@@ -343,9 +343,10 @@ typedef enum _WINED3DSAMPLERSTATETYPE {
     WINED3DSAMP_SRGBTEXTURE    = 11,
     WINED3DSAMP_ELEMENTINDEX   = 12,
     WINED3DSAMP_DMAPOFFSET     = 13,
-                                
+
     WINED3DSAMP_FORCE_DWORD   = 0x7fffffff,
 } WINED3DSAMPLERSTATETYPE;
+#define WINED3D_HIGHEST_SAMPLER_STATE WINED3DSAMP_DMAPOFFSET
 
 typedef enum _WINED3DTEXTURESTAGESTATETYPE {
     WINED3DTSS_COLOROP               =  1,
@@ -370,6 +371,8 @@ typedef enum _WINED3DTEXTURESTAGESTATETYPE {
 
     WINED3DTSS_FORCE_DWORD           = 0x7fffffff
 } WINED3DTEXTURESTAGESTATETYPE;
+
+#define WINED3D_HIGHEST_TEXTURE_STATE WINED3DTSS_CONSTANT
 
 typedef struct _WINEDD3DRECTPATCH_INFO {
     UINT                StartVertexOffsetWidth;
@@ -674,6 +677,15 @@ typedef struct _WINED3DCAPS {
 
 } WINED3DCAPS;
 
+typedef enum _WINED3DSTATEBLOCKTYPE {
+    WINED3DSBT_INIT          = 0,
+    WINED3DSBT_ALL           = 1,
+    WINED3DSBT_PIXELSTATE    = 2,
+    WINED3DSBT_VERTEXSTATE   = 3,
+
+    WINED3DSBT_FORCE_DWORD   = 0xffffffff
+} WINED3DSTATEBLOCKTYPE;
+
 typedef struct glDescriptor {
     UINT          textureName;
     int           level;
@@ -682,5 +694,7 @@ typedef struct glDescriptor {
     int/*GLenum*/ glFormatInternal;
     int/*GLenum*/ glType;
 } glDescriptor;
+
+
 
 #endif

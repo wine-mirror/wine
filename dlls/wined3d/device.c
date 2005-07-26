@@ -227,7 +227,7 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
     BOOL changeTexture = TRUE;
 
     TRACE("-----------------------> Updating the texture at stage %ld to have new texture state information\n", Stage);
-    for (i = 1; i < HIGHEST_TEXTURE_STATE; i++) {
+    for (i = 1; i < WINED3D_HIGHEST_TEXTURE_STATE; i++) {
 
         BOOL skip = FALSE;
 
@@ -283,7 +283,7 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
     }
 
     /* apply the sampler states to the texture */
-    for (i = 1; i <= HIGHEST_SAMPLER_STATE;i++) {
+    for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE;i++) {
       IWineD3DDevice_SetSamplerState(iface, Stage, i, This->stateBlock->samplerState[Stage][i]);
     }
 
@@ -419,7 +419,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT 
     return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTATEBLOCKTYPE Type, IWineD3DStateBlock** ppStateBlock, IUnknown *parent) {
+HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, WINED3DSTATEBLOCKTYPE Type, IWineD3DStateBlock** ppStateBlock, IUnknown *parent) {
 
     IWineD3DDeviceImpl     *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
@@ -430,7 +430,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTA
 
     /* Special case - Used during initialization to produce a placeholder stateblock
           so other functions called can update a state block                         */
-    if (Type == (D3DSTATEBLOCKTYPE) 0) {
+    if (Type == WINED3DSBT_INIT) {
         /* Don't bother increasing the reference count otherwise a device will never
            be freed due to circular dependencies                                   */
         return D3D_OK;
@@ -452,10 +452,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTA
 
     TRACE("Updating changed flags appropriate for type %d\n", Type);
 
-    if (Type == D3DSBT_ALL) {
+    if (Type == WINED3DSBT_ALL) {
         TRACE("ALL => Pretend everything has changed\n");
         memset(&object->changed, TRUE, sizeof(This->stateBlock->changed));
-    } else if (Type == D3DSBT_PIXELSTATE) {
+    } else if (Type == WINED3DSBT_PIXELSTATE) {
 
         memset(&object->changed, FALSE, sizeof(This->stateBlock->changed));
         /* TODO: Pixel Shader Constants */
@@ -475,7 +475,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTA
                 object->changed.samplerState[j][SavedPixelStates_S[i]] = TRUE;
             }
         }
-    } else if (Type == D3DSBT_VERTEXSTATE) {
+    } else if (Type == WINED3DSBT_VERTEXSTATE) {
 
         memset(&object->changed, FALSE, sizeof(This->stateBlock->changed));
 
@@ -1500,8 +1500,17 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT St
     }
 
     /* Not recording... */
-    if (oldSrc != NULL) IWineD3DVertexBuffer_Release(oldSrc);
-    if (pStreamData != NULL) IWineD3DVertexBuffer_AddRef(pStreamData);
+    if (pStreamData != NULL) {
+        IUnknown *newVertexBufferParent;
+        /* GetParent will add a ref, so leave it hanging until the vertex buffer is cleared */
+        IWineD3DVertexBuffer_GetParent(pStreamData, &newVertexBufferParent);
+    }
+    if (oldSrc != NULL) {
+        IUnknown *oldVertexBufferParent;
+        IWineD3DVertexBuffer_GetParent(oldSrc, &oldVertexBufferParent);
+        IUnknown_Release(oldVertexBufferParent);
+        IUnknown_Release(oldVertexBufferParent);
+    }
 
     return D3D_OK;
 }
@@ -2302,8 +2311,17 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWineD3DInde
         return D3D_OK;
     }
 
-    if (oldIdxs)    IWineD3DIndexBuffer_Release(oldIdxs);
-    if (pIndexData) IWineD3DIndexBuffer_AddRef(This->stateBlock->pIndexData);
+    if (pIndexData) {
+        IUnknown *indexBufferParent;
+        /* Getting the parent causes a addRef... it gets released when the indicies are clear */
+        IWineD3DIndexBuffer_GetParent(pIndexData, &indexBufferParent);
+    }
+    if (oldIdxs) {
+        IUnknown *indexBufferParent;
+        IWineD3DIndexBuffer_GetParent(oldIdxs, &indexBufferParent);
+        IUnknown_Release(indexBufferParent);
+        IUnknown_Release(indexBufferParent);
+    }
     return D3D_OK;
 }
 
@@ -3273,8 +3291,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD S
 
     TRACE("(%p) Sampler(%ld), Type(%d) Value(%ld)\n",This, Sampler ,Type, Value);
 
-    if(Sampler >  GL_LIMITS(samplers) || Sampler < 0 || Type > HIGHEST_SAMPLER_STATE || Type < 0) {
-        FIXME("out of range %d %d sampler %ld type %u\n", GL_LIMITS(samplers), HIGHEST_SAMPLER_STATE, Sampler, Type);
+    if(Sampler >  GL_LIMITS(samplers) || Sampler < 0 || Type > WINED3D_HIGHEST_SAMPLER_STATE || Type < 0) {
+        FIXME("out of range %d %d sampler %ld type %u\n", GL_LIMITS(samplers), WINED3D_HIGHEST_SAMPLER_STATE, Sampler, Type);
         return D3DERR_INVALIDCALL;
     }
 
@@ -4148,8 +4166,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
     * and the the application nust set the texture back to null (or have a leaky application),
     * This means we should pass the refcount upto the parent
      *******************************/
-    if (NULL != oldTexture) {
+    if (NULL != This->updateStateBlock->textures[Stage]) {
+        IUnknown *textureParent;
+        IWineD3DBaseTexture_GetParent(This->updateStateBlock->textures[Stage], (IUnknown **)&textureParent);
+        /** NOTE: GetParent will increase the ref count for me, I won't clean up untill the texture is set to NULL **/
+    }
 
+    if (NULL != oldTexture) {
         IUnknown *textureParent;
         IWineD3DBaseTexture_GetParent(oldTexture, (IUnknown **)&textureParent);
         IUnknown_Release(textureParent);
@@ -4159,10 +4182,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
 
 
     if (NULL != pTexture) {
-        IUnknown *textureParent;
-        IWineD3DBaseTexture_GetParent(This->updateStateBlock->textures[Stage], (IUnknown **)&textureParent);
-        /** NOTE: GetParent will increase the ref count for me, I won't clean up untill the texture is set to NULL **/
-
         /* Now setup the texture appropraitly */
         textureType = IWineD3DBaseTexture_GetType(pTexture);
 
@@ -4327,7 +4346,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSw
     object->wineD3DDevice= This;
     /** FIXME: object->parent       = parent; **/
     object->parent       = NULL;
-    object->blockType    = D3DSBT_ALL;
+    object->blockType    = WINED3DSBT_ALL;
     object->ref          = 1;
     object->lpVtbl       = &IWineD3DStateBlock_Vtbl;
 
@@ -4596,7 +4615,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIM
              debug_d3dprimitivetype(PrimitiveType),
              PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
 
-    if (This->stateBlock->streamSource[0] != NULL) IWineD3DVertexBuffer_Release(This->stateBlock->streamSource[0]);
+    if (This->stateBlock->streamSource[0] != NULL) {
+        IUnknown *vertexBufferParent;
+        IWineD3DVertexBuffer_GetParent(This->stateBlock->streamSource[0], &vertexBufferParent);
+        IUnknown_Release(vertexBufferParent);
+        IUnknown_Release(vertexBufferParent);
+    }
 
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
     This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
@@ -4623,12 +4647,26 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
              MinVertexIndex, NumVertexIndices, PrimitiveCount, pIndexData,
              IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
 
-    if (This->stateBlock->streamSource[0] != NULL) IWineD3DVertexBuffer_Release(This->stateBlock->streamSource[0]);
-
     if (IndexDataFormat == WINED3DFMT_INDEX16) {
         idxStride = 2;
     } else {
         idxStride = 4;
+    }
+
+    if (This->stateBlock->streamSource[0] != NULL) {
+        IUnknown *vertexBufferParent;
+        IWineD3DVertexBuffer_GetParent(This->stateBlock->streamSource[0], &vertexBufferParent);
+        This->stateBlock->streamSource[0] = NULL;
+        IUnknown_Release(vertexBufferParent);
+        IUnknown_Release(vertexBufferParent);
+    }
+
+    if (This->stateBlock->pIndexData) {
+        IUnknown *indexBufferParent;
+        IWineD3DIndexBuffer_GetParent(This->stateBlock->pIndexData, &indexBufferParent);
+        This->stateBlock->pIndexData = NULL;
+        IUnknown_Release(indexBufferParent);
+        IUnknown_Release(indexBufferParent);
     }
 
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
@@ -4641,7 +4679,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
     /* stream zero settings set to null at end as per the msdn */
     This->stateBlock->streamSource[0] = NULL;
     This->stateBlock->streamStride[0] = 0;
-    IWineD3DDevice_SetIndices(iface, NULL, 0);
 
     return D3D_OK;
 }

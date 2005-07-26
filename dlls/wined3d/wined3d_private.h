@@ -170,10 +170,6 @@ extern int num_lock;
                          /* Maximum number of constants provided to the shaders */
 #define HIGHEST_TRANSFORMSTATE 512 
                          /* Highest value in D3DTRANSFORMSTATETYPE */
-#define HIGHEST_TEXTURE_STATE   D3DTSS_CONSTANT
-                         /* Highest D3DTSS_ value                  */
-#define HIGHEST_SAMPLER_STATE   D3DSAMP_DMAPOFFSET
-                         /* Maximum number of constants provided to the shaders */
 #define MAX_CLIPPLANES  D3DMAXUSERCLIPPLANES
 
 #define MAX_PALETTES      256
@@ -781,9 +777,9 @@ typedef struct SAVEDSTATES {
         BOOL                      transform[HIGHEST_TRANSFORMSTATE + 1];
         BOOL                      viewport;
         BOOL                      renderState[WINEHIGHEST_RENDER_STATE + 1];
-        BOOL                      textureState[MAX_TEXTURES][HIGHEST_TEXTURE_STATE + 1];
+        BOOL                      textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
         BOOL                      clipplane[MAX_CLIPPLANES];
-        BOOL                      samplerState[MAX_SAMPLERS][HIGHEST_SAMPLER_STATE + 1];
+        BOOL                      samplerState[MAX_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
         BOOL                      vertexDecl;
         BOOL                      pixelShader;
         BOOL                      vertexShader;
@@ -798,7 +794,7 @@ struct IWineD3DStateBlockImpl
     /* IWineD3DStateBlock information */
     IUnknown                 *parent;
     IWineD3DDeviceImpl       *wineD3DDevice;
-    D3DSTATEBLOCKTYPE         blockType;
+    WINED3DSTATEBLOCKTYPE     blockType;
 
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
@@ -854,9 +850,9 @@ struct IWineD3DStateBlockImpl
     int                       textureDimensions[MAX_SAMPLERS];
 
     /* Texture State Stage */
-    DWORD                     textureState[MAX_TEXTURES][HIGHEST_TEXTURE_STATE + 1];
+    DWORD                     textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
     /* Sampler States */
-    DWORD                     samplerState[MAX_SAMPLERS][HIGHEST_SAMPLER_STATE + 1];
+    DWORD                     samplerState[MAX_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
 
 };
 

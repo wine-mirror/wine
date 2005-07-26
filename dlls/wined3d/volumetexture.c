@@ -47,7 +47,6 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_QueryInterface(IWineD3DVolumeTexture *i
 ULONG WINAPI IWineD3DVolumeTextureImpl_AddRef(IWineD3DVolumeTexture *iface) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
-    IUnknown_AddRef(This->resource.parent);
     return InterlockedIncrement(&This->resource.ref);
 }
 
@@ -66,8 +65,6 @@ ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *iface) {
         }
         IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *) iface);
         HeapFree(GetProcessHeap(), 0, This);
-    } else {
-        IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
     }
     return ref;
 }

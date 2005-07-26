@@ -49,7 +49,6 @@ ULONG WINAPI IWineD3DBaseTextureImpl_AddRef(IWineD3DBaseTexture *iface) {
     ULONG ref = InterlockedIncrement(&This->resource.ref);
 
     TRACE("(%p) : AddRef increasing from %ld\n", This,ref - 1);
-    IUnknown_AddRef(This->resource.parent);
     return ref;
 }
 
@@ -60,8 +59,6 @@ ULONG WINAPI IWineD3DBaseTextureImpl_Release(IWineD3DBaseTexture *iface) {
     if (ref == 0) {
         IWineD3DBaseTextureImpl_CleanUp(iface);
         HeapFree(GetProcessHeap(), 0, This);
-    } else {
-        IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
     }
     return ref;
 }

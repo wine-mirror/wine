@@ -1572,12 +1572,16 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     /* FIXME: Use for dx8 code eventually too! */
     /* Deliberately no indentation here, as this if will be removed when dx8 support merged in */
     if (This->dxVersion > 8) {
-
+        TRACE("(%p) : Creating stateblock\n", This);
         /* Creating the startup stateBlock - Note Special Case: 0 => Don't fill in yet! */
-        IWineD3DDevice_CreateStateBlock((IWineD3DDevice *)object,
-                                        (D3DSTATEBLOCKTYPE) 0,
+        if (D3D_OK != IWineD3DDevice_CreateStateBlock((IWineD3DDevice *)object,
+                                         WINED3DSBT_INIT,
                                         (IWineD3DStateBlock **)&object->stateBlock,
-                                        NULL);   /* Note: No parent needed for initial internal stateblock */
+                                        NULL)  || NULL == object->stateBlock) {   /* Note: No parent needed for initial internal stateblock */
+            WARN("Failed to create stateblock\n");
+            goto create_device_error;
+        }
+        TRACE("(%p) : Created stateblock (%p) \n", This, object->stateBlock);
         object->updateStateBlock = object->stateBlock;
         IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)object->updateStateBlock);
         /* Setup surfaces for the backbuffer, frontbuffer and depthstencil buffer */
@@ -1585,71 +1589,93 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
         /* Setup the implicit swapchain */
         TRACE("Creating implicit swapchain\n");
 
-        if (D3D_OK == D3DCB_CreateAdditionalSwapChain((IUnknown *) object->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain) && swapchain != NULL) {
-
-            object->renderTarget = swapchain->backBuffer;
-            IWineD3DSurface_AddRef(object->renderTarget);
-            /* Depth Stencil support */
-            object->stencilBufferTarget = object->depthStencilBuffer;
-            if (NULL != object->stencilBufferTarget) {
-                IWineD3DSurface_AddRef(object->stencilBufferTarget);
-            }
-
-            /* Set up some starting GL setup */
-
-            ENTER_GL();
-            /*
-            * Initialize openGL extension related variables
-            *  with Default values
-            */
-
-            This->isGLInfoValid = IWineD3DImpl_FillGLCaps(&This->gl_info, swapchain->display);
-            /* Setup all the devices defaults */
-            IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)object->stateBlock);
-#if 0
-            IWineD3DImpl_CheckGraphicsMemory();
-#endif
-            LEAVE_GL();
-
-            { /* Set a default viewport */
-                D3DVIEWPORT9 vp;
-                vp.X      = 0;
-                vp.Y      = 0;
-                vp.Width  = *(pPresentationParameters->BackBufferWidth);
-                vp.Height = *(pPresentationParameters->BackBufferHeight);
-                vp.MinZ   = 0.0f;
-                vp.MaxZ   = 1.0f;
-                IWineD3DDevice_SetViewport((IWineD3DDevice *)object, &vp);
-            }
-
-
-            /* Initialize the current view state */
-            object->modelview_valid = 1;
-            object->proj_valid = 0;
-            object->view_ident = 1;
-            object->last_was_rhw = 0;
-            glGetIntegerv(GL_MAX_LIGHTS, &object->maxConcurrentLights);
-            TRACE("(%p,%d) All defaults now set up, leaving CreateDevice with %p\n", This, Adapter, object);
-
-            /* Clear the screen */
-            IWineD3DDevice_Clear((IWineD3DDevice *) object, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
-        } else { /* couldn't create swapchain */
-            IWineD3DStateBlock_Release((IWineD3DStateBlock *)object->updateStateBlock);
-            object->updateStateBlock = NULL;
-            IWineD3DStateBlock_Release((IWineD3DStateBlock *)object->stateBlock);
-            object->stateBlock = NULL;
-            HeapFree(GetProcessHeap(), 0, object);
-            *ppReturnedDeviceInterface = NULL;
-            return D3DERR_INVALIDCALL;
+        if (D3D_OK != D3DCB_CreateAdditionalSwapChain((IUnknown *) object->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain) || swapchain == NULL) {
+            WARN("Failed to create implicite swapchain\n");
+            goto create_device_error;
         }
+
+        object->renderTarget = swapchain->backBuffer;
+        IWineD3DSurface_AddRef(object->renderTarget);
+        /* Depth Stencil support */
+        object->stencilBufferTarget = object->depthStencilBuffer;
+        if (NULL != object->stencilBufferTarget) {
+            IWineD3DSurface_AddRef(object->stencilBufferTarget);
+        }
+
+        /* Set up some starting GL setup */
+        ENTER_GL();
+        /*
+        * Initialize openGL extension related variables
+        *  with Default values
+        */
+
+        This->isGLInfoValid = IWineD3DImpl_FillGLCaps(&This->gl_info, swapchain->display);
+        /* Setup all the devices defaults */
+        IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)object->stateBlock);
+#if 0
+        IWineD3DImpl_CheckGraphicsMemory();
+#endif
+        LEAVE_GL();
+
+        { /* Set a default viewport */
+            D3DVIEWPORT9 vp;
+            vp.X      = 0;
+            vp.Y      = 0;
+            vp.Width  = *(pPresentationParameters->BackBufferWidth);
+            vp.Height = *(pPresentationParameters->BackBufferHeight);
+            vp.MinZ   = 0.0f;
+            vp.MaxZ   = 1.0f;
+            IWineD3DDevice_SetViewport((IWineD3DDevice *)object, &vp);
+        }
+
+
+        /* Initialize the current view state */
+        object->modelview_valid = 1;
+        object->proj_valid = 0;
+        object->view_ident = 1;
+        object->last_was_rhw = 0;
+        glGetIntegerv(GL_MAX_LIGHTS, &object->maxConcurrentLights);
+        TRACE("(%p,%d) All defaults now set up, leaving CreateDevice with %p\n", This, Adapter, object);
+
+        /* Clear the screen */
+        IWineD3DDevice_Clear((IWineD3DDevice *) object, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
 
     } else { /* End of FIXME: remove when dx8 merged in */
 
-     FIXME("(%p) Incomplete stub for d3d8\n", This);
+        FIXME("(%p) Incomplete stub for d3d8\n", This);
 
     }
 
     return D3D_OK;
+create_device_error:
+    if (object->updateStateBlock != NULL) {
+        IWineD3DStateBlock_Release((IWineD3DStateBlock *)object->updateStateBlock);
+        object->updateStateBlock = NULL;
+    }
+    if (object->stateBlock != NULL) {
+        IWineD3DStateBlock_Release((IWineD3DStateBlock *)object->stateBlock);
+        object->stateBlock = NULL;
+    }
+    if (object->renderTarget != NULL) {
+        IWineD3DSurface_Release(object->renderTarget);
+        object->renderTarget = NULL;
+    }
+    if (object->stencilBufferTarget != NULL) {
+        IWineD3DSurface_Release(object->stencilBufferTarget);
+        object->stencilBufferTarget = NULL;
+    }
+    if (object->stencilBufferTarget != NULL) {
+        IWineD3DSurface_Release(object->stencilBufferTarget);
+        object->stencilBufferTarget = NULL;
+    }
+    if (swapchain != NULL) {
+        IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+        swapchain = NULL;
+    }
+    HeapFree(GetProcessHeap(), 0, object);
+    *ppReturnedDeviceInterface = NULL;
+    return D3DERR_INVALIDCALL;
+
 }
 
 HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent) {

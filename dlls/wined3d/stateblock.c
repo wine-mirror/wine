@@ -57,6 +57,48 @@ ULONG WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, refCount + 1);
 
     if (!refCount) {
+        /* type 0 represents the primary stateblock, so free all the resources */
+        if (This->blockType == WINED3DSBT_INIT) {
+            int counter;
+            FIXME("Releasing primary stateblock\n");
+            /* Free any streams still bound */
+            for (counter = 0 ; counter < MAX_STREAMS ; counter++) {
+                if (This->streamSource[counter] != NULL) {
+                    IUnknown *vertexBufferParent;
+                    IWineD3DVertexBuffer_GetParent(This->streamSource[counter], &vertexBufferParent);
+                    /* Set to NULL here so that Device_ResourceReleased can give a warning if This->streamSource[counter] == ResourceReleased */
+                    This->streamSource[counter] = NULL;
+                    IUnknown_Release(vertexBufferParent);
+                    IUnknown_Release(vertexBufferParent);
+                }
+            }
+
+            /* free any index data */
+            if (This->pIndexData) {
+                IUnknown *indexBufferParent;
+                IWineD3DIndexBuffer_GetParent(This->pIndexData, &indexBufferParent);
+                This->pIndexData = NULL;
+                TRACE("Releasing index buffer %p p(%p)", This->pIndexData, indexBufferParent);
+                IUnknown_Release(indexBufferParent);
+                IUnknown_Release(indexBufferParent);
+            }
+
+            /* NOTE: according to MSDN: The applicaion is responsible for making sure the texture references are cleared down */
+            for (counter = 0; counter < GL_LIMITS(textures); counter++) {
+                if (This->textures[counter]) {
+                    IUnknown *textureParent;
+                    IWineD3DBaseTexture_GetParent(This->textures[counter], &textureParent);
+                    /* FIXME: Were not using internal counting properly, so were making up for it here by releasing the object anyway */
+
+                    IUnknown_Release(textureParent);
+                    /* release our 'internal' hold on the texture */
+                    if(0 != IUnknown_Release(textureParent)) {
+                        TRACE("Texture still referenced by stateblock, applications has leaked Stage = %u Texture = %p Parent = %p\n", counter, This->textures[counter], textureParent);
+                    }
+                }
+            }
+
+        }
         HeapFree(GetProcessHeap(), 0, This);
     }
     return refCount;
@@ -242,7 +284,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
         /* FIXME: textures are upto MAX_SAMPLERS for d3d9? */
         /* Texture */
         for (j = 0; j < GL_LIMITS(textures); j++) {
-            for (i = 1; i <= HIGHEST_TEXTURE_STATE ; i++) {
+            for (i = 1; i <= WINED3D_HIGHEST_TEXTURE_STATE ; i++) {
 
                 if (This->set.textureState[j][i] && (This->textureState[j][i] !=
                                                                     targetStateBlock->textureState[j][i])) {
@@ -263,7 +305,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
 
         /* Samplers */
         for (j = 0 ; j < GL_LIMITS(samplers); j++){
-            for (i = 1; i <= HIGHEST_SAMPLER_STATE ; i++){ /* States are 1 based */
+            for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE ; i++){ /* States are 1 based */
                 if (This->set.samplerState[j][i] && (This->samplerState[j][i] !=
                                                         targetStateBlock->samplerState[j][i])) {
                     TRACE("Updating sampler state %d,%d to %ld (was %ld)\n",
@@ -381,7 +423,7 @@ should really perform a delta so that only the changes get updated*/
             if (This->set.textures[j] && This->changed.textures[j]) {
                 IWineD3DDevice_SetTexture(pDevice, j, This->textures[j]);
             }
-            for (i = 1; i <= HIGHEST_TEXTURE_STATE; i++) {
+            for (i = 1; i <= WINED3D_HIGHEST_TEXTURE_STATE; i++) {
                 if (This->set.textureState[j][i] && This->changed.textureState[j][i]) {
                     IWineD3DDevice_SetTextureStageState(pDevice, j, i, This->textureState[j][i]);
                 }
@@ -390,7 +432,7 @@ should really perform a delta so that only the changes get updated*/
 
         /* Samplers */
         for (j = 0 ; j < GL_LIMITS(samplers); j++){
-            for (i = 1; i <= HIGHEST_SAMPLER_STATE; i++){
+            for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE; i++){
                  if (This->set.samplerState[j][i] && This->changed.samplerState[j][i] && This->samplerState[j][i] != 0) {
                         IWineD3DDevice_SetSamplerState(pDevice, j, i, This->samplerState[j][i]);
                  }
@@ -456,10 +498,11 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
     /* Note this may have a large overhead but it should only be executed
        once, in order to initialize the complete state of the device and
        all opengl equivalents                                            */
-    TRACE("-----------------------> Setting up device defaults...\n");
-    This->blockType = D3DSBT_ALL;
+    TRACE("(%p) -----------------------> Setting up device defaults... %p \n", This, This->wineD3DDevice);
+    /* TODO: make a special stateblock type for the primary stateblock (it never gets applied so it doesn't need a real type) */
+    This->blockType = WINED3DSBT_INIT;
 
-    /* FIXME: Set some of the defaults for lights, transforms etc */
+    /* Set some of the defaults for lights, transforms etc */
     memcpy(&This->transforms[D3DTS_PROJECTION], &identity, sizeof(identity));
     memcpy(&This->transforms[D3DTS_VIEW], &identity, sizeof(identity));
     for (i = 0; i < 256; ++i) {
@@ -633,7 +676,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
     }
 
         /* Sampler states*/
-    for (i = 0 ; i <  MAX_SAMPLERS; i++) {
+    for (i = 0 ; i <  GL_LIMITS(samplers); i++) {
         TRACE("Setting up default samplers states for sampler %d\n", i);
         This->samplerState[i][WINED3DSAMP_ADDRESSU         ] = D3DTADDRESS_WRAP;
         This->samplerState[i][WINED3DSAMP_ADDRESSV         ] = D3DTADDRESS_WRAP;
