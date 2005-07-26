@@ -56,8 +56,6 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#define CONST_VTABLE
-
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"

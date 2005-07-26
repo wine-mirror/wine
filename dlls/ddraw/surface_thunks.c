@@ -19,8 +19,6 @@
 #include "config.h"
 #include <stdarg.h>
 
-#define CONST_VTABLE
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

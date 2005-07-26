@@ -24,8 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CONST_VTABLE
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

@@ -246,6 +246,10 @@
 
 #define interface struct
 
+#ifdef __WINESRC__
+#define CONST_VTABLE
+#endif
+
 #ifdef CONST_VTABLE
 #undef CONST_VTBL
 #define CONST_VTBL const

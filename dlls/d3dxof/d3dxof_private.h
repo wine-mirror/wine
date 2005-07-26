@@ -24,8 +24,6 @@
 #ifndef __D3DXOF_PRIVATE_INCLUDED__
 #define __D3DXOF_PRIVATE_INCLUDED__
 
-#define CONST_VTABLE
-
 #include <stdarg.h>
 
 #include "windef.h"

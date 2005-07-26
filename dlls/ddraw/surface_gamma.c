@@ -23,8 +23,6 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#define CONST_VTABLE
-
 #include "wine/debug.h"
 #include "ddraw_private.h"
 

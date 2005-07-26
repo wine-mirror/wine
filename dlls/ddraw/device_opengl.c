@@ -30,8 +30,6 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#define CONST_VTABLE
-
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"

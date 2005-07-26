@@ -24,8 +24,6 @@
 #include <string.h>
 
 #define COBJMACROS
-#define CONST_VTABLE
-
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 

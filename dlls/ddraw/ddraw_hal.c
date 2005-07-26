@@ -23,8 +23,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#define CONST_VTABLE
-
 #include "wine/debug.h"
 #include "windef.h"
 #include "winbase.h"

@@ -25,8 +25,6 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#define CONST_VTABLE
-
 #include "wine/debug.h"
 #include "ddraw_private.h"
 

@@ -24,8 +24,6 @@
 #include <assert.h>
 #include <string.h>
 
-#define CONST_VTABLE
-
 #include "ddraw_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);

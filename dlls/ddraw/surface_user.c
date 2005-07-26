@@ -23,8 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CONST_VTABLE
-
 #include "winerror.h"
 #include "wine/debug.h"
 #include "ddraw_private.h"
