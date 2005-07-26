@@ -14,6 +14,7 @@ listed here are "stubbed out", meaning they still need to be implemented.
 DLLs (under dlls/):
 -------------------
 
+	activeds/		- Active Directory Service Interface
 	advapi32/		- Crypto, systeminfo, security, eventlogging
 	advpack/		- Reads and verifies .INF files
 	amstream/               - MultiMedia Streams
@@ -73,6 +74,7 @@ DLLs (under dlls/):
 	kernel/			- The Windows kernel
 	lzexpand/		- Lempel-Ziv compression/decompression
 	mapi32/			- Mail interface
+	midimap/		- MIDI mapper
 	mlang/			- Multi Language Support
 	mmdevldr.vxd/		- MMDEVLDR VxD implementation
 	monodebg.vxd/		- MONODEBG VxD implementation
@@ -101,6 +103,7 @@ DLLs (under dlls/):
 	newdev/			- New Hardware Device Library
 	ntdll/			- NT implementation of kernel calls
 	odbc32/			- Open DataBase Connectivity driver manager
+	odbccp32/		- Open DataBase Connectivity driver installer
 	ole32/			- 32 bit OLE 2.0 libraries
 	oleacc/			- OLE accessibility support
 	oleaut32/		- 32 bit OLE 2.0 automation
@@ -118,7 +121,7 @@ DLLs (under dlls/):
 	richedit/		- Rich text editing control
 	rpcrt4/			- Remote Procedure Call runtime
 	rsabase/		- RSA encryption
-	rsaenh/			- Crypto API that provides algorithms for DES, 3DES, and RSA among others
+	rsaenh/			- Crypto API (DES, 3DES, RSA, etc.)
 	secur32/                - Contains Windows Security functions
 	sensapi/		- System Event Notification Service
 	serialui/		- Serial port property pages
@@ -128,6 +131,7 @@ DLLs (under dlls/):
 	shfolder/		- Shell folder service
 	shlwapi/		- Shell Light-Weight interface
 	snmpapi/		- SNMP protocol interface (networking)
+	stdole2.tlb/		- OLE Automation typelib
 	stdole32.tlb/		- Standard OLE typelib
 	sti/			- Still Image service
 	tapi32/			- Telephone interface
@@ -135,7 +139,7 @@ DLLs (under dlls/):
 	twain/			- TWAIN Imaging device communications
 	unicows/		- Unicows replacement (Unicode layer for Win9x)
 	url/			- Internet shortcut shell extension
-	urlmon/			- URL Moniker allows binding to a URL (like KIO/gnome-vfs)
+	urlmon/			- URL Moniker allows binding to a URL
 	user/			- Window management, standard controls, etc.
 	uxtheme/		- Theme library
 	vdhcp.vxd/		- VDHCP VxD implementation
@@ -149,7 +153,7 @@ DLLs (under dlls/):
 	win32s/			- 32-bit function access for 16-bit systems
 	winaspi/		- 16 bit Advanced SCSI Peripheral Interface
 	wined3d/		- Wine internal Direct3D helper
-	winedos/		- DOS features and BIOS calls (interrupts) (wine specific)
+	winedos/		- DOS features and BIOS calls (Wine specific)
 	wineps/			- Postscript driver (Wine specific)
 	wininet/		- Internet extensions
 	winmm/			- Multimedia (16 & 32 bit)
@@ -159,7 +163,6 @@ DLLs (under dlls/):
 	winmm/mcicda/		- MCI audio CD driver
 	winmm/mciseq/		- MCI MIDI driver
 	winmm/mciwave/		- MCI wave driver
-	winmm/midimap/		- MIDI mapper
 	winmm/wavemap/		- Audio mapper
 	winmm/winealsa/		- ALSA audio driver
 	winmm/winearts/		- aRts audio driver
@@ -218,7 +221,7 @@ Support programs, libraries, etc:
 	dlls/dxerr8/		- DirectX 8 error import lib
 	dlls/dxerr9/		- DirectX 9 error import lib
 	dlls/dxguid/		- DirectX UUID import lib
-	dlls/strmiids/		- Exports class (CLSIDs) and interface (IIDs) identifiers 
+	dlls/strmiids/		- Exports class CLSIDs and interface IIDs
 	dlls/uuid/		- Windows-compatible UUID import lib
 	documentation/		- some documentation
 	documentation/samples/	- sample configuration files
