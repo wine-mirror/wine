@@ -1070,7 +1070,6 @@ IMPORT_LIBS = \
 	activeds/libactiveds.$(IMPLIBEXT) \
 	advapi32/libadvapi32.$(IMPLIBEXT) \
 	advpack/libadvpack.$(IMPLIBEXT) \
-	amstream/libamstream.$(IMPLIBEXT) \
 	atl/libatl.$(IMPLIBEXT) \
 	avicap32/libavicap32.$(IMPLIBEXT) \
 	avifil32/libavifil32.$(IMPLIBEXT) \
@@ -1078,7 +1077,6 @@ IMPORT_LIBS = \
 	capi2032/libcapi2032.$(IMPLIBEXT) \
 	cards/libcards.$(IMPLIBEXT) \
 	cfgmgr32/libcfgmgr32.$(IMPLIBEXT) \
-	comcat/libcomcat.$(IMPLIBEXT) \
 	comctl32/libcomctl32.$(IMPLIBEXT) \
 	commdlg/libcomdlg32.$(IMPLIBEXT) \
 	crtdll/libcrtdll.$(IMPLIBEXT) \
@@ -1094,26 +1092,14 @@ IMPORT_LIBS = \
 	dbghelp/libdbghelp.$(IMPLIBEXT) \
 	dciman32/libdciman32.$(IMPLIBEXT) \
 	ddraw/libddraw.$(IMPLIBEXT) \
-	devenum/libdevenum.$(IMPLIBEXT) \
 	dinput/libdinput.$(IMPLIBEXT) \
 	dinput/libdinput.$(STATIC_IMPLIBEXT) \
 	dinput8/libdinput8.$(IMPLIBEXT) \
-	dmband/libdmband.$(IMPLIBEXT) \
-	dmcompos/libdmcompos.$(IMPLIBEXT) \
-	dmime/libdmime.$(IMPLIBEXT) \
-	dmloader/libdmloader.$(IMPLIBEXT) \
-	dmscript/libdmscript.$(IMPLIBEXT) \
-	dmstyle/libdmstyle.$(IMPLIBEXT) \
-	dmsynth/libdmsynth.$(IMPLIBEXT) \
-	dmusic/libdmusic.$(IMPLIBEXT) \
 	dmusic32/libdmusic32.$(IMPLIBEXT) \
 	dplay/libdplay.$(IMPLIBEXT) \
 	dplayx/libdplayx.$(IMPLIBEXT) \
 	dpnet/libdpnet.$(IMPLIBEXT) \
-	dpnhpast/libdpnhpast.$(IMPLIBEXT) \
 	dsound/libdsound.$(IMPLIBEXT) \
-	dswave/libdswave.$(IMPLIBEXT) \
-	dxdiagn/libdxdiagn.$(IMPLIBEXT) \
 	gdi/libgdi32.$(IMPLIBEXT) \
 	glu32/libglu32.$(IMPLIBEXT) \
 	glut32/libglut32.$(IMPLIBEXT) \
@@ -1134,7 +1120,6 @@ IMPORT_LIBS = \
 	mshtml/libmshtml.$(IMPLIBEXT) \
 	msi/libmsi.$(IMPLIBEXT) \
 	msimg32/libmsimg32.$(IMPLIBEXT) \
-	msnet32/libmsnet32.$(IMPLIBEXT) \
 	msrle32/libmsrle32.$(IMPLIBEXT) \
 	msvcrt/libmsvcrt.$(IMPLIBEXT) \
 	msvcrt20/libmsvcrt20.$(IMPLIBEXT) \
@@ -1158,7 +1143,6 @@ IMPORT_LIBS = \
 	opengl32/libopengl32.$(IMPLIBEXT) \
 	powrprof/libpowrprof.$(IMPLIBEXT) \
 	psapi/libpsapi.$(IMPLIBEXT) \
-	qcap/libqcap.$(IMPLIBEXT) \
 	quartz/libquartz.$(IMPLIBEXT) \
 	rasapi32/librasapi32.$(IMPLIBEXT) \
 	riched20/libriched20.$(IMPLIBEXT) \
@@ -1212,9 +1196,6 @@ advapi32/libadvapi32.$(IMPLIBEXT): advapi32/advapi32.spec $(WINEBUILD)
 advpack/libadvpack.$(IMPLIBEXT): advpack/advpack.spec $(WINEBUILD)
 	@cd advpack && $(MAKE) libadvpack.$(IMPLIBEXT)
 
-amstream/libamstream.$(IMPLIBEXT): amstream/amstream.spec $(WINEBUILD)
-	@cd amstream && $(MAKE) libamstream.$(IMPLIBEXT)
-
 atl/libatl.$(IMPLIBEXT): atl/atl.spec $(WINEBUILD)
 	@cd atl && $(MAKE) libatl.$(IMPLIBEXT)
 
@@ -1235,9 +1216,6 @@ cards/libcards.$(IMPLIBEXT): cards/cards.spec $(WINEBUILD)
 
 cfgmgr32/libcfgmgr32.$(IMPLIBEXT): cfgmgr32/cfgmgr32.spec $(WINEBUILD)
 	@cd cfgmgr32 && $(MAKE) libcfgmgr32.$(IMPLIBEXT)
-
-comcat/libcomcat.$(IMPLIBEXT): comcat/comcat.spec $(WINEBUILD)
-	@cd comcat && $(MAKE) libcomcat.$(IMPLIBEXT)
 
 comctl32/libcomctl32.$(IMPLIBEXT): comctl32/comctl32.spec $(WINEBUILD)
 	@cd comctl32 && $(MAKE) libcomctl32.$(IMPLIBEXT)
@@ -1284,9 +1262,6 @@ dciman32/libdciman32.$(IMPLIBEXT): dciman32/dciman32.spec $(WINEBUILD)
 ddraw/libddraw.$(IMPLIBEXT): ddraw/ddraw.spec $(WINEBUILD)
 	@cd ddraw && $(MAKE) libddraw.$(IMPLIBEXT)
 
-devenum/libdevenum.$(IMPLIBEXT): devenum/devenum.spec $(WINEBUILD)
-	@cd devenum && $(MAKE) libdevenum.$(IMPLIBEXT)
-
 dinput/libdinput.$(IMPLIBEXT): dinput/dinput.spec $(WINEBUILD)
 	@cd dinput && $(MAKE) libdinput.$(IMPLIBEXT)
 
@@ -1295,30 +1270,6 @@ dinput/libdinput.$(STATIC_IMPLIBEXT): dummy
 
 dinput8/libdinput8.$(IMPLIBEXT): dinput8/dinput8.spec $(WINEBUILD)
 	@cd dinput8 && $(MAKE) libdinput8.$(IMPLIBEXT)
-
-dmband/libdmband.$(IMPLIBEXT): dmband/dmband.spec $(WINEBUILD)
-	@cd dmband && $(MAKE) libdmband.$(IMPLIBEXT)
-
-dmcompos/libdmcompos.$(IMPLIBEXT): dmcompos/dmcompos.spec $(WINEBUILD)
-	@cd dmcompos && $(MAKE) libdmcompos.$(IMPLIBEXT)
-
-dmime/libdmime.$(IMPLIBEXT): dmime/dmime.spec $(WINEBUILD)
-	@cd dmime && $(MAKE) libdmime.$(IMPLIBEXT)
-
-dmloader/libdmloader.$(IMPLIBEXT): dmloader/dmloader.spec $(WINEBUILD)
-	@cd dmloader && $(MAKE) libdmloader.$(IMPLIBEXT)
-
-dmscript/libdmscript.$(IMPLIBEXT): dmscript/dmscript.spec $(WINEBUILD)
-	@cd dmscript && $(MAKE) libdmscript.$(IMPLIBEXT)
-
-dmstyle/libdmstyle.$(IMPLIBEXT): dmstyle/dmstyle.spec $(WINEBUILD)
-	@cd dmstyle && $(MAKE) libdmstyle.$(IMPLIBEXT)
-
-dmsynth/libdmsynth.$(IMPLIBEXT): dmsynth/dmsynth.spec $(WINEBUILD)
-	@cd dmsynth && $(MAKE) libdmsynth.$(IMPLIBEXT)
-
-dmusic/libdmusic.$(IMPLIBEXT): dmusic/dmusic.spec $(WINEBUILD)
-	@cd dmusic && $(MAKE) libdmusic.$(IMPLIBEXT)
 
 dmusic32/libdmusic32.$(IMPLIBEXT): dmusic32/dmusic32.spec $(WINEBUILD)
 	@cd dmusic32 && $(MAKE) libdmusic32.$(IMPLIBEXT)
@@ -1332,17 +1283,8 @@ dplayx/libdplayx.$(IMPLIBEXT): dplayx/dplayx.spec $(WINEBUILD)
 dpnet/libdpnet.$(IMPLIBEXT): dpnet/dpnet.spec $(WINEBUILD)
 	@cd dpnet && $(MAKE) libdpnet.$(IMPLIBEXT)
 
-dpnhpast/libdpnhpast.$(IMPLIBEXT): dpnhpast/dpnhpast.spec $(WINEBUILD)
-	@cd dpnhpast && $(MAKE) libdpnhpast.$(IMPLIBEXT)
-
 dsound/libdsound.$(IMPLIBEXT): dsound/dsound.spec $(WINEBUILD)
 	@cd dsound && $(MAKE) libdsound.$(IMPLIBEXT)
-
-dswave/libdswave.$(IMPLIBEXT): dswave/dswave.spec $(WINEBUILD)
-	@cd dswave && $(MAKE) libdswave.$(IMPLIBEXT)
-
-dxdiagn/libdxdiagn.$(IMPLIBEXT): dxdiagn/dxdiagn.spec $(WINEBUILD)
-	@cd dxdiagn && $(MAKE) libdxdiagn.$(IMPLIBEXT)
 
 gdi/libgdi32.$(IMPLIBEXT): gdi/gdi32.spec $(WINEBUILD)
 	@cd gdi && $(MAKE) libgdi32.$(IMPLIBEXT)
@@ -1403,9 +1345,6 @@ msi/libmsi.$(IMPLIBEXT): msi/msi.spec $(WINEBUILD)
 
 msimg32/libmsimg32.$(IMPLIBEXT): msimg32/msimg32.spec $(WINEBUILD)
 	@cd msimg32 && $(MAKE) libmsimg32.$(IMPLIBEXT)
-
-msnet32/libmsnet32.$(IMPLIBEXT): msnet32/msnet32.spec $(WINEBUILD)
-	@cd msnet32 && $(MAKE) libmsnet32.$(IMPLIBEXT)
 
 msrle32/libmsrle32.$(IMPLIBEXT): msrle32/msrle32.spec $(WINEBUILD)
 	@cd msrle32 && $(MAKE) libmsrle32.$(IMPLIBEXT)
@@ -1475,9 +1414,6 @@ powrprof/libpowrprof.$(IMPLIBEXT): powrprof/powrprof.spec $(WINEBUILD)
 
 psapi/libpsapi.$(IMPLIBEXT): psapi/psapi.spec $(WINEBUILD)
 	@cd psapi && $(MAKE) libpsapi.$(IMPLIBEXT)
-
-qcap/libqcap.$(IMPLIBEXT): qcap/qcap.spec $(WINEBUILD)
-	@cd qcap && $(MAKE) libqcap.$(IMPLIBEXT)
 
 quartz/libquartz.$(IMPLIBEXT): quartz/quartz.spec $(WINEBUILD)
 	@cd quartz && $(MAKE) libquartz.$(IMPLIBEXT)

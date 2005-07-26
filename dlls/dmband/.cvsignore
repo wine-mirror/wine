@@ -1,4 +1,3 @@
 Makefile
 dmband.dll.dbg.c
-libdmband.def
 version.res

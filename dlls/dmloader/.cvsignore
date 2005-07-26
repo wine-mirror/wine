@@ -1,4 +1,3 @@
 Makefile
 dmloader.dll.dbg.c
-libdmloader.def
 version.res

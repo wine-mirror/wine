@@ -1,4 +1,3 @@
 Makefile
 dmusic.dll.dbg.c
-libdmusic.def
 version.res

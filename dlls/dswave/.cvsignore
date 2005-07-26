@@ -1,4 +1,3 @@
 Makefile
 dswave.dll.dbg.c
-libdswave.def
 version.res

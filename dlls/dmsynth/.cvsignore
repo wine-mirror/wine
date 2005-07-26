@@ -1,4 +1,3 @@
 Makefile
 dmsynth.dll.dbg.c
-libdmsynth.def
 version.res

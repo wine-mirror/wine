@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = amstream.dll
-IMPORTLIB = libamstream.$(IMPLIBEXT)
 IMPORTS   = ole32 user32 advapi32 kernel32
 EXTRALIBS = -lstrmiids -luuid
 

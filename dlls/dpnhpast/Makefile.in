@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dpnhpast.dll
-IMPORTLIB = libdpnhpast.$(IMPLIBEXT)
 IMPORTS   = kernel32
 
 C_SRCS = \

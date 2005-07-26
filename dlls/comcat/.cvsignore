@@ -1,4 +1,3 @@
 Makefile
 comcat.dll.dbg.c
-libcomcat.def
 version.res

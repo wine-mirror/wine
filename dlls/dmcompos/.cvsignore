@@ -1,4 +1,3 @@
 Makefile
 dmcompos.dll.dbg.c
-libdmcompos.def
 version.res

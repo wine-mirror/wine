@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmsynth.dll
-IMPORTLIB = libdmsynth.$(IMPLIBEXT)
 IMPORTS   = winmm ole32 user32 advapi32 kernel32
 EXTRALIBS = -ldxguid -luuid
 

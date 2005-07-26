@@ -1,3 +1,2 @@
 Makefile
-libmsnet32.def
 msnet32.dll.dbg.c

@@ -1,4 +1,3 @@
 Makefile
 dpnhpast.dll.dbg.c
-libdpnhpast.def
 version.res
