@@ -179,7 +179,7 @@ typedef struct
 {
     WORD  wLength;
     WORD  wValueLength;
-    WORD  bText;
+    WORD  wType;
     WCHAR szKey[1];
 #if 0   /* variable length structure */
     /* DWORD aligned */
@@ -206,7 +206,7 @@ typedef struct
 #define VersionInfo32_Children( ver )  \
     (VS_VERSION_INFO_STRUCT32 *)( VersionInfo32_Value( ver ) + \
                            ( ( (ver)->wValueLength * \
-                               ((ver)->bText? 2 : 1) + 3 ) & ~3 ) )
+                               ((ver)->wType? 2 : 1) + 3 ) & ~3 ) )
 
 #define VersionInfo16_Next( ver ) \
     (VS_VERSION_INFO_STRUCT16 *)( (LPBYTE)ver + (((ver)->wLength + 3) & ~3) )
@@ -222,14 +222,14 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
     /* Copy data onto local stack to prevent overwrites */
     WORD wLength = info32->wLength;
     WORD wValueLength = info32->wValueLength;
-    WORD bText = info32->bText;
+    WORD wType = info32->wType;
     LPBYTE lpValue = VersionInfo32_Value( info32 );
     VS_VERSION_INFO_STRUCT32 *child32 = VersionInfo32_Children( info32 );
     VS_VERSION_INFO_STRUCT16 *child16;
 
     TRACE("Converting %p to %p\n", info32, info16 );
-    TRACE("wLength %d, wValueLength %d, bText %d, value %p, child %p\n",
-                wLength, wValueLength, bText, lpValue, child32 );
+    TRACE("wLength %d, wValueLength %d, wType %d, value %p, child %p\n",
+                wLength, wValueLength, wType, lpValue, child32 );
 
     /* Convert key */
     WideCharToMultiByte( CP_ACP, 0, info32->szKey, -1, info16->szKey, 0x7fffffff, NULL, NULL );
@@ -243,7 +243,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
         info16->wValueLength = 0;
         TRACE("No value present\n" );
     }
-    else if ( bText )
+    else if ( wType )
     {
         info16->wValueLength = WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)lpValue, -1, NULL, 0, NULL, NULL );
         WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)lpValue, -1,
