@@ -584,6 +584,22 @@ int ME_FindPixelPos(ME_TextEditor *editor, int x, int y, ME_Cursor *result, BOOL
   return 0;
 }
 
+
+int
+ME_CharFromPos(ME_TextEditor *editor, int x, int y)
+{
+  ME_Cursor cursor;
+  RECT rc;
+
+  GetClientRect(editor->hWnd, &rc);
+  if (x < 0 || y < 0 || x >= rc.right || y >= rc.bottom)
+    return -1;
+  ME_FindPixelPos(editor, x, y, &cursor, NULL);
+  return (ME_GetParagraph(cursor.pRun)->member.para.nCharOfs
+          + cursor.pRun->member.run.nCharOfs + cursor.nOffset);
+}
+
+
 void ME_LButtonDown(ME_TextEditor *editor, int x, int y)
 {
   ME_Cursor tmp_cursor;

@@ -26,7 +26,7 @@
   + EM_CANPASTE
   + EM_CANREDO 2.0
   + EM_CANUNDO
-  - EM_CHARFROMPOS
+  + EM_CHARFROMPOS
   - EM_DISPLAYBAND
   + EM_EMPTYUNDOBUFFER
   + EM_EXGETSEL
@@ -1026,7 +1026,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   switch(msg) {
   
   UNSUPPORTED_MSG(EM_AUTOURLDETECT)
-  UNSUPPORTED_MSG(EM_CHARFROMPOS)
   UNSUPPORTED_MSG(EM_DISPLAYBAND)
   UNSUPPORTED_MSG(EM_EXLIMITTEXT)
   UNSUPPORTED_MSG(EM_FINDWORDBREAK)
@@ -1587,6 +1586,8 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     return TRUE;
   case EM_SETZOOM:
     return ME_SetZoom(editor, wParam, lParam);
+  case EM_CHARFROMPOS:
+    return ME_CharFromPos(editor, ((POINTL *)lParam)->x, ((POINTL *)lParam)->y);
   case WM_CREATE:
     ME_CommitUndo(editor);
     ME_WrapMarkedParagraphs(editor);
