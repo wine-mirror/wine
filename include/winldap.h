@@ -447,9 +447,9 @@ ULONG ldap_search_extW(LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,PLDAPControlW*,
     PLDAPControlW*,ULONG,ULONG,ULONG*);
 #define    ldap_search_ext WINELIB_NAME_AW(ldap_search_ext)
 ULONG ldap_search_ext_sA(LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,PLDAPControlA*,
-    PLDAPControlA*,ULONG,ULONG,LDAPMessage**);
+    PLDAPControlA*,struct l_timeval*,ULONG,LDAPMessage**);
 ULONG ldap_search_ext_sW(LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,PLDAPControlW*,
-    PLDAPControlW*,ULONG,ULONG,LDAPMessage**);
+    PLDAPControlW*,struct l_timeval*,ULONG,LDAPMessage**);
 #define    ldap_search_ext_s WINELIB_NAME_AW(ldap_search_ext_s)
 PLDAPSearch ldap_search_init_pageA(PLDAP,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,PLDAPControlA*,
     PLDAPControlA*,ULONG,ULONG,PLDAPSortKeyA*);
