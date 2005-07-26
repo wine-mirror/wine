@@ -72,18 +72,18 @@ DEFINE_GUID(IID_IDirectMusicTrack,                   0xf96029a1,0x4282,0x11d2,0x
 DEFINE_GUID(IID_IDirectMusicTrack8,                  0x0e674304,0x3b05,0x11d3,0x9b,0xd1,0xf9,0xe7,0xf0,0xa0,0x15,0x36);
 
 /* typedef definitions */
-typedef struct IDirectMusicTrack         IDirectMusicTrack,         *LPDIRECTMUSICTRACK;
-typedef struct IDirectMusicTrack         IDirectMusicTrack8,        *LPDIRECTMUSICTRACK8;
-typedef struct IDirectMusicTool          IDirectMusicTool,          *LPDIRECTMUSICTOOL;
-typedef struct IDirectMusicTool8         IDirectMusicTool8,         *LPDIRECTMUSICTOOL8;
+typedef struct IDirectMusicTrack *LPDIRECTMUSICTRACK;
+typedef struct IDirectMusicTrack8 *LPDIRECTMUSICTRACK8;
+typedef struct IDirectMusicTool *LPDIRECTMUSICTOOL;
+typedef struct IDirectMusicTool8 *LPDIRECTMUSICTOOL8;
 /* these are from dmusici.h and are needed here */
-typedef struct IDirectMusicPerformance   IDirectMusicPerformance,   *LPDIRECTMUSICPERFORMANCE;
-typedef struct IDirectMusicPerformance8  IDirectMusicPerformance8,  *LPDIRECTMUSICPERFORMANCE8;
-typedef struct IDirectMusicSegment       IDirectMusicSegment,       *LPDIRECTMUSICSEGMENT;
-typedef struct IDirectMusicSegment       IDirectMusicSegment8,      *LPDIRECTMUSICSEGMENT8;
-typedef struct IDirectMusicSegmentState  IDirectMusicSegmentState,  *LPDIRECTMUSICSEGMENTSTATE;
-typedef struct IDirectMusicSegmentState8 IDirectMusicSegmentState8, *LPDIRECTMUSICSEGMENTSTATE8;
-typedef struct IDirectMusicGraph         IDirectMusicGraph,         *LPDIRECTMUSICGRAPH;
+typedef struct IDirectMusicPerformance *LPDIRECTMUSICPERFORMANCE;
+typedef struct IDirectMusicPerformance8 *LPDIRECTMUSICPERFORMANCE8;
+typedef struct IDirectMusicSegment *LPDIRECTMUSICSEGMENT;
+typedef struct IDirectMusicSegment8 *LPDIRECTMUSICSEGMENT8;
+typedef struct IDirectMusicSegmentState *LPDIRECTMUSICSEGMENTSTATE;
+typedef struct IDirectMusicSegmentState8 *LPDIRECTMUSICSEGMENTSTATE8;
+typedef struct IDirectMusicGraph *LPDIRECTMUSICGRAPH;
 typedef struct IDirectMusicGraph         IDirectMusicGraph8,        *LPDIRECTMUSICGRAPH8;
 
 
@@ -131,12 +131,12 @@ DECLARE_INTERFACE_(IDirectMusicTool,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectMusicTool methods ***/
-    STDMETHOD(Init)(THIS_ IDirectMusicGraph *pGraph) PURE;
+    STDMETHOD(Init)(THIS_ struct IDirectMusicGraph *pGraph) PURE;
     STDMETHOD(GetMsgDeliveryType)(THIS_ DWORD *pdwDeliveryType) PURE;
     STDMETHOD(GetMediaTypeArraySize)(THIS_ DWORD *pdwNumElements) PURE;
     STDMETHOD(GetMediaTypes)(THIS_ DWORD **padwMediaTypes, DWORD dwNumElements) PURE;
-    STDMETHOD(ProcessPMsg)(THIS_ IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG) PURE;
-    STDMETHOD(Flush)(THIS_ IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG, REFERENCE_TIME rtTime) PURE;
+    STDMETHOD(ProcessPMsg)(THIS_ struct IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG) PURE;
+    STDMETHOD(Flush)(THIS_ struct IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG, REFERENCE_TIME rtTime) PURE;
 };
 #undef INTERFACE
 
@@ -166,12 +166,12 @@ DECLARE_INTERFACE_(IDirectMusicTool8,IDirectMusicTool)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectMusicTool methods ***/
-    STDMETHOD(Init)(THIS_ IDirectMusicGraph *pGraph) PURE;
+    STDMETHOD(Init)(THIS_ struct IDirectMusicGraph *pGraph) PURE;
     STDMETHOD(GetMsgDeliveryType)(THIS_ DWORD *pdwDeliveryType) PURE;
     STDMETHOD(GetMediaTypeArraySize)(THIS_ DWORD *pdwNumElements) PURE;
     STDMETHOD(GetMediaTypes)(THIS_ DWORD **padwMediaTypes, DWORD dwNumElements) PURE;
-    STDMETHOD(ProcessPMsg)(THIS_ IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG) PURE;
-    STDMETHOD(Flush)(THIS_ IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG, REFERENCE_TIME rtTime) PURE;
+    STDMETHOD(ProcessPMsg)(THIS_ struct IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG) PURE;
+    STDMETHOD(Flush)(THIS_ struct IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG, REFERENCE_TIME rtTime) PURE;
     /*** IDirectMusicTool8 methods ***/
     STDMETHOD(Clone)(THIS_ IDirectMusicTool **ppTool) PURE;
 };
@@ -205,10 +205,10 @@ DECLARE_INTERFACE_(IDirectMusicTrack,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectMusicTrack methods ***/
-    STDMETHOD(Init)(THIS_ IDirectMusicSegment *pSegment) PURE;
-    STDMETHOD(InitPlay)(THIS_ IDirectMusicSegmentState *pSegmentState, IDirectMusicPerformance *pPerformance, void **ppStateData, DWORD dwVirtualTrackID, DWORD dwFlags) PURE;
+    STDMETHOD(Init)(THIS_ struct IDirectMusicSegment *pSegment) PURE;
+    STDMETHOD(InitPlay)(THIS_ struct IDirectMusicSegmentState *pSegmentState, struct IDirectMusicPerformance *pPerformance, void **ppStateData, DWORD dwVirtualTrackID, DWORD dwFlags) PURE;
     STDMETHOD(EndPlay)(THIS_ void *pStateData) PURE;
-    STDMETHOD(Play)(THIS_ void *pStateData, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags, IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID) PURE;
+    STDMETHOD(Play)(THIS_ void *pStateData, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags, struct IDirectMusicPerformance *pPerf, struct IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID) PURE;
     STDMETHOD(GetParam)(THIS_ REFGUID rguidType, MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam) PURE;
     STDMETHOD(SetParam)(THIS_ REFGUID rguidType, MUSIC_TIME mtTime, void *pParam) PURE;
     STDMETHOD(IsParamSupported)(THIS_ REFGUID rguidType) PURE;
@@ -248,10 +248,10 @@ DECLARE_INTERFACE_(IDirectMusicTrack8,IDirectMusicTrack)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectMusicTrack methods ***/
-    STDMETHOD(Init)(THIS_ IDirectMusicSegment *pSegment) PURE;
-    STDMETHOD(InitPlay)(THIS_ IDirectMusicSegmentState *pSegmentState, IDirectMusicPerformance *pPerformance, void **ppStateData, DWORD dwVirtualTrackID, DWORD dwFlags) PURE;
+    STDMETHOD(Init)(THIS_ struct IDirectMusicSegment *pSegment) PURE;
+    STDMETHOD(InitPlay)(THIS_ struct IDirectMusicSegmentState *pSegmentState, struct IDirectMusicPerformance *pPerformance, void **ppStateData, DWORD dwVirtualTrackID, DWORD dwFlags) PURE;
     STDMETHOD(EndPlay)(THIS_ void *pStateData) PURE;
-    STDMETHOD(Play)(THIS_ void *pStateData, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags, IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID) PURE;
+    STDMETHOD(Play)(THIS_ void *pStateData, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags, struct IDirectMusicPerformance *pPerf, struct IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID) PURE;
     STDMETHOD(GetParam)(THIS_ REFGUID rguidType, MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam) PURE;
     STDMETHOD(SetParam)(THIS_ REFGUID rguidType, MUSIC_TIME mtTime, void *pParam) PURE;
     STDMETHOD(IsParamSupported)(THIS_ REFGUID rguidType) PURE;
@@ -259,7 +259,7 @@ DECLARE_INTERFACE_(IDirectMusicTrack8,IDirectMusicTrack)
     STDMETHOD(RemoveNotificationType)(THIS_ REFGUID rguidNotificationType) PURE;
     STDMETHOD(Clone)(THIS_ MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack) PURE;
     /*** IDirectMusicTrack8 methods ***/
-    STDMETHOD(PlayEx)(THIS_ void *pStateData, REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD dwFlags, IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID) PURE;
+    STDMETHOD(PlayEx)(THIS_ void *pStateData, REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD dwFlags, struct IDirectMusicPerformance *pPerf, struct IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID) PURE;
     STDMETHOD(GetParamEx)(THIS_ REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME *prtNext, void *pParam, void *pStateData, DWORD dwFlags) PURE;
     STDMETHOD(SetParamEx)(THIS_ REFGUID rguidType, REFERENCE_TIME rtTime, void *pParam, void *pStateData, DWORD dwFlags) PURE;
     STDMETHOD(Compose)(THIS_ IUnknown *pContext, DWORD dwTrackGroup, IDirectMusicTrack **ppResultTrack) PURE;

@@ -38,7 +38,7 @@ typedef LPCSTR LPCOLESTR16;
  * IMalloc16 interface
  */
 
-typedef struct IMalloc16 IMalloc16, *LPMALLOC16;
+typedef struct IMalloc16 *LPMALLOC16;
 
 #define INTERFACE IMalloc16
 DECLARE_INTERFACE_(IMalloc16,IUnknown)
@@ -63,7 +63,7 @@ extern LPMALLOC16 IMalloc16_Constructor(void);
 
 /**********************************************************************/
 
-typedef struct ILockBytes16 *LPLOCKBYTES16, ILockBytes16;
+typedef struct ILockBytes16 *LPLOCKBYTES16;
 
 #define INTERFACE ILockBytes16
 DECLARE_INTERFACE_(ILockBytes16,IUnknown)
@@ -100,7 +100,7 @@ typedef struct tagSTATSTG16
     DWORD reserved;
 } STATSTG16;
 
-typedef struct IStream16 IStream16, *LPSTREAM16;
+typedef struct IStream16 *LPSTREAM16;
 
 #define INTERFACE IStream16
 DECLARE_INTERFACE_(IStream16,ISequentialStream)
@@ -129,7 +129,7 @@ DECLARE_INTERFACE_(IStream16,ISequentialStream)
 
 typedef OLECHAR16 **SNB16;
 
-typedef struct IStorage16 IStorage16, *LPSTORAGE16;
+typedef struct IStorage16 *LPSTORAGE16;
 
 #define INTERFACE IStorage16
 DECLARE_INTERFACE_(IStorage16,IUnknown)

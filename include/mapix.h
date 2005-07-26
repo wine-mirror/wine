@@ -40,8 +40,7 @@ typedef struct IProfAdmin IProfAdmin;
 typedef IProfAdmin *LPPROFADMIN;
 typedef struct IMsgServiceAdmin IMsgServiceAdmin;
 typedef IMsgServiceAdmin *LPSERVICEADMIN;
-typedef struct IMAPISession IMAPISession;
-typedef IMAPISession *LPMAPISESSION;
+typedef struct IMAPISession *LPMAPISESSION;
 
 typedef unsigned long FLAGS;
 

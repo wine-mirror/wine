@@ -91,25 +91,25 @@ DEFINE_GUID(GUID_DMUS_PROP_XG_Capable,            0x6496aba1,0x61b0,0x11d2,0xaf,
 DEFINE_GUID(GUID_DMUS_PROP_XG_Hardware,           0x178f2f26,0xc364,0x11d1,0xa7,0x60,0x00,0x00,0xf8,0x75,0xac,0x12);	
 
 /* typedef definitions */
-typedef struct IDirectMusic                     IDirectMusic,                      *LPDIRECTMUSIC;
-typedef struct IDirectMusic                     IDirectMusic8,                     *LPDIRECTMUSIC8;
-typedef struct IDirectMusicBuffer               IDirectMusicBuffer,                *LPDIRECTMUSICBUFFER;
-typedef struct IDirectMusicBuffer               IDirectMusicBuffer8,               *LPDIRECTMUSICBUFFER8;
-typedef struct IDirectMusicInstrument           IDirectMusicInstrument,            *LPDIRECTMUSICINSTRUMENT;
-typedef struct IDirectMusicInstrument           IDirectMusicInstrument8,           *LPDIRECTMUSICINSTRUMENT8;
-typedef struct IDirectMusicDownloadedInstrument IDirectMusicDownloadedInstrument,  *LPDIRECTMUSICDOWNLOADEDINSTRUMENT;
+typedef struct IDirectMusic *LPDIRECTMUSIC;
+typedef struct IDirectMusic8 *LPDIRECTMUSIC8;
+typedef struct IDirectMusicBuffer *LPDIRECTMUSICBUFFER;
+typedef struct IDirectMusicBuffer IDirectMusicBuffer8, *LPDIRECTMUSICBUFFER8;
+typedef struct IDirectMusicInstrument *LPDIRECTMUSICINSTRUMENT;
+typedef struct IDirectMusicInstrument IDirectMusicInstrument8, *LPDIRECTMUSICINSTRUMENT8;
+typedef struct IDirectMusicDownloadedInstrument *LPDIRECTMUSICDOWNLOADEDINSTRUMENT;
 typedef struct IDirectMusicDownloadedInstrument IDirectMusicDownloadedInstrument8, *LPDIRECTMUSICDOWNLOADEDINSTRUMENT8;
-typedef struct IDirectMusicCollection           IDirectMusicCollection,            *LPDIRECTMUSICCOLLECTION;
-typedef struct IDirectMusicCollection           IDirectMusicCollection8,           *LPDIRECTMUSICCOLLECTION8;
-typedef struct IDirectMusicDownload             IDirectMusicDownload,              *LPDIRECTMUSICDOWNLOAD;
-typedef struct IDirectMusicDownload             IDirectMusicDownload8,             *LPDIRECTMUSICDOWNLOAD8;
-typedef struct IDirectMusicPortDownload         IDirectMusicPortDownload,          *LPDIRECTMUSICPORTDOWNLOAD;
-typedef struct IDirectMusicPortDownload         IDirectMusicPortDownload8,         *LPDIRECTMUSICPORTDOWNLOAD8;
-typedef struct IDirectMusicPort                 IDirectMusicPort,                  *LPDIRECTMUSICPORT;
-typedef struct IDirectMusicPort                 IDirectMusicPort8,                 *LPDIRECTMUSICPORT8;
-typedef struct IDirectMusicThru                 IDirectMusicThru,                  *LPDIRECTMUSICTHRU;
-typedef struct IDirectMusicThru                 IDirectMusicThru8,                 *LPDIRECTMUSICTHRU8;
-typedef struct IReferenceClock                  IReferenceClock,                   *LPREFERENCECLOCK;
+typedef struct IDirectMusicCollection *LPDIRECTMUSICCOLLECTION;
+typedef struct IDirectMusicCollection IDirectMusicCollection8, *LPDIRECTMUSICCOLLECTION8;
+typedef struct IDirectMusicDownload *LPDIRECTMUSICDOWNLOAD;
+typedef struct IDirectMusicDownload IDirectMusicDownload8, *LPDIRECTMUSICDOWNLOAD8;
+typedef struct IDirectMusicPortDownload *LPDIRECTMUSICPORTDOWNLOAD;
+typedef struct IDirectMusicPortDownload IDirectMusicPortDownload8, *LPDIRECTMUSICPORTDOWNLOAD8;
+typedef struct IDirectMusicPort *LPDIRECTMUSICPORT;
+typedef struct IDirectMusicPort IDirectMusicPort8, *LPDIRECTMUSICPORT8;
+typedef struct IDirectMusicThru *LPDIRECTMUSICTHRU;
+typedef struct IDirectMusicThru IDirectMusicThru8, *LPDIRECTMUSICTHRU8;
+typedef struct IReferenceClock *LPREFERENCECLOCK;
 
 
 /*****************************************************************************
@@ -382,7 +382,7 @@ DECLARE_INTERFACE_(IDirectMusic,IUnknown)
     STDMETHOD(CreateMusicBuffer)(THIS_ LPDMUS_BUFFERDESC pBufferDesc, LPDIRECTMUSICBUFFER **ppBuffer, LPUNKNOWN pUnkOuter) PURE;
     STDMETHOD(CreatePort)(THIS_ REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT *ppPort, LPUNKNOWN pUnkOuter) PURE;
     STDMETHOD(EnumMasterClock)(THIS_ DWORD dwIndex, LPDMUS_CLOCKINFO lpClockInfo) PURE;
-    STDMETHOD(GetMasterClock)(THIS_ LPGUID pguidClock, IReferenceClock **ppReferenceClock) PURE;
+    STDMETHOD(GetMasterClock)(THIS_ LPGUID pguidClock, struct IReferenceClock **ppReferenceClock) PURE;
     STDMETHOD(SetMasterClock)(THIS_ REFGUID rguidClock) PURE;
     STDMETHOD(Activate)(THIS_ BOOL fEnable) PURE;
     STDMETHOD(GetDefaultPort)(THIS_ LPGUID pguidPort) PURE;
@@ -423,13 +423,13 @@ DECLARE_INTERFACE_(IDirectMusic8,IDirectMusic)
     STDMETHOD(CreateMusicBuffer)(THIS_ LPDMUS_BUFFERDESC pBufferDesc, LPDIRECTMUSICBUFFER **ppBuffer, LPUNKNOWN pUnkOuter) PURE;
     STDMETHOD(CreatePort)(THIS_ REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT *ppPort, LPUNKNOWN pUnkOuter) PURE;
     STDMETHOD(EnumMasterClock)(THIS_ DWORD dwIndex, LPDMUS_CLOCKINFO lpClockInfo) PURE;
-    STDMETHOD(GetMasterClock)(THIS_ LPGUID pguidClock, IReferenceClock **ppReferenceClock) PURE;
+    STDMETHOD(GetMasterClock)(THIS_ LPGUID pguidClock, struct IReferenceClock **ppReferenceClock) PURE;
     STDMETHOD(SetMasterClock)(THIS_ REFGUID rguidClock) PURE;
     STDMETHOD(Activate)(THIS_ BOOL fEnable) PURE;
     STDMETHOD(GetDefaultPort)(THIS_ LPGUID pguidPort) PURE;
     STDMETHOD(SetDirectSound)(THIS_ LPDIRECTSOUND pDirectSound, HWND hWnd) PURE;
     /*** IDirectMusic8 methods ***/
-    STDMETHOD(SetExternalMasterClock)(THIS_ IReferenceClock *pClock) PURE;
+    STDMETHOD(SetExternalMasterClock)(THIS_ struct IReferenceClock *pClock) PURE;
 };
 #undef INTERFACE
 
@@ -656,7 +656,7 @@ DECLARE_INTERFACE_(IDirectMusicPort,IUnknown)
     STDMETHOD(Read)(THIS_ LPDIRECTMUSICBUFFER pBuffer) PURE;
     STDMETHOD(DownloadInstrument)(THIS_ IDirectMusicInstrument *pInstrument, IDirectMusicDownloadedInstrument **ppDownloadedInstrument, DMUS_NOTERANGE *pNoteRanges, DWORD dwNumNoteRanges) PURE;
     STDMETHOD(UnloadInstrument)(THIS_ IDirectMusicDownloadedInstrument *pDownloadedInstrument) PURE;
-    STDMETHOD(GetLatencyClock)(THIS_ IReferenceClock **ppClock) PURE;
+    STDMETHOD(GetLatencyClock)(THIS_ struct IReferenceClock **ppClock) PURE;
     STDMETHOD(GetRunningStats)(THIS_ LPDMUS_SYNTHSTATS pStats) PURE;
     STDMETHOD(Compact)(THIS) PURE;
     STDMETHOD(GetCaps)(THIS_ LPDMUS_PORTCAPS pPortCaps) PURE;

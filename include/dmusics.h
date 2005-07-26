@@ -38,9 +38,9 @@ DEFINE_GUID(IID_IDirectMusicSynth8,    0x53cab625,0x2711,0x4c9f,0x9d,0xe7,0x1b,0
 DEFINE_GUID(IID_IDirectMusicSynthSink, 0x09823663,0x5c85,0x11d2,0xaf,0xa6,0x00,0xaa,0x00,0x24,0xd8,0xb6);
 
 /* typedef definitions */
-typedef struct IDirectMusicSynth     IDirectMusicSynth,     *LPDIRECTMUSICSYNTH;
-typedef struct IDirectMusicSynth8    IDirectMusicSynth8,    *LPDIRECTMUSICSYNTH8;
-typedef struct IDirectMusicSynthSink IDirectMusicSynthSink, *LPDIRECTMUSICSYNTHSINK;	
+typedef struct IDirectMusicSynth *LPDIRECTMUSICSYNTH;
+typedef struct IDirectMusicSynth8 *LPDIRECTMUSICSYNTH8;
+typedef struct IDirectMusicSynthSink *LPDIRECTMUSICSYNTHSINK;
 
 /* GUIDs - property set */
 DEFINE_GUID(GUID_DMUS_PROP_SetSynthSink,   0x0a3a5ba5,0x37b6,0x11d2,0xb9,0xf9,0x00,0x00,0xf8,0x75,0xac,0x12);
@@ -92,7 +92,7 @@ DECLARE_INTERFACE_(IDirectMusicSynth,IUnknown)
     STDMETHOD(SetMasterClock)(THIS_ IReferenceClock *pClock) PURE;
     STDMETHOD(GetLatencyClock)(THIS_ IReferenceClock **ppClock) PURE;
     STDMETHOD(Activate)(THIS_ BOOL fEnable) PURE;
-    STDMETHOD(SetSynthSink)(THIS_ IDirectMusicSynthSink *pSynthSink) PURE;
+    STDMETHOD(SetSynthSink)(THIS_ struct IDirectMusicSynthSink *pSynthSink) PURE;
     STDMETHOD(Render)(THIS_ short *pBuffer, DWORD dwLength, LONGLONG llPosition) PURE;
     STDMETHOD(SetChannelPriority)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, DWORD dwPriority) PURE;
     STDMETHOD(GetChannelPriority)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwPriority) PURE;
@@ -149,7 +149,7 @@ DECLARE_INTERFACE_(IDirectMusicSynth8,IDirectMusicSynth)
     STDMETHOD(SetMasterClock)(THIS_ IReferenceClock *pClock) PURE;
     STDMETHOD(GetLatencyClock)(THIS_ IReferenceClock **ppClock) PURE;
     STDMETHOD(Activate)(THIS_ BOOL fEnable) PURE;
-    STDMETHOD(SetSynthSink)(THIS_ IDirectMusicSynthSink *pSynthSink) PURE;
+    STDMETHOD(SetSynthSink)(THIS_ struct IDirectMusicSynthSink *pSynthSink) PURE;
     STDMETHOD(Render)(THIS_ short *pBuffer, DWORD dwLength, LONGLONG llPosition) PURE;
     STDMETHOD(SetChannelPriority)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, DWORD dwPriority) PURE;
     STDMETHOD(GetChannelPriority)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwPriority) PURE;

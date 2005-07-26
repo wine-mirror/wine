@@ -250,14 +250,14 @@
 #undef CONST_VTBL
 #define CONST_VTBL const
 #define DECLARE_INTERFACE(iface) \
-         /*typedef*/ interface iface { const struct iface##Vtbl *lpVtbl; } /*iface*/; \
+         typedef interface iface { const struct iface##Vtbl *lpVtbl; } iface; \
          typedef struct iface##Vtbl iface##Vtbl; \
          struct iface##Vtbl
 #else
 #undef CONST_VTBL
 #define CONST_VTBL
 #define DECLARE_INTERFACE(iface) \
-         /*typedef*/ interface iface { struct iface##Vtbl *lpVtbl; } /*iface*/; \
+         typedef interface iface { struct iface##Vtbl *lpVtbl; } iface; \
          typedef struct iface##Vtbl iface##Vtbl; \
          struct iface##Vtbl
 #endif

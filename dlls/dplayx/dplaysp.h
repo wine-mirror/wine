@@ -29,7 +29,7 @@
 
 /* GUID for IDirectPlaySP  {0C9F6360-CC61-11cf-ACEC-00AA006886E3} */
 DEFINE_GUID(IID_IDirectPlaySP, 0xc9f6360, 0xcc61, 0x11cf, 0xac, 0xec, 0x0, 0xaa, 0x0, 0x68, 0x86, 0xe3);
-typedef struct IDirectPlaySP IDirectPlaySP, *LPDIRECTPLAYSP;
+typedef struct IDirectPlaySP *LPDIRECTPLAYSP;
 
 
 typedef BOOL (CALLBACK *LPENUMMRUCALLBACK)( LPCVOID lpData,

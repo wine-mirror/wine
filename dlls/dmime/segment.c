@@ -252,7 +252,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack 
   }
   pNewSegTrack->dwGroupBits = dwGroupBits;
   pNewSegTrack->pTrack = pTrack;
-  IDirectMusicTrack_Init(pTrack, iface);
+  IDirectMusicTrack_Init(pTrack, (IDirectMusicSegment *)iface);
   IDirectMusicTrack_AddRef(pTrack);
   list_add_tail (&This->Tracks, &pNewSegTrack->entry);
 

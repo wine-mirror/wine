@@ -64,33 +64,33 @@ DEFINE_GUID(IID_IDirect3DVertexBuffer,  0x7a503555,0x4a83,0x11d1,0xa5,0xdb,0x00,
 DEFINE_GUID(IID_IDirect3DVertexBuffer7, 0xf5049e7d,0x4861,0x11d2,0xa4,0x07,0x00,0xa0,0xc9,0x06,0x29,0xa8);
 
 
-typedef struct IDirect3D              IDirect3D ,*LPDIRECT3D;
-typedef struct IDirect3D2             IDirect3D2,*LPDIRECT3D2;
-typedef struct IDirect3D3             IDirect3D3,*LPDIRECT3D3;
-typedef struct IDirect3D7             IDirect3D7,*LPDIRECT3D7;
+typedef struct IDirect3D *LPDIRECT3D;
+typedef struct IDirect3D2 *LPDIRECT3D2;
+typedef struct IDirect3D3 *LPDIRECT3D3;
+typedef struct IDirect3D7 *LPDIRECT3D7;
 
-typedef struct IDirect3DLight         IDirect3DLight,*LPDIRECT3DLIGHT;
+typedef struct IDirect3DLight *LPDIRECT3DLIGHT;
 
-typedef struct IDirect3DDevice        IDirect3DDevice, *LPDIRECT3DDEVICE;
-typedef struct IDirect3DDevice2       IDirect3DDevice2, *LPDIRECT3DDEVICE2;
-typedef struct IDirect3DDevice3       IDirect3DDevice3, *LPDIRECT3DDEVICE3;
-typedef struct IDirect3DDevice7       IDirect3DDevice7, *LPDIRECT3DDEVICE7;
+typedef struct IDirect3DDevice *LPDIRECT3DDEVICE;
+typedef struct IDirect3DDevice2 *LPDIRECT3DDEVICE2;
+typedef struct IDirect3DDevice3 *LPDIRECT3DDEVICE3;
+typedef struct IDirect3DDevice7 *LPDIRECT3DDEVICE7;
 
-typedef struct IDirect3DViewport      IDirect3DViewport, *LPDIRECT3DVIEWPORT;
-typedef struct IDirect3DViewport2     IDirect3DViewport2, *LPDIRECT3DVIEWPORT2;
-typedef struct IDirect3DViewport3     IDirect3DViewport3, *LPDIRECT3DVIEWPORT3;
+typedef struct IDirect3DViewport *LPDIRECT3DVIEWPORT;
+typedef struct IDirect3DViewport2 *LPDIRECT3DVIEWPORT2;
+typedef struct IDirect3DViewport3 *LPDIRECT3DVIEWPORT3;
 
-typedef struct IDirect3DMaterial      IDirect3DMaterial, *LPDIRECT3DMATERIAL;
-typedef struct IDirect3DMaterial2     IDirect3DMaterial2, *LPDIRECT3DMATERIAL2;
-typedef struct IDirect3DMaterial3     IDirect3DMaterial3, *LPDIRECT3DMATERIAL3;
+typedef struct IDirect3DMaterial *LPDIRECT3DMATERIAL;
+typedef struct IDirect3DMaterial2 *LPDIRECT3DMATERIAL2;
+typedef struct IDirect3DMaterial3 *LPDIRECT3DMATERIAL3;
 
-typedef struct IDirect3DTexture       IDirect3DTexture, *LPDIRECT3DTEXTURE;
-typedef struct IDirect3DTexture2      IDirect3DTexture2,  *LPDIRECT3DTEXTURE2;
+typedef struct IDirect3DTexture *LPDIRECT3DTEXTURE;
+typedef struct IDirect3DTexture2 *LPDIRECT3DTEXTURE2;
 
-typedef struct IDirect3DExecuteBuffer IDirect3DExecuteBuffer, *LPDIRECT3DEXECUTEBUFFER;
+typedef struct IDirect3DExecuteBuffer *LPDIRECT3DEXECUTEBUFFER;
 
-typedef struct IDirect3DVertexBuffer  IDirect3DVertexBuffer, *LPDIRECT3DVERTEXBUFFER;
-typedef struct IDirect3DVertexBuffer7 IDirect3DVertexBuffer7, *LPDIRECT3DVERTEXBUFFER7;
+typedef struct IDirect3DVertexBuffer *LPDIRECT3DVERTEXBUFFER;
+typedef struct IDirect3DVertexBuffer7 *LPDIRECT3DVERTEXBUFFER7;
 
 /* ********************************************************************
    Error Codes

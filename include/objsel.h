@@ -149,7 +149,6 @@ typedef struct _DS_SELECTION_LIST
 /*****************************************************************************
  * IDsObjectPicker interface
  */
-typedef struct IDsObjectPicker IDsObjectPicker;
 #define INTERFACE   IDsObjectPicker
 DECLARE_INTERFACE_(IDsObjectPicker,IUnknown)
 {

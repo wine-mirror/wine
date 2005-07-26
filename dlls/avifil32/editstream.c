@@ -40,7 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(avifile);
 /***********************************************************************/
 
 /* internal interface to get access to table of stream in an editable stream */
-typedef struct IEditStreamInternal IEditStreamInternal;
 
 typedef struct _EditStreamTable {
   PAVISTREAM pStream;  /* stream which contains the data */

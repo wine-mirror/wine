@@ -41,7 +41,25 @@
  /*****************************************************************************
  * Predeclare the interfaces
  */
- 
+
+struct IWineD3D;
+struct IWineD3DDevice;
+struct IWineD3DResource;
+struct IWineD3DVertexBuffer;
+struct IWineD3DIndexBuffer;
+struct IWineD3DBaseTexture;
+struct IWineD3DTexture;
+struct IWineD3DCubeTexture;
+struct IWineD3DVolumeTexture;
+struct IWineD3DStateBlock;
+struct IWineD3DSurface;
+struct IWineD3DVolume;
+struct IWineD3DVertexDeclaration;
+struct IWineD3DVertexShader;
+struct IWineD3DPixelShader;
+struct IWineD3DQuery;
+struct IWineD3DSwapChain;
+
 
 /* {108F9C44-6F30-11d9-C687-00046142C14F} */
 DEFINE_GUID(IID_IWineD3D, 
@@ -135,24 +153,6 @@ DEFINE_GUID(IID_IWineD3DQuery,
 
 #endif
 
-typedef struct IWineD3D               IWineD3D;
-typedef struct IWineD3DDevice         IWineD3DDevice;
-typedef struct IWineD3DResource       IWineD3DResource;
-typedef struct IWineD3DVertexBuffer   IWineD3DVertexBuffer;
-typedef struct IWineD3DIndexBuffer    IWineD3DIndexBuffer;
-typedef struct IWineD3DBaseTexture    IWineD3DBaseTexture;
-typedef struct IWineD3DTexture        IWineD3DTexture;
-typedef struct IWineD3DCubeTexture    IWineD3DCubeTexture;
-typedef struct IWineD3DVolumeTexture  IWineD3DVolumeTexture;
-typedef struct IWineD3DStateBlock     IWineD3DStateBlock;
-typedef struct IWineD3DSurface        IWineD3DSurface;
-typedef struct IWineD3DVolume         IWineD3DVolume;
-typedef struct IWineD3DVertexDeclaration   IWineD3DVertexDeclaration;
-typedef struct IWineD3DVertexShader   IWineD3DVertexShader;
-typedef struct IWineD3DPixelShader    IWineD3DPixelShader;
-typedef struct IWineD3DQuery          IWineD3DQuery;
-typedef struct IWineD3DSwapChain      IWineD3DSwapChain;
-
 /*****************************************************************************
  * Callback functions required for predefining surfaces / stencils
  */
@@ -163,7 +163,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATERENDERTARGETFN) (IUnknown *pDevice,
                                                D3DMULTISAMPLE_TYPE MultiSample, 
                                                DWORD      MultisampleQuality, 
                                                BOOL       Lockable, 
-                                               IWineD3DSurface **ppSurface, 
+                                               struct IWineD3DSurface **ppSurface,
                                                HANDLE    *pSharedHandle);
 
 typedef HRESULT WINAPI (*D3DCB_CREATESURFACEFN) (IUnknown *pDevice,
@@ -173,7 +173,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATESURFACEFN) (IUnknown *pDevice,
                                                DWORD      Usage,
                                                D3DPOOL    Pool,            
                                                UINT       Level,
-                                               IWineD3DSurface **ppSurface, 
+                                               struct IWineD3DSurface **ppSurface,
                                                HANDLE    *pSharedHandle);
 
 typedef HRESULT WINAPI (*D3DCB_CREATEDEPTHSTENCILSURFACEFN) (IUnknown *pDevice,
@@ -183,7 +183,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATEDEPTHSTENCILSURFACEFN) (IUnknown *pDevice,
                                                D3DMULTISAMPLE_TYPE MultiSample, 
                                                DWORD      MultisampleQuality, 
                                                BOOL       Discard, 
-                                               IWineD3DSurface **ppSurface, 
+                                               struct IWineD3DSurface **ppSurface,
                                                HANDLE    *pSharedHandle);
 
 
@@ -194,12 +194,12 @@ typedef HRESULT WINAPI (*D3DCB_CREATEVOLUMEFN) (IUnknown *pDevice,
                                                WINED3DFORMAT  Format, 
                                                D3DPOOL    Pool,
                                                DWORD      Usage,
-                                               IWineD3DVolume **ppVolume, 
+                                               struct IWineD3DVolume **ppVolume,
                                                HANDLE    *pSharedHandle);
 
 typedef HRESULT WINAPI (*D3DCB_CREATEADDITIONALSWAPCHAIN) (IUnknown *pDevice,
                                                WINED3DPRESENT_PARAMETERS *pPresentationParameters,
-                                               IWineD3DSwapChain **pSwapChain
+                                               struct IWineD3DSwapChain **pSwapChain
                                                );
 
 /*****************************************************************************
@@ -228,7 +228,7 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown)
     STDMETHOD(CheckDeviceFormat)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DFORMAT  AdapterFormat, DWORD  Usage, D3DRESOURCETYPE  RType, WINED3DFORMAT  CheckFormat) PURE;
     STDMETHOD(CheckDeviceFormatConversion)(THIS_ UINT Adapter, D3DDEVTYPE DeviceType, WINED3DFORMAT SourceFormat, WINED3DFORMAT TargetFormat) PURE;
     STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DCAPS *pCaps) PURE;
-    STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, WINED3DPRESENT_PARAMETERS *pPresentationParameters, IWineD3DDevice **ppReturnedDeviceInterface, IUnknown *parent, D3DCB_CREATEADDITIONALSWAPCHAIN pFn3) PURE;
+    STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, WINED3DPRESENT_PARAMETERS *pPresentationParameters, struct IWineD3DDevice **ppReturnedDeviceInterface, IUnknown *parent, D3DCB_CREATEADDITIONALSWAPCHAIN pFn3) PURE;
 
 };
 #undef INTERFACE
@@ -271,32 +271,32 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DDevice methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
-    STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent) PURE;
-    STDMETHOD(CreateIndexBuffer)(THIS_ UINT Length, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer, HANDLE* pSharedHandle, IUnknown *parent) PURE;
-    STDMETHOD(CreateStateBlock)(THIS_ D3DSTATEBLOCKTYPE Type, IWineD3DStateBlock **ppStateBlock, IUnknown *parent) PURE;
-    STDMETHOD(CreateSurface)(THIS_ UINT Width, UINT Height, WINED3DFORMAT Format,  BOOL Lockable, BOOL Discard, UINT Level,  IWineD3DSurface** ppSurface, D3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality,  HANDLE* pSharedHandle, IUnknown *parent) PURE;    
-    STDMETHOD(CreateTexture)(THIS_ UINT Width, UINT Height, UINT Levels, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, IWineD3DTexture** ppTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn) PURE;
-    STDMETHOD(CreateVolumeTexture)(THIS_ UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, IWineD3DVolumeTexture** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATEVOLUMEFN pFn) PURE;
-    STDMETHOD(CreateVolume)(THIS_ UINT Width, UINT Height, UINT Depth, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, IWineD3DVolume** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent) PURE;
-    STDMETHOD(CreateCubeTexture)(THIS_ UINT EdgeLength, UINT Levels, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, IWineD3DCubeTexture** ppCubeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn) PURE;
-    STDMETHOD(CreateQuery)(THIS_ WINED3DQUERYTYPE Type, IWineD3DQuery **ppQuery, IUnknown *pParent);
-    STDMETHOD(CreateAdditionalSwapChain)(THIS_ WINED3DPRESENT_PARAMETERS *pPresentationParameters, IWineD3DSwapChain **pSwapChain, IUnknown *pParent, D3DCB_CREATERENDERTARGETFN pFn, D3DCB_CREATEDEPTHSTENCILSURFACEFN pFn2);
-    STDMETHOD(CreateVertexDeclaration)(THIS_ CONST VOID* pDeclaration, IWineD3DVertexDeclaration** ppDecl, IUnknown* pParent) PURE;
-    STDMETHOD(CreateVertexShader)(THIS_ CONST DWORD* pFunction, IWineD3DVertexShader** ppShader, IUnknown *pParent) PURE;
-    STDMETHOD(CreatePixelShader)(THIS_ CONST DWORD* pFunction, IWineD3DPixelShader** ppShader, IUnknown *pParent) PURE;
+    STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,struct IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent) PURE;
+    STDMETHOD(CreateIndexBuffer)(THIS_ UINT Length, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DIndexBuffer** ppIndexBuffer, HANDLE* pSharedHandle, IUnknown *parent) PURE;
+    STDMETHOD(CreateStateBlock)(THIS_ D3DSTATEBLOCKTYPE Type, struct IWineD3DStateBlock **ppStateBlock, IUnknown *parent) PURE;
+    STDMETHOD(CreateSurface)(THIS_ UINT Width, UINT Height, WINED3DFORMAT Format,  BOOL Lockable, BOOL Discard, UINT Level,  struct IWineD3DSurface** ppSurface, D3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality,  HANDLE* pSharedHandle, IUnknown *parent) PURE;    
+    STDMETHOD(CreateTexture)(THIS_ UINT Width, UINT Height, UINT Levels, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DTexture** ppTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn) PURE;
+    STDMETHOD(CreateVolumeTexture)(THIS_ UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DVolumeTexture** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATEVOLUMEFN pFn) PURE;
+    STDMETHOD(CreateVolume)(THIS_ UINT Width, UINT Height, UINT Depth, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DVolume** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent) PURE;
+    STDMETHOD(CreateCubeTexture)(THIS_ UINT EdgeLength, UINT Levels, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DCubeTexture** ppCubeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn) PURE;
+    STDMETHOD(CreateQuery)(THIS_ WINED3DQUERYTYPE Type, struct IWineD3DQuery **ppQuery, IUnknown *pParent);
+    STDMETHOD(CreateAdditionalSwapChain)(THIS_ WINED3DPRESENT_PARAMETERS *pPresentationParameters, struct IWineD3DSwapChain **pSwapChain, IUnknown *pParent, D3DCB_CREATERENDERTARGETFN pFn, D3DCB_CREATEDEPTHSTENCILSURFACEFN pFn2);
+    STDMETHOD(CreateVertexDeclaration)(THIS_ CONST VOID* pDeclaration, struct IWineD3DVertexDeclaration** ppDecl, IUnknown* pParent) PURE;
+    STDMETHOD(CreateVertexShader)(THIS_ CONST DWORD* pFunction, struct IWineD3DVertexShader** ppShader, IUnknown *pParent) PURE;
+    STDMETHOD(CreatePixelShader)(THIS_ CONST DWORD* pFunction, struct IWineD3DPixelShader** ppShader, IUnknown *pParent) PURE;
     STDMETHOD(EvictManagedResources)(THIS) PURE;
     STDMETHOD_(UINT, GetAvailableTextureMem)(THIS) PURE;
-    STDMETHOD(GetBackBuffer)(THIS_ UINT iSwapChain, UINT BackBuffer, D3DBACKBUFFER_TYPE, IWineD3DSurface** ppBackBuffer) PURE;
+    STDMETHOD(GetBackBuffer)(THIS_ UINT iSwapChain, UINT BackBuffer, D3DBACKBUFFER_TYPE, struct IWineD3DSurface** ppBackBuffer) PURE;
     STDMETHOD(GetCreationParameters)(THIS_ D3DDEVICE_CREATION_PARAMETERS *pParameters) PURE;
     STDMETHOD(GetDeviceCaps)(THIS_ WINED3DCAPS* pCaps) PURE;
     STDMETHOD(GetDirect3D)(THIS_ IWineD3D** ppD3D) PURE;
     STDMETHOD(GetDisplayMode)(THIS_ UINT iSwapChain, D3DDISPLAYMODE* pMode) PURE;
     STDMETHOD_(UINT, GetNumberOfSwapChains)(THIS) PURE;
     STDMETHOD(GetRasterStatus)(THIS_ UINT iSwapChain, D3DRASTER_STATUS* pRasterStatus) PURE;
-    STDMETHOD(GetSwapChain)(THIS_ UINT iSwapChain, IWineD3DSwapChain **pSwapChain) PURE;
+    STDMETHOD(GetSwapChain)(THIS_ UINT iSwapChain, struct IWineD3DSwapChain **pSwapChain) PURE;
     STDMETHOD(Reset)(THIS_ WINED3DPRESENT_PARAMETERS* pPresentationParameters) PURE;
     STDMETHOD(SetDialogBoxMode)(THIS_ BOOL bEnableDialogs) PURE;
-    STDMETHOD(SetCursorProperties)(THIS_ UINT XHotSpot, UINT YHotSpot, IWineD3DSurface* pCursorBitmap) PURE;
+    STDMETHOD(SetCursorProperties)(THIS_ UINT XHotSpot, UINT YHotSpot, struct IWineD3DSurface* pCursorBitmap) PURE;
     STDMETHOD_(void, SetCursorPosition)(THIS_ int XScreenSpace, int YScreenSpace, DWORD Flags) PURE;
     STDMETHOD_(BOOL, ShowCursor)(THIS_ BOOL bShow) PURE;
     STDMETHOD(TestCooperativeLevel)(THIS) PURE;
@@ -306,14 +306,14 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(GetClipStatus)(THIS_ WINED3DCLIPSTATUS * pClipStatus) PURE;
     STDMETHOD(SetCurrentTexturePalette)(THIS_ UINT PaletteNumber) PURE;
     STDMETHOD(GetCurrentTexturePalette)(THIS_ UINT *PaletteNumber) PURE;
-    STDMETHOD(SetDepthStencilSurface)(THIS_ IWineD3DSurface* pNewZStencil) PURE;
-    STDMETHOD(GetDepthStencilSurface)(THIS_ IWineD3DSurface** ppZStencilSurface) PURE;
+    STDMETHOD(SetDepthStencilSurface)(THIS_ struct IWineD3DSurface* pNewZStencil) PURE;
+    STDMETHOD(GetDepthStencilSurface)(THIS_ struct IWineD3DSurface** ppZStencilSurface) PURE;
     STDMETHOD(SetFVF)(THIS_ DWORD  fvf) PURE;
     STDMETHOD(GetFVF)(THIS_ DWORD * pfvf) PURE;
     STDMETHOD_(void, SetGammaRamp)(THIS_ UINT iSwapChain, DWORD Flags, CONST D3DGAMMARAMP* pRamp) PURE;
     STDMETHOD_(void, GetGammaRamp)(THIS_ UINT iSwapChain, D3DGAMMARAMP* pRamp) PURE;
-    STDMETHOD(SetIndices)(THIS_ IWineD3DIndexBuffer * pIndexData,UINT  BaseVertexIndex) PURE;
-    STDMETHOD(GetIndices)(THIS_ IWineD3DIndexBuffer ** ppIndexData,UINT * pBaseVertexIndex) PURE;
+    STDMETHOD(SetIndices)(THIS_ struct IWineD3DIndexBuffer * pIndexData,UINT  BaseVertexIndex) PURE;
+    STDMETHOD(GetIndices)(THIS_ struct IWineD3DIndexBuffer ** ppIndexData,UINT * pBaseVertexIndex) PURE;
     STDMETHOD(SetLight)(THIS_ DWORD  Index,CONST WINED3DLIGHT * pLight) PURE;
     STDMETHOD(GetLight)(THIS_ DWORD  Index,WINED3DLIGHT * pLight) PURE;
     STDMETHOD(SetLightEnable)(THIS_ DWORD  Index,BOOL  Enable) PURE;
@@ -324,8 +324,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD_(float, GetNPatchMode)(THIS) PURE;
     STDMETHOD(SetPaletteEntries)(THIS_ UINT PaletteNumber, CONST PALETTEENTRY* pEntries) PURE;
     STDMETHOD(GetPaletteEntries)(THIS_ UINT PaletteNumber,PALETTEENTRY* pEntries) PURE;
-    STDMETHOD(SetPixelShader)(THIS_ IWineD3DPixelShader  *pShader) PURE;
-    STDMETHOD(GetPixelShader)(THIS_ IWineD3DPixelShader **ppShader) PURE;
+    STDMETHOD(SetPixelShader)(THIS_ struct IWineD3DPixelShader  *pShader) PURE;
+    STDMETHOD(GetPixelShader)(THIS_ struct IWineD3DPixelShader **ppShader) PURE;
     STDMETHOD(SetPixelShaderConstantB)(THIS_ UINT StartRegister, CONST BOOL* pConstantData, UINT  BoolCount) PURE;
     STDMETHOD(GetPixelShaderConstantB)(THIS_ UINT StartRegister, BOOL* pConstantData, UINT BoolCount) PURE;
     STDMETHOD(SetPixelShaderConstantI)(THIS_ UINT StartRegister, CONST int* pConstantData, UINT Vector4iCount) PURE;
@@ -334,28 +334,28 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(GetPixelShaderConstantF)(THIS_ UINT StartRegister, float* pConstantData, UINT Vector4fCount) PURE;
     STDMETHOD(SetRenderState)(THIS_ D3DRENDERSTATETYPE  State,DWORD  Value) PURE;
     STDMETHOD(GetRenderState)(THIS_ D3DRENDERSTATETYPE  State,DWORD * pValue) PURE;
-    STDMETHOD(SetRenderTarget)(THIS_ DWORD RenderTargetIndex, IWineD3DSurface* pRenderTarget) PURE;
-    STDMETHOD(GetRenderTarget)(THIS_ DWORD RenderTargetIndex, IWineD3DSurface** ppRenderTarget) PURE;
+    STDMETHOD(SetRenderTarget)(THIS_ DWORD RenderTargetIndex, struct IWineD3DSurface* pRenderTarget) PURE;
+    STDMETHOD(GetRenderTarget)(THIS_ DWORD RenderTargetIndex, struct IWineD3DSurface** ppRenderTarget) PURE;
     STDMETHOD(SetSamplerState)(THIS_ DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD Value) PURE;
     STDMETHOD(GetSamplerState)(THIS_ DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD* Value) PURE;
     STDMETHOD(SetScissorRect)(THIS_ CONST RECT* pRect) PURE;
     STDMETHOD(GetScissorRect)(THIS_ RECT* pRect) PURE;
     STDMETHOD(SetSoftwareVertexProcessing)(THIS_ BOOL bSoftware) PURE;
     STDMETHOD_(BOOL, GetSoftwareVertexProcessing)(THIS) PURE;
-    STDMETHOD(SetStreamSource)(THIS_ UINT  StreamNumber,IWineD3DVertexBuffer * pStreamData,UINT Offset,UINT  Stride) PURE;
-    STDMETHOD(GetStreamSource)(THIS_ UINT  StreamNumber,IWineD3DVertexBuffer ** ppStreamData,UINT *pOffset, UINT * pStride) PURE;
+    STDMETHOD(SetStreamSource)(THIS_ UINT  StreamNumber,struct IWineD3DVertexBuffer * pStreamData,UINT Offset,UINT  Stride) PURE;
+    STDMETHOD(GetStreamSource)(THIS_ UINT  StreamNumber,struct IWineD3DVertexBuffer ** ppStreamData,UINT *pOffset, UINT * pStride) PURE;
     STDMETHOD(SetStreamSourceFreq)(THIS_ UINT StreamNumber, UINT Divider) PURE;
     STDMETHOD(GetStreamSourceFreq)(THIS_ UINT StreamNumber, UINT* Divider) PURE;
-    STDMETHOD(SetTexture)(THIS_ DWORD Stage, IWineD3DBaseTexture* pTexture) PURE;
-    STDMETHOD(GetTexture)(THIS_ DWORD Stage, IWineD3DBaseTexture** ppTexture) PURE;
+    STDMETHOD(SetTexture)(THIS_ DWORD Stage, struct IWineD3DBaseTexture* pTexture) PURE;
+    STDMETHOD(GetTexture)(THIS_ DWORD Stage, struct IWineD3DBaseTexture** ppTexture) PURE;
     STDMETHOD(SetTextureStageState)(THIS_ DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type,DWORD Value) PURE;
     STDMETHOD(GetTextureStageState)(THIS_ DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type,DWORD *pValue) PURE;
     STDMETHOD(SetTransform)(THIS_ D3DTRANSFORMSTATETYPE  State,CONST D3DMATRIX * pMatrix) PURE;
     STDMETHOD(GetTransform)(THIS_ D3DTRANSFORMSTATETYPE  State,D3DMATRIX * pMatrix) PURE;
-    STDMETHOD(SetVertexDeclaration)(THIS_ IWineD3DVertexDeclaration* pDecl) PURE;
-    STDMETHOD(GetVertexDeclaration)(THIS_ IWineD3DVertexDeclaration** ppDecl) PURE;
-    STDMETHOD(SetVertexShader)(THIS_ IWineD3DVertexShader* pShader) PURE;
-    STDMETHOD(GetVertexShader)(THIS_ IWineD3DVertexShader** ppShader) PURE;
+    STDMETHOD(SetVertexDeclaration)(THIS_ struct IWineD3DVertexDeclaration* pDecl) PURE;
+    STDMETHOD(GetVertexDeclaration)(THIS_ struct IWineD3DVertexDeclaration** ppDecl) PURE;
+    STDMETHOD(SetVertexShader)(THIS_ struct IWineD3DVertexShader* pShader) PURE;
+    STDMETHOD(GetVertexShader)(THIS_ struct IWineD3DVertexShader** ppShader) PURE;
     STDMETHOD(SetVertexShaderConstantB)(THIS_ UINT StartRegister, CONST BOOL*  pConstantData, UINT BoolCount) PURE;
     STDMETHOD(GetVertexShaderConstantB)(THIS_ UINT StartRegister, BOOL*        pConstantData, UINT BoolCount) PURE;
     STDMETHOD(SetVertexShaderConstantI)(THIS_ UINT StartRegister, CONST int*   pConstantData, UINT Vector4iCount) PURE;
@@ -366,9 +366,9 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(GetViewport)(THIS_ WINED3DVIEWPORT * pViewport) PURE;
     STDMETHOD(MultiplyTransform)(THIS_ D3DTRANSFORMSTATETYPE  State, CONST D3DMATRIX * pMatrix) PURE;
     STDMETHOD(ValidateDevice)(THIS_ DWORD* pNumPasses) PURE;
-    STDMETHOD(ProcessVertices)(THIS_ UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IWineD3DVertexBuffer* pDestBuffer, IWineD3DVertexBuffer* pVertexDecl, DWORD Flags) PURE;
+    STDMETHOD(ProcessVertices)(THIS_ UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, struct IWineD3DVertexBuffer* pDestBuffer, struct IWineD3DVertexBuffer* pVertexDecl, DWORD Flags) PURE;
     STDMETHOD(BeginStateBlock)(THIS) PURE;
-    STDMETHOD(EndStateBlock)(THIS_ IWineD3DStateBlock** ppStateBlock) PURE;    
+    STDMETHOD(EndStateBlock)(THIS_ struct IWineD3DStateBlock** ppStateBlock) PURE;
     STDMETHOD(BeginScene)(THIS) PURE;
     STDMETHOD(EndScene)(THIS) PURE;
     STDMETHOD(Present)(THIS_ CONST RECT * pSourceRect,CONST RECT * pDestRect,HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion) PURE;
@@ -380,16 +380,16 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(DrawRectPatch)(THIS_ UINT Handle, CONST float* pNumSegs, CONST D3DRECTPATCH_INFO* pRectPatchInfo) PURE;
     STDMETHOD(DrawTriPatch)(THIS_ UINT Handle, CONST float* pNumSegs, CONST D3DTRIPATCH_INFO* pTriPatchInfo) PURE;
     STDMETHOD(DeletePatch)(THIS_ UINT Handle) PURE;
-    STDMETHOD(ColorFill)(THIS_ IWineD3DSurface* pSurface, CONST D3DRECT* pRect, D3DCOLOR color) PURE;
-    STDMETHOD(UpdateTexture)(THIS_ IWineD3DBaseTexture *pSourceTexture,  IWineD3DBaseTexture *pDestinationTexture) PURE;
-    STDMETHOD(UpdateSurface)(THIS_ IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPoint) PURE;
-    STDMETHOD(StretchRect)(THIS_ IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, IWineD3DSurface* pDestinationSurface, CONST RECT* pDestRect, D3DTEXTUREFILTERTYPE Filter) PURE;
-    STDMETHOD(GetRenderTargetData)(THIS_ IWineD3DSurface* pRenderTarget, IWineD3DSurface* pSurface) PURE;
-    STDMETHOD(GetFrontBufferData)(THIS_ UINT iSwapChain,IWineD3DSurface* pSurface) PURE;    
+    STDMETHOD(ColorFill)(THIS_ struct IWineD3DSurface* pSurface, CONST D3DRECT* pRect, D3DCOLOR color) PURE;
+    STDMETHOD(UpdateTexture)(THIS_ struct IWineD3DBaseTexture *pSourceTexture, struct IWineD3DBaseTexture *pDestinationTexture) PURE;
+    STDMETHOD(UpdateSurface)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, struct IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPoint) PURE;
+    STDMETHOD(StretchRect)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, struct IWineD3DSurface* pDestinationSurface, CONST RECT* pDestRect, D3DTEXTUREFILTERTYPE Filter) PURE;
+    STDMETHOD(GetRenderTargetData)(THIS_ struct IWineD3DSurface* pRenderTarget, struct IWineD3DSurface* pSurface) PURE;
+    STDMETHOD(GetFrontBufferData)(THIS_ UINT iSwapChain,struct IWineD3DSurface* pSurface) PURE;
     /*** Internal use IWineD3Device methods ***/
     STDMETHOD_(void, SetupTextureStates)(THIS_ DWORD Stage, DWORD Flags);
     /*** object tracking ***/
-    STDMETHOD_(void, ResourceReleased)(THIS_ IWineD3DResource *resource);
+    STDMETHOD_(void, ResourceReleased)(THIS_ struct IWineD3DResource *resource);
 };
 #undef INTERFACE
 
@@ -757,7 +757,7 @@ DECLARE_INTERFACE_(IWineD3DTexture,IWineD3DBaseTexture)
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
     /*** IWineD3DTexture methods ***/
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level, WINED3DSURFACE_DESC* pDesc) PURE;
-    STDMETHOD(GetSurfaceLevel)(THIS_ UINT Level, IWineD3DSurface** ppSurfaceLevel) PURE;
+    STDMETHOD(GetSurfaceLevel)(THIS_ UINT Level, struct IWineD3DSurface** ppSurfaceLevel) PURE;
     STDMETHOD(LockRect)(THIS_ UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE;
     STDMETHOD(UnlockRect)(THIS_ UINT Level) PURE;
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pDirtyRect) PURE;
@@ -833,7 +833,7 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
     /*** IWineD3DCubeTexture methods ***/
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level,WINED3DSURFACE_DESC* pDesc) PURE;
-    STDMETHOD(GetCubeMapSurface)(THIS_ D3DCUBEMAP_FACES FaceType, UINT Level, IWineD3DSurface** ppCubeMapSurface) PURE;
+    STDMETHOD(GetCubeMapSurface)(THIS_ D3DCUBEMAP_FACES FaceType, UINT Level, struct IWineD3DSurface** ppCubeMapSurface) PURE;
     STDMETHOD(LockRect)(THIS_ D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE;
     STDMETHOD(UnlockRect)(THIS_ D3DCUBEMAP_FACES FaceType, UINT Level) PURE;
     STDMETHOD(AddDirtyRect)(THIS_ D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) PURE;
@@ -910,7 +910,7 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;    
     /*** IWineD3DVolumeTexture methods ***/
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level, WINED3DVOLUME_DESC *pDesc) PURE;
-    STDMETHOD(GetVolumeLevel)(THIS_ UINT Level, IWineD3DVolume** ppVolumeLevel) PURE;
+    STDMETHOD(GetVolumeLevel)(THIS_ UINT Level, struct IWineD3DVolume** ppVolumeLevel) PURE;
     STDMETHOD(LockBox)(THIS_ UINT Level, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) PURE;
     STDMETHOD(UnlockBox)(THIS_ UINT Level) PURE;
     STDMETHOD(AddDirtyBox)(THIS_ CONST D3DBOX* pDirtyBox) PURE;

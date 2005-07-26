@@ -51,13 +51,13 @@ typedef struct _DXFILELOADMEMORY {
     DWORD dSize;
 } DXFILELOADMEMORY, *LPDXFILELOADMEMORY;
 
-typedef struct IDirectXFile IDirectXFile, *LPDIRECTXFILE;
-typedef struct IDirectXFileEnumObject IDirectXFileEnumObject, *LPDIRECTXFILEENUMOBJECT;
-typedef struct IDirectXFileSaveObject IDirectXFileSaveObject, *LPDIRECTXFILESAVEOBJECT;
-typedef struct IDirectXFileObject IDirectXFileObject, *LPDIRECTXFILEOBJECT;
-typedef struct IDirectXFileData IDirectXFileData, *LPDIRECTXFILEDATA;
-typedef struct IDirectXFileDataReference IDirectXFileDataReference, *LPDIRECTXFILEDATAREFERENCE;
-typedef struct IDirectXFileBinary IDirectXFileBinary, *LPDIRECTXFILEBINARY;
+typedef struct IDirectXFile *LPDIRECTXFILE;
+typedef struct IDirectXFileEnumObject *LPDIRECTXFILEENUMOBJECT;
+typedef struct IDirectXFileSaveObject *LPDIRECTXFILESAVEOBJECT;
+typedef struct IDirectXFileObject *LPDIRECTXFILEOBJECT;
+typedef struct IDirectXFileData *LPDIRECTXFILEDATA;
+typedef struct IDirectXFileDataReference *LPDIRECTXFILEDATAREFERENCE;
+typedef struct IDirectXFileBinary *LPDIRECTXFILEBINARY;
 
 STDAPI DirectXFileCreate(LPDIRECTXFILE *lplpDirectXFile);
 

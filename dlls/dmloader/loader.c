@@ -197,7 +197,7 @@ HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIRECTMUSI
 			ERR(": could not create loader stream\n");
 			return result;
 		}
-		result = IDirectMusicLoaderFileStream_Attach (pStream, wszFileName, (LPDIRECTMUSICLOADER)iface);
+		result = IDirectMusicLoaderFileStream_Attach (pStream, wszFileName, iface);
 		if (FAILED(result)) {
 			ERR(": could not attach stream to file\n");			
 			return result;
@@ -213,7 +213,7 @@ HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIRECTMUSI
 			ERR(": could not create resource stream\n");
 			return result;
 		}
-		result = IDirectMusicLoaderResourceStream_Attach (pStream, pDesc->pbMemData, pDesc->llMemLength, 0, (LPDIRECTMUSICLOADER)iface);
+		result = IDirectMusicLoaderResourceStream_Attach (pStream, pDesc->pbMemData, pDesc->llMemLength, 0, iface);
 		if (FAILED(result)) {
 			ERR(": could not attach stream to resource\n");			
 			return result;
@@ -228,7 +228,7 @@ HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIRECTMUSI
 			ERR(": could not create generic stream\n");
 			return result;
 		}
-		result = IDirectMusicLoaderGenericStream_Attach (pStream, pDesc->pStream, (LPDIRECTMUSICLOADER)iface);
+		result = IDirectMusicLoaderGenericStream_Attach (pStream, pDesc->pStream, iface);
 		if (FAILED(result)) {
 			ERR(": failed to attach stream\n");
 			return result;
@@ -346,19 +346,19 @@ HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_SetObject (LPDIRECTMUSI
 		/* create stream */
 		DMUSIC_CreateDirectMusicLoaderFileStream ((LPVOID*)&pStream);
 		/* attach stream */
-		IDirectMusicLoaderFileStream_Attach (pStream, wszFileName, (LPDIRECTMUSICLOADER)iface);
+		IDirectMusicLoaderFileStream_Attach (pStream, wszFileName, iface);
 	}
 	else if (pDesc->dwValidData & DMUS_OBJ_STREAM) {	
 		/* create stream */
 		DMUSIC_CreateDirectMusicLoaderGenericStream ((LPVOID*)&pStream);
 		/* attach stream */
-		IDirectMusicLoaderGenericStream_Attach (pStream, pDesc->pStream, (LPDIRECTMUSICLOADER)iface);
+		IDirectMusicLoaderGenericStream_Attach (pStream, pDesc->pStream, iface);
 	}
 	else if (pDesc->dwValidData & DMUS_OBJ_MEMORY) {
 		/* create stream */
 		DMUSIC_CreateDirectMusicLoaderResourceStream ((LPVOID*)&pStream);
 		/* attach stream */
-		IDirectMusicLoaderResourceStream_Attach (pStream, pDesc->pbMemData, pDesc->llMemLength, 0, (LPDIRECTMUSICLOADER)iface);
+		IDirectMusicLoaderResourceStream_Attach (pStream, pDesc->pbMemData, pDesc->llMemLength, 0, iface);
 	}
 	else {
 		ERR(": no way to get additional info\n");

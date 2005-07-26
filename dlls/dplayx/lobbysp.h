@@ -28,7 +28,7 @@
 
 /* GUID for IDPLobbySP {5A4E5A20-2CED-11d0-A889-00A0C905433C} */
 DEFINE_GUID(IID_IDPLobbySP, 0x5a4e5a20, 0x2ced, 0x11d0, 0xa8, 0x89, 0x0, 0xa0, 0xc9, 0x5, 0x43, 0x3c);
-typedef struct IDPLobbySP IDPLobbySP, *LPDPLOBBYSP;
+typedef struct IDPLobbySP *LPDPLOBBYSP;
 
 /* For SP. Top 16 bits is dplay, bottom 16 is SP */
 #define DPLSP_MAJORVERSION               0x00050000

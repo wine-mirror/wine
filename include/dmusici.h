@@ -110,27 +110,27 @@ DEFINE_GUID(IID_IDirectMusicStyle8,                        0xfd24ad8a,0xa260,0x4
 #define IID_IDirectMusicScript8       IID_IDirectMusicScript
 
 /* typedef definitions */
-typedef struct IDirectMusicBand         IDirectMusicBand,          *LPDIRECTMUSICBAND;
+typedef struct IDirectMusicBand *LPDIRECTMUSICBAND;
 typedef struct IDirectMusicBand         IDirectMusicBand8,         *LPDIRECTMUSICBAND8;
-typedef struct IDirectMusicObject       IDirectMusicObject,        *LPDIRECTMUSICOBJECT;
+typedef struct IDirectMusicObject *LPDIRECTMUSICOBJECT;
 typedef struct IDirectMusicObject       IDirectMusicObject8,       *LPDIRECTMUSICOBJECT8;
-typedef struct IDirectMusicLoader       IDirectMusicLoader,        *LPDIRECTMUSICLOADER;
-typedef struct IDirectMusicLoader       IDirectMusicLoader8,       *LPDIRECTMUSICLOADER8;
-typedef struct IDirectMusicGetLoader    IDirectMusicGetLoader,     *LPDIRECTMUSICGETLOADER;
+typedef struct IDirectMusicLoader *LPDIRECTMUSICLOADER;
+typedef struct IDirectMusicLoader8 *LPDIRECTMUSICLOADER8;
+typedef struct IDirectMusicGetLoader *LPDIRECTMUSICGETLOADER;
 typedef struct IDirectMusicGetLoader    IDirectMusicGetLoader8,    *LPDIRECTMUSICGETLOADER8;
-typedef struct IDirectMusicAudioPath    IDirectMusicAudioPath,     *LPDIRECTMUSICAUDIOPATH;
+typedef struct IDirectMusicAudioPath *LPDIRECTMUSICAUDIOPATH;
 typedef struct IDirectMusicAudioPath    IDirectMusicAudioPath8,    *LPDIRECTMUSICAUDIOPATH8;
-typedef struct IDirectMusicStyle        IDirectMusicStyle,         *LPDIRECTMUSICSTYLE;
-typedef struct IDirectMusicStyle8       IDirectMusicStyle8,        *LPDIRECTMUSICSTYLE8;
-typedef struct IDirectMusicChordMap     IDirectMusicChordMap,      *LPDIRECTMUSICCHORDMAP;
+typedef struct IDirectMusicStyle *LPDIRECTMUSICSTYLE;
+typedef struct IDirectMusicStyle8 *LPDIRECTMUSICSTYLE8;
+typedef struct IDirectMusicChordMap *LPDIRECTMUSICCHORDMAP;
 typedef struct IDirectMusicChordMap     IDirectMusicChordMap8,     *LPDIRECTMUSICCHORDMAP8;
-typedef struct IDirectMusicComposer     IDirectMusicComposer,      *LPDIRECTMUSICCOMPOSER;
+typedef struct IDirectMusicComposer *LPDIRECTMUSICCOMPOSER;
 typedef struct IDirectMusicComposer     IDirectMusicComposer8,     *LPDIRECTMUSICCOMPOSER8;
-typedef struct IDirectMusicPatternTrack IDirectMusicPatternTrack,  *LPDIRECTMUSICPATTERNTRACK;
+typedef struct IDirectMusicPatternTrack *LPDIRECTMUSICPATTERNTRACK;
 typedef struct IDirectMusicPatternTrack IDirectMusicPatternTrack8, *LPDIRECTMUSICPATTERNTRACK8;
-typedef struct IDirectMusicScript       IDirectMusicScript,        *LPDIRECTMUSICSCRIPT;
+typedef struct IDirectMusicScript *LPDIRECTMUSICSCRIPT;
 typedef struct IDirectMusicScript       IDirectMusicScript8,       *LPDIRECTMUSICSCRIPT8;
-typedef struct IDirectMusicContainer    IDirectMusicContainer,     *LPDIRECTMUSICCONTAINER;
+typedef struct IDirectMusicContainer *LPDIRECTMUSICCONTAINER;
 typedef struct IDirectMusicContainer    IDirectMusicContainer8,    *LPDIRECTMUSICCONTAINER8;
 
 /* RPC declarations */
@@ -356,7 +356,7 @@ typedef WORD    TRANSITION_TYPE, *LPTRANSITION_TYPE;
 	DWORD              dwPChannel; \
 	DWORD              dwVirtualTrackID; \
 	IDirectMusicTool*  pTool; \
-	IDirectMusicGraph* pGraph; \
+	struct IDirectMusicGraph* pGraph; \
 	DWORD              dwType; \
 	DWORD              dwVoiceID; \
 	DWORD              dwGroupID; \
@@ -776,7 +776,7 @@ struct _DMUS_COMMAND_PARAM_2 {
 
 struct _DMUS_BAND_PARAM {
 	MUSIC_TIME       mtTimePhysical;
-	IDirectMusicBand *pBand;
+	struct IDirectMusicBand *pBand;
 };
 
 struct _DMUS_VARIATIONS_PARAM {
@@ -797,9 +797,9 @@ DECLARE_INTERFACE_(IDirectMusicBand,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectMusicBand methods ***/
-    STDMETHOD(CreateSegment)(THIS_ IDirectMusicSegment **ppSegment) PURE;
-    STDMETHOD(Download)(THIS_ IDirectMusicPerformance *pPerformance) PURE;
-    STDMETHOD(Unload)(THIS_ IDirectMusicPerformance *pPerformance) PURE;
+    STDMETHOD(CreateSegment)(THIS_ struct IDirectMusicSegment **ppSegment) PURE;
+    STDMETHOD(Download)(THIS_ struct IDirectMusicPerformance *pPerformance) PURE;
+    STDMETHOD(Unload)(THIS_ struct IDirectMusicPerformance *pPerformance) PURE;
 };
 #undef INTERFACE
 
@@ -980,9 +980,9 @@ DECLARE_INTERFACE_(IDirectMusicSegment,IUnknown)
     STDMETHOD(GetTrackGroup)(THIS_ IDirectMusicTrack *pTrack, DWORD *pdwGroupBits) PURE;
     STDMETHOD(InsertTrack)(THIS_ IDirectMusicTrack *pTrack, DWORD dwGroupBits) PURE;
     STDMETHOD(RemoveTrack)(THIS_ IDirectMusicTrack *pTrack) PURE;
-    STDMETHOD(InitPlay)(THIS_ IDirectMusicSegmentState **ppSegState, IDirectMusicPerformance *pPerformance, DWORD  dwFlags) PURE;
-    STDMETHOD(GetGraph)(THIS_ IDirectMusicGraph **ppGraph) PURE;
-    STDMETHOD(SetGraph)(THIS_ IDirectMusicGraph *pGraph) PURE;
+    STDMETHOD(InitPlay)(THIS_ struct IDirectMusicSegmentState **ppSegState, struct IDirectMusicPerformance *pPerformance, DWORD  dwFlags) PURE;
+    STDMETHOD(GetGraph)(THIS_ struct IDirectMusicGraph **ppGraph) PURE;
+    STDMETHOD(SetGraph)(THIS_ struct IDirectMusicGraph *pGraph) PURE;
     STDMETHOD(AddNotificationType)(THIS_ REFGUID rguidNotificationType) PURE;
     STDMETHOD(RemoveNotificationType)(THIS_ REFGUID rguidNotificationType) PURE;
     STDMETHOD(GetParam)(THIS_ REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam) PURE;
@@ -1049,9 +1049,9 @@ DECLARE_INTERFACE_(IDirectMusicSegment8,IDirectMusicSegment)
     STDMETHOD(GetTrackGroup)(THIS_ IDirectMusicTrack *pTrack, DWORD *pdwGroupBits) PURE;
     STDMETHOD(InsertTrack)(THIS_ IDirectMusicTrack *pTrack, DWORD dwGroupBits) PURE;
     STDMETHOD(RemoveTrack)(THIS_ IDirectMusicTrack *pTrack) PURE;
-    STDMETHOD(InitPlay)(THIS_ IDirectMusicSegmentState **ppSegState, IDirectMusicPerformance *pPerformance, DWORD  dwFlags) PURE;
-    STDMETHOD(GetGraph)(THIS_ IDirectMusicGraph **ppGraph) PURE;
-    STDMETHOD(SetGraph)(THIS_ IDirectMusicGraph *pGraph) PURE;
+    STDMETHOD(InitPlay)(THIS_ struct IDirectMusicSegmentState **ppSegState, struct IDirectMusicPerformance *pPerformance, DWORD  dwFlags) PURE;
+    STDMETHOD(GetGraph)(THIS_ struct IDirectMusicGraph **ppGraph) PURE;
+    STDMETHOD(SetGraph)(THIS_ struct IDirectMusicGraph *pGraph) PURE;
     STDMETHOD(AddNotificationType)(THIS_ REFGUID rguidNotificationType) PURE;
     STDMETHOD(RemoveNotificationType)(THIS_ REFGUID rguidNotificationType) PURE;
     STDMETHOD(GetParam)(THIS_ REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam) PURE;
@@ -1238,8 +1238,8 @@ DECLARE_INTERFACE_(IDirectMusicPerformance,IUnknown)
     STDMETHOD(GetTime)(THIS_ REFERENCE_TIME *prtNow, MUSIC_TIME *pmtNow) PURE;
     STDMETHOD(AllocPMsg)(THIS_ ULONG cb, DMUS_PMSG **ppPMSG) PURE;
     STDMETHOD(FreePMsg)(THIS_ DMUS_PMSG *pPMSG) PURE;
-    STDMETHOD(GetGraph)(THIS_ IDirectMusicGraph **ppGraph) PURE;
-    STDMETHOD(SetGraph)(THIS_ IDirectMusicGraph *pGraph) PURE;
+    STDMETHOD(GetGraph)(THIS_ struct IDirectMusicGraph **ppGraph) PURE;
+    STDMETHOD(SetGraph)(THIS_ struct IDirectMusicGraph *pGraph) PURE;
     STDMETHOD(SetNotificationHandle)(THIS_ HANDLE hNotification, REFERENCE_TIME rtMinimum) PURE;
     STDMETHOD(GetNotificationPMsg)(THIS_ DMUS_NOTIFICATION_PMSG **ppNotificationPMsg) PURE;
     STDMETHOD(AddNotificationType)(THIS_ REFGUID rguidNotificationType) PURE;
@@ -1343,8 +1343,8 @@ DECLARE_INTERFACE_(IDirectMusicPerformance8,IDirectMusicPerformance)
     STDMETHOD(GetTime)(THIS_ REFERENCE_TIME *prtNow, MUSIC_TIME *pmtNow) PURE;
     STDMETHOD(AllocPMsg)(THIS_ ULONG cb, DMUS_PMSG **ppPMSG) PURE;
     STDMETHOD(FreePMsg)(THIS_ DMUS_PMSG *pPMSG) PURE;
-    STDMETHOD(GetGraph)(THIS_ IDirectMusicGraph **ppGraph) PURE;
-    STDMETHOD(SetGraph)(THIS_ IDirectMusicGraph *pGraph) PURE;
+    STDMETHOD(GetGraph)(THIS_ struct IDirectMusicGraph **ppGraph) PURE;
+    STDMETHOD(SetGraph)(THIS_ struct IDirectMusicGraph *pGraph) PURE;
     STDMETHOD(SetNotificationHandle)(THIS_ HANDLE hNotification, REFERENCE_TIME rtMinimum) PURE;
     STDMETHOD(GetNotificationPMsg)(THIS_ DMUS_NOTIFICATION_PMSG **ppNotificationPMsg) PURE;
     STDMETHOD(AddNotificationType)(THIS_ REFGUID rguidNotificationType) PURE;
@@ -1489,9 +1489,9 @@ DECLARE_INTERFACE_(IDirectMusicStyle,IUnknown)
     STDMETHOD(GetDefaultBand)(THIS_ IDirectMusicBand **ppBand) PURE;
     STDMETHOD(EnumMotif)(THIS_ DWORD dwIndex, WCHAR *pwszName) PURE;
     STDMETHOD(GetMotif)(THIS_ WCHAR *pwszName, IDirectMusicSegment **ppSegment) PURE;
-    STDMETHOD(GetDefaultChordMap)(THIS_ IDirectMusicChordMap **ppChordMap) PURE;
+    STDMETHOD(GetDefaultChordMap)(THIS_ struct IDirectMusicChordMap **ppChordMap) PURE;
     STDMETHOD(EnumChordMap)(THIS_ DWORD dwIndex, WCHAR *pwszName) PURE;
-    STDMETHOD(GetChordMap)(THIS_ WCHAR *pwszName, IDirectMusicChordMap **ppChordMap) PURE;
+    STDMETHOD(GetChordMap)(THIS_ WCHAR *pwszName, struct IDirectMusicChordMap **ppChordMap) PURE;
     STDMETHOD(GetTimeSignature)(THIS_ DMUS_TIMESIGNATURE *pTimeSig) PURE;
     STDMETHOD(GetEmbellishmentLength)(THIS_ DWORD dwType, DWORD dwLevel, DWORD *pdwMin, DWORD *pdwMax) PURE;
     STDMETHOD(GetTempo)(THIS_ double *pTempo) PURE;
@@ -1534,9 +1534,9 @@ DECLARE_INTERFACE_(IDirectMusicStyle8,IDirectMusicStyle)
     STDMETHOD(GetDefaultBand)(THIS_ IDirectMusicBand **ppBand) PURE;
     STDMETHOD(EnumMotif)(THIS_ DWORD dwIndex, WCHAR *pwszName) PURE;
     STDMETHOD(GetMotif)(THIS_ WCHAR *pwszName, IDirectMusicSegment **ppSegment) PURE;
-    STDMETHOD(GetDefaultChordMap)(THIS_ IDirectMusicChordMap **ppChordMap) PURE;
+    STDMETHOD(GetDefaultChordMap)(THIS_ struct IDirectMusicChordMap **ppChordMap) PURE;
     STDMETHOD(EnumChordMap)(THIS_ DWORD dwIndex, WCHAR *pwszName) PURE;
-    STDMETHOD(GetChordMap)(THIS_ WCHAR *pwszName, IDirectMusicChordMap **ppChordMap) PURE;
+    STDMETHOD(GetChordMap)(THIS_ WCHAR *pwszName, struct IDirectMusicChordMap **ppChordMap) PURE;
     STDMETHOD(GetTimeSignature)(THIS_ DMUS_TIMESIGNATURE *pTimeSig) PURE;
     STDMETHOD(GetEmbellishmentLength)(THIS_ DWORD dwType, DWORD dwLevel, DWORD *pdwMin, DWORD *pdwMax) PURE;
     STDMETHOD(GetTempo)(THIS_ double *pTempo) PURE;

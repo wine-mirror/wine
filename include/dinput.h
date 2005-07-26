@@ -87,25 +87,25 @@ DEFINE_GUID(GUID_Inertia,	0x13541C29,0x8E33,0x11D0,0x9A,0xD0,0x00,0xA0,0xC9,0xA0
 DEFINE_GUID(GUID_Friction,	0x13541C2A,0x8E33,0x11D0,0x9A,0xD0,0x00,0xA0,0xC9,0xA0,0x6E,0x35);
 DEFINE_GUID(GUID_CustomForce,	0x13541C2B,0x8E33,0x11D0,0x9A,0xD0,0x00,0xA0,0xC9,0xA0,0x6E,0x35);
 
-typedef struct IDirectInputA IDirectInputA,*LPDIRECTINPUTA;
-typedef struct IDirectInputW IDirectInputW,*LPDIRECTINPUTW;
-typedef struct IDirectInput2A IDirectInput2A,*LPDIRECTINPUT2A;
-typedef struct IDirectInput2W IDirectInput2W,*LPDIRECTINPUT2W;
-typedef struct IDirectInput7A IDirectInput7A,*LPDIRECTINPUT7A;
-typedef struct IDirectInput7W IDirectInput7W,*LPDIRECTINPUT7W;
-typedef struct IDirectInput8A IDirectInput8A,*LPDIRECTINPUT8A;
-typedef struct IDirectInput8W IDirectInput8W,*LPDIRECTINPUT8W;
-typedef struct IDirectInputDeviceA IDirectInputDeviceA,*LPDIRECTINPUTDEVICEA;
-typedef struct IDirectInputDeviceW IDirectInputDeviceW,*LPDIRECTINPUTDEVICEW;
-typedef struct IDirectInputDevice2A IDirectInputDevice2A,*LPDIRECTINPUTDEVICE2A;
-typedef struct IDirectInputDevice2W IDirectInputDevice2W,*LPDIRECTINPUTDEVICE2W;
-typedef struct IDirectInputDevice7A IDirectInputDevice7A,*LPDIRECTINPUTDEVICE7A;
-typedef struct IDirectInputDevice7W IDirectInputDevice7W,*LPDIRECTINPUTDEVICE7W;
-typedef struct IDirectInputDevice8A IDirectInputDevice8A,*LPDIRECTINPUTDEVICE8A;
-typedef struct IDirectInputDevice8W IDirectInputDevice8W,*LPDIRECTINPUTDEVICE8W;
-typedef struct IDirectInputEffect IDirectInputEffect,*LPDIRECTINPUTEFFECT;
-typedef struct SysKeyboardA SysKeyboardA,*LPSYSKEYBOARDA;
-typedef struct SysMouseA SysMouseA,*LPSYSMOUSEA;
+typedef struct IDirectInputA *LPDIRECTINPUTA;
+typedef struct IDirectInputW *LPDIRECTINPUTW;
+typedef struct IDirectInput2A *LPDIRECTINPUT2A;
+typedef struct IDirectInput2W *LPDIRECTINPUT2W;
+typedef struct IDirectInput7A *LPDIRECTINPUT7A;
+typedef struct IDirectInput7W *LPDIRECTINPUT7W;
+typedef struct IDirectInput8A *LPDIRECTINPUT8A;
+typedef struct IDirectInput8W *LPDIRECTINPUT8W;
+typedef struct IDirectInputDeviceA *LPDIRECTINPUTDEVICEA;
+typedef struct IDirectInputDeviceW *LPDIRECTINPUTDEVICEW;
+typedef struct IDirectInputDevice2A *LPDIRECTINPUTDEVICE2A;
+typedef struct IDirectInputDevice2W *LPDIRECTINPUTDEVICE2W;
+typedef struct IDirectInputDevice7A *LPDIRECTINPUTDEVICE7A;
+typedef struct IDirectInputDevice7W *LPDIRECTINPUTDEVICE7W;
+typedef struct IDirectInputDevice8A *LPDIRECTINPUTDEVICE8A;
+typedef struct IDirectInputDevice8W *LPDIRECTINPUTDEVICE8W;
+typedef struct IDirectInputEffect *LPDIRECTINPUTEFFECT;
+typedef struct SysKeyboardA *LPSYSKEYBOARDA;
+typedef struct SysMouseA *LPSYSMOUSEA;
 
 #define IID_IDirectInput WINELIB_NAME_AW(IID_IDirectInput)
 DECL_WINELIB_TYPE_AW(LPDIRECTINPUT)

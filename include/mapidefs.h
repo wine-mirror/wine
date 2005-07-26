@@ -90,20 +90,15 @@ typedef struct IDistList IDistList;
 typedef IDistList *LPDISTLIST;
 typedef struct IMailUser IMailUser;
 typedef IMailUser *LPMAILUSER;
-typedef struct IMAPIAdviseSink IMAPIAdviseSink;
-typedef IMAPIAdviseSink *LPMAPIADVISESINK;
+typedef struct IMAPIAdviseSink *LPMAPIADVISESINK;
 typedef struct IMAPIContainer IMAPIContainer;
 typedef IMAPIContainer *LPMAPICONTAINER;
 typedef struct IMAPIFolder IMAPIFolder;
 typedef IMAPIFolder *LPMAPIFOLDER;
 typedef struct IMAPIProgress IMAPIProgress;
 typedef IMAPIProgress *LPMAPIPROGRESS;
-typedef struct IMAPIProp IMAPIProp;
-typedef IMAPIProp *LPMAPIPROP;
 typedef struct IMAPIStatus IMAPIStatus;
 typedef IMAPIStatus *LPMAPISTATUS;
-typedef struct IMAPITable IMAPITable;
-typedef IMAPITable *LPMAPITABLE;
 typedef struct IMessage IMessage;
 typedef IMessage *LPMESSAGE;
 typedef struct IMsgStore IMsgStore;
@@ -840,6 +835,8 @@ DECLARE_INTERFACE_(IMAPITable,IUnknown)
 #define IMAPITable_SetCollapseState(p,a,b,c,d)   (p)->lpVtbl->SetCollapseState(p,a,b,c,d)
 #endif
 
+typedef IMAPITable *LPMAPITABLE;
+
 /*****************************************************************************
  * IMAPIAdviseSink interface
  */
@@ -911,6 +908,8 @@ DECLARE_INTERFACE_(IMAPIProp,IUnknown)
 #define IMAPIProp_GetNamesFromIDs(p,a,b,c,d,e) (p)->lpVtbl->GetNamesFromIDs(p,a,b,c,d,e) 
 #define IMAPIProp_GetIDsFromNames(p,a,b,c,d)   (p)->lpVtbl->GetIDsFromNames(p,a,b,c,d)   
 #endif
+
+typedef IMAPIProp *LPMAPIPROP;
 
 typedef struct
 {

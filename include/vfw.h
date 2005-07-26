@@ -35,11 +35,10 @@ typedef HANDLE HDRAWDIB;
 /*****************************************************************************
  * Predeclare the interfaces
  */
-typedef struct IAVIStream IAVIStream,*PAVISTREAM;
-typedef struct IAVIFile IAVIFile,*PAVIFILE;
-typedef struct IGetFrame IGetFrame,*PGETFRAME;
-typedef struct IAVIEditStream IAVIEditStream, *PAVIEDITSTREAM;
-typedef struct IAVIStreaming  IAVIStreaming;
+typedef struct IAVIStream *PAVISTREAM;
+typedef struct IAVIFile *PAVIFILE;
+typedef struct IGetFrame *PGETFRAME;
+typedef struct IAVIEditStream *PAVIEDITSTREAM;
 
 /* Installable Compressor Manager */
 

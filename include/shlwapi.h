@@ -242,7 +242,7 @@ typedef enum
     ASSOCENUM_NONE
 } ASSOCENUM;
 
-typedef struct IQueryAssociations IQueryAssociations,*LPQUERYASSOCIATIONS;
+typedef struct IQueryAssociations *LPQUERYASSOCIATIONS;
 
 #define INTERFACE IQueryAssociations
 DECLARE_INTERFACE_(IQueryAssociations,IUnknown)

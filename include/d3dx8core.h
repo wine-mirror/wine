@@ -48,9 +48,9 @@
  * Predeclare the interfaces
  */
 DEFINE_GUID(IID_ID3DXBuffer,             0x1,0x1,0x4,0xB0,0xCF,0x98,0xFE,0xFD,0xFF,0x95,0x12);/* FIXME */
-typedef struct ID3DXBuffer              ID3DXBuffer, *LPD3DXBUFFER;
+typedef struct ID3DXBuffer *LPD3DXBUFFER;
 DEFINE_GUID(IID_ID3DXFont,               0x1,0x1,0x4,0xB0,0xCF,0x98,0xFE,0xFD,0xFF,0x95,0x13);/* FIXME */
-typedef struct ID3DXFont                ID3DXFont, *LPD3DXFONT;
+typedef struct ID3DXFont *LPD3DXFONT;
 
 /*****************************************************************************
  * ID3DXBuffer interface

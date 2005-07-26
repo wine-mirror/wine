@@ -84,14 +84,6 @@ BOOL WINAPI SHObjectProperties(HWND,DWORD,LPCWSTR,LPCWSTR);
 int WINAPI PathCleanupSpec(LPCWSTR,LPWSTR);
 
 /*****************************************************************************
- * Predeclare interfaces
- */
-typedef struct IShellIcon IShellIcon, *LPSHELLICON;
-typedef struct IQueryInfo IQueryInfo;
-typedef struct IInputObject IInputObject;
-typedef struct IInputObjectSite IInputObjectSite;
-
-/*****************************************************************************
  * IContextMenu interface
  */
 
@@ -228,6 +220,8 @@ DECLARE_INTERFACE_(IShellIcon,IUnknown)
 /*** IShellIcon methods ***/
 #define IShellIcon_GetIconOf(p,a,b,c)         (p)->lpVtbl->GetIconOf(p,a,b,c)
 #endif
+
+typedef IShellIcon *LPSHELLICON;
 
 /* IQueryInfo interface */
 #define INTERFACE IQueryInfo

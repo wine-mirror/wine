@@ -30,22 +30,22 @@ extern "C" {
  * Predeclare the interfaces
  */
 DEFINE_GUID(IID_IDsDriver,		0x8C4233C0l, 0xB4CC, 0x11CE, 0x92, 0x94, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00);
-typedef struct IDsDriver IDsDriver,*PIDSDRIVER;
+typedef struct IDsDriver *PIDSDRIVER;
 
 DEFINE_GUID(IID_IDsDriverBuffer,	0x8C4233C1l, 0xB4CC, 0x11CE, 0x92, 0x94, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00);
-typedef struct IDsDriverBuffer IDsDriverBuffer,*PIDSDRIVERBUFFER;
+typedef struct IDsDriverBuffer *PIDSDRIVERBUFFER;
 
 DEFINE_GUID(IID_IDsDriverPropertySet,	0x0F6F2E8E0, 0xD842, 0x11D0, 0x8F, 0x75, 0x00, 0xC0, 0x4F, 0xC2, 0x8A, 0xCA);
-typedef struct IDsDriverPropertySet IDsDriverPropertySet,*PIDSDRIVERPROPERTYSET;
+typedef struct IDsDriverPropertySet *PIDSDRIVERPROPERTYSET;
 
 DEFINE_GUID(IID_IDsDriverNotify,	0x00363EF44, 0x3B57, 0x11D3, 0xAC, 0x79, 0x00, 0x10, 0x5A, 0x01, 0x7f, 0xe1);
-typedef struct IDsDriverNotify IDsDriverNotify,*PIDSDRIVERNOTIFY;
+typedef struct IDsDriverNotify *PIDSDRIVERNOTIFY;
 
 DEFINE_GUID(IID_IDsCaptureDriver,	0x03DD10C47, 0x74FB, 0x11D3, 0x90, 0x49, 0xCB, 0xB4, 0xB3, 0x2E, 0xAA, 0x08);
-typedef struct IDsCaptureDriver IDsCaptureDriver,*PIDSCDRIVER;
+typedef struct IDsCaptureDriver *PIDSCDRIVER;
 
 DEFINE_GUID(IID_IDsCaptureDriverBuffer,	0x03DD10C48, 0x74FB, 0x11D3, 0x90, 0x49, 0xCB, 0xB4, 0xB3, 0x2E, 0xAA, 0x08);
-typedef struct IDsCaptureDriverBuffer IDsCaptureDriverBuffer,*PIDSCDRIVERBUFFER;
+typedef struct IDsCaptureDriverBuffer *PIDSCDRIVERBUFFER;
 
 #define DSDDESC_DOMMSYSTEMOPEN		0x00000001
 #define DSDDESC_DOMMSYSTEMSETFORMAT	0x00000002

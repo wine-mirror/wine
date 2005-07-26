@@ -51,19 +51,19 @@ DEFINE_GUID( IID_IDirectDrawColorControl,0x4B9F0EE0,0x0D7E,0x11D0,0x9B,0x06,0x00
 DEFINE_GUID( IID_IDirectDrawGammaControl,0x69C11C3E,0xB46B,0x11D1,0xAD,0x7A,0x00,0xC0,0x4F,0xC2,0x9B,0x4E );
 #endif
 
-typedef struct IDirectDraw IDirectDraw,*LPDIRECTDRAW;
-typedef struct IDirectDraw2 IDirectDraw2,*LPDIRECTDRAW2;
-typedef struct IDirectDraw4 IDirectDraw4,*LPDIRECTDRAW4;
-typedef struct IDirectDraw7 IDirectDraw7,*LPDIRECTDRAW7;
-typedef struct IDirectDrawClipper IDirectDrawClipper,*LPDIRECTDRAWCLIPPER;
-typedef struct IDirectDrawPalette IDirectDrawPalette,*LPDIRECTDRAWPALETTE;
-typedef struct IDirectDrawSurface IDirectDrawSurface,*LPDIRECTDRAWSURFACE;
-typedef struct IDirectDrawSurface2 IDirectDrawSurface2,*LPDIRECTDRAWSURFACE2;
-typedef struct IDirectDrawSurface3 IDirectDrawSurface3,*LPDIRECTDRAWSURFACE3;
-typedef struct IDirectDrawSurface4 IDirectDrawSurface4,*LPDIRECTDRAWSURFACE4;
-typedef struct IDirectDrawSurface7 IDirectDrawSurface7,*LPDIRECTDRAWSURFACE7;
-typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLORCONTROL;
-typedef struct IDirectDrawGammaControl IDirectDrawGammaControl,*LPDIRECTDRAWGAMMACONTROL;
+typedef struct IDirectDraw *LPDIRECTDRAW;
+typedef struct IDirectDraw2 *LPDIRECTDRAW2;
+typedef struct IDirectDraw4 *LPDIRECTDRAW4;
+typedef struct IDirectDraw7 *LPDIRECTDRAW7;
+typedef struct IDirectDrawClipper *LPDIRECTDRAWCLIPPER;
+typedef struct IDirectDrawPalette *LPDIRECTDRAWPALETTE;
+typedef struct IDirectDrawSurface *LPDIRECTDRAWSURFACE;
+typedef struct IDirectDrawSurface2 *LPDIRECTDRAWSURFACE2;
+typedef struct IDirectDrawSurface3 *LPDIRECTDRAWSURFACE3;
+typedef struct IDirectDrawSurface4 *LPDIRECTDRAWSURFACE4;
+typedef struct IDirectDrawSurface7 *LPDIRECTDRAWSURFACE7;
+typedef struct IDirectDrawColorControl *LPDIRECTDRAWCOLORCONTROL;
+typedef struct IDirectDrawGammaControl *LPDIRECTDRAWGAMMACONTROL;
 
 
 #define DDENUMRET_CANCEL	0
