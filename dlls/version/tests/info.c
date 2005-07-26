@@ -238,83 +238,123 @@ static void test_info(void)
 static void test_32bit_win(void)
 {
     DWORD hdlA, retvalA;
-    DWORD hdlW, retvalW;
+    DWORD hdlW, retvalW = 0;
     BOOL retA,retW;
     PVOID pVersionInfoA = NULL;
     PVOID pVersionInfoW = NULL;
     char *pBufA;
     WCHAR *pBufW;
-    UINT uiLength;
+    UINT uiLengthA, uiLengthW;
     char mypathA[MAX_PATH];
     WCHAR mypathW[MAX_PATH];
-    char varfileinfoA[] = "\\\\VarFileInfo\\\\Translation";
-    WCHAR varfileinfoW[]    = { '\\','\\','V','a','r','F','i','l','e','I','n','f','o',
-                                '\\','\\','T','r','a','n','s','l','a','t','i','o','n', 0 };
-    char FileDescriptionA[] = "\\\\StringFileInfo\\\\040904E4\\\\FileDescription";
-    WCHAR FileDescriptionW[] = { '\\','\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o',
-                                '\\','\\','0','4','0','9','0','4','e','4',
-                                '\\','\\','F','i','l','e','D','e','s','c','r','i','p','t','i','o','n', 0 };
+    char rootA[] = "\\";
+    WCHAR rootW[] = { '\\', 0 };
+    char varfileinfoA[] = "\\VarFileInfo\\Translation";
+    WCHAR varfileinfoW[]    = { '\\','V','a','r','F','i','l','e','I','n','f','o',
+                                '\\','T','r','a','n','s','l','a','t','i','o','n', 0 };
+    char WineVarFileInfoA[] = { 0x09, 0x04, 0xE4, 0x04 };
+    char FileDescriptionA[] = "\\StringFileInfo\\040904E4\\FileDescription";
+    WCHAR FileDescriptionW[] = { '\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o',
+                                '\\','0','4','0','9','0','4','E','4',
+                                '\\','F','i','l','e','D','e','s','c','r','i','p','t','i','o','n', 0 };
     char WineFileDescriptionA[] = "Wine version test";
     WCHAR WineFileDescriptionW[] = { 'W','i','n','e',' ','v','e','r','s','i','o','n',' ','t','e','s','t', 0 };
+    BOOL is_unicode_enabled = TRUE;
 
     /* If we call GetFileVersionInfoA on a system that supports Unicode (NT/W2K/XP/W2K3 by default)
      * then the versioninfo will contain Unicode strings.
      * Wine however always converts a VersionInfo32 to VersionInfo16 when called through GetFileVersionInfoA
      * regardless of Windows version
-     * The test is to call both the A and W versions, which should have the same Version Information,
-     * on systems that support both calls.
+     * Part of the test is to call both the A and W versions, which should have the same Version Information
+     * for some requests, on systems that support both calls.
      */
 
     /* First get the versioninfo via the W versions */
     GetModuleFileNameW(NULL, mypathW, MAX_PATH);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        trace("GetModuleFileNameW not existing on this platform, skipping rest of test\n");
-        return;
+        trace("GetModuleFileNameW not existing on this platform, skipping comparison between A- and W-calls\n");
+        is_unicode_enabled = FALSE;
     }
 
-    retvalW = GetFileVersionInfoSizeW( mypathW, &hdlW);
-    pVersionInfoW = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, retvalW );
-    retW = GetFileVersionInfoW( mypathW, 0, retvalW, pVersionInfoW );
+    if (is_unicode_enabled)
+    { 
+        retvalW = GetFileVersionInfoSizeW( mypathW, &hdlW);
+        pVersionInfoW = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, retvalW );
+        retW = GetFileVersionInfoW( mypathW, 0, retvalW, pVersionInfoW );
+    }
 
-    /* And now via the A versions */
     GetModuleFileNameA(NULL, mypathA, MAX_PATH);
     retvalA = GetFileVersionInfoSizeA( mypathA, &hdlA);
     pVersionInfoA = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, retvalA );
     retA = GetFileVersionInfoA( mypathA, 0, retvalA, pVersionInfoA );
 
-    ok( retvalA == retvalW, "The size of the struct should be the same for both A/W calls, it is (%ld) vs. (%ld)\n",
-                            retvalA, retvalW);
-
-    ok( !memcmp(pVersionInfoA, pVersionInfoW, retvalA), "Both structs should be the same, they aren't\n");
+    if (is_unicode_enabled)
+    { 
+        ok( retvalA == retvalW, "The size of the struct should be the same for both A/W calls, it is (%ld) vs. (%ld)\n",
+                                retvalA, retvalW);
+        ok( !memcmp(pVersionInfoA, pVersionInfoW, retvalA), "Both structs should be the same, they aren't\n");
+    }
 
     /* The structs are the same but that will mysteriously change with the next calls on Windows (not on Wine).
      * The structure on windows is way bigger then needed, so there must be something to it. As we do not
      * seem to need this bigger structure, we can leave that as is.
-     * The change is in this not needed part.
+     * The change in the Windows structure is in this not needed part.
      *
-     * Although the structures contain Unicode strings, VerQueryValueA will return normal strings,
-     * VerQueryValueW will return Unicode ones.
+     * Although the structures contain Unicode strings, VerQueryValueA will always return normal strings,
+     * VerQueryValueW will always return Unicode ones. (That means everything returned for StringFileInfo requests).
      */
 
-    retA = VerQueryValueA( pVersionInfoA, varfileinfoA, (LPVOID *)&pBufA, &uiLength );
-    ok (retA, "VerQueryValueA failed: GetLastError = 0x%08lx\n", GetLastError());
+    /* Get the VS_FIXEDFILEINFO information, this must be the same for both A- and W-Calls */ 
 
-    retA = VerQueryValueA( pVersionInfoA, FileDescriptionA, (LPVOID *)&pBufA, &uiLength );
+    retA = VerQueryValueA( pVersionInfoA, rootA, (LPVOID *)&pBufA, &uiLengthA );
+    ok (retA, "VerQueryValueA failed: GetLastError = 0x%08lx\n", GetLastError());
+    ok ( uiLengthA == sizeof(VS_FIXEDFILEINFO), "Size (%d) doesn't match the size of the VS_FIXEDFILEINFO struct (%d)\n",
+                                                uiLengthA, sizeof(VS_FIXEDFILEINFO));
+
+    if (is_unicode_enabled)
+    { 
+        retW = VerQueryValueW( pVersionInfoW, rootW, (LPVOID *)&pBufW, &uiLengthW );
+        ok (retW, "VerQueryValueW failed: GetLastError = 0x%08lx\n", GetLastError());
+        ok ( uiLengthA == sizeof(VS_FIXEDFILEINFO), "Size (%d) doesn't match the size of the VS_FIXEDFILEINFO struct (%d)\n",
+                                                    uiLengthA, sizeof(VS_FIXEDFILEINFO));
+
+        ok( uiLengthA == uiLengthW, "The size of VS_FIXEDFILEINFO should be the same for both A/W calls, it is (%d) vs. (%d)\n",
+                                    uiLengthA, uiLengthW);
+        ok( !memcmp(pBufA, pBufW, uiLengthA), "Both values should be the same, they aren't\n");
+    }
+
+    /* Get some VarFileInfo information, this must be the same for both A- and W-Calls */
+
+    retA = VerQueryValueA( pVersionInfoA, varfileinfoA, (LPVOID *)&pBufA, &uiLengthA );
+    ok (retA, "VerQueryValueA failed: GetLastError = 0x%08lx\n", GetLastError());
+    ok( !memcmp(pBufA, WineVarFileInfoA, uiLengthA), "The VarFileInfo should have matched 0904e404 (non case sensitive)\n");
+
+    if (is_unicode_enabled)
+    { 
+        retW = VerQueryValueW( pVersionInfoW, varfileinfoW, (LPVOID *)&pBufW, &uiLengthW );
+        ok (retW, "VerQueryValueW failed: GetLastError = 0x%08lx\n", GetLastError());
+        ok( uiLengthA == uiLengthW, "The size of the VarFileInfo information should be the same for both A/W calls, it is (%d) vs. (%d)\n",
+                                    uiLengthA, uiLengthW);
+        ok( !memcmp(pBufA, pBufW, uiLengthA), "Both values should be the same, they aren't\n");
+    }
+
+    /* Get some StringFileInfo information, this will be ANSI for A-Calls and Unicode for W-Calls */
+
+    retA = VerQueryValueA( pVersionInfoA, FileDescriptionA, (LPVOID *)&pBufA, &uiLengthA );
     ok (retA, "VerQueryValueA failed: GetLastError = 0x%08lx\n", GetLastError());
     ok( !lstrcmpA(WineFileDescriptionA, pBufA), "FileDescription should have been 'Wine version test'\n");
 
-    /* And the W-way */
-
-    retW = VerQueryValueW( pVersionInfoW, varfileinfoW, (LPVOID *)&pBufW, &uiLength );
-    ok (retW, "VerQueryValueW failed: GetLastError = 0x%08lx\n", GetLastError());
-
-    retW = VerQueryValueW( pVersionInfoW, FileDescriptionW, (LPVOID *)&pBufW, &uiLength );
-    ok (retW, "VerQueryValueW failed: GetLastError = 0x%08lx\n", GetLastError());
-    ok( !lstrcmpW(WineFileDescriptionW, pBufW), "FileDescription should have been 'Wine version test' (unicode)\n");
+    if (is_unicode_enabled)
+    { 
+        retW = VerQueryValueW( pVersionInfoW, FileDescriptionW, (LPVOID *)&pBufW, &uiLengthW );
+        ok (retW, "VerQueryValueW failed: GetLastError = 0x%08lx\n", GetLastError());
+        ok( !lstrcmpW(WineFileDescriptionW, pBufW), "FileDescription should have been 'Wine version test' (unicode)\n");
+    }
 
     HeapFree( GetProcessHeap(), 0, pVersionInfoA);
-    HeapFree( GetProcessHeap(), 0, pVersionInfoW);
+    if (is_unicode_enabled)
+        HeapFree( GetProcessHeap(), 0, pVersionInfoW);
 }
 
 START_TEST(info)
