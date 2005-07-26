@@ -93,7 +93,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
        HMODULE mod;
-       char buffer[64];
+       char buffer[MAX_PATH+10];
        DWORD size = sizeof(buffer);
        HKEY hkey = 0;
        HKEY appkey = 0;
