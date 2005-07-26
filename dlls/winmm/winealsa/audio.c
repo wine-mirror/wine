@@ -2051,26 +2051,6 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEDEV* wwo, BOOL force)
 }
 
 
-static void wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
-{
-    unsigned short revents;
-
-    if (snd_pcm_state(handle) != SND_PCM_STATE_RUNNING)
-	return;
-
-    while (1) {
-	poll(ufds, count, -1);
-	snd_pcm_poll_descriptors_revents(handle, ufds, count, &revents);
-
-	if (revents & POLLERR)
-	    return;
-
-	/*if (revents & POLLOUT)
-		return 0;*/
-    }
-}
-
-
 /**************************************************************************
  * 				wodPlayer_Reset			[internal]
  *
@@ -2085,7 +2065,7 @@ static	void	wodPlayer_Reset(WINE_WAVEDEV* wwo)
     TRACE("(%p)\n", wwo);
 
     /* flush all possible output */
-    wait_for_poll(wwo->pcm, wwo->ufds, wwo->count);
+    snd_pcm_drain(wwo->pcm);
 
     wodUpdatePlayedTotal(wwo, NULL);
     /* updates current notify list */
