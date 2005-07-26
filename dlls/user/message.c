@@ -368,10 +368,12 @@ static WPARAM map_wparam_AtoW( UINT message, WPARAM wparam )
     case WM_SYSDEADCHAR:
     case WM_MENUCHAR:
         {
-            char ch = LOWORD(wparam);
-            WCHAR wch;
-            MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
-            wparam = MAKEWPARAM( wch, HIWORD(wparam) );
+            char ch[2];
+            WCHAR wch[2];
+            ch[0] = (wparam & 0xff);
+            ch[1] = (wparam >> 8);
+            MultiByteToWideChar(CP_ACP, 0, ch, 2, wch, 2);
+            wparam = MAKEWPARAM(wch[0], wch[1]);
         }
         break;
     case WM_IME_CHAR:
@@ -407,10 +409,12 @@ static WPARAM map_wparam_WtoA( UINT message, WPARAM wparam )
     case WM_SYSDEADCHAR:
     case WM_MENUCHAR:
         {
-            WCHAR wch = LOWORD(wparam);
-            BYTE ch;
-            WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)&ch, 1, NULL, NULL );
-            wparam = MAKEWPARAM( ch, HIWORD(wparam) );
+            WCHAR wch[2];
+            BYTE ch[2];
+            wch[0] = LOWORD(wparam);
+            wch[1] = HIWORD(wparam);
+            WideCharToMultiByte( CP_ACP, 0, wch, 2, (LPSTR)ch, 2, NULL, NULL );
+            wparam = MAKEWPARAM( ch[0] | (ch[1] << 8), 0 );
         }
         break;
     case WM_IME_CHAR:
