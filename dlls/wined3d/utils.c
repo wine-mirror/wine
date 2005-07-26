@@ -1456,11 +1456,12 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
 #endif
 
 /* Setup this textures matrix according to the texture flags*/
-void set_texture_matrix(const float *smat, DWORD flags)
+void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords)
 {
     float mat[16];
 
     glMatrixMode(GL_TEXTURE);
+    checkGLcall("glMatrixMode(GL_TEXTURE)");
 
     if (flags == D3DTTFF_DISABLE) {
         glLoadIdentity();
@@ -1470,28 +1471,38 @@ void set_texture_matrix(const float *smat, DWORD flags)
 
     if (flags == (D3DTTFF_COUNT1|D3DTTFF_PROJECTED)) {
         ERR("Invalid texture transform flags: D3DTTFF_COUNT1|D3DTTFF_PROJECTED\n");
-        checkGLcall("glLoadIdentity()");
         return;
     }
 
-    memcpy(mat, smat, 16*sizeof(float));
+    memcpy(mat, smat, 16 * sizeof(float));
 
     switch (flags & ~D3DTTFF_PROJECTED) {
-    case D3DTTFF_COUNT1: mat[1] = mat[5] = mat[9] = mat[13] = 0;
+    case D3DTTFF_COUNT1: mat[1] = mat[5] = mat[13] = 0;
     case D3DTTFF_COUNT2: mat[2] = mat[6] = mat[10] = mat[14] = 0;
     default: mat[3] = mat[7] = mat[11] = 0, mat[15] = 1;
     }
 
-    if (flags & D3DTTFF_PROJECTED) switch (flags & ~D3DTTFF_PROJECTED) {
-    case D3DTTFF_COUNT2:
-        mat[3] = mat[1], mat[7] = mat[5], mat[11] = mat[9], mat[15] = mat[13];
-        mat[1] = mat[5] = mat[9] = mat[13] = 0;
+    if (flags & D3DTTFF_PROJECTED) {
+        switch (flags & ~D3DTTFF_PROJECTED) {
+        case D3DTTFF_COUNT1:
+            mat[9] = 0;
         break;
-    case D3DTTFF_COUNT3:
-        mat[3] = mat[2], mat[7] = mat[6], mat[11] = mat[10], mat[15] = mat[14];
-        mat[2] = mat[6] = mat[10] = mat[14] = 0;
-        break;
+        case D3DTTFF_COUNT2:
+            mat[3] = mat[1], mat[7] = mat[5], mat[11] = mat[9], mat[15] = mat[13];
+            mat[1] = mat[5] = mat[9] = mat[13] = 0;
+            break;
+        case D3DTTFF_COUNT3:
+            mat[3] = mat[2], mat[7] = mat[6], mat[11] = mat[10], mat[15] = mat[14];
+            mat[2] = mat[6] = mat[10] = mat[14] = 0;
+            break;
+        }
+    } else if(!calculatedCoords) { /* under directx the R/Z coord can be used for translation, under opengl we use the Q coord instead */
+        mat[12] = mat[8];
+        mat[13] = mat[9];
+        mat[8] = 0;
+        mat[9] = 0;
     }
+
     glLoadMatrixf(mat);
     checkGLcall("glLoadMatrixf(mat)");
 }

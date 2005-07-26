@@ -1615,7 +1615,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANS
             int tex = d3dts - D3DTS_TEXTURE0;
             GLACTIVETEXTURE(tex);
             set_texture_matrix((float *)lpmatrix,
-                               This->updateStateBlock->textureState[tex][WINED3DTSS_TEXTURETRANSFORMFLAGS]);
+                               This->updateStateBlock->textureState[tex][WINED3DTSS_TEXTURETRANSFORMFLAGS], (This->stateBlock->textureState[tex][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != D3DTSS_TCI_PASSTHRU);
         }
 
     } else if (d3dts == D3DTS_VIEW) { /* handle the VIEW matrice */
@@ -3956,6 +3956,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DW
               glDisable(GL_TEXTURE_GEN_S);
               glDisable(GL_TEXTURE_GEN_T);
               glDisable(GL_TEXTURE_GEN_R);
+              glDisable(GL_TEXTURE_GEN_Q);
               checkGLcall("glDisable(GL_TEXTURE_GEN_S,T,R)");
               break;
 
@@ -4070,6 +4071,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DW
                 glDisable(GL_TEXTURE_GEN_S);
                 glDisable(GL_TEXTURE_GEN_T);
                 glDisable(GL_TEXTURE_GEN_R);
+                glDisable(GL_TEXTURE_GEN_Q);
                 FIXME("Unhandled WINED3DTSS_TEXCOORDINDEX %lx\n", Value);
                 break;
             }
@@ -4078,7 +4080,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DW
 
         /* Unhandled */
     case WINED3DTSS_TEXTURETRANSFORMFLAGS :
-        set_texture_matrix((float *)&This->stateBlock->transforms[D3DTS_TEXTURE0 + Stage].u.m[0][0], Value);
+        set_texture_matrix((float *)&This->stateBlock->transforms[D3DTS_TEXTURE0 + Stage].u.m[0][0], Value, (This->stateBlock->textureState[Stage][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != D3DTSS_TCI_PASSTHRU);
         break;
 
     case WINED3DTSS_BUMPENVMAT00          :
