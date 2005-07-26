@@ -39,21 +39,27 @@
 #include "winldap_private.h"
 #include "wldap32.h"
 
+/* Should eventually be determined by the algorithm documented on MSDN. */
+static const WCHAR defaulthost[] = { 'l','o','c','a','l','h','o','s','t',0 };
+
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 WLDAP32_LDAP *ldap_initA( PCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
-    WLDAP32_LDAP *ld;
-    WCHAR *hostnameW;
+    WLDAP32_LDAP *ld = NULL;
+    WCHAR *hostnameW = NULL;
 
     TRACE( "(%s, %ld)\n", debugstr_a(hostname), portnumber );
 
-    hostnameW = strAtoW( hostname );
-    if (!hostnameW) return NULL;
+    if (hostname) {
+        hostnameW = strAtoW( hostname );
+        if (!hostnameW) goto exit;
+    }
 
     ld = ldap_initW( hostnameW, portnumber );
 
+exit:
     strfreeW( hostnameW );
     return ld;
 
@@ -64,16 +70,23 @@ WLDAP32_LDAP *ldap_initA( PCHAR hostname, ULONG portnumber )
 WLDAP32_LDAP *ldap_initW( PWCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
-    LDAP *ld;
-    char *hostnameU;
-    
+    LDAP *ld = NULL;
+    char *hostnameU = NULL;
+
     TRACE( "(%s, %ld)\n", debugstr_w(hostname), portnumber );
 
-    hostnameU = strWtoU( hostname );
-    if (!hostnameU) return NULL;
+    if (hostname) {
+        hostnameU = strWtoU( hostname );
+        if (!hostnameU) goto exit;
+    }
+    else {
+        hostnameU = strWtoU( defaulthost );
+        if (!hostnameU) goto exit;
+    }
 
     ld = ldap_init( hostnameU, portnumber );
 
+exit:
     strfreeU( hostnameU );
     return ld;
 
@@ -84,16 +97,19 @@ WLDAP32_LDAP *ldap_initW( PWCHAR hostname, ULONG portnumber )
 WLDAP32_LDAP *ldap_openA( PCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
-    WLDAP32_LDAP *ld;
-    WCHAR *hostnameW;
+    WLDAP32_LDAP *ld = NULL;
+    WCHAR *hostnameW = NULL;
 
     TRACE( "(%s, %ld)\n", debugstr_a(hostname), portnumber );
 
-    hostnameW = strAtoW( hostname );
-    if (!hostnameW) return NULL;
+    if (hostname) {
+        hostnameW = strAtoW( hostname );
+        if (!hostnameW) goto exit;
+    }
 
     ld = ldap_openW( hostnameW, portnumber );
 
+exit:
     strfreeW( hostnameW );
     return ld;
 
@@ -104,16 +120,23 @@ WLDAP32_LDAP *ldap_openA( PCHAR hostname, ULONG portnumber )
 WLDAP32_LDAP *ldap_openW( PWCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
-    LDAP *ld;
-    char *hostnameU;
+    LDAP *ld = NULL;
+    char *hostnameU = NULL;
 
     TRACE( "(%s, %ld)\n", debugstr_w(hostname), portnumber );
 
-    hostnameU = strWtoU( hostname );
-    if (!hostnameU) return NULL;
+    if (hostname) {
+        hostnameU = strWtoU( hostname );
+        if (!hostnameU) goto exit;
+    }
+    else {
+        hostnameU = strWtoU( defaulthost );
+        if (!hostnameU) goto exit;
+    }
 
     ld = ldap_open( hostnameU, portnumber );
 
+exit:
     strfreeU( hostnameU );
     return ld;
 
@@ -126,20 +149,25 @@ ULONG ldap_start_tls_sA( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
-    LDAPControlW **serverctrlsW, **clientctrlsW;
+    LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
+    ret = LDAP_NO_MEMORY;
 
     TRACE( "(%p, %p, %p, %p, %p)\n", ld, retval, result, serverctrls, clientctrls );
 
     if (!ld) return ~0UL;
 
-    serverctrlsW = controlarrayAtoW( serverctrls );
-    if (!serverctrlsW) return LDAP_NO_MEMORY;
-
-    clientctrlsW = controlarrayAtoW( clientctrls );
-    if (!clientctrlsW) return LDAP_NO_MEMORY;
+    if (serverctrls) {
+        serverctrlsW = controlarrayAtoW( serverctrls );
+        if (!serverctrlsW) goto exit;
+    }
+    if (clientctrls) {
+        clientctrlsW = controlarrayAtoW( clientctrls );
+        if (!clientctrlsW) goto exit;
+    }
 
     ret = ldap_start_tls_sW( ld, retval, result, serverctrlsW, clientctrlsW );
 
+exit:
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
 
@@ -152,20 +180,25 @@ ULONG ldap_start_tls_sW( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
-    LDAPControl **serverctrlsU, **clientctrlsU;
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
+    ret = LDAP_NO_MEMORY;
 
     TRACE( "(%p, %p, %p, %p, %p)\n", ld, retval, result, serverctrls, clientctrls );
 
     if (!ld) return ~0UL;
 
-    serverctrlsU = controlarrayWtoU( serverctrls );
-    if (!serverctrlsU) return LDAP_NO_MEMORY;
-
-    clientctrlsU = controlarrayWtoU( clientctrls );
-    if (!clientctrlsU) return LDAP_NO_MEMORY;
+    if (serverctrls) {
+        serverctrlsU = controlarrayWtoU( serverctrls );
+        if (!serverctrlsU) goto exit;
+    }
+    if (clientctrls) {
+        clientctrlsU = controlarrayWtoU( clientctrls );
+        if (!clientctrlsU) goto exit;
+    }
 
     ret = ldap_start_tls_s( ld, serverctrlsU, clientctrlsU );
 
+exit:
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
 
