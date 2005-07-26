@@ -837,7 +837,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 void BuildDef32File( FILE *outfile, DLLSPEC *spec )
 {
     const char *name;
-    int i;
+    int i, total;
 
     if (spec_file_name)
         fprintf( outfile, "; File generated automatically from %s; do not edit!\n\n",
@@ -851,17 +851,20 @@ void BuildDef32File( FILE *outfile, DLLSPEC *spec )
 
     /* Output the exports and relay entry points */
 
-    for(i = 0; i < spec->nb_entry_points; i++)
+    for (i = total = 0; i < spec->nb_entry_points; i++)
     {
         const ORDDEF *odp = &spec->entry_points[i];
         int is_data = 0;
 
         if (!odp) continue;
-        if (odp->type == TYPE_STUB) continue;
 
         if (odp->name) name = odp->name;
         else if (odp->export_name) name = odp->export_name;
         else continue;
+
+        if (!(odp->flags & FLAG_PRIVATE)) total++;
+
+        if (odp->type == TYPE_STUB) continue;
 
         fprintf(outfile, "  %s", name);
 
@@ -900,6 +903,7 @@ void BuildDef32File( FILE *outfile, DLLSPEC *spec )
         if (odp->flags & FLAG_PRIVATE) fprintf( outfile, " PRIVATE" );
         fprintf( outfile, "\n" );
     }
+    if (!total) warning( "%s: Import library doesn't export anything\n", spec->file_name );
 }
 
 
