@@ -995,7 +995,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             ++gen;
             if ((gen % 10) == 0) {
                 snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm", This, This->glDescription.target, This->glDescription.level, gen);
-                IWineD3DSurfaceImpl_SaveSnapshot((IWineD3DSurface *) This, buffer);
+                IWineD3DSurfaceImpl_SaveSnapshot(iface, buffer);
             }
             /*
              * debugging crash code

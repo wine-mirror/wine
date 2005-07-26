@@ -226,7 +226,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
                 checkGLcall("glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);");
 
                 /* If this swapchain is currently the active context then make this swapchain active */
-                if(IWineD3DSurface_GetContainer((IWineD3DSurface *)This->wineD3DDevice->renderTarget, &IID_IWineD3DSwapChain, (void **)&tmp) == D3D_OK){
+                if(IWineD3DSurface_GetContainer(This->wineD3DDevice->renderTarget, &IID_IWineD3DSwapChain, (void **)&tmp) == D3D_OK){
                     if(tmp != (IUnknown *)This){
                         glXMakeCurrent(This->display, currentDrawable, currentContext);
                         checkGLcall("glXMakeCurrent");
@@ -346,7 +346,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UIN
 
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
 
-    *ppBackBuffer = (IWineD3DSurface *) This->backBuffer;
+    *ppBackBuffer = This->backBuffer;
     TRACE("(%p) : BackBuf %d Type %d  returning %p\n", This, iBackBuffer, Type, *ppBackBuffer);
 
     if (iBackBuffer > This->presentParms.BackBufferCount - 1) {

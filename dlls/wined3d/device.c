@@ -5148,7 +5148,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface,DWORD 
     if(RenderTargetIndex > 0)
         FIXME("(%p) : RenderTargetIndex %ld >0 not currently supported\n", This, RenderTargetIndex);
 
-    *ppRenderTarget = (IWineD3DSurface *)This->renderTarget;
+    *ppRenderTarget = This->renderTarget;
     TRACE("(%p) : RenderTarget %ld Index returning %p\n", This, RenderTargetIndex, *ppRenderTarget);
     /* Note inc ref on returned surface */
     if(*ppRenderTarget != NULL)
@@ -5158,7 +5158,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface,DWORD 
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice* iface, IWineD3DSurface **ppZStencilSurface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    *ppZStencilSurface = (IWineD3DSurface *)This->depthStencilBuffer;
+    *ppZStencilSurface = This->depthStencilBuffer;
     TRACE("(%p) : zStencilSurface  returning %p\n", This,  *ppZStencilSurface);
 
     if(*ppZStencilSurface != NULL) {

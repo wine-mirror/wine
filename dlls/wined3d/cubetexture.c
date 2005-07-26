@@ -272,7 +272,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *iface, D3
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
     if (Level < This->baseTexture.levels) {
-        hr = IWineD3DSurface_UnlockRect((IWineD3DSurface *) This->surfaces[FaceType][Level]);
+        hr = IWineD3DSurface_UnlockRect(This->surfaces[FaceType][Level]);
     }
 
     if (D3D_OK == hr) {

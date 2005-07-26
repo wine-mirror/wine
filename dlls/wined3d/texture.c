@@ -208,7 +208,7 @@ HRESULT WINAPI IWineD3DTextureImpl_GetLevelDesc(IWineD3DTexture *iface, UINT Lev
 
     if (Level < This->baseTexture.levels) {
         TRACE("(%p) Level (%d)\n", This, Level);
-        return IWineD3DSurface_GetDesc((IWineD3DSurface *) This->surfaces[Level], pDesc);
+        return IWineD3DSurface_GetDesc(This->surfaces[Level], pDesc);
     }
     FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
     return D3DERR_INVALIDCALL;
@@ -237,7 +237,7 @@ HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface, UINT Level, 
     HRESULT hr = D3DERR_INVALIDCALL;
 
     if (Level < This->baseTexture.levels) {
-        hr = IWineD3DSurface_LockRect((IWineD3DSurface *) This->surfaces[Level], pLockedRect, pRect, Flags);
+        hr = IWineD3DSurface_LockRect(This->surfaces[Level], pLockedRect, pRect, Flags);
     }
     if (D3D_OK == hr) {
         TRACE("(%p) Level (%d) success\n", This, Level);
@@ -267,7 +267,7 @@ HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, CONST RE
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     This->baseTexture.dirty = TRUE;
     TRACE("(%p) : dirtyfication of surface Level (0)\n", This);
-    return IWineD3DSurface_AddDirtyRect((IWineD3DSurface *)This->surfaces[0], pDirtyRect);
+    return IWineD3DSurface_AddDirtyRect(This->surfaces[0], pDirtyRect);
 }
 
 const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =

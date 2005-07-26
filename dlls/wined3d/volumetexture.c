@@ -60,7 +60,7 @@ ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *iface) {
         for (i = 0; i < This->baseTexture.levels; i++) {
             if (This->volumes[i] != NULL) {
                 TRACE("(%p) : Releasing volume %p\n", This, This->volumes[i]);
-                IWineD3DVolume_Release((IWineD3DSurface *) This->volumes[i]);
+                IWineD3DVolume_Release(This->volumes[i]);
             }
         }
         IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *) iface);
