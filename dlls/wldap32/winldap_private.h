@@ -22,6 +22,27 @@
  * native headers.
  */
 
+typedef enum {
+    WLDAP32_LDAP_SERVER_DOWN             =   0x51,
+    WLDAP32_LDAP_LOCAL_ERROR             =   0x52,
+    WLDAP32_LDAP_ENCODING_ERROR          =   0x53,
+    WLDAP32_LDAP_DECODING_ERROR          =   0x54,
+    WLDAP32_LDAP_TIMEOUT                 =   0x55,
+    WLDAP32_LDAP_AUTH_UNKNOWN            =   0x56,
+    WLDAP32_LDAP_FILTER_ERROR            =   0x57,
+    WLDAP32_LDAP_USER_CANCELLED          =   0x58,
+    WLDAP32_LDAP_PARAM_ERROR             =   0x59,
+    WLDAP32_LDAP_NO_MEMORY               =   0x5a,
+    WLDAP32_LDAP_CONNECT_ERROR           =   0x5b,
+    WLDAP32_LDAP_NOT_SUPPORTED           =   0x5c,
+    WLDAP32_LDAP_NO_RESULTS_RETURNED     =   0x5e,
+    WLDAP32_LDAP_CONTROL_NOT_FOUND       =   0x5d,
+    WLDAP32_LDAP_MORE_RESULTS_TO_RETURN  =   0x5f,
+
+    WLDAP32_LDAP_CLIENT_LOOP             =   0x60,
+    WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED =   0x61
+} LDAP_RETCODE;
+
 typedef struct ldap
 {
     struct
