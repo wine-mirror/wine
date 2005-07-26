@@ -819,7 +819,7 @@ static void test_HTMLDocument(void)
 
     static const WCHAR wszHTMLDocumentTest[] =
         {'H','T','M','L','D','o','c','u','m','e','n','t','T','e','s','t',0};
-    static const WNDCLASSEXW wndclass = {
+    static WNDCLASSEXW wndclass = {
         sizeof(WNDCLASSEXW),
         0,
         wnd_proc,
