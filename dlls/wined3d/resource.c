@@ -70,6 +70,11 @@ void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface){
 
     HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
     This->resource.allocatedMemory = 0;
+
+    if (This->resource.wineD3DDevice != NULL) {
+        IWineD3DDevice_ResourceReleased((IWineD3DDevice *)This->resource.wineD3DDevice, iface);
+    }/* NOTE: this is not really an error for systemmem resoruces */
+    return;
 }
 
 /* IWineD3DResource Interface follow: */

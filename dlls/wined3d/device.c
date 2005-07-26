@@ -59,6 +59,10 @@ BOOL pbuffer_support     = TRUE;
 /* allocate one pbuffer per surface */
 BOOL pbuffer_per_surface = FALSE;
 
+/* static function declarations */
+static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource);
+
+
 /* helper macros */
 #define D3DMEMCHECK(object, ppResult) if(NULL == object) { *ppResult = NULL; WARN("Out of memory\n"); return D3DERR_OUTOFVIDEOMEMORY;}
 
@@ -102,6 +106,7 @@ BOOL pbuffer_per_surface = FALSE;
         return D3DERR_OUTOFVIDEOMEMORY; \
     } \
     *pp##type = (IWineD3D##type *) object; \
+    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object) ;\
     TRACE("(%p) : Created resource %p\n", This, object); \
 }
 
@@ -5724,6 +5729,176 @@ void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT iSwapCha
     return;
 }
 
+
+/** ********************************************************
+*   Notification functions
+** ********************************************************/
+/** This function must be called in the release of a resource when ref == 0,
+* the contents of resource must still be correct,
+* any handels to other resource held by the caller must be closed
+* (e.g. a texture should release all held surfaces because telling the device that it's been released.)
+ *****************************************************/
+static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource){
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    ResourceList* resourceList;
+
+    TRACE("(%p) : resource %p\n", This, resource);
+#if 0
+    EnterCriticalSection(&resourceStoreCriticalSection);
+#endif
+    /* add a new texture to the frot of the linked list */
+    resourceList = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ResourceList));
+    resourceList->resource = resource;
+
+    /* Get the old head */
+    resourceList->next = This->resources;
+
+    This->resources = resourceList;
+    TRACE("Added resource %p with element %p pointing to %p\n", resource, resourceList, resourceList->next);
+
+#if 0
+    LeaveCriticalSection(&resourceStoreCriticalSection);
+#endif
+    return;
+}
+
+static void WINAPI IWineD3DDeviceImpl_RemoveResource(IWineD3DDevice *iface, IWineD3DResource *resource){
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    ResourceList* resourceList = NULL;
+    ResourceList* previousResourceList = NULL;
+    
+    TRACE("(%p) : resource %p\n", This, resource);
+
+#if 0
+    EnterCriticalSection(&resourceStoreCriticalSection);
+#endif
+    resourceList = This->resources;
+
+    while (resourceList != NULL) {
+        if(resourceList->resource == resource) break;
+        previousResourceList = resourceList;
+        resourceList = resourceList->next;
+    }
+
+    if (resourceList == NULL) {
+        FIXME("Attempted to remove resource %p that hasn't been stored\n", resource);
+#if 0
+        LeaveCriticalSection(&resourceStoreCriticalSection);
+#endif
+        return;
+    } else {
+            TRACE("Found resource  %p with element %p pointing to %p (previous %p)\n", resourceList->resource, resourceList, resourceList->next, previousResourceList);
+    }
+    /* make sure we don't leave a hole in the list */
+    if (previousResourceList != NULL) {
+        previousResourceList->next = resourceList->next;
+    } else {
+        This->resources = resourceList->next;
+    }
+
+#if 0
+    LeaveCriticalSection(&resourceStoreCriticalSection);
+#endif
+    return;
+}
+
+
+void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IWineD3DResource *resource){
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    int counter;
+
+    TRACE("(%p) : resource %p\n", This, resource);
+    switch(IWineD3DResource_GetType(resource)){
+        case D3DRTYPE_SURFACE:
+        /* TODO: check front and back buffers, rendertargets etc..  possibly swapchains? */
+        break;
+        case D3DRTYPE_TEXTURE:
+        case D3DRTYPE_CUBETEXTURE:
+        case D3DRTYPE_VOLUMETEXTURE:
+                for (counter = 0; counter < GL_LIMITS(textures); counter++) {
+                    if (This->stateBlock != NULL && This->stateBlock->textures[counter] == (IWineD3DBaseTexture *)resource) {
+                        IUnknown *textureParent;
+                        IWineD3DBaseTexture_GetParent(This->stateBlock->textures[counter], &textureParent);
+                        /* TODO: Change this to a warn when we are sure our internal reference counting is ok. */
+                        FIXME("Texture being released is still by a stateblock, Stage = %u Texture = %p Parent = %p\n", counter, resource, textureParent);
+                        IUnknown_Release(textureParent);
+                        This->stateBlock->textures[counter] = NULL;
+                    }
+                    if (This->updateStateBlock != This->stateBlock ){
+                        if (This->updateStateBlock->textures[counter] == (IWineD3DBaseTexture *)resource) {
+                            IUnknown *textureParent;
+                            IWineD3DBaseTexture_GetParent(This->updateStateBlock->textures[counter], &textureParent);
+                            /* TODO: Change this to a warn when we are sure our internal reference counting is ok. */
+                            FIXME("Texture being released is still by a stateblock, Stage = %u Texture = %p Parent = %p\n", counter, resource, textureParent);
+                            IUnknown_Release(textureParent);
+                            This->updateStateBlock->textures[counter] = NULL;
+                        }
+                    }
+                }
+        break;
+        case D3DRTYPE_VOLUME:
+        /* TODO: nothing really? */
+        break;
+        case D3DRTYPE_VERTEXBUFFER:
+        /* MSDN: When an application no longer holds a references to this interface, the interface will automatically be freed. */
+        {
+            int streamNumber;
+            TRACE("Cleaning up stream pointers\n");
+
+            for(streamNumber = 0; streamNumber < MAX_STREAMS; streamNumber ++){
+                /* FINDOUT: should a warn be generated if were recording and updateStateBlock->streamSource is lost?
+                FINDOUT: should changes.streamSource[StreamNumber] be set ?
+                */
+                if (This->updateStateBlock != NULL ) { /* ==NULL when device is being destroyed */
+                    if ((IWineD3DResource *)This->updateStateBlock->streamSource[streamNumber] == resource) {
+                        FIXME("Vertex buffer released whlst bound to a state block  stream %d\n", streamNumber);
+                        This->updateStateBlock->streamSource[streamNumber] = 0;
+                        /* Set changed flag? */
+                    }
+                }
+                if (This->stateBlock != NULL ) { /* only happens if their is an error in the application, or on reset/release (because we don't manage internal tracknig properly) */
+                    if ((IWineD3DResource *)This->stateBlock->streamSource[streamNumber] == resource) {
+                        TRACE("Vertex buffer released whlst bound to a state block  stream %d\n", streamNumber);
+                        This->stateBlock->streamSource[streamNumber] = 0;
+                    }
+                }
+#if 0   /* TODO: Manage internal tracking properly so that 'this shouldn't happen' */
+                 else { /* This shouldn't happen */
+                    FIXME("Calling application has released the device before relasing all the resources bound to the device\n");
+                }
+#endif
+
+            }
+        }
+        break;
+        case D3DRTYPE_INDEXBUFFER:
+        /* MSDN: When an application no longer holds a references to this interface, the interface will automatically be freed.*/
+        if (This->updateStateBlock != NULL ) { /* ==NULL when device is being destroyed */
+            if (This->updateStateBlock->pIndexData == (IWineD3DIndexBuffer *)resource) {
+                This->updateStateBlock->pIndexData =  NULL;
+            }
+        }
+        if (This->stateBlock != NULL ) { /* ==NULL when device is being destroyed */
+            if (This->stateBlock->pIndexData == (IWineD3DIndexBuffer *)resource) {
+                This->stateBlock->pIndexData =  NULL;
+            }
+        }
+
+        break;
+        default:
+        FIXME("(%p) unknown resource type %p %u \n", This, resource, IWineD3DResource_GetType(resource));
+        break;
+    }
+
+
+    /* Remove the resoruce from the resourceStore */
+    IWineD3DDeviceImpl_RemoveResource(iface, resource);
+
+    TRACE("Resource released\n");
+
+}
+
+
 /**********************************************************
  * IWineD3DDevice VTbl follows
  **********************************************************/
@@ -5859,7 +6034,9 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetRenderTargetData,
     IWineD3DDeviceImpl_GetFrontBufferData,
     /*** Internal use IWineD3DDevice methods ***/
-    IWineD3DDeviceImpl_SetupTextureStates
+    IWineD3DDeviceImpl_SetupTextureStates,
+    /*** object tracking ***/
+    IWineD3DDeviceImpl_ResourceReleased
 };
 
 

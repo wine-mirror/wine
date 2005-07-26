@@ -411,6 +411,10 @@ this needs to be migrated to a list and some option availalbe for controle the c
 */
 #define CONTEXT_CACHE 100
 
+typedef struct ResourceList {
+    IWineD3DResource         *resource;
+    struct ResourceList      *next;
+} ResourceList;
 
 /*****************************************************************************
  * IWineD3DDevice implementation structure
@@ -458,6 +462,8 @@ typedef struct IWineD3DDeviceImpl
     /* TODO: Replace with a linked list */
     IWineD3DSwapChain      *swapchains[MAX_SWAPCHAINS]; /* no-one wil ever need more that MAX_SWAPCHAINS swapchains */
     int                     numberOfSwapChains;
+
+    ResourceList           *resources; /* a linked list to track resources created by the device */
 
     /* Render Target Support */
     IWineD3DSurface        *depthStencilBuffer;

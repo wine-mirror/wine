@@ -388,6 +388,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(GetFrontBufferData)(THIS_ UINT iSwapChain,IWineD3DSurface* pSurface) PURE;    
     /*** Internal use IWineD3Device methods ***/
     STDMETHOD_(void, SetupTextureStates)(THIS_ DWORD Stage, DWORD Flags);
+    /*** object tracking ***/
+    STDMETHOD_(void, ResourceReleased)(THIS_ IWineD3DResource *resource);
 };
 #undef INTERFACE
 
@@ -514,6 +516,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_GetRenderTargetData(p,a,b)               (p)->lpVtbl->GetRenderTargetData(p,a,b)
 #define IWineD3DDevice_GetFrontBufferData(p,a,b)                (p)->lpVtbl->GetFrontBufferData(p,a,b)
 #define IWineD3DDevice_SetupTextureStates(p,a,b)                (p)->lpVtbl->SetupTextureStates(p,a,b)
+#define IWineD3DDevice_ResourceReleased(p,a)                    (p)->lpVtbl->ResourceReleased(p,a)
 #endif
 
 /*****************************************************************************
