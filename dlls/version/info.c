@@ -562,62 +562,22 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
  *           GetFileVersionInfoSizeA         [VERSION.@]
  */
 DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
-{   UNICODE_STRING filenameW;
+{
+    UNICODE_STRING filenameW;
     DWORD retval;
 
     TRACE("(%s,%p)\n", debugstr_a(filename), handle );
 
-    if(filename) RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
-    else filenameW.Buffer = NULL;
+    if(filename)
+        RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
+    else
+        filenameW.Buffer = NULL;
+
     retval = GetFileVersionInfoSizeW(filenameW.Buffer, handle);
+
     RtlFreeUnicodeString(&filenameW);
+
     return retval;
-}
-
-/***********************************************************************
- *           GetFileVersionInfoA             [VERSION.@]
- */
-BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
-                                    DWORD datasize, LPVOID data )
-{   UNICODE_STRING filenameW;
-    DWORD len;
-
-    TRACE("(%s,%ld,size=%ld,data=%p)\n",
-                debugstr_a(filename), handle, datasize, data );
-
-    if (!data)
-    {
-        SetLastError(ERROR_INVALID_DATA);
-        return FALSE;
-    }
-    if(filename) RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
-    else filenameW.Buffer = NULL;
-    len = VERSION_GetFileVersionInfo_PE(filenameW.Buffer, datasize, data);
-    /* 0xFFFFFFFF means: file is a PE module, but VERSION_INFO not found */
-    RtlFreeUnicodeString(&filenameW);
-    if (len == 0xFFFFFFFF)
-    {
-        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
-        return FALSE;
-    }
-
-    if (!len)
-    {
-        len = VERSION_GetFileVersionInfo_16(filename, datasize, data);
-        /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
-        if (!len || len == 0xFFFFFFFF)
-        {
-            SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
-            return FALSE;
-        }
-    }
-
-    /* Don't convert a possible win32 to a win16 stucture, Windows always uses win32
-     * for storing the structure on a unicode enabled system
-     */
-
-    SetLastError(0);
-    return TRUE;
 }
 
 /***********************************************************************
@@ -675,6 +635,27 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
     return TRUE;
 }
 
+/***********************************************************************
+ *           GetFileVersionInfoA             [VERSION.@]
+ */
+BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
+                                    DWORD datasize, LPVOID data )
+{
+    UNICODE_STRING filenameW;
+    BOOL retval;
+                                                                                                                                               
+    TRACE("(%s,%ld,size=%ld,data=%p)\n",
+                debugstr_a(filename), handle, datasize, data );
+                                                                                                                                               
+    if(filename)
+        RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
+    else
+        filenameW.Buffer = NULL;
+                                                                                                                                               
+    retval = GetFileVersionInfoW(filenameW.Buffer, handle, datasize, data);
+                                                                                                                                               
+    return retval;
+}
 
 /***********************************************************************
  *           VersionInfo16_FindChild             [internal]
