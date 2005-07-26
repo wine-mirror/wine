@@ -339,7 +339,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 	    }
 
 	    DeleteObject(hClipRgn);
-	    DeleteDC(hClipDC);
+	    ReleaseDC(hwnd, hClipDC);
 	}
         
 	if (((phdi->fmt & HDF_STRING)
