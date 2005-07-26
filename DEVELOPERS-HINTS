@@ -102,6 +102,7 @@ DLLs (under dlls/):
 	netapi32/		- Network interface
 	newdev/			- New Hardware Device Library
 	ntdll/			- NT implementation of kernel calls
+	objsel/			- Object Picker Dialog
 	odbc32/			- Open DataBase Connectivity driver manager
 	odbccp32/		- Open DataBase Connectivity driver installer
 	ole32/			- 32 bit OLE 2.0 libraries

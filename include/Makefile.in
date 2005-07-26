@@ -190,6 +190,7 @@ WINDOWS_INCLUDES = \
 	ntsecapi.h \
 	ntstatus.h \
 	objbase.h \
+	objsel.h \
 	odbcinst.h \
 	ole2.h \
 	ole2ver.h \

@@ -98,6 +98,7 @@ BASEDIRS = \
 	netapi32 \
 	newdev \
 	ntdll \
+	objsel \
 	odbc32 \
 	odbccp32 \
 	ole32 \
@@ -346,6 +347,7 @@ SYMLINKS_SO = \
 	netapi32.dll.so \
 	newdev.dll.so \
 	ntdll.dll.so \
+	objsel.dll.so \
 	odbc32.dll.so \
 	odbccp32.dll.so \
 	ole32.dll.so \
@@ -742,6 +744,9 @@ newdev.dll.so: newdev/newdev.dll.so
 
 ntdll.dll.so: ntdll/ntdll.dll.so
 	$(RM) $@ && $(LN_S) ntdll/ntdll.dll.so $@
+
+objsel.dll.so: objsel/objsel.dll.so
+	$(RM) $@ && $(LN_S) objsel/objsel.dll.so $@
 
 odbc32.dll.so: odbc32/odbc32.dll.so
 	$(RM) $@ && $(LN_S) odbc32/odbc32.dll.so $@
@@ -1747,6 +1752,7 @@ mswsock/mswsock.dll.so: mswsock
 netapi32/netapi32.dll.so: netapi32
 newdev/newdev.dll.so: newdev
 ntdll/ntdll.dll.so: ntdll
+objsel/objsel.dll.so: objsel
 odbc32/odbc32.dll.so: odbc32
 odbccp32/odbccp32.dll.so: odbccp32
 ole32/ole32.dll.so: ole32
