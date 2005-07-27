@@ -414,10 +414,7 @@ static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, DWORD datasize, LPV
                                  offset, datasize, data );
         if (len)
         {
-            if ( VersionInfoIs16( data ) )
-                vffi = (VS_FIXEDFILEINFO *)VersionInfo16_Value( (VS_VERSION_INFO_STRUCT16 *)data );
-            else
-                vffi = (VS_FIXEDFILEINFO *)VersionInfo32_Value( (VS_VERSION_INFO_STRUCT32 *)data );
+            vffi = (VS_FIXEDFILEINFO *)VersionInfo16_Value( (VS_VERSION_INFO_STRUCT16 *)data );
 
             if ( vffi->dwSignature == VS_FFI_SIGNATURE )
             {
@@ -427,14 +424,6 @@ static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, DWORD datasize, LPV
                 if ( TRACE_ON(ver) )
                     print_vffi_debug( vffi );
 
-                if ( datasize >= sizeof(VS_VERSION_INFO_STRUCT16)
-                     && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength
-                     && !VersionInfoIs16( data ) )
-                {
-                    /* convert resource from PE format to NE format */
-                    ConvertVersionInfo32To16( (VS_VERSION_INFO_STRUCT32 *)data,
-                                              (VS_VERSION_INFO_STRUCT16 *)data );
-                }
                 return len;
             }
         }
