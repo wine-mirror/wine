@@ -7516,7 +7516,6 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   LISTVIEW_INFO *infoPtr;
   UINT uView = lpcs->style & LVS_TYPEMASK;
   LOGFONTW logFont;
-  BOOL themingActive = IsAppThemed() && IsThemeActive();
 
   TRACE("(lpcs=%p)\n", lpcs);
 
@@ -7599,7 +7598,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     }
   }
 
-  if (themingActive) OpenThemeData(hwnd, themeClass);
+  OpenThemeData(hwnd, themeClass);
 
   return 0;
 

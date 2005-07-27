@@ -1320,7 +1320,6 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TEXTMETRICW tm;
     HFONT hOldFont;
     HDC   hdc;
-    BOOL themingActive = IsAppThemed() && IsThemeActive();
 
     infoPtr = (HEADER_INFO *)Alloc (sizeof(HEADER_INFO));
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
@@ -1350,7 +1349,7 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     SelectObject (hdc, hOldFont);
     ReleaseDC (0, hdc);
 
-    if (themingActive) OpenThemeData(hwnd, themeClass);
+    OpenThemeData(hwnd, themeClass);
 
     return 0;
 }
