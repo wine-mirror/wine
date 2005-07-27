@@ -29,9 +29,6 @@
 
 #include "wine/debug.h"
 
-
-/* #define ICOM_THIS_From_IROTData(class, name) class* This = (class*)(((char*)name)-sizeof(void*)) */
-
 WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 
 static ULONG WINAPI DEVENUM_IEnumMoniker_AddRef(LPENUMMONIKER iface);

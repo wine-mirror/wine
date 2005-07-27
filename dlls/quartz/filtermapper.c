@@ -52,8 +52,10 @@ typedef struct FilterMapper2Impl
 static const IFilterMapper2Vtbl fm2vtbl;
 static const IFilterMapperVtbl fmvtbl;
 
-#define _IFilterMapper_Offset ((int)(&(((FilterMapper2Impl*)0)->lpVtblFilterMapper)))
-#define ICOM_THIS_From_IFilterMapper(impl, iface) impl* This = (impl*)(((char*)iface)-_IFilterMapper_Offset)
+static inline FilterMapper2Impl *impl_from_IFilterMapper( IFilterMapper *iface )
+{
+    return (FilterMapper2Impl *)((char*)iface - FIELD_OFFSET(FilterMapper2Impl, lpVtblFilterMapper));
+}
 
 static const WCHAR wszClsidSlash[] = {'C','L','S','I','D','\\',0};
 static const WCHAR wszSlashInstance[] = {'\\','I','n','s','t','a','n','c','e','\\',0};
@@ -1053,7 +1055,7 @@ static const IFilterMapper2Vtbl fm2vtbl =
 
 static HRESULT WINAPI FilterMapper_QueryInterface(IFilterMapper * iface, REFIID riid, LPVOID *ppv)
 {
-    ICOM_THIS_From_IFilterMapper(FilterMapper2Impl, iface);
+    FilterMapper2Impl *This = impl_from_IFilterMapper(iface);
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
@@ -1062,14 +1064,14 @@ static HRESULT WINAPI FilterMapper_QueryInterface(IFilterMapper * iface, REFIID 
 
 static ULONG WINAPI FilterMapper_AddRef(IFilterMapper * iface)
 {
-    ICOM_THIS_From_IFilterMapper(FilterMapper2Impl, iface);
+    FilterMapper2Impl *This = impl_from_IFilterMapper(iface);
 
     return FilterMapper2_AddRef((IFilterMapper2*)This);
 }
 
 static ULONG WINAPI FilterMapper_Release(IFilterMapper * iface)
 {
-    ICOM_THIS_From_IFilterMapper(FilterMapper2Impl, iface);
+    FilterMapper2Impl *This = impl_from_IFilterMapper(iface);
 
     return FilterMapper2_Release((IFilterMapper2*)This);
 }
@@ -1088,7 +1090,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
     CLSID clsOutMaj,
     CLSID clsOutSub)
 {
-    ICOM_THIS_From_IFilterMapper(FilterMapper2Impl, iface);
+    FilterMapper2Impl *This = impl_from_IFilterMapper(iface);
     GUID InputType[2];
     GUID OutputType[2];
     IEnumMoniker* ppEnumMoniker;

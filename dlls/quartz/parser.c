@@ -54,8 +54,11 @@ static HRESULT Parser_ChangeRate(LPVOID iface);
 
 static HRESULT Parser_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 
-#define _IMediaSeeking_Offset ((int)(&(((Parser_OutputPin*)0)->mediaSeeking)))
-#define ICOM_THIS_From_IMediaSeeking(impl, iface) impl* This = (impl*)(((char*)iface)-_IMediaSeeking_Offset);
+static inline Parser_OutputPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
+{
+    return (Parser_OutputPin *)((char*)iface - FIELD_OFFSET(Parser_OutputPin, mediaSeeking.lpVtbl));
+}
+
 
 HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect)
 {
@@ -550,21 +553,21 @@ static HRESULT Parser_ChangeRate(LPVOID iface)
 
 static HRESULT WINAPI Parser_Seeking_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS_From_IMediaSeeking(Parser_OutputPin, iface);
+    Parser_OutputPin *This = impl_from_IMediaSeeking(iface);
 
     return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
 }
 
 static ULONG WINAPI Parser_Seeking_AddRef(IMediaSeeking * iface)
 {
-    ICOM_THIS_From_IMediaSeeking(Parser_OutputPin, iface);
+    Parser_OutputPin *This = impl_from_IMediaSeeking(iface);
 
     return IUnknown_AddRef((IUnknown *)This);
 }
 
 static ULONG WINAPI Parser_Seeking_Release(IMediaSeeking * iface)
 {
-    ICOM_THIS_From_IMediaSeeking(Parser_OutputPin, iface);
+    Parser_OutputPin *This = impl_from_IMediaSeeking(iface);
 
     return IUnknown_Release((IUnknown *)This);
 }

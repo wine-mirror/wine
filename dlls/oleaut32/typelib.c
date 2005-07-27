@@ -885,8 +885,10 @@ typedef struct tagITypeLibImpl
 static const ITypeLib2Vtbl tlbvt;
 static const ITypeCompVtbl tlbtcvt;
 
-#define _ITypeComp_Offset(impl) ((int)(&(((impl*)0)->lpVtblTypeComp)))
-#define ICOM_THIS_From_ITypeComp(impl, iface) impl* This = (impl*)(((char*)iface)-_ITypeComp_Offset(impl))
+static inline ITypeLibImpl *impl_from_ITypeComp( ITypeComp *iface )
+{
+    return (ITypeLibImpl *)((char*)iface - FIELD_OFFSET(ITypeLibImpl, lpVtblTypeComp));
+}
 
 /* ITypeLib methods */
 static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength);
@@ -994,6 +996,11 @@ typedef struct tagITypeInfoImpl
     TLBCustData * pCustData;        /* linked list to cust data; */
     struct tagITypeInfoImpl * next;
 } ITypeInfoImpl;
+
+static inline ITypeInfoImpl *info_impl_from_ITypeComp( ITypeComp *iface )
+{
+    return (ITypeInfoImpl *)((char*)iface - FIELD_OFFSET(ITypeInfoImpl, lpVtblTypeComp));
+}
 
 static const ITypeInfo2Vtbl tinfvt;
 static const ITypeCompVtbl  tcompvt;
@@ -4003,23 +4010,23 @@ static const ITypeLib2Vtbl tlbvt = {
 
 static HRESULT WINAPI ITypeLibComp_fnQueryInterface(ITypeComp * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS_From_ITypeComp(ITypeLibImpl, iface);
+    ITypeLibImpl *This = impl_from_ITypeComp(iface);
 
-    return ITypeInfo_QueryInterface((ITypeInfo *)This, riid, ppv);
+    return ITypeLib2_QueryInterface((ITypeLib *)This, riid, ppv);
 }
 
 static ULONG WINAPI ITypeLibComp_fnAddRef(ITypeComp * iface)
 {
-    ICOM_THIS_From_ITypeComp(ITypeLibImpl, iface);
+    ITypeLibImpl *This = impl_from_ITypeComp(iface);
 
-    return ITypeInfo_AddRef((ITypeInfo *)This);
+    return ITypeLib2_AddRef((ITypeLib2 *)This);
 }
 
 static ULONG WINAPI ITypeLibComp_fnRelease(ITypeComp * iface)
 {
-    ICOM_THIS_From_ITypeComp(ITypeLibImpl, iface);
+    ITypeLibImpl *This = impl_from_ITypeComp(iface);
 
-    return ITypeInfo_Release((ITypeInfo *)This);
+    return ITypeLib2_Release((ITypeLib2 *)This);
 }
 
 static HRESULT WINAPI ITypeLibComp_fnBind(
@@ -5955,21 +5962,21 @@ HRESULT WINAPI CreateDispTypeInfo(
 
 static HRESULT WINAPI ITypeComp_fnQueryInterface(ITypeComp * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS_From_ITypeComp(ITypeInfoImpl, iface);
+    ITypeInfoImpl *This = info_impl_from_ITypeComp(iface);
 
     return ITypeInfo_QueryInterface((ITypeInfo *)This, riid, ppv);
 }
 
 static ULONG WINAPI ITypeComp_fnAddRef(ITypeComp * iface)
 {
-    ICOM_THIS_From_ITypeComp(ITypeInfoImpl, iface);
+    ITypeInfoImpl *This = info_impl_from_ITypeComp(iface);
 
     return ITypeInfo_AddRef((ITypeInfo *)This);
 }
 
 static ULONG WINAPI ITypeComp_fnRelease(ITypeComp * iface)
 {
-    ICOM_THIS_From_ITypeComp(ITypeInfoImpl, iface);
+    ITypeInfoImpl *This = info_impl_from_ITypeComp(iface);
 
     return ITypeInfo_Release((ITypeInfo *)This);
 }
@@ -5983,7 +5990,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
     DESCKIND * pDescKind,
     BINDPTR * pBindPtr)
 {
-    ICOM_THIS_From_ITypeComp(ITypeInfoImpl, iface);
+    ITypeInfoImpl *This = info_impl_from_ITypeComp(iface);
     TLBFuncDesc * pFDesc;
     TLBVarDesc * pVDesc;
 

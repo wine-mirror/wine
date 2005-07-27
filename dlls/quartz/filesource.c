@@ -58,11 +58,10 @@ static const IAsyncReaderVtbl FileAsyncReader_Vtbl;
 
 static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 
-#define _IFileSourceFilter_Offset ((int)(&(((AsyncReader*)0)->lpVtblFSF)))
-#define ICOM_THIS_From_IFileSourceFilter(impl, iface) impl* This = (impl*)(((char*)iface)-_IFileSourceFilter_Offset);
-
-#define _IAsyncReader_Offset ((int)(&(((FileAsyncReader*)0)->lpVtblAR)))
-#define ICOM_THIS_From_IAsyncReader(impl, iface) impl* This = (impl*)(((char*)iface)-_IAsyncReader_Offset);
+static inline AsyncReader *impl_from_IFileSourceFilter( IFileSourceFilter *iface )
+{
+    return (AsyncReader *)((char*)iface - FIELD_OFFSET(AsyncReader, lpVtblFSF));
+}
 
 static HRESULT process_extensions(HKEY hkeyExtensions, LPCOLESTR pszFileName, GUID * majorType, GUID * minorType)
 {
@@ -541,21 +540,21 @@ static const IBaseFilterVtbl AsyncReader_Vtbl =
 
 static HRESULT WINAPI FileSource_QueryInterface(IFileSourceFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS_From_IFileSourceFilter(AsyncReader, iface);
+    AsyncReader *This = impl_from_IFileSourceFilter(iface);
 
     return IBaseFilter_QueryInterface((IFileSourceFilter*)&This->lpVtbl, riid, ppv);
 }
 
 static ULONG WINAPI FileSource_AddRef(IFileSourceFilter * iface)
 {
-    ICOM_THIS_From_IFileSourceFilter(AsyncReader, iface);
+    AsyncReader *This = impl_from_IFileSourceFilter(iface);
 
     return IBaseFilter_AddRef((IFileSourceFilter*)&This->lpVtbl);
 }
 
 static ULONG WINAPI FileSource_Release(IFileSourceFilter * iface)
 {
-    ICOM_THIS_From_IFileSourceFilter(AsyncReader, iface);
+    AsyncReader *This = impl_from_IFileSourceFilter(iface);
 
     return IBaseFilter_Release((IFileSourceFilter*)&This->lpVtbl);
 }
@@ -565,7 +564,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     HRESULT hr;
     HANDLE hFile;
     IAsyncReader * pReader = NULL;
-    ICOM_THIS_From_IFileSourceFilter(AsyncReader, iface);
+    AsyncReader *This = impl_from_IFileSourceFilter(iface);
 
     TRACE("(%s, %p)\n", debugstr_w(pszFileName), pmt);
 
@@ -634,7 +633,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
 
 static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter * iface, LPOLESTR * ppszFileName, AM_MEDIA_TYPE * pmt)
 {
-    ICOM_THIS_From_IFileSourceFilter(AsyncReader, iface);
+    AsyncReader *This = impl_from_IFileSourceFilter(iface);
     
     TRACE("(%p, %p)\n", ppszFileName, pmt);
 
@@ -696,6 +695,11 @@ typedef struct FileAsyncReader
     DATAREQUEST * pHead; /* head of data request list */
     CRITICAL_SECTION csList; /* critical section to protect operations on list */
 } FileAsyncReader;
+
+static inline FileAsyncReader *impl_from_IAsyncReader( IAsyncReader *iface )
+{
+    return (FileAsyncReader *)((char*)iface - FIELD_OFFSET(FileAsyncReader, lpVtblAR));
+}
 
 static HRESULT AcceptProcAFR(LPVOID iface, const AM_MEDIA_TYPE *pmt)
 {
@@ -865,21 +869,21 @@ static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter
 
 static HRESULT WINAPI FileAsyncReader_QueryInterface(IAsyncReader * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS_From_IAsyncReader(FileAsyncReader, iface);
+    FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
     return IPin_QueryInterface((IPin *)This, riid, ppv);
 }
 
 static ULONG WINAPI FileAsyncReader_AddRef(IAsyncReader * iface)
 {
-    ICOM_THIS_From_IAsyncReader(FileAsyncReader, iface);
+    FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
     return IPin_AddRef((IPin *)This);
 }
 
 static ULONG WINAPI FileAsyncReader_Release(IAsyncReader * iface)
 {
-    ICOM_THIS_From_IAsyncReader(FileAsyncReader, iface);
+    FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
     return IPin_Release((IPin *)This);
 }
@@ -947,7 +951,7 @@ static HRESULT WINAPI FileAsyncReader_Request(IAsyncReader * iface, IMediaSample
     DATAREQUEST * pDataRq;
     BYTE * pBuffer;
     HRESULT hr = S_OK;
-    ICOM_THIS_From_IAsyncReader(FileAsyncReader, iface);
+    FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
     TRACE("(%p, %lx)\n", pSample, dwUser);
 
@@ -1025,7 +1029,7 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
 {
     HRESULT hr = S_OK;
     DATAREQUEST * pDataRq = NULL;
-    ICOM_THIS_From_IAsyncReader(FileAsyncReader, iface);
+    FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
     TRACE("(%lu, %p, %p)\n", dwTimeout, ppSample, pdwUser);
 
@@ -1115,7 +1119,7 @@ static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader * iface, LONGLONG ll
 {
     OVERLAPPED ovl;
     HRESULT hr = S_OK;
-    ICOM_THIS_From_IAsyncReader(FileAsyncReader, iface);
+    FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
     TRACE("(%lx%08lx, %ld, %p)\n", (ULONG)(llPosition >> 32), (ULONG)llPosition, lLength, pBuffer);
 
@@ -1150,7 +1154,7 @@ static HRESULT WINAPI FileAsyncReader_Length(IAsyncReader * iface, LONGLONG * pT
 {
     DWORD dwSizeLow;
     DWORD dwSizeHigh;
-    ICOM_THIS_From_IAsyncReader(FileAsyncReader, iface);
+    FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
     TRACE("(%p, %p)\n", pTotal, pAvailable);
 
@@ -1167,7 +1171,7 @@ static HRESULT WINAPI FileAsyncReader_Length(IAsyncReader * iface, LONGLONG * pT
 
 static HRESULT WINAPI FileAsyncReader_BeginFlush(IAsyncReader * iface)
 {
-    ICOM_THIS_From_IAsyncReader(FileAsyncReader, iface);
+    FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
     TRACE("()\n");
 
@@ -1182,7 +1186,7 @@ static HRESULT WINAPI FileAsyncReader_BeginFlush(IAsyncReader * iface)
 
 static HRESULT WINAPI FileAsyncReader_EndFlush(IAsyncReader * iface)
 {
-    ICOM_THIS_From_IAsyncReader(FileAsyncReader, iface);
+    FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
     TRACE("()\n");
 

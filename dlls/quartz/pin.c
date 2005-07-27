@@ -37,8 +37,11 @@ static const IPinVtbl PullPin_Vtbl;
 #define ALIGNDOWN(value,boundary) ((value) & ~(boundary-1))
 #define ALIGNUP(value,boundary) (ALIGNDOWN(value - 1, boundary) + boundary)
 
-#define _IMemInputPin_Offset ((int)(&(((InputPin*)0)->lpVtblMemInput)))
-#define ICOM_THIS_From_IMemInputPin(impl, iface) impl* This = (impl*)(((char*)iface)-_IMemInputPin_Offset);
+static inline InputPin *impl_from_IMemInputPin( IMemInputPin *iface )
+{
+    return (InputPin *)((char*)iface - FIELD_OFFSET(InputPin, lpVtblMemInput));
+}
+
 
 static void Copy_PinInfo(PIN_INFO * pDest, const PIN_INFO * pSrc)
 {
@@ -529,28 +532,28 @@ static const IPinVtbl InputPin_Vtbl =
 
 HRESULT WINAPI MemInputPin_QueryInterface(IMemInputPin * iface, REFIID riid, LPVOID * ppv)
 {
-    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+    InputPin *This = impl_from_IMemInputPin(iface);
 
     return IPin_QueryInterface((IPin *)&This->pin, riid, ppv);
 }
 
 ULONG WINAPI MemInputPin_AddRef(IMemInputPin * iface)
 {
-    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+    InputPin *This = impl_from_IMemInputPin(iface);
 
     return IPin_AddRef((IPin *)&This->pin);
 }
 
 ULONG WINAPI MemInputPin_Release(IMemInputPin * iface)
 {
-    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+    InputPin *This = impl_from_IMemInputPin(iface);
 
     return IPin_Release((IPin *)&This->pin);
 }
 
 HRESULT WINAPI MemInputPin_GetAllocator(IMemInputPin * iface, IMemAllocator ** ppAllocator)
 {
-    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+    InputPin *This = impl_from_IMemInputPin(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppAllocator);
 
@@ -563,7 +566,7 @@ HRESULT WINAPI MemInputPin_GetAllocator(IMemInputPin * iface, IMemAllocator ** p
 
 HRESULT WINAPI MemInputPin_NotifyAllocator(IMemInputPin * iface, IMemAllocator * pAllocator, BOOL bReadOnly)
 {
-    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+    InputPin *This = impl_from_IMemInputPin(iface);
 
     TRACE("(%p/%p)->(%p, %d)\n", This, iface, pAllocator, bReadOnly);
 
@@ -578,7 +581,7 @@ HRESULT WINAPI MemInputPin_NotifyAllocator(IMemInputPin * iface, IMemAllocator *
 
 HRESULT WINAPI MemInputPin_GetAllocatorRequirements(IMemInputPin * iface, ALLOCATOR_PROPERTIES * pProps)
 {
-    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+    InputPin *This = impl_from_IMemInputPin(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pProps);
 
@@ -589,7 +592,7 @@ HRESULT WINAPI MemInputPin_GetAllocatorRequirements(IMemInputPin * iface, ALLOCA
 
 HRESULT WINAPI MemInputPin_Receive(IMemInputPin * iface, IMediaSample * pSample)
 {
-    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+    InputPin *This = impl_from_IMemInputPin(iface);
 
     /* this trace commented out for performance reasons */
     /*TRACE("(%p/%p)->(%p)\n", This, iface, pSample);*/
@@ -600,7 +603,7 @@ HRESULT WINAPI MemInputPin_Receive(IMemInputPin * iface, IMediaSample * pSample)
 HRESULT WINAPI MemInputPin_ReceiveMultiple(IMemInputPin * iface, IMediaSample ** pSamples, long nSamples, long *nSamplesProcessed)
 {
     HRESULT hr = S_OK;
-    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+    InputPin *This = impl_from_IMemInputPin(iface);
 
     TRACE("(%p/%p)->(%p, %ld, %p)\n", This, iface, pSamples, nSamples, nSamplesProcessed);
 
@@ -616,7 +619,7 @@ HRESULT WINAPI MemInputPin_ReceiveMultiple(IMemInputPin * iface, IMediaSample **
 
 HRESULT WINAPI MemInputPin_ReceiveCanBlock(IMemInputPin * iface)
 {
-    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+    InputPin *This = impl_from_IMemInputPin(iface);
 
     FIXME("(%p/%p)->()\n", This, iface);
 
