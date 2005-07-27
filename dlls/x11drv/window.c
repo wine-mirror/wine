@@ -130,12 +130,7 @@ static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttrib
     attr->colormap          = X11DRV_PALETTE_PaletteXColormap;
     attr->save_under        = ((GetClassLongW( data->hwnd, GCL_STYLE ) & CS_SAVEBITS) != 0);
     attr->cursor            = x11drv_thread_data()->cursor;
-    attr->event_mask        = (ExposureMask | PointerMotionMask |
-                               ButtonPressMask | ButtonReleaseMask | EnterWindowMask |
-                               KeyPressMask | KeyReleaseMask | StructureNotifyMask |
-                               FocusChangeMask | KeymapStateMask);
-
-    return (CWOverrideRedirect | CWSaveUnder | CWEventMask | CWColormap | CWCursor);
+    return (CWOverrideRedirect | CWSaveUnder | CWColormap | CWCursor);
 }
 
 
@@ -663,7 +658,11 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     /* set the attributes that don't change over the lifetime of the window */
     attr.bit_gravity   = NorthWestGravity;
     attr.backing_store = NotUseful;
-    mask |= CWBitGravity | CWBackingStore;
+    attr.event_mask    = (ExposureMask | PointerMotionMask |
+                          ButtonPressMask | ButtonReleaseMask | EnterWindowMask |
+                          KeyPressMask | KeyReleaseMask | StructureNotifyMask |
+                          FocusChangeMask | KeymapStateMask);
+    mask |= CWBitGravity | CWBackingStore | CWEventMask;
 
     wine_tsx11_lock();
 
