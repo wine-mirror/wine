@@ -5,6 +5,7 @@
  * Copyright 1998 David Lee Lambert
  * Copyright 2000 Julio César Gázquez
  * Copyright 2003 Jon Griffiths
+ * Copyright 2005 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1603,276 +1604,83 @@ BOOL WINAPI EnumDateFormatsExW( DATEFMT_ENUMPROCEXW lpDateFmtEnumProc, LCID Loca
 
 /**************************************************************************
  *              EnumDateFormatsA	(KERNEL32.@)
+ *
+ * FIXME: MSDN mentions only LOCALE_USE_CP_ACP, should we handle
+ * LOCALE_NOUSEROVERRIDE here as well?
  */
-BOOL WINAPI EnumDateFormatsA( DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale,  DWORD dwFlags)
+BOOL WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA proc, LCID lcid, DWORD flags)
 {
-  LCID Loc = GetUserDefaultLCID();
-  if(!lpDateFmtEnumProc)
+    char buf[256];
+
+    if (!proc)
     {
-      SetLastError(ERROR_INVALID_PARAMETER);
-      return FALSE;
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
 
-  switch( Loc )
- {
-
-   case 0x00000407:  /* (Loc,"de_DE") */
-   {
-    switch(dwFlags)
+    switch (flags & ~LOCALE_USE_CP_ACP)
     {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("dd.MM.yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("d.M.yyyy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("d.MM.yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("d.M.yy")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("dddd,d. MMMM yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("d. MMMM yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("d. MMM yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-     }
-   }
+    case 0:
+    case DATE_SHORTDATE:
+        if (GetLocaleInfoA(lcid, LOCALE_SSHORTDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf);
+        break;
 
-   case 0x0000040c:  /* (Loc,"fr_FR") */
-   {
-    switch(dwFlags)
-    {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("dd.MM.yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("dd-MM-yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("dd/MM/yyyy")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("dddd d MMMM yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("d MMM yy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-     }
-   }
+    case DATE_LONGDATE:
+        if (GetLocaleInfoA(lcid, LOCALE_SLONGDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf);
+        break;
 
-   case 0x00000c0c:  /* (Loc,"fr_CA") */
-   {
-    switch(dwFlags)
-    {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("yy-MM-dd")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("dd-MM-yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("yy MM dd")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("d MMMM, yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("d MMM yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-     }
-   }
+    case DATE_YEARMONTH:
+        if (GetLocaleInfoA(lcid, LOCALE_SYEARMONTH | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf);
+        break;
 
-   case 0x00000809:  /* (Loc,"en_UK") */
-  {
-   switch(dwFlags)
-    {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("dd/MM/yyyy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("d/M/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("d.M.yy")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("dd MMMM yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
+    default:
+        FIXME("Unknown date format (%ld)\n", flags);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
-  }
-
-   case 0x00000c09:  /* (Loc,"en_AU") */
-  {
-   switch(dwFlags)
-    {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("d/MM/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("d/M/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("dddd,d MMMM yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-  }
-
-   case 0x00001009:  /* (Loc,"en_CA") */
-  {
-   switch(dwFlags)
-    {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("d/M/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("yy-MM-dd")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("M/dd/yy")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("d-MMM-yy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("MMMM d, yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-  }
-
-   case 0x00001409:  /* (Loc,"en_NZ") */
-  {
-   switch(dwFlags)
-    {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("d/MM/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("d.MM.yy")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("dddd, d MMMM yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-  }
-
-   case 0x00001809:  /* (Loc,"en_IE") */
-  {
-   switch(dwFlags)
-    {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("d/M/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("d.M.yy")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("dd MMMM yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-  }
-
-   case 0x00001c09:  /* (Loc,"en_ZA") */
-  {
-   switch(dwFlags)
-    {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("yy/MM/dd")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("dd MMMM yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-  }
-
-   case 0x00002009:  /* (Loc,"en_JM") */
-  {
-   switch(dwFlags)
-    {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("dd/MM/yyyy")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("dddd,MMMM dd,yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("MMMM dd,yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("dddd,dd MMMM,yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("dd MMMM,yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-  }
-
-   case 0x00002809:  /* (Loc,"en_BZ") */
-   case 0x00002c09:  /* (Loc,"en_TT") */
-  {
-   switch(dwFlags)
-    {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("dd/MM/yyyy")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("dddd,dd MMMM yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-  }
-
-   default:  /* default to US English "en_US" */
-  {
-   switch(dwFlags)
-    {
-      case DATE_SHORTDATE:
-	if(!(*lpDateFmtEnumProc)("M/d/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("M/d/yyyy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("MM/dd/yy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("MM/dd/yyyy")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("yy/MM/dd")) return TRUE;
-	if(!(*lpDateFmtEnumProc)("dd-MMM-yy")) return TRUE;
-	return TRUE;
-      case DATE_LONGDATE:
-        if(!(*lpDateFmtEnumProc)("dddd, MMMM dd, yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("MMMM dd, yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("dddd, dd MMMM, yyyy")) return TRUE;
-        if(!(*lpDateFmtEnumProc)("dd MMMM, yyyy")) return TRUE;
-	return TRUE;
-      default:
-	FIXME("Unknown date format (%ld)\n", dwFlags);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-  }
- }
+    return TRUE;
 }
 
 /**************************************************************************
  *              EnumDateFormatsW	(KERNEL32.@)
  */
-BOOL WINAPI EnumDateFormatsW( DATEFMT_ENUMPROCW lpDateFmtEnumProc, LCID Locale, DWORD dwFlags )
+BOOL WINAPI EnumDateFormatsW(DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags)
 {
-  FIXME("(%p, %ld, %ld): stub\n", lpDateFmtEnumProc, Locale, dwFlags);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    WCHAR buf[256];
+
+    if (!proc)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    switch (flags & ~LOCALE_USE_CP_ACP)
+    {
+    case 0:
+    case DATE_SHORTDATE:
+        if (GetLocaleInfoW(lcid, LOCALE_SSHORTDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf);
+        break;
+
+    case DATE_LONGDATE:
+        if (GetLocaleInfoW(lcid, LOCALE_SLONGDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf);
+        break;
+
+    case DATE_YEARMONTH:
+        if (GetLocaleInfoW(lcid, LOCALE_SYEARMONTH | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf);
+        break;
+
+    default:
+        FIXME("Unknown date format (%ld)\n", flags);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /**************************************************************************
