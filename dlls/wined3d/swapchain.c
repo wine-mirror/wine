@@ -87,6 +87,11 @@ ULONG WINAPI IWineD3DSwapChainImpl_Release(IWineD3DSwapChain *iface) {
     TRACE("(%p) : ReleaseRef to %ld\n", This, refCount);
     if (refCount == 0) {
         IUnknown* bufferParent;
+
+        /* tell the device that we've been released */
+        IWineD3DDevice_SwapChainReleased((IWineD3DDevice *)This->wineD3DDevice, iface);
+
+        /* release the ref to the front and back buffer parents */
         IWineD3DSurface_GetParent(This->frontBuffer, &bufferParent);
         IUnknown_Release(bufferParent); /* once for the get parent */
         if(IUnknown_Release(bufferParent) > 0){
@@ -108,7 +113,6 @@ ULONG WINAPI IWineD3DSwapChainImpl_Release(IWineD3DSwapChain *iface) {
          all others are crated by the caller, so releasing the parent should cause
          the child to be released, not the other way around!
          */
-         /* TODO: notify the device that this swapchain doesn't exist any more */
         HeapFree(GetProcessHeap(), 0, This);
     }
     return refCount;

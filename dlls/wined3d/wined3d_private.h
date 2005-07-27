@@ -51,9 +51,6 @@
 #define MAX_CLIPPLANES    D3DMAXUSERCLIPPLANES
 #define MAX_LEVELS        256
 
-/* Swap chains */
-#define MAX_SWAPCHAINS 256
-
 /* Used for CreateStateBlock */
 #define NUM_SAVEDPIXELSTATES_R     35
 #define NUM_SAVEDPIXELSTATES_T     18
@@ -379,6 +376,10 @@ typedef struct IWineD3DImpl
 
 extern const IWineD3DVtbl IWineD3D_Vtbl;
 
+typedef struct SwapChainList {
+    IWineD3DSwapChain         *swapchain;
+    struct SwapChainList      *next;
+} SwapChainList;
 
 /** Hacked out start of a context manager!! **/
 typedef struct glContext {
@@ -455,9 +456,7 @@ typedef struct IWineD3DDeviceImpl
     UINT                            adapterNo;
     D3DDEVTYPE                      devType;
 
-    /* TODO: Replace with a linked list */
-    IWineD3DSwapChain      *swapchains[MAX_SWAPCHAINS]; /* no-one wil ever need more that MAX_SWAPCHAINS swapchains */
-    int                     numberOfSwapChains;
+    SwapChainList          *swapchains;
 
     ResourceList           *resources; /* a linked list to track resources created by the device */
 
