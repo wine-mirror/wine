@@ -63,9 +63,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
-#define _IPropertySetStorage_Offset ((int)(&(((StorageImpl*)0)->base.pssVtbl)))
-#define _ICOM_THIS_From_IPropertySetStorage(class, name) \
-    class* This = (class*)(((char*)name)-_IPropertySetStorage_Offset)
+static inline StorageImpl *impl_from_IPropertySetStorage( IPropertySetStorage *iface )
+{
+    return (StorageImpl *)((char*)iface - FIELD_OFFSET(StorageImpl, base.pssVtbl));
+}
 
 /* These are documented in MSDN, e.g.
  * http://msdn.microsoft.com/library/en-us/stg/stg/property_set_header.asp
@@ -2039,7 +2040,7 @@ static HRESULT WINAPI IPropertySetStorage_fnQueryInterface(
     REFIID riid,
     void** ppvObject)
 {
-    _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
+    StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
     return IStorage_QueryInterface( (IStorage*)This, riid, ppvObject );
 }
 
@@ -2051,7 +2052,7 @@ static HRESULT WINAPI IPropertySetStorage_fnQueryInterface(
 static ULONG WINAPI IPropertySetStorage_fnAddRef(
     IPropertySetStorage *ppstg)
 {
-    _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
+    StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
     return IStorage_AddRef( (IStorage*)This );
 }
 
@@ -2063,7 +2064,7 @@ static ULONG WINAPI IPropertySetStorage_fnAddRef(
 static ULONG WINAPI IPropertySetStorage_fnRelease(
     IPropertySetStorage *ppstg)
 {
-    _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
+    StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
     return IStorage_Release( (IStorage*)This );
 }
 
@@ -2078,7 +2079,7 @@ static HRESULT WINAPI IPropertySetStorage_fnCreate(
     DWORD grfMode,
     IPropertyStorage** ppprstg)
 {
-    _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
+    StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
     WCHAR name[CCH_MAX_PROPSTG_NAME];
     IStream *stm = NULL;
     HRESULT r;
@@ -2133,7 +2134,7 @@ static HRESULT WINAPI IPropertySetStorage_fnOpen(
     DWORD grfMode,
     IPropertyStorage** ppprstg)
 {
-    _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
+    StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
     IStream *stm = NULL;
     WCHAR name[CCH_MAX_PROPSTG_NAME];
     HRESULT r;
@@ -2176,7 +2177,7 @@ static HRESULT WINAPI IPropertySetStorage_fnDelete(
     IPropertySetStorage *ppstg,
     REFFMTID rfmtid)
 {
-    _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
+    StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
     IStorage *stg = NULL;
     WCHAR name[CCH_MAX_PROPSTG_NAME];
     HRESULT r;
@@ -2201,7 +2202,7 @@ static HRESULT WINAPI IPropertySetStorage_fnEnum(
     IPropertySetStorage *ppstg,
     IEnumSTATPROPSETSTG** ppenum)
 {
-    _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
+    StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }

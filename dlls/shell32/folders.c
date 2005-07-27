@@ -60,11 +60,16 @@ static const IExtractIconAVtbl eiavt;
 static const IExtractIconWVtbl eivt;
 static const IPersistFileVtbl pfvt;
 
-#define _IPersistFile_Offset ((int)(&(((IExtractIconWImpl*)0)->lpvtblPersistFile)))
-#define _ICOM_THIS_From_IPersistFile(class, name) class* This = (class*)(((char*)name)-_IPersistFile_Offset);
+static inline IExtractIconW *impl_from_IPersistFile( IPersistFile *iface )
+{
+    return (IExtractIconW *)((char*)iface - FIELD_OFFSET(IExtractIconWImpl, lpvtblPersistFile));
+}
 
-#define _IExtractIconA_Offset ((int)(&(((IExtractIconWImpl*)0)->lpvtblExtractIconA)))
-#define _ICOM_THIS_From_IExtractIconA(class, name) class* This = (class*)(((char*)name)-_IExtractIconA_Offset);
+static inline IExtractIconW *impl_from_IExtractIconA( IExtractIconA *iface )
+{
+    return (IExtractIconW *)((char*)iface - FIELD_OFFSET(IExtractIconWImpl, lpvtblExtractIconA));
+}
+
 
 /**************************************************************************
 *  IExtractIconW_Constructor
@@ -422,7 +427,7 @@ IExtractIconA* IExtractIconA_Constructor(LPCITEMIDLIST pidl)
  */
 static HRESULT WINAPI IExtractIconA_fnQueryInterface(IExtractIconA * iface, REFIID riid, LPVOID *ppvObj)
 {
-	_ICOM_THIS_From_IExtractIconA(IExtractIconW, iface);
+	IExtractIconW *This = impl_from_IExtractIconA(iface);
 
 	return IExtractIconW_QueryInterface(This, riid, ppvObj);
 }
@@ -432,7 +437,7 @@ static HRESULT WINAPI IExtractIconA_fnQueryInterface(IExtractIconA * iface, REFI
 */
 static ULONG WINAPI IExtractIconA_fnAddRef(IExtractIconA * iface)
 {
-	_ICOM_THIS_From_IExtractIconA(IExtractIconW, iface);
+	IExtractIconW *This = impl_from_IExtractIconA(iface);
 
 	return IExtractIconW_AddRef(This);
 }
@@ -441,7 +446,7 @@ static ULONG WINAPI IExtractIconA_fnAddRef(IExtractIconA * iface)
 */
 static ULONG WINAPI IExtractIconA_fnRelease(IExtractIconA * iface)
 {
-	_ICOM_THIS_From_IExtractIconA(IExtractIconW, iface);
+	IExtractIconW *This = impl_from_IExtractIconA(iface);
 
 	return IExtractIconW_AddRef(This);
 }
@@ -460,7 +465,7 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 {
 	HRESULT ret;
 	LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, cchMax * sizeof(WCHAR));
-	_ICOM_THIS_From_IExtractIconA(IExtractIconW, iface);
+	IExtractIconW *This = impl_from_IExtractIconA(iface);
 	
 	TRACE("(%p) (flags=%u %p %u %p %p)\n", This, uFlags, szIconFile, cchMax, piIndex, pwFlags);
 
@@ -479,7 +484,7 @@ static HRESULT WINAPI IExtractIconA_fnExtract(IExtractIconA * iface, LPCSTR pszF
 	HRESULT ret;
 	INT len = MultiByteToWideChar(CP_ACP, 0, pszFile, -1, NULL, 0);
 	LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-	_ICOM_THIS_From_IExtractIconA(IExtractIconW, iface);
+	IExtractIconW *This = impl_from_IExtractIconA(iface);
 
 	TRACE("(%p) (file=%p index=%u %p %p size=%u)\n", This, pszFile, nIconIndex, phiconLarge, phiconSmall, nIconSize);
 
@@ -506,7 +511,7 @@ static HRESULT WINAPI IEIPersistFile_fnQueryInterface(
 	REFIID		iid,
 	LPVOID		*ppvObj)
 {
-	_ICOM_THIS_From_IPersistFile(IExtractIconW, iface);
+	IExtractIconW *This = impl_from_IPersistFile(iface);
 
 	return IExtractIconW_QueryInterface(This, iid, ppvObj);
 }
@@ -517,7 +522,7 @@ static HRESULT WINAPI IEIPersistFile_fnQueryInterface(
 static ULONG WINAPI IEIPersistFile_fnAddRef(
 	IPersistFile	*iface)
 {
-	_ICOM_THIS_From_IPersistFile(IExtractIconW, iface);
+	IExtractIconW *This = impl_from_IPersistFile(iface);
 
 	return IExtractIconW_AddRef(This);
 }
@@ -528,7 +533,7 @@ static ULONG WINAPI IEIPersistFile_fnAddRef(
 static ULONG WINAPI IEIPersistFile_fnRelease(
 	IPersistFile	*iface)
 {
-	_ICOM_THIS_From_IPersistFile(IExtractIconW, iface);
+	IExtractIconW *This = impl_from_IPersistFile(iface);
 
 	return IExtractIconW_Release(This);
 }
@@ -555,7 +560,7 @@ static HRESULT WINAPI IEIPersistFile_fnGetClassID(
  */
 static HRESULT WINAPI IEIPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFileName, DWORD dwMode)
 {
-	_ICOM_THIS_From_IPersistFile(IExtractIconW, iface);
+	IExtractIconW *This = impl_from_IPersistFile(iface);
 	FIXME("%p\n", This);
 	return E_NOTIMPL;
 
