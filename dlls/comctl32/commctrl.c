@@ -144,6 +144,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             TRACKBAR_Register ();
             TREEVIEW_Register ();
             UPDOWN_Register ();
+
+            /* subclass user32 controls */
+            THEMING_Initialize ();
             break;
 
 	case DLL_PROCESS_DETACH:

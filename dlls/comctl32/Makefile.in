@@ -35,6 +35,7 @@ C_SRCS = \
 	status.c \
 	syslink.c \
 	tab.c \
+	theming.c \
 	toolbar.c \
 	tooltips.c \
 	trackbar.c \
