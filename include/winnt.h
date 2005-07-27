@@ -386,6 +386,10 @@ typedef HANDLE *PHANDLE, *LPHANDLE;
 #define DECLARE_HANDLE(a) typedef HANDLE a
 #endif /*STRICT*/
 
+typedef BYTE  FCHAR;
+typedef WORD  FSHORT;
+typedef DWORD FLONG;
+
 /* Defines */
 
 #ifndef WIN32_NO_STATUS
