@@ -1725,7 +1725,7 @@ dlls/winmm/Makefile
 dlls/winmm/joystick/Makefile
 dlls/winmm/mcianim/Makefile
 dlls/winmm/mciavi/Makefile
-dlls/winmm/mcicda/Makefile
+dlls/mcicda/Makefile
 dlls/winmm/mciseq/Makefile
 dlls/winmm/mciwave/Makefile
 dlls/winmm/tests/Makefile

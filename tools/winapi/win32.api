@@ -1813,7 +1813,7 @@ DWORD
 HDRVR
 LONG
 
-%%mcicda.drv
+%%mcicda.dll
 
 %long
 
