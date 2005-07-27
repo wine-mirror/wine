@@ -371,6 +371,102 @@ static HRESULT UXTHEME_DrawGlyph(HTHEME hTheme, HDC hdc, int iPartId,
 }
 
 /***********************************************************************
+ * get_image_part_size
+ *
+ * Used by GetThemePartSize and UXTHEME_DrawImageBackground
+ */
+static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
+                                    int iStateId, RECT *prc, THEMESIZE eSize,
+                                    POINT *psz)
+{
+    HRESULT hr = S_OK;
+    HBITMAP bmpSrc;
+    RECT rcSrc;
+
+    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, prc, FALSE, &bmpSrc, &rcSrc);
+    if (FAILED(hr)) return hr;
+
+    switch (eSize)
+    {
+        case TS_DRAW:
+            if (prc != NULL)
+            {
+                RECT rcDst;
+                POINT dstSize;
+                POINT srcSize;
+                int sizingtype = ST_STRETCH;
+                BOOL uniformsizing = FALSE;
+
+                CopyRect(&rcDst, prc);
+
+                dstSize.x = rcDst.right-rcDst.left;
+                dstSize.y = rcDst.bottom-rcDst.top;
+                srcSize.x = rcSrc.right-rcSrc.left;
+                srcSize.y = rcSrc.bottom-rcSrc.top;
+            
+                GetThemeBool(hTheme, iPartId, iStateId, TMT_UNIFORMSIZING, &uniformsizing);
+                if(uniformsizing) {
+                    /* Scale height and width equally */
+                    int widthDiff = abs(srcSize.x-dstSize.x);
+                    int heightDiff = abs(srcSize.y-dstSize.x);
+                    if(widthDiff > heightDiff) {
+                        dstSize.y -= widthDiff-heightDiff;
+                        rcDst.bottom = rcDst.top + dstSize.y;
+                    }
+                    else if(heightDiff > widthDiff) {
+                        dstSize.x -= heightDiff-widthDiff;
+                        rcDst.right = rcDst.left + dstSize.x;
+                    }
+                }
+            
+                GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_SIZINGTYPE, &sizingtype);
+                if(sizingtype == ST_TRUESIZE) {
+                    int truesizestretchmark = 0;
+            
+                    if(dstSize.x < 0 || dstSize.y < 0) {
+                        BOOL mirrorimage = TRUE;
+                        GetThemeBool(hTheme, iPartId, iStateId, TMT_MIRRORIMAGE, &mirrorimage);
+                        if(mirrorimage) {
+                            if(dstSize.x < 0) {
+                                rcDst.left += dstSize.x;
+                                rcDst.right += dstSize.x;
+                            }
+                            if(dstSize.y < 0) {
+                                rcDst.top += dstSize.y;
+                                rcDst.bottom += dstSize.y;
+                            }
+                        }
+                    }
+                    /* Only stretch when target exceeds source by truesizestretchmark percent */
+                    GetThemeInt(hTheme, iPartId, iStateId, TMT_TRUESIZESTRETCHMARK, &truesizestretchmark);
+                    if(dstSize.x < 0 || dstSize.y < 0 ||
+                      MulDiv(srcSize.x, 100, dstSize.x) > truesizestretchmark ||
+                      MulDiv(srcSize.y, 100, dstSize.y) > truesizestretchmark) {
+                        memcpy (psz, &dstSize, sizeof (SIZE));
+                    }
+                    else {
+                        memcpy (psz, &srcSize, sizeof (SIZE));
+                    }
+                }
+                else
+                {
+                    psz->x = abs(dstSize.x);
+                    psz->y = abs(dstSize.y);
+                }
+                break;
+            }
+            /* else fall through */
+        case TS_MIN:
+            /* FIXME: couldn't figure how native uxtheme computes min size */
+        case TS_TRUE:
+            psz->x = rcSrc.right - rcSrc.left;
+            psz->y = rcSrc.bottom - rcSrc.top;
+            break;
+    }
+    return hr;
+}
+
+/***********************************************************************
  *      UXTHEME_DrawImageBackground
  *
  * Draw an imagefile background
@@ -387,8 +483,8 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     RECT rcDst;
     POINT dstSize;
     POINT srcSize;
-    int sizingtype = ST_TRUESIZE;
-    BOOL uniformsizing = FALSE;
+    POINT drawSize;
+    int sizingtype = ST_STRETCH;
     BOOL transparent = FALSE;
     COLORREF transparentcolor = 0;
 
@@ -417,59 +513,17 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     srcSize.x = rcSrc.right-rcSrc.left;
     srcSize.y = rcSrc.bottom-rcSrc.top;
 
-    GetThemeBool(hTheme, iPartId, iStateId, TMT_UNIFORMSIZING, &uniformsizing);
-    if(uniformsizing) {
-        /* Scale height and width equally */
-        int widthDiff = abs(srcSize.x-dstSize.x);
-        int heightDiff = abs(srcSize.y-dstSize.x);
-        if(widthDiff > heightDiff) {
-            dstSize.y -= widthDiff-heightDiff;
-            rcDst.bottom = rcDst.top + dstSize.y;
-        }
-        else if(heightDiff > widthDiff) {
-            dstSize.x -= heightDiff-widthDiff;
-            rcDst.right = rcDst.left + dstSize.x;
-        }
-    }
-
     GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_SIZINGTYPE, &sizingtype);
     if(sizingtype == ST_TRUESIZE) {
-        int truesizestretchmark = 0;
-
-        if(dstSize.x < 0 || dstSize.y < 0) {
-            BOOL mirrorimage = TRUE;
-            GetThemeBool(hTheme, iPartId, iStateId, TMT_MIRRORIMAGE, &mirrorimage);
-            if(mirrorimage) {
-                if(dstSize.x < 0) {
-                    rcDst.left += dstSize.x;
-                    rcDst.right += dstSize.x;
-                }
-                if(dstSize.y < 0) {
-                    rcDst.top += dstSize.y;
-                    rcDst.bottom += dstSize.y;
-                }
-            }
-        }
-        /* Only stretch when target exceeds source by truesizestretchmark percent */
-        GetThemeInt(hTheme, iPartId, iStateId, TMT_TRUESIZESTRETCHMARK, &truesizestretchmark);
-        if(dstSize.x < 0 || dstSize.y < 0 ||
-           MulDiv(srcSize.x, 100, dstSize.x) > truesizestretchmark ||
-           MulDiv(srcSize.y, 100, dstSize.y) > truesizestretchmark) {
-            if(!UXTHEME_StretchBlt(hdc, rcDst.left, rcDst.top, dstSize.x, dstSize.y,
-                                   hdcSrc, rcSrc.left, rcSrc.top, srcSize.x, srcSize.y,
-                                   transparent, transparentcolor))
-                hr = HRESULT_FROM_WIN32(GetLastError());
-        }
-        else {
-            rcDst.left += (dstSize.x/2)-(srcSize.x/2);
-            rcDst.top  += (dstSize.y/2)-(srcSize.y/2);
-            rcDst.right = rcDst.left + srcSize.x;
-            rcDst.bottom = rcDst.top + srcSize.y;
-            if(!UXTHEME_Blt(hdc, rcDst.left, rcDst.top, srcSize.x, srcSize.y,
-                            hdcSrc, rcSrc.left, rcSrc.top,
-                            transparent, transparentcolor))
-                hr = HRESULT_FROM_WIN32(GetLastError());
-        }
+        get_image_part_size (hTheme, hdc, iPartId, iStateId, pRect, TS_DRAW, &drawSize);
+        rcDst.left += (dstSize.x/2)-(drawSize.x/2);
+        rcDst.top  += (dstSize.y/2)-(drawSize.y/2);
+        rcDst.right = rcDst.left + drawSize.x;
+        rcDst.bottom = rcDst.top + drawSize.y;
+        if(!UXTHEME_StretchBlt(hdc, rcDst.left, rcDst.top, drawSize.x, drawSize.y,
+                                hdcSrc, rcSrc.left, rcSrc.top, srcSize.x, srcSize.y,
+                                transparent, transparentcolor))
+            hr = HRESULT_FROM_WIN32(GetLastError());
     }
     else {
         HDC hdcDst = NULL;
@@ -976,6 +1030,26 @@ HRESULT WINAPI GetThemeBackgroundRegion(HTHEME hTheme, HDC hdc, int iPartId,
     return hr;
 }
 
+/* compute part size for "borderfill" backgrounds */
+HRESULT get_border_background_size (HTHEME hTheme, int iPartId,
+                                    int iStateId, THEMESIZE eSize, POINT* psz)
+{
+    HRESULT hr = S_OK;
+    int bordersize = 1;
+
+    if (SUCCEEDED (hr = GetThemeInt(hTheme, iPartId, iStateId, TMT_BORDERSIZE, 
+        &bordersize)))
+    {
+        psz->x = psz->y = 2*bordersize;
+        if (eSize != TS_MIN)
+        {
+            psz->x++;
+            psz->y++; 
+        }
+    }
+    return hr;
+}
+
 /***********************************************************************
  *      GetThemePartSize                                    (UXTHEME.@)
  */
@@ -983,10 +1057,26 @@ HRESULT WINAPI GetThemePartSize(HTHEME hTheme, HDC hdc, int iPartId,
                                 int iStateId, RECT *prc, THEMESIZE eSize,
                                 SIZE *psz)
 {
-    FIXME("%d %d %d: stub\n", iPartId, iStateId, eSize);
+    int bgtype = BT_BORDERFILL;
+    HRESULT hr = S_OK;
+    POINT size = {1, 1};
+
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_BGTYPE, &bgtype);
+    if(bgtype == BT_IMAGEFILE)
+        hr = get_image_part_size (hTheme, hdc, iPartId, iStateId, prc, eSize, &size);
+    else if(bgtype == BT_BORDERFILL)
+        hr = get_border_background_size (hTheme, iPartId, iStateId, eSize, &size);
+    else {
+        FIXME("Unknown background type\n");
+        /* This should never happen, and hence I don't know what to return */
+        hr = E_FAIL;
+    }
+    psz->cx = size.x;
+    psz->cy = size.y;
+    return hr;
 }
 
 
