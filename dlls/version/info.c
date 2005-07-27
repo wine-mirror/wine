@@ -622,14 +622,9 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
         }
     }
 
-    if ( datasize >= sizeof(VS_VERSION_INFO_STRUCT16) &&
-         datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength &&
-         VersionInfoIs16( data ) )
-    {
-        ERR("Cannot access NE resource in %s\n", debugstr_w(filename) );
-        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
-        return  FALSE;
-    }
+    /* If we end up here we have found either 16bit or 32bit
+     * version information
+     */
 
     SetLastError(0);
     return TRUE;
