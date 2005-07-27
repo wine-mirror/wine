@@ -167,9 +167,6 @@ typedef struct {
     DWORD			dwPlayedTotal;		/* number of bytes actually played since opening */
     DWORD			dwWrittenTotal;		/* number of bytes written to ALSA buffer since opening */
 
-    struct pollfd		*ufds;
-    int				count;
-
     /* synchronization stuff */
     HANDLE			hStartUpEvent;
     HANDLE			hThread;
@@ -2563,24 +2560,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     ALSA_InitRingMessage(&wwo->msgRing);
 
-    wwo->count = snd_pcm_poll_descriptors_count (pcm);
-    if (wwo->count <= 0) {
-	ERR("Invalid poll descriptors count\n");
-	return MMSYSERR_ERROR;
-    }
-
-    wwo->ufds = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(struct pollfd) * wwo->count);
-    if (wwo->ufds == NULL) {
-	ERR("No enough memory\n");
-        retcode = MMSYSERR_NOMEM;
-        goto errexit;
-    }
-    if ((err = snd_pcm_poll_descriptors(pcm, wwo->ufds, wwo->count)) < 0) {
-	ERR("Unable to obtain poll descriptors for playback: %s\n", snd_strerror(err));
-        retcode = MMSYSERR_NOMEM;
-        goto errexit;
-    }
-
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
@@ -2628,10 +2607,6 @@ errexit:
 
     if ( hw_params )
     	snd_pcm_hw_params_free(hw_params);
-
-    if (wwo->ufds)
-        HeapFree(GetProcessHeap(), 0, wwo->ufds);
-    wwo->ufds = NULL;
 
     if (wwo->msgRing.ring_buffer_size > 0)
         ALSA_DestroyRingMessage(&wwo->msgRing);
@@ -2688,9 +2663,6 @@ static DWORD wodClose(WORD wDevID)
 	ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
 
-    /* JPW TODO:  should we be freeing this in case of WAVERR_STILLPLAYING? */
-    HeapFree(GetProcessHeap(), 0, wwo->ufds);
-    wwo->ufds = NULL;
     return ret;
 }
 
@@ -4110,22 +4082,6 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     ALSA_InitRingMessage(&wwi->msgRing);
 
-    wwi->count = snd_pcm_poll_descriptors_count (wwi->pcm);
-    if (wwi->count <= 0) {
-	ERR("Invalid poll descriptors count\n");
-	return MMSYSERR_ERROR;
-    }
-
-    wwi->ufds = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(struct pollfd) * wwi->count);
-    if (wwi->ufds == NULL) {
-	ERR("No enough memory\n");
-	return MMSYSERR_NOMEM;
-    }
-    if ((err = snd_pcm_poll_descriptors(wwi->pcm, wwi->ufds, wwi->count)) < 0) {
-	ERR("Unable to obtain poll descriptors for playback: %s\n", snd_strerror(err));
-	return MMSYSERR_ERROR;
-    }
-
     wwi->dwPeriodSize = period_size;
     /*if (wwi->dwFragmentSize % wwi->format.Format.nBlockAlign)
 	ERR("Fragment doesn't contain an integral number of data blocks\n");
@@ -4192,9 +4148,6 @@ static DWORD widClose(WORD wDevID)
 	ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
     }
 
-    /* JPW TODO:  Do we really want to always free this, even in case of WAVERR_STILLPLAYING? */
-    HeapFree(GetProcessHeap(), 0, wwi->ufds);
-    wwi->ufds = NULL;
     return ret;
 }
 
