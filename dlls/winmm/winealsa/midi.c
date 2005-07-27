@@ -833,7 +833,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		snd_seq_ev_set_controller(&event, evt&0x0F, d1, d2);
 		break;
 	    case MIDI_CMD_BENDER:
-		snd_seq_ev_set_pitchbend(&event, evt&0x0F, ((WORD)d1 << 7) | (WORD)d2);
+		snd_seq_ev_set_pitchbend(&event, evt&0x0F, ((WORD)d2 << 7 | (WORD)d1) - 0x2000);
 		break;
 	    case MIDI_CMD_PGM_CHANGE:
 		snd_seq_ev_set_pgmchange(&event, evt&0x0F, d1);
