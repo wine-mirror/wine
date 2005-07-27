@@ -137,6 +137,7 @@ BASEDIRS = \
 	url \
 	urlmon \
 	user \
+	usp10 \
 	uxtheme \
 	vdhcp.vxd \
 	vdmdbg \
@@ -385,6 +386,7 @@ SYMLINKS_SO = \
 	url.dll.so \
 	urlmon.dll.so \
 	user32.dll.so \
+	usp10.dll.so \
 	uxtheme.dll.so \
 	vdhcp.vxd.so \
 	vdmdbg.dll.so \
@@ -892,6 +894,9 @@ ddeml.dll.so display.drv.so keyboard.drv.so \
   mouse.drv.so user.exe.so : user32.dll.so
 	$(RM) $@ && $(LN_S) user32.dll.so $@
 
+usp10.dll.so: usp10/usp10.dll.so
+	$(RM) $@ && $(LN_S) usp10/usp10.dll.so $@
+
 uxtheme.dll.so: uxtheme/uxtheme.dll.so
 	$(RM) $@ && $(LN_S) uxtheme/uxtheme.dll.so $@
 
@@ -1166,6 +1171,7 @@ IMPORT_LIBS = \
 	url/liburl.$(IMPLIBEXT) \
 	urlmon/liburlmon.$(IMPLIBEXT) \
 	user/libuser32.$(IMPLIBEXT) \
+	usp10/libusp10.$(IMPLIBEXT) \
 	uxtheme/libuxtheme.$(IMPLIBEXT) \
 	vdmdbg/libvdmdbg.$(IMPLIBEXT) \
 	version/libversion.$(IMPLIBEXT) \
@@ -1484,6 +1490,9 @@ urlmon/liburlmon.$(IMPLIBEXT): urlmon/urlmon.spec $(WINEBUILD)
 user/libuser32.$(IMPLIBEXT): user/user32.spec $(WINEBUILD)
 	@cd user && $(MAKE) libuser32.$(IMPLIBEXT)
 
+usp10/libusp10.$(IMPLIBEXT): usp10/usp10.spec $(WINEBUILD)
+	@cd usp10 && $(MAKE) libusp10.$(IMPLIBEXT)
+
 uxtheme/libuxtheme.$(IMPLIBEXT): uxtheme/uxtheme.spec $(WINEBUILD)
 	@cd uxtheme && $(MAKE) libuxtheme.$(IMPLIBEXT)
 
@@ -1727,6 +1736,7 @@ unicows/unicows.dll.so: unicows
 url/url.dll.so: url
 urlmon/urlmon.dll.so: urlmon
 user/user32.dll.so: user
+usp10/usp10.dll.so: usp10
 uxtheme/uxtheme.dll.so: uxtheme
 vdhcp.vxd/vdhcp.vxd.so: vdhcp.vxd
 vdmdbg/vdmdbg.dll.so: vdmdbg

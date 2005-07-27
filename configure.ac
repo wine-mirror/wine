@@ -1702,6 +1702,7 @@ dlls/urlmon/Makefile
 dlls/urlmon/tests/Makefile
 dlls/user/Makefile
 dlls/user/tests/Makefile
+dlls/usp10/Makefile
 dlls/uuid/Makefile
 dlls/uxtheme/Makefile
 dlls/vdhcp.vxd/Makefile

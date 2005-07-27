@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = usp10.dll
+IMPORTLIB = libusp10.$(IMPLIBEXT)
+IMPORTS   = kernel32
+
+C_SRCS = \
+	usp10.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
