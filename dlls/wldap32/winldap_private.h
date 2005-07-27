@@ -124,6 +124,8 @@ WLDAP32_LDAP *ldap_initA(const PCHAR,ULONG);
 WLDAP32_LDAP *ldap_initW(const PWCHAR,ULONG);
 WLDAP32_LDAP *ldap_openA(PCHAR,ULONG);
 WLDAP32_LDAP *ldap_openW(PWCHAR,ULONG);
+void WLDAP32_ldap_perror(WLDAP32_LDAP*,const PCHAR);
+ULONG WLDAP32_ldap_result2error(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,ULONG);
 ULONG ldap_sasl_bindA(WLDAP32_LDAP*,const PCHAR,const PCHAR,const BERVAL*,PLDAPControlA*,PLDAPControlA*,int*);
 ULONG ldap_sasl_bindW(WLDAP32_LDAP*,const PWCHAR,const PWCHAR,const BERVAL*,PLDAPControlW*,PLDAPControlW*,int*);
 ULONG ldap_sasl_bind_sA(WLDAP32_LDAP*,const PCHAR,const PCHAR,const BERVAL*,PLDAPControlA*,PLDAPControlA*,PBERVAL*);

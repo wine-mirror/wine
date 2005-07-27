@@ -1,5 +1,5 @@
 @ stub LdapGetLastError
-@ stub LdapMapErrorToWin32
+@ cdecl LdapMapErrorToWin32(long)
 @ cdecl ber_alloc_t(long)
 @ cdecl ber_bvdup(ptr)
 @ cdecl ber_bvecfree(ptr)
@@ -25,6 +25,8 @@
 @ cdecl ldap_open(str long) ldap_openA
 @ cdecl ldap_openA(str long)
 @ cdecl ldap_openW(wstr long)
+@ cdecl ldap_perror(ptr ptr) WLDAP32_ldap_perror
+@ cdecl ldap_result2error(ptr ptr long) WLDAP32_ldap_result2error
 @ cdecl ldap_sasl_bindA(ptr str str ptr ptr ptr ptr)
 @ cdecl ldap_sasl_bindW(ptr wstr wstr ptr ptr ptr ptr)
 @ cdecl ldap_sasl_bind_sA(ptr str str ptr ptr ptr ptr)

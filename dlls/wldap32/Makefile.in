@@ -10,6 +10,7 @@ EXTRALIBS = @LDAPLIBS@
 C_SRCS = \
 	ber.c \
 	bind.c \
+	error.c \
 	init.c \
 	main.c \
 	search.c
