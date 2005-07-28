@@ -1375,7 +1375,7 @@ static void drawStridedHardwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStrided
     IDirect3DVertexShaderImpl* vertex_shader = NULL;
     int                        i;
     int                        NumVertexes;
-    int                        glPrimType;
+    GLenum                     glPrimType;
     int                        maxAttribs;
 
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;

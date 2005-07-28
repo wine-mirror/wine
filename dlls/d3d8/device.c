@@ -1175,7 +1175,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, ID
     D3DLOCKED_RECT lockedRect;
     RECT wantedRect;
     GLint  prev_store;
-    GLenum prev_read;
+    GLint  prev_read;
 
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
@@ -2667,8 +2667,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_STENCILFAIL               :
         {
             GLenum fail  ; 
-            GLenum zpass ; 
-            GLenum zfail ; 
+            GLint  zpass ; 
+            GLint  zfail ; 
 
             fail = StencilOp(Value);
             glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);
@@ -2683,8 +2683,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         break;
     case D3DRS_STENCILZFAIL              :
         {
-            GLenum fail  ; 
-            GLenum zpass ; 
+            GLint  fail  ; 
+            GLint  zpass ; 
             GLenum zfail ; 
 
             glGetIntegerv(GL_STENCIL_FAIL, &fail);
@@ -2700,9 +2700,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         break;
     case D3DRS_STENCILPASS               :
         {
-            GLenum fail  ; 
+            GLint  fail  ; 
             GLenum zpass ; 
-            GLenum zfail ; 
+            GLint  zfail ; 
 
             glGetIntegerv(GL_STENCIL_FAIL, &fail);
             checkGLcall("glGetIntegerv(GL_STENCIL_FAIL, &fail);");

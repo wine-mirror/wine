@@ -526,7 +526,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
       }
     }
 
-#define USE_GL_FUNC(type, pfn) This->gl_info.pfn = (type) glXGetProcAddressARB(#pfn);
+#define USE_GL_FUNC(type, pfn) This->gl_info.pfn = (type) glXGetProcAddressARB( (const GLubyte *) #pfn);
     GL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 
@@ -552,7 +552,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
         }
     }
 
-#define USE_GL_FUNC(type, pfn) This->gl_info.pfn = (type) glXGetProcAddressARB(#pfn);
+#define USE_GL_FUNC(type, pfn) This->gl_info.pfn = (type) glXGetProcAddressARB( (const GLubyte *) #pfn);
     GLX_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 

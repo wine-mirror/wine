@@ -205,7 +205,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
       
       if (This == This->Device->backBuffer || This == This->Device->renderTarget || This == This->Device->frontBuffer) {
 	GLint  prev_store;
-	GLenum prev_read;
+	GLint  prev_read;
 	
 	ENTER_GL();
 
@@ -329,7 +329,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 
       if (This == This->Device->backBuffer || This == This->Device->frontBuffer || This == This->Device->renderTarget) {
 	GLint  prev_store;
-	GLenum prev_draw;
+	GLint  prev_draw;
 	GLint  prev_rasterpos[4];
 
 	ENTER_GL();
