@@ -76,7 +76,7 @@ interface IXMLDOMNode : IDispatch
     HRESULT nodeValue( [out,retval] VARIANT *value );
 
     [propput, id(DISPID_DOM_NODE_NODEVALUE)]
-    HRESULT noveValue( [in] VARIANT value );
+    HRESULT nodeValue( [in] VARIANT value );
 
     [propget, id(DISPID_DOM_NODE_NODETYPE)]
     HRESULT nodeType( [out,retval] DOMNodeType *type );
@@ -477,7 +477,51 @@ interface IXMLDOMAttribute : IXMLDOMNode
     HRESULT value( [in] VARIANT attributeValue );
 };
 
-/* FIXME: interface IXMLDOMElement */
+[
+local,
+object,
+odl,
+dual,
+/*nonextensible,*/
+oleautomation,
+uuid(2933bf86-7b36-11d2-b20e-00c04f983e60),
+pointer_default(unique)
+]
+interface IXMLDOMElement : IXMLDOMNode
+{
+    [propget, id(DISPID_DOM_ELEMENT_GETTAGNAME)]
+    HRESULT tagName( [out,retval] BSTR *tagName );
+
+    [id(DISPID_DOM_ELEMENT_GETATTRIBUTE)]
+    HRESULT getAttribute( [in] BSTR name,
+                          [out,retval] VARIANT * value );
+
+    [id(DISPID_DOM_ELEMENT_SETATTRIBUTE)]
+    HRESULT setAttribute( [in] BSTR name,
+                          [in] VARIANT value );
+
+    [id(DISPID_DOM_ELEMENT_REMOVEATTRIBUTE)]
+    HRESULT removeAttribute( [in] BSTR name );
+
+    [id(DISPID_DOM_ELEMENT_GETATTRIBUTENODE)]
+    HRESULT getAttributeNode( [in] BSTR name,
+                              [out, retval] IXMLDOMAttribute ** attributeNode );
+
+    [id(DISPID_DOM_ELEMENT_SETATTRIBUTENODE)]
+    HRESULT setAttributeNode( [in] IXMLDOMAttribute *DOMAttribute,
+                              [out, retval] IXMLDOMAttribute ** attributeNode );
+
+    [id(DISPID_DOM_ELEMENT_REMOVEATTRIBUTENODE)]
+    HRESULT removeAttributeNode( [in] IXMLDOMAttribute *DOMAttribute,
+                              [out, retval] IXMLDOMAttribute ** attributeNode );
+
+    [id(DISPID_DOM_ELEMENT_GETELEMENTSBYTAGNAME)]
+    HRESULT getElementsByTagName( [in] BSTR tagName,
+                              [out, retval] IXMLDOMNodeList ** resultList );
+
+    [id(DISPID_DOM_ELEMENT_NORMALIZE)]
+    HRESULT normalize();
+};
 
 [
 local,
