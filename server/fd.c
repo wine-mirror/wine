@@ -126,7 +126,7 @@ static inline int epoll_wait( int epfd, struct epoll_event *events, int maxevent
 struct closed_fd
 {
     struct list entry;       /* entry in inode closed list */
-    int         fd;          /* the unix file descriptor */
+    int         unix_fd;     /* the unix file descriptor */
     char        unlink[1];   /* name to unlink on close (if any) */
 };
 
@@ -560,10 +560,10 @@ static void inode_close_pending( struct inode *inode )
         struct closed_fd *fd = LIST_ENTRY( ptr, struct closed_fd, entry );
         struct list *next = list_next( &inode->closed, ptr );
 
-        if (fd->fd != -1)
+        if (fd->unix_fd != -1)
         {
-            close( fd->fd );
-            fd->fd = -1;
+            close( fd->unix_fd );
+            fd->unix_fd = -1;
         }
         if (!fd->unlink)  /* get rid of it unless there's an unlink pending on that file */
         {
@@ -599,7 +599,7 @@ static void inode_destroy( struct object *obj )
     {
         struct closed_fd *fd = LIST_ENTRY( ptr, struct closed_fd, entry );
         list_remove( ptr );
-        if (fd->fd != -1) close( fd->fd );
+        if (fd->unix_fd != -1) close( fd->unix_fd );
         if (fd->unlink[0])
         {
             /* make sure it is still the same file */
@@ -646,7 +646,7 @@ static struct inode *get_inode( dev_t dev, ino_t ino )
     return inode;
 }
 
-/* add fd to the indoe list of file descriptors to close */
+/* add fd to the inode list of file descriptors to close */
 static void inode_add_closed_fd( struct inode *inode, struct closed_fd *fd )
 {
     if (!list_empty( &inode->locks ))
@@ -655,13 +655,13 @@ static void inode_add_closed_fd( struct inode *inode, struct closed_fd *fd )
     }
     else if (fd->unlink[0])  /* close the fd but keep the structure around for unlink */
     {
-        close( fd->fd );
-        fd->fd = -1;
+        if (fd->unix_fd != -1) close( fd->unix_fd );
+        fd->unix_fd = -1;
         list_add_head( &inode->closed, &fd->entry );
     }
     else  /* no locks on this inode and no unlink, get rid of the fd */
     {
-        close( fd->fd );
+        if (fd->unix_fd != -1) close( fd->unix_fd );
         free( fd );
     }
 }
@@ -1217,7 +1217,7 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
         free( closed_fd );
         return NULL;
     }
-    closed_fd->fd = fd->unix_fd;
+    closed_fd->unix_fd = fd->unix_fd;
     closed_fd->unlink[0] = 0;
     fstat( fd->unix_fd, &st );
     *mode = st.st_mode;
