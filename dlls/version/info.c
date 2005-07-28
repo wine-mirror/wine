@@ -194,7 +194,7 @@ typedef struct
 /***********************************************************************
  *           ConvertVersionInfo32To16        [internal]
  */
-void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
+static void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
                                VS_VERSION_INFO_STRUCT16 *info16 )
 {
     /* Copy data onto local stack to prevent overwrites */
@@ -663,7 +663,7 @@ static VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT
  *
  *    Gets a value from a 16-bit NE resource
  */
-BOOL WINAPI VersionInfo16_QueryValue( VS_VERSION_INFO_STRUCT16 *info, LPCSTR lpSubBlock,
+static BOOL WINAPI VersionInfo16_QueryValue( VS_VERSION_INFO_STRUCT16 *info, LPCSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT *puLen )
 {
     while ( *lpSubBlock )
@@ -691,6 +691,47 @@ BOOL WINAPI VersionInfo16_QueryValue( VS_VERSION_INFO_STRUCT16 *info, LPCSTR lpS
 
     /* Return value */
     *lplpBuffer = VersionInfo16_Value( info );
+    if (puLen)
+        *puLen = info->wValueLength;
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *           VersionInfo32_QueryValue              [internal]
+ *
+ *    Gets a value from a 32-bit PE resource
+ */
+static BOOL WINAPI VersionInfo32_QueryValue( VS_VERSION_INFO_STRUCT32 *info, LPCWSTR lpSubBlock,
+                               LPVOID *lplpBuffer, UINT *puLen )
+{
+    TRACE("lpSubBlock : (%s)\n", debugstr_w(lpSubBlock));
+
+    while ( *lpSubBlock )
+    {
+        /* Find next path component */
+        LPCWSTR lpNextSlash;
+        for ( lpNextSlash = lpSubBlock; *lpNextSlash; lpNextSlash++ )
+            if ( *lpNextSlash == '\\' )
+                break;
+
+        /* Skip empty components */
+        if ( lpNextSlash == lpSubBlock )
+        {
+            lpSubBlock++;
+            continue;
+        }
+
+        /* We have a non-empty component: search info for key */
+        info = VersionInfo32_FindChild( info, lpSubBlock, lpNextSlash-lpSubBlock );
+        if ( !info ) return FALSE;
+
+        /* Skip path component */
+        lpSubBlock = lpNextSlash;
+    }
+
+    /* Return value */
+    *lplpBuffer = VersionInfo32_Value( info );
     if (puLen)
         *puLen = info->wValueLength;
 
@@ -743,33 +784,5 @@ BOOL WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
         return ret;
     }
 
-    while ( *lpSubBlock )
-    {
-        /* Find next path component */
-        LPCWSTR lpNextSlash;
-        for ( lpNextSlash = lpSubBlock; *lpNextSlash; lpNextSlash++ )
-            if ( *lpNextSlash == '\\' )
-                break;
-
-        /* Skip empty components */
-        if ( lpNextSlash == lpSubBlock )
-        {
-            lpSubBlock++;
-            continue;
-        }
-
-        /* We have a non-empty component: search info for key */
-        info = VersionInfo32_FindChild( info, lpSubBlock, lpNextSlash-lpSubBlock );
-        if ( !info ) return FALSE;
-
-        /* Skip path component */
-        lpSubBlock = lpNextSlash;
-    }
-
-    /* Return value */
-    *lplpBuffer = VersionInfo32_Value( info );
-    if (puLen)
-        *puLen = info->wValueLength;
-
-    return TRUE;
+    return VersionInfo32_QueryValue(info, lpSubBlock, lplpBuffer, puLen);
 }
