@@ -1584,22 +1584,91 @@ GetCurrencyFormatW_Error:
 
 /**************************************************************************
  *              EnumDateFormatsExA    (KERNEL32.@)
+ *
+ * FIXME: MSDN mentions only LOCALE_USE_CP_ACP, should we handle
+ * LOCALE_NOUSEROVERRIDE here as well?
  */
-BOOL WINAPI EnumDateFormatsExA( DATEFMT_ENUMPROCEXA lpDateFmtEnumProc, LCID Locale, DWORD dwFlags )
+BOOL WINAPI EnumDateFormatsExA(DATEFMT_ENUMPROCEXA proc, LCID lcid, DWORD flags)
 {
-  FIXME("(%p, %ld, %ld): stub\n", lpDateFmtEnumProc, Locale, dwFlags);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    CALID cal_id;
+    char buf[256];
+
+    if (!proc)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!GetLocaleInfoW(lcid, LOCALE_ICALENDARTYPE|LOCALE_RETURN_NUMBER, (LPWSTR)&cal_id, sizeof(cal_id)/sizeof(WCHAR)))
+        return FALSE;
+
+    switch (flags & ~LOCALE_USE_CP_ACP)
+    {
+    case 0:
+    case DATE_SHORTDATE:
+        if (GetLocaleInfoA(lcid, LOCALE_SSHORTDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf, cal_id);
+        break;
+
+    case DATE_LONGDATE:
+        if (GetLocaleInfoA(lcid, LOCALE_SLONGDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf, cal_id);
+        break;
+
+    case DATE_YEARMONTH:
+        if (GetLocaleInfoA(lcid, LOCALE_SYEARMONTH | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf, cal_id);
+        break;
+
+    default:
+        FIXME("Unknown date format (%ld)\n", flags);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /**************************************************************************
  *              EnumDateFormatsExW    (KERNEL32.@)
  */
-BOOL WINAPI EnumDateFormatsExW( DATEFMT_ENUMPROCEXW lpDateFmtEnumProc, LCID Locale, DWORD dwFlags )
+BOOL WINAPI EnumDateFormatsExW(DATEFMT_ENUMPROCEXW proc, LCID lcid, DWORD flags)
 {
-  FIXME("(%p, %ld, %ld): stub\n", lpDateFmtEnumProc, Locale, dwFlags);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    CALID cal_id;
+    WCHAR buf[256];
+
+    if (!proc)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!GetLocaleInfoW(lcid, LOCALE_ICALENDARTYPE|LOCALE_RETURN_NUMBER, (LPWSTR)&cal_id, sizeof(cal_id)/sizeof(WCHAR)))
+        return FALSE;
+
+    switch (flags & ~LOCALE_USE_CP_ACP)
+    {
+    case 0:
+    case DATE_SHORTDATE:
+        if (GetLocaleInfoW(lcid, LOCALE_SSHORTDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf, cal_id);
+        break;
+
+    case DATE_LONGDATE:
+        if (GetLocaleInfoW(lcid, LOCALE_SLONGDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf, cal_id);
+        break;
+
+    case DATE_YEARMONTH:
+        if (GetLocaleInfoW(lcid, LOCALE_SYEARMONTH | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf, cal_id);
+        break;
+
+    default:
+        FIXME("Unknown date format (%ld)\n", flags);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /**************************************************************************
