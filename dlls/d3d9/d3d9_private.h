@@ -247,7 +247,7 @@ struct IDirect3D9Impl
 {
     /* IUnknown fields */
     const IDirect3D9Vtbl   *lpVtbl;
-    DWORD                   ref;
+    LONG                    ref;
 
     /* The WineD3D device */
     IWineD3D               *WineD3D;
@@ -292,7 +292,7 @@ struct IDirect3DDevice9Impl
 {
     /* IUnknown fields */
     const IDirect3DDevice9Vtbl   *lpVtbl;
-    DWORD                         ref;
+    LONG                          ref;
 
     /* IDirect3DDevice9 fields */
     IWineD3DDevice               *WineD3DDevice;
@@ -446,7 +446,7 @@ struct IDirect3DVolume9Impl
 {
     /* IUnknown fields */
     const IDirect3DVolume9Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                    ref;
 
     /* IDirect3DVolume9 fields */
     IWineD3DVolume         *wineD3DVolume;
@@ -484,7 +484,7 @@ typedef struct IDirect3DSwapChain9Impl
 {
     /* IUnknown fields */
     const IDirect3DSwapChain9Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                    ref;
 
     /* IDirect3DSwapChain9 fields */
     IWineD3DSwapChain      *wineD3DSwapChain;
@@ -506,7 +506,7 @@ struct IDirect3DResource9Impl
 {
     /* IUnknown fields */
     const IDirect3DResource9Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                    ref;
 
     /* IDirect3DResource9 fields */
     IWineD3DResource       *wineD3DResource;
@@ -544,7 +544,7 @@ struct IDirect3DSurface9Impl
 {
     /* IUnknown fields */
     const IDirect3DSurface9Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                    ref;
 
     /* IDirect3DResource9 fields */
     IWineD3DSurface        *wineD3DSurface;
@@ -591,7 +591,7 @@ struct IDirect3DVertexBuffer9Impl
 {
     /* IUnknown fields */
     const IDirect3DVertexBuffer9Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                    ref;
 
     /* IDirect3DResource9 fields */
     IWineD3DVertexBuffer   *wineD3DVertexBuffer;
@@ -634,7 +634,7 @@ struct IDirect3DIndexBuffer9Impl
 {
     /* IUnknown fields */
     const IDirect3DIndexBuffer9Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                    ref;
 
     /* IDirect3DResource9 fields */
     IWineD3DIndexBuffer    *wineD3DIndexBuffer;
@@ -677,7 +677,7 @@ struct IDirect3DBaseTexture9Impl
 {
     /* IUnknown fields */
     const IDirect3DBaseTexture9Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                    ref;
 
     /* IDirect3DResource9 fields */
     IWineD3DBaseTexture    *wineD3DBaseTexture;
@@ -723,7 +723,7 @@ struct IDirect3DCubeTexture9Impl
 {
     /* IUnknown fields */
     const IDirect3DCubeTexture9Vtbl *lpVtbl;
-    DWORD                     ref;
+    LONG                      ref;
 
     /* IDirect3DResource9 fields */
     IWineD3DCubeTexture      *wineD3DCubeTexture;
@@ -776,7 +776,7 @@ struct IDirect3DTexture9Impl
 {
     /* IUnknown fields */
     const IDirect3DTexture9Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                    ref;
 
     /* IDirect3DResource9 fields */
     IWineD3DTexture        *wineD3DTexture;
@@ -830,7 +830,7 @@ struct IDirect3DVolumeTexture9Impl
 {
     /* IUnknown fields */
     const IDirect3DVolumeTexture9Vtbl *lpVtbl;
-    DWORD                       ref;
+    LONG                        ref;
 
     /* IDirect3DResource9 fields */
     IWineD3DVolumeTexture      *wineD3DVolumeTexture;
@@ -882,7 +882,7 @@ extern const IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl;
 typedef struct  IDirect3DStateBlock9Impl {
   /* IUnknown fields */
   const IDirect3DStateBlock9Vtbl *lpVtbl;
-  DWORD                     ref;
+  LONG                      ref;
 
   /* IDirect3DStateBlock9 fields */
   IWineD3DStateBlock       *wineD3DStateBlock;
@@ -904,7 +904,7 @@ extern const IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl;
 struct IDirect3DVertexDeclaration9Impl {
   /* IUnknown fields */
   const IDirect3DVertexDeclaration9Vtbl *lpVtbl;
-  DWORD   ref;
+  LONG    ref;
 
   /* IDirect3DVertexDeclaration9 fields */
   IWineD3DVertexDeclaration *wineD3DVertexDeclaration;
@@ -935,7 +935,7 @@ extern const IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl;
 struct IDirect3DVertexShader9Impl {
   /* IUnknown fields */
   const IDirect3DVertexShader9Vtbl *lpVtbl;
-  DWORD ref;
+  LONG  ref;
 
   /* IDirect3DVertexDeclaration9 fields */
   IDirect3DDevice9Impl* Device;
@@ -977,7 +977,7 @@ extern const IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl;
 typedef struct IDirect3DPixelShader9Impl {
   /* IUnknown fields */
     const IDirect3DPixelShader9Vtbl *lpVtbl;
-    DWORD ref;
+    LONG  ref;
 
     /* IDirect3DPixelShader9 fields */
     IWineD3DPixelShader       *wineD3DPixelShader;
@@ -999,7 +999,7 @@ extern const IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl;
 typedef struct IDirect3DQuery9Impl {
     /* IUnknown fields */
     const IDirect3DQuery9Vtbl *lpVtbl;
-    DWORD                ref;
+    LONG                 ref;
 
     /* IDirect3DQuery9 fields */
     IWineD3DQuery       *wineD3DQuery;

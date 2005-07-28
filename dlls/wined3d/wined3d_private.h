@@ -363,7 +363,7 @@ typedef struct IWineD3DImpl
 {
     /* IUnknown fields */
     const IWineD3DVtbl     *lpVtbl;
-    DWORD                   ref;     /* Note: Ref counting not required */
+    LONG                    ref;     /* Note: Ref counting not required */
 
     /* WineD3D Information */
     IUnknown               *parent;
@@ -420,7 +420,7 @@ typedef struct IWineD3DDeviceImpl
 {
     /* IUnknown fields      */
     const IWineD3DDeviceVtbl *lpVtbl;
-    DWORD                   ref;     /* Note: Ref counting not required */
+    LONG                    ref;     /* Note: Ref counting not required */
 
     /* WineD3D Information  */
     IUnknown               *parent;
@@ -520,7 +520,7 @@ typedef struct PrivateData
 typedef struct IWineD3DResourceClass
 {
     /* IUnknown fields */
-    DWORD                   ref;     /* Note: Ref counting not required */
+    LONG                    ref;     /* Note: Ref counting not required */
 
     /* WineD3DResource Information */
     IUnknown               *parent;
@@ -740,7 +740,7 @@ extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
 typedef struct IWineD3DVertexDeclarationImpl {
  /* IUnknown  Information     */
   const IWineD3DVertexDeclarationVtbl *lpVtbl;
-  DWORD                   ref;     /* Note: Ref counting not required */
+  LONG                    ref;     /* Note: Ref counting not required */
 
   IUnknown               *parent;
   /** precomputed fvf if simple declaration */
@@ -788,7 +788,7 @@ struct IWineD3DStateBlockImpl
 {
     /* IUnknown fields */
     const IWineD3DStateBlockVtbl *lpVtbl;
-    DWORD                     ref;     /* Note: Ref counting not required */
+    LONG                      ref;     /* Note: Ref counting not required */
 
     /* IWineD3DStateBlock information */
     IUnknown                 *parent;
@@ -863,7 +863,7 @@ extern const IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;
 typedef struct IWineD3DQueryImpl
 {
     const IWineD3DQueryVtbl  *lpVtbl;
-    DWORD                     ref;     /* Note: Ref counting not required */
+    LONG                      ref;     /* Note: Ref counting not required */
     
     IUnknown                 *parent;
     /*TODO: replace with iface usage */
@@ -890,7 +890,7 @@ typedef struct IWineD3DSwapChainImpl
 {
     /*IUnknown part*/
     IWineD3DSwapChainVtbl    *lpVtbl;
-    DWORD                     ref;     /* Note: Ref counting not required */
+    LONG                      ref;     /* Note: Ref counting not required */
 
     IUnknown                 *parent;
     IWineD3DDeviceImpl       *wineD3DDevice;
@@ -1006,7 +1006,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
 typedef struct IWineD3DVertexShaderImpl {
     /* IUnknown parts*/   
     const IWineD3DVertexShaderVtbl *lpVtbl;
-    DWORD                       ref;     /* Note: Ref counting not required */
+    LONG                        ref;     /* Note: Ref counting not required */
 
     IUnknown                    *parent;
     IWineD3DDeviceImpl          *wineD3DDevice;
@@ -1032,7 +1032,7 @@ extern const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl;
 typedef struct IWineD3DPixelShaderImpl {
     /* IUnknown parts*/   
     const IWineD3DPixelShaderVtbl *lpVtbl;
-    DWORD                       ref;     /* Note: Ref counting not required */
+    LONG                        ref;     /* Note: Ref counting not required */
     
     IUnknown                   *parent;
     IWineD3DDeviceImpl         *wineD3DDevice;
