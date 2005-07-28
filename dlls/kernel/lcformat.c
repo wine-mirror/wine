@@ -1685,82 +1685,61 @@ BOOL WINAPI EnumDateFormatsW(DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags)
 
 /**************************************************************************
  *              EnumTimeFormatsA	(KERNEL32.@)
+ *
+ * FIXME: MSDN mentions only LOCALE_USE_CP_ACP, should we handle
+ * LOCALE_NOUSEROVERRIDE here as well?
  */
-BOOL WINAPI EnumTimeFormatsA( TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags )
+BOOL WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA proc, LCID lcid, DWORD flags)
 {
-  LCID Loc = GetUserDefaultLCID();
-  if(!lpTimeFmtEnumProc)
+    char buf[256];
+
+    if (!proc)
     {
-      SetLastError(ERROR_INVALID_PARAMETER);
-      return FALSE;
-    }
-  if(dwFlags)
-    {
-      FIXME("Unknown time format (%ld)\n", dwFlags);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
 
-  switch( Loc )
- {
-   case 0x00000407:  /* (Loc,"de_DE") */
-   {
-    if(!(*lpTimeFmtEnumProc)("HH.mm")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("H:mm:ss")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("H.mm")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("H.mm'Uhr'")) return TRUE;
-    return TRUE;
-   }
+    switch (flags & ~LOCALE_USE_CP_ACP)
+    {
+    case 0:
+        if (GetLocaleInfoA(lcid, LOCALE_STIMEFORMAT | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf);
+        break;
 
-   case 0x0000040c:  /* (Loc,"fr_FR") */
-   case 0x00000c0c:  /* (Loc,"fr_CA") */
-   {
-    if(!(*lpTimeFmtEnumProc)("H:mm")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("H:mm:ss")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("HH.mm")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("HH'h'mm")) return TRUE;
+    default:
+        FIXME("Unknown time format (%ld)\n", flags);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     return TRUE;
-   }
-
-   case 0x00000809:  /* (Loc,"en_UK") */
-   case 0x00000c09:  /* (Loc,"en_AU") */
-   case 0x00001409:  /* (Loc,"en_NZ") */
-   case 0x00001809:  /* (Loc,"en_IE") */
-   {
-    if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("H:mm:ss")) return TRUE;
-    return TRUE;
-   }
-
-   case 0x00001c09:  /* (Loc,"en_ZA") */
-   case 0x00002809:  /* (Loc,"en_BZ") */
-   case 0x00002c09:  /* (Loc,"en_TT") */
-   {
-    if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("hh:mm:ss tt")) return TRUE;
-    return TRUE;
-   }
-
-   default:  /* default to US style "en_US" */
-   {
-    if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("hh:mm:ss tt")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("H:mm:ss")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
-    return TRUE;
-   }
- }
 }
 
 /**************************************************************************
  *              EnumTimeFormatsW	(KERNEL32.@)
  */
-BOOL WINAPI EnumTimeFormatsW( TIMEFMT_ENUMPROCW lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags )
+BOOL WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags)
 {
-  FIXME("(%p,%ld,%ld): stub\n", lpTimeFmtEnumProc, Locale, dwFlags);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    WCHAR buf[256];
+
+    if (!proc)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    switch (flags & ~LOCALE_USE_CP_ACP)
+    {
+    case 0:
+        if (GetLocaleInfoW(lcid, LOCALE_STIMEFORMAT | (flags & LOCALE_USE_CP_ACP), buf, 256))
+            proc(buf);
+        break;
+
+    default:
+        FIXME("Unknown time format (%ld)\n", flags);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /******************************************************************************
