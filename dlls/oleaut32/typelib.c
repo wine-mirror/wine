@@ -2916,7 +2916,7 @@ static SLTG_TypeInfoTail *SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 	        paramName = NULL;
 		HaveOffs = TRUE;
 	    }
-	    else if(!isalnum(*(paramName-1)))
+	    else if((unsigned char)paramName[-1] == 0xff)
 	        HaveOffs = TRUE;
 
 	    pArg++;
@@ -4176,7 +4176,7 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeAttr( ITypeInfo2 *iface,
     if(This->TypeAttr.typekind == TKIND_ALIAS) /* need to deep copy typedesc */
 	copy_typedesc(&(*ppTypeAttr)->tdescAlias, &This->TypeAttr.tdescAlias);
 
-    if((*ppTypeAttr)->typekind == TKIND_DISPATCH && (*ppTypeAttr)->wTypeFlags & TYPEFLAG_FDUAL) {
+    if((*ppTypeAttr)->typekind == TKIND_DISPATCH) {
         (*ppTypeAttr)->cFuncs = (*ppTypeAttr)->cbSizeVft / 4; /* This should include all the inherited
                                                                  funcs */
         (*ppTypeAttr)->cbSizeVft = 28; /* This is always the size of IDispatch's vtbl */
@@ -5120,6 +5120,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
 	    return S_OK;
         }
     }
+    WARN("member %ld not found\n", memid);
     return TYPE_E_ELEMENTNOTFOUND;
 }
 
