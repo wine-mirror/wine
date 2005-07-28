@@ -39,10 +39,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
 
-
 /******************************************************************************
  *
- *   This function will print via dprintf[_]ver to stddeb debug info regarding
+ *   This function will print via standard TRACE, debug info regarding
  *   the file info structure vffi.
  *      15-Feb-1998 Dimitrie Paun (dimi@cs.toronto.edu)
  *      Added this function to clean up the code.
@@ -50,113 +49,92 @@ WINE_DEFAULT_DEBUG_CHANNEL(ver);
  *****************************************************************************/
 static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 {
-	TRACE(" structversion=%u.%u, fileversion=%u.%u.%u.%u, productversion=%u.%u.%u.%u, flagmask=0x%lx, flags=%s%s%s%s%s%s\n",
-		    HIWORD(vffi->dwStrucVersion),LOWORD(vffi->dwStrucVersion),
-		    HIWORD(vffi->dwFileVersionMS),LOWORD(vffi->dwFileVersionMS),
-		    HIWORD(vffi->dwFileVersionLS),LOWORD(vffi->dwFileVersionLS),
-		    HIWORD(vffi->dwProductVersionMS),LOWORD(vffi->dwProductVersionMS),
-		    HIWORD(vffi->dwProductVersionLS),LOWORD(vffi->dwProductVersionLS),
-		    vffi->dwFileFlagsMask,
-		    (vffi->dwFileFlags & VS_FF_DEBUG) ? "DEBUG," : "",
-		    (vffi->dwFileFlags & VS_FF_PRERELEASE) ? "PRERELEASE," : "",
-		    (vffi->dwFileFlags & VS_FF_PATCHED) ? "PATCHED," : "",
-		    (vffi->dwFileFlags & VS_FF_PRIVATEBUILD) ? "PRIVATEBUILD," : "",
-		    (vffi->dwFileFlags & VS_FF_INFOINFERRED) ? "INFOINFERRED," : "",
-		    (vffi->dwFileFlags & VS_FF_SPECIALBUILD) ? "SPECIALBUILD," : ""
-		    );
+    TRACE("structversion=%u.%u, fileversion=%u.%u.%u.%u, productversion=%u.%u.%u.%u, flagmask=0x%lx, flags=%s%s%s%s%s%s\n",
+          HIWORD(vffi->dwStrucVersion),LOWORD(vffi->dwStrucVersion),
+          HIWORD(vffi->dwFileVersionMS),LOWORD(vffi->dwFileVersionMS),
+          HIWORD(vffi->dwFileVersionLS),LOWORD(vffi->dwFileVersionLS),
+          HIWORD(vffi->dwProductVersionMS),LOWORD(vffi->dwProductVersionMS),
+          HIWORD(vffi->dwProductVersionLS),LOWORD(vffi->dwProductVersionLS),
+          vffi->dwFileFlagsMask,
+          (vffi->dwFileFlags & VS_FF_DEBUG) ? "DEBUG," : "",
+          (vffi->dwFileFlags & VS_FF_PRERELEASE) ? "PRERELEASE," : "",
+          (vffi->dwFileFlags & VS_FF_PATCHED) ? "PATCHED," : "",
+          (vffi->dwFileFlags & VS_FF_PRIVATEBUILD) ? "PRIVATEBUILD," : "",
+          (vffi->dwFileFlags & VS_FF_INFOINFERRED) ? "INFOINFERRED," : "",
+          (vffi->dwFileFlags & VS_FF_SPECIALBUILD) ? "SPECIALBUILD," : "");
 
-        TRACE("(");
-	TRACE(" OS=0x%x.0x%x ",
-		HIWORD(vffi->dwFileOS),
-		LOWORD(vffi->dwFileOS)
-	);
-	switch (vffi->dwFileOS&0xFFFF0000) {
-	case VOS_DOS:TRACE("DOS,");break;
-	case VOS_OS216:TRACE("OS/2-16,");break;
-	case VOS_OS232:TRACE("OS/2-32,");break;
-	case VOS_NT:TRACE("NT,");break;
-	case VOS_UNKNOWN:
-	default:
-		TRACE("UNKNOWN(0x%lx),",vffi->dwFileOS&0xFFFF0000);break;
-	}
-	switch (LOWORD(vffi->dwFileOS)) {
-	case VOS__BASE:TRACE("BASE");break;
-	case VOS__WINDOWS16:TRACE("WIN16");break;
-	case VOS__WINDOWS32:TRACE("WIN32");break;
-	case VOS__PM16:TRACE("PM16");break;
-	case VOS__PM32:TRACE("PM32");break;
-	default:TRACE("UNKNOWN(0x%x)",LOWORD(vffi->dwFileOS));break;
-	}
-	TRACE(")\n");
+    TRACE("(");
 
-	switch (vffi->dwFileType) {
-	default:
-	case VFT_UNKNOWN:
-		TRACE("filetype=Unknown(0x%lx)",vffi->dwFileType);
-		break;
-	case VFT_APP:TRACE("filetype=APP,");break;
-	case VFT_DLL:TRACE("filetype=DLL,");break;
-	case VFT_DRV:
-		TRACE("filetype=DRV,");
-		switch(vffi->dwFileSubtype) {
-		default:
-		case VFT2_UNKNOWN:
-			TRACE("UNKNOWN(0x%lx)",vffi->dwFileSubtype);
-			break;
-		case VFT2_DRV_PRINTER:
-			TRACE("PRINTER");
-			break;
-		case VFT2_DRV_KEYBOARD:
-			TRACE("KEYBOARD");
-			break;
-		case VFT2_DRV_LANGUAGE:
-			TRACE("LANGUAGE");
-			break;
-		case VFT2_DRV_DISPLAY:
-			TRACE("DISPLAY");
-			break;
-		case VFT2_DRV_MOUSE:
-			TRACE("MOUSE");
-			break;
-		case VFT2_DRV_NETWORK:
-			TRACE("NETWORK");
-			break;
-		case VFT2_DRV_SYSTEM:
-			TRACE("SYSTEM");
-			break;
-		case VFT2_DRV_INSTALLABLE:
-			TRACE("INSTALLABLE");
-			break;
-		case VFT2_DRV_SOUND:
-			TRACE("SOUND");
-			break;
-		case VFT2_DRV_COMM:
-			TRACE("COMM");
-			break;
-		case VFT2_DRV_INPUTMETHOD:
-			TRACE("INPUTMETHOD");
-			break;
-		}
-		break;
-	case VFT_FONT:
-                TRACE("filetype=FONT.");
-		switch (vffi->dwFileSubtype) {
-		default:
-			TRACE("UNKNOWN(0x%lx)",vffi->dwFileSubtype);
-			break;
-		case VFT2_FONT_RASTER:TRACE("RASTER");break;
-		case VFT2_FONT_VECTOR:TRACE("VECTOR");break;
-		case VFT2_FONT_TRUETYPE:TRACE("TRUETYPE");break;
-		}
-		break;
-	case VFT_VXD:TRACE("filetype=VXD");break;
-	case VFT_STATIC_LIB:TRACE("filetype=STATIC_LIB");break;
-	}
-        TRACE("\n");
-	TRACE("  filedata=0x%lx.0x%lx\n",
-		    vffi->dwFileDateMS,vffi->dwFileDateLS);
+    TRACE("OS=0x%x.0x%x ", HIWORD(vffi->dwFileOS), LOWORD(vffi->dwFileOS));
+
+    switch (vffi->dwFileOS&0xFFFF0000)
+    {
+    case VOS_DOS:TRACE("DOS,");break;
+    case VOS_OS216:TRACE("OS/2-16,");break;
+    case VOS_OS232:TRACE("OS/2-32,");break;
+    case VOS_NT:TRACE("NT,");break;
+    case VOS_UNKNOWN:
+    default:
+        TRACE("UNKNOWN(0x%lx),",vffi->dwFileOS&0xFFFF0000);break;
+    }
+
+    switch (LOWORD(vffi->dwFileOS))
+    {
+    case VOS__BASE:TRACE("BASE");break;
+    case VOS__WINDOWS16:TRACE("WIN16");break;
+    case VOS__WINDOWS32:TRACE("WIN32");break;
+    case VOS__PM16:TRACE("PM16");break;
+    case VOS__PM32:TRACE("PM32");break;
+    default:
+        TRACE("UNKNOWN(0x%x)",LOWORD(vffi->dwFileOS));break;
+    }
+
+    TRACE(")\n");
+
+    switch (vffi->dwFileType)
+    {
+    case VFT_APP:TRACE("filetype=APP");break;
+    case VFT_DLL:TRACE("filetype=DLL");break;
+    case VFT_DRV:
+        TRACE("filetype=DRV,");
+        switch(vffi->dwFileSubtype)
+        {
+        case VFT2_DRV_PRINTER:TRACE("PRINTER");break;
+        case VFT2_DRV_KEYBOARD:TRACE("KEYBOARD");break;
+        case VFT2_DRV_LANGUAGE:TRACE("LANGUAGE");break;
+        case VFT2_DRV_DISPLAY:TRACE("DISPLAY");break;
+        case VFT2_DRV_MOUSE:TRACE("MOUSE");break;
+        case VFT2_DRV_NETWORK:TRACE("NETWORK");break;
+        case VFT2_DRV_SYSTEM:TRACE("SYSTEM");break;
+        case VFT2_DRV_INSTALLABLE:TRACE("INSTALLABLE");break;
+        case VFT2_DRV_SOUND:TRACE("SOUND");break;
+        case VFT2_DRV_COMM:TRACE("COMM");break;
+        case VFT2_DRV_INPUTMETHOD:TRACE("INPUTMETHOD");break;
+        case VFT2_UNKNOWN:
+        default:
+            TRACE("UNKNOWN(0x%lx)",vffi->dwFileSubtype);break;
+        }
+        break;
+    case VFT_FONT:
+        TRACE("filetype=FONT,");
+        switch (vffi->dwFileSubtype)
+        {
+        case VFT2_FONT_RASTER:TRACE("RASTER");break;
+        case VFT2_FONT_VECTOR:TRACE("VECTOR");break;
+        case VFT2_FONT_TRUETYPE:TRACE("TRUETYPE");break;
+        default:TRACE("UNKNOWN(0x%lx)",vffi->dwFileSubtype);break;
+        }
+        break;
+    case VFT_VXD:TRACE("filetype=VXD");break;
+    case VFT_STATIC_LIB:TRACE("filetype=STATIC_LIB");break;
+    case VFT_UNKNOWN:
+    default:
+        TRACE("filetype=Unknown(0x%lx)",vffi->dwFileType);break;
+    }
+
+    TRACE("\n");
+    TRACE("filedate=0x%lx.0x%lx\n",vffi->dwFileDateMS,vffi->dwFileDateLS);
 }
-
 
 /***********************************************************************
  * Version Info Structure
