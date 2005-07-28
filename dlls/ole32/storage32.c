@@ -58,8 +58,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
-#define FILE_BEGIN 0
-
 /* Used for OleConvertIStorageToOLESTREAM and OleConvertOLESTREAMToIStorage */
 #define OLESTREAM_ID 0x501
 #define OLESTREAM_MAX_STR_LEN 255
