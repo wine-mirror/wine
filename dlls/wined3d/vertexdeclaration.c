@@ -434,36 +434,58 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDevice(IWineD3DVertexDeclaration
 }
 
 static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration8(IWineD3DVertexDeclaration* iface, DWORD* pData, DWORD* pSizeOfData) {
-  IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-  if (NULL == pData) {
-    *pSizeOfData = This->declaration8Length;
+    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
+    if (NULL == pData) {
+        *pSizeOfData = This->declaration8Length;
+        return D3D_OK;
+    }
+
+    /* The increadables and teenage mutant ninja turtles require this in d3d9 for NumElements == 0,
+    TODO: this needs to be tested against windows */
+    if(*pSizeOfData == 0) {
+        TRACE("(%p) : Requested the vertex declaration without specefying the size of the return buffer\n", This);
+        *pSizeOfData = This->declaration8Length;
+        memcpy(pData, This->pDeclaration8, This->declaration8Length);
+        return D3D_OK;
+    }
+
+    if (*pSizeOfData < This->declaration8Length) {
+        FIXME("(%p) : Returning D3DERR_MOREDATA numElements %ld expected %ld\n", iface, *pSizeOfData, This->declaration8Length);
+        *pSizeOfData = This->declaration8Length;
+        return D3DERR_MOREDATA;
+    }
+    TRACE("(%p) : GetVertexDeclaration8 copying to %p\n", This, pData);
+    memcpy(pData, This->pDeclaration8, This->declaration8Length);
     return D3D_OK;
-  }
-  if (*pSizeOfData < This->declaration8Length) {
-    *pSizeOfData = This->declaration8Length;
-    return D3DERR_MOREDATA;
-  }
-  TRACE("(%p) : GetVertexDeclaration8 copying to %p\n", This, pData);
-  memcpy(pData, This->pDeclaration8, This->declaration8Length);
-  return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration9(IWineD3DVertexDeclaration* iface,  D3DVERTEXELEMENT9* pData, DWORD* pNumElements) {
-  IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-  if (NULL == pData) {
-    *pNumElements = This->declaration9NumElements;
-    TRACE("(%p) : Returning numElements %ld\n", iface, *pNumElements);
+    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
+    if (NULL == pData) {
+        *pNumElements = This->declaration9NumElements;
+        TRACE("(%p) : Returning numElements %ld\n", iface, *pNumElements);
+        return D3D_OK;
+    }
+
+    /* The increadables and teenage mutant ninja turtles require this for NumElements == 0,
+    TODO: this needs to be tested against windows */
+    if(*pNumElements == 0) {
+        TRACE("(%p) : Requested the vertex declaration without specefying the size of the return buffer\n", This);
+        *pNumElements = This->declaration9NumElements;
+        memcpy(pData, This->pDeclaration9, *pNumElements * sizeof(*pData));
+        return D3D_OK;
+    }
+
+    /* just incase there's a simila problem to  The increadables and teenage mutant ninja without pNumElements = 0 */
+    if (*pNumElements < This->declaration9NumElements) {
+        *pNumElements = This->declaration9NumElements;
+        FIXME("(%p) : Returning D3DERR_MOREDATA numElements %ld expected %u\n", iface, *pNumElements, This->declaration9NumElements);
+        memcpy(pData, This->pDeclaration9, *pNumElements * sizeof(*pData));
+        return D3DERR_MOREDATA;
+    }
+    TRACE("(%p) : GetVertexDeclaration9 copying to %p\n", This, pData);
+    memcpy(pData, This->pDeclaration9, This->declaration9NumElements * sizeof(*pData));
     return D3D_OK;
-  }
-  if (*pNumElements < This->declaration9NumElements) {
-    *pNumElements = This->declaration9NumElements;
-    memcpy(pData, This->pDeclaration9, *pNumElements * sizeof(*pData));
-    FIXME("(%p) : Returning D3DERR_MOREDATA numElements %ld expected %u\n", iface, *pNumElements, This->declaration9NumElements);
-    return D3DERR_MOREDATA;
-  }
-  TRACE("(%p) : GetVertexDeclaration9 copying to %p\n", This, pData);
-  memcpy(pData, This->pDeclaration9, This->declaration9NumElements * sizeof(*pData));
-  return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclaration *iface, VOID *pData, DWORD *pSize) {
