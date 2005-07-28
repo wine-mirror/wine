@@ -2880,8 +2880,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     case WINED3DRS_STENCILFAIL               :
         {
             GLenum fail  ;
-            GLenum zpass ;
-            GLenum zfail ;
+            GLint  zpass ;
+            GLint  zfail ;
 
             fail = StencilOp(Value);
             glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);
@@ -2896,8 +2896,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         break;
     case WINED3DRS_STENCILZFAIL              :
         {
-            GLenum fail  ;
-            GLenum zpass ;
+            GLint  fail  ;
+            GLint  zpass ;
             GLenum zfail ;
 
             glGetIntegerv(GL_STENCIL_FAIL, &fail);
@@ -2913,9 +2913,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         break;
     case WINED3DRS_STENCILPASS               :
         {
-            GLenum fail  ;
+            GLint  fail  ;
             GLenum zpass ;
-            GLenum zfail ;
+            GLint  zfail ;
 
             glGetIntegerv(GL_STENCIL_FAIL, &fail);
             checkGLcall("glGetIntegerv(GL_STENCIL_FAIL, &fail);");
@@ -4871,7 +4871,8 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
      *       NOTE: move code to surface to accomplish this
       ****************************************/
     IWineD3DSurfaceImpl *pSrcSurface  = (IWineD3DSurfaceImpl *)pSourceSurface;
-    int srcWidth, srcHeight, srcSurfaceWidth, srcSurfaceHeight, destSurfaceWidth, destSurfaceHeight;
+    int srcWidth, srcHeight;
+    unsigned int srcSurfaceWidth, srcSurfaceHeight, destSurfaceWidth, destSurfaceHeight;
     WINED3DFORMAT destFormat, srcFormat;
     UINT destSize;
     int destLeft, destTop;
@@ -5325,8 +5326,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_CleanRender(IWineD3DDevice* iface, IWineD3DSwa
 HRESULT WINAPI IWineD3DDeviceImpl_FindGLContext(IWineD3DDevice *iface, IWineD3DSurface *pSurface, glContext **context) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     int i;
-    int width;
-    int height;
+    unsigned int width;
+    unsigned int height;
     WINED3DFORMAT format;
     WINED3DSURFACE_DESC surfaceDesc;
     memset(&surfaceDesc, 0, sizeof(surfaceDesc));

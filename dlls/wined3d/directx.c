@@ -562,7 +562,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
         }
     }
 
-#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) glXGetProcAddressARB(#pfn);
+#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) glXGetProcAddressARB( (const GLubyte *) #pfn);
     GL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 
@@ -588,7 +588,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
         }
     }
 
-#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) glXGetProcAddressARB(#pfn);
+#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) glXGetProcAddressARB( (const GLubyte *) #pfn);
     GLX_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 

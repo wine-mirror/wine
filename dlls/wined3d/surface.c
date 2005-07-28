@@ -370,7 +370,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
     } else if (D3DUSAGE_RENDERTARGET & This->resource.usage && !(Flags&D3DLOCK_DISCARD)) { /* render surfaces */
 
         GLint  prev_store;
-        GLenum prev_read;
+        GLint  prev_read;
         BOOL notInContext = FALSE;
         IWineD3DSwapChainImpl *targetSwapChain = NULL;
 
@@ -610,7 +610,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
         if (iface ==  implSwapChain->backBuffer || iface ==  implSwapChain->frontBuffer || iface == myDevice->renderTarget) {
             GLint  prev_store;
-            GLenum prev_draw;
+            GLint  prev_draw;
             GLint  prev_rasterpos[4];
 
             ENTER_GL();
@@ -797,7 +797,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
                  This->resource.format == WINED3DFMT_DXT5)
             FIXME("Format %d not supported\n", This->resource.format);
         else {
-            GLenum prevRead;
+            GLint prevRead;
             glGetIntegerv(GL_READ_BUFFER, &prevRead);
             vcheckGLcall("glGetIntegerv");
             glReadBuffer(GL_BACK);
