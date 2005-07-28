@@ -274,7 +274,6 @@ static void MRU_SaveChanged ( LPWINEMRULIST mp )
     HKEY newkey;
     WCHAR realname[2];
     LPWINEMRUITEM witem;
-    static const WCHAR emptyW[] = {'\0'};
 
     /* or should we do the following instead of RegOpenKeyEx:
      */
@@ -287,7 +286,7 @@ static void MRU_SaveChanged ( LPWINEMRULIST mp )
 	    err);
 	if ((err = RegCreateKeyExW( mp->extview.hKey, mp->extview.lpszSubKey,
 				    0,
-				    emptyW,
+				    NULL,
 				    REG_OPTION_NON_VOLATILE,
 				    KEY_READ | KEY_WRITE,
 				    0,
@@ -653,7 +652,6 @@ static HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
     WCHAR realname[2];
     LPWINEMRUITEM witem;
     DWORD type;
-    static const WCHAR emptyW[] = {'\0'};
 
     /* get space to save indices that will turn into names
      * but in order of most to least recently used
@@ -668,7 +666,7 @@ static HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
     /* open the sub key */
     if ((err = RegCreateKeyExW( mp->extview.hKey, mp->extview.lpszSubKey,
 			        0,
-				emptyW,
+				NULL,
 				REG_OPTION_NON_VOLATILE,
 				KEY_READ | KEY_WRITE,
                                 0,
