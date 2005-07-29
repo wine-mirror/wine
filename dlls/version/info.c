@@ -605,17 +605,17 @@ BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
 {
     UNICODE_STRING filenameW;
     BOOL retval;
-                                                                                                                                               
+
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_a(filename), handle, datasize, data );
-                                                                                                                                               
+
     if(filename)
         RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
     else
         filenameW.Buffer = NULL;
-                                                                                                                                               
+
     retval = GetFileVersionInfoW(filenameW.Buffer, handle, datasize, data);
-                                                                                                                                               
+
     return retval;
 }
 
@@ -744,6 +744,8 @@ static BOOL WINAPI VersionInfo32_QueryValue( VS_VERSION_INFO_STRUCT32 *info, LPC
 BOOL WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT *puLen )
 {
+    static const char rootA[] = "\\";
+    static const char varfileinfoA[] = "\\VarFileInfo\\Translation";
     VS_VERSION_INFO_STRUCT16 *info = (VS_VERSION_INFO_STRUCT16 *)pBlock;
 
     TRACE("(%p,%s,%p,%p)\n",
@@ -751,10 +753,43 @@ BOOL WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
 
     if ( !VersionInfoIs16( info ) )
     {
-        /* FIXME : The conversion is maybe a bit overkill, we only need 1 value */
+        BOOL ret;
+        INT len;
+        LPWSTR lpSubBlockW;
 
-        ConvertVersionInfo32To16( (VS_VERSION_INFO_STRUCT32 *)info,
-                                  (VS_VERSION_INFO_STRUCT16 *)info );
+        len  = MultiByteToWideChar(CP_ACP, 0, lpSubBlock, -1, NULL, 0);
+        lpSubBlockW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+        if (!lpSubBlockW)
+            return FALSE;
+
+        MultiByteToWideChar(CP_ACP, 0, lpSubBlock, -1, lpSubBlockW, len);
+
+        ret = VersionInfo32_QueryValue(pBlock, lpSubBlockW, lplpBuffer, puLen);
+
+        HeapFree(GetProcessHeap(), 0, lpSubBlockW);
+
+        if (( !strcasecmp( lpSubBlock, rootA )) || ( !strcasecmp( lpSubBlock, varfileinfoA )))
+            return ret;
+        else
+        {
+            LPSTR lplpBufferA;
+
+            len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*lplpBuffer, -1, NULL, 0, NULL, NULL);
+            lplpBufferA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
+
+            if (!lplpBufferA)
+                return FALSE;
+
+            WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*lplpBuffer, -1, lplpBufferA, len, NULL, NULL);
+
+            memcpy(*lplpBuffer, lplpBufferA, len);
+            *puLen = len;
+
+            HeapFree(GetProcessHeap(), 0, lplpBufferA);
+
+            return ret;
+        }
     }
 
     return VersionInfo16_QueryValue(info, lpSubBlock, lplpBuffer, puLen);
@@ -766,6 +801,10 @@ BOOL WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
 BOOL WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT *puLen )
 {
+    static const WCHAR rootW[] = { '\\', 0 };
+    static const WCHAR varfileinfoW[] = { '\\','V','a','r','F','i','l','e','I','n','f','o',
+                                          '\\','T','r','a','n','s','l','a','t','i','o','n', 0 };
+
     VS_VERSION_INFO_STRUCT32 *info = (VS_VERSION_INFO_STRUCT32 *)pBlock;
 
     TRACE("(%p,%s,%p,%p)\n",
@@ -774,14 +813,42 @@ BOOL WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
     if ( VersionInfoIs16( info ) )
     {
         BOOL ret;
-        int len = WideCharToMultiByte(CP_ACP, 0, lpSubBlock, -1, NULL, 0, NULL, NULL);
-        LPSTR lpSubBlockA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
+        int len;
+        LPSTR lpSubBlockA;
+
+        len = WideCharToMultiByte(CP_ACP, 0, lpSubBlock, -1, NULL, 0, NULL, NULL);
+        lpSubBlockA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
+
         if (!lpSubBlockA)
             return FALSE;
+
         WideCharToMultiByte(CP_ACP, 0, lpSubBlock, -1, lpSubBlockA, len, NULL, NULL);
+
         ret = VersionInfo16_QueryValue(pBlock, lpSubBlockA, lplpBuffer, puLen);
+
         HeapFree(GetProcessHeap(), 0, lpSubBlockA);
-        return ret;
+
+        if (( !strcmpiW( lpSubBlock, rootW )) || ( !strcmpiW( lpSubBlock, varfileinfoW )))
+            return ret;
+        else
+        {
+            LPWSTR lplpBufferW;
+
+            len  = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*lplpBuffer, -1, NULL, 0);
+            lplpBufferW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+            if (!lplpBufferW)
+                return FALSE;
+
+            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*lplpBuffer, -1, lplpBufferW, len);
+
+            memcpy(*lplpBuffer, lplpBufferW, len * sizeof(WCHAR));
+            *puLen = len;
+
+            HeapFree(GetProcessHeap(), 0, lplpBufferW);
+
+            return ret;
+        }
     }
 
     return VersionInfo32_QueryValue(info, lpSubBlock, lplpBuffer, puLen);
