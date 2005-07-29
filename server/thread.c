@@ -270,7 +270,7 @@ struct thread *get_thread_from_id( thread_id_t id )
     struct object *obj = get_ptid_entry( id );
 
     if (obj && obj->ops == &thread_ops) return (struct thread *)grab_object( obj );
-    set_win32_error( ERROR_INVALID_THREAD_ID );
+    set_error( STATUS_INVALID_CID );
     return NULL;
 }
 

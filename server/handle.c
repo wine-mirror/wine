@@ -331,13 +331,13 @@ int close_handle( struct process *process, obj_handle_t handle, int *fd )
     if (!(entry = get_handle( process, handle ))) return 0;
     if (entry->access & RESERVED_CLOSE_PROTECT)
     {
-        set_error( STATUS_INVALID_HANDLE );
+        set_error( STATUS_HANDLE_NOT_CLOSABLE );
         return 0;
     }
     obj = entry->ptr;
     if (!obj->ops->close_handle( obj, process, handle ))
     {
-        set_error( STATUS_INVALID_HANDLE );
+        set_error( STATUS_HANDLE_NOT_CLOSABLE );
         return 0;
     }
     entry->ptr = NULL;
