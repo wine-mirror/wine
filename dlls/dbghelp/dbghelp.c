@@ -282,6 +282,17 @@ DWORD WINAPI SymGetOptions(void)
 }
 
 /******************************************************************
+ *		SymSetParentWindow (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymSetParentWindow(HWND hwnd)
+{
+    /* Save hwnd so it can be used as parent window */
+    FIXME("(%p): stub\n", hwnd);
+    return TRUE;
+}
+
+/******************************************************************
  *		SymSetContext (DBGHELP.@)
  *
  */

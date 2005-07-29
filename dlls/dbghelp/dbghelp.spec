@@ -80,6 +80,7 @@
 @ stub SymRegisterFunctionEntryCallback
 @ stdcall SymSetContext(long ptr ptr)
 @ stdcall SymSetOptions(long)
+@ stdcall SymSetParentWindow(long)
 @ stdcall SymSetSearchPath(long str)
 @ stub SymSetSymWithAddr64
 @ stub SymUnDName64

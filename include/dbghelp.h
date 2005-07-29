@@ -887,6 +887,8 @@ BOOL WINAPI UnmapDebugInformation(PIMAGE_DEBUG_INFORMATION);
 DWORD   WINAPI  SymGetOptions(void);
 DWORD   WINAPI  SymSetOptions(DWORD);
 
+BOOL WINAPI SymSetParentWindow(HWND hwnd);
+
 /* Symbol server bits */
 typedef BOOL     (WINAPI* PSYMBOLSERVERPROC)(LPCSTR, LPCSTR, PVOID, DWORD, DWORD, LPSTR);
 typedef BOOL     (WINAPI* PSYMBOLSERVEROPENPROC)(void);
