@@ -223,6 +223,30 @@ sub GET_PROTOCOL_VERSION()
     return $protocol;
 }
 
+### Retrieve the list of status and errors used in the server
+
+sub GET_ERROR_NAMES()
+{
+    my %errors = ();
+    foreach my $f (glob "server/*.c")
+    {
+        open FILE, $f or die "Can't open $f";
+        while (<FILE>)
+        {
+            if (/set_error\s*\(\s*STATUS_(\w+)\s*\)/)
+            {
+                $errors{$1} = "STATUS_$1";
+            }
+            elsif (/set_win32_error\s*\(\s*(\w+)\s*\)/)
+            {
+                $errors{$1} = "0xc0010000 | $1";
+            }
+        }
+        close FILE;
+    }
+    return %errors;
+}
+
 ### Replace the contents of a file between ### make_requests ### marks
 
 sub REPLACE_IN_FILE($@)
@@ -251,6 +275,8 @@ sub REPLACE_IN_FILE($@)
 
 # Get the server protocol version
 my $protocol = GET_PROTOCOL_VERSION();
+
+my %errors = GET_ERROR_NAMES();
 
 ### Create server_protocol.h and print header
 
@@ -309,6 +335,18 @@ foreach my $req (@requests)
 {
     push @trace_lines, "    \"$req\",\n";
 }
+push @trace_lines, "};\n\n";
+
+push @trace_lines, "static const struct\n{\n";
+push @trace_lines, "    const char  *name;\n";
+push @trace_lines, "    unsigned int value;\n";
+push @trace_lines, "} status_names[] =\n{\n";
+
+foreach my $err (sort keys %errors)
+{
+    push @trace_lines, sprintf("    { %-30s %s },\n", "\"$err\",", $errors{$err});
+}
+push @trace_lines, "    { NULL, 0 }\n";
 push @trace_lines, "};\n";
 
 REPLACE_IN_FILE( "server/trace.c", @trace_lines );

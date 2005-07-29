@@ -3691,68 +3691,79 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_mailslot_info",
 };
 
+static const struct
+{
+    const char  *name;
+    unsigned int value;
+} status_names[] =
+{
+    { "ACCESS_DENIED",               STATUS_ACCESS_DENIED },
+    { "ACCESS_VIOLATION",            STATUS_ACCESS_VIOLATION },
+    { "ALIAS_EXISTS",                STATUS_ALIAS_EXISTS },
+    { "BUFFER_OVERFLOW",             STATUS_BUFFER_OVERFLOW },
+    { "BUFFER_TOO_SMALL",            STATUS_BUFFER_TOO_SMALL },
+    { "CHILD_MUST_BE_VOLATILE",      STATUS_CHILD_MUST_BE_VOLATILE },
+    { "DEVICE_BUSY",                 STATUS_DEVICE_BUSY },
+    { "DIRECTORY_NOT_EMPTY",         STATUS_DIRECTORY_NOT_EMPTY },
+    { "DISK_FULL",                   STATUS_DISK_FULL },
+    { "DLL_NOT_FOUND",               STATUS_DLL_NOT_FOUND },
+    { "ERROR_CLASS_ALREADY_EXISTS",  0xc0010000 | ERROR_CLASS_ALREADY_EXISTS },
+    { "ERROR_CLASS_DOES_NOT_EXIST",  0xc0010000 | ERROR_CLASS_DOES_NOT_EXIST },
+    { "ERROR_CLASS_HAS_WINDOWS",     0xc0010000 | ERROR_CLASS_HAS_WINDOWS },
+    { "ERROR_CLIPBOARD_NOT_OPEN",    0xc0010000 | ERROR_CLIPBOARD_NOT_OPEN },
+    { "ERROR_INVALID_INDEX",         0xc0010000 | ERROR_INVALID_INDEX },
+    { "ERROR_SEEK",                  0xc0010000 | ERROR_SEEK },
+    { "FILE_INVALID",                STATUS_FILE_INVALID },
+    { "FILE_IS_A_DIRECTORY",         STATUS_FILE_IS_A_DIRECTORY },
+    { "FILE_LOCK_CONFLICT",          STATUS_FILE_LOCK_CONFLICT },
+    { "HANDLE_NOT_CLOSABLE",         STATUS_HANDLE_NOT_CLOSABLE },
+    { "INVALID_CID",                 STATUS_INVALID_CID },
+    { "INVALID_FILE_FOR_SECTION",    STATUS_INVALID_FILE_FOR_SECTION },
+    { "INVALID_HANDLE",              STATUS_INVALID_HANDLE },
+    { "INVALID_PARAMETER",           STATUS_INVALID_PARAMETER },
+    { "IO_TIMEOUT",                  STATUS_IO_TIMEOUT },
+    { "KEY_DELETED",                 STATUS_KEY_DELETED },
+    { "MEDIA_WRITE_PROTECTED",       STATUS_MEDIA_WRITE_PROTECTED },
+    { "MUTANT_NOT_OWNED",            STATUS_MUTANT_NOT_OWNED },
+    { "NOT_ALL_ASSIGNED",            STATUS_NOT_ALL_ASSIGNED },
+    { "NOT_A_DIRECTORY",             STATUS_NOT_A_DIRECTORY },
+    { "NOT_IMPLEMENTED",             STATUS_NOT_IMPLEMENTED },
+    { "NOT_REGISTRY_FILE",           STATUS_NOT_REGISTRY_FILE },
+    { "NO_DATA_DETECTED",            STATUS_NO_DATA_DETECTED },
+    { "NO_IMPERSONATION_TOKEN",      STATUS_NO_IMPERSONATION_TOKEN },
+    { "NO_MEMORY",                   STATUS_NO_MEMORY },
+    { "NO_MORE_ENTRIES",             STATUS_NO_MORE_ENTRIES },
+    { "NO_MORE_FILES",               STATUS_NO_MORE_FILES },
+    { "NO_SUCH_DEVICE",              STATUS_NO_SUCH_DEVICE },
+    { "NO_SUCH_FILE",                STATUS_NO_SUCH_FILE },
+    { "NO_TOKEN",                    STATUS_NO_TOKEN },
+    { "OBJECT_NAME_COLLISION",       STATUS_OBJECT_NAME_COLLISION },
+    { "OBJECT_NAME_INVALID",         STATUS_OBJECT_NAME_INVALID },
+    { "OBJECT_NAME_NOT_FOUND",       STATUS_OBJECT_NAME_NOT_FOUND },
+    { "OBJECT_PATH_INVALID",         STATUS_OBJECT_PATH_INVALID },
+    { "OBJECT_TYPE_MISMATCH",        STATUS_OBJECT_TYPE_MISMATCH },
+    { "PENDING",                     STATUS_PENDING },
+    { "PIPE_BUSY",                   STATUS_PIPE_BUSY },
+    { "PIPE_CONNECTED",              STATUS_PIPE_CONNECTED },
+    { "PIPE_DISCONNECTED",           STATUS_PIPE_DISCONNECTED },
+    { "PIPE_LISTENING",              STATUS_PIPE_LISTENING },
+    { "PIPE_NOT_AVAILABLE",          STATUS_PIPE_NOT_AVAILABLE },
+    { "PRIVILEGE_NOT_HELD",          STATUS_PRIVILEGE_NOT_HELD },
+    { "SECTION_TOO_BIG",             STATUS_SECTION_TOO_BIG },
+    { "SEMAPHORE_LIMIT_EXCEEDED",    STATUS_SEMAPHORE_LIMIT_EXCEEDED },
+    { "SHARING_VIOLATION",           STATUS_SHARING_VIOLATION },
+    { "SUSPEND_COUNT_EXCEEDED",      STATUS_SUSPEND_COUNT_EXCEEDED },
+    { "TIMEOUT",                     STATUS_TIMEOUT },
+    { "UNSUCCESSFUL",                STATUS_UNSUCCESSFUL },
+    { "WAS_LOCKED",                  STATUS_WAS_LOCKED },
+    { NULL, 0 }
+};
+
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
 
 static const char *get_status_name( unsigned int status )
 {
-#define NAME(status)       { #status, STATUS_##status }
-#define NAME_WIN32(error)  { #error, 0xc0010000 | error }
-    static const struct
-    {
-        const char  *name;
-        unsigned int value;
-    } status_names[] =
-    {
-        NAME(ACCESS_DENIED),
-        NAME(ACCESS_VIOLATION),
-        NAME(ALIAS_EXISTS),
-        NAME(BUFFER_OVERFLOW),
-        NAME(CHILD_MUST_BE_VOLATILE),
-        NAME(DIRECTORY_NOT_EMPTY),
-        NAME(DISK_FULL),
-        NAME(DLL_NOT_FOUND),
-        NAME(FILE_IS_A_DIRECTORY),
-        NAME(FILE_LOCK_CONFLICT),
-        NAME(INVALID_FILE_FOR_SECTION),
-        NAME(INVALID_HANDLE),
-        NAME(INVALID_PARAMETER),
-        NAME(KEY_DELETED),
-        NAME(MEDIA_WRITE_PROTECTED),
-        NAME(MUTANT_NOT_OWNED),
-        NAME(NOT_A_DIRECTORY),
-        NAME(NOT_IMPLEMENTED),
-        NAME(NOT_REGISTRY_FILE),
-        NAME(NO_DATA_DETECTED),
-        NAME(NO_MEMORY),
-        NAME(NO_MORE_ENTRIES),
-        NAME(NO_MORE_FILES),
-        NAME(NO_SUCH_FILE),
-        NAME(OBJECT_NAME_COLLISION),
-        NAME(OBJECT_NAME_INVALID),
-        NAME(OBJECT_NAME_NOT_FOUND),
-        NAME(OBJECT_PATH_INVALID),
-        NAME(OBJECT_TYPE_MISMATCH),
-        NAME(PENDING),
-        NAME(PIPE_BUSY),
-        NAME(PIPE_CONNECTED),
-        NAME(PIPE_DISCONNECTED),
-        NAME(PIPE_LISTENING),
-        NAME(PIPE_NOT_AVAILABLE),
-        NAME(SEMAPHORE_LIMIT_EXCEEDED),
-        NAME(SHARING_VIOLATION),
-        NAME(SUSPEND_COUNT_EXCEEDED),
-        NAME(TIMEOUT),
-        NAME(USER_APC),
-        NAME(WAS_LOCKED),
-        NAME_WIN32(ERROR_INVALID_INDEX),
-        NAME_WIN32(ERROR_INVALID_THREAD_ID),
-        NAME_WIN32(ERROR_NEGATIVE_SEEK),
-        NAME_WIN32(ERROR_SEEK),
-        { NULL, 0 }  /* terminator */
-    };
-#undef NAME
-
     int i;
     static char buffer[10];
 
