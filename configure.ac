@@ -1289,6 +1289,11 @@ AC_CACHE_CHECK([whether linux/input.h is for real],
                   [Define if we have linux/input.h AND it contains the INPUT event API])
     fi
 
+AC_CHECK_MEMBERS([struct ff_effect.direction],,,
+[#ifdef HAVE_LINUX_INPUT_H
+#include <linux/input.h>
+#endif])
+
 AC_CACHE_CHECK([for sigaddset],wine_cv_have_sigaddset,
                AC_TRY_LINK([#include <signal.h>],[sigset_t set; sigaddset(&set,SIGTERM);],
                            wine_cv_have_sigaddset=yes,wine_cv_have_sigaddset=no))

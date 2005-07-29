@@ -3,6 +3,7 @@
  * Copyright 1998,2000 Marcus Meissner
  * Copyright 1998,1999 Lionel Ulmer
  * Copyright 2000-2001 TransGaming Technologies Inc.
+ * Copyright 2005 Daniel Remenak
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -97,6 +98,10 @@ struct JoystickImpl
 	BOOL				overflow;
 	DIJOYSTATE2			js;
 
+	/* Force feedback variables */
+	BOOL				has_ff;
+	int				num_effects;
+
 	/* data returned by the EVIOCGABS() ioctl */
 	int				axes[ABS_MAX+1][5];
 
@@ -107,9 +112,11 @@ struct JoystickImpl
 #define AXE_ABSFLAT	4
 
 
-	/* data returned by EVIOCGBIT for EV_ABS and EV_KEY */
+	/* data returned by EVIOCGBIT for caps, EV_ABS, EV_KEY, and EV_FF */
+	BYTE				evbits[(EV_MAX+7)/8];
 	BYTE				absbits[(ABS_MAX+7)/8];
 	BYTE				keybits[(KEY_MAX+7)/8];
+	BYTE				ffbits[(FF_MAX+7)/8];	
 };
 
 /* This GUID is slightly different from the linux joystick one. Take note. */
@@ -379,19 +386,32 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     int		i;
     JoystickImpl *This = (JoystickImpl *)iface;
     char	buf[200];
+    BOOL	readonly = TRUE;
 
     TRACE("(this=%p)\n",This);
     if (This->joyfd!=-1)
     	return 0;
     for (i=0;i<64;i++) {
       sprintf(buf,EVDEVPREFIX"%d",i);
-      if (-1==(This->joyfd=open(buf,O_RDONLY))) {
-	if (errno==ENODEV)
-	  return DIERR_NOTFOUND;
-	perror(buf);
-	continue;
+      if (-1==(This->joyfd=open(buf,O_RDWR))) { 
+        if (-1==(This->joyfd=open(buf,O_RDONLY))) {
+	  /* Couldn't open the device at all */ 
+	  if (errno==ENODEV)
+	    return DIERR_NOTFOUND;
+	  perror(buf);
+	  continue;
+	}
+	else {
+	  /* Couldn't open in r/w but opened in read-only. */
+          WARN("Could not open %s in read-write mode.  Force feedback will be disabled.\n",buf);
+	}
       }
-      if ((-1!=ioctl(This->joyfd,EVIOCGBIT(EV_ABS,sizeof(This->absbits)),This->absbits)) &&
+      else {
+	/* Opened device in read-write */
+	readonly = FALSE;
+      }
+      if ((-1!=ioctl(This->joyfd,EVIOCGBIT(0,sizeof(This->evbits)),This->evbits)) &&
+	  (-1!=ioctl(This->joyfd,EVIOCGBIT(EV_ABS,sizeof(This->absbits)),This->absbits)) &&
           (-1!=ioctl(This->joyfd,EVIOCGBIT(EV_KEY,sizeof(This->keybits)),This->keybits)) &&
           (test_bit(This->absbits,ABS_X) && test_bit(This->absbits,ABS_Y) &&
 	   (test_bit(This->keybits,BTN_TRIGGER)||
@@ -406,6 +426,30 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     }
     if (This->joyfd==-1)
     	return DIERR_NOTFOUND;
+
+    This->has_ff = FALSE;
+    This->num_effects = 0;
+
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
+    if (!readonly && test_bit(This->evbits, EV_FF)) {
+        if (-1!=ioctl(This->joyfd,EVIOCGBIT(EV_FF,sizeof(This->ffbits)),This->ffbits)) {
+	    if (-1!=ioctl(This->joyfd,EVIOCGEFFECTS,&This->num_effects) 
+		&& This->num_effects > 0) {
+		This->has_ff = TRUE;
+		TRACE("Joystick seems to be capable of force feedback.\n");
+	    }
+	    else {
+		TRACE("Joystick does not support any effects, disabling force feedback.\n");
+	    }
+        }
+        else {
+            TRACE("Could not get EV_FF bits; disabling force feedback.\n");
+        }
+    }
+    else {
+        TRACE("Force feedback disabled (device is readonly or joystick incapable).\n");
+    }
+#endif
 
     for (i=0;i<ABS_MAX;i++) {
 	if (test_bit(This->absbits,i)) {
@@ -778,6 +822,9 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
     for (i=0;i<ABS_MAX;i++) if (test_bit(This->absbits,i)) axes++;
     buttons=0;
     for (i=0;i<KEY_MAX;i++) if (test_bit(This->keybits,i)) buttons++;
+
+    if (This->has_ff) 
+	 lpDIDevCaps->dwFlags |= DIDC_FORCEFEEDBACK;
 
     lpDIDevCaps->dwAxes = axes;
     lpDIDevCaps->dwButtons = buttons;
