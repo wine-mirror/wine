@@ -18,7 +18,14 @@
  */
 
 #include <assert.h>
-#include <windows.h>
+#include <stdarg.h>
+#include <stdio.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 
 #include "wine/test.h"
 
@@ -30,7 +37,7 @@
 #define REDRAW
 #endif
 
-static const char *strings[4] = {
+static const char * const strings[4] = {
   "First added",
   "Second added",
   "Third added",
@@ -38,12 +45,12 @@ static const char *strings[4] = {
 };
 
 static HWND
-create_listbox (DWORD add_style)
+create_listbox (DWORD add_style, HWND parent)
 {
   HWND handle=CreateWindow ("LISTBOX", "TestList",
                             (LBS_STANDARD & ~LBS_SORT) | add_style,
                             0, 0, 100, 100,
-                            NULL, NULL, NULL, 0);
+                            parent, (HMENU)1, NULL, 0);
 
   assert (handle);
   SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) strings[0]);
@@ -125,7 +132,7 @@ static void
 check (const struct listbox_test test)
 {
   struct listbox_stat answer;
-  HWND hLB=create_listbox (test.prop.add_style);
+  HWND hLB=create_listbox (test.prop.add_style, 0);
   RECT second_item;
   int i;
 
@@ -144,7 +151,7 @@ check (const struct listbox_test test)
   listbox_ok (test, step, answer);
 
   DestroyWindow (hLB);
-  hLB=create_listbox (test.prop.add_style);
+  hLB=create_listbox (test.prop.add_style, 0);
 
   SendMessage (hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(1, 2));
   listbox_query (hLB, &answer);
@@ -177,21 +184,108 @@ static void check_item_height(void)
     HWND hLB;
     HDC hdc;
     HFONT font;
-    TEXTMETRICW tm;
+    TEXTMETRIC tm;
     INT itemHeight;
 
-    hLB = create_listbox (0);
+    hLB = create_listbox (0, 0);
     ok ((hdc = GetDCEx( hLB, 0, DCX_CACHE )) != 0, "Can't get hdc\n");
     ok ((font = GetCurrentObject(hdc, OBJ_FONT)) != 0, "Can't get the current font\n");
-    ok (GetTextMetricsW( hdc, &tm ), "Can't read font metrics\n");
+    ok (GetTextMetrics( hdc, &tm ), "Can't read font metrics\n");
     ReleaseDC( hLB, hdc);
 
-    ok (SendMessageW(hLB, WM_SETFONT, (WPARAM)font, 0) == 0, "Can't set font\n");
+    ok (SendMessage(hLB, WM_SETFONT, (WPARAM)font, 0) == 0, "Can't set font\n");
 
-    itemHeight = SendMessageW(hLB, LB_GETITEMHEIGHT, 0, 0);
+    itemHeight = SendMessage(hLB, LB_GETITEMHEIGHT, 0, 0);
     ok (itemHeight == tm.tmHeight, "Item height wrong, got %d, expecting %ld\n", itemHeight, tm.tmHeight);
 
     DestroyWindow (hLB);
+}
+
+static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_DRAWITEM:
+    {
+        RECT rc_item, rc_client, rc_clip;
+        DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)lparam;
+
+        trace("%p WM_DRAWITEM %08x %08lx\n", hwnd, wparam, lparam);
+
+        ok(wparam == 0, "wrong wparam %04x\n", wparam);
+        ok(dis->CtlType == ODT_LISTBOX, "wrong CtlType %04x\n", dis->CtlType);
+
+        GetClientRect(dis->hwndItem, &rc_client);
+        trace("hwndItem %p client rect (%ld,%ld-%ld,%ld)\n", dis->hwndItem,
+               rc_client.left, rc_client.top, rc_client.right, rc_client.bottom);
+        GetClipBox(dis->hDC, &rc_clip);
+        trace("clip rect (%ld,%ld-%ld,%ld)\n", rc_clip.left, rc_clip.top, rc_clip.right, rc_clip.bottom);
+        ok(EqualRect(&rc_client, &rc_clip), "client rect of the listbox should be equal to the clip box\n");
+
+        trace("rcItem (%ld,%ld-%ld,%ld)\n", dis->rcItem.left, dis->rcItem.top,
+               dis->rcItem.right, dis->rcItem.bottom);
+        SendMessage(dis->hwndItem, LB_GETITEMRECT, dis->itemID, (LPARAM)&rc_item);
+        trace("item rect (%ld,%ld-%ld,%ld)\n", rc_item.left, rc_item.top, rc_item.right, rc_item.bottom);
+        ok(EqualRect(&dis->rcItem, &rc_item), "item rects are not equal\n");
+
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+static void test_ownerdraw(void)
+{
+    WNDCLASS cls;
+    HWND parent, hLB;
+    INT ret;
+    RECT rc;
+
+    cls.style = 0;
+    cls.lpfnWndProc = main_window_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandle(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursor(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "main_window_class";
+    assert(RegisterClass(&cls));
+
+    parent = CreateWindowEx(0, "main_window_class", NULL,
+                            WS_POPUP | WS_VISIBLE,
+                            100, 100, 400, 400,
+                            GetDesktopWindow(), 0,
+                            GetModuleHandle(0), NULL);
+    assert(parent);
+
+    hLB = create_listbox(LBS_OWNERDRAWFIXED | WS_CHILD | WS_VISIBLE, parent);
+    assert(hLB);
+
+    UpdateWindow(hLB);
+
+    /* make height short enough */
+    SendMessage(hLB, LB_GETITEMRECT, 0, (LPARAM)&rc);
+    SetWindowPos(hLB, 0, 0, 0, 100, rc.bottom - rc.top + 1,
+                 SWP_NOZORDER | SWP_NOMOVE);
+
+    /* make 0 item invisible */
+    SendMessage(hLB, LB_SETTOPINDEX, 1, 0);
+    ret = SendMessage(hLB, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 1, "wrong top index %d\n", ret);
+
+    SendMessage(hLB, LB_GETITEMRECT, 0, (LPARAM)&rc);
+    trace("item 0 rect (%ld,%ld-%ld,%ld)\n", rc.left, rc.top, rc.right, rc.bottom);
+    ok(!IsRectEmpty(&rc), "empty item rect\n");
+    ok(rc.top < 0, "rc.top is not negative (%ld)\n", rc.top);
+
+    DestroyWindow(hLB);
+    DestroyWindow(parent);
 }
 
 START_TEST(listbox)
@@ -265,4 +359,5 @@ START_TEST(listbox)
   check (EMS_NS);
 
   check_item_height();
+  test_ownerdraw();
 }

@@ -542,7 +542,6 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
         DRAWITEMSTRUCT dis;
         RECT r;
         HRGN hrgn;
-        UINT id = (UINT)GetWindowLongPtrW( descr->self, GWLP_ID );
 
 	if (!item)
 	{
@@ -563,7 +562,7 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
         DeleteObject( hrgn );
 
         dis.CtlType      = ODT_LISTBOX;
-        dis.CtlID        = id;
+        dis.CtlID        = GetWindowLongPtrW( descr->self, GWLP_ID );
         dis.hwndItem     = descr->self;
         dis.itemAction   = action;
         dis.hDC          = hdc;
@@ -579,7 +578,7 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
         TRACE("[%p]: drawitem %d (%s) action=%02x state=%02x rect=%ld,%ld-%ld,%ld\n",
               descr->self, index, item ? debugstr_w(item->str) : "", action,
               dis.itemState, rect->left, rect->top, rect->right, rect->bottom );
-        SendMessageW(descr->owner, WM_DRAWITEM, id, (LPARAM)&dis);
+        SendMessageW(descr->owner, WM_DRAWITEM, 0, (LPARAM)&dis);
     }
     else
     {
