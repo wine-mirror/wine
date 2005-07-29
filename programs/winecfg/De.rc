@@ -38,15 +38,15 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Anwendungseinstellungen ",IDC_STATIC, 8,4,244,240
+    GROUPBOX        " Anwendungseinstellungen ",IDC_STATIC, 8,4,244,250
     LTEXT           "Wine kann für jede Anwendung eine unterschiedliche Windowsversion nachahmen. Dieser Reiter ist mit den Bibliothek- und Grafik-Reiter verknüpft, damit entweder systemweite oder anwendungsabhängige Einstellungen in diesen Reitern vorgenommen werden können.",
-                    IDC_STATIC,15,20,227,30
+                    IDC_STATIC,15,20,227,35
     CONTROL         "Anwendungen",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,50,230,160
-    PUSHBUTTON	    "Anw. &hinzufügen",IDC_APP_ADDAPP, 90,204,75,14
-    PUSHBUTTON	    "Anw. &entfernen",IDC_APP_REMOVEAPP, 170,204,75,14
-    LTEXT           "&Windows Version:",IDC_STATIC,17,226,58,8
-    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
+                    15,55,230,155
+    PUSHBUTTON	    "Anw. &hinzufügen",IDC_APP_ADDAPP, 90,214,75,14
+    PUSHBUTTON	    "Anw. &entfernen",IDC_APP_REMOVEAPP, 170,214,75,14
+    LTEXT           "&Windows Version:",IDC_STATIC,17,236,58,8
+    COMBOBOX        IDC_WINVER,83,234,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
 END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -74,10 +74,10 @@ BEGIN
     
     GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
     
-    LTEXT           "Vertex Shader Unterstützung: ",IDC_STATIC,15,150,80,30
-    COMBOBOX        IDC_D3D_VSHADER_MODE,100,148,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Vertex Shader Unterstützung: ",IDC_STATIC,15,150,80,35
+    COMBOBOX        IDC_D3D_VSHADER_MODE,100,150,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     
-    CONTROL         "Erlaube Pixel Shader (wenn es durch die Hardware unterstützt wird)", IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
+    CONTROL         "Erlaube Pixel Shader (wenn es durch die Hardware unterstützt wird)", IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,170,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -118,32 +118,32 @@ BEGIN
     GROUPBOX        " Laufwerkszuordnung ",IDC_STATIC,8,4,244,240
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
-    PUSHBUTTON      "&Hinzufügen",IDC_BUTTON_ADD,15,98,37,14
-    PUSHBUTTON      "&Entfernen",IDC_BUTTON_REMOVE,56,98,37,14
+    PUSHBUTTON      "&Hinzufügen",IDC_BUTTON_ADD,15,98,41,14
+    PUSHBUTTON      "&Entfernen",IDC_BUTTON_REMOVE,60,98,37,14
     PUSHBUTTON      "&Automatisch", IDC_BUTTON_AUTODETECT,197,98,49,14
 
     /* editing drive details */
     LTEXT           "&Pfad:",IDC_STATIC,15,123,20,9
-    EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Durchsuchen",IDC_BUTTON_BROWSE_PATH,206,120,40,13
+    EDITTEXT        IDC_EDIT_PATH,41,120,155,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Durchsuchen",IDC_BUTTON_BROWSE_PATH,201,120,45,13
 
     LTEXT           "&Typ:",IDC_STATIC,14,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     LTEXT           "Bezeichnung und Seriennummer",IDC_LABELSERIAL_STATIC,15,155,125,10
 
-    PUSHBUTTON      "&Zeige Erweitert",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
+    PUSHBUTTON      "&Zeige Erweitert",IDC_BUTTON_SHOW_HIDE_ADVANCED,178,136,68,13
     CONTROL         "Automatisch &vom Gerät:",IDC_RADIO_AUTODETECT,"Button",
                     BS_AUTORADIOBUTTON,15,166,93,10
-    EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Durch&suchen",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
+    EDITTEXT        IDC_EDIT_DEVICE,27,176,169,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Durch&suchen",IDC_BUTTON_BROWSE_DEVICE,201,176,45,13
     CONTROL         "&manuelles  Zuweisen:",IDC_RADIO_ASSIGN,"Button",
                     BS_AUTORADIOBUTTON,15,195,79,10
 
-    LTEXT           "&Bezeichnung:",IDC_STATIC_LABEL,33,208,29,12
-    EDITTEXT        IDC_EDIT_LABEL,63,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "S&eriennr:",IDC_STATIC_SERIAL,33,225,29,12
-    EDITTEXT        IDC_EDIT_SERIAL,63,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "&Bezeichnung:",IDC_STATIC_LABEL,33,208,41,12
+    EDITTEXT        IDC_EDIT_LABEL,78,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "S&eriennr:",IDC_STATIC_SERIAL,33,225,41,12
+    EDITTEXT        IDC_EDIT_SERIAL,78,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
     CONTROL         "Zeige Verzeichnis-Links an",IDC_SHOW_DIRSYM_LINK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,250,230,8
     CONTROL         "Zeige Dot-Dateien an",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
