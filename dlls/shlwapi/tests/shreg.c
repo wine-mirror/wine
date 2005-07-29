@@ -84,9 +84,9 @@ static HKEY create_test_entries(void)
 
 	if (hKey)
 	{
-           ok(!RegSetValueExA(hKey,"Test1",0,REG_EXPAND_SZ, sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed\n");
-           ok(!RegSetValueExA(hKey,"Test2",0,REG_SZ, sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed\n");
-           ok(!RegSetValueExA(hKey,"Test3",0,REG_EXPAND_SZ, sTestpath2, strlen(sTestpath2)+1), "RegSetValueExA failed\n");
+           ok(!RegSetValueExA(hKey,"Test1",0,REG_EXPAND_SZ, (LPBYTE) sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed\n");
+           ok(!RegSetValueExA(hKey,"Test2",0,REG_SZ, (LPBYTE) sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed\n");
+           ok(!RegSetValueExA(hKey,"Test3",0,REG_EXPAND_SZ, (LPBYTE) sTestpath2, strlen(sTestpath2)+1), "RegSetValueExA failed\n");
 	}
 
 	sExpLen1 = ExpandEnvironmentStringsA(sTestpath1, sExpTestpath1, sizeof(sExpTestpath1));

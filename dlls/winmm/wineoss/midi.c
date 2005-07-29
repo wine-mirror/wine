@@ -527,7 +527,7 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 
 	EnterCriticalSection(&crit_sect);
 	if ((lpMidiHdr = MidiInDev[wDevID].lpQueueHdr) != NULL) {
-	    LPBYTE	lpData = lpMidiHdr->lpData;
+	    LPBYTE	lpData = (LPBYTE) lpMidiHdr->lpData;
 
 	    lpData[lpMidiHdr->dwBytesRecorded++] = value;
 	    if (lpMidiHdr->dwBytesRecorded == lpMidiHdr->dwBufferLength) {
@@ -1512,7 +1512,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	return MIDIERR_NODEVICE;
     }
 
-    lpData = lpMidiHdr->lpData;
+    lpData = (LPBYTE) lpMidiHdr->lpData;
 
     if (lpData == NULL)
 	return MIDIERR_UNPREPARED;

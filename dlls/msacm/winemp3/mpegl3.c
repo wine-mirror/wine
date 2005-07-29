@@ -150,7 +150,7 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
     int                 size, ret;
     DWORD               dpos = 0;
 
-    ret = decodeMP3(&amd->mp, (unsigned char*)src, *nsrc, dst, *ndst, &size);
+    ret = decodeMP3(&amd->mp, src, *nsrc, dst, *ndst, &size);
     if (ret != MP3_OK)
     {
         *ndst = *nsrc = 0;

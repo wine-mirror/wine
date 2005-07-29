@@ -77,7 +77,7 @@ struct IDsDriverPropertySetImpl
 {
     /* IUnknown fields */
     const IDsDriverPropertySetVtbl *lpVtbl;
-    DWORD                       ref;
+    LONG                        ref;
 
     IDsDriverBufferImpl*        buffer;
 };
@@ -86,7 +86,7 @@ struct IDsDriverNotifyImpl
 {
     /* IUnknown fields */
     const IDsDriverNotifyVtbl  *lpVtbl;
-    DWORD                       ref;
+    LONG                        ref;
 
     /* IDsDriverNotifyImpl fields */
     LPDSBPOSITIONNOTIFY         notifies;
@@ -99,7 +99,7 @@ struct IDsDriverImpl
 {
     /* IUnknown fields */
     const IDsDriverVtbl        *lpVtbl;
-    DWORD                       ref;
+    LONG                        ref;
 
     /* IDsDriverImpl fields */
     UINT                        wDevID;
@@ -113,7 +113,7 @@ struct IDsDriverBufferImpl
 {
     /* IUnknown fields */
     const IDsDriverBufferVtbl  *lpVtbl;
-    DWORD                       ref;
+    LONG                        ref;
 
     /* IDsDriverBufferImpl fields */
     IDsDriverImpl*              drv;

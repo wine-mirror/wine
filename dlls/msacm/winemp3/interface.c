@@ -63,7 +63,7 @@ void ExitMP3(struct mpstr *mp)
 	}
 }
 
-static struct buf *addbuf(struct mpstr *mp,char *buf,int size)
+static struct buf *addbuf(struct mpstr *mp,const unsigned char *buf,int size)
 {
 	struct buf *nbuf;
 
@@ -151,7 +151,7 @@ static void read_head(struct mpstr *mp)
 	mp->header = head;
 }
 
-int decodeMP3(struct mpstr *mp,char *in,int isize,char *out,
+int decodeMP3(struct mpstr *mp,const unsigned char *in,int isize,unsigned char *out,
 		int osize,int *done)
 {
 	int len;

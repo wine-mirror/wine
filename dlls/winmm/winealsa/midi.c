@@ -928,7 +928,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	return MIDIERR_NODEVICE;
     }
 
-    lpData = lpMidiHdr->lpData;
+    lpData = (LPBYTE) lpMidiHdr->lpData;
     
     if (lpData == NULL)
 	return MIDIERR_UNPREPARED;
