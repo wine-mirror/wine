@@ -131,17 +131,24 @@ static void fake_current_js_state(JoystickImpl *ji);
 
 #define test_bit(arr,bit) (((BYTE*)arr)[bit>>3]&(1<<(bit&7)))
 
-static int joydev_have(void)
+static int joydev_have(BOOL require_ff)
 {
-  int i, fd;
+  int i, fd, flags, num_effects;
   int havejoy = 0;
 
   for (i=0;i<64;i++) {
       char	buf[200];
       BYTE	absbits[(ABS_MAX+7)/8],keybits[(KEY_MAX+7)/8];
+      BYTE	evbits[(EV_MAX+7)/8],ffbits[(FF_MAX+7)/8];
 
       sprintf(buf,EVDEVPREFIX"%d",i);
-      if (-1!=(fd=open(buf,O_RDONLY))) {
+
+      if (require_ff) 
+	  flags = O_RDWR;
+      else
+	  flags = O_RDONLY;
+
+      if (-1!=(fd=open(buf,flags))) {
 	  if (-1==ioctl(fd,EVIOCGBIT(EV_ABS,sizeof(absbits)),absbits)) {
 	      perror("EVIOCGBIT EV_ABS");
 	      close(fd);
@@ -152,6 +159,23 @@ static int joydev_have(void)
 	      close(fd);
 	      continue;
 	  }
+
+	  /* test for force feedback if it's required */
+	  if (require_ff) {
+	      if ((-1==ioctl(fd,EVIOCGBIT(0,sizeof(evbits)),evbits))) {
+	          perror("EVIOCGBIT 0");
+	          close(fd);
+	          continue; 
+	      }
+	      if (   (!test_bit(evbits,EV_FF))
+	          || (-1==ioctl(fd,EVIOCGBIT(EV_FF,sizeof(ffbits)),ffbits)) 
+                  || (-1==ioctl(fd,EVIOCGEFFECTS,&num_effects))
+                  || (num_effects <= 0)) {
+		  close(fd);
+	          continue;
+	      }
+	  }
+
 	  /* A true joystick has at least axis X and Y, and at least 1
 	   * button. copied from linux/drivers/input/joydev.c */
 	  if (test_bit(absbits,ABS_X) && test_bit(absbits,ABS_Y) &&
@@ -183,10 +207,12 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
         (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))))
     return FALSE;
 
+#ifndef HAVE_STRUCT_FF_EFFECT_DIRECTION
   if (dwFlags & DIEDFL_FORCEFEEDBACK)
     return FALSE;
+#endif
 
-  havejoy = joydev_have();
+  havejoy = joydev_have(dwFlags & DIEDFL_FORCEFEEDBACK);
 
   if (!havejoy)
       return FALSE;
@@ -221,10 +247,12 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
         (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))))
     return FALSE;
 
+#ifndef HAVE_STRUCT_FF_EFFECT_DIRECTION
   if (dwFlags & DIEDFL_FORCEFEEDBACK)
     return FALSE;
+#endif
 
-  havejoy = joydev_have();
+  havejoy = joydev_have(dwFlags & DIEDFL_FORCEFEEDBACK);
 
   if (!havejoy)
       return FALSE;
@@ -276,7 +304,7 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
 {
   int havejoy = 0;
 
-  havejoy = joydev_have();
+  havejoy = joydev_have(FALSE);
 
   if (!havejoy)
       return DIERR_DEVICENOTREG;
@@ -303,7 +331,7 @@ static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, RE
 {
   int havejoy = 0;
 
-  havejoy = joydev_have();
+  havejoy = joydev_have(FALSE);
 
   if (!havejoy)
       return DIERR_DEVICENOTREG;
