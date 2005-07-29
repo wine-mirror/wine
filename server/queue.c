@@ -260,7 +260,6 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
 void free_msg_queue( struct thread *thread )
 {
     struct process *process = thread->process;
-    struct thread_input *input;
 
     remove_thread_hooks( thread );
     if (!thread->queue) return;
@@ -275,7 +274,6 @@ void free_msg_queue( struct thread *thread )
             process->idle_event = NULL;
         }
     }
-    input = thread->queue->input;
     release_object( thread->queue );
     thread->queue = NULL;
 }
