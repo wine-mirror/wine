@@ -713,11 +713,12 @@ static void test_ReadTimeOut(HANDLE hcom)
     ok(SetCommTimeouts(hcom, &timeouts),"SetCommTimeouts failed\n");
 
     before = GetTickCount();
+    SetLastError(0xdeadbeef);
     res = ReadFile(hcom, rbuf, sizeof(rbuf), &read, NULL);
     LastError = GetLastError();
     after = GetTickCount();
     todo_wine ok( res == TRUE, "A timed-out read should return TRUE\n");
-    todo_wine ok( LastError == NO_ERROR, "A timed-out read is not an error\n");
+    todo_wine ok( LastError == 0xdeadbeef, "err=%ld\n", LastError);
     timediff = after - before;
     ok( timediff > TIMEOUT>>2 && timediff < TIMEOUT *2,
 	"Unexpected TimeOut %ld, expected %d\n", timediff, TIMEOUT);
