@@ -165,14 +165,43 @@ static const struct object_ops fd_ops =
     fd_destroy                /* destroy */
 };
 
+/* device object */
+
+#define DEVICE_HASH_SIZE 7
+#define INODE_HASH_SIZE 17
+
+struct device
+{
+    struct object       obj;        /* object header */
+    struct list         entry;      /* entry in device hash list */
+    dev_t               dev;        /* device number */
+    struct list         inode_hash[INODE_HASH_SIZE];  /* inodes hash table */
+};
+
+static void device_dump( struct object *obj, int verbose );
+static void device_destroy( struct object *obj );
+
+static const struct object_ops device_ops =
+{
+    sizeof(struct device),    /* size */
+    device_dump,              /* dump */
+    no_add_queue,             /* add_queue */
+    NULL,                     /* remove_queue */
+    NULL,                     /* signaled */
+    NULL,                     /* satisfied */
+    no_signal,                /* signal */
+    no_get_fd,                /* get_fd */
+    no_close_handle,          /* close_handle */
+    device_destroy            /* destroy */
+};
+
 /* inode object */
 
 struct inode
 {
     struct object       obj;        /* object header */
     struct list         entry;      /* inode hash list entry */
-    unsigned int        hash;       /* hashing code */
-    dev_t               dev;        /* device number */
+    struct device      *device;     /* device containing this inode */
     ino_t               ino;        /* inode number */
     struct list         open;       /* list of open file descriptors */
     struct list         locks;      /* list of file locks */
@@ -544,11 +573,55 @@ void main_loop(void)
 
 
 /****************************************************************/
+/* device functions */
+
+static struct list device_hash[DEVICE_HASH_SIZE];
+
+/* retrieve the device object for a given fd, creating it if needed */
+static struct device *get_device( dev_t dev )
+{
+    struct device *device;
+    unsigned int i, hash = dev % DEVICE_HASH_SIZE;
+
+    if (device_hash[hash].next)
+    {
+        LIST_FOR_EACH_ENTRY( device, &device_hash[hash], struct device, entry )
+            if (device->dev == dev) return (struct device *)grab_object( device );
+    }
+    else list_init( &device_hash[hash] );
+
+    /* not found, create it */
+    if ((device = alloc_object( &device_ops )))
+    {
+        device->dev = dev;
+        for (i = 0; i < INODE_HASH_SIZE; i++) list_init( &device->inode_hash[i] );
+        list_add_head( &device_hash[hash], &device->entry );
+    }
+    return device;
+}
+
+static void device_dump( struct object *obj, int verbose )
+{
+    struct device *device = (struct device *)obj;
+    fprintf( stderr, "Device dev=" );
+    DUMP_LONG_LONG( device->dev );
+    fprintf( stderr, "\n" );
+}
+
+static void device_destroy( struct object *obj )
+{
+    struct device *device = (struct device *)obj;
+    unsigned int i;
+
+    for (i = 0; i < INODE_HASH_SIZE; i++)
+        assert( list_empty(&device->inode_hash[i]) );
+
+    list_remove( &device->entry );  /* remove it from the hash table */
+}
+
+
+/****************************************************************/
 /* inode functions */
-
-#define HASH_SIZE 37
-
-static struct list inode_hash[HASH_SIZE];
 
 /* close all pending file descriptors in the closed list */
 static void inode_close_pending( struct inode *inode )
@@ -574,13 +647,10 @@ static void inode_close_pending( struct inode *inode )
     }
 }
 
-
 static void inode_dump( struct object *obj, int verbose )
 {
     struct inode *inode = (struct inode *)obj;
-    fprintf( stderr, "Inode dev=" );
-    DUMP_LONG_LONG( inode->dev );
-    fprintf( stderr, " ino=" );
+    fprintf( stderr, "Inode device=%p ino=", inode->device );
     DUMP_LONG_LONG( inode->ino );
     fprintf( stderr, "\n" );
 }
@@ -604,7 +674,7 @@ static void inode_destroy( struct object *obj )
         {
             /* make sure it is still the same file */
             struct stat st;
-            if (!stat( fd->unlink, &st ) && st.st_dev == inode->dev && st.st_ino == inode->ino)
+            if (!stat( fd->unlink, &st ) && st.st_dev == inode->device->dev && st.st_ino == inode->ino)
             {
                 if (S_ISDIR(st.st_mode)) rmdir( fd->unlink );
                 else unlink( fd->unlink );
@@ -612,37 +682,39 @@ static void inode_destroy( struct object *obj )
         }
         free( fd );
     }
+    release_object( inode->device );
 }
 
 /* retrieve the inode object for a given fd, creating it if needed */
 static struct inode *get_inode( dev_t dev, ino_t ino )
 {
-    struct list *ptr;
+    struct device *device;
     struct inode *inode;
-    unsigned int hash = (dev ^ ino) % HASH_SIZE;
+    unsigned int hash = ino % INODE_HASH_SIZE;
 
-    if (inode_hash[hash].next)
+    if (!(device = get_device( dev ))) return NULL;
+
+    LIST_FOR_EACH_ENTRY( inode, &device->inode_hash[hash], struct inode, entry )
     {
-        LIST_FOR_EACH( ptr, &inode_hash[hash] )
+        if (inode->ino == ino)
         {
-            inode = LIST_ENTRY( ptr, struct inode, entry );
-            if (inode->dev == dev && inode->ino == ino)
-                return (struct inode *)grab_object( inode );
+            release_object( device );
+            return (struct inode *)grab_object( inode );
         }
     }
-    else list_init( &inode_hash[hash] );
 
     /* not found, create it */
     if ((inode = alloc_object( &inode_ops )))
     {
-        inode->hash   = hash;
-        inode->dev    = dev;
+        inode->device = device;
         inode->ino    = ino;
         list_init( &inode->open );
         list_init( &inode->locks );
         list_init( &inode->closed );
-        list_add_head( &inode_hash[hash], &inode->entry );
+        list_add_head( &device->inode_hash[hash], &inode->entry );
     }
+    else release_object( device );
+
     return inode;
 }
 
