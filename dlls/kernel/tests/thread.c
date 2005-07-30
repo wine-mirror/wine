@@ -385,7 +385,7 @@ static VOID test_thread_priority(void)
    HANDLE curthread,access_thread;
    DWORD curthreadId,exitCode;
    int min_priority=-2,max_priority=2;
-   BOOL disabled;
+   BOOL disabled,rc;
    int i;
 
    curthread=GetCurrentThread();
@@ -408,10 +408,6 @@ static VOID test_thread_priority(void)
      if (access_thread!=NULL) {
        obey_ar(SetThreadPriority(access_thread,1)==0);
        obey_ar(GetThreadPriority(access_thread)==THREAD_PRIORITY_ERROR_RETURN);
-       if (pSetThreadPriorityBoost)
-         obey_ar(pSetThreadPriorityBoost(access_thread,1)==0);
-       if (pGetThreadPriorityBoost)
-         obey_ar(pGetThreadPriorityBoost(access_thread,&disabled)==0);
        obey_ar(GetExitCodeThread(access_thread,&exitCode)==0);
        ok(CloseHandle(access_thread),"Error Closing thread handle\n");
      }
@@ -436,27 +432,39 @@ static VOID test_thread_priority(void)
    ok(SetThreadPriority(curthread,0)!=0,"SetThreadPriority Failed\n");
 
 /* Check thread priority boost */
-   if (pGetThreadPriorityBoost && pSetThreadPriorityBoost) {
-     BOOL rc;
-     todo_wine {
-         SetLastError(0);
-         rc=pGetThreadPriorityBoost(curthread,&disabled);
-         if (rc!=0 || GetLastError()!=ERROR_CALL_NOT_IMPLEMENTED) {
-             ok(rc!=0,"error=%ld\n",GetLastError());
+   if (!pGetThreadPriorityBoost || !pSetThreadPriorityBoost) 
+     return; /* Win9x */
 
-             rc = pSetThreadPriorityBoost(curthread,1);
-             ok( rc != 0, "error=%ld\n",GetLastError());
-             rc=pGetThreadPriorityBoost(curthread,&disabled);
-             ok(rc!=0 && disabled==1,
-                "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);
+   SetLastError(0xdeadbeef);
+   rc=pGetThreadPriorityBoost(curthread,&disabled);
+   if (rc==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+     return; /* WinME */
 
-             rc = pSetThreadPriorityBoost(curthread,0);
-             ok( rc != 0, "error=%ld\n",GetLastError());
-             rc=pGetThreadPriorityBoost(curthread,&disabled);
-             ok(rc!=0 && disabled==0,
-                "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);
-         }
-     }
+/* check that access control is obeyed */
+   access_thread=pOpenThread(THREAD_ALL_ACCESS &
+                     (~THREAD_QUERY_INFORMATION) & (~THREAD_SET_INFORMATION),
+                     0,curthreadId);
+   ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
+   if (access_thread!=NULL) {
+     obey_ar(pSetThreadPriorityBoost(access_thread,1)==0);
+     obey_ar(pGetThreadPriorityBoost(access_thread,&disabled)==0);
+     ok(CloseHandle(access_thread),"Error Closing thread handle\n");
+   }
+
+   todo_wine {
+     ok(rc!=0,"error=%ld\n",GetLastError());
+
+     rc = pSetThreadPriorityBoost(curthread,1);
+     ok( rc != 0, "error=%ld\n",GetLastError());
+     rc=pGetThreadPriorityBoost(curthread,&disabled);
+     ok(rc!=0 && disabled==1,
+        "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);
+
+     rc = pSetThreadPriorityBoost(curthread,0);
+     ok( rc != 0, "error=%ld\n",GetLastError());
+     rc=pGetThreadPriorityBoost(curthread,&disabled);
+     ok(rc!=0 && disabled==0,
+        "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);
    }
 }
 
@@ -482,12 +490,6 @@ static VOID test_GetThreadTimes(void)
      ok(ResumeThread(thread)==1,"Resume thread returned an invalid value\n");
      ok(WaitForSingleObject(thread,5000)==WAIT_OBJECT_0,
         "ResumeThread didn't work\n");
-     if(access_thread!=NULL) {
-       error=GetThreadTimes(access_thread,&creationTime,&exitTime,
-                            &kernelTime,&userTime);
-       obey_ar(error==0);
-       ok(CloseHandle(access_thread)!=0,"CloseHandle Failed\n");
-     }
      creationTime.dwLowDateTime=99; creationTime.dwHighDateTime=99;
      exitTime.dwLowDateTime=99;     exitTime.dwHighDateTime=99;
      kernelTime.dwLowDateTime=99;   kernelTime.dwHighDateTime=99;
@@ -506,6 +508,15 @@ static VOID test_GetThreadTimes(void)
        ok(userTime.dwLowDateTime!=99 || userTime.dwHighDateTime!=99,
           "userTime was invalid\n");
        ok(CloseHandle(thread)!=0,"CloseHandle failed\n");
+       if(access_thread!=NULL)
+       {
+         error=GetThreadTimes(access_thread,&creationTime,&exitTime,
+                              &kernelTime,&userTime);
+         obey_ar(error==0);
+       }
+     }
+     if(access_thread!=NULL) {
+       ok(CloseHandle(access_thread)!=0,"CloseHandle Failed\n");
      }
 }
 
