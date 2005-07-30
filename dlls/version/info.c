@@ -4,6 +4,7 @@
  * Copyright 1996,1997 Marcus Meissner
  * Copyright 1997 David Cuthbert
  * Copyright 1999 Ulrich Weigand
+ * Copyright 2005 Paul Vriens
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,8 +20,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * TODO
- *   o Verify VerQueryValue()
  */
 
 #include <stdarg.h>
@@ -190,74 +189,6 @@ typedef struct
     (VS_VERSION_INFO_STRUCT16 *)( (LPBYTE)ver + (((ver)->wLength + 3) & ~3) )
 #define VersionInfo32_Next( ver ) \
     (VS_VERSION_INFO_STRUCT32 *)( (LPBYTE)ver + (((ver)->wLength + 3) & ~3) )
-
-/***********************************************************************
- *           ConvertVersionInfo32To16        [internal]
- */
-static void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
-                               VS_VERSION_INFO_STRUCT16 *info16 )
-{
-    /* Copy data onto local stack to prevent overwrites */
-    WORD wLength = info32->wLength;
-    WORD wValueLength = info32->wValueLength;
-    WORD wType = info32->wType;
-    LPBYTE lpValue = VersionInfo32_Value( info32 );
-    VS_VERSION_INFO_STRUCT32 *child32 = VersionInfo32_Children( info32 );
-    VS_VERSION_INFO_STRUCT16 *child16;
-
-    TRACE("Converting %p to %p\n", info32, info16 );
-    TRACE("wLength %d, wValueLength %d, wType %d, value %p, child %p\n",
-                wLength, wValueLength, wType, lpValue, child32 );
-
-    /* Convert key */
-    WideCharToMultiByte( CP_ACP, 0, info32->szKey, -1, info16->szKey, 0x7fffffff, NULL, NULL );
-
-    TRACE("Copied key from %p to %p: %s\n", info32->szKey, info16->szKey,
-                debugstr_a(info16->szKey) );
-
-    /* Convert value */
-    if ( wValueLength == 0 )
-    {
-        info16->wValueLength = 0;
-        TRACE("No value present\n" );
-    }
-    else if ( wType )
-    {
-        info16->wValueLength = WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)lpValue, -1, NULL, 0, NULL, NULL );
-        WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)lpValue, -1,
-                             VersionInfo16_Value( info16 ), info16->wValueLength, NULL, NULL );
-
-        TRACE("Copied value from %p to %p: %s\n", lpValue,
-                    VersionInfo16_Value( info16 ),
-                    debugstr_a(VersionInfo16_Value( info16 )) );
-    }
-    else
-    {
-        info16->wValueLength = wValueLength;
-        memmove( VersionInfo16_Value( info16 ), lpValue, wValueLength );
-
-        TRACE("Copied value from %p to %p: %d bytes\n", lpValue,
-                     VersionInfo16_Value( info16 ), wValueLength );
-    }
-
-    /* Convert children */
-    child16 = VersionInfo16_Children( info16 );
-    while ( (DWORD)child32 < (DWORD)info32 + wLength && child32->wLength != 0 )
-    {
-        VS_VERSION_INFO_STRUCT32 *nextChild = VersionInfo32_Next( child32 );
-
-        ConvertVersionInfo32To16( child32, child16 );
-
-        child16 = VersionInfo16_Next( child16 );
-        child32 = nextChild;
-    }
-
-    /* Fixup length */
-    info16->wLength = (DWORD)child16 - (DWORD)info16;
-
-    TRACE("Finished, length is %d (%p - %p)\n",
-                info16->wLength, info16, child16 );
-}
 
 /***********************************************************************
  *           VERSION_GetFileVersionInfo_PE             [internal]
@@ -615,6 +546,8 @@ BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
         filenameW.Buffer = NULL;
 
     retval = GetFileVersionInfoW(filenameW.Buffer, handle, datasize, data);
+
+    RtlFreeUnicodeString(&filenameW);
 
     return retval;
 }
