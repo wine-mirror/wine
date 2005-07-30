@@ -86,7 +86,7 @@ static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHand
     if(!*DllHandle)
     {
         if(!Silent)
-            printf("Dll %s not found\n", strDll);
+            printf("Failed to load DLL %s\n", strDll);
 
         exit(-1);
     }
@@ -94,7 +94,7 @@ static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHand
     if(!proc)
     {
         if(!Silent)
-            printf("%s not implemented in dll %s\n", procName, strDll);
+            printf("%s not implemented in DLL %s\n", procName, strDll);
         FreeLibrary(*DllHandle);
         exit(-1);
     }
@@ -113,12 +113,12 @@ static int RegisterDll(const char* strDll)
     if(FAILED(hr))
     {
         if(!Silent)
-            printf("Failed to register dll %s\n", strDll);
+            printf("Failed to register DLL %s\n", strDll);
 
         return -1;
     }
     if(!Silent)
-        printf("Successfully registered dll %s\n", strDll);
+        printf("Successfully registered DLL %s\n", strDll);
 
     if(DllHandle)
         FreeLibrary(DllHandle);
@@ -136,12 +136,12 @@ static int UnregisterDll(char* strDll)
     if(FAILED(hr))
     {
         if(!Silent)
-            printf("Failed to unregister dll %s\n", strDll);
+            printf("Failed to unregister DLL %s\n", strDll);
 
         return -1;
     }
     if(!Silent)
-        printf("Successfully unregistered dll %s\n", strDll);
+        printf("Successfully unregistered DLL %s\n", strDll);
 
     if(DllHandle)
         FreeLibrary(DllHandle);
@@ -159,12 +159,12 @@ static int InstallDll(BOOL install, char *strDll, WCHAR *command_line)
     if(FAILED(hr))
     {
         if(!Silent)
-            printf("Failed to %s dll %s\n", install ? "install" : "uninstall",
+            printf("Failed to %s DLL %s\n", install ? "install" : "uninstall",
                    strDll);
         return -1;
     }
     if(!Silent)
-        printf("Successfully %s dll %s\n",  install ? "installed" : "uninstalled",
+        printf("Successfully %s DLL %s\n",  install ? "installed" : "uninstalled",
                strDll);
 
     if(DllHandle)
