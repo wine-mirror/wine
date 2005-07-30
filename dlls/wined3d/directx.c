@@ -720,7 +720,7 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINE
             DEVMODEW DevModeWtmp;
 
 
-            while (i<(Mode+1) && EnumDisplaySettingsExW(NULL, j, &DevModeWtmp, 0)) {
+            while (i<(Mode) && EnumDisplaySettingsExW(NULL, j, &DevModeWtmp, 0)) {
                 j++;
                 switch (Format)
                 {
