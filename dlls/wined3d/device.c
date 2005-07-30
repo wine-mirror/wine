@@ -591,6 +591,12 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
         MultisampleQuality=0;
     }
 
+    /** FIXME: Check that the format is supported
+    *    by the device.
+      *******************************/
+    /* TODO: add support for dxt2 and dxt4 formats */
+    if (Format == D3DFMT_DXT2 || Format == D3DFMT_DXT4) return D3DERR_NOTAVAILABLE;
+
     /* Non-power2 support */
 
     /* Find the nearest pow2 match */
@@ -608,7 +614,17 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
         }
     }
 
-    /** TODO: Check against the maximum texture sizes supported by the video card **/
+    /** Check against the maximum texture sizes supported by the video card **/
+    if (pow2Width > GL_LIMITS(texture_size) || pow2Height > GL_LIMITS(texture_size)) {
+        /* one of three options
+        1: Do the same as we do with nonpow 2 and scale the texture, (any texture ops would require the texture to be scaled which is potentially slow)
+        2: Set the texture to the maxium size (bad idea)
+        3:    WARN and return D3DERR_NOTAVAILABLE;
+        */
+        WARN("(%p) Application requested a surface w %d, h %d, but the graphics card only supports %d\n", This, Width, Height, GL_LIMITS(texture_size));
+         return D3DERR_NOTAVAILABLE;
+    }
+
 
 
     /** DXTn mipmaps use the same number of 'levels' down to eg. 8x1, but since
@@ -1206,7 +1222,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
     object->presentParms.PresentationInterval           = *(pPresentationParameters->PresentationInterval);
 
 
-   /* FIXME: check for any failures */
    /*********************
    * Create the back, front and stencil buffers
    *******************/
