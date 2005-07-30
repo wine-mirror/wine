@@ -1265,6 +1265,16 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    TRACE("-- NM_RCLICK %p\n",This);
 	    break;	    
 
+          case NM_DBLCLK:
+            TRACE("-- NM_DBLCLK %p\n",This);
+            if (OnDefaultCommand(This) != S_OK) ShellView_OpenSelectedItems(This);
+            break;
+
+          case NM_RETURN:
+            TRACE("-- NM_DBLCLK %p\n",This);
+            if (OnDefaultCommand(This) != S_OK) ShellView_OpenSelectedItems(This);
+            break;
+
 	  case HDN_ENDTRACKA:
 	    TRACE("-- HDN_ENDTRACKA %p\n",This);
 	    /*nColumn1 = ListView_GetColumnWidth(This->hWndList, 0);
@@ -1287,7 +1297,6 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	  case LVN_ITEMACTIVATE:
 	    TRACE("-- LVN_ITEMACTIVATE %p\n",This);
 	    OnStateChange(This, CDBOSC_SELCHANGE);  /* the browser will get the IDataObject now */
-	    ShellView_DoContextMenu(This, 0, 0, TRUE);
 	    break;
 
 	  case LVN_COLUMNCLICK:
