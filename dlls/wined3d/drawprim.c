@@ -40,9 +40,7 @@ extern IDirect3DPixelShaderImpl*             PixelShaders[64];
    a vertex shader will be in use. Note the fvf bits returned may be split over
    multiple streams only if the vertex shader was created, otherwise it all relates
    to stream 0                                                                      */
-static BOOL initializeFVF(IWineD3DDevice *iface,
-                   DWORD *FVFbits,                 /* What to expect in the FVF across all streams */
-                   BOOL *useVertexShaderFunction)  /* Should we use the vertex shader              */
+static BOOL initializeFVF(IWineD3DDevice *iface, DWORD *FVFbits)
 {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -55,46 +53,10 @@ static BOOL initializeFVF(IWineD3DDevice *iface,
        an 'OR' of all the FVF's together so we know what to expect across all the
        streams                                                                        */
 #endif
-
-    if (This->stateBlock->vertexShader == NULL) {
-
-        /* Use this as the FVF */
-        *FVFbits = This->stateBlock->fvf;
-        *useVertexShaderFunction = FALSE;
-        TRACE("FVF explicitally defined, using fixed function pipeline with FVF=%lx\n", *FVFbits);
-
-    } else {
-
-#if 0 /* TODO */
-        /* Use created shader */
-        IDirect3DVertexShaderImpl* vertex_shader = NULL;
-        vertex_shader = VERTEX_SHADER(This->stateBlock->VertexShader);
-
-        if (vertex_shader == NULL) {
-
-            /* Hmm - User pulled figure out of the air? Unlikely, probably a bug */
-            ERR("trying to use unitialised vertex shader: %lu\n", This->stateBlock->VertexShader);
-            return TRUE;
-
-        } else {
-
-            *FVFbits = This->stateBlock->vertexShaderDecl->allFVF;
-
-            if (vertex_shader->function == NULL) {
-                /* No function, so many streams supplied plus FVF definition pre stream */
-                *useVertexShaderFunction = FALSE;
-                TRACE("vertex shader (%lx) declared without program, using fixed function pipeline with FVF=%lx\n",
-                            This->stateBlock->VertexShader, *FVFbits);
-            } else {
-                /* Vertex shader needs calling */
-                *useVertexShaderFunction = TRUE;
-                TRACE("vertex shader will be used (unusued FVF=%lx)\n", *FVFbits);
-            }
-        }
-#else
-        FIXME("Vertex Shaders not moved into wined3d yet\n");
+    *FVFbits = This->stateBlock->fvf;
+#if 0
+        *FVFbits = This->stateBlock->vertexShaderDecl->allFVF;
 #endif
-    }
     return FALSE;
 }
 
@@ -108,37 +70,37 @@ static DWORD primitiveToGl(D3DPRIMITIVETYPE PrimitiveType,
     switch (PrimitiveType) {
     case D3DPT_POINTLIST:
         TRACE("POINTS\n");
-        *primType = GL_POINTS;
+        *primType   = GL_POINTS;
         NumVertexes = NumPrimitives;
         break;
 
     case D3DPT_LINELIST:
         TRACE("LINES\n");
-        *primType = GL_LINES;
+        *primType   = GL_LINES;
         NumVertexes = NumPrimitives * 2;
         break;
 
     case D3DPT_LINESTRIP:
         TRACE("LINE_STRIP\n");
-        *primType = GL_LINE_STRIP;
+        *primType   = GL_LINE_STRIP;
         NumVertexes = NumPrimitives + 1;
         break;
 
     case D3DPT_TRIANGLELIST:
         TRACE("TRIANGLES\n");
-        *primType = GL_TRIANGLES;
+        *primType   = GL_TRIANGLES;
         NumVertexes = NumPrimitives * 3;
         break;
 
     case D3DPT_TRIANGLESTRIP:
         TRACE("TRIANGLE_STRIP\n");
-        *primType = GL_TRIANGLE_STRIP;
+        *primType   = GL_TRIANGLE_STRIP;
         NumVertexes = NumPrimitives + 2;
         break;
 
     case D3DPT_TRIANGLEFAN:
         TRACE("TRIANGLE_FAN\n");
-        *primType = GL_TRIANGLE_FAN;
+        *primType   = GL_TRIANGLE_FAN;
         NumVertexes = NumPrimitives + 2;
         break;
 
@@ -194,7 +156,7 @@ static void init_materials(IWineD3DDevice *iface, BOOL isDiffuseSupplied) {
         checkGLcall("glMaterialfv");
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &This->stateBlock->material.Diffuse);
         checkGLcall("glMaterialfv");
-        if (This->stateBlock->renderState[D3DRS_SPECULARENABLE]) {
+        if (This->stateBlock->renderState[WINED3DRS_SPECULARENABLE]) {
            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->stateBlock->material.Specular);
            checkGLcall("glMaterialfv");
         } else {
@@ -208,7 +170,7 @@ static void init_materials(IWineD3DDevice *iface, BOOL isDiffuseSupplied) {
 
 }
 
-static GLfloat invymat[16]={
+static GLfloat invymat[16] = {
 	1.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, -1.0f, 0.0f, 0.0f,
 	0.0f, 0.0f, 1.0f, 0.0f,
@@ -243,12 +205,12 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
                matrices. Reset all matrices to identity and leave the default matrix in world
                mode.                                                                         */
             glMatrixMode(GL_MODELVIEW);
-            checkGLcall("glMatrixMode");
+            checkGLcall("glMatrixMode(GL_MODELVIEW)");
             glLoadIdentity();
             checkGLcall("glLoadIdentity");
 
             glMatrixMode(GL_PROJECTION);
-            checkGLcall("glMatrixMode");
+            checkGLcall("glMatrixMode(GL_PROJECTION)");
             glLoadIdentity();
             checkGLcall("glLoadIdentity");
 
@@ -309,8 +271,9 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
                -1 and 1 respectively but (-1-1/viewport_widh) and (1-1/viewport_width)
                instead.                                                               */
             glLoadIdentity();
-            glTranslatef(1.0/This->stateBlock->viewport.Width, -1.0/This->stateBlock->viewport.Height, 0);
-            checkGLcall("glTranslatef (1.0/width, -1.0/height, 0)");
+
+            glTranslatef(1.0 / This->stateBlock->viewport.Width, -1.0 / This->stateBlock->viewport.Height, 0);
+            checkGLcall("glTranslatef (1.0 / width, -1.0 / height, 0)");
 
             if (This->renderUpsideDown) {
                 glMultMatrixf(invymat);
@@ -333,8 +296,8 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
             glLoadIdentity();
             /* Window Coord 0 is the middle of the first pixel, so translate by half
                a pixel (See comment above glTranslate above)                         */
-            glTranslatef(1.0/This->stateBlock->viewport.Width, -1.0/This->stateBlock->viewport.Height, 0);
-            checkGLcall("glTranslatef (1.0/width, -1.0/height, 0)");
+            glTranslatef(1.0 / This->stateBlock->viewport.Width, -1.0 / This->stateBlock->viewport.Height, 0);
+            checkGLcall("glTranslatef (1.0 / width, -1.0 / height, 0)");
             if (This->renderUpsideDown) {
                 glMultMatrixf(invymat);
                 checkGLcall("glMultMatrixf(invymat)");
@@ -357,7 +320,7 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVer
     int i;
     D3DVERTEXELEMENT9 *element;
     DWORD stride;
-    for(i = 0 ; i < vertexDeclaration->declaration9NumElements -1; i++){
+    for (i = 0 ; i < vertexDeclaration->declaration9NumElements - 1; ++i) {
 
         element = vertexDeclaration->pDeclaration9 + i;
         TRACE("%p Elements %p %d or %d\n", vertexDeclaration->pDeclaration9, element,  i, vertexDeclaration->declaration9NumElements);
@@ -372,28 +335,34 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVer
         data += (BaseVertexIndex * stride);
         data += element->Offset;
         /* Why can't I just use a lookup table instead of a switch statment? */
-        switch(element->Usage){
+        switch (element->Usage) {
         case D3DDECLUSAGE_POSITION:
-                switch(element->UsageIndex){
+                switch (element->UsageIndex) {
                 case 0: /* N-patch */
                     strided->u.s.position.lpData    = data;
                     strided->u.s.position.dwType    = element->Type;
                     strided->u.s.position.dwStride  = stride;
                 break;
                 case 1: /* tweened see http://www.gamedev.net/reference/articles/article2017.asp */
-                    FIXME("Tweened positions\n");
+                    TRACE("Tweened positions\n");
+                    strided->u.s.position2.lpData    = data;
+                    strided->u.s.position2.dwType    = element->Type;
+                    strided->u.s.position2.dwStride  = stride;
                 break;
                 }
         break;
         case D3DDECLUSAGE_NORMAL:
-                switch(element->UsageIndex){
+                switch (element->UsageIndex) {
                 case 0: /* N-patch */
                     strided->u.s.normal.lpData    = data;
                     strided->u.s.normal.dwType    = element->Type;
                     strided->u.s.normal.dwStride  = stride;
                 break;
                 case 1: /* skinning */
-                   FIXME("Skinning normals\n");
+                    TRACE("Skinning / tween normals\n");
+                    strided->u.s.normal2.lpData    = data;
+                    strided->u.s.normal2.dwType    = element->Type;
+                    strided->u.s.normal2.dwStride  = stride;
                 break;
                 }
                 *fvf |=  D3DFVF_NORMAL;
@@ -417,7 +386,7 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVer
             strided->u.s.pSize.dwStride             = stride;
         break;
         case D3DDECLUSAGE_COLOR:
-        switch(element->UsageIndex){
+        switch (element->UsageIndex) {
         case 0:/* diffuse */
             strided->u.s.diffuse.lpData             = data;
             strided->u.s.diffuse.dwType             = element->Type;
@@ -438,46 +407,38 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVer
             strided->u.s.texCoords[textureNo].dwType    = element->Type;
             strided->u.s.texCoords[textureNo].dwStride  = stride;
 
-        textureNo++;
+            ++textureNo;
         break;
         case D3DDECLUSAGE_TANGENT:
         /* Implement tangents and binormals using http://oss.sgi.com/projects/ogl-sample/registry/EXT/coordinate_frame.txt
         this is easy so long as the OpenGL implementation supports it, otherwise drop back to calculating the
         normal using tangents where no normal data has been provided */
-#if 0
-        strided->u.s.tangent.lpData   = data;
-        strided->u.s.tangent.dwType   = element->type;
-        strided->u.s.tangent.dsString = stride;
-#endif
-        TRACE("Tangents\n");
+            TRACE("Tangents\n");
+            strided->u.s.tangent.lpData   = data;
+            strided->u.s.tangent.dwType   = element->Type;
+            strided->u.s.tangent.dwStride = stride;
         break;
         case D3DDECLUSAGE_BINORMAL:
         /* Binormals are really bitangents perpendicular to the normal but s-aligned to the tangent, basically they are the vectors of any two lines on the plain at right angles to the normal and at right angles to each other, like the x,y,z axis.
         tangent data makes it easier to perform some calculations (a bit like using 2d graph paper instead of the normal of the piece of paper)
         The only thing they are useful for in fixed function would be working out normals when none are given.
         */
-#if 0
-        strided->u.s.binormal.lpData   = data;
-        strided->u.s.binormal.dwType   = element->type;
-        strided->u.s.binormal.dsString = stride;
-#endif
-        /* Don't bother showing fixme's tangents aren't that interesting */
-        TRACE("BI-Normal\n");
+            TRACE("BI-Normal\n");
+            strided->u.s.binormal.lpData   = data;
+            strided->u.s.binormal.dwType   = element->Type;
+            strided->u.s.binormal.dwStride = stride;
         break;
         case D3DDECLUSAGE_TESSFACTOR:
         /* a google for D3DDECLUSAGE_TESSFACTOR turns up a whopping 36 entries, 7 of which are from MSDN.
         */
-#if 0
-        strided->u.s.tessFacrot.lpData   = data;
-        strided->u.s.tessFactor.dwType   = element->type;
-        strided->u.s.tessFactor.dsString = stride;
-#else
-        FIXME("Tess Factor\n");
-#endif
+            TRACE("Tess Factor\n");
+            strided->u.s.tessFactor.lpData   = data;
+            strided->u.s.tessFactor.dwType   = element->Type;
+            strided->u.s.tessFactor.dwStride = stride;
         break;
         case D3DDECLUSAGE_POSITIONT:
 
-               switch(element->UsageIndex){
+               switch (element->UsageIndex) {
                 case 0: /* N-patch */
                     strided->u.s.position.lpData    = data;
                     strided->u.s.position.dwType    = element->Type;
@@ -487,7 +448,10 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVer
                         /* see http://rsn.gamedev.net/tutorials/ms3danim.asp
                         http://xface.blogspot.com/2004_08_01_xface_archive.html
                         */
-                    FIXME("Skinning positionsT\n");
+                    TRACE("Skinning positionsT\n");
+                    strided->u.s.position2.lpData    = data;
+                    strided->u.s.position2.dwType    = element->Type;
+                    strided->u.s.position2.dwStride  = stride;
                 break;
                 }
                 /* TODO: change fvf usage to a plain boolean flag */
@@ -502,30 +466,22 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVer
         * fragment depth-based fog equation.
         *
         * */
-#if 0
-        strided->u.s.fog.lpData   = data;
-        strided->u.s.fog.dwType   = element->type;
-        strided->u.s.fog.dsString = stride;
-#else
-        FIXME("Fog\n");
-#endif
+            TRACE("Fog\n");
+            strided->u.s.fog.lpData   = data;
+            strided->u.s.fog.dwType   = element->Type;
+            strided->u.s.fog.dwStride = stride;
         break;
         case D3DDECLUSAGE_DEPTH:
-        FIXME("depth\n");
-#if 0
-        strided->u.s.depth.lpData   = data;
-        strided->u.s.depth.dwType   = element->type;
-        strided->u.s.depth.dsString = stride;
-#endif
-
-        break;
+            TRACE("depth\n");
+            strided->u.s.depth.lpData   = data;
+            strided->u.s.depth.dwType   = element->Type;
+            strided->u.s.depth.dwStride = stride;
+            break;
         case D3DDECLUSAGE_SAMPLE: /* VertexShader textures */
-#if 0
-        strided->u.s.sample.lpData   = data;
-        strided->u.s.sample.dwType   = element->type;
-        strided->u.s.sample.dsString = stride;
-#endif
-        FIXME("depth\n");
+            TRACE("depth\n");
+            strided->u.s.sample.lpData   = data;
+            strided->u.s.sample.dwType   = element->Type;
+            strided->u.s.sample.dwStride = stride;
         break;
         };
 
@@ -556,7 +512,7 @@ static void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexS
     }
 
     /* Work through stream by stream */
-    for (nStream=0; nStream<LoopThroughTo; nStream++) {
+    for (nStream=0; nStream<LoopThroughTo; ++nStream) {
         DWORD  stride  = This->stateBlock->streamStride[nStream];
         BYTE  *data    = NULL;
         DWORD  thisFVF = 0;
@@ -690,6 +646,7 @@ static void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexS
     }
 }
 
+#if 0 /* TODO: Software Shaders */
 /* Draw a single vertex using this information */
 static void draw_vertex(IWineD3DDevice *iface,                         /* interface    */
                  BOOL isXYZ,    float x, float y, float z, float rhw,  /* xyzn position*/
@@ -744,7 +701,7 @@ static void draw_vertex(IWineD3DDevice *iface,                         /* interf
         if (This->stateBlock->textures[textureNo] != NULL) {
 
             int    coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
-            if (coordIdx > 7) {
+            if (coordIdx >= MAX_TEXTURES) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
                 continue;
             } else if (numcoords[coordIdx] == 0) {
@@ -818,6 +775,7 @@ static void draw_vertex(IWineD3DDevice *iface,                         /* interf
         }
     }
 }
+#endif /* TODO: Software shaders */
 
 /*
  * Actually draw using the supplied information.
@@ -1057,12 +1015,12 @@ static void drawStridedFast(IWineD3DDevice *iface, Direct3DVertexStridedData *sd
 
         TRACE("glElements(%x, %d, %ld, ...)\n", glPrimType, NumVertexes, minIndex);
 #if 1  /* FIXME: Want to use DrawRangeElements, but wrong calculation! */
-        glDrawElements(glPrimType, NumVertexes, idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT,
-                      (const char *)idxData+(idxSize * startIdx));
+        glDrawElements(glPrimType, NumVertexes, idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
+                      (const char *)idxData + (idxSize * startIdx));
 #else
-        glDrawRangeElements(glPrimType, minIndex, minIndex+NumVertexes-1, NumVertexes,
-                      idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT,
-                      (const char *)idxData+(idxSize * startIdx));
+        glDrawRangeElements(glPrimType, minIndex, minIndex + NumVertexes - 1, NumVertexes,
+                      idxSize == 2 ? GL_UNSIGNED_SHORT:GL_UNSIGNED_INT,
+                      (const char *)idxData + (idxSize * startIdx));
 #endif
         checkGLcall("glDrawRangeElements");
 
@@ -1115,7 +1073,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd
     glBegin(glPrimType);
 
     /* For each primitive */
-    for (vx_index = 0; vx_index < NumVertexes; vx_index++) {
+    for (vx_index = 0; vx_index < NumVertexes; ++vx_index) {
 
         /* Initialize diffuse color */
         diffuseColor = 0xFFFFFFFF;
@@ -1259,7 +1217,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd
                     }
 
                     /* crude support for non-power2 textures */
-                    if(((IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)This->stateBlock->textures[textureNo])->surfaces[0])->nonpow2){
+                    if (((IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)This->stateBlock->textures[textureNo])->surfaces[0])->nonpow2) {
                         t *= ((IWineD3DSurfaceImpl *)((IWineD3DTextureImpl *)This->stateBlock->textures[textureNo])->surfaces[0])->pow2scalingFactorY;
                         s *= ((IWineD3DSurfaceImpl *)((IWineD3DTextureImpl *)This->stateBlock->textures[textureNo])->surfaces[0])->pow2scalingFactorX;
                     }
@@ -1367,7 +1325,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd
 
         /* For non indexed mode, step onto next parts */
         if (idxData == NULL) {
-            SkipnStrides += 1;
+            ++SkipnStrides;
         }
     }
 
@@ -1420,7 +1378,7 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
     glBegin(glPrimType);
 
     /* For each primitive */
-    for (vx_index = 0; vx_index < NumVertexes; vx_index++) {
+    for (vx_index = 0; vx_index < NumVertexes; ++vx_index) {
 
         /* For indexed data, we need to go a few more strides in */
         if (idxData != NULL) {
@@ -1507,7 +1465,7 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
 
         /* For non indexed mode, step onto next parts */
         if (idxData == NULL) {
-            SkipnStrides += 1;
+           ++SkipnStrides;
         }
 
     } /* for each vertex */
@@ -1520,7 +1478,7 @@ static void drawStridedHardwareVS(IWineD3DDevice *iface, Direct3DVertexStridedDa
                      int PrimitiveType, ULONG NumPrimitives,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
 
-    IDirect3DVertexShaderImpl* vertex_shader = NULL;
+    IDirect3DVertexShaderImpl *vertex_shader = NULL;
     int                        i;
     int                        NumVertexes;
     int                        glPrimType;
@@ -1539,7 +1497,7 @@ static void drawStridedHardwareVS(IWineD3DDevice *iface, Direct3DVertexStridedDa
     checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
 
     /* Update the constants */
-    for (i=0; i<D3D8_VSHADER_MAX_CONSTANTS; i++) {
+    for (i = 0; i < D3D8_VSHADER_MAX_CONSTANTS; ++i) {
         GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, i, (GLfloat *)&This->stateBlock->vertexShaderConstant[i]));
         checkGLcall("glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB");
     }
@@ -1556,12 +1514,12 @@ static void drawStridedHardwareVS(IWineD3DDevice *iface, Direct3DVertexStridedDa
 
         TRACE("glElements(%x, %d, %ld, ...)\n", glPrimType, NumVertexes, minIndex);
 #if 1  /* FIXME: Want to use DrawRangeElements, but wrong calculation! */
-        glDrawElements(glPrimType, NumVertexes, idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT,
-                      (const char *)idxData+(idxSize * startIdx));
+        glDrawElements(glPrimType, NumVertexes, idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
+                      (const char *)idxData + (idxSize * startIdx));
 #else
-        glDrawRangeElements(glPrimType, minIndex, minIndex+NumVertexes-1, NumVertexes,
-                      idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT,
-                      (const char *)idxData+(idxSize * startIdx));
+        glDrawRangeElements(glPrimType, minIndex, minIndex+NumVertexes - 1, NumVertexes,
+                      idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
+                      (const char *)idxData + (idxSize * startIdx));
 #endif
         checkGLcall("glDrawRangeElements");
 
@@ -1587,7 +1545,7 @@ static void drawStridedHardwareVS(IWineD3DDevice *iface, Direct3DVertexStridedDa
     /* MESA does not support it right not */
     if (glGetError() != GL_NO_ERROR)
 	maxAttribs = 16;
-    for (i=0; i<maxAttribs; i++) {
+    for (i = 0; i < maxAttribs; ++i) {
         GL_EXTCALL(glDisableVertexAttribArrayARB(i));
         checkGLcall("glDisableVertexAttribArrayARB(reg);");
     }
@@ -1597,7 +1555,7 @@ static void drawStridedHardwareVS(IWineD3DDevice *iface, Direct3DVertexStridedDa
 }
 #endif
 
-void inline drawPrimitiveTraceDataLocations(Direct3DVertexStridedData *dataLocations,DWORD fvf){
+void inline drawPrimitiveTraceDataLocations(Direct3DVertexStridedData *dataLocations,DWORD fvf) {
 
     /* Dump out what parts we have supplied */
     TRACE("Strided Data (from FVF/VS): %lx\n", fvf);
@@ -1626,7 +1584,7 @@ BOOL inline drawPrimitiveUploadDirtyTextures(IWineD3DDeviceImpl* This) {
     unsigned int i;
     register IWineD3DBaseTexture *texture;
     /* And re-upload any dirty textures */
-    for (i = 0; i<GL_LIMITS(textures); ++i) {
+    for (i = 0; i < GL_LIMITS(textures); ++i) {
         texture = This->stateBlock->textures[i];
         if (texture != NULL) {
             if(IWineD3DBaseTexture_GetDirty(texture)) {
@@ -1672,7 +1630,7 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     if (This->stateBlock->vertexDecl == NULL) {
         /* Work out what the FVF should look like */
-        rc = initializeFVF(iface, &fvf, &useVertexShaderFunction);
+        rc = initializeFVF(iface, &fvf);
         if (rc) return;
     } else {
         TRACE("(%p) : using vertex declaration %p \n", iface, This->stateBlock->vertexDecl);
@@ -1717,7 +1675,7 @@ void drawPrimitive(IWineD3DDevice *iface,
             IDirect3DPixelShaderImpl_SetConstantF(pixel_shader, 0, (CONST FLOAT*) &This->stateBlock->pixelShaderConstant[0], 8);
         }
         /* Update the constants */
-        for (i=0; i<D3D8_PSHADER_MAX_CONSTANTS; i++) {
+        for (i = 0; i < D3D8_PSHADER_MAX_CONSTANTS; ++i) {
             GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, i, (GLfloat *)&This->stateBlock->pixelShaderConstant[i]));
             checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB");
         }
@@ -1729,10 +1687,10 @@ void drawPrimitive(IWineD3DDevice *iface,
         memset(&dataLocations, 0x00, sizeof(dataLocations));
 
         /* Convert to strided data */
-         if(This->stateBlock->vertexDecl != NULL){
+         if (This->stateBlock->vertexDecl != NULL) {
             TRACE("================ Vertex Declaration  ===================\n");
             primitiveDeclarationConvertToStridedData(iface, &dataLocations, StartVertexIndex, &fvf);
-         }else{
+         } else {
             TRACE("================ FVF ===================\n");
             primitiveConvertToStridedData(iface, &dataLocations, StartVertexIndex);
          }
@@ -1835,28 +1793,28 @@ void drawPrimitive(IWineD3DDevice *iface,
         if (isDumpingFrames) {
             D3DLOCKED_RECT r;
             char buffer[80];
-            IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) This->renderTarget, &r, NULL, D3DLOCK_READONLY);
+            IWineD3DSurface_LockRect(This->renderTarget, &r, NULL, D3DLOCK_READONLY);
             sprintf(buffer, "/tmp/backbuffer_%ld.ppm", primCounter);
             TRACE("Saving screenshot %s\n", buffer);
-            IDirect3DSurface8Impl_SaveSnapshot((LPDIRECT3DSURFACE8) This->renderTarget, buffer);
-            IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) This->renderTarget);
+            IWineD3DSurface_SaveSnapshot(This->renderTarget, buffer);
+            IWineD3DSurface_UnlockRect(This->renderTarget);
 
 #if defined(SHOW_TEXTURE_MAKEUP)
            {
-            LPDIRECT3DSURFACE8 pSur;
+            IWineD3DSurface *pSur;
             int textureNo;
             for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
                 if (This->stateBlock->textures[textureNo] != NULL) {
                     sprintf(buffer, "/tmp/texture_%ld_%d.ppm", primCounter, textureNo);
-                    TRACE("Saving texture %s (Format:%s)\n", buffer, debug_d3dformat(((IDirect3DBaseTexture8Impl *)This->stateBlock->textures[textureNo])->format));
-                    IDirect3DTexture8Impl_GetSurfaceLevel((LPDIRECT3DTEXTURE8) This->stateBlock->textures[textureNo], 0, &pSur);
-                    IDirect3DSurface8Impl_SaveSnapshot(pSur, buffer);
-                    IDirect3DSurface8Impl_Release(pSur);
+                    TRACE("Saving texture %s\n", buffer);
+                    IWineD3DTexture_GetSurfaceLevel(This->stateBlock->textures[textureNo], 0, &pSur);
+                    IWineD3DSurface_SaveSnapshot(pSur, buffer);
+                    IWineD3DSurface_Release(pSur);
                 }
             }
            }
 #endif
-           primCounter = primCounter + 1;
+           ++primCounter;
         }
     }
 #endif

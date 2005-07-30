@@ -329,6 +329,14 @@ typedef struct Direct3DVertexStridedData {
              Direct3DStridedData  diffuse;
              Direct3DStridedData  specular;
              Direct3DStridedData  texCoords[MAX_TEXTURES];
+             Direct3DStridedData  position2; /* tween data */
+             Direct3DStridedData  normal2;   /* tween data */
+             Direct3DStridedData  tangent;
+             Direct3DStridedData  binormal;
+             Direct3DStridedData  tessFactor;
+             Direct3DStridedData  fog;
+             Direct3DStridedData  depth;
+             Direct3DStridedData  sample;
         } s;
         Direct3DStridedData input[16];  /* Indexed by constants in D3DVSDE_REGISTER */
     } u;
