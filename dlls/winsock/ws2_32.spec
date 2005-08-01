@@ -1,7 +1,3 @@
-#  Winsock 2 DLL ~ ws2_32.dll
-#
-#  Export table information obtained from Windows 2000 ws2_32.dll
-
 1   stdcall  accept(long ptr ptr) WS_accept
 2   stdcall  bind(long ptr long) WS_bind
 3   stdcall  closesocket(long) WS_closesocket
@@ -25,33 +21,6 @@
 21  stdcall  setsockopt(long long long ptr long) WS_setsockopt
 22  stdcall  shutdown(long long) WS_shutdown
 23  stdcall  socket(long long long) WS_socket
-24  stdcall  WSApSetPostRoutine(ptr)
-25  stdcall  WPUCompleteOverlappedRequest(long ptr long long ptr)
-26  stdcall  WSAAccept(long ptr ptr ptr long)
-27  stdcall  WSAAddressToStringA(ptr long ptr ptr ptr)
-28  stdcall  WSAAddressToStringW(ptr long ptr ptr ptr)
-29  stdcall  WSACloseEvent(long)
-30  stdcall  WSAConnect(long ptr long ptr ptr ptr ptr)
-31  stdcall  WSACreateEvent ()
-32  stdcall  WSADuplicateSocketA(long long ptr)
-33  stdcall  WSADuplicateSocketW(long long ptr)
-34  stdcall  WSAEnumNameSpaceProvidersA(ptr ptr)
-35  stdcall  WSAEnumNameSpaceProvidersW(ptr ptr)
-36  stdcall  WSAEnumNetworkEvents(long long ptr)
-37  stdcall  WSAEnumProtocolsA(ptr ptr ptr)
-38  stdcall  WSAEnumProtocolsW(ptr ptr ptr)
-39  stdcall  WSAEventSelect(long long long)
-40  stdcall  WSAGetOverlappedResult(long ptr ptr long ptr)
-41  stdcall  WSAGetQOSByName(long ptr ptr)
-42  stdcall  WSAGetServiceClassInfoA(ptr ptr ptr ptr)
-43  stdcall  WSAGetServiceClassInfoW(ptr ptr ptr ptr)
-44  stdcall  WSAGetServiceClassNameByClassIdA(ptr ptr ptr)
-45  stdcall  WSAGetServiceClassNameByClassIdW(ptr ptr ptr)
-46  stdcall  WSAHtonl(long long ptr)
-47  stdcall  WSAHtons(long long ptr)
-48  stdcall  WSAInstallServiceClassA(ptr)
-49  stdcall  WSAInstallServiceClassW(ptr)
-50  stdcall  WSAIoctl(long long ptr long ptr long ptr ptr ptr)
 51  stdcall  gethostbyaddr(ptr long long) WS_gethostbyaddr
 52  stdcall  gethostbyname(str) WS_gethostbyname
 53  stdcall  getprotobyname(str) WS_getprotobyname
@@ -59,42 +28,6 @@
 55  stdcall  getservbyname(str str) WS_getservbyname
 56  stdcall  getservbyport(long str) WS_getservbyport
 57  stdcall  gethostname(ptr long) WS_gethostname
-58  stdcall  WSAJoinLeaf(long ptr long ptr ptr ptr ptr long)
-59  stdcall  WSALookupServiceBeginA(ptr long ptr)
-60  stdcall  WSALookupServiceBeginW(ptr long ptr)
-61  stdcall  WSALookupServiceEnd(long)
-62  stdcall  WSALookupServiceNextA(long long ptr ptr)
-63  stdcall  WSALookupServiceNextW(long long ptr ptr)
-64  stdcall  WSANtohl(long long ptr)
-65  stdcall  WSANtohs(long long ptr)
-66  stdcall  WSAProviderConfigChange(ptr ptr ptr)
-67  stdcall  WSARecv(long ptr long ptr ptr ptr ptr)
-68  stdcall  WSARecvDisconnect(long ptr)
-69  stdcall  WSARecvFrom(long ptr long ptr ptr ptr ptr ptr ptr )
-70  stdcall  WSARemoveServiceClass(ptr)
-71  stdcall  WSAResetEvent(long) kernel32.ResetEvent
-72  stdcall  WSASend(long ptr long ptr long ptr ptr)
-73  stdcall  WSASendDisconnect(long ptr)
-74  stdcall  WSASendTo(long ptr long ptr long ptr long ptr ptr)
-75  stdcall  WSASetEvent(long) kernel32.SetEvent
-76  stdcall  WSASetServiceA(ptr long long)
-77  stdcall  WSASetServiceW(ptr long long)
-78  stdcall  WSASocketA(long long long ptr long long)
-79  stdcall  WSASocketW(long long long ptr long long)
-80  stdcall  WSAStringToAddressA(str long ptr ptr ptr)
-81  stdcall  WSAStringToAddressW(wstr long ptr ptr ptr)
-82  stdcall  WSAWaitForMultipleEvents(long ptr long long long) kernel32.WaitForMultipleObjectsEx
-83  stdcall  WSCDeinstallProvider(ptr ptr)
-84  stdcall  WSCEnableNSProvider(ptr long)
-85  stdcall  WSCEnumProtocols(ptr ptr ptr ptr)
-86  stdcall  WSCGetProviderPath(ptr ptr ptr ptr)
-87  stdcall  WSCInstallNameSpace(wstr wstr long long ptr)
-88  stdcall  WSCInstallProvider(ptr wstr ptr long ptr)
-89  stdcall  WSCUnInstallNameSpace(ptr)
-90  stub     WSCWriteNameSpaceOrder
-91  stdcall  WSCWriteProviderOrder(ptr long)
-
-#  92 ~ 100   UNKNOWN
 
 101 stdcall WSAAsyncSelect(long long long long)
 102 stdcall WSAAsyncGetHostByAddr(long long ptr long long ptr long)
@@ -113,10 +46,73 @@
 115 stdcall WSAStartup(long ptr)
 116 stdcall WSACleanup()
 
-#  117 ~ 150  UNKNOWN
-
 151 stdcall  __WSAFDIsSet(long ptr)
 
-#  152 ~ 499  UNKNOWN
-
 500 stub     WEP
+
+@ stdcall WSApSetPostRoutine(ptr)
+@ stdcall WPUCompleteOverlappedRequest(long ptr long long ptr)
+@ stdcall WSAAccept(long ptr ptr ptr long)
+@ stdcall WSAAddressToStringA(ptr long ptr ptr ptr)
+@ stdcall WSAAddressToStringW(ptr long ptr ptr ptr)
+@ stdcall WSACloseEvent(long)
+@ stdcall WSAConnect(long ptr long ptr ptr ptr ptr)
+@ stdcall WSACreateEvent ()
+@ stdcall WSADuplicateSocketA(long long ptr)
+@ stdcall WSADuplicateSocketW(long long ptr)
+@ stdcall WSAEnumNameSpaceProvidersA(ptr ptr)
+@ stdcall WSAEnumNameSpaceProvidersW(ptr ptr)
+@ stdcall WSAEnumNetworkEvents(long long ptr)
+@ stdcall WSAEnumProtocolsA(ptr ptr ptr)
+@ stdcall WSAEnumProtocolsW(ptr ptr ptr)
+@ stdcall WSAEventSelect(long long long)
+@ stdcall WSAGetOverlappedResult(long ptr ptr long ptr)
+@ stdcall WSAGetQOSByName(long ptr ptr)
+@ stdcall WSAGetServiceClassInfoA(ptr ptr ptr ptr)
+@ stdcall WSAGetServiceClassInfoW(ptr ptr ptr ptr)
+@ stdcall WSAGetServiceClassNameByClassIdA(ptr ptr ptr)
+@ stdcall WSAGetServiceClassNameByClassIdW(ptr ptr ptr)
+@ stdcall WSAHtonl(long long ptr)
+@ stdcall WSAHtons(long long ptr)
+@ stdcall WSAInstallServiceClassA(ptr)
+@ stdcall WSAInstallServiceClassW(ptr)
+@ stdcall WSAIoctl(long long ptr long ptr long ptr ptr ptr)
+@ stdcall WSAJoinLeaf(long ptr long ptr ptr ptr ptr long)
+@ stdcall WSALookupServiceBeginA(ptr long ptr)
+@ stdcall WSALookupServiceBeginW(ptr long ptr)
+@ stdcall WSALookupServiceEnd(long)
+@ stdcall WSALookupServiceNextA(long long ptr ptr)
+@ stdcall WSALookupServiceNextW(long long ptr ptr)
+@ stub    WSANSPIoctl
+@ stdcall WSANtohl(long long ptr)
+@ stdcall WSANtohs(long long ptr)
+@ stdcall WSAProviderConfigChange(ptr ptr ptr)
+@ stdcall WSARecv(long ptr long ptr ptr ptr ptr)
+@ stdcall WSARecvDisconnect(long ptr)
+@ stdcall WSARecvFrom(long ptr long ptr ptr ptr ptr ptr ptr ) 
+@ stdcall WSARemoveServiceClass(ptr)
+@ stdcall WSAResetEvent(long) kernel32.ResetEvent
+@ stdcall WSASend(long ptr long ptr long ptr ptr)
+@ stdcall WSASendDisconnect(long ptr)
+@ stdcall WSASendTo(long ptr long ptr long ptr long ptr ptr)
+@ stdcall WSASetEvent(long) kernel32.SetEvent
+@ stdcall WSASetServiceA(ptr long long)
+@ stdcall WSASetServiceW(ptr long long)
+@ stdcall WSASocketA(long long long ptr long long)
+@ stdcall WSASocketW(long long long ptr long long)
+@ stdcall WSAStringToAddressA(str long ptr ptr ptr)
+@ stdcall WSAStringToAddressW(wstr long ptr ptr ptr)
+@ stdcall WSAWaitForMultipleEvents(long ptr long long long) kernel32.WaitForMultipleObjectsEx
+@ stdcall WSCDeinstallProvider(ptr ptr)
+@ stdcall WSCEnableNSProvider(ptr long)
+@ stdcall WSCEnumProtocols(ptr ptr ptr ptr)
+@ stdcall WSCGetProviderPath(ptr ptr ptr ptr)
+@ stdcall WSCInstallNameSpace(wstr wstr long long ptr)
+@ stdcall WSCInstallProvider(ptr wstr ptr long ptr)
+@ stdcall WSCUnInstallNameSpace(ptr)
+@ stub    WSCUpdateProvider
+@ stub    WSCWriteNameSpaceOrder
+@ stdcall WSCWriteProviderOrder(ptr long)
+@ stub    freeaddrinfo
+@ stub    getaddrinfo
+@ stub    getnameinfo
