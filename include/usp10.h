@@ -87,6 +87,17 @@ typedef struct tag_SCRIPT_DIGITSUBSTITUTE {
   DWORD dwReserved;
 } SCRIPT_DIGITSUBSTITUTE;
 
+typedef struct tag_SCRIPT_FONTPROPERTIES {
+  int   cBytes;
+  WORD wgBlank;
+  WORD wgDefault;
+  WORD wgInvalid;
+  WORD wgKashida;
+  int iKashidaWidth;
+} SCRIPT_FONTPROPERTIES;
+
+typedef void *SCRIPT_CACHE;
+
 /* Function Declairations */
 
 HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***ppSp, int *piNumScripts);
@@ -96,5 +107,6 @@ HRESULT WINAPI ScriptApplyDigitSubstitution(const SCRIPT_DIGITSUBSTITUTE* psds,
 HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItems, 
                              const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState, 
                              SCRIPT_ITEM *pItems, int *pcItems);
+HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPROPERTIES *sfp);
 
 #endif /* __USP10_H */

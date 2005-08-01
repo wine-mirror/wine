@@ -51,6 +51,21 @@ HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***ppSp, int *piNumSc
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPROPERTIES *sfp)
+{
+    FIXME("%p,%p,%p\n", hdc, psc, sfp);
+    /* return something sensible? */
+    if (NULL != sfp) {
+        sfp->cBytes        = sizeof(SCRIPT_FONTPROPERTIES);
+        sfp->wgBlank       = 0;
+        sfp->wgDefault     = 0;
+        sfp->wgInvalid     = 0;
+        sfp->wgKashida     = 1;
+        sfp->iKashidaWidth = 0;
+    }
+    return 0;
+}
+
 HRESULT WINAPI ScriptRecordDigitSubstitution(LCID Locale,SCRIPT_DIGITSUBSTITUTE *psds)
 {
     FIXME("%ld,%p\n",Locale,psds);
