@@ -274,7 +274,7 @@ static void test_dpa(void)
         j = pDPA_GetPtrIndex(dpa, (PVOID)i);
         ok(j+1 == i, "j=%d i=%d\n", j, i);
         j = pDPA_Search(dpa, (PVOID)i, 0, CB_CmpLT, 0xdeadbeef, DPAS_SORTED);
-        if(i > 1) todo_wine ok(j+1 == i, "j=%d i=%d\n", j, i);
+        ok(j+1 == i, "j=%d i=%d\n", j, i);
 
         /* Linear searches respect iStart ... */
         j = pDPA_Search(dpa, (PVOID)i, i+1, CB_CmpLT, 0xdeadbeef, 0);
