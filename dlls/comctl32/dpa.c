@@ -815,8 +815,7 @@ INT WINAPI DPA_Search (const HDPA hdpa, LPVOID pFind, INT nStart,
             else /* (n > 0) */
                 l = x + 1;
         }
-
-        return l;
+        if (uOptions & (DPAS_INSERTBEFORE|DPAS_INSERTAFTER)) return l;
     }
     else {
         /* array is not sorted --> use linear search */

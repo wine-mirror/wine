@@ -307,6 +307,10 @@ static void test_dpa(void)
     i = pDPA_Search(dpa, (PVOID)3, 0,
                     CB_CmpLT, 0xdeadbeef, DPAS_SORTED|DPAS_INSERTBEFORE);
     ok(i == 2, "i=%d\n", i);
+    /* without DPAS_INSERTBEFORE/AFTER */
+    i = pDPA_Search(dpa, (PVOID)3, 0,
+                    CB_CmpLT, 0xdeadbeef, DPAS_SORTED);
+    ok(i == -1, "i=%d\n", i);
 
     /* Re-insert the item */
     ret = pDPA_InsertPtr(dpa, 2, (PVOID)3);
