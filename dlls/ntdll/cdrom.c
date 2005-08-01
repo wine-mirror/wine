@@ -547,11 +547,11 @@ static void CDROM_ClearCacheEntry(int dev)
  *		CDROM_GetInterfaceInfo
  *
  * Determines the ide interface (the number after the ide), and the
- * number of the device on that interface for ide cdroms (*port == 0).
- * Determines the scsi information for scsi cdroms (*port >= 1).
+ * number of the device on that interface for ide cdroms (*iface <= 1).
+ * Determines the scsi information for scsi cdroms (*iface >= 2).
  * Returns false if the info cannot not be obtained.
  */
-static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int* lun)
+static int CDROM_GetInterfaceInfo(int fd, UCHAR* iface, UCHAR* port, UCHAR* device, UCHAR* lun)
 {
 #if defined(linux)
     struct stat st;
@@ -580,8 +580,8 @@ static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int
         UINT32 idlun[2];
         if (ioctl(fd, SCSI_IOCTL_GET_IDLUN, &idlun) != -1)
         {
-            *port = ((idlun[0] >> 24) & 0xff) + 1;
-            *iface = (idlun[0] >> 16) & 0xff;
+            *port = (idlun[0] >> 24) & 0xff;
+            *iface = ((idlun[0] >> 16) & 0xff) + 2;
             *device = idlun[0] & 0xff;
             *lun = (idlun[0] >> 8) & 0xff;
         }
@@ -1702,15 +1702,15 @@ static NTSTATUS CDROM_ScsiGetCaps(PIO_SCSI_CAPABILITIES caps)
  */
 static NTSTATUS CDROM_GetAddress(int fd, SCSI_ADDRESS* address)
 {
-    int portnum, busid, targetid, lun;
+    UCHAR portnum, busid, targetid, lun;
 
     address->Length = sizeof(SCSI_ADDRESS);
     if ( ! CDROM_GetInterfaceInfo(fd, &portnum, &busid, &targetid, &lun))
         return STATUS_NOT_SUPPORTED;
 
-    address->PortNumber = portnum;
-    address->PathId = busid; /* bus number */
-    address->TargetId = targetid;
+    address->PortNumber = portnum; /* primary=0 secondary=1 for ide */
+    address->PathId = busid;       /* always 0 for ide */
+    address->TargetId = targetid;  /* master=0 slave=1 for ide */
     address->Lun = lun;
     return STATUS_SUCCESS;
 }
