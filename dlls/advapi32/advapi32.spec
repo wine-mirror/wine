@@ -7,12 +7,24 @@
 @ stdcall AccessCheckAndAuditAlarmA(str ptr str str ptr long ptr long ptr ptr ptr)
 @ stdcall AccessCheckAndAuditAlarmW(wstr ptr wstr wstr ptr long ptr long ptr ptr ptr)
 @ stdcall AccessCheckByType(ptr ptr long long ptr long ptr ptr ptr ptr ptr)
+# @ stub AccessCheckByTypeAndAuditAlarmA
+# @ stub AccessCheckByTypeAndAuditAlarmW
+# @ stub AccessCheckByTypeResultList
+# @ stub AccessCheckByTypeResultListAndAuditAlarmA
+# @ stub AccessCheckByTypeResultListAndAuditAlarmByHandleA
+# @ stub AccessCheckByTypeResultListAndAuditAlarmByHandleW
+# @ stub AccessCheckByTypeResultListAndAuditAlarmW
 @ stdcall AddAccessAllowedAce (ptr long long ptr)
 @ stdcall AddAccessAllowedAceEx (ptr long long long ptr)
+# @ stub AddAccessAllowedObjectAce
 @ stdcall AddAccessDeniedAce(ptr long long ptr)
 @ stdcall AddAccessDeniedAceEx(ptr long long long ptr)
+# @ stub AddAccessDeniedObjectAce
 @ stdcall AddAce(ptr long long ptr long)
 @ stdcall AddAuditAccessAce(ptr long long ptr long long)
+# @ stub AddAuditAccessAceEx
+# @ stub AddAuditAccessObjectAce
+# @ stub AddUsersToEncryptedFile
 @ stdcall AdjustTokenGroups(long long ptr long ptr ptr)
 @ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr)
 @ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
@@ -23,6 +35,10 @@
 @ stdcall BackupEventLogW (long wstr)
 @ stdcall BuildExplicitAccessWithNameA(ptr str long long long)
 @ stdcall BuildExplicitAccessWithNameW(ptr wstr long long long)
+# @ stub BuildImpersonateExplicitAccessWithNameA
+# @ stub BuildImpersonateExplicitAccessWithNameW
+# @ stub BuildImpersonateTrusteeA
+# @ stub BuildImpersonateTrusteeW
 @ stdcall BuildSecurityDescriptorA(ptr ptr long ptr long ptr ptr ptr ptr)
 @ stdcall BuildSecurityDescriptorW(ptr ptr long ptr long ptr ptr ptr ptr)
 @ stdcall BuildTrusteeWithNameA(ptr str)
@@ -33,6 +49,7 @@
 @ stdcall BuildTrusteeWithObjectsAndSidW(ptr ptr ptr ptr ptr)
 @ stdcall BuildTrusteeWithSidA(ptr ptr)
 @ stdcall BuildTrusteeWithSidW(ptr ptr)
+# @ stub CancelOverlappedAccess
 @ stdcall ChangeServiceConfig2A(long long ptr)
 @ stdcall ChangeServiceConfig2W(long long ptr)
 @ stdcall ChangeServiceConfigA(long long long long wstr str ptr str str str str)
@@ -40,23 +57,80 @@
 @ stdcall CheckTokenMembership(long ptr ptr)
 @ stdcall ClearEventLogA (long str)
 @ stdcall ClearEventLogW (long wstr)
+# @ stub CloseCodeAuthzLevel
+# @ stub CloseEncryptedFileRaw
 @ stdcall CloseEventLog (long)
 @ stdcall CloseServiceHandle(long)
+# @ stub CloseTrace
 @ stdcall CommandLineFromMsiDescriptor(wstr wstr ptr)
+# @ stub ComputeAccessTokenFromCodeAuthzLevel
 @ stdcall ControlService(long long ptr)
+# @ stub ControlTraceA
+# @ stub ControlTraceW
+# @ stub ConvertAccessToSecurityDescriptorA
+# @ stub ConvertAccessToSecurityDescriptorW
+# @ stub ConvertSDToStringSDRootDomainA
+# @ stub ConvertSDToStringSDRootDomainW
+# @ stub ConvertSecurityDescriptorToAccessA
+# @ stub ConvertSecurityDescriptorToAccessNamedA
+# @ stub ConvertSecurityDescriptorToAccessNamedW
+# @ stub ConvertSecurityDescriptorToAccessW
+# @ stub ConvertSecurityDescriptorToStringSecurityDescriptorA
+# @ stub ConvertSecurityDescriptorToStringSecurityDescriptorW
 @ stdcall ConvertSidToStringSidA(ptr ptr)
 @ stdcall ConvertSidToStringSidW(ptr ptr)
+# @ stub ConvertStringSDToSDDomainA
+# @ stub ConvertStringSDToSDDomainW
+# @ stub ConvertStringSDToSDRootDomainA
+# @ stub ConvertStringSDToSDRootDomainW
 @ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorA(str long ptr ptr)
 @ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(wstr long ptr ptr)
 @ stdcall ConvertStringSidToSidA(ptr ptr)
 @ stdcall ConvertStringSidToSidW(ptr ptr)
+# @ stub ConvertToAutoInheritPrivateObjectSecurity
 @ stdcall CopySid(long ptr ptr)
+# @ stub CreateCodeAuthzLevel
 @ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
+# @ stub CreatePrivateObjectSecurityEx
+# @ stub CreatePrivateObjectSecurityWithMultipleInheritance
 @ stdcall CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr)
+# @ stub CreateProcessAsUserSecure
 @ stdcall CreateProcessAsUserW(long str str ptr ptr long long ptr str ptr ptr)
+# @ stub CreateProcessWithLogonW
+# @ stub CreateRestrictedToken
 @ stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr)
+# @ stub CreateTraceInstanceId
+# @ stub CreateWellKnownSid
+# @ stub CredDeleteA
+# @ stub CredDeleteW
+# @ stub CredEnumerateA
+# @ stub CredEnumerateW
+# @ stub CredFree
+# @ stub CredGetSessionTypes
+# @ stub CredGetTargetInfoA
+# @ stub CredGetTargetInfoW
+# @ stub CredIsMarshaledCredentialA
+# @ stub CredIsMarshaledCredentialW
+# @ stub CredMarshalCredentialA
+# @ stub CredMarshalCredentialW
 @ stub CredProfileLoaded
+# @ stub CredReadA
+# @ stub CredReadDomainCredentialsA
+# @ stub CredReadDomainCredentialsW
+# @ stub CredReadW
+# @ stub CredRenameA
+# @ stub CredRenameW
+# @ stub CredUnmarshalCredentialA
+# @ stub CredUnmarshalCredentialW
+# @ stub CredWriteA
+# @ stub CredWriteDomainCredentialsA
+# @ stub CredWriteDomainCredentialsW
+# @ stub CredWriteW
+# @ stub CredpConvertCredential
+# @ stub CredpConvertTargetInfo
+# @ stub CredpDecodeCredential
+# @ stub CredpEncodeCredential
 @ stdcall CryptAcquireContextA(ptr str str long long)
 @ stdcall CryptAcquireContextW(ptr wstr wstr long long)
 @ stdcall CryptContextAddRef(long ptr long)
@@ -102,48 +176,103 @@
 @ stdcall DeleteService(long)
 @ stdcall DeregisterEventSource(long)
 @ stdcall DestroyPrivateObjectSecurity(ptr)
+# @ stub DuplicateEncryptionInfoFile
 @ stdcall DuplicateToken(long long ptr)
 @ stdcall DuplicateTokenEx(long long ptr long long ptr)
+# @ stub ElfBackupEventLogFileA
+# @ stub ElfBackupEventLogFileW
+# @ stub ElfChangeNotify
+# @ stub ElfClearEventLogFileA
+# @ stub ElfClearEventLogFileW
+# @ stub ElfCloseEventLog
 @ stub ElfDeregisterEventSource
 @ stub ElfDeregisterEventSourceW
+# @ stub ElfFlushEventLog
+# @ stub ElfNumberOfRecords
+# @ stub ElfOldestRecord
+# @ stub ElfOpenBackupEventLogA
+# @ stub ElfOpenBackupEventLogW
+# @ stub ElfOpenEventLogA
+# @ stub ElfOpenEventLogW
+# @ stub ElfReadEventLogA
+# @ stub ElfReadEventLogW
+# @ stub ElfRegisterEventSourceA
 @ stub ElfRegisterEventSourceW
+# @ stub ElfReportEventA
 @ stub ElfReportEventW
+# @ stub EnableTrace
 @ stdcall EncryptFileA(str)
 @ stdcall EncryptFileW(wstr)
+# @ stub EncryptedFileKeyInfo
+# @ stub EncryptionDisable
 @ stdcall EnumDependentServicesA(long long ptr long ptr ptr)
 @ stdcall EnumDependentServicesW(long long ptr long ptr ptr)
 @ stub EnumServiceGroupA
 @ stub EnumServiceGroupW
 @ stdcall EnumServicesStatusA (long long long ptr long ptr ptr ptr)
+# @ stub EnumServicesStatusExA
+# @ stub EnumServicesStatusExW
 @ stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr)
+# @ stub EnumerateTraceGuids
+# @ stub EqualDomainSid
 @ stdcall EqualPrefixSid(ptr ptr)
 @ stdcall EqualSid(ptr ptr)
+# @ stub FileEncryptionStatusA
+# @ stub FileEncryptionStatusW
 @ stdcall FindFirstFreeAce(ptr ptr)
+# @ stub FlushTraceA
+# @ stub FlushTraceW
+# @ stub FreeEncryptedFileKeyInfo
+# @ stub FreeEncryptionCertificateHashList
+# @ stub FreeInheritedFromArray
 @ stdcall FreeSid(ptr)
+# @ stub GetAccessPermissionsForObjectA
+# @ stub GetAccessPermissionsForObjectW
 @ stdcall GetAce(ptr long ptr)
 @ stdcall GetAclInformation(ptr ptr long long)
+# @ stub GetAuditedPermissionsFromAclA
+# @ stub GetAuditedPermissionsFromAclW
 @ stdcall GetCurrentHwProfileA(ptr)
 @ stdcall GetCurrentHwProfileW(ptr)
 @ stdcall GetEffectiveRightsFromAclA(ptr ptr ptr)
+# @ stub GetEffectiveRightsFromAclW
+# @ stub GetEventLogInformation
 @ stdcall GetExplicitEntriesFromAclA(ptr ptr ptr)
 @ stdcall GetExplicitEntriesFromAclW(ptr ptr ptr)
 @ stdcall GetFileSecurityA(str long ptr long ptr)
 @ stdcall GetFileSecurityW(wstr long ptr long ptr)
+# @ stub GetInformationCodeAuthzLevelW
+# @ stub GetInformationCodeAuthzPolicyW
+# @ stub GetInheritanceSourceA
+# @ stub GetInheritanceSourceW
 @ stdcall GetKernelObjectSecurity(long long ptr long ptr)
 @ stdcall GetLengthSid(ptr)
+# @ stub GetLocalManagedApplicationData
+# @ stub GetLocalManagedApplications
+# @ stub GetManagedApplicationCategories
+# @ stub GetManagedApplications
 @ stub GetMangledSiteSid
+# @ stub GetMultipleTrusteeA
+# @ stub GetMultipleTrusteeOperationA
+# @ stub GetMultipleTrusteeOperationW
+# @ stub GetMultipleTrusteeW
 @ stdcall GetNamedSecurityInfoA (str long long ptr ptr ptr ptr ptr)
+# @ stub GetNamedSecurityInfoExA
+# @ stub GetNamedSecurityInfoExW
 @ stdcall GetNamedSecurityInfoW (wstr long long ptr ptr ptr ptr ptr)
 @ stdcall GetNumberOfEventLogRecords (long ptr)
 @ stdcall GetOldestEventLogRecord (long ptr)
+# @ stub GetOverlappedAccessResults
 @ stdcall GetPrivateObjectSecurity(ptr long ptr long ptr)
 @ stdcall GetSecurityDescriptorControl (ptr ptr ptr)
 @ stdcall GetSecurityDescriptorDacl (ptr ptr ptr ptr)
 @ stdcall GetSecurityDescriptorGroup(ptr ptr ptr)
 @ stdcall GetSecurityDescriptorLength(ptr)
 @ stdcall GetSecurityDescriptorOwner(ptr ptr ptr)
+# @ stub GetSecurityDescriptorRMControl
 @ stdcall GetSecurityDescriptorSacl (ptr ptr ptr ptr)
 @ stdcall GetSecurityInfo (long long long ptr ptr ptr ptr ptr)
+# @ stub GetSecurityInfoExA
 @ stdcall GetSecurityInfoExW (long long long wstr wstr ptr ptr wstr wstr)
 @ stdcall GetServiceDisplayNameA(ptr str ptr ptr)
 @ stdcall GetServiceDisplayNameW(ptr wstr ptr ptr)
@@ -155,6 +284,9 @@
 @ stdcall GetSidSubAuthorityCount(ptr)
 @ stub GetSiteSidFromToken
 @ stdcall GetTokenInformation(long long ptr long ptr)
+# @ stub GetTraceEnableFlags
+# @ stub GetTraceEnableLevel
+# @ stub GetTraceLoggerHandle
 @ stdcall GetTrusteeFormA(ptr) 
 @ stdcall GetTrusteeFormW(ptr) 
 @ stdcall GetTrusteeNameA(ptr) 
@@ -163,8 +295,16 @@
 @ stdcall GetTrusteeTypeW(ptr) 
 @ stdcall GetUserNameA(ptr ptr)
 @ stdcall GetUserNameW(ptr ptr)
+# @ stub GetWindowsAccountDomainSid
+# @ stub I_ScGetCurrentGroupStateW
+# @ stub I_ScIsSecurityProcess
+# @ stub I_ScPnPGetServiceName
+# @ stub I_ScSendTSMessage
 @ stub I_ScSetServiceBit
 @ stub I_ScSetServiceBitsA
+# @ stub I_ScSetServiceBitsW
+# @ stub IdentifyCodeAuthzLevelW
+# @ stub ImpersonateAnonymousToken
 @ stdcall ImpersonateLoggedOnUser(long)
 @ stdcall ImpersonateNamedPipeClient(long)
 @ stdcall ImpersonateSelf(long)
@@ -179,11 +319,15 @@
 @ stub IsProcessRestricted
 @ stdcall IsTextUnicode(ptr long ptr)
 @ stdcall IsTokenRestricted(long)
+# @ stub IsTokenUntrusted
 @ stdcall IsValidAcl(ptr)
 @ stdcall IsValidSecurityDescriptor(ptr)
 @ stdcall IsValidSid(ptr)
+# @ stub IsWellKnownSid
 @ stdcall LockServiceDatabase(ptr)
 @ stdcall LogonUserA(str str str long long ptr)
+# @ stub LogonUserExA
+# @ stub LogonUserExW
 @ stdcall LogonUserW(wstr wstr wstr long long ptr)
 @ stdcall LookupAccountNameA(str str ptr ptr ptr ptr ptr)
 @ stdcall LookupAccountNameW(wstr wstr ptr ptr ptr ptr ptr)
@@ -195,37 +339,68 @@
 @ stdcall LookupPrivilegeNameW(wstr ptr ptr long)
 @ stdcall LookupPrivilegeValueA(ptr ptr ptr)
 @ stdcall LookupPrivilegeValueW(ptr ptr ptr)
+# @ stub LookupSecurityDescriptorPartsA
+# @ stub LookupSecurityDescriptorPartsW
+# @ stub LsaAddAccountRights
 @ stub LsaAddPrivilegesToAccount
+# @ stub LsaClearAuditLog
 @ stdcall LsaClose(ptr)
 @ stub LsaCreateAccount
 @ stub LsaCreateSecret
 @ stub LsaCreateTrustedDomain
+# @ stub LsaCreateTrustedDomainEx
 @ stub LsaDelete
+# @ stub LsaDeleteTrustedDomain
+# @ stub LsaEnumerateAccountRights
 @ stub LsaEnumerateAccounts
+# @ stub LsaEnumerateAccountsWithUserRight
 @ stub LsaEnumeratePrivileges
 @ stub LsaEnumeratePrivilegesOfAccount
 @ stdcall LsaEnumerateTrustedDomains(long ptr ptr long ptr)
+# @ stub LsaEnumerateTrustedDomainsEx
 @ stdcall LsaFreeMemory(ptr)
+# @ stub LsaGetQuotasForAccount
+# @ stub LsaGetRemoteUserName
 @ stub LsaGetSystemAccessAccount
+# @ stub LsaGetUserName
 @ stub LsaICLookupNames
+# @ stub LsaICLookupNamesWithCreds
 @ stub LsaICLookupSids
+# @ stub LsaICLookupSidsWithCreds
+# @ stub LsaLookupNames2
 @ stdcall LsaLookupNames(long long ptr ptr ptr)
 @ stub LsaLookupPrivilegeDisplayName
+# @ stub LsaLookupPrivilegeName
+# @ stub LsaLookupPrivilegeValue
 @ stdcall LsaLookupSids(ptr long ptr ptr ptr)
 @ stdcall LsaNtStatusToWinError(long)
 @ stub LsaOpenAccount
 @ stdcall LsaOpenPolicy(long long long long)
+# @ stub LsaOpenPolicySce
 @ stub LsaOpenSecret
 @ stub LsaOpenTrustedDomain
+# @ stub LsaOpenTrustedDomainByName
+# @ stub LsaQueryDomainInformationPolicy
+# @ stub LsaQueryForestTrustInformation
 @ stub LsaQueryInfoTrustedDomain
 @ stdcall LsaQueryInformationPolicy(ptr long ptr)
 @ stub LsaQuerySecret
+# @ stub LsaQuerySecurityObject
+# @ stub LsaQueryTrustedDomainInfo
+# @ stub LsaQueryTrustedDomainInfoByName
+# @ stub LsaRemoveAccountRights
 @ stub LsaRemovePrivilegesFromAccount
 @ stdcall LsaRetrievePrivateData(ptr ptr ptr)
+# @ stub LsaSetDomainInformationPolicy
+# @ stub LsaSetForestTrustInformation
 @ stdcall LsaSetInformationPolicy(long long ptr)
 @ stub LsaSetInformationTrustedDomain
+# @ stub LsaSetQuotasForAccount
 @ stub LsaSetSecret
+# @ stub LsaSetSecurityObject
 @ stub LsaSetSystemAccessAccount
+# @ stub LsaSetTrustedDomainInfoByName
+# @ stub LsaSetTrustedDomainInformation
 @ stdcall LsaStorePrivateData(ptr ptr ptr)
 @ stdcall MD4Final(ptr)
 @ stdcall MD4Init(ptr)
@@ -233,6 +408,9 @@
 @ stdcall MD5Final(ptr)
 @ stdcall MD5Init(ptr)
 @ stdcall MD5Update(ptr ptr long)
+# @ stub MSChapSrvChangePassword2
+# @ stub MSChapSrvChangePassword
+# @ stub MakeAbsoluteSD2
 @ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall MakeSelfRelativeSD(ptr ptr ptr)
 @ stdcall MapGenericMask(ptr ptr)
@@ -240,12 +418,16 @@
 @ stdcall NotifyChangeEventLog (long long)
 @ stdcall ObjectCloseAuditAlarmA(str ptr long)
 @ stdcall ObjectCloseAuditAlarmW(wstr ptr long)
+# @ stub ObjectDeleteAuditAlarmA
+# @ stub ObjectDeleteAuditAlarmW
 @ stdcall ObjectOpenAuditAlarmA(str ptr str str ptr long long long ptr long long ptr)
 @ stdcall ObjectOpenAuditAlarmW(wstr ptr wstr wstr ptr long long long ptr long long ptr)
 @ stdcall ObjectPrivilegeAuditAlarmA(str ptr long long ptr long)
 @ stdcall ObjectPrivilegeAuditAlarmW(wstr ptr long long ptr long)
 @ stdcall OpenBackupEventLogA (str str)
 @ stdcall OpenBackupEventLogW (wstr wstr)
+# @ stub OpenEncryptedFileRawA
+# @ stub OpenEncryptedFileRawW
 @ stdcall OpenEventLogA (str str)
 @ stdcall OpenEventLogW (wstr wstr)
 @ stdcall OpenProcessToken(long long ptr)
@@ -254,9 +436,18 @@
 @ stdcall OpenServiceA(long str long)
 @ stdcall OpenServiceW(long wstr long)
 @ stdcall OpenThreadToken(long long long ptr)
+# @ stub OpenTraceA
+# @ stub OpenTraceW
 @ stdcall PrivilegeCheck(ptr ptr ptr)
 @ stdcall PrivilegedServiceAuditAlarmA(str str long ptr long)
 @ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)
+# @ stub ProcessIdleTasks
+# @ stub ProcessTrace
+# @ stub QueryAllTracesA
+# @ stub QueryAllTracesW
+# @ stub QueryRecoveryAgentsOnEncryptedFile
+# @ stub QueryServiceConfig2A
+# @ stub QueryServiceConfig2W
 @ stdcall QueryServiceConfigA(long ptr long ptr)
 @ stdcall QueryServiceConfigW(long ptr long ptr)
 @ stdcall QueryServiceLockStatusA(long ptr long ptr)
@@ -264,7 +455,11 @@
 @ stdcall QueryServiceObjectSecurity(long long ptr long ptr)
 @ stdcall QueryServiceStatus(long ptr)
 @ stdcall QueryServiceStatusEx (long long ptr long ptr)
+# @ stub QueryTraceA
+# @ stub QueryTraceW
+# @ stub QueryUsersOnEncryptedFile
 @ stdcall QueryWindows31FilesMigration(long)
+# @ stub ReadEncryptedFileRaw
 @ stdcall ReadEventLogA (long long long ptr long ptr ptr)
 @ stdcall ReadEventLogW (long long long ptr long ptr ptr)
 @ stdcall RegCloseKey(long)
@@ -278,6 +473,7 @@
 @ stdcall RegDeleteKeyW(long wstr)
 @ stdcall RegDeleteValueA(long str)
 @ stdcall RegDeleteValueW(long wstr)
+# @ stub RegDisablePredefinedCache
 @ stdcall RegEnumKeyA(long long ptr long)
 @ stdcall RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr)
 @ stdcall RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr)
@@ -297,6 +493,7 @@
 @ stdcall RegOpenKeyExW(long wstr long long ptr)
 @ stdcall RegOpenKeyW(long wstr ptr)
 @ stdcall RegOpenUserClassesRoot(ptr long long ptr)
+# @ stub RegOverridePredefKey
 @ stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall RegQueryMultipleValuesA(long ptr long ptr ptr)
@@ -311,6 +508,8 @@
 @ stdcall RegRestoreKeyA(long str long)
 @ stdcall RegRestoreKeyW(long wstr long)
 @ stdcall RegSaveKeyA(long ptr ptr)
+# @ stub RegSaveKeyExA
+# @ stub RegSaveKeyExW
 @ stdcall RegSaveKeyW(long ptr ptr)
 @ stdcall RegSetKeySecurity(long long ptr)
 @ stdcall RegSetValueA(long str long ptr long)
@@ -321,37 +520,76 @@
 @ stdcall RegUnLoadKeyW(long wstr)
 @ stdcall RegisterEventSourceA(ptr ptr)
 @ stdcall RegisterEventSourceW(ptr ptr)
+# @ stub RegisterIdleTask
 @ stdcall RegisterServiceCtrlHandlerA (ptr ptr)
+# @ stub RegisterServiceCtrlHandlerExA
+# @ stub RegisterServiceCtrlHandlerExW
 @ stdcall RegisterServiceCtrlHandlerW (ptr ptr)
 @ stdcall RegisterTraceGuidsA(ptr ptr ptr long ptr str str ptr)
 @ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr)
+# @ stub RemoveTraceCallback
+# @ stub RemoveUsersFromEncryptedFile
 @ stdcall ReportEventA (long long long long ptr long long str ptr)
 @ stdcall ReportEventW (long long long long ptr long long wstr ptr)
 @ stdcall RevertToSelf()
+# @ stub SaferCloseLevel
+# @ stub SaferComputeTokenFromLevel
+# @ stub SaferCreateLevel
+# @ stub SaferGetLevelInformation
+# @ stub SaferGetPolicyInformation
+# @ stub SaferIdentifyLevel
+# @ stub SaferRecordEventLogEntry
+# @ stub SaferSetLevelInformation
+# @ stub SaferSetPolicyInformation
+# @ stub SaferiChangeRegistryScope
+# @ stub SaferiCompareTokenLevels
+# @ stub SaferiIsExecutableFileType
+# @ stub SaferiPopulateDefaultsInRegistry
+# @ stub SaferiRecordEventLogEntry
+# @ stub SaferiReplaceProcessThreadTokens
+# @ stub SaferiSearchMatchingHashRules
 @ stdcall SetAclInformation(ptr ptr long long)
+# @ stub SetEntriesInAccessListA
+# @ stub SetEntriesInAccessListW
 @ stdcall SetEntriesInAclA(long ptr ptr ptr)
 @ stdcall SetEntriesInAclW(long ptr ptr ptr)
+# @ stub SetEntriesInAuditListA
+# @ stub SetEntriesInAuditListW
 @ stdcall SetFileSecurityA(str long ptr )
 @ stdcall SetFileSecurityW(wstr long ptr)
+# @ stub SetInformationCodeAuthzLevelW
+# @ stub SetInformationCodeAuthzPolicyW
 @ stdcall SetKernelObjectSecurity(long long ptr)
 @ stdcall SetNamedSecurityInfoA(str long ptr ptr ptr ptr ptr)
+# @ stub SetNamedSecurityInfoExA
+# @ stub SetNamedSecurityInfoExW
 @ stdcall SetNamedSecurityInfoW(wstr long ptr ptr ptr ptr ptr)
 @ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long)
+# @ stub SetPrivateObjectSecurityEx
 @ stdcall SetSecurityDescriptorControl(ptr long long)
 @ stdcall SetSecurityDescriptorDacl(ptr long ptr long)
 @ stdcall SetSecurityDescriptorGroup (ptr ptr long)
 @ stdcall SetSecurityDescriptorOwner (ptr ptr long)
+# @ stub SetSecurityDescriptorRMControl
 @ stdcall SetSecurityDescriptorSacl(ptr long ptr long)
 @ stdcall SetSecurityInfo (long long long ptr ptr ptr ptr)
+# @ stub SetSecurityInfoExA
+# @ stub SetSecurityInfoExW
 @ stdcall SetServiceBits(long long long long)
 @ stdcall SetServiceObjectSecurity(long long ptr)
 @ stdcall SetServiceStatus(long long)
 @ stdcall SetThreadToken (ptr ptr)
 @ stdcall SetTokenInformation (long long ptr long)
+# @ stub SetTraceCallback
+# @ stub SetUserFileEncryptionKey
 @ stdcall StartServiceA(long long ptr)
 @ stdcall StartServiceCtrlDispatcherA(ptr)
 @ stdcall StartServiceCtrlDispatcherW(ptr)
 @ stdcall StartServiceW(long long ptr)
+# @ stub StartTraceA
+# @ stub StartTraceW
+# @ stub StopTraceA
+# @ stub StopTraceW
 @ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long)
 @ stub SystemFunction001
 @ stub SystemFunction002
@@ -395,12 +633,52 @@
 @ stub TraceEventInstance
 @ stub TraceMessage
 @ stub TraceMessageVa
+# @ stub TreeResetNamedSecurityInfoA
+# @ stub TreeResetNamedSecurityInfoW
+# @ stub TrusteeAccessToObjectA
+# @ stub TrusteeAccessToObjectW
+# @ stub UninstallApplication
 @ stdcall UnlockServiceDatabase (ptr)
+# @ stub UnregisterIdleTask
 @ stub UnregisterTraceGuids
 @ stub UpdateTraceA
 @ stub UpdateTraceW
 @ stub WdmWmiServiceMain
 @ stub WmiCloseBlock
+# @ stub WmiCloseTraceWithCursor
+# @ stub WmiConvertTimestamp
+# @ stub WmiDevInstToInstanceNameA
+# @ stub WmiDevInstToInstanceNameW
+# @ stub WmiEnumerateGuids
+# @ stub WmiExecuteMethodA
+# @ stub WmiExecuteMethodW
+# @ stub WmiFileHandleToInstanceNameA
+# @ stub WmiFileHandleToInstanceNameW
+# @ stub WmiFreeBuffer
+# @ stub WmiGetFirstTraceOffset
+# @ stub WmiGetNextEvent
+# @ stub WmiGetTraceHeader
+# @ stub WmiMofEnumerateResourcesA
+# @ stub WmiMofEnumerateResourcesW
+# @ stub WmiNotificationRegistrationA
+# @ stub WmiNotificationRegistrationW
 @ stub WmiOpenBlock
+# @ stub WmiOpenTraceWithCursor
+# @ stub WmiParseTraceEvent
+# @ stub WmiQueryAllDataA
+# @ stub WmiQueryAllDataMultipleA
+# @ stub WmiQueryAllDataMultipleW
+# @ stub WmiQueryAllDataW
+# @ stub WmiQueryGuidInformation
+# @ stub WmiQuerySingleInstanceA
+# @ stub WmiQuerySingleInstanceMultipleA
+# @ stub WmiQuerySingleInstanceMultipleW
 @ stub WmiQuerySingleInstanceW
+# @ stub WmiReceiveNotificationsA
+# @ stub WmiReceiveNotificationsW
+# @ stub WmiSetSingleInstanceA
 @ stub WmiSetSingleInstanceW
+# @ stub WmiSetSingleItemA
+# @ stub WmiSetSingleItemW
+# @ stub Wow64Win32ApiEntry
+# @ stub WriteEncryptedFileRaw

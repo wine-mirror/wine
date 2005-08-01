@@ -2,6 +2,7 @@
 @ stdcall AdjustWindowRect(ptr long long)
 @ stdcall AdjustWindowRectEx(ptr long long long)
 @ stdcall AlignRects(ptr long long long)
+# @ stub AllowForegroundActivation
 @ stdcall AllowSetForegroundWindow (long)
 @ stdcall AnimateWindow(long long long)
 @ stdcall AnyPopup()
@@ -15,8 +16,12 @@
 @ stdcall BringWindowToTop(long)
 @ stdcall BroadcastSystemMessage(long ptr long long long) BroadcastSystemMessageA
 @ stdcall BroadcastSystemMessageA(long ptr long long long)
+# @ stub BroadcastSystemMessageExA
+# @ stub BroadcastSystemMessageExW
 @ stdcall BroadcastSystemMessageW(long ptr long long long)
+# @ stub BuildReasonArray
 @ stdcall CalcChildScroll(long long)
+# @ stub CalcMenuBar
 @ stdcall CallMsgFilter(ptr long) CallMsgFilterA
 @ stdcall CallMsgFilterA(ptr long)
 @ stdcall CallMsgFilterW(ptr long)
@@ -92,10 +97,13 @@
 @ stdcall CreateMDIWindowW(ptr ptr long long long long long long long long)
 @ stdcall CreateMenu()
 @ stdcall CreatePopupMenu()
+# @ stub CreateSystemThreads
 @ stdcall CreateWindowExA(long str str long long long long long long long long ptr)
 @ stdcall CreateWindowExW(long wstr wstr long long long long long long long long ptr)
 @ stdcall CreateWindowStationA(str long long ptr)
 @ stdcall CreateWindowStationW(wstr long long ptr)
+# @ stub CsrBroadcastSystemMessageExW
+# @ stub CtxInitUser32
 @ stdcall DdeAbandonTransaction(long long long)
 @ stdcall DdeAccessData(long ptr)
 @ stdcall DdeAddData(long ptr long long)
@@ -135,6 +143,7 @@
 @ stdcall DefFrameProcW(long long long long long)
 @ stdcall DefMDIChildProcA(long long long long)
 @ stdcall DefMDIChildProcW(long long long long)
+# @ stub DefRawInputProc
 @ stdcall DefWindowProcA(long long long long)
 @ stdcall DefWindowProcW(long long long long)
 @ stdcall DeferWindowPos(long long long long long long long long)
@@ -145,14 +154,18 @@
 @ stdcall DestroyCursor(long)
 @ stdcall DestroyIcon(long)
 @ stdcall DestroyMenu(long)
+# @ stub DestroyReasons
 @ stdcall DestroyWindow(long)
+# @ stub DeviceEventWorker
 @ stdcall DialogBoxIndirectParamA(long ptr long ptr long)
 @ stdcall DialogBoxIndirectParamAorW(long ptr long ptr long long)
 @ stdcall DialogBoxIndirectParamW(long ptr long ptr long)
 @ stdcall DialogBoxParamA(long str long ptr long)
 @ stdcall DialogBoxParamW(long wstr long ptr long)
+# @ stub DisableProcessWindowsGhosting
 @ stdcall DispatchMessageA(ptr)
 @ stdcall DispatchMessageW(ptr)
+# @ stub DisplayExitWindowsWarnings
 @ stdcall DlgDirListA(long str long long long)
 @ stdcall DlgDirListComboBoxA(long ptr long long long)
 @ stdcall DlgDirListComboBoxW(long ptr long long long)
@@ -191,6 +204,7 @@
 @ stdcall EndMenu()
 @ stdcall EndPaint(long ptr)
 @ stub EndTask
+# @ stub EnterReaderModeHelper
 @ stdcall EnumChildWindows(long ptr long)
 @ stdcall EnumClipboardFormats(long)
 @ stdcall EnumDesktopWindows(long ptr ptr)
@@ -230,6 +244,7 @@
 @ stdcall GetAltTabInfoA(long long ptr ptr long)
 @ stdcall GetAltTabInfoW(long long ptr ptr long)
 @ stdcall GetAncestor(long long)
+# @ stub GetAppCompatFlags2
 @ stdcall GetAppCompatFlags(long)
 @ stdcall GetAsyncKeyState(long)
 @ stdcall GetCapture()
@@ -254,6 +269,7 @@
 @ stdcall GetClipboardViewer()
 @ stdcall GetComboBoxInfo(long ptr)
 @ stdcall GetCursor()
+# @ stub GetCursorFrameInfo
 @ stdcall GetCursorInfo(ptr)
 @ stdcall GetCursorPos(ptr)
 @ stdcall GetDC(long)
@@ -286,6 +302,7 @@
 @ stdcall GetKeyboardType(long)
 @ stdcall GetLastActivePopup(long)
 @ stdcall GetLastInputInfo(ptr)
+# @ stub GetLayeredWindowAttributes
 # @ stub GetListBoxInfo
 @ stdcall GetMenu(long)
 @ stdcall GetMenuBarInfo(long long long ptr)
@@ -309,6 +326,7 @@
 @ stdcall GetMessageW(ptr long long long)
 @ stdcall GetMonitorInfoA(long ptr)
 @ stdcall GetMonitorInfoW(long ptr)
+# @ stub GetMouseMovePointsEx
 @ stdcall GetNextDlgGroupItem(long long long)
 @ stdcall GetNextDlgTabItem(long long long)
 # @ stub GetNextQueueWindow
@@ -321,6 +339,13 @@
 @ stdcall GetPropA(long str)
 @ stdcall GetPropW(long wstr)
 @ stdcall GetQueueStatus(long)
+# @ stub GetRawInputBuffer
+# @ stub GetRawInputData
+# @ stub GetRawInputDeviceInfoA
+# @ stub GetRawInputDeviceInfoW
+# @ stub GetRawInputDeviceList
+# @ stub GetReasonTitleFromReasonCode
+# @ stub GetRegisteredRawInputDevices
 @ stdcall GetScrollBarInfo(long long ptr)
 @ stdcall GetScrollInfo(long long ptr)
 @ stdcall GetScrollPos(long long)
@@ -342,17 +367,20 @@
 @ stdcall GetUserObjectInformationA (long long ptr long ptr)
 @ stdcall GetUserObjectInformationW (long long ptr long ptr)
 @ stdcall GetUserObjectSecurity (long ptr ptr long ptr)
+# @ stub GetWinStationInfo
 @ stdcall GetWindow(long long)
 @ stdcall GetWindowContextHelpId(long)
 @ stdcall GetWindowDC(long)
 @ stdcall GetWindowInfo(long ptr)
 @ stdcall GetWindowLongA(long long)
 @ stdcall GetWindowLongW(long long)
+# @ stub GetWindowModuleFileName
 @ stdcall GetWindowModuleFileNameA(long ptr long)
 @ stdcall GetWindowModuleFileNameW(long ptr long)
 @ stdcall GetWindowPlacement(long ptr)
 @ stdcall GetWindowRect(long ptr)
 @ stdcall GetWindowRgn(long long)
+# @ stub GetWindowRgnBox
 @ stdcall GetWindowTextA(long ptr long)
 @ stdcall GetWindowTextLengthA(long)
 @ stdcall GetWindowTextLengthW(long)
@@ -376,6 +404,8 @@
 @ stdcall InflateRect(ptr long long)
 # @ stub InitSharedTable
 # @ stub InitTask
+# @ stub InitializeLpkHooks
+# @ stub InitializeWin32EntryTable
 @ stdcall InsertMenuA(long long long long ptr)
 @ stdcall InsertMenuItemA(long long long ptr)
 @ stdcall InsertMenuItemW(long long long ptr)
@@ -399,14 +429,17 @@
 @ stdcall IsDialogMessageA(long ptr)
 @ stdcall IsDialogMessageW(long ptr)
 @ stdcall IsDlgButtonChecked(long long)
-# @ stub IsHungThread
+# @ stub IsGUIThread
 @ stdcall IsHungAppWindow(long)
+# @ stub IsHungThread
 @ stdcall IsIconic(long)
 @ stdcall IsMenu(long)
 @ stdcall IsRectEmpty(ptr)
+# @ stub IsServerSideWindow
 @ stdcall IsWinEventHookInstalled(long)
 @ stdcall IsWindow(long)
 @ stdcall IsWindowEnabled(long)
+# @ stub IsWindowInDestroy
 @ stdcall IsWindowUnicode(long)
 @ stdcall IsWindowVisible(long)
 @ stdcall IsZoomed(long)
@@ -425,6 +458,7 @@
 @ stdcall LoadImageA(long str long long long long)
 @ stdcall LoadImageW(long wstr long long long long)
 @ stdcall LoadKeyboardLayoutA(str long)
+# @ stub LoadKeyboardLayoutEx
 @ stdcall LoadKeyboardLayoutW(wstr long)
 @ stdcall LoadLocalFonts()
 @ stdcall LoadMenuA(long str)
@@ -441,6 +475,7 @@
 @ stdcall LookupIconIdFromDirectory(ptr long)
 @ stdcall LookupIconIdFromDirectoryEx(ptr long long long long)
 @ stub MBToWCSEx
+# @ stub MB_GetString
 @ stdcall MapDialogRect(long ptr)
 @ stdcall MapVirtualKeyA(long long)
 @ stdcall MapVirtualKeyExA(long long long)
@@ -456,6 +491,8 @@
 @ stdcall MessageBoxExW(long wstr wstr long long)
 @ stdcall MessageBoxIndirectA(ptr)
 @ stdcall MessageBoxIndirectW(ptr)
+# @ stub MessageBoxTimeoutA
+# @ stub MessageBoxTimeoutW
 @ stdcall MessageBoxW(long wstr wstr long)
 # @ stub ModifyAccess
 @ stdcall ModifyMenuA(long long long long ptr)
@@ -482,6 +519,7 @@
 @ stdcall OpenWindowStationW(wstr long long)
 @ stdcall PackDDElParam(long long long)
 @ stdcall PaintDesktop(long)
+# @ stub PaintMenuBar
 @ stdcall PeekMessageA(ptr long long long long)
 @ stdcall PeekMessageW(ptr long long long long)
 @ stub PlaySoundEvent
@@ -490,16 +528,23 @@
 @ stdcall PostQuitMessage(long)
 @ stdcall PostThreadMessageA(long long long long)
 @ stdcall PostThreadMessageW(long long long long)
+# @ stub PrintWindow
 @ stdcall PrivateExtractIconExA(str long ptr ptr long)
 @ stdcall PrivateExtractIconExW(wstr long ptr ptr long)
 @ stdcall PrivateExtractIconsA (str long long long ptr ptr long long)
 @ stdcall PrivateExtractIconsW (wstr long long long ptr ptr long long)
+# @ stub PrivateSetDbgTag
+# @ stub PrivateSetRipFlags
 @ stdcall PtInRect(ptr long long)
 @ stub QuerySendMessage
+# @ stub QueryUserCounters
 # @ stub RealChildWindowFromPoint
 @ stdcall RealGetWindowClass(long ptr long) RealGetWindowClassA
 @ stdcall RealGetWindowClassA(long ptr long)
 @ stdcall RealGetWindowClassW(long ptr long)
+# @ stub ReasonCodeNeedsBugID
+# @ stub ReasonCodeNeedsComment
+# @ stub RecordShutdownReason
 @ stdcall RedrawWindow(long ptr long long)
 @ stdcall RegisterClassA(ptr)
 @ stdcall RegisterClassExA(ptr)
@@ -511,11 +556,14 @@
 @ stdcall RegisterDeviceNotificationW(long ptr long)
 @ stdcall RegisterHotKey(long long long long)
 @ stdcall RegisterLogonProcess(long long)
+# @ stub RegisterMessagePumpHook
 @ stub RegisterNetworkCapabilities
+# @ stub RegisterRawInputDevices
 @ stub RegisterServicesProcess
 @ stdcall RegisterShellHookWindow (long)
 @ stdcall RegisterSystemThread(long long)
 @ stdcall RegisterTasklist (long)
+# @ stub RegisterUserApiHook
 @ stdcall RegisterWindowMessageA(str)
 @ stdcall RegisterWindowMessageW(wstr)
 @ stdcall ReleaseCapture()
@@ -525,6 +573,7 @@
 @ stdcall RemovePropW(long wstr)
 @ stdcall ReplyMessage(long)
 @ stub ResetDisplay
+# @ stub ResolveDesktopForWOW
 @ stdcall ReuseDDElParam(long long long long long)
 @ stdcall ScreenToClient(long ptr)
 @ stdcall ScrollChildren(long long long long)
@@ -554,13 +603,14 @@
 @ stdcall SetClassWord(long long long)
 @ stdcall SetClipboardData(long long)
 @ stdcall SetClipboardViewer(long)
+# @ stub SetConsoleReserveKeys
 @ stdcall SetCursor(long)
 @ stub SetCursorContents
 @ stdcall SetCursorPos(long long)
-# @ stub SetDeskWallpaper
-# @ stub SetDesktopBitmap
 @ stdcall SetDebugErrorLevel(long)
 @ stdcall SetDeskWallPaper(str)
+# @ stub SetDeskWallpaper
+# @ stub SetDesktopBitmap
 @ stdcall SetDlgItemInt(long long long long)
 @ stdcall SetDlgItemTextA(long long str)
 @ stdcall SetDlgItemTextW(long long wstr)
@@ -629,6 +679,7 @@
 @ stub ShowStartGlass
 @ stdcall ShowWindow(long long)
 @ stdcall ShowWindowAsync(long long)
+# @ stub SoftModalMessageBox
 @ stdcall SubtractRect(ptr ptr ptr)
 @ stdcall SwapMouseButton(long)
 @ stdcall SwitchDesktop(long)
@@ -652,6 +703,7 @@
 @ stdcall TranslateAcceleratorW(long long ptr)
 @ stdcall TranslateMDISysAccel(long ptr)
 @ stdcall TranslateMessage(ptr)
+# @ stub TranslateMessageEx
 @ stdcall UnhookWinEvent(long)
 @ stdcall UnhookWindowsHook(long ptr)
 @ stdcall UnhookWindowsHookEx(long)
@@ -663,16 +715,23 @@
 @ stdcall UnregisterClassW(wstr long)
 @ stub    UnregisterDeviceNotification
 @ stdcall UnregisterHotKey(long long)
+# @ stub UnregisterMessagePumpHook
+# @ stub UnregisterUserApiHook
+# @ stub UpdateLayeredWindow
 @ stub UpdatePerUserSystemParameters
 @ stdcall UpdateWindow(long)
 @ stdcall User32InitializeImmEntryTable(ptr)
 @ stdcall UserClientDllInitialize(long long ptr) DllMain
-# @ stub UserIsSystemResumeAutomatic
-# @ stub UserSetDeviceHoldState
 @ stub UserHandleGrantAccess
+# @ stub UserIsSystemResumeAutomatic
+# @ stub UserLpkPSMTextOut
+# @ stub UserLpkTabbedTextOut
 @ stdcall UserRealizePalette(long)
 @ stub UserRegisterWowHandlers
+# @ stub UserSetDeviceHoldState
 @ stdcall UserSignalProc(long long long long)
+# @ stub VRipOutput
+# @ stub VTagOutput
 @ stdcall ValidateRect(long ptr)
 @ stdcall ValidateRgn(long long)
 @ stdcall VkKeyScanA(long)
@@ -686,6 +745,7 @@
 @ stub WNDPROC_CALLBACK
 @ stdcall WaitForInputIdle(long long)
 @ stdcall WaitMessage()
+# @ stub Win32PoolAllocationStats
 @ stdcall WinHelpA(long str long long)
 @ stdcall WinHelpW(long wstr long long)
 # @ stub WinOldAppHackoMatic
