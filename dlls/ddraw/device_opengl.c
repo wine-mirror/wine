@@ -377,7 +377,7 @@ HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context)
     return cb(interface_name, device_name, &ddesc, context);
 }
 
-ULONG WINAPI
+static ULONG WINAPI
 GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
@@ -692,7 +692,7 @@ GL_IDirect3DDeviceImpl_2_1T_EnumTextureFormats(LPDIRECT3DDEVICE2 iface,
     return enum_texture_format_OpenGL(lpD3DEnumTextureProc, NULL, lpArg, This->version);
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 GL_IDirect3DDeviceImpl_7_3T_EnumTextureFormats(LPDIRECT3DDEVICE7 iface,
 					       LPD3DENUMPIXELFORMATSCALLBACK lpD3DEnumPixelProc,
 					       LPVOID lpArg)
@@ -702,7 +702,7 @@ GL_IDirect3DDeviceImpl_7_3T_EnumTextureFormats(LPDIRECT3DDEVICE7 iface,
     return enum_texture_format_OpenGL(NULL, lpD3DEnumPixelProc, lpArg, This->version);
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 GL_IDirect3DDeviceImpl_7_3T_2T_SetRenderState(LPDIRECT3DDEVICE7 iface,
 					      D3DRENDERSTATETYPE dwRenderStateType,
 					      DWORD dwRenderState)
@@ -717,7 +717,7 @@ GL_IDirect3DDeviceImpl_7_3T_2T_SetRenderState(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 GL_IDirect3DDeviceImpl_7_3T_2T_GetRenderState(LPDIRECT3DDEVICE7 iface,
 					      D3DRENDERSTATETYPE dwRenderStateType,
 					      LPDWORD lpdwRenderState)
@@ -733,7 +733,7 @@ GL_IDirect3DDeviceImpl_7_3T_2T_GetRenderState(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 GL_IDirect3DDeviceImpl_3_2T_GetLightState(LPDIRECT3DDEVICE3 iface,
 					  D3DLIGHTSTATETYPE dwLightStateType,
 					  LPDWORD lpdwLightState)
@@ -784,7 +784,7 @@ GL_IDirect3DDeviceImpl_3_2T_GetLightState(LPDIRECT3DDEVICE3 iface,
     return DD_OK;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 					  D3DLIGHTSTATETYPE dwLightStateType,
 					  DWORD dwLightState)
@@ -2401,7 +2401,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 GL_IDirect3DDeviceImpl_7_GetCaps(LPDIRECT3DDEVICE7 iface,
 				 LPD3DDEVICEDESC7 lpD3DHELDevDesc)
 {
@@ -2630,7 +2630,7 @@ GL_IDirect3DDeviceImpl_7_SetClipPlane(LPDIRECT3DDEVICE7 iface, DWORD dwIndex, CO
     return D3D_OK;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 GL_IDirect3DDeviceImpl_7_SetViewport(LPDIRECT3DDEVICE7 iface,
 				     LPD3DVIEWPORT7 lpData)
 {
@@ -3035,7 +3035,7 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
     if (dwFlags & DDBLT_COLORFILL) {
         /* This is easy to handle for the D3D Device... */
         DWORD color;
-        GLenum prev_draw;
+        GLint prev_draw;
         
         /* The color as given in the Blt function is in the format of the frame-buffer...
          * 'clear' expect it in ARGB format => we need to do some conversion :-)
@@ -3110,7 +3110,7 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		/* Both are 3D devices and using the same GL device and the Blt is without color-keying */
 		D3DRECT src_rect;
 		int width, height;
-		GLenum prev_draw;
+		GLint prev_draw;
 		WINE_GL_BUFFER_TYPE src_buffer_type;
 		IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) This->d3ddevice;
 		BOOLEAN initial;
@@ -3231,7 +3231,7 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		   (this prevents calling glReadPixels) */
 		D3DRECT src_rect;
 		int width, height;
-		GLenum prev_draw;
+		GLint prev_draw;
 		IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) This->d3ddevice;
 		BOOLEAN initial;
 		DWORD opt_bitmap;
@@ -3340,7 +3340,7 @@ d3ddevice_bltfast(IDirectDrawSurfaceImpl *This, DWORD dstx,
     IDirectDrawSurfaceImpl *src_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, src);
     IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) This->d3ddevice;
     WINE_GL_BUFFER_TYPE buffer_type;
-    GLenum prev_draw;
+    GLint prev_draw;
     DWORD opt_bitmap;
     BOOLEAN initial;
     int width, height, x, y;
@@ -3944,7 +3944,7 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
     /* First, check if we need to do anything. For the backbuffer, flushing is done at the next 3D activity. */
     if ((This->lastlocktype & DDLOCK_READONLY) == 0) {
         if (buffer_type == WINE_GL_BUFFER_FRONT) {
-	    GLenum prev_draw;
+	    GLint prev_draw;
 
 	    TRACE(" flushing front buffer immediately on screen.\n");
 	    

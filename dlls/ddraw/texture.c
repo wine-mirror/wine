@@ -340,7 +340,7 @@ gltex_setcolorkey_cb(IDirectDrawSurfaceImpl *This, DWORD dwFlags, LPDDCOLORKEY c
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
 
     if (glThis->dirty_flag == SURFACE_GL) {
-	GLuint cur_tex;
+	GLint cur_tex;
 
 	TRACE(" flushing GL texture back to memory.\n");
 	
@@ -386,7 +386,7 @@ gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
 	    /* This is a blt without color keying... We can use the direct copy. */
 	    RECT rsrc2;
 	    DWORD width, height;
-	    GLuint cur_tex;
+	    GLint cur_tex;
 	    IDirect3DTextureGLImpl *gl_surf_ptr = surf_ptr->tex_private;
 	    int y;
 	    
@@ -542,7 +542,7 @@ static void gltex_set_palette(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteIm
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
 
     if (glThis->dirty_flag == SURFACE_GL) {
-	GLuint cur_tex;
+	GLint cur_tex;
 	
 	TRACE(" flushing GL texture back to memory.\n");
 	

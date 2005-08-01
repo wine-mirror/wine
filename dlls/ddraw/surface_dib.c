@@ -410,8 +410,8 @@ static void DoDXTCDecompression(const DDSURFACEDESC2 *sdesc, const DDSURFACEDESC
 	int width = ddesc->dwWidth;
 	int height = ddesc->dwHeight;
 	int x,y;
-	char* dst = (char*) ddesc->lpSurface;
-	char* src = (char*) sdesc->lpSurface;
+	unsigned char* dst = (unsigned char*) ddesc->lpSurface;
+	unsigned char* src = (unsigned char*) sdesc->lpSurface;
 	for (x = 0; x < width; x++)
 	    for (y =0; y < height; y++) {
 		DWORD pixel = 0;
@@ -433,8 +433,8 @@ static void DoDXTCDecompression(const DDSURFACEDESC2 *sdesc, const DDSURFACEDESC
 	int width = ddesc->dwWidth;
 	int height = ddesc->dwHeight;
 	int x,y;
-	char* dst = (char*) ddesc->lpSurface;
-	char* src = (char*) sdesc->lpSurface;
+	unsigned char* dst = (unsigned char*) ddesc->lpSurface;
+	unsigned char* src = (unsigned char*) sdesc->lpSurface;
 	for (x = 0; x < width; x++)
 	    for (y =0; y < height; y++) {
 		DWORD pixel = 0;
@@ -456,8 +456,8 @@ static void DoDXTCDecompression(const DDSURFACEDESC2 *sdesc, const DDSURFACEDESC
 	int width = ddesc->dwWidth;
 	int height = ddesc->dwHeight;
 	int x,y;
-	char* dst = (char*) ddesc->lpSurface;
-	char* src = (char*) sdesc->lpSurface;
+	unsigned char* dst = (unsigned char*) ddesc->lpSurface;
+	unsigned char* src = (unsigned char*) sdesc->lpSurface;
 	for (x = 0; x < width; x++)
 	    for (y =0; y < height; y++) {
 		DWORD pixel = 0;
