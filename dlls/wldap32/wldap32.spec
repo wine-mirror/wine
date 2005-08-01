@@ -19,6 +19,18 @@
 @ cdecl ldap_bind_s(ptr str str long) ldap_bind_sA
 @ cdecl ldap_bind_sA(ptr str str long)
 @ cdecl ldap_bind_sW(ptr wstr wstr long)
+@ cdecl ldap_compare(ptr str str str) ldap_compareA
+@ cdecl ldap_compareA(ptr str str str)
+@ cdecl ldap_compareW(ptr wstr wstr wstr)
+@ cdecl ldap_compare_ext(ptr str str str ptr ptr ptr ptr) ldap_compare_extA
+@ cdecl ldap_compare_extA(ptr str str str ptr ptr ptr ptr)
+@ cdecl ldap_compare_extW(ptr wstr wstr wstr ptr ptr ptr ptr)
+@ cdecl ldap_compare_ext_s(ptr str str str ptr ptr ptr) ldap_compare_ext_sA
+@ cdecl ldap_compare_ext_sA(ptr str str str ptr ptr ptr)
+@ cdecl ldap_compare_ext_sW(ptr wstr wstr wstr ptr ptr ptr)
+@ cdecl ldap_compare_s(ptr str str str) ldap_compare_sA
+@ cdecl ldap_compare_sA(ptr str str str)
+@ cdecl ldap_compare_sW(ptr wstr wstr wstr)
 @ cdecl ldap_err2string(long) ldap_err2stringA
 @ cdecl ldap_err2stringA(long)
 @ cdecl ldap_err2stringW(long)
