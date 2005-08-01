@@ -76,7 +76,9 @@ static void testGetModuleFileName(const char* name)
         ok(len1W / 2 == len2W, "Correct length in GetModuleFilenameW with buffer too small (%ld/%ld)\n", len1W / 2, len2W);
     }
 
-    ok(len1A / 2 == len2A, "Correct length in GetModuleFilenameA with buffer too small (%ld/%ld)\n", len1A / 2, len2A);
+    ok(len1A / 2 == len2A || 
+       len1A / 2 == len2A + 1, /* Win9x */
+       "Correct length in GetModuleFilenameA with buffer too small (%ld/%ld)\n", len1A / 2, len2A);
 }
 
 static void testGetModuleFileName_Wrong(void)
@@ -94,7 +96,9 @@ static void testGetModuleFileName_Wrong(void)
 
     bufA[0] = '*';
     ok(GetModuleFileNameA((void*)0xffffffff, bufA, sizeof(bufA)) == 0, "Unexpected success in module handle\n");
-    ok(bufA[0] == '*', "When failing, buffer shouldn't be written to\n");
+    ok(bufA[0] == '*' ||
+       bufA[0] == 0 /* Win9x */,
+       "When failing, buffer shouldn't be written to\n");
 }
 
 static void testLoadLibraryA(void)
