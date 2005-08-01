@@ -1578,29 +1578,104 @@ void inline drawPrimitiveTraceDataLocations(Direct3DVertexStridedData *dataLocat
 
 }
 
-/* loads any dirty textures and returns true if any of the textures are nonpower2 */
+/**
+* OK, here we clear down any old junk iect in the context
+* enable the new texture and apply any state changes:
+*
+* Loop through all textures
+* select texture unit
+* if there is a texture bound to that unit then..
+* disable all textures types on that unit
+* enable and bind the texture that is bound to that unit.
+* otherwise dissable all texture types on that unit.
+**/
 BOOL inline drawPrimitiveUploadDirtyTextures(IWineD3DDeviceImpl* This) {
     BOOL nonPower2 = FALSE;
     unsigned int i;
-    register IWineD3DBaseTexture *texture;
-    /* And re-upload any dirty textures */
-    for (i = 0; i < GL_LIMITS(textures); ++i) {
-        texture = This->stateBlock->textures[i];
-        if (texture != NULL) {
-            if(IWineD3DBaseTexture_GetDirty(texture)) {
-                /* Load up the texture now */
-                IWineD3DTexture_PreLoad((IWineD3DTexture *)texture);
-            }
-            if (IWineD3DResourceImpl_GetType((IWineD3DResource *)texture) == D3DRTYPE_TEXTURE) {
-                /* TODO: Is this right, as its cast all texture types to texture8... checkme */
-                IWineD3DSurface *surface;
-                IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)texture, 0, &surface);
-                if (((IWineD3DSurfaceImpl *)surface)->nonpow2) {
-                    nonPower2 = TRUE;
-                }
-            }
+    /* upload the textures */
+    for (i = 0; i< GL_LIMITS(textures); ++i) {
+        /* Bind the texture to the stage here */
+        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+            GLACTIVETEXTURE(i);
+        } else if (0 < i) {
+            /* This isn't so much a warn as a message to the user about lack of hardware support */
+            WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
         }
-    }
+
+        /* don't bother with textures that have a colorop of disable */
+        if (This->stateBlock->textureState[i][WINED3DTSS_COLOROP] != D3DTOP_DISABLE) {
+            if (This->stateBlock->textures[i] != NULL) {
+                /* check to see if any of the texturs are non-power2 */
+                if (IWineD3DResourceImpl_GetType((IWineD3DResource *)This->stateBlock->textures[i]) == D3DRTYPE_TEXTURE) {
+                    IWineD3DSurface *surface;
+                    IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)This->stateBlock->textures[i], 0, &surface);
+                    if (((IWineD3DSurfaceImpl *)surface)->nonpow2) {
+                        nonPower2 = TRUE;
+                    }
+                }
+
+                glDisable(GL_TEXTURE_1D);
+                This->stateBlock->textureDimensions[i] = IWineD3DBaseTexture_GetTextureDimensions(This->stateBlock->textures[i]);
+                /* disable all texture states that aren't the selected textures' dimension */
+                switch(This->stateBlock->textureDimensions[i]) {
+                case GL_TEXTURE_2D:
+                    glDisable(GL_TEXTURE_3D);
+                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                break;
+                case GL_TEXTURE_3D:
+                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    glDisable(GL_TEXTURE_2D);
+                break;
+                case GLTEXTURECUBEMAP:
+                    glDisable(GL_TEXTURE_2D);
+                    glDisable(GL_TEXTURE_3D);
+                break;
+                }
+                /* imply GL_SUPPORT(NV_TEXTURE_SHADER) when setting texture_shader_active */
+                if (This->texture_shader_active && This->stateBlock->textureDimensions[i] == GL_TEXTURE_2D) {
+                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_2D);
+                } else {
+                    glEnable(This->stateBlock->textureDimensions[i]);
+                }
+                  /* Load up the texture now */
+                IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
+                IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)This, i, REAPPLY_ALPHAOP);
+                /* this is a stub function representing the state blocks being seperated here we are only updating the texture state changes, other objects and units get updated when they change (or need to be updated), e.g. states that relate to a context member line the texture unit are only updated when the context needs updating */
+#if 0 /* TODO: move the setting of states over to base texture */
+                IWineD3DBaseTexture_ApplyStateChanges(This->stateBlock->textures[i], This->stateBlock->textureState[i], This->stateBlock->samplerState[i]);
+#endif
+              }
+            /* Bind a default texture if no texture has been set, but colour-op is enabled */
+            else {
+                glDisable(GL_TEXTURE_2D);
+                glDisable(GL_TEXTURE_3D);
+                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                glEnable(GL_TEXTURE_1D);
+                This->stateBlock->textureDimensions[i] = GL_TEXTURE_1D;
+                glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[i]);
+              }
+/** these ops apply to the texture unit, so they are preseved between texture changes, but for now brute force and reapply all
+        dx9_1pass_emboss_bump_mapping and dx9_2pass_emboss_bump_mapping are good texts to make sure the states are being applied when needed **/
+            set_tex_op((IWineD3DDevice *)This, FALSE, i, This->stateBlock->textureState[i][WINED3DTSS_COLOROP],
+                        This->stateBlock->textureState[i][WINED3DTSS_COLORARG1],
+                        This->stateBlock->textureState[i][WINED3DTSS_COLORARG2],
+                        This->stateBlock->textureState[i][WINED3DTSS_COLORARG0]);
+            /* alphaop */
+            set_tex_op((IWineD3DDevice *)This, TRUE, i, This->stateBlock->textureState[i][WINED3DTSS_ALPHAOP],
+                        This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG1],
+                        This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG2],
+                        This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG0]);
+        } else {
+
+            /* no colorop so disable all the texture states */
+            glDisable(GL_TEXTURE_1D);
+            glDisable(GL_TEXTURE_2D);
+            glDisable(GL_TEXTURE_3D);
+            glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+          }
+
+      }
+
     return nonPower2;
 }
 

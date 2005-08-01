@@ -233,7 +233,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
         /* Always need to reset the number of mipmap levels when rebinding as it is
         a property of the active texture unit, and another texture may have set it
         to a different value                                                       */
-        if (This->baseTexture.levels > 0) {
+        if (This->baseTexture.levels > 1) {
             TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
             glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
             checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");

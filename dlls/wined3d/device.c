@@ -254,11 +254,11 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
              of these, which is what the Flags allows                                     */
         case WINED3DTSS_COLOROP:
         case WINED3DTSS_TEXCOORDINDEX:
-            if (!(Flags == REAPPLY_ALL)) skip=TRUE;
+            if (!(Flags == REAPPLY_ALL)) skip = TRUE;
             break;
 
         case WINED3DTSS_ALPHAOP:
-            if (!(Flags & REAPPLY_ALPHAOP)) skip=TRUE;
+            if (!(Flags & REAPPLY_ALPHAOP)) skip = TRUE;
             break;
 
         default:
@@ -266,25 +266,14 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
         }
 
         if (skip == FALSE) {
-           /* Performance: Only change to this texture if we have to */
-           if (changeTexture) {
-               /* Make appropriate texture active */
-               if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                   GLACTIVETEXTURE(Stage);
-                } else if (Stage > 0) {
-                    FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-                }
-                changeTexture = FALSE;
-           }
-
            /* Now apply the change */
            IWineD3DDevice_SetTextureStageState(iface, Stage, i, This->stateBlock->textureState[Stage][i]);
         }
     }
 
     /* apply the sampler states to the texture */
-    for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE;i++) {
-      IWineD3DDevice_SetSamplerState(iface, Stage, i, This->stateBlock->samplerState[Stage][i]);
+    for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE; i++) {
+        IWineD3DDevice_SetSamplerState(iface, Stage, i, This->stateBlock->samplerState[Stage][i]);
     }
 
     /* Note the D3DRS value applies to all textures, but GL has one
@@ -1652,13 +1641,14 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANS
     ENTER_GL();
 
     if (d3dts >= D3DTS_TEXTURE0 && d3dts <= D3DTS_TEXTURE7) { /* handle texture matrices */
+#if 0 /* This is now set with the texture unit states, it may be a good idea to flag the change though! */
         if (d3dts < GL_LIMITS(textures)) {
             int tex = d3dts - D3DTS_TEXTURE0;
             GLACTIVETEXTURE(tex);
             set_texture_matrix((float *)lpmatrix,
                                This->updateStateBlock->textureState[tex][WINED3DTSS_TEXTURETRANSFORMFLAGS], (This->stateBlock->textureState[tex][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != D3DTSS_TCI_PASSTHRU);
         }
-
+#endif
     } else if (d3dts == D3DTS_VIEW) { /* handle the VIEW matrice */
         unsigned int k;
 
@@ -4169,40 +4159,35 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DBaseTexture   *oldTexture;
-    BOOL                   reapplyStates = TRUE;
-    DWORD                  reapplyFlags = 0;
-    INT                    oldTextureDimensions = -1;
-    D3DRESOURCETYPE        textureType;
 
     oldTexture = This->updateStateBlock->textures[Stage];
     TRACE("(%p) : Stage(%ld), Texture (%p)\n", This, Stage, pTexture);
 
-    /* Reject invalid texture units */
-    if (Stage >= GL_LIMITS(textures)) {
-        TRACE("Attempt to access invalid texture rejected\n");
+#if 0 /* TODO: check so vertex textures */
+    if (Stage >= D3DVERTEXTEXTURESAMPLER && Stage <= D3DVERTEXTEXTURESAMPLER3){
+        This->updateStateBlock->vertexTextures[Stage - D3DVERTEXTEXTURESAMPLER] = pTexture;
+        return D3D_OK;
+    }
+#endif
+
+    if (Stage >= GL_LIMITS(textures) || Stage < 0) {
+        WARN("Attempt to access invalid texture rejected\n");
         return D3DERR_INVALIDCALL;
     }
 
-    This->updateStateBlock->set.textures[Stage] = TRUE;
+    oldTexture = This->updateStateBlock->textures[Stage];
+    TRACE("GL_LIMITS %d\n",GL_LIMITS(textures));
+    TRACE("(%p) : oldtexture(%p)\n", This,oldTexture);
+
+    This->updateStateBlock->set.textures[Stage]     = TRUE;
     This->updateStateBlock->changed.textures[Stage] = TRUE;
-    This->updateStateBlock->textures[Stage] = pTexture;
+    TRACE("(%p) : setting new texture to %p\n", This, pTexture);
+    This->updateStateBlock->textures[Stage]         = pTexture;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
         return D3D_OK;
-    }
-
-    oldTextureDimensions = This->updateStateBlock->textureDimensions[Stage];
-
-    ENTER_GL();
-
-    /* Make appropriate texture active */
-    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        GLACTIVETEXTURE(Stage);
-
-    } else if (Stage>0) {
-        FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
     }
 
     /** NOTE: MSDN says that setTexture increases the reference count,
@@ -4212,7 +4197,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
     if (NULL != This->updateStateBlock->textures[Stage]) {
         IUnknown *textureParent;
         IWineD3DBaseTexture_GetParent(This->updateStateBlock->textures[Stage], (IUnknown **)&textureParent);
-        /** NOTE: GetParent will increase the ref count for me, I won't clean up untill the texture is set to NULL **/
+        /** NOTE: GetParent will increase the ref count for me, I won't clean up until the texture is set to NULL **/
     }
 
     if (NULL != oldTexture) {
@@ -4222,102 +4207,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
         IUnknown_Release(textureParent); /** NOTE: Twice because GetParent adds a ref **/
         oldTexture = NULL;
     }
-
-
-    if (NULL != pTexture) {
-        /* Now setup the texture appropraitly */
-        textureType = IWineD3DBaseTexture_GetType(pTexture);
-
-        if (textureType == D3DRTYPE_TEXTURE) {
-
-          if (oldTexture == pTexture && !IWineD3DBaseTexture_GetDirty(pTexture)) {
-            TRACE("Skipping setting texture as old == new\n");
-            reapplyStates = FALSE;
-
-          } else {
-
-            /* Standard 2D texture */
-            TRACE("Standard 2d texture\n");
-            This->updateStateBlock->textureDimensions[Stage] = GL_TEXTURE_2D;
-
-            /* Load up the texture now */
-            IWineD3DTexture_PreLoad((IWineD3DTexture *) pTexture);
-          }
-
-        } else if (textureType == D3DRTYPE_VOLUMETEXTURE) {
-
-          if (oldTexture == pTexture && !IWineD3DBaseTexture_GetDirty(pTexture)) {
-              TRACE("Skipping setting texture as old == new\n");
-              reapplyStates = FALSE;
-
-          } else {
-
-              /* Standard 3D (volume) texture */
-              TRACE("Standard 3d texture\n");
-              This->updateStateBlock->textureDimensions[Stage] = GL_TEXTURE_3D;
-
-              /* Load up the texture now */
-              IWineD3DVolumeTexture_PreLoad((IWineD3DVolumeTexture *) pTexture);
-          }
-
-        } else if (textureType == D3DRTYPE_CUBETEXTURE) {
-
-            if (oldTexture == pTexture && !IWineD3DBaseTexture_GetDirty(pTexture)) {
-                TRACE("Skipping setting texture as old == new\n");
-                reapplyStates = FALSE;
-
-            } else {
-
-                /* Standard Cube texture */
-                TRACE("Standard Cube texture\n");
-                This->updateStateBlock->textureDimensions[Stage] = GL_TEXTURE_CUBE_MAP_ARB;
-
-                /* Load up the texture now */
-                IWineD3DCubeTexture_PreLoad((IWineD3DCubeTexture *) pTexture);
-            }
-
-        } else {
-            FIXME("(%p) : Incorrect type for a texture : (%d,%s)\n", This, textureType, debug_d3dresourcetype(textureType));
-        }
-
-    } else {
-
-        TRACE("Setting to no texture (ie default texture)\n");
-        This->updateStateBlock->textureDimensions[Stage] = GL_TEXTURE_1D;
-        glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[Stage]);
-        checkGLcall("glBindTexture");
-        TRACE("Bound dummy Texture to stage %ld (gl name %d)\n", Stage, This->dummyTextureName[Stage]);
-    }
-
-    /* Disable the old texture binding and enable the new one (unless operations are disabled) */
-    if (oldTextureDimensions != This->updateStateBlock->textureDimensions[Stage]) {
-
-       glDisable(oldTextureDimensions);
-       checkGLcall("Disable oldTextureDimensions");
-
-       if (This->stateBlock->textureState[Stage][WINED3DTSS_COLOROP] != D3DTOP_DISABLE) {
-          glEnable(This->updateStateBlock->textureDimensions[Stage]);
-          checkGLcall("glEnable new texture dimensions");
-       }
-
-       /* If Alpha arg1 is texture then handle the special case when there changes between a
-          texture and no texture - See comments in set_tex_op                                  */
-       if ((This->stateBlock->textureState[Stage][WINED3DTSS_ALPHAARG1] == D3DTA_TEXTURE) &&
-           (((oldTexture == NULL) && (pTexture != NULL)) || ((pTexture == NULL) && (oldTexture != NULL))))
-       {
-           reapplyFlags |= REAPPLY_ALPHAOP;
-       }
-    }
-
-
-    /* Even if the texture has been set to null, reapply the stages as a null texture to directx requires
-       a dummy texture in opengl, and we always need to ensure the current view of the TextureStates apply */
-    if (reapplyStates) {
-       IWineD3DDeviceImpl_SetupTextureStates(iface, Stage, reapplyFlags);
-    }
-
-    LEAVE_GL();
-    TRACE("Texture now fully setup\n");
 
     return D3D_OK;
 }
@@ -5584,7 +5473,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
             newContext->drawable  = glXCreatePbuffer(impSwapChain->display, cfgs[0], attribs);
 
             /** ****************************************
-            *GLX1.3 isn't supported by XFree 'yet' untill that point ATI emulates pBuffers
+            *GLX1.3 isn't supported by XFree 'yet' until that point ATI emulates pBuffers
             *they note:
             *   In future releases, we may provide the calls glXCreateNewContext,
             *   glXQueryDrawable and glXMakeContextCurrent.
