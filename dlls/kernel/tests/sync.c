@@ -39,15 +39,19 @@ static void test_signalandwait(void)
     if (!pSignalObjectAndWait)
         return;
 
-    /* events */
+    /* invalid parameters */
+    r = pSignalObjectAndWait(NULL, NULL, 0, 0);
+    if (r == ERROR_INVALID_FUNCTION)
+    {
+        trace("SignalObjectAndWait not implemented, skipping tests\n");
+        return; /* Win98/ME */
+    }
+    ok( r == WAIT_FAILED, "should fail\n");
+
     event[0] = CreateEvent(NULL, 0, 0, NULL);
     event[1] = CreateEvent(NULL, 1, 1, NULL);
 
     ok( event[0] && event[1], "failed to create event flags\n");
-
-    /* invalid parameters */
-    r = pSignalObjectAndWait(NULL, NULL, 0, 0);
-    ok( r == WAIT_FAILED, "should fail\n");
 
     r = pSignalObjectAndWait(event[0], NULL, 0, FALSE);
     ok( r == WAIT_FAILED, "should fail\n");
