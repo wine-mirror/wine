@@ -2,8 +2,8 @@
 @ stdcall ScriptApplyDigitSubstitution(ptr ptr ptr)
 @ stub ScriptApplyLogicalWidth
 @ stub ScriptBreak
-@ stub ScriptCacheGetHeight
 @ stub ScriptCPtoX
+@ stub ScriptCacheGetHeight
 @ stub ScriptFreeCache
 @ stub ScriptGetCMap
 @ stdcall ScriptGetFontProperties(long ptr ptr)
@@ -17,9 +17,6 @@
 @ stub ScriptPlace
 @ stdcall ScriptRecordDigitSubstitution(ptr ptr)
 @ stub ScriptShape
-@ stub ScriptString_pcOutChars
-@ stub ScriptString_pLogAttr
-@ stub ScriptString_pSize
 @ stub ScriptStringAnalyse
 @ stub ScriptStringCPtoX
 @ stub ScriptStringFree
@@ -28,6 +25,9 @@
 @ stub ScriptStringOut
 @ stub ScriptStringValidate
 @ stub ScriptStringXtoCP
+@ stub ScriptString_pLogAttr
+@ stub ScriptString_pSize
+@ stub ScriptString_pcOutChars
 @ stub ScriptTextOut
 @ stub ScriptXtoCP
 @ stub UspAllocCache
