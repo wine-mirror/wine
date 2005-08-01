@@ -19,6 +19,9 @@
 @ cdecl ldap_bind_s(ptr str str long) ldap_bind_sA
 @ cdecl ldap_bind_sA(ptr str str long)
 @ cdecl ldap_bind_sW(ptr wstr wstr long)
+@ cdecl ldap_err2string(long) ldap_err2stringA
+@ cdecl ldap_err2stringA(long)
+@ cdecl ldap_err2stringW(long)
 @ cdecl ldap_init(str long) ldap_initA
 @ cdecl ldap_initA(str long)
 @ cdecl ldap_initW(wstr long)

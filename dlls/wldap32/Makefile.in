@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wldap32.dll
 IMPORTLIB = libwldap32.$(IMPLIBEXT)
-IMPORTS   = kernel32
+IMPORTS   = user32 kernel32
 EXTRALIBS = @LDAPLIBS@
 
 C_SRCS = \
@@ -14,6 +14,8 @@ C_SRCS = \
 	init.c \
 	main.c \
 	search.c
+
+RC_SRCS = wldap32.rc
 
 @MAKE_DLL_RULES@
 

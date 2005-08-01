@@ -27,6 +27,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "winnls.h"
 
 #ifdef HAVE_LDAP_H
@@ -39,7 +40,37 @@
 #include "winldap_private.h"
 #include "wldap32.h"
 
+extern HINSTANCE hwldap32;
+
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
+
+PCHAR ldap_err2stringA( ULONG err )
+{
+    static char buf[256] = "";
+
+    TRACE( "(0x%08lx)\n", err );
+
+    if (err <= WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED)
+        LoadStringA( hwldap32, err, buf, 256 );
+    else
+        LoadStringA( hwldap32, WLDAP32_LDAP_LOCAL_ERROR, buf, 256 );
+
+    return buf;
+}
+
+PWCHAR ldap_err2stringW( ULONG err )
+{
+    static WCHAR buf[256] = { 0 };
+
+    TRACE( "(0x%08lx)\n", err );
+
+    if (err <= WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED)
+        LoadStringW( hwldap32, err, buf, 256 );
+    else
+        LoadStringW( hwldap32, WLDAP32_LDAP_LOCAL_ERROR, buf, 256 );
+
+    return buf;
+}
 
 /*
  * NOTES: does nothing

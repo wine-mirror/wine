@@ -1,5 +1,5 @@
 /*
- * WLDAP32 - LDAP support for Wine
+ * Top level resource file for WLDAP32
  *
  * Copyright 2005 Hans Leidekker
  *
@@ -18,30 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "config.h"
-
-#include "wine/debug.h"
-#include <stdarg.h>
-
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 
-HINSTANCE hwldap32;
-
-WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
-
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
-{
-    TRACE( "(%p, 0x%08lx, %p)\n", hinst, reason, reserved );
-
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        hwldap32 = hinst;
-        DisableThreadLibraryCalls( hinst );
-        break;
-    case DLL_PROCESS_DETACH:
-        break;
-    }
-    return TRUE;
-}
+#include "wldap32_En.rc"
