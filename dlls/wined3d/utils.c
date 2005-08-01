@@ -1499,8 +1499,6 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords)
     } else if(!calculatedCoords) { /* under directx the R/Z coord can be used for translation, under opengl we use the Q coord instead */
         mat[12] = mat[8];
         mat[13] = mat[9];
-        mat[8] = 0;
-        mat[9] = 0;
     }
 
     glLoadMatrixf(mat);

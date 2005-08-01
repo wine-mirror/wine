@@ -62,6 +62,9 @@ BOOL pbuffer_per_surface = FALSE;
 /* static function declarations */
 static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource);
 
+static void WINAPI IWineD3DDeviceImpl_ApplyTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type);
+
+static void WINAPI IWineD3DDeviceImpl_ApplySamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type);
 
 /* helper macros */
 #define D3DMEMCHECK(object, ppResult) if(NULL == object) { *ppResult = NULL; WARN("Out of memory\n"); return D3DERR_OUTOFVIDEOMEMORY;}
@@ -224,7 +227,6 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     int i = 0;
     float col[4];
-    BOOL changeTexture = TRUE;
 
     TRACE("-----------------------> Updating the texture at stage %ld to have new texture state information\n", Stage);
     for (i = 1; i < WINED3D_HIGHEST_TEXTURE_STATE; i++) {
@@ -267,13 +269,13 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
 
         if (skip == FALSE) {
            /* Now apply the change */
-           IWineD3DDevice_SetTextureStageState(iface, Stage, i, This->stateBlock->textureState[Stage][i]);
+           IWineD3DDeviceImpl_ApplyTextureStageState(iface, Stage, i);
         }
     }
 
     /* apply the sampler states to the texture */
     for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE; i++) {
-        IWineD3DDevice_SetSamplerState(iface, Stage, i, This->stateBlock->samplerState[Stage][i]);
+        IWineD3DDeviceImpl_ApplySamplerState(iface, Stage, i);
     }
 
     /* Note the D3DRS value applies to all textures, but GL has one
@@ -421,7 +423,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, WINED3
 
     IWineD3DDeviceImpl     *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
-    int i,j;
+    int i;
 
     D3DCREATEOBJECTINSTANCE(object, StateBlock)
     object->blockType     = Type;
@@ -461,37 +463,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, WINED3
         for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
             object->changed.renderState[SavedPixelStates_R[i]] = TRUE;
         }
-        for (j = 0; j < GL_LIMITS(textures); i++) {
-            for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
-                object->changed.textureState[j][SavedPixelStates_T[i]] = TRUE;
-            }
-        }
-        /* Setting sampler block changes states */
-        for (j = 0 ; j < GL_LIMITS(samplers); j++) {
-            for (i =0; i < NUM_SAVEDPIXELSTATES_S;i++) {
 
-                object->changed.samplerState[j][SavedPixelStates_S[i]] = TRUE;
-            }
-        }
     } else if (Type == WINED3DSBT_VERTEXSTATE) {
 
         memset(&object->changed, FALSE, sizeof(This->stateBlock->changed));
-
         /* TODO: Vertex Shader Constants */
         object->changed.vertexShader = TRUE;
         for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
             object->changed.renderState[SavedVertexStates_R[i]] = TRUE;
-        }
-        for (j = 0; j < GL_LIMITS(textures); i++) {
-            for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
-                object->changed.textureState[j][SavedVertexStates_T[i]] = TRUE;
-            }
-        }
-        /* Setting sampler block changes states */
-        for (j = 0 ; j < GL_LIMITS(samplers); j++) {
-            for (i =0; i < NUM_SAVEDVERTEXSTATES_S;i++) {
-                object->changed.samplerState[j][SavedVertexStates_S[i]] = TRUE;
-            }
         }
 
     /* Duplicate light chain */
@@ -1641,14 +1620,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANS
     ENTER_GL();
 
     if (d3dts >= D3DTS_TEXTURE0 && d3dts <= D3DTS_TEXTURE7) { /* handle texture matrices */
-#if 0 /* This is now set with the texture unit states, it may be a good idea to flag the change though! */
-        if (d3dts < GL_LIMITS(textures)) {
-            int tex = d3dts - D3DTS_TEXTURE0;
-            GLACTIVETEXTURE(tex);
-            set_texture_matrix((float *)lpmatrix,
-                               This->updateStateBlock->textureState[tex][WINED3DTSS_TEXTURETRANSFORMFLAGS], (This->stateBlock->textureState[tex][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != D3DTSS_TCI_PASSTHRU);
-        }
-#endif
+        /* This is now set with the texture unit states, it may be a good idea to flag the change though! */
     } else if (d3dts == D3DTS_VIEW) { /* handle the VIEW matrice */
         unsigned int k;
 
@@ -3299,8 +3271,15 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, D3DRENDE
     return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD Value) {
+/*****
+ * Apply / Get / Set Sampler States
+ * TODO: Verify against dx9 definitions
+ *****/
+
+/* NOTE: It is expected that this function is called a number of times in a row for the same texture unit, so it is more efficient if the caller sets the active texture unit before calling this function. set the correct Texture unit active before calling ApplySamplerState */
+static void WINAPI IWineD3DDeviceImpl_ApplySamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    DWORD Value = This->stateBlock->samplerState[Sampler][Type];
     /**
     * SetSampler is designed to allow for more than the standard up to 8 textures
     *  and Geforce has stopped supporting more than 6 standard textures in openGL.
@@ -3323,33 +3302,16 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD S
     TRACE("(%p) Sampler(%ld), Type(%d) Value(%ld)\n",This, Sampler ,Type, Value);
 
     if(Sampler >  GL_LIMITS(samplers) || Sampler < 0 || Type > WINED3D_HIGHEST_SAMPLER_STATE || Type < 0) {
-        FIXME("out of range %d %d sampler %ld type %u\n", GL_LIMITS(samplers), WINED3D_HIGHEST_SAMPLER_STATE, Sampler, Type);
-        return D3DERR_INVALIDCALL;
+        return;
     }
 
-    This->updateStateBlock->changed.samplerState[Sampler][Type] = TRUE;
-    This->updateStateBlock->set.samplerState[Sampler][Type]     = TRUE;
     TRACE("Setting sampler %ld %d to %ld \n", Sampler, Type, Value);
-    This->updateStateBlock->samplerState[Sampler][Type]         = Value;
-
-    /* Handle recording of state blocks */
-    if (This->isRecordingState) {
-        TRACE("Recording... not performing anything\n");
-        return D3D_OK;
-    }
 
     /* In addition, IDirect3DDevice9::SetSamplerState will now be used for filtering, tiling,
     clamping, MIPLOD, etc. This will work for up to 16 samplers.
     is this just GL_TEXTURE_2D or is it GL_TEXTURE_1D and GL_TEXTURE_3D as well?
     */
     ENTER_GL();
-    VTRACE(("Activating appropriate texture state %ld\n", Sampler));
-    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        GLACTIVETEXTURE(Sampler);
-    } else if (Sampler > 0) {
-        FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-    }
-
 
     switch (Type) {
 
@@ -3587,6 +3549,40 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD S
         TRACE("invalid sampler setting, Sampler=%ld, Type=%d, Value =%ld\n", Sampler, Type, Value);
     };
     LEAVE_GL();
+    return;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD Value) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    /**
+    * SetSampler is designed to allow for more than the standard up to 8 textures
+    *  and Geforce has stopped supporting more than 6 standard textures in openGL.
+    * So I have to use ARB for Gforce. (maybe if the sampler > 4 then use ARB?)
+    *
+    * http://developer.nvidia.com/object/General_FAQ.html#t6
+    *
+    * There are two new settings for GForce
+    * the sampler one:
+    * GL_MAX_TEXTURE_IMAGE_UNITS_ARB
+    * and the texture one:
+    * GL_MAX_TEXTURE_COORDS_ARB.
+    * Ok GForce say it's ok to use glTexParameter/glGetTexParameter(...).
+     ******************/
+    TRACE("(%p) Sampler(%ld), Type(%d) Value(%ld)\n",This, Sampler ,Type, Value);
+
+    if(Sampler >  GL_LIMITS(samplers) || Sampler < 0 || Type > WINED3D_HIGHEST_SAMPLER_STATE || Type < 0) {
+         FIXME("out of range %d %d sampler %ld type %u\n", GL_LIMITS(samplers), WINED3D_HIGHEST_SAMPLER_STATE, Sampler, Type);
+        return D3DERR_INVALIDCALL;
+    }
+    TRACE("Setting sampler %ld %d to %ld \n", Sampler, Type, Value);
+    This->updateStateBlock->samplerState[Sampler][Type]         = Value;
+
+    /* Handle recording of state blocks */
+    if (This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        return D3D_OK;
+    }
+
     return D3D_OK;
 }
 
@@ -3595,8 +3591,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, DWORD S
     /** TODO: check that sampler is in  range **/
     *Value = This->updateStateBlock->samplerState[Sampler][Type];
     TRACE("(%p) : Sampler %ld Type %u Returning %ld\n", This, Sampler, Type, *Value);
-    return D3D_OK;
 
+    return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, CONST RECT* pRect) {
@@ -3607,6 +3603,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, CONST RE
     TRACE("(%p)Setting new Scissor Rect to %ld:%ld-%ld:%ld\n", This, pRect->left, pRect->top, pRect->right, pRect->bottom);
     glScissor(pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top);
     LEAVE_GL();
+
     return D3D_OK;
 }
 
@@ -3801,41 +3798,25 @@ HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT Sr
 }
 
 /*****
- * Get / Set Texture Stage States
+ * Apply / Get / Set Texture Stage States
  * TODO: Verify against dx9 definitions
  *****/
-HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
+/* NOTE: It's expected that this function is going to be called lots of times with the same stage active, so make it the callers responsibility to GLACTIVETEXTURE(Stage) for better state management. Set the correct Texture unit active before callnig ApplyTextureStageState */
+static void WINAPI IWineD3DDeviceImpl_ApplyTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    DWORD Value = This->updateStateBlock->textureState[Stage][Type];
     /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
 
     TRACE("(%p) : Stage=%ld, Type=%s(%d), Value=%ld\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
 
-    /* Reject invalid texture units */
-    if (Stage >= GL_LIMITS(textures)) {
+    /* Check that the stage is within limits  */
+    if (Stage >= GL_LIMITS(textures) || Stage < 0) {
         TRACE("Attempt to access invalid texture rejected\n");
-        return D3DERR_INVALIDCALL;
-    }
-
-    This->updateStateBlock->changed.textureState[Stage][Type] = TRUE;
-    This->updateStateBlock->set.textureState[Stage][Type] = TRUE;
-    This->updateStateBlock->textureState[Stage][Type] = Value;
-
-    /* Handle recording of state blocks */
-    if (This->isRecordingState) {
-        TRACE("Recording... not performing anything\n");
-        return D3D_OK;
+        return;
     }
 
     ENTER_GL();
-
-    /* Make appropriate texture active */
-    VTRACE(("Activating appropriate texture state %ld\n", Stage));
-    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        GLACTIVETEXTURE(Stage);
-    } else if (Stage > 0) {
-        FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-    }
 
     switch (Type) {
     case WINED3DTSS_ALPHAOP               :
@@ -4141,6 +4122,24 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DW
     }
 
     LEAVE_GL();
+
+    return;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
+
+    TRACE("(%p) : Stage=%ld, Type=%s(%d), Value=%ld\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
+
+    /* Reject invalid texture units */
+    if (Stage >= GL_LIMITS(textures)) {
+        TRACE("Attempt to access invalid texture rejected\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    This->updateStateBlock->textureState[Stage][Type]         = Value;
 
     return D3D_OK;
 }

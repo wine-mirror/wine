@@ -784,9 +784,11 @@ typedef struct SAVEDSTATES {
         BOOL                      transform[HIGHEST_TRANSFORMSTATE + 1];
         BOOL                      viewport;
         BOOL                      renderState[WINEHIGHEST_RENDER_STATE + 1];
+#if 0
         BOOL                      textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
-        BOOL                      clipplane[MAX_CLIPPLANES];
         BOOL                      samplerState[MAX_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
+#endif
+        BOOL                      clipplane[MAX_CLIPPLANES];
         BOOL                      vertexDecl;
         BOOL                      pixelShader;
         BOOL                      vertexShader;

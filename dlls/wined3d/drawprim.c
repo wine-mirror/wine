@@ -1578,6 +1578,10 @@ void inline drawPrimitiveTraceDataLocations(Direct3DVertexStridedData *dataLocat
 
 }
 
+/* loads any dirty textures and returns true if any of the textures are nonpower2 */
+BOOL inline drawPrimitiveUploadDirtyTextures(IWineD3DDeviceImpl* This) {
+    BOOL nonPower2 = FALSE;
+    unsigned int i;
 /**
 * OK, here we clear down any old junk iect in the context
 * enable the new texture and apply any state changes:
@@ -1589,9 +1593,6 @@ void inline drawPrimitiveTraceDataLocations(Direct3DVertexStridedData *dataLocat
 * enable and bind the texture that is bound to that unit.
 * otherwise dissable all texture types on that unit.
 **/
-BOOL inline drawPrimitiveUploadDirtyTextures(IWineD3DDeviceImpl* This) {
-    BOOL nonPower2 = FALSE;
-    unsigned int i;
     /* upload the textures */
     for (i = 0; i< GL_LIMITS(textures); ++i) {
         /* Bind the texture to the stage here */
@@ -1653,7 +1654,7 @@ BOOL inline drawPrimitiveUploadDirtyTextures(IWineD3DDeviceImpl* This) {
                 glEnable(GL_TEXTURE_1D);
                 This->stateBlock->textureDimensions[i] = GL_TEXTURE_1D;
                 glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[i]);
-              }
+            }
 /** these ops apply to the texture unit, so they are preseved between texture changes, but for now brute force and reapply all
         dx9_1pass_emboss_bump_mapping and dx9_2pass_emboss_bump_mapping are good texts to make sure the states are being applied when needed **/
             set_tex_op((IWineD3DDevice *)This, FALSE, i, This->stateBlock->textureState[i][WINED3DTSS_COLOROP],
