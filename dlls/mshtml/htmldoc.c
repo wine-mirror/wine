@@ -38,9 +38,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+#define HTMLDOC_THIS(iface) DEFINE_THIS(HTMLDocument, HTMLDocument2, iface)
+
 static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID riid, void **ppvObject)
 {
-    HTMLDocument *This = (HTMLDocument*)iface;
+    HTMLDocument *This = HTMLDOC_THIS(iface);
 
     *ppvObject = NULL;
     if(IsEqualGUID(&IID_IUnknown, riid)) {
@@ -113,7 +115,7 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
 
 static ULONG WINAPI HTMLDocument_AddRef(IHTMLDocument2 *iface)
 {
-    HTMLDocument *This = (HTMLDocument*)iface;
+    HTMLDocument *This = HTMLDOC_THIS(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
     TRACE("(%p) ref = %lu\n", This, ref);
     return ref;
@@ -121,7 +123,7 @@ static ULONG WINAPI HTMLDocument_AddRef(IHTMLDocument2 *iface)
 
 static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
 {
-    HTMLDocument *This = (HTMLDocument*)iface;
+    HTMLDocument *This = HTMLDOC_THIS(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref = %lu\n", This, ref);
@@ -135,6 +137,8 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
             IOleDocumentView_SetInPlaceSite(DOCVIEW(This), NULL);
         if(This->hwnd)
             DestroyWindow(This->hwnd);
+        if(This->nscontainer)
+            HTMLDocument_NSContainer_Destroy(This);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -978,6 +982,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     HTMLDocument_View_Init(ret);
     HTMLDocument_Window_Init(ret);
     HTMLDocument_Service_Init(ret);
+    HTMLDocument_NSContainer_Init(ret);
 
     return hres;
 }

@@ -16,6 +16,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "nsiface.h"
+
+#define NS_OK                     ((nsresult)0x00000000L)
+#define NS_NOINTERFACE            ((nsresult)0x80004002L)
+#define NS_ERROR_NOT_IMPLEMENTED  ((nsresult)0x80004001L)
+
+#define NS_FAILED(res) ((res) & 0x80000000)
+#define NS_SUCCEEDED(res) (!NS_FAILED(res))
+
+typedef struct NSContainer NSContainer;
+
 typedef struct {
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
     const IPersistMonikerVtbl             *lpPersistMonikerVtbl;
@@ -32,6 +43,8 @@ typedef struct {
 
     LONG ref;
 
+    NSContainer *nscontainer;
+
     IOleClientSite *client;
     IDocHostUIHandler *hostui;
     IOleInPlaceSite *ipsite;
@@ -43,6 +56,17 @@ typedef struct {
     BOOL ui_active;
     BOOL has_key_path;
 } HTMLDocument;
+
+struct NSContainer {
+    nsIWebBrowser *webbrowser;
+    nsIWebNavigation *navigation;
+    nsIBaseWindow *window;
+
+    HWND hwnd;
+
+    LPWSTR url; /* hack! */
+};
+
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
 #define PERSIST(x)       ((IPersist*)                     &(x)->lpPersistFileVtbl)
@@ -70,8 +94,13 @@ void HTMLDocument_OleObj_Init(HTMLDocument*);
 void HTMLDocument_View_Init(HTMLDocument*);
 void HTMLDocument_Window_Init(HTMLDocument*);
 void HTMLDocument_Service_Init(HTMLDocument*);
+void HTMLDocument_NSContainer_Init(HTMLDocument*);
+
+void HTMLDocument_NSContainer_Destroy(HTMLDocument*);
 
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
+
+void close_gecko(void);
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_JSProtocol, 0x3050F3B2, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);

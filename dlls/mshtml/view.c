@@ -69,10 +69,73 @@ static void paint_disabled(HWND hwnd) {
     DeleteObject(brush);
 }
 
+static void activate_gecko(HTMLDocument *This)
+{
+    RECT rect;
+    nsresult nsres;
+
+    TRACE("(%p) %p\n", This, This->nscontainer->window);
+
+    GetClientRect(This->hwnd, &rect);
+
+    nsres = nsIBaseWindow_InitWindow(This->nscontainer->window, This->hwnd, NULL,
+            0, 0, rect.right, rect.bottom);
+
+    if(nsres == NS_OK) {
+        nsres = nsIBaseWindow_Create(This->nscontainer->window);
+        if(NS_FAILED(nsres))
+            WARN("Creating window failed: %08lx\n", nsres);
+
+        nsIBaseWindow_SetVisibility(This->nscontainer->window, TRUE);
+        nsIBaseWindow_SetEnabled(This->nscontainer->window, TRUE);
+    }else {
+        ERR("Initializing window failed: %08lx\n", nsres);
+    }
+
+    if(This->nscontainer->url) {
+        TRACE("Loading  url: %s\n", debugstr_w(This->nscontainer->url));
+        nsres = nsIWebNavigation_LoadURI(This->nscontainer->navigation, This->nscontainer->url,
+                LOAD_FLAGS_NONE, NULL, NULL, NULL);
+        if(NS_FAILED(nsres))
+            ERR("LoadURI failed: %08lx\n", nsres);
+        This->nscontainer->url = NULL;
+    }
+}
+
 static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    if(msg == WM_PAINT)
-        paint_disabled(hwnd);
+    HTMLDocument *This;
+
+    static const WCHAR wszTHIS[] = {'T','H','I','S',0};
+
+    if(msg == WM_CREATE) {
+        This = *(HTMLDocument**)lParam;
+        SetPropW(hwnd, wszTHIS, This);
+    }else {
+        This = (HTMLDocument*)GetPropW(hwnd, wszTHIS);
+    }
+
+    switch(msg) {
+    case WM_CREATE:
+        This->hwnd = hwnd;
+        if(This->nscontainer)
+            activate_gecko(This);
+        break;
+    case WM_PAINT:
+        if(!This->nscontainer)
+            paint_disabled(hwnd);
+        break;
+    case WM_SIZE:
+        TRACE("(%p)->(WM_SIZE)\n", This);
+
+        if(This->nscontainer) {
+            nsresult nsres;
+            nsres = nsIBaseWindow_SetSize(This->nscontainer->window,
+                    LOWORD(lParam), HIWORD(lParam), TRUE);
+            if(NS_FAILED(nsres))
+                WARN("SetSize failed: %08lx\n", nsres);
+        }
+    }
         
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
@@ -90,7 +153,6 @@ static void register_serverwnd_class(void)
     wndclass.hInstance = hInst;
     serverwnd_class = RegisterClassExW(&wndclass);
 }
-
 
 /**********************************************************
  * IOleDocumentView implementation
@@ -269,10 +331,13 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
                     posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
                     SWP_NOACTIVATE | SWP_SHOWWINDOW);
         }else {
-            This->hwnd = CreateWindowExW(0, wszInternetExplorer_Server, NULL,
+            CreateWindowExW(0, wszInternetExplorer_Server, NULL,
                     WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                     posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
                     parent_hwnd, NULL, hInst, This);
+
+            TRACE("Created window %p\n", This->hwnd);
+
             SetWindowPos(This->hwnd, NULL, 0, 0, 0, 0,
                     SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_SHOWWINDOW);
             RedrawWindow(This->hwnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN);

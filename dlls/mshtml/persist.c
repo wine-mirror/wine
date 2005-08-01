@@ -79,7 +79,34 @@ static HRESULT WINAPI PersistMoniker_IsDirty(IPersistMoniker *iface)
 static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAvailable,
         IMoniker *pimkName, LPBC pibc, DWORD grfMode)
 {
+    PERSISTMON_THIS
+    LPWSTR url;
+    HRESULT hres;
+    nsresult nsres;
+
     FIXME("(%p)->(%x %p %p %08lx)\n", iface, fFullyAvailable, pimkName, pibc, grfMode);
+
+    /* FIXME:
+     * This is a HACK, we should use moniker's BindToStorage instead of Gecko's LoadURI.
+     */
+    if(This->nscontainer) {
+        hres = IMoniker_GetDisplayName(pimkName, pibc, NULL, &url);
+        if(FAILED(hres)) {
+            WARN("GetDiaplayName failed: %08lx\n", hres);
+            return hres;
+        }
+        TRACE("got url: %s\n", debugstr_w(url));
+
+        if(This->hwnd) {
+            nsres = nsIWebNavigation_LoadURI(This->nscontainer->navigation, url,
+                    LOAD_FLAGS_NONE, NULL, NULL, NULL);
+            if(NS_FAILED(nsres))
+                WARN("LoadURI failed: %08lx\n", nsres);
+        }else {
+            This->nscontainer->url = url;
+        }
+    }
+    
     return S_OK;
 }
 

@@ -47,75 +47,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-DEFINE_GUID( CLSID_MozillaBrowser, 0x1339B54C,0x3453,0x11D2,0x93,0xB9,0x00,0x00,0x00,0x00,0x00,0x00);
-
-typedef HRESULT (WINAPI *fnGetClassObject)(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
-typedef BOOL (WINAPI *fnCanUnloadNow)();
-
-static HMODULE hMozCtl;
-
 HINSTANCE hInst;
-
-/* convert a guid to a wide character string */
-static void MSHTML_guid2wstr( const GUID *guid, LPWSTR wstr )
-{
-    char str[40];
-
-    sprintf(str, "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-           guid->Data1, guid->Data2, guid->Data3,
-           guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-           guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
-    MultiByteToWideChar( CP_ACP, 0, str, -1, wstr, 40 );
-}
-
-static BOOL MSHTML_GetMozctlPath( LPWSTR szPath, DWORD sz )
-{
-    DWORD r, type;
-    BOOL ret = FALSE;
-    HKEY hkey;
-    static const WCHAR szPre[] = {
-        'S','o','f','t','w','a','r','e','\\',
-        'C','l','a','s','s','e','s','\\',
-        'C','L','S','I','D','\\',0 };
-    static const WCHAR szPost[] = {
-        '\\','I','n','p','r','o','c','S','e','r','v','e','r','3','2',0 };
-    WCHAR szRegPath[(sizeof(szPre)+sizeof(szPost))/sizeof(WCHAR)+40];
-
-    strcpyW( szRegPath, szPre );
-    MSHTML_guid2wstr( &CLSID_MozillaBrowser, &szRegPath[strlenW(szRegPath)] );
-    strcatW( szRegPath, szPost );
-
-    TRACE("key = %s\n", debugstr_w( szRegPath ) );
-
-    r = RegOpenKeyW( HKEY_LOCAL_MACHINE, szRegPath, &hkey );
-    if( r != ERROR_SUCCESS )
-        return FALSE;
-
-    r = RegQueryValueExW( hkey, NULL, NULL, &type, (LPBYTE)szPath, &sz );
-    ret = ( r == ERROR_SUCCESS ) && ( type == REG_SZ );
-    RegCloseKey( hkey );
-
-    return ret;
-}
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
-    WCHAR szPath[MAX_PATH];
-
     switch(fdwReason) {
         case DLL_PROCESS_ATTACH:
-            if(MSHTML_GetMozctlPath(szPath, sizeof szPath)) {
-                hMozCtl = LoadLibraryExW(szPath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
-                if(!hMozCtl)
-                    ERR("Can't load the Mozilla ActiveX control\n");
-            }else {
-                TRACE("Not found Mozilla ActiveX Control. HTML rendering will be disabled.\n");
-            }
             hInst = hInstDLL;
 	    break;
 	case DLL_PROCESS_DETACH:
-            if(hMozCtl)
-                FreeLibrary( hMozCtl );
+            close_gecko();
 	    break;
     }
     return TRUE;
@@ -205,20 +146,6 @@ static HRESULT ClassFactory_Create(REFIID riid, void **ppv, CreateInstanceFunc f
 
 HRESULT WINAPI MSHTML_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    HRESULT hres;
-    fnGetClassObject pGetClassObject;
-
-    if(hMozCtl && IsEqualGUID(&CLSID_HTMLDocument, rclsid)) {
-        pGetClassObject = (fnGetClassObject) GetProcAddress(hMozCtl, "DllGetClassObject");
-        if(pGetClassObject) {
-            hres = pGetClassObject(&CLSID_MozillaBrowser, riid, ppv);
-            if(SUCCEEDED(hres)) {
-                TRACE("returning Mozilla ActiveX Control hres = %08lx  *ppv = %p\n", hres, *ppv);
-                return hres;
-            }
-        }
-    }
-
     if(IsEqualGUID(&CLSID_HTMLDocument, rclsid)) {
         TRACE("(CLSID_HTMLDocument %s %p)\n", debugstr_guid(riid), ppv);
         return ClassFactory_Create(riid, ppv, HTMLDocument_Create);
@@ -245,21 +172,8 @@ HRESULT WINAPI MSHTML_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *pp
 
 HRESULT WINAPI MSHTML_DllCanUnloadNow(void)
 {
-    fnCanUnloadNow pCanUnloadNow = NULL;
-    HRESULT hres;
-
-    TRACE("()\n");
-
-    if(hMozCtl)
-        pCanUnloadNow = (fnCanUnloadNow) GetProcAddress(hMozCtl, "DllCanUnloadNow");
-    if(!pCanUnloadNow)
-        return S_FALSE;
-
-    hres = pCanUnloadNow();
-
-    TRACE("hres = %08lx\n", hres);
-
-    return hres;
+    FIXME("()\n");
+    return S_FALSE;
 }
 
 /***********************************************************************

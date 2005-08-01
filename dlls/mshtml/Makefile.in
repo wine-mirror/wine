@@ -11,6 +11,7 @@ EXTRADEFS = -DCOM_NO_WINDOWS_H
 C_SRCS = \
 	htmldoc.c \
 	main.c \
+	nsembed.c \
 	oleobj.c \
 	olewnd.c \
 	persist.c \
@@ -19,6 +20,8 @@ C_SRCS = \
 	view.c
 
 RC_SRCS = rsrc.rc
+
+IDL_SRCS = nsiface.idl
 
 SUBDIRS = tests
 
