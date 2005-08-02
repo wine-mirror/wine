@@ -96,6 +96,7 @@ BASEDIRS = \
 	msvidc32 \
 	msvideo \
 	mswsock \
+	msxml3 \
 	netapi32 \
 	newdev \
 	ntdll \
@@ -345,6 +346,7 @@ SYMLINKS_SO = \
 	msvfw32.dll.so \
 	msvidc32.dll.so \
 	mswsock.dll.so \
+	msxml3.dll.so \
 	netapi32.dll.so \
 	newdev.dll.so \
 	ntdll.dll.so \
@@ -737,6 +739,9 @@ msvidc32.dll.so: msvidc32/msvidc32.dll.so
 
 mswsock.dll.so: mswsock/mswsock.dll.so
 	$(RM) $@ && $(LN_S) mswsock/mswsock.dll.so $@
+
+msxml3.dll.so: msxml3/msxml3.dll.so
+	$(RM) $@ && $(LN_S) msxml3/msxml3.dll.so $@
 
 netapi32.dll.so: netapi32/netapi32.dll.so
 	$(RM) $@ && $(LN_S) netapi32/netapi32.dll.so $@
@@ -1694,6 +1699,7 @@ msvcrtd/msvcrtd.dll.so: msvcrtd
 msvideo/msvfw32.dll.so: msvideo
 msvidc32/msvidc32.dll.so: msvidc32
 mswsock/mswsock.dll.so: mswsock
+msxml3/msxml3.dll.so: msxml3
 netapi32/netapi32.dll.so: netapi32
 newdev/newdev.dll.so: newdev
 ntdll/ntdll.dll.so: ntdll

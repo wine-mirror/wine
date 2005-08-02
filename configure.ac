@@ -424,6 +424,19 @@ else
     X_LIBS=""
 fi
 
+dnl **** Check for libxml2 ****
+
+AC_SUBST(XML2LIBS,"")
+AC_SUBST(XML2INCL,"")
+ac_save_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS -I/usr/include/libxml2"
+AC_CHECK_HEADERS(libxml/parser.h,
+    [AC_CHECK_LIB(xml2, xmlReadIO,
+        [AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])
+         XML2LIBS="-lxml2"
+         XML2INCL="-I/usr/include/libxml2"])])
+CPPFLAGS="$ac_save_CPPFLAGS"
+
 dnl **** Check which curses lib to use ***
 CURSESLIBS=""
 if test "x$with_curses" != "xno"
@@ -1650,6 +1663,7 @@ dlls/msvcrtd/tests/Makefile
 dlls/msvidc32/Makefile
 dlls/msvideo/Makefile
 dlls/mswsock/Makefile
+dlls/msxml3/Makefile
 dlls/netapi32/Makefile
 dlls/netapi32/tests/Makefile
 dlls/newdev/Makefile
