@@ -115,7 +115,7 @@ exit:
 }
 
 ULONG ldap_compare_extA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value,
-    struct berval *data, PLDAPControlA *serverctrls, PLDAPControlA *clientctrls,
+    struct WLDAP32_berval *data, PLDAPControlA *serverctrls, PLDAPControlA *clientctrls,
     ULONG *message )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -166,7 +166,7 @@ exit:
 }
 
 ULONG ldap_compare_extW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value,
-    struct berval *data, PLDAPControlW *serverctrls, PLDAPControlW *clientctrls,
+    struct WLDAP32_berval *data, PLDAPControlW *serverctrls, PLDAPControlW *clientctrls,
     ULONG *message )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -209,7 +209,7 @@ ULONG ldap_compare_extW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value,
         if (!clientctrlsU) goto exit;
     }
 
-    ret = ldap_compare_ext( ld, dn ? dnU : "", attrU, data ? data : &berval,
+    ret = ldap_compare_ext( ld, dn ? dnU : "", attrU, data ? (struct berval *)data : &berval,
                             serverctrlsU, clientctrlsU, (int *)message );
 
 exit:
@@ -224,7 +224,7 @@ exit:
 }
 
 ULONG ldap_compare_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value,
-    struct berval *data, PLDAPControlA *serverctrls, PLDAPControlA *clientctrls )
+    struct WLDAP32_berval *data, PLDAPControlA *serverctrls, PLDAPControlA *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -274,7 +274,7 @@ exit:
 }
 
 ULONG ldap_compare_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value,
-    struct berval *data, PLDAPControlW *serverctrls, PLDAPControlW *clientctrls )
+    struct WLDAP32_berval *data, PLDAPControlW *serverctrls, PLDAPControlW *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -314,7 +314,7 @@ ULONG ldap_compare_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR valu
         if (!clientctrlsU) goto exit;
     }
 
-    ret = ldap_compare_ext_s( ld, dn ? dnU : "", attr ? attrU : "", data ? data : &berval,
+    ret = ldap_compare_ext_s( ld, dn ? dnU : "", attr ? attrU : "", data ? (struct berval *)data : &berval,
                               serverctrlsU, clientctrlsU );
 
 exit:
