@@ -48,6 +48,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 HINSTANCE hInst;
+LONG module_ref = 0;
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
@@ -100,8 +101,10 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 
     TRACE("(%p) ref = %lu\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
         HeapFree(GetProcessHeap(), 0, This);
+        UNLOCK_MODULE();
+    }
 
     return ref;
 }
@@ -115,7 +118,13 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
 {
-    FIXME("(%p)->(%x) stub\n", iface, dolock);
+    TRACE("(%p)->(%x)\n", iface, dolock);
+
+    if(dolock)
+        LOCK_MODULE();
+    else
+        UNLOCK_MODULE();
+
     return S_OK;
 }
 
@@ -137,7 +146,9 @@ static HRESULT ClassFactory_Create(REFIID riid, void **ppv, CreateInstanceFunc f
     ret->fnCreateInstance = fnCreateInstance;
 
     hres = IClassFactory_QueryInterface((IClassFactory*)ret, riid, ppv);
-    if(FAILED(hres)) {
+    if(SUCCEEDED(hres)) {
+        LOCK_MODULE();
+    }else {
         HeapFree(GetProcessHeap(), 0, ret);
         *ppv = NULL;
     }
@@ -172,8 +183,8 @@ HRESULT WINAPI MSHTML_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *pp
 
 HRESULT WINAPI MSHTML_DllCanUnloadNow(void)
 {
-    FIXME("()\n");
-    return S_FALSE;
+    TRACE("() ref=%ld\n", module_ref);
+    return module_ref ? S_FALSE : S_OK;
 }
 
 /***********************************************************************

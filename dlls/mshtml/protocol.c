@@ -51,8 +51,7 @@ typedef struct {
     const IClassFactoryVtbl         *lpClassFactoryVtbl;
 } ProtocolFactory;
 
-#define PROTOCOLINFO_THIS(iface) \
-    (ProtocolFactory*)((char*)(iface)-offsetof(ProtocolFactory,lpInternetProtocolInfoVtbl))
+#define PROTOCOLINFO_THIS(iface) DEFINE_THIS(ProtocolFactory, InternetProtocolInfo, iface)
 
 static HRESULT WINAPI InternetProtocolInfo_QueryInterface(IInternetProtocolInfo *iface, REFIID riid, void **ppv)
 {
@@ -83,6 +82,7 @@ static ULONG WINAPI InternetProtocolInfo_AddRef(IInternetProtocolInfo *iface)
 {
     ProtocolFactory *This = PROTOCOLINFO_THIS(iface);
     TRACE("(%p)\n", This);
+    LOCK_MODULE();
     return 2;
 }
 
@@ -90,13 +90,13 @@ static ULONG WINAPI InternetProtocolInfo_Release(IInternetProtocolInfo *iface)
 {
     ProtocolFactory *This = PROTOCOLINFO_THIS(iface);
     TRACE("(%p)\n", This);
+    UNLOCK_MODULE();
     return 1;
 }
 
 #undef PROTOCOLINFO_THIS
 
-#define CLASSFACTORY_THIS(iface) \
-    (ProtocolFactory*)((char*)(iface)-offsetof(ProtocolFactory,lpClassFactoryVtbl))
+#define CLASSFACTORY_THIS(iface) DEFINE_THIS(ProtocolFactory, ClassFactory, iface)
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
@@ -119,7 +119,14 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
 {
     ProtocolFactory *This = CLASSFACTORY_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, dolock);
+
+    TRACE("(%p)->(%x)\n", This, dolock);
+
+    if(dolock)
+        LOCK_MODULE();
+    else
+        UNLOCK_MODULE();
+
     return S_OK;
 }
 
@@ -176,8 +183,10 @@ static ULONG WINAPI AboutProtocol_Release(IInternetProtocol *iface)
 
     TRACE("(%p) ref=%lx\n", iface, ref);
 
-    if(!ref)
+    if(!ref) {
         HeapFree(GetProcessHeap(), 0, This);
+        UNLOCK_MODULE();
+    }
 
     return ref;
 }
@@ -287,7 +296,9 @@ static HRESULT WINAPI AboutProtocolFactory_CreateInstance(IClassFactory *iface, 
 
     hres = IUnknown_QueryInterface((IUnknown*)ret, riid, ppv);
 
-    if(FAILED(hres))
+    if(SUCCEEDED(hres))
+        LOCK_MODULE();
+    else
         HeapFree(GetProcessHeap(), 0, ret);
 
     return hres;
@@ -408,6 +419,7 @@ static ULONG WINAPI ResProtocol_Release(IInternetProtocol *iface)
     if(!ref) {
         HeapFree(GetProcessHeap(), 0, This->data);
         HeapFree(GetProcessHeap(), 0, This);
+        UNLOCK_MODULE();
     }
 
     return ref;
@@ -612,7 +624,9 @@ static HRESULT WINAPI ResProtocolFactory_CreateInstance(IClassFactory *iface, IU
 
     hres = IUnknown_QueryInterface((IUnknown*)ret, riid, ppv);
 
-    if(FAILED(hres))
+    if(SUCCEEDED(hres))
+        LOCK_MODULE();
+    else
         HeapFree(GetProcessHeap(), 0, ret);
 
     return hres;
@@ -688,6 +702,6 @@ HRESULT ProtocolFactory_Create(REFCLSID rclsid, REFIID riid, void **ppv)
         FIXME("not implemented protocol %s\n", debugstr_guid(rclsid));
         return CLASS_E_CLASSNOTAVAILABLE;
     }
-
+ 
     return IUnknown_QueryInterface((IUnknown*)cf, riid, ppv);
 }

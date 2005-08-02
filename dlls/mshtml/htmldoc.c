@@ -140,6 +140,8 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
         if(This->nscontainer)
             HTMLDocument_NSContainer_Destroy(This);
         HeapFree(GetProcessHeap(), 0, This);
+
+        UNLOCK_MODULE();
     }
 
     return ref;
@@ -974,8 +976,12 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret->ref = 0;
 
     hres = IHTMLDocument_QueryInterface(HTMLDOC(ret), riid, ppvObject);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
         HeapFree(GetProcessHeap(), 0, ret);
+        return hres;
+    }
+
+    LOCK_MODULE();
 
     HTMLDocument_Persist_Init(ret);
     HTMLDocument_OleObj_Init(ret);
