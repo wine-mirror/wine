@@ -11,7 +11,7 @@ C_SRCS = \
 	main.c \
 	regsvr.c
 
-RC_SRCS = version.rc
+RC_SRCS = hhctrl.rc
 
 @MAKE_DLL_RULES@
 

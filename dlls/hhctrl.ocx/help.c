@@ -28,6 +28,7 @@
 #include "commctrl.h"
 #include "htmlhelp.h"
 #include "ole2.h"
+#include "wine/unicode.h"
 
 /* Window type defaults */
 
@@ -41,8 +42,11 @@ typedef struct tagHHInfo
     HH_WINTYPEW *pHHWinType;
     HINSTANCE hInstance;
     LPCWSTR szCmdLine;
+    DWORD dwNumTBButtons;
     HFONT hFont;
 } HHInfo;
+
+extern HINSTANCE hhctrl_hinstance;
 
 static LPWSTR HH_ANSIToUnicode(LPCSTR ansi)
 {
@@ -56,10 +60,133 @@ static LPWSTR HH_ANSIToUnicode(LPCSTR ansi)
     return unicode;
 }
 
+/* Loads a string from the resource file */
+static LPWSTR HH_LoadString(DWORD dwID)
+{
+    LPWSTR string = NULL;
+    int iSize;
+
+    iSize = LoadStringW(hhctrl_hinstance, dwID, NULL, 0);
+    iSize += 2; /* some strings (tab text) needs double-null termination */
+
+    string = HeapAlloc(GetProcessHeap(), 0, iSize * sizeof(WCHAR));
+    LoadStringW(hhctrl_hinstance, dwID, string, iSize);
+
+    return string;
+}
+
 /* Toolbar */
+
+#define ICON_SIZE   20
+
+static void TB_AddButton(TBBUTTON *pButtons, DWORD dwIndex, DWORD dwID)
+{
+    /* FIXME: Load the correct button bitmaps */
+    pButtons[dwIndex].iBitmap = STD_PRINT;
+    pButtons[dwIndex].idCommand = dwID;
+    pButtons[dwIndex].fsState = TBSTATE_ENABLED;
+    pButtons[dwIndex].fsStyle = BTNS_BUTTON;
+    pButtons[dwIndex].dwData = 0;
+    pButtons[dwIndex].iString = 0;
+}
+
+static void TB_AddButtonsFromFlags(TBBUTTON *pButtons, DWORD dwButtonFlags, LPDWORD pdwNumButtons)
+{
+    *pdwNumButtons = 0;
+
+    if (dwButtonFlags & HHWIN_BUTTON_EXPAND)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_EXPAND);
+
+    if (dwButtonFlags & HHWIN_BUTTON_BACK)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_BACK);
+
+    if (dwButtonFlags & HHWIN_BUTTON_FORWARD)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_FORWARD);
+
+    if (dwButtonFlags & HHWIN_BUTTON_STOP)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_STOP);
+
+    if (dwButtonFlags & HHWIN_BUTTON_REFRESH)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_REFRESH);
+
+    if (dwButtonFlags & HHWIN_BUTTON_HOME)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_HOME);
+
+    if (dwButtonFlags & HHWIN_BUTTON_SYNC)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_SYNC);
+
+    if (dwButtonFlags & HHWIN_BUTTON_OPTIONS)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_OPTIONS);
+
+    if (dwButtonFlags & HHWIN_BUTTON_PRINT)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_PRINT);
+
+    if (dwButtonFlags & HHWIN_BUTTON_JUMP1)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_JUMP1);
+
+    if (dwButtonFlags & HHWIN_BUTTON_JUMP2)
+        TB_AddButton(pButtons,(*pdwNumButtons)++, IDTB_JUMP2);
+
+    if (dwButtonFlags & HHWIN_BUTTON_ZOOM)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_ZOOM);
+
+    if (dwButtonFlags & HHWIN_BUTTON_TOC_NEXT)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_TOC_NEXT);
+
+    if (dwButtonFlags & HHWIN_BUTTON_TOC_PREV)
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_TOC_PREV);
+}
 
 static BOOL HH_AddToolbar(HHInfo *pHHInfo)
 {
+    HWND hToolbar;
+    HWND hwndParent = pHHInfo->pHHWinType->hwndHelp;
+    DWORD toolbarFlags = pHHInfo->pHHWinType->fsToolBarFlags;
+    TBBUTTON buttons[IDTB_TOC_PREV - IDTB_EXPAND];
+    TBADDBITMAP tbAB;
+    DWORD dwStyles, dwExStyles;
+    DWORD dwNumButtons, dwIndex;
+
+    /* FIXME: Remove the following line once we read the CHM file */
+    toolbarFlags = HHWIN_BUTTON_EXPAND | HHWIN_BUTTON_BACK | HHWIN_BUTTON_STOP |
+                   HHWIN_BUTTON_REFRESH | HHWIN_BUTTON_HOME | HHWIN_BUTTON_PRINT;
+    TB_AddButtonsFromFlags(buttons, toolbarFlags, &dwNumButtons);
+    pHHInfo->dwNumTBButtons = dwNumButtons;
+
+    dwStyles = WS_CHILDWINDOW | WS_VISIBLE | TBSTYLE_FLAT |
+               TBSTYLE_WRAPABLE | TBSTYLE_TOOLTIPS | CCS_NODIVIDER;
+    dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
+
+    hToolbar = CreateWindowExW(dwExStyles, TOOLBARCLASSNAMEW, NULL, dwStyles,
+                               0, 0, 0, 0, hwndParent, NULL,
+                               pHHInfo->hInstance, NULL);
+    if (!hToolbar)
+        return FALSE;
+
+    SendMessageW(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(ICON_SIZE, ICON_SIZE));
+    SendMessageW(hToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+    SendMessageW(hToolbar, WM_SETFONT, (WPARAM)pHHInfo->hFont, TRUE);
+
+    /* FIXME: Load correct icons for all buttons */
+    tbAB.hInst = HINST_COMMCTRL;
+    tbAB.nID = IDB_STD_LARGE_COLOR;
+    SendMessageW(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&tbAB);
+
+    for (dwIndex = 0; dwIndex < dwNumButtons; dwIndex++)
+    {
+        LPWSTR szBuf = HH_LoadString(buttons[dwIndex].idCommand);
+        DWORD dwLen = strlenW(szBuf);
+        szBuf[dwLen + 2] = 0; /* Double-null terminate */
+
+        buttons[dwIndex].iString = (DWORD)SendMessageW(hToolbar, TB_ADDSTRINGW, 0, (LPARAM)szBuf);
+        HeapFree(GetProcessHeap(), 0, szBuf);
+    }
+
+    SendMessageW(hToolbar, TB_ADDBUTTONSW, dwNumButtons, (LPARAM)&buttons);
+    SendMessageW(hToolbar, TB_AUTOSIZE, 0, 0);
+    ShowWindow(hToolbar, SW_SHOW);
+
+    pHHInfo->pHHWinType->hwndToolBar = hToolbar;
     return TRUE;
 }
 
