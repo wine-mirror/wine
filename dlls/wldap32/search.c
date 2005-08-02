@@ -47,7 +47,8 @@ ULONG ldap_searchA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope, PCHAR filter,
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR *baseW = NULL, *filterW = NULL, **attrsW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx)\n", ld, debugstr_a(base),
            scope, debugstr_a(filter), attrs, attrsonly );
@@ -84,7 +85,8 @@ ULONG ldap_searchW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *baseU = NULL, *filterU = NULL, **attrsU = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx)\n", ld, debugstr_w(base),
            scope, debugstr_w(filter), attrs, attrsonly );
@@ -123,7 +125,8 @@ ULONG ldap_search_extA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope,
 #ifdef HAVE_LDAP
     WCHAR *baseW = NULL, *filterW = NULL, **attrsW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, 0x%08lx, 0x%08lx, %p)\n",
            ld, debugstr_a(base), scope, debugstr_a(filter), attrs, attrsonly,
@@ -177,7 +180,7 @@ ULONG ldap_search_extW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
     struct timeval tv;
 
-    ret = LDAP_NO_MEMORY;
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, 0x%08lx, 0x%08lx, %p)\n",
            ld, debugstr_w(base), scope, debugstr_w(filter), attrs, attrsonly,
@@ -231,7 +234,8 @@ ULONG ldap_search_ext_sA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope,
 #ifdef HAVE_LDAP
     WCHAR *baseW = NULL, *filterW = NULL, **attrsW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, %p, 0x%08lx, %p)\n",
            ld, debugstr_a(base), scope, debugstr_a(filter), attrs, attrsonly,
@@ -282,7 +286,8 @@ ULONG ldap_search_ext_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
 #ifdef HAVE_LDAP
     char *baseU = NULL, *filterU = NULL, **attrsU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, %p, 0x%08lx, %p)\n",
            ld, debugstr_w(base), scope, debugstr_w(filter), attrs, attrsonly,
@@ -331,7 +336,8 @@ ULONG ldap_search_sA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope, PCHAR filter,
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR *baseW = NULL, *filterW = NULL, **attrsW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p)\n", ld, debugstr_a(base),
            scope, debugstr_a(filter), attrs, attrsonly, res );
@@ -368,7 +374,8 @@ ULONG ldap_search_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *baseU = NULL, *filterU = NULL, **attrsU = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p)\n", ld, debugstr_w(base),
            scope, debugstr_w(filter), attrs, attrsonly, res );
@@ -406,7 +413,8 @@ ULONG ldap_search_stA( WLDAP32_LDAP *ld, const PCHAR base, ULONG scope,
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR *baseW = NULL, *filterW = NULL, **attrsW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p)\n", ld,
            debugstr_a(base), scope, debugstr_a(filter), attrs,
@@ -446,7 +454,8 @@ ULONG ldap_search_stW( WLDAP32_LDAP *ld, const PWCHAR base, ULONG scope,
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *baseU = NULL, *filterU = NULL, **attrsU = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p)\n", ld,
            debugstr_w(base), scope, debugstr_w(filter), attrs,

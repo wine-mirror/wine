@@ -45,6 +45,7 @@ ULONG ldap_compareA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
+
     ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_a(dn), debugstr_a(attr),
@@ -122,6 +123,7 @@ ULONG ldap_compare_extA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value,
 #ifdef HAVE_LDAP
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
+
     ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn),
@@ -230,6 +232,7 @@ ULONG ldap_compare_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value,
 #ifdef HAVE_LDAP
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
+
     ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %s, %s, %p, %p, %p)\n", ld, debugstr_a(dn),
@@ -281,6 +284,7 @@ ULONG ldap_compare_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR valu
     struct berval berval;
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
+
     ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %s, %s, %p, %p, %p)\n", ld, debugstr_w(dn),
@@ -333,6 +337,7 @@ ULONG ldap_compare_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
+
     ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_a(dn), debugstr_a(attr),
@@ -369,6 +374,7 @@ ULONG ldap_compare_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
+
     ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_w(dn), debugstr_w(attr),

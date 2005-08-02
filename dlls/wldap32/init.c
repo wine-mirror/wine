@@ -150,7 +150,8 @@ ULONG ldap_start_tls_sA( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %p, %p, %p, %p)\n", ld, retval, result, serverctrls, clientctrls );
 
@@ -181,7 +182,8 @@ ULONG ldap_start_tls_sW( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %p, %p, %p, %p)\n", ld, retval, result, serverctrls, clientctrls );
 

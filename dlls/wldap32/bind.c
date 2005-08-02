@@ -46,7 +46,8 @@ ULONG ldap_bindA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR cred, ULONG method )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR *dnW = NULL, *credW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %p, 0x%08lx)\n", ld, debugstr_a(dn), cred, method );
 
@@ -76,7 +77,8 @@ ULONG ldap_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *credU = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %p, 0x%08lx)\n", ld, debugstr_w(dn), cred, method );
 
@@ -106,7 +108,8 @@ ULONG ldap_bind_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR cred, ULONG method )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR *dnW = NULL, *credW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %p, 0x%08lx)\n", ld, debugstr_a(dn), cred, method );
 
@@ -136,7 +139,8 @@ ULONG ldap_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *credU = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %p, 0x%08lx)\n", ld, debugstr_w(dn), cred, method );
 
@@ -169,7 +173,8 @@ ULONG ldap_sasl_bindA( WLDAP32_LDAP *ld, const PCHAR dn,
 #ifdef HAVE_LDAP
     WCHAR *dnW, *mechanismW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn),
            debugstr_a(mechanism), cred, serverctrls, clientctrls, message );
@@ -212,7 +217,8 @@ ULONG ldap_sasl_bindW( WLDAP32_LDAP *ld, const PWCHAR dn,
 #ifdef HAVE_LDAP
     char *dnU, *mechanismU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn),
            debugstr_w(mechanism), cred, serverctrls, clientctrls, message );
@@ -256,7 +262,8 @@ ULONG ldap_sasl_bind_sA( WLDAP32_LDAP *ld, const PCHAR dn,
 #ifdef HAVE_LDAP
     WCHAR *dnW, *mechanismW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn),
            debugstr_a(mechanism), cred, serverctrls, clientctrls, serverdata );
@@ -299,7 +306,8 @@ ULONG ldap_sasl_bind_sW( WLDAP32_LDAP *ld, const PWCHAR dn,
 #ifdef HAVE_LDAP
     char *dnU, *mechanismU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn),
            debugstr_w(mechanism), cred, serverctrls, clientctrls, serverdata );
@@ -340,7 +348,8 @@ ULONG ldap_simple_bindA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR passwd )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR *dnW = NULL, *passwdW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_a(dn), passwd );
 
@@ -370,7 +379,8 @@ ULONG ldap_simple_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *passwdU = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_w(dn), passwd );
 
@@ -400,7 +410,8 @@ ULONG ldap_simple_bind_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR passwd )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR *dnW = NULL, *passwdW = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_a(dn), passwd );
 
@@ -430,7 +441,8 @@ ULONG ldap_simple_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *passwdU = NULL;
-    ret = LDAP_NO_MEMORY;
+
+    ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_w(dn), passwd );
 
