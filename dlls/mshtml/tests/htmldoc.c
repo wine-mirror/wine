@@ -806,12 +806,76 @@ static void test_Persist()
     }
 }
 
+static const OLECMDF expect_cmds[OLECMDID_GETPRINTTEMPLATE+1] = {
+    0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_OPEN */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_NEW */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SAVE */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_SAVEAS */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SAVECOPYAS */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_PRINT */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_PRINTPREVIEW */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_PAGESETUP */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SPELL */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_PROPERTIES */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_CUT */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_COPY */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_PASTE */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_PASTESPECIAL */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_UNDO */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_RENDO */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_SELECTALL */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_CLEARSELECTION */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_ZOOM */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_GETZOOMRANGE */
+    0,
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_REFRESH */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_STOP */
+    0,0,0,0,0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_STOPDOWNLOAD */
+    0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_DELETE */
+    0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_ENABLE_INTERACTION */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_ONUNLOAD */
+    0,0,0,0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SHOWPAGESETUP */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SHOWPRINT */
+    0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_CLOSE */
+    0,0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SETPRINTTEMPLATE */
+    OLECMDF_SUPPORTED                   /* OLECMDID_GETPRINTTEMPLATE */
+};
+
+static void test_OleCommandTarget(IOleCommandTarget *cmdtrg)
+{
+    OLECMD cmds[OLECMDID_GETPRINTTEMPLATE];
+    int i;
+    HRESULT hres;
+
+    for(i=0; i<OLECMDID_GETPRINTTEMPLATE; i++) {
+        cmds[i].cmdID = i+1;
+        cmds[i].cmdf = 0xf0f0;
+    }
+
+    hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, sizeof(cmds)/sizeof(cmds[0]), cmds, NULL);
+    ok(hres == S_OK, "QueryStatus failed: %08lx\n", hres);
+
+    for(i=0; i<OLECMDID_GETPRINTTEMPLATE; i++) {
+        ok(cmds[i].cmdID == i+1, "cmds[%d].cmdID canged to %lx\n", i, cmds[i].cmdID);
+        ok(cmds[i].cmdf == expect_cmds[i+1], "cmds[%d].cmdf=%lx, expected %x\n",
+                i+1, cmds[i].cmdf, expect_cmds[i+1]);
+    }
+}
+
 static void test_HTMLDocument(void)
 {
     IOleObject *oleobj = NULL;
     IOleClientSite *clientsite = (LPVOID)0xdeadbeef;
     IOleInPlaceObjectWindowless *windowlessobj = NULL;
     IOleInPlaceActiveObject *activeobject = NULL;
+    IOleCommandTarget *cmdtrg = NULL;
     GUID guid;
     RECT rect = {0,0,500,500};
     HRESULT hres;
@@ -844,7 +908,10 @@ static void test_HTMLDocument(void)
     hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IOleInPlaceObjectWindowless,
             (void**)&windowlessobj);
     ok(hres == S_OK, "Could not get IOleInPlaceObjectWindowless interface: %08lx\n", hres);
-             
+
+    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    ok(hres == S_OK, "could not get IOleCommandTarget: %08lx\n", hres);
+
     hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08lx\n", hres);
     if(oleobj) {
@@ -890,6 +957,31 @@ static void test_HTMLDocument(void)
         CHECK_CALLED(ActivateMe);
     }
 
+    if(cmdtrg) {
+        OLECMD cmd[2] = {
+            {OLECMDID_OPEN, 0xf0f0},
+            {OLECMDID_GETPRINTTEMPLATE+1, 0xf0f0}
+        };
+    
+        hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, 0, NULL, NULL);
+        ok(hres == S_OK, "QueryStatus failed: %08lx\n", hres);
+    
+        hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, 2, cmd, NULL);
+        ok(hres == OLECMDERR_E_NOTSUPPORTED,
+                "QueryStatus failed: %08lx, expected OLECMDERR_E_NOTSUPPORTED\n", hres);
+        ok(cmd[1].cmdID == OLECMDID_GETPRINTTEMPLATE+1,
+                "cmd[0].cmdID=%ld, expected OLECMDID_GETPRINTTEMPLATE+1\n", cmd[0].cmdID);
+        ok(cmd[1].cmdf == 0, "cmd[0].cmdf=%lx, expected 0\n", cmd[0].cmdf);
+        ok(cmd[0].cmdf == OLECMDF_SUPPORTED,
+                "cmd[1].cmdf=%lx, expected OLECMDF_SUPPORTED\n", cmd[1].cmdf);
+
+        hres = IOleCommandTarget_QueryStatus(cmdtrg, &IID_IHTMLDocument2, 2, cmd, NULL);
+        ok(hres == OLECMDERR_E_UNKNOWNGROUP,
+                "QueryStatus failed: %08lx, expected OLECMDERR_E_UNKNOWNGROUP\n", hres);
+
+        test_OleCommandTarget(cmdtrg);
+    }
+
     hres = IOleDocumentView_QueryInterface(view, &IID_IOleInPlaceActiveObject, (void**)&activeobject);
     ok(hres == S_OK, "Could not get IOleInPlaceActiveObject interface: %08lx\n", hres);
 
@@ -912,6 +1004,9 @@ static void test_HTMLDocument(void)
         CHECK_CALLED(OnUIDeactivate);
     }
 
+    if(cmdtrg)
+        test_OleCommandTarget(cmdtrg);
+
     if(activeobject) {
         HWND tmp_hwnd;
         hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
@@ -925,6 +1020,9 @@ static void test_HTMLDocument(void)
         ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
         CHECK_CALLED(OnInPlaceDeactivate);
     }
+
+    /* Calling test_OleCommandTarget here couses Segmentation Fault with native
+     * MSHTML. It doesn't with Wine. */
 
     if(activeobject) {
         HWND tmp_hwnd;
@@ -1015,6 +1113,9 @@ static void test_HTMLDocument(void)
         ok(tmp_hwnd == hwnd, "tmp_hwnd=%p, expected %p\n", tmp_hwnd, hwnd);
     }
 
+    if(cmdtrg)
+        test_OleCommandTarget(cmdtrg);
+
     if(view) {
         SET_EXPECT(SetActiveObject);
         SET_EXPECT(HideUI);
@@ -1067,6 +1168,8 @@ static void test_HTMLDocument(void)
         ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
     }
 
+    if(cmdtrg)
+        IOleCommandTarget_Release(cmdtrg);
     if(windowlessobj)
         IOleInPlaceObjectWindowless_Release(windowlessobj);
     if(oleobj)

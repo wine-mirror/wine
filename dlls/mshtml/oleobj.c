@@ -464,6 +464,48 @@ static const IOleDocumentVtbl OleDocumentVtbl = {
 
 #define CMDTARGET_THIS(iface) DEFINE_THIS(HTMLDocument, OleCommandTarget, iface)
 
+static const OLECMDF status_table[OLECMDID_GETPRINTTEMPLATE+1] = {
+    0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_OPEN */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_NEW */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SAVE */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_SAVEAS */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SAVECOPYAS */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_PRINT */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_PRINTPREVIEW */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_PAGESETUP */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SPELL */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_PROPERTIES */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_CUT */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_COPY */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_PASTE */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_PASTESPECIAL */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_UNDO */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_RENDO */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_SELECTALL */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_CLEARSELECTION */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_ZOOM */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_GETZOOMRANGE */
+    0,
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_REFRESH */
+    OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_STOP */
+    0,0,0,0,0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_STOPDOWNLOAD */
+    0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_DELETE */
+    0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_ENABLE_INTERACTION */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_ONUNLOAD */
+    0,0,0,0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SHOWPAGESETUP */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SHOWPRINT */
+    0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_CLOSE */
+    0,0,0,
+    OLECMDF_SUPPORTED,                  /* OLECMDID_SETPRINTTEMPLATE */
+    OLECMDF_SUPPORTED                   /* OLECMDID_GETPRINTTEMPLATE */
+};
+
 static HRESULT WINAPI OleCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = CMDTARGET_THIS(iface);
@@ -486,8 +528,33 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
         ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
 {
     HTMLDocument *This = CMDTARGET_THIS(iface);
-    FIXME("(%p)->(%s %ld %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
-    return E_NOTIMPL;
+    HRESULT hres = S_OK;
+
+    TRACE("(%p)->(%s %ld %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
+
+    if(!pguidCmdGroup) {
+        ULONG i;
+
+        for(i=0; i<cCmds; i++) {
+            if(prgCmds[i].cmdID<OLECMDID_OPEN || prgCmds[i].cmdID>OLECMDID_GETPRINTTEMPLATE) {
+                WARN("Unsupported cmdID = %ld\n", prgCmds[i].cmdID);
+                prgCmds[i].cmdf = 0;
+                hres = OLECMDERR_E_NOTSUPPORTED;
+            }else {
+                prgCmds[i].cmdf = status_table[prgCmds[i].cmdID];
+                TRACE("cmdID = %ld  returning %lx\n", prgCmds[i].cmdID, prgCmds[i].cmdID);
+                hres = S_OK;
+            }
+        }
+
+        if(pguidCmdGroup)
+            FIXME("Set pCmdText\n");
+    }else {
+        FIXME("Unsupported pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
+        hres = OLECMDERR_E_UNKNOWNGROUP;
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
