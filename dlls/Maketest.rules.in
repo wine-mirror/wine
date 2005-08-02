@@ -19,14 +19,12 @@ TESTRESULTS  = $(CTESTS:.c=.ok)
 TESTPROGRAM  = $(MODULE)$(DLLEXT)
 RUNTESTFLAGS = -q -P wine -M $(TESTDLL) -T $(TOPOBJDIR) -p $(TESTPROGRAM)
 
-C_SRCS       = $(CTESTS)
-EXTRA_SRCS   = $(TESTLIST)
-EXTRA_OBJS   = $(TESTLIST:.c=.o)
+C_SRCS       = $(CTESTS) $(TESTLIST)
 ALL_LIBS     = $(IMPORTS:%=-l%) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 DLL_LDPATH  = -L$(DLLDIR) $(IMPORTS:%=-L$(DLLDIR)/%)
 
 CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
-CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(RC_SRCS:.rc=.res.cross.o) $(TESTLIST:.c=.cross.o)
+CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(RC_SRCS:.rc=.res.cross.o)
 CROSSCC      = @CROSSCC@
 CROSSWINDRES = @CROSSWINDRES@
 
