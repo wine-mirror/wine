@@ -304,10 +304,6 @@ static inline ENCODING PROFILE_DetectTextEncoding(const void * buffer, int * len
     return ENCODING_ANSI;
 }
 
-static const WCHAR * PROFILE_GetLine(const WCHAR * szStart, const WCHAR * szEnd)
-{
-    return memchrW(szStart, '\n', szEnd - szStart);
-}
 
 /***********************************************************************
  *           PROFILE_Load
@@ -319,7 +315,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     void *pBuffer;
     WCHAR * szFile;
     const WCHAR *szLineStart, *szLineEnd;
-    const WCHAR *szValueStart, *szNameEnd, *szEnd;
+    const WCHAR *szValueStart, *szEnd, *next_line;
     int line = 0, len;
     PROFILESECTION *section, *first_section;
     PROFILESECTION **next_section;
@@ -406,20 +402,22 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     next_section = &first_section->next;
     next_key     = &first_section->key;
     prev_key     = NULL;
-    szLineEnd = szFile - 1; /* will be increased to correct value in loop */
+    next_line    = szFile;
 
-    while (TRUE)
+    while (next_line < szEnd)
     {
-        szLineStart = szLineEnd + 1;
-        if (szLineStart >= szEnd)
-            break;
-        szLineEnd = PROFILE_GetLine(szLineStart, szEnd);
-        if (!szLineEnd)
-            szLineEnd = szEnd;
+        szLineStart = next_line;
+        next_line = memchrW(szLineStart, '\n', szEnd - szLineStart);
+        if (!next_line) next_line = szEnd;
+        else next_line++;
+        szLineEnd = next_line;
+
         line++;
-        
+
+        /* get rid of white space */
         while (szLineStart < szLineEnd && PROFILE_isspaceW(*szLineStart)) szLineStart++;
-        
+        while ((szLineEnd > szLineStart) && ((szLineEnd[-1] == '\n') || PROFILE_isspaceW(szLineEnd[-1]))) szLineEnd--;
+
         if (szLineStart >= szLineEnd) continue;
 
         if (*szLineStart == '[')  /* section start */
@@ -453,28 +451,18 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
             }
         }
 
-        /* get rid of white space at the end of the line */
-        while ((szLineEnd > szLineStart) && ((*szLineEnd == '\n') || PROFILE_isspaceW(*szLineEnd))) szLineEnd--;
-
-        /* line end should be pointing to character *after* the last wanted character */
-        szLineEnd++;
-
         /* get rid of white space after the name and before the start
          * of the value */
-        if ((szNameEnd = szValueStart = memchrW( szLineStart, '=', szLineEnd - szLineStart )) != NULL)
+        len = szLineEnd - szLineStart;
+        if ((szValueStart = memchrW( szLineStart, '=', szLineEnd - szLineStart )) != NULL)
         {
-            szNameEnd = szValueStart - 1;
-            while ((szNameEnd > szLineStart) && PROFILE_isspaceW(*szNameEnd)) szNameEnd--;
+            const WCHAR *szNameEnd = szValueStart;
+            while ((szNameEnd > szLineStart) && PROFILE_isspaceW(szNameEnd[-1])) szNameEnd--;
+            len = szNameEnd - szLineStart;
             szValueStart++;
             while (szValueStart < szLineEnd && PROFILE_isspaceW(*szValueStart)) szValueStart++;
         }
-        if (!szNameEnd)
-            szNameEnd = szLineEnd - 1;
-        /* name end should be pointing to character *after* the last wanted character */
-        szNameEnd++;
 
-        len = (int)(szNameEnd - szLineStart);
-        
         if (len || !prev_key || *prev_key->name)
         {
             /* no need to allocate +1 for NULL terminating character as
