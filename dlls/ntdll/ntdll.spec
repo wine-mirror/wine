@@ -619,7 +619,7 @@
 @ stub RtlGetCompressionWorkSpaceSize
 @ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr)
 @ stdcall RtlGetCurrentDirectory_U(long ptr)
-# @ stub RtlGetCurrentPeb
+@ stdcall RtlGetCurrentPeb()
 @ stdcall RtlGetDaclSecurityDescriptor(ptr ptr ptr ptr)
 @ stub RtlGetElementGenericTable
 # @ stub RtlGetElementGenericTableAvl
@@ -1254,7 +1254,7 @@
 @ cdecl _i64tow(long long ptr long)
 @ cdecl _itoa(long ptr long)
 @ cdecl _itow(long ptr long)
-# @ stub _lfind
+@ cdecl _lfind(ptr ptr ptr long ptr) lfind
 @ cdecl _ltoa(long ptr long)
 @ cdecl _ltow(long ptr long)
 @ cdecl _memccpy(ptr ptr long long) memccpy
@@ -1286,19 +1286,19 @@
 @ cdecl atan(double)
 @ cdecl atoi(str)
 @ cdecl atol(str)
-# @ stub bsearch
+@ cdecl bsearch(ptr ptr long long ptr)
 @ cdecl ceil(double)
 @ cdecl cos(double)
 @ cdecl fabs(double)
 @ cdecl floor(double)
-# @ stub isalnum
+@ cdecl isalnum(long)
 @ cdecl isalpha(long)
-# @ stub iscntrl
+@ cdecl iscntrl(long)
 @ cdecl isdigit(long)
-# @ stub isgraph
+@ cdecl isgraph(long)
 @ cdecl islower(long)
 @ cdecl isprint(long)
-# @ stub ispunct
+@ cdecl ispunct(long)
 @ cdecl isspace(long)
 @ cdecl isupper(long)
 @ cdecl iswalpha(long) NTDLL_iswalpha
@@ -1343,8 +1343,8 @@
 @ cdecl toupper(long)
 @ cdecl towlower(long) NTDLL_towlower
 @ cdecl towupper(long) NTDLL_towupper
-# @ stub vDbgPrintEx
-# @ stub vDbgPrintExWithPrefix
+@ stdcall vDbgPrintEx(long long str ptr)
+@ stdcall vDbgPrintExWithPrefix(str long long str ptr)
 @ cdecl vsprintf(ptr str ptr)
 @ cdecl wcscat(wstr wstr) NTDLL_wcscat
 @ cdecl wcschr(wstr long) NTDLL_wcschr

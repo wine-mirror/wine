@@ -314,21 +314,41 @@ NTSTATUS WINAPIV DbgPrint(LPCSTR fmt, ...)
  */
 NTSTATUS WINAPIV DbgPrintEx(ULONG iComponentId, ULONG Level, LPCSTR fmt, ...)
 {
-  char buf[1024];
-  va_list args;
+    NTSTATUS ret;
+    va_list args;
 
-  va_start(args, fmt);
-  vsprintf(buf, fmt, args);
-  va_end(args);
+    va_start(args, fmt);
+    ret = vDbgPrintEx(iComponentId, Level, fmt, args);
+    va_end(args);
+    return ret;
+}
 
-  switch (Level & DPFLTR_MASK) {
-  case DPFLTR_ERROR_LEVEL:   ERR("%lx: %s", iComponentId, buf); break;
-  case DPFLTR_WARNING_LEVEL: WARN("%lx: %s", iComponentId, buf); break;
-  case DPFLTR_TRACE_LEVEL: 
-  case DPFLTR_INFO_LEVEL: 
-  default:                   TRACE("%lx: %s", iComponentId, buf); break;
-  }
-  return STATUS_SUCCESS;
+/******************************************************************************
+ *	vDbgPrintEx	[NTDLL.@]
+ */
+NTSTATUS WINAPI vDbgPrintEx( ULONG id, ULONG level, LPCSTR fmt, va_list args )
+{
+    return vDbgPrintExWithPrefix( "", id, level, fmt, args );
+}
+
+/******************************************************************************
+ *	vDbgPrintExWithPrefix  [NTDLL.@]
+ */
+NTSTATUS WINAPI vDbgPrintExWithPrefix( LPCSTR prefix, ULONG id, ULONG level, LPCSTR fmt, va_list args )
+{
+    char buf[1024];
+
+    vsprintf(buf, fmt, args);
+
+    switch (level & DPFLTR_MASK)
+    {
+    case DPFLTR_ERROR_LEVEL:   ERR("%s%lx: %s", prefix, id, buf); break;
+    case DPFLTR_WARNING_LEVEL: WARN("%s%lx: %s", prefix, id, buf); break;
+    case DPFLTR_TRACE_LEVEL:
+    case DPFLTR_INFO_LEVEL:
+    default:                   TRACE("%s%lx: %s", prefix, id, buf); break;
+    }
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************

@@ -60,6 +60,15 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
     return ret;
 }
 
+/******************************************************************************
+ *  RtlGetCurrentPeb  [NTDLL.@]
+ *
+ */
+PEB * WINAPI RtlGetCurrentPeb(void)
+{
+    return NtCurrentTeb()->Peb;
+}
+
 #define UNIMPLEMENTED_INFO_CLASS(c) \
     case c: \
         FIXME("(process=%p) Unimplemented information class: " #c "\n", ProcessHandle); \
