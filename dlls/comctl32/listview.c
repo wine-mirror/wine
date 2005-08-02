@@ -379,6 +379,9 @@ typedef struct tagLISTVIEW_INFO
 #define LV_FL_DT_FLAGS  (DT_TOP | DT_NOPREFIX | DT_EDITCONTROL | DT_CENTER | DT_WORDBREAK | DT_NOCLIP)
 #define LV_SL_DT_FLAGS  (DT_VCENTER | DT_NOPREFIX | DT_EDITCONTROL | DT_SINGLELINE | DT_WORD_ELLIPSIS | DT_END_ELLIPSIS)
 
+/* Image index from state */
+#define STATEIMAGEINDEX(x) (((x) & LVIS_STATEIMAGEMASK) >> 12)
+
 /* The time in milliseconds to reset the search in the list */
 #define KEY_DELAY       450
 
@@ -3729,7 +3732,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     /* state icons */
     if (infoPtr->himlState && !IsRectEmpty(&rcState))
     {
-        UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
+        UINT uStateImage = STATEIMAGEINDEX(lvItem.state);
         if (uStateImage)
 	{
 	     TRACE("uStateImage=%d\n", uStateImage);
@@ -6100,7 +6103,7 @@ static INT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL s
 	lpht->flags |= LVHT_ONITEMICON;
     else if (PtInRect(&rcLabel, opt))
 	lpht->flags |= LVHT_ONITEMLABEL;
-    else if (infoPtr->himlState && ((lvItem.state & LVIS_STATEIMAGEMASK) >> 12) && PtInRect(&rcState, opt))
+    else if (infoPtr->himlState && STATEIMAGEINDEX(lvItem.state) && PtInRect(&rcState, opt))
 	lpht->flags |= LVHT_ONITEMSTATEICON;
     if (lpht->flags & LVHT_ONITEM)
 	lpht->flags &= ~LVHT_NOWHERE;
@@ -6829,7 +6832,7 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I} hCurosr : the new hot cursor handle
+ * [I] hCursor : the new hot cursor handle
  *
  * RETURN:
  * Returns the previous hot cursor
@@ -8103,13 +8106,13 @@ static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, 
  * DESCRIPTION:
  * Processes mouse down messages (left mouse button).
  *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] wKey : key flag
- * [I] x,y : mouse coordinate
+ * PARAMETERS:
+ *   infoPtr  [I ] valid pointer to the listview structure
+ *   wKey     [I ] key flag
+ *   x,y      [I ] mouse coordinate
  *
  * RETURN:
- * Zero
+ *   Zero
  */
 static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT y)
 {
@@ -8139,12 +8142,12 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
   {
     if ((infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES) && (lvHitTestInfo.flags & LVHT_ONITEMSTATEICON))
     {
-        DWORD state = LISTVIEW_GetItemState(infoPtr, nItem, LVIS_STATEIMAGEMASK) >> 12;
+        DWORD state = STATEIMAGEINDEX(LISTVIEW_GetItemState(infoPtr, nItem, LVIS_STATEIMAGEMASK));
         if(state == 1 || state == 2)
         {
             LVITEMW lvitem;
             state ^= 3;
-            lvitem.state = state << 12;
+            lvitem.state = INDEXTOSTATEIMAGEMASK(state);
             lvitem.stateMask = LVIS_STATEIMAGEMASK;
             LISTVIEW_SetItemState(infoPtr, nItem, &lvitem);
         }
@@ -8218,13 +8221,13 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
  * DESCRIPTION:
  * Processes mouse up messages (left mouse button).
  *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] wKey : key flag
- * [I] x,y : mouse coordinate
+ * PARAMETERS:
+ *   infoPtr [I ] valid pointer to the listview structure
+ *   wKey    [I ] key flag
+ *   x,y     [I ] mouse coordinate
  *
  * RETURN:
- * Zero
+ *   Zero
  */
 static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT y)
 {
