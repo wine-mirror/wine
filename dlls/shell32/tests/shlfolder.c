@@ -59,6 +59,41 @@ static void init_function_pointers(void)
     ok(hr == S_OK, "SHGetMalloc failed %08lx\n", hr);
 }
 
+static void test_ParseDisplayName(void)
+{
+    HRESULT hr;
+    IShellFolder *IDesktopFolder;
+    static const char *cNonExistDir1A = "c:\\nonexist_subdir";
+    static const char *cNonExistDir2A = "c:\\\\nonexist_subdir";
+    DWORD res;
+    WCHAR cTestDirW [MAX_PATH] = {0};
+    ITEMIDLIST *newPIDL;
+
+    hr = SHGetDesktopFolder(&IDesktopFolder);
+    if(hr != S_OK) return;
+
+    res = GetFileAttributesA(cNonExistDir1A);
+    if(res != INVALID_FILE_ATTRIBUTES) return;
+
+    MultiByteToWideChar(CP_ACP, 0, cNonExistDir1A, -1, cTestDirW, MAX_PATH);
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder, 
+        NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
+    /* This call returns HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) only in Windows.
+     * Should we distinguish between cNonExistDir1A and cNonExistDir2A ?
+     * Putting test as todo. */
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), 
+        "ParseDisplayName returned %08lx, expected 80070002\n", hr);
+
+    res = GetFileAttributesA(cNonExistDir2A);
+    if(res != INVALID_FILE_ATTRIBUTES) return;
+
+    MultiByteToWideChar(CP_ACP, 0, cNonExistDir2A, -1, cTestDirW, MAX_PATH);
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder, 
+        NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
+    ok((hr == E_FAIL), "ParseDisplayName returned %08lx, expected E_FAIL\n", hr);
+}
+
 /* creates a file with the specified name for tests */
 static void CreateTestFile(const CHAR *name)
 {
@@ -624,6 +659,7 @@ START_TEST(shlfolder)
        CO_E_NOTINITIALIZED for malformed directory names on win2k. */
     OleInitialize(NULL);
 
+    test_ParseDisplayName();
     test_BindToObject();
     test_EnumObjects_and_CompareIDs();
     test_GetDisplayName();
