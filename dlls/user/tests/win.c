@@ -2988,6 +2988,238 @@ static void test_redrawnow(void)
    DestroyWindow( hwndMain);
 }
 
+struct parentdc_stat {
+    RECT client;
+    RECT clip;
+    RECT paint;
+};
+
+struct parentdc_test {
+   struct parentdc_stat main, main_todo;
+   struct parentdc_stat child1, child1_todo;
+   struct parentdc_stat child2, child2_todo;
+};
+
+static LRESULT WINAPI parentdc_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    RECT rc;
+    PAINTSTRUCT ps;
+
+    struct parentdc_stat *t = (struct parentdc_stat *)GetWindowLongPtrA(hwnd, GWL_USERDATA);
+
+    switch (msg)
+    {
+    case WM_PAINT:
+        trace("doing WM_PAINT on %p\n", hwnd);
+        GetClientRect(hwnd, &rc);
+        CopyRect(&t->client, &rc);
+        trace("client rect (%ld, %ld)-(%ld, %ld)\n", rc.left, rc.top, rc.right, rc.bottom);
+        GetWindowRect(hwnd, &rc);
+        trace("window rect (%ld, %ld)-(%ld, %ld)\n", rc.left, rc.top, rc.right, rc.bottom);
+        BeginPaint(hwnd, &ps);
+        CopyRect(&t->paint, &ps.rcPaint);
+        GetClipBox(ps.hdc, &rc);
+        CopyRect(&t->clip, &rc);
+        trace("clip rect (%ld, %ld)-(%ld, %ld)\n", rc.left, rc.top, rc.right, rc.bottom);
+        trace("paint rect (%ld, %ld)-(%ld, %ld)\n", ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
+        EndPaint(hwnd, &ps);
+        return 0;
+    }
+    return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+static void zero_parentdc_stat(struct parentdc_stat *t)
+{
+    SetRectEmpty(&t->client);
+    SetRectEmpty(&t->clip);
+    SetRectEmpty(&t->paint);
+}
+
+static void zero_parentdc_test(struct parentdc_test *t)
+{
+    zero_parentdc_stat(&t->main);
+    zero_parentdc_stat(&t->child1);
+    zero_parentdc_stat(&t->child2);
+}
+
+#define parentdc_field_ok(t, w, r, f, got) \
+  ok (t.w.r.f==got.w.r.f, "window " #w ", rect " #r ", field " #f \
+      ": expected %ld, got %ld\n", \
+      t.w.r.f, got.w.r.f)
+
+#define parentdc_todo_field_ok(t, w, r, f, got) \
+  if (t.w##_todo.r.f) todo_wine { parentdc_field_ok(t, w, r, f, got); } \
+  else parentdc_field_ok(t, w, r, f, got)
+
+#define parentdc_rect_ok(t, w, r, got) \
+  parentdc_todo_field_ok(t, w, r, left, got); \
+  parentdc_todo_field_ok(t, w, r, top, got); \
+  parentdc_todo_field_ok(t, w, r, right, got); \
+  parentdc_todo_field_ok(t, w, r, bottom, got);
+
+#define parentdc_win_ok(t, w, got) \
+  parentdc_rect_ok(t, w, client, got); \
+  parentdc_rect_ok(t, w, clip, got); \
+  parentdc_rect_ok(t, w, paint, got);
+
+#define parentdc_ok(t, got) \
+  parentdc_win_ok(t, main, got); \
+  parentdc_win_ok(t, child1, got); \
+  parentdc_win_ok(t, child2, got);
+
+static void test_csparentdc(void)
+{
+   WNDCLASSA clsMain, cls;
+   HWND hwndMain, hwnd1, hwnd2;
+   MSG msg;
+   RECT rc;
+
+   struct parentdc_test test_answer;
+
+#define nothing_todo {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}
+   const struct parentdc_test test1 = 
+   {
+        {{0, 0, 150, 150}, {0, 0, 150, 150}, {0, 0, 150, 150}}, nothing_todo,
+        {{0, 0, 40, 40}, {-20, -20, 130, 130}, {0, 0, 40, 40}}, {{0, 0, 0, 0}, {1, 1, 1, 1}, {0, 0, 0, 0}},
+        {{0, 0, 40, 40}, {-40, -40, 110, 110}, {0, 0, 40, 40}}, {{0, 0, 0, 0}, {1, 1, 1, 1}, {0, 0, 0, 0}},
+   };
+
+   const struct parentdc_test test2 = 
+   {
+        {{0, 0, 150, 150}, {0, 0, 50, 50}, {0, 0, 50, 50}}, nothing_todo,
+        {{0, 0, 40, 40}, {-20, -20, 30, 30}, {0, 0, 30, 30}}, {{0, 0, 0, 0}, {1, 1, 0, 0}, {0, 0, 0, 0}},
+        {{0, 0, 40, 40}, {-40, -40, 10, 10}, {0, 0, 10, 10}}, {{0, 0, 0, 0}, {1, 1, 0, 0}, {0, 0, 0, 0}},
+   };
+
+   const struct parentdc_test test3 = 
+   {
+        {{0, 0, 150, 150}, {0, 0, 10, 10}, {0, 0, 10, 10}}, nothing_todo,
+        {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, nothing_todo,
+        {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, nothing_todo,
+   };
+
+   const struct parentdc_test test4 = 
+   {
+        {{0, 0, 150, 150}, {40, 40, 50, 50}, {40, 40, 50, 50}}, nothing_todo,
+        {{0, 0, 40, 40}, {20, 20, 30, 30}, {20, 20, 30, 30}}, nothing_todo,
+        {{0, 0, 40, 40}, {0, 0, 10, 10}, {0, 0, 10, 10}}, nothing_todo,
+   };
+
+   const struct parentdc_test test5 = 
+   {
+        {{0, 0, 150, 150}, {20, 20, 60, 60}, {20, 20, 60, 60}}, nothing_todo,
+        {{0, 0, 40, 40}, {-20, -20, 130, 130}, {0, 0, 40, 40}}, {{0, 0, 0, 0}, {1, 1, 1, 1}, {0, 0, 0, 0}},
+        {{0, 0, 40, 40}, {-20, -20, 20, 20}, {0, 0, 20, 20}}, {{0, 0, 0, 0}, {1, 1, 0, 0}, {0, 0, 0, 0}},
+   };
+
+   const struct parentdc_test test6 = 
+   {
+        {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, nothing_todo,
+        {{0, 0, 40, 40}, {0, 0, 10, 10}, {0, 0, 10, 10}}, nothing_todo,
+        {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, nothing_todo,
+   };
+
+   const struct parentdc_test test7 = 
+   {
+        {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, nothing_todo,
+        {{0, 0, 40, 40}, {-20, -20, 130, 130}, {0, 0, 40, 40}}, {{0, 0, 0, 0}, {1, 1, 1, 1}, {0, 0, 0, 0}},
+        {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, nothing_todo,
+   };
+#undef nothing_todo
+
+   clsMain.style = CS_DBLCLKS;
+   clsMain.lpfnWndProc = parentdc_window_procA;
+   clsMain.cbClsExtra = 0;
+   clsMain.cbWndExtra = 0;
+   clsMain.hInstance = GetModuleHandleA(0);
+   clsMain.hIcon = 0;
+   clsMain.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+   clsMain.hbrBackground = GetStockObject(WHITE_BRUSH);
+   clsMain.lpszMenuName = NULL;
+   clsMain.lpszClassName = "ParentDcMainWindowClass";
+
+   if(!RegisterClassA(&clsMain)) {
+       trace("Register failed %ld\n", GetLastError());
+       return;
+   }
+
+   cls.style = CS_DBLCLKS | CS_PARENTDC;
+   cls.lpfnWndProc = parentdc_window_procA;
+   cls.cbClsExtra = 0;
+   cls.cbWndExtra = 0;
+   cls.hInstance = GetModuleHandleA(0);
+   cls.hIcon = 0;
+   cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+   cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+   cls.lpszMenuName = NULL;
+   cls.lpszClassName = "ParentDcWindowClass";
+
+   if(!RegisterClassA(&cls)) {
+       trace("Register failed %ld\n", GetLastError());
+       return;
+   }
+
+   SetRect(&rc, 0, 0, 150, 150);
+   AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, FALSE, 0);
+   hwndMain = CreateWindowA("ParentDcMainWindowClass", "Main Window", WS_OVERLAPPEDWINDOW,
+                            CW_USEDEFAULT, 0, rc.right - rc.left, rc.bottom - rc.top, NULL, NULL, 0, NULL);
+   SetWindowLongPtrA(hwndMain, GWL_USERDATA, (DWORD_PTR)&test_answer.main);
+   hwnd1 = CreateWindowA("ParentDcWindowClass", "Child Window 1", WS_CHILD,
+                            20, 20, 40, 40, hwndMain, NULL, 0, NULL);
+   SetWindowLongPtrA(hwnd1, GWL_USERDATA, (DWORD_PTR)&test_answer.child1);
+   hwnd2 = CreateWindowA("ParentDcWindowClass", "Child Window 2", WS_CHILD,
+                            40, 40, 40, 40, hwndMain, NULL, 0, NULL);
+   SetWindowLongPtrA(hwnd2, GWL_USERDATA, (DWORD_PTR)&test_answer.child2);
+   ShowWindow(hwndMain, SW_SHOW);
+   ShowWindow(hwnd1, SW_SHOW);
+   ShowWindow(hwnd2, SW_SHOW);
+
+   zero_parentdc_test(&test_answer);
+   InvalidateRect(hwndMain, NULL, TRUE);
+   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   parentdc_ok(test1, test_answer);
+
+   zero_parentdc_test(&test_answer);
+   SetRect(&rc, 0, 0, 50, 50);
+   InvalidateRect(hwndMain, &rc, TRUE);
+   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   parentdc_ok(test2, test_answer);
+
+   zero_parentdc_test(&test_answer);
+   SetRect(&rc, 0, 0, 10, 10);
+   InvalidateRect(hwndMain, &rc, TRUE);
+   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   parentdc_ok(test3, test_answer);
+
+   zero_parentdc_test(&test_answer);
+   SetRect(&rc, 40, 40, 50, 50);
+   InvalidateRect(hwndMain, &rc, TRUE);
+   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   parentdc_ok(test4, test_answer);
+
+   zero_parentdc_test(&test_answer);
+   SetRect(&rc, 20, 20, 60, 60);
+   InvalidateRect(hwndMain, &rc, TRUE);
+   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   parentdc_ok(test5, test_answer);
+
+   zero_parentdc_test(&test_answer);
+   SetRect(&rc, 0, 0, 10, 10);
+   InvalidateRect(hwnd1, &rc, TRUE);
+   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   parentdc_ok(test6, test_answer);
+
+   zero_parentdc_test(&test_answer);
+   SetRect(&rc, -5, -5, 65, 65);
+   InvalidateRect(hwnd1, &rc, TRUE);
+   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   parentdc_ok(test7, test_answer);
+
+   DestroyWindow(hwndMain);
+   DestroyWindow(hwnd1);
+   DestroyWindow(hwnd2);
+}
+
 static void test_IsWindowUnicode(void)
 {
     static const char ansi_class_nameA[] = "ansi class name";
@@ -3176,4 +3408,5 @@ START_TEST(win)
     test_AdjustWindowRect();
     test_window_styles();
     test_redrawnow();
+    test_csparentdc();
 }
