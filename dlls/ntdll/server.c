@@ -119,9 +119,9 @@ static void fatal_perror( const char *err, ... )
 
 
 /***********************************************************************
- *           wine_server_exit_thread  (NTDLL.@)
+ *           server_exit_thread
  */
-void wine_server_exit_thread( int status )
+void server_exit_thread( int status )
 {
     struct wine_pthread_thread_info info;
     ULONG size;

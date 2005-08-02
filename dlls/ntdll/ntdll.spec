@@ -568,7 +568,7 @@
 @ stdcall RtlEqualString(ptr ptr long)
 @ stdcall RtlEqualUnicodeString(ptr ptr long)
 @ stdcall RtlEraseUnicodeString(ptr)
-# @ stub RtlExitUserThread
+@ stdcall RtlExitUserThread(long)
 @ stdcall RtlExpandEnvironmentStrings_U(ptr ptr ptr ptr)
 @ stub RtlExtendHeap
 @ stdcall -ret64 RtlExtendedIntegerMultiply(long long long)
@@ -1384,7 +1384,6 @@
 @ cdecl wine_server_handle_to_fd(long long ptr ptr)
 @ cdecl wine_server_release_fd(long long)
 @ cdecl wine_server_send_fd(long)
-@ cdecl wine_server_exit_thread(long)
 
 # Codepages
 @ cdecl __wine_init_codepages(ptr ptr ptr)

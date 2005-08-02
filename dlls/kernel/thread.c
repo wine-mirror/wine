@@ -248,11 +248,7 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
         LdrShutdownProcess();
         exit( code );
     }
-    else
-    {
-        LdrShutdownThread();
-        wine_server_exit_thread( code );
-    }
+    else RtlExitUserThread( code );
 }
 
 

@@ -54,7 +54,6 @@ extern void wine_server_send_fd( int fd );
 extern int wine_server_fd_to_handle( int fd, unsigned int access, int inherit, obj_handle_t *handle );
 extern int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd, int *flags );
 extern void wine_server_release_fd( obj_handle_t handle, int unix_fd );
-extern void DECLSPEC_NORETURN wine_server_exit_thread( int status );
 
 /* do a server call and set the last error code */
 inline static unsigned int wine_server_call_err( void *req_ptr )

@@ -344,6 +344,16 @@ error:
 
 
 /***********************************************************************
+ *           RtlExitUserThread  (NTDLL.@)
+ */
+void WINAPI RtlExitUserThread( ULONG status )
+{
+    LdrShutdownThread();
+    server_exit_thread( status );
+}
+
+
+/***********************************************************************
  *              NtOpenThread   (NTDLL.@)
  *              ZwOpenThread   (NTDLL.@)
  */
