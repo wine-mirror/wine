@@ -338,7 +338,6 @@ NTSTATUS WINAPI RtlGetVersion( RTL_OSVERSIONINFOEXW *info )
         info->wSuiteMask        = current->wSuiteMask;
         info->wProductType      = current->wProductType;
     }
-    TRACE("<-- %s (%s)\n", debug_names[current - VersionData], debugstr_w(current->szCSDVersion) );
     return STATUS_SUCCESS;
 }
 
