@@ -47,6 +47,107 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 
 
+static WCHAR *dll_directory;  /* extra path for SetDllDirectoryW */
+
+static CRITICAL_SECTION dlldir_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &dlldir_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": dlldir_section") }
+};
+static CRITICAL_SECTION dlldir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+
+/****************************************************************************
+ *              GetDllDirectoryA   (KERNEL32.@)
+ */
+DWORD WINAPI GetDllDirectoryA( DWORD buf_len, LPSTR buffer )
+{
+    DWORD len;
+
+    RtlEnterCriticalSection( &dlldir_section );
+    len = dll_directory ? FILE_name_WtoA( dll_directory, strlenW(dll_directory), NULL, 0 ) : 0;
+    if (buffer && buf_len > len)
+    {
+        if (dll_directory) FILE_name_WtoA( dll_directory, -1, buffer, buf_len );
+        else *buffer = 0;
+    }
+    else
+    {
+        len++;  /* for terminating null */
+        if (buffer) *buffer = 0;
+    }
+    RtlLeaveCriticalSection( &dlldir_section );
+    return len;
+}
+
+
+/****************************************************************************
+ *              GetDllDirectoryW   (KERNEL32.@)
+ */
+DWORD WINAPI GetDllDirectoryW( DWORD buf_len, LPWSTR buffer )
+{
+    DWORD len;
+
+    RtlEnterCriticalSection( &dlldir_section );
+    len = dll_directory ? strlenW( dll_directory ) : 0;
+    if (buffer && buf_len > len)
+    {
+        if (dll_directory) memcpy( buffer, dll_directory, (len + 1) * sizeof(WCHAR) );
+        else *buffer = 0;
+    }
+    else
+    {
+        len++;  /* for terminating null */
+        if (buffer) *buffer = 0;
+    }
+    RtlLeaveCriticalSection( &dlldir_section );
+    return len;
+}
+
+
+/****************************************************************************
+ *              SetDllDirectoryA   (KERNEL32.@)
+ */
+BOOL WINAPI SetDllDirectoryA( LPCSTR dir )
+{
+    WCHAR *dirW;
+    BOOL ret;
+
+    if (!(dirW = FILE_name_AtoW( dir, TRUE ))) return FALSE;
+    ret = SetDllDirectoryW( dirW );
+    HeapFree( GetProcessHeap(), 0, dirW );
+    return ret;
+}
+
+
+/****************************************************************************
+ *              SetDllDirectoryW   (KERNEL32.@)
+ */
+BOOL WINAPI SetDllDirectoryW( LPCWSTR dir )
+{
+    WCHAR *newdir = NULL;
+
+    if (dir)
+    {
+        DWORD len = (strlenW(dir) + 1) * sizeof(WCHAR);
+        if (!(newdir = HeapAlloc( GetProcessHeap(), 0, len )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return FALSE;
+        }
+        memcpy( newdir, dir, len );
+    }
+
+    RtlEnterCriticalSection( &dlldir_section );
+    HeapFree( GetProcessHeap(), 0, dll_directory );
+    dll_directory = newdir;
+    RtlLeaveCriticalSection( &dlldir_section );
+    return TRUE;
+}
+
+
 /****************************************************************************
  *              DisableThreadLibraryCalls (KERNEL32.@)
  *
@@ -570,14 +671,26 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
     if (RtlQueryEnvironmentVariable_U( NULL, &name, &value ) == STATUS_BUFFER_TOO_SMALL)
         path_len = value.Length;
 
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, path_len + len * sizeof(WCHAR) ))) return NULL;
-    p = ret;
-    if (module)
+    RtlEnterCriticalSection( &dlldir_section );
+    if (dll_directory) len += strlenW(dll_directory) + 1;
+    if ((p = ret = HeapAlloc( GetProcessHeap(), 0, path_len + len * sizeof(WCHAR) )))
     {
-        memcpy( ret, module, (mod_end - module) * sizeof(WCHAR) );
-        p += (mod_end - module);
-        *p++ = ';';
+        if (module)
+        {
+            memcpy( ret, module, (mod_end - module) * sizeof(WCHAR) );
+            p += (mod_end - module);
+            *p++ = ';';
+        }
+        if (dll_directory)
+        {
+            strcpyW( p, dll_directory );
+            p += strlenW(p);
+            *p++ = ';';
+        }
     }
+    RtlLeaveCriticalSection( &dlldir_section );
+    if (!ret) return NULL;
+
     strcpyW( p, system_path );
     p += strlenW(p);
     *p++ = ';';

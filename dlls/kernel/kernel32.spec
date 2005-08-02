@@ -508,8 +508,8 @@
 @ stdcall GetDiskFreeSpaceExA (str ptr ptr ptr)
 @ stdcall GetDiskFreeSpaceExW (wstr ptr ptr ptr)
 @ stdcall GetDiskFreeSpaceW(wstr ptr ptr ptr ptr)
-# @ stub GetDllDirectoryA
-# @ stub GetDllDirectoryW
+@ stdcall GetDllDirectoryA(long ptr)
+@ stdcall GetDllDirectoryW(long ptr)
 @ stdcall GetDriveTypeA(str)
 @ stdcall GetDriveTypeW(wstr)
 @ stdcall GetEnvironmentStrings() GetEnvironmentStringsA
@@ -996,8 +996,8 @@
 @ stub SetDaylightFlag
 @ stdcall SetDefaultCommConfigA(str ptr long)
 @ stdcall SetDefaultCommConfigW(wstr ptr long)
-# @ stub SetDllDirectoryA
-# @ stub SetDllDirectoryW
+@ stdcall SetDllDirectoryA(str)
+@ stdcall SetDllDirectoryW(wstr)
 @ stdcall SetEndOfFile(long)
 @ stdcall SetEnvironmentVariableA(str str)
 @ stdcall SetEnvironmentVariableW(wstr wstr)
