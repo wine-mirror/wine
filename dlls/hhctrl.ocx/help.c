@@ -44,7 +44,7 @@ typedef struct tagHHInfo
 {
     HH_WINTYPEW *pHHWinType;
     HINSTANCE hInstance;
-    LPCWSTR szCmdLine;
+    LPWSTR szCmdLine;
     DWORD dwNumTBButtons;
     HWND hwndTabCtrl;
     HFONT hFont;
@@ -473,7 +473,7 @@ static BOOL HH_CreateViewer(HHInfo *pHHInfo)
     return TRUE;
 }
 
-static HHInfo *HH_OpenHH(HINSTANCE hInstance, LPCWSTR szCmdLine)
+static HHInfo *HH_OpenHH(HINSTANCE hInstance, LPWSTR szCmdLine)
 {
     HHInfo *pHHInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HHInfo));
 
@@ -490,6 +490,7 @@ static void HH_Close(HHInfo *pHHInfo)
         return;
 
     HeapFree(GetProcessHeap(), 0, pHHInfo->pHHWinType);
+    HeapFree(GetProcessHeap(), 0, pHHInfo->szCmdLine);
 }
 
 /* FIXME: Check szCmdLine for bad arguments */
