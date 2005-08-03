@@ -1015,15 +1015,34 @@ HRESULT WINAPI GetThemeBackgroundExtent(HTHEME hTheme, HDC hdc, int iPartId,
     if(!hTheme)
         return E_HANDLE;
 
+    /* try content margins property... */
     hr = GetThemeMargins(hTheme, hdc, iPartId, iStateId, TMT_CONTENTMARGINS, NULL, &margin);
-    if(FAILED(hr)) {
-        TRACE("Margins not found\n");
-        return hr;
+    if(SUCCEEDED(hr)) {
+        pExtentRect->left = pContentRect->left - margin.cxLeftWidth;
+        pExtentRect->top  = pContentRect->top - margin.cyTopHeight;
+        pExtentRect->right = pContentRect->right + margin.cxRightWidth;
+        pExtentRect->bottom = pContentRect->bottom + margin.cyBottomHeight;
+    } else {
+        /* otherwise, try to determine content rect from the background type and props */
+        int bgtype = BT_BORDERFILL;
+        memcpy(pExtentRect, pContentRect, sizeof(RECT));
+
+        GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_BGTYPE, &bgtype);
+        if(bgtype == BT_BORDERFILL) {
+            int bordersize = 1;
+    
+            GetThemeInt(hTheme, iPartId, iStateId, TMT_BORDERSIZE, &bordersize);
+            InflateRect(pExtentRect, bordersize, bordersize);
+        } else if ((bgtype == BT_IMAGEFILE)
+                && (SUCCEEDED(hr = GetThemeMargins(hTheme, hdc, iPartId, iStateId, 
+                TMT_SIZINGMARGINS, NULL, &margin)))) {
+            pExtentRect->left = pContentRect->left - margin.cxLeftWidth;
+            pExtentRect->top  = pContentRect->top - margin.cyTopHeight;
+            pExtentRect->right = pContentRect->right + margin.cxRightWidth;
+            pExtentRect->bottom = pContentRect->bottom + margin.cyBottomHeight;
+        }
+        /* If nothing was found, leave unchanged */
     }
-    pExtentRect->left = pContentRect->left - margin.cxLeftWidth;
-    pExtentRect->top  = pContentRect->top - margin.cyTopHeight;
-    pExtentRect->right = pContentRect->right + margin.cxRightWidth;
-    pExtentRect->bottom = pContentRect->bottom + margin.cyBottomHeight;
 
     TRACE("left:%ld,top:%ld,right:%ld,bottom:%ld\n", pExtentRect->left, pExtentRect->top, pExtentRect->right, pExtentRect->bottom);
 
