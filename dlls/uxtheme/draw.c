@@ -462,7 +462,7 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
             
                 GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_SIZINGTYPE, &sizingtype);
                 if(sizingtype == ST_TRUESIZE) {
-                    int truesizestretchmark = 0;
+                    int truesizestretchmark = 100;
             
                     if(dstSize.x < 0 || dstSize.y < 0) {
                         BOOL mirrorimage = TRUE;
@@ -481,8 +481,8 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
                     /* Only stretch when target exceeds source by truesizestretchmark percent */
                     GetThemeInt(hTheme, iPartId, iStateId, TMT_TRUESIZESTRETCHMARK, &truesizestretchmark);
                     if(dstSize.x < 0 || dstSize.y < 0 ||
-                      MulDiv(srcSize.x, 100, dstSize.x) > truesizestretchmark ||
-                      MulDiv(srcSize.y, 100, dstSize.y) > truesizestretchmark) {
+                      (MulDiv(srcSize.x, 100, dstSize.x) > truesizestretchmark &&
+                      MulDiv(srcSize.y, 100, dstSize.y) > truesizestretchmark)) {
                         memcpy (psz, &dstSize, sizeof (SIZE));
                     }
                     else {
