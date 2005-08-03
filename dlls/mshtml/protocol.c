@@ -138,7 +138,12 @@ static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
 
 typedef struct {
     const IInternetProtocolVtbl *lpInternetProtocolVtbl;
+
     LONG ref;
+
+    BYTE *data;
+    ULONG data_len;
+    ULONG cur;
 } AboutProtocol;
 
 static HRESULT WINAPI AboutProtocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
@@ -184,6 +189,7 @@ static ULONG WINAPI AboutProtocol_Release(IInternetProtocol *iface)
     TRACE("(%p) ref=%lx\n", iface, ref);
 
     if(!ref) {
+        HeapFree(GetProcessHeap(), 0, This->data);
         HeapFree(GetProcessHeap(), 0, This);
         UNLOCK_MODULE();
     }
@@ -196,9 +202,53 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
         DWORD grfPI, DWORD dwReserved)
 {
     AboutProtocol *This = (AboutProtocol*)iface;
-    FIXME("(%p)->(%s %p %p %08lx %ld)\n", This, debugstr_w(szUrl), pOIProtSink,
+    BINDINFO bindinfo;
+    DWORD grfBINDF = 0;
+    LPCWSTR text = NULL;
+
+    static const WCHAR html_begin[] = {0xfeff,'<','H','T','M','L','>',0};
+    static const WCHAR html_end[] = {'<','/','H','T','M','L','>',0};
+    static const WCHAR wszBlank[] = {'b','l','a','n','k',0};
+    static const WCHAR wszAbout[] = {'a','b','o','u','t',':'};
+
+    /* NOTE:
+     * the about protocol seems not to work as I would expect. It creates html document
+     * for a given url, eg. about:some_text -> <HTML>some_text</HTML> except for the case when
+     * some_text = "blank", when document is blank (<HTML></HMTL>). The same happens
+     * when the url does not have "about:" in the beginning.
+     */
+
+    TRACE("(%p)->(%s %p %p %08lx %ld)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
-    return E_NOTIMPL;
+
+    memset(&bindinfo, 0, sizeof(bindinfo));
+    bindinfo.cbSize = sizeof(BINDINFO);
+    IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
+
+    if(strlenW(szUrl)>=sizeof(wszAbout)/sizeof(WCHAR) && !memcmp(wszAbout, szUrl, sizeof(wszAbout))) {
+        text = szUrl + sizeof(wszAbout)/sizeof(WCHAR);
+        if(!strcmpW(wszBlank, text))
+            text = NULL;
+    }
+
+    This->data_len = sizeof(html_begin)+sizeof(html_end)-sizeof(WCHAR) 
+        + (text ? strlenW(text)*sizeof(WCHAR) : 0);
+    This->data = HeapAlloc(GetProcessHeap(), 0, This->data_len);
+
+    memcpy(This->data, html_begin, sizeof(html_begin));
+    if(text)
+        strcatW((LPWSTR)This->data, text);
+    strcatW((LPWSTR)This->data, html_end);
+    
+    This->cur = 0;
+
+    IInternetProtocolSink_ReportData(pOIProtSink,
+            BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION | BSCF_DATAFULLYAVAILABLE,
+            This->data_len, This->data_len);
+
+    IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AboutProtocol_Continue(IInternetProtocol *iface, PROTOCOLDATA* pProtocolData)
@@ -219,8 +269,8 @@ static HRESULT WINAPI AboutProtocol_Abort(IInternetProtocol *iface, HRESULT hrRe
 static HRESULT WINAPI AboutProtocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)
 {
     AboutProtocol *This = (AboutProtocol*)iface;
-    FIXME("(%p)->(%08lx)\n", This, dwOptions);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%08lx)\n", This, dwOptions);
+    return S_OK;
 }
 
 static HRESULT WINAPI AboutProtocol_Suspend(IInternetProtocol *iface)
@@ -240,8 +290,21 @@ static HRESULT WINAPI AboutProtocol_Resume(IInternetProtocol *iface)
 static HRESULT WINAPI AboutProtocol_Read(IInternetProtocol *iface, void* pv, ULONG cb, ULONG* pcbRead)
 {
     AboutProtocol *This = (AboutProtocol*)iface;
-    FIXME("(%p)->(%lu %p)\n", This, cb, pcbRead);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %lu %p)\n", This, pv, cb, pcbRead);
+
+    if(!This->data)
+        return E_FAIL;
+
+    *pcbRead = (cb > This->data_len-This->cur ? This->data_len-This->cur : cb);
+
+    if(!*pcbRead)
+        return S_FALSE;
+
+    memcpy(pv, This->data, *pcbRead);
+    This->cur += *pcbRead;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AboutProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER dlibMove,
@@ -255,15 +318,19 @@ static HRESULT WINAPI AboutProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER
 static HRESULT WINAPI AboutProtocol_LockRequest(IInternetProtocol *iface, DWORD dwOptions)
 {
     AboutProtocol *This = (AboutProtocol*)iface;
-    FIXME("(%p)->(%ld)\n", This, dwOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%ld)\n", This, dwOptions);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AboutProtocol_UnlockRequest(IInternetProtocol *iface)
 {
     AboutProtocol *This = (AboutProtocol*)iface;
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    return S_OK;
 }
 
 static const IInternetProtocolVtbl AboutProtocolVtbl = {
@@ -293,6 +360,10 @@ static HRESULT WINAPI AboutProtocolFactory_CreateInstance(IClassFactory *iface, 
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(AboutProtocol));
     ret->lpInternetProtocolVtbl = &AboutProtocolVtbl;
     ret->ref = 0;
+
+    ret->data = NULL;
+    ret->data_len = 0;
+    ret->cur = 0;
 
     hres = IUnknown_QueryInterface((IUnknown*)ret, riid, ppv);
 

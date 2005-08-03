@@ -29,6 +29,7 @@
 #include "initguid.h"
 
 DEFINE_GUID(CLSID_ResProtocol, 0x3050F3BC, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
+DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 
 static BOOL expect_GetBindInfo = FALSE, called_GetBindInfo = FALSE;
 static BOOL expect_ReportProgress = FALSE, called_ReportProgress = FALSE;
@@ -312,6 +313,83 @@ static void test_res_protocol(void)
             protocol_start(protocol, blank_url);
             hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
             ok(hres == S_OK, "Read failed: %08lx\n", hres);
+            hres = IInternetProtocol_Terminate(protocol, 0);
+            ok(hres == S_OK, "Terminate failed: %08lx\n", hres);
+
+            IInternetProtocol_Release(protocol);
+        }
+
+        IClassFactory_Release(factory);
+    }
+
+    IUnknown_Release(unk);
+}
+
+static void test_about_protocol(void)
+{
+    IInternetProtocolInfo *protocol_info;
+    IUnknown *unk;
+    IClassFactory *factory;
+    HRESULT hres;
+
+    static const WCHAR blank_url[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+    static const WCHAR test_url[] = {'a','b','o','u','t',':','t','e','s','t',0};
+    static const WCHAR res_url[] = {'r','e','s',':','b','l','a','n','k',0};
+    static const WCHAR blank_html[] = {0xfeff,'<','H','T','M','L','>','<','/','H','T','M','L','>',0};
+    static const WCHAR test_html[] =
+        {0xfeff,'<','H','T','M','L','>','t','e','s','t','<','/','H','T','M','L','>',0};
+
+    hres = CoGetClassObject(&CLSID_AboutProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "CoGetClassObject failed: %08lx\n", hres);
+    if(!SUCCEEDED(hres))
+        return;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&protocol_info);
+    ok(hres == S_OK, "Could not get IInternetProtocolInfo interface: %08lx\n", hres);
+    if(SUCCEEDED(hres)) {
+        /* TODO: test IInternetProtocol interface */
+        IInternetProtocol_Release(protocol_info);
+    }
+
+    hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&factory);
+    ok(hres == S_OK, "Could not get IClassFactory interface\n");
+    if(SUCCEEDED(hres)) {
+        IInternetProtocol *protocol;
+        BYTE buf[512];
+        ULONG cb;
+        hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol, (void**)&protocol);
+        ok(hres == S_OK, "Could not get IInternetProtocol: %08lx\n", hres);
+
+        if(SUCCEEDED(hres)) {
+            protocol_start(protocol, blank_url);
+            hres = IInternetProtocol_LockRequest(protocol, 0);
+            ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
+            hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
+            ok(hres == S_OK, "Read failed: %08lx\n", hres);
+            ok(cb == sizeof(blank_html), "cb=%ld, expected %d\n", cb, sizeof(blank_html));
+            ok(!memcmp(buf, blank_html, cb), "Readed wrong data\n");
+            hres = IInternetProtocol_UnlockRequest(protocol);
+            ok(hres == S_OK, "UnlockRequest failed: %08lx\n", hres);
+
+            protocol_start(protocol, test_url);
+            hres = IInternetProtocol_LockRequest(protocol, 0);
+            ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
+            hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
+            ok(hres == S_OK, "Read failed: %08lx\n", hres);
+            ok(cb == sizeof(test_html), "cb=%ld, expected %d\n", cb, sizeof(test_html));
+            ok(!memcmp(buf, test_html, cb), "Readed wrong data\n");
+            hres = IInternetProtocol_UnlockRequest(protocol);
+            ok(hres == S_OK, "UnlockRequest failed: %08lx\n", hres);
+
+            protocol_start(protocol, res_url);
+            hres = IInternetProtocol_LockRequest(protocol, 0);
+            ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
+            hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
+            ok(hres == S_OK, "Read failed: %08lx\n", hres);
+            ok(cb == sizeof(blank_html), "cb=%ld, expected %d\n", cb, sizeof(blank_html));
+            ok(!memcmp(buf, blank_html, cb), "Readed wrong data\n");
+            hres = IInternetProtocol_UnlockRequest(protocol);
+            ok(hres == S_OK, "UnlockRequest failed: %08lx\n", hres);
 
             IInternetProtocol_Release(protocol);
         }
@@ -327,6 +405,7 @@ START_TEST(protocol)
     OleInitialize(NULL);
 
     test_res_protocol();
+    test_about_protocol();
 
     OleUninitialize();
 }
