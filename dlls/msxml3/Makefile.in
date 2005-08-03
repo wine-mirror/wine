@@ -10,6 +10,7 @@ EXTRAINCL = @XML2INCL@
 
 C_SRCS = \
 	domdoc.c \
+	element.c \
 	factory.c \
 	main.c
 

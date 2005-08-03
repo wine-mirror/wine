@@ -39,8 +39,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
-#include <libxml/parser.h>
-
 typedef struct _domdoc
 {
     const struct IXMLDOMDocumentVtbl *lpVtbl;
@@ -501,8 +499,11 @@ static HRESULT WINAPI domdoc_get_documentElement(
     IXMLDOMDocument *iface,
     IXMLDOMElement** DOMElement )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+
+    FIXME("%p\n", This);
+
+    return DOMElement_create(DOMElement, This->xmldoc);
 }
 
 

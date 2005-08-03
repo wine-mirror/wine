@@ -21,6 +21,14 @@
 #ifndef __MSXML_PRIVATE__
 #define __MSXML_PRIVATE__
 
+#ifdef HAVE_LIBXML_PARSER_H
+
+#include <libxml/parser.h>
+
+extern HRESULT DOMElement_create( IXMLDOMElement** DOMElement, xmlDocPtr xmldoc );
+
+#endif
+
 extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 
 #endif /* __MSXML_PRIVATE__ */
