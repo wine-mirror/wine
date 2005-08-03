@@ -725,6 +725,27 @@ then
     CFLAGS="$save_CFLAGS"
 fi
 
+dnl **** Check for EsounD ****
+AC_PATH_PROG(ESDCONFIG, esd-config)
+if test x$ESDCONFIG != x -a x$ESDCONFIG != x'"$ESDCONFIG"';
+then
+    ESD_CFLAGS=""
+    for i in `$ESDCONFIG --cflags`
+    do
+      case "$i" in
+        -I*) ESD_CFLAGS="$ESD_CFLAGS $i";;
+      esac
+    done
+    ESD_LIBS=`$ESDCONFIG --libs`
+    save_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS $ESD_CFLAGS"
+    AC_CHECK_LIB(esd,esd_open_sound,
+        [AC_SUBST(ESDLIBS, $ESD_LIBS)
+         AC_SUBST(ESDINCL, $ESD_CFLAGS)
+         AC_DEFINE(HAVE_ESD, 1, [Define if you have EsounD sound server])])
+    CFLAGS="$save_CFLAGS"
+fi
+
 dnl **** Check for ALSA 1.x ****
 AC_SUBST(ALSALIBS,"")
 AC_CHECK_HEADERS(alsa/asoundlib.h sys/asoundlib.h, break)
@@ -1753,6 +1774,7 @@ dlls/winmm/wavemap/Makefile
 dlls/winmm/winealsa/Makefile
 dlls/winmm/winearts/Makefile
 dlls/winmm/wineaudioio/Makefile
+dlls/winmm/wineesd/Makefile
 dlls/winmm/winejack/Makefile
 dlls/winmm/winenas/Makefile
 dlls/winmm/wineoss/Makefile
@@ -1848,11 +1870,11 @@ fi
 
 if test -z "$ALSALIBS" -a -z "$ARTSC_LIBS" -a -z "$AUDIOIOLIBS" -a \
         -z "$ac_cv_lib_soname_jack" -a -z "$NASLIBS" -a \
-        "$ac_cv_c_opensoundsystem" = "no"
+        "$ac_cv_c_opensoundsystem" = "no" -a -z "$ESD_LIBS"
 then
     echo "*** No sound system was found. Windows applications will be silent."
     echo "*** The currently supported sound systems are:"
-    echo "*** ALSA, ARTS, AudioIO, Jack, NAS and OSS"
+    echo "*** ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS"
 fi
 
 echo

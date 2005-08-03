@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS DLLDEFS build build_cpu build_vendor build_os host host_cpu host_vendor host_os WIN16_FILES WIN16_INSTALL SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPPBIN ac_ct_CPPBIN TOOLSDIR CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS LEX LEXLIB LEX_OUTPUT_ROOT XLEX BISON AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN EGREP LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS FONTFORGE LIBPTHREAD XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS GLUT_LIBS GLUT32FILES NASLIBS XML2LIBS XML2INCL CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS LCMSLIBS LDAPLIBS ft_devel ft_devel2 FREETYPELIBS FREETYPEINCL FONTSSUBDIRS ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLLFLAGS LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS LDLIBWINEFLAGS COREFOUNDATIONLIB IOKITLIB CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS SOCKETLIBS WINE_BINARIES MAIN_BINARY LDD ALLOCA LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS DLLDEFS build build_cpu build_vendor build_os host host_cpu host_vendor host_os WIN16_FILES WIN16_INSTALL SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPPBIN ac_ct_CPPBIN TOOLSDIR CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS LEX LEXLIB LEX_OUTPUT_ROOT XLEX BISON AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN EGREP LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS FONTFORGE LIBPTHREAD XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS GLUT_LIBS GLUT32FILES NASLIBS XML2LIBS XML2INCL CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS LCMSLIBS LDAPLIBS ft_devel ft_devel2 FREETYPELIBS FREETYPEINCL FONTSSUBDIRS ARTSCCONFIG ARTSLIBS ARTSINCL ESDCONFIG ESDLIBS ESDINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLLFLAGS LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS LDLIBWINEFLAGS COREFOUNDATIONLIB IOKITLIB CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS SOCKETLIBS WINE_BINARIES MAIN_BINARY LDD ALLOCA LIBOBJS LTLIBOBJS'
 ac_subst_files='MAKE_RULES MAKE_DLL_RULES MAKE_TEST_RULES MAKE_LIB_RULES MAKE_PROG_RULES'
 
 # Initialize some variables set by options.
@@ -11616,6 +11616,135 @@ fi
     CFLAGS="$save_CFLAGS"
 fi
 
+# Extract the first word of "esd-config", so it can be a program name with args.
+set dummy esd-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_ESDCONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $ESDCONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ESDCONFIG="$ESDCONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ESDCONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+ESDCONFIG=$ac_cv_path_ESDCONFIG
+
+if test -n "$ESDCONFIG"; then
+  echo "$as_me:$LINENO: result: $ESDCONFIG" >&5
+echo "${ECHO_T}$ESDCONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+if test x$ESDCONFIG != x -a x$ESDCONFIG != x'"$ESDCONFIG"';
+then
+    ESD_CFLAGS=""
+    for i in `$ESDCONFIG --cflags`
+    do
+      case "$i" in
+        -I*) ESD_CFLAGS="$ESD_CFLAGS $i";;
+      esac
+    done
+    ESD_LIBS=`$ESDCONFIG --libs`
+    save_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS $ESD_CFLAGS"
+    echo "$as_me:$LINENO: checking for esd_open_sound in -lesd" >&5
+echo $ECHO_N "checking for esd_open_sound in -lesd... $ECHO_C" >&6
+if test "${ac_cv_lib_esd_esd_open_sound+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lesd  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char esd_open_sound ();
+int
+main ()
+{
+esd_open_sound ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_esd_esd_open_sound=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_esd_esd_open_sound=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_esd_esd_open_sound" >&5
+echo "${ECHO_T}$ac_cv_lib_esd_esd_open_sound" >&6
+if test $ac_cv_lib_esd_esd_open_sound = yes; then
+  ESDLIBS=$ESD_LIBS
+
+         ESDINCL=$ESD_CFLAGS
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_ESD 1
+_ACEOF
+
+fi
+
+    CFLAGS="$save_CFLAGS"
+fi
+
 ALSALIBS=""
 
 
@@ -20549,7 +20678,7 @@ MAKE_LIB_RULES=libs/Makelib.rules
 MAKE_PROG_RULES=programs/Makeprog.rules
 
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ac_config_files="$ac_config_files Make.rules dlls/Makedll.rules dlls/Maketest.rules libs/Makelib.rules programs/Makeprog.rules Makefile dlls/Makefile dlls/activeds/Makefile dlls/advapi32/Makefile dlls/advapi32/tests/Makefile dlls/advpack/Makefile dlls/advpack/tests/Makefile dlls/amstream/Makefile dlls/atl/Makefile dlls/avicap32/Makefile dlls/avifil32/Makefile dlls/cabinet/Makefile dlls/capi2032/Makefile dlls/cards/Makefile dlls/cfgmgr32/Makefile dlls/comcat/Makefile dlls/comctl32/Makefile dlls/comctl32/tests/Makefile dlls/commdlg/Makefile dlls/crtdll/Makefile dlls/crypt32/Makefile dlls/crypt32/tests/Makefile dlls/cryptdll/Makefile dlls/ctl3d/Makefile dlls/d3d8/Makefile dlls/d3d9/Makefile dlls/d3dim/Makefile dlls/d3drm/Makefile dlls/d3dx8/Makefile dlls/d3dxof/Makefile dlls/dbghelp/Makefile dlls/dciman32/Makefile dlls/ddraw/Makefile dlls/ddraw/tests/Makefile dlls/devenum/Makefile dlls/dinput/Makefile dlls/dinput/tests/Makefile dlls/dinput8/Makefile dlls/dmband/Makefile dlls/dmcompos/Makefile dlls/dmime/Makefile dlls/dmloader/Makefile dlls/dmscript/Makefile dlls/dmstyle/Makefile dlls/dmsynth/Makefile dlls/dmusic/Makefile dlls/dmusic32/Makefile dlls/dplay/Makefile dlls/dplayx/Makefile dlls/dpnet/Makefile dlls/dpnhpast/Makefile dlls/dsound/Makefile dlls/dsound/tests/Makefile dlls/dswave/Makefile dlls/dxdiagn/Makefile dlls/dxerr8/Makefile dlls/dxerr9/Makefile dlls/dxguid/Makefile dlls/gdi/Makefile dlls/gdi/tests/Makefile dlls/glu32/Makefile dlls/glut32/Makefile dlls/hhctrl.ocx/Makefile dlls/iccvid/Makefile dlls/icmp/Makefile dlls/ifsmgr.vxd/Makefile dlls/imagehlp/Makefile dlls/imm32/Makefile dlls/iphlpapi/Makefile dlls/iphlpapi/tests/Makefile dlls/itss/Makefile dlls/kernel/Makefile dlls/kernel/tests/Makefile dlls/lzexpand/Makefile dlls/lzexpand/tests/Makefile dlls/mapi32/Makefile dlls/mapi32/tests/Makefile dlls/midimap/Makefile dlls/mlang/Makefile dlls/mlang/tests/Makefile dlls/mmdevldr.vxd/Makefile dlls/monodebg.vxd/Makefile dlls/mpr/Makefile dlls/msacm/Makefile dlls/msacm/imaadp32/Makefile dlls/msacm/msadp32/Makefile dlls/msacm/msg711/Makefile dlls/msacm/winemp3/Makefile dlls/msacm/tests/Makefile dlls/mscms/Makefile dlls/mscms/tests/Makefile dlls/msdmo/Makefile dlls/mshtml/Makefile dlls/mshtml/tests/Makefile dlls/msi/Makefile dlls/msi/tests/Makefile dlls/msimg32/Makefile dlls/msisys/Makefile dlls/msnet32/Makefile dlls/msrle32/Makefile dlls/msvcrt/Makefile dlls/msvcrt/tests/Makefile dlls/msvcrt20/Makefile dlls/msvcrt40/Makefile dlls/msvcrtd/Makefile dlls/msvcrtd/tests/Makefile dlls/msvidc32/Makefile dlls/msvideo/Makefile dlls/mswsock/Makefile dlls/msxml3/Makefile dlls/netapi32/Makefile dlls/netapi32/tests/Makefile dlls/newdev/Makefile dlls/ntdll/Makefile dlls/ntdll/tests/Makefile dlls/objsel/Makefile dlls/odbc32/Makefile dlls/odbccp32/Makefile dlls/ole32/Makefile dlls/ole32/tests/Makefile dlls/oleacc/Makefile dlls/oleaut32/Makefile dlls/oleaut32/tests/Makefile dlls/olecli/Makefile dlls/oledlg/Makefile dlls/olepro32/Makefile dlls/olesvr/Makefile dlls/opengl32/Makefile dlls/powrprof/Makefile dlls/psapi/Makefile dlls/psapi/tests/Makefile dlls/qcap/Makefile dlls/quartz/Makefile dlls/quartz/tests/Makefile dlls/rasapi32/Makefile dlls/riched20/Makefile dlls/richedit/Makefile dlls/rpcrt4/Makefile dlls/rpcrt4/tests/Makefile dlls/rsabase/Makefile dlls/rsabase/tests/Makefile dlls/rsaenh/Makefile dlls/rsaenh/tests/Makefile dlls/secur32/Makefile dlls/secur32/tests/Makefile dlls/sensapi/Makefile dlls/serialui/Makefile dlls/setupapi/Makefile dlls/shdocvw/Makefile dlls/shell32/Makefile dlls/shell32/tests/Makefile dlls/shfolder/Makefile dlls/shlwapi/Makefile dlls/shlwapi/tests/Makefile dlls/snmpapi/Makefile dlls/stdole2.tlb/Makefile dlls/stdole32.tlb/Makefile dlls/sti/Makefile dlls/strmiids/Makefile dlls/tapi32/Makefile dlls/ttydrv/Makefile dlls/twain/Makefile dlls/unicows/Makefile dlls/url/Makefile dlls/urlmon/Makefile dlls/urlmon/tests/Makefile dlls/user/Makefile dlls/user/tests/Makefile dlls/usp10/Makefile dlls/uuid/Makefile dlls/uxtheme/Makefile dlls/vdhcp.vxd/Makefile dlls/vdmdbg/Makefile dlls/version/Makefile dlls/version/tests/Makefile dlls/vmm.vxd/Makefile dlls/vnbt.vxd/Makefile dlls/vnetbios.vxd/Makefile dlls/vtdapi.vxd/Makefile dlls/vwin32.vxd/Makefile dlls/win32s/Makefile dlls/winaspi/Makefile dlls/wined3d/Makefile dlls/winedos/Makefile dlls/wineps/Makefile dlls/wininet/Makefile dlls/wininet/tests/Makefile dlls/winmm/Makefile dlls/winmm/joystick/Makefile dlls/winmm/mcianim/Makefile dlls/winmm/mciavi/Makefile dlls/mcicda/Makefile dlls/winmm/mciseq/Makefile dlls/winmm/mciwave/Makefile dlls/winmm/tests/Makefile dlls/winmm/wavemap/Makefile dlls/winmm/winealsa/Makefile dlls/winmm/winearts/Makefile dlls/winmm/wineaudioio/Makefile dlls/winmm/winejack/Makefile dlls/winmm/winenas/Makefile dlls/winmm/wineoss/Makefile dlls/winnls/Makefile dlls/winsock/Makefile dlls/winsock/tests/Makefile dlls/winspool/Makefile dlls/winspool/tests/Makefile dlls/wintab32/Makefile dlls/wintrust/Makefile dlls/wldap32/Makefile dlls/wow32/Makefile dlls/wsock32/Makefile dlls/wtsapi32/Makefile dlls/x11drv/Makefile documentation/Makefile fonts/Makefile include/Makefile libs/Makefile libs/port/Makefile libs/unicode/Makefile libs/wine/Makefile libs/wpp/Makefile loader/Makefile programs/Makefile programs/avitools/Makefile programs/clock/Makefile programs/cmdlgtst/Makefile programs/control/Makefile programs/expand/Makefile programs/hh/Makefile programs/msiexec/Makefile programs/notepad/Makefile programs/progman/Makefile programs/regedit/Makefile programs/regsvr32/Makefile programs/rpcss/Makefile programs/rundll32/Makefile programs/start/Makefile programs/taskmgr/Makefile programs/uninstaller/Makefile programs/view/Makefile programs/wcmd/Makefile programs/wineboot/Makefile programs/winebrowser/Makefile programs/winecfg/Makefile programs/wineconsole/Makefile programs/winedbg/Makefile programs/winefile/Makefile programs/winemenubuilder/Makefile programs/winemine/Makefile programs/winepath/Makefile programs/winetest/Makefile programs/winevdm/Makefile programs/winhelp/Makefile programs/winver/Makefile server/Makefile tools/Makefile tools/widl/Makefile tools/winapi/Makefile tools/winebuild/Makefile tools/winedump/Makefile tools/winegcc/Makefile tools/wmc/Makefile tools/wrc/Makefile"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ac_config_files="$ac_config_files Make.rules dlls/Makedll.rules dlls/Maketest.rules libs/Makelib.rules programs/Makeprog.rules Makefile dlls/Makefile dlls/activeds/Makefile dlls/advapi32/Makefile dlls/advapi32/tests/Makefile dlls/advpack/Makefile dlls/advpack/tests/Makefile dlls/amstream/Makefile dlls/atl/Makefile dlls/avicap32/Makefile dlls/avifil32/Makefile dlls/cabinet/Makefile dlls/capi2032/Makefile dlls/cards/Makefile dlls/cfgmgr32/Makefile dlls/comcat/Makefile dlls/comctl32/Makefile dlls/comctl32/tests/Makefile dlls/commdlg/Makefile dlls/crtdll/Makefile dlls/crypt32/Makefile dlls/crypt32/tests/Makefile dlls/cryptdll/Makefile dlls/ctl3d/Makefile dlls/d3d8/Makefile dlls/d3d9/Makefile dlls/d3dim/Makefile dlls/d3drm/Makefile dlls/d3dx8/Makefile dlls/d3dxof/Makefile dlls/dbghelp/Makefile dlls/dciman32/Makefile dlls/ddraw/Makefile dlls/ddraw/tests/Makefile dlls/devenum/Makefile dlls/dinput/Makefile dlls/dinput/tests/Makefile dlls/dinput8/Makefile dlls/dmband/Makefile dlls/dmcompos/Makefile dlls/dmime/Makefile dlls/dmloader/Makefile dlls/dmscript/Makefile dlls/dmstyle/Makefile dlls/dmsynth/Makefile dlls/dmusic/Makefile dlls/dmusic32/Makefile dlls/dplay/Makefile dlls/dplayx/Makefile dlls/dpnet/Makefile dlls/dpnhpast/Makefile dlls/dsound/Makefile dlls/dsound/tests/Makefile dlls/dswave/Makefile dlls/dxdiagn/Makefile dlls/dxerr8/Makefile dlls/dxerr9/Makefile dlls/dxguid/Makefile dlls/gdi/Makefile dlls/gdi/tests/Makefile dlls/glu32/Makefile dlls/glut32/Makefile dlls/hhctrl.ocx/Makefile dlls/iccvid/Makefile dlls/icmp/Makefile dlls/ifsmgr.vxd/Makefile dlls/imagehlp/Makefile dlls/imm32/Makefile dlls/iphlpapi/Makefile dlls/iphlpapi/tests/Makefile dlls/itss/Makefile dlls/kernel/Makefile dlls/kernel/tests/Makefile dlls/lzexpand/Makefile dlls/lzexpand/tests/Makefile dlls/mapi32/Makefile dlls/mapi32/tests/Makefile dlls/midimap/Makefile dlls/mlang/Makefile dlls/mlang/tests/Makefile dlls/mmdevldr.vxd/Makefile dlls/monodebg.vxd/Makefile dlls/mpr/Makefile dlls/msacm/Makefile dlls/msacm/imaadp32/Makefile dlls/msacm/msadp32/Makefile dlls/msacm/msg711/Makefile dlls/msacm/winemp3/Makefile dlls/msacm/tests/Makefile dlls/mscms/Makefile dlls/mscms/tests/Makefile dlls/msdmo/Makefile dlls/mshtml/Makefile dlls/mshtml/tests/Makefile dlls/msi/Makefile dlls/msi/tests/Makefile dlls/msimg32/Makefile dlls/msisys/Makefile dlls/msnet32/Makefile dlls/msrle32/Makefile dlls/msvcrt/Makefile dlls/msvcrt/tests/Makefile dlls/msvcrt20/Makefile dlls/msvcrt40/Makefile dlls/msvcrtd/Makefile dlls/msvcrtd/tests/Makefile dlls/msvidc32/Makefile dlls/msvideo/Makefile dlls/mswsock/Makefile dlls/msxml3/Makefile dlls/netapi32/Makefile dlls/netapi32/tests/Makefile dlls/newdev/Makefile dlls/ntdll/Makefile dlls/ntdll/tests/Makefile dlls/objsel/Makefile dlls/odbc32/Makefile dlls/odbccp32/Makefile dlls/ole32/Makefile dlls/ole32/tests/Makefile dlls/oleacc/Makefile dlls/oleaut32/Makefile dlls/oleaut32/tests/Makefile dlls/olecli/Makefile dlls/oledlg/Makefile dlls/olepro32/Makefile dlls/olesvr/Makefile dlls/opengl32/Makefile dlls/powrprof/Makefile dlls/psapi/Makefile dlls/psapi/tests/Makefile dlls/qcap/Makefile dlls/quartz/Makefile dlls/quartz/tests/Makefile dlls/rasapi32/Makefile dlls/riched20/Makefile dlls/richedit/Makefile dlls/rpcrt4/Makefile dlls/rpcrt4/tests/Makefile dlls/rsabase/Makefile dlls/rsabase/tests/Makefile dlls/rsaenh/Makefile dlls/rsaenh/tests/Makefile dlls/secur32/Makefile dlls/secur32/tests/Makefile dlls/sensapi/Makefile dlls/serialui/Makefile dlls/setupapi/Makefile dlls/shdocvw/Makefile dlls/shell32/Makefile dlls/shell32/tests/Makefile dlls/shfolder/Makefile dlls/shlwapi/Makefile dlls/shlwapi/tests/Makefile dlls/snmpapi/Makefile dlls/stdole2.tlb/Makefile dlls/stdole32.tlb/Makefile dlls/sti/Makefile dlls/strmiids/Makefile dlls/tapi32/Makefile dlls/ttydrv/Makefile dlls/twain/Makefile dlls/unicows/Makefile dlls/url/Makefile dlls/urlmon/Makefile dlls/urlmon/tests/Makefile dlls/user/Makefile dlls/user/tests/Makefile dlls/usp10/Makefile dlls/uuid/Makefile dlls/uxtheme/Makefile dlls/vdhcp.vxd/Makefile dlls/vdmdbg/Makefile dlls/version/Makefile dlls/version/tests/Makefile dlls/vmm.vxd/Makefile dlls/vnbt.vxd/Makefile dlls/vnetbios.vxd/Makefile dlls/vtdapi.vxd/Makefile dlls/vwin32.vxd/Makefile dlls/win32s/Makefile dlls/winaspi/Makefile dlls/wined3d/Makefile dlls/winedos/Makefile dlls/wineps/Makefile dlls/wininet/Makefile dlls/wininet/tests/Makefile dlls/winmm/Makefile dlls/winmm/joystick/Makefile dlls/winmm/mcianim/Makefile dlls/winmm/mciavi/Makefile dlls/mcicda/Makefile dlls/winmm/mciseq/Makefile dlls/winmm/mciwave/Makefile dlls/winmm/tests/Makefile dlls/winmm/wavemap/Makefile dlls/winmm/winealsa/Makefile dlls/winmm/winearts/Makefile dlls/winmm/wineaudioio/Makefile dlls/winmm/wineesd/Makefile dlls/winmm/winejack/Makefile dlls/winmm/winenas/Makefile dlls/winmm/wineoss/Makefile dlls/winnls/Makefile dlls/winsock/Makefile dlls/winsock/tests/Makefile dlls/winspool/Makefile dlls/winspool/tests/Makefile dlls/wintab32/Makefile dlls/wintrust/Makefile dlls/wldap32/Makefile dlls/wow32/Makefile dlls/wsock32/Makefile dlls/wtsapi32/Makefile dlls/x11drv/Makefile documentation/Makefile fonts/Makefile include/Makefile libs/Makefile libs/port/Makefile libs/unicode/Makefile libs/wine/Makefile libs/wpp/Makefile loader/Makefile programs/Makefile programs/avitools/Makefile programs/clock/Makefile programs/cmdlgtst/Makefile programs/control/Makefile programs/expand/Makefile programs/hh/Makefile programs/msiexec/Makefile programs/notepad/Makefile programs/progman/Makefile programs/regedit/Makefile programs/regsvr32/Makefile programs/rpcss/Makefile programs/rundll32/Makefile programs/start/Makefile programs/taskmgr/Makefile programs/uninstaller/Makefile programs/view/Makefile programs/wcmd/Makefile programs/wineboot/Makefile programs/winebrowser/Makefile programs/winecfg/Makefile programs/wineconsole/Makefile programs/winedbg/Makefile programs/winefile/Makefile programs/winemenubuilder/Makefile programs/winemine/Makefile programs/winepath/Makefile programs/winetest/Makefile programs/winevdm/Makefile programs/winhelp/Makefile programs/winver/Makefile server/Makefile tools/Makefile tools/widl/Makefile tools/winapi/Makefile tools/winebuild/Makefile tools/winedump/Makefile tools/winegcc/Makefile tools/wmc/Makefile tools/wrc/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -21284,6 +21413,7 @@ do
   "dlls/winmm/winealsa/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/winealsa/Makefile" ;;
   "dlls/winmm/winearts/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/winearts/Makefile" ;;
   "dlls/winmm/wineaudioio/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/wineaudioio/Makefile" ;;
+  "dlls/winmm/wineesd/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/wineesd/Makefile" ;;
   "dlls/winmm/winejack/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/winejack/Makefile" ;;
   "dlls/winmm/winenas/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/winenas/Makefile" ;;
   "dlls/winmm/wineoss/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/wineoss/Makefile" ;;
@@ -21525,6 +21655,9 @@ s,@FONTSSUBDIRS@,$FONTSSUBDIRS,;t t
 s,@ARTSCCONFIG@,$ARTSCCONFIG,;t t
 s,@ARTSLIBS@,$ARTSLIBS,;t t
 s,@ARTSINCL@,$ARTSINCL,;t t
+s,@ESDCONFIG@,$ESDCONFIG,;t t
+s,@ESDLIBS@,$ESDLIBS,;t t
+s,@ESDINCL@,$ESDINCL,;t t
 s,@ALSALIBS@,$ALSALIBS,;t t
 s,@AUDIOIOLIBS@,$AUDIOIOLIBS,;t t
 s,@EXTRACFLAGS@,$EXTRACFLAGS,;t t
@@ -22216,11 +22349,11 @@ fi
 
 if test -z "$ALSALIBS" -a -z "$ARTSC_LIBS" -a -z "$AUDIOIOLIBS" -a \
         -z "$ac_cv_lib_soname_jack" -a -z "$NASLIBS" -a \
-        "$ac_cv_c_opensoundsystem" = "no"
+        "$ac_cv_c_opensoundsystem" = "no" -a -z "$ESD_LIBS"
 then
     echo "*** No sound system was found. Windows applications will be silent."
     echo "*** The currently supported sound systems are:"
-    echo "*** ALSA, ARTS, AudioIO, Jack, NAS and OSS"
+    echo "*** ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS"
 fi
 
 echo

@@ -210,6 +210,15 @@ static const char *audioAutoDetect(void)
     numFound++;
   }
 
+  /* try to detect EsounD */
+  argv_new[2] = "ps awx|grep esd|grep -v grep|grep esd > /dev/null";
+  if(!spawnvp(_P_WAIT, "/bin/sh", argv_new))
+  {
+    driversFound[numFound] = "esd";
+    name[numFound] = "EsounD";
+    numFound++;
+  }
+
   /* try to detect nas */
   /* TODO */
 

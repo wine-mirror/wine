@@ -60,6 +60,7 @@ static const DLL_DESC sDLLType[] = {
 static const AUDIO_DRIVER sAudioDrivers[] = {
   {"ALSA", "alsa"},
   {"aRts", "arts"},
+  {"EsounD", "esd"},
   {"OSS", "oss"},
   {"JACK", "jack"},
   {"NAS", "nas"},
