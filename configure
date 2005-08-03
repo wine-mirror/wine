@@ -18922,8 +18922,6 @@ esac
 
           ac_config_commands="$ac_config_commands include/wine"
 
-          ac_config_commands="$ac_config_commands programs/regedit/tests"
-
 
 MAKE_RULES=Make.rules
 
@@ -19747,7 +19745,6 @@ do
   "dlls/user/resources" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/resources" ;;
   "dlls/wineps/data" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps/data" ;;
   "include/wine" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
-  "programs/regedit/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regedit/tests" ;;
   "include/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
@@ -20548,8 +20545,6 @@ echo "$as_me: creating dlls/user/resources" >&6;} && mkdir "dlls/user/resources"
 echo "$as_me: creating dlls/wineps/data" >&6;} && mkdir "dlls/wineps/data") ;;
     include/wine ) test -d "include/wine" || ({ echo "$as_me:$LINENO: creating include/wine" >&5
 echo "$as_me: creating include/wine" >&6;} && mkdir "include/wine") ;;
-    programs/regedit/tests ) test -d "programs/regedit/tests" || ({ echo "$as_me:$LINENO: creating programs/regedit/tests" >&5
-echo "$as_me: creating programs/regedit/tests" >&6;} && mkdir "programs/regedit/tests") ;;
   esac
 done
 _ACEOF

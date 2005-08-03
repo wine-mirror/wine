@@ -31,11 +31,6 @@ RC_BINARIES = \
 	regedit.ico \
 	string.ico
 
-PLTESTS = \
-	tests/regedit.pl
-
-EXTRASUBDIRS = tests
-
 @MAKE_PROG_RULES@
 
 ### Dependencies:

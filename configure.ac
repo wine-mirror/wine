@@ -1525,7 +1525,6 @@ WINE_CONFIG_EXTRA_DIR(dlls/kernel/messages)
 WINE_CONFIG_EXTRA_DIR(dlls/user/resources)
 WINE_CONFIG_EXTRA_DIR(dlls/wineps/data)
 WINE_CONFIG_EXTRA_DIR(include/wine)
-WINE_CONFIG_EXTRA_DIR(programs/regedit/tests)
 
 MAKE_RULES=Make.rules
 AC_SUBST_FILE(MAKE_RULES)
