@@ -35,11 +35,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#ifdef HAVE_CURSES_H
-#include <curses.h>
-#endif
 #ifdef HAVE_NCURSES_H
-#include <ncurses.h>
+# include <ncurses.h>
+#elif defined(HAVE_CURSES_H)
+# include <curses.h>
 #endif
 #undef KEY_EVENT  /* avoid redefinition warning */
 #ifdef HAVE_UNISTD_H

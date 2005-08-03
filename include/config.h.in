@@ -233,12 +233,6 @@
 /* Define to 1 if you have the <io.h> header file. */
 #undef HAVE_IO_H
 
-/* Define if IPX should use netipx/ipx.h from libc */
-#undef HAVE_IPX_GNU
-
-/* Define if IPX includes are taken from Linux kernel */
-#undef HAVE_IPX_LINUX
-
 /* Define to 1 if you have the `iswalnum' function. */
 #undef HAVE_ISWALNUM
 
@@ -350,6 +344,9 @@
 /* Define to 1 if you have the <linux/ioctl.h> header file. */
 #undef HAVE_LINUX_IOCTL_H
 
+/* Define to 1 if you have the <linux/ipx.h> header file. */
+#undef HAVE_LINUX_IPX_H
+
 /* Define to 1 if you have the <linux/joystick.h> header file. */
 #undef HAVE_LINUX_JOYSTICK_H
 
@@ -421,6 +418,9 @@
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
+
+/* Define to 1 if you have the <netipx/ipx.h> header file. */
+#undef HAVE_NETIPX_IPX_H
 
 /* Define to 1 if you have the <net/if_arp.h> header file. */
 #undef HAVE_NET_IF_ARP_H

@@ -172,11 +172,15 @@ dnl **** Check for header files ****
 
 AC_CHECK_HEADERS(\
 	IOKit/IOKitLib.h \
+	alsa/asoundlib.h \
 	arpa/inet.h \
 	arpa/nameser.h \
 	asm/types.h \
+	capi20.h \
 	cups/cups.h \
+	curses.h \
 	direct.h \
+	dlfcn.h \
 	elf.h \
 	float.h \
 	fontconfig/fontconfig.h \
@@ -187,10 +191,12 @@ AC_CHECK_HEADERS(\
 	jack/jack.h \
 	jpeglib.h \
 	lber.h \
-	lcms/lcms.h \
 	lcms.h \
+	lcms/lcms.h \
 	ldap.h \
+	libaudioio.h \
 	link.h \
+	linux/capi.h \
 	linux/cdrom.h \
 	linux/compiler.h \
 	linux/hdreg.h \
@@ -204,7 +210,9 @@ AC_CHECK_HEADERS(\
 	mach/machine.h \
 	machine/cpu.h \
 	machine/limits.h \
+	machine/soundcard.h \
 	mntent.h \
+	ncurses.h \
 	netdb.h \
 	netinet/in.h \
 	netinet/in_systm.h \
@@ -217,15 +225,17 @@ AC_CHECK_HEADERS(\
 	pwd.h \
 	regex.h \
 	sched.h \
-	scsi/sg.h \
 	scsi/scsi.h \
 	scsi/scsi_ioctl.h \
+	scsi/sg.h \
+	soundcard.h \
 	stdint.h \
 	strings.h \
+	sys/asoundlib.h \
 	sys/cdio.h \
 	sys/elf32.h \
-	sys/errno.h \
 	sys/epoll.h \
+	sys/errno.h \
 	sys/exec_elf.h \
 	sys/filio.h \
 	sys/ioctl.h \
@@ -244,7 +254,7 @@ AC_CHECK_HEADERS(\
 	sys/signal.h \
 	sys/socket.h \
 	sys/sockio.h \
-	sys/statfs.h \
+	sys/soundcard.h \
 	sys/statvfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
@@ -253,11 +263,11 @@ AC_CHECK_HEADERS(\
 	sys/times.h \
 	sys/uio.h \
 	sys/un.h \
-	sys/vfs.h \
 	sys/vm86.h \
 	sys/wait.h \
 	syscall.h \
 	termios.h \
+	unicode/ubidi.h \
 	unistd.h \
 	utime.h \
 	valgrind/memcheck.h
@@ -273,21 +283,22 @@ then
     CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
     dnl *** All of the following tests require X11/Xlib.h
-    AC_CHECK_HEADERS(X11/Xlib.h,
-      [
-        AC_CHECK_HEADERS([X11/XKBlib.h \
-                          X11/Xutil.h \
-                          X11/extensions/shape.h \
-                          X11/extensions/XInput.h \
-                          X11/extensions/XShm.h \
-                          X11/extensions/Xrandr.h \
-                          X11/extensions/Xrender.h \
-                          X11/extensions/xf86dga.h \
-                          X11/extensions/xf86vmode.h],,,
-                         [#include <X11/Xlib.h>
-                          #ifdef HAVE_X11_XUTIL_H
-                          # include <X11/Xutil.h>
-                          #endif])
+    AC_CHECK_HEADERS([X11/Xlib.h \
+                      X11/XKBlib.h \
+                      X11/Xutil.h \
+                      X11/extensions/shape.h \
+                      X11/extensions/XInput.h \
+                      X11/extensions/XShm.h \
+                      X11/extensions/Xrandr.h \
+                      X11/extensions/Xrender.h \
+                      X11/extensions/xf86dga.h \
+                      X11/extensions/xf86vmode.h],,,
+[#ifdef HAVE_X11_XLIB_H
+# include <X11/Xlib.h>
+#endif
+#ifdef HAVE_X11_XUTIL_H
+# include <X11/Xutil.h>
+#endif])
 
         dnl *** Check for X keyboard extension
         if test "$ac_cv_header_X11_XKBlib_h" = "yes"
@@ -350,16 +361,17 @@ then
                  [Define if Xrender has the XRenderSetPictureTransform function])],,
                 $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
-      ]
-    ) dnl *** End of X11/Xlib.h check
+    dnl *** End of X11/Xlib.h check
 
     dnl Check for the presence of OpenGL
     if test "x$with_opengl" != "xno"
     then
-	AC_CHECK_HEADERS(GL/gl.h GL/glx.h)
+	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glext.h,,,
+[#ifdef HAVE_GL_GLX_H
+# include <GL/glx.h>
+#endif])
 	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
 	then
-            AC_CHECK_HEADERS(GL/glext.h,,,[#include <GL/glx.h>])
 	    dnl Check for some problems due to old Mesa versions
 	    AC_CACHE_CHECK([for up-to-date OpenGL version], wine_cv_opengl_version_OK,
 	      AC_TRY_COMPILE(
@@ -441,14 +453,17 @@ dnl **** Check which curses lib to use ***
 CURSESLIBS=""
 if test "x$with_curses" != "xno"
 then
-    AC_CHECK_HEADERS(ncurses.h,
-        [AC_CHECK_LIB(ncurses,waddch,
+    if test "$ac_cv_header_ncurses_h" = "yes"
+    then
+        AC_CHECK_LIB(ncurses,waddch,
             [AC_DEFINE(HAVE_LIBNCURSES, 1, [Define if you have the ncurses library (-lncurses)])
-             CURSESLIBS="-lncurses"],
-             [AC_CHECK_HEADERS(curses.h,
-                 [AC_CHECK_LIB(curses,waddch,
-                     [AC_DEFINE(HAVE_LIBCURSES, 1, [Define if you have the curses library (-lcurses)])
-                      CURSESLIBS="-lcurses"])])])])
+             CURSESLIBS="-lncurses"])
+    elif test "$ac_cv_header_curses_h" = "yes"
+    then
+        AC_CHECK_LIB(curses,waddch,
+            [AC_DEFINE(HAVE_LIBCURSES, 1, [Define if you have the curses library (-lcurses)])
+             CURSESLIBS="-lcurses"])
+    fi
 fi
 AC_SUBST(CURSESLIBS)
 
@@ -479,7 +494,6 @@ AC_SUBST(SANELIBS)
 AC_SUBST(SANEINCL)
 
 dnl **** Check for the ICU library ****
-AC_CHECK_HEADERS(unicode/ubidi.h)
 if test "$ac_cv_header_unicode_ubidi_h" = "yes"
 then
     saved_libs="$LIBS"
@@ -654,8 +668,6 @@ AC_CHECK_FUNCS(\
 LIBS="$ac_save_LIBS"
 
 dnl **** Check for Open Sound System ****
-AC_CHECK_HEADERS(sys/soundcard.h machine/soundcard.h soundcard.h, break)
-
 AC_CACHE_CHECK([for Open Sound System],
 	ac_cv_c_opensoundsystem,
 	AC_TRY_COMPILE([
@@ -748,7 +760,6 @@ fi
 
 dnl **** Check for ALSA 1.x ****
 AC_SUBST(ALSALIBS,"")
-AC_CHECK_HEADERS(alsa/asoundlib.h sys/asoundlib.h, break)
 if test "$ac_cv_header_sys_asoundlib_h" = "yes" -o "$ac_cv_header_alsa_asoundlib_h" = "yes"
 then
     AC_CHECK_LIB(asound,snd_pcm_hw_params_get_access,
@@ -765,20 +776,19 @@ fi
 dnl **** Check for libaudioio (which can be used to get solaris audio support) ****
 
 AC_SUBST(AUDIOIOLIBS,"")
-AC_CHECK_HEADERS(libaudioio.h,
-    [AC_CHECK_LIB(audioio,AudioIOGetVersion,
+if test "$ac_cv_header_libaudioio_h" = "yes"
+then
+    AC_CHECK_LIB(audioio,AudioIOGetVersion,
                   [AUDIOIOLIBS="-laudioio"
-                   AC_DEFINE(HAVE_LIBAUDIOIO, 1, [Define if you have libaudioIO])])])
+                   AC_DEFINE(HAVE_LIBAUDIOIO, 1, [Define if you have libaudioIO])])
+fi
 
 dnl **** Check for capi4linux ****
 
-AC_CHECK_HEADERS(capi20.h,[
-	AC_CHECK_HEADERS(linux/capi.h,[
-		AC_CHECK_LIB(capi20,capi20_register,[
-			AC_DEFINE(HAVE_CAPI4LINUX,1,[Define if you have capi4linux libs and headers])
-		])
-	])
-])
+if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
+then
+    AC_CHECK_LIB(capi20,capi20_register,[AC_DEFINE(HAVE_CAPI4LINUX,1,[Define if you have capi4linux libs and headers])])
+fi
 
 dnl **** Check for broken glibc mmap64 ****
 
@@ -962,13 +972,16 @@ case $host_os in
     WIN16_INSTALL=""
     ;;
   *)
-    AC_CHECK_HEADERS(dlfcn.h,
-        [AC_CHECK_FUNCS(dlopen,,
+    if test "$ac_cv_header_dlfcn_h" = "yes"
+    then
+        AC_CHECK_FUNCS(dlopen,,
             [AC_CHECK_LIB(dl,dlopen,
                          [AC_DEFINE(HAVE_DLOPEN,1,[Define if you have dlopen])
                           DLLIBS="-ldl"],
-                         [LIBEXT="a"])])],
-        [LIBEXT="a"])
+                         [LIBEXT="a"])])
+    else
+        LIBEXT="a"
+    fi
 
     if test "$LIBEXT" = "so"
     then
@@ -1220,13 +1233,13 @@ AC_CHECK_FUNCS(\
 
 dnl **** Checks for headers that depend on other ones ****
 
-AC_CHECK_HEADERS(sys/mount.h sys/user.h,,,
+AC_CHECK_HEADERS([sys/mount.h sys/statfs.h sys/user.h sys/vfs.h],,,
     [#include <sys/types.h>
      #if HAVE_SYS_PARAM_H
      # include <sys/param.h>
      #endif])
 
-AC_CHECK_HEADERS([net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h],,,
+AC_CHECK_HEADERS([net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h netipx/ipx.h],,,
     [#include <sys/types.h>
      #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
@@ -1246,9 +1259,7 @@ AC_CHECK_HEADERS([resolv.h],,,
 
 AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
 
-dnl **** Check for v4l(2) headers ****
-
-AC_CHECK_HEADERS(linux/videodev.h,,,
+AC_CHECK_HEADERS([linux/ipx.h linux/videodev.h],,,
 [#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -1256,44 +1267,6 @@ AC_CHECK_HEADERS(linux/videodev.h,,,
 #ifdef HAVE_ASM_TYPES_H
 #include <asm/types.h>
 #endif])
-
-dnl **** Check for IPX headers (currently Linux only) ****
-
-AC_CACHE_CHECK([for GNU style IPX support], ac_cv_c_ipx_gnu,
- AC_TRY_COMPILE(
-   [#include <sys/types.h>
-    #ifdef HAVE_SYS_SOCKET_H
-    # include <sys/socket.h>
-    #endif
-    #include <netipx/ipx.h>],
-   [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
-   [ac_cv_c_ipx_gnu="yes"],
-   [ac_cv_c_ipx_gnu="no"])
- )
-if test "$ac_cv_c_ipx_gnu" = "yes"
-then
-    AC_DEFINE(HAVE_IPX_GNU, 1, [Define if IPX should use netipx/ipx.h from libc])
-fi
-
-if test "$ac_cv_c_ipx_gnu" = "no"
-then
- AC_CACHE_CHECK([for linux style IPX support], ac_cv_c_ipx_linux,
-  AC_TRY_COMPILE(
-    [#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
-     #include <asm/types.h>
-     #include <linux/ipx.h>],
-    [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
-    [ac_cv_c_ipx_linux="yes"],
-    [ac_cv_c_ipx_linux="no"])
-  )
-  if test "$ac_cv_c_ipx_linux" = "yes"
-  then
-      AC_DEFINE(HAVE_IPX_LINUX, 1, [Define if IPX includes are taken from Linux kernel])
-  fi
-fi
 
 dnl **** Check for types ****
 
