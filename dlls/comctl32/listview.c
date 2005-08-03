@@ -8417,15 +8417,13 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 static BOOL LISTVIEW_NCPaint(LISTVIEW_INFO *infoPtr, HRGN region)
 {
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
-    BOOL themingActive = IsAppThemed() && IsThemeActive();
-    BOOL doTheming = themingActive  && (theme != NULL);
     HDC dc;
     RECT r;
     HRGN cliprgn;
     int cxEdge = GetSystemMetrics (SM_CXEDGE),
         cyEdge = GetSystemMetrics (SM_CYEDGE);
 
-    if (!doTheming) return FALSE;
+    if (!theme) return FALSE;
 
     GetWindowRect(infoPtr->hwndSelf, &r);
 
