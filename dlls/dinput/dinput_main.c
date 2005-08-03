@@ -617,7 +617,7 @@ typedef struct
 {
     /* IUnknown fields */
     const IClassFactoryVtbl    *lpVtbl;
-    DWORD                       ref;
+    LONG                        ref;
 } IClassFactoryImpl;
 
 static HRESULT WINAPI DICF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {

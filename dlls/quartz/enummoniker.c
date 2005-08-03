@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 typedef struct EnumMonikerImpl
 {
     const IEnumMonikerVtbl *lpVtbl;
-    ULONG ref;
+    LONG ref;
     IMoniker ** ppMoniker;
     ULONG nMonikerCount;
     ULONG index;

@@ -109,7 +109,7 @@ typedef enum {
 struct SysMouseImpl
 {
     const void                     *lpVtbl;
-    DWORD                           ref;
+    LONG                            ref;
     GUID                            guid;
     
     IDirectInputImpl               *dinput;

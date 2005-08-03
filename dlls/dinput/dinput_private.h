@@ -30,7 +30,7 @@ typedef struct IDirectInputImpl IDirectInputImpl;
 struct IDirectInputImpl
 {
    const void *lpVtbl;
-   DWORD  ref;
+   LONG  ref;
 
    /* Used to have an unique sequence number for all the events */
    DWORD evsequence;

@@ -922,7 +922,7 @@ typedef struct _WineD3D_GLContext {
   XVisualInfo* visInfo;
   Display*     display;
   Drawable     drawable;
-  DWORD        ref;
+  LONG         ref;
 } WineD3D_Context;
 
 #endif /* HAVE_OPENGL */

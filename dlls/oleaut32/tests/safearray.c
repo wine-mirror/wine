@@ -78,7 +78,7 @@ BOOL HAVE_OLEAUT32_INT_PTR;
 typedef struct IRecordInfoImpl
 {
   const IRecordInfoVtbl *lpvtbl;
-  DWORD ref;
+  LONG ref;
   DWORD sizeCalled;
   DWORD clearCalled;
 } IRecordInfoImpl;

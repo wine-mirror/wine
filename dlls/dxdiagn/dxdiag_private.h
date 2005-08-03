@@ -46,7 +46,7 @@ typedef struct IDxDiagContainerImpl IDxDiagContainerImpl;
 struct IDxDiagProviderImpl {
   /* IUnknown fields */
   const IDxDiagProviderVtbl *lpVtbl;
-  DWORD       ref;
+  LONG        ref;
   /* IDxDiagProvider fields */
   BOOL        init;
   DXDIAG_INIT_PARAMS params;
@@ -85,7 +85,7 @@ typedef struct IDxDiagContainerImpl_Property {
 struct IDxDiagContainerImpl {
   /* IUnknown fields */
   const IDxDiagContainerVtbl *lpVtbl;
-  DWORD       ref;
+  LONG        ref;
   /* IDxDiagContainer fields */
   IDxDiagContainerImpl_Property* properties;  
   IDxDiagContainerImpl_SubContainer* subContainers;

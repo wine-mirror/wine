@@ -511,7 +511,7 @@ typedef struct tagINTERNAL_BSTR
 typedef struct
 {
   const IDispatchVtbl *lpVtbl;
-  ULONG ref;
+  LONG ref;
   VARTYPE vt;
   BOOL bFailInvoke;
 } DummyDispatch;

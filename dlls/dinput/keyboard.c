@@ -47,7 +47,7 @@ typedef struct SysKeyboardImpl SysKeyboardImpl;
 struct SysKeyboardImpl
 {
         const void                     *lpVtbl;
-        DWORD                           ref;
+        LONG                            ref;
         GUID                            guid;
 
 	IDirectInputImpl*               dinput;
@@ -87,7 +87,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION keyboard_crit = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static DWORD keyboard_users = 0;
+static LONG keyboard_users = 0;
 static HHOOK keyboard_hook = NULL;
 
 LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
