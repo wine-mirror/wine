@@ -825,7 +825,7 @@ static void testNonExistentPath(void)
             modifiedPath[len++] = '\0';
             if (winetest_interactive)
                 printf("Changing CSIDL_FAVORITES to %s\n", modifiedPath);
-            if (!RegSetValueExA(key, "Favorites", 0, type, modifiedPath, len))
+            if (!RegSetValueExA(key, "Favorites", 0, type, (LPBYTE) modifiedPath, len))
             {
                 char buffer[MAX_PATH];
                 STARTUPINFOA startup;
@@ -852,7 +852,7 @@ static void testNonExistentPath(void)
                 /* restore original values: */
                 if (winetest_interactive)
                     printf("Restoring CSIDL_FAVORITES to %s\n", originalPath);
-                RegSetValueExA(key, "Favorites", 0, type, originalPath,
+                RegSetValueExA(key, "Favorites", 0, type, (LPBYTE) originalPath,
                  strlen(originalPath) + 1);
                 RegFlushKey(key);
 

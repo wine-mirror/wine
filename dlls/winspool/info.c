@@ -224,7 +224,7 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
 	sprintf(buf,"%s,WINEPS.DRV,LPR:%s",devname,name);
 	WriteProfileStringA("windows","device",buf);
         if(RegCreateKeyW(HKEY_CURRENT_USER, user_default_reg_key, &hkey) == ERROR_SUCCESS) {
-            RegSetValueExA(hkey, "Device", 0, REG_SZ, buf, strlen(buf) + 1);
+            RegSetValueExA(hkey, "Device", 0, REG_SZ, (LPBYTE)buf, strlen(buf) + 1);
             RegCloseKey(hkey);
         }
 	HeapFree(GetProcessHeap(),0,buf);
@@ -275,7 +275,7 @@ static BOOL CUPS_LoadPrinters(void)
 	sprintf(devline,"WINEPS.DRV,%s",port);
 	WriteProfileStringA("devices",dests[i].name,devline);
         if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
-            RegSetValueExA(hkey, dests[i].name, 0, REG_SZ, devline, strlen(devline) + 1);
+            RegSetValueExA(hkey, dests[i].name, 0, REG_SZ, (LPBYTE)devline, strlen(devline) + 1);
             RegCloseKey(hkey);
         }
 	HeapFree(GetProcessHeap(),0,devline);
@@ -384,7 +384,7 @@ PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
     sprintf(devline,"WINEPS.DRV,%s",port);
     WriteProfileStringA("devices",devname,devline);
     if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
-        RegSetValueExA(hkey, devname, 0, REG_SZ, devline, strlen(devline) + 1);
+        RegSetValueExA(hkey, devname, 0, REG_SZ, (LPBYTE)devline, strlen(devline) + 1);
         RegCloseKey(hkey);
     }
     HeapFree(GetProcessHeap(),0,devline);
@@ -3372,17 +3372,17 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 	ERR("Can't create Name key\n");
 	return FALSE;
     }
-    RegSetValueExA(hkeyName, "Configuration File", 0, REG_SZ, di3.pConfigFile,
+    RegSetValueExA(hkeyName, "Configuration File", 0, REG_SZ, (LPBYTE) di3.pConfigFile,
 		   0);
-    RegSetValueExA(hkeyName, "Data File", 0, REG_SZ, di3.pDataFile, 0);
-    RegSetValueExA(hkeyName, "Driver", 0, REG_SZ, di3.pDriverPath, 0);
-    RegSetValueExA(hkeyName, "Version", 0, REG_DWORD, (LPSTR)&di3.cVersion,
+    RegSetValueExA(hkeyName, "Data File", 0, REG_SZ, (LPBYTE) di3.pDataFile, 0);
+    RegSetValueExA(hkeyName, "Driver", 0, REG_SZ, (LPBYTE) di3.pDriverPath, 0);
+    RegSetValueExA(hkeyName, "Version", 0, REG_DWORD, (LPBYTE) &di3.cVersion,
 		   sizeof(DWORD));
-    RegSetValueExA(hkeyName, "Datatype", 0, REG_SZ, di3.pDefaultDataType, 0);
+    RegSetValueExA(hkeyName, "Datatype", 0, REG_SZ, (LPBYTE) di3.pDefaultDataType, 0);
     RegSetValueExA(hkeyName, "Dependent Files", 0, REG_MULTI_SZ,
-		   di3.pDependentFiles, 0);
-    RegSetValueExA(hkeyName, "Help File", 0, REG_SZ, di3.pHelpFile, 0);
-    RegSetValueExA(hkeyName, "Monitor", 0, REG_SZ, di3.pMonitorName, 0);
+		   (LPBYTE) di3.pDependentFiles, 0);
+    RegSetValueExA(hkeyName, "Help File", 0, REG_SZ, (LPBYTE) di3.pHelpFile, 0);
+    RegSetValueExA(hkeyName, "Monitor", 0, REG_SZ, (LPBYTE) di3.pMonitorName, 0);
     RegCloseKey(hkeyName);
     RegCloseKey(hkeyDrivers);
 
