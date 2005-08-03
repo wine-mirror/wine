@@ -544,8 +544,8 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     GetThemeBool(hTheme, iPartId, iStateId, TMT_TRANSPARENT, &transparent);
     if(transparent) {
         if(FAILED(GetThemeColor(hTheme, iPartId, iStateId, TMT_TRANSPARENTCOLOR, &transparentcolor))) {
-            /* If image is transparent, but no color was specified, get the color of the upper left corner */
-            transparentcolor = GetPixel(hdcSrc, 0, 0);
+            /* If image is transparent, but no color was specified, use magenta */
+            transparentcolor = RGB(255, 0, 255);
         }
     }
 
