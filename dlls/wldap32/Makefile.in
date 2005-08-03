@@ -11,9 +11,11 @@ C_SRCS = \
 	ber.c \
 	bind.c \
 	compare.c \
+	dn.c \
 	error.c \
 	init.c \
 	main.c \
+	misc.c \
 	search.c
 
 RC_SRCS = wldap32.rc

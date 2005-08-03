@@ -1,5 +1,7 @@
 @ stub LdapGetLastError
 @ cdecl LdapMapErrorToWin32(long)
+@ cdecl LdapUnicodeToUTF8(wstr long ptr long)
+@ cdecl LdapUTF8ToUnicode(str long ptr long)
 @ cdecl ber_alloc_t(long)
 @ cdecl ber_bvdup(ptr)
 @ cdecl ber_bvecfree(ptr)
@@ -31,12 +33,24 @@
 @ cdecl ldap_compare_s(ptr str str str) ldap_compare_sA
 @ cdecl ldap_compare_sA(ptr str str str)
 @ cdecl ldap_compare_sW(ptr wstr wstr wstr)
+@ cdecl ldap_dn2ufn(str) ldap_dn2ufnA
+@ cdecl ldap_dn2ufnA(str)
+@ cdecl ldap_dn2ufnW(wstr)
 @ cdecl ldap_err2string(long) ldap_err2stringA
 @ cdecl ldap_err2stringA(long)
 @ cdecl ldap_err2stringW(long)
+@ cdecl ldap_explode_dn(str long) ldap_explode_dnA
+@ cdecl ldap_explode_dnA(str long)
+@ cdecl ldap_explode_dnW(wstr long)
+@ cdecl ldap_get_dn(ptr ptr) ldap_get_dnA
+@ cdecl ldap_get_dnA(ptr ptr)
+@ cdecl ldap_get_dnW(ptr ptr)
 @ cdecl ldap_init(str long) ldap_initA
 @ cdecl ldap_initA(str long)
 @ cdecl ldap_initW(wstr long)
+@ cdecl ldap_memfree(ptr) ldap_memfreeA
+@ cdecl ldap_memfreeA(ptr)
+@ cdecl ldap_memfreeW(ptr)
 @ cdecl ldap_open(str long) ldap_openA
 @ cdecl ldap_openA(str long)
 @ cdecl ldap_openW(wstr long)
@@ -71,3 +85,9 @@
 @ cdecl ldap_start_tls_sW(ptr ptr ptr ptr ptr)
 @ cdecl ldap_unbind(ptr) WLDAP32_ldap_unbind
 @ cdecl ldap_unbind_s(ptr) WLDAP32_ldap_unbind_s
+@ cdecl ldap_ufn2dn(str ptr) ldap_ufn2dnA
+@ cdecl ldap_ufn2dnA(str ptr)
+@ cdecl ldap_ufn2dnW(wstr ptr)
+@ cdecl ldap_value_free(ptr) ldap_value_freeA
+@ cdecl ldap_value_freeA(ptr)
+@ cdecl ldap_value_freeW(ptr)
