@@ -122,7 +122,6 @@ MAKE_FUNCPTR(glXQueryExtension)
 MAKE_FUNCPTR(glXGetFBConfigs)
 MAKE_FUNCPTR(glXChooseFBConfig)
 MAKE_FUNCPTR(glXGetFBConfigAttrib)
-MAKE_FUNCPTR(glXGetVisualFromFBConfig)
 #undef MAKE_FUNCPTR
 
 static BOOL has_opengl(void)
@@ -148,7 +147,6 @@ LOAD_FUNCPTR(glXQueryExtension)
 LOAD_FUNCPTR(glXGetFBConfigs)
 LOAD_FUNCPTR(glXChooseFBConfig)
 LOAD_FUNCPTR(glXGetFBConfigAttrib)
-LOAD_FUNCPTR(glXGetVisualFromFBConfig)
 #undef LOAD_FUNCPTR
 
     wine_tsx11_lock();
@@ -477,49 +475,26 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
 {
     XVisualInfo *visual = NULL;
     /* In order to support OpenGL or D3D, we require a double-buffered visual and stencil buffer support, */
-    int dblBuf[] = {GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT | GLX_WINDOW_BIT,
-                    GLX_RENDER_TYPE,GLX_RGBA_BIT 
-                    ,GLX_DEPTH_SIZE,16
-                    ,GLX_DOUBLEBUFFER,TRUE, None};
-    int nCfgs;
-    unsigned int i;
-    int maxStencil = -1;
-    int attribSize;
-    GLXFBConfig* cfgs = NULL;
-    GLXFBConfig* chosenCfg = NULL;
+    int dblBuf[] = {GLX_RGBA,GLX_DEPTH_SIZE, 16, GLX_STENCIL_SIZE, 8, GLX_DOUBLEBUFFER, None};
     if (!has_opengl()) return NULL;
 
     wine_tsx11_lock();
-
-    /* Fint the config with the highest stencil buffer size */
-    cfgs = pglXChooseFBConfig(display, DefaultScreen(display), dblBuf, &nCfgs);
-    if (cfgs == NULL) {
-        WARN("Couldn't find a double buffered, RGBA visual with 16 bits depth\n");
-        visual = NULL;
-    } else {
-        for (i = 0; i < nCfgs ; ++i) {
-            pglXGetFBConfigAttrib(display, cfgs[i],GLX_STENCIL_SIZE, &attribSize);
-            if (attribSize > maxStencil ) {
-                chosenCfg = cfgs + i;
-                maxStencil = attribSize;
-            }
-        }
-        pglXGetFBConfigAttrib(display, *chosenCfg, GLX_RED_SIZE, &attribSize);
-        TRACE("A FB config with RED %d", attribSize);
-        pglXGetFBConfigAttrib(display, *chosenCfg, GLX_GREEN_SIZE, &attribSize);
-        TRACE(" GREEN %d",attribSize);
-        pglXGetFBConfigAttrib(display, *chosenCfg, GLX_BLUE_SIZE, &attribSize);
-        TRACE(" BLUE %d",attribSize);
-        pglXGetFBConfigAttrib(display, *chosenCfg, GLX_ALPHA_SIZE, &attribSize);
-        TRACE(" ALPHA %d",attribSize);
-        pglXGetFBConfigAttrib(display, *chosenCfg, GLX_DEPTH_SIZE, &attribSize);
-        TRACE(" DEPTH %d",attribSize);
-        pglXGetFBConfigAttrib(display, *chosenCfg, GLX_STENCIL_SIZE, &attribSize);
-        TRACE(" STENCIL %d has been chosen\n",attribSize);
-        visual = pglXGetVisualFromFBConfig(display, *chosenCfg);
-        XFree(cfgs);
-    }
+    visual = pglXChooseVisual(display, DefaultScreen(display), dblBuf);
     wine_tsx11_unlock();
+    if (visual == NULL) {
+        /* fallback to no stencil */
+        int dblBuf2[] = {GLX_RGBA,GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None};
+        WARN("Failed to get a visual with at least 8 bits of stencil\n");
+
+        wine_tsx11_lock();
+        visual = pglXChooseVisual(display, DefaultScreen(display), dblBuf2);
+        wine_tsx11_unlock();
+        if (visual == NULL) {
+            /* This should only happen if we cannot find a match with a depth size 16 */
+            FIXME("Failed to find a suitable visual\n");
+        }
+    }
+    TRACE("Visual ID %lx Chosen\n",visual->visualid);
     return visual;
 }
 
