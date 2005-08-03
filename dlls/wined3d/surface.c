@@ -22,6 +22,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
@@ -696,7 +697,19 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                     vcheckGLcall("glDrawPixels");
                 }
                 break;
-            case WINED3DFMT_X8R8G8B8: /* FIXME: there's no alpha change with D3DFMT_X8R8G8B8 but were using GL_BGRA */
+            case WINED3DFMT_X8R8G8B8: /* make sure the X byte is set to alpha on, since it 
+                                        could be any random value this fixes the intro move in Pirates! */
+                {
+                    int size;
+                    unsigned int *data;
+                    data = (unsigned int *)This->resource.allocatedMemory;
+                    size = (This->lockedRect.bottom - This->lockedRect.top) * (This->lockedRect.right - This->lockedRect.left);
+                    while(size > 0) {
+                            *data |= 0xFF000000;
+                            data++;
+                            size--;
+                    }
+                }
             case WINED3DFMT_A8R8G8B8:
                 {
                     glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
