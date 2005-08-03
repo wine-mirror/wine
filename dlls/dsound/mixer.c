@@ -490,8 +490,10 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 			dsb->buf_mixpos %= dsb->buflen;
 			if (dsb->leadin && (dsb->startpos <= dsb->buf_mixpos))
 				dsb->leadin = FALSE; /* HACK: see above */
+		} else if (dsb->buf_mixpos > dsb->buflen) {
+			ERR("Mixpos (%lu) past buflen (%lu), capping...\n", dsb->buf_mixpos, dsb->buflen);
+			dsb->buf_mixpos = dsb->buflen;
 		}
-		else dsb->buf_mixpos = 0; /* %= dsb->buflen; */
 	}
 
 	return len;
