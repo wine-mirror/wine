@@ -5,6 +5,7 @@
 # distclean:       also remove all files created by configure
 # test:            run tests
 # testclean:       clean test results to force running all tests again
+# crosstest:       build tests as native windows applications (requires MinGW)
 # install-lib:     install libraries needed to run applications
 # install-dev:     install development environment
 # install:         install everything
