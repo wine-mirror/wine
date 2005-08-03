@@ -1691,6 +1691,14 @@ UINT WINAPI MsiCollectUserInfoA(LPCSTR szProduct)
     return rc;
 }
 
+UINT WINAPI MsiConfigureFeatureW(LPWSTR szProduct, LPWSTR szFeature, INSTALLSTATE eInstallState)
+{
+    FIXME("%s %s %i\n", debugstr_w(szProduct), debugstr_w(szFeature), eInstallState);
+    return ERROR_SUCCESS;
+}
+
+
+
 UINT WINAPI MsiCreateAndVerifyInstallerDirectory(DWORD dwReserved)
 {
     WCHAR path[MAX_PATH];

@@ -11,7 +11,7 @@
 11 stub MsiConfigureFeatureA
 12 stub MsiConfigureFeatureFromDescriptorA
 13 stub MsiConfigureFeatureFromDescriptorW
-14 stub MsiConfigureFeatureW
+14 stdcall MsiConfigureFeatureW(str str ptr)
 15 stdcall MsiConfigureProductA(str long long)
 16 stdcall MsiConfigureProductW(wstr long long)
 17 stdcall MsiCreateRecord(long)
