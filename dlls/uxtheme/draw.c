@@ -891,18 +891,556 @@ HRESULT WINAPI DrawThemeBackgroundEx(HTHEME hTheme, HDC hdc, int iPartId,
     return hr;
 }
 
+/*
+ * DrawThemeEdge() implementation
+ *
+ * Since it basically is DrawEdge() with different colors, I copied its code
+ * from user32's uitools.c.
+ */
+
+enum
+{
+    EDGE_LIGHT,
+    EDGE_HIGHLIGHT,
+    EDGE_SHADOW,
+    EDGE_DARKSHADOW,
+    EDGE_FILL,
+
+    EDGE_WINDOW,
+    EDGE_WINDOWFRAME,
+
+    EDGE_NUMCOLORS
+};
+
+static const struct 
+{
+    int themeProp;
+    int sysColor;
+} EdgeColorMap[EDGE_NUMCOLORS] = {
+    {TMT_EDGELIGHTCOLOR,                  COLOR_3DLIGHT},
+    {TMT_EDGEHIGHLIGHTCOLOR,              COLOR_BTNHIGHLIGHT},
+    {TMT_EDGESHADOWCOLOR,                 COLOR_BTNSHADOW},
+    {TMT_EDGEDKSHADOWCOLOR,               COLOR_3DDKSHADOW},
+    {TMT_EDGEFILLCOLOR,                   COLOR_BTNFACE},
+    {-1,                                  COLOR_WINDOW},
+    {-1,                                  COLOR_WINDOWFRAME}
+};
+
+static const signed char LTInnerNormal[] = {
+    -1,           -1,                 -1,                 -1,
+    -1,           EDGE_HIGHLIGHT,     EDGE_HIGHLIGHT,     -1,
+    -1,           EDGE_DARKSHADOW,    EDGE_DARKSHADOW,    -1,
+    -1,           -1,                 -1,                 -1
+};
+
+static const signed char LTOuterNormal[] = {
+    -1,                 EDGE_LIGHT,     EDGE_SHADOW, -1,
+    EDGE_HIGHLIGHT,     EDGE_LIGHT,     EDGE_SHADOW, -1,
+    EDGE_DARKSHADOW,    EDGE_LIGHT,     EDGE_SHADOW, -1,
+    -1,                 EDGE_LIGHT,     EDGE_SHADOW, -1
+};
+
+static const signed char RBInnerNormal[] = {
+    -1,           -1,                 -1,               -1,
+    -1,           EDGE_SHADOW,        EDGE_SHADOW,      -1,
+    -1,           EDGE_LIGHT,         EDGE_LIGHT,       -1,
+    -1,           -1,                 -1,               -1
+};
+
+static const signed char RBOuterNormal[] = {
+    -1,               EDGE_DARKSHADOW,  EDGE_HIGHLIGHT, -1,
+    EDGE_SHADOW,      EDGE_DARKSHADOW,  EDGE_HIGHLIGHT, -1,
+    EDGE_LIGHT,       EDGE_DARKSHADOW,  EDGE_HIGHLIGHT, -1,
+    -1,               EDGE_DARKSHADOW,  EDGE_HIGHLIGHT, -1
+};
+
+static const signed char LTInnerSoft[] = {
+    -1,                  -1,                -1,               -1,
+    -1,                  EDGE_LIGHT,        EDGE_LIGHT,       -1,
+    -1,                  EDGE_SHADOW,       EDGE_SHADOW,      -1,
+    -1,                  -1,                -1,               -1
+};
+
+static const signed char LTOuterSoft[] = {
+    -1,               EDGE_HIGHLIGHT, EDGE_DARKSHADOW, -1,
+    EDGE_LIGHT,       EDGE_HIGHLIGHT, EDGE_DARKSHADOW, -1,
+    EDGE_SHADOW,      EDGE_HIGHLIGHT, EDGE_DARKSHADOW, -1,
+    -1,               EDGE_HIGHLIGHT, EDGE_DARKSHADOW, -1
+};
+
+#define RBInnerSoft RBInnerNormal   /* These are the same */
+#define RBOuterSoft RBOuterNormal
+
+static const signed char LTRBOuterMono[] = {
+    -1,           EDGE_WINDOWFRAME, EDGE_WINDOWFRAME, EDGE_WINDOWFRAME,
+    EDGE_WINDOW,  EDGE_WINDOWFRAME, EDGE_WINDOWFRAME, EDGE_WINDOWFRAME,
+    EDGE_WINDOW,  EDGE_WINDOWFRAME, EDGE_WINDOWFRAME, EDGE_WINDOWFRAME,
+    EDGE_WINDOW,  EDGE_WINDOWFRAME, EDGE_WINDOWFRAME, EDGE_WINDOWFRAME,
+};
+
+static const signed char LTRBInnerMono[] = {
+    -1, -1,           -1,           -1,
+    -1, EDGE_WINDOW,  EDGE_WINDOW,  EDGE_WINDOW,
+    -1, EDGE_WINDOW,  EDGE_WINDOW,  EDGE_WINDOW,
+    -1, EDGE_WINDOW,  EDGE_WINDOW,  EDGE_WINDOW,
+};
+
+static const signed char LTRBOuterFlat[] = {
+    -1,                 EDGE_SHADOW, EDGE_SHADOW, EDGE_SHADOW,
+    EDGE_FILL,          EDGE_SHADOW, EDGE_SHADOW, EDGE_SHADOW,
+    EDGE_FILL,          EDGE_SHADOW, EDGE_SHADOW, EDGE_SHADOW,
+    EDGE_FILL,          EDGE_SHADOW, EDGE_SHADOW, EDGE_SHADOW,
+};
+
+static const signed char LTRBInnerFlat[] = {
+    -1, -1,               -1,               -1,
+    -1, EDGE_FILL,        EDGE_FILL,        EDGE_FILL,
+    -1, EDGE_FILL,        EDGE_FILL,        EDGE_FILL,
+    -1, EDGE_FILL,        EDGE_FILL,        EDGE_FILL,
+};
+
+static COLORREF get_edge_color (int edgeType, HTHEME theme, int part, int state)
+{
+    COLORREF col;
+    if ((EdgeColorMap[edgeType].themeProp == -1)
+        || FAILED (GetThemeColor (theme, part, state, 
+            EdgeColorMap[edgeType].themeProp, &col)))
+        col = GetSysColor (EdgeColorMap[edgeType].sysColor);
+    return col;
+}
+
+static inline HPEN get_edge_pen (int edgeType, HTHEME theme, int part, int state)
+{
+    return CreatePen (PS_SOLID, 1, get_edge_color (edgeType, theme, part, state));
+}
+
+static inline HBRUSH get_edge_brush (int edgeType, HTHEME theme, int part, int state)
+{
+    return CreateSolidBrush (get_edge_color (edgeType, theme, part, state));
+}
+
+/***********************************************************************
+ *           draw_diag_edge
+ *
+ * Same as DrawEdge invoked with BF_DIAGONAL
+ */
+static HRESULT draw_diag_edge (HDC hdc, HTHEME theme, int part, int state,
+                               const RECT* rc, UINT uType, 
+                               UINT uFlags, LPRECT contentsRect)
+{
+    POINT Points[4];
+    signed char InnerI, OuterI;
+    HPEN InnerPen, OuterPen;
+    POINT SavePoint;
+    HPEN SavePen;
+    int spx, spy;
+    int epx, epy;
+    int Width = rc->right - rc->left;
+    int Height= rc->bottom - rc->top;
+    int SmallDiam = Width > Height ? Height : Width;
+    HRESULT retval = (((uType & BDR_INNER) == BDR_INNER
+                       || (uType & BDR_OUTER) == BDR_OUTER)
+                      && !(uFlags & (BF_FLAT|BF_MONO)) ) ? E_FAIL : S_OK;
+    int add = (LTRBInnerMono[uType & (BDR_INNER|BDR_OUTER)] != -1 ? 1 : 0)
+            + (LTRBOuterMono[uType & (BDR_INNER|BDR_OUTER)] != -1 ? 1 : 0);
+
+    /* Init some vars */
+    OuterPen = InnerPen = (HPEN)GetStockObject(NULL_PEN);
+    SavePen = (HPEN)SelectObject(hdc, InnerPen);
+    spx = spy = epx = epy = 0; /* Satisfy the compiler... */
+
+    /* Determine the colors of the edges */
+    if(uFlags & BF_MONO)
+    {
+        InnerI = LTRBInnerMono[uType & (BDR_INNER|BDR_OUTER)];
+        OuterI = LTRBOuterMono[uType & (BDR_INNER|BDR_OUTER)];
+    }
+    else if(uFlags & BF_FLAT)
+    {
+        InnerI = LTRBInnerFlat[uType & (BDR_INNER|BDR_OUTER)];
+        OuterI = LTRBOuterFlat[uType & (BDR_INNER|BDR_OUTER)];
+    }
+    else if(uFlags & BF_SOFT)
+    {
+        if(uFlags & BF_BOTTOM)
+        {
+            InnerI = RBInnerSoft[uType & (BDR_INNER|BDR_OUTER)];
+            OuterI = RBOuterSoft[uType & (BDR_INNER|BDR_OUTER)];
+        }
+        else
+        {
+            InnerI = LTInnerSoft[uType & (BDR_INNER|BDR_OUTER)];
+            OuterI = LTOuterSoft[uType & (BDR_INNER|BDR_OUTER)];
+        }
+    }
+    else
+    {
+        if(uFlags & BF_BOTTOM)
+        {
+            InnerI = RBInnerNormal[uType & (BDR_INNER|BDR_OUTER)];
+            OuterI = RBOuterNormal[uType & (BDR_INNER|BDR_OUTER)];
+        }
+        else
+        {
+            InnerI = LTInnerNormal[uType & (BDR_INNER|BDR_OUTER)];
+            OuterI = LTOuterNormal[uType & (BDR_INNER|BDR_OUTER)];
+        }
+    }
+
+    if(InnerI != -1) InnerPen = get_edge_pen (InnerI, theme, part, state);
+    if(OuterI != -1) OuterPen = get_edge_pen (OuterI, theme, part, state);
+
+    MoveToEx(hdc, 0, 0, &SavePoint);
+
+    /* Don't ask me why, but this is what is visible... */
+    /* This must be possible to do much simpler, but I fail to */
+    /* see the logic in the MS implementation (sigh...). */
+    /* So, this might look a bit brute force here (and it is), but */
+    /* it gets the job done;) */
+
+    switch(uFlags & BF_RECT)
+    {
+    case 0:
+    case BF_LEFT:
+    case BF_BOTTOM:
+    case BF_BOTTOMLEFT:
+        /* Left bottom endpoint */
+        epx = rc->left-1;
+        spx = epx + SmallDiam;
+        epy = rc->bottom;
+        spy = epy - SmallDiam;
+        break;
+
+    case BF_TOPLEFT:
+    case BF_BOTTOMRIGHT:
+        /* Left top endpoint */
+        epx = rc->left-1;
+        spx = epx + SmallDiam;
+        epy = rc->top-1;
+        spy = epy + SmallDiam;
+        break;
+
+    case BF_TOP:
+    case BF_RIGHT:
+    case BF_TOPRIGHT:
+    case BF_RIGHT|BF_LEFT:
+    case BF_RIGHT|BF_LEFT|BF_TOP:
+    case BF_BOTTOM|BF_TOP:
+    case BF_BOTTOM|BF_TOP|BF_LEFT:
+    case BF_BOTTOMRIGHT|BF_LEFT:
+    case BF_BOTTOMRIGHT|BF_TOP:
+    case BF_RECT:
+        /* Right top endpoint */
+        spx = rc->left;
+        epx = spx + SmallDiam;
+        spy = rc->bottom-1;
+        epy = spy - SmallDiam;
+        break;
+    }
+
+    MoveToEx(hdc, spx, spy, NULL);
+    SelectObject(hdc, OuterPen);
+    LineTo(hdc, epx, epy);
+
+    SelectObject(hdc, InnerPen);
+
+    switch(uFlags & (BF_RECT|BF_DIAGONAL))
+    {
+    case BF_DIAGONAL_ENDBOTTOMLEFT:
+    case (BF_DIAGONAL|BF_BOTTOM):
+    case BF_DIAGONAL:
+    case (BF_DIAGONAL|BF_LEFT):
+        MoveToEx(hdc, spx-1, spy, NULL);
+        LineTo(hdc, epx, epy-1);
+        Points[0].x = spx-add;
+        Points[0].y = spy;
+        Points[1].x = rc->left;
+        Points[1].y = rc->top;
+        Points[2].x = epx+1;
+        Points[2].y = epy-1-add;
+        Points[3] = Points[2];
+        break;
+
+    case BF_DIAGONAL_ENDBOTTOMRIGHT:
+        MoveToEx(hdc, spx-1, spy, NULL);
+        LineTo(hdc, epx, epy+1);
+        Points[0].x = spx-add;
+        Points[0].y = spy;
+        Points[1].x = rc->left;
+        Points[1].y = rc->bottom-1;
+        Points[2].x = epx+1;
+        Points[2].y = epy+1+add;
+        Points[3] = Points[2];
+        break;
+
+    case (BF_DIAGONAL|BF_BOTTOM|BF_RIGHT|BF_TOP):
+    case (BF_DIAGONAL|BF_BOTTOM|BF_RIGHT|BF_TOP|BF_LEFT):
+    case BF_DIAGONAL_ENDTOPRIGHT:
+    case (BF_DIAGONAL|BF_RIGHT|BF_TOP|BF_LEFT):
+        MoveToEx(hdc, spx+1, spy, NULL);
+        LineTo(hdc, epx, epy+1);
+        Points[0].x = epx-1;
+        Points[0].y = epy+1+add;
+        Points[1].x = rc->right-1;
+        Points[1].y = rc->top+add;
+        Points[2].x = rc->right-1;
+        Points[2].y = rc->bottom-1;
+        Points[3].x = spx+add;
+        Points[3].y = spy;
+        break;
+
+    case BF_DIAGONAL_ENDTOPLEFT:
+        MoveToEx(hdc, spx, spy-1, NULL);
+        LineTo(hdc, epx+1, epy);
+        Points[0].x = epx+1+add;
+        Points[0].y = epy+1;
+        Points[1].x = rc->right-1;
+        Points[1].y = rc->top;
+        Points[2].x = rc->right-1;
+        Points[2].y = rc->bottom-1-add;
+        Points[3].x = spx;
+        Points[3].y = spy-add;
+        break;
+
+    case (BF_DIAGONAL|BF_TOP):
+    case (BF_DIAGONAL|BF_BOTTOM|BF_TOP):
+    case (BF_DIAGONAL|BF_BOTTOM|BF_TOP|BF_LEFT):
+        MoveToEx(hdc, spx+1, spy-1, NULL);
+        LineTo(hdc, epx, epy);
+        Points[0].x = epx-1;
+        Points[0].y = epy+1;
+        Points[1].x = rc->right-1;
+        Points[1].y = rc->top;
+        Points[2].x = rc->right-1;
+        Points[2].y = rc->bottom-1-add;
+        Points[3].x = spx+add;
+        Points[3].y = spy-add;
+        break;
+
+    case (BF_DIAGONAL|BF_RIGHT):
+    case (BF_DIAGONAL|BF_RIGHT|BF_LEFT):
+    case (BF_DIAGONAL|BF_RIGHT|BF_LEFT|BF_BOTTOM):
+        MoveToEx(hdc, spx, spy, NULL);
+        LineTo(hdc, epx-1, epy+1);
+        Points[0].x = spx;
+        Points[0].y = spy;
+        Points[1].x = rc->left;
+        Points[1].y = rc->top+add;
+        Points[2].x = epx-1-add;
+        Points[2].y = epy+1+add;
+        Points[3] = Points[2];
+        break;
+    }
+
+    /* Fill the interior if asked */
+    if((uFlags & BF_MIDDLE) && retval)
+    {
+        HBRUSH hbsave;
+        HBRUSH hb = get_edge_brush ((uFlags & BF_MONO) ? EDGE_WINDOW : EDGE_FILL, 
+            theme, part, state);
+        HPEN hpsave;
+        HPEN hp = get_edge_pen ((uFlags & BF_MONO) ? EDGE_WINDOW : EDGE_FILL, 
+            theme, part, state);
+        hbsave = (HBRUSH)SelectObject(hdc, hb);
+        hpsave = (HPEN)SelectObject(hdc, hp);
+        Polygon(hdc, Points, 4);
+        SelectObject(hdc, hbsave);
+        SelectObject(hdc, hpsave);
+        DeleteObject (hp);
+        DeleteObject (hb);
+    }
+
+    /* Adjust rectangle if asked */
+    if(uFlags & BF_ADJUST)
+    {
+        *contentsRect = *rc;
+        if(uFlags & BF_LEFT)   contentsRect->left   += add;
+        if(uFlags & BF_RIGHT)  contentsRect->right  -= add;
+        if(uFlags & BF_TOP)    contentsRect->top    += add;
+        if(uFlags & BF_BOTTOM) contentsRect->bottom -= add;
+    }
+
+    /* Cleanup */
+    SelectObject(hdc, SavePen);
+    MoveToEx(hdc, SavePoint.x, SavePoint.y, NULL);
+    if(InnerI != -1) DeleteObject (InnerPen);
+    if(OuterI != -1) DeleteObject (OuterPen);
+
+    return retval;
+}
+
+/***********************************************************************
+ *           draw_rect_edge
+ *
+ * Same as DrawEdge invoked without BF_DIAGONAL
+ */
+static HRESULT draw_rect_edge (HDC hdc, HTHEME theme, int part, int state,
+                               const RECT* rc, UINT uType, 
+                               UINT uFlags, LPRECT contentsRect)
+{
+    signed char LTInnerI, LTOuterI;
+    signed char RBInnerI, RBOuterI;
+    HPEN LTInnerPen, LTOuterPen;
+    HPEN RBInnerPen, RBOuterPen;
+    RECT InnerRect = *rc;
+    POINT SavePoint;
+    HPEN SavePen;
+    int LBpenplus = 0;
+    int LTpenplus = 0;
+    int RTpenplus = 0;
+    int RBpenplus = 0;
+    HRESULT retval = (((uType & BDR_INNER) == BDR_INNER
+                       || (uType & BDR_OUTER) == BDR_OUTER)
+                      && !(uFlags & (BF_FLAT|BF_MONO)) ) ? E_FAIL : S_OK;
+
+    /* Init some vars */
+    LTInnerPen = LTOuterPen = RBInnerPen = RBOuterPen = (HPEN)GetStockObject(NULL_PEN);
+    SavePen = (HPEN)SelectObject(hdc, LTInnerPen);
+
+    /* Determine the colors of the edges */
+    if(uFlags & BF_MONO)
+    {
+        LTInnerI = RBInnerI = LTRBInnerMono[uType & (BDR_INNER|BDR_OUTER)];
+        LTOuterI = RBOuterI = LTRBOuterMono[uType & (BDR_INNER|BDR_OUTER)];
+    }
+    else if(uFlags & BF_FLAT)
+    {
+        LTInnerI = RBInnerI = LTRBInnerFlat[uType & (BDR_INNER|BDR_OUTER)];
+        LTOuterI = RBOuterI = LTRBOuterFlat[uType & (BDR_INNER|BDR_OUTER)];
+
+        if( LTInnerI != -1 ) LTInnerI = RBInnerI = COLOR_BTNFACE;
+    }
+    else if(uFlags & BF_SOFT)
+    {
+        LTInnerI = LTInnerSoft[uType & (BDR_INNER|BDR_OUTER)];
+        LTOuterI = LTOuterSoft[uType & (BDR_INNER|BDR_OUTER)];
+        RBInnerI = RBInnerSoft[uType & (BDR_INNER|BDR_OUTER)];
+        RBOuterI = RBOuterSoft[uType & (BDR_INNER|BDR_OUTER)];
+    }
+    else
+    {
+        LTInnerI = LTInnerNormal[uType & (BDR_INNER|BDR_OUTER)];
+        LTOuterI = LTOuterNormal[uType & (BDR_INNER|BDR_OUTER)];
+        RBInnerI = RBInnerNormal[uType & (BDR_INNER|BDR_OUTER)];
+        RBOuterI = RBOuterNormal[uType & (BDR_INNER|BDR_OUTER)];
+    }
+
+    if((uFlags & BF_BOTTOMLEFT) == BF_BOTTOMLEFT)   LBpenplus = 1;
+    if((uFlags & BF_TOPRIGHT) == BF_TOPRIGHT)       RTpenplus = 1;
+    if((uFlags & BF_BOTTOMRIGHT) == BF_BOTTOMRIGHT) RBpenplus = 1;
+    if((uFlags & BF_TOPLEFT) == BF_TOPLEFT)         LTpenplus = 1;
+
+    if(LTInnerI != -1) LTInnerPen = get_edge_pen (LTInnerI, theme, part, state);
+    if(LTOuterI != -1) LTOuterPen = get_edge_pen (LTOuterI, theme, part, state);
+    if(RBInnerI != -1) RBInnerPen = get_edge_pen (RBInnerI, theme, part, state);
+    if(RBOuterI != -1) RBOuterPen = get_edge_pen (RBOuterI, theme, part, state);
+
+    MoveToEx(hdc, 0, 0, &SavePoint);
+
+    /* Draw the outer edge */
+    SelectObject(hdc, LTOuterPen);
+    if(uFlags & BF_TOP)
+    {
+        MoveToEx(hdc, InnerRect.left, InnerRect.top, NULL);
+        LineTo(hdc, InnerRect.right, InnerRect.top);
+    }
+    if(uFlags & BF_LEFT)
+    {
+        MoveToEx(hdc, InnerRect.left, InnerRect.top, NULL);
+        LineTo(hdc, InnerRect.left, InnerRect.bottom);
+    }
+    SelectObject(hdc, RBOuterPen);
+    if(uFlags & BF_BOTTOM)
+    {
+        MoveToEx(hdc, InnerRect.right-1, InnerRect.bottom-1, NULL);
+        LineTo(hdc, InnerRect.left-1, InnerRect.bottom-1);
+    }
+    if(uFlags & BF_RIGHT)
+    {
+        MoveToEx(hdc, InnerRect.right-1, InnerRect.bottom-1, NULL);
+        LineTo(hdc, InnerRect.right-1, InnerRect.top-1);
+    }
+
+    /* Draw the inner edge */
+    SelectObject(hdc, LTInnerPen);
+    if(uFlags & BF_TOP)
+    {
+        MoveToEx(hdc, InnerRect.left+LTpenplus, InnerRect.top+1, NULL);
+        LineTo(hdc, InnerRect.right-RTpenplus, InnerRect.top+1);
+    }
+    if(uFlags & BF_LEFT)
+    {
+        MoveToEx(hdc, InnerRect.left+1, InnerRect.top+LTpenplus, NULL);
+        LineTo(hdc, InnerRect.left+1, InnerRect.bottom-LBpenplus);
+    }
+    SelectObject(hdc, RBInnerPen);
+    if(uFlags & BF_BOTTOM)
+    {
+        MoveToEx(hdc, InnerRect.right-1-RBpenplus, InnerRect.bottom-2, NULL);
+        LineTo(hdc, InnerRect.left-1+LBpenplus, InnerRect.bottom-2);
+    }
+    if(uFlags & BF_RIGHT)
+    {
+        MoveToEx(hdc, InnerRect.right-2, InnerRect.bottom-1-RBpenplus, NULL);
+        LineTo(hdc, InnerRect.right-2, InnerRect.top-1+RTpenplus);
+    }
+
+    if( ((uFlags & BF_MIDDLE) && retval) || (uFlags & BF_ADJUST) )
+    {
+        int add = (LTRBInnerMono[uType & (BDR_INNER|BDR_OUTER)] != -1 ? 1 : 0)
+                + (LTRBOuterMono[uType & (BDR_INNER|BDR_OUTER)] != -1 ? 1 : 0);
+
+        if(uFlags & BF_LEFT)   InnerRect.left   += add;
+        if(uFlags & BF_RIGHT)  InnerRect.right  -= add;
+        if(uFlags & BF_TOP)    InnerRect.top    += add;
+        if(uFlags & BF_BOTTOM) InnerRect.bottom -= add;
+
+        if((uFlags & BF_MIDDLE) && retval)
+        {
+            HBRUSH br = get_edge_brush ((uFlags & BF_MONO) ? EDGE_WINDOW : EDGE_FILL, 
+                theme, part, state);
+            FillRect(hdc, &InnerRect, br);
+            DeleteObject (br);
+        }
+
+        if(uFlags & BF_ADJUST)
+            *contentsRect = InnerRect;
+    }
+
+    /* Cleanup */
+    SelectObject(hdc, SavePen);
+    MoveToEx(hdc, SavePoint.x, SavePoint.y, NULL);
+    if(LTInnerI != -1) DeleteObject (LTInnerPen);
+    if(LTOuterI != -1) DeleteObject (LTOuterPen);
+    if(RBInnerI != -1) DeleteObject (RBInnerPen);
+    if(RBOuterI != -1) DeleteObject (RBOuterPen);
+    return retval;
+}
+
+
 /***********************************************************************
  *      DrawThemeEdge                                       (UXTHEME.@)
+ *
+ * DrawThemeEdge() is pretty similar to the vanilla DrawEdge() - the
+ * difference is that it does not rely on the system colors alone, but
+ * also allows color specification in the theme.
  */
 HRESULT WINAPI DrawThemeEdge(HTHEME hTheme, HDC hdc, int iPartId,
                              int iStateId, const RECT *pDestRect, UINT uEdge,
                              UINT uFlags, RECT *pContentRect)
 {
-    FIXME("%d %d 0x%08x 0x%08x: stub\n", iPartId, iStateId, uEdge, uFlags);
+    TRACE("%d %d 0x%08x 0x%08x\n", iPartId, iStateId, uEdge, uFlags);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+     
+    if(uFlags & BF_DIAGONAL)
+        return draw_diag_edge (hdc, hTheme, iPartId, iStateId, pDestRect,
+            uEdge, uFlags, pContentRect);
+    else
+        return draw_rect_edge (hdc, hTheme, iPartId, iStateId, pDestRect,
+            uEdge, uFlags, pContentRect);
 }
+
 
 /***********************************************************************
  *      DrawThemeIcon                                       (UXTHEME.@)
