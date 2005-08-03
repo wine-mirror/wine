@@ -208,7 +208,7 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
 static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, const RECT *pRect, BOOL glyph,
                           HBITMAP *hBmp, RECT *bmpRect)
 {
-    int imagelayout = IL_VERTICAL;
+    int imagelayout = IL_HORIZONTAL;
     int imagecount = 1;
     BITMAP bmp;
     WCHAR szPath[MAX_PATH];
