@@ -1698,6 +1698,7 @@ dlls/rsabase/tests/Makefile
 dlls/rsaenh/Makefile
 dlls/rsaenh/tests/Makefile
 dlls/secur32/Makefile
+dlls/secur32/tests/Makefile
 dlls/sensapi/Makefile
 dlls/serialui/Makefile
 dlls/setupapi/Makefile

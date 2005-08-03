@@ -12,6 +12,8 @@ C_SRCS = \
 	thunks.c \
 	wrapper.c
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
