@@ -556,9 +556,20 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
 
     GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_SIZINGTYPE, &sizingtype);
     if(sizingtype == ST_TRUESIZE) {
+        int valign = VA_CENTER, halign = HA_CENTER;
+
         get_image_part_size (hTheme, hdc, iPartId, iStateId, pRect, TS_DRAW, &drawSize);
-        rcDst.left += (dstSize.x/2)-(drawSize.x/2);
-        rcDst.top  += (dstSize.y/2)-(drawSize.y/2);
+        GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_VALIGN, &valign);
+        GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_HALIGN, &halign);
+
+        if (halign == HA_CENTER)
+            rcDst.left += (dstSize.x/2)-(drawSize.x/2);
+        else if (halign == HA_RIGHT)
+            rcDst.left = rcDst.right - drawSize.x;
+        if (valign == VA_CENTER)
+            rcDst.top  += (dstSize.y/2)-(drawSize.y/2);
+        else if (valign == VA_BOTTOM)
+            rcDst.top = rcDst.bottom - drawSize.y;
         rcDst.right = rcDst.left + drawSize.x;
         rcDst.bottom = rcDst.top + drawSize.y;
         if(!UXTHEME_StretchBlt(hdc, rcDst.left, rcDst.top, drawSize.x, drawSize.y,
