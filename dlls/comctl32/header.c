@@ -416,7 +416,7 @@ HEADER_RefreshItem (HWND hwnd, HDC hdc, INT iItem)
 
     hFont = infoPtr->hFont ? infoPtr->hFont : GetStockObject (SYSTEM_FONT);
     hOldFont = SelectObject (hdc, hFont);
-    HEADER_DrawItem (hwnd, hdc, iItem, FALSE);
+    HEADER_DrawItem (hwnd, hdc, iItem, infoPtr->iHotItem == iItem);
     SelectObject (hdc, hOldFont);
 }
 
@@ -1580,6 +1580,22 @@ HEADER_NotifyFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
+HEADER_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
+    /* Reset hot-tracked item when mouse leaves control. */
+    INT oldHotItem = infoPtr->iHotItem;
+    HDC hdc = GetDC (hwnd);
+
+    infoPtr->iHotItem = -1;
+    if (oldHotItem != -1) HEADER_RefreshItem (hwnd, hdc, oldHotItem);
+    ReleaseDC (hwnd, hdc);
+
+    return 0;
+}
+
+
+static LRESULT
 HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
@@ -1588,28 +1604,35 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
     UINT  flags;
     INT   nItem, nWidth;
     HDC   hdc;
+    /* With theming, hottracking is always enabled */
+    BOOL  hotTrackEnabled =
+        ((dwStyle & HDS_BUTTONS) && (dwStyle & HDS_HOTTRACK))
+        || (GetWindowTheme (hwnd) != NULL);
+    INT oldHotItem = infoPtr->iHotItem;
 
     pt.x = (INT)(SHORT)LOWORD(lParam);
     pt.y = (INT)(SHORT)HIWORD(lParam);
     HEADER_InternalHitTest (hwnd, &pt, &flags, &nItem);
 
-    if ((dwStyle & HDS_BUTTONS) && (dwStyle & HDS_HOTTRACK)) {
+    if (hotTrackEnabled) {
 	if (flags & (HHT_ONHEADER | HHT_ONDIVIDER | HHT_ONDIVOPEN))
 	    infoPtr->iHotItem = nItem;
 	else
 	    infoPtr->iHotItem = -1;
-	InvalidateRect(hwnd, NULL, FALSE);
     }
 
     if (infoPtr->bCaptured) {
 	if (infoPtr->bPressed) {
+            BOOL oldState = infoPtr->items[infoPtr->iMoveItem].bDown;
 	    if ((nItem == infoPtr->iMoveItem) && (flags == HHT_ONHEADER))
 		infoPtr->items[infoPtr->iMoveItem].bDown = TRUE;
 	    else
 		infoPtr->items[infoPtr->iMoveItem].bDown = FALSE;
-	    hdc = GetDC (hwnd);
-	    HEADER_RefreshItem (hwnd, hdc, infoPtr->iMoveItem);
-	    ReleaseDC (hwnd, hdc);
+            if (oldState != infoPtr->items[infoPtr->iMoveItem].bDown) {
+                hdc = GetDC (hwnd);
+	        HEADER_RefreshItem (hwnd, hdc, infoPtr->iMoveItem);
+	        ReleaseDC (hwnd, hdc);
+            }
 
 	    TRACE("Moving pressed item %d!\n", infoPtr->iMoveItem);
 	}
@@ -1642,8 +1665,18 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
     }
 
-    if ((dwStyle & HDS_BUTTONS) && (dwStyle & HDS_HOTTRACK)) {
-	FIXME("hot track support!\n");
+    if (hotTrackEnabled) {
+        TRACKMOUSEEVENT tme;
+        if (oldHotItem != infoPtr->iHotItem) {
+	    hdc = GetDC (hwnd);
+	    if (oldHotItem != -1) HEADER_RefreshItem (hwnd, hdc, oldHotItem);
+	    if (infoPtr->iHotItem != -1) HEADER_RefreshItem (hwnd, hdc, infoPtr->iHotItem);
+	    ReleaseDC (hwnd, hdc);
+        }
+        tme.cbSize = sizeof( tme );
+        tme.dwFlags = TME_LEAVE;
+        tme.hwndTrack = hwnd;
+        TrackMouseEvent( &tme );
     }
 
     return 0;
@@ -1852,6 +1885,9 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_LBUTTONUP:
             return HEADER_LButtonUp (hwnd, wParam, lParam);
+
+        case WM_MOUSELEAVE:
+            return HEADER_MouseLeave (hwnd, wParam, lParam);
 
         case WM_MOUSEMOVE:
             return HEADER_MouseMove (hwnd, wParam, lParam);
