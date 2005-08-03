@@ -702,9 +702,7 @@ BOOL WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
 
         HeapFree(GetProcessHeap(), 0, lpSubBlockW);
 
-        if (( !strcasecmp( lpSubBlock, rootA )) || ( !strcasecmp( lpSubBlock, varfileinfoA )))
-            return ret;
-        else
+        if (ret && strcasecmp( lpSubBlock, rootA ) && strcasecmp( lpSubBlock, varfileinfoA ))
         {
             LPSTR lplpBufferA;
 
@@ -720,9 +718,8 @@ BOOL WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
             *puLen = len;
 
             HeapFree(GetProcessHeap(), 0, lplpBufferA);
-
-            return ret;
         }
+        return ret;
     }
 
     return VersionInfo16_QueryValue(info, lpSubBlock, lplpBuffer, puLen);
@@ -761,9 +758,7 @@ BOOL WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
 
         HeapFree(GetProcessHeap(), 0, lpSubBlockA);
 
-        if (( !strcmpiW( lpSubBlock, rootW )) || ( !strcmpiW( lpSubBlock, varfileinfoW )))
-            return ret;
-        else
+        if (ret && strcmpiW( lpSubBlock, rootW ) && strcmpiW( lpSubBlock, varfileinfoW ))
         {
             LPWSTR lplpBufferW;
 
@@ -779,9 +774,8 @@ BOOL WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
             *puLen = len;
 
             HeapFree(GetProcessHeap(), 0, lplpBufferW);
-
-            return ret;
         }
+        return ret;
     }
 
     return VersionInfo32_QueryValue(info, lpSubBlock, lplpBuffer, puLen);
