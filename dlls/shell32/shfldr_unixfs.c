@@ -19,6 +19,8 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <limits.h>

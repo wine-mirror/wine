@@ -36,6 +36,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

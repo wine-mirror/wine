@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <wine/debug.h>
 #include <wine/library.h>

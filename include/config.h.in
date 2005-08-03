@@ -977,9 +977,6 @@
    `char[]'. */
 #undef YYTEXT_POINTER
 
-/* Set this to 64 to enable 64-bit file support on Linux */
-#undef _FILE_OFFSET_BITS
-
 /* Define to a macro to generate an assembly function directive */
 #undef __ASM_FUNC
 

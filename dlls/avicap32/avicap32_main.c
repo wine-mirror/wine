@@ -17,8 +17,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define COM_NO_WINDOWS_H
 #include "config.h"
+#include "wine/port.h"
+
+#define COM_NO_WINDOWS_H
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <fcntl.h>

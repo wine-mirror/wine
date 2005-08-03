@@ -790,45 +790,6 @@ then
     AC_CHECK_LIB(capi20,capi20_register,[AC_DEFINE(HAVE_CAPI4LINUX,1,[Define if you have capi4linux libs and headers])])
 fi
 
-dnl **** Check for broken glibc mmap64 ****
-
-AC_CACHE_CHECK( [whether mmap64 works defined as mmap], ac_cv_mmap64_works,
-	AC_TRY_RUN([
-		#define _FILE_OFFSET_BITS 64
-		#include <stdio.h>
-		#include <unistd.h>
-		#include <fcntl.h>
-		#include <sys/mman.h>
-		#include <errno.h>
-
-		int main(int argc,char **argv) {
-			int fd = open("conftest.map",O_CREAT|O_RDWR,0600);
-			if (fd == -1) exit(1);
-
-			unlink("conftest.map");
-
-			write(fd,"test",4);
-
-			if ((-1 == mmap(0,4,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0)) &&
-			    (errno == EINVAL)
-			) {
-				exit(1);
-			}
-			close(fd);
-			fprintf(stderr,"success!\n");
-			exit(0);
-		}
-
-	],
-    ac_cv_mmap64_works="yes",
-    ac_cv_mmap64_works="no",
-    ac_cv_mmap64_works="no") )
-
-if test "$ac_cv_mmap64_works" = "yes"
-then
-    AC_DEFINE(_FILE_OFFSET_BITS, 64, [Set this to 64 to enable 64-bit file support on Linux])
-fi
-
 dnl **** Check for gcc specific options ****
 
 AC_SUBST(EXTRACFLAGS,"")

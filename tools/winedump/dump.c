@@ -46,10 +46,6 @@
 #include "winedump.h"
 #include "pe.h"
 
-#ifndef O_BINARY
-# define O_BINARY 0
-#endif
-
 static void*			dump_base;
 static unsigned long		dump_total_len;
 

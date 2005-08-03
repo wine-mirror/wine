@@ -21,6 +21,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -36,10 +37,6 @@
 #include <fcntl.h>
 #ifdef HAVE_IO_H
 # include <io.h>
-#endif
-
-#ifndef O_BINARY
-# define O_BINARY 0
 #endif
 
 #include "fnt2bdf.h"
