@@ -546,7 +546,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
     }
 
     /* process pending expose events before painting */
-    if (flags & RDW_UPDATENOW) MsgWaitForMultipleObjects( 0, NULL, FALSE, 0, QS_PAINT );
+    if (flags & RDW_UPDATENOW) USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_PAINT, 0 );
 
     if (rect && !hrgn)
     {
