@@ -152,10 +152,7 @@ static BOOL load_gecko()
 
     hXPCOM = LoadLibraryW(strXPCOM);
     if(!hXPCOM) {
-        /* FIXME:
-         * We don't have any SetDllDirectory implementation so we have to modify PATH,
-         * as XPCOM loads other DLLs from this directory.
-         */
+        /* We have to modify PATH as XPCOM loads other DLLs from this directory. */
         WCHAR path_env[MAX_PATH];
         static WCHAR wszPATH[] = {'P','A','T','H',0};
         int len;
