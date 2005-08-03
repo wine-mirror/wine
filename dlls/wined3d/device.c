@@ -55,16 +55,14 @@ static unsigned int emulated_textureram = 64*1024*1024;
 
 /* TODO: setup some flags in the regestry to enable, disable pbuffer support */
 /* enable pbuffer support for offscreen textures */
-BOOL pbuffer_support     = TRUE;
+BOOL pbuffer_support     = FALSE;
 /* allocate one pbuffer per surface */
 BOOL pbuffer_per_surface = FALSE;
 
 /* static function declarations */
 static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource);
 
-static void WINAPI IWineD3DDeviceImpl_ApplyTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type);
-
-static void WINAPI IWineD3DDeviceImpl_ApplySamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type);
+static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type);
 
 /* helper macros */
 #define D3DMEMCHECK(object, ppResult) if(NULL == object) { *ppResult = NULL; WARN("Out of memory\n"); return D3DERR_OUTOFVIDEOMEMORY;}
@@ -95,7 +93,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplySamplerState(IWineD3DDevice *iface, D
     if (Pool == D3DPOOL_DEFAULT) { \
         if (IWineD3DDevice_GetAvailableTextureMem(iface) <= _size) { \
             WARN("Out of 'bogus' video memory\n"); \
-            HeapFree(GetProcessHeap(),0,object); \
+            HeapFree(GetProcessHeap(), 0, object); \
             *pp##type = NULL; \
             return D3DERR_OUTOFVIDEOMEMORY; \
         } \
@@ -138,7 +136,7 @@ static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightIn
     /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadMatrixf((float *) &This->stateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
+    glLoadMatrixf((float *)&This->stateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
 
     /* Diffuse: */
     colRGBA[0] = lightInfo->OriginalParms.Diffuse.r;
@@ -170,8 +168,8 @@ static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightIn
     glLightf(GL_LIGHT0+Index, GL_LINEAR_ATTENUATION,    lightInfo->OriginalParms.Attenuation1);
     checkGLcall("glLightf");
 
-    if ((lightInfo->OriginalParms.Range * lightInfo->OriginalParms.Range) != 0 ) {
-        quad_att = 1.4/(lightInfo->OriginalParms.Range*lightInfo->OriginalParms.Range);
+    if ((lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range) != 0) {
+        quad_att = 1.4/(lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range);
     } else {
         quad_att = 0; /*  0 or  MAX?  (0 seems to be ok) */
     }
@@ -223,69 +221,85 @@ static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightIn
 }
 
 /* Apply the current values to the specified texture stage */
-void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD Stage, DWORD Flags) {
+void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD Sampler, DWORD Flags) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i = 0;
     float col[4];
 
-    TRACE("-----------------------> Updating the texture at stage %ld to have new texture state information\n", Stage);
-    for (i = 1; i < WINED3D_HIGHEST_TEXTURE_STATE; i++) {
+    union {
+        float f;
+        DWORD d;
+    } tmpvalue;
 
-        BOOL skip = FALSE;
-
-        switch (i) {
-        /* Performance: For texture states where multiples effect the outcome, only bother
-              applying the last one as it will pick up all the other values                */
-        case WINED3DTSS_COLORARG0:  /* Will be picked up when setting color op */
-        case WINED3DTSS_COLORARG1:  /* Will be picked up when setting color op */
-        case WINED3DTSS_COLORARG2:  /* Will be picked up when setting color op */
-        case WINED3DTSS_ALPHAARG0:  /* Will be picked up when setting alpha op */
-        case WINED3DTSS_ALPHAARG1:  /* Will be picked up when setting alpha op */
-        case WINED3DTSS_ALPHAARG2:  /* Will be picked up when setting alpha op */
-           skip = TRUE;
-           break;
-
-        /* Performance: If the texture states only impact settings for the texture unit
-             (compared to the texture object) then there is no need to reapply them. The
-             only time they need applying is the first time, since we cheat and put the
-             values into the stateblock without applying.
-             Per-texture unit: texture function (eg. combine), ops and args
-                               texture env color
-                               texture generation settings
-           Note: Due to some special conditions there may be a need to do particular ones
-             of these, which is what the Flags allows                                     */
-        case WINED3DTSS_COLOROP:
-        case WINED3DTSS_TEXCOORDINDEX:
-            if (!(Flags == REAPPLY_ALL)) skip = TRUE;
-            break;
-
-        case WINED3DTSS_ALPHAOP:
-            if (!(Flags & REAPPLY_ALPHAOP)) skip = TRUE;
-            break;
-
-        default:
-            skip = FALSE;
-        }
-
-        if (skip == FALSE) {
-           /* Now apply the change */
-           IWineD3DDeviceImpl_ApplyTextureStageState(iface, Stage, i);
-        }
+    /* In addition, IDirect3DDevice9::SetSamplerState will now be used for filtering, tiling,
+    clamping, MIPLOD, etc. This will work for up to 16 samplers.
+    */
+   
+    if (Sampler >= GL_LIMITS(samplers)) {
+        FIXME("Trying to set the state of more samplers %ld than are supported %d by this openGL implementation\n", Sampler, GL_LIMITS(samplers));
+        return;
+    }
+    VTRACE(("Activating appropriate texture state %ld\n", Sampler));
+    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        ENTER_GL();
+        GLACTIVETEXTURE(Sampler);
+        LEAVE_GL();
+        /* Could we use bindTexture and then apply the states instead of GLACTIVETEXTURE */
+    } else if (Sampler > 0) {
+        FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+        return;
     }
 
-    /* apply the sampler states to the texture */
-    for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE; i++) {
-        IWineD3DDeviceImpl_ApplySamplerState(iface, Stage, i);
+    /* TODO: change this to a lookup table
+        LOOKUP_TEXTURE_STATES lists all texture states that should be applied.
+        LOOKUP_CONTEXT_SATES list all context applicable states that can be applied
+        etc.... it's a lot cleaner, quicker and possibly easier to maintain than running a switch and setting a skip flag...
+        especially when there are a number of groups of states. */
+
+    TRACE("-----------------------> Updating the texture at Sampler %ld to have new texture state information\n", Sampler);
+
+    /* The list of states not to apply is a big as the list of states to apply, so it makes sense to produce an inclusive list  */
+#define APPLY_STATE(_state)     IWineD3DDeviceImpl_ApplyTextureUnitState(iface, Sampler, _state)
+/* these are the only two supported states that need to be applied */
+    APPLY_STATE(WINED3DTSS_TEXCOORDINDEX);
+    APPLY_STATE(WINED3DTSS_TEXTURETRANSFORMFLAGS);
+#if 0 /* not supported at the moment */
+    APPLY_STATE(WINED3DTSS_BUMPENVMAT00);
+    APPLY_STATE(WINED3DTSS_BUMPENVMAT01);
+    APPLY_STATE(WINED3DTSS_BUMPENVMAT10);
+    APPLY_STATE(WINED3DTSS_BUMPENVMAT11);
+    APPLY_STATE(WINED3DTSS_BUMPENVLSCALE);
+    APPLY_STATE(WINED3DTSS_BUMPENVLOFFSET);
+    APPLY_STATE(WINED3DTSS_RESULTARG);
+    APPLY_STATE(WINED3DTSS_CONSTANT);
+#endif
+    /* a quick sanity check incase someone forgot to update this function */
+    if (WINED3D_HIGHEST_TEXTURE_STATE > WINED3DTSS_CONSTANT) {
+        FIXME("(%p) : There are more texture states than expected, update device.c to match\n", This);
+    }
+#undef APPLY_STATE
+
+    /* apply any sampler states that always need applying */
+    if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
+        tmpvalue.d = This->stateBlock->samplerState[Sampler][WINED3DSAMP_MIPMAPLODBIAS];
+        glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
+                GL_TEXTURE_LOD_BIAS_EXT,
+                tmpvalue.f);
+        checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
     }
 
     /* Note the D3DRS value applies to all textures, but GL has one
      *  per texture, so apply it now ready to be used!
      */
     D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], col);
+    /* Set the default alpha blend color */
+    glBlendColor(col[0], col[1], col[2], col[3]);
+    checkGLcall("glBlendColor");
+
+    D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], col);
     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
     checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
 
-    TRACE("-----------------------> Updated the texture at stage %ld to have new texture state information\n", Stage);
+    TRACE("-----------------------> Updated the texture at Sampler %ld to have new texture state information\n", Sampler);
 }
 
 /**********************************************************
@@ -3272,285 +3286,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, D3DRENDE
 }
 
 /*****
- * Apply / Get / Set Sampler States
+ * Get / Set Sampler States
  * TODO: Verify against dx9 definitions
  *****/
-
-/* NOTE: It is expected that this function is called a number of times in a row for the same texture unit, so it is more efficient if the caller sets the active texture unit before calling this function. set the correct Texture unit active before calling ApplySamplerState */
-static void WINAPI IWineD3DDeviceImpl_ApplySamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    DWORD Value = This->stateBlock->samplerState[Sampler][Type];
-    /**
-    * SetSampler is designed to allow for more than the standard up to 8 textures
-    *  and Geforce has stopped supporting more than 6 standard textures in openGL.
-    * So I have to use ARB for Gforce. (maybe if the sampler > 4 then use ARB?)
-    *
-    * http://developer.nvidia.com/object/General_FAQ.html#t6
-    *
-    * There are two new settings for GForce
-    * the sampler one:
-    * GL_MAX_TEXTURE_IMAGE_UNITS_ARB
-    * and the texture one:
-    * GL_MAX_TEXTURE_COORDS_ARB.
-    * Ok GForce say it's ok to use glTexParameter/glGetTexParameter(...).
-     ******************/
-    union {
-        float f;
-        DWORD d;
-    } tmpvalue;
-
-    TRACE("(%p) Sampler(%ld), Type(%d) Value(%ld)\n",This, Sampler ,Type, Value);
-
-    if(Sampler >  GL_LIMITS(samplers) || Sampler < 0 || Type > WINED3D_HIGHEST_SAMPLER_STATE || Type < 0) {
-        return;
-    }
-
-    TRACE("Setting sampler %ld %d to %ld \n", Sampler, Type, Value);
-
-    /* In addition, IDirect3DDevice9::SetSamplerState will now be used for filtering, tiling,
-    clamping, MIPLOD, etc. This will work for up to 16 samplers.
-    is this just GL_TEXTURE_2D or is it GL_TEXTURE_1D and GL_TEXTURE_3D as well?
-    */
-    ENTER_GL();
-
-    switch (Type) {
-
-    case WINED3DSAMP_ADDRESSU              : /* 1 */
-    case WINED3DSAMP_ADDRESSV              : /* 2 */
-    case WINED3DSAMP_ADDRESSW              : /* 3 */
-        {
-            GLint wrapParm = GL_REPEAT;
-            switch (Value) {
-            case D3DTADDRESS_WRAP:   wrapParm = GL_REPEAT; break;
-            case D3DTADDRESS_CLAMP:  wrapParm = GL_CLAMP_TO_EDGE; break;
-            case D3DTADDRESS_BORDER:
-              {
-                if (GL_SUPPORT(ARB_TEXTURE_BORDER_CLAMP)) {
-                  wrapParm = GL_CLAMP_TO_BORDER_ARB;
-                } else {
-                  /* FIXME: Not right, but better */
-                  TRACE("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
-                  wrapParm = GL_REPEAT;
-                }
-              }
-              break;
-            case D3DTADDRESS_MIRROR:
-              {
-                if (GL_SUPPORT(ARB_TEXTURE_MIRRORED_REPEAT)) {
-                  wrapParm = GL_MIRRORED_REPEAT_ARB;
-                } else {
-                  /* Unsupported in OpenGL pre-1.4 */
-                  TRACE("Unsupported D3DTADDRESS_MIRROR (needs GL_ARB_texture_mirrored_repeat) state %d\n", Type);
-                  wrapParm = GL_REPEAT;
-                }
-              }
-              break;
-            case D3DTADDRESS_MIRRORONCE:
-              {
-                if (GL_SUPPORT(ATI_TEXTURE_MIRROR_ONCE)) {
-                  wrapParm = GL_MIRROR_CLAMP_TO_EDGE_ATI;
-                } else {
-                  TRACE("Unsupported D3DTADDRESS_MIRRORONCE (needs GL_ATI_texture_mirror_once) state %d\n", Type);
-                  wrapParm = GL_REPEAT;
-                }
-              }
-              break;
-
-            default:
-            /* This is for the whole context, not just the sampler,
-            so we should warn if two states are baing set for any given scene */
-            if (Type!=0)
-                TRACE("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
-                wrapParm = GL_REPEAT;
-            }
-            switch (Type) {
-            case WINED3DSAMP_ADDRESSU:
-                TRACE("Setting WRAP_S for %ld to %d \n", Sampler, wrapParm);
-                glTexParameteri(This->stateBlock->textureDimensions[Sampler], GL_TEXTURE_WRAP_S, wrapParm);
-                checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_S, wrapParm)");
-                break;
-            case WINED3DSAMP_ADDRESSV:
-                TRACE("Setting WRAP_T for %ld to %d\n", Sampler, wrapParm);
-                glTexParameteri(This->stateBlock->textureDimensions[Sampler], GL_TEXTURE_WRAP_T, wrapParm);
-                checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_T, wrapParm)");
-                break;
-
-            case WINED3DSAMP_ADDRESSW:
-                TRACE("Setting WRAP_R for %ld to %d\n", Sampler, wrapParm);
-                glTexParameteri(This->stateBlock->textureDimensions[Sampler], GL_TEXTURE_WRAP_R, wrapParm);
-                checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_R, wrapParm)");
-                break;
-            default: /* nop */
-                      break; /** stupic compilator */
-            }
-        }
-        break;
-
-    case WINED3DSAMP_BORDERCOLOR           : /* 4 */
-        {
-            float col[4];
-            D3DCOLORTOGLFLOAT4(Value, col);
-            TRACE("Setting border color for %ld to %lx\n", Sampler, Value);
-            glTexParameterfv(This->stateBlock->textureDimensions[Sampler], GL_TEXTURE_BORDER_COLOR, &col[0]);
-            checkGLcall("glTexParameteri(..., GL_TEXTURE_BORDER_COLOR, ...)");
-        }
-        break;
-
-      case WINED3DSAMP_MAGFILTER             : /* 5 */
-      {
-        DWORD ValueMAG = This->stateBlock->samplerState[Sampler][WINED3DSAMP_MAGFILTER];
-        GLint realVal = GL_NEAREST;
-
-        if (ValueMAG == D3DTEXF_POINT) {
-          realVal = GL_NEAREST;
-        } else if (ValueMAG == D3DTEXF_LINEAR) {
-          realVal = GL_LINEAR;
-        } else if (ValueMAG == D3DTEXF_ANISOTROPIC) {
-          if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
-            realVal = GL_LINEAR;
-          } else {
-            FIXME("Trying to use ANISOTROPIC_FILTERING for WINED3DTSS_MAGFILTER. But not supported by current OpenGL driver\n");
-            realVal = GL_NEAREST;
-          }
-        } else {
-          FIXME("Unhandled WINED3DTSS_MAGFILTER value of %ld\n", ValueMAG);
-          realVal = GL_NEAREST;
-        }
-        TRACE("ValueMAG=%ld setting MAGFILTER to %x\n", ValueMAG, realVal);
-        glTexParameteri(This->stateBlock->textureDimensions[Sampler], GL_TEXTURE_MAG_FILTER, realVal);
-        checkGLcall("glTexParameter GL_TEXTURE_MAG_FILTER, ...");
-        /**
-         * if we juste choose to use ANISOTROPIC filtering, refresh openGL state
-         */
-        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && D3DTEXF_ANISOTROPIC == ValueMAG) {
-          glTexParameteri(This->stateBlock->textureDimensions[Sampler],
-                          GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                          This->stateBlock->samplerState[Sampler][WINED3DSAMP_MAXANISOTROPY]);
-          checkGLcall("glTexParameter GL_TEXTURE_MAX_ANISOTROPY_EXT, ...");
-        }
-      }
-      break;
-
-       case WINED3DSAMP_MINFILTER: /* 6 */
-       case WINED3DSAMP_MIPFILTER: /* 7 */
-       {
-            DWORD ValueMIN = This->stateBlock->samplerState[Sampler][WINED3DSAMP_MINFILTER];
-            DWORD ValueMIP = This->stateBlock->samplerState[Sampler][WINED3DSAMP_MIPFILTER];
-            GLint realVal = GL_LINEAR;
-
-            if (ValueMIN == D3DTEXF_NONE) {
-              /* Doesn't really make sense - Windows just seems to disable
-                 mipmapping when this occurs                              */
-              FIXME("Odd - minfilter of none, just disabling mipmaps\n");
-              realVal = GL_LINEAR;
-            } else if (ValueMIN == D3DTEXF_POINT) {
-                /* GL_NEAREST_* */
-              if (ValueMIP == D3DTEXF_NONE) {
-                    realVal = GL_NEAREST;
-                } else if (ValueMIP == D3DTEXF_POINT) {
-                    realVal = GL_NEAREST_MIPMAP_NEAREST;
-                } else if (ValueMIP == D3DTEXF_LINEAR) {
-                    realVal = GL_NEAREST_MIPMAP_LINEAR;
-                } else {
-                    FIXME("Unhandled WINED3DTSS_MIPFILTER value of %ld\n", ValueMIP);
-                    realVal = GL_NEAREST;
-                }
-            } else if (ValueMIN == D3DTEXF_LINEAR) {
-                /* GL_LINEAR_* */
-                if (ValueMIP == D3DTEXF_NONE) {
-                    realVal = GL_LINEAR;
-                } else if (ValueMIP == D3DTEXF_POINT) {
-                    realVal = GL_LINEAR_MIPMAP_NEAREST;
-                } else if (ValueMIP == D3DTEXF_LINEAR) {
-                    realVal = GL_LINEAR_MIPMAP_LINEAR;
-                } else {
-                    FIXME("Unhandled WINED3DTSS_MIPFILTER value of %ld\n", ValueMIP);
-                    realVal = GL_LINEAR;
-                }
-            } else if (ValueMIN == D3DTEXF_ANISOTROPIC) {
-              if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
-                if (ValueMIP == D3DTEXF_NONE) {
-                  realVal = GL_LINEAR_MIPMAP_LINEAR;
-                } else if (ValueMIP == D3DTEXF_POINT) {
-                  realVal = GL_LINEAR_MIPMAP_NEAREST;
-                } else if (ValueMIP == D3DTEXF_LINEAR) {
-                    realVal = GL_LINEAR_MIPMAP_LINEAR;
-                } else {
-                  FIXME("Unhandled WINED3DTSS_MIPFILTER value of %ld\n", ValueMIP);
-                  realVal = GL_LINEAR;
-                }
-              } else {
-                WARN("Trying to use ANISOTROPIC_FILTERING for WINED3DTSS_MINFILTER. But not supported by OpenGL driver\n");
-                realVal = GL_LINEAR;
-              }
-            } else {
-                FIXME("Unhandled WINED3DTSS_MINFILTER value of %ld\n", ValueMIN);
-                realVal = GL_LINEAR_MIPMAP_LINEAR;
-            }
-
-            TRACE("ValueMIN=%ld, ValueMIP=%ld, setting MINFILTER to %x\n", ValueMIN, ValueMIP, realVal);
-            glTexParameteri(This->stateBlock->textureDimensions[Sampler], GL_TEXTURE_MIN_FILTER, realVal);
-            checkGLcall("glTexParameter GL_TEXTURE_MIN_FILTER, ...");
-            /**
-             * if we just choose to use ANISOTROPIC filtering, refresh openGL state
-             */
-            if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && D3DTEXF_ANISOTROPIC == ValueMIN) {
-              glTexParameteri(This->stateBlock->textureDimensions[Sampler],  GL_TEXTURE_MAX_ANISOTROPY_EXT,
-               This->stateBlock->samplerState[Sampler][WINED3DSAMP_MAXANISOTROPY]);
-              checkGLcall("glTexParameter GL_TEXTURE_MAX_ANISOTROPY_EXT, ...");
-            }
-        }
-        break;
-
-    case WINED3DSAMP_MIPMAPLODBIAS         : /* 8 */
-      {
-        if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
-          tmpvalue.d = Value;
-          glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
-                    GL_TEXTURE_LOD_BIAS_EXT,
-                    tmpvalue.f);
-          checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
-        }
-      }
-      break;
-
-    case WINED3DSAMP_MAXMIPLEVEL           : /* 9 */
-      {
-        /**
-         * Not really the same, but the more apprioprate than nothing
-         */
-        glTexParameteri(This->stateBlock->textureDimensions[Sampler],
-                        GL_TEXTURE_BASE_LEVEL,
-                        This->stateBlock->samplerState[Sampler][WINED3DSAMP_MAXMIPLEVEL]);
-        checkGLcall("glTexParameteri GL_TEXTURE_BASE_LEVEL ...");
-      }
-      break;
-
-    case WINED3DSAMP_MAXANISOTROPY         :  /* 10 */
-      {
-        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
-          glTexParameteri(This->stateBlock->textureDimensions[Sampler],
-                          GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                          This->stateBlock->samplerState[Sampler][WINED3DSAMP_MAXANISOTROPY]);
-          checkGLcall("glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT ...");
-        }
-      }
-      break;
-    case WINED3DSAMP_SRGBTEXTURE            : /* 11 */
-   /* Per texture gamma correction, default 0 */
-    case WINED3DSAMP_ELEMENTINDEX           : /* 12 */
-   /* When a multi-element textures is used this indicates the element, (what's a multielement texture?) */
-    case WINED3DSAMP_DMAPOFFSET             : /* 13 */
-   /* Value of a precompiled displacement map used by the tesselator, default 0 */
-        TRACE("Unsupported sampler setting, Sampler=%ld, Type=%d, Value =%ld\n", Sampler, Type, Value);
-    break;
-    default:
-
-        TRACE("invalid sampler setting, Sampler=%ld, Type=%d, Value =%ld\n", Sampler, Type, Value);
-    };
-    LEAVE_GL();
-    return;
-}
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD Value) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -3568,6 +3306,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD S
     * GL_MAX_TEXTURE_COORDS_ARB.
     * Ok GForce say it's ok to use glTexParameter/glGetTexParameter(...).
      ******************/
+    /** NOTE: States are appled in IWineD3DBaseTextre ApplyStateChanges and IWineD3DDevice SetupTextureStates**/
     TRACE("(%p) Sampler(%ld), Type(%d) Value(%ld)\n",This, Sampler ,Type, Value);
 
     if(Sampler >  GL_LIMITS(samplers) || Sampler < 0 || Type > WINED3D_HIGHEST_SAMPLER_STATE || Type < 0) {
@@ -3803,7 +3542,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT Sr
  *****/
 
 /* NOTE: It's expected that this function is going to be called lots of times with the same stage active, so make it the callers responsibility to GLACTIVETEXTURE(Stage) for better state management. Set the correct Texture unit active before callnig ApplyTextureStageState */
-static void WINAPI IWineD3DDeviceImpl_ApplyTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type) {
+static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     DWORD Value = This->updateStateBlock->textureState[Stage][Type];
     /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
@@ -5504,10 +5243,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
         }
     }
 
-#if 0 /* Apply the stateblock to the new context
+#if 1 /* Apply the stateblock to the new context
 FIXME: This is a bit of a hack, each context should know it's own state,
 the directX current directX state should then be applied to the context */
-
+    {
         BOOL oldRecording;
         IWineD3DStateBlockImpl *oldUpdateStateBlock;
         oldUpdateStateBlock = This->updateStateBlock;
@@ -5518,6 +5257,7 @@ the directX current directX state should then be applied to the context */
 
         This->isRecordingState = oldRecording;
         This->updateStateBlock = oldUpdateStateBlock;
+    }
 #endif
 
 

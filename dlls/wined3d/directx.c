@@ -58,6 +58,15 @@ inline static Display *get_display( HDC hdc )
     return display;
 }
 
+/* lookup tables */
+int minLookup[MAX_LOOKUPS];
+int maxLookup[MAX_LOOKUPS];
+DWORD *stateLookup[MAX_LOOKUPS];
+
+DWORD minMipLookup[D3DTEXF_ANISOTROPIC + 1][D3DTEXF_LINEAR + 1];
+
+
+
 /**
  * Note: GL seems to trap if GetDeviceCaps is called before any HWND's created
  * ie there is no GL Context - Get a default rendering context to enable the
@@ -204,7 +213,8 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
     Bool        test = 0;
     int         major, minor;
     WineD3D_Context *fake_ctx = NULL;
-    BOOL             gotContext  = FALSE;
+    BOOL        gotContext    = FALSE;
+    int         i;
 
     /* Make sure that we've got a context */
     if (glXGetCurrentContext() == NULL) {
@@ -561,6 +571,55 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             if (*GL_Extensions == ' ') GL_Extensions++;
         }
     }
+
+    /* Load all the lookup tables
+    TODO: It may be a good idea to make minLookup and maxLookup const and populate them in wined3d_private.h where they are declared */
+    minLookup[WINELOOKUP_WARPPARAM] = D3DTADDRESS_WRAP;
+    maxLookup[WINELOOKUP_WARPPARAM] = D3DTADDRESS_MIRRORONCE;
+
+    minLookup[WINELOOKUP_MAGFILTER] = D3DTEXF_NONE;
+    maxLookup[WINELOOKUP_MAGFILTER] = D3DTEXF_ANISOTROPIC;
+
+
+    for (i = 0; i < MAX_LOOKUPS; i++) {
+        stateLookup[i] = HeapAlloc(GetProcessHeap(), 0, sizeof(*stateLookup[i]) * (1 + maxLookup[i] - minLookup[MAX_LOOKUPS]) );
+    }
+
+    stateLookup[WINELOOKUP_WARPPARAM][D3DTADDRESS_WRAP   - minLookup[WINELOOKUP_WARPPARAM]] = GL_REPEAT;
+    stateLookup[WINELOOKUP_WARPPARAM][D3DTADDRESS_CLAMP  - minLookup[WINELOOKUP_WARPPARAM]] = GL_CLAMP_TO_EDGE;
+    stateLookup[WINELOOKUP_WARPPARAM][D3DTADDRESS_BORDER - minLookup[WINELOOKUP_WARPPARAM]] =
+             gl_info->supported[ARB_TEXTURE_BORDER_CLAMP] ? GL_CLAMP_TO_BORDER_ARB : GL_REPEAT;
+    stateLookup[WINELOOKUP_WARPPARAM][D3DTADDRESS_BORDER - minLookup[WINELOOKUP_WARPPARAM]] =
+             gl_info->supported[ARB_TEXTURE_BORDER_CLAMP] ? GL_CLAMP_TO_BORDER_ARB : GL_REPEAT;
+    stateLookup[WINELOOKUP_WARPPARAM][D3DTADDRESS_MIRROR - minLookup[WINELOOKUP_WARPPARAM]] =
+             gl_info->supported[ARB_TEXTURE_MIRRORED_REPEAT] ? GL_MIRRORED_REPEAT_ARB : GL_REPEAT;
+    stateLookup[WINELOOKUP_WARPPARAM][D3DTADDRESS_MIRRORONCE - minLookup[WINELOOKUP_WARPPARAM]] =
+             gl_info->supported[ATI_TEXTURE_MIRROR_ONCE] ? GL_MIRROR_CLAMP_TO_EDGE_ATI : GL_REPEAT;
+
+    stateLookup[WINELOOKUP_MAGFILTER][D3DTEXF_NONE        - minLookup[WINELOOKUP_MAGFILTER]]  = GL_NEAREST;
+    stateLookup[WINELOOKUP_MAGFILTER][D3DTEXF_POINT       - minLookup[WINELOOKUP_MAGFILTER]] = GL_NEAREST;
+    stateLookup[WINELOOKUP_MAGFILTER][D3DTEXF_LINEAR      - minLookup[WINELOOKUP_MAGFILTER]] = GL_LINEAR;
+    stateLookup[WINELOOKUP_MAGFILTER][D3DTEXF_ANISOTROPIC - minLookup[WINELOOKUP_MAGFILTER]] =
+             gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC] ? GL_LINEAR : GL_NEAREST;
+
+
+    minMipLookup[D3DTEXF_NONE][D3DTEXF_NONE]     = GL_LINEAR;
+    minMipLookup[D3DTEXF_NONE][D3DTEXF_POINT]    = GL_LINEAR;
+    minMipLookup[D3DTEXF_NONE][D3DTEXF_LINEAR]   = GL_LINEAR;
+    minMipLookup[D3DTEXF_POINT][D3DTEXF_NONE]    = GL_NEAREST;
+    minMipLookup[D3DTEXF_POINT][D3DTEXF_POINT]   = GL_NEAREST_MIPMAP_NEAREST;
+    minMipLookup[D3DTEXF_POINT][D3DTEXF_LINEAR]  = GL_NEAREST_MIPMAP_LINEAR;
+    minMipLookup[D3DTEXF_LINEAR][D3DTEXF_NONE]   = GL_LINEAR;
+    minMipLookup[D3DTEXF_LINEAR][D3DTEXF_POINT]  = GL_LINEAR_MIPMAP_NEAREST;
+    minMipLookup[D3DTEXF_LINEAR][D3DTEXF_LINEAR] = GL_LINEAR_MIPMAP_LINEAR;
+    minMipLookup[D3DTEXF_ANISOTROPIC][D3DTEXF_NONE]   = gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC] ?
+    GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
+    minMipLookup[D3DTEXF_ANISOTROPIC][D3DTEXF_POINT]  = gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC] ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR;
+    minMipLookup[D3DTEXF_ANISOTROPIC][D3DTEXF_LINEAR] = gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC] ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
+
+
+/* TODO: config lookups */
+
 
 #define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) glXGetProcAddressARB( (const GLubyte *) #pfn);
     GL_EXT_FUNCS_GEN;

@@ -691,6 +691,7 @@ DECLARE_INTERFACE_(IWineD3DBaseTexture,IWineD3DResource)
     STDMETHOD(BindTexture)(THIS) PURE;
     STDMETHOD(UnBindTexture)(THIS) PURE;
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
+    STDMETHOD_(void, ApplyStateChanges)(THIS_ const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) PURE;
 
 };
 #undef INTERFACE
@@ -723,6 +724,7 @@ DECLARE_INTERFACE_(IWineD3DBaseTexture,IWineD3DResource)
 #define IWineD3DBaseTexture_BindTexture(p)             (p)->lpVtbl->BindTexture(p)
 #define IWineD3DBaseTexture_UnBindTexture(p)           (p)->lpVtbl->UnBindTexture(p)
 #define IWineD3DBaseTexture_GetTextureDimensions(p)    (p)->lpVtbl->GetTextureDimensions(p)
+#define IWineD3DBaseTexture_ApplyStateChanges(p,a,b)   (p)->lpVtbl->ApplyStateChanges(p,a,b)
 #endif
 
 /*****************************************************************************
@@ -757,6 +759,7 @@ DECLARE_INTERFACE_(IWineD3DTexture,IWineD3DBaseTexture)
     STDMETHOD(BindTexture)(THIS) PURE;
     STDMETHOD(UnBindTexture)(THIS) PURE;
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
+    STDMETHOD_(void, ApplyStateChanges)(THIS_ const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) PURE;
     /*** IWineD3DTexture methods ***/
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level, WINED3DSURFACE_DESC* pDesc) PURE;
     STDMETHOD(GetSurfaceLevel)(THIS_ UINT Level, struct IWineD3DSurface** ppSurfaceLevel) PURE;
@@ -793,6 +796,7 @@ DECLARE_INTERFACE_(IWineD3DTexture,IWineD3DBaseTexture)
 #define IWineD3DTexture_BindTexture(p)             (p)->lpVtbl->BindTexture(p)
 #define IWineD3DTexture_UnBindTexture(p)           (p)->lpVtbl->UnBindTexture(p)
 #define IWineD3DTexture_GetTextureDimensions(p)    (p)->lpVtbl->GetTextureDimensions(p)
+#define IWineD3DTexture_ApplyStateChanges(p,a,b)   (p)->lpVtbl->ApplyStateChanges(p,a,b)
 /*** IWineD3DTexture methods ***/
 #define IWineD3DTexture_GetLevelDesc(p,a,b)        (p)->lpVtbl->GetLevelDesc(p,a,b)
 #define IWineD3DTexture_GetSurfaceLevel(p,a,b)     (p)->lpVtbl->GetSurfaceLevel(p,a,b)
@@ -833,6 +837,7 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
     STDMETHOD(BindTexture)(THIS) PURE;
     STDMETHOD(UnBindTexture)(THIS) PURE;
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
+    STDMETHOD_(void, ApplyStateChanges)(THIS_ DWORD const textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) PURE;
     /*** IWineD3DCubeTexture methods ***/
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level,WINED3DSURFACE_DESC* pDesc) PURE;
     STDMETHOD(GetCubeMapSurface)(THIS_ D3DCUBEMAP_FACES FaceType, UINT Level, struct IWineD3DSurface** ppCubeMapSurface) PURE;
@@ -869,6 +874,7 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
 #define IWineD3DCubeTexture_BindTexture(p)              (p)->lpVtbl->BindTexture(p)
 #define IWineD3DCubeTexture_UnBindTexture(p)            (p)->lpVtbl->UnBindTexture(p)
 #define IWineD3DCubeTexture_GetTextureDimensions(p)     (p)->lpVtbl->GetTextureDimensions(p)
+#define IWineD3DCubeTexture_ApplyStateChanges(p,a,b)   (p)->lpVtbl->ApplyStateChanges(p,a,b)
 /*** IWineD3DCubeTexture methods ***/
 #define IWineD3DCubeTexture_GetLevelDesc(p,a,b)        (p)->lpVtbl->GetLevelDesc(p,a,b)
 #define IWineD3DCubeTexture_GetCubeMapSurface(p,a,b,c) (p)->lpVtbl->GetCubeMapSurface(p,a,b,c)
@@ -909,7 +915,8 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
     STDMETHOD_(BOOL, GetDirty)(THIS) PURE;
     STDMETHOD(BindTexture)(THIS) PURE;
     STDMETHOD(UnBindTexture)(THIS) PURE;
-    STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;    
+    STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
+    STDMETHOD_(void, ApplyStateChanges)(THIS_ const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) PURE;
     /*** IWineD3DVolumeTexture methods ***/
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level, WINED3DVOLUME_DESC *pDesc) PURE;
     STDMETHOD(GetVolumeLevel)(THIS_ UINT Level, struct IWineD3DVolume** ppVolumeLevel) PURE;
@@ -946,6 +953,7 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
 #define IWineD3DVolumeTexture_BindTexture(p)              (p)->lpVtbl->BindTexture(p)
 #define IWineD3DVolumeTexture_UnBindTexture(p)            (p)->lpVtbl->UnBindTexture(p)
 #define IWineD3DVolumeTexture_GetTextureDimensions(p)     (p)->lpVtbl->GetTextureDimensions(p)
+#define IWineD3DVolumeTexture_ApplyStateChanges(p,a,b)   (p)->lpVtbl->ApplyStateChanges(p,a,b)
 /*** IWineD3DVolumeTexture methods ***/
 #define IWineD3DVolumeTexture_GetLevelDesc(p,a,b)        (p)->lpVtbl->GetLevelDesc(p,a,b)
 #define IWineD3DVolumeTexture_GetVolumeLevel(p,a,b)      (p)->lpVtbl->GetVolumeLevel(p,a,b)

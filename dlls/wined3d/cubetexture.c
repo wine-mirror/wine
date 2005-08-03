@@ -217,6 +217,13 @@ UINT WINAPI IWineD3DCubeTextureImpl_GetTextureDimensions(IWineD3DCubeTexture *if
     return GL_TEXTURE_CUBE_MAP_ARB;
 }
 
+void WINAPI IWineD3DCubeTextureImpl_ApplyStateChanges(IWineD3DCubeTexture *iface, 
+                                                        const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], 
+                                                        const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) {
+    IWineD3DBaseTextureImpl_ApplyStateChanges((IWineD3DBaseTexture *)iface, textureStates, samplerStates);
+}
+
+
 /* *******************************************
    IWineD3DCubeTexture IWineD3DCubeTexture parts follow
    ******************************************* */
@@ -319,6 +326,7 @@ const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
     IWineD3DCubeTextureImpl_BindTexture,
     IWineD3DCubeTextureImpl_UnBindTexture,
     IWineD3DCubeTextureImpl_GetTextureDimensions,
+    IWineD3DCubeTextureImpl_ApplyStateChanges,
     /* IWineD3DCubeTexture */
     IWineD3DCubeTextureImpl_GetLevelDesc,
     IWineD3DCubeTextureImpl_GetCubeMapSurface,

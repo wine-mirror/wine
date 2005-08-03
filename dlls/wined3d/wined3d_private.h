@@ -66,6 +66,46 @@ extern const DWORD SavedVertexStates_R[NUM_SAVEDVERTEXSTATES_R];
 extern const DWORD SavedVertexStates_T[NUM_SAVEDVERTEXSTATES_T];
 extern const DWORD SavedVertexStates_S[NUM_SAVEDVERTEXSTATES_S];
 
+typedef enum _WINELOOKUP {
+    WINELOOKUP_WARPPARAM = 0,
+    WINELOOKUP_MAGFILTER = 1,
+    MAX_LOOKUPS          = 2
+} WINELOOKUP;
+
+extern int minLookup[MAX_LOOKUPS];
+extern int maxLookup[MAX_LOOKUPS];
+extern DWORD *stateLookup[MAX_LOOKUPS];
+
+extern DWORD minMipLookup[D3DTEXF_ANISOTROPIC + 1][D3DTEXF_LINEAR + 1];
+
+#if 0
+/* NOTE: Make sure these are in the correct numerical order. (see /include/d3d9types.h typedef enum _D3DDECLTYPE) */
+UINT static const glTypeLookup[D3DDECLTYPE_UNUSED][5] = {
+                                  {D3DDECLTYPE_FLOAT1,    1, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {D3DDECLTYPE_FLOAT2,    2, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {D3DDECLTYPE_FLOAT3,    3, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {D3DDECLTYPE_FLOAT4,    4, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {D3DDECLTYPE_D3DCOLOR,  4, GL_UNSIGNED_BYTE   , GL_TRUE  ,sizeof(BYTE)},
+                                  {D3DDECLTYPE_UBYTE4,    4, GL_UNSIGNED_BYTE   , GL_FALSE ,sizeof(BYTE)},
+                                  {D3DDECLTYPE_SHORT2,    2, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {D3DDECLTYPE_SHORT4,    4, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {D3DDECLTYPE_UBYTE4N,   4, GL_UNSIGNED_BYTE   , GL_FALSE ,sizeof(BYTE)},
+                                  {D3DDECLTYPE_SHORT2N,   2, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {D3DDECLTYPE_SHORT4N,   4, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {D3DDECLTYPE_USHORT2N,  2, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
+                                  {D3DDECLTYPE_USHORT4N,  4, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
+                                  {D3DDECLTYPE_UDEC3,     3, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
+                                  {D3DDECLTYPE_DEC3N,     3, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {D3DDECLTYPE_FLOAT16_2, 2, GL_FLOAT           , GL_FALSE ,sizeof(short int)},
+                                  {D3DDECLTYPE_FLOAT16_4, 4, GL_FLOAT           , GL_FALSE ,sizeof(short int)}};
+
+#define WINED3D_ATR_TYPE(_attribute)          glTypeLookup[sd->u.s._attribute.dwType][0]
+#define WINED3D_ATR_SIZE(_attribute)          glTypeLookup[sd->u.s._attribute.dwType][1]
+#define WINED3D_ATR_GLTYPE(_attribute)        glTypeLookup[sd->u.s._attribute.dwType][2]
+#define WINED3D_ATR_GLSOMETHING(_attribute)   glTypeLookup[sd->u.s._attribute.dwType][3]
+#define WINED3D_ATR_TYPESIZE(_attribute)      glTypeLookup[sd->u.s._attribute.dwType][4]
+#endif
+
 /**
  * Settings 
  */
@@ -583,6 +623,34 @@ typedef struct IWineD3DIndexBufferImpl
 extern const IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl;
 
 /*****************************************************************************
+ * IWineD3DBaseTexture D3D- > openGL state map lookups
+ */
+#define WINED3DFUNC_NOTSUPPORTED  -2
+#define WINED3DFUNC_UNIMPLEMENTED -1
+
+typedef enum winetexturestates {
+    WINED3DTEXSTA_ADDRESSU       = 0,
+    WINED3DTEXSTA_ADDRESSV       = 1,
+    WINED3DTEXSTA_ADDRESSW       = 2,
+    WINED3DTEXSTA_BORDERCOLOR    = 3,
+    WINED3DTEXSTA_MAGFILTER      = 4,
+    WINED3DTEXSTA_MINFILTER      = 5,
+    WINED3DTEXSTA_MIPFILTER      = 6,
+    WINED3DTEXSTA_MAXMIPLEVEL    = 7,
+    WINED3DTEXSTA_MAXANISOTROPY  = 8,
+    WINED3DTEXSTA_SRGBTEXTURE    = 9,
+    WINED3DTEXSTA_ELEMENTINDEX   = 10,
+    WINED3DTEXSTA_DMAPOFFSET     = 11,
+    WINED3DTEXSTA_TSSADDRESSW    = 12,
+    MAX_WINETEXTURESTATES        = 13,
+} winetexturestates;
+
+typedef struct Wined3dTextureStateMap {
+    CONST int state;
+    int function;
+} Wined3dTextureStateMap;
+
+/*****************************************************************************
  * IWineD3DBaseTexture implementation structure (extends IWineD3DResourceImpl)
  */
 typedef struct IWineD3DBaseTextureClass
@@ -591,9 +659,10 @@ typedef struct IWineD3DBaseTextureClass
     BOOL                    dirty;
     D3DFORMAT               format;
     DWORD                   usage;
-    UINT                    textureName;    
+    UINT                    textureName;
     UINT                    LOD;
     D3DTEXTUREFILTERTYPE    filterType;
+    DWORD                   states[MAX_WINETEXTURESTATES];
 
 } IWineD3DBaseTextureClass;
 
@@ -1007,6 +1076,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
     extern HRESULT WINAPI IWineD3DVertexBufferImpl_ReleaseMemory(IWineD3DVertexBuffer* iface);
     extern HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface);
     extern HRESULT WINAPI IWineD3DBaseTextureImpl_UnBindTexture(IWineD3DBaseTexture *iface);
+    extern void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface, const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]);
     /*** class static members ***/
     void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface);
 

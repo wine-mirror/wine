@@ -199,6 +199,11 @@ UINT WINAPI IWineD3DTextureImpl_GetTextureDimensions(IWineD3DTexture *iface) {
     return GL_TEXTURE_2D;
 }
 
+void WINAPI IWineD3DTextureImpl_ApplyStateChanges(IWineD3DTexture *iface,
+                                                   const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1],
+                                                   const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) {
+    IWineD3DBaseTextureImpl_ApplyStateChanges((IWineD3DBaseTexture *)iface, textureStates, samplerStates);
+}
 
 /* *******************************************
    IWineD3DTexture IWineD3DTexture parts follow
@@ -298,6 +303,7 @@ const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_BindTexture,
     IWineD3DTextureImpl_UnBindTexture,
     IWineD3DTextureImpl_GetTextureDimensions,
+    IWineD3DTextureImpl_ApplyStateChanges,
     /* IWineD3DTexture */
     IWineD3DTextureImpl_GetLevelDesc,
     IWineD3DTextureImpl_GetSurfaceLevel,

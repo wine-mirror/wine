@@ -23,8 +23,37 @@
 #include "config.h"
 #include "wined3d_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->resource.wineD3DDevice)->wineD3D))->gl_info
+
+static const Wined3dTextureStateMap textureObjectSamplerStates[]  = {
+    {WINED3DSAMP_ADDRESSU,      WINED3DSAMP_ADDRESSU},
+    {WINED3DSAMP_ADDRESSV,      WINED3DSAMP_ADDRESSV},
+    {WINED3DSAMP_ADDRESSW,      WINED3DSAMP_ADDRESSW},
+/* NOTE: Sometimes it's a good idea to disable the setting of border colour, e.g. Axis and Allies */
+    {WINED3DSAMP_BORDERCOLOR,   WINED3DFUNC_NOTSUPPORTED/* WINED3DSAMP_BORDERCOLOR */},
+    {WINED3DSAMP_MAGFILTER,     WINED3DSAMP_MAGFILTER},
+    {WINED3DSAMP_MINFILTER,     WINED3DSAMP_MINFILTER},
+    {WINED3DSAMP_MIPFILTER,     WINED3DSAMP_MIPFILTER},
+/* applies to the texture unit
+    WINED3DSAMP_MIPMAPLODBIAS, WINED3DSAMP_MIPMAPLODBIAS,
+*/
+    {WINED3DSAMP_MAXMIPLEVEL,   WINED3DSAMP_MAXMIPLEVEL},
+#if 0
+    {WINED3DSAMP_MAXANISOTROPY, GL_SUPPORTED(EXT_TEXTURE_FILTER_ANISOTROPIC) ? WINED3DSAMP_MAXANISOTROPY : WINED3DFUNC_NOTSUPPORTED},
+#else
+    {WINED3DSAMP_MAXANISOTROPY, WINED3DSAMP_MAXANISOTROPY},
+#endif
+    {WINED3DSAMP_SRGBTEXTURE,   WINED3DFUNC_UNIMPLEMENTED},
+    {WINED3DSAMP_ELEMENTINDEX,  WINED3DFUNC_UNIMPLEMENTED},
+    {WINED3DSAMP_DMAPOFFSET,    WINED3DFUNC_UNIMPLEMENTED},
+    {-1, 0}
+};
+
+static const Wined3dTextureStateMap textureObjectTextureStates[] = {
+    {WINED3DTSS_ADDRESSW , WINED3DTSS_ADDRESSW},
+    {-1, 0}
+};
 
 /* *******************************************
    IWineD3DBaseTexture IUnknown parts follow
@@ -218,12 +247,28 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
         glGenTextures(1, &This->baseTexture.textureName);
         checkGLcall("glGenTextures");
         TRACE("Generated texture %d\n", This->baseTexture.textureName);
-         if (This->resource.pool == D3DPOOL_DEFAULT) {
+        if (This->resource.pool == D3DPOOL_DEFAULT) {
             /* Tell opengl to try and keep this texture in video ram (well mostly) */
             GLclampf tmp;
             tmp = 0.9f;
             glPrioritizeTextures(1, &This->baseTexture.textureName, &tmp);
-         }
+
+        }
+        /* Initilise the state of the texture object
+        to the openGL defaults, not the directx defaults */
+        This->baseTexture.states[WINED3DTEXSTA_ADDRESSU]      = D3DTADDRESS_WRAP;
+        This->baseTexture.states[WINED3DTEXSTA_ADDRESSV]      = D3DTADDRESS_WRAP;
+        This->baseTexture.states[WINED3DTEXSTA_ADDRESSW]      = D3DTADDRESS_WRAP;
+        This->baseTexture.states[WINED3DTEXSTA_BORDERCOLOR]   = 0;
+        This->baseTexture.states[WINED3DTEXSTA_MAGFILTER]     = D3DTEXF_POINT;
+        This->baseTexture.states[WINED3DTEXSTA_MINFILTER]     = D3DTEXF_POINT;
+        This->baseTexture.states[WINED3DTEXSTA_MIPFILTER]     = D3DTEXF_NONE;
+        This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL]   = 0;
+        This->baseTexture.states[WINED3DTEXSTA_MAXANISOTROPY] = 0;
+        This->baseTexture.states[WINED3DTEXSTA_SRGBTEXTURE]   = 0;
+        This->baseTexture.states[WINED3DTEXSTA_ELEMENTINDEX]  = 0;
+        This->baseTexture.states[WINED3DTEXSTA_DMAPOFFSET]    = 0;
+        This->baseTexture.states[WINED3DTEXSTA_TSSADDRESSW]   = D3DTADDRESS_WRAP;
         IWineD3DBaseTexture_SetDirty(iface, TRUE);
         isNewTexture = TRUE;
     }
@@ -242,14 +287,19 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
         }
         glBindTexture(textureDimensions, This->baseTexture.textureName);
         checkGLcall("glBindTexture");
-        if (isNewTexture) {
+        if (isNewTexture || (TRUE && This->baseTexture.levels >1)) {
             /* For a new texture we have to set the textures levels after binding the texture,
             * in theory this is all we should ever have to dom, but because ATI's drivers are broken we
             * also need to set the texture dimensins before the texture is is set */
             TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
             glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
             checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
-        }
+        } else {
+            TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
+            glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
+            checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
+	}
+		
     } else { /* this only happened if we've run out of openGL textures */
         WARN("This texture doesn't have an openGL texture assigned to it\n");
         hr =  D3DERR_INVALIDCALL;
@@ -285,6 +335,152 @@ UINT WINAPI IWineD3DBaseTextureImpl_GetTextureDimensions(IWineD3DBaseTexture *if
     return D3D_OK;
 }
 
+static inline GLenum warpLookupType(WINED3DSAMPLERSTATETYPE Type) {
+    switch(Type) {
+    case WINED3DSAMP_ADDRESSU:
+        return GL_TEXTURE_WRAP_S;
+    case WINED3DSAMP_ADDRESSV:
+        return GL_TEXTURE_WRAP_T;
+    case WINED3DSAMP_ADDRESSW:
+        return GL_TEXTURE_WRAP_R;
+    default:
+        FIXME("Unexpected warp type %d\n", Type);
+        return 0;
+    }
+}
+
+void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface,
+                                    const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1],
+                                    const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) {
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    int i;
+    DWORD *state = This->baseTexture.states;
+    GLint textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
+    IWineD3DBaseTexture_PreLoad(iface);
+    /* run through a couple of loops and apply and states that are different */
+    /* this will reduce the number of texture state changes to an absolute minimum
+    for multi-parameter states we  pickup the first one that changes, work out the correct values for the other states
+    and set all the states that we've just applied to their new values */
+
+    for (i = 0 ;textureObjectSamplerStates[i].state != -1; i++) {
+        if (*state != samplerStates[textureObjectSamplerStates[i].state]) {
+            /* apply the state */
+            TRACE("(%p) : Changing state %u from %ld to %ld \n",This, i, *state , samplerStates[textureObjectSamplerStates[i].state]);
+            switch (textureObjectSamplerStates[i].function) {
+            case WINED3DSAMP_ADDRESSU:
+            case WINED3DSAMP_ADDRESSV: /* fall through */
+            case WINED3DSAMP_ADDRESSW: /* fall through */
+                *state = samplerStates[textureObjectSamplerStates[i].state];
+                if (*state < minLookup[WINELOOKUP_WARPPARAM] || *state > maxLookup[WINELOOKUP_WARPPARAM]) {
+                    FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", *state, textureObjectSamplerStates[i].function);
+                } else {
+                    GLint wrapParm = stateLookup[WINELOOKUP_WARPPARAM][*state - minLookup[WINELOOKUP_WARPPARAM]];
+                    TRACE("Setting WRAP_R to %d for %x\n", wrapParm, textureDimensions);
+                    glTexParameteri(textureDimensions, warpLookupType(textureObjectSamplerStates[i].function), wrapParm);
+                    checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_R, wrapParm)");
+                }
+            break;
+            case WINED3DSAMP_BORDERCOLOR:
+            {
+                float col[4];
+                *state = samplerStates[textureObjectSamplerStates[i].state];
+                D3DCOLORTOGLFLOAT4(*state, col);
+                TRACE("Setting border color for %u to %lx\n", textureDimensions, *state);
+                glTexParameterfv(textureDimensions, GL_TEXTURE_BORDER_COLOR, &col[0]);
+                checkGLcall("glTexParameteri(..., GL_TEXTURE_BORDER_COLOR, ...)");
+            }
+            break;
+            case WINED3DSAMP_MAGFILTER:
+                {
+                    GLint glValue;
+                    *state = samplerStates[textureObjectSamplerStates[i].state];
+                    if (*state < minLookup[WINELOOKUP_MAGFILTER] || *state > maxLookup[WINELOOKUP_MAGFILTER]) {
+                        FIXME("Unrecognized or unsupported MAGFILTER* value %ld, state %d\n", *state, textureObjectSamplerStates[i].function);
+                    }
+                    glValue = stateLookup[WINELOOKUP_MAGFILTER][*state - minLookup[WINELOOKUP_MAGFILTER]];
+                    TRACE("ValueMAG=%ld setting MAGFILTER to %x\n", *state, glValue);
+                    glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
+                /* We need to reset the Aniotropic filtering state when we change the mag filter to D3DTEXF_ANISOTROPIC (this seems a bit weird, check the documentataion to see how it should be switched off. */
+                    if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && D3DTEXF_ANISOTROPIC == *state) {
+                        glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT, samplerStates[WINED3DSAMP_MAXANISOTROPY]);
+                    }
+                }
+            break;
+
+            case WINED3DSAMP_MINFILTER:
+                This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] = samplerStates[WINED3DSAMP_MIPFILTER];
+            case WINED3DSAMP_MIPFILTER: /* fall through */
+                {
+                    GLint glValue;
+                    *state = samplerStates[textureObjectSamplerStates[i].state];
+                    if (This->baseTexture.states[WINED3DTEXSTA_MINFILTER] < D3DTEXF_NONE ||
+                        This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] < D3DTEXF_NONE ||
+                        This->baseTexture.states[WINED3DTEXSTA_MINFILTER] > D3DTEXF_ANISOTROPIC ||
+                        This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] > D3DTEXF_LINEAR)
+                    {
+
+                        FIXME("Unrecognized or unsupported D3DSAMP_MINFILTER value %ld, state %d D3DSAMP_MIPFILTER value %ld, state %d\n",
+                                This->baseTexture.states[WINED3DTEXSTA_MINFILTER],
+                                textureObjectSamplerStates[WINED3DTEXSTA_MINFILTER].function,
+                                This->baseTexture.states[WINED3DTEXSTA_MIPFILTER],
+                                textureObjectSamplerStates[WINED3DTEXSTA_MIPFILTER].function);
+                    }
+                    glValue = minMipLookup[min(max(This->baseTexture.states[WINED3DTEXSTA_MINFILTER],D3DTEXF_NONE), D3DTEXF_ANISOTROPIC)]
+                                                [min(max(This->baseTexture.states[WINED3DTEXSTA_MIPFILTER],D3DTEXF_NONE), D3DTEXF_LINEAR)];
+
+                    TRACE("ValueMIN=%ld, ValueMIP=%ld, setting MINFILTER to %x\n", 
+                            This->baseTexture.states[WINED3DTEXSTA_MINFILTER], 
+                            This->baseTexture.states[WINED3DTEXSTA_MIPFILTER], glValue);
+                    glTexParameteri(textureDimensions, GL_TEXTURE_MIN_FILTER, glValue);
+                    checkGLcall("glTexParameter GL_TEXTURE_MIN_FILTER, ...");
+                }
+            break;
+            case WINED3DSAMP_MAXMIPLEVEL:
+                *state = samplerStates[textureObjectSamplerStates[i].state];
+                /**
+                * Not really the same, but the more apprioprate than nothing
+                */
+                glTexParameteri(textureDimensions, GL_TEXTURE_BASE_LEVEL, *state);
+            break;
+            case WINED3DSAMP_MAXANISOTROPY:
+                *state = samplerStates[textureObjectSamplerStates[i].state];
+                glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT,  *state);
+                checkGLcall("glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT ...");
+            break;
+            case WINED3DFUNC_UNIMPLEMENTED: /* unimplemented */
+                TRACE("(%p) : stub\n", This);
+                *state = samplerStates[textureObjectSamplerStates[i].state];
+            break;
+            case WINED3DFUNC_NOTSUPPORTED: /* nop */
+                TRACE("(%p) : %s function is not supported by this opengl implementation\n", This, "unknown" /* TODO: replace with debug_blah... */);
+                *state = samplerStates[textureObjectSamplerStates[i].state];
+            break;
+            }
+        }
+        state++;
+    }
+
+    for(i = 0 ;textureObjectTextureStates[i].state != - 1; i++) {
+        if(*state != textureStates[textureObjectTextureStates[i].state] ) {
+            /* apply the state */
+            *state = textureStates[textureObjectTextureStates[i].state];
+            switch (textureObjectTextureStates[i].function) {
+            case WINED3DTSS_ADDRESSW:
+            /* I'm not sure what to do if this is set as well as ADDRESSW on the sampler, how do they interact together? */
+            break;
+            case WINED3DFUNC_UNIMPLEMENTED: /* unimplemented */
+            TRACE("(%p) : stub\n", This);
+            break;
+            case WINED3DFUNC_NOTSUPPORTED: /* nop */
+            TRACE("(%p) : function no supported by this opengl implementation\n", This);
+            break;
+            }
+        }
+        state++;
+    }
+}
+
+
 static const IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
 {
     /* IUnknown */
@@ -313,6 +509,7 @@ static const IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
     /* internal */
     IWineD3DBaseTextureImpl_BindTexture,
     IWineD3DBaseTextureImpl_UnBindTexture,
-    IWineD3DBaseTextureImpl_GetTextureDimensions
+    IWineD3DBaseTextureImpl_GetTextureDimensions,
+    IWineD3DBaseTextureImpl_ApplyStateChanges
 
 };
