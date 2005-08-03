@@ -615,13 +615,13 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
       *********************************/
     if (Format == WINED3DFMT_DXT1) {
         /* DXT1 is half byte per pixel */
-       Size = ((max(Width,4) * D3DFmtGetBpp(This, Format)) * max(Height,4)) >> 1;
+       Size = ((max(pow2Width,4) * D3DFmtGetBpp(This, Format)) * max(pow2Height,4)) >> 1;
 
     } else if (Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
                Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
-       Size = ((max(Width,4) * D3DFmtGetBpp(This, Format)) * max(Height,4));
+       Size = ((max(pow2Width,4) * D3DFmtGetBpp(This, Format)) * max(pow2Height,4));
     } else {
-       Size = (Width     * D3DFmtGetBpp(This, Format)) * Height;
+       Size = (pow2Width     * D3DFmtGetBpp(This, Format)) * pow2Height;
     }
 
     /** Create the and initilise surface resource **/
@@ -651,11 +651,6 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     object->pow2Size      = (pow2Width * object->bytesPerPixel) * pow2Height;
 
     /** TODO: change this into a texture transform matrix so that it's processed in hardware **/
-
-    /* Precalculated scaling for 'faked' non power of two texture coords */
-    object->pow2scalingFactorX  =  (((float)Width)  / ((float)pow2Width));
-    object->pow2scalingFactorY  =  (((float)Height) / ((float)pow2Height));
-    TRACE(" xf(%f) yf(%f) \n", object->pow2scalingFactorX, object->pow2scalingFactorY);
 
     TRACE("Pool %d %d %d %d",Pool, D3DPOOL_DEFAULT, D3DPOOL_MANAGED, D3DPOOL_SYSTEMMEM);
 
@@ -716,6 +711,9 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
     UINT tmpW;
     UINT tmpH;
     HRESULT hr;
+    unsigned int pow2Width  = Width;
+    unsigned int pow2Height = Height;
+
 
     TRACE("(%p), Width(%d) Height(%d) Levels(%d) Usage(%ld) .... \n", This, Width, Height, Levels, Usage);
 
@@ -723,7 +721,19 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
     D3DINITILIZEBASETEXTURE(object->baseTexture);    
     object->width  = Width;
     object->height = Height;
-    
+
+    /** Non-power2 support **/
+    /* Find the nearest pow2 match */
+    pow2Width = pow2Height = 1;
+    while (pow2Width < Width) pow2Width <<= 1;
+    while (pow2Height < Height) pow2Height <<= 1;
+
+    /** FIXME: add support for real non-power-two if it's provided by the video card **/
+    /* Precalculated scaling for 'faked' non power of two texture coords */
+    object->pow2scalingFactorX  =  (((float)Width)  / ((float)pow2Width));
+    object->pow2scalingFactorY  =  (((float)Height) / ((float)pow2Height));
+    TRACE(" xf(%f) yf(%f) \n",     object->pow2scalingFactorX,     object->pow2scalingFactorY);
+
     /* Calculate levels for mip mapping */
     if (Levels == 0) {
         TRACE("calculating levels %d\n", object->baseTexture.levels);
@@ -820,8 +830,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
         /* Create the volume */
         D3DCB_CreateVolume(This->parent, Width, Height, Depth, Format, Pool, Usage,
                            (IWineD3DVolume **)&object->volumes[i], pSharedHandle);
+
+        /* Set it's container to this object */
         IWineD3DVolume_SetContainer(object->volumes[i], (IUnknown *)object);
 
+        /* calcualte the next mipmap level */
         tmpW = max(1, tmpW >> 1);
         tmpH = max(1, tmpH >> 1);
         tmpD = max(1, tmpD >> 1);
@@ -856,8 +869,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     object->lockable            = TRUE;
     object->locked              = FALSE;
     memset(&object->lockedBox, 0, sizeof(D3DBOX));
-    object->dirty = FALSE;
-    return IWineD3DVolume_CleanDirtyBox((IWineD3DVolume *) object);
+    object->dirty               = TRUE;
+
+    return IWineD3DVolume_AddDirtyBox((IWineD3DVolume *) object, NULL);
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT EdgeLength,
@@ -867,29 +881,40 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
                                                     HANDLE* pSharedHandle, IUnknown *parent,
                                                     D3DCB_CREATESURFACEFN D3DCB_CreateSurface) {
 
-   IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
-   IWineD3DCubeTextureImpl *object; /** NOTE: impl ref allowed since this is a create function **/
-   unsigned int             i,j;
-   UINT                     tmpW;
-   HRESULT                  hr;
+    IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DCubeTextureImpl *object; /** NOTE: impl ref allowed since this is a create function **/
+    unsigned int             i,j;
+    UINT                     tmpW;
+    HRESULT                  hr;
+    unsigned int pow2EdgeLength  = EdgeLength;
 
-   D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, D3DRTYPE_CUBETEXTURE, 0);
-   D3DINITILIZEBASETEXTURE(object->baseTexture);
+    D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, D3DRTYPE_CUBETEXTURE, 0);
+    D3DINITILIZEBASETEXTURE(object->baseTexture);
 
-   TRACE("(%p) Create Cube Texture \n", This);
+    TRACE("(%p) Create Cube Texture \n", This);
 
-   object->edgeLength           = EdgeLength;
+    object->edgeLength           = EdgeLength;
 
-   /* Calculate levels for mip mapping */
-   if (Levels == 0) {
-       object->baseTexture.levels++;
-       tmpW = EdgeLength;
-       while (tmpW > 1) {
-           tmpW = max(1, tmpW / 2);
-           object->baseTexture.levels++;
-       }
-       TRACE("Calculated levels = %d\n", object->baseTexture.levels);
-   }
+    /** Non-power2 support **/
+
+    /* Find the nearest pow2 match */
+    pow2EdgeLength = 1;
+    while (pow2EdgeLength < EdgeLength) pow2EdgeLength <<= 1;
+
+    /* TODO: support for native non-power 2 */
+    /* Precalculated scaling for 'faked' non power of two texture coords */
+    object->pow2scalingFactor    = ((float)EdgeLength) / ((float)pow2EdgeLength);
+
+    /* Calculate levels for mip mapping */
+    if (Levels == 0) {
+        object->baseTexture.levels++;
+        tmpW = EdgeLength;
+        while (tmpW > 1) {
+            tmpW = max(1, tmpW / 2);
+            object->baseTexture.levels++;
+        }
+        TRACE("Calculated levels = %d\n", object->baseTexture.levels);
+    }
 
     /* Generate all the surfaces */
     tmpW = EdgeLength;

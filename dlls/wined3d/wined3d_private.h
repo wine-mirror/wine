@@ -690,6 +690,8 @@ typedef struct IWineD3DTextureImpl
     
     UINT                      width;
     UINT                      height;
+    float                     pow2scalingFactorX;
+    float                     pow2scalingFactorY;
 
 } IWineD3DTextureImpl;
 
@@ -709,6 +711,7 @@ typedef struct IWineD3DCubeTextureImpl
     IWineD3DSurface          *surfaces[6][MAX_LEVELS];
 
     UINT                      edgeLength;
+    float                     pow2scalingFactor;
 
 } IWineD3DCubeTextureImpl;
 
@@ -790,9 +793,11 @@ struct IWineD3DSurfaceImpl
     UINT                      pow2Height;
     UINT                      pow2Size;
 
+#if 0
     /* precalculated x and y scalings for texture coords */
     float                     pow2scalingFactorX; /* =  (Width  / pow2Width ) */
     float                     pow2scalingFactorY; /* =  (Height / pow2Height) */
+#endif
 
     BOOL                      lockable;
     BOOL                      discard;

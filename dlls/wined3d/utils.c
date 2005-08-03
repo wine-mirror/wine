@@ -1484,9 +1484,6 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords)
 
     if (flags & D3DTTFF_PROJECTED) {
         switch (flags & ~D3DTTFF_PROJECTED) {
-        case D3DTTFF_COUNT1:
-            mat[9] = 0;
-        break;
         case D3DTTFF_COUNT2:
             mat[3] = mat[1], mat[7] = mat[5], mat[11] = mat[9], mat[15] = mat[13];
             mat[1] = mat[5] = mat[9] = mat[13] = 0;

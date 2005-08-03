@@ -1216,12 +1216,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd
                         }
                     }
 
-                    /* crude support for non-power2 textures */
-                    if (((IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)This->stateBlock->textures[textureNo])->surfaces[0])->nonpow2) {
-                        t *= ((IWineD3DSurfaceImpl *)((IWineD3DTextureImpl *)This->stateBlock->textures[textureNo])->surfaces[0])->pow2scalingFactorY;
-                        s *= ((IWineD3DSurfaceImpl *)((IWineD3DTextureImpl *)This->stateBlock->textures[textureNo])->surfaces[0])->pow2scalingFactorX;
-                    }
-
                     switch (coordsToUse) {   /* Supply the provided texture coords */
                     case D3DTTFF_COUNT1:
                         VTRACE(("tex:%d, s=%f\n", textureNo, s));
@@ -1578,9 +1572,9 @@ void inline drawPrimitiveTraceDataLocations(Direct3DVertexStridedData *dataLocat
 
 }
 
-/* loads any dirty textures and returns true if any of the textures are nonpower2 */
-BOOL inline drawPrimitiveUploadDirtyTextures(IWineD3DDeviceImpl* This) {
-    BOOL nonPower2 = FALSE;
+/* uploads textures and setup texture states ready for rendering */
+void inline drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
+
     unsigned int i;
 /**
 * OK, here we clear down any old junk iect in the context
@@ -1606,14 +1600,6 @@ BOOL inline drawPrimitiveUploadDirtyTextures(IWineD3DDeviceImpl* This) {
         /* don't bother with textures that have a colorop of disable */
         if (This->stateBlock->textureState[i][WINED3DTSS_COLOROP] != D3DTOP_DISABLE) {
             if (This->stateBlock->textures[i] != NULL) {
-                /* check to see if any of the texturs are non-power2 */
-                if (IWineD3DResourceImpl_GetType((IWineD3DResource *)This->stateBlock->textures[i]) == D3DRTYPE_TEXTURE) {
-                    IWineD3DSurface *surface;
-                    IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)This->stateBlock->textures[i], 0, &surface);
-                    if (((IWineD3DSurfaceImpl *)surface)->nonpow2) {
-                        nonPower2 = TRUE;
-                    }
-                }
 
                 glDisable(GL_TEXTURE_1D);
                 This->stateBlock->textureDimensions[i] = IWineD3DBaseTexture_GetTextureDimensions(This->stateBlock->textures[i]);
@@ -1642,9 +1628,9 @@ BOOL inline drawPrimitiveUploadDirtyTextures(IWineD3DDeviceImpl* This) {
                 IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
                 IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)This, i, REAPPLY_ALPHAOP);
                 /* this is a stub function representing the state blocks being seperated here we are only updating the texture state changes, other objects and units get updated when they change (or need to be updated), e.g. states that relate to a context member line the texture unit are only updated when the context needs updating */
-#if 0 /* TODO: move the setting of states over to base texture */
+                /* Tell the abse texture to sync it's states */
                 IWineD3DBaseTexture_ApplyStateChanges(This->stateBlock->textures[i], This->stateBlock->textureState[i], This->stateBlock->samplerState[i]);
-#endif
+
               }
             /* Bind a default texture if no texture has been set, but colour-op is enabled */
             else {
@@ -1677,7 +1663,6 @@ BOOL inline drawPrimitiveUploadDirtyTextures(IWineD3DDeviceImpl* This) {
 
       }
 
-    return nonPower2;
 }
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
@@ -1702,7 +1687,6 @@ void drawPrimitive(IWineD3DDevice *iface,
     BOOL                          isLightingOn = FALSE;
     Direct3DVertexStridedData     dataLocations;
     int                           useHW = FALSE;
-    BOOL                          nonPower2 = FALSE; /* set to true if any surfaces are non-power2 so that drawslow is used. */
 
     if (This->stateBlock->vertexDecl == NULL) {
         /* Work out what the FVF should look like */
@@ -1795,7 +1779,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     /* Now initialize the materials state */
     init_materials(iface, (dataLocations.u.s.diffuse.lpData != NULL));
 
-    nonPower2 = drawPrimitiveUploadDirtyTextures(This);
+    drawPrimitiveUploadTextures(This);
 
     /* Now draw the graphics to the screen */
     if  (useVertexShaderFunction) {
@@ -1820,7 +1804,6 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     } else if ((dataLocations.u.s.pSize.lpData           != NULL)
                || (dataLocations.u.s.diffuse.lpData      != NULL)
-               || nonPower2
 	       /*|| (dataLocations.u.s.blendWeights.lpData != NULL)*/) {
 
         /* Fixme, Ideally, only use the per-vertex code for software HAL
