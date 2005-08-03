@@ -23,6 +23,14 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 STRINGTABLE
 BEGIN
+    IDS_CONTENTS     "&Contents"
+    IDS_INDEX        "I&ndex"
+    IDS_SEARCH       "&Search"
+    IDS_FAVORITES    "Favor&ites"
+END
+
+STRINGTABLE
+BEGIN
     IDTB_EXPAND      "Show"
     IDTB_CONTRACT    "Hide"
     IDTB_STOP        "Stop"

@@ -1,5 +1,5 @@
 /*
- * HTML Help resources
+ * HTML Help resource definitions
  *
  * Copyright 2005 James Hawkins
  *
@@ -18,16 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winnls.h"
-#include "htmlhelp.h"
-#include "resource.h"
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#include "version.rc"
-
-#include "De.rc"
-#include "En.rc"
+#define IDS_CONTENTS    1
+#define IDS_INDEX       2
+#define IDS_SEARCH      3
+#define IDS_FAVORITES   4

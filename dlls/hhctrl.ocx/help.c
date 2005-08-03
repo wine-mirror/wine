@@ -30,6 +30,8 @@
 #include "ole2.h"
 #include "wine/unicode.h"
 
+#include "resource.h"
+
 /* Window type defaults */
 
 #define WINTYPE_DEFAULT_X           280
@@ -44,6 +46,7 @@ typedef struct tagHHInfo
     HINSTANCE hInstance;
     LPCWSTR szCmdLine;
     DWORD dwNumTBButtons;
+    HWND hwndTabCtrl;
     HFONT hFont;
 } HHInfo;
 
@@ -251,12 +254,25 @@ static void NP_GetNavigationRect(HHInfo *pHHInfo, RECT *rc)
         rc->right = WINTYPE_DEFAULT_NAVWIDTH;
 }
 
+static void NP_CreateTab(HINSTANCE hInstance, HWND hwndTabCtrl, DWORD dwStrID, DWORD dwIndex)
+{
+    TCITEMW tie;
+    LPWSTR tabText = HH_LoadString(dwStrID);
+
+    tie.mask = TCIF_TEXT;
+    tie.pszText = tabText;
+
+    TabCtrl_InsertItemW(hwndTabCtrl, dwIndex, &tie);
+    HeapFree(GetProcessHeap(), 0, tabText);
+}
+
 static BOOL HH_AddNavigationPane(HHInfo *pHHInfo)
 {
-    HWND hWnd;
+    HWND hWnd, hwndTabCtrl;
     HWND hwndParent = pHHInfo->pHHWinType->hwndHelp;
     DWORD dwStyles = WS_CHILDWINDOW | WS_VISIBLE;
     DWORD dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
+    DWORD dwIndex = 0;
     RECT rc;
 
     NP_GetNavigationRect(pHHInfo, &rc);
@@ -267,6 +283,21 @@ static BOOL HH_AddNavigationPane(HHInfo *pHHInfo)
     if (!hWnd)
         return FALSE;
 
+    hwndTabCtrl = CreateWindowExW(dwExStyles, WC_TABCONTROLW, szEmpty, dwStyles,
+                                  0, 0, rc.right, rc.bottom, hWnd,
+                                  NULL, pHHInfo->hInstance, NULL);
+    if (!hwndTabCtrl)
+        return FALSE;
+
+    /* FIXME: Check which tabs to include when we read the CHM file */
+    NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_CONTENTS, dwIndex++);
+    NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_INDEX, dwIndex++);
+    NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_SEARCH, dwIndex++);
+    NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_FAVORITES, dwIndex++);
+
+    SendMessageW(hwndTabCtrl, WM_SETFONT, (WPARAM)pHHInfo->hFont, TRUE);
+
+    pHHInfo->hwndTabCtrl = hwndTabCtrl;
     pHHInfo->pHHWinType->hwndNavigation = hWnd;
     return TRUE;
 }
