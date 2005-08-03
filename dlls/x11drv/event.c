@@ -274,19 +274,18 @@ static int process_events( Display *display, DWORD mask )
 DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                           DWORD timeout, DWORD mask, DWORD flags )
 {
-    HANDLE new_handles[MAXIMUM_WAIT_OBJECTS+1];  /* FIXME! */
     DWORD i, ret;
     struct x11drv_thread_data *data = TlsGetValue( thread_data_tls_index );
 
     if (!data || data->process_event_count)
+    {
+        if (!count && !timeout) return WAIT_TIMEOUT;
         return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
                                          timeout, flags & MWMO_ALERTABLE );
+    }
 
     /* check whether only server queue handle was passed in */
     if (count < 2) flags &= ~MWMO_WAITALL;
-
-    for (i = 0; i < count; i++) new_handles[i] = handles[i];
-    new_handles[count] = data->display_fd;
 
     wine_tsx11_lock();
     XFlush( gdi_display );
@@ -294,13 +293,21 @@ DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
     wine_tsx11_unlock();
 
     data->process_event_count++;
+
     if (process_events( data->display, mask )) ret = count;
-    else
+    else if (count || timeout)
     {
+        HANDLE new_handles[MAXIMUM_WAIT_OBJECTS+1];  /* FIXME! */
+
+        for (i = 0; i < count; i++) new_handles[i] = handles[i];
+        new_handles[count] = data->display_fd;
+
         ret = WaitForMultipleObjectsEx( count+1, new_handles, flags & MWMO_WAITALL,
                                         timeout, flags & MWMO_ALERTABLE );
         if (ret == count) process_events( data->display, mask );
     }
+    else ret = WAIT_TIMEOUT;
+
     data->process_event_count--;
     return ret;
 }
