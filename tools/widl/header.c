@@ -38,11 +38,11 @@
 
 static int indentation = 0;
 
-static void indent(int delta)
+static void indent(FILE *h, int delta)
 {
   int c;
   if (delta < 0) indentation += delta;
-  for (c=0; c<indentation; c++) fprintf(header, "    ");
+  for (c=0; c<indentation; c++) fprintf(h, "    ");
   if (delta > 0) indentation += delta;
 }
 
@@ -134,7 +134,7 @@ static void write_field(FILE *h, var_t *v)
 {
   if (!v) return;
   if (v->type) {
-    indent(0);
+    indent(h, 0);
     write_type(h, v->type, NULL, v->tname);
     if (get_name(v)) {
       fprintf(h, " ");
@@ -183,7 +183,7 @@ static void write_enums(FILE *h, var_t *v)
   while (NEXT_LINK(v)) v = NEXT_LINK(v);
   while (v) {
     if (get_name(v)) {
-      indent(0);
+      indent(h, 0);
       write_name(h, v);
       if (v->eval) {
         fprintf(h, " = ");
@@ -197,7 +197,7 @@ static void write_enums(FILE *h, var_t *v)
   fprintf(h, "\n");
 }
 
-void write_type(FILE *h, type_t *t, var_t *v, char *n)
+void write_type(FILE *h, type_t *t, var_t *v, const char *n)
 {
   int c;
 
@@ -247,7 +247,7 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
           t->written = TRUE;
           indentation++;
           write_enums(h, t->fields);
-          indent(-1);
+          indent(h, -1);
           fprintf(h, "}");
         }
         else fprintf(h, "enum %s", t->name);
@@ -273,7 +273,7 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
           t->written = TRUE;
           indentation++;
           write_fields(h, t->fields);
-          indent(-1);
+          indent(h, -1);
           fprintf(h, "}");
         }
         else fprintf(h, "struct %s", t->name);
@@ -285,7 +285,7 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
           t->written = TRUE;
           indentation++;
           write_fields(h, t->fields);
-          indent(-1);
+          indent(h, -1);
           fprintf(h, "}");
         }
         else fprintf(h, "union %s", t->name);
@@ -438,7 +438,7 @@ void write_externdef(var_t *v)
   fprintf(header, ";\n\n");
 }
 
-void write_library(char *name, attr_t *attr) {
+void write_library(const char *name, attr_t *attr) {
   UUID *uuid = get_attrp(attr, ATTR_UUID);
   fprintf(header, "\n");
   write_guid("LIBID", name, uuid);
@@ -511,7 +511,7 @@ static int write_method_macro(type_t *iface, char *name)
   return idx;
 }
 
-void write_args(FILE *h, var_t *arg, char *name, int method, int do_indent)
+void write_args(FILE *h, var_t *arg, const char *name, int method, int do_indent)
 {
   int count = 0;
   if (arg) {
@@ -520,10 +520,8 @@ void write_args(FILE *h, var_t *arg, char *name, int method, int do_indent)
   }
   if (do_indent)
   {
-      if (h == header) {
-          indentation++;
-          indent(0);
-      } else fprintf(h, "    ");
+      indentation++;
+      indent(h, 0);
   }
   if (method == 1) {
     fprintf(h, "%s* This", name);
@@ -534,8 +532,7 @@ void write_args(FILE *h, var_t *arg, char *name, int method, int do_indent)
         if (do_indent)
         {
             fprintf(h, ",\n");
-            if (h == header) indent(0);
-            else fprintf(h, "    ");
+            indent(h, 0);
         }
         else fprintf(h, ",");
     }
@@ -557,7 +554,7 @@ void write_args(FILE *h, var_t *arg, char *name, int method, int do_indent)
     arg = PREV_LINK(arg);
     count++;
   }
-  if (do_indent && h == header) indentation--;
+  if (do_indent) indentation--;
 }
 
 static void write_cpp_method_def(type_t *iface)
@@ -569,7 +566,7 @@ static void write_cpp_method_def(type_t *iface)
   while (cur) {
     var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
-      indent(0);
+      indent(header, 0);
       fprintf(header, "virtual ");
       write_type(header, def->type, def, def->tname);
       fprintf(header, " STDMETHODCALLTYPE ");
@@ -591,12 +588,12 @@ static void do_write_c_method_def(type_t *iface, char *name)
 
   if (!cur) return;
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-  indent(0);
+  indent(header, 0);
   fprintf(header, "/*** %s methods ***/\n", iface->name);
   while (cur) {
     var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
-      indent(0);
+      indent(header, 0);
       write_type(header, def->type, def, def->tname);
       fprintf(header, " (STDMETHODCALLTYPE *");
       write_name(header, def);
