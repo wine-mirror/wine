@@ -823,7 +823,7 @@ static const OLECMDF expect_cmds[OLECMDID_GETPRINTTEMPLATE+1] = {
     OLECMDF_SUPPORTED,                  /* OLECMDID_PASTE */
     OLECMDF_SUPPORTED,                  /* OLECMDID_PASTESPECIAL */
     OLECMDF_SUPPORTED,                  /* OLECMDID_UNDO */
-    OLECMDF_SUPPORTED,                  /* OLECMDID_RENDO */
+    OLECMDF_SUPPORTED,                  /* OLECMDID_REDO */
     OLECMDF_SUPPORTED|OLECMDF_ENABLED,  /* OLECMDID_SELECTALL */
     OLECMDF_SUPPORTED,                  /* OLECMDID_CLEARSELECTION */
     OLECMDF_SUPPORTED,                  /* OLECMDID_ZOOM */
@@ -958,6 +958,8 @@ static void test_HTMLDocument(void)
     }
 
     if(cmdtrg) {
+        int i;
+    
         OLECMD cmd[2] = {
             {OLECMDID_OPEN, 0xf0f0},
             {OLECMDID_GETPRINTTEMPLATE+1, 0xf0f0}
@@ -978,6 +980,20 @@ static void test_HTMLDocument(void)
         hres = IOleCommandTarget_QueryStatus(cmdtrg, &IID_IHTMLDocument2, 2, cmd, NULL);
         ok(hres == OLECMDERR_E_UNKNOWNGROUP,
                 "QueryStatus failed: %08lx, expected OLECMDERR_E_UNKNOWNGROUP\n", hres);
+
+        for(i=0; i<OLECMDID_GETPRINTTEMPLATE; i++) {
+            if(!expect_cmds[i]) {
+                hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_UPDATECOMMANDS,
+                    OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+                ok(hres == OLECMDERR_E_NOTSUPPORTED,
+                        "Exec failed: %08lx, expected OLECMDERR_E_NOTSUPPORTED\n", hres);
+            }
+        }
+
+        hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_GETPRINTTEMPLATE+1, 
+                OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+        ok(hres == OLECMDERR_E_NOTSUPPORTED,
+                "Exec failed: %08lx, expected OLECMDERR_E_NOTSUPPORTED\n", hres);
 
         test_OleCommandTarget(cmdtrg);
     }
