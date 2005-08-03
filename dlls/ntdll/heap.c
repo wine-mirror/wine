@@ -172,6 +172,14 @@ static inline void clear_block( void *ptr, SIZE_T size )
     memset( ptr, 0, size );
 }
 
+static RTL_CRITICAL_SECTION_DEBUG process_heap_critsect_debug =
+{
+    0, 0, NULL,  /* will be set later */
+    { &process_heap_critsect_debug.ProcessLocksList, &process_heap_critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": main process heap section") }
+};
+
+
 /***********************************************************************
  *           HEAP_Dump
  */
@@ -611,7 +619,18 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
         /* Initialize critical section */
 
-        RtlInitializeCriticalSection( &heap->critSection );
+        if (!processHeap)  /* do it by hand to avoid memory allocations */
+        {
+            heap->critSection.DebugInfo      = &process_heap_critsect_debug;
+            heap->critSection.LockCount      = -1;
+            heap->critSection.RecursionCount = 0;
+            heap->critSection.OwningThread   = 0;
+            heap->critSection.LockSemaphore  = 0;
+            heap->critSection.SpinCount      = 0;
+            process_heap_critsect_debug.CriticalSection = &heap->critSection;
+        }
+        else RtlInitializeCriticalSection( &heap->critSection );
+
         if (flags & HEAP_SHARED)
         {
             /* let's assume that only one thread at a time will try to do this */

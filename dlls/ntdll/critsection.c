@@ -114,22 +114,18 @@ NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *crit, ULONG spincount )
 {
-    if (!GetProcessHeap()) crit->DebugInfo = NULL;
-    else
+    crit->DebugInfo = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_CRITICAL_SECTION_DEBUG));
+    if (crit->DebugInfo)
     {
-        crit->DebugInfo = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_CRITICAL_SECTION_DEBUG));
-        if (crit->DebugInfo)
-        {
-            crit->DebugInfo->Type = 0;
-            crit->DebugInfo->CreatorBackTraceIndex = 0;
-            crit->DebugInfo->CriticalSection = crit;
-            crit->DebugInfo->ProcessLocksList.Blink = &(crit->DebugInfo->ProcessLocksList);
-            crit->DebugInfo->ProcessLocksList.Flink = &(crit->DebugInfo->ProcessLocksList);
-            crit->DebugInfo->EntryCount = 0;
-            crit->DebugInfo->ContentionCount = 0;
-            crit->DebugInfo->Spare[0] = 0;
-            crit->DebugInfo->Spare[1] = 0;
-        }
+        crit->DebugInfo->Type = 0;
+        crit->DebugInfo->CreatorBackTraceIndex = 0;
+        crit->DebugInfo->CriticalSection = crit;
+        crit->DebugInfo->ProcessLocksList.Blink = &(crit->DebugInfo->ProcessLocksList);
+        crit->DebugInfo->ProcessLocksList.Flink = &(crit->DebugInfo->ProcessLocksList);
+        crit->DebugInfo->EntryCount = 0;
+        crit->DebugInfo->ContentionCount = 0;
+        crit->DebugInfo->Spare[0] = 0;
+        crit->DebugInfo->Spare[1] = 0;
     }
     crit->LockCount      = -1;
     crit->RecursionCount = 0;
