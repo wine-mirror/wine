@@ -248,7 +248,7 @@ static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iState
 /***********************************************************************
  *      UXTHEME_StretchBlt
  *
- * Psudo TransparentBlt/StretchBlt
+ * Pseudo TransparentBlt/StretchBlt
  */
 static inline BOOL UXTHEME_StretchBlt(HDC hdcDst, int nXOriginDst, int nYOriginDst, int nWidthDst, int nHeightDst,
                                       HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc,
@@ -280,6 +280,47 @@ static inline BOOL UXTHEME_Blt(HDC hdcDest, int nXOriginDest, int nYOriginDest, 
                               transparent, transcolor);
 }
 
+/***********************************************************************
+ *      UXTHEME_SizedBlt
+ *
+ * Stretches or tiles, depending on sizingtype.
+ */
+static inline BOOL UXTHEME_SizedBlt (HDC hdcDst, int nXOriginDst, int nYOriginDst, 
+                                     int nWidthDst, int nHeightDst,
+                                     HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, 
+                                     int nWidthSrc, int nHeightSrc,
+                                     int sizingtype)
+{
+    if (sizingtype == ST_TILE)
+    {
+        int yOfs = nYOriginDst;
+        int yRemaining = nHeightDst;
+        while (yRemaining > 0)
+        {
+            int bltHeight = min (yRemaining, nHeightSrc);
+            int xOfs = nXOriginDst;
+            int xRemaining = nWidthDst;
+            while (xRemaining > 0)
+            {
+                int bltWidth = min (xRemaining, nWidthSrc);
+                if (!BitBlt (hdcDst, xOfs, yOfs, bltWidth, bltHeight,
+                    hdcSrc, nXOriginSrc, nYOriginSrc, SRCCOPY))
+                    return FALSE;
+                xOfs += nWidthSrc;
+                xRemaining -= nWidthSrc;
+            }
+            yOfs += nHeightSrc;
+            yRemaining -= nHeightSrc;
+        }
+        return TRUE;
+    }
+    else
+    {
+        return StretchBlt (hdcDst, nXOriginDst, nYOriginDst, nWidthDst, nHeightDst,
+                           hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
+                           SRCCOPY);
+    }
+}
 
 /***********************************************************************
  *      UXTHEME_DrawImageGlyph
@@ -573,11 +614,7 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
             goto draw_error; 
         }
 
-        if(sizingtype == ST_TILE) {
-            FIXME("Tile\n");
-            sizingtype = ST_STRETCH; /* Just use stretch for now */
-        }
-        if(sizingtype == ST_STRETCH) {
+        if ((sizingtype == ST_STRETCH) || (sizingtype == ST_TILE)) {
             int destCenterWidth  = dstSize.x - (sm.cxLeftWidth + sm.cxRightWidth);
             int srcCenterWidth   = srcSize.x - (sm.cxLeftWidth + sm.cxRightWidth);
             int destCenterHeight = dstSize.y - (sm.cyTopHeight + sm.cyBottomHeight);
@@ -585,28 +622,28 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
 
             if(destCenterWidth > 0) {
                 /* Center top */
-                if(!StretchBlt(hdcDst, sm.cxLeftWidth, 0, destCenterWidth, sm.cyTopHeight,
-                               hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.top, srcCenterWidth, sm.cyTopHeight, SRCCOPY)) {
+                if(!UXTHEME_SizedBlt(hdcDst, sm.cxLeftWidth, 0, destCenterWidth, sm.cyTopHeight,
+                               hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.top, srcCenterWidth, sm.cyTopHeight, sizingtype)) {
                     hr = HRESULT_FROM_WIN32(GetLastError());
                     goto draw_error; 
                 }
                 /* Center bottom */
-                if(!StretchBlt(hdcDst, sm.cxLeftWidth, dstSize.y-sm.cyBottomHeight, destCenterWidth, sm.cyBottomHeight,
-                               hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.bottom-sm.cyBottomHeight, srcCenterWidth, sm.cyTopHeight, SRCCOPY)) {
+                if(!UXTHEME_SizedBlt(hdcDst, sm.cxLeftWidth, dstSize.y-sm.cyBottomHeight, destCenterWidth, sm.cyBottomHeight,
+                               hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.bottom-sm.cyBottomHeight, srcCenterWidth, sm.cyTopHeight, sizingtype)) {
                     hr = HRESULT_FROM_WIN32(GetLastError());
                     goto draw_error; 
                 }
             }
             if(destCenterHeight > 0) {
                 /* Left center */
-                if(!StretchBlt(hdcDst, 0, sm.cyTopHeight, sm.cxLeftWidth, destCenterHeight,
-                           hdcSrc, rcSrc.left, rcSrc.top+sm.cyTopHeight, sm.cxLeftWidth, srcCenterHeight, SRCCOPY)) {
+                if(!UXTHEME_SizedBlt(hdcDst, 0, sm.cyTopHeight, sm.cxLeftWidth, destCenterHeight,
+                           hdcSrc, rcSrc.left, rcSrc.top+sm.cyTopHeight, sm.cxLeftWidth, srcCenterHeight, sizingtype)) {
                     hr = HRESULT_FROM_WIN32(GetLastError());
                     goto draw_error; 
                 }
                 /* Right center */
-                if(!StretchBlt(hdcDst, dstSize.x-sm.cxRightWidth, sm.cyTopHeight, sm.cxRightWidth, destCenterHeight,
-                               hdcSrc, rcSrc.right-sm.cxRightWidth, rcSrc.top+sm.cyTopHeight, sm.cxRightWidth, srcCenterHeight, SRCCOPY)) {
+                if(!UXTHEME_SizedBlt(hdcDst, dstSize.x-sm.cxRightWidth, sm.cyTopHeight, sm.cxRightWidth, destCenterHeight,
+                               hdcSrc, rcSrc.right-sm.cxRightWidth, rcSrc.top+sm.cyTopHeight, sm.cxRightWidth, srcCenterHeight, sizingtype)) {
                     hr = HRESULT_FROM_WIN32(GetLastError());
                     goto draw_error; 
                 }
@@ -616,8 +653,8 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
                 GetThemeBool(hTheme, iPartId, iStateId, TMT_BORDERONLY, &borderonly);
                 if(!borderonly) {
                     /* Center */
-                    if(!StretchBlt(hdcDst, sm.cxLeftWidth, sm.cyTopHeight, destCenterWidth, destCenterHeight,
-                                   hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.top+sm.cyTopHeight, srcCenterWidth, srcCenterHeight, SRCCOPY)) {
+                    if(!UXTHEME_SizedBlt(hdcDst, sm.cxLeftWidth, sm.cyTopHeight, destCenterWidth, destCenterHeight,
+                                   hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.top+sm.cyTopHeight, srcCenterWidth, srcCenterHeight, sizingtype)) {
                         hr = HRESULT_FROM_WIN32(GetLastError());
                         goto draw_error; 
                     }
