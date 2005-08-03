@@ -272,8 +272,8 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
                instead.                                                               */
             glLoadIdentity();
 
-            glTranslatef(1.0 / This->stateBlock->viewport.Width, -1.0 / This->stateBlock->viewport.Height, 0);
-            checkGLcall("glTranslatef (1.0 / width, -1.0 / height, 0)");
+            glTranslatef(0.9 / This->stateBlock->viewport.Width, -0.9 / This->stateBlock->viewport.Height, 0);
+            checkGLcall("glTranslatef (0.9 / width, -0.9 / height, 0)");
 
             if (This->renderUpsideDown) {
                 glMultMatrixf(invymat);
@@ -296,8 +296,8 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
             glLoadIdentity();
             /* Window Coord 0 is the middle of the first pixel, so translate by half
                a pixel (See comment above glTranslate above)                         */
-            glTranslatef(1.0 / This->stateBlock->viewport.Width, -1.0 / This->stateBlock->viewport.Height, 0);
-            checkGLcall("glTranslatef (1.0 / width, -1.0 / height, 0)");
+            glTranslatef(0.9 / This->stateBlock->viewport.Width, -0.9 / This->stateBlock->viewport.Height, 0);
+            checkGLcall("glTranslatef (0.9 / width, -0.9 / height, 0)");
             if (This->renderUpsideDown) {
                 glMultMatrixf(invymat);
                 checkGLcall("glMultMatrixf(invymat)");
