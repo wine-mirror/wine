@@ -97,6 +97,8 @@
 #include "wine/library.h"
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(cdrom);
+
 /* Non-Linux systems do not have linux/cdrom.h and the like, and thus
    lack the following constants. */
 
@@ -288,6 +290,7 @@ X(IOCTL_DVD_SEND_KEY)
 X(IOCTL_DVD_START_SESSION)
 X(IOCTL_SCSI_GET_ADDRESS)
 X(IOCTL_SCSI_GET_CAPABILITIES)
+X(IOCTL_SCSI_GET_INQUIRY_DATA)
 X(IOCTL_SCSI_PASS_THROUGH)
 X(IOCTL_SCSI_PASS_THROUGH_DIRECT)
 X(IOCTL_STORAGE_CHECK_VERIFY)
@@ -310,7 +313,8 @@ static const char *iocodex(DWORD code)
    return buffer;
 }
 
-WINE_DEFAULT_DEBUG_CHANNEL(cdrom);
+#define INQ_REPLY_LEN 36
+#define INQ_CMD_LEN 6
 
 #define FRAME_OF_ADDR(a) (((int)(a)[1] * CD_SECS + (a)[2]) * CD_FRAMES + (a)[3])
 #define FRAME_OF_MSF(a) (((int)(a).M * CD_SECS + (a).S) * CD_FRAMES + (a).F)
@@ -1920,6 +1924,66 @@ static NTSTATUS DVD_ReadStructure(int dev, PDVD_READ_STRUCTURE structure, PDVD_L
     return STATUS_SUCCESS;
 
 }
+
+/******************************************************************
+ *        GetInquiryData
+ *        Implements the IOCTL_GET_INQUIRY_DATA ioctl.
+ *        Returns Inquiry data for all devices on the specified scsi bus
+ *        Returns STATUS_BUFFER_TOO_SMALL if the output buffer is to small, 
+ *        STATUS_INVALID_DEVICE_REQUEST if the given handle isn't to a SCSI device,
+ *        or STATUS_NOT_SUPPORTED if the OS driver is too old
+ */
+static NTSTATUS GetInquiryData(int fd, PSCSI_ADAPTER_BUS_INFO BufferOut, DWORD OutBufferSize)
+{
+#ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
+    PSCSI_INQUIRY_DATA pInquiryData = NULL;
+    UCHAR sense_buffer[32];
+    int iochk, version;
+    sg_io_hdr_t iocmd;
+    UCHAR inquiry[INQ_CMD_LEN] = {INQUIRY, 0, 0, 0, INQ_REPLY_LEN, 0};
+
+    /* Check we have a SCSI device and a supported driver */
+    if(ioctl(fd, SG_GET_VERSION_NUM, &version) != 0)
+    {
+        WARN("IOCTL_SCSI_GET_INQUIRY_DATA sg driver is not loaded\n");
+        return STATUS_INVALID_DEVICE_REQUEST;
+    }
+    if(version < 30000 )
+        return STATUS_NOT_SUPPORTED;
+
+    /* FIXME: Enumerate devices on the bus */
+    BufferOut->NumberOfBuses = 1;
+    BufferOut->BusData[0].NumberOfLogicalUnits = 1;
+    BufferOut->BusData[0].InquiryDataOffset = sizeof(SCSI_ADAPTER_BUS_INFO);
+
+    pInquiryData = (PSCSI_INQUIRY_DATA)(BufferOut + 1);
+
+    RtlZeroMemory(&iocmd, sizeof(iocmd));
+    iocmd.interface_id = 'S';
+    iocmd.cmd_len = sizeof(inquiry);
+    iocmd.mx_sb_len = sizeof(sense_buffer);
+    iocmd.dxfer_direction = SG_DXFER_FROM_DEV;
+    iocmd.dxfer_len = INQ_REPLY_LEN;
+    iocmd.dxferp = pInquiryData->InquiryData;
+    iocmd.cmdp = inquiry;
+    iocmd.sbp = sense_buffer;
+    iocmd.timeout = 1000;
+
+    iochk = ioctl(fd, SG_IO, &iocmd);
+    if(iochk != 0)
+        WARN("ioctl SG_IO returned %d, error (%s)\n", iochk, strerror(errno));
+
+    CDROM_GetInterfaceInfo(fd, &BufferOut->BusData[0].InitiatorBusId, &pInquiryData->PathId, &pInquiryData->TargetId, &pInquiryData->Lun);
+    pInquiryData->DeviceClaimed = TRUE;
+    pInquiryData->InquiryDataLength = INQ_REPLY_LEN;
+    pInquiryData->NextInquiryDataOffset = 0;
+    return STATUS_SUCCESS;
+#else
+    FIXME("not implemented for nonlinux\n");
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 /******************************************************************
  *		CDROM_DeviceIoControl
  *
@@ -2183,6 +2247,11 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
         TRACE("doing DVD_READ_STRUCTURE\n");
         status = DVD_ReadStructure(fd, (PDVD_READ_STRUCTURE)lpInBuffer, (PDVD_LAYER_DESCRIPTOR)lpOutBuffer);
+        break;
+
+    case IOCTL_SCSI_GET_INQUIRY_DATA:
+        sz = INQ_REPLY_LEN;
+        status = GetInquiryData(fd, (PSCSI_ADAPTER_BUS_INFO)lpOutBuffer, nOutBufferSize);
         break;
 
     default:
