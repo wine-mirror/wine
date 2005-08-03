@@ -285,3 +285,19 @@ unsigned char *WINAPI NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char 
   /* FIXME: is this the right return value? */
   return NULL;
 }
+
+/************************************************************************
+ *           NdrMapCommAndFaultStatus [RPCRT4.@]
+ */
+RPC_STATUS RPC_ENTRY NdrMapCommAndFaultStatus( PMIDL_STUB_MESSAGE pStubMsg,
+                                               unsigned long *pCommStatus,
+                                               unsigned long *pFaultStatus,
+                                               RPC_STATUS Status )
+{
+    FIXME("(%p, %p, %p, %ld): stub\n", pStubMsg, pCommStatus, pFaultStatus, Status);
+
+    *pCommStatus = 0;
+    *pFaultStatus = 0;
+
+    return RPC_S_OK;
+}

@@ -404,6 +404,8 @@ typedef struct _SCONTEXT_QUEUE {
   NDR_SCONTEXT *ArrayOfObjects;
 } SCONTEXT_QUEUE, *PSCONTEXT_QUEUE;
 
+/* Context Handles */
+
 RPCRTAPI RPC_BINDING_HANDLE RPC_ENTRY
   NDRCContextBinding( IN NDR_CCONTEXT CContext );
 
@@ -437,6 +439,32 @@ RPCRTAPI NDR_SCONTEXT RPC_ENTRY
   NDRSContextUnmarshall2( IN RPC_BINDING_HANDLE BindingHandle, IN void *pBuff,
                           IN unsigned long DataRepresentation, IN void *CtxGuard,
                           IN unsigned long Flags );
+
+RPCRTAPI void RPC_ENTRY
+  NdrClientContextMarshall ( PMIDL_STUB_MESSAGE pStubMsg, NDR_CCONTEXT ContextHandle, int fCheck );
+
+RPCRTAPI void RPC_ENTRY
+  NdrClientContextUnmarshall( IN PMIDL_STUB_MESSAGE pStubMsg, OUT NDR_CCONTEXT* pContextHandle,
+                              IN RPC_BINDING_HANDLE BindHandle );
+
+RPCRTAPI void RPC_ENTRY
+  NdrServerContextMarshall ( PMIDL_STUB_MESSAGE pStubMsg, NDR_SCONTEXT ContextHandle, int fCheck );
+
+RPCRTAPI NDR_SCONTEXT RPC_ENTRY
+  NdrServerContextUnmarshall( IN PMIDL_STUB_MESSAGE pStubMsg );
+
+RPCRTAPI void RPC_ENTRY
+  NdrContextHandleSize( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat );
+
+RPCRTAPI NDR_SCONTEXT RPC_ENTRY
+  NdrContextHandleInitialize( IN PMIDL_STUB_MESSAGE pStubMsg, IN PFORMAT_STRING pFormat );
+
+RPCRTAPI void RPC_ENTRY
+  NdrServerContextNewMarshall( PMIDL_STUB_MESSAGE pStubMsg, NDR_SCONTEXT ContextHandle,
+                               NDR_RUNDOWN RundownRoutine, PFORMAT_STRING pFormat );
+
+RPCRTAPI NDR_SCONTEXT RPC_ENTRY
+  NdrServerContextNewUnmarshall( IN PMIDL_STUB_MESSAGE pStubMsg, IN PFORMAT_STRING pFormat );
 
 RPCRTAPI void RPC_ENTRY
   RpcSsDestroyClientContext( IN void **ContextHandle );
@@ -512,7 +540,11 @@ RPCRTAPI void* RPC_ENTRY
 
 RPCRTAPI void RPC_ENTRY
   NdrClearOutParameters( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, void *ArgAddr );
-                            
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  NdrMapCommAndFaultStatus( PMIDL_STUB_MESSAGE pStubMsg, unsigned long *pCommStatus,
+                            unsigned long *pFaultStatus, RPC_STATUS Status_ );
+
 RPCRTAPI void* RPC_ENTRY
   NdrOleAllocate( size_t Size );
 RPCRTAPI void RPC_ENTRY
