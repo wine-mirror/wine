@@ -842,6 +842,9 @@ HRESULT WINAPI DrawThemeBackgroundEx(HTHEME hTheme, HDC hdc, int iPartId,
     if(!hTheme)
         return E_HANDLE;
 
+    GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_BGTYPE, &bgtype);
+    if (bgtype == BT_NONE) return S_OK;
+
     /* Ensure we have a DTBGOPTS structure available, simplifies some of the code */
     opts = pOptions;
     if(!opts) opts = &defaultOpts;
@@ -856,7 +859,6 @@ HRESULT WINAPI DrawThemeBackgroundEx(HTHEME hTheme, HDC hdc, int iPartId,
     }
     CopyRect(&rt, pRect);
 
-    GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_BGTYPE, &bgtype);
     if(bgtype == BT_IMAGEFILE)
         hr = UXTHEME_DrawImageBackground(hTheme, hdc, iPartId, iStateId, &rt, opts);
     else if(bgtype == BT_BORDERFILL)
@@ -1121,7 +1123,9 @@ HRESULT WINAPI GetThemePartSize(HTHEME hTheme, HDC hdc, int iPartId,
         return E_HANDLE;
 
     GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_BGTYPE, &bgtype);
-    if(bgtype == BT_IMAGEFILE)
+    if (bgtype == BT_NONE)
+        /* do nothing */;
+    else if(bgtype == BT_IMAGEFILE)
         hr = get_image_part_size (hTheme, hdc, iPartId, iStateId, prc, eSize, &size);
     else if(bgtype == BT_BORDERFILL)
         hr = get_border_background_size (hTheme, iPartId, iStateId, eSize, &size);
