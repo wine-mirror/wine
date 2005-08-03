@@ -32,10 +32,11 @@
 
 /* Window type defaults */
 
-#define WINTYPE_DEFAULT_X       280
-#define WINTYPE_DEFAULT_Y       100
-#define WINTYPE_DEFAULT_WIDTH   740
-#define WINTYPE_DEFAULT_HEIGHT  640
+#define WINTYPE_DEFAULT_X           280
+#define WINTYPE_DEFAULT_Y           100
+#define WINTYPE_DEFAULT_WIDTH       740
+#define WINTYPE_DEFAULT_HEIGHT      640
+#define WINTYPE_DEFAULT_NAVWIDTH    250
 
 typedef struct tagHHInfo
 {
@@ -73,6 +74,45 @@ static LPWSTR HH_LoadString(DWORD dwID)
     LoadStringW(hhctrl_hinstance, dwID, string, iSize);
 
     return string;
+}
+
+/* Child Window */
+
+static const WCHAR szChildClass[] = {
+    'H','H',' ','C','h','i','l','d',0
+};
+
+static const WCHAR szEmpty[] = {0};
+
+LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+        default:
+            return DefWindowProcW(hWnd, message, wParam, lParam);
+    }
+
+    return 0;
+}
+
+static void HH_RegisterChildWndClass(HHInfo *pHHInfo)
+{
+    WNDCLASSEXW wcex;
+
+    wcex.cbSize         = sizeof(WNDCLASSEXW);
+    wcex.style          = 0;
+    wcex.lpfnWndProc    = (WNDPROC)Child_WndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = pHHInfo->hInstance;
+    wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
+    wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_3DFACE);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = szChildClass;
+    wcex.hIconSm        = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
+
+    RegisterClassExW(&wcex);
 }
 
 /* Toolbar */
@@ -192,15 +232,87 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
 
 /* Navigation Pane */
 
+static void NP_GetNavigationRect(HHInfo *pHHInfo, RECT *rc)
+{
+    HWND hwndParent = pHHInfo->pHHWinType->hwndHelp;
+    HWND hwndToolbar = pHHInfo->pHHWinType->hwndToolBar;
+    RECT rectWND, rectTB;
+
+    GetClientRect(hwndParent, &rectWND);
+    GetClientRect(hwndToolbar, &rectTB);
+
+    rc->left = 0;
+    rc->top = rectTB.bottom;
+    rc->bottom = rectWND.bottom - rectTB.bottom;
+
+    if (pHHInfo->pHHWinType->fsValidMembers & HHWIN_PARAM_NAV_WIDTH)
+        rc->right = pHHInfo->pHHWinType->iNavWidth;
+    else
+        rc->right = WINTYPE_DEFAULT_NAVWIDTH;
+}
+
 static BOOL HH_AddNavigationPane(HHInfo *pHHInfo)
 {
+    HWND hWnd;
+    HWND hwndParent = pHHInfo->pHHWinType->hwndHelp;
+    DWORD dwStyles = WS_CHILDWINDOW | WS_VISIBLE;
+    DWORD dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
+    RECT rc;
+
+    NP_GetNavigationRect(pHHInfo, &rc);
+
+    hWnd = CreateWindowExW(dwExStyles, szChildClass, szEmpty, dwStyles,
+                           rc.left, rc.top, rc.right, rc.bottom,
+                           hwndParent, NULL, pHHInfo->hInstance, NULL);
+    if (!hWnd)
+        return FALSE;
+
+    pHHInfo->pHHWinType->hwndNavigation = hWnd;
     return TRUE;
 }
 
 /* HTML Pane */
 
+static void HP_GetHTMLRect(HHInfo *pHHInfo, RECT *rc)
+{
+    HWND hwndParent = pHHInfo->pHHWinType->hwndHelp;
+    HWND hwndToolbar = pHHInfo->pHHWinType->hwndToolBar;
+    HWND hwndNavigation = pHHInfo->pHHWinType->hwndNavigation;
+    RECT rectTB, rectWND, rectNP;
+
+    GetClientRect(hwndParent, &rectWND);
+    GetClientRect(hwndToolbar, &rectTB);
+    GetClientRect(hwndNavigation, &rectNP);
+
+    rc->left = rectNP.right;
+    rc->top = rectTB.bottom;
+    rc->right = rectWND.right - rectNP.right;
+    rc->bottom = rectWND.bottom - rectTB.bottom;
+}
+
 static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
 {
+    HWND hWnd;
+    HWND hwndParent = pHHInfo->pHHWinType->hwndHelp;
+    DWORD dwStyles = WS_CHILDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN;
+    DWORD dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR | WS_EX_CLIENTEDGE;
+    RECT rc;
+
+    HP_GetHTMLRect(pHHInfo, &rc);
+
+    hWnd = CreateWindowExW(dwExStyles, szChildClass, szEmpty, dwStyles,
+                           rc.left, rc.top, rc.right, rc.bottom,
+                           hwndParent, NULL, pHHInfo->hInstance, NULL);
+    if (!hWnd)
+        return FALSE;
+
+    /* store the pointer to the HH info struct */
+    SetWindowLongPtrA(hWnd, GWLP_USERDATA, (LONG_PTR)pHHInfo);
+
+    ShowWindow(hWnd, SW_SHOW);
+    UpdateWindow(hWnd);
+
+    pHHInfo->pHHWinType->hwndHTML = hWnd;
     return TRUE;
 }
 
@@ -318,6 +430,8 @@ static BOOL HH_CreateViewer(HHInfo *pHHInfo)
 
     if (!HH_AddToolbar(pHHInfo))
         return FALSE;
+
+    HH_RegisterChildWndClass(pHHInfo);
 
     if (!HH_AddNavigationPane(pHHInfo))
         return FALSE;
