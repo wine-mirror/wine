@@ -28,4 +28,5 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 #include "version.rc"
 
+#include "De.rc"
 #include "En.rc"
