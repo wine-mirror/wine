@@ -16,37 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * History:
- *
- * Apr 3, 1999.  Lawson Whitney <lawson_whitney@juno.com>
- * - Fixed the modem control part of EscapeCommFunction16.
- *
- * Mar 31, 1999. Ove Kåven <ovek@arcticnet.no>
- * - Implemented buffers and EnableCommNotification.
- *
- * Mar 3, 1999. Ove Kåven <ovek@arcticnet.no>
- * - Use port indices instead of unixfds for win16
- * - Moved things around (separated win16 and win32 routines)
- * - Added some hints on how to implement buffers and EnableCommNotification.
- *
- * Oktober 98, Rein Klazes [RHK]
- * A program that wants to monitor the modem status line (RLSD/DCD) may
- * poll the modem status register in the commMask structure. I update the bit
- * in GetCommError, waiting for an implementation of communication events.
- *
- * July 6, 1998. Fixes and comments by Valentijn Sessink
- *                                     <vsessink@ic.uva.nl> [V]
- *
- * August 12, 1997.  Take a bash at SetCommEventMask - Lawson Whitney
- *                                     <lawson_whitney@juno.com>
- *
- * May 26, 1997.  Fixes and comments by Rick Richardson <rick@dgii.com> [RER]
- * - ptr->fd wasn't getting cleared on close.
- * - GetCommEventMask() and GetCommError() didn't do much of anything.
- *   IMHO, they are still wrong, but they at least implement the RXCHAR
- *   event and return I/O queue sizes, which makes the app I'm interested
- *   in (analog devices EZKIT DSP development system) work.
  */
 
 #include "config.h"
@@ -94,7 +63,6 @@
 #include "winbase.h"
 #include "winerror.h"
 
-#include "thread.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 
@@ -122,18 +90,30 @@ static inline void release_comm_fd( HANDLE handle, int fd )
     wine_server_release_fd( handle, fd );
 }
 
+/*             serial_irq_info
+ * local structure holding the irq values we need for WaitCommEvent()
+ *
+ * Stripped down from struct serial_icounter_struct, which may not be available on some systems
+ * As the modem line interrupts (cts, dsr, rng, dcd) only get updated with TIOCMIWAIT active,
+ * no need to carry them in the internal structure
+ *
+ */
+typedef struct serial_irq_info
+{
+    int rx , tx, frame, overrun, parity, brk, buf_overrun;
+}serial_irq_info;
 
 /***********************************************************************
- * Asynchronous I/O for asynchronous wait requests                     *
+ * Data needed by the thread polling for the changing CommEvent
  */
-
 typedef struct async_commio
 {
     HANDLE              handle;
-    PIO_APC_ROUTINE     apc_internal;
-    int                 type;
     char*               buffer;
-    int                 fd;
+    HANDLE              hEvent;
+    DWORD               evtmask;
+    DWORD               mstat;
+    serial_irq_info     irq_info;
 } async_commio;
 
 /***********************************************************************/
@@ -141,6 +121,29 @@ typedef struct async_commio
 #if !defined(TIOCINQ) && defined(FIONREAD)
 #define	TIOCINQ FIONREAD
 #endif
+
+/***********************************************************************
+ *   Get extended interrupt count info, needed for WaitCommEvent
+ */
+static int COMM_GetEInfo(int fd, serial_irq_info *irq_info)
+{
+#ifdef TIOCGICOUNT
+    struct serial_icounter_struct einfo;
+    if (!ioctl(fd,TIOCGICOUNT, &einfo))
+    {
+        irq_info->rx          = einfo.rx;
+        irq_info->tx          = einfo.tx;
+        irq_info->frame       = einfo.frame;
+        irq_info->overrun     = einfo.overrun;
+        irq_info->parity      = einfo.parity;
+        irq_info->brk         = einfo.brk;
+        irq_info->buf_overrun = einfo.buf_overrun;
+        return 0;
+    }
+#endif
+    memset(irq_info,0, sizeof(serial_irq_info));
+    return -1;
+}
 
 static int COMM_WhackModem(int fd, unsigned int andy, unsigned int orrie)
 {
@@ -1907,33 +1910,103 @@ BOOL WINAPI GetCommModemStatus(
 #endif
 }
 
+static DWORD WINAPI Comm_CheckEvents(int fd, DWORD mask, serial_irq_info *new, serial_irq_info *old, DWORD new_mstat, DWORD old_mstat)
+{
+    DWORD ret = 0, queue;
+
+    TRACE("mask 0x%08lx\n", mask);
+    TRACE("old->rx          0x%08x vs. new->rx          0x%08x \n", old->rx, new->rx);
+    TRACE("old->tx          0x%08x vs. new->tx          0x%08x \n", old->tx, new->tx);
+    TRACE("old->frame       0x%08x vs. new->frame       0x%08x \n", old->frame, new->frame);
+    TRACE("old->overrun     0x%08x vs. new->overrun     0x%08x \n", old->overrun, new->overrun);
+    TRACE("old->parity      0x%08x vs. new->parity      0x%08x \n", old->parity, new->parity);
+    TRACE("old->brk         0x%08x vs. new->brk         0x%08x \n", old->brk, new->brk);
+    TRACE("old->buf_overrun 0x%08x vs. new->buf_overrun 0x%08x \n", old->buf_overrun, new->buf_overrun);
+
+    ret |= ((mask & EV_BREAK) && ( old->brk != new->brk))?EV_BREAK:0;
+    ret |= ((mask & EV_CTS  ) && ((old_mstat&MS_CTS_ON )!=(new_mstat&MS_CTS_ON )))?EV_CTS  :0;
+    ret |= ((mask & EV_DSR  ) && ((old_mstat&MS_DSR_ON )!=(new_mstat&MS_DSR_ON )))?EV_DSR  :0;
+    ret |= ((mask & EV_RING ) && ((old_mstat&MS_RING_ON)!=(new_mstat&MS_RING_ON)))?EV_RING :0;
+    ret |= ((mask & EV_RLSD ) && ((old_mstat&MS_RLSD_ON)!=(new_mstat&MS_RLSD_ON)))?EV_RLSD :0;
+    ret |= ((mask & EV_ERR  ) && (( old->frame != new->frame) ||(old->overrun != new->overrun)
+		|| (old->parity != new->parity)) )?EV_ERR  :0;
+    if (mask & EV_RXCHAR)
+    {
+	queue = 0;
+#ifdef TIOCINQ
+	if(ioctl(fd, TIOCINQ, &queue))
+	    WARN("TIOCINQ returned error\n");
+#endif
+	if (queue)
+	    ret |= EV_RXCHAR;
+    }
+    if (mask & EV_TXEMPTY)
+    {
+	queue = 0;
+/* We really want to know when all characters have gone out of the transmitter */
+#if defined(TIOCSERGETLSR) 
+	if(ioctl(fd, TIOCSERGETLSR, &queue))
+	    WARN("TIOCSERGETLSR returned error\n");
+	if (queue)
+/* TIOCINQ only checks for an empty buffer */
+#elif def(TIOCINQ)
+	if(ioctl(fd, TIOCOUTQ, &queue))
+	    WARN("TIOCOUTQ returned error\n");
+	if (!queue)
+#endif
+           ret |= EV_TXEMPTY;
+    }
+    TRACE("OUTQUEUE %ld, Transmitter %sempty\n", queue, (ret & EV_TXEMPTY)?"":"not ");
+    return ret;
+    
+}
+
 /***********************************************************************
  *             COMM_WaitCommEventService      (INTERNAL)
  *
- *  This function is called while the client is waiting on the
- *  server, so we can't make any server calls here.
+ *  We need to poll for what is interesting
+ *  TIOCMIWAIT only checks modem status line and may not be aborted by a changing mask
+ *
  */
-static void WINAPI COMM_WaitCommEventService(void* ovp, IO_STATUS_BLOCK* iosb, ULONG status)
+static DWORD WINAPI COMM_WaitCommEventService(LPVOID arg)
 {
-    async_commio *commio = (async_commio*) ovp;
+    async_commio *commio = (async_commio*) arg;
+    int waitmask = 0;
+    int rc, fd, abort;
+    serial_irq_info new_irq_info;
+    DWORD new_mstat, new_evtmask;
 
-    TRACE("iosb %p\n", iosb);
+    fd=get_comm_fd( commio->handle, GENERIC_READ );
 
-    switch (status)
+    TRACE("handle %p fd 0x%08x, mask 0x%08lx buffer %p event %p irq_info %p waitmask 0x%08x\n", 
+	  commio->handle, fd, commio->evtmask, commio->buffer, commio->hEvent, &commio->irq_info, waitmask);
+    do
     {
-    case STATUS_ALERTED: /* got some new stuff */
-        /* FIXME: detect other events */
-        *commio->buffer = EV_RXCHAR;
-        iosb->u.Status = STATUS_SUCCESS;
-        break;
-    default:
-        iosb->u.Status = status;
-        break;
-    }
-    wine_server_release_fd( commio->handle, commio->fd );
-    if ( ((LPOVERLAPPED)iosb)->hEvent != INVALID_HANDLE_VALUE )
-        NtSetEvent( ((LPOVERLAPPED)iosb)->hEvent, NULL );
+	/*
+	 * TIOCMIWAIT is not adequate
+	 *
+	 * FIXME:
+	 * We don't handle the EV_RXFLAG (the eventchar)
+	 */
+	Sleep(1);
+	rc= COMM_GetEInfo(fd,&new_irq_info);
+	if (rc)
+	    TRACE("TIOCGICOUNT err %s\n", strerror(errno));
+	rc = GetCommModemStatus(commio->handle, &new_mstat);
+	if (!rc)
+	    TRACE("GetCommModemStatus failed\n");
+	rc = Comm_CheckEvents(fd, commio->evtmask,&new_irq_info,&commio->irq_info, new_mstat, commio->mstat);
+	GetCommMask(commio->handle, &new_evtmask);
+	abort = (commio->evtmask != new_evtmask);
+	TRACE("resulting Eventmask 0x%08x\n", rc);
+    } while (!rc && ! abort);
+    if (abort) rc = 0;
+    release_comm_fd( commio->handle, fd );
+    *commio->buffer = rc;
+    if (commio->hEvent != INVALID_HANDLE_VALUE )
+        NtSetEvent( commio->hEvent, NULL );
     HeapFree(GetProcessHeap(), 0, commio );
+    return 0;
 }
 
 
@@ -1949,7 +2022,8 @@ static BOOL COMM_WaitCommEvent(
 {
     int                 fd;
     async_commio*       commio;
-    NTSTATUS            status;
+    DWORD               result_mask;
+    BOOL res;
 
     if (!lpOverlapped)
     {
@@ -1971,32 +2045,70 @@ static BOOL COMM_WaitCommEvent(
     }
 
     commio->handle = hFile;
-    commio->type = ASYNC_TYPE_WAIT;
-    commio->apc_internal = COMM_WaitCommEventService;
     commio->buffer = (char *)lpdwEvents;
-    commio->fd = fd;  /* FIXME */
+    commio->hEvent = lpOverlapped->hEvent;
+    GetCommMask(hFile, &commio->evtmask);
 
-    lpOverlapped->InternalHigh = 0;
-    lpOverlapped->u.s.Offset = 0;
-    lpOverlapped->u.s.OffsetHigh = 0;
-
-    SERVER_START_REQ( register_async )
+/* We may never return, if some capabilities miss
+ * Return error in that case
+ */
+#if !defined(TIOCINQ)
+    if(commio->evtmask & EV_RXCHAR)
+	goto error;
+#endif
+#if !(defined(TIOCSERGETLSR) && defined(TIOCSER_TEMT)) || !defined(TIOCINQ)
+    if(commio->evtmask & EV_TXEMPTY)
+	goto error;
+#endif
+#if !defined(TIOCMGET)
+    if(commio->evtmask & (EV_CTS | EV_DSR| EV_RING| EV_RLSD))
+	goto error;
+#endif
+#if !defined(TIOCM_CTS)
+    if(commio->evtmask & EV_CTS)
+	goto error;
+#endif
+#if !defined(TIOCM_DSR)
+    if(commio->evtmask & EV_DSR)
+	goto error;
+#endif
+#if !defined(TIOCM_RNG)
+    if(commio->evtmask & EV_RING)
+	goto error;
+#endif
+#if !defined(TIOCM_CAR)
+    if(commio->evtmask & EV_RLSD)
+	goto error;
+#endif
+    if(commio->evtmask & EV_RXFLAG)
+	FIXME("EV_RXFLAG not handled\n");
+    COMM_GetEInfo(fd,&commio->irq_info);
+    GetCommModemStatus(hFile, &commio->mstat);
+    /* We might have received something or the TX bufffer is delivered*/
+    result_mask = Comm_CheckEvents( fd, commio->evtmask, &commio->irq_info, &commio->irq_info,commio->mstat,commio->mstat);
+    if (result_mask) 
     {
-        req->handle = hFile;
-        req->io_apc = COMM_WaitCommEventService;
-        req->io_user = commio;
-        req->io_sb = (IO_STATUS_BLOCK*)lpOverlapped;
-        req->count = 0;
-        status = wine_server_call( req );
+	TRACE("Event already met\n");
+	*lpdwEvents = result_mask;
+	release_comm_fd( commio->handle, fd );
+	HeapFree(GetProcessHeap(), 0, commio );
+	res = TRUE;
     }
-    SERVER_END_REQ;
-
-    if ( status ) SetLastError( RtlNtStatusToDosError(status) );
-    else NtCurrentTeb()->num_async_io++;
-
+    else
+    {
+	CreateThread(NULL, 0, COMM_WaitCommEventService, (LPVOID)commio, 0, NULL);
+	SetLastError(ERROR_IO_PENDING);
+	res = FALSE;
+    }
+    return res;
+#if !defined(TIOCINQ) || (!(defined(TIOCSERGETLSR) && defined(TIOCSER_TEMT)) && !defined(TIOCINQ)) || !defined(TIOCMGET) || !defined(TIOCM_CTS) ||!defined(TIOCM_DSR) || !defined(TIOCM_RNG) || !defined(TIOCM_CAR)
+ error:
+    FIXME("Returning error because of missing capabilities\n");
+    HeapFree(GetProcessHeap(), 0, commio );
+    SetLastError(ERROR_INVALID_PARAMETER);
     return FALSE;
+#endif
 }
-
 /***********************************************************************
  *           WaitCommEvent   (KERNEL32.@)
  *
@@ -2020,7 +2132,8 @@ BOOL WINAPI WaitCommEvent(
     LPOVERLAPPED lpOverlapped) /* [in/out] for Asynchronous waiting */
 {
     OVERLAPPED ov;
-    int ret;
+    int ret = 0;
+    DWORD res, err;
 
     TRACE("(%p %p %p )\n",hFile, lpdwEvents,lpOverlapped);
 
@@ -2030,10 +2143,27 @@ BOOL WINAPI WaitCommEvent(
     /* if there is no overlapped structure, create our own */
     ov.hEvent = CreateEventW(NULL,FALSE,FALSE,NULL);
 
-    COMM_WaitCommEvent(hFile, lpdwEvents, &ov);
-
-    /* wait for the overlapped to complete */
-    ret = GetOverlappedResult(hFile, &ov, NULL, TRUE);
+    res = COMM_WaitCommEvent(hFile, lpdwEvents, &ov);
+    err = GetLastError();
+    if (!res)
+    {
+	if (err == ERROR_IO_PENDING)
+	{
+	    do 
+	    {
+		res = WaitForSingleObjectEx(ov.hEvent, INFINITE, FALSE);
+	    } while (res != WAIT_OBJECT_0);
+	    TRACE("Event met\n:");
+	    ret = TRUE;
+	}
+	else
+	{
+	    FIXME("Unknown error 0x%08lx\n", err);
+	    ret = FALSE;
+	}
+    }
+    else
+	ret = TRUE;
     CloseHandle(ov.hEvent);
 
     return ret;
