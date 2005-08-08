@@ -33,6 +33,10 @@
 #include <sys/errno.h>
 #endif
 
+/* check for one of the Open Sound System specific SNDCTL_ defines */
+#ifdef SNDCTL_DSP_STEREO
+# define HAVE_OSS
+#endif
+
 extern LONG OSS_WaveInit(void);
 extern BOOL OSS_MidiInit(void);
-

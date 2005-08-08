@@ -5,21 +5,6 @@
 /* Specifies the compiler flag that forces a short wchar_t */
 #undef CC_FLAG_SHORT_WCHAR
 
-/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
-   systems. This function is required for `alloca.c' support on those systems.
-   */
-#undef CRAY_STACKSEG_END
-
-/* Define to 1 if using `alloca.c'. */
-#undef C_ALLOCA
-
-/* Define to 1 if you have `alloca', as a function or macro. */
-#undef HAVE_ALLOCA
-
-/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-   */
-#undef HAVE_ALLOCA_H
-
 /* Define if you have ALSA 1.x including devel headers */
 #undef HAVE_ALSA
 
@@ -58,9 +43,6 @@
 
 /* Define to 1 if you have the `connect' function. */
 #undef HAVE_CONNECT
-
-/* Define if we have linux/input.h AND it contains the INPUT event API */
-#undef HAVE_CORRECT_LINUXINPUT_H
 
 /* Define to 1 if you have the <cups/cups.h> header file. */
 #undef HAVE_CUPS_CUPS_H
@@ -233,9 +215,6 @@
 /* Define to 1 if you have the <io.h> header file. */
 #undef HAVE_IO_H
 
-/* Define to 1 if you have the `iswalnum' function. */
-#undef HAVE_ISWALNUM
-
 /* Define to 1 if you have the <jack/jack.h> header file. */
 #undef HAVE_JACK_JACK_H
 
@@ -289,9 +268,6 @@
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
-
-/* Define to 1 if you have the `w' library (-lw). */
-#undef HAVE_LIBW
 
 /* Define if you have the libxml2 library */
 #undef HAVE_LIBXML2
@@ -445,12 +421,6 @@
 
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
 #undef HAVE_OPENSSL_SSL_H
-
-/* Define if you have the Open Sound system */
-#undef HAVE_OSS
-
-/* Define if you have the Open Sound system (MIDI interface) */
-#undef HAVE_OSS_MIDI
 
 /* Define to 1 if you have the `pclose' function. */
 #undef HAVE_PCLOSE
@@ -946,14 +916,6 @@
 
 /* Define to the soname of the libXrender library. */
 #undef SONAME_LIBXRENDER
-
-/* If using the C implementation of alloca, define if you know the
-   direction of stack growth for your system; otherwise it will be
-   automatically deduced at run-time.
-	STACK_DIRECTION > 0 => grows toward higher addresses
-	STACK_DIRECTION < 0 => grows toward lower addresses
-	STACK_DIRECTION = 0 => direction of growth unknown */
-#undef STACK_DIRECTION
 
 /* Define if the struct statfs is defined by <sys/mount.h> */
 #undef STATFS_DEFINED_BY_SYS_MOUNT

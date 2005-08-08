@@ -72,6 +72,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
+#ifdef SNDCTL_SEQ_NRMIDIS
+#define HAVE_OSS_MIDI
+#endif
+
 #ifdef HAVE_OSS_MIDI
 
 #define MIDI_SEQ "/dev/sequencer"
@@ -1649,6 +1653,13 @@ static DWORD modReset(WORD wDevID)
     }
     /* FIXME: the LongData buffers must also be returned to the app */
     return MMSYSERR_NOERROR;
+}
+
+#else /* HAVE_OSS_MIDI */
+
+BOOL OSS_MidiInit(void)
+{
+    return FALSE;
 }
 
 #endif /* HAVE_OSS_MIDI */

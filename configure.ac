@@ -141,8 +141,6 @@ dnl Check for -li386 for NetBSD and OpenBSD
 AC_CHECK_LIB(i386,i386_set_ldt)
 dnl Check for -lossaudio for NetBSD
 AC_CHECK_LIB(ossaudio,_oss_ioctl)
-dnl Check for -lw for Solaris
-AC_CHECK_FUNCS(iswalnum,,AC_CHECK_LIB(w,iswalnum))
 dnl Check for -lnsl for Solaris
 AC_CHECK_FUNCS(gethostbyname,,AC_CHECK_LIB(nsl,gethostbyname))
 dnl Check for -lsocket for Solaris
@@ -158,15 +156,11 @@ AC_CHECK_LIB(resolv,res_9_init)
 dnl Check for -lpthread
 AC_CHECK_LIB(pthread,pthread_create,AC_SUBST(LIBPTHREAD,"-lpthread"))
 
-AC_SUBST(XLIB)
-AC_SUBST(XFILES)
-XFILES=""
-AC_SUBST(OPENGLFILES)
-OPENGLFILES=""
-AC_SUBST(GLU32FILES)
-GLU32FILES=""
-AC_SUBST(OPENGL_LIBS)
-OPENGL_LIBS=""
+AC_SUBST(XLIB,"")
+AC_SUBST(XFILES,"")
+AC_SUBST(OPENGLFILES,"")
+AC_SUBST(GLU32FILES,"")
+AC_SUBST(OPENGL_LIBS,"")
 
 dnl **** Check for header files ****
 
@@ -469,11 +463,10 @@ AC_SUBST(CURSESLIBS)
 
 dnl **** Check for SANE ****
 AC_CHECK_PROG(sane_devel,sane-config,sane-config,no)
-if test "$sane_devel" = "no"
+AC_SUBST(SANELIBS,"")
+AC_SUBST(SANEINCL,"")
+if test "$sane_devel" != "no"
 then
-    SANELIBS=""
-    SANEINCL=""
-else
     SANELIBS="`$sane_devel --libs`"
     SANEINCL="`$sane_devel --cflags`"
     ac_save_CPPFLAGS="$CPPFLAGS"
@@ -490,8 +483,6 @@ else
     LIBS="$ac_save_LIBS"
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
-AC_SUBST(SANELIBS)
-AC_SUBST(SANEINCL)
 
 dnl **** Check for the ICU library ****
 if test "$ac_cv_header_unicode_ubidi_h" = "yes"
@@ -530,11 +521,11 @@ then
 fi
 
 dnl **** Check for FreeType 2 ****
+AC_SUBST(FREETYPELIBS,"")
+AC_SUBST(FREETYPEINCL,"")
 AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no,$X_LIBS)
 if test "$ft_lib" = "no"
 then
-    FREETYPELIBS=""
-    FREETYPEINCL=""
     wine_cv_msg_freetype=no
 else
     AC_CHECK_PROG(ft_devel,freetype-config,freetype-config,no)
@@ -548,8 +539,6 @@ else
     fi
     if test "$ft_devel" = "no"
     then
-    	FREETYPELIBS=""
-	FREETYPEINCL=""
 	wine_cv_msg_freetype=yes
     else
 	FREETYPELIBS=`$ft_devel --libs`
@@ -588,8 +577,6 @@ else
 	fi
     fi
 fi
-AC_SUBST(FREETYPELIBS)
-AC_SUBST(FREETYPEINCL)
 
 dnl Only build the fonts dir if we have both freetype and fontforge
 if test "$FONTFORGE" != "false" -a -n "$FREETYPELIBS"
@@ -666,53 +653,6 @@ AC_CHECK_FUNCS(\
         pthread_get_stacksize_np \
 )
 LIBS="$ac_save_LIBS"
-
-dnl **** Check for Open Sound System ****
-AC_CACHE_CHECK([for Open Sound System],
-	ac_cv_c_opensoundsystem,
-	AC_TRY_COMPILE([
-	#if defined(HAVE_SYS_SOUNDCARD_H)
-		#include <sys/soundcard.h>
-	#elif defined(HAVE_MACHINE_SOUNDCARD_H)
-		#include <machine/soundcard.h>
-	#elif defined(HAVE_SOUNDCARD_H)
-		#include <soundcard.h>
-	#endif
-	],[
-
-/* check for one of the Open Sound System specific SNDCTL_ defines */
-#if !defined(SNDCTL_DSP_STEREO)
-#error No open sound system
-#endif
-],ac_cv_c_opensoundsystem="yes",ac_cv_c_opensoundsystem="no"))
-
-if test "$ac_cv_c_opensoundsystem" = "yes"
-then
-    AC_DEFINE(HAVE_OSS, 1, [Define if you have the Open Sound system])
-fi
-
-AC_CACHE_CHECK([for Open Sound System/MIDI interface],
-	ac_cv_c_opensoundsystem_midi,
-	AC_TRY_COMPILE([
-	#if defined(HAVE_SYS_SOUNDCARD_H)
-		#include <sys/soundcard.h>
-	#elif defined(HAVE_MACHINE_SOUNDCARD_H)
-		#include <machine/soundcard.h>
-	#elif defined(HAVE_SOUNDCARD_H)
-		#include <soundcard.h>
-	#endif
-	],[
-
-/* check for one of the Open Sound System specific SNDCTL_SEQ defines */
-#if !defined(SNDCTL_SEQ_SYNC)
-#error No open sound system MIDI interface
-#endif
-],ac_cv_c_opensoundsystem_midi="yes",ac_cv_c_opensoundsystem_midi="no"))
-
-if test "$ac_cv_c_opensoundsystem_midi" = "yes"
-then
-    AC_DEFINE(HAVE_OSS_MIDI, 1, [Define if you have the Open Sound system (MIDI interface)])
-fi
 
 dnl **** Check for aRts Sound Server ****
 AC_PATH_PROG(ARTSCCONFIG, artsc-config)
@@ -1128,7 +1068,6 @@ fi
 
 dnl **** Check for functions ****
 
-AC_FUNC_ALLOCA()
 AC_CHECK_FUNCS(\
 	_lwp_create \
 	_lwp_self \
@@ -1236,26 +1175,6 @@ AC_C_INLINE
 AC_CHECK_TYPES([mode_t, off_t, pid_t, size_t, ssize_t, long long, fsblkcnt_t, fsfilcnt_t])
 AC_CHECK_TYPES([sigset_t],,,[#include <signal.h>])
 AC_CHECK_TYPES([request_sense],,,[#include <linux/cdrom.h>])
-
-AC_CACHE_CHECK([whether linux/input.h is for real],
-	wine_cv_linux_input_h,
-	AC_TRY_COMPILE([
-	    #include <linux/input.h>
-	] , [
-	    int foo = EVIOCGBIT(EV_ABS,42);
-	    int bar = BTN_PINKIE;
-	    int fortytwo = 42;
-	],
-	wine_cv_linux_input_h=yes,
-	wine_cv_linux_input_h=no,
-	no
-	)
-    )
-    if test "$wine_cv_linux_input_h" = "yes"
-    then
-        AC_DEFINE(HAVE_CORRECT_LINUXINPUT_H, 1,
-                  [Define if we have linux/input.h AND it contains the INPUT event API])
-    fi
 
 AC_CHECK_MEMBERS([struct ff_effect.direction],,,
 [#ifdef HAVE_LINUX_INPUT_H
@@ -1801,9 +1720,15 @@ then
   echo "*** enable Wine to use TrueType fonts."
 fi
 
-if test -z "$ALSALIBS" -a -z "$ARTSC_LIBS" -a -z "$AUDIOIOLIBS" -a \
-        -z "$ac_cv_lib_soname_jack" -a -z "$NASLIBS" -a \
-        "$ac_cv_c_opensoundsystem" = "no" -a -z "$ESD_LIBS"
+if test -z "$ALSALIBS" -a \
+        -z "$ARTSC_LIBS" -a \
+        -z "$AUDIOIOLIBS" -a \
+        -z "$NASLIBS" -a \
+        -z "$ESD_LIBS" -a \
+        -z "$ac_cv_lib_soname_jack" -a \
+        "$ac_cv_header_sys_soundcard_h" != "yes" -a \
+        "$ac_cv_header_machine_soundcard_h" != "yes" -a \
+        "$ac_cv_header_soundcard_h" != "yes"
 then
     echo "*** No sound system was found. Windows applications will be silent."
     echo "*** The currently supported sound systems are:"
