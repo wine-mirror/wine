@@ -64,7 +64,14 @@ static BOOL file_exists(const CHAR *name)
 /* initializes the tests */
 static void init_shfo_tests(void)
 {
+    int len;
+
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
+    len = lstrlenA(CURR_DIR);
+
+    if(len && (CURR_DIR[len-1] == '\\'))
+        CURR_DIR[len-1] = 0;
+
     createTestFile(".\\test1.txt");
     createTestFile(".\\test2.txt");
     createTestFile(".\\test3.txt");

@@ -621,9 +621,19 @@ static void test_EnumObjects_and_CompareIDs(void)
     char  cCurrDirA [MAX_PATH] = {0};
     WCHAR cCurrDirW [MAX_PATH];
     static const WCHAR cTestDirW[] = {'\\','t','e','s','t','d','i','r',0};
+    int len;
     HRESULT hr;
 
     GetCurrentDirectoryA(MAX_PATH, cCurrDirA);
+    len = lstrlenA(cCurrDirA);
+
+    if(len == 0) {
+        trace("GetCurrentDirectoryA returned empty string. Skipping test_EnumObjects_and_CompareIDs\n");
+        return;
+    }
+    if(cCurrDirA[len-1] == '\\')
+        cCurrDirA[len-1] = 0;
+
     MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
     strcatW(cCurrDirW, cTestDirW);
 
