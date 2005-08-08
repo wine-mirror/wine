@@ -102,6 +102,9 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         TRACE("(%p)->(IID_IOleCommandTarget, %p)\n", This, ppvObject);
         *ppvObject = CMDTARGET(This);
+    }else if(IsEqualGUID(&IID_IOleControl, riid)) {
+        TRACE("(%p)->(IID_IOleControl, %p)\n", This, ppvObject);
+        *ppvObject = CONTROL(This);
     }
 
     if(*ppvObject) {

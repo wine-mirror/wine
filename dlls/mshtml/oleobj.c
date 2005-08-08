@@ -764,6 +764,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     return OLECMDERR_E_UNKNOWNGROUP;
 }
 
+#undef CMDTARGET_THIS
+
 static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
     OleCommandTarget_QueryInterface,
     OleCommandTarget_AddRef,
@@ -772,11 +774,76 @@ static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
     OleCommandTarget_Exec
 };
 
+/**********************************************************
+ * IOleControl implementation
+ */
+
+#define CONTROL_THIS(iface) DEFINE_THIS(HTMLDocument, OleControl, iface)
+
+static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface, REFIID riid, void **ppv)
+{
+    HTMLDocument *This = CONTROL_THIS(iface);
+    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+}
+
+static ULONG WINAPI OleControl_AddRef(IOleControl *iface)
+{
+    HTMLDocument *This = CONTROL_THIS(iface);
+    return IHTMLDocument2_AddRef(HTMLDOC(This));
+}
+
+static ULONG WINAPI OleControl_Release(IOleControl *iface)
+{
+    HTMLDocument *This = CONTROL_THIS(iface);
+    return IHTMLDocument_Release(HTMLDOC(This));
+}
+
+static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, CONTROLINFO *pCI)
+{
+    HTMLDocument *This = CONTROL_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pCI);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, MSG *pMsg)
+{
+    HTMLDocument *This = CONTROL_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pMsg);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
+{
+    HTMLDocument *This = CONTROL_THIS(iface);
+    FIXME("(%p)->(%ld)\n", This, dispID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL bFreeze)
+{
+    HTMLDocument *This = CONTROL_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, bFreeze);
+    return E_NOTIMPL;
+}
+
+#undef CONTROL_THIS
+
+static const IOleControlVtbl OleControlVtbl = {
+    OleControl_QueryInterface,
+    OleControl_AddRef,
+    OleControl_Release,
+    OleControl_GetControlInfo,
+    OleControl_OnMnemonic,
+    OleControl_OnAmbientPropertyChange,
+    OleControl_FreezeEvents
+};
+
 void HTMLDocument_OleObj_Init(HTMLDocument *This)
 {
     This->lpOleObjectVtbl = &OleObjectVtbl;
     This->lpOleDocumentVtbl = &OleDocumentVtbl;
     This->lpOleCommandTargetVtbl = &OleCommandTargetVtbl;
+    This->lpOleControlVtbl = &OleControlVtbl;
 
     This->client = NULL;
     This->hostui = NULL;

@@ -40,6 +40,7 @@ typedef struct {
     const IOleInPlaceObjectWindowlessVtbl *lpOleInPlaceObjectWindowlessVtbl;
     const IServiceProviderVtbl            *lpServiceProviderVtbl;
     const IOleCommandTargetVtbl           *lpOleCommandTargetVtbl;
+    const IOleControlVtbl                 *lpOleControlVtbl;
 
     LONG ref;
 
@@ -84,6 +85,7 @@ struct NSContainer {
 #define INPLACEWIN(x)    ((IOleInPlaceObjectWindowless*)  &(x)->lpOleInPlaceObjectWindowlessVtbl)
 #define SERVPROV(x)      ((IServiceProvider*)             &(x)->lpServiceProviderVtbl)
 #define CMDTARGET(x)     ((IOleCommandTarget*)            &(x)->lpOleCommandTargetVtbl)
+#define CONTROL(x)       ((IOleControl*)                  &(x)->lpOleControlVtbl)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
