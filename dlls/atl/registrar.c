@@ -31,6 +31,7 @@
 
 #define ATL_INITGUID
 #include "atliface.h"
+#include "atlbase.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -753,14 +754,13 @@ HRESULT WINAPI ATL_DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObj
 
 extern HINSTANCE hInst;
 
-static HRESULT do_register_server(BOOL do_register)
+static HRESULT do_register_dll_server(LPCOLESTR wszDll, LPCOLESTR wszId, BOOL do_register)
 {
     WCHAR buf[MAX_PATH];
     HRESULT hres;
     IRegistrar *pRegistrar;
 
     static const WCHAR wszModule[] = {'M','O','D','U','L','E',0};
-    static const WCHAR wszDll[] = {'a','t','l','.','d','l','l',0};
     static const WCHAR wszRegistry[] = {'R','E','G','I','S','T','R','Y',0};
     static const WCHAR wszCLSID_ATLRegistrar[] =
             {'C','L','S','I','D','_','A','T','L','R','e','g','i','s','t','r','a','r',0};
@@ -772,12 +772,49 @@ static HRESULT do_register_server(BOOL do_register)
     IRegistrar_AddReplacement(pRegistrar, wszCLSID_ATLRegistrar, buf);
 
     if(do_register)
-        hres = IRegistrar_ResourceRegister(pRegistrar, wszDll, 1, wszRegistry);
+        hres = IRegistrar_ResourceRegisterSz(pRegistrar, wszDll, wszId, wszRegistry);
     else
-        hres = IRegistrar_ResourceUnregister(pRegistrar, wszDll, 1, wszRegistry);
+        hres = IRegistrar_ResourceUnregisterSz(pRegistrar, wszDll, wszId, wszRegistry);
 
     IRegistrar_Release(pRegistrar);
     return hres;
+}
+
+static HRESULT do_register_server(BOOL do_register)
+{
+    static const WCHAR wszDll[] = {'a','t','l','.','d','l','l',0};
+    UINT nID = 1;
+    return do_register_dll_server(wszDll, (LPCOLESTR) nID, do_register);
+}
+
+/***********************************************************************
+ *           AtlModuleUpdateRegistryFromResourceD         [ATL.@]
+ *
+ */
+HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW* pM, LPCOLESTR lpszRes,
+		BOOL bRegister, struct _ATL_REGMAP_ENTRY* pMapEntries, IRegistrar* pReg)
+{
+    HINSTANCE lhInst = pM->m_hInst;
+    /* everything inside this function below this point
+     * should go into atl71.AtlUpdateRegistryFromResourceD
+     */
+    WCHAR module_name[MAX_PATH];
+
+    TRACE("stub %p (%s), %s, %d, %p, %p\n", hInst, debugstr_w(module_name),
+	debugstr_w(lpszRes), bRegister, pMapEntries, pReg);
+
+    if(pMapEntries || pReg) {
+        FIXME("MapEntries and Registrar parameter not supported\n");
+        return E_FAIL;
+    }
+
+    if(!GetModuleFileNameW(lhInst, module_name, MAX_PATH)) {
+        FIXME("%p (%s) did not get module name\n",
+        lhInst, debugstr_w(module_name));
+        return E_FAIL;
+    }
+
+    return do_register_dll_server(module_name, lpszRes, bRegister);
 }
 
 /***********************************************************************
