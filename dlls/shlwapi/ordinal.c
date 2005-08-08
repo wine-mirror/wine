@@ -1961,14 +1961,14 @@ HRESULT WINAPI IUnknown_HandleIRestrict(LPUNKNOWN lpUnknown, PVOID lpArg1,
  */
 HMENU WINAPI SHGetMenuFromID(HMENU hMenu, UINT uID)
 {
-  MENUITEMINFOA mi;
+  MENUITEMINFOW mi;
 
   TRACE("(%p,%uld)\n", hMenu, uID);
 
-  mi.cbSize = sizeof(MENUITEMINFOA);
+  mi.cbSize = sizeof(mi);
   mi.fMask = MIIM_SUBMENU;
 
-  if (!GetMenuItemInfoA(hMenu, uID, 0, &mi))
+  if (!GetMenuItemInfoW(hMenu, uID, FALSE, &mi))
     return NULL;
 
   return mi.hSubMenu;
@@ -4121,13 +4121,14 @@ BOOL WINAPI SHIsLowMemoryMachine (DWORD x)
  */
 INT WINAPI GetMenuPosFromID(HMENU hMenu, UINT wID)
 {
- MENUITEMINFOA mi;
+ MENUITEMINFOW mi;
  INT nCount = GetMenuItemCount(hMenu), nIter = 0;
 
  while (nIter < nCount)
  {
-   mi.wID = 0;
-   if (!GetMenuItemInfoA(hMenu, nIter, TRUE, &mi) && mi.wID == wID)
+   mi.cbSize = sizeof(mi);
+   mi.fMask = MIIM_ID;
+   if (GetMenuItemInfoW(hMenu, nIter, TRUE, &mi) && mi.wID == wID)
      return nIter;
    nIter++;
  }
