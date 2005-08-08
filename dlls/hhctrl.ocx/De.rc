@@ -23,12 +23,20 @@ LANGUAGE LANG_GERMAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 BEGIN
+    IDS_CONTENTS     "&Inhalt"
+    IDS_INDEX        "I&ndex"
+    IDS_SEARCH       "&Suche"
+    IDS_FAVORITES    "&Favoriten"
+END
+
+STRINGTABLE
+BEGIN
     IDTB_EXPAND      "Anzeigen"
     IDTB_CONTRACT    "Verstecken"
     IDTB_STOP        "Stop"
     IDTB_REFRESH     "Aktualisieren"
     IDTB_BACK        "Zurück"
-    IDTB_HOME        "Home"
+    IDTB_HOME        "Startseite"
     IDTB_SYNC        "Synchronisieren"
     IDTB_PRINT       "Drucken"
     IDTB_OPTIONS     "Einstellungen"
