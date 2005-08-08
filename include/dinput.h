@@ -785,6 +785,7 @@ typedef struct DIDEVCAPS {
 #define DISCL_FOREGROUND	0x00000004
 #define DISCL_BACKGROUND	0x00000008
 
+/* Effect flags */
 #define DIEFT_ALL		0x00000000
                                                                                 
 #define DIEFT_CONSTANTFORCE	0x00000001
@@ -802,6 +803,35 @@ typedef struct DIDEVCAPS {
 #define DIEFT_STARTDELAY	0x00008000
 #define DIEFT_GETTYPE(n)	LOBYTE(n)
                                                                                 
+#define DIEFF_OBJECTIDS         0x00000001
+#define DIEFF_OBJECTOFFSETS     0x00000002
+#define DIEFF_CARTESIAN         0x00000010
+#define DIEFF_POLAR             0x00000020
+#define DIEFF_SPHERICAL         0x00000040
+
+#define DIEP_DURATION           0x00000001
+#define DIEP_SAMPLEPERIOD       0x00000002
+#define DIEP_GAIN               0x00000004
+#define DIEP_TRIGGERBUTTON      0x00000008
+#define DIEP_TRIGGERREPEATINTERVAL 0x00000010
+#define DIEP_AXES               0x00000020
+#define DIEP_DIRECTION          0x00000040
+#define DIEP_ENVELOPE           0x00000080
+#define DIEP_TYPESPECIFICPARAMS 0x00000100
+#define DIEP_STARTDELAY         0x00000200
+#define DIEP_ALLPARAMS_DX5      0x000001FF
+#define DIEP_ALLPARAMS          0x000003FF
+#define DIEP_START              0x20000000
+#define DIEP_NORESTART          0x40000000
+#define DIEP_NODOWNLOAD         0x80000000
+#define DIEB_NOTRIGGER          0xFFFFFFFF
+
+#define DIES_SOLO               0x00000001
+#define DIES_NODOWNLOAD         0x80000000
+
+#define DIEGES_PLAYING          0x00000001
+#define DIEGES_EMULATED         0x00000002
+
 #define DI_DEGREES		100
 #define DI_FFNOMINALMAX		10000
 #define DI_SECONDS		1000000
