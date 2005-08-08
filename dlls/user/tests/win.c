@@ -2805,12 +2805,24 @@ static void test_scroll(void)
 
 static void test_params(void)
 {
+    HWND hwnd;
     INT rc;
 
     /* Just a param check */
     SetLastError(0xdeadbeef);
     rc = GetWindowText(hwndMain2, NULL, 1024);
     ok( rc==0, "GetWindowText: rc=%d err=%ld\n",rc,GetLastError());
+
+    hwnd=CreateWindow("LISTBOX", "TestList",
+                      (LBS_STANDARD & ~LBS_SORT),
+                      0, 0, 100, 100,
+                      NULL, (HMENU)1, NULL, 0);
+    todo_wine {
+    ok(hwnd==NULL, "CreateWindow(parent=NULL, ctlid!=0) should have failed\n");
+    }
+    /* NT sets LastError to ERROR_INVALID_MENU_HANDLE
+     * but Win9x leaves it unchanged. So no test.
+     */
 }
 
 static void test_AWRwindow(LPCSTR class, LONG style, LONG exStyle, BOOL menu)
