@@ -920,8 +920,9 @@ static void dump_msgtable_data( const void *ptr, unsigned int size, unsigned int
             }
             else
             {
+                const char *str = (const char *) entry->Text;
                 printf( "%s%08x \"", prefix, j );
-                dump_strA( entry->Text, strlen(entry->Text) );
+                dump_strA( entry->Text, strlen(str) );
                 printf( "\"\n" );
             }
             entry = (const MESSAGE_RESOURCE_ENTRY *)((const char *)entry + entry->Length);
