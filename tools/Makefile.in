@@ -3,17 +3,18 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+EXEEXT    = @EXEEXT@
 MODULE    = none
 EXTRAINCL = @FREETYPEINCL@
 FREETYPELIBS = @FREETYPELIBS@
 
 PROGRAMS = \
-	bin2res \
-	fnt2bdf \
-	fnt2fon \
-	make_ctests \
-	makedep \
-	sfnt2fnt \
+	bin2res$(EXEEXT) \
+	fnt2bdf$(EXEEXT) \
+	fnt2fon$(EXEEXT) \
+	make_ctests$(EXEEXT) \
+	makedep$(EXEEXT) \
+	sfnt2fnt$(EXEEXT) \
 	wineprefixcreate
 
 C_SRCS = \
@@ -42,23 +43,23 @@ all: $(PROGRAMS) $(SUBDIRS)
 
 @MAKE_RULES@
 
-makedep: makedep.o
-	$(CC) $(CFLAGS) -o makedep makedep.o
+makedep$(EXEEXT): makedep.o
+	$(CC) $(CFLAGS) -o $@ makedep.o
 
-make_ctests: make_ctests.o
-	$(CC) $(CFLAGS) -o make_ctests make_ctests.o
+make_ctests$(EXEEXT): make_ctests.o
+	$(CC) $(CFLAGS) -o $@ make_ctests.o
 
-fnt2bdf: fnt2bdf.o
-	$(CC) $(CFLAGS) -o fnt2bdf fnt2bdf.o $(LIBPORT)
+fnt2bdf$(EXEEXT): fnt2bdf.o
+	$(CC) $(CFLAGS) -o $@ fnt2bdf.o $(LIBPORT)
 
-fnt2fon: fnt2fon.o
-	$(CC) $(CFLAGS) -o fnt2fon fnt2fon.o $(LIBPORT)
+fnt2fon$(EXEEXT): fnt2fon.o
+	$(CC) $(CFLAGS) -o $@ fnt2fon.o $(LIBPORT)
 
-sfnt2fnt: sfnt2fnt.o
-	$(CC) $(CFLAGS) -o sfnt2fnt sfnt2fnt.o $(LIBUNICODE) $(LIBPORT) $(FREETYPELIBS)
+sfnt2fnt$(EXEEXT): sfnt2fnt.o
+	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBUNICODE) $(LIBPORT) $(FREETYPELIBS)
 
-bin2res: bin2res.o
-	$(CC) $(CFLAGS) -o bin2res bin2res.o $(LIBPORT)
+bin2res$(EXEEXT): bin2res.o
+	$(CC) $(CFLAGS) -o $@ bin2res.o $(LIBPORT)
 
 wineprefixcreate: wineprefixcreate.in
 	sed -e 's,@dlldir\@,$(dlldir),g' -e 's,@datadir\@,$(datadir),g' $(SRCDIR)/wineprefixcreate.in >$@ || ($(RM) $@ && false)
