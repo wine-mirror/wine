@@ -2556,6 +2556,9 @@ CharAttr(RTF_Info *info)
 static void
 CharSet(RTF_Info *info)
 {
+	if (info->ansiCodePage == CP_UTF8)
+		return;
+ 
         switch (info->rtfMinor)
         {
         case rtfAnsiCharSet:
@@ -2594,10 +2597,10 @@ DocAttr(RTF_Info *info)
         switch (info->rtfMinor)
         {
         case rtfAnsiCodePage:
-                info->ansiCodePage = info->rtfParam;
+                info->codePage = info->ansiCodePage = info->rtfParam;
                 break;
         case rtfUTF8RTF:
-                info->ansiCodePage = CP_UTF8;
+                info->codePage = info->ansiCodePage = CP_UTF8;
                 break;
         }
 }
