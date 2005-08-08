@@ -42,6 +42,10 @@
     
     - BITMAPV4HEADER: Introduced in Windows 95 / NT 4.0
     - BITMAPV5HEADER: Introduced in Windows 98 / 2000
+    
+    If biCompression is BI_BITFIELDS, the color masks are at the same position
+    in all the headers (they start at bmiColors of BITMAPINFOHEADER), because
+    the new headers have structure members for the masks.
 
 
   * You should never access the color table using the bmiColors member,
@@ -1118,7 +1122,6 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
     LONG width, height;
     WORD planes, bpp;
     DWORD compression, sizeImage;
-    const DWORD *colorPtr;
     void *mapBits = NULL;
 
     if (((bitmap_type = DIB_GetBitmapInfo( &bmi->bmiHeader, &width, &height,
@@ -1167,7 +1170,6 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
 
 
     /* set dsBitfields values */
-    colorPtr = (const DWORD *)((const char *)bmi + (WORD) bmi->bmiHeader.biSize);
     if (usage == DIB_PAL_COLORS || bpp <= 8)
     {
         dib->dsBitfields[0] = dib->dsBitfields[1] = dib->dsBitfields[2] = 0;
@@ -1176,15 +1178,15 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
     {
     case 15:
     case 16:
-        dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? colorPtr[0] : 0x7c00;
-        dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? colorPtr[1] : 0x03e0;
-        dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? colorPtr[2] : 0x001f;
+        dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? *(const DWORD *)bmi->bmiColors       : 0x7c00;
+        dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)bmi->bmiColors + 1) : 0x03e0;
+        dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)bmi->bmiColors + 2) : 0x001f;
         break;
     case 24:
     case 32:
-        dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? colorPtr[0] : 0xff0000;
-        dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? colorPtr[1] : 0x00ff00;
-        dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? colorPtr[2] : 0x0000ff;
+        dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? *(const DWORD *)bmi->bmiColors       : 0xff0000;
+        dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)bmi->bmiColors + 1) : 0x00ff00;
+        dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)bmi->bmiColors + 2) : 0x0000ff;
         break;
     }
 

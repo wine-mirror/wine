@@ -3761,7 +3761,6 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     LONG width, height;
     BOOL top_down;
     POINT pt;
-    const void* colorPtr;
 
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height,
 			   &descr.infoBpp, &descr.compression ) == -1)
@@ -3817,8 +3816,6 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     XSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[GetROP2(physDev->hdc) - 1]);
     wine_tsx11_unlock();
 
-    colorPtr = (const BYTE*) info + (WORD) info->bmiHeader.biSize;
-
     switch (descr.infoBpp)
     {
        case 1:
@@ -3832,17 +3829,17 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
                break;
        case 15:
        case 16:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0x7c00;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x03e0;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x001f;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(const DWORD *)info->bmiColors       : 0x7c00;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 1) : 0x03e0;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 2) : 0x001f;
                descr.colorMap = 0;
                break;
 
        case 24:
        case 32:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0xff0000;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x00ff00;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x0000ff;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(const DWORD *)info->bmiColors       : 0xff0000;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 1) : 0x00ff00;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 2) : 0x0000ff;
                descr.colorMap = 0;
                break;
     }
@@ -3887,7 +3884,6 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   BITMAP bitmap;
   LONG height, tmpheight;
   INT result;
-  const void* colorPtr;
 
   descr.physDev = physDev;
 
@@ -3906,8 +3902,6 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
 
   if (startscan + lines > height) lines = height - startscan;
 
-  colorPtr = (const BYTE*) info + (WORD) info->bmiHeader.biSize;
-
   switch (descr.infoBpp)
   {
        case 1:
@@ -3922,17 +3916,17 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
                break;
        case 15:
        case 16:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr    ) : 0x7c00;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr + 1) : 0x03e0;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr + 2) : 0x001f;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(const DWORD *)info->bmiColors       : 0x7c00;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 1) : 0x03e0;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 2) : 0x001f;
                descr.colorMap = 0;
                break;
 
        case 24:
        case 32:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr    ) : 0xff0000;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr + 1) : 0x00ff00;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD*)colorPtr + 2) : 0x0000ff;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(const DWORD *)info->bmiColors       : 0xff0000;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 1) : 0x00ff00;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 2) : 0x0000ff;
                descr.colorMap = 0;
                break;
 
@@ -4040,15 +4034,15 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
           break;
       case 15:
       case 16:
-          descr.rMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr    ) : 0x7c00;
-          descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x03e0;
-          descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x001f;
+          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(const DWORD *)info->bmiColors       : 0x7c00;
+          descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 1) : 0x03e0;
+          descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 2) : 0x001f;
           break;
       case 24:
       case 32:
-          descr.rMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr    ) : 0xff0000;
-          descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 1) : 0x00ff00;
-          descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)colorPtr + 2) : 0x0000ff;
+          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(const DWORD *)info->bmiColors       : 0xff0000;
+          descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 1) : 0x00ff00;
+          descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 2) : 0x0000ff;
           break;
   }
 
@@ -4094,9 +4088,9 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
 
   if (descr.compression == BI_BITFIELDS)
   {
-    *(DWORD *) colorPtr      = descr.rMask;
-    *((DWORD *)colorPtr + 1) = descr.gMask;
-    *((DWORD *)colorPtr + 2) = descr.bMask;
+    *(DWORD *)info->bmiColors       = descr.rMask;
+    *((DWORD *)info->bmiColors + 1) = descr.gMask;
+    *((DWORD *)info->bmiColors + 2) = descr.bMask;
   }
   else if (!core_header)
   {
