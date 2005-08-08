@@ -559,7 +559,7 @@
 @ stdcall ColorAdjustLuma(long long long)
 @ stdcall ColorHLSToRGB(long long long)
 @ stdcall ColorRGBToHLS(long ptr ptr ptr)
-@ stdcall DllGetVersion (ptr) SHLWAPI_DllGetVersion
+@ stdcall -private DllGetVersion(ptr)
 @ stdcall GetMenuPosFromID(ptr long)
 @ stdcall HashData (ptr long ptr long)
 @ stdcall IntlStrEqWorkerA(long str str long) StrIsIntlEqualA

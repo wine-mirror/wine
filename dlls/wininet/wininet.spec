@@ -32,7 +32,7 @@
 @ stdcall DeleteUrlCacheEntryW(wstr)
 @ stdcall DeleteUrlCacheGroup(double long ptr)
 @ stdcall DetectAutoProxyUrl(str long long)
-@ stdcall DllInstall(long ptr) WININET_DllInstall
+@ stdcall -private DllInstall(long wstr)
 @ stdcall FindCloseUrlCache(long)
 @ stdcall FindFirstUrlCacheContainerA(ptr ptr ptr long)
 @ stdcall FindFirstUrlCacheContainerW(ptr ptr ptr long)

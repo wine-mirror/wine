@@ -31,11 +31,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 /***********************************************************************
  *		DllInstall (WININET.@)
  */
-HRESULT WINAPI WININET_DllInstall(BOOL bInstall, LPCWSTR cmdline)
+HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
   FIXME("(%s, %s): stub\n", bInstall?"TRUE":"FALSE",
 	debugstr_w(cmdline));
 
   return S_OK;
 }
-
