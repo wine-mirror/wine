@@ -247,7 +247,7 @@ HRESULT WINAPI QueryPathOfRegTypeLib(
 
     while (hr != S_OK)
     {
-        DWORD dwPathLen = sizeof(Path);
+        LONG dwPathLen = sizeof(Path);
 
         get_lcid_subkey( myLCID, SYS_WIN32, buffer );
 
@@ -5215,7 +5215,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
             ITypeLib *pTLib = NULL;
 
 	    if(pRefType->pImpTLInfo == TLB_REF_INTERNAL) {
-	        int Index;
+	        UINT Index;
 		result = ITypeInfo_GetContainingTypeLib(iface, &pTLib, &Index);
 	    } else {
 	        if(pRefType->pImpTLInfo->pImpTypeLib) {

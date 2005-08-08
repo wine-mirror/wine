@@ -556,7 +556,7 @@ serialize_param(
 	    if (hres) return hres;
 	}
 	/* need to recurse since we need to free the stuff */
-	hres = serialize_param(tinfo,writeit,debugout,dealloc,&tdesc2,&(V_I4(vt)),buf);
+	hres = serialize_param(tinfo,writeit,debugout,dealloc,&tdesc2,(DWORD*)&(V_I4(vt)),buf);
 	if (debugout) TRACE_(olerelay)(")");
 	return hres;
     }
@@ -1077,7 +1077,7 @@ deserialize_param(
 		tdesc2.vt = vttype;
 		V_VT(vt)  = vttype;
 	        if (debugout) TRACE_(olerelay)("Vt(%ld)(",vttype);
-		hres = deserialize_param(tinfo, readit, debugout, alloc, &tdesc2, &(V_I4(vt)), buf);
+		hres = deserialize_param(tinfo, readit, debugout, alloc, &tdesc2, (DWORD*)&(V_I4(vt)), buf);
 		TRACE_(olerelay)(")");
 		return hres;
 	    } else {
@@ -1526,7 +1526,7 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
     ULONG		status;
     BSTR		fname,iname;
     BSTR		names[10];
-    int			nrofnames;
+    UINT		nrofnames;
     int			is_idispatch_getidsofnames = 0;
     DWORD		remoteresult = 0;
     ITypeInfo 		*tinfo;
@@ -2016,7 +2016,7 @@ TMStubImpl_Invoke(
     HRESULT	hres;
     DWORD	*args, res, *xargs, nrofargs;
     marshal_state	buf;
-    int		nrofnames;
+    UINT	nrofnames;
     BSTR	names[10];
     BSTR	fname = NULL,iname = NULL;
     BOOL	is_idispatch_getidsofnames = 0;

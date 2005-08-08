@@ -1332,7 +1332,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
 
     ITypeLib *container;
-    int index;
+    UINT index;
     HRESULT res;
 
     TRACE("(%p,%p,%p)\n", iface, pTInfo, phRefType);
