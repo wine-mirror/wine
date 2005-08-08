@@ -295,10 +295,10 @@ static void dump_mf_bits (const HMETAFILE mf, const char *desc)
  * otherwise returns the number of non-matching bytes.
  */
 
-static int compare_mf_bits (const HMETAFILE mf, const char *bits, UINT bsize,
+static int compare_mf_bits (const HMETAFILE mf, const unsigned char *bits, UINT bsize,
     const char *desc)
 {
-    char buf[MF_BUFSIZE];
+    unsigned char buf[MF_BUFSIZE];
     UINT mfsize, i;
     int diff;
 

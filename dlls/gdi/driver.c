@@ -410,14 +410,14 @@ DEVMODEW * WINAPI GdiConvertToDevmodeW(const DEVMODEA *dmA)
     dmW = HeapAlloc(GetProcessHeap(), 0, dmW_size + dmA->dmDriverExtra);
     if (!dmW) return NULL;
 
-    MultiByteToWideChar(CP_ACP, 0, dmA->dmDeviceName, CCHDEVICENAME,
+    MultiByteToWideChar(CP_ACP, 0, (const char*) dmA->dmDeviceName, CCHDEVICENAME,
                                    dmW->dmDeviceName, CCHDEVICENAME);
     /* copy slightly more, to avoid long computations */
     memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion, dmA->dmSize - CCHDEVICENAME);
 
     if (dmA->dmSize >= (const char *)dmA->dmFormName - (const char *)dmA + CCHFORMNAME)
     {
-        MultiByteToWideChar(CP_ACP, 0, dmA->dmFormName, CCHFORMNAME,
+        MultiByteToWideChar(CP_ACP, 0, (const char*) dmA->dmFormName, CCHFORMNAME,
                                        dmW->dmFormName, CCHFORMNAME);
         if (dmA->dmSize > (const char *)&dmA->dmLogPixels - (const char *)dmA)
             memcpy(&dmW->dmLogPixels, &dmA->dmLogPixels, dmA->dmSize - ((const char *)&dmA->dmLogPixels - (const char *)dmA));

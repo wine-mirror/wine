@@ -229,13 +229,13 @@ static void FONT_EnumLogFontExWTo16( const ENUMLOGFONTEXW *fontW, LPENUMLOGFONTE
     FONT_LogFontWTo16( (LPLOGFONTW)fontW, (LPLOGFONT16)font16);
 
     WideCharToMultiByte( CP_ACP, 0, fontW->elfFullName, -1,
-			 font16->elfFullName, LF_FULLFACESIZE, NULL, NULL );
+			 (LPSTR) font16->elfFullName, LF_FULLFACESIZE, NULL, NULL );
     font16->elfFullName[LF_FULLFACESIZE-1] = '\0';
     WideCharToMultiByte( CP_ACP, 0, fontW->elfStyle, -1,
-			 font16->elfStyle, LF_FACESIZE, NULL, NULL );
+			 (LPSTR) font16->elfStyle, LF_FACESIZE, NULL, NULL );
     font16->elfStyle[LF_FACESIZE-1] = '\0';
     WideCharToMultiByte( CP_ACP, 0, fontW->elfScript, -1,
-			 font16->elfScript, LF_FACESIZE, NULL, NULL );
+			 (LPSTR) font16->elfScript, LF_FACESIZE, NULL, NULL );
     font16->elfScript[LF_FACESIZE-1] = '\0';
 }
 
@@ -244,13 +244,13 @@ static void FONT_EnumLogFontExWToA( const ENUMLOGFONTEXW *fontW, LPENUMLOGFONTEX
     FONT_LogFontWToA( (LPLOGFONTW)fontW, (LPLOGFONTA)fontA);
 
     WideCharToMultiByte( CP_ACP, 0, fontW->elfFullName, -1,
-			 fontA->elfFullName, LF_FULLFACESIZE, NULL, NULL );
+			 (LPSTR) fontA->elfFullName, LF_FULLFACESIZE, NULL, NULL );
     fontA->elfFullName[LF_FULLFACESIZE-1] = '\0';
     WideCharToMultiByte( CP_ACP, 0, fontW->elfStyle, -1,
-			 fontA->elfStyle, LF_FACESIZE, NULL, NULL );
+			 (LPSTR) fontA->elfStyle, LF_FACESIZE, NULL, NULL );
     fontA->elfStyle[LF_FACESIZE-1] = '\0';
     WideCharToMultiByte( CP_ACP, 0, fontW->elfScript, -1,
-			 fontA->elfScript, LF_FACESIZE, NULL, NULL );
+			 (LPSTR) fontA->elfScript, LF_FACESIZE, NULL, NULL );
     fontA->elfScript[LF_FACESIZE-1] = '\0';
 }
 

@@ -848,7 +848,7 @@ static void load_fontconfig_fonts(void)
     FcFontSet *fontset;
     FcValue v;
     int i, len;
-    const char *ext;
+    const char *file, *ext;
 
     fc_handle = wine_dlopen(SONAME_LIBFONTCONFIG, RTLD_NOW, NULL, 0);
     if(!fc_handle) {
@@ -881,16 +881,17 @@ LOAD_FUNCPTR(FcPatternGet);
         if(pFcPatternGet(fontset->fonts[i], FC_FILE, 0, &v) != FcResultMatch)
             continue;
         if(v.type != FcTypeString) continue;
-        TRACE("fontconfig: %s\n", v.u.s);
+        file = (LPCSTR) v.u.s;
+        TRACE("fontconfig: %s\n", file);
 
         /* We're just interested in OT/TT fonts for now, so this hack just
            picks up the standard extensions to save time loading every other
            font */
-        len = strlen(v.u.s);
+        len = strlen( file );
         if(len < 4) continue;
-        ext = v.u.s + len - 3;
+        ext = &file[ len - 3 ];
         if(!strcasecmp(ext, "ttf") || !strcasecmp(ext, "ttc") || !strcasecmp(ext, "otf"))
-            AddFontFileToList(v.u.s, NULL, ADDFONT_EXTERNAL_FONT);
+            AddFontFileToList(file, NULL, ADDFONT_EXTERNAL_FONT);
     }
     pFcFontSetDestroy(fontset);
     pFcObjectSetDestroy(os);
