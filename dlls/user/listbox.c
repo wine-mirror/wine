@@ -578,7 +578,7 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
         TRACE("[%p]: drawitem %d (%s) action=%02x state=%02x rect=%ld,%ld-%ld,%ld\n",
               descr->self, index, item ? debugstr_w(item->str) : "", action,
               dis.itemState, rect->left, rect->top, rect->right, rect->bottom );
-        SendMessageW(descr->owner, WM_DRAWITEM, 0, (LPARAM)&dis);
+        SendMessageW(descr->owner, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
     }
     else
     {

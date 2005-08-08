@@ -47,10 +47,14 @@ static const char * const strings[4] = {
 static HWND
 create_listbox (DWORD add_style, HWND parent)
 {
-  HWND handle=CreateWindow ("LISTBOX", "TestList",
+  HWND handle;
+  int ctl_id=0;
+  if (parent)
+    ctl_id=1;
+  handle=CreateWindow ("LISTBOX", "TestList",
                             (LBS_STANDARD & ~LBS_SORT) | add_style,
                             0, 0, 100, 100,
-                            parent, (HMENU)1, NULL, 0);
+                            parent, (HMENU)ctl_id, NULL, 0);
 
   assert (handle);
   SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) strings[0]);
@@ -212,7 +216,8 @@ static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
 
         trace("%p WM_DRAWITEM %08x %08lx\n", hwnd, wparam, lparam);
 
-        ok(wparam == 0, "wrong wparam %04x\n", wparam);
+        ok(wparam == dis->CtlID, "got wParam=%08x instead of %08x\n",
+			wparam, dis->CtlID);
         ok(dis->CtlType == ODT_LISTBOX, "wrong CtlType %04x\n", dis->CtlType);
 
         GetClientRect(dis->hwndItem, &rc_client);
