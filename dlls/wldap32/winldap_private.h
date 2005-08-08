@@ -43,6 +43,44 @@ typedef enum {
     WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED =   0x61
 } LDAP_RETCODE;
 
+#define LDAP_OPT_THREAD_FN_PTRS         0x05
+#define LDAP_OPT_REBIND_FN              0x06
+#define LDAP_OPT_REBIND_ARG             0x07
+#define LDAP_OPT_SSL                    0x0a
+#define LDAP_OPT_IO_FN_PTRS             0x0b
+#define LDAP_OPT_CACHE_FN_PTRS          0x0d
+#define LDAP_OPT_CACHE_STRATEGY         0x0e
+#define LDAP_OPT_CACHE_ENABLE           0x0f
+#define LDAP_OPT_REFERRAL_HOP_LIMIT     0x10
+#define LDAP_OPT_VERSION                0x11
+#define LDAP_OPT_SERVER_ERROR           0x33
+#define LDAP_OPT_SERVER_EXT_ERROR       0x34
+#define LDAP_OPT_PING_KEEP_ALIVE        0x36
+#define LDAP_OPT_PING_WAIT_TIME         0x37
+#define LDAP_OPT_PING_LIMIT             0x38
+#define LDAP_OPT_DNSDOMAIN_NAME         0x3b
+#define LDAP_OPT_GETDSNAME_FLAGS        0x3d
+#define LDAP_OPT_HOST_REACHABLE         0x3e
+#define LDAP_OPT_PROMPT_CREDENTIALS     0x3f
+#define LDAP_OPT_TCP_KEEPALIVE          0x40
+#define LDAP_OPT_FAST_CONCURRENT_BIND   0x41
+#define LDAP_OPT_SEND_TIMEOUT           0x42
+#define LDAP_OPT_REFERRAL_CALLBACK      0x70
+#define LDAP_OPT_CLIENT_CERTIFICATE     0x80
+#define LDAP_OPT_SERVER_CERTIFICATE     0x81
+#define LDAP_OPT_AUTO_RECONNECT         0x91
+#define LDAP_OPT_SSPI_FLAGS             0x92
+#define LDAP_OPT_SSL_INFO               0x93
+#define LDAP_OPT_REF_DEREF_CONN_PER_MSG 0x94
+#define LDAP_OPT_TLS                    LDAP_OPT_SSL
+#define LDAP_OPT_TLS_INFO               LDAP_OPT_SSL_INFO
+#define LDAP_OPT_SIGN                   0x95
+#define LDAP_OPT_ENCRYPT                0x96
+#define LDAP_OPT_SASL_METHOD            0x97
+#define LDAP_OPT_AREC_EXCLUSIVE         0x98
+#define LDAP_OPT_SECURITY_CONTEXT       0x99
+#define LDAP_OPT_ROOTDSE_CACHE          0x9a
+
 typedef struct ldap
 {
     struct
@@ -116,6 +154,54 @@ typedef struct ldapcontrolW
     BOOLEAN ldctl_iscritical;
 } LDAPControlW, *PLDAPControlW;
 
+typedef struct ldapsortkeyA
+{
+    PCHAR sk_attrtype;
+    PCHAR sk_matchruleoid;
+    BOOLEAN sk_reverseorder;
+} LDAPSortKeyA, *PLDAPSortKeyA;
+
+typedef struct ldapsortkeyW
+{
+    PWCHAR sk_attrtype;
+    PWCHAR sk_matchruleoid;
+    BOOLEAN sk_reverseorder;
+} LDAPSortKeyW, *PLDAPSortKeyW;
+
+typedef struct ldapapiinfoA
+{
+    int ldapai_info_version;
+    int ldapai_api_version;
+    int ldapai_protocol_version;
+    char **ldapai_extensions;
+    char *ldapai_vendor_name;
+    int ldapai_vendor_version;
+} LDAPAPIInfoA;
+
+typedef struct ldapapiinfoW
+{
+    int ldapai_info_version;
+    int ldapai_api_version;
+    int ldapai_protocol_version;
+    PWCHAR *ldapai_extensions;
+    PWCHAR ldapai_vendor_name;
+    int ldapai_vendor_version;
+} LDAPAPIInfoW;
+
+typedef struct ldap_apifeature_infoA
+{
+    int ldapaif_info_version;
+    char *ldapaif_name;
+    int ldapaif_version;
+} LDAPAPIFeatureInfoA;
+
+typedef struct ldap_apifeature_infoW
+{
+    int ldapaif_info_version;
+    PWCHAR ldapaif_name;
+    int ldapaif_version;
+} LDAPAPIFeatureInfoW;
+
 ULONG ldap_bindA(WLDAP32_LDAP*,PCHAR,PCHAR,ULONG);
 ULONG ldap_bindW(WLDAP32_LDAP*,PWCHAR,PWCHAR,ULONG);
 ULONG ldap_bind_sA(WLDAP32_LDAP*,PCHAR,PCHAR,ULONG);
@@ -136,6 +222,8 @@ PCHAR *ldap_explode_dnA(PCHAR,ULONG);
 PWCHAR *ldap_explode_dnW(PWCHAR,ULONG);
 PCHAR ldap_get_dnA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
 PWCHAR ldap_get_dnW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
+ULONG ldap_get_optionA(WLDAP32_LDAP*,int,void*);
+ULONG ldap_get_optionW(WLDAP32_LDAP*,int,void*);
 WLDAP32_LDAP *ldap_initA(const PCHAR,ULONG);
 WLDAP32_LDAP *ldap_initW(const PWCHAR,ULONG);
 void ldap_memfreeA(PCHAR);
@@ -164,6 +252,8 @@ ULONG ldap_search_stA(WLDAP32_LDAP*,const PCHAR,ULONG,const PCHAR,PCHAR[],ULONG,
     struct l_timeval*,WLDAP32_LDAPMessage**);
 ULONG ldap_search_stW(WLDAP32_LDAP*,const PWCHAR,ULONG,const PWCHAR,PWCHAR[],ULONG,
     struct l_timeval*,WLDAP32_LDAPMessage**);
+ULONG ldap_set_optionA(WLDAP32_LDAP*,int,void*);
+ULONG ldap_set_optionW(WLDAP32_LDAP*,int,void*);
 ULONG ldap_simple_bindA(WLDAP32_LDAP*,PCHAR,PCHAR);
 ULONG ldap_simple_bindW(WLDAP32_LDAP*,PWCHAR,PWCHAR);
 ULONG ldap_simple_bind_sA(WLDAP32_LDAP*,PCHAR,PCHAR);
