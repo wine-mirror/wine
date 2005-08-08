@@ -134,6 +134,7 @@ AC_SUBST(LINTFLAGS)
 
 dnl Check for various programs
 AC_CHECK_PROGS(FONTFORGE, fontforge, false)
+AC_CHECK_PROGS(PKG_CONFIG, pkg-config, false)
 
 dnl **** Check for some libraries ****
 
@@ -434,14 +435,19 @@ dnl **** Check for libxml2 ****
 
 AC_SUBST(XML2LIBS,"")
 AC_SUBST(XML2INCL,"")
-ac_save_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS -I/usr/include/libxml2"
-AC_CHECK_HEADERS(libxml/parser.h,
-    [AC_CHECK_LIB(xml2, xmlReadIO,
-        [AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])
-         XML2LIBS="-lxml2"
-         XML2INCL="-I/usr/include/libxml2"])])
-CPPFLAGS="$ac_save_CPPFLAGS"
+if test "$PKG_CONFIG" != "false"
+then
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    ac_xml_libs="`$PKG_CONFIG --libs libxml-2.0`"
+    ac_xml_cflags="`$PKG_CONFIG --cflags libxml-2.0`"
+    CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
+    AC_CHECK_HEADERS(libxml/parser.h,
+        [AC_CHECK_LIB(xml2, xmlParseMemory,
+            [AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])
+             XML2LIBS="$ac_xml_libs"
+             XML2INCL="$ac_xml_cflags"],,$ac_xml_libs)])
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
 
 dnl **** Check which curses lib to use ***
 CURSESLIBS=""
