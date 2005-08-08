@@ -3,12 +3,9 @@
 %long
 
 BOOL
+DWORD
 HRESULT
 ULONG
-
-%wstr
-
-LPWSTR
 
 %ptr
 
@@ -18,6 +15,10 @@ LPVOID **
 REFIID
 ULONG *
 VOID **
+
+%wstr
+
+LPWSTR
 
 %%advapi32.dll
 
@@ -211,7 +212,6 @@ void
 
 %long
 
-DWORD
 HRESULT
 
 %ptr
@@ -309,6 +309,7 @@ PAVIFILE *
 PAVISTREAM
 PAVISTREAM *
 PGETFRAME
+REFCLSID
 REFIID
 
 %str
@@ -600,7 +601,9 @@ LONG
 %ptr
 
 BYTE *
+CERT_EXTENSION[]
 CRYPTPROTECT_PROMPTSTRUCT *
+CRYPT_ATTRIBUTE[]
 DATA_BLOB *
 DWORD *
 GUID *
@@ -685,7 +688,6 @@ LPVOID
 
 %long
 
-DWORD
 HRESULT
 
 %ptr
@@ -703,6 +705,7 @@ BOOL
 DWORD
 HANDLE
 HMODULE
+HWND
 IMAGEHLP_SYMBOL_TYPE_INFO
 MINIDUMP_TYPE
 ULONG
@@ -1252,7 +1255,7 @@ void
 %long
 
 DWORD
-HMODULE
+HINSTANCE
 HRESULT
 HWND
 UINT
@@ -1602,6 +1605,7 @@ LPMEMORYSTATUS
 LPMEMORYSTATUSEX
 LPMODULEENTRY32
 LPMODULEENTRY32W
+LPOFSTRUCT
 LPOSVERSIONINFOEXA
 LPOSVERSIONINFOEXW
 LPOVERLAPPED
@@ -1691,31 +1695,6 @@ void
 %wstr
 
 LPCWSTR
-LPWSTR
-
-%%lz32.dll
-
-%long
-
-HFILE
-INT
-LONG
-WORD
-
-%ptr
-
-LPOFSTRUCT
-
-%str
-
-LPSTR
-
-%void
-
-void
-
-%wstr
-
 LPWSTR
 
 %%mapi32.dll
@@ -2196,9 +2175,9 @@ HRESULT
 
 %ptr
 
-CLSID *
 IID *
-void **
+LPVOID *
+REFCLSID
 
 %%msrle32.dll
 
@@ -2430,6 +2409,18 @@ PVOID
 
 void
 
+%%msxml3.dll
+
+%long
+
+HRESULT
+
+%ptr
+
+LPVOID *
+REFCLSID
+REFIID
+
 %%netapi32.dll
 
 %long
@@ -2536,7 +2527,6 @@ UINT
 ULONG
 WCHAR
 WORD
-enum loadorder_type
 int
 long
 unsigned int
@@ -2614,6 +2604,7 @@ PCRTL_BITMAP
 PCSZ
 PDEBUG_BUFFER
 PDWORD
+PEB *
 PEXCEPTION_RECORD
 PGENERIC_MAPPING
 PHANDLE
@@ -2680,7 +2671,9 @@ USHORT *
 UNICODE_STRING *
 VOID *
 WCHAR **
+enum loadorder_type[]
 union cptable *
+va_list
 va_list *
 void *
 void **
@@ -3406,6 +3399,8 @@ LPWSTR *
 MIDL_STUB_MESSAGE *
 NDR_CCONTEXT
 NDR_CCONTEXT *
+NDR_RUNDOWN
+NDR_SCONTEXT
 PFORMAT_STRING
 PMIDL_STUB_DESC
 PMIDL_STUB_MESSAGE
@@ -3483,11 +3478,11 @@ unsigned long
 %ptr
 
 HANDLE *
+NTSTATUS *
 PCredHandle
 PCtxtHandle
 PHANDLE
 PLUID
-PNTSTATUS
 PSecBuffer
 PSecBufferDesc
 PSecPkgInfoA *
@@ -4272,6 +4267,27 @@ void
 LPCWSTR
 LPWSTR
 
+%%usp10
+
+%long
+
+HDC
+HRESULT
+LCID
+int
+
+%ptr
+
+SCRIPT_CACHE *
+SCRIPT_CONTROL *
+SCRIPT_DIGITSUBSTITUTE *
+SCRIPT_FONTPROPERTIES *
+SCRIPT_ITEM *
+SCRIPT_PROPERTIES ***
+SCRIPT_STATE *
+WCHAR *
+int *
+
 %%uxtheme.dll
 
 %long
@@ -4497,6 +4513,16 @@ LPCSTR
 %void
 
 void
+
+%%wineesd.drv
+
+%long
+
+DWORD
+HDRVR
+LONG
+UINT
+WORD
 
 %%winejack.drv
 
@@ -4911,6 +4937,8 @@ WORD
 %ptr
 
 DEVMODEW *
+DOCINFOA *
+DOCINFOW *
 HANDLE *
 LPBYTE
 LPDEVMODEA
@@ -5000,6 +5028,7 @@ void
 
 INT
 ULONG
+int
 
 %ptr
 
@@ -5009,16 +5038,35 @@ PBERVAL *
 CHAR *
 CHAR **
 PCHAR
+PCHAR *
+PCHAR[]
+PLDAPControlA *
+PLDAPControlW *
+PULONG
+PWCHAR
+PWCHAR *
+PWCHAR[]
 ULONG *
+WLDAP32_LDAP *
+WLDAP32_LDAPMessage *
+WLDAP32_LDAPMessage **
+int *
+struct WLDAP32_berval *
 struct l_timeval *
 
-%wstr
+%str
 
-PWCHAR
+LPCSTR
+LPSTR
 
 %void
 
 void
+
+%wstr
+
+LPCWSTR
+LPWSTR
 
 %%wnaspi32.dll
 
