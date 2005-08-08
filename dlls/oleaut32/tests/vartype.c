@@ -3275,9 +3275,15 @@ static const char *BadDateStrings[] =
   "1.2.3 4.5 6", "1.2.3 4 5.6", "1.2 3.4.5.6", "1.2 3.4.5 6", "1.2 3.4 5.6",
   "1.2 3.4 5 6", "1.2 3 4.5.6", "1.2 3 4.5 6", "1.2 3 4 5.6", "1.2 3 4 5 6",
   "1 2.3.4.5.6", "1 2.3.4.5 6", "1 2.3.4 5.6", "1 2.3.4 5 6", "1 2.3 4.5.6",
+#if 0
+  /* following throws an exception on winME */
   "1 2.3 4.5 6", "1 2.3 4 5.6", "1 2.3 4 5 6", "1 2 3.4.5.6", "1 2 3.4.5 6",
+#endif
   "1 2 3.4 5.6", "1 2 3.4 5 6", "1 2 3 4.5 6", "1 2 3 4 5.6", "1 2 3 4 5 6",
+#if 0
+  /* following throws an exception on winME */
   "1.2.3 4 am 5 6", "1.2.3 4 5 am 6", "1.2.3 4 5 6 am", "1 am 2 3 4.5.6",
+#endif
   "1 2 am 3 4.5.6", "1 2 3 am 4.5.6"
 };
 
@@ -3382,7 +3388,10 @@ static void test_VarDateFromStr(void)
   /* 5 elements - interpreted as 2 & 3 digit date/times */
   DFS("1.2.3 4 5"); MKRELDATE(5,4); relative += 0.04309027778; EXPECT_DBL(relative);
   DFS("1.2 3 4 5"); EXPECT_DBL(38415.04305555556);
+#if 0
+  /* following throws an exception on winME */
   DFS("1 2 3.4.5"); MKRELDATE(2,1); relative += 0.12783564815; EXPECT_DBL(relative);
+#endif
   DFS("1 2 3 4.5"); EXPECT_DBL(37623.17013888889);
   /* 6 elements - interpreted as 3 digit date/times */
   DFS("1.2.3 4 5 6"); EXPECT_DBL(38812.04309027778);
