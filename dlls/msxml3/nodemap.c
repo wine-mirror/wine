@@ -39,6 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
+#ifdef HAVE_LIBXML2
+
 typedef struct _xmlnodemap
 {
     const struct IXMLDOMNamedNodeMapVtbl *lpVtbl;
@@ -279,3 +281,5 @@ HRESULT NodeMap_create( IXMLDOMNamedNodeMap** DomNamedNodeMap, xmlDocPtr xmldoc,
 
     return S_OK;
 }
+
+#endif
