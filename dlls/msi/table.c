@@ -731,14 +731,39 @@ UINT load_string_table( MSIDATABASE *db )
     db->strings = msi_init_stringtable( count, codepage );
 
     offset = 0;
+    n = 1;
     for( i=1; i<count; i++ )
     {
         len = pool[i*2];
-        n = msi_addstring( db->strings, i, data+offset, len, pool[i*2+1] );
-        if( n != i )
-            ERR("Failed to add string %ld\n", i );
+
+        /*
+         * If a string is over 64k, the previous string entry is made null
+         * and its the high word of the length is inserted in the null string's
+         * reference count field.
+         */
+        if( pool[i*2-2] == 0 )
+            len += pool[i*2-1] * 0x10000;
+
+        if( (offset + len) > datasize )
+        {
+            ERR("string table corrupt?\n");
+            break;
+        }
+
+        /* don't add the high word of a string's length as a string */
+        if ( len || !pool[i*2+1] )
+        {
+            r = msi_addstring( db->strings, n, data+offset, len, pool[i*2+1] );
+            if( r != n )
+                ERR("Failed to add string %ld\n", n );
+            n++;
+        }
+
         offset += len;
     }
+
+    if ( datasize != offset )
+        ERR("string table load failed! (%08x != %08lx)\n", datasize, offset );
 
     TRACE("Loaded %ld strings\n", count);
 
