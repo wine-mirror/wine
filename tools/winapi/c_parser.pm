@@ -37,8 +37,7 @@ use c_type;
 my $CALL_CONVENTION="__cdecl|__stdcall|" .
                     "__RPC_API|__RPC_STUB|__RPC_USER|" .
 		    "CALLBACK|CDECL|NTAPI|PASCAL|RPC_ENTRY|RPC_VAR_ENTRY|" .
-		    "VFWAPI|VFWAPIV|WINAPI|WINAPIV|" .
-		    "WINE_UNUSED";
+		    "VFWAPI|VFWAPIV|WINAPI|WINAPIV|";
 
 
 sub parse_c_function($$$$$);
@@ -2074,8 +2073,6 @@ sub parse_c_variable($$$$$$$) {
     if($finished) {
 	# Nothing
     } elsif(s/^WINAPI\s*//) {
-	$self->_update_c_position($&, \$line, \$column);
-    } elsif(s/^WINE_UNUSED\s*//) {
 	$self->_update_c_position($&, \$line, \$column);
     }
 
