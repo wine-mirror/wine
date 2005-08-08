@@ -325,6 +325,77 @@ static void test_text_extents(void)
     ReleaseDC(NULL, hdc);
 }
 
+struct hgdiobj_event
+{
+    HDC hdc;
+    HGDIOBJ hgdiobj;
+    HANDLE stop_event;
+    HANDLE ready_event;
+};
+
+static DWORD WINAPI thread_proc(void *param)
+{
+    LOGPEN lp;
+    struct hgdiobj_event *hgdiobj_event = (struct hgdiobj_event *)param;
+
+    hgdiobj_event->hdc = CreateDC("display", NULL, NULL, NULL);
+    ok(hgdiobj_event->hdc != NULL, "CreateDC error %ld\n", GetLastError());
+
+    hgdiobj_event->hgdiobj = CreatePen(PS_DASHDOTDOT, 17, RGB(1, 2, 3));
+    ok(hgdiobj_event->hgdiobj != 0, "Failed to create pen\n");
+
+    SetEvent(hgdiobj_event->ready_event);
+    ok(WaitForSingleObject(hgdiobj_event->stop_event, INFINITE) == WAIT_OBJECT_0,
+       "WaitForSingleObject error %ld\n", GetLastError());
+
+    ok(!GetObject(hgdiobj_event->hgdiobj, sizeof(lp), &lp), "GetObject should fail\n");
+
+    ok(!GetDeviceCaps(hgdiobj_event->hdc, TECHNOLOGY), "GetDeviceCaps(TECHNOLOGY) should fail\n");
+
+    return 0;
+}
+
+static void test_thread_objects(void)
+{
+    LOGPEN lp;
+    DWORD tid;
+    HANDLE hthread;
+    struct hgdiobj_event hgdiobj_event;
+    INT ret;
+
+    hgdiobj_event.stop_event = CreateEvent(NULL, 0, 0, NULL);
+    ok(hgdiobj_event.stop_event != NULL, "CreateEvent error %ld\n", GetLastError());
+    hgdiobj_event.ready_event = CreateEvent(NULL, 0, 0, NULL);
+    ok(hgdiobj_event.ready_event != NULL, "CreateEvent error %ld\n", GetLastError());
+
+    hthread = CreateThread(NULL, 0, thread_proc, &hgdiobj_event, 0, &tid);
+    ok(hthread != NULL, "CreateThread error %ld\n", GetLastError());
+
+    ok(WaitForSingleObject(hgdiobj_event.ready_event, INFINITE) == WAIT_OBJECT_0,
+       "WaitForSingleObject error %ld\n", GetLastError());
+
+    ok(GetObject(hgdiobj_event.hgdiobj, sizeof(lp), &lp) == sizeof(lp),
+       "GetObject error %ld\n", GetLastError());
+    ok(lp.lopnStyle == PS_DASHDOTDOT, "wrong pen style %d\n", lp.lopnStyle);
+    ok(lp.lopnWidth.x == 17, "wrong pen width.y %ld\n", lp.lopnWidth.x);
+    ok(lp.lopnWidth.y == 0, "wrong pen width.y %ld\n", lp.lopnWidth.y);
+    ok(lp.lopnColor == RGB(1, 2, 3), "wrong pen width.y %08lx\n", lp.lopnColor);
+
+    ret = GetDeviceCaps(hgdiobj_event.hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps(TECHNOLOGY) should return DT_RASDISPLAY not %d\n", ret);
+
+    ok(DeleteObject(hgdiobj_event.hgdiobj), "DeleteObject error %ld\n", GetLastError());
+    ok(DeleteDC(hgdiobj_event.hdc), "DeleteDC error %ld\n", GetLastError());
+
+    SetEvent(hgdiobj_event.stop_event);
+    ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0,
+       "WaitForSingleObject error %ld\n", GetLastError());
+    CloseHandle(hthread);
+
+    CloseHandle(hgdiobj_event.stop_event);
+    CloseHandle(hgdiobj_event.ready_event);
+}
+
 START_TEST(gdiobj)
 {
     test_logfont();
@@ -332,4 +403,5 @@ START_TEST(gdiobj)
     test_gdi_objects();
     test_GdiGetCharDimensions();
     test_text_extents();
+    test_thread_objects();
 }
