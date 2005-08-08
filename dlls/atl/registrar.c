@@ -739,7 +739,7 @@ static IClassFactory RegistrarCF = { &IRegistrarCFVtbl };
 /**************************************************************
  * DllGetClassObject implementation
  */
-HRESULT WINAPI ATL_DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
+HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
 {
     TRACE("(%s %s %p)", debugstr_guid(clsid), debugstr_guid(riid), ppvObject);
 
@@ -820,7 +820,7 @@ HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW* pM, LPCOLESTR 
 /***********************************************************************
  *              DllRegisterServer (ATL.@)
  */
-HRESULT WINAPI ATL_DllRegisterServer(void)
+HRESULT WINAPI DllRegisterServer(void)
 {
     TRACE("\n");
     return do_register_server(TRUE);
@@ -829,7 +829,7 @@ HRESULT WINAPI ATL_DllRegisterServer(void)
 /***********************************************************************
  *              DllRegisterServer (ATL.@)
  */
-HRESULT WINAPI ATL_DllUnregisterServer(void)
+HRESULT WINAPI DllUnregisterServer(void)
 {
     TRACE("\n");
     return do_register_server(FALSE);
@@ -838,7 +838,7 @@ HRESULT WINAPI ATL_DllUnregisterServer(void)
 /***********************************************************************
  *              DllCanUnloadNow (ATL.@)
  */
-HRESULT WINAPI ATL_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     TRACE("dll_count = %lu\n", dll_count);
     return dll_count ? S_FALSE : S_OK;

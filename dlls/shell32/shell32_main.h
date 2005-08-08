@@ -103,11 +103,6 @@ HRESULT WINAPI IAutoComplete_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVO
 LPEXTRACTICONA	IExtractIconA_Constructor(LPCITEMIDLIST);
 LPEXTRACTICONW	IExtractIconW_Constructor(LPCITEMIDLIST);
 
-/* FIXME: rename the functions when the shell32.dll has it's own exports namespace */
-HRESULT WINAPI  SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
-HRESULT WINAPI  SHELL32_DllCanUnloadNow(void);
-
-
 /* menu merging */
 #define MM_ADDSEPARATOR         0x00000001L
 #define MM_SUBMENUSHAVEIDS      0x00000002L

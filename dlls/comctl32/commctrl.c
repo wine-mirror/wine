@@ -934,8 +934,7 @@ CreateToolbar (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
  *     Returns version of a comctl32.dll from IE4.01 SP1.
  */
 
-HRESULT WINAPI
-COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
+HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
 {
     if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) {
         WARN("wrong DLLVERSIONINFO size from app\n");
@@ -963,7 +962,7 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
  *     Success: S_OK
  *     Failure: A HRESULT error
  */
-HRESULT WINAPI COMCTL32_DllInstall(BOOL bInstall, LPCWSTR cmdline)
+HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
   FIXME("(%s, %s): stub\n", bInstall?"TRUE":"FALSE",
 	debugstr_w(cmdline));

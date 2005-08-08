@@ -12,7 +12,7 @@
 @ stub CreateServerInterfaceFromStub # wxp
 @ stdcall DceErrorInqTextA (long ptr)
 @ stdcall DceErrorInqTextW (long ptr)
-@ stdcall -private DllRegisterServer() RPCRT4_DllRegisterServer
+@ stdcall -private DllRegisterServer()
 @ stub GlobalMutexClearExternal
 @ stub GlobalMutexRequestExternal
 @ stdcall IUnknown_AddRef_Proxy(ptr)

@@ -678,7 +678,7 @@ static IClassFactoryImpl DINPUT_CF = {&DICF_Vtbl, 1 };
 /***********************************************************************
  *		DllCanUnloadNow (DINPUT.@)
  */
-HRESULT WINAPI DINPUT_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     FIXME("(void): stub\n");
 
@@ -688,8 +688,7 @@ HRESULT WINAPI DINPUT_DllCanUnloadNow(void)
 /***********************************************************************
  *		DllGetClassObject (DINPUT.@)
  */
-HRESULT WINAPI DINPUT_DllGetClassObject(REFCLSID rclsid, REFIID riid,
-					LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {

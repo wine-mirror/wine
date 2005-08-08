@@ -650,7 +650,7 @@ RPC_STATUS WINAPI UuidFromStringW(unsigned short* s, UUID *uuid)
  *              DllRegisterServer (RPCRT4.@)
  */
 
-HRESULT WINAPI RPCRT4_DllRegisterServer( void )
+HRESULT WINAPI DllRegisterServer( void )
 {
     FIXME( "(): stub\n" );
     return S_OK;

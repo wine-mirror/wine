@@ -5,8 +5,8 @@
 @ stdcall CreateStdAccessibleObject(ptr long ptr ptr)
 @ stub CreateStdAccessibleProxyA
 @ stub CreateStdAccessibleProxyW
-@ stdcall -private DllRegisterServer() OLEACC_DllRegisterServer
-@ stdcall -private DllUnregisterServer() OLEACC_DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub GetOleaccVersionInfo
 @ stub GetRoleTextA
 @ stub GetRoleTextW

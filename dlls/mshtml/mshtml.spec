@@ -1,10 +1,10 @@
 @ stub CreateHTMLPropertyPage
-@ stdcall -private DllCanUnloadNow() MSHTML_DllCanUnloadNow
+@ stdcall -private DllCanUnloadNow()
 @ stub DllEnumClassObjects
-@ stdcall -private DllGetClassObject(ptr ptr ptr) MSHTML_DllGetClassObject
-@ stdcall DllInstall(long wstr) MSHTML_DllInstall
-@ stdcall -private DllRegisterServer() MSHTML_DllRegisterServer
-@ stdcall -private DllUnregisterServer() MSHTML_DllUnregisterServer
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
+@ stdcall -private DllInstall(long wstr)
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub MatchExactGetIDsOfNames
 @ stub PrintHTML
 @ stub RNIGetCompatibleVersion

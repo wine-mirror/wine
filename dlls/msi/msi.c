@@ -1342,7 +1342,7 @@ static IClassFactoryImpl Msi_CF = { &MsiCF_Vtbl };
 /******************************************************************
  * DllGetClassObject          [MSI.@]
  */
-HRESULT WINAPI MSI_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
@@ -1361,7 +1361,7 @@ HRESULT WINAPI MSI_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 /******************************************************************
  * DllGetVersion              [MSI.@]
  */
-HRESULT WINAPI MSI_DllGetVersion(DLLVERSIONINFO *pdvi)
+HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *pdvi)
 {
     TRACE("%p\n",pdvi);
 
@@ -1379,7 +1379,7 @@ HRESULT WINAPI MSI_DllGetVersion(DLLVERSIONINFO *pdvi)
 /******************************************************************
  * DllCanUnloadNow            [MSI.@]
  */
-BOOL WINAPI MSI_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     return S_FALSE;
 }

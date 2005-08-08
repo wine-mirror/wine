@@ -1,7 +1,7 @@
-1 stdcall -private DllCanUnloadNow() MSI_DllCanUnloadNow
-2 stdcall -private DllGetClassObject(ptr ptr ptr) MSI_DllGetClassObject
-3 stdcall -private DllRegisterServer() MSI_DllRegisterServer
-4 stdcall -private DllUnregisterServer() MSI_DllUnregisterServer
+1 stdcall -private DllCanUnloadNow()
+2 stdcall -private DllGetClassObject(ptr ptr ptr)
+3 stdcall -private DllRegisterServer()
+4 stdcall -private DllUnregisterServer()
 5 stdcall MsiAdvertiseProductA(str str str long)
 6 stdcall MsiAdvertiseProductW(wstr wstr wstr long)
 7 stdcall MsiCloseAllHandles()
@@ -179,7 +179,7 @@
 179 stub MsiGetPatchInfoW
 180 stub MsiEnumPatchesA
 181 stub MsiEnumPatchesW
-182 stdcall DllGetVersion(ptr) MSI_DllGetVersion
+182 stdcall -private DllGetVersion(ptr)
 183 stub MsiGetProductCodeFromPackageCodeA
 184 stub MsiGetProductCodeFromPackageCodeW
 185 stub MsiCreateTransformSummaryInfoA

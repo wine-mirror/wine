@@ -62,7 +62,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
  *  S_OK, if the dll can be unloaded,
  *  S_FALSE, otherwise.
  */
-HRESULT WINAPI MAPI32_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     return MAPI_ObjectCount == 0 ? S_OK : S_FALSE;
 }

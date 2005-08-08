@@ -97,7 +97,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 /***********************************************************************
  *              DllCanUnloadNow (DPLAYX.10)
  */
-HRESULT WINAPI DPLAYX_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
   HRESULT hr = ( gdwDPlaySPRefCount > 0 ) ? S_FALSE : S_OK;
 

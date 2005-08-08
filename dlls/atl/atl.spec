@@ -1,7 +1,7 @@
-1 stdcall -private DllCanUnloadNow() ATL_DllCanUnloadNow
-2 stdcall -private DllGetClassObject(ptr ptr ptr) ATL_DllGetClassObject
-3 stdcall -private DllRegisterServer() ATL_DllRegisterServer
-4 stdcall -private DllUnregisterServer() ATL_DllUnregisterServer
+1 stdcall -private DllCanUnloadNow()
+2 stdcall -private DllGetClassObject(ptr ptr ptr)
+3 stdcall -private DllRegisterServer()
+4 stdcall -private DllUnregisterServer()
 10 stdcall AtlAdvise(ptr ptr ptr ptr)
 11 stdcall AtlUnadvise(ptr ptr long)
 12 stdcall AtlFreeMarshalStream(ptr)

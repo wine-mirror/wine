@@ -467,7 +467,7 @@ static struct regsvr_interface const interface_list[] = {
 /***********************************************************************
  *		DllRegisterServer (DDRAW.@)
  */
-HRESULT WINAPI DDRAW_DllRegisterServer()
+HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT hr;
 
@@ -482,7 +482,7 @@ HRESULT WINAPI DDRAW_DllRegisterServer()
 /***********************************************************************
  *		DllUnregisterServer (DDRAW.@)
  */
-HRESULT WINAPI DDRAW_DllUnregisterServer()
+HRESULT WINAPI DllUnregisterServer(void)
 {
     HRESULT hr;
 

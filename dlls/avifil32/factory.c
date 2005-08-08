@@ -182,7 +182,7 @@ LPCWSTR AVIFILE_BasenameW(LPCWSTR szPath)
 /***********************************************************************
  *		DllGetClassObject (AVIFIL32.@)
  */
-HRESULT WINAPI AVIFILE_DllGetClassObject(REFCLSID pclsid, REFIID piid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID pclsid, REFIID piid, LPVOID *ppv)
 {
   TRACE("(%s,%s,%p)\n", debugstr_guid(pclsid), debugstr_guid(piid), ppv);
 
@@ -195,7 +195,7 @@ HRESULT WINAPI AVIFILE_DllGetClassObject(REFCLSID pclsid, REFIID piid, LPVOID *p
 /*****************************************************************************
  *		DllCanUnloadNow		(AVIFIL32.@)
  */
-DWORD WINAPI AVIFILE_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
   return ((AVIFILE_bLocked || AVIFILE_uUseCount) ? S_FALSE : S_OK);
 }

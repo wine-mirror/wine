@@ -165,7 +165,7 @@ HRESULT WINAPI SHCoCreateInstance(
 
 	/* now we create an instance */
 	if (bLoadFromShell32) {
-	    if (! SUCCEEDED(SHELL32_DllGetClassObject(myclsid, &IID_IClassFactory,(LPVOID*)&pcf))) {
+	    if (! SUCCEEDED(DllGetClassObject(myclsid, &IID_IClassFactory,(LPVOID*)&pcf))) {
 	        ERR("LoadFromShell failed for CLSID=%s\n", shdebugstr_guid(myclsid));
 	    }
 	} else if (bLoadWithoutCOM) {
@@ -216,7 +216,7 @@ end:
 /*************************************************************************
  * DllGetClassObject   [SHELL32.@]
  */
-HRESULT WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
 	HRESULT	hres = E_OUTOFMEMORY;
 	IClassFactory * pcf = NULL;

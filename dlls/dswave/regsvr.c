@@ -499,7 +499,8 @@ static struct regsvr_interface const interface_list[] = {
 /***********************************************************************
  *		DllRegisterServer (DSWAVE.3)
  */
-HRESULT WINAPI DSWAVE_DllRegisterServer(void) {
+HRESULT WINAPI DllRegisterServer(void)
+{
     HRESULT hr;
 
     TRACE("\n");
@@ -513,7 +514,8 @@ HRESULT WINAPI DSWAVE_DllRegisterServer(void) {
 /***********************************************************************
  *		DllUnregisterServer (DSWAVE.4)
  */
-HRESULT WINAPI DSWAVE_DllUnregisterServer(void) {
+HRESULT WINAPI DllUnregisterServer(void)
+{
     HRESULT hr;
 
     TRACE("\n");

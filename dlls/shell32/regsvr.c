@@ -650,7 +650,7 @@ static struct regsvr_namespace const namespace_extensions_list[] = {
 /***********************************************************************
  *		DllRegisterServer (SHELL32.@)
  */
-HRESULT WINAPI SHELL32_DllRegisterServer()
+HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT hr;
 
@@ -669,7 +669,7 @@ HRESULT WINAPI SHELL32_DllRegisterServer()
 /***********************************************************************
  *		DllUnregisterServer (SHELL32.@)
  */
-HRESULT WINAPI SHELL32_DllUnregisterServer()
+HRESULT WINAPI DllUnregisterServer(void)
 {
     HRESULT hr;
 

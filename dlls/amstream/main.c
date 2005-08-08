@@ -167,7 +167,7 @@ static const IClassFactoryVtbl DSCF_Vtbl =
  *    Failure: CLASS_E_CLASSNOTAVAILABLE, E_OUTOFMEMORY, E_INVALIDARG,
  *             E_UNEXPECTED
  */
-HRESULT WINAPI AMSTREAM_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     int i;
     IClassFactoryImpl *factory;
@@ -205,7 +205,7 @@ HRESULT WINAPI AMSTREAM_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *
 /***********************************************************************
  *              DllCanUnloadNow (AMSTREAM.@)
  */
-HRESULT WINAPI AMSTREAM_DllCanUnloadNow()
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     return dll_ref != 0 ? S_FALSE : S_OK;
 }

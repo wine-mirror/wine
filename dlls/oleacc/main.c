@@ -50,13 +50,13 @@ HRESULT WINAPI AccessibleObjectFromWindow( HWND hwnd, DWORD dwObjectID,
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI OLEACC_DllRegisterServer()
+HRESULT WINAPI DllRegisterServer(void)
 {
     FIXME("\n");
     return S_OK;
 }
 
-HRESULT WINAPI OLEACC_DllUnregisterServer()
+HRESULT WINAPI DllUnregisterServer(void)
 {
     FIXME("\n");
     return S_OK;

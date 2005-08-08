@@ -155,7 +155,7 @@ static HRESULT ClassFactory_Create(REFIID riid, void **ppv, CreateInstanceFunc f
     return hres;
 }
 
-HRESULT WINAPI MSHTML_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     if(IsEqualGUID(&CLSID_HTMLDocument, rclsid)) {
         TRACE("(CLSID_HTMLDocument %s %p)\n", debugstr_guid(riid), ppv);
@@ -181,7 +181,7 @@ HRESULT WINAPI MSHTML_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *pp
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-HRESULT WINAPI MSHTML_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     TRACE("() ref=%ld\n", module_ref);
     return module_ref ? S_FALSE : S_OK;
@@ -202,7 +202,7 @@ HRESULT WINAPI RunHTMLApplication( HINSTANCE hinst, HINSTANCE hPrevInst,
 /***********************************************************************
  *          DllInstall (MSHTML.@)
  */
-HRESULT WINAPI MSHTML_DllInstall(BOOL bInstall, LPCWSTR cmdline)
+HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
     FIXME("stub %d %s: returning S_OK\n", bInstall, debugstr_w(cmdline));
     return S_OK;
@@ -320,7 +320,7 @@ static HRESULT register_server(BOOL do_register)
 /***********************************************************************
  *          DllRegisterServer (MSHTML.@)
  */
-HRESULT WINAPI MSHTML_DllRegisterServer(void)
+HRESULT WINAPI DllRegisterServer(void)
 {
     return register_server(TRUE);
 }
@@ -328,7 +328,7 @@ HRESULT WINAPI MSHTML_DllRegisterServer(void)
 /***********************************************************************
  *          DllUnregisterServer (MSHTML.@)
  */
-HRESULT WINAPI MSHTML_DllUnregisterServer(void)
+HRESULT WINAPI DllUnregisterServer(void)
 {
     return register_server(FALSE);
 }

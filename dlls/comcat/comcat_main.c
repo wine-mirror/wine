@@ -34,7 +34,7 @@ const WCHAR clsid_keyname[6] = { 'C', 'L', 'S', 'I', 'D', 0 };
 /***********************************************************************
  *		DllGetClassObject (COMCAT.@)
  */
-HRESULT WINAPI COMCAT_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     *ppv = NULL;
     if (IsEqualGUID(rclsid, &CLSID_StdComponentCategoriesMgr)) {
@@ -47,7 +47,7 @@ HRESULT WINAPI COMCAT_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv
 /***********************************************************************
  *		DllCanUnloadNow (COMCAT.@)
  */
-HRESULT WINAPI COMCAT_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     return dll_ref != 0 ? S_FALSE : S_OK;
 }

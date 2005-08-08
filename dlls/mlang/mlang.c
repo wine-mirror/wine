@@ -745,7 +745,7 @@ static const IClassFactoryVtbl MLANGCF_Vtbl =
     MLANGCF_LockServer
 };
 
-HRESULT WINAPI MLANG_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     int i;
     IClassFactoryImpl *factory;
@@ -1992,7 +1992,7 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
 /******************************************************************************/
 
-HRESULT WINAPI MLANG_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     FIXME("\n");
     return S_FALSE;

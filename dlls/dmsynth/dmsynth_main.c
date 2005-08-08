@@ -149,7 +149,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
  *
  *
  */
-HRESULT WINAPI DMSYNTH_DllCanUnloadNow(void) {
+HRESULT WINAPI DllCanUnloadNow(void)
+{
 	return DMSYNTH_refCount != 0 ? S_FALSE : S_OK;
 }
 
@@ -159,7 +160,8 @@ HRESULT WINAPI DMSYNTH_DllCanUnloadNow(void) {
  *
  *
  */
-HRESULT WINAPI DMSYNTH_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) {
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
     TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSynth) && IsEqualIID (riid, &IID_IClassFactory)) {
 		*ppv = (LPVOID) &Synth_CF;

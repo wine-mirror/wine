@@ -507,7 +507,8 @@ static struct regsvr_interface const interface_list[] = {
 /***********************************************************************
  *		DllRegisterServer (DMBAND.3)
  */
-HRESULT WINAPI DMBAND_DllRegisterServer(void) {
+HRESULT WINAPI DllRegisterServer(void)
+{
     HRESULT hr;
 
     TRACE("\n");
@@ -521,7 +522,8 @@ HRESULT WINAPI DMBAND_DllRegisterServer(void) {
 /***********************************************************************
  *		DllUnregisterServer (DMBAND.4)
  */
-HRESULT WINAPI DMBAND_DllUnregisterServer(void) {
+HRESULT WINAPI DllUnregisterServer(void)
+{
     HRESULT hr;
 
     TRACE("\n");

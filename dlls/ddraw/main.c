@@ -560,7 +560,7 @@ static const IClassFactoryVtbl DDCF_Vtbl =
  *    Failure: CLASS_E_CLASSNOTAVAILABLE, E_OUTOFMEMORY, E_INVALIDARG,
  *             E_UNEXPECTED
  */
-HRESULT WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     unsigned int i;
     IClassFactoryImpl *factory;
@@ -603,7 +603,8 @@ HRESULT WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv
  *    Success: S_OK
  *    Failure: S_FALSE
  */
-DWORD WINAPI DDRAW_DllCanUnloadNow(void) {
+HRESULT WINAPI DllCanUnloadNow(void)
+{
     FIXME("(void): stub\n");
     return S_FALSE;
 }

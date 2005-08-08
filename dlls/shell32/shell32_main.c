@@ -1058,7 +1058,7 @@ void WINAPI FreeIconList( DWORD dw )
  *     Returns version of a shell32.dll from IE4.01 SP1.
  */
 
-HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
+HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
 {
     /* FIXME: shouldn't these values come from the version resource? */
     if (pdvi->cbSize == sizeof(DLLVERSIONINFO) ||
@@ -1145,7 +1145,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
  *    LPCWSTR pszCmdLine - command line (unused by shell32?)
  */
 
-HRESULT WINAPI SHELL32_DllInstall(BOOL bInstall, LPCWSTR cmdline)
+HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
     FIXME("%s %s: stub\n", bInstall ? "TRUE":"FALSE", debugstr_w(cmdline));
     return S_OK;        /* indicate success */
@@ -1154,7 +1154,7 @@ HRESULT WINAPI SHELL32_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 /***********************************************************************
  *              DllCanUnloadNow (SHELL32.@)
  */
-HRESULT WINAPI SHELL32_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     FIXME("stub\n");
     return S_FALSE;

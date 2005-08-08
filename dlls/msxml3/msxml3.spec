@@ -6,7 +6,7 @@
 11 stub @
 12 stub @
 
-@ stdcall -private DllCanUnloadNow() MSXML_DllCanUnloadNow
-@ stdcall -private DllGetClassObject(ptr ptr ptr) MSXML_DllGetClassObject
-@ stdcall -private DllRegisterServer() MSXML_DllRegisterServer
+@ stdcall -private DllCanUnloadNow()
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
+@ stdcall -private DllRegisterServer()
 @ stub DllUnregisterServer

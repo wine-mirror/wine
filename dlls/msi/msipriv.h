@@ -411,11 +411,6 @@ UINT WINAPI MsiDecomposeDescriptorA( LPCSTR, LPSTR, LPSTR, LPSTR, DWORD * );
 LANGID WINAPI MsiLoadStringW( MSIHANDLE, UINT, LPWSTR, int, LANGID );
 LANGID WINAPI MsiLoadStringA( MSIHANDLE, UINT, LPSTR, int, LANGID );
 
-HRESULT WINAPI MSI_DllGetClassObject( REFCLSID, REFIID, LPVOID * );
-HRESULT WINAPI MSI_DllRegisterServer( void );
-HRESULT WINAPI MSI_DllUnregisterServer( void );
-BOOL WINAPI MSI_DllCanUnloadNow( void );
-
 /* UI globals */
 extern INSTALLUILEVEL gUILevel;
 extern HWND gUIhwnd;

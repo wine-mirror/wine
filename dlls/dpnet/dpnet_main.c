@@ -121,7 +121,7 @@ static IClassFactoryImpl DPNET_CFS[] = {
 /***********************************************************************
  *             DllCanUnloadNow (DPNET.@)
  */
-BOOL WINAPI DPNET_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     return S_FALSE;
 }
@@ -129,7 +129,7 @@ BOOL WINAPI DPNET_DllCanUnloadNow(void)
 /***********************************************************************
  *		DllGetClassObject (DPNET.@)
  */
-HRESULT WINAPI DPNET_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     int i = 0;
 

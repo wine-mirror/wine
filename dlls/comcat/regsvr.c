@@ -447,7 +447,7 @@ static struct regsvr_interface const interface_list[] = {
 /***********************************************************************
  *		DllRegisterServer (COMCAT.@)
  */
-HRESULT WINAPI COMCAT_DllRegisterServer()
+HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT hr;
 
@@ -462,7 +462,7 @@ HRESULT WINAPI COMCAT_DllRegisterServer()
 /***********************************************************************
  *		DllUnregisterServer (COMCAT.@)
  */
-HRESULT WINAPI COMCAT_DllUnregisterServer()
+HRESULT WINAPI DllUnregisterServer(void)
 {
     HRESULT hr;
 

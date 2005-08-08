@@ -41,7 +41,8 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 /******************************************************************
  *		DllCanUnloadNow (DMLOADER.1)
  */
-HRESULT WINAPI DMLOADER_DllCanUnloadNow (void) {
+HRESULT WINAPI DllCanUnloadNow (void)
+{
     TRACE("(void)\n");
 	/* if there are no instances left, it's safe to release */
 	if (!dwDirectMusicContainer && !dwDirectMusicLoader)
@@ -54,7 +55,8 @@ HRESULT WINAPI DMLOADER_DllCanUnloadNow (void) {
 /******************************************************************
  *		DllGetClassObject (DMLOADER.2)
  */
-HRESULT WINAPI DMLOADER_DllGetClassObject (REFCLSID rclsid, REFIID riid, LPVOID *ppv) {
+HRESULT WINAPI DllGetClassObject (REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
     TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     if (IsEqualCLSID (rclsid, &CLSID_DirectMusicLoader) && IsEqualIID (riid, &IID_IClassFactory)) {
 		return DMUSIC_CreateDirectMusicLoaderCF (riid, ppv, NULL);

@@ -117,7 +117,7 @@ static IClassFactoryImpl DP_and_DPL_CF = {&DP_and_DPL_Vtbl, 1 };
  *    Failure: CLASS_E_CLASSNOTAVAILABLE, E_OUTOFMEMORY, E_INVALIDARG,
  *             E_UNEXPECTED
  */
-HRESULT WINAPI DPLAYX_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 

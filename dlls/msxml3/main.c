@@ -29,7 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-HRESULT WINAPI MSXML_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     FIXME("\n");
     return S_FALSE;
@@ -48,7 +48,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return TRUE;
 }
 
-HRESULT WINAPI MSXML_DllRegisterServer(void)
+HRESULT WINAPI DllRegisterServer(void)
 {
     FIXME("\n");
     return S_OK;

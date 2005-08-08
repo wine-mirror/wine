@@ -84,7 +84,7 @@ BOOL WINAPI DllMain(
  *    Success: S_OK
  *    Failure: S_FALSE
  */
-HRESULT WINAPI MSISYS_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
 	return S_OK;
 }
@@ -92,8 +92,7 @@ HRESULT WINAPI MSISYS_DllCanUnloadNow(void)
 /***********************************************************************
  *		DllGetClassObject (MSISYS.@)
  */
-HRESULT WINAPI MSISYS_DllGetClassObject(
-		REFCLSID pclsid, const IID* piid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID pclsid, const IID* piid, LPVOID *ppv)
 {
         FIXME("\n");
 
@@ -104,7 +103,7 @@ HRESULT WINAPI MSISYS_DllGetClassObject(
  *		DllRegisterServer (MSISYS.@)
  */
 
-HRESULT WINAPI MSISYS_DllRegisterServer( void )
+HRESULT WINAPI DllRegisterServer( void )
 {
 	FIXME( "(): stub\n" );
 	return E_FAIL;
@@ -114,7 +113,7 @@ HRESULT WINAPI MSISYS_DllRegisterServer( void )
  *		DllUnregisterServer (MSISYS.@)
  */
 
-HRESULT WINAPI MSISYS_DllUnregisterServer( void )
+HRESULT WINAPI DllUnregisterServer( void )
 {
 	FIXME( "(): stub\n" );
 	return E_FAIL;

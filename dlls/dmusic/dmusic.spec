@@ -1,4 +1,4 @@
-@ stdcall -private DllCanUnloadNow() DMUSIC_DllCanUnloadNow
-@ stdcall -private DllGetClassObject(ptr ptr ptr) DMUSIC_DllGetClassObject
-@ stdcall -private DllRegisterServer() DMUSIC_DllRegisterServer
-@ stdcall -private DllUnregisterServer() DMUSIC_DllUnregisterServer
+@ stdcall -private DllCanUnloadNow()
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()

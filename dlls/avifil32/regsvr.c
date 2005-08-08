@@ -552,7 +552,7 @@ static struct regsvr_interface const interface_list[] = {
 /***********************************************************************
  *		DllRegisterServer (AVIFILE.@)
  */
-HRESULT WINAPI AVIFILE_DllRegisterServer(void)
+HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT hr;
 
@@ -567,7 +567,7 @@ HRESULT WINAPI AVIFILE_DllRegisterServer(void)
 /***********************************************************************
  *		DllUnregisterServer (AVIFILE.@)
  */
-HRESULT WINAPI AVIFILE_DllUnregisterServer(void)
+HRESULT WINAPI DllUnregisterServer(void)
 {
     HRESULT hr;
 

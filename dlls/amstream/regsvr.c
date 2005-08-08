@@ -526,7 +526,7 @@ static struct regsvr_interface const interface_list[] = {
 /***********************************************************************
  *		DllRegisterServer (AMSTREAM.@)
  */
-HRESULT WINAPI AMSTREAM_DllRegisterServer(void)
+HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT hr;
 
@@ -541,7 +541,7 @@ HRESULT WINAPI AMSTREAM_DllRegisterServer(void)
 /***********************************************************************
  *		DllUnregisterServer (AMSTREAM.@)
  */
-HRESULT WINAPI AMSTREAM_DllUnregisterServer(void)
+HRESULT WINAPI DllUnregisterServer(void)
 {
     HRESULT hr;
 

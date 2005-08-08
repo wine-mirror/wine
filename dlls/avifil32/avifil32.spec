@@ -59,10 +59,10 @@
 @ stdcall AVIStreamWriteData(ptr long ptr long)
 @ extern  CLSID_AVISimpleUnMarshal
 @ stdcall CreateEditableStream(ptr ptr)
-@ stdcall -private DllCanUnloadNow() AVIFILE_DllCanUnloadNow
-@ stdcall -private DllGetClassObject(ptr ptr ptr) AVIFILE_DllGetClassObject
-@ stdcall -private DllRegisterServer() AVIFILE_DllRegisterServer
-@ stdcall -private DllUnregisterServer() AVIFILE_DllUnregisterServer
+@ stdcall -private DllCanUnloadNow()
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stdcall EditStreamClone(ptr ptr)
 @ stdcall EditStreamCopy(ptr ptr ptr ptr)
 @ stdcall EditStreamCut(ptr ptr ptr ptr)

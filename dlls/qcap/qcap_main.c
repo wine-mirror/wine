@@ -171,7 +171,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 /***********************************************************************
  *    DllRegisterServer (QCAP.@)
  */
-HRESULT WINAPI QCAP_DllRegisterServer(void)
+HRESULT WINAPI DllRegisterServer(void)
 {
     TRACE("()\n");
 
@@ -181,7 +181,7 @@ HRESULT WINAPI QCAP_DllRegisterServer(void)
 /***********************************************************************
  *    DllUnregisterServer (QCAP.@)
  */
-HRESULT WINAPI QCAP_DllUnregisterServer(void)
+HRESULT WINAPI DllUnregisterServer(void)
 {
     TRACE("\n");
 
@@ -191,7 +191,7 @@ HRESULT WINAPI QCAP_DllUnregisterServer(void)
 /***********************************************************************
  *    DllCanUnloadNow (QCAP.@)
  */
-HRESULT WINAPI QCAP_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     TRACE("\n");
 
@@ -306,7 +306,7 @@ static const IClassFactoryVtbl DSCF_Vtbl =
 /***********************************************************************
  *    DllGetClassObject (QCAP.@)
  */
-HRESULT WINAPI QCAP_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     const CFactoryTemplate *pList = g_cTemplates;
     IClassFactoryImpl *factory;

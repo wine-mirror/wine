@@ -564,7 +564,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
  *
  *
  */
-HRESULT WINAPI DMSCRIPT_DllCanUnloadNow(void) {
+HRESULT WINAPI DllCanUnloadNow(void)
+{
 	return DMSCRIPT_refCount != 0 ? S_FALSE : S_OK;
 }
 
@@ -574,7 +575,8 @@ HRESULT WINAPI DMSCRIPT_DllCanUnloadNow(void) {
  *
  *
  */
-HRESULT WINAPI DMSCRIPT_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) {
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
     TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     if (IsEqualCLSID (rclsid, &CLSID_DirectMusicScriptAutoImpSegment) && IsEqualIID (riid, &IID_IClassFactory)) {
       *ppv = (LPVOID) &ScriptAutoImplSegment_CF;

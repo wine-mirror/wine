@@ -101,7 +101,8 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
  *
  *
  */
-HRESULT WINAPI DSWAVE_DllCanUnloadNow(void) {
+HRESULT WINAPI DllCanUnloadNow(void)
+{
 	return DSWAVE_refCount != 0 ? S_FALSE : S_OK;
 }
 
@@ -111,7 +112,8 @@ HRESULT WINAPI DSWAVE_DllCanUnloadNow(void) {
  *
  *
  */
-HRESULT WINAPI DSWAVE_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) {
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
 	TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
 	if (IsEqualCLSID (rclsid, &CLSID_DirectSoundWave) && IsEqualIID (riid, &IID_IClassFactory)) {
 		*ppv = (LPVOID) &Wave_CF;
