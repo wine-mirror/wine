@@ -47,6 +47,7 @@ TESTBINS = \
 	rpcrt4_test.exe$(DLLEXT) \
 	rsabase_test.exe$(DLLEXT) \
 	rsaenh_test.exe$(DLLEXT) \
+	secur32_test.exe$(DLLEXT) \
 	shell32_test.exe$(DLLEXT) \
 	shlwapi_test.exe$(DLLEXT) \
 	urlmon_test.exe$(DLLEXT) \
@@ -146,6 +147,8 @@ rsabase_test.exe$(DLLEXT): $(DLLDIR)/rsabase/tests/rsabase_test.exe$(DLLEXT)
 	cp $(DLLDIR)/rsabase/tests/rsabase_test.exe$(DLLEXT) $@ && $(STRIP) $@
 rsaenh_test.exe$(DLLEXT): $(DLLDIR)/rsaenh/tests/rsaenh_test.exe$(DLLEXT)
 	cp $(DLLDIR)/rsaenh/tests/rsaenh_test.exe$(DLLEXT) $@ && $(STRIP) $@
+secur32_test.exe$(DLLEXT): $(DLLDIR)/secur32/tests/secur32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/secur32/tests/secur32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 shell32_test.exe$(DLLEXT): $(DLLDIR)/shell32/tests/shell32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/shell32/tests/shell32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 shlwapi_test.exe$(DLLEXT): $(DLLDIR)/shlwapi/tests/shlwapi_test.exe$(DLLEXT)
