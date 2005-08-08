@@ -1067,7 +1067,6 @@ IMPORT_SYMLINKS = \
 	libntdll.$(IMPLIBEXT) \
 	libolecli32.$(IMPLIBEXT) \
 	libolesvr32.$(IMPLIBEXT) \
-	libriched32.$(IMPLIBEXT) \
 	libtwain_32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
 	libw32skrnl.$(IMPLIBEXT) \
@@ -1161,7 +1160,6 @@ IMPORT_LIBS = \
 	quartz/libquartz.$(IMPLIBEXT) \
 	rasapi32/librasapi32.$(IMPLIBEXT) \
 	riched20/libriched20.$(IMPLIBEXT) \
-	richedit/libriched32.$(IMPLIBEXT) \
 	rpcrt4/librpcrt4.$(IMPLIBEXT) \
 	rsabase/librsabase.$(IMPLIBEXT) \
 	rsaenh/librsaenh.$(IMPLIBEXT) \
@@ -1440,9 +1438,6 @@ rasapi32/librasapi32.$(IMPLIBEXT): rasapi32/rasapi32.spec $(WINEBUILD)
 riched20/libriched20.$(IMPLIBEXT): riched20/riched20.spec $(WINEBUILD)
 	@cd riched20 && $(MAKE) libriched20.$(IMPLIBEXT)
 
-richedit/libriched32.$(IMPLIBEXT): richedit/riched32.spec $(WINEBUILD)
-	@cd richedit && $(MAKE) libriched32.$(IMPLIBEXT)
-
 rpcrt4/librpcrt4.$(IMPLIBEXT): rpcrt4/rpcrt4.spec $(WINEBUILD)
 	@cd rpcrt4 && $(MAKE) librpcrt4.$(IMPLIBEXT)
 
@@ -1586,9 +1581,6 @@ libolecli32.$(IMPLIBEXT): olecli/libolecli32.$(IMPLIBEXT)
 
 libolesvr32.$(IMPLIBEXT): olesvr/libolesvr32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) olesvr/libolesvr32.$(IMPLIBEXT) $@
-
-libriched32.$(IMPLIBEXT): richedit/libriched32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) richedit/libriched32.$(IMPLIBEXT) $@
 
 libtwain_32.$(IMPLIBEXT): twain/libtwain_32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) twain/libtwain_32.$(IMPLIBEXT) $@
