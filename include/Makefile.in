@@ -16,6 +16,7 @@ IDL_SRCS = \
 	docobj.idl \
 	downloadmgr.idl \
 	exdisp.idl \
+	hlink.idl \
 	mediaobj.idl \
 	mimeinfo.idl \
 	mlang.idl \

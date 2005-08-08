@@ -11,6 +11,7 @@ dispex.h
 docobj.h
 downloadmgr.h
 exdisp.h
+hlink.h
 mediaobj.h
 mimeinfo.h
 mlang.h
