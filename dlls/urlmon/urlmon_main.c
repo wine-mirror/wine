@@ -199,7 +199,7 @@ static const IClassFactoryVtbl CF_Vtbl =
  *             E_UNEXPECTED
  */
 
-DWORD WINAPI URLMON_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI URLMON_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     int i;
     IClassFactoryImpl *factory;

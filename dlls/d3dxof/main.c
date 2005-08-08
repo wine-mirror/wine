@@ -183,7 +183,7 @@ HRESULT WINAPI DirectXFileCreate(LPDIRECTXFILE* lplpDirectXFile)
  *    Failure: CLASS_E_CLASSNOTAVAILABLE, E_OUTOFMEMORY, E_INVALIDARG,
  *             E_UNEXPECTED
  */
-DWORD WINAPI D3DXOF_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI D3DXOF_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     int i;
     IClassFactoryImpl *factory;

@@ -93,7 +93,7 @@ HRESULT WINAPI MSISYS_DllCanUnloadNow(void)
  *		DllGetClassObject (MSISYS.@)
  */
 HRESULT WINAPI MSISYS_DllGetClassObject(
-		const CLSID* pclsid,const IID* piid,void** ppv)
+		REFCLSID pclsid, const IID* piid, LPVOID *ppv)
 {
         FIXME("\n");
 
