@@ -2328,6 +2328,15 @@ HRESULT WINAPI OleDoAutoConvert(IStorage *pStg, LPCLSID pClsidNew)
     return E_NOTIMPL;
 }
 
+/******************************************************************************
+ *              OleDoAutoConvert        [OLE2.@]
+ */
+HRESULT WINAPI OleDoAutoConvert16(IStorage *pStg, LPCLSID pClsidNew)
+{
+    FIXME("(%p,%p) : stub\n",pStg,pClsidNew);
+    return E_NOTIMPL;
+}
+
 /***********************************************************************
  *           OLE_FreeClipDataArray   [internal]
  *
