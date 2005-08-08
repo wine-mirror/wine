@@ -216,8 +216,14 @@ static HRESULT WINAPI domelem_get_attributes(
     IXMLDOMElement *iface,
     IXMLDOMNamedNodeMap** attributeMap)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    xmlNodePtr root;
+
+    root = xmlDocGetRootElement( This->xmldoc );
+    if( !root )
+        return E_FAIL;
+
+    return NodeMap_create( attributeMap, This->xmldoc, root );
 }
 
 static HRESULT WINAPI domelem_insertBefore(
@@ -496,7 +502,7 @@ static HRESULT WINAPI domelem_normalize(
     return E_NOTIMPL;
 }
 
-const struct IXMLDOMElementVtbl domelem_vtbl =
+static const struct IXMLDOMElementVtbl domelem_vtbl =
 {
     domelem_QueryInterface,
     domelem_AddRef,

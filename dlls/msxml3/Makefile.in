@@ -12,7 +12,8 @@ C_SRCS = \
 	domdoc.c \
 	element.c \
 	factory.c \
-	main.c
+	main.c \
+	nodemap.c
 
 @MAKE_DLL_RULES@
 

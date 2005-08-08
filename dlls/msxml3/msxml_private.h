@@ -26,6 +26,7 @@
 #include <libxml/parser.h>
 
 extern HRESULT DOMElement_create( IXMLDOMElement** DOMElement, xmlDocPtr xmldoc );
+extern HRESULT NodeMap_create(IXMLDOMNamedNodeMap** DomNamedNodeMap, xmlDocPtr xmldoc, xmlNodePtr node );
 
 #endif
 
