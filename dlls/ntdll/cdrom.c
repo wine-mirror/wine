@@ -1470,10 +1470,10 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
     switch (pPacket->DataIn)
     {
     case SCSI_IOCTL_DATA_IN:
-        cmd.dxfer_direction = SG_DXFER_TO_DEV;
+        cmd.dxfer_direction = SG_DXFER_FROM_DEV;
         break;
     case SCSI_IOCTL_DATA_OUT:
-        cmd.dxfer_direction = SG_DXFER_FROM_DEV;
+        cmd.dxfer_direction = SG_DXFER_TO_DEV;
         break;
     case SCSI_IOCTL_DATA_UNSPECIFIED:
         cmd.dxfer_direction = SG_DXFER_NONE;
@@ -1593,10 +1593,10 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
     switch (pPacket->DataIn)
     {
     case SCSI_IOCTL_DATA_IN:
-        cmd.dxfer_direction = SG_DXFER_TO_DEV;
+        cmd.dxfer_direction = SG_DXFER_FROM_DEV;
                              break;
     case SCSI_IOCTL_DATA_OUT:
-        cmd.dxfer_direction = SG_DXFER_FROM_DEV;
+        cmd.dxfer_direction = SG_DXFER_TO_DEV;
                              break;
     case SCSI_IOCTL_DATA_UNSPECIFIED:
         cmd.dxfer_direction = SG_DXFER_NONE;
