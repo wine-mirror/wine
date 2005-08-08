@@ -45,7 +45,6 @@ typedef struct tagHHInfo
     HH_WINTYPEW *pHHWinType;
     HINSTANCE hInstance;
     LPWSTR szCmdLine;
-    DWORD dwNumTBButtons;
     HWND hwndTabCtrl;
     HFONT hFont;
 } HHInfo;
@@ -194,7 +193,6 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
     toolbarFlags = HHWIN_BUTTON_EXPAND | HHWIN_BUTTON_BACK | HHWIN_BUTTON_STOP |
                    HHWIN_BUTTON_REFRESH | HHWIN_BUTTON_HOME | HHWIN_BUTTON_PRINT;
     TB_AddButtonsFromFlags(buttons, toolbarFlags, &dwNumButtons);
-    pHHInfo->dwNumTBButtons = dwNumButtons;
 
     dwStyles = WS_CHILDWINDOW | WS_VISIBLE | TBSTYLE_FLAT |
                TBSTYLE_WRAPABLE | TBSTYLE_TOOLTIPS | CCS_NODIVIDER;
@@ -338,7 +336,7 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
         return FALSE;
 
     /* store the pointer to the HH info struct */
-    SetWindowLongPtrA(hWnd, GWLP_USERDATA, (LONG_PTR)pHHInfo);
+    SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)pHHInfo);
 
     ShowWindow(hWnd, SW_SHOW);
     UpdateWindow(hWnd);
