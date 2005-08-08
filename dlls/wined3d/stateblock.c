@@ -439,13 +439,13 @@ should really perform a delta so that only the changes get updated*/
 
         }
 
-        for (j = 0; j < GL_LIMITS(textures); i++) {
+        for (j = 0; j < GL_LIMITS(textures); j++) {
             for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
                 ((IWineD3DDeviceImpl *)pDevice)->stateBlock->textureState[j][SavedPixelStates_T[i]] = This->textureState[j][SavedPixelStates_T[i]];
             }
         }
 
-        for (j = 0; j < GL_LIMITS(samplers); i++) {
+        for (j = 0; j < GL_LIMITS(samplers); j++) {
             for (i = 0; i < NUM_SAVEDPIXELSTATES_S; i++) {
                 ((IWineD3DDeviceImpl *)pDevice)->stateBlock->samplerState[j][SavedPixelStates_S[i]] = This->samplerState[j][SavedPixelStates_S[i]];
             }
@@ -458,15 +458,15 @@ should really perform a delta so that only the changes get updated*/
                 IWineD3DDevice_SetRenderState(pDevice, SavedVertexStates_R[i], This->renderState[SavedVertexStates_R[i]]);
         }
 
-        for (j = 0; j < GL_LIMITS(textures); i++) {
+        for (j = 0; j < GL_LIMITS(textures); j++) {
             for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
-                ((IWineD3DDeviceImpl *)pDevice)->stateBlock->samplerState[j][SavedVertexStates_T[i]] = This->textureState[j][SavedVertexStates_T[i]];
+                ((IWineD3DDeviceImpl *)pDevice)->stateBlock->textureState[j][SavedVertexStates_T[i]] = This->textureState[j][SavedVertexStates_T[i]];
             }
         }
 
-        for (j = 0; j < GL_LIMITS(textures); i++) {
+        for (j = 0; j < GL_LIMITS(textures); j++) {
             for (i = 0; i < NUM_SAVEDVERTEXSTATES_S; i++) {
-                ((IWineD3DDeviceImpl *)pDevice)->stateBlock->samplerState[j][SavedVertexStates_S[i]] = This->textureState[j][SavedVertexStates_S[i]];
+                ((IWineD3DDeviceImpl *)pDevice)->stateBlock->samplerState[j][SavedVertexStates_S[i]] = This->samplerState[j][SavedVertexStates_S[i]];
             }
         }
 
