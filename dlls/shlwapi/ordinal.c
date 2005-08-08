@@ -74,11 +74,6 @@ extern HMODULE SHLWAPI_hversion;
 
 extern DWORD SHLWAPI_ThreadRef_index;
 
-/* following is GUID for IObjectWithSite::SetSite  -- see _174           */
-static DWORD id1[4] = {0xfc4801a3, 0x11cf2ba9, 0xaa0029a2, 0x52733d00};
-/* following is GUID for IPersistMoniker::GetClassID  -- see _174        */
-static DWORD id2[4] = {0x79eac9ee, 0x11cebaf9, 0xaa00828c, 0x0ba94b00};
-
 /* Function pointers for GET_FUNC macro; these need to be global because of gcc bug */
 typedef LPITEMIDLIST (WINAPI *fnpSHBrowseForFolderW)(LPBROWSEINFOW);
 static  fnpSHBrowseForFolderW pSHBrowseForFolderW;
@@ -1496,47 +1491,39 @@ HRESULT WINAPI IUnknown_SetOwner(IUnknown *pUnk, ULONG arg)
 /*************************************************************************
  *      @	[SHLWAPI.174]
  *
- * Call either IObjectWithSite_SetSite() or IPersistMoniker_GetClassID() on
- * an interface.
+ * Call either IObjectWithSite_SetSite() or IInternetSecurityManager_SetSecuritySite() on
+ * an object.
  *
- * RETURNS
- *  Success: S_OK.
- *  Failure: E_FAIL, if p1 is NULL.
- *           E_NOINTERFACE If p1 does not support the IPersist interface,
- *           Or an HRESULT error code.
  */
-DWORD WINAPI IUnknown_SetSite(
-        IUnknown *p1,     /* [in]   OLE object                          */
-        LPVOID *p2)       /* [out]  ptr for call results */
+HRESULT WINAPI IUnknown_SetSite(
+        IUnknown *obj,        /* [in]   OLE object     */
+        IUnknown *site)       /* [in]   Site interface */
 {
-    DWORD ret, aa;
+    HRESULT hr;
+    IObjectWithSite *iobjwithsite;
+    IInternetSecurityManager *isecmgr;
 
-    if (!p1) return E_FAIL;
+    if (!obj) return E_FAIL;
 
-    /* see if SetSite interface exists for IObjectWithSite object */
-    ret = IUnknown_QueryInterface((IUnknown *)p1, (REFIID)id1, (LPVOID *)&p1);
-    TRACE("first IU_QI ret=%08lx, p1=%p\n", ret, p1);
-    if (ret) {
-
-	/* see if GetClassId interface exists for IPersistMoniker object */
-	ret = IUnknown_QueryInterface((IUnknown *)p1, (REFIID)id2, (LPVOID *)&aa);
-	TRACE("second IU_QI ret=%08lx, aa=%08lx\n", ret, aa);
-	if (ret) return ret;
-
-	/* fake a GetClassId call */
-	ret = IOleWindow_GetWindow((IOleWindow *)aa, (HWND*)p2);
-	TRACE("second IU_QI doing 0x0c ret=%08lx, *p2=%08lx\n", ret,
-	      *(LPDWORD)p2);
-	IUnknown_Release((IUnknown *)aa);
+    hr = IUnknown_QueryInterface(obj, &IID_IObjectWithSite, (LPVOID *)&iobjwithsite);
+    TRACE("IID_IObjectWithSite QI ret=%08lx, %p\n", hr, iobjwithsite);
+    if (SUCCEEDED(hr))
+    {
+	hr = IObjectWithSite_SetSite(iobjwithsite, site);
+	TRACE("done IObjectWithSite_SetSite ret=%08lx\n", hr);
+	IUnknown_Release(iobjwithsite);
     }
-    else {
-	/* fake a SetSite call */
-	ret = IOleWindow_GetWindow((IOleWindow *)p1, (HWND*)p2);
-	TRACE("first IU_QI doing 0x0c ret=%08lx, *p2=%08lx\n", ret,
-	      *(LPDWORD)p2);
-	IUnknown_Release((IUnknown *)p1);
+    else
+    {
+	hr = IUnknown_QueryInterface(obj, &IID_IInternetSecurityManager, (LPVOID *)&isecmgr);
+	TRACE("IID_IInternetSecurityManager QI ret=%08lx, %p\n", hr, isecmgr);
+	if (FAILED(hr)) return hr;
+
+	hr = IInternetSecurityManager_SetSecuritySite(isecmgr, (IInternetSecurityMgrSite *)site);
+	TRACE("done IInternetSecurityManager_SetSecuritySite ret=%08lx\n", hr);
+	IUnknown_Release(isecmgr);
     }
-    return ret;
+    return hr;
 }
 
 /*************************************************************************
