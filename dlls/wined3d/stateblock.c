@@ -330,7 +330,7 @@ should really perform a delta so that only the changes get updated*/
 
     /* FIXME: Only apply applicable states not all states */
 
-    if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */This->blockType == D3DSBT_ALL || This->blockType == D3DSBT_VERTEXSTATE) {
+    if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */This->blockType == WINED3DSBT_INIT || This->blockType == D3DSBT_ALL || This->blockType == D3DSBT_VERTEXSTATE) {
 
 
         PLIGHTINFOEL *toDo = This->lights;
