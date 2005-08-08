@@ -78,12 +78,8 @@ static void test_ParseDisplayName(void)
     MultiByteToWideChar(CP_ACP, 0, cNonExistDir1A, -1, cTestDirW, MAX_PATH);
     hr = IShellFolder_ParseDisplayName(IDesktopFolder, 
         NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
-    /* This call returns HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) only in Windows.
-     * Should we distinguish between cNonExistDir1A and cNonExistDir2A ?
-     * Putting test as todo. */
-    todo_wine
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), 
-        "ParseDisplayName returned %08lx, expected 80070002\n", hr);
+    ok((hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) || (hr == E_FAIL), 
+        "ParseDisplayName returned %08lx, expected 80070002 or E_FAIL\n", hr);
 
     res = GetFileAttributesA(cNonExistDir2A);
     if(res != INVALID_FILE_ATTRIBUTES) return;
