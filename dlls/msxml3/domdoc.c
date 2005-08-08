@@ -627,38 +627,38 @@ static HRESULT WINAPI domdoc_nodeFromID(
     return E_NOTIMPL;
 }
 
-static int read_input_callback( void *context, char *buffer, int len )
-{
-    HANDLE handle = context;
-    DWORD count = 0;
-    BOOL r;
-
-    r = ReadFile( handle, buffer, len, &count, NULL );
-    if ( !r )
-        return -1;
-
-    return count;
-}
-
-static int input_close_callback( void *context )
-{
-    HANDLE handle = context;
-    return CloseHandle( handle ) ? 0 : -1;
-}
-
 static xmlDocPtr doread( LPWSTR filename )
 {
-    HANDLE handle;
+    HANDLE handle, mapping;
+    DWORD len;
+    xmlDocPtr xmldoc = NULL;
+    char *ptr;
 
     TRACE("%s\n", debugstr_w( filename ));
 
     handle = CreateFileW( filename, GENERIC_READ, FILE_SHARE_READ,
                          NULL, OPEN_EXISTING, 0, NULL );
     if( handle == INVALID_HANDLE_VALUE )
-        return NULL;
+        return xmldoc;
 
-    return xmlReadIO( read_input_callback, input_close_callback,
-                      handle, NULL, NULL, 0 );
+    len = GetFileSize( handle, NULL );
+    if( len != INVALID_FILE_SIZE || GetLastError() == NO_ERROR )
+    {
+        mapping = CreateFileMappingW( handle, NULL, PAGE_READONLY, 0, 0, NULL );
+        if ( mapping )
+        {
+            ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, len );
+            if ( ptr )
+            {
+                xmldoc = xmlParseMemory( ptr, len );
+                UnmapViewOfFile( ptr );
+            }
+            CloseHandle( mapping );
+        }
+    }
+    CloseHandle( handle );
+
+    return xmldoc;
 }
 
 
