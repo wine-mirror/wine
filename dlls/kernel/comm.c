@@ -1949,7 +1949,7 @@ static DWORD WINAPI Comm_CheckEvents(int fd, DWORD mask, serial_irq_info *new, s
 	    WARN("TIOCSERGETLSR returned error\n");
 	if (queue)
 /* TIOCINQ only checks for an empty buffer */
-#elif def(TIOCINQ)
+#elif defined(TIOCINQ)
 	if(ioctl(fd, TIOCOUTQ, &queue))
 	    WARN("TIOCOUTQ returned error\n");
 	if (!queue)
@@ -2101,7 +2101,7 @@ static BOOL COMM_WaitCommEvent(
 	res = FALSE;
     }
     return res;
-#if !defined(TIOCINQ) || (!(defined(TIOCSERGETLSR) && defined(TIOCSER_TEMT)) && !defined(TIOCINQ)) || !defined(TIOCMGET) || !defined(TIOCM_CTS) ||!defined(TIOCM_DSR) || !defined(TIOCM_RNG) || !defined(TIOCM_CAR)
+#if !defined(TIOCINQ) || (!(defined(TIOCSERGETLSR) && defined(TIOCSER_TEMT)) || !defined(TIOCINQ)) || !defined(TIOCMGET) || !defined(TIOCM_CTS) ||!defined(TIOCM_DSR) || !defined(TIOCM_RNG) || !defined(TIOCM_CAR)
  error:
     FIXME("Returning error because of missing capabilities\n");
     HeapFree(GetProcessHeap(), 0, commio );
