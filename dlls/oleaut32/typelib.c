@@ -2916,7 +2916,7 @@ static SLTG_TypeInfoTail *SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 	        paramName = NULL;
 		HaveOffs = TRUE;
 	    }
-	    else if((unsigned char)paramName[-1] == 0xff)
+	    else if(paramName[-1] && !isalnum(paramName[-1]))
 	        HaveOffs = TRUE;
 
 	    pArg++;
