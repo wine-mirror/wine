@@ -358,7 +358,9 @@ sub parse_c_file($$) {
 		    &$function_end($statements_line, $statements);
 		    $statements = undef;
 		} elsif($in_type) {
-		    if(/^\s*(?:WINE_PACKED\s+)?((?:(?:FAR\s*)?\*\s*(?:RESTRICTED_POINTER\s+)?)?\w+\s*(?:\s*,\s*(?:(?:FAR\s*)?\*+\s*(?:RESTRICTED_POINTER\s+)?)?\w+)*\s*);/s) {
+		    if(/^\s*((?:(?:FAR\s*)?\*\s*(?:RESTRICTED_POINTER\s+)?)?
+			    (?:\w+|WS\(\w+\))\s*
+			    (?:\s*,\s*(?:(?:FAR\s*)?\*+\s*(?:RESTRICTED_POINTER\s+)?)?(?:\w+|WS\(\w+\)))*\s*);/sx) {
 			my @parts = split(/\s*,\s*/, $1);
 			&$type_end([@parts]);
 		    } elsif(/;/s) {
@@ -430,13 +432,16 @@ sub parse_c_file($$) {
 		    $argument_name = "...";
 		} elsif($argument =~ /^
 			((?:struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
-			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+|ElfW\(\w+\))\s*
+			  (?:short\s+(?=int)|long\s+(?=int))?)?(?:\w+|ElfW\(\w+\)|WS\(\w+\)))\s*
 			((?:__RPC_FAR|const|CONST)?\s*(?:\*\s*(?:__RPC_FAR|const|CONST)?\s*?)*)\s*
-			(?:WINE_UNUSED\s+)?(\w*)\s*(?:\[\]|\s+OPTIONAL|\s+WINE_UNUSED)?$/x)
+			(\w*)\s*(\[\])?(?:\s+OPTIONAL)?$/x)
 		{
 		    $argument_type = $1;
 		    if ($2) {
 			$argument_type .= " $2";
+		    }
+		    if ($4) {
+			$argument_type .= "$4";
 		    }
 		    $argument_name = $3;
 		} elsif ($argument =~ /^
@@ -551,10 +556,10 @@ sub parse_c_file($$) {
 	    }
 	    &$type_begin($type);
 	} elsif(/typedef\s+
-		((?:const\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+)*?)
+		((?:const\s+|CONST\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+)*?)
 		(\w+)
 		(?:\s+const)?
-		((?:\s*(?:(?:FAR|__RPC_FAR|TW_HUGE)?\s*)?\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])*
+		((?:\s*(?:(?:FAR|__RPC_FAR|TW_HUGE)?\s*)?\*+\s*|\s+)(?:volatile\s+|DECLSPEC_ALIGN\(\d+\)\s+)?\w+\s*(?:\[[^\]]*\])*
 		(?:\s*,\s*(?:\s*(?:(?:FAR|__RPC_FAR|TW_HUGE)?\s*)?\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])?)*)
 		\s*;/sx)
 	{
@@ -580,9 +585,9 @@ sub parse_c_file($$) {
 	    &$type_end([@names]);
 	} elsif(/typedef\s+
 		(?:(?:const\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+)*?)
-		(\w+(?:\s*\*+\s*)?)\s+
+		(\w+(?:\s*\*+\s*)?)\s*
 		(?:(\w+)\s*)?
-		\((?:(\w+)\s*)?\s*\*\s*(\w+)\s*\)\s*
+		\((?:(\w+)\s*)?\s*(?:\*\s*(\w+)|_ATL_CATMAPFUNC)\s*\)\s*
 		(?:\(([^\)]*)\)|\[([^\]]*)\])\s*;/sx)
 	{
 	    $_ = $'; $again = 1;
