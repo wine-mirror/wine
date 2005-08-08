@@ -137,6 +137,8 @@ static struct change *create_change_notification( struct fd *fd, int subtree, un
     struct stat st;
     int unix_fd = get_unix_fd( fd );
 
+    if (unix_fd == -1) return NULL;
+
     if (fstat( unix_fd, &st ) == -1 || !S_ISDIR(st.st_mode))
     {
         set_error( STATUS_NOT_A_DIRECTORY );

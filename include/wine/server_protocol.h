@@ -851,6 +851,18 @@ struct unlock_file_reply
 
 
 
+struct unmount_device_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct unmount_device_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct create_socket_request
 {
     struct request_header __header;
@@ -3592,6 +3604,7 @@ enum request
     REQ_flush_file,
     REQ_lock_file,
     REQ_unlock_file,
+    REQ_unmount_device,
     REQ_create_socket,
     REQ_accept_socket,
     REQ_set_socket_event,
@@ -3802,6 +3815,7 @@ union generic_request
     struct flush_file_request flush_file_request;
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
+    struct unmount_device_request unmount_device_request;
     struct create_socket_request create_socket_request;
     struct accept_socket_request accept_socket_request;
     struct set_socket_event_request set_socket_event_request;
@@ -4010,6 +4024,7 @@ union generic_reply
     struct flush_file_reply flush_file_reply;
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
+    struct unmount_device_reply unmount_device_reply;
     struct create_socket_reply create_socket_reply;
     struct accept_socket_reply accept_socket_reply;
     struct set_socket_event_reply set_socket_event_reply;
@@ -4175,6 +4190,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 188
+#define SERVER_PROTOCOL_VERSION 189
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -657,6 +657,12 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @END
 
 
+/* Get ready to unmount a Unix device */
+@REQ(unmount_device)
+    obj_handle_t handle;        /* handle to a file on the device */
+@END
+
+
 /* Create a socket */
 @REQ(create_socket)
     unsigned int access;        /* wanted access rights */

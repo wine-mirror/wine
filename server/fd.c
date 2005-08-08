@@ -625,7 +625,7 @@ static void device_destroy( struct object *obj )
 /* inode functions */
 
 /* close all pending file descriptors in the closed list */
-static void inode_close_pending( struct inode *inode )
+static void inode_close_pending( struct inode *inode, int keep_unlinks )
 {
     struct list *ptr = list_head( &inode->closed );
 
@@ -639,7 +639,7 @@ static void inode_close_pending( struct inode *inode )
             close( fd->unix_fd );
             fd->unix_fd = -1;
         }
-        if (!fd->unlink)  /* get rid of it unless there's an unlink pending on that file */
+        if (!keep_unlinks || !fd->unlink[0])  /* get rid of it unless there's an unlink pending on that file */
         {
             list_remove( ptr );
             free( fd );
@@ -968,7 +968,7 @@ static void remove_lock( struct file_lock *lock, int remove_unix )
     list_remove( &lock->inode_entry );
     list_remove( &lock->proc_entry );
     if (remove_unix) remove_unix_locks( lock->fd, lock->start, lock->end );
-    if (list_empty( &inode->locks )) inode_close_pending( inode );
+    if (list_empty( &inode->locks )) inode_close_pending( inode, 1 );
     lock->process = NULL;
     wake_up( &lock->obj, 0 );
     release_object( lock );
@@ -1187,6 +1187,26 @@ void set_fd_events( struct fd *fd, int events )
     }
 }
 
+/* prepare an fd for unmounting its corresponding device */
+static inline void unmount_fd( struct fd *fd )
+{
+    assert( fd->inode );
+
+    async_terminate_queue( &fd->read_q, STATUS_VOLUME_DISMOUNTED );
+    async_terminate_queue( &fd->write_q, STATUS_VOLUME_DISMOUNTED );
+
+    if (fd->poll_index != -1) set_fd_events( fd, -1 );
+
+    if (fd->unix_fd != -1) close( fd->unix_fd );
+
+    fd->unix_fd = -1;
+    fd->closed->unix_fd = -1;
+    fd->closed->unlink[0] = 0;
+
+    /* stop using Unix locks on this fd (existing locks have been removed by close) */
+    fd->fs_locks = 0;
+}
+
 /* allocate an fd object, without setting the unix fd yet */
 struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user )
 {
@@ -1379,6 +1399,7 @@ void *get_fd_user( struct fd *fd )
 /* retrieve the unix fd for an object */
 int get_unix_fd( struct fd *fd )
 {
+    if (fd->unix_fd == -1) set_error( STATUS_VOLUME_DISMOUNTED );
     return fd->unix_fd;
 }
 
@@ -1398,6 +1419,8 @@ void fd_poll_event( struct fd *fd, int event )
 int check_fd_events( struct fd *fd, int events )
 {
     struct pollfd pfd;
+
+    if (fd->unix_fd == -1) return POLLERR;
 
     pfd.fd     = fd->unix_fd;
     pfd.events = events;
@@ -1554,6 +1577,29 @@ void no_cancel_async( struct fd *fd )
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
 }
 
+/* close all Unix file descriptors on a device to allow unmounting it */
+static void unmount_device( struct device *device )
+{
+    unsigned int i;
+    struct inode *inode;
+    struct fd *fd;
+
+    for (i = 0; i < INODE_HASH_SIZE; i++)
+    {
+        LIST_FOR_EACH_ENTRY( inode, &device->inode_hash[i], struct inode, entry )
+        {
+            LIST_FOR_EACH_ENTRY( fd, &inode->open, struct fd, inode_entry )
+            {
+                unmount_fd( fd );
+            }
+            inode_close_pending( inode, 0 );
+        }
+    }
+    /* remove it from the hash table */
+    list_remove( &device->entry );
+    list_init( &device->entry );
+}
+
 /* same as get_handle_obj but retrieve the struct fd associated to the object */
 static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handle,
                                      unsigned int access )
@@ -1595,14 +1641,27 @@ DECL_HANDLER(get_handle_fd)
 
     if ((fd = get_handle_fd_obj( current->process, req->handle, req->access )))
     {
-        int unix_fd = get_handle_unix_fd( current->process, req->handle, req->access );
-        if (unix_fd != -1) reply->fd = unix_fd;
-        else if (!get_error())
+        int unix_fd = get_unix_fd( fd );
+        if (unix_fd != -1)
         {
-            assert( fd->unix_fd != -1 );
-            send_client_fd( current->process, fd->unix_fd, req->handle );
+            int cached_fd = get_handle_unix_fd( current->process, req->handle, req->access );
+            if (cached_fd != -1) reply->fd = cached_fd;
+            else if (!get_error()) send_client_fd( current->process, unix_fd, req->handle );
         }
         reply->flags = fd->fd_ops->get_file_info( fd );
+        release_object( fd );
+    }
+}
+
+/* get ready to unmount a Unix device */
+DECL_HANDLER(unmount_device)
+{
+    struct fd *fd;
+
+    if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
+    {
+        if (fd->inode) unmount_device( fd->inode->device );
+        else set_error( STATUS_OBJECT_TYPE_MISMATCH );
         release_object( fd );
     }
 }

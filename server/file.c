@@ -226,8 +226,13 @@ static int file_get_poll_events( struct fd *fd )
 
 static int file_flush( struct fd *fd, struct event **event )
 {
-    int ret = (fsync( get_unix_fd(fd) ) != -1);
-    if (!ret) file_set_error();
+    int ret = 0, unix_fd = get_unix_fd( fd );
+
+    if (unix_fd != -1)
+    {
+        ret = (fsync( unix_fd ) != -1);
+        if (!ret) file_set_error();
+    }
     return ret;
 }
 
@@ -304,6 +309,8 @@ static int extend_file( struct file *file, file_pos_t new_size )
     int unix_fd = get_file_unix_fd( file );
     off_t size = new_size;
 
+    if (unix_fd == -1) return 0;
+
     if (sizeof(new_size) > sizeof(size) && size != new_size)
     {
         set_error( STATUS_INVALID_PARAMETER );
@@ -325,6 +332,8 @@ int grow_file( struct file *file, file_pos_t size )
 {
     struct stat st;
     int unix_fd = get_file_unix_fd( file );
+
+    if (unix_fd == -1) return 0;
 
     if (fstat( unix_fd, &st ) == -1)
     {

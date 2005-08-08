@@ -196,7 +196,7 @@ static int get_image_params( struct mapping *mapping )
     /* load the headers */
 
     if (!(fd = mapping_get_fd( &mapping->obj ))) return 0;
-    unix_fd = get_unix_fd( fd );
+    if ((unix_fd = get_unix_fd( fd )) == -1) goto error;
     if (pread( unix_fd, &dos, sizeof(dos), 0 ) != sizeof(dos)) goto error;
     if (dos.e_magic != IMAGE_DOS_SIGNATURE) goto error;
     pos = dos.e_lfanew;
@@ -250,7 +250,7 @@ inline static int get_file_size( struct file *file, file_pos_t *size )
     struct stat st;
     int unix_fd = get_file_unix_fd( file );
 
-    if (fstat( unix_fd, &st ) == -1) return 0;
+    if (unix_fd == -1 || fstat( unix_fd, &st ) == -1) return 0;
     *size = st.st_size;
     return 1;
 }
