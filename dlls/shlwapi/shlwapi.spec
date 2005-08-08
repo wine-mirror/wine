@@ -454,8 +454,8 @@
 454 stub -noname CharLowerNoDBCSW
 455 stdcall -noname PathIsValidCharA(long long)
 456 stdcall -noname PathIsValidCharW(long long)
-457 stub -noname GetLongPathNameWrapW
-458 stub -noname GetLongPathNameWrapA
+457 stdcall @(wstr ptr long) kernel32.GetLongPathNameW
+458 stdcall @(str ptr long) kernel32.GetLongPathNameA
 459 stdcall -noname SHExpandEnvironmentStringsA(str ptr long) kernel32.ExpandEnvironmentStringsA
 460 stdcall -noname SHExpandEnvironmentStringsW(wstr ptr long) kernel32.ExpandEnvironmentStringsW
 461 stdcall -noname SHGetAppCompatFlags(long)
