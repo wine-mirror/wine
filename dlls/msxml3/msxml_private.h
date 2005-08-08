@@ -21,7 +21,7 @@
 #ifndef __MSXML_PRIVATE__
 #define __MSXML_PRIVATE__
 
-#ifdef HAVE_LIBXML_PARSER_H
+#ifdef HAVE_LIBXML2
 
 #include <libxml/parser.h>
 

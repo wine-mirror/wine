@@ -38,6 +38,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
+#ifdef HAVE_LIBXML2
+
 typedef struct _domelem
 {
     const struct IXMLDOMElementVtbl *lpVtbl;
@@ -566,3 +568,5 @@ HRESULT DOMElement_create( IXMLDOMElement** DOMElement, xmlDocPtr xmldoc )
 
     return S_OK;
 }
+
+#endif
