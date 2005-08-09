@@ -522,9 +522,14 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
         if (!strcmp( odp->name, "DllRegisterServer" ) ||
             !strcmp( odp->name, "DllUnregisterServer" ) ||
             !strcmp( odp->name, "DllGetClassObject" ) ||
+            !strcmp( odp->name, "DllGetVersion" ) ||
+            !strcmp( odp->name, "DllInstall" ) ||
             !strcmp( odp->name, "DllCanUnloadNow" ))
         {
             warning( "Function %s should be marked private\n", odp->name );
+            if (strcmp( odp->name, odp->link_name ))
+                warning( "Function %s should not use a different internal name (%s)\n",
+                         odp->name, odp->link_name );
         }
     }
 
