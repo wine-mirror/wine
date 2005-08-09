@@ -72,7 +72,7 @@
  *      Linker Options
  *          object-file-name  -llibrary -nostartfiles  -nodefaultlibs
  *          -nostdlib -s  -static  -static-libgcc  -shared  -shared-libgcc
- *          -symbolic -Wl,option  -Xlinker option -u symbol
+ *          -symbolic -Wl,option  -Xlinker option -u symbol --image-base
  *
  *      Directory Options
  *          -Bprefix  -Idir  -I-  -Ldir  -specs=file
@@ -155,6 +155,7 @@ struct options
     int compile_only;
     int wine_mode;
     const char* output_name;
+    const char* image_base;
     strarray* prefix;
     strarray* lib_dirs;
     strarray* linker_args;
@@ -625,6 +626,22 @@ static void build(struct options* opts)
 
     spawn(opts->prefix, link_args);
 
+    /* set the base address */
+    if (opts->image_base)
+    {
+        const char *prelink = PRELINK;
+        if (prelink[0] && strcmp(prelink,"false"))
+        {
+            strarray *prelink_args = strarray_alloc();
+            strarray_add(prelink_args, prelink);
+            strarray_add(prelink_args, "--reloc-only");
+            strarray_add(prelink_args, opts->image_base);
+            strarray_add(prelink_args, strmake("%s.so", output_file));
+            spawn(opts->prefix, prelink_args);
+            strarray_free(prelink_args);
+        }
+    }
+
     /* create the loader script */
     if (generate_app_loader)
     {
@@ -892,8 +909,20 @@ int main(int argc, char **argv)
                 case 'W':
                     if (strncmp("-Wl,", argv[i], 4) == 0)
 		    {
-                        if (strstr(argv[i], "-static"))
-                            linking = -1;
+                        unsigned int j;
+                        strarray* Wl = strarray_fromstring(argv[i] + 4, ",");
+                        for (j = 0; j < Wl->size; j++)
+                        {
+                            if (!strcmp(Wl->base[j], "--image-base") && j < Wl->size - 1)
+                            {
+                                opts.image_base = strdup( Wl->base[++j] );
+                                continue;
+                            }
+                            if (!strcmp(Wl->base[j], "-static")) linking = -1;
+                            strarray_add(opts.linker_args, strmake("-Wl,%s",Wl->base[j]));
+                        }
+                        strarray_free(Wl);
+                        raw_compiler_arg = raw_linker_arg = 0;
                     }
 		    else if (strncmp("-Wb,", argv[i], 4) == 0)
 		    {

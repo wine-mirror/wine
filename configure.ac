@@ -136,6 +136,12 @@ dnl Check for various programs
 AC_CHECK_PROGS(FONTFORGE, fontforge, false)
 AC_CHECK_PROGS(PKG_CONFIG, pkg-config, false)
 
+case $host_cpu in
+  *i[[3456789]]86*)
+    AC_CHECK_PROGS(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
+    ;;
+esac
+
 dnl **** Check for some libraries ****
 
 dnl Check for -li386 for NetBSD and OpenBSD

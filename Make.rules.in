@@ -47,6 +47,7 @@ TOOLSDIR  = @TOOLSDIR@
 AS        = @AS@
 LD        = @LD@
 LDFLAGS   = @LDFLAGS@
+PRELINK   = @PRELINK@
 RM        = rm -f
 MV        = mv
 LINT      = @LINT@
