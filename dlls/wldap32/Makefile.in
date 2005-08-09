@@ -16,6 +16,7 @@ C_SRCS = \
 	init.c \
 	main.c \
 	misc.c \
+	option.c \
 	search.c
 
 RC_SRCS = wldap32.rc

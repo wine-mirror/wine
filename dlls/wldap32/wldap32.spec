@@ -45,6 +45,9 @@
 @ cdecl ldap_get_dn(ptr ptr) ldap_get_dnA
 @ cdecl ldap_get_dnA(ptr ptr)
 @ cdecl ldap_get_dnW(ptr ptr)
+@ cdecl ldap_get_option(ptr long ptr) ldap_get_optionA
+@ cdecl ldap_get_optionA(ptr long ptr)
+@ cdecl ldap_get_optionW(ptr long ptr)
 @ cdecl ldap_init(str long) ldap_initA
 @ cdecl ldap_initA(str long)
 @ cdecl ldap_initW(wstr long)
@@ -75,6 +78,9 @@
 @ cdecl ldap_search_st(ptr str long str ptr long ptr ptr) ldap_search_stA
 @ cdecl ldap_search_stA(ptr str long str ptr long ptr ptr)
 @ cdecl ldap_search_stW(ptr wstr long wstr ptr long ptr ptr)
+@ cdecl ldap_set_option(ptr long ptr) ldap_set_optionA
+@ cdecl ldap_set_optionA(ptr long ptr)
+@ cdecl ldap_set_optionW(ptr long ptr)
 @ cdecl ldap_simple_bind(ptr str str) ldap_simple_bindA
 @ cdecl ldap_simple_bindA(ptr str str)
 @ cdecl ldap_simple_bindW(ptr wstr wstr)
