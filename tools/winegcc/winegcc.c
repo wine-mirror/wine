@@ -341,7 +341,7 @@ static void compile(struct options* opts, const char* lang)
     }
 #undef SYS_INCLUDE
 
-    spawn(opts->prefix, comp_args);
+    spawn(opts->prefix, comp_args, 0);
 }
 
 static const char* compile_to_object(struct options* opts, const char* file, const char* lang)
@@ -576,7 +576,7 @@ static void build(struct options* opts)
 	}
     }
 
-    spawn(opts->prefix, spec_args);
+    spawn(opts->prefix, spec_args, 0);
 
     /* compile the .spec.c file into a .spec.o file */
     old_processor = opts->processor;
@@ -624,7 +624,7 @@ static void build(struct options* opts)
 	strarray_add(link_args, "-lc");
     }
 
-    spawn(opts->prefix, link_args);
+    spawn(opts->prefix, link_args, 0);
 
     /* set the base address */
     if (opts->image_base)
@@ -637,7 +637,7 @@ static void build(struct options* opts)
             strarray_add(prelink_args, "--reloc-only");
             strarray_add(prelink_args, opts->image_base);
             strarray_add(prelink_args, strmake("%s.so", output_file));
-            spawn(opts->prefix, prelink_args);
+            spawn(opts->prefix, prelink_args, 1);
             strarray_free(prelink_args);
         }
     }
@@ -661,7 +661,7 @@ static void forward(int argc, char **argv, struct options* opts)
     for( j = 1; j < argc; j++ ) 
 	strarray_add(args, argv[j]);
 
-    spawn(opts->prefix, args);
+    spawn(opts->prefix, args, 0);
 }
 
 /*

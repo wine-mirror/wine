@@ -279,7 +279,7 @@ file_type get_lib_type(strarray* path, const char* library, char** file)
     return file_na;
 }
 
-void spawn(const strarray* prefix, const strarray* args)
+void spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 {
     int i, status;
     strarray* arr = strarray_dup(args);
@@ -316,7 +316,7 @@ void spawn(const strarray* prefix, const strarray* args)
 	printf("\n");
     }
 
-    if ((status = spawnvp( _P_WAIT, argv[0], argv)))
+    if ((status = spawnvp( _P_WAIT, argv[0], argv)) && !ignore_errors)
     {
 	if (status > 0) error("%s failed.", argv[0]);
 	else perror("winegcc");
