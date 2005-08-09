@@ -3,7 +3,7 @@
 @ stub CloseINFEngine
 @ stdcall DelNode(str long)
 @ stdcall DelNodeRunDLL32(ptr ptr str long)
-@ stdcall DllMain(long long ptr)
+@ stdcall -private DllMain(long long ptr)
 @ stdcall DoInfInstall(ptr)
 @ stdcall ExecuteCab(ptr ptr ptr)
 @ stub ExtractFiles

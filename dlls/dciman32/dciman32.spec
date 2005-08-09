@@ -11,7 +11,7 @@
 @ stub    DCISetClipList
 @ stub    DCISetDestination
 @ stub    DCISetSrcDestClip
-@ stdcall DllEntryPoint(long long ptr) DllMain
+@ stdcall -private DllEntryPoint(long long ptr) DllMain
 @ stub    GetDCRegionData
 @ stub    GetWindowRegionData
 @ stub    WinWatchClose
