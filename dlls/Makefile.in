@@ -1122,7 +1122,6 @@ IMPORT_LIBS = \
 	imagehlp/libimagehlp.$(IMPLIBEXT) \
 	imm32/libimm32.$(IMPLIBEXT) \
 	iphlpapi/libiphlpapi.$(IMPLIBEXT) \
-	itss/libitss.$(IMPLIBEXT) \
 	kernel/libkernel32.$(IMPLIBEXT) \
 	lzexpand/liblz32.$(IMPLIBEXT) \
 	mapi32/libmapi32.$(IMPLIBEXT) \
@@ -1323,9 +1322,6 @@ imm32/libimm32.$(IMPLIBEXT): imm32/imm32.spec $(WINEBUILD)
 
 iphlpapi/libiphlpapi.$(IMPLIBEXT): iphlpapi/iphlpapi.spec $(WINEBUILD)
 	@cd iphlpapi && $(MAKE) libiphlpapi.$(IMPLIBEXT)
-
-itss/libitss.$(IMPLIBEXT): itss/itss.spec $(WINEBUILD)
-	@cd itss && $(MAKE) libitss.$(IMPLIBEXT)
 
 kernel/libkernel32.$(IMPLIBEXT): kernel/kernel32.spec $(WINEBUILD)
 	@cd kernel && $(MAKE) libkernel32.$(IMPLIBEXT)
