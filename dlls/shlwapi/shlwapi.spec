@@ -353,7 +353,7 @@
 353 stub -noname SHFormatDateTimeA
 354 stub -noname SHFormatDateTimeW
 355 stdcall -noname IUnknown_EnableModeless(ptr long)
-356 stdcall -noname _CreateAllAccessSecurityAttributes(ptr ptr)
+356 stdcall -noname _CreateAllAccessSecurityAttributes(ptr ptr long)
 357 stdcall -noname SHGetNewLinkInfoWrapW(wstr wstr wstr long long)
 358 stdcall -noname SHDefExtractIconWrapW(wstr long long ptr ptr long)
 359 stdcall @(long long wstr) kernel32.OpenEventW
