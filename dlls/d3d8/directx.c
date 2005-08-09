@@ -236,7 +236,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
       This->gl_info.glx_version = ((major & 0x0000FFFF) << 16) | (minor & 0x0000FFFF);
       gl_string = glXGetClientString(display, GLX_VENDOR);
     } else {
-      gl_string = glGetString(GL_VENDOR);
+      gl_string = (const char*) glGetString(GL_VENDOR);
     }
     
     if (strstr(gl_string, "NVIDIA")) {
@@ -249,7 +249,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
    
     TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x)\n", debugstr_a(gl_string), This->gl_info.gl_vendor);
     
-    gl_string = glGetString(GL_VERSION);
+    gl_string = (const char*) glGetString(GL_VERSION);
     switch (This->gl_info.gl_vendor) {
     case VENDOR_NVIDIA:
       gl_string_cursor = strstr(gl_string, "NVIDIA");
@@ -312,7 +312,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 
     FIXME_(d3d_caps)("found GL_VERSION  (%s)->(0x%08lx)\n", debugstr_a(gl_string), This->gl_info.gl_driver_version);
 
-    gl_string = glGetString(GL_RENDERER);
+    gl_string = (const char*) glGetString(GL_RENDERER);
     strcpy(This->gl_info.gl_renderer, gl_string);
 
     switch (This->gl_info.gl_vendor) {
@@ -366,7 +366,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     TRACE_(d3d_caps)("Lights support - max lights=%d\n", gl_max);
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
-    GL_Extensions = glGetString(GL_EXTENSIONS);
+    GL_Extensions = (const char*) glGetString(GL_EXTENSIONS);
     TRACE_(d3d_caps)("GL_Extensions reported:\n");  
     
     if (NULL == GL_Extensions) {
