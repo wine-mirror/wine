@@ -26,6 +26,7 @@
 #define NS_SUCCEEDED(res) (!NS_FAILED(res))
 
 typedef struct NSContainer NSContainer;
+typedef struct BindStatusCallback BindStatusCallback;
 
 typedef struct {
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
@@ -56,6 +57,8 @@ typedef struct {
     BOOL in_place_active;
     BOOL ui_active;
     BOOL has_key_path;
+
+    BindStatusCallback *status_callback;
 } HTMLDocument;
 
 struct NSContainer {
@@ -86,6 +89,7 @@ struct NSContainer {
 #define SERVPROV(x)      ((IServiceProvider*)             &(x)->lpServiceProviderVtbl)
 #define CMDTARGET(x)     ((IOleCommandTarget*)            &(x)->lpOleCommandTargetVtbl)
 #define CONTROL(x)       ((IOleControl*)                  &(x)->lpOleControlVtbl)
+#define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
