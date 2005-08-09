@@ -875,6 +875,8 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
     NTSTATUS status = STATUS_SUCCESS;
     int i;
 
+    if (process_detaching) return status;
+
     /* prevent infinite recursion in case of cyclical dependencies */
     if (    ( wm->ldr.Flags & LDR_LOAD_IN_PROGRESS )
          || ( wm->ldr.Flags & LDR_PROCESS_ATTACHED ) )
@@ -911,8 +913,9 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
         current_modref = prev;
     }
 
-    InsertTailList(&NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList, 
-                   &wm->ldr.InInitializationOrderModuleList);
+    if (!wm->ldr.InInitializationOrderModuleList.Flink)
+        InsertTailList(&NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList,
+                       &wm->ldr.InInitializationOrderModuleList);
 
     /* Remove recursion flag */
     wm->ldr.Flags &= ~LDR_LOAD_IN_PROGRESS;
