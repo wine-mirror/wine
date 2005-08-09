@@ -2217,61 +2217,127 @@ BOOL WINAPI SHIsChildOrSelf(HWND hParent, HWND hChild)
 }
 
 /*************************************************************************
+ *    FDSA functions.  Manage a dynamic array of fixed size memory blocks.
+ */
+
+typedef struct
+{
+    DWORD num_items;       /* Number of elements inserted */
+    void *mem;             /* Ptr to array */
+    DWORD blocks_alloced;  /* Number of elements allocated */
+    BYTE inc;              /* Number of elements to grow by when we need to expand */
+    BYTE block_size;       /* Size in bytes of an element */
+    BYTE flags;            /* Flags */
+} FDSA_info;
+
+#define FDSA_FLAG_INTERNAL_ALLOC 0x01 /* When set we have allocated mem internally */
+
+/*************************************************************************
  *      @	[SHLWAPI.208]
  *
- * Some sort of memory management process.
+ * Initialize an FDSA arrary. 
  */
-DWORD WINAPI FDSA_Initialize(
-	DWORD    a,
-	DWORD    b,
-	LPVOID   c,
-	LPVOID   d,
-	DWORD    e)
+BOOL WINAPI FDSA_Initialize(DWORD block_size, DWORD inc, FDSA_info *info, void *mem,
+                            DWORD init_blocks)
 {
-    FIXME("(0x%08lx 0x%08lx %p %p 0x%08lx) stub\n",
-	  a, b, c, d, e);
-    return 1;
+    TRACE("(0x%08lx 0x%08lx %p %p 0x%08lx)\n", block_size, inc, info, mem, init_blocks);
+
+    if(inc == 0)
+        inc = 1;
+
+    if(mem)
+        memset(mem, 0, block_size * init_blocks);
+    
+    info->num_items = 0;
+    info->inc = inc;
+    info->mem = mem;
+    info->blocks_alloced = init_blocks;
+    info->block_size = block_size;
+    info->flags = 0;
+
+    return TRUE;
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.209]
  *
- * Some sort of memory management process.
+ * Destroy an FDSA array
  */
-DWORD WINAPI FDSA_Destroy(
-	LPVOID   a)
+BOOL WINAPI FDSA_Destroy(FDSA_info *info)
 {
-    FIXME("(%p) stub\n",
-	  a);
-    return 1;
+    TRACE("(%p)\n", info);
+
+    if(info->flags & FDSA_FLAG_INTERNAL_ALLOC)
+    {
+        HeapFree(GetProcessHeap(), 0, info->mem);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.210]
  *
- * Some sort of memory management process.
+ * Insert element into an FDSA array
  */
-DWORD WINAPI FDSA_InsertItem(
-	LPVOID   a,
-	DWORD    b,
-	LPVOID   c)
+DWORD WINAPI FDSA_InsertItem(FDSA_info *info, DWORD where, void *block)
 {
-    FIXME("(%p 0x%08lx %p) stub\n",
-	  a, b, c);
-    return 0;
+    TRACE("(%p 0x%08lx %p)\n", info, where, block);
+    if(where > info->num_items)
+        where = info->num_items;
+
+    if(info->num_items >= info->blocks_alloced)
+    {
+        DWORD size = (info->blocks_alloced + info->inc) * info->block_size;
+        if(info->flags & 0x1)
+            info->mem = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, info->mem, size);
+        else
+        {
+            void *old_mem = info->mem;
+            info->mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+            memcpy(info->mem, old_mem, info->blocks_alloced * info->block_size);
+        }
+        info->blocks_alloced += info->inc;
+        info->flags |= 0x1;
+    }
+
+    if(where < info->num_items)
+    {
+        memmove((char*)info->mem + (where + 1) * info->block_size,
+                (char*)info->mem + where * info->block_size,
+                (info->num_items - where) * info->block_size);
+    }
+    memcpy((char*)info->mem + where * info->block_size, block, info->block_size);
+
+    info->num_items++;
+    return where;
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.211]
+ *
+ * Delete an element from an FDSA array.
  */
-DWORD WINAPI FDSA_DeleteItem(
-	LPVOID   a,
-	DWORD    b)
+BOOL WINAPI FDSA_DeleteItem(FDSA_info *info, DWORD where)
 {
-    FIXME("(%p 0x%08lx) stub\n",
-	  a, b);
-    return 1;
+    TRACE("(%p 0x%08lx)\n", info, where);
+
+    if(where >= info->num_items)
+        return FALSE;
+
+    if(where < info->num_items - 1)
+    {
+        memmove((char*)info->mem + where * info->block_size,
+                (char*)info->mem + (where + 1) * info->block_size,
+                (info->num_items - where - 1) * info->block_size);
+    }
+    memset((char*)info->mem + (info->num_items - 1) * info->block_size,
+           0, info->block_size);
+    info->num_items--;
+    return TRUE;
 }
+
 
 typedef struct {
     REFIID   refid;

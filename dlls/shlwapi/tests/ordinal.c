@@ -227,6 +227,106 @@ static void test_alloc_shared(void)
     ok( ret, "SHFreeShared failed: %ld\n", GetLastError());
 }
 
+static void test_fdsa(void)
+{
+    typedef struct
+    {
+        DWORD num_items;       /* Number of elements inserted */
+        void *mem;             /* Ptr to array */
+        DWORD blocks_alloced;  /* Number of elements allocated */
+        BYTE inc;              /* Number of elements to grow by when we need to expand */
+        BYTE block_size;       /* Size in bytes of an element */
+        BYTE flags;            /* Flags */
+    } FDSA_info;
+
+    BOOL (WINAPI *pFDSA_Initialize)(DWORD block_size, DWORD inc, FDSA_info *info, void *mem,
+                                    DWORD init_blocks);
+    BOOL (WINAPI *pFDSA_Destroy)(FDSA_info *info);
+    DWORD (WINAPI *pFDSA_InsertItem)(FDSA_info *info, DWORD where, void *block);
+    BOOL (WINAPI *pFDSA_DeleteItem)(FDSA_info *info, DWORD where);
+
+    FDSA_info info;
+    int block_size = 10, init_blocks = 4, inc = 2;
+    DWORD ret;
+    char *mem;
+
+    pFDSA_Initialize = (void *)GetProcAddress(hShlwapi, (LPSTR)208);
+    pFDSA_Destroy    = (void *)GetProcAddress(hShlwapi, (LPSTR)209);
+    pFDSA_InsertItem = (void *)GetProcAddress(hShlwapi, (LPSTR)210);
+    pFDSA_DeleteItem = (void *)GetProcAddress(hShlwapi, (LPSTR)211);
+
+    mem = HeapAlloc(GetProcessHeap(), 0, block_size * init_blocks);
+    memset(&info, 0, sizeof(info));
+
+    ok(pFDSA_Initialize(block_size, inc, &info, mem, init_blocks), "FDSA_Initialize rets FALSE\n");
+    ok(info.num_items == 0, "num_items = %ld\n", info.num_items);
+    ok(info.mem == mem, "mem = %p\n", info.mem);
+    ok(info.blocks_alloced == init_blocks, "blocks_alloced = %ld\n", info.blocks_alloced);
+    ok(info.inc == inc, "inc = %d\n", info.inc);
+    ok(info.block_size == block_size, "block_size = %d\n", info.block_size);
+    ok(info.flags == 0, "flags = %d\n", info.flags);
+
+    ret = pFDSA_InsertItem(&info, 1234, "1234567890");
+    ok(ret == 0, "ret = %ld\n", ret);
+    ok(info.num_items == 1, "num_items = %ld\n", info.num_items);
+    ok(info.mem == mem, "mem = %p\n", info.mem);
+    ok(info.blocks_alloced == init_blocks, "blocks_alloced = %ld\n", info.blocks_alloced);
+    ok(info.inc == inc, "inc = %d\n", info.inc);
+    ok(info.block_size == block_size, "block_size = %d\n", info.block_size);
+    ok(info.flags == 0, "flags = %d\n", info.flags);
+
+    ret = pFDSA_InsertItem(&info, 1234, "abcdefghij");
+    ok(ret == 1, "ret = %ld\n", ret);
+
+    ret = pFDSA_InsertItem(&info, 1, "klmnopqrst");
+    ok(ret == 1, "ret = %ld\n", ret);
+
+    ret = pFDSA_InsertItem(&info, 0, "uvwxyzABCD");
+    ok(ret == 0, "ret = %ld\n", ret);
+    ok(info.mem == mem, "mem = %p\n", info.mem);
+    ok(info.flags == 0, "flags = %d\n", info.flags);
+
+    /* This next InsertItem will cause shlwapi to allocate its own mem buffer */
+    ret = pFDSA_InsertItem(&info, 0, "EFGHIJKLMN");
+    ok(ret == 0, "ret = %ld\n", ret);
+    ok(info.mem != mem, "mem = %p\n", info.mem);
+    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %ld\n", info.blocks_alloced);
+    ok(info.flags == 0x1, "flags = %d\n", info.flags);
+
+    ok(!memcmp(info.mem, "EFGHIJKLMNuvwxyzABCD1234567890klmnopqrstabcdefghij", 50), "mem %s\n", (char*)info.mem);
+
+    ok(pFDSA_DeleteItem(&info, 2), "rets FALSE\n");
+    ok(info.mem != mem, "mem = %p\n", info.mem);
+    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %ld\n", info.blocks_alloced);
+    ok(info.flags == 0x1, "flags = %d\n", info.flags);
+
+    ok(!memcmp(info.mem, "EFGHIJKLMNuvwxyzABCDklmnopqrstabcdefghij", 40), "mem %s\n", (char*)info.mem);
+
+    ok(pFDSA_DeleteItem(&info, 3), "rets FALSE\n");
+    ok(info.mem != mem, "mem = %p\n", info.mem);
+    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %ld\n", info.blocks_alloced);
+    ok(info.flags == 0x1, "flags = %d\n", info.flags);
+
+    ok(!memcmp(info.mem, "EFGHIJKLMNuvwxyzABCDklmnopqrst", 30), "mem %s\n", (char*)info.mem);
+
+    ok(!pFDSA_DeleteItem(&info, 4), "does not ret FALSE\n");
+
+    /* As shlwapi has allocated memory internally, Destroy will ret FALSE */
+    ok(!pFDSA_Destroy(&info), "FDSA_Destroy does not ret FALSE\n");
+
+
+    /* When Initialize is called with inc = 0, set it to 1 */
+    ok(pFDSA_Initialize(block_size, 0, &info, mem, init_blocks), "FDSA_Initialize rets FALSE\n");
+    ok(info.inc == 1, "inc = %d\n", info.inc);
+
+    /* This time, because shlwapi hasn't had to allocate memory
+       internally, Destroy rets non-zero */
+    ok(pFDSA_Destroy(&info), "FDSA_Destroy rets FALSE\n");
+
+
+    HeapFree(GetProcessHeap(), 0, mem);
+}
+
 START_TEST(ordinal)
 {
   hShlwapi = LoadLibraryA("shlwapi.dll");
@@ -244,5 +344,7 @@ START_TEST(ordinal)
   test_GetAcceptLanguagesA();
   test_SHSearchMapInt();
   test_alloc_shared();
+  test_fdsa();
+
   FreeLibrary(hShlwapi);
 }
