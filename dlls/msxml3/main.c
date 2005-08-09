@@ -19,6 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -26,6 +28,8 @@
 #include "ole2.h"
 
 #include "wine/debug.h"
+
+#include "msxml_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -40,9 +44,15 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:
+#ifdef HAVE_LIBXML2
+        xmlInitParser();
+#endif
         DisableThreadLibraryCalls(hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
+#ifdef HAVE_LIBXML2
+        xmlCleanupParser();
+#endif
         break;
     }
     return TRUE;
