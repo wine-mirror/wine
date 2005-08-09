@@ -2305,10 +2305,9 @@ static const IPSFactoryBufferVtbl psfacbufvtbl = {
 static const IPSFactoryBufferVtbl *lppsfac = &psfacbufvtbl;
 
 /***********************************************************************
- *           DllGetClassObject [OLE32.63]
+ *           TMARSHAL_DllGetClassObject
  */
-HRESULT WINAPI
-TypeLibFac_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
+HRESULT TMARSHAL_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
 {
     if (IsEqualIID(iid,&IID_IPSFactoryBuffer)) {
 	*ppv = &lppsfac;

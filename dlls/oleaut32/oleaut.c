@@ -32,8 +32,7 @@
 #include "ole2.h"
 #include "olectl.h"
 #include "oleauto.h"
-
-#include "tmarshal.h"
+#include "typelib.h"
 
 #include "wine/debug.h"
 
@@ -727,7 +726,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
         return OLEAUTPS_DllGetClassObject(&CLSID_PSDispatch, iid, ppv);
     }
     if (IsEqualGUID(rclsid,&CLSID_PSOAInterface)) {
-	if (S_OK==TypeLibFac_DllGetClassObject(rclsid,iid,ppv))
+	if (S_OK==TMARSHAL_DllGetClassObject(rclsid,iid,ppv))
 	    return S_OK;
 	/*FALLTHROUGH*/
     }
