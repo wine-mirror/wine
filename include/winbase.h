@@ -139,7 +139,7 @@ typedef struct _OFSTRUCT
     WORD nErrCode;
     WORD Reserved1;
     WORD Reserved2;
-    BYTE szPathName[OFS_MAXPATHNAME];
+    CHAR szPathName[OFS_MAXPATHNAME];
 } OFSTRUCT, *POFSTRUCT, *LPOFSTRUCT;
 
 #define OF_READ               0x0000
