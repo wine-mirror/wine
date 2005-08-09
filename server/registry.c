@@ -879,7 +879,7 @@ static void set_value( struct key *key, WCHAR *name, int type, const void *data,
 }
 
 /* get a key value */
-static void get_value( struct key *key, const WCHAR *name, int *type, int *len )
+static void get_value( struct key *key, const WCHAR *name, int *type, unsigned int *len )
 {
     struct key_value *value;
     int index;

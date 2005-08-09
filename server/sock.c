@@ -623,7 +623,6 @@ static struct sock *accept_socket( obj_handle_t handle )
     struct sock *sock;
     int	acceptfd;
     struct sockaddr	saddr;
-    int			slen;
 
     sock=(struct sock*)get_handle_obj(current->process,handle,
                                       GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops);
@@ -642,7 +641,7 @@ static struct sock *accept_socket( obj_handle_t handle )
          * or that accept() is allowed on it. In those cases we will get -1/errno
          * return.
          */
-        slen = sizeof(saddr);
+        unsigned int slen = sizeof(saddr);
         acceptfd = accept( get_unix_fd(sock->fd), &saddr, &slen);
         if (acceptfd==-1)
         {

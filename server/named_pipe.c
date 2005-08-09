@@ -712,7 +712,7 @@ DECL_HANDLER(wait_named_pipe)
     }
     else
     {
-        unsigned int timeout;
+        int timeout;
         if (req->timeout == NMPWAIT_USE_DEFAULT_WAIT)
             timeout = pipe->timeout;
         else
