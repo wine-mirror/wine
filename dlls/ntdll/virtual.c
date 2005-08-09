@@ -1081,7 +1081,7 @@ BOOL is_current_process( HANDLE handle )
 /***********************************************************************
  *           virtual_init
  */
-void virtual_init(void)
+static inline void virtual_init(void)
 {
 #ifndef page_mask
     page_size = getpagesize();
@@ -1091,6 +1091,51 @@ void virtual_init(void)
     page_shift = 0;
     while ((1 << page_shift) != page_size) page_shift++;
 #endif  /* page_mask */
+}
+
+
+/***********************************************************************
+ *           VIRTUAL_alloc_teb
+ *
+ * Allocate a memory view for a new TEB. We don't care about granularity for TEBs.
+ */
+NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size, BOOL first )
+{
+    void *ptr;
+    NTSTATUS status;
+    struct file_view *view;
+    BYTE vprot = VPROT_READ | VPROT_WRITE | VPROT_COMMITTED;
+
+    if (first) virtual_init();
+
+    *ret = NULL;
+    size = ROUND_SIZE( 0, size );
+
+    for (;;)
+    {
+        if ((ptr = wine_anon_mmap( NULL, size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
+        {
+            if (errno == ENOMEM) return STATUS_NO_MEMORY;
+            return STATUS_INVALID_PARAMETER;
+        }
+        /* if we got something beyond the user limit, unmap it and retry */
+        if (is_beyond_limit( ptr, size, user_space_limit )) add_reserved_area( ptr, size );
+        else break;
+    }
+
+    if (!first) RtlEnterCriticalSection( &csVirtual );
+
+    status = create_view( &view, ptr, size, vprot );
+    if (status == STATUS_SUCCESS)
+    {
+        view->flags |= VFLAG_VALLOC;
+        *ret = ptr;
+    }
+    else unmap_area( ptr, size );
+
+    if (!first) RtlLeaveCriticalSection( &csVirtual );
+
+    return status;
 }
 
 
@@ -1456,7 +1501,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         {
             /* make the address space end at the user limit, except if
              * the last view was mapped beyond that */
-            if (alloc_base < (char *)user_space_limit)
+            if (alloc_base <= (char *)user_space_limit)
             {
                 if (user_space_limit && base >= (char *)user_space_limit)
                 {

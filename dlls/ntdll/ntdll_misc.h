@@ -51,7 +51,6 @@ extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handl
 extern BOOL SIGNAL_Init(void);
 extern void debug_init(void);
 extern void thread_init(void);
-extern void virtual_init(void);
 
 /* server support */
 extern time_t server_start_time;
@@ -90,6 +89,7 @@ extern NTSTATUS FILE_GetNtStatus(void);
 extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name );
 
 /* virtual memory */
+extern NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size, BOOL first );
 extern NTSTATUS VIRTUAL_HandleFault(LPCVOID addr);
 extern BOOL VIRTUAL_HasMapping( LPCVOID addr );
 extern void VIRTUAL_UseLargeAddressSpace(void);
