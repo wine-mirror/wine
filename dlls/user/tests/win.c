@@ -2813,16 +2813,16 @@ static void test_params(void)
     rc = GetWindowText(hwndMain2, NULL, 1024);
     ok( rc==0, "GetWindowText: rc=%d err=%ld\n",rc,GetLastError());
 
+    SetLastError(0xdeadbeef);
     hwnd=CreateWindow("LISTBOX", "TestList",
                       (LBS_STANDARD & ~LBS_SORT),
                       0, 0, 100, 100,
                       NULL, (HMENU)1, NULL, 0);
-    todo_wine {
-    ok(hwnd==NULL, "CreateWindow(parent=NULL, ctlid!=0) should have failed\n");
-    }
-    /* NT sets LastError to ERROR_INVALID_MENU_HANDLE
-     * but Win9x leaves it unchanged. So no test.
-     */
+
+    ok(!hwnd, "CreateWindow with invalid menu handle should fail\n");
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE || /* NT */
+       GetLastError() == 0xdeadbeef, /* Win9x */
+       "wrong last error value %ld\n", GetLastError());
 }
 
 static void test_AWRwindow(LPCSTR class, LONG style, LONG exStyle, BOOL menu)

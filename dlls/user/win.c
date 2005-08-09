@@ -1025,7 +1025,15 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     if (((wndPtr->dwStyle & (WS_CAPTION|WS_CHILD)) == WS_CAPTION) ||
         (wndPtr->dwExStyle & WS_EX_APPWINDOW))
     {
-        if (cs->hMenu) MENU_SetMenu(hwnd, cs->hMenu);
+        if (cs->hMenu)
+        {
+            if (!MENU_SetMenu(hwnd, cs->hMenu))
+            {
+                WIN_ReleasePtr( wndPtr );
+                free_window_handle( hwnd );
+                return 0;
+            }
+        }
         else
         {
             LPCSTR menuName = (LPCSTR)GetClassLongPtrA( hwnd, GCLP_MENUNAME );
