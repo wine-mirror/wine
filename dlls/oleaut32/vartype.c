@@ -34,6 +34,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(variant);
 
 extern HMODULE OLEAUT32_hModule;
 
+#define CY_MULTIPLIER   10000             /* 4 dp of precision */
+#define CY_MULTIPLIER_F 10000.0
+#define CY_HALF         (CY_MULTIPLIER/2) /* 0.5 */
+#define CY_HALF_F       (CY_MULTIPLIER_F/2.0)
+
 static const WCHAR szFloatFormatW[] = { '%','.','7','G','\0' };
 static const WCHAR szDoubleFormatW[] = { '%','.','1','5','G','\0' };
 
@@ -63,6 +68,20 @@ static inline void VARIANT_CopyData(const VARIANT *srcVar, VARTYPE vt, void *pOu
     FIXME("VT_ type %d unhandled, please report!\n", vt);
   }
 }
+
+/* Macro to inline conversion from a float or double to any integer type,
+ * rounding according to the 'dutch' convention.
+ */
+#define VARIANT_DutchRound(typ, value, res) do { \
+  double whole = value < 0 ? ceil(value) : floor(value); \
+  double fract = value - whole; \
+  if (fract > 0.5) res = (typ)whole + (typ)1; \
+  else if (fract == 0.5) { typ is_odd = (typ)whole & 1; res = whole + is_odd; } \
+  else if (fract >= 0.0) res = (typ)whole; \
+  else if (fract == -0.5) { typ is_odd = (typ)whole & 1; res = whole - is_odd; } \
+  else if (fract > -0.5) res = (typ)whole; \
+  else res = (typ)whole - (typ)1; \
+} while(0);
 
 
 /* Coerce VT_BSTR to a numeric type */
@@ -121,6 +140,128 @@ static HRESULT VARIANT_FromDisp(IDispatch* pdispIn, LCID lcid, void* pOut, VARTY
     hRet = DISP_E_TYPEMISMATCH;
   return hRet;
 }
+
+/* Inline return type */
+#define RETTYP inline static HRESULT
+
+
+/* Simple compiler cast from one type to another */
+#define SIMPLE(dest, src, func) RETTYP _##func(src in, dest* out) { \
+  *out = in; return S_OK; }
+
+/* Compiler cast where input cannot be negative */
+#define NEGTST(dest, src, func) RETTYP _##func(src in, dest* out) { \
+  if (in < (src)0) return DISP_E_OVERFLOW; *out = in; return S_OK; }
+
+/* Compiler cast where input cannot be > some number */
+#define POSTST(dest, src, func, tst) RETTYP _##func(src in, dest* out) { \
+  if (in > (dest)tst) return DISP_E_OVERFLOW; *out = in; return S_OK; }
+
+/* Compiler cast where input cannot be < some number or >= some other number */
+#define BOTHTST(dest, src, func, lo, hi) RETTYP _##func(src in, dest* out) { \
+  if (in < (dest)lo || in > hi) return DISP_E_OVERFLOW; *out = in; return S_OK; }
+
+/* I1 */
+POSTST(signed char, BYTE, VarI1FromUI1, I1_MAX);
+BOTHTST(signed char, SHORT, VarI1FromI2, I1_MIN, I1_MAX);
+BOTHTST(signed char, LONG, VarI1FromI4, I1_MIN, I1_MAX);
+SIMPLE(signed char, VARIANT_BOOL, VarI1FromBool);
+POSTST(signed char, USHORT, VarI1FromUI2, I1_MAX);
+POSTST(signed char, ULONG, VarI1FromUI4, I1_MAX);
+BOTHTST(signed char, LONG64, VarI1FromI8, I1_MIN, I1_MAX);
+POSTST(signed char, ULONG64, VarI1FromUI8, I1_MAX);
+
+/* UI1 */
+BOTHTST(BYTE, SHORT, VarUI1FromI2, UI1_MIN, UI1_MAX);
+SIMPLE(BYTE, VARIANT_BOOL, VarUI1FromBool);
+NEGTST(BYTE, signed char, VarUI1FromI1);
+POSTST(BYTE, USHORT, VarUI1FromUI2, UI1_MAX);
+BOTHTST(BYTE, LONG, VarUI1FromI4, UI1_MIN, UI1_MAX);
+POSTST(BYTE, ULONG, VarUI1FromUI4, UI1_MAX);
+BOTHTST(BYTE, LONG64, VarUI1FromI8, UI1_MIN, UI1_MAX);
+POSTST(BYTE, ULONG64, VarUI1FromUI8, UI1_MAX);
+
+/* I2 */
+SIMPLE(SHORT, BYTE, VarI2FromUI1);
+BOTHTST(SHORT, LONG, VarI2FromI4, I2_MIN, I2_MAX);
+SIMPLE(SHORT, VARIANT_BOOL, VarI2FromBool);
+SIMPLE(SHORT, signed char, VarI2FromI1);
+POSTST(SHORT, USHORT, VarI2FromUI2, I2_MAX);
+POSTST(SHORT, ULONG, VarI2FromUI4, I2_MAX);
+BOTHTST(SHORT, LONG64, VarI2FromI8, I2_MIN, I2_MAX);
+POSTST(SHORT, ULONG64, VarI2FromUI8, I2_MAX);
+
+/* UI2 */
+SIMPLE(USHORT, BYTE, VarUI2FromUI1);
+NEGTST(USHORT, SHORT, VarUI2FromI2);
+BOTHTST(USHORT, LONG, VarUI2FromI4, UI2_MIN, UI2_MAX);
+SIMPLE(USHORT, VARIANT_BOOL, VarUI2FromBool);
+NEGTST(USHORT, signed char, VarUI2FromI1);
+POSTST(USHORT, ULONG, VarUI2FromUI4, UI2_MAX);
+BOTHTST(USHORT, LONG64, VarUI2FromI8, UI2_MIN, UI2_MAX);
+POSTST(USHORT, ULONG64, VarUI2FromUI8, UI2_MAX);
+
+/* I4 */
+SIMPLE(LONG, BYTE, VarI4FromUI1);
+SIMPLE(LONG, SHORT, VarI4FromI2);
+SIMPLE(LONG, VARIANT_BOOL, VarI4FromBool);
+SIMPLE(LONG, signed char, VarI4FromI1);
+SIMPLE(LONG, USHORT, VarI4FromUI2);
+POSTST(LONG, ULONG, VarI4FromUI4, I4_MAX);
+BOTHTST(LONG, LONG64, VarI4FromI8, I4_MIN, I4_MAX);
+POSTST(LONG, ULONG64, VarI4FromUI8, I4_MAX);
+
+/* UI4 */
+SIMPLE(ULONG, BYTE, VarUI4FromUI1);
+NEGTST(ULONG, SHORT, VarUI4FromI2);
+NEGTST(ULONG, LONG, VarUI4FromI4);
+SIMPLE(ULONG, VARIANT_BOOL, VarUI4FromBool);
+NEGTST(ULONG, signed char, VarUI4FromI1);
+SIMPLE(ULONG, USHORT, VarUI4FromUI2);
+BOTHTST(ULONG, LONG64, VarUI4FromI8, UI4_MIN, UI4_MAX);
+POSTST(ULONG, ULONG64, VarUI4FromUI8, UI4_MAX);
+
+/* I8 */
+SIMPLE(LONG64, BYTE, VarI8FromUI1);
+SIMPLE(LONG64, SHORT, VarI8FromI2);
+SIMPLE(LONG64, signed char, VarI8FromI1);
+SIMPLE(LONG64, USHORT, VarI8FromUI2);
+SIMPLE(LONG64, LONG, VarI8FromI4);
+SIMPLE(LONG64, ULONG, VarI8FromUI4);
+POSTST(LONG64, ULONG64, VarI8FromUI8, I8_MAX);
+
+/* UI8 */
+SIMPLE(ULONG64, BYTE, VarUI8FromUI1);
+NEGTST(ULONG64, SHORT, VarUI8FromI2);
+NEGTST(ULONG64, signed char, VarUI8FromI1);
+SIMPLE(ULONG64, USHORT, VarUI8FromUI2);
+NEGTST(ULONG64, LONG, VarUI8FromI4);
+SIMPLE(ULONG64, ULONG, VarUI8FromUI4);
+NEGTST(ULONG64, LONG64, VarUI8FromI8);
+
+/* R4 (float) */
+SIMPLE(float, BYTE, VarR4FromUI1);
+SIMPLE(float, SHORT, VarR4FromI2);
+SIMPLE(float, signed char, VarR4FromI1);
+SIMPLE(float, USHORT, VarR4FromUI2);
+SIMPLE(float, LONG, VarR4FromI4);
+SIMPLE(float, ULONG, VarR4FromUI4);
+SIMPLE(float, LONG64, VarR4FromI8);
+SIMPLE(float, ULONG64, VarR4FromUI8);
+
+/* R8 (double) */
+SIMPLE(double, BYTE, VarR8FromUI1);
+SIMPLE(double, SHORT, VarR8FromI2);
+SIMPLE(double, float, VarR8FromR4);
+RETTYP _VarR8FromCy(CY i, double* o) { *o = (double)i.int64 / CY_MULTIPLIER_F; return S_OK; }
+SIMPLE(double, DATE, VarR8FromDate);
+SIMPLE(double, signed char, VarR8FromI1);
+SIMPLE(double, USHORT, VarR8FromUI2);
+SIMPLE(double, LONG, VarR8FromI4);
+SIMPLE(double, ULONG, VarR8FromUI4);
+SIMPLE(double, LONG64, VarR8FromI8);
+SIMPLE(double, ULONG64, VarR8FromUI8);
+
 
 /* I1
  */
@@ -222,7 +363,7 @@ HRESULT WINAPI VarI1FromR8(double dblIn, signed char* pcOut)
 {
   if (dblIn < (double)I1_MIN || dblIn > (double)I1_MAX)
     return DISP_E_OVERFLOW;
-  OLEAUT32_DutchRound(CHAR, dblIn, *pcOut);
+  VARIANT_DutchRound(CHAR, dblIn, *pcOut);
   return S_OK;
 }
 
@@ -512,7 +653,7 @@ HRESULT WINAPI VarUI1FromR8(double dblIn, BYTE* pbOut)
 {
   if (dblIn < -0.5 || dblIn > (double)UI1_MAX)
     return DISP_E_OVERFLOW;
-  OLEAUT32_DutchRound(BYTE, dblIn, *pbOut);
+  VARIANT_DutchRound(BYTE, dblIn, *pbOut);
   return S_OK;
 }
 
@@ -818,7 +959,7 @@ HRESULT WINAPI VarI2FromR8(double dblIn, SHORT* psOut)
 {
   if (dblIn < (double)I2_MIN || dblIn > (double)I2_MAX)
     return DISP_E_OVERFLOW;
-  OLEAUT32_DutchRound(SHORT, dblIn, *psOut);
+  VARIANT_DutchRound(SHORT, dblIn, *psOut);
   return S_OK;
 }
 
@@ -1130,7 +1271,7 @@ HRESULT WINAPI VarUI2FromR8(double dblIn, USHORT* pusOut)
 {
   if (dblIn < -0.5 || dblIn > (double)UI2_MAX)
     return DISP_E_OVERFLOW;
-  OLEAUT32_DutchRound(USHORT, dblIn, *pusOut);
+  VARIANT_DutchRound(USHORT, dblIn, *pusOut);
   return S_OK;
 }
 
@@ -1410,7 +1551,7 @@ HRESULT WINAPI VarI4FromR8(double dblIn, LONG *piOut)
 {
   if (dblIn < (double)I4_MIN || dblIn > (double)I4_MAX)
     return DISP_E_OVERFLOW;
-  OLEAUT32_DutchRound(LONG, dblIn, *piOut);
+  VARIANT_DutchRound(LONG, dblIn, *piOut);
   return S_OK;
 }
 
@@ -1719,7 +1860,7 @@ HRESULT WINAPI VarUI4FromR8(double dblIn, ULONG *pulOut)
 {
   if (dblIn < -0.5 || dblIn > (double)UI4_MAX)
     return DISP_E_OVERFLOW;
-  OLEAUT32_DutchRound(ULONG, dblIn, *pulOut);
+  VARIANT_DutchRound(ULONG, dblIn, *pulOut);
   return S_OK;
 }
 
@@ -2009,7 +2150,7 @@ HRESULT WINAPI VarI8FromR8(double dblIn, LONG64* pi64Out)
 {
   if ( dblIn < -4611686018427387904.0 || dblIn >= 4611686018427387904.0)
     return DISP_E_OVERFLOW;
-  OLEAUT32_DutchRound(LONG64, dblIn, *pi64Out);
+  VARIANT_DutchRound(LONG64, dblIn, *pi64Out);
   return S_OK;
 }
 
@@ -2334,7 +2475,7 @@ HRESULT WINAPI VarUI8FromR8(double dblIn, ULONG64* pui64Out)
 {
   if (dblIn < -0.5 || dblIn > 1.844674407370955e19)
     return DISP_E_OVERFLOW;
-  OLEAUT32_DutchRound(ULONG64, dblIn, *pui64Out);
+  VARIANT_DutchRound(ULONG64, dblIn, *pui64Out);
   return S_OK;
 }
 
@@ -3386,7 +3527,7 @@ HRESULT WINAPI VarCyFromR8(double dblIn, CY* pCyOut)
   if (dblIn < -922337203685477.5807 || dblIn >= 922337203685477.5807)
     return DISP_E_OVERFLOW;
   dblIn *= CY_MULTIPLIER_F;
-  OLEAUT32_DutchRound(LONG64, dblIn, pCyOut->int64);
+  VARIANT_DutchRound(LONG64, dblIn, pCyOut->int64);
 #endif
   return S_OK;
 }
@@ -3838,9 +3979,9 @@ HRESULT WINAPI VarCyRound(const CY cyIn, int cDecimals, CY* pCyOut)
 
     _VarR8FromCy(cyIn, &d);
     d = d * div;
-    OLEAUT32_DutchRound(LONGLONG, d, pCyOut->int64)
+    VARIANT_DutchRound(LONGLONG, d, pCyOut->int64)
     d = (double)pCyOut->int64 / div * CY_MULTIPLIER_F;
-    OLEAUT32_DutchRound(LONGLONG, d, pCyOut->int64)
+    VARIANT_DutchRound(LONGLONG, d, pCyOut->int64)
     return S_OK;
   }
 }
