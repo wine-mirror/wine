@@ -191,7 +191,7 @@ static void test_protocol_fail(IInternetProtocol *protocol, LPCWSTR url, HRESULT
     expect_GetBindInfo = called_GetBindInfo = FALSE;
 }
 
-static void protocol_start(IInternetProtocol *protocol, LPCWSTR url)
+static void protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL is_mime_todo)
 {
     HRESULT hres;
 
@@ -204,7 +204,11 @@ static void protocol_start(IInternetProtocol *protocol, LPCWSTR url)
     hres = IInternetProtocol_Start(protocol, url, &protocol_sink, &bind_info, 0, 0);
     ok(hres == S_OK, "Start failed: %08lx\n", hres);
     ok(called_GetBindInfo, "expected GetBindInfo\n");
-    todo_wine {
+    if(is_mime_todo) {
+        todo_wine {
+            ok(called_ReportProgress, "expected ReportProgress\n");
+        }
+    }else {
         ok(called_ReportProgress, "expected ReportProgress\n");
     }
     ok(called_ReportData, "expected ReportData\n");
@@ -266,7 +270,7 @@ static void test_res_protocol(void)
             ok(hres == E_FAIL, "Read returned %08lx expected E_FAIL\n", hres);
             ok(cb == 0xdeadbeef, "cb=%lu expected 0xdeadbeef\n", cb);
     
-            protocol_start(protocol, blank_url);
+            protocol_start(protocol, blank_url, TRUE);
             hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
             ok(hres == S_OK, "Read failed: %08lx\n", hres);
             ok(cb == 2, "cb=%lu expected 2\n", cb);
@@ -278,7 +282,7 @@ static void test_res_protocol(void)
             hres = IInternetProtocol_UnlockRequest(protocol);
             ok(hres == S_OK, "UnlockRequest failed: %08lx\n", hres);
 
-            protocol_start(protocol, blank_url);
+            protocol_start(protocol, blank_url, TRUE);
             hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
             ok(hres == S_OK, "Read failed: %08lx\n", hres);
             hres = IInternetProtocol_LockRequest(protocol, 0);
@@ -288,7 +292,7 @@ static void test_res_protocol(void)
             hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
             ok(hres == S_OK, "Read failed: %08lx\n", hres);
 
-            protocol_start(protocol, blank_url);
+            protocol_start(protocol, blank_url, TRUE);
             hres = IInternetProtocol_LockRequest(protocol, 0);
             ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
             hres = IInternetProtocol_Terminate(protocol, 0);
@@ -305,12 +309,12 @@ static void test_res_protocol(void)
             ok(hres == S_OK, "Read failed: %08lx\n", hres);
             ok(cb == 2, "cb=%lu expected 2\n", cb);
 
-            protocol_start(protocol, blank_url);
+            protocol_start(protocol, blank_url, TRUE);
             hres = IInternetProtocol_LockRequest(protocol, 0);
             ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
             hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
             ok(hres == S_OK, "Read failed: %08lx\n", hres);
-            protocol_start(protocol, blank_url);
+            protocol_start(protocol, blank_url, TRUE);
             hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
             ok(hres == S_OK, "Read failed: %08lx\n", hres);
             hres = IInternetProtocol_Terminate(protocol, 0);
@@ -361,7 +365,7 @@ static void test_about_protocol(void)
         ok(hres == S_OK, "Could not get IInternetProtocol: %08lx\n", hres);
 
         if(SUCCEEDED(hres)) {
-            protocol_start(protocol, blank_url);
+            protocol_start(protocol, blank_url, FALSE);
             hres = IInternetProtocol_LockRequest(protocol, 0);
             ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
             hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
@@ -371,7 +375,7 @@ static void test_about_protocol(void)
             hres = IInternetProtocol_UnlockRequest(protocol);
             ok(hres == S_OK, "UnlockRequest failed: %08lx\n", hres);
 
-            protocol_start(protocol, test_url);
+            protocol_start(protocol, test_url, FALSE);
             hres = IInternetProtocol_LockRequest(protocol, 0);
             ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
             hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
@@ -381,7 +385,7 @@ static void test_about_protocol(void)
             hres = IInternetProtocol_UnlockRequest(protocol);
             ok(hres == S_OK, "UnlockRequest failed: %08lx\n", hres);
 
-            protocol_start(protocol, res_url);
+            protocol_start(protocol, res_url, FALSE);
             hres = IInternetProtocol_LockRequest(protocol, 0);
             ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
             hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);

@@ -210,6 +210,7 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
     static const WCHAR html_end[] = {'<','/','H','T','M','L','>',0};
     static const WCHAR wszBlank[] = {'b','l','a','n','k',0};
     static const WCHAR wszAbout[] = {'a','b','o','u','t',':'};
+    static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 
     /* NOTE:
      * the about protocol seems not to work as I would expect. It creates html document
@@ -241,6 +242,8 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
     strcatW((LPWSTR)This->data, html_end);
     
     This->cur = 0;
+
+    IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_MIMETYPEAVAILABLE, wszTextHtml);
 
     IInternetProtocolSink_ReportData(pOIProtSink,
             BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION | BSCF_DATAFULLYAVAILABLE,
