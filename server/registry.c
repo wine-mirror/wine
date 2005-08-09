@@ -122,8 +122,8 @@ struct file_load_info
     char *buffer;  /* line buffer */
     int   len;     /* buffer length */
     int   line;    /* current input line */
-    char *tmp;     /* temp buffer to use while parsing input */
-    int   tmplen;  /* length of temp buffer */
+    WCHAR *tmp;    /* temp buffer to use while parsing input */
+    size_t tmplen; /* length of temp buffer */
 };
 
 
@@ -1021,9 +1021,9 @@ static int read_next_line( struct file_load_info *info )
 }
 
 /* make sure the temp buffer holds enough space */
-static int get_file_tmp_space( struct file_load_info *info, int size )
+static int get_file_tmp_space( struct file_load_info *info, size_t size )
 {
-    char *tmp;
+    WCHAR *tmp;
     if (info->tmplen >= size) return 1;
     if (!(tmp = realloc( info->tmp, size )))
     {
@@ -1144,14 +1144,14 @@ static struct key *load_key( struct key *base, const char *buffer, int flags,
     len = strlen(buffer) * sizeof(WCHAR);
     if (!get_file_tmp_space( info, len )) return NULL;
 
-    if ((res = parse_strW( (WCHAR *)info->tmp, &len, buffer, ']' )) == -1)
+    if ((res = parse_strW( info->tmp, &len, buffer, ']' )) == -1)
     {
         file_read_error( "Malformed key", info );
         return NULL;
     }
     if (sscanf( buffer + res, " %d", &modif ) != 1) modif = default_modif;
 
-    p = (WCHAR *)info->tmp;
+    p = info->tmp;
     while (prefix_len && *p) { if (*p++ == '\\') prefix_len--; }
 
     if (!*p)
@@ -1164,7 +1164,7 @@ static struct key *load_key( struct key *base, const char *buffer, int flags,
         /* empty key name, return base key */
         return (struct key *)grab_object( base );
     }
-    if (!(name = copy_path( p, len - ((char *)p - info->tmp), 0 )))
+    if (!(name = copy_path( p, len - (p - info->tmp) * sizeof(WCHAR), 0 )))
     {
         file_read_error( "Key is too long", info );
         return NULL;
@@ -1204,20 +1204,20 @@ static struct key_value *parse_value_name( struct key *key, const char *buffer, 
     if (!get_file_tmp_space( info, maxlen )) return NULL;
     if (buffer[0] == '@')
     {
-        info->tmp[0] = info->tmp[1] = 0;
+        info->tmp[0] = 0;
         *len = 1;
     }
     else
     {
-        if ((*len = parse_strW( (WCHAR *)info->tmp, &maxlen, buffer + 1, '\"' )) == -1) goto error;
+        if ((*len = parse_strW( info->tmp, &maxlen, buffer + 1, '\"' )) == -1) goto error;
         (*len)++;  /* for initial quote */
     }
     while (isspace(buffer[*len])) (*len)++;
     if (buffer[*len] != '=') goto error;
     (*len)++;
     while (isspace(buffer[*len])) (*len)++;
-    if (!(value = find_value( key, (WCHAR *)info->tmp, &index )))
-        value = insert_value( key, (WCHAR *)info->tmp, index );
+    if (!(value = find_value( key, info->tmp, &index )))
+        value = insert_value( key, info->tmp, index );
     return value;
 
  error:
@@ -1243,7 +1243,7 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     case REG_SZ:
         len = strlen(buffer) * sizeof(WCHAR);
         if (!get_file_tmp_space( info, len )) return 0;
-        if ((res = parse_strW( (WCHAR *)info->tmp, &len, buffer, '\"' )) == -1) goto error;
+        if ((res = parse_strW( info->tmp, &len, buffer, '\"' )) == -1) goto error;
         ptr = info->tmp;
         break;
     case REG_DWORD:
@@ -1257,7 +1257,7 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
         {
             maxlen = 1 + strlen(buffer)/3;  /* 3 chars for one hex byte */
             if (!get_file_tmp_space( info, len + maxlen )) return 0;
-            if ((res = parse_hex( info->tmp + len, &maxlen, buffer )) == -1) goto error;
+            if ((res = parse_hex( (unsigned char *)info->tmp + len, &maxlen, buffer )) == -1) goto error;
             len += maxlen;
             buffer += res;
             while (isspace(*buffer)) buffer++;
@@ -1299,16 +1299,16 @@ static int get_prefix_len( struct key *key, const char *name, struct file_load_i
     int len = strlen(name) * sizeof(WCHAR);
     if (!get_file_tmp_space( info, len )) return 0;
 
-    if ((res = parse_strW( (WCHAR *)info->tmp, &len, name, ']' )) == -1)
+    if ((res = parse_strW( info->tmp, &len, name, ']' )) == -1)
     {
         file_read_error( "Malformed key", info );
         return 0;
     }
-    for (p = (WCHAR *)info->tmp; *p; p++) if (*p == '\\') break;
+    for (p = info->tmp; *p; p++) if (*p == '\\') break;
     *p = 0;
     for (res = 1; key != root_key; res++)
     {
-        if (!strcmpiW( (WCHAR *)info->tmp, key->name )) break;
+        if (!strcmpiW( info->tmp, key->name )) break;
         key = key->parent;
     }
     if (key == root_key) res = 0;  /* no matching name */
