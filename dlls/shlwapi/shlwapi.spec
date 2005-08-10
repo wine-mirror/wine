@@ -422,7 +422,7 @@
 422 stdcall -noname _SHGlobalCounterCreateNamedA(str long)
 423 stdcall -noname _SHGlobalCounterCreateNamedW(wstr long)
 424 stdcall -noname _SHGlobalCounterDecrement(long)
-425 stub -noname DeleteMenuWrap
+425 stdcall -noname DeleteMenuWrap(ptr long long)
 426 stub -noname DestroyMenuWrap
 427 stub -noname TrackPopupMenuWrap
 428 stdcall @(long long long long long ptr) user32.TrackPopupMenuEx

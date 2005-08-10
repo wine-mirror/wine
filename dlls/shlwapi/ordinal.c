@@ -3722,6 +3722,16 @@ BOOL WINAPI SHFlushSFCacheWrap(void) {
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.425]
+ */
+BOOL WINAPI DeleteMenuWrap(HMENU hmenu, UINT pos, UINT flags)
+{
+    /* FIXME: This should do more than simply call DeleteMenu */
+    FIXME("%p %08x %08x): semi-stub\n", hmenu, pos, flags);
+    return DeleteMenu(hmenu, pos, flags);
+}
+
+/*************************************************************************
  *      @      [SHLWAPI.429]
  * FIXME I have no idea what this function does or what its arguments are.
  */
