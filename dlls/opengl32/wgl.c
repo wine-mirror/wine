@@ -360,7 +360,7 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     if (wgl_ext_ret == NULL) {
       /* Some sanity checks :-) */
       ENTER_GL();
-      local_func = p_glXGetProcAddressARB(lpszProc);
+      local_func = p_glXGetProcAddressARB( (const GLubyte *) lpszProc);
       LEAVE_GL();
       if (local_func != NULL) {
 	WARN("Extension %s defined in the OpenGL library but NOT in opengl_ext.c...\n", lpszProc);
@@ -391,7 +391,7 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     }
   } else {
     ENTER_GL();
-    local_func = p_glXGetProcAddressARB(ext_ret->glx_name);
+    local_func = p_glXGetProcAddressARB( (const GLubyte*) ext_ret->glx_name);
     LEAVE_GL();
     
     /* After that, look at the extensions defined in the Linux OpenGL library */
@@ -762,7 +762,7 @@ const GLubyte * internal_glGetString(GLenum name) {
   }
 
   if (NULL == internal_gl_extensions) {
-    GL_Extensions = glGetString(GL_EXTENSIONS);
+    GL_Extensions = (const char *) glGetString(GL_EXTENSIONS);
 
     TRACE("GL_EXTENSIONS reported:\n");  
     if (NULL == GL_Extensions) {
@@ -796,7 +796,7 @@ const GLubyte * internal_glGetString(GLenum name) {
       }
     }
   }
-  return internal_gl_extensions;
+  return (const GLubyte *) internal_gl_extensions;
 }
 
 

@@ -138,9 +138,9 @@ BOOL query_function_render_texture(glXGetProcAddressARB_t proc, const char *gl_v
   BOOL bTest = (0 <= strcmp("1.3", glx_version) || NULL != strstr(glx_extensions, "GLX_SGIX_pbuffer"));
   if (bTest) {
     if (NULL != strstr(glx_extensions, "GLX_ARB_render_texture")) {
-      p_glXBindTexImageARB = proc("glXBindTexImageARB");
-      p_glXReleaseTexImageARB = proc("glXReleaseTexImageARB");
-      p_glXDrawableAttribARB = proc("glXDrawableAttribARB");
+      p_glXBindTexImageARB = proc( (const GLubyte *) "glXBindTexImageARB");
+      p_glXReleaseTexImageARB = proc( (const GLubyte *) "glXReleaseTexImageARB");
+      p_glXDrawableAttribARB = proc( (const GLubyte *) "glXDrawableAttribARB");
       bTest = (NULL != p_glXBindTexImageARB && NULL != p_glXReleaseTexImageARB && NULL != p_glXDrawableAttribARB);
     } else {
       use_render_texture_emulation = 0;
@@ -156,7 +156,7 @@ BOOL query_function_swap_control(glXGetProcAddressARB_t proc, const char *gl_ver
 {
   BOOL bTest = (0 <= strcmp("1.3", glx_version) || NULL != strstr(glx_extensions, "GLX_SGI_swap_control"));
   if (bTest) {
-    p_glXSwapIntervalSGI = proc("glXSwapIntervalSGI");
+    p_glXSwapIntervalSGI = proc( (const GLubyte *) "glXSwapIntervalSGI");
     bTest = (NULL != p_glXSwapIntervalSGI);
   }
   return bTest;
@@ -901,10 +901,10 @@ GLboolean WINAPI wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAttribute, int *p
   }
   switch (iAttribute) {
   case WGL_PBUFFER_WIDTH_ARB:
-    glXQueryDrawable(object->display, object->drawable, GLX_WIDTH, piValue);
+    glXQueryDrawable(object->display, object->drawable, GLX_WIDTH, (unsigned int*) piValue);
     break;
   case WGL_PBUFFER_HEIGHT_ARB:
-    glXQueryDrawable(object->display, object->drawable, GLX_HEIGHT, piValue);
+    glXQueryDrawable(object->display, object->drawable, GLX_HEIGHT, (unsigned int*) piValue);
     break;
 
   case WGL_PBUFFER_LOST_ARB:
@@ -967,7 +967,7 @@ GLboolean WINAPI wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
     return GL_FALSE;
   }
   if (1 == use_render_texture_emulation) {
-    GLuint prev_binded_tex;
+    GLint prev_binded_tex;
     glGetIntegerv(object->texture_target, &prev_binded_tex);
     glBindTexture(object->texture_target, object->texture);
     if (GL_TEXTURE_1D == object->texture_target) {
