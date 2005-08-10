@@ -67,8 +67,6 @@ struct NSContainer {
     nsIBaseWindow *window;
 
     HWND hwnd;
-
-    LPWSTR url; /* hack! */
 };
 
 

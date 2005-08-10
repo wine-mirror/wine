@@ -71,35 +71,13 @@ static void paint_disabled(HWND hwnd) {
 
 static void activate_gecko(HTMLDocument *This)
 {
-    RECT rect;
-    nsresult nsres;
-
     TRACE("(%p) %p\n", This, This->nscontainer->window);
 
-    GetClientRect(This->hwnd, &rect);
+    SetParent(This->nscontainer->hwnd, This->hwnd);
+    ShowWindow(This->nscontainer->hwnd, SW_SHOW);
 
-    nsres = nsIBaseWindow_InitWindow(This->nscontainer->window, This->hwnd, NULL,
-            0, 0, rect.right, rect.bottom);
-
-    if(nsres == NS_OK) {
-        nsres = nsIBaseWindow_Create(This->nscontainer->window);
-        if(NS_FAILED(nsres))
-            WARN("Creating window failed: %08lx\n", nsres);
-
-        nsIBaseWindow_SetVisibility(This->nscontainer->window, TRUE);
-        nsIBaseWindow_SetEnabled(This->nscontainer->window, TRUE);
-    }else {
-        ERR("Initializing window failed: %08lx\n", nsres);
-    }
-
-    if(This->nscontainer->url) {
-        TRACE("Loading  url: %s\n", debugstr_w(This->nscontainer->url));
-        nsres = nsIWebNavigation_LoadURI(This->nscontainer->navigation, This->nscontainer->url,
-                LOAD_FLAGS_NONE, NULL, NULL, NULL);
-        if(NS_FAILED(nsres))
-            ERR("LoadURI failed: %08lx\n", nsres);
-        This->nscontainer->url = NULL;
-    }
+    nsIBaseWindow_SetVisibility(This->nscontainer->window, TRUE);
+    nsIBaseWindow_SetEnabled(This->nscontainer->window, TRUE);
 }
 
 static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -127,14 +105,9 @@ static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         break;
     case WM_SIZE:
         TRACE("(%p)->(WM_SIZE)\n", This);
-
-        if(This->nscontainer) {
-            nsresult nsres;
-            nsres = nsIBaseWindow_SetSize(This->nscontainer->window,
-                    LOWORD(lParam), HIWORD(lParam), TRUE);
-            if(NS_FAILED(nsres))
-                WARN("SetSize failed: %08lx\n", nsres);
-        }
+        if(This->nscontainer)
+            SetWindowPos(This->nscontainer->hwnd, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam),
+                    SWP_NOZORDER | SWP_NOACTIVATE);
     }
         
     return DefWindowProcW(hwnd, msg, wParam, lParam);

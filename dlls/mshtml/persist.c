@@ -265,17 +265,12 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
         TRACE("got url: %s\n", debugstr_w(url));
 
-        if(This->hwnd) {
-            nsres = nsIWebNavigation_LoadURI(This->nscontainer->navigation, url,
-                    LOAD_FLAGS_NONE, NULL, NULL, NULL);
-            if(NS_SUCCEEDED(nsres))
-                return S_OK;
-            else
-                WARN("LoadURI failed: %08lx\n", nsres);
-        }else {
-            This->nscontainer->url = url;
+        nsres = nsIWebNavigation_LoadURI(This->nscontainer->navigation, url,
+                LOAD_FLAGS_NONE, NULL, NULL, NULL);
+        if(NS_SUCCEEDED(nsres))
             return S_OK;
-        }
+        else
+            WARN("LoadURI failed: %08lx\n", nsres);
     }    
 
     /* FIXME: Use grfMode */

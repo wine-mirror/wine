@@ -67,6 +67,52 @@ static HINSTANCE hXPCOM = NULL;
 static nsIServiceManager *pServMgr = NULL;
 static nsIComponentManager *pCompMgr = NULL;
 
+static const WCHAR wszNsContainer[] = {'N','s','C','o','n','t','a','i','n','e','r',0};
+
+static ATOM nscontainer_class;
+
+static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    HTMLDocument *This;
+    nsresult nsres;
+
+    static const WCHAR wszTHIS[] = {'T','H','I','S',0};
+
+    if(msg == WM_CREATE) {
+        This = *(HTMLDocument**)lParam;
+        SetPropW(hwnd, wszTHIS, This);
+    }else {
+        This = (HTMLDocument*)GetPropW(hwnd, wszTHIS);
+    }
+
+    switch(msg) {
+        case WM_SIZE:
+            TRACE("(%p)->(WM_SIZE)\n", This);
+
+            nsres = nsIBaseWindow_SetSize(This->nscontainer->window,
+                    LOWORD(lParam), HIWORD(lParam), TRUE);
+            if(NS_FAILED(nsres))
+                WARN("SetSize failed: %08lx\n", nsres);
+    }
+
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+
+
+static void register_nscontainer_class(void)
+{
+    static WNDCLASSEXW wndclass = {
+        sizeof(WNDCLASSEXW),
+        CS_DBLCLKS,
+        nsembed_proc,
+        0, 0, NULL, NULL, NULL, NULL, NULL,
+        wszNsContainer,
+        NULL,
+    };
+    wndclass.hInstance = hInst;
+    nscontainer_class = RegisterClassExW(&wndclass);
+}
+
 static BOOL get_mozilla_path(PRUnichar *gre_path)
 {
     DWORD res, type, i, size = MAX_PATH;
@@ -124,8 +170,6 @@ static BOOL get_mozctl_path(PRUnichar *gre_path)
     return TRUE;
 }
 
-
-
 static BOOL load_gecko()
 {
     nsresult nsres;
@@ -143,7 +187,7 @@ static BOOL load_gecko()
         return pCompMgr != NULL;
     tried_load = TRUE;
 
-    if(!(get_mozctl_path(gre_path) || get_mozilla_path(gre_path))) {
+    if(!get_mozctl_path(gre_path) && !get_mozilla_path(gre_path)) {
         MESSAGE("Could not load Mozilla. HTML rendering will be disabled.\n");
         return FALSE;
     }
@@ -156,8 +200,6 @@ static BOOL load_gecko()
         WCHAR path_env[MAX_PATH];
         static WCHAR wszPATH[] = {'P','A','T','H',0};
         int len;
-
-        TRACE("here\n");
 
         GetEnvironmentVariableW(wszPATH, path_env, sizeof(path_env)/sizeof(WCHAR));
         len = strlenW(path_env);
@@ -238,7 +280,6 @@ void close_gecko()
 
 void HTMLDocument_NSContainer_Init(HTMLDocument *This)
 {
-    NSContainer *ret;
     nsIWebBrowserSetup *wbsetup;
     nsresult nsres;
 
@@ -247,20 +288,19 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
     if(!load_gecko())
         return;
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(NSContainer));
-    ret->url = NULL;
+    This->nscontainer = HeapAlloc(GetProcessHeap(), 0, sizeof(NSContainer));
 
-    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
-            NS_WEBBROWSER_CONTRACTID, NULL, &IID_nsIWebBrowser, (void**)&ret->webbrowser);
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
+            NULL, &IID_nsIWebBrowser, (void**)&This->nscontainer->webbrowser);
     if(NS_FAILED(nsres))
         ERR("Creating WebBrowser failed: %08lx\n", nsres);
 
-    nsres = nsIWebBrowser_QueryInterface(ret->webbrowser, &IID_nsIBaseWindow,
-            (void**)&ret->window);
+    nsres = nsIWebBrowser_QueryInterface(This->nscontainer->webbrowser, &IID_nsIBaseWindow,
+            (void**)&This->nscontainer->window);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIBaseWindow interface: %08lx\n", nsres);
 
-    nsres = nsIWebBrowser_QueryInterface(ret->webbrowser,
+    nsres = nsIWebBrowser_QueryInterface(This->nscontainer->webbrowser,
             &IID_nsIWebBrowserSetup, (void**)&wbsetup);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIWebBrowserSetup_SetProperty(wbsetup, SETUP_IS_CHROME_WRAPPER, TRUE);
@@ -271,12 +311,30 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
         ERR("Could not get nsIWebBrowserSetup interface\n");
     }
 
-    nsres = nsIWebBrowser_QueryInterface(ret->webbrowser, &IID_nsIWebNavigation,
-            (void**)&ret->navigation);
+    nsres = nsIWebBrowser_QueryInterface(This->nscontainer->webbrowser, &IID_nsIWebNavigation,
+            (void**)&This->nscontainer->navigation);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIWebNavigation interface: %08lx\n", nsres);
 
-    This->nscontainer = ret;
+    if(!nscontainer_class)
+        register_nscontainer_class();
+
+    This->nscontainer->hwnd = CreateWindowExW(0, wszNsContainer, NULL,
+            WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, 100, 100,
+            GetDesktopWindow(), NULL, hInst, This);
+
+    nsres = nsIBaseWindow_InitWindow(This->nscontainer->window, This->nscontainer->hwnd, NULL,
+            0, 0, 100, 100);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIBaseWindow_Create(This->nscontainer->window);
+        if(NS_FAILED(nsres))
+            WARN("Creating window failed: %08lx\n", nsres);
+
+        nsIBaseWindow_SetVisibility(This->nscontainer->window, FALSE);
+        nsIBaseWindow_SetEnabled(This->nscontainer->window, FALSE);
+    }else {
+        ERR("InitWindow failed: %08lx\n", nsres);
+    }
 }
 
 void HTMLDocument_NSContainer_Destroy(HTMLDocument *This)
