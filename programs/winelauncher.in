@@ -59,8 +59,8 @@ type xmessage >/dev/null 2>/dev/null
 if [ $? -ne 0 ] ; then
     # xmessage not found; make sure the user notices this error
     # (GUI users wouldn't even notice if we printed the text on console !)
-    MSGFILE=/tmp/WINE_CANNOT_FIND_XMESSAGE
-    cat > $MSGFILE << EOF
+    MSGFILE=`mktemp "/tmp/wine.xmessage.XXXXXX"`
+    cat > $MSGFILE <<EOF
 Warning:
     The Wine launcher is unable to find the xmessage program,
     which it needs to properly notify you of Wine execution status
@@ -87,6 +87,7 @@ EOF
 
     # ok, we really give up now, this system is hosed ;-)
     cat $MSGFILE
+    rm $MSGFILE
 else
     XMESSAGE="xmessage $COLOR"
 fi
