@@ -560,7 +560,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 
 
 /******************************************************************
- *		DllCanUnloadNow (DMSCRIPT.1)
+ *		DllCanUnloadNow (DMSCRIPT.@)
  *
  *
  */

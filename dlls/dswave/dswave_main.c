@@ -97,7 +97,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 
 
 /******************************************************************
- *		DllCanUnloadNow (DSWAVE.1)
+ *		DllCanUnloadNow (DSWAVE.@)
  *
  *
  */

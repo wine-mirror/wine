@@ -145,7 +145,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 
 
 /******************************************************************
- *		DllCanUnloadNow (DMSYNTH.1)
+ *		DllCanUnloadNow (DMSYNTH.@)
  *
  *
  */

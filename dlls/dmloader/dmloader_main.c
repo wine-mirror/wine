@@ -39,7 +39,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 
 
 /******************************************************************
- *		DllCanUnloadNow (DMLOADER.1)
+ *		DllCanUnloadNow (DMLOADER.@)
  */
 HRESULT WINAPI DllCanUnloadNow (void)
 {
