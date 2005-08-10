@@ -226,6 +226,134 @@ static inline void strarrayfreeU( char **strarray )
 
 #ifdef HAVE_LDAP
 
+static inline LDAPModW *modAtoW( LDAPModA *mod )
+{
+    LDAPModW *modW;
+
+    modW = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPModW) );
+    if (modW)
+    {
+        modW->mod_op = mod->mod_op;
+        modW->mod_type = strAtoW( mod->mod_type );
+
+        if (mod->mod_op & LDAP_MOD_BVALUES)
+            modW->mod_vals.modv_bvals = mod->mod_vals.modv_bvals;
+        else
+            modW->mod_vals.modv_strvals = strarrayAtoW( mod->mod_vals.modv_strvals );
+    }
+    return modW;
+}
+
+static inline LDAPMod *modWtoU( LDAPModW *mod )
+{
+    LDAPMod *modU;
+
+    modU = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPMod) );
+    if (modU)
+    {
+        modU->mod_op = mod->mod_op;
+        modU->mod_type = strWtoU( mod->mod_type );
+
+        if (mod->mod_op & LDAP_MOD_BVALUES)
+            modU->mod_vals.modv_bvals = mod->mod_vals.modv_bvals;
+        else
+            modU->mod_vals.modv_strvals = strarrayWtoU( mod->mod_vals.modv_strvals );
+    }
+    return modU;
+}
+
+static inline void modfreeW( LDAPModW *mod )
+{
+    if (!(mod->mod_op & LDAP_MOD_BVALUES))
+        strarrayfreeW( mod->mod_vals.modv_strvals );
+    HeapFree( GetProcessHeap(), 0, mod );
+}
+
+static inline void modfreeU( LDAPMod *mod )
+{
+    if (!(mod->mod_op & LDAP_MOD_BVALUES))
+        strarrayfreeU( mod->mod_vals.modv_strvals );
+    HeapFree( GetProcessHeap(), 0, mod );
+}
+
+static inline DWORD modarraylenA( LDAPModA **modarray )
+{
+    LDAPModA **p = modarray;
+    while (*p) p++;
+    return p - modarray;
+}
+
+static inline DWORD modarraylenW( LDAPModW **modarray )
+{
+    LDAPModW **p = modarray;
+    while (*p) p++;
+    return p - modarray;
+}
+
+static inline LDAPModW **modarrayAtoW( LDAPModA **modarray )
+{
+    LDAPModW **modarrayW = NULL;
+    DWORD size;
+
+    if (modarray)
+    {
+        size = sizeof(LDAPModW*) * (modarraylenA( modarray ) + 1);
+        modarrayW = HeapAlloc( GetProcessHeap(), 0, size );
+
+        if (modarrayW)
+        {
+            LDAPModA **p = modarray;
+            LDAPModW **q = modarrayW;
+
+            while (*p) *q++ = modAtoW( *p++ );
+            *q = NULL;
+        }
+    }
+    return modarrayW;
+}
+
+static inline LDAPMod **modarrayWtoU( LDAPModW **modarray )
+{
+    LDAPMod **modarrayU = NULL;
+    DWORD size;
+
+    if (modarray)
+    {
+        size = sizeof(LDAPMod*) * (modarraylenW( modarray ) + 1);
+        modarrayU = HeapAlloc( GetProcessHeap(), 0, size );
+
+        if (modarrayU)
+        {
+            LDAPModW **p = modarray;
+            LDAPMod **q = modarrayU;
+
+            while (*p) *q++ = modWtoU( *p++ );
+            *q = NULL;
+        }
+    }
+    return modarrayU;
+}
+
+static inline void modarrayfreeW( LDAPModW **modarray )
+{
+    if (modarray)
+    {
+        LDAPModW **p = modarray;
+        while (*p) modfreeW( *p++ );
+        HeapFree( GetProcessHeap(), 0, modarray );
+    }
+}
+
+static inline void modarrayfreeU( LDAPMod **modarray )
+{
+    if (modarray)
+    {
+        LDAPMod **p = modarray;
+        while (*p) modfreeU( *p++ );
+        HeapFree( GetProcessHeap(), 0, modarray );
+    }
+}
+
 static inline LDAPControlW *controlAtoW( LDAPControlA *control )
 {
     LDAPControlW *controlW;

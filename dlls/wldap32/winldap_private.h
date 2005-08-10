@@ -108,6 +108,24 @@ typedef struct ldap
     ULONG ld_options;
 } WLDAP32_LDAP, *WLDAP32_PLDAP;
 
+typedef struct ldapmodA {
+    ULONG mod_op;
+    PCHAR mod_type;
+    union {
+        PCHAR *modv_strvals;
+        struct berval **modv_bvals;
+    } mod_vals;
+} LDAPModA, *PLDAPModA;
+
+typedef struct ldapmodW {
+    ULONG mod_op;
+    PWCHAR mod_type;
+    union {
+        PWCHAR *modv_strvals;
+        struct berval **modv_bvals;
+    } mod_vals;
+} LDAPModW, *PLDAPModW;
+
 typedef struct l_timeval
 {
     LONG tv_sec;
@@ -134,6 +152,16 @@ typedef struct ldapmsg
     BOOLEAN ConnectionReferenced;
 } WLDAP32_LDAPMessage, *WLDAP32_PLDAPMessage;
 
+#define LAPI_MAJOR_VER1     1
+#define LAPI_MINOR_VER1     1
+
+typedef struct ldap_version_info
+{
+    ULONG lv_size;
+    ULONG lv_major;
+    ULONG lv_minor;
+} LDAP_VERSION_INFO, *PLDAP_VERSION_INFO;
+
 typedef struct WLDAP32_berval
 {
     ULONG bv_len;
@@ -153,6 +181,8 @@ typedef struct ldapcontrolW
     struct WLDAP32_berval ldctl_value;
     BOOLEAN ldctl_iscritical;
 } LDAPControlW, *PLDAPControlW;
+
+typedef struct ldapsearch LDAPSearch, *PLDAPSearch;
 
 typedef struct ldapsortkeyA
 {
@@ -202,6 +232,14 @@ typedef struct ldap_apifeature_infoW
     int ldapaif_version;
 } LDAPAPIFeatureInfoW;
 
+ULONG ldap_addA(WLDAP32_LDAP*,PCHAR,LDAPModA*[]);
+ULONG ldap_addW(WLDAP32_LDAP*,PWCHAR,LDAPModW*[]);
+ULONG ldap_add_extA(WLDAP32_LDAP*,PCHAR,LDAPModA*[],PLDAPControlA*,PLDAPControlA*,ULONG*);
+ULONG ldap_add_extW(WLDAP32_LDAP*,PWCHAR,LDAPModW*[],PLDAPControlW*,PLDAPControlW*,ULONG*);
+ULONG ldap_add_ext_sA(WLDAP32_LDAP*,PCHAR,LDAPModA*[],PLDAPControlA*,PLDAPControlA*);
+ULONG ldap_add_ext_sW(WLDAP32_LDAP*,PWCHAR,LDAPModW*[],PLDAPControlW*,PLDAPControlW*);
+ULONG ldap_add_sA(WLDAP32_LDAP*,PCHAR,LDAPModA*[]);
+ULONG ldap_add_sW(WLDAP32_LDAP*,PWCHAR,LDAPModW*[]);
 ULONG ldap_bindA(WLDAP32_LDAP*,PCHAR,PCHAR,ULONG);
 ULONG ldap_bindW(WLDAP32_LDAP*,PWCHAR,PWCHAR,ULONG);
 ULONG ldap_bind_sA(WLDAP32_LDAP*,PCHAR,PCHAR,ULONG);
