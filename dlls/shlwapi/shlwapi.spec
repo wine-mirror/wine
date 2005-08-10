@@ -401,7 +401,7 @@
 401 stdcall -noname PageSetupDlgWrapW(ptr)
 402 stdcall -noname PrintDlgWrapW(ptr)
 403 stdcall -noname GetOpenFileNameWrapW(ptr)
-404 stub -noname IShellFolder_EnumObjects
+404 stdcall -noname IUnknown_EnumObjects(ptr ptr long ptr)
 405 stdcall -noname MLBuildResURLA(str ptr long str ptr long)
 406 stdcall -noname MLBuildResURLW(wstr ptr long wstr ptr long)
 407 stub -noname AssocMakeProgid

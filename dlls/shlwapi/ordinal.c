@@ -3579,6 +3579,31 @@ BOOL WINAPI GetOpenFileNameWrapW(LPOPENFILENAMEW ofn)
   return pGetOpenFileNameW(ofn);
 }
 
+/*************************************************************************
+ *      @	[SHLWAPI.404]
+ */
+HRESULT WINAPI IUnknown_EnumObjects(LPSHELLFOLDER lpFolder, HWND hwnd, SHCONTF flags, IEnumIDList **ppenum)
+{
+    IPersist *persist;
+    HRESULT hr;
+
+    hr = IShellFolder_QueryInterface(lpFolder, &IID_IPersist, (LPVOID)&persist);
+    if(SUCCEEDED(hr))
+    {
+        CLSID clsid;
+        hr = IPersist_GetClassID(persist, &clsid);
+        if(SUCCEEDED(hr))
+        {
+            if(IsEqualCLSID(&clsid, &CLSID_ShellFSFolder))
+                hr = IShellFolder_EnumObjects(lpFolder, hwnd, flags, ppenum);
+            else
+                hr = E_FAIL;
+        }
+        IPersist_Release(persist);
+    }
+    return hr;
+}
+
 /* INTERNAL: Map from HLS color space to RGB */
 static WORD WINAPI ConvertHue(int wHue, WORD wMid1, WORD wMid2)
 {
