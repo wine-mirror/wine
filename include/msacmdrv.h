@@ -23,11 +23,11 @@
 
 #include <stdarg.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "mmsystem.h"
-#include "mmreg.h"
-#include "msacm.h"
+#include <windef.h>
+#include <winbase.h>
+#include <mmsystem.h>
+#include <mmreg.h>
+#include <msacm.h>
 
 /***********************************************************************
  * Types

@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-#include "sql.h"
+#include <sql.h>
 
 /* flags for Installer function requests */
 #define ODBC_INSTALL_INQUIRY 	1

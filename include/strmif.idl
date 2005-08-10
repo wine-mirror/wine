@@ -18,10 +18,10 @@
 
 import "objidl.idl";
 
-#include "devenum.idl"
+#include <devenum.idl>
 
-#include "axcore.idl"
+#include <axcore.idl>
 
-#include "axextend.idl"
+#include <axextend.idl>
 
-#include "dyngraph.idl"
+#include <dyngraph.idl>

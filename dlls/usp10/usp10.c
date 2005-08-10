@@ -24,10 +24,10 @@
 
 #include <stdarg.h>
 
-#include <windef.h>
-#include <winbase.h>
-#include <winuser.h>
-#include <usp10.h>
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "usp10.h"
 
 #include "wine/debug.h"
 
