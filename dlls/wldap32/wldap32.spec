@@ -15,6 +15,18 @@
 @ varargs ber_printf(ptr str)
 @ varargs ber_scanf(ptr str)
 @ cdecl ber_skip_tag(ptr ptr)
+@ cdecl ldap_add(ptr str ptr) ldap_addA
+@ cdecl ldap_addA(ptr str ptr)
+@ cdecl ldap_addW(ptr wstr ptr)
+@ cdecl ldap_add_ext(ptr str ptr ptr ptr ptr) ldap_add_extA
+@ cdecl ldap_add_extA(ptr str ptr ptr ptr ptr)
+@ cdecl ldap_add_extW(ptr wstr ptr ptr ptr ptr)
+@ cdecl ldap_add_ext_s(ptr str ptr ptr ptr) ldap_add_ext_sA
+@ cdecl ldap_add_ext_sA(ptr str ptr ptr ptr)
+@ cdecl ldap_add_ext_sW(ptr str ptr ptr ptr)
+@ cdecl ldap_add_s(ptr str ptr) ldap_add_sA
+@ cdecl ldap_add_sA(ptr str ptr)
+@ cdecl ldap_add_sW(ptr wstr ptr)
 @ cdecl ldap_bind(ptr str str long) ldap_bindA
 @ cdecl ldap_bindA(ptr str str long)
 @ cdecl ldap_bindW(ptr wstr wstr long)
