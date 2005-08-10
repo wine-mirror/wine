@@ -1547,7 +1547,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
     HWND16	hCurrentWnd = 0;
 
     lpDragInfo = (LPDRAGINFO16) GlobalLock16(hDragInfo);
-    spDragInfo = K32WOWGlobalLock16(hDragInfo);
+    spDragInfo = WOWGlobalLock16(hDragInfo);
 
     if( !lpDragInfo || !spDragInfo ) return 0L;
 

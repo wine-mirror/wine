@@ -369,11 +369,11 @@ STORAGE_get_big_block(stream_access16 *str,int n,BYTE *block)
 	args[0] = (DWORD)str->lockbytes;	/* iface */
 	args[1] = (n+1)*BIGSIZE;
 	args[2] = 0;	/* ULARGE_INTEGER offset */
-	args[3] = (DWORD)K32WOWGlobalAllocLock16( 0, BIGSIZE, &hsig ); /* sig */
+	args[3] = WOWGlobalAllocLock16( 0, BIGSIZE, &hsig ); /* sig */
 	args[4] = BIGSIZE;
 	args[5] = 0;
 
-	if (!K32WOWCallback16Ex(
+	if (!WOWCallback16Ex(
 	    (DWORD)((const ILockBytes16Vtbl*)MapSL(
 			(SEGPTR)((LPLOCKBYTES16)MapSL(str->lockbytes))->lpVtbl)
 	    )->ReadAt,
@@ -386,7 +386,7 @@ STORAGE_get_big_block(stream_access16 *str,int n,BYTE *block)
 	    return FALSE;
 	}
 	memcpy(block, MapSL(args[3]), BIGSIZE);
-	K32WOWGlobalUnlockFree16(args[3]);
+	WOWGlobalUnlockFree16(args[3]);
     }
     return TRUE;
 }
@@ -405,7 +405,7 @@ _ilockbytes16_writeat(SEGPTR lockbytes, DWORD offset, DWORD length, void *buffer
 
     /* THIS_ ULARGE_INTEGER ulOffset, const void *pv, ULONG cb, ULONG *pcbWritten); */
 
-    if (!K32WOWCallback16Ex(
+    if (!WOWCallback16Ex(
 	(DWORD)((const ILockBytes16Vtbl*)MapSL(
 		    (SEGPTR)((LPLOCKBYTES16)MapSL(lockbytes))->lpVtbl)
 	)->WriteAt,
@@ -1098,7 +1098,7 @@ _ilockbytes16_addref(SEGPTR lockbytes) {
     HRESULT hres;
     
     args[0] = (DWORD)lockbytes;	/* iface */
-    if (!K32WOWCallback16Ex(
+    if (!WOWCallback16Ex(
 	(DWORD)((const ILockBytes16Vtbl*)MapSL(
 		    (SEGPTR)((LPLOCKBYTES16)MapSL(lockbytes))->lpVtbl)
 	)->AddRef,
@@ -1116,7 +1116,7 @@ _ilockbytes16_release(SEGPTR lockbytes) {
     HRESULT hres;
     
     args[0] = (DWORD)lockbytes;	/* iface */
-    if (!K32WOWCallback16Ex(
+    if (!WOWCallback16Ex(
 	(DWORD)((const ILockBytes16Vtbl*)MapSL(
 		    (SEGPTR)((LPLOCKBYTES16)MapSL(lockbytes))->lpVtbl)
 	)->Release,
@@ -1134,7 +1134,7 @@ _ilockbytes16_flush(SEGPTR lockbytes) {
     HRESULT hres;
     
     args[0] = (DWORD)lockbytes;	/* iface */
-    if (!K32WOWCallback16Ex(
+    if (!WOWCallback16Ex(
 	(DWORD)((const ILockBytes16Vtbl*)MapSL(
 		    (SEGPTR)((LPLOCKBYTES16)MapSL(lockbytes))->lpVtbl)
 	)->Flush,
@@ -2155,11 +2155,11 @@ HRESULT WINAPI StgIsStorageILockBytes16(SEGPTR plkbyt)
   
   args[0] = (DWORD)plkbyt;	/* iface */
   args[1] = args[2] = 0;	/* ULARGE_INTEGER offset */
-  args[3] = (DWORD)K32WOWGlobalAllocLock16( 0, 8, &hsig ); /* sig */
+  args[3] = WOWGlobalAllocLock16( 0, 8, &hsig ); /* sig */
   args[4] = 8;
   args[5] = 0;
 
-  if (!K32WOWCallback16Ex(
+  if (!WOWCallback16Ex(
       (DWORD)((const ILockBytes16Vtbl*)MapSL(
                   (SEGPTR)((LPLOCKBYTES16)MapSL(plkbyt))->lpVtbl)
       )->ReadAt,
@@ -2172,10 +2172,10 @@ HRESULT WINAPI StgIsStorageILockBytes16(SEGPTR plkbyt)
       return hres;
   }
   if (memcmp(MapSL(args[3]), STORAGE_magic, sizeof(STORAGE_magic)) == 0) {
-    K32WOWGlobalUnlockFree16(args[3]);
+    WOWGlobalUnlockFree16(args[3]);
     return S_OK;
   }
-  K32WOWGlobalUnlockFree16(args[3]);
+  WOWGlobalUnlockFree16(args[3]);
   return S_FALSE;
 }
 
@@ -2239,10 +2239,10 @@ HRESULT WINAPI ReadClassStg16(SEGPTR /*IStorage **/pstg,CLSID *pclsid){
 	 * read a STATSTG structure (contains the clsid) from the storage
 	 */
 	args[0] = (DWORD)pstg;	/* iface */
-	args[1] = (DWORD)K32WOWGlobalAllocLock16( 0, sizeof(STATSTG16), &hstatstg );
+	args[1] = WOWGlobalAllocLock16( 0, sizeof(STATSTG16), &hstatstg );
 	args[2] = STATFLAG_DEFAULT;
 
-	if (!K32WOWCallback16Ex(
+	if (!WOWCallback16Ex(
 	    (DWORD)((const IStorage16Vtbl*)MapSL(
 			(SEGPTR)((LPSTORAGE16)MapSL(pstg))->lpVtbl)
 	    )->Stat,
@@ -2251,12 +2251,12 @@ HRESULT WINAPI ReadClassStg16(SEGPTR /*IStorage **/pstg,CLSID *pclsid){
 	    (LPVOID)args,
 	    (LPDWORD)&hres
 	)) {
-	    K32WOWGlobalUnlockFree16(args[1]);
+	    WOWGlobalUnlockFree16(args[1]);
 	    ERR("CallTo16 IStorage16::Stat() failed, hres %lx\n",hres);
 	    return hres;
 	}
 	memcpy(&statstg, MapSL(args[1]), sizeof(STATSTG16));
-	K32WOWGlobalUnlockFree16(args[1]);
+	WOWGlobalUnlockFree16(args[1]);
 
 	if(SUCCEEDED(hres)) {
 		*pclsid=statstg.clsid;

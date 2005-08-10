@@ -1354,7 +1354,7 @@ static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count
 
 	    countA = WideCharToMultiByte(CP_ACP, 0, es->text + start, count, NULL, 0, NULL, NULL);
 	    hglob16 = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT, countA);
-	    segptr = K32WOWGlobalLock16(hglob16);
+	    segptr = WOWGlobalLock16(hglob16);
 	    WideCharToMultiByte(CP_ACP, 0, es->text + start, count, MapSL(segptr), countA, NULL, NULL);
             args[4] = SELECTOROF(segptr);
             args[3] = OFFSETOF(segptr);

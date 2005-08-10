@@ -1683,7 +1683,7 @@ WORD WINAPI LocalHandleDelta16( WORD delta )
  */
 BOOL16 WINAPI LocalInfo16( LOCALINFO *pLocalInfo, HGLOBAL16 handle )
 {
-    LOCALHEAPINFO *pInfo = LOCAL_GetHeap(SELECTOROF(K32WOWGlobalLock16(handle)));
+    LOCALHEAPINFO *pInfo = LOCAL_GetHeap(SELECTOROF(WOWGlobalLock16(handle)));
     if (!pInfo) return FALSE;
     pLocalInfo->wcItems = pInfo->items;
     return TRUE;

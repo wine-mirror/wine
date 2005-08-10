@@ -23,24 +23,24 @@
 #include "winbase.h"
 #include "wownt32.h"
 
-#undef WOWHandle32
-#undef WOWHandle16
 #undef WOWCallback16
 #undef WOWCallback16Ex
+#undef WOWDirectedYield16
+#undef WOWGetVDMPointer
+#undef WOWGetVDMPointerFix
+#undef WOWGetVDMPointerUnfix
+#undef WOWGlobalAlloc16
+#undef WOWGlobalAllocLock16
+#undef WOWGlobalFree16
+#undef WOWGlobalLock16
+#undef WOWGlobalLockSize16
+#undef WOWGlobalUnlock16
+#undef WOWGlobalUnlockFree16
+#undef WOWHandle16
+#undef WOWHandle32
+#undef WOWYield16
 
 BOOL   WINAPI K32WOWGetDescriptor(DWORD,LPLDT_ENTRY);
-LPVOID WINAPI K32WOWGetVDMPointer(DWORD,DWORD,BOOL);
-LPVOID WINAPI K32WOWGetVDMPointerFix(DWORD,DWORD,BOOL);
-void   WINAPI K32WOWGetVDMPointerUnfix(DWORD);
-WORD   WINAPI K32WOWGlobalAlloc16(WORD,DWORD);
-WORD   WINAPI K32WOWGlobalFree16(WORD);
-DWORD  WINAPI K32WOWGlobalLock16(WORD);
-BOOL   WINAPI K32WOWGlobalUnlock16(WORD);
-DWORD  WINAPI K32WOWGlobalAllocLock16(WORD,DWORD,WORD *);
-WORD   WINAPI K32WOWGlobalUnlockFree16(DWORD);
-DWORD  WINAPI K32WOWGlobalLockSize16(WORD,PDWORD);
-void   WINAPI K32WOWYield16(void);
-void   WINAPI K32WOWDirectedYield16(WORD);
 
 /**********************************************************************
  *           WOWGetDescriptor   (WOW32.1)

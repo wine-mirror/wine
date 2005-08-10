@@ -1863,7 +1863,7 @@ void	WINAPI	mmTaskYield16(void)
     MSG		msg;
 
     if (PeekMessageA(&msg, 0, 0, 0, 0)) {
-	K32WOWYield16();
+	WOWYield16();
     }
 }
 
@@ -2150,7 +2150,7 @@ DWORD WINAPI WINE_mmThreadEntryPoint(LPVOID p)
     TRACE("[30-%p]\n", lpMMThd->hThread);
     while (lpMMThd->dwCounter) {
 	Sleep(1);
-	/* K32WOWYield16();*/
+	/* WOWYield16();*/
     }
     TRACE("[XX-%p]\n", lpMMThd->hThread);
     /* paranoia */

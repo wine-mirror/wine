@@ -21,6 +21,26 @@
 #ifndef _WOWNT32_H_
 #define _WOWNT32_H_
 
+#ifdef __WINESRC__
+/* under Wine use the kernel functions directly so we don't have to import wow32 */
+#define WOWCallback16 K32WOWCallback16
+#define WOWCallback16Ex K32WOWCallback16Ex
+#define WOWDirectedYield16 K32WOWDirectedYield16
+#define WOWGetVDMPointer K32WOWGetVDMPointer
+#define WOWGetVDMPointerFix K32WOWGetVDMPointerFix
+#define WOWGetVDMPointerUnfix K32WOWGetVDMPointerUnfix
+#define WOWGlobalAlloc16 K32WOWGlobalAlloc16
+#define WOWGlobalAllocLock16 K32WOWGlobalAllocLock16
+#define WOWGlobalFree16 K32WOWGlobalFree16
+#define WOWGlobalLock16 K32WOWGlobalLock16
+#define WOWGlobalLockSize16 K32WOWGlobalLockSize16
+#define WOWGlobalUnlock16 K32WOWGlobalUnlock16
+#define WOWGlobalUnlockFree16 K32WOWGlobalUnlockFree16
+#define WOWHandle16 K32WOWHandle16
+#define WOWHandle32 K32WOWHandle32
+#define WOWYield16 K32WOWYield16
+#endif
+
 LPVOID WINAPI WOWGetVDMPointer(DWORD,DWORD,BOOL);
 LPVOID WINAPI WOWGetVDMPointerFix(DWORD,DWORD,BOOL);
 VOID   WINAPI WOWGetVDMPointerUnfix(DWORD);
@@ -58,18 +78,6 @@ typedef enum
 
 HANDLE WINAPI WOWHandle32(WORD,WOW_HANDLE_TYPE);
 WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
-
-#ifdef __WINESRC__
-/* under Wine use the kernel functions directly so we don't have to import wow32 */
-HANDLE WINAPI K32WOWHandle32(WORD,WOW_HANDLE_TYPE);
-WORD   WINAPI K32WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
-DWORD  WINAPI K32WOWCallback16(DWORD,DWORD);
-BOOL   WINAPI K32WOWCallback16Ex(DWORD,DWORD,DWORD,PVOID,PDWORD);
-#define WOWHandle32 K32WOWHandle32
-#define WOWHandle16 K32WOWHandle16
-#define WOWCallback16 K32WOWCallback16
-#define WOWCallback16Ex K32WOWCallback16Ex
-#endif
 
 #ifdef __WINESRC__
 /* under Wine we use optimized versions where we can */

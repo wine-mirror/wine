@@ -1612,5 +1612,5 @@ SEGPTR WINAPI GetDOSEnvironment16(void)
         }
         FreeEnvironmentStringsA( env );
     }
-    return K32WOWGlobalLock16( handle );
+    return WOWGlobalLock16( handle );
 }

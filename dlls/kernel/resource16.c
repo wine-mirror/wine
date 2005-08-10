@@ -1066,7 +1066,7 @@ SEGPTR WINAPI WIN16_LockResource16( HGLOBAL16 handle )
 {
     TRACE("(%04x)\n", handle );
     /* May need to reload the resource if discarded */
-    return K32WOWGlobalLock16( handle );
+    return WOWGlobalLock16( handle );
 }
 
 

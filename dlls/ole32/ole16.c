@@ -305,7 +305,7 @@ _xmalloc16(DWORD size, SEGPTR *ptr) {
   /* No need for a Callback entry, we have WOWCallback16Ex which does
    * everything we need.
    */
-  if (!K32WOWCallback16Ex(
+  if (!WOWCallback16Ex(
       (DWORD)((const IMalloc16Vtbl*)MapSL(
 	  (SEGPTR)((LPMALLOC16)MapSL((SEGPTR)mllc))->lpVtbl  )
       )->Alloc,
