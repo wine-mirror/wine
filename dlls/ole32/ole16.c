@@ -285,10 +285,6 @@ HRESULT WINAPI CLSIDFromString16(
   return __CLSIDFromStringA(idstr,id);
 }
 
-extern BOOL WINAPI K32WOWCallback16Ex(	DWORD vpfn16, DWORD dwFlags,
-					DWORD cbArgs, LPVOID pArgs,
-					LPDWORD pdwRetCode );
-
 /******************************************************************************
  *		_xmalloc16	[internal]
  * Allocates size bytes from the standard ole16 allocator.

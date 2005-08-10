@@ -36,7 +36,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mapi);
 
 BOOL WINAPI FBadRglpszA(LPSTR*,ULONG);
-BOOL WINAPI FBadRglpszW(LPWSTR*,ULONG);
 
 /* Internal: Check if a property value array is invalid */
 static inline ULONG PROP_BadArray(LPSPropValue lpProp, size_t elemSize)
