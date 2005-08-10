@@ -52,9 +52,8 @@ struct sg_header
 #endif
 
 
-/* RegKey used for SCSI info under HKEY_DYN_DATA */
-#define KEYNAME_SCSI "WineScsi"
-#define KEYNAME_SCSI_CONTROLLERMAP "ControllerMap"
+/* RegKey used for SCSI info under HKLM */
+#define KEYNAME_SCSI "HARDWARE\\DEVICEMAP\\Scsi\\Scsi Port %d\\Scsi Bus %d\\Target Id %d\\Logical Unit Id %d"
 
 /* Function prototypes from dlls/wnaspi32/aspi.c */
 void
