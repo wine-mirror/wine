@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "ole2.h"
 #include "ocidl.h"
 #include "msxml.h"
@@ -44,7 +45,7 @@ typedef struct _domdoc
     const struct IXMLDOMDocumentVtbl *lpVtbl;
     LONG ref;
     VARIANT_BOOL async;
-    xmlDocPtr xmldoc;
+    IXMLDOMNode *node;
 } domdoc;
 
 static inline domdoc *impl_from_IXMLDOMDocument( IXMLDOMDocument *iface )
@@ -94,7 +95,7 @@ static ULONG WINAPI domdoc_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        xmlFreeDoc( This->xmldoc );
+        IXMLDOMElement_Release( This->node );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -500,10 +501,27 @@ static HRESULT WINAPI domdoc_get_documentElement(
     IXMLDOMElement** DOMElement )
 {
     domdoc *This = impl_from_IXMLDOMDocument( iface );
+    xmlDocPtr xmldoc = NULL;
+    xmlNodePtr root = NULL;
 
-    FIXME("%p\n", This);
+    TRACE("%p\n", This);
 
-    return DOMElement_create(DOMElement, This->xmldoc);
+    *DOMElement = NULL;
+
+    if ( !This->node )
+        return S_FALSE;
+
+    xmldoc = xmldoc_from_xmlnode( This->node );
+    if ( !xmldoc )
+        return S_FALSE;
+
+    root = xmlDocGetRootElement( xmldoc );
+    if ( !root )
+        return S_FALSE;
+
+    *DOMElement = create_element( root );
+ 
+    return S_OK;
 }
 
 
@@ -669,9 +687,15 @@ static HRESULT WINAPI domdoc_load(
 {
     domdoc *This = impl_from_IXMLDOMDocument( iface );
     LPWSTR filename = NULL;
-    xmlDocPtr xd;
+    xmlDocPtr xmldoc;
 
-    TRACE("%p\n", This);
+    TRACE("type %d\n", V_VT(&xmlSource) );
+
+    if ( This->node )
+    {
+        IXMLDOMNode_Release( This->node );
+        This->node = NULL;
+    }
 
     switch( V_VT(&xmlSource) )
     {
@@ -680,17 +704,20 @@ static HRESULT WINAPI domdoc_load(
     }
 
     if ( !filename )
-        return E_FAIL;
+        return S_FALSE;
 
-    xd = doread( filename );
-    if ( !xd )
-        return E_FAIL;
+    xmldoc = doread( filename );
+    if ( !xmldoc )
+        return S_FALSE;
 
-    /* free the old document before overwriting it */
-    if ( This->xmldoc )
-        xmlFreeDoc( This->xmldoc );
-    This->xmldoc = xd;
+    This->node = create_domdoc_node( xmldoc );
+    if ( !This->node )
+    {
+        *isSuccessful = VARIANT_FALSE;
+        return S_FALSE;
+    }
 
+    *isSuccessful = VARIANT_TRUE;
     return S_OK;
 }
 
@@ -942,7 +969,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->lpVtbl = &domdoc_vtbl;
     doc->ref = 1;
     doc->async = 0;
-    doc->xmldoc = NULL;
+    doc->node = NULL;
 
     *ppObj = &doc->lpVtbl;
 

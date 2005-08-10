@@ -27,8 +27,21 @@
 
 #include <libxml/parser.h>
 
-extern HRESULT DOMElement_create( IXMLDOMElement** DOMElement, xmlDocPtr xmldoc );
-extern HRESULT NodeMap_create(IXMLDOMNamedNodeMap** DomNamedNodeMap, xmlDocPtr xmldoc, xmlNodePtr node );
+/* constructors */
+extern IXMLDOMNode      *create_domdoc_node( xmlDocPtr node );
+extern IUnknown         *create_domdoc( void );
+extern IXMLDOMNode      *create_attribute_node( xmlAttrPtr attr );
+extern IUnknown         *create_xmldoc( void );
+extern IXMLDOMElement   *create_element( xmlNodePtr element );
+extern IXMLDOMNode      *create_element_node( xmlNodePtr element );
+
+/* data accessors */
+extern xmlDocPtr xmldoc_from_xmlnode( IXMLDOMNode *iface );
+extern xmlNodePtr xmlelement_from_xmlnode( IXMLDOMNode *iface );
+
+/* helpers */
+extern xmlChar *xmlChar_from_wchar( LPWSTR str );
+extern BSTR bstr_from_xmlChar( const xmlChar *buf );
 
 #endif
 

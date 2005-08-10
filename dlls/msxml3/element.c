@@ -44,7 +44,7 @@ typedef struct _domelem
 {
     const struct IXMLDOMElementVtbl *lpVtbl;
     LONG ref;
-    xmlDocPtr xmldoc;
+    IXMLDOMNode *node;
 } domelem;
 
 static inline domelem *impl_from_IXMLDOMElement( IXMLDOMElement *iface )
@@ -90,6 +90,7 @@ static ULONG WINAPI domelem_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
+        IXMLDOMNode_Release( This->node );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -216,14 +217,8 @@ static HRESULT WINAPI domelem_get_attributes(
     IXMLDOMElement *iface,
     IXMLDOMNamedNodeMap** attributeMap)
 {
-    domelem *This = impl_from_IXMLDOMElement( iface );
-    xmlNodePtr root;
-
-    root = xmlDocGetRootElement( This->xmldoc );
-    if( !root )
-        return E_FAIL;
-
-    return NodeMap_create( attributeMap, This->xmldoc, root );
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI domelem_insertBefore(
@@ -558,21 +553,25 @@ static const struct IXMLDOMElementVtbl domelem_vtbl =
     domelem_normalize,
 };
 
-HRESULT DOMElement_create( IXMLDOMElement** DOMElement, xmlDocPtr xmldoc )
+IXMLDOMElement* create_element( xmlNodePtr element )
 {
-    domelem *elem;
+    domelem *This;
 
-    elem = HeapAlloc( GetProcessHeap(), 0, sizeof *elem );
-    if( !elem )
-        return E_OUTOFMEMORY;
+    This = HeapAlloc( GetProcessHeap(), 0, sizeof *This );
+    if ( !This )
+        return NULL;
 
-    elem->lpVtbl = &domelem_vtbl;
-    elem->xmldoc = xmldoc;
-    elem->ref = 1;
+    This->lpVtbl = &domelem_vtbl;
+    This->node = create_element_node( element );
+    This->ref = 1;
 
-    *DOMElement = (IXMLDOMElement*) &elem->lpVtbl;
+    if ( !This->node )
+    {
+        HeapFree( GetProcessHeap(), 0, This );
+        return NULL;
+    }
 
-    return S_OK;
+    return (IXMLDOMElement*) &This->lpVtbl;
 }
 
 #endif

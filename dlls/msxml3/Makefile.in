@@ -13,6 +13,7 @@ C_SRCS = \
 	element.c \
 	factory.c \
 	main.c \
+	node.c \
 	nodemap.c
 
 @MAKE_DLL_RULES@

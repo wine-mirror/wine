@@ -133,7 +133,7 @@ static HRESULT WINAPI xmlnodemap_Invoke(
     return E_NOTIMPL;
 }
 
-static xmlChar *xmlChar_from_wchar( LPWSTR str )
+xmlChar *xmlChar_from_wchar( LPWSTR str )
 {
     DWORD len;
     xmlChar *xmlstr;
