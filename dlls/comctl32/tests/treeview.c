@@ -77,7 +77,7 @@ static void FillRoot(void)
     ins.hInsertAfter = TVI_ROOT;
     U(ins).item.mask = TVIF_TEXT;
     U(ins).item.pszText = "Root";
-    hRoot = TreeView_InsertItemA(hTree, &ins);
+    hRoot = TreeView_InsertItem(hTree, &ins);
     assert(hRoot);
   
     AddItem('B');
@@ -85,7 +85,7 @@ static void FillRoot(void)
     ins.hInsertAfter = TVI_FIRST;
     U(ins).item.mask = TVIF_TEXT;
     U(ins).item.pszText = "Child";
-    hChild = TreeView_InsertItemA(hTree, &ins);
+    hChild = TreeView_InsertItem(hTree, &ins);
     assert(hChild);
     AddItem('.');
     
