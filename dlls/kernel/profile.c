@@ -832,7 +832,7 @@ static BOOL PROFILE_Open( LPCWSTR filename )
  * If return_values is TRUE, also include the corresponding values.
  */
 static INT PROFILE_GetSection( PROFILESECTION *section, LPCWSTR section_name,
-			       LPWSTR buffer, UINT len, BOOL return_values )
+			       LPWSTR buffer, UINT len, BOOL return_values, BOOL return_noequalkeys )
 {
     PROFILEKEY *key;
 
@@ -850,7 +850,7 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCWSTR section_name,
                 if (len <= 2) break;
                 if (!*key->name) continue;  /* Skip empty lines */
                 if (IS_ENTRY_COMMENT(key->name)) continue;  /* Skip comments */
-                if (!return_values && !key->value) continue;  /* Skip lines w.o. '=' */
+                if (!return_noequalkeys && !return_values && !key->value) continue;  /* Skip lines w.o. '=' */
                 PROFILE_CopyEntry( buffer, key->name, len - 1, 0 );
                 len -= strlenW(buffer) + 1;
                 buffer += strlenW(buffer) + 1;
@@ -947,7 +947,7 @@ static INT PROFILE_GetSectionNames( LPWSTR buffer, UINT len )
  *
  */
 static INT PROFILE_GetString( LPCWSTR section, LPCWSTR key_name,
-                              LPCWSTR def_val, LPWSTR buffer, UINT len )
+                              LPCWSTR def_val, LPWSTR buffer, UINT len, BOOL win32 )
 {
     PROFILEKEY *key = NULL;
     static const WCHAR empty_strW[] = { 0 };
@@ -973,7 +973,7 @@ static INT PROFILE_GetString( LPCWSTR section, LPCWSTR key_name,
     /* no "else" here ! */
     if (section && section[0])
     {
-        INT ret = PROFILE_GetSection(CurProfile->section, section, buffer, len, FALSE);
+        INT ret = PROFILE_GetSection(CurProfile->section, section, buffer, len, FALSE, !win32);
         if (!buffer[0]) /* no luck -> def_val */
         {
             PROFILE_CopyEntry(buffer, def_val, len, TRUE);
@@ -1060,15 +1060,15 @@ UINT WINAPI GetProfileIntW( LPCWSTR section, LPCWSTR entry, INT def_val )
 }
 
 /*
- * if allow_section_name_copy is TRUE, allow the copying :
- *   - of Section names if 'section' is NULL
- *   - of Keys in a Section if 'entry' is NULL
+ * if win32, copy:
+ *   - Section names if 'section' is NULL
+ *   - Keys in a Section if 'entry' is NULL
  * (see MSDN doc for GetPrivateProfileString)
  */
 static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
 					    LPCWSTR def_val, LPWSTR buffer,
 					    UINT len, LPCWSTR filename,
-					    BOOL allow_section_name_copy )
+					    BOOL win32 )
 {
     int		ret;
     LPCWSTR	pDefVal = NULL;
@@ -1102,16 +1102,16 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
 	}
     }
     if (!pDefVal)
-	pDefVal = (LPCWSTR)def_val;
+	pDefVal = def_val;
 
     RtlEnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) {
-	if ((allow_section_name_copy) && (section == NULL))
+	if (win32 && (section == NULL))
             ret = PROFILE_GetSectionNames(buffer, len);
-	else
-	    /* PROFILE_GetString already handles the 'entry == NULL' case */
-            ret = PROFILE_GetString( section, entry, pDefVal, buffer, len );
+	else 
+	    /* PROFILE_GetString can handle the 'entry == NULL' case */
+            ret = PROFILE_GetString( section, entry, pDefVal, buffer, len, win32 );
     } else {
        lstrcpynW( buffer, pDefVal, len );
        ret = strlenW( buffer );
@@ -1334,7 +1334,7 @@ INT WINAPI GetPrivateProfileSectionW( LPCWSTR section, LPWSTR buffer,
     RtlEnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename ))
-        ret = PROFILE_GetSection(CurProfile->section, section, buffer, len, TRUE);
+        ret = PROFILE_GetSection(CurProfile->section, section, buffer, len, TRUE, FALSE);
 
     RtlLeaveCriticalSection( &PROFILE_CritSect );
 
