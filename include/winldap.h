@@ -98,6 +98,76 @@ typedef struct berelement
     PCHAR opaque;
 } BerElement;
 
+#define LDAP_OPT_API_INFO               0x00
+#define LDAP_OPT_DESC                   0x01
+#define LDAP_OPT_DEREF                  0x02
+#define LDAP_OPT_SIZELIMIT              0x03
+#define LDAP_OPT_TIMELIMIT              0x04
+#define LDAP_OPT_THREAD_FN_PTRS         0x05
+#define LDAP_OPT_REBIND_FN              0x06
+#define LDAP_OPT_REBIND_ARG             0x07
+#define LDAP_OPT_SSL                    0x0a
+#define LDAP_OPT_IO_FN_PTRS             0x0b
+#define LDAP_OPT_CACHE_FN_PTRS          0x0d
+#define LDAP_OPT_CACHE_STRATEGY         0x0e
+#define LDAP_OPT_CACHE_ENABLE           0x0f
+#define LDAP_OPT_REFERRAL_HOP_LIMIT     0x10
+#define LDAP_OPT_PROTOCOL_VERSION       0x11
+#define LDAP_OPT_VERSION                0x11
+#define LDAP_OPT_API_FEATURE_INFO       0x15
+#define LDAP_OPT_HOST_NAME              0x30
+#define LDAP_OPT_ERROR_NUMBER           0x31
+#define LDAP_OPT_ERROR_STRING           0x32
+#define LDAP_OPT_SERVER_ERROR           0x33
+#define LDAP_OPT_SERVER_EXT_ERROR       0x34
+#define LDAP_OPT_PING_KEEP_ALIVE        0x36
+#define LDAP_OPT_PING_WAIT_TIME         0x37
+#define LDAP_OPT_PING_LIMIT             0x38
+#define LDAP_OPT_DNSDOMAIN_NAME         0x3b
+#define LDAP_OPT_GETDSNAME_FLAGS        0x3d
+#define LDAP_OPT_HOST_REACHABLE         0x3e
+#define LDAP_OPT_PROMPT_CREDENTIALS     0x3f
+#define LDAP_OPT_TCP_KEEPALIVE          0x40
+#define LDAP_OPT_FAST_CONCURRENT_BIND   0x41
+#define LDAP_OPT_SEND_TIMEOUT           0x42
+#define LDAP_OPT_REFERRAL_CALLBACK      0x70
+#define LDAP_OPT_CLIENT_CERTIFICATE     0x80
+#define LDAP_OPT_SERVER_CERTIFICATE     0x81
+#define LDAP_OPT_AUTO_RECONNECT         0x91
+#define LDAP_OPT_SSPI_FLAGS             0x92
+#define LDAP_OPT_SSL_INFO               0x93
+#define LDAP_OPT_REF_DEREF_CONN_PER_MSG 0x94
+#define LDAP_OPT_TLS                    LDAP_OPT_SSL
+#define LDAP_OPT_TLS_INFO               LDAP_OPT_SSL_INFO
+#define LDAP_OPT_SIGN                   0x95
+#define LDAP_OPT_ENCRYPT                0x96
+#define LDAP_OPT_SASL_METHOD            0x97
+#define LDAP_OPT_AREC_EXCLUSIVE         0x98
+#define LDAP_OPT_SECURITY_CONTEXT       0x99
+#define LDAP_OPT_ROOTDSE_CACHE          0x9a
+
+#define LDAP_VERSION1   1
+#define LDAP_VERSION2   2
+#define LDAP_VERSION3   3
+#define LDAP_VERSION    LDAP_VERSION2
+
+#define LDAP_MSG_ONE        0
+#define LDAP_MSG_ALL        1
+#define LDAP_MSG_RECEIVED   2
+
+#define LDAP_RES_BIND           0x61
+#define LDAP_RES_SEARCH_ENTRY   0x64
+#define LDAP_RES_SEARCH_RESULT  0x65
+#define LDAP_RES_MODIFY         0x67
+#define LDAP_RES_ADD            0x69
+#define LDAP_RES_DELETE         0x6b
+#define LDAP_RES_MODRDN         0x6d
+#define LDAP_RES_COMPARE        0x6f
+#define LDAP_RES_SESSION        0x72
+#define LDAP_RES_REFERRAL       0x73
+#define LDAP_RES_EXTENDED       0x78
+#define LDAP_RES_ANY            (-1)
+
 typedef struct ldap
 {
     struct
@@ -240,6 +310,48 @@ typedef struct ldapsortkeyW
 
 DECL_WINELIB_TYPE_AW(LDAPSortKey)
 DECL_WINELIB_TYPE_AW(PLDAPSortKey)
+
+#define LDAP_API_INFO_VERSION     1
+
+typedef struct ldapapiinfoA
+{
+    int ldapai_info_version;
+    int ldapai_api_version;
+    int ldapai_protocol_version;
+    char **ldapai_extensions;
+    char *ldapai_vendor_name;
+    int ldapai_vendor_version;
+} LDAPAPIInfoA;
+
+typedef struct ldapapiinfoW
+{
+    int ldapai_info_version;
+    int ldapai_api_version;
+    int ldapai_protocol_version;
+    PWCHAR *ldapai_extensions;
+    PWCHAR ldapai_vendor_name;
+    int ldapai_vendor_version;
+} LDAPAPIInfoW;
+
+DECL_WINELIB_TYPE_AW(LDAPAPIInfo)
+
+#define LDAP_FEATURE_INFO_VERSION    1
+
+typedef struct ldap_apifeature_infoA
+{
+    int ldapaif_info_version;
+    char *ldapaif_name;
+    int ldapaif_version;
+} LDAPAPIFeatureInfoA;
+
+typedef struct ldap_apifeature_infoW
+{
+    int ldapaif_info_version;
+    PWCHAR ldapaif_name;
+    int ldapaif_version;
+} LDAPAPIFeatureInfoW;
+
+DECL_WINELIB_TYPE_AW(LDAPAPIFeatureInfo)
 
 LDAP *cldap_openA(PCHAR,ULONG);
 LDAP *cldap_openW(PWCHAR,ULONG);
