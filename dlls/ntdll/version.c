@@ -329,6 +329,16 @@ void WINAPI RtlGetNtVersionNumbers( LPDWORD major, LPDWORD minor, LPDWORD build 
 
 
 /******************************************************************************
+ *  RtlGetNtProductType   (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlGetNtProductType( LPDWORD type )
+{
+    if (type) *type = current_version->wProductType;
+    return TRUE;
+}
+
+
+/******************************************************************************
  *        VerifyVersionInfoW   (KERNEL32.@)
  */
 NTSTATUS WINAPI RtlVerifyVersionInfo( const RTL_OSVERSIONINFOEXW *info,

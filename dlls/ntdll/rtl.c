@@ -384,16 +384,6 @@ DWORD WINAPI RtlDeleteSecurityObject(DWORD x1) {
 }
 
 /**************************************************************************
- *                 RtlGetNtProductType			[NTDLL.@]
- */
-BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)
-{
-    FIXME("(%p): stub\n", type);
-    *type=3; /* dunno. 1 for client, 3 for server? */
-    return 1;
-}
-
-/**************************************************************************
  *                 _chkstk				[NTDLL.@]
  *
  * Glorified "enter xxxx".
