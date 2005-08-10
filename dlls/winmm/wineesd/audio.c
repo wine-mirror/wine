@@ -32,8 +32,6 @@
  *
  */
 
-/*#define EMULATE_SB16*/
-
 #include "config.h"
 
 #include <math.h>
@@ -126,7 +124,7 @@ typedef struct {
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
     PCMWAVEFORMAT		format;
-    WAVEOUTCAPSA		caps;
+    WAVEOUTCAPSW		caps;
     char                        interface_name[32];
 
     DWORD			dwSleepTime;		/* Num of milliseconds to sleep between filling the dsp buffers */
@@ -164,7 +162,7 @@ typedef struct {
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
     PCMWAVEFORMAT		format;
-    WAVEINCAPSA			caps;
+    WAVEINCAPSW			caps;
     char                        interface_name[32];
 
     /* esd information */
@@ -341,23 +339,14 @@ LONG ESD_WaveInit(void)
     /* initialize all device handles to -1 */
     for (i = 0; i < MAX_WAVEOUTDRV; ++i)
     {
+        static const WCHAR ini[] = {'E','s','o','u','n','D',' ','W','a','v','e','O','u','t','D','r','i','v','e','r',0};
+
 	WOutDev[i].esd_fd = -1;
 	memset(&WOutDev[i].caps, 0, sizeof(WOutDev[i].caps)); /* zero out
 							caps values */
-    /* FIXME: some programs compare this string against the content of the registry
-     * for MM drivers. The names have to match in order for the program to work
-     * (e.g. MS win9x mplayer.exe)
-     */
-#ifdef EMULATE_SB16
-    	WOutDev[i].caps.wMid = 0x0002;
-    	WOutDev[i].caps.wPid = 0x0104;
-    	strcpy(WOutDev[i].caps.szPname, "SB16 Wave Out");
-#else
     	WOutDev[i].caps.wMid = 0x00FF; 	/* Manufac ID */
     	WOutDev[i].caps.wPid = 0x0001; 	/* Product ID */
-    /*    strcpy(WOutDev[i].caps.szPname, "OpenSoundSystem WAVOUT Driver");*/
-    	strcpy(WOutDev[i].caps.szPname, "CS4236/37/38");
-#endif
+    	lstrcpyW(WOutDev[i].caps.szPname, ini);
         snprintf(WOutDev[i].interface_name, sizeof(WOutDev[i].interface_name), "wineesd: %d", i);
 
     	WOutDev[i].caps.vDriverVersion = 0x0100;
@@ -383,22 +372,14 @@ LONG ESD_WaveInit(void)
 
     for (i = 0; i < MAX_WAVEINDRV; ++i)
     {
+        static const WCHAR ini[] = {'E','s','o','u','n','D',' ','W','a','v','e','I','n','D','r','i','v','e','r',0};
+
 	WInDev[i].esd_fd = -1;
 	memset(&WInDev[i].caps, 0, sizeof(WInDev[i].caps)); /* zero out
 							caps values */
-    /* FIXME: some programs compare this string against the content of the registry
-     * for MM drivers. The names have to match in order for the program to work
-     * (e.g. MS win9x mplayer.exe)
-     */
-#ifdef EMULATE_SB16
-    	WInDev[i].caps.wMid = 0x0002;
-    	WInDev[i].caps.wPid = 0x0104;
-    	strcpy(WInDev[i].caps.szPname, "SB16 Wave In");
-#else
 	WInDev[i].caps.wMid = 0x00FF;
 	WInDev[i].caps.wPid = 0x0001;
-	strcpy(WInDev[i].caps.szPname,"CS4236/37/38");
-#endif
+	lstrcpyW(WInDev[i].caps.szPname, ini);
         snprintf(WInDev[i].interface_name, sizeof(WInDev[i].interface_name), "wineesd: %d", i);
 
 	WInDev[i].caps.vDriverVersion = 0x0100;
@@ -434,7 +415,7 @@ static int ESD_InitRingMessage(ESD_MSG_RING* mr)
 {
     mr->msg_toget = 0;
     mr->msg_tosave = 0;
-    mr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    mr->msg_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     mr->ring_buffer_size = ESD_RING_BUFFER_INCREMENT;
     mr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,mr->ring_buffer_size * sizeof(RING_MSG));
     InitializeCriticalSection(&mr->msg_crst);
@@ -485,7 +466,7 @@ static int ESD_AddRingMessage(ESD_MSG_RING* mr, enum win_wm_message msg, DWORD p
     }
     if (wait)
     {
-        hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+        hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         if (hEvent == INVALID_HANDLE_VALUE)
         {
             ERR("can't create event !?\n");
@@ -1047,7 +1028,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 /**************************************************************************
  * 			wodGetDevCaps				[internal]
  */
-static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
+static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -1167,7 +1148,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     /* create player thread */
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
-	wwo->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
 	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
 	CloseHandle(wwo->hStartUpEvent);
@@ -1532,7 +1513,7 @@ DWORD WINAPI ESD_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_BREAKLOOP: 	return wodBreakLoop     (wDevID);
     case WODM_PREPARE:	 	return wodPrepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
     case WODM_UNPREPARE: 	return wodUnprepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
-    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSA)dwParam1,	dwParam2);
+    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSW)dwParam1,	dwParam2);
     case WODM_GETNUMDEVS:	return wodGetNumDevs	();
     case WODM_GETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
     case WODM_SETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
@@ -1623,7 +1604,7 @@ static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD 
 /**************************************************************************
  * 			widGetDevCaps				[internal]
  */
-static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSA lpCaps, DWORD dwSize)
+static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -1907,7 +1888,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     /* create recorder thread */
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
-	wwi->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	wwi->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
 	WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
 	CloseHandle(wwi->hStartUpEvent);
@@ -2086,7 +2067,7 @@ DWORD WINAPI ESD_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WIDM_ADDBUFFER:	return widAddBuffer	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
     case WIDM_PREPARE:		return widPrepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
     case WIDM_UNPREPARE:	return widUnprepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
-    case WIDM_GETDEVCAPS:	return widGetDevCaps	(wDevID, (LPWAVEINCAPSA)dwParam1,	dwParam2);
+    case WIDM_GETDEVCAPS:	return widGetDevCaps	(wDevID, (LPWAVEINCAPSW)dwParam1,	dwParam2);
     case WIDM_GETNUMDEVS:	return widGetNumDevs	();
     case WIDM_RESET:		return widReset		(wDevID);
     case WIDM_START:		return widStart		(wDevID);
