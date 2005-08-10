@@ -758,9 +758,12 @@ ULARGE_INTEGER
 
 %ptr
 
+CLSID *
 IDataObject *
 IDataObject **
 ILockBytes16 *
+IStorage *
+LPCLSID
 LPDROPTARGET
 LPLOCKBYTES16 *
 LPMONIKER *
@@ -775,6 +778,10 @@ STATSTG16 *
 ULONG *
 void *
 void **
+
+%segptr
+
+SEGPTR
 
 %str
 
@@ -1035,7 +1042,6 @@ LARGE_INTEGER
 %ptr
 
 IID *
-ILockBytes16 *
 IStorage16 *
 IStorage16 **
 IStream16 *

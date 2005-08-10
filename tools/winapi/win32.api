@@ -993,7 +993,6 @@ REFIID
 
 %long
 
-BOOL
 HRESULT
 
 %ptr
@@ -3846,6 +3845,7 @@ CLSID *
 DLGPROC
 DLLVERSIONINFO *
 DWORD *
+FDSA_info *
 HICON *
 HKEY *
 HWND *
@@ -3921,6 +3921,7 @@ WNDCLASSA *
 int *
 unsigned char *
 va_list
+void *
 void **
 
 %ptr --extension
@@ -5053,6 +5054,7 @@ WLDAP32_LDAPMessage **
 int *
 struct WLDAP32_berval *
 struct l_timeval *
+void *
 
 %str
 
