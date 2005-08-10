@@ -159,6 +159,8 @@ typedef struct tagUSER_DRIVER {
 
 extern const USER_DRIVER *USER_Driver;
 
+extern void USER_unload_driver(void);
+
 struct received_message_info;
 struct hook16_queue_info;
 

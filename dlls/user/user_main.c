@@ -228,6 +228,9 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     case DLL_THREAD_DETACH:
         thread_detach();
         break;
+    case DLL_PROCESS_DETACH:
+        USER_unload_driver();
+        break;
     }
     return ret;
 }

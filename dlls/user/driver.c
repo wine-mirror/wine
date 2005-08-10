@@ -137,6 +137,13 @@ static const USER_DRIVER *load_driver(void)
     return driver;
 }
 
+/* unload the graphics driver on process exit */
+void USER_unload_driver(void)
+{
+    /* make sure we don't try to call the driver after it has been detached */
+    USER_Driver = &null_driver;
+}
+
 
 /**********************************************************************
  * Null user driver
