@@ -150,7 +150,7 @@ static INT read_header(HFILE fd,struct lzfileheader *head)
 
 
 /***********************************************************************
- *           LZStart   (LZ32.@)
+ *           LZStart   (KERNEL32.@)
  */
 INT WINAPI LZStart(void)
 {
@@ -160,7 +160,7 @@ INT WINAPI LZStart(void)
 
 
 /***********************************************************************
- *           LZInit   (LZ32.@)
+ *           LZInit   (KERNEL32.@)
  *
  * initializes internal decompression buffers, returns lzfiledescriptor.
  * (return value the same as hfSrc, if hfSrc is not compressed)
@@ -213,8 +213,7 @@ HFILE WINAPI LZInit( HFILE hfSrc )
 
 
 /***********************************************************************
- *           LZDone   (LZEXPAND.9)
- *           LZDone   (LZ32.@)
+ *           LZDone   (KERNEL32.@)
  */
 void WINAPI LZDone(void)
 {
@@ -223,7 +222,7 @@ void WINAPI LZDone(void)
 
 
 /***********************************************************************
- *           GetExpandedNameA   (LZ32.@)
+ *           GetExpandedNameA   (KERNEL32.@)
  *
  * gets the full filename of the compressed file 'in' by opening it
  * and reading the header
@@ -301,7 +300,7 @@ INT WINAPI GetExpandedNameA( LPSTR in, LPSTR out )
 
 
 /***********************************************************************
- *           GetExpandedNameW   (LZ32.@)
+ *           GetExpandedNameW   (KERNEL32.@)
  */
 INT WINAPI GetExpandedNameW( LPWSTR in, LPWSTR out )
 {
@@ -319,7 +318,7 @@ INT WINAPI GetExpandedNameW( LPWSTR in, LPWSTR out )
 
 
 /***********************************************************************
- *           LZRead   (LZ32.@)
+ *           LZRead   (KERNEL32.@)
  */
 INT WINAPI LZRead( HFILE fd, LPSTR vbuf, INT toread )
 {
@@ -410,7 +409,7 @@ INT WINAPI LZRead( HFILE fd, LPSTR vbuf, INT toread )
 
 
 /***********************************************************************
- *           LZSeek   (LZ32.@)
+ *           LZSeek   (KERNEL32.@)
  */
 LONG WINAPI LZSeek( HFILE fd, LONG off, INT type )
 {
@@ -442,7 +441,7 @@ LONG WINAPI LZSeek( HFILE fd, LONG off, INT type )
 
 
 /***********************************************************************
- *           LZCopy   (LZ32.@)
+ *           LZCopy   (KERNEL32.@)
  *
  * Copies everything from src to dest
  * if src is a LZ compressed file, it will be uncompressed.
@@ -524,7 +523,7 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
 
 
 /***********************************************************************
- *           LZOpenFileA   (LZ32.@)
+ *           LZOpenFileA   (KERNEL32.@)
  *
  * Opens a file. If not compressed, open it as a normal file.
  */
@@ -552,7 +551,7 @@ HFILE WINAPI LZOpenFileA( LPSTR fn, LPOFSTRUCT ofs, WORD mode )
 
 
 /***********************************************************************
- *           LZOpenFileW   (LZ32.@)
+ *           LZOpenFileW   (KERNEL32.@)
  */
 HFILE WINAPI LZOpenFileW( LPWSTR fn, LPOFSTRUCT ofs, WORD mode )
 {
@@ -567,7 +566,7 @@ HFILE WINAPI LZOpenFileW( LPWSTR fn, LPOFSTRUCT ofs, WORD mode )
 
 
 /***********************************************************************
- *           LZClose   (LZ32.@)
+ *           LZClose   (KERNEL32.@)
  */
 void WINAPI LZClose( HFILE fd )
 {
@@ -586,7 +585,7 @@ void WINAPI LZClose( HFILE fd )
 
 
 /***********************************************************************
- *           CopyLZFile  (LZ32.@)
+ *           CopyLZFile  (KERNEL32.@)
  *
  * Copy src to dest (including uncompressing src).
  * NOTE: Yes. This is exactly the same function as LZCopy.
