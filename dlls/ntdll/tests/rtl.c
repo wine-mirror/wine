@@ -25,6 +25,26 @@
 
 #include "ntdll_test.h"
 
+#ifndef __WINE_WINTERNL_H
+
+typedef struct _RTL_HANDLE
+{
+    struct _RTL_HANDLE * Next;
+} RTL_HANDLE;
+
+typedef struct _RTL_HANDLE_TABLE
+{
+    ULONG MaxHandleCount;
+    ULONG HandleSize;
+    ULONG Unused[2];
+    PVOID NextFree;
+    PVOID FirstHandle;
+    PVOID ReservedMemory;
+    PVOID MaxHandle;
+} RTL_HANDLE_TABLE;
+
+#endif
+
 /* Function ptrs for ntdll calls */
 static HMODULE hntdll = 0;
 static SIZE_T    (WINAPI  *pRtlCompareMemory)(LPCVOID,LPCVOID,SIZE_T);
