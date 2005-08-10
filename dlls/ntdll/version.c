@@ -152,36 +152,9 @@ static const char * const WinVersionNames[NB_WINDOWS_VERSIONS] =
     "win2003,win2k3"              /* WIN2K3 */
 };
 
-/* names to print out in debug traces */
-static const char * const debug_names[NB_WINDOWS_VERSIONS] =
-{
-    "Windows 2.0",       /* WIN20 */
-    "Windows 3.0",       /* WIN30 */
-    "Windows 3.1",       /* WIN31 */
-    "Windows 95",        /* WIN95 */
-    "Windows 98",        /* WIN98 */
-    "Windows Me",        /* WINME */
-    "Windows NT 3.51",   /* NT351 */
-    "Windows NT 4.0",    /* NT40 */
-    "Windows 2000",      /* NT2K */
-    "Windows XP",        /* WINXP */
-    "Windows Server 2003"/* WIN2K3 */
-};
 
-/* if one of the following dlls is importing ntdll the windows
-version autodetection switches wine to unicode (nt 3.51 or 4.0) */
-static const WCHAR special_dlls[][16] =
-{
-    {'c','o','m','d','l','g','3','2','.','d','l','l',0},
-    {'c','o','m','c','t','l','3','2','.','d','l','l',0},
-    {'s','h','e','l','l','3','2','.','d','l','l',0},
-    {'o','l','e','3','2','.','d','l','l',0},
-    {'r','p','c','r','t','4','.','d','l','l',0}
-};
-
-/* the current version has not been autodetected but forced via cmdline */
-static BOOL versionForced = FALSE;
-static WINDOWS_VERSION forcedWinVersion; /* init value irrelevant */
+/* initialized to null so that we crash if we try to retrieve the version too early at startup */
+static const RTL_OSVERSIONINFOEXW *current_version;
 
 /**********************************************************************
  *         parse_win_version
@@ -214,9 +187,8 @@ static BOOL parse_win_version( HANDLE hkey )
             len = p ? p - pCurr : strlen(pCurr);
             if ( (!strncmp( pCurr, buffer, len )) && (buffer[len] == 0) )
             {
-                forcedWinVersion = i;
-                versionForced = TRUE;
-                TRACE( "got win version %s\n", WinVersionNames[forcedWinVersion] );
+                current_version = &VersionData[i];
+                TRACE( "got win version %s\n", WinVersionNames[i] );
                 return TRUE;
             }
             pCurr = p+1;
@@ -239,15 +211,19 @@ static BOOL parse_win_version( HANDLE hkey )
 
 
 /**********************************************************************
- *         VERSION_Init
+ *         version_init
  */
-void VERSION_Init( const WCHAR *appname )
+void version_init( const WCHAR *appname )
 {
+    static const WCHAR configW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e',0};
+    static const WCHAR appdefaultsW[] = {'A','p','p','D','e','f','a','u','l','t','s','\\',0};
+
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HANDLE root, hkey, config_key;
-    static const WCHAR configW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e',0};
-    static const WCHAR appdefaultsW[] = {'A','p','p','D','e','f','a','u','l','t','s','\\',0};
+    BOOL got_win_ver = FALSE;
+
+    current_version = &VersionData[WIN98];  /* default if nothing else is specified */
 
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
@@ -261,61 +237,48 @@ void VERSION_Init( const WCHAR *appname )
     /* @@ Wine registry key: HKCU\Software\Wine */
     if (NtOpenKey( &config_key, KEY_ALL_ACCESS, &attr )) config_key = 0;
     NtClose( root );
-    if (!config_key) return;
+    if (!config_key) goto done;
 
     /* open AppDefaults\\appname key */
     if (appname && *appname)
     {
         const WCHAR *p;
         WCHAR appversion[MAX_PATH+20];
-        BOOL got_win_ver = FALSE;
 
         if ((p = strrchrW( appname, '/' ))) appname = p + 1;
         if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
 
         strcpyW( appversion, appdefaultsW );
         strcatW( appversion, appname );
-        TRACE( "getting version from %s\n", debugstr_w(appversion) );
         RtlInitUnicodeString( &nameW, appversion );
         attr.RootDirectory = config_key;
 
         /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe */
         if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
         {
+            TRACE( "getting version from %s\n", debugstr_w(appversion) );
             got_win_ver = parse_win_version( hkey );
             NtClose( hkey );
         }
-        if (got_win_ver) goto done;
     }
 
-    TRACE( "getting default version\n" );
-    parse_win_version( config_key );
-
- done:
+    if (!got_win_ver)
+    {
+        TRACE( "getting default version\n" );
+        parse_win_version( config_key );
+    }
     NtClose( config_key );
-}
 
-/**********************************************************************
- *         VERSION_GetVersion
- *
- * WARNING !!!
- * Don't call this function too early during the Wine init,
- * as pdb->exe_modref (required by VERSION_GetImageVersion()) might still
- * be NULL in such cases, which causes the winver to ALWAYS be detected
- * as WIN31.
- * And as we cache the winver once it has been determined, this is bad.
- * This can happen much easier than you might think, as this function
- * is called by EVERY GetVersion*() API !
- *
- */
-static const RTL_OSVERSIONINFOEXW *VERSION_GetVersion(void)
-{
-    static WORD winver = WIN98;
+done:
+    NtCurrentTeb()->Peb->OSMajorVersion = current_version->dwMajorVersion;
+    NtCurrentTeb()->Peb->OSMinorVersion = current_version->dwMinorVersion;
+    NtCurrentTeb()->Peb->OSBuildNumber  = current_version->dwBuildNumber;
+    NtCurrentTeb()->Peb->OSPlatformId   = current_version->dwPlatformId;
 
-    if (versionForced)
-        return &VersionData[forcedWinVersion];  /* user has overridden any sensible checks */
-
-    return &VersionData[winver];
+    TRACE( "got %ld.%ld plaform %ld build %lx name %s\n",
+           current_version->dwMajorVersion, current_version->dwMinorVersion,
+           current_version->dwPlatformId, current_version->dwBuildNumber,
+           debugstr_w( current_version->szCSDVersion ));
 }
 
 
@@ -324,19 +287,17 @@ static const RTL_OSVERSIONINFOEXW *VERSION_GetVersion(void)
  */
 NTSTATUS WINAPI RtlGetVersion( RTL_OSVERSIONINFOEXW *info )
 {
-    const RTL_OSVERSIONINFOEXW * const current = VERSION_GetVersion();
-
-    info->dwMajorVersion = current->dwMajorVersion;
-    info->dwMinorVersion = current->dwMinorVersion;
-    info->dwBuildNumber  = current->dwBuildNumber;
-    info->dwPlatformId   = current->dwPlatformId;
-    strcpyW( info->szCSDVersion, current->szCSDVersion );
+    info->dwMajorVersion = current_version->dwMajorVersion;
+    info->dwMinorVersion = current_version->dwMinorVersion;
+    info->dwBuildNumber  = current_version->dwBuildNumber;
+    info->dwPlatformId   = current_version->dwPlatformId;
+    strcpyW( info->szCSDVersion, current_version->szCSDVersion );
     if(info->dwOSVersionInfoSize == sizeof(RTL_OSVERSIONINFOEXW))
     {
-        info->wServicePackMajor = current->wServicePackMajor;
-        info->wServicePackMinor = current->wServicePackMinor;
-        info->wSuiteMask        = current->wSuiteMask;
-        info->wProductType      = current->wProductType;
+        info->wServicePackMajor = current_version->wServicePackMajor;
+        info->wServicePackMinor = current_version->wServicePackMinor;
+        info->wSuiteMask        = current_version->wSuiteMask;
+        info->wProductType      = current_version->wProductType;
     }
     return STATUS_SUCCESS;
 }
@@ -360,12 +321,10 @@ NTSTATUS WINAPI RtlGetVersion( RTL_OSVERSIONINFOEXW *info )
  */
 void WINAPI RtlGetNtVersionNumbers( LPDWORD major, LPDWORD minor, LPDWORD build )
 {
-    const RTL_OSVERSIONINFOEXW * const current = VERSION_GetVersion();
-
-    if (major) *major = current->dwMajorVersion;
-    if (minor) *minor = current->dwMinorVersion;
+    if (major) *major = current_version->dwMajorVersion;
+    if (minor) *minor = current_version->dwMinorVersion;
     /* FIXME: Does anybody know the real formula? */
-    if (build) *build = (0xF0000000 | current->dwBuildNumber);
+    if (build) *build = (0xF0000000 | current_version->dwBuildNumber);
 }
 
 

@@ -1938,6 +1938,8 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3
     UNICODE_STRING *main_exe_name = &peb->ProcessParameters->ImagePathName;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
 
+    version_init( main_exe_name->Buffer );
+
     /* allocate the modref for the main exe */
     if (!(wm = alloc_module( peb->ImageBaseAddress, main_exe_name->Buffer )))
     {
