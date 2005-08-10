@@ -742,7 +742,7 @@ static void test_waittxempty(HANDLE hcom)
     BOOL res_write, res;
     DWORD baud = SLOWBAUD;
 
-    trace("test_waittxempty");
+    trace("test_waittxempty\n");
     /* set a low baud rate to have ample time*/
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     dcb.BaudRate = baud;
