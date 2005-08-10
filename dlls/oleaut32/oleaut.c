@@ -700,7 +700,7 @@ extern void _get_STDFONT_CF(LPVOID);
 extern void _get_STDPIC_CF(LPVOID);
 
 /***********************************************************************
- *		DllGetClassObject (OLEAUT32.1)
+ *		DllGetClassObject (OLEAUT32.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
@@ -735,7 +735,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 }
 
 /***********************************************************************
- *		DllCanUnloadNow (OLEAUT32.410)
+ *		DllCanUnloadNow (OLEAUT32.@)
  *
  * Determine if this dll can be unloaded from the callers address space.
  *

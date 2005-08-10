@@ -63,7 +63,7 @@ HRESULT WINAPI DPNHPAST_DirectPlayNATHelpCreate()
 
 
 /******************************************************************
- *		DllRegisterServer (DPNHPAST.2)
+ *		DllRegisterServer (DPNHPAST.@)
  *
  *
  */
@@ -75,7 +75,7 @@ HRESULT WINAPI DllRegisterServer(void)
 
 
 /******************************************************************
- *		DllCanUnloadNow (DPNHPAST.3)
+ *		DllCanUnloadNow (DPNHPAST.@)
  *
  *
  */
@@ -87,7 +87,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 
 
 /******************************************************************
- *		DllGetClassObject (DPNHPAST.4)
+ *		DllGetClassObject (DPNHPAST.@)
  *
  *
  */
@@ -99,7 +99,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
 
 /******************************************************************
- *		DllUnregisterServer (DPNHPAST.5)
+ *		DllUnregisterServer (DPNHPAST.@)
  *
  *
  */

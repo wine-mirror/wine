@@ -1,5 +1,6 @@
 1 stub DirectPlayNATHelpCreate
-2 stdcall -private DllRegisterServer()
-3 stdcall -private DllCanUnloadNow()
-4 stdcall -private DllGetClassObject(ptr ptr ptr)
-5 stdcall -private DllUnregisterServer()
+
+@ stdcall -private DllCanUnloadNow()
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()

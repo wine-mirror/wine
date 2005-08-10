@@ -596,7 +596,7 @@ static struct regsvr_interface const interface_list[] = {
 };
 
 /***********************************************************************
- *		DllRegisterServer
+ *		DllRegisterServer (MSI.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
@@ -611,7 +611,7 @@ HRESULT WINAPI DllRegisterServer(void)
 }
 
 /***********************************************************************
- *		DllUnregisterServer
+ *		DllUnregisterServer (MSI.@)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {

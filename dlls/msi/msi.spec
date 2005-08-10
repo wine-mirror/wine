@@ -1,7 +1,3 @@
-1 stdcall -private DllCanUnloadNow()
-2 stdcall -private DllGetClassObject(ptr ptr ptr)
-3 stdcall -private DllRegisterServer()
-4 stdcall -private DllUnregisterServer()
 5 stdcall MsiAdvertiseProductA(str str str long)
 6 stdcall MsiAdvertiseProductW(wstr wstr wstr long)
 7 stdcall MsiCloseAllHandles()
@@ -234,3 +230,8 @@
 234 stub MsiDeleteUserDataW
 235 stub Migrate10CachedPackagesA
 236 stub Migrate10CachedPackagesW
+
+@ stdcall -private DllCanUnloadNow()
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()

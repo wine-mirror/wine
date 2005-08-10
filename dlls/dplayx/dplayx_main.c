@@ -95,7 +95,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 }
 
 /***********************************************************************
- *              DllCanUnloadNow (DPLAYX.10)
+ *              DllCanUnloadNow (DPLAYX.@)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
