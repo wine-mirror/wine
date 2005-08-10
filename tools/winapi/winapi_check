@@ -540,8 +540,6 @@ foreach my $file (@c_files) {
 			} else {
 			    $include = "$header";
 			}
-		    } elsif($header =~ /^(?:controls|message|winproc)\.h$/) { # FIXME: Kludge
-			$include = "dlls/user/$header";
 		    } elsif($check_local && $header ne "config.h") {
 			$output->write("$file: #include \"$header\": file not found\n");
 		    }
@@ -611,11 +609,6 @@ foreach my $file (@c_files) {
 			    foreach my $name (keys(%{$include2info{"$header"}{includes}})) {
 				$include2info{$name}{used}++;
 			    }
-			}
-		    } elsif($header =~ /^(?:controls|message|winproc)\.h$/) { # FIXME: Kludge
-			$include2info{"dlls/user/$header"}{used}++;
-			foreach my $name (keys(%{$include2info{"dlls/user/$header"}{includes}})) {
-			    $include2info{$name}{used}++;
 			}
 		    } elsif(-e "$wine_dir/include/$header") {
 			$include2info{"include/$header"}{used}++;
