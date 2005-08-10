@@ -92,13 +92,13 @@ typedef struct _TDB
     HANDLE16  hPDB;               /* 60 Selector of PDB (i.e. PSP) */
     SEGPTR    dta;                /* 62 Current DTA */
     BYTE      curdrive;           /* 66 Current drive */
-    BYTE      curdir[65];         /* 67 Current directory */
+    CHAR      curdir[65];         /* 67 Current directory */
     WORD      nCmdShow;           /* a8 cmdShow parameter to WinMain */
     HTASK16   hYieldTo;           /* aa Next task to schedule */
     DWORD     dlls_to_init;       /* ac Ptr to DLLs to initialize */
     HANDLE16  hCSAlias;           /* b0 Code segment for this TDB */
     WORD      thunks[8*4];        /* b2 Make proc instance thunks */
-    BYTE      module_name[8];     /* f2 Module name for task */
+    CHAR      module_name[8];     /* f2 Module name for task */
     WORD      magic;              /* fa TDB signature */
     HANDLE    hEvent;             /* fc scheduler event handle */
     PDB16     pdb;                /* 100 PDB for this task */
