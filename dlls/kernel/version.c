@@ -107,15 +107,11 @@ DWORD WINAPI GetVersion16(void)
  */
 DWORD WINAPI GetVersion(void)
 {
-    RTL_OSVERSIONINFOEXW info;
-    DWORD result;
-
-    info.dwOSVersionInfoSize = sizeof(info);
-    if (RtlGetVersion( &info ) != STATUS_SUCCESS) return 0;
-
-    result = MAKELONG( MAKEWORD( info.dwMajorVersion, info.dwMinorVersion ),
-                       (info.dwPlatformId ^ 2) << 14 );
-    if (info.dwPlatformId == VER_PLATFORM_WIN32_NT) result |= LOWORD(info.dwBuildNumber) << 16;
+    DWORD result = MAKELONG( MAKEWORD( NtCurrentTeb()->Peb->OSMajorVersion,
+                                       NtCurrentTeb()->Peb->OSMinorVersion ),
+                             (NtCurrentTeb()->Peb->OSPlatformId ^ 2) << 14 );
+    if (NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32_NT)
+        result |= LOWORD(NtCurrentTeb()->Peb->OSBuildNumber) << 16;
     return result;
 }
 
