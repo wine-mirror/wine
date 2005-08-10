@@ -156,7 +156,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 
 
 /******************************************************************
- *		DllGetClassObject (DMUSIC.2)
+ *		DllGetClassObject (DMUSIC.@)
  *
  *
  */

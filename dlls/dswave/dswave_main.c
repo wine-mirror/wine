@@ -108,7 +108,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 
 
 /******************************************************************
- *		DllGetClassObject (DSWAVE.2)
+ *		DllGetClassObject (DSWAVE.@)
  *
  *
  */

@@ -571,7 +571,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 
 
 /******************************************************************
- *		DllGetClassObject (DMSCRIPT.2)
+ *		DllGetClassObject (DMSCRIPT.@)
  *
  *
  */

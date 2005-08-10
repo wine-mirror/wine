@@ -737,7 +737,7 @@ static const IClassFactoryVtbl IRegistrarCFVtbl = {
 static IClassFactory RegistrarCF = { &IRegistrarCFVtbl };
 
 /**************************************************************
- * DllGetClassObject implementation
+ * DllGetClassObject (ATL.2)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
 {

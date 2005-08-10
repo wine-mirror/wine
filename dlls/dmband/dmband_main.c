@@ -159,7 +159,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 
 
 /******************************************************************
- *		DllGetClassObject (DMBAND.2)
+ *		DllGetClassObject (DMBAND.@)
  *
  *
  */

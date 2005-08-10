@@ -156,7 +156,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 
 
 /******************************************************************
- *		DllGetClassObject (DMSYNTH.2)
+ *		DllGetClassObject (DMSYNTH.@)
  *
  *
  */

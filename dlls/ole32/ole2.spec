@@ -77,7 +77,7 @@
 79 pascal OleDoAutoConvert(ptr ptr) OleDoAutoConvert16
 80 stub OLEGETAUTOCONVERT
 81 stub OLESETAUTOCONVERT
-82 pascal GETCONVERTSTG(ptr) GetConvertStg16
+82 pascal GetConvertStg(ptr) GetConvertStg16
 83 stub SETCONVERTSTG
 84 stub CREATESTREAMONHGLOBAL
 85 stub GETHGLOBALFROMSTREAM

@@ -53,7 +53,7 @@ HRESULT WINAPI DllCanUnloadNow (void)
 
 
 /******************************************************************
- *		DllGetClassObject (DMLOADER.2)
+ *		DllGetClassObject (DMLOADER.@)
  */
 HRESULT WINAPI DllGetClassObject (REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {

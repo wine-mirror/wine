@@ -1340,7 +1340,7 @@ static const IClassFactoryVtbl MsiCF_Vtbl =
 static IClassFactoryImpl Msi_CF = { &MsiCF_Vtbl };
 
 /******************************************************************
- * DllGetClassObject          [MSI.@]
+ * DllGetClassObject          [MSI.2]
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {

@@ -127,6 +127,9 @@ const struct IClassFactoryVtbl xmlcf_vtbl =
 
 static xmlcf domdoccf = { &xmlcf_vtbl, DOMDocument_create };
 
+/******************************************************************
+ *		DllGetClassObject (MSXML3.@)
+ */
 HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 {
     IClassFactory *cf = NULL;

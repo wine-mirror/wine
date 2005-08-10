@@ -2329,7 +2329,7 @@ HRESULT WINAPI OleDoAutoConvert(IStorage *pStg, LPCLSID pClsidNew)
 }
 
 /******************************************************************************
- *              OleDoAutoConvert        [OLE2.@]
+ *              OleDoAutoConvert        [OLE2.79]
  */
 HRESULT WINAPI OleDoAutoConvert16(IStorage *pStg, LPCLSID pClsidNew)
 {

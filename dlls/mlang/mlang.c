@@ -745,6 +745,9 @@ static const IClassFactoryVtbl MLANGCF_Vtbl =
     MLANGCF_LockServer
 };
 
+/******************************************************************
+ *		DllGetClassObject (MLANG.@)
+ */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     int i;
