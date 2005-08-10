@@ -29,7 +29,7 @@
 #include "winbase.h"
 #include "winnls.h"
 
-#ifdef HAVE_LDAP
+#ifdef HAVE_LDAP_H
 #include <ldap.h>
 #else
 #define LDAP_SUCCESS        0x00
