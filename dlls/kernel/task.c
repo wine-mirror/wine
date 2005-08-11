@@ -426,6 +426,12 @@ void TASK_CreateMainTask(void)
 }
 
 
+struct create_data
+{
+    TDB                 *task;
+    WIN16_SUBSYSTEM_TIB *tib;
+};
+
 /* allocate the win16 TIB for a new 16-bit task */
 static WIN16_SUBSYSTEM_TIB *allocate_win16_tib( TDB *pTask )
 {
@@ -441,7 +447,10 @@ static WIN16_SUBSYSTEM_TIB *allocate_win16_tib( TDB *pTask )
     else tib->exe_name = NULL;
 
     RtlAcquirePebLock();
-    curdir = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectory.DosPath;
+    if (NtCurrentTeb()->Tib.SubSystemTib)
+        curdir = &((WIN16_SUBSYSTEM_TIB *)NtCurrentTeb()->Tib.SubSystemTib)->curdir.DosPath;
+    else
+        curdir = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectory.DosPath;
     tib->curdir.DosPath.MaximumLength = sizeof(tib->curdir_buffer);
     tib->curdir.DosPath.Length = min( curdir->Length, tib->curdir.DosPath.MaximumLength-sizeof(WCHAR) );
     tib->curdir.DosPath.Buffer = tib->curdir_buffer;
@@ -452,14 +461,22 @@ static WIN16_SUBSYSTEM_TIB *allocate_win16_tib( TDB *pTask )
     return tib;
 }
 
+static inline void free_win16_tib( WIN16_SUBSYSTEM_TIB *tib )
+{
+    if (tib->exe_name) RtlFreeUnicodeString( tib->exe_name );
+    HeapFree( GetProcessHeap(), 0, tib );
+}
+
 /* startup routine for a new 16-bit thread */
 static DWORD CALLBACK task_start( LPVOID p )
 {
-    TDB *pTask = (TDB *)p;
+    struct create_data *data = p;
+    TDB *pTask = data->task;
     DWORD ret;
 
     kernel_get_thread_data()->htask16 = pTask->hSelf;
-    NtCurrentTeb()->Tib.SubSystemTib = allocate_win16_tib( pTask );
+    NtCurrentTeb()->Tib.SubSystemTib = data->tib;
+    HeapFree( GetProcessHeap(), 0, data );
 
     _EnterWin16Lock();
     TASK_LinkTask( pTask->hSelf );
@@ -478,15 +495,23 @@ static DWORD CALLBACK task_start( LPVOID p )
 HTASK16 TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow,
                         LPCSTR cmdline, BYTE len, HANDLE *hThread )
 {
+    struct create_data *data = NULL;
+    WIN16_SUBSYSTEM_TIB *tib;
     TDB *pTask;
 
     if (!(pTask = TASK_Create( pModule, cmdShow, cmdline, len ))) return 0;
-    if (!(*hThread = CreateThread( NULL, 0, task_start, pTask, 0, NULL )))
-    {
-        TASK_DeleteTask( pTask->hSelf );
-        return 0;
-    }
+    if (!(tib = allocate_win16_tib( pTask ))) goto failed;
+    if (!(data = HeapAlloc( GetProcessHeap(), 0, sizeof(*data)))) goto failed;
+    data->task = pTask;
+    data->tib = tib;
+    if (!(*hThread = CreateThread( NULL, 0, task_start, data, 0, NULL ))) goto failed;
     return pTask->hSelf;
+
+failed:
+    if (tib) free_win16_tib( tib );
+    HeapFree( GetProcessHeap(), 0, data );
+    TASK_DeleteTask( pTask->hSelf );
+    return 0;
 }
 
 
@@ -567,8 +592,7 @@ void TASK_ExitTask(void)
 
     if ((tib = NtCurrentTeb()->Tib.SubSystemTib))
     {
-        if (tib->exe_name) RtlFreeUnicodeString( tib->exe_name );
-        HeapFree( GetProcessHeap(), 0, tib );
+        free_win16_tib( tib );
         NtCurrentTeb()->Tib.SubSystemTib = NULL;
     }
 
