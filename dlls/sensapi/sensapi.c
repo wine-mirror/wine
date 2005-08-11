@@ -42,8 +42,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-#include "wine/debug.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(sensapi);
 
 HMODULE SENSAPI_hModule = 0;
