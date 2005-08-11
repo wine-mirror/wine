@@ -588,7 +588,7 @@ ME_StreamOutRTFText(ME_TextEditor *editor, WCHAR *text, LONG nChars)
             return FALSE;
           pos = i;
         }
-      if (!pos)
+      if (pos < nBytes)
         if (!ME_StreamOutMove(editor, buffer + pos, nBytes - pos))
           return FALSE;
       pos = 0;
