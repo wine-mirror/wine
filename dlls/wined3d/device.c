@@ -4463,25 +4463,62 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface, DWORD*
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *iface, UINT PaletteNumber, CONST PALETTEENTRY* pEntries) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    FIXME("(%p) : stub\n", This);
+    int j;
+    TRACE("(%p) : PaletteNumber %u\n", This, PaletteNumber);
+    if ( PaletteNumber < 0 || PaletteNumber >= MAX_PALETTES) {
+        WARN("(%p) : (%u) Out of range 0-%u, returning Invalid Call\n", This, PaletteNumber, MAX_PALETTES);
+        return D3DERR_INVALIDCALL;
+    }
+    for (j = 0; j < 256; ++j) {
+        This->palettes[PaletteNumber][j].peRed   = pEntries[j].peRed;
+        This->palettes[PaletteNumber][j].peGreen = pEntries[j].peGreen;
+        This->palettes[PaletteNumber][j].peBlue  = pEntries[j].peBlue;
+        This->palettes[PaletteNumber][j].peFlags = pEntries[j].peFlags;
+    }
+    TRACE("(%p) : returning\n", This);
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetPaletteEntries(IWineD3DDevice *iface, UINT PaletteNumber, PALETTEENTRY* pEntries) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    FIXME("(%p) : stub\n", This);
+    int j;
+    TRACE("(%p) : PaletteNumber %u\n", This, PaletteNumber);
+    if ( PaletteNumber < 0 || PaletteNumber >= MAX_PALETTES) {
+        WARN("(%p) : (%u) Out of range 0-%u, returning Invalid Call\n", This, PaletteNumber, MAX_PALETTES);
+        return D3DERR_INVALIDCALL;
+    }
+    for (j = 0; j < 256; ++j) {
+        pEntries[j].peRed   = This->palettes[PaletteNumber][j].peRed;
+        pEntries[j].peGreen = This->palettes[PaletteNumber][j].peGreen;
+        pEntries[j].peBlue  = This->palettes[PaletteNumber][j].peBlue;
+        pEntries[j].peFlags = This->palettes[PaletteNumber][j].peFlags;
+    }
+    TRACE("(%p) : returning\n", This);
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_SetCurrentTexturePalette(IWineD3DDevice *iface, UINT PaletteNumber) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    FIXME("(%p) : stub\n", This);
+    TRACE("(%p) : PaletteNumber %u\n", This, PaletteNumber);
+    if ( PaletteNumber < 0 || PaletteNumber >= MAX_PALETTES) {
+        WARN("(%p) : (%u) Out of range 0-%u, returning Invalid Call\n", This, PaletteNumber, MAX_PALETTES);
+        return D3DERR_INVALIDCALL;
+    }
+    /*TODO: stateblocks */
+    This->currentPalette = PaletteNumber;
+    TRACE("(%p) : returning\n", This);
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetCurrentTexturePalette(IWineD3DDevice *iface, UINT* PaletteNumber) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    FIXME("(%p) : stub\n", This);
+    if (PaletteNumber == NULL) {
+        WARN("(%p) : returning Invalid Call\n", This);
+        return D3DERR_INVALIDCALL;
+    }
+    /*TODO: stateblocks */
+    *PaletteNumber = This->currentPalette;
+    TRACE("(%p) : returning  %u\n", This, *PaletteNumber);
     return D3D_OK;
 }
 
