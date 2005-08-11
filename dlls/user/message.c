@@ -1650,24 +1650,23 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
     GUITHREADINFO info;
     MOUSEHOOKSTRUCT hook;
     BOOL eatMsg;
-    HWND hWndScope = msg->hwnd;
 
     /* find the window to dispatch this mouse message to */
 
-    hittest = HTCLIENT;
     GetGUIThreadInfo( GetCurrentThreadId(), &info );
-    if (!(msg->hwnd = info.hwndCapture))
+    if (info.hwndCapture)
     {
-        /* If no capture HWND, find window which contains the mouse position.
-         * Also find the position of the cursor hot spot (hittest) */
-        if (!IsWindow(hWndScope)) hWndScope = 0;
-        if (!(msg->hwnd = WINPOS_WindowFromPoint( hWndScope, msg->pt, &hittest )))
-            msg->hwnd = GetDesktopWindow();
+        hittest = HTCLIENT;
+        msg->hwnd = info.hwndCapture;
+    }
+    else
+    {
+        msg->hwnd = WINPOS_WindowFromPoint( msg->hwnd, msg->pt, &hittest );
     }
 
-    if (!WIN_IsCurrentThread( msg->hwnd ))
+    if (!msg->hwnd || !WIN_IsCurrentThread( msg->hwnd ))
     {
-        accept_hardware_message( hw_id, FALSE, msg->hwnd );
+        accept_hardware_message( hw_id, TRUE, msg->hwnd );
         return FALSE;
     }
 
