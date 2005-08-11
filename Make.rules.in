@@ -17,6 +17,7 @@
 # SUBDIRS      : subdirectories that contain a Makefile
 # EXTRASUBDIRS : subdirectories that do not contain a Makefile
 # INSTALLSUBDIRS : subdirectories to run make install/uninstall into
+# MODCFLAGS    : extra CFLAGS for this module
 
 # First some useful definitions
 
@@ -55,7 +56,7 @@ LINTFLAGS = @LINTFLAGS@
 FONTFORGE = @FONTFORGE@
 INCLUDES     = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)
 EXTRACFLAGS  = @EXTRACFLAGS@
-ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS)
+ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
 ALLLINTFLAGS = $(INCLUDES) $(DEFS) $(LINTFLAGS)
 IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
 MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs -m 755

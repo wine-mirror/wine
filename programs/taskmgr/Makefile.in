@@ -7,6 +7,7 @@ APPMODE   = -mwindows
 IMPORTS   = psapi shell32 comctl32 msvcrt user32 gdi32 advapi32 kernel32
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 EXTRADEFS = -DNO_LIBWINE_PORT
+MODCFLAGS = @BUILTINFLAG@
 
 C_SRCS = \
 	about.c \

@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = msvcrtd.dll
 IMPORTS   = msvcrtd
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+MODCFLAGS = @BUILTINFLAG@
 
 CTESTS = \
 	debug.c

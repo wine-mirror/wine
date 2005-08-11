@@ -8,6 +8,7 @@ IMPORTS   = msvcrt advapi32 kernel32
 DELAYIMPORTS = shlwapi shell32 comdlg32 comctl32 user32 gdi32
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 EXTRADEFS = -DNO_LIBWINE_PORT
+MODCFLAGS = @BUILTINFLAG@
 
 C_SRCS = \
 	about.c \

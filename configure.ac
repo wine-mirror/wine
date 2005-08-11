@@ -817,6 +817,25 @@ int main(void) {
   then
     EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
   fi
+
+  AC_SUBST(BUILTINFLAG,"")
+  saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -Werror"
+  AC_CACHE_CHECK([for builtin wchar inlines], ac_cv_c_builtin_wchar_ctype,
+      AC_TRY_COMPILE([],
+                     [int iswlower(unsigned short);],
+                     [ac_cv_c_builtin_wchar_ctype=no],[ac_cv_c_builtin_wchar_ctype=yes]))
+  CFLAGS="$saved_CFLAGS"
+  if test "$ac_cv_c_builtin_wchar_ctype" = "yes"
+  then
+    BUILTINFLAG=""
+    for builtin in \
+      iswalnum iswalpha iswcntrl iswdigit iswgraph iswlower \
+      iswprint iswpunct iswspace iswupper iswxdigit towlower towupper
+    do
+      BUILTINFLAG="$BUILTINFLAG -fno-builtin-$builtin"
+    done
+  fi
 fi
 
 dnl **** Check how to define a function in assembly code ****

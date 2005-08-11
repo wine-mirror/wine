@@ -6,6 +6,7 @@ MODULE    = notepad.exe
 APPMODE   = -mwindows
 IMPORTS   = comdlg32 shell32 user32 gdi32 msvcrt advapi32 kernel32
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+MODCFLAGS = @BUILTINFLAG@
 EXTRADEFS = -DNO_LIBWINE_PORT
 
 C_SRCS = \
