@@ -235,7 +235,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
         gl_string = glXGetClientString(display, GLX_VENDOR);
     } else {
         FIXME("Display must not be NULL, use glXGetCurrentDisplay or getAdapterDisplay()\n");
-        gl_string = glGetString(GL_VENDOR);
+        gl_string = (const char *) glGetString(GL_VENDOR);
     }
     TRACE_(d3d_caps)("Filling vendor string %s\n", gl_string);
     if (gl_string != NULL) {
@@ -255,7 +255,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
     TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x)\n", debugstr_a(gl_string), gl_info->gl_vendor);
 
     /* Parse the GL_VERSION field into major and minor information */
-    gl_string = glGetString(GL_VERSION);
+    gl_string = (const char *) glGetString(GL_VERSION);
     if (gl_string != NULL) {
 
         switch (gl_info->gl_vendor) {
@@ -324,7 +324,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
         TRACE_(d3d_caps)("found GL_VERSION  (%s)->(0x%08lx)\n", debugstr_a(gl_string), gl_info->gl_driver_version);
 
         /* Fill in the renderer information */
-        gl_string = glGetString(GL_RENDERER);
+        gl_string = (const char *) glGetString(GL_RENDERER);
         strcpy(gl_info->gl_renderer, gl_string);
 
         switch (gl_info->gl_vendor) {
@@ -393,7 +393,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
     TRACE_(d3d_caps)("Maximum point size support - max texture size=%f\n", gl_float);
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
-    GL_Extensions = glGetString(GL_EXTENSIONS);
+    GL_Extensions = (const char *) glGetString(GL_EXTENSIONS);
     TRACE_(d3d_caps)("GL_Extensions reported:\n");
 
     if (NULL == GL_Extensions) {

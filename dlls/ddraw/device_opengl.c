@@ -4411,12 +4411,12 @@ d3ddevice_init_at_startup(void *gl_handle)
 	    glGetIntegerv(GL_MAX_TEXTURE_UNITS_WINE, &(GL_extensions.max_texture_units));
 	    TRACE(" - multi-texturing (%d stages)\n", GL_extensions.max_texture_units);
 	    /* We query the ARB version to be the most portable we can... */
-	    GL_extensions.glActiveTexture = pglXGetProcAddressARB("glActiveTextureARB");
-	    GL_extensions.glMultiTexCoord[0] = pglXGetProcAddressARB("glMultiTexCoord1fvARB");
-	    GL_extensions.glMultiTexCoord[1] = pglXGetProcAddressARB("glMultiTexCoord2fvARB");
-	    GL_extensions.glMultiTexCoord[2] = pglXGetProcAddressARB("glMultiTexCoord3fvARB");
-	    GL_extensions.glMultiTexCoord[3] = pglXGetProcAddressARB("glMultiTexCoord4fvARB");
-	    GL_extensions.glClientActiveTexture = pglXGetProcAddressARB("glClientActiveTextureARB");
+	    GL_extensions.glActiveTexture = pglXGetProcAddressARB( (const GLubyte *) "glActiveTextureARB");
+	    GL_extensions.glMultiTexCoord[0] = pglXGetProcAddressARB( (const GLubyte *) "glMultiTexCoord1fvARB");
+	    GL_extensions.glMultiTexCoord[1] = pglXGetProcAddressARB( (const GLubyte *) "glMultiTexCoord2fvARB");
+	    GL_extensions.glMultiTexCoord[2] = pglXGetProcAddressARB( (const GLubyte *) "glMultiTexCoord3fvARB");
+	    GL_extensions.glMultiTexCoord[3] = pglXGetProcAddressARB( (const GLubyte *) "glMultiTexCoord4fvARB");
+	    GL_extensions.glClientActiveTexture = pglXGetProcAddressARB( (const GLubyte *) "glClientActiveTextureARB");
 	} else {
 	    GL_extensions.max_texture_units = 0;
 	}
@@ -4424,8 +4424,8 @@ d3ddevice_init_at_startup(void *gl_handle)
 	if (strstr(glExtensions, "GL_EXT_texture_compression_s3tc")) {
 	    TRACE(" - S3TC compression supported\n");
 	    GL_extensions.s3tc_compressed_texture = TRUE;
-	    GL_extensions.glCompressedTexImage2D = pglXGetProcAddressARB("glCompressedTexImage2DARB");
-	    GL_extensions.glCompressedTexSubImage2D = pglXGetProcAddressARB("glCompressedTexSubImage2DARB");
+	    GL_extensions.glCompressedTexImage2D = pglXGetProcAddressARB( (const GLubyte *) "glCompressedTexImage2DARB");
+	    GL_extensions.glCompressedTexSubImage2D = pglXGetProcAddressARB( (const GLubyte *) "glCompressedTexSubImage2DARB");
 	}
     }
     
