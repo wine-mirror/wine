@@ -4875,6 +4875,20 @@ static const WCHAR WC_STATICW[] = { 'S','t','a','t','i','c',0 };
 #endif
 #define WC_STATIC		WINELIB_NAME_AW(WC_STATIC)
 
+/**************************************************************************
+ * Combobox control
+ */
+
+#define WC_COMBOBOXA              "ComboBox"
+#if defined(__GNUC__)
+# define WC_COMBOBOXW             (const WCHAR []){ 'C','o','m','b','o','B','o','x',0 }
+#elif defined(_MSC_VER)
+# define WC_COMBOBOXW             L"ComboBox"
+#else
+static const WCHAR WC_COMBOBOXW[] = { 'C','o','m','b','o','B','o','x',0 };
+#endif
+#define WC_COMBOBOX               WINELIB_NAME_AW(WC_COMBOBOX)
+
 #ifdef __cplusplus
 }
 #endif
