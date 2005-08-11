@@ -505,7 +505,7 @@ static void test_GetAttributesOf(void)
     LPITEMIDLIST pidlMyComputer;
     DWORD dwFlags;
     const static DWORD dwDesktopFlags = /* As observed on WinXP SP2 */
-        SFGAO_STORAGE | SFGAO_HASPROPSHEET | SFGAO_STORAGE_ANCESTOR |
+        SFGAO_STORAGE | SFGAO_HASPROPSHEET | SFGAO_STORAGEANCESTOR |
         SFGAO_FILESYSANCESTOR | SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_HASSUBFOLDER;
     const static DWORD dwMyComputerFlags = /* As observed on WinXP SP2 */
         SFGAO_CANRENAME | SFGAO_CANDELETE | SFGAO_HASPROPSHEET |

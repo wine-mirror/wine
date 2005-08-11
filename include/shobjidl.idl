@@ -151,7 +151,7 @@ interface IShellFolder : IUnknown
     cpp_quote("#define SFGAO_NONENUMERATED     0x00100000L")
     cpp_quote("#define SFGAO_NEWCONTENT        0x00200000L")
     cpp_quote("#define SFGAO_STREAM            0x00400000L")
-    cpp_quote("#define SFGAO_STORAGE_ANCESTOR  0x00800000L")
+    cpp_quote("#define SFGAO_STORAGEANCESTOR   0x00800000L")
 
     typedef ULONG SFGAOF;
 
