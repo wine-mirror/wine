@@ -73,10 +73,10 @@ struct NSContainer {
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
     nsIBaseWindow *window;
+    nsIWebBrowserStream *stream;
 
     HWND hwnd;
 };
-
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
 #define PERSIST(x)       ((IPersist*)                     &(x)->lpPersistFileVtbl)
@@ -113,6 +113,12 @@ void HTMLDocument_NSContainer_Destroy(HTMLDocument*);
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 
 void close_gecko(void);
+
+nsIURI *get_nsIURI(LPCWSTR);
+
+nsACString *nsACString_Create(void);
+void nsACString_SetData(nsACString*,const char*);
+void nsACString_Destroy(nsACString*);
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_JSProtocol, 0x3050F3B2, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);

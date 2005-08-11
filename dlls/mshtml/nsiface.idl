@@ -39,11 +39,12 @@ typedef WCHAR PRUnichar;
 typedef LPWSTR nswstring;
 typedef ULONG PRUint32;
 typedef LONG PRInt32;
+typedef BYTE PRUint8;
 typedef BOOL PRBool;
 typedef LARGE_INTEGER PRInt64;
 
 typedef int nsAString;
-typedef int nsACString;
+typedef struct nsACString nsACString;
 
 interface nsIWebBrowserChrome;
 
@@ -64,10 +65,11 @@ typedef nsISupports nsIURIContentListener;
 typedef nsISupports nsIDOMWindow;
 typedef nsISupports nsIInputStream;
 typedef nsISupports nsIDOMDocument;
-typedef nsISupports nsIURI;
 typedef nsISupports nsISHistory;
 typedef nsISupports nsISimpleEnumerator;
 typedef nsISupports nsIWidget;
+typedef nsISupports nsIProtocolHandler;
+typedef nsISupports nsIChannel;
 
 [
     object,
@@ -102,6 +104,40 @@ interface nsIComponentManager : nsISupports
             nsQIResult result);
     nsresult CreateInstanceByContractID(nsstring aContractID, nsISupports *aDelegate,
             nsIIDRef aIID, nsQIResult result);
+}
+
+[
+    object,
+    uuid(07a22cc0-0ce5-11d3-9331-00104ba0fd40)
+]
+interface nsIURI : nsISupports
+{
+    nsresult GetSpec(nsACString *aSpec);
+    nsresult SetSpec(const nsACString *aSpec);
+    nsresult GetPrePath(nsACString *aPrePath);
+    nsresult GetScheme(nsACString *aScheme);
+    nsresult SetScheme(const nsACString *aScheme);
+    nsresult GetUserPass(nsACString *aUserPass);
+    nsresult SetUserPass(const nsACString *aUserPass);
+    nsresult GetUsername(nsACString *aUsername);
+    nsresult SetUsername(const nsACString *aUsername);
+    nsresult GetPassword(nsACString *aPassword);
+    nsresult SetPassword(const nsACString *aPassword);
+    nsresult GetHostPort(nsACString *aHostPort);
+    nsresult SetHostPort(const nsACString *aHostPort);
+    nsresult GetHost(nsACString *aHost);
+    nsresult SetHost(const nsACString *aHost);
+    nsresult GetPort(PRInt32 *aPort);
+    nsresult SetPort(PRInt32 aPort);
+    nsresult GetPath(nsACString *aPath);
+    nsresult SetPath(const nsACString *aPath);
+    nsresult Equals(nsIURI *other, PRBool *_retval);
+    nsresult SchemeIs(const char *scheme, PRBool *_retval);
+    nsresult Clone(nsIURI **_retval);
+    nsresult Resolve(const nsACString *relativePath, nsACString *_retval);
+    nsresult GetAsciiSpec(nsACString *aAsciiSpec);
+    nsresult GetAsciiHost(nsACString *aAsciiHost);
+    nsresult GetOriginCharset(nsACString *aOriginCharset);
 }
 
 [
@@ -238,4 +274,32 @@ interface nsIFile : nsISupports
     nsresult Contains(nsIFile *inFile, PRBool recir, PRBool *_retval);
     nsresult GetParent(nsIFile **aParent);
     nsresult GetDirectoryEntries(nsISimpleEnumerator **aDirectoryEntries);
+}
+
+[
+    object,
+    uuid(86d02f0e-219b-4cfc-9c88-bd98d2cce0b8)
+]
+interface nsIWebBrowserStream : nsISupports
+{
+    nsresult OpenStream(nsIURI *aBaseURI, nsACString *aContentType);
+    nsresult AppendToStream(PRUint8 *aData, PRUint32 aLen);
+    nsresult CloseStream();
+}
+
+[
+    object,
+    uuid(bddeda3f-9020-4d12-8c70-984ee9f7935e)
+]
+interface nsIIOService : nsISupports
+{
+    nsresult GetProtocolHandler(const char *aScheme, nsIProtocolHandler **_retval);
+    nsresult GetProtocolFlags(const char *aScheme, PRUint32 *_retval);
+    nsresult NewURI(const nsACString *aSpec, const char *aOriginCharset, nsIURI *aBaseURI, nsIURI **_retval);
+    nsresult NewFileURI(nsIFile *aFile, nsIURI **_retval);
+    nsresult NewChannelFromURI(nsIURI *aURI, nsIChannel **_retval);
+    nsresult NewChannel(const nsACString *aSpec, const char *aOriginCharset, nsIURI *aBaseURI, nsIChannel **_retval);
+    nsresult GetOffline(PRBool *aOffline);
+    nsresult SetOffline(PRBool aOffline);
+    nsresult AllowPort(PRInt32 aPort, const char *aScheme, PRBool *_retval);
 }

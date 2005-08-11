@@ -22,6 +22,8 @@
 #include <stdio.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include "windef.h"
 #include "winbase.h"
@@ -41,6 +43,8 @@ struct BindStatusCallback {
 
     HTMLDocument *doc;
     IBinding *binding;
+    IStream *stream;
+    LPOLESTR url;
 };
 
 #define STATUSCLB_THIS(iface) DEFINE_THIS(BindStatusCallback, BindStatusCallback, iface)
@@ -89,6 +93,9 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
         if(This->doc->status_callback == This)
             This->doc->status_callback = NULL;
         IHTMLDocument2_Release(HTMLDOC(This->doc));
+        if(This->stream)
+            IStream_Release(This->stream);
+        CoTaskMemFree(This->url);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -104,6 +111,22 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
 
     This->binding = pbind;
     IBinding_AddRef(pbind);
+
+    if(This->doc->nscontainer && This->doc->nscontainer->stream) {
+        nsACString *strTextHtml;
+        nsresult nsres;
+        nsIURI *uri = get_nsIURI(This->url);
+
+        strTextHtml = nsACString_Create();
+        /* FIXME: Set it correctly */
+        nsACString_SetData(strTextHtml, "text/html");
+
+        nsres = nsIWebBrowserStream_OpenStream(This->doc->nscontainer->stream, uri, strTextHtml);
+        if(NS_FAILED(nsres))
+            ERR("OpenStream failed: %08lx\n", nsres);
+
+        nsIURI_Release(uri);
+    }
 
     return S_OK;
 }
@@ -138,6 +161,9 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 
     TRACE("(%p)->(%08lx %s)\n", This, hresult, debugstr_w(szError));
 
+    if(This->doc->nscontainer && This->doc->nscontainer->stream)
+        nsIWebBrowserStream_CloseStream(This->doc->nscontainer->stream);
+
     IBinding_Release(This->binding);
     This->binding = NULL;
     return S_OK;
@@ -163,7 +189,26 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
         DWORD grfBSCF, DWORD dwSize, FORMATETC *pformatetc, STGMEDIUM *pstgmed)
 {
     BindStatusCallback *This = STATUSCLB_THIS(iface);
+
     TRACE("(%p)->(%08lx %ld %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+
+    if(!This->stream) {
+        This->stream = pstgmed->u.pstm;
+        IStream_AddRef(This->stream);
+    }
+
+    if(This->doc->nscontainer && This->doc->nscontainer->stream) {
+        BYTE buf[1024];
+        DWORD size;
+        HRESULT hres;
+
+        do {
+            size = sizeof(buf);
+            hres = IStream_Read(This->stream, buf, size, &size);
+            nsIWebBrowserStream_AppendToStream(This->doc->nscontainer->stream, buf, size);
+        }while(hres == S_OK);
+    }
+
     return S_OK;
 }
 
@@ -189,12 +234,14 @@ static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
     BindStatusCallback_OnObjectAvailable
 };
 
-static BindStatusCallback *BindStatusCallback_Create(HTMLDocument *doc)
+static BindStatusCallback *BindStatusCallback_Create(HTMLDocument *doc, LPOLESTR url)
 {
     BindStatusCallback *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(BindStatusCallback));
     ret->lpBindStatusCallbackVtbl = &BindStatusCallbackVtbl;
     ret->ref = 0;
+    ret->url = url;
     ret->doc = doc;
+    ret->stream = NULL;
     IHTMLDocument2_AddRef(HTMLDOC(doc));
     return ret;
 }
@@ -244,29 +291,34 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     IBindCtx *pbind;
     BindStatusCallback *callback;
     IStream *str;
-    LPWSTR url;
+    LPOLESTR url;
     HRESULT hres;
     nsresult nsres;
 
     FIXME("(%p)->(%x %p %p %08lx)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
 
-    /* FIXME:
-     * This is a HACK, we should use moniker's BindToStorage instead of Gecko's LoadURI.
-     */
-    if(This->nscontainer) {
-        hres = IMoniker_GetDisplayName(pimkName, pibc, NULL, &url);
-        if(FAILED(hres)) {
-            WARN("GetDiaplayName failed: %08lx\n", hres);
-            return hres;
-        }
-        TRACE("got url: %s\n", debugstr_w(url));
+    hres = IMoniker_GetDisplayName(pimkName, pibc, NULL, &url);
+    if(FAILED(hres)) {
+        WARN("GetDiaplayName failed: %08lx\n", hres);
+        return hres;
+    }
 
+    TRACE("got url: %s\n", debugstr_w(url));
+
+    if(This->nscontainer && !This->nscontainer->stream) {
+        /*
+         * This is a workaround for older Gecko that doesn't support nsIWebBrowserStream.
+         * It uses Gecko's LoadURI instead of IMoniker's BindToStorage. Should we improve
+         * it (to do so we'd have to use not frozen interfaces)?
+         */
         nsres = nsIWebNavigation_LoadURI(This->nscontainer->navigation, url,
                 LOAD_FLAGS_NONE, NULL, NULL, NULL);
-        if(NS_SUCCEEDED(nsres))
+        if(NS_SUCCEEDED(nsres)) {
+            CoTaskMemFree(url);
             return S_OK;
-        else
+        }else {
             WARN("LoadURI failed: %08lx\n", nsres);
+        }
     }    
 
     /* FIXME: Use grfMode */
@@ -279,11 +331,12 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     if(This->status_callback && This->status_callback->binding)
         IBinding_Abort(This->status_callback->binding);
 
-    callback = This->status_callback = BindStatusCallback_Create(This);
+    callback = This->status_callback = BindStatusCallback_Create(This, url);
 
     CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &pbind);
 
     hres = IMoniker_BindToStorage(pimkName, pbind, NULL, &IID_IStream, (void**)&str);
+    IBindCtx_Release(pbind);
     if(str)
         IStream_Release(str);
     if(FAILED(hres)) {

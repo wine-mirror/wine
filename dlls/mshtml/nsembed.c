@@ -40,12 +40,13 @@ DEFINE_GUID(CLSID_nsWebBrowser, 0xf1eac761,0x87e9,0x11d3,0xaf,0x80,0x00,0xa0,0x2
 
 #define NS_APPSTARTUPNOTIFIER_CONTRACTID "@mozilla.org/embedcomp/appstartup-notifier;1"
 #define NS_WEBBROWSER_CONTRACTID "@mozilla.org/embedding/browser/nsWebBrowser;1"
+#define NS_IOSERVICE_CONTRACTID "@mozilla.org/network/io-service;1"
 
 #define APPSTARTUP_TOPIC "app-startup"
 
 #define PR_UINT32_MAX 0xffffffff
 
-typedef struct {
+typedef struct nsACString {
     void *d1;
     PRUint32 d2;
     void *d3;
@@ -54,14 +55,18 @@ typedef struct {
 static nsresult (*NS_InitXPCOM2)(nsIServiceManager**,void*,void*);
 static nsresult (*NS_ShutdownXPCOM)(nsIServiceManager*);
 static nsresult (*NS_StringContainerInit)(nsString*);
+static nsresult (*NS_CStringContainerInit)(nsACString*);
 static nsresult (*NS_StringContainerFinish)(nsString*);
+static nsresult (*NS_CStringContainerFinish)(nsACString*);
 static nsresult (*NS_StringSetData)(nsString*,const PRUnichar*,PRUint32);
+static nsresult (*NS_CStringSetData)(nsString*,const char*,PRUint32);
 static nsresult (*NS_NewLocalFile)(const nsString*,PRBool,nsIFile**);
 
 static HINSTANCE hXPCOM = NULL;
 
 static nsIServiceManager *pServMgr = NULL;
 static nsIComponentManager *pCompMgr = NULL;
+static nsIIOService *pIOService = NULL;
 
 static const WCHAR wszNsContainer[] = {'N','s','C','o','n','t','a','i','n','e','r',0};
 
@@ -213,14 +218,17 @@ static BOOL load_gecko()
 #define NS_DLSYM(func) \
     func = (typeof(func))GetProcAddress(hXPCOM, #func); \
     if(!func) \
-        ERR("Could not GetProcAddress(" #func ") failed\n");
+        ERR("Could not GetProcAddress(" #func ") failed\n")
 
-    NS_DLSYM(NS_InitXPCOM2)
-    NS_DLSYM(NS_ShutdownXPCOM)
-    NS_DLSYM(NS_StringContainerInit)
-    NS_DLSYM(NS_StringContainerFinish)
-    NS_DLSYM(NS_StringSetData)
-    NS_DLSYM(NS_NewLocalFile)
+    NS_DLSYM(NS_InitXPCOM2);
+    NS_DLSYM(NS_ShutdownXPCOM);
+    NS_DLSYM(NS_StringContainerInit);
+    NS_DLSYM(NS_CStringContainerInit);
+    NS_DLSYM(NS_StringContainerFinish);
+    NS_DLSYM(NS_CStringContainerFinish);
+    NS_DLSYM(NS_StringSetData);
+    NS_DLSYM(NS_CStringSetData);
+    NS_DLSYM(NS_NewLocalFile);
 
 #undef NS_DLSYM
 
@@ -260,6 +268,25 @@ static BOOL load_gecko()
     return TRUE;
 }
 
+nsACString *nsACString_Create(void)
+{
+    nsACString *ret;
+    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(nsACString));
+    NS_CStringContainerInit(ret);
+    return ret;
+}
+
+void nsACString_SetData(nsACString *str, const char *data)
+{
+    NS_CStringSetData(str, data, PR_UINT32_MAX);
+}
+
+void nsACString_Destroy(nsACString *str)
+{
+    NS_CStringContainerFinish(str);
+    HeapFree(GetProcessHeap(), 0, str);
+}
+
 void close_gecko()
 {
     TRACE("()\n");
@@ -272,6 +299,38 @@ void close_gecko()
 
     if(hXPCOM)
         FreeLibrary(hXPCOM);
+}
+
+nsIURI *get_nsIURI(LPCWSTR url)
+{
+    nsIURI *ret;
+    nsACString *acstr;
+    nsresult nsres;
+    char *urla;
+    int len;
+
+    if(!pIOService) {
+        nsres = nsIServiceManager_GetServiceByContactID(pServMgr, NS_IOSERVICE_CONTRACTID,
+                &IID_nsIIOService, (void**)&pIOService);
+        if(NS_FAILED(nsres))
+            ERR("Failed to create nsIOService: %08lx\n", nsres);
+    }
+
+    len = WideCharToMultiByte(CP_ACP, 0, url, -1, NULL, -1, NULL, NULL);
+    urla = HeapAlloc(GetProcessHeap(), 0, len);
+    WideCharToMultiByte(CP_ACP, 0, url, -1, urla, -1, NULL, NULL);
+
+    acstr = nsACString_Create();
+    nsACString_SetData(acstr, urla);
+
+    nsres = nsIIOService_NewURI(pIOService, acstr, NULL, NULL, &ret);
+    if(NS_FAILED(nsres))
+        FIXME("NewURI failed: %08lx\n", nsres);
+
+    nsACString_Destroy(acstr);
+    HeapFree(GetProcessHeap(), 0, urla);
+
+    return ret;
 }
 
 void HTMLDocument_NSContainer_Init(HTMLDocument *This)
@@ -312,6 +371,11 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
     if(NS_FAILED(nsres))
         ERR("Could not get nsIWebNavigation interface: %08lx\n", nsres);
 
+    nsres = nsIWebBrowserStream_QueryInterface(This->nscontainer->webbrowser, &IID_nsIWebBrowserStream,
+            (void**)&This->nscontainer->stream);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsIWebBrowserStream interface: %08lx\n", nsres);
+
     if(!nscontainer_class)
         register_nscontainer_class();
 
@@ -340,6 +404,9 @@ void HTMLDocument_NSContainer_Destroy(HTMLDocument *This)
     nsIWebBrowser_Release(This->nscontainer->webbrowser);
     nsIWebNavigation_Release(This->nscontainer->navigation);
     nsIBaseWindow_Release(This->nscontainer->window);
+
+    if(This->nscontainer->stream)
+        nsIWebBrowserStream_Release(This->nscontainer->stream);
 
     HeapFree(GetProcessHeap(), 0, This->nscontainer);
 }
