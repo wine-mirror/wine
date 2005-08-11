@@ -260,9 +260,9 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
         This->baseTexture.states[WINED3DTEXSTA_ADDRESSV]      = D3DTADDRESS_WRAP;
         This->baseTexture.states[WINED3DTEXSTA_ADDRESSW]      = D3DTADDRESS_WRAP;
         This->baseTexture.states[WINED3DTEXSTA_BORDERCOLOR]   = 0;
-        This->baseTexture.states[WINED3DTEXSTA_MAGFILTER]     = D3DTEXF_POINT;
-        This->baseTexture.states[WINED3DTEXSTA_MINFILTER]     = D3DTEXF_POINT;
-        This->baseTexture.states[WINED3DTEXSTA_MIPFILTER]     = D3DTEXF_NONE;
+        This->baseTexture.states[WINED3DTEXSTA_MAGFILTER]     = D3DTEXF_LINEAR;
+        This->baseTexture.states[WINED3DTEXSTA_MINFILTER]     = D3DTEXF_POINT; /* GL_NEAREST_MIPMAP_LINEAR */
+        This->baseTexture.states[WINED3DTEXSTA_MIPFILTER]     = D3DTEXF_LINEAR; /* GL_NEAREST_MIPMAP_LINEAR */
         This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL]   = 0;
         This->baseTexture.states[WINED3DTEXSTA_MAXANISOTROPY] = 0;
         This->baseTexture.states[WINED3DTEXSTA_SRGBTEXTURE]   = 0;
