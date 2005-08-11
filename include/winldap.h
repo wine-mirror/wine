@@ -16,6 +16,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef __WINE_WINLDAP_H
+#define __WINE_WINLDAP_H
+
 typedef enum {
     LDAP_SUCCESS                    =   0x00,
     LDAP_OPERATIONS_ERROR           =   0x01,
@@ -106,6 +109,8 @@ typedef struct berelement
 #define LDAP_OPT_THREAD_FN_PTRS         0x05
 #define LDAP_OPT_REBIND_FN              0x06
 #define LDAP_OPT_REBIND_ARG             0x07
+#define LDAP_OPT_REFERRALS              0x08
+#define LDAP_OPT_RESTART                0x09
 #define LDAP_OPT_SSL                    0x0a
 #define LDAP_OPT_IO_FN_PTRS             0x0b
 #define LDAP_OPT_CACHE_FN_PTRS          0x0d
@@ -145,6 +150,9 @@ typedef struct berelement
 #define LDAP_OPT_AREC_EXCLUSIVE         0x98
 #define LDAP_OPT_SECURITY_CONTEXT       0x99
 #define LDAP_OPT_ROOTDSE_CACHE          0x9a
+
+#define LDAP_OPT_ON                     ((void *)1)
+#define LDAP_OPT_OFF                    ((void *)0)
 
 #define LDAP_VERSION1   1
 #define LDAP_VERSION2   2
@@ -615,3 +623,5 @@ ULONG LdapGetLastError(void);
 ULONG LdapMapErrorToWin32(ULONG);
 int LdapUnicodeToUTF8(LPCWSTR,int,LPSTR,int);
 int LdapUTF8ToUnicode(LPCSTR,int,LPWSTR,int);
+
+#endif  /* __WINE_WINLDAP_H */
