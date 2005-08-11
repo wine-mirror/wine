@@ -168,7 +168,7 @@ static lnk_string* load_string(int fd, int unicode)
     r = read( fd, &size, sizeof size );
     if (r != sizeof size)
         return NULL;
-    if (size < sizeof size)
+    if ( size == 0 )
         return NULL;
 
     bytesize = size;
