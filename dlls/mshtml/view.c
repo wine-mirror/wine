@@ -28,10 +28,6 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "ole2.h"
-#include "docobj.h"
-
-#include "mshtml.h"
-#include "mshtmhst.h"
 
 #include "wine/debug.h"
 

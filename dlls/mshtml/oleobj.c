@@ -27,10 +27,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
-#include "docobj.h"
-
-#include "mshtml.h"
-#include "mshtmhst.h"
 
 #include "wine/debug.h"
 

@@ -16,6 +16,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "docobj.h"
+#include "mshtml.h"
+#include "mshtmhst.h"
+
+#ifdef INIT_GUID
+#include "initguid.h"
+#endif
+
 #include "nsiface.h"
 
 #define NS_OK                     ((nsresult)0x00000000L)

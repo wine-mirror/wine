@@ -27,10 +27,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
-#include "docobj.h"
-
-#include "mshtml.h"
-#include "mshtmhst.h"
 
 #include "wine/debug.h"
 
@@ -42,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
  * IServiceProvider impementation
  */
 
-#define SERVPROV_THIS(iface) (HTMLDocument*)((BYTE*)(iface)-offsetof(HTMLDocument,lpServiceProviderVtbl))
+#define SERVPROV_THIS(iface) DEFINE_THIS(HTMLDocument, ServiceProvider, iface)
 
 static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
 {

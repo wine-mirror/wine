@@ -33,16 +33,12 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "ole2.h"
-#include "docobj.h"
 #include "advpub.h"
-
-#include "mshtml.h"
-#include "mshtmhst.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-#include "initguid.h"
+#define INIT_GUID
 #include "mshtml_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
