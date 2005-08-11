@@ -2169,6 +2169,7 @@ VOID        WINAPI _LeaveSysLevel(SYSLEVEL*);
 /* Wine internal functions */
 
 extern char *wine_get_unix_file_name( LPCWSTR dos );
+extern WCHAR *wine_get_dos_file_name( LPCSTR str );
 
 
 /* a few optimizations for i386/gcc */

@@ -1485,6 +1485,39 @@ char *wine_get_unix_file_name( LPCWSTR dosW )
     if (!RtlDosPathNameToNtPathName_U( dosW, &nt_name, NULL, NULL )) return NULL;
     status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN_IF, FALSE );
     RtlFreeUnicodeString( &nt_name );
-    if (status && status != STATUS_NO_SUCH_FILE) return NULL;
+    if (status && status != STATUS_NO_SUCH_FILE)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return NULL;
+    }
     return unix_name.Buffer;
+}
+
+
+/***********************************************************************
+ *           wine_get_dos_file_name (KERNEL32.@) Not a Windows API
+ *
+ * Return the full DOS file name for a given Unix path.
+ * Returned buffer must be freed by caller.
+ */
+WCHAR *wine_get_dos_file_name( LPCSTR str )
+{
+    UNICODE_STRING nt_name;
+    ANSI_STRING unix_name;
+    NTSTATUS status;
+    DWORD len;
+
+    RtlInitAnsiString( &unix_name, str );
+    status = wine_unix_to_nt_file_name( &unix_name, &nt_name );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return NULL;
+    }
+    /* get rid of the \??\ prefix */
+    /* FIXME: should implement RtlNtPathNameToDosPathName and use that instead */
+    len = nt_name.Length - 4 * sizeof(WCHAR);
+    memmove( nt_name.Buffer, nt_name.Buffer + 4, len );
+    nt_name.Buffer[len / sizeof(WCHAR)] = 0;
+    return nt_name.Buffer;
 }

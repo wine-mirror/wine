@@ -1261,6 +1261,7 @@
 
 # Unix files
 @ cdecl wine_get_unix_file_name(wstr)
+@ cdecl wine_get_dos_file_name(str)
 
 # Init code
 @ cdecl __wine_kernel_init()
