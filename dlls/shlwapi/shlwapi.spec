@@ -699,6 +699,7 @@
 @ stdcall SHGetValueA ( long str str ptr ptr ptr )
 @ stdcall SHGetValueW ( long wstr wstr ptr ptr ptr )
 @ stdcall SHIsLowMemoryMachine(long)
+@ stdcall SHLoadIndirectString(wstr ptr long ptr)
 @ stdcall SHOpenRegStream2A(long str str long)
 @ stdcall SHOpenRegStream2W(long wstr str long)
 @ stdcall SHOpenRegStreamA(long str str long)
