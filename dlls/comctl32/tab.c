@@ -1620,9 +1620,10 @@ TAB_DrawItemInterior
    * Setup for text output
   */
   oldBkMode = SetBkMode(hdc, TRANSPARENT);
-  if (!GetWindowTheme (infoPtr->hwnd))
-      SetTextColor(hdc, (((iItem == infoPtr->iHotTracked) && !(lStyle & TCS_FLATBUTTONS)) |
-                        (TAB_GetItem(infoPtr, iItem)->dwState & TCIS_HIGHLIGHTED)) ?
+  if (!GetWindowTheme (infoPtr->hwnd) || (lStyle & TCS_BUTTONS))
+      SetTextColor(hdc, (((lStyle & TCS_HOTTRACK) && (iItem == infoPtr->iHotTracked) 
+                          && !(lStyle & TCS_FLATBUTTONS)) 
+                        | (TAB_GetItem(infoPtr, iItem)->dwState & TCIS_HIGHLIGHTED)) ?
                         comctl32_color.clrHighlight : comctl32_color.clrBtnText);
 
   /*
