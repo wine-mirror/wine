@@ -353,54 +353,57 @@ static void create_hardware_branch(void)
 
     /* Enumerate all ide devices first */
     idedir = opendir("/proc/ide");
-    for (dent=readdir(idedir); dent; dent = readdir(idedir))
+    if (idedir)
     {
-        if (strncmp(dent->d_name, "hd", 2) == 0)
+        while ((dent = readdir(idedir)))
         {
-            sprintf(cStr, procname_ide_media, dent->d_name);
-            procfile = fopen(cStr, "r");
-            if (!procfile)
+            if (strncmp(dent->d_name, "hd", 2) == 0)
             {
-                ERR("Could not open %s\n", cStr);
-                continue;
-            } else {
-                fgets(cStr, sizeof(cStr), procfile);
-                fclose(procfile);
-                nType = DRIVE_UNKNOWN;
-                if (strncasecmp(cStr, "disk", 4)  == 0) nType = DRIVE_FIXED;
-                if (strncasecmp(cStr, "cdrom", 5) == 0) nType = DRIVE_CDROM;
-
-                if (nType == DRIVE_UNKNOWN) continue;
-            }
-
-            sprintf(cStr, procname_ide_model, dent->d_name);
-            procfile = fopen(cStr, "r");
-            if (!procfile)
-            {
-                ERR("Could not open %s\n", cStr);
-                switch (nType)
+                sprintf(cStr, procname_ide_media, dent->d_name);
+                procfile = fopen(cStr, "r");
+                if (!procfile)
                 {
+                    ERR("Could not open %s\n", cStr);
+                    continue;
+                } else {
+                    fgets(cStr, sizeof(cStr), procfile);
+                    fclose(procfile);
+                    nType = DRIVE_UNKNOWN;
+                    if (strncasecmp(cStr, "disk", 4)  == 0) nType = DRIVE_FIXED;
+                    if (strncasecmp(cStr, "cdrom", 5) == 0) nType = DRIVE_CDROM;
+
+                    if (nType == DRIVE_UNKNOWN) continue;
+                }
+
+                sprintf(cStr, procname_ide_model, dent->d_name);
+                procfile = fopen(cStr, "r");
+                if (!procfile)
+                {
+                    ERR("Could not open %s\n", cStr);
+                    switch (nType)
+                    {
                     case DRIVE_FIXED: strcpy(cDevModel, "Wine harddisk"); break;
                     case DRIVE_CDROM: strcpy(cDevModel, "Wine CDROM"); break;
+                    }
+                } else {
+                    fgets(cDevModel, sizeof(cDevModel), procfile);
+                    fclose(procfile);
+                    cDevModel[strlen(cDevModel) - 1] = 0;
                 }
-            } else {
-                fgets(cDevModel, sizeof(cDevModel), procfile);
-                fclose(procfile);
-                cDevModel[strlen(cDevModel) - 1] = 0;
+
+                sprintf(cUnixDeviceName, "/dev/%s", dent->d_name);
+                scsi_addr.PortNumber = (dent->d_name[2] - 'a') / 2;
+                scsi_addr.PathId = 0;
+                scsi_addr.TargetId = (dent->d_name[2] - 'a') % 2;
+                scsi_addr.Lun = 0;
+                if (scsi_addr.PortNumber + 1 > uFirstSCSIPort)
+                    uFirstSCSIPort = scsi_addr.PortNumber + 1;
+
+                create_scsi_entry(&scsi_addr, "atapi", nType, cDevModel, cUnixDeviceName);
             }
-            
-            sprintf(cUnixDeviceName, "/dev/%s", dent->d_name);
-            scsi_addr.PortNumber = (dent->d_name[2] - 'a') / 2;
-            scsi_addr.PathId = 0;
-            scsi_addr.TargetId = (dent->d_name[2] - 'a') % 2;
-            scsi_addr.Lun = 0;
-            if (scsi_addr.PortNumber + 1 > uFirstSCSIPort)
-                uFirstSCSIPort = scsi_addr.PortNumber + 1;
-            
-            create_scsi_entry(&scsi_addr, "atapi", nType, cDevModel, cUnixDeviceName);
         }
+        closedir(idedir);
     }
-    closedir(idedir);
 
     /* Now goes SCSI */
     procfile = fopen(procname_scsi, "r");
