@@ -24,12 +24,10 @@
 
 #include "ntdll_test.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "stdio.h"
 #include "winnt.h"
 #include "winnls.h"
 #include "stdlib.h"
-#include "wine/unicode.h"
 
 #ifndef __WINE_WINTERNL_H
 
@@ -68,6 +66,16 @@ typedef struct _RTL_QUERY_REGISTRY_TABLE {
   PVOID  DefaultData;
   ULONG  DefaultLength;
 } RTL_QUERY_REGISTRY_TABLE, *PRTL_QUERY_REGISTRY_TABLE;
+
+#define InitializeObjectAttributes(p,n,a,r,s) \
+    do { \
+        (p)->Length = sizeof(OBJECT_ATTRIBUTES); \
+        (p)->RootDirectory = r; \
+        (p)->Attributes = a; \
+        (p)->ObjectName = n; \
+        (p)->SecurityDescriptor = s; \
+        (p)->SecurityQualityOfService = NULL; \
+    } while (0)
 
 #endif
 
@@ -151,7 +159,7 @@ static NTSTATUS WINAPI QueryRoutine (IN PCWSTR ValueName, IN ULONG ValueType, IN
 
     if(ValueName)
     {
-        ValueNameLength = strlenW(ValueName);
+        ValueNameLength = lstrlenW(ValueName);
 
         ValName = (LPSTR)pRtlAllocateHeap(GetProcessHeap(), 0, ValueNameLength);
 
