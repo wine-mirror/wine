@@ -428,8 +428,21 @@ static HRESULT WINAPI domelem_get_tagName(
     IXMLDOMElement *iface,
     BSTR* p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    xmlNodePtr element;
+
+    TRACE("%p\n", This );
+
+    if ( !This->node )
+        return E_FAIL;
+
+    element = xmlelement_from_xmlnode( This->node );
+    if ( !element )
+        return E_FAIL;
+
+    *p = bstr_from_xmlChar( element->name );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI domelem_getAttribute(
