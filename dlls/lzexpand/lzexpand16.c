@@ -141,3 +141,12 @@ LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
     TRACE("(%d,%d)\n",src,dest);
     return LZCopy16(src,dest);
 }
+
+
+/***********************************************************************
+ *           LZDone   (LZEXPAND.9)
+ */
+void WINAPI LZDone16(void)
+{
+    TRACE("(void)\n");
+}

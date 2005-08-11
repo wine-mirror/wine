@@ -6,7 +6,7 @@
 6  pascal -ret16 LZClose(word) LZClose16
 7  pascal -ret16 LZStart() LZStart16
 8  pascal   CopyLZFile(word word) CopyLZFile16
-9  pascal -ret16 LZDone() LZDone
+9  pascal -ret16 LZDone() LZDone16
 10 pascal -ret16 GetExpandedName(str ptr) GetExpandedName16
 #11 WEP
 #12 ___EXPORTEDSTUB
