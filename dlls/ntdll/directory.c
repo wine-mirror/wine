@@ -59,6 +59,7 @@
 #include "windef.h"
 #include "winnt.h"
 #include "ntstatus.h"
+#include "thread.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
 #include "wine/unicode.h"
@@ -1574,4 +1575,87 @@ BOOLEAN WINAPI RtlDoesFileExists_U(LPCWSTR file_name)
     if (ret) RtlFreeAnsiString( &unix_name );
     RtlFreeUnicodeString( &nt_name );
     return ret;
+}
+
+
+/******************************************************************************
+ *           DIR_get_unix_cwd
+ *
+ * Retrieve the Unix name of the current directory; helper for wine_unix_to_nt_file_name.
+ * Returned value must be freed by caller.
+ */
+NTSTATUS DIR_get_unix_cwd( char **cwd )
+{
+    int old_cwd, unix_fd;
+    CURDIR *curdir;
+    HANDLE handle;
+    NTSTATUS status;
+
+    RtlAcquirePebLock();
+
+    if (NtCurrentTeb()->Tib.SubSystemTib)  /* FIXME: hack */
+        curdir = &((WIN16_SUBSYSTEM_TIB *)NtCurrentTeb()->Tib.SubSystemTib)->curdir;
+    else
+        curdir = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectory;
+
+    if (!(handle = curdir->Handle))
+    {
+        UNICODE_STRING dirW;
+        OBJECT_ATTRIBUTES attr;
+        IO_STATUS_BLOCK io;
+
+        if (!RtlDosPathNameToNtPathName_U( curdir->DosPath.Buffer, &dirW, NULL, NULL ))
+        {
+            status = STATUS_OBJECT_NAME_INVALID;
+            goto done;
+        }
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.Attributes = OBJ_CASE_INSENSITIVE;
+        attr.ObjectName = &dirW;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+
+        status = NtOpenFile( &handle, 0, &attr, &io, 0,
+                             FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+        RtlFreeUnicodeString( &dirW );
+        if (status != STATUS_SUCCESS) goto done;
+    }
+
+    if ((status = wine_server_handle_to_fd( handle, 0, &unix_fd, NULL )) == STATUS_SUCCESS)
+    {
+        RtlEnterCriticalSection( &dir_section );
+
+        if ((old_cwd = open(".", O_RDONLY)) != -1 && fchdir( unix_fd ) != -1)
+        {
+            unsigned int size = 512;
+
+            for (;;)
+            {
+                if (!(*cwd = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+                {
+                    status = STATUS_NO_MEMORY;
+                    break;
+                }
+                if (getcwd( *cwd, size )) break;
+                RtlFreeHeap( GetProcessHeap(), 0, *cwd );
+                if (errno != ERANGE)
+                {
+                    status = STATUS_OBJECT_PATH_INVALID;
+                    break;
+                }
+                size *= 2;
+            }
+            if (fchdir( old_cwd ) == -1) chdir( "/" );
+        }
+        else status = FILE_GetNtStatus();
+
+        RtlLeaveCriticalSection( &dir_section );
+        wine_server_release_fd( handle, unix_fd );
+    }
+    if (!curdir->Handle) NtClose( handle );
+
+done:
+    RtlReleasePebLock();
+    return status;
 }

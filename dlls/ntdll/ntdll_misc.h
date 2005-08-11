@@ -88,6 +88,7 @@ extern NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 /* file I/O */
 extern NTSTATUS FILE_GetNtStatus(void);
 extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name );
+extern NTSTATUS DIR_get_unix_cwd( char **cwd );
 
 /* virtual memory */
 extern NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size, BOOL first );

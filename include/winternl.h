@@ -2187,6 +2187,8 @@ NTSTATUS WINAPI vDbgPrintExWithPrefix(LPCSTR,ULONG,ULONG,LPCSTR,va_list);
 
 extern NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
                                            UINT disposition, BOOLEAN check_case );
+extern NTSTATUS wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRING *nt );
+
 
 /***********************************************************************
  * Inline functions

@@ -24,8 +24,12 @@
 
 #include <stdarg.h>
 #include <sys/types.h>
+#include <errno.h>
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
 #endif
 
 #include "windef.h"
@@ -91,11 +95,102 @@ static inline int get_drives_info( struct drive_info info[MAX_DOS_DRIVES] )
 
 
 /***********************************************************************
- *           remove_last_component
+ *           remove_last_componentA
  *
- * Remove the last component of the path. Helper for find_drive_root.
+ * Remove the last component of the path. Helper for find_drive_rootA.
  */
-static inline int remove_last_component( const WCHAR *path, int len )
+static inline unsigned int remove_last_componentA( const char *path, unsigned int len )
+{
+    int level = 0;
+
+    while (level < 1)
+    {
+        /* find start of the last path component */
+        unsigned int prev = len;
+        if (prev <= 1) break;  /* reached root */
+        while (prev > 1 && path[prev - 1] != '/') prev--;
+        /* does removing it take us up a level? */
+        if (len - prev != 1 || path[prev] != '.')  /* not '.' */
+        {
+            if (len - prev == 2 && path[prev] == '.' && path[prev+1] == '.')  /* is it '..'? */
+                level--;
+            else
+                level++;
+        }
+        /* strip off trailing slashes */
+        while (prev > 1 && path[prev - 1] == '/') prev--;
+        len = prev;
+    }
+    return len;
+}
+
+
+/***********************************************************************
+ *           find_drive_rootA
+ *
+ * Find a drive for which the root matches the beginning of the given path.
+ * This can be used to translate a Unix path into a drive + DOS path.
+ * Return value is the drive, or -1 on error. On success, ppath is modified
+ * to point to the beginning of the DOS path.
+ */
+static NTSTATUS find_drive_rootA( LPCSTR *ppath, unsigned int len, int *drive_ret )
+{
+    /* Starting with the full path, check if the device and inode match any of
+     * the wine 'drives'. If not then remove the last path component and try
+     * again. If the last component was a '..' then skip a normal component
+     * since it's a directory that's ascended back out of.
+     */
+    int drive;
+    char *buffer;
+    const char *path = *ppath;
+    struct stat st;
+    struct drive_info info[MAX_DOS_DRIVES];
+
+    /* get device and inode of all drives */
+    if (!get_drives_info( info )) return STATUS_OBJECT_PATH_NOT_FOUND;
+
+    /* strip off trailing slashes */
+    while (len > 1 && path[len - 1] == '/') len--;
+
+    /* make a copy of the path */
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, len + 1 ))) return STATUS_NO_MEMORY;
+    memcpy( buffer, path, len );
+    buffer[len] = 0;
+
+    for (;;)
+    {
+        if (!stat( buffer, &st ) && S_ISDIR( st.st_mode ))
+        {
+            /* Find the drive */
+            for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+            {
+                if ((info[drive].dev == st.st_dev) && (info[drive].ino == st.st_ino))
+                {
+                    if (len == 1) len = 0;  /* preserve root slash in returned path */
+                    TRACE( "%s -> drive %c:, root=%s, name=%s\n",
+                           debugstr_a(path), 'A' + drive, debugstr_a(buffer), debugstr_a(path + len));
+                    *ppath += len;
+                    *drive_ret = drive;
+                    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+                    return STATUS_SUCCESS;
+                }
+            }
+        }
+        if (len <= 1) break;  /* reached root */
+        len = remove_last_componentA( buffer, len );
+        buffer[len] = 0;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    return STATUS_OBJECT_PATH_NOT_FOUND;
+}
+
+
+/***********************************************************************
+ *           remove_last_componentW
+ *
+ * Remove the last component of the path. Helper for find_drive_rootW.
+ */
+static inline int remove_last_componentW( const WCHAR *path, int len )
 {
     int level = 0;
 
@@ -122,14 +217,14 @@ static inline int remove_last_component( const WCHAR *path, int len )
 
 
 /***********************************************************************
- *           find_drive_root
+ *           find_drive_rootW
  *
  * Find a drive for which the root matches the beginning of the given path.
  * This can be used to translate a Unix path into a drive + DOS path.
  * Return value is the drive, or -1 on error. On success, ppath is modified
  * to point to the beginning of the DOS path.
  */
-static int find_drive_root( LPCWSTR *ppath )
+static int find_drive_rootW( LPCWSTR *ppath )
 {
     /* Starting with the full path, check if the device and inode match any of
      * the wine 'drives'. If not then remove the last path component and try
@@ -175,7 +270,7 @@ static int find_drive_root( LPCWSTR *ppath )
             }
         }
         if (lenW <= 1) break;  /* reached root */
-        lenW = remove_last_component( path, lenW );
+        lenW = remove_last_componentW( path, lenW );
 
         /* we only need the new length, buffer already contains the converted string */
         lenA = ntdll_wcstoumbs( 0, path, lenW, NULL, 0, NULL, NULL );
@@ -642,7 +737,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         if (name[0] == '/')  /* may be a Unix path */
         {
             const WCHAR *ptr = name;
-            int drive = find_drive_root( &ptr );
+            int drive = find_drive_rootW( &ptr );
             if (drive != -1)
             {
                 reqsize = 3 * sizeof(WCHAR);
@@ -964,4 +1059,73 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
     RtlFreeUnicodeString( &newdir );
     RtlReleasePebLock();
     return nts;
+}
+
+
+/******************************************************************
+ *           wine_unix_to_nt_file_name  (NTDLL.@) Not a Windows API
+ */
+NTSTATUS wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRING *nt )
+{
+    static const WCHAR prefixW[] = {'\\','?','?','\\','a',':','\\'};
+    unsigned int lenW, lenA = name->Length;
+    const char *path = name->Buffer;
+    char *cwd;
+    WCHAR *p;
+    NTSTATUS status;
+    int drive;
+
+    if (!lenA || path[0] != '/')
+    {
+        char *newcwd, *end;
+        size_t size;
+
+        if ((status = DIR_get_unix_cwd( &cwd )) != STATUS_SUCCESS) return status;
+
+        size = strlen(cwd) + lenA + 1;
+        if (!(newcwd = RtlReAllocateHeap( GetProcessHeap(), 0, cwd, size )))
+        {
+            status = STATUS_NO_MEMORY;
+            goto done;
+        }
+        cwd = newcwd;
+        end = cwd + strlen(cwd);
+        if (end > cwd && end[-1] != '/') *end++ = '/';
+        memcpy( end, path, lenA );
+        lenA += end - cwd;
+        path = cwd;
+
+        status = find_drive_rootA( &path, lenA, &drive );
+        lenA -= (path - cwd);
+    }
+    else
+    {
+        cwd = NULL;
+        status = find_drive_rootA( &path, lenA, &drive );
+        lenA -= (path - name->Buffer);
+    }
+
+    if (status != STATUS_SUCCESS) goto done;
+    while (lenA && path[0] == '/') { lenA--; path++; }
+
+    lenW = ntdll_umbstowcs( 0, path, lenA, NULL, 0 );
+    if (!(nt->Buffer = RtlAllocateHeap( GetProcessHeap(), 0,
+                                        (lenW + 1) * sizeof(WCHAR) + sizeof(prefixW) )))
+    {
+        status = STATUS_NO_MEMORY;
+        goto done;
+    }
+
+    memcpy( nt->Buffer, prefixW, sizeof(prefixW) );
+    nt->Buffer[4] += drive;
+    ntdll_umbstowcs( 0, path, lenA, nt->Buffer + sizeof(prefixW)/sizeof(WCHAR), lenW );
+    lenW += sizeof(prefixW)/sizeof(WCHAR);
+    nt->Buffer[lenW] = 0;
+    nt->Length = lenW * sizeof(WCHAR);
+    nt->MaximumLength = nt->Length + sizeof(WCHAR);
+    for (p = nt->Buffer + sizeof(prefixW)/sizeof(WCHAR); *p; p++) if (*p == '/') *p = '\\';
+
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, cwd );
+    return status;
 }
