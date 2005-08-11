@@ -890,6 +890,8 @@ struct IWineD3DStateBlockImpl
 
     void                     *vertexShader; /* @TODO: Replace void * with IWineD3DVertexShader * */
 
+    BOOL                      softwareVertexProcessing;
+
     /* Stream Source */
     BOOL                      streamIsUP;
     UINT                      streamStride[MAX_STREAMS];

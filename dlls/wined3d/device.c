@@ -4487,15 +4487,25 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetCurrentTexturePalette(IWineD3DDevice *ifa
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_SetSoftwareVertexProcessing(IWineD3DDevice *iface, BOOL bSoftware) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    FIXME("(%p) : stub\n", This);
+    static BOOL showFixmes = TRUE;
+    if (showFixmes) {
+        FIXME("(%p) : stub\n", This);
+        showFixmes = FALSE;
+    }
+
+    This->updateStateBlock->softwareVertexProcessing = bSoftware;
     return D3D_OK;
 }
 
 
 BOOL     WINAPI  IWineD3DDeviceImpl_GetSoftwareVertexProcessing(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return FALSE;
+    static BOOL showFixmes = TRUE;
+    if (showFixmes) {
+        FIXME("(%p) : stub\n", This);
+        showFixmes = FALSE;
+    }
+    return This->updateStateBlock->softwareVertexProcessing;
 }
 
 

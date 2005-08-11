@@ -367,6 +367,8 @@ should really perform a delta so that only the changes get updated*/
         IWineD3DDevice_SetVertexDeclaration(pDevice, This->vertexDecl);
     }
 
+    IWineD3DDevice_SetSoftwareVertexProcessing(pDevice, This->softwareVertexProcessing);
+
     /* Others + Render & Texture */
     if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */ This->blockType == D3DSBT_ALL) {
         for (i = 1; i <= HIGHEST_TRANSFORMSTATE; i++) {
