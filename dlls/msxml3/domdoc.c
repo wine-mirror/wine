@@ -503,6 +503,7 @@ static HRESULT WINAPI domdoc_get_documentElement(
     domdoc *This = impl_from_IXMLDOMDocument( iface );
     xmlDocPtr xmldoc = NULL;
     xmlNodePtr root = NULL;
+    IXMLDOMElement* element;
 
     TRACE("%p\n", This);
 
@@ -519,7 +520,12 @@ static HRESULT WINAPI domdoc_get_documentElement(
     if ( !root )
         return S_FALSE;
 
-    *DOMElement = create_element( root );
+    element = create_element( root );
+    if ( element )
+    {
+        IXMLDOMNode_AddRef( This->node );
+        *DOMElement = element;
+    }
  
     return S_OK;
 }
