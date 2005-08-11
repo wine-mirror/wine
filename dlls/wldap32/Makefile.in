@@ -12,6 +12,7 @@ C_SRCS = \
 	ber.c \
 	bind.c \
 	compare.c \
+	delete.c \
 	dn.c \
 	error.c \
 	init.c \

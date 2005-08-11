@@ -252,6 +252,14 @@ ULONG ldap_compare_ext_sA(WLDAP32_LDAP*,PCHAR,PCHAR,PCHAR,struct WLDAP32_berval*
 ULONG ldap_compare_ext_sW(WLDAP32_LDAP*,PWCHAR,PWCHAR,PWCHAR,struct WLDAP32_berval*,PLDAPControlW*,PLDAPControlW*);
 ULONG ldap_compare_sA(WLDAP32_LDAP*,PCHAR,PCHAR,PCHAR);
 ULONG ldap_compare_sW(WLDAP32_LDAP*,PWCHAR,PWCHAR,PWCHAR);
+ULONG ldap_deleteA(WLDAP32_LDAP*,PCHAR);
+ULONG ldap_deleteW(WLDAP32_LDAP*,PWCHAR);
+ULONG ldap_delete_extA(WLDAP32_LDAP*,PCHAR,PLDAPControlA*,PLDAPControlA*,ULONG*);
+ULONG ldap_delete_extW(WLDAP32_LDAP*,PWCHAR,PLDAPControlW*,PLDAPControlW*,ULONG*);
+ULONG ldap_delete_ext_sA(WLDAP32_LDAP*,PCHAR,PLDAPControlA*,PLDAPControlA*);
+ULONG ldap_delete_ext_sW(WLDAP32_LDAP*,PWCHAR,PLDAPControlW*,PLDAPControlW*);
+ULONG ldap_delete_sA(WLDAP32_LDAP*,PCHAR);
+ULONG ldap_delete_sW(WLDAP32_LDAP*,PWCHAR);
 PCHAR ldap_dn2ufnA(PCHAR);
 PWCHAR ldap_dn2ufnW(PWCHAR);
 PCHAR ldap_err2stringA(ULONG);
