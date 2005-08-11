@@ -394,7 +394,7 @@ sub check_statements($$) {
     }
 
     if($options->win32 && $options->report_module($module32)) {
-	_check_statements($win16api, $functions, $function);
+	_check_statements($win32api, $functions, $function);
     }
 }
 
