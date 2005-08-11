@@ -23,14 +23,25 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+
+#include "ntstatus.h"
+/* Define WIN32_NO_STATUS so MSVC does not give us duplicate macro 
+ * definition errors when we get to winnt.h
+ */
+#define WIN32_NO_STATUS
+
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
 #include "winnls.h"
-#include "ntstatus.h"
 #include "wine/test.h"
 #include "wine/unicode.h"
 #include "winternl.h"
+
+#ifndef __WINE_WINTERNL_H
+typedef unsigned short RTL_ATOM, *PRTL_ATOM;
+typedef struct atom_table *RTL_ATOM_TABLE, **PRTL_ATOM_TABLE;
+#endif
 
 /* Function pointers for ntdll calls */
 static HMODULE hntdll = 0;
