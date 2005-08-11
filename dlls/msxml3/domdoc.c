@@ -668,7 +668,8 @@ static xmlDocPtr doread( LPWSTR filename )
             ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, len );
             if ( ptr )
             {
-                xmldoc = xmlParseMemory( ptr, len );
+                xmldoc = xmlReadMemory( ptr, len, NULL, NULL,
+                              XML_PARSE_NOERROR | XML_PARSE_NOWARNING );
                 UnmapViewOfFile( ptr );
             }
             CloseHandle( mapping );
@@ -781,13 +782,60 @@ static HRESULT WINAPI domdoc_abort(
 }
 
 
+BOOL bstr_to_utf8( BSTR bstr, char **pstr, int *plen )
+{
+    UINT len, blen = SysStringLen( bstr );
+    LPSTR str;
+
+    len = WideCharToMultiByte( CP_UTF8, 0, bstr, blen, NULL, 0, NULL, NULL );
+    str = HeapAlloc( GetProcessHeap(), 0, len );
+    if ( !str )
+        return FALSE;
+    WideCharToMultiByte( CP_UTF8, 0, bstr, blen, str, len, NULL, NULL );
+    *plen = len;
+    *pstr = str;
+    return TRUE;
+}
+
 static HRESULT WINAPI domdoc_loadXML(
     IXMLDOMDocument *iface,
     BSTR bstrXML,
     VARIANT_BOOL* isSuccessful )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    xmlDocPtr xmldoc;
+    char *str;
+    int len;
+
+    TRACE("%p %s %p\n", This, debugstr_w( bstrXML ), isSuccessful );
+
+    if ( This->node )
+    {
+        IXMLDOMNode_Release( This->node );
+        This->node = NULL;
+    }
+
+    if ( !isSuccessful )
+        return S_FALSE;
+
+    *isSuccessful = VARIANT_FALSE;
+
+    if ( !bstrXML )
+        return S_FALSE;
+
+    if ( !bstr_to_utf8( bstrXML, &str, &len ) )
+        return S_FALSE;
+
+    xmldoc = xmlReadMemory( str, len, NULL, NULL,
+                XML_PARSE_NOERROR | XML_PARSE_NOWARNING );
+    HeapFree( GetProcessHeap(), 0, str );
+
+    This->node = create_domdoc_node( xmldoc );
+    if( !This->node )
+        return S_FALSE;
+
+    *isSuccessful = VARIANT_TRUE;
+    return S_OK;
 }
 
 
