@@ -82,6 +82,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
 {
     WCHAR   xlpFile[1024];
     BOOL    done = FALSE;
+    BOOL    found_p1 = FALSE;
     PWSTR   res = out;
     PCWSTR  cmd;
     LPVOID  pv;
@@ -155,6 +156,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
                         res += strlenW(cmd);
                     }
                 }
+                found_p1 = TRUE;
                 break;
 
             /*
@@ -168,6 +170,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
 		    strcpyW(res, lpFile);
 		    res += strlenW(lpFile);
 		}
+                found_p1 = TRUE;
                 break;
 
             case 'i':
@@ -178,6 +181,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
 		    res += sprintfW(res, wszILPtr, pv);
 		    SHUnlockShared(pv);
 		}
+                found_p1 = TRUE;
                 break;
 
 	    default:
@@ -221,7 +225,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
 
     *res = '\0';
 
-    return done;
+    return found_p1;
 }
 
 HRESULT SHELL_GetPathFromIDListForExecuteA(LPCITEMIDLIST pidl, LPSTR pszPath, UINT uOutSize)
