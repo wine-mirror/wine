@@ -436,7 +436,7 @@
 436 stdcall -noname CLSIDFromStringWrap(wstr ptr)
 437 stdcall -noname IsOS(long)
 438 stub -noname SHLoadRegUIStringA
-439 stub -noname SHLoadRegUIStringW
+439 stdcall -noname SHLoadRegUIStringW(ptr wstr ptr long)
 440 stdcall -noname SHGetWebFolderFilePathA(str ptr long)
 441 stdcall -noname SHGetWebFolderFilePathW(wstr ptr long)
 442 stdcall @(wstr ptr long) kernel32.GetEnvironmentVariableW

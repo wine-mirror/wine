@@ -3993,6 +3993,19 @@ BOOL WINAPI IsOS(DWORD feature)
 }
 
 /*************************************************************************
+ * @  [SHLWAPI.439]
+ */
+HRESULT WINAPI SHLoadRegUIStringW(HKEY hkey, LPCWSTR value, LPWSTR buf, DWORD size)
+{
+    DWORD type, sz = size;
+
+    if(RegQueryValueExW(hkey, value, NULL, &type, (LPBYTE)buf, &sz) != ERROR_SUCCESS)
+        return E_FAIL;
+
+    return SHLoadIndirectString(buf, buf, size, NULL);
+}
+
+/*************************************************************************
  * @  [SHLWAPI.478]
  *
  * Call IInputObject_TranslateAcceleratorIO() on an object.
