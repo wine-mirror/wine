@@ -167,7 +167,13 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
     HTMLDocument *This = OLEOBJ_THIS(iface);
     HRESULT hres;
 
-    FIXME("(%p)->(%08lx)\n", This, dwSaveOption);
+    TRACE("(%p)->(%08lx)\n", This, dwSaveOption);
+
+    if(dwSaveOption == OLECLOSE_PROMPTSAVE)
+        FIXME("OLECLOSE_PROMPTSAVE not implemented\n");
+
+    if(This->in_place_active)
+        IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
 
     if(This->client) {
         IOleContainer *container;
@@ -219,7 +225,7 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
 
     TRACE("(%p)->(%ld %p %p %ld %p %p)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent, lprcPosRect);
 
-    if(iVerb != OLEIVERB_SHOW && iVerb != OLEIVERB_UIACTIVATE) {
+    if(iVerb != OLEIVERB_SHOW && iVerb != OLEIVERB_UIACTIVATE && iVerb != OLEIVERB_INPLACEACTIVATE) { 
         FIXME("iVerb = %ld not supported\n", iVerb);
         return E_NOTIMPL;
     }
@@ -727,7 +733,7 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 hres = OLECMDERR_E_NOTSUPPORTED;
             }else {
                 prgCmds[i].cmdf = exec_table[prgCmds[i].cmdID].cmdf;
-                TRACE("cmdID = %ld  returning %lx\n", prgCmds[i].cmdID, prgCmds[i].cmdID);
+                TRACE("cmdID = %ld  returning %lx\n", prgCmds[i].cmdID, prgCmds[i].cmdf);
                 hres = S_OK;
             }
         }
