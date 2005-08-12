@@ -796,12 +796,15 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
     {
         if (!pidl->mkid.cb) {
             lpName->uType = STRRET_CSTR;
-            strcpy(lpName->u.cStr, This->m_pszPath);
-            if (This->m_dwPathMode == PATHMODE_DOS) {
-                char path[MAX_PATH];
-                GetFullPathNameA(lpName->u.cStr, MAX_PATH, path, NULL);
-                PathRemoveBackslashA(path);
-                strcpy(lpName->u.cStr, path);
+            if (This->m_dwPathMode == PATHMODE_UNIX) {
+                strcpy(lpName->u.cStr, This->m_pszPath);
+            } else {
+                WCHAR *pwszDosPath = wine_get_dos_file_name(This->m_pszPath);
+                if (!pwszDosPath)
+                    return HRESULT_FROM_WIN32(GetLastError());
+                PathRemoveBackslashW(pwszDosPath);
+                WideCharToMultiByte(CP_UNIXCP, 0, pwszDosPath, -1, lpName->u.cStr, MAX_PATH, NULL, NULL);
+                HeapFree(GetProcessHeap(), 0, pwszDosPath);        
             }
         } else {
             IShellFolder *pSubFolder;
@@ -835,8 +838,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
 
-    char szSrc[FILENAME_MAX], szDest[FILENAME_MAX], szDosDest[MAX_PATH];
-    WCHAR wszDosDest[MAX_PATH];
+    char szSrc[FILENAME_MAX], szDest[FILENAME_MAX];
+    WCHAR *pwszDosDest;
     int cBasePathLen = lstrlenA(This->m_pszPath);
     struct stat statDest;
     LPITEMIDLIST pidlSrc, pidlDest;
@@ -885,10 +888,9 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
         return E_FAIL;
     
     /* Build a pidl for the path of the renamed file */
-    if (!GetFullPathNameA(szDest, MAX_PATH, szDosDest, NULL) ||
-        !MultiByteToWideChar(CP_UNIXCP, 0, szDosDest, -1, wszDosDest, MAX_PATH) ||
-        !UNIXFS_path_to_pidl(This, wszDosDest, &pidlDest))
-    {
+    pwszDosDest = wine_get_dos_file_name(szDest);
+    if (!pwszDosDest || !UNIXFS_path_to_pidl(This, pwszDosDest, &pidlDest)) {
+        HeapFree(GetProcessHeap(), 0, pwszDosDest);
         rename(szDest, szSrc); /* Undo the renaming */
         return E_FAIL;
     }
@@ -903,8 +905,9 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
     ILFree(pidlDest);
     
     if (ppidlOut) 
-        _ILCreateFromPathW(wszDosDest, ppidlOut);
+        _ILCreateFromPathW(pwszDosDest, ppidlOut);
     
+    HeapFree(GetProcessHeap(), 0, pwszDosDest);
     return S_OK;
 }
 
