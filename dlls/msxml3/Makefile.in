@@ -16,6 +16,8 @@ C_SRCS = \
 	node.c \
 	nodemap.c
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
