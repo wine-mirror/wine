@@ -451,7 +451,10 @@ then
         [AC_CHECK_LIB(xml2, xmlParseMemory,
             [AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])
              XML2LIBS="$ac_xml_libs"
-             XML2INCL="$ac_xml_cflags"],,$ac_xml_libs)])
+             XML2INCL="$ac_xml_cflags"],,$ac_xml_libs)
+         AC_CHECK_LIB(xml2, xmlReadMemory,
+            [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])])
+        ])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 

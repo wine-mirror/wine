@@ -651,6 +651,20 @@ static HRESULT WINAPI domdoc_nodeFromID(
     return E_NOTIMPL;
 }
 
+static xmlDocPtr doparse( char *ptr, int len )
+{
+#ifdef HAVE_XMLREADMEMORY
+    /*
+     * use xmlReadMemory if possible so we can supress
+     * writing errors to stderr
+     */
+    return xmlReadMemory( ptr, len, NULL, NULL,
+                          XML_PARSE_NOERROR | XML_PARSE_NOWARNING );
+#else
+    return xmlParseMemory( ptr, len );
+#endif
+}
+
 static xmlDocPtr doread( LPWSTR filename )
 {
     HANDLE handle, mapping;
@@ -674,8 +688,7 @@ static xmlDocPtr doread( LPWSTR filename )
             ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, len );
             if ( ptr )
             {
-                xmldoc = xmlReadMemory( ptr, len, NULL, NULL,
-                              XML_PARSE_NOERROR | XML_PARSE_NOWARNING );
+                xmldoc = doparse( ptr, len );
                 UnmapViewOfFile( ptr );
             }
             CloseHandle( mapping );
@@ -832,8 +845,7 @@ static HRESULT WINAPI domdoc_loadXML(
     if ( !bstr_to_utf8( bstrXML, &str, &len ) )
         return S_FALSE;
 
-    xmldoc = xmlReadMemory( str, len, NULL, NULL,
-                XML_PARSE_NOERROR | XML_PARSE_NOWARNING );
+    xmldoc = doparse( str, len );
     HeapFree( GetProcessHeap(), 0, str );
 
     This->node = create_domdoc_node( xmldoc );
