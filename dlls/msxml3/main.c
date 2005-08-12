@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "ole2.h"
 
 #include "wine/debug.h"
@@ -58,8 +59,25 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return TRUE;
 }
 
+static HRESULT add_key_val( LPCSTR key, LPCSTR valname, LPCSTR value )
+{
+    HKEY hkey;
+
+    if (RegCreateKeyA( HKEY_CLASSES_ROOT, key, &hkey ) != ERROR_SUCCESS) return E_FAIL;
+    RegSetValueA( hkey, valname, REG_SZ, value, strlen( value ) + 1 );
+    RegCloseKey( hkey );
+    return S_OK;
+}
+
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("\n");
-    return S_OK;
+    LONG r;
+
+    r = add_key_val( "CLSID\\{2933BF90-7B36-11D2-B20E-00C04F983E60}",
+                     NULL,
+                     "XML DOM Document" );
+    r = add_key_val( "CLSID\\{2933BF90-7B36-11D2-B20E-00C04F983E60}\\InProcServer32",
+                     NULL,
+                     "msxml3.dll" );
+    return r;
 }
