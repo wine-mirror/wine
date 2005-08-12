@@ -113,7 +113,7 @@ typedef struct tagSUBHEAP
 typedef struct tagHEAP
 {
     SUBHEAP          subheap;       /* First sub-heap */
-    struct tagHEAP  *next;          /* Next heap for this process */
+    struct list      entry;         /* Entry in process heap list */
     RTL_CRITICAL_SECTION critSection; /* Critical section for serialization */
     FREE_LIST_ENTRY  freeList[HEAP_NB_FREE_LISTS];  /* Free lists */
     DWORD            flags;         /* Heap flags */
@@ -126,9 +126,7 @@ typedef struct tagHEAP
 #define HEAP_MIN_BLOCK_SIZE  (8+sizeof(ARENA_FREE))  /* Min. heap block size */
 #define COMMIT_MASK          0xffff  /* bitmask for commit/decommit granularity */
 
-static HANDLE processHeap;  /* main process heap */
-
-static HEAP *firstHeap;     /* head of secondary heaps list */
+static HEAP *processHeap;  /* main process heap */
 
 static BOOL HEAP_IsRealArena( HEAP *heapPtr, DWORD flags, LPCVOID block, BOOL quiet );
 
@@ -190,7 +188,8 @@ static void HEAP_Dump( HEAP *heap )
     char *ptr;
 
     DPRINTF( "Heap: %p\n", heap );
-    DPRINTF( "Next: %p  Sub-heaps: %p", heap->next, &heap->subheap );
+    DPRINTF( "Next: %p  Sub-heaps: %p",
+             LIST_ENTRY( heap->entry.next, HEAP, entry ), &heap->subheap );
     subheap = &heap->subheap;
     while (subheap->next)
     {
@@ -592,7 +591,6 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
         subheap->headerSize = ROUND_SIZE( sizeof(HEAP) );
         subheap->next       = NULL;
-        heap->next          = NULL;
         heap->flags         = flags;
         heap->magic         = HEAP_MAGIC;
 
@@ -1060,12 +1058,15 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
     if (processHeap)
     {
         HEAP *heapPtr = subheap->heap;
-        RtlLockHeap( processHeap );
-        heapPtr->next = firstHeap;
-        firstHeap = heapPtr;
-        RtlUnlockHeap( processHeap );
+        RtlEnterCriticalSection( &processHeap->critSection );
+        list_add_head( &processHeap->entry, &heapPtr->entry );
+        RtlLeaveCriticalSection( &processHeap->critSection );
     }
-    else processHeap = subheap->heap;  /* assume the first heap we create is the process main heap */
+    else
+    {
+        processHeap = subheap->heap;  /* assume the first heap we create is the process main heap */
+        list_init( &processHeap->entry );
+    }
 
     return (HANDLE)subheap;
 }
@@ -1092,15 +1093,11 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
     if (!heapPtr) return heap;
 
     if (heap == processHeap) return heap; /* cannot delete the main process heap */
-    else /* remove it from the per-process list */
-    {
-        HEAP **pptr;
-        RtlLockHeap( processHeap );
-        pptr = &firstHeap;
-        while (*pptr && *pptr != heapPtr) pptr = &(*pptr)->next;
-        if (*pptr) *pptr = (*pptr)->next;
-        RtlUnlockHeap( processHeap );
-    }
+
+    /* remove it from the per-process list */
+    RtlEnterCriticalSection( &processHeap->critSection );
+    list_remove( &heapPtr->entry );
+    RtlLeaveCriticalSection( &processHeap->critSection );
 
     RtlDeleteCriticalSection( &heapPtr->critSection );
     subheap = &heapPtr->subheap;
@@ -1636,18 +1633,17 @@ HW_end:
  */
 ULONG WINAPI RtlGetProcessHeaps( ULONG count, HANDLE *heaps )
 {
-    ULONG total;
-    HEAP *ptr;
+    ULONG total = 1;  /* main heap */
+    struct list *ptr;
 
-    if (!processHeap) return 0;  /* should never happen */
-    total = 1;  /* main heap */
-    RtlLockHeap( processHeap );
-    for (ptr = firstHeap; ptr; ptr = ptr->next) total++;
+    RtlEnterCriticalSection( &processHeap->critSection );
+    LIST_FOR_EACH( ptr, &processHeap->entry ) total++;
     if (total <= count)
     {
-        *heaps++ = (HANDLE)processHeap;
-        for (ptr = firstHeap; ptr; ptr = ptr->next) *heaps++ = (HANDLE)ptr;
+        *heaps++ = processHeap;
+        LIST_FOR_EACH( ptr, &processHeap->entry )
+            *heaps++ = LIST_ENTRY( ptr, HEAP, entry );
     }
-    RtlUnlockHeap( processHeap );
+    RtlLeaveCriticalSection( &processHeap->critSection );
     return total;
 }
