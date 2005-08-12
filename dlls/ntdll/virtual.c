@@ -931,10 +931,11 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
             goto error;
         }
 
+        size = ROUND_SIZE( 0, sec->Misc.VirtualSize );
+
         if ((sec->Characteristics & IMAGE_SCN_MEM_SHARED) &&
             (sec->Characteristics & IMAGE_SCN_MEM_WRITE))
         {
-            size = ROUND_SIZE( 0, sec->Misc.VirtualSize );
             TRACE_(module)( "mapping shared section %.8s at %p off %lx (%x) size %lx (%lx) flags %lx\n",
                           sec->Name, ptr + sec->VirtualAddress,
                           sec->PointerToRawData, (int)pos, sec->SizeOfRawData,
@@ -964,17 +965,18 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
             continue;
         }
 
-        TRACE_(module)( "mapping section %.8s at %p off %lx size %lx flags %lx\n",
+        TRACE_(module)( "mapping section %.8s at %p off %lx size %lx virt %lx flags %lx\n",
                         sec->Name, ptr + sec->VirtualAddress,
                         sec->PointerToRawData, sec->SizeOfRawData,
-                        sec->Characteristics );
+                        size, sec->Characteristics );
 
         if (!sec->PointerToRawData || !sec->SizeOfRawData) continue;
+        if (sec->SizeOfRawData < size) size = sec->SizeOfRawData;
 
         /* Note: if the section is not aligned properly map_file_into_view will magically
          *       fall back to read(), so we don't need to check anything here.
          */
-        if (map_file_into_view( view, fd, sec->VirtualAddress, sec->SizeOfRawData, sec->PointerToRawData,
+        if (map_file_into_view( view, fd, sec->VirtualAddress, size, sec->PointerToRawData,
                                 VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
                                 removable ) != STATUS_SUCCESS)
         {
