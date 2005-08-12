@@ -47,8 +47,8 @@ static const char * sEnvvar2 = "ImARatherLongButIndeedNeededString";
 
 static char sExpTestpath1[MAX_PATH];
 static char sExpTestpath2[MAX_PATH];
-static unsigned sExpLen1;
-static unsigned sExpLen2;
+static DWORD nExpLen1;
+static DWORD nExpLen2;
 
 static const char * sEmptyBuffer ="0123456789";
 
@@ -75,6 +75,7 @@ static HKEY create_test_entries(void)
 {
 	HKEY hKey;
         DWORD ret;
+        DWORD nExpectedLen1, nExpectedLen2;
 
         SetEnvironmentVariableA("LONGSYSTEMVAR", sEnvvar1);
         SetEnvironmentVariableA("FOO", sEnvvar2);
@@ -89,15 +90,24 @@ static HKEY create_test_entries(void)
            ok(!RegSetValueExA(hKey,"Test3",0,REG_EXPAND_SZ, (LPBYTE) sTestpath2, strlen(sTestpath2)+1), "RegSetValueExA failed\n");
 	}
 
-	sExpLen1 = ExpandEnvironmentStringsA(sTestpath1, sExpTestpath1, sizeof(sExpTestpath1));
-	sExpLen2 = ExpandEnvironmentStringsA(sTestpath2, sExpTestpath2, sizeof(sExpTestpath2));
+	nExpLen1 = ExpandEnvironmentStringsA(sTestpath1, sExpTestpath1, sizeof(sExpTestpath1));
+	nExpLen2 = ExpandEnvironmentStringsA(sTestpath2, sExpTestpath2, sizeof(sExpTestpath2));
 
-        ok(sExpLen1 > 0, "Couldn't expand %s\n", sTestpath1);
-        trace("sExplen1 = (%d)\n", sExpLen1);
-        ok(sExpLen2 > 0, "Couldn't expand %s\n", sTestpath2);
-        trace("sExplen2 = (%d)\n", sExpLen2);
+	nExpectedLen1 = strlen(sTestpath1) - strlen("%LONGSYSTEMVAR%") + strlen(sEnvvar1) + 1;
+	nExpectedLen2 = strlen(sTestpath2) - strlen("%FOO%") + strlen(sEnvvar2) + 1;
+	/* ExpandEnvironmentStringsA on NT4 returns 2x the correct result */
+	trace("sExplen1 = (%ld)\n", nExpLen1);
+	if (nExpectedLen1 != nExpLen1)
+            trace( "Expanding %s failed (expected %ld) - known bug in NT4\n", sTestpath1, nExpectedLen1 );
 
-        return hKey;
+        trace("sExplen2 = (%ld)\n", nExpLen2);
+	if (nExpectedLen2 != nExpLen2)
+            trace( "Expanding %s failed (expected %ld) - known bug in NT4\n", sTestpath2, nExpectedLen2 );	
+
+	/* Make sure we carry on with correct values */
+	nExpLen1 = nExpectedLen1; 
+	nExpLen2 = nExpectedLen2;
+	return hKey;
 }
 
 static void test_SHGetValue(void)
@@ -226,7 +236,7 @@ static void test_SHQUeryValueEx(void)
 
         todo_wine
         {
-                ok( (0 == strcmp("", buf)) | (0 == strcmp(sTestpath2, buf)),
+                ok( (0 == strcmp("", buf)) || (0 == strcmp(sTestpath2, buf)),
                     "Expected empty or unexpanded string (win98), got (%s)\n", buf); 
         }
 
@@ -239,14 +249,14 @@ static void test_SHQUeryValueEx(void)
 	 * if the unexpanded string fits into the buffer it can get cut when expanded
 	 */
 	strcpy(buf, sEmptyBuffer);
-	dwSize = sExpLen2 - 4;
+	dwSize = nExpLen2 - 4;
 	dwType = -1;
         dwRet = SHQueryValueExA( hKey, "Test3", NULL, &dwType, buf, &dwSize);
 	ok( ERROR_MORE_DATA == dwRet, "Expected ERROR_MORE_DATA, got (%lu)\n", dwRet);
 
         todo_wine
         {
-                ok( (0 == strcmp("", buf)) | (0 == strcmp(sEnvvar2, buf)),
+            ok( (0 == strcmp("", buf)) || (0 == strcmp(sEnvvar2, buf)),
                     "Expected empty or first part of the string \"%s\", got \"%s\"\n", sEnvvar2, buf);
         }
 
