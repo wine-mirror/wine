@@ -1627,7 +1627,13 @@ void inline drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
                   /* Load up the texture now */
                 IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
                 IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)This, i, REAPPLY_ALPHAOP);
-                /* this is a stub function representing the state blocks being seperated here we are only updating the texture state changes, other objects and units get updated when they change (or need to be updated), e.g. states that relate to a context member line the texture unit are only updated when the context needs updating */
+                /* this is a stub function representing the state blocks
+                 * being separated here we are only updating the texture
+                 * state changes, other objects and units get updated when
+                 * they change (or need to be updated), e.g. states that
+                 * relate to a context member line the texture unit are
+                 * only updated when the context needs updating
+                 */
                 /* Tell the abse texture to sync it's states */
                 IWineD3DBaseTexture_ApplyStateChanges(This->stateBlock->textures[i], This->stateBlock->textureState[i], This->stateBlock->samplerState[i]);
 
@@ -1641,7 +1647,7 @@ void inline drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
                 This->stateBlock->textureDimensions[i] = GL_TEXTURE_1D;
                 glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[i]);
             }
-/** these ops apply to the texture unit, so they are preseved between texture changes, but for now brute force and reapply all
+/** these ops apply to the texture unit, so they are preserved between texture changes, but for now brute force and reapply all
         dx9_1pass_emboss_bump_mapping and dx9_2pass_emboss_bump_mapping are good texts to make sure the states are being applied when needed **/
             set_tex_op((IWineD3DDevice *)This, FALSE, i, This->stateBlock->textureState[i][WINED3DTSS_COLOROP],
                         This->stateBlock->textureState[i][WINED3DTSS_COLORARG1],

@@ -440,7 +440,7 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration8(IWineD3DVert
         return D3D_OK;
     }
 
-    /* The increadables and teenage mutant ninja turtles require this in d3d9 for NumElements == 0,
+    /* The Incredibles and Teenage Mutant Ninja Turtles require this in d3d9 for NumElements == 0,
     TODO: this needs to be tested against windows */
     if(*pSizeOfData == 0) {
         TRACE("(%p) : Requested the vertex declaration without specefying the size of the return buffer\n", This);
@@ -467,7 +467,7 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration9(IWineD3DVertexDecla
         return D3D_OK;
     }
 
-    /* The increadables and teenage mutant ninja turtles require this for NumElements == 0,
+    /* The Incredibles and Teenage Mutant Ninja Turtles require this for NumElements == 0,
     TODO: this needs to be tested against windows */
     if(*pNumElements == 0) {
         TRACE("(%p) : Requested the vertex declaration without specefying the size of the return buffer\n", This);
@@ -476,7 +476,7 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration9(IWineD3DVertexDecla
         return D3D_OK;
     }
 
-    /* just incase there's a simila problem to  The increadables and teenage mutant ninja without pNumElements = 0 */
+    /* just in case there's a similar problem to The Incredibles and Teenage Mutant Ninja Turtles without pNumElements = 0 */
     if (*pNumElements < This->declaration9NumElements) {
         *pNumElements = This->declaration9NumElements;
         FIXME("(%p) : Returning D3DERR_MOREDATA numElements %ld expected %u\n", iface, *pNumElements, This->declaration9NumElements);

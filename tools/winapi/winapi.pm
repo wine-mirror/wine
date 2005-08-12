@@ -197,12 +197,12 @@ sub parse_api_file($$) {
 	    if(!$forbidden) {
 		if(defined($module)) {
 		    if($$allowed_modules_unlimited{$type}) {
-			$output->write("$file: type ($type) already specificed as an unlimited type\n");
+			$output->write("$file: type ($type) already specified as an unlimited type\n");
 		    } elsif(!$$allowed_modules{$type}{$module}) {
 			$$allowed_modules{$type}{$module} = 1;
 			$$allowed_modules_limited{$type} = 1;
 		    } else {
-			$output->write("$file: type ($type) already specificed\n");
+			$output->write("$file: type ($type) already specified\n");
 		    }
 		} else {
 		    $$allowed_modules_unlimited{$type} = 1;

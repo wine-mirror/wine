@@ -1929,7 +1929,7 @@ static NTSTATUS DVD_ReadStructure(int dev, PDVD_READ_STRUCTURE structure, PDVD_L
  *        GetInquiryData
  *        Implements the IOCTL_GET_INQUIRY_DATA ioctl.
  *        Returns Inquiry data for all devices on the specified scsi bus
- *        Returns STATUS_BUFFER_TOO_SMALL if the output buffer is to small, 
+ *        Returns STATUS_BUFFER_TOO_SMALL if the output buffer is too small, 
  *        STATUS_INVALID_DEVICE_REQUEST if the given handle isn't to a SCSI device,
  *        or STATUS_NOT_SUPPORTED if the OS driver is too old
  */

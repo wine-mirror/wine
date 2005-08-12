@@ -83,7 +83,7 @@ typedef struct {
 } t1Struct;
 
 /* WinME supports OpenThread but doesn't know about access restrictions so
-   we require them to be either completly ignored or always obeyed.
+   we require them to be either completely ignored or always obeyed.
 */
 INT obeying_ars = 0; /* -1 == no, 0 == dunno yet, 1 == yes */
 #define obey_ar(x) \
@@ -96,7 +96,7 @@ INT obeying_ars = 0; /* -1 == no, 0 == dunno yet, 1 == yes */
       ? ok(!(x), "access restrictions obeyed\n") \
       : ok( (x), "access restrictions not obeyed\n"))
 
-/* Basic test that simulatneous threads can access shared memory,
+/* Basic test that simultaneous threads can access shared memory,
    that the thread local storage routines work correctly, and that
    threads actually run concurrently
 */
@@ -119,7 +119,7 @@ static DWORD WINAPI threadFunc1(LPVOID p)
    for(i=0;i<NUM_THREADS;i++) {
      while(tstruct->threadmem[i]==0) ;
    }
-/* Check that noone cahnged our tls memory */
+/* Check that noone changed our tls memory */
    ok((int)TlsGetValue(tlsIndex)-1==tstruct->threadnum,
       "TlsGetValue failed\n");
    return NUM_THREADS+tstruct->threadnum;
@@ -323,7 +323,7 @@ static VOID test_TerminateThread(void)
   thread = CreateThread(NULL,0,threadFunc4,
                         (LPVOID)event, 0,&threadId);
   ok(thread!=NULL,"Create Thread failed\n");
-/* Terminate thread has a race condition in Wine.  If the thread is terminated
+/* TerminateThread has a race condition in Wine.  If the thread is terminated
    before it starts, it leaves a process behind.  Therefore, we wait for the
    thread to signal that it has started.  There is no easy way to force the
    race to occur, so we don't try to find it.

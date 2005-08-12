@@ -1645,7 +1645,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
         IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)object->updateStateBlock);
         /* Setup surfaces for the backbuffer, frontbuffer and depthstencil buffer */
 
-        /* Setup some defaults for creating the implicite swapchain */
+        /* Setup some defaults for creating the implicit swapchain */
         ENTER_GL();
         IWineD3DImpl_FillGLCaps(&This->gl_info, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
         LEAVE_GL();
@@ -1653,7 +1653,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
         /* Setup the implicit swapchain */
         TRACE("Creating implicit swapchain\n");
         if (D3D_OK != D3DCB_CreateAdditionalSwapChain((IUnknown *) object->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain) || swapchain == NULL) {
-            WARN("Failed to create implicite swapchain\n");
+            WARN("Failed to create implicit swapchain\n");
             goto create_device_error;
         }
 

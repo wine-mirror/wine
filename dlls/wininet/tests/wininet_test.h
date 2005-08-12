@@ -20,7 +20,7 @@
 
 /* The Windows headers don't define A/W types for any of the following
  * structures and pointers :-(
- * Because for these structures there's not alignment or packing difference
+ * Because for these structures there's no alignment or packing difference
  * between the A and W versions, we just define a set of macros so the
  * generated tests work anyway.
  */

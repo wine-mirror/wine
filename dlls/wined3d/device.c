@@ -272,7 +272,7 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
     APPLY_STATE(WINED3DTSS_RESULTARG);
     APPLY_STATE(WINED3DTSS_CONSTANT);
 #endif
-    /* a quick sanity check incase someone forgot to update this function */
+    /* a quick sanity check in case someone forgot to update this function */
     if (WINED3D_HIGHEST_TEXTURE_STATE > WINED3DTSS_CONSTANT) {
         FIXME("(%p) : There are more texture states than expected, update device.c to match\n", This);
     }
@@ -349,7 +349,7 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
             if (nextSwapchain != NULL) {
                 nextSwapchain = nextSwapchain->next;
             } else {
-                WARN("Expected to find the implicite swapchain\n");
+                WARN("Expected to find the implicit swapchain\n");
             }
 
             /* release all the other swapchains */
@@ -366,11 +366,11 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
             }
 
             if (This->swapchains != NULL) {
-                /* Swapchain 0 is special because it's created in startup with a hanging parent, so we have to release it's parent now */
+                /* Swapchain 0 is special because it's created in startup with a hanging parent, so we have to release its parent now */
                 IWineD3DSwapChain_GetParent(This->swapchains->swapchain, &swapChainParent);
                 IUnknown_Release(swapChainParent);           /* once for the get parent */
                 if (IUnknown_Release(swapChainParent)  > 0) {  /* the second time for when it was created */
-                    FIXME("(%p) Something's still holding the implicite swapchain\n", This);
+                    FIXME("(%p) Something's still holding the implicit swapchain\n", This);
                 }
             }
 
