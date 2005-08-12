@@ -3208,6 +3208,9 @@ LPITEMIDLIST GetPidlFromDataObject ( IDataObject *doSelected, UINT nPidlIndex)
 
     TRACE("sv=%p index=%u\n", doSelected, nPidlIndex);
 
+    if (!doSelected)
+        return NULL;
+	
     /* Set the FORMATETC structure*/
     SETDefFormatEtc(formatetc, RegisterClipboardFormatA(CFSTR_SHELLIDLIST), TYMED_HGLOBAL);
 
