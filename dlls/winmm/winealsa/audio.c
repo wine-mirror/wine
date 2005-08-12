@@ -3302,6 +3302,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     /* FIXME: snd_pcm_mmap_hw_ptr() should not be accessed by a user app. */
     /*        It will NOT return what why want anyway. */
     hw_ptr = _snd_pcm_mmap_hw_ptr(wwo->pcm);
+    if (hw_ptr >= period_size) hw_ptr -= period_size; else hw_ptr = 0;
     if (lpdwPlay)
 	*lpdwPlay = snd_pcm_frames_to_bytes(wwo->pcm, hw_ptr/ period_size  * period_size) % This->mmap_buflen_bytes;
     if (lpdwWrite)
