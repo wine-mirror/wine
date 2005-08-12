@@ -180,6 +180,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
+/******************************************************************
+ *              DllCanUnloadNow (MSHTML.@)
+ */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     TRACE("() ref=%ld\n", module_ref);
@@ -196,6 +199,15 @@ HRESULT WINAPI RunHTMLApplication( HINSTANCE hinst, HINSTANCE hPrevInst,
 {
     FIXME("%p %p %s %d\n", hinst, hPrevInst, debugstr_a(szCmdLine), nCmdShow );
     return 0;
+}
+
+/***********************************************************************
+ *          RNIGetCompatibleVersion (MSHTML.@)
+ */
+DWORD WINAPI RNIGetCompatibleVersion(void)
+{
+    TRACE("()\n");
+    return 0x20000;
 }
 
 /***********************************************************************
