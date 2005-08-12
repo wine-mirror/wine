@@ -617,13 +617,20 @@ static const WCHAR *get_dll_system_path(void)
         WCHAR *p, *path;
         int len = 3;
 
-        len += GetSystemDirectoryW( NULL, 0 );
+        len += 2 * GetSystemDirectoryW( NULL, 0 );
         len += GetWindowsDirectoryW( NULL, 0 );
         p = path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
         *p++ = '.';
         *p++ = ';';
         GetSystemDirectoryW( p, path + len - p);
         p += strlenW(p);
+        /* if system directory ends in "32" add 16-bit version too */
+        if (p[-2] == '3' && p[-1] == '2')
+        {
+            *p++ = ';';
+            GetSystemDirectoryW( p, path + len - p);
+            p += strlenW(p) - 2;
+        }
         *p++ = ';';
         GetWindowsDirectoryW( p, path + len - p);
         cached_path = path;
