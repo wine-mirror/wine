@@ -87,7 +87,8 @@ static void test_ParseDisplayName(void)
     MultiByteToWideChar(CP_ACP, 0, cNonExistDir2A, -1, cTestDirW, MAX_PATH);
     hr = IShellFolder_ParseDisplayName(IDesktopFolder, 
         NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
-    ok((hr == E_FAIL), "ParseDisplayName returned %08lx, expected E_FAIL\n", hr);
+    ok((hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) || (hr == E_FAIL), 
+        "ParseDisplayName returned %08lx, expected 80070002 or E_FAIL\n", hr);
 }
 
 /* creates a file with the specified name for tests */
