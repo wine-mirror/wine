@@ -39,10 +39,11 @@ static void * (*pMSVCRTD_operator_new_dbg)(unsigned long, int, const char *, int
 static int init_functions(void)
 {
   HMODULE hModule = LoadLibraryA("msvcrtd.dll");
-  ok(hModule != NULL, "LoadLibraryA failed\n");
 
-  if (!hModule) 
+  if (!hModule) {
+    trace("LoadLibraryA failed to load msvcrtd.dll with GLE=%ld\n", GetLastError());
     return FALSE;
+  }
 
   SET(pMSVCRTD_operator_new_dbg, "??2@YAPAXIHPBDH@Z");
   if (pMSVCRTD_operator_new_dbg == NULL)

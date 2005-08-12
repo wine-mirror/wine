@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = msvcrtd.dll
-IMPORTS   = msvcrtd
+IMPORTS   = msvcrt
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 MODCFLAGS = @BUILTINFLAG@
 
