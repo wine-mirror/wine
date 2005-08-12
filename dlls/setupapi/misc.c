@@ -832,3 +832,24 @@ DWORD WINAPI RetreiveFileSecurity(LPCWSTR lpFileName,
 
     return dwError;
 }
+
+
+static DWORD global_flags = 0;  /* FIXME: what should be in here? */
+
+/***********************************************************************
+ *		pSetupGetGlobalFlags  (SETUPAPI.@)
+ */
+DWORD WINAPI pSetupGetGlobalFlags(void)
+{
+    FIXME( "stub\n" );
+    return global_flags;
+}
+
+
+/***********************************************************************
+ *		pSetupSetGlobalFlags  (SETUPAPI.@)
+ */
+void WINAPI pSetupSetGlobalFlags( DWORD flags )
+{
+    global_flags = flags;
+}

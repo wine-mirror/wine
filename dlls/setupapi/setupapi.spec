@@ -538,14 +538,14 @@
 @ stub pSetupDestroyRunOnceNodeList
 @ stub pSetupDirectoryIdToPath
 @ stub pSetupGetField
-@ stub pSetupGetGlobalFlags
+@ stdcall pSetupGetGlobalFlags()
 @ stub pSetupGetOsLoaderDriveAndPath
 @ stub pSetupGetQueueFlags
 @ stub pSetupGetVersionDatum
 @ stub pSetupGuidFromString
 @ stub pSetupIsGuidNull
 @ stub pSetupMakeSurePathExists
-@ stub pSetupSetGlobalFlags
+@ stdcall pSetupSetGlobalFlags(long)
 @ stub pSetupSetQueueFlags
 @ stub pSetupSetSystemSourceFlags
 @ stub pSetupStringFromGuid
