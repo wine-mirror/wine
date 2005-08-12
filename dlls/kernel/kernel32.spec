@@ -283,7 +283,7 @@
 # @ stub DecodeSystemPointer ( -> ntdll.RtlDecodeSystemPointer)
 @ stdcall DefineDosDeviceA(long str str)
 @ stdcall DefineDosDeviceW(long wstr wstr)
-@ stub DelayLoadFailureHook
+@ stdcall DelayLoadFailureHook(str str)
 @ stdcall DeleteAtom(long)
 @ stdcall DeleteCriticalSection(ptr) ntdll.RtlDeleteCriticalSection
 @ stdcall DeleteFiber(ptr)

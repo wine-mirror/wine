@@ -36,7 +36,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wine/exception.h"
 #include "build.h"
 
 struct import
@@ -526,7 +525,7 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
         kernel_imports += add_extra_symbol( extras, &count, "LoadLibraryA", spec );
         kernel_imports += add_extra_symbol( extras, &count, "FreeLibrary", spec );
         kernel_imports += add_extra_symbol( extras, &count, "GetProcAddress", spec );
-        kernel_imports += add_extra_symbol( extras, &count, "RaiseException", spec );
+        kernel_imports += add_extra_symbol( extras, &count, "DelayLoadFailureHook", spec );
     }
     if (nb_stubs)
         ntdll_imports += add_extra_symbol( extras, &count, "RtlRaiseException", spec );
@@ -965,9 +964,9 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     }
     fprintf( outfile, "  }\n};\n\n" );
 
-    fprintf( outfile, "extern void __stdcall RaiseException(unsigned int, unsigned int, unsigned int, const void *args[]);\n" );
     fprintf( outfile, "extern void * __stdcall LoadLibraryA(const char*);\n");
     fprintf( outfile, "extern void * __stdcall GetProcAddress(void *, const char*);\n");
+    fprintf( outfile, "extern void * __stdcall DelayLoadFailureHook(const char *, const char*);\n");
     fprintf( outfile, "\n" );
 
     fprintf( outfile, "void *__stdcall __wine_delay_load( int idx_nr )\n" );
@@ -979,17 +978,11 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, "  void *fn;\n\n" );
 
     fprintf( outfile, "  if (!*imd->phmod) *imd->phmod = LoadLibraryA(imd->szName);\n" );
-    fprintf( outfile, "  if (*imd->phmod && (fn = GetProcAddress(*imd->phmod, *pINT)))\n");
-    fprintf( outfile, "    /* patch IAT with final value */\n" );
-    fprintf( outfile, "    return *pIAT = fn;\n" );
-    fprintf( outfile, "  else {\n");
-    fprintf( outfile, "    const void *args[2];\n" );
-    fprintf( outfile, "    args[0] = imd->szName;\n" );
-    fprintf( outfile, "    args[1] = *pINT;\n" );
-    fprintf( outfile, "    RaiseException( 0x%08x, %d, 2, args );\n",
-             EXCEPTION_WINE_STUB, EH_NONCONTINUABLE );
-    fprintf( outfile, "    return 0;\n" );
-    fprintf( outfile, "  }\n}\n" );
+    fprintf( outfile, "  if (!*imd->phmod || !(fn = GetProcAddress(*imd->phmod, *pINT)))\n");
+    fprintf( outfile, "    fn = DelayLoadFailureHook(imd->szName, *pINT);\n" );
+    fprintf( outfile, "  /* patch IAT with final value */\n" );
+    fprintf( outfile, "  return *pIAT = fn;\n" );
+    fprintf( outfile, "}\n" );
 
     return nb_delayed;
 }

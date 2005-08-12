@@ -39,6 +39,7 @@
 #include "module.h"
 #include "kernel_private.h"
 
+#include "wine/exception.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
@@ -966,4 +967,19 @@ FARPROC WINAPI GetProcAddress32_16( HMODULE hModule, LPCSTR function )
 {
     /* FIXME: we used to disable snoop when returning proc for Win16 subsystem */
     return GetProcAddress( hModule, function );
+}
+
+
+/***********************************************************************
+ *           DelayLoadFailureHook  (KERNEL32.@)
+ */
+FARPROC WINAPI DelayLoadFailureHook( LPCSTR name, LPCSTR function )
+{
+    ULONG_PTR args[2];
+
+    ERR( "failed to delay load %s.%s\n", name, function );
+    args[0] = (ULONG_PTR)name;
+    args[1] = (ULONG_PTR)function;
+    RaiseException( EXCEPTION_WINE_STUB, EH_NONCONTINUABLE, 2, args );
+    return NULL;
 }
