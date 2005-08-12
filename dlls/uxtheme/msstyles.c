@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
 
 BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value);
 BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LPWSTR lpBuff, DWORD buffSize);
-void MSSTYLES_ParseThemeIni(PTHEME_FILE tf);
+void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics);
 
 extern HINSTANCE hDllInst;
 
@@ -224,7 +224,7 @@ void MSSTYLES_CloseThemeFile(PTHEME_FILE tf)
  *
  * Set the current active theme
  */
-HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf)
+HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf, BOOL setMetrics)
 {
     if(tfActiveTheme)
         MSSTYLES_CloseThemeFile(tfActiveTheme);
@@ -233,7 +233,7 @@ HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf)
     {
 	tfActiveTheme->dwRefCount++;
 	if(!tfActiveTheme->classes)
-	    MSSTYLES_ParseThemeIni(tfActiveTheme);
+	    MSSTYLES_ParseThemeIni(tfActiveTheme, setMetrics);
     }
     return S_OK;
 }
@@ -664,7 +664,7 @@ static PTHEME_PROPERTY MSSTYLES_AddMetric(PTHEME_FILE tf, int iPropertyPrimitive
  * PARAMS
  *     tf                  Theme to parse
  */
-void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
+void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
 {
     static const WCHAR szSysMetrics[] = {'S','y','s','M','e','t','r','i','c','s','\0'};
     static const WCHAR szGlobals[] = {'g','l','o','b','a','l','s','\0'};
@@ -709,7 +709,7 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
                             FIXME("Invalid color value for %s\n", debugstr_w(szPropertyName));
                         }
                     }
-		    else if (iPropertyId == TMT_FLATMENUS) {
+		    else if (setMetrics && (iPropertyId == TMT_FLATMENUS)) {
 			BOOL flatMenus = (*lpValue == 'T') || (*lpValue == 't');
 			SystemParametersInfoW (SPI_SETFLATMENU, 0, (PVOID)flatMenus, 0);
 		    }
@@ -720,7 +720,7 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
                     TRACE("Unknown system metric %s\n", debugstr_w(szPropertyName));
                 }
             }
-            if(colorCount > 0)
+            if (setMetrics && (colorCount > 0))
                 SetSysColors(colorCount, colorElements, colorRgb);
             continue;
         }

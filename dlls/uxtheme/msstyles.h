@@ -77,7 +77,7 @@ typedef void* PUXINI_FILE;
 
 HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWSTR pszSizeName, PTHEME_FILE *tf);
 void MSSTYLES_CloseThemeFile(PTHEME_FILE tf);
-HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf);
+HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf, BOOL setMetrics);
 PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList);
 HRESULT MSSTYLES_CloseThemeClass(PTHEME_CLASS tc);
 BOOL MSSTYLES_LookupProperty(LPCWSTR pszPropertyName, int *dwPrimitive, int *dwId);
