@@ -51,6 +51,59 @@ ULONG ldap_get_optionA( WLDAP32_LDAP *ld, int option, void *value )
 
     switch (option)
     {
+    case LDAP_OPT_API_FEATURE_INFO:
+    {
+        LDAPAPIFeatureInfoW featureW;
+        LDAPAPIFeatureInfoA *featureA = value;
+
+        if (!featureA->ldapaif_name) return WLDAP32_LDAP_PARAM_ERROR;
+
+        featureW.ldapaif_info_version = featureA->ldapaif_info_version;
+        featureW.ldapaif_name = strAtoW( featureA->ldapaif_name );
+        featureW.ldapaif_version = 0;
+
+        if (!featureW.ldapaif_name) return WLDAP32_LDAP_NO_MEMORY;
+
+        ret = ldap_get_optionW( ld, option, &featureW );
+
+        featureA->ldapaif_version = featureW.ldapaif_version;
+        strfreeW( featureW.ldapaif_name );
+        return ret;
+    }
+    case LDAP_OPT_API_INFO:
+    {
+        LDAPAPIInfoW infoW;
+        LDAPAPIInfoA *infoA = value;
+
+        memset( &infoW, 0, sizeof(LDAPAPIInfoW) );
+        infoW.ldapai_info_version = infoA->ldapai_info_version;
+
+        ret = ldap_get_optionW( ld, option, &infoW );
+
+        infoA->ldapai_api_version = infoW.ldapai_api_version;
+        infoA->ldapai_protocol_version = infoW.ldapai_protocol_version;
+
+        if (infoW.ldapai_extensions)
+        {
+            infoA->ldapai_extensions = strarrayWtoA( infoW.ldapai_extensions );
+            if (!infoA->ldapai_extensions) return WLDAP32_LDAP_NO_MEMORY;
+        }
+        if (infoW.ldapai_vendor_name)
+        {
+            infoA->ldapai_vendor_name = strWtoA( infoW.ldapai_vendor_name );
+            if (!infoA->ldapai_vendor_name)
+            {
+                ldap_value_freeW( infoW.ldapai_extensions );
+                return WLDAP32_LDAP_NO_MEMORY;
+            }
+        }
+        infoA->ldapai_vendor_version = infoW.ldapai_vendor_version;
+
+        ldap_value_freeW( infoW.ldapai_extensions );
+        ldap_memfreeW( infoW.ldapai_vendor_name );
+        return ret;
+    }
+
     case LDAP_OPT_DEREF:
     case LDAP_OPT_DESC:
     case LDAP_OPT_ERROR_NUMBER:
@@ -70,8 +123,6 @@ ULONG ldap_get_optionA( WLDAP32_LDAP *ld, int option, void *value )
     case LDAP_OPT_THREAD_FN_PTRS:
         return LDAP_LOCAL_ERROR;
 
-    case LDAP_OPT_API_FEATURE_INFO:
-    case LDAP_OPT_API_INFO:
     case LDAP_OPT_AREC_EXCLUSIVE:
     case LDAP_OPT_AUTO_RECONNECT:
     case LDAP_OPT_CLIENT_CERTIFICATE:
@@ -124,6 +175,59 @@ ULONG ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
 
     switch (option)
     {
+    case LDAP_OPT_API_FEATURE_INFO:
+    {
+        LDAPAPIFeatureInfo featureU;
+        LDAPAPIFeatureInfoW *featureW = value;
+
+        if (!featureW->ldapaif_name) return WLDAP32_LDAP_PARAM_ERROR;
+
+        featureU.ldapaif_info_version = featureW->ldapaif_info_version;
+        featureU.ldapaif_name = strWtoU( featureW->ldapaif_name );
+        featureU.ldapaif_version = 0;
+
+        if (!featureU.ldapaif_name) return WLDAP32_LDAP_NO_MEMORY;
+
+        ret = ldap_get_option( ld, option, &featureU );
+
+        featureW->ldapaif_version = featureU.ldapaif_version;
+        strfreeU( featureU.ldapaif_name );
+        return ret;
+    }
+    case LDAP_OPT_API_INFO:
+    {
+        LDAPAPIInfo infoU;
+        LDAPAPIInfoW *infoW = value;
+
+        memset( &infoU, 0, sizeof(LDAPAPIInfo) );
+        infoU.ldapai_info_version = infoW->ldapai_info_version;
+
+        ret = ldap_get_option( ld, option, &infoU );
+
+        infoW->ldapai_api_version = infoU.ldapai_api_version;
+        infoW->ldapai_protocol_version = infoU.ldapai_protocol_version;
+
+        if (infoU.ldapai_extensions)
+        {
+            infoW->ldapai_extensions = strarrayUtoW( infoU.ldapai_extensions );
+            if (!infoW->ldapai_extensions) return WLDAP32_LDAP_NO_MEMORY;
+        }
+        if (infoU.ldapai_vendor_name)
+        {
+            infoW->ldapai_vendor_name = strUtoW( infoU.ldapai_vendor_name );
+            if (!infoW->ldapai_vendor_name)
+            {
+                ldap_value_free( infoU.ldapai_extensions );
+                return WLDAP32_LDAP_NO_MEMORY;
+            }
+        }
+        infoW->ldapai_vendor_version = infoU.ldapai_vendor_version;
+
+        ldap_value_free( infoU.ldapai_extensions );
+        ldap_memfree( infoU.ldapai_vendor_name );
+        return ret;
+    }
+
     case LDAP_OPT_DEREF:
     case LDAP_OPT_DESC:
     case LDAP_OPT_ERROR_NUMBER:
@@ -143,8 +247,6 @@ ULONG ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
     case LDAP_OPT_THREAD_FN_PTRS:
         return LDAP_LOCAL_ERROR;
 
-    case LDAP_OPT_API_FEATURE_INFO:
-    case LDAP_OPT_API_INFO:
     case LDAP_OPT_AREC_EXCLUSIVE:
     case LDAP_OPT_AUTO_RECONNECT:
     case LDAP_OPT_CLIENT_CERTIFICATE:
@@ -218,6 +320,8 @@ ULONG ldap_set_optionA( WLDAP32_LDAP *ld, int option, void *value )
 
     case LDAP_OPT_API_FEATURE_INFO:
     case LDAP_OPT_API_INFO:
+        return LDAP_UNWILLING_TO_PERFORM;
+
     case LDAP_OPT_AREC_EXCLUSIVE:
     case LDAP_OPT_AUTO_RECONNECT:
     case LDAP_OPT_CLIENT_CERTIFICATE:
@@ -291,6 +395,8 @@ ULONG ldap_set_optionW( WLDAP32_LDAP *ld, int option, void *value )
 
     case LDAP_OPT_API_FEATURE_INFO:
     case LDAP_OPT_API_INFO:
+        return LDAP_UNWILLING_TO_PERFORM;
+
     case LDAP_OPT_AREC_EXCLUSIVE:
     case LDAP_OPT_AUTO_RECONNECT:
     case LDAP_OPT_CLIENT_CERTIFICATE:
