@@ -1662,7 +1662,6 @@ NTSTATUS WINAPI LdrLoadDll(LPCWSTR path_name, DWORD flags,
         nts = process_attach( wm, NULL );
         if (nts != STATUS_SUCCESS)
         {
-            WARN("Attach failed for module %s\n", debugstr_w(libname->Buffer));
             LdrUnloadDll(wm->ldr.BaseAddress);
             wm = NULL;
         }
