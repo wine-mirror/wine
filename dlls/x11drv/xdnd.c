@@ -111,7 +111,7 @@ void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event )
     else
     {
         count = 3;
-        xdndtypes = &event->data.l[2];
+        xdndtypes = (Atom*) &event->data.l[2];
     }
 
     if (TRACE_ON(xdnd))

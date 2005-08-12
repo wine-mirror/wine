@@ -702,7 +702,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 	if(format == AA_None) {
 	    pitch = ((gi.width + 31) / 32) * 4;
 	    for(i = 0; i < gi.height; i++) {
-	        line = buf + i * pitch;
+	        line = (unsigned char*) buf + i * pitch;
 		output[0] = '\0';
 		for(j = 0; j < pitch * 8; j++) {
 	            strcat(output, (line[j / 8] & (1 << (7 - (j % 8)))) ? "#" : " ");
@@ -717,7 +717,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 	    str[1] = '\0';
 	    pitch = ((gi.width + 3) / 4) * 4;
 	    for(i = 0; i < gi.height; i++) {
-	        line = buf + i * pitch;
+	        line = (unsigned char*) buf + i * pitch;
 		output[0] = '\0';
 		for(j = 0; j < pitch; j++) {
 		    str[0] = blks[line[j] >> 5];
@@ -731,7 +731,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 
     if(formatEntry->glyphset) {
         if(format == AA_None && BitmapBitOrder(gdi_display) != MSBFirst) {
-	    unsigned char *byte = buf, c;
+	    unsigned char *byte = (unsigned char*) buf, c;
 	    int i = buflen;
 
 	    while(i--) {

@@ -78,7 +78,7 @@ static LPDDHALMODEINFO dd_modes;
 static unsigned int dd_mode_count;
 static XRRScreenSize *real_xrandr_sizes;
 static short **real_xrandr_rates;
-static unsigned int real_xrandr_sizes_count;
+static int real_xrandr_sizes_count;
 static int *real_xrandr_rates_count;
 static unsigned int real_xrandr_modes_count;
 

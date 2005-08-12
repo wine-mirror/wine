@@ -3410,7 +3410,7 @@ BOOL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar, UINT lastChar
 		WCHAR wch = i;
 		BYTE ch;
 		UINT ch_f; /* character code in the font encoding */
-		WideCharToMultiByte( pfo->fi->codepage, 0, &wch, 1, &ch, 1, NULL, NULL );
+		WideCharToMultiByte( pfo->fi->codepage, 0, &wch, 1, (LPSTR)&ch, 1, NULL, NULL );
 		ch_f = ch;
 		if (ch_f >= pfo->fs->min_char_or_byte2 &&
 		    ch_f <= pfo->fs->max_char_or_byte2)
