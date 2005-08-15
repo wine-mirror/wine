@@ -2557,3 +2557,9 @@ LONG WINAPI GdiGetCharDimensions(HDC hdc, LPTEXTMETRICW lptm, LONG *height)
     if (height) *height = sz.cy;
     return (sz.cx / 26 + 1) / 2;
 }
+
+BOOL WINAPI EnableEUDC(BOOL fEnableEUDC)
+{
+    FIXME("(%d): stub\n", fEnableEUDC);
+    return FALSE;
+}

@@ -92,7 +92,7 @@
 @ stub DeviceCapabilitiesExW
 @ stdcall DrawEscape(long long long ptr)
 @ stdcall Ellipse(long long long long long)
-@ stub EnableEUDC
+@ stdcall EnableEUDC(long)
 @ stdcall EndDoc(long)
 # @ stub EndFormPage
 @ stdcall EndPage(long)
