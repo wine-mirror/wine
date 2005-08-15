@@ -478,8 +478,14 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
                             }
                         }
                     }
+                    /* Whatever TrueSizeStretchMark does - it does not seem to
+                     * be what's outlined below. It appears as if native 
+                     * uxtheme always stretches if dest is smaller than source
+                     * (ie as if TrueSizeStretchMark==100 with the code below) */
+#if 0
                     /* Only stretch when target exceeds source by truesizestretchmark percent */
                     GetThemeInt(hTheme, iPartId, iStateId, TMT_TRUESIZESTRETCHMARK, &truesizestretchmark);
+#endif
                     if(dstSize.x < 0 || dstSize.y < 0 ||
                       (MulDiv(srcSize.x, 100, dstSize.x) > truesizestretchmark &&
                       MulDiv(srcSize.y, 100, dstSize.y) > truesizestretchmark)) {
