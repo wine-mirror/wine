@@ -1026,7 +1026,7 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID)
 
   if (ret == S_OK)
   {
-    DWORD progidlen = 0;
+    LONG progidlen = 0;
 
     if (RegQueryValueW(hkey, NULL, NULL, &progidlen))
       ret = REGDB_E_CLASSNOTREG;
@@ -1064,7 +1064,7 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID)
 HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid)
 {
 	char	*buf,buf2[80];
-	DWORD	buf2len;
+	LONG	buf2len;
 	HRESULT	err;
 	HKEY	xhkey;
 
@@ -1101,7 +1101,7 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid)
 {
     static const WCHAR clsidW[] = { '\\','C','L','S','I','D',0 };
     WCHAR buf2[CHARS_IN_GUID];
-    DWORD buf2len = sizeof(buf2);
+    LONG buf2len = sizeof(buf2);
     HKEY xhkey;
 
     WCHAR *buf = HeapAlloc( GetProcessHeap(),0,(strlenW(progid)+8) * sizeof(WCHAR) );
@@ -1166,7 +1166,7 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     static const WCHAR wszPSC[] = {'\\','P','r','o','x','y','S','t','u','b','C','l','s','i','d','3','2',0};
     WCHAR path[ARRAYSIZE(wszInterface) - 1 + CHARS_IN_GUID - 1 + ARRAYSIZE(wszPSC)];
     WCHAR value[CHARS_IN_GUID];
-    DWORD len;
+    LONG len;
     HKEY hkey;
 
     TRACE("() riid=%s, pclsid=%p\n", debugstr_guid(riid), pclsid);
@@ -2206,7 +2206,7 @@ HRESULT WINAPI OleGetAutoConvert(REFCLSID clsidOld, LPCLSID pClsidNew)
     static const WCHAR wszAutoConvertTo[] = {'A','u','t','o','C','o','n','v','e','r','t','T','o',0};
     HKEY hkey = NULL;
     WCHAR buf[CHARS_IN_GUID];
-    DWORD len;
+    LONG len;
     HRESULT res = S_OK;
 
     if (ERROR_SUCCESS != COM_OpenKeyForCLSID(clsidOld, KEY_READ, &hkey))

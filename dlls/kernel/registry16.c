@@ -176,7 +176,7 @@ DWORD WINAPI RegQueryValue16( HKEY hkey, LPCSTR name, LPSTR data, LPDWORD count 
     if (!advapi32) init_func_ptrs();
     fix_win16_hkey( &hkey );
     if (count) *count &= 0xffff;
-    return pRegQueryValueA( hkey, name, data, count );
+    return pRegQueryValueA( hkey, name, data, (LONG*) count );
 }
 
 /******************************************************************************
@@ -198,7 +198,7 @@ DWORD WINAPI RegSetValueEx16( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type
 {
     if (!advapi32) init_func_ptrs();
     fix_win16_hkey( &hkey );
-    if (!count && (type==REG_SZ)) count = strlen(data);
+    if (!count && (type==REG_SZ)) count = strlen( (char*) data);
     return pRegSetValueExA( hkey, name, reserved, type, data, count );
 }
 

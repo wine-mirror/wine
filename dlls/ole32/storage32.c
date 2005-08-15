@@ -7091,7 +7091,7 @@ HRESULT OLECONVERT_CreateCompObjStream(LPSTORAGE pStorage, LPCSTR strOleTypeName
             {
                 char strTemp[OLESTREAM_MAX_STR_LEN];
                 IStorageCompObj.dwCLSIDNameLength = OLESTREAM_MAX_STR_LEN;
-                hErr = RegQueryValueA(hKey, NULL, strTemp, &(IStorageCompObj.dwCLSIDNameLength));
+                hErr = RegQueryValueA(hKey, NULL, strTemp, (LONG*) &(IStorageCompObj.dwCLSIDNameLength));
                 if(hErr == ERROR_SUCCESS)
                 {
                     strcpy(IStorageCompObj.strCLSIDName, strTemp);
