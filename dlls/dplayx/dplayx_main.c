@@ -73,7 +73,7 @@ DWORD gdwDPlaySPRefCount = 0; /* FIXME: Should it be initialized here? */
 BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
 
-  TRACE( "(%p,0x%08lx,%p)\n", hinstDLL, fdwReason, lpvReserved );
+  TRACE( "(%p,%ld,%p)\n", hinstDLL, fdwReason, lpvReserved );
 
   switch ( fdwReason )
   {

@@ -118,7 +118,7 @@ static LOGFONTA DefaultLogFont = {
  */
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    TRACE("(%p, 0x%08lx, %p)\n", hinst, reason, reserved);
+    TRACE("(%p, %ld, %p)\n", hinst, reason, reserved);
 
     switch(reason) {
 

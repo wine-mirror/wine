@@ -36,7 +36,7 @@ BOOL WINAPI DllMain(
 	DWORD fdwReason,
 	LPVOID lpvReserved)
 {
-    TRACE("(%p,%08lx,%p)\n", hInstDLL, fdwReason, lpvReserved);
+    TRACE("(%p,%ld,%p)\n", hInstDLL, fdwReason, lpvReserved);
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:

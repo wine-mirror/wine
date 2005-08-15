@@ -653,7 +653,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     int i;
-    TRACE("(%p 0x%lx %p)\n", hInstDLL, fdwReason, lpvReserved);
+    TRACE("(%p %ld %p)\n", hInstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
