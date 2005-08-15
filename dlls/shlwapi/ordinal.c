@@ -1950,7 +1950,7 @@ HMENU WINAPI SHGetMenuFromID(HMENU hMenu, UINT uID)
 {
   MENUITEMINFOW mi;
 
-  TRACE("(%p,%uld)\n", hMenu, uID);
+  TRACE("(%p,%u)\n", hMenu, uID);
 
   mi.cbSize = sizeof(mi);
   mi.fMask = MIIM_SUBMENU;
