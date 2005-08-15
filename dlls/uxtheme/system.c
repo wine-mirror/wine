@@ -291,8 +291,8 @@ static void UXTHEME_RestoreSystemMetrics(void)
                 char colorStr[13];
                 DWORD count = sizeof(colorStr);
             
-                if (SUCCEEDED(RegQueryValueExA (colorKey, SysColorsNames[i], 0,
-                    &type, colorStr, &count)))
+                if (RegQueryValueExA (colorKey, SysColorsNames[i], 0,
+                    &type, colorStr, &count) == ERROR_SUCCESS)
                 {
                     int r, g, b;
                     if (sscanf (colorStr, "%d %d %d", &r, &g, &b) == 3)
@@ -315,8 +315,8 @@ static void UXTHEME_RestoreSystemMetrics(void)
             DWORD count = sizeof(value);
             DWORD type;
             
-            if (SUCCEEDED(RegQueryValueExW (hKey, bsp->keyName, 0,
-                &type, (LPBYTE)&value, &count)))
+            if (RegQueryValueExW (hKey, bsp->keyName, 0,
+                &type, (LPBYTE)&value, &count) == ERROR_SUCCESS)
             {
                 SystemParametersInfoW (bsp->spiSet, 0, (LPVOID)value,
                     SPIF_UPDATEINIFILE);
