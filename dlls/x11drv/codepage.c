@@ -168,7 +168,7 @@ static XChar2b* X11DRV_unicode_to_char2b_sbcs( fontObject* pfo,
 {
     XChar2b *str2b;
     UINT i;
-    BYTE *str;
+    char *str;
     UINT codepage = pfo->fi->codepage;
     char ch = pfo->fs->default_char;
 
@@ -216,7 +216,7 @@ static XChar2b* X11DRV_unicode_to_char2b_cp932( fontObject* pfo,
 {
     XChar2b *str2b;
     XChar2b *str2b_dst;
-    BYTE *str;
+    char *str;
     BYTE *str_src;
     UINT i;
     char ch = pfo->fs->default_char;
@@ -232,7 +232,7 @@ static XChar2b* X11DRV_unicode_to_char2b_cp932( fontObject* pfo,
     /* handle jisx0212.1990... */
     WideCharToMultiByte( 932, 0, lpwstr, count, str, count*2, &ch, NULL );
 
-    str_src = str;
+    str_src = (BYTE*) str;
     str2b_dst = str2b;
     for (i = 0; i < count; i++, str_src++, str2b_dst++)
     {
@@ -259,7 +259,7 @@ static XChar2b* X11DRV_unicode_to_char2b_cp936( fontObject* pfo,
 {
     XChar2b *str2b;
     XChar2b *str2b_dst;
-    BYTE *str;
+    char *str;
     BYTE *str_src;
     UINT i;
     char ch = pfo->fs->default_char;
@@ -273,7 +273,7 @@ static XChar2b* X11DRV_unicode_to_char2b_cp936( fontObject* pfo,
     }
     WideCharToMultiByte( 936, 0, lpwstr, count, str, count*2, &ch, NULL );
 
-    str_src = str;
+    str_src = (BYTE*) str;
     str2b_dst = str2b;
     for (i = 0; i < count; i++, str_src++, str2b_dst++)
     {
@@ -300,7 +300,7 @@ static XChar2b* X11DRV_unicode_to_char2b_cp949( fontObject* pfo,
 {
     XChar2b *str2b;
     XChar2b *str2b_dst;
-    BYTE *str;
+    char *str;
     BYTE *str_src;
     UINT i;
     char ch = pfo->fs->default_char;
@@ -314,7 +314,7 @@ static XChar2b* X11DRV_unicode_to_char2b_cp949( fontObject* pfo,
     }
     WideCharToMultiByte( 949, 0, lpwstr, count, str, count*2, &ch, NULL );
 
-    str_src = str;
+    str_src = (BYTE*) str;
     str2b_dst = str2b;
     for (i = 0; i < count; i++, str_src++, str2b_dst++)
     {
@@ -342,7 +342,7 @@ static XChar2b* X11DRV_unicode_to_char2b_cp950( fontObject* pfo,
 {
     XChar2b *str2b;
     XChar2b *str2b_dst;
-    BYTE *str;
+    char *str;
     BYTE *str_src;
     UINT i;
     char ch = pfo->fs->default_char;
@@ -356,7 +356,7 @@ static XChar2b* X11DRV_unicode_to_char2b_cp950( fontObject* pfo,
     }
     WideCharToMultiByte( 950, 0, lpwstr, count, str, count*2, &ch, NULL );
 
-    str_src = str;
+    str_src = (BYTE*) str;
     str2b_dst = str2b;
     for (i = 0; i < count; i++, str_src++, str2b_dst++)
     {

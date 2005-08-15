@@ -1459,7 +1459,7 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 	if (lines && width && (bmpImage->bits_per_pixel == 16) &&
             (ImageByteOrder(gdi_display)==LSBFirst) )
 	{
-	    dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
+	    dstbits=(BYTE*)bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
 	    /* FIXME: Does this really handle all these cases correctly? */
 	    /* ==== pal 8 dib -> rgb or bgr 555 or 565 bmp ==== */
 	    for (h = lines ; h--; ) {
@@ -1494,7 +1494,7 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 	if (lines && width && (bmpImage->bits_per_pixel == 32) &&
             (ImageByteOrder(gdi_display)==LSBFirst) )
 	{
-	    dstbits=bmpImage->data+left*4+(lines-1)*bmpImage->bytes_per_line;
+	    dstbits=(BYTE*)bmpImage->data+left*4+(lines-1)*bmpImage->bytes_per_line;
 	    /* FIXME: Does this really handle both cases correctly? */
 	    /* ==== pal 8 dib -> rgb or bgr 0888 bmp ==== */
 	    for (h = lines ; h--; ) {
@@ -2434,7 +2434,7 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
             rDst=rDst << 16;
             gDst=gDst << 16;
             bDst=bDst << 16;
-            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+            srcbits=(BYTE*)bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
             for (h=0; h<lines; h++) {
                 srcpixel=srcbits;
                 dstpixel=(LPWORD)dstbits;
