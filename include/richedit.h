@@ -654,9 +654,10 @@ typedef LONG (*EDITWORDBREAKPROCEX)(char*,LONG,BYTE,INT);
 #define TM_SINGLECODEPAGE     0x00000010
 #define TM_MULTICODEPAGE      0x00000020
 
-/* GETTEXT structure flags */
+/* GETTEXTEX structure flags */
 #define GT_DEFAULT            0x00000000
 #define GT_USECRLF            0x00000001
+#define GT_SELECTION          0x00000002
 
 /* Options of the EM_SETTYPOGRAPHYOPTIONS message */
 #define TO_ADVANCEDTYPOGRAPHY 0x00000001
