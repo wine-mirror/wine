@@ -135,18 +135,18 @@
 @ cdecl ldap_memfree(ptr) ldap_memfreeA
 @ cdecl ldap_memfreeA(ptr)
 @ cdecl ldap_memfreeW(ptr)
-@ stub ldap_modify
-@ stub ldap_modifyA
-@ stub ldap_modifyW
-@ stub ldap_modify_ext
-@ stub ldap_modify_extA
-@ stub ldap_modify_extW
-@ stub ldap_modify_ext_s
-@ stub ldap_modify_ext_sA
-@ stub ldap_modify_ext_sW
-@ stub ldap_modify_s
-@ stub ldap_modify_sA
-@ stub ldap_modify_sW
+@ cdecl ldap_modify(ptr str ptr) ldap_modifyA
+@ cdecl ldap_modifyA(ptr str ptr)
+@ cdecl ldap_modifyW(ptr wstr ptr)
+@ cdecl ldap_modify_ext(ptr str ptr ptr ptr ptr) ldap_modify_extA
+@ cdecl ldap_modify_extA(ptr str ptr ptr ptr ptr)
+@ cdecl ldap_modify_extW(ptr wstr ptr ptr ptr ptr)
+@ cdecl ldap_modify_ext_s(ptr str ptr ptr ptr) ldap_modify_ext_sA
+@ cdecl ldap_modify_ext_sA(ptr str ptr ptr ptr)
+@ cdecl ldap_modify_ext_sW(ptr wstr ptr ptr ptr)
+@ cdecl ldap_modify_s(ptr str ptr) ldap_modify_sA
+@ cdecl ldap_modify_sA(ptr str ptr)
+@ cdecl ldap_modify_sW(ptr wstr ptr)
 @ stub ldap_modrdn
 @ stub ldap_modrdn2
 @ stub ldap_modrdn2A

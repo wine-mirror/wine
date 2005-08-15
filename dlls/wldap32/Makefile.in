@@ -18,6 +18,7 @@ C_SRCS = \
 	init.c \
 	main.c \
 	misc.c \
+	modify.c \
 	option.c \
 	search.c
 
