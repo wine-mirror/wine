@@ -58,6 +58,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(aspi);
 
+#ifdef linux
 static void set_last_error(void)
 {
     int save_errno = errno; /* errno gets overwritten by printf */
@@ -110,6 +111,7 @@ static void set_last_error(void)
     }
     errno = save_errno;
 }
+#endif
 
 static const WCHAR wDevicemapScsi[] = {'H','A','R','D','W','A','R','E','\\','D','E','V','I','C','E','M','A','P','\\','S','c','s','i',0};
 
