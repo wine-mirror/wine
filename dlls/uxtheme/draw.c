@@ -448,14 +448,14 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
                 GetThemeBool(hTheme, iPartId, iStateId, TMT_UNIFORMSIZING, &uniformsizing);
                 if(uniformsizing) {
                     /* Scale height and width equally */
-                    int widthDiff = abs(srcSize.x-dstSize.x);
-                    int heightDiff = abs(srcSize.y-dstSize.x);
-                    if(widthDiff > heightDiff) {
-                        dstSize.y -= widthDiff-heightDiff;
+                    if (dstSize.x*srcSize.y < dstSize.y*srcSize.x)
+                    {
+                        dstSize.y = MulDiv (srcSize.y, dstSize.x, srcSize.x);
                         rcDst.bottom = rcDst.top + dstSize.y;
                     }
-                    else if(heightDiff > widthDiff) {
-                        dstSize.x -= heightDiff-widthDiff;
+                    else
+                    {
+                        dstSize.x = MulDiv (srcSize.x, dstSize.y, srcSize.y);
                         rcDst.right = rcDst.left + dstSize.x;
                     }
                 }
