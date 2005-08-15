@@ -1,0 +1,182 @@
+/*
+ * WineCfg resources
+ * Japanese Language Support
+ *
+ * Copyright 2002 Jaco Greeff
+ * Copyright 2003 Dimitrie O. Paun
+ * Copyright 2003-2004 Mike Hearn
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+
+IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
+STYLE WS_CHILD
+FONT 9, "MS UI Gothic"
+BEGIN
+    LTEXT           "Wine バージョン:",IDC_STATIC,119,17,55,8
+    LTEXT           "CVS",IDC_WINEVER,179,17,56,8
+    CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
+    LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
+    CTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
+                    IDC_STATIC,119,44,124,72
+END
+
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 9, "MS UI Gothic"
+BEGIN
+    GROUPBOX        " アプリケーション設定 ",IDC_STATIC, 8,4,244,240
+    LTEXT           "Wineはアプリケーションによって異なるWindowsのバージョンをエミュレートできます。 このタブはライブラリ及びグラフィック各タブと連動しますので、システム全体の設定や\n個別アプリケーションの設定の変更が行えます。",
+                    IDC_STATIC,15,20,227,30
+    CONTROL         "アプリケーション",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+                    15,50,230,150
+    PUSHBUTTON	    "アプリケーションを追加(&A)...",IDC_APP_ADDAPP, 90,204,75,14
+    PUSHBUTTON	    "アプリケーションを削除(&R)",IDC_APP_REMOVEAPP, 170,204,75,14
+    LTEXT           "&Windows バージョン:",IDC_STATIC,17,226,58,8
+    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
+END
+
+IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 9, "MS UI Gothic"
+BEGIN
+    LTEXT	    "画面の解像度: ",IDC_STATIC,8,10,70,30
+    COMBOBOX	    IDC_SCREEN_DEPTH,80,8,170,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    GROUPBOX        " ウィンドウ設定 ",IDC_STATIC,8,25,244,110
+
+    CONTROL	    "DirectX アプリケーションがマウスを確保するのを許可する",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL	    "デスクトップのダブルバッファを有効にする",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    
+    /* FIXME: the wording of this explanation could be a lot better */
+    LTEXT           "デスクトップのエミュレートを有効にするとひとつのウィンドウ内に全てのアプリケーションが\n実行されます。無効にすると各アプリケーションが個別のウィンドウを生成します。",
+                    IDC_STATIC,15,73,228,28
+    LTEXT           "デスクトップの大きさ:",IDC_DESKTOP_SIZE,15,115,54,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,118,115,8,8,WS_DISABLED
+    CONTROL         "デスクトップをエミュレートする",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+		    
+    EDITTEXT        IDC_DESKTOP_WIDTH,74,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,127,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
+
+    LTEXT	    "Vertex Shader サポート: ",IDC_STATIC,15,150,80,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,100,148,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL         "Pixel Shader を有効にする(ハードウェアでサポートされている場合のみ)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
+END
+
+IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 9, "MS UI Gothic"
+BEGIN
+    GROUPBOX        " DLL オーバーライド ",IDC_STATIC,8,4,244,240
+    LTEXT           "ダイナミック・リンク・ライブラリ(DLL)は個別に builtin (Wine版) または native (Windows もしくはアプリケーション提供の物)を選ぶことができます。"
+                    ,IDC_STATIC,16,16,220,32
+    LTEXT           "新規ライブラリのオーバーライド:",IDC_STATIC,16,58,100,8
+    COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
+    PUSHBUTTON      "追加(&A)",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
+    LTEXT           "既存のオーバーライド:",IDC_STATIC,16,86,100,8
+    LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
+    PUSHBUTTON      "編集(&E)",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "削除(&R)",IDC_DLLS_REMOVEDLL,164,114,82,14 
+END
+
+IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "オーバーライドの編集"
+FONT 9, "MS UI Gothic"
+BEGIN
+    GROUPBOX        " 読込順序 ",IDC_STATIC,8,4,94,66
+    CONTROL         "&Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
+    CONTROL         "&Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
+    CONTROL         "Bui&ltin 後 Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "Nati&ve 後 Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "無効(&D)",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
+    PUSHBUTTON      "キャンセル",IDCANCEL,57,74,45,14,WS_GROUP
+END
+
+IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 9, "MS UI Gothic"
+BEGIN
+    GROUPBOX        " ドライブのマッピング ",IDC_STATIC,8,4,244,240
+    CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                    LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
+    PUSHBUTTON      "追加(&A)...",IDC_BUTTON_ADD,15,98,37,14
+    PUSHBUTTON      "削除(&R)",IDC_BUTTON_REMOVE,56,98,37,14
+    PUSHBUTTON      "自動検出(&D)...",IDC_BUTTON_AUTODETECT,197,98,49,14
+
+    /* editing drive details */
+    LTEXT           "パス(&P):",IDC_STATIC,15,123,20,9    
+    EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "参照(&B)...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
+    
+    LTEXT           "タイプ(&T):",IDC_STATIC_TYPE,15,138,21,10
+    COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    
+    LTEXT           "ラベルとシリアル番号",IDC_LABELSERIAL_STATIC,15,155,95,10
+    
+    PUSHBUTTON      "詳細を表示(&S)",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
+    CONTROL         "デバイスから自動検出(&F):",IDC_RADIO_AUTODETECT,"Button",
+                    BS_AUTORADIOBUTTON,15,166,93,10
+    EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "参照(&W)...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
+    CONTROL         "手動で設定(&M):",IDC_RADIO_ASSIGN,"Button",
+                    BS_AUTORADIOBUTTON,15,195,69,10
+
+    LTEXT           "ラベル(&L):",IDC_STATIC_LABEL,33,208,29,12
+    EDITTEXT        IDC_EDIT_LABEL,63,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "シリアル番号(&E):",IDC_STATIC_SERIAL,33,225,29,12
+    EDITTEXT        IDC_EDIT_SERIAL,63,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+
+    CONTROL         "ディレクトリーのシンボリックリンクを表示する",IDC_SHOW_DIRSYM_LINK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,250,230,8
+    CONTROL         "dot ファイルを表示する",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
+END
+
+IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 9, "MS UI Gothic"
+BEGIN
+    LTEXT	"オーディオドライバ: ",IDC_STATIC,10,20,60,8
+    COMBOBOX	IDC_AUDIO_DRIVER,70,18,85,85,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON	"自動検出",IDC_AUDIO_AUTODETECT,170,20,49,14
+    PUSHBUTTON	"設定",IDC_AUDIO_CONFIGURE,170,40,49,14
+    PUSHBUTTON	"コントロールパネル",IDC_AUDIO_CONTROL_PANEL,170,60,49,14
+
+    GROUPBOX    " DirectSound ",IDC_STATIC,8,75,244,120
+
+    LTEXT	"ハードウェア・アクセラレーション: ",IDC_STATIC,15,85,90,10
+    COMBOBOX	IDC_DSOUND_HW_ACCEL,100,83,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "ドライバ・エミュレーション",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WINE_VERSION        "CVS"
+    IDS_TAB_GENERAL         "全般"
+    IDS_TAB_DLLS            "ライブラリ"
+    IDS_TAB_DRIVES          "ドライブ"
+    IDS_CHOOSE_PATH         "マッピングするUnixディレクトリーを選んでください"
+    IDS_HIDE_ADVANCED       "詳細を隠す"
+    IDS_SHOW_ADVANCED       "詳細を表示"
+    
+END
