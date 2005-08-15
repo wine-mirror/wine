@@ -4889,6 +4889,34 @@ static const WCHAR WC_COMBOBOXW[] = { 'C','o','m','b','o','B','o','x',0 };
 #endif
 #define WC_COMBOBOX               WINELIB_NAME_AW(WC_COMBOBOX)
 
+/**************************************************************************
+ * Edit control
+ */
+
+#define WC_EDITA                  "Edit"
+#if defined(__GNUC__)
+# define WC_EDITW                 (const WCHAR []){ 'E','d','i','t',0 }
+#elif defined(_MSC_VER)
+# define WC_EDITW                 L"Edit"
+#else
+static const WCHAR WC_EDITW[] = { 'E','d','i','t',0 };
+#endif
+#define WC_EDIT                   WINELIB_NAME_AW(WC_EDIT)
+
+/**************************************************************************
+ * List box control
+ */
+
+#define WC_LISTBOXA               "ListBox"
+#if defined(__GNUC__)
+# define WC_LISTBOXW              (const WCHAR []){ 'L','i','s','t','B','o','x',0 }
+#elif defined(_MSC_VER)
+# define WC_LISTBOXW              L"ListBox"
+#else
+static const WCHAR WC_LISTBOXW[] = { 'L','i','s','t','B','o','x',0 };
+#endif
+#define WC_LISTBOX                WINELIB_NAME_AW(WC_LISTBOX)
+
 #ifdef __cplusplus
 }
 #endif
