@@ -1562,7 +1562,6 @@ HRESULT COM_RegReadPath(HKEY hkeyroot, const WCHAR *keyname, const WCHAR *valuen
 }
 
 /***********************************************************************
- *           CoGetClassObject [COMPOBJ.7]
  *           CoGetClassObject [OLE32.@]
  *
  * FIXME.  If request allows of several options and there is a failure
@@ -1663,6 +1662,23 @@ HRESULT WINAPI CoGetClassObject(
     }
 
     return hres;
+}
+
+/***********************************************************************
+ *           CoGetClassObject [COMPOBJ.7]
+ *
+ */
+HRESULT WINAPI CoGetClassObject16(
+    REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
+    REFIID iid, LPVOID *ppv)
+{
+    FIXME(", stub!\n\tCLSID:\t%s,\n\tIID:\t%s\n", debugstr_guid(rclsid), debugstr_guid(iid));
+
+    if (pServerInfo) {
+	FIXME("\tpServerInfo: name=%s\n",debugstr_w(pServerInfo->pwszName));
+	FIXME("\t\tpAuthInfo=%p\n",pServerInfo->pAuthInfo);
+    }
+    return E_NOTIMPL;
 }
 /***********************************************************************
  *        CoResumeClassObjects (OLE32.@)
@@ -1772,8 +1788,8 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
 
     return MK_E_INVALIDEXTENSION;
 }
+
 /***********************************************************************
- *           CoCreateInstance [COMPOBJ.13]
  *           CoCreateInstance [OLE32.@]
  */
 HRESULT WINAPI CoCreateInstance(
@@ -1838,6 +1854,23 @@ HRESULT WINAPI CoCreateInstance(
 		debugstr_guid(iid), debugstr_guid(rclsid),hres);
 
 	return hres;
+}
+
+/***********************************************************************
+ *           CoCreateInstance [COMPOBJ.13]
+ */
+HRESULT WINAPI CoCreateInstance16(
+	REFCLSID rclsid,
+	LPUNKNOWN pUnkOuter,
+	DWORD dwClsContext,
+	REFIID iid,
+	LPVOID *ppv)
+{
+  FIXME("(%s, %p, %lx, %s, %p), stub!\n", 
+	debugstr_guid(rclsid), pUnkOuter, dwClsContext, debugstr_guid(iid),
+	ppv
+  );
+  return E_NOTIMPL;
 }
 
 /***********************************************************************

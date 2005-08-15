@@ -9,7 +9,7 @@
 9 stub OLECREATELINKFROMDATA
 10 stub OLECREATE
 11 stub OLECREATELINK
-12 stub OLELOAD
+12 pascal OleLoad(segptr ptr segptr ptr) OleLoad16
 13 stub OLESAVE
 14 stub OLERUN
 #15 ___EXPORTEDSTUB
