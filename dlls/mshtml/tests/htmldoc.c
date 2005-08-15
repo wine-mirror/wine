@@ -43,7 +43,6 @@
     ok(called_ ## func, "expected " #func "\n"); \
     expect_ ## func = called_ ## func = FALSE
 
-static IUnknown *htmldoc_unk = NULL;
 static IOleDocumentView *view = NULL;
 static HWND container_hwnd = NULL, hwnd = NULL, last_hwnd = NULL;
 
@@ -469,7 +468,7 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
     CHECK_EXPECT(ActivateMe);
     ok(pViewToActivate != NULL, "pViewToActivate = NULL\n");
 
-    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IOleDocument, (void**)&document);
+    hres = IOleDocumentView_QueryInterface(pViewToActivate, &IID_IOleDocument, (void**)&document);
     ok(hres == S_OK, "could not get IOleDocument: %08lx\n", hres);
 
     if(SUCCEEDED(hres)) {
@@ -513,8 +512,15 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 SET_EXPECT(SetActiveObject);
                 SET_EXPECT(ShowUI);
                 expect_SetActiveObject_active = TRUE;
+
                 hres = IOleDocumentView_UIActivate(view, TRUE);
+
+                if(FAILED(hres)) {
+                    trace("UIActivate failed: %08lx\n", hres);
+                    return hres;
+                }
                 ok(hres == S_OK, "UIActivate failed: %08lx\n", hres);
+
                 CHECK_CALLED(CanInPlaceActivate);
                 CHECK_CALLED(GetWindowContext);
                 CHECK_CALLED(GetWindow);
@@ -796,14 +802,14 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-static void test_Persist()
+static void test_Persist(IUnknown *unk)
 {
     IPersistMoniker *persist_mon;
     IPersistFile *persist_file;
     GUID guid;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IPersistFile, (void**)&persist_file);
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistFile, (void**)&persist_file);
     ok(hres == S_OK, "QueryInterface(IID_IPersist) failed: %08lx\n", hres);
     if(SUCCEEDED(hres)) {
         hres = IPersist_GetClassID(persist_file, NULL);
@@ -816,7 +822,7 @@ static void test_Persist()
         IPersist_Release(persist_file);
     }
 
-    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IPersistMoniker, (void**)&persist_mon);
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistMoniker, (void**)&persist_mon);
     ok(hres == S_OK, "QueryInterface(IID_IPersistMoniker) failed: %08lx\n", hres);
     if(SUCCEEDED(hres)) {
         hres = IPersistMoniker_GetClassID(persist_mon, NULL);
@@ -872,11 +878,17 @@ static const OLECMDF expect_cmds[OLECMDID_GETPRINTTEMPLATE+1] = {
     OLECMDF_SUPPORTED                   /* OLECMDID_GETPRINTTEMPLATE */
 };
 
-static void test_OleCommandTarget(IOleCommandTarget *cmdtrg)
+static void test_OleCommandTarget(IUnknown *unk)
 {
+    IOleCommandTarget *cmdtrg;
     OLECMD cmds[OLECMDID_GETPRINTTEMPLATE];
     int i;
     HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    ok(hres == S_OK, "QueryInterface(IIDIOleM=CommandTarget failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
 
     for(i=0; i<OLECMDID_GETPRINTTEMPLATE; i++) {
         cmds[i].cmdID = i+1;
@@ -891,20 +903,63 @@ static void test_OleCommandTarget(IOleCommandTarget *cmdtrg)
         ok(cmds[i].cmdf == expect_cmds[i+1], "cmds[%d].cmdf=%lx, expected %x\n",
                 i+1, cmds[i].cmdf, expect_cmds[i+1]);
     }
+
+    IOleCommandTarget_Release(cmdtrg);
 }
 
-static void test_HTMLDocument(void)
+static void test_OleCommandTarget_fail(IUnknown *unk)
 {
-    IOleObject *oleobj = NULL;
-    IOleClientSite *clientsite = (LPVOID)0xdeadbeef;
-    IOleInPlaceObjectWindowless *windowlessobj = NULL;
-    IOleInPlaceActiveObject *activeobject = NULL;
-    IOleCommandTarget *cmdtrg = NULL;
-    GUID guid;
-    RECT rect = {0,0,500,500};
+    IOleCommandTarget *cmdtrg;
+    int i;
     HRESULT hres;
-    ULONG ref;
 
+    OLECMD cmd[2] = {
+        {OLECMDID_OPEN, 0xf0f0},
+        {OLECMDID_GETPRINTTEMPLATE+1, 0xf0f0}
+    };
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    ok(hres == S_OK, "QueryInterface(IIDIOleM=CommandTarget failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+
+
+    hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, 0, NULL, NULL);
+    ok(hres == S_OK, "QueryStatus failed: %08lx\n", hres);
+
+    hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, 2, cmd, NULL);
+    ok(hres == OLECMDERR_E_NOTSUPPORTED,
+            "QueryStatus failed: %08lx, expected OLECMDERR_E_NOTSUPPORTED\n", hres);
+    ok(cmd[1].cmdID == OLECMDID_GETPRINTTEMPLATE+1,
+            "cmd[0].cmdID=%ld, expected OLECMDID_GETPRINTTEMPLATE+1\n", cmd[0].cmdID);
+    ok(cmd[1].cmdf == 0, "cmd[0].cmdf=%lx, expected 0\n", cmd[0].cmdf);
+    ok(cmd[0].cmdf == OLECMDF_SUPPORTED,
+            "cmd[1].cmdf=%lx, expected OLECMDF_SUPPORTED\n", cmd[1].cmdf);
+
+    hres = IOleCommandTarget_QueryStatus(cmdtrg, &IID_IHTMLDocument2, 2, cmd, NULL);
+    ok(hres == OLECMDERR_E_UNKNOWNGROUP,
+            "QueryStatus failed: %08lx, expected OLECMDERR_E_UNKNOWNGROUP\n", hres);
+
+    for(i=0; i<OLECMDID_GETPRINTTEMPLATE; i++) {
+        if(!expect_cmds[i]) {
+            hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_UPDATECOMMANDS,
+                    OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+            ok(hres == OLECMDERR_E_NOTSUPPORTED,
+                    "Exec failed: %08lx, expected OLECMDERR_E_NOTSUPPORTED\n", hres);
+        }
+    }
+
+    hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_GETPRINTTEMPLATE+1,
+            OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+    ok(hres == OLECMDERR_E_NOTSUPPORTED,
+            "Exec failed: %08lx, expected OLECMDERR_E_NOTSUPPORTED\n", hres);
+
+    IOleCommandTarget_Release(cmdtrg);
+}
+
+static HWND create_container_window(void)
+{
     static const WCHAR wszHTMLDocumentTest[] =
         {'H','T','M','L','D','o','c','u','m','e','n','t','T','e','s','t',0};
     static WNDCLASSEXW wndclass = {
@@ -916,402 +971,307 @@ static void test_HTMLDocument(void)
         NULL
     };
 
-    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-            &IID_IUnknown, (void**)&htmldoc_unk);
-    ok(hres == S_OK, "CoCreateInstance failed: %08lx\n", hres);
+    RegisterClassExW(&wndclass);
+    return CreateWindowW(wszHTMLDocumentTest, wszHTMLDocumentTest,
+            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+            CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+}
+
+static HRESULT test_DoVerb(IOleObject *oleobj)
+{
+    RECT rect = {0,0,500,500};
+    HRESULT hres;
+
+    SET_EXPECT(GetContainer);
+    SET_EXPECT(LockContainer);
+    SET_EXPECT(ActivateMe);
+    expect_LockContainer_fLock = TRUE;
+    hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite, -1, container_hwnd, &rect);
+
+    if(FAILED(hres))
+        return hres;
+
+    ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
+    CHECK_CALLED(GetContainer);
+    CHECK_CALLED(LockContainer);
+    CHECK_CALLED(ActivateMe);
+
+    return hres;
+}
+
+#define CLIENTSITE_EXPECTPATH 0x00000001
+#define CLIENTSITE_SETNULL    0x00000002
+#define CLIENTSITE_DONTSET    0x00000004
+
+static void test_ClientSite(IOleObject *oleobj, DWORD flags)
+{
+    IOleClientSite *clientsite;
+    HRESULT hres;
+
+    if(flags & CLIENTSITE_SETNULL) {
+        hres = IOleObject_GetClientSite(oleobj, &clientsite);
+        ok(clientsite == &ClientSite, "clientsite=%p, expected %p\n", clientsite, &ClientSite);
+
+        hres = IOleObject_SetClientSite(oleobj, NULL);
+        ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
+    }
+
+    if(flags & CLIENTSITE_DONTSET)
+        return;
+
+    hres = IOleObject_GetClientSite(oleobj, &clientsite);
+    ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
+    ok(clientsite == NULL, "GetClientSite() = %p, expected NULL\n", clientsite);
+
+    SET_EXPECT(GetHostInfo);
+    if(flags & CLIENTSITE_EXPECTPATH) {
+        SET_EXPECT(GetOptionKeyPath);
+        SET_EXPECT(GetOverrideKeyPath);
+    }
+    SET_EXPECT(GetWindow);
+    hres = IOleObject_SetClientSite(oleobj, &ClientSite);
+    ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
+    CHECK_CALLED(GetHostInfo);
+    if(flags & CLIENTSITE_EXPECTPATH) {
+        CHECK_CALLED(GetOptionKeyPath);
+        CHECK_CALLED(GetOverrideKeyPath);
+    }
+    CHECK_CALLED(GetWindow);
+
+    hres = IOleObject_GetClientSite(oleobj, &clientsite);
+    ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
+    ok(clientsite == &ClientSite, "GetClientSite() = %p, expected %p\n", clientsite, &ClientSite);
+}
+
+static void test_Close(IUnknown *unk, BOOL set_client)
+{
+    IOleObject *oleobj = NULL;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
-    RegisterClassExW(&wndclass);
-    container_hwnd = CreateWindowW(wszHTMLDocumentTest, wszHTMLDocumentTest,
-            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+    SET_EXPECT(GetContainer);
+    SET_EXPECT(LockContainer);
+    expect_LockContainer_fLock = FALSE;
+    hres = IOleObject_Close(oleobj, OLECLOSE_NOSAVE);
+    ok(hres == S_OK, "Close failed: %08lx\n", hres);
+    CHECK_CALLED(GetContainer);
+    CHECK_CALLED(LockContainer);
 
-    test_Persist();
+    if(set_client)
+        test_ClientSite(oleobj, CLIENTSITE_SETNULL|CLIENTSITE_DONTSET);
 
-    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IOleInPlaceObjectWindowless,
+    IOleObject_Release(oleobj);
+}
+
+static void test_InPlaceDeactivate(IUnknown *unk, BOOL expect_call)
+{
+    IOleInPlaceObjectWindowless *windowlessobj = NULL;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceObjectWindowless,
             (void**)&windowlessobj);
-    ok(hres == S_OK, "Could not get IOleInPlaceObjectWindowless interface: %08lx\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_IOleInPlaceObjectWindowless) failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
 
-    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
-    ok(hres == S_OK, "could not get IOleCommandTarget: %08lx\n", hres);
+    if(expect_call) SET_EXPECT(OnInPlaceDeactivate);
+    hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
+    ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
+    if(expect_call) CHECK_CALLED(OnInPlaceDeactivate);
 
-    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IOleObject, (void**)&oleobj);
+    IOleInPlaceObjectWindowless_Release(windowlessobj);
+}
+
+static HRESULT test_Activate(IUnknown *unk, DWORD flags)
+{
+    IOleObject *oleobj = NULL;
+    GUID guid;
+    HRESULT hres;
+
+    last_hwnd = hwnd;
+
+    if(view)
+        IOleDocumentView_Release(view);
+    view = NULL;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08lx\n", hres);
-    if(oleobj) {
-        hres = IOleObject_GetUserClassID(oleobj, NULL);
-        ok(hres == E_INVALIDARG, "GetUserClassID returned: %08lx, expected E_INVALIDARG\n", hres);
+    if(FAILED(hres))
+        return hres;
 
-        hres = IOleObject_GetUserClassID(oleobj, &guid);
-        ok(hres == S_OK, "GetUserClassID failed: %08lx\n", hres);
-        ok(IsEqualGUID(&guid, &CLSID_HTMLDocument), "guid != CLSID_HTMLDocument\n");
+    hres = IOleObject_GetUserClassID(oleobj, NULL);
+    ok(hres == E_INVALIDARG, "GetUserClassID returned: %08lx, expected E_INVALIDARG\n", hres);
 
-        hres = IOleObject_GetClientSite(oleobj, &clientsite);
-        ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
-        ok(clientsite == NULL, "GetClientSite() = %p, expected NULL\n", clientsite);
+    hres = IOleObject_GetUserClassID(oleobj, &guid);
+    ok(hres == S_OK, "GetUserClassID failed: %08lx\n", hres);
+    ok(IsEqualGUID(&guid, &CLSID_HTMLDocument), "guid != CLSID_HTMLDocument\n");
 
-        SET_EXPECT(GetHostInfo);
-        SET_EXPECT(GetOptionKeyPath);
-        SET_EXPECT(GetOverrideKeyPath);
-        SET_EXPECT(GetWindow);
-        hres = IOleObject_SetClientSite(oleobj, &ClientSite);
-        ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
-        CHECK_CALLED(GetHostInfo);
-        CHECK_CALLED(GetOptionKeyPath);
-        CHECK_CALLED(GetOverrideKeyPath);
-        CHECK_CALLED(GetWindow);
+    test_ClientSite(oleobj, flags);
+    test_InPlaceDeactivate(unk, FALSE);
 
-        hres = IOleObject_GetClientSite(oleobj, &clientsite);
-        ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
-        ok(clientsite == &ClientSite, "GetClientSite() = %p, expected %p\n", clientsite, &ClientSite);
+    hres = test_DoVerb(oleobj);
 
-        if(windowlessobj) {
-            hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
-            ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
-        }
+    IOleObject_Release(oleobj);
+    return hres;
+}
 
-        SET_EXPECT(GetContainer);
-        SET_EXPECT(LockContainer);
-        SET_EXPECT(ActivateMe);
-        expect_LockContainer_fLock = TRUE;
-        hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite, -1, container_hwnd, &rect);
-        ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
-        CHECK_CALLED(GetContainer);
-        CHECK_CALLED(LockContainer);
-        CHECK_CALLED(ActivateMe);
-    }
-
-    if(cmdtrg) {
-        int i;
-    
-        OLECMD cmd[2] = {
-            {OLECMDID_OPEN, 0xf0f0},
-            {OLECMDID_GETPRINTTEMPLATE+1, 0xf0f0}
-        };
-    
-        hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, 0, NULL, NULL);
-        ok(hres == S_OK, "QueryStatus failed: %08lx\n", hres);
-    
-        hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, 2, cmd, NULL);
-        ok(hres == OLECMDERR_E_NOTSUPPORTED,
-                "QueryStatus failed: %08lx, expected OLECMDERR_E_NOTSUPPORTED\n", hres);
-        ok(cmd[1].cmdID == OLECMDID_GETPRINTTEMPLATE+1,
-                "cmd[0].cmdID=%ld, expected OLECMDID_GETPRINTTEMPLATE+1\n", cmd[0].cmdID);
-        ok(cmd[1].cmdf == 0, "cmd[0].cmdf=%lx, expected 0\n", cmd[0].cmdf);
-        ok(cmd[0].cmdf == OLECMDF_SUPPORTED,
-                "cmd[1].cmdf=%lx, expected OLECMDF_SUPPORTED\n", cmd[1].cmdf);
-
-        hres = IOleCommandTarget_QueryStatus(cmdtrg, &IID_IHTMLDocument2, 2, cmd, NULL);
-        ok(hres == OLECMDERR_E_UNKNOWNGROUP,
-                "QueryStatus failed: %08lx, expected OLECMDERR_E_UNKNOWNGROUP\n", hres);
-
-        for(i=0; i<OLECMDID_GETPRINTTEMPLATE; i++) {
-            if(!expect_cmds[i]) {
-                hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_UPDATECOMMANDS,
-                    OLECMDEXECOPT_DODEFAULT, NULL, NULL);
-                ok(hres == OLECMDERR_E_NOTSUPPORTED,
-                        "Exec failed: %08lx, expected OLECMDERR_E_NOTSUPPORTED\n", hres);
-            }
-        }
-
-        hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_GETPRINTTEMPLATE+1, 
-                OLECMDEXECOPT_DODEFAULT, NULL, NULL);
-        ok(hres == OLECMDERR_E_NOTSUPPORTED,
-                "Exec failed: %08lx, expected OLECMDERR_E_NOTSUPPORTED\n", hres);
-
-        test_OleCommandTarget(cmdtrg);
-    }
+static void test_Window(IUnknown *unk, BOOL expect_success)
+{
+    IOleInPlaceActiveObject *activeobject = NULL;
+    HWND tmp_hwnd;
+    HRESULT hres;
 
     hres = IOleDocumentView_QueryInterface(view, &IID_IOleInPlaceActiveObject, (void**)&activeobject);
     ok(hres == S_OK, "Could not get IOleInPlaceActiveObject interface: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
 
-    if(activeobject) {
-        HWND tmp_hwnd;
-        hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
+    hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
+
+    if(expect_success) {
         ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
         ok(tmp_hwnd == hwnd, "tmp_hwnd=%p, expected %p\n", tmp_hwnd, hwnd);
-    }
-
-    if(view) {
-        SET_EXPECT(SetActiveObject);
-        SET_EXPECT(HideUI);
-        SET_EXPECT(OnUIDeactivate);
-        expect_SetActiveObject_active = FALSE;
-        hres = IOleDocumentView_UIActivate(view, FALSE);
-        ok(hres == S_OK, "UIActivate failed: %08lx\n", hres);
-        CHECK_CALLED(SetActiveObject);
-        CHECK_CALLED(HideUI);
-        CHECK_CALLED(OnUIDeactivate);
-    }
-
-    if(cmdtrg)
-        test_OleCommandTarget(cmdtrg);
-
-    if(activeobject) {
-        HWND tmp_hwnd;
-        hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
-        ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
-        ok(tmp_hwnd == hwnd, "tmp_hwnd=%p, expected %p\n", tmp_hwnd, hwnd);
-    }
-    
-    if(windowlessobj) {
-        SET_EXPECT(OnInPlaceDeactivate);
-        hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
-        ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
-        CHECK_CALLED(OnInPlaceDeactivate);
-    }
-
-    /* Calling test_OleCommandTarget here couses Segmentation Fault with native
-     * MSHTML. It doesn't with Wine. */
-
-    if(activeobject) {
-        HWND tmp_hwnd;
-        hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
+    }else {
         ok(hres == E_FAIL, "GetWindow returned %08lx, expected E_FAIL\n", hres);
         ok(IsWindow(hwnd), "hwnd is destroyed\n");
     }
 
-    if(view) {
-        hres = IOleDocumentView_Show(view, FALSE);
-        ok(hres == S_OK, "Show failed: %08lx\n", hres);
-    }
-    if(windowlessobj) {
-        hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
-        ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
-    }
+    IOleInPlaceActiveObject_Release(activeobject);
+}
 
-    if(view) {
-        IOleInPlaceSite *inplacesite = (IOleInPlaceSite*)0xff00ff00;
+static void test_CloseView(void)
+{
+    IOleInPlaceSite *inplacesite = (IOleInPlaceSite*)0xff00ff00;
+    HRESULT hres;
 
-        hres = IOleDocumentView_Show(view, FALSE);
-        ok(hres == S_OK, "Show failed: %08lx\n", hres);
+    if(!view)
+        return;
 
-        hres = IOleDocumentView_CloseView(view, 0);
-        ok(hres == S_OK, "CloseVire failed: %08lx\n", hres);
+    hres = IOleDocumentView_Show(view, FALSE);
+    ok(hres == S_OK, "Show failed: %08lx\n", hres);
 
-        hres = IOleDocumentView_SetInPlaceSite(view, NULL);
-        ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
+    hres = IOleDocumentView_CloseView(view, 0);
+    ok(hres == S_OK, "CloseView failed: %08lx\n", hres);
 
-        hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
-        ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
-        ok(inplacesite == NULL, "inplacesite=%p, expected NULL\n", inplacesite);
-    }
+    hres = IOleDocumentView_SetInPlaceSite(view, NULL);
+    ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
 
-    if(oleobj) {
-        SET_EXPECT(GetContainer);
-        SET_EXPECT(LockContainer);
-        expect_LockContainer_fLock = FALSE;
-        hres = IOleObject_Close(oleobj, OLECLOSE_NOSAVE);
-        ok(hres == S_OK, "Close failed: %08lx\n", hres);
-        CHECK_CALLED(GetContainer);
-        CHECK_CALLED(LockContainer);
+    hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
+    ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
+    ok(inplacesite == NULL, "inplacesite=%p, expected NULL\n", inplacesite);
+}
 
-        if(view)
-            IOleDocumentView_Release(view);
+static void test_UIDeactivate(void)
+{
+    HRESULT hres;
 
-        /* Activate HTMLDocument again */
-        last_hwnd = hwnd;
-
-        hres = IOleObject_GetClientSite(oleobj, &clientsite);
-        ok(clientsite == &ClientSite, "clientsite=%p, expected %p\n", clientsite, &ClientSite);
-
-        hres = IOleObject_SetClientSite(oleobj, NULL);
-        ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
-
-        hres = IOleObject_GetClientSite(oleobj, &clientsite);
-        ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
-        ok(clientsite == NULL, "GetClientSite() = %p, expected NULL\n", clientsite);
-
-        SET_EXPECT(GetHostInfo);
-        SET_EXPECT(GetWindow);
-        hres = IOleObject_SetClientSite(oleobj, &ClientSite);
-        ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
-        CHECK_CALLED(GetHostInfo);
-        CHECK_CALLED(GetWindow);
-
-        if(windowlessobj) {
-            hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
-            ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
-        }
-
-        SET_EXPECT(GetContainer);
-        SET_EXPECT(LockContainer);
-        SET_EXPECT(ActivateMe);
-        expect_LockContainer_fLock = TRUE;
-        hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite, -1, container_hwnd, &rect);
-        ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
-        CHECK_CALLED(GetContainer);
-        CHECK_CALLED(LockContainer);
-        CHECK_CALLED(ActivateMe);
-    }
-
-    if(activeobject) {
-        HWND tmp_hwnd;
-        hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
-        ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
-        ok(tmp_hwnd == hwnd, "tmp_hwnd=%p, expected %p\n", tmp_hwnd, hwnd);
-    }
-
-    if(cmdtrg)
-        test_OleCommandTarget(cmdtrg);
-
-    if(view) {
+    if(call_UIActivate) {
         SET_EXPECT(SetActiveObject);
         SET_EXPECT(HideUI);
         SET_EXPECT(OnUIDeactivate);
-        expect_SetActiveObject_active = FALSE;
-        hres = IOleDocumentView_UIActivate(view, FALSE);
-        ok(hres == S_OK, "UIActivate failed: %08lx\n", hres);
+    }
+
+    expect_SetActiveObject_active = FALSE;
+    hres = IOleDocumentView_UIActivate(view, FALSE);
+    ok(hres == S_OK, "UIActivate failed: %08lx\n", hres);
+
+    if(call_UIActivate) {
         CHECK_CALLED(SetActiveObject);
         CHECK_CALLED(HideUI);
         CHECK_CALLED(OnUIDeactivate);
     }
+}
 
-    if(windowlessobj) {
-        SET_EXPECT(OnInPlaceDeactivate);
-        hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
-        ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
-        CHECK_CALLED(OnInPlaceDeactivate);
+static void test_Hide(void)
+{
+    HRESULT hres;
+
+    if(!view)
+        return;
+
+    hres = IOleDocumentView_Show(view, FALSE);
+    ok(hres == S_OK, "Show failed: %08lx\n", hres);
+}
+
+static void test_HTMLDocument(void)
+{
+    IUnknown *unk;
+    HRESULT hres;
+    ULONG ref;
+
+    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "CoCreateInstance failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    test_Persist(unk);
+
+    hres = test_Activate(unk, CLIENTSITE_EXPECTPATH);
+    if(FAILED(hres)) {
+        IUnknown_Release(unk);
+        return;
     }
 
-    if(oleobj) {
-        SET_EXPECT(GetContainer);
-        SET_EXPECT(LockContainer);
-        expect_LockContainer_fLock = FALSE;
-        hres = IOleObject_Close(oleobj, OLECLOSE_NOSAVE);
-        ok(hres == S_OK, "Close failed: %08lx\n", hres);
-        CHECK_CALLED(GetContainer);
-        CHECK_CALLED(LockContainer);
+    test_OleCommandTarget_fail(unk);
+    test_OleCommandTarget(unk);
+    test_Window(unk, TRUE);
+    test_UIDeactivate();
+    test_OleCommandTarget(unk);
+    test_Window(unk, TRUE);
+    test_InPlaceDeactivate(unk, TRUE);
 
-        if(view)
-            IOleDocumentView_Release(view);
+    /* Calling test_OleCommandTarget here couses Segmentation Fault with native
+     * MSHTML. It doesn't with Wine. */
 
-        hres = IOleObject_GetClientSite(oleobj, &clientsite);
-        ok(clientsite == &ClientSite, "clientsite=%p, expected %p\n", clientsite, &ClientSite);
+    test_Window(unk, FALSE);
+    test_Hide();
+    test_InPlaceDeactivate(unk, FALSE);
+    test_CloseView();
+    test_Close(unk, FALSE);
 
-        hres = IOleObject_SetClientSite(oleobj, NULL);
-        ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
+    /* Activate HTMLDocument again */
+    test_Activate(unk, CLIENTSITE_SETNULL);
+    test_Window(unk, TRUE);
+    test_OleCommandTarget(unk);
+    test_UIDeactivate();
+    test_InPlaceDeactivate(unk, TRUE);
+    test_Close(unk, FALSE);
 
-        hres = IOleObject_GetClientSite(oleobj, &clientsite);
-        ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
-        ok(clientsite == NULL, "GetClientSite() = %p, expected NULL\n", clientsite);
+    /* Activate HTMLDocument again, this time without UIActivate */
+    call_UIActivate = FALSE;
+    test_Activate(unk, CLIENTSITE_SETNULL);
+    test_Window(unk, TRUE);
+    test_UIDeactivate();
+    test_InPlaceDeactivate(unk, TRUE);
+    test_CloseView();
+    test_CloseView();
+    test_Close(unk, TRUE);
 
-        SET_EXPECT(GetHostInfo);
-        SET_EXPECT(GetWindow);
-        hres = IOleObject_SetClientSite(oleobj, &ClientSite);
-        ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
-        CHECK_CALLED(GetHostInfo);
-        CHECK_CALLED(GetWindow);
-
-        /* Activate HTMLDocument again, this time without UIActivate */
-        last_hwnd = hwnd;
-        call_UIActivate = FALSE;
-
-        SET_EXPECT(GetContainer);
-        SET_EXPECT(LockContainer);
-        SET_EXPECT(ActivateMe);
-        expect_LockContainer_fLock = TRUE;
-        hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite, -1, container_hwnd, &rect);
-        ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
-        CHECK_CALLED(GetContainer);
-        CHECK_CALLED(LockContainer);
-        CHECK_CALLED(ActivateMe);
-    }
-
-    if(activeobject) {
-        HWND tmp_hwnd;
-        hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
-        ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
-        ok(tmp_hwnd == hwnd, "tmp_hwnd=%p, expected %p\n", tmp_hwnd, hwnd);
-    }
-
-    if(view) {
-        expect_SetActiveObject_active = FALSE;
-        hres = IOleDocumentView_UIActivate(view, FALSE);
-        ok(hres == S_OK, "UIActivate failed: %08lx\n", hres);
-    }
-
-    if(windowlessobj) {
-        SET_EXPECT(OnInPlaceDeactivate);
-        hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
-        ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
-        CHECK_CALLED(OnInPlaceDeactivate);
-    }
-
-    if(view) {
-        IOleInPlaceSite *inplacesite = (IOleInPlaceSite*)0xff00ff00;
-
-        hres = IOleDocumentView_Show(view, FALSE);
-        ok(hres == S_OK, "Show failed: %08lx\n", hres);
-
-        hres = IOleDocumentView_CloseView(view, 0);
-        ok(hres == S_OK, "CloseView failed: %08lx\n", hres);
-
-        hres = IOleDocumentView_SetInPlaceSite(view, NULL);
-        ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
-
-        hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
-        ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
-        ok(inplacesite == NULL, "inplacesite=%p, expected NULL\n", inplacesite);
-    }
-
-    if(view) {
-        IOleInPlaceSite *inplacesite = (IOleInPlaceSite*)0xff00ff00;
-
-        hres = IOleDocumentView_Show(view, FALSE);
-        ok(hres == S_OK, "Show failed: %08lx\n", hres);
-
-        hres = IOleDocumentView_CloseView(view, 0);
-        ok(hres == S_OK, "CloseVire failed: %08lx\n", hres);
-
-        hres = IOleDocumentView_SetInPlaceSite(view, NULL);
-        ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
-
-        hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
-        ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
-        ok(inplacesite == NULL, "inplacesite=%p, expected NULL\n", inplacesite);
-
-        SET_EXPECT(GetContainer);
-        SET_EXPECT(LockContainer);
-        expect_LockContainer_fLock = FALSE;
-        hres = IOleObject_Close(oleobj, OLECLOSE_NOSAVE);
-        ok(hres == S_OK, "Close failed: %08lx\n", hres);
-        CHECK_CALLED(GetContainer);
-        CHECK_CALLED(LockContainer);
-
-        hres = IOleObject_GetClientSite(oleobj, &clientsite);
-        ok(clientsite == &ClientSite, "clientsite=%p, expected %p\n", clientsite, &ClientSite);
-
-        hres = IOleObject_SetClientSite(oleobj, NULL);
-        ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
-    }
-
-    if(cmdtrg)
-        IOleCommandTarget_Release(cmdtrg);
-    if(windowlessobj)
-        IOleInPlaceObjectWindowless_Release(windowlessobj);
-    if(oleobj)
-        IOleObject_Release(oleobj);
     if(view)
         IOleDocumentView_Release(view);
-    if(activeobject)
-        IOleInPlaceActiveObject_Release(activeobject);
+    view = NULL;
 
     ok(IsWindow(hwnd), "hwnd is destroyed\n");
 
-    ref = IUnknown_Release(htmldoc_unk);
+    ref = IUnknown_Release(unk);
     ok(ref == 0, "ref=%ld, expected 0\n", ref);
 
     ok(!IsWindow(hwnd), "hwnd is not destroyed\n");
 
-    DestroyWindow(container_hwnd);
 }
 
 START_TEST(htmldoc)
 {
     CoInitialize(NULL);
+    container_hwnd = create_container_window();
 
     test_HTMLDocument();
 
+    DestroyWindow(container_hwnd);
     CoUninitialize();
 }
