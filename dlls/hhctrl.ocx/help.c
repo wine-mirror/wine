@@ -38,7 +38,7 @@
 #define WINTYPE_DEFAULT_Y           100
 #define WINTYPE_DEFAULT_WIDTH       740
 #define WINTYPE_DEFAULT_HEIGHT      640
-#define WINTYPE_DEFAULT_NAVWIDTH    250
+#define WINTYPE_DEFAULT_NAVWIDTH    251
 
 typedef struct tagHHInfo
 {
@@ -86,10 +86,46 @@ static const WCHAR szChildClass[] = {
 
 static const WCHAR szEmpty[] = {0};
 
+static void Child_OnPaint(HWND hWnd)
+{
+    PAINTSTRUCT ps;
+    HDC hdc;
+    RECT rc;
+
+    hdc = BeginPaint(hWnd, &ps);
+
+    /* Only paint the Navigation pane, identified by the fact
+     * that it has a child window
+     */
+    if (GetWindow(hWnd, GW_CHILD))
+    {
+        GetClientRect(hWnd, &rc);
+
+        /* set the border color */
+        SelectObject(hdc, GetStockObject(DC_PEN));
+        SetDCPenColor(hdc, GetSysColor(COLOR_BTNSHADOW));
+
+        /* Draw the top and right borders */
+        MoveToEx(hdc, 0, 0, NULL);
+        LineTo(hdc, rc.right - 1, 0);
+        LineTo(hdc, rc.right - 1, rc.bottom);
+
+        /* Fill in the background, taking the border lines into account */
+        rc.top += 2;
+        rc.right -= 1;
+        FillRect(hdc, &rc, GetSysColorBrush(COLOR_3DFACE));
+    }
+
+    EndPaint(hWnd, &ps);
+}
+
 LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+        case WM_PAINT:
+            Child_OnPaint(hWnd);
+            break;
         default:
             return DefWindowProcW(hWnd, message, wParam, lParam);
     }
@@ -233,6 +269,10 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
 
 /* Navigation Pane */
 
+#define TAB_PADDING         2
+#define TAB_TOP_PADDING     8
+#define TAB_RIGHT_PADDING   4
+
 static void NP_GetNavigationRect(HHInfo *pHHInfo, RECT *rc)
 {
     HWND hwndParent = pHHInfo->pHHWinType->hwndHelp;
@@ -282,8 +322,10 @@ static BOOL HH_AddNavigationPane(HHInfo *pHHInfo)
         return FALSE;
 
     hwndTabCtrl = CreateWindowExW(dwExStyles, WC_TABCONTROLW, szEmpty, dwStyles,
-                                  0, 0, rc.right, rc.bottom, hWnd,
-                                  NULL, pHHInfo->hInstance, NULL);
+                                  TAB_PADDING, TAB_TOP_PADDING,
+                                  rc.right - TAB_PADDING - TAB_RIGHT_PADDING,
+                                  rc.bottom - TAB_PADDING - TAB_TOP_PADDING,
+                                  hWnd, NULL, pHHInfo->hInstance, NULL);
     if (!hwndTabCtrl)
         return FALSE;
 
@@ -394,7 +436,7 @@ static BOOL HH_CreateHelpWindow(HHInfo *pHHInfo)
     wcex.hInstance      = hInstance;
     wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_BACKGROUND + 1);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_MENU + 1);
     wcex.lpszMenuName   = NULL;
     wcex.lpszClassName  = windowClassW;
     wcex.hIconSm        = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
