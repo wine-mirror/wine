@@ -359,16 +359,18 @@ static void testSHGetSpecialFolderPathInvalidArgs(void)
 
     if (!pSHGetSpecialFolderPathA) return;
 
+#if 0
     ret = pSHGetSpecialFolderPathA(NULL, NULL, CSIDL_BITBUCKET, FALSE);
     ok(!ret,
      "SHGetSpecialFolderPathA(NULL, NULL, CSIDL_BITBUCKET, FALSE)\n"
      "returned TRUE, expected FALSE\n");
+#endif
     /* odd but true: calling with a NULL path still succeeds if it's a real
-     * dir
+     * dir (on some windows platform).  on winME it generates exception.
      */
-    ret = pSHGetSpecialFolderPathA(NULL, NULL, CSIDL_PROGRAMS, FALSE);
+    ret = pSHGetSpecialFolderPathA(NULL, path, CSIDL_PROGRAMS, FALSE);
     ok(ret,
-     "SHGetSpecialFolderPathA(NULL, NULL, CSIDL_PROGRAMS, FALSE)\n"
+     "SHGetSpecialFolderPathA(NULL, path, CSIDL_PROGRAMS, FALSE)\n"
      "returned FALSE, expected TRUE\n");
     ret = pSHGetSpecialFolderPathA(NULL, path, 0xeeee, FALSE);
     ok(!ret,
@@ -720,7 +722,7 @@ static void testNonExistentPath1(void)
 
     /* test some failure cases first: */
     hr = pSHGetFolderPathA(NULL, CSIDL_FAVORITES, NULL,
-     SHGFP_TYPE_CURRENT, NULL);
+     SHGFP_TYPE_CURRENT, path);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
      "SHGetFolderPath returned 0x%08lx, expected 0x80070002\n", hr);
     pidl = NULL;
@@ -768,9 +770,10 @@ static void testNonExistentPath1(void)
 static void testNonExistentPath2(void)
 {
     HRESULT hr;
+    char path[MAX_PATH];
 
     hr = pSHGetFolderPathA(NULL, CSIDL_FAVORITES | CSIDL_FLAG_CREATE, NULL,
-     SHGFP_TYPE_CURRENT, NULL);
+     SHGFP_TYPE_CURRENT, path);
     ok(SUCCEEDED(hr), "SHGetFolderPath failed: 0x%08lx\n", hr);
 }
 
