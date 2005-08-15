@@ -64,6 +64,7 @@ typedef struct {
 
     BOOL in_place_active;
     BOOL ui_active;
+    BOOL window_active;
     BOOL has_key_path;
 
     BindStatusCallback *status_callback;

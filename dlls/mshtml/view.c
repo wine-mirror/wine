@@ -123,6 +123,87 @@ static void register_serverwnd_class(void)
     serverwnd_class = RegisterClassExW(&wndclass);
 }
 
+static HRESULT activate_window(HTMLDocument *This)
+{
+    IOleInPlaceUIWindow *pIPWnd;
+    IOleInPlaceFrame *pIPFrame;
+    RECT posrect, cliprect;
+    OLEINPLACEFRAMEINFO frameinfo;
+    HWND parent_hwnd;
+    HRESULT hres;
+
+    if(!serverwnd_class)
+        register_serverwnd_class();
+
+    hres = IOleInPlaceSite_CanInPlaceActivate(This->ipsite);
+    if(hres != S_OK) {
+        WARN("CanInPlaceActivate returned: %08lx\n", hres);
+        return FAILED(hres) ? hres : E_FAIL;
+    }
+
+    hres = IOleInPlaceSite_GetWindowContext(This->ipsite, &pIPFrame, &pIPWnd, &posrect, &cliprect, &frameinfo);
+    if(FAILED(hres)) {
+        WARN("GetWindowContext failed: %08lx\n", hres);
+        return hres;
+    }
+    if(pIPWnd)
+        IOleInPlaceUIWindow_Release(pIPWnd);
+    TRACE("got window context: %p %p {%ld %ld %ld %ld} {%ld %ld %ld %ld} {%d %x %p %p %d}\n",
+            pIPFrame, pIPWnd, posrect.left, posrect.top, posrect.right, posrect.bottom,
+            cliprect.left, cliprect.top, cliprect.right, cliprect.bottom,
+            frameinfo.cb, frameinfo.fMDIApp, frameinfo.hwndFrame, frameinfo.haccel, frameinfo.cAccelEntries);
+
+    hres = IOleInPlaceSite_GetWindow(This->ipsite, &parent_hwnd);
+    if(FAILED(hres)) {
+        WARN("GetWindow failed: %08lx\n", hres);
+        return hres;
+    }
+
+    TRACE("got parent window %p\n", parent_hwnd);
+
+    if(This->hwnd) {
+        if(GetParent(This->hwnd) != parent_hwnd)
+            SetParent(This->hwnd, parent_hwnd);
+        SetWindowPos(This->hwnd, HWND_TOP,
+                posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
+                SWP_NOACTIVATE | SWP_SHOWWINDOW);
+    }else {
+        CreateWindowExW(0, wszInternetExplorer_Server, NULL,
+                WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
+                parent_hwnd, NULL, hInst, This);
+
+        TRACE("Created window %p\n", This->hwnd);
+
+        SetWindowPos(This->hwnd, NULL, 0, 0, 0, 0,
+                SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+        RedrawWindow(This->hwnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN);
+        SetFocus(This->hwnd);
+
+        /* NOTE:
+         * Windows implementation calls:
+         * RegisterWindowMessage("MSWHEEL_ROLLMSG");
+         * SetTimer(This->hwnd, TIMER_ID, 100, NULL);
+         */
+    }
+
+    This->in_place_active = TRUE;
+    hres = IOleInPlaceSite_OnInPlaceActivate(This->ipsite);
+    if(FAILED(hres)) {
+        WARN("OnInPlaceActivate failed: %08lx\n", hres);
+        This->in_place_active = FALSE;
+        return hres;
+    }
+
+    if(This->frame)
+        IOleInPlaceFrame_Release(This->frame);
+    This->frame = pIPFrame;
+
+    This->window_active = TRUE;
+
+    return S_OK;
+}
+
 /**********************************************************
  * IOleDocumentView implementation
  */
@@ -236,10 +317,20 @@ static HRESULT WINAPI OleDocumentView_SetRectComplex(IOleDocumentView *iface, LP
 static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
 {
     HTMLDocument *This = DOCVIEW_THIS(iface);
+    HRESULT hres;
+
     TRACE("(%p)->(%x)\n", This, fShow);
 
-    if(This->hwnd)
-        ShowWindow(This->hwnd, fShow);
+    if(fShow) {
+        if(!This->ui_active) {
+            hres = activate_window(This);
+            if(FAILED(hres))
+                return hres;
+        }
+        ShowWindow(This->hwnd, SW_SHOW);
+    }else {
+        ShowWindow(This->hwnd, SW_HIDE);
+    }
 
     return S_OK;
 }
@@ -248,11 +339,6 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
 {
     HTMLDocument *This = DOCVIEW_THIS(iface);
     HRESULT hres;
-    IOleInPlaceUIWindow *pIPWnd;
-    IOleInPlaceFrame *pIPFrame;
-    RECT posrect, cliprect;
-    OLEINPLACEFRAMEINFO frameinfo;
-    HWND parent_hwnd;
 
     TRACE("(%p)->(%x)\n", This, fUIActivate);
 
@@ -264,94 +350,41 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
     if(fUIActivate) {
         if(This->ui_active)
             return S_OK;
-        if(!serverwnd_class)
-            register_serverwnd_class();
 
-        hres = IOleInPlaceSite_CanInPlaceActivate(This->ipsite);
-        if(hres != S_OK) {
-            WARN("CanInPlaceActivate returned: %08lx\n", hres);
-            return FAILED(hres) ? hres : E_FAIL;
+        if(!This->window_active) {
+            hres = activate_window(This);
+            if(FAILED(hres))
+                return hres;
         }
 
-        hres = IOleInPlaceSite_GetWindowContext(This->ipsite, &pIPFrame, &pIPWnd, &posrect, &cliprect, &frameinfo);
-        if(FAILED(hres)) {
-            WARN("GetWindowContext failed: %08lx\n", hres);
-            return hres;
-        }
-        if(pIPWnd)
-            IOleInPlaceUIWindow_Release(pIPWnd);
-        TRACE("got window context: %p %p {%ld %ld %ld %ld} {%ld %ld %ld %ld} {%d %x %p %p %d}\n",
-                pIPFrame, pIPWnd, posrect.left, posrect.top, posrect.right, posrect.bottom,
-                cliprect.left, cliprect.top, cliprect.right, cliprect.bottom,
-                frameinfo.cb, frameinfo.fMDIApp, frameinfo.hwndFrame, frameinfo.haccel, frameinfo.cAccelEntries);
-
-        hres = IOleInPlaceSite_GetWindow(This->ipsite, &parent_hwnd);
-        if(FAILED(hres)) {
-            WARN("GetWindow failed: %08lx\n", hres);
-            return hres;
-        }
-
-        TRACE("got parent window %p\n", parent_hwnd);
-
-        if(This->hwnd) {
-            if(GetParent(This->hwnd) != parent_hwnd)
-                SetParent(This->hwnd, parent_hwnd);
-            SetWindowPos(This->hwnd, HWND_TOP,
-                    posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
-                    SWP_NOACTIVATE | SWP_SHOWWINDOW);
-        }else {
-            CreateWindowExW(0, wszInternetExplorer_Server, NULL,
-                    WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-                    posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
-                    parent_hwnd, NULL, hInst, This);
-
-            TRACE("Created window %p\n", This->hwnd);
-
-            SetWindowPos(This->hwnd, NULL, 0, 0, 0, 0,
-                    SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_SHOWWINDOW);
-            RedrawWindow(This->hwnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN);
-            SetFocus(This->hwnd);
-        }
-
-        This->in_place_active = TRUE;
-        hres = IOleInPlaceSite_OnInPlaceActivate(This->ipsite);
-        if(FAILED(hres)) {
-            WARN("OnInPlaceActivate failed: %08lx\n", hres);
-            This->in_place_active = FALSE;
-            return hres;
-        }
-
-        /* NOTE:
-         * Windows implementation calls:
-         * RegisterWindowMessage("MSWHEEL_ROLLMSG");
-         * SetTimer(This->hwnd, TIMER_ID, 100, NULL);
-         */
-
-        This->ui_active = TRUE;
         hres = IOleInPlaceSite_OnUIActivate(This->ipsite);
         if(SUCCEEDED(hres)) {
-            IOleInPlaceFrame_SetActiveObject(pIPFrame, ACTOBJ(This), wszHTML_Document);
+            IOleInPlaceFrame_SetActiveObject(This->frame, ACTOBJ(This), wszHTML_Document);
         }else {
             FIXME("OnUIActivate failed: %08lx\n", hres);
+            IOleInPlaceFrame_Release(This->frame);
+            This->frame = NULL;
             This->ui_active = FALSE;
             return hres;
         }
-        if(This->frame)
-            IOleInPlaceFrame_Release(This->frame);
-        This->frame = pIPFrame;
 
         hres = IDocHostUIHandler_ShowUI(This->hostui, 0, ACTOBJ(This), CMDTARGET(This),
-                pIPFrame, NULL);
+                This->frame, NULL);
         if(FAILED(hres))
             IDocHostUIHandler_HideUI(This->hostui);
+
+        This->ui_active = TRUE;
     }else {
-        This->ui_active = FALSE;
-        if(This->frame)
-            IOleInPlaceFrame_SetActiveObject(This->frame, NULL, NULL);
-        if(This->hostui)
-            IDocHostUIHandler_HideUI(This->hostui);
-        if(This->ipsite)
-            IOleInPlaceSite_OnUIDeactivate(This->ipsite, FALSE);
+        This->window_active = FALSE;
+        if(This->ui_active) {
+            This->ui_active = FALSE;
+            if(This->frame)
+                IOleInPlaceFrame_SetActiveObject(This->frame, NULL, NULL);
+            if(This->hostui)
+                IDocHostUIHandler_HideUI(This->hostui);
+            if(This->ipsite)
+                IOleInPlaceSite_OnUIDeactivate(This->ipsite, FALSE);
+        }
     }
     return S_OK;
 }
@@ -529,4 +562,5 @@ void HTMLDocument_View_Init(HTMLDocument *This)
 
     This->in_place_active = FALSE;
     This->ui_active = FALSE;
+    This->window_active = FALSE;
 }
