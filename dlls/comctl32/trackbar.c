@@ -582,8 +582,14 @@ TRACKBAR_DrawTics (TRACKBAR_INFO *infoPtr, HDC hdc, DWORD dwStyle)
     int ticFlags = dwStyle & 0x0f;
     LOGPEN ticPen = { PS_SOLID, {1, 0}, GetSysColor (COLOR_3DDKSHADOW) };
     HPEN hOldPen, hTicPen;
+    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     
-    /* create the pen to draw the tics with */   
+    if (theme)
+    {
+        int part = (dwStyle & TBS_VERT) ? TKP_TICSVERT : TKP_TICS;
+        GetThemeColor (theme, part, TSS_NORMAL, TMT_COLOR, &ticPen.lopnColor);
+    }
+    /* create the pen to draw the tics with */
     hTicPen = CreatePenIndirect(&ticPen);
     hOldPen = hTicPen ? SelectObject(hdc, hTicPen) : 0;
 
@@ -863,7 +869,10 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
     /* Erase backbround */
     if (gcdrf == CDRF_DODEFAULT ||
         notify_customdraw(infoPtr, &nmcd, CDDS_PREERASE) != CDRF_SKIPDEFAULT) {
-	FillRect (hdc, &rcClient, GetSysColorBrush(COLOR_BTNFACE));
+        if (GetWindowTheme (infoPtr->hwndSelf))
+            DrawThemeParentBackground (infoPtr->hwndSelf, hdc, &rcClient);
+        else
+	    FillRect (hdc, &rcClient, GetSysColorBrush(COLOR_BTNFACE));
         if (gcdrf != CDRF_DODEFAULT)
 	    notify_customdraw(infoPtr, &nmcd, CDDS_POSTERASE);
     }
