@@ -70,8 +70,8 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     static const WCHAR text_html[] = {'t','e','x','t','/','h','t','m','l',0};
 
     ok(expect_ReportProgress, "unexpected call\n");
-    ok(ulStatusCode == BINDSTATUS_MIMETYPEAVAILABLE,
-            "ulStatusCode=%ld expected BINDSTATUS_MIMETYPEAVAILABLE\n", ulStatusCode);
+    ok(ulStatusCode == BINDSTATUS_MIMETYPEAVAILABLE
+            || ulStatusCode == BINDSTATUS_VERFIEDMIMETYPEAVAILABLE, "ulStatusCode=%ld\n", ulStatusCode);
     ok(!lstrcmpW(szStatusText, text_html), "szStatusText != text/html\n");
     expect_ReportProgress = FALSE;
     called_ReportProgress = TRUE;
