@@ -1256,6 +1256,7 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     }
 #endif  /* HAVE_LIBXSHAPE */
 
+    invalidate_dce( hwnd, &data->window_rect );
     return TRUE;
 }
 
