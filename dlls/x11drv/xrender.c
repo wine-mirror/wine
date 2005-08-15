@@ -1628,8 +1628,8 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     XImage *image;
     GC gc;
     XGCValues gcv;
-    char *dstbits, *data;
-    int y;
+    BYTE *dstbits, *data;
+    int y, y2;
     POINT pts[2];
     BOOL top_down = FALSE;
 
@@ -1682,8 +1682,15 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     if(dib.dsBmih.biHeight < 0) { /* top-down dib */
         top_down = TRUE;
         dstbits += widthSrc * (heightSrc - 1) * 4;
+        y2 = ySrc;
+        y = y2 + heightSrc;
     }
-    for(y = ySrc + heightSrc - 1; y >= ySrc; y--) {
+    else
+    {
+        y = dib.dsBmih.biHeight - ySrc - 1;
+        y2 = y - heightSrc;
+    }
+    for(; y > y2; y--) {
         memcpy(dstbits, (char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes + xSrc * 4,
                widthSrc * 4);
         dstbits += (top_down ? -1 : 1) * widthSrc * 4;
@@ -1734,7 +1741,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     }
 #endif
     pXRenderComposite(gdi_display, PictOpOver, src_pict, 0, dst_pict,
-                      xSrc, ySrc, 0, 0,
+                      0, 0, 0, 0,
                       xDst + devDst->org.x, yDst + devDst->org.y, widthDst, heightDst);
 
 
