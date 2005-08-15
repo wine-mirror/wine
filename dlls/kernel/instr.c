@@ -715,6 +715,7 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
                 if (offset <= idtr.limit + 1 - (long_op ? 4 : 2))
                 {
                     idt[1].LimitLow = 0x100; /* FIXME */
+                    idt[2].LimitLow = 0x11E; /* FIXME */
                     idt[3].LimitLow = 0x500; /* FIXME */
                     store_reg( context, instr[1], (BYTE *)&idt + offset, long_op );
                     context->Eip += prefixlen + len + 1;
