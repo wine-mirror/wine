@@ -184,22 +184,26 @@ typedef char                        *PSZ;
 /* Note that Winelib is purely Win32.                             */
 
 #ifdef __WINESRC__
+#define WINE_NO_UNICODE_MACROS
+#endif
+
+#ifdef WINE_NO_UNICODE_MACROS
 # define WINELIB_NAME_AW(func) \
     func##_must_be_suffixed_with_W_or_A_in_this_context \
     func##_must_be_suffixed_with_W_or_A_in_this_context
-#else  /* __WINESRC__ */
+#else  /* WINE_NO_UNICODE_MACROS */
 # ifdef UNICODE
 #  define WINELIB_NAME_AW(func) func##W
 # else
 #  define WINELIB_NAME_AW(func) func##A
-# endif  /* UNICODE */
-#endif  /* __WINESRC__ */
+# endif
+#endif  /* WINE_NO_UNICODE_MACROS */
 
-#ifdef __WINESRC__
+#ifdef WINE_NO_UNICODE_MACROS
 # define DECL_WINELIB_TYPE_AW(type)  /* nothing */
-#else   /* __WINESRC__ */
+#else
 # define DECL_WINELIB_TYPE_AW(type)  typedef WINELIB_NAME_AW(type) type;
-#endif  /* __WINESRC__ */
+#endif
 
 #include <winnt.h>
 

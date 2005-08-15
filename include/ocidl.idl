@@ -514,7 +514,7 @@ interface IProvideClassInfo : IUnknown
 {
     typedef IProvideClassInfo *LPPROVIDECLASSINFO;
 
-cpp_quote("#ifdef __WINESRC__")
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
 cpp_quote("#undef GetClassInfo")
 cpp_quote("#endif")
 

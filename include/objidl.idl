@@ -435,10 +435,10 @@ interface IRunnableObject : IUnknown
 }
 
 /* GetObject is defined in wingdi.h as WINELIB_NAME_AW(GetObject),
- * which resolves to a compilation failure if __WINESRC__ is defined,
+ * which resolves to a compilation failure if WINE_NO_UNICODE_MACROS is defined,
  * but GetObject is used as a valid method name below, so we have
- * to undefine it if __WINESRC__ is defined */
-cpp_quote("#ifdef __WINESRC__")
+ * to undefine it in that case */
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
 cpp_quote("#undef GetObject")
 cpp_quote("#endif")
 
