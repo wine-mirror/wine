@@ -61,6 +61,9 @@ static void delnode_test(void)
     currDirLen = GetCurrentDirectoryA(sizeof(currDir) / sizeof(CHAR), currDir);
     assert(currDirLen > 0 && currDirLen < sizeof(currDir) / sizeof(CHAR));
 
+    if(currDir[currDirLen - 1] == '\\')
+        currDir[--currDirLen] = 0;
+
     /* Simple tests; these should fail. */
     hr = pDelNode(NULL, 0);
     ok (hr == E_FAIL, "DelNode called with NULL pathname should return E_FAIL\n");
