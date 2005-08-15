@@ -99,9 +99,16 @@ static inline int get_led_gap ( PROGRESS_INFO *infoPtr )
 /* Get client rect. Takes into account that theming needs no adjustment. */
 static inline void get_client_rect (HWND hwnd, RECT* rect)
 {
+    HTHEME theme = GetWindowTheme (hwnd);
     GetClientRect (hwnd, rect);
-    if (!GetWindowTheme (hwnd))
+    if (!theme)
         InflateRect(rect, -1, -1);
+    else
+    {
+        DWORD dwStyle = GetWindowLongW (hwnd, GWL_STYLE);
+        int part = (dwStyle & PBS_VERTICAL) ? PP_BARVERT : PP_BAR;
+        GetThemeBackgroundContentRect (theme, 0, part, 0, rect, rect);
+    }
 }
 
 /* Compute the extend of the bar */
@@ -143,14 +150,14 @@ static void PROGRESS_Invalidate( PROGRESS_INFO *infoPtr, INT old, INT new )
         rect.top = rect.bottom - max( oldPos, newPos );
         rect.bottom = rect.bottom - min( oldPos, newPos );
         if (!barSmooth) rect.top -=
-            get_led_size (infoPtr, style, &rect);
+            get_led_size (infoPtr, style, &rect) + get_led_gap (infoPtr);
     }
     else
     {
         rect.left = min( oldPos, newPos );
         rect.right = max( oldPos, newPos );
         if (!barSmooth) rect.right +=
-              get_led_size (infoPtr, style, &rect);
+              get_led_size (infoPtr, style, &rect) + get_led_gap (infoPtr);
     }
     InvalidateRect( infoPtr->Self, &rect, oldPos > newPos );
 }
@@ -376,6 +383,23 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
         FrameRect( hdc, &pdi.rect, pdi.hbrBk );
         InflateRect(&pdi.rect, -1, -1);
     }
+    else
+    {
+        RECT cntRect;
+        int part = (dwStyle & PBS_VERTICAL) ? PP_BARVERT : PP_BAR;
+        
+        GetThemeBackgroundContentRect (pdi.theme, hdc, part, 0, &pdi.rect, 
+            &cntRect);
+        
+        /* Exclude content rect - content background will be drawn later */
+        ExcludeClipRect (hdc, cntRect.left, cntRect.top, 
+            cntRect.right, cntRect.bottom);
+        if (IsThemeBackgroundPartiallyTransparent (pdi.theme, part, 0))
+            DrawThemeParentBackground (infoPtr->Self, hdc, NULL);
+        DrawThemeBackground (pdi.theme, hdc, part, 0, &pdi.rect, NULL);
+        SelectClipRgn (hdc, NULL);
+        CopyRect (&pdi.rect, &cntRect);
+    }
 
     /* compute some drawing parameters */
     barSmooth = (dwStyle & PBS_SMOOTH) && !pdi.theme;
@@ -439,56 +463,6 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
     if (infoPtr->ColorBk != CLR_DEFAULT) DeleteObject (pdi.hbrBk);
 
     return 0;
-}
-
-/* when themed, constrain the client area to the progress bar content rect. */
-static LRESULT nc_calc_size (PROGRESS_INFO *infoPtr, WPARAM wParam,
-                             LPARAM lParam)
-{
-    HTHEME theme = GetWindowTheme (infoPtr->Self);
-    RECT* r;
-    int part;
-    DWORD dwStyle;
-
-    TRACE("%p\n", theme);
-    if (!theme) 
-        return DefWindowProcW (infoPtr->Self, WM_NCCALCSIZE, wParam, lParam);
-    dwStyle = GetWindowLongW (infoPtr->Self, GWL_STYLE);
-
-    r = (RECT*)lParam;
-    TRACE("(%ld,%ld)-(%ld,%ld) -> ", r->left, r->top, r->right, r->bottom);
-    part = (dwStyle & PBS_VERTICAL) ? PP_BARVERT : PP_BAR;
-    GetThemeBackgroundContentRect (theme, 0, part, 0, r, r);
-    TRACE("(%ld,%ld)-(%ld,%ld)\n", r->left, r->top, r->right, r->bottom);
-    return 0;
-}
-
-/* paint the progress bar backgroundm*/
-static BOOL nc_paint (PROGRESS_INFO *infoPtr, HRGN region)
-{
-    HTHEME theme = GetWindowTheme (infoPtr->Self);
-    HDC hdc;
-    RECT r;
-    int part;
-    DWORD dwStyle;
-
-    if (!theme) return FALSE;
-
-    GetWindowRect(infoPtr->Self, &r);
-
-    hdc = GetDCEx(infoPtr->Self, region, DCX_WINDOW|DCX_INTERSECTRGN);
-    OffsetRect(&r, -r.left, -r.top);
-
-    /* get the window style */
-    dwStyle = GetWindowLongW (infoPtr->Self, GWL_STYLE);
-
-    part = (dwStyle & PBS_VERTICAL) ? PP_BARVERT : PP_BAR;
-    if (IsThemeBackgroundPartiallyTransparent (theme, part, 0))
-        DrawThemeParentBackground (infoPtr->Self, hdc, NULL);
-    DrawThemeBackground (theme, hdc, part, 0, &r, NULL);
-    ReleaseDC(infoPtr->Self, hdc);
-
-   return TRUE;
 }
 
 /***********************************************************************
@@ -604,8 +578,11 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     case WM_CREATE:
     {
 	DWORD dwExStyle = GetWindowLongW (hwnd, GWL_EXSTYLE);
+        
+        theme = OpenThemeData (hwnd, themeClass);
+
 	dwExStyle &= ~(WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
-	dwExStyle |= WS_EX_STATICEDGE;
+	if (!theme) dwExStyle |= WS_EX_STATICEDGE;
         SetWindowLongW (hwnd, GWL_EXSTYLE, dwExStyle);
 	/* Force recalculation of a non-client area */
 	SetWindowPos(hwnd, 0, 0, 0, 0, 0,
@@ -628,8 +605,6 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         infoPtr->ColorBk = CLR_DEFAULT;
         infoPtr->Font = 0;
 
-        OpenThemeData (hwnd, themeClass);
-
         TRACE("Progress Ctrl creation, hwnd=%p\n", hwnd);
         return 0;
     }
@@ -645,14 +620,6 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     case WM_ERASEBKGND:
         return 1;
 
-    case WM_NCCALCSIZE:
-        return nc_calc_size (infoPtr, wParam, lParam);
-
-    case WM_NCPAINT:
-        if (!nc_paint (infoPtr, (HRGN)wParam))
-            return DefWindowProcW( hwnd, message, wParam, lParam );
-        return 0;
-
     case WM_GETFONT:
         return (LRESULT)infoPtr->Font;
 
@@ -666,11 +633,23 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         return PROGRESS_Timer (infoPtr, (INT)wParam);
 
     case WM_THEMECHANGED:
+    {
+        DWORD dwExStyle = GetWindowLongW (hwnd, GWL_EXSTYLE);
+        
         theme = GetWindowTheme (hwnd);
         CloseThemeData (theme);
-        OpenThemeData (hwnd, themeClass);
+        theme = OpenThemeData (hwnd, themeClass);
+        
+        /* WS_EX_STATICEDGE disappears when the control is themed */
+        if (theme)
+            dwExStyle &= ~WS_EX_STATICEDGE;
+        else
+            dwExStyle |= WS_EX_STATICEDGE;
+        SetWindowLongW (hwnd, GWL_EXSTYLE, dwExStyle);
+        
         InvalidateRect (hwnd, NULL, FALSE);
         return 0;
+    }
 
     case PBM_DELTAPOS:
     {
