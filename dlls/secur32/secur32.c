@@ -609,6 +609,7 @@ static void SECUR32_initializeProviders(void)
     InitializeCriticalSection(&cs);
     /* First load built-in providers */
     SECUR32_initSchannelSP();
+    SECUR32_initNegotiateSP();
     /* Now load providers from registry */
     apiRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, securityProvidersKeyW, 0,
      KEY_READ, &key);

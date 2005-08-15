@@ -88,11 +88,9 @@ static int genClientContext(PBYTE in, DWORD in_count, PBYTE out,
         sec_status = (sft->AcquireCredentialsHandle)(NULL, "Negotiate", 
                 SECPKG_CRED_OUTBOUND, NULL, NULL, NULL, NULL, cred_handle,
                 &ttl);
-        todo_wine{
-            ok(sec_status == SEC_E_OK, 
-                    "Client AcquireCredentialsHandle should not return %s\n",
-                    getSecStatusError(sec_status) );
-        }
+        ok(sec_status == SEC_E_OK, 
+                "Client AcquireCredentialsHandle should not return %s\n",
+                getSecStatusError(sec_status) );
     }
 
     out_sec_buff_desc.ulVersion = 0;
@@ -288,24 +286,20 @@ static void testQuerySecurityPackageInfo(void)
     
     sec_status = setupPackageA(sec_pkg_name, &pkg_info);
 
-    todo_wine{
-        ok(sec_status == SEC_E_OK, 
-           "Return value of QuerySecurityPackageInfo() shouldn't be %s\n",
-           getSecStatusError(sec_status) );
-        ok(pkg_info != NULL, 
+    ok(sec_status == SEC_E_OK, 
+       "Return value of QuerySecurityPackageInfo() shouldn't be %s\n",
+       getSecStatusError(sec_status) );
+    ok(pkg_info != NULL, 
                 "QuerySecurityPackageInfo should give struct SecPkgInfo, but is NULL\n");
-    }
+    
     if(pkg_info != NULL){
         max_token = pkg_info->cbMaxToken;
         version   = pkg_info->wVersion;
     }
-    todo_wine{
-        ok(version == 1, "wVersion always should be 1, but is %d\n", version);
-        ok(max_token == 12000, "cbMaxToken for Negotiate is %ld, not 12000.\n",
-                max_token);
-    }
-
-    trace("Max token = %ld\n", max_token);
+    
+    ok(version == 1, "wVersion always should be 1, but is %d\n", version);
+    ok(max_token == 12000, "cbMaxToken for Negotiate is %ld, not 12000.\n",
+            max_token);
 
     sec_status = FreeContextBuffer(&pkg_info);
     
@@ -360,11 +354,9 @@ void testAuthentication(void)
             SECPKG_CRED_INBOUND, NULL, NULL, NULL, NULL, &server_cred, 
             &server_ttl);
 
-    todo_wine{
-        ok(sec_status == SEC_E_OK, 
-                "Server's AcquireCredentialsHandle returned %s.\n", 
-                getSecStatusError(sec_status) );
-    }
+    ok(sec_status == SEC_E_OK, 
+            "Server's AcquireCredentialsHandle returned %s.\n", 
+            getSecStatusError(sec_status) );
 
     
     genClientContext(NULL, 0, server_buff, &count_server, &done, "foo", 
@@ -379,6 +371,8 @@ void testAuthentication(void)
                 &count_server, &done, "foo", &client_cred, &client_ctxt, sft);
     }
 
+    FreeContextBuffer(&client_buff);
+    FreeContextBuffer(&server_buff);
 
 }
 
