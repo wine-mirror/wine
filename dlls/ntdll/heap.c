@@ -56,8 +56,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(heap);
 typedef struct tagARENA_INUSE
 {
     DWORD  size;                    /* Block size; must be the first field */
-    DWORD  magic : 27;              /* Magic number */
-    DWORD  unused_bytes : 5;        /* Number of bytes in the block not used by user data (max value is HEAP_MIN_BLOCK_SIZE+ALIGNMENT) */
+    DWORD  magic : 24;              /* Magic number */
+    DWORD  unused_bytes : 8;        /* Number of bytes in the block not used by user data (max value is HEAP_MIN_DATA_SIZE+HEAP_MIN_SHRINK_SIZE) */
 } ARENA_INUSE;
 
 typedef struct tagARENA_FREE
@@ -70,7 +70,7 @@ typedef struct tagARENA_FREE
 #define ARENA_FLAG_FREE        0x00000001  /* flags OR'ed with arena size */
 #define ARENA_FLAG_PREV_FREE   0x00000002
 #define ARENA_SIZE_MASK        (~3)
-#define ARENA_INUSE_MAGIC      0x4455355       /* Value for arena 'magic' field */
+#define ARENA_INUSE_MAGIC      0x455355        /* Value for arena 'magic' field */
 #define ARENA_FREE_MAGIC       0x45455246      /* Value for arena 'magic' field */
 
 #define ARENA_INUSE_FILLER     0x55
@@ -82,6 +82,11 @@ typedef struct tagARENA_FREE
 #define QUIET                  1           /* Suppress messages  */
 #define NOISY                  0           /* Report all errors  */
 
+/* minimum data size (without arenas) of an allocated block */
+#define HEAP_MIN_DATA_SIZE    16
+/* minimum size that must remain to shrink an allocated block */
+#define HEAP_MIN_SHRINK_SIZE  (HEAP_MIN_DATA_SIZE+sizeof(ARENA_FREE))
+
 #define HEAP_NB_FREE_LISTS   4   /* Number of free lists */
 
 /* Max size of the blocks on the free lists */
@@ -92,7 +97,6 @@ static const DWORD HEAP_freeListSizes[HEAP_NB_FREE_LISTS] =
 
 typedef struct
 {
-    DWORD       size;
     ARENA_FREE  arena;
 } FREE_LIST_ENTRY;
 
@@ -123,7 +127,6 @@ typedef struct tagHEAP
 #define HEAP_MAGIC       ((DWORD)('H' | ('E'<<8) | ('A'<<16) | ('P'<<24)))
 
 #define HEAP_DEF_SIZE        0x110000   /* Default heap size = 1Mb + 64Kb */
-#define HEAP_MIN_BLOCK_SIZE  (8+sizeof(ARENA_FREE))  /* Min. heap block size */
 #define COMMIT_MASK          0xffff  /* bitmask for commit/decommit granularity */
 
 static HEAP *processHeap;  /* main process heap */
@@ -170,6 +173,17 @@ static inline void clear_block( void *ptr, SIZE_T size )
     memset( ptr, 0, size );
 }
 
+/* locate a free list entry of the appropriate size */
+/* size is the size of the whole block including the arena header */
+static inline unsigned int get_freelist_index( SIZE_T size )
+{
+    unsigned int i;
+
+    size -= sizeof(ARENA_FREE);
+    for (i = 0; i < HEAP_NB_FREE_LISTS - 1; i++) if (size <= HEAP_freeListSizes[i]) break;
+    return i;
+}
+
 static RTL_CRITICAL_SECTION_DEBUG process_heap_critsect_debug =
 {
     0, 0, NULL,  /* will be set later */
@@ -200,7 +214,7 @@ static void HEAP_Dump( HEAP *heap )
     DPRINTF( "\nFree lists:\n Block   Stat   Size    Id\n" );
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
         DPRINTF( "%p free %08lx prev=%p next=%p\n",
-                 &heap->freeList[i].arena, heap->freeList[i].size,
+                 &heap->freeList[i].arena, HEAP_freeListSizes[i],
                  LIST_ENTRY( heap->freeList[i].arena.entry.prev, ARENA_FREE, entry ),
                  LIST_ENTRY( heap->freeList[i].arena.entry.next, ARENA_FREE, entry ));
 
@@ -325,8 +339,7 @@ static HEAP *HEAP_GetPtr(
  */
 static inline void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena, BOOL last )
 {
-    FREE_LIST_ENTRY *pEntry = heap->freeList;
-    while (pEntry->size < pArena->size) pEntry++;
+    FREE_LIST_ENTRY *pEntry = heap->freeList + get_freelist_index( pArena->size + sizeof(*pArena) );
     if (last)
     {
         /* insert at end of free list, i.e. before the next free list entry */
@@ -369,11 +382,12 @@ static SUBHEAP *HEAP_FindSubHeap(
 /***********************************************************************
  *           HEAP_Commit
  *
- * Make sure the heap storage is committed up to (not including) ptr.
+ * Make sure the heap storage is committed for a given size in the specified arena.
  */
-static inline BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
+static inline BOOL HEAP_Commit( SUBHEAP *subheap, ARENA_INUSE *pArena, SIZE_T data_size )
 {
-    SIZE_T size = (SIZE_T)((char *)ptr - (char *)subheap);
+    void *ptr = (char *)(pArena + 1) + data_size + sizeof(ARENA_FREE);
+    SIZE_T size = (char *)ptr - (char *)subheap;
     size = (size + COMMIT_MASK) & ~COMMIT_MASK;
     if (size > subheap->size) size = subheap->size;
     if (size <= subheap->commitSize) return TRUE;
@@ -532,7 +546,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
  */
 static void HEAP_ShrinkBlock(SUBHEAP *subheap, ARENA_INUSE *pArena, SIZE_T size)
 {
-    if ((pArena->size & ARENA_SIZE_MASK) >= size + HEAP_MIN_BLOCK_SIZE)
+    if ((pArena->size & ARENA_SIZE_MASK) >= size + HEAP_MIN_SHRINK_SIZE)
     {
         HEAP_CreateFreeBlock( subheap, (char *)(pArena + 1) + size,
                               (pArena->size & ARENA_SIZE_MASK) - size );
@@ -599,7 +613,6 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         list_init( &heap->freeList[0].arena.entry );
         for (i = 0, pEntry = heap->freeList; i < HEAP_NB_FREE_LISTS; i++, pEntry++)
         {
-            pEntry->size       = HEAP_freeListSizes[i];
             pEntry->arena.size = 0 | ARENA_FLAG_FREE;
             pEntry->arena.magic = ARENA_FREE_MAGIC;
             if (i) list_add_after( &pEntry[-1].arena.entry, &pEntry->arena.entry );
@@ -692,11 +705,10 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
 {
     SUBHEAP *subheap;
     struct list *ptr;
-    FREE_LIST_ENTRY *pEntry = heap->freeList;
+    FREE_LIST_ENTRY *pEntry = heap->freeList + get_freelist_index( size + sizeof(ARENA_INUSE) );
 
     /* Find a suitable free list, and in it find a block large enough */
 
-    while (pEntry->size < size) pEntry++;
     ptr = &pEntry->arena.entry;
     while ((ptr = list_next( &heap->freeList[0].arena.entry, ptr )))
     {
@@ -706,9 +718,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
         if (arena_size >= size)
         {
             subheap = HEAP_FindSubHeap( heap, pArena );
-            if (!HEAP_Commit( subheap, (char *)pArena + sizeof(ARENA_INUSE)
-                                               + size + HEAP_MIN_BLOCK_SIZE))
-                return NULL;
+            if (!HEAP_Commit( subheap, (ARENA_INUSE *)pArena, size )) return NULL;
             *ppSubHeap = subheap;
             return pArena;
         }
@@ -724,9 +734,9 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
     /* make sure that we have a big enough size *committed* to fit another
      * last free arena in !
      * So just one heap struct, one first free arena which will eventually
-     * get inuse, and HEAP_MIN_BLOCK_SIZE for the second free arena that
-     * might get assigned all remaining free space in HEAP_ShrinkBlock() */
-    size += ROUND_SIZE(sizeof(SUBHEAP)) + sizeof(ARENA_INUSE) + HEAP_MIN_BLOCK_SIZE;
+     * get inuse, and a second free arena that might get assigned all remaining
+     * free space in HEAP_ShrinkBlock() */
+    size += ROUND_SIZE(sizeof(SUBHEAP)) + sizeof(ARENA_INUSE) + sizeof(ARENA_FREE);
     if (!(subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, size,
                                         max( HEAP_DEF_SIZE, size ) )))
         return NULL;
@@ -1144,7 +1154,7 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
     flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY;
     flags |= heapPtr->flags;
     rounded_size = ROUND_SIZE(size);
-    if (rounded_size < HEAP_MIN_BLOCK_SIZE) rounded_size = HEAP_MIN_BLOCK_SIZE;
+    if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
     /* Locate a suitable free block */
@@ -1278,7 +1288,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
              HEAP_REALLOC_IN_PLACE_ONLY;
     flags |= heapPtr->flags;
     rounded_size = ROUND_SIZE(size);
-    if (rounded_size < HEAP_MIN_BLOCK_SIZE) rounded_size = HEAP_MIN_BLOCK_SIZE;
+    if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
     if (!HEAP_IsRealArena( heapPtr, HEAP_NO_SERIALIZE, ptr, QUIET ))
@@ -1305,8 +1315,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
             ARENA_FREE *pFree = (ARENA_FREE *)pNext;
             list_remove( &pFree->entry );
             pArena->size += (pFree->size & ARENA_SIZE_MASK) + sizeof(*pFree);
-            if (!HEAP_Commit( subheap, (char *)pArena + sizeof(ARENA_INUSE)
-                                               + rounded_size + HEAP_MIN_BLOCK_SIZE))
+            if (!HEAP_Commit( subheap, pArena, rounded_size ))
             {
                 if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
                 if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
