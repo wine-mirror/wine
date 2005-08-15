@@ -389,6 +389,32 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
 
 /* Viewer Window */
 
+static void Help_OnSize(HWND hWnd, LPARAM lParam)
+{
+    HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+    RECT rc;
+
+    if (!pHHInfo)
+        return;
+
+    /* Only resize the Navigation pane vertically */
+    if (HIWORD(lParam))
+    {
+        NP_GetNavigationRect(pHHInfo, &rc);
+        SetWindowPos(pHHInfo->pHHWinType->hwndNavigation, HWND_TOP, 0, 0,
+                     rc.right, rc.bottom, SWP_NOMOVE);
+
+        GetClientRect(pHHInfo->pHHWinType->hwndNavigation, &rc);
+        SetWindowPos(pHHInfo->hwndTabCtrl, HWND_TOP, 0, 0,
+                     rc.right - TAB_PADDING - TAB_RIGHT_PADDING,
+                     rc.bottom - TAB_PADDING - TAB_TOP_PADDING, SWP_NOMOVE);
+    }
+
+    HP_GetHTMLRect(pHHInfo, &rc);
+    SetWindowPos(pHHInfo->pHHWinType->hwndHTML, HWND_TOP, 0, 0,
+                 LOWORD(lParam), HIWORD(lParam), SWP_NOMOVE);
+}
+
 LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
@@ -396,7 +422,9 @@ LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
     switch (message)
     {
-
+        case WM_SIZE:
+            Help_OnSize(hWnd, lParam);
+            break;
         case WM_PAINT:
             hdc = BeginPaint(hWnd, &ps);
             EndPaint(hWnd, &ps);
