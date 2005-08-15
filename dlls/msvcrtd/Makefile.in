@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = msvcrtd.dll
 IMPORTLIB = libmsvcrtd.$(IMPLIBEXT)
 IMPORTS   = msvcrt kernel32
+MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 
 C_SRCS = \
