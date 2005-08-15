@@ -3688,11 +3688,52 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
 
 UINT ACTION_ResolveSource(MSIPACKAGE* package)
 {
+    DWORD attrib;
+    UINT rc;
     /*
      * we are currently doing what should be done here in the top level Install
      * however for Adminastrative and uninstalls this step will be needed
      */
-    return ERROR_SUCCESS;
+    if (!package->PackagePath)
+        return ERROR_SUCCESS;
+
+    attrib = GetFileAttributesW(package->PackagePath);
+    if (attrib == INVALID_FILE_ATTRIBUTES)
+    {
+        LPWSTR prompt;
+        LPWSTR msg;
+        DWORD size = 0;
+
+        rc = MsiSourceListGetInfoW(package->ProductCode, NULL, 
+                MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT,
+                INSTALLPROPERTY_DISKPROMPTW,NULL,&size);
+        if (rc == ERROR_MORE_DATA)
+        {
+            prompt = HeapAlloc(GetProcessHeap(),0,size);
+            MsiSourceListGetInfoW(package->ProductCode, NULL, 
+                    MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT,
+                    INSTALLPROPERTY_DISKPROMPTW,prompt,&size);
+        }
+        else
+            prompt = strdupW(package->PackagePath);
+
+        msg = generate_error_string(package,1302,1,prompt);
+        while(attrib == INVALID_FILE_ATTRIBUTES)
+        {
+            rc = MessageBoxW(NULL,msg,NULL,MB_OKCANCEL);
+            if (rc == IDCANCEL)
+            {
+                rc = ERROR_INSTALL_USEREXIT;
+                break;
+            }
+            attrib = GetFileAttributesW(package->PackagePath);
+        }
+        rc = ERROR_SUCCESS;
+    }
+    else
+        return ERROR_SUCCESS;
+
+    return rc;
 }
 
 static UINT ACTION_RegisterUser(MSIPACKAGE *package)
