@@ -59,7 +59,7 @@ DWORD WINAPI phoneConfigDialogA(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpszDev
  */
 DWORD WINAPI phoneDevSpecific(HPHONE hPhone, LPVOID lpParams, DWORD dwSize)
 {
-    FIXME("(%p, %p, %08ld): stub.\n", hPhone, lpParams, dwSize);
+    FIXME("(%p, %p, %ld): stub.\n", hPhone, lpParams, dwSize);
     return 1;
 }
 
@@ -78,7 +78,7 @@ DWORD WINAPI phoneGetButtonInfoA(HPHONE hPhone, DWORD dwButtonLampID,
  */
 DWORD WINAPI phoneGetData(HPHONE hPhone, DWORD dwDataID, LPVOID lpData, DWORD dwSize)
 {
-    FIXME("(%p, %08ld, %p, %08ld): stub.\n", hPhone, dwDataID, lpData, dwSize);
+    FIXME("(%p, %08lx, %p, %ld): stub.\n", hPhone, dwDataID, lpData, dwSize);
     return 0;
 }
 
@@ -88,7 +88,7 @@ DWORD WINAPI phoneGetData(HPHONE hPhone, DWORD dwDataID, LPVOID lpData, DWORD dw
 DWORD WINAPI phoneGetDevCapsA(HPHONEAPP hPhoneApp, DWORD dwDeviceID,
                DWORD dwAPIVersion, DWORD dwExtVersion, LPPHONECAPS lpPhoneCaps)
 {
-    FIXME("(%p, %08ld, %08lx, %08lx, %p): stub.\n", hPhoneApp, dwDeviceID, dwAPIVersion, dwExtVersion, lpPhoneCaps);
+    FIXME("(%p, %08lx, %08lx, %08lx, %p): stub.\n", hPhoneApp, dwDeviceID, dwAPIVersion, dwExtVersion, lpPhoneCaps);
     /* call TSPI function here ! */
     return 0;
 }

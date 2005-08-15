@@ -1230,7 +1230,7 @@ BOOL WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction
     WDML_CONV*		pConv;
     WDML_XACT*          pXAct;
 
-    TRACE("(%08lx,%p,%08ld);\n", idInst, hConv, idTransaction);
+    TRACE("(%08lx,%p,%08lx);\n", idInst, hConv, idTransaction);
 
     EnterCriticalSection(&WDML_CritSect);
     if ((pInstance = WDML_GetInstance(idInst)))
