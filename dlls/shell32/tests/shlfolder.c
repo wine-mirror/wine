@@ -87,8 +87,8 @@ static void test_ParseDisplayName(void)
     MultiByteToWideChar(CP_ACP, 0, cNonExistDir2A, -1, cTestDirW, MAX_PATH);
     hr = IShellFolder_ParseDisplayName(IDesktopFolder, 
         NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
-    ok((hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) || (hr == E_FAIL), 
-        "ParseDisplayName returned %08lx, expected 80070002 or E_FAIL\n", hr);
+    ok((hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) || (hr == E_FAIL) || (hr == E_INVALIDARG), 
+        "ParseDisplayName returned %08lx, expected 80070002, E_FAIL or E_INVALIDARG\n", hr);
 }
 
 /* creates a file with the specified name for tests */
@@ -584,6 +584,12 @@ static void test_SHGetPathFromIDList(void)
     WCHAR wszMyComputer[] = { 
         ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-',
         'A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0 };
+    WCHAR wszFileName[MAX_PATH];
+    LPITEMIDLIST pidlTestFile;
+    HANDLE hTestFile;
+    STRRET strret;
+    static WCHAR wszTestFile[] = {
+        'w','i','n','e','t','e','s','t','.','f','o','o',0 };
 
     if(!pSHGetSpecialFolderPathW) return;
 
@@ -604,15 +610,67 @@ static void test_SHGetPathFromIDList(void)
 
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyComputer, NULL, &pidlMyComputer, NULL);
     ok (SUCCEEDED(hr), "Desktop's ParseDisplayName failed to parse MyComputer's CLSID! hr = %08lx\n", hr);
-    IShellFolder_Release(psfDesktop);
-    if (FAILED(hr)) return;
+    if (FAILED(hr)) {
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
 
     SetLastError(0xdeadbeef);
     result = SHGetPathFromIDListW(pidlMyComputer, wszPath);
     ok (!result, "SHGetPathFromIDList succeeded where it shouldn't!\n");
     ok (GetLastError()==0xdeadbeef, "SHGetPathFromIDList shouldn't set last error! Last error: %08lx\n", GetLastError());
+    if (result) {
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
 
     IMalloc_Free(ppM, pidlMyComputer);
+
+    result = pSHGetSpecialFolderPathW(NULL, wszFileName, CSIDL_DESKTOPDIRECTORY, FALSE);
+    ok(result, "SHGetSpecialFolderPathW failed! Last error: %08lx\n", GetLastError());
+    if (!result) {
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
+    PathAddBackslashW(wszFileName);
+    lstrcatW(wszFileName, wszTestFile);
+    hTestFile = CreateFileW(wszFileName, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+    ok(hTestFile != INVALID_HANDLE_VALUE, "CreateFileW failed! Last error: %08lx\n", GetLastError());
+    if (hTestFile == INVALID_HANDLE_VALUE) {
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
+    CloseHandle(hTestFile);
+
+    hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszTestFile, NULL, &pidlTestFile, NULL);
+    ok (SUCCEEDED(hr), "Desktop's ParseDisplayName failed to parse filename hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(psfDesktop);
+        DeleteFileW(wszFileName);
+        IMalloc_Free(ppM, pidlTestFile);
+        return;
+    }
+
+    /* This test is to show that the Desktop shellfolder prepends the CSIDL_DESKTOPDIRECTORY
+     * path for files placed on the desktop, if called with SHGDN_FORPARSING. */
+    hr = IShellFolder_GetDisplayNameOf(psfDesktop, pidlTestFile, SHGDN_FORPARSING, &strret);
+    ok (SUCCEEDED(hr), "Desktop's GetDisplayNamfOf failed! hr = %08lx\n", hr);
+    IShellFolder_Release(psfDesktop);
+    DeleteFileW(wszFileName);
+    if (FAILED(hr)) {
+        IMalloc_Free(ppM, pidlTestFile);
+        return;
+    }
+    StrRetToBufW(&strret, pidlTestFile, wszPath, MAX_PATH);
+    ok(0 == lstrcmpW(wszFileName, wszPath), 
+        "Desktop->GetDisplayNameOf(pidlTestFile, SHGDN_FORPARSING) "
+        "returned incorrect path for file placed on desktop\n");
+
+    result = SHGetPathFromIDListW(pidlTestFile, wszPath);
+    ok(result, "SHGetPathFromIDListW failed! Last error: %08lx\n", GetLastError());
+    IMalloc_Free(ppM, pidlTestFile);
+    if (!result) return;
+    ok(0 == lstrcmpW(wszFileName, wszPath), "SHGetPathFromIDListW returned incorrect path for file placed on desktop\n");
 }
 
 static void test_EnumObjects_and_CompareIDs(void)
