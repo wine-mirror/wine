@@ -33,12 +33,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(theming);
 typedef LRESULT (CALLBACK* THEMING_SUBCLASSPROC)(HWND, UINT, WPARAM, LPARAM,
     ULONG_PTR);
 
+extern LRESULT CALLBACK THEMING_EditSubclassProc (HWND, UINT, WPARAM, LPARAM,
+                                                    ULONG_PTR);
+
 static const struct ThemingSubclass
 {
     const WCHAR* className;
     THEMING_SUBCLASSPROC subclassProc;
 } subclasses[] = {
     /* Note: list must be sorted by class name */
+    {WC_EDITW,             THEMING_EditSubclassProc}
 };
 
 #define NUM_SUBCLASSES        (sizeof(subclasses)/sizeof(subclasses[0]))
@@ -83,7 +87,10 @@ static LRESULT CALLBACK subclass_stub ## N (HWND wnd, UINT msg,             \
     return THEMING_SubclassProc (wnd, msg, wParam, lParam);                 \
 }
 
+MAKE_SUBCLASS_STUB(0)
+
 const static WNDPROC subclassStubs[NUM_SUBCLASSES] = {
+    subclass_stub0
 };
 
 /***********************************************************************
