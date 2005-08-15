@@ -1258,13 +1258,16 @@ BOOL WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath)
 
     dwAttributes = SFGAO_FILESYSTEM;
     hr = IShellFolder_GetAttributesOf(psfFolder, 1, &pidlLast, &dwAttributes);
-    if (FAILED(hr) || !(dwAttributes & SFGAO_FILESYSTEM)) return FALSE;
+    if (FAILED(hr) || !(dwAttributes & SFGAO_FILESYSTEM)) {
+        IShellFolder_Release(psfFolder);
+        return FALSE;
+    }
                 
     hr = IShellFolder_GetDisplayNameOf(psfFolder, pidlLast, SHGDN_FORPARSING, &strret);
+    IShellFolder_Release(psfFolder);
     if (FAILED(hr)) return FALSE;
 
     hr = StrRetToBufW(&strret, pidlLast, pszPath, MAX_PATH);
-    IShellFolder_Release(psfFolder);
 
     TRACE_(shell)("-- %s, 0x%08lx\n",debugstr_w(pszPath), hr);
     return SUCCEEDED(hr);
