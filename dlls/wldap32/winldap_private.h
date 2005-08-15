@@ -285,6 +285,7 @@ ULONG ldap_modify_sW(WLDAP32_LDAP*,PWCHAR,LDAPModW*[]);
 WLDAP32_LDAP *ldap_openA(PCHAR,ULONG);
 WLDAP32_LDAP *ldap_openW(PWCHAR,ULONG);
 void WLDAP32_ldap_perror(WLDAP32_LDAP*,const PCHAR);
+ULONG WLDAP32_ldap_result(WLDAP32_LDAP*,ULONG,ULONG,struct l_timeval*,WLDAP32_LDAPMessage**);
 ULONG WLDAP32_ldap_result2error(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,ULONG);
 ULONG ldap_sasl_bindA(WLDAP32_LDAP*,const PCHAR,const PCHAR,const BERVAL*,PLDAPControlA*,PLDAPControlA*,int*);
 ULONG ldap_sasl_bindW(WLDAP32_LDAP*,const PWCHAR,const PWCHAR,const BERVAL*,PLDAPControlW*,PLDAPControlW*,int*);

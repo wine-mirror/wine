@@ -52,6 +52,21 @@ void ldap_memfreeW( PWCHAR block )
     strfreeW( block );
 }
 
+ULONG WLDAP32_ldap_result( WLDAP32_LDAP *ld, ULONG msgid, ULONG all,
+    struct l_timeval *timeout, WLDAP32_LDAPMessage **res )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+
+    TRACE( "(%p, 0x%08lx, 0x%08lx, %p, %p)\n", ld, msgid, all, timeout, res );
+
+    if (!ld || !res) return ~0UL;
+    ret = ldap_result( ld, msgid, all, (struct timeval *)timeout, res );
+
+#endif
+    return ret;
+}
+
 ULONG ldap_value_freeA( PCHAR *vals )
 {
     TRACE( "(%p)\n", vals );

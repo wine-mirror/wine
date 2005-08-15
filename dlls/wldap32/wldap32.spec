@@ -191,7 +191,7 @@
 @ stub ldap_rename_ext_s
 @ stub ldap_rename_ext_sA
 @ stub ldap_rename_ext_sW
-@ stub ldap_result
+@ cdecl ldap_result(ptr long long ptr ptr) WLDAP32_ldap_result
 @ cdecl ldap_result2error(ptr ptr long) WLDAP32_ldap_result2error
 @ cdecl ldap_sasl_bindA(ptr str str ptr ptr ptr ptr)
 @ cdecl ldap_sasl_bindW(ptr wstr wstr ptr ptr ptr ptr)
