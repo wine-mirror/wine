@@ -25,7 +25,9 @@
 
 #ifdef HAVE_LIBXML2
 
+#ifdef HAVE_LIBXML_PARSER_H
 #include <libxml/parser.h>
+#endif
 
 /* constructors */
 extern IXMLDOMNode      *create_domdoc_node( xmlDocPtr node );
