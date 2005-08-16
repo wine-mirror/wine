@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
-#include "initguid.h"
 #include "shlguid.h"
 #include "shlobj.h"
 #include "shlwapi.h"
