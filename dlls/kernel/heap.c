@@ -1140,19 +1140,17 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     }
 #endif
 
+    /* Project2k refuses to start if it sees less than 1Mb of free swap */
+    if (lpmemex->ullTotalPageFile < lpmemex->ullTotalPhys)
+        lpmemex->ullTotalPageFile = lpmemex->ullTotalPhys;
+    if (lpmemex->ullAvailPageFile < lpmemex->ullAvailPhys)
+        lpmemex->ullAvailPageFile = lpmemex->ullAvailPhys;
+
     /* FIXME: should do something for other systems */
     GetSystemInfo(&si);
     lpmemex->ullTotalVirtual  = (char*)si.lpMaximumApplicationAddress-(char*)si.lpMinimumApplicationAddress;
     /* FIXME: we should track down all the already allocated VM pages and substract them, for now arbitrarily remove 64KB so that it matches NT */
     lpmemex->ullAvailVirtual  = lpmemex->ullTotalVirtual-64*1024;
-    memcpy(&cached_memstatus,lpmemex,sizeof(*lpmemex));
-
-    /* it appears some memory display programs want to divide by these values */
-    if(lpmemex->ullTotalPageFile==0)
-        lpmemex->ullTotalPageFile++;
-
-    if(lpmemex->ullAvailPageFile==0)
-        lpmemex->ullAvailPageFile++;
 
     /* MSDN says about AvailExtendedVirtual: Size of unreserved and uncommitted
        memory in the extended portion of the virtual address space of the calling
@@ -1160,6 +1158,8 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
        However, I don't know what this means, so set it to zero :(
     */
     lpmemex->ullAvailExtendedVirtual = 0;
+
+    memcpy(&cached_memstatus,lpmemex,sizeof(*lpmemex));
 
     TRACE("<-- LPMEMORYSTATUSEX: dwLength %ld, dwMemoryLoad %ld, ullTotalPhys %s, ullAvailPhys %s,"
           " ullTotalPageFile %s, ullAvailPageFile %s, ullTotalVirtual %s, ullAvailVirtual %s\n",
