@@ -184,7 +184,6 @@ static void test_decodeInt(DWORD dwEncoding)
     static const char bigInt[] = { 2, 5, 0xff, 0xfe, 0xff, 0xfe, 0xff };
     static const char testStr[] = { 0x16, 4, 't', 'e', 's', 't' };
     static const BYTE longForm[] = { 2, 0x81, 0x01, 0x01 };
-    static const BYTE tooBig[] = { 0x02, 0x84, 0xff, 0xff, 0xff, 0xff };
     static const BYTE bigBogus[] = { 0x02, 0x84, 0x01, 0xff, 0xff, 0xf9 };
     BYTE *buf = NULL;
     DWORD bufSize = 0;
@@ -303,15 +302,15 @@ static void test_decodeInt(DWORD dwEncoding)
     }
     /* Try to decode some bogus large items */
     /* The buffer size is smaller than the encoded length, so this should fail
-     * with CRYPT_E_ASN1_EOD if it's being decoded.  It's failing with
-     * CRYPT_E_ASN1_LARGE, meaning there's a limit on the size decoded.
-     * The magic limit under XP seems to be 0x061a8000 bytes--more than this
-     * fails with CRYPT_E_ASN1_LARGE.
-     */
+     * with CRYPT_E_ASN1_EOD if it's being decoded.
+     * Under XP it fails with CRYPT_E_ASN1_LARGE, which means there's a limit
+     * on the size decoded, but in ME it fails with CRYPT_E_ASN1_EOD or crashes.
+     * So this test unfortunately isn't useful.
     ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, tooBig,
      0x7fffffff, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
     ok(!ret && GetLastError() == CRYPT_E_ASN1_LARGE,
      "Expected CRYPT_E_ASN1_LARGE, got %08lx\n", GetLastError());
+     */
     /* This will try to decode the buffer and overflow it, check that it's
      * caught.
      */
