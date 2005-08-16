@@ -495,6 +495,7 @@ SecureProvider *SECUR32_addProvider(PSecurityFunctionTableA fnTableA,
         ret->lib = NULL;
         if (fnTableA || fnTableW)
         {
+            ret->moduleName = NULL;
             _makeFnTableA(&ret->fnTableA, fnTableA, fnTableW);
             _makeFnTableW(&ret->fnTableW, fnTableA, fnTableW);
             ret->loaded = TRUE;
