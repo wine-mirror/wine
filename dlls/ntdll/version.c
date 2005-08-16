@@ -156,6 +156,200 @@ static const char * const WinVersionNames[NB_WINDOWS_VERSIONS] =
 /* initialized to null so that we crash if we try to retrieve the version too early at startup */
 static const RTL_OSVERSIONINFOEXW *current_version;
 
+
+/**********************************************************************
+ *         get_nt_registry_version
+ *
+ * Fetch the version information from the NT-style registry keys.
+ */
+static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
+{
+    static const WCHAR version_keyW[] = {'M','a','c','h','i','n','e','\\',
+                                         'S','o','f','t','w','a','r','e','\\',
+                                         'M','i','c','r','o','s','o','f','t','\\',
+                                         'W','i','n','d','o','w','s',' ','N','T','\\',
+                                         'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
+    static const WCHAR product_keyW[] = {'M','a','c','h','i','n','e','\\',
+                                         'S','y','s','t','e','m','\\',
+                                         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                         'C','o','n','t','r','o','l','\\',
+                                         'P','r','o','d','u','c','t','O','p','t','i','o','n','s',0};
+    static const WCHAR CurrentBuildNumberW[] = {'C','u','r','r','e','n','t','B','u','i','l','d','N','u','m','b','e','r',0};
+    static const WCHAR CSDVersionW[] = {'C','S','D','V','e','r','s','i','o','n',0};
+    static const WCHAR CurrentVersionW[] = {'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
+    static const WCHAR ProductTypeW[] = {'P','r','o','d','u','c','t','T','y','p','e',0};
+    static const WCHAR WinNTW[]    = {'W','i','n','N','T',0};
+    static const WCHAR ServerNTW[] = {'S','e','r','v','e','r','N','T',0};
+    static const WCHAR LanmanNTW[] = {'L','a','n','m','a','n','N','T',0};
+
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, valueW;
+    HANDLE hkey, product;
+    char tmp[64];
+    DWORD count;
+    WCHAR *p;
+    BOOL ret = FALSE;
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)tmp;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, version_keyW );
+
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return FALSE;
+
+    memset( version, 0, sizeof(*version) );
+
+    RtlInitUnicodeString( &valueW, CurrentVersionW );
+    if (!NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp)-1, &count ))
+    {
+        WCHAR *p, *str = (WCHAR *)info->Data;
+        str[info->DataLength / sizeof(WCHAR)] = 0;
+        p = strchrW( str, '.' );
+        if (p)
+        {
+            *p++ = 0;
+            version->dwMinorVersion = atoiW( p );
+        }
+        version->dwMajorVersion = atoiW( str );
+    }
+
+    if (version->dwMajorVersion)   /* we got the main version, now fetch the other fields */
+    {
+        ret = TRUE;
+        version->dwPlatformId = VER_PLATFORM_WIN32_NT;
+
+        /* get build number */
+
+        RtlInitUnicodeString( &valueW, CurrentBuildNumberW );
+        if (!NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp)-1, &count ))
+        {
+            WCHAR *str = (WCHAR *)info->Data;
+            str[info->DataLength / sizeof(WCHAR)] = 0;
+            version->dwBuildNumber = atoiW( str );
+        }
+
+        /* get version description */
+
+        RtlInitUnicodeString( &valueW, CSDVersionW );
+        if (!NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp)-1, &count ))
+        {
+            DWORD len = min( info->DataLength, sizeof(version->szCSDVersion) - sizeof(WCHAR) );
+            memcpy( version->szCSDVersion, info->Data, len );
+            version->szCSDVersion[len / sizeof(WCHAR)] = 0;
+        }
+
+        /* get service pack version (FIXME: should find a better way) */
+
+        for (p = version->szCSDVersion; *p; p++) if (isdigitW(*p)) break;
+        if (*p) version->wServicePackMajor = atoiW(p);
+        if ((p = strchrW( p, '.' ))) version->wServicePackMinor = atoiW(p + 1);
+
+        /* get product type */
+
+        RtlInitUnicodeString( &nameW, product_keyW );
+        if (!NtOpenKey( &product, KEY_ALL_ACCESS, &attr ))
+        {
+            RtlInitUnicodeString( &valueW, ProductTypeW );
+            if (!NtQueryValueKey( product, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp)-1, &count ))
+            {
+                WCHAR *str = (WCHAR *)info->Data;
+                str[info->DataLength / sizeof(WCHAR)] = 0;
+                if (!strcmpiW( str, WinNTW )) version->wProductType = VER_NT_WORKSTATION;
+                else if (!strcmpiW( str, LanmanNTW )) version->wProductType = VER_NT_DOMAIN_CONTROLLER;
+                else if (!strcmpiW( str, ServerNTW )) version->wProductType = VER_NT_SERVER;
+            }
+            NtClose( product );
+        }
+
+        /* FIXME: get wSuiteMask */
+    }
+
+    NtClose( hkey );
+    return ret;
+}
+
+
+/**********************************************************************
+ *         get_win9x_registry_version
+ *
+ * Fetch the version information from the Win9x-style registry keys.
+ */
+static BOOL get_win9x_registry_version( RTL_OSVERSIONINFOEXW *version )
+{
+    static const WCHAR version_keyW[] = {'M','a','c','h','i','n','e','\\',
+                                         'S','o','f','t','w','a','r','e','\\',
+                                         'M','i','c','r','o','s','o','f','t','\\',
+                                         'W','i','n','d','o','w','s','\\',
+                                         'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
+    static const WCHAR VersionNumberW[] = {'V','e','r','s','i','o','n','N','u','m','b','e','r',0};
+    static const WCHAR SubVersionNumberW[] = {'S','u','b','V','e','r','s','i','o','n','N','u','m','b','e','r',0};
+
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, valueW;
+    HANDLE hkey;
+    char tmp[64];
+    DWORD count;
+    BOOL ret = FALSE;
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)tmp;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, version_keyW );
+
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return FALSE;
+
+    memset( version, 0, sizeof(*version) );
+
+    RtlInitUnicodeString( &valueW, VersionNumberW );
+    if (!NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp)-1, &count ))
+    {
+        WCHAR *p, *str = (WCHAR *)info->Data;
+        str[info->DataLength / sizeof(WCHAR)] = 0;
+        p = strchrW( str, '.' );
+        if (p) *p++ = 0;
+        version->dwMajorVersion = atoiW( str );
+        if (p)
+        {
+            str = p;
+            p = strchrW( str, '.' );
+            if (p)
+            {
+                *p++ = 0;
+                version->dwBuildNumber = atoiW( p );
+            }
+            version->dwMinorVersion = atoiW( str );
+        }
+        /* build number contains version too on Win9x */
+        version->dwBuildNumber |= MAKEWORD( version->dwMinorVersion, version->dwMajorVersion ) << 16;
+    }
+
+    if (version->dwMajorVersion)   /* we got the main version, now fetch the other fields */
+    {
+        ret = TRUE;
+        version->dwPlatformId = VER_PLATFORM_WIN32_WINDOWS;
+
+        RtlInitUnicodeString( &valueW, SubVersionNumberW );
+        if (!NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp)-1, &count ))
+        {
+            DWORD len = min( info->DataLength, sizeof(version->szCSDVersion) - sizeof(WCHAR) );
+            memcpy( version->szCSDVersion, info->Data, len );
+            version->szCSDVersion[len / sizeof(WCHAR)] = 0;
+        }
+    }
+
+    NtClose( hkey );
+    return ret;
+}
+
+
 /**********************************************************************
  *         parse_win_version
  *
@@ -265,20 +459,33 @@ void version_init( const WCHAR *appname )
     if (!got_win_ver)
     {
         TRACE( "getting default version\n" );
-        parse_win_version( config_key );
+        got_win_ver = parse_win_version( config_key );
     }
     NtClose( config_key );
 
 done:
+    if (!got_win_ver)
+    {
+        static RTL_OSVERSIONINFOEXW registry_version;
+
+        TRACE( "getting registry version\n" );
+        if (get_nt_registry_version( &registry_version ) ||
+            get_win9x_registry_version( &registry_version ))
+            current_version = &registry_version;
+    }
+
+
     NtCurrentTeb()->Peb->OSMajorVersion = current_version->dwMajorVersion;
     NtCurrentTeb()->Peb->OSMinorVersion = current_version->dwMinorVersion;
     NtCurrentTeb()->Peb->OSBuildNumber  = current_version->dwBuildNumber;
     NtCurrentTeb()->Peb->OSPlatformId   = current_version->dwPlatformId;
 
-    TRACE( "got %ld.%ld plaform %ld build %lx name %s\n",
+    TRACE( "got %ld.%ld plaform %ld build %lx name %s service pack %d.%d product %d\n",
            current_version->dwMajorVersion, current_version->dwMinorVersion,
            current_version->dwPlatformId, current_version->dwBuildNumber,
-           debugstr_w( current_version->szCSDVersion ));
+           debugstr_w(current_version->szCSDVersion),
+           current_version->wServicePackMajor, current_version->wServicePackMinor,
+           current_version->wProductType );
 }
 
 
