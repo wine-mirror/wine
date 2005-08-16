@@ -1698,7 +1698,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
 
     wine_tsx11_lock();
     image = XCreateImage(gdi_display, visual, 32, ZPixmap, 0,
-                         data, widthSrc, heightSrc, 32, widthSrc * 4);
+                         (char*) data, widthSrc, heightSrc, 32, widthSrc * 4);
 
     src_format = pXRenderFindStandardFormat(gdi_display, PictStandardARGB32);
 

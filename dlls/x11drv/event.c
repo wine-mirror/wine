@@ -778,6 +778,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
     Atom	atom_aux;
     int         i;
     Window      w_aux;
+    unsigned int u;
   }		u; /* unused */
 
   if (!(GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return;
@@ -794,7 +795,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 
   if( !aux_long && p_data) {	/* don't bother if > 64K */
     /* calculate length */
-    p = p_data;
+    p = (char*) p_data;
     next = strchr(p, '\n');
     while (p) {
       if (next) *next=0;
@@ -814,7 +815,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
     if( drop_len && drop_len < 65535 ) {
       wine_tsx11_lock();
       XQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
-                     &x, &y, &u.i, &u.i, &u.i);
+                     &x, &y, &u.i, &u.i, &u.u);
       wine_tsx11_unlock();
 
       drop_len += sizeof(DROPFILES) + 1;
@@ -838,7 +839,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 
       /* create message content */
       if (p_drop) {
-	p = p_data;
+	p = (char*) p_data;
 	next = strchr(p, '\n');
 	while (p) {
 	  if (next) *next=0;

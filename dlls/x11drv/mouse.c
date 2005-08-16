@@ -453,7 +453,7 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
                 return 0;
             }
             /* The location of the mask. */
-            theMask = (char *)(ptr + 1);
+            theMask = (unsigned char *)(ptr + 1);
             /* The mask should still be 1 bit per pixel. The color image
              * should immediately follow the mask.
              */

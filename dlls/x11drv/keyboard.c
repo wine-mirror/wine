@@ -2376,7 +2376,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 
     if (ret == 0)
     {
-	BYTE dead_char;
+	char dead_char;
 
 #ifdef XK_EuroSign
         /* An ugly hack for EuroSign: X can't translate it to a character
