@@ -284,37 +284,70 @@ static void InternetOpenUrlA_test(void)
   trace("read 0x%08lx bytes\n",totalbytes);
 }
   
+static inline void copy_compsA(
+    URL_COMPONENTSA *src, 
+    URL_COMPONENTSA *dst, 
+    DWORD scheLen,
+    DWORD hostLen,
+    DWORD userLen,
+    DWORD passLen,
+    DWORD pathLen,
+    DWORD extrLen )
+{
+    *dst = *src;
+    dst->dwSchemeLength    = scheLen;
+    dst->dwHostNameLength  = hostLen;
+    dst->dwUserNameLength  = userLen;
+    dst->dwPasswordLength  = passLen;
+    dst->dwUrlPathLength   = pathLen;
+    dst->dwExtraInfoLength = extrLen;
+    SetLastError(0xfaceabad);
+}
+  
+static inline void zero_compsA(
+    URL_COMPONENTSA *dst, 
+    DWORD scheLen,
+    DWORD hostLen,
+    DWORD userLen,
+    DWORD passLen,
+    DWORD pathLen,
+    DWORD extrLen )
+{
+    ZeroMemory(dst, sizeof(URL_COMPONENTSA));
+    dst->dwStructSize = sizeof(URL_COMPONENTSA);
+    dst->dwSchemeLength    = scheLen;
+    dst->dwHostNameLength  = hostLen;
+    dst->dwUserNameLength  = userLen;
+    dst->dwPasswordLength  = passLen;
+    dst->dwUrlPathLength   = pathLen;
+    dst->dwExtraInfoLength = extrLen;
+    SetLastError(0xfaceabad);
+}
+  
 static void InternetCrackUrl_test(void)
 {
-  URL_COMPONENTSA urlComponents;
+  URL_COMPONENTSA urlSrc, urlComponents;
   char protocol[32], hostName[1024], userName[1024];
   char password[1024], extra[1024], path[1024];
   BOOL ret;
 
-  urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
-  urlComponents.lpszScheme = protocol;
-  urlComponents.dwSchemeLength = 32;
-  urlComponents.lpszHostName = hostName;
-  urlComponents.dwHostNameLength = 1024;
-  urlComponents.lpszUserName = userName;
-  urlComponents.dwUserNameLength = 1024;
-  urlComponents.lpszPassword = password;
-  urlComponents.dwPasswordLength = 1024;
-  urlComponents.lpszUrlPath = path;
-  urlComponents.dwUrlPathLength = 2048;
-  urlComponents.lpszExtraInfo = extra;
-  urlComponents.dwExtraInfoLength = 1024;
+  ZeroMemory(&urlSrc, sizeof(urlSrc));
+  urlSrc.dwStructSize = sizeof(urlSrc);
+  urlSrc.lpszScheme = protocol;
+  urlSrc.lpszHostName = hostName;
+  urlSrc.lpszUserName = userName;
+  urlSrc.lpszPassword = password;
+  urlSrc.lpszUrlPath = path;
+  urlSrc.lpszExtraInfo = extra;
+
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);
   ret = InternetCrackUrl(TEST_URL, 0,0,&urlComponents);
   ok( ret, "InternetCrackUrl failed, error %lx\n",GetLastError());
   ok((strcmp(TEST_URL_PATH,path) == 0),"path cracked wrong\n");
 
   /* Bug 1805: Confirm the returned lengths are correct:                     */
   /* 1. When extra info split out explicitly */
-  ZeroMemory(&urlComponents, sizeof(urlComponents));
-  urlComponents.dwStructSize = sizeof(urlComponents);
-  urlComponents.dwHostNameLength = 1;
-  urlComponents.dwUrlPathLength  = 1;
-  urlComponents.dwExtraInfoLength = 1;
+  zero_compsA(&urlComponents, 0, 1, 0, 0, 1, 1);
   ok(InternetCrackUrlA(TEST_URL2, 0, 0, &urlComponents),"InternetCrackUrl failed, error 0x%lx\n", GetLastError());
   ok(urlComponents.dwUrlPathLength == strlen(TEST_URL2_PATH),".dwUrlPathLength should be %d, but is %ld\n", strlen(TEST_URL2_PATH), urlComponents.dwUrlPathLength);
   ok(!strncmp(urlComponents.lpszUrlPath,TEST_URL2_PATH,strlen(TEST_URL2_PATH)),"lpszUrlPath should be %s but is %s\n", TEST_URL2_PATH, urlComponents.lpszUrlPath);
@@ -324,10 +357,7 @@ static void InternetCrackUrl_test(void)
   ok(!strncmp(urlComponents.lpszExtraInfo,TEST_URL2_EXTRA,strlen(TEST_URL2_EXTRA)),"lpszExtraInfo should be %s but is %s\n", TEST_URL2_EXTRA, urlComponents.lpszHostName);
 
   /* 2. When extra info is not split out explicitly and is in url path */
-  ZeroMemory(&urlComponents, sizeof(urlComponents));
-  urlComponents.dwStructSize = sizeof(urlComponents);
-  urlComponents.dwHostNameLength = 1;
-  urlComponents.dwUrlPathLength  = 1;
+  zero_compsA(&urlComponents, 0, 1, 0, 0, 1, 0);
   ok(InternetCrackUrlA(TEST_URL2, 0, 0, &urlComponents),"InternetCrackUrl failed with GLE 0x%lx\n",GetLastError());
   ok(urlComponents.dwUrlPathLength == strlen(TEST_URL2_PATHEXTRA),".dwUrlPathLength should be %d, but is %ld\n", strlen(TEST_URL2_PATHEXTRA), urlComponents.dwUrlPathLength);
   ok(!strncmp(urlComponents.lpszUrlPath,TEST_URL2_PATHEXTRA,strlen(TEST_URL2_PATHEXTRA)),"lpszUrlPath should be %s but is %s\n", TEST_URL2_PATHEXTRA, urlComponents.lpszUrlPath);
@@ -335,19 +365,7 @@ static void InternetCrackUrl_test(void)
   ok(!strncmp(urlComponents.lpszHostName,TEST_URL2_SERVER,strlen(TEST_URL2_SERVER)),"lpszHostName should be %s but is %s\n", TEST_URL2_SERVER, urlComponents.lpszHostName);
 
   /*3. Check for %20 */
-  ZeroMemory(&urlComponents, sizeof(urlComponents));
-  urlComponents.dwStructSize = sizeof(urlComponents);
-  urlComponents.lpszScheme = protocol;
-  urlComponents.dwSchemeLength = 32;
-  urlComponents.lpszHostName = hostName;
-  urlComponents.dwHostNameLength = 1024;
-  urlComponents.lpszUserName = userName;
-  urlComponents.dwUserNameLength = 1024;
-  urlComponents.lpszPassword = password;
-  urlComponents.dwPasswordLength = 1024;
-  urlComponents.lpszUrlPath = path;
-  urlComponents.dwUrlPathLength = 2048;
-  urlComponents.lpszExtraInfo = extra;
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 0);
   ok(InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents),"InternetCrackUrl failed with GLE 0x%lx\n",GetLastError());
 }
 
