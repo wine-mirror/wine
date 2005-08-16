@@ -2322,7 +2322,7 @@ done:
 /******************************************************************************
  *              OleDoAutoConvert        [OLE32.@]
  */
-HRESULT WINAPI OleDoAutoConvert(IStorage *pStg, LPCLSID pClsidNew)
+HRESULT WINAPI OleDoAutoConvert(LPSTORAGE pStg, LPCLSID pClsidNew)
 {
     FIXME("(%p,%p) : stub\n",pStg,pClsidNew);
     return E_NOTIMPL;
@@ -2331,7 +2331,7 @@ HRESULT WINAPI OleDoAutoConvert(IStorage *pStg, LPCLSID pClsidNew)
 /******************************************************************************
  *              OleDoAutoConvert        [OLE2.79]
  */
-HRESULT WINAPI OleDoAutoConvert16(IStorage *pStg, LPCLSID pClsidNew)
+HRESULT WINAPI OleDoAutoConvert16(LPSTORAGE pStg, LPCLSID pClsidNew)
 {
     FIXME("(%p,%p) : stub\n",pStg,pClsidNew);
     return E_NOTIMPL;

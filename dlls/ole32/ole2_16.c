@@ -195,12 +195,16 @@ BOOL WINAPI IsValidInterface16(SEGPTR punk)
 
 /******************************************************************************
  *              OleLoad        [OLE2.12]
+ *
+ * PARAMS
+ *  pStg Segmented LPSTORAGE pointer.
+ *  pClientSite Segmented LPOLECLIENTSITE pointer.
  */
 HRESULT WINAPI OleLoad16(
-  /*LPSTORAGE16*/	SEGPTR		pStg,
-  REFIID            			riid,
-  /*LPOLECLIENTSITE16*/	SEGPTR		pClientSite,
-  LPVOID*				ppvObj)
+    SEGPTR		pStg,
+    REFIID            	riid,
+    SEGPTR		pClientSite,
+    LPVOID*		ppvObj)
 {
   FIXME("(%lx,%s,%lx,%p), stub!\n", pStg, debugstr_guid(riid), pClientSite, ppvObj);
   return E_NOTIMPL;

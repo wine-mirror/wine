@@ -2223,9 +2223,14 @@ HRESULT WINAPI StgOpenStorageOnILockBytes16(
 /***********************************************************************
  *    ReadClassStg (OLE2.18)
  *
- * This method reads the CLSID previously written to a storage object with the WriteClassStg.
+ * This method reads the CLSID previously written to a storage object with
+ * the WriteClassStg.
+ *
+ * PARAMS
+ *  pstg Segmented LPSTORAGE pointer.
  */
-HRESULT WINAPI ReadClassStg16(SEGPTR /*IStorage **/pstg,CLSID *pclsid){
+HRESULT WINAPI ReadClassStg16(SEGPTR pstg, CLSID *pclsid)
+{
 	STATSTG16 statstg;
 	HANDLE16 hstatstg;
 	HRESULT	hres;
@@ -2268,7 +2273,7 @@ HRESULT WINAPI ReadClassStg16(SEGPTR /*IStorage **/pstg,CLSID *pclsid){
 /***********************************************************************
  *              GetConvertStg (OLE2.82)
  */
-HRESULT WINAPI GetConvertStg16(IStorage *stg) {
+HRESULT WINAPI GetConvertStg16(LPSTORAGE stg) {
     FIXME("unimplemented stub!\n");
     return E_FAIL;
 }
