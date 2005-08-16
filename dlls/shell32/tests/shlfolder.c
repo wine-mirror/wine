@@ -43,16 +43,24 @@ static IMalloc *ppM;
 
 static HRESULT (WINAPI *pSHBindToParent)(LPCITEMIDLIST, REFIID, LPVOID*, LPCITEMIDLIST*);
 static BOOL (WINAPI *pSHGetSpecialFolderPathW)(HWND, LPWSTR, int, BOOL);
+static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
 
 static void init_function_pointers(void)
 {
-    HMODULE hmod = GetModuleHandleA("shell32.dll");
+    HMODULE hmod;
     HRESULT hr;
 
+    hmod = GetModuleHandleA("shell32.dll");
     if(hmod)
     {
         pSHBindToParent = (void*)GetProcAddress(hmod, "SHBindToParent");
         pSHGetSpecialFolderPathW = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathW");
+    }
+
+    hmod = GetModuleHandleA("shlwapi.dll");
+    if(hmod)
+    {
+        pStrRetToBufW = (void*)GetProcAddress(hmod, "StrRetToBufW");
     }
 
     hr = SHGetMalloc(&ppM);
@@ -369,10 +377,13 @@ static void test_GetDisplayName(void)
         IShellFolder_Release(psfPersonal);
         return;
     }
-    
-    hr = StrRetToBufW(&strret, pidlLast, wszTestFile2, MAX_PATH);
-    ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08lx\n", hr);
-    ok (!lstrcmpiW(wszTestFile, wszTestFile2), "GetDisplayNameOf returns incorrect path!\n");
+
+    if (pStrRetToBufW)
+    {
+        hr = pStrRetToBufW(&strret, pidlLast, wszTestFile2, MAX_PATH);
+        ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08lx\n", hr);
+        ok (!lstrcmpiW(wszTestFile, wszTestFile2), "GetDisplayNameOf returns incorrect path!\n");
+    }
     
     IShellFolder_Release(psfDesktop);
     IShellFolder_Release(psfPersonal);
@@ -661,10 +672,13 @@ static void test_SHGetPathFromIDList(void)
         IMalloc_Free(ppM, pidlTestFile);
         return;
     }
-    StrRetToBufW(&strret, pidlTestFile, wszPath, MAX_PATH);
-    ok(0 == lstrcmpW(wszFileName, wszPath), 
-        "Desktop->GetDisplayNameOf(pidlTestFile, SHGDN_FORPARSING) "
-        "returned incorrect path for file placed on desktop\n");
+    if (pStrRetToBufW)
+    {
+        pStrRetToBufW(&strret, pidlTestFile, wszPath, MAX_PATH);
+        ok(0 == lstrcmpW(wszFileName, wszPath), 
+           "Desktop->GetDisplayNameOf(pidlTestFile, SHGDN_FORPARSING) "
+           "returned incorrect path for file placed on desktop\n");
+    }
 
     result = SHGetPathFromIDListW(pidlTestFile, wszPath);
     ok(result, "SHGetPathFromIDListW failed! Last error: %08lx\n", GetLastError());
