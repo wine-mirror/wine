@@ -32,7 +32,10 @@ extern "C" {
  * Fundamental types and data structures
  */
 
+#ifndef WINE_NTSTATUS_DECLARED
+#define WINE_NTSTATUS_DECLARED
 typedef LONG NTSTATUS;
+#endif
 
 typedef CONST char *PCSZ;
 

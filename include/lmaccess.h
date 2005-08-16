@@ -111,6 +111,15 @@ static const WCHAR GROUP_SPECIALGRP_GUESTS[] = { 'G','U','E','S','T','S',0 };
 static const WCHAR GROUP_SPECIALGRP_LOCAL[] = { 'L','O','C','A','L',0 };
 #endif
 
+#ifndef WINE_NTSTATUS_DECLARED
+#define WINE_NTSTATUS_DECLARED
+typedef LONG NTSTATUS;
+#endif
+#ifndef WINE_PNTSTATUS_DECLARED
+#define WINE_PNTSTATUS_DECLARED
+typedef NTSTATUS *PNTSTATUS;
+#endif
+
 /* NetGetUserInfo structures */
 typedef struct _USER_INFO_0 {
     LPWSTR usri0_name;

@@ -960,7 +960,7 @@ BOOLEAN WINAPI GetUserNameExW(
 NTSTATUS WINAPI LsaCallAuthenticationPackage(
   HANDLE LsaHandle, ULONG AuthenticationPackage, PVOID ProtocolSubmitBuffer,
   ULONG SubmitBufferLength, PVOID* ProtocolReturnBuffer, PULONG ReturnBufferLength,
-  NTSTATUS *ProtocolStatus)
+  PNTSTATUS ProtocolStatus)
 {
     FIXME("%p %ld %p %ld %p %p %p\n", LsaHandle, AuthenticationPackage,
           ProtocolSubmitBuffer, SubmitBufferLength, ProtocolReturnBuffer,
