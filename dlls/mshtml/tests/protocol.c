@@ -95,8 +95,8 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
 {
     ok(expect_ReportResult, "unexpected call\n");
     if(expect_hr_win32err)
-        ok((hrResult&0xffff0000) == ((FACILITY_WIN32 << 16)|0x80000000),
-                "expected win32 err got: %08lx\n", hrResult);
+        ok((hrResult&0xffff0000) == ((FACILITY_WIN32 << 16)|0x80000000) || expect_hrResult,
+                "expected win32 err or %08lx got: %08lx\n", expect_hrResult, hrResult);
     else
         ok(hrResult == expect_hrResult, "expected: %08lx got: %08lx\n", expect_hrResult, hrResult);
     ok(dwError == 0, "dwError = %ld\n", dwError);
@@ -182,7 +182,8 @@ static void test_protocol_fail(IInternetProtocol *protocol, LPCWSTR url, HRESULT
     expect_hr_win32err = expect_win32err;
     hres = IInternetProtocol_Start(protocol, url, &protocol_sink, &bind_info, 0, 0);
     if(expect_win32err)
-        ok((hres&0xffff0000) == ((FACILITY_WIN32 << 16)|0x80000000), "expected win32 err got: %08lx\n", hres);
+        ok((hres&0xffff0000) == ((FACILITY_WIN32 << 16)|0x80000000) || hres == expect_hrResult,
+                "expected win32 err or %08lx got: %08lx\n", expected_hres, hres);
     else
         ok(hres == expected_hres, "expected: %08lx got: %08lx\n", expected_hres, hres);
     ok(called_ReportResult, "expected ReportResult\n");
