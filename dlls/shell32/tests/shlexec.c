@@ -49,17 +49,24 @@ static char argv0[MAX_PATH];
 static int myARGC;
 static char** myARGV;
 static char tmpdir[MAX_PATH];
+static char child_file[MAX_PATH];
+static DLLVERSIONINFO dllver;
 
-static const char* testfiles[]=
+
+/***
+ *
+ * ShellExecute wrappers
+ *
+ ***/
+static void dump_child();
+
+static HANDLE hEvent;
+static void init_event(const char* child_file)
 {
-    "%s\\test file.shlexec",
-    "%s\\test file.noassoc",
-    "%s\\test file.noassoc.shlexec",
-    "%s\\test file.shlexec.noassoc",
-    "%s\\test_shortcut_shlexec.lnk",
-    NULL
-};
-
+    char* event_name;
+    event_name=strrchr(child_file, '\\')+1;
+    hEvent=CreateEvent(NULL, FALSE, FALSE, event_name);
+}
 
 static void strcat_param(char* str, const char* param)
 {
@@ -78,6 +85,8 @@ static void strcat_param(char* str, const char* param)
 static char shell_call[2048]="";
 static int shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCSTR directory)
 {
+    int rc;
+
     strcpy(shell_call, "ShellExecute(");
     strcat_param(shell_call, operation);
     strcat(shell_call, ", ");
@@ -90,13 +99,30 @@ static int shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCST
     if (winetest_debug > 1)
         trace("%s\n", shell_call);
 
+    DeleteFile(child_file);
     SetLastError(0xcafebabe);
+
     /* FIXME: We cannot use ShellExecuteEx() here because if there is no
      * association it displays the 'Open With' dialog and I could not find
      * a flag to prevent this.
      */
-    return (int)ShellExecute(NULL, operation, file, parameters, directory,
-                             SW_SHOWNORMAL);
+    rc=(int)ShellExecute(NULL, operation, file, parameters, directory,
+                         SW_SHOWNORMAL);
+
+    if (rc>=32)
+    {
+        int wait_rc;
+        wait_rc=WaitForSingleObject(hEvent, 60000);
+        ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
+    }
+    /* The child process may have changed the result file, so let profile
+     * functions know about it
+     */
+    WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
+    if (rc>=32)
+        dump_child();
+
+    return rc;
 }
 
 static int shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
@@ -119,7 +145,7 @@ static int shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
         trace("%s\n", shell_call);
 
     sei.cbSize=sizeof(sei);
-    sei.fMask=mask;
+    sei.fMask=SEE_MASK_NOCLOSEPROCESS | mask;
     sei.hwnd=NULL;
     sei.lpVerb=operation;
     sei.lpFile=file;
@@ -132,14 +158,43 @@ static int shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
     sei.hkeyClass=NULL;
     sei.dwHotKey=0;
     U(sei).hIcon=NULL;
+    sei.hProcess=NULL; /* Out */
 
+    DeleteFile(child_file);
     SetLastError(0xcafebabe);
     success=ShellExecuteEx(&sei);
     rc=(int)sei.hInstApp;
     ok((success && rc >= 32) || (!success && rc < 32),
        "%s rc=%d and hInstApp=%d is not allowed\n", shell_call, success, rc);
+
+    if (rc>=32)
+    {
+        int wait_rc;
+        if (sei.hProcess!=NULL)
+        {
+            wait_rc=WaitForSingleObject(sei.hProcess, 60000);
+            ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject(hProcess) returned %d\n", wait_rc);
+        }
+        wait_rc=WaitForSingleObject(hEvent, 60000);
+        ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
+    }
+    /* The child process may have changed the result file, so let profile
+     * functions know about it
+     */
+    WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
+    if (rc>=32)
+        dump_child();
+
     return rc;
 }
+
+
+
+/***
+ *
+ * Functions to create / delete associations wrappers
+ *
+ ***/
 
 static void create_test_association(const char* extension)
 {
@@ -192,8 +247,8 @@ static void create_test_verb(const char* extension, const char* verb)
                       NULL, &hkey_cmd, NULL);
     assert(rc==ERROR_SUCCESS);
 
-    cmd=malloc(strlen(argv0)+13+1);
-    sprintf(cmd,"%s shlexec \"%%1\"", argv0);
+    cmd=malloc(strlen(argv0)+10+strlen(child_file)+2+strlen(verb)+5+1);
+    sprintf(cmd,"%s shlexec \"%s\" %s \"%%1\"", argv0, child_file, verb);
     rc=RegSetValueEx(hkey_cmd, NULL, 0, REG_SZ, cmd, strlen(cmd)+1);
     assert(rc==ERROR_SUCCESS);
 
@@ -203,6 +258,219 @@ static void create_test_verb(const char* extension, const char* verb)
     CloseHandle(hkey_cmd);
 }
 
+
+
+/***
+ *
+ * Functions to check that the child process was started just right
+ * (borrowed from dlls/kernel32/tests/process.c)
+ *
+ ***/
+
+static const char* encodeA(const char* str)
+{
+    static char encoded[2*1024+1];
+    char*       ptr;
+    size_t      len,i;
+
+    if (!str) return "";
+    len = strlen(str) + 1;
+    if (len >= sizeof(encoded)/2)
+    {
+        fprintf(stderr, "string is too long!\n");
+        assert(0);
+    }
+    ptr = encoded;
+    for (i = 0; i < len; i++)
+        sprintf(&ptr[i * 2], "%02x", (unsigned char)str[i]);
+    ptr[2 * len] = '\0';
+    return ptr;
+}
+
+static unsigned decode_char(char c)
+{
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    assert(c >= 'A' && c <= 'F');
+    return c - 'A' + 10;
+}
+
+static char* decodeA(const char* str)
+{
+    static char decoded[1024];
+    char*       ptr;
+    size_t      len,i;
+
+    len = strlen(str) / 2;
+    if (!len--) return NULL;
+    if (len >= sizeof(decoded))
+    {
+        fprintf(stderr, "string is too long!\n");
+        assert(0);
+    }
+    ptr = decoded;
+    for (i = 0; i < len; i++)
+        ptr[i] = (decode_char(str[2 * i]) << 4) | decode_char(str[2 * i + 1]);
+    ptr[len] = '\0';
+    return ptr;
+}
+
+static void     childPrintf(HANDLE h, const char* fmt, ...)
+{
+    va_list     valist;
+    char        buffer[1024];
+    DWORD       w;
+
+    va_start(valist, fmt);
+    vsprintf(buffer, fmt, valist);
+    va_end(valist);
+    WriteFile(h, buffer, strlen(buffer), &w, NULL);
+}
+
+static void doChild(int argc, char** argv)
+{
+    char* filename;
+    HANDLE hFile;
+    int i;
+
+    filename=argv[2];
+    hFile=CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    if (hFile == INVALID_HANDLE_VALUE)
+        return;
+
+    /* Arguments */
+    childPrintf(hFile, "[Arguments]\n");
+    if (winetest_debug > 2)
+        trace("argcA=%d\n", argc);
+    childPrintf(hFile, "argcA=%d\n", argc);
+    for (i = 0; i < argc; i++)
+    {
+        if (winetest_debug > 2)
+            trace("argvA%d=%s\n", i, argv[i]);
+        childPrintf(hFile, "argvA%d=%s\n", i, encodeA(argv[i]));
+    }
+    CloseHandle(hFile);
+
+    init_event(filename);
+    SetEvent(hEvent);
+    CloseHandle(hEvent);
+}
+
+static char* getChildString(const char* sect, const char* key)
+{
+    char        buf[1024];
+    char*       ret;
+
+    GetPrivateProfileStringA(sect, key, "-", buf, sizeof(buf), child_file);
+    if (buf[0] == '\0' || (buf[0] == '-' && buf[1] == '\0')) return NULL;
+    assert(!(strlen(buf) & 1));
+    ret = decodeA(buf);
+    return ret;
+}
+
+static void dump_child()
+{
+    if (winetest_debug > 1)
+    {
+        char key[18];
+        char* str;
+        int i, c;
+
+        c=GetPrivateProfileIntA("Arguments", "argcA", -1, child_file);
+        trace("argcA=%d\n",c);
+        for (i=0;i<c;i++)
+        {
+            sprintf(key, "argvA%d", i);
+            str=getChildString("Arguments", key);
+            trace("%s=%s\n", key, str);
+        }
+    }
+}
+
+static int StrCmpPath(const char* s1, const char* s2)
+{
+    if (!s1 && !s2) return 0;
+    if (!s2) return 1;
+    if (!s1) return -1;
+    while (*s1)
+    {
+        if (!*s2)
+        {
+            if (*s1=='.')
+                s1++;
+            return (*s1-*s2);
+        }
+        if ((*s1=='/' || *s1=='\\') && (*s2=='/' || *s2=='\\'))
+        {
+            while (*s1=='/' || *s1=='\\')
+                s1++;
+            while (*s2=='/' || *s2=='\\')
+                s2++;
+        }
+        else if (toupper(*s1)==toupper(*s2))
+        {
+            s1++;
+            s2++;
+        }
+        else
+        {
+            return (*s1-*s2);
+        }
+    }
+    if (*s2=='.')
+        s2++;
+    if (*s2)
+        return -1;
+    return 0;
+}
+
+static int _okChildString(const char* file, int line, const char* key, const char* expected)
+{
+    char* result;
+    result=getChildString("Arguments", key);
+    return ok_(file, line)(lstrcmpiA(result, expected) == 0,
+               "%s expected '%s', got '%s'\n", key, expected, result);
+}
+
+static int _okChildPath(const char* file, int line, const char* key, const char* expected)
+{
+    char* result;
+    result=getChildString("Arguments", key);
+    return ok_(file, line)(StrCmpPath(result, expected) == 0,
+               "%s expected '%s', got '%s'\n", key, expected, result);
+}
+
+static int _okChildInt(const char* file, int line, const char* key, int expected)
+{
+    INT result;
+    result=GetPrivateProfileIntA("Arguments", key, expected, child_file);
+    return ok_(file, line)(result == expected,
+               "%s expected %d, but got %d\n", key, expected, result);
+}
+
+#define okChildString(key, expected) _okChildString(__FILE__, __LINE__, (key), (expected))
+#define okChildPath(key, expected) _okChildPath(__FILE__, __LINE__, (key), (expected))
+#define okChildInt(key, expected)    _okChildInt(__FILE__, __LINE__, (key), (expected))
+
+
+
+/***
+ *
+ * Tests
+ *
+ ***/
+
+static const char* testfiles[]=
+{
+    "%s\\test file.shlexec",
+    "%s\\%%nasty%% $file.shlexec",
+    "%s\\test file.noassoc",
+    "%s\\test file.noassoc.shlexec",
+    "%s\\test file.shlexec.noassoc",
+    "%s\\test_shortcut_shlexec.lnk",
+    "%s\\test_shortcut_exe.lnk",
+    NULL
+};
 
 typedef struct
 {
@@ -214,23 +482,21 @@ typedef struct
 static filename_tests_t filename_tests[]=
 {
     /* Test bad / nonexistent filenames */
-    {"%s\\nonexistent.shlexec", ERROR_FILE_NOT_FOUND, 1},
-    {"%s\\nonexistent.noassoc", ERROR_FILE_NOT_FOUND, 1},
+    {"%s\\nonexistent.shlexec", ERROR_FILE_NOT_FOUND, 0x1},
+    {"%s\\nonexistent.noassoc", ERROR_FILE_NOT_FOUND, 0x1},
 
     /* Standard tests */
-    {"%s\\test file.shlexec",   0, 0},
-    {"%s\\test file.shlexec.",  0, 0},
-    {"%s/test file.shlexec",    0, 0},
+    {"%s\\test file.shlexec",   0, 0x0},
+    {"%s\\test file.shlexec.",  0, 0x0},
+    {"%s\\%%nasty%% $file.shlexec",  0, 0x0},
+    {"%s/test file.shlexec",    0, 0x0},
 
     /* Test filenames with no association */
-    {"%s\\test file.noassoc",   SE_ERR_NOASSOC, 0},
+    {"%s\\test file.noassoc",   SE_ERR_NOASSOC, 0x0},
 
     /* Test double extensions */
     {"%s\\test file.noassoc.shlexec", 0, 0},
-    {"%s\\test file.shlexec.noassoc", SE_ERR_NOASSOC, 0},
-
-    /* Test shortcuts */
-    {"%s\\test_shortcut_shlexec.lnk", 0, 0},
+    {"%s\\test file.shlexec.noassoc", SE_ERR_NOASSOC, 0x0},
 
     {NULL, 0, 0}
 };
@@ -239,9 +505,6 @@ static void test_filename()
 {
     char filename[MAX_PATH];
     const filename_tests_t* test;
-    HMODULE hdll;
-    DLLVERSIONINFO dllver;
-    HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO*);
     char* c;
     int rc;
 
@@ -260,49 +523,50 @@ static void test_filename()
             }
         }
         rc=shell_execute(NULL, filename, NULL, NULL);
-        if (test->rc==0)
+        if (rc>=32)
+            rc=0;
+        if ((test->todo & 0x1)==0)
         {
-            if (test->todo)
-            {
-                todo_wine
-                {
-                    ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call,
-                       rc, GetLastError());
-                }
-            }
-            else
-            {
-                ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call,
-                   rc, GetLastError());
-            }
+            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+               rc, GetLastError());
         }
-        else
+        else todo_wine
         {
-            if (test->todo)
+            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+               rc, GetLastError());
+        }
+        if (rc==0)
+        {
+            if ((test->todo & 0x2)==0)
             {
-                todo_wine
-                {
-                    ok(rc==test->rc, "%s returned %d\n", shell_call, rc);
-                }
+                okChildInt("argcA", 5);
             }
-            else
+            else todo_wine
             {
-                ok(rc==test->rc, "%s returned %d\n", shell_call, rc);
+                okChildInt("argcA", 5);
+            }
+            if ((test->todo & 0x3)==0)
+            {
+                okChildString("argvA3", "Open");
+            }
+            else todo_wine
+            {
+                okChildString("argvA3", "Open");
+            }
+            if ((test->todo & 0x4)==0)
+            {
+                okChildPath("argvA4", filename);
+            }
+            else todo_wine
+            {
+                okChildPath("argvA4", filename);
             }
         }
         test++;
     }
 
-    hdll=GetModuleHandleA("shell32.dll");
-    pDllGetVersion=(void*)GetProcAddress(hdll, "DllGetVersion");
-    if (pDllGetVersion)
+    if (dllver.dwMajorVersion != 0)
     {
-        dllver.cbSize=sizeof(dllver);
-        pDllGetVersion(&dllver);
-        trace("major=%ld minor=%ld build=%ld platform=%ld\n",
-              dllver.dwMajorVersion, dllver.dwMinorVersion,
-              dllver.dwBuildNumber, dllver.dwPlatformID);
-
         /* The more recent versions of shell32.dll accept quoted filenames
          * while older ones (e.g. 4.00) don't. Still we want to test this
          * because IE 6 depends on the new behavior.
@@ -313,26 +577,130 @@ static void test_filename()
         rc=shell_execute(NULL, filename, NULL, NULL);
         ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call, rc,
            GetLastError());
+        todo_wine {
+        okChildInt("argcA", 5);
+        }
+        okChildString("argvA3", "Open");
+        sprintf(filename, "%s\\test file.shlexec", tmpdir);
+        todo_wine {
+        okChildPath("argvA4", filename);
+        }
+    }
+}
 
-        if (dllver.dwMajorVersion>=6)
+
+static filename_tests_t lnk_tests[]=
+{
+    /* Pass bad / nonexistent filenames as a parameter */
+    {"%s\\nonexistent.shlexec", 0, 0xa},
+    {"%s\\nonexistent.noassoc", 0, 0xa},
+
+    /* Pass regular paths as a parameter */
+    {"%s\\test file.shlexec",   0, 0xa},
+    {"%s/%%nasty%% $file.shlexec",  0, 0xa},
+
+    /* Pass filenames with no association as a parameter */
+    {"%s\\test file.noassoc",   0, 0xa},
+
+    {NULL, 0, 0}
+};
+
+static void test_lnks()
+{
+    char filename[MAX_PATH];
+    char params[MAX_PATH];
+    const filename_tests_t* test;
+    int rc;
+
+    sprintf(filename, "%s\\test_shortcut_shlexec.lnk", tmpdir);
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
+    ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call, rc,
+       GetLastError());
+    okChildInt("argcA", 5);
+    okChildString("argvA3", "Open");
+    sprintf(filename, "%s\\test file.shlexec", tmpdir);
+    todo_wine {
+    okChildPath("argvA4", filename);
+    }
+
+    sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
+    ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call, rc,
+       GetLastError());
+    okChildInt("argcA", 4);
+    okChildString("argvA3", "Lnk");
+
+    if (dllver.dwMajorVersion>=6)
+    {
+        char* c;
+       /* Recent versions of shell32.dll accept '/'s in shortcut paths.
+         * Older versions don't or are quite buggy in this regard.
+         */
+        sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
+        c=filename;
+        while (*c)
         {
-            /* Recent versions of shell32.dll accept '/'s in shortcut paths.
-             * Older versions don't or are quite buggy in this regard.
-             */
-            sprintf(filename, "%s\\test_shortcut_shlexec.lnk", tmpdir);
-            c=filename;
-            while (*c)
+            if (*c=='\\')
+                *c='/';
+            c++;
+        }
+        rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
+        ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call, rc,
+           GetLastError());
+        okChildInt("argcA", 4);
+        okChildString("argvA3", "Lnk");
+    }
+
+    sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
+    test=lnk_tests;
+    while (test->basename)
+    {
+        params[0]='\"';
+        sprintf(params+1, test->basename, tmpdir);
+        strcat(params,"\"");
+        rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, params,
+                            NULL);
+        if (rc>=32)
+            rc=0;
+        if ((test->todo & 0x1)==0)
+        {
+            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+               rc, GetLastError());
+        }
+        else todo_wine
+        {
+            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+               rc, GetLastError());
+        }
+        if (rc==0)
+        {
+            if ((test->todo & 0x2)==0)
             {
-                if (*c=='\\')
-                    *c='/';
-                c++;
+                okChildInt("argcA", 5);
             }
-            rc=shell_execute(NULL, filename, NULL, NULL);
-            todo_wine {
-            ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call, rc,
-               GetLastError());
+            else todo_wine
+            {
+                okChildInt("argcA", 5);
+            }
+            if ((test->todo & 0x4)==0)
+            {
+                okChildString("argvA3", "Lnk");
+            }
+            else todo_wine
+            {
+                okChildString("argvA3", "Lnk");
+            }
+            sprintf(params, test->basename, tmpdir);
+            if ((test->todo & 0x8)==0)
+            {
+                okChildPath("argvA4", params);
+            }
+            else todo_wine
+            {
+                okChildPath("argvA4", params);
             }
         }
+        test++;
     }
 }
 
@@ -340,17 +708,22 @@ static void test_filename()
 static void test_exes()
 {
     char filename[MAX_PATH];
+    char params[1024];
     int rc;
 
+    sprintf(params, "shlexec \"%s\" Exec", child_file);
+
     /* We need NOZONECHECKS on Win2003 to block a dialog */
-    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, "shlexec -nop",
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params,
                         NULL);
     ok(rc>=32, "%s returned %d\n", shell_call, rc);
+    okChildInt("argcA", 4);
+    okChildString("argvA3", "Exec");
 
     sprintf(filename, "%s\\test file.noassoc", tmpdir);
     if (CopyFile(argv0, filename, FALSE))
     {
-        rc=shell_execute(NULL, filename, "shlexec -nop", NULL);
+        rc=shell_execute(NULL, filename, params, NULL);
         todo_wine {
         ok(rc==SE_ERR_NOASSOC, "%s succeeded: rc=%d\n", shell_call, rc);
         }
@@ -360,12 +733,30 @@ static void test_exes()
 
 static void init_test()
 {
+    HMODULE hdll;
+    HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO*);
     char filename[MAX_PATH];
     WCHAR lnkfile[MAX_PATH];
+    char params[1024];
     const char* const * testfile;
     lnk_desc_t desc;
     DWORD rc;
     HRESULT r;
+
+    hdll=GetModuleHandleA("shell32.dll");
+    pDllGetVersion=(void*)GetProcAddress(hdll, "DllGetVersion");
+    if (pDllGetVersion)
+    {
+        dllver.cbSize=sizeof(dllver);
+        pDllGetVersion(&dllver);
+        trace("major=%ld minor=%ld build=%ld platform=%ld\n",
+              dllver.dwMajorVersion, dllver.dwMinorVersion,
+              dllver.dwBuildNumber, dllver.dwPlatformID);
+    }
+    else
+    {
+        memset(&dllver, 0, sizeof(dllver));
+    }
 
     r = CoInitialize(NULL);
     ok(SUCCEEDED(r), "CoInitialize failed (0x%08lx)\n", r);
@@ -382,6 +773,8 @@ static void init_test()
     }
 
     GetTempPathA(sizeof(tmpdir)/sizeof(*tmpdir), tmpdir);
+    assert(GetTempFileNameA(tmpdir, "wt", 0, child_file)!=0);
+    init_event(child_file);
 
     /* Set up the test files */
     testfile=testfiles;
@@ -409,7 +802,21 @@ static void init_test()
     sprintf(filename, "%s\\test file.shlexec", tmpdir);
     desc.path=filename;
     desc.pidl=NULL;
-    desc.arguments="";
+    desc.arguments="ignored";
+    desc.showcmd=0;
+    desc.icon=NULL;
+    desc.icon_id=0;
+    desc.hotkey=0;
+    create_lnk(lnkfile, &desc, 0);
+
+    sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, lnkfile, sizeof(lnkfile)/sizeof(*lnkfile));
+    desc.description=NULL;
+    desc.workdir=NULL;
+    desc.path=argv0;
+    desc.pidl=NULL;
+    sprintf(params, "shlexec \"%s\" Lnk", child_file);
+    desc.arguments=params;
     desc.showcmd=0;
     desc.icon=NULL;
     desc.icon_id=0;
@@ -434,9 +841,12 @@ static void cleanup_test()
         DeleteFile(filename);
         testfile++;
     }
+    DeleteFile(child_file);
 
     /* Delete the test association */
     delete_test_association(".shlexec");
+
+    CloseHandle(hEvent);
 
     CoUninitialize();
 }
@@ -445,17 +855,16 @@ START_TEST(shlexec)
 {
 
     myARGC = winetest_get_mainargs(&myARGV);
-    if (myARGC>=3)
+    if (myARGC >= 3)
     {
-        /* FIXME: We should dump the parameters we got
-         *        and have the parent verify them
-         */
+        doChild(myARGC, myARGV);
         exit(0);
     }
 
     init_test();
 
     test_filename();
+    test_lnks();
     test_exes();
 
     cleanup_test();
