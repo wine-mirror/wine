@@ -1834,7 +1834,7 @@ static LRESULT COMBO_GetComboBoxInfo(LPHEADCOMBO lphc, COMBOBOXINFO *pcbi)
     pcbi->rcItem = lphc->textRect;
     pcbi->rcButton = lphc->buttonRect;
     pcbi->stateButton = 0;
-    if (lphc->wState & CBF_DROPPED)
+    if (lphc->wState & CBF_BUTTONDOWN)
         pcbi->stateButton |= STATE_SYSTEM_PRESSED;
     if (IsRectEmpty(&lphc->buttonRect))
         pcbi->stateButton |= STATE_SYSTEM_INVISIBLE;
