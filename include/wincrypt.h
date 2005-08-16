@@ -1531,6 +1531,11 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
   (x) == CERT_ISSUER_SERIAL_NUMBER_MD5_HASH_PROP_ID || \
   (x) == CERT_SUBJECT_NAME_MD5_HASH_PROP_ID)
 
+/* access state flags */
+#define CERT_ACCESS_STATE_WRITE_PERSIST_FLAG   0x1
+#define CERT_ACCESS_STATE_SYSTEM_STORE_FLAG    0x2
+#define CERT_ACCESS_STATE_LM_SYSTEM_STORE_FLAG 0x4
+
 /* CERT_RDN attribute dwValueType types */
 #define CERT_RDN_TYPE_MASK 0x000000ff
 #define CERT_RDN_ANY_TYPE         0
@@ -1666,6 +1671,19 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
  (CERT_COMPARE_CROSS_CERT_DIST_POINTS << CERT_COMPARE_SHIFT)
 #define CERT_FIND_PUBKEY_MD5_HASH \
  (CERT_COMPARE_PUBKEY_MD5_HASH << CERT_COMPARE_SHIFT)
+
+/* PFN_CERT_STORE_PROV_WRITE_CERT dwFlags values */
+#define CERT_STORE_PROV_WRITE_ADD_FLAG 0x1
+
+/* CertAddSerializedElementToStore context types */
+#define CERT_STORE_CERTIFICATE_CONTEXT 1
+#define CERT_STORE_CRL_CONTEXT         2
+#define CERT_STORE_CTL_CONTEXT         3
+#define CERT_STORE_ALL_CONTEXT_FLAG    ~0UL
+#define CERT_STORE_CERTIFICATE_CONTEXT_FLAG \
+                                    (1 << CERT_STORE_CERTIFICATE_CONTEXT)
+#define CERT_STORE_CRL_CONTEXT_FLAG (1 << CERT_STORE_CRL_CONTEXT)
+#define CERT_STORE_CTL_CONTEXT_FLAG (1 << CERT_STORE_CTL_CONTEXT)
 
 /* OIDs */
 #define szOID_RSA                           "1.2.840.113549"
@@ -2150,6 +2168,15 @@ BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus);
 
+DWORD WINAPI CertEnumCertificateContextProperties(PCCERT_CONTEXT pCertContext,
+ DWORD dwPropId);
+
+BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
+ DWORD dwPropId, void *pvData, DWORD *pcbData);
+
+BOOL WINAPI CertSetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
+ DWORD dwPropId, DWORD dwFlags, const void *pvData);
+
 BOOL WINAPI CertGetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
  void *pvData, DWORD *pcbData);
 
@@ -2205,7 +2232,7 @@ BOOL WINAPI CertAddEncodedCTLToStore(HCERTSTORE hCertStore,
 
 BOOL WINAPI CertAddSerializedElementToStore(HCERTSTORE hCertStore,
  const BYTE *pbElement, DWORD cbElement, DWORD dwAddDisposition, DWORD dwFlags,
- DWORD dwContextTypeFlags, DWORD *pdwContentType, const void *ppvContext);
+ DWORD dwContextTypeFlags, DWORD *pdwContentType, const void **ppvContext);
 
 const void *CertCreateContext(DWORD dwContextType, DWORD dwEncodingType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
