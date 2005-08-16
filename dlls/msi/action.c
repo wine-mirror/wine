@@ -3709,7 +3709,7 @@ UINT ACTION_ResolveSource(MSIPACKAGE* package)
                 INSTALLPROPERTY_DISKPROMPTW,NULL,&size);
         if (rc == ERROR_MORE_DATA)
         {
-            prompt = HeapAlloc(GetProcessHeap(),0,size);
+            prompt = HeapAlloc(GetProcessHeap(),0,size * sizeof(WCHAR));
             MsiSourceListGetInfoW(package->ProductCode, NULL, 
                     MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT,
                     INSTALLPROPERTY_DISKPROMPTW,prompt,&size);
@@ -3728,6 +3728,7 @@ UINT ACTION_ResolveSource(MSIPACKAGE* package)
             }
             attrib = GetFileAttributesW(package->PackagePath);
         }
+        HeapFree(GetProcessHeap(),0,prompt);
         rc = ERROR_SUCCESS;
     }
     else
