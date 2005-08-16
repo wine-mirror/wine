@@ -1155,7 +1155,9 @@ static user_handle_t find_hardware_message_window( struct thread_input *input, s
         if (!input || !(win = input->capture))
         {
             if (!(win = msg->win) || !is_window_visible( win ))
-                win = window_from_point( input->desktop, msg->x, msg->y );
+            {
+                if (input) win = window_from_point( input->desktop, msg->x, msg->y );
+            }
         }
     }
     return win;
