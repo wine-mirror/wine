@@ -31,12 +31,13 @@ C_SRCS = \
 	propsheet.c \
 	rebar.c \
 	smoothscroll.c \
-	string.c \
 	status.c \
+	string.c \
 	syslink.c \
 	tab.c \
-	theming.c \
+	theme_combo.c \
 	theme_edit.c \
+	theming.c \
 	toolbar.c \
 	tooltips.c \
 	trackbar.c \
