@@ -1836,10 +1836,10 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
     NTSTATUS    status;
     static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
 
-    TRACE("(%p %lx %p %p %lx %ld %lx %ld %ld %ld %ld %ld %ld %p)\n",
-          handle, access, oa, iosb, sharing, dispo, options, pipe_type,
-          read_mode, completion_mode, max_inst, inbound_quota, outbound_quota,
-          timeout);
+    TRACE("(%p %lx %s %p %lx %ld %lx %ld %ld %ld %ld %ld %ld %p)\n",
+          handle, access, debugstr_w(oa->ObjectName->Buffer), iosb, sharing, dispo,
+          options, pipe_type, read_mode, completion_mode, max_inst, inbound_quota,
+          outbound_quota, timeout);
 
     if (oa->ObjectName->Length < sizeof(leadin) ||
         strncmpiW( oa->ObjectName->Buffer, 
