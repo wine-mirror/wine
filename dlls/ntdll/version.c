@@ -169,6 +169,11 @@ static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
                                          'M','i','c','r','o','s','o','f','t','\\',
                                          'W','i','n','d','o','w','s',' ','N','T','\\',
                                          'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
+    static const WCHAR service_pack_keyW[] = {'M','a','c','h','i','n','e','\\',
+                                              'S','y','s','t','e','m','\\',
+                                              'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                              'C','o','n','t','r','o','l','\\',
+                                              'W','i','n','d','o','w','s',0};
     static const WCHAR product_keyW[] = {'M','a','c','h','i','n','e','\\',
                                          'S','y','s','t','e','m','\\',
                                          'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -184,10 +189,9 @@ static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
 
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW, valueW;
-    HANDLE hkey, product;
+    HANDLE hkey, hkey2;
     char tmp[64];
     DWORD count;
-    WCHAR *p;
     BOOL ret = FALSE;
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)tmp;
 
@@ -242,19 +246,31 @@ static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
             version->szCSDVersion[len / sizeof(WCHAR)] = 0;
         }
 
-        /* get service pack version (FIXME: should find a better way) */
+        /* get service pack version */
 
-        for (p = version->szCSDVersion; *p; p++) if (isdigitW(*p)) break;
-        if (*p) version->wServicePackMajor = atoiW(p);
-        if ((p = strchrW( p, '.' ))) version->wServicePackMinor = atoiW(p + 1);
+        RtlInitUnicodeString( &nameW, service_pack_keyW );
+        if (!NtOpenKey( &hkey2, KEY_ALL_ACCESS, &attr ))
+        {
+            RtlInitUnicodeString( &valueW, CSDVersionW );
+            if (!NtQueryValueKey( hkey2, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
+            {
+                if (info->DataLength >= sizeof(DWORD))
+                {
+                    DWORD dw = *(DWORD *)info->Data;
+                    version->wServicePackMajor = LOWORD(dw) >> 8;
+                    version->wServicePackMinor = LOWORD(dw) & 0xff;
+                }
+            }
+            NtClose( hkey2 );
+        }
 
         /* get product type */
 
         RtlInitUnicodeString( &nameW, product_keyW );
-        if (!NtOpenKey( &product, KEY_ALL_ACCESS, &attr ))
+        if (!NtOpenKey( &hkey2, KEY_ALL_ACCESS, &attr ))
         {
             RtlInitUnicodeString( &valueW, ProductTypeW );
-            if (!NtQueryValueKey( product, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp)-1, &count ))
+            if (!NtQueryValueKey( hkey2, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp)-1, &count ))
             {
                 WCHAR *str = (WCHAR *)info->Data;
                 str[info->DataLength / sizeof(WCHAR)] = 0;
@@ -262,7 +278,7 @@ static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
                 else if (!strcmpiW( str, LanmanNTW )) version->wProductType = VER_NT_DOMAIN_CONTROLLER;
                 else if (!strcmpiW( str, ServerNTW )) version->wProductType = VER_NT_SERVER;
             }
-            NtClose( product );
+            NtClose( hkey2 );
         }
 
         /* FIXME: get wSuiteMask */
