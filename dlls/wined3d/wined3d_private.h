@@ -1102,6 +1102,10 @@ typedef struct IWineD3DVertexShaderImpl {
     CONST DWORD                 *function;
     UINT                         functionLength;
 
+    DWORD usage;
+    DWORD version;
+    /* run time datas...  */
+    VSHADERDATA* data;
 #if 0 /* needs reworking */
     DWORD usage;
     DWORD version;
@@ -1125,13 +1129,11 @@ typedef struct IWineD3DPixelShaderImpl {
     IWineD3DDeviceImpl         *wineD3DDevice;
 
     
-    /* IWineD3DPixelShaderImpl*/
+    /* IWineD3DPixelShaderImpl */
     CONST DWORD                *function;
     UINT                        functionLength;
-
+        
 #if 0 /* needs reworking */
-    UINT functionLength;
-    DWORD version;
     /* run time datas */
     PSHADERDATA* data;
     PSHADERINPUTDATA input;
