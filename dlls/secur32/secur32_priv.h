@@ -80,5 +80,6 @@ PSTR  SECUR32_AllocMultiByteFromWide(PCWSTR str);
 /* Initialization functions for built-in providers */
 void SECUR32_initSchannelSP(void);
 void SECUR32_initNegotiateSP(void);
+void SECUR32_initNTLMSP(void);
 
 #endif /* ndef __SECUR32_PRIV_H__ */

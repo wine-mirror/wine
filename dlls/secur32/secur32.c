@@ -611,6 +611,7 @@ static void SECUR32_initializeProviders(void)
     /* First load built-in providers */
     SECUR32_initSchannelSP();
     SECUR32_initNegotiateSP();
+    SECUR32_initNTLMSP();
     /* Now load providers from registry */
     apiRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, securityProvidersKeyW, 0,
      KEY_READ, &key);
