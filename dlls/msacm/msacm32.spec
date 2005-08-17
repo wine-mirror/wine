@@ -44,4 +44,4 @@
 
 ################################################################
 # Wine internal extension
-@ stdcall DriverProc(long long long long long) PCM_DriverProc
+@ stdcall -private DriverProc(long long long long long) PCM_DriverProc

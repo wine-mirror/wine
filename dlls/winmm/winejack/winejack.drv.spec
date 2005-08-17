@@ -1,3 +1,3 @@
-@ stdcall DriverProc(long long long long long) JACK_DriverProc
-@ stdcall widMessage(long long long long long) JACK_widMessage
-@ stdcall wodMessage(long long long long long) JACK_wodMessage
+@ stdcall -private DriverProc(long long long long long) JACK_DriverProc
+@ stdcall -private widMessage(long long long long long) JACK_widMessage
+@ stdcall -private wodMessage(long long long long long) JACK_wodMessage
