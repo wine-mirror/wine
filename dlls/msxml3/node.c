@@ -186,7 +186,7 @@ static HRESULT WINAPI xmlnode_Invoke(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlnode_get_xmlnodeName(
+static HRESULT WINAPI xmlnode_get_nodeName(
     IXMLDOMNode *iface,
     BSTR* name)
 {
@@ -213,7 +213,7 @@ BSTR bstr_from_xmlChar( const xmlChar *buf )
     return bstr;
 }
 
-static HRESULT WINAPI xmlnode_get_xmlnodeValue(
+static HRESULT WINAPI xmlnode_get_nodeValue(
     IXMLDOMNode *iface,
     VARIANT* value)
 {
@@ -247,7 +247,7 @@ static HRESULT WINAPI xmlnode_get_xmlnodeValue(
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_put_xmlnodeValue(
+static HRESULT WINAPI xmlnode_put_nodeValue(
     IXMLDOMNode *iface,
     VARIANT value)
 {
@@ -255,7 +255,7 @@ static HRESULT WINAPI xmlnode_put_xmlnodeValue(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlnode_get_xmlnodeType(
+static HRESULT WINAPI xmlnode_get_nodeType(
     IXMLDOMNode *iface,
     DOMNodeType* type)
 {
@@ -386,7 +386,7 @@ static HRESULT WINAPI xmlnode_cloneNode(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlnode_get_xmlnodeTypeString(
+static HRESULT WINAPI xmlnode_get_nodeTypeString(
     IXMLDOMNode *iface,
     BSTR* xmlnodeType)
 {
@@ -426,7 +426,7 @@ static HRESULT WINAPI xmlnode_get_definition(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlnode_get_xmlnodeTypedValue(
+static HRESULT WINAPI xmlnode_get_nodeTypedValue(
     IXMLDOMNode *iface,
     VARIANT* typedValue)
 {
@@ -434,7 +434,7 @@ static HRESULT WINAPI xmlnode_get_xmlnodeTypedValue(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlnode_put_xmlnodeTypedValue(
+static HRESULT WINAPI xmlnode_put_nodeTypedValue(
     IXMLDOMNode *iface,
     VARIANT typedValue)
 {
@@ -543,10 +543,10 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_GetTypeInfo,
     xmlnode_GetIDsOfNames,
     xmlnode_Invoke,
-    xmlnode_get_xmlnodeName,
-    xmlnode_get_xmlnodeValue,
-    xmlnode_put_xmlnodeValue,
-    xmlnode_get_xmlnodeType,
+    xmlnode_get_nodeName,
+    xmlnode_get_nodeValue,
+    xmlnode_put_nodeValue,
+    xmlnode_get_nodeType,
     xmlnode_get_parentNode,
     xmlnode_get_childNodes,
     xmlnode_get_firstChild,
@@ -561,13 +561,13 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_hasChildNodes,
     xmlnode_get_ownerDocument,
     xmlnode_cloneNode,
-    xmlnode_get_xmlnodeTypeString,
+    xmlnode_get_nodeTypeString,
     xmlnode_get_text,
     xmlnode_put_text,
     xmlnode_get_specified,
     xmlnode_get_definition,
-    xmlnode_get_xmlnodeTypedValue,
-    xmlnode_put_xmlnodeTypedValue,
+    xmlnode_get_nodeTypedValue,
+    xmlnode_put_nodeTypedValue,
     xmlnode_get_dataType,
     xmlnode_put_dataType,
     xmlnode_get_xml,
