@@ -155,6 +155,7 @@ extern int num_lock;
 #define GL_SUPPORT(ExtName)           (GLINFO_LOCATION.supported[ExtName] != 0)
 #define GL_LIMITS(ExtName)            (GLINFO_LOCATION.max_##ExtName)
 #define GL_EXTCALL(FuncName)          (GLINFO_LOCATION.FuncName)
+#define GL_VEND(_VendName)            (GLINFO_LOCATION.gl_vendor == VENDOR_##_VendName ? TRUE : FALSE)
 
 #define D3DCOLOR_R(dw) (((float) (((dw) >> 16) & 0xFF)) / 255.0f)
 #define D3DCOLOR_G(dw) (((float) (((dw) >>  8) & 0xFF)) / 255.0f)
@@ -888,9 +889,9 @@ struct IWineD3DStateBlockImpl
     /* Drawing - Vertex Shader or FVF related */
     DWORD                     fvf;
     /* Vertex Shader Declaration */
-    IWineD3DVertexDeclaration* vertexDecl;
+    IWineD3DVertexDeclaration *vertexDecl;
 
-    void                     *vertexShader; /* @TODO: Replace void * with IWineD3DVertexShader * */
+    IWineD3DVertexShader      *vertexShader; /* @TODO: Replace void * with IWineD3DVertexShader * */
 
     /* Vertex Shader Constants */
     BOOL                       vertexShaderConstantB[MAX_VSHADER_CONSTANTS];
@@ -1094,6 +1095,15 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
     /*** class static members ***/
     void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface);
 
+/* an emul for the type of constants that are used... adressing causes problems with being able to work out what's used and what's not.. so maybe we'll have to rely on the server vertex shader const functions? */
+enum vsConstantsEnum {
+    VS_CONSTANT_NOT_USED = 0,
+    VS_CONSTANT_CONSTANT,
+    VS_CONSTANT_INTEGER,
+    VS_CONSTANT_BOOLEAN,
+    VS_CONSTANT_FLOAT
+};
+
 /*****************************************************************************
  * IDirect3DVertexShader implementation structure
  */
@@ -1105,19 +1115,25 @@ typedef struct IWineD3DVertexShaderImpl {
     IUnknown                    *parent;
     IWineD3DDeviceImpl          *wineD3DDevice;
 
-    /* IWineD3DVertexShaderImpl*/
+    /* IWineD3DVertexShaderImpl */
     CONST DWORD                 *function;
     UINT                         functionLength;
 
     DWORD usage;
     DWORD version;
+
+    /* vertex declaration array mapping */
+    BOOL                        namedArrays;    /* don't map use named functions */
+    BOOL                        declaredArrays; /* mapping requires */
+    INT                         arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE];    /* lookup table for the maps */
+    INT                         highestConstant;
+    CHAR                        constantsUsedBitmap[256];
+    /* FIXME: This needs to be populated with some flags of VS_CONSTANT_NOT_USED, VS_CONSTANT_CONSTANT, VS_CONSTANT_INTEGER, VS_CONSTANT_BOOLEAN, VS_CONSTANT_FLOAT, a half byte bitmap will be the best option, but I'll keep it as chards for siplicity */
     /* run time datas...  */
     VSHADERDATA* data;
+    GLint                       prgId;
 #if 0 /* needs reworking */
-    DWORD usage;
-    DWORD version;
     /* run time datas */
-    VSHADERDATA* data;
     VSHADERINPUTDATA input;
     VSHADEROUTPUTDATA output;
 #endif

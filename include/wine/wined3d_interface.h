@@ -1250,8 +1250,9 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DVertexShader methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
-    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;    
-    STDMETHOD(GetFunction)(THIS_ VOID* pData, UINT* pSizeOfData) PURE;
+    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;
+    STDMETHOD(GetFunction)(THIS_ VOID *pData, UINT *pSizeOfData) PURE;
+    STDMETHOD(SetFunction)(THIS_ CONST DWORD *pFunction) PURE;
     STDMETHOD(SetConstantB)(THIS_ UINT StartRegister, CONST BOOL*  pConstantData, UINT BoolCount) PURE;
     STDMETHOD(SetConstantI)(THIS_ UINT StartRegister, CONST INT*   pConstantData, UINT Vector4iCount) PURE;
     STDMETHOD(SetConstantF)(THIS_ UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount) PURE;
@@ -1272,6 +1273,7 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IUnknown)
 #define IWineD3DVertexShader_GetParent(p,a)            (p)->lpVtbl->GetParent(p,a)
 #define IWineD3DVertexShader_GetDevice(p,a)            (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DVertexShader_GetFunction(p,a,b)        (p)->lpVtbl->GetFunction(p,a,b)
+#define IWineD3DVertexShader_SetFunction(p,a)          (p)->lpVtbl->SetFunction(p,a)
 #define IWineD3DVertexShader_SetConstantB(p,a,b,c)     (p)->lpVtbl->SetConstantB(p,a,b,c)
 #define IWineD3DVertexShader_SetConstantI(p,a,b,c)     (p)->lpVtbl->SetConstantI(p,a,b,c)
 #define IWineD3DVertexShader_SetConstantF(p,a,b,c)     (p)->lpVtbl->SetConstantF(p,a,b,c)

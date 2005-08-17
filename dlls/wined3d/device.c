@@ -1451,14 +1451,15 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice* iface,
 }
 
 /* http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/programmable/vertexshaders/vscreate.asp */
-HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice* iface,  CONST DWORD* pFunction, IWineD3DVertexShader** ppVertexShader, IUnknown *parent) {
+HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface,  CONST DWORD *pFunction, IWineD3DVertexShader** ppVertexShader, IUnknown *parent) {
     IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexShaderImpl *object;  /* NOTE: impl usage is ok, this is a create */
     D3DCREATEOBJECTINSTANCE(object, VertexShader)
-    object->function      = pFunction;
-    FIXME("(%p) : STUB: Created Vertex shader %p\n", This, ppVertexShader);
-    return D3D_OK;
 
+    TRACE("(%p) : Created Vertex shader %p\n", This, ppVertexShader);
+    IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction);
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice* iface, CONST DWORD* pFunction, IWineD3DPixelShader** ppPixelShader, IUnknown *parent) {
@@ -1473,7 +1474,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice* iface, IWineD3D** 
    TRACE("(%p) : wineD3D returning %p\n", This,  *ppD3D);
    IWineD3D_AddRef(*ppD3D);
    return D3D_OK;
-
 }
 
 UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *iface) {
@@ -3417,41 +3417,30 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice* iface, IW
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3DVertexShader* pShader) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    static BOOL showFixmes = TRUE;
+    IWineD3DVertexShader *oldShader = This->updateStateBlock->vertexShader;
 
     This->updateStateBlock->vertexShader = pShader;
     This->updateStateBlock->changed.vertexShader = TRUE;
     This->updateStateBlock->set.vertexShader = TRUE;
 
-    if(pShader == NULL) {
-    /* clear down the shader */
-        TRACE("Clear down the shader\n");
-    }else{
-        if(showFixmes) {
-            FIXME("(%p) : stub pShader(%p)\n", This, pShader);
-            showFixmes = FALSE;
-        }
-    }
-
-    return D3D_OK;
-
-    /** FIXME: refernece counting? **/
-    if (pShader  == NULL) { /* only valid with non FVF shaders */
-      TRACE_(d3d_shader)("(%p) : FVF Shader, pShader=%p\n", This, pShader);
-      This->updateStateBlock->vertexShader = NULL;
-    } else {
-       TRACE_(d3d_shader)("(%p) : Created shader, pShader=%p\n", This, pShader);
-      This->updateStateBlock->vertexShader = pShader;
-    }
-
-    This->updateStateBlock->changed.vertexShader = TRUE;
-    This->updateStateBlock->set.vertexShader = TRUE;
-
-    /* Handle recording of state blocks */
     if (This->isRecordingState) {
-      TRACE("Recording... not performing anything\n");
-      return D3D_OK;
+        TRACE("Recording... not performing anything\n");
+        return D3D_OK;
+    }
+
+    if (pShader != NULL) {
+        IUnknown *newVertexShaderParent;
+        /* GetParent will add a ref, so leave it hanging until the vertex buffer is cleared */
+        TRACE("(%p) : setting pShader(%p)\n", This, pShader);
+        IWineD3DVertexShader_GetParent(pShader, &newVertexShaderParent);
+    } else {
+        TRACE("Clear down the shader\n");
+    }
+    if (oldShader != NULL) {
+        IUnknown *oldVertexShaderParent;
+        IWineD3DVertexShader_GetParent(oldShader, &oldVertexShaderParent);
+        IUnknown_Release(oldVertexShaderParent);
+        IUnknown_Release(oldVertexShaderParent);
     }
     /**
      * TODO: merge HAL shaders context switching from prototype
@@ -3461,7 +3450,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDevice *iface, IWineD3DVertexShader** ppShader) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    *ppShader = This->stateBlock->vertexShader;
+    *ppShader = This->updateStateBlock->vertexShader;
     if(*ppShader != NULL)
         IWineD3DVertexShader_AddRef(*ppShader);
     TRACE("(%p) : returning %p\n", This, *ppShader);
