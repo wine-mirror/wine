@@ -1067,7 +1067,6 @@ IMPORT_SYMLINKS = \
 	libntdll.$(IMPLIBEXT) \
 	libolecli32.$(IMPLIBEXT) \
 	libolesvr32.$(IMPLIBEXT) \
-	libtwain_32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
 	libw32skrnl.$(IMPLIBEXT) \
 	libwinnls32.$(IMPLIBEXT) \
@@ -1117,7 +1116,6 @@ IMPORT_LIBS = \
 	gdi/libgdi32.$(IMPLIBEXT) \
 	glu32/libglu32.$(IMPLIBEXT) \
 	glut32/libglut32.$(IMPLIBEXT) \
-	iccvid/libiccvid.$(IMPLIBEXT) \
 	icmp/libicmp.$(IMPLIBEXT) \
 	imagehlp/libimagehlp.$(IMPLIBEXT) \
 	imm32/libimm32.$(IMPLIBEXT) \
@@ -1133,13 +1131,11 @@ IMPORT_LIBS = \
 	mshtml/libmshtml.$(IMPLIBEXT) \
 	msi/libmsi.$(IMPLIBEXT) \
 	msimg32/libmsimg32.$(IMPLIBEXT) \
-	msrle32/libmsrle32.$(IMPLIBEXT) \
 	msvcrt/libmsvcrt.$(IMPLIBEXT) \
 	msvcrt20/libmsvcrt20.$(IMPLIBEXT) \
 	msvcrt40/libmsvcrt40.$(IMPLIBEXT) \
 	msvcrtd/libmsvcrtd.$(IMPLIBEXT) \
 	msvideo/libmsvfw32.$(IMPLIBEXT) \
-	msvidc32/libmsvidc32.$(IMPLIBEXT) \
 	mswsock/libmswsock.$(IMPLIBEXT) \
 	netapi32/libnetapi32.$(IMPLIBEXT) \
 	newdev/libnewdev.$(IMPLIBEXT) \
@@ -1173,7 +1169,6 @@ IMPORT_LIBS = \
 	snmpapi/libsnmpapi.$(IMPLIBEXT) \
 	sti/libsti.$(IMPLIBEXT) \
 	tapi32/libtapi32.$(IMPLIBEXT) \
-	twain/libtwain_32.$(IMPLIBEXT) \
 	unicows/libunicows.$(IMPLIBEXT) \
 	url/liburl.$(IMPLIBEXT) \
 	urlmon/liburlmon.$(IMPLIBEXT) \
@@ -1308,9 +1303,6 @@ glu32/libglu32.$(IMPLIBEXT): glu32/glu32.spec $(WINEBUILD)
 glut32/libglut32.$(IMPLIBEXT): glut32/glut32.spec $(WINEBUILD)
 	@cd glut32 && $(MAKE) libglut32.$(IMPLIBEXT)
 
-iccvid/libiccvid.$(IMPLIBEXT): iccvid/iccvid.spec $(WINEBUILD)
-	@cd iccvid && $(MAKE) libiccvid.$(IMPLIBEXT)
-
 icmp/libicmp.$(IMPLIBEXT): icmp/icmp.spec $(WINEBUILD)
 	@cd icmp && $(MAKE) libicmp.$(IMPLIBEXT)
 
@@ -1356,9 +1348,6 @@ msi/libmsi.$(IMPLIBEXT): msi/msi.spec $(WINEBUILD)
 msimg32/libmsimg32.$(IMPLIBEXT): msimg32/msimg32.spec $(WINEBUILD)
 	@cd msimg32 && $(MAKE) libmsimg32.$(IMPLIBEXT)
 
-msrle32/libmsrle32.$(IMPLIBEXT): msrle32/msrle32.spec $(WINEBUILD)
-	@cd msrle32 && $(MAKE) libmsrle32.$(IMPLIBEXT)
-
 msvcrt/libmsvcrt.$(IMPLIBEXT): msvcrt/msvcrt.spec $(WINEBUILD)
 	@cd msvcrt && $(MAKE) libmsvcrt.$(IMPLIBEXT)
 
@@ -1373,9 +1362,6 @@ msvcrtd/libmsvcrtd.$(IMPLIBEXT): msvcrtd/msvcrtd.spec $(WINEBUILD)
 
 msvideo/libmsvfw32.$(IMPLIBEXT): msvideo/msvfw32.spec $(WINEBUILD)
 	@cd msvideo && $(MAKE) libmsvfw32.$(IMPLIBEXT)
-
-msvidc32/libmsvidc32.$(IMPLIBEXT): msvidc32/msvidc32.spec $(WINEBUILD)
-	@cd msvidc32 && $(MAKE) libmsvidc32.$(IMPLIBEXT)
 
 mswsock/libmswsock.$(IMPLIBEXT): mswsock/mswsock.spec $(WINEBUILD)
 	@cd mswsock && $(MAKE) libmswsock.$(IMPLIBEXT)
@@ -1476,9 +1462,6 @@ sti/libsti.$(IMPLIBEXT): sti/sti.spec $(WINEBUILD)
 tapi32/libtapi32.$(IMPLIBEXT): tapi32/tapi32.spec $(WINEBUILD)
 	@cd tapi32 && $(MAKE) libtapi32.$(IMPLIBEXT)
 
-twain/libtwain_32.$(IMPLIBEXT): twain/twain_32.spec $(WINEBUILD)
-	@cd twain && $(MAKE) libtwain_32.$(IMPLIBEXT)
-
 unicows/libunicows.$(IMPLIBEXT): unicows/unicows.spec $(WINEBUILD)
 	@cd unicows && $(MAKE) libunicows.$(IMPLIBEXT)
 
@@ -1577,9 +1560,6 @@ libolecli32.$(IMPLIBEXT): olecli/libolecli32.$(IMPLIBEXT)
 
 libolesvr32.$(IMPLIBEXT): olesvr/libolesvr32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) olesvr/libolesvr32.$(IMPLIBEXT) $@
-
-libtwain_32.$(IMPLIBEXT): twain/libtwain_32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) twain/libtwain_32.$(IMPLIBEXT) $@
 
 libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@

@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = iccvid.dll
-IMPORTLIB = libiccvid.$(IMPLIBEXT)
 IMPORTS   = kernel32
 
 C_SRCS = \

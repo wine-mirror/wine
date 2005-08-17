@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msrle32.dll
-IMPORTLIB = libmsrle32.$(IMPLIBEXT)
 IMPORTS   = winmm user32 kernel32
 
 C_SRCS = msrle32.c

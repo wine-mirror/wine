@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvidc32.dll
-IMPORTLIB = libmsvidc32.$(IMPLIBEXT)
 IMPORTS   = kernel32
 
 C_SRCS = \
