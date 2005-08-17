@@ -150,13 +150,13 @@ typedef struct _IFilterGraphImpl {
     const IMediaEventExVtbl *IMediaEventEx_vtbl;
     const IMediaFilterVtbl *IMediaFilter_vtbl;
     const IMediaEventSinkVtbl *IMediaEventSink_vtbl;
+    const IGraphConfigVtbl *IGraphConfig_vtbl;
     /* IAMGraphStreams */
     /* IAMStats */
     /* IBasicVideo2 */
     /* IFilterChain */
     /* IFilterGraph2 */
     /* IFilterMapper2 */
-    /* IGraphConfig */
     /* IGraphVersion */
     /* IMediaPosition */
     /* IQueueCommand */
@@ -221,6 +221,9 @@ static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
     } else if (IsEqualGUID(&IID_IMediaEventSink, riid)) {
         *ppvObj = &(This->IMediaEventSink_vtbl);
         TRACE("   returning IMediaEventSink interface (%p)\n", *ppvObj);
+    } else if (IsEqualGUID(&IID_IGraphConfig, riid)) {
+        *ppvObj = &(This->IGraphConfig_vtbl);
+        TRACE("   returning IGraphConfig interface (%p)\n", *ppvObj);
     } else {
         *ppvObj = NULL;
 	FIXME("unknown interface %s\n", debugstr_guid(riid));
@@ -3091,6 +3094,157 @@ static const IMediaEventSinkVtbl IMediaEventSink_VTable =
     MediaEventSink_Notify
 };
 
+static HRESULT WINAPI GraphConfig_QueryInterface(IGraphConfig *iface, REFIID riid, LPVOID *ppv)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    return Filtergraph_QueryInterface(This, riid, ppv);
+}
+
+static ULONG WINAPI GraphConfig_AddRef(IGraphConfig *iface)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventSink_vtbl, iface);
+
+    return Filtergraph_AddRef(This);
+}
+
+static ULONG WINAPI GraphConfig_Release(IGraphConfig *iface)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    return Filtergraph_Release(This);
+}
+
+static HRESULT WINAPI GraphConfig_Reconnect(IGraphConfig *iface,
+					    IPin* pOutputPin,
+					    IPin* pInputPin,
+					    const AM_MEDIA_TYPE* pmtFirstConnection,
+					    IBaseFilter* pUsingFilter,
+					    HANDLE hAbortEvent,
+					    DWORD dwFlags)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    FIXME("(%p)->(%p, %p, %p, %p, %p, %lx): stub!\n", This, pOutputPin, pInputPin, pmtFirstConnection, pUsingFilter, hAbortEvent, dwFlags);
+    
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GraphConfig_Reconfigure(IGraphConfig *iface,
+					      IGraphConfigCallback* pCallback,
+					      PVOID pvContext,
+					      DWORD dwFlags,
+					      HANDLE hAbortEvent)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    FIXME("(%p)->(%p, %p, %lx, %p): stub!\n", This, pCallback, pvContext, dwFlags, hAbortEvent);
+    
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GraphConfig_AddFilterToCache(IGraphConfig *iface,
+						   IBaseFilter* pFilter)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    FIXME("(%p)->(%p): stub!\n", This, pFilter);
+    
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GraphConfig_EnumCacheFilter(IGraphConfig *iface,
+						  IEnumFilters** pEnum)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    FIXME("(%p)->(%p): stub!\n", This, pEnum);
+    
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GraphConfig_RemoveFilterFromCache(IGraphConfig *iface,
+							IBaseFilter* pFilter)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    FIXME("(%p)->(%p): stub!\n", This, pFilter);
+    
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GraphConfig_GetStartTime(IGraphConfig *iface,
+					       REFERENCE_TIME* prtStart)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    FIXME("(%p)->(%p): stub!\n", This, prtStart);
+    
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GraphConfig_PushThroughData(IGraphConfig *iface,
+						  IPin* pOutputPin,
+						  IPinConnection* pConnection,
+						  HANDLE hEventAbort)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    FIXME("(%p)->(%p, %p, %p): stub!\n", This, pOutputPin, pConnection, hEventAbort);
+    
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GraphConfig_SetFilterFlags(IGraphConfig *iface,
+						 IBaseFilter* pFilter,
+						 DWORD dwFlags)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    FIXME("(%p)->(%p, %lx): stub!\n", This, pFilter, dwFlags);
+    
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GraphConfig_GetFilterFlags(IGraphConfig *iface,
+						 IBaseFilter* pFilter,
+						 DWORD* dwFlags)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    FIXME("(%p)->(%p, %p): stub!\n", This, pFilter, dwFlags);
+    
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GraphConfig_RemoveFilterEx(IGraphConfig *iface,
+					  	 IBaseFilter* pFilter,
+						 DWORD dwFlags)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+
+    FIXME("(%p)->(%p, %lx): stub!\n", This, pFilter, dwFlags);
+    
+    return E_NOTIMPL;
+}
+
+static const IGraphConfigVtbl IGraphConfig_VTable =
+{
+    GraphConfig_QueryInterface,
+    GraphConfig_AddRef,
+    GraphConfig_Release,
+    GraphConfig_Reconnect,
+    GraphConfig_Reconfigure,
+    GraphConfig_AddFilterToCache,
+    GraphConfig_EnumCacheFilter,
+    GraphConfig_RemoveFilterFromCache,
+    GraphConfig_GetStartTime,
+    GraphConfig_PushThroughData,
+    GraphConfig_SetFilterFlags,
+    GraphConfig_GetFilterFlags,
+    GraphConfig_RemoveFilterEx
+};
+
 /* This is the only function that actually creates a FilterGraph class... */
 HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
@@ -3112,6 +3266,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->IMediaEventEx_vtbl = &IMediaEventEx_VTable;
     fimpl->IMediaFilter_vtbl = &IMediaFilter_VTable;
     fimpl->IMediaEventSink_vtbl = &IMediaEventSink_VTable;
+    fimpl->IGraphConfig_vtbl = &IGraphConfig_VTable;
     fimpl->ref = 1;
     fimpl->ppFiltersInGraph = NULL;
     fimpl->pFilterNames = NULL;
