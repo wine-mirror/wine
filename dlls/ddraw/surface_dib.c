@@ -819,7 +819,7 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	    }
 	} else {
            LONG dstyinc = ddesc.u1.lPitch, dstxinc = bpp;
-           DWORD keylow = 0, keyhigh = 0;
+           DWORD keylow = 0, keyhigh = 0, keymask = 0;
            if (dwFlags & (DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE)) {
 
 	      if (dwFlags & DDBLT_KEYSRC) {
@@ -835,7 +835,8 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 		 keylow  = lpbltfx->ddckDestColorkey.dwColorSpaceLowValue;
 		 keyhigh = lpbltfx->ddckDestColorkey.dwColorSpaceHighValue;
 	      }
-              dwFlags &= ~(DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE);
+	      keymask = sdesc.u4.ddpfPixelFormat.u2.dwRBitMask | sdesc.u4.ddpfPixelFormat.u3.dwGBitMask | sdesc.u4.ddpfPixelFormat.u4.dwBBitMask;
+	      dwFlags &= ~(DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE);
            }
 
            if (dwFlags & DDBLT_DDFX)  {
@@ -919,7 +920,7 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
                dx = d; \
 	       for (x = sx = 0; x < dstwidth; x++, sx += xinc) { \
 		  tmp = s[sx >> 16]; \
-		  if (tmp < keylow || tmp > keyhigh) dx[0] = tmp; \
+		  if ((tmp & keymask) < keylow || (tmp & keymask) > keyhigh) dx[0] = tmp; \
                   dx = (type*)(((LPBYTE)dx)+dstxinc); \
 	       } \
                d = (type*)(((LPBYTE)d)+dstyinc); \
@@ -938,7 +939,7 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 			DWORD pixel;
 			s = sbuf+3*(sx>>16);
 			pixel = s[0]|(s[1]<<8)|(s[2]<<16);
-                        if (pixel < keylow || pixel > keyhigh){
+                        if ((pixel & keymask) < keylow || (pixel & keymask) > keyhigh) {
 		            dx[0] = (pixel    )&0xff;
 			    dx[1] = (pixel>> 8)&0xff;
 			    dx[2] = (pixel>>16)&0xff;
