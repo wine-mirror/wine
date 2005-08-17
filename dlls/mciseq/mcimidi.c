@@ -1,10 +1,8 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
-
 /*
  * Sample MIDI Wine Driver for Linux
  *
- * Copyright 	1994 Martin Ayotte
- *		1999 Eric Pouech
+ * Copyright 1994 Martin Ayotte
+ * Copyright 1999 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,14 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-/*
- * Eric POUECH :
- * 98/7 changes for making this MIDI driver work on OSS
- * 	current support is limited to MIDI ports of OSS systems
- * 98/9	rewriting MCI code for MIDI
- * 98/11 splitted in midi.c and mcimidi.c
  */
 
 /* TODO:
@@ -1092,7 +1082,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 		mmt->wStatus = 0;
 		break;
 	    case 0x51:/* set tempo */
-		/* Tempo is expressed in µ-seconds per midi quarter note
+		/* Tempo is expressed in -seconds per midi quarter note
 		 * for format 1 MIDI files, this can only be present on track #0
 		 */
 		if (mmt->wTrackNr != 0 && wmm->wFormat == 1) {

@@ -71,6 +71,7 @@ BASEDIRS = \
 	lzexpand \
 	mapi32 \
 	mcicda \
+	mciseq \
 	midimap \
 	mlang \
 	mmdevldr.vxd \
@@ -158,7 +159,6 @@ BASEDIRS = \
 	winmm/joystick \
 	winmm/mcianim \
 	winmm/mciavi \
-	winmm/mciseq \
 	winmm/mciwave \
 	winmm/wavemap \
 	winmm/winealsa \
@@ -321,7 +321,7 @@ SYMLINKS_SO = \
 	mcianim.drv.so \
 	mciavi.drv.so \
 	mcicda.dll.so \
-	mciseq.drv.so \
+	mciseq.dll.so \
 	mciwave.drv.so \
 	midimap.dll.so \
 	mlang.dll.so \
@@ -658,8 +658,8 @@ mciavi.drv.so: winmm/mciavi/mciavi.drv.so
 mcicda.dll.so: mcicda/mcicda.dll.so
 	$(RM) $@ && $(LN_S) mcicda/mcicda.dll.so $@
 
-mciseq.drv.so: winmm/mciseq/mciseq.drv.so
-	$(RM) $@ && $(LN_S) winmm/mciseq/mciseq.drv.so $@
+mciseq.dll.so: mciseq/mciseq.dll.so
+	$(RM) $@ && $(LN_S) mciseq/mciseq.dll.so $@
 
 mciwave.drv.so: winmm/mciwave/mciwave.drv.so
 	$(RM) $@ && $(LN_S) winmm/mciwave/mciwave.drv.so $@
@@ -1666,7 +1666,7 @@ mapi32/mapi32.dll.so: mapi32
 winmm/mcianim/mcianim.drv.so: winmm/mcianim
 winmm/mciavi/mciavi.drv.so: winmm/mciavi
 mcicda/mcicda.dll.so: mcicda
-winmm/mciseq/mciseq.drv.so: winmm/mciseq
+mciseq/mciseq.dll.so: mciseq
 winmm/mciwave/mciwave.drv.so: winmm/mciwave
 midimap/midimap.dll.so: midimap
 mlang/mlang.dll.so: mlang

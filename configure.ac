@@ -1538,6 +1538,8 @@ dlls/lzexpand/Makefile
 dlls/lzexpand/tests/Makefile
 dlls/mapi32/Makefile
 dlls/mapi32/tests/Makefile
+dlls/mcicda/Makefile
+dlls/mciseq/Makefile
 dlls/midimap/Makefile
 dlls/mlang/Makefile
 dlls/mlang/tests/Makefile
@@ -1548,8 +1550,8 @@ dlls/msacm/Makefile
 dlls/msacm/imaadp32/Makefile
 dlls/msacm/msadp32/Makefile
 dlls/msacm/msg711/Makefile
-dlls/msacm/winemp3/Makefile
 dlls/msacm/tests/Makefile
+dlls/msacm/winemp3/Makefile
 dlls/mscms/Makefile
 dlls/mscms/tests/Makefile
 dlls/msdmo/Makefile
@@ -1653,8 +1655,6 @@ dlls/winmm/Makefile
 dlls/winmm/joystick/Makefile
 dlls/winmm/mcianim/Makefile
 dlls/winmm/mciavi/Makefile
-dlls/mcicda/Makefile
-dlls/winmm/mciseq/Makefile
 dlls/winmm/mciwave/Makefile
 dlls/winmm/tests/Makefile
 dlls/winmm/wavemap/Makefile

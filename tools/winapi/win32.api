@@ -1799,7 +1799,7 @@ DWORD
 HDRVR
 LONG
 
-%%mciseq.drv
+%%mciseq.dll
 
 %long
 
