@@ -139,11 +139,11 @@ end:
  *
  * If valueName or value is NULL, an empty section will be created
  */
-static int set_config_key(HKEY root, const char *subkey, const char *name, const char *value) {
+static int set_config_key(HKEY root, const char *subkey, const char *name, const BYTE *value, DWORD type) {
     DWORD res = 1;
     HKEY key = NULL;
 
-    WINE_TRACE("subkey=%s: name=%s, value=%s\n", subkey, name, value);
+    WINE_TRACE("subkey=%s: name=%s, value=%s, type=%ld\n", subkey, name, value, type);
 
     assert( subkey != NULL );
 
@@ -155,7 +155,11 @@ static int set_config_key(HKEY root, const char *subkey, const char *name, const
     else key = root;
     if (name == NULL || value == NULL) goto end;
 
-    res = RegSetValueEx(key, name, 0, REG_SZ, value, strlen(value) + 1);
+    switch (type)
+    {
+        case REG_SZ: res = RegSetValueEx(key, name, 0, REG_SZ, value, strlen(value) + 1); break;
+        case REG_DWORD: res = RegSetValueEx(key, name, 0, REG_DWORD, value, sizeof(DWORD)); break;
+    }
     if (res != ERROR_SUCCESS) goto end;
 
     res = 0;
@@ -213,6 +217,7 @@ struct setting
     char *path;   /* path in the registry rooted at root  */
     char *name;   /* name of the registry value. if null, this means delete the key  */
     char *value;  /* contents of the registry value. if null, this means delete the value  */
+    DWORD type;   /* type of registry value. REG_SZ or REG_DWORD for now */
 };
 
 struct list *settings;
@@ -281,16 +286,18 @@ char *get_reg_key(HKEY root, const char *path, const char *name, const char *def
  *
  * value is what to set the value to, or NULL to delete it.
  *
+ * type is REG_SZ or REG_DWORD.
+ *
  * These values will be copied when necessary.
  */
-void set_reg_key(HKEY root, const char *path, const char *name, const char *value)
+static void set_reg_key_ex(HKEY root, const char *path, const char *name, const void *value, DWORD type)
 {
     struct list *cursor;
     struct setting *s;
 
     assert( path != NULL );
 
-    WINE_TRACE("path=%s, name=%s, value=%s\n", path, name, value);
+    WINE_TRACE("path=%s, name=%s, value=%p\n", path, name, value);
 
     /* firstly, see if we already set this setting  */
     LIST_FOR_EACH( cursor, settings )
@@ -309,7 +316,17 @@ void set_reg_key(HKEY root, const char *path, const char *name, const char *valu
 
         /* yes, we have already set it, so just replace the content and return  */
         HeapFree(GetProcessHeap(), 0, s->value);
-        s->value = value ? strdupA(value) : NULL;
+        s->type = type;
+        switch (type)
+        {
+            case REG_SZ:
+                s->value = value ? strdupA(value) : NULL;
+                break;
+            case REG_DWORD:
+                s->value = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD));
+                memcpy( s->value, value, sizeof(DWORD) );
+                break;
+        }
 
         /* are we deleting this key? this won't remove any of the
          * children from the overlay so if the user adds it again in
@@ -329,9 +346,29 @@ void set_reg_key(HKEY root, const char *path, const char *name, const char *valu
     s->root  = root;
     s->path  = strdupA(path);
     s->name  = name  ? strdupA(name)  : NULL;
-    s->value = value ? strdupA(value) : NULL;
+    s->type  = type;
+    switch (type)
+    {
+        case REG_SZ:
+            s->value = value ? strdupA(value) : NULL;
+            break;
+        case REG_DWORD:
+            s->value = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD));
+            memcpy( s->value, value, sizeof(DWORD) );
+            break;
+    }
 
     list_add_tail(settings, &s->entry);
+}
+
+void set_reg_key(HKEY root, const char *path, const char *name, const char *value)
+{
+    set_reg_key_ex(root, path, name, value, REG_SZ);
+}
+
+void set_reg_key_dword(HKEY root, const char *path, const char *name, DWORD value)
+{
+    set_reg_key_ex(root, path, name, &value, REG_DWORD);
 }
 
 /**
@@ -466,7 +503,7 @@ static void process_setting(struct setting *s)
     if (s->value)
     {
 	WINE_TRACE("Setting %s:%s to '%s'\n", s->path, s->name, s->value);
-        set_config_key(s->root, s->path, s->name, s->value);
+        set_config_key(s->root, s->path, s->name, s->value, s->type);
     }
     else
     {

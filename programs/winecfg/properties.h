@@ -37,12 +37,6 @@
 #define MAX_VERSION_LENGTH      48
 #define MAX_DESCRIPTION_LENGTH 128
 
-typedef struct
-{
-    char  szVersion[MAX_VERSION_LENGTH];
-    char  szDescription[MAX_DESCRIPTION_LENGTH];
-} VERSION_DESC;
-
 #define DLL_NATIVE  0x0000
 #define DLL_BUILTIN 0x0001
 
@@ -93,11 +87,7 @@ typedef struct
   int nType;
 } DEV_NODES;
 
-const VERSION_DESC *getWinVersions(void);
-const VERSION_DESC *getDOSVersions(void);
 const DLL_DESC *getDLLDefaults(void);
 const AUDIO_DRIVER *getAudioDrivers(void);
-char* getVersionFromDescription(VERSION_DESC *pVer, char *desc);
-char* getDescriptionFromVersion(VERSION_DESC *pVer, char *ver);
 
 #endif

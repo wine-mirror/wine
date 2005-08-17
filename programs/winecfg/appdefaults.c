@@ -32,10 +32,38 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
+static const struct
+{
+    const char *szVersion;
+    const char *szDescription;
+    DWORD       dwMajorVersion;
+    DWORD       dwMinorVersion;
+    DWORD       dwBuildNumber;
+    DWORD       dwPlatformId;
+    const char *szCSDVersion;
+    WORD        wServicePackMajor;
+    WORD        wServicePackMinor;
+    const char *szProductType;
+} win_versions[] =
+{
+    { "win2003", "Windows 2003",   5,  2, 0xECE, VER_PLATFORM_WIN32_NT, "Service Pack 1", 1, 0, "ServerNT"},
+    { "winxp",   "Windows XP",     5,  1, 0xA28, VER_PLATFORM_WIN32_NT, "Service Pack 2", 2, 0, "WinNT"},
+    { "win2k",   "Windows 2000",   5,  0, 0x893, VER_PLATFORM_WIN32_NT, "Service Pack 4", 4, 0, "WinNT"},
+    { "winme",   "Windows ME",     4, 90, 0xBB8, VER_PLATFORM_WIN32_WINDOWS, " ", 0, 0, ""},
+    { "win98",   "Windows 98",     4, 10, 0x8AE, VER_PLATFORM_WIN32_WINDOWS, " A ", 0, 0, ""},
+    { "win95",   "Windows 95",     4,  0, 0x3B6, VER_PLATFORM_WIN32_WINDOWS, "", 0, 0, ""},
+    { "nt40",    "Windows NT 4.0", 4,  0, 0x565, VER_PLATFORM_WIN32_NT, "Service Pack 6a", 6, 0, "WinNT"},
+    { "nt351",   "Windows NT 3.5", 3, 51, 0x421, VER_PLATFORM_WIN32_NT, "Service Pack 2", 0, 0, "WinNT"},
+    { "win31",   "Windows 3.1",    2, 10,     0, VER_PLATFORM_WIN32s, "Win32s 1.3", 0, 0, ""},
+    { "win30",   "Windows 3.0",    3,  0,     0, VER_PLATFORM_WIN32s, "Win32s 1.3", 0, 0, ""},
+    { "win20",   "Windows 2.0",    2,  0,     0, VER_PLATFORM_WIN32s, "Win32s 1.3", 0, 0, ""}
+};
+
+#define NB_VERSIONS (sizeof(win_versions)/sizeof(win_versions[0]))
+
 static void update_comboboxes(HWND dialog)
 {
   int i;
-  const VERSION_DESC *pVer = NULL;
 
   char *winver;
   
@@ -48,17 +76,14 @@ static void update_comboboxes(HWND dialog)
   /* normalize the version strings */
   if (*winver != '\0')
   {
-    if ((pVer = getWinVersions ()))
-    {
-      for (i = 0; *pVer->szVersion || *pVer->szDescription; i++, pVer++)
+      for (i = 0; i < NB_VERSIONS; i++)
       {
-	if (!strcasecmp (pVer->szVersion, winver))
+	if (!strcasecmp (win_versions[i].szVersion, winver))
 	{
 	  SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL, (WPARAM) (i + 1), 0);
-	  WINE_TRACE("match with %s\n", pVer->szVersion);
+	  WINE_TRACE("match with %s\n", win_versions[i].szVersion);
 	}
       }
-    }
   }
   else /* no explicit setting */
   {
@@ -73,7 +98,6 @@ static void
 init_comboboxes (HWND dialog)
 {
   int i;
-  const VERSION_DESC *ver = NULL;
 
   SendDlgItemMessage(dialog, IDC_WINVER, CB_RESETCONTENT, 0, 0);
 
@@ -87,14 +111,11 @@ init_comboboxes (HWND dialog)
       SendDlgItemMessage(dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM) "Automatically detect required version");
   }
 
-  if ((ver = getWinVersions ()))
-  {
-    for (i = 0; *ver->szVersion || *ver->szDescription; i++, ver++)
+    for (i = 0; i < NB_VERSIONS; i++)
     {
       SendDlgItemMessage (dialog, IDC_WINVER, CB_ADDSTRING,
-			  0, (LPARAM) ver->szDescription);
+                          0, (LPARAM) win_versions[i].szDescription);
     }
-  }
 }
 
 static void add_listview_item(HWND listview, const char *text, void *association)
@@ -291,7 +312,6 @@ static void on_remove_app_click(HWND dialog)
 static void on_winver_change(HWND dialog)
 {
     int selection = SendDlgItemMessage(dialog, IDC_WINVER, CB_GETCURSEL, 0, 0);
-    const VERSION_DESC *ver = getWinVersions();
 
     if (selection == 0)
     {
@@ -300,8 +320,59 @@ static void on_winver_change(HWND dialog)
     }
     else
     {
-        WINE_TRACE("setting Version key to value '%s'\n", ver[selection - 1].szVersion);
-        set_reg_key(config_key, keypath(""), "Version", ver[selection - 1].szVersion);
+        WINE_TRACE("setting Version key to value '%s'\n", win_versions[selection - 1].szVersion);
+        set_reg_key(config_key, keypath(""), "Version", win_versions[selection - 1].szVersion);
+    }
+    /* global version only */
+    if (!current_app && selection != 0)
+    {
+        static const char szKey9x[] = "Software\\Microsoft\\Windows\\CurrentVersion";
+        static const char szKeyNT[] = "Software\\Microsoft\\Windows NT\\CurrentVersion";
+        static const char szKeyProdNT[] = "System\\CurrentControlSet\\Control\\ProductOptions";
+        static const char szKeyWindNT[] = "System\\CurrentControlSet\\Control\\Windows";
+        char Buffer[40];
+
+        switch (win_versions[selection-1].dwPlatformId)
+        {
+        case VER_PLATFORM_WIN32_WINDOWS:
+            snprintf(Buffer, sizeof(Buffer), "%ld.%ld.%ld", win_versions[selection-1].dwMajorVersion,
+                     win_versions[selection-1].dwMinorVersion, win_versions[selection-1].dwBuildNumber);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", Buffer);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", win_versions[selection-1].szCSDVersion);
+
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyWindNT, "CSDVersion", NULL);
+            break;
+
+        case VER_PLATFORM_WIN32_NT:
+            snprintf(Buffer, sizeof(Buffer), "%ld.%ld", win_versions[selection-1].dwMajorVersion,
+                     win_versions[selection-1].dwMinorVersion);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", Buffer);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", win_versions[selection-1].szCSDVersion);
+            snprintf(Buffer, sizeof(Buffer), "%ld", win_versions[selection-1].dwBuildNumber);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", Buffer);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", win_versions[selection-1].szProductType);
+            set_reg_key_dword(HKEY_LOCAL_MACHINE, szKeyWindNT, "CSDVersion",
+                              MAKEWORD( win_versions[selection-1].wServicePackMinor,
+                                        win_versions[selection-1].wServicePackMajor ));
+
+            set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", NULL);
+            break;
+
+        case VER_PLATFORM_WIN32s:
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyWindNT, "CSDVersion", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", NULL);
+            break;
+        }
     }
 
     /* enable the apply button  */

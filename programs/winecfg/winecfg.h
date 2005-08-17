@@ -52,6 +52,7 @@ extern char *current_app; /* NULL means editing global settings  */
  */
 
 void set_reg_key(HKEY root, const char *path, const char *name, const char *value);
+void set_reg_key_dword(HKEY root, const char *path, const char *name, DWORD value);
 char *get_reg_key(HKEY root, const char *path, const char *name, const char *def);
 BOOL reg_key_exists(HKEY root, const char *path, const char *name);
 void apply(void);

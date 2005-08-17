@@ -24,21 +24,6 @@
 
 #include "properties.h"
 
-static const VERSION_DESC sWinVersions[] = {
-    {"win2003", "Windows 2003"},
-    {"winxp", "Windows XP"},
-    {"win2k", "Windows 2000"},
-    {"winme", "Windows ME"},
-    {"win98", "Windows 98"},
-    {"win95", "Windows 95"},
-    {"nt40", "Windows NT 4.0"},
-    {"nt351", "Windows NT 3.5"},
-    {"win31", "Windows 3.1"},
-    {"win30", "Windows 3.0"},
-    {"win20", "Windows 2.0"},
-    {"", ""}
-};
-
 static const DLL_DESC sDLLType[] = {
     {"oleaut32", DLL_BUILTIN},
     {"ole32", DLL_BUILTIN},
@@ -68,15 +53,6 @@ static const AUDIO_DRIVER sAudioDrivers[] = {
   {"Disable sound", ""},
   {"", ""}
 };
- 
-
-
-/*****************************************************************************
- */
-const VERSION_DESC* getWinVersions(void)
-{
-    return sWinVersions;
-}
 
 
 /*****************************************************************************
@@ -91,28 +67,4 @@ const DLL_DESC* getDLLDefaults(void)
 const AUDIO_DRIVER* getAudioDrivers(void)
 {
     return sAudioDrivers;
-}
-
-
-/* Functions to convert from version to description and back */
-char* getVersionFromDescription(VERSION_DESC* pVer, char *desc)
-{
-  for (; *pVer->szVersion; pVer++)
-  {
-    if(!strcasecmp(pVer->szDescription, desc))
-      return pVer->szVersion;
-  }
-
-  return NULL;
-}
-
-char* getDescriptionFromVersion(VERSION_DESC* pVer, char *ver)
-{
-  for (; *pVer->szDescription; pVer++)
-  {
-    if(!strcasecmp(pVer->szVersion, ver))
-      return pVer->szDescription;
-  }
-
-  return NULL;
 }
