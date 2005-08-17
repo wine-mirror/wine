@@ -330,6 +330,7 @@ static void InternetCrackUrl_test(void)
   char protocol[32], hostName[1024], userName[1024];
   char password[1024], extra[1024], path[1024];
   BOOL ret;
+  DWORD GLE;
 
   ZeroMemory(&urlSrc, sizeof(urlSrc));
   urlSrc.dwStructSize = sizeof(urlSrc);
@@ -365,8 +366,55 @@ static void InternetCrackUrl_test(void)
   ok(!strncmp(urlComponents.lpszHostName,TEST_URL2_SERVER,strlen(TEST_URL2_SERVER)),"lpszHostName should be %s but is %s\n", TEST_URL2_SERVER, urlComponents.lpszHostName);
 
   /*3. Check for %20 */
-  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 0);
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);
   ok(InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents),"InternetCrackUrl failed with GLE 0x%lx\n",GetLastError());
+
+
+  /* Tests for lpsz* members pointing to real strings while 
+   * some corresponding length members are set to zero */
+  copy_compsA(&urlSrc, &urlComponents, 0, 1024, 1024, 1024, 2048, 1024);
+  ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
+  ok(ret==1, "InternetCrackUrl returned %d with GLE=%ld (expected to return 1)\n",
+    ret, GetLastError());
+
+  copy_compsA(&urlSrc, &urlComponents, 32, 0, 1024, 1024, 2048, 1024);
+  ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
+  ok(ret==1, "InternetCrackUrl returned %d with GLE=%ld (expected to return 1)\n",
+    ret, GetLastError());
+
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 0, 1024, 2048, 1024);
+  ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
+  ok(ret==1, "InternetCrackUrl returned %d with GLE=%ld (expected to return 1)\n",
+    ret, GetLastError());
+
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 0, 2048, 1024);
+  ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
+  ok(ret==1, "InternetCrackUrl returned %d with GLE=%ld (expected to return 1)\n",
+    ret, GetLastError());
+
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 0, 1024);
+  ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
+  GLE = GetLastError();
+  todo_wine
+  ok(ret==0 && (GLE==ERROR_INVALID_HANDLE || GLE==ERROR_INSUFFICIENT_BUFFER),
+     "InternetCrackUrl returned %d with GLE=%ld (expected to return 0 and ERROR_INVALID_HANDLE or ERROR_INSUFFICIENT_BUFFER)\n",
+    ret, GLE);
+
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 0);
+  ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
+  GLE = GetLastError();
+  todo_wine
+  ok(ret==0 && (GLE==ERROR_INVALID_HANDLE || GLE==ERROR_INSUFFICIENT_BUFFER),
+     "InternetCrackUrl returned %d with GLE=%ld (expected to return 0 and ERROR_INVALID_HANDLE or ERROR_INSUFFICIENT_BUFFER)\n",
+    ret, GLE);
+
+  copy_compsA(&urlSrc, &urlComponents, 0, 0, 0, 0, 0, 0);
+  ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
+  GLE = GetLastError();
+  todo_wine
+  ok(ret==0 && GLE==ERROR_INVALID_PARAMETER,
+     "InternetCrackUrl returned %d with GLE=%ld (expected to return 0 and ERROR_INVALID_PARAMETER)\n",
+    ret, GLE);
 }
 
 static void InternetCrackUrlW_test(void)
