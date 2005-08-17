@@ -84,9 +84,9 @@ static LPWSTR load_messageW( HMODULE module, UINT id, WORD lang )
     }
     else
     {
-        int len = MultiByteToWideChar( CP_ACP, 0, mre->Text, -1, NULL, 0 );
+        int len = MultiByteToWideChar( CP_ACP, 0, (const char *)mre->Text, -1, NULL, 0 );
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
-        MultiByteToWideChar( CP_ACP, 0, mre->Text, -1, buffer, len );
+        MultiByteToWideChar( CP_ACP, 0, (const char*)mre->Text, -1, buffer, len );
     }
     TRACE("returning %s\n", wine_dbgstr_w(buffer));
     return buffer;
@@ -114,7 +114,7 @@ static LPSTR load_messageA( HMODULE module, UINT id, WORD lang )
     }
     else
     {
-        int len = strlen(mre->Text) + 1;
+        int len = strlen((const char*)mre->Text) + 1;
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len ))) return NULL;
         memcpy( buffer, mre->Text, len );
     }

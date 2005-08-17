@@ -455,7 +455,7 @@ LONG WINAPI LZCopy( HFILE src, HFILE dest )
 	FILETIME filetime;
 	struct	lzstate	*lzs;
 #define BUFLEN	1000
-	BYTE	buf[BUFLEN];
+	CHAR	buf[BUFLEN];
 	/* we need that weird typedef, for i can't seem to get function pointer
 	 * casts right. (Or they probably just do not like WINAPI in general)
 	 */

@@ -236,11 +236,11 @@ static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR module, LPS
     ET_BUNDLE *bundle;
     ET_ENTRY *entry;
 
+    *pOrd = 0;
     if (!(pModule = NE_GetPtr( FarGetOwner16( GlobalHandle16( frame->module_cs ) ))))
         return NULL;
 
     max_offset = 0;
-    *pOrd = 0;
     bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->ne_enttab);
     do
     {

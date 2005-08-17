@@ -374,7 +374,7 @@ static void VOLUME_GetSuperblockLabel( enum fs_type type, const BYTE *superblock
         }
     }
     if (label_len) RtlMultiByteToUnicodeN( label, (len-1) * sizeof(WCHAR),
-                                           &label_len, label_ptr, label_len );
+                                           &label_len, (char*)label_ptr, label_len );
     label_len /= sizeof(WCHAR);
     label[label_len] = 0;
     while (label_len && label[label_len-1] == ' ') label[--label_len] = 0;
@@ -386,7 +386,7 @@ static void VOLUME_GetSuperblockLabel( enum fs_type type, const BYTE *superblock
  */
 static BOOL VOLUME_SetSuperblockLabel( enum fs_type type, HANDLE handle, const WCHAR *label )
 {
-    BYTE label_data[11];
+    CHAR label_data[11];
     DWORD offset, len;
 
     switch(type)

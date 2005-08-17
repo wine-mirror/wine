@@ -1086,7 +1086,7 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
 
   if (This->sInfo.dwSampleSize != 0) {
     /* fixed samplesize -- we can read over frame/block boundaries */
-    ULONG block = start;
+    LONG block = start;
     LONG offset = 0;
 
     /* convert start sample to block,offset pair */

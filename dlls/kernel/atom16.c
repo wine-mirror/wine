@@ -59,7 +59,7 @@ typedef struct
     HANDLE16    next;
     WORD        refCount;
     BYTE        length;
-    BYTE        str[1];
+    CHAR        str[1];
 } ATOMENTRY;
 
 typedef struct

@@ -201,11 +201,10 @@ static inline BOOL apply_relocations( NE_MODULE *pModule, const struct relocatio
 
         case NE_RELTYPE_NAME:
             module = pModuleTable[rep->target1-1];
-            func_name = (char *)pModule + pModule->ne_imptab + rep->target2;
+            func_name = (BYTE *)pModule + pModule->ne_imptab + rep->target2;
             memcpy( buffer, func_name+1, *func_name );
             buffer[*func_name] = '\0';
-            func_name = buffer;
-            ordinal = NE_GetOrdinal( module, func_name );
+            ordinal = NE_GetOrdinal( module, buffer );
             address = NE_GetEntryPoint( module, ordinal );
 
             if (ERR_ON(fixup) && !address)
@@ -213,7 +212,7 @@ static inline BOOL apply_relocations( NE_MODULE *pModule, const struct relocatio
                 NE_MODULE *pTarget = NE_GetPtr( module );
                 ERR("No implementation for %.*s.%s, setting to 0xdeadbeef\n",
                     *((BYTE *)pTarget + pTarget->ne_restab),
-                    (char *)pTarget + pTarget->ne_restab + 1, func_name );
+                    (char *)pTarget + pTarget->ne_restab + 1, buffer );
             }
             if (!address) address = (FARPROC16) 0xdeadbeef;
             if (TRACE_ON(fixup))
@@ -222,7 +221,7 @@ static inline BOOL apply_relocations( NE_MODULE *pModule, const struct relocatio
                 TRACE("%d: %.*s.%s=%04x:%04x %s\n", i + 1,
                        *((BYTE *)pTarget + pTarget->ne_restab),
                        (char *)pTarget + pTarget->ne_restab + 1,
-                       func_name, HIWORD(address), LOWORD(address),
+                       buffer, HIWORD(address), LOWORD(address),
                        NE_GetRelocAddrName( rep->address_type, additive ) );
             }
             break;

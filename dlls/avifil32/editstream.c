@@ -552,7 +552,7 @@ static HRESULT WINAPI IAVIEditStream_fnPaste(IAVIEditStream*iface,LONG*plStart,
   IAVIEditStreamImpl *pEdit = NULL;
   PAVISTREAM          pStream;
   DWORD               startPos, endPos, streamNr, nStreams;
-  LONG                n;
+  ULONG               n;
 
   TRACE("(%p,%p,%p,%p,%ld,%ld)\n",iface,plStart,plLength,
 	pSource,lStart,lLength);

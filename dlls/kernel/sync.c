@@ -831,7 +831,7 @@ HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
  */
 BOOL WINAPI ReleaseSemaphore( HANDLE handle, LONG count, LONG *previous )
 {
-    NTSTATUS status = NtReleaseSemaphore( handle, count, previous );
+    NTSTATUS status = NtReleaseSemaphore( handle, count, (PULONG)previous );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
