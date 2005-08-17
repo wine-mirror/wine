@@ -577,14 +577,10 @@ static void test_filename()
         rc=shell_execute(NULL, filename, NULL, NULL);
         ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call, rc,
            GetLastError());
-        todo_wine {
         okChildInt("argcA", 5);
-        }
         okChildString("argvA3", "Open");
         sprintf(filename, "%s\\test file.shlexec", tmpdir);
-        todo_wine {
         okChildPath("argvA4", filename);
-        }
     }
 }
 

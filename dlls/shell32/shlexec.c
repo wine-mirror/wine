@@ -1008,10 +1008,19 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
     sei->hProcess = NULL;
 
     /* make copies of all path/command strings */
-    if (sei_tmp.lpFile)
-	strcpyW(wszApplicationName, sei_tmp.lpFile);
+    if (!sei_tmp.lpFile)
+        *wszApplicationName = '\0';
+    else if (*sei_tmp.lpFile == '\"')
+    {
+        UINT l;
+        strcpyW(wszApplicationName, sei_tmp.lpFile+1);
+        l=lstrlenW(wszApplicationName);
+        if (wszApplicationName[l-1] == '\"')
+            wszApplicationName[l-1] = '\0';
+        TRACE("wszApplicationName=%s\n",debugstr_w(wszApplicationName));
+    }
     else
-	*wszApplicationName = '\0';
+        strcpyW(wszApplicationName, sei_tmp.lpFile);
 
     if (sei_tmp.lpParameters)
 	strcpyW(wszParameters, sei_tmp.lpParameters);
@@ -1353,7 +1362,8 @@ HINSTANCE WINAPI ShellExecuteA(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile,
     HANDLE hProcess = 0;
 
     TRACE("%p,%s,%s,%s,%s,%d\n",
-           hWnd, lpOperation, lpFile, lpParameters, lpDirectory, iShowCmd);
+          hWnd, debugstr_a(lpOperation), debugstr_a(lpFile),
+          debugstr_a(lpParameters), debugstr_a(lpDirectory), iShowCmd);
 
     sei.cbSize = sizeof(sei);
     sei.fMask = 0;
