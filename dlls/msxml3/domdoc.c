@@ -655,7 +655,7 @@ static xmlDocPtr doparse( char *ptr, int len )
 {
 #ifdef HAVE_XMLREADMEMORY
     /*
-     * use xmlReadMemory if possible so we can supress
+     * use xmlReadMemory if possible so we can suppress
      * writing errors to stderr
      */
     return xmlReadMemory( ptr, len, NULL, NULL,

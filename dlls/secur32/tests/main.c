@@ -307,15 +307,14 @@ static void testQuerySecurityPackageInfo(void)
         "Return value of FreeContextBuffer() shouldn't be %s\n",
         getSecStatusError(sec_status) );
 
-    /* Test with non-existing package, test should fail */
+    /* Test with a nonexistent package, test should fail */
    
     lstrcpy(sec_pkg_name, "Winetest");
 
     sec_status = QuerySecurityPackageInfo( sec_pkg_name, &pkg_info);
 
     ok( sec_status != SEC_E_OK,
-        "Return value of QuerySecurityPackageInfo() should not be %s for \
-a non-existant package\n", getSecStatusError(SEC_E_OK));
+        "Return value of QuerySecurityPackageInfo() should not be %s for a nonexistent package\n", getSecStatusError(SEC_E_OK));
 
     sec_status = FreeContextBuffer(&pkg_info);
     

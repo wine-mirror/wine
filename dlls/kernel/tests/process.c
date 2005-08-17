@@ -415,7 +415,7 @@ static int strCmp(const char* s1, const char* s2, BOOL sensitive)
         ok(strCmp(result, expect, 0) == 0, "%s:%s expected '%s', got '%s'\n", sect, key, expect, result); \
     } while (0)
 
-/* using !expect insures that the test will fail if the sect/key isn't present
+/* using !expect ensures that the test will fail if the sect/key isn't present
  * in result file
  */
 #define okChildInt(sect, key, expect) \

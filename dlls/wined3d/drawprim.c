@@ -1585,7 +1585,7 @@ void inline drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
 * if there is a texture bound to that unit then..
 * disable all textures types on that unit
 * enable and bind the texture that is bound to that unit.
-* otherwise dissable all texture types on that unit.
+* otherwise disable all texture types on that unit.
 **/
     /* upload the textures */
     for (i = 0; i< GL_LIMITS(textures); ++i) {
