@@ -336,7 +336,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     StretchDIBits(hDC, This->DestRect.left, This->DestRect.top, This->DestRect.right -This->DestRect.left,
                   This->DestRect.bottom - This->DestRect.top, This->SourceRect.left, This->SourceRect.top,
                   This->SourceRect.right - This->SourceRect.left, This->SourceRect.bottom - This->SourceRect.top,
-                  data, (BITMAPINFO*)&format->bmiHeader, DIB_PAL_COLORS, SRCCOPY);
+                  data, (BITMAPINFO*)&format->bmiHeader, DIB_RGB_COLORS, SRCCOPY);
 
     ReleaseDC(This->hWnd, hDC);
     
