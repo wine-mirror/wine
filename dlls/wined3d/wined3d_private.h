@@ -51,6 +51,8 @@
 #define MAX_CLIPPLANES    D3DMAXUSERCLIPPLANES
 #define MAX_LEVELS        256
 
+#define MAX_VSHADER_CONSTANTS 96
+
 /* Used for CreateStateBlock */
 #define NUM_SAVEDPIXELSTATES_R     35
 #define NUM_SAVEDPIXELSTATES_T     18
@@ -889,6 +891,11 @@ struct IWineD3DStateBlockImpl
     IWineD3DVertexDeclaration* vertexDecl;
 
     void                     *vertexShader; /* @TODO: Replace void * with IWineD3DVertexShader * */
+
+    /* Vertex Shader Constants */
+    BOOL                       vertexShaderConstantB[MAX_VSHADER_CONSTANTS];
+    UINT                       vertexShaderConstantI[MAX_VSHADER_CONSTANTS * 4];
+    float                      vertexShaderConstantF[MAX_VSHADER_CONSTANTS * 4];
 
     BOOL                      softwareVertexProcessing;
 

@@ -152,7 +152,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
         PLIGHTINFOEL *src;
 
         /* Recorded => Only update 'changed' values */
-        if (This->set.vertexShader && This->vertexShader != targetStateBlock->vertexShader) {
+        if (This->vertexShader != targetStateBlock->vertexShader) {
             This->vertexShader = targetStateBlock->vertexShader;
             TRACE("Updating vertex shader to %p\n", targetStateBlock->vertexShader);
         }
@@ -342,11 +342,14 @@ should really perform a delta so that only the changes get updated*/
             toDo = toDo->next;
         }
 
-#if 0 /*TODO: VertexShaders*/
-        if (This->set.vertexShader && This->changed.vertexShader)
+        if (This->changed.vertexShader) {
             IWineD3DDevice_SetVertexShader(pDevice, This->vertexShader);
-        /* TODO: Vertex Shader Constants */
-#endif
+            /* TODO: Vertex Shader Constants */
+            IWineD3DDevice_SetVertexShaderConstantB(pDevice, 0 , This->vertexShaderConstantB , MAX_VSHADER_CONSTANTS);
+            IWineD3DDevice_SetVertexShaderConstantI(pDevice, 0 , This->vertexShaderConstantI , MAX_VSHADER_CONSTANTS);
+            IWineD3DDevice_SetVertexShaderConstantF(pDevice, 0 , This->vertexShaderConstantF , MAX_VSHADER_CONSTANTS);
+        }
+
     }
 
 #if 0 /*TODO: Pixel Shaders*/
