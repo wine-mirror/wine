@@ -13,10 +13,10 @@ Ascent: 13
 Descent: 3
 NeedsXUIDChange: 1
 FSType: 8
-PfmFamily: 17
+PfmFamily: 33
 TTFWeight: 700
 TTFWidth: 5
-Panose: 2 0 6 3 0 0 0 0 0 0
+Panose: 2 11 6 3 0 0 0 0 0 0
 LineGap: 90
 VLineGap: 0
 OS2WinAscent: 0
