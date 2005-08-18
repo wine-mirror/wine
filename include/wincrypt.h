@@ -1276,9 +1276,9 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 #define CERT_SYSTEM_STORE_SERVICES_ID                   5
 /* HKEY_USERS */
 #define CERT_SYSTEM_STORE_USERS_ID                      6
-/* hkcu\Software\Microsoft\Policies\Microsoft\SystemCertificates */
+/* hkcu\Software\Policies\Microsoft\SystemCertificates */
 #define CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY_ID  7
-/* hklm\Software\Microsoft\Policies\Microsoft\SystemCertificates */
+/* hklm\Software\Policies\Microsoft\SystemCertificates */
 #define CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY_ID 8
 /* hklm\Software\Microsoft\EnterpriseCertificates */
 #define CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE_ID   9
@@ -1290,7 +1290,7 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
  (CERT_SYSTEM_STORE_LOCAL_MACHINE_ID << CERT_SYSTEM_STORE_LOCATION_SHIFT)
 #define CERT_SYSTEM_STORE_CURRENT_SERVICE \
  (CERT_SYSTEM_STORE_CURRENT_SERVICE_ID << CERT_SYSTEM_STORE_LOCATION_SHIFT)
-#define CERT_SYSTEM_STORE_SERVICE \
+#define CERT_SYSTEM_STORE_SERVICES \
  (CERT_SYSTEM_STORE_SERVICES_ID << CERT_SYSTEM_STORE_LOCATION_SHIFT)
 #define CERT_SYSTEM_STORE_USERS \
  (CERT_SYSTEM_STORE_USERS_ID << CERT_SYSTEM_STORE_LOCATION_SHIFT)
@@ -1300,6 +1300,30 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
  (CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY_ID << CERT_SYSTEM_STORE_LOCATION_SHIFT)
 #define CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE \
  (CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE_ID << CERT_SYSTEM_STORE_LOCATION_SHIFT)
+
+#if defined(__GNUC__)
+#define CERT_LOCAL_MACHINE_SYSTEM_STORE_REGPATH (const WCHAR[])\
+ {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t',\
+  '\\','S','y','s','t','e','m','C','e','r','t','i','f','i','c','a','t','e','s',\
+  0 }
+#define CERT_GROUP_POLICY_SYSTEM_STORE_REGPATH (const WCHAR[])\
+ {'S','o','f','t','w','a','r','e','\\','P','o','l','i','c','i','e','s','\\',\
+  'M','i','c','r','o','s','o','f','t','\\','S','y','s','t','e','m','C','e','r',\
+  't','i','f','i','c','a','t','e','s',0 }
+#elif defined(_MSC_VER)
+#define CERT_LOCAL_MACHINE_SYSTEM_STORE_REGPATH \
+ L"Software\\Microsoft\\SystemCertificates"
+#define CERT_GROUP_POLICY_SYSTEM_STORE_REGPATH \
+ L"Software\\Policies\\Microsoft\\SystemCertificates"
+#else
+static const WCHAR CERT_LOCAL_MACHINE_SYSTEM_STORE_REGPATH[] = 
+ {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+  'S','y','s','t','e','m','C','e','r','t','i','f','i','c','a','t','e','s',0 };
+static const WCHAR CERT_GROUP_POLICY_SYSTEM_STORE_REGPATH[] = 
+ {'S','o','f','t','w','a','r','e','\\','P','o','l','i','c','i','e','s','\\',
+  'M','i','c','r','o','s','o','f','t','\\','S','y','s','t','e','m','C','e','r',
+  't','i','f','i','c','a','t','e','s',0 };
+#endif
 
 /* flags for CertOpenStore dwFlags */
 #define CERT_STORE_NO_CRYPT_RELEASE_FLAG            0x00000001
@@ -2140,7 +2164,14 @@ HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV hProv,
  LPCWSTR szSubSystemProtocol);
 #define CertOpenSystemStore WINELIB_NAME_AW(CertOpenSystemStore)
 
-PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrev);
+PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT pPrev);
+
+PCCRL_CONTEXT WINAPI CertEnumCRLsInStore(HCERTSTORE hCertStore,
+ PCCRL_CONTEXT pPrev);
+
+PCCTL_CONTEXT WINAPI CertEnumCTLsInStore(HCERTSTORE hCertStore,
+ PCCTL_CONTEXT pPrev);
 
 BOOL WINAPI CertEnumSystemStoreLocation(DWORD dwFlags, void *pvArg,
  PFN_CERT_ENUM_SYSTEM_STORE_LOCATION pfnEnum);
@@ -2175,6 +2206,24 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
  DWORD dwPropId, void *pvData, DWORD *pcbData);
 
 BOOL WINAPI CertSetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
+ DWORD dwPropId, DWORD dwFlags, const void *pvData);
+
+DWORD WINAPI CertEnumCRLContextProperties(PCCRL_CONTEXT pCRLContext,
+ DWORD dwPropId);
+
+BOOL WINAPI CertGetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
+ DWORD dwPropId, void *pvData, DWORD *pcbData);
+
+BOOL WINAPI CertSetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
+ DWORD dwPropId, DWORD dwFlags, const void *pvData);
+
+DWORD WINAPI CertEnumCTLContextProperties(PCCTL_CONTEXT pCTLContext,
+ DWORD dwPropId);
+
+BOOL WINAPI CertGetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
+ DWORD dwPropId, void *pvData, DWORD *pcbData);
+
+BOOL WINAPI CertSetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
  DWORD dwPropId, DWORD dwFlags, const void *pvData);
 
 BOOL WINAPI CertGetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
