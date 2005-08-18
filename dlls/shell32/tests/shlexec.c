@@ -229,7 +229,8 @@ static void delete_test_association(const char* extension)
     SHDeleteKey(HKEY_CLASSES_ROOT, extension);
 }
 
-static void create_test_verb(const char* extension, const char* verb)
+static void create_test_verb(const char* extension, const char* verb,
+                             const char* cmdtail)
 {
     HKEY hkey_shell, hkey_verb, hkey_cmd;
     char shell[MAX_PATH];
@@ -247,8 +248,8 @@ static void create_test_verb(const char* extension, const char* verb)
                       NULL, &hkey_cmd, NULL);
     assert(rc==ERROR_SUCCESS);
 
-    cmd=malloc(strlen(argv0)+10+strlen(child_file)+2+strlen(verb)+5+1);
-    sprintf(cmd,"%s shlexec \"%s\" %s \"%%1\"", argv0, child_file, verb);
+    cmd=malloc(strlen(argv0)+10+strlen(child_file)+2+strlen(cmdtail)+1);
+    sprintf(cmd,"%s shlexec \"%s\" %s", argv0, child_file, cmdtail);
     rc=RegSetValueEx(hkey_cmd, NULL, 0, REG_SZ, cmd, strlen(cmd)+1);
     assert(rc==ERROR_SUCCESS);
 
@@ -474,6 +475,7 @@ static const char* testfiles[]=
 
 typedef struct
 {
+    char* verb;
     char* basename;
     int rc;
     int todo;
@@ -482,23 +484,40 @@ typedef struct
 static filename_tests_t filename_tests[]=
 {
     /* Test bad / nonexistent filenames */
-    {"%s\\nonexistent.shlexec", ERROR_FILE_NOT_FOUND, 0x1},
-    {"%s\\nonexistent.noassoc", ERROR_FILE_NOT_FOUND, 0x1},
+    {NULL,           "%s\\nonexistent.shlexec", ERROR_FILE_NOT_FOUND, 0x1},
+    {NULL,           "%s\\nonexistent.noassoc", ERROR_FILE_NOT_FOUND, 0x1},
 
     /* Standard tests */
-    {"%s\\test file.shlexec",   0, 0x0},
-    {"%s\\test file.shlexec.",  0, 0x0},
-    {"%s\\%%nasty%% $file.shlexec",  0, 0x0},
-    {"%s/test file.shlexec",    0, 0x0},
+    {NULL,           "%s\\test file.shlexec",   0, 0x0},
+    {NULL,           "%s\\test file.shlexec.",  0, 0x0},
+    {NULL,           "%s\\%%nasty%% $file.shlexec", 0, 0x0},
+    {NULL,           "%s/test file.shlexec",    0, 0x0},
 
     /* Test filenames with no association */
-    {"%s\\test file.noassoc",   SE_ERR_NOASSOC, 0x0},
+    {NULL,           "%s\\test file.noassoc",   SE_ERR_NOASSOC, 0x0},
 
     /* Test double extensions */
-    {"%s\\test file.noassoc.shlexec", 0, 0},
-    {"%s\\test file.shlexec.noassoc", SE_ERR_NOASSOC, 0x0},
+    {NULL,           "%s\\test file.noassoc.shlexec", 0, 0},
+    {NULL,           "%s\\test file.shlexec.noassoc", SE_ERR_NOASSOC, 0x0},
 
-    {NULL, 0, 0}
+    /* Test alternate verbs */
+    {"LowerL",       "%s\\nonexistent.shlexec", ERROR_FILE_NOT_FOUND, 0x1},
+    {"LowerL",       "%s\\test file.noassoc",   SE_ERR_NOASSOC, 0x0},
+
+    {"QuotedLowerL", "%s\\test file.shlexec",   0, 0x0},
+    {"QuotedUpperL", "%s\\test file.shlexec",   0, 0x0},
+
+    {NULL, NULL, 0, 0}
+};
+
+static filename_tests_t noquotes_tests[]=
+{
+    /* Test unquoted '%1' thingies */
+    {"NoQuotes",     "%s\\test file.shlexec",   0, 0xa},
+    {"LowerL",       "%s\\test file.shlexec",   0, 0x0},
+    {"UpperL",       "%s\\test file.shlexec",   0, 0x0},
+
+    {NULL, NULL, 0, 0}
 };
 
 static void test_filename()
@@ -522,7 +541,7 @@ static void test_filename()
                 c++;
             }
         }
-        rc=shell_execute(NULL, filename, NULL, NULL);
+        rc=shell_execute(test->verb, filename, NULL, NULL);
         if (rc>=32)
             rc=0;
         if ((test->todo & 0x1)==0)
@@ -537,6 +556,7 @@ static void test_filename()
         }
         if (rc==0)
         {
+            const char* verb;
             if ((test->todo & 0x2)==0)
             {
                 okChildInt("argcA", 5);
@@ -545,21 +565,90 @@ static void test_filename()
             {
                 okChildInt("argcA", 5);
             }
-            if ((test->todo & 0x3)==0)
-            {
-                okChildString("argvA3", "Open");
-            }
-            else todo_wine
-            {
-                okChildString("argvA3", "Open");
-            }
+            verb=(test->verb ? test->verb : "Open");
             if ((test->todo & 0x4)==0)
             {
+                okChildString("argvA3", verb);
+            }
+            else todo_wine
+            {
+                okChildString("argvA3", verb);
+            }
+            if ((test->todo & 0x8)==0)
+            {
                 okChildPath("argvA4", filename);
             }
             else todo_wine
             {
                 okChildPath("argvA4", filename);
+            }
+        }
+        test++;
+    }
+
+    test=noquotes_tests;
+    while (test->basename)
+    {
+        sprintf(filename, test->basename, tmpdir);
+        rc=shell_execute(test->verb, filename, NULL, NULL);
+        if (rc>=32)
+            rc=0;
+        if ((test->todo & 0x1)==0)
+        {
+            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+               rc, GetLastError());
+        }
+        else todo_wine
+        {
+            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+               rc, GetLastError());
+        }
+        if (rc==0)
+        {
+            int count;
+            const char* verb;
+            char* str;
+
+            verb=(test->verb ? test->verb : "Open");
+            if ((test->todo & 0x4)==0)
+            {
+                okChildString("argvA3", verb);
+            }
+            else todo_wine
+            {
+                okChildString("argvA3", verb);
+            }
+
+            count=4;
+            str=filename;
+            while (1)
+            {
+                char attrib[18];
+                char* space;
+                space=strchr(str, ' ');
+                if (space)
+                    *space='\0';
+                sprintf(attrib, "argvA%d", count);
+                if ((test->todo & 0x8)==0)
+                {
+                    okChildPath(attrib, str);
+                }
+                else todo_wine
+                {
+                    okChildPath(attrib, str);
+                }
+                count++;
+                if (!space)
+                    break;
+                str=space+1;
+            }
+            if ((test->todo & 0x2)==0)
+            {
+                okChildInt("argcA", count);
+            }
+            else todo_wine
+            {
+                okChildInt("argcA", count);
             }
         }
         test++;
@@ -588,17 +677,17 @@ static void test_filename()
 static filename_tests_t lnk_tests[]=
 {
     /* Pass bad / nonexistent filenames as a parameter */
-    {"%s\\nonexistent.shlexec", 0, 0xa},
-    {"%s\\nonexistent.noassoc", 0, 0xa},
+    {NULL, "%s\\nonexistent.shlexec", 0, 0xa},
+    {NULL, "%s\\nonexistent.noassoc", 0, 0xa},
 
     /* Pass regular paths as a parameter */
-    {"%s\\test file.shlexec",   0, 0xa},
-    {"%s/%%nasty%% $file.shlexec",  0, 0xa},
+    {NULL, "%s\\test file.shlexec",   0, 0xa},
+    {NULL, "%s/%%nasty%% $file.shlexec", 0, 0xa},
 
     /* Pass filenames with no association as a parameter */
-    {"%s\\test file.noassoc",   0, 0xa},
+    {NULL, "%s\\test file.noassoc",   0, 0xa},
 
-    {NULL, 0, 0}
+    {NULL, NULL, 0, 0}
 };
 
 static void test_lnks()
@@ -821,7 +910,12 @@ static void init_test()
 
     /* Create a basic association suitable for most tests */
     create_test_association(".shlexec");
-    create_test_verb(".shlexec", "Open");
+    create_test_verb(".shlexec", "Open", "Open \"%1\"");
+    create_test_verb(".shlexec", "NoQuotes", "NoQuotes %1");
+    create_test_verb(".shlexec", "LowerL", "LowerL %l");
+    create_test_verb(".shlexec", "QuotedLowerL", "QuotedLowerL \"%l\"");
+    create_test_verb(".shlexec", "UpperL", "UpperL %L");
+    create_test_verb(".shlexec", "QuotedUpperL", "QuotedUpperL \"%L\"");
 }
 
 static void cleanup_test()
