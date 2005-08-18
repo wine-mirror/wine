@@ -2808,11 +2808,11 @@ static  WINMM_MapType	MCI_UnMapMsg16To32W(WORD uDevType, WORD wMsg, DWORD dwFlag
 
 	    mop16->wDeviceID = mop32w->wDeviceID;
             if( ( dwFlags & ( MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID)) == MCI_OPEN_TYPE)
-                HeapFree(GetProcessHeap(), 0, mop32w->lpstrDeviceType);
+                HeapFree(GetProcessHeap(), 0, (LPWSTR)mop32w->lpstrDeviceType);
             if( ( dwFlags & ( MCI_OPEN_ELEMENT | MCI_OPEN_ELEMENT_ID)) == MCI_OPEN_ELEMENT)
-                HeapFree(GetProcessHeap(), 0, mop32w->lpstrElementName);
+                HeapFree(GetProcessHeap(), 0, (LPWSTR)mop32w->lpstrElementName);
             if( ( dwFlags &  MCI_OPEN_ALIAS))
-                HeapFree(GetProcessHeap(), 0, mop32w->lpstrAlias);
+                HeapFree(GetProcessHeap(), 0, (LPWSTR)mop32w->lpstrAlias);
 	    if (!HeapFree(GetProcessHeap(), 0, (LPVOID)(lParam - sizeof(LPMCI_OPEN_PARMS16))))
 		FIXME("bad free line=%d\n", __LINE__);
 	}
