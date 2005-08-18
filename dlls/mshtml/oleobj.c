@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "shlguid.h"
 
 #include "wine/debug.h"
 
@@ -62,6 +63,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
     IDocHostUIHandler *pDocHostUIHandler = NULL;
+    IOleCommandTarget *cmdtrg = NULL;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pClientSite);
@@ -130,6 +132,21 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
             IOleWindow_GetWindow(pOleWindow, &hwnd);
             IOleWindow_Release(pOleWindow);
         }
+    }
+
+    hres = IOleClientSite_QueryInterface(pClientSite, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    if(SUCCEEDED(hres)) {
+        VARIANT var;
+        OLECMD cmd = {OLECMDID_SETPROGRESSTEXT, 0};
+
+        IOleCommandTarget_QueryStatus(cmdtrg, NULL, 1, &cmd, NULL);
+
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = 0;
+        IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_SETPROGRESSMAX, 0, &var, NULL);
+        IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_SETPROGRESSPOS, 0, &var, NULL);
+
+        IOleCommandTarget_Release(cmdtrg);
     }
 
     IOleClientSite_AddRef(pClientSite);
@@ -719,7 +736,7 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
         ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
 {
     HTMLDocument *This = CMDTARGET_THIS(iface);
-    HRESULT hres = S_OK;
+    HRESULT hres = S_OK, hr;
 
     TRACE("(%p)->(%s %ld %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
 
@@ -732,8 +749,29 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 prgCmds[i].cmdf = 0;
                 hres = OLECMDERR_E_NOTSUPPORTED;
             }else {
-                prgCmds[i].cmdf = exec_table[prgCmds[i].cmdID].cmdf;
-                TRACE("cmdID = %ld  returning %lx\n", prgCmds[i].cmdID, prgCmds[i].cmdf);
+                if(prgCmds[i].cmdID == OLECMDID_OPEN || prgCmds[i].cmdID == OLECMDID_NEW) {
+                    IOleCommandTarget *cmdtrg = NULL;
+                    OLECMD olecmd;
+
+                    prgCmds[i].cmdf = OLECMDF_SUPPORTED;
+                    if(This->client) {
+                        hr = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget,
+                                (void**)&cmdtrg);
+                        if(SUCCEEDED(hr)) {
+                            olecmd.cmdID = prgCmds[i].cmdID;
+                            olecmd.cmdf = 0;
+
+                            hr = IOleCommandTarget_QueryStatus(cmdtrg, NULL, 1, &olecmd, NULL);
+                            if(SUCCEEDED(hr) && olecmd.cmdf)
+                                prgCmds[i].cmdf = olecmd.cmdf;
+                        }
+                    }else {
+                        ERR("This->client == NULL, native would crash\n");
+                    }
+                }else {
+                    prgCmds[i].cmdf = exec_table[prgCmds[i].cmdID].cmdf;
+                    TRACE("cmdID = %ld  returning %lx\n", prgCmds[i].cmdID, prgCmds[i].cmdf);
+                }
                 hres = S_OK;
             }
         }
@@ -760,6 +798,9 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         }
 
         return exec_table[nCmdID].func(This, nCmdexecopt, pvaIn, pvaOut);
+    }else if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
+        FIXME("unsupported nCmdID %ld of CGID_ShellDocView group\n", nCmdID);
+        return OLECMDERR_E_UNKNOWNGROUP;
     }
 
     FIXME("Unsupported pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));

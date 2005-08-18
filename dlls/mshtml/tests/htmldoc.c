@@ -27,6 +27,10 @@
 #include "mshtml.h"
 #include "docobj.h"
 #include "mshtmhst.h"
+#include "shlguid.h"
+
+#include "initguid.h"
+DEFINE_SHLGUID(CGID_Undocumented, 0x000214D4L, 0, 0);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -62,6 +66,12 @@ DEFINE_EXPECT(GetHostInfo);
 DEFINE_EXPECT(HideUI);
 DEFINE_EXPECT(GetOptionKeyPath);
 DEFINE_EXPECT(GetOverrideKeyPath);
+DEFINE_EXPECT(SetStatusText);
+DEFINE_EXPECT(QueryStatus_SETPROGRESSTEXT);
+DEFINE_EXPECT(QueryStatus_OPEN);
+DEFINE_EXPECT(QueryStatus_NEW);
+DEFINE_EXPECT(Exec_SETPROGRESSMAX);
+DEFINE_EXPECT(Exec_SETPROGRESSPOS);
 
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
@@ -204,8 +214,9 @@ static HRESULT WINAPI InPlaceFrame_RemoveMenus(IOleInPlaceFrame *iface, HMENU hm
 
 static HRESULT WINAPI InPlaceFrame_SetStatusText(IOleInPlaceFrame *iface, LPCOLESTR pszStatusText)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(SetStatusText);
+    ok(pszStatusText == NULL, "pszStatusText=%p, expected NULL\n", pszStatusText);
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceFrame_EnableModeless(IOleInPlaceFrame *iface, BOOL fEnable)
@@ -508,6 +519,9 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 SET_EXPECT(GetWindowContext);
                 SET_EXPECT(GetWindow);
                 SET_EXPECT(OnInPlaceActivate);
+                SET_EXPECT(SetStatusText);
+                SET_EXPECT(Exec_SETPROGRESSMAX);
+                SET_EXPECT(Exec_SETPROGRESSPOS);
                 SET_EXPECT(OnUIActivate);
                 SET_EXPECT(SetActiveObject);
                 SET_EXPECT(ShowUI);
@@ -525,12 +539,15 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 CHECK_CALLED(GetWindowContext);
                 CHECK_CALLED(GetWindow);
                 CHECK_CALLED(OnInPlaceActivate);
+                CHECK_CALLED(SetStatusText);
+                CHECK_CALLED(Exec_SETPROGRESSMAX);
+                CHECK_CALLED(Exec_SETPROGRESSPOS);
                 CHECK_CALLED(OnUIActivate);
                 CHECK_CALLED(SetActiveObject);
                 CHECK_CALLED(ShowUI);
 
                 if(activeobj) {
-                    IOleInPlaceActiveObject_GetWindow(activeobj, &hwnd);
+                    hres = IOleInPlaceActiveObject_GetWindow(activeobj, &hwnd);
                     ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
                     ok(hwnd != NULL, "hwnd == NULL\n");
                     if(last_hwnd)
@@ -541,7 +558,7 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 ok(hres == S_OK, "UIActivate failed: %08lx\n", hres);
 
                 if(activeobj) {
-                    IOleInPlaceActiveObject_GetWindow(activeobj, &tmp_hwnd);
+                    hres = IOleInPlaceActiveObject_GetWindow(activeobj, &tmp_hwnd);
                     ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
                     ok(tmp_hwnd == hwnd, "tmp_hwnd=%p, expected %p\n", tmp_hwnd, hwnd);
                 }
@@ -558,15 +575,22 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 SET_EXPECT(GetWindowContext);
                 SET_EXPECT(GetWindow);
                 SET_EXPECT(OnInPlaceActivate);
+                SET_EXPECT(SetStatusText);
+                SET_EXPECT(Exec_SETPROGRESSMAX);
+                SET_EXPECT(Exec_SETPROGRESSPOS);
+                SET_EXPECT(OnUIActivate);
                 hres = IOleDocumentView_Show(view, TRUE);
                 ok(hres == S_OK, "Show failed: %08lx\n", hres);
                 CHECK_CALLED(CanInPlaceActivate);
                 CHECK_CALLED(GetWindowContext);
                 CHECK_CALLED(GetWindow);
                 CHECK_CALLED(OnInPlaceActivate);
+                CHECK_CALLED(SetStatusText);
+                CHECK_CALLED(Exec_SETPROGRESSMAX);
+                CHECK_CALLED(Exec_SETPROGRESSPOS);
 
                 if(activeobj) {
-                    IOleInPlaceActiveObject_GetWindow(activeobj, &hwnd);
+                    hres = IOleInPlaceActiveObject_GetWindow(activeobj, &hwnd);
                     ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
                     ok(hwnd != NULL, "hwnd == NULL\n");
                     if(last_hwnd)
@@ -765,6 +789,96 @@ static const IDocHostUIHandler2Vtbl DocHostUIHandlerVtbl = {
 
 static IDocHostUIHandler2 DocHostUIHandler = { &DocHostUIHandlerVtbl };
 
+static HRESULT WINAPI OleCommandTarget_QueryInterface(IOleCommandTarget *iface,
+        REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI OleCommandTarget_AddRef(IOleCommandTarget *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI OleCommandTarget_Release(IOleCommandTarget *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
+{
+    ok(!pguidCmdGroup, "pguidCmdGroup != MULL\n");
+    ok(cCmds == 1, "cCmds=%ld, expected 1\n", cCmds);
+    ok(!pCmdText, "pCmdText != NULL\n");
+
+    switch(prgCmds[0].cmdID) {
+    case OLECMDID_SETPROGRESSTEXT:
+        CHECK_EXPECT(QueryStatus_SETPROGRESSTEXT);
+        prgCmds[0].cmdf = OLECMDF_ENABLED;
+        return S_OK;
+    case OLECMDID_OPEN:
+        CHECK_EXPECT(QueryStatus_OPEN);
+        prgCmds[0].cmdf = 0;
+        return S_OK;
+    case OLECMDID_NEW:
+        CHECK_EXPECT(QueryStatus_NEW);
+        prgCmds[0].cmdf = 0;
+        return S_OK;
+    default:
+        ok(0, "unexpected command %ld\n", prgCmds[0].cmdID);
+    };
+
+    return E_FAIL;
+}
+
+static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
+{
+    if(!pguidCmdGroup) {
+        switch(nCmdID) {
+        case OLECMDID_SETPROGRESSMAX:
+            CHECK_EXPECT(Exec_SETPROGRESSMAX);
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
+            if(pvaIn) {
+                ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
+                ok(V_I4(pvaIn) == 0, "V_I4(pvaIn)=%ld, expected 0\n", V_I4(pvaIn));
+            }
+            ok(pvaOut == NULL, "pvaOut=%p, expected NULL\n", pvaOut);
+            return S_OK;
+        case OLECMDID_SETPROGRESSPOS:
+            CHECK_EXPECT(Exec_SETPROGRESSPOS);
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
+            if(pvaIn) {
+                ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
+                ok(V_I4(pvaIn) == 0, "V_I4(pvaIn)=%ld, expected 0\n", V_I4(pvaIn));
+            }
+            ok(pvaOut == NULL, "pvaOut=%p, expected NULL\n", pvaOut);
+            return S_OK;
+        default:
+            ok(0, "unexpected command %ld\n", nCmdID);
+            return E_FAIL;
+        };
+    }
+
+    if(IsEqualGUID(&CGID_Undocumented, pguidCmdGroup))
+        return E_FAIL; /* TODO */
+
+    ok(0, "unexpected call");
+
+    return E_NOTIMPL;
+}
+
+static IOleCommandTargetVtbl OleCommandTargetVtbl = {
+    OleCommandTarget_QueryInterface,
+    OleCommandTarget_AddRef,
+    OleCommandTarget_Release,
+    OleCommandTarget_QueryStatus,
+    OleCommandTarget_Exec
+};
+
+static IOleCommandTarget OleCommandTarget = { &OleCommandTargetVtbl };
+
 static HRESULT QueryInterface(REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -773,20 +887,20 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &ClientSite;
     else if(IsEqualGUID(&IID_IOleDocumentSite, riid))
         *ppv = &DocumentSite;
-    else if(IsEqualGUID(&IID_IDocHostUIHandler, riid) || IsEqualGUID(&IID_IDocHostUIHandler2, riid)) {
+    else if(IsEqualGUID(&IID_IDocHostUIHandler, riid) || IsEqualGUID(&IID_IDocHostUIHandler2, riid))
         *ppv = &DocHostUIHandler;
-    }
     else if(IsEqualGUID(&IID_IOleContainer, riid))
         *ppv = &OleContainer;
     else if(IsEqualGUID(&IID_IOleWindow, riid) || IsEqualGUID(&IID_IOleInPlaceSite, riid))
         *ppv = &InPlaceSite;
     else if(IsEqualGUID(&IID_IOleInPlaceUIWindow, riid) || IsEqualGUID(&IID_IOleInPlaceFrame, riid))
         *ppv = &InPlaceFrame;
+    else if(IsEqualGUID(&IID_IOleCommandTarget , riid))
+        *ppv = &OleCommandTarget;
 
     /* TODO:
      * IDispatch
      * IServiceProvider
-     * IOleCommandTarget
      * {D48A6EC6-6A4A-11CF-94A7-444553540000}
      * {7BB0B520-B1A7-11D2-BB23-00C04F79ABCD}
      * {000670BA-0000-0000-C000-000000000046}
@@ -895,8 +1009,12 @@ static void test_OleCommandTarget(IUnknown *unk)
         cmds[i].cmdf = 0xf0f0;
     }
 
+    SET_EXPECT(QueryStatus_OPEN);
+    SET_EXPECT(QueryStatus_NEW);
     hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, sizeof(cmds)/sizeof(cmds[0]), cmds, NULL);
     ok(hres == S_OK, "QueryStatus failed: %08lx\n", hres);
+    CHECK_CALLED(QueryStatus_OPEN);
+    CHECK_CALLED(QueryStatus_NEW);
 
     for(i=0; i<OLECMDID_GETPRINTTEMPLATE; i++) {
         ok(cmds[i].cmdID == i+1, "cmds[%d].cmdID canged to %lx\n", i, cmds[i].cmdID);
@@ -923,12 +1041,13 @@ static void test_OleCommandTarget_fail(IUnknown *unk)
     if(FAILED(hres))
         return;
 
-
-
     hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, 0, NULL, NULL);
     ok(hres == S_OK, "QueryStatus failed: %08lx\n", hres);
 
+    SET_EXPECT(QueryStatus_OPEN);
     hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, 2, cmd, NULL);
+    CHECK_CALLED(QueryStatus_OPEN);
+
     ok(hres == OLECMDERR_E_NOTSUPPORTED,
             "QueryStatus failed: %08lx, expected OLECMDERR_E_NOTSUPPORTED\n", hres);
     ok(cmd[1].cmdID == OLECMDID_GETPRINTTEMPLATE+1,
@@ -986,8 +1105,8 @@ static HRESULT test_DoVerb(IOleObject *oleobj)
     SET_EXPECT(LockContainer);
     SET_EXPECT(ActivateMe);
     expect_LockContainer_fLock = TRUE;
-    hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite, -1, container_hwnd, &rect);
 
+    hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite, -1, container_hwnd, &rect);
     if(FAILED(hres))
         return hres;
 
@@ -1029,6 +1148,9 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         SET_EXPECT(GetOverrideKeyPath);
     }
     SET_EXPECT(GetWindow);
+    SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
+    SET_EXPECT(Exec_SETPROGRESSMAX);
+    SET_EXPECT(Exec_SETPROGRESSPOS);
     hres = IOleObject_SetClientSite(oleobj, &ClientSite);
     ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
     CHECK_CALLED(GetHostInfo);
@@ -1037,6 +1159,9 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         CHECK_CALLED(GetOverrideKeyPath);
     }
     CHECK_CALLED(GetWindow);
+    CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
+    CHECK_CALLED(Exec_SETPROGRESSMAX);
+    CHECK_CALLED(Exec_SETPROGRESSPOS);
 
     hres = IOleObject_GetClientSite(oleobj, &clientsite);
     ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);

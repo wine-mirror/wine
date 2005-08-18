@@ -127,6 +127,7 @@ static HRESULT activate_window(HTMLDocument *This)
 {
     IOleInPlaceUIWindow *pIPWnd;
     IOleInPlaceFrame *pIPFrame;
+    IOleCommandTarget *cmdtrg;
     RECT posrect, cliprect;
     OLEINPLACEFRAMEINFO frameinfo;
     HWND parent_hwnd;
@@ -193,6 +194,20 @@ static HRESULT activate_window(HTMLDocument *This)
         WARN("OnInPlaceActivate failed: %08lx\n", hres);
         This->in_place_active = FALSE;
         return hres;
+    }
+
+    hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    if(SUCCEEDED(hres)) {
+        VARIANT var;
+
+        IOleInPlaceFrame_SetStatusText(pIPFrame, NULL);
+
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = 0;
+        IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_SETPROGRESSMAX, 0, &var, NULL);
+        IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_SETPROGRESSPOS, 0, &var, NULL);
+
+        IOleCommandTarget_Release(cmdtrg);
     }
 
     if(This->frame)
