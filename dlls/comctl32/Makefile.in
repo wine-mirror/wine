@@ -37,6 +37,7 @@ C_SRCS = \
 	tab.c \
 	theme_combo.c \
 	theme_edit.c \
+	theme_listbox.c \
 	theming.c \
 	toolbar.c \
 	tooltips.c \

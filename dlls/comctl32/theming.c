@@ -37,6 +37,10 @@ extern LRESULT CALLBACK THEMING_ComboSubclassProc (HWND, UINT, WPARAM, LPARAM,
                                                    ULONG_PTR);
 extern LRESULT CALLBACK THEMING_EditSubclassProc (HWND, UINT, WPARAM, LPARAM,
                                                   ULONG_PTR);
+extern LRESULT CALLBACK THEMING_ListBoxSubclassProc (HWND, UINT, WPARAM, LPARAM,
+                                                     ULONG_PTR);
+
+static const WCHAR comboLboxClass[] = {'C','o','m','b','o','L','b','o','x',0};
 
 static const struct ThemingSubclass
 {
@@ -45,7 +49,9 @@ static const struct ThemingSubclass
 } subclasses[] = {
     /* Note: list must be sorted by class name */
     {WC_COMBOBOXW,         THEMING_ComboSubclassProc},
-    {WC_EDITW,             THEMING_EditSubclassProc}
+    {comboLboxClass,       THEMING_ListBoxSubclassProc},
+    {WC_EDITW,             THEMING_EditSubclassProc},
+    {WC_LISTBOXW,          THEMING_ListBoxSubclassProc}
 };
 
 #define NUM_SUBCLASSES        (sizeof(subclasses)/sizeof(subclasses[0]))
@@ -92,10 +98,14 @@ static LRESULT CALLBACK subclass_stub ## N (HWND wnd, UINT msg,             \
 
 MAKE_SUBCLASS_STUB(0)
 MAKE_SUBCLASS_STUB(1)
+MAKE_SUBCLASS_STUB(2)
+MAKE_SUBCLASS_STUB(3)
 
 const static WNDPROC subclassStubs[NUM_SUBCLASSES] = {
     subclass_stub0,
-    subclass_stub1
+    subclass_stub1,
+    subclass_stub2,
+    subclass_stub3
 };
 
 /***********************************************************************
