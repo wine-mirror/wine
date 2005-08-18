@@ -866,22 +866,33 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE DeviceHandle, HANDLE hEvent,
  * NtFsControlFile [NTDLL.@]
  * ZwFsControlFile [NTDLL.@]
  */
-NTSTATUS WINAPI NtFsControlFile(
-	IN HANDLE DeviceHandle,
-	IN HANDLE Event OPTIONAL,
-	IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-	IN PVOID ApcContext OPTIONAL,
-	OUT PIO_STATUS_BLOCK IoStatusBlock,
-	IN ULONG IoControlCode,
-	IN PVOID InputBuffer,
-	IN ULONG InputBufferSize,
-	OUT PVOID OutputBuffer,
-	IN ULONG OutputBufferSize)
+NTSTATUS WINAPI NtFsControlFile(HANDLE DeviceHandle, HANDLE Event OPTIONAL, PIO_APC_ROUTINE ApcRoutine,
+                                PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, ULONG IoControlCode,
+                                PVOID InputBuffer, ULONG InputBufferSize, PVOID OutputBuffer, ULONG OutputBufferSize)
 {
-	FIXME("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): stub\n",
-	DeviceHandle,Event,ApcRoutine,ApcContext,IoStatusBlock,IoControlCode,
-	InputBuffer,InputBufferSize,OutputBuffer,OutputBufferSize);
-	return 0;
+    NTSTATUS ret;
+
+    TRACE("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx)\n",
+    DeviceHandle,Event,ApcRoutine,ApcContext,IoStatusBlock,IoControlCode,
+    InputBuffer,InputBufferSize,OutputBuffer,OutputBufferSize);
+
+    if(!IoStatusBlock) return STATUS_INVALID_PARAMETER;
+
+    switch(IoControlCode)
+    {
+        case FSCTL_PIPE_DISCONNECT :
+            SERVER_START_REQ(disconnect_named_pipe)
+            {
+                req->handle = DeviceHandle;
+                ret = wine_server_call(req);
+                if (!ret && reply->fd != -1) close(reply->fd);
+            }
+            SERVER_END_REQ;
+            return ret;
+        default :
+            FIXME("Unsupported IoControlCode %lx\n", IoControlCode);
+            return STATUS_NOT_SUPPORTED;
+    }
 }
 
 /******************************************************************************

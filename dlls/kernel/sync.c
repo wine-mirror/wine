@@ -50,6 +50,7 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "winternl.h"
+#include "winioctl.h"
 
 #include "wine/server.h"
 #include "wine/unicode.h"
@@ -1357,22 +1358,28 @@ BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
 
 /***********************************************************************
  *           DisconnectNamedPipe   (KERNEL32.@)
+ *
+ *  Disconnects from a named pipe
+ *
+ *  Parameters
+ *  hPipe: A handle to a named pipe returned by CreateNamedPipe
+ *
+ *  Return values
+ *  TRUE: Success
+ *  FALSE: Failure, GetLastError can be called for further details
  */
 BOOL WINAPI DisconnectNamedPipe(HANDLE hPipe)
 {
-    BOOL ret;
+    NTSTATUS status;
+    IO_STATUS_BLOCK io_block;
 
     TRACE("(%p)\n",hPipe);
 
-    SERVER_START_REQ( disconnect_named_pipe )
-    {
-        req->handle = hPipe;
-        ret = !wine_server_call_err( req );
-        if (ret && reply->fd != -1) close( reply->fd );
-    }
-    SERVER_END_REQ;
-
-    return ret;
+    status = NtFsControlFile(hPipe, 0, NULL, NULL, &io_block, FSCTL_PIPE_DISCONNECT,
+                             NULL, 0, NULL, 0);
+    if (status == STATUS_SUCCESS) return TRUE;
+    SetLastError( RtlNtStatusToDosError(status) );
+    return FALSE;
 }
 
 /***********************************************************************
