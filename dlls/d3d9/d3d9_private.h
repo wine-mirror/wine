@@ -186,7 +186,6 @@ typedef struct IDirect3DIndexBuffer9Impl       IDirect3DIndexBuffer9Impl;
 typedef struct IDirect3DSurface9Impl           IDirect3DSurface9Impl;
 typedef struct IDirect3DResource9Impl          IDirect3DResource9Impl;
 typedef struct IDirect3DVolume9Impl            IDirect3DVolume9Impl;
-typedef struct IDirect3DVertexShader9Impl      IDirect3DVertexShader9Impl;
 typedef struct IDirect3DVertexDeclaration9Impl IDirect3DVertexDeclaration9Impl;
 
 
@@ -899,7 +898,7 @@ typedef struct  IDirect3DStateBlock9Impl {
 extern const IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl;
 
 /*****************************************************************************
- * IDirect3DVertexShaderDeclaration implementation structure
+ * IDirect3DVertexDeclaration implementation structure
  */
 struct IDirect3DVertexDeclaration9Impl {
   /* IUnknown fields */
@@ -932,25 +931,14 @@ extern const IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl;
 /*****************************************************************************
  * IDirect3DVertexShader implementation structure
  */
-struct IDirect3DVertexShader9Impl {
+typedef struct IDirect3DVertexShader9Impl {
   /* IUnknown fields */
   const IDirect3DVertexShader9Vtbl *lpVtbl;
   LONG  ref;
 
-  /* IDirect3DVertexDeclaration9 fields */
-  IDirect3DDevice9Impl* Device;
-
-  DWORD* function;
-  UINT functionLength;
-  DWORD usage; /* 0 || D3DUSAGE_SOFTWAREPROCESSING */
-  DWORD version;
-  /* run time datas */
-  /*
-  VSHADERDATA* data;
-  VSHADERINPUTDATA input;
-  VSHADEROUTPUTDATA output;
-  */
-};
+  /* IDirect3DVertexShader9 fields */
+  IWineD3DVertexShader *wineD3DVertexShader;
+} IDirect3DVertexShader9Impl;
 
 /* IUnknown: */
 extern HRESULT WINAPI         IDirect3DVertexShader9Impl_QueryInterface(LPDIRECT3DVERTEXSHADER9 iface, REFIID refiid, LPVOID* obj);

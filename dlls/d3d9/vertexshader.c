@@ -22,7 +22,7 @@
 #include "config.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DVertexShader9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DVertexShader9Impl_QueryInterface(LPDIRECT3DVERTEXSHADER9 iface, REFIID riid, LPVOID* ppobj) {
@@ -30,7 +30,7 @@ HRESULT WINAPI IDirect3DVertexShader9Impl_QueryInterface(LPDIRECT3DVERTEXSHADER9
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DVertexShader9)) {
-        IDirect3DVertexShader9Impl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
@@ -55,6 +55,7 @@ ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 iface) {
     TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
 
     if (ref == 0) {
+        IWineD3DVertexShader_Release(This->wineD3DVertexShader);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -63,24 +64,35 @@ ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 iface) {
 /* IDirect3DVertexShader9 Interface follow: */
 HRESULT WINAPI IDirect3DVertexShader9Impl_GetDevice(LPDIRECT3DVERTEXSHADER9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
-    TRACE("(%p) : returning %p\n", This, This->Device);
-    *ppDevice = (LPDIRECT3DDEVICE9) This->Device;
-    IDirect3DDevice9Impl_AddRef(*ppDevice);
-    return D3D_OK;
+    IWineD3DDevice *myDevice = NULL;
+    HRESULT hr = D3D_OK;
+    TRACE("(%p) : Relay\n", This);
+
+    if (D3D_OK == (hr = IWineD3DVertexShader_GetDevice(This->wineD3DVertexShader, &myDevice) && myDevice != NULL)) {
+        hr = IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
+        IWineD3DDevice_Release(myDevice);
+    } else {
+        *ppDevice = NULL;
+    }
+    TRACE("(%p) returing (%p)", This, *ppDevice);
+    return hr;
 }
 
 HRESULT WINAPI IDirect3DVertexShader9Impl_GetFunction(LPDIRECT3DVERTEXSHADER9 iface, VOID* pData, UINT* pSizeOfData) {
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+
+    TRACE("(%p) : Relay\n", This);
+    return IWineD3DVertexShader_GetFunction(This->wineD3DVertexShader, pData, pSizeOfData);
 }
 
 
 const IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl =
 {
+    /* IUnknown */
     IDirect3DVertexShader9Impl_QueryInterface,
     IDirect3DVertexShader9Impl_AddRef,
-    IDirect3DVertexShader9Impl_Release,
+    IDirect3DVertexShader9Impl_Release
+    /* IDirect3DVertexShader9 */,
     IDirect3DVertexShader9Impl_GetDevice,
     IDirect3DVertexShader9Impl_GetFunction
 };
@@ -89,152 +101,95 @@ const IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl =
 /* IDirect3DDevice9 IDirect3DVertexShader9 Methods follow: */
 HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexShader(LPDIRECT3DDEVICE9 iface, CONST DWORD* pFunction, IDirect3DVertexShader9** ppShader) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    HRESULT hrc = D3D_OK;
+    IDirect3DVertexShader9Impl *object;
+
+    /* Setup a stub object for now */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    TRACE("(%p) : pFunction(%p), ppShader(%p)\n", This, pFunction, ppShader);
+    if (NULL == object) {
+        FIXME("Allocation of memory failed\n");
+        *ppShader = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->ref = 1;
+    object->lpVtbl = &Direct3DVertexShader9_Vtbl;
+    hrc= IWineD3DDevice_CreateVertexShader(This->WineD3DDevice, pFunction, &object->wineD3DVertexShader, (IUnknown *)object);
+
+    if (FAILED(hrc)) {
+        /* free up object */
+        FIXME("Call to IWineD3DDevice_CreateVertexShader failed\n");
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppShader = NULL;
+    }else{
+        *ppShader = (IDirect3DVertexShader9 *)object;
+    }
+
+    TRACE("(%p) : returning %p\n", This, *ppShader);
+    return hrc;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShader(LPDIRECT3DDEVICE9 iface, IDirect3DVertexShader9* pShader) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    /* TODO: implement stateblocks */
-    
-    FIXME("Disabled %p\n", This);
-    /* Handle recording of state blocks */
-    /**
-     * TODO: merge HAL shaders context switching from prototype
-     */
-    return D3D_OK;
+    HRESULT hrc = D3D_OK;
+
+    TRACE("(%p) : Relay  \n", This);
+    hrc =  IWineD3DDevice_SetVertexShader(This->WineD3DDevice, pShader==NULL?NULL:((IDirect3DVertexShader9Impl *)pShader)->wineD3DVertexShader);
+
+    TRACE("(%p) : returning hr(%lu) \n", This, hrc);
+    return hrc;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShader(LPDIRECT3DDEVICE9 iface, IDirect3DVertexShader9** ppShader) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) : GetVertexShader returning\n", This);
-    *ppShader = NULL; 
-    return D3D_OK;
+    IWineD3DVertexShader *pShader;
+    HRESULT hrc = D3D_OK;
+
+    TRACE("(%p) : Relay  device@%p \n", This, This->WineD3DDevice);
+    hrc = IWineD3DDevice_GetVertexShader(This->WineD3DDevice, &pShader);
+    if(hrc == D3D_OK){
+       hrc = IWineD3DVertexShader_GetParent(pShader, (IUnknown **)ppShader);
+       IWineD3DVertexShader_Release(pShader);
+    } else {
+        WARN("(%p) : Call to IWineD3DDevice_GetVertexShader failed %lu (device %p)\n", This, hrc, This->WineD3DDevice);
+    }
+    TRACE("(%p) : returning %p\n", This, *ppShader);
+    return hrc;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShaderConstantF(LPDIRECT3DDEVICE9 iface, UINT Register, CONST float* pConstantData, UINT Vector4fCount) {
-  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-#if 0
-  if (Register + Vector4fCount > D3D_VSHADER_MAX_CONSTANTS) {
-    ERR("(%p) : SetVertexShaderConstant C[%u] invalid\n", This, Register);
-    return D3DERR_INVALIDCALL;
-  }
-  if (NULL == pConstantData) {
-    return D3DERR_INVALIDCALL;
-  }
-  if (Vector4fCount > 1) {
-    CONST FLOAT* f = pConstantData;
-    UINT i;
-    TRACE("(%p) : SetVertexShaderConstant C[%u..%u]=\n", This, Register, Register + Vector4fCount - 1);
-    for (i = 0; i < Vector4fCount; ++i) {
-      TRACE("{%f, %f, %f, %f}\n", f[0], f[1], f[2], f[3]);
-      f += 4;
-    }
-  } else { 
-    const FLOAT* f = (const FLOAT*) pConstantData;
-    TRACE("(%p) : SetVertexShaderConstant, C[%u]={%f, %f, %f, %f}\n", This, Register, f[0], f[1], f[2], f[3]);
-  }
-  This->UpdateStateBlock->Changed.vertexShaderConstant = TRUE;
-  memcpy(&This->UpdateStateBlock->vertexShaderConstantF[Register], pConstantData, Vector4fCount * 4 * sizeof(FLOAT));
-#endif
-  FIXME("(%p) : stub\n", This);
-  return D3D_OK;
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    TRACE("(%p) : Relay\n", This);
+    return IWineD3DDevice_SetVertexShaderConstantF(This->WineD3DDevice, Register, pConstantData, Vector4fCount);
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShaderConstantF(LPDIRECT3DDEVICE9 iface, UINT Register, float* pConstantData, UINT Vector4fCount) {
-  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-#if 0
-  TRACE("(%p) : C[%u] count=%u\n", This, Register, Vector4fCount);
-  if (Register + Vector4fCount > D3D_VSHADER_MAX_CONSTANTS) {
-    return D3DERR_INVALIDCALL;
-  }
-  if (NULL == pConstantData) {
-    return D3DERR_INVALIDCALL;
-  }
-  memcpy(pConstantData, &This->UpdateStateBlock->vertexShaderConstantF[Register], Vector4fCount * 4 * sizeof(FLOAT));
-#endif
-  FIXME("(%p) : stub\n", This);
-  return D3D_OK;
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    TRACE("(%p) : Relay\n", This);
+    return IWineD3DDevice_GetVertexShaderConstantF(This->WineD3DDevice, Register, pConstantData, Vector4fCount);
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShaderConstantI(LPDIRECT3DDEVICE9 iface, UINT Register, CONST int* pConstantData, UINT Vector4iCount) {
-  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-#if 0
-  if (Register + Vector4iCount > D3D_VSHADER_MAX_CONSTANTS) {
-    ERR("(%p) : SetVertexShaderConstantI C[%u] invalid\n", This, Register);
-    return D3DERR_INVALIDCALL;
-  }
-  if (NULL == pConstantData) {
-    return D3DERR_INVALIDCALL;
-  }
-  if (Vector4iCount > 1) {
-    CONST int* f = pConstantData;
-    UINT i;
-    TRACE("(%p) : SetVertexShaderConstantI C[%u..%u]=\n", This, Register, Register + Vector4iCount - 1);
-    for (i = 0; i < Vector4iCount; ++i) {
-      TRACE("{%d, %d, %d, %d}\n", f[0], f[1], f[2], f[3]);
-      f += 4;
-    }
-  } else { 
-    CONST int* f = pConstantData;
-    TRACE("(%p) : SetVertexShaderConstantI, C[%u]={%i, %i, %i, %i}\n", This, Register, f[0], f[1], f[2], f[3]);
-  }
-  This->UpdateStateBlock->Changed.vertexShaderConstant = TRUE;
-  memcpy(&This->UpdateStateBlock->vertexShaderConstantI[Register], pConstantData, Vector4iCount * 4 * sizeof(int));
-#endif
-  FIXME("(%p) : stub\n", This);
-  return D3D_OK;
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    TRACE("(%p) : Relay\n", This);
+    return IWineD3DDevice_SetVertexShaderConstantI(This->WineD3DDevice, Register, pConstantData, Vector4iCount);
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShaderConstantI(LPDIRECT3DDEVICE9 iface, UINT Register, int* pConstantData, UINT Vector4iCount) {
-  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-#if 0
-  TRACE("(%p) : C[%u] count=%u\n", This, Register, Vector4iCount);
-  if (Register + Vector4iCount > D3D_VSHADER_MAX_CONSTANTS) {
-    return D3DERR_INVALIDCALL;
-  }
-  if (NULL == pConstantData) {
-    return D3DERR_INVALIDCALL;
-  }
-  memcpy(pConstantData, &This->UpdateStateBlock->vertexShaderConstantI[Register], Vector4iCount * 4 * sizeof(FLOAT));
-#endif
-  FIXME("(%p) : stub\n", This);
-  return D3D_OK;
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    TRACE("(%p) : Relay\n", This);
+    return IWineD3DDevice_GetVertexShaderConstantI(This->WineD3DDevice, Register, pConstantData, Vector4iCount);
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShaderConstantB(LPDIRECT3DDEVICE9 iface, UINT Register, CONST BOOL* pConstantData, UINT BoolCount) {
-  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-#if 0
-  UINT i;
-
-  if (Register + BoolCount > D3D_VSHADER_MAX_CONSTANTS) {
-    ERR("(%p) : SetVertexShaderConstantB C[%u] invalid\n", This, Register);
-    return D3DERR_INVALIDCALL;
-  }
-  if (NULL == pConstantData) {
-    return D3DERR_INVALIDCALL;
-  }
-  if (BoolCount > 1) {
-    CONST BOOL* f = pConstantData;
-    TRACE("(%p) : SetVertexShaderConstantB C[%u..%u]=\n", This, Register, Register + BoolCount - 1);
-    for (i = 0; i < BoolCount; ++i) {
-      TRACE("{%u}\n", f[i]);
-    }
-  } else { 
-    CONST BOOL* f = pConstantData;
-    TRACE("(%p) : SetVertexShaderConstantB, C[%u]={%u}\n", This, Register, f[0]);
-  }
-  This->UpdateStateBlock->Changed.vertexShaderConstant = TRUE;
-  for (i = 0; i < BoolCount; ++i) {
-    This->UpdateStateBlock->vertexShaderConstantB[Register] = pConstantData[i];
-  }
-#endif
-  FIXME("(%p) : stub\n", This);
-  return D3D_OK;
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    TRACE("(%p) : Relay\n", This);
+    return IWineD3DDevice_SetVertexShaderConstantB(This->WineD3DDevice, Register, pConstantData, BoolCount);
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShaderConstantB(LPDIRECT3DDEVICE9 iface, UINT Register, BOOL* pConstantData, UINT BoolCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) : Relay\n", This);
+    return IWineD3DDevice_GetVertexShaderConstantB(This->WineD3DDevice, Register, pConstantData, BoolCount);
 }
