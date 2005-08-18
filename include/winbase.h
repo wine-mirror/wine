@@ -2176,8 +2176,8 @@ extern WCHAR *wine_get_dos_file_name( LPCSTR str );
 
 #if defined(__i386__) && defined(__GNUC__) && defined(__WINESRC__) && !defined(_NTSYSTEM_)
 
-extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare );
-extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
+extern inline LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare );
+extern inline LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 {
     LONG ret;
     __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
@@ -2185,8 +2185,8 @@ extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LON
     return ret;
 }
 
-extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val );
-extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
+extern inline LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val );
+extern inline LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
 {
     LONG ret;
     __asm__ __volatile__( "lock; xchgl %0,(%1)"
@@ -2194,8 +2194,8 @@ extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
     return ret;
 }
 
-extern inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr );
-extern inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
+extern inline LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr );
+extern inline LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
 {
     LONG ret;
     __asm__ __volatile__( "lock; xaddl %0,(%1)"
@@ -2203,14 +2203,14 @@ extern inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
     return ret;
 }
 
-extern inline LONG WINAPI InterlockedIncrement( PLONG dest );
-extern inline LONG WINAPI InterlockedIncrement( PLONG dest )
+extern inline LONG WINAPI InterlockedIncrement( LONG volatile *dest );
+extern inline LONG WINAPI InterlockedIncrement( LONG volatile *dest )
 {
     return InterlockedExchangeAdd( dest, 1 ) + 1;
 }
 
-extern inline LONG WINAPI InterlockedDecrement( PLONG dest );
-extern inline LONG WINAPI InterlockedDecrement( PLONG dest )
+extern inline LONG WINAPI InterlockedDecrement( LONG volatile *dest );
+extern inline LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 {
     return InterlockedExchangeAdd( dest, -1 ) - 1;
 }
@@ -2259,22 +2259,22 @@ DWORD       WINAPI GetCurrentProcessId(void);
 DWORD       WINAPI GetCurrentThreadId(void);
 DWORD       WINAPI GetLastError(void);
 HANDLE      WINAPI GetProcessHeap(void);
-LONG        WINAPI InterlockedCompareExchange(LONG*,LONG,LONG);
-LONG        WINAPI InterlockedDecrement(PLONG);
-LONG        WINAPI InterlockedExchange(PLONG,LONG);
-LONG        WINAPI InterlockedExchangeAdd(PLONG,LONG);
-LONG        WINAPI InterlockedIncrement(PLONG);
+LONG        WINAPI InterlockedCompareExchange(LONG volatile*,LONG,LONG);
+LONG        WINAPI InterlockedDecrement(LONG volatile*);
+LONG        WINAPI InterlockedExchange(LONG volatile*,LONG);
+LONG        WINAPI InterlockedExchangeAdd(LONG volatile*,LONG);
+LONG        WINAPI InterlockedIncrement(LONG volatile*);
 VOID        WINAPI SetLastError(DWORD);
 
 #endif  /* __i386__ && __GNUC__ && __WINESRC__ && !_NTSYSTEM_ */
 
 /* FIXME: should handle platforms where sizeof(void*) != sizeof(long) */
-static inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID *dest, PVOID xchg, PVOID compare )
+static inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID volatile *dest, PVOID xchg, PVOID compare )
 {
     return (PVOID)InterlockedCompareExchange( (PLONG)dest, (LONG)xchg, (LONG)compare );
 }
 
-static inline PVOID WINAPI InterlockedExchangePointer( PVOID *dest, PVOID val )
+static inline PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVOID val )
 {
     return (PVOID)InterlockedExchange( (PLONG)dest, (LONG)val );
 }
