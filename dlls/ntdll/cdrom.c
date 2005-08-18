@@ -1334,6 +1334,9 @@ static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DW
     int         io = -1;
     DWORD       sectSize;
 
+    TRACE("RAW_READ_INFO: DiskOffset=%li,%li SectorCount=%li TrackMode=%i\n buffer=%p len=%li sz=%p\n",
+          raw->DiskOffset.u.HighPart, raw->DiskOffset.u.LowPart, raw->SectorCount, raw->TrackMode, buffer, len, sz);
+
     switch (raw->TrackMode)
     {
     case YellowMode2:   sectSize = 2336;        break;
