@@ -45,8 +45,7 @@ typedef struct _xmlnodemap
 {
     const struct IXMLDOMNamedNodeMapVtbl *lpVtbl;
     LONG ref;
-    xmlDocPtr xmldoc;
-    xmlNodePtr node;
+    IXMLDOMNode *node;
 } xmlnodemap;
 
 static inline xmlnodemap *impl_from_IXMLDOMNamedNodeMap( IXMLDOMNamedNodeMap *iface )
@@ -91,6 +90,7 @@ static ULONG WINAPI xmlnodemap_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
+        IXMLDOMNode_Release( This->node );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -153,16 +153,24 @@ static HRESULT WINAPI xmlnodemap_getNamedItem(
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
     xmlChar *element_name;
     xmlAttrPtr attr;
+    xmlNodePtr node;
+
+    TRACE("%p %s\n", This, debugstr_w(name) );
+
+    node = xmlNodePtr_from_domnode( This->node, 0 );
+    if ( !node )
+        return E_FAIL;
 
     element_name = xmlChar_from_wchar( name );
-    attr = xmlHasNsProp( This->node, element_name, NULL );
-    TRACE("xmlHasNsProp returned %p for %s\n", attr, element_name );
+    attr = xmlHasNsProp( node, element_name, NULL );
     HeapFree( GetProcessHeap(), 0, element_name );
 
     if ( !attr )
         return E_FAIL;
-    /* return Node_create( namedItem, This->xmldoc, attr ); */
-    return E_NOTIMPL;
+
+    *namedItem = create_attribute_node( attr );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnodemap_setNamedItem(
@@ -264,22 +272,21 @@ static const struct IXMLDOMNamedNodeMapVtbl xmlnodemap_vtbl =
     xmlnodemap__newEnum,
 };
 
-HRESULT NodeMap_create( IXMLDOMNamedNodeMap** DomNamedNodeMap, xmlDocPtr xmldoc, xmlNodePtr node )
+IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node )
 {
     xmlnodemap *nodemap;
 
     nodemap = HeapAlloc( GetProcessHeap(), 0, sizeof *nodemap );
     if ( !nodemap )
-        return E_OUTOFMEMORY;
+        return NULL;
 
     nodemap->lpVtbl = &xmlnodemap_vtbl;
-    nodemap->xmldoc = xmldoc;
     nodemap->node = node;
     nodemap->ref = 1;
 
-    *DomNamedNodeMap = (IXMLDOMNamedNodeMap*) &nodemap->lpVtbl;
+    IXMLDOMNode_AddRef( node );
 
-    return S_OK;
+    return (IXMLDOMNamedNodeMap*) &nodemap->lpVtbl;
 }
 
 #endif

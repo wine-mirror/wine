@@ -36,10 +36,12 @@ extern IXMLDOMNode      *create_attribute_node( xmlAttrPtr attr );
 extern IUnknown         *create_xmldoc( void );
 extern IXMLDOMElement   *create_element( xmlNodePtr element );
 extern IXMLDOMNode      *create_element_node( xmlNodePtr element );
+extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );
+extern IXMLDOMNode      *create_generic_node( xmlNodePtr node );
+extern IXMLDOMNodeList  *create_nodelist( xmlNodePtr node );
 
 /* data accessors */
-extern xmlDocPtr xmldoc_from_xmlnode( IXMLDOMNode *iface );
-extern xmlNodePtr xmlelement_from_xmlnode( IXMLDOMNode *iface );
+xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );
 
 /* helpers */
 extern xmlChar *xmlChar_from_wchar( LPWSTR str );

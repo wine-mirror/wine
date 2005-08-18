@@ -52,6 +52,11 @@ static inline domelem *impl_from_IXMLDOMElement( IXMLDOMElement *iface )
     return (domelem *)((char*)iface - FIELD_OFFSET(domelem, lpVtbl));
 }
 
+static inline xmlNodePtr get_element( domelem *This )
+{
+    return xmlNodePtr_from_domnode( This->node, XML_ELEMENT_NODE );
+}
+
 static HRESULT WINAPI domelem_QueryInterface(
     IXMLDOMElement *iface,
     REFIID riid,
@@ -137,16 +142,16 @@ static HRESULT WINAPI domelem_get_nodeName(
     IXMLDOMElement *iface,
     BSTR* p )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    return IXMLDOMNode_get_nodeName( This->node, p );
 }
 
 static HRESULT WINAPI domelem_get_nodeValue(
     IXMLDOMElement *iface,
     VARIANT* var1 )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    return IXMLDOMNode_get_nodeValue( This->node, var1 );
 }
 
 static HRESULT WINAPI domelem_put_nodeValue(
@@ -161,8 +166,8 @@ static HRESULT WINAPI domelem_get_nodeType(
     IXMLDOMElement *iface,
     DOMNodeType* domNodeType )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    return IXMLDOMNode_get_nodeType( This->node, domNodeType );
 }
 
 static HRESULT WINAPI domelem_get_parentNode(
@@ -177,8 +182,8 @@ static HRESULT WINAPI domelem_get_childNodes(
     IXMLDOMElement *iface,
     IXMLDOMNodeList** outList)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    return IXMLDOMNode_get_childNodes( This->node, outList );
 }
 
 static HRESULT WINAPI domelem_get_firstChild(
@@ -217,8 +222,8 @@ static HRESULT WINAPI domelem_get_attributes(
     IXMLDOMElement *iface,
     IXMLDOMNamedNodeMap** attributeMap)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    return IXMLDOMNode_get_attributes( This->node, attributeMap );
 }
 
 static HRESULT WINAPI domelem_insertBefore(
@@ -412,8 +417,8 @@ static HRESULT WINAPI domelem_get_baseName(
     IXMLDOMElement *iface,
     BSTR* p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    return IXMLDOMNode_get_baseName( This->node, p );
 }
 
 static HRESULT WINAPI domelem_transformNodeToObject(
@@ -436,7 +441,7 @@ static HRESULT WINAPI domelem_get_tagName(
     if ( !This->node )
         return E_FAIL;
 
-    element = xmlelement_from_xmlnode( This->node );
+    element = get_element( This );
     if ( !element )
         return E_FAIL;
 

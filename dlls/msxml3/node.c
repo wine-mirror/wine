@@ -23,6 +23,7 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <assert.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -41,20 +42,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
-typedef union {
-   xmlDocPtr     doc;
-   xmlNodePtr    node;
-   xmlAttrPtr    attr;
-   xmlElementPtr element;
-} libxml_node;
-
 typedef struct _xmlnode
 {
     const struct IXMLDOMNodeVtbl *lpVtbl;
     LONG ref;
-    BOOL free_me;
-    xmlElementType type;
-    libxml_node u;
+    xmlNodePtr node;
 } xmlnode;
 
 static inline xmlnode *impl_from_IXMLDOMNode( IXMLDOMNode *iface )
@@ -62,25 +54,18 @@ static inline xmlnode *impl_from_IXMLDOMNode( IXMLDOMNode *iface )
     return (xmlnode *)((char*)iface - FIELD_OFFSET(xmlnode, lpVtbl));
 }
 
-xmlDocPtr xmldoc_from_xmlnode( IXMLDOMNode *iface )
+xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type )
 {
     xmlnode *This;
 
     if ( !iface )
         return NULL;
-
     This = impl_from_IXMLDOMNode( iface );
-    if (This->type != XML_DOCUMENT_NODE )
+    if ( !This->node )
         return NULL;
-    return This->u.doc;
-}
-
-xmlNodePtr xmlelement_from_xmlnode( IXMLDOMNode *iface )
-{
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    if (This->type != XML_ELEMENT_NODE )
+    if ( type && This->node->type != type )
         return NULL;
-    return This->u.node;
+    return This->node;
 }
 
 static HRESULT WINAPI xmlnode_QueryInterface(
@@ -120,20 +105,18 @@ static ULONG WINAPI xmlnode_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        if ( This->free_me )
+        if( This->node->type == XML_DOCUMENT_NODE )
         {
-            switch( This->type )
-            {
-            case XML_DOCUMENT_NODE:
-                xmlFreeDoc( This->u.doc );
-                break;
-            case XML_ATTRIBUTE_NODE:
-            case XML_ELEMENT_NODE:
-                /* don't free these */
-                break;
-            default:
-                ERR("don't know how to free this element\n");
-            }
+            xmlFreeDoc( (xmlDocPtr) This->node );
+        }
+        else
+        {
+            IXMLDOMNode *root;
+            assert( This->node->doc );
+            root = This->node->doc->_private;
+            assert( root );
+            IXMLDOMNode_Release( root );
+            This->node->_private = NULL;
         }
         HeapFree( GetProcessHeap(), 0, This );
     }
@@ -218,33 +201,37 @@ static HRESULT WINAPI xmlnode_get_nodeValue(
     VARIANT* value)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
+    HRESULT r = S_FALSE;
 
     TRACE("%p %p\n", This, value);
 
-    switch ( This->type )
+    V_BSTR(value) = NULL;
+    V_VT(value) = VT_NULL;
+
+    switch ( This->node->type )
     {
-    case XML_COMMENT_NODE:
-        FIXME("comment\n");
-        return E_FAIL;
-        break;
     case XML_ATTRIBUTE_NODE:
         V_VT(value) = VT_BSTR;
-        V_BSTR(value) = bstr_from_xmlChar( This->u.attr->name );
+        V_BSTR(value) = bstr_from_xmlChar( This->node->name );
+        r = S_OK;
         break;
-    case XML_PI_NODE:
-        FIXME("processing instruction\n");
-        return E_FAIL;
+    case XML_TEXT_NODE:
+        V_VT(value) = VT_BSTR;
+        V_BSTR(value) = bstr_from_xmlChar( This->node->content );
+        r = S_OK;
         break;
     case XML_ELEMENT_NODE:
     case XML_DOCUMENT_NODE:
-    default:
-        return E_FAIL;
+        /* these seem to return NULL */
         break;
+    case XML_PI_NODE:
+    default:
+        FIXME("node %p type %d\n", This, This->node->type);
     }
  
     TRACE("%p returned %s\n", This, debugstr_w( V_BSTR(value) ) );
 
-    return S_OK;
+    return r;
 }
 
 static HRESULT WINAPI xmlnode_put_nodeValue(
@@ -259,8 +246,16 @@ static HRESULT WINAPI xmlnode_get_nodeType(
     IXMLDOMNode *iface,
     DOMNodeType* type)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+
+    TRACE("%p %p\n", This, type);
+
+    assert( NODE_ELEMENT == XML_ELEMENT_NODE );
+    assert( NODE_NOTATION == XML_NOTATION_NODE );
+
+    *type = This->node->type;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_get_parentNode(
@@ -276,9 +271,17 @@ static HRESULT WINAPI xmlnode_get_childNodes(
     IXMLDOMNodeList** childList)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    FIXME("%p\n", This);
+
+    TRACE("%p %p\n", This, childList );
+
+    if ( !childList )
+        return E_INVALIDARG;
+#if 0
+    *childList = create_nodelist( This->node->children );
+    return S_OK;
+#else
     return E_NOTIMPL;
-    /*return NodeList_create( childList, This );*/
+#endif
 }
 
 static HRESULT WINAPI xmlnode_get_firstChild(
@@ -318,9 +321,9 @@ static HRESULT WINAPI xmlnode_get_attributes(
     IXMLDOMNamedNodeMap** attributeMap)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
-    /*return NodeMap_create( attributeMap, This, node ); */
+    TRACE("%p\n", This);
+    *attributeMap = create_nodemap( iface );
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_insertBefore(
@@ -398,8 +401,23 @@ static HRESULT WINAPI xmlnode_get_text(
     IXMLDOMNode *iface,
     BSTR* text)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    xmlNodePtr child;
+    BSTR str = NULL;
+
+    TRACE("%p\n", This);
+
+    if ( !text )
+        return E_INVALIDARG;
+
+    child = This->node->children;
+    if ( child && child->type == XML_TEXT_NODE )
+        str = bstr_from_xmlChar( child->content );
+
+    TRACE("%p %s\n", This, debugstr_w(str) );
+    *text = str;
+ 
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_put_text(
@@ -521,8 +539,33 @@ static HRESULT WINAPI xmlnode_get_baseName(
     IXMLDOMNode *iface,
     BSTR* nameString)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    BSTR str = NULL;
+    HRESULT r = S_FALSE;
+
+    TRACE("%p %p\n", This, nameString );
+
+    if ( !nameString )
+        return E_INVALIDARG;
+
+    switch ( This->node->type )
+    {
+    case XML_ELEMENT_NODE:
+    case XML_ATTRIBUTE_NODE:
+        str = bstr_from_xmlChar( This->node->name );
+        r = S_OK;
+        break;
+    case XML_TEXT_NODE:
+        break;
+    default:
+        ERR("Unhandled type %d\n", This->node->type );
+        break;
+    }
+
+    TRACE("returning %08lx str = %s\n", r, debugstr_w( str ) );
+
+    *nameString = str;
+    return r;
 }
 
 static HRESULT WINAPI xmlnode_transformNodeToObject(
@@ -581,9 +624,37 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_transformNodeToObject,
 };
 
-static xmlnode *create_node( void )
+static IXMLDOMNode *create_node( xmlNodePtr node )
 {
     xmlnode *This;
+
+    if ( !node )
+        return NULL;
+
+    assert( node->doc );
+
+    /* if an interface already exists for this node, return it */
+    if ( node->_private )
+    {
+        IXMLDOMNode *n = node->_private;
+        IXMLDOMNode_AddRef( n );
+        return n;
+    }
+
+    /*
+     * Try adding a reference to the IXMLDOMNode implementation
+     * containing the document's root element.
+     */
+    if ( node->type != XML_DOCUMENT_NODE )
+    {
+        IXMLDOMNode *root = NULL;
+
+        root = node->doc->_private;
+        assert( root );
+        IXMLDOMNode_AddRef( root );
+    }
+    else
+        assert( node->doc == (xmlDocPtr) node );
 
     This = HeapAlloc( GetProcessHeap(), 0, sizeof *This );
     if ( !This )
@@ -591,61 +662,32 @@ static xmlnode *create_node( void )
 
     This->lpVtbl = &xmlnode_vtbl;
     This->ref = 1;
-    This->free_me = TRUE;
-    This->u.doc = NULL;
+    This->node = node;
 
-    return This;
+    /* remember which interface we associated with this node */
+    node->_private = This;
+
+    return (IXMLDOMNode*) &This->lpVtbl;
 }
 
 IXMLDOMNode *create_domdoc_node( xmlDocPtr node )
 {
-    xmlnode *This;
-
-    if ( !node )
-        return NULL;
-
-    This = create_node();
-    if ( !This )
-        return NULL;
-
-    This->type = XML_DOCUMENT_NODE;
-    This->u.doc = node;
- 
-    return (IXMLDOMNode*) &This->lpVtbl;
+    return create_node( (xmlNodePtr) node );
 }
 
 IXMLDOMNode *create_attribute_node( xmlAttrPtr node )
 {
-    xmlnode *This;
-
-    if ( !node )
-        return NULL;
-
-    This = create_node();
-    if ( !This )
-        return NULL;
-
-    This->type = XML_ATTRIBUTE_NODE;
-    This->u.attr = node;
- 
-    return (IXMLDOMNode*) &This->lpVtbl;
+    return create_node( (xmlNodePtr) node );
 }
 
 IXMLDOMNode *create_element_node( xmlNodePtr element )
 {
-    xmlnode *This;
+    return create_node( element );
+}
 
-    if ( !element )
-        return NULL;
-
-    This = create_node();
-    if ( !This )
-        return NULL;
-
-    This->type = XML_ELEMENT_NODE;
-    This->u.node = element;
- 
-    return (IXMLDOMNode*) &This->lpVtbl;
+IXMLDOMNode *create_generic_node( xmlNodePtr node )
+{
+    return create_node( node );
 }
 
 #endif

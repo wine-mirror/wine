@@ -53,6 +53,11 @@ static inline domdoc *impl_from_IXMLDOMDocument( IXMLDOMDocument *iface )
     return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpVtbl));
 }
 
+static inline xmlDocPtr get_doc( domdoc *This )
+{
+    return (xmlDocPtr) xmlNodePtr_from_domnode( This->node, XML_DOCUMENT_NODE );
+}
+
 static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument *iface, REFIID riid, void** ppvObject )
 {
     domdoc *This = impl_from_IXMLDOMDocument( iface );
@@ -503,7 +508,6 @@ static HRESULT WINAPI domdoc_get_documentElement(
     domdoc *This = impl_from_IXMLDOMDocument( iface );
     xmlDocPtr xmldoc = NULL;
     xmlNodePtr root = NULL;
-    IXMLDOMElement* element;
 
     TRACE("%p\n", This);
 
@@ -512,7 +516,7 @@ static HRESULT WINAPI domdoc_get_documentElement(
     if ( !This->node )
         return S_FALSE;
 
-    xmldoc = xmldoc_from_xmlnode( This->node );
+    xmldoc = get_doc( This );
     if ( !xmldoc )
         return S_FALSE;
 
@@ -520,12 +524,7 @@ static HRESULT WINAPI domdoc_get_documentElement(
     if ( !root )
         return S_FALSE;
 
-    element = create_element( root );
-    if ( element )
-    {
-        IXMLDOMNode_AddRef( This->node );
-        *DOMElement = element;
-    }
+    *DOMElement = create_element( root );
  
     return S_OK;
 }
