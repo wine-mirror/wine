@@ -132,11 +132,11 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     cptable = wine_cp_get_table(enc);
     if(!cptable) {
         fprintf(stderr, "Can't find codepage %d\n", enc);
-        exit(0);
+        exit(1);
     }
     if(cptable->info.char_size != 1) {
         fprintf(stderr, "Can't cope with double byte codepages\n");
-        exit(0);
+        exit(1);
     }
 
     ppem = face->size->metrics.y_ppem;
@@ -144,13 +144,13 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
 
     if(FT_Load_Char(face, 0xc5, FT_LOAD_DEFAULT)) {
         fprintf(stderr, "Can't find Aring\n");
-        exit(0);
+        exit(1);
     }
     ascent = face->glyph->metrics.height >> 6;
     descent = ppem - ascent;
     if(FT_Load_Char(face, 'M', FT_LOAD_DEFAULT)) {
         fprintf(stderr, "Can't find M\n");
-        exit(0);
+        exit(1);
     }
     il = ascent - (face->glyph->metrics.height >> 6);
 
@@ -341,19 +341,19 @@ int main(int argc, char **argv)
 
     if(FT_Init_FreeType(&lib)) {
         fprintf(stderr, "ft init failure\n");
-        exit(0);
+        exit(1);
     }
 
     if(FT_New_Face(lib, argv[1], 0, &face)) {
         fprintf(stderr, "Can't open face\n");
         usage(argv);
-        exit(0);
+        exit(1);
     }
 
     if(FT_Set_Pixel_Sizes(face, ppem, ppem)) {
         fprintf(stderr, "Can't set size\n");
         usage(argv);
-        exit(0);
+        exit(1);
     }
 
     strcpy(name, face->family_name);
