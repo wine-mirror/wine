@@ -424,6 +424,11 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
 
     /* Get the font name */
 
+    result->pointSize = 0;
+    result->faceName = NULL;
+    result->weight = FW_DONTCARE;
+    result->italic = FALSE;
+
     if (result->style & DS_SETFONT)
     {
         result->pointSize = GET_WORD(p);
@@ -432,11 +437,6 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
         {
             result->weight = GET_WORD(p); p++;
             result->italic = LOBYTE(GET_WORD(p)); p++;
-        }
-        else
-        {
-            result->weight = FW_DONTCARE;
-            result->italic = FALSE;
         }
         result->faceName = (LPCWSTR)p;
         p += strlenW( result->faceName ) + 1;

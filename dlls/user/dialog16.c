@@ -260,6 +260,9 @@ static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
 
     /* Get the font name */
 
+    result->pointSize = 0;
+    result->faceName = NULL;
+
     if (result->style & DS_SETFONT)
     {
         result->pointSize = GET_WORD(p);
