@@ -1068,12 +1068,3 @@ ULONGLONG WINAPI VerSetConditionMask( ULONGLONG dwlConditionMask, DWORD dwTypeBi
 	dwlConditionMask |= dwConditionMask << 0*3;
     return dwlConditionMask;
 }
-
-/******************************************************************************
- *        NtAlertThread   (NTDLL.@)
- */
-NTSTATUS WINAPI NtAlertThread(HANDLE ThreadHandle)
-{
-    FIXME("%p\n", ThreadHandle);
-    return STATUS_NOT_IMPLEMENTED;
-}

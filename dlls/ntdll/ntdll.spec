@@ -101,7 +101,7 @@
 # @ stub NtAddBootEntry
 @ stdcall NtAdjustGroupsToken(long long ptr long ptr ptr)
 @ stdcall NtAdjustPrivilegesToken(long long long long long long)
-@ stub NtAlertResumeThread
+@ stdcall NtAlertResumeThread(long ptr)
 @ stdcall NtAlertThread(long)
 @ stdcall NtAllocateLocallyUniqueId(ptr)
 # @ stub NtAllocateUserPhysicalPages
@@ -946,7 +946,7 @@
 # @ stub ZwAddBootEntry
 @ stdcall ZwAdjustGroupsToken(long long long long long long) NtAdjustGroupsToken
 @ stdcall ZwAdjustPrivilegesToken(long long long long long long) NtAdjustPrivilegesToken
-@ stub ZwAlertResumeThread
+@ stdcall ZwAlertResumeThread(long ptr) NtAlertResumeThread
 @ stdcall ZwAlertThread(long) NtAlertThread
 @ stdcall ZwAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
 # @ stub ZwAllocateUserPhysicalPages

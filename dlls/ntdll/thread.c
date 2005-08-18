@@ -400,6 +400,28 @@ NTSTATUS WINAPI NtResumeThread( HANDLE handle, PULONG count )
 
 
 /******************************************************************************
+ *              NtAlertResumeThread   (NTDLL.@)
+ *              ZwAlertResumeThread   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAlertResumeThread( HANDLE handle, PULONG count )
+{
+    FIXME( "stub: should alert thread %p\n", handle );
+    return NtResumeThread( handle, count );
+}
+
+
+/******************************************************************************
+ *              NtAlertThread   (NTDLL.@)
+ *              ZwAlertThread   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAlertThread( HANDLE handle )
+{
+    FIXME( "stub: %p\n", handle );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
  *              NtTerminateThread  (NTDLL.@)
  *              ZwTerminateThread  (NTDLL.@)
  */
