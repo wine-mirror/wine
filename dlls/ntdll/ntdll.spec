@@ -30,8 +30,6 @@
 @ stub DbgPrompt
 # @ stub DbgQueryDebugFilterState
 # @ stub DbgSetDebugFilterState
-@ stub DbgSsHandleKmApiMsg
-@ stub DbgSsInitialize
 @ stub DbgUiConnectToDbg
 @ stub DbgUiContinue
 # @ stub DbgUiConvertStateChangeStructure
@@ -85,7 +83,6 @@
 @ stdcall LdrUnloadDll(ptr)
 @ stdcall LdrUnlockLoaderLock(long long)
 @ stub LdrVerifyImageMatchesChecksum
-@ stub NPXEMULATORTABLE
 @ extern NlsAnsiCodePage
 @ extern NlsMbCodePageTag
 @ extern NlsMbOemCodePageTag
@@ -387,7 +384,6 @@
 @ stub PfxInsertPrefix
 @ stub PfxRemovePrefix
 # @ stub PropertyLengthAsVariant
-@ stub RestoreEm87Context
 @ stub RtlAbortRXact
 @ stdcall RtlAbsoluteToSelfRelativeSD(ptr ptr ptr)
 @ stdcall RtlAcquirePebLock()
@@ -918,7 +914,6 @@
 # @ stub RtlZombifyActivationContext
 # @ stub RtlpApplyLengthFunction
 # @ stub RtlpEnsureBufferSize
-@ stub RtlpInitializeRtl
 # @ stub RtlpNotOwnerCriticalSection
 @ stdcall RtlpNtCreateKey(ptr long ptr long ptr long long)
 @ stdcall RtlpNtEnumerateSubKey(ptr ptr long)
@@ -932,7 +927,6 @@
 @ stdcall RtlxOemStringToUnicodeSize(ptr) RtlOemStringToUnicodeSize
 @ stdcall RtlxUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
 @ stdcall RtlxUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
-@ stub SaveEm87Context
 @ stdcall -ret64 VerSetConditionMask(long long long long)
 @ stdcall ZwAcceptConnectPort(ptr long ptr long long ptr) NtAcceptConnectPort
 @ stdcall ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
