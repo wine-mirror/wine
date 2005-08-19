@@ -60,6 +60,7 @@ struct name_table
 
 static struct name_table undef_symbols;    /* list of undefined symbols */
 static struct name_table ignore_symbols;   /* list of symbols to ignore */
+static struct name_table extra_ld_symbols; /* list of extra symbols that ld should resolve */
 static struct name_table delayed_imports;  /* list of delayed import dlls */
 
 static char *ld_tmp_file;  /* ld temp file name */
@@ -438,6 +439,12 @@ void add_ignore_symbol( const char *name )
     else add_name( &ignore_symbols, name );
 }
 
+/* add a symbol to the list of extra symbols that ld must resolve */
+void add_extra_ld_symbol( const char *name )
+{
+    add_name( &extra_ld_symbols, name );
+}
+
 /* add a function to the list of imports from a given dll */
 static void add_import_func( struct import *imp, ORDDEF *func )
 {
@@ -546,8 +553,8 @@ static int check_unused( const struct import* imp, const DLLSPEC *spec )
 /* returns the name of the combined file */
 static const char *ldcombine_files( char **argv )
 {
-    int i, len = 0;
-    char *cmd;
+    unsigned int i, len = 0;
+    char *cmd, *p;
     int fd, err;
 
     if (output_file_name && output_file_name[0])
@@ -563,10 +570,14 @@ static const char *ldcombine_files( char **argv )
     atexit( remove_ld_tmp_file );
 
     if (!ld_command) ld_command = xstrdup("ld");
+    for (i = 0; i < extra_ld_symbols.count; i++) len += strlen(extra_ld_symbols.names[i]) + 5;
     for (i = 0; argv[i]; i++) len += strlen(argv[i]) + 1;
-    cmd = xmalloc( len + strlen(ld_tmp_file) + 8 + strlen(ld_command)  );
-    sprintf( cmd, "%s -r -o %s", ld_command, ld_tmp_file );
-    for (i = 0; argv[i]; i++) sprintf( cmd + strlen(cmd), " %s", argv[i] );
+    cmd = p = xmalloc( len + strlen(ld_tmp_file) + 8 + strlen(ld_command)  );
+    p += sprintf( cmd, "%s -r -o %s", ld_command, ld_tmp_file );
+    for (i = 0; i < extra_ld_symbols.count; i++)
+        p += sprintf( p, " -u %s", asm_name(extra_ld_symbols.names[i]) );
+    for (i = 0; argv[i]; i++)
+        p += sprintf( p, " %s", argv[i] );
     err = system( cmd );
     if (err) fatal_error( "%s -r failed with status %d\n", ld_command, err );
     free( cmd );
