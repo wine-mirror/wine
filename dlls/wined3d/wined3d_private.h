@@ -80,7 +80,6 @@ extern DWORD *stateLookup[MAX_LOOKUPS];
 
 extern DWORD minMipLookup[D3DTEXF_ANISOTROPIC + 1][D3DTEXF_LINEAR + 1];
 
-#if 0
 /* NOTE: Make sure these are in the correct numerical order. (see /include/d3d9types.h typedef enum _D3DDECLTYPE) */
 UINT static const glTypeLookup[D3DDECLTYPE_UNUSED][5] = {
                                   {D3DDECLTYPE_FLOAT1,    1, GL_FLOAT           , GL_FALSE ,sizeof(float)},
@@ -104,9 +103,8 @@ UINT static const glTypeLookup[D3DDECLTYPE_UNUSED][5] = {
 #define WINED3D_ATR_TYPE(_attribute)          glTypeLookup[sd->u.s._attribute.dwType][0]
 #define WINED3D_ATR_SIZE(_attribute)          glTypeLookup[sd->u.s._attribute.dwType][1]
 #define WINED3D_ATR_GLTYPE(_attribute)        glTypeLookup[sd->u.s._attribute.dwType][2]
-#define WINED3D_ATR_GLSOMETHING(_attribute)   glTypeLookup[sd->u.s._attribute.dwType][3]
+#define WINED3D_ATR_NORMALIZED(_attribute)    glTypeLookup[sd->u.s._attribute.dwType][3]
 #define WINED3D_ATR_TYPESIZE(_attribute)      glTypeLookup[sd->u.s._attribute.dwType][4]
-#endif
 
 /**
  * Settings 
@@ -343,9 +341,9 @@ extern LONG primCounter;
 void drawPrimitive(IWineD3DDevice *iface,
                     int PrimitiveType,
                     long NumPrimitives,
-
                     /* for Indexed: */
                     long  StartVertexIndex,
+                    UINT  numberOfVertices,
                     long  StartIdx,
                     short idxBytes,
                     const void *idxData,

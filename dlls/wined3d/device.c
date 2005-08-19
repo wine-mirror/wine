@@ -1456,7 +1456,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface,  CON
     IWineD3DVertexShaderImpl *object;  /* NOTE: impl usage is ok, this is a create */
     D3DCREATEOBJECTINSTANCE(object, VertexShader)
 
-    TRACE("(%p) : Created Vertex shader %p\n", This, ppVertexShader);
+    TRACE("(%p) : Created Vertex shader %p\n", This, *ppVertexShader);
     IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction);
 
     return D3D_OK;
@@ -4334,7 +4334,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, D3DPRIMIT
     TRACE("(%p) : Type=(%d,%s), Start=%d, Count=%d\n", This, PrimitiveType,
                                debug_d3dprimitivetype(PrimitiveType),
                                StartVertex, PrimitiveCount);
-    drawPrimitive(iface, PrimitiveType, PrimitiveCount, StartVertex, -1, 0, NULL, 0);
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, StartVertex, 0/* NumVertices */, -1 /* indxStart */,
+                  0 /* indxSize */, NULL /* indxData */, 0 /* minIndex */);
+
 
     return D3D_OK;
 }
@@ -4343,7 +4345,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, D3DPRIMIT
 HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface,
                                                            D3DPRIMITIVETYPE PrimitiveType,
                                                            INT baseVIndex, UINT minIndex,
-                                                           UINT NumVertices,UINT startIndex,UINT primCount) {
+                                                           UINT NumVertices, UINT startIndex, UINT primCount) {
 
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
     UINT                 idxStride = 2;
@@ -4364,10 +4366,8 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface,
         idxStride = 4;
     }
 
-    drawPrimitive(iface, PrimitiveType, primCount, baseVIndex,
-                      startIndex, idxStride,
-                      ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory,
-                      minIndex);
+    drawPrimitive(iface, PrimitiveType, primCount, baseVIndex, NumVertices, startIndex,
+                   idxStride, ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory, minIndex);
 
     return D3D_OK;
 }
@@ -4392,7 +4392,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIM
     This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
     This->stateBlock->streamIsUP = TRUE;
-    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, 0, NULL, 0);
+
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* start vertex */, 0  /* NumVertices */,
+                  0 /* indxStart*/, 0 /* indxSize*/, NULL /* indxData */, 0 /* indxMin */);
+    /* stream zero settings set to null at end, as per the msdn
+            http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/DrawPrimitiveUP.asp
+    */
     This->stateBlock->streamStride[0] = 0;
     This->stateBlock->streamSource[0] = NULL;
 
@@ -4401,16 +4406,16 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIM
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType,
-                                                             UINT MinVertexIndex,
-                                                             UINT NumVertexIndices,UINT PrimitiveCount,CONST void* pIndexData,
-                                                             WINED3DFORMAT IndexDataFormat, CONST void* pVertexStreamZeroData,
+                                                             UINT MinVertexIndex, UINT NumVertices,
+                                                             UINT PrimitiveCount, CONST void* pIndexData,
+                                                             WINED3DFORMAT IndexDataFormat,CONST void* pVertexStreamZeroData,
                                                              UINT VertexStreamZeroStride) {
     int                 idxStride;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     TRACE("(%p) : Type=(%d,%s), MinVtxIdx=%d, NumVIdx=%d, PCount=%d, pidxdata=%p, IdxFmt=%d, pVtxdata=%p, stride=%d\n",
              This, PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
-             MinVertexIndex, NumVertexIndices, PrimitiveCount, pIndexData,
+             MinVertexIndex, NumVertices, PrimitiveCount, pIndexData,
              IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
 
     if (IndexDataFormat == WINED3DFMT_INDEX16) {
@@ -4440,7 +4445,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
     This->stateBlock->streamIsUP = TRUE;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
 
-    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, idxStride, pIndexData, MinVertexIndex);
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* vertexStart */, NumVertices, 0 /* indxStart */, idxStride, pIndexData, MinVertexIndex);
+    /* stream zero settings set to null at end as per the msdn
+    http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/DrawPrimitiveUP.asp
+    */
 
     /* stream zero settings set to null at end as per the msdn */
     This->stateBlock->streamSource[0] = NULL;
