@@ -1,5 +1,6 @@
 /*
- * WineCfg (Russian resources)
+ * WineCfg resources
+ * Russian Language Support
  *
  * Copyright 2003 Igor Stepin
  *
@@ -21,36 +22,16 @@
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
-/*
-
-Программа находится в стадии предварительной разработки,
-в файле ресурсов ожидаются значительные изменения,
-поэтому я не настраивал размеры элементов.
-
-Как только будет объявлено о выходе функциональной версии
-это будет сделано.
-
-*/
-
-IDD_GENERALCFG DIALOGEX 0, 0, 260, 250
+IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
 STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
 BEGIN
-    COMBOBOX        IDC_WINVER,83,153,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_DOSVER,83,172,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Версия Wine:",IDC_STATIC,119,17,45,8
-    LTEXT           "CVS",IDC_WINEVER,169,17,56,8
-    LTEXT           "Версия Windows:",IDC_STATIC,17,155,58,8
-    LTEXT           "Версия DOS:",IDC_STATIC,17,173,57,8
-    CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | 
-                    SS_REALSIZEIMAGE | WS_BORDER,15,17,157,111, WS_EX_TRANSPARENT
+    LTEXT           "Версия Wine:",IDC_STATIC,119,17,55,8
+    LTEXT           "CVS",IDC_WINEVER,179,17,56,8
+    CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    GROUPBOX        "Поведение по умолчанию",IDC_STATIC,8,115,244,97
-    LTEXT           "Wine предоставляет возможность для Windows-приложений имитировать различные версии и внешний вид Windows.",
-                    IDC_STATIC,15,128,227,20
-    GROUPBOX        "Информация",IDC_STATIC,8,4,244,106
 /*
-    CTEXT           "Эта библиотека является свободным программным обеспечением; вы можете распространять её и/или модифицировать по условиям лицензии GNU Lesser General Public License, опубликованной Free Software Foundation; версии 2.1 лицензии или (на ваше усмотрение) любой более поздней.",
+    CTEXT           "Эта библиотека является свободным программным обеспечением; вы можете распространять её и/или модифицировать согласно условиям лицензии GNU Lesser General Public License, опубликованной Free Software Foundation; версии 2.1 лицензии или (на ваше усмотрение) любой более поздней.",
 */
     CTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_STATIC,119,44,124,72
@@ -60,117 +41,142 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
+    GROUPBOX        " Настройка приложений ",IDC_STATIC, 8,4,244,240
+    LTEXT           "Wine может имитировать разные версии Windows для разных приложений. Эта вкладка связаны с вкладками Библиотеки и Графика, для того чтобы позволить вам изменить глобальные настройки или настройки только для определённого приложения также и в этих вкладках.",
+                    IDC_STATIC,15,20,227,60
+    CONTROL         "Приложения",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+                    15,65,230,134
+    PUSHBUTTON	    "&Добавить приложение...",IDC_APP_ADDAPP, 68,204,94,14
+    PUSHBUTTON	    "&Удалить приложение",IDC_APP_REMOVEAPP, 164,204,78,14
+    LTEXT           "&Версия Windows:",IDC_STATIC,17,226,58,8
+    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
 END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    CONTROL         "Использовать расширение XFree DGA",IDC_XDGA,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,145,44,97,10
-    CONTROL         "Включить рабочий стол Wine",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,110,84,10
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    GROUPBOX        "Настройки отрисовки",IDC_STATIC,8,4,244,60
-    LTEXT           "Драйвер цвета и настройки отрисовки используются для оптимизации отображения цветов и приложений.",
-                    IDC_STATIC,15,17,228,22
-		    
-    LTEXT           "Размещено системных цветов:",IDC_STATIC,15,43,76,8
-    EDITTEXT        IDC_SYSCOLORS,90,41,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT	    "Глубина цвета экрана: ",IDC_STATIC,8,10,120,30
+    COMBOBOX	    IDC_SCREEN_DEPTH,90,8,160,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    GROUPBOX        " Настройки окна ",IDC_STATIC,8,25,244,110
+
+    CONTROL	    "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL	    "Включить двойную буферизацию рабочего стола",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     
-    GROUPBOX        "Рабочий стол Wine",IDC_STATIC,8,65,244,83
-    LTEXT           "Wine может имитировать рабочий стол Windows или работать в режиме ""Managed"" (по умолчанию), когда за размещение окон отвечает текущий менеджер окон X11.",
-                    IDC_STATIC,15,77,228,28
-    LTEXT           "Размер рабочего стола:",IDC_DESKTOP_SIZE,17,125,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,125,8,8,WS_DISABLED
+    /* FIXME: the wording of this explanation could be a lot better */
+    LTEXT           "Если включить эмуляцию рабочего стола, то все окна будут отображаться в одном 'виртуальном экране', иначе окна размещаются как обычные, на стандартном рабочем столе.",
+                    IDC_STATIC,15,73,228,28
+    LTEXT           "Размер рабочего стола:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
+    CONTROL         "Эмулировать виртуальный рабочий стол",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+		    
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
+
+    LTEXT	    "Поддержка Vertex Shader: ",IDC_STATIC,15,150,120,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,120,148,130,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL         "Включить Pixel Shader (если поддерживается оборудованием)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
+    GROUPBOX        " Замещения DLL ",IDC_STATIC,8,4,244,240
+    LTEXT           "Динамически подключаемые библиотеки могут быть встроенными builtin (предоставляются Wine) или родными native (берутся из Windows или предоставляются приложением)."
+                    ,IDC_STATIC,16,16,220,32
+    LTEXT           "Новое замещение для библиотеки:",IDC_STATIC,16,58,160,8
+    COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
+    PUSHBUTTON      "&Добавить",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
+    LTEXT           "Существующие замещения:",IDC_STATIC,16,86,100,8
+    LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
+    PUSHBUTTON      "&Редактировать",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "&Удалить",IDC_DLLS_REMOVEDLL,164,114,82,14 
 END
 
-IDD_SYSTEMCFG DIALOG DISCARDABLE  0, 0, 260, 250
-STYLE WS_CHILD
+IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 130, 92
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Редактировать замещение"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Диски",IDC_STATIC,8,4,244,120
-    LISTBOX         IDC_LIST_DRIVES,15,23,179,90,WS_VSCROLL
-    PUSHBUTTON      "&Добавить",IDC_DRIVE_ADD,197,22,50,22
-    PUSHBUTTON      "&Удалить",IDC_DRIVE_REMOVE,197,51,50,22
-    PUSHBUTTON      "&Править",IDC_DRIVE_EDIT,197,80,50,22
-END
-
-IDD_DRIVE_EDIT DIALOG DISCARDABLE  0, 0, 207, 110
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Настройка диска"
-FONT 8, "MS Shell Dlg"
-BEGIN
-    DEFPUSHBUTTON   "OK",ID_DRIVE_OK,150,7,50,14
-    PUSHBUTTON      "Отмена",ID_DRIVE_CANCEL,150,24,50,14
-    EDITTEXT        IDC_DRIVE_EDIT_NAME,42,8,78,13,ES_AUTOHSCROLL
-    LTEXT           "Диск:",-1,11,10,29,12
-    EDITTEXT        IDC_DRIVE_EDIT_LABEL,42,23,78,13,ES_AUTOHSCROLL
-    LTEXT           "Метка:",-1,11,25,29,12
-    EDITTEXT        IDC_DRIVE_EDIT_TYPE,42,38,78,13,ES_AUTOHSCROLL
-    LTEXT           "Тип:",-1,11,40,29,12
-    EDITTEXT        IDC_DRIVE_EDIT_PATH,42,53,78,13,ES_AUTOHSCROLL
-    LTEXT           "Путь:",-1,11,55,29,12
-    EDITTEXT        IDC_DRIVE_EDIT_FS,42,68,78,13,ES_AUTOHSCROLL
-    LTEXT           "Файловая система:",-1,11,70,29,12
-    EDITTEXT        IDC_DRIVE_EDIT_DEVICE,42,83,78,13,ES_AUTOHSCROLL
-    LTEXT           "Устройство:",-1,11,85,29,12
+    GROUPBOX        " Порядок загрузки ",IDC_STATIC,8,4,115,66
+    CONTROL         "&Встроенная (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,105,10
+    CONTROL         "&Родная (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,105,10
+    CONTROL         "В&строенная затем родная",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,105,10
+    CONTROL         "Род&ная затем встроенная",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,105,10
+    CONTROL         "&Блокировать",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,105,10
+    DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
+    PUSHBUTTON      "Отмена",IDCANCEL,57,74,45,14,WS_GROUP
 END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Другие диски",IDC_STATIC,7,107,246,112
-    LISTBOX         IDC_LIST_DRIVES,14,118,232,76,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
-                    LBS_MULTICOLUMN | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Добавить...",IDC_BUTTON_ADD,14,199,37,14
-    PUSHBUTTON      "Удалить",IDC_BUTTON_REMOVE,55,199,37,14
-    PUSHBUTTON      "Правка...",IDC_BUTTON_EDIT,97,199,37,14
-    PUSHBUTTON      "Автоопределение...",IDC_BUTTON_AUTODETECT,197,199,49,14
+    GROUPBOX        " Настройка дисков ",IDC_STATIC,8,4,244,240
+    CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                    LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
+    PUSHBUTTON      "&Добавить...",IDC_BUTTON_ADD,15,98,45,14
+    PUSHBUTTON      "&Удалить",IDC_BUTTON_REMOVE,66,98,47,14
+    PUSHBUTTON      "&Автоопределение...",IDC_BUTTON_AUTODETECT,165,98,80,14
+
+    /* editing drive details */
+    LTEXT           "&Путь:",IDC_STATIC,15,123,20,9    
+    EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Обзор...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
+    
+    LTEXT           "&Тип:",IDC_STATIC_TYPE,15,138,21,10
+    COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    
+    LTEXT           "Метка и серийный номер",IDC_LABELSERIAL_STATIC,15,155,95,10
+    
+    PUSHBUTTON      "Дополнительно...",IDC_BUTTON_SHOW_HIDE_ADVANCED,150,136,96,13
+    CONTROL         "Автоопределить &c устройства:",IDC_RADIO_AUTODETECT,"Button",
+                    BS_AUTORADIOBUTTON,15,166,150,10
+    EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Об&зор...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
+    CONTROL         "&Назначить вручную:",IDC_RADIO_ASSIGN,"Button",
+                    BS_AUTORADIOBUTTON,15,195,100,10
+
+    LTEXT           "&Метка:",IDC_STATIC_LABEL,33,208,29,12
+    EDITTEXT        IDC_EDIT_LABEL,103,205,118,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Серийный номер:",IDC_STATIC_SERIAL,33,225,80,12
+    EDITTEXT        IDC_EDIT_SERIAL,103,221,118,13,ES_AUTOHSCROLL | WS_TABSTOP
+
+    CONTROL         "Показывать символические ссылки на каталоги",IDC_SHOW_DIRSYM_LINK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,250,230,8
+    CONTROL         "Показывать файлы, начинающиеся с точки",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
 END
 
-IDD_DRIVE_EDIT2 DIALOG DISCARDABLE  0, 0, 272, 153
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Настройка диска"
+IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    DEFPUSHBUTTON   "OK",ID_BUTTON_OK,217,5,50,14
-    PUSHBUTTON      "Отменить",ID_BUTTON_CANCEL,217,22,50,14
-    LTEXT           "Буква:",IDC_STATIC,5,23,26,9
-    EDITTEXT        IDC_EDIT_LABEL,63,114,78,13,ES_AUTOHSCROLL
-    LTEXT           "Метка:",IDC_STATIC_LABEL,33,117,29,12
-    LTEXT           "Тип:",IDC_STATIC,5,54,21,10
-    EDITTEXT        IDC_EDIT_PATH,31,5,117,13,ES_AUTOHSCROLL
-    LTEXT           "Путь:",IDC_STATIC,5,9,20,9
-    LTEXT           "Имена:",IDC_STATIC,5,39,25,9
-    EDITTEXT        IDC_EDIT_SERIAL,63,129,78,13,ES_AUTOHSCROLL
-    LTEXT           "Серийный номер:",IDC_STATIC_SERIAL,33,133,29,12
-    COMBOBOX        IDC_COMBO_LETTER,31,20,78,60,CBS_DROPDOWNLIST  | 
-                    WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Обзор...",IDC_BUTTON_BROWSE_PATH,154,5,40,13
-    COMBOBOX        IDC_COMBO_TYPE,31,52,78,60,CBS_DROPDOWNLIST | 
-                    WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Автоопределить с устройсва:",IDC_RADIO_AUTODETECT,"Button",
-                    BS_AUTORADIOBUTTON,21,79,93,10
-    EDITTEXT        IDC_EDIT_DEVICE,33,89,108,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Обзор...",IDC_BUTTON_BROWSE_DEVICE,148,89,40,13
-    CONTROL         "Задать вручную:",IDC_RADIO_ASSIGN,"Button",
-                    BS_AUTORADIOBUTTON,21,104,69,10
-    GROUPBOX        "Метка и серийный номер",IDC_BOX_LABELSERIAL,15,68,180,79
+    LTEXT	"Звуковой драйвер: ",IDC_STATIC,40,20,90,8
+    COMBOBOX	IDC_AUDIO_DRIVER,40,40,75,105,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON	"Определить автоматически",IDC_AUDIO_AUTODETECT,150,20,100,14
+    PUSHBUTTON	"Настроить",IDC_AUDIO_CONFIGURE,170,40,80,14
+    PUSHBUTTON	"Панель управления",IDC_AUDIO_CONTROL_PANEL,170,60,80,14
+
+    GROUPBOX    " DirectSound ",IDC_STATIC,8,75,244,120
+
+    LTEXT	"Аппаратное ускорение: ",IDC_STATIC,15,85,90,10
+    COMBOBOX	IDC_DSOUND_HW_ACCEL,100,83,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "Программная эмуляция",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
     IDS_TAB_GENERAL         "Общие"
     IDS_TAB_DLLS            "Библиотеки"
     IDS_TAB_DRIVES          "Диски"
+    IDS_CHOOSE_PATH         "Выберите unix каталог для диска."
+    IDS_HIDE_ADVANCED       "Скрыть дополнительные"
+    IDS_SHOW_ADVANCED       "Показать дополнительные"
 END
