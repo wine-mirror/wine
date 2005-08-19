@@ -38,6 +38,8 @@
 #include "winbase.h"
 #include "winerror.h"
 
+#include "wine/exception.h"
+#include "excpt.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "kernel_private.h"
@@ -47,6 +49,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(atom);
 
 #define MAX_ATOM_LEN 255
+
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 static struct atom_table* get_local_table(DWORD entries)
 {
@@ -183,7 +193,18 @@ static ATOM ATOM_AddAtomA( LPCSTR str, struct atom_table* table )
  */
 ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] String to add */ )
 {
-    return ATOM_AddAtomA( str, NULL );
+    ATOM ret;
+    __TRY
+    {
+        ret = ATOM_AddAtomA( str, NULL );
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return ret;
 }
 
 
