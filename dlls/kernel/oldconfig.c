@@ -337,7 +337,8 @@ static int SCSI_getprocentry( FILE * procfile, struct LinuxProcScsiDevice * dev 
 /* create the hardware registry branch */
 static void create_hardware_branch(void)
 {
-#ifdef linux
+    /* The following mostly will work on Linux, but should not cause
+     * problems on other systems. */
     static const char procname_ide_media[] = "/proc/ide/%s/media";
     static const char procname_ide_model[] = "/proc/ide/%s/model";
     static const char procname_scsi[] = "/proc/scsi/scsi";
@@ -453,7 +454,6 @@ static void create_hardware_branch(void)
     if( result != EOF )
         WARN("Incorrect %s format\n", procname_scsi);
     fclose( procfile );
-#endif
 }
 
 
