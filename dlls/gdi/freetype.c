@@ -418,7 +418,8 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
 #ifdef HAVE_FREETYPE_FTWINFNT_H
     FT_WinFNT_HeaderRec winfnt_header;
 #endif
-    int i, bitmap_num;
+    int i, bitmap_num, internal_leading;
+    FONTSIGNATURE fs;
 
     do {
         char *family_name = fake_family;
@@ -489,12 +490,43 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
             StyleW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
             MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, StyleW, len);
 
+            internal_leading = 0;
+            memset(&fs, 0, sizeof(fs));
+
+            pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
+            if(pOS2) {
+                fs.fsCsb[0] = pOS2->ulCodePageRange1;
+                fs.fsCsb[1] = pOS2->ulCodePageRange2;
+                fs.fsUsb[0] = pOS2->ulUnicodeRange1;
+                fs.fsUsb[1] = pOS2->ulUnicodeRange2;
+                fs.fsUsb[2] = pOS2->ulUnicodeRange3;
+                fs.fsUsb[3] = pOS2->ulUnicodeRange4;
+                if(pOS2->version == 0) {
+                    FT_UInt dummy;
+
+                    if(!pFT_Get_First_Char || (pFT_Get_First_Char( ft_face, &dummy ) < 0x100))
+                        fs.fsCsb[0] |= 1;
+                    else
+                        fs.fsCsb[0] |= 1L << 31;
+                }
+            }
+#ifdef HAVE_FREETYPE_FTWINFNT_H
+            else if(pFT_Get_WinFNT_Header && !pFT_Get_WinFNT_Header(ft_face, &winfnt_header)) {
+                CHARSETINFO csi;
+                TRACE("pix_h %d charset %d dpi %dx%d pt %d\n", winfnt_header.pixel_height, winfnt_header.charset,
+                      winfnt_header.vertical_resolution,winfnt_header.horizontal_resolution, winfnt_header.nominal_point_size);
+                if(TranslateCharsetInfo((DWORD*)(UINT)winfnt_header.charset, &csi, TCI_SRCCHARSET))
+                    memcpy(&fs, &csi.fs, sizeof(csi.fs));
+                internal_leading = winfnt_header.internal_leading;
+            }
+#endif
+
             face_elem_ptr = list_head(&family->faces);
             while(face_elem_ptr) {
                 face = LIST_ENTRY(face_elem_ptr, Face, entry);
                 face_elem_ptr = list_next(&family->faces, face_elem_ptr);
                 if(!strcmpW(face->StyleName, StyleW) &&
-                   (FT_IS_SCALABLE(ft_face) || (size->y_ppem == face->size.y_ppem))) {
+                   (FT_IS_SCALABLE(ft_face) || ((size->y_ppem == face->size.y_ppem) && !memcmp(&fs, &face->fs, sizeof(fs)) ))) {
                     TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
                           debugstr_w(family->FamilyName), debugstr_w(StyleW),
                           face->font_version,  pHeader ? pHeader->Font_Revision : 0);
@@ -531,6 +563,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
             face->font_version = pHeader ? pHeader->Font_Revision : 0;
             face->family = family;
             face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
+            memcpy(&face->fs, &fs, sizeof(face->fs));
 
             if(FT_IS_SCALABLE(ft_face)) {
                 memset(&face->size, 0, sizeof(face->size));
@@ -544,39 +577,10 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
                 face->size.size = size->size;
                 face->size.x_ppem = size->x_ppem;
                 face->size.y_ppem = size->y_ppem;
-                face->size.internal_leading = 0;
+                face->size.internal_leading = internal_leading;
                 face->scalable = FALSE;
             }
 
-            memset(&face->fs, 0, sizeof(face->fs));
-
-            pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
-            if(pOS2) {
-                face->fs.fsCsb[0] = pOS2->ulCodePageRange1;
-                face->fs.fsCsb[1] = pOS2->ulCodePageRange2;
-                face->fs.fsUsb[0] = pOS2->ulUnicodeRange1;
-                face->fs.fsUsb[1] = pOS2->ulUnicodeRange2;
-                face->fs.fsUsb[2] = pOS2->ulUnicodeRange3;
-                face->fs.fsUsb[3] = pOS2->ulUnicodeRange4;
-                if(pOS2->version == 0) {
-                    FT_UInt dummy;
-
-                    if(!pFT_Get_First_Char || (pFT_Get_First_Char( ft_face, &dummy ) < 0x100))
-                        face->fs.fsCsb[0] |= 1;
-                    else
-                        face->fs.fsCsb[0] |= 1L << 31;
-                }
-            }
-#ifdef HAVE_FREETYPE_FTWINFNT_H
-            else if(pFT_Get_WinFNT_Header && !pFT_Get_WinFNT_Header(ft_face, &winfnt_header)) {
-                CHARSETINFO csi;
-                TRACE("pix_h %d charset %d dpi %dx%d pt %d\n", winfnt_header.pixel_height, winfnt_header.charset,
-                      winfnt_header.vertical_resolution,winfnt_header.horizontal_resolution, winfnt_header.nominal_point_size);
-                if(TranslateCharsetInfo((DWORD*)(UINT)winfnt_header.charset, &csi, TCI_SRCCHARSET))
-                    memcpy(&face->fs, &csi.fs, sizeof(csi.fs));
-                face->size.internal_leading = winfnt_header.internal_leading;
-            }
-#endif
             TRACE("fsCsb = %08lx %08lx/%08lx %08lx %08lx %08lx\n",
                   face->fs.fsCsb[0], face->fs.fsCsb[1],
                   face->fs.fsUsb[0], face->fs.fsUsb[1],
@@ -622,7 +626,7 @@ static void DumpFontList(void)
         TRACE("Family: %s\n", debugstr_w(family->FamilyName));
         LIST_FOR_EACH(face_elem_ptr, &family->faces) {
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-	    TRACE("\t%s", debugstr_w(face->StyleName));
+	    TRACE("\t%s\t%08lx", debugstr_w(face->StyleName), face->fs.fsCsb[0]);
             if(!face->scalable)
                 TRACE(" %ld", face->size.y_ppem >> 6);
             TRACE("\n");
@@ -1721,84 +1725,78 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
         LIST_FOR_EACH(family_elem_ptr, &font_list) {
             family = LIST_ENTRY(family_elem_ptr, Family, entry);
 	    if(!strcmpiW(family->FamilyName, lf.lfFaceName)) {
-                face_elem_ptr = list_head(&family->faces); 
-                face = LIST_ENTRY(face_elem_ptr, Face, entry);
-	        if((csi.fs.fsCsb[0] & face->fs.fsCsb[0]) || !csi.fs.fsCsb[0])
-                    if(face->scalable || can_use_bitmap)
-                        break;
+                LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
+                    face = LIST_ENTRY(face_elem_ptr, Face, entry);
+                    if((csi.fs.fsCsb[0] & face->fs.fsCsb[0]) || !csi.fs.fsCsb[0])
+                        if(face->scalable || can_use_bitmap)
+                            goto found;
+                }
             }
-            family = NULL;
 	}
     }
 
-    if(!family) {
-      /* If requested charset was DEFAULT_CHARSET then try using charset
-	 corresponding to the current ansi codepage */
-        if(!csi.fs.fsCsb[0]) {
-	    INT acp = GetACP();
-	    if(!TranslateCharsetInfo((DWORD*)acp, &csi, TCI_SRCCODEPAGE)) {
-	        FIXME("TCI failed on codepage %d\n", acp);
-		csi.fs.fsCsb[0] = 0;
-	    } else
-	        lf.lfCharSet = csi.ciCharset;
-	}
+    /* If requested charset was DEFAULT_CHARSET then try using charset
+       corresponding to the current ansi codepage */
+    if(!csi.fs.fsCsb[0]) {
+        INT acp = GetACP();
+        if(!TranslateCharsetInfo((DWORD*)acp, &csi, TCI_SRCCODEPAGE)) {
+            FIXME("TCI failed on codepage %d\n", acp);
+            csi.fs.fsCsb[0] = 0;
+        } else
+            lf.lfCharSet = csi.ciCharset;
+    }
 
-		/* Face families are in the top 4 bits of lfPitchAndFamily,
-		   so mask with 0xF0 before testing */
+    /* Face families are in the top 4 bits of lfPitchAndFamily,
+       so mask with 0xF0 before testing */
 
-	if((lf.lfPitchAndFamily & FIXED_PITCH) ||
-	   (lf.lfPitchAndFamily & 0xF0) == FF_MODERN)
-	  strcpyW(lf.lfFaceName, defFixed);
-	else if((lf.lfPitchAndFamily & 0xF0) == FF_ROMAN)
-	  strcpyW(lf.lfFaceName, defSerif);
-	else if((lf.lfPitchAndFamily & 0xF0) == FF_SWISS)
-	  strcpyW(lf.lfFaceName, defSans);
-	else
-	  strcpyW(lf.lfFaceName, defSans);
-        LIST_FOR_EACH(family_elem_ptr, &font_list) {
-            family = LIST_ENTRY(family_elem_ptr, Family, entry);
-	    if(!strcmpiW(family->FamilyName, lf.lfFaceName)) {
-                face_elem_ptr = list_head(&family->faces); 
+    if((lf.lfPitchAndFamily & FIXED_PITCH) ||
+       (lf.lfPitchAndFamily & 0xF0) == FF_MODERN)
+        strcpyW(lf.lfFaceName, defFixed);
+    else if((lf.lfPitchAndFamily & 0xF0) == FF_ROMAN)
+        strcpyW(lf.lfFaceName, defSerif);
+    else if((lf.lfPitchAndFamily & 0xF0) == FF_SWISS)
+        strcpyW(lf.lfFaceName, defSans);
+    else
+        strcpyW(lf.lfFaceName, defSans);
+    LIST_FOR_EACH(family_elem_ptr, &font_list) {
+        family = LIST_ENTRY(family_elem_ptr, Family, entry);
+        if(!strcmpiW(family->FamilyName, lf.lfFaceName)) {
+            LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
                 face = LIST_ENTRY(face_elem_ptr, Face, entry);
                 if(csi.fs.fsCsb[0] & face->fs.fsCsb[0])
                     if(face->scalable || can_use_bitmap)
-                        break;
+                        goto found;
             }
-            family = NULL;
-	}
+        }
     }
 
-    if(!family) {
-        LIST_FOR_EACH(family_elem_ptr, &font_list) {
-            family = LIST_ENTRY(family_elem_ptr, Family, entry);
-            face_elem_ptr = list_head(&family->faces); 
+    LIST_FOR_EACH(family_elem_ptr, &font_list) {
+        family = LIST_ENTRY(family_elem_ptr, Family, entry);
+        LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-	    if(csi.fs.fsCsb[0] & face->fs.fsCsb[0])
+            if(csi.fs.fsCsb[0] & face->fs.fsCsb[0])
                 if(face->scalable || can_use_bitmap)
-                    break;
-            family = NULL;
-	}
+                    goto found;
+        }
     }
 
-    if(!family) {
-        LIST_FOR_EACH(family_elem_ptr, &font_list) {
-            family = LIST_ENTRY(family_elem_ptr, Family, entry);
-            face_elem_ptr = list_head(&family->faces); 
+    
+    LIST_FOR_EACH(family_elem_ptr, &font_list) {
+        family = LIST_ENTRY(family_elem_ptr, Family, entry);
+        LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
             if(face->scalable || can_use_bitmap) {
                 csi.fs.fsCsb[0] = 0;
                 FIXME("just using first face for now\n");
-                break;
+                goto found;
             }
-            family = NULL;
-        }
-        if(!family) {
-            FIXME("can't find a single appropriate font - bailing\n");
-            free_font(ret);
-            return NULL;
         }
     }
+    FIXME("can't find a single appropriate font - bailing\n");
+    free_font(ret);
+    return NULL;
 
+found:
     it = lf.lfItalic ? 1 : 0;
     bd = lf.lfWeight > 550 ? 1 : 0;
 
@@ -1808,7 +1806,8 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     face = best = NULL;
     LIST_FOR_EACH(face_elem_ptr, &family->faces) {
         face = LIST_ENTRY(face_elem_ptr, Face, entry);
-        if(!(face->Italic ^ it) && !(face->Bold ^ bd)) {
+        if(!(face->Italic ^ it) && !(face->Bold ^ bd) &&
+           ((csi.fs.fsCsb[0] & face->fs.fsCsb[0]) || !csi.fs.fsCsb[0])) {
             if(face->scalable)
                 break;
             if(height > 0)
@@ -1832,19 +1831,21 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
         best = NULL;
         LIST_FOR_EACH(face_elem_ptr, &family->faces) {
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if(face->scalable)
-                break;
-            if(height > 0)
-                newdiff = height - (signed int)(face->size.y_ppem >> 6);
-            else
-                newdiff = -height - ((signed int)(face->size.y_ppem >> 6) - face->size.internal_leading);
-            if(!best || (diff > 0 && newdiff < diff && newdiff >= 0) ||
-               (diff < 0 && newdiff > diff)) {
-                TRACE("%ld is better for %d diff was %d\n", face->size.y_ppem >> 6, height, diff);
-                diff = newdiff;
-                best = face;
-                if(diff == 0)
+            if((csi.fs.fsCsb[0] & face->fs.fsCsb[0]) || !csi.fs.fsCsb[0]) {
+                if(face->scalable)
                     break;
+                if(height > 0)
+                    newdiff = height - (signed int)(face->size.y_ppem >> 6);
+                else
+                    newdiff = -height - ((signed int)(face->size.y_ppem >> 6) - face->size.internal_leading);
+                if(!best || (diff > 0 && newdiff < diff && newdiff >= 0) ||
+                   (diff < 0 && newdiff > diff)) {
+                    TRACE("%ld is better for %d diff was %d\n", face->size.y_ppem >> 6, height, diff);
+                    diff = newdiff;
+                    best = face;
+                    if(diff == 0)
+                        break;
+                }
             }
             face = NULL;
         }
@@ -1863,8 +1864,8 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     else
         ret->charset = get_nearest_charset(face, &ret->codepage);
 
-    TRACE("Chosen: %s %s\n", debugstr_w(family->FamilyName),
-	  debugstr_w(face->StyleName));
+    TRACE("Chosen: %s %s (%s:%ld)\n", debugstr_w(family->FamilyName),
+	  debugstr_w(face->StyleName), face->file, face->face_index);
 
     if(!face->scalable) {
         width = face->size.x_ppem >> 6;
