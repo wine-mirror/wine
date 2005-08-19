@@ -580,7 +580,7 @@ IXMLDOMElement* create_element( xmlNodePtr element )
         return NULL;
 
     This->lpVtbl = &domelem_vtbl;
-    This->node = create_element_node( element );
+    This->node = create_node( element );
     This->ref = 1;
 
     if ( !This->node )

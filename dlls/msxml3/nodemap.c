@@ -168,7 +168,7 @@ static HRESULT WINAPI xmlnodemap_getNamedItem(
     if ( !attr )
         return E_FAIL;
 
-    *namedItem = create_attribute_node( attr );
+    *namedItem = create_node( (xmlNodePtr) attr );
 
     return S_OK;
 }

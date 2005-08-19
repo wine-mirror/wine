@@ -729,7 +729,7 @@ static HRESULT WINAPI domdoc_load(
     if ( !xmldoc )
         return S_FALSE;
 
-    This->node = create_domdoc_node( xmldoc );
+    This->node = create_node( (xmlNodePtr) xmldoc );
     if ( !This->node )
     {
         *isSuccessful = VARIANT_FALSE;
@@ -847,7 +847,7 @@ static HRESULT WINAPI domdoc_loadXML(
     xmldoc = doparse( str, len );
     HeapFree( GetProcessHeap(), 0, str );
 
-    This->node = create_domdoc_node( xmldoc );
+    This->node = create_node( (xmlNodePtr) xmldoc );
     if( !This->node )
         return S_FALSE;
 

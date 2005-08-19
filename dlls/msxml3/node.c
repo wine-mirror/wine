@@ -624,7 +624,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_transformNodeToObject,
 };
 
-static IXMLDOMNode *create_node( xmlNodePtr node )
+IXMLDOMNode *create_node( xmlNodePtr node )
 {
     xmlnode *This;
 
@@ -668,26 +668,6 @@ static IXMLDOMNode *create_node( xmlNodePtr node )
     node->_private = This;
 
     return (IXMLDOMNode*) &This->lpVtbl;
-}
-
-IXMLDOMNode *create_domdoc_node( xmlDocPtr node )
-{
-    return create_node( (xmlNodePtr) node );
-}
-
-IXMLDOMNode *create_attribute_node( xmlAttrPtr node )
-{
-    return create_node( (xmlNodePtr) node );
-}
-
-IXMLDOMNode *create_element_node( xmlNodePtr element )
-{
-    return create_node( element );
-}
-
-IXMLDOMNode *create_generic_node( xmlNodePtr node )
-{
-    return create_node( node );
 }
 
 #endif

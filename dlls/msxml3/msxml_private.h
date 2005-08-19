@@ -30,15 +30,12 @@
 #endif
 
 /* constructors */
-extern IXMLDOMNode      *create_domdoc_node( xmlDocPtr node );
 extern IUnknown         *create_domdoc( void );
-extern IXMLDOMNode      *create_attribute_node( xmlAttrPtr attr );
 extern IUnknown         *create_xmldoc( void );
+extern IXMLDOMNode      *create_node( xmlNodePtr node );
 extern IXMLDOMElement   *create_element( xmlNodePtr element );
-extern IXMLDOMNode      *create_element_node( xmlNodePtr element );
-extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );
-extern IXMLDOMNode      *create_generic_node( xmlNodePtr node );
 extern IXMLDOMNodeList  *create_nodelist( xmlNodePtr node );
+extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );
 
 /* data accessors */
 xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );
