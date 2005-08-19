@@ -153,6 +153,9 @@ extern void close_registry(void);
 
 /* signal functions */
 
+extern void start_watchdog(void);
+extern void stop_watchdog(void);
+extern int watchdog_triggered(void);
 extern void init_signals(void);
 extern void close_signals(void);
 

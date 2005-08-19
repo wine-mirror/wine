@@ -139,23 +139,30 @@ static int wait4_thread( struct thread *thread, int signal )
 {
     int res, status;
 
+    start_watchdog();
     for (;;)
     {
         if ((res = wait4_wrapper( get_ptrace_pid(thread), &status, WUNTRACED, NULL )) == -1)
         {
-            if (errno == EINTR) continue;
-            if (errno == ECHILD)  /* must have died */
+            if (errno == EINTR)
+            {
+                if (!watchdog_triggered()) continue;
+                if (debug_level) fprintf( stderr, "%04x: *watchdog* wait4 aborted\n", thread->id );
+            }
+            else if (errno == ECHILD)  /* must have died */
             {
                 thread->unix_pid = -1;
                 thread->unix_tid = -1;
                 thread->attached = 0;
             }
             else perror( "wait4" );
+            stop_watchdog();
             return 0;
         }
         res = handle_child_status( thread, res, status, signal );
         if (!res || res == signal) break;
     }
+    stop_watchdog();
     return (thread->unix_pid != -1);
 }
 
@@ -188,21 +195,6 @@ int send_thread_signal( struct thread *thread, int sig )
         }
     }
     return (ret != -1);
-}
-
-/* attach to a Unix thread */
-static int attach_thread( struct thread *thread )
-{
-    /* this may fail if the client is already being debugged */
-    if (!use_ptrace) return 0;
-    if (ptrace( PTRACE_ATTACH, get_ptrace_pid(thread), 0, 0 ) == -1)
-    {
-        if (errno == ESRCH) thread->unix_pid = thread->unix_tid = -1;  /* thread got killed */
-        return 0;
-    }
-    if (debug_level) fprintf( stderr, "%04x: *attached*\n", thread->id );
-    thread->attached = 1;
-    return wait4_thread( thread, SIGSTOP );
 }
 
 /* detach from a Unix thread and kill it */
@@ -264,10 +256,21 @@ int suspend_for_ptrace( struct thread *thread )
     if (thread->attached)
     {
         if (!send_thread_signal( thread, SIGSTOP )) goto error;
-        if (!wait4_thread( thread, SIGSTOP )) goto error;
-        return 1;
     }
-    if (attach_thread( thread )) return 1;
+    else
+    {
+        /* this may fail if the client is already being debugged */
+        if (!use_ptrace) goto error;
+        if (ptrace( PTRACE_ATTACH, get_ptrace_pid(thread), 0, 0 ) == -1)
+        {
+            if (errno == ESRCH) thread->unix_pid = thread->unix_tid = -1;  /* thread got killed */
+            goto error;
+        }
+        if (debug_level) fprintf( stderr, "%04x: *attached*\n", thread->id );
+        thread->attached = 1;
+    }
+    if (wait4_thread( thread, SIGSTOP )) return 1;
+    resume_after_ptrace( thread );
  error:
     set_error( STATUS_ACCESS_DENIED );
     return 0;

@@ -88,6 +88,8 @@ static struct handler *handler_sigio;
 
 static sigset_t blocked_sigset;
 
+static int watchdog;
+
 /* create a signal handler */
 static struct handler *create_handler( signal_callback callback )
 {
@@ -199,6 +201,12 @@ static void do_sigint( int signum )
     do_signal( handler_sigint );
 }
 
+/* SIGALRM handler */
+static void do_sigalrm( int signum )
+{
+    watchdog = 1;
+}
+
 /* SIGCHLD handler */
 static void do_sigchld( int signum )
 {
@@ -214,6 +222,23 @@ static void do_sigio( int signum, siginfo_t *si, void *x )
 }
 #endif
 
+void start_watchdog(void)
+{
+    alarm( 3 );
+    watchdog = 0;
+}
+
+void stop_watchdog(void)
+{
+    alarm( 0 );
+    watchdog = 0;
+}
+
+int watchdog_triggered(void)
+{
+    return watchdog != 0;
+}
+
 void init_signals(void)
 {
     struct sigaction action;
@@ -228,6 +253,7 @@ void init_signals(void)
     sigaddset( &blocked_sigset, SIGCHLD );
     sigaddset( &blocked_sigset, SIGHUP );
     sigaddset( &blocked_sigset, SIGINT );
+    sigaddset( &blocked_sigset, SIGALRM );
     sigaddset( &blocked_sigset, SIGIO );
     sigaddset( &blocked_sigset, SIGQUIT );
     sigaddset( &blocked_sigset, SIGTERM );
@@ -246,6 +272,8 @@ void init_signals(void)
     sigaction( SIGHUP, &action, NULL );
     action.sa_handler = do_sigint;
     sigaction( SIGINT, &action, NULL );
+    action.sa_handler = do_sigalrm;
+    sigaction( SIGALRM, &action, NULL );
     action.sa_handler = do_sigterm;
     sigaction( SIGQUIT, &action, NULL );
     sigaction( SIGTERM, &action, NULL );
