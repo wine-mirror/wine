@@ -89,6 +89,7 @@ typedef struct _UnixFolder {
     LPITEMIDLIST m_pidlLocation;
     DWORD m_dwPathMode;
     DWORD m_dwAttributes;
+    const CLSID *m_pCLSID;
 } UnixFolder;
 
 /******************************************************************************
@@ -1080,10 +1081,17 @@ static ULONG WINAPI UnixFolder_IPersistFolder3_Release(IPersistFolder3* This)
                 (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder3, This));
 }
 
-static HRESULT WINAPI UnixFolder_IPersistFolder3_GetClassID(IPersistFolder3* This, CLSID* pClassID)
-{
-    TRACE("stub\n");
-    return E_NOTIMPL;
+static HRESULT WINAPI UnixFolder_IPersistFolder3_GetClassID(IPersistFolder3* iface, CLSID* pClassID)
+{    
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IPersistFolder3, iface);
+    
+    TRACE("(iface=%p, pClassId=%p)\n", iface, pClassID);
+    
+    if (!pClassID)
+        return E_INVALIDARG;
+
+    memcpy(pClassID, This->m_pCLSID, sizeof(CLSID));
+    return S_OK;
 }
 
 static HRESULT WINAPI UnixFolder_IPersistFolder3_Initialize(IPersistFolder3* iface, LPCITEMIDLIST pidl)
@@ -1440,7 +1448,9 @@ static const ISFHelperVtbl UnixFolder_ISFHelper_Vtbl = {
  *  The UnixDosFolder_Constructor sets the dwPathMode member to PATHMODE_DOS. This
  *  means that paths are converted from dos to unix and back at the interfaces.
  */
-static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, DWORD dwPathMode) {
+static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, DWORD dwPathMode, 
+    const CLSID *pCLSID) 
+{
     HRESULT hr = E_FAIL;
     UnixFolder *pUnixFolder = SHAlloc((ULONG)sizeof(UnixFolder));
     
@@ -1451,6 +1461,7 @@ static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, D
         pUnixFolder->m_cRef = 0;
         pUnixFolder->m_pszPath = NULL;
         pUnixFolder->m_dwPathMode = dwPathMode;
+        pUnixFolder->m_pCLSID = pCLSID;
 
         UnixFolder_IShellFolder2_AddRef(STATIC_CAST(IShellFolder2, pUnixFolder));
         hr = UnixFolder_IShellFolder2_QueryInterface(STATIC_CAST(IShellFolder2, pUnixFolder), riid, ppv);
@@ -1461,12 +1472,12 @@ static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, D
 
 HRESULT WINAPI UnixFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
     TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
-    return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_UNIX);
+    return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_UNIX, &CLSID_UnixFolder);
 }
 
 HRESULT WINAPI UnixDosFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
     TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
-    return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_DOS);
+    return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_DOS, &CLSID_UnixDosFolder);
 }
 
 /******************************************************************************
