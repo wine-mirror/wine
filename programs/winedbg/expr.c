@@ -770,7 +770,7 @@ int expr_print(const struct expr* exp)
     return TRUE;
 }
 
-struct expr* expr_clone(const struct expr* exp, unsigned* local_binding)
+struct expr* expr_clone(const struct expr* exp, BOOL *local_binding)
 {
     int		        i;
     struct expr*        rtn;

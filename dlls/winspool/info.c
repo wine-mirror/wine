@@ -764,16 +764,16 @@ static LPDEVMODEW DEVMODEcpyAtoW(DEVMODEW *dmW, const DEVMODEA *dmA)
 
     Formname = (dmA->dmSize > off_formname);
     size = dmA->dmSize + CCHDEVICENAME + (Formname ? CCHFORMNAME : 0);
-    MultiByteToWideChar(CP_ACP, 0, dmA->dmDeviceName, -1, dmW->dmDeviceName,
-			CCHDEVICENAME);
+    MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dmA->dmDeviceName, -1,
+                        dmW->dmDeviceName, CCHDEVICENAME);
     if(!Formname) {
       memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion,
 	     dmA->dmSize - CCHDEVICENAME);
     } else {
       memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion,
 	     off_formname - CCHDEVICENAME);
-      MultiByteToWideChar(CP_ACP, 0, dmA->dmFormName, -1, dmW->dmFormName,
-			  CCHFORMNAME);
+      MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dmA->dmFormName, -1,
+                          dmW->dmFormName, CCHFORMNAME);
       memcpy(&dmW->dmLogPixels, &dmA->dmLogPixels, dmA->dmSize -
 	     (off_formname + CCHFORMNAME));
     }
@@ -798,16 +798,16 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
     Formname = (dmW->dmSize > off_formname);
     size = dmW->dmSize - CCHDEVICENAME - (Formname ? CCHFORMNAME : 0);
     dmA = HeapAlloc(heap, HEAP_ZERO_MEMORY, size + dmW->dmDriverExtra);
-    WideCharToMultiByte(CP_ACP, 0, dmW->dmDeviceName, -1, dmA->dmDeviceName,
-			CCHDEVICENAME, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, dmW->dmDeviceName, -1,
+                        (LPSTR)dmA->dmDeviceName, CCHDEVICENAME, NULL, NULL);
     if(!Formname) {
       memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
 	     dmW->dmSize - CCHDEVICENAME * sizeof(WCHAR));
     } else {
       memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
 	     off_formname - CCHDEVICENAME * sizeof(WCHAR));
-      WideCharToMultiByte(CP_ACP, 0, dmW->dmFormName, -1, dmA->dmFormName,
-			  CCHFORMNAME, NULL, NULL);
+      WideCharToMultiByte(CP_ACP, 0, dmW->dmFormName, -1,
+                          (LPSTR)dmA->dmFormName, CCHFORMNAME, NULL, NULL);
       memcpy(&dmA->dmLogPixels, &dmW->dmLogPixels, dmW->dmSize -
 	     (off_formname + CCHFORMNAME * sizeof(WCHAR)));
     }
@@ -2237,10 +2237,11 @@ static void WINSPOOL_GetDefaultDevMode(
 	BOOL unicode)
 {
     DEVMODEA	dm;
+    static const char szwps[] = "wineps.drv";
 
 	/* fill default DEVMODE - should be read from ppd... */
 	ZeroMemory( &dm, sizeof(dm) );
-	strcpy(dm.dmDeviceName,"wineps.drv");
+	memcpy(dm.dmDeviceName,szwps,sizeof szwps);
 	dm.dmSpecVersion = DM_SPECVERSION;
 	dm.dmDriverVersion = 1;
 	dm.dmSize = sizeof(DEVMODEA);
@@ -2972,8 +2973,8 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         *pcbNeeded = WideCharToMultiByte(CP_ACP, 0, DriverName, -1, NULL, 0,
                                           NULL, NULL);
         if(*pcbNeeded <= cbBuf)
-            WideCharToMultiByte(CP_ACP, 0, DriverName, -1, strPtr, *pcbNeeded,
-                                NULL, NULL);
+            WideCharToMultiByte(CP_ACP, 0, DriverName, -1,
+                                (LPSTR)strPtr, *pcbNeeded, NULL, NULL);
     }
     if(Level == 1) {
        if(ptr)
@@ -3010,8 +3011,8 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         if(unicode)
             strcpyW((LPWSTR)strPtr, pEnvironment);
         else
-            WideCharToMultiByte(CP_ACP, 0, pEnvironment, -1, strPtr, size,
-                                NULL, NULL);
+            WideCharToMultiByte(CP_ACP, 0, pEnvironment, -1,
+                                (LPSTR)strPtr, size, NULL, NULL);
         if(ptr)
             ((PDRIVER_INFO_3W) ptr)->pEnvironment = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? (pDriverStrings + (*pcbNeeded)) : NULL;
@@ -3293,7 +3294,7 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
     if (ret) {
         DWORD needed;
         needed = 1 + WideCharToMultiByte( CP_ACP, 0, driverDirectoryW, -1, 
-                                   pDriverDirectory, cbBuf, NULL, NULL);
+                                   (LPSTR)pDriverDirectory, cbBuf, NULL, NULL);
         if(pcbNeeded)
             *pcbNeeded = needed;
         ret = (needed <= cbBuf) ? TRUE : FALSE;
@@ -3789,7 +3790,7 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
 
             /* add the name of the port if we can fit it */
             if ( ofs < bufsize )
-                lstrcpynA(&buffer[ofs],portname,bufsize - ofs);
+                lstrcpynA((LPSTR)&buffer[ofs],portname,bufsize - ofs);
 
             n++;
         }
@@ -4911,7 +4912,7 @@ static BOOL string_to_buf(LPCWSTR str, LPBYTE ptr, DWORD cb, DWORD *size, BOOL u
         *size = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
         if(*size <= cb)
         {
-            WideCharToMultiByte(CP_ACP, 0, str, -1, ptr, *size, NULL, NULL);
+            WideCharToMultiByte(CP_ACP, 0, str, -1, (LPSTR)ptr, *size, NULL, NULL);
             return TRUE;
         }
         return FALSE;

@@ -692,7 +692,7 @@ void info_wine_dbg_channel(BOOL turn_on, const char* chnl, const char* name)
     struct dll_option_layout    dol;
     int                         i;
     char*                       str;
-    unsigned char               buffer[32];
+    char                        buffer[32];
     unsigned char               mask;
     int                         done = 0;
     BOOL                        bAll;

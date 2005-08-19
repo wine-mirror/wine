@@ -69,8 +69,8 @@ void WCMD_clear_screen (void) {
   if (GetConsoleScreenBufferInfo(hStdOut, &consoleInfo))
   {
       COORD topLeft;
-      long screenSize;
-      
+      DWORD screenSize;
+
       screenSize = consoleInfo.dwSize.X * (consoleInfo.dwSize.Y + 1);
 
       topLeft.X = 0;

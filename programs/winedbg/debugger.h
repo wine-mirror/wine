@@ -297,7 +297,7 @@ extern struct expr*     expr_alloc_struct(struct expr*, const char* element);
 extern struct expr*     expr_alloc_func_call(const char*, int nargs, ...);
 extern struct expr*     expr_alloc_typecast(struct type_expr_t*, struct expr*);
 extern struct dbg_lvalue expr_eval(struct expr*);
-extern struct expr*     expr_clone(const struct expr* exp, unsigned* local_binding);
+extern struct expr*     expr_clone(const struct expr* exp, BOOL *local_binding);
 extern int              expr_free(struct expr* exp);
 extern int              expr_print(const struct expr* exp);
 

@@ -496,7 +496,7 @@ static void init_msvcrt_io_block(STARTUPINFO* st)
          * it's new input & output handles)
          */
         size_t sz = max(sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * 3, st_p.cbReserved2);
-        char* ptr = HeapAlloc(GetProcessHeap(), 0, sz);
+        BYTE* ptr = HeapAlloc(GetProcessHeap(), 0, sz);
         if (ptr)
         {
             unsigned num = *(unsigned*)st_p.lpReserved2;
@@ -506,7 +506,7 @@ static void init_msvcrt_io_block(STARTUPINFO* st)
             memcpy(ptr, st_p.lpReserved2, st_p.cbReserved2);
             st->cbReserved2 = sz;
             st->lpReserved2 = ptr;
-                
+
 #define WX_OPEN 0x01    /* see dlls/msvcrt/file.c */
             if (num <= 0 || (flags[0] & WX_OPEN))
             {

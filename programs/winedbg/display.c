@@ -60,7 +60,7 @@ static inline BOOL cmp_symbol(const SYMBOL_INFO* si1, const SYMBOL_INFO* si2)
 int display_add(struct expr *exp, int count, char format)
 {
     int         i;
-    int         local_binding = FALSE;
+    BOOL local_binding = FALSE;
 
     for (i = 0; i < ndisplays; i++)
         if (displaypoints[i].exp == NULL)

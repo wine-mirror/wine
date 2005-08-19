@@ -201,7 +201,7 @@ static int enum_channel(HANDLE hProcess, EnumChannelCB ce, void* user, unsigned 
     int                         i, ret = 1;
     unsigned int                j;
     void*                       buf_addr;
-    unsigned char               buffer[32];
+    char                        buffer[32];
     void*                       addr;
     const char**                cache = NULL;
     unsigned                    num_cache, used_cache;
