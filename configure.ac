@@ -1653,7 +1653,6 @@ dlls/wininet/Makefile
 dlls/wininet/tests/Makefile
 dlls/winmm/Makefile
 dlls/winmm/joystick/Makefile
-dlls/winmm/mcianim/Makefile
 dlls/winmm/mciavi/Makefile
 dlls/winmm/mciwave/Makefile
 dlls/winmm/tests/Makefile
