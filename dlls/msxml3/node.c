@@ -292,12 +292,10 @@ static HRESULT WINAPI xmlnode_get_childNodes(
 
     if ( !childList )
         return E_INVALIDARG;
-#if 0
     *childList = create_nodelist( This->node->children );
+    if (!*childList)
+        return S_FALSE;
     return S_OK;
-#else
-    return E_NOTIMPL;
-#endif
 }
 
 static HRESULT WINAPI xmlnode_get_firstChild(
