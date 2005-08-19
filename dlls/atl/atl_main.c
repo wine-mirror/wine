@@ -65,11 +65,15 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE 
 
     /* call mains */
     i = 0;
-    while (pM->m_pObjMap[i].pclsid != NULL)
+    if (pM->m_pObjMap != NULL)
     {
-        TRACE("Initializing object %i\n",i);
-        p[i].pfnObjectMain(TRUE);
-        i++;
+        while (pM->m_pObjMap[i].pclsid != NULL)
+        {
+            TRACE("Initializing object %i %p\n",i,p[i].pfnObjectMain);
+            if (p[i].pfnObjectMain)
+                p[i].pfnObjectMain(TRUE);
+            i++;
+        }
     }
 
     return S_OK;
