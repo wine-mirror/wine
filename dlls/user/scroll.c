@@ -1232,12 +1232,11 @@ static BOOL SCROLL_GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO in
     }
 
     /* handle invalid data structure */
-    if (!info->cbSize != sizeof(*info))
+    if (info->cbSize != sizeof(*info))
         return FALSE;
 
-    if (!SCROLL_GetScrollBarRect(hwnd, nBar, &info->rcScrollBar, &nDummy,
-                                 &info->dxyLineButton, &info->xyThumbTop))
-        return FALSE;
+    SCROLL_GetScrollBarRect(hwnd, nBar, &info->rcScrollBar, &nDummy,
+                            &info->dxyLineButton, &info->xyThumbTop);
 
     info->xyThumbBottom = info->xyThumbTop + info->dxyLineButton;
 
