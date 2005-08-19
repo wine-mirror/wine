@@ -583,8 +583,8 @@ static int CURSORICON_FindBestCursor( LPVOID dir, fnGetCIEntry get_entry,
     maxwidth = maxheight = 255;
     for ( i = 0; get_entry( dir, i, &cx, &cy, &bits ); i++ )
     {
-        if ((cx < maxwidth) && (cy < maxheight) &&
-            (bits == 1))
+        if (((cx < maxwidth) && (cy < maxheight) && (bits == 1)) ||
+            (bestEntry==-1))
         {
             bestEntry = i;
             maxwidth  = cx;
