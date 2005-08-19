@@ -456,7 +456,7 @@ void apply_drive_changes(void)
                               driveValue,
                               0,
                               REG_SZ,
-                              typeText,
+                              (LPBYTE) typeText,
                               strlen(typeText) + 1);
                 if(retval != ERROR_SUCCESS)
                 {

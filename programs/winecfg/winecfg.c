@@ -83,7 +83,7 @@ void set_window_title(HWND dialog)
  */
 static char *get_config_key (HKEY root, const char *subkey, const char *name, const char *def)
 {
-    LPBYTE buffer = NULL;
+    LPSTR buffer = NULL;
     DWORD len;
     HKEY hSubKey = NULL;
     DWORD res;
@@ -119,13 +119,13 @@ static char *get_config_key (HKEY root, const char *subkey, const char *name, co
 
     buffer = HeapAlloc(GetProcessHeap(), 0, len + 1);
 
-    RegQueryValueEx(hSubKey, name, NULL, NULL, buffer, &len);
+    RegQueryValueEx(hSubKey, name, NULL, NULL, (LPBYTE) buffer, &len);
 
     WINE_TRACE("buffer=%s\n", buffer);
 end:
     if (hSubKey && hSubKey != root) RegCloseKey(hSubKey);
 
-    return (char*)buffer;
+    return buffer;
 }
 
 /**
@@ -139,11 +139,11 @@ end:
  *
  * If valueName or value is NULL, an empty section will be created
  */
-static int set_config_key(HKEY root, const char *subkey, const char *name, const BYTE *value, DWORD type) {
+static int set_config_key(HKEY root, const char *subkey, const char *name, const void *value, DWORD type) {
     DWORD res = 1;
     HKEY key = NULL;
 
-    WINE_TRACE("subkey=%s: name=%s, value=%s, type=%ld\n", subkey, name, value, type);
+    WINE_TRACE("subkey=%s: name=%s, value=%p, type=%ld\n", subkey, name, value, type);
 
     assert( subkey != NULL );
 
@@ -165,7 +165,7 @@ static int set_config_key(HKEY root, const char *subkey, const char *name, const
     res = 0;
 end:
     if (key && key != root) RegCloseKey(key);
-    if (res != 0) WINE_ERR("Unable to set configuration key %s in section %s to %s, res=%ld\n", name, subkey, value, res);
+    if (res != 0) WINE_ERR("Unable to set configuration key %s in section %s, res=%ld\n", name, subkey, res);
     return res;
 }
 
