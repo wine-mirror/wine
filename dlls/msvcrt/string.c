@@ -106,9 +106,11 @@ void MSVCRT__swab(char* src, char* dst, int len)
     len = (unsigned)len >> 1;
 
     while (len--) {
-      *dst++ = src[1];
-      *dst++ = *src++;
-      src++;
+      char s0 = src[0];
+      char s1 = src[1];
+      *dst++ = s1;
+      *dst++ = s0;
+      src = src + 2;
     }
   }
 }
