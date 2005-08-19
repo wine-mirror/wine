@@ -64,54 +64,39 @@ static WNDPROC originalProcs[NUM_SUBCLASSES];
 static ATOM atRefDataProp;
 static ATOM atSubclassProp;
 
-/***********************************************************************
- * THEMING_SubclassProc
- *
- * The window proc registered to the subclasses. Fetches the subclass
- * proc and ref data and call the proc.
- */
-static LRESULT CALLBACK THEMING_SubclassProc (HWND wnd, UINT msg,
-                                              WPARAM wParam, LPARAM lParam)
-{
-    int subclass = (int)GetPropW (wnd, MAKEINTATOMW (atSubclassProp));
-    LRESULT result;
-    ULONG_PTR refData;
-
-    refData = (ULONG_PTR)GetPropW (wnd, MAKEINTATOMW (atRefDataProp));
-
-    TRACE ("%d; (%p, %x, %x, %lx, %lx)", subclass, wnd, msg, wParam, lParam, 
-        refData);
-    result = subclasses[subclass].subclassProc (wnd, msg, wParam, lParam, refData);
-    TRACE (" = %lx\n", result);
-    return result;
-}
-
 /* Generate a number of subclass window procs.
  * With a single proc alone, we can't really reliably find out the superclass,
- * hence, the first time the subclass is called, these "stubs" are used which
- * just save the internal ID of the subclass.
+ * so have one for each subclass. The subclass number is also stored in a prop
+ * since it's needed by THEMING_CallOriginalClass(). Then, the the subclass 
+ * proc and ref data are fetched and the proc called.
  */
-#define MAKE_SUBCLASS_STUB(N)                                               \
-static LRESULT CALLBACK subclass_stub ## N (HWND wnd, UINT msg,             \
+#define MAKE_SUBCLASS_PROC(N)                                               \
+static LRESULT CALLBACK subclass_proc ## N (HWND wnd, UINT msg,             \
                                             WPARAM wParam, LPARAM lParam)   \
 {                                                                           \
+    LRESULT result;                                                         \
+    ULONG_PTR refData;                                                      \
     SetPropW (wnd, MAKEINTATOMW (atSubclassProp), (HANDLE)N);               \
-    SetWindowLongPtrW (wnd, GWLP_WNDPROC, (LONG_PTR)THEMING_SubclassProc);  \
-    return THEMING_SubclassProc (wnd, msg, wParam, lParam);                 \
+    refData = (ULONG_PTR)GetPropW (wnd, MAKEINTATOMW (atRefDataProp));      \
+    TRACE ("%d; (%p, %x, %x, %lx, %lx)\n", N, wnd, msg, wParam, lParam,     \
+        refData);                                                           \
+    result = subclasses[N].subclassProc (wnd, msg, wParam, lParam, refData);\
+    TRACE ("result = %lx\n", result);                                       \
+    return result;                                                          \
 }
 
-MAKE_SUBCLASS_STUB(0)
-MAKE_SUBCLASS_STUB(1)
-MAKE_SUBCLASS_STUB(2)
-MAKE_SUBCLASS_STUB(3)
-MAKE_SUBCLASS_STUB(4)
+MAKE_SUBCLASS_PROC(0)
+MAKE_SUBCLASS_PROC(1)
+MAKE_SUBCLASS_PROC(2)
+MAKE_SUBCLASS_PROC(3)
+MAKE_SUBCLASS_PROC(4)
 
-const static WNDPROC subclassStubs[NUM_SUBCLASSES] = {
-    subclass_stub0,
-    subclass_stub1,
-    subclass_stub2,
-    subclass_stub3,
-    subclass_stub4
+const static WNDPROC subclassProcs[NUM_SUBCLASSES] = {
+    subclass_proc0,
+    subclass_proc1,
+    subclass_proc2,
+    subclass_proc3,
+    subclass_proc4
 };
 
 /***********************************************************************
@@ -139,11 +124,11 @@ void THEMING_Initialize (void)
         class.style |= CS_GLOBALCLASS;
         GetClassInfoExW (NULL, subclasses[i].className, &class);
         originalProcs[i] = class.lpfnWndProc;
-        class.lpfnWndProc = subclassStubs[i];
+        class.lpfnWndProc = subclassProcs[i];
         
         if (!class.lpfnWndProc)
         {
-            ERR("Missing stub for class %s\n", 
+            ERR("Missing proc for class %s\n", 
                 debugstr_w (subclasses[i].className));
             continue;
         }
