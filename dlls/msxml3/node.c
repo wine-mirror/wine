@@ -258,12 +258,28 @@ static HRESULT WINAPI xmlnode_get_nodeType(
     return S_OK;
 }
 
+static HRESULT get_node(
+    xmlnode *This,
+    const char *name,
+    xmlNodePtr node,
+    IXMLDOMNode **out )
+{
+    TRACE("%p->%s %p\n", This, name, node );
+
+    if ( !out )
+        return E_INVALIDARG;
+    *out = create_node( node );
+    if (!*out)
+        return S_FALSE;
+    return S_OK;
+}
+
 static HRESULT WINAPI xmlnode_get_parentNode(
     IXMLDOMNode *iface,
     IXMLDOMNode** parent)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    return get_node( This, "parent", This->node->parent, parent );
 }
 
 static HRESULT WINAPI xmlnode_get_childNodes(
@@ -288,32 +304,32 @@ static HRESULT WINAPI xmlnode_get_firstChild(
     IXMLDOMNode *iface,
     IXMLDOMNode** firstChild)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    return get_node( This, "firstChild", This->node->children, firstChild );
 }
 
 static HRESULT WINAPI xmlnode_get_lastChild(
     IXMLDOMNode *iface,
     IXMLDOMNode** lastChild)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    return get_node( This, "lastChild", This->node->last, lastChild );
 }
 
 static HRESULT WINAPI xmlnode_get_previousSibling(
     IXMLDOMNode *iface,
     IXMLDOMNode** previousSibling)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    return get_node( This, "previous", This->node->prev, previousSibling );
 }
 
 static HRESULT WINAPI xmlnode_get_nextSibling(
     IXMLDOMNode *iface,
     IXMLDOMNode** nextSibling)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    return get_node( This, "next", This->node->next, nextSibling );
 }
 
 static HRESULT WINAPI xmlnode_get_attributes(
