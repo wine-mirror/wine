@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "wine/list.h"
+
 #define IDENTIFIER_SIZE 96
 
 typedef struct tagMSIFEATURE
@@ -35,8 +37,8 @@ typedef struct tagMSIFEATURE
     INSTALLSTATE ActionRequest;
     INSTALLSTATE Action;
 
-    INT ComponentCount;
-    INT Components[1024]; /* yes hardcoded limit.... I am bad */
+    struct list *Components;
+    
     INT Cost;
 } MSIFEATURE;
 
@@ -60,6 +62,12 @@ typedef struct tagMSICOMPONENT
     LPWSTR FullKeypath;
     LPWSTR AdvertiseString;
 } MSICOMPONENT;
+
+typedef struct tagComponentList
+{
+    struct list entry;
+    int component;
+} ComponentList;
 
 typedef struct tagMSIFOLDER
 {

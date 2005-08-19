@@ -1016,8 +1016,20 @@ static int load_component(MSIPACKAGE* package, MSIRECORD * row)
 typedef struct {
     MSIPACKAGE *package;
     INT index;
-    INT cnt;
 } _ilfs;
+
+static UINT add_feature_component( MSIFEATURE *feature, int index )
+{
+    ComponentList *cl;
+
+    cl = HeapAlloc( GetProcessHeap(), 0, sizeof (*cl) );
+    if ( !cl )
+        return ERROR_NOT_ENOUGH_MEMORY;
+    cl->component = index;
+    list_add_tail( feature->Components, &cl->entry );
+
+    return ERROR_SUCCESS;
+}
 
 static UINT iterate_component_check(MSIRECORD *row, LPVOID param)
 {
@@ -1025,9 +1037,8 @@ static UINT iterate_component_check(MSIRECORD *row, LPVOID param)
     INT c_indx;
 
     c_indx = load_component(ilfs->package,row);
+    add_feature_component( &ilfs->package->features[ilfs->index], c_indx );
 
-    ilfs->package->features[ilfs->index].Components[ilfs->cnt] = c_indx;
-    ilfs->package->features[ilfs->index].ComponentCount ++;
     TRACE("Loaded new component to index %i\n",c_indx);
 
     return ERROR_SUCCESS;
@@ -1039,7 +1050,6 @@ static UINT iterate_load_featurecomponents(MSIRECORD *row, LPVOID param)
     LPCWSTR component;
     DWORD rc;
     INT c_indx;
-    INT cnt = ilfs->package->features[ilfs->index].ComponentCount;
     MSIQUERY * view;
     static const WCHAR Query[] = 
         {'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ', 
@@ -1056,8 +1066,7 @@ static UINT iterate_load_featurecomponents(MSIRECORD *row, LPVOID param)
     {
         TRACE("Component %s already loaded at %i\n", debugstr_w(component),
                         c_indx);
-        ilfs->package->features[ilfs->index].Components[cnt] = c_indx;
-        ilfs->package->features[ilfs->index].ComponentCount ++;
+        add_feature_component( &ilfs->package->features[ilfs->index], c_indx );
         return ERROR_SUCCESS;
     }
 
@@ -1065,7 +1074,6 @@ static UINT iterate_load_featurecomponents(MSIRECORD *row, LPVOID param)
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    ilfs->cnt = cnt;
     rc = MSI_IterateRecords(view, NULL, iterate_component_check, ilfs);
     msiobj_release( &view->hdr );
 
@@ -1101,6 +1109,14 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
                                 package->loaded_features * sizeof(MSIFEATURE));
 
     memset(&package->features[index],0,sizeof(MSIFEATURE));
+
+    /*
+     * Can't use struct list in features because the address keeps changing
+     * due to the above HeapReAlloc, so allocate a struct list instead
+     */
+    package->features[index].Components =
+        HeapAlloc( GetProcessHeap(), 0, sizeof (struct list) );
+    list_init( package->features[index].Components );
     
     sz = IDENTIFIER_SIZE;       
     MSI_RecordGetStringW(row,1,package->features[index].Feature,&sz);
@@ -1421,12 +1437,14 @@ static void ACTION_UpdateInstallStates(MSIPACKAGE *package)
 
     for (i = 0; i < package->loaded_features; i++)
     {
+        ComponentList *cl;
         INSTALLSTATE res = -10;
-        int j;
-        for (j = 0; j < package->features[i].ComponentCount; j++)
+
+        LIST_FOR_EACH_ENTRY( cl, package->features[i].Components,
+                             ComponentList, entry )
         {
-            MSICOMPONENT* component = &package->components[package->features[i].
-                                                           Components[j]];
+            MSICOMPONENT* component = &package->components[cl->component];
+
             if (res == -10)
                 res = component->Installed;
             else
@@ -1497,7 +1515,6 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
     LPWSTR level;
     INT install_level;
     DWORD i;
-    INT j;
     static const WCHAR szlevel[] =
         {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szAddLocal[] =
@@ -1590,14 +1607,15 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
     for(i = 0; i < package->loaded_features; i++)
     {
         MSIFEATURE* feature = &package->features[i];
+        ComponentList *cl;
+
         TRACE("Examining Feature %s (Installed %i, Action %i, Request %i)\n",
             debugstr_w(feature->Feature), feature->Installed, feature->Action,
             feature->ActionRequest);
 
-        for( j = 0; j < feature->ComponentCount; j++)
+        LIST_FOR_EACH_ENTRY( cl, feature->Components, ComponentList, entry )
         {
-            MSICOMPONENT* component = &package->components[
-                                                    feature->Components[j]];
+            MSICOMPONENT* component = &package->components[cl->component];
 
             if (!component->Enabled)
             {
@@ -2435,27 +2453,30 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, UINT index)
     /* increment counts */
     for (j = 0; j < package->loaded_features; j++)
     {
-        int i;
+        ComponentList *cl;
 
         if (!ACTION_VerifyFeatureForAction(package,j,INSTALLSTATE_LOCAL))
             continue;
 
-        for (i = 0; i < package->features[j].ComponentCount; i++)
+        LIST_FOR_EACH_ENTRY( cl, package->features[j].Components,
+                             ComponentList, entry )
         {
-            if (package->features[j].Components[i] == index)
+            if ( cl->component == index )
                 count++;
         }
     }
     /* decrement counts */
     for (j = 0; j < package->loaded_features; j++)
     {
-        int i;
+        ComponentList *cl;
+
         if (!ACTION_VerifyFeatureForAction(package,j,INSTALLSTATE_ABSENT))
             continue;
 
-        for (i = 0; i < package->features[j].ComponentCount; i++)
+        LIST_FOR_EACH_ENTRY( cl, package->features[j].Components,
+                             ComponentList, entry )
         {
-            if (package->features[j].Components[i] == index)
+            if ( cl->component == index )
                 count--;
         }
     }
@@ -3324,9 +3345,9 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     /* here the guids are base 85 encoded */
     for (i = 0; i < package->loaded_features; i++)
     {
+        ComponentList *cl;
         LPWSTR data = NULL;
         GUID clsid;
-        int j;
         INT size;
         BOOL absent = FALSE;
 
@@ -3335,26 +3356,29 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
             !ACTION_VerifyFeatureForAction(package,i,INSTALLSTATE_ADVERTISED))
             absent = TRUE;
 
-        size = package->features[i].ComponentCount*21;
-        size +=1;
+        size = 1;
+        LIST_FOR_EACH_ENTRY( cl, package->features[i].Components,
+                             ComponentList, entry )
+        {
+            size += 21;
+        }
         if (package->features[i].Feature_Parent[0])
             size += strlenW(package->features[i].Feature_Parent)+2;
 
         data = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
 
         data[0] = 0;
-        for (j = 0; j < package->features[i].ComponentCount; j++)
+        LIST_FOR_EACH_ENTRY( cl, package->features[i].Components,
+                             ComponentList, entry )
         {
+            MSICOMPONENT* component = &package->components[cl->component];
             WCHAR buf[21];
+
             memset(buf,0,sizeof(buf));
-            if (package->components
-                [package->features[i].Components[j]].ComponentId[0]!=0)
+            if ( component->ComponentId[0] )
             {
-                TRACE("From %s\n",debugstr_w(package->components
-                            [package->features[i].Components[j]].ComponentId));
-                CLSIDFromString(package->components
-                            [package->features[i].Components[j]].ComponentId,
-                            &clsid);
+                TRACE("From %s\n",debugstr_w(component->ComponentId));
+                CLSIDFromString(component->ComponentId, &clsid);
                 encode_base85_guid(&clsid,buf);
                 TRACE("to %s\n",debugstr_w(buf));
                 strcatW(data,buf);

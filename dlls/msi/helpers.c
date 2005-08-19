@@ -457,14 +457,23 @@ static void remove_tracked_tempfiles(MSIPACKAGE* package)
 void ACTION_free_package_structures( MSIPACKAGE* package)
 {
     INT i;
+    struct list *item, *cursor;
     
     TRACE("Freeing package action data\n");
 
     remove_tracked_tempfiles(package);
 
-    /* No dynamic buffers in features */
-    if (package->features && package->loaded_features > 0)
+    if (package->features)
+    {
+        LIST_FOR_EACH_SAFE( item, cursor, package->features->Components )
+        {
+            ComponentList *cl = LIST_ENTRY( item, ComponentList, entry );
+            list_remove( &cl->entry );
+            HeapFree(GetProcessHeap(), 0, cl);
+        }
+        HeapFree(GetProcessHeap(),0,package->features->Components);
         HeapFree(GetProcessHeap(),0,package->features);
+    }
 
     for (i = 0; i < package->loaded_folders; i++)
     {
@@ -847,6 +856,7 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
     int i;
     INSTALLSTATE newstate;
     MSIFEATURE *feature;
+    ComponentList *cl;
 
     i = get_loaded_feature(package,szFeature);
     if (i < 0)
@@ -855,9 +865,9 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
     feature = &package->features[i];
     newstate = feature->ActionRequest;
 
-    for( i = 0; i < feature->ComponentCount; i++)
+    LIST_FOR_EACH_ENTRY( cl, feature->Components, ComponentList, entry )
     {
-        MSICOMPONENT* component = &package->components[feature->Components[i]];
+        MSICOMPONENT* component = &package->components[cl->component];
 
         TRACE("MODIFYING(%i): Component %s (Installed %i, Action %i, Request %i)\n",
             newstate, debugstr_w(component->Component), component->Installed, 
@@ -874,7 +884,8 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
             }
             else 
             {
-                int j,k;
+                int j;
+                ComponentList *clist;
 
                 component->ActionRequest = newstate;
                 component->Action = newstate;
@@ -885,9 +896,10 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
                      component->ActionRequest != INSTALLSTATE_LOCAL; 
                      j++)
                 {
-                    for (k = 0; k < package->features[j].ComponentCount; k++)
-                        if ( package->features[j].Components[k] ==
-                             feature->Components[i] )
+                    LIST_FOR_EACH_ENTRY( clist, package->features[j].Components,
+                                         ComponentList, entry )
+                    {
+                        if ( clist->component == cl->component )
                         {
                             if (package->features[j].ActionRequest == 
                                 INSTALLSTATE_LOCAL)
@@ -898,6 +910,7 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
                             }
                             break;
                         }
+                    }
                 }
             }
         }
