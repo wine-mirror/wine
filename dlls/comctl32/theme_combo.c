@@ -246,7 +246,7 @@ LRESULT CALLBACK THEMING_ComboSubclassProc (HWND hwnd, UINT msg,
     case WM_DESTROY:
         theme = GetWindowTheme( hwnd );
         CloseThemeData ( theme );
-        break;
+        return THEMING_CallOriginalClass (hwnd, msg, wParam, lParam);
 
     case WM_THEMECHANGED:
         theme = GetWindowTheme( hwnd );
