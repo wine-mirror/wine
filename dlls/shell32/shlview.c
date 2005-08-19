@@ -1506,6 +1506,13 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		/* free pidl array memory */
 		HeapFree(GetProcessHeap(), 0, pItems);
               }
+
+              /* Initiate a refresh */
+              else if(plvKeyDown->wVKey == VK_F5)
+              {
+		IShellView_Refresh((IShellView*)This);
+              }
+
               else
 		FIXME("LVN_KEYDOWN key=0x%08x\n",plvKeyDown->wVKey);
 	    }
