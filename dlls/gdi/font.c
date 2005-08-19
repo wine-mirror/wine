@@ -1718,6 +1718,8 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                          const RECT *lprect, LPCWSTR str, UINT count, const INT *lpDx )
 {
     BOOL ret = FALSE;
+    LPWSTR reordered_string = (LPWSTR)str;
+
     DC * dc = DC_GetDCUpdate( hdc );
     if (dc)
     {
@@ -1732,19 +1734,20 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             {
                 /* The caller did not specify that language processing was already done.
                  */
-                LPWSTR lpReorderedString=HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
+                reordered_string = HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
 
                 BIDI_Reorder( str, count, GCP_REORDER,
                               ((flags&ETO_RTLREADING)!=0 || (GetTextAlign(hdc)&TA_RTLREADING)!=0)?
                               WINE_GCPW_FORCE_RTL:WINE_GCPW_FORCE_LTR,
-                              lpReorderedString, count, NULL );
+                              reordered_string, count, NULL );
 
-                ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags|ETO_IGNORELANGUAGE,
-                                             lprect,lpReorderedString,count,lpDx,dc->breakExtra);
-                HeapFree(GetProcessHeap(), 0, lpReorderedString);
-            } else
-                ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,str,count,
-                                             lpDx,dc->breakExtra);
+                flags |= ETO_IGNORELANGUAGE;
+            }
+            ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,reordered_string,count,
+                                         lpDx,dc->breakExtra);
+
+            if(reordered_string != str)
+                HeapFree(GetProcessHeap(), 0, reordered_string);
         }
         GDI_ReleaseObj( hdc );
     }
