@@ -960,12 +960,30 @@ INT WINAPI GetDIBits(
                 info->bmiHeader.biWidth = bmp->bitmap.bmWidth;
                 info->bmiHeader.biHeight = bmp->bitmap.bmHeight;
                 info->bmiHeader.biPlanes = 1;
-                info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
                 info->bmiHeader.biSizeImage =
                                  DIB_GetDIBImageBytes( bmp->bitmap.bmWidth,
                                                        bmp->bitmap.bmHeight,
                                                        bmp->bitmap.bmBitsPixel );
-                info->bmiHeader.biCompression = 0;
+                switch(bmp->bitmap.bmBitsPixel)
+                {
+                case 15:
+                    info->bmiHeader.biBitCount = 16;
+                    info->bmiHeader.biCompression = BI_RGB;
+                    break;
+                    
+                case 16:
+                    info->bmiHeader.biBitCount = 16;
+                    info->bmiHeader.biCompression = BI_BITFIELDS;
+                    ((PDWORD)info->bmiColors)[0] = 0xf800;
+                    ((PDWORD)info->bmiColors)[1] = 0x07e0;
+                    ((PDWORD)info->bmiColors)[2] = 0x001f;
+                    break;
+    
+                default:
+                    info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
+                    info->bmiHeader.biCompression = BI_RGB;
+                    break;
+                }
                 info->bmiHeader.biXPelsPerMeter = 0;
                 info->bmiHeader.biYPelsPerMeter = 0;
                 info->bmiHeader.biClrUsed = 0;
