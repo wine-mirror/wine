@@ -243,13 +243,19 @@ BOOL memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee,
     if (!addr) return FALSE;
     if (in_debuggee)
     {
-        if (!unicode) return pcs->process_io->read(pcs->handle, addr, buffer, size, &sz);
+        BOOL ret;
 
-        buffW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-        pcs->process_io->read(pcs->handle, addr, buffW, size * sizeof(WCHAR), &sz);
-        WideCharToMultiByte(CP_ACP, 0, buffW, sz / sizeof(WCHAR), buffer, size, 
-                            NULL, NULL);
-        HeapFree(GetProcessHeap(), 0, buffW);
+        if (!unicode) ret = pcs->process_io->read(pcs->handle, addr, buffer, size, &sz);
+        else
+        {
+            buffW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+            ret = pcs->process_io->read(pcs->handle, addr, buffW, size * sizeof(WCHAR), &sz);
+            WideCharToMultiByte(CP_ACP, 0, buffW, sz / sizeof(WCHAR), buffer, size,
+                                NULL, NULL);
+            HeapFree(GetProcessHeap(), 0, buffW);
+        }
+        if (size) buffer[size-1] = 0;
+        return ret;
     }
     else
     {
