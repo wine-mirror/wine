@@ -6,6 +6,7 @@ wine_courier-1250-96-13.fnt
 wine_courier-1251-96-13.fnt
 wine_courier-1252-96-13.fnt
 wine_courier.ttf
+wine_cvgasys.fon
 wine_marlett.ttf
 wine_sans_serif-1250-96-13.fnt
 wine_sans_serif-1250-96-16.fnt
@@ -19,9 +20,12 @@ wine_sans_serif.ttf
 wine_sserife.fon
 wine_sserifee.fon
 wine_sserifer.fon
+wine_svgasys.fon
 wine_system-1250-96-16.fnt
 wine_system-1251-96-16.fnt
 wine_system-1252-96-16.fnt
+wine_system-936-96-16.fnt
+wine_system-950-96-16.fnt
 wine_system.ttf
 wine_vgasys.fon
 wine_vgasyse.fon

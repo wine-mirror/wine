@@ -134,9 +134,14 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
         fprintf(stderr, "Can't find codepage %d\n", enc);
         exit(1);
     }
+
     if(cptable->info.char_size != 1) {
-        fprintf(stderr, "Can't cope with double byte codepages\n");
-        exit(1);
+        /* for double byte charsets we actually want to use cp1252 */
+        cptable = wine_cp_get_table(1252);
+        if(!cptable) {
+            fprintf(stderr, "Can't find codepage 1252\n");
+            exit(1);
+        }
     }
 
     ppem = face->size->metrics.y_ppem;
@@ -154,8 +159,8 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     }
     il = ascent - (face->glyph->metrics.height >> 6);
 
-    /* Hack: Courier has no internal leading, so we do likewise */
-    if(!strcmp(face->family_name, "Wine Courier"))
+    /* Hack: Courier has no internal leading, nor do any Chinese fonts */
+    if(!strcmp(face->family_name, "Wine Courier") || enc == 936 || enc == 950)
         il = 0;
 
     first_char = FT_Get_First_Char(face, &gi);

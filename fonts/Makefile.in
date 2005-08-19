@@ -14,7 +14,9 @@ BITMAP_FONTS  = \
 	wine_sserifer.fon \
 	wine_vgasys.fon \
 	wine_vgasyse.fon \
-	wine_vgasysr.fon
+	wine_vgasysr.fon \
+	wine_svgasys.fon \
+	wine_cvgasys.fon 
 
 TRUETYPE_FONTS = \
 	wine_marlett.ttf
@@ -78,6 +80,21 @@ wine_system-1250-96-16.fnt: wine_system.ttf $(SFNT2FNT)
 wine_system-1251-96-16.fnt: wine_system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 1251 96 128 7
 
+wine_system-936-96-16.fnt: wine_system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 936 96 128 7
+
+wine_system-950-96-16.fnt: wine_system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 950 96 128 7
+
+wine_coure.fon: wine_courier-1252-96-13.fnt $(FNT2FON)
+	$(FNT2FON) wine_courier-1252-96-13.fnt $@
+
+wine_couree.fon: wine_courier-1250-96-13.fnt $(FNT2FON)
+	$(FNT2FON) wine_courier-1250-96-13.fnt $@
+
+wine_courer.fon: wine_courier-1251-96-13.fnt $(FNT2FON)
+	$(FNT2FON) wine_courier-1251-96-13.fnt $@
+
 wine_sserife.fon: wine_sans_serif-1252-96-13.fnt wine_sans_serif-1252-96-16.fnt wine_sans_serif-1252-96-20.fnt $(FNT2FON)
 	$(FNT2FON) wine_sans_serif-1252-96-13.fnt wine_sans_serif-1252-96-16.fnt wine_sans_serif-1252-96-20.fnt $@
 
@@ -96,14 +113,11 @@ wine_vgasyse.fon: wine_system-1250-96-16.fnt $(FNT2FON)
 wine_vgasysr.fon: wine_system-1251-96-16.fnt $(FNT2FON)
 	$(FNT2FON) wine_system-1251-96-16.fnt $@
 
-wine_coure.fon: wine_courier-1252-96-13.fnt $(FNT2FON)
-	$(FNT2FON) wine_courier-1252-96-13.fnt $@
+wine_svgasys.fon: wine_system-936-96-16.fnt wine_system-1252-96-16.fnt $(FNT2FON)
+	$(FNT2FON) wine_system-936-96-16.fnt wine_system-1252-96-16.fnt $@
 
-wine_couree.fon: wine_courier-1250-96-13.fnt $(FNT2FON)
-	$(FNT2FON) wine_courier-1250-96-13.fnt $@
-
-wine_courer.fon: wine_courier-1251-96-13.fnt $(FNT2FON)
-	$(FNT2FON) wine_courier-1251-96-13.fnt $@
+wine_cvgasys.fon: wine_system-950-96-16.fnt wine_system-1252-96-16.fnt $(FNT2FON)
+	$(FNT2FON) wine_system-950-96-16.fnt wine_system-1252-96-16.fnt $@
 
 install:: $(FONTS)
 	$(MKINSTALLDIRS) $(fontdir)
