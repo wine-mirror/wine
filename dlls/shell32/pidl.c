@@ -1986,7 +1986,14 @@ BOOL _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
     {
         FileTimeToLocalFileTime(&ft, &lft);
         FileTimeToSystemTime (&lft, &time);
+
         ret = GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&time, NULL,  pOut, uOutSize);
+        if (ret) 
+        {
+            /* Append space + time without seconds */
+            pOut[ret-1] = ' ';
+            GetTimeFormatA(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &time, NULL, &pOut[ret], uOutSize - ret);
+        }
     }
     else
     {
