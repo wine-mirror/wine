@@ -73,6 +73,7 @@ struct {
 	{&CLSID_AutoComplete,   &IAutoComplete_Constructor},
 	{&CLSID_UnixFolder,     &UnixFolder_Constructor},
 	{&CLSID_UnixDosFolder,  &UnixDosFolder_Constructor},
+	{&CLSID_FolderShortcut, &FolderShortcut_Constructor},
 	{NULL,NULL}
 };
 

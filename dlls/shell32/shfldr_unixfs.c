@@ -83,6 +83,7 @@ const GUID CLSID_UnixDosFolder = {0x9d20aae8, 0x0625, 0x44b0, {0x9c, 0xa7, 0x71,
 typedef struct _UnixFolder {
     const IShellFolder2Vtbl  *lpIShellFolder2Vtbl;
     const IPersistFolder3Vtbl *lpIPersistFolder3Vtbl;
+    const IPersistPropertyBagVtbl *lpIPersistPropertyBagVtbl;
     const ISFHelperVtbl *lpISFHelperVtbl;
     LONG m_cRef;
     CHAR *m_pszPath;
@@ -511,6 +512,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_QueryInterface(IShellFolder2 *ifa
                IsEqualIID(&IID_IPersistFolder, riid) || IsEqualIID(&IID_IPersist, riid)) 
     {
         *ppv = &This->lpIPersistFolder3Vtbl;
+    } else if (IsEqualIID(&IID_IPersistPropertyBag, riid)) {
+        *ppv = &This->lpIPersistPropertyBagVtbl;
     } else if (IsEqualIID(&IID_ISFHelper, riid)) {
         *ppv = &This->lpISFHelperVtbl;
     } else {
@@ -1242,6 +1245,65 @@ static const IPersistFolder3Vtbl UnixFolder_IPersistFolder3_Vtbl = {
     UnixFolder_IPersistFolder3_GetFolderTargetInfo
 };
 
+static HRESULT WINAPI UnixFolder_IPersistPropertyBag_QueryInterface(IPersistPropertyBag* This,
+    REFIID riid, void** ppvObject)
+{
+    return UnixFolder_IShellFolder2_QueryInterface(
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistPropertyBag, This), riid, ppvObject);
+}
+
+static ULONG WINAPI UnixFolder_IPersistPropertyBag_AddRef(IPersistPropertyBag* This)
+{
+    return UnixFolder_IShellFolder2_AddRef(
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistPropertyBag, This));
+}
+
+static ULONG WINAPI UnixFolder_IPersistPropertyBag_Release(IPersistPropertyBag* This)
+{
+    return UnixFolder_IShellFolder2_Release(
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistPropertyBag, This));
+}
+
+static HRESULT WINAPI UnixFolder_IPersistPropertyBag_GetClassID(IPersistPropertyBag* iface, 
+    CLSID* pClassID)
+{
+    return UnixFolder_IPersistFolder3_GetClassID(
+        (IPersistFolder3*)&ADJUST_THIS(UnixFolder, IPersistPropertyBag, iface)->lpIPersistFolder3Vtbl,
+        pClassID);
+}
+
+static HRESULT WINAPI UnixFolder_IPersistPropertyBag_InitNew(IPersistPropertyBag* iface)
+{
+    TRACE("() stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UnixFolder_IPersistPropertyBag_Load(IPersistPropertyBag *iface, 
+    IPropertyBag *pPropertyBag, IErrorLog *pErrorLog)
+{
+    TRACE("() stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UnixFolder_IPersistPropertyBag_Save(IPersistPropertyBag *iface,
+    IPropertyBag *pPropertyBag, BOOL fClearDirty, BOOL fSaveAllProperties)
+{
+    TRACE("() stub\n");
+    return E_NOTIMPL;
+}
+
+/* VTable for UnixFolder's IPersistPropertyBag interface.
+ */
+static const IPersistPropertyBagVtbl UnixFolder_IPersistPropertyBag_Vtbl = {
+    UnixFolder_IPersistPropertyBag_QueryInterface,
+    UnixFolder_IPersistPropertyBag_AddRef,
+    UnixFolder_IPersistPropertyBag_Release,
+    UnixFolder_IPersistPropertyBag_GetClassID,
+    UnixFolder_IPersistPropertyBag_InitNew,
+    UnixFolder_IPersistPropertyBag_Load,
+    UnixFolder_IPersistPropertyBag_Save
+};
+
 static HRESULT WINAPI UnixFolder_ISFHelper_QueryInterface(ISFHelper* iface, REFIID riid, 
     void** ppvObject)
 {
@@ -1457,6 +1519,7 @@ static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, D
     if(pUnixFolder) {
         pUnixFolder->lpIShellFolder2Vtbl = &UnixFolder_IShellFolder2_Vtbl;
         pUnixFolder->lpIPersistFolder3Vtbl = &UnixFolder_IPersistFolder3_Vtbl;
+        pUnixFolder->lpIPersistPropertyBagVtbl = &UnixFolder_IPersistPropertyBag_Vtbl;
         pUnixFolder->lpISFHelperVtbl = &UnixFolder_ISFHelper_Vtbl;
         pUnixFolder->m_cRef = 0;
         pUnixFolder->m_pszPath = NULL;
@@ -1478,6 +1541,11 @@ HRESULT WINAPI UnixFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *
 HRESULT WINAPI UnixDosFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
     TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
     return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_DOS, &CLSID_UnixDosFolder);
+}
+
+HRESULT WINAPI FolderShortcut_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
+    TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
+    return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_DOS, &CLSID_FolderShortcut);
 }
 
 /******************************************************************************
