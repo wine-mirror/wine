@@ -297,6 +297,40 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
 
     FIXME("(%p)->(%x %p %p %08lx)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
 
+    if(pibc) {
+        IUnknown *unk = NULL;
+
+        static WCHAR wszClientSiteParam[] = {'{','d','4','d','b','6','8','5','0','-',
+            '5','3','8','5','-','1','1','d','0','-','8','9','e','9','-','0','0','a',
+            '0','c','9','0','a','9','0','a','c','}',0};
+
+        /* FIXME:
+         * Use params:
+         * "__PrecreatedObject"
+         * "BIND_CONTEXT_PARAM"
+         * "__HTMLLOADOPTIONS"
+         * "__DWNBINDINFO"
+         * "URL Context"
+         * "CBinding Context"
+         * "_ITransData_Object_"
+         * "_EnumFORMATETC_"
+         */
+
+        IBindCtx_GetObjectParam(pibc, wszClientSiteParam, &unk);
+        if(unk) {
+            IOleClientSite *client = NULL;
+
+            hres = IUnknown_QueryInterface(unk, &IID_IOleClientSite, (void**)&client);
+            if(SUCCEEDED(hres)) {
+                TRACE("Got client site %p\n", client);
+                IOleObject_SetClientSite(OLEOBJ(This), client);
+                IOleClientSite_Release(client);
+            }
+
+            IUnknown_Release(unk);
+        }
+    }
+    
     hres = IMoniker_GetDisplayName(pimkName, pibc, NULL, &url);
     if(FAILED(hres)) {
         WARN("GetDiaplayName failed: %08lx\n", hres);
@@ -325,18 +359,23 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
 
     if(fFullyAvailable)
         FIXME("not supported fFullyAvailable\n");
-    if(pibc)
-        FIXME("not supported pibc\n");
 
     if(This->status_callback && This->status_callback->binding)
         IBinding_Abort(This->status_callback->binding);
 
     callback = This->status_callback = BindStatusCallback_Create(This, url);
 
-    CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &pbind);
+    if(pibc) {
+        pbind = pibc;
+        RegisterBindStatusCallback(pbind, STATUSCLB(callback), NULL, 0);
+    }else {
+        CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &pbind);
+    }
 
     hres = IMoniker_BindToStorage(pimkName, pbind, NULL, &IID_IStream, (void**)&str);
-    IBindCtx_Release(pbind);
+
+    if(!pibc)
+        IBindCtx_Release(pbind);
     if(str)
         IStream_Release(str);
     if(FAILED(hres)) {
