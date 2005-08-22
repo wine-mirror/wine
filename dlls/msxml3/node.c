@@ -382,8 +382,20 @@ static HRESULT WINAPI xmlnode_hasChildNodes(
     IXMLDOMNode *iface,
     VARIANT_BOOL* hasChild)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+
+    TRACE("%p\n", This);
+
+    if (!hasChild)
+        return E_INVALIDARG;
+    if (!This->node->children)
+    {
+        *hasChild = VARIANT_FALSE;
+        return S_FALSE;
+    }
+
+    *hasChild = VARIANT_TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_get_ownerDocument(
