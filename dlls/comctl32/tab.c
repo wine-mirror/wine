@@ -329,7 +329,18 @@ static BOOL TAB_InternalGetItemRect(
   if ( (infoPtr->uNumItem <= 0) ||
        (itemIndex >= infoPtr->uNumItem) ||
        (!((lStyle & TCS_MULTILINE) || (lStyle & TCS_VERTICAL)) && (itemIndex < infoPtr->leftmostVisible)) )
-    return FALSE;
+    {
+        TRACE("Not Visible\n");
+        /* need to initialize these to empty rects */
+        if (itemRect)
+        {
+            memset(itemRect,0,sizeof(RECT));
+            itemRect->bottom = infoPtr->tabHeight;
+        }
+        if (selectedRect)
+            memset(selectedRect,0,sizeof(RECT));
+        return FALSE;
+    }
 
   /*
    * Avoid special cases in this procedure by assigning the "out"
