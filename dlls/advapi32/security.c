@@ -2663,8 +2663,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
 
                 if (SecurityDescriptor)
                 {
-                    SecurityDescriptor->Owner = (PSID) ((DWORD) lpNext -
-                        (DWORD) SecurityDescriptor);
+                    SecurityDescriptor->Owner = (PSID)(lpNext - (LPBYTE)SecurityDescriptor);
                     lpNext += bytes; /* Advance to next token */
                 }
 
@@ -2682,8 +2681,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
 
                 if (SecurityDescriptor)
                 {
-                    SecurityDescriptor->Group = (PSID) ((DWORD) lpNext - 
-                        (DWORD) SecurityDescriptor);
+                    SecurityDescriptor->Group = (PSID)(lpNext - (LPBYTE)SecurityDescriptor);
                     lpNext += bytes; /* Advance to next token */
                 }
 
@@ -2703,8 +2701,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
                 if (SecurityDescriptor)
                 {
                     SecurityDescriptor->Control |= SE_DACL_PRESENT | flags;
-                    SecurityDescriptor->Dacl = (PACL) ((DWORD) lpNext -
-                        (DWORD) SecurityDescriptor);
+                    SecurityDescriptor->Dacl = (PACL)(lpNext - (LPBYTE)SecurityDescriptor);
                     lpNext += bytes; /* Advance to next token */
 		}
 
@@ -2724,8 +2721,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
                 if (SecurityDescriptor)
                 {
                     SecurityDescriptor->Control |= SE_SACL_PRESENT | flags;
-                    SecurityDescriptor->Sacl = (PACL) ((DWORD) lpNext -
-                        (DWORD) SecurityDescriptor);
+                    SecurityDescriptor->Sacl = (PACL)(lpNext - (LPBYTE)SecurityDescriptor);
                     lpNext += bytes; /* Advance to next token */
 		}
 
