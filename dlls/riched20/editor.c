@@ -1131,6 +1131,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     return editor->pUndoStack != NULL;
   case EM_CANREDO:
     return editor->pRedoStack != NULL;
+  case WM_UNDO: /* FIXME: actually not the same */
   case EM_UNDO:
     ME_Undo(editor);
     return 0;
@@ -1696,12 +1697,38 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     goto do_default;
   case WM_CHAR: 
   {
-    WCHAR wstr;
+    WCHAR wstr = LOWORD(wParam);
+
+    switch (wstr)
+    {
+    case 3: /* Ctrl-C */
+      SendMessageW(editor->hWnd, WM_COPY, 0, 0);
+      return 0;
+    }
+    
     if (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_READONLY) {
       MessageBeep(MB_ICONERROR);
       return 0; /* FIXME really 0 ? */
     }
-    wstr = LOWORD(wParam);
+
+    switch (wstr)
+    {
+    case 1: /* Ctrl-A */
+      ME_SetSelection(editor, 0, -1);
+      return 0;
+    case 22: /* Ctrl-V */
+      SendMessageW(editor->hWnd, WM_PASTE, 0, 0);
+      return 0;
+    case 24: /* Ctrl-X */
+      SendMessageW(editor->hWnd, WM_CUT, 0, 0);
+      return 0;
+    case 25: /* Ctrl-Y */
+      SendMessageW(editor->hWnd, EM_REDO, 0, 0);
+      return 0;
+    case 26: /* Ctrl-Z */
+      SendMessageW(editor->hWnd, EM_UNDO, 0, 0);
+      return 0;
+    }
     if (((unsigned)wstr)>=' ' || wstr=='\r' || wstr=='\t') {
       /* FIXME maybe it would make sense to call EM_REPLACESEL instead ? */
       ME_Style *style = ME_GetInsertStyle(editor, 0);
