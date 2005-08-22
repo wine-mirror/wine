@@ -367,10 +367,14 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
     if(NS_FAILED(nsres))
         ERR("Could not get nsIWebNavigation interface: %08lx\n", nsres);
 
+#if 0
     nsres = nsIWebBrowserStream_QueryInterface(This->nscontainer->webbrowser, &IID_nsIWebBrowserStream,
             (void**)&This->nscontainer->stream);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIWebBrowserStream interface: %08lx\n", nsres);
+#else
+    This->nscontainer->stream = NULL;
+#endif
 
     if(!nscontainer_class)
         register_nscontainer_class();
