@@ -116,7 +116,7 @@ static HRESULT BaseMemAllocator_Init(HRESULT (* fnAlloc)(IMemAllocator *), HRESU
 static HRESULT WINAPI BaseMemAllocator_QueryInterface(IMemAllocator * iface, REFIID riid, LPVOID * ppv)
 {
     BaseMemAllocator *This = (BaseMemAllocator *)iface;
-    TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
+    TRACE("(%p)->(%s, %p)\n", This, qzdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
@@ -170,7 +170,7 @@ static HRESULT WINAPI BaseMemAllocator_SetProperties(IMemAllocator * iface, ALLO
     BaseMemAllocator *This = (BaseMemAllocator *)iface;
     HRESULT hr;
 
-    TRACE("(%p, %p)\n", pRequest, pActual);
+    TRACE("(%p)->(%p, %p)\n", This, pRequest, pActual);
 
     EnterCriticalSection(&This->csState);
     {
@@ -207,7 +207,7 @@ static HRESULT WINAPI BaseMemAllocator_GetProperties(IMemAllocator * iface, ALLO
     BaseMemAllocator *This = (BaseMemAllocator *)iface;
     HRESULT hr = S_OK;
 
-    TRACE("(%p)\n", pProps);
+    TRACE("(%p)->(%p)\n", This, pProps);
 
     EnterCriticalSection(&This->csState);
     {
@@ -232,14 +232,14 @@ static HRESULT WINAPI BaseMemAllocator_Commit(IMemAllocator * iface)
     BaseMemAllocator *This = (BaseMemAllocator *)iface;
     HRESULT hr;
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(&This->csState);
     {
         if (!This->pProps)
             hr = VFW_E_SIZENOTSET;
         else if (This->bCommitted)
-            hr = VFW_E_ALREADY_COMMITTED;
+            hr = S_OK;
         else if (This->bDecommitQueued)
         {
             This->bDecommitQueued = FALSE;
@@ -272,12 +272,12 @@ static HRESULT WINAPI BaseMemAllocator_Decommit(IMemAllocator * iface)
     BaseMemAllocator *This = (BaseMemAllocator *)iface;
     HRESULT hr;
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(&This->csState);
     {
         if (!This->bCommitted)
-            hr = VFW_E_NOT_COMMITTED;
+            hr = S_OK;
         else
         {
             if (!list_empty(&This->used_list))
@@ -315,7 +315,7 @@ static HRESULT WINAPI BaseMemAllocator_GetBuffer(IMemAllocator * iface, IMediaSa
     /* NOTE: The pStartTime and pEndTime parameters are not applied to the sample. 
      * The allocator might use these values to determine which buffer it retrieves */
     
-    TRACE("(%p, %p, %p, %lx)\n", pSample, pStartTime, pEndTime, dwFlags);
+    TRACE("(%p)->(%p, %p, %p, %lx)\n", This, pSample, pStartTime, pEndTime, dwFlags);
 
     *pSample = NULL;
 
@@ -360,7 +360,7 @@ static HRESULT WINAPI BaseMemAllocator_ReleaseBuffer(IMemAllocator * iface, IMed
     StdMediaSample2 * pStdSample = (StdMediaSample2 *)pSample;
     HRESULT hr = S_OK;
     
-    TRACE("(%p)\n", pSample);
+    TRACE("(%p)->(%p)\n", This, pSample);
 
     /* FIXME: make sure that sample is currently on the used list */
 
