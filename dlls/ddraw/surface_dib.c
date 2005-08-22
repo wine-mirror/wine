@@ -819,7 +819,7 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	    }
 	} else {
            LONG dstyinc = ddesc.u1.lPitch, dstxinc = bpp;
-           DWORD keylow = 0, keyhigh = 0, keymask = 0;
+           DWORD keylow = 0, keyhigh = 0, keymask = 0xFFFFFFFF;
            if (dwFlags & (DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE)) {
 
 	      if (dwFlags & DDBLT_KEYSRC) {
