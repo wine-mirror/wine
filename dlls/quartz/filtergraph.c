@@ -352,13 +352,16 @@ static HRESULT WINAPI Graphbuilder_AddFilter(IGraphBuilder *iface,
 
     if (This->nFilters + 1 > This->filterCapacity)
     {
-        int newCapacity = 2*This->filterCapacity;
+        int newCapacity = This->filterCapacity ? 2 * This->filterCapacity : 1;
         IBaseFilter ** ppNewFilters = CoTaskMemAlloc(newCapacity * sizeof(IBaseFilter*));
         LPWSTR * pNewNames = CoTaskMemAlloc(newCapacity * sizeof(LPWSTR));
         memcpy(ppNewFilters, This->ppFiltersInGraph, This->nFilters * sizeof(IBaseFilter*));
         memcpy(pNewNames, This->pFilterNames, This->nFilters * sizeof(LPWSTR));
-        CoTaskMemFree(This->ppFiltersInGraph);
-        CoTaskMemFree(This->pFilterNames);
+        if (!This->filterCapacity)
+        {
+            CoTaskMemFree(This->ppFiltersInGraph);
+            CoTaskMemFree(This->pFilterNames);
+        }
         This->ppFiltersInGraph = ppNewFilters;
         This->pFilterNames = pNewNames;
         This->filterCapacity = newCapacity;
@@ -460,6 +463,25 @@ static HRESULT WINAPI Graphbuilder_ConnectDirect(IGraphBuilder *iface,
     TRACE("(%p/%p)->(%p, %p, %p)\n", This, iface, ppinIn, ppinOut, pmt);
 
     /* FIXME: check pins are in graph */
+
+    if (TRACE_ON(quartz))
+    {
+        PIN_INFO PinInfo;
+
+        hr = IPin_QueryPinInfo(ppinIn, &PinInfo);
+        if (FAILED(hr))
+            return hr;
+
+        TRACE("Filter owning first pin => %p\n", PinInfo.pFilter);
+        IBaseFilter_Release(PinInfo.pFilter);
+
+        hr = IPin_QueryPinInfo(ppinOut, &PinInfo);
+        if (FAILED(hr))
+            return hr;
+
+        TRACE("Filter owning second pin => %p\n", PinInfo.pFilter);
+        IBaseFilter_Release(PinInfo.pFilter);
+    }
 
     hr = IPin_QueryDirection(ppinIn, &dir);
     if (SUCCEEDED(hr))
@@ -623,8 +645,27 @@ static HRESULT WINAPI Graphbuilder_Connect(IGraphBuilder *iface,
     ULONG nb;
     IMoniker* pMoniker;
     ULONG pin;
+    PIN_INFO PinInfo;
+    CLSID FilterCLSID;
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, ppinOut, ppinIn);
+
+    if (TRACE_ON(quartz))
+    {
+	hr = IPin_QueryPinInfo(ppinIn, &PinInfo);
+        if (FAILED(hr))
+            return hr;
+
+        TRACE("Filter owning first pin => %p\n", PinInfo.pFilter);
+        IBaseFilter_Release(PinInfo.pFilter);
+
+        hr = IPin_QueryPinInfo(ppinOut, &PinInfo);
+        if (FAILED(hr))
+            return hr;
+
+        TRACE("Filter owning second pin => %p\n", PinInfo.pFilter);
+        IBaseFilter_Release(PinInfo.pFilter);
+    }
 
     /* Try direct connection first */
     hr = IPin_Connect(ppinOut, ppinIn, NULL);
@@ -632,6 +673,16 @@ static HRESULT WINAPI Graphbuilder_Connect(IGraphBuilder *iface,
         return S_OK;
     }
     TRACE("Direct connection failed, trying to insert other filters\n");
+
+    hr = IPin_QueryPinInfo(ppinIn, &PinInfo);
+    if (FAILED(hr))
+       return hr;
+
+    hr = IBaseFilter_GetClassID(PinInfo.pFilter, &FilterCLSID);
+    if (FAILED(hr))
+       return hr;
+
+    IBaseFilter_Release(PinInfo.pFilter);
 
     /* Find the appropriate transform filter than can transform the minor media type of output pin of the upstream 
      * filter to the minor mediatype of input pin of the renderer */
@@ -674,14 +725,19 @@ static HRESULT WINAPI Graphbuilder_Connect(IGraphBuilder *iface,
         hr = GetFilterInfo(pMoniker, &clsid, &var);
         IMoniker_Release(pMoniker);
         if (FAILED(hr)) {
-           ERR("Unable to retrieve filter info (%lx)\n", hr);
-           goto error;
+            ERR("Unable to retrieve filter info (%lx)\n", hr);
+            goto error;
+        }
+
+        if (IsEqualGUID(&clsid, &FilterCLSID)) {
+            /* Skip filter (same as the one the output pin belongs to) */
+            goto error;
         }
 
         hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&pfilter);
         if (FAILED(hr)) {
-           ERR("Unable to create filter (%lx), trying next one\n", hr);
-           goto error;
+            ERR("Unable to create filter (%lx), trying next one\n", hr);
+            goto error;
         }
 
         hr = IGraphBuilder_AddFilter(iface, pfilter, NULL);
@@ -767,6 +823,18 @@ static HRESULT WINAPI Graphbuilder_Render(IGraphBuilder *iface,
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppinOut);
 
+    if (TRACE_ON(quartz))
+    {
+        PIN_INFO PinInfo;
+
+        hr = IPin_QueryPinInfo(ppinOut, &PinInfo);
+        if (FAILED(hr))
+            return hr;
+
+        TRACE("Filter owning pin => %p\n", PinInfo.pFilter);
+        IBaseFilter_Release(PinInfo.pFilter);
+    }
+
     hr = IPin_EnumMediaTypes(ppinOut, &penummt);
     if (FAILED(hr)) {
         ERR("EnumMediaTypes (%lx)\n", hr);
@@ -819,7 +887,6 @@ static HRESULT WINAPI Graphbuilder_Render(IGraphBuilder *iface,
             hr = IGraphBuilder_AddFilter(iface, pfilter, NULL);
             if (FAILED(hr)) {
                 ERR("Unable to add filter (%lx)\n", hr);
-                IBaseFilter_Release(pfilter);
                 pfilter = NULL;
                 goto error;
             }
@@ -1295,7 +1362,7 @@ static HRESULT SendFilterMessage(IMediaControl *iface, fnFoundFilter FoundFilter
         }
         if (source == TRUE)
         {
-            TRACE("Found a source filter\n");
+            TRACE("Found a source filter %p\n", pfilter);
             IEnumPins_Reset(pEnum);
             while(IEnumPins_Next(pEnum, 1, &pPin, &dummy) == S_OK)
             {
@@ -1364,7 +1431,7 @@ static HRESULT WINAPI Mediacontrol_GetState(IMediaControl *iface,
     *pfs = This->state;
 
     LeaveCriticalSection(&This->cs);
-    
+
     return S_OK;
 }
 
