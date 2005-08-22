@@ -3203,20 +3203,22 @@ void WINAPI UserYield16(void)
  *		RegisterWindowMessage (USER.118)
  *		RegisterWindowMessageA (USER32.@)
  */
-WORD WINAPI RegisterWindowMessageA( LPCSTR str )
+UINT WINAPI RegisterWindowMessageA( LPCSTR str )
 {
-    TRACE("%s\n", str );
-    return GlobalAddAtomA( str );
+    UINT ret = GlobalAddAtomA(str);
+    TRACE("%s, ret=%x\n", str, ret);
+    return ret;
 }
 
 
 /***********************************************************************
  *		RegisterWindowMessageW (USER32.@)
  */
-WORD WINAPI RegisterWindowMessageW( LPCWSTR str )
+UINT WINAPI RegisterWindowMessageW( LPCWSTR str )
 {
-    TRACE("%p\n", str );
-    return GlobalAddAtomW( str );
+    UINT ret = GlobalAddAtomW(str);
+    TRACE("%s ret=%x\n", debugstr_w(str), ret);
+    return ret;
 }
 
 

@@ -4531,8 +4531,8 @@ ATOM        WINAPI RegisterClassExW(const WNDCLASSEXW *);
 UINT      WINAPI RegisterClipboardFormatA(LPCSTR);
 UINT      WINAPI RegisterClipboardFormatW(LPCWSTR);
 #define     RegisterClipboardFormat WINELIB_NAME_AW(RegisterClipboardFormat)
-WORD        WINAPI RegisterWindowMessageA(LPCSTR);
-WORD        WINAPI RegisterWindowMessageW(LPCWSTR);
+UINT        WINAPI RegisterWindowMessageA(LPCSTR);
+UINT        WINAPI RegisterWindowMessageW(LPCWSTR);
 #define     RegisterWindowMessage WINELIB_NAME_AW(RegisterWindowMessage)
 INT       WINAPI ReleaseDC(HWND,HDC);
 BOOL      WINAPI RemoveMenu(HMENU,UINT,UINT);
