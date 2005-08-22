@@ -66,6 +66,7 @@ typedef struct {
     BOOL ui_active;
     BOOL window_active;
     BOOL has_key_path;
+    BOOL container_locked;
 
     BindStatusCallback *status_callback;
 } HTMLDocument;
@@ -110,6 +111,8 @@ void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_NSContainer_Init(HTMLDocument*);
 
 void HTMLDocument_NSContainer_Destroy(HTMLDocument*);
+
+void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
 
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 

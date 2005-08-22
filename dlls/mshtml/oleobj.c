@@ -70,6 +70,9 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 
     TRACE("(%p)->(%p)\n", This, pClientSite);
 
+    if(pClientSite == This->client)
+        return S_OK;
+
     if(This->client)
         IOleClientSite_Release(This->client);
 
@@ -190,7 +193,6 @@ static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szCont
 static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    HRESULT hres;
 
     TRACE("(%p)->(%08lx)\n", This, dwSaveOption);
 
@@ -200,14 +202,7 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
     if(This->in_place_active)
         IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
 
-    if(This->client) {
-        IOleContainer *container;
-        hres = IOleClientSite_GetContainer(This->client, &container);
-        if(SUCCEEDED(hres)) {
-            IOleContainer_LockContainer(container, FALSE);
-            IOleContainer_Release(container);
-        }
-    }
+    HTMLDocument_LockContainer(This, FALSE);
     
     return S_OK;
 }
@@ -260,12 +255,8 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
 
     hres = IOleClientSite_QueryInterface(pActiveSite, &IID_IOleDocumentSite, (void**)&pDocSite);
     if(SUCCEEDED(hres)) {
-        IOleContainer *pContainer;
-        hres = IOleClientSite_GetContainer(pActiveSite, &pContainer);
-        if(SUCCEEDED(hres)) {
-            IOleContainer_LockContainer(pContainer, TRUE);
-            IOleContainer_Release(pContainer);
-        }
+        HTMLDocument_LockContainer(This, TRUE);
+
         /* FIXME: Create new IOleDocumentView. See CreateView for more info. */
         hres = IOleDocumentSite_ActivateMe(pDocSite, DOCVIEW(This));
         IOleDocumentSite_Release(pDocSite);
@@ -1003,6 +994,22 @@ static const IOleControlVtbl OleControlVtbl = {
     OleControl_FreezeEvents
 };
 
+void HTMLDocument_LockContainer(HTMLDocument *This, BOOL fLock)
+{
+    IOleContainer *container;
+    HRESULT hres;
+
+    if(!This->client || This->container_locked == fLock)
+        return;
+
+    hres = IOleClientSite_GetContainer(This->client, &container);
+    if(SUCCEEDED(hres)) {
+        IOleContainer_LockContainer(container, fLock);
+        This->container_locked = fLock;
+        IOleContainer_Release(container);
+    }
+}
+
 void HTMLDocument_OleObj_Init(HTMLDocument *This)
 {
     This->lpOleObjectVtbl = &OleObjectVtbl;
@@ -1014,4 +1021,5 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
     This->hostui = NULL;
 
     This->has_key_path = FALSE;
+    This->container_locked = FALSE;
 }
