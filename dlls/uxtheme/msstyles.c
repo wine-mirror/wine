@@ -711,7 +711,7 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
                     }
 		    else if (setMetrics && (iPropertyId == TMT_FLATMENUS)) {
 			BOOL flatMenus = (*lpValue == 'T') || (*lpValue == 't');
-			SystemParametersInfoW (SPI_SETFLATMENU, 0, (PVOID)flatMenus, 0);
+			SystemParametersInfoW (SPI_SETFLATMENU, 0, (PVOID)(INT_PTR)flatMenus, 0);
 		    }
                     /* Catch all metrics, including colors */
                     MSSTYLES_AddMetric(tf, iPropertyPrimitive, iPropertyId, lpValue, dwValueLen);

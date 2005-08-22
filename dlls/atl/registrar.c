@@ -634,7 +634,7 @@ static HRESULT WINAPI Registrar_ResourceRegister(IRegistrar* iface, LPCOLESTR re
 {
     Registrar *This = (Registrar*)iface;
     TRACE("(%p)->(%s %d %s)\n", iface, debugstr_w(resFileName), nID, debugstr_w(szType));
-    return resource_register(This, resFileName, (LPOLESTR)nID, szType, TRUE);
+    return resource_register(This, resFileName, MAKEINTRESOURCEW(nID), szType, TRUE);
 }
 
 static HRESULT WINAPI Registrar_ResourceUnregister(IRegistrar* iface, LPCOLESTR resFileName,
@@ -642,7 +642,7 @@ static HRESULT WINAPI Registrar_ResourceUnregister(IRegistrar* iface, LPCOLESTR 
 {
     Registrar *This = (Registrar*)iface;
     TRACE("(%p)->(%s %d %s)\n", This, debugstr_w(resFileName), nID, debugstr_w(szType));
-    return resource_register(This, resFileName, (LPOLESTR)nID, szType, FALSE);
+    return resource_register(This, resFileName, MAKEINTRESOURCEW(nID), szType, FALSE);
 }
 
 static const IRegistrarVtbl RegistrarVtbl = {
