@@ -27,6 +27,8 @@
 #include "mshtml.h"
 #include "docobj.h"
 #include "mshtmhst.h"
+#include "mshtmdid.h"
+#include "idispids.h"
 #include "shlguid.h"
 
 #include "initguid.h"
@@ -41,6 +43,10 @@ DEFINE_SHLGUID(CGID_Undocumented, 0x000214D4L, 0, 0);
 #define CHECK_EXPECT(func) \
     ok(expect_ ##func, "unexpected call\n"); \
     expect_ ## func = FALSE; \
+    called_ ## func = TRUE
+
+#define CHECK_EXPECT2(func) \
+    ok(expect_ ##func, "unexpected call\n"); \
     called_ ## func = TRUE
 
 #define CHECK_CALLED(func) \
@@ -72,6 +78,12 @@ DEFINE_EXPECT(QueryStatus_OPEN);
 DEFINE_EXPECT(QueryStatus_NEW);
 DEFINE_EXPECT(Exec_SETPROGRESSMAX);
 DEFINE_EXPECT(Exec_SETPROGRESSPOS);
+DEFINE_EXPECT(Invoke_AMBIENT_USERMODE);
+DEFINE_EXPECT(Invoke_AMBIENT_DLCONTROL);
+DEFINE_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+DEFINE_EXPECT(Invoke_AMBIENT_SILENT);
+DEFINE_EXPECT(Invoke_AMBIENT_USERAGENT);
+DEFINE_EXPECT(Invoke_AMBIENT_PALETTE);
 
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
@@ -879,6 +891,93 @@ static IOleCommandTargetVtbl OleCommandTargetVtbl = {
 
 static IOleCommandTarget OleCommandTarget = { &OleCommandTargetVtbl };
 
+static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI Dispatch_AddRef(IDispatch *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Dispatch_Release(IDispatch *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Dispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid,
+        ITypeInfo **ppTInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ok(IsEqualGUID(&IID_NULL, riid), "riid != IID_NULL\n");
+    ok(pDispParams != NULL, "pDispParams == NULL\n");
+    ok(pExcepInfo == NULL, "pExcepInfo=%p, expected NULL\n", pExcepInfo);
+    ok(puArgErr != NULL, "puArgErr == NULL\n");
+    ok(V_VT(pVarResult) == 0, "V_VT(pVarResult)=%d, expected 0\n", V_VT(pVarResult));
+    ok(wFlags == DISPATCH_PROPERTYGET, "wFlags=%08x, expected DISPATCH_PROPERTYGET\n", wFlags);
+
+    switch(dispIdMember) {
+    case DISPID_AMBIENT_USERMODE:
+        CHECK_EXPECT2(Invoke_AMBIENT_USERMODE);
+        V_VT(pVarResult) = VT_BOOL;
+        V_BOOL(pVarResult) = VARIANT_TRUE;
+        return S_OK;
+    case DISPID_AMBIENT_DLCONTROL:
+        CHECK_EXPECT2(Invoke_AMBIENT_DLCONTROL);
+        return E_FAIL;
+    case DISPID_AMBIENT_OFFLINEIFNOTCONNECTED:
+        CHECK_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        return E_FAIL;
+    case DISPID_AMBIENT_SILENT:
+        CHECK_EXPECT(Invoke_AMBIENT_SILENT);
+        V_VT(pVarResult) = VT_BOOL;
+        V_BOOL(pVarResult) = VARIANT_FALSE;
+        return S_OK;
+    case DISPID_AMBIENT_USERAGENT:
+        CHECK_EXPECT(Invoke_AMBIENT_USERAGENT);
+        return E_FAIL;
+    case DISPID_AMBIENT_PALETTE:
+        CHECK_EXPECT(Invoke_AMBIENT_PALETTE);
+        return E_FAIL;
+    };
+
+    ok(0, "unexpected dispid %ld\n", dispIdMember);
+    return E_FAIL;
+}
+
+static IDispatchVtbl DispatchVtbl = {
+    Dispatch_QueryInterface,
+    Dispatch_AddRef,
+    Dispatch_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    Dispatch_GetIDsOfNames,
+    Dispatch_Invoke
+};
+
+static IDispatch Dispatch = { &DispatchVtbl };
+
 static HRESULT QueryInterface(REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -897,9 +996,10 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &InPlaceFrame;
     else if(IsEqualGUID(&IID_IOleCommandTarget , riid))
         *ppv = &OleCommandTarget;
+    else if(IsEqualGUID(&IID_IDispatch, riid))
+        *ppv = &Dispatch;
 
     /* TODO:
-     * IDispatch
      * IServiceProvider
      * {D48A6EC6-6A4A-11CF-94A7-444553540000}
      * {7BB0B520-B1A7-11D2-BB23-00C04F79ABCD}
@@ -1151,6 +1251,12 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
     SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
     SET_EXPECT(Exec_SETPROGRESSMAX);
     SET_EXPECT(Exec_SETPROGRESSPOS);
+    SET_EXPECT(Invoke_AMBIENT_USERMODE);
+    SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
+    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    SET_EXPECT(Invoke_AMBIENT_SILENT);
+    SET_EXPECT(Invoke_AMBIENT_USERAGENT);
+    SET_EXPECT(Invoke_AMBIENT_PALETTE);
     hres = IOleObject_SetClientSite(oleobj, &ClientSite);
     ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
     CHECK_CALLED(GetHostInfo);
@@ -1162,10 +1268,81 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
     CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
     CHECK_CALLED(Exec_SETPROGRESSMAX);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
+    CHECK_CALLED(Invoke_AMBIENT_USERMODE);
+    CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
+    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED); 
+    CHECK_CALLED(Invoke_AMBIENT_SILENT);
+    CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
+    CHECK_CALLED(Invoke_AMBIENT_PALETTE);
 
     hres = IOleObject_GetClientSite(oleobj, &clientsite);
     ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
     ok(clientsite == &ClientSite, "GetClientSite() = %p, expected %p\n", clientsite, &ClientSite);
+}
+
+static void test_OnAmbientPropertyChange(IUnknown *unk)
+{
+    IOleControl *control = NULL;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleControl, (void**)&control);
+    ok(hres == S_OK, "QueryInterface(IID_IOleControl failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    SET_EXPECT(Invoke_AMBIENT_USERMODE);
+    hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_USERMODE);
+    ok(hres == S_OK, "OnAmbientChange failed: %08lx\n", hres);
+    CHECK_CALLED(Invoke_AMBIENT_USERMODE);
+
+    SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
+    hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_DLCONTROL);
+    ok(hres == S_OK, "OnAmbientChange failed: %08lx\n", hres);
+    CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
+
+    SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
+    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_OFFLINEIFNOTCONNECTED);
+    ok(hres == S_OK, "OnAmbientChange failed: %08lx\n", hres);
+    CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
+    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+
+    SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
+    SET_EXPECT(Invoke_AMBIENT_SILENT);
+    hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_SILENT);
+    ok(hres == S_OK, "OnAmbientChange failed: %08lx\n", hres);
+    CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
+    CHECK_CALLED(Invoke_AMBIENT_SILENT);
+
+    SET_EXPECT(Invoke_AMBIENT_USERAGENT);
+    hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_USERAGENT);
+    ok(hres == S_OK, "OnAmbientChange failed: %08lx\n", hres);
+    CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
+
+    SET_EXPECT(Invoke_AMBIENT_PALETTE);
+    hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_PALETTE);
+    ok(hres == S_OK, "OnAmbientChange failed: %08lx\n", hres);
+    CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+
+    IOleControl_Release(control);
+}
+
+
+
+static void test_OnAmbientPropertyChange2(IUnknown *unk)
+{
+    IOleControl *control = NULL;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleControl, (void**)&control);
+    ok(hres == S_OK, "QueryInterface(IID_IOleControl failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_PALETTE);
+    ok(hres == S_OK, "OnAmbientPropertyChange failed: %08lx\n", hres);
+
+    IOleControl_Release(control);
 }
 
 static void test_Close(IUnknown *unk, BOOL set_client)
@@ -1336,6 +1513,7 @@ static void test_HTMLDocument(void)
 
     test_Persist(unk);
 
+    test_OnAmbientPropertyChange2(unk);
     hres = test_Activate(unk, CLIENTSITE_EXPECTPATH);
     if(FAILED(hres)) {
         IUnknown_Release(unk);
@@ -1344,6 +1522,7 @@ static void test_HTMLDocument(void)
 
     test_OleCommandTarget_fail(unk);
     test_OleCommandTarget(unk);
+    test_OnAmbientPropertyChange(unk);
     test_Window(unk, TRUE);
     test_UIDeactivate();
     test_OleCommandTarget(unk);
@@ -1376,6 +1555,7 @@ static void test_HTMLDocument(void)
     test_CloseView();
     test_CloseView();
     test_Close(unk, TRUE);
+    test_OnAmbientPropertyChange2(unk);
 
     if(view)
         IOleDocumentView_Release(view);

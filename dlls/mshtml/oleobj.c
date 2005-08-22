@@ -28,6 +28,8 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "shlguid.h"
+#include "mshtmdid.h"
+#include "idispids.h"
 
 #include "wine/debug.h"
 
@@ -152,6 +154,12 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     IOleClientSite_AddRef(pClientSite);
     This->client = pClientSite;
     This->hostui = pDocHostUIHandler;
+
+    IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_USERMODE);
+    IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_OFFLINEIFNOTCONNECTED); 
+    IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_SILENT);
+    IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_USERAGENT);
+    IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_PALETTE);
 
     return S_OK;
 }
@@ -855,11 +863,125 @@ static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, MSG *pMsg)
     return E_NOTIMPL;
 }
 
+static HRESULT get_property(IOleClientSite *client, DISPID dispid, VARIANT *res)
+{
+    IDispatch *disp = NULL;
+    DISPPARAMS dispparams = {NULL, 0};
+    UINT err;
+    HRESULT hres;
+
+    hres = IOleClientSite_QueryInterface(client, &IID_IDispatch, (void**)&disp);
+    if(FAILED(hres)) {
+        TRACE("Could not get IDispatch\n");
+        return hres;
+    }
+
+    VariantInit(res);
+
+    hres = IDispatch_Invoke(disp, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYGET, &dispparams, res, NULL, &err);
+
+    IDispatch_Release(disp);
+
+    return hres;
+}
+
+static HRESULT on_change_dlcontrol(HTMLDocument *This)
+{
+    VARIANT res;
+    HRESULT hres;
+    
+    hres = get_property(This->client, DISPID_AMBIENT_DLCONTROL, &res);
+    if(SUCCEEDED(hres))
+        FIXME("unsupported dlcontrol %08lx\n", V_I4(&res));
+
+    return S_OK;
+}
+
 static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
 {
     HTMLDocument *This = CONTROL_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, dispID);
-    return E_NOTIMPL;
+    VARIANT res;
+    HRESULT hres;
+
+    if(!This->client) {
+        TRACE("This->client = NULL\n");
+        return S_OK;
+    }
+
+    switch(dispID) {
+    case DISPID_AMBIENT_USERMODE:
+        TRACE("(%p)->(DISPID_AMBIENT_USERMODE)\n", This);
+        hres = get_property(This->client, DISPID_AMBIENT_USERMODE, &res);
+        if(FAILED(hres))
+            return S_OK;
+
+        if(V_VT(&res) == VT_BOOL) {
+            if(!V_BOOL(&res)) {
+                FIXME("edit mode is not supported\n");
+                hres = E_FAIL;
+            }
+        }else {
+            FIXME("V_VT(res)=%d\n", V_VT(&res));
+        }
+        return S_OK;
+    case DISPID_AMBIENT_DLCONTROL:
+        TRACE("(%p)->(DISPID_AMBIENT_DLCONTROL)\n", This);
+        return on_change_dlcontrol(This);
+    case DISPID_AMBIENT_OFFLINEIFNOTCONNECTED:
+        TRACE("(%p)->(DISPID_AMBIENT_OFFLINEIFNOTCONNECTED)\n", This);
+        on_change_dlcontrol(This);
+        hres = get_property(This->client, DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &res);
+        if(FAILED(hres))
+            return S_OK;
+
+        if(V_VT(&res) == VT_BOOL) {
+            if(V_BOOL(&res)) {
+                FIXME("offline connection is not supported\n");
+                hres = E_FAIL;
+            }
+        }else {
+            FIXME("V_VT(res)=%d\n", V_VT(&res));
+        }
+        return S_OK;
+    case DISPID_AMBIENT_SILENT:
+        TRACE("(%p)->(DISPID_AMBIENT_SILENT)\n", This);
+        on_change_dlcontrol(This);
+        hres = get_property(This->client, DISPID_AMBIENT_SILENT, &res);
+        if(FAILED(hres))
+            return S_OK;
+
+        if(V_VT(&res) == VT_BOOL) {
+            if(V_BOOL(&res)) {
+                FIXME("silent mode is not supported\n");
+                hres = E_FAIL;
+            }
+        }else {
+            FIXME("V_VT(res)=%d\n", V_VT(&res));
+        }
+        return S_OK;
+    case DISPID_AMBIENT_USERAGENT:
+        TRACE("(%p)->(DISPID_AMBIENT_USERAGENT)\n", This);
+        hres = get_property(This->client, DISPID_AMBIENT_USERAGENT, &res);
+        if(FAILED(hres))
+            return S_OK;
+
+        FIXME("not supported AMBIENT_USERAGENT\n");
+        hres = E_FAIL;
+        return S_OK;
+    case DISPID_AMBIENT_PALETTE:
+        TRACE("(%p)->(DISPID_AMBIENT_PALETTE)\n", This);
+        hres = get_property(This->client, DISPID_AMBIENT_PALETTE, &res);
+        if(FAILED(hres))
+            return S_OK;
+
+        FIXME("not supported AMBIENT_PALETTE\n");
+        hres = E_FAIL;
+        return S_OK;
+    }
+
+    FIXME("(%p) unsupported dispID=%ld\n", This, dispID);
+    return E_FAIL;
 }
 
 static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL bFreeze)
