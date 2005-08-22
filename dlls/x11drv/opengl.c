@@ -492,6 +492,7 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
         if (visual == NULL) {
             /* This should only happen if we cannot find a match with a depth size 16 */
             FIXME("Failed to find a suitable visual\n");
+            return visual;
         }
     }
     TRACE("Visual ID %lx Chosen\n",visual->visualid);
