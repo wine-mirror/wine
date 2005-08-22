@@ -800,19 +800,19 @@ HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW* pM, LPCOLESTR 
      */
     WCHAR module_name[MAX_PATH];
 
-    TRACE("stub %p (%s), %s, %d, %p, %p\n", hInst, debugstr_w(module_name),
-	debugstr_w(lpszRes), bRegister, pMapEntries, pReg);
-
     if(pMapEntries || pReg) {
         FIXME("MapEntries and Registrar parameter not supported\n");
         return E_FAIL;
     }
 
     if(!GetModuleFileNameW(lhInst, module_name, MAX_PATH)) {
-        FIXME("%p (%s) did not get module name\n",
-        lhInst, debugstr_w(module_name));
+        FIXME("hinst %p: did not get module name\n",
+        lhInst);
         return E_FAIL;
     }
+
+    TRACE("%p (%s), %s, %d, %p, %p\n", hInst, debugstr_w(module_name),
+	debugstr_w(lpszRes), bRegister, pMapEntries, pReg);
 
     return do_register_dll_server(module_name, lpszRes, bRegister);
 }
