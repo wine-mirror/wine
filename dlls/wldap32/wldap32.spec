@@ -147,18 +147,18 @@
 @ cdecl ldap_modify_s(ptr str ptr) ldap_modify_sA
 @ cdecl ldap_modify_sA(ptr str ptr)
 @ cdecl ldap_modify_sW(ptr wstr ptr)
-@ stub ldap_modrdn
-@ stub ldap_modrdn2
-@ stub ldap_modrdn2A
-@ stub ldap_modrdn2W
-@ stub ldap_modrdn2_s
-@ stub ldap_modrdn2_sA
-@ stub ldap_modrdn2_sW
-@ stub ldap_modrdnA
-@ stub ldap_modrdnW
-@ stub ldap_modrdn_s
-@ stub ldap_modrdn_sA
-@ stub ldap_modrdn_sW
+@ cdecl ldap_modrdn(ptr str ptr) ldap_modrdnA
+@ cdecl ldap_modrdn2(ptr str ptr long) ldap_modrdn2A
+@ cdecl ldap_modrdn2A(ptr str ptr long)
+@ cdecl ldap_modrdn2W(ptr wstr ptr long)
+@ cdecl ldap_modrdn2_s(ptr str ptr long) ldap_modrdn2_sA
+@ cdecl ldap_modrdn2_sA(ptr str ptr long)
+@ cdecl ldap_modrdn2_sW(ptr wstr ptr long)
+@ cdecl ldap_modrdnA(ptr str ptr)
+@ cdecl ldap_modrdnW(ptr wstr ptr)
+@ cdecl ldap_modrdn_s(ptr str ptr) ldap_modrdn_sA
+@ cdecl ldap_modrdn_sA(ptr str ptr)
+@ cdecl ldap_modrdn_sW(ptr wstr ptr)
 @ stub ldap_msgfree
 @ stub ldap_next_attribute
 @ stub ldap_next_attributeA

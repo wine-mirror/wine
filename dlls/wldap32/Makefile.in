@@ -19,6 +19,7 @@ C_SRCS = \
 	main.c \
 	misc.c \
 	modify.c \
+	modrdn.c \
 	option.c \
 	search.c
 
