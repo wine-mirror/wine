@@ -10,7 +10,8 @@ CTESTS = \
 	brush.c \
 	gdiobj.c \
 	generated.c \
-	metafile.c
+	metafile.c \
+	palette.c
 
 @MAKE_TEST_RULES@
 

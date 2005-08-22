@@ -4,4 +4,5 @@ brush.ok
 gdiobj.ok
 generated.ok
 metafile.ok
+palette.ok
 testlist.c
