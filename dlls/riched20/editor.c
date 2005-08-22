@@ -1228,8 +1228,12 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     return 0;
   }
   case EM_SETEVENTMASK:
+  {
+    DWORD nOldMask = editor->nEventMask;
+    
     editor->nEventMask = lParam;
-    return 0;
+    return nOldMask;
+  }
   case EM_GETEVENTMASK:
     return editor->nEventMask;
   case EM_SETCHARFORMAT:
