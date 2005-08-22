@@ -178,8 +178,11 @@ static BOOL load_gecko()
     nsString path;
     nsIFile *gre_dir;
     PRUnichar gre_path[MAX_PATH];
+    WCHAR path_env[MAX_PATH];
+    int len;
 
     static BOOL tried_load = FALSE;
+    static const WCHAR wszPATH[] = {'P','A','T','H',0};
     static const WCHAR strXPCOM[] = {'x','p','c','o','m','.','d','l','l',0};
 
     TRACE("()\n");
@@ -192,27 +195,20 @@ static BOOL load_gecko()
         MESSAGE("Could not load Mozilla. HTML rendering will be disabled.\n");
         return FALSE;
     }
-    
+
     TRACE("found path %s\n", debugstr_w(gre_path));
+
+    /* We have to modify PATH as XPCOM loads other DLLs from this directory. */
+    GetEnvironmentVariableW(wszPATH, path_env, sizeof(path_env)/sizeof(WCHAR));
+    len = strlenW(path_env);
+    path_env[len++] = ';';
+    strcpyW(path_env+len, gre_path);
+    SetEnvironmentVariableW(wszPATH, path_env);
 
     hXPCOM = LoadLibraryW(strXPCOM);
     if(!hXPCOM) {
-        /* We have to modify PATH as XPCOM loads other DLLs from this directory. */
-        WCHAR path_env[MAX_PATH];
-        static WCHAR wszPATH[] = {'P','A','T','H',0};
-        int len;
-
-        GetEnvironmentVariableW(wszPATH, path_env, sizeof(path_env)/sizeof(WCHAR));
-        len = strlenW(path_env);
-        path_env[len++] = ';';
-        strcpyW(path_env+len, gre_path);
-        SetEnvironmentVariableW(wszPATH, path_env);
-
-        hXPCOM = LoadLibraryW(strXPCOM);
-        if(!hXPCOM) {
-            ERR("Could not load XPCOM: %ld\n", GetLastError());
-            return FALSE;
-        }
+        ERR("Could not load XPCOM: %ld\n", GetLastError());
+        return FALSE;
     }
 
 #define NS_DLSYM(func) \
