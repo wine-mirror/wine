@@ -190,8 +190,8 @@ static HRESULT WINAPI domdoc_get_parentNode(
     IXMLDOMDocument *iface,
     IXMLDOMNode** parent )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_parentNode( This->node, parent );
 }
 
 
@@ -199,8 +199,8 @@ static HRESULT WINAPI domdoc_get_childNodes(
     IXMLDOMDocument *iface,
     IXMLDOMNodeList** childList )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_childNodes( This->node, childList );
 }
 
 
@@ -208,8 +208,8 @@ static HRESULT WINAPI domdoc_get_firstChild(
     IXMLDOMDocument *iface,
     IXMLDOMNode** firstChild )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_firstChild( This->node, firstChild );
 }
 
 
@@ -217,8 +217,8 @@ static HRESULT WINAPI domdoc_get_lastChild(
     IXMLDOMDocument *iface,
     IXMLDOMNode** lastChild )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_lastChild( This->node, lastChild );
 }
 
 
@@ -226,8 +226,8 @@ static HRESULT WINAPI domdoc_get_previousSibling(
     IXMLDOMDocument *iface,
     IXMLDOMNode** previousSibling )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_previousSibling( This->node, previousSibling );
 }
 
 
@@ -235,8 +235,8 @@ static HRESULT WINAPI domdoc_get_nextSibling(
     IXMLDOMDocument *iface,
     IXMLDOMNode** nextSibling )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_nextSibling( This->node, nextSibling );
 }
 
 
@@ -244,8 +244,8 @@ static HRESULT WINAPI domdoc_get_attributes(
     IXMLDOMDocument *iface,
     IXMLDOMNamedNodeMap** attributeMap )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_attributes( This->node, attributeMap );
 }
 
 
@@ -255,8 +255,8 @@ static HRESULT WINAPI domdoc_insertBefore(
     VARIANT refChild,
     IXMLDOMNode** outNewChild )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_insertBefore( This->node, newChild, refChild, outNewChild );
 }
 
 
@@ -266,8 +266,8 @@ static HRESULT WINAPI domdoc_replaceChild(
     IXMLDOMNode* oldChild,
     IXMLDOMNode** outOldChild)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_replaceChild( This->node, newChild, oldChild, outOldChild );
 }
 
 
@@ -276,8 +276,8 @@ static HRESULT WINAPI domdoc_removeChild(
     IXMLDOMNode* childNode,
     IXMLDOMNode** oldChild)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_removeChild( This->node, childNode, oldChild );
 }
 
 
@@ -286,8 +286,8 @@ static HRESULT WINAPI domdoc_appendChild(
     IXMLDOMNode* newChild,
     IXMLDOMNode** outNewChild)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_appendChild( This->node, newChild, outNewChild );
 }
 
 
@@ -295,8 +295,8 @@ static HRESULT WINAPI domdoc_hasChildNodes(
     IXMLDOMDocument *iface,
     VARIANT_BOOL* hasChild)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_hasChildNodes( This->node, hasChild );
 }
 
 
@@ -304,8 +304,8 @@ static HRESULT WINAPI domdoc_get_ownerDocument(
     IXMLDOMDocument *iface,
     IXMLDOMDocument** DOMDocument)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_ownerDocument( This->node, DOMDocument );
 }
 
 
@@ -314,8 +314,8 @@ static HRESULT WINAPI domdoc_cloneNode(
     VARIANT_BOOL deep,
     IXMLDOMNode** cloneRoot)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_cloneNode( This->node, deep, cloneRoot );
 }
 
 
@@ -323,8 +323,8 @@ static HRESULT WINAPI domdoc_get_nodeTypeString(
     IXMLDOMDocument *iface,
     BSTR* nodeType )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_nodeTypeString( This->node, nodeType );
 }
 
 
@@ -332,8 +332,8 @@ static HRESULT WINAPI domdoc_get_text(
     IXMLDOMDocument *iface,
     BSTR* text )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_text( This->node, text );
 }
 
 
@@ -341,8 +341,8 @@ static HRESULT WINAPI domdoc_put_text(
     IXMLDOMDocument *iface,
     BSTR text )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_put_text( This->node, text );
 }
 
 
@@ -350,8 +350,8 @@ static HRESULT WINAPI domdoc_get_specified(
     IXMLDOMDocument *iface,
     VARIANT_BOOL* isSpecified )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_specified( This->node, isSpecified );
 }
 
 
@@ -359,8 +359,8 @@ static HRESULT WINAPI domdoc_get_definition(
     IXMLDOMDocument *iface,
     IXMLDOMNode** definitionNode )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_definition( This->node, definitionNode );
 }
 
 
@@ -368,16 +368,16 @@ static HRESULT WINAPI domdoc_get_nodeTypedValue(
     IXMLDOMDocument *iface,
     VARIANT* typedValue )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_nodeTypedValue( This->node, typedValue );
 }
 
 static HRESULT WINAPI domdoc_put_nodeTypedValue(
     IXMLDOMDocument *iface,
     VARIANT typedValue )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_put_nodeTypedValue( This->node, typedValue );
 }
 
 
@@ -385,8 +385,8 @@ static HRESULT WINAPI domdoc_get_dataType(
     IXMLDOMDocument *iface,
     VARIANT* dataTypeName )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_dataType( This->node, dataTypeName );
 }
 
 
@@ -394,8 +394,8 @@ static HRESULT WINAPI domdoc_put_dataType(
     IXMLDOMDocument *iface,
     BSTR dataTypeName )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_put_dataType( This->node, dataTypeName );
 }
 
 
@@ -403,8 +403,8 @@ static HRESULT WINAPI domdoc_get_xml(
     IXMLDOMDocument *iface,
     BSTR* xmlString )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_xml( This->node, xmlString );
 }
 
 
@@ -413,8 +413,8 @@ static HRESULT WINAPI domdoc_transformNode(
     IXMLDOMNode* styleSheet,
     BSTR* xmlString )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_transformNode( This->node, styleSheet, xmlString );
 }
 
 
@@ -423,8 +423,8 @@ static HRESULT WINAPI domdoc_selectNodes(
     BSTR queryString,
     IXMLDOMNodeList** resultList )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_selectNodes( This->node, queryString, resultList );
 }
 
 
@@ -433,8 +433,8 @@ static HRESULT WINAPI domdoc_selectSingleNode(
     BSTR queryString,
     IXMLDOMNode** resultNode )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_selectSingleNode( This->node, queryString, resultNode );
 }
 
 
@@ -442,8 +442,8 @@ static HRESULT WINAPI domdoc_get_parsed(
     IXMLDOMDocument *iface,
     VARIANT_BOOL* isParsed )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_parsed( This->node, isParsed );
 }
 
 
@@ -451,8 +451,8 @@ static HRESULT WINAPI domdoc_get_namespaceURI(
     IXMLDOMDocument *iface,
     BSTR* namespaceURI )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_namespaceURI( This->node, namespaceURI );
 }
 
 
@@ -460,8 +460,8 @@ static HRESULT WINAPI domdoc_get_prefix(
     IXMLDOMDocument *iface,
     BSTR* prefixString )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_prefix( This->node, prefixString );
 }
 
 
@@ -469,8 +469,8 @@ static HRESULT WINAPI domdoc_get_baseName(
     IXMLDOMDocument *iface,
     BSTR* nameString )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_get_baseName( This->node, nameString );
 }
 
 
@@ -479,8 +479,8 @@ static HRESULT WINAPI domdoc_transformNodeToObject(
     IXMLDOMNode* stylesheet,
     VARIANT outputObject)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    return IXMLDOMNode_transformNodeToObject( This->node, stylesheet, outputObject );
 }
 
 
