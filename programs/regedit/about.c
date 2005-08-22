@@ -28,5 +28,5 @@
 
 void ShowAboutBox(HWND hWnd)
 {
-    ShellAbout(hWnd, _T("Registry Explorer"), _T(""), LoadIcon(hInst, MAKEINTRESOURCE(IDI_REGEDIT)));
+    ShellAbout(hWnd, _T("Registry Editor"), _T(""), LoadIcon(hInst, MAKEINTRESOURCE(IDI_REGEDIT)));
 }
