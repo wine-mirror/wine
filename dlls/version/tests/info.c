@@ -345,6 +345,11 @@ static void test_32bit_win(void)
     ok (retA, "VerQueryValueA failed: GetLastError = 0x%08lx\n", GetLastError());
     ok( !lstrcmpA(WineFileDescriptionA, pBufA), "FileDescription should have been 'Wine version test'\n");
 
+    /* Test a second time */
+    retA = VerQueryValueA( pVersionInfoA, FileDescriptionA, (LPVOID *)&pBufA, &uiLengthA );
+    ok (retA, "VerQueryValueA failed: GetLastError = 0x%08lx\n", GetLastError());
+    todo_wine ok( !lstrcmpA(WineFileDescriptionA, pBufA), "FileDescription should have been 'Wine version test'\n");
+
     if (is_unicode_enabled)
     { 
         retW = VerQueryValueW( pVersionInfoW, FileDescriptionW, (LPVOID *)&pBufW, &uiLengthW );
