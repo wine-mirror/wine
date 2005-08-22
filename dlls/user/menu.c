@@ -149,7 +149,7 @@ typedef struct
 
 #define IS_STRING_ITEM(flags) (MENU_ITEM_TYPE ((flags)) == MF_STRING)
 #define IS_BITMAP_ITEM(flags) (MENU_ITEM_TYPE ((flags)) == MF_BITMAP)
-#define IS_MAGIC_ITEM(text)   (LOWORD((int)text)<12)
+#define IS_MAGIC_ITEM(id)     ((id) && ((INT_PTR)(id) < 12) && ((INT_PTR)(id) >= -1))
 
 #define IS_SYSTEM_MENU(menu)  \
 	(!((menu)->wFlags & MF_POPUP) && ((menu)->wFlags & MF_SYSMENU))
@@ -697,42 +697,37 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu,
  *
  * Get the size of a bitmap item.
  */
-static void MENU_GetBitmapItemSize( UINT id, DWORD data, SIZE *size )
+static void MENU_GetBitmapItemSize( HBITMAP bmp, DWORD data, SIZE *size )
 {
     BITMAP bm;
-    HBITMAP bmp = (HBITMAP)id;
 
     size->cx = size->cy = 0;
 
     /* check if there is a magic menu item associated with this item */
-    if (id && IS_MAGIC_ITEM( id ))
+    switch( (INT_PTR)bmp )
     {
-        switch(LOWORD(id))
+    case (INT_PTR)HBMMENU_SYSTEM:
+        if (data)
         {
-        case (INT_PTR)HBMMENU_SYSTEM:
-            if (data)
-            {
-                bmp = (HBITMAP)data;
-                break;
-            }
-            /* fall through */
-        case (INT_PTR)HBMMENU_MBAR_RESTORE:
-        case (INT_PTR)HBMMENU_MBAR_MINIMIZE:
-        case (INT_PTR)HBMMENU_MBAR_MINIMIZE_D:
-        case (INT_PTR)HBMMENU_MBAR_CLOSE:
-        case (INT_PTR)HBMMENU_MBAR_CLOSE_D:
-            size->cx = GetSystemMetrics( SM_CYMENU ) - 4;
-            size->cy = size->cx;
-            return;
-        case (INT_PTR)HBMMENU_CALLBACK:
-        case (INT_PTR)HBMMENU_POPUP_CLOSE:
-        case (INT_PTR)HBMMENU_POPUP_RESTORE:
-        case (INT_PTR)HBMMENU_POPUP_MAXIMIZE:
-        case (INT_PTR)HBMMENU_POPUP_MINIMIZE:
-        default:
-            FIXME("Magic 0x%08x not implemented\n", id);
-            return;
+            bmp = (HBITMAP)data;
+            break;
         }
+        /* fall through */
+    case (INT_PTR)HBMMENU_MBAR_RESTORE:
+    case (INT_PTR)HBMMENU_MBAR_MINIMIZE:
+    case (INT_PTR)HBMMENU_MBAR_MINIMIZE_D:
+    case (INT_PTR)HBMMENU_MBAR_CLOSE:
+    case (INT_PTR)HBMMENU_MBAR_CLOSE_D:
+        size->cx = GetSystemMetrics( SM_CYMENU ) - 4;
+        size->cy = size->cx;
+        return;
+    case (INT_PTR)HBMMENU_CALLBACK:
+    case (INT_PTR)HBMMENU_POPUP_CLOSE:
+    case (INT_PTR)HBMMENU_POPUP_RESTORE:
+    case (INT_PTR)HBMMENU_POPUP_MAXIMIZE:
+    case (INT_PTR)HBMMENU_POPUP_MINIMIZE:
+        FIXME("Magic %p not implemented\n", bmp );
+        return;
     }
     if (GetObjectW(bmp, sizeof(bm), &bm ))
     {
@@ -760,12 +755,12 @@ static void MENU_DrawBitmapItem( HDC hdc, MENUITEM *lpitem, const RECT *rect, BO
     HBITMAP hbmToDraw = (drawhbmbitmap)?lpitem->hbmpItem:(HBITMAP)lpitem->text;    
 
     /* Check if there is a magic menu item associated with this item */
-    if (hbmToDraw && IS_MAGIC_ITEM(hbmToDraw))
+    if (IS_MAGIC_ITEM(hbmToDraw))
     {
         UINT flags = 0;
         RECT r;
 
-	switch(LOWORD(hbmToDraw))
+	switch((INT_PTR)hbmToDraw)
         {
         case (INT_PTR)HBMMENU_SYSTEM:
             if (lpitem->dwItemData)
@@ -806,7 +801,7 @@ static void MENU_DrawBitmapItem( HDC hdc, MENUITEM *lpitem, const RECT *rect, BO
         case (INT_PTR)HBMMENU_POPUP_MAXIMIZE:
         case (INT_PTR)HBMMENU_POPUP_MINIMIZE:
         default:
-	    FIXME("Magic 0x%08x not implemented\n", LOWORD(hbmToDraw)); 
+            FIXME("Magic %p not implemented\n", hbmToDraw);
             return;
         }
         r = *rect;
@@ -918,7 +913,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 		lpitem->rect.right = lpitem->rect.left + measItem.itemWidth;
 	    } else {
 		SIZE size;
-		MENU_GetBitmapItemSize((UINT)lpitem->hbmpItem, lpitem->dwItemData, &size);
+		MENU_GetBitmapItemSize(lpitem->hbmpItem, lpitem->dwItemData, &size);
 		lppop->maxBmpSize.cx = max(lppop->maxBmpSize.cx, size.cx);
 		lppop->maxBmpSize.cy = max(lppop->maxBmpSize.cy, size.cy);
 		lpitem->rect.right  += size.cx;
@@ -938,7 +933,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
     {
         SIZE size;
 
-        MENU_GetBitmapItemSize( (int)lpitem->text, lpitem->dwItemData, &size );
+        MENU_GetBitmapItemSize( (HBITMAP) lpitem->text, lpitem->dwItemData, &size );
         lpitem->rect.right  += size.cx;
         lpitem->rect.bottom += size.cy;
         /* Leave space for the sunken border */
@@ -3412,7 +3407,7 @@ UINT WINAPI GetMenuItemID( HMENU hMenu, INT nPos )
 {
     MENUITEM * lpmi;
 
-    if (!(lpmi = MENU_FindItem(&hMenu,&nPos,MF_BYPOSITION))) return -1;
+    if (!(lpmi = MENU_FindItem(&hMenu,(UINT*)&nPos,MF_BYPOSITION))) return -1;
     if (lpmi->fType & MF_POPUP) return -1;
     return lpmi->wID;
 
@@ -3834,7 +3829,7 @@ HMENU WINAPI GetSubMenu( HMENU hMenu, INT nPos )
 {
     MENUITEM * lpmi;
 
-    if (!(lpmi = MENU_FindItem(&hMenu,&nPos,MF_BYPOSITION))) return 0;
+    if (!(lpmi = MENU_FindItem(&hMenu,(UINT*)&nPos,MF_BYPOSITION))) return 0;
     if (!(lpmi->fType & MF_POPUP)) return 0;
     return lpmi->hSubMenu;
 }
