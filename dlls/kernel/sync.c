@@ -1897,7 +1897,7 @@ __ASM_GLOBAL_FUNC(InterlockedDecrement,
  * NOTES
  *  dest is updated only if it is equal to compare, otherwise no swap is done.
  */
-LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
+LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 {
     return interlocked_cmpxchg( dest, xchg, compare );
 }
@@ -1914,7 +1914,7 @@ LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
  * RETURNS
  *  The resulting value of dest.
  */
-LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
+LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
 {
     return interlocked_xchg( dest, val );
 }
@@ -1931,7 +1931,7 @@ LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
  * RETURNS
  *  The resulting value of dest.
  */
-LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
+LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
 {
     return interlocked_xchg_add( dest, incr );
 }
@@ -1947,7 +1947,7 @@ LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
  * RETURNS
  *  The resulting value of dest.
  */
-LONG WINAPI InterlockedIncrement( PLONG dest )
+LONG WINAPI InterlockedIncrement( LONG volatile *dest )
 {
     return interlocked_xchg_add( dest, 1 ) + 1;
 }
@@ -1963,7 +1963,7 @@ LONG WINAPI InterlockedIncrement( PLONG dest )
  * RETURNS
  *  The resulting value of dest.
  */
-LONG WINAPI InterlockedDecrement( PLONG dest )
+LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 {
     return interlocked_xchg_add( dest, -1 ) - 1;
 }
