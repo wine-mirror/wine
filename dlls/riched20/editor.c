@@ -393,6 +393,7 @@ static void ME_RTFCharAttrHook(RTF_Info *info)
     style2 = ME_ApplyStyle(info->style, &fmt);
     ME_ReleaseStyle(info->style);
     info->style = style2;
+    info->styleChanged = TRUE;
   }
 }
 
@@ -476,18 +477,22 @@ static void ME_RTFReadHook(RTF_Info *info) {
             info->stack[info->stackTop].unicodeLength = info->unicodeLength;
           }
           info->stackTop++;
+          info->styleChanged = FALSE;
           break;
         case rtfEndGroup:
         {
           ME_Style *s;
           RTFFlushOutputBuffer(info);
           info->stackTop--;
-          /* FIXME too slow ? how come ? */
-          s = ME_ApplyStyle(info->style, &info->stack[info->stackTop].fmt);
-          ME_ReleaseStyle(info->style);
-          info->style = s;
-          info->codePage = info->stack[info->stackTop].codePage;
-          info->unicodeLength = info->stack[info->stackTop].unicodeLength;
+          if (info->styleChanged)
+          {
+            /* FIXME too slow ? how come ? */
+            s = ME_ApplyStyle(info->style, &info->stack[info->stackTop].fmt);
+            ME_ReleaseStyle(info->style);
+            info->style = s;
+            info->codePage = info->stack[info->stackTop].codePage;
+            info->unicodeLength = info->stack[info->stackTop].unicodeLength;
+          }
           break;
         }
       }
