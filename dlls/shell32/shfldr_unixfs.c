@@ -798,7 +798,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
     if ((GET_SHGDN_FOR(uFlags) & SHGDN_FORPARSING) &&
         (GET_SHGDN_RELATION(uFlags) != SHGDN_INFOLDER))
     {
-        if (!pidl->mkid.cb) {
+        if (!pidl || !pidl->mkid.cb) {
             lpName->uType = STRRET_CSTR;
             if (This->m_dwPathMode == PATHMODE_UNIX) {
                 strcpy(lpName->u.cStr, This->m_pszPath);
@@ -1523,7 +1523,9 @@ static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, D
         pUnixFolder->lpISFHelperVtbl = &UnixFolder_ISFHelper_Vtbl;
         pUnixFolder->m_cRef = 0;
         pUnixFolder->m_pszPath = NULL;
+        pUnixFolder->m_pidlLocation = NULL;
         pUnixFolder->m_dwPathMode = dwPathMode;
+        pUnixFolder->m_dwAttributes = 0;
         pUnixFolder->m_pCLSID = pCLSID;
 
         UnixFolder_IShellFolder2_AddRef(STATIC_CAST(IShellFolder2, pUnixFolder));
