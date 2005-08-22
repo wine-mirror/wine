@@ -279,20 +279,16 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, const char *szXPMFile
             {
                 for (i = 0; i < pIconDir->idCount; i++)
                 {
-                    if ((pIconDir->idEntries[i].wBitCount >= nMaxBits) && (pIconDir->idEntries[i].wBitCount <= 8))
-                    {
-                        if (pIconDir->idEntries[i].wBitCount > nMaxBits)
-                        {
-                            nMaxBits = pIconDir->idEntries[i].wBitCount;
-                            nMax = 0;
-                        }
-                    }
+		    if ((pIconDir->idEntries[i].wBitCount >= nMaxBits) && (pIconDir->idEntries[i].wBitCount <= 8))
+		    {
+			nMaxBits = pIconDir->idEntries[i].wBitCount;
 
-                    if ((pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth) > nMax)
-                    {
-                        lpName = MAKEINTRESOURCEW(pIconDir->idEntries[i].nID);
-                        nMax = pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth;
-                    }
+			if ((pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth) >= nMax)
+			{
+			    lpName = MAKEINTRESOURCEW(pIconDir->idEntries[i].nID);
+			    nMax = pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth;
+			}
+		    }		    
                 }
             }
 
