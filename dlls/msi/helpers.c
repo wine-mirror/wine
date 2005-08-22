@@ -167,20 +167,16 @@ LPWSTR load_dynamic_property(MSIPACKAGE *package, LPCWSTR prop, UINT* rc)
     return str;
 }
 
-int get_loaded_component(MSIPACKAGE* package, LPCWSTR Component )
+MSICOMPONENT* get_loaded_component( MSIPACKAGE* package, LPCWSTR Component )
 {
-    int rc = -1;
-    DWORD i;
+    MSICOMPONENT *comp = NULL;
 
-    for (i = 0; i < package->loaded_components; i++)
+    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
-        if (strcmpW(Component,package->components[i].Component)==0)
-        {
-            rc = i;
-            break;
-        }
+        if (lstrcmpW(Component,comp->Component)==0)
+            return comp;
     }
-    return rc;
+    return NULL;
 }
 
 int get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature )
@@ -487,11 +483,14 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
     if (package->folders && package->loaded_folders > 0)
         HeapFree(GetProcessHeap(),0,package->folders);
 
-    for (i = 0; i < package->loaded_components; i++)
-        HeapFree(GetProcessHeap(),0,package->components[i].FullKeypath);
-
-    if (package->components && package->loaded_components > 0)
-        HeapFree(GetProcessHeap(),0,package->components);
+    LIST_FOR_EACH_SAFE( item, cursor, &package->components )
+    {
+        MSICOMPONENT *comp = LIST_ENTRY( item, MSICOMPONENT, entry );
+        
+        list_remove( &comp->entry );
+        HeapFree( GetProcessHeap(), 0, comp->FullKeypath );
+        HeapFree( GetProcessHeap(), 0, comp );
+    }
 
     for (i = 0; i < package->loaded_files; i++)
     {
@@ -762,13 +761,13 @@ void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * record)
     msiobj_release(&row->hdr);
 }
 
-BOOL ACTION_VerifyComponentForAction(MSIPACKAGE* package, INT index, 
+BOOL ACTION_VerifyComponentForAction(MSIPACKAGE* package, MSICOMPONENT* comp,
                                             INSTALLSTATE check )
 {
-    if (package->components[index].Installed == check)
+    if (comp->Installed == check)
         return FALSE;
 
-    if (package->components[index].ActionRequest == check)
+    if (comp->ActionRequest == check)
         return TRUE;
     else
         return FALSE;
@@ -867,8 +866,8 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
 
     LIST_FOR_EACH_ENTRY( cl, feature->Components, ComponentList, entry )
     {
-        MSICOMPONENT* component = &package->components[cl->component];
-
+        MSICOMPONENT* component = cl->component;
+    
         TRACE("MODIFYING(%i): Component %s (Installed %i, Action %i, Request %i)\n",
             newstate, debugstr_w(component->Component), component->Installed, 
             component->Action, component->ActionRequest);

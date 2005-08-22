@@ -190,8 +190,7 @@ typedef struct tagMSIPACKAGE
     UINT loaded_features;
     struct tagMSIFOLDER  *folders;
     UINT loaded_folders;
-    struct tagMSICOMPONENT *components;
-    UINT loaded_components;
+    struct list components;
     struct tagMSIFILE *files;
     UINT loaded_files;
     LPWSTR ActionFormat;

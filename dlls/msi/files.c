@@ -56,14 +56,13 @@ extern const WCHAR szRemoveFiles[];
 
 static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 
-inline static UINT create_component_directory ( MSIPACKAGE* package, INT component)
+static UINT create_component_directory( MSIPACKAGE* package, MSICOMPONENT *comp )
 {
     UINT rc = ERROR_SUCCESS;
     MSIFOLDER *folder;
     LPWSTR install_path;
 
-    install_path = resolve_folder(package, package->components[component].Directory,
-                        FALSE, FALSE, &folder);
+    install_path = resolve_folder(package, comp->Directory, FALSE, FALSE, &folder);
     if (!install_path)
         return ERROR_FUNCTION_FAILED; 
 
@@ -683,7 +682,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if (file->Temporary)
             continue;
 
-        if (!ACTION_VerifyComponentForAction(package, file->ComponentIndex, 
+        if (!ACTION_VerifyComponentForAction(package, file->Component, 
                                        INSTALLSTATE_LOCAL))
         {
             ui_progress(package,2,file->FileSize,0,0);
@@ -700,13 +699,12 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
             TRACE("Pass 1: %s\n",debugstr_w(file->File));
 
-            create_component_directory( package, file->ComponentIndex);
+            create_component_directory( package, file->Component );
 
             /* recalculate file paths because things may have changed */
 
-            if (file->ComponentIndex >= 0)
-                comp = &package->components[file->ComponentIndex];
-            else
+            comp = file->Component;
+            if (!comp)
             {
                 ERR("No Component for file\n");
                 continue;
@@ -724,7 +722,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     for (index = 0; index < package->loaded_files; index++)
     {
         MSIFILE *file;
-        MSICOMPONENT* comp = NULL;
 
         file = &package->files[index];
 
@@ -735,10 +732,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         {
             TRACE("Pass 2: %s\n",debugstr_w(file->File));
 
-            if (file->ComponentIndex >= 0)
-                comp = &package->components[file->ComponentIndex];
-
-            rc = ready_media_for_file(package, index, comp);
+            rc = ready_media_for_file( package, index, file->Component );
             if (rc != ERROR_SUCCESS)
             {
                 ERR("Unable to ready media\n");
@@ -808,27 +802,25 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
     WCHAR dest_name[0x100];
     LPWSTR dest_path, dest;
     LPCWSTR file_key, component;
-    INT component_index;
     DWORD sz;
     DWORD rc;
+    MSICOMPONENT *comp;
 
     component = MSI_RecordGetString(row,2);
-    component_index = get_loaded_component(package,component);
+    comp = get_loaded_component(package,component);
 
-    if (!ACTION_VerifyComponentForAction(package, component_index,
-                            INSTALLSTATE_LOCAL))
+    if (!ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_LOCAL))
     {
         TRACE("Skipping copy due to disabled component %s\n",
                         debugstr_w(component));
 
         /* the action taken was the same as the current install state */        
-        package->components[component_index].Action =
-                package->components[component_index].Installed;
+        comp->Action = comp->Installed;
 
         return ERROR_SUCCESS;
     }
 
-    package->components[component_index].Action = INSTALLSTATE_LOCAL;
+    comp->Action = INSTALLSTATE_LOCAL;
 
     file_key = MSI_RecordGetString(row,3);
     if (!file_key)

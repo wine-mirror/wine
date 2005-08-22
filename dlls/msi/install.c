@@ -545,20 +545,20 @@ UINT WINAPI MsiGetComponentStateA(MSIHANDLE hInstall, LPSTR szComponent,
 UINT MSI_GetComponentStateW(MSIPACKAGE *package, LPWSTR szComponent,
                   INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
 {
-    INT index;
+    MSICOMPONENT *comp;
 
     TRACE("%p %s %p %p\n", package, debugstr_w(szComponent), piInstalled,
 piAction);
 
-    index = get_loaded_component(package,szComponent);
-    if (index < 0)
+    comp = get_loaded_component(package,szComponent);
+    if (!comp)
         return ERROR_UNKNOWN_COMPONENT;
 
     if (piInstalled)
-        *piInstalled = package->components[index].Installed;
+        *piInstalled = comp->Installed;
 
     if (piAction)
-        *piAction = package->components[index].Action;
+        *piAction = comp->Action;
 
     TRACE("states (%i, %i)\n",
 (piInstalled)?*piInstalled:-1,(piAction)?*piAction:-1);

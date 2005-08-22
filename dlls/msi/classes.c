@@ -253,8 +253,7 @@ static INT load_class(MSIPACKAGE* package, MSIRECORD *row)
     sz = IDENTIFIER_SIZE;
     MSI_RecordGetStringW(row, 2, package->classes[index].Context, &sz);
     buffer = MSI_RecordGetString(row,3);
-    package->classes[index].ComponentIndex = get_loaded_component(package, 
-                    buffer);
+    package->classes[index].Component = get_loaded_component(package, buffer);
 
     package->classes[index].ProgIDText = load_dynamic_stringW(row,4);
     package->classes[index].ProgIDIndex = 
@@ -466,8 +465,7 @@ static INT load_extension(MSIPACKAGE* package, MSIRECORD *row)
                     debugstr_w(package->extensions[index].Extension));
 
     buffer = MSI_RecordGetString(row,2);
-    package->extensions[index].ComponentIndex = 
-            get_loaded_component(package,buffer);
+    package->extensions[index].Component = get_loaded_component(package,buffer);
 
     package->extensions[index].ProgIDText = load_dynamic_stringW(row,3);
     package->extensions[index].ProgIDIndex = load_given_progid(package,
@@ -574,10 +572,10 @@ static UINT iterate_load_verb(MSIRECORD *row, LPVOID param)
 
 static UINT iterate_all_classes(MSIRECORD *rec, LPVOID param)
 {
+    MSICOMPONENT *comp;
     LPCWSTR clsid;
     LPCWSTR context;
     LPCWSTR buffer;
-    INT    component_index;
     MSIPACKAGE* package =(MSIPACKAGE*)param;
     INT i;
     BOOL match = FALSE;
@@ -585,7 +583,7 @@ static UINT iterate_all_classes(MSIRECORD *rec, LPVOID param)
     clsid = MSI_RecordGetString(rec,1);
     context = MSI_RecordGetString(rec,2);
     buffer = MSI_RecordGetString(rec,3);
-    component_index = get_loaded_component(package,buffer);
+    comp = get_loaded_component(package,buffer);
 
     for (i = 0; i < package->loaded_classes; i++)
     {
@@ -593,7 +591,7 @@ static UINT iterate_all_classes(MSIRECORD *rec, LPVOID param)
             continue;
         if (strcmpW(context,package->classes[i].Context))
             continue;
-        if (component_index == package->classes[i].ComponentIndex)
+        if (comp == package->classes[i].Component)
         {
             match = TRUE;
             break;
@@ -625,22 +623,22 @@ static VOID load_all_classes(MSIPACKAGE *package)
 
 static UINT iterate_all_extensions(MSIRECORD *rec, LPVOID param)
 {
+    MSICOMPONENT *comp;
     LPCWSTR buffer;
     LPCWSTR extension;
-    INT    component_index;
     MSIPACKAGE* package =(MSIPACKAGE*)param;
     BOOL match = FALSE;
     INT i;
 
     extension = MSI_RecordGetString(rec,1);
     buffer = MSI_RecordGetString(rec,2);
-    component_index = get_loaded_component(package,buffer);
+    comp = get_loaded_component(package,buffer);
 
     for (i = 0; i < package->loaded_extensions; i++)
     {
         if (strcmpiW(extension,package->extensions[i].Extension))
             continue;
-        if (component_index == package->extensions[i].ComponentIndex)
+        if (comp == package->extensions[i].Component)
         {
             match = TRUE;
             break;
@@ -920,16 +918,15 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     
     for (i = 0; i < package->loaded_classes; i++)
     {
-        INT index,f_index;
+        MSICOMPONENT *comp;
+        INT index, f_index;
         DWORD size, sz;
         LPWSTR argument;
 
-        if (package->classes[i].ComponentIndex < 0)
-        {
+        comp = package->classes[i].Component;
+        if ( !comp )
             continue;
-        }
 
-        index = package->classes[i].ComponentIndex;
         f_index = package->classes[i].FeatureIndex;
 
         /* 
@@ -963,7 +960,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                                      Description)+1)*sizeof(WCHAR));
 
         RegCreateKeyW(hkey2,package->classes[i].Context,&hkey3);
-        index = get_loaded_file(package,package->components[index].KeyPath);
+        index = get_loaded_file( package, comp->KeyPath );
 
 
         /* the context server is a short path name 
@@ -1425,13 +1422,12 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
     for (i = 0; i < package->loaded_extensions; i++)
     {
         WCHAR extension[257];
-        INT index,f_index;
+        INT f_index;
      
-        index = package->extensions[i].ComponentIndex;
-        f_index = package->extensions[i].FeatureIndex;
-
-        if (index < 0)
+        if (!package->extensions[i].Component)
             continue;
+
+        f_index = package->extensions[i].FeatureIndex;
 
         /* 
          * yes. MSDN says that these are based on _Feature_ not on
@@ -1512,7 +1508,7 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
             /* do all the verbs */
             for (v = 0; v < package->extensions[i].VerbCount; v++)
                 register_verb(package, progid, 
-                              &package->components[index],
+                              package->extensions[i].Component,
                               &package->extensions[i],
                               &package->verbs[package->extensions[i].Verbs[v]], 
                               &Sequence);

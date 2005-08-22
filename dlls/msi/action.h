@@ -44,6 +44,8 @@ typedef struct tagMSIFEATURE
 
 typedef struct tagMSICOMPONENT
 {
+    struct list entry;
+    DWORD magic;
     WCHAR Component[IDENTIFIER_SIZE];
     WCHAR ComponentId[IDENTIFIER_SIZE];
     WCHAR Directory[IDENTIFIER_SIZE];
@@ -66,7 +68,7 @@ typedef struct tagMSICOMPONENT
 typedef struct tagComponentList
 {
     struct list entry;
-    int component;
+    MSICOMPONENT *component;
 } ComponentList;
 
 typedef struct tagMSIFOLDER
@@ -91,7 +93,7 @@ typedef struct tagMSIFOLDER
 typedef struct tagMSIFILE
 {
     LPWSTR File;
-    INT ComponentIndex;
+    MSICOMPONENT *Component;
     LPWSTR FileName;
     LPWSTR ShortName;
     INT FileSize;
@@ -115,7 +117,7 @@ typedef struct tagMSICLASS
 {
     WCHAR CLSID[IDENTIFIER_SIZE];     /* Primary Key */
     WCHAR Context[IDENTIFIER_SIZE];   /* Primary Key */
-    INT ComponentIndex;               /* Primary Key */
+    MSICOMPONENT *Component;
     INT ProgIDIndex;
     LPWSTR ProgIDText;
     LPWSTR Description;
@@ -134,7 +136,7 @@ typedef struct tagMSICLASS
 typedef struct tagMSIEXTENSION
 {
     WCHAR Extension[256];  /* Primary Key */
-    INT ComponentIndex;    /* Primary Key */
+    MSICOMPONENT *Component;
     INT ProgIDIndex;
     LPWSTR ProgIDText;
     INT MIMEIndex;
@@ -233,7 +235,7 @@ WCHAR *load_dynamic_stringW(MSIRECORD *row, INT index);
 LPWSTR load_dynamic_property(MSIPACKAGE *package, LPCWSTR prop, UINT* rc);
 LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source, 
                       BOOL set_prop, MSIFOLDER **folder);
-int get_loaded_component(MSIPACKAGE* package, LPCWSTR Component );
+MSICOMPONENT *get_loaded_component( MSIPACKAGE* package, LPCWSTR Component );
 int get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature );
 int get_loaded_file(MSIPACKAGE* package, LPCWSTR file);
 int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path);
@@ -242,7 +244,7 @@ UINT build_icon_path(MSIPACKAGE *, LPCWSTR, LPWSTR *);
 DWORD build_version_dword(LPCWSTR);
 LPWSTR build_directory_name(DWORD , ...);
 BOOL create_full_pathW(const WCHAR *path);
-BOOL ACTION_VerifyComponentForAction(MSIPACKAGE*, INT, INSTALLSTATE);
+BOOL ACTION_VerifyComponentForAction(MSIPACKAGE*, MSICOMPONENT*, INSTALLSTATE);
 BOOL ACTION_VerifyFeatureForAction(MSIPACKAGE*, INT, INSTALLSTATE);
 void reduce_to_longfilename(WCHAR*);
 void reduce_to_shortfilename(WCHAR*);
