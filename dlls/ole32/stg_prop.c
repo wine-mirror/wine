@@ -1022,7 +1022,7 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
             ptr[cbEntry - 1] = '\0';
         else
             *((LPWSTR)ptr + cbEntry / sizeof(WCHAR)) = '\0';
-        hr = PropertyStorage_StoreNameWithId(This, ptr, This->codePage, propid);
+        hr = PropertyStorage_StoreNameWithId(This, (char*)ptr, This->codePage, propid);
         if (This->codePage == CP_UNICODE)
         {
             /* Unicode entries are padded to DWORD boundaries */
@@ -1060,7 +1060,7 @@ static HRESULT PropertyStorage_ReadProperty(PropertyStorage_impl *This,
         TRACE("Read byte 0x%x\n", prop->u.bVal);
         break;
     case VT_I2:
-        StorageUtl_ReadWord(data, 0, &prop->u.iVal);
+        StorageUtl_ReadWord(data, 0, (WORD*)&prop->u.iVal);
         TRACE("Read short %d\n", prop->u.iVal);
         break;
     case VT_UI2:
@@ -1069,7 +1069,7 @@ static HRESULT PropertyStorage_ReadProperty(PropertyStorage_impl *This,
         break;
     case VT_INT:
     case VT_I4:
-        StorageUtl_ReadDWord(data, 0, &prop->u.lVal);
+        StorageUtl_ReadDWord(data, 0, (DWORD*)&prop->u.lVal);
         TRACE("Read long %ld\n", prop->u.lVal);
         break;
     case VT_UINT:

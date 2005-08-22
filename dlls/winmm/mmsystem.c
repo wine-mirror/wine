@@ -2232,7 +2232,7 @@ void WINAPI WMMMidiRunOnce16(void)
  *
  * Map a 32 bit driver message to a 16 bit driver message.
  */
-static WINMM_MapType DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
+static WINMM_MapType DRIVER_MapMsg32To16(WORD wMsg, LPARAM *lParam1, LPARAM *lParam2)
 {
     WINMM_MapType       ret = WINMM_MAP_MSGERROR;
 
@@ -2743,7 +2743,7 @@ static LRESULT	MMIO_UnMap32To16(DWORD wMsg, LPARAM lParam1, LPARAM lParam2,
 static LRESULT MMIO_Callback16(SEGPTR cb16, LPMMIOINFO lpmmioinfo, UINT uMessage,
                                LPARAM lParam1, LPARAM lParam2)
 {
-    LRESULT 		result;
+    DWORD 		result;
     MMIOINFO16          mmioInfo16;
     SEGPTR		segmmioInfo16;
     LPARAM		lp1 = lParam1, lp2 = lParam2;

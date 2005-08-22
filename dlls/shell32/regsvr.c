@@ -313,7 +313,7 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 				  &shellfolder_key, NULL);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	    if (list->flags & SHELLFOLDER_WANTSFORPARSING)
-		res = RegSetValueExA(shellfolder_key, wfparsing_valuename, 0, REG_SZ, "", 1);
+		res = RegSetValueExA(shellfolder_key, wfparsing_valuename, 0, REG_SZ, (LPBYTE)"", 1);
 	    if (list->flags & SHELLFOLDER_ATTRIBUTES) 
 		res = RegSetValueExA(shellfolder_key, attributes_valuename, 0, REG_DWORD, 
 				     (LPBYTE)&list->dwAttributes, sizeof(DWORD));

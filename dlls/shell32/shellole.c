@@ -642,7 +642,7 @@ HRESULT WINAPI SHCreateDefClassObject(
               shdebugstr_guid(riid), ppv, lpfnCI, pcRefDll, shdebugstr_guid(riidInst));
 
 	if (! IsEqualCLSID(riid, &IID_IClassFactory) ) return E_NOINTERFACE;
-	if (! (pcf = IDefClF_fnConstructor(lpfnCI, pcRefDll, riidInst))) return E_OUTOFMEMORY;
+	if (! (pcf = IDefClF_fnConstructor(lpfnCI, (PLONG)pcRefDll, riidInst))) return E_OUTOFMEMORY;
 	*ppv = pcf;
 	return NOERROR;
 }

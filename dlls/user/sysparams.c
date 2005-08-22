@@ -1107,7 +1107,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             ret = get_twips_param( SPI_ICONHORIZONTALSPACING_IDX,
                                    SPI_ICONHORIZONTALSPACING_REGKEY,
                                    SPI_ICONHORIZONTALSPACING_VALNAME,
-                                   &icon_metrics.iHorzSpacing, pvParam );
+                                   (UINT*)&icon_metrics.iHorzSpacing, pvParam );
         }
         else
         {
@@ -1115,7 +1115,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             ret = set_uint_param( SPI_ICONHORIZONTALSPACING_IDX,
                                   SPI_ICONHORIZONTALSPACING_REGKEY,
                                   SPI_ICONHORIZONTALSPACING_VALNAME,
-                                  &icon_metrics.iHorzSpacing, uiParam, fWinIni );
+                                  (UINT*)&icon_metrics.iHorzSpacing, uiParam, fWinIni );
         }
         break;
 
@@ -1204,7 +1204,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             ret = get_twips_param( SPI_ICONVERTICALSPACING_IDX,
                                    SPI_ICONVERTICALSPACING_REGKEY,
                                    SPI_ICONVERTICALSPACING_VALNAME,
-                                   &icon_metrics.iVertSpacing, pvParam );
+                                   (UINT*)&icon_metrics.iVertSpacing, pvParam );
         }
         else
         {
@@ -1212,7 +1212,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             ret = set_uint_param( SPI_ICONVERTICALSPACING_IDX,
                                   SPI_ICONVERTICALSPACING_REGKEY,
                                   SPI_ICONVERTICALSPACING_VALNAME,
-                                  &icon_metrics.iVertSpacing, uiParam, fWinIni );
+                                  (UINT*)&icon_metrics.iVertSpacing, uiParam, fWinIni );
         }
         break;
 
@@ -1312,7 +1312,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         break;
 
     case SPI_SETMOUSEBUTTONSWAP:
-        ret = set_uint_param( SPI_SETMOUSEBUTTONSWAP_IDX,
+        ret = set_bool_param( SPI_SETMOUSEBUTTONSWAP_IDX,
                               SPI_SETMOUSEBUTTONSWAP_REGKEY,
                               SPI_SETMOUSEBUTTONSWAP_VALNAME,
                               &swap_buttons, uiParam, fWinIni );
@@ -2261,7 +2261,7 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_DEBUG:
         return 0;
     case SM_SWAPBUTTON:
-        get_uint_param( SPI_SETMOUSEBUTTONSWAP_IDX, SPI_SETMOUSEBUTTONSWAP_REGKEY,
+        get_bool_param( SPI_SETMOUSEBUTTONSWAP_IDX, SPI_SETMOUSEBUTTONSWAP_REGKEY,
                         SPI_SETMOUSEBUTTONSWAP_VALNAME, &swap_buttons, &ret );
         return ret;
     case SM_RESERVED1:
