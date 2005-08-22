@@ -38,6 +38,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winternl.h"
+#include "winioctl.h"
 #include "kernel_private.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
@@ -359,19 +360,30 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 
     if (lpOverlapped)
     {
-        status = NtDeviceIoControlFile(hDevice, lpOverlapped->hEvent,
-                                       NULL, NULL, (PIO_STATUS_BLOCK)lpOverlapped,
-                                       dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                       lpvOutBuffer, cbOutBuffer);
+        if (HIWORD(dwIoControlCode) == FILE_DEVICE_FILE_SYSTEM)
+            status = NtFsControlFile(hDevice, lpOverlapped->hEvent,
+                                     NULL, NULL, (PIO_STATUS_BLOCK)lpOverlapped,
+                                     dwIoControlCode, lpvInBuffer, cbInBuffer,
+                                     lpvOutBuffer, cbOutBuffer);
+        else
+            status = NtDeviceIoControlFile(hDevice, lpOverlapped->hEvent,
+                                           NULL, NULL, (PIO_STATUS_BLOCK)lpOverlapped,
+                                           dwIoControlCode, lpvInBuffer, cbInBuffer,
+                                           lpvOutBuffer, cbOutBuffer);
         if (lpcbBytesReturned) *lpcbBytesReturned = lpOverlapped->InternalHigh;
     }
     else
     {
         IO_STATUS_BLOCK iosb;
 
-        status = NtDeviceIoControlFile(hDevice, NULL, NULL, NULL, &iosb,
-                                       dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                       lpvOutBuffer, cbOutBuffer);
+        if (HIWORD(dwIoControlCode) == FILE_DEVICE_FILE_SYSTEM)
+            status = NtFsControlFile(hDevice, NULL, NULL, NULL, &iosb,
+                                     dwIoControlCode, lpvInBuffer, cbInBuffer,
+                                     lpvOutBuffer, cbOutBuffer);
+        else
+            status = NtDeviceIoControlFile(hDevice, NULL, NULL, NULL, &iosb,
+                                           dwIoControlCode, lpvInBuffer, cbInBuffer,
+                                           lpvOutBuffer, cbOutBuffer);
         if (lpcbBytesReturned) *lpcbBytesReturned = iosb.Information;
     }
     if (status) SetLastError( RtlNtStatusToDosError(status) );
