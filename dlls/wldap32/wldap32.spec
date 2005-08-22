@@ -185,12 +185,12 @@
 @ stub ldap_parse_vlv_controlA
 @ stub ldap_parse_vlv_controlW
 @ cdecl ldap_perror(ptr ptr) WLDAP32_ldap_perror
-@ stub ldap_rename_ext
-@ stub ldap_rename_extA
-@ stub ldap_rename_extW
-@ stub ldap_rename_ext_s
-@ stub ldap_rename_ext_sA
-@ stub ldap_rename_ext_sW
+@ cdecl ldap_rename_ext(ptr str str str long ptr ptr ptr) ldap_rename_extA
+@ cdecl ldap_rename_extA(ptr str str str long ptr ptr ptr)
+@ cdecl ldap_rename_extW(ptr wstr wstr wstr long ptr ptr ptr)
+@ cdecl ldap_rename_ext_s(ptr str str str long ptr ptr) ldap_rename_ext_sA
+@ cdecl ldap_rename_ext_sA(ptr str str str long ptr ptr)
+@ cdecl ldap_rename_ext_sW(ptr wstr wstr wstr long ptr ptr)
 @ cdecl ldap_result(ptr long long ptr ptr) WLDAP32_ldap_result
 @ cdecl ldap_result2error(ptr ptr long) WLDAP32_ldap_result2error
 @ cdecl ldap_sasl_bindA(ptr str str ptr ptr ptr ptr)

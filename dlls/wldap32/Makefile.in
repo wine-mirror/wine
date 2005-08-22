@@ -21,6 +21,7 @@ C_SRCS = \
 	modify.c \
 	modrdn.c \
 	option.c \
+	rename.c \
 	search.c
 
 RC_SRCS = wldap32.rc
