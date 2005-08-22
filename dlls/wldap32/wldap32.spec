@@ -1,4 +1,4 @@
-@ stub LdapGetLastError
+@ cdecl LdapGetLastError()
 @ cdecl LdapMapErrorToWin32(long)
 @ cdecl LdapUTF8ToUnicode(str long ptr long)
 @ cdecl LdapUnicodeToUTF8(wstr long ptr long)
@@ -15,10 +15,10 @@
 @ varargs ber_printf(ptr str)
 @ varargs ber_scanf(ptr str)
 @ cdecl ber_skip_tag(ptr ptr)
-@ stub cldap_open
-@ stub cldap_openA
-@ stub cldap_openW
-@ stub ldap_abandon
+@ cdecl cldap_open(str long) cldap_openA
+@ cdecl cldap_openA(str long)
+@ cdecl cldap_openW(wstr long)
+@ cdecl ldap_abandon(ptr long) WLDAP32_ldap_abandon
 @ cdecl ldap_add(ptr str ptr) ldap_addA
 @ cdecl ldap_addA(ptr str ptr)
 @ cdecl ldap_addW(ptr wstr ptr)
@@ -37,9 +37,9 @@
 @ cdecl ldap_bind_s(ptr str str long) ldap_bind_sA
 @ cdecl ldap_bind_sA(ptr str str long)
 @ cdecl ldap_bind_sW(ptr wstr wstr long)
-@ stub ldap_check_filterA
-@ stub ldap_check_filterW
-@ stub ldap_cleanup
+@ cdecl ldap_check_filterA(ptr str)
+@ cdecl ldap_check_filterW(ptr wstr)
+@ cdecl ldap_cleanup(long)
 @ stub ldap_close_extended_op
 @ cdecl ldap_compare(ptr str str str) ldap_compareA
 @ cdecl ldap_compareA(ptr str str str)
@@ -53,8 +53,8 @@
 @ cdecl ldap_compare_s(ptr str str str) ldap_compare_sA
 @ cdecl ldap_compare_sA(ptr str str str)
 @ cdecl ldap_compare_sW(ptr wstr wstr wstr)
-@ stub ldap_conn_from_msg
-@ stub ldap_connect
+@ cdecl ldap_conn_from_msg(ptr ptr)
+@ cdecl ldap_connect(ptr ptr)
 @ stub ldap_control_free
 @ stub ldap_control_freeA
 @ stub ldap_control_freeW

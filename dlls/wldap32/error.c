@@ -94,6 +94,12 @@ ULONG WLDAP32_ldap_result2error( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res, ULO
     return ret;
 }
 
+ULONG LdapGetLastError( void )
+{
+    TRACE( "\n" );
+    return GetLastError();
+}
+
 static const ULONG WLDAP32_errormap[] = {
     /* LDAP_SUCCESS */                      ERROR_SUCCESS,
     /* LDAP_OPERATIONS_ERROR */             ERROR_OPEN_FAILED,

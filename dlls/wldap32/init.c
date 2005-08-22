@@ -44,6 +44,30 @@ static const WCHAR defaulthost[] = { 'l','o','c','a','l','h','o','s','t',0 };
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+WLDAP32_LDAP *cldap_openA( PCHAR hostname, ULONG portnumber )
+{
+    TRACE( "(%s, %ld)\n", debugstr_a(hostname), portnumber );
+
+    /* FIXME: should use UDP instead of TCP */
+    return ldap_openA( hostname, portnumber );
+}
+
+WLDAP32_LDAP *cldap_openW( PWCHAR hostname, ULONG portnumber )
+{
+    TRACE( "(%s, %ld)\n", debugstr_w(hostname), portnumber );
+
+    /* FIXME: should use UDP instead of TCP */
+    return ldap_openW( hostname, portnumber );
+}
+
+ULONG ldap_connect( WLDAP32_LDAP *ld, LDAP_TIMEVAL *timeout )
+{
+    TRACE( "(%p, %p)\n", ld, timeout );
+
+    if (!ld || !timeout) return WLDAP32_LDAP_PARAM_ERROR;
+    return LDAP_SUCCESS;
+}
+
 WLDAP32_LDAP *ldap_initA( PCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP

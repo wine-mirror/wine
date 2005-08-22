@@ -33,12 +33,69 @@
 #include <ldap.h>
 #else
 #define LDAP_SUCCESS        0x00
+#define LDAP_NOT_SUPPORTED  0x5c
 #endif
 
 #include "winldap_private.h"
 #include "wldap32.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
+
+ULONG WLDAP32_ldap_abandon( WLDAP32_LDAP *ld, ULONG msgid )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+
+    TRACE( "(%p, 0x%08lx)\n", ld, msgid );
+
+    if (!ld) return ~0UL;
+    ret = ldap_abandon( ld, msgid );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_check_filterA( WLDAP32_LDAP *ld, PCHAR filter )
+{
+    ULONG ret;
+    WCHAR *filterW = NULL;
+
+    TRACE( "(%p, %s)\n", ld, debugstr_a(filter) );
+
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+
+    if (filter) {
+        filterW = strAtoW( filter );
+        if (!filterW) return WLDAP32_LDAP_NO_MEMORY;
+    }
+
+    ret = ldap_check_filterW( ld, filterW );
+
+    strfreeW( filterW );
+    return ret;
+}
+
+ULONG ldap_check_filterW( WLDAP32_LDAP *ld, PWCHAR filter )
+{
+    TRACE( "(%p, %s)\n", ld, debugstr_w(filter) );
+
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    return LDAP_SUCCESS;
+}
+
+ULONG ldap_cleanup( HANDLE instance )
+{
+    TRACE( "(%p)\n", instance );
+    return LDAP_SUCCESS;
+}
+
+WLDAP32_LDAP *ldap_conn_from_msg( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res )
+{
+    TRACE( "(%p, %p)\n", ld, res );
+
+    if (!ld || !res) return NULL;
+    return ld; /* FIXME: not always correct */
+}
 
 void ldap_memfreeA( PCHAR block )
 {
