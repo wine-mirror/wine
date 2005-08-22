@@ -4342,6 +4342,7 @@ d3ddevice_init_at_startup(void *gl_handle)
 	return FALSE;
     }
     gl_context = glXCreateContext(display, vis, NULL, GL_TRUE);
+    XFree(vis);
 
     if (gl_context == NULL) {
 	LEAVE_GL();
