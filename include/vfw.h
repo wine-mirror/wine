@@ -187,28 +187,28 @@ DWORD VFWAPIV ICCompress(
 
 #define ICCompressGetFormat(hic, lpbiInput, lpbiOutput) 		\
 	ICSendMessage(							\
-	    hic,ICM_COMPRESS_GET_FORMAT,(DWORD)(LPVOID)(lpbiInput),	\
-	    (DWORD)(LPVOID)(lpbiOutput)					\
+	    hic,ICM_COMPRESS_GET_FORMAT,(DWORD_PTR)(LPVOID)(lpbiInput),	\
+	    (DWORD_PTR)(LPVOID)(lpbiOutput)					\
 	)
 
 #define ICCompressGetFormatSize(hic,lpbi) ICCompressGetFormat(hic,lpbi,NULL)
 
 #define ICCompressBegin(hic, lpbiInput, lpbiOutput) 			\
     ICSendMessage(							\
-    	hic, ICM_COMPRESS_BEGIN, (DWORD)(LPVOID)(lpbiInput),		\
-	(DWORD)(LPVOID)(lpbiOutput)					\
+    	hic, ICM_COMPRESS_BEGIN, (DWORD_PTR)(LPVOID)(lpbiInput),		\
+	(DWORD_PTR)(LPVOID)(lpbiOutput)					\
     )
 
 #define ICCompressGetSize(hic, lpbiInput, lpbiOutput) 			\
     ICSendMessage(							\
-    	hic, ICM_COMPRESS_GET_SIZE, (DWORD)(LPVOID)(lpbiInput), 	\
-	(DWORD)(LPVOID)(lpbiOutput)					\
+    	hic, ICM_COMPRESS_GET_SIZE, (DWORD_PTR)(LPVOID)(lpbiInput), 	\
+	(DWORD_PTR)(LPVOID)(lpbiOutput)					\
     )
 
 #define ICCompressQuery(hic, lpbiInput, lpbiOutput)		\
     ICSendMessage(						\
-    	hic, ICM_COMPRESS_QUERY, (DWORD)(LPVOID)(lpbiInput),	\
-	(DWORD)(LPVOID)(lpbiOutput)				\
+    	hic, ICM_COMPRESS_QUERY, (DWORD_PTR)(LPVOID)(lpbiInput),	\
+	(DWORD_PTR)(LPVOID)(lpbiOutput)				\
     )
 
 #define ICCompressEnd(hic) ICSendMessage(hic, ICM_COMPRESS_END, 0, 0)
@@ -295,17 +295,17 @@ typedef struct {
 #define ICMF_ABOUT_QUERY         0x00000001
 
 #define ICQueryAbout(hic) \
-	(ICSendMessage(hic,ICM_ABOUT,(DWORD)-1,ICMF_ABOUT_QUERY)==ICERR_OK)
+	(ICSendMessage(hic,ICM_ABOUT,(DWORD_PTR)-1,ICMF_ABOUT_QUERY)==ICERR_OK)
 
-#define ICAbout(hic, hwnd) ICSendMessage(hic,ICM_ABOUT,(DWORD)(UINT)(hwnd),0)
+#define ICAbout(hic, hwnd) ICSendMessage(hic,ICM_ABOUT,(DWORD_PTR)(UINT_PTR)(hwnd),0)
 
 /* ICM_CONFIGURE */
 #define ICMF_CONFIGURE_QUERY	0x00000001
 #define ICQueryConfigure(hic) \
-	(ICSendMessage(hic,ICM_CONFIGURE,(DWORD)-1,ICMF_CONFIGURE_QUERY)==ICERR_OK)
+	(ICSendMessage(hic,ICM_CONFIGURE,(DWORD_PTR)-1,ICMF_CONFIGURE_QUERY)==ICERR_OK)
 
 #define ICConfigure(hic,hwnd) \
-	ICSendMessage(hic,ICM_CONFIGURE,(DWORD)(UINT)(hwnd),0)
+	ICSendMessage(hic,ICM_CONFIGURE,(DWORD_PTR)(UINT_PTR)(hwnd),0)
 
 /* Decompression stuff */
 #define ICDECOMPRESS_HURRYUP		0x80000000	/* don't draw just buffer (hurry up!) */
@@ -346,20 +346,20 @@ DWORD VFWAPIV ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,L
 
 #define ICDecompressBegin(hic, lpbiInput, lpbiOutput) 	\
     ICSendMessage(						\
-    	hic, ICM_DECOMPRESS_BEGIN, (DWORD)(LPVOID)(lpbiInput),	\
-	(DWORD)(LPVOID)(lpbiOutput)				\
+    	hic, ICM_DECOMPRESS_BEGIN, (DWORD_PTR)(LPVOID)(lpbiInput),	\
+	(DWORD_PTR)(LPVOID)(lpbiOutput)				\
     )
 
 #define ICDecompressQuery(hic, lpbiInput, lpbiOutput) 	\
     ICSendMessage(						\
-    	hic,ICM_DECOMPRESS_QUERY, (DWORD)(LPVOID)(lpbiInput),	\
-	(DWORD) (LPVOID)(lpbiOutput)				\
+    	hic,ICM_DECOMPRESS_QUERY, (DWORD_PTR)(LPVOID)(lpbiInput),	\
+	(DWORD_PTR) (LPVOID)(lpbiOutput)				\
     )
 
 #define ICDecompressGetFormat(hic, lpbiInput, lpbiOutput)		\
     ((LONG)ICSendMessage(						\
-    	hic,ICM_DECOMPRESS_GET_FORMAT, (DWORD)(LPVOID)(lpbiInput),	\
-	(DWORD)(LPVOID)(lpbiOutput)					\
+    	hic,ICM_DECOMPRESS_GET_FORMAT, (DWORD_PTR)(LPVOID)(lpbiInput),	\
+	(DWORD_PTR)(LPVOID)(lpbiOutput)					\
     ))
 
 #define ICDecompressGetFormatSize(hic, lpbi) 				\
@@ -367,19 +367,19 @@ DWORD VFWAPIV ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,L
 
 #define ICDecompressGetPalette(hic, lpbiInput, lpbiOutput)		\
     ICSendMessage(							\
-    	hic, ICM_DECOMPRESS_GET_PALETTE, (DWORD)(LPVOID)(lpbiInput), 	\
-	(DWORD)(LPVOID)(lpbiOutput)					\
+    	hic, ICM_DECOMPRESS_GET_PALETTE, (DWORD_PTR)(LPVOID)(lpbiInput), 	\
+	(DWORD_PTR)(LPVOID)(lpbiOutput)					\
     )
 
 #define ICDecompressSetPalette(hic,lpbiPalette)	\
         ICSendMessage(				\
 		hic,ICM_DECOMPRESS_SET_PALETTE,		\
-		(DWORD)(LPVOID)(lpbiPalette),0		\
+		(DWORD_PTR)(LPVOID)(lpbiPalette),0		\
 	)
 
 #define ICDecompressEnd(hic) ICSendMessage(hic, ICM_DECOMPRESS_END, 0, 0)
 
-LRESULT	VFWAPI	ICSendMessage(HIC hic, UINT msg, DWORD dw1, DWORD dw2);
+LRESULT	VFWAPI	ICSendMessage(HIC hic, UINT msg, DWORD_PTR dw1, DWORD_PTR dw2);
 
 inline static LRESULT VFWAPI ICDecompressEx(HIC hic, DWORD dwFlags,
 					    LPBITMAPINFOHEADER lpbiSrc, LPVOID lpSrc,
@@ -402,7 +402,7 @@ inline static LRESULT VFWAPI ICDecompressEx(HIC hic, DWORD dwFlags,
     ic.yDst = yDst;
     ic.dxDst = dxDst;
     ic.dyDst = dyDst;
-    return ICSendMessage(hic, ICM_DECOMPRESSEX, (DWORD)&ic, sizeof(ic));
+    return ICSendMessage(hic, ICM_DECOMPRESSEX, (DWORD_PTR)&ic, sizeof(ic));
 }
 
 inline static LRESULT VFWAPI ICDecompressExBegin(HIC hic, DWORD dwFlags,
@@ -431,7 +431,7 @@ inline static LRESULT VFWAPI ICDecompressExBegin(HIC hic, DWORD dwFlags,
     ic.yDst = yDst;
     ic.dxDst = dxDst;
     ic.dyDst = dyDst;
-    return ICSendMessage(hic, ICM_DECOMPRESSEX_BEGIN, (DWORD)&ic, sizeof(ic));
+    return ICSendMessage(hic, ICM_DECOMPRESSEX_BEGIN, (DWORD_PTR)&ic, sizeof(ic));
 }
 inline static LRESULT VFWAPI ICDecompressExQuery(HIC hic, DWORD dwFlags,
 						 LPBITMAPINFOHEADER lpbiSrc,
@@ -459,7 +459,7 @@ inline static LRESULT VFWAPI ICDecompressExQuery(HIC hic, DWORD dwFlags,
     ic.yDst = yDst;
     ic.dxDst = dxDst;
     ic.dyDst = dyDst;
-    return ICSendMessage(hic, ICM_DECOMPRESSEX_QUERY, (DWORD)&ic, sizeof(ic));
+    return ICSendMessage(hic, ICM_DECOMPRESSEX_QUERY, (DWORD_PTR)&ic, sizeof(ic));
 }
 
 #define ICDecompressExEnd(hic) \
@@ -507,28 +507,28 @@ HIC	VFWAPI	ICGetDisplayFormat(HIC hic, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHE
 #define ICINSTALL_DRIVERW       0x8002
 
 #define ICGetState(hic, pv, cb) \
-    ICSendMessage(hic, ICM_GETSTATE, (DWORD)(LPVOID)(pv), (DWORD)(cb))
+    ICSendMessage(hic, ICM_GETSTATE, (DWORD_PTR)(LPVOID)(pv), (DWORD_PTR)(cb))
 #define ICSetState(hic, pv, cb) \
-    ICSendMessage(hic, ICM_SETSTATE, (DWORD)(LPVOID)(pv), (DWORD)(cb))
+    ICSendMessage(hic, ICM_SETSTATE, (DWORD_PTR)(LPVOID)(pv), (DWORD_PTR)(cb))
 #define ICGetStateSize(hic) \
     ICGetState(hic, NULL, 0)
 
 inline static DWORD ICGetDefaultQuality(HIC hic)
 {
    DWORD dwICValue;
-   ICSendMessage(hic, ICM_GETDEFAULTQUALITY, (DWORD)(LPVOID)&dwICValue, sizeof(DWORD));
+   ICSendMessage(hic, ICM_GETDEFAULTQUALITY, (DWORD_PTR)(LPVOID)&dwICValue, sizeof(DWORD));
    return dwICValue;
 }
 
 inline static DWORD ICGetDefaultKeyFrameRate(HIC hic)
 {
    DWORD dwICValue;
-   ICSendMessage(hic, ICM_GETDEFAULTKEYFRAMERATE, (DWORD)(LPVOID)&dwICValue, sizeof(DWORD));
+   ICSendMessage(hic, ICM_GETDEFAULTKEYFRAMERATE, (DWORD_PTR)(LPVOID)&dwICValue, sizeof(DWORD));
    return dwICValue;
 }
 
 #define ICDrawWindow(hic, prc) \
-    ICSendMessage(hic, ICM_DRAW_WINDOW, (DWORD)(LPVOID)(prc), sizeof(RECT))
+    ICSendMessage(hic, ICM_DRAW_WINDOW, (DWORD_PTR)(LPVOID)(prc), sizeof(RECT))
 
 /* As passed to ICM_DRAW_SUGGESTFORMAT */
 typedef struct {
@@ -618,17 +618,17 @@ inline static LRESULT VFWAPI ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpb
     ic.dxDst = dxDst;
     ic.dyDst = dyDst;
     ic.hicDecompressor = hicDecomp;
-    return ICSendMessage(hic, ICM_DRAW_SUGGESTFORMAT, (DWORD)&ic, sizeof(ic));
+    return ICSendMessage(hic, ICM_DRAW_SUGGESTFORMAT, (DWORD_PTR)&ic, sizeof(ic));
 }
 
 #define ICDrawQuery(hic, lpbiInput) \
-    ICSendMessage(hic, ICM_DRAW_QUERY, (DWORD)(LPVOID)(lpbiInput), 0L)
+    ICSendMessage(hic, ICM_DRAW_QUERY, (DWORD_PTR)(LPVOID)(lpbiInput), 0L)
 
 #define ICDrawChangePalette(hic, lpbiInput) \
-    ICSendMessage(hic, ICM_DRAW_CHANGEPALETTE, (DWORD)(LPVOID)(lpbiInput), 0L)
+    ICSendMessage(hic, ICM_DRAW_CHANGEPALETTE, (DWORD_PTR)(LPVOID)(lpbiInput), 0L)
 
 #define ICGetBuffersWanted(hic, lpdwBuffers) \
-    ICSendMessage(hic, ICM_GETBUFFERSWANTED, (DWORD)(LPVOID)(lpdwBuffers), 0)
+    ICSendMessage(hic, ICM_GETBUFFERSWANTED, (DWORD_PTR)(LPVOID)(lpdwBuffers), 0)
 
 #define ICDrawEnd(hic) \
     ICSendMessage(hic, ICM_DRAW_END, 0, 0)
@@ -637,7 +637,7 @@ inline static LRESULT VFWAPI ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpb
     ICSendMessage(hic, ICM_DRAW_START, 0, 0)
 
 #define ICDrawStartPlay(hic, lFrom, lTo) \
-    ICSendMessage(hic, ICM_DRAW_START_PLAY, (DWORD)(lFrom), (DWORD)(lTo))
+    ICSendMessage(hic, ICM_DRAW_START_PLAY, (DWORD_PTR)(lFrom), (DWORD_PTR)(lTo))
 
 #define ICDrawStop(hic) \
     ICSendMessage(hic, ICM_DRAW_STOP, 0, 0)
@@ -646,13 +646,13 @@ inline static LRESULT VFWAPI ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpb
     ICSendMessage(hic, ICM_DRAW_STOP_PLAY, 0, 0)
 
 #define ICDrawGetTime(hic, lplTime) \
-    ICSendMessage(hic, ICM_DRAW_GETTIME, (DWORD)(LPVOID)(lplTime), 0)
+    ICSendMessage(hic, ICM_DRAW_GETTIME, (DWORD_PTR)(LPVOID)(lplTime), 0)
 
 #define ICDrawSetTime(hic, lTime) \
-    ICSendMessage(hic, ICM_DRAW_SETTIME, (DWORD)lTime, 0)
+    ICSendMessage(hic, ICM_DRAW_SETTIME, (DWORD_PTR)lTime, 0)
 
 #define ICDrawRealize(hic, hdc, fBackground) \
-    ICSendMessage(hic, ICM_DRAW_REALIZE, (DWORD)(UINT)(HDC)(hdc), (DWORD)(BOOL)(fBackground))
+    ICSendMessage(hic, ICM_DRAW_REALIZE, (DWORD_PTR)(UINT_PTR)(HDC)(hdc), (DWORD_PTR)(BOOL)(fBackground))
 
 #define ICDrawFlush(hic) \
     ICSendMessage(hic, ICM_DRAW_FLUSH, 0, 0)
@@ -670,7 +670,7 @@ inline static LRESULT VFWAPI ICSetStatusProc(HIC hic, DWORD dwFlags, LRESULT lPa
     /* FIXME: see comment in ICSETSTATUSPROC definition */
     ic.zStatus = fpfnStatus;
 
-    return ICSendMessage(hic, ICM_SET_STATUS_PROC, (DWORD)&ic, sizeof(ic));
+    return ICSendMessage(hic, ICM_SET_STATUS_PROC, (DWORD_PTR)&ic, sizeof(ic));
 }
 
 typedef struct {

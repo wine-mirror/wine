@@ -436,7 +436,7 @@ HIC MSVIDEO_OpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode,
     /* return value is not checked */
     MSVIDEO_SendMessage(whic, DRV_ENABLE, 0L, 0L);
 
-    whic->driverId = (DWORD)MSVIDEO_SendMessage(whic, DRV_OPEN, 0, (DWORD)&icopen);
+    whic->driverId = (DWORD)MSVIDEO_SendMessage(whic, DRV_OPEN, 0, (DWORD_PTR)&icopen);
     /* FIXME: What should we put here? */
     whic->hdrv = NULL;
     
@@ -481,7 +481,7 @@ LRESULT VFWAPI ICGetInfo(HIC hic, ICINFO *picinfo, DWORD cb)
      */
     if (cb >= sizeof(ICINFO)) picinfo->szDriver[0] = '\0';
 
-    ret = ICSendMessage(hic, ICM_GETINFO, (DWORD)picinfo, cb);
+    ret = ICSendMessage(hic, ICM_GETINFO, (DWORD_PTR)picinfo, cb);
 
     /* (WS) When szDriver was not supplied by the driver itself, apparently 
      * Windows will set its value equal to the driver file name. This can
@@ -517,7 +517,7 @@ static HIC try_driver(driver_info_t *info)
 
     if ((hic = ICOpen(info->fccType, info->fccHandler, info->wMode))) 
     {
-	if (!ICSendMessage(hic, info->querymsg, (DWORD)info->lpbiIn, (DWORD)info->lpbiOut))
+	if (!ICSendMessage(hic, info->querymsg, (DWORD_PTR)info->lpbiIn, (DWORD_PTR)info->lpbiOut))
 	    return hic;
 	ICClose(hic);
     }
@@ -671,7 +671,7 @@ ICCompress(
 	iccmp.dwQuality		= dwQuality;
 	iccmp.lpbiPrev		= lpbiPrev;
 	iccmp.lpPrev		= lpPrev;
-	return ICSendMessage(hic,ICM_COMPRESS,(DWORD)&iccmp,sizeof(iccmp));
+	return ICSendMessage(hic,ICM_COMPRESS,(DWORD_PTR)&iccmp,sizeof(iccmp));
 }
 
 /***********************************************************************
@@ -694,7 +694,7 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	icd.lpbiOutput	= lpbi;
 	icd.lpOutput	= lpBits;
 	icd.ckid	= 0;
-	ret = ICSendMessage(hic,ICM_DECOMPRESS,(DWORD)&icd,sizeof(ICDECOMPRESS));
+	ret = ICSendMessage(hic,ICM_DECOMPRESS,(DWORD_PTR)&icd,sizeof(ICDECOMPRESS));
 
 	TRACE("lpBits[0] == %lx\n",((LPDWORD)lpBits)[0]);
 
@@ -773,7 +773,7 @@ void VFWAPI ICCompressorFree(PCOMPVARS pc)
  *
  *
  */
-LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD lParam1, DWORD lParam2)
+LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD_PTR lParam1, DWORD_PTR lParam2)
 {
     LRESULT     ret;
     
@@ -857,7 +857,7 @@ LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD lParam1, DWORD lPara
 /***********************************************************************
  *		ICSendMessage			[MSVFW32.@]
  */
-LRESULT VFWAPI ICSendMessage(HIC hic, UINT msg, DWORD lParam1, DWORD lParam2) 
+LRESULT VFWAPI ICSendMessage(HIC hic, UINT msg, DWORD_PTR lParam1, DWORD_PTR lParam2) 
 {
     WINE_HIC*   whic = MSVIDEO_GetHicPtr(hic);
 
@@ -908,7 +908,7 @@ DWORD VFWAPIV ICDrawBegin(
 	icdb.dySrc = dySrc;
 	icdb.dwRate = dwRate;
 	icdb.dwScale = dwScale;
-	return ICSendMessage(hic,ICM_DRAW_BEGIN,(DWORD)&icdb,sizeof(icdb));
+	return ICSendMessage(hic,ICM_DRAW_BEGIN,(DWORD_PTR)&icdb,sizeof(icdb));
 }
 
 /***********************************************************************
@@ -925,7 +925,7 @@ DWORD VFWAPIV ICDraw(HIC hic, DWORD dwFlags, LPVOID lpFormat, LPVOID lpData, DWO
 	icd.cbData = cbData;
 	icd.lTime = lTime;
 
-	return ICSendMessage(hic,ICM_DRAW,(DWORD)&icd,sizeof(icd));
+	return ICSendMessage(hic,ICM_DRAW,(DWORD_PTR)&icd,sizeof(icd));
 }
 
 /***********************************************************************
@@ -1241,7 +1241,7 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
 	     pc->cbSize, pc->dwFlags, pc->hic, pc->fccType, pc->fccHandler,
 	     pc->lpbiIn, pc->lpbiOut, pc->lKey, pc->lDataRate, pc->lQ);
 
-    ret = ICSendMessage(pc->hic, ICM_COMPRESS_BEGIN, (DWORD)pc->lpbiIn, (DWORD)pc->lpbiOut);
+    ret = ICSendMessage(pc->hic, ICM_COMPRESS_BEGIN, (DWORD_PTR)pc->lpbiIn, (DWORD_PTR)pc->lpbiOut);
     TRACE(" -- %lx\n", ret);
     if (ret == ICERR_OK)
     {

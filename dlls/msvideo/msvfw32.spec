@@ -40,7 +40,7 @@
 @ stdcall ICOpen(long long long)
 @ stdcall ICOpenFunction(long long long ptr)
 @ stdcall ICRemove(long long long)
-@ stdcall ICSendMessage(long long long long)
+@ stdcall ICSendMessage(long long ptr ptr)
 @ stdcall ICSeqCompressFrame(ptr long ptr ptr ptr)
 @ stdcall ICSeqCompressFrameEnd(ptr)
 @ stdcall ICSeqCompressFrameStart(ptr ptr)
