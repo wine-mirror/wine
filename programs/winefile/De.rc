@@ -22,8 +22,6 @@
  */
 
 LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
-#pragma code_page(1252)
-
 
 /* Menu */
 

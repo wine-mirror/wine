@@ -23,8 +23,6 @@
  */
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
-#pragma code_page(1250)
-
 
 /* Menu */
 
