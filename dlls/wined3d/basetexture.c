@@ -283,7 +283,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
             glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
             checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
         } else {
-           glTexParameteri(textureDimensions, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(textureDimensions, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         }
         glBindTexture(textureDimensions, This->baseTexture.textureName);
         checkGLcall("glBindTexture");
@@ -294,11 +294,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
             TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
             glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
             checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
-        } else {
-            TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
-            glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
-            checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
-	}
+        }
 		
     } else { /* this only happened if we've run out of openGL textures */
         WARN("This texture doesn't have an openGL texture assigned to it\n");

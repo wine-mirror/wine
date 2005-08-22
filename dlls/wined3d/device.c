@@ -3382,6 +3382,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD S
     }
     TRACE("Setting sampler %ld %d to %ld \n", Sampler, Type, Value);
     This->updateStateBlock->samplerState[Sampler][Type]         = Value;
+    This->updateStateBlock->set.samplerState[Sampler][Type]     = Value;
+    This->updateStateBlock->changed.samplerState[Sampler][Type] = Value;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -3703,131 +3705,20 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
     switch (Type) {
     case WINED3DTSS_ALPHAOP               :
     case WINED3DTSS_COLOROP               :
-        {
-
-            if ((Value == D3DTOP_DISABLE) && (Type == WINED3DTSS_COLOROP)) {
-                /* TODO: Disable by making this and all later levels disabled */
-                glDisable(GL_TEXTURE_1D);
-                checkGLcall("Disable GL_TEXTURE_1D");
-                glDisable(GL_TEXTURE_2D);
-                checkGLcall("Disable GL_TEXTURE_2D");
-                glDisable(GL_TEXTURE_3D);
-                checkGLcall("Disable GL_TEXTURE_3D");
-                break; /* Don't bother setting the texture operations */
-            } else {
-                /* Enable only the appropriate texture dimension */
-                if (Type == WINED3DTSS_COLOROP) {
-                    if (This->stateBlock->textureDimensions[Stage] == GL_TEXTURE_1D) {
-                        glEnable(GL_TEXTURE_1D);
-                        checkGLcall("Enable GL_TEXTURE_1D");
-                    } else {
-                        glDisable(GL_TEXTURE_1D);
-                        checkGLcall("Disable GL_TEXTURE_1D");
-                    }
-                    if (This->stateBlock->textureDimensions[Stage] == GL_TEXTURE_2D) {
-                      if (GL_SUPPORT(NV_TEXTURE_SHADER) && This->texture_shader_active) {
-                        glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_2D);
-                        checkGLcall("Enable GL_TEXTURE_2D");
-                      } else {
-                        glEnable(GL_TEXTURE_2D);
-                        checkGLcall("Enable GL_TEXTURE_2D");
-                      }
-                    } else {
-                        glDisable(GL_TEXTURE_2D);
-                        checkGLcall("Disable GL_TEXTURE_2D");
-                    }
-                    if (This->stateBlock->textureDimensions[Stage] == GL_TEXTURE_3D) {
-                        glEnable(GL_TEXTURE_3D);
-                        checkGLcall("Enable GL_TEXTURE_3D");
-                    } else {
-                        glDisable(GL_TEXTURE_3D);
-                        checkGLcall("Disable GL_TEXTURE_3D");
-                    }
-                    if (This->stateBlock->textureDimensions[Stage] == GL_TEXTURE_CUBE_MAP_ARB) {
-                        glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-                        checkGLcall("Enable GL_TEXTURE_CUBE_MAP");
-                    } else {
-                        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                        checkGLcall("Disable GL_TEXTURE_CUBE_MAP");
-                    }
-                }
-            }
-            /* Drop through... (Except disable case) */
-        case WINED3DTSS_COLORARG0             :
-        case WINED3DTSS_COLORARG1             :
-        case WINED3DTSS_COLORARG2             :
-        case WINED3DTSS_ALPHAARG0             :
-        case WINED3DTSS_ALPHAARG1             :
-        case WINED3DTSS_ALPHAARG2             :
-            {
-                BOOL isAlphaArg = (Type == WINED3DTSS_ALPHAOP || Type == WINED3DTSS_ALPHAARG1 ||
-                                   Type == WINED3DTSS_ALPHAARG2 || Type == WINED3DTSS_ALPHAARG0);
-                if (isAlphaArg) {
-                    set_tex_op(iface, TRUE, Stage, This->stateBlock->textureState[Stage][WINED3DTSS_ALPHAOP],
-                               This->stateBlock->textureState[Stage][WINED3DTSS_ALPHAARG1],
-                               This->stateBlock->textureState[Stage][WINED3DTSS_ALPHAARG2],
-                               This->stateBlock->textureState[Stage][WINED3DTSS_ALPHAARG0]);
-                } else {
-                    set_tex_op(iface, FALSE, Stage, This->stateBlock->textureState[Stage][WINED3DTSS_COLOROP],
-                               This->stateBlock->textureState[Stage][WINED3DTSS_COLORARG1],
-                               This->stateBlock->textureState[Stage][WINED3DTSS_COLORARG2],
-                               This->stateBlock->textureState[Stage][WINED3DTSS_COLORARG0]);
-                }
-            }
-            break;
-        }
-
-    case WINED3DTSS_ADDRESSW              :
-        {
-            GLint wrapParm = GL_REPEAT;
-
-            switch (Value) {
-            case D3DTADDRESS_WRAP:   wrapParm = GL_REPEAT; break;
-            case D3DTADDRESS_CLAMP:  wrapParm = GL_CLAMP_TO_EDGE; break;
-            case D3DTADDRESS_BORDER:
-              {
-                if (GL_SUPPORT(ARB_TEXTURE_BORDER_CLAMP)) {
-                  wrapParm = GL_CLAMP_TO_BORDER_ARB;
-                } else {
-                  /* FIXME: Not right, but better */
-                  FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
-                  wrapParm = GL_REPEAT;
-                }
-              }
-              break;
-            case D3DTADDRESS_MIRROR:
-              {
-                if (GL_SUPPORT(ARB_TEXTURE_MIRRORED_REPEAT)) {
-                  wrapParm = GL_MIRRORED_REPEAT_ARB;
-                } else {
-                  /* Unsupported in OpenGL pre-1.4 */
-                  FIXME("Unsupported D3DTADDRESS_MIRROR (needs GL_ARB_texture_mirrored_repeat) state %d\n", Type);
-                  wrapParm = GL_REPEAT;
-                }
-              }
-              break;
-            case D3DTADDRESS_MIRRORONCE:
-              {
-                if (GL_SUPPORT(ATI_TEXTURE_MIRROR_ONCE)) {
-                  wrapParm = GL_MIRROR_CLAMP_TO_EDGE_ATI;
-                } else {
-                  FIXME("Unsupported D3DTADDRESS_MIRRORONCE (needs GL_ATI_texture_mirror_once) state %d\n", Type);
-                  wrapParm = GL_REPEAT;
-                }
-              }
-              break;
-
-            default:
-                FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
-                wrapParm = GL_REPEAT;
-            }
-
-            TRACE("Setting WRAP_R to %d for %x\n", wrapParm, This->stateBlock->textureDimensions[Stage]);
-            glTexParameteri(This->stateBlock->textureDimensions[Stage], GL_TEXTURE_WRAP_R, wrapParm);
-            checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_R, wrapParm)");
-        }
+        /* nothing to do as moved to drawprim for now */
         break;
+    case WINED3DTSS_ADDRESSW              :
+#if 0 /* I'm not sure what D3D does about ADDRESSW appearing twice */
+            if (Value < minLookup[WINELOOKUP_WARPPARAM] || Value > maxLookup[WINELOOKUP_WARPPARAM]) {
+                FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
 
+            } else {
+                GLint wrapParm = stateLookup[WINELOOKUP_WARPPARAM][Value - minLookup[WINELOOKUP_WARPPARAM]];
+                TRACE("Setting WRAP_R to %d for %x\n", wrapParm, This->stateBlock->textureDimensions[Stage]);
+                glTexParameteri(This->stateBlock->textureDimensions[Stage], GL_TEXTURE_WRAP_R, wrapParm);
+                checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_R, wrapParm)");
+            }
+#endif
     case WINED3DTSS_TEXCOORDINDEX         :
         {
             /* Values 0-7 are indexes into the FVF tex coords - See comments in DrawPrimitive */
@@ -4025,6 +3916,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DW
         return D3DERR_INVALIDCALL;
     }
 
+    This->updateStateBlock->changed.textureState[Stage][Type] = TRUE;
+    This->updateStateBlock->set.textureState[Stage][Type]     = TRUE;
     This->updateStateBlock->textureState[Stage][Type]         = Value;
 
     return D3D_OK;

@@ -286,12 +286,14 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
         for (j = 0; j < GL_LIMITS(textures); j++) {
             /* TODO: move over to using memcpy */
             for (i = 1; i <= WINED3D_HIGHEST_TEXTURE_STATE ; i++) {
-                TRACE("Updating texturestagestate %d,%d to %ld (was %ld)\n", j,i, targetStateBlock->textureState[j][i],
-                This->textureState[j][i]);
-                This->textureState[j][i] =  targetStateBlock->textureState[j][i];
+                if (This->set.textureState[j][i]) {
+                    TRACE("Updating texturestagestate %d,%d to %ld (was %ld)\n", j,i, targetStateBlock->textureState[j][i],
+                    This->textureState[j][i]);
+                    This->textureState[j][i]         =  targetStateBlock->textureState[j][i];
+                }
             }
 
-            if ((This->set.textures[j] && (This->textures[j] != targetStateBlock->textures[j]))) {
+            if (This->set.textures[j]) {
                 TRACE("Updating texture %d to %p (was %p)\n", j, targetStateBlock->textures[j],  This->textures[j]);
                 This->textures[j] = targetStateBlock->textures[j];
             }
@@ -302,10 +304,12 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
         /* TODO: move over to using memcpy */
         for (j = 0 ; j < GL_LIMITS(samplers); j++){
             for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE ; i++){ /* States are 1 based */
-                TRACE("Updating sampler state %d,%d to %ld (was %ld)\n",
-                j, i, targetStateBlock->samplerState[j][i],
-                This->samplerState[j][i]);
-                This->samplerState[j][i] = targetStateBlock->samplerState[j][i];
+                if (This->set.samplerState[j][i]) {
+                    TRACE("Updating sampler state %d,%d to %ld (was %ld)\n",
+                    j, i, targetStateBlock->samplerState[j][i],
+                    This->samplerState[j][i]);
+                    This->samplerState[j][i]         = targetStateBlock->samplerState[j][i];
+                }
             }
         }
     }
@@ -330,7 +334,7 @@ should really perform a delta so that only the changes get updated*/
 
     /* FIXME: Only apply applicable states not all states */
 
-    if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */This->blockType == WINED3DSBT_INIT || This->blockType == D3DSBT_ALL || This->blockType == D3DSBT_VERTEXSTATE) {
+    if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */This->blockType == WINED3DSBT_INIT || This->blockType == WINED3DSBT_ALL || This->blockType == WINED3DSBT_VERTEXSTATE) {
 
 
         PLIGHTINFOEL *toDo = This->lights;
@@ -373,7 +377,7 @@ should really perform a delta so that only the changes get updated*/
     IWineD3DDevice_SetSoftwareVertexProcessing(pDevice, This->softwareVertexProcessing);
 
     /* Others + Render & Texture */
-    if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */ This->blockType == D3DSBT_ALL) {
+    if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */ This->blockType == WINED3DSBT_ALL || This->blockType == WINED3DSBT_INIT) {
         for (i = 1; i <= HIGHEST_TRANSFORMSTATE; i++) {
             if (This->set.transform[i] && This->changed.transform[i])
                 IWineD3DDevice_SetTransform(pDevice, i, &This->transforms[i]);
@@ -423,7 +427,11 @@ should really perform a delta so that only the changes get updated*/
             }
             /* TODO: move over to memcpy */
             for (i = 1; i <= WINED3D_HIGHEST_TEXTURE_STATE; i++) {
-                ((IWineD3DDeviceImpl *)pDevice)->stateBlock->textureState[j][i] = This->textureState[j][i];
+                if (This->set.textureState[j][i] && This->changed.textureState[j][i]) { /* tb_dx9_10 failes without this test */
+                    ((IWineD3DDeviceImpl *)pDevice)->stateBlock->textureState[j][i]         = This->textureState[j][i];
+                    ((IWineD3DDeviceImpl *)pDevice)->stateBlock->set.textureState[j][i]     = TRUE;
+                    ((IWineD3DDeviceImpl *)pDevice)->stateBlock->changed.textureState[j][i] = TRUE;
+                }
             }
         }
 
@@ -431,12 +439,16 @@ should really perform a delta so that only the changes get updated*/
         /* TODO: move over to memcpy */
         for (j = 0 ; j < GL_LIMITS(samplers); j++){
             for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE; i++){
-                ((IWineD3DDeviceImpl *)pDevice)->stateBlock->samplerState[j][i] = This->samplerState[j][i];
+                if (This->set.samplerState[j][i] && This->changed.samplerState[j][i]) {
+                    ((IWineD3DDeviceImpl *)pDevice)->stateBlock->samplerState[j][i]         = This->samplerState[j][i];
+                    ((IWineD3DDeviceImpl *)pDevice)->stateBlock->set.samplerState[j][i]     = TRUE;
+                    ((IWineD3DDeviceImpl *)pDevice)->stateBlock->changed.samplerState[j][i] = TRUE;
+                }
             }
 
         }
 
-    } else if (This->blockType == D3DSBT_PIXELSTATE) {
+    } else if (This->blockType == WINED3DSBT_PIXELSTATE) {
 
         for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
             if (This->set.renderState[SavedPixelStates_R[i]] && This->changed.renderState[SavedPixelStates_R[i]])
@@ -456,7 +468,7 @@ should really perform a delta so that only the changes get updated*/
             }
         }
 
-    } else if (This->blockType == D3DSBT_VERTEXSTATE) {
+    } else if (This->blockType == WINED3DSBT_VERTEXSTATE) {
 
         for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
             if ( This->set.renderState[SavedVertexStates_R[i]] && This->changed.renderState[SavedVertexStates_R[i]])
