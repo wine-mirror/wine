@@ -220,6 +220,7 @@ static void test_BindToObject(void)
     SHITEMID emptyitem = { 0, { 0 } };
     LPITEMIDLIST pidlMyComputer, pidlSystemDir, pidlEmpty = (LPITEMIDLIST)&emptyitem;
     WCHAR wszSystemDir[MAX_PATH];
+    char szSystemDir[MAX_PATH];
     WCHAR wszMyComputer[] = { 
         ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-',
         'A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0 };
@@ -256,12 +257,13 @@ static void test_BindToObject(void)
     hr = IShellFolder_BindToObject(psfMyComputer, NULL, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, "MyComputers's BindToObject should fail, when called with NULL pidl! hr = %08lx\n", hr);
 
-    cChars = GetSystemDirectoryW(wszSystemDir, MAX_PATH);
-    ok (cChars > 0 && cChars < MAX_PATH, "GetSystemDirectoryW failed! LastError: %08lx\n", GetLastError());
+    cChars = GetSystemDirectoryA(szSystemDir, MAX_PATH);
+    ok (cChars > 0 && cChars < MAX_PATH, "GetSystemDirectoryA failed! LastError: %08lx\n", GetLastError());
     if (cChars == 0 || cChars >= MAX_PATH) {
         IShellFolder_Release(psfMyComputer);
         return;
     }
+    MultiByteToWideChar(CP_ACP, 0, szSystemDir, -1, wszSystemDir, MAX_PATH);
     
     hr = IShellFolder_ParseDisplayName(psfMyComputer, NULL, NULL, wszSystemDir, NULL, &pidlSystemDir, NULL);
     ok (SUCCEEDED(hr), "MyComputers's ParseDisplayName failed to parse the SystemDirectory! hr = %08lx\n", hr);
@@ -293,6 +295,7 @@ static void test_GetDisplayName(void)
     HRESULT hr;
     HANDLE hTestFile;
     WCHAR wszTestFile[MAX_PATH], wszTestFile2[MAX_PATH], wszTestDir[MAX_PATH];
+    char szTestFile[MAX_PATH], szTestDir[MAX_PATH];
     STRRET strret;
     LPSHELLFOLDER psfDesktop, psfPersonal;
     IUnknown *psfFile;
@@ -318,16 +321,18 @@ static void test_GetDisplayName(void)
 
     PathAddBackslashW(wszTestDir);
     lstrcatW(wszTestDir, wszDirName);
-    result = CreateDirectoryW(wszTestDir, NULL);
-    ok(result, "CreateDirectoryW failed! Last error: %08lx\n", GetLastError());
+    WideCharToMultiByte(CP_ACP, 0, wszTestDir, -1, szTestDir, MAX_PATH, 0, 0);
+    result = CreateDirectoryA(szTestDir, NULL);
+    ok(result, "CreateDirectoryA failed! Last error: %08lx\n", GetLastError());
     if (!result) return;
 
     lstrcpyW(wszTestFile, wszTestDir);
     PathAddBackslashW(wszTestFile);
     lstrcatW(wszTestFile, wszFileName);
+    WideCharToMultiByte(CP_ACP, 0, wszTestFile, -1, szTestFile, MAX_PATH, 0, 0);
 
-    hTestFile = CreateFileW(wszTestFile, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
-    ok(hTestFile != INVALID_HANDLE_VALUE, "CreateFileW failed! Last error: %08lx\n", GetLastError());
+    hTestFile = CreateFileA(szTestFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok((hTestFile != INVALID_HANDLE_VALUE), "CreateFileA failed! Last error: %08lx\n", GetLastError());
     if (hTestFile == INVALID_HANDLE_VALUE) return;
     CloseHandle(hTestFile);
 
@@ -352,8 +357,8 @@ static void test_GetDisplayName(void)
     }
     
     /* Deleting the file and the directory */
-    DeleteFileW(wszTestFile);
-    RemoveDirectoryW(wszTestDir);
+    DeleteFileA(szTestFile);
+    RemoveDirectoryA(szTestDir);
 
     /* SHGetPathFromIDListW still works, although the file is not present anymore. */
     result = SHGetPathFromIDListW(pidlTestFile, wszTestFile2);
