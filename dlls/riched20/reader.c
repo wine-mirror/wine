@@ -1021,6 +1021,14 @@ static void ReadFontTbl(RTF_Info *info)
  * Could check other pieces of structure here, too, I suppose.
  */
 	RTFRouteToken (info);	/* feed "}" back to router */
+
+        /* Set default font */
+	info->rtfClass = rtfControl;
+	info->rtfMajor = rtfCharAttr;
+	info->rtfMinor = rtfFontNum;
+	info->rtfParam = info->defFont;
+	lstrcpyA(info->rtfTextBuf, "f");
+        RTFUngetToken(info);
 }
 
 
