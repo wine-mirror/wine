@@ -1177,7 +1177,7 @@ void X11DRV_SetFocus( HWND hwnd )
     hwnd = GetAncestor( hwnd, GA_ROOT );
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->managed || !data->whole_window) return;
+    if (data->managed || !data->whole_window) return;
 
     /* Set X focus and install colormap */
     wine_tsx11_lock();
