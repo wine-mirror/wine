@@ -179,20 +179,16 @@ MSICOMPONENT* get_loaded_component( MSIPACKAGE* package, LPCWSTR Component )
     return NULL;
 }
 
-int get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature )
+MSIFEATURE* get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature )
 {
-    int rc = -1;
-    DWORD i;
+    MSIFEATURE *feature = NULL;
 
-    for (i = 0; i < package->loaded_features; i++)
+    LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if (strcmpW(Feature,package->features[i].Feature)==0)
-        {
-            rc = i;
-            break;
-        }
+        if (lstrcmpW( Feature, feature->Feature )==0)
+            return feature;
     }
-    return rc;
+    return NULL;
 }
 
 int get_loaded_file(MSIPACKAGE* package, LPCWSTR file)
@@ -449,6 +445,20 @@ static void remove_tracked_tempfiles(MSIPACKAGE* package)
     }
 }
 
+static void free_feature( MSIFEATURE *feature )
+{
+    struct list *item, *cursor;
+
+    LIST_FOR_EACH_SAFE( item, cursor, &feature->Components )
+    {
+        ComponentList *cl = LIST_ENTRY( item, ComponentList, entry );
+        list_remove( &cl->entry );
+        HeapFree( GetProcessHeap(), 0, cl );
+    }
+    HeapFree( GetProcessHeap(), 0, feature );
+}
+
+
 /* Called when the package is being closed */
 void ACTION_free_package_structures( MSIPACKAGE* package)
 {
@@ -459,16 +469,11 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
 
     remove_tracked_tempfiles(package);
 
-    if (package->features)
+    LIST_FOR_EACH_SAFE( item, cursor, &package->features )
     {
-        LIST_FOR_EACH_SAFE( item, cursor, package->features->Components )
-        {
-            ComponentList *cl = LIST_ENTRY( item, ComponentList, entry );
-            list_remove( &cl->entry );
-            HeapFree(GetProcessHeap(), 0, cl);
-        }
-        HeapFree(GetProcessHeap(),0,package->features->Components);
-        HeapFree(GetProcessHeap(),0,package->features);
+        MSIFEATURE *feature = LIST_ENTRY( item, MSIFEATURE, entry );
+        list_remove( &feature->entry );
+        free_feature( feature );
     }
 
     for (i = 0; i < package->loaded_folders; i++)
@@ -773,13 +778,12 @@ BOOL ACTION_VerifyComponentForAction(MSIPACKAGE* package, MSICOMPONENT* comp,
         return FALSE;
 }
 
-BOOL ACTION_VerifyFeatureForAction(MSIPACKAGE* package, INT index, 
-                                            INSTALLSTATE check )
+BOOL ACTION_VerifyFeatureForAction( MSIFEATURE* feature, INSTALLSTATE check )
 {
-    if (package->features[index].Installed == check)
+    if (feature->Installed == check)
         return FALSE;
 
-    if (package->features[index].ActionRequest == check)
+    if (feature->ActionRequest == check)
         return TRUE;
     else
         return FALSE;
@@ -852,19 +856,17 @@ LPWSTR create_component_advertise_string(MSIPACKAGE* package,
 /* update compoennt state based on a feature change */
 void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
 {
-    int i;
     INSTALLSTATE newstate;
     MSIFEATURE *feature;
     ComponentList *cl;
 
-    i = get_loaded_feature(package,szFeature);
-    if (i < 0)
+    feature = get_loaded_feature(package,szFeature);
+    if (!feature)
         return;
 
-    feature = &package->features[i];
     newstate = feature->ActionRequest;
 
-    LIST_FOR_EACH_ENTRY( cl, feature->Components, ComponentList, entry )
+    LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
     {
         MSICOMPONENT* component = cl->component;
     
@@ -883,27 +885,25 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
             }
             else 
             {
-                int j;
                 ComponentList *clist;
+                MSIFEATURE *f;
 
                 component->ActionRequest = newstate;
                 component->Action = newstate;
 
                 /*if any other feature wants is local we need to set it local*/
-                for (j = 0; 
-                     j < package->loaded_features &&
-                     component->ActionRequest != INSTALLSTATE_LOCAL; 
-                     j++)
+                LIST_FOR_EACH_ENTRY( f, &package->features, MSIFEATURE, entry )
                 {
-                    LIST_FOR_EACH_ENTRY( clist, package->features[j].Components,
-                                         ComponentList, entry )
+                    if ( component->ActionRequest != INSTALLSTATE_LOCAL )
+                        break;
+
+                    LIST_FOR_EACH_ENTRY( clist, &f->Components, ComponentList, entry )
                     {
-                        if ( clist->component == cl->component )
+                        if ( clist->component == component )
                         {
-                            if (package->features[j].ActionRequest == 
-                                INSTALLSTATE_LOCAL)
+                            if (f->ActionRequest == INSTALLSTATE_LOCAL)
                             {
-                                TRACE("Saved by %s\n", debugstr_w(package->features[j].Feature));
+                                TRACE("Saved by %s\n", debugstr_w(f->Feature));
                                 component->ActionRequest = INSTALLSTATE_LOCAL;
                                 component->Action = INSTALLSTATE_LOCAL;
                             }

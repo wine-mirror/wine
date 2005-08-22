@@ -416,30 +416,29 @@ UINT WINAPI MsiSetFeatureStateA(MSIHANDLE hInstall, LPCSTR szFeature,
 UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE* package, LPCWSTR szFeature,
                                 INSTALLSTATE iState)
 {
-    INT index, i;
     UINT rc = ERROR_SUCCESS;
+    MSIFEATURE *feature, *child;
 
     TRACE(" %s to %i\n",debugstr_w(szFeature), iState);
 
-    index = get_loaded_feature(package,szFeature);
-    if (index < 0)
+    feature = get_loaded_feature(package,szFeature);
+    if (!feature)
         return ERROR_UNKNOWN_FEATURE;
 
     if (iState == INSTALLSTATE_ADVERTISED && 
-        package->features[index].Attributes & 
-            msidbFeatureAttributesDisallowAdvertise)
+        feature->Attributes & msidbFeatureAttributesDisallowAdvertise)
         return ERROR_FUNCTION_FAILED;
 
-    package->features[index].ActionRequest= iState;
-    package->features[index].Action= iState;
+    feature->ActionRequest = iState;
+    feature->Action = iState;
 
     ACTION_UpdateComponentStates(package,szFeature);
 
     /* update all the features that are children of this feature */
-    for (i = 0; i < package->loaded_features; i++)
+    LIST_FOR_EACH_ENTRY( child, &package->features, MSIFEATURE, entry )
     {
-        if (strcmpW(szFeature, package->features[i].Feature_Parent) == 0)
-            MSI_SetFeatureStateW(package, package->features[i].Feature, iState);
+        if (lstrcmpW(szFeature, child->Feature_Parent) == 0)
+            MSI_SetFeatureStateW(package, child->Feature, iState);
     }
     
     return rc;
@@ -487,19 +486,19 @@ UINT WINAPI MsiGetFeatureStateA(MSIHANDLE hInstall, LPSTR szFeature,
 UINT MSI_GetFeatureStateW(MSIPACKAGE *package, LPWSTR szFeature,
                   INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
 {
-    INT index;
+    MSIFEATURE *feature;
 
-    index = get_loaded_feature(package,szFeature);
-    if (index < 0)
+    feature = get_loaded_feature(package,szFeature);
+    if (!feature)
         return ERROR_UNKNOWN_FEATURE;
 
     if (piInstalled)
-        *piInstalled = package->features[index].Installed;
+        *piInstalled = feature->Installed;
 
     if (piAction)
-        *piAction = package->features[index].Action;
+        *piAction = feature->Action;
 
-    TRACE("returning %i %i\n",*piInstalled,*piAction);
+    TRACE("returning %i %i\n", feature->Installed, feature->Action);
 
     return ERROR_SUCCESS;
 }
@@ -547,8 +546,8 @@ UINT MSI_GetComponentStateW(MSIPACKAGE *package, LPWSTR szComponent,
 {
     MSICOMPONENT *comp;
 
-    TRACE("%p %s %p %p\n", package, debugstr_w(szComponent), piInstalled,
-piAction);
+    TRACE("%p %s %p %p\n", package, debugstr_w(szComponent),
+           piInstalled, piAction);
 
     comp = get_loaded_component(package,szComponent);
     if (!comp)
@@ -560,8 +559,7 @@ piAction);
     if (piAction)
         *piAction = comp->Action;
 
-    TRACE("states (%i, %i)\n",
-(piInstalled)?*piInstalled:-1,(piAction)?*piAction:-1);
+    TRACE("states (%i, %i)\n", comp->Installed, comp->Action );
 
     return ERROR_SUCCESS;
 }

@@ -329,7 +329,7 @@ static INT load_class(MSIPACKAGE* package, MSIRECORD *row)
     deformat_string(package,buffer,&package->classes[index].Argument);
 
     buffer = MSI_RecordGetString(row,12);
-    package->classes[index].FeatureIndex = get_loaded_feature(package,buffer);
+    package->classes[index].Feature = get_loaded_feature(package,buffer);
 
     package->classes[index].Attributes = MSI_RecordGetInteger(row,13);
     
@@ -475,8 +475,7 @@ static INT load_extension(MSIPACKAGE* package, MSIRECORD *row)
     package->extensions[index].MIMEIndex = load_given_mime(package,buffer);
 
     buffer = MSI_RecordGetString(row,5);
-    package->extensions[index].FeatureIndex = 
-            get_loaded_feature(package,buffer);
+    package->extensions[index].Feature = get_loaded_feature(package,buffer);
 
     return index;
 }
@@ -919,28 +918,28 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     for (i = 0; i < package->loaded_classes; i++)
     {
         MSICOMPONENT *comp;
-        INT index, f_index;
+        INT index;
         DWORD size, sz;
         LPWSTR argument;
+        MSIFEATURE *feature;
 
         comp = package->classes[i].Component;
         if ( !comp )
             continue;
 
-        f_index = package->classes[i].FeatureIndex;
+        feature = package->classes[i].Feature;
 
         /* 
          * yes. MSDN says that these are based on _Feature_ not on
          * Component.  So verify the feature is to be installed
          */
-        if ((!ACTION_VerifyFeatureForAction(package, f_index,
-                                INSTALLSTATE_LOCAL)) &&
-             !(install_on_demand && ACTION_VerifyFeatureForAction(package,
-                             f_index, INSTALLSTATE_ADVERTISED)))
+        if ((!ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_LOCAL )) &&
+             !(install_on_demand &&
+               ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_ADVERTISED )))
         {
             TRACE("Skipping class %s reg due to disabled feature %s\n", 
                             debugstr_w(package->classes[i].CLSID), 
-                            debugstr_w(package->features[f_index].Feature));
+                            debugstr_w(feature->Feature));
 
             continue;
         }
@@ -1347,12 +1346,12 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
      HeapFree(GetProcessHeap(),0,command);
 
      advertise = create_component_advertise_string(package, component, 
-                        package->features[extension->FeatureIndex].Feature);
+                                                   extension->Feature->Feature);
 
      size = strlenW(advertise);
 
      if (verb->Argument)
-        size += strlenW(verb->Argument);
+         size += strlenW(verb->Argument);
      size += 4;
 
      command = HeapAlloc(GetProcessHeap(),0, size * sizeof (WCHAR));
@@ -1361,7 +1360,7 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
      strcpyW(command,advertise);
      if (verb->Argument)
      {
-        static const WCHAR szSpace[] = {' ',0};
+         static const WCHAR szSpace[] = {' ',0};
          strcatW(command,szSpace);
          strcatW(command,verb->Argument);
      }
@@ -1422,25 +1421,24 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
     for (i = 0; i < package->loaded_extensions; i++)
     {
         WCHAR extension[257];
-        INT f_index;
+        MSIFEATURE *feature;
      
         if (!package->extensions[i].Component)
             continue;
 
-        f_index = package->extensions[i].FeatureIndex;
+        feature = package->extensions[i].Feature;
 
         /* 
          * yes. MSDN says that these are based on _Feature_ not on
          * Component.  So verify the feature is to be installed
          */
-        if ((!ACTION_VerifyFeatureForAction(package, f_index,
-                                INSTALLSTATE_LOCAL)) &&
-             !(install_on_demand && ACTION_VerifyFeatureForAction(package,
-                             f_index, INSTALLSTATE_ADVERTISED)))
+        if ((!ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_LOCAL )) &&
+             !(install_on_demand &&
+               ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_ADVERTISED )))
         {
             TRACE("Skipping extension  %s reg due to disabled feature %s\n",
                             debugstr_w(package->extensions[i].Extension),
-                            debugstr_w(package->features[f_index].Feature));
+                            debugstr_w(feature->Feature));
 
             continue;
         }

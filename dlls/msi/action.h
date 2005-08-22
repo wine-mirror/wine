@@ -24,6 +24,7 @@
 
 typedef struct tagMSIFEATURE
 {
+    struct list entry;
     WCHAR Feature[IDENTIFIER_SIZE];
     WCHAR Feature_Parent[IDENTIFIER_SIZE];
     WCHAR Title[0x100];
@@ -37,7 +38,7 @@ typedef struct tagMSIFEATURE
     INSTALLSTATE ActionRequest;
     INSTALLSTATE Action;
 
-    struct list *Components;
+    struct list Components;
     
     INT Cost;
 } MSIFEATURE;
@@ -127,7 +128,7 @@ typedef struct tagMSICLASS
     LPWSTR DefInprocHandler;
     LPWSTR DefInprocHandler32;
     LPWSTR Argument;
-    INT FeatureIndex;
+    MSIFEATURE *Feature;
     INT Attributes;
     /* not in the table, set during installation */
     BOOL Installed;
@@ -140,7 +141,7 @@ typedef struct tagMSIEXTENSION
     INT ProgIDIndex;
     LPWSTR ProgIDText;
     INT MIMEIndex;
-    INT FeatureIndex;
+    MSIFEATURE *Feature;
     /* not in the table, set during installation */
     BOOL Installed;
     INT VerbCount;
@@ -236,7 +237,7 @@ LPWSTR load_dynamic_property(MSIPACKAGE *package, LPCWSTR prop, UINT* rc);
 LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source, 
                       BOOL set_prop, MSIFOLDER **folder);
 MSICOMPONENT *get_loaded_component( MSIPACKAGE* package, LPCWSTR Component );
-int get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature );
+MSIFEATURE *get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature );
 int get_loaded_file(MSIPACKAGE* package, LPCWSTR file);
 int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path);
 UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action);
@@ -245,7 +246,7 @@ DWORD build_version_dword(LPCWSTR);
 LPWSTR build_directory_name(DWORD , ...);
 BOOL create_full_pathW(const WCHAR *path);
 BOOL ACTION_VerifyComponentForAction(MSIPACKAGE*, MSICOMPONENT*, INSTALLSTATE);
-BOOL ACTION_VerifyFeatureForAction(MSIPACKAGE*, INT, INSTALLSTATE);
+BOOL ACTION_VerifyFeatureForAction(MSIFEATURE*, INSTALLSTATE);
 void reduce_to_longfilename(WCHAR*);
 void reduce_to_shortfilename(WCHAR*);
 LPWSTR create_component_advertise_string(MSIPACKAGE*, MSICOMPONENT*, LPCWSTR);
