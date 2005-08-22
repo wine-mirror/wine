@@ -37,6 +37,8 @@ static SECURITY_STATUS SECUR32_makeSecHandle(PSecHandle phSec,
 {
     SECURITY_STATUS ret;
 
+    TRACE("%p %p %p\n", phSec, package, realHandle);
+
     if (phSec && package && realHandle)
     {
         PSecHandle newSec = (PSecHandle)SECUR32_ALLOC(sizeof(SecHandle));
@@ -260,14 +262,22 @@ SECURITY_STATUS WINAPI InitializeSecurityContextA(
             {
                 CtxtHandle myCtxt;
 
+                if(phContext)
+                {
+                    PCtxtHandle realCtxt = (PCtxtHandle)phContext->dwLower;
+                    myCtxt.dwUpper = realCtxt->dwUpper;
+                    myCtxt.dwLower = realCtxt->dwLower;
+                }
+
                 ret = package->provider->fnTableA.InitializeSecurityContextA(
                  cred, phContext ? &myCtxt : NULL, pszTargetName, fContextReq,
                  Reserved1, TargetDataRep, pInput, Reserved2, &myCtxt,
                  pOutput, pfContextAttr, ptsExpiry);
-                if (ret == SEC_E_OK)
+                if (ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED)
                 {
-                    ret = SECUR32_makeSecHandle(phContext, package, &myCtxt);
-                    if (ret != SEC_E_OK)
+                    SECURITY_STATUS ret2;
+                    ret2 = SECUR32_makeSecHandle(phNewContext, package, &myCtxt);
+                    if (ret2 != SEC_E_OK)
                         package->provider->fnTableW.DeleteSecurityContext(
                          &myCtxt);
                 }
@@ -309,14 +319,22 @@ SECURITY_STATUS WINAPI InitializeSecurityContextW(
             {
                 CtxtHandle myCtxt;
 
+                if(phContext)
+                {
+                    PCtxtHandle realCtxt = (PCtxtHandle)phContext->dwLower;
+                    myCtxt.dwUpper = realCtxt->dwUpper;
+                    myCtxt.dwLower = realCtxt->dwLower;
+                }
+
                 ret = package->provider->fnTableW.InitializeSecurityContextW(
                  cred, phContext ? &myCtxt : NULL, pszTargetName, fContextReq,
                  Reserved1, TargetDataRep, pInput, Reserved2, &myCtxt,
                  pOutput, pfContextAttr, ptsExpiry);
-                if (ret == SEC_E_OK)
+                if (ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED)
                 {
-                    ret = SECUR32_makeSecHandle(phContext, package, &myCtxt);
-                    if (ret != SEC_E_OK)
+                    SECURITY_STATUS ret2;
+                    ret2 = SECUR32_makeSecHandle(phNewContext, package, &myCtxt);
+                    if (ret2 != SEC_E_OK)
                         package->provider->fnTableW.DeleteSecurityContext(
                          &myCtxt);
                 }
@@ -357,13 +375,22 @@ SECURITY_STATUS WINAPI AcceptSecurityContext(
             {
                 CtxtHandle myCtxt;
 
+                if(phContext)
+                {
+                    PCtxtHandle realCtxt = (PCtxtHandle)phContext->dwLower;
+                    TRACE("realCtx: %p\n", realCtxt);
+                    myCtxt.dwUpper = realCtxt->dwUpper;
+                    myCtxt.dwLower = realCtxt->dwLower;
+                }
+                
                 ret = package->provider->fnTableW.AcceptSecurityContext(
                  cred, phContext ? &myCtxt : NULL, pInput, fContextReq,
                  TargetDataRep, &myCtxt, pOutput, pfContextAttr, ptsExpiry);
-                if (ret == SEC_E_OK)
+                if (ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED)
                 {
-                    ret = SECUR32_makeSecHandle(phContext, package, &myCtxt);
-                    if (ret != SEC_E_OK)
+                    SECURITY_STATUS ret2;
+                    ret2 = SECUR32_makeSecHandle(phNewContext, package, &myCtxt);
+                    if (ret2 != SEC_E_OK)
                         package->provider->fnTableW.DeleteSecurityContext(
                          &myCtxt);
                 }
