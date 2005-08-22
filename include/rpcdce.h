@@ -103,6 +103,36 @@ typedef struct _RPC_POLICY
   unsigned long NICFlags;
 } RPC_POLICY,  *PRPC_POLICY;
 
+typedef struct _SEC_WINNT_AUTH_IDENTITY_W
+{
+    unsigned short __RPC_FAR* User;
+    unsigned long UserLength;
+    unsigned short __RPC_FAR* Domain;
+    unsigned long DomainLength;
+    unsigned short __RPC_FAR* Password;
+    unsigned long PasswordLength;
+    unsigned long Flags;
+} SEC_WINNT_AUTH_IDENTITY_W, *PSEC_WINNT_AUTH_IDENTITY_W;
+
+typedef struct _SEC_WINNT_AUTH_IDENTITY_A
+{
+    unsigned char __RPC_FAR* User;
+    unsigned long UserLength;
+    unsigned char __RPC_FAR* Domain;
+    unsigned long DomainLength;
+    unsigned char __RPC_FAR* Password;
+    unsigned long PasswordLength;
+    unsigned long Flags;
+} SEC_WINNT_AUTH_IDENTITY_A, *PSEC_WINNT_AUTH_IDENTITY_A;
+
+#define _SEC_WINNT_AUTH_IDENTITY WINELIB_NAME_AW(_SEC_WINNT_AUTH_IDENTITY_)
+#define  SEC_WINNT_AUTH_IDENTITY WINELIB_NAME_AW(SEC_WINNT_AUTH_IDENTITY_)
+#define PSEC_WINNT_AUTH_IDENTITY WINELIB_NAME_AW(PSEC_WINNT_AUTH_IDENTITY_)
+
+/* SEC_WINNT_AUTH Flags */
+#define SEC_WINNT_AUTH_IDENTITY_ANSI    0x1
+#define SEC_WINNT_AUTH_IDENTITY_UNICODE 0x2
+
 /* RpcServerRegisterIfEx Flags */
 #define RPC_IF_AUTOLISTEN               0x1
 #define RPC_IF_OLE                      0x2
