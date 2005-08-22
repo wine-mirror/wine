@@ -366,8 +366,8 @@ static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpMod, DWORD flags)
      * the equivalent of mixer identification
      * (with a reference to a wave, midi.. handle
      */
-    if (!(mix = MIX_Get(wDevID))) {
-        WARN("bad device ID\n");
+    if ((mix = MIX_Get(wDevID)) == NULL) {
+        WARN("bad device ID: %04X\n", wDevID);
         return MMSYSERR_BADDEVICEID;
     }
 
@@ -610,8 +610,8 @@ static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPSW lpCaps, DWORD dwSize)
         return MMSYSERR_INVALPARAM;
     }
 
-    if (!(mix = MIX_Get(wDevID))) {
-        WARN("bad device ID\n");
+    if ((mix = MIX_Get(wDevID)) == NULL) {
+        WARN("bad device ID: %04X\n", wDevID);
         return MMSYSERR_BADDEVICEID;
     }
 
@@ -787,7 +787,7 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEW lpMl, DWORD fdwInfo)
     }
 
     if ((mix = MIX_Get(wDevID)) == NULL) {
-        WARN("bad device ID\n");
+        WARN("bad device ID: %04X\n", wDevID);
         return MMSYSERR_BADDEVICEID;
     }
 
@@ -969,7 +969,7 @@ static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSW lpMlc,
     }
 
     if ((mix = MIX_Get(wDevID)) == NULL) {
-        WARN("bad device id\n");
+        WARN("bad device ID: %04X\n", wDevID);
         return MMSYSERR_BADDEVICEID;
     }
 
@@ -1068,7 +1068,7 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
     }
 
     if ((mix = MIX_Get(wDevID)) == NULL) {
-        WARN("bad device ID\n");
+        WARN("bad device ID: %04X\n", wDevID);
         return MMSYSERR_BADDEVICEID;
     }
 
@@ -1266,7 +1266,7 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
     }
 
     if ((mix = MIX_Get(wDevID)) == NULL) {
-        WARN("bad device ID\n");
+        WARN("bad device ID: %04X\n", wDevID);
         return MMSYSERR_BADDEVICEID;
     }
 
@@ -1457,8 +1457,8 @@ static	DWORD	MIX_Init(void)
 #ifdef SOUND_MIXER_INFO
             mixer_info info;
             if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
-                MIX_Mixers[i].name = HeapAlloc(GetProcessHeap(),0,strlen(info.name) + 1);
-                strcpy(MIX_Mixers[i].name, info.name);
+                MIX_Mixers[MIX_NumMixers].name = HeapAlloc(GetProcessHeap(),0,strlen(info.name) + 1);
+                strcpy(MIX_Mixers[MIX_NumMixers].name, info.name);
             } else {
                 /* FreeBSD up to at least 5.2 provides this ioctl, but does not
                  * implement it properly, and there are probably similar issues
@@ -1469,10 +1469,10 @@ static	DWORD	MIX_Init(void)
 #endif
             close(mixer);
 
+            MIX_Mixers[MIX_NumMixers].dev_name = HeapAlloc(GetProcessHeap(),0,strlen(name) + 1);
+            strcpy(MIX_Mixers[MIX_NumMixers].dev_name, name);
             MIX_NumMixers++;
-            MIX_Mixers[i].dev_name = HeapAlloc(GetProcessHeap(),0,strlen(name) + 1);
-            strcpy(MIX_Mixers[i].dev_name, name);
-            MIX_Open(i, NULL, 0); /* FIXME */
+            MIX_Open(MIX_NumMixers - 1, NULL, 0); /* FIXME */
         } else {
             WARN("couldn't open %s\n", name);
         }
