@@ -2262,7 +2262,7 @@ INT WINAPI GetSystemMetrics( INT index )
         return 0;
     case SM_SWAPBUTTON:
         get_bool_param( SPI_SETMOUSEBUTTONSWAP_IDX, SPI_SETMOUSEBUTTONSWAP_REGKEY,
-                        SPI_SETMOUSEBUTTONSWAP_VALNAME, &swap_buttons, &ret );
+                        SPI_SETMOUSEBUTTONSWAP_VALNAME, &swap_buttons, (BOOL*)&ret );
         return ret;
     case SM_RESERVED1:
     case SM_RESERVED2:

@@ -123,7 +123,7 @@ static inline void INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
 
 /* Performs a world-to-viewport transformation on the specified width.
  */
-static inline void INTERNAL_WSTODS(DC *dc, LONG *width)
+static inline void INTERNAL_WSTODS(DC *dc, DWORD *width)
 {
     POINT pt[2];
     pt[0].x = pt[0].y = 0;
@@ -1478,7 +1478,7 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 	LOGPEN lp;
 	GetObjectW(hOldPen, sizeof(LOGPEN), &lp);
 	if(lp.lopnWidth.x > 0)
-	    INTERNAL_WSTODS(dc, &lp.lopnWidth.x);
+	    INTERNAL_WSTODS(dc, (DWORD*)&lp.lopnWidth.x);
 	hNewPen = CreatePenIndirect(&lp);
     }
     SelectObject(dc->hSelf, hNewPen);
