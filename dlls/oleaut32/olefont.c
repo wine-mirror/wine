@@ -953,7 +953,9 @@ static HRESULT WINAPI OLEFontImpl_get_hFont(
      */
     IFont_get_Size(iface, &cySize);
 
-    fontHeight = MulDiv( cySize.s.Lo, this->cyLogical, this->cyHimetric );
+    /* Standard ratio is 72 / 2540, or 18 / 635 in lowest terms. */
+    /* Ratio is applied here relative to the standard. */
+    fontHeight = MulDiv( cySize.s.Lo, this->cyLogical*635, this->cyHimetric*18 );
 
     memset(&logFont, 0, sizeof(LOGFONTW));
 
@@ -1020,7 +1022,7 @@ static HRESULT WINAPI OLEFontImpl_Clone(
   /* We need to clone the HFONT too. This is just cut & paste from above */
   IFont_get_Size(iface, &cySize);
 
-  fontHeight = MulDiv(cySize.s.Lo, this->cyLogical,this->cyHimetric);
+  fontHeight = MulDiv(cySize.s.Lo, this->cyLogical*635,this->cyHimetric*18);
 
   memset(&logFont, 0, sizeof(LOGFONTW));
 
