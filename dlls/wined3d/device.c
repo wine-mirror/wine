@@ -450,8 +450,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, WINED3
         return D3D_OK;
     }
 
-    /* Otherwise, might as well set the whole state block to the appropriate values */
-    IWineD3DDevice_AddRef(iface);
     /* Otherwise, might as well set the whole state block to the appropriate values  */
     if ( This->stateBlock != NULL) {
        memcpy(object, This->stateBlock, sizeof(IWineD3DStateBlockImpl));
@@ -467,10 +465,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, WINED3
     TRACE("Updating changed flags appropriate for type %d\n", Type);
 
     if (Type == WINED3DSBT_ALL) {
+
         TRACE("ALL => Pretend everything has changed\n");
         memset(&object->changed, TRUE, sizeof(This->stateBlock->changed));
     } else if (Type == WINED3DSBT_PIXELSTATE) {
 
+        TRACE("PIXELSTATE => Pretend all pixel shates have changed\n");
         memset(&object->changed, FALSE, sizeof(This->stateBlock->changed));
         /* TODO: Pixel Shader Constants */
         object->changed.pixelShader = TRUE;
@@ -480,6 +480,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, WINED3
 
     } else if (Type == WINED3DSBT_VERTEXSTATE) {
 
+        TRACE("VERTEXSTATE => Pretend all vertex shates have changed\n");
         memset(&object->changed, FALSE, sizeof(This->stateBlock->changed));
         /* TODO: Vertex Shader Constants */
         object->changed.vertexShader = TRUE;
@@ -755,15 +756,15 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
     {
         /* use the callback to create the texture surface */
         hr = D3DCB_CreateSurface(This->parent, tmpW, tmpH, Format, Usage, Pool, i, &object->surfaces[i],NULL);
-        if(hr!= D3D_OK) {
+        if (hr!= D3D_OK) {
             int j;
             FIXME("Failed to create surface  %p \n",object);
             /* clean up */
-            for(j = 0 ; j < i ; j++) {
+            for (j = 0 ; j < i ; j++) {
                 IWineD3DSurface_Release(object->surfaces[j]);
             }
             /* heap free object */
-            HeapFree(GetProcessHeap(),0,object);
+            HeapFree(GetProcessHeap(), 0, object);
 
             *ppTexture = NULL;
             return hr;
@@ -784,8 +785,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
                                                       UINT Width, UINT Height, UINT Depth,
                                                       UINT Levels, DWORD Usage,
                                                       WINED3DFORMAT Format, D3DPOOL Pool,
-                                                      IWineD3DVolumeTexture** ppVolumeTexture,
-                                                      HANDLE* pSharedHandle, IUnknown *parent,
+                                                      IWineD3DVolumeTexture **ppVolumeTexture,
+                                                      HANDLE *pSharedHandle, IUnknown *parent,
                                                       D3DCB_CREATEVOLUMEFN D3DCB_CreateVolume) {
 
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
@@ -877,13 +878,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
 HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT EdgeLength,
                                                     UINT Levels, DWORD Usage,
                                                     WINED3DFORMAT Format, D3DPOOL Pool,
-                                                    IWineD3DCubeTexture** ppCubeTexture,
-                                                    HANDLE* pSharedHandle, IUnknown *parent,
+                                                    IWineD3DCubeTexture **ppCubeTexture,
+                                                    HANDLE *pSharedHandle, IUnknown *parent,
                                                     D3DCB_CREATESURFACEFN D3DCB_CreateSurface) {
 
     IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DCubeTextureImpl *object; /** NOTE: impl ref allowed since this is a create function **/
-    unsigned int             i,j;
+    unsigned int             i, j;
     UINT                     tmpW;
     HRESULT                  hr;
     unsigned int pow2EdgeLength  = EdgeLength;
@@ -893,14 +894,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
 
     TRACE("(%p) Create Cube Texture \n", This);
 
-    object->edgeLength           = EdgeLength;
-
     /** Non-power2 support **/
 
     /* Find the nearest pow2 match */
     pow2EdgeLength = 1;
     while (pow2EdgeLength < EdgeLength) pow2EdgeLength <<= 1;
 
+    object->edgeLength           = EdgeLength;
     /* TODO: support for native non-power 2 */
     /* Precalculated scaling for 'faked' non power of two texture coords */
     object->pow2scalingFactor    = ((float)EdgeLength) / ((float)pow2EdgeLength);
@@ -910,7 +910,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
         object->baseTexture.levels++;
         tmpW = EdgeLength;
         while (tmpW > 1) {
-            tmpW = max(1, tmpW / 2);
+            tmpW = max(1, tmpW >> 1);
             object->baseTexture.levels++;
         }
         TRACE("Calculated levels = %d\n", object->baseTexture.levels);
@@ -930,11 +930,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
                 /* clean up */
                 int k;
                 int l;
-                for (l=0;l<j;l++) {
+                for (l = 0; l < j; l++) {
                     IWineD3DSurface_Release(object->surfaces[j][i]);
                 }
-                for (k=0;k<i;k++) {
-                    for (l=0;l<6;l++) {
+                for (k = 0; k < i; k++) {
+                    for (l = 0; l < 6; l++) {
                     IWineD3DSurface_Release(object->surfaces[l][j]);
                     }
                 }
@@ -959,7 +959,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUER
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DQueryImpl *object; /*NOTE: impl ref allowed since this is a create function */
 
-    if(NULL == ppQuery) {
+    if (NULL == ppQuery) {
         /* Just a check to see if we support this type of query */
         HRESULT hr = D3DERR_NOTAVAILABLE;
         /* Lie and say everything is good (we can return ok fake data from a stub) */
@@ -1074,7 +1074,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
         TRACE("Using x visual ID  : %ld\n", template.visualid);
         TRACE("        visual info: %p\n", object->visInfo);
         TRACE("        num items  : %d\n", num);
-        for(n = 0;n < num; n++) {
+        for (n = 0;n < num; n++) {
             TRACE("=====item=====: %d\n", n + 1);
             TRACE("   visualid      : %ld\n", object->visInfo[n].visualid);
             TRACE("   screen        : %d\n",  object->visInfo[n].screen);
@@ -1255,7 +1255,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
                              &object->backBuffer,
                              NULL /* pShared (always null)*/);
     if (object->backBuffer != NULL)
-       IWineD3DSurface_SetContainer(object->backBuffer, (IUnknown *)object);
+        IWineD3DSurface_SetContainer(object->backBuffer, (IUnknown *)object);
 
     /* Under directX swapchains share the depth stencil, so only create one depth-stencil */
     if (pPresentationParameters->EnableAutoDepthStencil) {
@@ -1291,14 +1291,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
     object->drawable     = object->win;
     object->render_ctx   = object->glCtx;
 
-    if(hr == D3D_OK) {
+    if (hr == D3D_OK) {
         /*********************
          * Setup some defaults and clear down the buffers
          *******************/
         ENTER_GL();
         /** save current context and drawable **/
-        oldContext   =   glXGetCurrentContext();
-        oldDrawable  =   glXGetCurrentDrawable();
+        oldContext  = glXGetCurrentContext();
+        oldDrawable = glXGetCurrentDrawable();
 
         TRACE("Activating context (display %p context %p drawable %ld)!\n", object->display, object->glCtx, object->win);
         if (glXMakeCurrent(object->display, object->win, object->glCtx) == False) {
@@ -1332,7 +1332,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
         glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
         checkGLcall("glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);");
 
-        /* switch back to the original context (unless it was zero)*/
+        /* switch back to the original context (if there was one)*/
         if (This->swapchains != NULL) {
             /** TODO: restore the context and drawable **/
             glXMakeCurrent(object->display, oldDrawable, oldContext);
@@ -1343,7 +1343,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
         { /* Finally add the swapchain to the end of the devices' swapchain list */
             SwapChainList **nextSwapchain;
             nextSwapchain = &This->swapchains;
-            while(*nextSwapchain != NULL) {
+            while (*nextSwapchain != NULL) {
                 nextSwapchain = &((*nextSwapchain)->next);
             }
             (*nextSwapchain) = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->swapchains));
@@ -1355,14 +1355,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
         if (object->frontBuffer) {
             IWineD3DSurface_GetParent(object->frontBuffer, &bufferParent);
             IUnknown_Release(bufferParent); /* once for the get parent */
-            if(IUnknown_Release(bufferParent) > 0) {
+            if (IUnknown_Release(bufferParent) > 0) {
                 FIXME("(%p) Something's still holding the front buffer\n",This);
             }
         }
         if (object->backBuffer) {
             IWineD3DSurface_GetParent(object->backBuffer, &bufferParent);
             IUnknown_Release(bufferParent); /* once for the get parent */
-            if(IUnknown_Release(bufferParent) > 0) {
+            if (IUnknown_Release(bufferParent) > 0) {
                 FIXME("(%p) Something's still holding the back buffer\n",This);
             }
         }
@@ -1378,6 +1378,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
         HeapFree(GetProcessHeap(), 0, object);
 
     }
+
     return hr;
 }
 
@@ -1732,29 +1733,44 @@ HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface, D3DTR
     }
 
     /* Copied from ddraw code:  */
-    temp.u.s._11 = (mat->u.s._11 * pMatrix->u.s._11) + (mat->u.s._21 * pMatrix->u.s._12) + (mat->u.s._31 * pMatrix->u.s._13) + (mat->u.s._41 * pMatrix->u.s._14);
-    temp.u.s._21 = (mat->u.s._11 * pMatrix->u.s._21) + (mat->u.s._21 * pMatrix->u.s._22) + (mat->u.s._31 * pMatrix->u.s._23) + (mat->u.s._41 * pMatrix->u.s._24);
-    temp.u.s._31 = (mat->u.s._11 * pMatrix->u.s._31) + (mat->u.s._21 * pMatrix->u.s._32) + (mat->u.s._31 * pMatrix->u.s._33) + (mat->u.s._41 * pMatrix->u.s._34);
-    temp.u.s._41 = (mat->u.s._11 * pMatrix->u.s._41) + (mat->u.s._21 * pMatrix->u.s._42) + (mat->u.s._31 * pMatrix->u.s._43) + (mat->u.s._41 * pMatrix->u.s._44);
+    temp.u.s._11 = (mat->u.s._11 * pMatrix->u.s._11) + (mat->u.s._21 * pMatrix->u.s._12) +
+      (mat->u.s._31 * pMatrix->u.s._13) + (mat->u.s._41 * pMatrix->u.s._14);
+    temp.u.s._21 = (mat->u.s._11 * pMatrix->u.s._21) + (mat->u.s._21 * pMatrix->u.s._22) +
+      (mat->u.s._31 * pMatrix->u.s._23) + (mat->u.s._41 * pMatrix->u.s._24);
+    temp.u.s._31 = (mat->u.s._11 * pMatrix->u.s._31) + (mat->u.s._21 * pMatrix->u.s._32) +
+      (mat->u.s._31 * pMatrix->u.s._33) + (mat->u.s._41 * pMatrix->u.s._34);
+    temp.u.s._41 = (mat->u.s._11 * pMatrix->u.s._41) + (mat->u.s._21 * pMatrix->u.s._42) +
+      (mat->u.s._31 * pMatrix->u.s._43) + (mat->u.s._41 * pMatrix->u.s._44);
 
-    temp.u.s._12 = (mat->u.s._12 * pMatrix->u.s._11) + (mat->u.s._22 * pMatrix->u.s._12) + (mat->u.s._32 * pMatrix->u.s._13) + (mat->u.s._42 * pMatrix->u.s._14);
-    temp.u.s._22 = (mat->u.s._12 * pMatrix->u.s._21) + (mat->u.s._22 * pMatrix->u.s._22) + (mat->u.s._32 * pMatrix->u.s._23) + (mat->u.s._42 * pMatrix->u.s._24);
-    temp.u.s._32 = (mat->u.s._12 * pMatrix->u.s._31) + (mat->u.s._22 * pMatrix->u.s._32) + (mat->u.s._32 * pMatrix->u.s._33) + (mat->u.s._42 * pMatrix->u.s._34);
-    temp.u.s._42 = (mat->u.s._12 * pMatrix->u.s._41) + (mat->u.s._22 * pMatrix->u.s._42) + (mat->u.s._32 * pMatrix->u.s._43) + (mat->u.s._42 * pMatrix->u.s._44);
+    temp.u.s._12 = (mat->u.s._12 * pMatrix->u.s._11) + (mat->u.s._22 * pMatrix->u.s._12) +
+      (mat->u.s._32 * pMatrix->u.s._13) + (mat->u.s._42 * pMatrix->u.s._14);
+    temp.u.s._22 = (mat->u.s._12 * pMatrix->u.s._21) + (mat->u.s._22 * pMatrix->u.s._22) +
+      (mat->u.s._32 * pMatrix->u.s._23) + (mat->u.s._42 * pMatrix->u.s._24);
+    temp.u.s._32 = (mat->u.s._12 * pMatrix->u.s._31) + (mat->u.s._22 * pMatrix->u.s._32) +
+      (mat->u.s._32 * pMatrix->u.s._33) + (mat->u.s._42 * pMatrix->u.s._34);
+    temp.u.s._42 = (mat->u.s._12 * pMatrix->u.s._41) + (mat->u.s._22 * pMatrix->u.s._42) +
+      (mat->u.s._32 * pMatrix->u.s._43) + (mat->u.s._42 * pMatrix->u.s._44);
 
-    temp.u.s._13 = (mat->u.s._13 * pMatrix->u.s._11) + (mat->u.s._23 * pMatrix->u.s._12) + (mat->u.s._33 * pMatrix->u.s._13) + (mat->u.s._43 * pMatrix->u.s._14);
-    temp.u.s._23 = (mat->u.s._13 * pMatrix->u.s._21) + (mat->u.s._23 * pMatrix->u.s._22) + (mat->u.s._33 * pMatrix->u.s._23) + (mat->u.s._43 * pMatrix->u.s._24);
-    temp.u.s._33 = (mat->u.s._13 * pMatrix->u.s._31) + (mat->u.s._23 * pMatrix->u.s._32) + (mat->u.s._33 * pMatrix->u.s._33) + (mat->u.s._43 * pMatrix->u.s._34);
-    temp.u.s._43 = (mat->u.s._13 * pMatrix->u.s._41) + (mat->u.s._23 * pMatrix->u.s._42) + (mat->u.s._33 * pMatrix->u.s._43) + (mat->u.s._43 * pMatrix->u.s._44);
+    temp.u.s._13 = (mat->u.s._13 * pMatrix->u.s._11) + (mat->u.s._23 * pMatrix->u.s._12) +
+      (mat->u.s._33 * pMatrix->u.s._13) + (mat->u.s._43 * pMatrix->u.s._14);
+    temp.u.s._23 = (mat->u.s._13 * pMatrix->u.s._21) + (mat->u.s._23 * pMatrix->u.s._22) +
+      (mat->u.s._33 * pMatrix->u.s._23) + (mat->u.s._43 * pMatrix->u.s._24);
+    temp.u.s._33 = (mat->u.s._13 * pMatrix->u.s._31) + (mat->u.s._23 * pMatrix->u.s._32) +
+      (mat->u.s._33 * pMatrix->u.s._33) + (mat->u.s._43 * pMatrix->u.s._34);
+    temp.u.s._43 = (mat->u.s._13 * pMatrix->u.s._41) + (mat->u.s._23 * pMatrix->u.s._42) +
+      (mat->u.s._33 * pMatrix->u.s._43) + (mat->u.s._43 * pMatrix->u.s._44);
 
-    temp.u.s._14 = (mat->u.s._14 * pMatrix->u.s._11) + (mat->u.s._24 * pMatrix->u.s._12) + (mat->u.s._34 * pMatrix->u.s._13) + (mat->u.s._44 * pMatrix->u.s._14);
-    temp.u.s._24 = (mat->u.s._14 * pMatrix->u.s._21) + (mat->u.s._24 * pMatrix->u.s._22) + (mat->u.s._34 * pMatrix->u.s._23) + (mat->u.s._44 * pMatrix->u.s._24);
-    temp.u.s._34 = (mat->u.s._14 * pMatrix->u.s._31) + (mat->u.s._24 * pMatrix->u.s._32) + (mat->u.s._34 * pMatrix->u.s._33) + (mat->u.s._44 * pMatrix->u.s._34);
-    temp.u.s._44 = (mat->u.s._14 * pMatrix->u.s._41) + (mat->u.s._24 * pMatrix->u.s._42) + (mat->u.s._34 * pMatrix->u.s._43) + (mat->u.s._44 * pMatrix->u.s._44);
+    temp.u.s._14 = (mat->u.s._14 * pMatrix->u.s._11) + (mat->u.s._24 * pMatrix->u.s._12) +
+      (mat->u.s._34 * pMatrix->u.s._13) + (mat->u.s._44 * pMatrix->u.s._14);
+    temp.u.s._24 = (mat->u.s._14 * pMatrix->u.s._21) + (mat->u.s._24 * pMatrix->u.s._22) +
+      (mat->u.s._34 * pMatrix->u.s._23) + (mat->u.s._44 * pMatrix->u.s._24);
+    temp.u.s._34 = (mat->u.s._14 * pMatrix->u.s._31) + (mat->u.s._24 * pMatrix->u.s._32) +
+      (mat->u.s._34 * pMatrix->u.s._33) + (mat->u.s._44 * pMatrix->u.s._34);
+    temp.u.s._44 = (mat->u.s._14 * pMatrix->u.s._41) + (mat->u.s._24 * pMatrix->u.s._42) +
+      (mat->u.s._34 * pMatrix->u.s._43) + (mat->u.s._44 * pMatrix->u.s._44);
 
     /* Apply change via set transform - will reapply to eg. lights this way */
-    IWineD3DDeviceImpl_SetTransform(iface, State, &temp);
-    return D3D_OK;
+    return IWineD3DDeviceImpl_SetTransform(iface, State, &temp);
 }
 
 /*****
@@ -1973,32 +1989,32 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD In
         /* Warning - untested code :-) Prob safe to change fixme to a trace but
              wait until someone confirms it seems to work!                     */
         TRACE("Light enabled requested but light not defined, so defining one!\n");
-        lightParms.Type = D3DLIGHT_DIRECTIONAL;
-        lightParms.Diffuse.r = 1.0;
-        lightParms.Diffuse.g = 1.0;
-        lightParms.Diffuse.b = 1.0;
-        lightParms.Diffuse.a = 0.0;
-        lightParms.Specular.r = 0.0;
-        lightParms.Specular.g = 0.0;
-        lightParms.Specular.b = 0.0;
-        lightParms.Specular.a = 0.0;
-        lightParms.Ambient.r = 0.0;
-        lightParms.Ambient.g = 0.0;
-        lightParms.Ambient.b = 0.0;
-        lightParms.Ambient.a = 0.0;
-        lightParms.Position.x = 0.0;
-        lightParms.Position.y = 0.0;
-        lightParms.Position.z = 0.0;
-        lightParms.Direction.x = 0.0;
-        lightParms.Direction.y = 0.0;
-        lightParms.Direction.z = 1.0;
-        lightParms.Range = 0.0;
-        lightParms.Falloff = 0.0;
+        lightParms.Type         = D3DLIGHT_DIRECTIONAL;
+        lightParms.Diffuse.r    = 1.0;
+        lightParms.Diffuse.g    = 1.0;
+        lightParms.Diffuse.b    = 1.0;
+        lightParms.Diffuse.a    = 0.0;
+        lightParms.Specular.r   = 0.0;
+        lightParms.Specular.g   = 0.0;
+        lightParms.Specular.b   = 0.0;
+        lightParms.Specular.a   = 0.0;
+        lightParms.Ambient.r    = 0.0;
+        lightParms.Ambient.g    = 0.0;
+        lightParms.Ambient.b    = 0.0;
+        lightParms.Ambient.a    = 0.0;
+        lightParms.Position.x   = 0.0;
+        lightParms.Position.y   = 0.0;
+        lightParms.Position.z   = 0.0;
+        lightParms.Direction.x  = 0.0;
+        lightParms.Direction.y  = 0.0;
+        lightParms.Direction.z  = 1.0;
+        lightParms.Range        = 0.0;
+        lightParms.Falloff      = 0.0;
         lightParms.Attenuation0 = 0.0;
         lightParms.Attenuation1 = 0.0;
         lightParms.Attenuation2 = 0.0;
-        lightParms.Theta = 0.0;
-        lightParms.Phi = 0.0;
+        lightParms.Theta        = 0.0;
+        lightParms.Phi          = 0.0;
         IWineD3DDeviceImpl_SetLight(iface, Index, &lightParms);
 
         /* Search for it again! Should be fairly quick as near head of list */
@@ -2291,30 +2307,34 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONST WINED
     }
 
     ENTER_GL();
-    TRACE("(%p) : Diffuse (%f,%f,%f,%f)\n", This, pMaterial->Diffuse.r, pMaterial->Diffuse.g, pMaterial->Diffuse.b, pMaterial->Diffuse.a);
-    TRACE("(%p) : Ambient (%f,%f,%f,%f)\n", This, pMaterial->Ambient.r, pMaterial->Ambient.g, pMaterial->Ambient.b, pMaterial->Ambient.a);
-    TRACE("(%p) : Specular (%f,%f,%f,%f)\n", This, pMaterial->Specular.r, pMaterial->Specular.g, pMaterial->Specular.b, pMaterial->Specular.a);
-    TRACE("(%p) : Emissive (%f,%f,%f,%f)\n", This, pMaterial->Emissive.r, pMaterial->Emissive.g, pMaterial->Emissive.b, pMaterial->Emissive.a);
+    TRACE("(%p) : Diffuse (%f,%f,%f,%f)\n", This, pMaterial->Diffuse.r, pMaterial->Diffuse.g,
+        pMaterial->Diffuse.b, pMaterial->Diffuse.a);
+    TRACE("(%p) : Ambient (%f,%f,%f,%f)\n", This, pMaterial->Ambient.r, pMaterial->Ambient.g,
+        pMaterial->Ambient.b, pMaterial->Ambient.a);
+    TRACE("(%p) : Specular (%f,%f,%f,%f)\n", This, pMaterial->Specular.r, pMaterial->Specular.g,
+        pMaterial->Specular.b, pMaterial->Specular.a);
+    TRACE("(%p) : Emissive (%f,%f,%f,%f)\n", This, pMaterial->Emissive.r, pMaterial->Emissive.g,
+        pMaterial->Emissive.b, pMaterial->Emissive.a);
     TRACE("(%p) : Power (%f)\n", This, pMaterial->Power);
 
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*) &This->updateStateBlock->material.Ambient);
-    checkGLcall("glMaterialfv");
+    checkGLcall("glMaterialfv(GL_AMBIENT)");
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &This->updateStateBlock->material.Diffuse);
-    checkGLcall("glMaterialfv");
+    checkGLcall("glMaterialfv(GL_DIFFUSE)");
 
     /* Only change material color if specular is enabled, otherwise it is set to black */
     if (This->stateBlock->renderState[WINED3DRS_SPECULARENABLE]) {
        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->updateStateBlock->material.Specular);
-       checkGLcall("glMaterialfv");
+       checkGLcall("glMaterialfv(GL_SPECULAR");
     } else {
        float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
-       checkGLcall("glMaterialfv");
+       checkGLcall("glMaterialfv(GL_SPECULAR");
     }
     glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*) &This->updateStateBlock->material.Emissive);
-    checkGLcall("glMaterialfv");
+    checkGLcall("glMaterialfv(GL_EMISSION)");
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, This->updateStateBlock->material.Power);
-    checkGLcall("glMaterialf");
+    checkGLcall("glMaterialf(GL_SHININESS");
 
     LEAVE_GL();
     return D3D_OK;
@@ -2323,11 +2343,16 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONST WINED
 HRESULT WINAPI IWineD3DDeviceImpl_GetMaterial(IWineD3DDevice *iface, WINED3DMATERIAL* pMaterial) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     memcpy(pMaterial, &This->updateStateBlock->material, sizeof (WINED3DMATERIAL));
-    TRACE("(%p) : Diffuse (%f,%f,%f,%f)\n", This, pMaterial->Diffuse.r, pMaterial->Diffuse.g, pMaterial->Diffuse.b, pMaterial->Diffuse.a);
-    TRACE("(%p) : Ambient (%f,%f,%f,%f)\n", This, pMaterial->Ambient.r, pMaterial->Ambient.g, pMaterial->Ambient.b, pMaterial->Ambient.a);
-    TRACE("(%p) : Specular (%f,%f,%f,%f)\n", This, pMaterial->Specular.r, pMaterial->Specular.g, pMaterial->Specular.b, pMaterial->Specular.a);
-    TRACE("(%p) : Emissive (%f,%f,%f,%f)\n", This, pMaterial->Emissive.r, pMaterial->Emissive.g, pMaterial->Emissive.b, pMaterial->Emissive.a);
+    TRACE("(%p) : Diffuse (%f,%f,%f,%f)\n", This, pMaterial->Diffuse.r, pMaterial->Diffuse.g,
+        pMaterial->Diffuse.b, pMaterial->Diffuse.a);
+    TRACE("(%p) : Ambient (%f,%f,%f,%f)\n", This, pMaterial->Ambient.r, pMaterial->Ambient.g,
+        pMaterial->Ambient.b, pMaterial->Ambient.a);
+    TRACE("(%p) : Specular (%f,%f,%f,%f)\n", This, pMaterial->Specular.r, pMaterial->Specular.g,
+        pMaterial->Specular.b, pMaterial->Specular.a);
+    TRACE("(%p) : Emissive (%f,%f,%f,%f)\n", This, pMaterial->Emissive.r, pMaterial->Emissive.g,
+        pMaterial->Emissive.b, pMaterial->Emissive.a);
     TRACE("(%p) : Power (%f)\n", This, pMaterial->Power);
+
     return D3D_OK;
 }
 
@@ -2373,8 +2398,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWineD3DInde
     *ppIndexData = This->stateBlock->pIndexData;
 
     /* up ref count on ppindexdata */
-    if (*ppIndexData) IWineD3DIndexBuffer_AddRef(*ppIndexData);
-    *pBaseVertexIndex = This->stateBlock->baseVertexIndex;
+    if (*ppIndexData) {
+        IWineD3DIndexBuffer_AddRef(*ppIndexData);
+        *pBaseVertexIndex = This->stateBlock->baseVertexIndex;
+        TRACE("(%p) index data set to %p + %u\n", This, ppIndexData, This->stateBlock->baseVertexIndex);
+    }else{
+        TRACE("(%p) No index data set\n", This);
+    }
+    TRACE("Returning %p %d \n",*ppIndexData, *pBaseVertexIndex);
 
     return D3D_OK;
 }
@@ -3132,7 +3163,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case WINED3DRS_ZBIAS                     :
+    case WINED3DRS_ZBIAS                     : /* D3D8 only */
         {
             if (Value) {
                 tmpvalue.d = Value;
@@ -3283,6 +3314,17 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     case WINED3DRS_WRAP5                     :
     case WINED3DRS_WRAP6                     :
     case WINED3DRS_WRAP7                     :
+    /**
+    http://www.cosc.brocku.ca/Offerings/3P98/course/lectures/texture/
+    http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/FixedFunction/Textures/texturewrapping.asp
+    http://www.gamedev.net/reference/programming/features/rendererdll3/page2.asp
+    Descussion that ways to turn on WRAPing to solve an opengl conversion problem.
+    http://www.flipcode.org/cgi-bin/fcmsg.cgi?thread_show=10248
+
+    so far as I can tell, wrapping and texture-coordinate generate go hand in hand,
+    */
+    TRACE("(%p)->(%d,%ld) Texture wraping not yet supported\n",This, State, Value);
+    break;
     case WINED3DRS_POINTSPRITEENABLE         :
     case WINED3DRS_MULTISAMPLEANTIALIAS      :
     case WINED3DRS_MULTISAMPLEMASK           :
@@ -3450,9 +3492,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDevice *iface, IWineD3DVertexShader** ppShader) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    *ppShader = This->updateStateBlock->vertexShader;
-    if(*ppShader != NULL)
+
+    if (NULL == ppShader) {
+        return D3DERR_INVALIDCALL;
+    }
+    *ppShader = This->stateBlock->vertexShader;
+    if( NULL != *ppShader)
         IWineD3DVertexShader_AddRef(*ppShader);
+
     TRACE("(%p) : returning %p\n", This, *ppShader);
     return D3D_OK;
 }
@@ -3799,117 +3846,117 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
              */
             switch (Value & 0xFFFF0000) {
             case D3DTSS_TCI_PASSTHRU:
-              /*Use the specified texture coordinates contained within the vertex format. This value resolves to zero.*/
-              glDisable(GL_TEXTURE_GEN_S);
-              glDisable(GL_TEXTURE_GEN_T);
-              glDisable(GL_TEXTURE_GEN_R);
-              glDisable(GL_TEXTURE_GEN_Q);
-              checkGLcall("glDisable(GL_TEXTURE_GEN_S,T,R)");
-              break;
+                /*Use the specified texture coordinates contained within the vertex format. This value resolves to zero.*/
+                glDisable(GL_TEXTURE_GEN_S);
+                glDisable(GL_TEXTURE_GEN_T);
+                glDisable(GL_TEXTURE_GEN_R);
+                glDisable(GL_TEXTURE_GEN_Q);
+                checkGLcall("glDisable(GL_TEXTURE_GEN_S,T,R,Q)");
+                break;
 
             case D3DTSS_TCI_CAMERASPACEPOSITION:
-              /* CameraSpacePosition means use the vertex position, transformed to camera space,
-                 as the input texture coordinates for this stage's texture transformation. This
-                 equates roughly to EYE_LINEAR                                                  */
-              {
-                float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
-                float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
-                float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
-                float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
-                TRACE("WINED3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
-
-                glMatrixMode(GL_MODELVIEW);
-                glPushMatrix();
-                glLoadIdentity();
-                glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
-                glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
-                glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
-                glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
-                glPopMatrix();
-
-                TRACE("WINED3DTSS_TCI_CAMERASPACEPOSITION - Set GL_TEXTURE_GEN_x and GL_x, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR\n");
-                glEnable(GL_TEXTURE_GEN_S);
-                checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
-                glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-                checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
-                glEnable(GL_TEXTURE_GEN_T);
-                checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
-                glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-                checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
-                glEnable(GL_TEXTURE_GEN_R);
-                checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
-                glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-                checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
-              }
-              break;
+                /* CameraSpacePosition means use the vertex position, transformed to camera space,
+                    as the input texture coordinates for this stage's texture transformation. This
+                    equates roughly to EYE_LINEAR                                                  */
+                {
+                    float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+                    float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+                    float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+                    float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+                    TRACE("WINED3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
+    
+                    glMatrixMode(GL_MODELVIEW);
+                    glPushMatrix();
+                    glLoadIdentity();
+                    glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+                    glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+                    glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+                    glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+                    glPopMatrix();
+    
+                    TRACE("WINED3DTSS_TCI_CAMERASPACEPOSITION - Set GL_TEXTURE_GEN_x and GL_x, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR\n");
+                    glEnable(GL_TEXTURE_GEN_S);
+                    checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+                    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+                    checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+                    glEnable(GL_TEXTURE_GEN_T);
+                    checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+                    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+                    checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+                    glEnable(GL_TEXTURE_GEN_R);
+                    checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+                    glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+                    checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+                }
+                break;
 
             case D3DTSS_TCI_CAMERASPACENORMAL:
-              {
-                if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
-                  float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
-                  float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
-                  float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
-                  float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
-                  TRACE("WINED3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
-
-                  glMatrixMode(GL_MODELVIEW);
-                  glPushMatrix();
-                  glLoadIdentity();
-                  glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
-                  glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
-                  glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
-                  glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
-                  glPopMatrix();
-
-                  glEnable(GL_TEXTURE_GEN_S);
-                  checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
-                  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
-                  checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
-                  glEnable(GL_TEXTURE_GEN_T);
-                  checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
-                  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
-                  checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
-                  glEnable(GL_TEXTURE_GEN_R);
-                  checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
-                  glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
-                  checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+                {
+                    if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
+                        float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+                        float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+                        float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+                        float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+                        TRACE("WINED3DTSS_TCI_CAMERASPACENORMAL - Set eye plane\n");
+        
+                        glMatrixMode(GL_MODELVIEW);
+                        glPushMatrix();
+                        glLoadIdentity();
+                        glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+                        glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+                        glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+                        glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+                        glPopMatrix();
+        
+                        glEnable(GL_TEXTURE_GEN_S);
+                        checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+                        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+                        checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+                        glEnable(GL_TEXTURE_GEN_T);
+                        checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+                        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+                        checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+                        glEnable(GL_TEXTURE_GEN_R);
+                        checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+                        glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+                        checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+                    }
                 }
-              }
-              break;
+                break;
 
             case D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
-              {
-                if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
-                  float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
-                  float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
-                  float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
-                  float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
-                  TRACE("WINED3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
-
-                  glMatrixMode(GL_MODELVIEW);
-                  glPushMatrix();
-                  glLoadIdentity();
-                  glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
-                  glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
-                  glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
-                  glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
-                  glPopMatrix();
-
-                  glEnable(GL_TEXTURE_GEN_S);
-                  checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
-                  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
-                  checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
-                  glEnable(GL_TEXTURE_GEN_T);
-                  checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
-                  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
-                  checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
-                  glEnable(GL_TEXTURE_GEN_R);
-                  checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
-                  glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
-                  checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+                {
+                    if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
+                    float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+                    float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+                    float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+                    float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+                    TRACE("WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR - Set eye plane\n");
+    
+                    glMatrixMode(GL_MODELVIEW);
+                    glPushMatrix();
+                    glLoadIdentity();
+                    glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+                    glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+                    glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+                    glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+                    glPopMatrix();
+    
+                    glEnable(GL_TEXTURE_GEN_S);
+                    checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+                    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+                    checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+                    glEnable(GL_TEXTURE_GEN_T);
+                    checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+                    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+                    checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+                    glEnable(GL_TEXTURE_GEN_R);
+                    checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+                    glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+                    checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+                    }
                 }
-              }
-              break;
+                break;
 
             /* Unhandled types: */
             default:
@@ -3961,6 +4008,10 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
     return;
 }
 
+/*****
+ * Get / Set Texture Stage States
+ * TODO: Verify against dx9 definitions
+ *****/
 HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -4004,6 +4055,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
     }
 #endif
 
+    /* Reject invalid texture units */
     if (Stage >= GL_LIMITS(textures) || Stage < 0) {
         WARN("Attempt to access invalid texture rejected\n");
         return D3DERR_INVALIDCALL;
@@ -4047,10 +4099,18 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD Stage, IWineD3DBaseTexture** ppTexture) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : returning %p for stage %ld\n", This, This->updateStateBlock->textures[Stage], Stage);
-    *ppTexture = (IWineD3DBaseTexture *) This->updateStateBlock->textures[Stage];
+    TRACE("(%p) : (%ld /* Stage */,%p /* ppTexture */) \n", This, Stage, ppTexture);
+
+    /* Reject invalid texture units */
+    if (Stage >= GL_LIMITS(textures)) {
+        TRACE("Attempt to access invalid texture rejected\n");
+        return D3DERR_INVALIDCALL;
+    }
+    *ppTexture=This->updateStateBlock->textures[Stage];
     if (*ppTexture)
         IWineD3DBaseTexture_AddRef(*ppTexture);
+    else
+        return D3DERR_INVALIDCALL;
     return D3D_OK;
 }
 
@@ -4058,7 +4118,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD Stage,
  * Get Back Buffer
  *****/
 HRESULT WINAPI IWineD3DDeviceImpl_GetBackBuffer(IWineD3DDevice *iface, UINT iSwapChain, UINT BackBuffer, D3DBACKBUFFER_TYPE Type,
-                                                IWineD3DSurface** ppBackBuffer) {
+                                                IWineD3DSurface **ppBackBuffer) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSwapChain *swapChain;
     HRESULT hr;
@@ -4066,10 +4126,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetBackBuffer(IWineD3DDevice *iface, UINT iSwa
     TRACE("(%p) : BackBuf %d Type %d SwapChain %d returning %p\n", This, BackBuffer, Type, iSwapChain, *ppBackBuffer);
 
     hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, &swapChain);
-    if(hr == D3D_OK) {
+    if (hr == D3D_OK) {
         hr = IWineD3DSwapChain_GetBackBuffer(swapChain, BackBuffer, Type, ppBackBuffer);
             IWineD3DSwapChain_Release(swapChain);
-    }else{
+    } else {
         *ppBackBuffer = NULL;
     }
     return hr;
@@ -4090,7 +4150,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSw
     if (hr == D3D_OK) {
         hr = IWineD3DSwapChain_GetDisplayMode(swapChain, pMode);
         IWineD3DSwapChain_Release(swapChain);
-    }else{
+    } else {
         FIXME("(%p) Error getting display mode\n", This);
     }
     return hr;
@@ -4099,12 +4159,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSw
  * Stateblock related functions
  *****/
 
- HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) {
+HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
     TRACE("(%p)", This);
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DStateBlockImpl));
-    if(NULL == object ) {
+    if (NULL == object ) {
         FIXME("(%p)Error allocating memory for stateblock\n", This);
         return E_OUTOFMEMORY;
     }
@@ -4188,7 +4248,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
 HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
                                           CONST RECT* pSourceRect, CONST RECT* pDestRect,
                                           HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion) {
-   IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSwapChain *swapChain = NULL;
     int i;
     int swapchains = IWineD3DDeviceImpl_GetNumberOfSwapChains(iface);
@@ -4281,7 +4341,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONS
             checkGLcall("glScissor");
         } else {
             glScissor(This->stateBlock->viewport.X,
-                      (((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height - (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)),
+                      (((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height - 
+                      (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)),
                       This->stateBlock->viewport.Width,
                       This->stateBlock->viewport.Height);
             checkGLcall("glScissor");
@@ -4536,6 +4597,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface, DWORD*
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     /* return a sensible default */
     *pNumPasses = 1;
+    /* TODO: If the window is minimized then validate device shold return something other than d3d_ok */
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
@@ -4869,6 +4931,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurfa
     unsigned int u, v;
     DWORD       *data;
     TRACE("(%p) Colour fill Surface: %p rect: %p color: %ld\n", This, pSurface, pRect, color);
+
     if (surface->resource.pool != D3DPOOL_DEFAULT) {
         FIXME("call to colorfill with non D3DPOOL_DEFAULT surface\n");
         return D3DERR_INVALIDCALL;
@@ -5115,6 +5178,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CleanRender(IWineD3DDevice* iface, IWineD3DSwa
     }
     return D3D_OK;
 }
+
 /* TODO: move this off into a context manager so that GLX_ATI_render_texture and other types of surface can be used. */
 HRESULT WINAPI IWineD3DDeviceImpl_FindGLContext(IWineD3DDevice *iface, IWineD3DSurface *pSurface, glContext **context) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -5338,7 +5402,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
         * In many cases I would expect that we can 'skip' some functions, such as preserving states,
         * and gain a good performance increase at the cost of compatibility.
         * I would suggest that, when this is the case, a user configurable flag be made
-        * available, allowing the user to choose the best emmulated experience for them.
+        * available, allowing the user to choose the best emulated experience for them.
          *********************************************************************/
 
         XVisualInfo *visinfo;
@@ -5823,7 +5887,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_CreateVertexDeclaration,
     IWineD3DDeviceImpl_CreateVertexShader,
     IWineD3DDeviceImpl_CreatePixelShader,
-
     /*** Odd functions **/
     IWineD3DDeviceImpl_EvictManagedResources,
     IWineD3DDeviceImpl_GetAvailableTextureMem,
@@ -5933,8 +5996,8 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetFrontBufferData,
     /*** Internal use IWineD3DDevice methods ***/
     IWineD3DDeviceImpl_SetupTextureStates,
-    IWineD3DDeviceImpl_SwapChainReleased,
     /*** object tracking ***/
+    IWineD3DDeviceImpl_SwapChainReleased,
     IWineD3DDeviceImpl_ResourceReleased
 };
 
