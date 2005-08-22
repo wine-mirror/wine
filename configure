@@ -7036,6 +7036,7 @@ done
 
 
 
+
 for ac_header in \
 	IOKit/IOKitLib.h \
 	alsa/asoundlib.h \
@@ -7106,6 +7107,7 @@ for ac_header in \
 	sys/filio.h \
 	sys/ioctl.h \
 	sys/ipc.h \
+	sys/limits.h \
 	sys/link.h \
 	sys/lwp.h \
 	sys/mman.h \

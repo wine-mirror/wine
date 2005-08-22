@@ -241,6 +241,7 @@ AC_CHECK_HEADERS(\
 	sys/filio.h \
 	sys/ioctl.h \
 	sys/ipc.h \
+	sys/limits.h \
 	sys/link.h \
 	sys/lwp.h \
 	sys/mman.h \
