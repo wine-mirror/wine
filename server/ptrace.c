@@ -197,23 +197,6 @@ int send_thread_signal( struct thread *thread, int sig )
     return (ret != -1);
 }
 
-/* detach from a Unix thread and kill it */
-void detach_thread( struct thread *thread, int sig )
-{
-    if (thread->unix_pid == -1) return;
-    if (thread->attached)
-    {
-        /* make sure it is stopped */
-        suspend_for_ptrace( thread );
-        if (sig) send_thread_signal( thread, sig );
-        if (thread->unix_pid == -1) return;
-        if (debug_level) fprintf( stderr, "%04x: *detached*\n", thread->id );
-        ptrace( PTRACE_DETACH, get_ptrace_pid(thread), (caddr_t)1, sig );
-        thread->attached = 0;
-    }
-    else if (sig) send_thread_signal( thread, sig );
-}
-
 /* attach to a Unix process with ptrace */
 int attach_process( struct process *process )
 {
@@ -242,7 +225,15 @@ void detach_process( struct process *process )
 
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
     {
-        if (thread->attached) detach_thread( thread, 0 );
+        if (thread->attached)
+        {
+            /* make sure it is stopped */
+            suspend_for_ptrace( thread );
+            if (thread->unix_pid == -1) return;
+            if (debug_level) fprintf( stderr, "%04x: *detached*\n", thread->id );
+            ptrace( PTRACE_DETACH, get_ptrace_pid(thread), (caddr_t)1, 0 );
+            thread->attached = 0;
+        }
     }
 }
 

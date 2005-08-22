@@ -122,7 +122,6 @@ extern struct token *thread_get_impersonation_token( struct thread *thread );
 
 extern void sigchld_callback(void);
 extern int get_ptrace_pid( struct thread *thread );
-extern void detach_thread( struct thread *thread, int sig );
 extern int attach_process( struct process *process );
 extern void detach_process( struct process *process );
 extern int suspend_for_ptrace( struct thread *thread );

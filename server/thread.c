@@ -766,7 +766,7 @@ void kill_thread( struct thread *thread, int violent_death )
     abandon_mutexes( thread );
     remove_process_thread( thread->process, thread );
     wake_up( &thread->obj, 0 );
-    detach_thread( thread, violent_death ? SIGTERM : 0 );
+    if (violent_death) send_thread_signal( thread, SIGTERM );
     cleanup_thread( thread );
     release_object( thread );
 }
