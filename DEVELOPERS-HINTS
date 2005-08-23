@@ -99,6 +99,7 @@ DLLs (under dlls/):
 	msvidc32/		- Microsoft Video-1 Decoder
 	msvideo/		- 16 bit video manager
 	mswsock/		- Misc networking
+	msxml3/			- MSXML Class Factory
 	netapi32/		- Network interface
 	newdev/			- New Hardware Device Library
 	ntdll/			- NT implementation of kernel calls
@@ -142,6 +143,7 @@ DLLs (under dlls/):
 	url/			- Internet shortcut shell extension
 	urlmon/			- URL Moniker allows binding to a URL
 	user/			- Window management, standard controls, etc.
+	usp10/			- Uniscribe Script Processor
 	uxtheme/		- Theme library
 	vdhcp.vxd/		- VDHCP VxD implementation
 	vdmdbg/			- Virtual DOS machine debug library
@@ -225,7 +227,6 @@ Support programs, libraries, etc:
 	dlls/strmiids/		- Exports class CLSIDs and interface IIDs
 	dlls/uuid/		- Windows-compatible UUID import lib
 	documentation/		- some documentation
-	documentation/samples/	- sample configuration files
 	include/		- Windows standard includes
 	include/msvcrt/		- MSVC compatible libc headers
 	include/wine/		- Wine specific headers
