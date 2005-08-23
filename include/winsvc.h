@@ -114,8 +114,9 @@ extern "C" {
 
 /* Handle types */
 
-typedef HANDLE SC_HANDLE, *LPSC_HANDLE;
-typedef DWORD  SERVICE_STATUS_HANDLE;
+DECLARE_HANDLE(SC_HANDLE);
+typedef SC_HANDLE *LPSC_HANDLE;
+DECLARE_HANDLE(SERVICE_STATUS_HANDLE);
 typedef LPVOID SC_LOCK;
 
 /* Service status structure */

@@ -895,7 +895,7 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
     service_data *service;
     BOOL r = TRUE;
 
-    TRACE("%lx %lx %lx %lx %lx %lx %lx %lx\n", hService,
+    TRACE("%p %lx %lx %lx %lx %lx %lx %lx\n", hService,
           lpStatus->dwServiceType, lpStatus->dwCurrentState,
           lpStatus->dwControlsAccepted, lpStatus->dwWin32ExitCode,
           lpStatus->dwServiceSpecificExitCode, lpStatus->dwCheckPoint,
@@ -1511,7 +1511,7 @@ BOOL WINAPI StartServiceW(SC_HANDLE hService, DWORD dwNumServiceArgs,
         return r;
     }
 
-    hLock = LockServiceDatabase(hsvc->scm);
+    hLock = LockServiceDatabase((SC_HANDLE)hsvc->scm);
     if (!hLock)
         return r;
 
@@ -2224,7 +2224,7 @@ BOOL WINAPI SetServiceBits( SERVICE_STATUS_HANDLE hServiceStatus,
         BOOL bSetBitsOn,
         BOOL bUpdateImmediately)
 {
-    FIXME("%08lx %08lx %x %x\n", hServiceStatus, dwServiceBits,
+    FIXME("%p %08lx %x %x\n", hServiceStatus, dwServiceBits,
           bSetBitsOn, bUpdateImmediately);
     return TRUE;
 }
