@@ -1,5 +1,3 @@
-
-
 /*
  * Digital video MCI Wine Driver
  *

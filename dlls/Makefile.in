@@ -70,6 +70,7 @@ BASEDIRS = \
 	kernel \
 	lzexpand \
 	mapi32 \
+	mciavi32 \
 	mcicda \
 	mciseq \
 	midimap \
@@ -157,7 +158,6 @@ BASEDIRS = \
 	wininet \
 	winmm \
 	winmm/joystick \
-	winmm/mciavi \
 	winmm/mciwave \
 	winmm/wavemap \
 	winmm/winealsa \
@@ -317,7 +317,7 @@ SYMLINKS_SO = \
 	libuuid.a \
 	lz32.dll.so \
 	mapi32.dll.so \
-	mciavi.drv.so \
+	mciavi32.dll.so \
 	mcicda.dll.so \
 	mciseq.dll.so \
 	mciwave.drv.so \
@@ -647,8 +647,8 @@ lzexpand.dll.so : lz32.dll.so
 mapi32.dll.so: mapi32/mapi32.dll.so
 	$(RM) $@ && $(LN_S) mapi32/mapi32.dll.so $@
 
-mciavi.drv.so: winmm/mciavi/mciavi.drv.so
-	$(RM) $@ && $(LN_S) winmm/mciavi/mciavi.drv.so $@
+mciavi32.dll.so: mciavi32/mciavi32.dll.so
+	$(RM) $@ && $(LN_S) mciavi32/mciavi32.dll.so $@
 
 mcicda.dll.so: mcicda/mcicda.dll.so
 	$(RM) $@ && $(LN_S) mcicda/mcicda.dll.so $@
@@ -1638,7 +1638,7 @@ winmm/joystick/joystick.drv.so: winmm/joystick
 kernel/kernel32.dll.so: kernel
 lzexpand/lz32.dll.so: lzexpand
 mapi32/mapi32.dll.so: mapi32
-winmm/mciavi/mciavi.drv.so: winmm/mciavi
+mciavi32/mciavi32.dll.so: mciavi32
 mcicda/mcicda.dll.so: mcicda
 mciseq/mciseq.dll.so: mciseq
 winmm/mciwave/mciwave.drv.so: winmm/mciwave

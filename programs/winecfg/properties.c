@@ -36,7 +36,7 @@ static const DLL_DESC sDLLType[] = {
     {"shdocvw", DLL_BUILTIN},
     {"advapi32", DLL_BUILTIN},
     {"msvcrt", DLL_NATIVE},
-    {"mciavi.drv", DLL_NATIVE},
+    {"mciavi32.dll", DLL_NATIVE},
     {"*", DLL_NATIVE},
     {"", -1}
 };

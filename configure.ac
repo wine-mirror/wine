@@ -1539,6 +1539,7 @@ dlls/lzexpand/Makefile
 dlls/lzexpand/tests/Makefile
 dlls/mapi32/Makefile
 dlls/mapi32/tests/Makefile
+dlls/mciavi32/Makefile
 dlls/mcicda/Makefile
 dlls/mciseq/Makefile
 dlls/midimap/Makefile
@@ -1654,7 +1655,6 @@ dlls/wininet/Makefile
 dlls/wininet/tests/Makefile
 dlls/winmm/Makefile
 dlls/winmm/joystick/Makefile
-dlls/winmm/mciavi/Makefile
 dlls/winmm/mciwave/Makefile
 dlls/winmm/tests/Makefile
 dlls/winmm/wavemap/Makefile
