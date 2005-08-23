@@ -137,7 +137,7 @@ HRESULT WINAPI IDirect3DSurface9Impl_GetContainer(LPDIRECT3DSURFACE9 iface, REFI
             IUnknown_Release(myContainer);
         } else
         if(D3D_OK == IUnknown_QueryInterface(IWineContainer, &IID_IWineD3DSwapChain, (void **)&myContainer)){
-            IWineD3DBaseTexture_GetParent((IWineD3DBaseTexture *)IWineContainer, &IUnknownParent);
+            IWineD3DSwapChain_GetParent((IWineD3DSwapChain *)IWineContainer, &IUnknownParent);
             IUnknown_Release(myContainer);
         }else{
             FIXME("Container is of unknown interface\n");
@@ -206,9 +206,11 @@ HRESULT WINAPI IDirect3DSurface9Impl_ReleaseDC(LPDIRECT3DSURFACE9 iface, HDC hdc
 
 const IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl =
 {
+    /* IUnknown */
     IDirect3DSurface9Impl_QueryInterface,
     IDirect3DSurface9Impl_AddRef,
     IDirect3DSurface9Impl_Release,
+    /* IDirect3DResource9 */
     IDirect3DSurface9Impl_GetDevice,
     IDirect3DSurface9Impl_SetPrivateData,
     IDirect3DSurface9Impl_GetPrivateData,
@@ -217,6 +219,7 @@ const IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl =
     IDirect3DSurface9Impl_GetPriority,
     IDirect3DSurface9Impl_PreLoad,
     IDirect3DSurface9Impl_GetType,
+    /* IDirect3DSurface9 */
     IDirect3DSurface9Impl_GetContainer,
     IDirect3DSurface9Impl_GetDesc,
     IDirect3DSurface9Impl_LockRect,

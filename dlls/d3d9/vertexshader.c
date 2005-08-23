@@ -91,8 +91,8 @@ const IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl =
     /* IUnknown */
     IDirect3DVertexShader9Impl_QueryInterface,
     IDirect3DVertexShader9Impl_AddRef,
-    IDirect3DVertexShader9Impl_Release
-    /* IDirect3DVertexShader9 */,
+    IDirect3DVertexShader9Impl_Release,
+    /* IDirect3DVertexShader9 */
     IDirect3DVertexShader9Impl_GetDevice,
     IDirect3DVertexShader9Impl_GetFunction
 };

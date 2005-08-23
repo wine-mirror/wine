@@ -133,9 +133,11 @@ HRESULT  WINAPI        IDirect3DIndexBuffer9Impl_GetDesc(LPDIRECT3DINDEXBUFFER9 
 
 const IDirect3DIndexBuffer9Vtbl Direct3DIndexBuffer9_Vtbl =
 {
+    /* IUnknown */
     IDirect3DIndexBuffer9Impl_QueryInterface,
     IDirect3DIndexBuffer9Impl_AddRef,
     IDirect3DIndexBuffer9Impl_Release,
+    /* IDirect3DResource9 */
     IDirect3DIndexBuffer9Impl_GetDevice,
     IDirect3DIndexBuffer9Impl_SetPrivateData,
     IDirect3DIndexBuffer9Impl_GetPrivateData,
@@ -144,6 +146,7 @@ const IDirect3DIndexBuffer9Vtbl Direct3DIndexBuffer9_Vtbl =
     IDirect3DIndexBuffer9Impl_GetPriority,
     IDirect3DIndexBuffer9Impl_PreLoad,
     IDirect3DIndexBuffer9Impl_GetType,
+    /* IDirect3DIndexBuffer9 */
     IDirect3DIndexBuffer9Impl_Lock,
     IDirect3DIndexBuffer9Impl_Unlock,
     IDirect3DIndexBuffer9Impl_GetDesc

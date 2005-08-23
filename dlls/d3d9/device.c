@@ -32,7 +32,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_QueryInterface(LPDIRECT3DDEVICE9 iface, REFI
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DDevice9)) {
-        IDirect3DDevice9Impl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
@@ -168,7 +168,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9 iface, D3DPRESENT_
         
     localParameters.BackBufferWidth                = &pPresentationParameters->BackBufferWidth;
     localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;           
-    localParameters.BackBufferFormat               = &pPresentationParameters->BackBufferFormat;           
+    localParameters.BackBufferFormat               = (WINED3DFORMAT *)&pPresentationParameters->BackBufferFormat;
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;            
     localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;            
     localParameters.MultiSampleQuality             = &pPresentationParameters->MultiSampleQuality;         
@@ -176,7 +176,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9 iface, D3DPRESENT_
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;              
     localParameters.Windowed                       = &pPresentationParameters->Windowed;                   
     localParameters.EnableAutoDepthStencil         = &pPresentationParameters->EnableAutoDepthStencil;     
-    localParameters.AutoDepthStencilFormat         = &pPresentationParameters->AutoDepthStencilFormat;     
+    localParameters.AutoDepthStencilFormat         = (WINED3DFORMAT *)&pPresentationParameters->AutoDepthStencilFormat;     
     localParameters.Flags                          = &pPresentationParameters->Flags;                      
     localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz; 
     localParameters.PresentationInterval           = &pPresentationParameters->PresentationInterval;       
@@ -813,9 +813,11 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_DeletePatch(LPDIRECT3DDEVICE9 iface, UINT 
 
 const IDirect3DDevice9Vtbl Direct3DDevice9_Vtbl =
 {
+    /* IUnknown */
     IDirect3DDevice9Impl_QueryInterface,
     IDirect3DDevice9Impl_AddRef,
     IDirect3DDevice9Impl_Release,
+    /* IDirect3DDevice9 */
     IDirect3DDevice9Impl_TestCooperativeLevel,
     IDirect3DDevice9Impl_GetAvailableTextureMem,
     IDirect3DDevice9Impl_EvictManagedResources,

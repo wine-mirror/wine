@@ -2,7 +2,8 @@
  * Direct3D 9
  *
  * Copyright 2002-2003 Jason Edmeades
- *                     Raphael Junqueira
+ * Copyright 2002-2003 Raphael Junqueira
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,7 +25,7 @@
 #include "initguid.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
@@ -72,15 +73,15 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv) {
 /***********************************************************************
  *		ValidateVertexShader (D3D9.@)
  */
-BOOL WINAPI ValidateVertexShader(LPVOID what, LPVOID toto) {
-  FIXME("(void): stub: %p %p\n", what, toto);
+BOOL WINAPI ValidateVertexShader(LPVOID pFunction, int param1, int param2, LPVOID toto/* result? */) {
+  FIXME("(void): stub: %p %d %d %p\n", pFunction, param1, param2, toto);
   return TRUE;
 }
 
 /***********************************************************************
  *		ValidatePixelShader (D3D9.@)
  */
-BOOL WINAPI ValidatePixelShader(LPVOID what, LPVOID toto) {
-  FIXME("(void): stub: %p %p\n", what, toto);
+BOOL WINAPI ValidatePixelShader(LPVOID pFunction, int param1, int param2, LPVOID toto/* result?*/) {
+  FIXME("(void): stub: %p %d %d %p\n", pFunction, param1, param2, toto);
   return TRUE;
 }

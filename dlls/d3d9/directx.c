@@ -22,7 +22,7 @@
 #include "config.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3D9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3D9Impl_QueryInterface(LPDIRECT3D9 iface, REFIID riid, LPVOID* ppobj)
@@ -31,7 +31,7 @@ HRESULT WINAPI IDirect3D9Impl_QueryInterface(LPDIRECT3D9 iface, REFIID riid, LPV
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3D9)) {
-        IDirect3D9Impl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
@@ -294,7 +294,7 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
     /* Allocate an associated WineD3DDevice object */
     localParameters.BackBufferWidth                = &pPresentationParameters->BackBufferWidth;
     localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;
-    localParameters.BackBufferFormat               = &pPresentationParameters->BackBufferFormat;
+    localParameters.BackBufferFormat               = (WINED3DFORMAT *)&pPresentationParameters->BackBufferFormat;
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;
     localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;
     localParameters.MultiSampleQuality             = &pPresentationParameters->MultiSampleQuality;
@@ -302,7 +302,7 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;
     localParameters.Windowed                       = &pPresentationParameters->Windowed;
     localParameters.EnableAutoDepthStencil         = &pPresentationParameters->EnableAutoDepthStencil;
-    localParameters.AutoDepthStencilFormat         = &pPresentationParameters->AutoDepthStencilFormat;
+    localParameters.AutoDepthStencilFormat         = (WINED3DFORMAT *)&pPresentationParameters->AutoDepthStencilFormat;
     localParameters.Flags                          = &pPresentationParameters->Flags;
     localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz; 
     localParameters.PresentationInterval           = &pPresentationParameters->PresentationInterval;
@@ -323,9 +323,11 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
 
 const IDirect3D9Vtbl Direct3D9_Vtbl =
 {
+    /* IUnknown */
     IDirect3D9Impl_QueryInterface,
     IDirect3D9Impl_AddRef,
     IDirect3D9Impl_Release,
+    /* IDirect3D9 */
     IDirect3D9Impl_RegisterSoftwareDevice,
     IDirect3D9Impl_GetAdapterCount,
     IDirect3D9Impl_GetAdapterIdentifier,

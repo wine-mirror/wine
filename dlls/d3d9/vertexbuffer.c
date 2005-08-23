@@ -134,9 +134,11 @@ HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDesc(LPDIRECT3DVERTEXBUFFER9 iface,
 
 const IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl =
 {
+    /* IUnknown */
     IDirect3DVertexBuffer9Impl_QueryInterface,
     IDirect3DVertexBuffer9Impl_AddRef,
     IDirect3DVertexBuffer9Impl_Release,
+    /* IDirect3DResource9 */
     IDirect3DVertexBuffer9Impl_GetDevice,
     IDirect3DVertexBuffer9Impl_SetPrivateData,
     IDirect3DVertexBuffer9Impl_GetPrivateData,
@@ -145,6 +147,7 @@ const IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl =
     IDirect3DVertexBuffer9Impl_GetPriority,
     IDirect3DVertexBuffer9Impl_PreLoad,
     IDirect3DVertexBuffer9Impl_GetType,
+    /* IDirect3DVertexBuffer9 */
     IDirect3DVertexBuffer9Impl_Lock,
     IDirect3DVertexBuffer9Impl_Unlock,
     IDirect3DVertexBuffer9Impl_GetDesc

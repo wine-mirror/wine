@@ -401,7 +401,7 @@ typedef struct _WINED3DADAPTER_IDENTIFIER {
 typedef struct _WINED3DPRESENT_PARAMETERS {
     UINT                *BackBufferWidth;
     UINT                *BackBufferHeight;
-    D3DFORMAT           *BackBufferFormat;
+    WINED3DFORMAT       *BackBufferFormat;
     UINT                *BackBufferCount;
     D3DMULTISAMPLE_TYPE *MultiSampleType;
     DWORD               *MultiSampleQuality;
@@ -409,7 +409,7 @@ typedef struct _WINED3DPRESENT_PARAMETERS {
     HWND                *hDeviceWindow;
     BOOL                *Windowed;
     BOOL                *EnableAutoDepthStencil;
-    D3DFORMAT           *AutoDepthStencilFormat;
+    WINED3DFORMAT       *AutoDepthStencilFormat;
     DWORD               *Flags;
     UINT                *FullScreen_RefreshRateInHz;
     UINT                *PresentationInterval;

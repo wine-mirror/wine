@@ -22,7 +22,7 @@
 #include "config.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DPixelShader9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DPixelShader9Impl_QueryInterface(LPDIRECT3DPIXELSHADER9 iface, REFIID riid, LPVOID* ppobj) {
@@ -84,9 +84,11 @@ HRESULT WINAPI IDirect3DPixelShader9Impl_GetFunction(LPDIRECT3DPIXELSHADER9 ifac
 
 const IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl =
 {
+    /* IUnknown */
     IDirect3DPixelShader9Impl_QueryInterface,
     IDirect3DPixelShader9Impl_AddRef,
     IDirect3DPixelShader9Impl_Release,
+    /* IDirect3DPixelShader9 */
     IDirect3DPixelShader9Impl_GetDevice,
     IDirect3DPixelShader9Impl_GetFunction
 };
@@ -101,24 +103,24 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreatePixelShader(LPDIRECT3DDEVICE9 iface, C
     FIXME("(%p) Relay (disabled)\n", This);
     *ppShader = NULL;
     return D3D_OK;
-    if(ppShader == NULL){
+    if (ppShader == NULL) {
         TRACE("(%p) Invalid call\n", This);
         return D3DERR_INVALIDCALL;
     }
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
 
-    if(NULL == object){
+    if (NULL == object) {
         return E_OUTOFMEMORY;
-    }else{
+    } else {
 
         object->ref    = 1;
         object->lpVtbl = &Direct3DPixelShader9_Vtbl;
         hrc = IWineD3DDevice_CreatePixelShader(This->WineD3DDevice, pFunction, &object->wineD3DPixelShader , (IUnknown *)object);
-        if(hrc != D3D_OK){
+        if (hrc != D3D_OK) {
             FIXME("(%p) call to IWineD3DDevice_CreatePixelShader failed\n", This);
             HeapFree(GetProcessHeap(), 0 , object);
             *ppShader = NULL;
-        }else{
+        } else {
             *ppShader = (IDirect3DPixelShader9*) object;
         }
 
@@ -142,15 +144,17 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(LPDIRECT3DDEVICE9 iface, IDir
 
     HRESULT hrc = D3D_OK;
     TRACE("(%p) Relay\n", This);
-    if(ppShader == NULL){
+    if (ppShader == NULL) {
         TRACE("(%p) Invalid call\n", This);
         return D3DERR_INVALIDCALL;
     }
 
     hrc = IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &object);
-    if(hrc == D3D_OK && object != NULL){
+    if (hrc == D3D_OK && object != NULL) {
        hrc = IWineD3DPixelShader_GetParent(object, (IUnknown **)ppShader);
        IWineD3DPixelShader_Release(object);
+    } else {
+        *ppShader = NULL;
     }
 
     TRACE("(%p) : returning %p\n", This, *ppShader);

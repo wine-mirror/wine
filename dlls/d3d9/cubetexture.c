@@ -209,9 +209,11 @@ HRESULT  WINAPI IDirect3DCubeTexture9Impl_AddDirtyRect(LPDIRECT3DCUBETEXTURE9 if
 
 const IDirect3DCubeTexture9Vtbl Direct3DCubeTexture9_Vtbl =
 {
+    /* IUnknown */
     IDirect3DCubeTexture9Impl_QueryInterface,
     IDirect3DCubeTexture9Impl_AddRef,
     IDirect3DCubeTexture9Impl_Release,
+    /* IDirect3DResource9 */
     IDirect3DCubeTexture9Impl_GetDevice,
     IDirect3DCubeTexture9Impl_SetPrivateData,
     IDirect3DCubeTexture9Impl_GetPrivateData,
@@ -220,6 +222,7 @@ const IDirect3DCubeTexture9Vtbl Direct3DCubeTexture9_Vtbl =
     IDirect3DCubeTexture9Impl_GetPriority,
     IDirect3DCubeTexture9Impl_PreLoad,
     IDirect3DCubeTexture9Impl_GetType,
+    /* IDirect3DBaseTexture9 */
     IDirect3DCubeTexture9Impl_SetLOD,
     IDirect3DCubeTexture9Impl_GetLOD,
     IDirect3DCubeTexture9Impl_GetLevelCount,

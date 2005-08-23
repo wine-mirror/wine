@@ -23,7 +23,7 @@
 #include "config.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DStateBlock9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DStateBlock9Impl_QueryInterface(LPDIRECT3DSTATEBLOCK9 iface, REFIID riid, LPVOID* ppobj) {
@@ -112,7 +112,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateStateBlock(LPDIRECT3DDEVICE9 iface, D3
    object->lpVtbl = &Direct3DStateBlock9_Vtbl;
    object->ref = 1;
    
-   hrc=IWineD3DDevice_CreateStateBlock(This->WineD3DDevice, (WINED3DSTATEBLOCKTYPE)Type, &object->wineD3DStateBlock, (IUnknown*)object);
+   hrc = IWineD3DDevice_CreateStateBlock(This->WineD3DDevice, (WINED3DSTATEBLOCKTYPE)Type, &object->wineD3DStateBlock, (IUnknown*)object);
    if(hrc != D3D_OK){
        FIXME("(%p) Call to IWineD3DDevice_CreateStateBlock failed.\n", This);
        HeapFree(GetProcessHeap(), 0, object);

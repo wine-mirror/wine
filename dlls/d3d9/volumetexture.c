@@ -158,7 +158,7 @@ HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetLevelDesc(LPDIRECT3DVOLUMETEXTURE9
     TRACE("(%p) Relay\n", This);
 
     /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
-    wined3ddesc.Format              = (WINED3DFORMAT*) &pDesc->Format;
+    wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
     wined3ddesc.Type                = &pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
     wined3ddesc.Pool                = &pDesc->Pool;
@@ -206,9 +206,11 @@ HRESULT WINAPI IDirect3DVolumeTexture9Impl_AddDirtyBox(LPDIRECT3DVOLUMETEXTURE9 
 
 const IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl =
 {
+    /* IUnknown */
     IDirect3DVolumeTexture9Impl_QueryInterface,
     IDirect3DVolumeTexture9Impl_AddRef,
     IDirect3DVolumeTexture9Impl_Release,
+    /* IDirect3DResource9 */
     IDirect3DVolumeTexture9Impl_GetDevice,
     IDirect3DVolumeTexture9Impl_SetPrivateData,
     IDirect3DVolumeTexture9Impl_GetPrivateData,
@@ -217,12 +219,14 @@ const IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl =
     IDirect3DVolumeTexture9Impl_GetPriority,
     IDirect3DVolumeTexture9Impl_PreLoad,
     IDirect3DVolumeTexture9Impl_GetType,
+    /* IDirect3DBaseTexture9 */
     IDirect3DVolumeTexture9Impl_SetLOD,
     IDirect3DVolumeTexture9Impl_GetLOD,
     IDirect3DVolumeTexture9Impl_GetLevelCount,
     IDirect3DVolumeTexture9Impl_SetAutoGenFilterType,
     IDirect3DVolumeTexture9Impl_GetAutoGenFilterType,
     IDirect3DVolumeTexture9Impl_GenerateMipSubLevels,
+    /* IDirect3DVolumeTexture9 */
     IDirect3DVolumeTexture9Impl_GetLevelDesc,
     IDirect3DVolumeTexture9Impl_GetVolumeLevel,
     IDirect3DVolumeTexture9Impl_LockBox,

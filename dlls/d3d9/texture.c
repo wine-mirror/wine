@@ -206,9 +206,11 @@ HRESULT WINAPI IDirect3DTexture9Impl_AddDirtyRect(LPDIRECT3DTEXTURE9 iface, CONS
 
 const IDirect3DTexture9Vtbl Direct3DTexture9_Vtbl =
 {
+    /* IUnknown */
     IDirect3DTexture9Impl_QueryInterface,
     IDirect3DTexture9Impl_AddRef,
     IDirect3DTexture9Impl_Release,
+     /* IDirect3DResource9 */
     IDirect3DTexture9Impl_GetDevice,
     IDirect3DTexture9Impl_SetPrivateData,
     IDirect3DTexture9Impl_GetPrivateData,
@@ -217,13 +219,14 @@ const IDirect3DTexture9Vtbl Direct3DTexture9_Vtbl =
     IDirect3DTexture9Impl_GetPriority,
     IDirect3DTexture9Impl_PreLoad,
     IDirect3DTexture9Impl_GetType,
-    
+    /* IDirect3dBaseTexture9 */
     IDirect3DTexture9Impl_SetLOD,
     IDirect3DTexture9Impl_GetLOD,
     IDirect3DTexture9Impl_GetLevelCount,
     IDirect3DTexture9Impl_SetAutoGenFilterType,
     IDirect3DTexture9Impl_GetAutoGenFilterType,
     IDirect3DTexture9Impl_GenerateMipSubLevels,
+    /* IDirect3DTexture9 */
     IDirect3DTexture9Impl_GetLevelDesc,
     IDirect3DTexture9Impl_GetSurfaceLevel,
     IDirect3DTexture9Impl_LockRect,
