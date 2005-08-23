@@ -142,12 +142,17 @@ typedef struct
 #define BUTTON_SPACINGX         3
 #define BUTTON_SPACINGY         3
 #define FLAT_BTN_SPACINGX       8
-#define DEFAULT_TAB_WIDTH       96
+#define DEFAULT_MIN_TAB_WIDTH   54
+#define DEFAULT_TAB_WIDTH_FIXED 96
+#define DEFAULT_PADDING_X       6
+#define EXTRA_ICON_PADDING      3
 
 #define TAB_GetInfoPtr(hwnd) ((TAB_INFO *)GetWindowLongPtrW(hwnd,0))
 /* Since items are variable sized, cannot directly access them */
 #define TAB_GetItem(info,i) \
   ((TAB_ITEM*)((LPBYTE)info->items + (i) * TAB_ITEM_SIZE(info)))
+
+#define GET_DEFAULT_MIN_TAB_WIDTH(infoPtr) (DEFAULT_MIN_TAB_WIDTH - (DEFAULT_PADDING_X - (infoPtr)->uHItemPadding) * 2)
 
 /******************************************************************************
  * Hot-tracking timer constants
@@ -1163,23 +1168,43 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
     /* Set the leftmost position of the tab. */
     curr->rect.left = curItemLeftPos;
 
-    if ((lStyle & TCS_FIXEDWIDTH) || !curr->pszText)
+    if (lStyle & TCS_FIXEDWIDTH)
     {
       curr->rect.right = curr->rect.left +
         max(infoPtr->tabWidth, icon_width);
     }
+    else if (!curr->pszText)
+    {
+      /* If no text use minimum tab width including padding. */
+      if (infoPtr->tabMinWidth < 0)
+        curr->rect.right = curr->rect.left + GET_DEFAULT_MIN_TAB_WIDTH(infoPtr);
+      else
+      {
+        curr->rect.right = curr->rect.left + infoPtr->tabMinWidth;
+
+        /* Add extra padding if icon is present */
+        if (infoPtr->himl && infoPtr->tabMinWidth > 0 && infoPtr->tabMinWidth < DEFAULT_MIN_TAB_WIDTH
+            && infoPtr->uHItemPadding > 1)
+          curr->rect.right += EXTRA_ICON_PADDING * (infoPtr->uHItemPadding-1);
+      }
+    }
     else
     {
-      int num = 2;
-
+      int tabwidth;
       /* Calculate how wide the tab is depending on the text it contains */
       GetTextExtentPoint32W(hdc, curr->pszText,
                             lstrlenW(curr->pszText), &size);
 
-      curr->rect.right = curr->rect.left + size.cx + icon_width +
-                         num * infoPtr->uHItemPadding;
-      TRACE("for <%s>, l,r=%ld,%ld, num=%d\n",
-	  debugstr_w(curr->pszText), curr->rect.left, curr->rect.right, num);
+      tabwidth = size.cx + icon_width + 2 * infoPtr->uHItemPadding;
+
+      if (infoPtr->tabMinWidth < 0)
+        tabwidth = max(tabwidth, GET_DEFAULT_MIN_TAB_WIDTH(infoPtr));
+      else
+        tabwidth = max(tabwidth, infoPtr->tabMinWidth);
+
+      curr->rect.right = curr->rect.left + tabwidth;
+      TRACE("for <%s>, l,r=%ld,%ld\n",
+	  debugstr_w(curr->pszText), curr->rect.left, curr->rect.right);
     }
 
     /*
@@ -2648,7 +2673,7 @@ TAB_SetItemSize (TAB_INFO *infoPtr, LPARAM lParam)
   /* UNDOCUMENTED: If requested Width or Height is 0 this means that program wants to use auto size. */
   if (lStyle & TCS_FIXEDWIDTH && (infoPtr->tabWidth != (INT)LOWORD(lParam)))
   {
-    infoPtr->tabWidth = max((INT)LOWORD(lParam), infoPtr->tabMinWidth);
+    infoPtr->tabWidth = (INT)LOWORD(lParam);
     bNeedPaint = TRUE;
   }
 
@@ -2680,8 +2705,9 @@ static inline LRESULT TAB_SetMinTabWidth (TAB_INFO *infoPtr, INT cx)
 
   if (infoPtr) {
     oldcx = infoPtr->tabMinWidth;
-    infoPtr->tabMinWidth = (cx==-1)?DEFAULT_TAB_WIDTH:cx;
+    infoPtr->tabMinWidth = cx;
   }
+  TAB_SetItemBounds(infoPtr);
 
   return oldcx;
 }
@@ -3041,8 +3067,10 @@ static LRESULT TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
                         infoPtr->uVItemPadding;
 
   /* Initialize the width of a tab. */
-  infoPtr->tabWidth = DEFAULT_TAB_WIDTH;
-  infoPtr->tabMinWidth = 0;
+  if (dwStyle & TCS_FIXEDWIDTH)
+    infoPtr->tabWidth = DEFAULT_TAB_WIDTH_FIXED;
+
+  infoPtr->tabMinWidth = -1;
 
   TRACE("tabH=%d, tabW=%d\n", infoPtr->tabHeight, infoPtr->tabWidth);
 
