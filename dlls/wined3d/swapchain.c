@@ -324,24 +324,32 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
 
 HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface, IWineD3DSurface *pDestSurface) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)pDestSurface;
-    GLenum format;
-    GLenum type;
+    WINED3DFORMAT d3dformat;
+    int width;
+    int height;
+    WINED3DSURFACE_DESC desc;
+    glDescriptor *glDescription;
 
     TRACE("(%p) : iface(%p) pDestSurface(%p) \n", This, iface, pDestSurface);
     ENTER_GL();
-
-    /* check to see if it's the backbuffer or the frontbuffer being requested (to make sure the data is up to date) */
-    format = D3DFmt2GLFmt(This->wineD3DDevice, surface->resource.format);
-    type   = D3DFmt2GLType(This->wineD3DDevice, surface->resource.format);
+    desc.Width =  &width;
+    desc.Height = &height;
+    desc.Format = &d3dformat;
+#if 0 /* TODO: make sure that this swapchains context is active */
+    IWineD3DDevice_ActivateSwapChainContext(This->wineD3DDevice, iface);
+#endif
+    IWineD3DSurface_GetDesc(pDestSurface, &desc);
+    /* make sure that the front buffer is the active read buffer */
     glReadBuffer(GL_FRONT);
-    glReadPixels(0,
-                0,
-                surface->currentDesc.Width,
-                surface->currentDesc.Height,
-                format,
-                type,
-                surface->resource.allocatedMemory);
+    /* Read the pixels from the buffer into the surfaces memory */
+    IWineD3DSurface_GetGlDesc(pDestSurface, &glDescription);
+    glReadPixels(glDescription->target,
+                glDescription->level,
+                width,
+                height,
+                glDescription->glFormat,
+                glDescription->glType,
+                (void *)IWineD3DSurface_GetData(pDestSurface));
     LEAVE_GL();
     return D3D_OK;
 }
