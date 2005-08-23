@@ -159,17 +159,7 @@ REQUIREMENTS
 
 Successfully installing Wine requires:
 
-    * Install the RPM.
-
-    * No longer: A configuration file
-
-        Wine will run without a configuration file at this time.  Wine
-	provides a sample config file and it can be found in
-	documentation/samples.
-
-        Some packagers may attempt to provide (or dynamically generate) a
-	default configuration file. Some packagers may copy this on
-	startup, but it is no longer necessary.
+    * Install of the .rpm or .deb package.
 
     * No longer: Preparing a fake windows setup.
 
@@ -259,10 +249,6 @@ WINE COMPONENTS
         they should be handled.  This section attempts
         to explain the alternatives clearly.
 
-        - WINEPREFIX/config
-            This file is the user local Wine configuration file.
-            At the time of this writing, if this file exists,
-            then no other configuration file is loaded.
 
         - PREFIX/share/wine.inf
 	
@@ -465,13 +451,8 @@ You will need to package the files:
 	%config /etc/wine/*
 	%doc ... choose from the top level directory and documentation/
 
-2. Creating a good default configuration file.
 
-This is no longer necessary, most of this work is now done
-by wineprefixcreate itself.
-
-
-3. Installing Wine for the system administrator
+2. Installing Wine for the system administrator
 
 Install the package using the usual packager 'rpm -i wine.rpm'.
 
@@ -491,7 +472,7 @@ Also make sure that the kernel you use includes the Joliet CD-ROM support,
 for the very same reasons as given above (no long filenames due to missing
 Joliet, files not found).
 
-4. Installing Wine for the user
+3. Installing Wine for the user
 
 If no standard wine prefix was setup, the first call to wine will
 create one for the user.
