@@ -200,7 +200,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     if ( !resTab ) return FALSE;
 
     LZSeek( lzfd, nehd.ne_rsrctab + nehdoffset, SEEK_SET );
-    if ( resTabSize != LZRead( lzfd, resTab, resTabSize ) )
+    if ( resTabSize != LZRead( lzfd, (char*)resTab, resTabSize ) )
     {
         HeapFree( GetProcessHeap(), 0, resTab );
         return FALSE;
@@ -217,7 +217,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
             if (!(typeInfo->type_id & 0x8000))
             {
                 BYTE *p = resTab + typeInfo->type_id;
-                if ((*p == len) && !strncasecmp( p+1, typeid, len )) goto found_type;
+                if ((*p == len) && !strncasecmp( (char*)p+1, typeid, len )) goto found_type;
             }
             typeInfo = (NE_TYPEINFO *)((char *)(typeInfo + 1) +
                                        typeInfo->count * sizeof(NE_NAMEINFO));
@@ -247,7 +247,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
         {
             BYTE *p = resTab + nameInfo->id;
             if (nameInfo->id & 0x8000) continue;
-            if ((*p == len) && !strncasecmp( p+1, resid, len )) goto found_name;
+            if ((*p == len) && !strncasecmp( (char*)p+1, resid, len )) goto found_name;
         }
     }
     else  /* numeric resource id */
@@ -340,7 +340,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     }
 
     LZSeek( lzfd, sections[i].PointerToRawData, SEEK_SET );
-    if ( resSectionSize != LZRead( lzfd, resSection, resSectionSize ) ) goto done;
+    if ( resSectionSize != LZRead( lzfd, (char*)resSection, resSectionSize ) ) goto done;
 
     /* Find resource */
     resDir = resSection + (resDataDir->VirtualAddress - sections[i].VirtualAddress);

@@ -223,7 +223,7 @@ TW_UINT16 TWAIN_ICAPXferMech (activeDS *pSource, pTW_CAPABILITY pCapability,
         case MSG_SET:
             if (pCapability->ConType == TWON_ONEVALUE)
             {
-		TW_UINT32 xfermechtemp;
+		TW_UINT32 xfermechtemp = 0;
                 if (!TWAIN_OneValueGet (pCapability, &xfermechtemp))
                     return TWCC_LOWMEMORY;
 		pSource->capXferMech = xfermechtemp;

@@ -206,7 +206,7 @@ static void create_test_association(const char* extension)
     rc=RegCreateKeyEx(HKEY_CLASSES_ROOT, extension, 0, NULL, 0, KEY_SET_VALUE,
                       NULL, &hkey, NULL);
     assert(rc==ERROR_SUCCESS);
-    rc=RegSetValueEx(hkey, NULL, 0, REG_SZ, class, strlen(class)+1);
+    rc=RegSetValueEx(hkey, NULL, 0, REG_SZ, (LPBYTE) class, strlen(class)+1);
     assert(rc==ERROR_SUCCESS);
     CloseHandle(hkey);
 
@@ -250,7 +250,7 @@ static void create_test_verb(const char* extension, const char* verb,
 
     cmd=malloc(strlen(argv0)+10+strlen(child_file)+2+strlen(cmdtail)+1);
     sprintf(cmd,"%s shlexec \"%s\" %s", argv0, child_file, cmdtail);
-    rc=RegSetValueEx(hkey_cmd, NULL, 0, REG_SZ, cmd, strlen(cmd)+1);
+    rc=RegSetValueEx(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE) cmd, strlen(cmd)+1);
     assert(rc==ERROR_SUCCESS);
 
     free(cmd);

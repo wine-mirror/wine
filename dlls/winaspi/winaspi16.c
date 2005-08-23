@@ -391,6 +391,8 @@ DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
 {
 #ifdef linux
   LPSRB16 lpSRB = PTR_TO_LIN( ptrSRB, mode );
+  static const char szId[] = "Wine ASPI16";
+  static const char szWh[] = "Wine host";
 
   if (mode == ASPI_WIN16 && ASPIChainFunc)
   {
@@ -412,8 +414,8 @@ DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
     lpSRB->inquiry.SRB_ExtBufferSize = 0x2000; /* bogus value */
     lpSRB->inquiry.HA_Count = HA_Count;
     lpSRB->inquiry.HA_SCSI_ID = 7;             /* not always ID 7 */
-    strcat(lpSRB->inquiry.HA_ManagerId, "Wine ASPI16"); /* max 15 chars */
-    strcat(lpSRB->inquiry.HA_Identifier, "Wine host"); /* FIXME: return host
+    memcpy(lpSRB->inquiry.HA_ManagerId, szId, sizeof szId); /* max 15 chars */
+    memcpy(lpSRB->inquiry.HA_Identifier, szWh, sizeof szWh); /* FIXME: return host
 adapter name */
     memset(lpSRB->inquiry.HA_Unique, 0, 16); /* default HA_Unique content */
     lpSRB->inquiry.HA_Unique[6] = 0x02; /* Maximum Transfer Length (128K, Byte> 4-7) */

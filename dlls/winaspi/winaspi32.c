@@ -513,13 +513,15 @@ DWORD __cdecl GetASPI32SupportInfo(void)
 DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
 {
 #ifdef linux
+  static const char szId[] = "ASPI for WIN32";
+  static const char szWh[] = "Wine host";
   switch (lpSRB->common.SRB_Cmd) {
   case SC_HA_INQUIRY:
     lpSRB->inquiry.SRB_Status = SS_COMP;       /* completed successfully */
     lpSRB->inquiry.HA_Count = ASPI_GetNumControllers();
     lpSRB->inquiry.HA_SCSI_ID = 7;             /* not always ID 7 */
-    strcpy(lpSRB->inquiry.HA_ManagerId, "ASPI for WIN32"); /* max 15 chars, don't change */
-    strcpy(lpSRB->inquiry.HA_Identifier, "Wine host"); /* FIXME: return host adapter name */
+    memcpy(lpSRB->inquiry.HA_ManagerId, szId, sizeof szId); /* max 15 chars, don't change */
+    memcpy(lpSRB->inquiry.HA_Identifier, szWh, sizeof szWh); /* FIXME: return host adapter name */
     memset(lpSRB->inquiry.HA_Unique, 0, 16); /* default HA_Unique content */
     lpSRB->inquiry.HA_Unique[6] = 0x02; /* Maximum Transfer Length (128K, Byte> 4-7) */
     lpSRB->inquiry.HA_Unique[3] = 0x08; /* Maximum number of SCSI targets */
@@ -530,7 +532,7 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
     /* FIXME: We should return SS_NO_DEVICE if the device is not configured */
     /* FIXME: We should return SS_INVALID_HA if HostAdapter!=0 */
     SRB		tmpsrb;
-    char	inqbuf[200];
+    unsigned char inqbuf[200];
     DWORD	ret;
 
     memset(&tmpsrb,0,sizeof(tmpsrb));
