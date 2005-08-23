@@ -225,10 +225,22 @@ int track_tempfile( MSIPACKAGE *package, LPCWSTR name, LPCWSTR path )
     return 0;
 }
 
+MSIFOLDER *get_loaded_folder( MSIPACKAGE *package, LPCWSTR dir )
+{
+    MSIFOLDER *folder;
+    
+    LIST_FOR_EACH_ENTRY( folder, &package->folders, MSIFOLDER, entry )
+    {
+        if (lstrcmpW( dir, folder->Directory )==0)
+            return folder;
+    }
+    return NULL;
+}
+
 LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source, 
                       BOOL set_prop, MSIFOLDER **folder)
 {
-    DWORD i;
+    MSIFOLDER *f;
     LPWSTR p, path = NULL;
 
     TRACE("Working to resolve %s\n",debugstr_w(name));
@@ -254,17 +266,6 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
             path = build_directory_name(2, check_path, NULL);
             if (strcmpiW(path,check_path)!=0)
                 MSI_SetPropertyW(package,cszTargetDir,path);
-
-            if (folder)
-            {
-                for (i = 0; i < package->loaded_folders; i++)
-                {
-                    if (strcmpW(package->folders[i].Directory,name)==0)
-                        break;
-                }
-                *folder = &(package->folders[i]);
-            }
-            return path;
         }
         else
         {
@@ -279,81 +280,66 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
                         *(p+1) = 0;
                 }
             }
-            if (folder)
-            {
-                for (i = 0; i < package->loaded_folders; i++)
-                {
-                    if (strcmpW(package->folders[i].Directory,name)==0)
-                        break;
-                }
-                *folder = &(package->folders[i]);
-            }
-            return path;
         }
+        if (folder)
+            *folder = get_loaded_folder( package, name );
+        return path;
     }
 
-    for (i = 0; i < package->loaded_folders; i++)
-    {
-        if (strcmpW(package->folders[i].Directory,name)==0)
-            break;
-    }
-
-    if (i >= package->loaded_folders)
+    f = get_loaded_folder( package, name );
+    if (!f)
         return NULL;
 
     if (folder)
-        *folder = &(package->folders[i]);
+        *folder = f;
 
-    if (!source && package->folders[i].ResolvedTarget)
+    if (!source && f->ResolvedTarget)
     {
-        path = strdupW(package->folders[i].ResolvedTarget);
+        path = strdupW( f->ResolvedTarget );
         TRACE("   already resolved to %s\n",debugstr_w(path));
         return path;
     }
-    else if (source && package->folders[i].ResolvedSource)
+    else if (source && f->ResolvedSource)
     {
-        path = strdupW(package->folders[i].ResolvedSource);
+        path = strdupW( f->ResolvedSource );
         TRACE("   (source)already resolved to %s\n",debugstr_w(path));
         return path;
     }
-    else if (!source && package->folders[i].Property)
+    else if (!source && f->Property)
     {
-        path = build_directory_name(2, package->folders[i].Property, NULL);
+        path = build_directory_name( 2, f->Property, NULL );
                     
         TRACE("   internally set to %s\n",debugstr_w(path));
         if (set_prop)
-            MSI_SetPropertyW(package,name,path);
+            MSI_SetPropertyW( package, name, path );
         return path;
     }
 
-    if (package->folders[i].ParentIndex >= 0)
+    if (f->Parent)
     {
-        LPWSTR parent = package->folders[package->folders[i].ParentIndex].Directory;
+        LPWSTR parent = f->Parent->Directory;
 
         TRACE(" ! Parent is %s\n", debugstr_w(parent));
 
         p = resolve_folder(package, parent, source, set_prop, NULL);
         if (!source)
         {
-            TRACE("   TargetDefault = %s\n",
-                    debugstr_w(package->folders[i].TargetDefault));
+            TRACE("   TargetDefault = %s\n", debugstr_w(f->TargetDefault));
 
-            path = build_directory_name(3, p, 
-                            package->folders[i].TargetDefault, NULL);
-            package->folders[i].ResolvedTarget = strdupW(path);
+            path = build_directory_name( 3, p, f->TargetDefault, NULL );
+            f->ResolvedTarget = strdupW( path );
             TRACE("   resolved into %s\n",debugstr_w(path));
             if (set_prop)
                 MSI_SetPropertyW(package,name,path);
         }
         else 
         {
-            if (package->folders[i].SourceDefault && 
-                package->folders[i].SourceDefault[0]!='.')
-                path = build_directory_name(3, p, package->folders[i].SourceDefault, NULL);
+            if (f->SourceDefault && f->SourceDefault[0]!='.')
+                path = build_directory_name( 3, p, f->SourceDefault, NULL );
             else
                 path = strdupW(p);
             TRACE("   (source)resolved into %s\n",debugstr_w(path));
-            package->folders[i].ResolvedSource = strdupW(path);
+            f->ResolvedSource = strdupW( path );
         }
         HeapFree(GetProcessHeap(),0,p);
     }
@@ -462,17 +448,18 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         free_feature( feature );
     }
 
-    for (i = 0; i < package->loaded_folders; i++)
+    LIST_FOR_EACH_SAFE( item, cursor, &package->folders )
     {
-        HeapFree(GetProcessHeap(),0,package->folders[i].Directory);
-        HeapFree(GetProcessHeap(),0,package->folders[i].TargetDefault);
-        HeapFree(GetProcessHeap(),0,package->folders[i].SourceDefault);
-        HeapFree(GetProcessHeap(),0,package->folders[i].ResolvedTarget);
-        HeapFree(GetProcessHeap(),0,package->folders[i].ResolvedSource);
-        HeapFree(GetProcessHeap(),0,package->folders[i].Property);
+        MSIFOLDER *folder = LIST_ENTRY( item, MSIFOLDER, entry );
+
+        list_remove( &folder->entry );
+        HeapFree( GetProcessHeap(), 0, folder->Directory );
+        HeapFree( GetProcessHeap(), 0, folder->TargetDefault );
+        HeapFree( GetProcessHeap(), 0, folder->SourceDefault );
+        HeapFree( GetProcessHeap(), 0, folder->ResolvedTarget );
+        HeapFree( GetProcessHeap(), 0, folder->ResolvedSource );
+        HeapFree( GetProcessHeap(), 0, folder->Property );
     }
-    if (package->folders && package->loaded_folders > 0)
-        HeapFree(GetProcessHeap(),0,package->folders);
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->components )
     {

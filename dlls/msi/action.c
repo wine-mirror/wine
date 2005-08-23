@@ -1291,7 +1291,7 @@ static UINT ACTION_FileCost(MSIPACKAGE *package)
 }
 
 
-static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
+static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
 {
     static const WCHAR Query[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
@@ -1303,38 +1303,25 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     LPCWSTR parent;
     LPWSTR shortname = NULL;
     MSIRECORD * row = 0;
-    INT index = -1;
-    DWORD i;
+    MSIFOLDER *folder;
 
     TRACE("Looking for dir %s\n",debugstr_w(dir));
 
-    for (i = 0; i < package->loaded_folders; i++)
-    {
-        if (strcmpW(package->folders[i].Directory,dir)==0)
-        {
-            TRACE(" %s retuning on index %lu\n",debugstr_w(dir),i);
-            return i;
-        }
-    }
+    folder = get_loaded_folder( package, dir );
+    if (folder)
+        return folder;
 
     TRACE("Working to load %s\n",debugstr_w(dir));
 
-    index = package->loaded_folders++;
-    if (package->loaded_folders==1)
-        package->folders = HeapAlloc(GetProcessHeap(),0,
-                                        sizeof(MSIFOLDER));
-    else
-        package->folders= HeapReAlloc(GetProcessHeap(),0,
-            package->folders, package->loaded_folders* 
-            sizeof(MSIFOLDER));
+    folder = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof (MSIFOLDER) );
+    if (!folder)
+        return NULL;
 
-    memset(&package->folders[index],0,sizeof(MSIFOLDER));
-
-    package->folders[index].Directory = strdupW(dir);
+    folder->Directory = strdupW(dir);
 
     row = MSI_QueryGetRecord(package->db, Query, dir);
     if (!row)
-        return -1;
+        return NULL;
 
     ptargetdir = targetdir = load_dynamic_stringW(row,3);
 
@@ -1370,37 +1357,39 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     if (targetdir)
     {
         TRACE("   TargetDefault = %s\n",debugstr_w(targetdir));
-        HeapFree(GetProcessHeap(),0, package->folders[index].TargetDefault);
-        package->folders[index].TargetDefault = strdupW(targetdir);
+        HeapFree(GetProcessHeap(),0, folder->TargetDefault);
+        folder->TargetDefault = strdupW(targetdir);
     }
 
     if (srcdir)
-        package->folders[index].SourceDefault = strdupW(srcdir);
+        folder->SourceDefault = strdupW(srcdir);
     else if (shortname)
-        package->folders[index].SourceDefault = strdupW(shortname);
+        folder->SourceDefault = strdupW(shortname);
     else if (targetdir)
-        package->folders[index].SourceDefault = strdupW(targetdir);
+        folder->SourceDefault = strdupW(targetdir);
     HeapFree(GetProcessHeap(), 0, ptargetdir);
-        TRACE("   SourceDefault = %s\n",debugstr_w(package->folders[index].SourceDefault));
+        TRACE("   SourceDefault = %s\n", debugstr_w( folder->SourceDefault ));
 
     parent = MSI_RecordGetString(row,2);
     if (parent) 
     {
-        i = load_folder(package,parent);
-        package->folders[index].ParentIndex = i;
-        TRACE("Parent is index %i... %s %s\n",
-                    package->folders[index].ParentIndex,
-        debugstr_w(package->folders[package->folders[index].ParentIndex].Directory),
-                    debugstr_w(parent));
+        folder->Parent = load_folder( package, parent );
+        if ( folder->Parent )
+            TRACE("loaded parent %p %s\n", folder->Parent,
+                  debugstr_w(folder->Parent->Directory));
+        else
+            ERR("failed to load parent folder %s\n", debugstr_w(parent));
     }
-    else
-        package->folders[index].ParentIndex = -2;
 
-    package->folders[index].Property = load_dynamic_property(package, dir,NULL);
+    folder->Property = load_dynamic_property( package, dir, NULL );
 
     msiobj_release(&row->hdr);
-    TRACE(" %s retuning on index %i\n",debugstr_w(dir),index);
-    return index;
+
+    list_add_tail( &package->folders, &folder->entry );
+
+    TRACE("%s returning %p\n",debugstr_w(dir),folder);
+
+    return folder;
 }
 
 /* scan for and update current install states */

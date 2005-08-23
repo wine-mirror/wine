@@ -263,7 +263,6 @@ UINT WINAPI MsiSetTargetPathA(MSIHANDLE hInstall, LPCSTR szFolder,
 UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder, 
                              LPCWSTR szFolderPath)
 {
-    DWORD i;
     DWORD attrib;
     LPWSTR path = NULL;
     LPWSTR path2 = NULL;
@@ -312,16 +311,17 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     }
     else
     {
-        for (i = 0; i < package->loaded_folders; i++)
+        MSIFOLDER *f;
+
+        LIST_FOR_EACH_ENTRY( f, &package->folders, MSIFOLDER, entry )
         {
-            HeapFree(GetProcessHeap(),0,package->folders[i].ResolvedTarget);
-            package->folders[i].ResolvedTarget=NULL;
+            HeapFree( GetProcessHeap(),0,f->ResolvedTarget);
+            f->ResolvedTarget=NULL;
         }
 
-        for (i = 0; i < package->loaded_folders; i++)
+        LIST_FOR_EACH_ENTRY( f, &package->folders, MSIFOLDER, entry )
         {
-            path2=resolve_folder(package, package->folders[i].Directory, FALSE,
-                       TRUE, NULL);
+            path2 = resolve_folder(package, f->Directory, FALSE, TRUE, NULL);
             HeapFree(GetProcessHeap(),0,path2);
         }
     }

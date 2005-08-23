@@ -74,6 +74,7 @@ typedef struct tagComponentList
 
 typedef struct tagMSIFOLDER
 {
+    struct list entry;
     LPWSTR Directory;
     LPWSTR TargetDefault;
     LPWSTR SourceDefault;
@@ -81,7 +82,7 @@ typedef struct tagMSIFOLDER
     LPWSTR ResolvedTarget;
     LPWSTR ResolvedSource;
     LPWSTR Property;   /* initially set property */
-    INT   ParentIndex;
+    struct tagMSIFOLDER *Parent;
     INT   State;
         /* 0 = uninitialized */
         /* 1 = existing */
@@ -89,7 +90,7 @@ typedef struct tagMSIFOLDER
         /* 3 = created persist if empty */
     INT   Cost;
     INT   Space;
-}MSIFOLDER;
+} MSIFOLDER;
 
 typedef struct tagMSIFILE
 {
@@ -240,6 +241,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
 MSICOMPONENT *get_loaded_component( MSIPACKAGE* package, LPCWSTR Component );
 MSIFEATURE *get_loaded_feature( MSIPACKAGE* package, LPCWSTR Feature );
 MSIFILE *get_loaded_file( MSIPACKAGE* package, LPCWSTR file );
+MSIFOLDER *get_loaded_folder( MSIPACKAGE *package, LPCWSTR dir );
 int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path);
 UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action);
 UINT build_icon_path(MSIPACKAGE *, LPCWSTR, LPWSTR *);

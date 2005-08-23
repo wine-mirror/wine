@@ -377,11 +377,10 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
         msiobj_addref( &db->hdr );
 
         package->db = db;
-        list_init( &package->features );
-        package->folders = NULL;
         list_init( &package->components );
+        list_init( &package->features );
         list_init( &package->files );
-        package->loaded_folders = 0;
+        list_init( &package->folders );
         package->ActionFormat = NULL;
         package->LastAction = NULL;
         package->dialog = NULL;

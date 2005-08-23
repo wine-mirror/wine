@@ -186,11 +186,10 @@ typedef struct tagMSIPACKAGE
 {
     MSIOBJECTHDR hdr;
     MSIDATABASE *db;
-    struct tagMSIFOLDER  *folders;
-    UINT loaded_folders;
     struct list components;
     struct list features;
     struct list files;
+    struct list folders;
     LPWSTR ActionFormat;
     LPWSTR LastAction;
 
