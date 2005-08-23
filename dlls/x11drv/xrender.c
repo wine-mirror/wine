@@ -47,14 +47,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(xrender);
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
 
-/* Older version of the Xrender headers don't define these */
-#ifndef PictStandardARGB32
-
-#define PictStandardARGB32 0
-XRenderPictFormat * XRenderFindStandardFormat (Display *dpy, int format);
-
-#endif
-
 static XRenderPictFormat *screen_format; /* format of screen */
 static XRenderPictFormat *mono_format; /* format of mono bitmap */
 
@@ -130,7 +122,6 @@ MAKE_FUNCPTR(XRenderCreateGlyphSet)
 MAKE_FUNCPTR(XRenderCreatePicture)
 MAKE_FUNCPTR(XRenderFillRectangle)
 MAKE_FUNCPTR(XRenderFindFormat)
-MAKE_FUNCPTR(XRenderFindStandardFormat)
 MAKE_FUNCPTR(XRenderFindVisualFormat)
 MAKE_FUNCPTR(XRenderFreeGlyphSet)
 MAKE_FUNCPTR(XRenderFreePicture)
@@ -178,7 +169,6 @@ LOAD_FUNCPTR(XRenderCreateGlyphSet)
 LOAD_FUNCPTR(XRenderCreatePicture)
 LOAD_FUNCPTR(XRenderFillRectangle)
 LOAD_FUNCPTR(XRenderFindFormat)
-LOAD_FUNCPTR(XRenderFindStandardFormat)
 LOAD_FUNCPTR(XRenderFindVisualFormat)
 LOAD_FUNCPTR(XRenderFreeGlyphSet)
 LOAD_FUNCPTR(XRenderFreePicture)
@@ -1404,6 +1394,34 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
 {
     XRenderPictureAttributes pa;
     XRenderPictFormat *src_format;
+    XRenderPictFormat argb32_templ = {
+        0,                          /* id */
+        PictTypeDirect,             /* type */
+        32,                         /* depth */
+        {                           /* direct */
+            16,                     /* direct.red */
+            0xff,                   /* direct.redMask */
+            8,                      /* direct.green */
+            0xff,                   /* direct.greenMask */
+            0,                      /* direct.blue */
+            0xff,                   /* direct.blueMask */
+            24,                     /* direct.alpha */
+            0xff,                   /* direct.alphaMask */
+        },
+        0,                          /* colormap */
+    };
+    unsigned long argb32_templ_mask = 
+        PictFormatType |
+        PictFormatDepth |
+        PictFormatRed |
+        PictFormatRedMask |
+        PictFormatGreen |
+        PictFormatGreenMask |
+        PictFormatBlue |
+        PictFormatBlueMask |
+        PictFormatAlpha |
+        PictFormatAlphaMask;
+
     Picture dst_pict, src_pict;
     Pixmap xpm;
     DIBSECTION dib;
@@ -1482,8 +1500,11 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     image = XCreateImage(gdi_display, visual, 32, ZPixmap, 0,
                          (char*) data, widthSrc, heightSrc, 32, widthSrc * 4);
 
-    src_format = pXRenderFindStandardFormat(gdi_display, PictStandardARGB32);
-
+    /*
+      Avoid using XRenderFindStandardFormat as older libraries don't have it
+      src_format = pXRenderFindStandardFormat(gdi_display, PictStandardARGB32);
+    */
+    src_format = pXRenderFindFormat(gdi_display, argb32_templ_mask, &argb32_templ, 0);
 
     TRACE("src_format %p\n", src_format);
 
