@@ -267,14 +267,14 @@ typedef INT     (CALLBACK *PROC)();
 
 /* Macros to split words and longs. */
 
-#define LOBYTE(w)              ((BYTE)(WORD)(w))
-#define HIBYTE(w)              ((BYTE)((WORD)(w) >> 8))
+#define LOBYTE(w)              ((BYTE)((DWORD_PTR)(w) & 0xFF))
+#define HIBYTE(w)              ((BYTE)((DWORD_PTR)(w) >> 8))
 
-#define LOWORD(l)              ((WORD)(DWORD)(l))
-#define HIWORD(l)              ((WORD)((DWORD)(l) >> 16))
+#define LOWORD(l)              ((WORD)((DWORD_PTR)(l) & 0xFFFF))
+#define HIWORD(l)              ((WORD)((DWORD_PTR)(l) >> 16))
 
-#define MAKEWORD(low,high)     ((WORD)(((BYTE)(low)) | ((WORD)((BYTE)(high))) << 8))
-#define MAKELONG(low,high)     ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
+#define MAKEWORD(low,high)     ((WORD)(((BYTE)((DWORD_PTR)(low) & 0xFF)) | ((WORD)((BYTE)((DWORD_PTR)(high) & 0xFF))) << 8))
+#define MAKELONG(low,high)     ((LONG)(((WORD)((DWORD_PTR)(low) & 0xFFFF)) | ((DWORD)((WORD)((DWORD_PTR)(high) & 0xFFFF))) << 16))
 
 /* min and max macros */
 #ifndef NOMINMAX
