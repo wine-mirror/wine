@@ -3937,7 +3937,7 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
     MSIPACKAGE *package = (MSIPACKAGE*)param;
     LPWSTR name;
     LPCWSTR file;
-    UINT index;
+    INT index;
     DWORD size;
     static const WCHAR regfont1[] =
         {'S','o','f','t','w','a','r','e','\\',
