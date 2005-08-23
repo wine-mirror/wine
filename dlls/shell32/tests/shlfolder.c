@@ -33,6 +33,8 @@
 #include "shlobj.h"
 #include "shobjidl.h"
 #include "shlwapi.h"
+#include "ocidl.h"
+#include "oleauto.h"
 
 
 #include "wine/unicode.h"
@@ -736,6 +738,163 @@ static void test_EnumObjects_and_CompareIDs(void)
     IMalloc_Free(ppM, newPIDL);
 }
 
+/* A simple implementation of an IPropertyBag, which returns fixed values for
+ * 'Target' and 'Attributes' properties.
+ */
+static HRESULT WINAPI InitPropertyBag_IPropertyBag_QueryInterface(IPropertyBag *iface, REFIID riid,
+    void **ppvObject) 
+{
+    if (!ppvObject)
+        return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IPropertyBag, riid)) {
+        *ppvObject = iface;
+    } else {
+        ok (FALSE, "InitPropertyBag asked for unknown interface!\n");
+        return E_NOINTERFACE;
+    }
+
+    IPropertyBag_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI InitPropertyBag_IPropertyBag_AddRef(IPropertyBag *iface) {
+    return 2;
+}
+
+static ULONG WINAPI InitPropertyBag_IPropertyBag_Release(IPropertyBag *iface) {
+    return 1;
+}
+
+static HRESULT WINAPI InitPropertyBag_IPropertyBag_Read(IPropertyBag *iface, LPCOLESTR pszPropName,
+    VARIANT *pVar, IErrorLog *pErrorLog)
+{
+    static const WCHAR wszTargetSpecialFolder[] = {
+        'T','a','r','g','e','t','S','p','e','c','i','a','l','F','o','l','d','e','r',0 };
+    static const WCHAR wszTarget[] = {
+        'T','a','r','g','e','t',0 };
+    static const WCHAR wszAttributes[] = {
+        'A','t','t','r','i','b','u','t','e','s',0 };
+    static const WCHAR wszResolveLinkFlags[] = {
+        'R','e','s','o','l','v','e','L','i','n','k','F','l','a','g','s',0 };
+        
+    if (!lstrcmpW(pszPropName, wszTargetSpecialFolder) || 
+        !lstrcmpW(pszPropName, wszResolveLinkFlags)) 
+    {
+        return E_INVALIDARG;
+    }
+
+    if (!lstrcmpW(pszPropName, wszTarget)) {
+        WCHAR wszPath[MAX_PATH];
+        BOOL result;
+        
+        ok(V_VT(pVar) == VT_BSTR, "Wrong variant type for 'Target' property!\n");
+        if (V_VT(pVar) != VT_BSTR) return E_INVALIDARG;
+
+        result = pSHGetSpecialFolderPathW(NULL, wszPath, CSIDL_DESKTOPDIRECTORY, FALSE);
+        ok(result, "SHGetSpecialFolderPathW(DESKTOPDIRECTORY) failed! x%08lx\n", GetLastError());
+        if (!result) return E_INVALIDARG;
+
+        V_BSTR(pVar) = SysAllocString(wszPath);
+        return S_OK;
+    }
+
+    if (!lstrcmpW(pszPropName, wszAttributes)) {
+        ok(V_VT(pVar) == VT_UI4, "Wrong variant type for 'Attributes' property!\n");
+        if (V_VT(pVar) != VT_UI4) return E_INVALIDARG;
+        V_UI4(pVar) = SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR|
+                      SFGAO_CANRENAME|SFGAO_FILESYSTEM;
+        return S_OK;
+    }
+
+    ok(FALSE, "PropertyBag was asked for unknown property (vt=%d)!\n", V_VT(pVar));
+    return E_INVALIDARG;
+}
+
+static HRESULT WINAPI InitPropertyBag_IPropertyBag_Write(IPropertyBag *iface, LPCOLESTR pszPropName,
+    VARIANT *pVar)
+{
+    ok(FALSE, "Unexpected call to IPropertyBag_Write\n");
+    return E_NOTIMPL;
+}
+    
+static const IPropertyBagVtbl InitPropertyBag_IPropertyBagVtbl = {
+    InitPropertyBag_IPropertyBag_QueryInterface,
+    InitPropertyBag_IPropertyBag_AddRef,
+    InitPropertyBag_IPropertyBag_Release,
+    InitPropertyBag_IPropertyBag_Read,
+    InitPropertyBag_IPropertyBag_Write
+};
+
+struct IPropertyBag InitPropertyBag = {
+    &InitPropertyBag_IPropertyBagVtbl
+};
+
+void test_FolderShortcut(void) {
+    IPersistPropertyBag *pPersistPropertyBag;
+    IShellFolder *pShellFolder;
+    IPersistFolder3 *pPersistFolder3;
+    HRESULT hr;
+    STRRET strret;
+    WCHAR wszPath[MAX_PATH], wszBuffer[MAX_PATH];
+    BOOL result;
+    CLSID clsid;
+    LPITEMIDLIST pidlCurrentFolder;
+       
+    if (!pSHGetSpecialFolderPathW || !pStrRetToBufW) return;
+   
+    /* These tests basically show, that CLSID_FolderShortcuts are initialized
+     * via their IPersistPropertyBag interface. And that the target folder
+     * is taken from the IPropertyBag's 'Target' property.
+     */
+    hr = CoCreateInstance(&CLSID_FolderShortcut, NULL, CLSCTX_INPROC_SERVER, 
+                          &IID_IPersistPropertyBag, (LPVOID*)&pPersistPropertyBag);
+    ok (SUCCEEDED(hr), "CoCreateInstance failed! hr = 0x%08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IPersistPropertyBag_Load(pPersistPropertyBag, &InitPropertyBag, NULL);
+    todo_wine { ok(SUCCEEDED(hr), "IPersistPropertyBag_Load failed! hr = %08lx\n", hr); }
+    if (FAILED(hr)) {
+        IPersistPropertyBag_Release(pPersistPropertyBag);
+        return;
+    }
+    
+    hr = IPersistPropertyBag_QueryInterface(pPersistPropertyBag, &IID_IShellFolder, 
+                                            (LPVOID*)&pShellFolder);
+    IPersistPropertyBag_Release(pPersistPropertyBag);
+    ok(SUCCEEDED(hr), "IPersistPropertyBag_QueryInterface(IShellFolder) failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IShellFolder_GetDisplayNameOf(pShellFolder, NULL, SHGDN_FORPARSING, &strret);
+    ok(SUCCEEDED(hr), "IShellFolder_GetDisplayNameOf(NULL) failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(pShellFolder);
+        return;
+    }
+
+    result = pSHGetSpecialFolderPathW(NULL, wszPath, CSIDL_DESKTOPDIRECTORY, FALSE);
+    ok(result, "SHGetSpecialFolderPathW(CSIDL_MYDOCUMENTS) failed! 0x%08lx\n", GetLastError());
+    if (!result) return;
+
+    pStrRetToBufW(&strret, NULL, wszBuffer, MAX_PATH);
+    ok(!lstrcmpiW(wszPath, wszBuffer), "FolderShortcut returned incorrect folder!\n");
+
+    hr = IShellFolder_QueryInterface(pShellFolder, &IID_IPersistFolder3, (LPVOID*)&pPersistFolder3);
+    IShellFolder_Release(pShellFolder);
+    ok(SUCCEEDED(hr), "IShellFolder_QueryInterface(IID_IPersistFolder3 failed! hr = 0x%08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IPersistFolder3_GetClassID(pPersistFolder3, &clsid);
+    ok(SUCCEEDED(hr), "IPersistFolder3_GetClassID failed! hr=0x%08lx\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_FolderShortcut), "Unexpected CLSID!\n");
+
+    hr = IPersistFolder3_GetCurFolder(pPersistFolder3, &pidlCurrentFolder);
+    ok(SUCCEEDED(hr), "IPersistFolder3_GetCurFolder failed! hr=0x%08lx\n", hr);
+    ok(!pidlCurrentFolder, "IPersistFolder3_GetCurFolder should return a NULL pidl!\n");
+                    
+    IPersistFolder3_Release(pPersistFolder3);
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -750,6 +909,7 @@ START_TEST(shlfolder)
     test_GetAttributesOf();
     test_SHGetPathFromIDList();
     test_CallForAttributes();
+    test_FolderShortcut();
 
     OleUninitialize();
 }
