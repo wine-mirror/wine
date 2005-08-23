@@ -38,7 +38,7 @@
  *        for that)
  *      + set a mode where winedbg would start (postmortem debugging) from a minidump
  * - CPU adherence
- *      + we always assume the stack grows has an i386 (ie downwards)
+ *      + we always assume the stack grows as on i386 (ie downwards)
  * - UI
  *      + enable back the limited output (depth of structure printing and number of 
  *        lines)
@@ -609,7 +609,8 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
         return DBG_CONTINUE;
     }
 
-    if (first_chance && !is_debug && !DBG_IVAR(BreakOnFirstChance))
+    if (first_chance && !is_debug && !DBG_IVAR(BreakOnFirstChance) &&
+	!(rec->ExceptionFlags & EH_STACK_INVALID))
     {
         /* pass exception to program except for debug exceptions */
         return DBG_EXCEPTION_NOT_HANDLED;
@@ -725,6 +726,9 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
             dbg_printf("0x%08lx", rec->ExceptionCode);
             break;
         }
+    }
+    if( (rec->ExceptionFlags & EH_STACK_INVALID) ) {
+        dbg_printf( ", invalid program stack" );
     }
 
     if (dbg_action_mode == automatic_mode)
