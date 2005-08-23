@@ -127,7 +127,7 @@ static int output_debug( FILE *outfile )
 static int get_exports_size( DLLSPEC *spec )
 {
     int nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
-    int i, fwd_size = 0, total_size;
+    int i, strings_size, total_size;
 
     if (!nr_exports) return 0;
 
@@ -144,34 +144,20 @@ static int get_exports_size( DLLSPEC *spec )
     total_size += spec->nb_names * sizeof(short);
     if (spec->nb_names % 2) total_size += sizeof(short);
 
+    /* export name strings */
+    strings_size = strlen(spec->file_name) + 1;
+    for (i = 0; i < spec->nb_names; i++)
+        strings_size += strlen(spec->names[i]->name) + 1;
+
     /* forward strings */
     for (i = spec->base; i <= spec->limit; i++)
     {
         ORDDEF *odp = spec->ordinals[i];
-        if (odp && odp->flags & FLAG_FORWARD) fwd_size += strlen(odp->link_name) + 1;
+        if (odp && odp->flags & FLAG_FORWARD) strings_size += strlen(odp->link_name) + 1;
     }
-    total_size += (fwd_size + 3) & ~3;
+    total_size += (strings_size + 3) & ~3;
 
     return total_size;
-}
-
-
-/*******************************************************************
- *         output_export_names
- *
- * Output all the exported names for a Win32 module.
- */
-static void output_export_names( FILE *outfile, DLLSPEC *spec )
-{
-    int i, nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
-
-    if (!nr_exports) return;
-
-    fprintf( outfile, "\nconst char __wine_spec_exp_names[] =" );
-    fprintf( outfile, "\n    \"%s\\0\"", spec->file_name );
-    for (i = 0; i < spec->nb_names; i++)
-        fprintf( outfile, "\n    \"%s\\0\"", spec->names[i]->name );
-    fprintf( outfile, ";\n" );
 }
 
 
@@ -197,7 +183,7 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* Characteristics */
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* TimeDateStamp */
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* MajorVersion/MinorVersion */
-    fprintf( outfile, "    \"\\t.long %s\\n\"\n", asm_name("__wine_spec_exp_names") ); /* Name */
+    fprintf( outfile, "    \"\\t.long __wine_spec_exp_names\\n\"\n" ); /* Name */
     fprintf( outfile, "    \"\\t.long %d\\n\"\n", spec->base );        /* Base */
     fprintf( outfile, "    \"\\t.long %d\\n\"\n", nr_exports );        /* NumberOfFunctions */
     fprintf( outfile, "    \"\\t.long %d\\n\"\n", spec->nb_names );    /* NumberOfNames */
@@ -254,13 +240,10 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
         fprintf( outfile, "    \"__wine_spec_exp_name_ptrs:\\n\"\n" );
         for (i = 0; i < spec->nb_names; i++)
         {
-            fprintf( outfile, "    \"\\t.long %s+%d\\n\"\n", asm_name("__wine_spec_exp_names"), namepos );
+            fprintf( outfile, "    \"\\t.long __wine_spec_exp_names+%d\\n\"\n", namepos );
             namepos += strlen(spec->names[i]->name) + 1;
         }
-    }
 
-    if (spec->nb_names)
-    {
         /* output the function ordinals */
 
         fprintf( outfile, "    \"__wine_spec_exp_ordinals:\\n\"\n" );
@@ -275,6 +258,14 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
         }
     }
 
+    /* output the export name strings */
+
+    fprintf( outfile, "    \"__wine_spec_exp_names:\\n\"\n" );
+    fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), spec->file_name );
+    for (i = 0; i < spec->nb_names; i++)
+        fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n",
+                 get_asm_string_keyword(), spec->names[i]->name );
+
     /* output forward strings */
 
     if (fwd_size)
@@ -286,8 +277,8 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
             if (odp && (odp->flags & FLAG_FORWARD))
                 fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), odp->link_name );
         }
-        fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
     }
+    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
 
     /* output relays */
 
@@ -535,7 +526,6 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
         fprintf( outfile, "#define __stdcall\n\n" );
 
     output_stub_funcs( outfile, spec );
-    output_export_names( outfile, spec );
 
     /* Output the DLL imports */
 
