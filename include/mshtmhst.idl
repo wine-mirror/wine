@@ -22,6 +22,63 @@ import "oleidl.idl";
 import "oaidl.idl";
 import "docobj.idl";
 
+cpp_quote("#define CONTEXT_MENU_DEFAULT     0")
+cpp_quote("#define CONTEXT_MENU_IMAGE       1")
+cpp_quote("#define CONTEXT_MENU_CONTROL     2")
+cpp_quote("#define CONTEXT_MENU_TABLE       3")
+cpp_quote("#define CONTEXT_MENU_TEXTSELECT  4")
+cpp_quote("#define CONTEXT_MENU_ANCHOR      5")
+cpp_quote("#define CONTEXT_MENU_UNKNOWN     6")
+cpp_quote("#define CONTEXT_MENU_IMGDYNSRC   7")
+cpp_quote("#define CONTEXT_MENU_IMGART      8")
+cpp_quote("#define CONTEXT_MENU_DEBUG       9")
+cpp_quote("#define CONTEXT_MENU_VSCROLL    10")
+cpp_quote("#define CONTEXT_MENU_HSCROLL    11")
+
+cpp_quote("#define MENUEXT_SHOWDIALOG 1")
+
+cpp_quote("#define DOCHOSTUIFLAG_BROWSER (DOCHOSTUIFLAG_DISABLE_HELP_MENU|DOCHOSTUIFLAG_DISABLE_SCRIPT_INACTIVE)")
+
+cpp_quote("#define HTMLDLG_NOUI            0x0010")
+cpp_quote("#define HTMLDLG_MODAL           0x0020")
+cpp_quote("#define HTMLDLG_MODELESS        0x0040")
+cpp_quote("#define HTMLDLG_PRINT_TEMPLATE  0x0080")
+cpp_quote("#define HTMLDLG_VERIFY          0x0100")
+
+cpp_quote("#define PRINT_DONTBOTHERUSER     0x0001")
+cpp_quote("#define PRINT_WAITFORCOMPLETION  0x0002")
+
+/*****************************************************************************
+ *    IHostDialogHelper interface
+ */
+[
+    object,
+    uuid(53DEC138-A51E-11d2-861E-00C04FA35C89),
+    pointer_default(unique),
+    local
+]
+interface IHostDialogHelper : IUnknown
+{
+    HRESULT ShowHTMLDialog(
+        HWND hwndParent,
+        IMoniker *pMk,
+        VARIANT *pvarArgIn,
+        WCHAR *pchOptions,
+        VARIANT *pvarArgOut,
+        IUnknown *punkHost);
+}
+
+/*****************************************************************************
+ *    HostDialogHelper coclass
+ */
+[
+    uuid(429AF92C-A51F-11d2-861E-00C04FA35C89)
+]
+coclass HostDialogHelper
+{
+    [default] interface IHostDialogHelper;
+};
+
 /*****************************************************************************
  *    IDocHostUIHandler interface
  */
@@ -145,6 +202,71 @@ interface IDocHostUIHandler2 : IDocHostUIHandler
         [out] LPOLESTR *pchKey,
         [in] DWORD dw);
 }
+
+/*****************************************************************************
+ *    ICustomDoc interface
+ */
+[
+    object,
+    uuid(3050f3f0-98b5-11cf-bb82-00aa00bdce0b),
+    pointer_default(unique),
+    local
+]
+interface ICustomDoc : IUnknown
+{
+    HRESULT SetUIHandler([in] IDocHostUIHandler *pUIHandler);
+}
+
+/*****************************************************************************
+ *    IDocHostShowUI interface
+ */
+[
+    object,
+    uuid(c4d244b0-d43e-11cf-893b-00aa00bdce1a),
+    pointer_default(unique),
+    local
+]
+interface IDocHostShowUI : IUnknown
+{
+    HRESULT ShowMessage(
+        [in] HWND hwnd,
+        [in] LPOLESTR lpstrText,
+        [in] LPOLESTR lpstrCaption,
+        [in] DWORD dwType,
+        [in] LPOLESTR lpstrHelpFile,
+        [in] DWORD dwHelpContext,
+        [out] LRESULT *plResult);
+
+    HRESULT ShowHelp(
+        [in] HWND hwnd,
+        [in] LPOLESTR pszHelpFile,
+        [in] UINT uCommand,
+        [in] DWORD dwData,
+        [in] POINT ptMouse,
+        [out] IDispatch *pDispatchObjectHit);
+}
+
+/*****************************************************************************
+ *    IClassFactoryEx interface
+ */
+
+cpp_quote("#define IClassFactory3 IClassFactoryEx")
+cpp_quote("#define IID_IClassFactory3 IID_IClassFactoryEx")
+
+[
+    object,
+    uuid(342D1EA0-AE25-11D1-89C5-006008C3FBFC),
+    pointer_default(unique),
+    local
+]
+interface IClassFactoryEx : IClassFactory
+{
+    HRESULT CreateInstanceWithContext(
+        IUnknown *punkContext,
+        IUnknown *punkOuter,
+        REFIID riid,
+        [out] void **ppv);
+};
 
 cpp_quote("typedef HRESULT WINAPI SHOWHTMLDIALOGFN(HWND,IMoniker*,VARIANT*,WCHAR*,VARIANT*);");
 cpp_quote("typedef HRESULT WINAPI SHOWHTMLDIALOGEXFN(HWND,IMoniker*,DWORD,VARIANT*,WCHAR*,VARIANT*);");
