@@ -54,6 +54,76 @@ static MSVCRT_wchar_t msvcrt_mbc_to_wc(unsigned int ch)
   return chW;
 }
 
+static inline size_t u_strlen( const unsigned char *str )
+{
+  return strlen( (const char*) str );
+}
+
+static inline unsigned char* u_strncat( unsigned char* dst, const unsigned char* src, size_t len )
+{
+  return (unsigned char*)strncat( (char*)dst, (const char*)src, len);
+}
+
+static inline int u_strcmp( const unsigned char *s1, const unsigned char *s2 )
+{
+  return strcmp( (const char*)s1, (const char*)s2 );
+}
+
+static inline int u_strcasecmp( const unsigned char *s1, const unsigned char *s2 )
+{
+  return strcasecmp( (const char*)s1, (const char*)s2 );
+}
+
+static inline int u_strncmp( const unsigned char *s1, const unsigned char *s2, size_t len )
+{
+  return strncmp( (const char*)s1, (const char*)s2, len );
+}
+
+static inline int u_strncasecmp( const unsigned char *s1, const unsigned char *s2, size_t len )
+{
+  return strncasecmp( (const char*)s1, (const char*)s2, len );
+}
+
+static inline unsigned char *u_strchr( const unsigned char *s, unsigned char x )
+{
+  return (unsigned char*) strchr( (const char*)s, x );
+}
+
+static inline unsigned char *u_strrchr( const unsigned char *s, unsigned char x )
+{
+  return (unsigned char*) strrchr( (const char*)s, x );
+}
+
+static inline unsigned char *u_strtok( unsigned char *s, const unsigned char *delim )
+{
+  return (unsigned char*) strtok( (char*)s, (const char*)delim );
+}
+
+static inline unsigned char *u__strset( unsigned char *s, unsigned char c )
+{
+  return (unsigned char*) _strset( (char*)s, c);
+}
+
+static inline unsigned char *u__strnset( unsigned char *s, unsigned char c, size_t len )
+{
+  return (unsigned char*) _strnset( (char*)s, c, len );
+}
+
+static inline unsigned char *u__strlwr( unsigned char *s )
+{
+  return (unsigned char*) _strlwr( (char*)s );
+}
+
+static inline unsigned char *u__strupr( unsigned char *s )
+{
+  return (unsigned char*) _strupr( (char*)s );
+}
+
+static inline size_t u_strcspn( const unsigned char *s, const unsigned char *rej )
+{
+  return strcspn( (const char *)s, (const char*)rej );
+}
+
 /*********************************************************************
  *		__p__mbctype (MSVCRT.@)
  */
@@ -182,7 +252,7 @@ MSVCRT_size_t _mbslen(const unsigned char* str)
     }
     return len;
   }
-  return strlen(str); /* ASCII CP */
+  return u_strlen(str); /* ASCII CP */
 }
 
 /*********************************************************************
@@ -310,7 +380,7 @@ int _mbscmp(const unsigned char* str, const unsigned char* cmp)
       cmp +=(strc > 255) ? 2 : 1; /* equal, use same increment */
     } while(1);
   }
-  return strcmp(str, cmp); /* ASCII CP */
+  return u_strcmp(str, cmp); /* ASCII CP */
 }
 
 /*********************************************************************
@@ -335,7 +405,7 @@ int _mbsicoll(const unsigned char* str, const unsigned char* cmp)
       cmp +=(strc > 255) ? 2 : 1; /* equal, use same increment */
     } while(1);
   }
-  return strcasecmp(str, cmp); /* ASCII CP */
+  return u_strcasecmp(str, cmp); /* ASCII CP */
 }
 
 
@@ -360,7 +430,7 @@ int _mbsicmp(const unsigned char* str, const unsigned char* cmp)
       cmp +=(strc > 255) ? 2 : 1; /* equal, use same increment */
     } while(1);
   }
-  return strcasecmp(str, cmp); /* ASCII CP */
+  return u_strcasecmp(str, cmp); /* ASCII CP */
 }
 
 /*********************************************************************
@@ -391,7 +461,7 @@ int _mbsncmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t l
     }
     return 0; /* Matched len chars */
   }
-  return strncmp(str, cmp, len); /* ASCII CP */
+  return u_strncmp(str, cmp, len); /* ASCII CP */
 }
 
 /*********************************************************************
@@ -433,7 +503,7 @@ int _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t 
     }
     return 0; /* Matched len chars */
   }
-  return strncmp(str,cmp,len);
+  return u_strncmp(str,cmp,len);
 }
 
 /*********************************************************************
@@ -462,7 +532,7 @@ int _mbsnicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t 
     }
     return 0; /* Matched len chars */
   }
-  return strncasecmp(str, cmp, len); /* ASCII CP */
+  return u_strncasecmp(str, cmp, len); /* ASCII CP */
 }
 
 /*********************************************************************
@@ -506,7 +576,7 @@ int _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t
     }
     return 0; /* Matched len bytes */
   }
-  return strncmp(str,cmp,len);
+  return u_strncmp(str,cmp,len);
 }
 
 /*********************************************************************
@@ -529,7 +599,7 @@ unsigned char* _mbschr(const unsigned char* s, unsigned int x)
       s += c > 255 ? 2 : 1;
     }
   }
-  return strchr(s, x); /* ASCII CP */
+  return u_strchr(s, x); /* ASCII CP */
 }
 
 /*********************************************************************
@@ -552,7 +622,7 @@ unsigned char* _mbsrchr(const unsigned char* s, unsigned int x)
       s +=(c > 255) ? 2 : 1;
     }
   }
-  return strrchr(s,x);
+  return u_strrchr(s, x);
 }
 
 /*********************************************************************
@@ -563,7 +633,7 @@ unsigned char* _mbsrchr(const unsigned char* s, unsigned int x)
 unsigned char* _mbstok(unsigned char *str, const unsigned char *delim)
 {
     thread_data_t *data = msvcrt_get_thread_data();
-    char *ret;
+    unsigned char *ret;
 
     if(MSVCRT___mb_cur_max > 1)
     {
@@ -587,7 +657,7 @@ unsigned char* _mbstok(unsigned char *str, const unsigned char *delim)
 	data->mbstok_next = str;
 	return ret;
     }
-    return strtok(str, delim);	/* ASCII CP */
+    return u_strtok(str, delim); /* ASCII CP */
 }
 
 /*********************************************************************
@@ -822,7 +892,7 @@ unsigned char* _mbsset(unsigned char* str, unsigned int c)
   unsigned char* ret = str;
 
   if(MSVCRT___mb_cur_max == 1 || c < 256)
-    return _strset(str, c); /* ASCII CP or SB char */
+    return u__strset(str, c); /* ASCII CP or SB char */
 
   c &= 0xffff; /* Strip high bits */
 
@@ -848,7 +918,7 @@ unsigned char* _mbsnbset(unsigned char *str, unsigned int c, MSVCRT_size_t len)
 	return ret;
 
     if(MSVCRT___mb_cur_max == 1 || c < 256)
-	return _strnset(str, c, len); /* ASCII CP or SB char */
+	return u__strnset(str, c, len); /* ASCII CP or SB char */
 
     c &= 0xffff; /* Strip high bits */
 
@@ -878,7 +948,7 @@ unsigned char* _mbsnset(unsigned char* str, unsigned int c, MSVCRT_size_t len)
     return ret;
 
   if(MSVCRT___mb_cur_max == 1 || c < 256)
-    return _strnset(str, c, len); /* ASCII CP or SB char */
+    return u__strnset(str, c, len); /* ASCII CP or SB char */
 
   c &= 0xffff; /* Strip high bits */
 
@@ -917,7 +987,7 @@ MSVCRT_size_t _mbsnccnt(const unsigned char* str, MSVCRT_size_t len)
     }
     return ret;
   }
-  ret=strlen(str);
+  ret=u_strlen(str);
   return min(ret, len); /* ASCII CP */
 }
 
@@ -938,10 +1008,9 @@ MSVCRT_size_t _mbsnbcnt(const unsigned char* str, MSVCRT_size_t len)
     }
     return xstr-str;
   }
-  ret=strlen(str);
+  ret=u_strlen(str);
   return min(ret, len); /* ASCII CP */
 }
-
 
 /*********************************************************************
  *		_mbsnbcat(MSVCRT.@)
@@ -950,7 +1019,7 @@ unsigned char* _mbsnbcat(unsigned char* dst, const unsigned char* src, MSVCRT_si
 {
     if(MSVCRT___mb_cur_max > 1)
     {
-        char *res = dst;
+        unsigned char *res = dst;
         while (*dst) {
 	    if (MSVCRT_isleadbyte(*dst++)) {
 		if (*dst) {
@@ -966,7 +1035,7 @@ unsigned char* _mbsnbcat(unsigned char* dst, const unsigned char* src, MSVCRT_si
         *dst = '\0';
         return res;
     }
-    return strncat(dst, src, len); /* ASCII CP */
+    return u_strncat(dst, src, len); /* ASCII CP */
 }
 
 
@@ -977,7 +1046,7 @@ unsigned char* _mbsncat(unsigned char* dst, const unsigned char* src, MSVCRT_siz
 {
   if(MSVCRT___mb_cur_max > 1)
   {
-    char *res = dst;
+    unsigned char *res = dst;
     while (*dst)
     {
       if (MSVCRT_isleadbyte(*dst++))
@@ -992,7 +1061,7 @@ unsigned char* _mbsncat(unsigned char* dst, const unsigned char* src, MSVCRT_siz
     *dst = '\0';
     return res;
   }
-  return strncat(dst, src, len); /* ASCII CP */
+  return u_strncat(dst, src, len); /* ASCII CP */
 }
 
 
@@ -1020,7 +1089,7 @@ unsigned char* _mbslwr(unsigned char* s)
     }
     return p;
   }
-  return _strlwr(s);
+  return u__strlwr(s);
 }
 
 
@@ -1048,7 +1117,7 @@ unsigned char* _mbsupr(unsigned char* s)
     }
     return p;
   }
-  return _strupr(s);
+  return u__strupr(s);
 }
 
 
@@ -1089,7 +1158,7 @@ MSVCRT_size_t _mbscspn(const unsigned char* str, const unsigned char* cmp)
 {
   if (MSVCRT___mb_cur_max > 1)
     FIXME("don't handle double character case\n");
-  return strcspn(str, cmp);
+  return u_strcspn(str, cmp);
 }
 
 /*********************************************************************

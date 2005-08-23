@@ -670,12 +670,12 @@ BOOL16 VFWAPI ICInfo16(DWORD fccType, DWORD fccHandler, ICINFO16 *lpicinfo)
 static  LRESULT CALLBACK  IC_Callback3216(HIC hic, HDRVR hdrv, UINT msg, DWORD lp1, DWORD lp2)
 {
     WINE_HIC*   whic;
-    LRESULT     ret = 0;
     WORD args[8];
 
     whic = MSVIDEO_GetHicPtr(hic);
     if (whic)
     {
+        DWORD ret = 0;
         switch (msg)
         {
         case DRV_OPEN:
@@ -698,9 +698,9 @@ static  LRESULT CALLBACK  IC_Callback3216(HIC hic, HDRVR hdrv, UINT msg, DWORD l
             UnMapLS(lp2);
             break;
         }
+        return ret;
     }
-    else ret = ICERR_BADHANDLE;
-    return ret;
+    else return ICERR_BADHANDLE;
 }
 
 /***********************************************************************
@@ -730,6 +730,7 @@ LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lPara
         if (whic->driverproc16)
         {
             WORD args[8];
+            DWORD result;
 
             /* FIXME: original code was passing hdrv first and hic second */
             /* but this doesn't match what IC_Callback3216 does */
@@ -741,7 +742,8 @@ LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lPara
             args[2] = LOWORD(lParam1);
             args[1] = HIWORD(lParam2);
             args[0] = LOWORD(lParam2);
-            WOWCallback16Ex( (DWORD)whic->driverproc16, WCB16_PASCAL, sizeof(args), args, &ret );
+            WOWCallback16Ex( (DWORD)whic->driverproc16, WCB16_PASCAL, sizeof(args), args, &result );
+            ret = result;
         }
         else
         {
