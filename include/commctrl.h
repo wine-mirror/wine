@@ -297,6 +297,8 @@ static const WCHAR STATUSCLASSNAMEW[] = { 'm','s','c','t','l','s','_',
 
 #define SBARS_SIZEGRIP		0x0100
 
+#define SB_SIMPLEID		0x00ff
+
 #define SB_SETTEXTA		(WM_USER+1)
 #define SB_SETTEXTW		(WM_USER+11)
 #define SB_SETTEXT		WINELIB_NAME_AW(SB_SETTEXT)
