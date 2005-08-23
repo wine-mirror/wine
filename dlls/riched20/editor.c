@@ -666,62 +666,130 @@ ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int
 static int
 ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CHARRANGE *chrgText)
 {
-  int nStart = chrg->cpMin;
+  int nStart, nEnd;
   int nLen = lstrlenW(text);
-  ME_DisplayItem *item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
+  int nMin, nMax;
+  ME_DisplayItem *item;
   ME_DisplayItem *para;
-  
-  if (!item)
-    return -1;
 
-  if (!nLen)
-  {
-    if (chrgText)
-      chrgText->cpMin = chrgText->cpMax = chrg->cpMin;
-    return chrg->cpMin;
-  }
- 
-  if (!(flags & FR_DOWN))
-    FIXME("Backward search not implemented\n");
+  TRACE("flags==0x%08lx, chrg->cpMin==%ld, chrg->cpMax==%ld text==%s\n",
+        flags, chrg->cpMin, chrg->cpMax, debugstr_w(text));
+  
   if (!(flags & FR_MATCHCASE))
     FIXME("Case-insensitive search not implemented\n");
   if (flags & ~(FR_DOWN | FR_MATCHCASE))
     FIXME("Flags 0x%08lx not implemented\n", flags & ~(FR_DOWN | FR_MATCHCASE));
-  
-  para = ME_GetParagraph(item);
-  while (item && para->member.para.nCharOfs + item->member.run.nCharOfs + nStart + nLen < chrg->cpMax)
+
+  if (chrg->cpMax == -1)
   {
-    ME_DisplayItem *pCurItem = item;
-    int nCurStart = nStart;
-    int nMatched = 0;
+    nMin = chrg->cpMin;
+    nMax = ME_GetTextLength(editor);
+  }
+  else
+  {
+    nMin = min(chrg->cpMin, chrg->cpMax);
+    nMax = max(chrg->cpMin, chrg->cpMax);
+  }
+  
+  if (!nLen)
+  {
+    if (chrgText)
+      chrgText->cpMin = chrgText->cpMax = ((flags & FR_DOWN) ? nMin : nMax);
+    return chrgText->cpMin;
+  }
+ 
+  if (flags & FR_DOWN) /* Forward search */
+  {
+    nStart = nMin;
+    item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
+    if (!item)
+      return -1;
+
+    para = ME_GetParagraph(item);
+    while (item
+           && para->member.para.nCharOfs + item->member.run.nCharOfs + nStart + nLen < nMax)
+    {
+      ME_DisplayItem *pCurItem = item;
+      int nCurStart = nStart;
+      int nMatched = 0;
     
-    while (pCurItem->member.run.strText->szData[nCurStart + nMatched] == text[nMatched])
-    {
-      nMatched++;
-      if (nMatched == nLen)
+      while (pCurItem && pCurItem->member.run.strText->szData[nCurStart + nMatched] == text[nMatched])
       {
-        nStart += para->member.para.nCharOfs + item->member.run.nCharOfs;
-        if (chrgText)
+        nMatched++;
+        if (nMatched == nLen)
         {
-          chrgText->cpMin = nStart;
-          chrgText->cpMax = nStart + nLen;
+          nStart += para->member.para.nCharOfs + item->member.run.nCharOfs;
+          if (chrgText)
+          {
+            chrgText->cpMin = nStart;
+            chrgText->cpMax = nStart + nLen;
+          }
+          TRACE("found at %d-%d\n", nStart, nStart + nLen);
+          return nStart;
         }
-        return nStart;
+        if (nCurStart + nMatched == ME_StrLen(pCurItem->member.run.strText))
+        {
+          pCurItem = ME_FindItemFwd(pCurItem, diRun);
+          para = ME_GetParagraph(pCurItem);
+          nCurStart = -nMatched;
+        }
       }
-      if (nCurStart + nMatched == ME_StrLen(pCurItem->member.run.strText))
+      nStart++;
+      if (nStart == ME_StrLen(item->member.run.strText))
       {
-        pCurItem = ME_FindItemFwd(pCurItem, diRun);
-        nCurStart = -nMatched;
+        item = ME_FindItemFwd(item, diRun);
+        para = ME_GetParagraph(item);
+        nStart = 0;
       }
-    }
-    nStart++;
-    if (nStart == ME_StrLen(item->member.run.strText))
-    {
-      item = ME_FindItemFwd(item, diRun);
-      para = ME_GetParagraph(item);
-      nStart = 0;
     }
   }
+  else /* Backward search */
+  {
+    nEnd = nMax;
+    item = ME_FindItemAtOffset(editor, diRun, nEnd, &nEnd);
+    if (!item)
+      return -1;
+    
+    para = ME_GetParagraph(item);
+    
+    while (item
+           && para->member.para.nCharOfs + item->member.run.nCharOfs + nEnd - nLen >= nMin)
+    {
+      ME_DisplayItem *pCurItem = item;
+      int nCurEnd = nEnd;
+      int nMatched = 0;
+      
+      while (pCurItem && pCurItem->member.run.strText->szData[nCurEnd - nMatched - 1] == text[nLen - nMatched - 1])
+      {
+        nMatched++;
+        if (nMatched == nLen)
+        {
+          nStart = para->member.para.nCharOfs + item->member.run.nCharOfs + nCurEnd - nMatched;
+          if (chrgText)
+          {
+            chrgText->cpMin = nStart;
+            chrgText->cpMax = nStart + nLen;
+          }
+          TRACE("found at %d-%d\n", nStart, nStart + nLen);
+          return nStart;
+        }
+        if (nCurEnd - nMatched == 0)
+        {
+          pCurItem = ME_FindItemBack(pCurItem, diRun);
+          para = ME_GetParagraph(pCurItem);
+          nCurEnd = ME_StrLen(pCurItem->member.run.strText) + nMatched;
+        }
+      }
+      nEnd--;
+      if (nEnd < 0)
+      {
+        item = ME_FindItemBack(item, diRun);
+        para = ME_GetParagraph(item);
+        nEnd = ME_StrLen(item->member.run.strText);
+      }
+    }
+  }
+  TRACE("not found\n");
   return -1;
 }
 
