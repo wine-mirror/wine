@@ -93,6 +93,7 @@ typedef struct tagMSIFOLDER
 
 typedef struct tagMSIFILE
 {
+    struct list entry;
     LPWSTR File;
     MSICOMPONENT *Component;
     LPWSTR FileName;
@@ -237,8 +238,8 @@ LPWSTR load_dynamic_property(MSIPACKAGE *package, LPCWSTR prop, UINT* rc);
 LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source, 
                       BOOL set_prop, MSIFOLDER **folder);
 MSICOMPONENT *get_loaded_component( MSIPACKAGE* package, LPCWSTR Component );
-MSIFEATURE *get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature );
-int get_loaded_file(MSIPACKAGE* package, LPCWSTR file);
+MSIFEATURE *get_loaded_feature( MSIPACKAGE* package, LPCWSTR Feature );
+MSIFILE *get_loaded_file( MSIPACKAGE* package, LPCWSTR file );
 int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path);
 UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action);
 UINT build_icon_path(MSIPACKAGE *, LPCWSTR, LPWSTR *);

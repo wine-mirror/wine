@@ -380,9 +380,8 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
         list_init( &package->features );
         package->folders = NULL;
         list_init( &package->components );
-        package->files = NULL;
+        list_init( &package->files );
         package->loaded_folders = 0;
-        package->loaded_files = 0;
         package->ActionFormat = NULL;
         package->LastAction = NULL;
         package->dialog = NULL;

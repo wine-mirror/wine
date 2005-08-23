@@ -918,7 +918,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     for (i = 0; i < package->loaded_classes; i++)
     {
         MSICOMPONENT *comp;
-        INT index;
+        MSIFILE *file;
         DWORD size, sz;
         LPWSTR argument;
         MSIFEATURE *feature;
@@ -959,7 +959,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                                      Description)+1)*sizeof(WCHAR));
 
         RegCreateKeyW(hkey2,package->classes[i].Context,&hkey3);
-        index = get_loaded_file( package, comp->KeyPath );
+        file = get_loaded_file( package, comp->KeyPath );
 
 
         /* the context server is a short path name 
@@ -968,7 +968,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         if (strcmpiW(package->classes[i].Context,szInprocServer32)!=0)
         {
             sz = 0;
-            sz = GetShortPathNameW(package->files[index].TargetPath, NULL, 0);
+            sz = GetShortPathNameW( file->TargetPath, NULL, 0 );
             if (sz == 0)
             {
                 ERR("Unable to find short path for CLSID COM Server\n");
@@ -986,8 +986,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                 }
 
                 argument = HeapAlloc(GetProcessHeap(), 0, size + sizeof(WCHAR));
-                GetShortPathNameW(package->files[index].TargetPath, argument, 
-                                sz);
+                GetShortPathNameW( file->TargetPath, argument, sz );
 
                 if (package->classes[i].Argument)
                 {
@@ -998,7 +997,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         }
         else
         {
-            size = lstrlenW(package->files[index].TargetPath) * sizeof(WCHAR);
+            size = lstrlenW( file->TargetPath ) * sizeof(WCHAR);
 
             if (package->classes[i].Argument)
             {
@@ -1007,7 +1006,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
             }
 
             argument = HeapAlloc(GetProcessHeap(), 0, size + sizeof(WCHAR));
-            strcpyW(argument, package->files[index].TargetPath);
+            strcpyW( argument, file->TargetPath );
 
             if (package->classes[i].Argument)
             {

@@ -169,7 +169,7 @@ LPWSTR load_dynamic_property(MSIPACKAGE *package, LPCWSTR prop, UINT* rc)
 
 MSICOMPONENT* get_loaded_component( MSIPACKAGE* package, LPCWSTR Component )
 {
-    MSICOMPONENT *comp = NULL;
+    MSICOMPONENT *comp;
 
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
@@ -181,7 +181,7 @@ MSICOMPONENT* get_loaded_component( MSIPACKAGE* package, LPCWSTR Component )
 
 MSIFEATURE* get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature )
 {
-    MSIFEATURE *feature = NULL;
+    MSIFEATURE *feature;
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
@@ -191,49 +191,36 @@ MSIFEATURE* get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature )
     return NULL;
 }
 
-int get_loaded_file(MSIPACKAGE* package, LPCWSTR file)
+MSIFILE* get_loaded_file( MSIPACKAGE* package, LPCWSTR key )
 {
-    int rc = -1;
-    DWORD i;
+    MSIFILE *file;
 
-    for (i = 0; i < package->loaded_files; i++)
+    LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        if (strcmpW(file,package->files[i].File)==0)
-        {
-            rc = i;
-            break;
-        }
+        if (lstrcmpW( key, file->File )==0)
+            return file;
     }
-    return rc;
+    return NULL;
 }
 
-int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path)
+int track_tempfile( MSIPACKAGE *package, LPCWSTR name, LPCWSTR path )
 {
-    DWORD i;
-    DWORD index;
+    MSIFILE *file;
 
     if (!package)
         return -2;
 
-    for (i=0; i < package->loaded_files; i++)
-        if (strcmpW(package->files[i].File,name)==0)
-            return -1;
+    file = get_loaded_file( package, name );
+    if (file)
+        return -1;
 
-    index = package->loaded_files;
-    package->loaded_files++;
-    if (package->loaded_files== 1)
-        package->files = HeapAlloc(GetProcessHeap(),0,sizeof(MSIFILE));
-    else
-        package->files = HeapReAlloc(GetProcessHeap(),0,
-            package->files , package->loaded_files * sizeof(MSIFILE));
+    file = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof (MSIFILE) );
 
-    memset(&package->files[index],0,sizeof(MSIFILE));
+    file->File = strdupW( name );
+    file->TargetPath = strdupW( path );
+    file->Temporary = TRUE;
 
-    package->files[index].File = strdupW(name);
-    package->files[index].TargetPath = strdupW(path);
-    package->files[index].Temporary = TRUE;
-
-    TRACE("Tracking tempfile (%s)\n",debugstr_w(package->files[index].File));  
+    TRACE("Tracking tempfile (%s)\n", debugstr_w( file->File ));  
 
     return 0;
 }
@@ -429,19 +416,18 @@ UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action)
 
 static void remove_tracked_tempfiles(MSIPACKAGE* package)
 {
-    DWORD i;
+    MSIFILE *file;
 
     if (!package)
         return;
 
-    for (i = 0; i < package->loaded_files; i++)
+    LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        if (package->files[i].Temporary)
+        if (file->Temporary)
         {
-            TRACE("Cleaning up %s\n",debugstr_w(package->files[i].TargetPath));
-            DeleteFileW(package->files[i].TargetPath);
+            TRACE("Cleaning up %s\n", debugstr_w( file->TargetPath ));
+            DeleteFileW( file->TargetPath );
         }
-
     }
 }
 
@@ -497,19 +483,20 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         HeapFree( GetProcessHeap(), 0, comp );
     }
 
-    for (i = 0; i < package->loaded_files; i++)
+    LIST_FOR_EACH_SAFE( item, cursor, &package->files )
     {
-        HeapFree(GetProcessHeap(),0,package->files[i].File);
-        HeapFree(GetProcessHeap(),0,package->files[i].FileName);
-        HeapFree(GetProcessHeap(),0,package->files[i].ShortName);
-        HeapFree(GetProcessHeap(),0,package->files[i].Version);
-        HeapFree(GetProcessHeap(),0,package->files[i].Language);
-        HeapFree(GetProcessHeap(),0,package->files[i].SourcePath);
-        HeapFree(GetProcessHeap(),0,package->files[i].TargetPath);
-    }
+        MSIFILE *file = LIST_ENTRY( item, MSIFILE, entry );
 
-    if (package->files && package->loaded_files > 0)
-        HeapFree(GetProcessHeap(),0,package->files);
+        list_remove( &file->entry );
+        HeapFree( GetProcessHeap(), 0, file->File );
+        HeapFree( GetProcessHeap(), 0, file->FileName );
+        HeapFree( GetProcessHeap(), 0, file->ShortName );
+        HeapFree( GetProcessHeap(), 0, file->Version );
+        HeapFree( GetProcessHeap(), 0, file->Language );
+        HeapFree( GetProcessHeap(), 0, file->SourcePath );
+        HeapFree( GetProcessHeap(), 0, file->TargetPath );
+        HeapFree( GetProcessHeap(), 0, file );
+    }
 
     /* clean up extension, progid, class and verb structures */
     for (i = 0; i < package->loaded_classes; i++)

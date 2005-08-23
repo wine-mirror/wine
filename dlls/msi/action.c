@@ -1153,45 +1153,41 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
 static UINT load_file(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE* package = (MSIPACKAGE*)param;
-    DWORD index = package->loaded_files;
     LPCWSTR component;
+    MSIFILE *file;
 
     /* fill in the data */
 
-    package->loaded_files++;
-    if (package->loaded_files== 1)
-        package->files = HeapAlloc(GetProcessHeap(),0,sizeof(MSIFILE));
-    else
-        package->files = HeapReAlloc(GetProcessHeap(),0,
-            package->files , package->loaded_files * sizeof(MSIFILE));
-
-    memset(&package->files[index],0,sizeof(MSIFILE));
+    file = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof (MSIFILE) );
+    if (!file)
+        return ERROR_NOT_ENOUGH_MEMORY;
  
-    package->files[index].File = load_dynamic_stringW(row, 1);
+    file->File = load_dynamic_stringW( row, 1 );
 
-    component = MSI_RecordGetString(row, 2);
-    package->files[index].Component = get_loaded_component(package,
-                    component);
+    component = MSI_RecordGetString( row, 2 );
+    file->Component = get_loaded_component( package, component );
 
-    if (!package->files[index].Component)
+    if (!file->Component)
         ERR("Unfound Component %s\n",debugstr_w(component));
 
-    package->files[index].FileName = load_dynamic_stringW(row,3);
-    reduce_to_longfilename(package->files[index].FileName);
+    file->FileName = load_dynamic_stringW( row, 3 );
+    reduce_to_longfilename( file->FileName );
 
-    package->files[index].ShortName = load_dynamic_stringW(row,3);
-    reduce_to_shortfilename(package->files[index].ShortName);
+    file->ShortName = load_dynamic_stringW( row, 3 );
+    reduce_to_shortfilename( file->ShortName );
     
-    package->files[index].FileSize = MSI_RecordGetInteger(row,4);
-    package->files[index].Version = load_dynamic_stringW(row, 5);
-    package->files[index].Language = load_dynamic_stringW(row, 6);
-    package->files[index].Attributes= MSI_RecordGetInteger(row,7);
-    package->files[index].Sequence= MSI_RecordGetInteger(row,8);
+    file->FileSize = MSI_RecordGetInteger( row, 4 );
+    file->Version = load_dynamic_stringW( row, 5 );
+    file->Language = load_dynamic_stringW( row, 6 );
+    file->Attributes = MSI_RecordGetInteger( row, 7 );
+    file->Sequence = MSI_RecordGetInteger( row, 8 );
 
-    package->files[index].Temporary = FALSE;
-    package->files[index].State = 0;
+    file->Temporary = FALSE;
+    file->State = 0;
 
-    TRACE("File Loaded (%s)\n",debugstr_w(package->files[index].File));  
+    TRACE("File Loaded (%s)\n",debugstr_w(file->File));  
+
+    list_add_tail( &package->files, &file->entry );
  
     return ERROR_SUCCESS;
 }
@@ -1722,9 +1718,9 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szOne[] = { '1', 0 };
     MSICOMPONENT *comp;
+    MSIFILE *file;
     UINT rc;
     MSIQUERY * view;
-    DWORD i;
     LPWSTR level;
     DWORD sz = 3;
     WCHAR buffer[3];
@@ -1743,14 +1739,12 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         msiobj_release(&view->hdr);
     }
 
-    TRACE("File calculations %i files\n",package->loaded_files);
+    TRACE("File calculations\n");
 
-    for (i = 0; i < package->loaded_files; i++)
+    LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
         MSICOMPONENT* comp = NULL;
-        MSIFILE* file= NULL;
 
-        file = &package->files[i];
         comp = file->Component;
 
         if (file->Temporary == TRUE)
@@ -2198,7 +2192,7 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
     MSIQUERY * view;
     MSIRECORD * row = 0;
     MSIFEATURE *feature;
-    int i;
+    MSIFILE *file;
 
     TRACE(" InstallValidate \n");
 
@@ -2233,8 +2227,10 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
     {
         total += COMPONENT_PROGRESS_VALUE;
     }
-    for (i=0; i < package->loaded_files; i++)
-        total += package->files[i].FileSize;
+    LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
+    {
+        total += file->FileSize;
+    }
     ui_progress(package,0,total,0,0);
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
@@ -2347,14 +2343,10 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, MSICOMPONENT *cmp )
     }
     else
     {
-        int j;
-        j = get_loaded_file(package,cmp->KeyPath);
+        MSIFILE *file = get_loaded_file( package, cmp->KeyPath );
 
-        if (j>=0)
-        {
-            LPWSTR p = strdupW(package->files[j].TargetPath);
-            return p;
-        }
+        if (file)
+            return strdupW( file->TargetPath );
     }
     return NULL;
 }
@@ -2411,7 +2403,6 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
     MSIFEATURE *feature;
     INT count = 0;
     BOOL write = FALSE;
-    INT j;
 
     /* only refcount DLLs */
     if (comp->KeyPath[0]==0 || 
@@ -2441,6 +2432,7 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
                 count++;
         }
     }
+
     /* decrement counts */
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
@@ -2458,13 +2450,17 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
 
     /* ref count all the files in the component */
     if (write)
-        for (j = 0; j < package->loaded_files; j++)
+    {
+        MSIFILE *file;
+
+        LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
         {
-            if (package->files[j].Temporary)
+            if (file->Temporary)
                 continue;
-            if (package->files[j].Component == comp)
-                ACTION_WriteSharedDLLsCount(package->files[j].TargetPath,count);
+            if (file->Component == comp)
+                ACTION_WriteSharedDLLsCount( file->TargetPath, count );
         }
+    }
     
     /* add a count for permenent */
     if (comp->Attributes & msidbComponentAttributesPermanent)
@@ -2658,8 +2654,8 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE* package = (MSIPACKAGE*)param;
     LPCWSTR component;
-    INT index;
     MSICOMPONENT *comp;
+    MSIFILE *file;
     typelib_struct tl_struct;
     HMODULE module;
     static const WCHAR szTYPELIB[] = {'T','Y','P','E','L','I','B',0};
@@ -2680,20 +2676,18 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
 
     comp->Action = INSTALLSTATE_LOCAL;
 
-    index = get_loaded_file(package,comp->KeyPath); 
-
-    if (index < 0)
+    file = get_loaded_file( package, comp->KeyPath ); 
+    if (!file)
         return ERROR_SUCCESS;
 
-    module = LoadLibraryExW(package->files[index].TargetPath, NULL,
-                    LOAD_LIBRARY_AS_DATAFILE);
+    module = LoadLibraryExW( file->TargetPath, NULL, LOAD_LIBRARY_AS_DATAFILE );
     if (module != NULL)
     {
         LPWSTR guid;
         guid = load_dynamic_stringW(row,1);
         CLSIDFromString(guid, &tl_struct.clsid);
         HeapFree(GetProcessHeap(),0,guid);
-        tl_struct.source = strdupW(package->files[index].TargetPath);
+        tl_struct.source = strdupW( file->TargetPath );
         tl_struct.path = NULL;
 
         EnumResourceNamesW(module, szTYPELIB, Typelib_EnumResNameProc,
@@ -2733,8 +2727,7 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
         HeapFree(GetProcessHeap(),0,tl_struct.source);
     }
     else
-        ERR("Could not load file! %s\n",
-                debugstr_w(package->files[index].TargetPath));
+        ERR("Could not load file! %s\n", debugstr_w(file->TargetPath));
 
     return ERROR_SUCCESS;
 }
@@ -3162,7 +3155,7 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
         goto cleanup;
     }
 
-    fullname = build_directory_name(3, folder, filename, NULL);
+    fullname = build_directory_name(2, folder, filename);
 
     if (action == 0)
     {
@@ -3231,7 +3224,7 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
     MSIPACKAGE *package = (MSIPACKAGE*)param;
     LPCWSTR filename;
     LPWSTR FullName;
-    INT index;
+    MSIFILE *file;
     DWORD len;
     static const WCHAR ExeStr[] =
         {'r','e','g','s','v','r','3','2','.','e','x','e',' ','\"',0};
@@ -3243,21 +3236,19 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
     memset(&si,0,sizeof(STARTUPINFOW));
 
     filename = MSI_RecordGetString(row,1);
-    index = get_loaded_file(package,filename);
+    file = get_loaded_file( package, filename );
 
-    if (index < 0)
+    if (!file)
     {
         ERR("Unable to find file id %s\n",debugstr_w(filename));
         return ERROR_SUCCESS;
     }
 
-    len = strlenW(ExeStr);
-    len += strlenW(package->files[index].TargetPath);
-    len +=2;
+    len = strlenW(ExeStr) + strlenW( file->TargetPath ) + 2;
 
     FullName = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
     strcpyW(FullName,ExeStr);
-    strcatW(FullName,package->files[index].TargetPath);
+    strcatW( FullName, file->TargetPath );
     strcatW(FullName,close);
 
     TRACE("Registering %s\n",debugstr_w(FullName));
@@ -3936,8 +3927,8 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = (MSIPACKAGE*)param;
     LPWSTR name;
-    LPCWSTR file;
-    INT index;
+    LPCWSTR filename;
+    MSIFILE *file;
     DWORD size;
     static const WCHAR regfont1[] =
         {'S','o','f','t','w','a','r','e','\\',
@@ -3954,9 +3945,9 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
     HKEY hkey1;
     HKEY hkey2;
 
-    file = MSI_RecordGetString(row,1);
-    index = get_loaded_file(package,file);
-    if (index < 0)
+    filename = MSI_RecordGetString( row, 1 );
+    file = get_loaded_file( package, filename );
+    if (!file)
     {
         ERR("Unable to load file\n");
         return ERROR_SUCCESS;
@@ -3964,7 +3955,7 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
 
     /* check to make sure that component is installed */
     if (!ACTION_VerifyComponentForAction(package, 
-                package->files[index].Component, INSTALLSTATE_LOCAL))
+                file->Component, INSTALLSTATE_LOCAL))
     {
         TRACE("Skipping: Component not scheduled for install\n");
         return ERROR_SUCCESS;
@@ -3974,17 +3965,15 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
     RegCreateKeyW(HKEY_LOCAL_MACHINE,regfont2,&hkey2);
 
     if (MSI_RecordIsNull(row,2))
-        name = load_ttfname_from(package->files[index].TargetPath);
+        name = load_ttfname_from( file->TargetPath );
     else
         name = load_dynamic_stringW(row,2);
 
     if (name)
     {
-        size = strlenW(package->files[index].FileName) * sizeof(WCHAR);
-        RegSetValueExW(hkey1,name,0,REG_SZ,
-                    (LPBYTE)package->files[index].FileName,size);
-        RegSetValueExW(hkey2,name,0,REG_SZ,
-                    (LPBYTE)package->files[index].FileName,size);
+        size = strlenW( file->FileName ) * sizeof(WCHAR);
+        RegSetValueExW( hkey1, name, 0, REG_SZ, (LPBYTE)file->FileName, size );
+        RegSetValueExW( hkey2, name, 0, REG_SZ, (LPBYTE)file->FileName, size );
     }
 
     HeapFree(GetProcessHeap(),0,name);
