@@ -124,6 +124,7 @@ DECL_HANDLER(queue_apc);
 DECL_HANDLER(get_apc);
 DECL_HANDLER(close_handle);
 DECL_HANDLER(set_handle_info);
+DECL_HANDLER(set_handle_cached_fd);
 DECL_HANDLER(dup_handle);
 DECL_HANDLER(open_process);
 DECL_HANDLER(open_thread);
@@ -334,6 +335,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_apc,
     (req_handler)req_close_handle,
     (req_handler)req_set_handle_info,
+    (req_handler)req_set_handle_cached_fd,
     (req_handler)req_dup_handle,
     (req_handler)req_open_process,
     (req_handler)req_open_thread,

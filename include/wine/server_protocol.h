@@ -529,12 +529,24 @@ struct set_handle_info_request
     obj_handle_t handle;
     int          flags;
     int          mask;
-    int          fd;
 };
 struct set_handle_info_reply
 {
     struct reply_header __header;
     int          old_flags;
+};
+
+
+
+struct set_handle_cached_fd_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+    int          fd;
+};
+struct set_handle_cached_fd_reply
+{
+    struct reply_header __header;
     int          cur_fd;
 };
 
@@ -3585,6 +3597,7 @@ enum request
     REQ_get_apc,
     REQ_close_handle,
     REQ_set_handle_info,
+    REQ_set_handle_cached_fd,
     REQ_dup_handle,
     REQ_open_process,
     REQ_open_thread,
@@ -3796,6 +3809,7 @@ union generic_request
     struct get_apc_request get_apc_request;
     struct close_handle_request close_handle_request;
     struct set_handle_info_request set_handle_info_request;
+    struct set_handle_cached_fd_request set_handle_cached_fd_request;
     struct dup_handle_request dup_handle_request;
     struct open_process_request open_process_request;
     struct open_thread_request open_thread_request;
@@ -4005,6 +4019,7 @@ union generic_reply
     struct get_apc_reply get_apc_reply;
     struct close_handle_reply close_handle_reply;
     struct set_handle_info_reply set_handle_info_reply;
+    struct set_handle_cached_fd_reply set_handle_cached_fd_reply;
     struct dup_handle_reply dup_handle_reply;
     struct open_process_reply open_process_reply;
     struct open_thread_reply open_thread_reply;
@@ -4190,6 +4205,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 189
+#define SERVER_PROTOCOL_VERSION 190
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

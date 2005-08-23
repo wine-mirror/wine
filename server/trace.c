@@ -828,13 +828,22 @@ static void dump_set_handle_info_request( const struct set_handle_info_request *
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " flags=%d,", req->flags );
-    fprintf( stderr, " mask=%d,", req->mask );
-    fprintf( stderr, " fd=%d", req->fd );
+    fprintf( stderr, " mask=%d", req->mask );
 }
 
 static void dump_set_handle_info_reply( const struct set_handle_info_reply *req )
 {
-    fprintf( stderr, " old_flags=%d,", req->old_flags );
+    fprintf( stderr, " old_flags=%d", req->old_flags );
+}
+
+static void dump_set_handle_cached_fd_request( const struct set_handle_cached_fd_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " fd=%d", req->fd );
+}
+
+static void dump_set_handle_cached_fd_reply( const struct set_handle_cached_fd_reply *req )
+{
     fprintf( stderr, " cur_fd=%d", req->cur_fd );
 }
 
@@ -3100,6 +3109,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_apc_request,
     (dump_func)dump_close_handle_request,
     (dump_func)dump_set_handle_info_request,
+    (dump_func)dump_set_handle_cached_fd_request,
     (dump_func)dump_dup_handle_request,
     (dump_func)dump_open_process_request,
     (dump_func)dump_open_thread_request,
@@ -3307,6 +3317,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_apc_reply,
     (dump_func)dump_close_handle_reply,
     (dump_func)dump_set_handle_info_reply,
+    (dump_func)dump_set_handle_cached_fd_reply,
     (dump_func)dump_dup_handle_reply,
     (dump_func)dump_open_process_reply,
     (dump_func)dump_open_thread_reply,
@@ -3514,6 +3525,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_apc",
     "close_handle",
     "set_handle_info",
+    "set_handle_cached_fd",
     "dup_handle",
     "open_process",
     "open_thread",

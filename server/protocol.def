@@ -437,9 +437,16 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
     obj_handle_t handle;       /* handle we are interested in */
     int          flags;        /* new handle flags */
     int          mask;         /* mask for flags to set */
-    int          fd;           /* file descriptor or -1 */
 @REPLY
     int          old_flags;    /* old flag value */
+@END
+
+
+/* Set the cached file descriptor of a handle */
+@REQ(set_handle_cached_fd)
+    obj_handle_t handle;       /* handle we are interested in */
+    int          fd;           /* file descriptor */
+@REPLY
     int          cur_fd;       /* current file descriptor */
 @END
 

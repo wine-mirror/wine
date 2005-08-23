@@ -425,6 +425,17 @@ int get_handle_unix_fd( struct process *process, obj_handle_t handle, unsigned i
     return entry->fd;
 }
 
+/* set the cached fd for a handle if not set already, and return the current value */
+static int set_handle_unix_fd( struct process *process, obj_handle_t handle, int fd )
+{
+    struct handle_entry *entry;
+
+    if (!(entry = get_handle( process, handle ))) return -1;
+    /* if no current fd set it, otherwise return current fd */
+    if (entry->fd == -1) entry->fd = fd;
+    return entry->fd;
+}
+
 /* remove the cached fd and return it */
 int flush_cached_fd( struct process *process, obj_handle_t handle )
 {
@@ -460,7 +471,7 @@ obj_handle_t find_inherited_handle( struct process *process, const struct object
 
 /* get/set the handle reserved flags */
 /* return the old flags (or -1 on error) */
-int set_handle_info( struct process *process, obj_handle_t handle, int mask, int flags, int *fd )
+static int set_handle_flags( struct process *process, obj_handle_t handle, int mask, int flags )
 {
     struct handle_entry *entry;
     unsigned int old_access;
@@ -476,9 +487,6 @@ int set_handle_info( struct process *process, obj_handle_t handle, int mask, int
     mask  = (mask << RESERVED_SHIFT) & RESERVED_ALL;
     flags = (flags << RESERVED_SHIFT) & mask;
     entry->access = (entry->access & ~mask) | flags;
-    /* if no current fd set it, otherwise return current fd */
-    if (entry->fd == -1) entry->fd = *fd;
-    *fd = entry->fd;
     return (old_access & RESERVED_ALL) >> RESERVED_SHIFT;
 }
 
@@ -545,12 +553,16 @@ DECL_HANDLER(close_handle)
 /* set a handle information */
 DECL_HANDLER(set_handle_info)
 {
+    reply->old_flags = set_handle_flags( current->process, req->handle, req->mask, req->flags );
+}
+
+/* set the cached file descriptor of a handle */
+DECL_HANDLER(set_handle_cached_fd)
+{
     int fd = req->fd;
 
     if (handle_is_global(req->handle)) fd = -1;  /* no fd cache for global handles */
-    reply->old_flags = set_handle_info( current->process, req->handle,
-                                        req->mask, req->flags, &fd );
-    reply->cur_fd = fd;
+    reply->cur_fd = set_handle_unix_fd( current->process, req->handle, fd );
 }
 
 /* duplicate a handle */

@@ -428,11 +428,9 @@ inline static int store_cached_fd( int *fd, obj_handle_t handle )
 {
     int ret;
 
-    SERVER_START_REQ( set_handle_info )
+    SERVER_START_REQ( set_handle_cached_fd )
     {
         req->handle = handle;
-        req->flags  = 0;
-        req->mask   = 0;
         req->fd     = *fd;
         if (!(ret = wine_server_call( req )))
         {
