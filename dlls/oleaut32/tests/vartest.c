@@ -1187,7 +1187,10 @@ static void test_VarNumFromParseNum(void)
   SETRGB(12, 0xf); SETRGB(13, 0xf); SETRGB(14, 0xf); SETRGB(15, 0xf);
   if (HAVE_OLEAUT32_I8)
   {
-    CONVERT(16,0,0,16,4,0, INTEGER_VTBITS); EXPECT_I8(0x7fffffff,0xffffffff);
+    /* We cannot use INTEGER_VTBITS as WinXP and Win2003 are broken(?). They
+       truncate the number to the smallest integer size requested:
+       CONVERT(16,0,0,16,4,0, INTEGER_VTBITS); EXPECT_I1((signed char)0xff); */
+    CONVERT(16,0,0,16,4,0, VTBIT_I8); EXPECT_I8(0x7fffffff,0xffffffff);
   }
 
   /* Assume the above pattern holds for numbers without hi-bit set, test (preservation of) hi-bit */
@@ -1210,7 +1213,11 @@ static void test_VarNumFromParseNum(void)
   SETRGB(12, 0); SETRGB(13, 0); SETRGB(14, 0); SETRGB(15, 2);
   if (HAVE_OLEAUT32_I8)
   {
-    CONVERT(16,0,0,16,4,0, INTEGER_VTBITS); EXPECT_I8(0x80000000,0x00000002);
+    /* We cannot use INTEGER_VTBITS as WinXP and Win2003 are broken(?). They
+       truncate the number to the smallest integer size requested:
+       CONVERT(16,0,0,16,4,0, INTEGER_VTBITS & ~VTBIT_I1);
+       EXPECT_I2((signed short)0x0002); */
+    CONVERT(16,0,0,16,4,0, VTBIT_I8); EXPECT_I8(0x80000000,0x00000002);
   }
 
   /* Test (preservation of) hi-bit with STRICT type requesting */
@@ -4684,15 +4691,9 @@ static void test_VarMul(void)
     VARMUL(I2, I2_MAX, I2, I2_MAX, I4, I2_MAX * I2_MAX);
     VARMUL(I2, I2_MAX, I2, I2_MIN, I4, I2_MAX * I2_MIN);
     VARMUL(I2, I2_MIN, I2, I2_MIN, I4, I2_MIN * I2_MIN);
-if (HAVE_OLEAUT32_I8) {
-    VARMUL(I4, I4_MAX, I4, I4_MAX, I8, (LONGLONG)I4_MAX * I4_MAX);
-    VARMUL(I4, I4_MAX, I4, I4_MIN, I8, (LONGLONG)I4_MAX * I4_MIN);
-    VARMUL(I4, I4_MIN, I4, I4_MIN, I8, (LONGLONG)I4_MIN * I4_MIN);
-} else {
     VARMUL(I4, I4_MAX, I4, I4_MAX, R8, (double)I4_MAX * I4_MAX);
     VARMUL(I4, I4_MAX, I4, I4_MIN, R8, (double)I4_MAX * I4_MIN);
     VARMUL(I4, I4_MIN, I4, I4_MIN, R8, (double)I4_MIN * I4_MIN);
-}
     VARMUL(R4, R4_MAX, R4, R4_MAX, R8, (double)R4_MAX * R4_MAX);
     VARMUL(R4, R4_MAX, R4, R4_MIN, R4, R4_MAX * R4_MIN);
     VARMUL(R4, R4_MIN, R4, R4_MIN, R4, R4_MIN * R4_MIN);
@@ -4878,13 +4879,8 @@ static void test_VarAdd(void)
     VARADD(I2, I2_MAX, I2, I2_MIN, I2, I2_MAX + I2_MIN);
     VARADD(I2, I2_MIN, I2, I2_MIN, I4, I2_MIN + I2_MIN);
     VARADD(I4, I4_MAX, I4, I4_MIN, I4, I4_MAX + I4_MIN);
-    if (HAVE_OLEAUT32_I8) {
-        VARADD(I4, I4_MAX, I4, I4_MAX, I8, (LONGLONG)I4_MAX + I4_MAX);
-        VARADD(I4, I4_MIN, I4, I4_MIN, I8, (LONGLONG)I4_MIN + I4_MIN);
-    } else {
-        VARADD(I4, I4_MAX, I4, I4_MAX, R8, (double)I4_MAX + I4_MAX);
-        VARADD(I4, I4_MIN, I4, I4_MIN, R8, (double)I4_MIN + I4_MIN);
-    }
+    VARADD(I4, I4_MAX, I4, I4_MAX, R8, (double)I4_MAX + I4_MAX);
+    VARADD(I4, I4_MIN, I4, I4_MIN, R8, (double)I4_MIN + I4_MIN);
     VARADD(R4, R4_MAX, R4, R4_MAX, R8, (double)R4_MAX + R4_MAX);
     VARADD(R4, R4_MAX, R4, R4_MIN, R4, R4_MAX + R4_MIN);
     VARADD(R4, R4_MIN, R4, R4_MIN, R4, R4_MIN + R4_MIN);
