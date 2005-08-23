@@ -12,6 +12,7 @@ C_SRCS = \
 	lzx.c \
 	itss.c \
 	moniker.c \
+	regsvr.c \
 	storage.c
 
 IDL_SRCS = \

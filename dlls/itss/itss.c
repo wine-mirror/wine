@@ -413,12 +413,6 @@ static HRESULT ITSS_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
 /*****************************************************************************/
 
-HRESULT WINAPI DllRegisterServer(void)
-{
-    FIXME("\n");
-    return S_OK;
-}
-
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     TRACE("dll_count = %lu\n", dll_count);
