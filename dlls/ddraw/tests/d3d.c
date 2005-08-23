@@ -41,7 +41,7 @@ static void init_function_pointers(void)
 }
 
 
-static void CreateDirect3D(void)
+static BOOL CreateDirect3D(void)
 {
     HRESULT rc;
     DDSURFACEDESC2 ddsd;
@@ -67,7 +67,13 @@ static void CreateDirect3D(void)
 
     rc = IDirect3D7_CreateDevice(lpD3D, &IID_IDirect3DTnLHalDevice, lpDDS,
         &lpD3DDevice);
-    ok(rc==D3D_OK, "CreateDevice returned: %lx\n", rc);
+    ok(rc==D3D_OK || rc==DDERR_NOPALETTEATTACHED, "CreateDevice returned: %lx\n", rc);
+    if (!lpD3DDevice) {
+        trace("IDirect3D7::CreateDevice() failed\n");
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 static void ReleaseDirect3D(void)
@@ -197,7 +203,10 @@ START_TEST(d3d)
         return;
     }
 
-    CreateDirect3D();
+    if(!CreateDirect3D()) {
+        trace("Skipping tests\n");
+        return;
+	}
     LightTest();
     ReleaseDirect3D();
 }
