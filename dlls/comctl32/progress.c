@@ -513,6 +513,7 @@ static LRESULT PROGRESS_Timer (PROGRESS_INFO *infoPtr, INT idTimer)
         }
 
         InvalidateRect(infoPtr->Self, &rect, FALSE);
+        UpdateWindow(infoPtr->Self);
     }
     return 0;
 }
@@ -660,6 +661,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 	    PROGRESS_CoercePos (infoPtr);
 	    TRACE("PBM_DELTAPOS: current pos changed from %d to %d\n", oldVal, infoPtr->CurVal);
             PROGRESS_Invalidate( infoPtr, oldVal, infoPtr->CurVal );
+            UpdateWindow( infoPtr->Self );
         }
         return oldVal;
     }
@@ -673,6 +675,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 	    PROGRESS_CoercePos(infoPtr);
 	    TRACE("PBM_SETPOS: current pos changed from %d to %d\n", oldVal, infoPtr->CurVal);
             PROGRESS_Invalidate( infoPtr, oldVal, infoPtr->CurVal );
+            UpdateWindow( infoPtr->Self );
         }
         return oldVal;
     }
@@ -699,6 +702,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 	{
 	    TRACE("PBM_STEPIT: current pos changed from %d to %d\n", oldVal, infoPtr->CurVal);
             PROGRESS_Invalidate( infoPtr, oldVal, infoPtr->CurVal );
+            UpdateWindow( infoPtr->Self );
 	}
         return oldVal;
     }

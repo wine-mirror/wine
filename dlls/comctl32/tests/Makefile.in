@@ -9,6 +9,7 @@ CTESTS = \
 	dpa.c \
 	imagelist.c \
 	mru.c \
+	progress.c \
 	subclass.c \
 	tab.c \
 	treeview.c \
