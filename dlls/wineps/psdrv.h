@@ -469,7 +469,7 @@ extern INT PSDRV_EndDoc( PSDRV_PDEVICE *physDev );
 extern INT PSDRV_EndPage( PSDRV_PDEVICE *physDev );
 extern BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				const RECT *lprect, LPCWSTR str, UINT count,
-				const INT *lpDx, INT breakExtra );
+				const INT *lpDx );
 extern BOOL PSDRV_GetCharWidth( PSDRV_PDEVICE *physDev, UINT firstChar, UINT lastChar,
 				  LPINT buffer );
 extern BOOL PSDRV_GetTextExtentPoint( PSDRV_PDEVICE *physDev, LPCWSTR str, INT count,

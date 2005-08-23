@@ -84,7 +84,7 @@ extern BOOL MFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT 
 extern INT  MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode );
 extern BOOL MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y,
                               UINT flags, const RECT *lprect, LPCWSTR str,
-                              UINT count, const INT *lpDx, INT breakExtra );
+                              UINT count, const INT *lpDx );
 extern BOOL MFDRV_FillPath( PHYSDEV dev );
 extern BOOL MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush );
 extern BOOL MFDRV_FlattenPath( PHYSDEV dev );

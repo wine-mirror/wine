@@ -42,93 +42,36 @@ WINE_DEFAULT_DEBUG_CHANNEL(text);
 BOOL
 X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
                    const RECT *lprect, LPCWSTR wstr, UINT count,
-                   const INT *lpDx, INT breakExtra )
+                   const INT *lpDx )
 {
     unsigned int i;
     fontObject*		pfo;
-    INT	 	        width, ascent, descent, xwidth, ywidth;
     XFontStruct*	font;
     RECT 		rect;
-    char		dfBreakChar, lfUnderline, lfStrikeOut;
     BOOL		rotated = FALSE;
     XChar2b		*str2b = NULL;
     BOOL		dibUpdateFlag = FALSE;
     BOOL                result = TRUE;
     HRGN                saved_region = 0;
-    POINT               pt;
-    UINT                align;
-    INT                 charExtra;
 
     if(physDev->has_gdi_font)
-        return X11DRV_XRender_ExtTextOut(physDev, x, y, flags, lprect, wstr, count, lpDx, breakExtra);
+        return X11DRV_XRender_ExtTextOut(physDev, x, y, flags, lprect, wstr, count, lpDx);
 
     if (!X11DRV_SetupGCForText( physDev )) return TRUE;
 
-    align = GetTextAlign( physDev->hdc );
-    charExtra = GetTextCharacterExtra( physDev->hdc );
-    
     pfo = XFONT_GetFontObject( physDev->font );
     font = pfo->fs;
 
     if (pfo->lf.lfEscapement && pfo->lpX11Trans)
         rotated = TRUE;
-    dfBreakChar = (char)pfo->fi->df.dfBreakChar;
-    lfUnderline = (pfo->fo_flags & FO_SYNTH_UNDERLINE) ? 1 : 0;
-    lfStrikeOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT) ? 1 : 0;
 
     TRACE("hdc=%p df=%04x %d,%d %s, %d  flags=%d lpDx=%p\n",
 	  physDev->hdc, (UINT16)(physDev->font), x, y,
 	  debugstr_wn (wstr, count), count, flags, lpDx);
 
-    /* some strings sent here end in a newline for whatever reason.  I have no
-       clue what the right treatment should be in general, but ignoring
-       terminating newlines seems ok.  MW, April 1998.  */
-    if (count > 0 && wstr[count - 1] == '\n') count--;
-
     if (lprect != NULL) TRACE("\trect=(%ld,%ld - %ld,%ld)\n",
                                      lprect->left, lprect->top,
                                      lprect->right, lprect->bottom );
-      /* Setup coordinates */
-
-    if (align & TA_UPDATECP)
-    {
-        GetCurrentPositionEx( physDev->hdc, &pt );
-        x = pt.x;
-        y = pt.y;
-    }
-
-    if (flags & (ETO_OPAQUE | ETO_CLIPPED))  /* there's a rectangle */
-    {
-        if (!lprect)  /* not always */
-        {
-            SIZE sz;
-            if (flags & ETO_CLIPPED)  /* Can't clip with no rectangle */
-	      return FALSE;
-	    if (!X11DRV_GetTextExtentPoint( physDev, wstr, count, &sz ))
-	      return FALSE;
-	    rect.left   = x;
-	    rect.right  = x + sz.cx;
-	    rect.top    = y;
-	    rect.bottom = y + sz.cy;
-	}
-	else
-	{
-	    rect = *lprect;
-	}
-	LPtoDP(physDev->hdc, (POINT*)&rect, 2);
-
-	if (rect.right < rect.left) SWAP_INT( rect.left, rect.right );
-	if (rect.bottom < rect.top) SWAP_INT( rect.top, rect.bottom );
-    }
-
-    pt.x = x;
-    pt.y = y;
-    LPtoDP(physDev->hdc, &pt, 1);
-    x = pt.x;
-    y = pt.y;
-
-    TRACE("\treal coord: x=%i, y=%i, rect=(%ld,%ld - %ld,%ld)\n",
-			  x, y, rect.left, rect.top, rect.right, rect.bottom);
 
       /* Draw the rectangle */
 
@@ -145,83 +88,14 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     }
     if (!count) goto END;  /* Nothing more to do */
 
-      /* Compute text starting position */
-
-    if (lpDx) /* have explicit character cell x offsets in logical coordinates */
-    {
-        for (i = width = 0; i < count; i++) width += lpDx[i];
-        width = X11DRV_XWStoDS(physDev, width);
-    }
-    else
-    {
-        SIZE sz;
-        if (!X11DRV_GetTextExtentPoint( physDev, wstr, count, &sz ))
-        {
-            result = FALSE;
-            goto END;
-        }
-        width = X11DRV_XWStoDS(physDev, sz.cx);
-    }
-    ascent = pfo->lpX11Trans ? pfo->lpX11Trans->ascent : font->ascent;
-    descent = pfo->lpX11Trans ? pfo->lpX11Trans->descent : font->descent;
-    xwidth = pfo->lpX11Trans ? width * pfo->lpX11Trans->a /
-      pfo->lpX11Trans->pixelsize : width;
-    ywidth = pfo->lpX11Trans ? width * pfo->lpX11Trans->b /
-      pfo->lpX11Trans->pixelsize : 0;
-
-    switch( align & (TA_LEFT | TA_RIGHT | TA_CENTER) )
-    {
-      case TA_LEFT:
-	  if (align & TA_UPDATECP) {
-	      pt.x = x + xwidth;
-	      pt.y = y - ywidth;
-	      DPtoLP(physDev->hdc, &pt, 1);
-	      MoveToEx(physDev->hdc, pt.x, pt.y, NULL);
-	  }
-	  break;
-      case TA_RIGHT:
-	  x -= xwidth;
-	  y += ywidth;
-	  if (align & TA_UPDATECP) {
-	      pt.x = x;
-	      pt.y = y;
-	      DPtoLP(physDev->hdc, &pt, 1);
-	      MoveToEx(physDev->hdc, pt.x, pt.y, NULL);
-	  }
-	  break;
-      case TA_CENTER:
-	  x -= xwidth / 2;
-	  y += ywidth / 2;
-	  break;
-    }
-
-    switch( align & (TA_TOP | TA_BOTTOM | TA_BASELINE) )
-    {
-      case TA_TOP:
-	  x -= pfo->lpX11Trans ? ascent * pfo->lpX11Trans->c /
-	    pfo->lpX11Trans->pixelsize : 0;
-	  y += pfo->lpX11Trans ? ascent * pfo->lpX11Trans->d /
-	    pfo->lpX11Trans->pixelsize : ascent;
-	  break;
-      case TA_BOTTOM:
-	  x += pfo->lpX11Trans ? descent * pfo->lpX11Trans->c /
-	    pfo->lpX11Trans->pixelsize : 0;
-	  y -= pfo->lpX11Trans ? descent * pfo->lpX11Trans->d /
-	    pfo->lpX11Trans->pixelsize : descent;
-	  break;
-      case TA_BASELINE:
-	  break;
-    }
 
       /* Set the clip region */
 
     if (flags & ETO_CLIPPED)
     {
         HRGN clip_region;
-        RECT clip_rect = *lprect;
 
-        LPtoDP( physDev->hdc, (POINT *)&clip_rect, 2 );
-        clip_region = CreateRectRgnIndirect( &clip_rect );
+        clip_region = CreateRectRgnIndirect( lprect );
         /* make a copy of the current device region */
         saved_region = CreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( saved_region, physDev->region, 0, RGN_COPY );
@@ -237,28 +111,6 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
         dibUpdateFlag = TRUE;
     }
 
-    if (GetBkMode( physDev->hdc ) != TRANSPARENT)
-    {
-          /* If rectangle is opaque and clipped, do nothing */
-        if (!(flags & ETO_CLIPPED) || !(flags & ETO_OPAQUE))
-        {
-              /* Only draw if rectangle is not opaque or if some */
-              /* text is outside the rectangle */
-            if (!(flags & ETO_OPAQUE) ||
-                (x < rect.left) ||
-                (x + width >= rect.right) ||
-                (y - ascent < rect.top) ||
-                (y + descent >= rect.bottom))
-            {
-                wine_tsx11_lock();
-                XSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
-                XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                                physDev->org.x + x, physDev->org.y + y - ascent,
-                                width, ascent + descent );
-                wine_tsx11_unlock();
-            }
-        }
-    }
 
     /* Draw the text (count > 0 verified) */
     if (!(str2b = X11DRV_cptable[pfo->fi->cptable].punicode_to_char2b( pfo, wstr, count )))
@@ -269,154 +121,67 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     wine_tsx11_unlock();
     if(!rotated)
     {
-      if (!charExtra && !breakExtra && !lpDx)
-      {
-        X11DRV_cptable[pfo->fi->cptable].pDrawString(
-		pfo, gdi_display, physDev->drawable, physDev->gc,
-		physDev->org.x + x, physDev->org.y + y, str2b, count );
-      }
-      else  /* Now the fun begins... */
-      {
-        XTextItem16 *items, *pitem;
-	int delta;
-
-	/* allocate max items */
-
-        pitem = items = HeapAlloc( GetProcessHeap(), 0,
-                                   count * sizeof(XTextItem16) );
-	if(items == NULL) goto FAIL;
-        delta = i = 0;
-	if( lpDx ) /* explicit character widths */
-	{
-	    long ve_we;
-	    unsigned short err = 0;
-
-	    ve_we = X11DRV_XWStoDS( physDev, 0x10000 );
-
-	    while (i < count)
-	    {
-		/* initialize text item with accumulated delta */
-
-		long sum;
-		long fSum;
-		sum = 0;
-		pitem->chars  = str2b + i;
-		pitem->delta  = delta;
-		pitem->nchars = 0;
-		pitem->font   = None;
-		delta = 0;
-
-		/* add characters to the same XTextItem
-		 * until new delta becomes non-zero */
-
-		do
-		{
-		    sum += lpDx[i];
-		    fSum = sum*ve_we+err;
-		    delta = (short)HIWORD(fSum)
-		      - X11DRV_cptable[pfo->fi->cptable].pTextWidth(
-		                                pfo, pitem->chars, pitem->nchars+1);
-		    pitem->nchars++;
-		} while ((++i < count) && !delta);
-		pitem++;
-		err = LOWORD(fSum);
-	   }
-	}
-	else /* charExtra or breakExtra */
-	{
-            while (i < count)
-            {
-		pitem->chars  = str2b + i;
-		pitem->delta  = delta;
-		pitem->nchars = 0;
-		pitem->font   = None;
-		delta = 0;
-
-		do
-                {
-                    delta += charExtra;
-                    if (str2b[i].byte2 == (char)dfBreakChar)
-		      delta += breakExtra;
-		    pitem->nchars++;
-                } while ((++i < count) && !delta);
-		pitem++;
-            }
+        if (!lpDx)
+        {
+            X11DRV_cptable[pfo->fi->cptable].pDrawString(
+                           pfo, gdi_display, physDev->drawable, physDev->gc,
+                           physDev->org.x + x, physDev->org.y + y, str2b, count );
         }
+        else
+        {
+            XTextItem16 *items, *pitem;
 
-	X11DRV_cptable[pfo->fi->cptable].pDrawText( pfo, gdi_display,
-		physDev->drawable, physDev->gc,
-		physDev->org.x + x, physDev->org.y + y, items, pitem - items );
-        HeapFree( GetProcessHeap(), 0, items );
-      }
+            pitem = items = HeapAlloc( GetProcessHeap(), 0,
+                                       count * sizeof(XTextItem16) );
+            if(items == NULL) goto FAIL;
+
+            for(i = 0; i < count; i++)
+            {
+                pitem->chars  = str2b + i;
+                pitem->delta  = lpDx[i];
+                pitem->nchars = 1;
+                pitem->font   = None;
+                pitem++;
+            }
+
+            X11DRV_cptable[pfo->fi->cptable].pDrawText( pfo, gdi_display,
+                                  physDev->drawable, physDev->gc,
+                                  physDev->org.x + x, physDev->org.y + y, items, pitem - items );
+            HeapFree( GetProcessHeap(), 0, items );
+        }
     }
     else /* rotated */
     {
-      /* have to render character by character. */
-      double offset = 0.0;
-      int i;
+        /* have to render character by character. */
+        double offset = 0.0;
+        int i;
 
-      for (i=0; i<count; i++)
-      {
-	int char_metric_offset = str2b[i].byte2 + (str2b[i].byte1 << 8)
-	  - font->min_char_or_byte2;
-	int x_i = IROUND((double) (physDev->org.x + x) + offset *
-			 pfo->lpX11Trans->a / pfo->lpX11Trans->pixelsize );
-	int y_i = IROUND((double) (physDev->org.y + y) - offset *
-			 pfo->lpX11Trans->b / pfo->lpX11Trans->pixelsize );
+        for (i=0; i<count; i++)
+        {
+            int char_metric_offset = str2b[i].byte2 + (str2b[i].byte1 << 8)
+                - font->min_char_or_byte2;
+            int x_i = IROUND((double) (physDev->org.x + x) + offset *
+                             pfo->lpX11Trans->a / pfo->lpX11Trans->pixelsize );
+            int y_i = IROUND((double) (physDev->org.y + y) - offset *
+                             pfo->lpX11Trans->b / pfo->lpX11Trans->pixelsize );
 
-	X11DRV_cptable[pfo->fi->cptable].pDrawString(
-		pfo, gdi_display, physDev->drawable, physDev->gc,
-		x_i, y_i, &str2b[i], 1);
-	if (lpDx)
-	{
-	  offset += X11DRV_XWStoDS(physDev, lpDx[i]);
-	}
-	else
-	{
-	  offset += (double) (font->per_char ?
-			      font->per_char[char_metric_offset].attributes:
-			      font->min_bounds.attributes)
-	                  * pfo->lpX11Trans->pixelsize / 1000.0;
-	  offset += charExtra;
-	  if (str2b[i].byte2 == (char)dfBreakChar)
-	    offset += breakExtra;
-	}
-      }
+            X11DRV_cptable[pfo->fi->cptable].pDrawString(
+                                    pfo, gdi_display, physDev->drawable, physDev->gc,
+                                    x_i, y_i, &str2b[i], 1);
+            if (lpDx)
+            {
+                offset += lpDx[i];
+            }
+            else
+            {
+                offset += (double) (font->per_char ?
+                                    font->per_char[char_metric_offset].attributes:
+                                    font->min_bounds.attributes)
+                    * pfo->lpX11Trans->pixelsize / 1000.0;
+            }
+        }
     }
     HeapFree( GetProcessHeap(), 0, str2b );
-
-      /* Draw underline and strike-out if needed */
-
-    wine_tsx11_lock();
-    if (lfUnderline)
-    {
-	long linePos, lineWidth;
-
-	if (!XGetFontProperty( font, XA_UNDERLINE_POSITION, &linePos ))
-	    linePos = descent - 1;
-	if (!XGetFontProperty( font, XA_UNDERLINE_THICKNESS, &lineWidth ))
-	    lineWidth = 0;
-	else if (lineWidth == 1) lineWidth = 0;
-        XSetLineAttributes( gdi_display, physDev->gc, lineWidth,
-                            LineSolid, CapRound, JoinBevel );
-        XDrawLine( gdi_display, physDev->drawable, physDev->gc,
-                   physDev->org.x + x, physDev->org.y + y + linePos,
-                   physDev->org.x + x + width, physDev->org.y + y + linePos );
-    }
-    if (lfStrikeOut)
-    {
-	long lineAscent, lineDescent;
-	if (!XGetFontProperty( font, XA_STRIKEOUT_ASCENT, &lineAscent ))
-	    lineAscent = ascent / 2;
-	if (!XGetFontProperty( font, XA_STRIKEOUT_DESCENT, &lineDescent ))
-	    lineDescent = -lineAscent * 2 / 3;
-        XSetLineAttributes( gdi_display, physDev->gc, lineAscent + lineDescent,
-                            LineSolid, CapRound, JoinBevel );
-        XDrawLine( gdi_display, physDev->drawable, physDev->gc,
-                   physDev->org.x + x, physDev->org.y + y - lineAscent,
-                   physDev->org.x + x + width, physDev->org.y + y - lineAscent );
-    }
-    wine_tsx11_unlock();
 
     if (flags & ETO_CLIPPED)
     {

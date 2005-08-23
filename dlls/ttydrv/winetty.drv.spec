@@ -8,7 +8,7 @@
 @ cdecl Ellipse(ptr long long long long) TTYDRV_DC_Ellipse
 @ cdecl ExtEscape(ptr long long ptr long ptr) TTYDRV_ExtEscape
 @ cdecl ExtFloodFill(ptr long long long long) TTYDRV_DC_ExtFloodFill
-@ cdecl ExtTextOut(ptr long long long ptr ptr long ptr long) TTYDRV_DC_ExtTextOut
+@ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) TTYDRV_DC_ExtTextOut
 @ cdecl GetBitmapBits(long ptr long) TTYDRV_GetBitmapBits
 @ cdecl GetCharWidth(ptr long long ptr) TTYDRV_DC_GetCharWidth
 @ cdecl GetDCOrgEx(ptr ptr) TTYDRV_GetDCOrgEx

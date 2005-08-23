@@ -1004,33 +1004,24 @@ static int XRenderErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
  */
 BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				const RECT *lprect, LPCWSTR wstr, UINT count,
-				const INT *lpDx, INT breakExtra )
+				const INT *lpDx )
 {
     XRenderColor col;
-    unsigned int idx;
-    TEXTMETRICW tm;
     RGNDATA *data;
-    SIZE sz;
-    RECT rc;
-    BOOL done_extents = FALSE;
-    INT width, xwidth, ywidth;
-    double cosEsc, sinEsc;
     XGCValues xgcval;
-    LOGFONTW lf;
     int render_op = PictOpOver;
-    const WORD *glyphs;
-    POINT pt;
     gsCacheEntry *entry;
     gsCacheEntryFormat *formatEntry;
     BOOL retv = FALSE;
     HDC hdc = physDev->hdc;
     int textPixel, backgroundPixel;
-    INT *deltas = NULL, char_extra;
     HRGN saved_region = 0;
-    UINT align = GetTextAlign( hdc );
     BOOL disable_antialias = FALSE;
     AA_Type antialias = AA_None;
     DIBSECTION bmp;
+    unsigned int idx;
+    double cosEsc, sinEsc;
+    LOGFONTW lf;
 
     /* Do we need to disable antialiasing because of palette mode? */
     if( !physDev->bitmap || GetObjectW( physDev->bitmap->hbitmap, sizeof(bmp), &bmp ) != sizeof(bmp) ) {
@@ -1039,61 +1030,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     else if (bmp.dsBmih.biBitCount <= 8) {
         TRACE("Disabling antialiasing\n");
         disable_antialias = TRUE;
-    }
-
-    TRACE("%p, %d, %d, %08x, %p, %s, %d, %p)\n", hdc, x, y, flags,
-	  lprect, debugstr_wn(wstr, count), count, lpDx);
-
-    if(flags & ETO_GLYPH_INDEX)
-        glyphs = (const WORD*)wstr;
-    else {
-        glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR));
-        GetGlyphIndicesW(hdc, wstr, count, (WORD*)glyphs, 0);
-    }
-
-    if(lprect)
-      TRACE("rect: %ld,%ld - %ld,%ld\n", lprect->left, lprect->top, lprect->right,
-	    lprect->bottom);
-    TRACE("align = %x bkmode = %x mapmode = %x\n", align, GetBkMode(hdc), GetMapMode(hdc));
-
-    if(align & TA_UPDATECP)
-    {
-        GetCurrentPositionEx( hdc, &pt );
-        x = pt.x;
-        y = pt.y;
-    }
-
-    GetTextMetricsW(hdc, &tm);
-    GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
-
-    if(!(tm.tmPitchAndFamily & TMPF_VECTOR)) /* Non-scalable fonts shouldn't be rotated */
-        lf.lfEscapement = 0;
-
-    if(lf.lfEscapement != 0) {
-        cosEsc = cos(lf.lfEscapement * M_PI / 1800);
-	sinEsc = sin(lf.lfEscapement * M_PI / 1800);
-    } else {
-        cosEsc = 1;
-	sinEsc = 0;
-    }
-
-    if(flags & (ETO_CLIPPED | ETO_OPAQUE)) {
-        if(!lprect) {
-            if(flags & ETO_CLIPPED) goto done;
-            GetTextExtentPointI(hdc, glyphs, count, &sz);
-            done_extents = TRUE;
-            rc.left = x;
-            rc.top = y;
-            rc.right = x + sz.cx;
-            rc.bottom = y + sz.cy;
-	} else {
-	    rc = *lprect;
-	}
-
-	LPtoDP(hdc, (POINT*)&rc, 2);
-
-	if(rc.left > rc.right) {INT tmp = rc.left; rc.left = rc.right; rc.right = tmp;}
-	if(rc.top > rc.bottom) {INT tmp = rc.top; rc.top = rc.bottom; rc.bottom = tmp;}
     }
 
     xgcval.function = GXcopy;
@@ -1118,114 +1054,37 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	backgroundPixel = physDev->backgroundPixel;
     }
 
-    if(flags & ETO_OPAQUE) {
+    if(flags & ETO_OPAQUE)
+    {
         wine_tsx11_lock();
         XSetForeground( gdi_display, physDev->gc, backgroundPixel );
         XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                        physDev->org.x + rc.left, physDev->org.y + rc.top,
-                        rc.right - rc.left, rc.bottom - rc.top );
+                        physDev->org.x + lprect->left, physDev->org.y + lprect->top,
+                        lprect->right - lprect->left, lprect->bottom - lprect->top );
         wine_tsx11_unlock();
     }
 
-    if(count == 0) {
-	retv =  TRUE;
+    if(count == 0)
+    {
+	retv = TRUE;
         goto done_unlock;
     }
 
-    pt.x = x;
-    pt.y = y;
-    LPtoDP(hdc, &pt, 1);
-    x = pt.x;
-    y = pt.y;
-
-    TRACE("real x,y %d,%d\n", x, y);
-
-    char_extra = GetTextCharacterExtra(hdc);
-    if(char_extra || breakExtra) {
-        UINT i;
-	SIZE tmpsz;
-        deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
-	for(i = 0; i < count; i++) {
-	    if(lpDx)
-	        deltas[i] = lpDx[i] + char_extra;
-	    else {
-	        GetTextExtentPointI(hdc, glyphs + i, 1, &tmpsz);
-		deltas[i] = tmpsz.cx;
-	    }
-            
-            if (breakExtra && wstr[i] == tm.tmBreakChar) {
-                deltas[i] = deltas[i] + breakExtra;
-            }
-	}
-    } else if(lpDx)
-        deltas = (INT*)lpDx;
-
-    if(deltas) {
-	width = 0;
-	for(idx = 0; idx < count; idx++)
-	    width += deltas[idx];
+    
+    GetObjectW(GetCurrentObject(physDev->hdc, OBJ_FONT), sizeof(lf), &lf);
+    if(lf.lfEscapement != 0) {
+        cosEsc = cos(lf.lfEscapement * M_PI / 1800);
+        sinEsc = sin(lf.lfEscapement * M_PI / 1800);
     } else {
-	if(!done_extents) {
-	    GetTextExtentPointI(hdc, glyphs, count, &sz);
-	    done_extents = TRUE;
-	}
-	width = sz.cx;
-    }
-    width = X11DRV_XWStoDS(physDev, width);
-    xwidth = width * cosEsc;
-    ywidth = width * sinEsc;
-
-    tm.tmAscent = abs(X11DRV_YWStoDS(physDev, tm.tmAscent));
-    tm.tmDescent = abs(X11DRV_YWStoDS(physDev, tm.tmDescent));
-    switch( align & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
-    case TA_LEFT:
-        if (align & TA_UPDATECP) {
-	    pt.x = x + xwidth;
-	    pt.y = y - ywidth;
-	    DPtoLP(hdc, &pt, 1);
-	    MoveToEx(hdc, pt.x, pt.y, NULL);
-	}
-	break;
-
-    case TA_CENTER:
-        x -= xwidth / 2;
-	y += ywidth / 2;
-	break;
-
-    case TA_RIGHT:
-        x -= xwidth;
-	y += ywidth;
-	if (align & TA_UPDATECP) {
-	    pt.x = x;
-	    pt.y = y;
-	    DPtoLP(hdc, &pt, 1);
-	    MoveToEx(hdc, pt.x, pt.y, NULL);
-	}
-	break;
-    }
-
-    switch( align & (TA_TOP | TA_BOTTOM | TA_BASELINE) ) {
-    case TA_TOP:
-        y += tm.tmAscent * cosEsc;
-	x += tm.tmAscent * sinEsc;
-	break;
-
-    case TA_BOTTOM:
-        y -= tm.tmDescent * cosEsc;
-	x -= tm.tmDescent * sinEsc;
-	break;
-
-    case TA_BASELINE:
-        break;
+        cosEsc = 1;
+        sinEsc = 0;
     }
 
     if (flags & ETO_CLIPPED)
     {
         HRGN clip_region;
-        RECT clip_rect = *lprect;
 
-        LPtoDP( hdc, (POINT *)&clip_rect, 2 );
-        clip_region = CreateRectRgnIndirect( &clip_rect );
+        clip_region = CreateRectRgnIndirect( lprect );
         /* make a copy of the current device region */
         saved_region = CreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( saved_region, physDev->region, 0, RGN_COPY );
@@ -1261,20 +1120,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 					      (XRectangle *)data->Buffer, data->rdh.nCount );
 	    wine_tsx11_unlock();
 	    HeapFree( GetProcessHeap(), 0, data );
-	}
-    }
-
-    if(GetBkMode(hdc) != TRANSPARENT) {
-        if(!((flags & ETO_CLIPPED) && (flags & ETO_OPAQUE))) {
-	    if(!(flags & ETO_OPAQUE) || x < rc.left || x + width >= rc.right ||
-	       y - tm.tmAscent < rc.top || y + tm.tmDescent >= rc.bottom) {
-                wine_tsx11_lock();
-                XSetForeground( gdi_display, physDev->gc, backgroundPixel );
-                XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                                physDev->org.x + x, physDev->org.y + y - tm.tmAscent,
-                                width, tm.tmAscent + tm.tmDescent );
-                wine_tsx11_unlock();
-	    }
 	}
     }
 
@@ -1345,10 +1190,10 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     for(idx = 0; idx < count; idx++) {
         if( !formatEntry ) {
-	    UploadGlyph(physDev, glyphs[idx], antialias);
+	    UploadGlyph(physDev, wstr[idx], antialias);
             formatEntry = entry->format[antialias];
-        } else if( glyphs[idx] >= formatEntry->nrealized || formatEntry->realized[glyphs[idx]] == FALSE) {
-	    UploadGlyph(physDev, glyphs[idx], antialias);
+        } else if( wstr[idx] >= formatEntry->nrealized || formatEntry->realized[wstr[idx]] == FALSE) {
+	    UploadGlyph(physDev, wstr[idx], antialias);
 	}
     }
     assert(formatEntry);
@@ -1358,14 +1203,13 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     if(X11DRV_XRender_Installed) {
         wine_tsx11_lock();
-	if(!deltas)
+	if(!lpDx)
 	    pXRenderCompositeString16(gdi_display, render_op,
 				      physDev->xrender->tile_pict,
 				      physDev->xrender->pict,
 				      formatEntry->font_format, formatEntry->glyphset,
 				      0, 0, physDev->org.x + x, physDev->org.y + y,
-				      glyphs, count);
-
+				      wstr, count);
 	else {
 	    INT offset = 0, xoff = 0, yoff = 0;
 	    for(idx = 0; idx < count; idx++) {
@@ -1375,8 +1219,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 					  formatEntry->font_format, formatEntry->glyphset,
 					  0, 0, physDev->org.x + x + xoff,
 					  physDev->org.y + y + yoff,
-					  glyphs + idx, 1);
-		offset += X11DRV_XWStoDS(physDev, deltas[idx]);
+					  wstr + idx, 1);
+                offset += lpDx[idx];
 		xoff = offset * cosEsc;
 		yoff = offset * -sinEsc;
 	    }
@@ -1392,32 +1236,30 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    for(idx = 0; idx < count; idx++) {
 	        SharpGlyphMono(physDev, physDev->org.x + x + xoff,
 			       physDev->org.y + y + yoff,
-			       formatEntry->bitmaps[glyphs[idx]],
-			       &formatEntry->gis[glyphs[idx]]);
-		if(deltas) {
-		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
+			       formatEntry->bitmaps[wstr[idx]],
+			       &formatEntry->gis[wstr[idx]]);
+		if(lpDx) {
+		    offset += lpDx[idx];
 		    xoff = offset * cosEsc;
 		    yoff = offset * -sinEsc;
-
 		} else {
-		    xoff += formatEntry->gis[glyphs[idx]].xOff;
-		    yoff += formatEntry->gis[glyphs[idx]].yOff;
+		    xoff += formatEntry->gis[wstr[idx]].xOff;
+		    yoff += formatEntry->gis[wstr[idx]].yOff;
 		}
 	    }
 	} else if(physDev->depth == 1) {
 	    for(idx = 0; idx < count; idx++) {
 	        SharpGlyphGray(physDev, physDev->org.x + x + xoff,
 			       physDev->org.y + y + yoff,
-			       formatEntry->bitmaps[glyphs[idx]],
-			       &formatEntry->gis[glyphs[idx]]);
-		if(deltas) {
-		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
+			       formatEntry->bitmaps[wstr[idx]],
+			       &formatEntry->gis[wstr[idx]]);
+		if(lpDx) {
+		    offset += lpDx[idx];
 		    xoff = offset * cosEsc;
 		    yoff = offset * -sinEsc;
-
 		} else {
-		    xoff += formatEntry->gis[glyphs[idx]].xOff;
-		    yoff += formatEntry->gis[glyphs[idx]].yOff;
+		    xoff += formatEntry->gis[wstr[idx]].xOff;
+		    yoff += formatEntry->gis[wstr[idx]].yOff;
 		}
 		    
 	    }
@@ -1436,21 +1278,21 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    TRACE("drawable %dx%d\n", w, h);
 
 	    for(idx = 0; idx < count; idx++) {
-	        if(extents.left > cur.x - formatEntry->gis[glyphs[idx]].x)
-		    extents.left = cur.x - formatEntry->gis[glyphs[idx]].x;
-		if(extents.top > cur.y - formatEntry->gis[glyphs[idx]].y)
-		    extents.top = cur.y - formatEntry->gis[glyphs[idx]].y;
-		if(extents.right < cur.x - formatEntry->gis[glyphs[idx]].x + formatEntry->gis[glyphs[idx]].width)
-		    extents.right = cur.x - formatEntry->gis[glyphs[idx]].x + formatEntry->gis[glyphs[idx]].width;
-		if(extents.bottom < cur.y - formatEntry->gis[glyphs[idx]].y + formatEntry->gis[glyphs[idx]].height)
-		    extents.bottom = cur.y - formatEntry->gis[glyphs[idx]].y + formatEntry->gis[glyphs[idx]].height;
-		if(deltas) {
-		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
+	        if(extents.left > cur.x - formatEntry->gis[wstr[idx]].x)
+		    extents.left = cur.x - formatEntry->gis[wstr[idx]].x;
+		if(extents.top > cur.y - formatEntry->gis[wstr[idx]].y)
+		    extents.top = cur.y - formatEntry->gis[wstr[idx]].y;
+		if(extents.right < cur.x - formatEntry->gis[wstr[idx]].x + formatEntry->gis[wstr[idx]].width)
+		    extents.right = cur.x - formatEntry->gis[wstr[idx]].x + formatEntry->gis[wstr[idx]].width;
+		if(extents.bottom < cur.y - formatEntry->gis[wstr[idx]].y + formatEntry->gis[wstr[idx]].height)
+		    extents.bottom = cur.y - formatEntry->gis[wstr[idx]].y + formatEntry->gis[wstr[idx]].height;
+		if(lpDx) {
+		    offset += lpDx[idx];
 		    cur.x = offset * cosEsc;
 		    cur.y = offset * -sinEsc;
 		} else {
-		    cur.x += formatEntry->gis[glyphs[idx]].xOff;
-		    cur.y += formatEntry->gis[glyphs[idx]].yOff;
+		    cur.x += formatEntry->gis[wstr[idx]].xOff;
+		    cur.y += formatEntry->gis[wstr[idx]].yOff;
 		}
 	    }
 	    TRACE("glyph extents %ld,%ld - %ld,%ld drawable x,y %ld,%ld\n", extents.left, extents.top,
@@ -1518,18 +1360,17 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    for(idx = 0; idx < count; idx++) {
 	        SmoothGlyphGray(image, xoff + image_off_x - extents.left,
 				yoff + image_off_y - extents.top,
-				formatEntry->bitmaps[glyphs[idx]],
-				&formatEntry->gis[glyphs[idx]],
+				formatEntry->bitmaps[wstr[idx]],
+				&formatEntry->gis[wstr[idx]],
 				physDev->textPixel);
-		if(deltas) {
-		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
+		if(lpDx) {
+		    offset += lpDx[idx];
 		    xoff = offset * cosEsc;
 		    yoff = offset * -sinEsc;
 		} else {
-		    xoff += formatEntry->gis[glyphs[idx]].xOff;
-		    yoff += formatEntry->gis[glyphs[idx]].yOff;
+		    xoff += formatEntry->gis[wstr[idx]].xOff;
+		    yoff += formatEntry->gis[wstr[idx]].yOff;
 		}
-		    
 	    }
 	    XPutImage(gdi_display, physDev->drawable, physDev->gc, image, 0, 0,
 		      image_x, image_y, image_w, image_h);
@@ -1539,63 +1380,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	wine_tsx11_unlock();
     }
     LeaveCriticalSection(&xrender_cs);
-
-    if (lf.lfUnderline || lf.lfStrikeOut) {
-        int underlinePos, strikeoutPos;
-        int underlineWidth, strikeoutWidth;
-        UINT nMetricsSize = GetOutlineTextMetricsW(hdc, 0, NULL);
-        OUTLINETEXTMETRICW* otm = NULL;
-
-        if(!nMetricsSize) {
-            underlinePos = 0;
-            underlineWidth = tm.tmAscent / 20 + 1;
-            strikeoutPos = tm.tmAscent / 2;
-            strikeoutWidth = underlineWidth;
-        } else {
-            otm = HeapAlloc(GetProcessHeap(), 0, nMetricsSize);
-            if (!otm) goto done_unlock;
-
-            GetOutlineTextMetricsW(hdc, nMetricsSize, otm);
-            underlinePos = otm->otmsUnderscorePosition;
-            underlineWidth = otm->otmsUnderscoreSize;
-            strikeoutPos = otm->otmsStrikeoutPosition;
-            strikeoutWidth = otm->otmsStrikeoutSize;
-        }
-
-        wine_tsx11_lock();
-        XSetForeground( gdi_display, physDev->gc, physDev->textPixel );
-
-        if (lf.lfUnderline) {
-            underlinePos = X11DRV_YWStoDS(physDev, underlinePos);
-            underlineWidth = X11DRV_YWStoDS(physDev, underlineWidth);
-
-            XSetLineAttributes( gdi_display, physDev->gc, underlineWidth,
-                                LineSolid, CapProjecting, JoinBevel );
-            XDrawLine( gdi_display, physDev->drawable, physDev->gc,
-                       physDev->org.x + x - underlinePos * sinEsc,
-                       physDev->org.y + y - underlinePos * cosEsc,
-                       physDev->org.x + x + width * cosEsc - underlinePos * sinEsc,
-                       physDev->org.y + y - width * sinEsc - underlinePos * cosEsc );
-        }
-
-        if (lf.lfStrikeOut) { 
-            strikeoutPos = X11DRV_YWStoDS(physDev, strikeoutPos);
-            strikeoutWidth = X11DRV_YWStoDS(physDev, strikeoutWidth);
-            
-            XSetLineAttributes( gdi_display, physDev->gc, strikeoutWidth,
-                                LineSolid, CapProjecting, JoinBevel );
-            XDrawLine( gdi_display, physDev->drawable, physDev->gc,
-                       physDev->org.x + x - strikeoutPos * sinEsc,
-                       physDev->org.y + y - strikeoutPos * cosEsc,
-                       physDev->org.x + x + width * cosEsc - strikeoutPos * sinEsc,
-                       physDev->org.y + y - width * sinEsc - strikeoutPos * cosEsc);
-        }
-        wine_tsx11_unlock();
-        HeapFree(GetProcessHeap(), 0, otm);
-    }
-
-    if(deltas && deltas != lpDx)
-        HeapFree(GetProcessHeap(), 0, deltas);
 
     if (flags & ETO_CLIPPED)
     {
@@ -1608,8 +1392,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
 done_unlock:
     X11DRV_UnlockDIBSection( physDev, TRUE );
-done:
-    if(glyphs != wstr) HeapFree(GetProcessHeap(), 0, (WORD*)glyphs);
     return retv;
 }
 

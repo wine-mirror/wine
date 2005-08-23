@@ -11,7 +11,7 @@
 @ cdecl EnumDeviceFonts(ptr ptr ptr long) PSDRV_EnumDeviceFonts
 @ cdecl ExtDeviceMode(ptr long ptr ptr ptr ptr ptr long) PSDRV_ExtDeviceMode
 @ cdecl ExtEscape(ptr long long ptr long ptr) PSDRV_ExtEscape
-@ cdecl ExtTextOut(ptr long long long ptr ptr long ptr long) PSDRV_ExtTextOut
+@ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) PSDRV_ExtTextOut
 @ cdecl GetCharWidth(ptr long long ptr) PSDRV_GetCharWidth
 @ cdecl GetDeviceCaps(ptr long) PSDRV_GetDeviceCaps
 @ cdecl GetTextExtentPoint(ptr ptr long ptr) PSDRV_GetTextExtentPoint

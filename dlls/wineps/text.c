@@ -40,12 +40,11 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
  */
 BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 		       const RECT *lprect, LPCWSTR str, UINT count,
-		       const INT *lpDx, INT breakExtra )
+		       const INT *lpDx )
 {
     BOOL bResult = TRUE;
     BOOL bClipped = FALSE;
     BOOL bOpaque = FALSE;
-    RECT rect;
 
     TRACE("(x=%d, y=%d, flags=0x%08x, str=%s, count=%d, lpDx=%p)\n", x, y,
 	  flags, debugstr_wn(str, count), count, lpDx);
@@ -58,11 +57,9 @@ BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     /* set clipping and/or draw background */
     if ((flags & (ETO_CLIPPED | ETO_OPAQUE)) && (lprect != NULL))
     {
-        rect = *lprect;
-        LPtoDP( physDev->hdc, (POINT *)&rect, 2 );
 	PSDRV_WriteGSave(physDev);
-	PSDRV_WriteRectangle(physDev, rect.left, rect.top, rect.right - rect.left,
-			     rect.bottom - rect.top);
+	PSDRV_WriteRectangle(physDev, lprect->left, lprect->top, lprect->right - lprect->left,
+			     lprect->bottom - lprect->top);
 
 	if (flags & ETO_OPAQUE)
 	{
@@ -97,14 +94,7 @@ BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR str,
 		       UINT count, BOOL bDrawBackground, const INT *lpDx)
 {
-    SIZE sz;
-    TEXTMETRICW tm;
-    POINT pt;
-    INT ascent, descent;
     WORD *glyphs = NULL;
-    UINT align = GetTextAlign( physDev->hdc );
-    INT char_extra;
-    INT *deltas = NULL;
     double cosEsc, sinEsc;
     LOGFONTW lf;
 
@@ -120,127 +110,12 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
         sinEsc = 0;
     }
 
-    if(physDev->font.fontloc == Download) {
-        if(flags & ETO_GLYPH_INDEX)
-	    glyphs = (LPWORD)str;
-	else {
-	    glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WORD));
-	    GetGlyphIndicesW(physDev->hdc, str, count, glyphs, 0);
-	}
-    }
-
-    pt.x = x;
-    pt.y = y;
-    if(align & TA_UPDATECP) GetCurrentPositionEx( physDev->hdc, &pt );
-    LPtoDP(physDev->hdc, &pt, 1);
-    x = pt.x;
-    y = pt.y;
-
     if(physDev->font.fontloc == Download)
-        GetTextExtentPointI(physDev->hdc, glyphs, count, &sz);
-    else
-        GetTextExtentPoint32W(physDev->hdc, str, count, &sz);
-
-    if((char_extra = GetTextCharacterExtra(physDev->hdc)) != 0) {
-        UINT i;
-	SIZE tmpsz;
-
-        deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
-	for(i = 0; i < count; i++) {
-	    if(lpDx)
-	        deltas[i] = lpDx[i] + char_extra;
-	    else {
-	        if(physDev->font.fontloc == Download)
-		    GetTextExtentPointI(physDev->hdc, glyphs + i, 1, &tmpsz);
-		else
-		    GetTextExtentPoint32W(physDev->hdc, str + i, 1, &tmpsz);
-	        deltas[i] = tmpsz.cx;
-	    }
-	}
-    } else if(lpDx)
-        deltas = (INT*)lpDx;
-
-    if(deltas) {
-        SIZE tmpsz;
-	UINT i;
-	/* Get the width of the last char and add on all the offsets */
-	if(physDev->font.fontloc == Download)
-	    GetTextExtentPointI(physDev->hdc, glyphs + count - 1, 1, &tmpsz);
-	else
-	    GetTextExtentPoint32W(physDev->hdc, str + count - 1, 1, &tmpsz);
-	for(i = 0; i < count-1; i++)
-	    tmpsz.cx += deltas[i];
-	sz.cx = tmpsz.cx; /* sz.cy remains untouched */
-    }
-
-    sz.cx = PSDRV_XWStoDS(physDev, sz.cx);
-    sz.cy = PSDRV_YWStoDS(physDev, sz.cy);
-
-    GetTextMetricsW(physDev->hdc, &tm);
-    ascent = abs(PSDRV_YWStoDS(physDev, tm.tmAscent));
-    descent = abs(PSDRV_YWStoDS(physDev, tm.tmDescent));
-
-    TRACE("textAlign = %x\n", align);
-    switch(align & (TA_LEFT | TA_CENTER | TA_RIGHT) ) {
-    case TA_LEFT:
-        if(align & TA_UPDATECP)
-        {
-            POINT pt;
-            pt.x = x + sz.cx * cosEsc;
-            pt.y = y - sz.cx * sinEsc;
-            DPtoLP( physDev->hdc, &pt, 1 );
-            MoveToEx( physDev->hdc, pt.x, pt.y, NULL );
-	}
-	break;
-
-    case TA_CENTER:
-        x -= sz.cx * cosEsc / 2;
-        y += sz.cx * sinEsc / 2;
-	break;
-
-    case TA_RIGHT:
-        x -= sz.cx * cosEsc;
-        y += sz.cx * sinEsc;
-	if(align & TA_UPDATECP)
-        {
-            POINT pt;
-            pt.x = x;
-            pt.y = y;
-            DPtoLP( physDev->hdc, &pt, 1 );
-            MoveToEx( physDev->hdc, pt.x, pt.y, NULL );
-	}
-	break;
-    }
-
-    switch(align & (TA_TOP | TA_BASELINE | TA_BOTTOM) ) {
-    case TA_TOP:
-        y += ascent * cosEsc;
-        x += ascent * sinEsc;
-	break;
-
-    case TA_BASELINE:
-	break;
-
-    case TA_BOTTOM:
-        y -= descent * cosEsc;
-        x -= descent * sinEsc;
-	break;
-    }
-
-    if ((GetBkMode( physDev->hdc ) != TRANSPARENT) && bDrawBackground)
-    {
-	PSDRV_WriteGSave(physDev);
-	PSDRV_WriteNewPath(physDev);
-	PSDRV_WriteRectangle(physDev, x, y - ascent, sz.cx,
-			     ascent + descent);
-	PSDRV_WriteSetColor(physDev, &physDev->bkColor);
-	PSDRV_WriteFill(physDev);
-	PSDRV_WriteGRestore(physDev);
-    }
+        glyphs = (LPWORD)str;
 
     PSDRV_WriteMoveTo(physDev, x, y);
 
-    if(!deltas) {
+    if(!lpDx) {
         if(physDev->font.fontloc == Download)
 	    PSDRV_WriteDownloadGlyphShow(physDev, glyphs, count);
 	else
@@ -252,87 +127,20 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 	float cos_theta = cos(physDev->font.escapement * M_PI / 1800.0);
 	float sin_theta = sin(physDev->font.escapement * M_PI / 1800.0);
         for(i = 0; i < count-1; i++) {
-	    TRACE("lpDx[%d] = %d\n", i, deltas[i]);
+	    TRACE("lpDx[%d] = %d\n", i, lpDx[i]);
 	    if(physDev->font.fontloc == Download)
 	        PSDRV_WriteDownloadGlyphShow(physDev, glyphs + i, 1);
 	    else
 	        PSDRV_WriteBuiltinGlyphShow(physDev, str + i, 1);
-	    dx += deltas[i] * cos_theta;
-	    dy -= deltas[i] * sin_theta;
-	    PSDRV_WriteMoveTo(physDev, x + PSDRV_XWStoDS(physDev, dx),
-			      y + PSDRV_YWStoDS(physDev, dy));
+	    dx += lpDx[i] * cos_theta;
+	    dy -= lpDx[i] * sin_theta;
+	    PSDRV_WriteMoveTo(physDev, x + dx, y + dy);
 	}
 	if(physDev->font.fontloc == Download)
 	    PSDRV_WriteDownloadGlyphShow(physDev, glyphs + i, 1);
 	else
 	    PSDRV_WriteBuiltinGlyphShow(physDev, str + i, 1);
-	if(deltas != lpDx)
-	    HeapFree(GetProcessHeap(), 0, deltas);
     }
 
-    /*
-     * Underline and strikeout attributes.
-     */
-    if ((tm.tmUnderlined) || (tm.tmStruckOut)) {
-
-        /* Get the thickness and the position for the underline attribute */
-        /* We'll use the same thickness for the strikeout attribute       */
-
-        INT escapement =  physDev->font.escapement;
-
-        /* Do the underline */
-
-        if (tm.tmUnderlined) {
-            PSDRV_WriteNewPath(physDev); /* will be closed by WriteRectangle */
-            if (escapement != 0)  /* rotated text */
-            {
-                PSDRV_WriteGSave(physDev);  /* save the graphics state */
-                PSDRV_WriteMoveTo(physDev, x, y); /* move to the start */
-
-                /* temporarily rotate the coord system */
-                PSDRV_WriteRotate(physDev, -escapement/10);
-
-                /* draw the underline relative to the starting point */
-                PSDRV_WriteRRectangle(physDev, 0, -physDev->font.underlinePosition,
-				      sz.cx, physDev->font.underlineThickness);
-            }
-            else
-                PSDRV_WriteRectangle(physDev, x, y - physDev->font.underlinePosition,
-				     sz.cx, physDev->font.underlineThickness);
-
-            PSDRV_WriteFill(physDev);
-
-            if (escapement != 0)  /* rotated text */
-                PSDRV_WriteGRestore(physDev);  /* restore the graphics state */
-        }
-
-        /* Do the strikeout */
-
-        if (tm.tmStruckOut) {
-            PSDRV_WriteNewPath(physDev); /* will be closed by WriteRectangle */
-            if (escapement != 0)  /* rotated text */
-            {
-                PSDRV_WriteGSave(physDev);  /* save the graphics state */
-                PSDRV_WriteMoveTo(physDev, x, y); /* move to the start */
-
-                /* temporarily rotate the coord system */
-                PSDRV_WriteRotate(physDev, -escapement/10);
-
-                /* draw the line relative to the starting point */
-                PSDRV_WriteRRectangle(physDev, 0, -physDev->font.strikeoutPosition,
-				      sz.cx, physDev->font.strikeoutThickness);
-            }
-            else
-                PSDRV_WriteRectangle(physDev, x, y - physDev->font.strikeoutPosition,
-				     sz.cx, physDev->font.strikeoutThickness);
-
-            PSDRV_WriteFill(physDev);
-
-            if (escapement != 0)  /* rotated text */
-                PSDRV_WriteGRestore(physDev);  /* restore the graphics state */
-        }
-    }
-
-    if(glyphs && glyphs != str) HeapFree(GetProcessHeap(), 0, glyphs);
     return TRUE;
 }

@@ -338,14 +338,12 @@ BOOL TTYDRV_DC_StretchBlt(TTYDRV_PDEVICE *physDevDst, INT xDst, INT yDst,
  */
 BOOL TTYDRV_DC_ExtTextOut(TTYDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 			  const RECT *lpRect, LPCWSTR str, UINT count,
-			  const INT *lpDx, INT breakExtra )
+			  const INT *lpDx )
 {
 #ifdef WINE_CURSES
   INT row, col;
   LPSTR ascii;
   DWORD len;
-  POINT pt;
-  UINT text_align = GetTextAlign( physDev->hdc );
 
   TRACE("(%p, %d, %d, 0x%08x, %p, %s, %d, %p)\n",
         physDev->hdc, x, y, flags, lpRect, debugstr_wn(str, count), count, lpDx);
@@ -353,28 +351,14 @@ BOOL TTYDRV_DC_ExtTextOut(TTYDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
   if(!physDev->window)
     return FALSE;
 
-  pt.x = x;
-  pt.y = y;
-  /* FIXME: Is this really correct? */
-  if(text_align & TA_UPDATECP) GetCurrentPositionEx( physDev->hdc, &pt );
-
-  LPtoDP( physDev->hdc, &pt, 1 );
-  row = (physDev->org.y + pt.y) / physDev->cellHeight;
-  col = (physDev->org.x + pt.x) / physDev->cellWidth;
+  row = (physDev->org.y + y) / physDev->cellHeight;
+  col = (physDev->org.x + x) / physDev->cellWidth;
   len = WideCharToMultiByte( CP_ACP, 0, str, count, NULL, 0, NULL, NULL );
   ascii = HeapAlloc( GetProcessHeap(), 0, len );
   WideCharToMultiByte( CP_ACP, 0, str, count, ascii, len, NULL, NULL );
   mvwaddnstr(physDev->window, row, col, ascii, len);
   HeapFree( GetProcessHeap(), 0, ascii );
   wrefresh(physDev->window);
-
-  if(text_align & TA_UPDATECP)
-  {
-      pt.x += count * physDev->cellWidth;
-      pt.y += physDev->cellHeight;
-      DPtoLP( physDev->hdc, &pt, 1 );
-      MoveToEx( physDev->hdc, pt.x, pt.y, NULL );
-  }
 
   return TRUE;
 #else /* defined(WINE_CURSES) */

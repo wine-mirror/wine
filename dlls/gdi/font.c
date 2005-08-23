@@ -68,6 +68,25 @@ static inline INT INTERNAL_YDSTOWS(DC *dc, INT height)
     return GDI_ROUND(floatHeight);
 }
 
+static inline INT INTERNAL_XWSTODS(DC *dc, INT width)
+{
+    POINT pt[2];
+    pt[0].x = pt[0].y = 0;
+    pt[1].x = width;
+    pt[1].y = 0;
+    LPtoDP(dc->hSelf, pt, 2);
+    return pt[1].x - pt[0].x;
+}
+
+static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
+{
+    POINT pt[2];
+    pt[0].x = pt[0].y = 0;
+    pt[1].x = 0;
+    pt[1].y = height;
+    LPtoDP(dc->hSelf, pt, 2);
+    return pt[1].y - pt[0].y;
+}
 
 static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, void *obj, HDC hdc );
 static INT FONT_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
@@ -1718,39 +1737,320 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                          const RECT *lprect, LPCWSTR str, UINT count, const INT *lpDx )
 {
     BOOL ret = FALSE;
-    LPWSTR reordered_string = (LPWSTR)str;
-
+    LPWSTR reordered_str = (LPWSTR)str;
+    const WORD *glyphs = NULL;
+    UINT align = GetTextAlign( hdc );
+    POINT pt;
+    TEXTMETRICW tm;
+    LOGFONTW lf;
+    double cosEsc, sinEsc;
+    INT *deltas = NULL, char_extra;
+    SIZE sz;
+    RECT rc;
+    BOOL done_extents = FALSE;
+    INT width, xwidth, ywidth;
+    DWORD type;
     DC * dc = DC_GetDCUpdate( hdc );
-    if (dc)
+
+    if (!dc) return FALSE;
+
+    if (flags & (ETO_NUMERICSLOCAL | ETO_NUMERICSLATIN | ETO_PDY))
+        FIXME("flags ETO_NUMERICSLOCAL | ETO_NUMERICSLATIN | ETO_PDY unimplemented\n");
+
+    if(PATH_IsPathOpen(dc->path))
     {
-        if (flags&(ETO_NUMERICSLOCAL|ETO_NUMERICSLATIN|ETO_PDY))
-            FIXME("flags ETO_NUMERICSLOCAL|ETO_NUMERICSLATIN|ETO_PDY unimplemented\n");
-
-        if(PATH_IsPathOpen(dc->path))
-            FIXME("called on an open path\n");
-        else if(dc->funcs->pExtTextOut)
-        {
-            if( !(flags&(ETO_GLYPH_INDEX|ETO_IGNORELANGUAGE)) && BidiAvail && count>0 )
-            {
-                /* The caller did not specify that language processing was already done.
-                 */
-                reordered_string = HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
-
-                BIDI_Reorder( str, count, GCP_REORDER,
-                              ((flags&ETO_RTLREADING)!=0 || (GetTextAlign(hdc)&TA_RTLREADING)!=0)?
-                              WINE_GCPW_FORCE_RTL:WINE_GCPW_FORCE_LTR,
-                              reordered_string, count, NULL );
-
-                flags |= ETO_IGNORELANGUAGE;
-            }
-            ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,reordered_string,count,
-                                         lpDx,dc->breakExtra);
-
-            if(reordered_string != str)
-                HeapFree(GetProcessHeap(), 0, reordered_string);
-        }
+        FIXME("called on an open path\n");
         GDI_ReleaseObj( hdc );
+        return ret;
     }
+
+    if(!dc->funcs->pExtTextOut)
+    {
+        GDI_ReleaseObj( hdc );
+        return ret;
+    }
+
+    type = GetObjectType(hdc);
+    if(type == OBJ_METADC || type == OBJ_ENHMETADC)
+    {
+        ret = dc->funcs->pExtTextOut(dc->physDev, x, y, flags, lprect, str, count, lpDx);
+        GDI_ReleaseObj( hdc );
+        return ret;
+    }
+        
+    if( !(flags & (ETO_GLYPH_INDEX | ETO_IGNORELANGUAGE)) && BidiAvail && count > 0 )
+    {
+        reordered_str = HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
+
+        BIDI_Reorder( str, count, GCP_REORDER,
+                      ((flags&ETO_RTLREADING)!=0 || (GetTextAlign(hdc)&TA_RTLREADING)!=0)?
+                      WINE_GCPW_FORCE_RTL:WINE_GCPW_FORCE_LTR,
+                      reordered_str, count, NULL );
+    
+        flags |= ETO_IGNORELANGUAGE;
+    }
+
+    TRACE("%p, %d, %d, %08x, %p, %s, %d, %p)\n", hdc, x, y, flags,
+          lprect, debugstr_wn(str, count), count, lpDx);
+
+    if(flags & ETO_GLYPH_INDEX)
+        glyphs = (const WORD*)reordered_str;
+    else if(dc->gdiFont)
+    {
+        glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR));
+        GetGlyphIndicesW(hdc, reordered_str, count, (WORD*)glyphs, 0);
+        flags |= ETO_GLYPH_INDEX;
+    }
+
+    if(lprect)
+        TRACE("rect: %ld,%ld - %ld,%ld\n", lprect->left, lprect->top, lprect->right,
+              lprect->bottom);
+    TRACE("align = %x bkmode = %x mapmode = %x\n", align, GetBkMode(hdc), GetMapMode(hdc));
+
+    if(align & TA_UPDATECP)
+    {
+        GetCurrentPositionEx( hdc, &pt );
+        x = pt.x;
+        y = pt.y;
+    }
+
+    GetTextMetricsW(hdc, &tm);
+    GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
+
+    if(!(tm.tmPitchAndFamily & TMPF_VECTOR)) /* Non-scalable fonts shouldn't be rotated */
+        lf.lfEscapement = 0;
+
+    if(lf.lfEscapement != 0)
+    {
+        cosEsc = cos(lf.lfEscapement * M_PI / 1800);
+        sinEsc = sin(lf.lfEscapement * M_PI / 1800);
+    }
+    else
+    {
+        cosEsc = 1;
+        sinEsc = 0;
+    }
+
+    if(flags & (ETO_CLIPPED | ETO_OPAQUE))
+    {
+        if(!lprect)
+        {
+            if(flags & ETO_CLIPPED) goto done;
+            if(flags & ETO_GLYPH_INDEX)
+                GetTextExtentPointI(hdc, glyphs, count, &sz);
+            else
+                GetTextExtentPointW(hdc, reordered_str, count, &sz);
+
+            done_extents = TRUE;
+            rc.left = x;
+            rc.top = y;
+            rc.right = x + sz.cx;
+            rc.bottom = y + sz.cy;
+        }
+        else
+        {
+            rc = *lprect;
+        }
+
+        LPtoDP(hdc, (POINT*)&rc, 2);
+
+        if(rc.left > rc.right) {INT tmp = rc.left; rc.left = rc.right; rc.right = tmp;}
+        if(rc.top > rc.bottom) {INT tmp = rc.top; rc.top = rc.bottom; rc.bottom = tmp;}
+    }
+
+    if(flags & ETO_OPAQUE)
+        dc->funcs->pExtTextOut(dc->physDev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL);
+
+    if(count == 0)
+        goto done;
+
+    pt.x = x;
+    pt.y = y;
+    LPtoDP(hdc, &pt, 1);
+    x = pt.x;
+    y = pt.y;
+
+    char_extra = GetTextCharacterExtra(hdc);
+    width = 0;
+    if(char_extra || dc->breakExtra || lpDx)
+    {
+        UINT i;
+        SIZE tmpsz;
+        deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
+        for(i = 0; i < count; i++)
+        {
+            if(lpDx)
+                deltas[i] = lpDx[i] + char_extra;
+            else
+            {
+                if(flags & ETO_GLYPH_INDEX)
+                    GetTextExtentPointI(hdc, glyphs + i, 1, &tmpsz);
+                else
+                    GetTextExtentPointW(hdc, reordered_str + i, 1, &tmpsz);
+
+                deltas[i] = tmpsz.cx;
+            }
+            
+            if (dc->breakExtra && reordered_str[i] == tm.tmBreakChar)
+            {
+                deltas[i] = deltas[i] + dc->breakExtra;
+            }
+            deltas[i] = INTERNAL_XWSTODS(dc, deltas[i]);
+            width += deltas[i];
+        }
+    }
+    else
+    {
+        if(!done_extents)
+        {
+            if(flags & ETO_GLYPH_INDEX)
+                GetTextExtentPointI(hdc, glyphs, count, &sz);
+            else
+                GetTextExtentPointW(hdc, reordered_str, count, &sz);
+            done_extents = TRUE;
+        }
+        width = INTERNAL_XWSTODS(dc, sz.cx);
+    }
+    xwidth = width * cosEsc;
+    ywidth = width * sinEsc;
+
+    tm.tmAscent = abs(INTERNAL_YWSTODS(dc, tm.tmAscent));
+    tm.tmDescent = abs(INTERNAL_YWSTODS(dc, tm.tmDescent));
+    switch( align & (TA_LEFT | TA_RIGHT | TA_CENTER) )
+    {
+    case TA_LEFT:
+        if (align & TA_UPDATECP)
+        {
+            pt.x = x + xwidth;
+            pt.y = y - ywidth;
+            DPtoLP(hdc, &pt, 1);
+            MoveToEx(hdc, pt.x, pt.y, NULL);
+        }
+        break;
+
+    case TA_CENTER:
+        x -= xwidth / 2;
+        y += ywidth / 2;
+        break;
+
+    case TA_RIGHT:
+        x -= xwidth;
+        y += ywidth;
+        if (align & TA_UPDATECP)
+        {
+            pt.x = x;
+            pt.y = y;
+            DPtoLP(hdc, &pt, 1);
+            MoveToEx(hdc, pt.x, pt.y, NULL);
+        }
+        break;
+    }
+
+    switch( align & (TA_TOP | TA_BOTTOM | TA_BASELINE) )
+    {
+    case TA_TOP:
+        y += tm.tmAscent * cosEsc;
+        x += tm.tmAscent * sinEsc;
+        break;
+
+    case TA_BOTTOM:
+        y -= tm.tmDescent * cosEsc;
+        x -= tm.tmDescent * sinEsc;
+        break;
+
+    case TA_BASELINE:
+        break;
+    }
+
+    if(GetBkMode(hdc) != TRANSPARENT)
+    {
+        if(!((flags & ETO_CLIPPED) && (flags & ETO_OPAQUE)))
+        {
+            if(!(flags & ETO_OPAQUE) || x < rc.left || x + width >= rc.right ||
+               y - tm.tmAscent < rc.top || y + tm.tmDescent >= rc.bottom)
+            {
+                RECT rc;
+                rc.left = x;
+                rc.right = x + width;
+                rc.top = y - tm.tmAscent;
+                rc.bottom = y + tm.tmDescent;
+                dc->funcs->pExtTextOut(dc->physDev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL);
+            }
+        }
+    }
+
+    ret = dc->funcs->pExtTextOut(dc->physDev, x, y, (flags & ~ETO_OPAQUE), &rc,
+                                 (flags & ETO_GLYPH_INDEX) ? glyphs: reordered_str, count, deltas);
+
+    if (lf.lfUnderline || lf.lfStrikeOut)
+    {
+        int underlinePos, strikeoutPos;
+        int underlineWidth, strikeoutWidth;
+        UINT nMetricsSize = GetOutlineTextMetricsW(hdc, 0, NULL);
+        OUTLINETEXTMETRICW* otm = NULL;
+
+        if(!nMetricsSize)
+        {
+            TEXTMETRICW tm;
+            GetTextMetricsW(hdc, &tm);
+            underlinePos = 0;
+            underlineWidth = tm.tmAscent / 20 + 1;
+            strikeoutPos = tm.tmAscent / 2;
+            strikeoutWidth = underlineWidth;
+        }
+        else
+        {
+            otm = HeapAlloc(GetProcessHeap(), 0, nMetricsSize);
+            if (!otm) goto done;
+
+            GetOutlineTextMetricsW(hdc, nMetricsSize, otm);
+            underlinePos = otm->otmsUnderscorePosition;
+            underlineWidth = otm->otmsUnderscoreSize;
+            strikeoutPos = otm->otmsStrikeoutPosition;
+            strikeoutWidth = otm->otmsStrikeoutSize;
+        }
+
+        if(lf.lfUnderline)
+        {
+            POINT pts[2], oldpt;
+            HPEN hpen = CreatePen(PS_SOLID, underlineWidth, dc->textColor);
+            hpen = SelectObject(hdc, hpen);
+            pts[0].x = x;
+            pts[0].y = y;
+            pts[1].x = x + xwidth;
+            pts[1].y = y - ywidth;
+            DPtoLP(hdc, pts, 2);
+            MoveToEx(hdc, pts[0].x - underlinePos * sinEsc, pts[0].y - underlinePos * cosEsc, &oldpt);
+            LineTo(hdc, pts[1].x - underlinePos * sinEsc, pts[1].y - underlinePos * cosEsc);
+            MoveToEx(hdc, oldpt.x, oldpt.y, NULL);
+            DeleteObject(SelectObject(hdc, hpen));
+        }
+
+        if(lf.lfStrikeOut)
+        {
+            POINT pts[2], oldpt;
+            HPEN hpen = CreatePen(PS_SOLID, strikeoutWidth, dc->textColor);
+            hpen = SelectObject(hdc, hpen);
+            pts[0].x = x;
+            pts[0].y = y;
+            pts[1].x = x + xwidth;
+            pts[1].y = y - ywidth;
+            DPtoLP(hdc, pts, 2);
+            MoveToEx(hdc, pts[0].x - strikeoutPos * sinEsc, pts[0].y - strikeoutPos * cosEsc, &oldpt);
+            LineTo(hdc, pts[1].x - strikeoutPos * sinEsc, pts[1].y - strikeoutPos * cosEsc);
+            MoveToEx(hdc, oldpt.x, oldpt.y, NULL);
+            DeleteObject(SelectObject(hdc, hpen));
+        }
+    }
+
+done:
+    HeapFree(GetProcessHeap(), 0, deltas);
+    if(glyphs && glyphs != reordered_str)
+        HeapFree(GetProcessHeap(), 0, (WORD*)glyphs);
+    if(reordered_str != str)
+        HeapFree(GetProcessHeap(), 0, reordered_str);
+
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 

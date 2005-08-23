@@ -710,7 +710,7 @@ EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
  */
 BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 			const RECT *lprect, LPCWSTR str, UINT count,
-			const INT *lpDx, INT breakExtra )
+			const INT *lpDx )
 {
     EMREXTTEXTOUTW *pemr;
     DWORD nSize;

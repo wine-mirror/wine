@@ -82,7 +82,7 @@ typedef struct tagDC_FUNCS
     INT      (*pExtEscape)(PHYSDEV,INT,INT,LPCVOID,INT,LPVOID);
     BOOL     (*pExtFloodFill)(PHYSDEV,INT,INT,COLORREF,UINT);
     INT      (*pExtSelectClipRgn)(PHYSDEV,HRGN,INT);
-    BOOL     (*pExtTextOut)(PHYSDEV,INT,INT,UINT,const RECT*,LPCWSTR,UINT,const INT*,INT);
+    BOOL     (*pExtTextOut)(PHYSDEV,INT,INT,UINT,const RECT*,LPCWSTR,UINT,const INT*);
     BOOL     (*pFillPath)(PHYSDEV);
     BOOL     (*pFillRgn)(PHYSDEV,HRGN,HBRUSH);
     BOOL     (*pFlattenPath)(PHYSDEV);

@@ -15,7 +15,7 @@
 @ cdecl EnumDeviceFonts(ptr ptr ptr long) X11DRV_EnumDeviceFonts
 @ cdecl ExtEscape(ptr long long ptr long ptr) X11DRV_ExtEscape
 @ cdecl ExtFloodFill(ptr long long long long) X11DRV_ExtFloodFill
-@ cdecl ExtTextOut(ptr long long long ptr ptr long ptr long) X11DRV_ExtTextOut
+@ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) X11DRV_ExtTextOut
 @ cdecl GetBitmapBits(long ptr long) X11DRV_GetBitmapBits
 @ cdecl GetCharWidth(ptr long long ptr) X11DRV_GetCharWidth
 @ cdecl GetDCOrgEx(ptr ptr) X11DRV_GetDCOrgEx
