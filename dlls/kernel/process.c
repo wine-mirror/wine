@@ -2489,18 +2489,17 @@ BOOL WINAPI CloseHandle( HANDLE handle )
  */
 BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
 {
-    BOOL ret;
-    SERVER_START_REQ( set_handle_info )
+    OBJECT_DATA_INFORMATION info;
+    NTSTATUS status = NtQueryObject( handle, ObjectDataInformation, &info, sizeof(info), NULL );
+
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    else if (flags)
     {
-        req->handle = handle;
-        req->flags  = 0;
-        req->mask   = 0;
-        req->fd     = -1;
-        ret = !wine_server_call_err( req );
-        if (ret && flags) *flags = reply->old_flags;
+        *flags = 0;
+        if (info.InheritHandle) *flags |= HANDLE_FLAG_INHERIT;
+        if (info.ProtectFromClose) *flags |= HANDLE_FLAG_PROTECT_FROM_CLOSE;
     }
-    SERVER_END_REQ;
-    return ret;
+    return !status;
 }
 
 
@@ -2509,17 +2508,27 @@ BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
  */
 BOOL WINAPI SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
 {
-    BOOL ret;
-    SERVER_START_REQ( set_handle_info )
+    OBJECT_DATA_INFORMATION info;
+    NTSTATUS status;
+
+    /* if not setting both fields, retrieve current value first */
+    if ((mask & (HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE)) !=
+        (HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE))
     {
-        req->handle = handle;
-        req->flags  = flags;
-        req->mask   = mask;
-        req->fd     = -1;
-        ret = !wine_server_call_err( req );
+        if ((status = NtQueryObject( handle, ObjectDataInformation, &info, sizeof(info), NULL )))
+        {
+            SetLastError( RtlNtStatusToDosError(status) );
+            return FALSE;
+        }
     }
-    SERVER_END_REQ;
-    return ret;
+    if (mask & HANDLE_FLAG_INHERIT)
+        info.InheritHandle = (flags & HANDLE_FLAG_INHERIT) != 0;
+    if (mask & HANDLE_FLAG_PROTECT_FROM_CLOSE)
+        info.ProtectFromClose = (flags & HANDLE_FLAG_PROTECT_FROM_CLOSE) != 0;
+
+    status = NtSetInformationObject( handle, ObjectDataInformation, &info, sizeof(info) );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
