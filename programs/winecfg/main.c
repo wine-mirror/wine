@@ -86,7 +86,7 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-#define NUM_PROPERTY_PAGES 6
+#define NUM_PROPERTY_PAGES 7
 
 static INT_PTR
 doPropertySheet (HINSTANCE hInstance, HWND hOwner)
@@ -134,6 +134,16 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[pg].u2.pszIcon = NULL;
     psp[pg].pfnDlgProc = GraphDlgProc;
     psp[pg].pszTitle = "Graphics";
+    psp[pg].lParam = 0;
+    pg++;
+
+    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwFlags = PSP_USETITLE;
+    psp[pg].hInstance = hInstance;
+    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_APPEARANCE);
+    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pfnDlgProc = ThemeDlgProc;
+    psp[pg].pszTitle = "Appearance";
     psp[pg].lParam = 0;
     pg++;
 

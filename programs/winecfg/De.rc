@@ -176,4 +176,5 @@ BEGIN
     IDS_CHOOSE_PATH         "Bitte wählen Sie ein Unix-Verzeichnis für das Laufwerk."
     IDS_HIDE_ADVANCED       "Verstecke Erweitert"
     IDS_SHOW_ADVANCED       "Zeige Erweitert"
+    IDS_NOTHEME             "(Kein Motiv)"
 END

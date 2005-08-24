@@ -31,6 +31,7 @@
 #define IDS_CHOOSE_PATH                 5
 #define IDS_SHOW_ADVANCED               6
 #define IDS_HIDE_ADVANCED               7
+#define IDS_NOTHEME                     8
 #define IDD_MAINDLG                     101
 #define IDB_WINE                        104
 #define IDD_ABOUTCFG                    107
@@ -40,6 +41,7 @@
 #define IDD_DLLCFG                      111
 #define IDD_DRIVECFG                    112
 #define IDD_DRIVE_EDIT                  114
+#define IDD_APPEARANCE                  115
 #define IDB_WINE_LOGO                   200
 #define IDC_TABABOUT                    1001
 #define IDC_APPLYBTN                    1002
@@ -132,3 +134,10 @@
 #define IDC_AUDIO_CONTROL_PANEL         1303
 #define IDC_DSOUND_HW_ACCEL             1304
 #define IDC_DSOUND_DRV_EMUL             1305
+
+/* appearance tab */
+#define IDC_THEME_COLORCOMBO            1401
+#define IDC_THEME_COLORTEXT             1402
+#define IDC_THEME_SIZECOMBO             1403
+#define IDC_THEME_SIZETEXT              1404
+#define IDC_THEME_THEMECOMBO            1405

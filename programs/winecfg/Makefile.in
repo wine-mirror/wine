@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winecfg.exe
 APPMODE   = -mwindows
-IMPORTS   = comdlg32 comctl32 shell32 ole32 winmm shlwapi user32 advapi32 kernel32
+IMPORTS   = comdlg32 comctl32 shell32 ole32 winmm shlwapi uxtheme user32 advapi32 kernel32
 
 C_SRCS = \
 	appdefaults.c \
@@ -15,6 +15,7 @@ C_SRCS = \
 	libraries.c \
 	main.c \
 	properties.c \
+	theme.c \
 	winecfg.c \
 	x11drvdlg.c
 
