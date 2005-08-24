@@ -25,6 +25,7 @@
 #include "winnt.h"
 #include "ntstatus.h"
 #include "winternl.h"
+#include "winioctl.h"
 #include "wine/server.h"
 
 /* The per-thread signal stack size */
@@ -87,6 +88,7 @@ extern NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 
 /* file I/O */
 extern NTSTATUS FILE_GetNtStatus(void);
+extern NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info );
 extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name );
 extern NTSTATUS DIR_get_unix_cwd( char **cwd );
 

@@ -1377,6 +1377,219 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
 
 
 /******************************************************************************
+ *              FILE_GetDeviceInfo
+ *
+ * Implementation of the FileFsDeviceInformation query for NtQueryVolumeInformationFile.
+ */
+NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
+{
+    struct stat st;
+
+    info->Characteristics = 0;
+    if (fstat( fd, &st ) < 0) return FILE_GetNtStatus();
+    if (S_ISCHR( st.st_mode ))
+    {
+        info->DeviceType = FILE_DEVICE_UNKNOWN;
+#ifdef linux
+        switch(major(st.st_rdev))
+        {
+        case MEM_MAJOR:
+            info->DeviceType = FILE_DEVICE_NULL;
+            break;
+        case TTY_MAJOR:
+            info->DeviceType = FILE_DEVICE_SERIAL_PORT;
+            break;
+        case LP_MAJOR:
+            info->DeviceType = FILE_DEVICE_PARALLEL_PORT;
+            break;
+        }
+#endif
+    }
+    else if (S_ISBLK( st.st_mode ))
+    {
+        info->DeviceType = FILE_DEVICE_DISK;
+    }
+    else if (S_ISFIFO( st.st_mode ) || S_ISSOCK( st.st_mode ))
+    {
+        info->DeviceType = FILE_DEVICE_NAMED_PIPE;
+    }
+    else  /* regular file or directory */
+    {
+#if defined(linux) && defined(HAVE_FSTATFS)
+        struct statfs stfs;
+
+        /* check for floppy disk */
+        if (major(st.st_dev) == FLOPPY_MAJOR)
+            info->Characteristics |= FILE_REMOVABLE_MEDIA;
+
+        if (fstatfs( fd, &stfs ) < 0) stfs.f_type = 0;
+        switch (stfs.f_type)
+        {
+        case 0x9660:      /* iso9660 */
+        case 0x15013346:  /* udf */
+            info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+            info->Characteristics |= FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
+            break;
+        case 0x6969:  /* nfs */
+        case 0x517B:  /* smbfs */
+        case 0x564c:  /* ncpfs */
+            info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+            info->Characteristics |= FILE_REMOTE_DEVICE;
+            break;
+        case 0x01021994:  /* tmpfs */
+        case 0x28cd3d45:  /* cramfs */
+        case 0x1373:      /* devfs */
+        case 0x9fa0:      /* procfs */
+            info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
+            break;
+        default:
+            info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+            break;
+        }
+#elif defined(__FreeBSD__)
+        struct statfs stfs;
+
+        /* The proper way to do this in FreeBSD seems to be with the
+         * name rather than the type, since their linux-compatible
+         * fstatfs call converts the name to one of the Linux types.
+         */
+        if (fstatfs( fd, &stfs ) < 0)
+            info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+        else if (!strncmp("cd9660", stfs.f_fstypename,
+                          sizeof(stfs.f_fstypename)))
+        {
+            info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+            /* Don't assume read-only, let the mount options set it
+             * below
+             */
+            info->Characteristics |= FILE_REMOVABLE_MEDIA;
+        }
+        else if (!strncmp("nfs", stfs.f_fstypename,
+                          sizeof(stfs.f_fstypename)))
+        {
+            info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+            info->Characteristics |= FILE_REMOTE_DEVICE;
+        }
+        else if (!strncmp("nwfs", stfs.f_fstypename,
+                          sizeof(stfs.f_fstypename)))
+        {
+            info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+            info->Characteristics |= FILE_REMOTE_DEVICE;
+        }
+        else if (!strncmp("procfs", stfs.f_fstypename,
+                          sizeof(stfs.f_fstypename)))
+            info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
+        else
+            info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+        if (stfs.f_flags & MNT_RDONLY)
+            info->Characteristics |= FILE_READ_ONLY_DEVICE;
+        if (!(stfs.f_flags & MNT_LOCAL))
+        {
+            info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+            info->Characteristics |= FILE_REMOTE_DEVICE;
+        }
+#elif defined (__APPLE__)
+        struct statfs stfs;
+
+        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+
+        if (fstatfs( fd, &stfs ) < 0) return FILE_GetNtStatus();
+
+        /* stfs.f_type is reserved (always set to 0) so use IOKit */
+        kern_return_t kernResult = KERN_FAILURE;
+        mach_port_t masterPort;
+
+        char bsdName[6]; /* disk#\0 */
+        const char *name = stfs.f_mntfromname + strlen(_PATH_DEV);
+        memcpy( bsdName, name, min(strlen(name)+1,sizeof(bsdName)) );
+        bsdName[sizeof(bsdName)-1] = 0;
+
+        kernResult = IOMasterPort(MACH_PORT_NULL, &masterPort);
+
+        if (kernResult == KERN_SUCCESS)
+        {
+            CFMutableDictionaryRef matching = IOBSDNameMatching(masterPort, 0, bsdName);
+
+            if (matching)
+            {
+                CFMutableDictionaryRef properties;
+                io_service_t devService = IOServiceGetMatchingService(masterPort, matching);
+
+                if (IORegistryEntryCreateCFProperties(devService,
+                                                      &properties,
+                                                      kCFAllocatorDefault, 0) != KERN_SUCCESS)
+                    return FILE_GetNtStatus();  /* FIXME */
+                if ( CFEqual(
+                         CFDictionaryGetValue(properties, CFSTR("Removable")),
+                         kCFBooleanTrue)
+                    ) info->Characteristics |= FILE_REMOVABLE_MEDIA;
+
+                if ( CFEqual(
+                         CFDictionaryGetValue(properties, CFSTR("Writable")),
+                         kCFBooleanFalse)
+                    ) info->Characteristics |= FILE_READ_ONLY_DEVICE;
+
+                /*
+                  NB : mounted disk image (.img/.dmg) don't provide specific type
+                */
+                CFStringRef type;
+                if ( (type = CFDictionaryGetValue(properties, CFSTR("Type"))) )
+                {
+                    if ( CFStringCompare(type, CFSTR("CD-ROM"), 0) == kCFCompareEqualTo
+                         || CFStringCompare(type, CFSTR("DVD-ROM"), 0) == kCFCompareEqualTo
+                        )
+                    {
+                        info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+                    }
+                }
+
+                if (properties)
+                    CFRelease(properties);
+            }
+        }
+#elif defined(sun)
+        /* Use dkio to work out device types */
+        {
+# include <sys/dkio.h>
+# include <sys/vtoc.h>
+            struct dk_cinfo dkinf;
+            int retval = ioctl(fd, DKIOCINFO, &dkinf);
+            if(retval==-1){
+                WARN("Unable to get disk device type information - assuming a disk like device\n");
+                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+            }
+            switch (dkinf.dki_ctype)
+            {
+            case DKC_CDROM:
+                info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+                info->Characteristics |= FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
+                break;
+            case DKC_NCRFLOPPY:
+            case DKC_SMSFLOPPY:
+            case DKC_INTEL82072:
+            case DKC_INTEL82077:
+                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+                info->Characteristics |= FILE_REMOVABLE_MEDIA;
+                break;
+            case DKC_MD:
+                info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
+                break;
+            default:
+                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+            }
+        }
+#else
+        static int warned;
+        if (!warned++) FIXME( "device info not properly supported on this platform\n" );
+        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+#endif
+        info->Characteristics |= FILE_DEVICE_IS_MOUNTED;
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************************
  *  NtQueryVolumeInformationFile		[NTDLL.@]
  *  ZwQueryVolumeInformationFile		[NTDLL.@]
  *
@@ -1466,212 +1679,8 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
         {
             FILE_FS_DEVICE_INFORMATION *info = buffer;
 
-            info->Characteristics = 0;
-            if (fstat( fd, &st ) < 0)
-            {
-                io->u.Status = FILE_GetNtStatus();
-                break;
-            }
-            if (S_ISCHR( st.st_mode ))
-            {
-                info->DeviceType = FILE_DEVICE_UNKNOWN;
-#ifdef linux
-                switch(major(st.st_rdev))
-                {
-                case MEM_MAJOR:
-                    info->DeviceType = FILE_DEVICE_NULL;
-                    break;
-                case TTY_MAJOR:
-                    info->DeviceType = FILE_DEVICE_SERIAL_PORT;
-                    break;
-                case LP_MAJOR:
-                    info->DeviceType = FILE_DEVICE_PARALLEL_PORT;
-                    break;
-                }
-#endif
-            }
-            else if (S_ISBLK( st.st_mode ))
-            {
-                info->DeviceType = FILE_DEVICE_DISK;
-            }
-            else if (S_ISFIFO( st.st_mode ) || S_ISSOCK( st.st_mode ))
-            {
-                info->DeviceType = FILE_DEVICE_NAMED_PIPE;
-            }
-            else  /* regular file or directory */
-            {
-#if defined(linux) && defined(HAVE_FSTATFS)
-                struct statfs stfs;
-
-                /* check for floppy disk */
-                if (major(st.st_dev) == FLOPPY_MAJOR)
-                    info->Characteristics |= FILE_REMOVABLE_MEDIA;
-
-                if (fstatfs( fd, &stfs ) < 0) stfs.f_type = 0;
-                switch (stfs.f_type)
-                {
-                case 0x9660:      /* iso9660 */
-                case 0x15013346:  /* udf */
-                    info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
-                    info->Characteristics |= FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
-                    break;
-                case 0x6969:  /* nfs */
-                case 0x517B:  /* smbfs */
-                case 0x564c:  /* ncpfs */
-                    info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
-                    info->Characteristics |= FILE_REMOTE_DEVICE;
-                    break;
-                case 0x01021994:  /* tmpfs */
-                case 0x28cd3d45:  /* cramfs */
-                case 0x1373:      /* devfs */
-                case 0x9fa0:      /* procfs */
-                    info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
-                    break;
-                default:
-                    info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-                    break;
-                }
-#elif defined(__FreeBSD__)
-                struct statfs stfs;
-
-                /* The proper way to do this in FreeBSD seems to be with the
-                 * name rather than the type, since their linux-compatible
-                 * fstatfs call converts the name to one of the Linux types.
-                 */
-                if (fstatfs( fd, &stfs ) < 0)
-                    info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-                else if (!strncmp("cd9660", stfs.f_fstypename,
-                 sizeof(stfs.f_fstypename)))
-                {
-                    info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
-                    /* Don't assume read-only, let the mount options set it
-                     * below
-                     */
-                    info->Characteristics |= FILE_REMOVABLE_MEDIA;
-                }
-                else if (!strncmp("nfs", stfs.f_fstypename,
-                 sizeof(stfs.f_fstypename)))
-                {
-                    info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
-                    info->Characteristics |= FILE_REMOTE_DEVICE;
-                }
-                else if (!strncmp("nwfs", stfs.f_fstypename,
-                 sizeof(stfs.f_fstypename)))
-                {
-                    info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
-                    info->Characteristics |= FILE_REMOTE_DEVICE;
-                }
-                else if (!strncmp("procfs", stfs.f_fstypename,
-                 sizeof(stfs.f_fstypename)))
-                    info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
-                else
-                    info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-                if (stfs.f_flags & MNT_RDONLY)
-                    info->Characteristics |= FILE_READ_ONLY_DEVICE;
-                if (!(stfs.f_flags & MNT_LOCAL))
-                {
-                    info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
-                    info->Characteristics |= FILE_REMOTE_DEVICE;
-                }
-#elif defined (__APPLE__)
-                struct statfs stfs;
-                
-                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-		
-		if (fstatfs( fd, &stfs ) < 0) break;
-
-		/* stfs.f_type is reserved (always set to 0) so use IOKit */
-		kern_return_t kernResult = KERN_FAILURE; 
-		mach_port_t masterPort;
-		
-		char bsdName[6]; /* disk#\0 */
-                const char *name = stfs.f_mntfromname + strlen(_PATH_DEV);
-                memcpy( bsdName, name, min(strlen(name)+1,sizeof(bsdName)) );
-                bsdName[sizeof(bsdName)-1] = 0;
-
-		kernResult = IOMasterPort(MACH_PORT_NULL, &masterPort);
-
-		if (kernResult == KERN_SUCCESS)
-		{
-		    CFMutableDictionaryRef matching = IOBSDNameMatching(masterPort, 0, bsdName);
-		    
-		    if (matching)
-		    {
-			CFMutableDictionaryRef properties;
-			io_service_t devService = IOServiceGetMatchingService(masterPort, matching);
-			
-			if (IORegistryEntryCreateCFProperties(devService, 
-								&properties,
-								kCFAllocatorDefault, 0) != KERN_SUCCESS)
-								    break;
-			if ( CFEqual(
-					CFDictionaryGetValue(properties, CFSTR("Removable")),
-					kCFBooleanTrue)
-			    ) info->Characteristics |= FILE_REMOVABLE_MEDIA;
-			    
-			if ( CFEqual(
-					CFDictionaryGetValue(properties, CFSTR("Writable")),
-					kCFBooleanFalse)
-			    ) info->Characteristics |= FILE_READ_ONLY_DEVICE;
-
-                        /*
-                            NB : mounted disk image (.img/.dmg) don't provide specific type
-                        */
-                    	CFStringRef type;
-			if ( (type = CFDictionaryGetValue(properties, CFSTR("Type"))) )
-			{
-			    if ( CFStringCompare(type, CFSTR("CD-ROM"), 0) == kCFCompareEqualTo
-				|| CFStringCompare(type, CFSTR("DVD-ROM"), 0) == kCFCompareEqualTo
-			    )
-			    {
-				info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
-			    }
-			} 
-			
-			if (properties)
-			    CFRelease(properties);
-		    }
-		}
-#elif defined(sun)
-                /* Use dkio to work out device types */
-                {
-# include <sys/dkio.h>
-# include <sys/vtoc.h>
-                    struct dk_cinfo dkinf;
-                    int retval = ioctl(fd, DKIOCINFO, &dkinf);
-                    if(retval==-1){
-                        WARN("Unable to get disk device type information - assuming a disk like device\n");
-                        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-                    }
-                    switch (dkinf.dki_ctype)
-                    {
-                    case DKC_CDROM:
-                        info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
-                        info->Characteristics |= FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
-                        break;
-                    case DKC_NCRFLOPPY:
-                    case DKC_SMSFLOPPY:
-                    case DKC_INTEL82072:
-                    case DKC_INTEL82077:
-                        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-                        info->Characteristics |= FILE_REMOVABLE_MEDIA;
-                        break;
-                    case DKC_MD:
-                        info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
-                        break;
-                    default:
-                        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-                    }
-                }
-#else
-                static int warned;
-                if (!warned++) FIXME( "device info not properly supported on this platform\n" );
-                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-#endif
-                info->Characteristics |= FILE_DEVICE_IS_MOUNTED;
-            }
-            io->Information = sizeof(*info);
-            io->u.Status = STATUS_SUCCESS;
+            if ((io->u.Status = FILE_GetDeviceInfo( fd, info )) == STATUS_SUCCESS)
+                io->Information = sizeof(*info);
         }
         break;
     case FileFsAttributeInformation:
