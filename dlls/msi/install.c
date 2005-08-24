@@ -529,8 +529,14 @@ piAction);
 UINT WINAPI MsiSetComponentStateA(MSIHANDLE hInstall, LPCSTR szComponent,
                                   INSTALLSTATE iState)
 {
-    FIXME("STUB (szComponent=%s,iState=%i)\n",debugstr_a(szComponent),iState);
-    return ERROR_SUCCESS;
+    UINT rc;
+    LPWSTR szwComponent = strdupAtoW(szComponent);
+
+    rc = MsiSetComponentStateW(hInstall, szwComponent, iState);
+
+    HeapFree(GetProcessHeap(), 0, szwComponent);
+
+    return rc;
 }
 
 /***********************************************************************
@@ -549,6 +555,22 @@ UINT WINAPI MsiGetComponentStateA(MSIHANDLE hInstall, LPSTR szComponent,
     HeapFree( GetProcessHeap(), 0 , szwComponent);
 
     return rc;
+}
+
+static UINT MSI_SetComponentStateW(MSIPACKAGE *package, LPCWSTR szComponent,
+                                   INSTALLSTATE iState)
+{
+    MSICOMPONENT *comp;
+
+    TRACE("%p %s %d\n", package, debugstr_w(szComponent), iState);
+
+    comp = get_loaded_component(package, szComponent);
+    if (!comp)
+        return ERROR_UNKNOWN_COMPONENT;
+
+    comp->Installed = iState;
+
+    return ERROR_SUCCESS;
 }
 
 UINT MSI_GetComponentStateW(MSIPACKAGE *package, LPWSTR szComponent,
@@ -580,8 +602,15 @@ UINT MSI_GetComponentStateW(MSIPACKAGE *package, LPWSTR szComponent,
 UINT WINAPI MsiSetComponentStateW(MSIHANDLE hInstall, LPCWSTR szComponent,
                                   INSTALLSTATE iState)
 {
-    FIXME("STUB (szComponent=%s,iState=%i)\n",debugstr_w(szComponent),iState);
-    return ERROR_SUCCESS;
+    MSIPACKAGE* package;
+    UINT ret;
+
+    package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+    ret = MSI_SetComponentStateW(package, szComponent, iState);
+    msiobj_release(&package->hdr);
+    return ret;
 }
 
 /***********************************************************************
