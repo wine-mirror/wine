@@ -25,16 +25,17 @@
 
 #include "wine/test.h"
 
+static const char *msifile = "winetest.msi";
+
 static void test_msidatabase(void)
 {
     MSIHANDLE hdb = 0;
-    CHAR szName[] = "C:\\mytest.msi";
     UINT res;
 
-    DeleteFile(szName);
+    DeleteFile(msifile);
 
     /* create an empty database */
-    res = MsiOpenDatabase(szName, MSIDBOPEN_CREATE, &hdb );
+    res = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to create database\n" );
 
     res = MsiDatabaseCommit( hdb );
@@ -43,13 +44,12 @@ static void test_msidatabase(void)
     res = MsiCloseHandle( hdb );
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
 
-    res = DeleteFile( szName );
+    res = DeleteFile( msifile );
     ok( res == TRUE, "Falled to delete database\n" );
 }
 
 static void test_msiinsert(void)
 {
-    const char *msifile = "winetest.msi";
     MSIHANDLE hdb = 0, hview = 0, hrec = 0;
     UINT r;
     const char *query;
@@ -224,7 +224,6 @@ static UINT try_insert_query( MSIHANDLE hdb, LPCSTR szQuery )
 
 static void test_msibadqueries(void)
 {
-    const char *msifile = "winetest.msi";
     MSIHANDLE hdb = 0;
     UINT r;
 
@@ -352,10 +351,138 @@ static void test_msibadqueries(void)
     ok(r == TRUE, "file didn't exist after commit\n");
 }
 
+static UINT run_query( MSIHANDLE hdb, const char *query )
+{
+    MSIHANDLE hview = 0;
+    UINT r;
+
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    r = MsiViewExecute(hview, 0);
+    if( r == ERROR_SUCCESS )
+        r = MsiViewClose(hview);
+    MsiCloseHandle(hview);
+    return r;
+}
+
+static void test_viewmodify(void)
+{
+    MSIHANDLE hdb = 0, hview = 0, hrec = 0;
+    UINT r;
+    const char *query;
+    char buffer[0x100];
+    DWORD sz;
+
+    DeleteFile(msifile);
+
+    /* just MsiOpenDatabase should not create a file */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
+
+    query = "CREATE TABLE `phone` ( "
+            "`id` INT, `name` CHAR(32), `number` CHAR(32) "
+            "PRIMARY KEY `id`)";
+    r = run_query( hdb, query );
+    ok(r == ERROR_SUCCESS, "query failed\n");
+
+    /* check what the error function reports without doing anything */
+    r = MsiViewGetError( 0, NULL, NULL );
+    ok(r == MSIDBERROR_INVALIDARG, "MsiViewGetError return\n");
+
+    /* open a view */
+    query = "SELECT * FROM `phone`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+
+    /* see what happens with a good hview and bad args */
+    r = MsiViewGetError( hview, NULL, NULL );
+    ok(r == MSIDBERROR_INVALIDARG, "MsiViewGetError return\n");
+    r = MsiViewGetError( hview, buffer, NULL );
+    ok(r == MSIDBERROR_INVALIDARG, "MsiViewGetError return\n");
+
+    /* see what happens with a zero length buffer */
+    sz = 0;
+    buffer[0] = 'x';
+    r = MsiViewGetError( hview, buffer, &sz );
+    ok(r == MSIDBERROR_MOREDATA, "MsiViewGetError return\n");
+    ok(buffer[0] == 'x', "buffer cleared\n");
+    ok(sz == 0, "size not zero\n");
+
+    /* ok this one is strange */
+    sz = 0;
+    r = MsiViewGetError( hview, NULL, &sz );
+    ok(r == MSIDBERROR_NOERROR, "MsiViewGetError return\n");
+    ok(sz == 0, "size not zero\n");
+
+    /* see if it really has an error */
+    sz = sizeof buffer;
+    buffer[0] = 'x';
+    r = MsiViewGetError( hview, buffer, &sz );
+    ok(r == MSIDBERROR_NOERROR, "MsiViewGetError return\n");
+    ok(buffer[0] == 0, "buffer not cleared\n");
+    ok(sz == 0, "size not zero\n");
+
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    /* try some invalid records */
+    r = MsiViewModify(hview, MSIMODIFY_INSERT, 0 );
+    ok(r == ERROR_INVALID_HANDLE, "MsiViewModify failed\n");
+    r = MsiViewModify(hview, -1, 0 );
+    ok(r == ERROR_INVALID_HANDLE, "MsiViewModify failed\n");
+
+    /* try an small record */
+    hrec = MsiCreateRecord(1);
+    r = MsiViewModify(hview, -1, hrec );
+    ok(r == ERROR_INVALID_DATA, "MsiViewModify failed\n");
+
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    /* insert a valid record */
+    hrec = MsiCreateRecord(3);
+
+    r = MsiRecordSetInteger(hrec, 2, 1);
+    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+    r = MsiRecordSetString(hrec, 2, "bob");
+    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+    r = MsiRecordSetString(hrec, 3, "7654321");
+    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+    r = MsiViewModify(hview, MSIMODIFY_INSERT_TEMPORARY, hrec );
+    ok(r == ERROR_SUCCESS, "MsiViewModify failed\n");
+
+    /* insert the same thing again */
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    /* should fail ... */
+    todo_wine {
+    r = MsiViewModify(hview, MSIMODIFY_INSERT_TEMPORARY, hrec );
+    ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
+    }
+
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    r = MsiCloseHandle( hdb );
+    ok(r == ERROR_SUCCESS, "MsiOpenDatabase close failed\n");
+}
+
 START_TEST(db)
 {
     test_msidatabase();
     test_msiinsert();
     test_msidecomposedesc();
     test_msibadqueries();
+    test_viewmodify();
 }
