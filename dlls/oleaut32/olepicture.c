@@ -549,10 +549,34 @@ static HRESULT WINAPI OLEPictureImpl_get_hPal(IPicture *iface,
 					      OLE_HANDLE *phandle)
 {
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
-  FIXME("(%p)->(%p): stub, return 0 palette.\n", This, phandle);
+  HRESULT hres;
+  TRACE("(%p)->(%p)\n", This, phandle);
 
-  *phandle = 0;
-  return S_OK;
+  if (!phandle)
+    return E_POINTER;
+
+  switch (This->desc.picType) {
+    case PICTYPE_UNINITIALIZED:
+    case PICTYPE_NONE:
+      *phandle = 0;
+      hres = S_FALSE;
+      break;
+    case PICTYPE_BITMAP:
+      *phandle = (OLE_HANDLE)This->desc.u.bmp.hpal;
+      hres = S_OK;
+      break;
+    case PICTYPE_ICON:
+    case PICTYPE_METAFILE:
+    case PICTYPE_ENHMETAFILE:
+    default:
+      FIXME("unimplemented for type %d. Returning 0 palette.\n",
+           This->desc.picType);
+      *phandle = 0;
+      hres = S_OK;
+  }
+
+  TRACE("returning 0x%08lx, palette handle %08x\n", hres, *phandle);
+  return hres;
 }
 
 /************************************************************************
