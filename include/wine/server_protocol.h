@@ -538,20 +538,6 @@ struct set_handle_info_reply
 
 
 
-struct set_handle_cached_fd_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    int          fd;
-};
-struct set_handle_cached_fd_reply
-{
-    struct reply_header __header;
-    int          cur_fd;
-};
-
-
-
 struct dup_handle_request
 {
     struct request_header __header;
@@ -803,6 +789,7 @@ struct get_handle_fd_reply
 {
     struct reply_header __header;
     int          fd;
+    int          removable;
     int          flags;
 };
 #define FD_FLAG_OVERLAPPED         0x01
@@ -811,6 +798,20 @@ struct get_handle_fd_reply
 #define FD_FLAG_SEND_SHUTDOWN      0x08
 #define FD_FLAG_AVAILABLE          0x10 /* in overlap read/write operation,
                                          * only handle available data (don't wait) */
+
+
+struct set_handle_fd_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+    int          fd;
+    int          removable;
+};
+struct set_handle_fd_reply
+{
+    struct reply_header __header;
+    int          cur_fd;
+};
 
 
 
@@ -3597,7 +3598,6 @@ enum request
     REQ_get_apc,
     REQ_close_handle,
     REQ_set_handle_info,
-    REQ_set_handle_cached_fd,
     REQ_dup_handle,
     REQ_open_process,
     REQ_open_thread,
@@ -3614,6 +3614,7 @@ enum request
     REQ_create_file,
     REQ_alloc_file_handle,
     REQ_get_handle_fd,
+    REQ_set_handle_fd,
     REQ_flush_file,
     REQ_lock_file,
     REQ_unlock_file,
@@ -3809,7 +3810,6 @@ union generic_request
     struct get_apc_request get_apc_request;
     struct close_handle_request close_handle_request;
     struct set_handle_info_request set_handle_info_request;
-    struct set_handle_cached_fd_request set_handle_cached_fd_request;
     struct dup_handle_request dup_handle_request;
     struct open_process_request open_process_request;
     struct open_thread_request open_thread_request;
@@ -3826,6 +3826,7 @@ union generic_request
     struct create_file_request create_file_request;
     struct alloc_file_handle_request alloc_file_handle_request;
     struct get_handle_fd_request get_handle_fd_request;
+    struct set_handle_fd_request set_handle_fd_request;
     struct flush_file_request flush_file_request;
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
@@ -4019,7 +4020,6 @@ union generic_reply
     struct get_apc_reply get_apc_reply;
     struct close_handle_reply close_handle_reply;
     struct set_handle_info_reply set_handle_info_reply;
-    struct set_handle_cached_fd_reply set_handle_cached_fd_reply;
     struct dup_handle_reply dup_handle_reply;
     struct open_process_reply open_process_reply;
     struct open_thread_reply open_thread_reply;
@@ -4036,6 +4036,7 @@ union generic_reply
     struct create_file_reply create_file_reply;
     struct alloc_file_handle_reply alloc_file_handle_reply;
     struct get_handle_fd_reply get_handle_fd_reply;
+    struct set_handle_fd_reply set_handle_fd_reply;
     struct flush_file_reply flush_file_reply;
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
@@ -4205,6 +4206,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 190
+#define SERVER_PROTOCOL_VERSION 191
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

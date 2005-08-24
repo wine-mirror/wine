@@ -836,17 +836,6 @@ static void dump_set_handle_info_reply( const struct set_handle_info_reply *req 
     fprintf( stderr, " old_flags=%d", req->old_flags );
 }
 
-static void dump_set_handle_cached_fd_request( const struct set_handle_cached_fd_request *req )
-{
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " fd=%d", req->fd );
-}
-
-static void dump_set_handle_cached_fd_reply( const struct set_handle_cached_fd_reply *req )
-{
-    fprintf( stderr, " cur_fd=%d", req->cur_fd );
-}
-
 static void dump_dup_handle_request( const struct dup_handle_request *req )
 {
     fprintf( stderr, " src_process=%p,", req->src_process );
@@ -1047,7 +1036,20 @@ static void dump_get_handle_fd_request( const struct get_handle_fd_request *req 
 static void dump_get_handle_fd_reply( const struct get_handle_fd_reply *req )
 {
     fprintf( stderr, " fd=%d,", req->fd );
+    fprintf( stderr, " removable=%d,", req->removable );
     fprintf( stderr, " flags=%d", req->flags );
+}
+
+static void dump_set_handle_fd_request( const struct set_handle_fd_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " fd=%d,", req->fd );
+    fprintf( stderr, " removable=%d", req->removable );
+}
+
+static void dump_set_handle_fd_reply( const struct set_handle_fd_reply *req )
+{
+    fprintf( stderr, " cur_fd=%d", req->cur_fd );
 }
 
 static void dump_flush_file_request( const struct flush_file_request *req )
@@ -3109,7 +3111,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_apc_request,
     (dump_func)dump_close_handle_request,
     (dump_func)dump_set_handle_info_request,
-    (dump_func)dump_set_handle_cached_fd_request,
     (dump_func)dump_dup_handle_request,
     (dump_func)dump_open_process_request,
     (dump_func)dump_open_thread_request,
@@ -3126,6 +3127,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_file_request,
     (dump_func)dump_alloc_file_handle_request,
     (dump_func)dump_get_handle_fd_request,
+    (dump_func)dump_set_handle_fd_request,
     (dump_func)dump_flush_file_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
@@ -3317,7 +3319,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_apc_reply,
     (dump_func)dump_close_handle_reply,
     (dump_func)dump_set_handle_info_reply,
-    (dump_func)dump_set_handle_cached_fd_reply,
     (dump_func)dump_dup_handle_reply,
     (dump_func)dump_open_process_reply,
     (dump_func)dump_open_thread_reply,
@@ -3334,6 +3335,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_file_reply,
     (dump_func)dump_alloc_file_handle_reply,
     (dump_func)dump_get_handle_fd_reply,
+    (dump_func)dump_set_handle_fd_reply,
     (dump_func)dump_flush_file_reply,
     (dump_func)dump_lock_file_reply,
     (dump_func)0,
@@ -3525,7 +3527,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_apc",
     "close_handle",
     "set_handle_info",
-    "set_handle_cached_fd",
     "dup_handle",
     "open_process",
     "open_thread",
@@ -3542,6 +3543,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_file",
     "alloc_file_handle",
     "get_handle_fd",
+    "set_handle_fd",
     "flush_file",
     "lock_file",
     "unlock_file",

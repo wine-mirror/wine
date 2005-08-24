@@ -403,8 +403,7 @@ static int receive_fd( obj_handle_t *handle )
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
             fd = cmsg.fd;
 #endif
-            if (fd == -1) server_protocol_error( "no fd received for handle %d\n", *handle );
-            fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
+            if (fd != -1) fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
             return fd;
         }
         if (!ret) break;
@@ -414,41 +413,6 @@ static int receive_fd( obj_handle_t *handle )
     }
     /* the server closed the connection; time to die... */
     server_abort_thread(0);
-}
-
-
-/***********************************************************************
- *           store_cached_fd
- *
- * Store the cached fd value for a given handle back into the server.
- * Returns the new fd, which can be different if there was already an
- * fd in the cache for that handle.
- */
-inline static int store_cached_fd( int *fd, obj_handle_t handle )
-{
-    int ret;
-
-    SERVER_START_REQ( set_handle_cached_fd )
-    {
-        req->handle = handle;
-        req->fd     = *fd;
-        if (!(ret = wine_server_call( req )))
-        {
-            if (reply->cur_fd != *fd)
-            {
-                /* someone was here before us */
-                close( *fd );
-                *fd = reply->cur_fd;
-            }
-        }
-        else
-        {
-            close( *fd );
-            *fd = -1;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
 }
 
 
@@ -502,7 +466,7 @@ int wine_server_fd_to_handle( int fd, unsigned int access, int inherit, obj_hand
 int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd, int *flags )
 {
     obj_handle_t fd_handle;
-    int ret, fd = -1;
+    int ret, removable = -1, fd = -1;
 
     *unix_fd = -1;
     for (;;)
@@ -511,8 +475,12 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
         {
             req->handle = handle;
             req->access = access;
-            if (!(ret = wine_server_call( req ))) fd = reply->fd;
-            if (flags) *flags = reply->flags;
+            if (!(ret = wine_server_call( req )))
+            {
+                fd = reply->fd;
+                removable = reply->removable;
+                if (flags) *flags = reply->flags;
+            }
         }
         SERVER_END_REQ;
         if (ret) return ret;
@@ -521,8 +489,39 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
 
         /* it wasn't in the cache, get it from the server */
         fd = receive_fd( &fd_handle );
+        if (fd == -1) return STATUS_TOO_MANY_OPENED_FILES;
+        if (fd_handle != handle) removable = -1;
+
+        if (removable == -1)
+        {
+            FILE_FS_DEVICE_INFORMATION info;
+            if (FILE_GetDeviceInfo( fd, &info ) == STATUS_SUCCESS)
+                removable = (info.Characteristics & FILE_REMOVABLE_MEDIA) != 0;
+        }
+        else if (removable) break;  /* don't cache it */
+
         /* and store it back into the cache */
-        ret = store_cached_fd( &fd, fd_handle );
+        SERVER_START_REQ( set_handle_fd )
+        {
+            req->handle    = handle;
+            req->fd        = fd;
+            req->removable = removable;
+            if (!(ret = wine_server_call( req )))
+            {
+                if (reply->cur_fd != fd && reply->cur_fd != -1)
+                {
+                    /* someone was here before us */
+                    close( fd );
+                    fd = reply->cur_fd;
+                }
+            }
+            else
+            {
+                close( fd );
+                fd = -1;
+            }
+        }
+        SERVER_END_REQ;
         if (ret) return ret;
 
         if (fd_handle == handle) break;

@@ -40,6 +40,7 @@ extern struct object *get_handle_obj( struct process *process, obj_handle_t hand
                                       unsigned int access, const struct object_ops *ops );
 extern unsigned int get_handle_access( struct process *process, obj_handle_t handle );
 extern int get_handle_unix_fd( struct process *process, obj_handle_t handle, unsigned int access );
+extern int set_handle_unix_fd( struct process *process, obj_handle_t handle, int fd );
 extern obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, struct process *dst,
                                   unsigned int access, int inherit, int options );
 extern obj_handle_t open_object( const struct namespace *namespace, const WCHAR *name, size_t len,

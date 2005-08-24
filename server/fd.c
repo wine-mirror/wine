@@ -176,6 +176,7 @@ struct device
     struct object       obj;        /* object header */
     struct list         entry;      /* entry in device hash list */
     dev_t               dev;        /* device number */
+    int                 removable;  /* removable device? (or -1 if unknown) */
     struct list         inode_hash[INODE_HASH_SIZE];  /* inodes hash table */
 };
 
@@ -595,6 +596,7 @@ static struct device *get_device( dev_t dev )
     if ((device = alloc_object( &device_ops )))
     {
         device->dev = dev;
+        device->removable = -1;
         for (i = 0; i < INODE_HASH_SIZE; i++) list_init( &device->inode_hash[i] );
         list_add_head( &device_hash[hash], &device->entry );
     }
@@ -1648,7 +1650,27 @@ DECL_HANDLER(get_handle_fd)
             if (cached_fd != -1) reply->fd = cached_fd;
             else if (!get_error()) send_client_fd( current->process, unix_fd, req->handle );
         }
+        if (fd->inode) reply->removable = fd->inode->device->removable;
         reply->flags = fd->fd_ops->get_file_info( fd );
+        release_object( fd );
+    }
+}
+
+/* set the cached file descriptor of a handle */
+DECL_HANDLER(set_handle_fd)
+{
+    struct fd *fd;
+
+    reply->cur_fd = -1;
+    if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
+    {
+        struct device *device = fd->inode ? fd->inode->device : NULL;
+
+        if (device && device->removable == -1) device->removable = req->removable;
+
+        /* only cache the fd on non-removable devices */
+        if (!device || !device->removable)
+            reply->cur_fd = set_handle_unix_fd( current->process, req->handle, req->fd );
         release_object( fd );
     }
 }

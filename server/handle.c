@@ -426,10 +426,11 @@ int get_handle_unix_fd( struct process *process, obj_handle_t handle, unsigned i
 }
 
 /* set the cached fd for a handle if not set already, and return the current value */
-static int set_handle_unix_fd( struct process *process, obj_handle_t handle, int fd )
+int set_handle_unix_fd( struct process *process, obj_handle_t handle, int fd )
 {
     struct handle_entry *entry;
 
+    if (handle_is_global( handle )) return -1;  /* no fd cache for global handles */
     if (!(entry = get_handle( process, handle ))) return -1;
     /* if no current fd set it, otherwise return current fd */
     if (entry->fd == -1) entry->fd = fd;
@@ -554,15 +555,6 @@ DECL_HANDLER(close_handle)
 DECL_HANDLER(set_handle_info)
 {
     reply->old_flags = set_handle_flags( current->process, req->handle, req->mask, req->flags );
-}
-
-/* set the cached file descriptor of a handle */
-DECL_HANDLER(set_handle_cached_fd)
-{
-    int fd = req->fd;
-
-    if (handle_is_global(req->handle)) fd = -1;  /* no fd cache for global handles */
-    reply->cur_fd = set_handle_unix_fd( current->process, req->handle, fd );
 }
 
 /* duplicate a handle */
