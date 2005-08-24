@@ -49,14 +49,24 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+#define ATLVer1Size 100
+
 HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE h)
 {
     INT i;
+    UINT size;
 
     FIXME("SEMI-STUB (%p %p %p)\n",pM,p,h);
 
-    memset(pM,0,sizeof(_ATL_MODULEA));
-    pM->cbSize = sizeof(_ATL_MODULEA);
+    size = pM->cbSize;
+    if  (size != sizeof(_ATL_MODULEA) && size != ATLVer1Size)
+    {
+        FIXME("Unknown structure version (size %i)\n",size);
+        return E_INVALIDARG;
+    }
+    
+    memset(pM,0,pM->cbSize);
+    pM->cbSize = size;
     pM->m_hInst = h;
     pM->m_hInstResource = h;
     pM->m_hInstTypeLib = h;
@@ -65,7 +75,7 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE 
 
     /* call mains */
     i = 0;
-    if (pM->m_pObjMap != NULL)
+    if (pM->m_pObjMap != NULL  && size > ATLVer1Size)
     {
         while (pM->m_pObjMap[i].pclsid != NULL)
         {
