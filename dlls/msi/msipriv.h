@@ -203,8 +203,7 @@ typedef struct tagMSIPACKAGE
     UINT loaded_verbs;
     struct tagMSIMIME *mimes;
     UINT loaded_mimes;
-    struct tagMSIAPPID *appids;
-    UINT loaded_appids;
+    struct list appids;
     
     struct tagMSISCRIPT *script;
 

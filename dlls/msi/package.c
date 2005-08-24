@@ -386,6 +386,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
         package->dialog = NULL;
         package->next_dialog = NULL;
         list_init( &package->subscriptions );
+        list_init( &package->appids );
 
         /* OK, here is where we do a slew of things to the database to 
          * prep for all that is to come as a package */

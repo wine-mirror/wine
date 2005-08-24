@@ -114,7 +114,19 @@ typedef struct tagMSIFILE
     LPWSTR  SourcePath;
     LPWSTR  TargetPath;
     BOOL    Temporary; 
-}MSIFILE;
+} MSIFILE;
+
+typedef struct tagMSIAPPID
+{
+    struct list entry;
+    WCHAR AppID[IDENTIFIER_SIZE]; /* Primary key */
+    LPWSTR RemoteServerName;
+    LPWSTR LocalServer;
+    LPWSTR ServiceParameters;
+    LPWSTR DllSurrogate;
+    BOOL ActivateAtStorage;
+    BOOL RunAsInteractiveUser;
+} MSIAPPID;
 
 typedef struct tagMSICLASS
 {
@@ -124,7 +136,7 @@ typedef struct tagMSICLASS
     INT ProgIDIndex;
     LPWSTR ProgIDText;
     LPWSTR Description;
-    INT AppIDIndex;
+    MSIAPPID *AppID;
     LPWSTR FileTypeMask;
     LPWSTR IconPath;
     LPWSTR DefInprocHandler;
@@ -181,17 +193,6 @@ typedef struct tagMSIMIME
     /* not in the table, set during installation */
     BOOL InstallMe;
 } MSIMIME;
-
-typedef struct tagMSIAPPID
-{
-    WCHAR AppID[IDENTIFIER_SIZE]; /* Primary key */
-    LPWSTR RemoteServerName;
-    LPWSTR LocalServer;
-    LPWSTR ServiceParameters;
-    LPWSTR DllSurrogate;
-    BOOL ActivateAtStorage;
-    BOOL RunAsInteractiveUser;
-} MSIAPPID;
 
 enum SCRIPTS {
         INSTALL_SCRIPT = 0,

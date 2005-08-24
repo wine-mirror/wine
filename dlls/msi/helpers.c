@@ -534,16 +534,17 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
     if (package->mimes && package->loaded_mimes > 0)
         HeapFree(GetProcessHeap(),0,package->mimes);
 
-    for (i = 0; i < package->loaded_appids; i++)
+    LIST_FOR_EACH_SAFE( item, cursor, &package->appids )
     {
-        HeapFree(GetProcessHeap(),0,package->appids[i].RemoteServerName);
-        HeapFree(GetProcessHeap(),0,package->appids[i].LocalServer);
-        HeapFree(GetProcessHeap(),0,package->appids[i].ServiceParameters);
-        HeapFree(GetProcessHeap(),0,package->appids[i].DllSurrogate);
-    }
+        MSIAPPID *appid = LIST_ENTRY( item, MSIAPPID, entry );
 
-    if (package->appids && package->loaded_appids > 0)
-        HeapFree(GetProcessHeap(),0,package->appids);
+        list_remove( &appid->entry );
+        HeapFree( GetProcessHeap(), 0, appid->RemoteServerName );
+        HeapFree( GetProcessHeap(), 0, appid->LocalServer );
+        HeapFree( GetProcessHeap(), 0, appid->ServiceParameters );
+        HeapFree( GetProcessHeap(), 0, appid->DllSurrogate );
+        HeapFree( GetProcessHeap(), 0, appid );
+    }
 
     if (package->script)
     {

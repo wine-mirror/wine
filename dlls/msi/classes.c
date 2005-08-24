@@ -54,69 +54,67 @@ extern const WCHAR szUnregisterExtensionInfo[];
 extern const WCHAR szUnregisterMIMEInfo[];
 extern const WCHAR szUnregisterProgIdInfo[];
 
-static INT load_appid(MSIPACKAGE* package, MSIRECORD *row)
+static MSIAPPID *load_appid( MSIPACKAGE* package, MSIRECORD *row )
 {
-    DWORD index = package->loaded_appids;
     DWORD sz;
     LPCWSTR buffer;
+    MSIAPPID *appid;
 
     /* fill in the data */
 
-    package->loaded_appids++;
-    if (package->loaded_appids == 1)
-        package->appids = HeapAlloc(GetProcessHeap(),0,sizeof(MSIAPPID));
-    else
-        package->appids = HeapReAlloc(GetProcessHeap(),0,
-            package->appids, package->loaded_appids * sizeof(MSIAPPID));
-
-    memset(&package->appids[index],0,sizeof(MSIAPPID));
+    appid = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSIAPPID) );
+    if (!appid)
+        return NULL;
     
     sz = IDENTIFIER_SIZE;
-    MSI_RecordGetStringW(row, 1, package->appids[index].AppID, &sz);
-    TRACE("loading appid %s\n",debugstr_w(package->appids[index].AppID));
+    MSI_RecordGetStringW(row, 1, appid->AppID, &sz);
+    TRACE("loading appid %s\n", debugstr_w( appid->AppID ));
 
     buffer = MSI_RecordGetString(row,2);
-    deformat_string(package,buffer,&package->appids[index].RemoteServerName);
+    deformat_string( package, buffer, &appid->RemoteServerName );
 
-    package->appids[index].LocalServer = load_dynamic_stringW(row,3);
-    package->appids[index].ServiceParameters = load_dynamic_stringW(row,4);
-    package->appids[index].DllSurrogate = load_dynamic_stringW(row,5);
+    appid->LocalServer = load_dynamic_stringW(row,3);
+    appid->ServiceParameters = load_dynamic_stringW(row,4);
+    appid->DllSurrogate = load_dynamic_stringW(row,5);
 
-    package->appids[index].ActivateAtStorage = !MSI_RecordIsNull(row,6);
-    package->appids[index].RunAsInteractiveUser = !MSI_RecordIsNull(row,7);
+    appid->ActivateAtStorage = !MSI_RecordIsNull(row,6);
+    appid->RunAsInteractiveUser = !MSI_RecordIsNull(row,7);
+
+    list_add_tail( &package->appids, &appid->entry );
     
-    return index;
+    return appid;
 }
 
-static INT load_given_appid(MSIPACKAGE *package, LPCWSTR appid)
+static MSIAPPID *load_given_appid( MSIPACKAGE *package, LPCWSTR name )
 {
-    INT rc;
     MSIRECORD *row;
-    INT i;
+    MSIAPPID *appid;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','A','p','p','I','d','`',' ','W','H','E','R','E',' ',
          '`','A','p','p','I','d','`',' ','=',' ','\'','%','s','\'',0};
 
-    if (!appid)
-        return -1;
+    if (!name)
+        return NULL;
 
     /* check for appids already loaded */
-    for (i = 0; i < package->loaded_appids; i++)
-        if (strcmpiW(package->appids[i].AppID,appid)==0)
+    LIST_FOR_EACH_ENTRY( appid, &package->appids, MSIAPPID, entry )
+    {
+        if (lstrcmpiW( appid->AppID, name )==0)
         {
-            TRACE("found appid %s at index %i\n",debugstr_w(appid),i);
-            return i;
+            TRACE("found appid %s %p\n", debugstr_w(name), appid);
+            return appid;
         }
+    }
     
     row = MSI_QueryGetRecord(package->db, ExecSeqQuery, appid);
     if (!row)
-        return -1;
+        return NULL;
 
-    rc = load_appid(package, row);
+    appid = load_appid(package, row);
     msiobj_release(&row->hdr);
 
-    return rc;
+    return appid;
 }
 
 static INT load_given_progid(MSIPACKAGE *package, LPCWSTR progid);
@@ -263,10 +261,7 @@ static INT load_class(MSIPACKAGE* package, MSIRECORD *row)
 
     buffer = MSI_RecordGetString(row,6);
     if (buffer)
-        package->classes[index].AppIDIndex = 
-                load_given_appid(package, buffer);
-    else
-        package->classes[index].AppIDIndex = -1;
+        package->classes[index].AppID = load_given_appid(package, buffer);
 
     package->classes[index].FileTypeMask = load_dynamic_stringW(row,7);
 
@@ -793,88 +788,80 @@ static void mark_mime_for_install(MSIPACKAGE* package, INT index)
     mime->InstallMe = TRUE;
 }
 
-static UINT register_appid(MSIPACKAGE *package, int appidIndex, LPCWSTR app )
+static UINT register_appid(MSIAPPID *appid, LPCWSTR app )
 {
     static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
     HKEY hkey2,hkey3;
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
+    UINT size; 
 
     RegCreateKeyW(HKEY_CLASSES_ROOT,szAppID,&hkey2);
-    RegCreateKeyW(hkey2,package->appids[appidIndex].AppID,&hkey3);
-    RegSetValueExW(hkey3,NULL,0,REG_SZ,(LPVOID)app,
-                   (strlenW(app)+1)*sizeof(WCHAR));
+    RegCreateKeyW( hkey2, appid->AppID, &hkey3 );
+    RegSetValueExW( hkey3, NULL, 0, REG_SZ,
+                    (LPBYTE)app, (strlenW(app)+1)*sizeof(WCHAR) );
 
-    if (package->appids[appidIndex].RemoteServerName)
+    if (appid->RemoteServerName)
     {
-        UINT size; 
         static const WCHAR szRemoteServerName[] =
-             {'R','e','m','o','t','e','S','e','r','v','e','r','N','a','m','e',
-              0};
+             {'R','e','m','o','t','e','S','e','r','v','e','r','N','a','m','e',0};
 
-        size = (strlenW(package->appids[appidIndex].RemoteServerName)+1) * 
-                sizeof(WCHAR);
+        size = (lstrlenW(appid->RemoteServerName)+1) * sizeof(WCHAR);
 
-        RegSetValueExW(hkey3,szRemoteServerName,0,REG_SZ,
-                        (LPVOID)package->appids[appidIndex].RemoteServerName,
-                        size);
+        RegSetValueExW( hkey3, szRemoteServerName, 0, REG_SZ,
+                        (LPBYTE)appid->RemoteServerName, size);
     }
 
-    if (package->appids[appidIndex].LocalServer)
+    if (appid->LocalServer)
     {
         static const WCHAR szLocalService[] =
              {'L','o','c','a','l','S','e','r','v','i','c','e',0};
-        UINT size;
-        size = (strlenW(package->appids[appidIndex].LocalServer)+1) * 
-                sizeof(WCHAR);
 
-        RegSetValueExW(hkey3,szLocalService,0,REG_SZ,
-                        (LPVOID)package->appids[appidIndex].LocalServer,size);
+        size = (lstrlenW(appid->LocalServer)+1) * sizeof(WCHAR);
+
+        RegSetValueExW( hkey3, szLocalService, 0, REG_SZ,
+                        (LPBYTE)appid->LocalServer, size );
     }
 
-    if (package->appids[appidIndex].ServiceParameters)
+    if (appid->ServiceParameters)
     {
         static const WCHAR szService[] =
              {'S','e','r','v','i','c','e',
               'P','a','r','a','m','e','t','e','r','s',0};
-        UINT size;
-        size = (strlenW(package->appids[appidIndex].ServiceParameters)+1) * 
-                sizeof(WCHAR);
-        RegSetValueExW(hkey3,szService,0,REG_SZ,
-                        (LPVOID)package->appids[appidIndex].ServiceParameters,
-                        size);
+
+        size = (lstrlenW(appid->ServiceParameters)+1) * sizeof(WCHAR);
+        RegSetValueExW( hkey3, szService, 0, REG_SZ,
+                        (LPBYTE)appid->ServiceParameters, size );
     }
 
-    if (package->appids[appidIndex].DllSurrogate)
+    if (appid->DllSurrogate)
     {
         static const WCHAR szDLL[] =
              {'D','l','l','S','u','r','r','o','g','a','t','e',0};
-        UINT size;
-        size = (strlenW(package->appids[appidIndex].DllSurrogate)+1) * 
-                sizeof(WCHAR);
-        RegSetValueExW(hkey3,szDLL,0,REG_SZ,
-                        (LPVOID)package->appids[appidIndex].DllSurrogate,size);
+
+        size = (lstrlenW(appid->DllSurrogate)+1) * sizeof(WCHAR);
+        RegSetValueExW( hkey3, szDLL, 0, REG_SZ,
+                        (LPBYTE)appid->DllSurrogate, size );
     }
 
-    if (package->appids[appidIndex].ActivateAtStorage)
+    if (appid->ActivateAtStorage)
     {
         static const WCHAR szActivate[] =
              {'A','c','t','i','v','a','t','e','A','s',
               'S','t','o','r','a','g','e',0};
         static const WCHAR szY[] = {'Y',0};
 
-        RegSetValueExW(hkey3,szActivate,0,REG_SZ,(LPVOID)szY,4);
+        RegSetValueExW( hkey3, szActivate, 0, REG_SZ,
+                        (LPBYTE)szY, sizeof szY );
     }
 
-    if (package->appids[appidIndex].RunAsInteractiveUser)
+    if (appid->RunAsInteractiveUser)
     {
         static const WCHAR szRunAs[] = {'R','u','n','A','s',0};
         static const WCHAR szUser[] = 
              {'I','n','t','e','r','a','c','t','i','v','e',' ',
               'U','s','e','r',0};
 
-        RegSetValueExW(hkey3,szRunAs,0,REG_SZ,(LPVOID)szUser,sizeof(szUser));
+        RegSetValueExW( hkey3, szRunAs, 0, REG_SZ,
+                        (LPBYTE)szUser, sizeof szUser );
     }
 
     RegCloseKey(hkey3);
@@ -1017,7 +1004,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
 
         if (argument)
         {
-            RegSetValueExW(hkey3,NULL,0,REG_SZ, (LPVOID)argument, size);
+            RegSetValueExW(hkey3,NULL,0,REG_SZ, (LPBYTE)argument, size);
             HeapFree(GetProcessHeap(),0,argument);
         }
 
@@ -1035,7 +1022,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                 progid = package->classes[i].ProgIDText;
 
             RegCreateKeyW(hkey2,szProgID,&hkey3);
-            RegSetValueExW(hkey3,NULL,0,REG_SZ,(LPVOID)progid,
+            RegSetValueExW(hkey3,NULL,0,REG_SZ,(LPBYTE)progid,
                             (strlenW(progid)+1) *sizeof(WCHAR));
             RegCloseKey(hkey3);
 
@@ -1047,22 +1034,21 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                         package->classes[i].ProgIDIndex].VersionIndIndex].
                         ProgID);
                 RegCreateKeyW(hkey2,szVIProgID,&hkey3);
-                RegSetValueExW(hkey3,NULL,0,REG_SZ,(LPVOID)viprogid,
+                RegSetValueExW(hkey3,NULL,0,REG_SZ,(LPBYTE)viprogid,
                             (strlenW(viprogid)+1) *sizeof(WCHAR));
                 RegCloseKey(hkey3);
                 HeapFree(GetProcessHeap(), 0, viprogid);
             }
         }
 
-        if (package->classes[i].AppIDIndex >= 0)
+        if (package->classes[i].AppID)
         { 
-            RegSetValueExW(hkey2,szAppID,0,REG_SZ,
-             (LPVOID)package->appids[package->classes[i].AppIDIndex].AppID,
-             (strlenW(package->appids[package->classes[i].AppIDIndex].AppID)+1)
-             *sizeof(WCHAR));
+            MSIAPPID *appid = package->classes[i].AppID;
 
-            register_appid(package,package->classes[i].AppIDIndex,
-                            package->classes[i].Description);
+            RegSetValueExW( hkey2, szAppID, 0, REG_SZ, (LPBYTE)appid->AppID,
+                           (lstrlenW(appid->AppID)+1)*sizeof(WCHAR) );
+
+            register_appid( appid, package->classes[i].Description );
         }
 
         if (package->classes[i].IconPath)
