@@ -349,7 +349,7 @@
 @ cdecl _mbscat(str str) strcat
 @ cdecl _mbschr(str long)
 @ cdecl _mbscmp(str str)
-@ stub _mbscoll #(str str)
+@ cdecl _mbscoll(str str)
 @ cdecl _mbscpy(ptr str) strcpy
 @ cdecl _mbscspn (str str)
 @ cdecl _mbsdec(ptr ptr)
