@@ -2439,6 +2439,7 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, D
             lpsztmp = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,  lphttpHdr->lpszValue, (len+1)*sizeof(WCHAR));
             if (lpsztmp)
             {
+                lphttpHdr->lpszValue = lpsztmp;
 		/* FIXME: Increment lphttpHdr->wCount. Perhaps lpszValue should be an array */
                 if (ch > 0)
                 {
