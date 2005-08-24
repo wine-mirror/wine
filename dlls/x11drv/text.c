@@ -47,7 +47,6 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     unsigned int i;
     fontObject*		pfo;
     XFontStruct*	font;
-    RECT 		rect;
     BOOL		rotated = FALSE;
     XChar2b		*str2b = NULL;
     BOOL		dibUpdateFlag = FALSE;
@@ -82,8 +81,8 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
         wine_tsx11_lock();
         XSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
         XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                        physDev->org.x + rect.left, physDev->org.y + rect.top,
-                        rect.right-rect.left, rect.bottom-rect.top );
+                        physDev->org.x + lprect->left, physDev->org.y + lprect->top,
+                        lprect->right - lprect->left, lprect->bottom - lprect->top );
         wine_tsx11_unlock();
     }
     if (!count) goto END;  /* Nothing more to do */
