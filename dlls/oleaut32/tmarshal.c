@@ -159,7 +159,6 @@ _unmarshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN *pUnk) {
 
 static HRESULT
 _marshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN pUnk) {
-    LPUNKNOWN		newiface = NULL;
     LPBYTE		tempbuf = NULL;
     IStream		*pStm = NULL;
     STATSTG		ststg;
@@ -183,11 +182,6 @@ _marshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN pUnk) {
     hres = E_FAIL;
 
     TRACE("...%s...\n",debugstr_guid(riid));
-    hres = IUnknown_QueryInterface(pUnk,riid,(LPVOID*)&newiface);
-    if (hres) {
-	WARN("%p does not support iface %s\n",pUnk,debugstr_guid(riid));
-	goto fail;
-    }
     
     hres = CreateStreamOnHGlobal(0,TRUE,&pStm);
     if (hres) {
@@ -195,7 +189,7 @@ _marshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN pUnk) {
 	goto fail;
     }
     
-    hres = CoMarshalInterface(pStm,riid,newiface,0,NULL,0);
+    hres = CoMarshalInterface(pStm,riid,pUnk,0,NULL,0);
     if (hres) {
 	ERR("Marshalling interface %s failed with %lx\n", debugstr_guid(riid), hres);
 	goto fail;
@@ -226,7 +220,6 @@ _marshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN pUnk) {
     hres = xbuf_add(buf,tempbuf,ststg.cbSize.u.LowPart);
     
     HeapFree(GetProcessHeap(),0,tempbuf);
-    IUnknown_Release(newiface);
     IStream_Release(pStm);
     
     return hres;
@@ -235,7 +228,6 @@ fail:
     xsize = 0;
     xbuf_add(buf,(LPBYTE)&xsize,sizeof(xsize));
     if (pStm) IUnknown_Release(pStm);
-    if (newiface) IUnknown_Release(newiface);
     HeapFree(GetProcessHeap(), 0, tempbuf);
     return hres;
 }
@@ -663,6 +655,8 @@ serialize_param(
 	case TKIND_INTERFACE:
 	    if (writeit)
 	       hres=_marshal_interface(buf,&(tattr->guid),(LPUNKNOWN)arg);
+	    if (dealloc)
+	        IUnknown_Release((LPUNKNOWN)arg);
 	    break;
 	case TKIND_RECORD: {
 	    int i;
