@@ -129,10 +129,9 @@ typedef struct tagMSIVIEWOPS
     UINT (*set_int)( struct tagMSIVIEW *, UINT row, UINT col, UINT val );
 
     /*
-     * Inserts a new, blank row into the database
-     *  *row receives the number of the new row
+     * Inserts a new row into the database from the records contents
      */
-    UINT (*insert_row)( struct tagMSIVIEW *, UINT *row );
+    UINT (*insert_row)( struct tagMSIVIEW *, MSIRECORD * );
 
     /*
      * execute - loads the underlying data into memory so it can be read
