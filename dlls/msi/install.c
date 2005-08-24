@@ -524,6 +524,16 @@ piAction);
 }
 
 /***********************************************************************
+ * MsiSetComponentStateA (MSI.@)
+ */
+UINT WINAPI MsiSetComponentStateA(MSIHANDLE hInstall, LPCSTR szComponent,
+                                  INSTALLSTATE iState)
+{
+    FIXME("STUB (szComponent=%s,iState=%i)\n",debugstr_a(szComponent),iState);
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
  * MsiGetComponentStateA (MSI.@)
  */
 UINT WINAPI MsiGetComponentStateA(MSIHANDLE hInstall, LPSTR szComponent,
@@ -561,6 +571,16 @@ UINT MSI_GetComponentStateW(MSIPACKAGE *package, LPWSTR szComponent,
 
     TRACE("states (%i, %i)\n", comp->Installed, comp->Action );
 
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ * MsiSetComponentStateW (MSI.@)
+ */
+UINT WINAPI MsiSetComponentStateW(MSIHANDLE hInstall, LPCWSTR szComponent,
+                                  INSTALLSTATE iState)
+{
+    FIXME("STUB (szComponent=%s,iState=%i)\n",debugstr_w(szComponent),iState);
     return ERROR_SUCCESS;
 }
 
