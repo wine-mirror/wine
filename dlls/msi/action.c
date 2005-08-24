@@ -1992,6 +1992,8 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
 
     component = MSI_RecordGetString(row, 6);
     comp = get_loaded_component(package,component);
+    if (!comp)
+        return ERROR_SUCCESS;
 
     if (!ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_LOCAL))
     {
