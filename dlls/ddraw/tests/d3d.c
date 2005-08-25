@@ -48,7 +48,11 @@ static BOOL CreateDirect3D(void)
 
     rc = pDirectDrawCreateEx(NULL, (void**)&lpDD,
         &IID_IDirectDraw7, NULL);
-    ok(rc==DD_OK, "DirectDrawCreateEx returned: %lx\n", rc);
+    ok(rc==DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %lx\n", rc);
+    if (!lpDD) {
+        trace("DirectDrawCreateEx() failed with an error %lx\n", rc);
+        return FALSE;
+    }
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL);
     ok(rc==DD_OK, "SetCooperativeLevel returned: %lx\n", rc);
@@ -67,9 +71,9 @@ static BOOL CreateDirect3D(void)
 
     rc = IDirect3D7_CreateDevice(lpD3D, &IID_IDirect3DTnLHalDevice, lpDDS,
         &lpD3DDevice);
-    ok(rc==D3D_OK || rc==DDERR_NOPALETTEATTACHED, "CreateDevice returned: %lx\n", rc);
+    ok(rc==D3D_OK || rc==DDERR_NOPALETTEATTACHED || rc==E_OUTOFMEMORY, "CreateDevice returned: %lx\n", rc);
     if (!lpD3DDevice) {
-        trace("IDirect3D7::CreateDevice() failed\n");
+        trace("IDirect3D7::CreateDevice() failed with an error %lx\n", rc);
         return FALSE;
     }
 
