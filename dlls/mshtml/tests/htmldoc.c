@@ -78,6 +78,7 @@ DEFINE_EXPECT(QueryStatus_OPEN);
 DEFINE_EXPECT(QueryStatus_NEW);
 DEFINE_EXPECT(Exec_SETPROGRESSMAX);
 DEFINE_EXPECT(Exec_SETPROGRESSPOS);
+DEFINE_EXPECT(Exec_ShellDocView_37);
 DEFINE_EXPECT(Invoke_AMBIENT_USERMODE);
 DEFINE_EXPECT(Invoke_AMBIENT_DLCONTROL);
 DEFINE_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
@@ -87,6 +88,7 @@ DEFINE_EXPECT(Invoke_AMBIENT_PALETTE);
 
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
+static BOOL do_load = FALSE, set_clientsite = FALSE, container_locked = FALSE;
 
 static HRESULT QueryInterface(REFIID riid, void **ppv);
 
@@ -873,10 +875,27 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         };
     }
 
+    if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
+        switch(nCmdID) {
+        case 37:
+            CHECK_EXPECT(Exec_ShellDocView_37);
+            ok(pvaOut == NULL, "pvaOut=%p, expected NULL\n", pvaOut);
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
+            if(pvaIn) {
+                ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
+                ok(V_I4(pvaIn) == 0, "V_I4(pvaIn)=%ld, expected 0\n", V_I4(pvaIn));
+            }
+            return S_OK;
+        default:
+            ok(0, "unexpected command %ld\n", nCmdID);
+            return E_FAIL;
+        };
+    }
+
     if(IsEqualGUID(&CGID_Undocumented, pguidCmdGroup))
         return E_FAIL; /* TODO */
 
-    ok(0, "unexpected call");
+    ok(0, "unexpected call\n");
 
     return E_NOTIMPL;
 }
@@ -947,10 +966,10 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         CHECK_EXPECT2(Invoke_AMBIENT_DLCONTROL);
         return E_FAIL;
     case DISPID_AMBIENT_OFFLINEIFNOTCONNECTED:
-        CHECK_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        CHECK_EXPECT2(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         return E_FAIL;
     case DISPID_AMBIENT_SILENT:
-        CHECK_EXPECT(Invoke_AMBIENT_SILENT);
+        CHECK_EXPECT2(Invoke_AMBIENT_SILENT);
         V_VT(pVarResult) = VT_BOOL;
         V_BOOL(pVarResult) = VARIANT_FALSE;
         return S_OK;
@@ -1016,6 +1035,72 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
+static void test_Load(IPersistMoniker *persist)
+{
+    IMoniker *mon;
+    IBindCtx *bind;
+    HRESULT hres;
+
+    static WCHAR wszClientSiteParam[] = {'{','d','4','d','b','6','8','5','0','-',
+        '5','3','8','5','-','1','1','d','0','-','8','9','e','9','-','0','0','a',
+        '0','c','9','0','a','9','0','a','c','}',0};
+    static const WCHAR wszWineHQ[] =
+        {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
+
+    hres = CreateURLMoniker(NULL, wszWineHQ, &mon);
+    ok(hres == S_OK, "CreateURLMoniker failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    CreateBindCtx(0, &bind);
+    IBindCtx_RegisterObjectParam(bind, wszClientSiteParam, (IUnknown*)&ClientSite);
+
+    SET_EXPECT(GetHostInfo);
+    SET_EXPECT(GetOptionKeyPath);
+    SET_EXPECT(GetOverrideKeyPath);
+    SET_EXPECT(GetWindow);
+    SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
+    SET_EXPECT(Exec_SETPROGRESSMAX);
+    SET_EXPECT(Exec_SETPROGRESSPOS);
+    SET_EXPECT(Invoke_AMBIENT_USERMODE);
+    SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
+    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    SET_EXPECT(Invoke_AMBIENT_SILENT);
+    SET_EXPECT(Invoke_AMBIENT_USERAGENT);
+    SET_EXPECT(Invoke_AMBIENT_PALETTE);
+    SET_EXPECT(GetContainer);
+    SET_EXPECT(LockContainer);
+    SET_EXPECT(Exec_ShellDocView_37);
+    expect_LockContainer_fLock = TRUE;
+
+    hres = IPersistMoniker_Load(persist, FALSE, mon, bind, 0x12);
+#if 0
+    ok(hres == S_OK, "Load failed: %08lx\n", hres);
+#endif
+
+    CHECK_CALLED(GetHostInfo);
+    CHECK_CALLED(GetOptionKeyPath);
+    CHECK_CALLED(GetOverrideKeyPath);
+    CHECK_CALLED(GetWindow);
+    CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
+    CHECK_CALLED(Exec_SETPROGRESSMAX);
+    CHECK_CALLED(Exec_SETPROGRESSPOS);
+    CHECK_CALLED(Invoke_AMBIENT_USERMODE);
+    CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
+    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    CHECK_CALLED(Invoke_AMBIENT_SILENT);
+    CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
+    CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+    CHECK_CALLED(GetContainer);
+    CHECK_CALLED(LockContainer);
+    CHECK_CALLED(Exec_ShellDocView_37);
+
+    set_clientsite = container_locked = TRUE;
+
+    IBindCtx_Release(bind);
+    IMoniker_Release(mon);
+}
+
 static void test_Persist(IUnknown *unk)
 {
     IPersistMoniker *persist_mon;
@@ -1045,6 +1130,9 @@ static void test_Persist(IUnknown *unk)
         hres = IPersistMoniker_GetClassID(persist_mon, &guid);
         ok(hres == S_OK, "GetClassID failed: %08lx\n", hres);
         ok(IsEqualGUID(&CLSID_HTMLDocument, &guid), "guid != CLSID_HTMLDocument\n");
+
+        if(do_load)
+            test_Load(persist_mon);
 
         IPersistMoniker_Release(persist_mon);
     }
@@ -1201,18 +1289,23 @@ static HRESULT test_DoVerb(IOleObject *oleobj)
     RECT rect = {0,0,500,500};
     HRESULT hres;
 
-    SET_EXPECT(GetContainer);
-    SET_EXPECT(LockContainer);
+    if(!container_locked) {
+        SET_EXPECT(GetContainer);
+        SET_EXPECT(LockContainer);
+    }
     SET_EXPECT(ActivateMe);
     expect_LockContainer_fLock = TRUE;
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite, -1, container_hwnd, &rect);
     if(FAILED(hres))
         return hres;
-
     ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
-    CHECK_CALLED(GetContainer);
-    CHECK_CALLED(LockContainer);
+
+    if(!container_locked) {
+        CHECK_CALLED(GetContainer);
+        CHECK_CALLED(LockContainer);
+        container_locked = TRUE;
+    }
     CHECK_CALLED(ActivateMe);
 
     return hres;
@@ -1233,6 +1326,8 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
 
         hres = IOleObject_SetClientSite(oleobj, NULL);
         ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
+
+        set_clientsite = FALSE;
     }
 
     if(flags & CLIENTSITE_DONTSET)
@@ -1240,40 +1335,50 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
 
     hres = IOleObject_GetClientSite(oleobj, &clientsite);
     ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
-    ok(clientsite == NULL, "GetClientSite() = %p, expected NULL\n", clientsite);
+    ok(clientsite == (set_clientsite ? &ClientSite : NULL), "GetClientSite() = %p, expected %p\n",
+            clientsite, set_clientsite ? &ClientSite : NULL);
 
-    SET_EXPECT(GetHostInfo);
-    if(flags & CLIENTSITE_EXPECTPATH) {
-        SET_EXPECT(GetOptionKeyPath);
-        SET_EXPECT(GetOverrideKeyPath);
+    if(!set_clientsite) {
+        SET_EXPECT(GetHostInfo);
+        if(flags & CLIENTSITE_EXPECTPATH) {
+            SET_EXPECT(GetOptionKeyPath);
+            SET_EXPECT(GetOverrideKeyPath);
+        }
+        SET_EXPECT(GetWindow);
+        SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
+        SET_EXPECT(Exec_SETPROGRESSMAX);
+        SET_EXPECT(Exec_SETPROGRESSPOS);
+        SET_EXPECT(Invoke_AMBIENT_USERMODE);
+        SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
+        SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        SET_EXPECT(Invoke_AMBIENT_SILENT);
+        SET_EXPECT(Invoke_AMBIENT_USERAGENT);
+        SET_EXPECT(Invoke_AMBIENT_PALETTE);
+
+        hres = IOleObject_SetClientSite(oleobj, &ClientSite);
+        ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
+
+        CHECK_CALLED(GetHostInfo);
+        if(flags & CLIENTSITE_EXPECTPATH) {
+            CHECK_CALLED(GetOptionKeyPath);
+            CHECK_CALLED(GetOverrideKeyPath);
+        }
+        CHECK_CALLED(GetWindow);
+        CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
+        CHECK_CALLED(Exec_SETPROGRESSMAX);
+        CHECK_CALLED(Exec_SETPROGRESSPOS);
+        CHECK_CALLED(Invoke_AMBIENT_USERMODE);
+        CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
+        CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED); 
+        CHECK_CALLED(Invoke_AMBIENT_SILENT);
+        CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
+        CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+
+        set_clientsite = TRUE;
     }
-    SET_EXPECT(GetWindow);
-    SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
-    SET_EXPECT(Exec_SETPROGRESSMAX);
-    SET_EXPECT(Exec_SETPROGRESSPOS);
-    SET_EXPECT(Invoke_AMBIENT_USERMODE);
-    SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
-    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
-    SET_EXPECT(Invoke_AMBIENT_SILENT);
-    SET_EXPECT(Invoke_AMBIENT_USERAGENT);
-    SET_EXPECT(Invoke_AMBIENT_PALETTE);
+
     hres = IOleObject_SetClientSite(oleobj, &ClientSite);
     ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
-    CHECK_CALLED(GetHostInfo);
-    if(flags & CLIENTSITE_EXPECTPATH) {
-        CHECK_CALLED(GetOptionKeyPath);
-        CHECK_CALLED(GetOverrideKeyPath);
-    }
-    CHECK_CALLED(GetWindow);
-    CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
-    CHECK_CALLED(Exec_SETPROGRESSMAX);
-    CHECK_CALLED(Exec_SETPROGRESSPOS);
-    CHECK_CALLED(Invoke_AMBIENT_USERMODE);
-    CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
-    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED); 
-    CHECK_CALLED(Invoke_AMBIENT_SILENT);
-    CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
-    CHECK_CALLED(Invoke_AMBIENT_PALETTE);
 
     hres = IOleObject_GetClientSite(oleobj, &clientsite);
     ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
@@ -1362,6 +1467,7 @@ static void test_Close(IUnknown *unk, BOOL set_client)
     ok(hres == S_OK, "Close failed: %08lx\n", hres);
     CHECK_CALLED(GetContainer);
     CHECK_CALLED(LockContainer);
+    container_locked = FALSE;
 
     if(set_client)
         test_ClientSite(oleobj, CLIENTSITE_SETNULL|CLIENTSITE_DONTSET);
@@ -1505,6 +1611,8 @@ static void test_HTMLDocument(void)
     HRESULT hres;
     ULONG ref;
 
+    hwnd = last_hwnd = NULL;
+
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoCreateInstance failed: %08lx\n", hres);
@@ -1512,8 +1620,9 @@ static void test_HTMLDocument(void)
         return;
 
     test_Persist(unk);
+    if(!do_load)
+        test_OnAmbientPropertyChange2(unk);
 
-    test_OnAmbientPropertyChange2(unk);
     hres = test_Activate(unk, CLIENTSITE_EXPECTPATH);
     if(FAILED(hres)) {
         IUnknown_Release(unk);
@@ -1575,6 +1684,9 @@ START_TEST(htmldoc)
     CoInitialize(NULL);
     container_hwnd = create_container_window();
 
+    do_load = FALSE;
+    test_HTMLDocument();
+    do_load = TRUE;
     test_HTMLDocument();
 
     DestroyWindow(container_hwnd);

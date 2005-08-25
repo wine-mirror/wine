@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "shlguid.h"
 
 #include "wine/debug.h"
 
@@ -290,12 +291,12 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     HTMLDocument *This = PERSISTMON_THIS(iface);
     IBindCtx *pbind;
     BindStatusCallback *callback;
-    IStream *str;
+    IStream *str = NULL;
     LPOLESTR url;
     HRESULT hres;
     nsresult nsres;
 
-    FIXME("(%p)->(%x %p %p %08lx)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
+    TRACE("(%p)->(%x %p %p %08lx)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
 
     if(pibc) {
         IUnknown *unk = NULL;
@@ -330,6 +331,8 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
             IUnknown_Release(unk);
         }
     }
+
+    HTMLDocument_LockContainer(This, TRUE);
     
     hres = IMoniker_GetDisplayName(pimkName, pibc, NULL, &url);
     if(FAILED(hres)) {
@@ -338,6 +341,20 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     }
 
     TRACE("got url: %s\n", debugstr_w(url));
+
+    if(This->client) {
+        IOleCommandTarget *cmdtrg = NULL;
+
+        hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget,
+                (void**)&cmdtrg);
+        if(SUCCEEDED(hres)) {
+            VARIANT var;
+
+            V_VT(&var) = VT_I4;
+            V_I4(&var) = 0;
+            IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
+        }
+    }
 
     if(This->nscontainer && !This->nscontainer->stream) {
         /*
