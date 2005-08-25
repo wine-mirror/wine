@@ -89,6 +89,7 @@ WINDOWS_INCLUDES = \
 	dciman.h \
 	dde.h \
 	ddeml.h \
+	ddk/winsplp.h \
 	ddraw.h \
 	ddrawi.h \
 	devguid.h \
@@ -348,7 +349,7 @@ IDL_HEADERS = $(IDL_SRCS:.idl=.h)
 all: $(IDL_HEADERS)
 
 install:: $(IDL_HEADERS)
-	$(MKINSTALLDIRS) $(includedir) $(includedir)/windows $(includedir)/msvcrt $(includedir)/msvcrt/sys
+	$(MKINSTALLDIRS) $(includedir) $(includedir)/windows $(includedir)/windows/ddk $(includedir)/msvcrt $(includedir)/msvcrt/sys
 	for f in $(WINDOWS_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/windows/$$f; done
 	for f in $(WINDOWS_IDL_HEADERS); do $(INSTALL_DATA) $$f $(includedir)/windows/$$f; done
 	for f in $(MSVCRT_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/$$f; done
@@ -360,6 +361,6 @@ install:: $(IDL_HEADERS)
 uninstall::
 	[ -d $(includedir)/windows ] && cd $(includedir)/windows && $(RM) $(WINDOWS_INCLUDES) $(WINDOWS_IDL_HEADERS) || true
 	[ -d $(includedir) ] && cd $(includedir) && $(RM) $(MSVCRT_INCLUDES) $(WINE_INCLUDES) $(WINE_IDL_HEADERS) || true
-	-rmdir $(includedir)/msvcrt/sys $(includedir)/msvcrt $(includedir)/windows $(includedir)
+	-rmdir $(includedir)/msvcrt/sys $(includedir)/msvcrt $(includedir)/windows/ddk $(includedir)/windows $(includedir)
 
 ### Dependencies:
