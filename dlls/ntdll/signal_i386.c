@@ -761,7 +761,8 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
         server_abort_thread(1);
     }
 
-    if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit + 4096 ||
+    if (stack - 1 > stack || /* check for overflow in subtraction */
+        (char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit + 4096 ||
         (char *)stack > (char *)NtCurrentTeb()->Tib.StackBase)
     {
         UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit + 4096 - (char *)stack;
