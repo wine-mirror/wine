@@ -153,6 +153,7 @@ struct options
     int nodefaultlibs;
     int noshortwchar;
     int gui_app;
+    int unicode_app;
     int compile_only;
     int wine_mode;
     const char* output_name;
@@ -559,6 +560,11 @@ static void build(struct options* opts)
         strarray_add(spec_args, output_name);
         strarray_add(spec_args, "--subsystem");
         strarray_add(spec_args, opts->gui_app ? "windows" : "console");
+        if (opts->unicode_app)
+        {
+            strarray_add(spec_args, "--entry");
+            strarray_add(spec_args, "wmain");
+        }
     }
 
     for ( j = 0; j < lib_dirs->size; j++ )
@@ -730,13 +736,13 @@ static int is_directory_arg(const char* arg)
 
 /*
  *      MinGW Options
- *	    -mno-cygwin -mwindows -mconsole -mthreads
+ *	    -mno-cygwin -mwindows -mconsole -mthreads -municode
  */ 
 static int is_mingw_arg(const char* arg)
 {
     static const char* mingw_switches[] = 
     {
-	"-mno-cygwin", "-mwindows", "-mconsole", "-mthreads"
+        "-mno-cygwin", "-mwindows", "-mconsole", "-mthreads", "-municode"
     };
     int j;
 
@@ -889,6 +895,8 @@ int main(int argc, char **argv)
 			opts.gui_app = 1;
 		    else if (strcmp("-mconsole", argv[i]) == 0)
 			opts.gui_app = 0;
+		    else if (strcmp("-municode", argv[i]) == 0)
+			opts.unicode_app = 1;
 		    break;
                 case 'n':
                     if (strcmp("-nostdinc", argv[i]) == 0)

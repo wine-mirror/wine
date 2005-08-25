@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winepath.exe
-APPMODE   = -mconsole -Wb,-e,wmain
+APPMODE   = -mconsole -municode
 IMPORTS   = kernel32
 
 C_SRCS = winepath.c

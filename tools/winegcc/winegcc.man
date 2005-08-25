@@ -49,6 +49,9 @@ of MSVCRT. This switch is also used by the MinGW compiler to link
 against MSVCRT on Windows, instead of linking against Cygwin's
 libc. Sharing the syntax with MinGW makes it very easy to write 
 Makefiles that work under Wine, MinGW+MSYS, or MinGW+Cygwin.
+.IP \fB-municode\fR
+Set the default entry point of the application to be the Unicode
+\fBwmain()\fR instead of the standard \fBmain()\fR.
 .IP \fB-mwindows\fR
 This option adds -lgdi32, -lcomdlg32, and -lshell32 to the list of
 default libraries, and passes '--subsystem windows' to winebuild
@@ -58,6 +61,8 @@ Do not use the standard system libraries when linking. These
 include at a minimum -lkernel32, -luser32, -ladvapi32, and 
 any default libraries used by the backend compiler. The -mwindows
 option augments the list of default libraries as described above.
+.IP \fB-nostartfiles\fR
+Do not add the winecrt0 library when linking.
 .IP \fB-Wb,option\fR
 Pass option as an option to winebuild.  If option contains 
 commas, it is split into multiple options at the commas.
