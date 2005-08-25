@@ -881,7 +881,7 @@ UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf,
     MSIPACKAGE *package;
     UINT ret;
 
-    TRACE("%lu %s %lu\n", hInstall, debugstr_a(szName), *pchValueBuf);
+    TRACE("%lu %s %p\n", hInstall, debugstr_a(szName), pchValueBuf);
 
     if (0 == hInstall)
         return ERROR_INVALID_HANDLE;
@@ -901,10 +901,10 @@ UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf,
     msiobj_release( &package->hdr );
 
     /* MsiGetProperty does not return error codes on missing properties */
-    if (ret!= ERROR_MORE_DATA)
-        return ERROR_SUCCESS;
-    else
-        return ret;
+    if (ret != ERROR_MORE_DATA)
+        ret = ERROR_SUCCESS;
+
+    return ret;
 }
 
   
@@ -913,6 +913,8 @@ UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName,
 {
     MSIPACKAGE *package;
     UINT ret;
+
+    TRACE("%lu %s %p\n", hInstall, debugstr_w(szName), pchValueBuf);
 
     if (0 == hInstall)
         return ERROR_INVALID_HANDLE;
@@ -932,8 +934,8 @@ UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName,
     msiobj_release( &package->hdr );
 
     /* MsiGetProperty does not return error codes on missing properties */
-    if (ret!= ERROR_MORE_DATA)
-        return ERROR_SUCCESS;
-    else
-        return ret;
+    if (ret != ERROR_MORE_DATA)
+        ret = ERROR_SUCCESS;
+
+    return ret;
 }
