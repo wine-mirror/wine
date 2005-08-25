@@ -52,6 +52,7 @@
 #define MAX_LEVELS        256
 
 #define MAX_VSHADER_CONSTANTS 96
+#define MAX_PSHADER_CONSTANTS 32
 
 /* Used for CreateStateBlock */
 #define NUM_SAVEDPIXELSTATES_R     35
@@ -925,7 +926,12 @@ struct IWineD3DStateBlockImpl
     WINED3DMATERIAL           material;
 
     /* Pixel Shader */
-    void                     *pixelShader; /* TODO: Replace void * with IWineD3DPixelShader * */
+    IWineD3DPixelShader      *pixelShader; /* TODO: Replace void * with IWineD3DPixelShader */
+
+    /* Pixel Shader Constants */
+    BOOL                       pixelShaderConstantB[MAX_PSHADER_CONSTANTS];
+    UINT                       pixelShaderConstantI[MAX_PSHADER_CONSTANTS * 4];
+    float                      pixelShaderConstantF[MAX_PSHADER_CONSTANTS * 4];
 
     /* Indexed Vertex Blending */
     D3DVERTEXBLENDFLAGS       vertex_blend;

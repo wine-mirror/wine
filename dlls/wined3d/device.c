@@ -1465,8 +1465,18 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface,  CON
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice* iface, CONST DWORD* pFunction, IWineD3DPixelShader** ppPixelShader, IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    FIXME("(%p) : Stub\n", This);
+    IWineD3DPixelShaderImpl *object; /* NOTE: impl allowed, this is a create */
+
+    D3DCREATEOBJECTINSTANCE(object, PixelShader)
+#if 1
+    object->function      = pFunction;
+#else /* TODO: pixel shader set function */
+    IWineD3DPixelShaderImpl_SetFuction(*ppPixelShader, pFunction);
+#endif
+    FIXME("(%p) : STUB: Created Pixel shader %p\n", This, ppPixelShader);
     return D3D_OK;
+
+
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice* iface, IWineD3D** ppD3D) {
@@ -3626,54 +3636,153 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantF(IWineD3DDevice *iface
 #undef GET_SHADER_CONSTANT
 
 
-HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader  *pShader) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : stub\n", This);
+HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader *pShader) {
+    IUnknown *parent;
+    IWineD3DDeviceImpl *This        = (IWineD3DDeviceImpl *)iface;
+    IWineD3DPixelShader *oldpShader = This->updateStateBlock->pixelShader;
+    static BOOL showFixmes          = TRUE;
+
+    /** FIXME: reference counting? **/
+    This->updateStateBlock->pixelShader         = pShader;
+    This->updateStateBlock->changed.pixelShader = TRUE;
+    This->updateStateBlock->set.pixelShader     = TRUE;
+
+    if (pShader == NULL) {
+    /* clear down the shader */
+        TRACE("Clear down the shader\n");
+    }else{
+        if (showFixmes) {
+            FIXME("(%p) : stub pShader(%p)\n", This, pShader);
+            showFixmes = FALSE;
+        }
+    }
+
+    /* Handle recording of state blocks */
+    if (This->isRecordingState) {
+      TRACE("Recording... not performing anything\n");
+      return D3D_OK;
+    }
+    /**
+     * TODO: merge HAL shaders context switching from prototype
+     */
+
+    /* manage reference counting. */
+    if (pShader != NULL) {
+        IWineD3DPixelShader_GetParent(pShader, &parent); /* get parent adds a ref for us*/
+    }
+
+    if (oldpShader != NULL) {
+        IWineD3DPixelShader_GetParent(oldpShader, &parent);
+        IUnknown_Release(parent); /* once for the getparent */
+        IUnknown_Release(parent); /* and once for the ref */
+    }
+
+
+    
     return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader **ppShader) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : stub\n", This);
+
+    if (ppShader == NULL) {
+        WARN("(%p) : PShader is NULL, returning INVALIDCALL\n", This);
+        return D3DERR_INVALIDCALL;
+    }
+
+    *ppShader =  This->updateStateBlock->pixelShader;
+    if (NULL != ppShader) {
+        IWineD3DPixelShader_AddRef(*ppShader);
+    }
+    TRACE("(%p) : returning %p\n", This, *ppShader);
     return D3D_OK;
 }
+
+#define GET_SHADER_CONSTANT(_pixelshaderconstant, _count, _sizecount) \
+int count = min(_count, MAX_PSHADER_CONSTANTS - (StartRegister + 1)); \
+if (NULL == pConstantData || count < 0 /* || _count != count */ ) \
+    return D3DERR_INVALIDCALL; \
+memcpy(pConstantData, This->updateStateBlock->_pixelshaderconstant + (StartRegister * _sizecount), count * (sizeof(*pConstantData) * _sizecount)); \
+
+
+#define SET_SHADER_CONSTANT(_pixelshaderconstant, _count, _sizecount) \
+int count = min(_count, MAX_PSHADER_CONSTANTS - (StartRegister + 1)); \
+if (NULL == pConstantData || count < 0 /* || _count != count */ ) \
+    return D3DERR_INVALIDCALL; \
+memcpy(This->updateStateBlock->_pixelshaderconstant + (StartRegister * _sizecount), pConstantData, count * (sizeof(*pConstantData) * _sizecount)); \
+This->updateStateBlock->changed.pixelShader = TRUE; \
+This->updateStateBlock->set.pixelShader = TRUE;
 
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(IWineD3DDevice *iface, UINT StartRegister, CONST BOOL   *pConstantData, UINT BoolCount) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : stub\n", This);
+    static BOOL showFixmes = TRUE;
+    SET_SHADER_CONSTANT(pixelShaderConstantB, BoolCount, 1);
+    if(showFixmes) {
+        FIXME("(%p) : stub\n", This);
+        showFixmes = FALSE;
+    }
     return D3D_OK;
+
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantB(IWineD3DDevice *iface, UINT StartRegister, BOOL         *pConstantData, UINT BoolCount) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : stub\n", This);
+    static BOOL showFixmes = TRUE;
+    GET_SHADER_CONSTANT(pixelShaderConstantB, BoolCount, 1);
+    if(showFixmes) {
+        FIXME("(%p) : stub\n", This);
+        showFixmes = FALSE;
+    }
     return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(IWineD3DDevice *iface, UINT StartRegister, CONST int    *pConstantData, UINT Vector4iCount) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : stub\n", This);
+    static BOOL showFixmes = TRUE;
+    SET_SHADER_CONSTANT(pixelShaderConstantI, Vector4iCount, 4);
+    if(showFixmes) {
+        FIXME("(%p) : stub\n", This);
+        showFixmes = FALSE;
+    }
     return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantI(IWineD3DDevice *iface, UINT StartRegister, int          *pConstantData, UINT Vector4iCount) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : stub\n", This);
+    static BOOL showFixmes = TRUE;
+    GET_SHADER_CONSTANT(pixelShaderConstantI, Vector4iCount, 4);
+    if(showFixmes) {
+        FIXME("(%p) : stub\n", This);
+        showFixmes = FALSE;
+    }
     return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(IWineD3DDevice *iface, UINT StartRegister, CONST float  *pConstantData, UINT Vector4fCount) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : stub\n", This);
+    static BOOL showFixmes = TRUE;
+    SET_SHADER_CONSTANT(pixelShaderConstantF, Vector4fCount, 4);
+    if(showFixmes) {
+        FIXME("(%p) : stub\n", This);
+        showFixmes = FALSE;
+    }
     return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(IWineD3DDevice *iface, UINT StartRegister, float        *pConstantData, UINT Vector4fCount) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : stub\n", This);
+    static BOOL showFixmes = TRUE;
+    GET_SHADER_CONSTANT(pixelShaderConstantF, Vector4fCount, 4);
+    if(showFixmes) {
+        FIXME("(%p) : stub\n", This);
+        showFixmes = FALSE;
+    }
     return D3D_OK;
 }
+
+#undef SET_SHADER_CONSTANT
+#undef GET_SHADER_CONSTANT
 
 HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IWineD3DVertexBuffer* pDestBuffer, IWineD3DVertexBuffer* pVertexDecl, DWORD Flags) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
