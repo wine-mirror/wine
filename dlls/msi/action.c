@@ -1431,6 +1431,7 @@ static void ACTION_UpdateInstallStates(MSIPACKAGE *package)
                         res = INSTALLSTATE_INCOMPLETE;
             }
         }
+        feature->Installed = res;
     }
 }
 
