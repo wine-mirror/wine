@@ -1675,7 +1675,6 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
                                     SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
                                     SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
 {
-    IO_STATUS_BLOCK io;
     FILE_FS_DEVICE_INFORMATION device_info;
     NTSTATUS res;
     SIZE_T size = 0;
@@ -1722,8 +1721,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     if ((res = wine_server_handle_to_fd( handle, 0, &unix_handle, NULL ))) return res;
 
-    if (NtQueryVolumeInformationFile( handle, &io, &device_info, sizeof(device_info),
-                                      FileFsDeviceInformation ) == STATUS_SUCCESS)
+    if (FILE_GetDeviceInfo( unix_handle, &device_info ) == STATUS_SUCCESS)
         removable = device_info.Characteristics & FILE_REMOVABLE_MEDIA;
 
     if (prot & VPROT_IMAGE)
