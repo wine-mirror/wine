@@ -255,6 +255,18 @@ static IOleInPlaceObjectWindowlessVtbl OleInPlaceObjectWindowlessVtbl = {
 
 #undef INPLACEWIN_THIS
 
+void HTMLDocument_ShowContextMenu(HTMLDocument *This, DWORD dwID, POINT *ppt)
+{
+    HRESULT hres;
+
+    hres = IDocHostUIHandler_ShowContextMenu(This->hostui, dwID, ppt,
+            (IUnknown*)CMDTARGET(This), (IDispatch*)HTMLDOC(This));
+    if(hres == S_OK)
+        return;
+
+    FIXME("Show default context menu\n");
+}
+
 void HTMLDocument_Window_Init(HTMLDocument *This)
 {
     This->lpOleInPlaceActiveObjectVtbl = &OleInPlaceActiveObjectVtbl;

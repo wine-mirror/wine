@@ -39,12 +39,15 @@ typedef WCHAR PRUnichar;
 typedef LPWSTR nswstring;
 typedef ULONG PRUint32;
 typedef LONG PRInt32;
+typedef WORD PRUint16;
 typedef BYTE PRUint8;
 typedef BOOL PRBool;
 typedef LARGE_INTEGER PRInt64;
+typedef ULARGE_INTEGER PRUint64;
 
 typedef int nsAString;
 typedef struct nsACString nsACString;
+typedef PRUint64 DOMTimeStamp;
 
 interface nsIWebBrowserChrome;
 
@@ -70,6 +73,10 @@ typedef nsISupports nsISimpleEnumerator;
 typedef nsISupports nsIWidget;
 typedef nsISupports nsIProtocolHandler;
 typedef nsISupports nsIChannel;
+typedef nsISupports nsIDOMElement;
+typedef nsISupports nsIDOMNode;
+typedef nsISupports nsIDOMEventTarget;
+typedef nsISupports nsIDOMAbstractView;
 
 [
     object,
@@ -302,4 +309,92 @@ interface nsIIOService : nsISupports
     nsresult GetOffline(PRBool *aOffline);
     nsresult SetOffline(PRBool aOffline);
     nsresult AllowPort(PRInt32 aPort, const char *aScheme, PRBool *_retval);
+}
+
+[
+    object,
+    uuid(ba434c60-9d52-11d3-afb0-00a024ffc08c)
+]
+interface nsIWebBrowserChrome : nsISupports
+{
+    nsresult SetStatus(PRUint32 statusType, const PRUnichar *status);
+    nsresult GetWebBrowser(nsIWebBrowser **aWebBrowser);
+    nsresult SetWebBrowser(nsIWebBrowser *aWebBrowser);
+    nsresult GetChromeFlags(PRUint32 *aChromeFlags);
+    nsresult SetChromeFlags(PRUint32 aChromeFlags);
+    nsresult DestroyBrowserWindow();
+    nsresult SizeBrowserTo(PRInt32 aCX, PRInt32 aCY);
+    nsresult ShowAsModal();
+    nsresult IsWindowModal(PRBool *_retval);
+    nsresult ExitModalEventLoop(nsresult aStatus);
+}
+
+[
+    object,
+    uuid(a66b7b80-ff46-bd97-0080-5f8ae38add32)
+]
+interface nsIDOMEvent : nsISupports
+{
+    nsresult GetType(nsAString *aType);
+    nsresult GetTarget(nsIDOMEventTarget **aTarget);
+    nsresult GetCurrentTarget(nsIDOMEventTarget **aCurrentTarget);
+    nsresult GetEventPhase(PRUint16 *aEventPhase);
+    nsresult GetBubbles(PRBool *aBubbles);
+    nsresult GetCancelable(PRBool *aCancelable);
+    nsresult GetTimeStamp(DOMTimeStamp *aTimeStamp);
+    nsresult StopPropagation();
+    nsresult PreventDefault();
+    nsresult InitEvent(const nsAString *eventTypeArg, PRBool canBubbleArg, PRBool cancelableArg);
+}
+
+cpp_quote("#define CONTEXT_NONE              0x00");
+cpp_quote("#define CONTEXT_LINK              0x01");
+cpp_quote("#define CONTEXT_IMAGE             0x02");
+cpp_quote("#define CONTEXT_DOCUMENT          0x04");
+cpp_quote("#define CONTEXT_TEXT              0x08");
+cpp_quote("#define CONTEXT_INPUT             0x10");
+cpp_quote("#define CONTEXT_BACKGROUND_IMAGE  0x20");
+
+[
+    object,
+    uuid(3478b6b0-3875-11d4-94ef-0020183bf181)
+]
+interface nsIContextMenuListener : nsISupports
+{
+    nsresult OnShowContextMenu(PRUint32 aContextFlags, nsIDOMEvent *aEvent, nsIDOMNode *aNode);
+}
+
+[
+    object,
+    uuid(a6cf90c3-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMUIEvent : nsIDOMEvent
+{
+    nsresult GetView(nsIDOMAbstractView **aView);
+    nsresult GetDetail(PRInt32 *aDetail);
+    nsresult InitUIEvent(const nsAString *typeArg, PRBool canBubbleArg, PRBool cancelableArg,
+            nsIDOMAbstractView *viewArg, PRInt32 detailArg);
+}
+
+[
+    object,
+    uuid(ff751edc-8b02-aae7-0010-8301838a3123)
+]
+interface nsIDOMMouseEvent : nsIDOMUIEvent
+{
+    nsresult GetScreenX(PRInt32 *aScreenX);
+    nsresult GetScreenY(PRInt32 *aScreenY);
+    nsresult GetClientX(PRInt32 *aClientX);
+    nsresult GetClientY(PRInt32 *aClientY);
+    nsresult GetCtrlKey(PRBool *aCtrlKey);
+    nsresult GetShiftKey(PRBool *aShiftKey);
+    nsresult GetAltKey(PRBool *aAltKey);
+    nsresult GetMetaKey(PRBool *aMetaKey);
+    nsresult GetButton(PRUint16 *aButton);
+    nsresult GetRelatedTarget(nsIDOMEventTarget * *aRelatedTarget);
+    nsresult InitMouseEvent(const nsAString *typeArg, PRBool canBubbleArg, PRBool cancelableArg,
+            nsIDOMAbstractView *viewArg, PRInt32 detailArg, PRInt32 screenXArg, PRInt32 screenYArg,
+            PRInt32 clientXArg, PRInt32 clientYArg, PRBool ctrlKeyArg, PRBool altKeyArg,
+            PRBool shiftKeyArg, PRBool metaKeyArg, PRUint16 buttonArg,
+            nsIDOMEventTarget *relatedTargetArg);
 }

@@ -329,6 +329,228 @@ nsIURI *get_nsIURI(LPCWSTR url)
     return ret;
 }
 
+#define NSWBCHROME_THIS(iface) DEFINE_THIS(NSContainer, WebBrowserChrome, iface)
+
+static nsresult NSAPI nsWebBrowserChrome_QueryInterface(nsIWebBrowserChrome *iface,
+        nsIIDRef riid, nsQIResult result)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+
+    *result = NULL;
+    if(IsEqualGUID(&IID_nsISupports, riid)) {
+        TRACE("(%p)->(IID_nsISupports, %p)\n", This, result);
+        *result = NSWBCHROME(This);
+    }else if(IsEqualGUID(&IID_nsIWebBrowserChrome, riid)) {
+        TRACE("(%p)->(IID_nsIWebBrowserChrome, %p)\n", This, result);
+        *result = NSWBCHROME(This);
+    }else if(IsEqualGUID(&IID_nsIContextMenuListener, riid)) {
+        TRACE("(%p)->(IID_nsIContextMenuListener, %p)\n", This, result);
+        *result = NSCML(This);
+    }
+
+    if(*result)
+        return NS_OK;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
+    return NS_NOINTERFACE;
+}
+
+static nsrefcnt NSAPI nsWebBrowserChrome_AddRef(nsIWebBrowserChrome *iface)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+    TRACE("(%p)\n", This);
+    return 2;  /* Should we implement ref conunting here? */
+}
+
+static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+    TRACE("(%p)\n", This);
+    return 1;
+}
+
+static nsresult NSAPI nsWebBrowserChrome_SetStatus(nsIWebBrowserChrome *iface,
+        PRUint32 statusType, const PRUnichar *status)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+    TRACE("(%p)->(%ld %s)\n", This, statusType, debugstr_w(status));
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsWebBrowserChrome_GetWebBrowser(nsIWebBrowserChrome *iface,
+        nsIWebBrowser **aWebBrowser)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aWebBrowser);
+
+    if(!aWebBrowser)
+        return NS_ERROR_INVALID_ARG;
+
+    *aWebBrowser = This->webbrowser;
+    return S_OK;
+}
+
+static nsresult NSAPI nsWebBrowserChrome_SetWebBrowser(nsIWebBrowserChrome *iface,
+        nsIWebBrowser *aWebBrowser)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aWebBrowser);
+
+    if(aWebBrowser != This->webbrowser)
+        ERR("Wrong nsWebBrowser!\n");
+
+    return NS_OK;
+}
+
+static nsresult NSAPI nsWebBrowserChrome_GetChromeFlags(nsIWebBrowserChrome *iface,
+        PRUint32 *aChromeFlags)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+    WARN("(%p)->(%p)\n", This, aChromeFlags);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsWebBrowserChrome_SetChromeFlags(nsIWebBrowserChrome *iface,
+        PRUint32 aChromeFlags)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+    WARN("(%p)->(%08lx)\n", This, aChromeFlags);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsWebBrowserChrome_DestroyBrowserWindow(nsIWebBrowserChrome *iface)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+    TRACE("(%p)\n", This);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsWebBrowserChrome_SizeBrowserTo(nsIWebBrowserChrome *iface,
+        PRInt32 aCX, PRInt32 aCY)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+    WARN("(%p)->(%ld %ld)\n", This, aCX, aCY);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsWebBrowserChrome_ShowAsModal(nsIWebBrowserChrome *iface)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+    WARN("(%p)\n", This);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsWebBrowserChrome_IsWindowModal(nsIWebBrowserChrome *iface, PRBool *_retval)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+    WARN("(%p)->(%p)\n", This, _retval);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsWebBrowserChrome_ExitModalEventLoop(nsIWebBrowserChrome *iface,
+        nsresult aStatus)
+{
+    NSContainer *This = NSWBCHROME_THIS(iface);
+    WARN("(%p)->(%08lx)\n", This, aStatus);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+#undef NSWBCHROME_THIS
+
+static const nsIWebBrowserChromeVtbl nsWebBrowserChromeVtbl = {
+    nsWebBrowserChrome_QueryInterface,
+    nsWebBrowserChrome_AddRef,
+    nsWebBrowserChrome_Release,
+    nsWebBrowserChrome_SetStatus,
+    nsWebBrowserChrome_GetWebBrowser,
+    nsWebBrowserChrome_SetWebBrowser,
+    nsWebBrowserChrome_GetChromeFlags,
+    nsWebBrowserChrome_SetChromeFlags,
+    nsWebBrowserChrome_DestroyBrowserWindow,
+    nsWebBrowserChrome_SizeBrowserTo,
+    nsWebBrowserChrome_ShowAsModal,
+    nsWebBrowserChrome_IsWindowModal,
+    nsWebBrowserChrome_ExitModalEventLoop
+};
+
+#define NSCML_THIS(iface) DEFINE_THIS(NSContainer, ContextMenuListener, iface)
+
+static nsresult NSAPI nsContextMenuListener_QueryInterface(nsIContextMenuListener *iface,
+        nsIIDRef riid, nsQIResult result)
+{
+    NSContainer *This = NSCML_THIS(iface);
+    return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
+}
+
+static nsrefcnt NSAPI nsContextMenuListener_AddRef(nsIContextMenuListener *iface)
+{
+    NSContainer *This = NSCML_THIS(iface);
+    return nsIContextMenuListener_AddRef(NSWBCHROME(This));
+}
+
+static nsrefcnt NSAPI nsContextMenuListener_Release(nsIContextMenuListener *iface)
+{
+    NSContainer *This = NSCML_THIS(iface);
+    return nsIWebBrowserChrome_Release(NSWBCHROME(This));
+}
+
+static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuListener *iface,
+        PRUint32 aContextFlags, nsIDOMEvent *aEvent, nsIDOMNode *aNode)
+{
+    NSContainer *This = NSCML_THIS(iface);
+    nsIDOMMouseEvent *event;
+    POINT pt;
+    DWORD dwID = CONTEXT_MENU_DEFAULT;
+    nsresult nsres;
+
+    TRACE("(%p)->(%08lx %p %p)\n", This, aContextFlags, aEvent, aNode);
+
+    nsres = nsIDOMEvent_QueryInterface(aEvent, &IID_nsIDOMMouseEvent, (void**)&event);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMMouseEvent interface: %08lx\n", nsres);
+        return nsres;
+    }
+
+    nsIDOMMouseEvent_GetScreenX(event, &pt.x);
+    nsIDOMMouseEvent_GetScreenY(event, &pt.y);
+    nsIDOMMouseEvent_Release(event);
+
+    switch(aContextFlags) {
+    case CONTEXT_NONE:
+    case CONTEXT_DOCUMENT:
+    case CONTEXT_TEXT:
+        dwID = CONTEXT_MENU_DEFAULT;
+        break;
+    case CONTEXT_IMAGE:
+    case CONTEXT_IMAGE|CONTEXT_LINK:
+        dwID = CONTEXT_MENU_IMAGE;
+        break;
+    case CONTEXT_LINK:
+        dwID = CONTEXT_MENU_ANCHOR;
+        break;
+    case CONTEXT_INPUT:
+        dwID = CONTEXT_MENU_CONTROL;
+        break;
+    default:
+        FIXME("aContextFlags=%08lx\n", aContextFlags);
+    };
+
+    HTMLDocument_ShowContextMenu(This->doc, dwID, &pt);
+
+    return NS_OK;
+}
+
+#undef NSCML_THIS
+
+static const nsIContextMenuListenerVtbl nsContextMenuListenerVtbl = {
+    nsContextMenuListener_QueryInterface,
+    nsContextMenuListener_AddRef,
+    nsContextMenuListener_Release,
+    nsContextMenuListener_OnShowContextMenu
+};
+
 void HTMLDocument_NSContainer_Init(HTMLDocument *This)
 {
     nsIWebBrowserSetup *wbsetup;
@@ -341,10 +563,20 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
 
     This->nscontainer = HeapAlloc(GetProcessHeap(), 0, sizeof(NSContainer));
 
+    This->nscontainer->lpWebBrowserChromeVtbl    = &nsWebBrowserChromeVtbl;
+    This->nscontainer->lpContextMenuListenerVtbl = &nsContextMenuListenerVtbl;
+
+    This->nscontainer->doc = This;
+
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
             NULL, &IID_nsIWebBrowser, (void**)&This->nscontainer->webbrowser);
     if(NS_FAILED(nsres))
         ERR("Creating WebBrowser failed: %08lx\n", nsres);
+
+    nsres = nsIWebBrowser_SetContainerWindow(This->nscontainer->webbrowser,
+            NSWBCHROME(This->nscontainer));
+    if(NS_FAILED(nsres))
+        ERR("SetContainerWindow failed: %08lx\n", nsres);
 
     nsres = nsIWebBrowser_QueryInterface(This->nscontainer->webbrowser, &IID_nsIBaseWindow,
             (void**)&This->nscontainer->window);

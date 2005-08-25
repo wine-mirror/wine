@@ -29,9 +29,12 @@
 #define NS_OK                     ((nsresult)0x00000000L)
 #define NS_NOINTERFACE            ((nsresult)0x80004002L)
 #define NS_ERROR_NOT_IMPLEMENTED  ((nsresult)0x80004001L)
+#define NS_ERROR_INVALID_ARG      ((nsresult)0x80070057L) 
 
 #define NS_FAILED(res) ((res) & 0x80000000)
 #define NS_SUCCEEDED(res) (!NS_FAILED(res))
+
+#define NSAPI WINAPI
 
 typedef struct NSContainer NSContainer;
 typedef struct BindStatusCallback BindStatusCallback;
@@ -72,10 +75,15 @@ typedef struct {
 } HTMLDocument;
 
 struct NSContainer {
+    const nsIWebBrowserChromeVtbl     *lpWebBrowserChromeVtbl;
+    const nsIContextMenuListenerVtbl  *lpContextMenuListenerVtbl;
+
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
     nsIBaseWindow *window;
     nsIWebBrowserStream *stream;
+
+    HTMLDocument *doc;
 
     HWND hwnd;
 };
@@ -99,6 +107,9 @@ struct NSContainer {
 #define CONTROL(x)       ((IOleControl*)                  &(x)->lpOleControlVtbl)
 #define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
 
+#define NSWBCHROME(x)    ((nsIWebBrowserChrome*)          &(x)->lpWebBrowserChromeVtbl)
+#define NSCML(x)         ((nsIContextMenuListener*)       &(x)->lpContextMenuListenerVtbl)
+
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
@@ -113,6 +124,7 @@ void HTMLDocument_NSContainer_Init(HTMLDocument*);
 void HTMLDocument_NSContainer_Destroy(HTMLDocument*);
 
 void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
+void HTMLDocument_ShowContextMenu(HTMLDocument*,DWORD,POINT*);
 
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 
