@@ -252,7 +252,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 
         /* the UI chunk */
         uirow=MSI_CreateRecord(9);
-        MSI_RecordSetStringW( uirow, 1, f->File );
+        MSI_RecordSetStringW( uirow, 1, f->FileName );
         uipath = strdupW( f->TargetPath );
         *(strrchrW(uipath,'\\')+1)=0;
         MSI_RecordSetStringW(uirow,9,uipath);
