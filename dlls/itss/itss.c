@@ -42,12 +42,10 @@
 
 #include "itsstor.h"
 
-#define ITSS_INITGUID
-#include "itss.h"
+#include "initguid.h"
+#include "wine/itss.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(itss);
-
-#include "initguid.h"
 
 static HRESULT ITSS_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 

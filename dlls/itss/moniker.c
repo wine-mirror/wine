@@ -34,9 +34,9 @@
 #include "winreg.h"
 #include "ole2.h"
 
-#include "itss.h"
 #include "uuids.h"
 
+#include "wine/itss.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

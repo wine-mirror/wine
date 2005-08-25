@@ -28,8 +28,7 @@
 #include "winerror.h"
 #include "ole2.h"
 
-#include "itss.h"
-
+#include "wine/itss.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(itss);

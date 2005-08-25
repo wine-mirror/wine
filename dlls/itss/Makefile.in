@@ -15,12 +15,6 @@ C_SRCS = \
 	regsvr.c \
 	storage.c
 
-IDL_SRCS = \
-	itss.idl
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-
-# note: this will get overwritten by make depend
-$(ALL_OBJS): $(IDL_SRCS:.idl=.h)

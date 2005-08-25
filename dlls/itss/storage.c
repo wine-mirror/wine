@@ -36,10 +36,10 @@
 
 #include "uuids.h"
 
-#include "itss.h"
 #include "chm_lib.h"
 #include "itsstor.h"
 
+#include "wine/itss.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

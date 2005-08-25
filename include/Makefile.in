@@ -42,7 +42,8 @@ IDL_SRCS = \
 	urlmon.idl \
 	wtypes.idl \
 	xmldom.idl \
-	xmldso.idl
+	xmldso.idl \
+	wine/itss.idl
 
 IDL_INCLUDES = \
 	$(IDL_SRCS) \

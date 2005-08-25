@@ -18,10 +18,6 @@
 
 import "oaidl.idl";
 
-cpp_quote("#ifdef ITSS_INITGUID")
-cpp_quote("#include \"initguid.h\"")
-cpp_quote("#endif")
-
 typedef struct _ITS_Control_Data
 {
     UINT cdwControlData;
@@ -36,6 +32,7 @@ typedef enum ECompactionLev {
 
 [
   object,
+  uuid(88cc31de-27ab-11d0-9df9-00a0c922e6ec),
   pointer_default(unique)
 ]
 interface IITStorage : IUnknown
@@ -93,5 +90,4 @@ interface IITStorage : IUnknown
 }
 
 cpp_quote("DEFINE_GUID(CLSID_ITStorage,0x5d02926a,0x212e,0x11d0,0x9d,0xf9,0x00,0xa0,0xc9,0x22,0xe6,0xec );");
-cpp_quote("DEFINE_GUID(IID_IITStorage, 0x88cc31de, 0x27ab, 0x11d0, 0x9d, 0xf9, 0x0, 0xa0, 0xc9, 0x22, 0xe6, 0xec);");
 cpp_quote("DEFINE_GUID(CLSID_ITSProtocol,0x9d148290,0xb9c8,0x11d0,0xa4,0xcc,0x00,0x00,0xf8,0x01,0x49,0xf6);");
