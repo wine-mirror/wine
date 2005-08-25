@@ -379,6 +379,7 @@ static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
     WCHAR timet[0x100];
     MSIRECORD * row = 0;
     LPCWSTR ActionText;
+    LPWSTR deformated;
 
     GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
 
@@ -387,8 +388,10 @@ static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
         return;
 
     ActionText = MSI_RecordGetString(row,2);
+    deformat_string(package, ActionText, &deformated);
 
-    sprintfW(message,template_s,timet,action,ActionText);
+    sprintfW(message,template_s,timet,action,deformated);
+    ce_actiontext(package, deformated);
     msiobj_release(&row->hdr);
 
     row = MSI_CreateRecord(1);
@@ -396,6 +399,7 @@ static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
  
     MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, row);
     msiobj_release(&row->hdr);
+    HeapFree(GetProcessHeap(),0,deformated);
 }
 
 static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start, 
@@ -799,7 +803,6 @@ static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action,
     {
         if (strcmpW(StandardActions[i].action, action)==0)
         {
-            ce_actiontext(package, action);
             if (!run)
             {
                 ui_actioninfo(package, action, TRUE, 0);
