@@ -1,6 +1,3 @@
-DLLDEFS   = @DLLDEFS@
-DLLFLAGS  = @DLLFLAGS@
-DEFS      = -D__WINESRC__ $(DLLDEFS)
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -12,19 +9,6 @@ C_SRCS = \
 
 EXTRA_OBJS = $(MODULE).dbg.o
 
-all: $(MODULE)
-
-@MAKE_RULES@
-
-$(MODULE): $(OBJS) Makefile.in
-	$(RM) $@
-	$(AR) $@ $(OBJS)
-	$(RANLIB) $@
-
-man:
-
-doc-html:
-
-doc-sgml:
+@MAKE_IMPLIB_RULES@
 
 ### Dependencies:
