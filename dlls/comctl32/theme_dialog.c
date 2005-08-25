@@ -101,6 +101,39 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
             return 1;
         }
 
+    case WM_CTLCOLORSTATIC:
+        if (!doTheming) return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
+        {
+            DLGPROC dlgp = (DLGPROC)GetWindowLongPtrW (hWnd, DWLP_DLGPROC);
+            LRESULT result = (LRESULT)dlgp (hWnd, msg, wParam, lParam);
+            if (!result)
+            {
+                /* Override defaults with more suitable values when themed */
+                HDC controlDC = (HDC)wParam;
+                HWND controlWnd = (HWND)lParam;
+                WCHAR controlClass[32];
+                RECT rc;
+
+                GetClassNameW (controlWnd, controlClass, 
+                    sizeof(controlClass) / sizeof(controlClass[0]));
+                if (lstrcmpiW (controlClass, WC_STATICW) == 0)
+                {
+                    /* Static control - draw parent background and set text to 
+                     * transparent, so it looks right on tab pages. */
+                    GetClientRect (controlWnd, &rc);
+                    DrawThemeParentBackground (controlWnd, controlDC, &rc);
+                    SetBkMode (controlDC, TRANSPARENT);
+
+                    /* Return NULL brush since we painted the BG already */
+                    return (LRESULT)GetStockObject (NULL_BRUSH);
+                }
+                else
+                    return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
+
+            }
+            return result;
+        }
+
     default: 
 	/* Call old proc */
 	return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
