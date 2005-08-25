@@ -547,3 +547,24 @@ DWORD __wine_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_R
     }
     return ExceptionContinueSearch;
 }
+
+
+/*************************************************************
+ *            __wine_spec_unimplemented_stub
+ *
+ * ntdll-specific implementation to avoid depending on kernel functions.
+ * Can be removed once ntdll.spec no longer contains stubs.
+ */
+void __wine_spec_unimplemented_stub( const char *module, const char *function )
+{
+    EXCEPTION_RECORD record;
+
+    record.ExceptionCode    = EXCEPTION_WINE_STUB;
+    record.ExceptionFlags   = EH_NONCONTINUABLE;
+    record.ExceptionRecord  = NULL;
+    record.ExceptionAddress = __wine_spec_unimplemented_stub;
+    record.NumberParameters = 2;
+    record.ExceptionInformation[0] = (ULONG_PTR)module;
+    record.ExceptionInformation[1] = (ULONG_PTR)function;
+    RtlRaiseException( &record );
+}

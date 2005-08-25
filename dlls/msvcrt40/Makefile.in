@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvcrt40.dll
 IMPORTLIB = libmsvcrt40.$(IMPLIBEXT)
-IMPORTS   = msvcrt
+IMPORTS   = msvcrt kernel32
 
 C_SRCS = msvcrt40.c
 

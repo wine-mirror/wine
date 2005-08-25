@@ -479,20 +479,26 @@ static int add_extra_symbol( const char **extras, int *count, const char *name, 
     return 1;
 }
 
+/* check if the spec file exports any stubs */
+static int has_stubs( const DLLSPEC *spec )
+{
+    int i;
+    for (i = 0; i < spec->nb_entry_points; i++)
+    {
+        ORDDEF *odp = &spec->entry_points[i];
+        if (odp->type == TYPE_STUB) return 1;
+    }
+    return 0;
+}
+
 /* add the extra undefined symbols that will be contained in the generated spec file itself */
 static void add_extra_undef_symbols( const DLLSPEC *spec )
 {
     const char *extras[10];
-    int i, count = 0, nb_stubs = 0;
-    int kernel_imports = 0, ntdll_imports = 0;
+    int i, count = 0;
+    int kernel_imports = 0;
 
     sort_names( &undef_symbols );
-
-    for (i = 0; i < spec->nb_entry_points; i++)
-    {
-        ORDDEF *odp = &spec->entry_points[i];
-        if (odp->type == TYPE_STUB) nb_stubs++;
-    }
 
     /* add symbols that will be contained in the spec file itself */
     if (!(spec->characteristics & IMAGE_FILE_DLL))
@@ -515,12 +521,9 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
         kernel_imports += add_extra_symbol( extras, &count, "GetProcAddress", spec );
         kernel_imports += add_extra_symbol( extras, &count, "DelayLoadFailureHook", spec );
     }
-    if (nb_stubs)
-        ntdll_imports += add_extra_symbol( extras, &count, "RtlRaiseException", spec );
 
     /* make sure we import the dlls that contain these functions */
     if (kernel_imports) add_import_dll( "kernel32", NULL );
-    if (ntdll_imports) add_import_dll( "ntdll", NULL );
 
     if (count)
     {
@@ -599,6 +602,8 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
     else if (spec->characteristics & IMAGE_FILE_DLL) add_extra_ld_symbol( "DllMain" );
     else if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) add_extra_ld_symbol( "DriverEntry ");
     else add_extra_ld_symbol( "main" );
+
+    if (has_stubs( spec )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
 
     strcpy( name_prefix, asm_name("") );
     prefix_len = strlen( name_prefix );

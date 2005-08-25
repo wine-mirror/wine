@@ -322,29 +322,10 @@ static void output_stub_funcs( FILE *outfile, DLLSPEC *spec )
         ORDDEF *odp = &spec->entry_points[i];
         if (odp->type != TYPE_STUB) continue;
         fprintf( outfile, "#ifdef __GNUC__\n" );
-        fprintf( outfile, "static void __wine_unimplemented( const char *func ) __attribute__((noreturn));\n" );
-        fprintf( outfile, "#endif\n\n" );
-        fprintf( outfile, "struct exc_record {\n" );
-        fprintf( outfile, "  unsigned int code, flags;\n" );
-        fprintf( outfile, "  void *rec, *addr;\n" );
-        fprintf( outfile, "  unsigned int params;\n" );
-        fprintf( outfile, "  const void *info[15];\n" );
-        fprintf( outfile, "};\n\n" );
-        fprintf( outfile, "extern void __stdcall RtlRaiseException( struct exc_record * );\n\n" );
-        fprintf( outfile, "static void __wine_unimplemented( const char *func )\n{\n" );
-        fprintf( outfile, "  struct exc_record rec;\n" );
-        fprintf( outfile, "  rec.code    = 0x%08x;\n", EXCEPTION_WINE_STUB );
-        fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
-        fprintf( outfile, "  rec.rec     = 0;\n" );
-        fprintf( outfile, "  rec.params  = 2;\n" );
-        fprintf( outfile, "  rec.info[0] = \"%s\";\n", spec->file_name );
-        fprintf( outfile, "  rec.info[1] = func;\n" );
-        fprintf( outfile, "#ifdef __GNUC__\n" );
-        fprintf( outfile, "  rec.addr = __builtin_return_address(1);\n" );
+        fprintf( outfile, "extern void __wine_spec_unimplemented_stub( const char *module, const char *func ) __attribute__((noreturn));\n" );
         fprintf( outfile, "#else\n" );
-        fprintf( outfile, "  rec.addr = 0;\n" );
-        fprintf( outfile, "#endif\n" );
-        fprintf( outfile, "  for (;;) RtlRaiseException( &rec );\n}\n\n" );
+        fprintf( outfile, "extern void __wine_spec_unimplemented_stub( const char *module, const char *func );\n" );
+        fprintf( outfile, "#endif\n\n" );
         break;
     }
 
@@ -354,11 +335,11 @@ static void output_stub_funcs( FILE *outfile, DLLSPEC *spec )
         if (odp->type != TYPE_STUB) continue;
         fprintf( outfile, "void %s(void) ", make_internal_name( odp, spec, "stub" ) );
         if (odp->name)
-            fprintf( outfile, "{ __wine_unimplemented(\"%s\"); }\n", odp->name );
+            fprintf( outfile, "{ __wine_spec_unimplemented_stub(__wine_spec_file_name, \"%s\"); }\n", odp->name );
         else if (odp->export_name)
-            fprintf( outfile, "{ __wine_unimplemented(\"%s\"); }\n", odp->export_name );
+            fprintf( outfile, "{ __wine_spec_unimplemented_stub(__wine_spec_file_name, \"%s\"); }\n", odp->export_name );
         else
-            fprintf( outfile, "{ __wine_unimplemented(\"%d\"); }\n", odp->ordinal );
+            fprintf( outfile, "{ __wine_spec_unimplemented_stub(__wine_spec_file_name, \"%d\"); }\n", odp->ordinal );
     }
 }
 
@@ -494,6 +475,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     else
         fprintf( outfile, "extern char _end[];\n" );
 
+    fprintf( outfile, "static const char __wine_spec_file_name[] = \"%s\";\n", spec->file_name );
     fprintf( outfile, "extern int __wine_spec_data_start[], __wine_spec_exports[];\n\n" );
 
     if (target_cpu == CPU_x86)
@@ -732,9 +714,8 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
              "{\n"
              "    extern void __wine_dll_register( const struct image_nt_headers *, const char * );\n"
              "    __wine_spec_init_state = 1;\n"
-             "    __wine_dll_register( &nt_header, \"%s\" );\n"
-             "}\n\n",
-             spec->file_name );
+             "    __wine_dll_register( &nt_header, __wine_spec_file_name );\n"
+             "}\n\n" );
 
     fprintf( outfile,
              "void __wine_spec_init_ctor(void)\n"
