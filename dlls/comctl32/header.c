@@ -385,7 +385,7 @@ HEADER_Refresh (HWND hwnd, HDC hdc)
     }
 
     x = rect.left;
-    for (i = 0; i < infoPtr->uNumItem; i++) {
+    for (i = 0; x <= rect.right && i < infoPtr->uNumItem; i++) {
         x = HEADER_DrawItem (hwnd, hdc, HEADER_OrderToIndex(hwnd,i), 
             infoPtr->iHotItem == i);
     }
