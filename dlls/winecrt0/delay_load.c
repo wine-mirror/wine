@@ -1,0 +1,63 @@
+/*
+ * Support for delayed imports
+ *
+ * Copyright 2005 Alexandre Julliard
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+
+struct ImgDelayDescr
+{
+    DWORD                   grAttrs;
+    LPCSTR                  szName;
+    HMODULE                *phmod;
+    IMAGE_THUNK_DATA       *pIAT;
+    const IMAGE_THUNK_DATA *pINT;
+    const IMAGE_THUNK_DATA *pBoundIAT;
+    const IMAGE_THUNK_DATA *pUnloadIAT;
+    DWORD                   dwTimeStamp;
+};
+
+extern struct ImgDelayDescr __wine_spec_delay_imports[];
+
+extern FARPROC WINAPI DelayLoadFailureHook( LPCSTR name, LPCSTR function );
+
+FARPROC WINAPI __wine_spec_delay_load( unsigned int id )
+{
+    struct ImgDelayDescr *descr = __wine_spec_delay_imports + HIWORD(id);
+    WORD func = LOWORD(id);
+    FARPROC proc;
+
+    if (!*descr->phmod) *descr->phmod = LoadLibraryA( descr->szName );
+    if (!*descr->phmod ||
+        !(proc = GetProcAddress( *descr->phmod, (LPCSTR)descr->pINT[func].u1.Function )))
+        proc = DelayLoadFailureHook( descr->szName, (LPCSTR)descr->pINT[func].u1.Function );
+    descr->pIAT[func].u1.Function = (ULONG_PTR)proc;
+    return proc;
+}
+
+#ifdef __GNUC__
+static void free_delay_imports(void) __attribute__((destructor));
+static void free_delay_imports(void)
+{
+    struct ImgDelayDescr *descr;
+    for (descr = __wine_spec_delay_imports; descr->szName; descr++)
+        if (*descr->phmod) FreeLibrary( *descr->phmod );
+}
+#endif

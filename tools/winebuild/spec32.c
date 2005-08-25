@@ -534,20 +534,10 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
                  "    if (reason == %d && __wine_spec_init_state == 1)\n"
                  "        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
                  "    ret = %s( inst, reason, reserved );\n"
-                 "    if (reason == %d && __wine_spec_init_state == 1)\n",
+                 "    if (reason == %d && __wine_spec_init_state == 1)\n"
+                 "        _fini();\n"
+                 "    return ret;\n}\n",
                  DLL_PROCESS_ATTACH, init_func, DLL_PROCESS_DETACH );
-        if (!nr_delayed)
-            fprintf( outfile, "        _fini();\n" );
-        else
-            fprintf( outfile,
-                     "    {\n"
-                     "        extern int __stdcall FreeLibrary(void *);\n"
-                     "        unsigned int i;\n"
-                     "        _fini();\n"
-                     "        for (i = 0; i < sizeof(__wine_delay_imp_hmod)/sizeof(__wine_delay_imp_hmod[0]); i++)\n"
-                     "            if (__wine_delay_imp_hmod[i]) FreeLibrary( __wine_delay_imp_hmod[i] );\n"
-                     "    }\n" );
-        fprintf( outfile, "    return ret;\n}\n" );
         init_func = "__wine_dll_main";
     }
     else switch(spec->subsystem)

@@ -507,19 +507,9 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
         {
         case IMAGE_SUBSYSTEM_WINDOWS_GUI:
         case IMAGE_SUBSYSTEM_WINDOWS_CUI:
-            kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA", spec );
-            kernel_imports += add_extra_symbol( extras, &count, "GetStartupInfoA", spec );
-            kernel_imports += add_extra_symbol( extras, &count, "GetModuleHandleA", spec );
             kernel_imports += add_extra_symbol( extras, &count, "ExitProcess", spec );
             break;
         }
-    }
-    if (nb_delayed)
-    {
-        kernel_imports += add_extra_symbol( extras, &count, "LoadLibraryA", spec );
-        kernel_imports += add_extra_symbol( extras, &count, "FreeLibrary", spec );
-        kernel_imports += add_extra_symbol( extras, &count, "GetProcAddress", spec );
-        kernel_imports += add_extra_symbol( extras, &count, "DelayLoadFailureHook", spec );
     }
 
     /* make sure we import the dlls that contain these functions */
@@ -604,6 +594,7 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
     else add_extra_ld_symbol( "main" );
 
     if (has_stubs( spec )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
+    if (nb_delayed) add_extra_ld_symbol( "__wine_spec_delay_load" );
 
     strcpy( name_prefix, asm_name("") );
     prefix_len = strlen( name_prefix );
@@ -905,7 +896,7 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
         }
     }
     fprintf( outfile, "\n" );
-    fprintf( outfile, "static struct {\n" );
+    fprintf( outfile, "struct {\n" );
     fprintf( outfile, "  struct ImgDelayDescr {\n" );
     fprintf( outfile, "    unsigned int  grAttrs;\n" );
     fprintf( outfile, "    const char   *szName;\n" );
@@ -915,15 +906,15 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, "    void*         pBoundIAT;\n" );
     fprintf( outfile, "    void*         pUnloadIAT;\n" );
     fprintf( outfile, "    unsigned long dwTimeStamp;\n" );
-    fprintf( outfile, "  } imp[%d];\n", nb_delayed );
+    fprintf( outfile, "  } imp[%d];\n", nb_delayed + 1 );
     fprintf( outfile, "  void         *IAT[%d];\n", total_delayed );
     fprintf( outfile, "  const char   *INT[%d];\n", total_delayed );
-    fprintf( outfile, "} delay_imports = {\n" );
+    fprintf( outfile, "} __wine_spec_delay_imports = {\n" );
     fprintf( outfile, "  {\n" );
     for (i = j = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
-        fprintf( outfile, "    { 0, \"%s\", &__wine_delay_imp_hmod[%d], &delay_imports.IAT[%d], &delay_imports.INT[%d], 0, 0, 0 },\n",
+        fprintf( outfile, "    { 0, \"%s\", &__wine_delay_imp_hmod[%d], &__wine_spec_delay_imports.IAT[%d], &__wine_spec_delay_imports.INT[%d], 0, 0, 0 },\n",
                  dll_imports[i]->spec->file_name, i, j, j );
         j += dll_imports[i]->nb_imports;
     }
@@ -955,26 +946,6 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     }
     fprintf( outfile, "  }\n};\n\n" );
 
-    fprintf( outfile, "extern void * __stdcall LoadLibraryA(const char*);\n");
-    fprintf( outfile, "extern void * __stdcall GetProcAddress(void *, const char*);\n");
-    fprintf( outfile, "extern void * __stdcall DelayLoadFailureHook(const char *, const char*);\n");
-    fprintf( outfile, "\n" );
-
-    fprintf( outfile, "void *__stdcall __wine_delay_load( int idx_nr )\n" );
-    fprintf( outfile, "{\n" );
-    fprintf( outfile, "  int idx = idx_nr >> 16, nr = idx_nr & 0xffff;\n" );
-    fprintf( outfile, "  struct ImgDelayDescr *imd = delay_imports.imp + idx;\n" );
-    fprintf( outfile, "  void **pIAT = imd->pIAT + nr;\n" );
-    fprintf( outfile, "  const char** pINT = imd->pINT + nr;\n" );
-    fprintf( outfile, "  void *fn;\n\n" );
-
-    fprintf( outfile, "  if (!*imd->phmod) *imd->phmod = LoadLibraryA(imd->szName);\n" );
-    fprintf( outfile, "  if (!*imd->phmod || !(fn = GetProcAddress(*imd->phmod, *pINT)))\n");
-    fprintf( outfile, "    fn = DelayLoadFailureHook(imd->szName, *pINT);\n" );
-    fprintf( outfile, "  /* patch IAT with final value */\n" );
-    fprintf( outfile, "  return *pIAT = fn;\n" );
-    fprintf( outfile, "}\n" );
-
     return nb_delayed;
 }
 
@@ -997,17 +968,17 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
     {
     case CPU_x86:
         fprintf( outfile, "    \"\\tpushl %%ecx\\n\\tpushl %%edx\\n\\tpushl %%eax\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall %s\\n\"\n", asm_name("__wine_delay_load") );
+        fprintf( outfile, "    \"\\tcall %s\\n\"\n", asm_name("__wine_spec_delay_load") );
         fprintf( outfile, "    \"\\tpopl %%edx\\n\\tpopl %%ecx\\n\\tjmp *%%eax\\n\"\n" );
         break;
     case CPU_SPARC:
         fprintf( outfile, "    \"\\tsave %%sp, -96, %%sp\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall %s\\n\"\n", asm_name("__wine_delay_load") );
+        fprintf( outfile, "    \"\\tcall %s\\n\"\n", asm_name("__wine_spec_delay_load") );
         fprintf( outfile, "    \"\\tmov %%g1, %%o0\\n\"\n" );
         fprintf( outfile, "    \"\\tjmp %%o0\\n\\trestore\\n\"\n" );
         break;
     case CPU_ALPHA:
-        fprintf( outfile, "    \"\\tjsr $26,%s\\n\"\n", asm_name("__wine_delay_load") );
+        fprintf( outfile, "    \"\\tjsr $26,%s\\n\"\n", asm_name("__wine_spec_delay_load") );
         fprintf( outfile, "    \"\\tjmp $31,($0)\\n\"\n" );
         break;
     case CPU_POWERPC:
@@ -1034,7 +1005,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
         fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(0), 44+extra_stack_storage, ppc_reg(1));
 
         /* Call the __wine_delay_load function, arg1 is arg1. */
-        fprintf( outfile, "    \"\\tbl %s\\n\"\n", asm_name("__wine_delay_load") );
+        fprintf( outfile, "    \"\\tbl %s\\n\"\n", asm_name("__wine_spec_delay_load") );
 
         /* Load return value from call into ctr register */
         fprintf( outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg(3));
@@ -1125,7 +1096,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
 
     fprintf( outfile, "\n    \".align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"%s:\\n\"\n", asm_name(delayed_import_thunks));
-    pos = nb_delayed * 32;
+    pos = (nb_delayed + 1) * 32;
     for (i = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
@@ -1133,7 +1104,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             output_import_thunk( outfile, odp->name ? odp->name : odp->export_name,
-                                 "delay_imports", pos );
+                                 "__wine_spec_delay_imports", pos );
         }
     }
     output_function_size( outfile, delayed_import_thunks );
