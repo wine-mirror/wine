@@ -107,7 +107,7 @@ static MSIAPPID *load_given_appid( MSIPACKAGE *package, LPCWSTR name )
         }
     }
     
-    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, appid);
+    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, name);
     if (!row)
         return NULL;
 
