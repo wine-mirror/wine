@@ -139,8 +139,14 @@ foreach my $dir (sort values %directories)
     printf NEWMAKE " \\\n\t%s", $dir;
 }
 
-printf NEWMAKE "\n\nSUBDIRS = \\\n\t\$(BASEDIRS)";
-foreach my $dir (sort (keys %special_dlls, values %staticlib_dirs))
+printf NEWMAKE "\n\nIMPLIBSUBDIRS =";
+foreach my $dir (sort values %staticlib_dirs)
+{
+    printf NEWMAKE " \\\n\t%s", $dir;
+}
+
+printf NEWMAKE "\n\nSUBDIRS = \\\n\t\$(BASEDIRS) \\\n\t\$(IMPLIBSUBDIRS)";
+foreach my $dir (sort keys %special_dlls)
 {
     printf NEWMAKE " \\\n\t%s", $dir;
 }
@@ -149,7 +155,7 @@ printf NEWMAKE <<EOF;
 
 BUILDSUBDIRS = \$(BASEDIRS) \$(EXTRADIRS)
 
-INSTALLSUBDIRS = \$(BUILDSUBDIRS)
+INSTALLSUBDIRS = \$(BUILDSUBDIRS) \$(IMPLIBSUBDIRS)
 EOF
 
 ################################################################

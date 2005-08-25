@@ -177,27 +177,30 @@ BASEDIRS = \
 	wsock32 \
 	wtsapi32
 
+IMPLIBSUBDIRS = \
+	dxerr8 \
+	dxerr9 \
+	dxguid \
+	strmiids \
+	uuid \
+	winecrt0
+
 SUBDIRS = \
 	$(BASEDIRS) \
+	$(IMPLIBSUBDIRS) \
 	d3d8 \
 	d3d9 \
 	d3dx8 \
 	ddraw \
-	dxerr8 \
-	dxerr9 \
-	dxguid \
 	glu32 \
 	glut32 \
 	opengl32 \
-	strmiids \
-	uuid \
-	winecrt0 \
 	wined3d \
 	x11drv
 
 BUILDSUBDIRS = $(BASEDIRS) $(EXTRADIRS)
 
-INSTALLSUBDIRS = $(BUILDSUBDIRS)
+INSTALLSUBDIRS = $(BUILDSUBDIRS) $(IMPLIBSUBDIRS)
 
 @MAKE_RULES@
 
