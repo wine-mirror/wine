@@ -27,9 +27,31 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "mssip.h"
+#include "crypt32_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
+
+static HCRYPTPROV hDefProv;
+
+BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
+{
+    switch (fdwReason)
+    {
+        case DLL_PROCESS_DETACH:
+            if (hDefProv) CryptReleaseContext(hDefProv, 0);
+            break;
+    }
+    return TRUE;
+}
+
+HCRYPTPROV CRYPT_GetDefaultProvider(void)
+{
+    if (!hDefProv)
+        CryptAcquireContextW(&hDefProv, NULL, MS_ENHANCED_PROV_W,
+         PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    return hDefProv;
+}
 
 /* this function is called by Internet Explorer when it is about to verify a downloaded component */
 BOOL WINAPI I_CryptCreateLruCache(DWORD x, DWORD y)

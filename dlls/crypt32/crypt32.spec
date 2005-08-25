@@ -108,7 +108,7 @@
 @ stub CryptGetMessageSignerCount
 @ stub CryptGetOIDFunctionAddress
 @ stdcall CryptGetOIDFunctionValue(long str str wstr ptr ptr ptr)
-@ stub CryptHashCertificate
+@ stdcall CryptHashCertificate(long long long ptr long ptr ptr)
 @ stub CryptHashMessage
 @ stub CryptHashPublicKeyInfo
 @ stub CryptHashToBeSigned

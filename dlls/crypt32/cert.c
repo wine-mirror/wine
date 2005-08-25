@@ -22,6 +22,7 @@
 #include "winreg.h"
 #include "wincrypt.h"
 #include "wine/debug.h"
+#include "crypt32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
@@ -264,6 +265,35 @@ LONG WINAPI CertVerifyTimeValidity(LPFILETIME pTimeToVerify,
         ret = CompareFileTime(pTimeToVerify, &pCertInfo->NotAfter);
         if (ret < 0)
             ret = 0;
+    }
+    return ret;
+}
+
+BOOL WINAPI CryptHashCertificate(HCRYPTPROV hCryptProv, ALG_ID Algid,
+ DWORD dwFlags, const BYTE *pbEncoded, DWORD cbEncoded, BYTE *pbComputedHash,
+ DWORD *pcbComputedHash)
+{
+    BOOL ret = TRUE;
+    HCRYPTHASH hHash = 0;
+
+    TRACE("(%ld, %d, %08lx, %p, %ld, %p, %p)\n", hCryptProv, Algid, dwFlags,
+     pbEncoded, cbEncoded, pbComputedHash, pcbComputedHash);
+
+    if (!hCryptProv)
+        hCryptProv = CRYPT_GetDefaultProvider();
+    if (!Algid)
+        Algid = CALG_SHA1;
+    if (ret)
+    {
+        ret = CryptCreateHash(hCryptProv, Algid, 0, 0, &hHash);
+        if (ret)
+        {
+            ret = CryptHashData(hHash, pbEncoded, cbEncoded, 0);
+            if (ret)
+                ret = CryptGetHashParam(hHash, HP_HASHVAL, pbComputedHash,
+                 pcbComputedHash, 0);
+            CryptDestroyHash(hHash);
+        }
     }
     return ret;
 }

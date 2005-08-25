@@ -6,6 +6,7 @@ TESTDLL   = crypt32.dll
 IMPORTS   = crypt32
 
 CTESTS = \
+	cert.c \
 	encode.c \
 	main.c \
 	protectdata.c

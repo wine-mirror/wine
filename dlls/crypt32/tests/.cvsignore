@@ -1,4 +1,5 @@
 Makefile
+cert.ok
 encode.ok
 main.ok
 protectdata.ok
