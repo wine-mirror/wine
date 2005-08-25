@@ -127,7 +127,6 @@ struct apartment
   LONG  refs;              /* refcount of the apartment (LOCK) */
   DWORD model;             /* threading model (RO) */
   DWORD tid;               /* thread id (RO) */
-  HANDLE thread;           /* thread handle (RO) */
   OXID oxid;               /* object exporter ID (RO) */
   LONG ipidc;              /* interface pointer ID counter, starts at 1 (LOCK) */
   HWND win;                /* message window (RO) */

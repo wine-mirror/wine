@@ -224,9 +224,6 @@ static APARTMENT *apartment_construct(DWORD model)
 
     apt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*apt));
     apt->tid = GetCurrentThreadId();
-    DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
-                    GetCurrentProcess(), &apt->thread,
-                    THREAD_ALL_ACCESS, FALSE, 0);
 
     list_init(&apt->proxies);
     list_init(&apt->stubmgrs);
@@ -360,7 +357,6 @@ DWORD apartment_release(struct apartment *apt)
 
         DEBUG_CLEAR_CRITSEC_NAME(&apt->cs);
         DeleteCriticalSection(&apt->cs);
-        CloseHandle(apt->thread);
 
         HeapFree(GetProcessHeap(), 0, apt);
     }
