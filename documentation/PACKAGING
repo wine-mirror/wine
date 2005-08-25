@@ -35,7 +35,7 @@ for configurable values. Those terms are described here.
     * WINDOWSDIR: is an important concept to Wine.  This directory specifies
 	what directory corresponds to the root Windows directory
         (e.g. C:\WINDOWS). This directory is specified by the user, in
-        the user's configuration file.  Generally speaking, this directory
+        their registry settings.  Generally speaking, this directory
 	is either set to point at an empty directory, or it is set to point
 	at a Windows partition that has been mounted through the vfat driver.
         NOTE:   It is extremely important that the packager understand the
@@ -419,7 +419,7 @@ For a current .spec file, please refer to any one of the existing SRPMs.
 Wine is configured the usual way (depending on your build environment).
 The PREFIX is chosen using your application placement policy
 (/usr/, /usr/X11R6/, /opt/wine/, or similar).  The configuration files
-(wine.conf, wine.userreg, wine.systemreg) are targeted for /etc/wine/
+(wine.userreg, wine.systemreg) are targeted for /etc/wine/
 (rationale: FHS 2.2, multiple read only configuration files of a package).
 
 Example (split this into %build and %install section for rpm:
