@@ -133,6 +133,7 @@ typedef struct tagMSIAPPID
 
 typedef struct tagMSICLASS
 {
+    struct list entry;
     WCHAR CLSID[IDENTIFIER_SIZE];     /* Primary Key */
     WCHAR Context[IDENTIFIER_SIZE];   /* Primary Key */
     MSICOMPONENT *Component;
@@ -169,7 +170,7 @@ typedef struct tagMSIPROGID
 {
     LPWSTR ProgID;  /* Primary Key */
     INT ParentIndex;
-    INT ClassIndex;
+    MSICLASS *Class;
     LPWSTR Description;
     LPWSTR IconPath;
     /* not in the table, set during installation */
@@ -192,7 +193,7 @@ typedef struct tagMSIMIME
     LPWSTR ContentType;  /* Primary Key */
     INT ExtensionIndex;
     WCHAR CLSID[IDENTIFIER_SIZE];
-    INT ClassIndex;
+    MSICLASS *Class;
     /* not in the table, set during installation */
     BOOL InstallMe;
 } MSIMIME;

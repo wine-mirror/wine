@@ -486,19 +486,19 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
     }
 
     /* clean up extension, progid, class and verb structures */
-    for (i = 0; i < package->loaded_classes; i++)
+    LIST_FOR_EACH_SAFE( item, cursor, &package->classes )
     {
-        HeapFree(GetProcessHeap(),0,package->classes[i].Description);
-        HeapFree(GetProcessHeap(),0,package->classes[i].FileTypeMask);
-        HeapFree(GetProcessHeap(),0,package->classes[i].IconPath);
-        HeapFree(GetProcessHeap(),0,package->classes[i].DefInprocHandler);
-        HeapFree(GetProcessHeap(),0,package->classes[i].DefInprocHandler32);
-        HeapFree(GetProcessHeap(),0,package->classes[i].Argument);
-        HeapFree(GetProcessHeap(),0,package->classes[i].ProgIDText);
-    }
+        MSICLASS *cls = LIST_ENTRY( item, MSICLASS, entry );
 
-    if (package->classes && package->loaded_classes > 0)
-        HeapFree(GetProcessHeap(),0,package->classes);
+        list_remove( &cls->entry );
+        HeapFree( GetProcessHeap(), 0, cls->Description );
+        HeapFree( GetProcessHeap(), 0, cls->FileTypeMask );
+        HeapFree( GetProcessHeap(), 0, cls->IconPath );
+        HeapFree( GetProcessHeap(), 0, cls->DefInprocHandler );
+        HeapFree( GetProcessHeap(), 0, cls->DefInprocHandler32 );
+        HeapFree( GetProcessHeap(), 0, cls->Argument );
+        HeapFree( GetProcessHeap(), 0, cls->ProgIDText );
+    }
 
     for (i = 0; i < package->loaded_extensions; i++)
     {
