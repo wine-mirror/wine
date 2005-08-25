@@ -617,7 +617,7 @@ static void fd_set_unimport( WS_fd_set* wsfds, int lfd[] )
 static inline int get_rcvsnd_timeo( int fd, int optname)
 {
   struct timeval tv;
-  int len = sizeof(tv);
+  unsigned int len = sizeof(tv);
   int ret = getsockopt(fd, SOL_SOCKET, optname, &tv, &len);
   if( ret >= 0)
       ret = tv.tv_sec * 1000 + tv.tv_usec / 1000;
@@ -776,7 +776,7 @@ static struct WS_protoent *check_buffer_pe(int size)
  * start with. Note that the returned pointer may be the original pointer
  * if no conversion is necessary.
  */
-static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsaddrlen, int *uaddrlen)
+static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsaddrlen, unsigned int *uaddrlen)
 {
     switch (wsaddr->sa_family)
     {
@@ -815,7 +815,7 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
 }
 
 /* Allocates a Unix sockaddr structure to receive the data */
-static inline struct sockaddr* ws_sockaddr_alloc(const struct WS_sockaddr* wsaddr, int* wsaddrlen, int* uaddrlen)
+static inline struct sockaddr* ws_sockaddr_alloc(const struct WS_sockaddr* wsaddr, int* wsaddrlen, unsigned int* uaddrlen)
 {
     if (wsaddr==NULL)
     {
@@ -1195,7 +1195,7 @@ static int WS2_send( int fd, struct iovec* iov, int count,
 #ifdef SOL_IPX
             struct sockaddr_ipx* uipx = (struct sockaddr_ipx*)hdr.msg_name;
             int val=0;
-            int len=sizeof(int);
+            unsigned int len=sizeof(int);
 
             /* The packet type is stored at the ipx socket level; At least the linux kernel seems
              *  to do something with it in case hdr.msg_name is NULL. Nonetheless can we use it to store
@@ -1428,7 +1428,7 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
         else
         {
             const struct sockaddr* uaddr;
-            int uaddrlen;
+            unsigned int uaddrlen;
 
             uaddr=ws_sockaddr_ws2u(name,namelen,&uaddrlen);
             if (uaddr == NULL)
@@ -1489,7 +1489,7 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
     if (fd != -1)
     {
         const struct sockaddr* uaddr;
-        int uaddrlen;
+        unsigned int uaddrlen;
 
         uaddr=ws_sockaddr_ws2u(name,namelen,&uaddrlen);
         if (uaddr == NULL)
@@ -1584,7 +1584,7 @@ int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
     if (fd != -1)
     {
         struct sockaddr* uaddr;
-        int uaddrlen;
+        unsigned int uaddrlen;
 
         uaddr=ws_sockaddr_alloc(name,namelen,&uaddrlen);
         if (getpeername(fd, uaddr, &uaddrlen) != 0)
@@ -1629,7 +1629,7 @@ int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
     if (fd != -1)
     {
         struct sockaddr* uaddr;
-        int uaddrlen;
+        unsigned int uaddrlen;
 
         uaddr=ws_sockaddr_alloc(name,namelen,&uaddrlen);
         if (getsockname(fd, uaddr, &uaddrlen) != 0)
@@ -1687,7 +1687,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 	    case IPX_PTYPE:
 		fd = get_sock_fd( s, 0, NULL );
 #ifdef SOL_IPX
-		if(getsockopt(fd, SOL_IPX, IPX_TYPE, optval, optlen) == -1)
+		if(getsockopt(fd, SOL_IPX, IPX_TYPE, optval, (unsigned int*)optlen) == -1)
 		{
 		    return SOCKET_ERROR;
 		}
@@ -1746,7 +1746,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     } else {
         struct timeval tv;
         struct linger lingval;
-        INT len, *plen = optlen;
+        unsigned int len, *plen = (unsigned int*)optlen;
         char *pval = optval;
         if(level == SOL_SOCKET && is_timeout_option(optname)) {
             len = sizeof(tv);
