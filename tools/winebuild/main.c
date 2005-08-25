@@ -568,7 +568,7 @@ int main(int argc, char **argv)
                 BuildSpec16File( output_file, spec );
                 break;
             case SPEC_WIN32:
-                read_undef_symbols( argv );
+                read_undef_symbols( spec, argv );
                 BuildSpec32File( output_file, spec );
                 break;
             default: assert(0);
@@ -580,7 +580,7 @@ int main(int argc, char **argv)
         load_resources( argv, spec );
         load_import_libs( argv );
         if (spec_file_name && !parse_input_file( spec )) break;
-        read_undef_symbols( argv );
+        read_undef_symbols( spec, argv );
         BuildSpec32File( output_file, spec );
         break;
     case MODE_DEF:

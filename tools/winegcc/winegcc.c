@@ -149,6 +149,7 @@ struct options
     int use_msvcrt;
     int nostdinc;
     int nostdlib;
+    int nostartfiles;
     int nodefaultlibs;
     int noshortwchar;
     int gui_app;
@@ -528,6 +529,14 @@ static void build(struct options* opts)
         strarray_add(files, "-dkernel32");
     }
 
+    if (!opts->nostartfiles)
+    {
+        char *fullname = NULL;
+        if (get_lib_type(lib_dirs, "winecrt0", &fullname) == file_arh)
+            strarray_add(files, strmake("-a%s", fullname));
+        free( fullname );
+    }
+
     /* run winebuild to generate the .spec.c file */
     spec_args = strarray_alloc();
     spec_c_name = get_temp_file(output_name, ".spec.c");
@@ -888,6 +897,8 @@ int main(int argc, char **argv)
                         opts.nodefaultlibs = 1;
                     else if (strcmp("-nostdlib", argv[i]) == 0)
                         opts.nostdlib = 1;
+                    else if (strcmp("-nostartfiles", argv[i]) == 0)
+                        opts.nostartfiles = 1;
                     break;
 		case 'o':
 		    opts.output_name = option_arg;

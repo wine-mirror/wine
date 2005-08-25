@@ -191,6 +191,7 @@ SUBDIRS = \
 	opengl32 \
 	strmiids \
 	uuid \
+	winecrt0 \
 	wined3d \
 	x11drv
 
@@ -315,6 +316,7 @@ SYMLINKS_SO = \
 	libdxguid.a \
 	libstrmiids.a \
 	libuuid.a \
+	libwinecrt0.a \
 	lz32.dll.so \
 	mapi32.dll.so \
 	mciavi32.dll.so \
@@ -1046,6 +1048,9 @@ libstrmiids.a: strmiids/libstrmiids.a
 libuuid.a: uuid/libuuid.a
 	$(RM) $@ && $(LN_S) uuid/libuuid.a $@
 
+libwinecrt0.a: winecrt0/libwinecrt0.a
+	$(RM) $@ && $(LN_S) winecrt0/libwinecrt0.a $@
+
 
 # Import libraries
 
@@ -1071,7 +1076,8 @@ IMPORT_SYMLINKS = \
 	libdxerr9.a \
 	libdxguid.a \
 	libstrmiids.a \
-	libuuid.a
+	libuuid.a \
+	libwinecrt0.a
 
 IMPORT_LIBS = \
 	$(IMPORT_SYMLINKS) \
@@ -1750,6 +1756,7 @@ dxerr9/libdxerr9.a: dxerr9
 dxguid/libdxguid.a: dxguid
 strmiids/libstrmiids.a: strmiids
 uuid/libuuid.a: uuid
+winecrt0/libwinecrt0.a: winecrt0
 
 # Rules for auto documentation
 

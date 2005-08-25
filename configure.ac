@@ -1648,6 +1648,7 @@ dlls/vtdapi.vxd/Makefile
 dlls/vwin32.vxd/Makefile
 dlls/win32s/Makefile
 dlls/winaspi/Makefile
+dlls/winecrt0/Makefile
 dlls/wined3d/Makefile
 dlls/winedos/Makefile
 dlls/wineps/Makefile

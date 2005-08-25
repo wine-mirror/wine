@@ -1,0 +1,26 @@
+DLLDEFS   = @DLLDEFS@
+DLLFLAGS  = @DLLFLAGS@
+DEFS      = -D__WINESRC__ $(DLLDEFS)
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = libwinecrt0.a
+
+C_SRCS = \
+	dll_main.c \
+	exe_main.c \
+	exe_wmain.c
+
+all: $(MODULE)
+
+@MAKE_RULES@
+
+$(MODULE): $(OBJS) Makefile.in
+	$(RM) $@
+	$(AR) $@ $(OBJS)
+	$(RANLIB) $@
+
+man doc-html doc-sgml:
+
+### Dependencies:

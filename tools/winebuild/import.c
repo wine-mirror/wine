@@ -585,7 +585,7 @@ static const char *ldcombine_files( char **argv )
 }
 
 /* read in the list of undefined symbols */
-void read_undef_symbols( char **argv )
+void read_undef_symbols( DLLSPEC *spec, char **argv )
 {
     size_t prefix_len;
     FILE *f;
@@ -595,12 +595,15 @@ void read_undef_symbols( char **argv )
 
     if (!argv[0]) return;
 
+    if (spec->init_func) add_extra_ld_symbol( spec->init_func );
+    else if (spec->characteristics & IMAGE_FILE_DLL) add_extra_ld_symbol( "DllMain" );
+    else if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) add_extra_ld_symbol( "DriverEntry ");
+    else add_extra_ld_symbol( "main" );
+
     strcpy( name_prefix, asm_name("") );
     prefix_len = strlen( name_prefix );
 
-    /* if we have multiple object files, link them together */
-    if (argv[1]) name = ldcombine_files( argv );
-    else name = argv[0];
+    name = ldcombine_files( argv );
 
     if (!nm_command) nm_command = xstrdup("nm");
     cmd = xmalloc( strlen(nm_command) + strlen(name) + 5 );
