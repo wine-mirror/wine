@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH	  = @srcdir@
 MODULE	  = none
 
-IDL_SRCS = \
+WINDOWS_IDL_SRCS = \
 	activscp.idl \
 	amstream.idl \
 	amvideo.idl \
@@ -42,18 +42,17 @@ IDL_SRCS = \
 	urlmon.idl \
 	wtypes.idl \
 	xmldom.idl \
-	xmldso.idl \
-	wine/itss.idl
+	xmldso.idl
 
-IDL_INCLUDES = \
-	$(IDL_SRCS) \
+WINDOWS_IDL_INCLUDES = \
+	$(WINDOWS_IDL_SRCS) \
 	axcore.idl \
 	axextend.idl \
 	devenum.idl \
 	dyngraph.idl
 
 WINDOWS_INCLUDES = \
-	$(IDL_INCLUDES) \
+	$(WINDOWS_IDL_INCLUDES) \
 	accctrl.h \
 	aclapi.h \
 	advpub.h \
@@ -326,16 +325,24 @@ MSVCRT_INCLUDES = \
 	msvcrt/wchar.h \
 	msvcrt/wctype.h
 
+WINE_IDL_SRCS = \
+	itss.idl
+
 WINE_INCLUDES = \
+	$(WINE_IDL_SRCS) \
 	debug.h \
 	exception.h \
 	library.h \
 	unicode.h
 
+IDL_SRCS = $(WINDOWS_IDL_SRCS) $(WINE_IDL_SRCS:%=wine/%)
+
 EXTRASUBDIRS = msvcrt msvcrt/sys wine
 
 @MAKE_RULES@
 
+WINDOWS_IDL_HEADERS = $(WINDOWS_IDL_SRCS:.idl=.h)
+WINE_IDL_HEADERS = $(WINE_IDL_SRCS:.idl=.h)
 IDL_HEADERS = $(IDL_SRCS:.idl=.h)
 
 all: $(IDL_HEADERS)
@@ -343,15 +350,16 @@ all: $(IDL_HEADERS)
 install:: $(IDL_HEADERS)
 	$(MKINSTALLDIRS) $(includedir) $(includedir)/windows $(includedir)/msvcrt $(includedir)/msvcrt/sys
 	for f in $(WINDOWS_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/windows/$$f; done
-	for f in $(IDL_HEADERS); do $(INSTALL_DATA) $$f $(includedir)/windows/$$f; done
+	for f in $(WINDOWS_IDL_HEADERS); do $(INSTALL_DATA) $$f $(includedir)/windows/$$f; done
 	for f in $(MSVCRT_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/$$f; done
 	for f in $(WINE_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/wine/$$f $(includedir)/$$f; done
+	for f in $(WINE_IDL_HEADERS); do $(INSTALL_DATA) wine/$$f $(includedir)/$$f; done
 
 # Don't just do a rm -rf on $(includedir) -- don't want to wipe out
 # anything extra the user may have put there.
 uninstall::
-	[ -d $(includedir)/windows ] && cd $(includedir)/windows && $(RM) $(WINDOWS_INCLUDES) $(IDL_HEADERS) || true
-	[ -d $(includedir) ] && cd $(includedir) && $(RM) $(MSVCRT_INCLUDES) $(WINE_INCLUDES) || true
+	[ -d $(includedir)/windows ] && cd $(includedir)/windows && $(RM) $(WINDOWS_INCLUDES) $(WINDOWS_IDL_HEADERS) || true
+	[ -d $(includedir) ] && cd $(includedir) && $(RM) $(MSVCRT_INCLUDES) $(WINE_INCLUDES) $(WINE_IDL_HEADERS) || true
 	-rmdir $(includedir)/msvcrt/sys $(includedir)/msvcrt $(includedir)/windows $(includedir)
 
 ### Dependencies:
