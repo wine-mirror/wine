@@ -24,8 +24,14 @@ interface IRunningObjectTable;
 interface IMoniker;
 interface IAdviseSink;
 interface IAsyncManager;
+interface ISynchronize;
 
-/* FIXME: COSERVERINFO should be moved here from wtypes.idl */
+typedef struct _COSERVERINFO {
+  DWORD dwReserved1;
+  LPWSTR pwszName;
+  COAUTHINFO *pAuthInfo;
+  DWORD dwReserved2;
+} COSERVERINFO;
 
 /******************** Fundamentals ********************/
 
@@ -72,6 +78,16 @@ interface IMarshal : IUnknown
 
   HRESULT DisconnectObject(
     [in] DWORD dwReserved);
+}
+
+[
+    local,
+    object,
+    uuid(000001cf-0000-0000-C000-000000000046)
+]
+interface IMarshal2 : IMarshal
+{
+    typedef [unique] IMarshal2 *LPMARSHAL2;
 }
 
 [
@@ -1177,6 +1193,56 @@ interface ILayoutStorage : IUnknown
     [in] ILockBytes *pILockBytes);
 }
 
+[
+    object,
+    uuid(30f3d47a-6447-11d1-8e3c-00c04fb9386d)
+]
+interface IBlockingLock : IUnknown
+{
+    HRESULT Lock(
+        [in] DWORD dwTimeout);
+
+    HRESULT Unlock();
+}
+
+
+[
+    object,
+    uuid(bc0bf6ae-8878-11d1-83e9-00c04fc2c6d4)
+]
+interface ITimeAndNoticeControl : IUnknown
+{
+    HRESULT SuppressChanges(
+        [in] DWORD res1,
+        [in] DWORD res2);
+
+}
+
+
+
+[
+    object,
+    uuid(8d19c834-8879-11d1-83e9-00c04fc2c6d4)
+]
+interface IOplockStorage: IUnknown
+{
+    HRESULT CreateStorageEx(
+        [in] LPCWSTR pwcsName,
+        [in] DWORD grfMode,
+        [in] DWORD stgfmt,
+        [in] DWORD grfAttrs,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppstgOpen);
+
+    HRESULT OpenStorageEx(
+        [in] LPCWSTR pwcsName,
+        [in] DWORD grfMode,
+        [in] DWORD stgfmt,
+        [in] DWORD grfAttrs,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppstgOpen);
+}
+
 /******************** Data Object ********************/
 
 [
@@ -1699,6 +1765,40 @@ interface IRpcChannelBuffer3 : IRpcChannelBuffer2
 }
 
 [
+    local,
+    object,
+    uuid(a5029fb6-3c34-11d1-9c99-00c04fb998aa),
+    pointer_default(unique)
+]
+interface IAsyncRpcChannelBuffer : IRpcChannelBuffer2
+{
+    HRESULT Send(
+        [in, out] RPCOLEMESSAGE *pMsg,
+        [in] ISynchronize *pSync,
+        [out] ULONG *pulStatus);
+
+    HRESULT Receive(
+        [in, out] RPCOLEMESSAGE *pMsg,
+        [out] ULONG *pulStatus);
+
+    HRESULT GetDestCtxEx(
+        [in] RPCOLEMESSAGE *pMsg,
+        [out] DWORD *pdwDestContext,
+        [out] void **ppvDestContext);
+};
+
+[
+    local,
+    object,
+    uuid(58a08519-24c8-4935-b482-3fd823333a4f)
+]
+interface IRpcSyntaxNegotiate : IUnknown
+{
+    HRESULT NegotiateSyntax(
+        [in, out] RPCOLEMESSAGE *pMsg);
+}
+
+[
   local,
   object,
   uuid(D5F56A34-593B-101A-B569-08002B2DBF7A)
@@ -1921,6 +2021,103 @@ interface IAsyncSetup : IUnknown
 }
 
 [
+    object,
+    uuid(0e6d4d92-6738-11cf-9608-00aa00680db4)
+]
+interface IDirectWriterLock : IUnknown
+{
+    HRESULT WaitForWriteAccess(
+        [in] DWORD dwTimeout);
+
+    HRESULT ReleaseWriteAccess();
+
+    HRESULT HaveWriteAccess();
+}
+
+[
+    object,
+    uuid(00000030-0000-0000-C000-000000000046)
+]
+
+interface ISynchronize : IUnknown
+{
+    HRESULT Wait(
+        [in] DWORD dwFlags,
+        [in] DWORD dwMilliseconds);
+
+    HRESULT Signal();
+
+    HRESULT Reset();
+}
+
+
+[
+    local,
+    object,
+    uuid(00000031-0000-0000-C000-000000000046)
+]
+interface ISynchronizeHandle : IUnknown
+{
+    HRESULT GetHandle(
+        [out] HANDLE *ph);
+}
+
+
+[
+    local,
+    object,
+    uuid(00000032-0000-0000-C000-000000000046)
+]
+interface ISynchronizeEvent : ISynchronizeHandle
+{
+    HRESULT SetEventHandle(
+        [in] HANDLE *ph);
+}
+
+
+[
+    local,
+    object,
+    uuid(00000033-0000-0000-C000-000000000046)
+]
+interface ISynchronizeContainer : IUnknown
+{
+    HRESULT AddSynchronize(
+        [in] ISynchronize *pSync);
+
+    HRESULT WaitMultiple(
+        [in] DWORD dwFlags,
+        [in] DWORD dwTimeOut,
+        [out] ISynchronize **ppSync);
+}
+
+[
+    local,
+    object,
+    uuid(00000025-0000-0000-C000-000000000046)
+]
+interface ISynchronizeMutex : ISynchronize
+{
+    HRESULT ReleaseMutex();
+}
+
+[
+    local,
+    object,
+    uuid(00000029-0000-0000-C000-000000000046)
+]
+
+interface ICancelMethodCalls : IUnknown
+{
+    typedef [unique] ICancelMethodCalls *LPCANCELMETHODCALLS;
+
+    HRESULT Cancel(
+        [in] ULONG ulSeconds);
+
+    HRESULT TestCancel();
+}
+
+[
   local,
   object,
   uuid(0000002A-0000-0000-C000-000000000046)
@@ -1935,9 +2132,246 @@ interface IAsyncManager : IUnknown
 
   HRESULT CompleteCall(
     [in] HRESULT Result);
+
   HRESULT GetCallContext(
     [in] REFIID riid,
     [out] void **pInterface);
+
   HRESULT GetState(
     [out] ULONG *pulStateFlags);
+}
+
+[
+    local,
+    object,
+    uuid(1c733a30-2a1c-11ce-ade5-00aa0044773d),
+    pointer_default(unique)
+]
+interface ICallFactory : IUnknown
+{
+    HRESULT CreateCall(
+        [in] REFIID riid,
+        [in] IUnknown *pCtrlUnk,
+        [in] REFIID riid2,
+        [out, iid_is(riid2)] IUnknown **ppv);
+}
+
+[
+    local,
+    object,
+    uuid(00000144-0000-0000-C000-000000000046)
+]
+interface IRpcOptions : IUnknown
+{
+    HRESULT Set(
+        [in] IUnknown *pPrx,
+        [in] DWORD dwProperty,
+        [in] ULONG_PTR dwValue);
+
+    HRESULT Query(
+        [in] IUnknown *pPrx,
+        [in] DWORD dwProperty,
+        [out] ULONG_PTR *pdwValue);
+}
+
+enum {
+   COMBND_RPCTIMEOUT = 1,
+   COMBND_SERVER_LOCALITY = 2
+};  
+
+enum {
+   SERVER_LOCALITY_PROCESS_LOCAL = 0,
+   SERVER_LOCALITY_MACHINE_LOCAL = 1,
+   SERVER_LOCALITY_REMOTE = 2
+};
+
+[
+    local,
+    object,
+    uuid(00000149-0000-0000-C000-000000000046),
+    pointer_default(unique)
+]
+interface IRpcHelper : IUnknown
+{
+    HRESULT GetDCOMProtocolVersion(
+        [out] DWORD *pComVersion);
+
+    HRESULT GetIIDFromOBJREF(
+        [in] void *pObjRef,
+        [out] IID **piid);
+}
+
+[
+    local,
+    object,
+    uuid(eb0cb9e8-7996-11d2-872e-0000f8080859)
+]
+interface IReleaseMarshalBuffers : IUnknown
+{
+    HRESULT ReleaseMarshalBuffer(
+        [in] RPCOLEMESSAGE *pMsg,
+        [in] DWORD dwFlags,
+        [in, unique] IUnknown *pChnl);
+}
+
+[
+    local,
+    object,
+    uuid(0000002B-0000-0000-C000-000000000046)
+]
+interface IWaitMultiple : IUnknown
+{
+    HRESULT WaitMultiple(
+        [in] DWORD timeout,
+        [out] ISynchronize **pSync);
+    HRESULT AddSynchronize(
+        [in] ISynchronize *pSync);
+}
+
+
+[
+    object,
+    uuid(00000026-0000-0000-C000-000000000046)
+]
+interface IUrlMon : IUnknown
+{
+    HRESULT AsyncGetClassBits(
+        [in] REFCLSID rclsid,
+        [in, unique] LPCWSTR pszTYPE,
+        [in, unique] LPCWSTR pszExt,
+        [in] DWORD dwFileVersionMS,
+        [in] DWORD dwFileVersionLS,
+        [in, unique] LPCWSTR pszCodeBase,
+        [in] IBindCtx *pbc,
+        [in] DWORD dwClassContext,
+        [in] REFIID riid,
+        [in] DWORD flags);
+}
+
+[
+    local,
+    object,
+    uuid(00000145-0000-0000-C000-000000000046)
+]
+interface IForegroundTransfer : IUnknown
+{
+    HRESULT AllowForegroundTransfer(
+        [in] void *lpvReserved);
+}
+
+[
+    local,
+    object,
+    uuid(00000147-0000-0000-C000-000000000046)
+]
+interface IAddrTrackingControl : IUnknown
+{
+    typedef [unique] IAddrTrackingControl *LPADDRTRACKINGCONTROL;
+
+    HRESULT EnableCOMDynamicAddrTracking();
+    HRESULT DisableCOMDynamicAddrTracking();
+};
+
+[
+    local,
+    object,
+    uuid(00000148-0000-0000-C000-000000000046)
+]
+interface IAddrExclusionControl : IUnknown
+{
+    typedef [unique] IAddrExclusionControl *LPADDREXCLUSIONCONTROL;
+
+    HRESULT GetCurrentAddrExclusionList(
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppEnumerator);
+    HRESULT UpdateAddrExclusionList(
+        [in] IUnknown *pEnumerator);
+};
+
+typedef enum _APTTYPE {
+    APTTYPE_CURRENT = -1,
+    APTTYPE_STA     = 0,
+    APTTYPE_MTA     = 1,
+    APTTYPE_NA      = 2,
+    APTTYPE_MAINSTA = 3
+} APTTYPE;
+
+typedef enum _THDTYPE {
+    THDTYPE_BLOCKMESSAGES   = 0,
+    THDTYPE_PROCESSMESSAGES = 1
+} THDTYPE;
+
+[
+    local,
+    object,
+    uuid(000001ce-0000-0000-C000-000000000046),
+    pointer_default(unique)
+]
+interface IComThreadingInfo : IUnknown
+{
+    HRESULT GetCurrentApartmentType(
+        [out] APTTYPE *pAptType);
+    HRESULT GetCurrentThreadType(
+        [out] THDTYPE *pThreadType);
+    HRESULT GetCurrentLogicalThreadId(
+        [out] GUID *pguidLogicalThreadId);
+    HRESULT SetCurrentLogicalThreadId(
+        [in] REFGUID rguid);
+};
+
+
+[
+    object,
+    pointer_default(unique),
+    uuid(72380d55-8d2b-43a3-8513-2b6ef31434e9)
+]
+interface IProcessInitControl : IUnknown
+{
+    HRESULT ResetInitializerTimeout(
+        [in] DWORD dwSecondsRemaining);
+};
+
+[
+    local,
+    object,
+    uuid(00000034-0000-0000-C000-000000000046),
+    pointer_default(unique)
+]
+interface IInitializeSpy : IUnknown
+{
+    typedef [unique] IInitializeSpy *LPINITIALIZESPY;
+
+    HRESULT PreInitialize(
+        [in] DWORD dwCoInit,
+        [in] DWORD dwCurThreadAptRefs);
+
+    HRESULT PostInitialize(
+        [in] HRESULT hrCoInit,
+        [in] DWORD dwCoInit,
+        [in] DWORD dwNewThreadAptRefs);
+
+    HRESULT PreUninitialize(
+        [in] DWORD dwCurThreadAptRefs);
+
+    HRESULT PostUninitialize(
+        [in] DWORD dwNewThreadAptRefs);
+};
+
+[
+    object,
+    uuid(969dc708-5c76-11d1-8d86-0000f804b057)
+]
+interface IThumbnailExtractor : IUnknown
+{
+    HRESULT ExtractThumbnail(
+        [in] IStorage *pStg,
+        [in] ULONG ulLength,
+        [in] ULONG ulHeight,
+        [out] ULONG *pulOutputLength,
+        [out] ULONG *pulOutputHeight,
+        [out] HBITMAP *phOutputBitmap);
+
+
+    HRESULT OnFileUpdated(
+        [in] IStorage *pStg);
 }

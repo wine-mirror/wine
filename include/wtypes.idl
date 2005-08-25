@@ -302,14 +302,6 @@ typedef struct _COAUTHINFO {
   DWORD dwCapabilities;
 } COAUTHINFO;
 
-/* FIXME: COSERVERINFO was in Wine's pre-WIDL wtypes.h, but should be in objidl.idl */
-typedef struct _COSERVERINFO {
-  DWORD dwReserved1;
-  LPWSTR pwszName;
-  COAUTHINFO *pAuthInfo;
-  DWORD dwReserved2;
-} COSERVERINFO;
-
 typedef enum tagMEMCTX {
   MEMCTX_TASK      = 1,
   MEMCTX_SHARED    = 2,
