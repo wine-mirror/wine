@@ -173,7 +173,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
-    IDS_TAB_GENERAL         "Общие"
     IDS_TAB_DLLS            "Библиотеки"
     IDS_TAB_DRIVES          "Диски"
     IDS_CHOOSE_PATH         "Выберите unix каталог для диска."

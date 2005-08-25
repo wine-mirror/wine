@@ -172,7 +172,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
-    IDS_TAB_GENERAL         "全般"
     IDS_TAB_DLLS            "ライブラリ"
     IDS_TAB_DRIVES          "ドライブ"
     IDS_CHOOSE_PATH         "マッピングするUnixディレクトリーを選んでください"

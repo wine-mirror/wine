@@ -169,7 +169,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
-    IDS_TAB_GENERAL         "Algemeen"
     IDS_TAB_DLLS            "Bibliotheken"
     IDS_TAB_DRIVES          "Stations"
     IDS_CHOOSE_PATH         "Selecteer een unix folder voor dit station."

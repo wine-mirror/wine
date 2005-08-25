@@ -170,7 +170,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
-    IDS_TAB_GENERAL         "Général"
     IDS_TAB_DLLS            "Bibliothèques"
     IDS_TAB_DRIVES          "Lecteurs"
     IDS_CHOOSE_PATH         "Veuillez sélectionner le répertoire unix à assigner."

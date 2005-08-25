@@ -86,26 +86,41 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
+static WCHAR* load_string (UINT id)
+{
+    WCHAR buf[100];
+    int len;
+    WCHAR* newStr;
+
+    LoadStringW (GetModuleHandle (NULL), id, buf, sizeof(buf)/sizeof(buf[0]));
+
+    len = lstrlenW (buf);
+    newStr = HeapAlloc (GetProcessHeap(), 0, (len + 1) * sizeof (WCHAR));
+    memcpy (newStr, buf, len * sizeof (WCHAR));
+    newStr[len] = 0;
+    return newStr;
+}
+
 #define NUM_PROPERTY_PAGES 7
 
 static INT_PTR
 doPropertySheet (HINSTANCE hInstance, HWND hOwner)
 {
-    PROPSHEETPAGE psp[NUM_PROPERTY_PAGES];
-    PROPSHEETHEADER psh;
+    PROPSHEETPAGEW psp[NUM_PROPERTY_PAGES];
+    PROPSHEETHEADERW psh;
     int pg = 0; /* start with page 0 */
 
     /*
      * Fill out the (Applications) PROPSHEETPAGE data structure 
      * for the property sheet
      */
-    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_APPCFG);
+    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_APPCFG);
     psp[pg].u2.pszIcon = NULL;
     psp[pg].pfnDlgProc = AppDlgProc;
-    psp[pg].pszTitle = "Applications";
+    psp[pg].pszTitle = load_string (IDS_TAB_APPLICATIONS);
     psp[pg].lParam = 0;
     pg++;
 
@@ -113,13 +128,13 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
      * Fill out the (Libraries) PROPSHEETPAGE data structure 
      * for the property sheet
      */
-    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_DLLCFG);
+    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_DLLCFG);
     psp[pg].u2.pszIcon = NULL;
     psp[pg].pfnDlgProc = LibrariesDlgProc;
-    psp[pg].pszTitle = "Libraries";
+    psp[pg].pszTitle = load_string (IDS_TAB_DLLS);
     psp[pg].lParam = 0;
     pg++;
     
@@ -127,43 +142,43 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
      * Fill out the (X11Drv) PROPSHEETPAGE data structure 
      * for the property sheet
      */
-    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_GRAPHCFG);
+    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_GRAPHCFG);
     psp[pg].u2.pszIcon = NULL;
     psp[pg].pfnDlgProc = GraphDlgProc;
-    psp[pg].pszTitle = "Graphics";
+    psp[pg].pszTitle =  load_string (IDS_TAB_GRAPHICS);
     psp[pg].lParam = 0;
     pg++;
 
-    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_APPEARANCE);
+    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_APPEARANCE);
     psp[pg].u2.pszIcon = NULL;
     psp[pg].pfnDlgProc = ThemeDlgProc;
-    psp[pg].pszTitle = "Appearance";
+    psp[pg].pszTitle =  load_string (IDS_TAB_APPEARANCE);
     psp[pg].lParam = 0;
     pg++;
 
-    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_DRIVECFG);
+    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_DRIVECFG);
     psp[pg].u2.pszIcon = NULL;
     psp[pg].pfnDlgProc = DriveDlgProc;
-    psp[pg].pszTitle = "Drives";
+    psp[pg].pszTitle =  load_string (IDS_TAB_DRIVES);
     psp[pg].lParam = 0;
     pg++;
 
-    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_AUDIOCFG);
+    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_AUDIOCFG);
     psp[pg].u2.pszIcon = NULL;
     psp[pg].pfnDlgProc = AudioDlgProc;
-    psp[pg].pszTitle = "Audio";
+    psp[pg].pszTitle =  load_string (IDS_TAB_AUDIO);
     psp[pg].lParam = 0;
     pg++;
 
@@ -171,34 +186,34 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
      * Fill out the (General) PROPSHEETPAGE data structure 
      * for the property sheet
      */
-    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_ABOUTCFG);
+    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_ABOUTCFG);
     psp[pg].u2.pszIcon = NULL;
     psp[pg].pfnDlgProc = AboutDlgProc;
-    psp[pg].pszTitle = "About";
+    psp[pg].pszTitle =  load_string (IDS_TAB_ABOUT);
     psp[pg].lParam = 0;
     pg++;
 
     /*
      * Fill out the PROPSHEETHEADER
      */
-    psh.dwSize = sizeof (PROPSHEETHEADER);
+    psh.dwSize = sizeof (PROPSHEETHEADERW);
     psh.dwFlags = PSH_PROPSHEETPAGE | PSH_USEICONID | PSH_USECALLBACK;
     psh.hwndParent = hOwner;
     psh.hInstance = hInstance;
     psh.u.pszIcon = NULL;
-    psh.pszCaption = "Wine Configuration";
+    psh.pszCaption =  load_string (IDS_WINECFG_TITLE);
     psh.nPages = NUM_PROPERTY_PAGES;
-    psh.u3.ppsp = (LPCPROPSHEETPAGE) & psp;
+    psh.u3.ppsp = (LPCPROPSHEETPAGEW) & psp;
     psh.pfnCallback = (PFNPROPSHEETCALLBACK) PropSheetCallback;
     psh.u2.nStartPage = 0;
 
     /*
      * Display the modal property sheet
      */
-    return PropertySheet (&psh);
+    return PropertySheetW (&psh);
 }
 
 /******************************************************************************

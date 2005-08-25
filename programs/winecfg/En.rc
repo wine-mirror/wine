@@ -185,13 +185,18 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
-    IDS_TAB_GENERAL         "General"
+    IDS_TAB_APPLICATIONS    "Applications"
     IDS_TAB_DLLS            "Libraries"
     IDS_TAB_DRIVES          "Drives"
     IDS_CHOOSE_PATH         "Select the unix directory to be mapped, please."
     IDS_HIDE_ADVANCED       "Hide Advanced"
     IDS_SHOW_ADVANCED       "Show Advanced"
-    IDS_NOTHEME		    "(No Theme)"
+    IDS_NOTHEME             "(No Theme)"
+    IDS_TAB_GRAPHICS        "Graphics"
+    IDS_TAB_APPEARANCE      "Appearance"
+    IDS_TAB_AUDIO           "Audio"
+    IDS_TAB_ABOUT           "About"
+    IDS_WINECFG_TITLE       "Wine configuration"
 END
 
 

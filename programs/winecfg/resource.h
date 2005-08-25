@@ -25,13 +25,18 @@
 
 #define IDC_STATIC                     -1
 #define IDS_WINE_VERSION                1
-#define IDS_TAB_GENERAL                 2
+#define IDS_TAB_APPLICATIONS            2
 #define IDS_TAB_DLLS                    3
 #define IDS_TAB_DRIVES                  4
 #define IDS_CHOOSE_PATH                 5
 #define IDS_SHOW_ADVANCED               6
 #define IDS_HIDE_ADVANCED               7
 #define IDS_NOTHEME                     8
+#define IDS_TAB_GRAPHICS                9
+#define IDS_TAB_APPEARANCE              10
+#define IDS_TAB_AUDIO                   11
+#define IDS_TAB_ABOUT                   12
+#define IDS_WINECFG_TITLE               13
 #define IDD_MAINDLG                     101
 #define IDB_WINE                        104
 #define IDD_ABOUTCFG                    107
