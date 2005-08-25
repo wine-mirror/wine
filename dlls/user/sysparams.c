@@ -2405,10 +2405,16 @@ INT WINAPI GetSystemMetrics( INT index )
 
 /***********************************************************************
  *		SwapMouseButton (USER32.@)
+ *  Reverse or restore the meaning of the left and right mouse buttons
+ *  fSwap  [I ] TRUE - reverse, FALSE - original
+ * RETURN
+ *   previous state 
  */
 BOOL WINAPI SwapMouseButton( BOOL fSwap )
 {
-    return SystemParametersInfoW(SPI_SETMOUSEBUTTONSWAP, fSwap, 0, 0);
+    BOOL prev = GetSystemMetrics(SM_SWAPBUTTON);
+    SystemParametersInfoW(SPI_SETMOUSEBUTTONSWAP, fSwap, 0, 0);
+    return prev;
 }
 
 

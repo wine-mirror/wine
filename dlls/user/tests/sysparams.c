@@ -1011,7 +1011,7 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
         rc=SystemParametersInfoA( SPI_SETMOUSEBUTTONSWAP, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEBUTTONSWAP"))
-            return;
+            break;
             
         test_change_message( SPI_SETMOUSEBUTTONSWAP, 0 );
         test_reg_key( SPI_SETMOUSEBUTTONSWAP_REGKEY,
@@ -1019,6 +1019,10 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
                       vals[i] ? "1" : "0" );
         eq( GetSystemMetrics( SM_SWAPBUTTON ), (int)vals[i],
             "SM_SWAPBUTTON", "%d" );
+        rc=SwapMouseButton((BOOL)vals[i^1]);
+        eq( GetSystemMetrics( SM_SWAPBUTTON ), (int)vals[i^1],
+            "SwapMouseButton", "%d" );
+        ok( rc==vals[i], "SwapMouseButton does not return previous state (really %d)\n", rc );
     }
 
     rc=SystemParametersInfoA( SPI_SETMOUSEBUTTONSWAP, old_b, 0,
