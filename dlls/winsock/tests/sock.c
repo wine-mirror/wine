@@ -830,7 +830,8 @@ static void test_so_reuseaddr(void)
 {
     struct sockaddr_in saddr;
     SOCKET s1,s2;
-    unsigned int rc,reuse,size;
+    unsigned int rc,reuse;
+    int size;
 
     saddr.sin_family      = AF_INET;
     saddr.sin_port        = htons(9375);

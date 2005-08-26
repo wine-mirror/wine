@@ -205,7 +205,8 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk, W
 {
   IMAGE_DOS_HEADER mz_header;
   DWORD image_start,image_size,min_size,max_size,avail;
-  BYTE*psp_start,*load_start,*oldenv = 0;
+  BYTE*psp_start,*load_start;
+  LPSTR oldenv = 0;
   int x, old_com=0, alloc;
   SEGPTR reloc;
   WORD env_seg, load_seg, rel_seg, oldpsp_seg;
@@ -218,7 +219,7 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk, W
     oldpsp_seg = DOSVM_psp;
     if( !par_env_seg) {  
         par_psp = (PDB16*)((DWORD)DOSVM_psp << 4);
-        oldenv = (LPBYTE)((DWORD)par_psp->environment << 4);
+        oldenv = (LPSTR)((DWORD)par_psp->environment << 4);
     }
   } else {
     /* allocate new DOS process, inheriting from Wine environment */
@@ -454,7 +455,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
   {
     if(func == 0) /* load and execute */
     {
-      LPBYTE fullCmdLine;
+      LPSTR fullCmdLine;
       WORD fullCmdLength;
       LPBYTE psp_start = (LPBYTE)((DWORD)DOSVM_psp << 4);
       PDB16 *psp = (PDB16 *)psp_start;
@@ -532,7 +533,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
       LPBYTE cmdline = PTR_REAL_TO_LIN(SELECTOROF(blk->cmdline),OFFSETOF(blk->cmdline));
 
       /* First character contains the length of the command line. */
-      MZ_FillPSP(psp_start, cmdline + 1, cmdline[0]);
+      MZ_FillPSP(psp_start, (LPSTR)cmdline + 1, cmdline[0]);
 
       /* the lame MS-DOS engineers decided that the return address should be in int22 */
       DOSVM_SetRMHandler(0x22, (FARPROC16)MAKESEGPTR(context->SegCs, LOWORD(context->Eip)));

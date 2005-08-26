@@ -1004,7 +1004,7 @@ static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, PVTabl
         /* The new key container has to be inserted into the CSP immediately 
          * after creation to be available for CPGetProvParam's PP_ENUMCONTAINERS. */
         if (!(dwFlags & CRYPT_VERIFYCONTEXT)) {
-            BYTE szRSABase[MAX_PATH];
+            CHAR szRSABase[MAX_PATH];
             HKEY hRootKey, hKey;
 
             sprintf(szRSABase, RSAENH_REGKEY, pKeyContainer->szName);
@@ -1589,11 +1589,19 @@ BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, 
     init_data_blob(&pCryptHash->tpPRFParams.blobSeed);
 
     if (Algid == CALG_SCHANNEL_MASTER_HASH) {
-        CRYPT_DATA_BLOB blobRandom, blobKeyExpansion = { 13, "key expansion" };
+        static const char keyex[] = "key expansion";
+        BYTE key_expansion[sizeof keyex];
+        CRYPT_DATA_BLOB blobRandom, blobKeyExpansion = { 13, key_expansion };
+
+        memcpy( key_expansion, keyex, sizeof keyex );
         
         if (pCryptKey->dwState != RSAENH_KEYSTATE_MASTERKEY) {
-            CRYPT_DATA_BLOB blobLabel = { 13, "master secret" };
+            static const char msec[] = "master secret";
+            BYTE master_secret[sizeof msec];
+            CRYPT_DATA_BLOB blobLabel = { 13, master_secret };
             BYTE abKeyValue[48];
+
+            memcpy( master_secret, msec, sizeof msec );
     
             /* See RFC 2246, chapter 8.1 */
             if (!concat_data_blobs(&blobRandom, 
@@ -2781,7 +2789,7 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
     KEYCONTAINER *pKeyContainer;
     PROV_ENUMALGS provEnumalgs;
     DWORD dwTemp;
-    BYTE szRSABase[MAX_PATH];
+    CHAR szRSABase[MAX_PATH];
     HKEY hKey, hRootKey;
    
     /* This is for dwParam 41, which does not seem to be documented
@@ -2866,7 +2874,7 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
             }
 
             dwTemp = *pdwDataLen;
-            switch (RegEnumKeyExA(hKey, pKeyContainer->dwEnumContainersCtr, pbData, &dwTemp,
+            switch (RegEnumKeyExA(hKey, pKeyContainer->dwEnumContainersCtr, (LPSTR)pbData, &dwTemp,
                     NULL, NULL, NULL, NULL))
             {
                 case ERROR_MORE_DATA:

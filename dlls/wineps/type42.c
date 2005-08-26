@@ -324,7 +324,7 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 
     if(GET_BE_WORD(t42->tables[t42->glyf_tab].data + start) == 0xffff) {
       /* Composite glyph */
-        char *sg_start = t42->tables[t42->glyf_tab].data + start + 10;
+        BYTE *sg_start = t42->tables[t42->glyf_tab].data + start + 10;
 	DWORD sg_flags, sg_index;
 	char sg_name[MAX_G_NAME + 1];
 

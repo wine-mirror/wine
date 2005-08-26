@@ -272,7 +272,7 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
     Formname = (dmW->dmSize > off_formname);
     size = dmW->dmSize - CCHDEVICENAME - (Formname ? CCHFORMNAME : 0);
     dmA = HeapAlloc(heap, HEAP_ZERO_MEMORY, size + dmW->dmDriverExtra);
-    WideCharToMultiByte(CP_ACP, 0, dmW->dmDeviceName, -1, dmA->dmDeviceName,
+    WideCharToMultiByte(CP_ACP, 0, dmW->dmDeviceName, -1, (LPSTR)dmA->dmDeviceName,
 			CCHDEVICENAME, NULL, NULL);
     if(!Formname) {
       memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
@@ -280,7 +280,7 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
     } else {
       memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
 	     off_formname - CCHDEVICENAME * sizeof(WCHAR));
-      WideCharToMultiByte(CP_ACP, 0, dmW->dmFormName, -1, dmA->dmFormName,
+      WideCharToMultiByte(CP_ACP, 0, dmW->dmFormName, -1, (LPSTR)dmA->dmFormName,
 			  CCHFORMNAME, NULL, NULL);
       memcpy(&dmA->dmLogPixels, &dmW->dmLogPixels, dmW->dmSize -
 	     (off_formname + CCHFORMNAME * sizeof(WCHAR)));
@@ -308,7 +308,7 @@ BOOL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR devi
     if ( !device && *pdev )
     {
         physDev = *pdev;
-        strcpy(deviceA, physDev->Devmode->dmPublic.dmDeviceName);
+        lstrcpynA(deviceA, (LPCSTR)physDev->Devmode->dmPublic.dmDeviceName, CCHDEVICENAME);
     }
     else
         WideCharToMultiByte(CP_ACP, 0, device, -1, deviceA, sizeof(deviceA), NULL, NULL);
@@ -549,7 +549,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	if (pi->Devmode == NULL)
 	    goto cleanup;
 	memcpy(pi->Devmode, &DefaultDevmode, sizeof(DefaultDevmode) );
-	strcpy(pi->Devmode->dmPublic.dmDeviceName,name);
+	lstrcpynA((LPSTR)pi->Devmode->dmPublic.dmDeviceName,name,CCHDEVICENAME);
 	using_default_devmode = TRUE;
 
 	/* need to do something here AddPrinter?? */
@@ -591,7 +591,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
         res = GetPrinterDataA(hPrinter, "PPD File", NULL, NULL, 0, &needed);
         if ((res==ERROR_SUCCESS) || (res==ERROR_MORE_DATA)) {
             ppdFileName=HeapAlloc(PSDRV_Heap, 0, needed);
-            res = GetPrinterDataA(hPrinter, "PPD File", &ppdType, ppdFileName, needed, &needed);
+            res = GetPrinterDataA(hPrinter, "PPD File", &ppdType, (LPBYTE)ppdFileName, needed, &needed);
         }
     }
     /* Look for a ppd file for this printer in the config file.

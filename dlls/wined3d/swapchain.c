@@ -325,8 +325,8 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
 HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface, IWineD3DSurface *pDestSurface) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     WINED3DFORMAT d3dformat;
-    int width;
-    int height;
+    UINT width;
+    UINT height;
     WINED3DSURFACE_DESC desc;
     glDescriptor *glDescription;
 

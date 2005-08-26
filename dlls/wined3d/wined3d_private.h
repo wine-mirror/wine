@@ -892,7 +892,7 @@ struct IWineD3DStateBlockImpl
 
     /* Vertex Shader Constants */
     BOOL                       vertexShaderConstantB[MAX_VSHADER_CONSTANTS];
-    UINT                       vertexShaderConstantI[MAX_VSHADER_CONSTANTS * 4];
+    INT                        vertexShaderConstantI[MAX_VSHADER_CONSTANTS * 4];
     float                      vertexShaderConstantF[MAX_VSHADER_CONSTANTS * 4];
 
     BOOL                      softwareVertexProcessing;
@@ -1133,7 +1133,7 @@ typedef struct IWineD3DVertexShaderImpl {
     /* FIXME: This needs to be populated with some flags of VS_CONSTANT_NOT_USED, VS_CONSTANT_CONSTANT, VS_CONSTANT_INTEGER, VS_CONSTANT_BOOLEAN, VS_CONSTANT_FLOAT, a half byte bitmap will be the best option, but I'll keep it as chards for siplicity */
     /* run time datas...  */
     VSHADERDATA* data;
-    GLint                       prgId;
+    GLuint                      prgId;
 #if 0 /* needs reworking */
     /* run time datas */
     VSHADERINPUTDATA input;

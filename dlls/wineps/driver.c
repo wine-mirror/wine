@@ -145,7 +145,7 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
    if (dm2->dmPublic.dmFields & DM_COLLATE )
        dm1->dmPublic.dmCollate = dm2->dmPublic.dmCollate;
    if (dm2->dmPublic.dmFields & DM_FORMNAME )
-       lstrcpynA(dm1->dmPublic.dmFormName, dm2->dmPublic.dmFormName, CCHFORMNAME);
+       lstrcpynA((LPSTR)dm1->dmPublic.dmFormName, (LPCSTR)dm2->dmPublic.dmFormName, CCHFORMNAME);
    if (dm2->dmPublic.dmFields & DM_BITSPERPEL )
        dm1->dmPublic.dmBitsPerPel = dm2->dmPublic.dmBitsPerPel;
    if (dm2->dmPublic.dmFields & DM_PELSWIDTH )

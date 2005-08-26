@@ -214,7 +214,7 @@ void WINAPI DOSVM_ASPIHandler( CONTEXT86 *context )
 
 		/* Get SendASPI32Command by Ordinal 2 */
 		/* Cast to correct argument/return types */
-		pSendASPI32Command = (DWORD (*)(LPSRB))GetProcAddress(hWNASPI32, (LPBYTE)2);
+		pSendASPI32Command = (DWORD (*)(LPSRB))GetProcAddress(hWNASPI32, (LPCSTR)2);
 		if( !pSendASPI32Command )
 		{
 			ERR("Error getting ordinal 2 from WNASPI32\n");

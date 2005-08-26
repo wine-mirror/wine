@@ -107,7 +107,7 @@ send_file (const char *name)
     SOCKET s;
     FILE *f;
 #define BUFLEN 8192
-    unsigned char buffer[BUFLEN+1];
+    char buffer[BUFLEN+1];
     size_t bytes_read, total, filesize;
     char *str;
     int ret;

@@ -745,7 +745,7 @@ BOOL PSDRV_WriteData(PSDRV_PDEVICE *physDev, const BYTE *data, DWORD number)
 
     do {
         num = min(num_left, 60);
-        PSDRV_WriteSpool(physDev, data, num);
+        PSDRV_WriteSpool(physDev, (LPCSTR)data, num);
         PSDRV_WriteSpool(physDev, "\n", 1);
         data += num;
         num_left -= num;
@@ -852,7 +852,7 @@ BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usa
 	return FALSE;
     }
 
-    bits = (char*)bmi + bmi->bmiHeader.biSize;
+    bits = (LPBYTE)bmi + bmi->bmiHeader.biSize;
     colours = bmi->bmiHeader.biClrUsed;
     if (colours > 256) colours = 256;
     if(!colours && bmi->bmiHeader.biBitCount <= 8)
