@@ -860,7 +860,7 @@ cpp_quote("#define MAX_SIZE_SECURITY_ID 512")
     HRESULT QueryCustomPolicy(
         [in] LPCWSTR pwszUrl,
         [in] REFGUID guidKey,
-        [out, size_is(*pcbPolicy)] BYTE **ppPolicy,
+        [out, size_is(,*pcbPolicy)] BYTE **ppPolicy,
         [out] DWORD *pcbPolicy,
         [in] BYTE *pContext,
         [in] DWORD cbContext,
@@ -1120,7 +1120,7 @@ cpp_quote("HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx*,DWORD,IBindStatusCallba
 cpp_quote("HRESULT WINAPI CoInternetCreateSecurityManager(IServiceProvider*,IInternetSecurityManager**,DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetCombineUrl(LPCWSTR,LPCWSTR,DWORD,LPWSTR,DWORD,DWORD*,DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetCompareUrl(LPCWSTR,LPCWSTR,DWORD);")
-cpp_quote("HRESULT WINAPI CoInternetCreateZoneManager(IServiceProvider*, IInternetZoneManager**, DWORD);");
+cpp_quote("HRESULT WINAPI CoInternetCreateZoneManager(IServiceProvider*, IInternetZoneManager**, DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetQueryInfo(LPCWSTR,QUERYOPTION,DWORD,LPVOID,DWORD,DWORD*,DWORD);")
 cpp_quote("HRESULT WINAPI GetSoftwareUpdateInfo( LPCWSTR szDistUnit, LPSOFTDISTINFO psdi);")
 cpp_quote("HRESULT WINAPI FaultInIEFeature(HWND,uCLSSPEC*,QUERYCONTEXT*,DWORD);")
