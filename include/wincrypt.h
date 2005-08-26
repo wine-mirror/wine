@@ -239,7 +239,7 @@ typedef struct _CERT_ALT_NAME_ENTRY {
         LPWSTR           pwszDNSName;
         CERT_NAME_BLOB   DirectoryName;
         LPWSTR           pwszURL;
-        CRYPT_DATA_BLOB  IPaddress;
+        CRYPT_DATA_BLOB  IPAddress;
         LPSTR            pszRegisteredID;
     } DUMMYUNIONNAME;
 } CERT_ALT_NAME_ENTRY, *PCERT_ALT_NAME_ENTRY;
@@ -404,6 +404,87 @@ typedef struct _CRL_INFO {
     DWORD           cExtension;
     PCERT_EXTENSION rgExtension;
 } CRL_INFO, *PCRL_INFO;
+
+typedef struct _CRL_DIST_POINT_NAME {
+    DWORD dwDistPointNameChoice;
+    union {
+        CERT_ALT_NAME_INFO FullName;
+    } DUMMYUNIONNAME;
+} CRL_DIST_POINT_NAME, *PCRL_DIST_POINT_NAME;
+
+#define CRL_DIST_POINT_NO_NAME         0
+#define CRL_DIST_POINT_FULL_NAME       1
+#define CRL_DIST_POINT_ISSUER_RDN_NAME 2
+
+typedef struct _CRL_DIST_POINT {
+    CRL_DIST_POINT_NAME DistPointName;
+    CRYPT_BIT_BLOB      ReasonFlags;
+    CERT_ALT_NAME_INFO  CRLIssuer;
+} CRL_DIST_POINT, *PCRL_DIST_POINT;
+
+#define CRL_REASON_UNUSED_FLAG                 0x80
+#define CRL_REASON_KEY_COMPROMISE_FLAG         0x40
+#define CRL_REASON_CA_COMPROMISE_FLAG          0x20
+#define CRL_REASON_AFFILIATION_CHANGED_FLAG    0x10
+#define CRL_REASON_SUPERSEDED_FLAG             0x08
+#define CRL_REASON_CESSATION_OF_OPERATION_FLAG 0x04
+#define CRL_REASON_CERTIFICATE_HOLD_FLAG       0x02
+
+typedef struct _CRL_DIST_POINTS_INFO {
+    DWORD           cDistPoint;
+    PCRL_DIST_POINT rgDistPoint;
+} CRL_DIST_POINTS_INFO, *PCRL_DIST_POINTS_INFO;
+
+#define CRL_DIST_POINT_ERR_INDEX_MASK  0x7f
+#define CRL_DIST_POINT_ERR_INDEX_SHIFT 24
+#define GET_CRL_DIST_POINT_ERR_INDEX(x) \
+ (((x) >> CRL_DIST_POINT_ERR_INDEX_SHIFT) & CRL_DIST_POINT_ERR_INDEX_MASK)
+
+#define CRL_DIST_POINT_ERR_CRL_ISSUER_BIT 0x80000000L
+#define IS_CRL_DIST_POINT_ERR_CRL_ISSUER(x) \
+ ((x) & CRL_DIST_POINT_ERR_CRL_ISSUER_BIT)
+
+typedef struct _CROSS_CERT_DIST_POINTS_INFO {
+    DWORD               dwSyncDeltaTime;
+    DWORD               cDistPoint;
+    PCERT_ALT_NAME_INFO rgDistPoint;
+} CROSS_CERT_DIST_POINTS_INFO, *PCROSS_CERT_DIST_POINTS_INFO;
+
+#define CROSS_CERT_DIST_POINT_ERR_INDEX_MASK  0xff
+#define CROSS_CERT_DIST_POINT_ERR_INDEX_SHIFT 24
+#define GET_CROSS_CERT_DIST_POINT_ERR_INDEX(x) \
+ (((x) >> CROSS_CERT_DIST_POINT_ERR_INDEX_SHIFT) & \
+ CROSS_CERT_DIST_POINT_ERR_INDEX_MASK)
+
+typedef struct _CERT_PAIR {
+    CERT_BLOB Forward;
+    CERT_BLOB Reverse;
+} CERT_PAIR, *PCERT_PAIR;
+
+typedef struct _CRL_ISSUING_DIST_POINT {
+    CRL_DIST_POINT_NAME DistPointName;
+    BOOL                fOnlyContainsUserCerts;
+    BOOL                fOnlyContainsCACerts;
+    CRYPT_BIT_BLOB      OnlySomeReasonFlags;
+    BOOL                fIndirectCRL;
+} CRL_ISSUING_DIST_POINT, *PCRL_ISSUING_DIST_POINT;
+
+typedef struct _CERT_GENERAL_SUBTREE {
+    CERT_ALT_NAME_ENTRY Base;
+    DWORD               dwMinimum;
+    BOOL                fMaximum;
+    DWORD               dwMaximum;
+} CERT_GENERAL_SUBTREE, *PCERT_GENERAL_SUBTREE;
+
+typedef struct _CERT_NAME_CONSTRAINTS_INFO {
+    DWORD                 cPermittedSubtree;
+    PCERT_GENERAL_SUBTREE rgPermittedSubtree;
+    DWORD                 cExcludedSubtree;
+    PCERT_GENERAL_SUBTREE rgExcludedSubtree;
+} CERT_NAME_CONSTRAINTS_INFO, *PCERT_NAME_CONSTRAINTS_INFO;
+
+#define CERT_EXCLUDED_SUBTREE_BIT 0x80000000L
+#define IS_CERT_EXCLUDED_SUBTREE(x) ((x) & CERT_EXCLUDED_SUBTREE_BIT)
 
 typedef struct _CRYPT_ATTRIBUTE {
     LPSTR            pszObjId;
