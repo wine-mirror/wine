@@ -2490,6 +2490,16 @@ BOOL WINAPI CoIsHandlerConnected(IUnknown *pUnk)
 
     return TRUE;
 }
+
+/***********************************************************************
+ *           CoAllowSetForegroundWindow [OLE32.@]
+ *
+ */
+HRESULT WINAPI CoAllowSetForegroundWindow(IUnknown *pUnk, void *pvReserved)
+{
+    FIXME("(%p, %p): stub\n", pUnk, pvReserved);
+    return S_OK;
+}
  
 /***********************************************************************
  *           CoQueryProxyBlanket [OLE32.@]
