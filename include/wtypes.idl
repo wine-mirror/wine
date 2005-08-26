@@ -66,17 +66,22 @@ typedef void *HANDLE;
 #define DECLARE_HANDLE(name) typedef void *name
 #define DECLARE_WIREM_HANDLE(name) typedef [wire_marshal(wire##name)] void*name
 
-DECLARE_HANDLE(HACCEL);
-DECLARE_HANDLE(HDC);
-DECLARE_HANDLE(HFONT);
-DECLARE_HANDLE(HWND);
-DECLARE_HANDLE(HMENU);
 DECLARE_HANDLE(HMODULE);
 DECLARE_HANDLE(HINSTANCE);
 DECLARE_HANDLE(HRGN);
 DECLARE_HANDLE(HTASK);
 DECLARE_HANDLE(HKEY);
-DECLARE_HANDLE(HICON);
+DECLARE_HANDLE(HDESK);
+DECLARE_HANDLE(HMF);
+DECLARE_HANDLE(HEMF);
+DECLARE_HANDLE(HPEN);
+DECLARE_HANDLE(HRSRC);
+DECLARE_HANDLE(HSTR);
+DECLARE_HANDLE(HWINSTA);
+DECLARE_HANDLE(HKL);
+DECLARE_HANDLE(HGDIOBJ);
+
+typedef HANDLE HDWP;
 
 typedef LONG_PTR LRESULT;
 
@@ -173,16 +178,6 @@ typedef const RECTL *LPCRECTL;
 
 typedef UINT_PTR WPARAM;
 typedef LONG_PTR LPARAM;
-
-typedef struct tagMSG
-{
-    HWND   hwnd;
-    UINT   message;
-    WPARAM wParam;
-    LPARAM lParam;
-    DWORD  time;
-    POINT  pt;
-} MSG, *PMSG, *NPMSG, *LPMSG;
 
 cpp_quote("#endif /* winnt.h */")
 
@@ -310,6 +305,11 @@ typedef enum tagMEMCTX {
   MEMCTX_SAME      = -2
 } MEMCTX;
 
+cpp_quote("#ifndef _ROT_COMPARE_MAX_DEFINED")
+cpp_quote("#define _ROT_COMPARE_MAX_DEFINED")
+cpp_quote("#define ROT_COMPARE_MAX 2048")
+cpp_quote("#endif")
+
 cpp_quote("#ifndef _ROTFLAGS_DEFINED")
 cpp_quote("#define _ROTFLAGS_DEFINED")
 cpp_quote("#define ROTFLAGS_REGISTRATIONKEEPSALIVE 0x1")
@@ -398,8 +398,9 @@ typedef struct _HYPER_SIZEDARR {
 
 /******************** GDI TYPES ********************/
 
-const unsigned long WDT_INPROC_CALL = 0x48746457;
-const unsigned long WDT_REMOTE_CALL = 0x52746457;
+const unsigned long WDT_INPROC_CALL   = 0x48746457;
+const unsigned long WDT_REMOTE_CALL   = 0x52746457;
+const unsigned long WDT_INPROC64_CALL = 0x50746457;
 
 typedef union _userCLIPFORMAT switch(long fContext) u {
   case WDT_INPROC_CALL: DWORD dwValue;
@@ -520,6 +521,43 @@ DECLARE_WIREM_HANDLE(HENHMETAFILE);
 DECLARE_WIREM_HANDLE(HMETAFILE);
 cpp_quote("#endif")
 DECLARE_WIREM_HANDLE(HMETAFILEPICT);
+
+typedef union _RemotableHandle switch (long fContext) u
+{
+    case WDT_INPROC_CALL: long hInproc;
+    case WDT_REMOTE_CALL: long hRemote;
+} RemotableHandle;
+
+typedef [unique] RemotableHandle *wireHACCEL;
+typedef [unique] RemotableHandle *wireHBRUSH;
+typedef [unique] RemotableHandle *wireHDC;
+typedef [unique] RemotableHandle *wireHFONT;
+typedef [unique] RemotableHandle *wireHICON;
+typedef [unique] RemotableHandle *wireHMENU;
+typedef [unique] RemotableHandle *wireHWND;
+
+cpp_quote("#if 0") /* for IDL only (C/C++ defs are in windef.h) */
+DECLARE_WIREM_HANDLE(HACCEL);
+DECLARE_WIREM_HANDLE(HBRUSH);
+DECLARE_WIREM_HANDLE(HDC);
+DECLARE_WIREM_HANDLE(HFONT);
+DECLARE_WIREM_HANDLE(HICON);
+DECLARE_WIREM_HANDLE(HMENU);
+DECLARE_WIREM_HANDLE(HWND);
+
+typedef HICON HCURSOR;
+
+typedef struct tagMSG
+{
+    HWND   hwnd;
+    UINT   message;
+    WPARAM wParam;
+    LPARAM lParam;
+    DWORD  time;
+    POINT  pt;
+} MSG, *PMSG, *NPMSG, *LPMSG;
+
+cpp_quote("#endif")
 
 /******************** GUID TYPES ********************/
 
@@ -709,6 +747,7 @@ enum VARENUM {
   VT_BLOB_OBJECT     = 70,
   VT_CF              = 71,
   VT_CLSID           = 72,
+  VT_VERSIONED_STREAM= 73,
   VT_BSTR_BLOB       = 0x0fff,
   VT_VECTOR          = 0x1000,
   VT_ARRAY           = 0x2000,
