@@ -1,36 +1,37 @@
 @ stdcall CertAddCRLContextToStore(long ptr long ptr)
-@ stub CertAddCTLContextToStore
-@ stub CertAddCertificateContextToStore
-@ stub CertAddEncodedCRLToStore
-@ stub CertAddEncodedCTLToStore
-@ stub CertAddEncodedCertificateToStore
+@ stdcall CertAddCTLContextToStore(long ptr long ptr)
+@ stdcall CertAddCertificateContextToStore(long ptr long ptr)
+@ stdcall CertAddEncodedCRLToStore(long long ptr long long ptr)
+@ stdcall CertAddEncodedCTLToStore(long long ptr long long ptr)
+@ stdcall CertAddEncodedCertificateToStore(long long ptr long long ptr)
 @ stub CertAddEncodedCertificateToSystemStoreA
 @ stub CertAddEncodedCertificateToSystemStoreW
 @ stub CertAddEnhancedKeyUsageIdentifier
-@ stub CertAddSerializedElementToStore
-@ stub CertAddStoreToCollection
+@ stdcall CertAddSerializedElementToStore(ptr ptr long long long long ptr ptr)
+@ stdcall CertAddStoreToCollection(ptr ptr long long)
 @ stdcall CertAlgIdToOID(long)
 @ stdcall CertCloseStore(ptr long)
 @ stub CertCompareCertificate
 @ stub CertCompareCertificateName
 @ stub CertCompareIntegerBlob
 @ stub CertComparePublicKeyInfo
-@ stub CertControlStore
+@ stdcall CertControlStore(long long long ptr)
 @ stdcall CertCreateCRLContext(long ptr long)
-@ stub CertCreateCTLContext
+@ stdcall CertCreateCTLContext(long ptr long)
 @ stub CertCreateCertificateChainEngine
-@ stub CertCreateCertificateContext
-@ stub CertDeleteCRLFromStore
-@ stub CertDeleteCTLFromStore
-@ stub CertDeleteCertificateFromStore
+@ stdcall CertCreateCertificateContext(long ptr long)
+@ stdcall CertDeleteCRLFromStore(ptr)
+@ stdcall CertDeleteCTLFromStore(ptr)
+@ stdcall CertDeleteCertificateFromStore(ptr)
 @ stub CertDuplicateCRLContext
 @ stub CertDuplicateCTLContext
-@ stub CertDuplicateCertificateContext
+@ stdcall CertDuplicateCertificateContext(ptr)
 @ stub CertDuplicateStore
 @ stub CertEnumCRLContextProperties
+@ stdcall CertEnumCRLsInStore(ptr ptr)
 @ stub CertEnumCTLContextProperties
-@ stub CertEnumCTLsInStore
-@ stub CertEnumCertificateContextProperties
+@ stdcall CertEnumCTLsInStore(ptr ptr)
+@ stdcall CertEnumCertificateContextProperties(ptr long)
 @ stdcall CertEnumCertificatesInStore(long ptr)
 @ stdcall CertFindAttribute(str long ptr)
 @ stub CertFindCTLInStore
@@ -39,15 +40,15 @@
 @ stdcall CertFindRDNAttr(str ptr)
 @ stub CertFindSubjectInCTL
 @ stdcall CertFreeCRLContext(ptr)
-@ stub CertFreeCTLContext
+@ stdcall CertFreeCTLContext(ptr)
 @ stub CertFreeCertificateChain
 @ stub CertFreeCertificateChainEngine
 @ stdcall CertFreeCertificateContext(ptr)
-@ stub CertGetCRLContextProperty
+@ stdcall CertGetCRLContextProperty(ptr long ptr ptr)
 @ stub CertGetCRLFromStore
-@ stub CertGetCTLContextProperty
+@ stdcall CertGetCTLContextProperty(ptr long ptr ptr)
 @ stub CertGetCertificateChain
-@ stub CertGetCertificateContextProperty
+@ stdcall CertGetCertificateContextProperty(ptr long ptr ptr)
 @ stub CertGetEnhancedKeyUsage
 @ stub CertGetIntendedKeyUsage
 @ stub CertGetIssuerCertificateFromStore
@@ -63,13 +64,14 @@
 @ stub CertRDNValueToStrA
 @ stub CertRDNValueToStrW
 @ stub CertRemoveEnhancedKeyUsageIdentifier
+@ stdcall CertRemoveStoreFromCollection(long long)
 @ stdcall CertSaveStore(long long long long ptr long)
-@ stub CertSerializeCRLStoreElement
-@ stub CertSerializeCTLStoreElement
-@ stub CertSerializeCertificateStoreElement
-@ stub CertSetCRLContextProperty
-@ stub CertSetCTLContextProperty
-@ stub CertSetCertificateContextProperty
+@ stdcall CertSerializeCRLStoreElement(ptr long ptr ptr)
+@ stdcall CertSerializeCTLStoreElement(ptr long ptr ptr)
+@ stdcall CertSerializeCertificateStoreElement(ptr long ptr ptr)
+@ stdcall CertSetCRLContextProperty(ptr long long ptr)
+@ stdcall CertSetCTLContextProperty(ptr long long ptr)
+@ stdcall CertSetCertificateContextProperty(ptr long long ptr)
 @ stub CertSetEnhancedKeyUsage
 @ stub CertStrToNameA
 @ stub CertStrToNameW

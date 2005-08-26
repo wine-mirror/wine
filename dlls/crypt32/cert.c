@@ -103,6 +103,21 @@ BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
     return TRUE;
 }
 
+PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
+ const BYTE *pbCertEncoded, DWORD cbCertEncoded)
+{
+    FIXME("(%08lx, %p, %ld): stub\n", dwCertEncodingType, pbCertEncoded,
+     cbCertEncoded);
+    return NULL;
+}
+
+PCCERT_CONTEXT WINAPI CertDuplicateCertificateContext(
+ PCCERT_CONTEXT pCertContext)
+{
+    FIXME("(%p): stub\n", pCertContext);
+    return NULL;
+}
+
 PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
   const BYTE* pbCrlEncoded, DWORD cbCrlEncoded)
 {
@@ -111,6 +126,7 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
 
     TRACE("%08lx %p %08lx\n", dwCertEncodingType, pbCrlEncoded, cbCrlEncoded);
 
+    /* FIXME: semi-stub, need to use CryptDecodeObjectEx to decode the CRL. */
     pcrl = HeapAlloc( GetProcessHeap(), 0, sizeof (CRL_CONTEXT) );
     if( !pcrl )
         return NULL;
@@ -131,6 +147,41 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
     return pcrl;
 }
 
+BOOL WINAPI CertAddEncodedCertificateToStore(HCERTSTORE hCertStore,
+ DWORD dwCertEncodingType, const BYTE *pbCertEncoded, DWORD cbCertEncoded,
+ DWORD dwAddDisposition, PCCERT_CONTEXT *ppCertContext)
+{
+    FIXME("(%p, %08lx, %p, %ld, %08lx, %p): stub\n", hCertStore,
+     dwCertEncodingType, pbCertEncoded, cbCertEncoded, dwAddDisposition,
+     ppCertContext);
+    return FALSE;
+}
+
+BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT pCertContext, DWORD dwAddDisposition,
+ PCCERT_CONTEXT *ppStoreContext)
+{
+    FIXME("(%p, %p, %08lx, %p): stub\n", hCertStore, pCertContext,
+     dwAddDisposition, ppStoreContext);
+    return FALSE;
+}
+
+BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
+{
+    FIXME("(%p): stub\n", pCertContext);
+    return FALSE;
+}
+
+BOOL WINAPI CertAddEncodedCRLToStore(HCERTSTORE hCertStore,
+ DWORD dwCertEncodingType, const BYTE *pbCrlEncoded, DWORD cbCrlEncoded,
+ DWORD dwAddDisposition, PCCRL_CONTEXT *ppCrlContext)
+{
+    FIXME("(%p, %08lx, %p, %ld, %08lx, %p): stub\n", hCertStore,
+     dwCertEncodingType, pbCrlEncoded, cbCrlEncoded, dwAddDisposition,
+     ppCrlContext);
+    return FALSE;
+}
+
 BOOL WINAPI CertAddCRLContextToStore( HCERTSTORE hCertStore,
              PCCRL_CONTEXT pCrlContext, DWORD dwAddDisposition,
              PCCRL_CONTEXT* ppStoreContext )
@@ -146,6 +197,66 @@ BOOL WINAPI CertFreeCRLContext( PCCRL_CONTEXT pCrlContext)
 
     return TRUE;
 }
+
+BOOL WINAPI CertDeleteCRLFromStore(PCCRL_CONTEXT pCrlContext)
+{
+    FIXME("(%p): stub\n", pCrlContext);
+    return TRUE;
+}
+
+PCCRL_CONTEXT WINAPI CertEnumCRLsInStore(HCERTSTORE hCertStore,
+ PCCRL_CONTEXT pPrev)
+{
+    FIXME("(%p, %p): stub\n", hCertStore, pPrev);
+    return NULL;
+}
+
+PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwCertEncodingType,
+  const BYTE* pbCtlEncoded, DWORD cbCtlEncoded)
+{
+    FIXME("(%08lx, %p, %08lx): stub\n", dwCertEncodingType, pbCtlEncoded,
+     cbCtlEncoded);
+    return NULL;
+}
+
+BOOL WINAPI CertAddEncodedCTLToStore(HCERTSTORE hCertStore,
+ DWORD dwMsgAndCertEncodingType, const BYTE *pbCtlEncoded, DWORD cbCtlEncoded,
+ DWORD dwAddDisposition, PCCTL_CONTEXT *ppCtlContext)
+{
+    FIXME("(%p, %08lx, %p, %ld, %08lx, %p): stub\n", hCertStore,
+     dwMsgAndCertEncodingType, pbCtlEncoded, cbCtlEncoded, dwAddDisposition,
+     ppCtlContext);
+    return FALSE;
+}
+
+BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
+ PCCTL_CONTEXT pCtlContext, DWORD dwAddDisposition,
+ PCCTL_CONTEXT* ppStoreContext)
+{
+    FIXME("(%p, %p, %08lx, %p): stub\n", hCertStore, pCtlContext,
+     dwAddDisposition, ppStoreContext);
+    return TRUE;
+}
+
+BOOL WINAPI CertFreeCTLContext(PCCTL_CONTEXT pCtlContext)
+{
+    FIXME("(%p): stub\n", pCtlContext );
+    return TRUE;
+}
+
+BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
+{
+    FIXME("(%p): stub\n", pCtlContext);
+    return TRUE;
+}
+
+PCCTL_CONTEXT WINAPI CertEnumCTLsInStore(HCERTSTORE hCertStore,
+ PCCTL_CONTEXT pPrev)
+{
+    FIXME("(%p, %p): stub\n", hCertStore, pPrev);
+    return NULL;
+}
+
 
 BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags )
 {
@@ -164,6 +275,100 @@ BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags )
     return TRUE;
 }
 
+BOOL WINAPI CertControlStore(HCERTSTORE hCertStore, DWORD dwFlags,
+ DWORD dwCtrlType, void const *pvCtrlPara)
+{
+    FIXME("(%p, %08lx, %ld, %p): stub\n", hCertStore, dwFlags, dwCtrlType,
+     pvCtrlPara);
+    return TRUE;
+}
+
+DWORD WINAPI CertEnumCertificateContextProperties(PCCERT_CONTEXT pCertContext,
+ DWORD dwPropId)
+{
+    FIXME("(%p, %ld): stub\n", pCertContext, dwPropId);
+    return 0;
+}
+
+BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
+ DWORD dwPropId, void *pvData, DWORD *pcbData)
+{
+    FIXME("(%p, %ld, %p, %p): stub\n", pCertContext, dwPropId, pvData, pcbData);
+    return FALSE;
+}
+
+BOOL WINAPI CertSetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
+ DWORD dwPropId, DWORD dwFlags, const void *pvData)
+{
+    FIXME("(%p, %ld, %08lx, %p): stub\n", pCertContext, dwPropId, dwFlags,
+     pvData);
+    return FALSE;
+}
+
+BOOL WINAPI CertGetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
+ DWORD dwPropId, void *pvData, DWORD *pcbData)
+{
+    FIXME("(%p, %ld, %p, %p): stub\n", pCRLContext, dwPropId, pvData, pcbData);
+    return FALSE;
+}
+
+BOOL WINAPI CertSetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
+ DWORD dwPropId, DWORD dwFlags, const void *pvData)
+{
+    FIXME("(%p, %ld, %08lx, %p): stub\n", pCRLContext, dwPropId, dwFlags,
+     pvData);
+    return FALSE;
+}
+
+BOOL WINAPI CertSerializeCRLStoreElement(PCCRL_CONTEXT pCrlContext,
+ DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement)
+{
+    FIXME("(%p, %08lx, %p, %p): stub\n", pCrlContext, dwFlags, pbElement,
+     pcbElement);
+    return FALSE;
+}
+
+BOOL WINAPI CertGetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
+ DWORD dwPropId, void *pvData, DWORD *pcbData)
+{
+    FIXME("(%p, %ld, %p, %p): stub\n", pCTLContext, dwPropId, pvData, pcbData);
+    return FALSE;
+}
+
+BOOL WINAPI CertSetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
+ DWORD dwPropId, DWORD dwFlags, const void *pvData)
+{
+    FIXME("(%p, %ld, %08lx, %p): stub\n", pCTLContext, dwPropId, dwFlags,
+     pvData);
+    return FALSE;
+}
+
+BOOL WINAPI CertSerializeCTLStoreElement(PCCTL_CONTEXT pCtlContext,
+ DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement)
+{
+    FIXME("(%p, %08lx, %p, %p): stub\n", pCtlContext, dwFlags, pbElement,
+     pcbElement);
+    return FALSE;
+}
+
+BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
+ DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement)
+{
+    FIXME("(%p, %08lx, %p, %p): stub\n", pCertContext, dwFlags, pbElement,
+     pcbElement);
+    return FALSE;
+}
+
+BOOL WINAPI CertAddSerializedElementToStore(HCERTSTORE hCertStore,
+ const BYTE *pbElement, DWORD cbElement, DWORD dwAddDisposition, DWORD dwFlags,
+ DWORD dwContextTypeFlags, DWORD *pdwContentType, const void **ppvContext)
+{
+    FIXME("(%p, %p, %ld, %08lx, %08lx, %08lx, %p, %p): stub\n", hCertStore,
+     pbElement, cbElement, dwAddDisposition, dwFlags, dwContextTypeFlags,
+     pdwContentType, ppvContext);
+    return FALSE;
+}
+
 BOOL WINAPI CertFreeCertificateContext( PCCERT_CONTEXT pCertContext )
 {
     FIXME("%p stub\n", pCertContext);
@@ -178,6 +383,20 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
 	dwFlags, dwType, pvPara, pPrevCertContext);
     SetLastError(CRYPT_E_NOT_FOUND);
     return NULL;
+}
+
+BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,
+ HCERTSTORE hSiblingStore, DWORD dwUpdateFlags, DWORD dwPriority)
+{
+    FIXME("(%p, %p, %08lx, %ld): stub\n", hCollectionStore, hSiblingStore,
+     dwUpdateFlags, dwPriority);
+    return TRUE;
+}
+
+void WINAPI CertRemoveStoreFromCollection(HCERTSTORE hCollectionStore,
+ HCERTSTORE hSiblingStore)
+{
+    FIXME("(%p, %p): stub\n", hCollectionStore, hSiblingStore);
 }
 
 PCRYPT_ATTRIBUTE WINAPI CertFindAttribute(LPCSTR pszObjId, DWORD cAttr,
