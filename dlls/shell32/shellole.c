@@ -74,6 +74,7 @@ struct {
 	{&CLSID_UnixFolder,     &UnixFolder_Constructor},
 	{&CLSID_UnixDosFolder,  &UnixDosFolder_Constructor},
 	{&CLSID_FolderShortcut, &FolderShortcut_Constructor},
+	{&CLSID_MyDocuments,    &MyDocuments_Constructor},
 	{NULL,NULL}
 };
 

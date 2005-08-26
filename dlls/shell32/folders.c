@@ -266,7 +266,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
             if(IsEqualGUID(riid, &CLSID_MyComputer))
                 *piIndex = -IDI_SHELL_MY_COMPUTER;
             else if(IsEqualGUID(riid, &CLSID_MyDocuments))
-                *piIndex = -IDI_SHELL_FOLDER;
+                *piIndex = -IDI_SHELL_MY_DOCUMENTS;
             else if(IsEqualGUID(riid, &CLSID_NetworkPlaces))
                 *piIndex = -IDI_SHELL_MY_NETWORK_PLACES;
             else if(IsEqualGUID(riid, &CLSID_UnixFolder) ||

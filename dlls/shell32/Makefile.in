@@ -61,6 +61,7 @@ RC_BINARIES = \
 	folder.ico \
 	folder_open.ico \
 	mycomputer.ico \
+	mydocs.ico \
 	netdrive.ico \
 	netdrive2.ico \
 	printer.ico \

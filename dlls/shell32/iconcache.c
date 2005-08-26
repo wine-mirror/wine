@@ -399,7 +399,7 @@ BOOL SIC_Initialize(void)
        ImageList_SetBkColor(ShellSmallIconList, CLR_NONE);
        ImageList_SetBkColor(ShellBigIconList, CLR_NONE);
 
-	for (index=1; index<39; index++)
+	for (index=1; index<=IDI_SHELL_MY_DOCUMENTS; index++)
 	{
 	  hSm = (HICON)LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(index), IMAGE_ICON, cx_small, cy_small, LR_SHARED);
 	  hLg = (HICON)LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(index), IMAGE_ICON, cx_large, cy_large, LR_SHARED);

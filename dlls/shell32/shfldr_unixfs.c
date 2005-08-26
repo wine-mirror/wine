@@ -594,6 +594,9 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_EnumObjects(IShellFolder2* iface,
     return hr;
 }
 
+static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, DWORD dwPathMode, 
+    const CLSID *pCLSID);
+
 static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface, LPCITEMIDLIST pidl,
     LPBC pbcReserved, REFIID riid, void** ppvOut)
 {
@@ -607,12 +610,9 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface
 
     if (!pidl || !pidl->mkid.cb)
         return E_INVALIDARG;
-    
-    if (This->m_dwPathMode == PATHMODE_DOS)
-        hr = UnixDosFolder_Constructor(NULL, &IID_IPersistFolder3, (void**)&persistFolder);
-    else
-        hr = UnixFolder_Constructor(NULL, &IID_IPersistFolder3, (void**)&persistFolder);
-        
+       
+    hr = CreateUnixFolder(NULL, &IID_IPersistFolder3, (void**)&persistFolder, This->m_dwPathMode, 
+                          This->m_pCLSID);
     if (!SUCCEEDED(hr)) return hr;
     hr = IPersistFolder_QueryInterface(persistFolder, riid, (void**)ppvOut);
     
@@ -1109,23 +1109,29 @@ static HRESULT WINAPI UnixFolder_IPersistFolder3_Initialize(IPersistFolder3* ifa
 
     /* Find the UnixFolderClass root */
     while (current->mkid.cb) {
-        if (_ILIsSpecialFolder(current) && 
-            (IsEqualIID(&CLSID_UnixFolder, _ILGetGUIDPointer(current)) ||
-             IsEqualIID(&CLSID_UnixDosFolder, _ILGetGUIDPointer(current))))
-        {
+        if (_ILIsSpecialFolder(current) && IsEqualIID(This->m_pCLSID, _ILGetGUIDPointer(current)))
             break;
-        }
         current = ILGetNext(current);
     }
 
     if (current && current->mkid.cb) {
+        if (IsEqualIID(&CLSID_MyDocuments, _ILGetGUIDPointer(current))) {
+            WCHAR wszMyDocumentsPath[MAX_PATH];
+            if (!SHGetSpecialFolderPathW(0, wszMyDocumentsPath, CSIDL_PERSONAL, FALSE))
+                return E_FAIL;
+            PathAddBackslashW(wszMyDocumentsPath);
+            if (!UNIXFS_get_unix_path(wszMyDocumentsPath, szBasePath))
+                return E_FAIL;
+            dwPathLen = strlen(szBasePath) + 1;
+        } else {
+            dwPathLen = 2; /* For the '/' prefix and the terminating '\0' */
+        }
         root = current = ILGetNext(current);
-        dwPathLen = 2; /* For the '/' prefix and the terminating '\0' */
     } else if (_ILIsDesktop(pidl) || _ILIsValue(pidl) || _ILIsFolder(pidl)) {
         /* Path rooted at Desktop */
         WCHAR wszDesktopPath[MAX_PATH];
-        if (FAILED(SHGetSpecialFolderPathW(0, wszDesktopPath, CSIDL_DESKTOP, FALSE)))
-           return E_FAIL;
+        if (!SHGetSpecialFolderPathW(0, wszDesktopPath, CSIDL_DESKTOPDIRECTORY, FALSE)) 
+            return E_FAIL;
         PathAddBackslashW(wszDesktopPath);
         if (!UNIXFS_get_unix_path(wszDesktopPath, szBasePath))
             return E_FAIL;
@@ -1154,7 +1160,7 @@ static HRESULT WINAPI UnixFolder_IPersistFolder3_Initialize(IPersistFolder3* ifa
     current = root;
     strcpy(pNextDir, szBasePath);
     pNextDir += strlen(szBasePath);
-    if (This->m_dwPathMode == PATHMODE_UNIX)
+    if (This->m_dwPathMode == PATHMODE_UNIX || IsEqualCLSID(&CLSID_MyDocuments, This->m_pCLSID))
         This->m_dwAttributes |= SFGAO_FILESYSTEM;
     if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
         *pNextDir = '\0';
@@ -1548,6 +1554,11 @@ HRESULT WINAPI UnixDosFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOI
 HRESULT WINAPI FolderShortcut_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
     TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
     return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_DOS, &CLSID_FolderShortcut);
+}
+
+HRESULT WINAPI MyDocuments_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
+    TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
+    return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_DOS, &CLSID_MyDocuments);
 }
 
 /******************************************************************************

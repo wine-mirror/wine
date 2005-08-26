@@ -630,6 +630,15 @@ static struct regsvr_coclass const coclass_list[] = {
 	SFGAO_FILESYSTEM|SFGAO_FOLDER|SFGAO_LINK,
 	SFGAO_HASSUBFOLDER|SFGAO_FILESYSTEM|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR
     },
+    {	&CLSID_MyDocuments,
+	"My Documents",
+	NULL,
+	"shell32.dll",
+	"Apartment",
+	SHELLFOLDER_WANTSFORPARSING|SHELLFOLDER_ATTRIBUTES|SHELLFOLDER_CALLFORATTRIBUTES,
+	SFGAO_FILESYSANCESTOR|SFGAO_FOLDER|SFGAO_HASSUBFOLDER,
+	SFGAO_FILESYSTEM
+    },
     { NULL }			/* list terminator */
 };
 
@@ -646,12 +655,18 @@ static struct regsvr_interface const interface_list[] = {
  */
 static const WCHAR wszDesktop[] = { 'D','e','s','k','t','o','p',0 };
 static const WCHAR wszSlash[] = { '/', 0 };
+static const WCHAR wszMyDocuments[] = { 'M','y',' ','D','o','c','u','m','e','n','t','s', 0 };
 
 static struct regsvr_namespace const namespace_extensions_list[] = {
     {   
         &CLSID_UnixDosFolder,
         wszDesktop,
         wszSlash
+    },
+    {   
+        &CLSID_MyDocuments,
+        wszDesktop,
+        wszMyDocuments
     },
     { NULL }
 };
