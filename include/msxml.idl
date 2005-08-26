@@ -201,8 +201,8 @@ interface IXMLElement2 : IDispatch
     [id(DISPID_XMLELEMENT_ADDCHILD)]
     HRESULT addChild(
         [in] IXMLElement2 *pChildElem,
-        [retval, out] long lIndex,
-        [retval, out] long lReserved);
+        [in] long lIndex,
+        [in] long lReserved);
 
     [id(DISPID_XMLELEMENT_REMOVECHILD)]
     HRESULT removeChild([in]IXMLElement2 *pChildElem);
