@@ -74,6 +74,7 @@ static void activate_gecko(HTMLDocument *This)
 
     nsIBaseWindow_SetVisibility(This->nscontainer->window, TRUE);
     nsIBaseWindow_SetEnabled(This->nscontainer->window, TRUE);
+    nsIWebBrowserFocus_Activate(This->nscontainer->focus);
 }
 
 static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)

@@ -313,6 +313,22 @@ interface nsIIOService : nsISupports
 
 [
     object,
+    uuid(9c5d3c58-1dd1-11b2-a1c9-f3699284657a)
+]
+interface nsIWebBrowserFocus : nsISupports
+{
+    nsresult Activate();
+    nsresult Deactivate();
+    nsresult SetFocusAtFirstElement();
+    nsresult SetFocusAtLastElement();
+    nsresult GetFocusedWindow(nsIDOMWindow **aFocusedWindow);
+    nsresult SetFocusedWindow(nsIDOMWindow *aFocusedWindow);
+    nsresult GetFocusedElement(nsIDOMElement **aFocusedElement);
+    nsresult SetFocusedElement(nsIDOMElement *aFocusedElement);
+}
+
+[
+    object,
     uuid(ba434c60-9d52-11d3-afb0-00a024ffc08c)
 ]
 interface nsIWebBrowserChrome : nsISupports

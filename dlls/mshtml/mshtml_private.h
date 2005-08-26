@@ -82,6 +82,7 @@ struct NSContainer {
     nsIWebNavigation *navigation;
     nsIBaseWindow *window;
     nsIWebBrowserStream *stream;
+    nsIWebBrowserFocus *focus;
 
     HTMLDocument *doc;
 

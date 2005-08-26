@@ -599,6 +599,11 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
     if(NS_FAILED(nsres))
         ERR("Could not get nsIWebNavigation interface: %08lx\n", nsres);
 
+    nsres = nsIWebBrowserFocus_QueryInterface(This->nscontainer->webbrowser, &IID_nsIWebBrowserFocus,
+            (void**)&This->nscontainer->focus);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsIWebBrowserFocus interface: %08lx\n", nsres);
+
 #if 0
     nsres = nsIWebBrowserStream_QueryInterface(This->nscontainer->webbrowser, &IID_nsIWebBrowserStream,
             (void**)&This->nscontainer->stream);
