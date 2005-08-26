@@ -1067,7 +1067,6 @@ IMPORT_SYMLINKS = \
 	liblz32.$(IMPLIBEXT) \
 	libmsacm32.$(IMPLIBEXT) \
 	libmsvfw32.$(IMPLIBEXT) \
-	libntdll.$(IMPLIBEXT) \
 	libolecli32.$(IMPLIBEXT) \
 	libolesvr32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
@@ -1555,9 +1554,6 @@ libmsacm32.$(IMPLIBEXT): msacm/libmsacm32.$(IMPLIBEXT)
 
 libmsvfw32.$(IMPLIBEXT): msvideo/libmsvfw32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) msvideo/libmsvfw32.$(IMPLIBEXT) $@
-
-libntdll.$(IMPLIBEXT): ntdll/libntdll.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) ntdll/libntdll.$(IMPLIBEXT) $@
 
 libolecli32.$(IMPLIBEXT): olecli/libolecli32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) olecli/libolecli32.$(IMPLIBEXT) $@

@@ -248,7 +248,7 @@ foreach my $mod (sort keys %staticlib_dirs)
 print NEWMAKE "\n# Import libraries\n\n";
 print NEWMAKE "STATIC_IMPLIBEXT = \$(IMPLIBEXT:def=def.a)\n\n";
 
-my @lib_symlinks = ("ntdll.dll");
+my @lib_symlinks = ();
 foreach my $mod (sort keys %importlibs)
 {
     my $dir = $directories{$mod};
