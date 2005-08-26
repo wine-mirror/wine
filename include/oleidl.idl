@@ -20,6 +20,7 @@
 
 import "objidl.idl";
 
+interface IOleInPlaceActiveObject;
 
 /*****************************************************************************
  * IOleTypes interface
@@ -96,54 +97,6 @@ interface IOleInPlaceObject : IOleWindow
 }
 
 
-/* avoid conflict with Wine Unicode macros */
-cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
-cpp_quote("#undef TranslateAccelerator")
-cpp_quote("#endif")
-
-/*****************************************************************************
- * IOleInPlaceActiveObject interface
- */
-interface IOleInPlaceUIWindow;  /* forward declaration */
-[
-    object,
-    uuid(00000117-0000-0000-c000-000000000046)
-]
-interface IOleInPlaceActiveObject : IOleWindow
-{
-    typedef [unique] IOleInPlaceActiveObject *LPOLEINPLACEACTIVEOBJECT;
-
-    [local]
-    HRESULT TranslateAccelerator(
-        [in] LPMSG lpmsg);
-
-    [call_as(TranslateAccelerator)]
-    HRESULT RemoteTranslateAccelerator();
-
-    HRESULT OnFrameWindowActivate(
-        [in] BOOL fActivate);
-
-    HRESULT OnDocWindowActivate(
-        [in] BOOL fActivate);
-
-    [local]
-    HRESULT ResizeBorder(
-        [in] LPCRECT prcBorder,
-        [in, unique] IOleInPlaceUIWindow *pUIWindow,
-        [in] BOOL fFrameWindow);
-
-    [call_as(ResizeBorder)]
-    HRESULT RemoteResizeBorder(
-        [in] LPCRECT prcBorder,
-        [in] REFIID riid,
-        [in, unique, iid_is(riid)] IOleInPlaceUIWindow *pUIWindow,
-        [in] BOOL fFrameWindow);
-
-    HRESULT EnableModeless(
-        [in] BOOL fEnable);
-}
-
-
 /*****************************************************************************
  * IOleInPlaceUIWindow interface
  */
@@ -175,6 +128,11 @@ interface IOleInPlaceUIWindow : IOleWindow
         [in, string, unique] LPCOLESTR pszObjName);
 }
 
+
+/* avoid conflict with Wine Unicode macros */
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef TranslateAccelerator")
+cpp_quote("#endif")
 
 /*****************************************************************************
  * IOleInPlaceFrame interface
@@ -225,6 +183,48 @@ interface IOleInPlaceFrame : IOleInPlaceUIWindow
     HRESULT TranslateAccelerator(
         [in] LPMSG lpmsg,
         [in] WORD wID);
+}
+
+
+/*****************************************************************************
+ * IOleInPlaceActiveObject interface
+ */
+[
+    object,
+    uuid(00000117-0000-0000-c000-000000000046)
+]
+interface IOleInPlaceActiveObject : IOleWindow
+{
+    typedef [unique] IOleInPlaceActiveObject *LPOLEINPLACEACTIVEOBJECT;
+
+    [local]
+    HRESULT TranslateAccelerator(
+        [in] LPMSG lpmsg);
+
+    [call_as(TranslateAccelerator)]
+    HRESULT RemoteTranslateAccelerator();
+
+    HRESULT OnFrameWindowActivate(
+        [in] BOOL fActivate);
+
+    HRESULT OnDocWindowActivate(
+        [in] BOOL fActivate);
+
+    [local]
+    HRESULT ResizeBorder(
+        [in] LPCRECT prcBorder,
+        [in, unique] IOleInPlaceUIWindow *pUIWindow,
+        [in] BOOL fFrameWindow);
+
+    [call_as(ResizeBorder)]
+    HRESULT RemoteResizeBorder(
+        [in] LPCRECT prcBorder,
+        [in] REFIID riid,
+        [in, unique, iid_is(riid)] IOleInPlaceUIWindow *pUIWindow,
+        [in] BOOL fFrameWindow);
+
+    HRESULT EnableModeless(
+        [in] BOOL fEnable);
 }
 
 
