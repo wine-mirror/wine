@@ -865,9 +865,9 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
  * until XLoadFont() succeeds.
  * to avoid an infinite loop; these will always match
  */
-   if (uRelax >= 5)
+   if (uRelax >= 6)
    {
-       if (uRelax == 5)
+       if (uRelax == 6)
 	   sprintf( lpLFD, "-*-*-*-*-*-*-*-*-*-*-*-*-iso8859-1" );
        else
 	   sprintf( lpLFD, "-*-*-*-*-*-*-*-*-*-*-*-*-*-*" );
@@ -909,7 +909,7 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
        else
 	   aLFD.slant = "i";
    else
-       aLFD.slant = (uRelax < 1) ? "r" : any;
+       aLFD.slant = (uRelax <= 1) ? "r" : any;
 
 /* add width */
    if( fo->fi->fi_flags & FI_NORMAL )
@@ -939,7 +939,7 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
        h = MAX_FONT_SIZE;
    }
 
-   if (uRelax <= 2)
+   if (uRelax <= 3)
        /* handle rotated fonts */
        if (fo->lf.lfEscapement) {
 	   /* escapement is in tenths of degrees, theta is in radians */
@@ -961,7 +961,7 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
     * so that you have to mess around with res_y
     */
    aLFD.average_width = any;
-   if (uRelax <= 3)
+   if (uRelax <= 4)
    {
        sprintf(resx_string, "%d", fo->fi->lfd_resolution);
        aLFD.resolution_x = resx_string;
@@ -997,12 +997,12 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
        else
 	   w = ( fo->fi->fi_flags & FI_VARIABLEPITCH ) ? "p" : any;
 
-       aLFD.spacing = (uRelax <= 1) ? w : any;
+       aLFD.spacing = (uRelax <= 2) ? w : any;
    }
 
 /* encoding */
 
-   if (uRelax <= 4)
+   if (uRelax <= 5)
    {
        fontEncodingTemplate* boba = fETTable;
 
