@@ -528,11 +528,14 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
     if (package->verbs && package->loaded_verbs > 0)
         HeapFree(GetProcessHeap(),0,package->verbs);
 
-    for (i = 0; i < package->loaded_mimes; i++)
-        HeapFree(GetProcessHeap(),0,package->mimes[i].ContentType);
+    LIST_FOR_EACH_SAFE( item, cursor, &package->mimes )
+    {
+        MSIMIME *mt = LIST_ENTRY( item, MSIMIME, entry );
 
-    if (package->mimes && package->loaded_mimes > 0)
-        HeapFree(GetProcessHeap(),0,package->mimes);
+        list_remove( &mt->entry );
+        HeapFree( GetProcessHeap(), 0, mt->ContentType );
+        HeapFree( GetProcessHeap(), 0, mt );
+    }
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->appids )
     {

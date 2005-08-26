@@ -152,13 +152,15 @@ typedef struct tagMSICLASS
     BOOL Installed;
 } MSICLASS;
 
+typedef struct tagMSIMIME MSIMIME;
+
 typedef struct tagMSIEXTENSION
 {
     WCHAR Extension[256];  /* Primary Key */
     MSICOMPONENT *Component;
     INT ProgIDIndex;
     LPWSTR ProgIDText;
-    INT MIMEIndex;
+    MSIMIME *Mime;
     MSIFEATURE *Feature;
     /* not in the table, set during installation */
     BOOL Installed;
@@ -188,15 +190,16 @@ typedef struct tagMSIVERB
     LPWSTR Argument;
 } MSIVERB;
 
-typedef struct tagMSIMIME
+struct tagMSIMIME
 {
+    struct list entry;
     LPWSTR ContentType;  /* Primary Key */
     INT ExtensionIndex;
     WCHAR CLSID[IDENTIFIER_SIZE];
     MSICLASS *Class;
     /* not in the table, set during installation */
     BOOL InstallMe;
-} MSIMIME;
+};
 
 enum SCRIPTS {
         INSTALL_SCRIPT = 0,

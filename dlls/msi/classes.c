@@ -366,69 +366,62 @@ static MSICLASS *load_given_class(MSIPACKAGE *package, LPCWSTR classid)
 
 static INT load_given_extension(MSIPACKAGE *package, LPCWSTR extension);
 
-static INT load_mime(MSIPACKAGE* package, MSIRECORD *row)
+static MSIMIME *load_mime( MSIPACKAGE* package, MSIRECORD *row )
 {
-    DWORD index = package->loaded_mimes;
     DWORD sz;
     LPCWSTR buffer;
+    MSIMIME *mt;
 
     /* fill in the data */
 
-    package->loaded_mimes++;
-    if (package->loaded_mimes== 1)
-        package->mimes= HeapAlloc(GetProcessHeap(),0,sizeof(MSIMIME));
-    else
-        package->mimes= HeapReAlloc(GetProcessHeap(),0,
-            package->mimes, package->loaded_mimes* 
-            sizeof(MSIMIME));
+    mt = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSIMIME) );
+    if (!mt)
+        return mt;
 
-    memset(&package->mimes[index],0,sizeof(MSIMIME));
+    mt->ContentType = load_dynamic_stringW( row, 1 ); 
+    TRACE("loading mime %s\n", debugstr_w(mt->ContentType));
 
-    package->mimes[index].ContentType = load_dynamic_stringW(row,1); 
-    TRACE("loading mime %s\n",debugstr_w(package->mimes[index].ContentType));
-
-    buffer = MSI_RecordGetString(row,2);
-    package->mimes[index].ExtensionIndex = load_given_extension(package,
-                    buffer);
+    buffer = MSI_RecordGetString( row, 2 );
+    mt->ExtensionIndex = load_given_extension( package, buffer );
 
     sz = IDENTIFIER_SIZE;
-    MSI_RecordGetStringW(row,3,package->mimes[index].CLSID,&sz);
-    package->mimes[index].Class = load_given_class(package,
-                    package->mimes[index].CLSID);
+    MSI_RecordGetStringW( row, 3, mt->CLSID, &sz );
+    mt->Class = load_given_class(package, mt->CLSID);
     
-    return index;
+    return mt;
 }
 
-static INT load_given_mime(MSIPACKAGE *package, LPCWSTR mime)
+static MSIMIME *load_given_mime( MSIPACKAGE *package, LPCWSTR mime )
 {
-    INT rc;
     MSIRECORD *row;
-    INT i;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','M','I','M','E','`',' ','W','H','E','R','E',' ',
          '`','C','o','n','t','e','n','t','T','y','p','e','`',' ','=',' ',
          '\'','%','s','\'',0};
+    MSIMIME *mt;
 
     if (!mime)
-        return -1;
+        return NULL;
     
     /* check for mime already loaded */
-    for (i = 0; i < package->loaded_mimes; i++)
-        if (strcmpiW(package->mimes[i].ContentType,mime)==0)
+    LIST_FOR_EACH_ENTRY( mt, &package->mimes, MSIMIME, entry )
+    {
+        if (strcmpiW(mt->ContentType,mime)==0)
         {
-            TRACE("found mime %s at index %i\n",debugstr_w(mime), i);
-            return i;
+            TRACE("found mime %s (%p)\n",debugstr_w(mime), mt);
+            return mt;
         }
+    }
     
     row = MSI_QueryGetRecord(package->db, ExecSeqQuery, mime);
     if (!row)
-        return -1;
+        return NULL;
 
-    rc = load_mime(package, row);
+    mt = load_mime(package, row);
     msiobj_release(&row->hdr);
 
-    return rc;
+    return mt;
 }
 
 static INT load_extension(MSIPACKAGE* package, MSIRECORD *row)
@@ -462,7 +455,7 @@ static INT load_extension(MSIPACKAGE* package, MSIRECORD *row)
                     package->extensions[index].ProgIDText);
 
     buffer = MSI_RecordGetString(row,4);
-    package->extensions[index].MIMEIndex = load_given_mime(package,buffer);
+    package->extensions[index].Mime = load_given_mime(package,buffer);
 
     buffer = MSI_RecordGetString(row,5);
     package->extensions[index].Feature = get_loaded_feature(package,buffer);
@@ -736,8 +729,8 @@ static void load_classes_and_such(MSIPACKAGE *package)
 
     /* check if already loaded */
     if (!list_empty( &package->classes ) ||
-        package->extensions || package->progids || 
-        package->verbs || package->mimes)
+        !list_empty( &package->mimes) ||
+        package->extensions || package->progids || package->verbs )
         return;
 
     load_all_classes(package);
@@ -769,18 +762,10 @@ static void mark_progid_for_install(MSIPACKAGE* package, INT index)
             mark_progid_for_install(package,i);
 }
 
-static void mark_mime_for_install(MSIPACKAGE* package, INT index)
+static void mark_mime_for_install( MSIMIME *mime )
 {
-    MSIMIME* mime;
-
-    if (index < 0 || index >= package->loaded_mimes)
+    if (!mime)
         return;
-
-    mime = &package->mimes[index];
-
-    if (mime->InstallMe == TRUE)
-        return;
-
     mime->InstallMe = TRUE;
 }
 
@@ -1421,8 +1406,7 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
                 package->extensions[i].VerbCount > 0)
            mark_progid_for_install(package, package->extensions[i].ProgIDIndex);
 
-        if (package->extensions[i].MIMEIndex >= 0)
-           mark_mime_for_install(package, package->extensions[i].MIMEIndex);
+        mark_mime_for_install(package->extensions[i].Mime);
 
         extension[0] = '.';
         extension[1] = 0;
@@ -1430,13 +1414,11 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
 
         RegCreateKeyW(HKEY_CLASSES_ROOT,extension,&hkey);
 
-        if (package->extensions[i].MIMEIndex >= 0)
+        if (package->extensions[i].Mime)
         {
             RegSetValueExW(hkey,szContentType,0,REG_SZ,
-                            (LPVOID)package->mimes[package->extensions[i].
-                                MIMEIndex].ContentType,
-                           (strlenW(package->mimes[package->extensions[i].
-                                    MIMEIndex].ContentType)+1)*sizeof(WCHAR));
+                            (LPBYTE)package->extensions[i].Mime->ContentType,
+                     (strlenW(package->extensions[i].Mime->ContentType)+1)*sizeof(WCHAR));
         }
 
         if (package->extensions[i].ProgIDIndex >= 0 || 
@@ -1494,15 +1476,15 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
     static const WCHAR szExten[] = 
         {'E','x','t','e','n','s','i','o','n',0 };
     HKEY hkey;
-    INT i;
     MSIRECORD *uirow;
+    MSIMIME *mt;
 
     if (!package)
         return ERROR_INVALID_HANDLE;
 
     load_classes_and_such(package);
 
-    for (i = 0; i < package->loaded_mimes; i++)
+    LIST_FOR_EACH_ENTRY( mt, &package->mimes, MSIMIME, entry )
     {
         WCHAR extension[257];
         LPCWSTR exten;
@@ -1516,21 +1498,20 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
          * check if the MIME is to be installed. Either as requesed by an
          * extension or Class
          */
-        package->mimes[i].InstallMe =  ((package->mimes[i].InstallMe) ||
-              (package->mimes[i].Class &&
-              package->mimes[i].Class->Installed) ||
-              (package->mimes[i].ExtensionIndex >=0 &&
-              package->extensions[package->mimes[i].ExtensionIndex].Installed));
+        mt->InstallMe = (mt->InstallMe ||
+              (mt->Class && mt->Class->Installed) ||
+              (mt->ExtensionIndex >=0 &&
+              package->extensions[mt->ExtensionIndex].Installed));
 
-        if (!package->mimes[i].InstallMe)
+        if (!mt->InstallMe)
         {
             TRACE("MIME %s not scheduled to be installed\n",
-                             debugstr_w(package->mimes[i].ContentType));
+                             debugstr_w(mt->ContentType));
             continue;
         }
         
-        mime = package->mimes[i].ContentType;
-        exten = package->extensions[package->mimes[i].ExtensionIndex].Extension;
+        mime = mt->ContentType;
+        exten = package->extensions[mt->ExtensionIndex].Extension;
         extension[0] = '.';
         extension[1] = 0;
         strcatW(extension,exten);
@@ -1544,7 +1525,7 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
 
         HeapFree(GetProcessHeap(),0,key);
 
-        if (package->mimes[i].CLSID[0])
+        if (mt->CLSID[0])
         {
             FIXME("Handle non null for field 3\n");
         }
@@ -1552,7 +1533,7 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
         RegCloseKey(hkey);
 
         uirow = MSI_CreateRecord(2);
-        MSI_RecordSetStringW(uirow,1,package->mimes[i].ContentType);
+        MSI_RecordSetStringW(uirow,1,mt->ContentType);
         MSI_RecordSetStringW(uirow,2,exten);
         ui_actiondata(package,szRegisterMIMEInfo,uirow);
         msiobj_release(&uirow->hdr);
