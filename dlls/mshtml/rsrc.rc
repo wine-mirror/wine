@@ -21,6 +21,7 @@
 
 #include "resource.h"
 
+#include "De.rc"
 #include "En.rc"
 
 REGINST REGINST mshtml.inf
