@@ -4919,6 +4919,20 @@ static const WCHAR WC_LISTBOXW[] = { 'L','i','s','t','B','o','x',0 };
 #endif
 #define WC_LISTBOX                WINELIB_NAME_AW(WC_LISTBOX)
 
+/**************************************************************************
+ * Scroll bar control
+ */
+
+#define WC_SCROLLBARA             "ScrollBar"
+#if defined(__GNUC__)
+# define WC_SCROLLBARW            (const WCHAR []){ 'S','c','r','o','l','l','B','a','r',0 }
+#elif defined(_MSC_VER)
+# define WC_SCROLLBARW            L"ScrollBar"
+#else
+static const WCHAR WC_SCROLLBARW[] = { 'S','c','r','o','l','l','B','a','r',0 };
+#endif
+#define WC_SCROLLBAR              WINELIB_NAME_AW(WC_SCROLLBAR)
+
 #ifdef __cplusplus
 }
 #endif
