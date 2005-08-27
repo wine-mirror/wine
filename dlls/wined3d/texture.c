@@ -174,7 +174,7 @@ void WINAPI IWineD3DTextureImpl_GenerateMipSubLevels(IWineD3DTexture *iface) {
 
 /* Internal function, No d3d mapping */
 BOOL WINAPI IWineD3DTextureImpl_SetDirty(IWineD3DTexture *iface, BOOL dirty) {
-    return IWineD3DBaseTextureImpl_SetDirty((IWineD3DBaseTexture *)iface, TRUE);
+    return IWineD3DBaseTextureImpl_SetDirty((IWineD3DBaseTexture *)iface, dirty);
 }
 
 BOOL WINAPI IWineD3DTextureImpl_GetDirty(IWineD3DTexture *iface) {
