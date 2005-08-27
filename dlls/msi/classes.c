@@ -386,7 +386,9 @@ static MSIMIME *load_mime( MSIPACKAGE* package, MSIRECORD *row )
 
     sz = IDENTIFIER_SIZE;
     MSI_RecordGetStringW( row, 3, mt->CLSID, &sz );
-    mt->Class = load_given_class(package, mt->CLSID);
+    mt->Class = load_given_class( package, mt->CLSID );
+
+    list_add_tail( &package->mimes, &mt->entry );
     
     return mt;
 }
