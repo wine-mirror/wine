@@ -23,6 +23,10 @@
 extern "C" {
 #endif
 
+#define NETWORK_ALIVE_LAN 1
+#define NETWORK_ALIVE_WAN 2
+#define NETWORK_ALIVE_AOL 4
+
 typedef struct tagQOCINFO
 {
     DWORD dwSize;

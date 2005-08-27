@@ -79,6 +79,8 @@ BOOL WINAPI IsDestinationReachableW(LPCWSTR lpszDestination, LPQOCINFO lpQOCInfo
 
 BOOL WINAPI IsNetworkAlive(LPDWORD lpdwFlags)
 {
-    FIXME("%p\n", lpdwFlags);
+    TRACE("yes, using LAN type network.\n");
+    if (lpdwFlags)
+       *lpdwFlags = NETWORK_ALIVE_LAN;
     return TRUE;
 }
