@@ -101,6 +101,9 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IOleControl, riid)) {
         TRACE("(%p)->(IID_IOleControl, %p)\n", This, ppvObject);
         *ppvObject = CONTROL(This);
+    }else if(IsEqualGUID(&IID_IHlinkTarget, riid)) {
+        TRACE("(%p)->(IID_IHlinkTarget, %p)\n", This, ppvObject);
+        *ppvObject = HLNKTARGET(This);
     }
 
     if(*ppvObject) {
@@ -173,7 +176,7 @@ static HRESULT WINAPI HTMLDocument_Invoke(IHTMLDocument2 *iface, DISPID dispIdMe
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     FIXME("(%p)->(%ld %s %ld %d %p %p %p %p)\n", iface, dispIdMember, debugstr_guid(riid),
-		                  lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }
 
@@ -987,6 +990,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     HTMLDocument_View_Init(ret);
     HTMLDocument_Window_Init(ret);
     HTMLDocument_Service_Init(ret);
+    HTMLDocument_Hlink_Init(ret);
     HTMLDocument_NSContainer_Init(ret);
 
     return hres;

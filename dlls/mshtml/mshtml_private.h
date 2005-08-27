@@ -19,6 +19,7 @@
 #include "docobj.h"
 #include "mshtml.h"
 #include "mshtmhst.h"
+#include "hlink.h"
 
 #ifdef INIT_GUID
 #include "initguid.h"
@@ -53,6 +54,7 @@ typedef struct {
     const IServiceProviderVtbl            *lpServiceProviderVtbl;
     const IOleCommandTargetVtbl           *lpOleCommandTargetVtbl;
     const IOleControlVtbl                 *lpOleControlVtbl;
+    const IHlinkTargetVtbl                *lpHlinkTargetVtbl;
 
     LONG ref;
 
@@ -107,6 +109,7 @@ struct NSContainer {
 #define CMDTARGET(x)     ((IOleCommandTarget*)            &(x)->lpOleCommandTargetVtbl)
 #define CONTROL(x)       ((IOleControl*)                  &(x)->lpOleControlVtbl)
 #define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
+#define HLNKTARGET(x)    ((IHlinkTarget*)                 &(x)->lpHlinkTargetVtbl)
 
 #define NSWBCHROME(x)    ((nsIWebBrowserChrome*)          &(x)->lpWebBrowserChromeVtbl)
 #define NSCML(x)         ((nsIContextMenuListener*)       &(x)->lpContextMenuListenerVtbl)
@@ -120,6 +123,7 @@ void HTMLDocument_OleObj_Init(HTMLDocument*);
 void HTMLDocument_View_Init(HTMLDocument*);
 void HTMLDocument_Window_Init(HTMLDocument*);
 void HTMLDocument_Service_Init(HTMLDocument*);
+void HTMLDocument_Hlink_Init(HTMLDocument*);
 void HTMLDocument_NSContainer_Init(HTMLDocument*);
 
 void HTMLDocument_NSContainer_Destroy(HTMLDocument*);
