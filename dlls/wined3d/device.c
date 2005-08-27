@@ -4691,11 +4691,19 @@ BOOL     WINAPI  IWineD3DDeviceImpl_GetSoftwareVertexProcessing(IWineD3DDevice *
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetRasterStatus(IWineD3DDevice *iface, UINT iSwapChain, D3DRASTER_STATUS* pRasterStatus) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSwapChain *swapChain;
+    HRESULT hr;
 
-    pRasterStatus->InVBlank = TRUE;
-    pRasterStatus->ScanLine = 0;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) :  SwapChain %d returning %p\n", This, iSwapChain, pRasterStatus);
+
+    hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
+    if(hr == D3D_OK){
+        hr = IWineD3DSwapChain_GetRasterStatus(swapChain, pRasterStatus);
+        IWineD3DSwapChain_Release(swapChain);
+    }else{
+        FIXME("(%p) IWineD3DSwapChain_GetRasterStatus returned in error \n", This);
+    }
+    return hr;
 }
 
 
