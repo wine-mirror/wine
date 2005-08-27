@@ -121,12 +121,6 @@ static BOOL process_attach(void)
     /* Setup registry locale information */
     LOCALE_InitRegistry();
 
-    /* Initialize 16-bit thunking entry points */
-    if (!WOWTHUNK_Init()) return FALSE;
-
-    /* Initialize DOS memory */
-    if (!DOSMEM_Init()) return FALSE;
-
     /* Setup computer name */
     COMPUTERNAME_Init();
 
@@ -135,6 +129,12 @@ static BOOL process_attach(void)
 
     if ((hModule = LoadLibrary16( "krnl386.exe" )) >= 32)
     {
+        /* Initialize 16-bit thunking entry points */
+        if (!WOWTHUNK_Init()) return FALSE;
+
+        /* Initialize DOS memory */
+        if (!DOSMEM_Init()) return FALSE;
+
         /* Initialize special KERNEL entry points */
 
         /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
@@ -170,8 +170,13 @@ static BOOL process_attach(void)
     }
 
 #ifdef __i386__
-    /* Create the shared heap for broken win95 native dlls */
-    if (GetVersion() & 0x80000000) HeapCreate( HEAP_SHARED, 0, 0 );
+    if (GetVersion() & 0x80000000)
+    {
+        /* create the shared heap for broken win95 native dlls */
+        HeapCreate( HEAP_SHARED, 0, 0 );
+        /* setup emulation of protected instructions from 32-bit code */
+        RtlAddVectoredExceptionHandler( TRUE, INSTR_vectored_handler );
+    }
 #endif
 
     /* initialize LDT locking */

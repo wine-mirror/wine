@@ -880,6 +880,28 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 
 
 /***********************************************************************
+ *           INSTR_vectored_handler
+ *
+ * Vectored exception handler used to emulate protected instructions
+ * from 32-bit code.
+ */
+LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs )
+{
+    EXCEPTION_RECORD *record = ptrs->ExceptionRecord;
+    CONTEXT *context = ptrs->ContextRecord;
+
+    if (wine_ldt_is_system(context->SegCs) &&
+        (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
+         record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION))
+    {
+        if (INSTR_EmulateInstruction( record, context ) == ExceptionContinueExecution)
+            return EXCEPTION_CONTINUE_EXECUTION;
+    }
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+
+/***********************************************************************
  *           INSTR_CallBuiltinHandler
  */
 void INSTR_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum )

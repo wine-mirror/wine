@@ -87,7 +87,6 @@ extern BYTE __wine_call16_end[];
 
 extern void RELAY16_InitDebugLists(void);
 
-static LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs );
 static SEGPTR call16_ret_addr;  /* segptr to __wine_call_to_16_ret routine */
 
 static WORD  dpmi_checker_selector;
@@ -127,8 +126,6 @@ BOOL WOWTHUNK_Init(void)
 
     if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY16_InitDebugLists();
 
-    /* setup emulation of protected instructions from 32-bit code (only for Win9x versions) */
-    if (GetVersion() & 0x80000000) RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
     return TRUE;
 }
 
@@ -331,28 +328,6 @@ static DWORD vm86_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECO
     }
 
     return ExceptionContinueSearch;
-}
-
-
-/***********************************************************************
- *           vectored_handler
- *
- * Vectored exception handler used to emulate protected instructions
- * from 32-bit code.
- */
-static LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs )
-{
-    EXCEPTION_RECORD *record = ptrs->ExceptionRecord;
-    CONTEXT *context = ptrs->ContextRecord;
-
-    if (wine_ldt_is_system(context->SegCs) &&
-        (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
-         record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION))
-    {
-        if (INSTR_EmulateInstruction( record, context ) == ExceptionContinueExecution)
-            return EXCEPTION_CONTINUE_EXECUTION;
-    }
-    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 
