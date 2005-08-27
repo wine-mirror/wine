@@ -139,6 +139,7 @@ check (const struct listbox_test test)
   HWND hLB=create_listbox (test.prop.add_style, 0);
   RECT second_item;
   int i;
+  int res;
 
   listbox_query (hLB, &answer);
   listbox_ok (test, init, answer);
@@ -179,6 +180,16 @@ check (const struct listbox_test test)
 	HeapFree (GetProcessHeap(), 0, txt);
   }
   
+  /* Confirm the count of items, and that an invalid delete does not remove anything */
+  res = SendMessage (hLB, LB_GETCOUNT, 0, 0);
+  ok((res==4), "Expected 4 items, got %d\n", res);
+  res = SendMessage (hLB, LB_DELETESTRING, -1, 0);
+  ok((res==LB_ERR), "Expected LB_ERR items, got %d\n", res);
+  res = SendMessage (hLB, LB_DELETESTRING, 4, 0);
+  ok((res==LB_ERR), "Expected LB_ERR items, got %d\n", res);
+  res = SendMessage (hLB, LB_GETCOUNT, 0, 0);
+  ok((res==4), "Expected 4 items, got %d\n", res);
+
   WAIT;
   DestroyWindow (hLB);
 }

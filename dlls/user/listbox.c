@@ -1662,8 +1662,7 @@ static LRESULT LISTBOX_RemoveItem( LB_DESCR *descr, INT index )
     LB_ITEMDATA *item;
     INT max_items;
 
-    if ((index == -1) && (descr->nb_items > 0)) index = descr->nb_items - 1;
-    else if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
+    if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
 
     /* We need to invalidate the original rect instead of the updated one. */
     LISTBOX_InvalidateItems( descr, index );
@@ -1760,7 +1759,7 @@ static LRESULT LISTBOX_SetCount( LB_DESCR *descr, INT count )
     else if (count < descr->nb_items)
     {
         while (count < descr->nb_items)
-            if ((ret = LISTBOX_RemoveItem( descr, -1 )) < 0)
+            if ((ret = LISTBOX_RemoveItem( descr, (descr->nb_items - 1) )) < 0)
                 return ret;
     }
     return LB_OKAY;
