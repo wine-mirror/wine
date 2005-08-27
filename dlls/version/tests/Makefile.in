@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = version.dll
-IMPORTS   = version
+IMPORTS   = version kernel32
 
 CTESTS = \
 	info.c

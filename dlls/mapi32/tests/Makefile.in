@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = mapi32.dll
-IMPORTS   = mapi32
+IMPORTS   = mapi32 kernel32
 EXTRALIBS = -luuid
 
 CTESTS = \

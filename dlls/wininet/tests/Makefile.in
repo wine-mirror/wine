@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = wininet.dll
-IMPORTS   = wininet
+IMPORTS   = wininet kernel32
 
 CTESTS = \
 	generated.c \

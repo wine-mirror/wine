@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = rpcrt4.dll
-IMPORTS   = rpcrt4
+IMPORTS   = rpcrt4 kernel32
 
 CTESTS = \
 	generated.c \

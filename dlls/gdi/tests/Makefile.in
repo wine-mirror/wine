@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = gdi32.dll
-IMPORTS   = user32 gdi32
+IMPORTS   = user32 gdi32 kernel32
 
 CTESTS = \
 	bitmap.c \
