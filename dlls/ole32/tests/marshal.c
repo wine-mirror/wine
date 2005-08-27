@@ -417,6 +417,65 @@ static void test_interthread_marshal_and_unmarshal(void)
     end_host_object(tid, thread);
 }
 
+/* tests success case of an interthread marshal and then marshaling the proxy */
+static void test_proxy_marshal_and_unmarshal(void)
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy = NULL;
+    IUnknown *pProxy2 = NULL;
+    DWORD tid;
+    HANDLE thread;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+    ok_more_than_one_lock();
+    
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, CoUnmarshalInterface);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    /* marshal the proxy */
+    hr = CoMarshalInterface(pStream, &IID_IClassFactory, pProxy, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    /* unmarshal the second proxy to the object */
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
+    ok_ole_success(hr, CoUnmarshalInterface);
+    IStream_Release(pStream);
+
+    /* now the proxies should be as follows:
+     *  pProxy -> &Test_ClassFactory
+     *  pProxy2 -> &Test_ClassFactory
+     * they should NOT be as follows:
+     *  pProxy -> &Test_ClassFactory
+     *  pProxy2 -> pProxy
+     * the above can only really be tested by looking in +ole traces
+     */
+
+    ok_more_than_one_lock();
+
+    IUnknown_Release(pProxy);
+
+    ok_more_than_one_lock();
+
+    IUnknown_Release(pProxy2);
+
+    ok_no_locks();
+
+    end_host_object(tid, thread);
+}
+
 /* tests that stubs are released when the containing apartment is destroyed */
 static void test_marshal_stub_apartment_shutdown(void)
 {
@@ -1210,7 +1269,7 @@ static void test_proxy_interfaces(void)
     if (hr == S_OK) IUnknown_Release(pOtherUnknown);
 
     hr = IUnknown_QueryInterface(pProxy, &IID_IMarshal, (LPVOID*)&pOtherUnknown);
-    todo_wine { ok_ole_success(hr, IUnknown_QueryInterface IID_IMarshal); }
+    ok_ole_success(hr, IUnknown_QueryInterface IID_IMarshal);
     if (hr == S_OK) IUnknown_Release(pOtherUnknown);
 
     /* IMarshal2 is also supported on NT-based systems, but is pretty much
@@ -1639,6 +1698,7 @@ START_TEST(marshal)
     test_normal_marshal_and_unmarshal();
     test_marshal_and_unmarshal_invalid();
     test_interthread_marshal_and_unmarshal();
+    test_proxy_marshal_and_unmarshal();
     test_marshal_stub_apartment_shutdown();
     test_marshal_proxy_apartment_shutdown();
     test_marshal_proxy_mta_apartment_shutdown();
