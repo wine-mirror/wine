@@ -3815,7 +3815,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
                                LPINT lpAddressLength)
 {
     INT res=0;
-    LONG inetaddr;
+    struct in_addr inetaddr;
     LPSTR workBuffer=NULL,ptrPort;
 
     TRACE( "(%s, %x, %p, %p, %p)\n", AddressString, AddressFamily, lpProtocolInfo,
@@ -3853,10 +3853,9 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
                         }
                         else
                             ((LPSOCKADDR_IN)lpAddress)->sin_port = 0;
-                        inetaddr = inet_addr(workBuffer);
-                        if (inetaddr != INADDR_NONE)
+                        if (inet_aton(workBuffer, &inetaddr) > 0)
                         {
-                            ((LPSOCKADDR_IN)lpAddress)->sin_addr.WS_s_addr = inetaddr;
+                            ((LPSOCKADDR_IN)lpAddress)->sin_addr.WS_s_addr = inetaddr.s_addr;
                             res = 0;
                         }
                         else

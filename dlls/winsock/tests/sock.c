@@ -1210,9 +1210,12 @@ static void test_WSAStringToAddressA(void)
         "WSAStringToAddressA() failed unexpectedly: %d\n", WSAGetLastError() );
 
     len = sizeof(sockaddr);
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAStringToAddressA( address3, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
-    ok( ret, "WSAStringToAddressA() succeeded unexpectedly: %d\n", WSAGetLastError() );
+    ok( !ret && sockaddr.sin_addr.s_addr == 0xffffffff,
+        "WSAStringToAddressA() failed unexpectedly: %d\n", WSAGetLastError() );
 
     len = sizeof(sockaddr);
     sockaddr.sin_port = 0;
@@ -1223,9 +1226,12 @@ static void test_WSAStringToAddressA(void)
         "WSAStringToAddressA() failed unexpectedly: %d\n", WSAGetLastError() );
 
     len = sizeof(sockaddr);
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAStringToAddressA( address5, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
-    ok( ret, "WSAStringToAddressA() succeeded unexpectedly: %d\n", WSAGetLastError() );
+    ok( !ret && sockaddr.sin_addr.s_addr == 0xffffffff && sockaddr.sin_port == 0xffff,
+        "WSAStringToAddressA() failed unexpectedly: %d\n", WSAGetLastError() );
 }
 
 static void test_WSAStringToAddressW(void)
@@ -1257,7 +1263,6 @@ static void test_WSAStringToAddressW(void)
         "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     len = sizeof(sockaddr);
-
     sockaddr.sin_port = 0;
     sockaddr.sin_addr.s_addr = 0;
 
@@ -1266,9 +1271,12 @@ static void test_WSAStringToAddressW(void)
         "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     len = sizeof(sockaddr);
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAStringToAddressW( address3, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
-    ok( ret, "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
+    ok( !ret && sockaddr.sin_addr.s_addr == 0xffffffff,
+        "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     len = sizeof(sockaddr);
     sockaddr.sin_port = 0;
@@ -1279,9 +1287,12 @@ static void test_WSAStringToAddressW(void)
         "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     len = sizeof(sockaddr);
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAStringToAddressW( address5, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
-    ok( ret, "WSAStringToAddressW() succeeded unexpectedly: %d\n", WSAGetLastError() );
+    ok( !ret && sockaddr.sin_addr.s_addr == 0xffffffff && sockaddr.sin_port == 0xffff,
+        "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
 }
 
 /**************** Main program  ***************/
