@@ -1432,6 +1432,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     int y, y2;
     POINT pts[2];
     BOOL top_down = FALSE;
+    RGNDATA *rgndata;
 
     if(!X11DRV_XRender_Installed) {
         FIXME("Unable to AlphaBlend without Xrender\n");
@@ -1530,6 +1531,15 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
                                      xpm, src_format,
                                      CPSubwindowMode, &pa);
     TRACE("src_pict %08lx\n", src_pict);
+
+    if ((rgndata = X11DRV_GetRegionData( devDst->region, 0 )))
+    {
+        pXRenderSetPictureClipRectangles( gdi_display, dst_pict,
+                                          devDst->org.x, devDst->org.y,
+                                          (XRectangle *)rgndata->Buffer, 
+                                          rgndata->rdh.nCount );
+        HeapFree( GetProcessHeap(), 0, rgndata );
+    }
 
 #ifdef HAVE_XRENDERSETPICTURETRANSFORM
     if(widthDst != widthSrc || heightDst != heightSrc) {
