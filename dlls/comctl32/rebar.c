@@ -3935,7 +3935,7 @@ REBAR_LButtonDown (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     REBAR_BAND *lpBand;
     UINT htFlags;
-    UINT iHitBand;
+    INT iHitBand;
     POINT ptMouseDown;
     ptMouseDown.x = (INT)LOWORD(lParam);
     ptMouseDown.y = (INT)HIWORD(lParam);

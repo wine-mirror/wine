@@ -601,7 +601,8 @@ static LRESULT
 TAB_LButtonDown (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
   POINT pt;
-  INT newItem, dummy;
+  INT newItem;
+  UINT dummy;
 
   if (infoPtr->hwndToolTip)
     TAB_RelayEvent (infoPtr->hwndToolTip, infoPtr->hwnd,

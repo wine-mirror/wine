@@ -163,7 +163,7 @@ BOOL FileIsPlaceable( LPCSTR szFileName )
 
 HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
 {
-  LPSTR	lpData;
+  LPBYTE lpData;
   METAHEADER mfHeader;
   APMFILEHEADER	APMHeader;
   HFILE	fh;
@@ -191,7 +191,7 @@ HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
 
   if (!_lread(fh, (LPSTR)&mfHeader, sizeof(METAHEADER))) return 0;
 
-  if (!(lpData = (LPSTR) GlobalAlloc(GPTR, (mfHeader.mtSize * 2L)))) return 0;
+  if (!(lpData = GlobalAlloc(GPTR, (mfHeader.mtSize * 2L)))) return 0;
 
   _llseek(fh, sizeof(APMFILEHEADER), 0);
   if (!_lread(fh, lpData, (UINT)(mfHeader.mtSize * 2L)))

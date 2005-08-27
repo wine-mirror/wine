@@ -1637,7 +1637,7 @@ QueryServiceConfigA( SC_HANDLE hService,
     CHAR str_buffer[ MAX_PATH ];
     LONG r;
     DWORD type, val, sz, total, n;
-    LPBYTE p;
+    LPSTR p;
 
     TRACE("%p %p %ld %p\n", hService, lpServiceConfig,
            cbBufSize, pcbBytesNeeded);
@@ -1715,7 +1715,7 @@ QueryServiceConfigA( SC_HANDLE hService,
         lpServiceConfig->dwErrorControl = val;
 
     /* now do the strings */
-    p = (LPBYTE) &lpServiceConfig[1];
+    p = (LPSTR) &lpServiceConfig[1];
     n = total - sizeof (QUERY_SERVICE_CONFIGA);
 
     sz = sizeof(str_buffer);
@@ -1725,7 +1725,7 @@ QueryServiceConfigA( SC_HANDLE hService,
         sz = ExpandEnvironmentStringsA(str_buffer, p, n);
         if( 0 == sz || sz > n ) return FALSE;
 
-        lpServiceConfig->lpBinaryPathName = (LPSTR) p;
+        lpServiceConfig->lpBinaryPathName = p;
         p += sz;
         n -= sz;
     }
@@ -1739,7 +1739,7 @@ QueryServiceConfigA( SC_HANDLE hService,
     r = RegQueryValueExA( hKey, szGroup, 0, &type, (LPBYTE)p, &sz );
     if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
     {
-        lpServiceConfig->lpLoadOrderGroup = (LPSTR) p;
+        lpServiceConfig->lpLoadOrderGroup = p;
         p += sz;
         n -= sz;
     }
@@ -1748,7 +1748,7 @@ QueryServiceConfigA( SC_HANDLE hService,
     r = RegQueryValueExA( hKey, szDependencies, 0, &type, (LPBYTE)p, &sz );
     if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
     {
-        lpServiceConfig->lpDependencies = (LPSTR) p;
+        lpServiceConfig->lpDependencies = p;
         p += sz;
         n -= sz;
     }

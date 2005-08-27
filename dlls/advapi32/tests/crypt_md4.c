@@ -51,7 +51,7 @@ static void test_md4_ctx(void)
         "In our business there is Sin"
         "In our bodies, there is Die";
 
-    int size = strlen( message );
+    int size = sizeof(message) - 1;
     HMODULE module;
 
     MD4_CTX ctx;

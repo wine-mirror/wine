@@ -49,7 +49,7 @@ typedef struct {
 #define R4(v,w,x,y,z,i) z+=f4(w,x,y)+blk1(i)+0xCA62C1D6+rol(v,5);w=rol(w,30);
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
-void SHA1Transform(ULONG State[5], CHAR Buffer[64])
+void SHA1Transform(ULONG State[5], UCHAR Buffer[64])
 {
    ULONG a, b, c, d, e;
    ULONG *Block;
@@ -178,7 +178,7 @@ A_SHAFinal(PSHA_CTX Context, PULONG Result)
    Count = (ULONG*)(Buffer + Pad);
    Count[0] = DWORD2BE(LengthHi);
    Count[1] = DWORD2BE(LengthLo);
-   A_SHAUpdate(Context, Buffer, Pad + 8);
+   A_SHAUpdate(Context, (PCHAR)Buffer, Pad + 8);
 
    for (Index = 0; Index < 5; Index++)
       Result[Index] = DWORD2BE(Context->State[Index]);

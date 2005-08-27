@@ -991,7 +991,7 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
         if (type == REG_SZ)
         {
             if (!data) return ERROR_INVALID_PARAMETER;
-            count = strlen(data) + 1;
+            count = strlen((const char *)data) + 1;
         }
     }
     else if (count && is_string(type))
@@ -1005,9 +1005,9 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
     if (is_string( type )) /* need to convert to Unicode */
     {
         DWORD lenW;
-        RtlMultiByteToUnicodeSize( &lenW, data, count );
+        RtlMultiByteToUnicodeSize( &lenW, (const char *)data, count );
         if (!(dataW = HeapAlloc( GetProcessHeap(), 0, lenW ))) return ERROR_OUTOFMEMORY;
-        RtlMultiByteToUnicodeN( dataW, lenW, NULL, data, count );
+        RtlMultiByteToUnicodeN( dataW, lenW, NULL, (const char *)data, count );
         count = lenW;
         data = (BYTE *)dataW;
     }
@@ -1232,7 +1232,7 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
                 if (len > *count) status = STATUS_BUFFER_OVERFLOW;
                 else
                 {
-                    RtlUnicodeToMultiByteN( data, len, NULL, (WCHAR *)(buf_ptr + info_size),
+                    RtlUnicodeToMultiByteN( (char*)data, len, NULL, (WCHAR *)(buf_ptr + info_size),
                                             total_size - info_size );
                     /* if the type is REG_SZ and data is not 0-terminated
                      * and there is enough space in the buffer NT appends a \0 */
@@ -1285,7 +1285,7 @@ DWORD WINAPI RegQueryValueW( HKEY hkey, LPCWSTR name, LPWSTR data, LPLONG count 
     {
         if ((ret = RegOpenKeyW( hkey, name, &subkey )) != ERROR_SUCCESS) return ret;
     }
-    ret = RegQueryValueExW( subkey, NULL, NULL, NULL, (LPBYTE)data, count );
+    ret = RegQueryValueExW( subkey, NULL, NULL, NULL, (LPBYTE)data, (LPDWORD)count );
     if (subkey != hkey) RegCloseKey( subkey );
     if (ret == ERROR_FILE_NOT_FOUND)
     {
@@ -1314,7 +1314,7 @@ DWORD WINAPI RegQueryValueA( HKEY hkey, LPCSTR name, LPSTR data, LPLONG count )
     {
         if ((ret = RegOpenKeyA( hkey, name, &subkey )) != ERROR_SUCCESS) return ret;
     }
-    ret = RegQueryValueExA( subkey, NULL, NULL, NULL, (LPBYTE)data, count );
+    ret = RegQueryValueExA( subkey, NULL, NULL, NULL, (LPBYTE)data, (LPDWORD)count );
     if (subkey != hkey) RegCloseKey( subkey );
     if (ret == ERROR_FILE_NOT_FOUND)
     {
@@ -1731,7 +1731,7 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
                 if (len > *count) status = STATUS_BUFFER_OVERFLOW;
                 else
                 {
-                    RtlUnicodeToMultiByteN( data, len, NULL, (WCHAR *)(buf_ptr + info->DataOffset),
+                    RtlUnicodeToMultiByteN( (char*)data, len, NULL, (WCHAR *)(buf_ptr + info->DataOffset),
                                             total_size - info->DataOffset );
                     /* if the type is REG_SZ and data is not 0-terminated
                      * and there is enough space in the buffer NT appends a \0 */
