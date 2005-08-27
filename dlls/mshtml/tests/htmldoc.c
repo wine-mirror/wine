@@ -197,7 +197,8 @@ static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
 
     if(expect_SetActiveObject_active) {
         ok(pActiveObject != NULL, "pActiveObject = NULL\n");
-        ok(!lstrcmpW(wszHTML_Document, pszObjName), "pszObjName != \"HTML Document\"\n");
+        if(pActiveObject && PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ENGLISH)
+            ok(!lstrcmpW(wszHTML_Document, pszObjName), "pszObjName != \"HTML Document\"\n");
     }else {
         ok(pActiveObject == NULL, "pActiveObject=%p, expected NULL\n", pActiveObject);
         ok(pszObjName == NULL, "pszObjName=%p, expected NULL\n", pszObjName);
