@@ -452,6 +452,9 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
   DWORD dwFlags;
   int width, height;
 
+  if (!lppsp)
+    return FALSE;
+
   TRACE("\n");
   psInfo->proppage[index].hpage = (HPROPSHEETPAGE)lppsp;
   psInfo->proppage[index].hwndPage = 0;
