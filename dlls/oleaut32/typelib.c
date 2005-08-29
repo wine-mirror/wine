@@ -3132,7 +3132,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
     DWORD len, order;
     ITypeInfoImpl **ppTypeInfoImpl;
 
-    TRACE("%p, TLB length = %ld\n", pLib, dwTLBLength);
+    TRACE_(typelib)("%p, TLB length = %ld\n", pLib, dwTLBLength);
 
     pTypeLibImpl = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ITypeLibImpl));
     if (!pTypeLibImpl) return NULL;
@@ -3142,8 +3142,8 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
     pHeader = pLib;
 
-    TRACE("header:\n");
-    TRACE("\tmagic=0x%08lx, file blocks = %d\n", pHeader->SLTG_magic,
+    TRACE_(typelib)("header:\n");
+    TRACE_(typelib)("\tmagic=0x%08lx, file blocks = %d\n", pHeader->SLTG_magic,
 	  pHeader->nrOfFileBlks );
     if (pHeader->SLTG_magic != SLTG_SIGNATURE) {
 	FIXME("Header type magic 0x%08lx not supported.\n",
@@ -3219,7 +3219,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	}
 	w = *(WORD*)(ptr + 4 + len);
 	if(w != 0xffff) {
-	    TRACE("\twith %s\n", debugstr_an(ptr + 6 + len, w));
+	    TRACE_(typelib)("\twith %s\n", debugstr_an(ptr + 6 + len, w));
 	    len += w;
 	    pOtherTypeInfoBlks[i].other_name = HeapAlloc(GetProcessHeap(),0,
 							 w+1);
@@ -3366,7 +3366,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	  (*ppTypeInfoImpl)->TypeAttr.cbSizeInstance = pTITail->cbSizeInstance;
 	  (*ppTypeInfoImpl)->TypeAttr.cbSizeVft = pTITail->cbSizeVft;
 
-#define X(x) TRACE("tt "#x": %x\n",pTITail->res##x);
+#define X(x) TRACE_(typelib)("tt "#x": %x\n",pTITail->res##x);
 	  X(06);
 	  X(08);
 	  X(0a);
@@ -4997,6 +4997,14 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                             dump_Variant(&varresult);
                         }
                         hres = VariantCopyInd(pVarResult, &varresult);
+                        /* free data stored in varresult. Note that
+                         * VariantClear doesn't do what we want because we are
+                         * working with byref types. */
+                        /* FIXME: clear safearrays, bstrs, records and
+                         * variants here too */
+                        if ((V_VT(&varresult) == (VT_UNKNOWN | VT_BYREF)) ||
+                            (V_VT(&varresult) == (VT_DISPATCH | VT_BYREF)))
+                            IUnknown_Release(*V_UNKNOWNREF(&varresult));
                         break;
 		    }
 		}
