@@ -386,6 +386,8 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
         {
             hr = SHBindToParent( pidl, &IID_IShellFolder, (LPVOID*)&psfParent,
                                 (LPCITEMIDLIST*)&pidlLast );
+            if (SUCCEEDED(hr))
+                pidlLast = ILClone(pidlLast);
             ILFree(pidl);
         }
         else
