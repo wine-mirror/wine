@@ -736,20 +736,13 @@ BOOL WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
 
         if (ret && strcasecmp( lpSubBlock, rootA ) && strcasecmp( lpSubBlock, varfileinfoA ))
         {
-            LPSTR lplpBufferA;
+            LPSTR lpBufferA = (LPSTR)pBlock + info->wLength + 4;
+            DWORD pos = (LPSTR)*lplpBuffer - (LPSTR)pBlock;
 
-            len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*lplpBuffer, -1, NULL, 0, NULL, NULL);
-            lplpBufferA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
-
-            if (!lplpBufferA)
-                return FALSE;
-
-            WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*lplpBuffer, -1, lplpBufferA, len, NULL, NULL);
-
-            memcpy(*lplpBuffer, lplpBufferA, len);
+            len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*lplpBuffer, -1,
+                                      lpBufferA + pos, info->wLength - pos, NULL, NULL);
+            *lplpBuffer = lpBufferA + pos;
             *puLen = len;
-
-            HeapFree(GetProcessHeap(), 0, lplpBufferA);
         }
         return ret;
     }
@@ -792,20 +785,14 @@ BOOL WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
 
         if (ret && strcmpiW( lpSubBlock, rootW ) && strcmpiW( lpSubBlock, varfileinfoW ))
         {
-            LPWSTR lplpBufferW;
+            LPWSTR lpBufferW = (LPWSTR)((LPSTR)pBlock + info->wLength);
+            DWORD pos = (LPSTR)*lplpBuffer - (LPSTR)pBlock;
+            DWORD max = (info->wLength - sizeof(VS_FIXEDFILEINFO)) * 4 - info->wLength;
 
-            len  = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*lplpBuffer, -1, NULL, 0);
-            lplpBufferW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-
-            if (!lplpBufferW)
-                return FALSE;
-
-            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*lplpBuffer, -1, lplpBufferW, len);
-
-            memcpy(*lplpBuffer, lplpBufferW, len * sizeof(WCHAR));
+            len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*lplpBuffer, -1,
+                                      lpBufferW + pos, max/sizeof(WCHAR) - pos );
+            *lplpBuffer = lpBufferW + pos;
             *puLen = len;
-
-            HeapFree(GetProcessHeap(), 0, lplpBufferW);
         }
         return ret;
     }
