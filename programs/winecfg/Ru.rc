@@ -42,7 +42,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Настройка приложений ",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine может имитировать разные версии Windows для разных приложений. Эта вкладка связаны с вкладками Библиотеки и Графика, для того чтобы позволить вам изменить глобальные настройки или настройки только для определённого приложения также и в этих вкладках.",
+    LTEXT           "Wine может имитировать разные версии Windows для разных приложений. Эта вкладка связана с вкладками Библиотеки и Графика, для того чтобы позволить вам изменить глобальные настройки или настройки только для определённого приложения также и в этих вкладках.",
                     IDC_STATIC,15,20,227,60
     CONTROL         "Приложения",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,65,230,134
@@ -61,7 +61,7 @@ BEGIN
 
     GROUPBOX        " Настройки окна ",IDC_STATIC,8,25,244,110
 
-    CONTROL	    "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL	    "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,235,8
     CONTROL	    "Включить двойную буферизацию рабочего стола",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     
     /* FIXME: the wording of this explanation could be a lot better */
@@ -170,12 +170,32 @@ BEGIN
 
 END
 
+IDD_APPEARANCE DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Темы ",IDC_STATIC,8,10,244,94
+    LTEXT           "Тема:",IDC_STATIC,15,22,228,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,15,30,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Цвет:",IDC_THEME_COLORTEXT,15,48,228,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,15,56,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Размер:",IDC_THEME_SIZETEXT,15,74,228,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,15,82,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
+    IDS_TAB_APPLICATIONS    "Приложения"
     IDS_TAB_DLLS            "Библиотеки"
     IDS_TAB_DRIVES          "Диски"
     IDS_CHOOSE_PATH         "Выберите unix каталог для диска."
     IDS_HIDE_ADVANCED       "Скрыть дополнительные"
     IDS_SHOW_ADVANCED       "Показать дополнительные"
+    IDS_NOTHEME             "(без темы)"
+    IDS_TAB_GRAPHICS        "Графика"
+    IDS_TAB_APPEARANCE      "Внешний вид"
+    IDS_TAB_AUDIO           "Аудио"
+    IDS_TAB_ABOUT           "О программе"
+    IDS_WINECFG_TITLE       "Настройка Wine"
 END
