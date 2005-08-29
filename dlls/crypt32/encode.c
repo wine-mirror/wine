@@ -242,7 +242,7 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
 
     /* write the values */
     if (pszOverrideFuncName)
-        RegSetValueExA(hKey, "FuncName", 0, REG_SZ, pszOverrideFuncName,
+        RegSetValueExA(hKey, "FuncName", 0, REG_SZ, (const BYTE*)pszOverrideFuncName,
          lstrlenA(pszOverrideFuncName) + 1);
     RegSetValueExW(hKey, szDllName, 0, REG_SZ, (const BYTE*) pwszDll,
                     (lstrlenW(pwszDll) + 1) * sizeof (WCHAR));
@@ -2574,7 +2574,7 @@ static BOOL CRYPT_AsnDecodeExtension(const BYTE *pbEncoded, DWORD cbEncoded,
                              &ext->Value, &dataLen);
                             if (ret)
                             {
-                                ext->pszObjId = ext->Value.pbData +
+                                ext->pszObjId = (LPSTR)ext->Value.pbData +
                                  ext->Value.cbData;
                                 ptr = pbEncoded + 1 + lenBytes;
                                 ret = CRYPT_AsnDecodeOid(ptr,
@@ -3024,7 +3024,7 @@ static BOOL WINAPI CRYPT_AsnDecodeRdnAttr(const BYTE *pbEncoded,
                                              (LPSTR)(attr->Value.pbData +
                                              attr->Value.cbData);
                                         else
-                                            attr->pszObjId = originalData;
+                                            attr->pszObjId = (LPSTR)originalData;
                                         size = bytesNeeded - size;
                                         ret = CRYPT_AsnDecodeOid(
                                          pbEncoded + objIdOfset,
@@ -3355,17 +3355,17 @@ static BOOL WINAPI CRYPT_AsnDecodeAlgorithmId(DWORD dwCertEncodingType,
                                 {
                                     memcpy(algo->Parameters.pbData, ptr,
                                      algo->Parameters.cbData);
-                                    algo->pszObjId = algo->Parameters.pbData +
+                                    algo->pszObjId = (LPSTR)algo->Parameters.pbData +
                                      algo->Parameters.cbData;
                                 }
                                 else
                                 {
                                     algo->Parameters.pbData = (BYTE *)ptr;
-                                    algo->pszObjId = algo->Parameters.pbData;
+                                    algo->pszObjId = (LPSTR)algo->Parameters.pbData;
                                 }
                             }
                             else
-                                algo->pszObjId = algo->Parameters.pbData;
+                                algo->pszObjId = (LPSTR)algo->Parameters.pbData;
                             ptr = pbEncoded + 1 + lenBytes;
                             ret = CRYPT_AsnDecodeOid(ptr,
                              cbEncoded - (ptr - pbEncoded), 

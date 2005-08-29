@@ -169,8 +169,8 @@ struct LZXstate *LZXinit(int window)
     if (window < 15 || window > 21) return NULL;
 
     /* allocate state and associated window */
-    pState = (struct LZXstate *)malloc(sizeof(struct LZXstate));
-    if (!(pState->window = (UBYTE *)malloc(wndsize)))
+    pState = malloc(sizeof(struct LZXstate));
+    if (!(pState->window = malloc(wndsize)))
     {
         free(pState);
         return NULL;

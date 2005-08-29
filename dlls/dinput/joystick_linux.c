@@ -254,10 +254,10 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 inline static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
                                     char *buffer, DWORD size )
 {
-    if (appkey && !RegQueryValueExA( appkey, name, 0, NULL, buffer, &size ))
+    if (appkey && !RegQueryValueExA( appkey, name, 0, NULL, (LPBYTE)buffer, &size ))
         return 0;
 
-    if (defkey && !RegQueryValueExA( defkey, name, 0, NULL, buffer, &size ))
+    if (defkey && !RegQueryValueExA( defkey, name, 0, NULL, (LPBYTE)buffer, &size ))
         return 0;
 
     return ERROR_FILE_NOT_FOUND;

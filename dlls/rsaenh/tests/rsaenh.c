@@ -821,7 +821,7 @@ static void test_import_private(void)
 
     dwLen = (DWORD)sizeof(abEncryptedMessage);
     result = CryptDecrypt(hSessionKey, 0, TRUE, 0, abEncryptedMessage, &dwLen);
-    ok(result && dwLen == 12 && !strcmp(abEncryptedMessage, "Wine rocks!"), 
+    ok(result && dwLen == 12 && !memcmp(abEncryptedMessage, "Wine rocks!",12), 
        "%08lx, len: %ld\n", GetLastError(), dwLen);
     
     if (!derive_key(CALG_RC4, &hSessionKey, 56)) return;
@@ -1390,7 +1390,7 @@ static void test_enum_container(void)
     
     /* We only check, if the currently open 'winetest' container is among the enumerated. */
     do {
-        if (!strcmp(abContainerName, "winetest")) fFound = TRUE;
+        if (!strcmp((const char*)abContainerName, "winetest")) fFound = TRUE;
         dwBufferLen = (DWORD)sizeof(abContainerName);
     } while (CryptGetProvParam(hProv, PP_ENUMCONTAINERS, abContainerName, &dwBufferLen, 0));
         

@@ -122,7 +122,7 @@ BOOL NBNameCacheAddEntry(struct NBNameCache *cache, NBNameCacheEntry *entry)
         NBNameCacheNode **node;
 
         EnterCriticalSection(&cache->cs);
-        node = NBNameCacheWalk(cache, entry->name);
+        node = NBNameCacheWalk(cache, (char*)entry->name);
         if (node)
         {
             (*node)->expireTime = GetTickCount() +
@@ -166,7 +166,7 @@ const NBNameCacheEntry *NBNameCacheFindEntry(struct NBNameCache *cache,
         NBNameCacheNode **node;
 
         EnterCriticalSection(&cache->cs);
-        node = NBNameCacheWalk(cache, name);
+        node = NBNameCacheWalk(cache, (char*)name);
         if (node)
             ret = (*node)->entry;
         else
@@ -188,7 +188,7 @@ BOOL NBNameCacheUpdateNBName(struct NBNameCache *cache,
         NBNameCacheNode **node;
 
         EnterCriticalSection(&cache->cs);
-        node = NBNameCacheWalk(cache, name);
+        node = NBNameCacheWalk(cache, (char*)name);
         if (node && *node && (*node)->entry)
         {
             memcpy((*node)->entry->nbname, nbname, NCBNAMSZ);

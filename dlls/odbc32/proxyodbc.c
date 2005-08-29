@@ -200,12 +200,12 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
         {
             SQLRETURN sql_ret;
             SQLUSMALLINT dirn;
-            SQLCHAR desc [256];
+            CHAR desc [256];
             SQLSMALLINT sizedesc;
 
             success = 1;
             dirn = SQL_FETCH_FIRST;
-            while ((sql_ret = SQLDrivers (hEnv, dirn, desc, sizeof(desc),
+            while ((sql_ret = SQLDrivers (hEnv, dirn, (SQLCHAR*)desc, sizeof(desc),
                     &sizedesc, NULL, 0, NULL)) == SQL_SUCCESS ||
                     sql_ret == SQL_SUCCESS_WITH_INFO)
             {
@@ -218,7 +218,7 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
                             NULL, NULL, NULL)) == ERROR_FILE_NOT_FOUND)
                     {
                         if ((reg_ret = RegSetValueExA (hDrivers, desc, 0,
-                                REG_SZ, "Installed", 10)) != ERROR_SUCCESS)
+                                REG_SZ, (LPBYTE)"Installed", 10)) != ERROR_SUCCESS)
                         {
                             TRACE ("Error %ld replicating driver %s\n",
                                     reg_ret, desc);
@@ -316,9 +316,9 @@ static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
     LONG reg_ret;
     SQLRETURN sql_ret;
     SQLUSMALLINT dirn;
-    SQLCHAR dsn [SQL_MAX_DSN_LENGTH + 1];
+    CHAR dsn [SQL_MAX_DSN_LENGTH + 1];
     SQLSMALLINT sizedsn;
-    SQLCHAR desc [256];
+    CHAR desc [256];
     SQLSMALLINT sizedesc;
     int success;
     const char *which = is_user ? "user" : "system";
@@ -333,8 +333,8 @@ static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
         success = 1;
         dirn = is_user ? SQL_FETCH_FIRST_USER : SQL_FETCH_FIRST_SYSTEM;
         while ((sql_ret = SQLDataSources (hEnv, dirn,
-                dsn, sizeof(dsn), &sizedsn,
-                desc, sizeof(desc), &sizedesc)) == SQL_SUCCESS
+                (SQLCHAR*)dsn, sizeof(dsn), &sizedsn,
+                (SQLCHAR*)desc, sizeof(desc), &sizedesc)) == SQL_SUCCESS
                 || sql_ret == SQL_SUCCESS_WITH_INFO)
         {
             /* FIXME Do some proper handling of the SUCCESS_WITH_INFO */
@@ -353,7 +353,7 @@ static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
                             == ERROR_FILE_NOT_FOUND)
                     {
                         if ((reg_ret = RegSetValueExA (hDSN, DRIVERKEY, 0,
-                                REG_SZ, desc, sizedesc)) != ERROR_SUCCESS)
+                                REG_SZ, (LPBYTE)desc, sizedesc)) != ERROR_SUCCESS)
                         {
                             TRACE ("Error %ld replicating description of "
                                     "%s(%s)\n", reg_ret, dsn, desc);
@@ -862,8 +862,8 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle,
 
         CHECK_READY_AND_dmHandle();
 
-        strcpy(gProxyHandle.ServerName, ServerName);
-        strcpy(gProxyHandle.UserName, UserName);
+        strcpy( (LPSTR)gProxyHandle.ServerName, (LPSTR)ServerName );
+        strcpy( (LPSTR)gProxyHandle.UserName, (LPSTR)UserName );
 
         assert(gProxyHandle.functions[SQLAPI_INDEX_SQLCONNECT].func);
         ret=(gProxyHandle.functions[SQLAPI_INDEX_SQLCONNECT].func)

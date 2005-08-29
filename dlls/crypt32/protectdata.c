@@ -52,7 +52,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 #define CRYPT32_PROTECTDATA_KEY_CALG  CALG_RC2
 #define CRYPT32_PROTECTDATA_SALT_LEN  16
 
-#define CRYPT32_PROTECTDATA_SECRET "I'm hunting wabbits"
+static const BYTE crypt32_protectdata_secret[] = {
+    'I','\'','m',' ','h','u','n','t','i','n','g',' ',
+    'w','a','b','b','i','t','s',0
+};
 
 /*
  * The data format returned by the real Windows CryptProtectData seems
@@ -513,7 +516,7 @@ BOOL valid_protect_data(struct protect_data_t * pInfo)
      * implementation of CryptProtectData.
      */
     if (pInfo->info0.cbData!=strlen(crypt_magic_str)+1 ||
-        strcmp(pInfo->info0.pbData,crypt_magic_str) != 0)
+        strcmp( (LPCSTR)pInfo->info0.pbData,crypt_magic_str) != 0)
     {
         ERR("info0 magic value not matched !\n");
         status=FALSE;
@@ -562,7 +565,7 @@ BYTE * convert_str_to_blob(char* str, DATA_BLOB* blob)
         blob->cbData=0;
     }
     else {
-        strcpy(blob->pbData, str);
+        strcpy((LPSTR)blob->pbData, str);
     }
 
     return blob->pbData;
@@ -743,9 +746,9 @@ BOOL load_encryption_key(HCRYPTPROV hProv, DATA_BLOB * salt,
      * - randomness (from the salt)
      * - user-supplied entropy
      */
-    if ((szUsername && !CryptHashData(hSaltHash,szUsername,dwUsernameLen,0)) ||
-        !CryptHashData(hSaltHash,CRYPT32_PROTECTDATA_SECRET,
-                                 strlen(CRYPT32_PROTECTDATA_SECRET),0) ||
+    if ((szUsername && !CryptHashData(hSaltHash,(LPBYTE)szUsername,dwUsernameLen,0)) ||
+        !CryptHashData(hSaltHash,crypt32_protectdata_secret,
+                                 sizeof(crypt32_protectdata_secret)-1,0) ||
         !CryptHashData(hSaltHash,salt->pbData,salt->cbData,0) ||
         (pOptionalEntropy && !CryptHashData(hSaltHash,
                                             pOptionalEntropy->pbData,
@@ -791,7 +794,7 @@ report(DATA_BLOB* pDataIn, DATA_BLOB* pOptionalEntropy,
     if (pOptionalEntropy)
     {
         TRACE_DATA_BLOB(pOptionalEntropy);
-        TRACE("  %s\n",debugstr_an(pOptionalEntropy->pbData,pOptionalEntropy->cbData));
+        TRACE("  %s\n",debugstr_an((LPCSTR)pOptionalEntropy->pbData,pOptionalEntropy->cbData));
     }
 
 }

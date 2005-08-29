@@ -144,7 +144,7 @@ static void test_cryptunprotectdata(void)
 
     ok(plain.pbData!=NULL,"Plain DATA_BLOB missing data\n");
     ok(plain.cbData==strlen(secret)+1,"Plain DATA_BLOB wrong length\n");
-    ok(!strcmp(plain.pbData,secret),"Plain does not match secret\n");
+    ok(!strcmp((const char*)plain.pbData,secret),"Plain does not match secret\n");
     ok(data_desc!=NULL,"Description not allocated\n");
     ok(!lstrcmpW(data_desc,desc),"Description does not match\n");
 
@@ -171,7 +171,7 @@ static void test_cryptunprotectdata(void)
 
     ok(plain.pbData!=NULL,"Plain DATA_BLOB missing data\n");
     ok(plain.cbData==strlen(secret)+1,"Plain DATA_BLOB wrong length\n");
-    ok(!strcmp(plain.pbData,secret),"Plain does not match secret\n");
+    ok(!strcmp((const char*)plain.pbData,secret),"Plain does not match secret\n");
     ok(data_desc!=NULL,"Description not allocated\n");
     ok(!lstrcmpW(data_desc,desc),"Description does not match\n");
 
@@ -191,7 +191,7 @@ static void test_cryptunprotectdata(void)
 
     ok(plain.pbData!=NULL,"Plain DATA_BLOB missing data\n");
     ok(plain.cbData==strlen(secret2)+1,"Plain DATA_BLOB wrong length\n");
-    ok(!strcmp(plain.pbData,secret2),"Plain does not match secret\n");
+    ok(!strcmp((const char*)plain.pbData,secret2),"Plain does not match secret\n");
     ok(data_desc!=NULL,"Description not allocated\n");
     ok(data_desc[0]=='\0',"Description not empty\n");
 

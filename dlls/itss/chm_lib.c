@@ -573,15 +573,14 @@ static Int64 _chm_fetch_bytes(struct chmFile *h,
     CHM_ACQUIRE_LOCK(h->mutex);
     /* NOTE: this might be better done with CreateFileMapping, et cetera... */
     {
-        DWORD origOffsetLo=0, origOffsetHi=0;
-        DWORD offsetLo, offsetHi;
+        LARGE_INTEGER old_pos, new_pos;
         DWORD actualLen=0;
 
         /* awkward Win32 Seek/Tell */
-        offsetLo = (unsigned long)(os & 0xffffffffL);
-        offsetHi = (unsigned long)((os >> 32) & 0xffffffffL);
-        origOffsetLo = SetFilePointer(h->fd, 0, &origOffsetHi, FILE_CURRENT);
-        offsetLo = SetFilePointer(h->fd, offsetLo, &offsetHi, FILE_BEGIN);
+        new_pos.QuadPart = 0;
+        SetFilePointerEx( h->fd, new_pos, &old_pos, FILE_CURRENT );
+        new_pos.QuadPart = os;
+        SetFilePointerEx( h->fd, new_pos, NULL, FILE_BEGIN );
 
         /* read the data */
         if (ReadFile(h->fd,
@@ -594,7 +593,7 @@ static Int64 _chm_fetch_bytes(struct chmFile *h,
             readLen = 0;
 
         /* restore original position */
-        SetFilePointer(h->fd, origOffsetLo, &origOffsetHi, FILE_BEGIN);
+        SetFilePointerEx( h->fd, old_pos, NULL, FILE_BEGIN );
     }
     CHM_RELEASE_LOCK(h->mutex);
     return readLen;
@@ -616,7 +615,7 @@ struct chmFile *chm_openW(const WCHAR *filename)
     struct chmLzxcControlData   ctlData;
 
     /* allocate handle */
-    newHandle = (struct chmFile *)malloc(sizeof(struct chmFile));
+    newHandle = malloc(sizeof(struct chmFile));
     newHandle->fd = CHM_NULL_FD;
     newHandle->lzx_state = NULL;
     newHandle->cache_blocks = NULL;
@@ -834,12 +833,12 @@ void chm_set_param(struct chmFile *h,
             if (paramVal != h->cache_num_blocks)
             {
                 UChar **newBlocks;
-                UInt64 *newIndices;
+                Int64 *newIndices;
                 int     i;
 
                 /* allocate new cached blocks */
-                newBlocks = (UChar **)malloc(paramVal * sizeof (UChar *));
-                newIndices = (UInt64 *)malloc(paramVal * sizeof (UInt64));
+                newBlocks = malloc(paramVal * sizeof (UChar *));
+                newIndices = malloc(paramVal * sizeof (UInt64));
                 for (i=0; i<paramVal; i++)
                 {
                     newBlocks[i] = NULL;
@@ -1212,8 +1211,7 @@ static Int64 _chm_decompress_block(struct chmFile *h,
                 indexSlot = (int)((curBlockIdx) % h->cache_num_blocks);
                 h->cache_block_indices[indexSlot] = curBlockIdx;
                 if (! h->cache_blocks[indexSlot])
-                    h->cache_blocks[indexSlot] = (UChar *)malloc(
-                                                                 (unsigned int)(h->reset_table.block_len));
+                    h->cache_blocks[indexSlot] = malloc( (unsigned int)(h->reset_table.block_len));
                 lbuffer = h->cache_blocks[indexSlot];
 
                 /* decompress the previous block */
@@ -1251,8 +1249,7 @@ static Int64 _chm_decompress_block(struct chmFile *h,
     indexSlot = (int)(block % h->cache_num_blocks);
     h->cache_block_indices[indexSlot] = block;
     if (! h->cache_blocks[indexSlot])
-        h->cache_blocks[indexSlot] = (UChar *)malloc(
-                                          ((unsigned int)h->reset_table.block_len));
+        h->cache_blocks[indexSlot] = malloc( ((unsigned int)h->reset_table.block_len));
     lbuffer = h->cache_blocks[indexSlot];
     *ubuffer = lbuffer;
 

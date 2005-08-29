@@ -116,9 +116,8 @@ static void testAlgIDToOID(void)
 static void test_findAttribute(void)
 {
     PCRYPT_ATTRIBUTE ret;
-    CRYPT_ATTR_BLOB blobs[] = {
-     { 3, "\x02\x01\x01" },
-    };
+    BYTE blobbin[] = {0x02,0x01,0x01};
+    CRYPT_ATTR_BLOB blobs[] = { { sizeof blobbin, blobbin }, };
     CRYPT_ATTRIBUTE attr = { "1.2.3", sizeof(blobs) / sizeof(blobs[0]), blobs };
 
     /* returns NULL, last error not set */
@@ -158,7 +157,8 @@ static void test_findAttribute(void)
 static void test_findExtension(void)
 {
     PCERT_EXTENSION ret;
-    CERT_EXTENSION ext = { "1.2.3", TRUE, { 3, "\x02\x01\x01" } };
+    BYTE blobbin[] = {0x02,0x01,0x01};
+    CERT_EXTENSION ext = { "1.2.3", TRUE, { sizeof blobbin, blobbin } };
 
     /* returns NULL, last error not set */
     SetLastError(0xdeadbeef);
@@ -197,8 +197,9 @@ static void test_findExtension(void)
 static void test_findRDNAttr(void)
 {
     PCERT_RDN_ATTR ret;
+    BYTE bin[] = { 0x16,0x09,'J','u','a','n',' ','L','a','n','g' };
     CERT_RDN_ATTR attrs[] = {
-     { "1.2.3", CERT_RDN_IA5_STRING, { 11, "\x16\x09Juan Lang" } },
+     { "1.2.3", CERT_RDN_IA5_STRING, { sizeof bin, bin } },
     };
     CERT_RDN rdns[] = {
      { sizeof(attrs) / sizeof(attrs[0]), attrs },

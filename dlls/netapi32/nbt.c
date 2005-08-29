@@ -244,7 +244,7 @@ static int NetBTSendNameQuery(SOCKET fd, const UCHAR name[NCBNAMSZ], WORD xid,
     TRACE("name %s, dest addr %s\n", name, inet_ntoa(addr));
 
     if (broadcast)
-        ret = setsockopt(fd, SOL_SOCKET, SO_BROADCAST, (PUCHAR)&on, sizeof(on));
+        ret = setsockopt(fd, SOL_SOCKET, SO_BROADCAST, (const char*)&on, sizeof(on));
     if(ret == 0)
     {
         WSABUF wsaBuf;
@@ -256,7 +256,7 @@ static int NetBTSendNameQuery(SOCKET fd, const UCHAR name[NCBNAMSZ], WORD xid,
         sin.sin_family      = AF_INET;
         sin.sin_port        = htons(PORT_NBNS);
 
-        wsaBuf.buf = buf;
+        wsaBuf.buf = (CHAR*)buf;
         wsaBuf.len = NetBTNameReq(name, xid, qtype, broadcast, buf,
          sizeof(buf));
         if (wsaBuf.len > 0)
@@ -318,7 +318,7 @@ static UCHAR NetBTWaitForNameResponse(NetBTAdapter *adapter, SOCKET fd,
             int fromsize;
             struct sockaddr_in fromaddr;
             WORD respXID, flags, queryCount, answerCount;
-            WSABUF wsaBuf = { sizeof(buffer), buffer };
+            WSABUF wsaBuf = { sizeof(buffer), (CHAR*)buffer };
             DWORD bytesReceived, recvFlags = 0;
 
             fromsize = sizeof(fromaddr);
@@ -533,7 +533,7 @@ static UCHAR NetBTinetResolve(const UCHAR name[NCBNAMSZ],
     if (isalnum(name[0]) && (name[NCBNAMSZ - 1] == 0 ||
      name[NCBNAMSZ - 1] == 0x20))
     {
-        UCHAR toLookup[NCBNAMSZ];
+        CHAR toLookup[NCBNAMSZ];
         unsigned int i;
 
         for (i = 0; i < NCBNAMSZ - 1 && name[i] && name[i] != ' '; i++)
@@ -929,7 +929,7 @@ static UCHAR NetBTSessionReq(SOCKET fd, const UCHAR *calledName,
     NBR_ADDWORD(&buffer[2], len);
 
     wsaBuf.len = len + NBSS_HDRSIZE;
-    wsaBuf.buf = buffer;
+    wsaBuf.buf = (char*)buffer;
 
     r = WSASend(fd, &wsaBuf, 1, &bytesSent, 0, NULL, NULL);
     if(r < 0 || bytesSent < len + NBSS_HDRSIZE)
@@ -1005,13 +1005,13 @@ static UCHAR NetBTCall(void *adapt, PNCB ncb, void **sess)
                 if (ncb->ncb_rto > 0)
                 {
                     timeout = ncb->ncb_rto * 500;
-                    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (PUCHAR)&timeout,
+                    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout,
                      sizeof(timeout));
                 }
                 if (ncb->ncb_rto > 0)
                 {
                     timeout = ncb->ncb_sto * 500;
-                    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (PUCHAR)&timeout,
+                    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout,
                      sizeof(timeout));
                 }
 
@@ -1098,9 +1098,9 @@ static UCHAR NetBTSend(void *adapt, void *sess, PNCB ncb)
     NBR_ADDWORD(&buffer[2], ncb->ncb_length);
 
     wsaBufs[0].len = NBSS_HDRSIZE;
-    wsaBufs[0].buf = buffer;
+    wsaBufs[0].buf = (char*)buffer;
     wsaBufs[1].len = ncb->ncb_length;
-    wsaBufs[1].buf = ncb->ncb_buffer;
+    wsaBufs[1].buf = (char*)ncb->ncb_buffer;
 
     r = WSASend(session->fd, wsaBufs, sizeof(wsaBufs) / sizeof(wsaBufs[0]),
      &bytesSent, 0, NULL, NULL);
@@ -1148,10 +1148,10 @@ static UCHAR NetBTRecv(void *adapt, void *sess, PNCB ncb)
     {
         bufferCount++;
         wsaBufs[0].len = NBSS_HDRSIZE;
-        wsaBufs[0].buf = buffer;
+        wsaBufs[0].buf = (char*)buffer;
     }
     wsaBufs[bufferCount].len = ncb->ncb_length;
-    wsaBufs[bufferCount].buf = ncb->ncb_buffer;
+    wsaBufs[bufferCount].buf = (char*)ncb->ncb_buffer;
     bufferCount++;
 
     flags = 0;
