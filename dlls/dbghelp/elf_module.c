@@ -1432,7 +1432,18 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
     return FALSE;
 }
 
+BOOL elf_fetch_file_info(const char* name, DWORD* base,
+                         DWORD* size, DWORD* checksum)
+{
+    return FALSE;
+}
+
 BOOL elf_read_wine_loader_dbg_info(struct process* pcs)
+{
+    return FALSE;
+}
+
+BOOL elf_enum_modules(HANDLE hProc, elf_enum_modules_cb cb, void* user)
 {
     return FALSE;
 }
