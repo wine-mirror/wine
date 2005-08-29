@@ -54,6 +54,17 @@ static int nrofnotifys = 0;
 
 static FARPROC16 HookNotify = NULL;
 
+
+/***********************************************************************
+ *           TaskFindHandle   (TOOLHELP.65)
+ */
+BOOL16 WINAPI TaskFindHandle16( TASKENTRY *lpte, HTASK16 hTask )
+{
+    lpte->hNext = hTask;
+    return TaskNext16( lpte );
+}
+
+
 /***********************************************************************
  *		NotifyRegister (TOOLHELP.73)
  */

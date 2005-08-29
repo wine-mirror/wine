@@ -1511,16 +1511,6 @@ BOOL16 WINAPI TaskNext16( TASKENTRY *lpte )
 }
 
 
-/***********************************************************************
- *           TaskFindHandle   (TOOLHELP.65)
- */
-BOOL16 WINAPI TaskFindHandle16( TASKENTRY *lpte, HTASK16 hTask )
-{
-    lpte->hNext = hTask;
-    return TaskNext16( lpte );
-}
-
-
 typedef INT (WINAPI *MessageBoxA_funcptr)(HWND hWnd, LPCSTR text, LPCSTR title, UINT type);
 
 /**************************************************************************
