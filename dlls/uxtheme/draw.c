@@ -187,11 +187,41 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
         POINT size = {pRect->right-pRect->left, pRect->bottom-pRect->top};
         POINT reqsize;
         for(i=4; i>=0; i--) {
-            if(SUCCEEDED(GetThemePosition(hTheme, iPartId, iStateId, i + TMT_MINSIZE1, &reqsize))) {
-                if(reqsize.x >= size.x && reqsize.y >= size.y) {
-                    TRACE("Using image size %ldx%ld, image %d\n", reqsize.x, reqsize.y, i + TMT_IMAGEFILE1);
-                    return MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, i + TMT_IMAGEFILE1);
+            PTHEME_PROPERTY fileProp = 
+                MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, i + TMT_IMAGEFILE1);
+            if (!fileProp) continue;
+            if(FAILED(GetThemePosition(hTheme, iPartId, iStateId, i + TMT_MINSIZE1, &reqsize))) {
+                /* fall back to size of Nth image */
+                WCHAR szPath[MAX_PATH];
+                int imagelayout = IL_HORIZONTAL;
+                int imagecount = 1;
+                int imagenum;
+                BITMAP bmp;
+                HBITMAP hBmp;
+                BOOL hasAlpha;
+
+                lstrcpynW(szPath, fileProp->lpValue, 
+                    min(fileProp->dwValueLen+1, sizeof(szPath)/sizeof(szPath[0])));
+                hBmp = MSSTYLES_LoadBitmap(hTheme, szPath, &hasAlpha);
+                if(!hBmp) continue;
+
+                GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_IMAGELAYOUT, &imagelayout);
+                GetThemeInt(hTheme, iPartId, iStateId, TMT_IMAGECOUNT, &imagecount);
+
+                imagenum = max (min (imagecount, iStateId), 1) - 1;
+                GetObjectW(hBmp, sizeof(bmp), &bmp);
+                if(imagelayout == IL_VERTICAL) {
+                    reqsize.x = bmp.bmWidth;
+                    reqsize.y = bmp.bmHeight/imagecount;
                 }
+                else {
+                    reqsize.x = bmp.bmWidth/imagecount;
+                    reqsize.y = bmp.bmHeight;
+                }
+            }
+            if(reqsize.x <= size.x && reqsize.y <= size.y) {
+                TRACE("Using image size %ldx%ld, image %d\n", reqsize.x, reqsize.y, i + TMT_IMAGEFILE1);
+                return fileProp;
             }
         }
         /* If an image couldnt be selected, choose the smallest one */
