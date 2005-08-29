@@ -454,31 +454,6 @@ static void add_import_func( struct import *imp, ORDDEF *func )
     if (imp->delay) total_delayed++;
 }
 
-/* add a symbol to the extra list, but only if needed */
-static int add_extra_symbol( const char **extras, int *count, const char *name, const DLLSPEC *spec )
-{
-    int i;
-
-    if (!find_name( name, &undef_symbols ))
-    {
-        /* check if the symbol is being exported by this dll */
-        for (i = 0; i < spec->nb_entry_points; i++)
-        {
-            ORDDEF *odp = &spec->entry_points[i];
-            if (odp->type == TYPE_STDCALL ||
-                odp->type == TYPE_CDECL ||
-                odp->type == TYPE_VARARGS ||
-                odp->type == TYPE_EXTERN)
-            {
-                if (odp->name && !strcmp( odp->name, name )) return 0;
-            }
-        }
-        extras[*count] = name;
-        (*count)++;
-    }
-    return 1;
-}
-
 /* check if the spec file exports any stubs */
 static int has_stubs( const DLLSPEC *spec )
 {
@@ -491,35 +466,21 @@ static int has_stubs( const DLLSPEC *spec )
     return 0;
 }
 
-/* add the extra undefined symbols that will be contained in the generated spec file itself */
-static void add_extra_undef_symbols( const DLLSPEC *spec )
+/* get the default entry point for a given spec file */
+static const char *get_default_entry_point( const DLLSPEC *spec )
 {
-    const char *extras[10];
-    int i, count = 0;
-    int kernel_imports = 0;
+    if (spec->characteristics & IMAGE_FILE_DLL) return "__wine_spec_dll_entry";
+    if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) return "DriverEntry";
+    return "__wine_spec_exe_entry";
+}
 
-    sort_names( &undef_symbols );
-
-    /* add symbols that will be contained in the spec file itself */
-    if (!(spec->characteristics & IMAGE_FILE_DLL))
-    {
-        switch (spec->subsystem)
-        {
-        case IMAGE_SUBSYSTEM_WINDOWS_GUI:
-        case IMAGE_SUBSYSTEM_WINDOWS_CUI:
-            kernel_imports += add_extra_symbol( extras, &count, "ExitProcess", spec );
-            break;
-        }
-    }
-
-    /* make sure we import the dlls that contain these functions */
-    if (kernel_imports) add_import_dll( "kernel32", NULL );
-
-    if (count)
-    {
-        for (i = 0; i < count; i++) add_name( &undef_symbols, extras[i] );
-        sort_names( &undef_symbols );
-    }
+/* add the extra undefined symbols that will be contained in the generated spec file itself */
+static void add_extra_undef_symbols( DLLSPEC *spec )
+{
+    if (!spec->init_func) spec->init_func = xstrdup( get_default_entry_point(spec) );
+    add_extra_ld_symbol( spec->init_func );
+    if (has_stubs( spec )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
+    if (nb_delayed) add_extra_ld_symbol( "__wine_spec_delay_load" );
 }
 
 /* check if a given imported dll is not needed, taking forwards into account */
@@ -588,13 +549,7 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
 
     if (!argv[0]) return;
 
-    if (spec->init_func) add_extra_ld_symbol( spec->init_func );
-    else if (spec->characteristics & IMAGE_FILE_DLL) add_extra_ld_symbol( "DllMain" );
-    else if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) add_extra_ld_symbol( "DriverEntry ");
-    else add_extra_ld_symbol( "main" );
-
-    if (has_stubs( spec )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
-    if (nb_delayed) add_extra_ld_symbol( "__wine_spec_delay_load" );
+    add_extra_undef_symbols( spec );
 
     strcpy( name_prefix, asm_name("") );
     prefix_len = strlen( name_prefix );
@@ -640,7 +595,6 @@ int resolve_imports( DLLSPEC *spec )
 {
     unsigned int i, j, removed;
 
-    add_extra_undef_symbols( spec );
     remove_ignored_symbols();
 
     for (i = 0; i < nb_imports; i++)

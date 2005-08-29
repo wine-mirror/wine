@@ -443,7 +443,6 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     int exports_size = 0;
     int nr_exports, nr_imports, nr_delayed;
     unsigned int page_size = get_page_size();
-    const char *init_func = spec->init_func;
 
     nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
     resolve_imports( spec );
@@ -478,11 +477,6 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "static const char __wine_spec_file_name[] = \"%s\";\n", spec->file_name );
     fprintf( outfile, "extern int __wine_spec_data_start[], __wine_spec_exports[];\n\n" );
 
-    if (target_cpu == CPU_x86)
-        fprintf( outfile, "#define __stdcall __attribute__((__stdcall__))\n\n" );
-    else
-        fprintf( outfile, "#define __stdcall\n\n" );
-
     output_stub_funcs( outfile, spec );
 
     /* Output the DLL imports */
@@ -495,105 +489,8 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 
     /* Output the entry point function */
 
-    fprintf( outfile, "static int __wine_spec_init_state;\n" );
-    fprintf( outfile, "extern int __wine_main_argc;\n" );
-    fprintf( outfile, "extern char **__wine_main_argv;\n" );
-    fprintf( outfile, "extern char **__wine_main_environ;\n" );
-    if (target_platform == PLATFORM_APPLE)
-    {
-        fprintf( outfile, "extern _dyld_func_lookup(char *, void *);" );
-        fprintf( outfile, "static void __wine_spec_hidden_init(int argc, char** argv, char** envp)\n" );
-        fprintf( outfile, "{\n" );
-        fprintf( outfile, "    void (*init)(void);\n" );
-        fprintf( outfile, "    _dyld_func_lookup(\"__dyld_make_delayed_module_initializer_calls\", (unsigned long *)&init);\n" );
-        fprintf( outfile, "    init();\n" );
-        fprintf( outfile, "}\n" );
-        fprintf( outfile, "static void __wine_spec_hidden_fini()\n" );
-        fprintf( outfile, "{\n" );
-        fprintf( outfile, "    void (*fini)(void);\n" );
-        fprintf( outfile, "    _dyld_func_lookup(\"__dyld_mod_term_funcs\", (unsigned long *)&fini);\n" );
-        fprintf( outfile, "    fini();\n" );
-        fprintf( outfile, "}\n" );
-        fprintf( outfile, "#define _init __wine_spec_hidden_init\n" );
-        fprintf( outfile, "#define _fini __wine_spec_hidden_fini\n" );
-    }
-    else
-    {
-        fprintf( outfile, "extern void _init(int, char**, char**);\n" );
-        fprintf( outfile, "extern void _fini();\n" );
-    }
-
-    if (spec->characteristics & IMAGE_FILE_DLL)
-    {
-        if (!init_func) init_func = "DllMain";
-        fprintf( outfile, "extern int __stdcall %s( void*, unsigned int, void* );\n\n", init_func );
-        fprintf( outfile,
-                 "static int __stdcall __wine_dll_main( void *inst, unsigned int reason, void *reserved )\n"
-                 "{\n"
-                 "    int ret;\n"
-                 "    if (reason == %d && __wine_spec_init_state == 1)\n"
-                 "        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
-                 "    ret = %s( inst, reason, reserved );\n"
-                 "    if (reason == %d && __wine_spec_init_state == 1)\n"
-                 "        _fini();\n"
-                 "    return ret;\n}\n",
-                 DLL_PROCESS_ATTACH, init_func, DLL_PROCESS_DETACH );
-        init_func = "__wine_dll_main";
-    }
-    else switch(spec->subsystem)
-    {
-    case IMAGE_SUBSYSTEM_NATIVE:
-        if (!init_func) init_func = "DriverEntry";
-        fprintf( outfile, "extern int __stdcall %s( void*, void* );\n\n", init_func );
-        fprintf( outfile,
-                 "static int __stdcall __wine_driver_entry( void *obj, void *path )\n"
-                 "{\n"
-                 "    int ret;\n"
-                 "    if (__wine_spec_init_state == 1)\n"
-                 "        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
-                 "    ret = %s( obj, path );\n"
-                 "    if (__wine_spec_init_state == 1) _fini();\n"
-                 "    return ret;\n"
-                 "}\n",
-                 init_func );
-        init_func = "__wine_driver_entry";
-        break;
-    case IMAGE_SUBSYSTEM_WINDOWS_GUI:
-    case IMAGE_SUBSYSTEM_WINDOWS_CUI:
-        if (!init_func) init_func = "main";
-        else if (!strcmp( init_func, "wmain" ))  /* FIXME: temp hack for crt0 support */
-        {
-            fprintf( outfile, "extern int wmain( int argc, unsigned short *argv[] );\n" );
-            fprintf( outfile, "extern unsigned short **__wine_main_wargv;\n" );
-            fprintf( outfile,
-                     "\nextern void __stdcall ExitProcess(unsigned int);\n"
-                     "static void __wine_exe_wmain(void)\n"
-                     "{\n"
-                     "    int ret;\n"
-                     "    if (__wine_spec_init_state == 1)\n"
-                     "        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
-                     "    ret = wmain( __wine_main_argc, __wine_main_wargv );\n"
-                     "    if (__wine_spec_init_state == 1) _fini();\n"
-                     "    ExitProcess( ret );\n"
-                     "}\n\n" );
-            init_func = "__wine_exe_wmain";
-            break;
-        }
-        fprintf( outfile, "extern int %s( int argc, char *argv[] );\n", init_func );
-        fprintf( outfile,
-                 "\nextern void __stdcall ExitProcess(unsigned int);\n"
-                 "static void __wine_exe_main(void)\n"
-                 "{\n"
-                 "    int ret;\n"
-                 "    if (__wine_spec_init_state == 1)\n"
-                 "        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
-                 "    ret = %s( __wine_main_argc, __wine_main_argv );\n"
-                 "    if (__wine_spec_init_state == 1) _fini();\n"
-                 "    ExitProcess( ret );\n"
-                 "}\n\n", init_func );
-        init_func = "__wine_exe_main";
-        break;
-    }
+    fprintf( outfile, "int __wine_spec_init_state;\n" );
+    fprintf( outfile, "extern void %s();\n\n", spec->init_func );
 
     /* Output the NT header */
 
@@ -666,7 +563,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "  { 0x%04x,\n", IMAGE_NT_OPTIONAL_HDR_MAGIC );  /* Magic */
     fprintf( outfile, "    0, 0,\n" );                   /* Major/MinorLinkerVersion */
     fprintf( outfile, "    0, 0, 0,\n" );                /* SizeOfCode/Data */
-    fprintf( outfile, "    %s,\n", init_func );          /* AddressOfEntryPoint */
+    fprintf( outfile, "    %s,\n", spec->init_func );    /* AddressOfEntryPoint */
     fprintf( outfile, "    0, __wine_spec_data_start,\n" );              /* BaseOfCode/Data */
     fprintf( outfile, "    __wine_spec_pe_header,\n" );  /* ImageBase */
     fprintf( outfile, "    %u,\n", page_size );          /* SectionAlignment */

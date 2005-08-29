@@ -1,0 +1,41 @@
+/*
+ * Default entry point for a dll
+ *
+ * Copyright 2005 Alexandre Julliard
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+#include "wine/library.h"
+#include "crt0_private.h"
+
+int __wine_spec_init_state;
+
+extern BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved );
+
+BOOL WINAPI __wine_spec_dll_entry( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    BOOL ret;
+
+    if (reason == DLL_PROCESS_ATTACH && __wine_spec_init_state == 1)
+        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );
+    ret = DllMain( inst, reason, reserved );
+    if (reason == DLL_PROCESS_DETACH && __wine_spec_init_state == 1)
+        _fini();
+    return ret;
+}

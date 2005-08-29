@@ -563,7 +563,7 @@ static void build(struct options* opts)
         if (opts->unicode_app)
         {
             strarray_add(spec_args, "--entry");
-            strarray_add(spec_args, "wmain");
+            strarray_add(spec_args, "__wine_spec_exe_wentry");
         }
     }
 
