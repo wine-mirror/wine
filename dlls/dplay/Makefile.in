@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dplay.dll
 IMPORTLIB = libdplay.$(IMPLIBEXT)
-IMPORTS   = dplayx
+IMPORTS   = dplayx kernel32
 
 C_SRCS = dplay_main.c
 

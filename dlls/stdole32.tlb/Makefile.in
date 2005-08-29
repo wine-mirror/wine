@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = stdole32.tlb
+IMPORTS   = kernel32
 
 RC_SRCS = rsrc.rc
 RC_TLB = std_ole_v1.tlb

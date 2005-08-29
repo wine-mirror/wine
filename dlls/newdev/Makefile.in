@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = newdev.dll
 IMPORTLIB = libnewdev.$(IMPLIBEXT)
+IMPORTS   = kernel32
 
 C_SRCS = main.c
 

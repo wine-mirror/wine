@@ -24,6 +24,6 @@
 
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
-    /* if (reason == DLL_PROCESS_ATTACH) DisableThreadLibraryCalls( inst ); */
+    if (reason == DLL_PROCESS_ATTACH) DisableThreadLibraryCalls( inst );
     return TRUE;
 }

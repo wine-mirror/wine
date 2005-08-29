@@ -2088,6 +2088,16 @@ NTSTATUS WINAPI NtUnloadDriver( const UNICODE_STRING *DriverServiceName )
 
 
 /******************************************************************
+ *		DllMain   (NTDLL.@)
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    if (reason == DLL_PROCESS_ATTACH) LdrDisableThreadCalloutsForDll( inst );
+    return TRUE;
+}
+
+
+/******************************************************************
  *		__wine_init_windows_dir   (NTDLL.@)
  *
  * Windows and system dir initialization once kernel32 has been loaded.
