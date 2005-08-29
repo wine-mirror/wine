@@ -23,6 +23,7 @@
 
 #include "De.rc"
 #include "En.rc"
+#include "Fr.rc"
 
 REGINST REGINST mshtml.inf
 
