@@ -609,6 +609,16 @@ static void assign_ordinals( DLLSPEC *spec )
     int i, count, ordinal;
 
     /* start assigning from base, or from 1 if no ordinal defined yet */
+
+    spec->base = MAX_ORDINALS;
+    spec->limit = 0;
+    for (i = 0; i < spec->nb_entry_points; i++)
+    {
+        ordinal = spec->entry_points[i].ordinal;
+        if (ordinal == -1) continue;
+        if (ordinal > spec->limit) spec->limit = ordinal;
+        if (ordinal < spec->base) spec->base = ordinal;
+    }
     if (spec->base == MAX_ORDINALS) spec->base = 1;
     if (spec->limit < spec->base) spec->limit = spec->base;
 
@@ -826,8 +836,6 @@ static int parse_def_export( char *name, DLLSPEC *spec )
             error( "Ordinal number %d too large\n", ordinal );
             goto error;
         }
-        if (ordinal > spec->limit) spec->limit = ordinal;
-        if (ordinal < spec->base) spec->base = ordinal;
         odp->ordinal = ordinal;
         token = GetToken(1);
     }
