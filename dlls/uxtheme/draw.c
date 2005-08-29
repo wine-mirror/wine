@@ -210,6 +210,7 @@ static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iState
 {
     int imagelayout = IL_HORIZONTAL;
     int imagecount = 1;
+    int imagenum;
     BITMAP bmp;
     WCHAR szPath[MAX_PATH];
     BOOL hasAlpha;
@@ -228,17 +229,18 @@ static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iState
     GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_IMAGELAYOUT, &imagelayout);
     GetThemeInt(hTheme, iPartId, iStateId, TMT_IMAGECOUNT, &imagecount);
 
+    imagenum = max (min (imagecount, iStateId), 1) - 1;
     GetObjectW(*hBmp, sizeof(bmp), &bmp);
     if(imagelayout == IL_VERTICAL) {
         int height = bmp.bmHeight/imagecount;
         bmpRect->left = 0;
         bmpRect->right = bmp.bmWidth;
-        bmpRect->top = (max(min(imagecount, iStateId), 1)-1) * height;
+        bmpRect->top = imagenum * height;
         bmpRect->bottom = bmpRect->top + height;
     }
     else {
         int width = bmp.bmWidth/imagecount;
-        bmpRect->left = (max(min(imagecount, iStateId), 1)-1) * width;
+        bmpRect->left = imagenum * width;
         bmpRect->right = bmpRect->left + width;
         bmpRect->top = 0;
         bmpRect->bottom = bmp.bmHeight;
