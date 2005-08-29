@@ -876,6 +876,38 @@ PTHEME_PROPERTY MSSTYLES_FindProperty(PTHEME_CLASS tc, int iPartId, int iStateId
     return NULL;
 }
 
+/* Prepare a bitmap to be used for alpha blending */
+static BOOL prepare_alpha (HBITMAP bmp, BOOL* hasAlpha)
+{
+    DIBSECTION dib;
+    int n;
+    BYTE* p;
+
+    *hasAlpha = FALSE;
+
+    if (!bmp || GetObjectW( bmp, sizeof(dib), &dib ) != sizeof(dib))
+        return FALSE;
+
+    if(dib.dsBm.bmBitsPixel != 32)
+        /* nothing to do */
+        return TRUE;
+
+    *hasAlpha = TRUE;
+    p = (BYTE*)dib.dsBm.bmBits;
+    n = abs(dib.dsBmih.biHeight) * dib.dsBmih.biWidth;
+    /* AlphaBlend() wants premultiplied alpha, so do that now */
+    while (n-- > 0)
+    {
+        int a = p[3]+1;
+        p[0] = (p[0] * a) >> 8;
+        p[1] = (p[1] * a) >> 8;
+        p[2] = (p[2] * a) >> 8;
+        p += 4;
+    }
+
+    return TRUE;
+}
+
 HBITMAP MSSTYLES_LoadBitmap (PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha)
 {
     WCHAR szFile[MAX_PATH];
@@ -904,7 +936,8 @@ HBITMAP MSSTYLES_LoadBitmap (PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha
     /* Not found? Load from resources */
     img = HeapAlloc (GetProcessHeap(), 0, sizeof (THEME_IMAGE));
     img->image = LoadImageW(tc->hTheme, szFile, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-    img->hasAlpha = *hasAlpha = FALSE; /* TODO: real check */
+    prepare_alpha (img->image, hasAlpha);
+    img->hasAlpha = *hasAlpha;
     /* ...and stow away for later reuse. */
     lstrcpyW (img->name, szFile);
     img->next = tc->tf->images;

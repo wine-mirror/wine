@@ -87,4 +87,11 @@ HRESULT WINAPI ParseThemeIniFile(LPCWSTR pszIniFileName, LPWSTR pszUnknown,
 
 extern void UXTHEME_InitSystem(HINSTANCE hInst);
 
-#endif
+/* No alpha blending */
+#define ALPHABLEND_NONE             0
+/* "Cheap" binary alpha blending - but possibly faster */
+#define ALPHABLEND_BINARY           1
+/* Full alpha blending */
+#define ALPHABLEND_FULL             2
+
+#endif /* __WINE_UXTHEMEDLL_H */

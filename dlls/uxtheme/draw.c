@@ -236,21 +236,20 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
  * Load image for part/state
  */
 static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, const RECT *pRect, BOOL glyph,
-                          HBITMAP *hBmp, RECT *bmpRect)
+                          HBITMAP *hBmp, RECT *bmpRect, BOOL* hasImageAlpha)
 {
     int imagelayout = IL_HORIZONTAL;
     int imagecount = 1;
     int imagenum;
     BITMAP bmp;
     WCHAR szPath[MAX_PATH];
-    BOOL hasAlpha;
     PTHEME_PROPERTY tp = UXTHEME_SelectImage(hTheme, hdc, iPartId, iStateId, pRect, glyph);
     if(!tp) {
         FIXME("Couldn't determine image for part/state %d/%d, invalid theme?\n", iPartId, iStateId);
         return E_PROP_ID_UNSUPPORTED;
     }
     lstrcpynW(szPath, tp->lpValue, min(tp->dwValueLen+1, sizeof(szPath)/sizeof(szPath[0])));
-    *hBmp = MSSTYLES_LoadBitmap(hTheme, szPath, &hasAlpha);
+    *hBmp = MSSTYLES_LoadBitmap(hTheme, szPath, hasImageAlpha);
     if(!*hBmp) {
         TRACE("Failed to load bitmap %s\n", debugstr_w(szPath));
         return HRESULT_FROM_WIN32(GetLastError());
@@ -285,18 +284,31 @@ static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iState
  */
 static inline BOOL UXTHEME_StretchBlt(HDC hdcDst, int nXOriginDst, int nYOriginDst, int nWidthDst, int nHeightDst,
                                       HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc,
-                                      BOOL transparent, COLORREF transcolor)
+                                      INT transparent, COLORREF transcolor)
 {
-    if(transparent) {
+    static const BLENDFUNCTION blendFunc = 
+    {
+      AC_SRC_OVER, /* BlendOp */
+      0,           /* BlendFlag */
+      255,         /* SourceConstantAlpha */
+      AC_SRC_ALPHA /* AlphaFormat */
+    };
+    if (transparent == ALPHABLEND_BINARY) {
         /* Ensure we don't pass any negative values to TransparentBlt */
         return TransparentBlt(hdcDst, nXOriginDst, nYOriginDst, abs(nWidthDst), abs(nHeightDst),
                               hdcSrc, nXOriginSrc, nYOriginSrc, abs(nWidthSrc), abs(nHeightSrc),
                               transcolor);
     }
-    /* This should be using AlphaBlend */
-    return StretchBlt(hdcDst, nXOriginDst, nYOriginDst, nWidthDst, nHeightDst,
-                        hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
-                        SRCCOPY);
+    if ((transparent == ALPHABLEND_NONE) ||
+        !AlphaBlend(hdcDst, nXOriginDst, nYOriginDst, nWidthDst, nHeightDst,
+                    hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
+                    blendFunc))
+    {
+        return StretchBlt(hdcDst, nXOriginDst, nYOriginDst, nWidthDst, nHeightDst,
+                          hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
+                          SRCCOPY);
+    }
+    return TRUE;
 }
 
 /***********************************************************************
@@ -306,7 +318,7 @@ static inline BOOL UXTHEME_StretchBlt(HDC hdcDst, int nXOriginDst, int nYOriginD
  */
 static inline BOOL UXTHEME_Blt(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest,
                                HDC hdcSrc, int nXOriginSrc, int nYOriginSrc,
-                               BOOL transparent, COLORREF transcolor)
+                               INT transparent, COLORREF transcolor)
 {
     return UXTHEME_StretchBlt(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest,
                               hdcSrc, nXOriginSrc, nYOriginSrc, nWidthDest, nHeightDest,
@@ -322,7 +334,8 @@ static inline BOOL UXTHEME_SizedBlt (HDC hdcDst, int nXOriginDst, int nYOriginDs
                                      int nWidthDst, int nHeightDst,
                                      HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, 
                                      int nWidthSrc, int nHeightSrc,
-                                     int sizingtype)
+                                     int sizingtype, 
+                                     INT transparent, COLORREF transcolor)
 {
     if (sizingtype == ST_TILE)
     {
@@ -336,8 +349,9 @@ static inline BOOL UXTHEME_SizedBlt (HDC hdcDst, int nXOriginDst, int nYOriginDs
             while (xRemaining > 0)
             {
                 int bltWidth = min (xRemaining, nWidthSrc);
-                if (!BitBlt (hdcDst, xOfs, yOfs, bltWidth, bltHeight,
-                    hdcSrc, nXOriginSrc, nYOriginSrc, SRCCOPY))
+                if (!UXTHEME_Blt (hdcDst, xOfs, yOfs, bltWidth, bltHeight,
+                                  hdcSrc, nXOriginSrc, nYOriginSrc, 
+                                  transparent, transcolor))
                     return FALSE;
                 xOfs += nWidthSrc;
                 xRemaining -= nWidthSrc;
@@ -349,9 +363,40 @@ static inline BOOL UXTHEME_SizedBlt (HDC hdcDst, int nXOriginDst, int nYOriginDs
     }
     else
     {
-        return StretchBlt (hdcDst, nXOriginDst, nYOriginDst, nWidthDst, nHeightDst,
-                           hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
-                           SRCCOPY);
+        return UXTHEME_StretchBlt (hdcDst, nXOriginDst, nYOriginDst, nWidthDst, nHeightDst,
+                                   hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
+                                   transparent, transcolor);
+    }
+}
+
+/* Get transparency parameters passed to UXTHEME_StretchBlt() - the parameters 
+ * depend on whether the image has full alpha  or whether it is 
+ * color-transparent or just opaque. */
+static inline void get_transparency (HTHEME hTheme, int iPartId, int iStateId, 
+                                     BOOL hasImageAlpha, INT* transparent,
+                                     COLORREF* transparentcolor, BOOL glyph)
+{
+    if (hasImageAlpha)
+    {
+        *transparent = ALPHABLEND_FULL;
+        *transparentcolor = RGB (255, 0, 255);
+    }
+    else
+    {
+        BOOL trans = FALSE;
+        GetThemeBool(hTheme, iPartId, iStateId, 
+            glyph ? TMT_GLYPHTRANSPARENT : TMT_TRANSPARENT, &trans);
+        if(trans) {
+            *transparent = ALPHABLEND_BINARY;
+            if(FAILED(GetThemeColor(hTheme, iPartId, iStateId, 
+                glyph ? TMT_GLYPHTRANSPARENTCOLOR : TMT_TRANSPARENTCOLOR, 
+                transparentcolor))) {
+                /* If image is transparent, but no color was specified, use magenta */
+                *transparentcolor = RGB(255, 0, 255);
+            }
+        }
+        else
+            *transparent = ALPHABLEND_NONE;
     }
 }
 
@@ -369,15 +414,17 @@ static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
     HDC hdcSrc = NULL;
     HGDIOBJ oldSrc = NULL;
     RECT rcSrc;
-    BOOL transparent = FALSE;
-    COLORREF transparentcolor = 0;
+    INT transparent = FALSE;
+    COLORREF transparentcolor;
     int valign = VA_CENTER;
     int halign = HA_CENTER;
     POINT dstSize;
     POINT srcSize;
     POINT topleft;
+    BOOL hasAlpha;
 
-    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, pRect, TRUE, &bmpSrc, &rcSrc);
+    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, pRect, TRUE, 
+        &bmpSrc, &rcSrc, &hasAlpha);
     if(FAILED(hr)) return hr;
     hdcSrc = CreateCompatibleDC(hdc);
     if(!hdcSrc) {
@@ -392,13 +439,8 @@ static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
     srcSize.x = rcSrc.right-rcSrc.left;
     srcSize.y = rcSrc.bottom-rcSrc.top;
 
-    GetThemeBool(hTheme, iPartId, iStateId, TMT_GLYPHTRANSPARENT, &transparent);
-    if(transparent) {
-        if(FAILED(GetThemeColor(hTheme, iPartId, iStateId, TMT_GLYPHTRANSPARENTCOLOR, &transparentcolor))) {
-            /* If image is transparent, but no color was specified, use magenta */
-            transparentcolor = RGB(255, 0, 255);
-        }
-    }
+    get_transparency (hTheme, iPartId, iStateId, hasAlpha, &transparent,
+        &transparentcolor, TRUE);
     GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_VALIGN, &valign);
     GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_HALIGN, &halign);
 
@@ -456,8 +498,10 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
     HRESULT hr = S_OK;
     HBITMAP bmpSrc;
     RECT rcSrc;
+    BOOL hasAlpha;
 
-    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, prc, FALSE, &bmpSrc, &rcSrc);
+    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, prc, FALSE, 
+        &bmpSrc, &rcSrc, &hasAlpha);
     if (FAILED(hr)) return hr;
 
     switch (eSize)
@@ -565,10 +609,12 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     POINT srcSize;
     POINT drawSize;
     int sizingtype = ST_STRETCH;
-    BOOL transparent = FALSE;
+    INT transparent;
     COLORREF transparentcolor = 0;
+    BOOL hasAlpha;
 
-    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, pRect, FALSE, &bmpSrc, &rcSrc);
+    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, pRect, FALSE, 
+        &bmpSrc, &rcSrc, &hasAlpha);
     if(FAILED(hr)) return hr;
     hdcSrc = CreateCompatibleDC(hdc);
     if(!hdcSrc) {
@@ -580,13 +626,8 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
 
     CopyRect(&rcDst, pRect);
     
-    GetThemeBool(hTheme, iPartId, iStateId, TMT_TRANSPARENT, &transparent);
-    if(transparent) {
-        if(FAILED(GetThemeColor(hTheme, iPartId, iStateId, TMT_TRANSPARENTCOLOR, &transparentcolor))) {
-            /* If image is transparent, but no color was specified, use magenta */
-            transparentcolor = RGB(255, 0, 255);
-        }
-    }
+    get_transparency (hTheme, iPartId, iStateId, hasAlpha, &transparent,
+        &transparentcolor, FALSE);
 
     dstSize.x = rcDst.right-rcDst.left;
     dstSize.y = rcDst.bottom-rcDst.top;
@@ -618,48 +659,45 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     }
     else {
         HDC hdcDst = NULL;
-        HBITMAP bmpDst = NULL;
-        HGDIOBJ oldDst = NULL;
         MARGINS sm;
+        POINT org;
 
         dstSize.x = abs(dstSize.x);
         dstSize.y = abs(dstSize.y);
 
         GetThemeMargins(hTheme, hdc, iPartId, iStateId, TMT_SIZINGMARGINS, NULL, &sm);
 
-        hdcDst = CreateCompatibleDC(hdc);
-        if(!hdcDst) {
-            hr = HRESULT_FROM_WIN32(GetLastError());
-            goto draw_error; 
-        }
-        bmpDst = CreateCompatibleBitmap(hdc, dstSize.x, dstSize.y);
-        if(!bmpDst) {
-            hr = HRESULT_FROM_WIN32(GetLastError());
-            goto draw_error; 
-        }
-        oldDst = SelectObject(hdcDst, bmpDst);
+        hdcDst = hdc;
+        OffsetViewportOrgEx(hdcDst, rcDst.left, rcDst.top, &org);
 
         /* Upper left corner */
-        if(!BitBlt(hdcDst, 0, 0, sm.cxLeftWidth, sm.cyTopHeight,
-                   hdcSrc, rcSrc.left, rcSrc.top, SRCCOPY)) {
+        if(!UXTHEME_Blt(hdcDst, 0, 0, sm.cxLeftWidth, sm.cyTopHeight,
+                        hdcSrc, rcSrc.left, rcSrc.top, 
+                        transparent, transparentcolor)) {
             hr = HRESULT_FROM_WIN32(GetLastError());
             goto draw_error; 
         }
         /* Upper right corner */
-        if(!BitBlt(hdcDst, dstSize.x-sm.cxRightWidth, 0, sm.cxRightWidth, sm.cyTopHeight,
-                   hdcSrc, rcSrc.right-sm.cxRightWidth, rcSrc.top, SRCCOPY)) {
+        if(!UXTHEME_Blt (hdcDst, dstSize.x-sm.cxRightWidth, 0, 
+                         sm.cxRightWidth, sm.cyTopHeight,
+                         hdcSrc, rcSrc.right-sm.cxRightWidth, rcSrc.top, 
+                         transparent, transparentcolor)) {
             hr = HRESULT_FROM_WIN32(GetLastError());
             goto draw_error; 
         }
         /* Lower left corner */
-        if(!BitBlt(hdcDst, 0, dstSize.y-sm.cyBottomHeight, sm.cxLeftWidth, sm.cyBottomHeight,
-                   hdcSrc, rcSrc.left, rcSrc.bottom-sm.cyBottomHeight, SRCCOPY)) {
+        if(!UXTHEME_Blt (hdcDst, 0, dstSize.y-sm.cyBottomHeight, 
+                         sm.cxLeftWidth, sm.cyBottomHeight,
+                         hdcSrc, rcSrc.left, rcSrc.bottom-sm.cyBottomHeight, 
+                         transparent, transparentcolor)) {
             hr = HRESULT_FROM_WIN32(GetLastError());
             goto draw_error; 
         }
         /* Lower right corner */
-        if(!BitBlt(hdcDst, dstSize.x-sm.cxRightWidth, dstSize.y-sm.cyBottomHeight, sm.cxRightWidth, sm.cyBottomHeight,
-                   hdcSrc, rcSrc.right-sm.cxRightWidth, rcSrc.bottom-sm.cyBottomHeight, SRCCOPY)) {
+        if(!UXTHEME_Blt (hdcDst, dstSize.x-sm.cxRightWidth, dstSize.y-sm.cyBottomHeight, 
+                         sm.cxRightWidth, sm.cyBottomHeight,
+                         hdcSrc, rcSrc.right-sm.cxRightWidth, rcSrc.bottom-sm.cyBottomHeight, 
+                         transparent, transparentcolor)) {
             hr = HRESULT_FROM_WIN32(GetLastError());
             goto draw_error; 
         }
@@ -672,28 +710,41 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
 
             if(destCenterWidth > 0) {
                 /* Center top */
-                if(!UXTHEME_SizedBlt(hdcDst, sm.cxLeftWidth, 0, destCenterWidth, sm.cyTopHeight,
-                               hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.top, srcCenterWidth, sm.cyTopHeight, sizingtype)) {
+                if(!UXTHEME_SizedBlt (hdcDst, sm.cxLeftWidth, 0, 
+                                      destCenterWidth, sm.cyTopHeight,
+                                      hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.top, 
+                                      srcCenterWidth, sm.cyTopHeight, 
+                                      sizingtype, transparent, transparentcolor)) {
                     hr = HRESULT_FROM_WIN32(GetLastError());
                     goto draw_error; 
                 }
                 /* Center bottom */
-                if(!UXTHEME_SizedBlt(hdcDst, sm.cxLeftWidth, dstSize.y-sm.cyBottomHeight, destCenterWidth, sm.cyBottomHeight,
-                               hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.bottom-sm.cyBottomHeight, srcCenterWidth, sm.cyTopHeight, sizingtype)) {
+                if(!UXTHEME_SizedBlt (hdcDst, sm.cxLeftWidth, dstSize.y-sm.cyBottomHeight, 
+                                      destCenterWidth, sm.cyBottomHeight,
+                                      hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.bottom-sm.cyBottomHeight, 
+                                      srcCenterWidth, sm.cyBottomHeight, 
+                                      sizingtype, transparent, transparentcolor)) {
                     hr = HRESULT_FROM_WIN32(GetLastError());
                     goto draw_error; 
                 }
             }
             if(destCenterHeight > 0) {
                 /* Left center */
-                if(!UXTHEME_SizedBlt(hdcDst, 0, sm.cyTopHeight, sm.cxLeftWidth, destCenterHeight,
-                           hdcSrc, rcSrc.left, rcSrc.top+sm.cyTopHeight, sm.cxLeftWidth, srcCenterHeight, sizingtype)) {
+                if(!UXTHEME_SizedBlt (hdcDst, 0, sm.cyTopHeight, 
+                                      sm.cxLeftWidth, destCenterHeight,
+                                      hdcSrc, rcSrc.left, rcSrc.top+sm.cyTopHeight, 
+                                      sm.cxLeftWidth, srcCenterHeight, 
+                                      sizingtype, 
+                                      transparent, transparentcolor)) {
                     hr = HRESULT_FROM_WIN32(GetLastError());
                     goto draw_error; 
                 }
                 /* Right center */
-                if(!UXTHEME_SizedBlt(hdcDst, dstSize.x-sm.cxRightWidth, sm.cyTopHeight, sm.cxRightWidth, destCenterHeight,
-                               hdcSrc, rcSrc.right-sm.cxRightWidth, rcSrc.top+sm.cyTopHeight, sm.cxRightWidth, srcCenterHeight, sizingtype)) {
+                if(!UXTHEME_SizedBlt (hdcDst, dstSize.x-sm.cxRightWidth, sm.cyTopHeight, 
+                                      sm.cxRightWidth, destCenterHeight,
+                                      hdcSrc, rcSrc.right-sm.cxRightWidth, rcSrc.top+sm.cyTopHeight, 
+                                      sm.cxRightWidth, srcCenterHeight, 
+                                      sizingtype, transparent, transparentcolor)) {
                     hr = HRESULT_FROM_WIN32(GetLastError());
                     goto draw_error; 
                 }
@@ -703,8 +754,11 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
                 GetThemeBool(hTheme, iPartId, iStateId, TMT_BORDERONLY, &borderonly);
                 if(!borderonly) {
                     /* Center */
-                    if(!UXTHEME_SizedBlt(hdcDst, sm.cxLeftWidth, sm.cyTopHeight, destCenterWidth, destCenterHeight,
-                                   hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.top+sm.cyTopHeight, srcCenterWidth, srcCenterHeight, sizingtype)) {
+                    if(!UXTHEME_SizedBlt (hdcDst, sm.cxLeftWidth, sm.cyTopHeight, 
+                                          destCenterWidth, destCenterHeight,
+                                          hdcSrc, rcSrc.left+sm.cxLeftWidth, rcSrc.top+sm.cyTopHeight, 
+                                          srcCenterWidth, srcCenterHeight, 
+                                          sizingtype, transparent, transparentcolor)) {
                         hr = HRESULT_FROM_WIN32(GetLastError());
                         goto draw_error; 
                     }
@@ -712,17 +766,8 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
             }
         }
 
-        if(!UXTHEME_Blt(hdc, rcDst.left, rcDst.top, dstSize.x, dstSize.y,
-                        hdcDst, 0, 0,
-                        transparent, transparentcolor))
-            hr = HRESULT_FROM_WIN32(GetLastError());
-
 draw_error:
-        if(hdcDst) {
-            SelectObject(hdcDst, oldDst);
-            DeleteDC(hdcDst);
-        }
-        if(bmpDst) DeleteObject(bmpDst);
+        SetViewportOrgEx (hdcDst, org.x, org.y, NULL);
     }
     SelectObject(hdcSrc, oldSrc);
     DeleteObject(bmpSrc);
