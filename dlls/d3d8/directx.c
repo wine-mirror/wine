@@ -667,7 +667,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     /* Allocate an associated WineD3DDevice object */
     localParameters.BackBufferWidth                = &pPresentationParameters->BackBufferWidth;             
     localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;
-    localParameters.BackBufferFormat               = &pPresentationParameters->BackBufferFormat;           
+    localParameters.BackBufferFormat               = (WINED3DFORMAT *)&pPresentationParameters->BackBufferFormat;           
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;            
     localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;            
     localParameters.MultiSampleQuality             = NULL; /* New at dx9 */
@@ -675,7 +675,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;              
     localParameters.Windowed                       = &pPresentationParameters->Windowed;                   
     localParameters.EnableAutoDepthStencil         = &pPresentationParameters->EnableAutoDepthStencil;     
-    localParameters.AutoDepthStencilFormat         = &pPresentationParameters->AutoDepthStencilFormat;     
+    localParameters.AutoDepthStencilFormat         = (WINED3DFORMAT *)&pPresentationParameters->AutoDepthStencilFormat;     
     localParameters.Flags                          = &pPresentationParameters->Flags;                      
     localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz; 
     localParameters.PresentationInterval           = &pPresentationParameters->FullScreen_PresentationInterval;    /* Renamed in dx9 */
