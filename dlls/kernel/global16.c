@@ -1068,7 +1068,6 @@ DWORD WINAPI GetFreeMemInfo16(void)
 
 /***********************************************************************
  *           A20Proc   (KERNEL.165)
- *           A20_Proc  (SYSTEM.20)
  */
 void WINAPI A20Proc16( WORD unused )
 {

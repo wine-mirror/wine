@@ -29,8 +29,6 @@
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "winternl.h"
-#include "kernel_private.h"
-#include "kernel16_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(system);
@@ -227,6 +225,15 @@ void WINAPI DisableSystemTimers16(void)
 
 
 /***********************************************************************
+ *           GetSystemMSecCount (SYSTEM.6)
+ */
+DWORD WINAPI GetSystemMSecCount16(void)
+{
+    return GetTickCount();
+}
+
+
+/***********************************************************************
  *           Get80x87SaveSize   (SYSTEM.7)
  */
 WORD WINAPI Get80x87SaveSize16(void)
@@ -254,4 +261,13 @@ void WINAPI Restore80x87State16( const char *ptr )
 #ifdef __i386__
     __asm__(".byte 0x66; frstor %0" : : "m" (ptr) );
 #endif
+}
+
+
+/***********************************************************************
+ *           A20_Proc  (SYSTEM.20)
+ */
+void WINAPI A20_Proc16( WORD unused )
+{
+    /* this is also a NOP in Windows */
 }

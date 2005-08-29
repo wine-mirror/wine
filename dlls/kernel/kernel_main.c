@@ -220,7 +220,6 @@ INT WINAPI MulDiv( INT nMultiplicand, INT nMultiplier, INT nDivisor)
 
 
 /***********************************************************************
- *           GetSystemMSecCount (SYSTEM.6)
  *           GetTickCount       (KERNEL32.@)
  *
  * Get the number of milliseconds the system has been running.
