@@ -327,8 +327,8 @@ static BOOL fill_theme_list (HWND comboTheme, HWND comboColor, HWND comboSize)
 /* Update the color & size combo boxes when the selection of the theme
  * combo changed. Selects the current color and size scheme if the theme
  * is currently active, otherwise the first color and size. */
-BOOL THEME_update_color_and_size (int themeIndex, HWND comboColor, 
-				  HWND comboSize)
+static BOOL update_color_and_size (int themeIndex, HWND comboColor, 
+				   HWND comboSize)
 {
     if (themeIndex == 0)
     {
@@ -437,7 +437,7 @@ static void init_dialog (HWND dialog)
 static void on_theme_changed(HWND dialog) {
     int index = SendMessageW (GetDlgItem (dialog, IDC_THEME_THEMECOMBO),
         CB_GETCURSEL, 0, 0);
-    if (!THEME_update_color_and_size (index, GetDlgItem (dialog, IDC_THEME_COLORCOMBO),
+    if (!update_color_and_size (index, GetDlgItem (dialog, IDC_THEME_COLORCOMBO),
         GetDlgItem (dialog, IDC_THEME_SIZECOMBO)))
     {
         SendMessageW (GetDlgItem (dialog, IDC_THEME_COLORCOMBO), CB_SETCURSEL, (WPARAM)-1, 0);
