@@ -167,12 +167,32 @@ BEGIN
     CONTROL     "Emulation pilote",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
 END
 
+IDD_APPEARANCE DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Thèmes ",IDC_STATIC,8,10,244,94
+    LTEXT           "Thème:",IDC_STATIC,15,22,228,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,15,30,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Couleur:",IDC_THEME_COLORTEXT,15,48,228,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,15,56,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Taille:",IDC_THEME_SIZETEXT,15,74,228,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,15,82,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
+    IDS_TAB_APPLICATIONS    "Applications"
     IDS_TAB_DLLS            "Bibliothèques"
     IDS_TAB_DRIVES          "Lecteurs"
     IDS_CHOOSE_PATH         "Veuillez sélectionner le répertoire unix à assigner."
     IDS_HIDE_ADVANCED       "Cacher avancés"
     IDS_SHOW_ADVANCED       "Montrer avancés"
+    IDS_NOTHEME             "(Pas de thème)"
+    IDS_TAB_GRAPHICS        "Affichage"
+    IDS_TAB_APPEARANCE      "Apparence"
+    IDS_TAB_AUDIO           "Audio"
+    IDS_TAB_ABOUT           "A propos"
+    IDS_WINECFG_TITLE       "Configuration de Wine"
 END
