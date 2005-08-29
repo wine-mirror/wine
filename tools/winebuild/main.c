@@ -373,7 +373,6 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             lib_path[nb_lib_paths++] = xstrdup( optarg );
             break;
         case 'M':
-            spec->owner_name = xstrdup( optarg );
             spec->type = SPEC_WIN16;
             break;
         case 'N':

@@ -88,7 +88,6 @@ typedef struct
 {
     char            *file_name;          /* file name of the dll */
     char            *dll_name;           /* internal name of the dll */
-    char            *owner_name;         /* name of the 32-bit dll owning this one */
     char            *init_func;          /* initialization routine */
     SPEC_TYPE        type;               /* type of dll (Win16/Win32) */
     int              base;               /* ordinal base */
