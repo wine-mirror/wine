@@ -28,11 +28,13 @@
 #include "docobj.h"
 #include "mshtmhst.h"
 #include "mshtmdid.h"
+#include "hlink.h"
 #include "idispids.h"
 #include "shlguid.h"
 
 #include "initguid.h"
 DEFINE_SHLGUID(CGID_Undocumented, 0x000214D4L, 0, 0);
+DEFINE_GUID(CGID_MSHTML, 0xDE4BA900,0x59CA,0x11CF,0x95,0x92, 0x44,0x45,0x53,0x54,0x00,0x00);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -78,17 +80,33 @@ DEFINE_EXPECT(QueryStatus_OPEN);
 DEFINE_EXPECT(QueryStatus_NEW);
 DEFINE_EXPECT(Exec_SETPROGRESSMAX);
 DEFINE_EXPECT(Exec_SETPROGRESSPOS);
+DEFINE_EXPECT(Exec_HTTPEQUIV_DONE); 
+DEFINE_EXPECT(Exec_SETDOWNLOADSTATE);
 DEFINE_EXPECT(Exec_ShellDocView_37);
+DEFINE_EXPECT(Exec_UPDATECOMMANDS);
+DEFINE_EXPECT(Exec_SETTITLE);
+DEFINE_EXPECT(Exec_HTTPEQUIV);
+DEFINE_EXPECT(Exec_MSHTML_2315);
 DEFINE_EXPECT(Invoke_AMBIENT_USERMODE);
 DEFINE_EXPECT(Invoke_AMBIENT_DLCONTROL);
 DEFINE_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
 DEFINE_EXPECT(Invoke_AMBIENT_SILENT);
 DEFINE_EXPECT(Invoke_AMBIENT_USERAGENT);
 DEFINE_EXPECT(Invoke_AMBIENT_PALETTE);
+DEFINE_EXPECT(GetDropTarget);
+DEFINE_EXPECT(UpdateUI);
 
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
-static BOOL do_load = FALSE, set_clientsite = FALSE, container_locked = FALSE;
+static BOOL set_clientsite = FALSE, container_locked = FALSE;
+static enum {
+    LD_NO = 0,
+    LD_DOLOAD,
+    LD_LOADING,
+    LD_LOADED
+} load_state;
+
+static LPCOLESTR expect_status_text = NULL;
 
 static HRESULT QueryInterface(REFIID riid, void **ppv);
 
@@ -229,8 +247,9 @@ static HRESULT WINAPI InPlaceFrame_RemoveMenus(IOleInPlaceFrame *iface, HMENU hm
 
 static HRESULT WINAPI InPlaceFrame_SetStatusText(IOleInPlaceFrame *iface, LPCOLESTR pszStatusText)
 {
-    CHECK_EXPECT(SetStatusText);
-    ok(pszStatusText == NULL, "pszStatusText=%p, expected NULL\n", pszStatusText);
+    CHECK_EXPECT2(SetStatusText);
+    if(!expect_status_text)
+        ok(pszStatusText == NULL, "pszStatusText=%p, expected NULL\n", pszStatusText);
     return S_OK;
 }
 
@@ -541,6 +560,7 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 SET_EXPECT(SetActiveObject);
                 SET_EXPECT(ShowUI);
                 expect_SetActiveObject_active = TRUE;
+                expect_status_text = NULL;
 
                 hres = IOleDocumentView_UIActivate(view, TRUE);
 
@@ -594,8 +614,11 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 SET_EXPECT(Exec_SETPROGRESSMAX);
                 SET_EXPECT(Exec_SETPROGRESSPOS);
                 SET_EXPECT(OnUIActivate);
+                expect_status_text = (load_state == LD_LOADED ? (LPCOLESTR)0xdeadbeef : NULL);
+
                 hres = IOleDocumentView_Show(view, TRUE);
                 ok(hres == S_OK, "Show failed: %08lx\n", hres);
+
                 CHECK_CALLED(CanInPlaceActivate);
                 CHECK_CALLED(GetWindowContext);
                 CHECK_CALLED(GetWindow);
@@ -695,8 +718,8 @@ static HRESULT WINAPI DocHostUIHandler_HideUI(IDocHostUIHandler2 *iface)
 
 static HRESULT WINAPI DocHostUIHandler_UpdateUI(IDocHostUIHandler2 *iface)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(UpdateUI);
+    return S_OK;
 }
 
 static HRESULT WINAPI DocHostUIHandler_EnableModeless(IDocHostUIHandler2 *iface, BOOL fEnable)
@@ -745,7 +768,8 @@ static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *ifac
 static HRESULT WINAPI DocHostUIHandler_GetDropTarget(IDocHostUIHandler2 *iface,
         IDropTarget *pDropTarget, IDropTarget **ppDropTarget)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(GetDropTarget);
+    /* TODO */
     return E_NOTIMPL;
 }
 
@@ -853,22 +877,44 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     if(!pguidCmdGroup) {
         switch(nCmdID) {
         case OLECMDID_SETPROGRESSMAX:
-            CHECK_EXPECT(Exec_SETPROGRESSMAX);
+            CHECK_EXPECT2(Exec_SETPROGRESSMAX);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             if(pvaIn) {
                 ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
-                ok(V_I4(pvaIn) == 0, "V_I4(pvaIn)=%ld, expected 0\n", V_I4(pvaIn));
+                if(load_state == LD_NO)
+                    ok(V_I4(pvaIn) == 0, "V_I4(pvaIn)=%ld, expected 0\n", V_I4(pvaIn));
             }
             ok(pvaOut == NULL, "pvaOut=%p, expected NULL\n", pvaOut);
             return S_OK;
         case OLECMDID_SETPROGRESSPOS:
-            CHECK_EXPECT(Exec_SETPROGRESSPOS);
+            CHECK_EXPECT2(Exec_SETPROGRESSPOS);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             if(pvaIn) {
                 ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
-                ok(V_I4(pvaIn) == 0, "V_I4(pvaIn)=%ld, expected 0\n", V_I4(pvaIn));
+                if(load_state == LD_NO)
+                    ok(V_I4(pvaIn) == 0, "V_I4(pvaIn)=%ld, expected 0\n", V_I4(pvaIn));
             }
             ok(pvaOut == NULL, "pvaOut=%p, expected NULL\n", pvaOut);
+            return S_OK;
+        case OLECMDID_HTTPEQUIV_DONE:
+            CHECK_EXPECT(Exec_HTTPEQUIV_DONE);
+            /* TODO */
+            return S_OK;
+        case OLECMDID_SETDOWNLOADSTATE:
+            CHECK_EXPECT2(Exec_SETDOWNLOADSTATE);
+            /* TODO */
+            return S_OK;
+        case OLECMDID_UPDATECOMMANDS:
+            CHECK_EXPECT(Exec_UPDATECOMMANDS);
+            /* TODO */
+            return S_OK;
+        case OLECMDID_SETTITLE:
+            CHECK_EXPECT2(Exec_SETTITLE);
+            /* TODO */
+            return S_OK;
+        case OLECMDID_HTTPEQUIV:
+            CHECK_EXPECT2(Exec_HTTPEQUIV);
+            /* TODO */
             return S_OK;
         default:
             ok(0, "unexpected command %ld\n", nCmdID);
@@ -893,11 +939,21 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         };
     }
 
+    if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
+        switch(nCmdID) {
+        case 2315:
+            CHECK_EXPECT(Exec_MSHTML_2315);
+            /* TODO */
+            return S_OK;
+        default:
+            ok(0, "unexpected command %ld\n", nCmdID);
+        };
+    }
+
     if(IsEqualGUID(&CGID_Undocumented, pguidCmdGroup))
         return E_FAIL; /* TODO */
 
     ok(0, "unexpected call\n");
-
     return E_NOTIMPL;
 }
 
@@ -1102,6 +1158,49 @@ static void test_Load(IPersistMoniker *persist)
     IMoniker_Release(mon);
 }
 
+#ifdef DOWNLOAD_TEST
+
+static void test_download(void)
+{
+    MSG msg;
+
+    load_state = LD_LOADING;
+
+    SET_EXPECT(Exec_SETDOWNLOADSTATE);
+    SET_EXPECT(GetDropTarget);
+    SET_EXPECT(SetStatusText);
+    SET_EXPECT(UpdateUI);
+    SET_EXPECT(Exec_UPDATECOMMANDS);
+    SET_EXPECT(Exec_SETTITLE);
+    SET_EXPECT(Exec_HTTPEQUIV);
+    SET_EXPECT(Exec_SETPROGRESSMAX);
+    SET_EXPECT(Exec_SETPROGRESSPOS);
+    SET_EXPECT(Exec_MSHTML_2315);
+    SET_EXPECT(Exec_HTTPEQUIV_DONE);
+    expect_status_text = (LPCOLESTR)0xdeadbeef; /* TODO */
+
+    while(!called_Exec_HTTPEQUIV_DONE && GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    CHECK_CALLED(Exec_SETDOWNLOADSTATE);
+    CHECK_CALLED(GetDropTarget);
+    CHECK_CALLED(SetStatusText);
+    CHECK_CALLED(UpdateUI);
+    CHECK_CALLED(Exec_UPDATECOMMANDS);
+    CHECK_CALLED(Exec_SETTITLE);
+    CHECK_CALLED(Exec_HTTPEQUIV);
+    CHECK_CALLED(Exec_SETPROGRESSMAX);
+    CHECK_CALLED(Exec_SETPROGRESSPOS);
+    CHECK_CALLED(Exec_MSHTML_2315);
+    CHECK_CALLED(Exec_HTTPEQUIV_DONE);
+
+    load_state = LD_LOADED;
+}
+
+#endif
+
 static void test_Persist(IUnknown *unk)
 {
     IPersistMoniker *persist_mon;
@@ -1132,7 +1231,7 @@ static void test_Persist(IUnknown *unk)
         ok(hres == S_OK, "GetClassID failed: %08lx\n", hres);
         ok(IsEqualGUID(&CLSID_HTMLDocument, &guid), "guid != CLSID_HTMLDocument\n");
 
-        if(do_load)
+        if(load_state == LD_DOLOAD)
             test_Load(persist_mon);
 
         IPersistMoniker_Release(persist_mon);
@@ -1606,6 +1705,30 @@ static void test_Hide(void)
     ok(hres == S_OK, "Show failed: %08lx\n", hres);
 }
 
+static HRESULT create_document(IUnknown **unk)
+{
+    HRESULT hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IUnknown, (void**)unk);
+    ok(hres == S_OK, "CoCreateInstance failed: %08lx\n", hres);
+    return hres;
+}
+
+static void test_Navigate(IUnknown *unk)
+{
+    IHlinkTarget *hlink;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHlinkTarget, (void**)&hlink);
+    ok(hres == S_OK, "QueryInterface(IID_IHlinkTarget) failed: %08lx\n", hres);
+
+    SET_EXPECT(ActivateMe);
+    hres = IHlinkTarget_Navigate(hlink, 0, NULL);
+    ok(hres == S_OK, "Navigate failed: %08lx\n", hres);
+    CHECK_CALLED(ActivateMe);
+
+    IHlinkTarget_Release(hlink);
+}
+
 static void test_HTMLDocument(void)
 {
     IUnknown *unk;
@@ -1614,14 +1737,12 @@ static void test_HTMLDocument(void)
 
     hwnd = last_hwnd = NULL;
 
-    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-            &IID_IUnknown, (void**)&unk);
-    ok(hres == S_OK, "CoCreateInstance failed: %08lx\n", hres);
+    hres = create_document(&unk);
     if(FAILED(hres))
         return;
 
     test_Persist(unk);
-    if(!do_load)
+    if(load_state == LD_NO)
         test_OnAmbientPropertyChange2(unk);
 
     hres = test_Activate(unk, CLIENTSITE_EXPECTPATH);
@@ -1629,6 +1750,11 @@ static void test_HTMLDocument(void)
         IUnknown_Release(unk);
         return;
     }
+
+#ifdef DOWNLOAD_TEST
+    if(load_state == LD_DOLOAD)
+        test_download();
+#endif
 
     test_OleCommandTarget_fail(unk);
     test_OleCommandTarget(unk);
@@ -1680,15 +1806,49 @@ static void test_HTMLDocument(void)
 
 }
 
+static void test_HTMLDocument_hlink(void)
+{
+    IUnknown *unk;
+    HRESULT hres;
+    ULONG ref;
+
+    hwnd = last_hwnd = NULL;
+
+    hres = create_document(&unk);
+    if(FAILED(hres))
+        return;
+
+    test_Persist(unk);
+    test_Navigate(unk);
+
+#ifdef DOWNLOAD_TEST
+    test_download();
+#endif
+
+    test_Window(unk, TRUE);
+    test_InPlaceDeactivate(unk, TRUE);
+    test_Close(unk, FALSE);
+
+    if(view)
+        IOleDocumentView_Release(view);
+    view = NULL;
+
+    ref = IUnknown_Release(unk);
+    ok(ref == 0, "ref=%ld, expected 0\n", ref);
+
+}
+
 START_TEST(htmldoc)
 {
     CoInitialize(NULL);
     container_hwnd = create_container_window();
 
-    do_load = FALSE;
+    load_state = LD_NO;
     test_HTMLDocument();
-    do_load = TRUE;
+    load_state = LD_DOLOAD;
     test_HTMLDocument();
+    load_state = LD_DOLOAD;
+    test_HTMLDocument_hlink();
 
     DestroyWindow(container_hwnd);
     CoUninitialize();
