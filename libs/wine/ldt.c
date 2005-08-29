@@ -117,6 +117,24 @@ extern int i386_get_ldt(int, union descriptor *, int);
 extern int i386_set_ldt(int, union descriptor *, int);
 #endif  /* __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
 
+#ifdef __APPLE__
+
+static inline int thread_set_user_ldt( const void *addr, unsigned int size, unsigned int flags )
+{
+    int ret;
+    __asm__ __volatile__ ("pushl %4\n\t"
+                          "pushl %3\n\t"
+                          "pushl %2\n\t"
+                          "pushl $0\n\t"
+                          "lcall $0x3b,$0\n\t"
+                          "leal  16(%%esp),%%esp"
+                          : "=a" (ret)
+                          : "0" (4 /*thread_set_user_ldt*/), "r" (addr), "r" (size), "r" (flags) );
+    return ret;
+}
+
+#endif  /* __APPLE__ */
+
 #endif  /* __i386__ */
 
 /* local copy of the LDT */
@@ -382,7 +400,7 @@ void wine_ldt_free_entries( unsigned short sel, int count )
 
 #ifdef __i386__
 
-static int fs_gdt_index = -1;  /* GDT index for %fs, or 0 if GDT not supported on this kernel */
+static int global_fs_sel = -1;  /* global selector for %fs shared among all threads */
 
 /***********************************************************************
  *           wine_ldt_alloc_fs
@@ -392,7 +410,7 @@ static int fs_gdt_index = -1;  /* GDT index for %fs, or 0 if GDT not supported o
  */
 unsigned short wine_ldt_alloc_fs(void)
 {
-    if (fs_gdt_index == -1)
+    if (global_fs_sel == -1)
     {
 #ifdef __linux__
         struct modify_ldt_s ldt_info;
@@ -402,13 +420,17 @@ unsigned short wine_ldt_alloc_fs(void)
         fill_modify_ldt_struct( &ldt_info, &null_entry );
         if ((ret = set_thread_area( &ldt_info ) < 0))
         {
-            fs_gdt_index = 0;  /* don't try it again */
+            global_fs_sel = 0;  /* don't try it again */
             if (errno != ENOSYS) perror( "set_thread_area" );
         }
-        else fs_gdt_index = ldt_info.entry_number;
-#endif  /* __linux__ */
+        else global_fs_sel = (ldt_info.entry_number << 3) | 3;
+#elif defined(__APPLE__)
+        int ret = thread_set_user_ldt( NULL, 0, 0 );
+        if (ret != -1) global_fs_sel = ret;
+        else global_fs_sel = 0;
+#endif  /* __APPLE__ */
     }
-    if (fs_gdt_index > 0) return (fs_gdt_index << 3) | 3;
+    if (global_fs_sel > 0) return global_fs_sel;
     return wine_ldt_alloc_entries( 1 );
 }
 
@@ -423,17 +445,20 @@ unsigned short wine_ldt_alloc_fs(void)
  */
 void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry )
 {
-    if (is_gdt_sel(sel))
+    if ((sel & ~3) == (global_fs_sel & ~3))
     {
 #ifdef __linux__
         struct modify_ldt_s ldt_info;
         int ret;
 
         ldt_info.entry_number = sel >> 3;
-        assert( ldt_info.entry_number == fs_gdt_index );
         fill_modify_ldt_struct( &ldt_info, entry );
         if ((ret = set_thread_area( &ldt_info ) < 0)) perror( "set_thread_area" );
-#endif  /* __linux__ */
+#elif defined(__APPLE__)
+        int ret = thread_set_user_ldt( wine_ldt_get_base(entry), wine_ldt_get_limit(entry), 0 );
+        if (ret == -1) perror( "thread_set_user_ldt" );
+        else assert( ret == global_fs_sel );
+#endif  /* __APPLE__ */
     }
     else  /* LDT selector */
     {
