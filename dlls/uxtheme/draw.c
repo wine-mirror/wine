@@ -212,13 +212,14 @@ static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iState
     int imagecount = 1;
     BITMAP bmp;
     WCHAR szPath[MAX_PATH];
+    BOOL hasAlpha;
     PTHEME_PROPERTY tp = UXTHEME_SelectImage(hTheme, hdc, iPartId, iStateId, pRect, glyph);
     if(!tp) {
         FIXME("Couldn't determine image for part/state %d/%d, invalid theme?\n", iPartId, iStateId);
         return E_PROP_ID_UNSUPPORTED;
     }
     lstrcpynW(szPath, tp->lpValue, min(tp->dwValueLen+1, sizeof(szPath)/sizeof(szPath[0])));
-    *hBmp = MSSTYLES_LoadBitmap(hdc, hTheme, szPath);
+    *hBmp = MSSTYLES_LoadBitmap(hTheme, szPath, &hasAlpha);
     if(!*hBmp) {
         TRACE("Failed to load bitmap %s\n", debugstr_w(szPath));
         return HRESULT_FROM_WIN32(GetLastError());

@@ -48,6 +48,7 @@ BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *
 void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics);
 
 extern HINSTANCE hDllInst;
+extern int alphaBlendMode;
 
 #define MSSTYLES_VERSION 0x0003
 
@@ -213,6 +214,13 @@ void MSSTYLES_CloseThemeFile(PTHEME_FILE tf)
                     }
                     HeapFree(GetProcessHeap(), 0, pcls);
                 }
+            }
+            while (tf->images)
+            {
+                PTHEME_IMAGE img = tf->images;
+                tf->images = img->next;
+                DeleteObject (img->image);
+                HeapFree (GetProcessHeap(), 0, img);
             }
             HeapFree(GetProcessHeap(), 0, tf);
         }
@@ -868,10 +876,11 @@ PTHEME_PROPERTY MSSTYLES_FindProperty(PTHEME_CLASS tc, int iPartId, int iStateId
     return NULL;
 }
 
-HBITMAP MSSTYLES_LoadBitmap(HDC hdc, PTHEME_CLASS tc, LPCWSTR lpFilename)
+HBITMAP MSSTYLES_LoadBitmap (PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha)
 {
     WCHAR szFile[MAX_PATH];
     LPWSTR tmp;
+    PTHEME_IMAGE img;
     lstrcpynW(szFile, lpFilename, sizeof(szFile)/sizeof(szFile[0]));
     tmp = szFile;
     do {
@@ -879,7 +888,29 @@ HBITMAP MSSTYLES_LoadBitmap(HDC hdc, PTHEME_CLASS tc, LPCWSTR lpFilename)
         if(*tmp == '/') *tmp = '_';
         if(*tmp == '.') *tmp = '_';
     } while(*tmp++);
-    return LoadImageW(tc->hTheme, szFile, IMAGE_BITMAP, 0, 0, LR_SHARED|LR_CREATEDIBSECTION);
+
+    /* Try to locate in list of loaded images */
+    img = tc->tf->images;
+    while (img)
+    {
+        if (lstrcmpiW (szFile, img->name) == 0)
+        {
+            TRACE ("found %p %s: %p\n", img, debugstr_w (img->name), img->image);
+            *hasAlpha = img->hasAlpha;
+            return img->image;
+        }
+        img = img->next;
+    }
+    /* Not found? Load from resources */
+    img = HeapAlloc (GetProcessHeap(), 0, sizeof (THEME_IMAGE));
+    img->image = LoadImageW(tc->hTheme, szFile, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+    img->hasAlpha = *hasAlpha = FALSE; /* TODO: real check */
+    /* ...and stow away for later reuse. */
+    lstrcpyW (img->name, szFile);
+    img->next = tc->tf->images;
+    tc->tf->images = img;
+    TRACE ("new %p %s: %p\n", img, debugstr_w (img->name), img->image);
+    return img->image;
 }
 
 BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value)
