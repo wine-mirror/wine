@@ -513,7 +513,7 @@
 666 pascal UTGlue16(ptr long ptr long) UTGlue16
 667 pascal EntryAddrProc(word word) EntryAddrProc16
 668 pascal MyAlloc(word word word) MyAlloc16
-
+669 pascal -ret16 DllEntryPoint(long word word word long word) KERNEL_DllEntryPoint
 
 # 700-704 are Win95 only
 

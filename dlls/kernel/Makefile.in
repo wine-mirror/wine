@@ -79,6 +79,7 @@ C_SRCS = \
 C_SRCS16 = \
 	atom16.c \
 	error16.c \
+	kernel16.c \
 	registry16.c \
 	toolhelp16.c \
 	win87em.c

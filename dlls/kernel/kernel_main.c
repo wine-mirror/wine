@@ -107,7 +107,6 @@ static void thread_detach(void)
  */
 static BOOL process_attach(void)
 {
-    HMODULE16 hModule;
     SYSTEM_INFO si;
     SYSTEM_TIMEOFDAY_INFORMATION sti;
 
@@ -126,48 +125,6 @@ static BOOL process_attach(void)
 
     /* copy process information from ntdll */
     ENV_CopyStartupInformation();
-
-    if ((hModule = LoadLibrary16( "krnl386.exe" )) >= 32)
-    {
-        /* Initialize 16-bit thunking entry points */
-        if (!WOWTHUNK_Init()) return FALSE;
-
-        /* Initialize DOS memory */
-        if (!DOSMEM_Init()) return FALSE;
-
-        /* Initialize special KERNEL entry points */
-
-        /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
-        NE_SetEntryPoint( hModule, 178, GetWinFlags16() );
-
-        /* Initialize KERNEL.454/455 (__FLATCS/__FLATDS) */
-        NE_SetEntryPoint( hModule, 454, wine_get_cs() );
-        NE_SetEntryPoint( hModule, 455, wine_get_ds() );
-
-        /* Initialize KERNEL.THHOOK */
-        TASK_InstallTHHook(MapSL((SEGPTR)GetProcAddress16( hModule, (LPCSTR)332 )));
-
-        /* Initialize the real-mode selector entry points */
-#define SET_ENTRY_POINT( num, addr ) \
-    NE_SetEntryPoint( hModule, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
-                      DOSMEM_MapDosToLinear(addr), 0x10000, hModule, \
-                      WINE_LDT_FLAGS_DATA ))
-
-        SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
-        SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */
-        SET_ENTRY_POINT( 182, 0xb8000 );  /* KERNEL.182: __B800H */
-        SET_ENTRY_POINT( 195, 0xc0000 );  /* KERNEL.195: __C000H */
-        SET_ENTRY_POINT( 179, 0xd0000 );  /* KERNEL.179: __D000H */
-        SET_ENTRY_POINT( 190, 0xe0000 );  /* KERNEL.190: __E000H */
-        NE_SetEntryPoint( hModule, 183, DOSMEM_0000H );       /* KERNEL.183: __0000H */
-        NE_SetEntryPoint( hModule, 173, DOSMEM_BiosSysSeg );  /* KERNEL.173: __ROMBIOS */
-        NE_SetEntryPoint( hModule, 193, DOSMEM_BiosDataSeg ); /* KERNEL.193: __0040H */
-        NE_SetEntryPoint( hModule, 194, DOSMEM_BiosSysSeg );  /* KERNEL.194: __F000H */
-#undef SET_ENTRY_POINT
-
-        /* Force loading of some dlls */
-        LoadLibrary16( "system.drv" );
-    }
 
 #ifdef __i386__
     if (GetVersion() & 0x80000000)
@@ -203,6 +160,7 @@ static BOOL process_attach(void)
         SetConsoleCtrlHandler(NULL, TRUE);
 
     /* Create 16-bit task */
+    LoadLibrary16( "krnl386.exe" );
     thread_attach();
     TASK_CreateMainTask();
     return TRUE;
@@ -228,26 +186,6 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         break;
     }
     return TRUE;
-}
-
-/***********************************************************************
- *		EnableDos (KERNEL.41)
- *		DisableDos (KERNEL.42)
- *		GetLastDiskChange (KERNEL.98)
- *		ValidateCodeSegments (KERNEL.100)
- *		KbdRst (KERNEL.123)
- *		EnableKernel (KERNEL.124)
- *		DisableKernel (KERNEL.125)
- *		ValidateFreeSpaces (KERNEL.200)
- *		K237 (KERNEL.237)
- *		BUNNY_351 (KERNEL.351)
- *		PIGLET_361 (KERNEL.361)
- *
- * Entry point for kernel functions that do nothing.
- */
-LONG WINAPI KERNEL_nop(void)
-{
-    return 0;
 }
 
 /***********************************************************************

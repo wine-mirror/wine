@@ -56,20 +56,6 @@ DWORD WINAPI FreeLibrary32W16(DWORD);
 #define CPEX_DEST_STDCALL   0x00000000L
 #define CPEX_DEST_CDECL     0x80000000L
 
-/* thunk for 16-bit CreateThread */
-struct thread_args
-{
-    FARPROC16 proc;
-    DWORD     param;
-};
-
-static DWORD CALLBACK start_thread16( LPVOID threadArgs )
-{
-    struct thread_args args = *(struct thread_args *)threadArgs;
-    HeapFree( GetProcessHeap(), 0, threadArgs );
-    return K32WOWCallback16( (DWORD)args.proc, args.param );
-}
-
 
 #ifdef __i386__
 
@@ -940,19 +926,4 @@ DWORD WINAPIV WOW16Call(WORD x, WORD y, WORD z, VA_LIST16 args)
         stack16_pop( 3*sizeof(WORD) + x + sizeof(DWORD) );
         DPRINTF(") calling address was 0x%08lx\n",calladdr);
         return 0;
-}
-
-
-/***********************************************************************
- *           CreateThread16   (KERNEL.441)
- */
-HANDLE WINAPI CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
-                              FARPROC16 start, SEGPTR param,
-                              DWORD flags, LPDWORD id )
-{
-    struct thread_args *args = HeapAlloc( GetProcessHeap(), 0, sizeof(*args) );
-    if (!args) return INVALID_HANDLE_VALUE;
-    args->proc = start;
-    args->param = param;
-    return CreateThread( sa, stack, start_thread16, args, flags, id );
 }
