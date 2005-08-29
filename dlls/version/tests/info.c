@@ -261,6 +261,21 @@ static void test_32bit_win(void)
     WCHAR WineFileDescriptionW[] = { 'W','i','n','e',' ','v','e','r','s','i','o','n',' ','t','e','s','t', 0 };
     BOOL is_unicode_enabled = TRUE;
 
+    /* A copy from dlls/version/info.c */
+    typedef struct
+    {
+        WORD  wLength;
+        WORD  wValueLength;
+        WORD  wType;
+        WCHAR szKey[1];
+#if 0   /* variable length structure */
+        /* DWORD aligned */
+        BYTE  Value[];
+        /* DWORD aligned */
+        VS_VERSION_INFO_STRUCT32 Children[];
+#endif
+    } VS_VERSION_INFO_STRUCT32;
+
     /* If we call GetFileVersionInfoA on a system that supports Unicode (NT/W2K/XP/W2K3 by default)
      * then the versioninfo will contain Unicode strings.
      * Wine however always converts a VersionInfo32 to VersionInfo16 when called through GetFileVersionInfoA
@@ -296,12 +311,40 @@ static void test_32bit_win(void)
         ok( !memcmp(pVersionInfoA, pVersionInfoW, retvalA), "Both structs should be the same, they aren't\n");
     }
 
-    /* The structs are the same but that will mysteriously change with the next calls on Windows (not on Wine).
-     * The structure on windows is way bigger then needed, so there must be something to it. As we do not
-     * seem to need this bigger structure, we can leave that as is.
-     * The change in the Windows structure is in this not needed part.
+    /* The structs on Windows are bigger then just the struct for the basic information. The total struct
+     * contains also an empty part, which is used for converted strings. The converted strings are a result
+     * of calling VerQueryValueA on a 32bit resource and calling VerQueryValueW on a 16bit resource.
+     * The first WORD of the structure (wLength) shows the size of the base struct. The total struct size depends
+     * on the Windows version:
      *
-     * Although the structures contain Unicode strings, VerQueryValueA will always return normal strings,
+     * 16bits resource (numbers are from a sample app):
+     *
+     * Windows Version    Retrieved with A/W    wLength        StructSize
+     * ====================================================================================
+     * Win98              A                     0x01B4 (436)   436
+     * NT4                A/W                   0x01B4 (436)   2048 ???
+     * W2K/XP/W2K3        A/W                   0x01B4 (436)   1536 which is (436 - sizeof(VS_FIXEDFILEINFO)) * 4
+     *
+     * 32bits resource (numbers are from this test executable version_crosstest.exe):
+     * Windows Version    Retrieved with A/W    wLength        StructSize
+     * =============================================================
+     * Win98              A                     0x01E0 (480)   848 (structure data doesn't seem correct)
+     * NT4                A/W                   0x0350 (848)   1272 (848 * 1.5)
+     * W2K/XP/W2K3        A/W                   0x0350 (848)   1700 which is (848 * 2) + 4 
+     *
+     * Wine will follow the implementation (eventually) of W2K/XP/W2K3
+     */
+
+    /* Now some tests for the above (only if we are unicode enabled) */
+
+    if (is_unicode_enabled)
+    { 
+        VS_VERSION_INFO_STRUCT32 *vvis = (VS_VERSION_INFO_STRUCT32 *)pVersionInfoW;
+        ok ( retvalW == ((vvis->wLength * 2) + 4) || retvalW == (vvis->wLength * 1.5),
+             "Structure is not of the correct size\n");
+    }
+
+    /* Although the 32bit resource structures contain Unicode strings, VerQueryValueA will always return normal strings,
      * VerQueryValueW will always return Unicode ones. (That means everything returned for StringFileInfo requests).
      */
 
@@ -367,7 +410,7 @@ START_TEST(info)
     test_info_size();
     test_info();
    
-    /* Test GetFileVersionInfoSize[AW] and GetFileVersionInfo[AW] on a 32 bit windows executable */
+    /* Test several AW-calls on a 32 bit windows executable */
     trace("Testing 32 bit windows application\n");
     test_32bit_win();
 }

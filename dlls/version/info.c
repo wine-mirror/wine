@@ -450,6 +450,27 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
             SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
             return 0;
         }
+
+        /* We have a 16bit resource.
+         *
+         * XP/W2K/W2K3 uses a buffer which is more than the actual needed space:
+         *
+         * (info->wLength - sizeof(VS_FIXEDFILEINFO)) * 4
+         *
+         * This extra buffer is used for ANSI to Unicode conversions in W-Calls.
+         * info->wLength should be the same as len. Currently it isn't but that
+         * doesn't seem to be a problem (len is bigger then info->wLength).
+         */
+         len = (len - sizeof(VS_FIXEDFILEINFO)) * 4;
+    }
+    else
+    {
+        /* We have a 32bit resource.
+         *
+         * XP/W2K/W2K3 uses a buffer which is 2 times the actual needed space + 4 bytes "FE2X"
+         * This extra buffer is used for Unicode to ANSI conversions in A-Calls
+         */
+         len = (len * 2) + 4;
     }
 
     SetLastError(0);
@@ -485,6 +506,7 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
 {
     DWORD len;
+    VS_VERSION_INFO_STRUCT32* vvis = (VS_VERSION_INFO_STRUCT32*)data;
 
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_w(filename), handle, datasize, data );
@@ -518,11 +540,21 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
             SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
             return FALSE;
         }
+        /* We have a 16bit resource. */
     }
+    else 
+    {
+        DWORD convbuf;
+ 
+        /* We have a 32bit resource.
+         *
+         * XP/W2K/W2K3 uses a buffer which is 2 times the actual needed space + 4 bytes "FE2X"
+         * This extra buffer is used for Unicode to ANSI conversions in A-Calls
+         */
 
-    /* If we end up here we have found either 16bit or 32bit
-     * version information
-     */
+        convbuf = datasize - vvis->wLength;
+        memcpy( ((char*)(data))+vvis->wLength, "FE2X", convbuf > 4 ? 4 : convbuf );
+    }
 
     SetLastError(0);
     return TRUE;
