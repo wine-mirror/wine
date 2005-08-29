@@ -4719,7 +4719,7 @@ TOOLBAR_SetBitmapSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
         FIXME("wParam is %d. Perhaps image list index?\n", wParam);
 
     if ((LOWORD(lParam) <= 0) || (HIWORD(lParam)<=0))
-	return FALSE;
+        lParam = MAKELPARAM(16, 15);
 
     if (infoPtr->nNumButtons > 0)
         WARN("%d buttons, undoc increase to bitmap size : %d-%d -> %d-%d\n",
