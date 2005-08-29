@@ -377,6 +377,11 @@ static void test_GetDisplayName(void)
         return;
     }
 
+    /* This test shows that Windows doesn't allocate a new pidlLast, but returns a pointer into 
+     * pidlTestFile (In accordance with MSDN). */
+    todo_wine{ok (ILFindLastID(pidlTestFile) == pidlLast, 
+                                "SHBindToParent doesn't return the last id of the pidl param!\n");}
+    
     hr = IShellFolder_GetDisplayNameOf(psfPersonal, pidlLast, SHGDN_FORPARSING, &strret);
     ok (SUCCEEDED(hr), "Personal->GetDisplayNameOf failed! hr = %08lx\n", hr);
     if (FAILED(hr)) {
