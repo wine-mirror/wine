@@ -15,6 +15,7 @@ C_SRCS = \
 	delete.c \
 	dn.c \
 	error.c \
+	extended.c \
 	init.c \
 	main.c \
 	misc.c \

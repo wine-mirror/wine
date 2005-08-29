@@ -40,7 +40,7 @@
 @ cdecl ldap_check_filterA(ptr str)
 @ cdecl ldap_check_filterW(ptr wstr)
 @ cdecl ldap_cleanup(long)
-@ stub ldap_close_extended_op
+@ cdecl ldap_close_extended_op(ptr long)
 @ cdecl ldap_compare(ptr str str str) ldap_compareA
 @ cdecl ldap_compareA(ptr str str str)
 @ cdecl ldap_compareW(ptr wstr wstr wstr)
@@ -101,11 +101,11 @@
 @ cdecl ldap_explode_dn(str long) ldap_explode_dnA
 @ cdecl ldap_explode_dnA(str long)
 @ cdecl ldap_explode_dnW(wstr long)
-@ stub ldap_extended_operation
-@ stub ldap_extended_operationA
-@ stub ldap_extended_operationW
-@ stub ldap_extended_operation_sA
-@ stub ldap_extended_operation_sW
+@ cdecl ldap_extended_operation(ptr str ptr ptr ptr ptr) ldap_extended_operationA
+@ cdecl ldap_extended_operationA(ptr str ptr ptr ptr ptr)
+@ cdecl ldap_extended_operationW(ptr wstr ptr ptr ptr ptr)
+@ cdecl ldap_extended_operation_sA(ptr str ptr ptr ptr ptr ptr)
+@ cdecl ldap_extended_operation_sW(ptr wstr ptr ptr ptr ptr ptr)
 @ stub ldap_first_attribute
 @ stub ldap_first_attributeA
 @ stub ldap_first_attributeW

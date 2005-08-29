@@ -250,6 +250,7 @@ ULONG ldap_bind_sW(WLDAP32_LDAP*,PWCHAR,PWCHAR,ULONG);
 ULONG ldap_check_filterA(WLDAP32_LDAP*,PCHAR);
 ULONG ldap_check_filterW(WLDAP32_LDAP*,PWCHAR);
 ULONG ldap_cleanup(HANDLE);
+ULONG ldap_close_extended_op(WLDAP32_LDAP*,ULONG);
 ULONG ldap_compareA(WLDAP32_LDAP*,PCHAR,PCHAR,PCHAR);
 ULONG ldap_compareW(WLDAP32_LDAP*,PWCHAR,PWCHAR,PWCHAR);
 ULONG ldap_compare_extA(WLDAP32_LDAP*,PCHAR,PCHAR,PCHAR,struct WLDAP32_berval*,PLDAPControlA*,PLDAPControlA*,ULONG*);
@@ -274,6 +275,12 @@ PCHAR ldap_err2stringA(ULONG);
 PWCHAR ldap_err2stringW(ULONG);
 PCHAR *ldap_explode_dnA(PCHAR,ULONG);
 PWCHAR *ldap_explode_dnW(PWCHAR,ULONG);
+ULONG ldap_extended_operationA(WLDAP32_LDAP*,PCHAR,struct WLDAP32_berval*,PLDAPControlA*,PLDAPControlA*,ULONG*);
+ULONG ldap_extended_operationW(WLDAP32_LDAP*,PWCHAR,struct WLDAP32_berval*,PLDAPControlW*,PLDAPControlW*,ULONG*);
+ULONG ldap_extended_operation_sA(WLDAP32_LDAP*,PCHAR,struct WLDAP32_berval*,PLDAPControlA*, PLDAPControlA*,
+    PCHAR*,struct WLDAP32_berval**);
+ULONG ldap_extended_operation_sW(WLDAP32_LDAP*,PWCHAR,struct WLDAP32_berval*,PLDAPControlW*, PLDAPControlW*,
+    PWCHAR*,struct WLDAP32_berval**);
 PCHAR ldap_get_dnA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
 PWCHAR ldap_get_dnW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
 ULONG ldap_get_optionA(WLDAP32_LDAP*,int,void*);
