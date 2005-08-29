@@ -109,6 +109,18 @@ void ldap_memfreeW( PWCHAR block )
     strfreeW( block );
 }
 
+ULONG WLDAP32_ldap_msgfree( WLDAP32_LDAPMessage *res )
+{
+    ULONG ret = LDAP_SUCCESS;
+#ifdef HAVE_LDAP
+
+    TRACE( "(%p)\n", res );
+    ldap_msgfree( res );
+
+#endif
+    return ret;
+}
+
 ULONG WLDAP32_ldap_result( WLDAP32_LDAP *ld, ULONG msgid, ULONG all,
     struct l_timeval *timeout, WLDAP32_LDAPMessage **res )
 {
@@ -122,22 +134,6 @@ ULONG WLDAP32_ldap_result( WLDAP32_LDAP *ld, ULONG msgid, ULONG all,
 
 #endif
     return ret;
-}
-
-ULONG ldap_value_freeA( PCHAR *vals )
-{
-    TRACE( "(%p)\n", vals );
-
-    strarrayfreeA( vals );
-    return LDAP_SUCCESS;
-}
-
-ULONG ldap_value_freeW( PWCHAR *vals )
-{
-    TRACE( "(%p)\n", vals );
-
-    strarrayfreeW( vals );
-    return LDAP_SUCCESS;
 }
 
 int LdapUnicodeToUTF8( LPCWSTR src, int srclen, LPSTR dst, int dstlen )

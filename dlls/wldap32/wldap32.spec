@@ -63,10 +63,10 @@
 @ stub ldap_controls_freeW
 @ stub ldap_count_entries
 @ stub ldap_count_references
-@ stub ldap_count_values
-@ stub ldap_count_valuesA
-@ stub ldap_count_valuesW
-@ stub ldap_count_values_len
+@ cdecl ldap_count_values(ptr) ldap_count_valuesA
+@ cdecl ldap_count_valuesA(ptr)
+@ cdecl ldap_count_valuesW(ptr)
+@ cdecl ldap_count_values_len(ptr) WLDAP32_ldap_count_values_len
 @ stub ldap_create_page_control
 @ stub ldap_create_page_controlA
 @ stub ldap_create_page_controlW
@@ -123,12 +123,12 @@
 @ cdecl ldap_get_optionA(ptr long ptr)
 @ cdecl ldap_get_optionW(ptr long ptr)
 @ stub ldap_get_paged_count
-@ stub ldap_get_values
-@ stub ldap_get_valuesA
-@ stub ldap_get_valuesW
-@ stub ldap_get_values_len
-@ stub ldap_get_values_lenA
-@ stub ldap_get_values_lenW
+@ cdecl ldap_get_values(ptr ptr str) ldap_get_valuesA
+@ cdecl ldap_get_valuesA(ptr ptr str)
+@ cdecl ldap_get_valuesW(ptr ptr wstr)
+@ cdecl ldap_get_values_len(ptr ptr str) ldap_get_values_lenA
+@ cdecl ldap_get_values_lenA(ptr ptr str)
+@ cdecl ldap_get_values_lenW(ptr ptr wstr)
 @ cdecl ldap_init(str long) ldap_initA
 @ cdecl ldap_initA(str long)
 @ cdecl ldap_initW(wstr long)
@@ -159,7 +159,7 @@
 @ cdecl ldap_modrdn_s(ptr str ptr) ldap_modrdn_sA
 @ cdecl ldap_modrdn_sA(ptr str ptr)
 @ cdecl ldap_modrdn_sW(ptr wstr ptr)
-@ stub ldap_msgfree
+@ cdecl ldap_msgfree(ptr) WLDAP32_ldap_msgfree
 @ stub ldap_next_attribute
 @ stub ldap_next_attributeA
 @ stub ldap_next_attributeW
@@ -242,4 +242,4 @@
 @ cdecl ldap_value_free(ptr) ldap_value_freeA
 @ cdecl ldap_value_freeA(ptr)
 @ cdecl ldap_value_freeW(ptr)
-@ stub ldap_value_free_len
+@ cdecl ldap_value_free_len(ptr) WLDAP32_ldap_value_free_len
