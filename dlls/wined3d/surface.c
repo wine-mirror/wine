@@ -277,11 +277,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
     }
 
     /* DXTn formats don't have exact pitches as they are to the new row of blocks,
-         where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt3/5)
+         where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt2/3/4/5)
           ie pitch = (width/4) * bytes per block                                  */
     if (This->resource.format == WINED3DFMT_DXT1) /* DXT1 is 8 bytes per block */
         pLockedRect->Pitch = (This->currentDesc.Width >> 2) << 3;
-    else if (This->resource.format == WINED3DFMT_DXT3 || This->resource.format == WINED3DFMT_DXT5) /* DXT3/5 is 16 bytes per block */
+    else if (This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
+             This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) /* DXT2/3/4/5 is 16 bytes per block */
         pLockedRect->Pitch = (This->currentDesc.Width >> 2) << 4;
     else
         pLockedRect->Pitch = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */
@@ -297,7 +298,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
         TRACE("Lock Rect (%p) = l %ld, t %ld, r %ld, b %ld\n", pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
 
         if (This->resource.format == WINED3DFMT_DXT1) { /* DXT1 is half byte per pixel */
-            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel/2));
+            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel / 2));
         } else {
             pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
         }
@@ -332,9 +333,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
             IWineD3DSurface_PreLoad(iface); /* Make sure there is a texture to bind! */
 
             TRACE("(%p) glGetTexImage level(%d), fmt(%d), typ(%d), mem(%p) \n" , This, This->glDescription.level,  This->glDescription.glFormat, This->glDescription.glType, This->resource.allocatedMemory);
-            /* TODO: DXT2 and DXT4 formats */
+
             if (This->resource.format == WINED3DFMT_DXT1 ||
+                This->resource.format == WINED3DFMT_DXT2 ||
                 This->resource.format == WINED3DFMT_DXT3 ||
+                This->resource.format == WINED3DFMT_DXT4 ||
                 This->resource.format == WINED3DFMT_DXT5) {
                 TRACE("Locking a compressed texture\n");
                 if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) { /* we can assume this as the texture would not have been created otherwise */
@@ -362,7 +365,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
             pLockedRect->pBits = This->resource.allocatedMemory;
         }  else{
             if (This->resource.format == D3DFMT_DXT1) { /* DXT1 is half byte per pixel */
-                pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel/2));
+                pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel / 2));
             } else {
                 pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
             }
@@ -806,7 +809,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         if (This->glDescription.level != 0)
             FIXME("Surface in texture is only supported for level 0\n");
         else if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8 ||
-                 This->resource.format == WINED3DFMT_DXT1 || This->resource.format == WINED3DFMT_DXT3 ||
+                 This->resource.format == WINED3DFMT_DXT1 || This->resource.format == WINED3DFMT_DXT2 ||
+                 This->resource.format == WINED3DFMT_DXT3 || This->resource.format == WINED3DFMT_DXT4 ||
                  This->resource.format == WINED3DFMT_DXT5)
             FIXME("Format %d not supported\n", This->resource.format);
         else {
@@ -888,9 +892,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     }
 
     /* TODO: Compressed non-power 2 support */
-    /* TODO: DXT2 DXT4 support */
+
     if (This->resource.format == WINED3DFMT_DXT1 ||
+        This->resource.format == WINED3DFMT_DXT2 ||
         This->resource.format == WINED3DFMT_DXT3 ||
+        This->resource.format == WINED3DFMT_DXT4 ||
         This->resource.format == WINED3DFMT_DXT5) {
         if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
             TRACE("Calling glCompressedTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, sz=%d, Mem=%p\n",

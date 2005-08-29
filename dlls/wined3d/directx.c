@@ -1189,7 +1189,9 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, D3D
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
         switch (CheckFormat) {
         case D3DFMT_DXT1:
+        case D3DFMT_DXT2:
         case D3DFMT_DXT3:
+        case D3DFMT_DXT4:
         case D3DFMT_DXT5:
           TRACE_(d3d_caps)("[OK]\n");
           return D3D_OK;

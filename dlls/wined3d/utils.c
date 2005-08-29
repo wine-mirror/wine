@@ -1575,7 +1575,9 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
         switch (fmt) {
         case WINED3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+        case WINED3DFMT_DXT2:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
         case WINED3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+        case WINED3DFMT_DXT4:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
         case WINED3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
         default:
             /* stupid compiler */
@@ -1636,7 +1638,9 @@ GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
         switch (fmt) {
         case WINED3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+        case WINED3DFMT_DXT2:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
         case WINED3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+        case WINED3DFMT_DXT4:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
         case WINED3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
         default:
             /* stupid compiler */
@@ -1696,7 +1700,9 @@ GLenum D3DFmt2GLType(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
         switch (fmt) {
         case WINED3DFMT_DXT1:             retVal = 0; break;
+        case WINED3DFMT_DXT2:             retVal = 0; break;
         case WINED3DFMT_DXT3:             retVal = 0; break;
+        case WINED3DFMT_DXT4:             retVal = 0; break;
         case WINED3DFMT_DXT5:             retVal = 0; break;
         default:
             /* stupid compiler */
@@ -1740,7 +1746,9 @@ GLenum D3DFmt2GLType(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_D16_LOCKABLE:     retVal = GL_UNSIGNED_SHORT; break;
             /* compressed textures */
         case WINED3DFMT_DXT1:             retVal = 0; break;
+        case WINED3DFMT_DXT2:             retVal = 0; break;
         case WINED3DFMT_DXT3:             retVal = 0; break;
+        case WINED3DFMT_DXT4:             retVal = 0; break;
         case WINED3DFMT_DXT5:             retVal = 0; break;
 
         default:
@@ -1791,7 +1799,9 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     case WINED3DFMT_Q16W16V16U16:     retVal = 8; break;
         /* Compressed */
     case WINED3DFMT_DXT1:             retVal = 1; break; /* Actually  8 bytes per 16 pixels - Special cased later */
+    case WINED3DFMT_DXT2:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
     case WINED3DFMT_DXT3:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
+    case WINED3DFMT_DXT4:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
     case WINED3DFMT_DXT5:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
         /* to see */
     case WINED3DFMT_A8:               retVal = 1; break;

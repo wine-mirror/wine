@@ -4910,7 +4910,9 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
     } else { /* Full width, so just write out the whole texture */
 
         if (WINED3DFMT_DXT1 == destFormat ||
+            WINED3DFMT_DXT2 == destFormat ||
             WINED3DFMT_DXT3 == destFormat ||
+            WINED3DFMT_DXT4 == destFormat ||
             WINED3DFMT_DXT5 == destFormat) {
             if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
                 if (destSurfaceHeight != srcHeight || destSurfaceWidth != srcWidth) {
