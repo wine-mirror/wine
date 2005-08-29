@@ -198,7 +198,7 @@ static void *dlopen_dll( const char *name, char *error, int errorsize,
 
 
 /* adjust an array of pointers to make them into RVAs */
-static inline void fixup_rva_ptrs( void *array, void *base, int count )
+static inline void fixup_rva_ptrs( void *array, void *base, unsigned int count )
 {
     void **ptr = (void **)array;
     while (count--)
@@ -219,7 +219,7 @@ static void fixup_imports( IMAGE_IMPORT_DESCRIPTOR *dir, DWORD size, void *base 
     while (count--)
     {
         if (*ptr >= (void *)0x10000) *ptr = (void *)((char *)*ptr - (char *)base);
-        else if (*ptr) *ptr = (void *)(0x80000000 | (unsigned int)*ptr);
+        else if (*ptr) *ptr = (void *)(IMAGE_ORDINAL_FLAG | (UINT_PTR)*ptr);
         ptr++;
     }
 }
