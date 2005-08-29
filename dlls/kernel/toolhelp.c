@@ -32,7 +32,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "tlhelp32.h"
-#include "toolhelp.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -342,23 +341,7 @@ BOOL WINAPI Module32Next(HANDLE hSnapshot, LPMODULEENTRY32 lpme)
 }
 
 /************************************************************************
- *              GlobalMasterHandle (KERNEL.28)
- *
- *
- * Should return selector and handle of the information structure for
- * the global heap. selector and handle are stored in the THHOOK as
- * pGlobalHeap and hGlobalHeap.
- * As Wine doesn't have this structure, we return both values as zero
- * Applications should interpret this as "No Global Heap"
- */
-DWORD WINAPI GlobalMasterHandle16(void)
-{
-    FIXME(": stub\n");
-    return 0;
-}
-
-/************************************************************************
- *              Heap32ListFirst (KERNEL.@)
+ *              Heap32ListFirst (KERNEL32.@)
  *
  */
 BOOL WINAPI Heap32ListFirst(HANDLE hSnapshot, LPHEAPLIST32 lphl)
@@ -368,7 +351,7 @@ BOOL WINAPI Heap32ListFirst(HANDLE hSnapshot, LPHEAPLIST32 lphl)
 }
 
 /******************************************************************
- *		Toolhelp32ReadProcessMemory (KERNEL.@)
+ *		Toolhelp32ReadProcessMemory (KERNEL32.@)
  *
  *
  */
