@@ -28,6 +28,7 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "ole2.h"
+#include "resource.h"
 
 #include "wine/debug.h"
 
@@ -37,8 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static const WCHAR wszInternetExplorer_Server[] =
     {'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','_','S','e','r','v','e','r',0};
-static const WCHAR wszHTML_Document[] =
-    {'H','T','M','L',' ','D','o','c','u','m','e','n','t',0};
 
 static ATOM serverwnd_class = 0;
 
@@ -48,6 +47,9 @@ static void paint_disabled(HWND hwnd) {
     HBRUSH brush;
     RECT rect;
     HFONT font;
+    WCHAR wszHTMLDisabled[100];
+
+    LoadStringW(hInst, IDS_HTMLDISABLED, wszHTMLDisabled, sizeof(wszHTMLDisabled)/sizeof(WCHAR));
 
     font = CreateFontA(25,0,0,0,400,0,0,0,ANSI_CHARSET,0,0,DEFAULT_QUALITY,DEFAULT_PITCH,NULL);
     brush = CreateSolidBrush(RGB(255,255,255));
@@ -57,8 +59,7 @@ static void paint_disabled(HWND hwnd) {
     SelectObject(hdc, font);
     SelectObject(hdc, brush);
     Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
-    DrawTextA(hdc, "HTML rendering is currently disabled.",-1, &rect,
-            DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+    DrawTextW(hdc, wszHTMLDisabled,-1, &rect, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
     EndPaint(hwnd, &ps);
 
     DeleteObject(font);
@@ -375,7 +376,10 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
 
         hres = IOleInPlaceSite_OnUIActivate(This->ipsite);
         if(SUCCEEDED(hres)) {
-            IOleInPlaceFrame_SetActiveObject(This->frame, ACTOBJ(This), wszHTML_Document);
+            OLECHAR wszHTMLDocument[30];
+            LoadStringW(hInst, IDS_HTMLDOCUMENT, wszHTMLDocument,
+                    sizeof(wszHTMLDocument)/sizeof(WCHAR));
+            IOleInPlaceFrame_SetActiveObject(This->frame, ACTOBJ(This), wszHTMLDocument);
         }else {
             FIXME("OnUIActivate failed: %08lx\n", hres);
             IOleInPlaceFrame_Release(This->frame);
