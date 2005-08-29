@@ -4579,8 +4579,78 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_StretchRect(IWineD3DDevice *iface, IWineD3DS
 }
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTargetData(IWineD3DDevice *iface, IWineD3DSurface *pRenderTarget, IWineD3DSurface *pSurface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    /** TODO: remove remove casts to IWineD3DSurfaceImpl *
+    *  NOTE It may be best to move the code into surface to occomplish this
+    ****************************************/
 
-    TRACE("(%p) : stub\n", This);
+    WINED3DSURFACE_DESC surfaceDesc;
+    unsigned int surfaceWidth, surfaceHeight;
+    glDescriptor *targetGlDescription  = NULL;
+    glDescriptor *surfaceGlDescription = NULL;
+    IWineD3DSwapChainImpl *container = NULL;
+    
+    IWineD3DSurface_GetGlDesc(pRenderTarget, &targetGlDescription);
+    IWineD3DSurface_GetGlDesc(pSurface,      &surfaceGlDescription);
+    memset(&surfaceDesc, 0, sizeof(surfaceDesc));
+
+    surfaceDesc.Width  = &surfaceWidth;
+    surfaceDesc.Height = &surfaceHeight;
+    IWineD3DSurface_GetDesc(pSurface, &surfaceDesc);
+   /* check to see if it's the backbuffer or the frontbuffer being requested (to make sureteh data is upto date)*/
+
+    /* Ok, I may need to setup some kind of active  swapchain reference on the device */
+    IWineD3DSurface_GetContainer(pRenderTarget, &IID_IWineD3DSwapChain, (void **)&container);
+    ENTER_GL();
+    /* TODO: opengl Context switching for swapchains etc... */
+    if (NULL != container  || pRenderTarget == This->renderTarget || pRenderTarget == This->depthStencilBuffer) {
+        if (NULL != container  && (pRenderTarget == container->backBuffer)) {
+            glReadBuffer(GL_BACK);
+            vcheckGLcall("glReadBuffer(GL_BACK)");
+        } else if ((NULL != container  && (pRenderTarget == container->frontBuffer)) || (pRenderTarget == This->renderTarget)) {
+            glReadBuffer(GL_FRONT);
+            vcheckGLcall("glReadBuffer(GL_FRONT)");
+        } else if (pRenderTarget == This->depthStencilBuffer) {
+            FIXME("Reading of depthstencil not yet supported\n");
+        }
+
+        glReadPixels(surfaceGlDescription->target,
+                    surfaceGlDescription->level,
+                    surfaceWidth,
+                    surfaceHeight,
+                    surfaceGlDescription->glFormat,
+                    surfaceGlDescription->glType,
+                    (void *)IWineD3DSurface_GetData(pSurface));
+        vcheckGLcall("glReadPixels(...)");
+        if(NULL != container ){
+            IWineD3DSwapChain_Release((IWineD3DSwapChain*) container);
+        }
+    } else {
+        IWineD3DBaseTexture *container;
+        GLenum textureDimensions = GL_TEXTURE_2D;
+
+        if (D3D_OK == IWineD3DSurface_GetContainer(pSurface, &IID_IWineD3DBaseTexture, (void **)&container)) {
+            textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(container);
+            IWineD3DBaseTexture_Release(container);
+        }
+        /* TODO: 2D -> Cube surface coppies etc.. */
+        if (surfaceGlDescription->target != textureDimensions) {
+            FIXME("(%p) : Texture dimension mismatch\n", This);
+        }
+        glEnable(textureDimensions);
+        vcheckGLcall("glEnable(GL_TEXTURE_...)");
+        /* FIXME: this isn't correct, it need to add a dirty rect if nothing else... */
+        glBindTexture(targetGlDescription->target, targetGlDescription->textureName);
+        vcheckGLcall("glBindTexture");
+        glGetTexImage(surfaceGlDescription->target,
+                        surfaceGlDescription->level,
+                        surfaceGlDescription->glFormat,
+                        surfaceGlDescription->glType,
+                        (void *)IWineD3DSurface_GetData(pSurface));
+        glDisable(textureDimensions);
+        vcheckGLcall("glDisable(GL_TEXTURE_...)");
+
+    }
+    LEAVE_GL();
     return D3D_OK;
 }
 
