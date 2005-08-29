@@ -25,8 +25,6 @@
 #include "wine/library.h"
 #include "crt0_private.h"
 
-int __wine_spec_init_state;
-
 extern int main( int argc, char *argv[] );
 
 DWORD WINAPI __wine_spec_exe_entry( PEB *peb )

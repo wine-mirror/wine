@@ -29,4 +29,6 @@ extern  void _init(int argc, char **argv, char **envp );
 extern void _fini(void);
 #endif
 
+extern int __wine_spec_init_state;
+
 #endif /* __WINE_CRT0_PRIVATE_H__ */

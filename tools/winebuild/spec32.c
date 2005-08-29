@@ -489,7 +489,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 
     /* Output the entry point function */
 
-    fprintf( outfile, "int __wine_spec_init_state;\n" );
+    fprintf( outfile, "int __wine_spec_init_state = 0;\n" );
     fprintf( outfile, "extern void %s();\n\n", spec->init_func );
 
     /* Output the NT header */
