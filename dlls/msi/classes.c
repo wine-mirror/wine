@@ -364,7 +364,7 @@ static MSICLASS *load_given_class(MSIPACKAGE *package, LPCWSTR classid)
     return cls;
 }
 
-static INT load_given_extension(MSIPACKAGE *package, LPCWSTR extension);
+static MSIEXTENSION *load_given_extension( MSIPACKAGE *package, LPCWSTR extension );
 
 static MSIMIME *load_mime( MSIPACKAGE* package, MSIRECORD *row )
 {
@@ -382,14 +382,14 @@ static MSIMIME *load_mime( MSIPACKAGE* package, MSIRECORD *row )
     TRACE("loading mime %s\n", debugstr_w(mt->ContentType));
 
     buffer = MSI_RecordGetString( row, 2 );
-    mt->ExtensionIndex = load_given_extension( package, buffer );
+    mt->Extension = load_given_extension( package, buffer );
 
     sz = IDENTIFIER_SIZE;
     MSI_RecordGetStringW( row, 3, mt->CLSID, &sz );
     mt->Class = load_given_class( package, mt->CLSID );
 
     list_add_tail( &package->mimes, &mt->entry );
-    
+
     return mt;
 }
 
@@ -426,54 +426,45 @@ static MSIMIME *load_given_mime( MSIPACKAGE *package, LPCWSTR mime )
     return mt;
 }
 
-static INT load_extension(MSIPACKAGE* package, MSIRECORD *row)
+static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
 {
-    DWORD index = package->loaded_extensions;
+    MSIEXTENSION *ext;
     DWORD sz;
     LPCWSTR buffer;
 
     /* fill in the data */
 
-    package->loaded_extensions++;
-    if (package->loaded_extensions == 1)
-        package->extensions = HeapAlloc(GetProcessHeap(),0,sizeof(MSIEXTENSION));
-    else
-        package->extensions = HeapReAlloc(GetProcessHeap(),0,
-            package->extensions, package->loaded_extensions* 
-            sizeof(MSIEXTENSION));
-
-    memset(&package->extensions[index],0,sizeof(MSIEXTENSION));
+    ext = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSIEXTENSION) );
 
     sz = 256;
-    MSI_RecordGetStringW(row,1,package->extensions[index].Extension,&sz);
-    TRACE("loading extension %s\n",
-                    debugstr_w(package->extensions[index].Extension));
+    MSI_RecordGetStringW( row, 1, ext->Extension, &sz );
+    TRACE("loading extension %s\n", debugstr_w(ext->Extension));
 
-    buffer = MSI_RecordGetString(row,2);
-    package->extensions[index].Component = get_loaded_component(package,buffer);
+    buffer = MSI_RecordGetString( row, 2 );
+    ext->Component = get_loaded_component( package,buffer );
 
-    package->extensions[index].ProgIDText = load_dynamic_stringW(row,3);
-    package->extensions[index].ProgIDIndex = load_given_progid(package,
-                    package->extensions[index].ProgIDText);
+    ext->ProgIDText = load_dynamic_stringW( row, 3 );
+    ext->ProgIDIndex = load_given_progid( package, ext->ProgIDText );
 
-    buffer = MSI_RecordGetString(row,4);
-    package->extensions[index].Mime = load_given_mime(package,buffer);
+    buffer = MSI_RecordGetString( row, 4 );
+    ext->Mime = load_given_mime( package, buffer );
 
     buffer = MSI_RecordGetString(row,5);
-    package->extensions[index].Feature = get_loaded_feature(package,buffer);
+    ext->Feature = get_loaded_feature( package, buffer );
 
-    return index;
+    list_add_tail( &package->extensions, &ext->entry );
+
+    return ext;
 }
 
 /*
  * While the extension table has 2 primary keys, this function is only looking
  * at the Extension key which is what is referenced as a forign key 
  */
-static INT load_given_extension(MSIPACKAGE *package, LPCWSTR extension)
+static MSIEXTENSION *load_given_extension( MSIPACKAGE *package, LPCWSTR name )
 {
-    INT rc;
     MSIRECORD *row;
-    INT i;
+    MSIEXTENSION *ext;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','E','x','t','e','n','s','i','o','n','`',' ',
@@ -481,26 +472,27 @@ static INT load_given_extension(MSIPACKAGE *package, LPCWSTR extension)
          '`','E','x','t','e','n','s','i','o','n','`',' ','=',' ',
          '\'','%','s','\'',0};
 
-    if (!extension)
-        return -1;
+    if (!name)
+        return NULL;
 
     /* check for extensions already loaded */
-    for (i = 0; i < package->loaded_extensions; i++)
-        if (strcmpiW(package->extensions[i].Extension,extension)==0)
+    LIST_FOR_EACH_ENTRY( ext, &package->extensions, MSIEXTENSION, entry )
+    {
+        if (strcmpiW( ext->Extension, name )==0)
         {
-            TRACE("extension %s already loaded at %i\n",debugstr_w(extension),
-                            i);
-            return i;
+            TRACE("extension %s already loaded %p\n", debugstr_w(name), ext);
+            return ext;
         }
+    }
     
-    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, extension);
+    row = MSI_QueryGetRecord( package->db, ExecSeqQuery, name );
     if (!row)
-        return -1;
+        return NULL;
 
-    rc = load_extension(package, row);
+    ext = load_extension(package, row);
     msiobj_release(&row->hdr);
 
-    return rc;
+    return ext;
 }
 
 static UINT iterate_load_verb(MSIRECORD *row, LPVOID param)
@@ -521,8 +513,8 @@ static UINT iterate_load_verb(MSIRECORD *row, LPVOID param)
     memset(&package->verbs[index],0,sizeof(MSIVERB));
 
     buffer = MSI_RecordGetString(row,1);
-    package->verbs[index].ExtensionIndex = load_given_extension(package,buffer);
-    if (package->verbs[index].ExtensionIndex < 0 && buffer)
+    package->verbs[index].Extension = load_given_extension(package,buffer);
+    if (package->verbs[index].Extension == NULL && buffer)
         ERR("Verb unable to find loaded extension %s\n", debugstr_w(buffer));
 
     package->verbs[index].Verb = load_dynamic_stringW(row,2);
@@ -536,10 +528,9 @@ static UINT iterate_load_verb(MSIRECORD *row, LPVOID param)
     deformat_string(package,buffer,&package->verbs[index].Argument);
 
     /* assosiate the verb with the correct extension */
-    if (package->verbs[index].ExtensionIndex >= 0)
+    if (package->verbs[index].Extension)
     {
-        MSIEXTENSION* extension = &package->extensions[package->verbs[index].
-                ExtensionIndex];
+        MSIEXTENSION* extension = package->verbs[index].Extension;
         int count = extension->VerbCount;
 
         if (count >= 99)
@@ -612,17 +603,17 @@ static UINT iterate_all_extensions(MSIRECORD *rec, LPVOID param)
     LPCWSTR extension;
     MSIPACKAGE* package =(MSIPACKAGE*)param;
     BOOL match = FALSE;
-    INT i;
+    MSIEXTENSION *ext;
 
     extension = MSI_RecordGetString(rec,1);
     buffer = MSI_RecordGetString(rec,2);
     comp = get_loaded_component(package,buffer);
 
-    for (i = 0; i < package->loaded_extensions; i++)
+    LIST_FOR_EACH_ENTRY( ext, &package->extensions, MSIEXTENSION, entry )
     {
-        if (strcmpiW(extension,package->extensions[i].Extension))
+        if (strcmpiW(extension,ext->Extension))
             continue;
-        if (comp == package->extensions[i].Component)
+        if (comp == ext->Component)
         {
             match = TRUE;
             break;
@@ -731,8 +722,9 @@ static void load_classes_and_such(MSIPACKAGE *package)
 
     /* check if already loaded */
     if (!list_empty( &package->classes ) ||
-        !list_empty( &package->mimes) ||
-        package->extensions || package->progids || package->verbs )
+        !list_empty( &package->mimes ) ||
+        !list_empty( &package->extensions ) ||
+        package->progids || package->verbs )
         return;
 
     load_all_classes(package);
@@ -1357,7 +1349,7 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
     static const WCHAR szContentType[] = 
         {'C','o','n','t','e','n','t',' ','T','y','p','e',0 };
     HKEY hkey;
-    INT i;
+    MSIEXTENSION *ext;
     MSIRECORD *uirow;
     BOOL install_on_demand = TRUE;
 
@@ -1371,15 +1363,15 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
      * going to default to TRUE
      */
     
-    for (i = 0; i < package->loaded_extensions; i++)
+    LIST_FOR_EACH_ENTRY( ext, &package->extensions, MSIEXTENSION, entry )
     {
         WCHAR extension[257];
         MSIFEATURE *feature;
      
-        if (!package->extensions[i].Component)
+        if (!ext->Component)
             continue;
 
-        feature = package->extensions[i].Feature;
+        feature = ext->Feature;
 
         /* 
          * yes. MSDN says that these are based on _Feature_ not on
@@ -1389,42 +1381,38 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
              !(install_on_demand &&
                ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_ADVERTISED )))
         {
-            TRACE("Skipping extension  %s reg due to disabled feature %s\n",
-                            debugstr_w(package->extensions[i].Extension),
-                            debugstr_w(feature->Feature));
+            TRACE("Skipping extension %s reg due to disabled feature %s\n",
+                   debugstr_w(ext->Extension), debugstr_w(feature->Feature));
 
             continue;
         }
 
-        TRACE("Registering extension %s index %i\n",
-                        debugstr_w(package->extensions[i].Extension), i);
+        TRACE("Registering extension %s (%p)\n", debugstr_w(ext->Extension), ext);
 
-        package->extensions[i].Installed = TRUE;
+        ext->Installed = TRUE;
 
         /* this is only registered if the extension has at least 1 verb
          * according to MSDN
          */
-        if (package->extensions[i].ProgIDIndex >= 0 &&
-                package->extensions[i].VerbCount > 0)
-           mark_progid_for_install(package, package->extensions[i].ProgIDIndex);
+        if (ext->ProgIDIndex >= 0 && ext->VerbCount > 0)
+           mark_progid_for_install(package, ext->ProgIDIndex);
 
-        mark_mime_for_install(package->extensions[i].Mime);
+        mark_mime_for_install(ext->Mime);
 
         extension[0] = '.';
         extension[1] = 0;
-        strcatW(extension,package->extensions[i].Extension);
+        strcatW(extension,ext->Extension);
 
         RegCreateKeyW(HKEY_CLASSES_ROOT,extension,&hkey);
 
-        if (package->extensions[i].Mime)
+        if (ext->Mime)
         {
             RegSetValueExW(hkey,szContentType,0,REG_SZ,
-                            (LPBYTE)package->extensions[i].Mime->ContentType,
-                     (strlenW(package->extensions[i].Mime->ContentType)+1)*sizeof(WCHAR));
+                            (LPBYTE)ext->Mime->ContentType,
+                     (strlenW(ext->Mime->ContentType)+1)*sizeof(WCHAR));
         }
 
-        if (package->extensions[i].ProgIDIndex >= 0 || 
-            package->extensions[i].ProgIDText)
+        if (ext->ProgIDIndex >= 0 || ext->ProgIDText)
         {
             static const WCHAR szSN[] = 
                 {'\\','S','h','e','l','l','N','e','w',0};
@@ -1434,11 +1422,10 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
             INT v;
             INT Sequence = MSI_NULL_INTEGER;
             
-            if (package->extensions[i].ProgIDIndex >= 0)
-                progid = package->progids[package->extensions[i].
-                    ProgIDIndex].ProgID;
+            if (ext->ProgIDIndex >= 0)
+                progid = package->progids[ext->ProgIDIndex].ProgID;
             else
-                progid = package->extensions[i].ProgIDText;
+                progid = ext->ProgIDText;
 
             RegSetValueExW(hkey,NULL,0,REG_SZ,(LPVOID)progid,
                            (strlenW(progid)+1)*sizeof(WCHAR));
@@ -1454,18 +1441,15 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
             HeapFree(GetProcessHeap(),0,newkey);
 
             /* do all the verbs */
-            for (v = 0; v < package->extensions[i].VerbCount; v++)
-                register_verb(package, progid, 
-                              package->extensions[i].Component,
-                              &package->extensions[i],
-                              &package->verbs[package->extensions[i].Verbs[v]], 
-                              &Sequence);
+            for (v = 0; v < ext->VerbCount; v++)
+                register_verb( package, progid, ext->Component,
+                               ext, &package->verbs[ext->Verbs[v]], &Sequence);
         }
         
         RegCloseKey(hkey);
 
         uirow = MSI_CreateRecord(1);
-        MSI_RecordSetStringW(uirow,1,package->extensions[i].Extension);
+        MSI_RecordSetStringW( uirow, 1, ext->Extension );
         ui_actiondata(package,szRegisterExtensionInfo,uirow);
         msiobj_release(&uirow->hdr);
     }
@@ -1502,8 +1486,7 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
          */
         mt->InstallMe = (mt->InstallMe ||
               (mt->Class && mt->Class->Installed) ||
-              (mt->ExtensionIndex >=0 &&
-              package->extensions[mt->ExtensionIndex].Installed));
+              (mt->Extension && mt->Extension->Installed));
 
         if (!mt->InstallMe)
         {
@@ -1513,7 +1496,7 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
         }
         
         mime = mt->ContentType;
-        exten = package->extensions[mt->ExtensionIndex].Extension;
+        exten = mt->Extension->Extension;
         extension[0] = '.';
         extension[1] = 0;
         strcatW(extension,exten);

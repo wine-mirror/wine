@@ -193,8 +193,7 @@ typedef struct tagMSIPACKAGE
     LPWSTR LastAction;
 
     struct list classes;
-    struct tagMSIEXTENSION *extensions;
-    UINT loaded_extensions;
+    struct list extensions;
     struct tagMSIPROGID *progids;
     UINT loaded_progids;
     struct tagMSIVERB *verbs;

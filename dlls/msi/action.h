@@ -156,6 +156,7 @@ typedef struct tagMSIMIME MSIMIME;
 
 typedef struct tagMSIEXTENSION
 {
+    struct list entry;
     WCHAR Extension[256];  /* Primary Key */
     MSICOMPONENT *Component;
     INT ProgIDIndex;
@@ -183,7 +184,7 @@ typedef struct tagMSIPROGID
 
 typedef struct tagMSIVERB
 {
-    INT ExtensionIndex;
+    MSIEXTENSION *Extension;
     LPWSTR Verb;
     INT Sequence;
     LPWSTR Command;
@@ -194,7 +195,7 @@ struct tagMSIMIME
 {
     struct list entry;
     LPWSTR ContentType;  /* Primary Key */
-    INT ExtensionIndex;
+    MSIEXTENSION *Extension;
     WCHAR CLSID[IDENTIFIER_SIZE];
     MSICLASS *Class;
     /* not in the table, set during installation */

@@ -389,6 +389,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
         list_init( &package->appids );
         list_init( &package->classes );
         list_init( &package->mimes );
+        list_init( &package->extensions );
 
         /* OK, here is where we do a slew of things to the database to 
          * prep for all that is to come as a package */

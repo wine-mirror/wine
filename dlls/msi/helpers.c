@@ -498,15 +498,17 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         HeapFree( GetProcessHeap(), 0, cls->DefInprocHandler32 );
         HeapFree( GetProcessHeap(), 0, cls->Argument );
         HeapFree( GetProcessHeap(), 0, cls->ProgIDText );
+        HeapFree( GetProcessHeap(), 0, cls );
     }
 
-    for (i = 0; i < package->loaded_extensions; i++)
+    LIST_FOR_EACH_SAFE( item, cursor, &package->extensions )
     {
-        HeapFree(GetProcessHeap(),0,package->extensions[i].ProgIDText);
-    }
+        MSIEXTENSION *ext = LIST_ENTRY( item, MSIEXTENSION, entry );
 
-    if (package->extensions && package->loaded_extensions > 0)
-        HeapFree(GetProcessHeap(),0,package->extensions);
+        list_remove( &ext->entry );
+        HeapFree( GetProcessHeap(), 0, ext->ProgIDText );
+        HeapFree( GetProcessHeap(), 0, ext );
+    }
 
     for (i = 0; i < package->loaded_progids; i++)
     {
