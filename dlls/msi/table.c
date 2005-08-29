@@ -1326,6 +1326,7 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
 {
     LPCWSTR str;
     UINT i, val, r, row;
+    BOOL has_key = FALSE;
 
     /* FIXME: set the MsiViewGetError value */
 
@@ -1334,6 +1335,8 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
         /* check for duplicate keys */
         if( !( tv->columns[i].type & MSITYPE_KEY ) )
             continue;
+
+        has_key = TRUE;
 
         TRACE("column %d (%s.%s)is a key\n", i,
              debugstr_w(tv->columns[i].tablename),
@@ -1350,7 +1353,7 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
              /* if the string doesn't exist in the string table yet, it's OK */
              r = msi_string2idW( tv->db->strings, str, &val );
              if( ERROR_SUCCESS != r )
-                 continue;
+                 return ERROR_SUCCESS;
         }
         else
         {
@@ -1361,12 +1364,14 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
         /* if we find the same value in the table, it's a duplicate */
         row = 0;
         r = table_find_in_column( tv, i+1, val, &row );
-        if( ERROR_SUCCESS == r )
-        {
-            TRACE("found in row %d\n", row );
-            return ERROR_INVALID_DATA;
-        }
+        if( ERROR_SUCCESS != r )
+            return ERROR_SUCCESS;
+
+        TRACE("found in row %d\n", row );
     }
+
+    if (has_key)
+        return ERROR_INVALID_DATA;
 
     return ERROR_SUCCESS;
 }
@@ -1417,6 +1422,13 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
     UINT r;
 
     TRACE("%p %d %p\n", view, eModifyMode, rec );
+
+    if (!tv->table)
+    {
+        r = TABLE_execute( view, NULL );
+        if( r )
+            return r;
+    }
 
     switch (eModifyMode)
     {
