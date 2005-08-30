@@ -898,7 +898,7 @@ HRESULT WINAPI EnumThemes(LPCWSTR pszThemePath, EnumThemeProc callback,
  *     pszSizeName         Theme size to enumerate available colors
  *                         If NULL the default theme size is used
  *     dwColorNum          Color index to retrieve, increment from 0
- *     pszColorName        Output color name
+ *     pszColorNames       Output color names
  *
  * RETURNS
  *     S_OK on success
@@ -906,19 +906,20 @@ HRESULT WINAPI EnumThemes(LPCWSTR pszThemePath, EnumThemeProc callback,
  *          or when pszSizeName does not refer to a valid size
  *
  * NOTES
- * XP fails with E_POINTER when pszColorName points to a buffer smaller then 605
- * characters
+ * XP fails with E_POINTER when pszColorNames points to a buffer smaller than 
+ * sizeof(THEMENAMES).
  *
  * Not very efficient that I'm opening & validating the theme every call, but
  * this is undocumented and almost never called..
  * (and this is how windows works too)
  */
 HRESULT WINAPI EnumThemeColors(LPWSTR pszThemeFileName, LPWSTR pszSizeName,
-                               DWORD dwColorNum, LPWSTR pszColorName)
+                               DWORD dwColorNum, PTHEMENAMES pszColorNames)
 {
     PTHEME_FILE pt;
     HRESULT hr;
     LPWSTR tmp;
+    UINT resourceId = dwColorNum + 1000;
     TRACE("(%s,%s,%ld)\n", debugstr_w(pszThemeFileName),
           debugstr_w(pszSizeName), dwColorNum);
 
@@ -932,7 +933,13 @@ HRESULT WINAPI EnumThemeColors(LPWSTR pszThemeFileName, LPWSTR pszSizeName,
     }
     if(!dwColorNum && *tmp) {
         TRACE("%s\n", debugstr_w(tmp));
-        lstrcpyW(pszColorName, tmp);
+        lstrcpyW(pszColorNames->szName, tmp);
+        LoadStringW (pt->hTheme, resourceId,
+            pszColorNames->szDisplayName,
+            sizeof (pszColorNames->szDisplayName) / sizeof (WCHAR));
+        LoadStringW (pt->hTheme, resourceId+1000,
+            pszColorNames->szTooltip,
+            sizeof (pszColorNames->szTooltip) / sizeof (WCHAR));
     }
     else
         hr = E_PROP_ID_UNSUPPORTED;
@@ -951,7 +958,7 @@ HRESULT WINAPI EnumThemeColors(LPWSTR pszThemeFileName, LPWSTR pszSizeName,
  *     pszColorName        Theme color to enumerate available sizes
  *                         If NULL the default theme color is used
  *     dwSizeNum           Size index to retrieve, increment from 0
- *     pszSizeName         Output size name
+ *     pszSizeNames        Output size names
  *
  * RETURNS
  *     S_OK on success
@@ -959,19 +966,20 @@ HRESULT WINAPI EnumThemeColors(LPWSTR pszThemeFileName, LPWSTR pszSizeName,
  *          or when pszColorName does not refer to a valid color
  *
  * NOTES
- * XP fails with E_POINTER when pszSizeName points to a buffer smaller then 605
- * characters
+ * XP fails with E_POINTER when pszSizeNames points to a buffer smaller than 
+ * sizeof(THEMENAMES).
  *
  * Not very efficient that I'm opening & validating the theme every call, but
  * this is undocumented and almost never called..
  * (and this is how windows works too)
  */
 HRESULT WINAPI EnumThemeSizes(LPWSTR pszThemeFileName, LPWSTR pszColorName,
-                              DWORD dwSizeNum, LPWSTR pszSizeName)
+                              DWORD dwSizeNum, PTHEMENAMES pszSizeNames)
 {
     PTHEME_FILE pt;
     HRESULT hr;
     LPWSTR tmp;
+    UINT resourceId = dwSizeNum + 3000;
     TRACE("(%s,%s,%ld)\n", debugstr_w(pszThemeFileName),
           debugstr_w(pszColorName), dwSizeNum);
 
@@ -985,7 +993,13 @@ HRESULT WINAPI EnumThemeSizes(LPWSTR pszThemeFileName, LPWSTR pszColorName,
     }
     if(!dwSizeNum && *tmp) {
         TRACE("%s\n", debugstr_w(tmp));
-        lstrcpyW(pszSizeName, tmp);
+        lstrcpyW(pszSizeNames->szName, tmp);
+        LoadStringW (pt->hTheme, resourceId,
+            pszSizeNames->szDisplayName,
+            sizeof (pszSizeNames->szDisplayName) / sizeof (WCHAR));
+        LoadStringW (pt->hTheme, resourceId+1000,
+            pszSizeNames->szTooltip,
+            sizeof (pszSizeNames->szTooltip) / sizeof (WCHAR));
     }
     else
         hr = E_PROP_ID_UNSUPPORTED;
