@@ -37,6 +37,8 @@
 #define IDS_TAB_AUDIO                   11
 #define IDS_TAB_ABOUT                   12
 #define IDS_WINECFG_TITLE               13
+#define IDS_THEMEFILE                   14
+#define IDS_THEMEFILE_SELECT            15
 #define IDD_MAINDLG                     101
 #define IDB_WINE                        104
 #define IDD_ABOUTCFG                    107
@@ -146,3 +148,4 @@
 #define IDC_THEME_SIZECOMBO             1403
 #define IDC_THEME_SIZETEXT              1404
 #define IDC_THEME_THEMECOMBO            1405
+#define IDC_THEME_INSTALL               1406

@@ -30,6 +30,7 @@
 #include <uxtheme.h>
 #include <tmschema.h>
 #include <shlobj.h>
+#include <shlwapi.h>
 #include <wine/debug.h>
 
 #include "resource.h"
@@ -468,6 +469,103 @@ static void apply_theme(HWND dialog)
     theme_dirty = FALSE;
 }
 
+static void on_theme_install(HWND dialog)
+{
+  static const WCHAR filterMask[] = {0,'*','.','m','s','s','t','y','l','e','s',0,0};
+  const int filterMaskLen = sizeof(filterMask)/sizeof(filterMask[0]);
+  OPENFILENAMEW ofn;
+  WCHAR filetitle[MAX_PATH];
+  WCHAR file[MAX_PATH];
+  WCHAR filter[100];
+  WCHAR title[100];
+
+  LoadStringW (GetModuleHandle (NULL), IDS_THEMEFILE, 
+      filter, sizeof (filter) / sizeof (filter[0]) - filterMaskLen);
+  memcpy (filter + lstrlenW (filter), filterMask, 
+      filterMaskLen * sizeof (WCHAR));
+  LoadStringW (GetModuleHandle (NULL), IDS_THEMEFILE_SELECT, 
+      title, sizeof (title) / sizeof (title[0]));
+
+  ofn.lStructSize = sizeof(OPENFILENAMEW);
+  ofn.hwndOwner = 0;
+  ofn.hInstance = 0;
+  ofn.lpstrFilter = filter;
+  ofn.lpstrCustomFilter = NULL;
+  ofn.nMaxCustFilter = 0;
+  ofn.nFilterIndex = 0;
+  ofn.lpstrFile = file;
+  ofn.lpstrFile[0] = '\0';
+  ofn.nMaxFile = sizeof(file)/sizeof(filetitle[0]);
+  ofn.lpstrFileTitle = filetitle;
+  ofn.lpstrFileTitle[0] = '\0';
+  ofn.nMaxFileTitle = sizeof(filetitle)/sizeof(filetitle[0]);
+  ofn.lpstrInitialDir = NULL;
+  ofn.lpstrTitle = title;
+  ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
+  ofn.nFileOffset = 0;
+  ofn.nFileExtension = 0;
+  ofn.lpstrDefExt = NULL;
+  ofn.lCustData = 0;
+  ofn.lpfnHook = NULL;
+  ofn.lpTemplateName = NULL;
+
+  if (GetOpenFileNameW(&ofn))
+  {
+      static const WCHAR themesSubdir[] = { '\\','T','h','e','m','e','s',0 };
+      static const WCHAR backslash[] = { '\\',0 };
+      WCHAR themeFilePath[MAX_PATH];
+      SHFILEOPSTRUCTW shfop;
+
+      if (FAILED (SHGetFolderPathW (NULL, CSIDL_RESOURCES, NULL, 
+          SHGFP_TYPE_CURRENT, themeFilePath))) return;
+
+      PathRemoveExtensionW (filetitle);
+
+      /* Construct path into which the theme file goes */
+      lstrcatW (themeFilePath, themesSubdir);
+      lstrcatW (themeFilePath, backslash);
+      lstrcatW (themeFilePath, filetitle);
+
+      /* Create the directory */
+      SHCreateDirectoryExW (dialog, themeFilePath, NULL);
+
+      /* Append theme file name itself */
+      lstrcatW (themeFilePath, backslash);
+      lstrcatW (themeFilePath, PathFindFileNameW (file));
+      /* SHFileOperation() takes lists as input, so double-nullterminate */
+      themeFilePath[lstrlenW (themeFilePath)+1] = 0;
+      file[lstrlenW (file)+1] = 0;
+
+      /* Do the copying */
+      WINE_TRACE("copying: %s -> %s\n", wine_dbgstr_w (file), 
+          wine_dbgstr_w (themeFilePath));
+      shfop.hwnd = dialog;
+      shfop.wFunc = FO_COPY;
+      shfop.pFrom = file;
+      shfop.pTo = themeFilePath;
+      shfop.fFlags = FOF_NOCONFIRMMKDIR;
+      if (SHFileOperationW (&shfop) == 0)
+      {
+          scan_theme_files();
+          if (!fill_theme_list (GetDlgItem (dialog, IDC_THEME_THEMECOMBO),
+              GetDlgItem (dialog, IDC_THEME_COLORCOMBO),
+              GetDlgItem (dialog, IDC_THEME_SIZECOMBO)))
+          {
+              SendMessageW (GetDlgItem (dialog, IDC_THEME_COLORCOMBO), CB_SETCURSEL, (WPARAM)-1, 0);
+              SendMessageW (GetDlgItem (dialog, IDC_THEME_SIZECOMBO), CB_SETCURSEL, (WPARAM)-1, 0);
+              enable_size_and_color_controls (dialog, FALSE);
+          }
+          else
+          {
+              enable_size_and_color_controls (dialog, TRUE);
+          }
+      }
+      else
+          WINE_TRACE("copy operation failed\n");
+  }
+  else WINE_TRACE("user cancelled\n");
+}
+
 INT_PTR CALLBACK
 ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -496,6 +594,16 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     }
                     break;
                 }
+                    
+                default:
+                    break;
+            }
+            switch (LOWORD(wParam))
+            {
+                case IDC_THEME_INSTALL:
+                    if (HIWORD(wParam) != BN_CLICKED) break;
+                    on_theme_install (hDlg);
+                    break;
                     
                 default:
                     break;
