@@ -199,7 +199,7 @@ STATUSBAR_DrawPart (STATUS_INFO *infoPtr, HDC hdc, STATUSWINDOWPART *part, int i
 	dis.hwndItem = infoPtr->Self;
 	dis.hDC = hdc;
 	dis.rcItem = r;
-	dis.itemData = (INT)part->text;
+	dis.itemData = (ULONG_PTR)part->text;
 	SendMessageW (infoPtr->Notify, WM_DRAWITEM, (WPARAM)dis.CtlID, (LPARAM)&dis);
     } else {
 	if (part->hIcon) {

@@ -659,12 +659,13 @@ TREEVIEW_SendCustomDrawItemNotify(TREEVIEW_INFO *infoPtr, HDC hdc,
 {
     HWND hwnd = infoPtr->hwnd;
     LPNMCUSTOMDRAW nmcd;
-    DWORD dwDrawStage, dwItemSpec;
+    DWORD dwDrawStage;
+    DWORD_PTR dwItemSpec;
     UINT uItemState;
     INT retval;
 
     dwDrawStage = CDDS_ITEM | uItemDrawState;
-    dwItemSpec = (DWORD)wineItem;
+    dwItemSpec = (DWORD_PTR)wineItem;
     uItemState = 0;
     if (wineItem->state & TVIS_SELECTED)
 	uItemState |= CDIS_SELECTED;
@@ -1238,11 +1239,11 @@ TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL i
     insertAfter = ptdi->hInsertAfter;
 
     /* Validate this now for convenience. */
-    switch ((DWORD)insertAfter)
+    switch ((DWORD_PTR)insertAfter)
     {
-    case (DWORD)TVI_FIRST:
-    case (DWORD)TVI_LAST:
-    case (DWORD)TVI_SORT:
+    case (DWORD_PTR)TVI_FIRST:
+    case (DWORD_PTR)TVI_LAST:
+    case (DWORD_PTR)TVI_SORT:
 	break;
 
     default:
@@ -1274,9 +1275,9 @@ TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL i
 
     infoPtr->uNumItems++;
 
-    switch ((DWORD)insertAfter)
+    switch ((DWORD_PTR)insertAfter)
     {
-    case (DWORD)TVI_FIRST:
+    case (DWORD_PTR)TVI_FIRST:
         {
            TREEVIEW_ITEM *originalFirst = parentItem->firstChild;
            TREEVIEW_InsertBefore(newItem, parentItem->firstChild, parentItem);
@@ -1285,7 +1286,7 @@ TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL i
         }
 	break;
 
-    case (DWORD)TVI_LAST:
+    case (DWORD_PTR)TVI_LAST:
 	TREEVIEW_InsertAfter(newItem, parentItem->lastChild, parentItem);
 	break;
 
@@ -1294,7 +1295,7 @@ TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL i
 	TREEVIEW_InsertAfter(newItem, insertAfter, insertAfter->parent);
 	break;
 
-    case (DWORD)TVI_SORT:
+    case (DWORD_PTR)TVI_SORT:
 	{
 	    TREEVIEW_ITEM *aChild;
 	    TREEVIEW_ITEM *previousChild = NULL;
@@ -2591,9 +2592,9 @@ TREEVIEW_DrawItem(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *wineItem)
     /* Draw insertion mark if necessary */
 
     if (infoPtr->insertMarkItem)
-	TRACE("item:%d,mark:%d\n",
+	TRACE("item:%d,mark:%p\n",
 	      TREEVIEW_GetItemIndex(infoPtr, wineItem),
-	      (int)infoPtr->insertMarkItem);
+	      infoPtr->insertMarkItem);
 
     if (wineItem == infoPtr->insertMarkItem)
     {
@@ -2972,7 +2973,7 @@ TREEVIEW_Sort(TREEVIEW_INFO *infoPtr, BOOL fRecurse, HTREEITEM parent,
     /* Check for a valid handle to the parent item */
     if (!TREEVIEW_ValidItem(infoPtr, parent))
     {
-	ERR("invalid item hParent=%x\n", (INT)parent);
+	ERR("invalid item hParent=%p\n", parent);
 	return FALSE;
     }
 
@@ -3643,7 +3644,7 @@ TREEVIEW_EditLabel(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
     TEXTMETRICW textMetric;
     static const WCHAR EditW[] = {'E','d','i','t',0};
 
-    TRACE("%x %p\n", (unsigned)hwnd, hItem);
+    TRACE("%p %p\n", hwnd, hItem);
     if (!TREEVIEW_ValidItem(infoPtr, editItem))
 	return NULL;
 

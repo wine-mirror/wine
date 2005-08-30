@@ -1246,8 +1246,8 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	TRACE("building icon ranges:\n");
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
 	{
-            rcItem.left = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
-	    rcItem.top = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
+            rcItem.left = (LONG_PTR)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
+	    rcItem.top = (LONG_PTR)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
 	    rcItem.right = rcItem.left + infoPtr->nItemWidth;
 	    rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
 	    if (IntersectRect(&rcTemp, &rcItem, &frame))
@@ -1844,8 +1844,8 @@ static void LISTVIEW_GetItemOrigin(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lp
 
     if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
     {
-	lpptPosition->x = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
-	lpptPosition->y = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
+	lpptPosition->x = (LONG_PTR)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
+	lpptPosition->y = (LONG_PTR)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
     }
     else if (uView == LVS_LIST)
     {
@@ -2221,8 +2221,8 @@ static BOOL LISTVIEW_MoveIconTo(LISTVIEW_INFO *infoPtr, INT nItem, const POINT *
     
     if (!isNew)
     { 
-        old.x = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
-        old.y = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
+        old.x = (LONG_PTR)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
+        old.y = (LONG_PTR)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
     
         if (lppt->x == old.x && lppt->y == old.y) return TRUE;
 	LISTVIEW_InvalidateItem(infoPtr, nItem);
@@ -2230,8 +2230,8 @@ static BOOL LISTVIEW_MoveIconTo(LISTVIEW_INFO *infoPtr, INT nItem, const POINT *
 
     /* Allocating a POINTER for every item is too resource intensive,
      * so we'll keep the (x,y) in different arrays */
-    if (!DPA_SetPtr(infoPtr->hdpaPosX, nItem, (void *)lppt->x)) return FALSE;
-    if (!DPA_SetPtr(infoPtr->hdpaPosY, nItem, (void *)lppt->y)) return FALSE;
+    if (!DPA_SetPtr(infoPtr->hdpaPosX, nItem, (void *)(LONG_PTR)lppt->x)) return FALSE;
+    if (!DPA_SetPtr(infoPtr->hdpaPosY, nItem, (void *)(LONG_PTR)lppt->y)) return FALSE;
 
     LISTVIEW_InvalidateItem(infoPtr, nItem);
 
@@ -2310,8 +2310,8 @@ static void LISTVIEW_GetAreaRect(LISTVIEW_INFO *infoPtr, LPRECT lprcView)
     case LVS_SMALLICON:
 	for (i = 0; i < infoPtr->nItemCount; i++)
 	{
-	    x = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, i);
-           y = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, i);
+	    x = (LONG_PTR)DPA_GetPtr(infoPtr->hdpaPosX, i);
+            y = (LONG_PTR)DPA_GetPtr(infoPtr->hdpaPosY, i);
 	    lprcView->right = max(lprcView->right, x);
 	    lprcView->bottom = max(lprcView->bottom, y);
 	}

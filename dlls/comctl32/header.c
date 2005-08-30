@@ -1173,7 +1173,7 @@ HEADER_SetImageList (HWND hwnd, HIMAGELIST himl)
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     HIMAGELIST himlOld;
 
-    TRACE("(himl 0x%x)\n", (int)himl);
+    TRACE("(himl %p)\n", himl);
     himlOld = infoPtr->himl;
     infoPtr->himl = himl;
 

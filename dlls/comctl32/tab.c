@@ -711,7 +711,7 @@ TAB_HotTrackTimerProc
   (
   HWND hwnd,    /* handle of window for timer messages */
   UINT uMsg,    /* WM_TIMER message */
-  UINT idEvent, /* timer identifier */
+  UINT_PTR idEvent, /* timer identifier */
   DWORD dwTime  /* current system time */
   )
 {

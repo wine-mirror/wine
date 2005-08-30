@@ -153,7 +153,7 @@ void THEMING_Initialize (void)
  */
 LRESULT THEMING_CallOriginalClass (HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    int subclass = (int)GetPropW (wnd, MAKEINTATOMW (atSubclassProp));
+    INT_PTR subclass = (INT_PTR)GetPropW (wnd, MAKEINTATOMW (atSubclassProp));
     WNDPROC oldProc = originalProcs[subclass];
     return CallWindowProcW (oldProc, wnd, msg, wParam, lParam);
 }

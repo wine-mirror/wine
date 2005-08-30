@@ -673,9 +673,9 @@ static HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
 				&newkey,
 				&dwdisp))) {
 	/* error - what to do ??? */
-	ERR("(%lu %lu %lx %lx \"%s\" %p): Could not open key, error=%d\n",
+	ERR("(%lu %lu %lx %p %s %p): Could not open key, error=%d\n",
 	    mp->extview.cbSize, mp->extview.nMaxItems, mp->extview.dwFlags,
-	    (DWORD)mp->extview.hKey, debugstr_w(mp->extview.lpszSubKey),
+	    mp->extview.hKey, debugstr_w(mp->extview.lpszSubKey),
 				 mp->extview.lpfnCompare, err);
 	return 0;
     }
@@ -716,9 +716,9 @@ static HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
     else
 	mp->cursize = 0;
 
-    TRACE("(%lu %lu %lx %lx \"%s\" %p): Current Size = %ld\n",
+    TRACE("(%lu %lu %lx %p %s %p): Current Size = %ld\n",
 	  mp->extview.cbSize, mp->extview.nMaxItems, mp->extview.dwFlags,
-	  (DWORD)mp->extview.hKey, debugstr_w(mp->extview.lpszSubKey),
+	  mp->extview.hKey, debugstr_w(mp->extview.lpszSubKey),
 	  mp->extview.lpfnCompare, mp->cursize);
     return (HANDLE)mp;
 }

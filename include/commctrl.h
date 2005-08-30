@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-BOOL WINAPI ShowHideMenuCtl (HWND, UINT, LPINT);
+BOOL WINAPI ShowHideMenuCtl (HWND, UINT_PTR, LPINT);
 VOID WINAPI GetEffectiveClientRect (HWND, LPRECT, LPINT);
 VOID WINAPI InitCommonControls (VOID);
 
@@ -155,8 +155,8 @@ typedef struct tagNMTOOLTIPSCREATED
 typedef struct tagNMMOUSE
 {
     NMHDR   hdr;
-    DWORD   dwItemSpec;
-    DWORD   dwItemData;
+    DWORD_PTR   dwItemSpec;
+    DWORD_PTR   dwItemData;
     POINT   pt;
     DWORD   dwHitInfo;   /* info where on item or control the mouse is */
 } NMMOUSE, *LPNMMOUSE;
@@ -261,7 +261,7 @@ typedef struct tagNMCUSTOMDRAWINFO
 	DWORD	dwDrawStage;
 	HDC	hdc;
 	RECT	rc;
-	DWORD	dwItemSpec;
+	DWORD_PTR dwItemSpec;
 	UINT	uItemState;
 	LPARAM	lItemlParam;
 } NMCUSTOMDRAW, *LPNMCUSTOMDRAW;
@@ -1293,8 +1293,8 @@ typedef struct _TBBUTTON {
     BYTE  fsState;
     BYTE  fsStyle;
     BYTE  bReserved[2];
-    DWORD dwData;
-    INT iString;
+    DWORD_PTR dwData;
+    INT_PTR iString;
 } TBBUTTON, *PTBBUTTON, *LPTBBUTTON;
 typedef const TBBUTTON *LPCTBBUTTON;
 
@@ -1307,7 +1307,7 @@ typedef struct _COLORMAP {
 
 typedef struct tagTBADDBITMAP {
     HINSTANCE hInst;
-    UINT      nID;
+    UINT_PTR  nID;
 } TBADDBITMAP, *LPTBADDBITMAP;
 
 #define HINST_COMMCTRL         ((HINSTANCE)-1)
@@ -1378,7 +1378,7 @@ typedef struct
     BYTE   fsState;
     BYTE   fsStyle;
     WORD   cx;
-    DWORD  lParam;
+    DWORD_PTR lParam;
     LPSTR  pszText;
     INT  cchText;
 } TBBUTTONINFOA, *LPTBBUTTONINFOA;
@@ -1392,7 +1392,7 @@ typedef struct
     BYTE   fsState;
     BYTE   fsStyle;
     WORD   cx;
-    DWORD  lParam;
+    DWORD_PTR lParam;
     LPWSTR pszText;
     INT  cchText;
 } TBBUTTONINFOW, *LPTBBUTTONINFOW;
@@ -1434,7 +1434,7 @@ typedef struct
     NMHDR hdr;
     DWORD dwMask;
     int idCommand;
-    DWORD lParam;
+    DWORD_PTR lParam;
     int iImage;
     LPSTR pszText;
     int cchText;
@@ -1445,7 +1445,7 @@ typedef struct
     NMHDR hdr;
     DWORD dwMask;
     int idCommand;
-    DWORD lParam;
+    DWORD_PTR lParam;
     int iImage;
     LPWSTR pszText;
     int cchText;
@@ -1488,9 +1488,9 @@ typedef struct tagNMTOOLBARW
 typedef struct
 {
 	HINSTANCE hInstOld;
-	UINT      nIDOld;
+	UINT_PTR  nIDOld;
 	HINSTANCE hInstNew;
-	UINT      nIDNew;
+	UINT_PTR  nIDNew;
 	INT       nButtons;
 } TBREPLACEBITMAP, *LPTBREPLACEBITMAP;
 
@@ -1562,7 +1562,7 @@ CreateToolbarEx(HWND, DWORD, UINT, INT,
                 INT, INT, INT, INT, INT, UINT);
 
 HBITMAP WINAPI
-CreateMappedBitmap (HINSTANCE, INT, UINT, LPCOLORMAP, INT);
+CreateMappedBitmap (HINSTANCE, INT_PTR, UINT, LPCOLORMAP, INT);
 
 
 /* Tool tips */
@@ -1684,7 +1684,7 @@ typedef struct tagTOOLINFOA {
     UINT cbSize;
     UINT uFlags;
     HWND hwnd;
-    UINT uId;
+    UINT_PTR uId;
     RECT rect;
     HINSTANCE hinst;
     LPSTR lpszText;
@@ -1696,7 +1696,7 @@ typedef struct tagTOOLINFOW {
     UINT cbSize;
     UINT uFlags;
     HWND hwnd;
-    UINT uId;
+    UINT_PTR uId;
     RECT rect;
     HINSTANCE hinst;
     LPWSTR lpszText;

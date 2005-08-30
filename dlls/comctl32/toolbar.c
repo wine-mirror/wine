@@ -98,7 +98,7 @@ typedef struct
     BYTE  bHot;
     BYTE  bDropDownPressed;
     DWORD dwData;
-    INT iString;
+    INT_PTR iString;
     INT nRow;
     RECT rect;
     INT cx; /* manually set size */
@@ -2203,8 +2203,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    return FALSE;
 
 		/* UNDOCUMENTED: dialog hwnd immediately follows NMHDR */
-		/* FIXME: this hack won't work on 64-bit - we need to declare a structure for this */
-		nmtb.iItem = (int)hwnd;
+		memcpy(&nmtb.iItem, &hwnd, sizeof(hwnd));
 		/* Send TBN_INITCUSTOMIZE notification */
 		if (TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr, TBN_INITCUSTOMIZE) ==
 		    TBNRF_HIDEHELP)
@@ -4775,7 +4774,7 @@ TOOLBAR_SetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lptbbi->dwMask & TBIF_STYLE)
 	btnPtr->fsStyle = lptbbi->fsStyle;
 
-    if ((lptbbi->dwMask & TBIF_TEXT) && ((INT)lptbbi->pszText != -1)) {
+    if ((lptbbi->dwMask & TBIF_TEXT) && ((INT_PTR)lptbbi->pszText != -1)) {
         if ((HIWORD(btnPtr->iString) == 0) || (btnPtr->iString == -1))
 	    /* iString is index, zero it to make Str_SetPtr succeed */
 	    btnPtr->iString=0;
@@ -4829,7 +4828,7 @@ TOOLBAR_SetButtonInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lptbbi->dwMask & TBIF_STYLE)
 	btnPtr->fsStyle = lptbbi->fsStyle;
 
-    if ((lptbbi->dwMask & TBIF_TEXT) && ((INT)lptbbi->pszText != -1)) {
+    if ((lptbbi->dwMask & TBIF_TEXT) && ((INT_PTR)lptbbi->pszText != -1)) {
         if ((HIWORD(btnPtr->iString) == 0) || (btnPtr->iString == -1))
 	    /* iString is index, zero it to make Str_SetPtr succeed */
 	    btnPtr->iString=0;
