@@ -1849,8 +1849,28 @@ HRESULT WINAPI GetThemeTextMetrics(HTHEME hTheme, HDC hdc, int iPartId,
 BOOL WINAPI IsThemeBackgroundPartiallyTransparent(HTHEME hTheme, int iPartId,
                                                   int iStateId)
 {
-    BOOL transparent = FALSE;
+    int bgtype = BT_BORDERFILL;
+    RECT rect = {0, 0, 0, 0};
+    HBITMAP bmpSrc;
+    RECT rcSrc;
+    BOOL hasAlpha;
+    INT transparent;
+    COLORREF transparentcolor;
+
     TRACE("(%d,%d)\n", iPartId, iStateId);
-    GetThemeBool(hTheme, iPartId, iStateId, TMT_TRANSPARENT, &transparent);
-    return transparent;
+
+    if(!hTheme)
+        return FALSE;
+
+    GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_BGTYPE, &bgtype);
+
+    if (bgtype != BT_IMAGEFILE) return FALSE;
+
+    if(FAILED (UXTHEME_LoadImage (hTheme, 0, iPartId, iStateId, &rect, FALSE, 
+                                  &bmpSrc, &rcSrc, &hasAlpha))) 
+        return FALSE;
+
+    get_transparency (hTheme, iPartId, iStateId, hasAlpha, &transparent,
+        &transparentcolor, FALSE);
+    return (transparent != ALPHABLEND_NONE);
 }
