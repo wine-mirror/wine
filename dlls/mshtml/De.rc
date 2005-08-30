@@ -21,6 +21,12 @@
 
 LANGUAGE LANG_GERMAN, SUBLANG_DEFAULT
 
+STRINGTABLE DISCARDABLE
+{
+    IDS_HTMLDISABLED  "Die HTML Darstellung ist zur Zeit ausgeschalten."
+    IDS_HTMLDOCUMENT  "HTML Dokument"
+}
+
 /* FIXME: This should be in shdoclc.dll */
 
 IDR_BROWSE_CONTEXT_MENU MENU
