@@ -2498,7 +2498,7 @@ static HRESULT WINAPI DP_IF_GetGroupName
 
   if( lpGData->name.u1.lpszShortNameA )
   {
-    strcpy( ((BYTE*)lpName)+lpGData->name.dwSize,
+    strcpy( ((char*)lpName)+lpGData->name.dwSize,
             lpGData->name.u1.lpszShortNameA );
   }
   else
@@ -2508,7 +2508,7 @@ static HRESULT WINAPI DP_IF_GetGroupName
 
   if( lpGData->name.u1.lpszShortNameA )
   {
-    strcpy( ((BYTE*)lpName)+lpGData->name.dwSize,
+    strcpy( ((char*)lpName)+lpGData->name.dwSize,
             lpGData->name.u2.lpszLongNameA );
   }
   else
@@ -2697,7 +2697,7 @@ static HRESULT WINAPI DP_IF_GetPlayerName
 
   if( lpPList->lpPData->name.u1.lpszShortNameA )
   {
-    strcpy( ((BYTE*)lpName)+lpPList->lpPData->name.dwSize,
+    strcpy( ((char*)lpName)+lpPList->lpPData->name.dwSize,
             lpPList->lpPData->name.u1.lpszShortNameA );
   }
   else
@@ -2707,7 +2707,7 @@ static HRESULT WINAPI DP_IF_GetPlayerName
 
   if( lpPList->lpPData->name.u1.lpszShortNameA )
   {
-    strcpy( ((BYTE*)lpName)+lpPList->lpPData->name.dwSize,
+    strcpy( ((char*)lpName)+lpPList->lpPData->name.dwSize,
             lpPList->lpPData->name.u2.lpszLongNameA );
   }
   else

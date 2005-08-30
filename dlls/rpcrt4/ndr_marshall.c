@@ -422,8 +422,8 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg,
   
   assert(pFormat);
   if (*pFormat == RPC_FC_C_CSTRING) {
-    TRACE("string=%s\n", debugstr_a(pszMessage));
-    len = strlen(pszMessage)+1;
+    TRACE("string=%s\n", debugstr_a((char*)pszMessage));
+    len = strlen((char*)pszMessage)+1;
     esize = 1;
   }
   else if (*pFormat == RPC_FC_C_WSTRING) {
@@ -470,8 +470,8 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   assert(pFormat);
   if (*pFormat == RPC_FC_C_CSTRING) {
     /* we need 12 octets for the [maxlen, offset, len] DWORDS, + 1 octet for '\0' */
-    TRACE("string=%s\n", debugstr_a(pMemory));
-    pStubMsg->BufferLength += strlen(pMemory) + 13 + BUFFER_PARANOIA;
+    TRACE("string=%s\n", debugstr_a((char*)pMemory));
+    pStubMsg->BufferLength += strlen((char*)pMemory) + 13 + BUFFER_PARANOIA;
   }
   else if (*pFormat == RPC_FC_C_WSTRING) {
     /* we need 12 octets for the [maxlen, offset, len] DWORDS, + 2 octets for L'\0' */
@@ -569,7 +569,7 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
   pStubMsg->Buffer += len*esize;
 
   if (*pFormat == RPC_FC_C_CSTRING) {
-    TRACE("string=%s\n", debugstr_a(pMem));
+    TRACE("string=%s\n", debugstr_a((char*)pMem));
   }
   else if (*pFormat == RPC_FC_C_WSTRING) {
     TRACE("string=%s\n", debugstr_w((LPWSTR)pMem));

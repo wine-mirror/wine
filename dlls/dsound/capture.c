@@ -1488,11 +1488,11 @@ IDirectSoundCaptureBufferImpl_Start(
                         break;
                     }
                     if (c == 0) {
-                        ipDSC->device->pwave[0].lpData = ipDSC->device->buffer;
+                        ipDSC->device->pwave[0].lpData = (LPSTR)ipDSC->device->buffer;
                         ipDSC->device->pwave[0].dwBufferLength =
                             This->notifies[0].dwOffset + 1;
                     } else {
-                        ipDSC->device->pwave[c].lpData = ipDSC->device->buffer +
+                        ipDSC->device->pwave[c].lpData = (LPSTR)ipDSC->device->buffer +
                             This->notifies[c-1].dwOffset + 1;
                         ipDSC->device->pwave[c].dwBufferLength =
                             This->notifies[c].dwOffset -
@@ -1534,7 +1534,7 @@ IDirectSoundCaptureBufferImpl_Start(
 		else
                     ipDSC->device->pwave = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEHDR));
 
-                ipDSC->device->pwave[0].lpData = ipDSC->device->buffer;
+                ipDSC->device->pwave[0].lpData = (LPSTR)ipDSC->device->buffer;
                 ipDSC->device->pwave[0].dwBufferLength = ipDSC->device->buflen;
                 ipDSC->device->pwave[0].dwBytesRecorded = 0;
                 ipDSC->device->pwave[0].dwUser = (DWORD)ipDSC;

@@ -96,7 +96,7 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 
 			/* prepare fragment headers */
 			for (c=0; c<DS_HEL_FRAGS; c++) {
-				device->pwave[c]->lpData = device->buffer + c*device->fraglen;
+				device->pwave[c]->lpData = (char*)device->buffer + c*device->fraglen;
 				device->pwave[c]->dwBufferLength = device->fraglen;
 				device->pwave[c]->dwUser = (DWORD)device;
 				device->pwave[c]->dwFlags = 0;
