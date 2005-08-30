@@ -429,7 +429,6 @@ static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
     hdcSrc = CreateCompatibleDC(hdc);
     if(!hdcSrc) {
         hr = HRESULT_FROM_WIN32(GetLastError());
-        DeleteObject(bmpSrc);
         return hr;
     }
     oldSrc = SelectObject(hdcSrc, bmpSrc);
@@ -459,7 +458,6 @@ static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
 
     SelectObject(hdcSrc, oldSrc);
     DeleteDC(hdcSrc);
-    DeleteObject(bmpSrc);
     return hr;
 }
 
@@ -619,7 +617,6 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     hdcSrc = CreateCompatibleDC(hdc);
     if(!hdcSrc) {
         hr = HRESULT_FROM_WIN32(GetLastError());
-        DeleteObject(bmpSrc);
         return hr;
     }
     oldSrc = SelectObject(hdcSrc, bmpSrc);
@@ -770,7 +767,6 @@ draw_error:
         SetViewportOrgEx (hdcDst, org.x, org.y, NULL);
     }
     SelectObject(hdcSrc, oldSrc);
-    DeleteObject(bmpSrc);
     DeleteDC(hdcSrc);
     CopyRect(pRect, &rcDst);
     return hr;
