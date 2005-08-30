@@ -254,6 +254,312 @@ static void testMemStore(void)
     CertCloseStore(store1, 0);
 }
 
+static const BYTE bigCert2[] = "\x30\x7a\x02\x01\x01\x30\x02\x06\x00"
+ "\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x13\x0a\x41\x6c\x65\x78\x20\x4c"
+ "\x61\x6e\x67\x00\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30"
+ "\x30\x30\x30\x5a\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30"
+ "\x30\x5a\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x13\x0a\x41\x6c\x65\x78"
+ "\x20\x4c\x61\x6e\x67\x00\x30\x07\x30\x02\x06\x00\x03\x01\x00\xa3\x16\x30\x14"
+ "\x30\x12\x06\x03\x55\x1d\x13\x01\x01\xff\x04\x08\x30\x06\x01\x01\xff\x02\x01"
+ "\x01";
+
+static void testCollectionStore(void)
+{
+    HCERTSTORE store1, store2, collection, collection2;
+    PCCERT_CONTEXT context;
+    BOOL ret;
+
+    collection = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+
+    /* Try adding a cert to any empty collection */
+    ret = CertAddEncodedCertificateToStore(collection, X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
+     "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), got %08lx\n",
+     GetLastError());
+
+    /* Create and add a cert to a memory store */
+    store1 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
+    /* Add the memory store to the collection, without allowing adding */
+    ret = CertAddStoreToCollection(collection, store1, 0, 0);
+    ok(ret, "CertAddStoreToCollection failed: %08lx\n", GetLastError());
+    /* Verify the cert is in the collection */
+    context = CertEnumCertificatesInStore(collection, NULL);
+    ok(context != NULL, "Expected a valid context\n");
+    if (context)
+    {
+        ok(context->hCertStore == collection, "Unexpected store\n");
+        CertFreeCertificateContext(context);
+    }
+    /* Check that adding to the collection isn't allowed */
+    ret = CertAddEncodedCertificateToStore(collection, X509_ASN_ENCODING,
+     bigCert2, sizeof(bigCert2) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
+     "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), got %08lx\n",
+     GetLastError());
+
+    /* Create a new memory store */
+    store2 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    /* Try adding a store to a non-collection store */
+    ret = CertAddStoreToCollection(store1, store2,
+     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    /* Try adding some bogus stores */
+    /* This crashes in Windows
+    ret = CertAddStoreToCollection(0, store2,
+     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+     */
+    /* This "succeeds"... */
+    ret = CertAddStoreToCollection(collection, 0,
+     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+    ok(ret, "CertAddStoreToCollection failed: %08lx\n", GetLastError());
+    /* while this crashes.
+    ret = CertAddStoreToCollection(collection, 1,
+     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+     */
+
+    /* Add it to the collection, this time allowing adding */
+    ret = CertAddStoreToCollection(collection, store2,
+     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+    ok(ret, "CertAddStoreToCollection failed: %08lx\n", GetLastError());
+    /* Check that adding to the collection is allowed */
+    ret = CertAddEncodedCertificateToStore(collection, X509_ASN_ENCODING,
+     bigCert2, sizeof(bigCert2) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
+    /* Now check that it was actually added to store2 */
+    context = CertEnumCertificatesInStore(store2, NULL);
+    ok(context != NULL, "Expected a valid context\n");
+    if (context)
+    {
+        ok(context->hCertStore == store2, "Unexpected store\n");
+        CertFreeCertificateContext(context);
+    }
+    /* Check that the collection has both bigCert and bigCert2.  bigCert comes
+     * first because store1 was added first.
+     */
+    context = CertEnumCertificatesInStore(collection, NULL);
+    ok(context != NULL, "Expected a valid context\n");
+    if (context)
+    {
+        ok(context->hCertStore == collection, "Unexpected store\n");
+        ok(context->cbCertEncoded == sizeof(bigCert) - 1,
+         "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+         context->cbCertEncoded);
+        ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
+         "Unexpected cert\n");
+        context = CertEnumCertificatesInStore(collection, context);
+        ok(context != NULL, "Expected a valid context\n");
+        if (context)
+        {
+            ok(context->hCertStore == collection, "Unexpected store\n");
+            ok(context->cbCertEncoded == sizeof(bigCert2) - 1,
+             "Expected size %d, got %ld\n", sizeof(bigCert2) - 1,
+             context->cbCertEncoded);
+            ok(!memcmp(context->pbCertEncoded, bigCert2,
+             context->cbCertEncoded), "Unexpected cert\n");
+            context = CertEnumCertificatesInStore(collection, context);
+            ok(!context, "Unexpected cert\n");
+        }
+    }
+    /* close store2, and check that the collection is unmodified */
+    CertCloseStore(store2, 0);
+    context = CertEnumCertificatesInStore(collection, NULL);
+    ok(context != NULL, "Expected a valid context\n");
+    if (context)
+    {
+        ok(context->hCertStore == collection, "Unexpected store\n");
+        ok(context->cbCertEncoded == sizeof(bigCert) - 1,
+         "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+         context->cbCertEncoded);
+        ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
+         "Unexpected cert\n");
+        context = CertEnumCertificatesInStore(collection, context);
+        ok(context != NULL, "Expected a valid context\n");
+        if (context)
+        {
+            ok(context->hCertStore == collection, "Unexpected store\n");
+            ok(context->cbCertEncoded == sizeof(bigCert2) - 1,
+             "Expected size %d, got %ld\n", sizeof(bigCert2) - 1,
+             context->cbCertEncoded);
+            ok(!memcmp(context->pbCertEncoded, bigCert2,
+             context->cbCertEncoded), "Unexpected cert\n");
+            context = CertEnumCertificatesInStore(collection, context);
+            ok(!context, "Unexpected cert\n");
+        }
+    }
+
+    /* Adding a collection to a collection is legal */
+    collection2 = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ret = CertAddStoreToCollection(collection2, collection,
+     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+    ok(ret, "CertAddStoreToCollection failed: %08lx\n", GetLastError());
+    /* check the contents of collection2 */
+    context = CertEnumCertificatesInStore(collection2, NULL);
+    ok(context != NULL, "Expected a valid context\n");
+    if (context)
+    {
+        ok(context->hCertStore == collection2, "Unexpected store\n");
+        ok(context->cbCertEncoded == sizeof(bigCert) - 1,
+         "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+         context->cbCertEncoded);
+        ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
+         "Unexpected cert\n");
+        context = CertEnumCertificatesInStore(collection2, context);
+        ok(context != NULL, "Expected a valid context\n");
+        if (context)
+        {
+            ok(context->hCertStore == collection2, "Unexpected store\n");
+            ok(context->cbCertEncoded == sizeof(bigCert2) - 1,
+             "Expected size %d, got %ld\n", sizeof(bigCert2) - 1,
+             context->cbCertEncoded);
+            ok(!memcmp(context->pbCertEncoded, bigCert2,
+             context->cbCertEncoded), "Unexpected cert\n");
+            context = CertEnumCertificatesInStore(collection2, context);
+            ok(!context, "Unexpected cert\n");
+        }
+    }
+
+    /* I'd like to test closing the collection in the middle of enumeration,
+     * but my tests have been inconsistent.  The first time calling
+     * CertEnumCertificatesInStore on a closed collection succeeded, while the
+     * second crashed.  So anything appears to be fair game.
+     * I'd also like to test removing a store from a collection in the middle
+     * of an enumeration, but my tests in Windows have been inconclusive.
+     * In one scenario it worked.  In another scenario, about a third of the
+     * time this leads to "random" crashes elsewhere in the code.  This
+     * probably means this is not allowed.
+     */
+
+    CertCloseStore(store1, 0);
+    CertCloseStore(collection, 0);
+    CertCloseStore(collection2, 0);
+
+    /* Add the same cert to two memory stores, then put them in a collection */
+    store1 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store1 != 0, "CertOpenStore failed: %08lx\n", GetLastError());
+    store2 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store2 != 0, "CertOpenStore failed: %08lx\n", GetLastError());
+
+    ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
+    ret = CertAddEncodedCertificateToStore(store2, X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
+    collection = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(collection != 0, "CertOpenStore failed: %08lx\n", GetLastError());
+
+    ret = CertAddStoreToCollection(collection, store1,
+     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+    ok(ret, "CertAddStoreToCollection failed: %08lx\n", GetLastError());
+    ret = CertAddStoreToCollection(collection, store2,
+     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+    ok(ret, "CertAddStoreToCollection failed: %08lx\n", GetLastError());
+
+    /* Check that the collection has two copies of the same cert */
+    context = CertEnumCertificatesInStore(collection, NULL);
+    ok(context != NULL, "Expected a valid context\n");
+    if (context)
+    {
+        ok(context->hCertStore == collection, "Unexpected store\n");
+        ok(context->cbCertEncoded == sizeof(bigCert) - 1,
+         "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+         context->cbCertEncoded);
+        ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
+         "Unexpected cert\n");
+        context = CertEnumCertificatesInStore(collection, context);
+        ok(context != NULL, "Expected a valid context\n");
+        if (context)
+        {
+            ok(context->hCertStore == collection, "Unexpected store\n");
+            ok(context->cbCertEncoded == sizeof(bigCert) - 1,
+             "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+             context->cbCertEncoded);
+            ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
+             "Unexpected cert\n");
+            context = CertEnumCertificatesInStore(collection, context);
+            ok(context == NULL, "Unexpected cert\n");
+        }
+    }
+
+    /* The following would check whether I can delete an identical cert, rather
+     * than one enumerated from the store.  It crashes, so that means I must
+     * only call CertDeleteCertificateFromStore with contexts enumerated from
+     * the store.
+    context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
+     sizeof(bigCert) - 1);
+    ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n",
+     GetLastError());
+    if (context)
+    {
+        ret = CertDeleteCertificateFromStore(collection, context);
+        printf("ret is %d, GetLastError is %08lx\n", ret, GetLastError());
+        CertFreeCertificateContext(context);
+    }
+     */
+
+    /* Now check deleting from the collection. */
+    context = CertEnumCertificatesInStore(collection, NULL);
+    ok(context != NULL, "Expected a valid context\n");
+    if (context)
+    {
+        CertDeleteCertificateFromStore(context);
+        /* store1 should now be empty */
+        context = CertEnumCertificatesInStore(store1, NULL);
+        ok(!context, "Unexpected cert\n");
+        /* and there should be one certificate in the collection */
+        context = CertEnumCertificatesInStore(collection, NULL);
+        ok(context != NULL, "Expected a valid cert\n");
+        if (context)
+        {
+            ok(context->hCertStore == collection, "Unexpected store\n");
+            ok(context->cbCertEncoded == sizeof(bigCert) - 1,
+             "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+             context->cbCertEncoded);
+            ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
+             "Unexpected cert\n");
+        }
+        context = CertEnumCertificatesInStore(collection, context);
+        ok(context == NULL, "Unexpected cert\n");
+    }
+
+    /* Finally, test removing stores from the collection.  No return value, so
+     * it's a bit funny to test.
+     */
+    /* This crashes
+    CertRemoveStoreFromCollection(NULL, NULL);
+     */
+    /* This "succeeds," no crash, no last error set */
+    SetLastError(0xdeadbeef);
+    CertRemoveStoreFromCollection(store2, collection);
+    ok(GetLastError() == 0xdeadbeef,
+     "Didn't expect an error to be set: %08lx\n", GetLastError());
+
+    /* After removing store2, the collection should be empty */
+    SetLastError(0xdeadbeef);
+    CertRemoveStoreFromCollection(collection, store2);
+    ok(GetLastError() == 0xdeadbeef,
+     "Didn't expect an error to be set: %08lx\n", GetLastError());
+    context = CertEnumCertificatesInStore(collection, NULL);
+    ok(!context, "Unexpected cert\n");
+
+    CertCloseStore(collection, 0);
+    CertCloseStore(store2, 0);
+    CertCloseStore(store1, 0);
+}
+
 static void testCertProperties(void)
 {
     PCCERT_CONTEXT context = CertCreateCertificateContext(X509_ASN_ENCODING,
@@ -367,6 +673,7 @@ START_TEST(cert)
 
     /* various combinations of CertOpenStore */
     testMemStore();
+    testCollectionStore();
 
     testCertProperties();
 }
