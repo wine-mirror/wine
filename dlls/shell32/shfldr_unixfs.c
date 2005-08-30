@@ -590,15 +590,13 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_EnumObjects(IShellFolder2* iface,
     return hr;
 }
 
-static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, DWORD dwPathMode, 
-    const CLSID *pCLSID);
+static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, const CLSID *pCLSID);
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface, LPCITEMIDLIST pidl,
     LPBC pbcReserved, REFIID riid, void** ppvOut)
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
     IPersistFolder3 *persistFolder;
-    LPITEMIDLIST pidlSubFolder;
     HRESULT hr;
         
     TRACE("(iface=%p, pidl=%p, pbcReserver=%p, riid=%p, ppvOut=%p)\n", 
@@ -607,23 +605,25 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface
     if (!pidl || !pidl->mkid.cb)
         return E_INVALIDARG;
        
-    hr = CreateUnixFolder(NULL, &IID_IPersistFolder3, (void**)&persistFolder, This->m_dwPathMode, 
-                          This->m_pCLSID);
+    hr = CreateUnixFolder(NULL, &IID_IPersistFolder3, (void**)&persistFolder, This->m_pCLSID);
     if (!SUCCEEDED(hr)) return hr;
     hr = IPersistFolder_QueryInterface(persistFolder, riid, (void**)ppvOut);
+   
+    if (SUCCEEDED(hr)) {
+        LPITEMIDLIST pidlSubFolder = ILCombine(This->m_pidlLocation, pidl);
+        hr = IPersistFolder3_Initialize(persistFolder, pidlSubFolder);
+        ILFree(pidlSubFolder);
+    }
     
-    pidlSubFolder = ILCombine(This->m_pidlLocation, pidl);
-    IPersistFolder3_Initialize(persistFolder, pidlSubFolder);
     IPersistFolder3_Release(persistFolder);
-    ILFree(pidlSubFolder);
-
+    
     return hr;
 }
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_BindToStorage(IShellFolder2* This, LPCITEMIDLIST pidl, 
     LPBC pbcReserved, REFIID riid, void** ppvObj)
 {
-    TRACE("stub\n");
+    FIXME("stub\n");
     return E_NOTIMPL;
 }
 
@@ -914,35 +914,35 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
 static HRESULT WINAPI UnixFolder_IShellFolder2_EnumSearches(IShellFolder2* iface, 
     IEnumExtraSearch **ppEnum) 
 {
-    TRACE("stub\n");
+    FIXME("stub\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_GetDefaultColumn(IShellFolder2* iface, 
     DWORD dwReserved, ULONG *pSort, ULONG *pDisplay) 
 {
-    TRACE("stub\n");
+    FIXME("stub\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_GetDefaultColumnState(IShellFolder2* iface, 
     UINT iColumn, SHCOLSTATEF *pcsFlags)
 {
-    TRACE("stub\n");
+    FIXME("stub\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_GetDefaultSearchGUID(IShellFolder2* iface, 
     GUID *pguid)
 {
-    TRACE("stub\n");
+    FIXME("stub\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsEx(IShellFolder2* iface, 
     LPCITEMIDLIST pidl, const SHCOLUMNID *pscid, VARIANT *pv)
 {
-    TRACE("stub\n");
+    FIXME("stub\n");
     return E_NOTIMPL;
 }
 
@@ -1032,7 +1032,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsOf(IShellFolder2* iface
 static HRESULT WINAPI UnixFolder_IShellFolder2_MapColumnToSCID(IShellFolder2* iface, UINT iColumn,
     SHCOLUMNID *pscid) 
 {
-    TRACE("stub\n");
+    FIXME("stub\n");
     return E_NOTIMPL;
 }
 
@@ -1276,21 +1276,21 @@ static HRESULT WINAPI UnixFolder_IPersistPropertyBag_GetClassID(IPersistProperty
 
 static HRESULT WINAPI UnixFolder_IPersistPropertyBag_InitNew(IPersistPropertyBag* iface)
 {
-    TRACE("() stub\n");
+    FIXME("() stub\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI UnixFolder_IPersistPropertyBag_Load(IPersistPropertyBag *iface, 
     IPropertyBag *pPropertyBag, IErrorLog *pErrorLog)
 {
-    TRACE("() stub\n");
+    FIXME("() stub\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI UnixFolder_IPersistPropertyBag_Save(IPersistPropertyBag *iface,
     IPropertyBag *pPropertyBag, BOOL fClearDirty, BOOL fSaveAllProperties)
 {
-    TRACE("() stub\n");
+    FIXME("() stub\n");
     return E_NOTIMPL;
 }
 
@@ -1512,8 +1512,7 @@ static const ISFHelperVtbl UnixFolder_ISFHelper_Vtbl = {
  *  The UnixDosFolder_Constructor sets the dwPathMode member to PATHMODE_DOS. This
  *  means that paths are converted from dos to unix and back at the interfaces.
  */
-static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, DWORD dwPathMode, 
-    const CLSID *pCLSID) 
+static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, const CLSID *pCLSID) 
 {
     HRESULT hr = E_FAIL;
     UnixFolder *pUnixFolder = SHAlloc((ULONG)sizeof(UnixFolder));
@@ -1526,7 +1525,7 @@ static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, D
         pUnixFolder->m_cRef = 0;
         pUnixFolder->m_pszPath = NULL;
         pUnixFolder->m_pidlLocation = NULL;
-        pUnixFolder->m_dwPathMode = dwPathMode;
+        pUnixFolder->m_dwPathMode = IsEqualCLSID(&CLSID_UnixFolder, pCLSID) ? PATHMODE_UNIX : PATHMODE_DOS;
         pUnixFolder->m_dwAttributes = 0;
         pUnixFolder->m_pCLSID = pCLSID;
 
@@ -1539,22 +1538,22 @@ static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, D
 
 HRESULT WINAPI UnixFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
     TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
-    return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_UNIX, &CLSID_UnixFolder);
+    return CreateUnixFolder(pUnkOuter, riid, ppv, &CLSID_UnixFolder);
 }
 
 HRESULT WINAPI UnixDosFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
     TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
-    return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_DOS, &CLSID_UnixDosFolder);
+    return CreateUnixFolder(pUnkOuter, riid, ppv, &CLSID_UnixDosFolder);
 }
 
 HRESULT WINAPI FolderShortcut_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
     TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
-    return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_DOS, &CLSID_FolderShortcut);
+    return CreateUnixFolder(pUnkOuter, riid, ppv, &CLSID_FolderShortcut);
 }
 
 HRESULT WINAPI MyDocuments_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
     TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
-    return CreateUnixFolder(pUnkOuter, riid, ppv, PATHMODE_DOS, &CLSID_MyDocuments);
+    return CreateUnixFolder(pUnkOuter, riid, ppv, &CLSID_MyDocuments);
 }
 
 /******************************************************************************
@@ -1697,7 +1696,7 @@ static HRESULT WINAPI UnixSubFolderIterator_IEnumIDList_Reset(IEnumIDList* iface
 static HRESULT WINAPI UnixSubFolderIterator_IEnumIDList_Clone(IEnumIDList* This, 
     IEnumIDList** ppenum)
 {
-    TRACE("stub\n");
+    FIXME("stub\n");
     return E_NOTIMPL;
 }
 
