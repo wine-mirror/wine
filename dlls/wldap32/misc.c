@@ -97,6 +97,96 @@ WLDAP32_LDAP *ldap_conn_from_msg( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res )
     return ld; /* FIXME: not always correct */
 }
 
+ULONG WLDAP32_ldap_count_entries( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+
+    TRACE( "(%p, %p)\n", ld, res );
+
+    if (!ld) return ~0UL;
+    ret = ldap_count_entries( ld, res );
+
+#endif
+    return ret;
+}
+
+ULONG WLDAP32_ldap_count_references( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+
+    TRACE( "(%p, %p)\n", ld, res );
+
+    if (!ld) return 0;
+    ret = ldap_count_references( ld, res );
+
+#endif
+    return ret;
+}
+
+PCHAR ldap_first_attributeA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, BerElement** ptr )
+{
+    PCHAR ret = NULL;
+#ifdef HAVE_LDAP
+    WCHAR *retW;
+
+    TRACE( "(%p, %p, %p)\n", ld, entry, ptr );
+
+    if (!ld || !entry) return NULL;
+    retW = ldap_first_attributeW( ld, entry, ptr );
+
+    ret = strWtoA( retW );
+    ldap_memfreeW( retW );
+
+#endif
+    return ret;
+}
+
+PWCHAR ldap_first_attributeW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, BerElement** ptr )
+{
+    PWCHAR ret = NULL;
+#ifdef HAVE_LDAP
+    char *retU;
+
+    TRACE( "(%p, %p, %p)\n", ld, entry, ptr );
+
+    if (!ld || !entry) return NULL;
+    retU = ldap_first_attribute( ld, entry, ptr );
+
+    ret = strUtoW( retU );
+    ldap_memfree( retU );
+
+#endif
+    return ret;
+}
+
+WLDAP32_LDAPMessage *WLDAP32_ldap_first_entry( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res )
+{
+#ifdef HAVE_LDAP
+
+    TRACE( "(%p, %p)\n", ld, res );
+
+    if (!ld || !res) return NULL;
+    return ldap_first_entry( ld, res );
+
+#endif
+    return NULL;
+}
+
+WLDAP32_LDAPMessage *WLDAP32_ldap_first_reference( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res )
+{
+#ifdef HAVE_LDAP
+
+    TRACE( "(%p, %p)\n", ld, res );
+
+    if (!ld) return NULL;
+    return ldap_first_reference( ld, res );
+
+#endif
+    return NULL;
+}
+
 void ldap_memfreeA( PCHAR block )
 {
     TRACE( "(%p)\n", block );
@@ -119,6 +209,68 @@ ULONG WLDAP32_ldap_msgfree( WLDAP32_LDAPMessage *res )
 
 #endif
     return ret;
+}
+
+PCHAR ldap_next_attributeA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, BerElement *ptr )
+{
+    PCHAR ret = NULL;
+#ifdef HAVE_LDAP
+    WCHAR *retW;
+
+    TRACE( "(%p, %p, %p)\n", ld, entry, ptr );
+
+    if (!ld || !entry || !ptr) return NULL;
+    retW = ldap_next_attributeW( ld, entry, ptr );
+
+    ret = strWtoA( retW );
+    ldap_memfreeW( retW );
+
+#endif
+    return ret;
+}
+
+PWCHAR ldap_next_attributeW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, BerElement *ptr )
+{
+    PWCHAR ret = NULL;
+#ifdef HAVE_LDAP
+    char *retU;
+
+    TRACE( "(%p, %p, %p)\n", ld, entry, ptr );
+
+    if (!ld || !entry || !ptr) return NULL;
+    retU = ldap_next_attribute( ld, entry, ptr );
+
+    ret = strUtoW( retU );
+    ldap_memfree( retU );
+
+#endif
+    return ret;
+}
+
+WLDAP32_LDAPMessage *WLDAP32_ldap_next_entry( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry )
+{
+#ifdef HAVE_LDAP
+
+    TRACE( "(%p, %p)\n", ld, entry );
+
+    if (!ld || !entry) return NULL;
+    return ldap_next_entry( ld, entry );
+
+#endif
+    return NULL;
+}
+
+WLDAP32_LDAPMessage *WLDAP32_ldap_next_reference( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry )
+{
+#ifdef HAVE_LDAP
+
+    TRACE( "(%p, %p)\n", ld, entry );
+
+    if (!ld || !entry) return NULL;
+    return ldap_next_reference( ld, entry );
+
+#endif
+    return NULL;
 }
 
 ULONG WLDAP32_ldap_result( WLDAP32_LDAP *ld, ULONG msgid, ULONG all,
