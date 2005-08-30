@@ -21,6 +21,8 @@
 #ifndef __SECUR32_PRIV_H__
 #define __SECUR32_PRIV_H__
 
+#include "wine/list.h"
+
 /* Memory allocation functions for memory accessible by callers of secur32.
  * There is no REALLOC, because LocalReAlloc can only work if used in
  * conjunction with LMEM_MOVEABLE and LocalLock, but callers aren't using
@@ -34,6 +36,7 @@
 
 typedef struct _SecureProvider
 {
+    struct list             entry;
     BOOL                    loaded;
     PWSTR                   moduleName;
     HMODULE                 lib;
@@ -43,6 +46,7 @@ typedef struct _SecureProvider
 
 typedef struct _SecurePackage
 {
+    struct list     entry;
     SecPkgInfoW     infoW;
     SecureProvider *provider;
 } SecurePackage;

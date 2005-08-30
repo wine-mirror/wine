@@ -30,6 +30,7 @@
 #include "ntsecapi.h"
 #include "thunks.h"
 
+#include "wine/list.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
@@ -42,33 +43,19 @@ typedef struct _SecurePackageTable
 {
     DWORD numPackages;
     DWORD numAllocated;
-    SecurePackage table[1];
+    struct list table;
 } SecurePackageTable;
 
 typedef struct _SecureProviderTable
 {
     DWORD numProviders;
     DWORD numAllocated;
-    SecureProvider table[1];
+    struct list table;
 } SecureProviderTable;
 
 /**
  *  Prototypes
  */
-
-/* Makes sure table has space for at least howBig entries.  If table is NULL,
- * returns a newly allocated table.  Otherwise returns the address of the
- * modified table, which may not be the same was when called.
- */
-static SecurePackageTable *_resizePackageTable(SecurePackageTable *table,
- DWORD howBig);
-
-/* Makes sure table has space for at least howBig entries.  If table is NULL,
- * returns a newly allocated table.  Otherwise returns the address of the
- * modified table, which may not be the same was when called.
- */
-static SecureProviderTable *_resizeProviderTable(SecureProviderTable *table,
- DWORD howBig);
 
 /* Tries to load moduleName as a provider.  If successful, enumerates what
  * packages it can and adds them to the package and provider tables.  Resizes
@@ -171,89 +158,6 @@ PSecurityFunctionTableA WINAPI InitSecurityInterfaceA(void)
 PSecurityFunctionTableW WINAPI InitSecurityInterfaceW(void)
 {
     return &securityFunctionTableW;
-}
-
-/* Allocates or resizes table to have space for at least howBig packages.
- * Uses Heap functions, because needs to be able to reallocate.
- */
-static SecurePackageTable *_resizePackageTable(SecurePackageTable *table,
- DWORD howBig)
-{
-    SecurePackageTable *ret;
-
-    EnterCriticalSection(&cs);
-    if (table)
-    {
-        if (table->numAllocated < howBig)
-        {
-            ret = HeapReAlloc(GetProcessHeap(), 0, table,
-             sizeof(SecurePackageTable) + (howBig - 1) * sizeof(SecurePackage));
-            if (ret)
-            {
-                ret->numAllocated = howBig;
-                table = ret;
-            }
-        }
-        else
-            ret = table;
-    }
-    else
-    {
-        DWORD numAllocated = (howBig > 1 ? howBig : 1);
-
-        ret = HeapAlloc(GetProcessHeap(), 0,
-         sizeof(SecurePackageTable) +
-         (numAllocated - 1) * sizeof(SecurePackage));
-        if (ret)
-        {
-            ret->numAllocated = numAllocated;
-            ret->numPackages = 0;
-        }
-    }
-    LeaveCriticalSection(&cs);
-    return ret;
-}
-
-/* Allocates or resizes table to have space for at least howBig providers.
- * Uses Heap functions, because needs to be able to reallocate.
- */
-static SecureProviderTable *_resizeProviderTable(SecureProviderTable *table,
- DWORD howBig)
-{
-    SecureProviderTable *ret;
-
-    EnterCriticalSection(&cs);
-    if (table)
-    {
-        if (table->numAllocated < howBig)
-        {
-            ret = HeapReAlloc(GetProcessHeap(), 0, table,
-             sizeof(SecureProviderTable) +
-             (howBig - 1) * sizeof(SecureProvider));
-            if (ret)
-            {
-                ret->numAllocated = howBig;
-                table = ret;
-            }
-        }
-        else
-            ret = table;
-    }
-    else
-    {
-        DWORD numAllocated = (howBig > 1 ? howBig : 1);
-
-        ret = HeapAlloc(GetProcessHeap(), 0,
-         sizeof(SecureProviderTable) +
-         (numAllocated - 1) * sizeof(SecureProvider));
-        if (ret)
-        {
-            ret->numAllocated = numAllocated;
-            ret->numProviders = 0;
-        }
-    }
-    LeaveCriticalSection(&cs);
-    return ret;
 }
 
 PWSTR SECUR32_strdupW(PCWSTR str)
@@ -487,27 +391,36 @@ SecureProvider *SECUR32_addProvider(PSecurityFunctionTableA fnTableA,
     SecureProvider *ret;
 
     EnterCriticalSection(&cs);
-    providerTable = _resizeProviderTable(providerTable,
-     providerTable ? providerTable->numProviders + 1 : 1);
-    if (providerTable)
+
+    if (!providerTable)
     {
-        ret = &providerTable->table[providerTable->numProviders++];
-        ret->lib = NULL;
-        if (fnTableA || fnTableW)
-        {
-            ret->moduleName = NULL;
-            _makeFnTableA(&ret->fnTableA, fnTableA, fnTableW);
-            _makeFnTableW(&ret->fnTableW, fnTableA, fnTableW);
-            ret->loaded = TRUE;
-        }
-        else
-        {
-            ret->moduleName = SECUR32_strdupW(moduleName);
-            ret->loaded = FALSE;
-        }
+        providerTable = HeapAlloc(GetProcessHeap(), 0, sizeof(SecureProviderTable));
+        if (!providerTable)
+            return NULL;
+
+        list_init(&providerTable->table);
+    }
+
+    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(SecureProvider));
+    if (!ret)
+        return NULL;
+
+    list_add_tail(&providerTable->table, &ret->entry);
+    ret->lib = NULL;
+
+    if (fnTableA || fnTableW)
+    {
+        ret->moduleName = NULL;
+        _makeFnTableA(&ret->fnTableA, fnTableA, fnTableW);
+        _makeFnTableW(&ret->fnTableW, fnTableA, fnTableW);
+        ret->loaded = TRUE;
     }
     else
-        ret = NULL;
+    {
+        ret->moduleName = SECUR32_strdupW(moduleName);
+        ret->loaded = FALSE;
+    }
+    
     LeaveCriticalSection(&cs);
     return ret;
 }
@@ -515,28 +428,38 @@ SecureProvider *SECUR32_addProvider(PSecurityFunctionTableA fnTableA,
 void SECUR32_addPackages(SecureProvider *provider, ULONG toAdd,
  const SecPkgInfoA *infoA, const SecPkgInfoW *infoW)
 {
+    ULONG i;
+
     assert(provider);
     assert(infoA || infoW);
 
     EnterCriticalSection(&cs);
-    packageTable = _resizePackageTable(packageTable,
-     packageTable ? packageTable->numPackages + toAdd : toAdd);
-    if (packageTable)
+
+    if (!packageTable)
     {
-        ULONG i;
+        packageTable = HeapAlloc(GetProcessHeap(), 0, sizeof(SecurePackageTable));
+        if (!packageTable)
+            return;
 
-        for (i = 0; i < toAdd; i++)
-        {
-            SecurePackage *package =
-             &packageTable->table[packageTable->numPackages + i];
-
-            package->provider = provider;
-            _copyPackageInfo(&package->infoW,
-             infoA ? &infoA[i] : NULL,
-             infoW ? &infoW[i] : NULL);
-        }
-        packageTable->numPackages += toAdd;
+        packageTable->numPackages = 0;
+        list_init(&packageTable->table);
     }
+        
+    for (i = 0; i < toAdd; i++)
+    {
+        SecurePackage *package = HeapAlloc(GetProcessHeap(), 0, sizeof(SecurePackage));
+        if (!package)
+            continue;
+
+        list_add_tail(&packageTable->table, &package->entry);
+
+        package->provider = provider;
+        _copyPackageInfo(&package->infoW,
+            infoA ? &infoA[i] : NULL,
+            infoW ? &infoW[i] : NULL);
+    }
+    packageTable->numPackages += toAdd;
+
     LeaveCriticalSection(&cs);
 }
 
@@ -653,11 +576,12 @@ SecurePackage *SECUR32_findPackageW(PWSTR packageName)
 
     if (packageTable && packageName)
     {
-        DWORD i;
-
-        for (i = 0, ret = NULL; !ret && i < packageTable->numPackages; i++)
-            if (!lstrcmpiW(packageTable->table[i].infoW.Name, packageName))
-                ret = &packageTable->table[i];
+        LIST_FOR_EACH_ENTRY(ret, &packageTable->table, SecurePackage, entry)
+        {
+            if (!lstrcmpiW(ret->infoW.Name, packageName))
+                break;
+        }
+        
         if (ret && ret->provider && !ret->provider->loaded)
         {
             ret->provider->lib = LoadLibraryW(ret->provider->moduleName);
@@ -706,32 +630,38 @@ SecurePackage *SECUR32_findPackageA(PSTR packageName)
 
 static void SECUR32_freeProviders(void)
 {
-    DWORD i;
+    SecurePackage *package;
+    SecureProvider *provider;
 
     TRACE("\n");
     EnterCriticalSection(&cs);
+
     if (packageTable)
     {
-        for (i = 0; i < packageTable->numPackages; i++)
+        LIST_FOR_EACH_ENTRY(package, &packageTable->table, SecurePackage, entry)
         {
-            SECUR32_FREE(packageTable->table[i].infoW.Name);
-            SECUR32_FREE(packageTable->table[i].infoW.Comment);
+            SECUR32_FREE(package->infoW.Name);
+            SECUR32_FREE(package->infoW.Comment);
         }
+
         HeapFree(GetProcessHeap(), 0, packageTable);
         packageTable = NULL;
     }
+
     if (providerTable)
     {
-        for (i = 0; i < providerTable->numProviders; i++)
+        LIST_FOR_EACH_ENTRY(provider, &providerTable->table, SecureProvider, entry)
         {
-            if (providerTable->table[i].moduleName)
-                SECUR32_FREE(providerTable->table[i].moduleName);
-            if (providerTable->table[i].lib)
-                FreeLibrary(providerTable->table[i].lib);
+            if (provider->moduleName)
+                SECUR32_FREE(provider->moduleName);
+            if (provider->lib)
+                FreeLibrary(provider->lib);
         }
+
         HeapFree(GetProcessHeap(), 0, providerTable);
         providerTable = NULL;
     }
+
     LeaveCriticalSection(&cs);
     DeleteCriticalSection(&cs);
 }
@@ -773,50 +703,45 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
     EnterCriticalSection(&cs);
     if (packageTable)
     {
-        ULONG i;
+        SecurePackage *package;
         size_t bytesNeeded;
 
         bytesNeeded = packageTable->numPackages * sizeof(SecPkgInfoW);
-        for (i = 0; i < packageTable->numPackages; i++)
+        LIST_FOR_EACH_ENTRY(package, &packageTable->table, SecurePackage, entry)
         {
-            if (packageTable->table[i].infoW.Name)
-                bytesNeeded +=
-                 (lstrlenW(packageTable->table[i].infoW.Name) + 1) *
-                 sizeof(WCHAR);
-            if (packageTable->table[i].infoW.Comment)
-                bytesNeeded +=
-                 (lstrlenW(packageTable->table[i].infoW.Comment) + 1) *
-                 sizeof(WCHAR);
+            if (package->infoW.Name)
+                bytesNeeded += (lstrlenW(package->infoW.Name) + 1) * sizeof(WCHAR);
+            if (package->infoW.Comment)
+                bytesNeeded += (lstrlenW(package->infoW.Comment) + 1) * sizeof(WCHAR);
         }
         if (bytesNeeded)
         {
             *ppPackageInfo = (PSecPkgInfoW)SECUR32_ALLOC(bytesNeeded);
             if (*ppPackageInfo)
             {
+                ULONG i = 0;
                 PWSTR nextString;
 
                 *pcPackages = packageTable->numPackages;
                 nextString = (PWSTR)((PBYTE)*ppPackageInfo +
                  packageTable->numPackages * sizeof(SecPkgInfoW));
-                for (i = 0; i < packageTable->numPackages; i++)
+                LIST_FOR_EACH_ENTRY(package, &packageTable->table, SecurePackage, entry)
                 {
-                    PSecPkgInfoW pkgInfo = *ppPackageInfo + i;
+                    PSecPkgInfoW pkgInfo = *ppPackageInfo + i++;
 
-                    memcpy(pkgInfo, &packageTable->table[i].infoW,
-                     sizeof(SecPkgInfoW));
-                    if (packageTable->table[i].infoW.Name)
+                    memcpy(pkgInfo, &package->infoW, sizeof(SecPkgInfoW));
+                    if (package->infoW.Name)
                     {
                         pkgInfo->Name = nextString;
-                        lstrcpyW(nextString, packageTable->table[i].infoW.Name);
+                        lstrcpyW(nextString, package->infoW.Name);
                         nextString += lstrlenW(nextString) + 1;
                     }
                     else
                         pkgInfo->Name = NULL;
-                    if (packageTable->table[i].infoW.Comment)
+                    if (package->infoW.Comment)
                     {
                         pkgInfo->Comment = nextString;
-                        lstrcpyW(nextString,
-                         packageTable->table[i].infoW.Comment);
+                        lstrcpyW(nextString, package->infoW.Comment);
                         nextString += lstrlenW(nextString) + 1;
                     }
                     else

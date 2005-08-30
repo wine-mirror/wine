@@ -218,15 +218,15 @@ static void testEnumerateSecurityPackages(void)
     SECURITY_STATUS sec_status;
     ULONG           num_packages, i;
     PSecPkgInfo     pkg_info = NULL;
-    
+
     trace("Running testEnumerateSecurityPackages\n");
     
     sec_status = EnumerateSecurityPackages(&num_packages, &pkg_info);
 
     ok(sec_status == SEC_E_OK, 
-            "EnumerateSecurityPackages() should return %ld, not %ld\n",
+            "EnumerateSecurityPackages() should return %ld, not %08lx\n",
             (LONG)SEC_E_OK, (LONG)sec_status);
-    
+
     ok(num_packages > 0, "Number of sec packages should be > 0 ,but is %ld\n",
             num_packages);
 
