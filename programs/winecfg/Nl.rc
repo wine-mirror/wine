@@ -163,15 +163,34 @@ BEGIN
     LTEXT	"Hardwareversnelling: ",IDC_STATIC,15,85,90,10
     COMBOBOX	IDC_DSOUND_HW_ACCEL,100,83,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL     "Stuurprogramma emulatie",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+END
 
+IDD_APPEARANCE DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Thema's ",IDC_STATIC,8,10,244,94
+    LTEXT           "Thema:",IDC_STATIC,15,22,228,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,15,30,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Kleuren:",IDC_THEME_COLORTEXT,15,48,228,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,15,56,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Tekstgrootte:",IDC_THEME_SIZETEXT,15,74,228,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,15,82,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
+    IDS_TAB_APPLICATIONS    "Toepassingen"
     IDS_TAB_DLLS            "Bibliotheken"
     IDS_TAB_DRIVES          "Stations"
     IDS_CHOOSE_PATH         "Selecteer een unix folder voor dit station."
     IDS_HIDE_ADVANCED       "Verberg uitgebreid"
     IDS_SHOW_ADVANCED       "Toon uitgebreid"
+    IDS_NOTHEME             "(Geen Thema)"
+    IDS_TAB_GRAPHICS        "Graphics" /* FIXME */
+    IDS_TAB_APPEARANCE      "Vormgeving"
+    IDS_TAB_AUDIO           "Audio"
+    IDS_TAB_ABOUT           "Info"
+    IDS_WINECFG_TITLE       "Wine configuratie"
 END
