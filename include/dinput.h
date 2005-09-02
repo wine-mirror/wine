@@ -785,6 +785,27 @@ typedef struct DIDEVCAPS {
 #define DISCL_FOREGROUND	0x00000004
 #define DISCL_BACKGROUND	0x00000008
 
+/* Device FF flags */
+#define DISFFC_RESET            0x00000001
+#define DISFFC_STOPALL          0x00000002
+#define DISFFC_PAUSE            0x00000004
+#define DISFFC_CONTINUE         0x00000008
+#define DISFFC_SETACTUATORSON   0x00000010
+#define DISFFC_SETACTUATORSOFF  0x00000020
+  
+#define DIGFFS_EMPTY            0x00000001
+#define DIGFFS_STOPPED          0x00000002
+#define DIGFFS_PAUSED           0x00000004
+#define DIGFFS_ACTUATORSON      0x00000010
+#define DIGFFS_ACTUATORSOFF     0x00000020
+#define DIGFFS_POWERON          0x00000040
+#define DIGFFS_POWEROFF         0x00000080
+#define DIGFFS_SAFETYSWITCHON   0x00000100
+#define DIGFFS_SAFETYSWITCHOFF  0x00000200
+#define DIGFFS_USERFFSWITCHON   0x00000400
+#define DIGFFS_USERFFSWITCHOFF  0x00000800
+#define DIGFFS_DEVICELOST       0x80000000
+
 /* Effect flags */
 #define DIEFT_ALL		0x00000000
                                                                                 
