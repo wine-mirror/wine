@@ -1467,7 +1467,7 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
     cmd.dxfer_len      = pPacket->DataTransferLength;
     cmd.dxferp         = pPacket->DataBuffer;
     cmd.cmdp           = pPacket->Cdb;
-    cmd.sbp            = (char*)pPacket + pPacket->SenseInfoOffset;
+    cmd.sbp            = (unsigned char*)pPacket + pPacket->SenseInfoOffset;
     cmd.timeout        = pPacket->TimeOutValue*1000;
 
     switch (pPacket->DataIn)
@@ -1591,7 +1591,7 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
     cmd.timeout        = pPacket->TimeOutValue*1000;
 
     if(cmd.mx_sb_len > 0)
-        cmd.sbp = (char*)pPacket + pPacket->SenseInfoOffset;
+        cmd.sbp = (unsigned char*)pPacket + pPacket->SenseInfoOffset;
 
     switch (pPacket->DataIn)
     {

@@ -515,7 +515,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
             {
                 IMAGE_IMPORT_BY_NAME *pe_name = get_rva( module, (DWORD)import_list->u1.AddressOfData );
                 WARN("No implementation for %s.%s", name, pe_name->Name );
-                thunk_list->u1.Function = allocate_stub( name, pe_name->Name );
+                thunk_list->u1.Function = allocate_stub( name, (const char*)pe_name->Name );
             }
             WARN(" imported from %s, allocating stub %p\n",
                  debugstr_w(current_modref->ldr.FullDllName.Buffer),
@@ -548,10 +548,10 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
             IMAGE_IMPORT_BY_NAME *pe_name;
             pe_name = get_rva( module, (DWORD)import_list->u1.AddressOfData );
             thunk_list->u1.Function = (ULONG_PTR)find_named_export( imp_mod, exports, exp_size,
-                                                                    pe_name->Name, pe_name->Hint );
+                                                                    (const char*)pe_name->Name, pe_name->Hint );
             if (!thunk_list->u1.Function)
             {
-                thunk_list->u1.Function = allocate_stub( name, pe_name->Name );
+                thunk_list->u1.Function = allocate_stub( name, (const char*)pe_name->Name );
                 WARN("No implementation for %s.%s imported from %s, setting to %p\n",
                      name, pe_name->Name, debugstr_w(current_modref->ldr.FullDllName.Buffer),
                      (void *)thunk_list->u1.Function );
@@ -1707,10 +1707,10 @@ NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi,
             sm->Unknown = 0; /* FIXME */
             str.Length = 0;
             str.MaximumLength = MAXIMUM_FILENAME_LENGTH;
-            str.Buffer = sm->Name;
+            str.Buffer = (char*)sm->Name;
             RtlUnicodeStringToAnsiString(&str, &mod->FullDllName, FALSE);
-            ptr = strrchr(sm->Name, '\\');
-            sm->NameOffset = (ptr != NULL) ? (ptr - (char*)sm->Name + 1) : 0;
+            ptr = strrchr(str.Buffer, '\\');
+            sm->NameOffset = (ptr != NULL) ? (ptr - str.Buffer + 1) : 0;
 
             smi->ModulesCount++;
             sm++;

@@ -1185,6 +1185,7 @@ union codeview_symbol
 union any_size
 {
     const char*                 c;
+    const unsigned char*        uc;
     const short*                s;
     const int*                  i;
     const unsigned int*         ui;

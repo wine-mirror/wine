@@ -52,12 +52,12 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module,
         ((char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nth->FileHeader.NumberOfSections; i++, section++)
     {
-        if (!strcasecmp(section->Name, ".stab"))
+        if (!strcasecmp((const char*)section->Name, ".stab"))
         {
             stabs = section->VirtualAddress;
             stabsize = section->SizeOfRawData;
         }
-        else if (!strncasecmp(section->Name, ".stabstr", 8))
+        else if (!strncasecmp((const char*)section->Name, ".stabstr", 8))
         {
             stabstr = section->VirtualAddress;
             stabstrsize = section->SizeOfRawData;
@@ -183,7 +183,7 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs,
         }
         else
         {
-            ret = pe_load_dbg_file(pcs, module, misc->Data, nth->FileHeader.TimeDateStamp);
+            ret = pe_load_dbg_file(pcs, module, (const char*)misc->Data, nth->FileHeader.TimeDateStamp);
         }
     }
     else

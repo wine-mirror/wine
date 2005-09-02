@@ -497,7 +497,7 @@ NTSTATUS WINAPI NtRequestWaitReplyPort(
     TRACE("\tMessageId           = %lu\n",pLpcMessageIn->MessageId);
     TRACE("\tSectionSize         = %lu\n",pLpcMessageIn->SectionSize);
     TRACE("\tData                = %s\n",
-      debugstr_an(pLpcMessageIn->Data,pLpcMessageIn->DataSize));
+      debugstr_an((const char*)pLpcMessageIn->Data,pLpcMessageIn->DataSize));
   }
   return 0;
 }

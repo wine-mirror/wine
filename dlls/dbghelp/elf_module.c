@@ -882,15 +882,15 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
         else if (debug_sect != -1)
         {
             /* Dwarf 2 debug information */
-            const char* dw2_debug;
-            const char* dw2_debug_abbrev;
-            const char* dw2_debug_str;
+            const BYTE* dw2_debug;
+            const BYTE* dw2_debug_abbrev;
+            const BYTE* dw2_debug_str;
 
             FIXME("Alpha-support for Dwarf2 information for %s\n", module->module.ModuleName);
 
-            dw2_debug = elf_map_section(fmap, debug_sect);
-            dw2_debug_abbrev = elf_map_section(fmap, debug_abbrev_sect);
-            dw2_debug_str = elf_map_section(fmap, debug_str_sect);
+            dw2_debug = (const BYTE*) elf_map_section(fmap, debug_sect);
+            dw2_debug_abbrev = (const BYTE*) elf_map_section(fmap, debug_abbrev_sect);
+            dw2_debug_str = (const BYTE*) elf_map_section(fmap, debug_str_sect);
             if (dw2_debug != NO_MAP && NO_MAP != dw2_debug_abbrev && dw2_debug_str != NO_MAP)
             {
                 /* OK, now just parse dwarf2 debug infos. */

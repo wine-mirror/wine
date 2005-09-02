@@ -757,7 +757,7 @@ void WINAPI RtlSecondsSince1980ToTime( DWORD Seconds, LARGE_INTEGER *Time )
 void WINAPI RtlTimeToElapsedTimeFields( const LARGE_INTEGER *Time, PTIME_FIELDS TimeFields )
 {
     LONGLONG time;
-    UINT rem;
+    INT rem;
 
     time = RtlExtendedLargeIntegerDivide( Time->QuadPart, TICKSPERSEC, &rem );
     TimeFields->Milliseconds = rem / TICKSPERMSEC;

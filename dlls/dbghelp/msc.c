@@ -76,7 +76,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
 static void dump(const void* ptr, unsigned len)
 {
     int         i, j;
-    BYTE        msg[128];
+    char        msg[128];
     const char* hexof = "0123456789abcdef";
     const BYTE* x = (const BYTE*)ptr;
 
@@ -741,11 +741,11 @@ static int codeview_new_func_signature(struct module* module, unsigned typeno,
     return codeview_add_type(typeno, symt);
 }
 
-static int codeview_parse_type_table(struct module* module, const char* table,
+static int codeview_parse_type_table(struct module* module, const BYTE* table,
                                      int len)
 {
     unsigned int                curr_type = 0x1000;
-    const char*                 ptr = table;
+    const BYTE*                 ptr = table;
     int                         retv;
     const union codeview_type*  type;
     int                         value, leaf_len;
@@ -846,7 +846,7 @@ static int codeview_parse_type_table(struct module* module, const char* table,
                 * type of the corresponding sort.  Later on, the definition of
                 * the 'real' type will copy the member / enumeration data.
                 */
-               const char* list = type->fieldlist.list;
+               const unsigned char* list = type->fieldlist.list;
                int   len  = (ptr + type->generic.len + 2) - list;
 
                if (((const union codeview_fieldtype*)list)->generic.id == LF_ENUMERATE_V1 ||
@@ -970,7 +970,7 @@ static int codeview_parse_type_table(struct module* module, const char* table,
  */
 
 static struct codeview_linetab* codeview_snarf_linetab(struct module* module, 
-                                                       const char* linetab, int size,
+                                                       const BYTE* linetab, int size,
                                                        BOOL pascal_str)
 {
     int				file_segcount;
@@ -992,7 +992,7 @@ static struct codeview_linetab* codeview_snarf_linetab(struct module* module,
     /*
      * Now get the important bits.
      */
-    pnt.c = linetab;
+    pnt.uc = linetab;
     nfile = *pnt.s++;
     nseg = *pnt.s++;
 
@@ -1004,7 +1004,7 @@ static struct codeview_linetab* codeview_snarf_linetab(struct module* module,
     nseg = 0;
     for (i = 0; i < nfile; i++)
     {
-        pnt2.c = linetab + filetab[i];
+        pnt2.uc = linetab + filetab[i];
         nseg += *pnt2.s;
     }
 
@@ -1033,7 +1033,7 @@ static struct codeview_linetab* codeview_snarf_linetab(struct module* module,
         /*
          * Get the pointer into the segment information.
          */
-        pnt2.c = linetab + filetab[i];
+        pnt2.uc = linetab + filetab[i];
         file_segcount = *pnt2.s;
 
         pnt2.ui++;
@@ -1055,7 +1055,7 @@ static struct codeview_linetab* codeview_snarf_linetab(struct module* module,
         
         for (k = 0; k < file_segcount; k++, this_seg++)
 	{
-            pnt2.c = linetab + lt_ptr[k];
+            pnt2.uc = linetab + lt_ptr[k];
             lt_hdr[this_seg].start      = start[k].start;
             lt_hdr[this_seg].end        = start[k].end;
             lt_hdr[this_seg].compiland  = compiland;
@@ -1643,7 +1643,7 @@ static void* pdb_read_ds_file(const struct PDB_DS_HEADER* pdb,
     return pdb_ds_read(pdb, block_list, toc->file_size[file_nr]);
 }
 
-static void* pdb_read_file(const BYTE* image, const struct pdb_lookup* pdb_lookup,
+static void* pdb_read_file(const char* image, const struct pdb_lookup* pdb_lookup,
                            DWORD file_nr)
 {
     switch (pdb_lookup->kind)
@@ -1795,7 +1795,7 @@ static HANDLE open_pdb_file(const struct process* pcs, const char* filename)
 static void pdb_process_types(const struct msc_debug_info* msc_dbg, 
                               const char* image, struct pdb_lookup* pdb_lookup)
 {
-    char*       types_image = NULL;
+    BYTE*       types_image = NULL;
 
     types_image = pdb_read_file(image, pdb_lookup, 2);
     if (types_image)
@@ -1995,7 +1995,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
     BOOL        ret = FALSE;
     HANDLE      hFile, hMap = NULL;
     char*       image = NULL;
-    char*       symbols_image = NULL;
+    BYTE*       symbols_image = NULL;
 
     TRACE("Processing PDB file %s\n", pdb_lookup->filename);
 
@@ -2013,8 +2013,8 @@ static BOOL pdb_process_internal(const struct process* pcs,
     if (symbols_image)
     {
         PDB_SYMBOLS symbols;
-        char*       modimage;
-        char*       file;
+        BYTE*       modimage;
+        BYTE*       file;
         int         header_size = 0;
         
         pdb_convert_symbols_header(&symbols, &header_size, symbols_image);
@@ -2072,7 +2072,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             }
             file_name = (const char*)file + size;
             file_name += strlen(file_name) + 1;
-            file = (char*)((DWORD)(file_name + strlen(file_name) + 1 + 3) & ~3);
+            file = (BYTE*)((DWORD)(file_name + strlen(file_name) + 1 + 3) & ~3);
         }
     }
     else

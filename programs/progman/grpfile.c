@@ -515,7 +515,7 @@ static UINT GRPFILE_WriteWithChecksum(HFILE file, LPCSTR str, UINT size)
 
 static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
 {
-  BYTE buffer[34];
+  CHAR buffer[34];
   HLOCAL hProgram;
   INT    NumProg, Title, Progs, Icons, Extension;
   INT    CurrProg, CurrIcon, nCmdShow, ptr, seqnum;
