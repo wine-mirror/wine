@@ -34,6 +34,8 @@
 #include "wincrypt.h"
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "excpt.h"
+#include "wine/exception.h"
 #include "crypt32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
@@ -43,6 +45,77 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 #define CERT_CERT_PROP_ID 32
 #define CERT_CRL_PROP_ID  33
 #define CERT_CTL_PROP_ID  34
+
+/* Some typedefs that make it easier to abstract which type of context we're
+ * working with.
+ */
+typedef const void *(WINAPI *CreateContextFunc)(DWORD dwCertEncodingType,
+ const BYTE *pbCertEncoded, DWORD cbCertEncoded);
+typedef BOOL (WINAPI *AddContextToStoreFunc)(HCERTSTORE hCertStore,
+ const void *context, DWORD dwAddDisposition, const void **ppStoreContext);
+typedef BOOL (WINAPI *AddEncodedContextToStoreFunc)(HCERTSTORE hCertStore,
+ DWORD dwCertEncodingType, const BYTE *pbEncoded, DWORD cbEncoded,
+ DWORD dwAddDisposition, const void **ppContext);
+typedef const void *(WINAPI *EnumContextsInStoreFunc)(HCERTSTORE hCertStore,
+ const void *pPrevContext);
+typedef BOOL (WINAPI *GetContextPropertyFunc)(const void *context,
+ DWORD dwPropID, void *pvData, DWORD *pcbData);
+typedef BOOL (WINAPI *SetContextPropertyFunc)(const void *context,
+ DWORD dwPropID, DWORD dwFlags, const void *pvData);
+typedef BOOL (WINAPI *SerializeElementFunc)(const void *context, DWORD dwFlags,
+ BYTE *pbElement, DWORD *pcbElement);
+typedef BOOL (WINAPI *FreeContextFunc)(const void *context);
+typedef BOOL (WINAPI *DeleteContextFunc)(const void *context);
+
+/* An abstract context (certificate, CRL, or CTL) interface */
+typedef struct _WINE_CONTEXT_INTERFACE
+{
+    CreateContextFunc            create;
+    AddContextToStoreFunc        addContextToStore;
+    AddEncodedContextToStoreFunc addEncodedToStore;
+    EnumContextsInStoreFunc      enumContextsInStore;
+    GetContextPropertyFunc       getProp;
+    SetContextPropertyFunc       setProp;
+    SerializeElementFunc         serialize;
+    FreeContextFunc              free;
+    DeleteContextFunc            deleteFromStore;
+} WINE_CONTEXT_INTERFACE, *PWINE_CONTEXT_INTERFACE;
+
+static const WINE_CONTEXT_INTERFACE gCertInterface = {
+    (CreateContextFunc)CertCreateCertificateContext,
+    (AddContextToStoreFunc)CertAddCertificateContextToStore,
+    (AddEncodedContextToStoreFunc)CertAddEncodedCertificateToStore,
+    (EnumContextsInStoreFunc)CertEnumCertificatesInStore,
+    (GetContextPropertyFunc)CertGetCertificateContextProperty,
+    (SetContextPropertyFunc)CertSetCertificateContextProperty,
+    (SerializeElementFunc)CertSerializeCertificateStoreElement,
+    (FreeContextFunc)CertFreeCertificateContext,
+    (DeleteContextFunc)CertDeleteCertificateFromStore,
+};
+
+static const WINE_CONTEXT_INTERFACE gCRLInterface = {
+    (CreateContextFunc)CertCreateCRLContext,
+    (AddContextToStoreFunc)CertAddCRLContextToStore,
+    (AddEncodedContextToStoreFunc)CertAddEncodedCRLToStore,
+    (EnumContextsInStoreFunc)CertEnumCRLsInStore,
+    (GetContextPropertyFunc)CertGetCRLContextProperty,
+    (SetContextPropertyFunc)CertSetCRLContextProperty,
+    (SerializeElementFunc)CertSerializeCRLStoreElement,
+    (FreeContextFunc)CertFreeCRLContext,
+    (DeleteContextFunc)CertDeleteCRLFromStore,
+};
+
+static const WINE_CONTEXT_INTERFACE gCTLInterface = {
+    (CreateContextFunc)CertCreateCTLContext,
+    (AddContextToStoreFunc)CertAddCTLContextToStore,
+    (AddEncodedContextToStoreFunc)CertAddEncodedCTLToStore,
+    (EnumContextsInStoreFunc)CertEnumCTLsInStore,
+    (GetContextPropertyFunc)CertGetCTLContextProperty,
+    (SetContextPropertyFunc)CertSetCTLContextProperty,
+    (SerializeElementFunc)CertSerializeCTLStoreElement,
+    (FreeContextFunc)CertFreeCTLContext,
+    (DeleteContextFunc)CertDeleteCTLFromStore,
+};
 
 struct WINE_CRYPTCERTSTORE;
 
@@ -204,6 +277,23 @@ static BOOL WINAPI CRYPT_GetCertificateContextProperty(
  */
 static BOOL WINAPI CRYPT_SetCertificateContextProperty(
  PWINE_CERT_CONTEXT context, DWORD dwPropId, DWORD dwFlags, const void *pvData);
+
+/* Helper function for store reading functions and
+ * CertAddSerializedElementToStore.  Returns a context of the appropriate type
+ * if it can, or NULL otherwise.  Doesn't validate any of the properties in
+ * the serialized context (for example, bad hashes are retained.)
+ * *pdwContentType is set to the type of the returned context.
+ */
+static const void * WINAPI CRYPT_ReadSerializedElement(const BYTE *pbElement,
+ DWORD cbElement, DWORD dwContextTypeFlags, DWORD *pdwContentType);
+
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 static void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, HCRYPTPROV hCryptProv,
  DWORD dwFlags, CertStoreType type)
@@ -1655,14 +1745,292 @@ BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
     return ret;
 }
 
+/* Looks for the property with ID propID in the buffer buf.  Returns a pointer
+ * to its header if a valid header is found, NULL if not.  Valid means the
+ * length of thte property won't overrun buf, and the unknown field is 1.
+ */
+static const WINE_CERT_PROP_HEADER *CRYPT_findPropID(const BYTE *buf,
+ DWORD size, DWORD propID)
+{
+    const WINE_CERT_PROP_HEADER *ret = NULL;
+    BOOL done = FALSE;
+
+    while (size && !ret && !done)
+    {
+        if (size < sizeof(WINE_CERT_PROP_HEADER))
+        {
+            SetLastError(CRYPT_E_FILE_ERROR);
+            done = TRUE;
+        }
+        else
+        {
+            const WINE_CERT_PROP_HEADER *hdr =
+             (const WINE_CERT_PROP_HEADER *)buf;
+
+            size -= sizeof(WINE_CERT_PROP_HEADER);
+            buf += sizeof(WINE_CERT_PROP_HEADER);
+            if (size < hdr->cb)
+            {
+                SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+                done = TRUE;
+            }
+            else if (!hdr->propID)
+            {
+                /* assume a zero prop ID means the data are uninitialized, so
+                 * stop looking.
+                 */
+                done = TRUE;
+            }
+            else if (hdr->unknown != 1)
+            {
+                SetLastError(ERROR_FILE_NOT_FOUND);
+                done = TRUE;
+            }
+            else if (hdr->propID == propID)
+                ret = hdr;
+            else
+            {
+                buf += hdr->cb;
+                size -= hdr->cb;
+            }
+        }
+    }
+    return ret;
+}
+
+static const void * WINAPI CRYPT_ReadSerializedElement(const BYTE *pbElement,
+ DWORD cbElement, DWORD dwContextTypeFlags, DWORD *pdwContentType)
+{
+    const void *context = NULL;
+
+    TRACE("(%p, %ld, %08lx, %p)\n", pbElement, cbElement, dwContextTypeFlags,
+     pdwContentType);
+
+    if (!cbElement)
+    {
+        SetLastError(ERROR_END_OF_MEDIA);
+        return NULL;
+    }
+
+    __TRY
+    {
+        const WINE_CONTEXT_INTERFACE *contextInterface = NULL;
+        const WINE_CERT_PROP_HEADER *hdr = NULL;
+        DWORD type = 0;
+        BOOL ret;
+
+        ret = TRUE;
+        if (dwContextTypeFlags == CERT_STORE_ALL_CONTEXT_FLAG)
+        {
+            hdr = CRYPT_findPropID(pbElement, cbElement, CERT_CERT_PROP_ID);
+            if (hdr)
+                type = CERT_STORE_CERTIFICATE_CONTEXT;
+            else
+            {
+                hdr = CRYPT_findPropID(pbElement, cbElement, CERT_CRL_PROP_ID);
+                if (hdr)
+                    type = CERT_STORE_CRL_CONTEXT;
+                else
+                {
+                    hdr = CRYPT_findPropID(pbElement, cbElement,
+                     CERT_CTL_PROP_ID);
+                    if (hdr)
+                        type = CERT_STORE_CTL_CONTEXT;
+                }
+            }
+        }
+        else if (dwContextTypeFlags & CERT_STORE_CERTIFICATE_CONTEXT_FLAG)
+        {
+            hdr = CRYPT_findPropID(pbElement, cbElement, CERT_CERT_PROP_ID);
+            type = CERT_STORE_CERTIFICATE_CONTEXT;
+        }
+        else if (dwContextTypeFlags & CERT_STORE_CRL_CONTEXT_FLAG)
+        {
+            hdr = CRYPT_findPropID(pbElement, cbElement, CERT_CRL_PROP_ID);
+            type = CERT_STORE_CRL_CONTEXT;
+        }
+        else if (dwContextTypeFlags & CERT_STORE_CTL_CONTEXT_FLAG)
+        {
+            hdr = CRYPT_findPropID(pbElement, cbElement, CERT_CTL_PROP_ID);
+            type = CERT_STORE_CTL_CONTEXT;
+        }
+
+        switch (type)
+        {
+        case CERT_STORE_CERTIFICATE_CONTEXT:
+            contextInterface = &gCertInterface;
+            break;
+        case CERT_STORE_CRL_CONTEXT:
+            contextInterface = &gCRLInterface;
+            break;
+        case CERT_STORE_CTL_CONTEXT:
+            contextInterface = &gCTLInterface;
+            break;
+        default:
+            SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+            ret = FALSE;
+        }
+        if (!hdr)
+            ret = FALSE;
+
+        if (ret)
+            context = contextInterface->create(X509_ASN_ENCODING,
+             (BYTE *)hdr + sizeof(WINE_CERT_PROP_HEADER), hdr->cb);
+        if (ret && context)
+        {
+            BOOL noMoreProps = FALSE;
+
+            while (!noMoreProps && ret)
+            {
+                if (cbElement < sizeof(WINE_CERT_PROP_HEADER))
+                    ret = FALSE;
+                else
+                {
+                    const WINE_CERT_PROP_HEADER *hdr =
+                     (const WINE_CERT_PROP_HEADER *)pbElement;
+
+                    TRACE("prop is %ld\n", hdr->propID);
+                    cbElement -= sizeof(WINE_CERT_PROP_HEADER);
+                    pbElement += sizeof(WINE_CERT_PROP_HEADER);
+                    if (cbElement < hdr->cb)
+                    {
+                        SetLastError(HRESULT_FROM_WIN32(
+                         ERROR_INVALID_PARAMETER));
+                        ret = FALSE;
+                    }
+                    else if (!hdr->propID)
+                    {
+                        /* Like in CRYPT_findPropID, stop if the propID is zero
+                         */
+                        noMoreProps = TRUE;
+                    }
+                    else if (hdr->unknown != 1)
+                    {
+                        SetLastError(ERROR_FILE_NOT_FOUND);
+                        ret = FALSE;
+                    }
+                    else if (hdr->propID != CERT_CERT_PROP_ID &&
+                     hdr->propID != CERT_CRL_PROP_ID && hdr->propID !=
+                     CERT_CTL_PROP_ID)
+                    {
+                        /* Have to create a blob for most types, but not
+                         * for all.. arghh.
+                         */
+                        switch (hdr->propID)
+                        {
+                        case CERT_AUTO_ENROLL_PROP_ID:
+                        case CERT_CTL_USAGE_PROP_ID:
+                        case CERT_DESCRIPTION_PROP_ID:
+                        case CERT_FRIENDLY_NAME_PROP_ID:
+                        case CERT_HASH_PROP_ID:
+                        case CERT_KEY_IDENTIFIER_PROP_ID:
+                        case CERT_MD5_HASH_PROP_ID:
+                        case CERT_NEXT_UPDATE_LOCATION_PROP_ID:
+                        case CERT_PUBKEY_ALG_PARA_PROP_ID:
+                        case CERT_PVK_FILE_PROP_ID:
+                        case CERT_SIGNATURE_HASH_PROP_ID:
+                        case CERT_ISSUER_PUBLIC_KEY_MD5_HASH_PROP_ID:
+                        case CERT_SUBJECT_PUBLIC_KEY_MD5_HASH_PROP_ID:
+                        case CERT_ENROLLMENT_PROP_ID:
+                        case CERT_CROSS_CERT_DIST_POINTS_PROP_ID:
+                        case CERT_RENEWAL_PROP_ID:
+                        {
+                            CRYPT_DATA_BLOB blob = { hdr->cb,
+                             (LPBYTE)pbElement };
+
+                            ret = contextInterface->setProp(context,
+                             hdr->propID, 0, &blob);
+                            break;
+                        }
+                        case CERT_DATE_STAMP_PROP_ID:
+                            ret = contextInterface->setProp(context,
+                             hdr->propID, 0, pbElement);
+                            break;
+                        default:
+                            FIXME("prop ID %ld: stub\n", hdr->propID);
+                        }
+                    }
+                    pbElement += hdr->cb;
+                    cbElement -= hdr->cb;
+                    if (!cbElement)
+                        noMoreProps = TRUE;
+                }
+            }
+            if (ret)
+            {
+                if (pdwContentType)
+                    *pdwContentType = type;
+            }
+            else
+            {
+                contextInterface->free(context);
+                context = NULL;
+            }
+        }
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        context = NULL;
+    }
+    __ENDTRY
+    return context;
+}
+
 BOOL WINAPI CertAddSerializedElementToStore(HCERTSTORE hCertStore,
  const BYTE *pbElement, DWORD cbElement, DWORD dwAddDisposition, DWORD dwFlags,
  DWORD dwContextTypeFlags, DWORD *pdwContentType, const void **ppvContext)
 {
-    FIXME("(%p, %p, %ld, %08lx, %08lx, %08lx, %p, %p): stub\n", hCertStore,
+    const void *context;
+    DWORD type;
+    BOOL ret;
+
+    TRACE("(%p, %p, %ld, %08lx, %08lx, %08lx, %p, %p)\n", hCertStore,
      pbElement, cbElement, dwAddDisposition, dwFlags, dwContextTypeFlags,
      pdwContentType, ppvContext);
-    return FALSE;
+
+    /* Call the internal function, then delete the hashes.  Tests show this
+     * function uses real hash values, not whatever's stored in the hash
+     * property.
+     */
+    context = CRYPT_ReadSerializedElement(pbElement, cbElement,
+     dwContextTypeFlags, &type);
+    if (context)
+    {
+        const WINE_CONTEXT_INTERFACE *contextInterface = NULL;
+
+        switch (type)
+        {
+        case CERT_STORE_CERTIFICATE_CONTEXT:
+            contextInterface = &gCertInterface;
+            break;
+        case CERT_STORE_CRL_CONTEXT:
+            contextInterface = &gCRLInterface;
+            break;
+        case CERT_STORE_CTL_CONTEXT:
+            contextInterface = &gCTLInterface;
+            break;
+        default:
+            SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        }
+        if (contextInterface)
+        {
+            contextInterface->setProp(context, CERT_HASH_PROP_ID, 0, NULL);
+            contextInterface->setProp(context, CERT_MD5_HASH_PROP_ID, 0, NULL);
+            contextInterface->setProp(context, CERT_SIGNATURE_HASH_PROP_ID, 0,
+             NULL);
+            if (pdwContentType)
+                *pdwContentType = type;
+            ret = contextInterface->addContextToStore(hCertStore, context,
+             dwAddDisposition, ppvContext);
+            contextInterface->free(context);
+        }
+        else
+            ret = FALSE;
+    }
+    else
+        ret = FALSE;
+    return ret;
 }
 
 BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)

@@ -28,6 +28,18 @@
 
 #include "wine/test.h"
 
+/* The following aren't defined in wincrypt.h, as they're "reserved" */
+#define CERT_CERT_PROP_ID 32
+#define CERT_CRL_PROP_ID  33
+#define CERT_CTL_PROP_ID  34
+
+struct CertPropIDHeader
+{
+    DWORD propID;
+    DWORD unknown1;
+    DWORD cb;
+};
+
 static void testCryptHashCert(void)
 {
     static const BYTE emptyHash[] = { 0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b,
@@ -667,6 +679,169 @@ static void testCertProperties(void)
     }
 }
 
+static void testAddSerialized(void)
+{
+    BOOL ret;
+    HCERTSTORE store;
+    BYTE buf[sizeof(struct CertPropIDHeader) * 2 + 20 + sizeof(bigCert) - 1] =
+     { 0 };
+    BYTE hash[20];
+    struct CertPropIDHeader *hdr;
+    PCCERT_CONTEXT context;
+
+    ret = CertAddSerializedElementToStore(0, NULL, 0, 0, 0, 0, NULL, NULL);
+    ok(!ret && GetLastError() == ERROR_END_OF_MEDIA,
+     "Expected ERROR_END_OF_MEDIA, got %08lx\n", GetLastError());
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != 0, "CertOpenStore failed: %08lx\n", GetLastError());
+
+    ret = CertAddSerializedElementToStore(store, NULL, 0, 0, 0, 0, NULL, NULL);
+    ok(!ret && GetLastError() == ERROR_END_OF_MEDIA,
+     "Expected ERROR_END_OF_MEDIA, got %08lx\n", GetLastError());
+
+    /* Test with an empty property */
+    hdr = (struct CertPropIDHeader *)buf;
+    hdr->propID = CERT_CERT_PROP_ID;
+    hdr->unknown1 = 1;
+    hdr->cb = 0;
+    ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 0,
+     NULL, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    /* Test with a bad size in property header */
+    hdr->cb = sizeof(bigCert) - 2;
+    memcpy(buf + sizeof(struct CertPropIDHeader), bigCert, sizeof(bigCert) - 1);
+    ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 0,
+     NULL, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    ret = CertAddSerializedElementToStore(store, buf,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, 0, 0, 0, NULL,
+     NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    ret = CertAddSerializedElementToStore(store, buf,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, CERT_STORE_ADD_NEW,
+     0, 0, NULL, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    /* Kosher size in property header, but no context type */
+    hdr->cb = sizeof(bigCert) - 1;
+    ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 0,
+     NULL, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    ret = CertAddSerializedElementToStore(store, buf,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, 0, 0, 0, NULL,
+     NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    ret = CertAddSerializedElementToStore(store, buf,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, CERT_STORE_ADD_NEW,
+     0, 0, NULL, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    /* With a bad context type */
+    ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 
+     CERT_STORE_CRL_CONTEXT_FLAG, NULL, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    ret = CertAddSerializedElementToStore(store, buf,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, 0, 0, 
+     CERT_STORE_CRL_CONTEXT_FLAG, NULL, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    ret = CertAddSerializedElementToStore(store, buf,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, CERT_STORE_ADD_NEW,
+     0, CERT_STORE_CRL_CONTEXT_FLAG, NULL, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    /* Bad unknown field, good type */
+    hdr->unknown1 = 2;
+    ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 
+     CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND got %08lx\n", GetLastError());
+    ret = CertAddSerializedElementToStore(store, buf,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, 0, 0, 
+     CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND got %08lx\n", GetLastError());
+    ret = CertAddSerializedElementToStore(store, buf,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, CERT_STORE_ADD_NEW,
+     0, CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND got %08lx\n", GetLastError());
+    /* Most everything okay, but bad add disposition */
+    hdr->unknown1 = 1;
+    /* This crashes
+    ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 
+     CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
+     * as does this
+    ret = CertAddSerializedElementToStore(store, buf,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, 0, 0, 
+     CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
+     */
+    /* Everything okay, but buffer's too big */
+    ret = CertAddSerializedElementToStore(store, buf, sizeof(buf),
+     CERT_STORE_ADD_NEW, 0, CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
+    ok(ret, "CertAddSerializedElementToStore failed: %08lx\n", GetLastError());
+    /* Everything okay, check it's not re-added */
+    ret = CertAddSerializedElementToStore(store, buf,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, CERT_STORE_ADD_NEW,
+     0, CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
+    ok(!ret && GetLastError() == CRYPT_E_EXISTS,
+     "Expected CRYPT_E_EXISTS, got %08lx\n", GetLastError());
+
+    context = CertEnumCertificatesInStore(store, NULL);
+    ok(context != NULL, "Expected a cert\n");
+    if (context)
+        CertDeleteCertificateFromStore(context);
+
+    /* Try adding with a bogus hash.  Oddly enough, it succeeds, and the hash,
+     * when queried, is the real hash rather than the bogus hash.
+     */
+    hdr = (struct CertPropIDHeader *)(buf + sizeof(struct CertPropIDHeader) +
+     sizeof(bigCert) - 1);
+    hdr->propID = CERT_HASH_PROP_ID;
+    hdr->unknown1 = 1;
+    hdr->cb = sizeof(hash);
+    memset(hash, 0xc, sizeof(hash));
+    memcpy((LPBYTE)hdr + sizeof(struct CertPropIDHeader), hash, sizeof(hash));
+    ret = CertAddSerializedElementToStore(store, buf, sizeof(buf),
+     CERT_STORE_ADD_NEW, 0, CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL,
+     (const void **)&context);
+    ok(ret, "CertAddSerializedElementToStore failed: %08lx\n", GetLastError());
+    if (context)
+    {
+        BYTE hashVal[20], realHash[20];
+        DWORD size = sizeof(hashVal);
+
+        ret = CryptHashCertificate(0, 0, 0, bigCert, sizeof(bigCert) - 1,
+         realHash, &size);
+        ok(ret, "CryptHashCertificate failed: %08lx\n", GetLastError());
+        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID,
+         hashVal, &size);
+        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
+         GetLastError());
+        ok(!memcmp(hashVal, realHash, size), "Unexpected hash\n");
+    }
+
+    CertCloseStore(store, 0);
+}
+
 START_TEST(cert)
 {
     testCryptHashCert();
@@ -676,4 +851,5 @@ START_TEST(cert)
     testCollectionStore();
 
     testCertProperties();
+    testAddSerialized();
 }
