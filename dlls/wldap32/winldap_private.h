@@ -43,6 +43,11 @@ typedef enum {
     WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED =   0x61
 } LDAP_RETCODE;
 
+typedef struct berelement
+{
+    PCHAR opaque;
+} WLDAP32_BerElement;
+
 #define LDAP_OPT_THREAD_FN_PTRS         0x05
 #define LDAP_OPT_REBIND_FN              0x06
 #define LDAP_OPT_REBIND_ARG             0x07
@@ -286,8 +291,8 @@ ULONG ldap_extended_operation_sA(WLDAP32_LDAP*,PCHAR,struct WLDAP32_berval*,PLDA
     PCHAR*,struct WLDAP32_berval**);
 ULONG ldap_extended_operation_sW(WLDAP32_LDAP*,PWCHAR,struct WLDAP32_berval*,PLDAPControlW*, PLDAPControlW*,
     PWCHAR*,struct WLDAP32_berval**);
-PCHAR ldap_first_attributeA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,BerElement**);
-PWCHAR ldap_first_attributeW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,BerElement**);
+PCHAR ldap_first_attributeA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,WLDAP32_BerElement**);
+PWCHAR ldap_first_attributeW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,WLDAP32_BerElement**);
 WLDAP32_LDAPMessage *WLDAP32_ldap_first_entry(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
 WLDAP32_LDAPMessage *WLDAP32_ldap_first_reference(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
 PCHAR ldap_get_dnA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
@@ -319,8 +324,8 @@ ULONG ldap_modrdn2_sW(WLDAP32_LDAP*,PWCHAR,PWCHAR,INT);
 ULONG ldap_modrdn_sA(WLDAP32_LDAP*,PCHAR,PCHAR);
 ULONG ldap_modrdn_sW(WLDAP32_LDAP*,PWCHAR,PWCHAR);
 ULONG WLDAP32_ldap_msgfree(WLDAP32_LDAPMessage*);
-PCHAR ldap_next_attributeA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,BerElement*);
-PWCHAR ldap_next_attributeW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,BerElement*);
+PCHAR ldap_next_attributeA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,WLDAP32_BerElement*);
+PWCHAR ldap_next_attributeW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,WLDAP32_BerElement*);
 WLDAP32_LDAPMessage *WLDAP32_ldap_next_entry(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
 WLDAP32_LDAPMessage *WLDAP32_ldap_next_reference(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
 WLDAP32_LDAP *ldap_openA(PCHAR,ULONG);

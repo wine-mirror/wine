@@ -125,7 +125,8 @@ ULONG WLDAP32_ldap_count_references( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res 
     return ret;
 }
 
-PCHAR ldap_first_attributeA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, BerElement** ptr )
+PCHAR ldap_first_attributeA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry,
+    WLDAP32_BerElement** ptr )
 {
     PCHAR ret = NULL;
 #ifdef HAVE_LDAP
@@ -143,7 +144,8 @@ PCHAR ldap_first_attributeA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, BerEl
     return ret;
 }
 
-PWCHAR ldap_first_attributeW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, BerElement** ptr )
+PWCHAR ldap_first_attributeW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry,
+    WLDAP32_BerElement** ptr )
 {
     PWCHAR ret = NULL;
 #ifdef HAVE_LDAP
@@ -211,7 +213,8 @@ ULONG WLDAP32_ldap_msgfree( WLDAP32_LDAPMessage *res )
     return ret;
 }
 
-PCHAR ldap_next_attributeA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, BerElement *ptr )
+PCHAR ldap_next_attributeA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry,
+    WLDAP32_BerElement *ptr )
 {
     PCHAR ret = NULL;
 #ifdef HAVE_LDAP
@@ -229,7 +232,8 @@ PCHAR ldap_next_attributeA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, BerEle
     return ret;
 }
 
-PWCHAR ldap_next_attributeW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, BerElement *ptr )
+PWCHAR ldap_next_attributeW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry,
+    WLDAP32_BerElement *ptr )
 {
     PWCHAR ret = NULL;
 #ifdef HAVE_LDAP
