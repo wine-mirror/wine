@@ -1540,8 +1540,34 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetFVF(IWineD3DDevice *iface, DWORD *pfvf) {
  * Get / Set Stream Source
  *****/
 HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT StreamNumber,IWineD3DVertexBuffer* pStreamData, UINT OffsetInBytes, UINT Stride) {
-    IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
+        IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexBuffer     *oldSrc;
+
+    /**TODO: instance and index data, see
+    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/programmingguide/advancedtopics/DrawingMultipleInstances.asp
+    and
+    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/SetStreamSourceFreq.asp
+     **************/
+
+    /* D3d9 only, but shouldn't  hurt d3d8 */
+    UINT streamFlags;
+
+    streamFlags = StreamNumber &(D3DSTREAMSOURCE_INDEXEDDATA | D3DSTREAMSOURCE_INSTANCEDATA);
+    if (streamFlags) {
+        if (streamFlags & D3DSTREAMSOURCE_INDEXEDDATA) {
+           FIXME("stream index data not supported\n");
+        }
+        if (streamFlags & D3DSTREAMSOURCE_INDEXEDDATA) {
+           FIXME("stream instance data not supported\n");
+        }
+    }
+
+    StreamNumber&= ~(D3DSTREAMSOURCE_INDEXEDDATA | D3DSTREAMSOURCE_INSTANCEDATA);
+
+    if (StreamNumber >= MAX_STREAMS) {
+        WARN("Stream out of range %d\n", StreamNumber);
+        return D3DERR_INVALIDCALL;
+    }
 
     oldSrc = This->stateBlock->streamSource[StreamNumber];
     TRACE("(%p) : StreamNo: %d, OldStream (%p), NewStream (%p), NewStride %d\n", This, StreamNumber, oldSrc, pStreamData, Stride);
@@ -1551,6 +1577,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT St
     This->updateStateBlock->streamStride[StreamNumber]         = Stride;
     This->updateStateBlock->streamSource[StreamNumber]         = pStreamData;
     This->updateStateBlock->streamOffset[StreamNumber]         = OffsetInBytes;
+    This->updateStateBlock->streamFlags[StreamNumber]          = streamFlags;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -1559,6 +1586,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT St
     }
 
     /* Not recording... */
+    /* Need to do a getParent and pass the reffs up */
+    /* MSDN says ..... When an application no longer holds a references to this interface, the interface will automatically be freed.
+    which suggests that we shouldn't be ref counting? and do need a _release on the stream source to reset the stream source
+    so for now, just count internally   */
     if (pStreamData != NULL) {
         IUnknown *newVertexBufferParent;
         /* GetParent will add a ref, so leave it hanging until the vertex buffer is cleared */
@@ -1576,12 +1607,38 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT St
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, UINT StreamNumber,IWineD3DVertexBuffer** pStream, UINT *pOffset, UINT* pStride) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    UINT streamFlags;
 
-    TRACE("(%p) : StreamNo: %d, Stream (%p), Stride %d\n", This, StreamNumber, This->stateBlock->streamSource[StreamNumber], This->stateBlock->streamStride[StreamNumber]);
+    TRACE("(%p) : StreamNo: %d, Stream (%p), Stride %d\n", This, StreamNumber,
+           This->stateBlock->streamSource[StreamNumber], This->stateBlock->streamStride[StreamNumber]);
+
+
+    streamFlags = StreamNumber &(D3DSTREAMSOURCE_INDEXEDDATA | D3DSTREAMSOURCE_INSTANCEDATA);
+    if (streamFlags) {
+        if (streamFlags & D3DSTREAMSOURCE_INDEXEDDATA) {
+           FIXME("stream index data not supported\n");
+        }
+        if (streamFlags & D3DSTREAMSOURCE_INDEXEDDATA) {
+            FIXME("stream instance data not supported\n");
+        }
+    }
+
+    StreamNumber&= ~(D3DSTREAMSOURCE_INDEXEDDATA | D3DSTREAMSOURCE_INSTANCEDATA);
+
+    if (StreamNumber >= MAX_STREAMS) {
+        WARN("Stream out of range %d\n", StreamNumber);
+        return D3DERR_INVALIDCALL;
+    }
     *pStream = This->stateBlock->streamSource[StreamNumber];
     *pStride = This->stateBlock->streamStride[StreamNumber];
     *pOffset = This->stateBlock->streamOffset[StreamNumber];
-    if (*pStream != NULL) IWineD3DVertexBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
+
+     if (*pStream == NULL) {
+        FIXME("Attempting to get an empty stream %d, returning D3DERR_INVALIDCALL\n", StreamNumber);
+        return  D3DERR_INVALIDCALL;
+    }
+
+    IWineD3DVertexBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
     return D3D_OK;
 }
 
@@ -1598,14 +1655,28 @@ VertexOffset = StartVertex / Divider * StreamStride +
 HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *iface,  UINT StreamNumber, UINT Divider) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    FIXME("(%p) : stub\n", This);
+    TRACE("(%p) StreamNumber(%d), Divider(%d)\n", This, StreamNumber, Divider);
+    This->updateStateBlock->streamFlags[StreamNumber] = Divider & (D3DSTREAMSOURCE_INSTANCEDATA  | D3DSTREAMSOURCE_INDEXEDDATA );
+
+    This->updateStateBlock->changed.streamFreq[StreamNumber]  = TRUE;
+    This->updateStateBlock->set.streamFreq[StreamNumber]      = TRUE;
+    This->updateStateBlock->streamFreq[StreamNumber]          = Divider & 0x7FFFFF;
+
+    if (This->updateStateBlock->streamFlags[StreamNumber] || This->updateStateBlock->streamFreq[StreamNumber] != 1) {
+        FIXME("Stream indexing not fully supported\n");
+    }
+
     return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSourceFreq(IWineD3DDevice *iface,  UINT StreamNumber, UINT* Divider) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    FIXME("(%p) : stub\n", This);
+    TRACE("(%p) StreamNumber(%d), Divider(%p)\n", This, StreamNumber, Divider);
+    *Divider = This->updateStateBlock->streamFreq[StreamNumber] | This->updateStateBlock->streamFlags[StreamNumber];
+
+    TRACE("(%p) : returning %d\n", This, *Divider);
+
     return D3D_OK;
 }
 
