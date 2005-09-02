@@ -29,9 +29,11 @@ extern int main( int argc, char *argv[] );
 
 DWORD WINAPI __wine_spec_exe_entry( PEB *peb )
 {
+    BOOL needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
     DWORD ret;
-    if (__wine_spec_init_state == 1) _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );
+
+    if (needs_init) _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );
     ret = main( __wine_main_argc, __wine_main_argv );
-    if (__wine_spec_init_state == 1) _fini();
+    if (needs_init) _fini();
     ExitProcess( ret );
 }

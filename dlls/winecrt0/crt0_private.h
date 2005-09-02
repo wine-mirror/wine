@@ -29,6 +29,13 @@ extern  void _init(int argc, char **argv, char **envp );
 extern void _fini(void);
 #endif
 
-extern int __wine_spec_init_state;
+enum init_state
+{
+    NO_INIT_DONE,      /* no initialization done yet */
+    DLL_REGISTERED,    /* the dll has been registered */
+    CONSTRUCTORS_DONE  /* the constructors have been run (implies dll registered too) */
+};
+
+extern enum init_state __wine_spec_init_state;
 
 #endif /* __WINE_CRT0_PRIVATE_H__ */

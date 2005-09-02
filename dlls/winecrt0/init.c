@@ -1,5 +1,5 @@
 /*
- * Default entry point for a dll
+ * Initialization code for spec files
  *
  * Copyright 2005 Alexandre Julliard
  *
@@ -24,17 +24,19 @@
 #include "wine/library.h"
 #include "crt0_private.h"
 
-extern BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved );
+enum init_state __wine_spec_init_state = NO_INIT_DONE;
 
-BOOL WINAPI __wine_spec_dll_entry( HINSTANCE inst, DWORD reason, LPVOID reserved )
+extern const IMAGE_NT_HEADERS __wine_spec_nt_header;
+extern const char __wine_spec_file_name[];
+
+void __wine_spec_init(void)
 {
-    BOOL ret, needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
+    __wine_spec_init_state = DLL_REGISTERED;
+    __wine_dll_register( &__wine_spec_nt_header, __wine_spec_file_name );
+}
 
-    if (reason == DLL_PROCESS_ATTACH && needs_init)
-        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );
-
-    ret = DllMain( inst, reason, reserved );
-
-    if (reason == DLL_PROCESS_DETACH && needs_init) _fini();
-    return ret;
+void __wine_spec_init_ctor(void)
+{
+    if (__wine_spec_init_state == NO_INIT_DONE) __wine_spec_init();
+    __wine_spec_init_state = CONSTRUCTORS_DONE;
 }

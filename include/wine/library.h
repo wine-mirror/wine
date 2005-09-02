@@ -53,6 +53,7 @@ extern int __wine_main_argc;
 extern char **__wine_main_argv;
 extern WCHAR **__wine_main_wargv;
 extern char **__wine_main_environ;
+extern void __wine_dll_register( const IMAGE_NT_HEADERS *header, const char *filename );
 extern void wine_init( int argc, char *argv[], char *error, int error_size );
 
 /* debugging */

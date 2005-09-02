@@ -474,7 +474,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     else
         fprintf( outfile, "extern char _end[];\n" );
 
-    fprintf( outfile, "static const char __wine_spec_file_name[] = \"%s\";\n", spec->file_name );
+    fprintf( outfile, "const char __wine_spec_file_name[] = \"%s\";\n", spec->file_name );
     fprintf( outfile, "extern int __wine_spec_data_start[], __wine_spec_exports[];\n\n" );
 
     output_stub_funcs( outfile, spec );
@@ -489,13 +489,12 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 
     /* Output the entry point function */
 
-    fprintf( outfile, "int __wine_spec_init_state = 0;\n" );
     fprintf( outfile, "extern void %s();\n\n", spec->init_func );
 
     /* Output the NT header */
 
     /* this is the IMAGE_NT_HEADERS structure, but we cannot include winnt.h here */
-    fprintf( outfile, "static const struct image_nt_headers\n{\n" );
+    fprintf( outfile, "const struct image_nt_headers\n{\n" );
     fprintf( outfile, "  int Signature;\n" );
     fprintf( outfile, "  struct file_header {\n" );
     fprintf( outfile, "    short Machine;\n" );
@@ -539,7 +538,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    struct { const void *VirtualAddress; int Size; } DataDirectory[%d];\n",
              IMAGE_NUMBEROF_DIRECTORY_ENTRIES );
     fprintf( outfile, "  } OptionalHeader;\n" );
-    fprintf( outfile, "} nt_header = {\n" );
+    fprintf( outfile, "} __wine_spec_nt_header = {\n" );
     fprintf( outfile, "  0x%04x,\n", IMAGE_NT_SIGNATURE );   /* Signature */
     switch(target_cpu)
     {
@@ -557,7 +556,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
         break;
     }
     fprintf( outfile, "    0, 0, 0, 0,\n" );
-    fprintf( outfile, "    sizeof(nt_header.OptionalHeader),\n" ); /* SizeOfOptionalHeader */
+    fprintf( outfile, "    sizeof(__wine_spec_nt_header.OptionalHeader),\n" ); /* SizeOfOptionalHeader */
     fprintf( outfile, "    0x%04x },\n", spec->characteristics );  /* Characteristics */
 
     fprintf( outfile, "  { 0x%04x,\n", IMAGE_NT_OPTIONAL_HDR_MAGIC );  /* Magic */
@@ -593,24 +592,6 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
              spec->nb_resources ? "&__wine_spec_resources" : "0",
              spec->nb_resources ? "sizeof(__wine_spec_resources)" : "0" );
     fprintf( outfile, "    }\n  }\n};\n\n" );
-
-    /* Output the DLL constructor */
-
-    fprintf( outfile,
-             "void __wine_spec_init(void)\n"
-             "{\n"
-             "    extern void __wine_dll_register( const struct image_nt_headers *, const char * );\n"
-             "    __wine_spec_init_state = 1;\n"
-             "    __wine_dll_register( &nt_header, __wine_spec_file_name );\n"
-             "}\n\n" );
-
-    fprintf( outfile,
-             "void __wine_spec_init_ctor(void)\n"
-             "{\n"
-             "    if (__wine_spec_init_state) return;\n"
-             "    __wine_spec_init();\n"
-             "    __wine_spec_init_state = 2;\n"
-             "}\n" );
 
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "static void __asm__dummy(void) {\n" );
