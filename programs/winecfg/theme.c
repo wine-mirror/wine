@@ -39,6 +39,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 /* UXTHEME functions not in the headers */
+
+typedef struct tagTHEMENAMES
+{
+    WCHAR szName[MAX_PATH+1];
+    WCHAR szDisplayName[MAX_PATH+1];
+    WCHAR szTooltip[MAX_PATH+1];
+} THEMENAMES, *PTHEMENAMES;
+
 typedef void* HTHEMEFILE;
 typedef BOOL (CALLBACK *EnumThemeProc)(LPVOID lpReserved, 
 				       LPCWSTR pszThemeFileName,
@@ -47,9 +55,9 @@ typedef BOOL (CALLBACK *EnumThemeProc)(LPVOID lpReserved,
                                        LPVOID lpData);
 
 HRESULT WINAPI EnumThemeColors (LPWSTR pszThemeFileName, LPWSTR pszSizeName,
-				DWORD dwColorNum, LPWSTR pszColorName);
+				DWORD dwColorNum, PTHEMENAMES pszColorNames);
 HRESULT WINAPI EnumThemeSizes (LPWSTR pszThemeFileName, LPWSTR pszColorName,
-			       DWORD dwSizeNum, LPWSTR pszSizeName);
+			       DWORD dwSizeNum, PTHEMENAMES pszSizeNames);
 HRESULT WINAPI ApplyTheme (HTHEMEFILE hThemeFile, char* unknown, HWND hWnd);
 HRESULT WINAPI OpenThemeFile (LPCWSTR pszThemeFileName, LPCWSTR pszColorName,
 			      LPCWSTR pszSizeName, HTHEMEFILE* hThemeFile,
@@ -158,7 +166,7 @@ static void free_theme_files(void)
     themeFilesCount = 0;
 }
 
-typedef HRESULT (WINAPI * EnumTheme) (LPWSTR, LPWSTR, DWORD, LPWSTR);
+typedef HRESULT (WINAPI * EnumTheme) (LPWSTR, LPWSTR, DWORD, PTHEMENAMES);
 
 /* fill a string list with either colors or sizes of a theme */
 static void fill_theme_string_array (const WCHAR* filename, 
@@ -166,14 +174,15 @@ static void fill_theme_string_array (const WCHAR* filename,
 				     EnumTheme enumTheme)
 {
     DWORD index = 0;
-    WCHAR name[MAX_PATH];
+    THEMENAMES names;
 
     WINE_TRACE ("%s %p %p\n", wine_dbgstr_w (filename), wdsa, enumTheme);
 
-    while (SUCCEEDED (enumTheme ((WCHAR*)filename, NULL, index++, name)))
+    while (SUCCEEDED (enumTheme ((WCHAR*)filename, NULL, index++, &names)))
     {
-	WINE_TRACE ("%s\n", wine_dbgstr_w (name));
-	color_or_size_dsa_add (wdsa, name, name);
+	WINE_TRACE ("%s: %s\n", wine_dbgstr_w (names.szName), 
+            wine_dbgstr_w (names.szDisplayName));
+	color_or_size_dsa_add (wdsa, names.szName, names.szDisplayName);
     }
 }
 
