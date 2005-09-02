@@ -847,16 +847,6 @@ static const BYTE localhost[] = { 127, 0, 0, 1 };
 static const BYTE encodedIPAddr[] = { 0x30, 0x06, 0x87, 0x04, 0x7f, 0x00, 0x00,
  0x01 };
 
-static void printBytes(const char *hdr, const BYTE *pb, size_t cb)
-{
-    size_t i;
-
-    printf("%s:\n", hdr);
-    for (i = 0; i < cb; i++)
-        printf("%02x ", pb[i]);
-    putchar('\n');
-}
-
 static void test_encodeAltName(DWORD dwEncoding)
 {
     static const WCHAR nihongo[] = { 0x226f, 0x575b, 0 };
@@ -1332,6 +1322,164 @@ static void test_decodeBasicConstraints(DWORD dwEncoding)
      (BYTE *)&buf, &bufSize);
     ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
      "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
+}
+
+/* These are terrible public keys of course, I'm just testing encoding */
+static const BYTE modulus1[] = { 0,0,0,1,1,1,1,1 };
+static const BYTE modulus2[] = { 1,1,1,1,1,0,0,0 };
+
+struct EncodedRSAPubKey
+{
+    const BYTE *modulus;
+    size_t modulusLen;
+    const BYTE *encoded;
+    size_t decodedModulusLen;
+};
+
+struct EncodedRSAPubKey rsaPubKeys[] = {
+ { modulus1, sizeof(modulus1),
+   "\x30\x0f\x02\x08\x01\x01\x01\x01\x01\x00\x00\x00\x02\x03\x01\x00\x01",
+   sizeof(modulus1) },
+ { modulus2, sizeof(modulus2),
+   "\x30\x0c\x02\x05\x01\x01\x01\x01\x01\x02\x03\x01\x00\x01",
+   5 },
+};
+
+static void test_encodeRsaPublicKey(DWORD dwEncoding)
+{
+    BYTE toEncode[sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) + sizeof(modulus1)];
+    BLOBHEADER *hdr = (BLOBHEADER *)toEncode;
+    RSAPUBKEY *rsaPubKey = (RSAPUBKEY *)(toEncode + sizeof(BLOBHEADER));
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD bufSize = 0;
+
+    /* Try with a bogus blob type */
+    hdr->bType = 2;
+    hdr->bVersion = CUR_BLOB_VERSION;
+    hdr->reserved = 0;
+    hdr->aiKeyAlg = CALG_RSA_KEYX;
+    rsaPubKey->magic = 0x31415352;
+    rsaPubKey->bitlen = sizeof(modulus1) * 8;
+    rsaPubKey->pubexp = 65537;
+    memcpy(toEncode + sizeof(BLOBHEADER) + sizeof(RSAPUBKEY), modulus1,
+     sizeof(modulus1));
+
+    ret = CryptEncodeObjectEx(dwEncoding, RSA_CSP_PUBLICKEYBLOB,
+     toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+     &bufSize);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    /* Now with a bogus reserved field */
+    hdr->bType = PUBLICKEYBLOB;
+    hdr->reserved = 1;
+    ret = CryptEncodeObjectEx(dwEncoding, RSA_CSP_PUBLICKEYBLOB,
+     toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+     &bufSize);
+    if (buf)
+    {
+        ok(bufSize == rsaPubKeys[0].encoded[1] + 2,
+         "Expected size %d, got %ld\n", rsaPubKeys[0].encoded[1] + 2, bufSize);
+        ok(!memcmp(buf, rsaPubKeys[0].encoded, bufSize), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* Now with a bogus blob version */
+    hdr->reserved = 0;
+    hdr->bVersion = 0;
+    ret = CryptEncodeObjectEx(dwEncoding, RSA_CSP_PUBLICKEYBLOB,
+     toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+     &bufSize);
+    if (buf)
+    {
+        ok(bufSize == rsaPubKeys[0].encoded[1] + 2,
+         "Expected size %d, got %ld\n", rsaPubKeys[0].encoded[1] + 2, bufSize);
+        ok(!memcmp(buf, rsaPubKeys[0].encoded, bufSize), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* And with a bogus alg ID */
+    hdr->bVersion = CUR_BLOB_VERSION;
+    hdr->aiKeyAlg = CALG_DES;
+    ret = CryptEncodeObjectEx(dwEncoding, RSA_CSP_PUBLICKEYBLOB,
+     toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+     &bufSize);
+    if (buf)
+    {
+        ok(bufSize == rsaPubKeys[0].encoded[1] + 2,
+         "Expected size %d, got %ld\n", rsaPubKeys[0].encoded[1] + 2, bufSize);
+        ok(!memcmp(buf, rsaPubKeys[0].encoded, bufSize), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* Finally, all valid, but change the modulus */
+    hdr->aiKeyAlg = CALG_RSA_KEYX;
+    memcpy(toEncode + sizeof(BLOBHEADER) + sizeof(RSAPUBKEY), modulus2,
+     sizeof(modulus2));
+    ret = CryptEncodeObjectEx(dwEncoding, RSA_CSP_PUBLICKEYBLOB,
+     toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+     &bufSize);
+    if (buf)
+    {
+        ok(bufSize == rsaPubKeys[1].encoded[1] + 2,
+         "Expected size %d, got %ld\n", rsaPubKeys[1].encoded[1] + 2, bufSize);
+        ok(!memcmp(buf, rsaPubKeys[1].encoded, bufSize), "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
+static void test_decodeRsaPublicKey(DWORD dwEncoding)
+{
+    DWORD i;
+    LPBYTE buf = NULL;
+    DWORD bufSize = 0;
+    BOOL ret;
+
+    /* Try with a bad length */
+    ret = CryptDecodeObjectEx(dwEncoding, RSA_CSP_PUBLICKEYBLOB,
+     rsaPubKeys[0].encoded, rsaPubKeys[0].encoded[1],
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", CRYPT_E_ASN1_EOD);
+    /* Now try success cases */
+    for (i = 0; i < sizeof(rsaPubKeys) / sizeof(rsaPubKeys[0]); i++)
+    {
+        bufSize = 0;
+        ret = CryptDecodeObjectEx(dwEncoding, RSA_CSP_PUBLICKEYBLOB,
+         rsaPubKeys[i].encoded, rsaPubKeys[i].encoded[1] + 2,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            BLOBHEADER *hdr = (BLOBHEADER *)buf;
+            RSAPUBKEY *rsaPubKey = (RSAPUBKEY *)(buf + sizeof(BLOBHEADER));
+
+            ok(bufSize >= sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
+             rsaPubKeys[i].decodedModulusLen,
+             "Expected size at least %d, got %ld\n",
+             sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
+             rsaPubKeys[i].decodedModulusLen, bufSize);
+            ok(hdr->bType == PUBLICKEYBLOB,
+             "Expected type PUBLICKEYBLOB (%d), got %d\n", PUBLICKEYBLOB,
+             hdr->bType);
+            ok(hdr->bVersion == CUR_BLOB_VERSION,
+             "Expected version CUR_BLOB_VERSION (%d), got %d\n",
+             CUR_BLOB_VERSION, hdr->bVersion);
+            ok(hdr->reserved == 0, "Expected reserved 0, got %d\n",
+             hdr->reserved);
+            ok(hdr->aiKeyAlg == CALG_RSA_KEYX,
+             "Expected CALG_RSA_KEYX, got %08x\n", hdr->aiKeyAlg);
+            ok(rsaPubKey->magic == 0x31415352,
+             "Expected magic RSA1, got %08lx\n", rsaPubKey->magic);
+            ok(rsaPubKey->bitlen == rsaPubKeys[i].decodedModulusLen * 8,
+             "Expected bit len %d, got %ld\n",
+             rsaPubKeys[i].decodedModulusLen * 8, rsaPubKey->bitlen);
+            ok(rsaPubKey->pubexp == 65537, "Expected pubexp 65537, got %ld\n",
+             rsaPubKey->pubexp);
+            ok(!memcmp(buf + sizeof(BLOBHEADER) + sizeof(RSAPUBKEY),
+             rsaPubKeys[i].modulus, rsaPubKeys[i].decodedModulusLen),
+             "Unexpected modulus\n");
+            LocalFree(buf);
+        }
+    }
 }
 
 static const BYTE intSequence[] = { 0x30, 0x1b, 0x02, 0x01, 0x01, 0x02, 0x01,
@@ -2117,12 +2265,6 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
          info->Issuer.cbData);
         ok(!memcmp(info->Issuer.pbData, encodedCommonName, info->Issuer.cbData),
          "Unexpected issuer\n");
-        if (memcmp(info->Issuer.pbData, encodedCommonName, info->Issuer.cbData))
-        {
-            printBytes("Expected", encodedCommonName,
-             sizeof(encodedCommonName));
-            printBytes("Got", info->Issuer.pbData, info->Issuer.cbData);
-        }
     }
     /* and finally, with an extension */
     ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED,
@@ -2237,6 +2379,8 @@ START_TEST(encode)
         test_decodeBits(encodings[i]);
         test_encodeBasicConstraints(encodings[i]);
         test_decodeBasicConstraints(encodings[i]);
+        test_encodeRsaPublicKey(encodings[i]);
+        test_decodeRsaPublicKey(encodings[i]);
         test_encodeSequenceOfAny(encodings[i]);
         test_decodeSequenceOfAny(encodings[i]);
         test_encodeExtensions(encodings[i]);

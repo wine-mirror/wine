@@ -1690,6 +1690,47 @@ static BOOL WINAPI CRYPT_AsnEncodeBasicConstraints2(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeRsaPubKey(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret;
+
+    __TRY
+    {
+        const BLOBHEADER *hdr =
+         (const BLOBHEADER *)pvStructInfo;
+
+        if (hdr->bType != PUBLICKEYBLOB)
+        {
+            SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+            ret = FALSE;
+        }
+        else
+        {
+            const RSAPUBKEY *rsaPubKey = (const RSAPUBKEY *)
+             ((const BYTE *)pvStructInfo + sizeof(BLOBHEADER));
+            CRYPT_INTEGER_BLOB blob = { rsaPubKey->bitlen / 8,
+             (BYTE *)pvStructInfo + sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) };
+            struct AsnEncodeSequenceItem items[] = { 
+             { &blob, CRYPT_AsnEncodeInteger, 0 },
+             { &rsaPubKey->pubexp, CRYPT_AsnEncodeInt, 0 },
+            };
+
+            ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+             sizeof(items) / sizeof(items[0]), dwFlags, pEncodePara, pbEncoded,
+             pcbEncoded);
+        }
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnEncodeOctets(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -2277,6 +2318,9 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         case (WORD)X509_BASIC_CONSTRAINTS2:
             encodeFunc = CRYPT_AsnEncodeBasicConstraints2;
             break;
+        case (WORD)RSA_CSP_PUBLICKEYBLOB:
+            encodeFunc = CRYPT_AsnEncodeRsaPubKey;
+            break;
         case (WORD)X509_OCTET_STRING:
             encodeFunc = CRYPT_AsnEncodeOctets;
             break;
@@ -2404,8 +2448,16 @@ static BOOL WINAPI CRYPT_GetLen(const BYTE *pbEncoded, DWORD cbEncoded,
     }
     else if (pbEncoded[1] <= 0x7f)
     {
-        *len = pbEncoded[1];
-        ret = TRUE;
+        if (pbEncoded[1] + 1 > cbEncoded)
+        {
+            SetLastError(CRYPT_E_ASN1_EOD);
+            ret = FALSE;
+        }
+        else
+        {
+            *len = pbEncoded[1];
+            ret = TRUE;
+        }
     }
     else
     {
@@ -4356,6 +4408,80 @@ static BOOL WINAPI CRYPT_AsnDecodeBasicConstraints2(DWORD dwCertEncodingType,
     return ret;
 }
 
+#define RSA1_MAGIC 0x31415352
+
+struct DECODED_RSA_PUB_KEY
+{
+    DWORD              pubexp;
+    CRYPT_INTEGER_BLOB modulus;
+};
+
+static BOOL WINAPI CRYPT_AsnDecodeRsaPubKey(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret;
+
+    __TRY
+    {
+        struct AsnDecodeSequenceItem items[] = {
+         { offsetof(struct DECODED_RSA_PUB_KEY, modulus),
+           CRYPT_AsnDecodeIntegerInternal, sizeof(CRYPT_INTEGER_BLOB),
+           FALSE, TRUE, offsetof(struct DECODED_RSA_PUB_KEY, modulus.pbData),
+           0 },
+         { offsetof(struct DECODED_RSA_PUB_KEY, pubexp),
+           CRYPT_AsnDecodeInt, sizeof(DWORD), FALSE, FALSE, 0, 0 },
+        };
+        struct DECODED_RSA_PUB_KEY *decodedKey = NULL;
+        DWORD size = 0;
+
+        ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
+         sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, &decodedKey, &size, NULL);
+        if (ret)
+        {
+            DWORD bytesNeeded = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
+             decodedKey->modulus.cbData;
+
+            if (!pvStructInfo)
+            {
+                *pcbStructInfo = bytesNeeded;
+                ret = TRUE;
+            }
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+             pvStructInfo, pcbStructInfo, bytesNeeded)))
+            {
+                BLOBHEADER *hdr;
+                RSAPUBKEY *rsaPubKey;
+
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                hdr = (BLOBHEADER *)pvStructInfo;
+                hdr->bType = PUBLICKEYBLOB;
+                hdr->bVersion = CUR_BLOB_VERSION;
+                hdr->reserved = 0;
+                hdr->aiKeyAlg = CALG_RSA_KEYX;
+                rsaPubKey = (RSAPUBKEY *)((BYTE *)pvStructInfo +
+                 sizeof(BLOBHEADER));
+                rsaPubKey->magic = RSA1_MAGIC;
+                rsaPubKey->pubexp = decodedKey->pubexp;
+                rsaPubKey->bitlen = decodedKey->modulus.cbData * 8;
+                memcpy((BYTE *)pvStructInfo + sizeof(BLOBHEADER) +
+                 sizeof(RSAPUBKEY), decodedKey->modulus.pbData,
+                 decodedKey->modulus.cbData);
+            }
+            LocalFree(decodedKey);
+        }
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnDecodeOctets(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
@@ -5267,6 +5393,9 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
             break;
         case (WORD)X509_BASIC_CONSTRAINTS2:
             decodeFunc = CRYPT_AsnDecodeBasicConstraints2;
+            break;
+        case (WORD)RSA_CSP_PUBLICKEYBLOB:
+            decodeFunc = CRYPT_AsnDecodeRsaPubKey;
             break;
         case (WORD)X509_OCTET_STRING:
             decodeFunc = CRYPT_AsnDecodeOctets;
