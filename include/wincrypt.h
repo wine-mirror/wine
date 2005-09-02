@@ -2149,6 +2149,17 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define CRYPT_UNICODE_NAME_DECODE_DISABLE_IE4_UTF8_FLAG \
  CERT_RDN_DISABLE_IE4_UTF8_FLAG
 
+/* subject types for CryptVerifyCertificateSignatureEx */
+#define CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB 1
+#define CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT 2
+#define CRYPT_VERIFY_CERT_SIGN_SUBJECT_CRL  3
+
+/* issuer types for CryptVerifyCertificateSignatureEx */
+#define CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY 1
+#define CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT   2
+#define CRYPT_VERIFY_CERT_SIGN_ISSUER_CHAIN  3
+#define CRYPT_VERIFY_CERT_SIGN_ISSUER_NULL   4
+
 /* function declarations */
 /* advapi32.dll */
 BOOL WINAPI CryptAcquireContextA(HCRYPTPROV *phProv, LPCSTR pszContainer,
@@ -2427,6 +2438,28 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
 BOOL WINAPI CryptHashCertificate(HCRYPTPROV hCryptProv, ALG_ID Algid,
  DWORD dwFlags, const BYTE *pbEncoded, DWORD cbEncoded, BYTE *pbComputedHash,
  DWORD *pcbComputedHash);
+
+BOOL WINAPI CryptHashToBeSigned(HCRYPTPROV hCryptProv, DWORD dwCertEncodingType,
+ const BYTE *pbEncoded, DWORD cbEncoded, BYTE *pbComputedHash,
+ DWORD *pcbComputedHash);
+
+BOOL WINAPI CryptSignCertificate(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
+ DWORD dwCertEncodingType, const BYTE *pbEncodedToBeSigned,
+ DWORD cbEncodedToBeSigned, PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm,
+ const void *pvHashAuxInfo, BYTE *pbSignature, DWORD *pcbSignature);
+
+BOOL WINAPI CryptSignAndEncodeCertificate(HCRYPTPROV hCryptProv,
+ DWORD dwKeySpec, DWORD dwCertEncodingType, LPCSTR lpszStructType,
+ const void *pvStructInfo, PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm,
+ const void *pvHashAuxInfo, PBYTE pbEncoded, DWORD *pcbEncoded);
+
+BOOL WINAPI CryptVerifyCertificateSignature(HCRYPTPROV hCryptProv,
+ DWORD dwCertEncodingType, const BYTE *pbEncoded, DWORD cbEncoded,
+ PCERT_PUBLIC_KEY_INFO pPublicKey);
+
+BOOL WINAPI CryptVerifyCertificateSignatureEx(HCRYPTPROV hCryptProv,
+ DWORD dwCertEncodingType, DWORD dwSubjectType, void *pvSubject,
+ DWORD dwIssuerType, void *pvIssuer, DWORD dwFlags, void *pvReserved);
 
 PCRYPT_ATTRIBUTE WINAPI CertFindAttribute(LPCSTR pszObjId, DWORD cAttr,
  CRYPT_ATTRIBUTE rgAttr[]);
