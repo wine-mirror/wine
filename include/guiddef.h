@@ -35,12 +35,18 @@ typedef const GUID *LPCGUID;
 #undef DEFINE_GUID
 
 #ifdef INITGUID
+#ifdef __cplusplus
 #define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
-        const GUID name = \
+        EXTERN_C const GUID name = \
 	{ l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
 #else
 #define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
-    extern const GUID name
+        const GUID name = \
+	{ l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
+#endif
+#else
+#define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+    EXTERN_C const GUID name
 #endif
 
 #define DEFINE_OLEGUID(name, l, w1, w2) \
