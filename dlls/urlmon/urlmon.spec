@@ -24,7 +24,7 @@
 @ stub CopyStgMedium
 @ stdcall CreateAsyncBindCtx(long ptr ptr ptr)
 @ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long)
-@ stub CreateFormatEnumerator
+@ stdcall CreateFormatEnumerator(long ptr ptr)
 @ stdcall CreateURLMoniker(ptr wstr ptr)
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)

@@ -1,4 +1,5 @@
 Makefile
 generated.ok
+misc.ok
 testlist.c
 url.ok
