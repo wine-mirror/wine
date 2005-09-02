@@ -594,10 +594,9 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
     NSContainer *This = NSURICL_THIS(iface);
     BOOL do_load = TRUE;
     nsresult nsres;
+    nsACString *spec_str = nsACString_Create();
 
     TRACE("(%p)->(%p %p)\n", This, aURI, _retval);
-
-    nsACString *spec_str = nsACString_Create();
 
     nsres = nsIURI_GetSpec(aURI, spec_str);
     if(NS_SUCCEEDED(nsres)) {
