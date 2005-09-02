@@ -480,8 +480,8 @@ static void test_FPropCompareProp(void)
             case PT_BINARY:
                 pvLeft.Value.bin.cb = 1;
                 pvRight.Value.bin.cb = 1;
-                pvLeft.Value.bin.lpb = lbuffa;
-                pvRight.Value.bin.lpb = rbuffa;
+                pvLeft.Value.bin.lpb = (LPBYTE)lbuffa;
+                pvRight.Value.bin.lpb = (LPBYTE)rbuffa;
                 lbuffa[0] = lVal;
                 rbuffa[0] = rVal;
                 break;
@@ -603,8 +603,8 @@ static void test_LPropCompareProp(void)
             case PT_BINARY:
                 pvLeft.Value.bin.cb = 1;
                 pvRight.Value.bin.cb = 1;
-                pvLeft.Value.bin.lpb = lbuffa;
-                pvRight.Value.bin.lpb = rbuffa;
+                pvLeft.Value.bin.lpb = (LPBYTE)lbuffa;
+                pvRight.Value.bin.lpb = (LPBYTE)rbuffa;
                 lbuffa[0] = lVal;
                 rbuffa[0] = rVal;
                 break;

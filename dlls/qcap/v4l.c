@@ -549,7 +549,7 @@ static void V4l_GetFrame(Capture * capBox, unsigned char ** pInput)
             if (errno != EAGAIN) break;
         if (retval == -1)
             WARN("Error occurred while reading from device: %s\n", strerror(errno));
-        *pInput = capBox->grab_data;
+        *pInput = (unsigned char*) capBox->grab_data;
     }
 }
 

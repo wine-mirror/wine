@@ -403,7 +403,7 @@ static void msvcrt_alloc_buffer(MSVCRT_FILE* file)
 		file->_bufsiz = MSVCRT_BUFSIZ;
 		file->_flag |= MSVCRT__IOMYBUF;
 	} else {
-		file->_base = (unsigned char *)(&file->_charbuf);
+		file->_base = (char*)(&file->_charbuf);
 		/* put here 2 ??? */
 		file->_bufsiz = sizeof(file->_charbuf);
 	}
@@ -726,7 +726,8 @@ int _dup(int od)
  */
 int _eof(int fd)
 {
-  DWORD curpos,endpos,hcurpos,hendpos;
+  DWORD curpos,endpos;
+  LONG hcurpos,hendpos;
   HANDLE hand = msvcrt_fdtoh(fd);
 
   TRACE(":fd (%d) handle (%p)\n",fd,hand);
@@ -738,7 +739,7 @@ int _eof(int fd)
 
   /* Otherwise we do it the hard way */
   hcurpos = hendpos = 0;
-  curpos = SetFilePointer(hand, 0, &hcurpos, SEEK_CUR);
+  curpos = SetFilePointer(hand, 0, &hcurpos, FILE_CURRENT);
   endpos = SetFilePointer(hand, 0, &hendpos, FILE_END);
 
   if (curpos == endpos && hcurpos == hendpos)
@@ -788,8 +789,8 @@ void msvcrt_free_io(void)
  */
 __int64 _lseeki64(int fd, __int64 offset, int whence)
 {
-  DWORD ret, hoffset = (DWORD) (offset >> 32);
   HANDLE hand = msvcrt_fdtoh(fd);
+  LARGE_INTEGER ofs, ret;
 
   TRACE(":fd (%d) handle (%p)\n",fd,hand);
   if (hand == INVALID_HANDLE_VALUE)
@@ -801,19 +802,19 @@ __int64 _lseeki64(int fd, __int64 offset, int whence)
     return -1;
   }
 
-  TRACE(":fd (%d) to 0x%08lx%08lx pos %s\n",
-        fd,hoffset,(long)offset,
+  TRACE(":fd (%d) to %s pos %s\n",
+        fd,wine_dbgstr_longlong(ofs.QuadPart),
         (whence==SEEK_SET)?"SEEK_SET":
         (whence==SEEK_CUR)?"SEEK_CUR":
         (whence==SEEK_END)?"SEEK_END":"UNKNOWN");
 
-  ret = SetFilePointer(hand, (long)offset, &hoffset, whence);
-  if (ret != INVALID_SET_FILE_POINTER || !GetLastError())
+  ofs.QuadPart = offset;
+  if (SetFilePointerEx(hand, ofs, &ret, whence))
   {
     MSVCRT_fdesc[fd].wxflag &= ~WX_ATEOF;
     /* FIXME: What if we seek _to_ EOF - is EOF set? */
 
-    return ((__int64)hoffset << 32) | ret;
+    return ret.QuadPart;
   }
   TRACE(":error-last error (%ld)\n",GetLastError());
   msvcrt_set_errno(GetLastError());

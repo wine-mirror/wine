@@ -73,7 +73,7 @@ extern DWORD msvcrt_tls_index;
 struct __thread_data {
     int                             thread_errno;
     unsigned long                   thread_doserrno;
-    char                           *mbstok_next;        /* next ptr for mbstok() */
+    unsigned char                  *mbstok_next;        /* next ptr for mbstok() */
     char                           *efcvt_buffer;       /* buffer for ecvt/fcvt */
     int                             fpecode;
     MSVCRT_terminate_function       terminate_handler;

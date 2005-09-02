@@ -29,7 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-unsigned int MSVCRT___argc;
+int MSVCRT___argc;
 unsigned int MSVCRT_basemajor;/* FIXME: */
 unsigned int MSVCRT_baseminor;/* FIXME: */
 unsigned int MSVCRT_baseversion; /* FIXME: */
