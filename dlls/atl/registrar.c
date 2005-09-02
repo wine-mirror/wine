@@ -783,7 +783,7 @@ static HRESULT do_register_dll_server(LPCOLESTR wszDll, LPCOLESTR wszId, BOOL do
 static HRESULT do_register_server(BOOL do_register)
 {
     static const WCHAR wszDll[] = {'a','t','l','.','d','l','l',0};
-    UINT nID = 1;
+    UINT nID = 101;
     return do_register_dll_server(wszDll, (LPCOLESTR) nID, do_register);
 }
 
