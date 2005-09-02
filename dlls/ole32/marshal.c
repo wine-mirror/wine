@@ -84,7 +84,7 @@ inline static HRESULT get_facbuf_for_iid(REFIID riid, IPSFactoryBuffer **facbuf)
         &IID_IPSFactoryBuffer, (LPVOID*)facbuf);
 }
 
-/* creates a new stub manager */
+/* marshals an object into a STDOBJREF structure */
 HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *object, MSHLFLAGS mshlflags)
 {
     struct stub_manager *manager;
@@ -135,15 +135,13 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
     else
         stdobjref->flags = SORF_NULL;
 
-    /* FIXME: what happens if we register an interface twice with different
-     * marshaling flags? */
     if ((manager = get_stub_manager_from_object(apt, object)))
         TRACE("registering new ifstub on pre-existing manager\n");
     else
     {
         TRACE("constructing new stub manager\n");
 
-        manager = new_stub_manager(apt, object, mshlflags);
+        manager = new_stub_manager(apt, object);
         if (!manager)
         {
             if (stub) IRpcStubBuffer_Release(stub);
@@ -155,15 +153,20 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
 
     tablemarshal = ((mshlflags & MSHLFLAGS_TABLESTRONG) || (mshlflags & MSHLFLAGS_TABLEWEAK));
 
-    ifstub = stub_manager_new_ifstub(manager, stub, iobject, riid);
-    IUnknown_Release(iobject);
-    if (stub) IRpcStubBuffer_Release(stub);
+    /* make sure ifstub that we are creating is unique */
+    ifstub = stub_manager_find_ifstub(manager, riid, mshlflags);
     if (!ifstub)
     {
-        stub_manager_int_release(manager);
-        /* FIXME: should we do another release to completely destroy the
-         * stub manager? */
-        return E_OUTOFMEMORY;
+        ifstub = stub_manager_new_ifstub(manager, stub, iobject, riid, mshlflags);
+        IUnknown_Release(iobject);
+        if (stub) IRpcStubBuffer_Release(stub);
+        if (!ifstub)
+        {
+            stub_manager_int_release(manager);
+            /* FIXME: should we do another release to completely destroy the
+             * stub manager? */
+            return E_OUTOFMEMORY;
+        }
     }
 
     if (!tablemarshal)
@@ -1034,7 +1037,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
         hres = IUnknown_QueryInterface(stubmgr->object, riid, ppv);
       
         /* unref the ifstub. FIXME: only do this on success? */
-        if (!stub_manager_is_table_marshaled(stubmgr))
+        if (!stub_manager_is_table_marshaled(stubmgr, &stdobjref.ipid))
             stub_manager_ext_release(stubmgr, stdobjref.cPublicRefs);
 
         stub_manager_int_release(stubmgr);
@@ -1050,7 +1053,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
     {
         if ((stubmgr = get_stub_manager(stub_apt, stdobjref.oid)))
         {
-            if (!stub_manager_notify_unmarshal(stubmgr))
+            if (!stub_manager_notify_unmarshal(stubmgr, &stdobjref.ipid))
                 hres = CO_E_OBJNOTCONNECTED;
 
             stub_manager_int_release(stubmgr);
@@ -1111,7 +1114,7 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm)
         return RPC_E_INVALID_OBJREF;
     }
 
-    stub_manager_release_marshal_data(stubmgr, stdobjref.cPublicRefs);
+    stub_manager_release_marshal_data(stubmgr, stdobjref.cPublicRefs, &stdobjref.ipid);
 
     stub_manager_int_release(stubmgr);
     apartment_release(apt);
@@ -1343,6 +1346,18 @@ HRESULT WINAPI CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
 }
 
 
+static void dump_MSHLFLAGS(MSHLFLAGS flags)
+{
+    if (flags & MSHLFLAGS_TABLESTRONG)
+        TRACE(" MSHLFLAGS_TABLESTRONG");
+    if (flags & MSHLFLAGS_TABLEWEAK)
+        TRACE(" MSHLFLAGS_TABLEWEAK");
+    if (!(flags & (MSHLFLAGS_TABLESTRONG|MSHLFLAGS_TABLEWEAK)))
+        TRACE(" MSHLFLAGS_NORMAL");
+    if (flags & MSHLFLAGS_NOPING)
+        TRACE(" MSHLFLAGS_NOPING");
+}
+
 /***********************************************************************
  *		CoMarshalInterface	[OLE32.@]
  *
@@ -1384,8 +1399,10 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
     OBJREF objref;
     LPMARSHAL pMarshal;
 
-    TRACE("(%p, %s, %p, %lx, %p, %lx)\n", pStream, debugstr_guid(riid), pUnk,
-        dwDestContext, pvDestContext, mshlFlags);
+    TRACE("(%p, %s, %p, %lx, %p,", pStream, debugstr_guid(riid), pUnk,
+        dwDestContext, pvDestContext);
+    dump_MSHLFLAGS(mshlFlags);
+    TRACE(")\n");
 
     if (pUnk == NULL)
         return E_INVALIDARG;
