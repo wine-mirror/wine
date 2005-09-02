@@ -471,7 +471,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     }
     pidl->mkid.cb = 0; /* Terminate the ITEMIDLIST */
 
-    if ((int)pidl-(int)*ppidl+sizeof(USHORT) != cPidlLen) /* We've corrupted the heap :( */ 
+    if ((char *)pidl-(char *)*ppidl+sizeof(USHORT) != cPidlLen) /* We've corrupted the heap :( */ 
         ERR("Computed length of pidl incorrect. Please report.\n");
     
     return TRUE;
@@ -783,6 +783,22 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetUIObjectOf(IShellFolder2* ifac
     }
 }
 
+/******************************************************************************
+ * Translate file name from unix to ANSI encoding.
+ */
+static void strcpyn_U2A(char *win_fn, UINT win_fn_len, const char *unix_fn)
+{
+    UINT len;
+    WCHAR *unicode_fn;
+
+    len = MultiByteToWideChar(CP_UNIXCP, 0, unix_fn, -1, NULL, 0);
+    unicode_fn = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_UNIXCP, 0, unix_fn, -1, unicode_fn, len);
+
+    WideCharToMultiByte(CP_ACP, 0, unicode_fn, len, win_fn, win_fn_len, NULL, NULL);
+    HeapFree(GetProcessHeap(), 0, unicode_fn);
+}
+
 static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* iface, 
     LPCITEMIDLIST pidl, SHGDNF uFlags, STRRET* lpName)
 {
@@ -797,7 +813,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
         if (!pidl || !pidl->mkid.cb) {
             lpName->uType = STRRET_CSTR;
             if (This->m_dwPathMode == PATHMODE_UNIX) {
-                strcpy(lpName->u.cStr, This->m_pszPath);
+                strcpyn_U2A(lpName->u.cStr, MAX_PATH, This->m_pszPath);
             } else {
                 WCHAR *pwszDosPath = wine_get_dos_file_name(This->m_pszPath);
                 if (!pwszDosPath)
@@ -819,7 +835,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
     } else {
         char *pszFileName = _ILGetTextPointer(pidl);
         lpName->uType = STRRET_CSTR;
-        strcpy(lpName->u.cStr, pszFileName ? pszFileName : "");
+        strcpyn_U2A(lpName->u.cStr, MAX_PATH, pszFileName ? pszFileName : "");
     }
 
     /* If in dos mode, do some post-processing on the path.
