@@ -498,7 +498,11 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
             if (FILE_GetDeviceInfo( fd, &info ) == STATUS_SUCCESS)
                 removable = (info.Characteristics & FILE_REMOVABLE_MEDIA) != 0;
         }
-        else if (removable) break;  /* don't cache it */
+        else if (removable)  /* don't cache it */
+        {
+            *unix_fd = fd;
+            return STATUS_SUCCESS;
+        }
 
         /* and store it back into the cache */
         SERVER_START_REQ( set_handle_fd )
