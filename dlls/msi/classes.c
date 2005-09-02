@@ -240,6 +240,8 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
     if (!cls)
         return NULL;
 
+    list_add_tail( &package->classes, &cls->entry );
+
     sz = IDENTIFIER_SIZE;
     MSI_RecordGetStringW(row, 1, cls->CLSID, &sz);
     TRACE("loading class %s\n",debugstr_w(cls->CLSID));
@@ -435,6 +437,10 @@ static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
     /* fill in the data */
 
     ext = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSIEXTENSION) );
+    if (!ext)
+        return NULL;
+
+    list_add_tail( &package->extensions, &ext->entry );
 
     sz = 256;
     MSI_RecordGetStringW( row, 1, ext->Extension, &sz );
@@ -451,8 +457,6 @@ static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
 
     buffer = MSI_RecordGetString(row,5);
     ext->Feature = get_loaded_feature( package, buffer );
-
-    list_add_tail( &package->extensions, &ext->entry );
 
     return ext;
 }
