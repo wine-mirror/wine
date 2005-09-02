@@ -470,7 +470,7 @@ static int has_stubs( const DLLSPEC *spec )
 static const char *get_default_entry_point( const DLLSPEC *spec )
 {
     if (spec->characteristics & IMAGE_FILE_DLL) return "__wine_spec_dll_entry";
-    if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) return "DriverEntry";
+    if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) return "__wine_spec_drv_entry";
     return "__wine_spec_exe_entry";
 }
 

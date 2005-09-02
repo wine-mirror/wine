@@ -8,6 +8,7 @@ C_SRCS = \
 	delay_load.c \
 	dll_entry.c \
 	dll_main.c \
+	drv_entry.c \
 	exe_entry.c \
 	exe_main.c \
 	exe_wentry.c \
