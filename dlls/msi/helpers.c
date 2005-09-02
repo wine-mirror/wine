@@ -430,6 +430,25 @@ static void free_feature( MSIFEATURE *feature )
     HeapFree( GetProcessHeap(), 0, feature );
 }
 
+void free_extension( MSIEXTENSION *ext )
+{
+    struct list *item, *cursor;
+
+    LIST_FOR_EACH_SAFE( item, cursor, &ext->verbs )
+    {
+        MSIVERB *verb = LIST_ENTRY( item, MSIVERB, entry );
+
+        list_remove( &verb->entry );
+        HeapFree( GetProcessHeap(), 0, verb->Verb );
+        HeapFree( GetProcessHeap(), 0, verb->Command );
+        HeapFree( GetProcessHeap(), 0, verb->Argument );
+        HeapFree( GetProcessHeap(), 0, verb );
+    }
+
+    HeapFree( GetProcessHeap(), 0, ext->ProgIDText );
+    HeapFree( GetProcessHeap(), 0, ext );
+}
+
 
 /* Called when the package is being closed */
 void ACTION_free_package_structures( MSIPACKAGE* package)
@@ -506,8 +525,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSIEXTENSION *ext = LIST_ENTRY( item, MSIEXTENSION, entry );
 
         list_remove( &ext->entry );
-        HeapFree( GetProcessHeap(), 0, ext->ProgIDText );
-        HeapFree( GetProcessHeap(), 0, ext );
+        free_extension( ext );
     }
 
     for (i = 0; i < package->loaded_progids; i++)
@@ -519,16 +537,6 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
 
     if (package->progids && package->loaded_progids > 0)
         HeapFree(GetProcessHeap(),0,package->progids);
-
-    for (i = 0; i < package->loaded_verbs; i++)
-    {
-        HeapFree(GetProcessHeap(),0,package->verbs[i].Verb);
-        HeapFree(GetProcessHeap(),0,package->verbs[i].Command);
-        HeapFree(GetProcessHeap(),0,package->verbs[i].Argument);
-    }
-
-    if (package->verbs && package->loaded_verbs > 0)
-        HeapFree(GetProcessHeap(),0,package->verbs);
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->mimes )
     {

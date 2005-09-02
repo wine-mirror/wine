@@ -440,6 +440,8 @@ static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
     if (!ext)
         return NULL;
 
+    list_init( &ext->verbs );
+
     list_add_tail( &package->extensions, &ext->entry );
 
     sz = 256;
@@ -502,49 +504,36 @@ static MSIEXTENSION *load_given_extension( MSIPACKAGE *package, LPCWSTR name )
 static UINT iterate_load_verb(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE* package = (MSIPACKAGE*)param;
-    DWORD index = package->loaded_verbs;
+    MSIVERB *verb;
     LPCWSTR buffer;
+    MSIEXTENSION *extension;
+
+    buffer = MSI_RecordGetString(row,1);
+    extension = load_given_extension( package, buffer );
+    if (!extension)
+    {
+        ERR("Verb unable to find loaded extension %s\n", debugstr_w(buffer));
+        return ERROR_SUCCESS;
+    }
 
     /* fill in the data */
 
-    package->loaded_verbs++;
-    if (package->loaded_verbs == 1)
-        package->verbs = HeapAlloc(GetProcessHeap(),0,sizeof(MSIVERB));
-    else
-        package->verbs = HeapReAlloc(GetProcessHeap(),0,
-            package->verbs , package->loaded_verbs * sizeof(MSIVERB));
+    verb = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSIVERB) );
+    if (!verb)
+        return ERROR_OUTOFMEMORY;
 
-    memset(&package->verbs[index],0,sizeof(MSIVERB));
-
-    buffer = MSI_RecordGetString(row,1);
-    package->verbs[index].Extension = load_given_extension(package,buffer);
-    if (package->verbs[index].Extension == NULL && buffer)
-        ERR("Verb unable to find loaded extension %s\n", debugstr_w(buffer));
-
-    package->verbs[index].Verb = load_dynamic_stringW(row,2);
-    TRACE("loading verb %s\n",debugstr_w(package->verbs[index].Verb));
-    package->verbs[index].Sequence = MSI_RecordGetInteger(row,3);
+    verb->Verb = load_dynamic_stringW(row,2);
+    TRACE("loading verb %s\n",debugstr_w(verb->Verb));
+    verb->Sequence = MSI_RecordGetInteger(row,3);
 
     buffer = MSI_RecordGetString(row,4);
-    deformat_string(package,buffer,&package->verbs[index].Command);
+    deformat_string(package,buffer,&verb->Command);
 
     buffer = MSI_RecordGetString(row,5);
-    deformat_string(package,buffer,&package->verbs[index].Argument);
+    deformat_string(package,buffer,&verb->Argument);
 
     /* assosiate the verb with the correct extension */
-    if (package->verbs[index].Extension)
-    {
-        MSIEXTENSION* extension = package->verbs[index].Extension;
-        int count = extension->VerbCount;
-
-        if (count >= 99)
-            FIXME("Exceeding max verb count! Increase that limit!!!\n");
-        else
-        {
-            extension->VerbCount++;
-            extension->Verbs[count] = index;
-        }
-    }
+    list_add_tail( &extension->verbs, &verb->entry );
     
     return ERROR_SUCCESS;
 }
@@ -728,7 +717,7 @@ static void load_classes_and_such(MSIPACKAGE *package)
     if (!list_empty( &package->classes ) ||
         !list_empty( &package->mimes ) ||
         !list_empty( &package->extensions ) ||
-        package->progids || package->verbs )
+        package->progids )
         return;
 
     load_all_classes(package);
@@ -1136,7 +1125,7 @@ static UINT register_progid_base(MSIPACKAGE* package, MSIPROGID* progid,
     }
     else
     {
-        FIXME("UNHANDLED case, Parent progid but classid is NULL\n");
+        FIXME("progid (%s) with null classid\n", debugstr_w(progid->ProgID));
     }
 
     if (progid->IconPath)
@@ -1398,8 +1387,8 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
         /* this is only registered if the extension has at least 1 verb
          * according to MSDN
          */
-        if (ext->ProgIDIndex >= 0 && ext->VerbCount > 0)
-           mark_progid_for_install(package, ext->ProgIDIndex);
+        if (ext->ProgIDIndex >= 0 && !list_empty( &ext->verbs ) )
+            mark_progid_for_install(package, ext->ProgIDIndex);
 
         mark_mime_for_install(ext->Mime);
 
@@ -1423,7 +1412,7 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
             HKEY hkey2;
             LPWSTR newkey;
             LPCWSTR progid;
-            INT v;
+            MSIVERB *verb;
             INT Sequence = MSI_NULL_INTEGER;
             
             if (ext->ProgIDIndex >= 0)
@@ -1445,9 +1434,11 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
             HeapFree(GetProcessHeap(),0,newkey);
 
             /* do all the verbs */
-            for (v = 0; v < ext->VerbCount; v++)
+            LIST_FOR_EACH_ENTRY( verb, &ext->verbs, MSIVERB, entry )
+            {
                 register_verb( package, progid, ext->Component,
-                               ext, &package->verbs[ext->Verbs[v]], &Sequence);
+                               ext, verb, &Sequence);
+            }
         }
         
         RegCloseKey(hkey);

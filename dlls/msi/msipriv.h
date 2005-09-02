@@ -196,8 +196,6 @@ typedef struct tagMSIPACKAGE
     struct list extensions;
     struct tagMSIPROGID *progids;
     UINT loaded_progids;
-    struct tagMSIVERB *verbs;
-    UINT loaded_verbs;
     struct list mimes;
     struct list appids;
     

@@ -165,8 +165,7 @@ typedef struct tagMSIEXTENSION
     MSIFEATURE *Feature;
     /* not in the table, set during installation */
     BOOL Installed;
-    INT VerbCount;
-    INT Verbs[100]; /* yes hard coded limit, but realistically 100 verbs??? */
+    struct list verbs;
 } MSIEXTENSION;
 
 typedef struct tagMSIPROGID
@@ -184,7 +183,7 @@ typedef struct tagMSIPROGID
 
 typedef struct tagMSIVERB
 {
-    MSIEXTENSION *Extension;
+    struct list entry;
     LPWSTR Verb;
     INT Sequence;
     LPWSTR Command;
