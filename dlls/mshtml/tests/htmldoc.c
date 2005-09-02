@@ -210,8 +210,7 @@ static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
     static const WCHAR wszHTML_Document[] =
         {'H','T','M','L',' ','D','o','c','u','m','e','n','t',0};
 
-    ok(expect_SetActiveObject, "unexpected call\n");
-    called_SetActiveObject = TRUE;
+    CHECK_EXPECT2(SetActiveObject);
 
     if(expect_SetActiveObject_active) {
         ok(pActiveObject != NULL, "pActiveObject = NULL\n");
@@ -1077,6 +1076,7 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
 
     /* TODO:
      * IServiceProvider
+     * IOleInPlaceSiteEx
      * {D48A6EC6-6A4A-11CF-94A7-444553540000}
      * {7BB0B520-B1A7-11D2-BB23-00C04F79ABCD}
      * {000670BA-0000-0000-C000-000000000046}
@@ -1361,6 +1361,31 @@ static void test_OleCommandTarget_fail(IUnknown *unk)
             OLECMDEXECOPT_DODEFAULT, NULL, NULL);
     ok(hres == OLECMDERR_E_NOTSUPPORTED,
             "Exec failed: %08lx, expected OLECMDERR_E_NOTSUPPORTED\n", hres);
+
+    IOleCommandTarget_Release(cmdtrg);
+}
+
+static void test_exec_onunload(IUnknown *unk)
+{
+    IOleCommandTarget *cmdtrg;
+    VARIANT var;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    ok(hres == S_OK, "QueryInterface(IID_IOleCommandTarget) failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    memset(&var, 0x0a, sizeof(var));
+    hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_ONUNLOAD,
+            OLECMDEXECOPT_DODEFAULT, NULL, &var);
+    ok(hres == S_OK, "Exec(..., OLECMDID_ONUNLOAD, ...) failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_BOOL, "V_VT(var)=%d, expected VT_BOOL\n", V_VT(&var));
+    ok(V_BOOL(&var) == VARIANT_TRUE, "V_BOOL(var)=%x, expected VARIANT_TRUE\n", V_BOOL(&var));
+
+    hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_ONUNLOAD,
+            OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+    ok(hres == S_OK, "Exec(..., OLECMDID_ONUNLOAD, ...) failed: %08lx\n", hres);
 
     IOleCommandTarget_Release(cmdtrg);
 }
@@ -1825,6 +1850,7 @@ static void test_HTMLDocument_hlink(void)
     test_download();
 #endif
 
+    test_exec_onunload(unk);
     test_Window(unk, TRUE);
     test_InPlaceDeactivate(unk, TRUE);
     test_Close(unk, FALSE);
@@ -1835,7 +1861,6 @@ static void test_HTMLDocument_hlink(void)
 
     ref = IUnknown_Release(unk);
     ok(ref == 0, "ref=%ld, expected 0\n", ref);
-
 }
 
 START_TEST(htmldoc)

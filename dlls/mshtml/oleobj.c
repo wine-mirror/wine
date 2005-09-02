@@ -634,8 +634,16 @@ static HRESULT exec_enable_interaction(HTMLDocument *This, DWORD nCmdexecopt, VA
 
 static HRESULT exec_on_unload(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%ld %p %p)\n", This, nCmdexecopt, pvaIn, pvaOut);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%ld %p %p)\n", This, nCmdexecopt, pvaIn, pvaOut);
+
+    /* Tests show that we have nothing more to do here */
+
+    if(pvaOut) {
+        V_VT(pvaOut) = VT_BOOL;
+        V_BOOL(pvaOut) = VARIANT_TRUE;
+    }
+
+    return S_OK;
 }
 
 static HRESULT exec_show_page_setup(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
@@ -775,7 +783,7 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
             }
         }
 
-        if(pguidCmdGroup)
+        if(pCmdText)
             FIXME("Set pCmdText\n");
     }else {
         FIXME("Unsupported pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
@@ -797,9 +805,13 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         }
 
         return exec_table[nCmdID].func(This, nCmdexecopt, pvaIn, pvaOut);
+    }else if(IsEqualGUID(&CGID_Explorer, pguidCmdGroup)) {
+        FIXME("unsupported nCmdID %ld of CGID_Explorer group\n", nCmdID);
+        TRACE("%p %p\n", pvaIn, pvaOut);
+        return OLECMDERR_E_NOTSUPPORTED;
     }else if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
         FIXME("unsupported nCmdID %ld of CGID_ShellDocView group\n", nCmdID);
-        return OLECMDERR_E_UNKNOWNGROUP;
+        return OLECMDERR_E_NOTSUPPORTED;
     }
 
     FIXME("Unsupported pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
