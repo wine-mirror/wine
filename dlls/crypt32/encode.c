@@ -190,7 +190,7 @@ static char *CRYPT_GetKeyName(DWORD dwEncodingType, LPCSTR pszFuncName,
      */
     if (!HIWORD(pszOID))
     {
-        snprintf(numericOID, sizeof(numericOID), "#%d", (int)pszOID);
+        snprintf(numericOID, sizeof(numericOID), "#%d", LOWORD(pszOID));
         oid = numericOID;
     }
     else

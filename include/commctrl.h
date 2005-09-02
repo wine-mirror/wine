@@ -2658,7 +2658,7 @@ typedef struct tagTVKEYDOWN
 
 #define TreeView_SetImageList(hwnd, himl, iImage) \
     (HIMAGELIST)SNDMSGA((hwnd), TVM_SETIMAGELIST, iImage, \
- (LPARAM)(UINT)(HIMAGELIST)(himl))
+ (LPARAM)(HIMAGELIST)(himl))
 
 #define TreeView_GetNextItem(hwnd, hitem, code) \
     (HTREEITEM)SNDMSGA((hwnd), TVM_GETNEXTITEM, (WPARAM)code,\
@@ -2691,8 +2691,8 @@ typedef struct tagTVKEYDOWN
 
 
 #define TreeView_Select(hwnd, hitem, code) \
- (UINT)SNDMSGA((hwnd), TVM_SELECTITEM, (WPARAM)code, \
-(LPARAM)(UINT)(hitem))
+ (BOOL)SNDMSGA((hwnd), TVM_SELECTITEM, (WPARAM)(code), \
+(LPARAM)(HTREEITEM)(hitem))
 
 
 #define TreeView_SelectItem(hwnd, hitem) \
@@ -3663,7 +3663,7 @@ typedef struct NMLVSCROLL
 #define ListView_SetBkColor(hwnd,clrBk) \
     (BOOL)SNDMSGA((hwnd),LVM_SETBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
 #define ListView_SetImageList(hwnd,himl,iImageList) \
-    (HIMAGELIST)(UINT)SNDMSGA((hwnd),LVM_SETIMAGELIST,(WPARAM)(iImageList),(LPARAM)(UINT)(HIMAGELIST)(himl))
+    (HIMAGELIST)SNDMSGA((hwnd),LVM_SETIMAGELIST,(WPARAM)(iImageList),(LPARAM)(HIMAGELIST)(himl))
 #define ListView_GetItemCount(hwnd) \
     (INT)SNDMSGA((hwnd),LVM_GETITEMCOUNT,0,0L)
 #define ListView_RedrawItems(hwnd,first,last) \

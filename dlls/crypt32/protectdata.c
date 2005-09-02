@@ -132,7 +132,7 @@ hex_str(unsigned char *p, int n)
 
 #define TRACE_DATA_BLOB(blob) do { \
     TRACE("%s cbData: %u\n", #blob ,(unsigned int)((blob)->cbData)); \
-    TRACE("%s pbData @ 0x%x:%s\n", #blob ,(unsigned int)((blob)->pbData), \
+    TRACE("%s pbData @ %p:%s\n", #blob ,(blob)->pbData, \
           hex_str((blob)->pbData, (blob)->cbData)); \
 } while (0)
 
@@ -778,14 +778,14 @@ static void
 report(DATA_BLOB* pDataIn, DATA_BLOB* pOptionalEntropy,
        CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags)
 {
-    TRACE("pPromptStruct: 0x%x\n",(unsigned int)pPromptStruct);
+    TRACE("pPromptStruct: %p\n", pPromptStruct);
     if (pPromptStruct)
     {
         TRACE("  cbSize: 0x%x\n",(unsigned int)pPromptStruct->cbSize);
         TRACE("  dwPromptFlags: 0x%x\n",(unsigned int)pPromptStruct->dwPromptFlags);
-        TRACE("  hwndApp: 0x%x\n",(unsigned int)pPromptStruct->hwndApp);
-        TRACE("  szPrompt: 0x%x %s\n",
-              (unsigned int)pPromptStruct->szPrompt,
+        TRACE("  hwndApp: %p\n", pPromptStruct->hwndApp);
+        TRACE("  szPrompt: %p %s\n",
+              pPromptStruct->szPrompt,
               pPromptStruct->szPrompt ? debugstr_w(pPromptStruct->szPrompt)
               : "");
     }
@@ -855,7 +855,7 @@ BOOL WINAPI CryptProtectData(DATA_BLOB* pDataIn,
 
     /* debug: show our arguments */
     report(pDataIn,pOptionalEntropy,pPromptStruct,dwFlags);
-    TRACE("\tszDataDescr: 0x%x %s\n",(unsigned int)szDataDescr,
+    TRACE("\tszDataDescr: %p %s\n", szDataDescr,
           szDataDescr ? debugstr_w(szDataDescr) : "");
 
     /* Windows appears to create an empty szDataDescr instead of maintaining
@@ -1026,7 +1026,7 @@ BOOL WINAPI CryptUnprotectData(DATA_BLOB* pDataIn,
 
     /* debug: show our arguments */
     report(pDataIn,pOptionalEntropy,pPromptStruct,dwFlags);
-    TRACE("\tppszDataDescr: 0x%x\n",(unsigned int)ppszDataDescr);
+    TRACE("\tppszDataDescr: %p\n", ppszDataDescr);
 
     /* take apart the opaque blob */
     if (!unserialize(pDataIn, &protect_data))

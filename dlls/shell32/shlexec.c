@@ -334,12 +334,12 @@ static HRESULT SHELL_ResolveShortCutW(LPWSTR wcmd, LPWSTR wargs, LPWSTR wdir, HW
  *	SHELL_ExecuteW [Internal]
  *
  */
-static UINT SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
+static UINT_PTR SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
 			    LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
     STARTUPINFOW  startup;
     PROCESS_INFORMATION info;
-    UINT retval = 31;
+    UINT_PTR retval = 31;
     UINT gcdret = 0;
     WCHAR curdir[MAX_PATH];
 
@@ -864,13 +864,13 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
 /*************************************************************************
  *	execute_from_key [Internal]
  */
-static UINT execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR szCommandline,
+static UINT_PTR execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR szCommandline,
 			     SHELL_ExecuteW32 execfunc,
 			     LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
     WCHAR cmd[1024];
     LONG cmdlen = sizeof(cmd);
-    UINT retval = 31;
+    UINT_PTR retval = 31;
 
     cmd[0] = '\0';
 
@@ -928,7 +928,7 @@ HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResu
     if (wDirectory) SHFree( wDirectory );
 
     TRACE("returning %s\n", lpResult);
-    return (HINSTANCE)retval;
+    return retval;
 }
 
 /*************************************************************************
@@ -936,7 +936,7 @@ HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResu
  */
 HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpResult)
 {
-    UINT retval = 31;    /* default - 'No association was found' */
+    UINT_PTR retval = 31;    /* default - 'No association was found' */
     WCHAR old_dir[1024];
 
     TRACE("File %s, Dir %s\n",
@@ -989,7 +989,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
     WCHAR *env;
     WCHAR lpstrProtocol[256];
     LPCWSTR lpFile;
-    UINT retval = 31;
+    UINT_PTR retval = 31;
     WCHAR wcmd[1024];
     WCHAR buffer[MAX_PATH];
     const WCHAR* ext;
@@ -1337,7 +1337,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
         WCHAR lpstrTmpFile[256];
         strcpyW(lpstrTmpFile, wHttp);
         strcatW(lpstrTmpFile, lpFile);
-        retval = (UINT)ShellExecuteW(sei_tmp.hwnd, sei_tmp.lpVerb, lpstrTmpFile, NULL, NULL, 0);
+        retval = (UINT_PTR)ShellExecuteW(sei_tmp.hwnd, sei_tmp.lpVerb, lpstrTmpFile, NULL, NULL, 0);
     }
 
     TRACE("retval %u\n", retval);

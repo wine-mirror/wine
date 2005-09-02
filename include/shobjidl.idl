@@ -1033,7 +1033,7 @@ cpp_quote("#define CMIC_MASK_NOZONECHECKS   SEE_MASK_NOZONECHECKS")
     HRESULT InvokeCommand( [in] LPCMINVOKECOMMANDINFO lpici );
 
     HRESULT GetCommandString(
-        [in] UINT idCmd,
+        [in] UINT_PTR idCmd,
         [in] UINT uType,
         [out] UINT *pwReserved,
         [out, size_is(cchMax)] LPSTR pszName,

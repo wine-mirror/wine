@@ -3157,7 +3157,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 pda->curdlg.ptPaperSize.x = tmp;
             }
 	} else 
-	    WARN("GlobalLock(pda->pdlg.hDevMode) fail? hDevMode=%ld", (DWORD)pda->pdlg.hDevMode);
+	    WARN("GlobalLock(pda->pdlg.hDevMode) fail? hDevMode=%p", pda->pdlg.hDevMode);
 	/* Drawing paper prev */
 	PRINTDLG_PS_ChangePaperPrev(pda);
 	return TRUE;
