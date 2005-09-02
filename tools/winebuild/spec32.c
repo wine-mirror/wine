@@ -440,13 +440,12 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
  */
 void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 {
-    int exports_size = 0;
-    int nr_exports, nr_imports, nr_delayed;
+    int exports_size, imports_size;
     unsigned int page_size = get_page_size();
 
-    nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
     resolve_imports( spec );
     exports_size = get_exports_size( spec );
+    imports_size = get_imports_size();
     output_standard_file_header( outfile );
 
     /* Reserve some space for the PE header */
@@ -475,13 +474,13 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
         fprintf( outfile, "extern char _end[];\n" );
 
     fprintf( outfile, "const char __wine_spec_file_name[] = \"%s\";\n", spec->file_name );
-    fprintf( outfile, "extern int __wine_spec_data_start[], __wine_spec_exports[];\n\n" );
+    fprintf( outfile, "extern int __wine_spec_data_start[], __wine_spec_exports[], __wine_spec_imports[];\n\n" );
 
     output_stub_funcs( outfile, spec );
 
     /* Output the DLL imports */
 
-    nr_imports = output_imports( outfile, spec, &nr_delayed );
+    output_imports( outfile, spec );
 
     /* Output the resources */
 
@@ -584,10 +583,10 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    0,\n" );                      /* LoaderFlags */
     fprintf( outfile, "    %d,\n", IMAGE_NUMBEROF_DIRECTORY_ENTRIES );  /* NumberOfRvaAndSizes */
     fprintf( outfile, "    {\n" );
-    fprintf( outfile, "      { %s, %d },\n",  /* IMAGE_DIRECTORY_ENTRY_EXPORT */
+    fprintf( outfile, "      { %s, %u },\n",  /* IMAGE_DIRECTORY_ENTRY_EXPORT */
              exports_size ? "__wine_spec_exports" : "0", exports_size );
-    fprintf( outfile, "      { %s, %s },\n",  /* IMAGE_DIRECTORY_ENTRY_IMPORT */
-             nr_imports ? "&imports" : "0", nr_imports ? "sizeof(imports)" : "0" );
+    fprintf( outfile, "      { %s, %u },\n",  /* IMAGE_DIRECTORY_ENTRY_IMPORT */
+             imports_size ? "__wine_spec_imports" : "0", imports_size );
     fprintf( outfile, "      { %s, %s },\n",   /* IMAGE_DIRECTORY_ENTRY_RESOURCE */
              spec->nb_resources ? "&__wine_spec_resources" : "0",
              spec->nb_resources ? "sizeof(__wine_spec_resources)" : "0" );

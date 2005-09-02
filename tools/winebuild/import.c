@@ -742,63 +742,102 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
     output_function_size( outfile, name );
 }
 
-/* output the import table of a Win32 module */
-static int output_immediate_imports( FILE *outfile )
+/* compute the size of the import table */
+int get_imports_size(void)
 {
-    int i, j, nb_imm = nb_imports - nb_delayed;
+    int i, total_size, nb_imm = nb_imports - nb_delayed;
 
     if (!nb_imm) return 0;
 
+    /* list of dlls */
+    total_size = 5 * 4 * (nb_imm + 1);
+
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (dll_imports[i]->delay) continue;
+        total_size += (dll_imports[i]->nb_imports + 1) * 4;
+    }
+    /* Note: the strings are not counted as being part of the import directory */
+    return total_size;
+}
+
+/* output the import table of a Win32 module */
+static void output_immediate_imports( FILE *outfile )
+{
+    int i, j;
+    const char *dll_name;
+
+    if (nb_imports == nb_delayed) return;  /* no immediate imports */
+
     /* main import header */
 
-    fprintf( outfile, "\nstatic struct {\n" );
-    fprintf( outfile, "  struct {\n" );
-    fprintf( outfile, "    void        *OriginalFirstThunk;\n" );
-    fprintf( outfile, "    unsigned int TimeDateStamp;\n" );
-    fprintf( outfile, "    unsigned int ForwarderChain;\n" );
-    fprintf( outfile, "    const char  *Name;\n" );
-    fprintf( outfile, "    void        *FirstThunk;\n" );
-    fprintf( outfile, "  } imp[%d];\n", nb_imm+1 );
-    fprintf( outfile, "  const char *data[%d];\n",
-             total_imports - total_delayed + nb_imm );
-    fprintf( outfile, "} imports = {\n  {\n" );
+    fprintf( outfile, "/* import table */\n" );
+    fprintf( outfile, "asm(\".data\\n\\t.align %d\\n\"\n", get_alignment(4) );
+    fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_spec_imports"));
 
     /* list of dlls */
 
     for (i = j = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        fprintf( outfile, "    { 0, 0, 0, \"%s\", &imports.data[%d] },\n",
-                 dll_imports[i]->spec->file_name, j );
+        dll_name = make_c_identifier( dll_imports[i]->spec->file_name );
+        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* OriginalFirstThunk */
+        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* TimeDateStamp */
+        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* ForwarderChain */
+        fprintf( outfile, "    \"\\t.long __wine_spec_import_name_%s\\n\"\n", dll_name ); /* Name */
+        fprintf( outfile, "    \"\\t.long %s+%d\\n\"\n",     /* FirstThunk */
+                 asm_name("__wine_spec_import_data_ptrs"), j * 4 );
         j += dll_imports[i]->nb_imports + 1;
     }
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* OriginalFirstThunk */
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* TimeDateStamp */
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* ForwarderChain */
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* Name */
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* FirstThunk */
 
-    fprintf( outfile, "    { 0, 0, 0, 0, 0 },\n" );
-    fprintf( outfile, "  },\n  {\n" );
-
-    /* list of imported functions */
+    fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_spec_import_data_ptrs") );
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (dll_imports[i]->delay) continue;
+        dll_name = make_c_identifier( dll_imports[i]->spec->file_name );
+        for (j = 0; j < dll_imports[i]->nb_imports; j++)
+        {
+            ORDDEF *odp = dll_imports[i]->imports[j];
+            if (!(odp->flags & FLAG_NONAME))
+                fprintf( outfile, "    \"\\t.long __wine_spec_import_data_%s_%s\\n\"\n",
+                         dll_name, odp->name );
+            else
+                fprintf( outfile, "    \"\\t.long %d\\n\"\n", odp->ordinal );
+        }
+        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );
+    }
 
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        fprintf( outfile, "    /* %s */\n", dll_imports[i]->spec->file_name );
+        dll_name = make_c_identifier( dll_imports[i]->spec->file_name );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             if (!(odp->flags & FLAG_NONAME))
             {
-                unsigned short ord = odp->ordinal;
-                fprintf( outfile, "    \"\\%03o\\%03o%s\",\n",
-                         *(unsigned char *)&ord, *((unsigned char *)&ord + 1), odp->name );
+                fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(2) );
+                fprintf( outfile, "    \"__wine_spec_import_data_%s_%s:\\n\"\n", dll_name, odp->name );
+                fprintf( outfile, "    \"\\t%s %d\\n\"\n", get_asm_short_keyword(), odp->ordinal );
+                fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), odp->name );
             }
-            else
-                fprintf( outfile, "    (char *)%d,\n", odp->ordinal );
         }
-        fprintf( outfile, "    0,\n" );
     }
-    fprintf( outfile, "  }\n};\n\n" );
 
-    return nb_imm;
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (dll_imports[i]->delay) continue;
+        dll_name = make_c_identifier( dll_imports[i]->spec->file_name );
+        fprintf( outfile, "    \"__wine_spec_import_name_%s:\\t%s \\\"%s\\\"\\n\"\n",
+                 dll_name, get_asm_string_keyword(), dll_imports[i]->spec->file_name );
+    }
+
+    fprintf( outfile, ");\n" );
 }
 
 /* output the import thunks of a Win32 module */
@@ -810,20 +849,18 @@ static void output_immediate_import_thunks( FILE *outfile )
 
     if (!nb_imm) return;
 
-    pos = (sizeof(void *) + 2*sizeof(unsigned int) + sizeof(const char *) + sizeof(void *)) *
-            (nb_imm + 1);  /* offset of imports.data from start of imports */
     fprintf( outfile, "/* immediate import thunks */\n" );
     fprintf( outfile, "asm(\".text\\n\\t.align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"%s:\\n\"\n", asm_name(import_thunks));
 
-    for (i = 0; i < nb_imports; i++)
+    for (i = pos = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += sizeof(const char *))
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             output_import_thunk( outfile, odp->name ? odp->name : odp->export_name,
-                                 "imports", pos );
+                                 "__wine_spec_import_data_ptrs", pos );
         }
         pos += 4;
     }
@@ -832,11 +869,11 @@ static void output_immediate_import_thunks( FILE *outfile )
 }
 
 /* output the delayed import table of a Win32 module */
-static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
+static void output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 {
     int i, j;
 
-    if (!nb_delayed) return 0;
+    if (!nb_delayed) return;
 
     fprintf( outfile, "static void *__wine_delay_imp_hmod[%d];\n", nb_delayed );
     for (i = 0; i < nb_imports; i++)
@@ -899,8 +936,6 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
         }
     }
     fprintf( outfile, "  }\n};\n\n" );
-
-    return nb_delayed;
 }
 
 /* output the delayed import thunks of a Win32 module */
@@ -1042,7 +1077,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
                 }
                 break;
             }
-            output_function_size( outfile, name );
+            output_function_size( outfile, buffer );
         }
         idx++;
     }
@@ -1065,18 +1100,16 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, ");\n" );
 }
 
-/* output the import and delayed import tables of a Win32 module
- * returns number of DLLs exported in 'immediate' mode
- */
-int output_imports( FILE *outfile, DLLSPEC *spec, int *nb_delayed )
+/* output the import and delayed import tables of a Win32 module */
+void output_imports( FILE *outfile, DLLSPEC *spec )
 {
-    *nb_delayed = output_delayed_imports( outfile, spec );
-    return output_immediate_imports( outfile );
+    output_delayed_imports( outfile, spec );
 }
 
 /* output the import and delayed import thunks of a Win32 module */
 void output_import_thunks( FILE *outfile, DLLSPEC *spec )
 {
-    output_delayed_import_thunks( outfile, spec );
+    output_immediate_imports( outfile );
     output_immediate_import_thunks( outfile );
+    output_delayed_import_thunks( outfile, spec );
 }
