@@ -79,6 +79,7 @@ typedef struct {
 struct NSContainer {
     const nsIWebBrowserChromeVtbl     *lpWebBrowserChromeVtbl;
     const nsIContextMenuListenerVtbl  *lpContextMenuListenerVtbl;
+    const nsIURIContentListenerVtbl   *lpURIContentListenerVtbl;
 
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
@@ -89,6 +90,8 @@ struct NSContainer {
     HTMLDocument *doc;
 
     HWND hwnd;
+
+    LPOLESTR url; /* hack */
 };
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
@@ -113,6 +116,7 @@ struct NSContainer {
 
 #define NSWBCHROME(x)    ((nsIWebBrowserChrome*)          &(x)->lpWebBrowserChromeVtbl)
 #define NSCML(x)         ((nsIContextMenuListener*)       &(x)->lpContextMenuListenerVtbl)
+#define NSURICL(x)       ((nsIURIContentListener*)        &(x)->lpURIContentListenerVtbl)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
@@ -130,6 +134,7 @@ void HTMLDocument_NSContainer_Destroy(HTMLDocument*);
 
 void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
 void HTMLDocument_ShowContextMenu(HTMLDocument*,DWORD,POINT*);
+BOOL HTMLDocument_OnLoad(HTMLDocument*,LPCWSTR);
 
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 

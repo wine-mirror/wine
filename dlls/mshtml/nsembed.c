@@ -35,9 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-DEFINE_GUID(CLSID_StartupNotifier, 0x1f59b001,0x02c9,0x11d5,0xae,0x76,0xcc,0x92,0xf7,0xdb,0x9e,0x03);
-DEFINE_GUID(CLSID_nsWebBrowser, 0xf1eac761,0x87e9,0x11d3,0xaf,0x80,0x00,0xa0,0x24,0xff,0xc0,0x8c);
-
 #define NS_APPSTARTUPNOTIFIER_CONTRACTID "@mozilla.org/embedcomp/appstartup-notifier;1"
 #define NS_WEBBROWSER_CONTRACTID "@mozilla.org/embedding/browser/nsWebBrowser;1"
 #define NS_IOSERVICE_CONTRACTID "@mozilla.org/network/io-service;1"
@@ -59,8 +56,9 @@ static nsresult (*NS_CStringContainerInit)(nsACString*);
 static nsresult (*NS_StringContainerFinish)(nsString*);
 static nsresult (*NS_CStringContainerFinish)(nsACString*);
 static nsresult (*NS_StringSetData)(nsString*,const PRUnichar*,PRUint32);
-static nsresult (*NS_CStringSetData)(nsString*,const char*,PRUint32);
+static nsresult (*NS_CStringSetData)(nsACString*,const char*,PRUint32);
 static nsresult (*NS_NewLocalFile)(const nsString*,PRBool,nsIFile**);
+static PRUint32 (*NS_CStringGetData)(nsACString*,const char**,PRBool*);
 
 static HINSTANCE hXPCOM = NULL;
 
@@ -225,6 +223,7 @@ static BOOL load_gecko()
     NS_DLSYM(NS_StringSetData);
     NS_DLSYM(NS_CStringSetData);
     NS_DLSYM(NS_NewLocalFile);
+    NS_DLSYM(NS_CStringGetData);
 
 #undef NS_DLSYM
 
@@ -275,6 +274,11 @@ nsACString *nsACString_Create(void)
 void nsACString_SetData(nsACString *str, const char *data)
 {
     NS_CStringSetData(str, data, PR_UINT32_MAX);
+}
+
+static PRUint32 nsACString_GetData(nsACString *str, const char **data, PRBool *termited)
+{
+    return NS_CStringGetData(str, data, termited);
 }
 
 void nsACString_Destroy(nsACString *str)
@@ -328,6 +332,10 @@ nsIURI *get_nsIURI(LPCWSTR url)
 
     return ret;
 }
+
+/**********************************************************
+ *      nsIWebBrowserChrome interface
+ */
 
 #define NSWBCHROME_THIS(iface) DEFINE_THIS(NSContainer, WebBrowserChrome, iface)
 
@@ -475,6 +483,10 @@ static const nsIWebBrowserChromeVtbl nsWebBrowserChromeVtbl = {
     nsWebBrowserChrome_ExitModalEventLoop
 };
 
+/**********************************************************
+ *      nsIContextMenuListener interface
+ */
+
 #define NSCML_THIS(iface) DEFINE_THIS(NSContainer, ContextMenuListener, iface)
 
 static nsresult NSAPI nsContextMenuListener_QueryInterface(nsIContextMenuListener *iface,
@@ -487,7 +499,7 @@ static nsresult NSAPI nsContextMenuListener_QueryInterface(nsIContextMenuListene
 static nsrefcnt NSAPI nsContextMenuListener_AddRef(nsIContextMenuListener *iface)
 {
     NSContainer *This = NSCML_THIS(iface);
-    return nsIContextMenuListener_AddRef(NSWBCHROME(This));
+    return nsIWebBrowserChrome_AddRef(NSWBCHROME(This));
 }
 
 static nsrefcnt NSAPI nsContextMenuListener_Release(nsIContextMenuListener *iface)
@@ -551,6 +563,152 @@ static const nsIContextMenuListenerVtbl nsContextMenuListenerVtbl = {
     nsContextMenuListener_OnShowContextMenu
 };
 
+/**********************************************************
+ *      nsIURIContentListener interface
+ */
+
+#define NSURICL_THIS(iface) DEFINE_THIS(NSContainer, URIContentListener, iface)
+
+static nsresult NSAPI nsURIContentListener_QueryInterface(nsIURIContentListener *iface,
+        nsIIDRef riid, nsQIResult result)
+{
+    NSContainer *This = NSURICL_THIS(iface);
+    return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
+}
+
+static nsrefcnt NSAPI nsURIContentListener_AddRef(nsIURIContentListener *iface)
+{
+    NSContainer *This = NSURICL_THIS(iface);
+    return nsIWebBrowserChrome_AddRef(NSWBCHROME(This));
+}
+
+static nsrefcnt NSAPI nsURIContentListener_Release(nsIURIContentListener *iface)
+{
+    NSContainer *This = NSURICL_THIS(iface);
+    return nsIWebBrowserChrome_Release(NSWBCHROME(This));
+}
+
+static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener *iface, nsIURI *aURI,
+        PRBool *_retval)
+{
+    NSContainer *This = NSURICL_THIS(iface);
+    BOOL do_load = TRUE;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p %p)\n", This, aURI, _retval);
+
+    nsACString *spec_str = nsACString_Create();
+
+    nsres = nsIURI_GetSpec(aURI, spec_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const char *spec = NULL;
+        LPWSTR specw;
+        int len;
+
+        nsACString_GetData(spec_str, &spec, NULL);
+
+        len = MultiByteToWideChar(CP_ACP, 0, spec, -1, NULL, 0);
+        specw = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, spec, -1, specw, -1);
+
+        if(strcmpW(This->url, specw)) /* hack */
+            do_load = HTMLDocument_OnLoad(This->doc, specw);
+
+        HeapFree(GetProcessHeap(), 0, specw);
+    }else {
+        ERR("GetSpec failed: %08lx\n", nsres);
+    }
+
+    nsACString_Destroy(spec_str);
+
+    if(!do_load) {
+        *_retval = TRUE;
+        return NS_OK;
+    }
+
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsURIContentListener_DoContent(nsIURIContentListener *iface,
+        const char *aContentType, PRBool aIsContentPreferred, nsIRequest *aRequest,
+        nsIStreamListener **aContentHandler, PRBool *_retval)
+{
+    NSContainer *This = NSURICL_THIS(iface);
+    TRACE("(%p)->(%s %x %p %p %p)\n", This, debugstr_a(aContentType), aIsContentPreferred,
+            aRequest, aContentHandler, _retval);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsURIContentListener_IsPreferred(nsIURIContentListener *iface,
+        const char *aContentType, char **aDesiredContentType, PRBool *_retval)
+{
+    NSContainer *This = NSURICL_THIS(iface);
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_a(aContentType), aDesiredContentType, _retval);
+
+    /* FIXME: Should we do something here? */
+    *_retval = TRUE; 
+    return NS_OK;
+}
+
+static nsresult NSAPI nsURIContentListener_CanHandleContent(nsIURIContentListener *iface,
+        const char *aContentType, PRBool aIsContentPreferred, char **aDesiredContentType,
+        PRBool *_retval)
+{
+    NSContainer *This = NSURICL_THIS(iface);
+    TRACE("(%p)->(%s %x %p %p)\n", This, debugstr_a(aContentType), aIsContentPreferred,
+            aDesiredContentType, _retval);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsURIContentListener_GetLoadCookie(nsIURIContentListener *iface,
+        nsISupports **aLoadCookie)
+{
+    NSContainer *This = NSURICL_THIS(iface);
+    WARN("(%p)->(%p)\n", This, aLoadCookie);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsURIContentListener_SetLoadCookie(nsIURIContentListener *iface,
+        nsISupports *aLoadCookie)
+{
+    NSContainer *This = NSURICL_THIS(iface);
+    WARN("(%p)->(%p)\n", This, aLoadCookie);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsURIContentListener_GetParentContentListener(nsIURIContentListener *iface,
+        nsIURIContentListener **aParentContentListener)
+{
+    NSContainer *This = NSURICL_THIS(iface);
+    WARN("(%p)->(%p)\n", This, aParentContentListener);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsURIContentListener_SetParentContentListener(nsIURIContentListener *iface,
+        nsIURIContentListener *aParentContentListener)
+{
+    NSContainer *This = NSURICL_THIS(iface);
+    WARN("(%p)->(%p)\n", This, aParentContentListener);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+#undef NSURICL_THIS
+
+static const nsIURIContentListenerVtbl nsURIContentListenerVtbl = {
+    nsURIContentListener_QueryInterface,
+    nsURIContentListener_AddRef,
+    nsURIContentListener_Release,
+    nsURIContentListener_OnStartURIOpen,
+    nsURIContentListener_DoContent,
+    nsURIContentListener_IsPreferred,
+    nsURIContentListener_CanHandleContent,
+    nsURIContentListener_GetLoadCookie,
+    nsURIContentListener_SetLoadCookie,
+    nsURIContentListener_GetParentContentListener,
+    nsURIContentListener_SetParentContentListener
+};
+
 void HTMLDocument_NSContainer_Init(HTMLDocument *This)
 {
     nsIWebBrowserSetup *wbsetup;
@@ -565,6 +723,7 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
 
     This->nscontainer->lpWebBrowserChromeVtbl    = &nsWebBrowserChromeVtbl;
     This->nscontainer->lpContextMenuListenerVtbl = &nsContextMenuListenerVtbl;
+    This->nscontainer->lpURIContentListenerVtbl  = &nsURIContentListenerVtbl;
 
     This->nscontainer->doc = This;
 
@@ -632,6 +791,13 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
     }else {
         ERR("InitWindow failed: %08lx\n", nsres);
     }
+
+    nsres = nsIWebBrowser_SetParentURIContentListener(This->nscontainer->webbrowser,
+            NSURICL(This->nscontainer));
+    if(NS_FAILED(nsres))
+        ERR("SetParentURIContentListener failed: %08lx\n", nsres);
+
+    This->nscontainer->url = NULL;
 }
 
 void HTMLDocument_NSContainer_Destroy(HTMLDocument *This)
@@ -646,4 +812,7 @@ void HTMLDocument_NSContainer_Destroy(HTMLDocument *This)
         nsIWebBrowserStream_Release(This->nscontainer->stream);
 
     HeapFree(GetProcessHeap(), 0, This->nscontainer);
+
+    if(This->nscontainer->url)
+        CoTaskMemFree(This->nscontainer->url);
 }
