@@ -240,7 +240,7 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_GetDropTarget(IOleInPlaceObject
     return E_NOTIMPL;
 }
 
-static IOleInPlaceObjectWindowlessVtbl OleInPlaceObjectWindowlessVtbl = {
+static const IOleInPlaceObjectWindowlessVtbl OleInPlaceObjectWindowlessVtbl = {
     OleInPlaceObjectWindowless_QueryInterface,
     OleInPlaceObjectWindowless_AddRef,
     OleInPlaceObjectWindowless_Release,
