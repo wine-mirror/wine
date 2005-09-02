@@ -22,6 +22,7 @@ msxml.h
 msxml2.h
 oaidl.h
 objidl.h
+objsafe.h
 ocidl.h
 oleidl.h
 propidl.h

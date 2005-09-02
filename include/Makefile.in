@@ -27,6 +27,7 @@ WINDOWS_IDL_SRCS = \
 	msxml2.idl \
 	oaidl.idl \
 	objidl.idl \
+	objsafe.idl \
 	ocidl.idl \
 	oleidl.idl \
 	propidl.idl \
