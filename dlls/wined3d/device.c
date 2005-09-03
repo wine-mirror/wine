@@ -299,6 +299,29 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
     checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
 
+    /* TODO: NV_POINT_SPRITE */
+    if (GL_SUPPORT(ARB_POINT_SPRITE)) {
+        if (This->stateBlock->renderState[WINED3DRS_POINTSPRITEENABLE] != FALSE) {
+           /* Doesn't work with GL_POINT_SMOOTH on on my ATI 9600, but then ATI drivers are buggered! */
+           glDisable(GL_POINT_SMOOTH);
+
+           /* Centre the texture on the vertex */
+           VTRACE("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n");
+           glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
+
+           VTRACE("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n");
+           glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
+           checkGLcall("glTexEnvf(...)");
+           VTRACE("glEnable( GL_POINT_SPRITE_ARB )\n");
+           glEnable( GL_POINT_SPRITE_ARB );
+           checkGLcall("glEnable(...)");
+        } else {
+           VTRACE("glDisable( GL_POINT_SPRITE_ARB )\n");
+           glDisable( GL_POINT_SPRITE_ARB );
+           checkGLcall("glEnable(...)");
+        }
+    }
+
     TRACE("-----------------------> Updated the texture at Sampler %ld to have new texture state information\n", Sampler);
 }
 
@@ -3279,6 +3302,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         break;
 
     case WINED3DRS_POINTSIZE                 :
+        /* FIXME: check that pointSize isn't outside glGetFloatv( GL_POINT_SIZE_MAX_ARB, &maxSize ); or -ve */
         tmpvalue.d = Value;
         TRACE("Set point size to %f\n", tmpvalue.f);
         glPointSize(tmpvalue.f);
@@ -3313,23 +3337,26 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
             /* If enabled, supply the parameters, otherwise fall back to defaults */
             if (This->stateBlock->renderState[WINED3DRS_POINTSCALEENABLE]) {
                 GLfloat att[3] = {1.0f, 0.0f, 0.0f};
-                att[0] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_A]);
-                att[1] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_B]);
-                att[2] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_C]);
+                /* TODO: Correct the scaling (this hack seems to be good enough for every demo that uses point sprites!) */
+                att[0] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_A])/ This->stateBlock->viewport.Width;
+                att[1] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_B])/ This->stateBlock->viewport.Height;
+                att[2] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_C]) *
+                2.0f /(This->stateBlock->viewport.Width *  This->stateBlock->viewport.Height);
 
                 if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-                  GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
-                  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
+                    TRACE("glPointParameterfvARB %f %f %f\n", att[0], att[1], att[2]);
+                    GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
+                    checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
                 } else {
-                  TRACE("WINED3DRS_POINTSCALEENABLE not supported on this opengl\n");
+                    TRACE("WINED3DRS_POINTSCALEENABLE not supported on this opengl\n");
                 }
             } else {
                 GLfloat att[3] = {1.0f, 0.0f, 0.0f};
                 if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-                  GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
-                  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
+                    GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
+                    checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
                 } else {
-                  TRACE("WINED3DRS_POINTSCALEENABLE not supported, but not on either\n");
+                    TRACE("WINED3DRS_POINTSCALEENABLE not supported, but not on either\n");
                 }
             }
             break;
@@ -3384,7 +3411,29 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         LEAVE_GL();
         return D3DERR_INVALIDCALL;
       }
-
+    case WINED3DRS_POINTSPRITEENABLE         :
+        /* TODO: NV_POINT_SPRITE */
+        if (GL_SUPPORT(ARB_POINT_SPRITE)) {
+            if (Value != FALSE) {
+                /* Doesn't work with GL_POINT_SMOOTH on on my ATI 9600, but then ATI drivers are buggered! */
+                glDisable(GL_POINT_SMOOTH);
+        /* Centre the texture on the vertex */
+                VTRACE("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n");
+                glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
+        
+                VTRACE("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n");
+                glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
+                checkGLcall("glTexEnvf(...)");
+                VTRACE("glEnable( GL_POINT_SPRITE_ARB )\n");
+                glEnable( GL_POINT_SPRITE_ARB );
+                checkGLcall("glEnable(...)");
+            } else {
+                VTRACE("glDisable( GL_POINT_SPRITE_ARB )\n");
+                glDisable( GL_POINT_SPRITE_ARB );
+                        checkGLcall("glEnable(...)");
+            }
+        }
+    break;
         /* Unhandled yet...! */
     case WINED3DRS_EDGEANTIALIAS             :
     case WINED3DRS_WRAP0                     :
@@ -3406,7 +3455,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     */
     TRACE("(%p)->(%d,%ld) Texture wraping not yet supported\n",This, State, Value);
     break;
-    case WINED3DRS_POINTSPRITEENABLE         :
     case WINED3DRS_MULTISAMPLEANTIALIAS      :
     case WINED3DRS_MULTISAMPLEMASK           :
     case WINED3DRS_PATCHEDGESTYLE            :
