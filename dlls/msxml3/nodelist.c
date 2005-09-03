@@ -37,9 +37,111 @@
 
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(msxml);
+
 #ifdef HAVE_LIBXML2
 
-WINE_DEFAULT_DEBUG_CHANNEL(msxml);
+#ifdef HAVE_LIBXSLT
+
+#ifdef HAVE_LIBXSLT_PATTERN_H
+#include <libxslt/pattern.h>
+#endif
+#ifdef HAVE_LIBXSLT_TRANSFORM_H
+#include <libxslt/transform.h>
+#endif
+
+struct xslt_info {
+    xsltTransformContextPtr ctxt;
+    xsltCompMatchPtr pattern;
+    xsltStylesheetPtr sheet;
+};
+
+static void xlst_info_init( struct xslt_info *info )
+{
+    info->ctxt = NULL;
+    info->pattern = NULL;
+    info->sheet = NULL;
+}
+
+static int create_xslt_parser( struct xslt_info *info, xmlNodePtr node, const xmlChar *str )
+{
+    info->sheet = xsltNewStylesheet();
+    if (!info->sheet)
+        return 0;
+
+    info->ctxt = xsltNewTransformContext( info->sheet, node->doc );
+    if (!info->ctxt)
+        return 0;
+
+    info->pattern = xsltCompilePattern( str, node->doc,
+                                        node, info->sheet, info->ctxt );
+    if (!info->pattern)
+        return 0;
+    return 1;
+}
+ 
+void free_xslt_info( struct xslt_info *info )
+{
+    if (info->pattern)
+        xsltFreeCompMatchList( info->pattern );
+    if (info->sheet)
+        xsltFreeStylesheet( info->sheet );
+    if (info->ctxt)
+        xsltFreeTransformContext( info->ctxt );
+}
+
+static HRESULT xslt_next_match( struct xslt_info *info, xmlNodePtr *node )
+{
+    if (!info->ctxt)
+        return S_FALSE;
+ 
+    /* make sure that the current element matches the pattern */
+    while ( *node )
+    {
+        int r;
+
+        r = xsltTestCompMatchList( info->ctxt, *node, info->pattern );
+        if ( 1 == r )
+        {
+            TRACE("Matched %p (%s)\n", *node, (*node)->name );
+            return S_OK;
+        }
+        if (r != 0)
+        {
+            ERR("Pattern match failed\n");
+            return E_FAIL;
+        }
+        *node = (*node)->next;
+    }
+    return S_OK;
+}
+
+#else
+
+struct xslt_info {
+    /* empty */
+};
+
+static void xlst_info_init( struct xslt_info *info )
+{
+}
+
+void free_xslt_info( struct xslt_info *info )
+{
+}
+
+static int create_xslt_parser( struct xslt_info *info, xmlNodePtr node, const xmlChar *str )
+{
+    MESSAGE("libxslt was missing at compile time\n");
+    return 0;
+}
+
+static HRESULT xslt_next_match( struct xslt_info *info, xmlNodePtr *node )
+{
+    return S_FALSE;
+}
+
+#endif
 
 typedef struct _xmlnodelist
 {
@@ -47,6 +149,7 @@ typedef struct _xmlnodelist
     LONG ref;
     xmlNodePtr node;
     xmlNodePtr current;
+    struct xslt_info xinfo;
 } xmlnodelist;
 
 static inline xmlnodelist *impl_from_IXMLDOMNodeList( IXMLDOMNodeList *iface )
@@ -91,6 +194,7 @@ static ULONG WINAPI xmlnodelist_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
+        free_xslt_info( &This->xinfo );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -164,8 +268,13 @@ static HRESULT WINAPI xmlnodelist_nextNode(
         IXMLDOMNode** nextItem)
 {
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+    HRESULT r;
 
     TRACE("%p %p\n", This, nextItem );
+
+    r = xslt_next_match( &This->xinfo, &This->current );
+    if (FAILED(r) )
+        return r;
 
     if (!This->current)
         return S_FALSE;
@@ -178,8 +287,11 @@ static HRESULT WINAPI xmlnodelist_nextNode(
 static HRESULT WINAPI xmlnodelist_reset(
         IXMLDOMNodeList* iface)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+
+    TRACE("%p\n", This);
+    This->current = This->node;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnodelist__newEnum(
@@ -207,7 +319,7 @@ static const struct IXMLDOMNodeListVtbl xmlnodelist_vtbl =
     xmlnodelist__newEnum,
 };
 
-IXMLDOMNodeList* create_nodelist( xmlNodePtr node )
+static xmlnodelist *new_nodelist( xmlNodePtr node )
 {
     xmlnodelist *nodelist;
 
@@ -219,8 +331,28 @@ IXMLDOMNodeList* create_nodelist( xmlNodePtr node )
     nodelist->ref = 1;
     nodelist->node = node;
     nodelist->current = node;
+    xlst_info_init( &nodelist->xinfo );
 
+    return nodelist;
+}
+
+IXMLDOMNodeList* create_nodelist( xmlNodePtr node )
+{
+    xmlnodelist *nodelist = new_nodelist( node );
+    if (!node)
+        return NULL;
     return (IXMLDOMNodeList*) &nodelist->lpVtbl;
+}
+
+IXMLDOMNodeList* create_filtered_nodelist( xmlNodePtr node, const xmlChar *str )
+{
+    xmlnodelist *This = new_nodelist( node );
+
+    if (create_xslt_parser( &This->xinfo, node, str ))
+        return (IXMLDOMNodeList*) &This->lpVtbl;
+
+    IXMLDOMNodeList_Release( (IXMLDOMNodeList*) &This->lpVtbl );
+    return NULL;
 }
 
 #endif

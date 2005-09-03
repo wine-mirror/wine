@@ -442,6 +442,8 @@ dnl **** Check for libxml2 ****
 
 AC_SUBST(XML2LIBS,"")
 AC_SUBST(XML2INCL,"")
+AC_SUBST(XSLTLIBS,"")
+AC_SUBST(XSLTINCL,"")
 if test "$PKG_CONFIG" != "false"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
@@ -454,7 +456,19 @@ then
              XML2LIBS="$ac_xml_libs"
              XML2INCL="$ac_xml_cflags"],,$ac_xml_libs)
          AC_CHECK_LIB(xml2, xmlReadMemory,
-            [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])])
+            [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])],,$ac_xml_libs)
+        ])
+    CPPFLAGS="$ac_save_CPPFLAGS"
+    ac_xslt_libs="`$PKG_CONFIG --libs libxslt`"
+    ac_xslt_cflags="`$PKG_CONFIG --cflags libxslt`"
+    CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
+    AC_CHECK_HEADERS(libxslt/xslt.h \
+                     libxslt/pattern.h \
+                     libxslt/transform.h,
+        [AC_CHECK_LIB(xslt, xsltCompilePattern,
+            [AC_DEFINE(HAVE_LIBXSLT, 1, [Define if you have the libxslt library])
+             XSLTLIBS="$ac_xslt_libs"
+             XSLTINCL="$ac_xslt_cflags"],,$ac_xslt_libs)
         ])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi

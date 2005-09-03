@@ -524,8 +524,19 @@ static HRESULT WINAPI xmlnode_selectNodes(
     BSTR queryString,
     IXMLDOMNodeList** resultList)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    xmlChar *str = NULL;
+    HRESULT r = E_FAIL;
+
+    TRACE("%p %s %p\n", This, debugstr_w(queryString), resultList );
+
+    str = xmlChar_from_wchar( queryString );
+    if (!str)
+        return r;
+
+    *resultList = create_filtered_nodelist( This->node->children, str );
+    HeapFree( GetProcessHeap(), 0, str );
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_selectSingleNode(

@@ -284,6 +284,18 @@
 /* Define if you have the X Shape extension */
 #undef HAVE_LIBXSHAPE
 
+/* Define if you have the libxslt library */
+#undef HAVE_LIBXSLT
+
+/* Define to 1 if you have the <libxslt/pattern.h> header file. */
+#undef HAVE_LIBXSLT_PATTERN_H
+
+/* Define to 1 if you have the <libxslt/transform.h> header file. */
+#undef HAVE_LIBXSLT_TRANSFORM_H
+
+/* Define to 1 if you have the <libxslt/xslt.h> header file. */
+#undef HAVE_LIBXSLT_XSLT_H
+
 /* Define if you have the Xxf86dga library version 2 */
 #undef HAVE_LIBXXF86DGA2
 
