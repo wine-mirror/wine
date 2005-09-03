@@ -840,6 +840,8 @@ static const WCHAR url[] = { 'h','t','t','p',':','/','/','w','i','n','e',
 static const BYTE encodedURL[] = { 0x30, 0x13, 0x86, 0x11, 0x68, 0x74,
  0x74, 0x70, 0x3a, 0x2f, 0x2f, 0x77, 0x69, 0x6e, 0x65, 0x68, 0x71, 0x2e,
  0x6f, 0x72, 0x67 };
+static const WCHAR nihongoURL[] = { 'h','t','t','p',':','/','/',0x226f,
+ 0x575b, 0 };
 static const WCHAR dnsName[] = { 'w','i','n','e','h','q','.','o','r','g',0 };
 static const BYTE encodedDnsName[] = { 0x30, 0x0c, 0x82, 0x0a, 0x77, 0x69,
  0x6e, 0x65, 0x68, 0x71, 0x2e, 0x6f, 0x72, 0x67 };
@@ -849,7 +851,6 @@ static const BYTE encodedIPAddr[] = { 0x30, 0x06, 0x87, 0x04, 0x7f, 0x00, 0x00,
 
 static void test_encodeAltName(DWORD dwEncoding)
 {
-    static const WCHAR nihongo[] = { 0x226f, 0x575b, 0 };
     CERT_ALT_NAME_INFO info = { 0 };
     CERT_ALT_NAME_ENTRY entry = { 0 };
     BYTE *buf = NULL;
@@ -897,11 +898,15 @@ static void test_encodeAltName(DWORD dwEncoding)
         LocalFree(buf);
     }
     /* Now with the URL containing an invalid IA5 char */
-    U(entry).pwszURL = (LPWSTR)nihongo;
+    U(entry).pwszURL = (LPWSTR)nihongoURL;
     ret = CryptEncodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_IA5_STRING,
      "Expected CRYPT_E_INVALID_IA5_STRING, got %08lx\n", GetLastError());
+    /* The first invalid character is at index 7 */
+    ok(GET_CERT_ALT_NAME_VALUE_ERR_INDEX(size) == 7,
+     "Expected invalid char at index 7, got %ld\n",
+     GET_CERT_ALT_NAME_VALUE_ERR_INDEX(size));
     /* Now with the URL missing a scheme */
     U(entry).pwszURL = (LPWSTR)dnsName;
     ret = CryptEncodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, &info,
@@ -1960,16 +1965,13 @@ static void test_decodeCertToBeSigned(DWORD dwEncoding)
     /* The following certs all fail with CRYPT_E_ASN1_CORRUPT, because at a
      * minimum a cert must have a non-zero serial number, an issuer, and a
      * subject.
-     * It's hard to match the errors precisely sometimes, so accept one
-     * that only wine gives as long as it fails
      */
     for (i = 0; i < sizeof(corruptCerts) / sizeof(corruptCerts[0]); i++)
     {
         ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED,
          corruptCerts[i], corruptCerts[i][1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
          (BYTE *)&buf, &size);
-        ok(!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT ||
-         GetLastError() == CRYPT_E_ASN1_BADTAG),
+        ok(!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT),
          "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
     }
     /* Now check with serial number, subject and issuer specified */
@@ -2205,11 +2207,7 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
         ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED,
          corruptCRLs[i], corruptCRLs[i][1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
          (BYTE *)&buf, &size);
-        /* It's hard to match the errors precisely sometimes, so accept one
-         * that only wine gives as long as it fails
-         */
-        ok(!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT ||
-         GetLastError() == CRYPT_E_ASN1_BADTAG),
+        ok(!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT),
          "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
     }
     /* at a minimum, a CRL must contain an issuer: */
