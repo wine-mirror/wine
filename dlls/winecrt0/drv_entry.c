@@ -20,7 +20,6 @@
 
 #include <stdarg.h>
 #include "windef.h"
-#include "winbase.h"
 #include "winternl.h"
 #include "wine/library.h"
 #include "crt0_private.h"
@@ -31,10 +30,8 @@ extern NTSTATUS DriverEntry( struct _DRIVER_OBJECT *obj, UNICODE_STRING *path );
 NTSTATUS __wine_spec_drv_entry( struct _DRIVER_OBJECT *obj, UNICODE_STRING *path )
 {
     BOOL needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
-    NTSTATUS ret;
 
     if (needs_init) _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );
-    ret = DriverEntry( obj, path );
-    if (needs_init) _fini();
-    ExitProcess( ret );
+    return DriverEntry( obj, path );
+    /* there is no detach routine so we can't call destructors */
 }
