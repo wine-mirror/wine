@@ -1179,16 +1179,38 @@ static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszLeft
 HRESULT WINAPI CreateAsyncBindCtx(DWORD reserved, IBindStatusCallback *callback,
     IEnumFORMATETC *format, IBindCtx **pbind)
 {
-    HRESULT hres;
-    BIND_OPTS bindopts;
-    IBindCtx *bctx;
-
     TRACE("(%08lx %p %p %p)\n", reserved, callback, format, pbind);
 
     if(!callback)
         return E_INVALIDARG;
+
+    return CreateAsyncBindCtxEx(NULL, 0, callback, format, pbind, 0);
+}
+/***********************************************************************
+ *           CreateAsyncBindCtxEx (URLMON.@)
+ *
+ * Create an asynchronous bind context.
+ */ 
+HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
+    IBindStatusCallback *callback, IEnumFORMATETC *format, IBindCtx** pbind,
+    DWORD reserved)
+{
+    HRESULT hres;
+    BIND_OPTS bindopts;
+    IBindCtx *bctx;
+
+    TRACE("(%p %08lx %p %p %p %ld)\n", ibind, options, callback, format, pbind, reserved);
+
+    if(!pbind)
+        return E_INVALIDARG;
+
+    if(options)
+        FIXME("not supported options %08lx", options);
     if(format)
-        FIXME("format is not supported yet\n");
+        FIXME("format is not supported\n");
+
+    if(reserved)
+        WARN("reserved=%ld\n", reserved);
 
     hres = CreateBindCtx(0, &bctx);
     if(FAILED(hres))
@@ -1200,30 +1222,12 @@ HRESULT WINAPI CreateAsyncBindCtx(DWORD reserved, IBindStatusCallback *callback,
     bindopts.dwTickCountDeadline = 0;
     IBindCtx_SetBindOptions(bctx, &bindopts);
 
-    hres = IBindCtx_RegisterObjectParam(bctx, (LPOLESTR)BSCBHolder, (IUnknown*)callback);
-    if(FAILED(hres)) {
-        IBindCtx_Release(bctx);
-        return hres;
-    }
+    if(callback)
+        RegisterBindStatusCallback(bctx, callback, NULL, 0);
 
     *pbind = bctx;
 
     return S_OK;
-}
-/***********************************************************************
- *           CreateAsyncBindCtxEx (URLMON.@)
- *
- * Create an asynchronous bind context.
- *
- * FIXME
- *   Not implemented.
- */ 
-HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
-    IBindStatusCallback *callback, IEnumFORMATETC *format, IBindCtx** pbind,
-    DWORD reserved)
-{
-     FIXME("stub, returns failure\n");
-     return E_INVALIDARG;
 }
 
 
@@ -1445,7 +1449,7 @@ HRESULT WINAPI RegisterBindStatusCallback(
             IBindStatusCallback_Release(prev);
     }
 
-	return IBindCtx_RegisterObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown *)pbsc);
+    return IBindCtx_RegisterObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown *)pbsc);
 }
 
 /***********************************************************************

@@ -218,13 +218,14 @@ static void test_CreateAsyncBindCtx(void)
         return;
     }
 
-    bindopts.cbStruct = 16;
+    bindopts.cbStruct = sizeof(bindopts);
     hres = IBindCtx_GetBindOptions(bctx, &bindopts);
     ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08lx\n", hres);
     ok(bindopts.grfFlags == BIND_MAYBOTHERUSER,
                 "bindopts.grfFlags = %08lx, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
-    ok(bindopts.grfMode = STGM_READWRITE | STGM_SHARE_EXCLUSIVE,
-                "bindopts.grfMode = %08lx, expected: STGM_READWRITE | STGM_SHARE_EXCLUSIVE\n", bindopts.grfMode);
+    ok(bindopts.grfMode == (STGM_READWRITE | STGM_SHARE_EXCLUSIVE),
+                "bindopts.grfMode = %08lx, expected: STGM_READWRITE | STGM_SHARE_EXCLUSIVE\n",
+                bindopts.grfMode);
     ok(bindopts.dwTickCountDeadline == 0,
                 "bindopts.dwTickCountDeadline = %08lx, expected: 0\n", bindopts.dwTickCountDeadline);
 
@@ -232,6 +233,64 @@ static void test_CreateAsyncBindCtx(void)
     ok(ref == 0, "bctx should be destroyed here\n");
     ref = IBindStatusCallback_Release(bsc);
     ok(ref == 0, "bsc should be destroyed here\n");
+}
+
+static void test_CreateAsyncBindCtxEx(void)
+{
+    IBindCtx *bctx = NULL, *bctx_arg = NULL;
+    IBindStatusCallback *bsc = statusclb_create();
+    BIND_OPTS bindopts;
+    HRESULT hres;
+
+    hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, NULL, 0);
+    ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed: %08lx, expected E_INVALIDARG\n", hres);
+
+    hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
+    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08lx\n", hres);
+
+    if(SUCCEEDED(hres)) {
+        bindopts.cbStruct = sizeof(bindopts);
+        hres = IBindCtx_GetBindOptions(bctx, &bindopts);
+        ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08lx\n", hres);
+        ok(bindopts.grfFlags == BIND_MAYBOTHERUSER,
+                "bindopts.grfFlags = %08lx, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
+        ok(bindopts.grfMode == (STGM_READWRITE | STGM_SHARE_EXCLUSIVE),
+                "bindopts.grfMode = %08lx, expected: STGM_READWRITE | STGM_SHARE_EXCLUSIVE\n",
+                bindopts.grfMode);
+        ok(bindopts.dwTickCountDeadline == 0,
+                "bindopts.dwTickCountDeadline = %08lx, expected: 0\n", bindopts.dwTickCountDeadline);
+
+        IBindCtx_Release(bctx);
+    }
+
+    CreateBindCtx(0, &bctx_arg);
+    hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
+    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08lx\n", hres);
+
+    if(SUCCEEDED(hres)) {
+        bindopts.cbStruct = sizeof(bindopts);
+        hres = IBindCtx_GetBindOptions(bctx, &bindopts);
+        ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08lx\n", hres);
+        ok(bindopts.grfFlags == BIND_MAYBOTHERUSER,
+                "bindopts.grfFlags = %08lx, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
+        ok(bindopts.grfMode == (STGM_READWRITE | STGM_SHARE_EXCLUSIVE),
+                "bindopts.grfMode = %08lx, expected: STGM_READWRITE | STGM_SHARE_EXCLUSIVE\n",
+                bindopts.grfMode);
+        ok(bindopts.dwTickCountDeadline == 0,
+                "bindopts.dwTickCountDeadline = %08lx, expected: 0\n", bindopts.dwTickCountDeadline);
+
+        IBindCtx_Release(bctx);
+    }
+
+    IBindCtx_Release(bctx_arg);
+
+    hres = CreateAsyncBindCtxEx(NULL, 0, bsc, NULL, &bctx, 0);
+    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08lx\n", hres);
+
+    if(SUCCEEDED(hres))
+        IBindCtx_Release(bctx);
+
+    IBindStatusCallback_Release(bsc);
 }
 
 static void test_BindToStorage(void)
@@ -302,5 +361,6 @@ START_TEST(url)
 {
     test_create();
     test_CreateAsyncBindCtx();
+    test_CreateAsyncBindCtxEx();
     test_BindToStorage();
 }
