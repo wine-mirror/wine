@@ -1005,7 +1005,7 @@ case $host_os in
           if test "$ac_cv_c_dll_macho" = "yes"
           then
             LIBEXT="dylib"
-            LDDLLFLAGS="-bundle -flat_namespace -undefined suppress -read_only_relocs warning"
+            LDDLLFLAGS="-bundle -read_only_relocs warning"
             LDSHARED="\$(CC) -dynamiclib"
             CFLAGS="$CFLAGS -ffixed-r13 -no-cpp-precomp"
             STRIP="$STRIP -u -r"
