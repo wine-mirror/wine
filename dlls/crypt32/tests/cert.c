@@ -148,13 +148,26 @@ static void testMemStore(void)
      CRYPT_E_ASN1_CORRUPT),
      "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT, got %08lx\n",
      GetLastError());
-    /* add a signed cert (this also fails) */
-    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD || GetLastError() ==
-     CRYPT_E_ASN1_CORRUPT),
-     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT, got %08lx\n",
-     GetLastError());
+    /* add a "signed" cert--the signature isn't a real signature, so this adds
+     * without any check of the signature's validity
+     */
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING,
-     signedBigCert, sizeof(signedBigCert) - 1, CERT_STORE_ADD_ALWAYS, &context);
+     signedBigCert, sizeof(signedBigCert), CERT_STORE_ADD_ALWAYS, &context);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
+    ok(context != NULL, "Expected a valid cert context\n");
+    if (context)
+    {
+        ok(context->cbCertEncoded == sizeof(signedBigCert),
+         "Expected cert of %d bytes, got %ld\n", sizeof(signedBigCert),
+         context->cbCertEncoded);
+        ok(!memcmp(context->pbCertEncoded, signedBigCert,
+         sizeof(signedBigCert)), "Unexpected encoded cert in context\n");
+        /* remove it, the rest of the tests will work on an unsigned cert */
+        ret = CertDeleteCertificateFromStore(context);
+        ok(ret, "CertDeleteCertificateFromStore failed: %08lx\n",
+         GetLastError());
+        CertFreeCertificateContext(context);
+    }
     /* add a cert to store1 */
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING, bigCert,
      sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, &context);

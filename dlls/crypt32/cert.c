@@ -981,10 +981,16 @@ static PWINE_CERT_CONTEXT CRYPT_CreateCertificateContext(
     TRACE("(%08lx, %p, %ld)\n", dwCertEncodingType, pbCertEncoded,
      cbCertEncoded);
 
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT_TO_BE_SIGNED,
-     pbCertEncoded, cbCertEncoded,
-     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+    /* First try to decode it as a signed cert. */
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT, pbCertEncoded,
+     cbCertEncoded, CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
      (BYTE *)&certInfo, &size);
+    /* Failing that, try it as an unsigned cert */
+    if (!ret)
+        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT_TO_BE_SIGNED,
+         pbCertEncoded, cbCertEncoded,
+         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+         (BYTE *)&certInfo, &size);
     if (ret)
     {
         BYTE *data = NULL;
@@ -1020,7 +1026,6 @@ static void CRYPT_FreeCert(PWINE_CERT_CONTEXT context)
 
     HeapFree(GetProcessHeap(), 0, context->cert.pbCertEncoded);
     LocalFree(context->cert.pCertInfo);
-    HeapFree(GetProcessHeap(), 0, context);
     DeleteCriticalSection(&context->cs);
     LIST_FOR_EACH_ENTRY_SAFE(prop, next, &context->extendedProperties,
      WINE_CERT_PROPERTY, entry)
@@ -1029,6 +1034,7 @@ static void CRYPT_FreeCert(PWINE_CERT_CONTEXT context)
         HeapFree(GetProcessHeap(), 0, prop->pbData);
         HeapFree(GetProcessHeap(), 0, prop);
     }
+    HeapFree(GetProcessHeap(), 0, context);
 }
 
 PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
