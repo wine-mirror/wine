@@ -28,61 +28,23 @@
 #include "wine/library.h"
 #include "wine/pthread.h"
 
-/* Note: the wine_pthread functions are just placeholders,
- * they will be overridden by the pthread support code.
- */
+static struct wine_pthread_functions pthread_functions;
 
 /***********************************************************************
- *           wine_pthread_init_process
+ *           wine_pthread_get_functions
  */
-void wine_pthread_init_process( const struct wine_pthread_functions *functions )
+void wine_pthread_get_functions( struct wine_pthread_functions *functions, size_t size )
 {
+    memcpy( functions, &pthread_functions, min( size, sizeof(pthread_functions) ));
 }
 
-/***********************************************************************
- *           wine_pthread_init_thread
- */
-void wine_pthread_init_thread( struct wine_pthread_thread_info *info )
-{
-}
 
 /***********************************************************************
- *           wine_pthread_create_thread
+ *           wine_pthread_set_functions
  */
-int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
+void wine_pthread_set_functions( const struct wine_pthread_functions *functions, size_t size )
 {
-    return -1;
-}
-
-/***********************************************************************
- *           wine_pthread_init_current_teb
- */
-void wine_pthread_init_current_teb( struct wine_pthread_thread_info *info )
-{
-}
-
-/***********************************************************************
- *           wine_pthread_get_current_teb
- */
-void *wine_pthread_get_current_teb(void)
-{
-    return NULL;
-}
-
-/***********************************************************************
- *           wine_pthread_exit_thread
- */
-void wine_pthread_exit_thread( struct wine_pthread_thread_info *info )
-{
-    exit( info->exit_status );
-}
-
-/***********************************************************************
- *           wine_pthread_abort_thread
- */
-void wine_pthread_abort_thread( int status )
-{
-    exit( status );
+    memcpy( &pthread_functions, functions, min( size, sizeof(pthread_functions) ));
 }
 
 

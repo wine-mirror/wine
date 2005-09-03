@@ -58,13 +58,8 @@ EXPORTS
     wine_mmap_add_reserved_area
     wine_mmap_is_in_reserved_area
     wine_mmap_remove_reserved_area
-    wine_pthread_abort_thread
-    wine_pthread_create_thread
-    wine_pthread_exit_thread
-    wine_pthread_get_current_teb
-    wine_pthread_init_current_teb
-    wine_pthread_init_process
-    wine_pthread_init_thread
+    wine_pthread_get_functions
+    wine_pthread_set_functions
     wine_set_fs
     wine_set_gs
     wine_switch_to_stack

@@ -83,6 +83,8 @@ struct cmsg_fd
 
 time_t server_start_time = 0;  /* time of server startup */
 
+extern struct wine_pthread_functions pthread_functions;
+
 static sigset_t block_set;  /* signals to block during server calls */
 static int fd_socket = -1;  /* socket to exchange file descriptors with the server */
 
@@ -148,7 +150,7 @@ void server_exit_thread( int status )
     close( ntdll_get_thread_data()->wait_fd[1] );
     close( ntdll_get_thread_data()->reply_fd );
     close( ntdll_get_thread_data()->request_fd );
-    wine_pthread_exit_thread( &info );
+    pthread_functions.exit_thread( &info );
 }
 
 
@@ -162,7 +164,7 @@ void server_abort_thread( int status )
     close( ntdll_get_thread_data()->wait_fd[1] );
     close( ntdll_get_thread_data()->reply_fd );
     close( ntdll_get_thread_data()->request_fd );
-    wine_pthread_abort_thread( status );
+    pthread_functions.abort_thread( status );
 }
 
 

@@ -53,6 +53,7 @@ static RTL_BITMAP tls_bitmap;
 static RTL_BITMAP tls_expansion_bitmap;
 static LIST_ENTRY tls_links;
 
+struct wine_pthread_functions pthread_functions = { NULL };
 
 /***********************************************************************
  *           init_teb
@@ -136,8 +137,9 @@ void thread_init(void)
     thread_info.stack_size = 0;
     thread_info.teb_base   = teb;
     thread_info.teb_sel    = thread_data->teb_sel;
-    wine_pthread_init_current_teb( &thread_info );
-    wine_pthread_init_thread( &thread_info );
+    wine_pthread_get_functions( &pthread_functions, sizeof(pthread_functions) );
+    pthread_functions.init_current_teb( &thread_info );
+    pthread_functions.init_thread( &thread_info );
 
     debug_info.str_pos = debug_info.strings;
     debug_info.out_pos = debug_info.output;
@@ -197,10 +199,10 @@ static void start_thread( struct wine_pthread_thread_info *info )
     debug_info.out_pos = debug_info.output;
     thread_data->debug_info = &debug_info;
 
-    wine_pthread_init_current_teb( info );
+    pthread_functions.init_current_teb( info );
     SIGNAL_Init();
     server_init_thread( info->pid, info->tid, func );
-    wine_pthread_init_thread( info );
+    pthread_functions.init_thread( info );
 
     /* allocate a memory view for the stack */
     size = info->stack_size;
@@ -305,7 +307,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     info->entry_point             = start;
     info->entry_arg               = param;
 
-    if (wine_pthread_create_thread( &info->pthread_info ) == -1)
+    if (pthread_functions.create_thread( &info->pthread_info ) == -1)
     {
         status = STATUS_NO_MEMORY;
         goto error;
@@ -673,7 +675,7 @@ __ASM_GLOBAL_FUNC( NtCurrentTeb, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" );
 
 TEB * WINAPI NtCurrentTeb(void)
 {
-    return wine_pthread_get_current_teb();
+    return pthread_functions.get_current_teb();
 }
 
 #endif  /* __i386__ */

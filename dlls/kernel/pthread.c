@@ -354,7 +354,7 @@ static void wine_cond_real_init(pthread_cond_t *cond)
   }
 }
 
-int wine_pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cond_attr)
+static int wine_pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cond_attr)
 {
   /* The same as for wine_pthread_mutex_init, we postpone initialization
      until condition is really used.*/
@@ -362,7 +362,7 @@ int wine_pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cond_
   return 0;
 }
 
-int wine_pthread_cond_destroy(pthread_cond_t *cond)
+static int wine_pthread_cond_destroy(pthread_cond_t *cond)
 {
   wine_cond_detail *detail = ((wine_cond)cond)->cond;
 
@@ -375,7 +375,7 @@ int wine_pthread_cond_destroy(pthread_cond_t *cond)
   return 0;
 }
 
-int wine_pthread_cond_signal(pthread_cond_t *cond)
+static int wine_pthread_cond_signal(pthread_cond_t *cond)
 {
   int have_waiters;
   wine_cond_detail *detail;
@@ -394,7 +394,7 @@ int wine_pthread_cond_signal(pthread_cond_t *cond)
   return 0;
 }
 
-int wine_pthread_cond_broadcast(pthread_cond_t *cond)
+static int wine_pthread_cond_broadcast(pthread_cond_t *cond)
 {
   int have_waiters = 0;
   wine_cond_detail *detail;
@@ -438,7 +438,7 @@ int wine_pthread_cond_broadcast(pthread_cond_t *cond)
   return 0;
 }
 
-int wine_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
+static int wine_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
   wine_cond_detail *detail;
   int last_waiter;
@@ -474,8 +474,8 @@ int wine_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
   return 0;
 }
 
-int wine_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
-                                const struct timespec *abstime)
+static int wine_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
+                                       const struct timespec *abstime)
 {
   DWORD ms = abstime->tv_sec * 1000 + abstime->tv_nsec / 1000000;
   int last_waiter;
@@ -539,9 +539,8 @@ static void wine_set_thread_data( void *data )
     kernel_get_thread_data()->pthread_data = data;
 }
 
-static const struct wine_pthread_functions functions =
+static const struct wine_pthread_callbacks callbacks =
 {
-    sizeof(functions),              /* size */
     wine_get_thread_data,           /* ptr_get_thread_data */
     wine_set_thread_data,           /* ptr_set_thread_data */
     wine_pthread_self,              /* ptr_pthread_self */
@@ -571,9 +570,12 @@ static const struct wine_pthread_functions functions =
     wine_pthread_cond_timedwait     /* ptr_pthread_cond_timedwait */
 };
 
+static struct wine_pthread_functions pthread_functions;
+
 void PTHREAD_Init(void)
 {
-    wine_pthread_init_process( &functions );
+    wine_pthread_get_functions( &pthread_functions, sizeof(pthread_functions) );
+    pthread_functions.init_process( &callbacks, sizeof(callbacks) );
 }
 
 #endif /* HAVE_PTHREAD_H */

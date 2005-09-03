@@ -21,7 +21,7 @@
 #ifndef __WINE_WINE_PTHREAD_H
 #define __WINE_WINE_PTHREAD_H
 
-struct wine_pthread_functions;
+struct wine_pthread_callbacks;
 
 #ifdef HAVE_PTHREAD_H
 
@@ -35,9 +35,8 @@ typedef void *pthread_rwlock_t;
 typedef void *pthread_rwlockattr_t;
 #endif
 
-struct wine_pthread_functions
+struct wine_pthread_callbacks
 {
-    size_t      size;
     void *    (*ptr_get_thread_data)(void);
     void      (*ptr_set_thread_data)(void *data);
     pthread_t (*ptr_pthread_self)(void);
@@ -97,12 +96,18 @@ struct wine_pthread_thread_info
     int            exit_status; /* thread exit status when calling wine_pthread_exit_thread */
 };
 
-extern void wine_pthread_init_process( const struct wine_pthread_functions *functions );
-extern void wine_pthread_init_thread( struct wine_pthread_thread_info *info );
-extern int wine_pthread_create_thread( struct wine_pthread_thread_info *info );
-extern void wine_pthread_init_current_teb( struct wine_pthread_thread_info *info );
-extern void *wine_pthread_get_current_teb(void);
-extern void DECLSPEC_NORETURN wine_pthread_exit_thread( struct wine_pthread_thread_info *info );
-extern void DECLSPEC_NORETURN wine_pthread_abort_thread( int status );
+struct wine_pthread_functions
+{
+    void   (*init_process)( const struct wine_pthread_callbacks *callbacks, size_t size );
+    void   (*init_thread)( struct wine_pthread_thread_info *info );
+    int    (*create_thread)( struct wine_pthread_thread_info *info );
+    void   (*init_current_teb)( struct wine_pthread_thread_info *info );
+    void * (*get_current_teb)(void);
+    void   (* DECLSPEC_NORETURN exit_thread)( struct wine_pthread_thread_info *info );
+    void   (* DECLSPEC_NORETURN abort_thread)( int status );
+};
+
+extern void wine_pthread_get_functions( struct wine_pthread_functions *functions, size_t size );
+extern void wine_pthread_set_functions( const struct wine_pthread_functions *functions, size_t size );
 
 #endif  /* __WINE_WINE_PTHREAD_H */

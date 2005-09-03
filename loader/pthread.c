@@ -38,32 +38,32 @@
 #include "wine/library.h"
 #include "wine/pthread.h"
 
-static struct wine_pthread_functions funcs;
+static int init_done;
 
 #ifndef __i386__
 static pthread_key_t teb_key;
 #endif
 
 /***********************************************************************
- *           wine_pthread_init_process
+ *           init_process
  *
  * Initialization for a newly created process.
  */
-void wine_pthread_init_process( const struct wine_pthread_functions *functions )
+static void init_process( const struct wine_pthread_callbacks *callbacks, size_t size )
 {
-    memcpy( &funcs, functions, min(functions->size,sizeof(funcs)) );
+    init_done = 1;
 }
 
 
 /***********************************************************************
- *           wine_pthread_init_thread
+ *           init_thread
  *
  * Initialization for a newly created thread.
  */
-void wine_pthread_init_thread( struct wine_pthread_thread_info *info )
+static void init_thread( struct wine_pthread_thread_info *info )
 {
     /* retrieve the stack info (except for main thread) */
-    if (funcs.ptr_set_thread_data)
+    if (init_done)
     {
 #ifdef HAVE_PTHREAD_GETATTR_NP
         pthread_attr_t attr;
@@ -84,9 +84,9 @@ void wine_pthread_init_thread( struct wine_pthread_thread_info *info )
 
 
 /***********************************************************************
- *           wine_pthread_create_thread
+ *           create_thread
  */
-int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
+static int create_thread( struct wine_pthread_thread_info *info )
 {
     pthread_t id;
     pthread_attr_t attr;
@@ -102,11 +102,11 @@ int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
 
 
 /***********************************************************************
- *           wine_pthread_init_current_teb
+ *           init_current_teb
  *
  * Set the current TEB for a new thread.
  */
-void wine_pthread_init_current_teb( struct wine_pthread_thread_info *info )
+static void init_current_teb( struct wine_pthread_thread_info *info )
 {
 #ifdef __i386__
     /* On the i386, the current thread is in the %fs register */
@@ -117,7 +117,7 @@ void wine_pthread_init_current_teb( struct wine_pthread_thread_info *info )
     wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
     wine_ldt_init_fs( info->teb_sel, &fs_entry );
 #else
-    if (!funcs.ptr_set_thread_data)  /* first thread */
+    if (!init_done)  /* first thread */
         pthread_key_create( &teb_key, NULL );
     pthread_setspecific( teb_key, info->teb_base );
 #endif
@@ -129,9 +129,9 @@ void wine_pthread_init_current_teb( struct wine_pthread_thread_info *info )
 
 
 /***********************************************************************
- *           wine_pthread_get_current_teb
+ *           get_current_teb
  */
-void *wine_pthread_get_current_teb(void)
+static void *get_current_teb(void)
 {
 #ifdef __i386__
     void *ret;
@@ -144,9 +144,9 @@ void *wine_pthread_get_current_teb(void)
 
 
 /***********************************************************************
- *           wine_pthread_exit_thread
+ *           exit_thread
  */
-void wine_pthread_exit_thread( struct wine_pthread_thread_info *info )
+static void DECLSPEC_NORETURN exit_thread( struct wine_pthread_thread_info *info )
 {
     wine_ldt_free_fs( info->teb_sel );
     munmap( info->teb_base, info->teb_size );
@@ -155,11 +155,26 @@ void wine_pthread_exit_thread( struct wine_pthread_thread_info *info )
 
 
 /***********************************************************************
- *           wine_pthread_abort_thread
+ *           abort_thread
  */
-void wine_pthread_abort_thread( int status )
+static void DECLSPEC_NORETURN abort_thread( int status )
 {
     pthread_exit( (void *)status );
 }
+
+
+/***********************************************************************
+ *           pthread_functions
+ */
+const struct wine_pthread_functions pthread_functions =
+{
+    init_process,
+    init_thread,
+    create_thread,
+    init_current_teb,
+    get_current_teb,
+    exit_thread,
+    abort_thread
+};
 
 #endif  /* HAVE_PTHREAD_H */
