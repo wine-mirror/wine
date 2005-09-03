@@ -28,13 +28,18 @@ extern BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved );
 
 BOOL WINAPI __wine_spec_dll_entry( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
-    BOOL ret, needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
+    static BOOL call_fini;
+    BOOL ret;
 
-    if (reason == DLL_PROCESS_ATTACH && needs_init)
+    if (reason == DLL_PROCESS_ATTACH && __wine_spec_init_state != CONSTRUCTORS_DONE)
+    {
+        call_fini = TRUE;
         _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );
+    }
 
     ret = DllMain( inst, reason, reserved );
 
-    if (reason == DLL_PROCESS_DETACH && needs_init) _fini();
+    if (reason == DLL_PROCESS_DETACH && call_fini) _fini();
+
     return ret;
 }
