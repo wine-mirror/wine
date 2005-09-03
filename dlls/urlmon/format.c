@@ -31,6 +31,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
+static WCHAR wszEnumFORMATETC[] = {'_','E','n','u','m','F','O','R','M','A','T','E','T','C','_',0};
+
 typedef struct {
     const IEnumFORMATETCVtbl *lpEnumFORMATETCVtbl;
 
@@ -188,4 +190,33 @@ HRESULT WINAPI CreateFormatEnumerator(UINT cfmtetc, FORMATETC *rgfmtetc,
 
     *ppenumfmtetc = EnumFORMATETC_Create(cfmtetc, rgfmtetc, 0);
     return S_OK;
+}
+
+/**********************************************************
+ *      RegisterFormatEnumerator (urlmon.@)
+ */
+HRESULT WINAPI RegisterFormatEnumerator(LPBC pBC, IEnumFORMATETC *pEFetc, DWORD reserved)
+{
+    TRACE("(%p %p %ld)\n", pBC, pEFetc, reserved);
+
+    if(reserved)
+        WARN("reserved != 0\n");
+
+    if(!pBC || !pEFetc)
+        return E_INVALIDARG;
+
+    return IBindCtx_RegisterObjectParam(pBC, wszEnumFORMATETC, (IUnknown*)pEFetc);
+}
+
+/**********************************************************
+ *      RevokeFormatEnumerator (urlmon.@)
+ */
+HRESULT WINAPI RevokeFormatEnumerator(LPBC pbc, IEnumFORMATETC *pEFetc)
+{
+    TRACE("(%p %p)\n", pbc, pEFetc);
+
+    if(!pbc)
+        return E_INVALIDARG;
+
+    return IBindCtx_RevokeObjectParam(pbc, wszEnumFORMATETC);
 }

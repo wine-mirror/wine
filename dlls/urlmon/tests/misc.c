@@ -129,7 +129,81 @@ static void test_CreateFormatEnum(void)
     IEnumFORMATETC_Release(fenum);
 }
 
+static void test_RegisterFormatEnumerator(void)
+{
+    IBindCtx *bctx = NULL;
+    IEnumFORMATETC *format = NULL, *format2 = NULL;
+    IUnknown *unk = NULL;
+    HRESULT hres;
+
+    static FORMATETC formatetc = {0,NULL,0,0,0};
+    static WCHAR wszEnumFORMATETC[] =
+        {'_','E','n','u','m','F','O','R','M','A','T','E','T','C','_',0};
+
+    CreateBindCtx(0, &bctx);
+
+    hres = CreateFormatEnumerator(1, &formatetc, &format);
+    ok(hres == S_OK, "CreateFormatEnumerator failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = RegisterFormatEnumerator(NULL, format, 0);
+    ok(hres == E_INVALIDARG,
+            "RegisterFormatEnumerator failed: %08lx, expected E_INVALIDARG\n", hres);
+    hres = RegisterFormatEnumerator(bctx, NULL, 0);
+    ok(hres == E_INVALIDARG,
+            "RegisterFormatEnumerator failed: %08lx, expected E_INVALIDARG\n", hres);
+
+    hres = RegisterFormatEnumerator(bctx, format, 0);
+    ok(hres == S_OK, "RegisterFormatEnumerator failed: %08lx\n", hres);
+
+    hres = IBindCtx_GetObjectParam(bctx, wszEnumFORMATETC, &unk);
+    ok(hres == S_OK, "GetObjectParam failed: %08lx\n", hres);
+    ok(unk == (IUnknown*)format, "unk != format\n");
+
+    hres = RevokeFormatEnumerator(NULL, format);
+    ok(hres == E_INVALIDARG,
+            "RevokeFormatEnumerator failed: %08lx, expected E_INVALIDARG\n", hres);
+
+    hres = RevokeFormatEnumerator(bctx, format);
+    ok(hres == S_OK, "RevokeFormatEnumerator failed: %08lx\n", hres);
+
+    hres = RevokeFormatEnumerator(bctx, format);
+    ok(hres == E_FAIL, "RevokeFormatEnumerator failed: %08lx, expected E_FAIL\n", hres);
+
+    hres = IBindCtx_GetObjectParam(bctx, wszEnumFORMATETC, &unk);
+    ok(hres == E_FAIL, "GetObjectParam failed: %08lx, expected E_FAIL\n", hres);
+
+    hres = RegisterFormatEnumerator(bctx, format, 0);
+    ok(hres == S_OK, "RegisterFormatEnumerator failed: %08lx\n", hres);
+
+    hres = CreateFormatEnumerator(1, &formatetc, &format2);
+    ok(hres == S_OK, "CreateFormatEnumerator failed: %08lx\n", hres);
+
+    if(SUCCEEDED(hres)) {
+        hres = RevokeFormatEnumerator(bctx, format);
+        ok(hres == S_OK, "RevokeFormatEnumerator failed: %08lx\n", hres);
+
+        IEnumFORMATETC_Release(format2);
+    }
+
+    hres = IBindCtx_GetObjectParam(bctx, wszEnumFORMATETC, &unk);
+    ok(hres == E_FAIL, "GetObjectParam failed: %08lx, expected E_FAIL\n", hres);
+
+    IEnumFORMATETC_Release(format);
+
+    hres = RegisterFormatEnumerator(bctx, format, 0);
+    ok(hres == S_OK, "RegisterFormatEnumerator failed: %08lx\n", hres);
+    hres = RevokeFormatEnumerator(bctx, NULL);
+    ok(hres == S_OK, "RevokeFormatEnumerator failed: %08lx\n", hres);
+    hres = IBindCtx_GetObjectParam(bctx, wszEnumFORMATETC, &unk);
+    ok(hres == E_FAIL, "GetObjectParam failed: %08lx, expected E_FAIL\n", hres);
+
+    IBindCtx_Release(bctx);
+}
+
 START_TEST(misc)
 {
     test_CreateFormatEnum();
+    test_RegisterFormatEnumerator();
 }
