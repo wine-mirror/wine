@@ -611,6 +611,14 @@ static void build(struct options* opts)
     for ( j = 0 ; j < opts->linker_args->size ; j++ ) 
         strarray_add(link_args, opts->linker_args->base[j]);
 
+#ifdef __APPLE__
+    if (opts->image_base)
+    {
+        strarray_add(link_args, "-image_base");
+        strarray_add(link_args, opts->image_base);
+    }
+#endif
+
     for ( j = 0; j < lib_dirs->size; j++ )
 	strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
 
