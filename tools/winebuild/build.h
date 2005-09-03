@@ -194,7 +194,6 @@ extern void read_undef_symbols( DLLSPEC *spec, char **argv );
 extern int resolve_imports( DLLSPEC *spec );
 extern int get_imports_size(void);
 extern void output_imports( FILE *outfile, DLLSPEC *spec );
-extern void output_import_thunks( FILE *outfile, DLLSPEC *spec );
 extern int load_res32_file( const char *name, DLLSPEC *spec );
 extern void output_resources( FILE *outfile, DLLSPEC *spec );
 extern void load_res16_file( const char *name, DLLSPEC *spec );

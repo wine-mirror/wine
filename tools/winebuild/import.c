@@ -636,7 +636,7 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
         if (!UsePIC)
         {
             if (strstr( name, "__wine_call_from_16" )) fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
-            fprintf( outfile, "    \"\\tjmp *(%s+%d)\\n\"\n", asm_name(table), pos );
+            fprintf( outfile, "    \"\\tjmp *(%s+%d)\\n\"\n", table, pos );
         }
         else
         {
@@ -650,7 +650,7 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
                 if (!strcmp( name, "__wine_call_from_16_regs" ))
                     fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
                 fprintf( outfile, "    \"\\tmovl %s+%d-.L__wine_spec_%s(%%eax),%%eax\\n\"\n",
-                         asm_name(table), pos, name );
+                         table, pos, name );
                 fprintf( outfile, "    \"\\txchgl %%eax,(%%esp)\\n\"\n" );
                 fprintf( outfile, "    \"\\tret\\n\"\n" );
             }
@@ -664,7 +664,7 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
                 fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
                 fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
                 fprintf( outfile, "    \"\\tmovl %s+%d-.L__wine_spec_%s(%%eax),%%eax\\n\"\n",
-                         asm_name(table), pos, name );
+                         table, pos, name );
                 fprintf( outfile, "    \"\\tmovzwl %%sp, %%ecx\\n\"\n" );
                 fprintf( outfile, "    \"\\t.byte 0x36\\n\"\n" );
                 fprintf( outfile, "    \"\\txchgl %%eax,4(%%ecx)\\n\"\n" );
@@ -679,7 +679,7 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
                 if (strstr( name, "__wine_call_from_16" ))
                     fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
                 fprintf( outfile, "    \"\\tjmp *%s+%d-.L__wine_spec_%s(%%eax)\\n\"\n",
-                         asm_name(table), pos, name );
+                         table, pos, name );
             }
         }
         break;
@@ -717,16 +717,16 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
         if (target_platform == PLATFORM_APPLE)
         {
             fprintf(outfile, "    \"\\tlis %s, ha16(%s+%d)\\n\"\n",
-                    ppc_reg(9), asm_name(table), pos);
+                    ppc_reg(9), table, pos);
             fprintf(outfile, "    \"\\tla  %s, lo16(%s+%d)(%s)\\n\"\n",
-                    ppc_reg(8), asm_name(table), pos, ppc_reg(9));
+                    ppc_reg(8), table, pos, ppc_reg(9));
         }
         else
         {
             fprintf(outfile, "    \"\\tlis %s, (%s+%d)@hi\\n\"\n",
-                    ppc_reg(9), asm_name(table), pos);
+                    ppc_reg(9), table, pos);
             fprintf(outfile, "    \"\\tla  %s, (%s+%d)@l(%s)\\n\"\n",
-                    ppc_reg(8), asm_name(table), pos, ppc_reg(9));
+                    ppc_reg(8), table, pos, ppc_reg(9));
         }
         fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n", ppc_reg(7), ppc_reg(8));
         fprintf(outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg(7));
@@ -784,9 +784,8 @@ static void output_immediate_imports( FILE *outfile )
         fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* OriginalFirstThunk */
         fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* TimeDateStamp */
         fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* ForwarderChain */
-        fprintf( outfile, "    \"\\t.long __wine_spec_import_name_%s\\n\"\n", dll_name ); /* Name */
-        fprintf( outfile, "    \"\\t.long %s+%d\\n\"\n",     /* FirstThunk */
-                 asm_name("__wine_spec_import_data_ptrs"), j * 4 );
+        fprintf( outfile, "    \"\\t.long .L__wine_spec_import_name_%s\\n\"\n", dll_name ); /* Name */
+        fprintf( outfile, "    \"\\t.long .L__wine_spec_import_data_ptrs+%d\\n\"\n", j * 4 ); /* FirstThunk */
         j += dll_imports[i]->nb_imports + 1;
     }
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* OriginalFirstThunk */
@@ -795,7 +794,7 @@ static void output_immediate_imports( FILE *outfile )
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* Name */
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* FirstThunk */
 
-    fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_spec_import_data_ptrs") );
+    fprintf( outfile, "    \".L__wine_spec_import_data_ptrs:\\n\"\n" );
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
@@ -804,7 +803,7 @@ static void output_immediate_imports( FILE *outfile )
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             if (!(odp->flags & FLAG_NONAME))
-                fprintf( outfile, "    \"\\t.long __wine_spec_import_data_%s_%s\\n\"\n",
+                fprintf( outfile, "    \"\\t.long .L__wine_spec_import_data_%s_%s\\n\"\n",
                          dll_name, odp->name );
             else
                 fprintf( outfile, "    \"\\t.long %d\\n\"\n", odp->ordinal );
@@ -822,7 +821,7 @@ static void output_immediate_imports( FILE *outfile )
             if (!(odp->flags & FLAG_NONAME))
             {
                 fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(2) );
-                fprintf( outfile, "    \"__wine_spec_import_data_%s_%s:\\n\"\n", dll_name, odp->name );
+                fprintf( outfile, "    \".L__wine_spec_import_data_%s_%s:\\n\"\n", dll_name, odp->name );
                 fprintf( outfile, "    \"\\t%s %d\\n\"\n", get_asm_short_keyword(), odp->ordinal );
                 fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), odp->name );
             }
@@ -833,7 +832,7 @@ static void output_immediate_imports( FILE *outfile )
     {
         if (dll_imports[i]->delay) continue;
         dll_name = make_c_identifier( dll_imports[i]->spec->file_name );
-        fprintf( outfile, "    \"__wine_spec_import_name_%s:\\t%s \\\"%s\\\"\\n\"\n",
+        fprintf( outfile, "    \".L__wine_spec_import_name_%s:\\t%s \\\"%s\\\"\\n\"\n",
                  dll_name, get_asm_string_keyword(), dll_imports[i]->spec->file_name );
     }
 
@@ -860,7 +859,7 @@ static void output_immediate_import_thunks( FILE *outfile )
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             output_import_thunk( outfile, odp->name ? odp->name : odp->export_name,
-                                 "__wine_spec_import_data_ptrs", pos );
+                                 ".L__wine_spec_import_data_ptrs", pos );
         }
         pos += 4;
     }
@@ -875,67 +874,88 @@ static void output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 
     if (!nb_delayed) return;
 
-    fprintf( outfile, "static void *__wine_delay_imp_hmod[%d];\n", nb_delayed );
-    for (i = 0; i < nb_imports; i++)
-    {
-        if (!dll_imports[i]->delay) continue;
-        for (j = 0; j < dll_imports[i]->nb_imports; j++)
-        {
-            ORDDEF *odp = dll_imports[i]->imports[j];
-            const char *name = odp->name ? odp->name : odp->export_name;
-            fprintf( outfile, "void __wine_delay_imp_%d_%s();\n", i, name );
-        }
-    }
-    fprintf( outfile, "\n" );
-    fprintf( outfile, "struct {\n" );
-    fprintf( outfile, "  struct ImgDelayDescr {\n" );
-    fprintf( outfile, "    unsigned int  grAttrs;\n" );
-    fprintf( outfile, "    const char   *szName;\n" );
-    fprintf( outfile, "    void        **phmod;\n" );
-    fprintf( outfile, "    void        **pIAT;\n" );
-    fprintf( outfile, "    const char  **pINT;\n" );
-    fprintf( outfile, "    void*         pBoundIAT;\n" );
-    fprintf( outfile, "    void*         pUnloadIAT;\n" );
-    fprintf( outfile, "    unsigned long dwTimeStamp;\n" );
-    fprintf( outfile, "  } imp[%d];\n", nb_delayed + 1 );
-    fprintf( outfile, "  void         *IAT[%d];\n", total_delayed );
-    fprintf( outfile, "  const char   *INT[%d];\n", total_delayed );
-    fprintf( outfile, "} __wine_spec_delay_imports = {\n" );
-    fprintf( outfile, "  {\n" );
+    fprintf( outfile, "/* delayed imports */\n" );
+    fprintf( outfile, "asm(\".data\\n\\t.align %d\\n\"\n", get_alignment(4) );
+    fprintf( outfile, "    \"\\t.globl %s\\n\"\n", asm_name("__wine_spec_delay_imports") );
+    fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_spec_delay_imports"));
+
+    /* list of dlls */
+
     for (i = j = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
-        fprintf( outfile, "    { 0, \"%s\", &__wine_delay_imp_hmod[%d], &__wine_spec_delay_imports.IAT[%d], &__wine_spec_delay_imports.INT[%d], 0, 0, 0 },\n",
-                 dll_imports[i]->spec->file_name, i, j, j );
+        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                              /* grAttrs */
+        fprintf( outfile, "    \"\\t.long .L__wine_delay_name_%d\\n\"\n", i );        /* szName */
+        fprintf( outfile, "    \"\\t.long .L__wine_delay_modules+%d\\n\"\n", i * 4 ); /* phmod */
+        fprintf( outfile, "    \"\\t.long .L__wine_delay_IAT+%d\\n\"\n", j * 4 );     /* pIAT */
+        fprintf( outfile, "    \"\\t.long .L__wine_delay_INT+%d\\n\"\n", j * 4 );     /* pINT */
+        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                              /* pBoundIAT */
+        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                              /* pUnloadIAT */
+        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                              /* dwTimeStamp */
         j += dll_imports[i]->nb_imports;
     }
-    fprintf( outfile, "  },\n  {\n" );
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );   /* grAttrs */
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );   /* szName */
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );   /* phmod */
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );   /* pIAT */
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );   /* pINT */
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );   /* pBoundIAT */
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );   /* pUnloadIAT */
+    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );   /* dwTimeStamp */
+
+    fprintf( outfile, "    \".L__wine_delay_IAT:\\n\"\n" );
     for (i = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
-        fprintf( outfile, "    /* %s */\n", dll_imports[i]->spec->file_name );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             const char *name = odp->name ? odp->name : odp->export_name;
-            fprintf( outfile, "    &__wine_delay_imp_%d_%s,\n", i, name );
+            fprintf( outfile, "    \"\\t.long .L__wine_delay_imp_%d_%s\\n\"\n", i, name );
         }
     }
-    fprintf( outfile, "  },\n  {\n" );
+
+    fprintf( outfile, "    \".L__wine_delay_INT:\\n\"\n" );
     for (i = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
-        fprintf( outfile, "    /* %s */\n", dll_imports[i]->spec->file_name );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             if (!odp->name)
-                fprintf( outfile, "    (char *)%d,\n", odp->ordinal );
+                fprintf( outfile, "    \"\\t.long %d\\n\"\n", odp->ordinal );
             else
-                fprintf( outfile, "    \"%s\",\n", odp->name );
+                fprintf( outfile, "    \"\\t.long .L__wine_delay_data_%d_%s\\n\"\n", i, odp->name );
         }
     }
-    fprintf( outfile, "  }\n};\n\n" );
+
+    fprintf( outfile, "    \".L__wine_delay_modules:\\n\"\n" );
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (dll_imports[i]->delay) fprintf( outfile, "    \"\\t.long 0\\n\"\n" );
+    }
+
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (!dll_imports[i]->delay) continue;
+        fprintf( outfile, "    \".L__wine_delay_name_%d:\\n\"\n", i );
+        fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n",
+                 get_asm_string_keyword(), dll_imports[i]->spec->file_name );
+    }
+
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (!dll_imports[i]->delay) continue;
+        for (j = 0; j < dll_imports[i]->nb_imports; j++)
+        {
+            ORDDEF *odp = dll_imports[i]->imports[j];
+            if (!odp->name) continue;
+            fprintf( outfile, "    \".L__wine_delay_data_%d_%s:\\n\"\n", i, odp->name );
+            fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), odp->name );
+        }
+    }
+    output_function_size( outfile, "__wine_spec_delay_imports" );
+    fprintf( outfile, ");\n" );
 }
 
 /* output the delayed import thunks of a Win32 module */
@@ -1027,13 +1047,10 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
         if (!dll_imports[i]->delay) continue;
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
-            char buffer[128];
             ORDDEF *odp = dll_imports[i]->imports[j];
             const char *name = odp->name ? odp->name : odp->export_name;
 
-            sprintf( buffer, "__wine_delay_imp_%d_%s", i, name );
-            fprintf( outfile, "    \"\\t%s\\n\"\n", func_declaration(buffer) );
-            fprintf( outfile, "    \"%s:\\n\"\n", asm_name(buffer) );
+            fprintf( outfile, "    \".L__wine_delay_imp_%d_%s:\\n\"\n", i, name );
             switch(target_cpu)
             {
             case CPU_x86:
@@ -1077,7 +1094,6 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
                 }
                 break;
             }
-            output_function_size( outfile, buffer );
         }
         idx++;
     }
@@ -1085,15 +1101,14 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
 
     fprintf( outfile, "\n    \".align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"%s:\\n\"\n", asm_name(delayed_import_thunks));
-    pos = (nb_delayed + 1) * 32;
-    for (i = 0; i < nb_imports; i++)
+    for (i = pos = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             output_import_thunk( outfile, odp->name ? odp->name : odp->export_name,
-                                 "__wine_spec_delay_imports", pos );
+                                 ".L__wine_delay_IAT", pos );
         }
     }
     output_function_size( outfile, delayed_import_thunks );
@@ -1103,13 +1118,8 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
 /* output the import and delayed import tables of a Win32 module */
 void output_imports( FILE *outfile, DLLSPEC *spec )
 {
-    output_delayed_imports( outfile, spec );
-}
-
-/* output the import and delayed import thunks of a Win32 module */
-void output_import_thunks( FILE *outfile, DLLSPEC *spec )
-{
     output_immediate_imports( outfile );
+    output_delayed_imports( outfile, spec );
     output_immediate_import_thunks( outfile );
     output_delayed_import_thunks( outfile, spec );
 }

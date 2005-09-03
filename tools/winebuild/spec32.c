@@ -478,10 +478,6 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 
     output_stub_funcs( outfile, spec );
 
-    /* Output the DLL imports */
-
-    output_imports( outfile, spec );
-
     /* Output the resources */
 
     output_resources( outfile, spec );
@@ -597,7 +593,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "#endif\n" );
 
     output_exports( outfile, spec );
-    output_import_thunks( outfile, spec );
+    output_imports( outfile, spec );
     output_dll_init( outfile, "__wine_spec_init_ctor", NULL );
 
     fprintf( outfile, "#ifndef __GNUC__\n" );
