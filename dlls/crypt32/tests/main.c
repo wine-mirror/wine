@@ -87,12 +87,21 @@ static const struct OIDToAlgID algIDToOID[] = {
 static void testOIDToAlgID(void)
 {
     int i;
+    DWORD alg;
+
+    /* Test with a bogus one */
+    SetLastError(0xdeadbeef);
+    alg = CertOIDToAlgId("1.2.3");
+    ok(!alg && GetLastError() == 0xdeadbeef,
+     "Didn't expect last error (%08lx) to be set\n", GetLastError());
 
     for (i = 0; i < sizeof(oidToAlgID) / sizeof(oidToAlgID[0]); i++)
     {
-        DWORD alg = CertOIDToAlgId(oidToAlgID[i].oid);
-
-        ok(alg == oidToAlgID[i].algID,
+        alg = CertOIDToAlgId(oidToAlgID[i].oid);
+        /* Not all Windows installations support all these, so make sure it's
+         * at least not the wrong one.
+         */
+        ok(alg == 0 || alg == oidToAlgID[i].algID,
          "Expected %ld, got %ld\n", oidToAlgID[i].algID, alg);
     }
 }
@@ -100,16 +109,20 @@ static void testOIDToAlgID(void)
 static void testAlgIDToOID(void)
 {
     int i;
+    LPCSTR oid;
 
+    /* Test with a bogus one */
+    SetLastError(0xdeadbeef);
+    oid = CertAlgIdToOID(ALG_CLASS_SIGNATURE | ALG_TYPE_ANY | 80);
+    ok(!oid && GetLastError() == 0xdeadbeef,
+     "Didn't expect last error (%08lx) to be set\n", GetLastError());
     for (i = 0; i < sizeof(algIDToOID) / sizeof(algIDToOID[0]); i++)
     {
-        LPCSTR oid = CertAlgIdToOID(algIDToOID[i].algID);
-
-        if ((!oid || !algIDToOID[i].oid) && oid != algIDToOID[i].oid &&
-         algIDToOID[i].algID)
-            printf("Expected %s, got %s\n", algIDToOID[i].oid, oid);
-        else if (oid && algIDToOID[i].oid && strcmp(oid, algIDToOID[i].oid))
-            printf("Expected %s, got %s\n", algIDToOID[i].oid, oid);
+        oid = CertAlgIdToOID(algIDToOID[i].algID);
+        /* Allow failure, not every version of Windows supports every algo */
+        if (oid)
+            ok(!strcmp(oid, algIDToOID[i].oid), 
+             "Expected %s, got %s\n", algIDToOID[i].oid, oid);
     }
 }
 

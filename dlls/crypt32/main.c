@@ -294,10 +294,13 @@ DWORD WINAPI CertOIDToAlgId(LPCSTR pszObjId)
 {
     int i;
 
-    for (i = 0; i < sizeof(oidToAlgID) / sizeof(oidToAlgID[0]); i++)
+    if (pszObjId)
     {
-        if (!strcmp(pszObjId, oidToAlgID[i].oid))
-            return oidToAlgID[i].algID;
+        for (i = 0; i < sizeof(oidToAlgID) / sizeof(oidToAlgID[0]); i++)
+        {
+            if (!strcmp(pszObjId, oidToAlgID[i].oid))
+                return oidToAlgID[i].algID;
+        }
     }
     return 0;
 }
