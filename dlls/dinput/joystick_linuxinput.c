@@ -69,6 +69,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 #define WINE_JOYSTICK_AXIS_BASE   0
 #define WINE_JOYSTICK_BUTTON_BASE 8
 
+typedef struct EffectListItem EffectListItem;
+struct EffectListItem
+{
+        LPDIRECTINPUTEFFECT ref;
+	struct EffectListItem* next;
+};
+
+/* implemented in effect_linuxinput.c */
+HRESULT linuxinput_create_effect(int fd, REFGUID rguid, LPDIRECTINPUTEFFECT* peff);
+HRESULT linuxinput_get_info_A(int fd, REFGUID rguid, LPDIEFFECTINFOA info);
+HRESULT linuxinput_get_info_W(int fd, REFGUID rguid, LPDIEFFECTINFOW info);
+
 typedef struct JoystickImpl JoystickImpl;
 static const IDirectInputDevice8AVtbl JoystickAvt;
 static const IDirectInputDevice8WVtbl JoystickWvt;
@@ -104,6 +116,8 @@ struct JoystickImpl
 	/* Force feedback variables */
 	BOOL				has_ff;
 	int				num_effects;
+	EffectListItem*			top_effect;
+	int				ff_state;
 
 	/* data returned by the EVIOCGABS() ioctl */
 	int				axes[ABS_MAX+1][5];
@@ -288,6 +302,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
   newDevice->ref = 1;
   newDevice->joyfd = -1;
   newDevice->dinput = dinput;
+  newDevice->ff_state = FF_STATUS_STOPPED;
   memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
   for (i=0;i<ABS_MAX;i++) {
     newDevice->wantmin[i] = -32768;
@@ -375,6 +390,9 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 	ref = InterlockedDecrement(&(This->ref));
 	if (ref)
 		return ref;
+
+	/* Reset the FF state, free all effects, etc */
+	iface->lpVtbl->SendForceFeedbackCommand(iface, DISFFC_RESET);
 
 	/* Free the data queue */
 	HeapFree(GetProcessHeap(),0,This->data_queue);
@@ -704,6 +722,9 @@ static void joy_polldev(JoystickImpl *This) {
 		FIXME("unhandled joystick axe event (code %d, value %d)\n",ie.code,ie.value);
 		break;
 	    }
+	    break;
+	case EV_FF_STATUS:
+	    This->ff_state = ie.value;
 	    break;
 	default:
 	    FIXME("joystick cannot handle type %d event (code %d)\n",ie.type,ie.code);
@@ -1104,6 +1125,350 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
   return DI_OK;
 }
 
+/****************************************************************************** 
+  *	CreateEffect - Create a new FF effect with the specified params
+  */
+static HRESULT WINAPI JoystickAImpl_CreateEffect(LPDIRECTINPUTDEVICE8A iface,
+						 REFGUID rguid,
+						 LPCDIEFFECT lpeff,
+						 LPDIRECTINPUTEFFECT *ppdef,
+						 LPUNKNOWN pUnkOuter)
+{
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
+    EffectListItem* new = NULL;
+    HRESULT retval = DI_OK;
+#endif
+
+    JoystickImpl* This = (JoystickImpl*)iface;
+    TRACE("(this=%p,%p,%p,%p,%p)\n", This, rguid, lpeff, ppdef, pUnkOuter);
+
+#ifndef HAVE_STRUCT_FF_EFFECT_DIRECTION
+    TRACE("not available (compiled w/o ff support)\n");
+    *ppdef = NULL;
+    return DI_OK; 
+#else
+
+    new = malloc(sizeof(EffectListItem));
+    new->next = This->top_effect;
+    This->top_effect = new;
+
+    retval = linuxinput_create_effect(This->joyfd, rguid, &(new->ref));
+    if (retval != DI_OK)
+	return retval;
+ 
+    if (lpeff != NULL)
+	retval = new->ref->lpVtbl->SetParameters(new->ref, lpeff, 0); 
+    if (retval != DI_OK)
+	return retval;
+
+    *ppdef = new->ref;
+
+    if (pUnkOuter != NULL)
+	FIXME("Interface aggregation not implemented.\n");
+
+    return DI_OK;
+
+#endif /* HAVE_STRUCT_FF_EFFECT_DIRECTION */
+} 
+
+/*******************************************************************************
+ *	EnumEffects - Enumerate available FF effects
+ */
+static HRESULT WINAPI JoystickAImpl_EnumEffects(LPDIRECTINPUTDEVICE8A iface,
+						LPDIENUMEFFECTSCALLBACKA lpCallback,
+						LPVOID pvRef,
+						DWORD dwEffType)
+{
+    DIEFFECTINFOA dei; /* feif */
+    DWORD type = DIEFT_GETTYPE(dwEffType);
+    JoystickImpl* This = (JoystickImpl*)iface;
+    int xfd = This->joyfd;
+
+    TRACE("(this=%p,%p,%ld) type=%ld fd=%d\n", This, pvRef, dwEffType, type, xfd);
+
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
+    dei.dwSize = sizeof(DIEFFECTINFOA);          
+
+    /* We need to return something even if we're not yet acquired */
+    if (xfd == -1)
+	iface->lpVtbl->Acquire(iface);
+
+    if ((type == DIEFT_ALL || type == DIEFT_CONSTANTFORCE)
+	&& test_bit(This->ffbits, FF_CONSTANT)) {
+	iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_ConstantForce);
+	(*lpCallback)(&dei, pvRef);
+    }
+
+    if ((type == DIEFT_ALL || type == DIEFT_PERIODIC)
+	&& test_bit(This->ffbits, FF_PERIODIC)) {
+	if (test_bit(This->ffbits, FF_SQUARE)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Square);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_SINE)) {
+            iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Sine);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_TRIANGLE)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Triangle);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_SAW_UP)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_SawtoothUp);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_SAW_DOWN)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_SawtoothDown);
+	    (*lpCallback)(&dei, pvRef);
+	}
+    } 
+
+    if ((type == DIEFT_ALL || type == DIEFT_RAMPFORCE)
+	&& test_bit(This->ffbits, FF_RAMP)) {
+        iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_RampForce);
+        (*lpCallback)(&dei, pvRef);
+    }
+
+    if (type == DIEFT_ALL || type == DIEFT_CONDITION) {
+	if (test_bit(This->ffbits, FF_SPRING)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Spring);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_DAMPER)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Damper);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_INERTIA)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Inertia);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_FRICTION)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Friction);
+	    (*lpCallback)(&dei, pvRef);
+	}
+    }
+
+    /* return to unaquired state if that's where it was */
+    if (xfd == -1)
+	iface->lpVtbl->Unacquire(iface);
+#endif
+
+    return DI_OK;
+}
+
+static HRESULT WINAPI JoystickWImpl_EnumEffects(LPDIRECTINPUTDEVICE8W iface,
+                                                LPDIENUMEFFECTSCALLBACKW lpCallback,
+                                                LPVOID pvRef,
+                                                DWORD dwEffType)
+{
+    /* seems silly to duplicate all this code but all the structures and functions
+     * are actually different (A/W) */
+    DIEFFECTINFOW dei; /* feif */
+    DWORD type = DIEFT_GETTYPE(dwEffType);
+    JoystickImpl* This = (JoystickImpl*)iface;
+    int xfd = This->joyfd;
+
+    TRACE("(this=%p,%p,%ld) type=%ld fd=%d\n", This, pvRef, dwEffType, type, xfd);
+
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
+    dei.dwSize = sizeof(DIEFFECTINFOW);          
+
+    /* We need to return something even if we're not yet acquired */
+    if (xfd == -1)
+	iface->lpVtbl->Acquire(iface);
+
+    if ((type == DIEFT_ALL || type == DIEFT_CONSTANTFORCE)
+	&& test_bit(This->ffbits, FF_CONSTANT)) {
+	iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_ConstantForce);
+	(*lpCallback)(&dei, pvRef);
+    }
+
+    if ((type == DIEFT_ALL || type == DIEFT_PERIODIC)
+	&& test_bit(This->ffbits, FF_PERIODIC)) {
+	if (test_bit(This->ffbits, FF_SQUARE)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Square);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_SINE)) {
+            iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Sine);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_TRIANGLE)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Triangle);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_SAW_UP)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_SawtoothUp);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_SAW_DOWN)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_SawtoothDown);
+	    (*lpCallback)(&dei, pvRef);
+	}
+    } 
+
+    if ((type == DIEFT_ALL || type == DIEFT_RAMPFORCE)
+	&& test_bit(This->ffbits, FF_RAMP)) {
+        iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_RampForce);
+        (*lpCallback)(&dei, pvRef);
+    }
+
+    if (type == DIEFT_ALL || type == DIEFT_CONDITION) {
+	if (test_bit(This->ffbits, FF_SPRING)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Spring);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_DAMPER)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Damper);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_INERTIA)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Inertia);
+	    (*lpCallback)(&dei, pvRef);
+	}
+	if (test_bit(This->ffbits, FF_FRICTION)) {
+	    iface->lpVtbl->GetEffectInfo(iface, &dei, &GUID_Friction);
+	    (*lpCallback)(&dei, pvRef);
+	}
+    }
+
+    /* return to unaquired state if that's where it was */
+    if (xfd == -1)
+	iface->lpVtbl->Unacquire(iface);
+#endif
+
+    return DI_OK;
+}
+
+/*******************************************************************************
+ *      GetEffectInfo - Get information about a particular effect 
+ */
+static HRESULT WINAPI JoystickAImpl_GetEffectInfo(LPDIRECTINPUTDEVICE8A iface,
+						  LPDIEFFECTINFOA pdei,
+						  REFGUID guid)
+{
+    JoystickImpl* This = (JoystickImpl*)iface;
+
+    TRACE("(this=%p,%p,%s)\n", This, pdei, _dump_dinput_GUID(guid));
+
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
+    return linuxinput_get_info_A(This->joyfd, guid, pdei); 
+#else
+    return DI_OK;
+#endif
+}
+
+static HRESULT WINAPI JoystickWImpl_GetEffectInfo(LPDIRECTINPUTDEVICE8W iface,
+                                                  LPDIEFFECTINFOW pdei,
+                                                  REFGUID guid)
+{
+    JoystickImpl* This = (JoystickImpl*)iface;
+            
+    TRACE("(this=%p,%p,%s)\n", This, pdei, _dump_dinput_GUID(guid));
+        
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
+    return linuxinput_get_info_W(This->joyfd, guid, pdei);
+#else
+    return DI_OK;
+#endif
+}
+
+/*******************************************************************************
+ *      GetForceFeedbackState - Get information about the device's FF state 
+ */
+static HRESULT WINAPI JoystickAImpl_GetForceFeedbackState(
+	LPDIRECTINPUTDEVICE8A iface,
+	LPDWORD pdwOut)
+{
+    JoystickImpl* This = (JoystickImpl*)iface;
+
+    TRACE("(this=%p,%p)\n", This, pdwOut);
+
+    (*pdwOut) = 0;
+
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
+    /* DIGFFS_STOPPED is the only mandatory flag to report */
+    if (This->ff_state == FF_STATUS_STOPPED)
+	(*pdwOut) |= DIGFFS_STOPPED;
+#endif
+
+    return DI_OK;
+}
+
+/*******************************************************************************
+ *      SendForceFeedbackCommand - Send a command to the device's FF system
+ */
+static HRESULT WINAPI JoystickAImpl_SendForceFeedbackCommand(
+	LPDIRECTINPUTDEVICE8A iface,
+	DWORD dwFlags)
+{
+    JoystickImpl* This = (JoystickImpl*)iface;
+    TRACE("(this=%p,%ld)\n", This, dwFlags);
+
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
+    if (dwFlags == DISFFC_STOPALL) {
+	/* Stop all effects */
+	EffectListItem* itr = This->top_effect;
+	while (itr) {
+	    itr->ref->lpVtbl->Stop(itr->ref);
+	    itr = itr->next;
+	}
+    } else if (dwFlags == DISFFC_RESET) {
+	/* Stop, unload, release and free all effects */
+	/* This returns the device to its "bare" state */
+	while (This->top_effect) {
+	    EffectListItem* temp = This->top_effect; 
+	    temp->ref->lpVtbl->Stop(temp->ref);
+	    temp->ref->lpVtbl->Unload(temp->ref);
+	    temp->ref->lpVtbl->Release(temp->ref);
+	    This->top_effect = temp->next; 
+	    free(temp);
+	}
+    } else if (dwFlags == DISFFC_PAUSE || dwFlags == DISFFC_CONTINUE) {
+	FIXME("No support for Pause or Continue in linux\n");
+    } else if (dwFlags == DISFFC_SETACTUATORSOFF 
+		|| dwFlags == DISFFC_SETACTUATORSON) {
+	FIXME("No direct actuator control in linux\n");
+    } else {
+	FIXME("Unknown Force Feedback Command!\n");
+	return DIERR_INVALIDPARAM;
+    }
+    return DI_OK;
+#else
+    return DIERR_UNSUPPORTED;
+#endif
+}
+
+/*******************************************************************************
+ *      EnumCreatedEffectObjects - Enumerate all the effects that have been
+ *		created for this device.
+ */
+static HRESULT WINAPI JoystickAImpl_EnumCreatedEffectObjects(
+	LPDIRECTINPUTDEVICE8A iface,
+	LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback,
+	LPVOID pvRef,
+	DWORD dwFlags)
+{
+    /* this function is safe to call on non-ff-enabled builds */
+
+    JoystickImpl* This = (JoystickImpl*)iface;
+    EffectListItem* itr = This->top_effect;
+    TRACE("(this=%p,%p,%p,%ld)\n", This, lpCallback, pvRef, dwFlags);
+
+    if (!lpCallback)
+	return DIERR_INVALIDPARAM;
+
+    if (dwFlags != 0)
+	FIXME("Flags specified, but no flags exist yet (DX9)!");
+
+    while (itr) {
+	(*lpCallback)(itr->ref, pvRef);
+	itr = itr->next;
+    }
+
+    return DI_OK;
+}
+
 static const IDirectInputDevice8AVtbl JoystickAvt =
 {
 	IDirectInputDevice2AImpl_QueryInterface,
@@ -1124,12 +1489,12 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	IDirectInputDevice2AImpl_GetDeviceInfo,
 	IDirectInputDevice2AImpl_RunControlPanel,
 	IDirectInputDevice2AImpl_Initialize,
-	IDirectInputDevice2AImpl_CreateEffect,
-	IDirectInputDevice2AImpl_EnumEffects,
-	IDirectInputDevice2AImpl_GetEffectInfo,
-	IDirectInputDevice2AImpl_GetForceFeedbackState,
-	IDirectInputDevice2AImpl_SendForceFeedbackCommand,
-	IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
+	JoystickAImpl_CreateEffect,
+	JoystickAImpl_EnumEffects,
+	JoystickAImpl_GetEffectInfo,
+	JoystickAImpl_GetForceFeedbackState,
+	JoystickAImpl_SendForceFeedbackCommand,
+	JoystickAImpl_EnumCreatedEffectObjects,
 	IDirectInputDevice2AImpl_Escape,
 	JoystickAImpl_Poll,
 	IDirectInputDevice2AImpl_SendDeviceData,
@@ -1166,12 +1531,12 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 	IDirectInputDevice2WImpl_GetDeviceInfo,
 	XCAST(RunControlPanel)IDirectInputDevice2AImpl_RunControlPanel,
 	XCAST(Initialize)IDirectInputDevice2AImpl_Initialize,
-	XCAST(CreateEffect)IDirectInputDevice2AImpl_CreateEffect,
-	IDirectInputDevice2WImpl_EnumEffects,
-	IDirectInputDevice2WImpl_GetEffectInfo,
-	XCAST(GetForceFeedbackState)IDirectInputDevice2AImpl_GetForceFeedbackState,
-	XCAST(SendForceFeedbackCommand)IDirectInputDevice2AImpl_SendForceFeedbackCommand,
-	XCAST(EnumCreatedEffectObjects)IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
+	XCAST(CreateEffect)JoystickAImpl_CreateEffect,
+	JoystickWImpl_EnumEffects,
+	JoystickWImpl_GetEffectInfo,
+	XCAST(GetForceFeedbackState)JoystickAImpl_GetForceFeedbackState,
+	XCAST(SendForceFeedbackCommand)JoystickAImpl_SendForceFeedbackCommand,
+	XCAST(EnumCreatedEffectObjects)JoystickAImpl_EnumCreatedEffectObjects,
 	XCAST(Escape)IDirectInputDevice2AImpl_Escape,
 	XCAST(Poll)JoystickAImpl_Poll,
 	XCAST(SendDeviceData)IDirectInputDevice2AImpl_SendDeviceData,
