@@ -3292,7 +3292,7 @@ static BOOL WINAPI CRYPT_AsnDecodeExtensionsInternal(DWORD dwCertEncodingType,
                      i < cExtension && ptr - pbEncoded - 1 - lenBytes <
                      dataLen; i++)
                     {
-                        exts->rgExtension[i].pszObjId = nextData;
+                        exts->rgExtension[i].pszObjId = (LPSTR)nextData;
                         size = bytesNeeded;
                         ret = CRYPT_AsnDecodeExtension(ptr,
                          cbEncoded - (ptr - pbEncoded), dwFlags,

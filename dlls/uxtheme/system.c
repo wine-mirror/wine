@@ -342,7 +342,7 @@ static void UXTHEME_RestoreSystemMetrics(void)
                 DWORD count = sizeof(colorStr);
             
                 if (RegQueryValueExA (colorKey, SysColorsNames[i], 0,
-                    &type, colorStr, &count) == ERROR_SUCCESS)
+                    &type, (LPBYTE) colorStr, &count) == ERROR_SUCCESS)
                 {
                     int r, g, b;
                     if (sscanf (colorStr, "%d %d %d", &r, &g, &b) == 3)

@@ -91,13 +91,13 @@ static void UuidConversionAndComparison(void) {
     for (i1 = 0; i1 < 10; i1++) {
         Uuid1 = Uuid_Table[i1];
 	ok( (UuidToStringA(&Uuid1, (unsigned char**)&str) == RPC_S_OK), "Simple UUID->String copy\n" );
-	ok( (UuidFromStringA(str, &Uuid2) == RPC_S_OK), "Simple String->UUID copy from generated UUID String\n" );
+	ok( (UuidFromStringA((unsigned char*)str, &Uuid2) == RPC_S_OK), "Simple String->UUID copy from generated UUID String\n" );
 	ok( UuidEqual(&Uuid1, &Uuid2, &rslt), "Uuid -> String -> Uuid transform\n" );
 	/* invalid uuid tests  -- size of valid UUID string=36 */
 	for (i2 = 0; i2 < 36; i2++) {
 	    x = str[i2];
 	    str[i2] = 'g'; /* whatever, but "g" is a good boundary condition */
-	    ok( (UuidFromStringA(str, &Uuid1) == RPC_S_INVALID_STRING_UUID), "Invalid UUID String\n" );
+	    ok( (UuidFromStringA((unsigned char*)str, &Uuid1) == RPC_S_INVALID_STRING_UUID), "Invalid UUID String\n" );
 	    str[i2] = x; /* change it back so remaining tests are interesting. */
 	}
     }
@@ -138,10 +138,10 @@ static void TestDceErrorInqText (void)
 
     /* A random sample of DceErrorInqText */
     /* 0 is success */
-    ok ((DceErrorInqTextA (0, buffer) == RPC_S_OK),
+    ok ((DceErrorInqTextA (0, (unsigned char*)buffer) == RPC_S_OK),
             "DceErrorInqTextA(0...)\n");
     /* A real RPC_S error */
-    ok ((DceErrorInqTextA (RPC_S_INVALID_STRING_UUID, buffer) == RPC_S_OK),
+    ok ((DceErrorInqTextA (RPC_S_INVALID_STRING_UUID, (unsigned char*)buffer) == RPC_S_OK),
             "DceErrorInqTextA(valid...)\n");
 
     if (dwCount)
@@ -150,14 +150,14 @@ static void TestDceErrorInqText (void)
          * which should return RPC_S_OK and the 
          * fixed "not valid" message
          */
-        ok ((DceErrorInqTextA (35, buffer) == RPC_S_OK &&
+        ok ((DceErrorInqTextA (35, (unsigned char*)buffer) == RPC_S_OK &&
                     strcmp (buffer, bufferInvalid) == 0),
                 "DceErrorInqTextA(unformattable...)\n");
         /* One for which FormatMessage should succeed but 
          * DceErrorInqText should "fail"
          * 3814 is generally quite a long message
          */
-        ok ((DceErrorInqTextA (3814, buffer) == RPC_S_OK &&
+        ok ((DceErrorInqTextA (3814, (unsigned char*)buffer) == RPC_S_OK &&
                     strcmp (buffer, bufferInvalid) == 0),
                 "DceErrorInqTextA(deviation...)\n");
     }

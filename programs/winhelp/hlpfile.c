@@ -373,7 +373,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
 
     if (hlpfile->hasPhrases)
     {
-        HLPFILE_Uncompress2(title, end, page->lpszTitle, page->lpszTitle + titlesize);
+        HLPFILE_Uncompress2(title, end, (BYTE*)page->lpszTitle, (BYTE*)page->lpszTitle + titlesize);
     }
     else
     {
@@ -830,7 +830,8 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
     HLPFILE_PAGE      *page;
     HLPFILE_PARAGRAPH *paragraph, **paragraphptr;
     UINT               textsize;
-    BYTE              *format, *format_end, *text, *text_end;
+    BYTE              *format, *format_end;
+    char              *text, *text_end;
     long               size;
     unsigned short     bits;
     unsigned           nc, ncol = 1;
@@ -848,7 +849,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
     if (!text) return FALSE;
     if (hlpfile->hasPhrases)
     {
-        HLPFILE_Uncompress2(buf + GET_UINT(buf, 0x10), end, text, text + size);
+        HLPFILE_Uncompress2(buf + GET_UINT(buf, 0x10), end, (BYTE*)text, (BYTE*)text + size);
     }
     else
     {
@@ -859,7 +860,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
         }
         else
         {
-            text = buf + GET_UINT(buf, 0x10);
+            text = (char*)buf + GET_UINT(buf, 0x10);
         }
     }
     text_end = text + size;
@@ -1070,7 +1071,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
             case 0xCC:
                 WINE_TRACE("macro => %s\n", format + 3);
                 HLPFILE_FreeLink(attributes.link);
-                attributes.link = HLPFILE_AllocLink(hlp_link_macro, format + 3, 
+                attributes.link = HLPFILE_AllocLink(hlp_link_macro, (const char*)format + 3, 
                                                     0, !(*format & 4), -1);
                 format += 3 + GET_USHORT(format, 1);
                 break;
@@ -1098,7 +1099,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
             case 0xEE:
             case 0xEF:
                 {
-                    char*       ptr = format + 8;
+                    char*       ptr = (char*) format + 8;
                     BYTE        type = format[3];
                     int         wnd = -1;
                     char*       str;
@@ -1134,7 +1135,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
 	    }
 	}
     }
-    if (text_end != buf + GET_UINT(buf, 0x10) + size)
+    if (text_end != (char*)buf + GET_UINT(buf, 0x10) + size)
         HeapFree(GetProcessHeap(), 0, text_end - size);
     return TRUE;
 }
@@ -1300,9 +1301,10 @@ static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE **subbuf, BYTE **subend)
         ptr += 6;
         for (i = 0; i < nentries; i++)
         {
-            WINE_TRACE("<= %s\n", ptr);
-            if (strcmp(name, ptr) < 0) break;
-            ptr += strlen(ptr) + 1;
+            char *str = (char*) ptr;
+            WINE_TRACE("<= %s\n", str);
+            if (strcmp(name, str) < 0) break;
+            ptr += strlen(str) + 1;
             pglast = GET_USHORT(ptr, 0);
             ptr += 2;
         }
@@ -1313,7 +1315,7 @@ static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE **subbuf, BYTE **subend)
     ptr += 8;
     for (i = 0; i < nentries; i++)
     {
-        char*   fname = ptr;
+        char*   fname = (char*)ptr;
         ptr += strlen(fname) + 1;
         WINE_TRACE("\\- %s\n", fname);
         if (strcmp(fname, name) == 0)
@@ -1365,21 +1367,22 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 
     for (ptr = buf + 0x15; ptr + 4 <= end; ptr += GET_USHORT(ptr, 2) + 4)
     {
+        char *str = (char*) ptr + 4;
         switch (GET_USHORT(ptr, 0))
 	{
 	case 1:
             if (hlpfile->lpszTitle) {WINE_WARN("title\n"); break;}
-            hlpfile->lpszTitle = HeapAlloc(GetProcessHeap(), 0, strlen(ptr + 4) + 1);
+            hlpfile->lpszTitle = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
             if (!hlpfile->lpszTitle) return FALSE;
-            lstrcpy(hlpfile->lpszTitle, ptr + 4);
+            lstrcpy(hlpfile->lpszTitle, str);
             WINE_TRACE("Title: %s\n", hlpfile->lpszTitle);
             break;
 
 	case 2:
             if (hlpfile->lpszCopyright) {WINE_WARN("copyright\n"); break;}
-            hlpfile->lpszCopyright = HeapAlloc(GetProcessHeap(), 0, strlen(ptr + 4) + 1);
+            hlpfile->lpszCopyright = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
             if (!hlpfile->lpszCopyright) return FALSE;
-            lstrcpy(hlpfile->lpszCopyright, ptr + 4);
+            lstrcpy(hlpfile->lpszCopyright, str);
             WINE_TRACE("Copyright: %s\n", hlpfile->lpszCopyright);
             break;
 
@@ -1390,10 +1393,10 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             break;
 
 	case 4:
-            macro = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_MACRO) + lstrlen(ptr + 4) + 1);
+            macro = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_MACRO) + lstrlen(str) + 1);
             if (!macro) break;
             p = (char*)macro + sizeof(HLPFILE_MACRO);
-            lstrcpy(p, (LPSTR)ptr + 4);
+            lstrcpy(p, str);
             macro->lpszMacro = p;
             macro->next = 0;
             for (m = &hlpfile->first_macro; *m; m = &(*m)->next);
@@ -1415,11 +1418,11 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
                 unsigned flags = GET_USHORT(ptr, 4);
                 HLPFILE_WINDOWINFO* wi = &hlpfile->windows[hlpfile->numWindows - 1];
 
-                if (flags & 0x0001) strcpy(wi->type, ptr + 6);
+                if (flags & 0x0001) strcpy(wi->type, &str[2]);
                 else wi->type[0] = '\0';
-                if (flags & 0x0002) strcpy(wi->name, ptr + 16);
+                if (flags & 0x0002) strcpy(wi->name, &str[12]);
                 else wi->name[0] = '\0';
-                if (flags & 0x0004) strcpy(wi->caption, ptr + 25);
+                if (flags & 0x0004) strcpy(wi->caption, &str[23]);
                 else lstrcpynA(wi->caption, hlpfile->lpszTitle, sizeof(wi->caption));
                 wi->origin.x = (flags & 0x0008) ? GET_USHORT(ptr, 76) : CW_USEDEFAULT;
                 wi->origin.y = (flags & 0x0010) ? GET_USHORT(ptr, 78) : CW_USEDEFAULT;
@@ -1527,7 +1530,7 @@ static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
     for (i = 0; i <= num; i++)
         phrases.offsets[i] = GET_USHORT(buf, 0x11 + 2 * i) - 2 * num - 2;
 
-    HLPFILE_UncompressLZ77(buf + 0x13 + 2 * num, end, phrases.buffer);
+    HLPFILE_UncompressLZ77(buf + 0x13 + 2 * num, end, (BYTE*)phrases.buffer);
 
     hlpfile->hasPhrases = TRUE;
     return TRUE;
@@ -1597,7 +1600,7 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
     if (dec_size == cpr_size)
         memcpy(phrases.buffer, buf_phs + 9, dec_size);
     else
-        HLPFILE_UncompressLZ77(buf_phs + 9, end_phs, phrases.buffer);
+        HLPFILE_UncompressLZ77(buf_phs + 9, end_phs, (BYTE*)phrases.buffer);
 
     hlpfile->hasPhrases = FALSE;
     return TRUE;
@@ -1637,7 +1640,7 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
         topic.map = HeapAlloc(GetProcessHeap(), 0,
                               topic.wMapLen * sizeof(topic.map[0]) + newsize);
         if (!topic.map) return FALSE;
-        newptr = (char*)(topic.map + topic.wMapLen);
+        newptr = (BYTE*)(topic.map + topic.wMapLen);
         topic.end = newptr + newsize;
 
         for (i = 0; i < topic.wMapLen; i++)
@@ -1661,7 +1664,7 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
         topic.map = HeapAlloc(GetProcessHeap(), 0,
                               topic.wMapLen * (sizeof(topic.map[0]) + DST_LEN));
         if (!topic.map) return FALSE;
-        newptr = (char*)(topic.map + topic.wMapLen);
+        newptr = (BYTE*)(topic.map + topic.wMapLen);
         topic.end = newptr + newsize;
 
         for (i = 0; i < topic.wMapLen; i++)
@@ -1695,8 +1698,8 @@ static void HLPFILE_Uncompress2(const BYTE *ptr, const BYTE *end, BYTE *newptr, 
             code  = 0x100 * ptr[0] + ptr[1];
             index = (code - 0x100) / 2;
 
-            phptr = phrases.buffer + phrases.offsets[index];
-            phend = phrases.buffer + phrases.offsets[index + 1];
+            phptr = (BYTE*)phrases.buffer + phrases.offsets[index];
+            phend = (BYTE*)phrases.buffer + phrases.offsets[index + 1];
 
             if (newptr + (phend - phptr) > newend)
             {

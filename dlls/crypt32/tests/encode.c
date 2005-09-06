@@ -32,14 +32,22 @@ struct encodedInt
     const BYTE *encoded;
 };
 
+static const BYTE bin1[] = {0x02,0x01,0x01,0};
+static const BYTE bin2[] = {0x02,0x01,0x7f,0};
+static const BYTE bin3[] = {0x02,0x02,0x00,0x80,0};
+static const BYTE bin4[] = {0x02,0x02,0x01,0x00,0};
+static const BYTE bin5[] = {0x02,0x01,0x80,0};
+static const BYTE bin6[] = {0x02,0x02,0xff,0x7f,0};
+static const BYTE bin7[] = {0x02,0x04,0xba,0xdd,0xf0,0x0d,0};
+
 static const struct encodedInt ints[] = {
- { 1,          "\x02\x01\x01" },
- { 127,        "\x02\x01\x7f" },
- { 128,        "\x02\x02\x00\x80" },
- { 256,        "\x02\x02\x01\x00" },
- { -128,       "\x02\x01\x80" },
- { -129,       "\x02\x02\xff\x7f" },
- { 0xbaddf00d, "\x02\x04\xba\xdd\xf0\x0d" },
+ { 1,          bin1 },
+ { 127,        bin2 },
+ { 128,        bin3 },
+ { 256,        bin4 },
+ { -128,       bin5 },
+ { -129,       bin6 },
+ { 0xbaddf00d, bin7 },
 };
 
 struct encodedBigInt
@@ -49,21 +57,28 @@ struct encodedBigInt
     const BYTE *decoded;
 };
 
+static const BYTE bin8[] = {0xff,0xff,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0};
+static const BYTE bin9[] = {0x02,0x0a,0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x01,0xff,0xff,0};
+static const BYTE bin10[] = {0xff,0xff,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0};
+
+static const BYTE bin11[] = {0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x01,0xff,0xff,0xff,0};
+static const BYTE bin12[] = {0x02,0x09,0xff,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0};
+static const BYTE bin13[] = {0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x01,0xff,0};
+
 static const struct encodedBigInt bigInts[] = {
- { "\xff\xff\x01\x02\x03\x04\x05\x06\x07\x08",
-   "\x02\x0a\x08\x07\x06\x05\x04\x03\x02\x01\xff\xff",
-   "\xff\xff\x01\x02\x03\x04\x05\x06\x07\x08" },
- { "\x08\x07\x06\x05\x04\x03\x02\x01\xff\xff\xff",
-   "\x02\x09\xff\x01\x02\x03\x04\x05\x06\x07\x08",
-   "\x08\x07\x06\x05\x04\x03\x02\x01\xff" },
+ { bin8, bin9, bin10 },
+ { bin11, bin12, bin13 },
 };
+
+static const BYTE bin14[] = {0xff,0xff,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0};
+static const BYTE bin15[] = {0x02,0x0a,0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x01,0xff,0xff,0};
+static const BYTE bin16[] = {0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x01,0xff,0xff,0xff,0};
+static const BYTE bin17[] = {0x02,0x0c,0x00,0xff,0xff,0xff,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0};
 
 /* Decoded is the same as original, so don't bother storing a separate copy */
 static const struct encodedBigInt bigUInts[] = {
- { "\xff\xff\x01\x02\x03\x04\x05\x06\x07\x08",
-   "\x02\x0a\x08\x07\x06\x05\x04\x03\x02\x01\xff\xff", NULL },
- { "\x08\x07\x06\x05\x04\x03\x02\x01\xff\xff\xff",
-   "\x02\x0c\x00\xff\xff\xff\x01\x02\x03\x04\x05\x06\x07\x08", NULL },
+ { bin14, bin15, NULL },
+ { bin16, bin17, NULL },
 };
 
 static void test_encodeInt(DWORD dwEncoding)
@@ -134,7 +149,7 @@ static void test_encodeInt(DWORD dwEncoding)
      */
     for (i = 0; i < sizeof(bigInts) / sizeof(bigInts[0]); i++)
     {
-        blob.cbData = strlen(bigInts[i].val);
+        blob.cbData = strlen((const char*)bigInts[i].val);
         blob.pbData = (BYTE *)bigInts[i].val;
         ret = CryptEncodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, &blob,
          0, NULL, NULL, &bufSize);
@@ -157,8 +172,8 @@ static void test_encodeInt(DWORD dwEncoding)
     /* and, encode some uints */
     for (i = 0; i < sizeof(bigUInts) / sizeof(bigUInts[0]); i++)
     {
-        blob.cbData = strlen(bigUInts[i].val);
-        blob.pbData = (BYTE *)bigUInts[i].val;
+        blob.cbData = strlen((const char*)bigUInts[i].val);
+        blob.pbData = (BYTE*)bigUInts[i].val;
         ret = CryptEncodeObjectEx(dwEncoding, X509_MULTI_BYTE_UINT, &blob,
          0, NULL, NULL, &bufSize);
         ok(ret, "Expected success, got %ld\n", GetLastError());
@@ -181,8 +196,8 @@ static void test_encodeInt(DWORD dwEncoding)
 
 static void test_decodeInt(DWORD dwEncoding)
 {
-    static const char bigInt[] = { 2, 5, 0xff, 0xfe, 0xff, 0xfe, 0xff };
-    static const char testStr[] = { 0x16, 4, 't', 'e', 's', 't' };
+    static const BYTE bigInt[] = { 2, 5, 0xff, 0xfe, 0xff, 0xfe, 0xff };
+    static const BYTE testStr[] = { 0x16, 4, 't', 'e', 's', 't' };
     static const BYTE longForm[] = { 2, 0x81, 0x01, 0x01 };
     static const BYTE bigBogus[] = { 0x02, 0x84, 0x01, 0xff, 0xff, 0xf9 };
     BYTE *buf = NULL;
@@ -256,8 +271,8 @@ static void test_decodeInt(DWORD dwEncoding)
         {
             CRYPT_INTEGER_BLOB *blob = (CRYPT_INTEGER_BLOB *)buf;
 
-            ok(blob->cbData == strlen(bigInts[i].decoded),
-             "Expected len %d, got %ld\n", strlen(bigInts[i].decoded),
+            ok(blob->cbData == strlen((const char*)bigInts[i].decoded),
+             "Expected len %d, got %ld\n", strlen((const char*)bigInts[i].decoded),
              blob->cbData);
             ok(!memcmp(blob->pbData, bigInts[i].decoded, blob->cbData),
              "Unexpected value\n");
@@ -283,8 +298,8 @@ static void test_decodeInt(DWORD dwEncoding)
         {
             CRYPT_INTEGER_BLOB *blob = (CRYPT_INTEGER_BLOB *)buf;
 
-            ok(blob->cbData == strlen(bigUInts[i].val),
-             "Expected len %d, got %ld\n", strlen(bigUInts[i].val),
+            ok(blob->cbData == strlen((const char*)bigUInts[i].val),
+             "Expected len %d, got %ld\n", strlen((const char*)bigUInts[i].val),
              blob->cbData);
             ok(!memcmp(blob->pbData, bigUInts[i].val, blob->cbData),
              "Unexpected value\n");
