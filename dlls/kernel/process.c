@@ -2076,15 +2076,8 @@ BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
 void WINAPI ExitProcess( DWORD status )
 {
     LdrShutdownProcess();
-    SERVER_START_REQ( terminate_process )
-    {
-        /* send the exit code to the server */
-        req->handle    = GetCurrentProcess();
-        req->exit_code = status;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    exit( status );
+    NtTerminateProcess(GetCurrentProcess(), status);
+    exit(status);
 }
 
 
