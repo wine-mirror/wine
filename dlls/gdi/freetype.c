@@ -247,6 +247,7 @@ struct tagGdiFont {
     SHORT yMin;
     OUTLINETEXTMETRICW *potm;
     FONTSIGNATURE fs;
+    LONG ppem;
 };
 
 typedef struct {
@@ -1516,8 +1517,8 @@ static FT_Face OpenFontFile(GdiFont font, char *file, FT_Long face_index, LONG w
 {
     FT_Error err;
     FT_Face ft_face;
-    LONG ppem;
 
+    TRACE("%s, %ld, %ld x %ld\n", debugstr_a(file), face_index, width, height);
     err = pFT_New_Face(library, file, face_index, &ft_face);
     if(err) {
         ERR("FT_New_Face rets %d\n", err);
@@ -1529,13 +1530,14 @@ static FT_Face OpenFontFile(GdiFont font, char *file, FT_Long face_index, LONG w
 
     if(FT_IS_SCALABLE(ft_face)) {
         /* load the VDMX table if we have one */
-        ppem = load_VDMX(font, height);
-        if(ppem == 0)
-            ppem = calc_ppem_for_height(ft_face, height);
+        font->ppem = load_VDMX(font, height);
+        if(font->ppem == 0)
+            font->ppem = calc_ppem_for_height(ft_face, height);
 
-        if((err = pFT_Set_Pixel_Sizes(ft_face, 0, ppem)) != 0)
-            WARN("FT_Set_Pixel_Sizes %d, %ld rets %x\n", 0, ppem, err);
+        if((err = pFT_Set_Pixel_Sizes(ft_face, 0, font->ppem)) != 0)
+            WARN("FT_Set_Pixel_Sizes %d, %ld rets %x\n", 0, font->ppem, err);
     } else {
+        font->ppem = height;
         if((err = pFT_Set_Pixel_Sizes(ft_face, width, height)) != 0)
             WARN("FT_Set_Pixel_Sizes %ld, %ld rets %x\n", width, height, err);
     }
