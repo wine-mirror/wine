@@ -671,7 +671,7 @@ DECL_HANDLER(connect_named_pipe)
         assert( !server->fd );
         server->state = ps_wait_open;
         create_async( current, NULL, &server->wait_q,
-                      req->func, req->overlapped, NULL );
+                      req->func, req->event, NULL );
         async_terminate_queue( &server->pipe->waiters, STATUS_SUCCESS );
         break;
     case ps_connected_server:

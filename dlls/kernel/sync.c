@@ -1310,50 +1310,34 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
 
 /***********************************************************************
  *           ConnectNamedPipe   (KERNEL32.@)
+ *
+ *  Connects to a named pipe
+ *
+ *  Parameters
+ *  hPipe: A handle to a named pipe returned by CreateNamedPipe
+ *  overlapped: Optional OVERLAPPED struct
+ *
+ *  Return values
+ *  TRUE: Success
+ *  FALSE: Failure, GetLastError can be called for further details
  */
 BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
 {
-    BOOL                ret;
-    LPOVERLAPPED        pov;
-    OVERLAPPED          ov;
+    NTSTATUS status;
+    IO_STATUS_BLOCK status_block;
 
     TRACE("(%p,%p)\n", hPipe, overlapped);
 
-    if (!overlapped)
-    {
-        memset(&ov, 0, sizeof(ov));
-        ov.hEvent = CreateEventW(NULL, 0, 0, NULL);
-        if (!ov.hEvent) return FALSE;
-        pov = &ov;
-    }
-    else pov = overlapped;
-        
-    pov->Internal = STATUS_PENDING;
+    if(overlapped)
+        overlapped->Internal = STATUS_PENDING;
 
-    SERVER_START_REQ( connect_named_pipe )
-    {
-        req->handle = hPipe;
-        req->overlapped = pov;
-        req->func = PIPE_CompletionWait;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
+    status = NtFsControlFile(hPipe, overlapped ? overlapped->hEvent : NULL, NULL, NULL,
+                             overlapped ? (IO_STATUS_BLOCK *)overlapped : &status_block,
+                             FSCTL_PIPE_LISTEN, NULL, 0, NULL, 0);
 
-    if (ret)
-    {
-        if (overlapped)
-        {
-            SetLastError( ERROR_IO_PENDING );
-            ret = FALSE;
-        }
-        else
-        {
-            ret = GetOverlappedResult(hPipe, &ov, NULL, TRUE);
-            CloseHandle(ov.hEvent);
-        }
-    }
-
-    return ret;
+    if (status == STATUS_SUCCESS) return TRUE;
+    SetLastError( RtlNtStatusToDosError(status) );
+    return FALSE;
 }
 
 /***********************************************************************

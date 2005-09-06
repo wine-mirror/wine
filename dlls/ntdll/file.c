@@ -862,24 +862,90 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE DeviceHandle, HANDLE hEvent,
     return IoStatusBlock->u.Status;
 }
 
-/******************************************************************************
- * NtFsControlFile [NTDLL.@]
- * ZwFsControlFile [NTDLL.@]
+/***********************************************************************
+ *           pipe_completion_wait   (Internal)
+ */
+static void CALLBACK pipe_completion_wait(HANDLE event, PIO_STATUS_BLOCK iosb, ULONG status)
+{
+    TRACE("for %p/%p, status=%08lx\n", event, iosb, status);
+
+    if (iosb)
+        iosb->u.Status = status;
+    NtSetEvent(event, NULL);
+    TRACE("done\n");
+}
+
+/**************************************************************************
+ *              NtFsControlFile                 [NTDLL.@]
+ *              ZwFsControlFile                 [NTDLL.@]
+ *
+ * Perform a file system control operation on an open file handle.
+ *
+ * PARAMS
+ *  DeviceHandle     [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  Event            [I] Event to signal upon completion (or NULL)
+ *  ApcRoutine       [I] Callback to call upon completion (or NULL)
+ *  ApcContext       [I] Context for ApcRoutine (or NULL)
+ *  IoStatusBlock    [O] Receives information about the operation on return
+ *  FsControlCode    [I] Control code for the operation to perform
+ *  InputBuffer      [I] Source for any input data required (or NULL)
+ *  InputBufferSize  [I] Size of InputBuffer
+ *  OutputBuffer     [O] Source for any output data returned (or NULL)
+ *  OutputBufferSize [I] Size of OutputBuffer
+ *
+ * RETURNS
+ *  Success: 0. IoStatusBlock is updated.
+ *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtFsControlFile(HANDLE DeviceHandle, HANDLE Event OPTIONAL, PIO_APC_ROUTINE ApcRoutine,
-                                PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, ULONG IoControlCode,
+                                PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, ULONG FsControlCode,
                                 PVOID InputBuffer, ULONG InputBufferSize, PVOID OutputBuffer, ULONG OutputBufferSize)
 {
     NTSTATUS ret;
 
     TRACE("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx)\n",
-    DeviceHandle,Event,ApcRoutine,ApcContext,IoStatusBlock,IoControlCode,
+    DeviceHandle,Event,ApcRoutine,ApcContext,IoStatusBlock,FsControlCode,
     InputBuffer,InputBufferSize,OutputBuffer,OutputBufferSize);
 
     if(!IoStatusBlock) return STATUS_INVALID_PARAMETER;
 
-    switch(IoControlCode)
+    switch(FsControlCode)
     {
+        case FSCTL_PIPE_LISTEN :
+        {
+            HANDLE internal_event;
+
+            if(!Event)
+            {
+                OBJECT_ATTRIBUTES obj;
+                InitializeObjectAttributes(&obj, NULL, 0, 0, NULL);
+                ret = NtCreateEvent(&internal_event, EVENT_ALL_ACCESS, &obj, FALSE, FALSE);
+                if(ret != STATUS_SUCCESS) return ret;
+            }
+
+            SERVER_START_REQ(connect_named_pipe)
+            {
+                req->handle = DeviceHandle;
+                req->event = Event ? Event : internal_event;
+                req->func = pipe_completion_wait;
+                ret = wine_server_call(req);
+            }
+            SERVER_END_REQ;
+
+            if(ret == STATUS_SUCCESS)
+            {
+                if(Event)
+                    ret = STATUS_PENDING;
+                else
+                {
+                    do
+                        ret = NtWaitForSingleObject(internal_event, TRUE, NULL);
+                    while(ret == STATUS_USER_APC);
+                    NtClose(internal_event);
+                }
+            }
+            break;
+        }
         case FSCTL_PIPE_DISCONNECT :
             SERVER_START_REQ(disconnect_named_pipe)
             {
@@ -888,11 +954,14 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE DeviceHandle, HANDLE Event OPTIONAL, PIO_
                 if (!ret && reply->fd != -1) close(reply->fd);
             }
             SERVER_END_REQ;
-            return ret;
+            break;
         default :
-            FIXME("Unsupported IoControlCode %lx\n", IoControlCode);
-            return STATUS_NOT_SUPPORTED;
+            FIXME("Unsupported FsControlCode %lx\n", FsControlCode);
+            ret = STATUS_NOT_SUPPORTED;
+            break;
     }
+    IoStatusBlock->u.Status = ret;
+    return ret;
 }
 
 /******************************************************************************

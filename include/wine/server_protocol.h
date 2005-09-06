@@ -2408,7 +2408,7 @@ struct connect_named_pipe_request
 {
     struct request_header __header;
     obj_handle_t   handle;
-    void*          overlapped;
+    obj_handle_t   event;
     void*          func;
 };
 struct connect_named_pipe_reply
@@ -4206,6 +4206,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 191
+#define SERVER_PROTOCOL_VERSION 192
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

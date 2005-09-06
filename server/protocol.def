@@ -1712,7 +1712,7 @@ enum message_type
 /* Connect to a named pipe */
 @REQ(connect_named_pipe)
     obj_handle_t   handle;
-    void*          overlapped;
+    obj_handle_t   event;
     void*          func;
 @END
 

@@ -2173,7 +2173,7 @@ static void dump_open_named_pipe_reply( const struct open_named_pipe_reply *req 
 static void dump_connect_named_pipe_request( const struct connect_named_pipe_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " overlapped=%p,", req->overlapped );
+    fprintf( stderr, " event=%p,", req->event );
     fprintf( stderr, " func=%p", req->func );
 }
 
