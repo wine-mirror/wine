@@ -173,8 +173,8 @@
 177 stub MsiAdvertiseScriptW
 178 stub MsiGetPatchInfoA
 179 stub MsiGetPatchInfoW
-180 stub MsiEnumPatchesA
-181 stub MsiEnumPatchesW
+180 stdcall MsiEnumPatchesA(str long ptr ptr ptr)
+181 stdcall MsiEnumPatchesW(str long ptr ptr ptr)
 182 stdcall -private DllGetVersion(ptr)
 183 stub MsiGetProductCodeFromPackageCodeA
 184 stub MsiGetProductCodeFromPackageCodeW
