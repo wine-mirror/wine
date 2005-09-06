@@ -388,7 +388,9 @@ static void test_viewmodify(void)
     ok(r == ERROR_SUCCESS, "query failed\n");
 
     /* check what the error function reports without doing anything */
-    r = MsiViewGetError( 0, NULL, NULL );
+    sz = 0;
+    /* passing NULL as the 3rd param make function to crash on older platforms */
+    r = MsiViewGetError( 0, NULL, &sz );
     ok(r == MSIDBERROR_INVALIDARG, "MsiViewGetError return\n");
 
     /* open a view */
