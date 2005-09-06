@@ -46,6 +46,7 @@ static IMalloc *ppM;
 static HRESULT (WINAPI *pSHBindToParent)(LPCITEMIDLIST, REFIID, LPVOID*, LPCITEMIDLIST*);
 static BOOL (WINAPI *pSHGetSpecialFolderPathW)(HWND, LPWSTR, int, BOOL);
 static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
+static LPITEMIDLIST (WINAPI *pILFindLastID)(LPCITEMIDLIST);
 
 static void init_function_pointers(void)
 {
@@ -57,6 +58,8 @@ static void init_function_pointers(void)
     {
         pSHBindToParent = (void*)GetProcAddress(hmod, "SHBindToParent");
         pSHGetSpecialFolderPathW = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathW");
+        pILFindLastID = (void *)GetProcAddress(hmod, (LPCSTR)16);
+
     }
 
     hmod = GetModuleHandleA("shlwapi.dll");
@@ -379,7 +382,7 @@ static void test_GetDisplayName(void)
 
     /* This test shows that Windows doesn't allocate a new pidlLast, but returns a pointer into 
      * pidlTestFile (In accordance with MSDN). */
-    todo_wine{ok (ILFindLastID(pidlTestFile) == pidlLast, 
+    todo_wine{ok (pILFindLastID(pidlTestFile) == pidlLast, 
                                 "SHBindToParent doesn't return the last id of the pidl param!\n");}
     
     hr = IShellFolder_GetDisplayNameOf(psfPersonal, pidlLast, SHGDN_FORPARSING, &strret);
