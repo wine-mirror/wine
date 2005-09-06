@@ -37,8 +37,7 @@
 #include <poll.h>
 #endif
 
-#include "windef.h"
-#include "winnt.h"
+#include "winternl.h"
 
 #include "file.h"
 #include "handle.h"
@@ -233,7 +232,7 @@ struct thread *create_process( int fd )
     process->msg_fd          = NULL;
     process->exit_code       = STILL_ACTIVE;
     process->running_threads = 0;
-    process->priority        = NORMAL_PRIORITY_CLASS;
+    process->priority        = PROCESS_PRIOCLASS_NORMAL;
     process->affinity        = 1;
     process->suspend         = 0;
     process->create_flags    = 0;

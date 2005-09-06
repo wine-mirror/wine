@@ -2607,16 +2607,38 @@ HANDLE WINAPI CreateSocketHandle(void)
  */
 BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )
 {
-    BOOL ret;
-    SERVER_START_REQ( set_process_info )
+    NTSTATUS                    status;
+    PROCESS_PRIORITY_CLASS      ppc;
+
+    ppc.Foreground = FALSE;
+    switch (priorityclass)
     {
-        req->handle   = hprocess;
-        req->priority = priorityclass;
-        req->mask     = SET_PROCESS_INFO_PRIORITY;
-        ret = !wine_server_call_err( req );
+    case IDLE_PRIORITY_CLASS:
+        ppc.PriorityClass = PROCESS_PRIOCLASS_IDLE; break;
+    case BELOW_NORMAL_PRIORITY_CLASS:
+        ppc.PriorityClass = PROCESS_PRIOCLASS_BELOW_NORMAL; break;
+    case NORMAL_PRIORITY_CLASS:
+        ppc.PriorityClass = PROCESS_PRIOCLASS_NORMAL; break;
+    case ABOVE_NORMAL_PRIORITY_CLASS:
+        ppc.PriorityClass = PROCESS_PRIOCLASS_ABOVE_NORMAL; break;
+    case HIGH_PRIORITY_CLASS:
+        ppc.PriorityClass = PROCESS_PRIOCLASS_HIGH; break;
+    case REALTIME_PRIORITY_CLASS:
+        ppc.PriorityClass = PROCESS_PRIOCLASS_REALTIME; break;
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
-    SERVER_END_REQ;
-    return ret;
+
+    status = NtSetInformationProcess(hprocess, ProcessPriorityClass,
+                                     &ppc, sizeof(ppc));
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 
@@ -2630,8 +2652,21 @@ DWORD WINAPI GetPriorityClass(HANDLE hProcess)
 
     status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi,
                                        sizeof(pbi), NULL);
-    if (status == STATUS_SUCCESS) return pbi.BasePriority;
-    SetLastError( RtlNtStatusToDosError(status) );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
+    switch (pbi.BasePriority)
+    {
+    case PROCESS_PRIOCLASS_IDLE: return IDLE_PRIORITY_CLASS;
+    case PROCESS_PRIOCLASS_BELOW_NORMAL: return BELOW_NORMAL_PRIORITY_CLASS;
+    case PROCESS_PRIOCLASS_NORMAL: return NORMAL_PRIORITY_CLASS;
+    case PROCESS_PRIOCLASS_ABOVE_NORMAL: return ABOVE_NORMAL_PRIORITY_CLASS;
+    case PROCESS_PRIOCLASS_HIGH: return HIGH_PRIORITY_CLASS;
+    case PROCESS_PRIOCLASS_REALTIME: return REALTIME_PRIORITY_CLASS;
+    }
+    SetLastError( ERROR_INVALID_PARAMETER );
     return 0;
 }
 

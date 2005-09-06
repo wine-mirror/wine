@@ -160,7 +160,25 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32W lppe, BOOL 
             lppe->th32ModuleID        = (DWORD)reply->module;
             lppe->cntThreads          = reply->threads;
             lppe->th32ParentProcessID = reply->ppid;
-            lppe->pcPriClassBase      = reply->priority;
+            switch (reply->priority)
+            {
+            case PROCESS_PRIOCLASS_IDLE:
+                lppe->pcPriClassBase = IDLE_PRIORITY_CLASS; break;
+            case PROCESS_PRIOCLASS_BELOW_NORMAL:
+                lppe->pcPriClassBase = BELOW_NORMAL_PRIORITY_CLASS; break;
+            case PROCESS_PRIOCLASS_NORMAL:
+                lppe->pcPriClassBase = NORMAL_PRIORITY_CLASS; break;
+            case PROCESS_PRIOCLASS_ABOVE_NORMAL:
+                lppe->pcPriClassBase = ABOVE_NORMAL_PRIORITY_CLASS; break;
+            case PROCESS_PRIOCLASS_HIGH:
+                lppe->pcPriClassBase = HIGH_PRIORITY_CLASS; break;
+            case PROCESS_PRIOCLASS_REALTIME:
+                lppe->pcPriClassBase = REALTIME_PRIORITY_CLASS; break;
+            default:
+                FIXME("Unknown NT priority class %d, setting to normal\n", reply->priority);
+                lppe->pcPriClassBase = NORMAL_PRIORITY_CLASS;
+                break;
+            }
             lppe->dwFlags             = -1; /* FIXME */
             if (unicode)
             {

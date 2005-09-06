@@ -302,9 +302,36 @@ NTSTATUS WINAPI NtSetInformationProcess(
 	IN PVOID ProcessInformation,
 	IN ULONG ProcessInformationLength)
 {
-    FIXME("(%p,0x%08x,%p,0x%08lx) stub\n",
-          ProcessHandle,ProcessInformationClass,ProcessInformation,ProcessInformationLength);
-    return 0;
+    NTSTATUS ret = STATUS_SUCCESS;
+
+    switch (ProcessInformationClass)
+    {
+    case ProcessPriorityClass:
+        if (ProcessInformationLength != sizeof(PROCESS_PRIORITY_CLASS))
+            return STATUS_INVALID_PARAMETER;
+        else
+        {
+            PROCESS_PRIORITY_CLASS* ppc = ProcessInformation;
+
+            SERVER_START_REQ( set_process_info )
+            {
+                req->handle   = ProcessHandle;
+                /* FIXME Foreground isn't used */
+                req->priority = ppc->PriorityClass;
+                req->mask     = SET_PROCESS_INFO_PRIORITY;
+                ret = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        }
+        break;
+    default:
+        FIXME("(%p,0x%08x,%p,0x%08lx) stub\n",
+              ProcessHandle,ProcessInformationClass,ProcessInformation,
+              ProcessInformationLength);
+        ret = STATUS_NOT_IMPLEMENTED;
+        break;
+    }
+    return ret;
 }
 
 /******************************************************************************
