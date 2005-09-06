@@ -41,7 +41,7 @@ void _beep( unsigned int freq, unsigned int duration)
 /*********************************************************************
  *		rand (MSVCRT.@)
  */
-int MSVCRT_rand()
+int MSVCRT_rand(void)
 {
   return (rand() & 0x7fff);
 }

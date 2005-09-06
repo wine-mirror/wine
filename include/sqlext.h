@@ -1635,9 +1635,9 @@ SQLRETURN WINAPI  SQLSetScrollOptions(
 #define		TRACE_VERSION	1000
 
 RETCODE	 TraceOpenLogFile(LPWSTR,LPWSTR,DWORD);
-RETCODE	 TraceCloseLogFile();
+RETCODE	 TraceCloseLogFile(void);
 VOID	 TraceReturn(RETCODE,RETCODE);
-DWORD	 TraceVersion();
+DWORD	 TraceVersion(void);
 
 /*#define TRACE_ON		0x00000001L*/
 #define TRACE_VS_EVENT_ON	0x00000002L

@@ -1030,7 +1030,7 @@ BOOL WINAPI SSInit16(void)
  * RETURNS
  *	TRUE for success.
  */
-BOOL WINAPI SSOnBigStack()
+BOOL WINAPI SSOnBigStack(void)
 {
     TRACE("Yes, thunking is initialized\n");
     return TRUE;
@@ -2109,7 +2109,7 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE16 handle, LPSTR func_name)
  *		GetWin16DOSEnv			(KERNEL32.34)
  * Returns some internal value.... probably the default environment database?
  */
-DWORD WINAPI GetWin16DOSEnv()
+DWORD WINAPI GetWin16DOSEnv(void)
 {
 	FIXME("stub, returning 0\n");
 	return 0;
