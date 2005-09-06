@@ -182,6 +182,7 @@ typedef struct tagFace {
     BOOL Italic;
     BOOL Bold;
     FONTSIGNATURE fs;
+    FONTSIGNATURE fs_links;
     FT_Fixed font_version;
     BOOL scalable;
     Bitmap_Size size;     /* set if face is a bitmap */
@@ -219,6 +220,13 @@ typedef struct tagHFONTLIST {
     HFONT hfont;
 } HFONTLIST;
 
+typedef struct {
+    struct list entry;
+    char *file_name;
+    INT index;
+    GdiFont font;
+} CHILD_FONT;
+
 struct tagGdiFont {
     struct list entry;
     FT_Face ft_face;
@@ -241,11 +249,18 @@ struct tagGdiFont {
     FONTSIGNATURE fs;
 };
 
+typedef struct {
+    struct list entry;
+    WCHAR *font_name;
+    struct list links;
+} SYSTEM_LINKS;
+
 #define INIT_GM_SIZE 128
 
 static struct list gdi_font_list = LIST_INIT(gdi_font_list);
 static struct list unused_gdi_font_list = LIST_INIT(unused_gdi_font_list);
 #define UNUSED_CACHE_SIZE 10
+static struct list system_links = LIST_INIT(system_links);
 
 static struct list font_list = LIST_INIT(font_list);
 
@@ -564,6 +579,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
             face->family = family;
             face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
             memcpy(&face->fs, &fs, sizeof(face->fs));
+            memset(&face->fs_links, 0, sizeof(face->fs_links));
 
             if(FT_IS_SCALABLE(ft_face)) {
                 memset(&face->size, 0, sizeof(face->size));
@@ -635,6 +651,49 @@ static void DumpFontList(void)
     return;
 }
 
+static Face *find_face_from_filename(WCHAR *name)
+{
+    Family *family;
+    Face *face;
+    char *file;
+    DWORD len = WideCharToMultiByte(CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL);
+    char *nameA = HeapAlloc(GetProcessHeap(), 0, len);
+    Face *ret = NULL;
+
+    WideCharToMultiByte(CP_UNIXCP, 0, name, -1, nameA, len, NULL, NULL);
+    TRACE("looking for %s\n", debugstr_a(nameA));
+
+    LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
+    {
+        LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+        {
+            file = strrchr(face->file, '/');
+            if(!file)
+                file = face->file;
+            else
+                file++;
+            if(!strcmp(file, nameA))
+                ret = face;
+            break;
+	}
+    }
+    HeapFree(GetProcessHeap(), 0, nameA);
+    return ret;
+}
+
+static Family *find_family_from_name(WCHAR *name)
+{
+    Family *family;
+
+    LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
+    {
+        if(!strcmpiW(family->FamilyName, name))
+            return family;
+    }
+
+    return NULL;
+}
+    
 static void DumpSubstList(void)
 {
     FontSubst *psub;
@@ -649,10 +708,19 @@ static void DumpSubstList(void)
     return;
 }
 
-static LPWSTR strdupW(LPWSTR p)
+static LPWSTR strdupW(LPCWSTR p)
 {
     LPWSTR ret;
     DWORD len = (strlenW(p) + 1) * sizeof(WCHAR);
+    ret = HeapAlloc(GetProcessHeap(), 0, len);
+    memcpy(ret, p, len);
+    return ret;
+}
+
+static LPSTR strdupA(LPCSTR p)
+{
+    LPSTR ret;
+    DWORD len = (strlen(p) + 1);
     ret = HeapAlloc(GetProcessHeap(), 0, len);
     memcpy(ret, p, len);
     return ret;
@@ -804,6 +872,129 @@ static void LoadReplaceList(void)
     }
 }
 
+/*************************************************************
+ * init_system_links
+ */
+static BOOL init_system_links(void)
+{
+    static const WCHAR system_link[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+                                        'W','i','n','d','o','w','s',' ','N','T','\\',
+                                        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','F','o','n','t','L','i','n','k','\\',
+                                        'S','y','s','t','e','m','L','i','n','k',0};
+    HKEY hkey;
+    BOOL ret = FALSE;
+    DWORD type, max_val, max_data, val_len, data_len, index;
+    WCHAR *value, *data;
+    WCHAR *entry, *next;
+    SYSTEM_LINKS *font_link, *system_font_link;
+    CHILD_FONT *child_font;
+    static const WCHAR Tahoma[] = {'T','a','h','o','m','a',0};
+    static const WCHAR System[] = {'S','y','s','t','e','m',0};
+    FONTSIGNATURE fs;
+    Family *family;
+    Face *face;
+
+    if(RegOpenKeyW(HKEY_LOCAL_MACHINE, system_link, &hkey) == ERROR_SUCCESS)
+    {
+        RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &max_val, &max_data, NULL, NULL);
+        value = HeapAlloc(GetProcessHeap(), 0, (max_val + 1) * sizeof(WCHAR));
+        data = HeapAlloc(GetProcessHeap(), 0, max_data);
+        val_len = max_val + 1;
+        data_len = max_data;
+        index = 0;
+        while(RegEnumValueW(hkey, index++, value, &val_len, NULL, &type, (LPBYTE)data, &data_len) == ERROR_SUCCESS)
+        {
+            TRACE("%s:\n", debugstr_w(value));
+
+            memset(&fs, 0, sizeof(fs));
+            font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_link));
+            font_link->font_name = strdupW(value);
+            list_init(&font_link->links);
+            for(entry = data; (char*)entry < (char*)data + data_len && *entry != 0; entry = next)
+            {
+                WCHAR *face_name;
+                INT index;
+                CHILD_FONT *child_font;
+
+                TRACE("\t%s\n", debugstr_w(entry));
+
+                next = entry + strlenW(entry) + 1;
+                
+                face_name = strchrW(entry, ',');
+                if(!face_name)
+                    index = 0;
+                else
+                {
+                    FIXME("don't yet handle ttc's correctly in linking.  Assuming index 0\n");
+                    *face_name++ = 0;
+                    while(isspaceW(*face_name))
+                        face_name++;
+
+                    index = 0;
+                }
+                face = find_face_from_filename(entry);
+                if(!face)
+                {
+                    TRACE("Unable to find file %s\n", debugstr_w(entry));
+                    continue;
+                }
+
+                child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
+                child_font->file_name = strdupA(face->file);
+                child_font->index = index;
+                child_font->font = NULL;
+                fs.fsCsb[0] |= face->fs.fsCsb[0];
+                fs.fsCsb[1] |= face->fs.fsCsb[1];
+                list_add_tail(&font_link->links, &child_font->entry);
+            }
+            family = find_family_from_name(font_link->font_name);
+            if(family)
+            {
+                LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+                {
+                    memcpy(&face->fs_links, &fs, sizeof(fs));
+                }
+            }
+            list_add_tail(&system_links, &font_link->entry);
+            val_len = max_val + 1;
+            data_len = max_data;
+        }
+
+        HeapFree(GetProcessHeap(), 0, value);
+        HeapFree(GetProcessHeap(), 0, data);
+        RegCloseKey(hkey);
+    }
+
+    /* Explicitly add an entry for the system font, this links to Tahoma and any links
+       that Tahoma has */
+    system_font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*system_font_link));
+    system_font_link->font_name = strdupW(System);
+    list_init(&system_font_link->links);    
+    child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
+    child_font->file_name = strdupA("Tahoma.ttf");
+    child_font->index = 0;
+    child_font->font = NULL;
+    list_add_tail(&system_font_link->links, &child_font->entry);
+    LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
+    {
+        if(!strcmpW(font_link->font_name, Tahoma))
+        {
+            CHILD_FONT *font_link_entry;
+            LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
+            {
+                CHILD_FONT *new_child;
+                new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
+                new_child->file_name = strdupA(font_link_entry->file_name);
+                new_child->index = font_link_entry->index;
+                new_child->font = NULL;
+                list_add_tail(&system_font_link->links, &new_child->entry);
+            }
+            break;
+        }
+    }
+    list_add_tail(&system_links, &system_font_link->entry);
+    return ret;
+}
 
 static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 {
@@ -1263,6 +1454,8 @@ BOOL WineEngInit(void)
     LoadReplaceList();
     update_reg_entries();
 
+    init_system_links();
+    
     ReleaseMutex(font_mutex);
     return TRUE;
 sym_not_found:
