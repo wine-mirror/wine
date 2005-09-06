@@ -1,5 +1,6 @@
 Makefile
 generated.ok
 misc.ok
+protocol.ok
 testlist.c
 url.ok

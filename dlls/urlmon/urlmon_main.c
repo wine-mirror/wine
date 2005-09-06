@@ -101,6 +101,7 @@ struct object_creation_info
  
 static const struct object_creation_info object_creation[] =
 {
+    { &CLSID_FileProtocol, FileProtocol_Construct },
     { &CLSID_InternetSecurityManager, &SecManagerImpl_Construct },
     { &CLSID_InternetZoneManager, ZoneMgrImpl_Construct }
 };

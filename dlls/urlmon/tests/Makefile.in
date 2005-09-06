@@ -9,6 +9,7 @@ EXTRALIBS = -luuid
 CTESTS = \
 	generated.c \
 	misc.c \
+	protocol.c \
 	url.c
 
 @MAKE_TEST_RULES@

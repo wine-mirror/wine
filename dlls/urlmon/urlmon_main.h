@@ -27,6 +27,7 @@
 extern HINSTANCE URLMON_hInstance;
 extern HRESULT SecManagerImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT ZoneMgrImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
+extern HRESULT FileProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for urlmon.dll
@@ -36,6 +37,7 @@ static inline void URLMON_LockModule(void) { InterlockedIncrement( &URLMON_refCo
 static inline void URLMON_UnlockModule(void) { InterlockedDecrement( &URLMON_refCount ); }
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
+#define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
 typedef struct
 {	
