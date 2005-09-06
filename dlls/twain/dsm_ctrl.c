@@ -185,7 +185,10 @@ TW_UINT16 TWAIN_IdentityGetNext (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 
     TRACE("DG_CONTROL/DAT_IDENTITY/MSG_GETNEXT\n");
 
-    if (device_list && device_list[DSM_currentDevice])
+    if (device_list && device_list[DSM_currentDevice] &&
+        device_list[DSM_currentDevice]->name &&
+        device_list[DSM_currentDevice]->vendor &&
+        device_list[DSM_currentDevice]->model)
     {
         pSourceIdentity->Id = DSM_sourceId ++;
         strcpy (pSourceIdentity->ProductName, device_list[DSM_currentDevice]->name);
