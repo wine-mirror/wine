@@ -888,7 +888,7 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs )
 {
     EXCEPTION_RECORD *record = ptrs->ExceptionRecord;
-    CONTEXT *context = ptrs->ContextRecord;
+    CONTEXT86 *context = ptrs->ContextRecord;
 
     if (wine_ldt_is_system(context->SegCs) &&
         (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
