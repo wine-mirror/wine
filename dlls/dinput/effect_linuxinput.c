@@ -54,7 +54,7 @@ struct LinuxInputEffectImpl
     struct ff_effect effect;
 
     /* Parent device */
-    int 	fd;
+    int* 	fd;
 };
 
 
@@ -254,7 +254,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_Download(
 
     TRACE("(this=%p)\n", This);
 
-    if (ioctl(This->fd, EVIOCSFF, &This->effect) == -1) {
+    if (ioctl(*(This->fd), EVIOCSFF, &This->effect) == -1) {
 	if (errno == ENOMEM) {
 	    return DIERR_DEVICEFULL;
 	} else {
@@ -516,7 +516,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_Start(
     event.type = EV_FF;
     event.code = This->effect.id;
     event.value = dwIterations;
-    if (write(This->fd, &event, sizeof(event)) == -1) {
+    if (write(*(This->fd), &event, sizeof(event)) == -1) {
 	FIXME("Unable to write event.  Assuming device disconnected.\n");
 	return DIERR_INPUTLOST;
     }
@@ -708,7 +708,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
     if (!(dwFlags & DIEP_NODOWNLOAD))
 	retval = LinuxInputEffectImpl_Download(iface);
     if (retval != DI_OK)
-	return retval;
+	return DI_DOWNLOADSKIPPED;
 
     if (dwFlags & DIEP_NORESTART)
 	TRACE("DIEP_NORESTART: not handled (we have no control of that).\n");
@@ -744,7 +744,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_Stop(
     event.code = This->effect.id;
     event.value = 0;
     /* we don't care about the success or failure of this call */
-    write(This->fd, &event, sizeof(event));
+    write(*(This->fd), &event, sizeof(event));
 
     return DI_OK;
 }
@@ -756,7 +756,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_Unload(
     TRACE("(this=%p)\n", This);
 
     /* Erase the downloaded effect */
-    if (ioctl(This->fd, EVIOCRMFF, This->effect.id) == -1)
+    if (ioctl(*(This->fd), EVIOCRMFF, This->effect.id) == -1)
 	return DIERR_INVALIDPARAM;
 
     /* Mark the effect as deallocated */
@@ -770,7 +770,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_Unload(
  */
 
 HRESULT linuxinput_create_effect(
-	int fd,
+	int* fd,
 	REFGUID rguid,
 	LPDIRECTINPUTEFFECT* peff)
 {

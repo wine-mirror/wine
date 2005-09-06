@@ -77,7 +77,7 @@ struct EffectListItem
 };
 
 /* implemented in effect_linuxinput.c */
-HRESULT linuxinput_create_effect(int fd, REFGUID rguid, LPDIRECTINPUTEFFECT* peff);
+HRESULT linuxinput_create_effect(int* fd, REFGUID rguid, LPDIRECTINPUTEFFECT* peff);
 HRESULT linuxinput_get_info_A(int fd, REFGUID rguid, LPDIEFFECTINFOA info);
 HRESULT linuxinput_get_info_W(int fd, REFGUID rguid, LPDIEFFECTINFOW info);
 
@@ -1171,13 +1171,13 @@ static HRESULT WINAPI JoystickAImpl_CreateEffect(LPDIRECTINPUTDEVICE8A iface,
     new->next = This->top_effect;
     This->top_effect = new;
 
-    retval = linuxinput_create_effect(This->joyfd, rguid, &(new->ref));
+    retval = linuxinput_create_effect(&(This->joyfd), rguid, &(new->ref));
     if (retval != DI_OK)
 	return retval;
  
     if (lpeff != NULL)
 	retval = new->ref->lpVtbl->SetParameters(new->ref, lpeff, 0); 
-    if (retval != DI_OK)
+    if (retval != DI_OK && retval != DI_DOWNLOADSKIPPED)
 	return retval;
 
     *ppdef = new->ref;
