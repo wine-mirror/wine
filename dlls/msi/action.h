@@ -54,7 +54,7 @@ typedef struct tagMSICOMPONENT
     WCHAR ComponentId[IDENTIFIER_SIZE];
     WCHAR Directory[IDENTIFIER_SIZE];
     INT Attributes;
-    WCHAR Condition[0x100];
+    LPWSTR Condition;
     WCHAR KeyPath[IDENTIFIER_SIZE];
 
     INSTALLSTATE Installed;

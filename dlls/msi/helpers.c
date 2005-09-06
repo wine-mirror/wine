@@ -485,6 +485,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSICOMPONENT *comp = LIST_ENTRY( item, MSICOMPONENT, entry );
         
         list_remove( &comp->entry );
+        HeapFree( GetProcessHeap(), 0, comp->Condition );
         HeapFree( GetProcessHeap(), 0, comp->FullKeypath );
         HeapFree( GetProcessHeap(), 0, comp );
     }

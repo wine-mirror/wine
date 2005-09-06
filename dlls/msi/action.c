@@ -993,8 +993,7 @@ static MSICOMPONENT* load_component( MSIRECORD * row )
 
     comp->Attributes = MSI_RecordGetInteger(row,4);
 
-    sz = 0x100;       
-    MSI_RecordGetStringW(row,5,comp->Condition,&sz);
+    comp->Condition = load_dynamic_stringW( row, 5 );
 
     sz = IDENTIFIER_SIZE;       
     MSI_RecordGetStringW(row,6,comp->KeyPath,&sz);
@@ -1826,7 +1825,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     TRACE("Enabling or Disabling Components\n");
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
-        if (comp->Condition[0])
+        if (comp->Condition)
         {
             if (MSI_EvaluateConditionW(package,
                 comp->Condition) == MSICONDITION_FALSE)
