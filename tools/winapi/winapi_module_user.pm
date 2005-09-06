@@ -738,7 +738,7 @@ sub _parse_windowsx_h($$$) {
 		$output->write("message $name: result type mismatch '$result' != '$result2'\n");
 	    }
 	    foreach (split(/\s*,\s*/)) {
-		if(/^((?:const\s+)?\w+(?:\s*\*\s*|\s+)?)(\w+)$/) {
+		if(/^((?:const\s+|volatile\s+)?\w+(?:\s*\*\s*|\s+)?)(\w+)$/) {
 		    my $type = $1;
 		    my $name = $2;
 
@@ -756,7 +756,7 @@ sub _parse_windowsx_h($$$) {
 
 	my $find_inner_cast = sub {
 	    local $_ = shift;
-	    if(/^(?:\(\s*((?:const\s+)?\w+(?:\s*\*)?)\s*\))*\(.*?\)$/) {
+	    if(/^(?:\(\s*((?:const\s+|volatile\s+)?\w+(?:\s*\*)?)\s*\))*\(.*?\)$/) {
 		if(defined($1)) {
 		    return $1;
 		} else {
@@ -774,7 +774,7 @@ sub _parse_windowsx_h($$$) {
 	    (my $refparam, my $upper, my $lower) = @$entry;
 
 	    local $_ = $$refparam;
-	    if(s/^\(\s*$upper(?:)PARAM\s*\)\s*(?:\(\s*((?:const\s+)?\w+(?:\s*\*)?)\s*\))*\(\s*(.*?)\s*\)$/$2/) {
+	    if(s/^\(\s*$upper(?:)PARAM\s*\)\s*(?:\(\s*((?:const\s+|volatile\s+)?\w+(?:\s*\*)?)\s*\))*\(\s*(.*?)\s*\)$/$2/) {
 		if(defined($1)) {
 		    $$refparam = $1;
 		} else {
@@ -792,7 +792,7 @@ sub _parse_windowsx_h($$$) {
 			    last;
 			}
 		    }
-		} elsif(/^\(\((?:const\s+)?\w+\s*(?:\*\s*)?\)\s*(?:\(\s*\w+\s*\)|\w+)\s*\)\s*\->\s*\w+$/) {
+		} elsif(/^\(\((?:const\s+|volatile\s+)?\w+\s*(?:\*\s*)?\)\s*(?:\(\s*\w+\s*\)|\w+)\s*\)\s*\->\s*\w+$/) {
 		    $$refparam = "UINT";
 		} else {
 		    die "$name: '$_'";

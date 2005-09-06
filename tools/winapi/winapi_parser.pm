@@ -426,14 +426,14 @@ sub parse_c_file($$) {
 		$argument =~ s/^\s*(.*?)\s*$/$1/;
 		# print "  " . ($n + 1) . ": '$argument'\n";
 		$argument =~ s/^(IN OUT(?=\s)|IN(?=\s)|OUT(?=\s)|\s*)\s*//;
-		$argument =~ s/^(const(?=\s)|CONST(?=\s)|\s*)\s*//;
+		$argument =~ s/^(const(?=\s)|CONST(?=\s)|volatile(?=\s)|\s*)\s*//;
 		if($argument =~ /^\.\.\.$/) {
 		    $argument_type = "...";
 		    $argument_name = "...";
 		} elsif($argument =~ /^
 			((?:struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
 			  (?:short\s+(?=int)|long\s+(?=int))?)?(?:\w+|ElfW\(\w+\)|WS\(\w+\)))\s*
-			((?:__RPC_FAR|const|CONST)?\s*(?:\*\s*(?:__RPC_FAR|const|CONST)?\s*?)*)\s*
+			((?:__RPC_FAR|const|CONST|volatile)?\s*(?:\*\s*(?:__RPC_FAR|const|CONST|volatile)?\s*?)*)\s*
 			(\w*)\s*(\[\])?(?:\s+OPTIONAL)?$/x)
 		{
 		    $argument_type = $1;
@@ -447,7 +447,7 @@ sub parse_c_file($$) {
 		} elsif ($argument =~ /^
 			((?:struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
 			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
-			((?:const)?\s*(?:\*\s*(?:const)?\s*?)*)\s*
+			((?:const|volatile)?\s*(?:\*\s*(?:const|volatile)?\s*?)*)\s*
 			(?:__cdecl\s+|__stdcall\s+|CALLBACK\s+|CDECL\s+|NET_API_FUNCTION\s+|RPC_ENTRY\s+|STDMETHODCALLTYPE\s+|VFWAPIV\s+|VFWAPI\s+|WINAPIV\s+|WINAPI\s+)?
 			\(\s*(?:__cdecl|__stdcall|CALLBACK|CDECL|NET_API_FUNCTION|RPC_ENTRY|STDMETHODCALLTYPE|VFWAPIV|VFWAPI|WINAPIV|WINAPI)?\s*\*\s*((?:\w+)?)\s*\)\s*
 			\(\s*(.*?)\s*\)$/x) 
@@ -466,7 +466,7 @@ sub parse_c_file($$) {
 		} elsif ($argument =~ /^
 			((?:struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
 			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
-			((?:const)?\s*(?:\*\s*(?:const)?\s*?)*)\s*
+			((?:const|volatile)?\s*(?:\*\s*(?:const|volatile)?\s*?)*)\s*
 			(\w+)\s*\[\s*(.*?)\s*\](?:\[\s*(.*?)\s*\])?$/x)
 		{
 		    my $return_type = $1;
@@ -486,7 +486,7 @@ sub parse_c_file($$) {
 		    die "$file: $.: syntax error: '$argument'\n";
 		}
 
-		$argument_type =~ s/\s*const\s*/ /g; # Remove const
+		$argument_type =~ s/\s*(?:const|volatile)\s*/ /g; # Remove const/volatile
 		$argument_type =~ s/([^\*\(\s])\*/$1 \*/g; # Assure whitespace between non-* and *
 		$argument_type =~ s/,([^\s])/, $1/g; # Assure whitespace after ,
 		$argument_type =~ s/\*\s+\*/\*\*/g; # Remove whitespace between * and *
@@ -556,9 +556,9 @@ sub parse_c_file($$) {
 	    }
 	    &$type_begin($type);
 	} elsif(/typedef\s+
-		((?:const\s+|CONST\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+)*?)
+		((?:const\s+|CONST\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+|volatile\s+)*?)
 		(\w+)
-		(?:\s+const)?
+		(?:\s+const|\s+volatile)?
 		((?:\s*(?:(?:FAR|__RPC_FAR|TW_HUGE)?\s*)?\*+\s*|\s+)(?:volatile\s+|DECLSPEC_ALIGN\(\d+\)\s+)?\w+\s*(?:\[[^\]]*\])*
 		(?:\s*,\s*(?:\s*(?:(?:FAR|__RPC_FAR|TW_HUGE)?\s*)?\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])?)*)
 		\s*;/sx)
@@ -584,7 +584,7 @@ sub parse_c_file($$) {
 	    &$type_begin($type);
 	    &$type_end([@names]);
 	} elsif(/typedef\s+
-		(?:(?:const\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+)*?)
+		(?:(?:const\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+|volatile\s+)*?)
 		(\w+(?:\s*\*+\s*)?)\s*
 		(?:(\w+)\s*)?
 		\((?:(\w+)\s*)?\s*(?:\*\s*(\w+)|_ATL_CATMAPFUNC)\s*\)\s*
