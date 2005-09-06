@@ -2294,28 +2294,33 @@ static void EDIT_AdjustFormatRect(EDITSTATE *es)
 static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
 {
 	LONG_PTR ExStyle;
-
-	CopyRect(&es->format_rect, rc);
+	INT bw, bh;
 	ExStyle = GetWindowLongPtrW(es->hwndSelf, GWL_EXSTYLE);
-	if ((es->style & WS_POPUP) && !(ExStyle & WS_EX_CLIENTEDGE)) {
-		if (es->style & WS_BORDER) {
-			INT bw = GetSystemMetrics(SM_CXBORDER) + 1;
-			es->format_rect.left += bw;
-			es->format_rect.right -= bw;
-			if (es->line_height + 2 * bw <=
-		    	es->format_rect.bottom - es->format_rect.top) {
-				es->format_rect.top += bw;
-				es->format_rect.bottom -= bw;
-			}
-		}
-	} else {
-		if (es->line_height + 2 <=
-			es->format_rect.bottom - es->format_rect.top) {
+	
+	CopyRect(&es->format_rect, rc);
+	
+	if (ExStyle & WS_EX_CLIENTEDGE) {
+		es->format_rect.left++;
+		es->format_rect.right--;
+		
+		if (es->format_rect.bottom - es->format_rect.top
+		    >= es->line_height + 2)
+		{
 			es->format_rect.top++;
 			es->format_rect.bottom--;
 		}
-		es->format_rect.left++;
-		es->format_rect.right--;
+	}
+	else if (es->style & WS_BORDER) {
+		bw = GetSystemMetrics(SM_CXBORDER) + 1;
+		bh = GetSystemMetrics(SM_CYBORDER) + 1;
+		es->format_rect.left += bw;
+		es->format_rect.right -= bw;
+		if (es->format_rect.bottom - es->format_rect.top
+		  >= es->line_height + 2 * bh)
+		{
+		    es->format_rect.top += bh;
+		    es->format_rect.bottom -= bh;
+		}
 	}
 	
 	es->format_rect.left += es->left_margin;
@@ -4712,6 +4717,7 @@ static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
 	RECT rcRgn;
 	HBRUSH brush;
 	HBRUSH old_brush;
+	INT bw, bh;
 	BOOL rev = es->bEnableState &&
 				((es->flags & EF_FOCUSED) ||
 					(es->style & ES_NOHIDESEL));
@@ -4725,20 +4731,32 @@ static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
 
 	/* paint the border and the background */
 	IntersectClipRect(dc, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
+	
 	if(es->style & WS_BORDER) {
+		bw = GetSystemMetrics(SM_CXBORDER);
+		bh = GetSystemMetrics(SM_CYBORDER);
 		rc = rcClient;
 		if(es->style & ES_MULTILINE) {
-			if(es->style & WS_HSCROLL) rc.bottom++;
-			if(es->style & WS_VSCROLL) rc.right++;
+			if(es->style & WS_HSCROLL) rc.bottom+=bh;
+			if(es->style & WS_VSCROLL) rc.right+=bw;
 		}
-		old_brush = SelectObject(dc, brush);
-		Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
+		
+		/* Draw the frame. Same code as in nonclient.c */
+		old_brush = SelectObject(dc, GetSysColorBrush(COLOR_WINDOWFRAME));
+		PatBlt(dc, rc.left, rc.top, rc.right - rc.left, bh, PATCOPY);
+		PatBlt(dc, rc.left, rc.top, bw, rc.bottom - rc.top, PATCOPY);
+		PatBlt(dc, rc.left, rc.bottom - 1, rc.right - rc.left, -bw, PATCOPY);
+		PatBlt(dc, rc.right - 1, rc.top, -bw, rc.bottom - rc.top, PATCOPY);
 		SelectObject(dc, old_brush);
+		
+		/* Keep the border clean */
+		IntersectClipRect(dc, rc.left+bw, rc.top+bh,
+		    max(rc.right-bw, rc.left+bw), max(rc.bottom-bh, rc.top+bh));
 	}
-	else {
-		GetClipBox(dc, &rc);
-		FillRect(dc, &rc, brush);
-	}
+	
+	GetClipBox(dc, &rc);
+	FillRect(dc, &rc, brush);
+
 	IntersectClipRect(dc, es->format_rect.left,
 				es->format_rect.top,
 				es->format_rect.right,
