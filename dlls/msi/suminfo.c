@@ -544,6 +544,7 @@ static UINT get_prop( MSIHANDLE handle, UINT uiProperty, UINT *puiDataType,
 {
     MSISUMMARYINFO *si;
     PROPVARIANT *prop;
+    UINT ret = ERROR_SUCCESS;
 
     TRACE("%ld %d %p %p %p %p %p\n", handle, uiProperty, puiDataType,
           piValue, pftValue, str, pcchValueBuf);
@@ -583,6 +584,8 @@ static UINT get_prop( MSIHANDLE handle, UINT uiProperty, UINT *puiDataType,
                 if( str->str.a )
                     lstrcpynA(str->str.a, prop->u.pszVal, *pcchValueBuf );
             }
+            if (len >= *pcchValueBuf)
+                ret = ERROR_MORE_DATA;
             *pcchValueBuf = len;
         }
         break;
@@ -597,7 +600,7 @@ static UINT get_prop( MSIHANDLE handle, UINT uiProperty, UINT *puiDataType,
         break;
     }
     msiobj_release( &si->hdr );
-    return ERROR_SUCCESS;
+    return ret;
 }
 
 UINT WINAPI MsiSummaryInfoGetPropertyA(

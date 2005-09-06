@@ -67,7 +67,7 @@ START_TEST(suminfo)
     const char *msifile = "winetest.msi";
     MSIHANDLE hdb = 0, hsuminfo;
     UINT r, count, type;
-    DWORD dwcount;
+    DWORD sz;
     INT val;
     FILETIME ft;
     char buf[0x10];
@@ -112,11 +112,11 @@ START_TEST(suminfo)
 
     buf[0]='x';
     buf[1]=0;
-    dwcount = 0x10;
-    r = MsiSummaryInfoGetProperty(hsuminfo, PID_REVNUMBER, &type, &val, NULL, buf, &dwcount);
+    sz = 0x10;
+    r = MsiSummaryInfoGetProperty(hsuminfo, PID_REVNUMBER, &type, &val, NULL, buf, &sz);
     ok(r == ERROR_SUCCESS, "getpropcount failed\n");
     ok(buf[0]=='x', "cleared buffer\n");
-    ok(dwcount == 0x10, "count wasn't zero\n");
+    ok(sz == 0x10, "count wasn't zero\n");
     ok(type == VT_EMPTY, "should be empty\n");
 
     r = MsiSummaryInfoSetProperty(hsuminfo, PID_TITLE, VT_LPSTR, 0, NULL, "Mike");
@@ -176,6 +176,22 @@ START_TEST(suminfo)
 
     r = MsiSummaryInfoSetProperty(hsuminfo, PID_TITLE, VT_LPSTR, 0, NULL, "Mike");
     ok(r == ERROR_SUCCESS, "MsiSummaryInfoSetProperty failed\n");
+
+    sz = 2;
+    strcpy(buf,"x");
+    r = MsiSummaryInfoGetProperty(hsuminfo, PID_TITLE, &type, NULL, NULL, buf, &sz );
+    ok(r == ERROR_MORE_DATA, "MsiSummaryInfoSetProperty failed\n");
+    ok(sz == 4, "count was wrong\n");
+    ok(type == VT_LPSTR, "type was wrong\n");
+    ok(!strcmp(buf,"M"), "buffer was wrong\n");
+
+    sz = 4;
+    strcpy(buf,"x");
+    r = MsiSummaryInfoGetProperty(hsuminfo, PID_TITLE, &type, NULL, NULL, buf, &sz );
+    ok(r == ERROR_MORE_DATA, "MsiSummaryInfoSetProperty failed\n");
+    ok(sz == 4, "count was wrong\n");
+    ok(type == VT_LPSTR, "type was wrong\n");
+    ok(!strcmp(buf,"Mik"), "buffer was wrong\n");
 
     r = MsiSummaryInfoSetProperty(hsuminfo, PID_TITLE, VT_LPSTR, 0, NULL, "JungAh");
     ok(r == ERROR_SUCCESS, "MsiSummaryInfoSetProperty failed\n");
