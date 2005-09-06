@@ -1197,6 +1197,8 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     LPSTR cmdline;
     WORD cmdShow;
 
+    if (name == NULL) return 0;
+
     /* Load module */
 
     if ( (hModule = NE_GetModuleByFilename(name) ) != 0 )
