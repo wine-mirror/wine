@@ -150,76 +150,99 @@ UINT WINAPI MsiGetTargetPathW( MSIHANDLE hInstall, LPCWSTR szFolder, LPWSTR
     return rc;
 }
 
-
 /***********************************************************************
-* MsiGetSourcePathA     (MSI.@)
-*/
-UINT WINAPI MsiGetSourcePathA( MSIHANDLE hInstall, LPCSTR szFolder, 
-                               LPSTR szPathBuf, DWORD* pcchPathBuf) 
-{
-    LPWSTR szwFolder;
-    LPWSTR szwPathBuf;
-    UINT rc;
-
-    TRACE("getting source %s %p %li\n",szFolder,szPathBuf, *pcchPathBuf);
-
-    if (!szFolder)
-        return ERROR_FUNCTION_FAILED;
-    if (hInstall == 0)
-        return ERROR_FUNCTION_FAILED;
-
-    szwFolder = strdupAtoW(szFolder);
-    if (!szwFolder)
-        return ERROR_FUNCTION_FAILED; 
-
-    szwPathBuf = HeapAlloc( GetProcessHeap(), 0 , *pcchPathBuf * sizeof(WCHAR));
-
-    rc = MsiGetSourcePathW(hInstall, szwFolder, szwPathBuf,pcchPathBuf);
-
-    WideCharToMultiByte( CP_ACP, 0, szwPathBuf, *pcchPathBuf, szPathBuf,
-                         *pcchPathBuf, NULL, NULL );
-
-    HeapFree(GetProcessHeap(),0,szwFolder);
-    HeapFree(GetProcessHeap(),0,szwPathBuf);
-
-    return rc;
-}
-
-/***********************************************************************
-* MsiGetSourcePathW     (MSI.@)
-*/
-UINT WINAPI MsiGetSourcePathW( MSIHANDLE hInstall, LPCWSTR szFolder, LPWSTR
-                                szPathBuf, DWORD* pcchPathBuf) 
+ * MsiGetSourcePath   (internal)
+ */
+static UINT MSI_GetSourcePath( MSIHANDLE hInstall, LPCWSTR szFolder,
+                               awstring *szPathBuf, DWORD* pcchPathBuf )
 {
     LPWSTR path;
-    UINT rc = ERROR_FUNCTION_FAILED;
+    UINT r, len;
     MSIPACKAGE *package;
 
-    TRACE("(%s %p %li)\n",debugstr_w(szFolder),szPathBuf,*pcchPathBuf);
+    TRACE("%s %p %p\n", debugstr_w(szFolder), szPathBuf, pcchPathBuf );
+
+    if (!szFolder)
+        return ERROR_INVALID_PARAMETER;
 
     package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
-    if( !package )
+    if (!package)
         return ERROR_INVALID_HANDLE;
+
+    if (szPathBuf->str.w && !pcchPathBuf )
+    {
+        msiobj_release( &package->hdr );
+        return ERROR_INVALID_PARAMETER;
+    }
+
     path = resolve_folder(package, szFolder, TRUE, FALSE, NULL);
     msiobj_release( &package->hdr );
 
-    if (path && strlenW(path) > *pcchPathBuf)
+    TRACE("path = %s\n",debugstr_w(path));
+    if (!path)
+        return ERROR_DIRECTORY;
+
+    r = ERROR_SUCCESS;
+    if (pcchPathBuf)
     {
-        *pcchPathBuf = strlenW(path)+1;
-        rc = ERROR_MORE_DATA;
+        if (szPathBuf->unicode)
+        {
+            len = lstrlenW( path );
+            if (szPathBuf->str.w) 
+                lstrcpynW( szPathBuf->str.w, path, *pcchPathBuf );
+        }
+        else
+        {
+            len = WideCharToMultiByte( CP_ACP, 0, path, -1,
+                               szPathBuf->str.a, *pcchPathBuf, NULL, NULL );
+            len--;
+        }
+
+        if (len >= *pcchPathBuf)
+            r = ERROR_MORE_DATA;
+        *pcchPathBuf = len;
     }
-    else if (path)
-    {
-        *pcchPathBuf = strlenW(path)+1;
-        strcpyW(szPathBuf,path);
-        TRACE("Returning Path %s\n",debugstr_w(path));
-        rc = ERROR_SUCCESS;
-    }
-    HeapFree(GetProcessHeap(),0,path);
-    
-    return rc;
+    HeapFree( GetProcessHeap(), 0, path );
+    return r;
 }
 
+/***********************************************************************
+ * MsiGetSourcePathA     (MSI.@)
+ */
+UINT WINAPI MsiGetSourcePathA( MSIHANDLE hInstall, LPCSTR szFolder, 
+                               LPSTR szPathBuf, DWORD* pcchPathBuf )
+{
+    LPWSTR folder;
+    awstring str;
+    UINT r;
+
+    TRACE("%s %p %p\n", szFolder, debugstr_a(szPathBuf), pcchPathBuf);
+
+    str.unicode = FALSE;
+    str.str.a = szPathBuf;
+
+    folder = strdupAtoW( szFolder );
+    r = MSI_GetSourcePath( hInstall, folder, &str, pcchPathBuf );
+    HeapFree( GetProcessHeap(), 0, folder );
+
+    return r;
+}
+
+/***********************************************************************
+ * MsiGetSourcePathW     (MSI.@)
+ */
+UINT WINAPI MsiGetSourcePathW( MSIHANDLE hInstall, LPCWSTR szFolder,
+                               LPWSTR szPathBuf, DWORD* pcchPathBuf )
+{
+    awstring str;
+
+    TRACE("%s %p %p\n", debugstr_w(szFolder), szPathBuf, pcchPathBuf );
+
+    str.unicode = TRUE;
+    str.str.w = szPathBuf;
+
+    return MSI_GetSourcePath( hInstall, szFolder, &str, pcchPathBuf );
+}
 
 /***********************************************************************
  * MsiSetTargetPathA  (MSI.@)

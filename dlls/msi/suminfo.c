@@ -81,22 +81,6 @@ typedef struct {
 
 #define SECT_HDR_SIZE (sizeof(PROPERTYSECTIONHEADER))
 
-typedef struct {
-    BOOL unicode;
-    union {
-       LPSTR a;
-       LPWSTR w;
-    } str;
-} awstring;
-
-typedef struct {
-    BOOL unicode;
-    union {
-       LPCSTR a;
-       LPCWSTR w;
-    } str;
-} awcstring;
-
 typedef struct tagMSISUMMARYINFO
 {
     MSIOBJECTHDR hdr;
