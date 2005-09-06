@@ -444,7 +444,7 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         rc = OpenURLSubkey(sourcekey, &typekey, TRUE);
     else
     {
-        ERR("Unknown media type!\n");
+        ERR("unknown media type: %08lx\n", dwOptions);
         RegCloseKey(sourcekey);
         return ERROR_FUNCTION_FAILED;
     }
@@ -455,7 +455,7 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         DWORD current_index = atoiW(source_struct.szIndex);
         /* found the source */
         if (dwIndex > 0 && current_index != dwIndex)
-            FIXME("Need to reorder the souces! UNHANDLED\n");
+            FIXME("Need to reorder the sources!\n");
     }
     else
     {
@@ -467,7 +467,7 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
             current_index = atoiW(source_struct.szIndex);
         /* new source */
         if (dwIndex > 0 && dwIndex < current_index)
-            FIXME("Need to reorder the souces! UNHANDLED\n");
+            FIXME("Need to reorder the sources!\n");
 
         current_index ++;
         sprintfW(source_struct.szIndex,fmt,current_index);

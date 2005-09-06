@@ -818,7 +818,7 @@ static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action,
                 }
                 else
                 {
-                    FIXME("UNHANDLED Standard Action %s\n",debugstr_w(action));
+                    FIXME("unhandled standard action %s\n",debugstr_w(action));
                     *rc = ERROR_SUCCESS;
                 }
             }
@@ -868,7 +868,7 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, BOOL force)
 
     if (!handled)
     {
-        FIXME("UNHANDLED MSI ACTION %s\n",debugstr_w(action));
+        FIXME("unhandled msi action %s\n",debugstr_w(action));
         rc = ERROR_FUNCTION_NOT_CALLED;
     }
 
@@ -892,7 +892,7 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action)
 
     if (!handled)
     {
-        FIXME("UNHANDLED MSI ACTION %s\n",debugstr_w(action));
+        FIXME("unhandled msi action %s\n",debugstr_w(action));
         rc = ERROR_FUNCTION_NOT_CALLED;
     }
 
