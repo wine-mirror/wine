@@ -865,39 +865,37 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
         
         if (!component->Enabled)
             continue;
-        else
+ 
+        if (newstate == INSTALLSTATE_LOCAL)
         {
-            if (newstate == INSTALLSTATE_LOCAL)
-            {
-                component->ActionRequest = INSTALLSTATE_LOCAL;
-                component->Action = INSTALLSTATE_LOCAL;
-            }
-            else 
-            {
-                ComponentList *clist;
-                MSIFEATURE *f;
+            component->ActionRequest = INSTALLSTATE_LOCAL;
+            component->Action = INSTALLSTATE_LOCAL;
+        }
+        else 
+        {
+            ComponentList *clist;
+            MSIFEATURE *f;
 
-                component->ActionRequest = newstate;
-                component->Action = newstate;
+            component->ActionRequest = newstate;
+            component->Action = newstate;
 
-                /*if any other feature wants is local we need to set it local*/
-                LIST_FOR_EACH_ENTRY( f, &package->features, MSIFEATURE, entry )
+            /*if any other feature wants is local we need to set it local*/
+            LIST_FOR_EACH_ENTRY( f, &package->features, MSIFEATURE, entry )
+            {
+                if ( component->ActionRequest != INSTALLSTATE_LOCAL )
+                    break;
+
+                LIST_FOR_EACH_ENTRY( clist, &f->Components, ComponentList, entry )
                 {
-                    if ( component->ActionRequest != INSTALLSTATE_LOCAL )
-                        break;
-
-                    LIST_FOR_EACH_ENTRY( clist, &f->Components, ComponentList, entry )
+                    if ( clist->component == component )
                     {
-                        if ( clist->component == component )
+                        if (f->ActionRequest == INSTALLSTATE_LOCAL)
                         {
-                            if (f->ActionRequest == INSTALLSTATE_LOCAL)
-                            {
-                                TRACE("Saved by %s\n", debugstr_w(f->Feature));
-                                component->ActionRequest = INSTALLSTATE_LOCAL;
-                                component->Action = INSTALLSTATE_LOCAL;
-                            }
-                            break;
+                            TRACE("Saved by %s\n", debugstr_w(f->Feature));
+                            component->ActionRequest = INSTALLSTATE_LOCAL;
+                            component->Action = INSTALLSTATE_LOCAL;
                         }
+                        break;
                     }
                 }
             }
@@ -930,7 +928,7 @@ UINT register_unique_action(MSIPACKAGE *package, LPCWSTR action)
     newbuf[count] = strdupW(action);
     package->script->UniqueActions = newbuf;
 
-   return ERROR_SUCCESS;
+    return ERROR_SUCCESS;
 }
 
 BOOL check_unique_action(MSIPACKAGE *package, LPCWSTR action)
