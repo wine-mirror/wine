@@ -360,7 +360,7 @@ NTSTATUS WINAPI NtFindAtom( const WCHAR* name, ULONG length, RTL_ATOM* atom )
  *		NtQueryInformationAtom (NTDLL.@)
  */
 NTSTATUS WINAPI NtQueryInformationAtom( RTL_ATOM atom, ATOM_INFORMATION_CLASS class,
-                                        RTL_ATOM_TABLE ptr, ULONG size, PULONG psize )
+                                        PVOID ptr, ULONG size, PULONG psize )
 {
     NTSTATUS status;
 
