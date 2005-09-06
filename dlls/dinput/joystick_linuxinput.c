@@ -302,7 +302,9 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
   newDevice->ref = 1;
   newDevice->joyfd = -1;
   newDevice->dinput = dinput;
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
   newDevice->ff_state = FF_STATUS_STOPPED;
+#endif
   memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
   for (i=0;i<ABS_MAX;i++) {
     newDevice->wantmin[i] = -32768;
@@ -723,9 +725,11 @@ static void joy_polldev(JoystickImpl *This) {
 		break;
 	    }
 	    break;
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
 	case EV_FF_STATUS:
 	    This->ff_state = ie.value;
 	    break;
+#endif
 	default:
 	    FIXME("joystick cannot handle type %d event (code %d)\n",ie.type,ie.code);
 	    break;
