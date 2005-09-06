@@ -689,6 +689,8 @@ static HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
 	    datasize = 1;
 	    *mp->realMRU = 0;
 	}
+        else
+            datasize /= sizeof(WCHAR);
 
 	TRACE("MRU list = %s, datasize = %ld\n", debugstr_w(mp->realMRU), datasize);
 
