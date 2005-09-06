@@ -912,7 +912,6 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
   DIDEVICEOBJECTINSTANCEA ddoi;
   int xfd = This->joyfd;
 
-
   TRACE("(this=%p,%p,%p,%08lx)\n", This, lpCallback, lpvRef, dwFlags);
   if (TRACE_ON(dinput)) {
     TRACE("  - flags = ");
@@ -920,7 +919,9 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
     TRACE("\n");
   }
 
-  if (xfd == -1) return DIERR_NOTACQUIRED;
+  /* We need to work even if we're not yet acquired */
+  if (xfd == -1)
+    iface->lpVtbl->Acquire(iface);
 
   /* Only the fields till dwFFMaxForce are relevant */
   ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
@@ -971,10 +972,19 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 	FIXME("unhandled abs axis %d, ignoring!\n",i);
       }
       ddoi.dwType = DIDFT_MAKEINSTANCE((1<<i) << WINE_JOYSTICK_AXIS_BASE) | DIDFT_ABSAXIS;
+      /* Linux event force feedback supports only (and always) x and y axes */
+      if (i == ABS_X || i == ABS_Y) {
+	if (This->has_ff)
+	  ddoi.dwFlags |= DIDOI_FFACTUATOR;
+      }
       sprintf(ddoi.tszName, "%d-Axis", i);
       _dump_OBJECTINSTANCEA(&ddoi);
-      if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE)
-	  return DI_OK;
+      if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) {
+	/* return to unaquired state if that's where we were */
+	if (xfd == -1)
+	  iface->lpVtbl->Unacquire(iface);
+	return DI_OK;
+      }
     }
   }
 
@@ -1057,13 +1067,18 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       }
       sprintf(ddoi.tszName, "%d-Button", i);
       _dump_OBJECTINSTANCEA(&ddoi);
-      if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE)
-	  return DI_OK;
+      if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) {
+	/* return to unaquired state if that's where we were */
+	if (xfd == -1)
+	  iface->lpVtbl->Unacquire(iface);
+	return DI_OK;
+      }
     }
   }
 
-  if (xfd!=This->joyfd)
-    close(xfd);
+  /* return to unaquired state if that's where we were */
+  if (xfd == -1)
+    iface->lpVtbl->Unacquire(iface);
 
   return DI_OK;
 }
