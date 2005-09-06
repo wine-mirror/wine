@@ -22,7 +22,8 @@
 #define __WINE_SHDOCVW_H
 
 #define COM_NO_WINDOWS_H
-/* FIXME: Is there a better way to deal with all these includes? */
+#define COBJMACROS
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -49,29 +50,21 @@ extern IClassFactoryImpl SHDOCVW_ClassFactory;
 
 
 /**********************************************************************
- * IOleObject declaration for SHDOCVW.DLL
+ * WebBrowser declaration for SHDOCVW.DLL
  */
-typedef struct
-{
-    /* IUnknown fields */
-    const IOleObjectVtbl *lpVtbl;
+typedef struct {
+    const IWebBrowserVtbl   *lpWebBrowserVtbl;
+    const IOleObjectVtbl    *lpOleObjectVtbl;
+
     LONG ref;
-} IOleObjectImpl;
+} WebBrowser;
 
-extern IOleObjectImpl SHDOCVW_OleObject;
+#define WEBBROWSER(x)   ((IWebBrowser*)     &(x)->lpWebBrowserVtbl)
+#define OLEOBJ(x)       ((IOleObject*)      &(x)->lpOleObjectVtbl)
 
-/**********************************************************************
- * IWebBrowser declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IWebBrowserVtbl *lpVtbl;
-    LONG ref;
-} IWebBrowserImpl;
+void WebBrowser_OleObject_Init(WebBrowser*);
 
-extern IWebBrowserImpl SHDOCVW_WebBrowser;
-
+HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 
 /**********************************************************************
  * IProvideClassInfo declaration for SHDOCVW.DLL
@@ -160,6 +153,32 @@ typedef struct
     const IConnectionPointVtbl *lpVtbl;
     LONG ref;
 } IConnectionPointImpl;
+
+/**********************************************************************
+ * IOleInPlaceObject declaration for SHDOCVW.DLL
+ */
+typedef struct
+{
+        /* IUnknown fields */
+        const IOleInPlaceObjectVtbl *lpVtbl;
+            DWORD ref;
+} IOleInPlaceObjectImpl;
+
+extern IOleInPlaceObjectImpl SHDOCVW_OleInPlaceObject;
+
+/**********************************************************************
+ * IOleControl declaration for SHDOCVW.DLL
+ */
+typedef struct
+{
+    /* IUnknown fields */
+    const IOleControlVtbl *lpVtbl;
+    DWORD ref;
+} IOleControlImpl;
+
+extern IOleControlImpl SHDOCVW_OleControl;
+
+#define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
 /**********************************************************************
  * Dll lifetime tracking declaration for shdocvw.dll
