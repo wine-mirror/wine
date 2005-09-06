@@ -500,8 +500,13 @@ UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute,
                             &pcchwValueBuf );
 
     if( ERROR_SUCCESS == r )
+    {
+        INT old_len = *pcchValueBuf;
         *pcchValueBuf = WideCharToMultiByte(CP_ACP, 0, szwBuffer, pcchwValueBuf,
                         szBuffer, *pcchValueBuf, NULL, NULL);
+        if (old_len > *pcchValueBuf)
+            szBuffer[*pcchValueBuf]=0;
+    }
 
 end:
     HeapFree( GetProcessHeap(), 0, szwProduct );
