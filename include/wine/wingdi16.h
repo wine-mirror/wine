@@ -355,6 +355,15 @@ struct PATH_INFO {
 #define RENDERMODE_OPEN 1
 #define RENDERMODE_CLOSED 2
 
+/* For DRAWPATTERNRECT Escape, 16bit mode */
+typedef struct _DRAWPATRECT16
+{
+    POINT16	ptPosition;
+    POINT16	ptSize;
+    WORD	wStyle;
+    WORD	wPattern;
+} DRAWPATRECT16, *PDRAWPATRECT16;
+
 #include <poppack.h>
 
 

@@ -646,11 +646,24 @@ INT16 WINAPI Escape16( HDC16 hdc, INT16 escape, INT16 in_count, SEGPTR in_data, 
         rc16->bottom = rc.bottom;
         return ret;
     }
+    /* Escape(hdc,DRAWPATTERNRECT,PRECT_STRUCT*,NULL); */
+    case DRAWPATTERNRECT:
+    {
+        DRAWPATRECT pr;
+        DRAWPATRECT16 *pr16 = (DRAWPATRECT16*)MapSL(in_data);
+
+        pr.ptPosition.x = pr16->ptPosition.x;
+        pr.ptPosition.y = pr16->ptPosition.y;
+        pr.ptSize.x	= pr16->ptSize.x;
+        pr.ptSize.y	= pr16->ptSize.y;
+        pr.wStyle	= pr16->wStyle;
+        pr.wPattern	= pr16->wPattern;
+        return Escape( HDC_32(hdc), escape, sizeof(pr), (LPCSTR)&pr, NULL );
+    }
 
     /* Escape(hdc,ABORTDOC,NULL,NULL); */
     /* Escape(hdc,BANDINFO,BANDINFOSTRUCT*,BANDINFOSTRUCT*); */
     /* Escape(hdc,BEGIN_PATH,NULL,NULL); */
-    /* Escape(hdc,DRAWPATTERNRECT,PRECT_STRUCT*,NULL); */
     /* Escape(hdc,ENDDOC,NULL,NULL); */
     /* Escape(hdc,END_PATH,PATHINFO,NULL); */
     /* Escape(hdc,EXTTEXTOUT,EXTTEXT_STRUCT*,NULL); */
@@ -674,7 +687,6 @@ INT16 WINAPI Escape16( HDC16 hdc, INT16 escape, INT16 in_count, SEGPTR in_data, 
     case ABORTDOC:
     case BANDINFO:
     case BEGIN_PATH:
-    case DRAWPATTERNRECT:
     case ENDDOC:
     case END_PATH:
     case EXTTEXTOUT:

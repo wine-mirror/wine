@@ -54,6 +54,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 
 	    switch(num) {
 	    case NEXTBAND:
+	    /*case BANDINFO:*/
 	    case SETCOPYCOUNT:
 	    case GETTECHNOLOGY:
 	    case SETLINECAP:
@@ -70,13 +71,50 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 	    case BEGIN_PATH:
 	    case CLIP_TO_PATH:
 	    case END_PATH:
+	    /*case DRAWPATTERNRECT:*/
 	        return TRUE;
 
 	    default:
+		FIXME("QUERYESCSUPPORT(%d) - not supported.\n", num);
 	        return FALSE;
 	    }
 	}
 
+    case MFCOMMENT:
+    {
+	int i;
+	FIXME("MFCOMMENT(%p, %d)\n", in_data, cbInput);
+	for (i=0;i<cbInput;i++) MESSAGE("%02x ", ((LPBYTE)in_data)[i]);
+	MESSAGE("\n");
+	return 1;
+    }
+    case DRAWPATTERNRECT:
+    {
+	DRAWPATRECT	*dpr = (DRAWPATRECT*)in_data;
+
+	FIXME("DRAWPATTERNRECT(pos (%ld,%ld), size %ldx%ld, style %d, pattern %x), stub!\n",
+		dpr->ptPosition.x, dpr->ptPosition.y,
+		dpr->ptSize.x, dpr->ptSize.y,
+		dpr->wStyle, dpr->wPattern
+	);
+	return 1;
+    }
+    case BANDINFO:
+    {
+	BANDINFOSTRUCT	*ibi = (BANDINFOSTRUCT*)in_data;
+	BANDINFOSTRUCT	*obi = (BANDINFOSTRUCT*)out_data;
+
+	FIXME("BANDINFO(graphics %d, text %d, rect [%ldx%ld-%ldx%ld]), stub!\n",
+		ibi->GraphicsFlag,
+		ibi->TextFlag,
+		ibi->GraphicsRect.top,
+		ibi->GraphicsRect.bottom,
+		ibi->GraphicsRect.left,
+		ibi->GraphicsRect.right
+	);
+	memcpy (obi, ibi, sizeof(*ibi));
+	return 1;
+    }
     case NEXTBAND:
     {
         RECT *r = out_data;

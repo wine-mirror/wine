@@ -141,6 +141,14 @@ typedef struct _tagPAGESIZE {
 } PAGESIZE;
 
 
+/* For BANDINFO Escape */
+typedef struct _BANDINFOSTRUCT
+{
+    BOOL GraphicsFlag;
+    BOOL TextFlag;
+    RECT GraphicsRect;
+} BANDINFOSTRUCT, *PBANDINFOSTRUCT;
+
 typedef struct _tagOPTIONENTRY {
     char			*Name;		/* eg "True" */
     char			*FullName;	/* eg "Installed" */

@@ -3204,6 +3204,14 @@ typedef struct _BLENDFUNCTION
 #define LAYOUT_BITMAPORIENTATIONPRESERVED  0x00000008
 #define NOMIRRORBITMAP                     0x80000000
 
+/* For DRAWPATTERNRECT Escape */
+typedef struct _DRAWPATRECT
+{
+    POINT ptPosition;
+    POINT ptSize;
+    WORD  wStyle;
+    WORD  wPattern;
+} DRAWPATRECT, *PDRAWPATRECT;
 
 INT         WINAPI AbortDoc(HDC);
 BOOL        WINAPI AbortPath(HDC);
