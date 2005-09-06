@@ -194,8 +194,7 @@ typedef struct tagMSIPACKAGE
 
     struct list classes;
     struct list extensions;
-    struct tagMSIPROGID *progids;
-    UINT loaded_progids;
+    struct list progids;
     struct list mimes;
     struct list appids;
     

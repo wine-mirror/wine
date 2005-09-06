@@ -131,13 +131,15 @@ typedef struct tagMSIAPPID
     BOOL RunAsInteractiveUser;
 } MSIAPPID;
 
+typedef struct tagMSIPROGID MSIPROGID;
+
 typedef struct tagMSICLASS
 {
     struct list entry;
     WCHAR CLSID[IDENTIFIER_SIZE];     /* Primary Key */
     WCHAR Context[IDENTIFIER_SIZE];   /* Primary Key */
     MSICOMPONENT *Component;
-    INT ProgIDIndex;
+    MSIPROGID *ProgID;
     LPWSTR ProgIDText;
     LPWSTR Description;
     MSIAPPID *AppID;
@@ -159,7 +161,7 @@ typedef struct tagMSIEXTENSION
     struct list entry;
     WCHAR Extension[256];  /* Primary Key */
     MSICOMPONENT *Component;
-    INT ProgIDIndex;
+    MSIPROGID *ProgID;
     LPWSTR ProgIDText;
     MSIMIME *Mime;
     MSIFEATURE *Feature;
@@ -168,18 +170,19 @@ typedef struct tagMSIEXTENSION
     struct list verbs;
 } MSIEXTENSION;
 
-typedef struct tagMSIPROGID
+struct tagMSIPROGID
 {
+    struct list entry;
     LPWSTR ProgID;  /* Primary Key */
-    INT ParentIndex;
+    MSIPROGID *Parent;
     MSICLASS *Class;
     LPWSTR Description;
     LPWSTR IconPath;
     /* not in the table, set during installation */
     BOOL InstallMe;
-    INT CurVerIndex;
-    INT VersionIndIndex;
-} MSIPROGID;
+    MSIPROGID *CurVer;
+    MSIPROGID *VersionInd;
+};
 
 typedef struct tagMSIVERB
 {

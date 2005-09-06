@@ -528,15 +528,16 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         free_extension( ext );
     }
 
-    for (i = 0; i < package->loaded_progids; i++)
+    LIST_FOR_EACH_SAFE( item, cursor, &package->progids )
     {
-        HeapFree(GetProcessHeap(),0,package->progids[i].ProgID);
-        HeapFree(GetProcessHeap(),0,package->progids[i].Description);
-        HeapFree(GetProcessHeap(),0,package->progids[i].IconPath);
-    }
+        MSIPROGID *progid = LIST_ENTRY( item, MSIPROGID, entry );
 
-    if (package->progids && package->loaded_progids > 0)
-        HeapFree(GetProcessHeap(),0,package->progids);
+        list_remove( &progid->entry );
+        HeapFree( GetProcessHeap(), 0, progid->ProgID );
+        HeapFree( GetProcessHeap(), 0, progid->Description );
+        HeapFree( GetProcessHeap(), 0, progid->IconPath );
+        HeapFree( GetProcessHeap(), 0, progid );
+    }
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->mimes )
     {
