@@ -31,6 +31,7 @@
 #include "wine/unicode.h"
 
 #include "resource.h"
+#include "chm.h"
 
 /* Window type defaults */
 
@@ -43,6 +44,7 @@
 typedef struct tagHHInfo
 {
     HH_WINTYPEW *pHHWinType;
+    CHMInfo *pCHMInfo;
     HINSTANCE hInstance;
     LPWSTR szCmdLine;
     HWND hwndTabCtrl;
@@ -219,15 +221,17 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
 {
     HWND hToolbar;
     HWND hwndParent = pHHInfo->pHHWinType->hwndHelp;
-    DWORD toolbarFlags = pHHInfo->pHHWinType->fsToolBarFlags;
+    DWORD toolbarFlags;
     TBBUTTON buttons[IDTB_TOC_PREV - IDTB_EXPAND];
     TBADDBITMAP tbAB;
     DWORD dwStyles, dwExStyles;
     DWORD dwNumButtons, dwIndex;
 
-    /* FIXME: Remove the following line once we read the CHM file */
-    toolbarFlags = HHWIN_BUTTON_EXPAND | HHWIN_BUTTON_BACK | HHWIN_BUTTON_STOP |
-                   HHWIN_BUTTON_REFRESH | HHWIN_BUTTON_HOME | HHWIN_BUTTON_PRINT;
+    if (pHHInfo->pHHWinType->fsWinProperties & HHWIN_PARAM_TB_FLAGS)
+        toolbarFlags = pHHInfo->pHHWinType->fsToolBarFlags;
+    else
+        toolbarFlags = HHWIN_DEF_BUTTONS;
+
     TB_AddButtonsFromFlags(buttons, toolbarFlags, &dwNumButtons);
 
     dwStyles = WS_CHILDWINDOW | WS_VISIBLE | TBSTYLE_FLAT |
@@ -329,11 +333,17 @@ static BOOL HH_AddNavigationPane(HHInfo *pHHInfo)
     if (!hwndTabCtrl)
         return FALSE;
 
-    /* FIXME: Check which tabs to include when we read the CHM file */
-    NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_CONTENTS, dwIndex++);
-    NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_INDEX, dwIndex++);
-    NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_SEARCH, dwIndex++);
-    NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_FAVORITES, dwIndex++);
+    if (pHHInfo->pHHWinType->pszToc)
+        NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_CONTENTS, dwIndex++);
+
+    if (pHHInfo->pHHWinType->pszIndex)
+        NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_INDEX, dwIndex++);
+
+    if (pHHInfo->pHHWinType->fsWinProperties & HHWIN_PROP_TAB_SEARCH)
+        NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_SEARCH, dwIndex++);
+
+    if (pHHInfo->pHHWinType->fsWinProperties & HHWIN_PROP_TAB_FAVORITES)
+        NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_FAVORITES, dwIndex++);
 
     SendMessageW(hwndTabCtrl, WM_SETFONT, (WPARAM)pHHInfo->hFont, TRUE);
 
@@ -444,16 +454,13 @@ static BOOL HH_CreateHelpWindow(HHInfo *pHHInfo)
 {
     HWND hWnd;
     HINSTANCE hInstance = pHHInfo->hInstance;
+    RECT winPos = pHHInfo->pHHWinType->rcWindowPos;
     WNDCLASSEXW wcex;
     DWORD dwStyles, dwExStyles;
     DWORD x, y, width, height;
 
     static const WCHAR windowClassW[] = {
         'H','H',' ', 'P','a','r','e','n','t',0
-    };
-
-    static const WCHAR windowTitleW[] = {
-        'H','T','M','L',' ','H','e','l','p',0
     };
 
     wcex.cbSize         = sizeof(WNDCLASSEXW);
@@ -471,18 +478,36 @@ static BOOL HH_CreateHelpWindow(HHInfo *pHHInfo)
 
     RegisterClassExW(&wcex);
 
-    dwStyles = WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-    dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR |
-                 WS_EX_WINDOWEDGE | WS_EX_APPWINDOW;
+    /* Read in window parameters if available */
+    if (pHHInfo->pHHWinType->fsValidMembers & HHWIN_PARAM_STYLES)
+        dwStyles = pHHInfo->pHHWinType->dwStyles;
+    else
+        dwStyles = WS_OVERLAPPEDWINDOW | WS_VISIBLE |
+                   WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 
-    /* these will be loaded from the CHM file in the future if they're provided */
-    x = WINTYPE_DEFAULT_X;
-    y = WINTYPE_DEFAULT_Y;
-    width = WINTYPE_DEFAULT_WIDTH;
-    height = WINTYPE_DEFAULT_HEIGHT;
+    if (pHHInfo->pHHWinType->fsValidMembers & HHWIN_PARAM_EXSTYLES)
+        dwExStyles = pHHInfo->pHHWinType->dwExStyles;
+    else
+        dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_APPWINDOW |
+                     WS_EX_WINDOWEDGE | WS_EX_RIGHTSCROLLBAR;
 
-    hWnd = CreateWindowExW(dwExStyles, windowClassW, windowTitleW, dwStyles,
-                           x, y, width, height, NULL, NULL, hInstance, NULL);
+    if (pHHInfo->pHHWinType->fsValidMembers & HHWIN_PARAM_RECT)
+    {
+        x = winPos.left;
+        y = winPos.top;
+        width = winPos.right - x;
+        height = winPos.bottom - y;
+    }
+    else
+    {
+        x = WINTYPE_DEFAULT_X;
+        y = WINTYPE_DEFAULT_Y;
+        width = WINTYPE_DEFAULT_WIDTH;
+        height = WINTYPE_DEFAULT_HEIGHT;
+    }
+
+    hWnd = CreateWindowExW(dwExStyles, windowClassW, pHHInfo->pHHWinType->pszCaption,
+                           dwStyles, x, y, width, height, NULL, NULL, hInstance, NULL);
     if (!hWnd)
         return FALSE;
 
@@ -546,6 +571,7 @@ static HHInfo *HH_OpenHH(HINSTANCE hInstance, LPWSTR szCmdLine)
     HHInfo *pHHInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HHInfo));
 
     pHHInfo->pHHWinType = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HH_WINTYPEW));
+    pHHInfo->pCHMInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(CHMInfo));
     pHHInfo->hInstance = hInstance;
     pHHInfo->szCmdLine = szCmdLine;
 
@@ -557,8 +583,36 @@ static void HH_Close(HHInfo *pHHInfo)
     if (!pHHInfo)
         return;
 
+    /* Free allocated strings */
+    if (pHHInfo->pHHWinType)
+    {
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszType);
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszCaption);
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszToc);
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszType);
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszIndex);
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszFile);
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszHome);
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszJump1);
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszJump2);
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszUrlJump1);
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszUrlJump2);
+    }
+
     HeapFree(GetProcessHeap(), 0, pHHInfo->pHHWinType);
+    HeapFree(GetProcessHeap(), 0, pHHInfo->pCHMInfo);
     HeapFree(GetProcessHeap(), 0, pHHInfo->szCmdLine);
+}
+
+static BOOL HH_OpenCHM(HHInfo *pHHInfo)
+{
+    if (!CHM_OpenCHM(pHHInfo->pCHMInfo, pHHInfo->szCmdLine))
+        return FALSE;
+
+    if (!CHM_LoadWinTypeFromCHM(pHHInfo->pCHMInfo, pHHInfo->pHHWinType))
+        return FALSE;
+
+    return TRUE;
 }
 
 /* FIXME: Check szCmdLine for bad arguments */
@@ -571,7 +625,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
         return -1;
 
     pHHInfo = HH_OpenHH(hInstance, HH_ANSIToUnicode(szCmdLine));
-    if (!pHHInfo || !HH_CreateViewer(pHHInfo))
+    if (!pHHInfo || !HH_OpenCHM(pHHInfo) || !HH_CreateViewer(pHHInfo))
     {
         OleUninitialize();
         return -1;
