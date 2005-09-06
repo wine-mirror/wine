@@ -1,3 +1,4 @@
 Makefile
 libwintrust.def
+version.res
 wintrust.dll.dbg.c

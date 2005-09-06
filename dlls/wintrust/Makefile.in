@@ -8,6 +8,9 @@ IMPORTS   = kernel32
 
 C_SRCS = wintrust_main.c
 
+RC_SRCS = \
+        version.rc
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
