@@ -22,6 +22,7 @@
 #include "winbase.h"
 #include <string.h>
 #include <stdlib.h>
+#include <mbctype.h>
 
 static void* (*pmemcpy)(void *, const void *, size_t n);
 static int* (*pmemcmp)(void *, const void *, size_t n);
@@ -73,6 +74,14 @@ static void test_swab( void ) {
     ok(memcmp(to,expected3,testsize) == 0, "Testing small size %d returned '%*.*s'\n", testsize, testsize, testsize, to);
 }
 
+void test_ismbblead()
+{
+    unsigned int s = '\354';
+
+    _setmbcp(936);
+    todo_wine ok(_ismbblead(s) == 4, "got result %d\n", _ismbblead(s));
+    _setmbcp(1252);
+}
 
 START_TEST(string)
 {
@@ -95,4 +104,7 @@ START_TEST(string)
 
     /* Test _swab function */
     test_swab();
+
+    /* Test ismbblead*/
+    test_ismbblead();
 }
