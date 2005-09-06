@@ -144,6 +144,15 @@ BOOL WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
 }
 
 /***********************************************************************
+ *              IsNTAdmin	(ADVPACK.@)
+ */
+BOOL WINAPI IsNTAdmin( DWORD reserved, PDWORD pReserved )
+{
+    FIXME("(0x%08lx, %p): stub\n", reserved, pReserved);
+    return TRUE;
+}
+
+/***********************************************************************
  *             NeedRebootInit  (ADVPACK.@)
  */
 DWORD WINAPI NeedRebootInit(VOID)

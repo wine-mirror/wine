@@ -12,7 +12,7 @@
 @ stub FileSaveRestoreOnINF
 @ stdcall GetVersionFromFile(str ptr ptr long)
 @ stdcall GetVersionFromFileEx(str ptr ptr long)
-@ stub IsNTAdmin
+@ stdcall IsNTAdmin(long ptr)
 @ stdcall LaunchINFSection(ptr ptr str long)
 @ stdcall LaunchINFSectionEx(ptr ptr str long)
 @ stdcall NeedReboot(long)
