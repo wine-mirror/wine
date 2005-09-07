@@ -73,6 +73,7 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
     FMT_TO_STR(WINED3DFMT_D32);
     FMT_TO_STR(WINED3DFMT_D15S1);
     FMT_TO_STR(WINED3DFMT_D24S8);
+    FMT_TO_STR(WINED3DFMT_D24FS8);
     FMT_TO_STR(WINED3DFMT_D24X8);
     FMT_TO_STR(WINED3DFMT_D24X4S4);
     FMT_TO_STR(WINED3DFMT_D16);
@@ -1610,12 +1611,14 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A4R4G4B4:         retVal = GL_RGBA4; break;
         case WINED3DFMT_X4R4G4B4:         retVal = GL_RGB4; break;
         case WINED3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
+        case WINED3DFMT_A2R10G10B10:      retVal = GL_RGBA8; break;
         case WINED3DFMT_X8R8G8B8:         retVal = GL_RGB; break;
             /* to see */
         case WINED3DFMT_A8:               retVal = GL_ALPHA8; break;
 
         /* Depth + Stencil NOTE: OpenGL doesn't support depth-stencil surfaces so the formats are the closes bits match for the data */
         case WINED3DFMT_D24S8:            retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D24FS8:           retVal = GL_COLOR_INDEX; break;
         case WINED3DFMT_D24X8:            retVal = GL_COLOR_INDEX; break;
         case WINED3DFMT_D24X4S4:          retVal = GL_COLOR_INDEX; break;
         case WINED3DFMT_D32:              retVal = GL_COLOR_INDEX; break;
@@ -1673,11 +1676,13 @@ GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A4R4G4B4:         retVal = GL_BGRA; break;
         case WINED3DFMT_X4R4G4B4:         retVal = GL_BGRA; break;
         case WINED3DFMT_A8R8G8B8:         retVal = GL_BGRA; break;
+        case WINED3DFMT_A2R10G10B10:      retVal = GL_BGRA; break;
         case WINED3DFMT_X8R8G8B8:         retVal = GL_BGRA; break;
             /* to see */
         case WINED3DFMT_A8:               retVal = GL_ALPHA; break;
             /* Depth + Stencil */
         case WINED3DFMT_D24S8:            retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D24FS8:           retVal = GL_COLOR_INDEX; break;
         case WINED3DFMT_D24X8:            retVal = GL_COLOR_INDEX; break;
         case WINED3DFMT_D24X4S4:          retVal = GL_COLOR_INDEX; break;
         case WINED3DFMT_D32:              retVal = GL_COLOR_INDEX; break;
@@ -1733,11 +1738,13 @@ GLenum D3DFmt2GLType(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
         case WINED3DFMT_X4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
         case WINED3DFMT_A8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
+        case WINED3DFMT_A2R10G10B10:      retVal = GL_UNSIGNED_INT_2_10_10_10_REV; break;
         case WINED3DFMT_X8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
             /* to see */
         case WINED3DFMT_A8:               retVal = GL_ALPHA; break;
             /* Depth + Stencil */
         case WINED3DFMT_D24S8:            retVal = GL_UNSIGNED_INT; break;
+        case WINED3DFMT_D24FS8:           retVal = GL_UNSIGNED_INT; break;
         case WINED3DFMT_D24X8:            retVal = GL_UNSIGNED_INT; break;
         case WINED3DFMT_D24X4S4:          retVal = GL_UNSIGNED_INT; break;
         case WINED3DFMT_D32:              retVal = GL_UNSIGNED_INT; break;
@@ -1774,6 +1781,7 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     case WINED3DFMT_A4R4G4B4:         retVal = 2; break;
     case WINED3DFMT_X4R4G4B4:         retVal = 2; break;
     case WINED3DFMT_A8R8G8B8:         retVal = 4; break;
+    case WINED3DFMT_A2R10G10B10:      retVal = 4; break;
     case WINED3DFMT_X8R8G8B8:         retVal = 4; break;
         /* Paletted */
     case WINED3DFMT_P8:               retVal = 1; break;
@@ -1785,6 +1793,7 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     case WINED3DFMT_D15S1:            retVal = 2; break;
     case WINED3DFMT_D24X4S4:          retVal = 4; break;
     case WINED3DFMT_D24S8:            retVal = 4; break;
+    case WINED3DFMT_D24FS8:           retVal = 4; break;
     case WINED3DFMT_D24X8:            retVal = 4; break;
         /* Luminance */
     case WINED3DFMT_L8:               retVal = 1; break;
@@ -1874,6 +1883,13 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
         PUSH2(GLX_BLUE_SIZE,    8);
         break;
 
+    case WINED3DFMT_A2R10G10B10:
+        PUSH2(GLX_ALPHA_SIZE,   2);
+        PUSH2(GLX_RED_SIZE,    10);
+        PUSH2(GLX_GREEN_SIZE,  10);
+        PUSH2(GLX_BLUE_SIZE,   10);
+        break;
+
     default:
         break;
     }
@@ -1901,6 +1917,11 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
         break;
 
     case WINED3DFMT_D24S8:
+        PUSH2(GLX_DEPTH_SIZE,   24);
+        PUSH2(GLX_STENCIL_SIZE, 8);
+        break;
+
+    case WINED3DFMT_D24FS8:
         PUSH2(GLX_DEPTH_SIZE,   24);
         PUSH2(GLX_STENCIL_SIZE, 8);
         break;
@@ -1937,6 +1958,11 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
             break;
 
         case WINED3DFMT_D24S8:
+            PUSH2(GLX_DEPTH_SIZE,   1);
+            PUSH2(GLX_STENCIL_SIZE, 1);
+            break;
+
+        case WINED3DFMT_D24FS8:
             PUSH2(GLX_DEPTH_SIZE,   1);
             PUSH2(GLX_STENCIL_SIZE, 1);
             break;

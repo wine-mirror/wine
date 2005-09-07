@@ -993,6 +993,9 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(WineD3D_Context* c
   case WINED3DFMT_A8R8G8B8:
     if (8 == rb && 8 == gb && 8 == bb && 8 == ab) return TRUE;
     break;
+  case WINED3DFMT_A2R10G10B10:
+    if (10 == rb && 10 == gb && 10 == bb && 2 == ab) return TRUE;
+    break;
   case WINED3DFMT_X1R5G5B5:
     if (5 == rb && 5 == gb && 5 == bb) return TRUE;
     break;
@@ -1037,6 +1040,9 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(WineD3D_Context* ct
     if (15 == db) return TRUE;
     break;
   case WINED3DFMT_D24S8:
+    if (24 == db && 8 == sb) return TRUE;
+    break;
+  case WINED3DFMT_D24FS8:
     if (24 == db && 8 == sb) return TRUE;
     break;
   case WINED3DFMT_D24X8:

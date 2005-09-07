@@ -724,6 +724,17 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                     vcheckGLcall("glPixelStorei");
                 }
                 break;
+            case WINED3DFMT_A2R10G10B10:
+                {
+                    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
+                    vcheckGLcall("glPixelStorei");
+                    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
+                                 GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV, This->resource.allocatedMemory);
+                    vcheckGLcall("glDrawPixels");
+                    glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
+                    vcheckGLcall("glPixelStorei");
+                }
+                break;
             default:
                 FIXME("Unsupported Format %u in locking func\n", This->resource.format);
             }
