@@ -10,6 +10,7 @@ EXTRALIBS = -luuid
 C_SRCS = \
 	file.c \
 	format.c \
+	internet.c \
 	regsvr.c \
 	sec_mgr.c \
 	umon.c \

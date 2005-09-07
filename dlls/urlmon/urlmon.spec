@@ -17,7 +17,7 @@
 @ stub CoInternetGetProtocolFlags
 @ stub CoInternetGetSecurityUrl
 @ stdcall CoInternetGetSession(long ptr long)
-@ stub CoInternetParseUrl
+@ stdcall CoInternetParseUrl(wstr long long wstr long ptr long)
 @ stdcall CoInternetQueryInfo(ptr long long ptr long ptr long)
 @ stub CompareSecurityIds
 @ stub CopyBindInfo

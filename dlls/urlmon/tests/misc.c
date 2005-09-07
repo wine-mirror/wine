@@ -202,8 +202,66 @@ static void test_RegisterFormatEnumerator(void)
     IBindCtx_Release(bctx);
 }
 
+static const WCHAR url1[] = {'r','e','s',':','/','/','m','s','h','t','m','l','.','d','l','l',
+        '/','b','l','a','n','k','.','h','t','m',0};
+static const WCHAR url2[] = {'i','n','d','e','x','.','h','t','m',0};
+static const WCHAR url3[] = {'f','i','l','e',':','c',':','\\','I','n','d','e','x','.','h','t','m',0};
+static const WCHAR url4[] = {'f','i','l','e',':','s','o','m','e','%','2','0','f','i','l','e',
+        '%','2','E','j','p','g',0};
+
+static const WCHAR url4e[] = {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e',
+        '.','j','p','g',0};
+
+static const WCHAR wszRes[] = {'r','e','s',0};
+static const WCHAR wszFile[] = {'f','i','l','e',0};
+static const WCHAR wszEmpty[] = {0};
+
+struct parse_test {
+    LPCWSTR url;
+    LPCWSTR encoded_url;
+    LPCWSTR schema;
+};
+
+static const struct parse_test parse_tests[] = {
+    {url1,  url1,   wszRes},
+    {url2,  url2,   wszEmpty},
+    {url3,  url3,   wszFile},
+    {url4,  url4e,  wszFile}
+};
+
+static void test_CoInternetParseUrl(void)
+{
+    HRESULT hres;
+    DWORD size;
+    int i;
+
+    static WCHAR buf[4096];
+
+    memset(buf, 0xf0, sizeof(buf));
+    hres = CoInternetParseUrl(parse_tests[0].url, PARSE_SCHEMA, 0, buf,
+            3, &size, 0);
+    ok(hres == E_POINTER, "schema failed: %08lx, expected E_POINTER\n", hres);
+
+    for(i=0; i < sizeof(parse_tests)/sizeof(parse_tests[0]); i++) {
+        memset(buf, 0xf0, sizeof(buf));
+        hres = CoInternetParseUrl(parse_tests[i].url, PARSE_ENCODE, 0, buf,
+                sizeof(buf)/sizeof(WCHAR), &size, 0);
+        ok(hres == S_OK, "[%d] encoding failed: %08lx\n", i, hres);
+        ok(size == lstrlenW(parse_tests[i].encoded_url), "[%d] wrong size\n", i);
+        ok(!lstrcmpW(parse_tests[i].encoded_url, buf), "[%d] wrong encoded url\n", i);
+
+        memset(buf, 0xf0, sizeof(buf));
+        hres = CoInternetParseUrl(parse_tests[i].url, PARSE_SCHEMA, 0, buf,
+                sizeof(buf)/sizeof(WCHAR), &size, 0);
+        ok(hres == S_OK, "[%d] schema failed: %08lx\n", i, hres);
+        ok(size == lstrlenW(parse_tests[i].schema), "[%d] wrong size\n", i);
+        ok(!lstrcmpW(parse_tests[i].schema, buf), "[%d] wrong schema\n", i);
+    }
+}
+
 START_TEST(misc)
 {
     test_CreateFormatEnum();
     test_RegisterFormatEnumerator();
+    test_CoInternetParseUrl();
 }
