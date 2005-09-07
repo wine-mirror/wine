@@ -464,8 +464,7 @@ static void test_CallForAttributes(void)
     ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(MyDocuments) failed! hr = %08lx\n", hr);
 
     /* We need the following setup (as observed on WinXP SP2), for the tests to make sense. */
-    todo_wine{ ok (dwAttributes & SFGAO_FILESYSTEM, 
-                   "SFGAO_FILESYSTEM attribute is not set for MyDocuments!\n"); }
+    ok (dwAttributes & SFGAO_FILESYSTEM, "SFGAO_FILESYSTEM attribute is not set for MyDocuments!\n");
     ok (!(dwAttributes & SFGAO_ISSLOW), "SFGAO_ISSLOW attribute is set for MyDocuments!\n");
     ok (!(dwAttributes & SFGAO_GHOSTED), "SFGAO_GHOSTED attribute is set for MyDocuments!\n");
 
@@ -473,7 +472,7 @@ static void test_CallForAttributes(void)
      * key. So the test will return at this point, if run on wine. 
      */
     lResult = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszMyDocumentsKey, 0, KEY_WRITE|KEY_READ, &hKey);
-    todo_wine { ok (lResult == ERROR_SUCCESS, "RegOpenKeyEx failed! result: %08lx\n", lResult); }
+    ok (lResult == ERROR_SUCCESS, "RegOpenKeyEx failed! result: %08lx\n", lResult);
     if (lResult != ERROR_SUCCESS) {
         IMalloc_Free(ppM, pidlMyDocuments);
         IShellFolder_Release(psfDesktop);
