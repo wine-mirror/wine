@@ -28,10 +28,6 @@ for configurable values. Those terms are described here.
         prefix is /opt/wine.  Ideally, a packager would also allow the
 	installer to override this value.
 
-    * ETCDIR: is the prefix that Wine uses to find the global
-	configuration directory. This can be changed by the configure
-	option sysconfdir.  The current default is $PREFIX/etc.
-
     * WINDOWSDIR: is an important concept to Wine.  This directory specifies
 	what directory corresponds to the root Windows directory
         (e.g. C:\WINDOWS). This directory is specified by the user, in
@@ -301,19 +297,6 @@ WINE COMPONENTS
                 Generally, this cache is generated once at Wine start time.
                 cachedmetrics can be generated if absent.
 		You should note this can take a long time.
-
-	    - ETCDIR/wine.systemreg
-                This file contains the global values for HKEY_LOCAL_MACHINE.
-		The values in this file can be overridden by the user's
-		local settings. The location of this directory is hard coded
-		within wine, generally to /etc.
-
-	    - ETCDIR/wine.userreg
-                This file contains the global values for HKEY_USERS.
-		The values in this file can be overridden by the user's
-		local settings.  This file is likely to be deprecated in
-                favor of a global wine.userdef.reg that will only contain
-		HKEY_USERS/.Default.
 
     * Important Files from a Windows Partition
         Wine has the ability to use files from an installation of the
