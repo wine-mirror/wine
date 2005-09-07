@@ -27,10 +27,12 @@
  *   registering and enumerating physical stores and locations.)
  * - Many flags, options and whatnot are unimplemented.
  */
+#include <assert.h>
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "winuser.h"
 #include "wincrypt.h"
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -233,6 +235,29 @@ typedef struct _WINE_MEMSTORE
     CRITICAL_SECTION    cs;
     struct list         certs;
 } WINE_MEMSTORE, *PWINE_MEMSTORE;
+
+typedef struct _WINE_HASH_TO_DELETE
+{
+    BYTE        hash[20];
+    struct list entry;
+} WINE_HASH_TO_DELETE, *PWINE_HASH_TO_DELETE;
+
+/* Returned by a reg store during enumeration. */
+typedef struct _WINE_REG_CERT_CONTEXT
+{
+    WINE_CERT_CONTEXT_REF  cert;
+    PWINE_CERT_CONTEXT_REF childContext;
+} WINE_REG_CERT_CONTEXT, *PWINE_REG_CERT_CONTEXT;
+
+typedef struct _WINE_REGSTORE
+{
+    WINECRYPT_CERTSTORE  hdr;
+    PWINECRYPT_CERTSTORE memStore;
+    HKEY                 key;
+    BOOL                 dirty;
+    CRITICAL_SECTION     cs;
+    struct list          certsToDelete;
+} WINE_REGSTORE, *PWINE_REGSTORE;
 
 typedef struct _WINE_STORE_LIST_ENTRY
 {
@@ -806,6 +831,570 @@ static WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
     return (PWINECRYPT_CERTSTORE)store;
 }
 
+static void CRYPT_HashToStr(LPBYTE hash, LPWSTR asciiHash)
+{
+    static const WCHAR fmt[] = { '%','0','2','X',0 };
+    DWORD i;
+
+    assert(hash);
+    assert(asciiHash);
+
+    for (i = 0; i < 20; i++)
+        wsprintfW(asciiHash + i * 2, fmt, hash[i]);
+}
+
+static const WCHAR CertsW[] = { 'C','e','r','t','i','f','i','c','a','t','e','s',
+ 0 };
+static const WCHAR CRLsW[] = { 'C','R','L','s',0 };
+static const WCHAR CTLsW[] = { 'C','T','L','s',0 };
+static const WCHAR BlobW[] = { 'B','l','o','b',0 };
+
+static void CRYPT_RegReadSerializedFromReg(PWINE_REGSTORE store, HKEY key,
+ DWORD contextType)
+{
+    LONG rc;
+    DWORD index = 0;
+    WCHAR subKeyName[MAX_PATH];
+
+    do {
+        DWORD size = sizeof(subKeyName) / sizeof(WCHAR);
+
+        rc = RegEnumKeyExW(key, index++, subKeyName, &size, NULL, NULL, NULL,
+         NULL);
+        if (!rc)
+        {
+            HKEY subKey;
+
+            rc = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
+            if (!rc)
+            {
+                LPBYTE buf = NULL;
+
+                size = 0;
+                rc = RegQueryValueExW(subKey, BlobW, NULL, NULL, NULL, &size);
+                if (!rc)
+                    buf = HeapAlloc(GetProcessHeap(), 0, size);
+                if (buf)
+                {
+                    rc = RegQueryValueExW(subKey, BlobW, NULL, NULL, buf,
+                     &size);
+                    if (!rc)
+                    {
+                        const void *context;
+                        DWORD addedType;
+
+                        TRACE("Adding cert with hash %s\n",
+                         debugstr_w(subKeyName));
+                        context = CRYPT_ReadSerializedElement(buf, size,
+                         contextType, &addedType);
+                        if (context)
+                        {
+                            const WINE_CONTEXT_INTERFACE *contextInterface;
+                            BYTE hash[20];
+
+                            switch (addedType)
+                            {
+                            case CERT_STORE_CERTIFICATE_CONTEXT:
+                                contextInterface = &gCertInterface;
+                                break;
+                            case CERT_STORE_CRL_CONTEXT:
+                                contextInterface = &gCRLInterface;
+                                break;
+                            case CERT_STORE_CTL_CONTEXT:
+                                contextInterface = &gCTLInterface;
+                                break;
+                            default:
+                                contextInterface = NULL;
+                            }
+                            if (contextInterface)
+                            {
+                                size = sizeof(hash);
+                                if (contextInterface->getProp(context,
+                                 CERT_HASH_PROP_ID, hash, &size))
+                                {
+                                    WCHAR asciiHash[20 * 2 + 1];
+
+                                    CRYPT_HashToStr(hash, asciiHash);
+                                    TRACE("comparing %s\n",
+                                     debugstr_w(asciiHash));
+                                    TRACE("with %s\n", debugstr_w(subKeyName));
+                                    if (!lstrcmpW(asciiHash, subKeyName))
+                                    {
+                                        TRACE("hash matches, adding\n");
+                                        contextInterface->addContextToStore(
+                                         store, context,
+                                         CERT_STORE_ADD_REPLACE_EXISTING, NULL);
+                                    }
+                                    else
+                                    {
+                                        TRACE("hash doesn't match, ignoring\n");
+                                        contextInterface->free(context);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    HeapFree(GetProcessHeap(), 0, buf);
+                }
+                RegCloseKey(subKey);
+            }
+            /* Ignore intermediate errors, continue enumerating */
+            rc = ERROR_SUCCESS;
+        }
+    } while (!rc);
+}
+
+static void CRYPT_RegReadFromReg(PWINE_REGSTORE store)
+{
+    static const WCHAR *subKeys[] = { CertsW, CRLsW, CTLsW };
+    static const DWORD contextFlags[] = { CERT_STORE_CERTIFICATE_CONTEXT_FLAG,
+     CERT_STORE_CRL_CONTEXT_FLAG, CERT_STORE_CTL_CONTEXT_FLAG };
+    DWORD i;
+
+    for (i = 0; i < sizeof(subKeys) / sizeof(subKeys[0]); i++)
+    {
+        HKEY key;
+        LONG rc;
+
+        rc = RegCreateKeyExW(store->key, subKeys[i], 0, NULL, 0, KEY_READ, NULL,
+         &key, NULL);
+        if (!rc)
+        {
+            CRYPT_RegReadSerializedFromReg(store, key, contextFlags[i]);
+            RegCloseKey(key);
+        }
+    }
+}
+
+/* Hash is assumed to be 20 bytes in length (a SHA-1 hash) */
+static BOOL CRYPT_WriteSerializedToReg(HKEY key, LPBYTE hash, LPBYTE buf,
+ DWORD len)
+{
+    WCHAR asciiHash[20 * 2 + 1];
+    LONG rc;
+    HKEY subKey;
+    BOOL ret;
+
+    CRYPT_HashToStr(hash, asciiHash);
+    rc = RegCreateKeyExW(key, asciiHash, 0, NULL, 0, KEY_ALL_ACCESS, NULL,
+     &subKey, NULL);
+    if (!rc)
+    {
+        rc = RegSetValueExW(subKey, BlobW, 0, REG_BINARY, buf, len);
+        RegCloseKey(subKey);
+    }
+    if (!rc)
+        ret = TRUE;
+    else
+    {
+        SetLastError(rc);
+        ret = FALSE;
+    }
+    return ret;
+}
+
+static BOOL CRYPT_SerializeContextsToReg(HKEY key,
+ const WINE_CONTEXT_INTERFACE *contextInterface, HCERTSTORE memStore)
+{
+    const void *context = NULL;
+    BOOL ret;
+
+    do {
+        context = contextInterface->enumContextsInStore(memStore, context);
+        if (context)
+        {
+            BYTE hash[20];
+            DWORD hashSize = sizeof(hash);
+
+            ret = contextInterface->getProp(context, CERT_HASH_PROP_ID, hash,
+             &hashSize);
+            if (ret)
+            {
+                DWORD size = 0;
+                LPBYTE buf = NULL;
+
+                ret = contextInterface->serialize(context, 0, NULL, &size);
+                if (size)
+                    buf = HeapAlloc(GetProcessHeap(), 0, size);
+                if (buf)
+                {
+                    ret = contextInterface->serialize(context, 0, buf, &size);
+                    if (ret)
+                        ret = CRYPT_WriteSerializedToReg(key, hash, buf, size);
+                }
+                HeapFree(GetProcessHeap(), 0, buf);
+            }
+        }
+        else
+            ret = TRUE;
+    } while (ret && context != NULL);
+    if (context)
+        contextInterface->free(context);
+    return ret;
+}
+
+static BOOL CRYPT_RegWriteToReg(PWINE_REGSTORE store)
+{
+    static const WCHAR *subKeys[] = { CertsW, CRLsW, CTLsW };
+    static const WINE_CONTEXT_INTERFACE *interfaces[] = { &gCertInterface,
+     &gCRLInterface, &gCTLInterface };
+    struct list *listToDelete[] = { &store->certsToDelete, NULL, NULL };
+    BOOL ret = TRUE;
+    DWORD i;
+
+    for (i = 0; ret && i < sizeof(subKeys) / sizeof(subKeys[0]); i++)
+    {
+        HKEY key;
+        LONG rc = RegCreateKeyExW(store->key, subKeys[i], 0, NULL, 0,
+         KEY_ALL_ACCESS, NULL, &key, NULL);
+
+        if (!rc)
+        {
+            if (listToDelete[i])
+            {
+                PWINE_HASH_TO_DELETE toDelete, next;
+                WCHAR asciiHash[20 * 2 + 1];
+
+                EnterCriticalSection(&store->cs);
+                LIST_FOR_EACH_ENTRY_SAFE(toDelete, next, listToDelete[i],
+                 WINE_HASH_TO_DELETE, entry)
+                {
+                    LONG rc;
+
+                    CRYPT_HashToStr(toDelete->hash, asciiHash);
+                    TRACE("Removing %s\n", debugstr_w(asciiHash));
+                    rc = RegDeleteKeyW(key, asciiHash);
+                    if (rc != ERROR_SUCCESS && rc != ERROR_FILE_NOT_FOUND)
+                    {
+                        SetLastError(rc);
+                        ret = FALSE;
+                    }
+                    list_remove(&toDelete->entry);
+                    HeapFree(GetProcessHeap(), 0, toDelete);
+                }
+                LeaveCriticalSection(&store->cs);
+            }
+            ret = CRYPT_SerializeContextsToReg(key, interfaces[i],
+             store->memStore);
+            RegCloseKey(key);
+        }
+        else
+        {
+            SetLastError(rc);
+            ret = FALSE;
+        }
+    }
+    return ret;
+}
+
+/* If force is true or the registry store is dirty, writes the contents of the
+ * store to the registry.
+ */
+static BOOL CRYPT_RegFlushStore(PWINE_REGSTORE store, BOOL force)
+{
+    BOOL ret;
+
+    if (store->dirty || force)
+        ret = CRYPT_RegWriteToReg(store);
+    else
+        ret = TRUE;
+    return ret;
+}
+
+static void WINAPI CRYPT_RegCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
+{
+    PWINE_REGSTORE store = (PWINE_REGSTORE)hCertStore;
+
+    TRACE("(%p, %08lx)\n", store, dwFlags);
+    if (dwFlags)
+        FIXME("Unimplemented flags: %08lx\n", dwFlags);
+
+    CRYPT_RegFlushStore(store, FALSE);
+    /* certsToDelete should already be cleared by this point */
+    store->memStore->closeStore(store->memStore, 0);
+    RegCloseKey(store->key);
+    DeleteCriticalSection(&store->cs);
+    HeapFree(GetProcessHeap(), 0, store);
+}
+
+static BOOL WINAPI CRYPT_RegAddCert(HCERTSTORE hCertStore, PCCERT_CONTEXT cert,
+ DWORD dwAddDisposition)
+{
+    PWINE_REGSTORE store = (PWINE_REGSTORE)hCertStore;
+    BOOL ret;
+
+    TRACE("(%p, %p, %ld)\n", hCertStore, cert, dwAddDisposition);
+
+    if (store->hdr.dwOpenFlags & CERT_STORE_READONLY_FLAG)
+    {
+        SetLastError(ERROR_ACCESS_DENIED);
+        ret = FALSE;
+    }
+    else
+    {
+        ret = store->memStore->addCert(store->memStore, cert, dwAddDisposition);
+        if (ret)
+            store->dirty = TRUE;
+    }
+    return ret;
+}
+
+static PWINE_CERT_CONTEXT_REF CRYPT_RegCreateCertRef(
+ PWINE_CERT_CONTEXT context, HCERTSTORE store)
+{
+    PWINE_REG_CERT_CONTEXT ret = HeapAlloc(GetProcessHeap(), 0,
+     sizeof(WINE_REG_CERT_CONTEXT));
+
+    if (ret)
+    {
+        CRYPT_InitCertRef((PWINE_CERT_CONTEXT_REF)ret, context, store);
+        ret->childContext = NULL;
+    }
+    return (PWINE_CERT_CONTEXT_REF)ret;
+}
+
+static PWINE_CERT_CONTEXT_REF CRYPT_RegEnumCert(PWINECRYPT_CERTSTORE store,
+ PWINE_CERT_CONTEXT_REF pPrev)
+{
+    PWINE_REGSTORE rs = (PWINE_REGSTORE)store;
+    PWINE_CERT_CONTEXT_REF child;
+    PWINE_REG_CERT_CONTEXT prev = (PWINE_REG_CERT_CONTEXT)pPrev, ret = NULL;
+
+    TRACE("(%p, %p)\n", store, pPrev);
+
+    if (pPrev)
+    {
+        child = rs->memStore->enumCert(rs->memStore, prev->childContext);
+        if (child)
+        {
+            ret = (PWINE_REG_CERT_CONTEXT)pPrev;
+            memcpy(&ret->cert, child, sizeof(WINE_CERT_CONTEXT_REF));
+            ret->cert.cert.hCertStore = (HCERTSTORE)store;
+            InterlockedIncrement(&ret->cert.context->ref);
+            ret->childContext = child;
+        }
+    }
+    else
+    {
+        child = rs->memStore->enumCert(rs->memStore, NULL);
+        if (child)
+        {
+            ret = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_REG_CERT_CONTEXT));
+
+            if (ret)
+            {
+                memcpy(&ret->cert, child, sizeof(WINE_CERT_CONTEXT_REF));
+                ret->cert.cert.hCertStore = (HCERTSTORE)store;
+                InterlockedIncrement(&ret->cert.context->ref);
+                ret->childContext = child;
+            }
+            else
+                CertFreeCertificateContext((PCCERT_CONTEXT)child);
+        }
+    }
+    return (PWINE_CERT_CONTEXT_REF)ret;
+}
+
+static BOOL WINAPI CRYPT_RegDeleteCert(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT pCertContext, DWORD dwFlags)
+{
+    PWINE_REGSTORE store = (PWINE_REGSTORE)hCertStore;
+    BOOL ret;
+
+    TRACE("(%p, %p, %08lx)\n", store, pCertContext, dwFlags);
+
+    if (store->hdr.dwOpenFlags & CERT_STORE_READONLY_FLAG)
+    {
+        SetLastError(ERROR_ACCESS_DENIED);
+        ret = FALSE;
+    }
+    else
+    {
+        PWINE_HASH_TO_DELETE toDelete =
+         HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_HASH_TO_DELETE));
+
+        if (toDelete)
+        {
+            DWORD size = sizeof(toDelete->hash);
+
+            ret = CertGetCertificateContextProperty(pCertContext,
+             CERT_HASH_PROP_ID, toDelete->hash, &size);
+            if (ret)
+            {
+                list_init(&toDelete->entry);
+                EnterCriticalSection(&store->cs);
+                list_add_tail(&store->certsToDelete, &toDelete->entry);
+                LeaveCriticalSection(&store->cs);
+                ret = store->memStore->deleteCert(store->memStore, pCertContext,
+                 dwFlags);
+            }
+            else
+                HeapFree(GetProcessHeap(), 0, toDelete);
+        }
+        else
+            ret = FALSE;
+        if (ret)
+            store->dirty = TRUE;
+    }
+    return ret;
+}
+
+static void CRYPT_RegFreeCert(PWINE_CERT_CONTEXT_REF ref)
+{
+    PWINE_REG_CERT_CONTEXT context = (PWINE_REG_CERT_CONTEXT)ref;
+
+    TRACE("(%p)\n", ref);
+
+    if (context->childContext)
+        CertFreeCertificateContext((PCCERT_CONTEXT)context->childContext);
+}
+
+static BOOL WINAPI CRYPT_RegControl(HCERTSTORE hCertStore, DWORD dwFlags,
+ DWORD dwCtrlType, void const *pvCtrlPara)
+{
+    PWINE_REGSTORE store = (PWINE_REGSTORE)hCertStore;
+    BOOL ret;
+
+    switch (dwCtrlType)
+    {
+    case CERT_STORE_CTRL_RESYNC:
+        CRYPT_RegFlushStore(store, FALSE);
+        store->memStore->closeStore(store->memStore, 0);
+        store->memStore = CRYPT_MemOpenStore(store->hdr.cryptProv,
+         store->hdr.dwOpenFlags, NULL);
+        if (store->memStore)
+        {
+            CRYPT_RegReadFromReg(store);
+            ret = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    case CERT_STORE_CTRL_COMMIT:
+        ret = CRYPT_RegFlushStore(store,
+         dwFlags & CERT_STORE_CTRL_COMMIT_FORCE_FLAG);
+        break;
+    default:
+        FIXME("%ld: stub\n", dwCtrlType);
+        ret = FALSE;
+    }
+    return ret;
+}
+
+/* Copied from shlwapi's SHDeleteKeyW, and reformatted to match this file. */
+static DWORD CRYPT_RecurseDeleteKey(HKEY hKey, LPCWSTR lpszSubKey)
+{
+    DWORD dwRet, dwKeyCount = 0, dwMaxSubkeyLen = 0, dwSize, i;
+    WCHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
+    HKEY hSubKey = 0;
+
+    TRACE("(hkey=%p,%s)\n", hKey, debugstr_w(lpszSubKey));
+
+    dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+    if (!dwRet)
+    {
+        /* Find how many subkeys there are */
+        dwRet = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, &dwKeyCount,
+         &dwMaxSubkeyLen, NULL, NULL, NULL, NULL, NULL, NULL);
+        if (!dwRet)
+        {
+            dwMaxSubkeyLen++;
+            if (dwMaxSubkeyLen > sizeof(szNameBuf)/sizeof(WCHAR))
+            {
+                /* Name too big: alloc a buffer for it */
+                lpszName = HeapAlloc(GetProcessHeap(), 0,
+                 dwMaxSubkeyLen*sizeof(WCHAR));
+            }
+
+            if (!lpszName)
+                dwRet = ERROR_NOT_ENOUGH_MEMORY;
+            else
+            {
+                /* Recursively delete all the subkeys */
+                for (i = 0; i < dwKeyCount && !dwRet; i++)
+                {
+                    dwSize = dwMaxSubkeyLen;
+                    dwRet = RegEnumKeyExW(hSubKey, i, lpszName, &dwSize, NULL,
+                     NULL, NULL, NULL);
+                    if (!dwRet)
+                        dwRet = CRYPT_RecurseDeleteKey(hSubKey, lpszName);
+                }
+
+                if (lpszName != szNameBuf)
+                {
+                    /* Free buffer if allocated */
+                    HeapFree(GetProcessHeap(), 0, lpszName);
+                }
+            }
+        }
+
+        RegCloseKey(hSubKey);
+        if (!dwRet)
+            dwRet = RegDeleteKeyW(hKey, lpszSubKey);
+    }
+    return dwRet;
+}
+
+static WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara)
+{
+    PWINE_REGSTORE store = NULL;
+
+    TRACE("(%ld, %08lx, %p)\n", hCryptProv, dwFlags, pvPara);
+
+    if (dwFlags & CERT_STORE_DELETE_FLAG)
+    {
+        DWORD rc = CRYPT_RecurseDeleteKey((HKEY)pvPara, CertsW);
+
+        if (rc == ERROR_SUCCESS || rc == ERROR_NO_MORE_ITEMS)
+            rc = CRYPT_RecurseDeleteKey((HKEY)pvPara, CRLsW);
+        if (rc == ERROR_SUCCESS || rc == ERROR_NO_MORE_ITEMS)
+            rc = CRYPT_RecurseDeleteKey((HKEY)pvPara, CTLsW);
+        if (rc == ERROR_NO_MORE_ITEMS)
+            rc = ERROR_SUCCESS;
+        SetLastError(rc);
+    }
+    else
+    {
+        HKEY key;
+
+        if (DuplicateHandle(GetCurrentProcess(), (HANDLE)pvPara,
+         GetCurrentProcess(), (LPHANDLE)&key,
+         dwFlags & CERT_STORE_READONLY_FLAG ? KEY_READ : KEY_ALL_ACCESS,
+         TRUE, 0))
+        {
+            PWINECRYPT_CERTSTORE memStore;
+
+            memStore = CRYPT_MemOpenStore(hCryptProv, dwFlags, NULL);
+            if (memStore)
+            {
+                store = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                 sizeof(WINE_REGSTORE));
+                if (store)
+                {
+                    CRYPT_InitStore(&store->hdr, hCryptProv, dwFlags,
+                     StoreTypeReg);
+                    store->hdr.closeStore    = CRYPT_RegCloseStore;
+                    store->hdr.addCert       = CRYPT_RegAddCert;
+                    store->hdr.createCertRef = CRYPT_RegCreateCertRef;
+                    store->hdr.enumCert      = CRYPT_RegEnumCert;
+                    store->hdr.deleteCert    = CRYPT_RegDeleteCert;
+                    store->hdr.freeCert      = CRYPT_RegFreeCert;
+                    store->hdr.control       = CRYPT_RegControl;
+                    store->memStore          = memStore;
+                    store->key               = key;
+                    InitializeCriticalSection(&store->cs);
+                    list_init(&store->certsToDelete);
+                    CRYPT_RegReadFromReg(store);
+                    store->dirty = FALSE;
+                }
+            }
+        }
+    }
+    TRACE("returning %p\n", store);
+    return (WINECRYPT_CERTSTORE *)store;
+}
+
 static void WINAPI CRYPT_DummyCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     HeapFree(GetProcessHeap(), 0, (PWINECRYPT_CERTSTORE)hCertStore);
@@ -877,10 +1466,12 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
         case (int)CERT_STORE_PROV_MEMORY:
             openFunc = CRYPT_MemOpenStore;
             break;
+        case (int)CERT_STORE_PROV_REG:
+            openFunc = CRYPT_RegOpenStore;
+            break;
         case (int)CERT_STORE_PROV_COLLECTION:
             openFunc = CRYPT_CollectionOpenStore;
             break;
-        case (int)CERT_STORE_PROV_REG:
         case (int)CERT_STORE_PROV_SYSTEM_A:
         case (int)CERT_STORE_PROV_SYSTEM_W:
             openFunc = CRYPT_DummyOpenStore;
@@ -1640,9 +2231,24 @@ BOOL WINAPI CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 BOOL WINAPI CertControlStore(HCERTSTORE hCertStore, DWORD dwFlags,
  DWORD dwCtrlType, void const *pvCtrlPara)
 {
-    FIXME("(%p, %08lx, %ld, %p): stub\n", hCertStore, dwFlags, dwCtrlType,
+    WINECRYPT_CERTSTORE *hcs = (WINECRYPT_CERTSTORE *)hCertStore;
+    BOOL ret;
+
+    TRACE("(%p, %08lx, %ld, %p)\n", hCertStore, dwFlags, dwCtrlType,
      pvCtrlPara);
-    return TRUE;
+
+    if (!hcs)
+        ret = FALSE;
+    else if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
+        ret = FALSE;
+    else
+    {
+        if (hcs->control)
+            ret = hcs->control(hCertStore, dwFlags, dwCtrlType, pvCtrlPara);
+        else
+            ret = TRUE;
+    }
+    return ret;
 }
 
 BOOL WINAPI CertGetCRLContextProperty(PCCRL_CONTEXT pCRLContext,

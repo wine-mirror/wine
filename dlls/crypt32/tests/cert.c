@@ -585,6 +585,329 @@ static void testCollectionStore(void)
     CertCloseStore(store1, 0);
 }
 
+/* Looks for the property with ID propID in the buffer buf.  Returns a pointer
+ * to its header if found, NULL if not.
+ */
+static const struct CertPropIDHeader *findPropID(const BYTE *buf, DWORD size,
+ DWORD propID)
+{
+    const struct CertPropIDHeader *ret = NULL;
+    BOOL failed = FALSE;
+
+    while (size && !ret && !failed)
+    {
+        if (size < sizeof(struct CertPropIDHeader))
+            failed = TRUE;
+        else
+        {
+            const struct CertPropIDHeader *hdr =
+             (const struct CertPropIDHeader *)buf;
+
+            size -= sizeof(struct CertPropIDHeader);
+            buf += sizeof(struct CertPropIDHeader);
+            if (size < hdr->cb)
+                failed = TRUE;
+            else if (hdr->propID == propID)
+                ret = hdr;
+            else
+            {
+                buf += hdr->cb;
+                size -= hdr->cb;
+            }
+        }
+    }
+    return ret;
+}
+
+typedef DWORD (WINAPI *SHDeleteKeyAFunc)(HKEY, LPCSTR);
+
+static void testRegStore(void)
+{
+    static const char tempKey[] = "Software\\Wine\\CryptTemp";
+    HCERTSTORE store;
+    LONG rc;
+    HKEY key = NULL;
+    DWORD disp;
+
+    store = CertOpenStore(CERT_STORE_PROV_REG, 0, 0, 0, NULL);
+    ok(!store && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
+    store = CertOpenStore(CERT_STORE_PROV_REG, 0, 0, 0, key);
+    ok(!store && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
+
+    /* Opening up any old key works.. */
+    key = HKEY_CURRENT_USER;
+    store = CertOpenStore(CERT_STORE_PROV_REG, 0, 0, 0, key);
+    /* Not sure if this is a bug in DuplicateHandle, marking todo_wine for now
+     */
+    todo_wine ok(store != 0, "CertOpenStore failed: %08lx\n", GetLastError());
+    CertCloseStore(store, 0);
+
+    rc = RegCreateKeyExA(HKEY_CURRENT_USER, tempKey, 0, NULL, 0, KEY_ALL_ACCESS,
+     NULL, &key, NULL);
+    ok(!rc, "RegCreateKeyExA failed: %ld\n", rc);
+    if (key)
+    {
+        BOOL ret;
+        BYTE hash[20];
+        DWORD size, i;
+        static const char certificates[] = "Certificates\\";
+        char subKeyName[sizeof(certificates) + 20 * 2 + 1], *ptr;
+        HKEY subKey;
+        PCCERT_CONTEXT context;
+
+        store = CertOpenStore(CERT_STORE_PROV_REG, 0, 0, 0, key);
+        ok(store != 0, "CertOpenStore failed: %08lx\n", GetLastError());
+        /* Add a certificate.  It isn't persisted right away, since it's only
+         * added to the cache..
+         */
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert2, sizeof(bigCert2) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        /* so flush the cache to force a commit.. */
+        ret = CertControlStore(store, 0, CERT_STORE_CTRL_COMMIT, NULL);
+        ok(ret, "CertControlStore failed: %08lx\n", GetLastError());
+        /* and check that the expected subkey was written. */
+        size = sizeof(hash);
+        ret = CryptHashCertificate(0, 0, 0, bigCert2, sizeof(bigCert2) - 1,
+         hash, &size);
+        ok(ret, "CryptHashCertificate failed: %ld\n", GetLastError());
+        strcpy(subKeyName, certificates);
+        for (i = 0, ptr = subKeyName + sizeof(certificates) - 1; i < size;
+         i++, ptr += 2)
+            sprintf(ptr, "%02X", hash[i]);
+        rc = RegCreateKeyExA(key, subKeyName, 0, NULL, 0, KEY_ALL_ACCESS, NULL,
+         &subKey, NULL);
+        ok(!rc, "RegCreateKeyExA failed: %ld\n", rc);
+        if (subKey)
+        {
+            LPBYTE buf;
+
+            size = 0;
+            RegQueryValueExA(subKey, "Blob", NULL, NULL, NULL, &size);
+            buf = HeapAlloc(GetProcessHeap(), 0, size);
+            if (buf)
+            {
+                rc = RegQueryValueExA(subKey, "Blob", NULL, NULL, buf, &size);
+                ok(!rc, "RegQueryValueExA failed: %ld\n", rc);
+                if (!rc)
+                {
+                    const struct CertPropIDHeader *hdr;
+
+                    /* Both the hash and the cert should be present */
+                    hdr = findPropID(buf, size, CERT_CERT_PROP_ID);
+                    ok(hdr != NULL, "Expected to find a cert property\n");
+                    if (hdr)
+                    {
+                        ok(hdr->cb == sizeof(bigCert2) - 1,
+                         "Unexpected size %ld of cert property, expected %d\n",
+                         hdr->cb, sizeof(bigCert2) - 1);
+                        ok(!memcmp((BYTE *)hdr + sizeof(*hdr), bigCert2,
+                         hdr->cb), "Unexpected cert in cert property\n");
+                    }
+                    hdr = findPropID(buf, size, CERT_HASH_PROP_ID);
+                    ok(hdr != NULL, "Expected to find a hash property\n");
+                    if (hdr)
+                    {
+                        ok(hdr->cb == sizeof(hash),
+                         "Unexpected size %ld of hash property, expected %d\n",
+                         hdr->cb, sizeof(hash));
+                        ok(!memcmp((BYTE *)hdr + sizeof(*hdr), hash,
+                         hdr->cb), "Unexpected hash in cert property\n");
+                    }
+                }
+                HeapFree(GetProcessHeap(), 0, buf);
+            }
+            RegCloseKey(subKey);
+        }
+
+        /* Remove the existing context */
+        context = CertEnumCertificatesInStore(store, NULL);
+        ok(context != NULL, "Expected a cert context\n");
+        if (context)
+        {
+            CertDeleteCertificateFromStore(context);
+            CertFreeCertificateContext(context);
+        }
+        ret = CertControlStore(store, 0, CERT_STORE_CTRL_COMMIT, NULL);
+        ok(ret, "CertControlStore failed: %08lx\n", GetLastError());
+
+        /* Add a serialized cert with a bogus hash directly to the registry */
+        memset(hash, 0, sizeof(hash));
+        strcpy(subKeyName, certificates);
+        for (i = 0, ptr = subKeyName + sizeof(certificates) - 1;
+         i < sizeof(hash); i++, ptr += 2)
+            sprintf(ptr, "%02X", hash[i]);
+        rc = RegCreateKeyExA(key, subKeyName, 0, NULL, 0, KEY_ALL_ACCESS, NULL,
+         &subKey, NULL);
+        ok(!rc, "RegCreateKeyExA failed: %ld\n", rc);
+        if (subKey)
+        {
+            BYTE buf[sizeof(struct CertPropIDHeader) * 2 + sizeof(hash) +
+             sizeof(bigCert) - 1], *ptr;
+            DWORD certCount = 0;
+            struct CertPropIDHeader *hdr;
+
+            hdr = (struct CertPropIDHeader *)buf;
+            hdr->propID = CERT_HASH_PROP_ID;
+            hdr->unknown1 = 1;
+            hdr->cb = sizeof(hash);
+            ptr = buf + sizeof(*hdr);
+            memcpy(ptr, hash, sizeof(hash));
+            ptr += sizeof(hash);
+            hdr = (struct CertPropIDHeader *)ptr;
+            hdr->propID = CERT_CERT_PROP_ID;
+            hdr->unknown1 = 1;
+            hdr->cb = sizeof(bigCert) - 1;
+            ptr += sizeof(*hdr);
+            memcpy(ptr, bigCert, sizeof(bigCert) - 1);
+
+            rc = RegSetValueExA(subKey, "Blob", 0, REG_BINARY, buf,
+             sizeof(buf));
+            ok(!rc, "RegSetValueExA failed: %ld\n", rc);
+
+            ret = CertControlStore(store, 0, CERT_STORE_CTRL_RESYNC, NULL);
+            ok(ret, "CertControlStore failed: %08lx\n", GetLastError());
+
+            /* Make sure the bogus hash cert gets loaded. */
+            certCount = 0;
+            context = NULL;
+            do {
+                context = CertEnumCertificatesInStore(store, context);
+                if (context)
+                    certCount++;
+            } while (context != NULL);
+            ok(certCount == 1, "Expected 1 certificates, got %ld\n", certCount);
+
+            RegCloseKey(subKey);
+        }
+
+        /* Add another serialized cert directly to the registry, this time
+         * under the correct key name (named with the correct hash value).
+         */
+        size = sizeof(hash);
+        ret = CryptHashCertificate(0, 0, 0, bigCert2,
+         sizeof(bigCert2) - 1, hash, &size);
+        ok(ret, "CryptHashCertificate failed: %ld\n", GetLastError());
+        strcpy(subKeyName, certificates);
+        for (i = 0, ptr = subKeyName + sizeof(certificates) - 1;
+         i < sizeof(hash); i++, ptr += 2)
+            sprintf(ptr, "%02X", hash[i]);
+        rc = RegCreateKeyExA(key, subKeyName, 0, NULL, 0, KEY_ALL_ACCESS, NULL,
+         &subKey, NULL);
+        ok(!rc, "RegCreateKeyExA failed: %ld\n", rc);
+        if (subKey)
+        {
+            BYTE buf[sizeof(struct CertPropIDHeader) * 2 + sizeof(hash) +
+             sizeof(bigCert2) - 1], *ptr;
+            DWORD certCount = 0;
+            PCCERT_CONTEXT context;
+            struct CertPropIDHeader *hdr;
+
+            /* First try with a bogus hash... */
+            hdr = (struct CertPropIDHeader *)buf;
+            hdr->propID = CERT_HASH_PROP_ID;
+            hdr->unknown1 = 1;
+            hdr->cb = sizeof(hash);
+            ptr = buf + sizeof(*hdr);
+            memset(ptr, 0, sizeof(hash));
+            ptr += sizeof(hash);
+            hdr = (struct CertPropIDHeader *)ptr;
+            hdr->propID = CERT_CERT_PROP_ID;
+            hdr->unknown1 = 1;
+            hdr->cb = sizeof(bigCert2) - 1;
+            ptr += sizeof(*hdr);
+            memcpy(ptr, bigCert2, sizeof(bigCert2) - 1);
+
+            rc = RegSetValueExA(subKey, "Blob", 0, REG_BINARY, buf,
+             sizeof(buf));
+            ok(!rc, "RegSetValueExA failed: %ld\n", rc);
+
+            ret = CertControlStore(store, 0, CERT_STORE_CTRL_RESYNC, NULL);
+            ok(ret, "CertControlStore failed: %08lx\n", GetLastError());
+
+            /* and make sure just one cert still gets loaded. */
+            certCount = 0;
+            context = NULL;
+            do {
+                context = CertEnumCertificatesInStore(store, context);
+                if (context)
+                    certCount++;
+            } while (context != NULL);
+            ok(certCount == 1, "Expected 1 certificates, got %ld\n", certCount);
+
+            /* Try again with the correct hash... */
+            ptr = buf + sizeof(*hdr);
+            memcpy(ptr, hash, sizeof(hash));
+
+            rc = RegSetValueExA(subKey, "Blob", 0, REG_BINARY, buf,
+             sizeof(buf));
+            ok(!rc, "RegSetValueExA failed: %ld\n", rc);
+
+            ret = CertControlStore(store, 0, CERT_STORE_CTRL_RESYNC, NULL);
+            ok(ret, "CertControlStore failed: %08lx\n", GetLastError());
+
+            /* and make sure two certs get loaded. */
+            certCount = 0;
+            context = NULL;
+            do {
+                context = CertEnumCertificatesInStore(store, context);
+                if (context)
+                    certCount++;
+            } while (context != NULL);
+            ok(certCount == 2, "Expected 2 certificates, got %ld\n", certCount);
+
+            RegCloseKey(subKey);
+        }
+        CertCloseStore(store, 0);
+        /* Is delete allowed on a reg store? */
+        store = CertOpenStore(CERT_STORE_PROV_REG, 0, 0,
+         CERT_STORE_DELETE_FLAG, key);
+        ok(store == NULL, "Expected NULL return from CERT_STORE_DELETE_FLAG\n");
+        ok(GetLastError() == 0, "CertOpenStore failed: %08lx\n",
+         GetLastError());
+
+        RegCloseKey(key);
+    }
+    /* The CertOpenStore with CERT_STORE_DELETE_FLAG above will delete the
+     * contents of the key, but not the key itself.
+     */
+    rc = RegCreateKeyExA(HKEY_CURRENT_USER, tempKey, 0, NULL, 0, KEY_ALL_ACCESS,
+     NULL, &key, &disp);
+    ok(!rc, "RegCreateKeyExA failed: %ld\n", rc);
+    ok(disp == REG_OPENED_EXISTING_KEY,
+     "Expected REG_OPENED_EXISTING_KEY, got %ld\n", disp);
+    if (!rc)
+    {
+        RegCloseKey(key);
+        rc = RegDeleteKeyA(HKEY_CURRENT_USER, tempKey);
+        /* There seems to be a bug in the registry code, not sure if it's a
+         * race condition in the recurse delete key implementation here, or if
+         * it's elsewhere in wine.  Marking todo_wine for now.
+         */
+        todo_wine ok(!rc, "RegDeleteKeyA failed: %ld\n", rc);
+        if (rc)
+        {
+            HMODULE shlwapi = LoadLibraryA("shlwapi");
+
+            /* Use shlwapi's SHDeleteKeyA to _really_ blow away the key,
+             * otherwise subsequent tests will fail.
+             */
+            if (shlwapi)
+            {
+                SHDeleteKeyAFunc pSHDeleteKeyA =
+                 (SHDeleteKeyAFunc)GetProcAddress(shlwapi, "SHDeleteKeyA");
+
+                if (pSHDeleteKeyA)
+                    pSHDeleteKeyA(HKEY_CURRENT_USER, tempKey);
+                FreeLibrary(shlwapi);
+            }
+        }
+    }
+}
+
 static void testCertProperties(void)
 {
     PCCERT_CONTEXT context = CertCreateCertificateContext(X509_ASN_ENCODING,
@@ -862,6 +1185,7 @@ START_TEST(cert)
     /* various combinations of CertOpenStore */
     testMemStore();
     testCollectionStore();
+    testRegStore();
 
     testCertProperties();
     testAddSerialized();
