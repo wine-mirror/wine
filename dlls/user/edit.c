@@ -1618,7 +1618,6 @@ static void EDIT_LockBuffer(EDITSTATE *es)
 {
 	STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
 	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-	HANDLE16 oldDS = stack16->ds;
 
 	if (!es->text) {
 	    CHAR *textA = NULL;
@@ -1635,6 +1634,7 @@ static void EDIT_LockBuffer(EDITSTATE *es)
 		}
 		else if(es->hloc16)
 		{
+		    HANDLE16 oldDS = stack16->ds;
 		    TRACE("Synchronizing with 16-bit ANSI buffer\n");
 		    stack16->ds = hInstance;
 		    textA = MapSL(LocalLock16(es->hloc16));
@@ -1677,6 +1677,7 @@ static void EDIT_LockBuffer(EDITSTATE *es)
 		MultiByteToWideChar(CP_ACP, 0, textA, countA, es->text, es->buffer_size + 1);
 		if(_16bit)
 		{
+		    HANDLE16 oldDS = stack16->ds;
 		    stack16->ds = hInstance;
 		    LocalUnlock16(es->hloc16);
 		    stack16->ds = oldDS;
