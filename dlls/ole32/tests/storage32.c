@@ -393,6 +393,14 @@ static void test_open_storage(void)
     ok(r==STG_E_INVALIDFLAG, "StgOpenStorage failed\n");
 
     /* open it for real */
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_DENY_NONE | STGM_READ | STGM_TRANSACTED, NULL, 0, &stg); /* XLViewer 97/2000 */
+    ok(r==S_OK, "StgOpenStorage failed\n");
+    if(stg)
+    {
+        r = IStorage_Release(stg);
+        ok(r == 0, "wrong ref count\n");
+    }
+
     r = StgOpenStorage( filename, NULL, STGM_SHARE_DENY_WRITE | STGM_READ, NULL, 0, &stg);
     ok(r==S_OK, "StgOpenStorage failed\n");
     if(stg)
