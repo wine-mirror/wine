@@ -92,7 +92,7 @@ static UINT set_summary_info(MSIHANDLE hdb)
 MSIHANDLE create_package_db(void)
 {
     MSIHANDLE hdb = 0;
-    CHAR szName[] = "C:\\mytest.msi";
+    CHAR szName[] = "winetest.msi";
     UINT res;
 
     DeleteFile(szName);
@@ -147,7 +147,134 @@ static void test_createpackage(void)
     ok( res == ERROR_SUCCESS , "Failed to close package\n" );
 }
 
+static void test_getsourcepath_bad( void )
+{
+    static const char str[] = { 0 };
+    char buffer[0x80];
+    DWORD sz;
+    UINT r;
+
+    r = MsiGetSourcePath( -1, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "return value wrong\n");
+
+    sz = 0;
+    r = MsiGetSourcePath( -1, NULL, buffer, &sz );
+    ok( r == ERROR_INVALID_PARAMETER, "return value wrong\n");
+
+    sz = 0;
+    r = MsiGetSourcePath( -1, str, NULL, &sz );
+    ok( r == ERROR_INVALID_HANDLE, "return value wrong\n");
+
+    sz = 0;
+    r = MsiGetSourcePath( -1, str, NULL, NULL );
+    ok( r == ERROR_INVALID_HANDLE, "return value wrong\n");
+
+    sz = 0;
+    r = MsiGetSourcePath( -1, str, buffer, &sz );
+    ok( r == ERROR_INVALID_HANDLE, "return value wrong\n");
+}
+
+static UINT add_directory_entry( MSIHANDLE hdb, char *values )
+{
+    char insert[] = "INSERT INTO `Directory` (`Directory`,`Directory_Parent`,`DefaultDir`) VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static void test_getsourcepath( void )
+{
+    static const char str[] = { 0 };
+    char buffer[0x80];
+    DWORD sz;
+    UINT r;
+    MSIHANDLE hpkg, hdb;
+
+    hpkg = package_from_db(create_package_db());
+    ok( hpkg, "failed to create package\n");
+
+    sz = 0;
+    buffer[0] = 'x';
+    r = MsiGetSourcePath( hpkg, str, buffer, &sz );
+    ok( r == ERROR_DIRECTORY, "return value wrong\n");
+    ok( buffer[0] == 'x', "buffer modified\n");
+
+    sz = 1;
+    buffer[0] = 'x';
+    r = MsiGetSourcePath( hpkg, str, buffer, &sz );
+    ok( r == ERROR_DIRECTORY, "return value wrong\n");
+    ok( buffer[0] == 'x', "buffer modified\n");
+
+    MsiCloseHandle( hpkg );
+
+
+    /* another test but try create a directory this time */
+    hdb = create_package_db();
+    ok( hdb, "failed to create database\n");
+    
+    r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'");
+    ok( r == S_OK, "failed\n");
+
+    hpkg = package_from_db(hdb);
+    ok( hpkg, "failed to create package\n");
+
+    sz = sizeof buffer -1;
+    strcpy(buffer,"x bad");
+    r = MsiGetSourcePath( hpkg, "TARGETDIR", buffer, &sz );
+    ok( r == ERROR_DIRECTORY, "return value wrong\n");
+
+    todo_wine {
+    r = MsiDoAction( hpkg, "CostInitialize");
+    ok( r == ERROR_SUCCESS, "cost init failed\n");
+    }
+    r = MsiDoAction( hpkg, "CostFinalize");
+    ok( r == ERROR_SUCCESS, "cost finalize failed\n");
+
+    todo_wine {
+    sz = sizeof buffer -1;
+    buffer[0] = 'x';
+    r = MsiGetSourcePath( hpkg, "TARGETDIR", buffer, &sz );
+    ok( r == ERROR_SUCCESS, "return value wrong\n");
+    ok( sz == strlen(buffer), "returned length wrong\n");
+
+    sz = 0;
+    strcpy(buffer,"x bad");
+    r = MsiGetSourcePath( hpkg, "TARGETDIR", buffer, &sz );
+    ok( r == ERROR_MORE_DATA, "return value wrong\n");
+    }
+    ok( buffer[0] == 'x', "buffer modified\n");
+
+    todo_wine {
+    r = MsiGetSourcePath( hpkg, "TARGETDIR", NULL, NULL );
+    ok( r == ERROR_SUCCESS, "return value wrong\n");
+    }
+
+    r = MsiGetSourcePath( hpkg, "TARGETDIR ", NULL, NULL );
+    ok( r == ERROR_DIRECTORY, "return value wrong\n");
+
+    r = MsiGetSourcePath( hpkg, "targetdir", NULL, NULL );
+    ok( r == ERROR_DIRECTORY, "return value wrong\n");
+
+    r = MsiGetSourcePath( hpkg, "TARGETDIR", buffer, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "return value wrong\n");
+
+    todo_wine {
+    r = MsiGetSourcePath( hpkg, "TARGETDIR", NULL, &sz );
+    ok( r == ERROR_SUCCESS, "return value wrong\n");
+    }
+
+    MsiCloseHandle( hpkg );
+}
+
 START_TEST(package)
 {
     test_createpackage();
+    test_getsourcepath_bad();
+    test_getsourcepath();
 }
