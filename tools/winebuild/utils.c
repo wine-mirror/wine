@@ -349,6 +349,7 @@ unsigned int get_alignment(unsigned int align)
     switch(target_cpu)
     {
     case CPU_x86:
+    case CPU_x86_64:
     case CPU_SPARC:
         if (target_platform != PLATFORM_APPLE) return align;
         /* fall through */
@@ -369,9 +370,28 @@ unsigned int get_page_size(void)
     switch(target_cpu)
     {
     case CPU_x86:     return 4096;
+    case CPU_x86_64:  return 4096;
     case CPU_POWERPC: return 4096;
     case CPU_SPARC:   return 8192;
     case CPU_ALPHA:   return 8192;
+    }
+    /* unreached */
+    assert(0);
+    return 0;
+}
+
+/* return the size of a pointer on the target CPU */
+unsigned int get_ptr_size(void)
+{
+    switch(target_cpu)
+    {
+    case CPU_x86:
+    case CPU_POWERPC:
+    case CPU_SPARC:
+    case CPU_ALPHA:
+        return 4;
+    case CPU_x86_64:
+        return 8;
     }
     /* unreached */
     assert(0);
@@ -431,6 +451,17 @@ const char *func_size( const char *func )
         sprintf( buffer, ".size %s, .-%s", func, func );
         return buffer;
     }
+}
+
+const char *get_asm_ptr_keyword(void)
+{
+    switch(get_ptr_size())
+    {
+    case 4: return ".long";
+    case 8: return ".quad";
+    }
+    assert(0);
+    return NULL;
 }
 
 const char *get_asm_string_keyword(void)

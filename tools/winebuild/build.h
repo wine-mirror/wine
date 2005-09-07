@@ -110,7 +110,7 @@ typedef struct
 
 enum target_cpu
 {
-    CPU_x86, CPU_SPARC, CPU_ALPHA, CPU_POWERPC
+    CPU_x86, CPU_x86_64, CPU_SPARC, CPU_ALPHA, CPU_POWERPC
 };
 
 enum target_platform
@@ -180,9 +180,11 @@ extern void free_dll_spec( DLLSPEC *spec );
 extern const char *make_c_identifier( const char *str );
 extern unsigned int get_alignment(unsigned int align);
 extern unsigned int get_page_size(void);
+extern unsigned int get_ptr_size(void);
 extern const char *asm_name( const char *func );
 extern const char *func_declaration( const char *func );
 extern const char *func_size( const char *func );
+extern const char *get_asm_ptr_keyword(void);
 extern const char *get_asm_string_keyword(void);
 extern const char *get_asm_short_keyword(void);
 

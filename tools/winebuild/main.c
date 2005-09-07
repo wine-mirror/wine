@@ -49,6 +49,8 @@ int kill_at = 0;
 
 #ifdef __i386__
 enum target_cpu target_cpu = CPU_x86;
+#elif defined(__x86_64__)
+enum target_cpu target_cpu = CPU_x86_64;
 #elif defined(__sparc__)
 enum target_cpu target_cpu = CPU_SPARC;
 #elif defined(__ALPHA__)
@@ -109,6 +111,7 @@ static const struct
     { "i586",    CPU_x86 },
     { "i686",    CPU_x86 },
     { "i786",    CPU_x86 },
+    { "x86_64",  CPU_x86_64 },
     { "sparc",   CPU_SPARC },
     { "alpha",   CPU_ALPHA },
     { "powerpc", CPU_POWERPC }

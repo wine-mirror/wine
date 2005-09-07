@@ -632,6 +632,7 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
 
     switch(target_cpu)
     {
+    case CPU_x86_64:  /* FIXME */
     case CPU_x86:
         if (!UsePIC)
         {
@@ -976,6 +977,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_delay_load_asm") );
     switch(target_cpu)
     {
+    case CPU_x86_64:  /* FIXME */
     case CPU_x86:
         fprintf( outfile, "    \"\\tpushl %%ecx\\n\\tpushl %%edx\\n\\tpushl %%eax\\n\"\n" );
         fprintf( outfile, "    \"\\tcall %s\\n\"\n", asm_name("__wine_spec_delay_load") );
@@ -1054,6 +1056,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
             fprintf( outfile, "    \".L__wine_delay_imp_%d_%s:\\n\"\n", i, name );
             switch(target_cpu)
             {
+            case CPU_x86_64:  /* FIXME */
             case CPU_x86:
                 fprintf( outfile, "    \"\\tmovl $%d, %%eax\\n\"\n", (idx << 16) | j );
                 fprintf( outfile, "    \"\\tjmp %s\\n\"\n", asm_name("__wine_delay_load_asm") );

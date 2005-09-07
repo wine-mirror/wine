@@ -375,6 +375,7 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
     else switch(target_cpu)
     {
     case CPU_x86:
+    case CPU_x86_64:
         if (constructor)
         {
             fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
@@ -502,6 +503,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     switch(target_cpu)
     {
     case CPU_x86:     machine = IMAGE_FILE_MACHINE_I386; break;
+    case CPU_x86_64:  machine = IMAGE_FILE_MACHINE_AMD64; break;
     case CPU_POWERPC: machine = IMAGE_FILE_MACHINE_POWERPC; break;
     case CPU_ALPHA:   machine = IMAGE_FILE_MACHINE_ALPHA; break;
     case CPU_SPARC:   machine = IMAGE_FILE_MACHINE_UNKNOWN; break;
