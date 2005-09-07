@@ -2468,9 +2468,15 @@ static FT_UInt get_glyph_index(GdiFont font, UINT glyph)
 {
     if(font->ft_face->charmap->encoding == FT_ENCODING_NONE) {
         WCHAR wc = (WCHAR)glyph;
+        BOOL default_used;
+        FT_UInt ret;
         char buf;
-        WideCharToMultiByte(font->codepage, 0, &wc, 1, &buf, sizeof(buf), 0, 0);
-        return pFT_Get_Char_Index(font->ft_face, (unsigned char)buf);
+        if(!WideCharToMultiByte(font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, &default_used) || default_used)
+            ret = 0;
+        else
+            ret = pFT_Get_Char_Index(font->ft_face, (unsigned char)buf);
+        TRACE("%04x (%02x) -> ret %d def_used %d\n", glyph, buf, ret, default_used);
+        return ret;
     }
 
     if(font->charset == SYMBOL_CHARSET && glyph < 0x100)
