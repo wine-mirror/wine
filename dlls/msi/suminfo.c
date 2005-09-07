@@ -561,6 +561,7 @@ static UINT get_prop( MSIHANDLE handle, UINT uiProperty, UINT *puiDataType,
             {
                 len = MultiByteToWideChar( CP_ACP, 0, prop->u.pszVal, -1,
                                            str->str.w, *pcchValueBuf );
+                len--;
             }
             else
             {
