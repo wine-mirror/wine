@@ -304,7 +304,8 @@ static void test_GetDisplayName(void)
     STRRET strret;
     LPSHELLFOLDER psfDesktop, psfPersonal;
     IUnknown *psfFile;
-    LPITEMIDLIST pidlTestFile;
+    SHITEMID emptyitem = { 0, { 0 } };
+    LPITEMIDLIST pidlTestFile, pidlEmpty = (LPITEMIDLIST)&emptyitem;
     LPCITEMIDLIST pidlLast;
     static const WCHAR wszFileName[] = { 'w','i','n','e','t','e','s','t','.','f','o','o',0 };
     static const WCHAR wszDirName[] = { 'w','i','n','e','t','e','s','t',0 };
@@ -372,6 +373,17 @@ static void test_GetDisplayName(void)
 
     if(!pSHBindToParent) return;
 
+    /* SHBindToParent fails, if called with a NULL PIDL. */
+    hr = pSHBindToParent(NULL, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast);
+    ok (FAILED(hr), "SHBindToParent(NULL) should fail!\n");
+
+    /* But it succeeds with an empty PIDL. */
+    hr = pSHBindToParent(pidlEmpty, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast);
+    ok (SUCCEEDED(hr), "SHBindToParent(empty PIDL) should succeed! hr = %08lx\n", hr);
+    ok (pidlLast == pidlEmpty, "The last element of an empty PIDL should be the PIDL itself!\n");
+    if (SUCCEEDED(hr)) 
+        IShellFolder_Release(psfPersonal);
+    
     /* Binding to the folder and querying the display name of the file also works. */
     hr = pSHBindToParent(pidlTestFile, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast); 
     ok (SUCCEEDED(hr), "SHBindToParent failed! hr = %08lx\n", hr);
@@ -382,8 +394,8 @@ static void test_GetDisplayName(void)
 
     /* This test shows that Windows doesn't allocate a new pidlLast, but returns a pointer into 
      * pidlTestFile (In accordance with MSDN). */
-    todo_wine{ok (pILFindLastID(pidlTestFile) == pidlLast, 
-                                "SHBindToParent doesn't return the last id of the pidl param!\n");}
+    ok (pILFindLastID(pidlTestFile) == pidlLast, 
+                                "SHBindToParent doesn't return the last id of the pidl param!\n");
     
     hr = IShellFolder_GetDisplayNameOf(psfPersonal, pidlLast, SHGDN_FORPARSING, &strret);
     ok (SUCCEEDED(hr), "Personal->GetDisplayNameOf failed! hr = %08lx\n", hr);
