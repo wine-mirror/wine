@@ -600,8 +600,13 @@ static void HH_Close(HHInfo *pHHInfo)
     }
 
     HeapFree(GetProcessHeap(), 0, pHHInfo->pHHWinType);
-    HeapFree(GetProcessHeap(), 0, pHHInfo->pCHMInfo);
     HeapFree(GetProcessHeap(), 0, pHHInfo->szCmdLine);
+
+    if (pHHInfo->pCHMInfo)
+    {
+        CHM_CloseCHM(pHHInfo->pCHMInfo);
+        HeapFree(GetProcessHeap(), 0, pHHInfo->pCHMInfo);
+    }
 }
 
 static BOOL HH_OpenCHM(HHInfo *pHHInfo)
