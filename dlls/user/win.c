@@ -1039,7 +1039,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             LPCSTR menuName = (LPCSTR)GetClassLongPtrA( hwnd, GCLP_MENUNAME );
             if (menuName)
             {
-                if (HIWORD(cs->hInstance))
+                if (!cs->hInstance || HIWORD(cs->hInstance))
                     cs->hMenu = LoadMenuA(cs->hInstance,menuName);
                 else
                     cs->hMenu = HMENU_32(LoadMenu16(HINSTANCE_16(cs->hInstance),menuName));
