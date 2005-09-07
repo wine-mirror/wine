@@ -773,7 +773,7 @@ static void output_immediate_imports( FILE *outfile )
 
     fprintf( outfile, "/* import table */\n" );
     fprintf( outfile, "asm(\".data\\n\\t.align %d\\n\"\n", get_alignment(4) );
-    fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_spec_imports"));
+    fprintf( outfile, "    \".L__wine_spec_imports:\\n\"\n" );
 
     /* list of dlls */
 
@@ -810,6 +810,7 @@ static void output_immediate_imports( FILE *outfile )
         }
         fprintf( outfile, "    \"\\t.long 0\\n\"\n" );
     }
+    fprintf( outfile, "    \".L__wine_spec_imports_end:\\n\"\n" );
 
     for (i = 0; i < nb_imports; i++)
     {

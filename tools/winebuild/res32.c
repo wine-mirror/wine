@@ -327,16 +327,16 @@ static void output_string( FILE *outfile, const WCHAR *name )
 }
 
 /* output the resource definitions */
-void output_resources( FILE *outfile, DLLSPEC *spec )
+int output_resources( FILE *outfile, DLLSPEC *spec )
 {
-    int j, k, nb_id_types;
+    int j, k, nb_id_types, total_size;
     unsigned int i, n, offset, data_offset;
     struct res_tree *tree;
     struct res_type *type;
     struct res_name *name;
     const struct resource *res;
 
-    if (!spec->nb_resources) return;
+    if (!spec->nb_resources) return 0;
 
     tree = build_resource_tree( spec );
 
@@ -407,8 +407,12 @@ void output_resources( FILE *outfile, DLLSPEC *spec )
             else name->name_offset = name->name->id;
         }
     }
+    total_size = offset;
     for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
+    {
         fprintf( outfile, "  unsigned int          res_%d[%d];\n", i, res->data_size / 4 );
+        total_size += (res->data_size + 3) & ~3;
+    }
 
     /* resource directory contents */
 
@@ -501,4 +505,5 @@ void output_resources( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "};\n\n" );
 
     free_resource_tree( tree );
+    return total_size;
 }

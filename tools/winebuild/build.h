@@ -195,7 +195,7 @@ extern int resolve_imports( DLLSPEC *spec );
 extern int get_imports_size(void);
 extern void output_imports( FILE *outfile, DLLSPEC *spec );
 extern int load_res32_file( const char *name, DLLSPEC *spec );
-extern void output_resources( FILE *outfile, DLLSPEC *spec );
+extern int output_resources( FILE *outfile, DLLSPEC *spec );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
 extern unsigned int get_res16_data_size( DLLSPEC *spec, unsigned int res_offset,
                                          unsigned int alignment );
