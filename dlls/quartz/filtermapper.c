@@ -543,7 +543,7 @@ static HRESULT FM2_ReadFilterData(IPropertyBag * pPropBag, REGFILTER2 * prf2)
 
             /* FIXME: check signature */
 
-            TRACE("\tsignature = %s\n", debugstr_an(prrfp->signature, 4));
+            TRACE("\tsignature = %s\n", debugstr_an((const char*)prrfp->signature, 4));
 
             TRACE("\tpin[%ld]: flags = %lx, instances = %ld, media types = %ld, mediums = %ld\n",
                 i, prrfp->dwFlags, prrfp->dwInstances, prrfp->dwMediaTypes, prrfp->dwMediums);
@@ -577,7 +577,7 @@ static HRESULT FM2_ReadFilterData(IPropertyBag * pPropBag, REGFILTER2 * prf2)
                 CLSID * clsMinor = CoTaskMemAlloc(sizeof(CLSID));
 
                 /* FIXME: check signature */
-                TRACE("\t\tsignature = %s\n", debugstr_an(prt->signature, 4));
+                TRACE("\t\tsignature = %s\n", debugstr_an((const char*)prt->signature, 4));
 
                 memcpy(clsMajor, pData + prt->dwOffsetMajor, sizeof(CLSID));
                 memcpy(clsMinor, pData + prt->dwOffsetMinor, sizeof(CLSID));

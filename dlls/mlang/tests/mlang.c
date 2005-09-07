@@ -51,7 +51,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     WCHAR stringW[] = {'J','u','s','t',' ','a',' ','t','e','s','t',' ','s','t','r','i','n','g',0};
     char bufA[256];
     WCHAR bufW[256];
-    int lenA, lenW, expected_len;
+    UINT lenA, lenW, expected_len;
     HRESULT ret;
     HMODULE hMlang;
     FARPROC pConvertINetMultiByteToUnicode;

@@ -335,12 +335,15 @@ static void test_decodeInt(DWORD dwEncoding)
      "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
 }
 
+static const BYTE bin18[] = {0x0a,0x01,0x01,0};
+static const BYTE bin19[] = {0x0a,0x05,0x00,0xff,0xff,0xff,0x80,0};
+
 /* These are always encoded unsigned, and aren't constrained to be any
  * particular value
  */
 static const struct encodedInt enums[] = {
- { 1,    "\x0a\x01\x01" },
- { -128, "\x0a\x05\x00\xff\xff\xff\x80" },
+ { 1,    bin18 },
+ { -128, bin19 },
 };
 
 /* X509_CRL_REASON_CODE is also an enumerated type, but it's #defined to
@@ -478,10 +481,17 @@ static void testTimeDecoding(DWORD dwEncoding, LPCSTR structType,
          "Expected CRYPT_E_ASN1_BADTAG, got 0x%08lx\n", GetLastError());
 }
 
+static const BYTE bin20[] = {
+    0x17,0x0d,'0','5','0','6','0','6','1','6','1','0','0','0','Z',0};
+static const BYTE bin21[] = {
+    0x18,0x0f,'1','9','4','5','0','6','0','6','1','6','1','0','0','0','Z',0};
+static const BYTE bin22[] = {
+    0x18,0x0f,'2','1','4','5','0','6','0','6','1','6','1','0','0','0','Z',0};
+
 static const struct encodedFiletime times[] = {
- { { 2005, 6, 1, 6, 16, 10, 0, 0 }, "\x17" "\x0d" "050606161000Z" },
- { { 1945, 6, 1, 6, 16, 10, 0, 0 }, "\x18" "\x0f" "19450606161000Z" },
- { { 2145, 6, 1, 6, 16, 10, 0, 0 }, "\x18" "\x0f" "21450606161000Z" },
+ { { 2005, 6, 1, 6, 16, 10, 0, 0 }, bin20 },
+ { { 1945, 6, 1, 6, 16, 10, 0, 0 }, bin21 },
+ { { 2145, 6, 1, 6, 16, 10, 0, 0 }, bin22 },
 };
 
 static void test_encodeFiletime(DWORD dwEncoding)
@@ -496,33 +506,66 @@ static void test_encodeFiletime(DWORD dwEncoding)
     }
 }
 
+static const BYTE bin23[] = {
+    0x18,0x13,'1','9','4','5','0','6','0','6','1','6','1','0','0','0','.','0','0','0','Z',0};
+static const BYTE bin24[] = {
+    0x18,0x13,'1','9','4','5','0','6','0','6','1','6','1','0','0','0','.','9','9','9','Z',0};
+static const BYTE bin25[] = {
+    0x18,0x13,'1','9','4','5','0','6','0','6','1','6','1','0','0','0','+','0','1','0','0',0};
+static const BYTE bin26[] = {
+    0x18,0x13,'1','9','4','5','0','6','0','6','1','6','1','0','0','0','-','0','1','0','0',0};
+static const BYTE bin27[] = {
+    0x18,0x13,'1','9','4','5','0','6','0','6','1','6','1','0','0','0','-','0','1','1','5',0};
+static const BYTE bin28[] = {
+    0x18,0x0a,'2','1','4','5','0','6','0','6','1','6',0};
+static const BYTE bin29[] = {
+    0x17,0x0a,'4','5','0','6','0','6','1','6','1','0',0};
+static const BYTE bin30[] = {
+    0x17,0x0b,'4','5','0','6','0','6','1','6','1','0','Z',0};
+static const BYTE bin31[] = {
+    0x17,0x0d,'4','5','0','6','0','6','1','6','1','0','+','0','1',0};
+static const BYTE bin32[] = {
+    0x17,0x0d,'4','5','0','6','0','6','1','6','1','0','-','0','1',0};
+static const BYTE bin33[] = {
+    0x17,0x0f,'4','5','0','6','0','6','1','6','1','0','+','0','1','0','0',0};
+static const BYTE bin34[] = {
+    0x17,0x0f,'4','5','0','6','0','6','1','6','1','0','-','0','1','0','0',0};
+static const BYTE bin35[] = {
+    0x17,0x08, '4','5','0','6','0','6','1','6',0};
+static const BYTE bin36[] = {
+    0x18,0x0f, 'a','a','a','a','a','a','a','a','a','a','a','a','a','a','Z',0};
+static const BYTE bin37[] = {
+    0x18,0x04, '2','1','4','5',0};
+static const BYTE bin38[] = {
+    0x18,0x08, '2','1','4','5','0','6','0','6',0};
+
 static void test_decodeFiletime(DWORD dwEncoding)
 {
     static const struct encodedFiletime otherTimes[] = {
-     { { 1945, 6, 1, 6, 16, 10, 0, 0 },   "\x18" "\x13" "19450606161000.000Z" },
-     { { 1945, 6, 1, 6, 16, 10, 0, 999 }, "\x18" "\x13" "19450606161000.999Z" },
-     { { 1945, 6, 1, 6, 17, 10, 0, 0 },   "\x18" "\x13" "19450606161000+0100" },
-     { { 1945, 6, 1, 6, 15, 10, 0, 0 },   "\x18" "\x13" "19450606161000-0100" },
-     { { 1945, 6, 1, 6, 14, 55, 0, 0 },   "\x18" "\x13" "19450606161000-0115" },
-     { { 2145, 6, 1, 6, 16,  0, 0, 0 },   "\x18" "\x0a" "2145060616" },
-     { { 2045, 6, 1, 6, 16, 10, 0, 0 },   "\x17" "\x0a" "4506061610" },
-     { { 2045, 6, 1, 6, 16, 10, 0, 0 },   "\x17" "\x0b" "4506061610Z" },
-     { { 2045, 6, 1, 6, 17, 10, 0, 0 },   "\x17" "\x0d" "4506061610+01" },
-     { { 2045, 6, 1, 6, 15, 10, 0, 0 },   "\x17" "\x0d" "4506061610-01" },
-     { { 2045, 6, 1, 6, 17, 10, 0, 0 },   "\x17" "\x0f" "4506061610+0100" },
-     { { 2045, 6, 1, 6, 15, 10, 0, 0 },   "\x17" "\x0f" "4506061610-0100" },
+     { { 1945, 6, 1, 6, 16, 10, 0, 0 },   bin23 },
+     { { 1945, 6, 1, 6, 16, 10, 0, 999 }, bin24 },
+     { { 1945, 6, 1, 6, 17, 10, 0, 0 },   bin25 },
+     { { 1945, 6, 1, 6, 15, 10, 0, 0 },   bin26 },
+     { { 1945, 6, 1, 6, 14, 55, 0, 0 },   bin27 },
+     { { 2145, 6, 1, 6, 16,  0, 0, 0 },   bin28 },
+     { { 2045, 6, 1, 6, 16, 10, 0, 0 },   bin29 },
+     { { 2045, 6, 1, 6, 16, 10, 0, 0 },   bin30 },
+     { { 2045, 6, 1, 6, 17, 10, 0, 0 },   bin31 },
+     { { 2045, 6, 1, 6, 15, 10, 0, 0 },   bin32 },
+     { { 2045, 6, 1, 6, 17, 10, 0, 0 },   bin33 },
+     { { 2045, 6, 1, 6, 15, 10, 0, 0 },   bin34 },
     };
     /* An oddball case that succeeds in Windows, but doesn't seem correct
      { { 2145, 6, 1, 2, 11, 31, 0, 0 },   "\x18" "\x13" "21450606161000-9999" },
      */
-    static const char *bogusTimes[] = {
+    static const unsigned char *bogusTimes[] = {
      /* oddly, this succeeds on Windows, with year 2765
      "\x18" "\x0f" "21r50606161000Z",
       */
-     "\x17" "\x08" "45060616",
-     "\x18" "\x0f" "aaaaaaaaaaaaaaZ",
-     "\x18" "\x04" "2145",
-     "\x18" "\x08" "21450606",
+     bin35,
+     bin36,
+     bin37,
+     bin38,
     };
     DWORD i, size;
     FILETIME ft1 = { 0 }, ft2 = { 0 };

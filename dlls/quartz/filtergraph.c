@@ -1349,7 +1349,7 @@ static HRESULT SendFilterMessage(IMediaControl *iface, fnFoundFilter FoundFilter
     IEnumPins* pEnum;
     HRESULT hr;
     IPin* pPin;
-    LONG dummy;
+    DWORD dummy;
     PIN_DIRECTION dir;
     TRACE("(%p/%p)->()\n", This, iface);
 

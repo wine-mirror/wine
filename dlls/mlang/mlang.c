@@ -1407,7 +1407,7 @@ static HRESULT WINAPI fnIMultiLanguage_ConvertString(
     UINT* pcDstSize)
 {
     return ConvertINetString(pdwMode, dwSrcEncoding, dwDstEncoding,
-                             pSrcStr, pcSrcSize, pDstStr, pcDstSize);
+        (LPCSTR)pSrcStr, (LPINT)pcSrcSize, (LPSTR)pDstStr, (LPINT)pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_ConvertStringToUnicode(
@@ -1420,7 +1420,7 @@ static HRESULT WINAPI fnIMultiLanguage_ConvertStringToUnicode(
     UINT* pcDstSize)
 {
     return ConvertINetMultiByteToUnicode(pdwMode, dwEncoding,
-                                         pSrcStr, pcSrcSize, pDstStr, pcDstSize);
+        (LPCSTR)pSrcStr, (LPINT)pcSrcSize, pDstStr, (LPINT)pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_ConvertStringFromUnicode(
@@ -1433,7 +1433,7 @@ static HRESULT WINAPI fnIMultiLanguage_ConvertStringFromUnicode(
     UINT* pcDstSize)
 {
     return ConvertINetUnicodeToMultiByte(pdwMode, dwEncoding,
-                                         pSrcStr, pcSrcSize, pDstStr, pcDstSize);
+        pSrcStr, (LPINT)pcSrcSize, pDstStr, (LPINT)pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_ConvertStringReset(
@@ -1705,7 +1705,7 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertString(
     UINT* pcDstSize)
 {
     return ConvertINetString(pdwMode, dwSrcEncoding, dwDstEncoding,
-                             pSrcStr, pcSrcSize, pDstStr, pcDstSize);
+        (LPCSTR)pSrcStr, (LPINT)pcSrcSize, (LPSTR)pDstStr, (LPINT)pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_ConvertStringToUnicode(
@@ -1718,7 +1718,7 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertStringToUnicode(
     UINT* pcDstSize)
 {
     return ConvertINetMultiByteToUnicode(pdwMode, dwEncoding,
-                                         pSrcStr, pcSrcSize, pDstStr, pcDstSize);
+        pSrcStr, (LPINT)pcSrcSize, pDstStr, (LPINT)pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_ConvertStringFromUnicode(
@@ -1731,7 +1731,7 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertStringFromUnicode(
     UINT* pcDstSize)
 {
     return ConvertINetUnicodeToMultiByte(pdwMode, dwEncoding,
-                                         pSrcStr, pcSrcSize, pDstStr, pcDstSize);
+        pSrcStr, (LPINT)pcSrcSize, pDstStr, (LPINT)pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_ConvertStringReset(
