@@ -247,6 +247,8 @@ struct tagGdiFont {
     SHORT yMin;
     OUTLINETEXTMETRICW *potm;
     FONTSIGNATURE fs;
+    GdiFont base_font;
+    struct list child_fonts;
     LONG ppem;
 };
 
@@ -261,6 +263,7 @@ typedef struct {
 static struct list gdi_font_list = LIST_INIT(gdi_font_list);
 static struct list unused_gdi_font_list = LIST_INIT(unused_gdi_font_list);
 #define UNUSED_CACHE_SIZE 10
+static struct list child_font_list = LIST_INIT(child_font_list);
 static struct list system_links = LIST_INIT(system_links);
 
 static struct list font_list = LIST_INIT(font_list);
@@ -1588,11 +1591,29 @@ static GdiFont alloc_font(void)
     ret->potm = NULL;
     ret->font_desc.matrix.eM11 = ret->font_desc.matrix.eM22 = 1.0;
     list_init(&ret->hfontlist);
+    list_init(&ret->child_fonts);
     return ret;
 }
 
 static void free_font(GdiFont font)
 {
+    struct list *cursor, *cursor2;
+
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &font->child_fonts)
+    {
+        CHILD_FONT *child = LIST_ENTRY(cursor, CHILD_FONT, entry);
+        struct list *first_hfont;
+        HFONTLIST *hfontlist;
+        list_remove(cursor);
+        first_hfont = list_head(&child->font->hfontlist);
+        hfontlist = LIST_ENTRY(first_hfont, HFONTLIST, entry);
+        DeleteObject(hfontlist->hfont);
+        HeapFree(GetProcessHeap(), 0, hfontlist);
+        free_font(child->font);
+        HeapFree(GetProcessHeap(), 0, child->file_name);
+        HeapFree(GetProcessHeap(), 0, child);
+    }
+
     if (font->ft_face) pFT_Done_Face(font->ft_face);
     HeapFree(GetProcessHeap(), 0, font->potm);
     HeapFree(GetProcessHeap(), 0, font->name);
@@ -1829,6 +1850,38 @@ static GdiFont find_in_cache(HFONT hfont, LOGFONTW *plf, XFORM *pxf, BOOL can_us
     return NULL;
 }
 
+    
+/*************************************************************
+ * create_child_font_list
+ */
+static BOOL create_child_font_list(GdiFont font)
+{
+    BOOL ret = FALSE;
+    SYSTEM_LINKS *font_link;
+    CHILD_FONT *font_link_entry, *new_child;
+
+    LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
+    {
+        if(!strcmpW(font_link->font_name, font->name))
+        {
+            TRACE("found entry in system list\n");
+            LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
+            {
+                new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
+                new_child->file_name = strdupA(font_link_entry->file_name);
+                new_child->index = font_link_entry->index;
+                new_child->font = NULL;
+                list_add_tail(&font->child_fonts, &new_child->entry);
+                TRACE("font %s %d\n", debugstr_a(new_child->file_name), new_child->index); 
+            }
+            ret = TRUE;
+            break;
+        }
+    }
+
+    return ret;
+}
+
 /*************************************************************
  * WineEngCreateFontInstance
  *
@@ -1845,6 +1898,14 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     LOGFONTW lf;
     CHARSETINFO csi;
     HFONTLIST *hflist;
+
+    LIST_FOR_EACH_ENTRY(ret, &child_font_list, struct tagGdiFont, entry)
+    {
+        struct list *first_hfont = list_head(&ret->hfontlist);
+        hflist = LIST_ENTRY(first_hfont, HFONTLIST, entry);
+        if(hflist->hfont == hfont)
+            return ret;
+    }
 
     if (!GetObjectW( hfont, sizeof(lf), &lf )) return NULL;
     can_use_bitmap = GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_RA_ABLE;
@@ -1922,7 +1983,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 	    if(!strcmpiW(family->FamilyName, lf.lfFaceName)) {
                 LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
                     face = LIST_ENTRY(face_elem_ptr, Face, entry);
-                    if((csi.fs.fsCsb[0] & face->fs.fsCsb[0]) || !csi.fs.fsCsb[0])
+                    if((csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) || !csi.fs.fsCsb[0])
                         if(face->scalable || can_use_bitmap)
                             goto found;
                 }
@@ -1958,7 +2019,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
         if(!strcmpiW(family->FamilyName, lf.lfFaceName)) {
             LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
                 face = LIST_ENTRY(face_elem_ptr, Face, entry);
-                if(csi.fs.fsCsb[0] & face->fs.fsCsb[0])
+                if(csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0]))
                     if(face->scalable || can_use_bitmap)
                         goto found;
             }
@@ -1969,7 +2030,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
         family = LIST_ENTRY(family_elem_ptr, Family, entry);
         LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if(csi.fs.fsCsb[0] & face->fs.fsCsb[0])
+            if(csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0]))
                 if(face->scalable || can_use_bitmap)
                     goto found;
         }
@@ -2002,7 +2063,7 @@ found:
     LIST_FOR_EACH(face_elem_ptr, &family->faces) {
         face = LIST_ENTRY(face_elem_ptr, Face, entry);
         if(!(face->Italic ^ it) && !(face->Bold ^ bd) &&
-           ((csi.fs.fsCsb[0] & face->fs.fsCsb[0]) || !csi.fs.fsCsb[0])) {
+           ((csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) || !csi.fs.fsCsb[0])) {
             if(face->scalable)
                 break;
             if(height > 0)
@@ -2026,7 +2087,7 @@ found:
         best = NULL;
         LIST_FOR_EACH(face_elem_ptr, &family->faces) {
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if((csi.fs.fsCsb[0] & face->fs.fsCsb[0]) || !csi.fs.fsCsb[0]) {
+            if((csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) || !csi.fs.fsCsb[0]) {
                 if(face->scalable)
                     break;
                 if(height > 0)
@@ -2089,6 +2150,7 @@ found:
     ret->name = strdupW(family->FamilyName);
     ret->underline = lf.lfUnderline ? 0xff : 0;
     ret->strikeout = lf.lfStrikeOut ? 0xff : 0;
+    create_child_font_list(ret);
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
 
@@ -3218,6 +3280,55 @@ end:
     return ret;
 }
 
+static BOOL load_child_font(GdiFont font, CHILD_FONT *child)
+{
+    HFONTLIST *hfontlist;
+    child->font = alloc_font();
+    child->font->ft_face = OpenFontFile(child->font, child->file_name, child->index, 0, -font->ppem);
+    if(!child->font->ft_face)
+        return FALSE;
+
+    child->font->orientation = font->orientation;
+    hfontlist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hfontlist));
+    hfontlist->hfont = CreateFontIndirectW(&font->font_desc.lf);
+    list_add_head(&child->font->hfontlist, &hfontlist->entry);
+    child->font->base_font = font;
+    list_add_head(&child_font_list, &child->font->entry);
+    TRACE("created child font hfont %p for base %p child %p\n", hfontlist->hfont, font, child->font);
+    return TRUE;
+}
+
+static BOOL get_glyph_index_linked(GdiFont font, UINT c, GdiFont *linked_font, FT_UInt *glyph)
+{
+    FT_UInt g;
+    CHILD_FONT *child_font;
+
+    if(font->base_font)
+        font = font->base_font;
+
+    *linked_font = font;
+
+    if((*glyph = get_glyph_index(font, c)))
+        return TRUE;
+
+    LIST_FOR_EACH_ENTRY(child_font, &font->child_fonts, CHILD_FONT, entry)
+    {
+        if(!child_font->font)
+            if(!load_child_font(font, child_font))
+                continue;
+
+        if(!child_font->font->ft_face)
+            continue;
+        g = get_glyph_index(child_font->font, c);
+        if(g)
+        {
+            *glyph = g;
+            *linked_font = child_font->font;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
 
 /*************************************************************
  * WineEngGetCharWidth
@@ -3396,6 +3507,25 @@ UINT WineEngGetTextCharsetInfo(GdiFont font, LPFONTSIGNATURE fs, DWORD flags)
     return font->charset;
 }
 
+BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
+{
+    GdiFont font = dc->gdiFont, linked_font;
+    struct list *first_hfont;
+    BOOL ret;
+
+    ret = get_glyph_index_linked(font, c, &linked_font, glyph);
+    TRACE("get_glyph_index_linked glyph %d font %p\n", *glyph, linked_font);
+    if(font == linked_font)
+        *new_hfont = dc->hFont;
+    else
+    {
+        first_hfont = list_head(&linked_font->hfontlist);
+        *new_hfont = LIST_ENTRY(first_hfont, struct tagHFONTLIST, entry)->hfont;
+    }
+
+    return ret;
+}
+
 #else /* HAVE_FREETYPE */
 
 BOOL WineEngInit(void)
@@ -3502,4 +3632,8 @@ UINT WineEngGetTextCharsetInfo(GdiFont font, LPFONTSIGNATURE fs, DWORD flags)
     return DEFAULT_CHARSET;
 }
 
+BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
+{
+    return FALSE;
+}
 #endif /* HAVE_FREETYPE */
