@@ -283,6 +283,8 @@ PCHAR ldap_dn2ufnA(PCHAR);
 PWCHAR ldap_dn2ufnW(PWCHAR);
 PCHAR ldap_err2stringA(ULONG);
 PWCHAR ldap_err2stringW(ULONG);
+ULONG ldap_escape_filter_elementA(PCHAR,ULONG,PCHAR,ULONG);
+ULONG ldap_escape_filter_elementW(PCHAR,ULONG,PWCHAR,ULONG);
 PCHAR *ldap_explode_dnA(PCHAR,ULONG);
 PWCHAR *ldap_explode_dnW(PWCHAR,ULONG);
 ULONG ldap_extended_operationA(WLDAP32_LDAP*,PCHAR,struct WLDAP32_berval*,PLDAPControlA*,PLDAPControlA*,ULONG*);

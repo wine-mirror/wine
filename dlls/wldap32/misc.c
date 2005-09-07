@@ -24,6 +24,7 @@
 #include "wine/debug.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -123,6 +124,77 @@ ULONG WLDAP32_ldap_count_references( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res 
 
 #endif
     return ret;
+}
+
+static ULONG get_escape_size( PCHAR src, ULONG srclen )
+{
+    ULONG i, size = 0;
+
+    if (src)
+    {
+        for (i = 0; i < srclen; i++)
+        {
+            if ((src[i] >= '0' && src[i] <= '9') ||
+                (src[i] >= 'A' && src[i] <= 'Z') ||
+                (src[i] >= 'a' && src[i] <= 'z'))
+                size++;
+            else
+                size += 3;
+        }
+    }
+    return size + 1;
+}
+
+static void escape_filter_element( PCHAR src, ULONG srclen, PCHAR dst )
+{
+    ULONG i;
+    char fmt[] = "\\%02X";
+    char *d = dst;
+
+    for (i = 0; i < srclen; i++)
+    {
+        if ((src[i] >= '0' && src[i] <= '9') ||
+            (src[i] >= 'A' && src[i] <= 'Z') ||
+            (src[i] >= 'a' && src[i] <= 'z'))
+            *d++ = src[i];
+        else
+        {
+            sprintf( d, fmt, (unsigned char)src[i] );
+            d += 3;
+        }
+    }
+    *++d = 0;
+}
+
+ULONG ldap_escape_filter_elementA( PCHAR src, ULONG srclen, PCHAR dst, ULONG dstlen )
+{
+    ULONG len;
+
+    TRACE( "(%p, 0x%08lx, %p, 0x%08lx)\n", src, srclen, dst, dstlen );
+
+    len = get_escape_size( src, srclen );
+    if (!dst) return len;
+
+    if (!src || dstlen < len)
+        return WLDAP32_LDAP_PARAM_ERROR;
+    else
+    {
+        escape_filter_element( src, srclen, dst );
+        return LDAP_SUCCESS;
+    }
+}
+
+ULONG ldap_escape_filter_elementW( PCHAR src, ULONG srclen, PWCHAR dst, ULONG dstlen )
+{
+    ULONG len;
+
+    TRACE( "(%p, 0x%08lx, %p, 0x%08lx)\n", src, srclen, dst, dstlen );
+
+    len = get_escape_size( src, srclen );
+    if (!dst) return len;
+
+    /* no matter what you throw at it, this is what native returns */
+    return WLDAP32_LDAP_PARAM_ERROR;
 }
 
 PCHAR ldap_first_attributeA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry,

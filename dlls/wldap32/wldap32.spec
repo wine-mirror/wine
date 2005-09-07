@@ -95,9 +95,9 @@
 @ cdecl ldap_err2string(long) ldap_err2stringA
 @ cdecl ldap_err2stringA(long)
 @ cdecl ldap_err2stringW(long)
-@ stub ldap_escape_filter_element
-@ stub ldap_escape_filter_elementA
-@ stub ldap_escape_filter_elementW
+@ cdecl ldap_escape_filter_element(str long ptr long) ldap_escape_filter_elementA
+@ cdecl ldap_escape_filter_elementA(str long ptr long)
+@ cdecl ldap_escape_filter_elementW(wstr long ptr long)
 @ cdecl ldap_explode_dn(str long) ldap_explode_dnA
 @ cdecl ldap_explode_dnA(str long)
 @ cdecl ldap_explode_dnW(wstr long)

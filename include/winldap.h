@@ -445,7 +445,7 @@ PCHAR ldap_err2stringA(ULONG);
 PWCHAR ldap_err2stringW(ULONG);
 #define    ldap_err2string WINELIB_NAME_AW(ldap_err2string)
 ULONG ldap_escape_filter_elementA(PCHAR,ULONG,PCHAR,ULONG);
-ULONG ldap_escape_filter_elementW(PWCHAR,ULONG,PWCHAR,ULONG);
+ULONG ldap_escape_filter_elementW(PCHAR,ULONG,PWCHAR,ULONG);
 #define    ldap_escape_filter_element WINELIB_NAME_AW(ldap_escape_filter_element)
 PCHAR *ldap_explode_dnA(PCHAR,ULONG);
 PWCHAR *ldap_explode_dnW(PWCHAR,ULONG);
