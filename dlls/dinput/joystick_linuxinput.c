@@ -1198,6 +1198,7 @@ static HRESULT WINAPI JoystickAImpl_EnumEffects(LPDIRECTINPUTDEVICE8A iface,
 						LPVOID pvRef,
 						DWORD dwEffType)
 {
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
     DIEFFECTINFOA dei; /* feif */
     DWORD type = DIEFT_GETTYPE(dwEffType);
     JoystickImpl* This = (JoystickImpl*)iface;
@@ -1205,7 +1206,6 @@ static HRESULT WINAPI JoystickAImpl_EnumEffects(LPDIRECTINPUTDEVICE8A iface,
 
     TRACE("(this=%p,%p,%ld) type=%ld fd=%d\n", This, pvRef, dwEffType, type, xfd);
 
-#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
     dei.dwSize = sizeof(DIEFFECTINFOA);          
 
     /* We need to return something even if we're not yet acquired */
@@ -1280,6 +1280,7 @@ static HRESULT WINAPI JoystickWImpl_EnumEffects(LPDIRECTINPUTDEVICE8W iface,
                                                 LPVOID pvRef,
                                                 DWORD dwEffType)
 {
+#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
     /* seems silly to duplicate all this code but all the structures and functions
      * are actually different (A/W) */
     DIEFFECTINFOW dei; /* feif */
@@ -1289,7 +1290,6 @@ static HRESULT WINAPI JoystickWImpl_EnumEffects(LPDIRECTINPUTDEVICE8W iface,
 
     TRACE("(this=%p,%p,%ld) type=%ld fd=%d\n", This, pvRef, dwEffType, type, xfd);
 
-#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
     dei.dwSize = sizeof(DIEFFECTINFOW);          
 
     /* We need to return something even if we're not yet acquired */
