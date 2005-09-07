@@ -205,22 +205,32 @@ MSIFILE* get_loaded_file( MSIPACKAGE* package, LPCWSTR key )
 
 int track_tempfile( MSIPACKAGE *package, LPCWSTR name, LPCWSTR path )
 {
-    MSIFILE *file;
+    MSITEMPFILE *temp;
 
     if (!package)
-        return -2;
-
-    file = get_loaded_file( package, name );
-    if (file)
         return -1;
 
-    file = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof (MSIFILE) );
+    LIST_FOR_EACH_ENTRY( temp, &package->tempfiles, MSITEMPFILE, entry )
+    {
+        if (lstrcmpW( name, temp->File )==0)
+        {
+            TRACE("tempfile %s already exists with path %s\n",
+                debugstr_w(temp->File), debugstr_w(temp->Path));
+            return -1;
+        }
+    }
 
-    file->File = strdupW( name );
-    file->TargetPath = strdupW( path );
-    file->Temporary = TRUE;
+    temp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof (MSITEMPFILE) );
+    if (!temp)
+        return -1;
 
-    TRACE("Tracking tempfile (%s)\n", debugstr_w( file->File ));  
+    list_add_head( &package->tempfiles, &temp->entry );
+
+    temp->File = strdupW( name );
+    temp->Path = strdupW( path );
+
+    TRACE("adding tempfile %s with path %s\n",
+           debugstr_w(temp->File), debugstr_w(temp->Path));
 
     return 0;
 }
@@ -402,18 +412,18 @@ UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action)
 
 static void remove_tracked_tempfiles(MSIPACKAGE* package)
 {
-    MSIFILE *file;
+    struct list *item, *cursor;
 
-    if (!package)
-        return;
-
-    LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
+    LIST_FOR_EACH_SAFE( item, cursor, &package->tempfiles )
     {
-        if (file->Temporary)
-        {
-            TRACE("Cleaning up %s\n", debugstr_w( file->TargetPath ));
-            DeleteFileW( file->TargetPath );
-        }
+        MSITEMPFILE *temp = LIST_ENTRY( item, MSITEMPFILE, entry );
+
+        list_remove( &temp->entry );
+        TRACE("deleting temp file %s\n", debugstr_w( temp->Path ));
+        DeleteFileW( temp->Path );
+        HeapFree( GetProcessHeap(), 0, temp->File );
+        HeapFree( GetProcessHeap(), 0, temp->Path );
+        HeapFree( GetProcessHeap(), 0, temp );
     }
 }
 

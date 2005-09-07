@@ -670,9 +670,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     {
         MSICOMPONENT* comp = NULL;
 
-        if (file->Temporary)
-            continue;
-
         if (!ACTION_VerifyComponentForAction(package, file->Component, 
                                        INSTALLSTATE_LOCAL))
         {
@@ -712,9 +709,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     /* Pass 2 */
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        if (file->Temporary)
-            continue;
-
         if ((file->State == 1) || (file->State == 2))
         {
             TRACE("Pass 2: %s\n",debugstr_w(file->File));

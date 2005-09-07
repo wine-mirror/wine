@@ -1184,7 +1184,6 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
     file->Attributes = MSI_RecordGetInteger( row, 7 );
     file->Sequence = MSI_RecordGetInteger( row, 8 );
 
-    file->Temporary = FALSE;
     file->State = 0;
 
     TRACE("File Loaded (%s)\n",debugstr_w(file->File));  
@@ -1738,9 +1737,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         MSICOMPONENT* comp = NULL;
 
         comp = file->Component;
-
-        if (file->Temporary == TRUE)
-            continue;
 
         if (comp)
         {
@@ -2449,8 +2445,6 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
 
         LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
         {
-            if (file->Temporary)
-                continue;
             if (file->Component == comp)
                 ACTION_WriteSharedDLLsCount( file->TargetPath, count );
         }

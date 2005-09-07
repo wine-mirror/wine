@@ -114,10 +114,17 @@ typedef struct tagMSIFILE
        /* 2 = present but replace */
        /* 3 = present do not replace */
        /* 4 = Installed */
+       /* 5 = Skipped */
     LPWSTR  SourcePath;
     LPWSTR  TargetPath;
-    BOOL    Temporary; 
 } MSIFILE;
+
+typedef struct tagMSITEMPFILE
+{
+    struct list entry;
+    LPWSTR File;
+    LPWSTR Path;
+} MSITEMPFILE;
 
 typedef struct tagMSIAPPID
 {

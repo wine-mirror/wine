@@ -188,6 +188,7 @@ typedef struct tagMSIPACKAGE
     struct list components;
     struct list features;
     struct list files;
+    struct list tempfiles;
     struct list folders;
     LPWSTR ActionFormat;
     LPWSTR LastAction;
