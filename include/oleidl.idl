@@ -252,7 +252,7 @@ interface IOleInPlaceSite : IOleWindow
         [in, out] LPOLEINPLACEFRAMEINFO lpFrameInfo);
 
     HRESULT Scroll(
-        [in] SIZE scrollExtant);
+        [in] SIZE scrollExtent);
 
     HRESULT OnUIDeactivate(
         [in] BOOL fUndoable);
