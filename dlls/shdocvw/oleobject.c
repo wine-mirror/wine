@@ -260,32 +260,33 @@ static const IOleObjectVtbl OleObjectVtbl =
  * Implement the IOleInPlaceObject interface
  */
 
-static HRESULT WINAPI WBOIPO_QueryInterface(LPOLEINPLACEOBJECT iface,
-                                            REFIID riid, LPVOID *ppobj)
-{
-    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+#define INPLACEOBJ_THIS(iface) DEFINE_THIS(WebBrowser, OleInPlaceObject, iface)
 
-    if (ppobj == NULL) return E_POINTER;
-    
-    return E_NOINTERFACE;
+static HRESULT WINAPI OleInPlaceObject_QueryInterface(IOleInPlaceObject *iface,
+        REFIID riid, LPVOID *ppobj)
+{
+    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    return IWebBrowser_QueryInterface(WEBBROWSER(This), riid, ppobj);
 }
 
-static ULONG WINAPI WBOIPO_AddRef(LPOLEINPLACEOBJECT iface)
+static ULONG WINAPI OleInPlaceObject_AddRef(IOleInPlaceObject *iface)
 {
-    SHDOCVW_LockModule();
-
-    return 2; /* non-heap based object */
+    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    return IWebBrowser_AddRef(WEBBROWSER(This));
 }
 
-static ULONG WINAPI WBOIPO_Release(LPOLEINPLACEOBJECT iface)
+static ULONG WINAPI OleInPlaceObject_Release(IOleInPlaceObject *iface)
 {
-    SHDOCVW_UnlockModule();
-
-    return 1; /* non-heap based object */
+    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    return IWebBrowser_Release(WEBBROWSER(This));
 }
 
-static HRESULT WINAPI WBOIPO_GetWindow(LPOLEINPLACEOBJECT iface, HWND* phwnd)
+static HRESULT WINAPI OleInPlaceObject_GetWindow(IOleInPlaceObject *iface, HWND* phwnd)
 {
+    WebBrowser *This = INPLACEOBJ_THIS(iface);
+
+    FIXME("(%p)->(%p)\n", This, phwnd);
+
 #if 0
     /* Create a fake window to fool MFC into believing that we actually
      * have an implemented browser control.  Avoids the assertion.
@@ -300,132 +301,130 @@ static HRESULT WINAPI WBOIPO_GetWindow(LPOLEINPLACEOBJECT iface, HWND* phwnd)
     TRACE ("Returning hwnd = %d\n", hwnd);
 #endif
 
-    FIXME("stub HWND* = %p\n", phwnd);
     return S_OK;
 }
 
-static HRESULT WINAPI WBOIPO_ContextSensitiveHelp(LPOLEINPLACEOBJECT iface,
-                                                  BOOL fEnterMode)
+static HRESULT WINAPI OleInPlaceObject_ContextSensitiveHelp(IOleInPlaceObject *iface,
+        BOOL fEnterMode)
 {
-    FIXME("stub fEnterMode = %d\n", fEnterMode);
-    return S_OK;
+    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, fEnterMode);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WBOIPO_InPlaceDeactivate(LPOLEINPLACEOBJECT iface)
+static HRESULT WINAPI OleInPlaceObject_InPlaceDeactivate(IOleInPlaceObject *iface)
 {
-    FIXME("stub \n");
-    return S_OK;
+    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WBOIPO_UIDeactivate(LPOLEINPLACEOBJECT iface)
+static HRESULT WINAPI OleInPlaceObject_UIDeactivate(IOleInPlaceObject *iface)
 {
-    FIXME("stub \n");
-    return S_OK;
+    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WBOIPO_SetObjectRects(LPOLEINPLACEOBJECT iface,
-                                            LPCRECT lprcPosRect, LPCRECT lprcClipRect)
+static HRESULT WINAPI OleInPlaceObject_SetObjectRects(IOleInPlaceObject *iface,
+        LPCRECT lprcPosRect, LPCRECT lprcClipRect)
 {
-    FIXME("stub PosRect = %p, ClipRect = %p\n", lprcPosRect, lprcClipRect);
-    return S_OK;
+    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    FIXME("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WBOIPO_ReactivateAndUndo(LPOLEINPLACEOBJECT iface)
+static HRESULT WINAPI OleInPlaceObject_ReactivateAndUndo(IOleInPlaceObject *iface)
 {
-    FIXME("stub \n");
-    return S_OK;
+    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
 }
 
-/**********************************************************************
- * IOleInPlaceObject virtual function table for IE Web Browser component
- */
+#undef INPLACEOBJ_THIS
 
-static const IOleInPlaceObjectVtbl WBOIPO_Vtbl =
+static const IOleInPlaceObjectVtbl OleInPlaceObjectVtbl =
 {
-    WBOIPO_QueryInterface,
-    WBOIPO_AddRef,
-    WBOIPO_Release,
-    WBOIPO_GetWindow,
-    WBOIPO_ContextSensitiveHelp,
-    WBOIPO_InPlaceDeactivate,
-    WBOIPO_UIDeactivate,
-    WBOIPO_SetObjectRects,
-    WBOIPO_ReactivateAndUndo
+    OleInPlaceObject_QueryInterface,
+    OleInPlaceObject_AddRef,
+    OleInPlaceObject_Release,
+    OleInPlaceObject_GetWindow,
+    OleInPlaceObject_ContextSensitiveHelp,
+    OleInPlaceObject_InPlaceDeactivate,
+    OleInPlaceObject_UIDeactivate,
+    OleInPlaceObject_SetObjectRects,
+    OleInPlaceObject_ReactivateAndUndo
 };
-
-IOleInPlaceObjectImpl SHDOCVW_OleInPlaceObject = {&WBOIPO_Vtbl};
-
 
 /**********************************************************************
  * Implement the IOleControl interface
  */
 
-static HRESULT WINAPI WBOC_QueryInterface(LPOLECONTROL iface,
-                                          REFIID riid, LPVOID *ppobj)
-{
-    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+#define CONTROL_THIS(iface) DEFINE_THIS(WebBrowser, OleControl, iface)
 
-    if (ppobj == NULL) return E_POINTER;
-    
-    return E_NOINTERFACE;
+static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface,
+        REFIID riid, LPVOID *ppobj)
+{
+    WebBrowser *This = CONTROL_THIS(iface);
+    return IWebBrowser_QueryInterface(WEBBROWSER(This), riid, ppobj);
 }
 
-static ULONG WINAPI WBOC_AddRef(LPOLECONTROL iface)
+static ULONG WINAPI OleControl_AddRef(IOleControl *iface)
 {
-    SHDOCVW_LockModule();
-
-    return 2; /* non-heap based object */
+    WebBrowser *This = CONTROL_THIS(iface);
+    return IWebBrowser_AddRef(WEBBROWSER(This));
 }
 
-static ULONG WINAPI WBOC_Release(LPOLECONTROL iface)
+static ULONG WINAPI OleControl_Release(IOleControl *iface)
 {
-    SHDOCVW_UnlockModule();
-
-    return 1; /* non-heap based object */
+    WebBrowser *This = CONTROL_THIS(iface);
+    return IWebBrowser_Release(WEBBROWSER(This));
 }
 
-static HRESULT WINAPI WBOC_GetControlInfo(LPOLECONTROL iface, LPCONTROLINFO pCI)
+static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, LPCONTROLINFO pCI)
 {
-    FIXME("stub: LPCONTROLINFO = %p\n", pCI);
-    return S_OK;
+    WebBrowser *This = CONTROL_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pCI);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WBOC_OnMnemonic(LPOLECONTROL iface, struct tagMSG *pMsg)
+static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, struct tagMSG *pMsg)
 {
-    FIXME("stub: MSG* = %p\n", pMsg);
-    return S_OK;
+    WebBrowser *This = CONTROL_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pMsg);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WBOC_OnAmbientPropertyChange(LPOLECONTROL iface, DISPID dispID)
+static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
 {
-    FIXME("stub: DISPID = %ld\n", dispID);
-    return S_OK;
+    WebBrowser *This = CONTROL_THIS(iface);
+    FIXME("(%p)->(%ld)\n", This, dispID);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WBOC_FreezeEvents(LPOLECONTROL iface, BOOL bFreeze)
+static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL bFreeze)
 {
-    FIXME("stub: bFreeze = %d\n", bFreeze);
-    return S_OK;
+    WebBrowser *This = CONTROL_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, bFreeze);
+    return E_NOTIMPL;
 }
 
-/**********************************************************************
- * IOleControl virtual function table for IE Web Browser component
- */
+#undef CONTROL_THIS
 
-static const IOleControlVtbl WBOC_Vtbl =
+static const IOleControlVtbl OleControlVtbl =
 {
-    WBOC_QueryInterface,
-    WBOC_AddRef,
-    WBOC_Release,
-    WBOC_GetControlInfo,
-    WBOC_OnMnemonic,
-    WBOC_OnAmbientPropertyChange,
-    WBOC_FreezeEvents
+    OleControl_QueryInterface,
+    OleControl_AddRef,
+    OleControl_Release,
+    OleControl_GetControlInfo,
+    OleControl_OnMnemonic,
+    OleControl_OnAmbientPropertyChange,
+    OleControl_FreezeEvents
 };
-
-IOleControlImpl SHDOCVW_OleControl = {&WBOC_Vtbl};
 
 void WebBrowser_OleObject_Init(WebBrowser *This)
 {
-    This->lpOleObjectVtbl = &OleObjectVtbl;
+    This->lpOleObjectVtbl        = &OleObjectVtbl;
+    This->lpOleInPlaceObjectVtbl = &OleInPlaceObjectVtbl;
+    This->lpOleControlVtbl       = &OleControlVtbl;
 }

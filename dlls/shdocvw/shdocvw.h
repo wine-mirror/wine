@@ -53,14 +53,18 @@ extern IClassFactoryImpl SHDOCVW_ClassFactory;
  * WebBrowser declaration for SHDOCVW.DLL
  */
 typedef struct {
-    const IWebBrowserVtbl   *lpWebBrowserVtbl;
-    const IOleObjectVtbl    *lpOleObjectVtbl;
+    const IWebBrowserVtbl       *lpWebBrowserVtbl;
+    const IOleObjectVtbl        *lpOleObjectVtbl;
+    const IOleInPlaceObjectVtbl *lpOleInPlaceObjectVtbl;
+    const IOleControlVtbl       *lpOleControlVtbl;
 
     LONG ref;
 } WebBrowser;
 
-#define WEBBROWSER(x)   ((IWebBrowser*)     &(x)->lpWebBrowserVtbl)
-#define OLEOBJ(x)       ((IOleObject*)      &(x)->lpOleObjectVtbl)
+#define WEBBROWSER(x)   ((IWebBrowser*)         &(x)->lpWebBrowserVtbl)
+#define OLEOBJ(x)       ((IOleObject*)          &(x)->lpOleObjectVtbl)
+#define INPLACEOBJ(x)   ((IOleInPlaceObject*)   &(x)->lpOleInPlaceObjectVtbl)
+#define CONTROL(x)      ((IOleControl*)         &(x)->lpOleControlVtbl)
 
 void WebBrowser_OleObject_Init(WebBrowser*);
 
@@ -153,30 +157,6 @@ typedef struct
     const IConnectionPointVtbl *lpVtbl;
     LONG ref;
 } IConnectionPointImpl;
-
-/**********************************************************************
- * IOleInPlaceObject declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-        /* IUnknown fields */
-        const IOleInPlaceObjectVtbl *lpVtbl;
-            DWORD ref;
-} IOleInPlaceObjectImpl;
-
-extern IOleInPlaceObjectImpl SHDOCVW_OleInPlaceObject;
-
-/**********************************************************************
- * IOleControl declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IOleControlVtbl *lpVtbl;
-    DWORD ref;
-} IOleControlImpl;
-
-extern IOleControlImpl SHDOCVW_OleControl;
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 

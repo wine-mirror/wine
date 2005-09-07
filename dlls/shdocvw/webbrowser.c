@@ -42,14 +42,23 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser *iface, REFIID riid,
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = WEBBROWSER(This);
     }else if(IsEqualGUID (&IID_IDispatch, riid)) {
-        FIXME("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = WEBBROWSER(This);
     }else if(IsEqualGUID(&IID_IWebBrowser, riid)) {
         TRACE("(%p)->(IID_IWebBrowser %p)\n", This, ppv);
         *ppv = WEBBROWSER(This);
     }else if(IsEqualGUID(&IID_IOleObject, riid)) {
-        FIXME("(%p)->(IID_IOleObject %p)\n", This, ppv);
+        TRACE("(%p)->(IID_IOleObject %p)\n", This, ppv);
         *ppv = OLEOBJ(This);
+    }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
+        TRACE("(%p)->(IID_IOleWindow %p)\n", This, ppv);
+        *ppv = INPLACEOBJ(This);
+    }else if(IsEqualGUID (&IID_IOleInPlaceObject, riid)) {
+        TRACE("(%p)->(IID_IOleInPlaceObject %p)\n", This, ppv);
+        *ppv = INPLACEOBJ(This);
+    }else if(IsEqualGUID (&IID_IOleControl, riid)) {
+        FIXME("(%p)->(IID_IOleControl %p)\n", This, ppv);
+        *ppv = CONTROL(This);
     }else if(IsEqualGUID (&IID_IPersistStorage, riid)) {
         FIXME("(%p)->(IID_IPersistStorage %p)\n", This, ppv);
         *ppv = &SHDOCVW_PersistStorage;
@@ -68,12 +77,6 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser *iface, REFIID riid,
     }else if(IsEqualGUID (&IID_IConnectionPointContainer, riid)) {
         FIXME("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = &SHDOCVW_ConnectionPointContainer;
-    }else if(IsEqualGUID (&IID_IOleInPlaceObject, riid)) {
-        FIXME("(%p)->(IID_IOleInPlaceObject %p)\n", This, ppv);
-        *ppv = &SHDOCVW_OleInPlaceObject;
-    }else if(IsEqualGUID (&IID_IOleControl, riid)) {
-        FIXME("(%p)->(IID_IOleControl %p)\n", This, ppv);
-        *ppv = &SHDOCVW_OleControl;
     }
 
     if(*ppv) {
