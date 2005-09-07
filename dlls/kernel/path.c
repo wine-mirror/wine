@@ -1122,7 +1122,13 @@ BOOL WINAPI MoveFileExA( LPCSTR source, LPCSTR dest, DWORD flag )
     BOOL ret;
 
     if (!(sourceW = FILE_name_AtoW( source, FALSE ))) return FALSE;
-    if (!(destW = FILE_name_AtoW( dest, TRUE ))) return FALSE;
+    if (dest)
+    {
+        if (!(destW = FILE_name_AtoW( dest, TRUE ))) return FALSE;
+    }
+    else
+        destW = NULL;
+
     ret = MoveFileExW( sourceW, destW, flag );
     HeapFree( GetProcessHeap(), 0, destW );
     return ret;
