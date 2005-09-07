@@ -416,16 +416,19 @@ BOOL WINAPI SetThreadPriority(
     HANDLE hthread, /* [in] Handle to thread */
     INT priority)   /* [in] Thread priority level */
 {
-    BOOL ret;
-    SERVER_START_REQ( set_thread_info )
+    DWORD       prio = priority;
+    NTSTATUS    status;
+
+    status = NtSetInformationThread(hthread, ThreadBasePriority,
+                                    &prio, sizeof(prio));
+
+    if (status)
     {
-        req->handle   = hthread;
-        req->priority = priority;
-        req->mask     = SET_THREAD_INFO_PRIORITY;
-        ret = !wine_server_call_err( req );
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-    SERVER_END_REQ;
-    return ret;
+
+    return TRUE;
 }
 
 
