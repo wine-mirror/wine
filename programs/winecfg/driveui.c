@@ -24,6 +24,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define COBJMACROS
+
 #include <windef.h>
 #include <winbase.h>
 #include <winreg.h>
@@ -622,10 +624,10 @@ static void browse_for_folder(HWND dialog)
     hr = SHGetDesktopFolder(&pDesktop);
     if (!SUCCEEDED(hr)) return;
 
-    hr = pDesktop->lpVtbl->ParseDisplayName(pDesktop, NULL, NULL, wszUnixRootDisplayName, NULL, 
-                                            &pidlUnixRoot, NULL);
+    hr = IShellFolder_ParseDisplayName(pDesktop, NULL, NULL, wszUnixRootDisplayName, NULL, 
+                                       &pidlUnixRoot, NULL);
     if (!SUCCEEDED(hr)) {
-        pDesktop->lpVtbl->Release(pDesktop);
+        IShellFolder_Release(pDesktop);
         return;
     }
 
@@ -638,9 +640,9 @@ static void browse_for_folder(HWND dialog)
         char *pszSelectedPath;
         HRESULT hr;
         
-        hr = pDesktop->lpVtbl->GetDisplayNameOf(pDesktop, pidlSelectedPath, SHGDN_FORPARSING, 
-                                                &strSelectedPath);
-        pDesktop->lpVtbl->Release(pDesktop);
+        hr = IShellFolder_GetDisplayNameOf(pDesktop, pidlSelectedPath, SHGDN_FORPARSING, 
+                                           &strSelectedPath);
+        IShellFolder_Release(pDesktop);
         if (!SUCCEEDED(hr)) {
             SHFree(pidlSelectedPath);
             return;
