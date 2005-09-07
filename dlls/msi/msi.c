@@ -1745,17 +1745,114 @@ UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
 UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
                                   DWORD dwReinstallMode )
 {
+    MSIHANDLE handle = -1;
+    MSIPACKAGE* package;
+    UINT rc;
+    DWORD sz;
+    WCHAR sourcepath[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+    static const WCHAR szInstalled[] = {
+        ' ','L','O','G','V','E','R','B','O','S','E','=','1',' ','I','n','s','t','a','l','l','e','d','=','1',0};
+    static const WCHAR fmt[] = {'R','E','I','N','S','T','A','L','L','=','%','s',0};
+    static const WCHAR REINSTALLMODE[] = {'R','E','I','N','S','T','A','L','L','M','O','D','E',0};
+    WCHAR reinstallmode[11];
+    LPWSTR ptr;
+    LPWSTR commandline;
+
     FIXME("%s %s %li\n", debugstr_w(szProduct), debugstr_w(szFeature),
                            dwReinstallMode);
-    return ERROR_SUCCESS;
+
+    memset(reinstallmode,0,sizeof(reinstallmode));
+    ptr = reinstallmode;
+
+    if (dwReinstallMode & REINSTALLMODE_FILEMISSING)
+        { *ptr = 'p'; ptr++; }
+    if (dwReinstallMode & REINSTALLMODE_FILEOLDERVERSION)
+        { *ptr = 'o'; ptr++; }
+    if (dwReinstallMode & REINSTALLMODE_FILEEQUALVERSION)
+        { *ptr = 'w'; ptr++; }
+    if (dwReinstallMode & REINSTALLMODE_FILEEXACT)
+        { *ptr = 'd'; ptr++; }
+    if (dwReinstallMode & REINSTALLMODE_FILEVERIFY)
+        { *ptr = 'c'; ptr++; }
+    if (dwReinstallMode & REINSTALLMODE_FILEREPLACE)
+        { *ptr = 'a'; ptr++; }
+    if (dwReinstallMode & REINSTALLMODE_USERDATA)
+        { *ptr = 'u'; ptr++; }
+    if (dwReinstallMode & REINSTALLMODE_MACHINEDATA)
+        { *ptr = 'm'; ptr++; }
+    if (dwReinstallMode & REINSTALLMODE_SHORTCUT)
+        { *ptr = 's'; ptr++; }
+    if (dwReinstallMode & REINSTALLMODE_PACKAGE)
+        { *ptr = 'v'; ptr++; }
+    
+    sz = sizeof(sourcepath);
+    MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED, 
+            MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath,
+            &sz);
+
+    sz = sizeof(filename);
+    MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED, 
+            MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAMEW, filename, &sz);
+
+    strcatW(sourcepath,filename);
+
+    if (!(dwReinstallMode & REINSTALLMODE_PACKAGE))
+        rc = MsiOpenProductW(szProduct,&handle);
+    else
+        rc = MsiOpenPackageW(sourcepath,&handle);
+
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    package = msihandle2msiinfo(handle, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+    {
+        rc = ERROR_INVALID_HANDLE;
+        goto end;
+    }
+
+    MSI_SetPropertyW(package,REINSTALLMODE,reinstallmode);
+    
+    sz = lstrlenW(szInstalled);
+    sz += lstrlenW(fmt);
+    sz += lstrlenW(szFeature);
+
+    commandline = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
+
+    sprintfW(commandline,fmt,szFeature);
+    lstrcatW(commandline,szInstalled);
+
+    rc = ACTION_DoTopLevelINSTALL(package, sourcepath, commandline, sourcepath);
+
+    msiobj_release( &package->hdr );
+
+    HeapFree(GetProcessHeap(),0,commandline);
+end:
+    if (handle != -1)
+        MsiCloseHandle(handle);
+
+    return rc;
 }
 
 UINT WINAPI MsiReinstallFeatureA( LPCSTR szProduct, LPCSTR szFeature,
                                   DWORD dwReinstallMode )
 {
-    FIXME("%s %s %li\n", debugstr_a(szProduct), debugstr_a(szFeature),
+    LPWSTR wszProduct;
+    LPWSTR wszFeature;
+    UINT rc;
+
+    TRACE("%s %s %li\n", debugstr_a(szProduct), debugstr_a(szFeature),
                            dwReinstallMode);
-    return ERROR_SUCCESS;
+
+    wszProduct = strdupAtoW(szProduct);
+    wszFeature = strdupAtoW(szFeature);
+
+    rc = MsiReinstallFeatureW(wszProduct, wszFeature, dwReinstallMode);
+    
+    HeapFree(GetProcessHeap(),0,wszProduct);
+    HeapFree(GetProcessHeap(),0,wszFeature);
+    return rc;
 }
 
 /***********************************************************************
