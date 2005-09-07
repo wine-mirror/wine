@@ -169,13 +169,34 @@ BEGIN
 
 END
 
+IDD_APPEARANCE DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 9, "MS UI Gothic"
+BEGIN
+    LTEXT           "テーマ:",IDC_STATIC,8,10,244,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,8,18,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "テーマのインストール...",IDC_THEME_INSTALL,152,32,100,14
+    LTEXT           "配色:",IDC_THEME_COLORTEXT,8,48,244,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,8,56,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "サイズ:",IDC_THEME_SIZETEXT,8,74,244,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,8,82,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
+    IDS_TAB_APPLICATIONS    "アプリケーション"
     IDS_TAB_DLLS            "ライブラリ"
     IDS_TAB_DRIVES          "ドライブ"
     IDS_CHOOSE_PATH         "マッピングするUnixディレクトリーを選んでください"
     IDS_HIDE_ADVANCED       "詳細を隠す"
     IDS_SHOW_ADVANCED       "詳細を表示"
-    
+    IDS_NOTHEME             "(テーマ無し)"
+    IDS_TAB_GRAPHICS        "画面"
+    IDS_TAB_APPEARANCE      "外観"
+    IDS_TAB_AUDIO           "オーディオ"
+    IDS_TAB_ABOUT           "Wineについて"
+    IDS_WINECFG_TITLE       "Wine設定"
+    IDS_THEMEFILE           "テーマファイル"
+    IDS_THEMEFILE_SELECT    "テーマファイルを選んでください"
 END
