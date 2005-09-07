@@ -3531,6 +3531,23 @@ BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
 
     return ret;
 }
+    
+
+/*************************************************************
+ *     FontIsLinked
+ */
+BOOL WINAPI FontIsLinked(HDC hdc)
+{
+    DC *dc = DC_GetDCPtr(hdc);
+    BOOL ret = FALSE;
+
+    if(!dc) return FALSE;
+    if(dc->gdiFont && !list_empty(&dc->gdiFont->child_fonts))
+        ret = TRUE;
+    GDI_ReleaseObj(hdc);
+    TRACE("returning %d\n", ret);
+    return ret;
+}
 
 #else /* HAVE_FREETYPE */
 
@@ -3639,6 +3656,11 @@ UINT WineEngGetTextCharsetInfo(GdiFont font, LPFONTSIGNATURE fs, DWORD flags)
 }
 
 BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
+{
+    return FALSE;
+}
+
+BOOL WINAPI FontIsLinked(HDC hdc)
 {
     return FALSE;
 }

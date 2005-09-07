@@ -125,7 +125,7 @@
 @ stdcall FixBrushOrgEx(long long long ptr)
 @ stdcall FlattenPath(long)
 @ stdcall FloodFill(long long long long)
-# @ stub FontIsLinked
+@ stdcall FontIsLinked(long)
 @ stdcall FrameRgn(long long long long long)
 @ stub FreeImageColorMatcher
 # @ stub GdiAddFontResourceW

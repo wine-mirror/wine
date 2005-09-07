@@ -432,3 +432,5 @@ extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
 /* Undocumented value for DIB's iUsage: Indicates a mono DIB w/o pal enties */
 #define DIB_PAL_MONO 2
 #endif /* __WINE_GDI_PRIVATE_H */
+
+BOOL WINAPI FontIsLinked(HDC);
