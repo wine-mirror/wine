@@ -30,8 +30,8 @@ typedef struct tagMSIFEATURE
     struct list entry;
     WCHAR Feature[IDENTIFIER_SIZE];
     WCHAR Feature_Parent[IDENTIFIER_SIZE];
-    WCHAR Title[0x100];
-    WCHAR Description[0x100];
+    LPWSTR Title;
+    LPWSTR Description;
     INT Display;
     INT Level;
     WCHAR Directory[IDENTIFIER_SIZE];

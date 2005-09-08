@@ -1110,13 +1110,8 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
     if (!MSI_RecordIsNull(row,2))
         MSI_RecordGetStringW(row,2,feature->Feature_Parent,&sz);
 
-    sz = 0x100;
-    if (!MSI_RecordIsNull(row,3))
-        MSI_RecordGetStringW(row,3,feature->Title,&sz);
-
-    sz = 0x100;
-    if (!MSI_RecordIsNull(row,4))
-        MSI_RecordGetStringW(row,4,feature->Description,&sz);
+    feature->Title = load_dynamic_stringW( row, 3 );
+    feature->Description = load_dynamic_stringW( row, 4 );
 
     if (!MSI_RecordIsNull(row,5))
         feature->Display = MSI_RecordGetInteger(row,5);

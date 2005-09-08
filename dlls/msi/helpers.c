@@ -438,6 +438,8 @@ static void free_feature( MSIFEATURE *feature )
         list_remove( &cl->entry );
         HeapFree( GetProcessHeap(), 0, cl );
     }
+    HeapFree( GetProcessHeap(), 0, feature->Description );
+    HeapFree( GetProcessHeap(), 0, feature->Title );
     HeapFree( GetProcessHeap(), 0, feature );
 }
 
