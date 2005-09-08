@@ -883,11 +883,7 @@ static void testRegStore(void)
     {
         RegCloseKey(key);
         rc = RegDeleteKeyA(HKEY_CURRENT_USER, tempKey);
-        /* There seems to be a bug in the registry code, not sure if it's a
-         * race condition in the recurse delete key implementation here, or if
-         * it's elsewhere in wine.  Marking todo_wine for now.
-         */
-        todo_wine ok(!rc, "RegDeleteKeyA failed: %ld\n", rc);
+        ok(!rc, "RegDeleteKeyA failed: %ld\n", rc);
         if (rc)
         {
             HMODULE shlwapi = LoadLibraryA("shlwapi");
@@ -906,6 +902,77 @@ static void testRegStore(void)
             }
         }
     }
+}
+
+static const char MyA[] = { 'M','y',0,0 };
+static const WCHAR MyW[] = { 'M','y',0 };
+static const WCHAR BogusW[] = { 'B','o','g','u','s',0 };
+static const WCHAR BogusPathW[] = { 'S','o','f','t','w','a','r','e','\\',
+ 'M','i','c','r','o','s','o','f','t','\\','S','y','s','t','e','m','C','e','r',
+ 't','i','f','i','c','a','t','e','s','\\','B','o','g','u','s',0 };
+
+static void testSystemRegStore(void)
+{
+    HCERTSTORE store, memStore;
+
+    /* Check with a UNICODE name */
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, MyW);
+    /* Not all OSes support CERT_STORE_PROV_SYSTEM_REGISTRY, so don't continue
+     * testing if they don't.
+     */
+    if (!store)
+        return;
+
+    /* Check that it isn't a collection store */
+    memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    if (memStore)
+    {
+        BOOL ret = CertAddStoreToCollection(store, memStore, 0, 0);
+
+        ok(!ret && GetLastError() ==
+         HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+         "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+         GetLastError());
+        CertCloseStore(memStore, 0);
+    }
+    CertCloseStore(store, 0);
+
+    /* Check opening a bogus store */
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, BogusW);
+    ok(!store && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER, BogusW);
+    ok(store != 0, "CertOpenStore failed: %08lx\n", GetLastError());
+    if (store)
+        CertCloseStore(store, 0);
+    /* Now check whether deleting is allowed */
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_DELETE_FLAG, BogusW);
+    RegDeleteKeyW(HKEY_CURRENT_USER, BogusPathW);
+
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0, 0, NULL);
+    ok(!store && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
+     CERT_SYSTEM_STORE_LOCAL_MACHINE | CERT_SYSTEM_STORE_CURRENT_USER, MyA);
+    ok(!store && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
+     CERT_SYSTEM_STORE_LOCAL_MACHINE | CERT_SYSTEM_STORE_CURRENT_USER, MyW);
+    ok(!store && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    /* The name is expected to be UNICODE, check with an ASCII name */
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, MyA);
+    ok(!store && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
 }
 
 static void testCertProperties(void)
@@ -1186,6 +1253,7 @@ START_TEST(cert)
     testMemStore();
     testCollectionStore();
     testRegStore();
+    testSystemRegStore();
 
     testCertProperties();
     testAddSerialized();

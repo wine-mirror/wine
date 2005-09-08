@@ -31,6 +31,7 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winreg.h"
 #include "winuser.h"
 #include "wincrypt.h"
@@ -1395,6 +1396,145 @@ static WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv,
     return (WINECRYPT_CERTSTORE *)store;
 }
 
+/* FIXME: this isn't complete for the Root store, in which the top-level
+ * self-signed CA certs reside.  Adding a cert to the Root store should present
+ * the user with a dialog indicating the consequences of doing so, and asking
+ * the user to confirm whether the cert should be added.
+ */
+static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara)
+{
+    static const WCHAR fmt[] = { '%','s','\\','%','s',0 };
+    LPWSTR storeName = (LPWSTR)pvPara;
+    LPWSTR storePath;
+    PWINECRYPT_CERTSTORE store = NULL;
+    HKEY root;
+    LPCWSTR base;
+    BOOL ret;
+
+    TRACE("(%ld, %08lx, %s)\n", hCryptProv, dwFlags,
+     debugstr_w((LPCWSTR)pvPara));
+
+    if (!pvPara)
+    {
+        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        return NULL;
+    }
+
+    ret = TRUE;
+    switch (dwFlags & CERT_SYSTEM_STORE_LOCATION_MASK)
+    {
+    case CERT_SYSTEM_STORE_LOCAL_MACHINE:
+        root = HKEY_LOCAL_MACHINE;
+        base = CERT_LOCAL_MACHINE_SYSTEM_STORE_REGPATH;
+        break;
+    case CERT_SYSTEM_STORE_CURRENT_USER:
+        root = HKEY_CURRENT_USER;
+        base = CERT_LOCAL_MACHINE_SYSTEM_STORE_REGPATH;
+        break;
+    case CERT_SYSTEM_STORE_CURRENT_SERVICE:
+        /* hklm\Software\Microsoft\Cryptography\Services\servicename\
+         * SystemCertificates
+         */
+        FIXME("CERT_SYSTEM_STORE_CURRENT_SERVICE, %s: stub\n",
+         debugstr_w(storeName));
+        return NULL;
+    case CERT_SYSTEM_STORE_SERVICES:
+        /* hklm\Software\Microsoft\Cryptography\Services\servicename\
+         * SystemCertificates
+         */
+        FIXME("CERT_SYSTEM_STORE_SERVICES, %s: stub\n",
+         debugstr_w(storeName));
+        return NULL;
+    case CERT_SYSTEM_STORE_USERS:
+        /* hku\user sid\Software\Microsoft\SystemCertificates */
+        FIXME("CERT_SYSTEM_STORE_USERS, %s: stub\n",
+         debugstr_w(storeName));
+        return NULL;
+    case CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY:
+        root = HKEY_CURRENT_USER;
+        base = CERT_GROUP_POLICY_SYSTEM_STORE_REGPATH;
+        break;
+    case CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY:
+        root = HKEY_LOCAL_MACHINE;
+        base = CERT_GROUP_POLICY_SYSTEM_STORE_REGPATH;
+        break;
+    case CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE:
+        /* hklm\Software\Microsoft\EnterpriseCertificates */
+        FIXME("CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE, %s: stub\n",
+         debugstr_w(storeName));
+        return NULL;
+    default:
+        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        return NULL;
+    }
+
+    storePath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(base) +
+         lstrlenW(storeName) + 2) * sizeof(WCHAR));
+    if (storePath)
+    {
+        LONG rc;
+        HKEY key;
+        REGSAM sam = dwFlags & CERT_STORE_READONLY_FLAG ? KEY_READ :
+            KEY_ALL_ACCESS;
+
+        wsprintfW(storePath, fmt, base, storeName);
+        if (dwFlags & CERT_STORE_OPEN_EXISTING_FLAG)
+            rc = RegOpenKeyExW(root, storePath, 0, sam, &key);
+        else
+        {
+            DWORD disp;
+
+            rc = RegCreateKeyExW(root, storePath, 0, NULL, 0, sam, NULL,
+                                 &key, &disp);
+            if (!rc && dwFlags & CERT_STORE_CREATE_NEW_FLAG &&
+                disp == REG_OPENED_EXISTING_KEY)
+            {
+                RegCloseKey(key);
+                rc = ERROR_FILE_EXISTS;
+            }
+        }
+        if (!rc)
+        {
+            store = CRYPT_RegOpenStore(hCryptProv, dwFlags, key);
+            RegCloseKey(key);
+        }
+        else
+            SetLastError(rc);
+        HeapFree(GetProcessHeap(), 0, storePath);
+    }
+    return store;
+}
+
+static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreA(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara)
+{
+    int len;
+    PWINECRYPT_CERTSTORE ret = NULL;
+
+    TRACE("(%ld, %08lx, %s)\n", hCryptProv, dwFlags,
+     debugstr_a((LPCSTR)pvPara));
+
+    if (!pvPara)
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return NULL;
+    }
+    len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pvPara, -1, NULL, 0);
+    if (len)
+    {
+        LPWSTR storeName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+        if (storeName)
+        {
+            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pvPara, -1, storeName, len);
+            ret = CRYPT_SysRegOpenStoreW(hCryptProv, dwFlags, storeName);
+            HeapFree(GetProcessHeap(), 0, storeName);
+        }
+    }
+    return ret;
+}
+
 static void WINAPI CRYPT_DummyCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     HeapFree(GetProcessHeap(), 0, (PWINECRYPT_CERTSTORE)hCertStore);
@@ -1476,6 +1616,12 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
         case (int)CERT_STORE_PROV_SYSTEM_W:
             openFunc = CRYPT_DummyOpenStore;
             break;
+        case (int)CERT_STORE_PROV_SYSTEM_REGISTRY_A:
+            openFunc = CRYPT_SysRegOpenStoreA;
+            break;
+        case (int)CERT_STORE_PROV_SYSTEM_REGISTRY_W:
+            openFunc = CRYPT_SysRegOpenStoreW;
+            break;
         default:
             if (LOWORD(lpszStoreProvider))
                 FIXME("unimplemented type %d\n", LOWORD(lpszStoreProvider));
@@ -1487,6 +1633,8 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
         openFunc = CRYPT_DummyOpenStore;
     else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_COLLECTION))
         openFunc = CRYPT_CollectionOpenStore;
+    else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_SYSTEM_REGISTRY))
+        openFunc = CRYPT_SysRegOpenStoreW;
     else
     {
         FIXME("unimplemented type %s\n", lpszStoreProvider);
