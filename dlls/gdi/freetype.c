@@ -3346,14 +3346,15 @@ BOOL WineEngGetCharWidth(GdiFont font, UINT firstChar, UINT lastChar,
     UINT c;
     GLYPHMETRICS gm;
     FT_UInt glyph_index;
+    GdiFont linked_font;
 
     TRACE("%p, %d, %d, %p\n", font, firstChar, lastChar, buffer);
 
     for(c = firstChar; c <= lastChar; c++) {
-        glyph_index = get_glyph_index(font, c);
-        WineEngGetGlyphOutline(font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
+        get_glyph_index_linked(font, c, &linked_font, &glyph_index);
+        WineEngGetGlyphOutline(linked_font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
                                &gm, 0, NULL, NULL);
-	buffer[c - firstChar] = font->gm[glyph_index].adv;
+	buffer[c - firstChar] = linked_font->gm[glyph_index].adv;
     }
     return TRUE;
 }
@@ -3368,6 +3369,7 @@ BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar, UINT lastChar,
     UINT c;
     GLYPHMETRICS gm;
     FT_UInt glyph_index;
+    GdiFont linked_font;
 
     TRACE("%p, %d, %d, %p\n", font, firstChar, lastChar, buffer);
 
@@ -3375,13 +3377,13 @@ BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar, UINT lastChar,
         return FALSE;
 
     for(c = firstChar; c <= lastChar; c++) {
-        glyph_index = get_glyph_index(font, c);
-        WineEngGetGlyphOutline(font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
+        get_glyph_index_linked(font, c, &linked_font, &glyph_index);
+        WineEngGetGlyphOutline(linked_font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
                                &gm, 0, NULL, NULL);
-	buffer[c - firstChar].abcA = font->gm[glyph_index].lsb;
-	buffer[c - firstChar].abcB = font->gm[glyph_index].bbx;
-	buffer[c - firstChar].abcC = font->gm[glyph_index].adv - font->gm[glyph_index].lsb -
-	  font->gm[glyph_index].bbx;
+	buffer[c - firstChar].abcA = linked_font->gm[glyph_index].lsb;
+	buffer[c - firstChar].abcB = linked_font->gm[glyph_index].bbx;
+	buffer[c - firstChar].abcC = linked_font->gm[glyph_index].adv - linked_font->gm[glyph_index].lsb -
+	  linked_font->gm[glyph_index].bbx;
     }
     return TRUE;
 }
@@ -3397,6 +3399,7 @@ BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
     GLYPHMETRICS gm;
     TEXTMETRICW tm;
     FT_UInt glyph_index;
+    GdiFont linked_font;
 
     TRACE("%p, %s, %d, %p\n", font, debugstr_wn(wstr, count), count,
 	  size);
@@ -3406,10 +3409,10 @@ BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
     size->cy = tm.tmHeight;
 
     for(idx = 0; idx < count; idx++) {
-	glyph_index = get_glyph_index(font, wstr[idx]);
-        WineEngGetGlyphOutline(font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
+        get_glyph_index_linked(font, wstr[idx], &linked_font, &glyph_index);
+        WineEngGetGlyphOutline(linked_font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
                                &gm, 0, NULL, NULL);
-	size->cx += font->gm[glyph_index].adv;
+	size->cx += linked_font->gm[glyph_index].adv;
     }
     TRACE("return %ld,%ld\n", size->cx, size->cy);
     return TRUE;
