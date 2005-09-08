@@ -1173,11 +1173,11 @@ MMRESULT WINAPI mmioDescend(HMMIO hmmio, LPMMCKINFO lpck,
     /* find_riff and find_list look for 'fccType' */
     if (uFlags & MMIO_FINDLIST) {
 	srchCkId = FOURCC_LIST;
-	srchType = lpck->fccType;
+	srchType = lpck->ckid;
     }
     if (uFlags & MMIO_FINDRIFF) {
 	srchCkId = FOURCC_RIFF;
-	srchType = lpck->fccType;
+	srchType = lpck->ckid;
     }
 
     if (uFlags & (MMIO_FINDCHUNK|MMIO_FINDLIST|MMIO_FINDRIFF)) {
