@@ -1873,36 +1873,46 @@ static void test_decodePublicKeyInfo(DWORD dwEncoding)
      "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
 }
 
-static const BYTE v1Cert[] = "\x30\x33\x02\x00\x30\x02\x06\x00\x30\x22\x18"
- "\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x18\x0f\x31"
- "\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x30\x07\x30\x02\x06"
- "\x00\x03\x01\x00";
-static const BYTE v2Cert[] = "\x30\x38\xa0\x03\x02\x01\x01\x02\x00\x30\x02\x06"
- "\x00\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30"
- "\x5a\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x30"
- "\x07\x30\x02\x06\x00\x03\x01\x00";
-static const BYTE v3Cert[] = "\x30\x38\xa0\x03\x02\x01\x02\x02\x00\x30\x02\x06"
- "\x00\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30"
- "\x5a\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x30"
- "\x07\x30\x02\x06\x00\x03\x01\x00";
-static const BYTE v1CertWithConstraints[] = "\x30\x4b\x02\x00\x30\x02\x06\x00"
- "\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a"
- "\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x30\x07"
- "\x30\x02\x06\x00\x03\x01\x00\xa3\x16\x30\x14\x30\x12\x06\x03\x55\x1d\x13\x01"
- "\x01\xff\x04\x08\x30\x06\x01\x01\xff\x02\x01\x01";
-static const BYTE v1CertWithSerial[] = "\x30\x4c\x02\x01\x01\x30\x02\x06\x00"
- "\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a"
- "\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x30\x07"
- "\x30\x02\x06\x00\x03\x01\x00\xa3\x16\x30\x14\x30\x12\x06\x03\x55\x1d\x13\x01"
- "\x01\xff\x04\x08\x30\x06\x01\x01\xff\x02\x01\x01";
-static const BYTE bigCert[] = "\x30\x7a\x02\x01\x01\x30\x02\x06\x00"
- "\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x13\x0a\x4a\x75\x61\x6e\x20\x4c"
- "\x61\x6e\x67\x00\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30"
- "\x30\x30\x30\x5a\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30"
- "\x30\x5a\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x13\x0a\x4a\x75\x61\x6e"
- "\x20\x4c\x61\x6e\x67\x00\x30\x07\x30\x02\x06\x00\x03\x01\x00\xa3\x16\x30\x14"
- "\x30\x12\x06\x03\x55\x1d\x13\x01\x01\xff\x04\x08\x30\x06\x01\x01\xff\x02\x01"
- "\x01";
+static const BYTE v1Cert[] = { 0x30, 0x33, 0x02, 0x00, 0x30, 0x02, 0x06, 0x00,
+ 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x07, 0x30,
+ 0x02, 0x06, 0x00, 0x03, 0x01, 0x00 };
+static const BYTE v2Cert[] = { 0x30, 0x38, 0xa0, 0x03, 0x02, 0x01, 0x01, 0x02,
+ 0x00, 0x30, 0x02, 0x06, 0x00, 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31,
+ 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f,
+ 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30,
+ 0x30, 0x5a, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01, 0x00 };
+static const BYTE v3Cert[] = { 0x30, 0x38, 0xa0, 0x03, 0x02, 0x01, 0x02, 0x02,
+ 0x00, 0x30, 0x02, 0x06, 0x00, 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31,
+ 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f,
+ 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30,
+ 0x30, 0x5a, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01, 0x00 };
+static const BYTE v1CertWithConstraints[] = { 0x30, 0x4b, 0x02, 0x00, 0x30,
+ 0x02, 0x06, 0x00, 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31,
+ 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36,
+ 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a,
+ 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01, 0x00, 0xa3, 0x16, 0x30, 0x14,
+ 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01, 0x01, 0xff, 0x04, 0x08, 0x30,
+ 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
+static const BYTE v1CertWithSerial[] = { 0x30, 0x4c, 0x02, 0x01, 0x01, 0x30,
+ 0x02, 0x06, 0x00, 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31,
+ 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36,
+ 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a,
+ 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01, 0x00, 0xa3, 0x16, 0x30, 0x14,
+ 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01, 0x01, 0xff, 0x04, 0x08, 0x30,
+ 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
+static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
+ 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
+ 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22,
+ 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30,
+ 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31, 0x13, 0x30,
+ 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20,
+ 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01,
+ 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01,
+ 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
+
 /* This is the encoded form of the printable string "Juan Lang" */
 static const BYTE encodedCommonName[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11,
  0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c,
@@ -1939,8 +1949,8 @@ static void test_encodeCertToBeSigned(DWORD dwEncoding)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (buf)
     {
-        ok(size == v2Cert[1] + 2, "Expected size %d, got %ld\n",
-         v3Cert[1] + 2, size);
+        ok(size == sizeof(v2Cert), "Expected size %d, got %ld\n",
+         sizeof(v2Cert), size);
         ok(!memcmp(buf, v2Cert, size), "Got unexpected value\n");
         LocalFree(buf);
     }
@@ -1951,8 +1961,8 @@ static void test_encodeCertToBeSigned(DWORD dwEncoding)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (buf)
     {
-        ok(size == v3Cert[1] + 2, "Expected size %d, got %ld\n",
-         v3Cert[1] + 2, size);
+        ok(size == sizeof(v3Cert), "Expected size %d, got %ld\n",
+         sizeof(v3Cert), size);
         ok(!memcmp(buf, v3Cert, size), "Got unexpected value\n");
         LocalFree(buf);
     }
@@ -1967,8 +1977,8 @@ static void test_encodeCertToBeSigned(DWORD dwEncoding)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (buf)
     {
-        ok(size == v1CertWithConstraints[1] + 2, "Expected size %d, got %ld\n",
-         v1CertWithConstraints[1] + 2, size);
+        ok(size == sizeof(v1CertWithConstraints), "Expected size %d, got %ld\n",
+         sizeof(v1CertWithConstraints), size);
         ok(!memcmp(buf, v1CertWithConstraints, size), "Got unexpected value\n");
         LocalFree(buf);
     }
@@ -1979,8 +1989,8 @@ static void test_encodeCertToBeSigned(DWORD dwEncoding)
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     if (buf)
     {
-        ok(size == v1CertWithSerial[1] + 2, "Expected size %d, got %ld\n",
-         v1CertWithSerial[1] + 2, size);
+        ok(size == sizeof(v1CertWithSerial), "Expected size %d, got %ld\n",
+         sizeof(v1CertWithSerial), size);
         ok(!memcmp(buf, v1CertWithSerial, size), "Got unexpected value\n");
         LocalFree(buf);
     }
@@ -1993,8 +2003,8 @@ static void test_encodeCertToBeSigned(DWORD dwEncoding)
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     if (buf)
     {
-        ok(size == bigCert[1] + 2, "Expected size %d, got %ld\n",
-         bigCert[1] + 2, size);
+        ok(size == sizeof(bigCert), "Expected size %d, got %ld\n",
+         sizeof(bigCert), size);
         ok(!memcmp(buf, bigCert, size), "Got unexpected value\n");
         LocalFree(buf);
     }
@@ -2034,7 +2044,7 @@ static void test_decodeCertToBeSigned(DWORD dwEncoding)
     }
     /* Now check with serial number, subject and issuer specified */
     ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, bigCert,
-     bigCert[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+     sizeof(bigCert), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
     if (buf)
     {
@@ -2084,7 +2094,7 @@ static void test_encodeCert(DWORD dwEncoding)
      * also that bigCert is a NULL-terminated string, so don't count its
      * last byte (otherwise the signed cert won't decode.)
      */
-    CERT_SIGNED_CONTENT_INFO info = { { sizeof(bigCert) - 1, (BYTE *)bigCert },
+    CERT_SIGNED_CONTENT_INFO info = { { sizeof(bigCert), (BYTE *)bigCert },
      { NULL, { 0, NULL } }, { sizeof(hash), (BYTE *)hash, 0 } };
     BOOL ret;
     BYTE *buf = NULL;
@@ -2115,8 +2125,8 @@ static void test_decodeCert(DWORD dwEncoding)
     {
         CERT_SIGNED_CONTENT_INFO *info = (CERT_SIGNED_CONTENT_INFO *)buf;
 
-        ok(info->ToBeSigned.cbData == sizeof(bigCert) - 1,
-         "Expected cert to be %d bytes, got %ld\n", sizeof(bigCert) - 1,
+        ok(info->ToBeSigned.cbData == sizeof(bigCert),
+         "Expected cert to be %d bytes, got %ld\n", sizeof(bigCert),
          info->ToBeSigned.cbData);
         ok(!memcmp(info->ToBeSigned.pbData, bigCert, info->ToBeSigned.cbData),
          "Unexpected cert\n");
