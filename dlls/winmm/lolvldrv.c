@@ -440,11 +440,11 @@ LPWINE_MLD	MMDRV_Get(HANDLE _hndl, UINT type, BOOL bCanBeID)
     if (hndl >= llTypes[type].wMaxId &&
 	hndl != (UINT16)-1 && hndl != (UINT)-1) {
 	if (hndl & 0x8000) {
-	    hndl = hndl & ~0x8000;
-	    if (hndl < sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0])) {
-		mld = MM_MLDrvs[hndl];
+	    UINT idx = hndl & ~0x8000;
+	    if (idx < sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0])) {
                 __TRY
                 {
+                    mld = MM_MLDrvs[idx];
                     if (mld && mld->type != type) mld = NULL;
                 }
                 __EXCEPT(NULL)
@@ -453,7 +453,6 @@ LPWINE_MLD	MMDRV_Get(HANDLE _hndl, UINT type, BOOL bCanBeID)
                 }
                 __ENDTRY;
 	    }
-	    hndl = hndl | 0x8000;
 	}
     }
     if (mld == NULL && bCanBeID) {

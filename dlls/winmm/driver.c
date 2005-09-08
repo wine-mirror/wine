@@ -75,10 +75,11 @@ static	unsigned DRIVER_GetNumberOfModuleRefs(HMODULE hModule, WINE_DRIVER** foun
  */
 LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
 {
-    LPWINE_DRIVER	d = (LPWINE_DRIVER)hDrvr;
+    LPWINE_DRIVER d;
 
     __TRY
     {
+        d = (LPWINE_DRIVER)hDrvr;
         if (d && d->dwMagic != WINE_DI_MAGIC) d = NULL;
     }
     __EXCEPT(NULL)
