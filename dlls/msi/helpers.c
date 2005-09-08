@@ -276,6 +276,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
             path = build_directory_name(2, check_path, NULL);
             if (strcmpiW(path,check_path)!=0)
                 MSI_SetPropertyW(package,cszTargetDir,path);
+            HeapFree(GetProcessHeap(),0,check_path);
         }
         else
         {

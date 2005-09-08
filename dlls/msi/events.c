@@ -236,8 +236,11 @@ static UINT ControlEvent_SetTargetPath(MSIPACKAGE* package, LPCWSTR argument,
                                    msi_dialog* dialog)
 {
     LPWSTR path = load_dynamic_property(package,argument, NULL);
+    UINT r;
     /* failure to set the path halts the executing of control events */
-    return MSI_SetTargetPathW(package, argument, path);
+    r = MSI_SetTargetPathW(package, argument, path);
+    HeapFree(GetProcessHeap(),0,path);
+    return r;
 }
 
 /*
