@@ -55,12 +55,12 @@
 @ cdecl ldap_compare_sW(ptr wstr wstr wstr)
 @ cdecl ldap_conn_from_msg(ptr ptr)
 @ cdecl ldap_connect(ptr ptr)
-@ stub ldap_control_free
-@ stub ldap_control_freeA
-@ stub ldap_control_freeW
-@ stub ldap_controls_free
-@ stub ldap_controls_freeA
-@ stub ldap_controls_freeW
+@ cdecl ldap_control_free(ptr) ldap_control_freeA
+@ cdecl ldap_control_freeA(ptr)
+@ cdecl ldap_control_freeW(ptr)
+@ cdecl ldap_controls_free(ptr) ldap_controls_freeA
+@ cdecl ldap_controls_freeA(ptr)
+@ cdecl ldap_controls_freeW(ptr)
 @ cdecl ldap_count_entries(ptr ptr) WLDAP32_ldap_count_entries
 @ cdecl ldap_count_references(ptr ptr) WLDAP32_ldap_count_references
 @ cdecl ldap_count_values(ptr) ldap_count_valuesA
@@ -111,9 +111,9 @@
 @ cdecl ldap_first_attributeW(ptr ptr ptr)
 @ cdecl ldap_first_entry(ptr ptr) WLDAP32_ldap_first_entry
 @ cdecl ldap_first_reference(ptr ptr) WLDAP32_ldap_first_reference
-@ stub ldap_free_controls
-@ stub ldap_free_controlsA
-@ stub ldap_free_controlsW
+@ cdecl ldap_free_controls(ptr) ldap_free_controlsA
+@ cdecl ldap_free_controlsA(ptr)
+@ cdecl ldap_free_controlsW(ptr)
 @ cdecl ldap_get_dn(ptr ptr) ldap_get_dnA
 @ cdecl ldap_get_dnA(ptr ptr)
 @ cdecl ldap_get_dnW(ptr ptr)
