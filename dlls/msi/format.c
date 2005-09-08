@@ -85,7 +85,7 @@ static LPWSTR deformat_component(MSIPACKAGE* package, LPCWSTR key, DWORD* sz)
     if (!package)
         return NULL;
 
-    ERR("POORLY HANDLED DEFORMAT.. [$componentkey] \n");
+    FIXME("component key %s\n", debugstr_w(key));
     comp = get_loaded_component(package,key);
     if (comp)
     {
