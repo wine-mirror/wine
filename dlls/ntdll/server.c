@@ -487,7 +487,11 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
         SERVER_END_REQ;
         if (ret) return ret;
 
-        if (fd != -1) break;
+        if (fd != -1)
+        {
+            if ((fd = dup(fd)) == -1) return FILE_GetNtStatus();
+            break;
+        }
 
         /* it wasn't in the cache, get it from the server */
         fd = receive_fd( &fd_handle );
@@ -500,11 +504,7 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
             if (FILE_GetDeviceInfo( fd, &info ) == STATUS_SUCCESS)
                 removable = (info.Characteristics & FILE_REMOVABLE_MEDIA) != 0;
         }
-        else if (removable)  /* don't cache it */
-        {
-            *unix_fd = fd;
-            return STATUS_SUCCESS;
-        }
+        else if (removable) break;  /* don't cache it */
 
         /* and store it back into the cache */
         SERVER_START_REQ( set_handle_fd )
@@ -514,11 +514,10 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
             req->removable = removable;
             if (!(ret = wine_server_call( req )))
             {
-                if (reply->cur_fd != fd && reply->cur_fd != -1)
+                if (reply->cur_fd != -1) /* it has been cached */
                 {
-                    /* someone was here before us */
-                    close( fd );
-                    fd = reply->cur_fd;
+                    if (reply->cur_fd != fd) close( fd );  /* someone was here before us */
+                    if ((fd = dup(reply->cur_fd)) == -1) ret = FILE_GetNtStatus();
                 }
             }
             else
@@ -535,9 +534,9 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
          * a race with another thread; we restart everything from
          * scratch in this case.
          */
+        close( fd );
     }
 
-    if ((fd != -1) && ((fd = dup(fd)) == -1)) return STATUS_TOO_MANY_OPENED_FILES;
     *unix_fd = fd;
     return STATUS_SUCCESS;
 }
