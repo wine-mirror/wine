@@ -883,7 +883,6 @@ static void testRegStore(void)
     {
         RegCloseKey(key);
         rc = RegDeleteKeyA(HKEY_CURRENT_USER, tempKey);
-        ok(!rc, "RegDeleteKeyA failed: %ld\n", rc);
         if (rc)
         {
             HMODULE shlwapi = LoadLibraryA("shlwapi");
@@ -973,6 +972,102 @@ static void testSystemRegStore(void)
      CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, MyA);
     ok(!store && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+}
+
+static void testSystemStore(void)
+{
+    static const WCHAR baskslashW[] = { '\\',0 };
+    HCERTSTORE store;
+    WCHAR keyName[MAX_PATH];
+    HKEY key;
+    LONG rc;
+
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, 0, NULL);
+    ok(!store && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
+     CERT_SYSTEM_STORE_LOCAL_MACHINE | CERT_SYSTEM_STORE_CURRENT_USER, MyA);
+    ok(!store && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
+     CERT_SYSTEM_STORE_LOCAL_MACHINE | CERT_SYSTEM_STORE_CURRENT_USER, MyW);
+    ok(!store && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    /* The name is expected to be UNICODE, first check with an ASCII name */
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, MyA);
+    ok(!store && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    /* Create the expected key */
+    lstrcpyW(keyName, CERT_LOCAL_MACHINE_SYSTEM_STORE_REGPATH);
+    lstrcatW(keyName, baskslashW);
+    lstrcatW(keyName, MyW);
+    rc = RegCreateKeyExW(HKEY_CURRENT_USER, keyName, 0, NULL, 0, KEY_READ,
+     NULL, &key, NULL);
+    ok(!rc, "RegCreateKeyEx failed: %ld\n", rc);
+    if (!rc)
+        RegCloseKey(key);
+    /* Check opening with a UNICODE name, specifying the create new flag */
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_CREATE_NEW_FLAG, MyW);
+    ok(!store && GetLastError() == ERROR_FILE_EXISTS,
+     "Expected ERROR_FILE_EXISTS, got %08lx\n", GetLastError());
+    /* Now check opening with a UNICODE name, this time opening existing */
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, MyW);
+    ok(store != 0, "CertOpenStore failed: %08lx\n", GetLastError());
+    if (store)
+    {
+        HCERTSTORE memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+         CERT_STORE_CREATE_NEW_FLAG, NULL);
+
+        /* Check that it's a collection store */
+        if (memStore)
+        {
+            BOOL ret = CertAddStoreToCollection(store, memStore, 0, 0);
+
+            /* FIXME: this'll fail on NT4, but what error will it give? */
+            ok(ret, "CertAddStoreToCollection failed: %08lx\n", GetLastError());
+            CertCloseStore(memStore, 0);
+        }
+        CertCloseStore(store, 0);
+    }
+
+    /* Check opening a bogus store */
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, BogusW);
+    ok(!store && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER, BogusW);
+    ok(store != 0, "CertOpenStore failed: %08lx\n", GetLastError());
+    if (store)
+        CertCloseStore(store, 0);
+    /* Now check whether deleting is allowed */
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_DELETE_FLAG, BogusW);
+    RegDeleteKeyW(HKEY_CURRENT_USER, BogusPathW);
+}
+
+static void testCertOpenSystemStore(void)
+{
+    HCERTSTORE store;
+
+    store = CertOpenSystemStoreW(0, NULL);
+    ok(!store && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    /* This succeeds, and on WinXP at least, the Bogus key is created under
+     * HKCU (but not under HKLM, even when run as an administrator.)
+     */
+    store = CertOpenSystemStoreW(0, BogusW);
+    ok(store != 0, "CertOpenSystemStore failed: %08lx\n", GetLastError());
+    if (store)
+        CertCloseStore(store, 0);
+    /* Delete it so other tests succeed next time around */
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_DELETE_FLAG, BogusW);
+    RegDeleteKeyW(HKEY_CURRENT_USER, BogusPathW);
 }
 
 static void testCertProperties(void)
@@ -1254,6 +1349,9 @@ START_TEST(cert)
     testCollectionStore();
     testRegStore();
     testSystemRegStore();
+    testSystemStore();
+
+    testCertOpenSystemStore();
 
     testCertProperties();
     testAddSerialized();

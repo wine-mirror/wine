@@ -1405,7 +1405,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     static const WCHAR fmt[] = { '%','s','\\','%','s',0 };
-    LPWSTR storeName = (LPWSTR)pvPara;
+    LPCWSTR storeName = (LPCWSTR)pvPara;
     LPWSTR storePath;
     PWINECRYPT_CERTSTORE store = NULL;
     HKEY root;
@@ -1535,59 +1535,88 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreA(HCRYPTPROV hCryptProv,
     return ret;
 }
 
-static void WINAPI CRYPT_DummyCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
-{
-    HeapFree(GetProcessHeap(), 0, (PWINECRYPT_CERTSTORE)hCertStore);
-}
-
-static BOOL WINAPI CRYPT_DummyAddCert(HCERTSTORE store, PCCERT_CONTEXT pCert,
- DWORD dwAddDisposition)
-{
-    return FALSE;
-}
-
-static PWINE_CERT_CONTEXT_REF CRYPT_DummyEnumCert(PWINECRYPT_CERTSTORE store,
- PWINE_CERT_CONTEXT_REF pPrev)
-{
-    return NULL;
-}
-
-static BOOL WINAPI CRYPT_DummyDeleteCert(HCERTSTORE hCertStore,
- PCCERT_CONTEXT pCertContext, DWORD dwFlags)
-{
-    return TRUE;
-}
-
-static WINECRYPT_CERTSTORE *CRYPT_DummyOpenStore(HCRYPTPROV hCryptProv,
+static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
-    PWINECRYPT_CERTSTORE store;
+    HCERTSTORE store = 0;
+    BOOL ret;
 
-    TRACE("(%ld, %08lx, %p)\n", hCryptProv, dwFlags, pvPara);
+    TRACE("(%ld, %08lx, %s)\n", hCryptProv, dwFlags,
+     debugstr_w((LPCWSTR)pvPara));
 
-    if (dwFlags & CERT_STORE_DELETE_FLAG)
+    if (!pvPara)
     {
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        store = NULL;
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return NULL;
     }
-    else
+    /* This returns a different error than system registry stores if the
+     * location is invalid.
+     */
+    switch (dwFlags & CERT_SYSTEM_STORE_LOCATION_MASK)
     {
-        store = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-         sizeof(WINECRYPT_CERTSTORE));
-        if (store)
+    case CERT_SYSTEM_STORE_LOCAL_MACHINE:
+    case CERT_SYSTEM_STORE_CURRENT_USER:
+    case CERT_SYSTEM_STORE_CURRENT_SERVICE:
+    case CERT_SYSTEM_STORE_SERVICES:
+    case CERT_SYSTEM_STORE_USERS:
+    case CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY:
+    case CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY:
+    case CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE:
+        ret = TRUE;
+        break;
+    default:
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        ret = FALSE;
+    }
+    if (ret)
+    {
+        HCERTSTORE regStore = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W,
+         0, hCryptProv, dwFlags, pvPara);
+
+        if (regStore)
         {
-            CRYPT_InitStore(store, hCryptProv, dwFlags, StoreTypeDummy);
-            store->closeStore    = CRYPT_DummyCloseStore;
-            store->addCert       = CRYPT_DummyAddCert;
-            store->createCertRef = CRYPT_CreateCertRef;
-            store->enumCert      = CRYPT_DummyEnumCert;
-            store->deleteCert    = CRYPT_DummyDeleteCert;
-            store->freeCert      = NULL;
+            store = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+             CERT_STORE_CREATE_NEW_FLAG, NULL);
+            if (store)
+            {
+                CertAddStoreToCollection(store, regStore,
+                 dwFlags & CERT_STORE_READONLY_FLAG ? 0 :
+                 CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+                CertCloseStore(regStore, 0);
+            }
         }
     }
     return (PWINECRYPT_CERTSTORE)store;
 }
 
+static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreA(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara)
+{
+    int len;
+    PWINECRYPT_CERTSTORE ret = NULL;
+
+    TRACE("(%ld, %08lx, %s)\n", hCryptProv, dwFlags,
+     debugstr_a((LPCSTR)pvPara));
+
+    if (!pvPara)
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return NULL;
+    }
+    len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pvPara, -1, NULL, 0);
+    if (len)
+    {
+        LPWSTR storeName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+        if (storeName)
+        {
+            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pvPara, -1, storeName, len);
+            ret = CRYPT_SysOpenStoreW(hCryptProv, dwFlags, storeName);
+            HeapFree(GetProcessHeap(), 0, storeName);
+        }
+    }
+    return ret;
+}
 
 HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
  DWORD dwMsgAndCertEncodingType, HCRYPTPROV hCryptProv, DWORD dwFlags,
@@ -1613,8 +1642,10 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
             openFunc = CRYPT_CollectionOpenStore;
             break;
         case (int)CERT_STORE_PROV_SYSTEM_A:
+            openFunc = CRYPT_SysOpenStoreA;
+            break;
         case (int)CERT_STORE_PROV_SYSTEM_W:
-            openFunc = CRYPT_DummyOpenStore;
+            openFunc = CRYPT_SysOpenStoreW;
             break;
         case (int)CERT_STORE_PROV_SYSTEM_REGISTRY_A:
             openFunc = CRYPT_SysRegOpenStoreA;
@@ -1630,7 +1661,7 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
     else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_MEMORY))
         openFunc = CRYPT_MemOpenStore;
     else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_SYSTEM))
-        openFunc = CRYPT_DummyOpenStore;
+        openFunc = CRYPT_SysOpenStoreW;
     else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_COLLECTION))
         openFunc = CRYPT_CollectionOpenStore;
     else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_SYSTEM_REGISTRY))
@@ -1655,17 +1686,64 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
 HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV hProv,
  LPCSTR szSubSystemProtocol)
 {
-    return CertOpenStore( CERT_STORE_PROV_SYSTEM_A, 0, 0,
-     CERT_SYSTEM_STORE_CURRENT_USER | CERT_SYSTEM_STORE_LOCAL_MACHINE |
-     CERT_SYSTEM_STORE_USERS, szSubSystemProtocol );
+    HCERTSTORE ret = 0;
+
+    if (szSubSystemProtocol)
+    {
+        int len = MultiByteToWideChar(CP_ACP, 0, szSubSystemProtocol, -1, NULL,
+         0);
+        LPWSTR param = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+        if (param)
+        {
+            MultiByteToWideChar(CP_ACP, 0, szSubSystemProtocol, -1, param, len);
+            ret = CertOpenSystemStoreW(hProv, param);
+            HeapFree(GetProcessHeap(), 0, param);
+        }
+    }
+    else
+        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+    return ret;
 }
 
 HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV hProv,
  LPCWSTR szSubSystemProtocol)
 {
-    return CertOpenStore( CERT_STORE_PROV_SYSTEM_W, 0, 0,
-     CERT_SYSTEM_STORE_CURRENT_USER | CERT_SYSTEM_STORE_LOCAL_MACHINE |
-     CERT_SYSTEM_STORE_USERS, szSubSystemProtocol );
+    HCERTSTORE ret;
+
+    if (!szSubSystemProtocol)
+    {
+        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        return 0;
+    }
+
+    /* FIXME: needs some tests. It seems to open both HKEY_LOCAL_MACHINE and
+     * HKEY_CURRENT_USER stores, but I'm not sure under what conditions, if any,
+     * it fails.
+     */
+    ret = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, hProv,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    if (ret)
+    {
+        HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W,
+         0, hProv, CERT_SYSTEM_STORE_LOCAL_MACHINE, szSubSystemProtocol);
+
+        if (store)
+        {
+            CertAddStoreToCollection(ret, store,
+             CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+            CertCloseStore(store, 0);
+        }
+        store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W,
+         0, hProv, CERT_SYSTEM_STORE_CURRENT_USER, szSubSystemProtocol);
+        if (store)
+        {
+            CertAddStoreToCollection(ret, store,
+             CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+            CertCloseStore(store, 0);
+        }
+    }
+    return ret;
 }
 
 BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
