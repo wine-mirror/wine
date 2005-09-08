@@ -562,7 +562,7 @@ BOOLEAN WINAPI RtlGetNtProductType( LPDWORD type )
 
 
 /******************************************************************************
- *        VerifyVersionInfoW   (KERNEL32.@)
+ *        RtlVerifyVersionInfo   (NTDLL.@)
  */
 NTSTATUS WINAPI RtlVerifyVersionInfo( const RTL_OSVERSIONINFOEXW *info,
                                       DWORD dwTypeMask, DWORDLONG dwlConditionMask )
