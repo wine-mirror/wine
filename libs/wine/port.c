@@ -104,6 +104,15 @@ __ASM_GLOBAL_FUNC( wine_switch_to_stack,
                    "mov $18,$30\n\t" /* stack */
                    "jsr $31,($0),0\n\t" /* call func */
                    "L1:\tbr $31,L1"); /* loop */
+#elif defined(__x86_64__) && defined(__GNUC__)
+__ASM_GLOBAL_FUNC( wine_switch_to_stack,
+                   "movq %rdi,%rax\n\t" /* func */
+                   "movq %rsi,%rdi\n\t" /* arg */
+                   "andq $~15,%rdx\n\t" /* stack */
+                   "movq %rdx,%rsp\n\t"
+                   "xorq %rbp,%rbp\n\t"
+                   "callq *%rax\n\t"    /* call func */
+                   "int $3");
 #else
 #error You must implement wine_switch_to_stack for your platform
 #endif
