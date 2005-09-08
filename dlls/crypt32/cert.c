@@ -2561,7 +2561,7 @@ static const WINE_CERT_PROP_HEADER *CRYPT_findPropID(const BYTE *buf,
 static const void * WINAPI CRYPT_ReadSerializedElement(const BYTE *pbElement,
  DWORD cbElement, DWORD dwContextTypeFlags, DWORD *pdwContentType)
 {
-    const void *context = NULL;
+    const void *context;
 
     TRACE("(%p, %ld, %08lx, %p)\n", pbElement, cbElement, dwContextTypeFlags,
      pdwContentType);
@@ -2580,6 +2580,7 @@ static const void * WINAPI CRYPT_ReadSerializedElement(const BYTE *pbElement,
         BOOL ret;
 
         ret = TRUE;
+        context = NULL;
         if (dwContextTypeFlags == CERT_STORE_ALL_CONTEXT_FLAG)
         {
             hdr = CRYPT_findPropID(pbElement, cbElement, CERT_CERT_PROP_ID);

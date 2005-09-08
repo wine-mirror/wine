@@ -1313,11 +1313,12 @@ static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
 {
     BOOL ret;
     CRYPT_DER_BLOB *blobs = NULL;
-   
+
     __TRY
     {
         DWORD bytesNeeded = 0, lenBytes, i;
 
+        blobs = NULL;
         ret = TRUE;
         if (rdn->cRDNAttr)
         {
@@ -1384,7 +1385,7 @@ static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
     __EXCEPT(page_fault)
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
-        ret = FALSE;
+        return FALSE;
     }
     __ENDTRY
     HeapFree(GetProcessHeap(), 0, blobs);
@@ -4953,10 +4954,11 @@ static BOOL WINAPI CRYPT_AsnDecodeEnumerated(DWORD dwCertEncodingType,
 static BOOL CRYPT_AsnDecodeTimeZone(const BYTE *pbEncoded, DWORD len,
  SYSTEMTIME *sysTime)
 {
-    BOOL ret = TRUE;
+    BOOL ret;
 
     __TRY
     {
+        ret = TRUE;
         if (len >= 3 && (*pbEncoded == '+' || *pbEncoded == '-'))
         {
             WORD hours, minutes = 0;
@@ -5020,7 +5022,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUtcTime(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
-    BOOL ret = TRUE;
+    BOOL ret;
 
     if (!pvStructInfo)
     {
@@ -5029,6 +5031,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUtcTime(DWORD dwCertEncodingType,
     }
     __TRY
     {
+        ret = TRUE;
         if (pbEncoded[0] == ASN_UTCTIME)
         {
             if (cbEncoded <= 1)
@@ -5108,7 +5111,7 @@ static BOOL WINAPI CRYPT_AsnDecodeGeneralizedTime(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
-    BOOL ret = TRUE;
+    BOOL ret;
 
     if (!pvStructInfo)
     {
@@ -5117,6 +5120,7 @@ static BOOL WINAPI CRYPT_AsnDecodeGeneralizedTime(DWORD dwCertEncodingType,
     }
     __TRY
     {
+        ret = TRUE;
         if (pbEncoded[0] == ASN_GENERALTIME)
         {
             if (cbEncoded <= 1)
