@@ -28,6 +28,16 @@ extern "C" {
 #endif
 
 typedef unsigned char   SQLCHAR;
+#ifdef WINE_UNICODE_NATIVE
+typedef wchar_t         SQLWCHAR;
+#else
+typedef unsigned short  SQLWCHAR;
+#endif
+#ifndef UNICODE
+typedef SQLCHAR         SQLTCHAR;
+#else
+typedef SQLWCHAR        SQLTCHAR;
+#endif
 
 #if (ODBCVER >= 0x0300)
 typedef unsigned char   SQLDATE;
