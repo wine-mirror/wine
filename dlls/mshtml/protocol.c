@@ -231,6 +231,7 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(BINDINFO);
     IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
+    ReleaseBindInfo(&bindinfo);
 
     if(strlenW(szUrl)>=sizeof(wszAbout)/sizeof(WCHAR) && !memcmp(wszAbout, szUrl, sizeof(wszAbout))) {
         text = szUrl + sizeof(wszAbout)/sizeof(WCHAR);
@@ -546,6 +547,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(BINDINFO);
     IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
+    ReleaseBindInfo(&bindinfo);
 
     /* FIXME:
      * Implement MIME type checking
