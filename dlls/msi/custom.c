@@ -188,6 +188,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
                 MSI_SetPropertyW(package,szActionData,actiondata);
             else
                 MSI_SetPropertyW(package,szActionData,szBlank);
+            HeapFree(GetProcessHeap(),0,actiondata);
         }
     }
     else if (!check_execution_scheduling_options(package,action,type))
@@ -697,6 +698,7 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
 
         HeapFree(GetProcessHeap(),0,deformated);
     }
+    HeapFree(GetProcessHeap(),0,prop);
 
     TRACE("executing exe %s \n",debugstr_w(cmd));
 
