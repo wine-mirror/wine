@@ -1051,7 +1051,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
 
 	if (SUCCEEDED(hr))
 	{
-	    hr = IShellExecuteHookW_Execute(pSEH, sei);
+	    hr = IShellExecuteHookW_Execute(pSEH, &sei_tmp);
 
 	    IShellExecuteHookW_Release(pSEH);
 
@@ -1151,7 +1151,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
 
 		if (SUCCEEDED(hr))
 		{
-		    hr = IShellExecuteHookW_Execute(pSEH, sei);
+		    hr = IShellExecuteHookW_Execute(pSEH, &sei_tmp);
 
 		    IShellExecuteHookW_Release(pSEH);
 
