@@ -1195,11 +1195,6 @@ MMRESULT WINAPI mmioDescend(HMMIO hmmio, LPMMCKINFO lpck,
 		return MMIOERR_CHUNKNOTFOUND;
 	    }
 	    lpck->dwDataOffset = dwOldPos + 2 * sizeof(DWORD);
-	    if (ix < lpck->dwDataOffset - dwOldPos) {
-		mmioSeek(hmmio, dwOldPos, SEEK_SET);
-		WARN("return ChunkNotFound\n");
-		return MMIOERR_CHUNKNOTFOUND;
-	    }
 	    TRACE("ckid=%.4s fcc=%.4s cksize=%08lX !\n",
 		  (LPSTR)&lpck->ckid,
 		  srchType?(LPSTR)&lpck->fccType:"<na>",
