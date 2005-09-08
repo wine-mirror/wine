@@ -1856,7 +1856,10 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         dc->funcs->pExtTextOut(dc->physDev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL);
 
     if(count == 0)
+    {
+        ret = TRUE;
         goto done;
+    }
 
     pt.x = x;
     pt.y = y;
