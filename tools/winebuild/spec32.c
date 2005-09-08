@@ -96,48 +96,6 @@ static int output_debug( FILE *outfile )
 
 
 /*******************************************************************
- *         get_exports_size
- *
- * Compute the size of the export table.
- */
-static int get_exports_size( DLLSPEC *spec )
-{
-    int nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
-    int i, strings_size, total_size;
-
-    if (!nr_exports) return 0;
-
-    /* export directory header */
-    total_size = 10 * sizeof(int);
-
-    /* function pointers */
-    total_size += nr_exports * sizeof(int);
-
-    /* function name pointers */
-    total_size += spec->nb_names * sizeof(int);
-
-    /* function ordinals */
-    total_size += spec->nb_names * sizeof(short);
-    if (spec->nb_names % 2) total_size += sizeof(short);
-
-    /* export name strings */
-    strings_size = strlen(spec->file_name) + 1;
-    for (i = 0; i < spec->nb_names; i++)
-        strings_size += strlen(spec->names[i]->name) + 1;
-
-    /* forward strings */
-    for (i = spec->base; i <= spec->limit; i++)
-    {
-        ORDDEF *odp = spec->ordinals[i];
-        if (odp && odp->flags & FLAG_FORWARD) strings_size += strlen(odp->link_name) + 1;
-    }
-    total_size += (strings_size + 3) & ~3;
-
-    return total_size;
-}
-
-
-/*******************************************************************
  *         output_exports
  *
  * Output the export table for a Win32 module.
@@ -281,7 +239,7 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
             }
             if ((odp->flags & FLAG_RET64) && (j < 16)) mask |= 0x80000000;
 
-            args = strlen(odp->u.func.arg_types) * sizeof(int);
+            args = strlen(odp->u.func.arg_types) * get_ptr_size();
 
             switch(odp->type)
             {
@@ -444,12 +402,10 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
  */
 void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 {
-    int exports_size, imports_size, resources_size, machine = 0;
+    int resources_size, machine = 0;
     unsigned int page_size = get_page_size();
 
     resolve_imports( spec );
-    exports_size = get_exports_size( spec );
-    imports_size = get_imports_size();
     output_standard_file_header( outfile );
 
     /* Reserve some space for the PE header */
@@ -510,16 +466,19 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     }
     fprintf( outfile, "    \"\\t%s 0x%04x\\n\"\n",              /* Machine */
              get_asm_short_keyword(), machine );
-    fprintf( outfile, "    \"\\t.short 0\\n\"\n" );             /* NumberOfSections */
+    fprintf( outfile, "    \"\\t%s 0\\n\"\n",                   /* NumberOfSections */
+             get_asm_short_keyword() );
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* TimeDateStamp */
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* PointerToSymbolTable */
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* NumberOfSymbols */
     fprintf( outfile, "    \"\\t%s %d\\n\"\n",                  /* SizeOfOptionalHeader */
-             get_asm_short_keyword(), IMAGE_SIZEOF_NT_OPTIONAL32_HEADER );
+             get_asm_short_keyword(),
+             get_ptr_size() == 8 ? IMAGE_SIZEOF_NT_OPTIONAL64_HEADER : IMAGE_SIZEOF_NT_OPTIONAL32_HEADER );
     fprintf( outfile, "    \"\\t%s 0x%04x\\n\"\n",              /* Characteristics */
              get_asm_short_keyword(), spec->characteristics );
     fprintf( outfile, "    \"\\t%s 0x%04x\\n\"\n",              /* Magic */
-             get_asm_short_keyword(), IMAGE_NT_OPTIONAL_HDR_MAGIC );
+             get_asm_short_keyword(),
+             get_ptr_size() == 8 ? IMAGE_NT_OPTIONAL_HDR64_MAGIC : IMAGE_NT_OPTIONAL_HDR32_MAGIC );
     fprintf( outfile, "    \"\\t.byte 0\\n\"\n" );              /* MajorLinkerVersion */
     fprintf( outfile, "    \"\\t.byte 0\\n\"\n" );              /* MinorLinkerVersion */
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* SizeOfCode */
@@ -529,7 +488,8 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
              asm_name(spec->init_func) );
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* BaseOfCode */
     fprintf( outfile, "    \"\\t.long .L__wine_spec_data_start\\n\"\n" ); /* BaseOfData */
-    fprintf( outfile, "    \"\\t.long __wine_spec_pe_header\\n\"\n" );    /* ImageBase */
+    fprintf( outfile, "    \"\\t%s __wine_spec_pe_header\\n\"\n",         /* ImageBase */
+             get_asm_ptr_keyword() );
     fprintf( outfile, "    \"\\t.long %u\\n\"\n", page_size );  /* SectionAlignment */
     fprintf( outfile, "    \"\\t.long %u\\n\"\n", page_size );  /* FileAlignment */
     fprintf( outfile, "    \"\\t%s 1,0\\n\"\n",                 /* Major/MinorOperatingSystemVersion */
@@ -547,19 +507,19 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
              get_asm_short_keyword(), spec->subsystem );
     fprintf( outfile, "    \"\\t%s 0\\n\"\n",                   /* DllCharacteristics */
              get_asm_short_keyword() );
-    fprintf( outfile, "    \"\\t.long %u,%u\\n\"\n",            /* SizeOfStackReserve/Commit */
-             (spec->stack_size ? spec->stack_size : 1024) * 1024, page_size );
-    fprintf( outfile, "    \"\\t.long %u,%u\\n\"\n",            /* SizeOfHeapReserve/Commit */
-             (spec->heap_size ? spec->heap_size : 1024) * 1024, page_size );
+    fprintf( outfile, "    \"\\t%s %u,%u\\n\"\n",               /* SizeOfStackReserve/Commit */
+             get_asm_ptr_keyword(), (spec->stack_size ? spec->stack_size : 1024) * 1024, page_size );
+    fprintf( outfile, "    \"\\t%s %u,%u\\n\"\n",               /* SizeOfHeapReserve/Commit */
+             get_asm_ptr_keyword(), (spec->heap_size ? spec->heap_size : 1024) * 1024, page_size );
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* LoaderFlags */
     fprintf( outfile, "    \"\\t.long 16\\n\"\n" );             /* NumberOfRvaAndSizes */
 
-    if (exports_size)   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT] */
+    if (spec->base <= spec->limit)   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT] */
         fprintf( outfile, "    \"\\t.long .L__wine_spec_exports, .L__wine_spec_exports_end-.L__wine_spec_exports\\n\"\n" );
     else
         fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );
 
-    if (imports_size)   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT] */
+    if (has_imports())   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT] */
         fprintf( outfile, "    \"\\t.long .L__wine_spec_imports, .L__wine_spec_imports_end-.L__wine_spec_imports\\n\"\n" );
     else
         fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );
@@ -644,7 +604,7 @@ void BuildDef32File( FILE *outfile, DLLSPEC *spec )
             break;
         case TYPE_STDCALL:
         {
-            int at_param = strlen(odp->u.func.arg_types) * sizeof(int);
+            int at_param = strlen(odp->u.func.arg_types) * get_ptr_size();
             if (!kill_at) fprintf(outfile, "@%d", at_param);
             if  (odp->flags & FLAG_FORWARD)
             {

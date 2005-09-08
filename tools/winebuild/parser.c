@@ -791,7 +791,7 @@ static int parse_def_export( char *name, DLLSPEC *spec )
     else
     {
         odp->type = TYPE_STDCALL;
-        args /= sizeof(int);
+        args /= get_ptr_size();
         if (args >= sizeof(odp->u.func.arg_types))
         {
             error( "Too many arguments in stdcall function '%s'\n", odp->name );
