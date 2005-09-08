@@ -53,10 +53,12 @@ extern IClassFactoryImpl SHDOCVW_ClassFactory;
  * WebBrowser declaration for SHDOCVW.DLL
  */
 typedef struct {
-    const IWebBrowserVtbl       *lpWebBrowserVtbl;
-    const IOleObjectVtbl        *lpOleObjectVtbl;
-    const IOleInPlaceObjectVtbl *lpOleInPlaceObjectVtbl;
-    const IOleControlVtbl       *lpOleControlVtbl;
+    const IWebBrowserVtbl         *lpWebBrowserVtbl;
+    const IOleObjectVtbl          *lpOleObjectVtbl;
+    const IOleInPlaceObjectVtbl   *lpOleInPlaceObjectVtbl;
+    const IOleControlVtbl         *lpOleControlVtbl;
+    const IPersistStorageVtbl     *lpPersistStorageVtbl;
+    const IPersistStreamInitVtbl  *lpPersistStreamInitVtbl;
 
     LONG ref;
 } WebBrowser;
@@ -65,8 +67,11 @@ typedef struct {
 #define OLEOBJ(x)       ((IOleObject*)          &(x)->lpOleObjectVtbl)
 #define INPLACEOBJ(x)   ((IOleInPlaceObject*)   &(x)->lpOleInPlaceObjectVtbl)
 #define CONTROL(x)      ((IOleControl*)         &(x)->lpOleControlVtbl)
+#define PERSTORAGE(x)   ((IPersistStorage*)     &(x)->lpPersistStorageVtbl)
+#define PERSTRINIT(x)   ((IPersistStreamInit*)  &(x)->lpPersistStreamInitVtbl)
 
 void WebBrowser_OleObject_Init(WebBrowser*);
+void WebBrowser_Persist_Init(WebBrowser*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 
@@ -94,33 +99,6 @@ typedef struct
 } IProvideClassInfo2Impl;
 
 extern IProvideClassInfo2Impl SHDOCVW_ProvideClassInfo2;
-
-
-/**********************************************************************
- * IPersistStorage declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IPersistStorageVtbl *lpVtbl;
-    LONG ref;
-} IPersistStorageImpl;
-
-extern IPersistStorageImpl SHDOCVW_PersistStorage;
-
-
-/**********************************************************************
- * IPersistStreamInit declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IPersistStreamInitVtbl *lpVtbl;
-    LONG ref;
-} IPersistStreamInitImpl;
-
-extern IPersistStreamInitImpl SHDOCVW_PersistStreamInit;
-
 
 /**********************************************************************
  * IQuickActivate declaration for SHDOCVW.DLL

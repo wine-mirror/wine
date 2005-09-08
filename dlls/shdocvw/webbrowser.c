@@ -56,15 +56,18 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser *iface, REFIID riid,
     }else if(IsEqualGUID (&IID_IOleInPlaceObject, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceObject %p)\n", This, ppv);
         *ppv = INPLACEOBJ(This);
-    }else if(IsEqualGUID (&IID_IOleControl, riid)) {
-        FIXME("(%p)->(IID_IOleControl %p)\n", This, ppv);
+    }else if(IsEqualGUID(&IID_IOleControl, riid)) {
+        TRACE("(%p)->(IID_IOleControl %p)\n", This, ppv);
         *ppv = CONTROL(This);
-    }else if(IsEqualGUID (&IID_IPersistStorage, riid)) {
-        FIXME("(%p)->(IID_IPersistStorage %p)\n", This, ppv);
-        *ppv = &SHDOCVW_PersistStorage;
+    }else if(IsEqualGUID(&IID_IPersist, riid)) {
+        TRACE("(%p)->(IID_IPersist %p)\n", This, ppv);
+        *ppv = PERSTORAGE(This);
+    }else if(IsEqualGUID(&IID_IPersistStorage, riid)) {
+        TRACE("(%p)->(IID_IPersistStorage %p)\n", This, ppv);
+        *ppv = PERSTORAGE(This);
     }else if(IsEqualGUID (&IID_IPersistStreamInit, riid)) {
-        FIXME("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
-        *ppv = &SHDOCVW_PersistStreamInit;
+        TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
+        *ppv = PERSTRINIT(This);
     }else if(IsEqualGUID (&IID_IProvideClassInfo, riid)) {
         FIXME("(%p)->(IID_IProvideClassInfo %p)\n", This, ppv);
         *ppv = &SHDOCVW_ProvideClassInfo;
@@ -382,6 +385,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->ref = 0;
 
     WebBrowser_OleObject_Init(ret);
+    WebBrowser_Persist_Init(ret);
 
     hres = IWebBrowser_QueryInterface(WEBBROWSER(ret), riid, ppv);
     if(SUCCEEDED(hres)) {
