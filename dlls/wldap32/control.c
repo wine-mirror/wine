@@ -89,6 +89,62 @@ ULONG ldap_controls_freeW( LDAPControlW **controls )
     return ret;
 }
 
+ULONG ldap_create_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkey,
+    UCHAR critical, PLDAPControlA *control )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    LDAPSortKeyW **sortkeyW = NULL;
+    LDAPControlW *controlW = NULL;
+
+    TRACE( "(%p, %p, 0x%02x, %p)\n", ld, sortkey, critical, control );
+
+    if (!ld || !sortkey || !control)
+        return WLDAP32_LDAP_PARAM_ERROR;
+
+    sortkeyW = sortkeyarrayAtoW( sortkey );
+    if (!sortkeyW) return WLDAP32_LDAP_NO_MEMORY;
+
+    ret = ldap_create_sort_controlW( ld, sortkeyW, critical, &controlW );
+
+    *control = controlWtoA( controlW );
+    if (!*control) ret = WLDAP32_LDAP_NO_MEMORY;
+
+    ldap_control_freeW( controlW );
+    sortkeyarrayfreeW( sortkeyW );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_create_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkey,
+    UCHAR critical, PLDAPControlW *control )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    LDAPSortKey **sortkeyU = NULL;
+    LDAPControl *controlU = NULL;
+
+    TRACE( "(%p, %p, 0x%02x, %p)\n", ld, sortkey, critical, control );
+
+    if (!ld || !sortkey || !control)
+        return WLDAP32_LDAP_PARAM_ERROR;
+
+    sortkeyU = sortkeyarrayWtoU( sortkey );
+    if (!sortkeyU) return WLDAP32_LDAP_NO_MEMORY;
+
+    ret = ldap_create_sort_control( ld, sortkeyU, critical, &controlU );
+
+    *control = controlUtoW( controlU );
+    if (!*control) ret = WLDAP32_LDAP_NO_MEMORY;
+
+    ldap_control_free( controlU );
+    sortkeyarrayfreeU( sortkeyU );
+
+#endif
+    return ret;
+}
+
 ULONG ldap_free_controlsA( LDAPControlA **controls )
 {
     return ldap_controls_freeA( controls );

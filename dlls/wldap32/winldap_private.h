@@ -275,6 +275,8 @@ ULONG WLDAP32_ldap_count_references(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
 ULONG ldap_count_valuesA(PCHAR*);
 ULONG ldap_count_valuesW(PWCHAR*);
 ULONG WLDAP32_ldap_count_values_len(PBERVAL*);
+ULONG ldap_create_sort_controlA(WLDAP32_PLDAP,PLDAPSortKeyA*,UCHAR,PLDAPControlA*);
+ULONG ldap_create_sort_controlW(WLDAP32_PLDAP,PLDAPSortKeyW*,UCHAR,PLDAPControlW*);
 ULONG ldap_deleteA(WLDAP32_LDAP*,PCHAR);
 ULONG ldap_deleteW(WLDAP32_LDAP*,PWCHAR);
 ULONG ldap_delete_extA(WLDAP32_LDAP*,PCHAR,PLDAPControlA*,PLDAPControlA*,ULONG*);

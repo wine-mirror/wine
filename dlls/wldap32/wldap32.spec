@@ -70,9 +70,9 @@
 @ stub ldap_create_page_control
 @ stub ldap_create_page_controlA
 @ stub ldap_create_page_controlW
-@ stub ldap_create_sort_control
-@ stub ldap_create_sort_controlA
-@ stub ldap_create_sort_controlW
+@ cdecl ldap_create_sort_control(ptr ptr long ptr) ldap_create_sort_controlA
+@ cdecl ldap_create_sort_controlA(ptr ptr long ptr)
+@ cdecl ldap_create_sort_controlW(ptr ptr long ptr)
 @ stub ldap_create_vlv_controlA
 @ stub ldap_create_vlv_controlW
 @ cdecl ldap_delete(ptr str) ldap_deleteA
