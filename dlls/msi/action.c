@@ -478,9 +478,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
         check = load_dynamic_property(package, cszSourceDir,NULL);
         if (!check)
             MSI_SetPropertyW(package, cszSourceDir, path);
-        else
-            HeapFree(GetProcessHeap(), 0, check);
-
+        HeapFree(GetProcessHeap(), 0, check);
         HeapFree(GetProcessHeap(), 0, path);
     }
 
@@ -1437,50 +1435,47 @@ static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property,
                                     INSTALLSTATE state)
 {
     static const WCHAR all[]={'A','L','L',0};
-    LPWSTR override = NULL;
-    BOOL rc = FALSE;
+    LPWSTR override;
     MSIFEATURE *feature;
 
     override = load_dynamic_property(package, property, NULL);
-    if (override)
+    if (!override)
+        return FALSE;
+ 
+    LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        rc = TRUE;
-        LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
+        if (strcmpiW(override,all)==0)
         {
-            if (strcmpiW(override,all)==0)
-            {
-                feature->ActionRequest= state;
-                feature->Action = state;
-            }
-            else
-            {
-                LPWSTR ptr = override;
-                LPWSTR ptr2 = strchrW(override,',');
+            feature->ActionRequest= state;
+            feature->Action = state;
+        }
+        else
+        {
+            LPWSTR ptr = override;
+            LPWSTR ptr2 = strchrW(override,',');
 
-                while (ptr)
+            while (ptr)
+            {
+                if ((ptr2 && strncmpW(ptr,feature->Feature, ptr2-ptr)==0)
+                    || (!ptr2 && strcmpW(ptr,feature->Feature)==0))
                 {
-                    if ((ptr2 && 
-                        strncmpW(ptr,feature->Feature, ptr2-ptr)==0)
-                        || (!ptr2 && strcmpW(ptr,feature->Feature)==0))
-                    {
-                        feature->ActionRequest= state;
-                        feature->Action = state;
-                        break;
-                    }
-                    if (ptr2)
-                    {
-                        ptr=ptr2+1;
-                        ptr2 = strchrW(ptr,',');
-                    }
-                    else
-                        break;
+                    feature->ActionRequest= state;
+                    feature->Action = state;
+                    break;
                 }
+                if (ptr2)
+                {
+                    ptr=ptr2+1;
+                    ptr2 = strchrW(ptr,',');
+                }
+                else
+                    break;
             }
         }
-        HeapFree(GetProcessHeap(),0,override);
     } 
+    HeapFree(GetProcessHeap(),0,override);
 
-    return rc;
+    return TRUE;
 }
 
 static UINT SetFeatureStates(MSIPACKAGE *package)
@@ -1837,8 +1832,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     level = load_dynamic_property(package,szlevel,NULL);
     if (!level)
         MSI_SetPropertyW(package,szlevel, szOne);
-    else
-        HeapFree(GetProcessHeap(),0,level);
+    HeapFree(GetProcessHeap(),0,level);
 
     ACTION_UpdateInstallStates(package);
 
@@ -3731,8 +3725,7 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    productid = load_dynamic_property(package,INSTALLPROPERTY_PRODUCTIDW,
-            &rc);
+    productid = load_dynamic_property(package,INSTALLPROPERTY_PRODUCTIDW, &rc);
     if (!productid)
         return ERROR_SUCCESS;
 
