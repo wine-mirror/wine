@@ -398,6 +398,14 @@ static int dump_lnk_fd(int fd)
     printf("Size:    %04lx\n", hdr->dwSize);
     printf("GUID:    %s\n", guid);
 
+    printf("FileAttr: %08lx\n", hdr->dwFileAttr);
+    printf("FileLength: %08lx\n", hdr->dwFileLength);
+    printf("nIcon: %ld\n", hdr->nIcon);
+    printf("Startup: %ld\n", hdr->fStartup);
+    printf("HotKey: %08lx\n", hdr->wHotKey);
+    printf("Unknown5: %08lx\n", hdr->Unknown5);
+    printf("Unknown6: %08lx\n", hdr->Unknown6);
+
     /* dump out all the flags */
     printf("Flags:   %04lx ( ", hdr->dwFlags);
 #define FLAG(x) if(hdr->dwFlags & SCF_##x) printf("%s ",#x);
