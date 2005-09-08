@@ -362,3 +362,27 @@ HRESULT WINAPI CoGetClassObjectFromURL( REFCLSID rclsid, LPCWSTR szCodeURL, DWOR
 	debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
 }
+
+/***********************************************************************
+ *           ReleaseBindInfo (URLMON.@)
+ *
+ * Release the resources used by the specified BINDINFO structure.
+ *
+ * PARAMS
+ *  pbindinfo [I] BINDINFO to release.
+ *
+ * RETURNS
+ *  Nothing.
+ */
+void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
+{
+    TRACE("(%p)\n", pbindinfo);
+
+    if(!pbindinfo)
+        return;
+
+    CoTaskMemFree(pbindinfo->szExtraInfo);
+
+    if(pbindinfo->pUnk)
+        IUnknown_Release(pbindinfo->pUnk);
+}

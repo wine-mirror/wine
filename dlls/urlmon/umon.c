@@ -1491,22 +1491,6 @@ HRESULT WINAPI RevokeBindStatusCallback(
 }
 
 /***********************************************************************
- *           ReleaseBindInfo (URLMON.@)
- *
- * Release the resources used by the specified BINDINFO structure.
- *
- * PARAMS
- *  pbindinfo [I] BINDINFO to release.
- *
- * RETURNS
- *  Nothing.
- */
-void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
-{
-    FIXME("(%p)stub!\n", pbindinfo);
-}
-
-/***********************************************************************
  *           URLDownloadToFileA (URLMON.@)
  *
  * Downloads URL szURL to rile szFileName and call lpfnCB callback to
