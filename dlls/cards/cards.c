@@ -72,6 +72,12 @@ BOOL WINAPI cdtInit(int *width, int *height)
 	return TRUE;
 }
 
+static DWORD do_blt(HDC hdc, int x, int y, int dx, int dy, HDC hMemoryDC, DWORD rasterOp )
+{
+	if((cardWidth == dx) && (cardHeight == dy))
+		return BitBlt(hdc, x, y, cardWidth, cardHeight, hMemoryDC, 0, 0, rasterOp);
+	return StretchBlt(hdc, x, y, dx, dy, hMemoryDC, 0, 0, cardWidth, cardHeight, rasterOp);
+}
 
 /***********************************************************************
  * Draw a card. Unlike cdtDrawCard, this version allows you to stretch
@@ -85,7 +91,6 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 	HGDIOBJ result;
 	DWORD rasterOp = SRCCOPY;
 	BOOL roundCornersFlag;
-	COLORREF savedPixels[12];
 	BOOL eraseFlag = FALSE;
 	BOOL drawFlag = TRUE;
 
@@ -170,6 +175,8 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 
 		if(roundCornersFlag)
 		{
+			COLORREF savedPixels[12];
+
 			savedPixels[0] = GetPixel(hdc, x, y);
 			savedPixels[1] = GetPixel(hdc, x + 1, y);
 			savedPixels[2] = GetPixel(hdc, x, y + 1);
@@ -182,15 +189,9 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 			savedPixels[9] = GetPixel(hdc, x + dx - 1, y + dy - 1);
 			savedPixels[10] = GetPixel(hdc, x + dx - 2, y + dy - 1);
 			savedPixels[11] = GetPixel(hdc, x + dx - 1, y + dy - 2);
-		}
 
-		if((cardWidth == dx) && (cardHeight == dy))
-			BitBlt(hdc, x, y, cardWidth, cardHeight, hMemoryDC, 0, 0, rasterOp);
-		else
-			StretchBlt(hdc, x, y, dx, dy, hMemoryDC, 0, 0, cardWidth, cardHeight, rasterOp);
+			do_blt(hdc, x, y, dx, dy, hMemoryDC, rasterOp);
 
-		if(roundCornersFlag)
-		{
 			SetPixel(hdc, x, y, savedPixels[0]);
 			SetPixel(hdc, x + 1, y, savedPixels[1]);
 			SetPixel(hdc, x, y + 1, savedPixels[2]);
@@ -204,6 +205,8 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 			SetPixel(hdc, x + dx - 2, y + dy - 1, savedPixels[10]);
 			SetPixel(hdc, x + dx - 1, y + dy - 2, savedPixels[11]);
 		}
+		else
+			do_blt(hdc, x, y, dx, dy, hMemoryDC, rasterOp);
 	}
 
 	DeleteDC(hMemoryDC);

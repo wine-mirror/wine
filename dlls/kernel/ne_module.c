@@ -172,7 +172,7 @@ static const IMAGE_DOS_HEADER *find_dll_descr( const char *dllname, const char *
             /* check the dll file name */
             if (!NE_strcasecmp( builtin_dlls[i].file_name, dllname ) ||
             /* check the dll module name (without extension) */
-                (!NE_strncasecmp( dllname, name_table+1, *name_table ) &&
+                (!NE_strncasecmp( dllname, (const char*)name_table+1, *name_table ) &&
                  !strcmp( dllname + *name_table, ".dll" )))
             {
                 *file_name = builtin_dlls[i].file_name;
@@ -311,7 +311,7 @@ void NE_DumpModule( HMODULE16 hModule )
       /* Dump the resident name table */
     DPRINTF( "---\n" );
     DPRINTF( "Resident-name table:\n" );
-    pstr = (char *)pModule + pModule->ne_restab;
+    pstr = (BYTE*) pModule + pModule->ne_restab;
     while (*pstr)
     {
         DPRINTF( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
@@ -357,7 +357,7 @@ void NE_DumpModule( HMODULE16 hModule )
     DPRINTF( "Non-resident names table:\n" );
     if (pModule->nrname_handle)
     {
-        pstr = (char *)GlobalLock16( pModule->nrname_handle );
+        pstr = GlobalLock16( pModule->nrname_handle );
         while (*pstr)
         {
             DPRINTF( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
@@ -428,7 +428,8 @@ static void NE_InitResourceHandler( HMODULE16 hModule )
  */
 WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
 {
-    unsigned char buffer[256], *cpnt;
+    char buffer[256], *p;
+    BYTE *cpnt;
     BYTE len;
     NE_MODULE *pModule;
 
@@ -444,18 +445,18 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
       /* Now copy and uppercase the string */
 
     strcpy( buffer, name );
-    for (cpnt = buffer; *cpnt; cpnt++) *cpnt = RtlUpperChar(*cpnt);
-    len = cpnt - buffer;
+    for (p = buffer; *p; p++) *p = RtlUpperChar(*p);
+    len = p - buffer;
 
       /* First search the resident names */
 
-    cpnt = (char *)pModule + pModule->ne_restab;
+    cpnt = (BYTE *)pModule + pModule->ne_restab;
 
       /* Skip the first entry (module name) */
     cpnt += *cpnt + 1 + sizeof(WORD);
     while (*cpnt)
     {
-        if (((BYTE)*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
+        if ((*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
         {
             WORD ordinal;
             memcpy( &ordinal, cpnt + *cpnt + 1, sizeof(ordinal) );
@@ -468,13 +469,13 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
       /* Now search the non-resident names table */
 
     if (!pModule->nrname_handle) return 0;  /* No non-resident table */
-    cpnt = (char *)GlobalLock16( pModule->nrname_handle );
+    cpnt = GlobalLock16( pModule->nrname_handle );
 
       /* Skip the first entry (module description string) */
     cpnt += *cpnt + 1 + sizeof(WORD);
     while (*cpnt)
     {
-        if (((BYTE)*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
+        if ((*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
         {
             WORD ordinal;
             memcpy( &ordinal, cpnt + *cpnt + 1, sizeof(ordinal) );
@@ -1491,7 +1492,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
         if (pModule->ne_flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->ne_restab;
-        if ((*name_table == len) && !strncmp(name, name_table+1, len))
+        if ((*name_table == len) && !strncmp(name, (char*) name_table+1, len))
             return hModule;
     }
 
@@ -1513,7 +1514,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	 * 'i' compare is just a quickfix until the loader handles that
 	 * correctly. -MM 990705
 	 */
-        if ((*name_table == len) && !NE_strncasecmp(tmpstr, name_table+1, len))
+        if ((*name_table == len) && !NE_strncasecmp(tmpstr, (const char*)name_table+1, len))
             return hModule;
     }
 
@@ -1865,7 +1866,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
         if (pModule->ne_flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->ne_restab;
-        if ((*name_table == len) && !NE_strncasecmp(s, name_table+1, len))
+        if ((*name_table == len) && !NE_strncasecmp(s, (const char*)name_table+1, len))
             return hModule;
     }
 
