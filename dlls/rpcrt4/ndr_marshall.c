@@ -2684,9 +2684,9 @@ void WINAPI NdrClientContextUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
 void WINAPI NdrServerContextMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                      NDR_SCONTEXT ContextHandle,
-                                     int fCheck )
+                                     NDR_RUNDOWN RundownRoutine )
 {
-    FIXME("(%p, %p, %d): stub\n", pStubMsg, ContextHandle, fCheck);
+    FIXME("(%p, %p, %p): stub\n", pStubMsg, ContextHandle, RundownRoutine);
 }
 
 NDR_SCONTEXT WINAPI NdrServerContextUnmarshall(PMIDL_STUB_MESSAGE pStubMsg)

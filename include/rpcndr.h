@@ -448,7 +448,7 @@ RPCRTAPI void RPC_ENTRY
                               IN RPC_BINDING_HANDLE BindHandle );
 
 RPCRTAPI void RPC_ENTRY
-  NdrServerContextMarshall ( PMIDL_STUB_MESSAGE pStubMsg, NDR_SCONTEXT ContextHandle, int fCheck );
+  NdrServerContextMarshall ( PMIDL_STUB_MESSAGE pStubMsg, NDR_SCONTEXT ContextHandle, NDR_RUNDOWN RundownRoutine );
 
 RPCRTAPI NDR_SCONTEXT RPC_ENTRY
   NdrServerContextUnmarshall( IN PMIDL_STUB_MESSAGE pStubMsg );
