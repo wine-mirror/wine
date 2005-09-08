@@ -392,6 +392,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
         list_init( &package->mimes );
         list_init( &package->extensions );
         list_init( &package->progids );
+        list_init( &package->RunningActions );
 
         /* OK, here is where we do a slew of things to the database to 
          * prep for all that is to come as a package */

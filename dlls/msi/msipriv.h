@@ -201,8 +201,7 @@ typedef struct tagMSIPACKAGE
     
     struct tagMSISCRIPT *script;
 
-    struct tagMSIRUNNINGACTION *RunningAction;
-    UINT RunningActionCount;
+    struct list RunningActions;
 
     LPWSTR PackagePath;
     LPWSTR msiFilePath;

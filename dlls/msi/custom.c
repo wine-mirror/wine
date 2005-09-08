@@ -57,6 +57,7 @@ static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 
 typedef struct tagMSIRUNNINGACTION
 {
+    struct list entry;
     HANDLE handle;
     BOOL   process;
     LPWSTR name;
@@ -301,22 +302,15 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
 static void file_running_action(MSIPACKAGE* package, HANDLE Handle, 
                                 BOOL process, LPCWSTR name)
 {
-    MSIRUNNINGACTION *newbuf = NULL;
-    INT count;
-    count = package->RunningActionCount;
-    package->RunningActionCount++;
-    if (count != 0)
-        newbuf = HeapReAlloc(GetProcessHeap(),0,
-                        package->RunningAction,
-                        package->RunningActionCount * sizeof(MSIRUNNINGACTION));
-    else
-        newbuf = HeapAlloc(GetProcessHeap(),0, sizeof(MSIRUNNINGACTION));
+    MSIRUNNINGACTION *action;
 
-    newbuf[count].handle = Handle;
-    newbuf[count].process = process;
-    newbuf[count].name = strdupW(name);
+    action = HeapAlloc( GetProcessHeap(), 0, sizeof(MSIRUNNINGACTION) );
 
-    package->RunningAction = newbuf;
+    action->handle = Handle;
+    action->process = process;
+    action->name = strdupW(name);
+
+    list_add_tail( &package->RunningActions, &action->entry );
 }
 
 static UINT process_action_return_value(UINT type, HANDLE ThreadHandle)
@@ -764,29 +758,30 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
 
 void ACTION_FinishCustomActions(MSIPACKAGE* package)
 {
-    INT i;
+    struct list *item, *cursor;
     DWORD rc;
 
-    for (i = 0; i < package->RunningActionCount; i++)
+    LIST_FOR_EACH_SAFE( item, cursor, &package->RunningActions )
     {
-        TRACE("Checking on action %s\n",
-               debugstr_w(package->RunningAction[i].name));
+        MSIRUNNINGACTION *action = LIST_ENTRY( item, MSIRUNNINGACTION, entry );
 
-        if (package->RunningAction[i].process)
-            GetExitCodeProcess(package->RunningAction[i].handle, &rc);
+        TRACE("Checking on action %s\n", debugstr_w(action->name));
+
+        list_remove( &action->entry );
+
+        if (action->process)
+            GetExitCodeProcess( action->handle, &rc );
         else
-            GetExitCodeThread(package->RunningAction[i].handle, &rc);
+            GetExitCodeThread( action->handle, &rc );
 
         if (rc == STILL_ACTIVE)
         {
-            TRACE("Waiting on action %s\n",
-               debugstr_w(package->RunningAction[i].name));
-            msi_dialog_check_messages(package->RunningAction[i].handle);
+            TRACE("Waiting on action %s\n", debugstr_w( action->name) );
+            msi_dialog_check_messages( action->handle );
         }
 
-        HeapFree(GetProcessHeap(),0,package->RunningAction[i].name);
-        CloseHandle(package->RunningAction[i].handle);
+        CloseHandle( action->handle );
+        HeapFree( GetProcessHeap(), 0, action->name );
+        HeapFree( GetProcessHeap(), 0, action );
     }
-
-    HeapFree(GetProcessHeap(),0,package->RunningAction);
 }
