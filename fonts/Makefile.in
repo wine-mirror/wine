@@ -6,20 +6,20 @@ MODULE    = none
 fontdir   = $(datadir)/fonts/wine
 
 BITMAP_FONTS  = \
-	wine_coure.fon \
-	wine_couree.fon \
-	wine_courer.fon \
-	wine_sserife.fon \
-	wine_sserifee.fon \
-	wine_sserifer.fon \
-	wine_vgasys.fon \
-	wine_vgasyse.fon \
-	wine_vgasysr.fon \
-	wine_svgasys.fon \
-	wine_cvgasys.fon 
+	coure.fon \
+	couree.fon \
+	courer.fon \
+	sserife.fon \
+	sserifee.fon \
+	sserifer.fon \
+	vgasys.fon \
+	vgasyse.fon \
+	vgasysr.fon \
+	svgasys.fon \
+	cvgasys.fon 
 
 TRUETYPE_FONTS = \
-	wine_marlett.ttf
+	marlett.ttf
 
 FONTS = \
 	$(BITMAP_FONTS) \
@@ -29,95 +29,95 @@ all: $(FONTS)
 
 @MAKE_RULES@
 
-wine_courier.ttf: wine_courier.sfd
+courier.ttf: courier.sfd
 	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
 
-wine_sans_serif.ttf: wine_sans_serif.sfd
+ms_sans_serif.ttf: ms_sans_serif.sfd
 	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
 
-wine_system.ttf: wine_system.sfd
+system.ttf: system.sfd
 	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
 
-wine_courier-1252-96-13.fnt: wine_courier.ttf $(SFNT2FNT)
+courier-1252-96-13.fnt: courier.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 13 1252 96 128 8
 
-wine_courier-1250-96-13.fnt: wine_courier.ttf $(SFNT2FNT)
+courier-1250-96-13.fnt: courier.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 13 1250 96 128 8
 
-wine_courier-1251-96-13.fnt: wine_courier.ttf $(SFNT2FNT)
+courier-1251-96-13.fnt: courier.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 13 1251 96 128 8
 
-wine_sans_serif-1252-96-13.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+ms_sans_serif-1252-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 13 1252 96 129 5
 
-wine_sans_serif-1252-96-16.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+ms_sans_serif-1252-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 1252 96 129 7
 
-wine_sans_serif-1252-96-20.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+ms_sans_serif-1252-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 20 1252 96 129 8
 
-wine_sans_serif-1250-96-13.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+ms_sans_serif-1250-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 13 1250 96 129 5
 
-wine_sans_serif-1250-96-16.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+ms_sans_serif-1250-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 1250 96 129 7
 
-wine_sans_serif-1251-96-13.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+ms_sans_serif-1251-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 13 1251 96 129 5
 
-wine_sans_serif-1251-96-16.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+ms_sans_serif-1251-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 1251 96 129 7
 
-wine_sans_serif-1251-96-20.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+ms_sans_serif-1251-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 20 1251 96 129 8
 
-wine_system-1252-96-16.fnt: wine_system.ttf $(SFNT2FNT)
+system-1252-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 1252 96 128 7
 
-wine_system-1250-96-16.fnt: wine_system.ttf $(SFNT2FNT)
+system-1250-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 1250 96 128 7
 
-wine_system-1251-96-16.fnt: wine_system.ttf $(SFNT2FNT)
+system-1251-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 1251 96 128 7
 
-wine_system-936-96-16.fnt: wine_system.ttf $(SFNT2FNT)
+system-936-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 936 96 128 7
 
-wine_system-950-96-16.fnt: wine_system.ttf $(SFNT2FNT)
+system-950-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 950 96 128 7
 
-wine_coure.fon: wine_courier-1252-96-13.fnt $(FNT2FON)
-	$(FNT2FON) wine_courier-1252-96-13.fnt $@
+coure.fon: courier-1252-96-13.fnt $(FNT2FON)
+	$(FNT2FON) courier-1252-96-13.fnt $@
 
-wine_couree.fon: wine_courier-1250-96-13.fnt $(FNT2FON)
-	$(FNT2FON) wine_courier-1250-96-13.fnt $@
+couree.fon: courier-1250-96-13.fnt $(FNT2FON)
+	$(FNT2FON) courier-1250-96-13.fnt $@
 
-wine_courer.fon: wine_courier-1251-96-13.fnt $(FNT2FON)
-	$(FNT2FON) wine_courier-1251-96-13.fnt $@
+courer.fon: courier-1251-96-13.fnt $(FNT2FON)
+	$(FNT2FON) courier-1251-96-13.fnt $@
 
-wine_sserife.fon: wine_sans_serif-1252-96-13.fnt wine_sans_serif-1252-96-16.fnt wine_sans_serif-1252-96-20.fnt $(FNT2FON)
-	$(FNT2FON) wine_sans_serif-1252-96-13.fnt wine_sans_serif-1252-96-16.fnt wine_sans_serif-1252-96-20.fnt $@
+sserife.fon: ms_sans_serif-1252-96-13.fnt ms_sans_serif-1252-96-16.fnt ms_sans_serif-1252-96-20.fnt $(FNT2FON)
+	$(FNT2FON) ms_sans_serif-1252-96-13.fnt ms_sans_serif-1252-96-16.fnt ms_sans_serif-1252-96-20.fnt $@
 
-wine_sserifee.fon: wine_sans_serif-1250-96-13.fnt wine_sans_serif-1250-96-16.fnt $(FNT2FON)
-	$(FNT2FON) wine_sans_serif-1250-96-13.fnt wine_sans_serif-1250-96-16.fnt $@
+sserifee.fon: ms_sans_serif-1250-96-13.fnt ms_sans_serif-1250-96-16.fnt $(FNT2FON)
+	$(FNT2FON) ms_sans_serif-1250-96-13.fnt ms_sans_serif-1250-96-16.fnt $@
 
-wine_sserifer.fon: wine_sans_serif-1251-96-13.fnt wine_sans_serif-1251-96-16.fnt wine_sans_serif-1251-96-20.fnt $(FNT2FON)
-	$(FNT2FON) wine_sans_serif-1251-96-13.fnt wine_sans_serif-1251-96-16.fnt wine_sans_serif-1251-96-20.fnt $@
+sserifer.fon: ms_sans_serif-1251-96-13.fnt ms_sans_serif-1251-96-16.fnt ms_sans_serif-1251-96-20.fnt $(FNT2FON)
+	$(FNT2FON) ms_sans_serif-1251-96-13.fnt ms_sans_serif-1251-96-16.fnt ms_sans_serif-1251-96-20.fnt $@
 
-wine_vgasys.fon: wine_system-1252-96-16.fnt $(FNT2FON)
-	$(FNT2FON) wine_system-1252-96-16.fnt $@
+vgasys.fon: system-1252-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-1252-96-16.fnt $@
 
-wine_vgasyse.fon: wine_system-1250-96-16.fnt $(FNT2FON)
-	$(FNT2FON) wine_system-1250-96-16.fnt $@
+vgasyse.fon: system-1250-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-1250-96-16.fnt $@
 
-wine_vgasysr.fon: wine_system-1251-96-16.fnt $(FNT2FON)
-	$(FNT2FON) wine_system-1251-96-16.fnt $@
+vgasysr.fon: system-1251-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-1251-96-16.fnt $@
 
-wine_svgasys.fon: wine_system-936-96-16.fnt wine_system-1252-96-16.fnt $(FNT2FON)
-	$(FNT2FON) wine_system-936-96-16.fnt wine_system-1252-96-16.fnt $@
+svgasys.fon: system-936-96-16.fnt system-1252-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-936-96-16.fnt system-1252-96-16.fnt $@
 
-wine_cvgasys.fon: wine_system-950-96-16.fnt wine_system-1252-96-16.fnt $(FNT2FON)
-	$(FNT2FON) wine_system-950-96-16.fnt wine_system-1252-96-16.fnt $@
+cvgasys.fon: system-950-96-16.fnt system-1252-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-950-96-16.fnt system-1252-96-16.fnt $@
 
 install:: $(FONTS)
 	$(MKINSTALLDIRS) $(fontdir)
