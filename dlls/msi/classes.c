@@ -181,13 +181,13 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
     {
         MSIPROGID *parent = progid->Parent;
 
-        while (parent->Parent && parent->Parent != progid)
+        while (parent->Parent && parent->Parent != parent)
             parent = parent->Parent;
 
-        FIXME("BAD BAD need to determing if we are really the CurVer\n");
+        FIXME("need to determing if we are really the CurVer\n");
 
         progid->CurVer = parent;
-        progid->VersionInd = progid;
+        parent->VersionInd = progid;
     }
     
     return progid;
