@@ -161,7 +161,7 @@ static	int 	MIDI_AlsaToWindowsDeviceType(int type)
     if (type & SND_SEQ_PORT_TYPE_MIDI_GENERIC)
         return MOD_MIDIPORT;
     
-    ERR("Cannot determine the type of this midi device. Assuming FM Synth\n");
+    ERR("Cannot determine the type (alsa type is %x) of this midi device. Assuming FM Synth\n", type);
     return MOD_FMSYNTH;
 }
 
