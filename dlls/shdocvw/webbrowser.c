@@ -69,11 +69,11 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser *iface, REFIID riid,
         TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
         *ppv = PERSTRINIT(This);
     }else if(IsEqualGUID (&IID_IProvideClassInfo, riid)) {
-        FIXME("(%p)->(IID_IProvideClassInfo %p)\n", This, ppv);
-        *ppv = &SHDOCVW_ProvideClassInfo;
+        TRACE("(%p)->(IID_IProvideClassInfo %p)\n", This, ppv);
+        *ppv = CLASSINFO(This);
     }else if(IsEqualGUID (&IID_IProvideClassInfo2, riid)) {
-        FIXME("(%p)->(IID_IProvideClassInfo2 %p)\n", This, ppv);
-        *ppv = &SHDOCVW_ProvideClassInfo2;
+        TRACE("(%p)->(IID_IProvideClassInfo2 %p)\n", This, ppv);
+        *ppv = CLASSINFO(This);
     }else if(IsEqualGUID (&IID_IQuickActivate, riid)) {
         FIXME("(%p)->(IID_IQuickActivate %p)\n", This, ppv);
         *ppv = &SHDOCVW_QuickActivate;
@@ -386,6 +386,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_Persist_Init(ret);
+    WebBrowser_ClassInfo_Init(ret);
 
     hres = IWebBrowser_QueryInterface(WEBBROWSER(ret), riid, ppv);
     if(SUCCEEDED(hres)) {

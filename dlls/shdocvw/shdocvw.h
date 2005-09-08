@@ -59,6 +59,7 @@ typedef struct {
     const IOleControlVtbl         *lpOleControlVtbl;
     const IPersistStorageVtbl     *lpPersistStorageVtbl;
     const IPersistStreamInitVtbl  *lpPersistStreamInitVtbl;
+    const IProvideClassInfo2Vtbl  *lpProvideClassInfoVtbl;
 
     LONG ref;
 } WebBrowser;
@@ -69,36 +70,13 @@ typedef struct {
 #define CONTROL(x)      ((IOleControl*)         &(x)->lpOleControlVtbl)
 #define PERSTORAGE(x)   ((IPersistStorage*)     &(x)->lpPersistStorageVtbl)
 #define PERSTRINIT(x)   ((IPersistStreamInit*)  &(x)->lpPersistStreamInitVtbl)
+#define CLASSINFO(x)    ((IProvideClassInfo2*)  &(x)->lpProvideClassInfoVtbl)
 
 void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_Persist_Init(WebBrowser*);
+void WebBrowser_ClassInfo_Init(WebBrowser*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
-
-/**********************************************************************
- * IProvideClassInfo declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IProvideClassInfoVtbl *lpVtbl;
-    LONG ref;
-} IProvideClassInfoImpl;
-
-extern IProvideClassInfoImpl SHDOCVW_ProvideClassInfo;
-
-
-/**********************************************************************
- * IProvideClassInfo2 declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IProvideClassInfo2Vtbl *lpVtbl;
-    LONG ref;
-} IProvideClassInfo2Impl;
-
-extern IProvideClassInfo2Impl SHDOCVW_ProvideClassInfo2;
 
 /**********************************************************************
  * IQuickActivate declaration for SHDOCVW.DLL
