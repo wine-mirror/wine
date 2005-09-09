@@ -4468,7 +4468,7 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
 	    {
 		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
 		if (style & WS_CHILD)
-		    lParam = GetWindowLongA(hwnd, GWL_ID);
+		    lParam = GetWindowLongPtrA(hwnd, GWLP_ID);
 		else if (style & WS_POPUP)
 		    lParam = WND_POPUP_ID;
 		else
@@ -4497,7 +4497,7 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
 	    {
 		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
 		if (style & WS_CHILD)
-		    lParam = GetWindowLongA(hwnd, GWL_ID);
+		    lParam = GetWindowLongPtrA(hwnd, GWLP_ID);
 		else if (style & WS_POPUP)
 		    lParam = WND_POPUP_ID;
 		else
@@ -4788,7 +4788,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	{
 	    DWORD style = GetWindowLongA((HWND)wParam, GWL_STYLE);
 	    if (style & WS_CHILD)
-		lParam = GetWindowLongA((HWND)wParam, GWL_ID);
+		lParam = GetWindowLongPtrA((HWND)wParam, GWLP_ID);
 	    else if (style & WS_POPUP)
 		lParam = WND_POPUP_ID;
 	    else
@@ -5743,7 +5743,7 @@ static void test_DispatchMessage(void)
     UpdateWindow( hwnd );
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     flush_sequence();
-    SetWindowLongPtrA( hwnd, GWL_WNDPROC, (LONG_PTR)DispatchMessageCheckProc );
+    SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)DispatchMessageCheckProc );
 
     SetRect( &rect, -5, -5, 5, 5 );
     RedrawWindow( hwnd, &rect, 0, RDW_INVALIDATE|RDW_ERASE|RDW_FRAME );

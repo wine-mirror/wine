@@ -172,7 +172,7 @@ static void test_menu_ownerdraw(void)
             NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "CreateWindowEx failed with error %ld\n", GetLastError());
     if( !hwnd) return;
-    SetWindowLong( hwnd, GWL_WNDPROC, (LONG)menu_ownerdraw_wnd_proc);
+    SetWindowLongPtr( hwnd, GWLP_WNDPROC, (LONG)menu_ownerdraw_wnd_proc);
     hmenu = CreatePopupMenu();
     ok(hmenu != NULL, "CreateMenu failed with error %ld\n", GetLastError());
     if( !hmenu) { DestroyWindow(hwnd);return;}

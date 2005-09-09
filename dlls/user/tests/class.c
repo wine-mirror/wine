@@ -251,9 +251,9 @@ static void check_instance( const char *name, HINSTANCE inst, HINSTANCE info_ins
     ok( (HINSTANCE)GetClassLongA( hwnd, GCL_HMODULE ) == gcl_inst,
         "Wrong GCL instance %p/%p for class %s\n",
         (HINSTANCE)GetClassLongA( hwnd, GCL_HMODULE ), gcl_inst, name );
-    ok( (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ) == inst,
+    ok( (HINSTANCE)GetWindowLongPtrA( hwnd, GWLP_HINSTANCE ) == inst,
         "Wrong GWL instance %p/%p for window %s\n",
-        (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ), inst, name );
+        (HINSTANCE)GetWindowLongPtrA( hwnd, GWLP_HINSTANCE ), inst, name );
     ok(!UnregisterClassA(name, inst), "UnregisterClassA should fail while exists a class window\n");
     ok(GetLastError() == ERROR_CLASS_HAS_WINDOWS, "GetLastError() should be set to ERROR_CLASS_HAS_WINDOWS not %ld\n", GetLastError());
     DestroyWindow(hwnd);

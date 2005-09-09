@@ -763,8 +763,8 @@ static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND hWnd, UINT msg, WPARAM wPa
                                             Globals.hInstance, 0);
                 if (button->hWnd) {
                     if (Globals.button_proc == NULL)
-                        Globals.button_proc = (WNDPROC) GetWindowLong(button->hWnd, GWL_WNDPROC);
-                    SetWindowLong(button->hWnd, GWL_WNDPROC, (LONG) WINHELP_ButtonWndProc);
+                        Globals.button_proc = (WNDPROC) GetWindowLongPtr(button->hWnd, GWLP_WNDPROC);
+                    SetWindowLongPtr(button->hWnd, GWLP_WNDPROC, (LONG_PTR) WINHELP_ButtonWndProc);
                 }
             }
             hDc = GetDC(button->hWnd);

@@ -1417,7 +1417,7 @@ static void packet_query_monitor_wnd_helper(struct gdb_context* gdbctx, HWND hWn
                 "%*s%04x%*s%-17.17s %08lx %08lx %.14s\n",
                 indent, "", (UINT)hWnd, 13 - indent, "",
                 clsName, GetWindowLong(hWnd, GWL_STYLE),
-                GetWindowLong(hWnd, GWL_WNDPROC), wndName);
+                GetWindowLongPtr(hWnd, GWLP_WNDPROC), wndName);
        packet_reply_hex_to_str(gdbctx, buffer);
        packet_reply_close(gdbctx);
 

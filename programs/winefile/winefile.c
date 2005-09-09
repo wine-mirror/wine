@@ -1616,7 +1616,7 @@ static LRESULT CALLBACK CBTProc(int code, WPARAM wparam, LPARAM lparam)
 		newchild = NULL;
 
 		child->hwnd = (HWND) wparam;
-		SetWindowLong(child->hwnd, GWL_USERDATA, (LPARAM)child);
+		SetWindowLongPtr(child->hwnd, GWLP_USERDATA, (LPARAM)child);
 	}
 
 	return CallNextHookEx(hcbthook, code, wparam, lparam);
@@ -1696,7 +1696,7 @@ static INT_PTR CALLBACK DestinationDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam, 
 
 	switch(nmsg) {
 		case WM_INITDIALOG:
-			SetWindowLong(hwnd, GWL_USERDATA, lparam);
+			SetWindowLongPtr(hwnd, GWLP_USERDATA, lparam);
 			SetWindowText(GetDlgItem(hwnd, 201), (LPCTSTR)lparam);
 			return 1;
 
@@ -1705,7 +1705,7 @@ static INT_PTR CALLBACK DestinationDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam, 
 
 			switch(id) {
 			  case IDOK: {
-				LPTSTR dest = (LPTSTR) GetWindowLong(hwnd, GWL_USERDATA);
+				LPTSTR dest = (LPTSTR) GetWindowLongPtr(hwnd, GWLP_USERDATA);
 				GetWindowText(GetDlgItem(hwnd, 201), dest, MAX_PATH);
 				EndDialog(hwnd, id);
 				break;}
@@ -2083,7 +2083,7 @@ static BOOL activate_drive_window(LPCTSTR path)
 
 	/* search for a already open window for the same drive */
 	for(child_wnd=GetNextWindow(Globals.hmdiclient,GW_CHILD); child_wnd; child_wnd=GetNextWindow(child_wnd, GW_HWNDNEXT)) {
-		ChildWnd* child = (ChildWnd*) GetWindowLong(child_wnd, GWL_USERDATA);
+		ChildWnd* child = (ChildWnd*) GetWindowLongPtr(child_wnd, GWLP_USERDATA);
 
 		if (child) {
 			_tsplitpath(child->root.path, drv2, 0, 0, 0);
@@ -2108,7 +2108,7 @@ static BOOL activate_fs_window(LPCTSTR filesys)
 
 	/* search for a already open window of the given file system name */
 	for(child_wnd=GetNextWindow(Globals.hmdiclient,GW_CHILD); child_wnd; child_wnd=GetNextWindow(child_wnd, GW_HWNDNEXT)) {
-		ChildWnd* child = (ChildWnd*) GetWindowLong(child_wnd, GWL_USERDATA);
+		ChildWnd* child = (ChildWnd*) GetWindowLongPtr(child_wnd, GWLP_USERDATA);
 
 		if (child) {
 			if (!lstrcmpi(child->root.fs, filesys)) {
@@ -2253,7 +2253,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 						/* change font in all open child windows */
 						for(childWnd=GetWindow(Globals.hmdiclient,GW_CHILD); childWnd; childWnd=GetNextWindow(childWnd,GW_HWNDNEXT)) {
-							ChildWnd* child = (ChildWnd*) GetWindowLong(childWnd, GWL_USERDATA);
+							ChildWnd* child = (ChildWnd*) GetWindowLongPtr(childWnd, GWLP_USERDATA);
 							SetWindowFont(child->left.hwnd, Globals.hfont, TRUE);
 							SetWindowFont(child->right.hwnd, Globals.hfont, TRUE);
 							ListBox_SetItemHeight(child->left.hwnd, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
@@ -2860,7 +2860,7 @@ static void create_tree_window(HWND parent, Pane* pane, int id, int id_header, L
 								LBS_DISABLENOSCROLL|LBS_NOINTEGRALHEIGHT|LBS_OWNERDRAWFIXED|LBS_NOTIFY,
 								0, 0, 0, 0, parent, (HMENU)id, Globals.hInstance, 0);
 
-	SetWindowLong(pane->hwnd, GWL_USERDATA, (LPARAM)pane);
+	SetWindowLongPtr(pane->hwnd, GWLP_USERDATA, (LPARAM)pane);
 	g_orgTreeWndProc = SubclassWindow(pane->hwnd, TreeWndProc);
 
 	SetWindowFont(pane->hwnd, Globals.hfont, FALSE);
@@ -4142,7 +4142,7 @@ static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParen
 
 static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
-	ChildWnd* child = (ChildWnd*) GetWindowLong(hwnd, GWL_USERDATA);
+	ChildWnd* child = (ChildWnd*) GetWindowLongPtr(hwnd, GWLP_USERDATA);
 	ASSERT(child);
 
 	switch(nmsg) {
@@ -4165,7 +4165,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 		case WM_NCDESTROY:
 			free_child_window(child);
-			SetWindowLong(hwnd, GWL_USERDATA, 0);
+			SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
 			break;
 
 		case WM_PAINT: {
@@ -4524,8 +4524,8 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 static LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
-	ChildWnd* child = (ChildWnd*) GetWindowLong(GetParent(hwnd), GWL_USERDATA);
-	Pane* pane = (Pane*) GetWindowLong(hwnd, GWL_USERDATA);
+	ChildWnd* child = (ChildWnd*) GetWindowLongPtr(GetParent(hwnd), GWLP_USERDATA);
+	Pane* pane = (Pane*) GetWindowLongPtr(hwnd, GWLP_USERDATA);
 	ASSERT(child);
 
 	switch(nmsg) {

@@ -115,7 +115,7 @@ LRESULT CALLBACK Graph_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
         
         hdc = BeginPaint(hWnd, &ps);
 
-        WindowId = GetWindowLong(hWnd, GWL_ID);
+        WindowId = GetWindowLongPtr(hWnd, GWLP_ID);
 
         switch (WindowId)
         {

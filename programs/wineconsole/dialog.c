@@ -65,7 +65,7 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
     case WM_INITDIALOG:
 	di = (struct dialog_info*)((PROPSHEETPAGEA*)lParam)->lParam;
 	di->hDlg = hDlg;
-	SetWindowLong(hDlg, DWL_USER, (DWORD)di);
+	SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)di);
 
 	if (di->config.cursor_size <= 25)	idc = IDC_OPT_CURSOR_SMALL;
 	else if (di->config.cursor_size <= 50)	idc = IDC_OPT_CURSOR_MEDIUM;
@@ -89,7 +89,7 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
         DWORD   val;
         BOOL	done;
 
-	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
+	di = (struct dialog_info*)GetWindowLongPtr(hDlg, DWLP_USER);
 
 	switch (nmhdr->code)
 	{
@@ -176,7 +176,7 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
             struct dialog_info*	di;
             HFONT	        hFont, hOldFont;
 
-            di = (struct dialog_info*)GetWindowLong(GetParent(hWnd), DWL_USER);
+            di = (struct dialog_info*)GetWindowLongPtr(GetParent(hWnd), DWLP_USER);
             BeginPaint(hWnd, &ps);
 
             font_idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0L, 0L);
@@ -520,7 +520,7 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
     case WM_INITDIALOG:
 	di = (struct dialog_info*)((PROPSHEETPAGEA*)lParam)->lParam;
 	di->hDlg = hDlg;
-	SetWindowLong(hDlg, DWL_USER, (DWORD)di);
+	SetWindowLongPtr(hDlg, DWLP_USER, (DWORD_PTR)di);
         /* remove dialog from this control, font will be reset when listboxes are filled */
         SendDlgItemMessage(hDlg, IDC_FNT_PREVIEW, WM_SETFONT, 0L, 0L);
 	fill_list_font(di);
@@ -528,7 +528,7 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
         SetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0, di->config.def_attr & 0x0F);
 	break;
     case WM_COMMAND:
-	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
+	di = (struct dialog_info*)GetWindowLongPtr(hDlg, DWLP_USER);
 	switch (LOWORD(wParam))
 	{
 	case IDC_FNT_LIST_FONT:
@@ -550,7 +550,7 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
 	NMHDR*	nmhdr = (NMHDR*)lParam;
         DWORD   val;
 
-	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
+	di = (struct dialog_info*)GetWindowLongPtr(hDlg, DWLP_USER);
 	switch (nmhdr->code)
 	{
         case PSN_SETACTIVE:
@@ -600,7 +600,7 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
     case WM_INITDIALOG:
 	di = (struct dialog_info*)((PROPSHEETPAGEA*)lParam)->lParam;
 	di->hDlg = hDlg;
-	SetWindowLong(hDlg, DWL_USER, (DWORD)di);
+	SetWindowLongPtr(hDlg, DWLP_USER, (DWORD_PTR)di);
 	SetDlgItemInt(hDlg, IDC_CNF_SB_WIDTH,   di->config.sb_width,   FALSE);
 	SetDlgItemInt(hDlg, IDC_CNF_SB_HEIGHT,  di->config.sb_height,  FALSE);
 	SetDlgItemInt(hDlg, IDC_CNF_WIN_WIDTH,  di->config.win_width,  FALSE);
@@ -621,7 +621,7 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 
 	break;
     case WM_COMMAND:
-	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
+	di = (struct dialog_info*)GetWindowLongPtr(hDlg, DWLP_USER);
 	switch (LOWORD(wParam))
 	{
 	}
@@ -632,7 +632,7 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
         int             win_w, win_h, sb_w, sb_h;
         BOOL            st1, st2;
 
-	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
+	di = (struct dialog_info*)GetWindowLongPtr(hDlg, DWLP_USER);
 	switch (nmhdr->code)
 	{
         case PSN_SETACTIVE:

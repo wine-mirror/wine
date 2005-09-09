@@ -305,7 +305,7 @@ static void class_walker(HWND hWnd, struct class_walker* cw)
 void info_win32_class(HWND hWnd, const char* name)
 {
     WNDCLASSEXA	wca;
-    HINSTANCE   hInst = hWnd ? (HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE) : 0;
+    HINSTANCE   hInst = hWnd ? (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE) : 0;
 
     if (!name)
     {
@@ -369,7 +369,7 @@ static void info_window(HWND hWnd, int indent)
         dbg_printf("%*s%08x%*s %-17.17s %08lx %08lx %08lx %.14s\n",
                    indent, "", (UINT)hWnd, 12 - indent, "",
                    clsName, GetWindowLong(hWnd, GWL_STYLE),
-                   GetWindowLong(hWnd, GWL_WNDPROC),
+                   GetWindowLongPtr(hWnd, GWLP_WNDPROC),
                    GetWindowThreadProcessId(hWnd, NULL), wndName);
 
         if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
@@ -416,12 +416,12 @@ void info_win32_window(HWND hWnd, BOOL detailed)
                GetParent(hWnd),
                GetWindow(hWnd, GW_OWNER),
                clsName,
-               (HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE),
+               (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE),
                GetLastActivePopup(hWnd),
-               GetWindowLong(hWnd, GWL_ID),
+               GetWindowLongPtr(hWnd, GWLP_ID),
                GetWindowLong(hWnd, GWL_STYLE),
                GetWindowLong(hWnd, GWL_EXSTYLE),
-               GetWindowLong(hWnd, GWL_WNDPROC),
+               GetWindowLongPtr(hWnd, GWLP_WNDPROC),
                wndName,
                clientRect.left, clientRect.top, clientRect.right, clientRect.bottom,
                windowRect.left, windowRect.top, windowRect.right, windowRect.bottom,

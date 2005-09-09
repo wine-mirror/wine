@@ -451,7 +451,7 @@ START_TEST(bitmap)
                            10, 10, 300, 300,
                            NULL, NULL, NULL, NULL);
     assert(hWnd);
-    is_win9x = GetWindowLongW(hWnd, GWL_WNDPROC) == 0;
+    is_win9x = GetWindowLongPtrW(hWnd, GWLP_WNDPROC) == 0;
     DestroyWindow(hWnd);
 
     test_createdibitmap();
