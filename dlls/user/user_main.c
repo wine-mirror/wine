@@ -360,39 +360,43 @@ static void USER_DoShutdown(void)
 /***********************************************************************
  *		ExitWindowsEx (USER32.@)
  */
-BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
+BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
 {
-    int i;
-    BOOL result = FALSE;
-    HWND *list, *phwnd;
+    TRACE("(%x,%lx)\n", flags, reason);
 
-    /* We have to build a list of all windows first, as in EnumWindows */
-    TRACE("(%x,%lx)\n", flags, reserved);
-
-    list = WIN_ListChildren( GetDesktopWindow() );
-    if (list)
+    if ((flags & EWX_FORCE) == 0)
     {
-        /* Send a WM_QUERYENDSESSION message to every window */
+        HWND *list;
 
-        for (i = 0; list[i]; i++)
+        /* We have to build a list of all windows first, as in EnumWindows */
+        list = WIN_ListChildren( GetDesktopWindow() );
+        if (list)
         {
-            /* Make sure that the window still exists */
-            if (!IsWindow( list[i] )) continue;
-            if (!SendMessageW( list[i], WM_QUERYENDSESSION, 0, 0 )) break;
+            HWND *phwnd;
+            UINT send_flags;
+            DWORD result;
+
+            /* Send a WM_QUERYENDSESSION message to every window */
+            send_flags=(flags & EWX_FORCEIFHUNG) ? SMTO_ABORTIFHUNG : SMTO_NORMAL;
+            for (phwnd = list; *phwnd; phwnd++)
+            {
+                /* Make sure that the window still exists */
+                if (!IsWindow( *phwnd )) continue;
+                if (SendMessageTimeoutW( *phwnd, WM_QUERYENDSESSION, 0, 0, send_flags, INFINITE, &result) && !result) break;
+            }
+            result = (*phwnd == NULL);
+
+            /* Now notify all windows that got a WM_QUERYENDSESSION of the result */
+            for (phwnd = list; *phwnd; phwnd++)
+            {
+                if (!IsWindow( *phwnd )) continue;
+                SendMessageW( *phwnd, WM_ENDSESSION, result, 0 );
+            }
+            HeapFree( GetProcessHeap(), 0, list );
+
+            if (!result)
+                return TRUE;
         }
-        result = !list[i];
-
-        /* Now notify all windows that got a WM_QUERYENDSESSION of the result */
-
-        for (phwnd = list; i > 0; i--, phwnd++)
-        {
-            if (!IsWindow( *phwnd )) continue;
-            SendMessageW( *phwnd, WM_ENDSESSION, result, 0 );
-        }
-        HeapFree( GetProcessHeap(), 0, list );
-
-        if ( !(result || (flags & EWX_FORCE) ))
-            return FALSE;
     }
 
     /* USER_DoShutdown will kill all processes except the current process */
@@ -415,6 +419,6 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
             MESSAGE("wine: Failed to start wineboot\n");
     }
 
-    if (result) ExitProcess(0);
+    ExitProcess(0);
     return TRUE;
 }
