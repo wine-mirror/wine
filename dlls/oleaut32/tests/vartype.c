@@ -4596,7 +4596,10 @@ static void test_VarBstrFromR4(void)
 {
   static const WCHAR szNative[] = { '6','5','4','3','2','2','.','3','\0' };
   static const WCHAR szZero[] = {'0', '\0'};
+  static const WCHAR szOneHalf_English[] = { '0','.','5','\0' };    /* uses period */
+  static const WCHAR szOneHalf_Spanish[] = { '0',',','5','\0' };    /* uses comma */
   LCID lcid;
+  LCID lcid_spanish;
   HRESULT hres;
   BSTR bstr = NULL;
 
@@ -4605,6 +4608,7 @@ static void test_VarBstrFromR4(void)
   CHECKPTR(VarBstrFromR4);
 
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+  lcid_spanish = MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH), SORT_DEFAULT);
   f = 654322.23456f;
   hres = pVarBstrFromR4(f, lcid, 0, &bstr);
   ok(hres == S_OK, "got hres 0x%08lx\n", hres);
@@ -4625,6 +4629,22 @@ static void test_VarBstrFromR4(void)
   if (bstr)
   {
     ok(memcmp(bstr, szZero, sizeof(szZero)) == 0, "negative zero (got %s)\n", wtoascii(bstr));
+  }
+  
+  /* The following tests that lcid is used for decimal separator even without LOCALE_USE_NLS */
+  f = 0.5;
+  hres = pVarBstrFromR4(f, lcid, 0, &bstr);
+  ok(hres == S_OK, "got hres 0x%08lx\n", hres);
+  if (bstr)
+  {
+    ok(memcmp(bstr, szOneHalf_English, sizeof(szOneHalf_English)) == 0, "English locale failed (got %s)\n", wtoascii(bstr));
+  }
+  f = 0.5;
+  hres = pVarBstrFromR4(f, lcid_spanish, 0, &bstr);
+  ok(hres == S_OK, "got hres 0x%08lx\n", hres);
+  if (bstr)
+  {
+    ok(memcmp(bstr, szOneHalf_Spanish, sizeof(szOneHalf_Spanish)) == 0, "Spanish locale failed (got %s)\n", wtoascii(bstr));
   }
 }
 

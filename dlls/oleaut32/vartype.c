@@ -5442,7 +5442,54 @@ static HRESULT VARIANT_BstrFromReal(DOUBLE dblIn, LCID lcid, ULONG dwFlags,
     *pbstrOut = SysAllocString(numbuff);
   }
   else
-    *pbstrOut = SysAllocString(buff);
+  {
+    WCHAR lpDecimalSep[16];
+
+    /* Native oleaut32 uses the locale-specific decimal separator even in the
+       absence of the LOCALE_USE_NLS flag. For example, the Spanish/Latin 
+       American locales will see "one thousand and one tenth" as "1000,1" 
+       instead of "1000.1" (notice the comma). The following code checks for
+       the need to replace the decimal separator, and if so, will prepare an
+       appropriate NUMBERFMTW structure to do the job via GetNumberFormatW().
+     */
+    GetLocaleInfoW(lcid, LOCALE_SDECIMAL, lpDecimalSep, sizeof(lpDecimalSep) / sizeof(WCHAR));
+    if (lpDecimalSep[0] == '.' && lpDecimalSep[1] == '\0')
+    {
+      /* locale is compatible with English - return original string */
+      *pbstrOut = SysAllocString(buff);
+    }
+    else
+    {
+      WCHAR *p;
+      WCHAR numbuff[256];
+      WCHAR empty[1] = {'\0'};
+      NUMBERFMTW minFormat;
+
+      minFormat.NumDigits = 0;
+      minFormat.LeadingZero = 0;
+      minFormat.Grouping = 0;
+      minFormat.lpDecimalSep = lpDecimalSep;
+      minFormat.lpThousandSep = empty;
+      minFormat.NegativeOrder = 1; /* NLS_NEG_LEFT */
+
+      /* count number of decimal digits in string */
+      p = strchrW( buff, '.' );
+      if (p) minFormat.NumDigits = strlenW(p + 1);
+
+      numbuff[0] = '\0';
+      if (!GetNumberFormatW(lcid, dwFlags & LOCALE_NOUSEROVERRIDE,
+                     buff, &minFormat, numbuff, sizeof(numbuff) / sizeof(WCHAR)))
+      {
+        WARN("GetNumberFormatW() failed, returning raw number string instead\n");
+        *pbstrOut = SysAllocString(buff);
+      }
+      else
+      {
+        TRACE("created minimal NLS string %s\n", debugstr_w(numbuff));
+        *pbstrOut = SysAllocString(numbuff);
+      }
+    }
+  }
   return *pbstrOut ? S_OK : E_OUTOFMEMORY;
 }
 
