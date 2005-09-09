@@ -60,6 +60,7 @@ typedef struct {
     const IPersistStorageVtbl     *lpPersistStorageVtbl;
     const IPersistStreamInitVtbl  *lpPersistStreamInitVtbl;
     const IProvideClassInfo2Vtbl  *lpProvideClassInfoVtbl;
+    const IQuickActivateVtbl      *lpQuickActivateVtbl;
 
     LONG ref;
 } WebBrowser;
@@ -71,25 +72,14 @@ typedef struct {
 #define PERSTORAGE(x)   ((IPersistStorage*)     &(x)->lpPersistStorageVtbl)
 #define PERSTRINIT(x)   ((IPersistStreamInit*)  &(x)->lpPersistStreamInitVtbl)
 #define CLASSINFO(x)    ((IProvideClassInfo2*)  &(x)->lpProvideClassInfoVtbl)
+#define QUICKACT(x)     ((IQuickActivate*)      &(x)->lpQuickActivateVtbl)
 
 void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_Persist_Init(WebBrowser*);
 void WebBrowser_ClassInfo_Init(WebBrowser*);
+void WebBrowser_Misc_Init(WebBrowser*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
-
-/**********************************************************************
- * IQuickActivate declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IQuickActivateVtbl *lpVtbl;
-    LONG ref;
-} IQuickActivateImpl;
-
-extern IQuickActivateImpl SHDOCVW_QuickActivate;
-
 
 /**********************************************************************
  * IConnectionPointContainer declaration for SHDOCVW.DLL
