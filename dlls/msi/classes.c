@@ -427,7 +427,6 @@ static MSIMIME *load_given_mime( MSIPACKAGE *package, LPCWSTR mime )
 static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
 {
     MSIEXTENSION *ext;
-    DWORD sz;
     LPCWSTR buffer;
 
     /* fill in the data */
@@ -440,8 +439,7 @@ static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
 
     list_add_tail( &package->extensions, &ext->entry );
 
-    sz = 256;
-    MSI_RecordGetStringW( row, 1, ext->Extension, &sz );
+    ext->Extension = load_dynamic_stringW( row, 1 );
     TRACE("loading extension %s\n", debugstr_w(ext->Extension));
 
     buffer = MSI_RecordGetString( row, 2 );
@@ -1343,7 +1341,7 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
     
     LIST_FOR_EACH_ENTRY( ext, &package->extensions, MSIEXTENSION, entry )
     {
-        WCHAR extension[257];
+        LPWSTR extension;
         MSIFEATURE *feature;
      
         if (!ext->Component)
@@ -1377,11 +1375,13 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
 
         mark_mime_for_install(ext->Mime);
 
+        extension = HeapAlloc( GetProcessHeap(), 0,
+                               (lstrlenW( ext->Extension ) + 2)*sizeof(WCHAR) );
         extension[0] = '.';
-        extension[1] = 0;
-        strcatW(extension,ext->Extension);
+        lstrcpyW(extension+1,ext->Extension);
 
         RegCreateKeyW(HKEY_CLASSES_ROOT,extension,&hkey);
+        HeapFree( GetProcessHeap(), 0, extension );
 
         if (ext->Mime)
         {
@@ -1452,7 +1452,7 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( mt, &package->mimes, MSIMIME, entry )
     {
-        WCHAR extension[257];
+        LPWSTR extension;
         LPCWSTR exten;
         LPCWSTR mime;
         static const WCHAR fmt[] = 
@@ -1477,17 +1477,20 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
         
         mime = mt->ContentType;
         exten = mt->Extension->Extension;
+
+        extension = HeapAlloc( GetProcessHeap(), 0,
+                               (lstrlenW( exten ) + 2)*sizeof(WCHAR) );
         extension[0] = '.';
-        extension[1] = 0;
-        strcatW(extension,exten);
+        lstrcpyW(extension+1,exten);
 
         key = HeapAlloc(GetProcessHeap(),0,(strlenW(mime)+strlenW(fmt)+1) *
                                             sizeof(WCHAR));
         sprintfW(key,fmt,mime);
         RegCreateKeyW(HKEY_CLASSES_ROOT,key,&hkey);
-        RegSetValueExW(hkey,szExten,0,REG_SZ,(LPVOID)extension,
+        RegSetValueExW(hkey,szExten,0,REG_SZ,(LPBYTE)extension,
                            (strlenW(extension)+1)*sizeof(WCHAR));
 
+        HeapFree(GetProcessHeap(),0,extension);
         HeapFree(GetProcessHeap(),0,key);
 
         if (mt->CLSID[0])

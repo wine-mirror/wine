@@ -166,7 +166,7 @@ typedef struct tagMSIMIME MSIMIME;
 typedef struct tagMSIEXTENSION
 {
     struct list entry;
-    WCHAR Extension[256];  /* Primary Key */
+    LPWSTR Extension;  /* Primary Key */
     MSICOMPONENT *Component;
     MSIPROGID *ProgID;
     LPWSTR ProgIDText;

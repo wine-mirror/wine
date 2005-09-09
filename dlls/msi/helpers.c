@@ -458,10 +458,10 @@ void free_extension( MSIEXTENSION *ext )
         HeapFree( GetProcessHeap(), 0, verb );
     }
 
+    HeapFree( GetProcessHeap(), 0, ext->Extension );
     HeapFree( GetProcessHeap(), 0, ext->ProgIDText );
     HeapFree( GetProcessHeap(), 0, ext );
 }
-
 
 /* Called when the package is being closed */
 void ACTION_free_package_structures( MSIPACKAGE* package)
