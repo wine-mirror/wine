@@ -1724,78 +1724,74 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        MSICOMPONENT* comp = NULL;
+        MSICOMPONENT* comp = file->Component;
+        LPWSTR p;
 
-        comp = file->Component;
+        if (!comp)
+            continue;
 
-        if (comp)
+        /* calculate target */
+        p = resolve_folder(package, comp->Directory, FALSE, FALSE, NULL);
+
+        HeapFree(GetProcessHeap(),0,file->TargetPath);
+
+        TRACE("file %s is named %s\n",
+               debugstr_w(file->File),debugstr_w(file->FileName));       
+
+        file->TargetPath = build_directory_name(2, p, file->FileName);
+
+        HeapFree(GetProcessHeap(),0,p);
+
+        TRACE("file %s resolves to %s\n",
+               debugstr_w(file->File),debugstr_w(file->TargetPath));       
+
+        if (GetFileAttributesW(file->TargetPath) == INVALID_FILE_ATTRIBUTES)
         {
-            LPWSTR p;
+            file->State = 1;
+            comp->Cost += file->FileSize;
+            continue;
+        }
 
-            /* calculate target */
-            p = resolve_folder(package, comp->Directory, FALSE, FALSE, NULL);
+        if (file->Version)
+        {
+            DWORD handle;
+            DWORD versize;
+            UINT sz;
+            LPVOID version;
+            static const WCHAR name[] = 
+                {'\\',0};
+            static const WCHAR name_fmt[] = 
+                {'%','u','.','%','u','.','%','u','.','%','u',0};
+            WCHAR filever[0x100];
+            VS_FIXEDFILEINFO *lpVer;
 
-            HeapFree(GetProcessHeap(),0,file->TargetPath);
+            TRACE("Version comparison.. \n");
+            versize = GetFileVersionInfoSizeW(file->TargetPath,&handle);
+            version = HeapAlloc(GetProcessHeap(),0,versize);
+            GetFileVersionInfoW(file->TargetPath, 0, versize, version);
 
-            TRACE("file %s is named %s\n",
-                   debugstr_w(file->File),debugstr_w(file->FileName));       
+            VerQueryValueW(version, name, (LPVOID*)&lpVer, &sz);
 
-            file->TargetPath = build_directory_name(2, p, file->FileName);
+            sprintfW(filever,name_fmt,
+                HIWORD(lpVer->dwFileVersionMS),
+                LOWORD(lpVer->dwFileVersionMS),
+                HIWORD(lpVer->dwFileVersionLS),
+                LOWORD(lpVer->dwFileVersionLS));
 
-            HeapFree(GetProcessHeap(),0,p);
-
-            TRACE("file %s resolves to %s\n",
-                   debugstr_w(file->File),debugstr_w(file->TargetPath));       
-
-            if (GetFileAttributesW(file->TargetPath) == INVALID_FILE_ATTRIBUTES)
+            TRACE("new %s old %s\n", debugstr_w(file->Version),
+                  debugstr_w(filever));
+            if (strcmpiW(filever,file->Version)<0)
             {
-                file->State = 1;
+                file->State = 2;
+                FIXME("cost should be diff in size\n");
                 comp->Cost += file->FileSize;
             }
             else
-            {
-                if (file->Version)
-                {
-                    DWORD handle;
-                    DWORD versize;
-                    UINT sz;
-                    LPVOID version;
-                    static const WCHAR name[] = 
-                        {'\\',0};
-                    static const WCHAR name_fmt[] = 
-                        {'%','u','.','%','u','.','%','u','.','%','u',0};
-                    WCHAR filever[0x100];
-                    VS_FIXEDFILEINFO *lpVer;
-
-                    TRACE("Version comparison.. \n");
-                    versize = GetFileVersionInfoSizeW(file->TargetPath,&handle);
-                    version = HeapAlloc(GetProcessHeap(),0,versize);
-                    GetFileVersionInfoW(file->TargetPath, 0, versize, version);
-
-                    VerQueryValueW(version, name, (LPVOID*)&lpVer, &sz);
-
-                    sprintfW(filever,name_fmt,
-                        HIWORD(lpVer->dwFileVersionMS),
-                        LOWORD(lpVer->dwFileVersionMS),
-                        HIWORD(lpVer->dwFileVersionLS),
-                        LOWORD(lpVer->dwFileVersionLS));
-
-                    TRACE("new %s old %s\n", debugstr_w(file->Version),
-                          debugstr_w(filever));
-                    if (strcmpiW(filever,file->Version)<0)
-                    {
-                        file->State = 2;
-                        FIXME("cost should be diff in size\n");
-                        comp->Cost += file->FileSize;
-                    }
-                    else
-                        file->State = 3;
-                    HeapFree(GetProcessHeap(),0,version);
-                }
-                else
-                    file->State = 3;
-            }
-        } 
+                file->State = 3;
+            HeapFree(GetProcessHeap(),0,version);
+        }
+        else
+            file->State = 3;
     }
 
     TRACE("Evaluating Condition Table\n");
