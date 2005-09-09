@@ -875,6 +875,9 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         case IMAGE_FILE_MACHINE_R10000:  MESSAGE("R10000"); break;
         case IMAGE_FILE_MACHINE_ALPHA:   MESSAGE("Alpha"); break;
         case IMAGE_FILE_MACHINE_POWERPC: MESSAGE("PowerPC"); break;
+        case IMAGE_FILE_MACHINE_IA64:    MESSAGE("IA-64"); break;
+        case IMAGE_FILE_MACHINE_ALPHA64: MESSAGE("Alpha-64"); break;
+        case IMAGE_FILE_MACHINE_AMD64:   MESSAGE("AMD-64"); break;
         default: MESSAGE("Unknown-%04x", nt->FileHeader.Machine); break;
         }
         MESSAGE(")\n");
