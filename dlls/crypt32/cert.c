@@ -523,7 +523,6 @@ static BOOL WINAPI CRYPT_MemDeleteCert(HCERTSTORE hCertStore,
              */
             list_remove(&cert->entry);
             cert->entry.prev = cert->entry.next = &store->certs;
-            CertFreeCertificateContext((PCCERT_CONTEXT)cert);
             break;
         }
     }
@@ -784,10 +783,7 @@ static BOOL WINAPI CRYPT_CollectionDeleteCert(HCERTSTORE hCertStore,
 
     ret = CertDeleteCertificateFromStore((PCCERT_CONTEXT)context->childContext);
     if (ret)
-    {
         context->childContext = NULL;
-        CertFreeCertificateContext((PCCERT_CONTEXT)context);
-    }
     return ret;
 }
 
@@ -1171,7 +1167,6 @@ static PWINE_CERT_CONTEXT_REF CRYPT_RegEnumCert(PWINECRYPT_CERTSTORE store,
             ret = (PWINE_REG_CERT_CONTEXT)pPrev;
             memcpy(&ret->cert, child, sizeof(WINE_CERT_CONTEXT_REF));
             ret->cert.cert.hCertStore = (HCERTSTORE)store;
-            InterlockedIncrement(&ret->cert.context->ref);
             ret->childContext = child;
         }
     }
@@ -1186,7 +1181,6 @@ static PWINE_CERT_CONTEXT_REF CRYPT_RegEnumCert(PWINECRYPT_CERTSTORE store,
             {
                 memcpy(&ret->cert, child, sizeof(WINE_CERT_CONTEXT_REF));
                 ret->cert.cert.hCertStore = (HCERTSTORE)store;
-                InterlockedIncrement(&ret->cert.context->ref);
                 ret->childContext = child;
             }
             else
@@ -2327,7 +2321,10 @@ BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
     if (!pCertContext)
         ret = TRUE;
     else if (!pCertContext->hCertStore)
+    {
         ret = TRUE;
+        CertFreeCertificateContext(pCertContext);
+    }
     else
     {
         PWINECRYPT_CERTSTORE hcs =
@@ -2338,7 +2335,10 @@ BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
         else if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
             ret = FALSE;
         else
+        {
             ret = hcs->deleteCert(hcs, pCertContext, 0);
+            CertFreeCertificateContext(pCertContext);
+        }
     }
     return ret;
 }
@@ -2443,7 +2443,7 @@ BOOL WINAPI CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 
     if (InterlockedDecrement(&hcs->ref) == 0)
     {
-        TRACE("freeing %p\n", hcs);
+        TRACE("%p's ref count is 0, freeing\n", hcs);
         hcs->dwMagic = 0;
         if (!(hcs->dwOpenFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
             CryptReleaseContext(hcs->cryptProv, 0);
@@ -2883,12 +2883,11 @@ BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)
 
         if (InterlockedDecrement(&ref->context->ref) == 0)
         {
-            TRACE("freeing %p\n", ref->context);
+            TRACE("%p's ref count is 0, freeing\n", ref->context);
             CRYPT_FreeCert(ref->context);
         }
         else
-            TRACE("%p's ref count is %ld\n", ref->context,
-             ref->context->ref);
+            TRACE("%p's ref count is %ld\n", ref->context, ref->context->ref);
         if (store && store->dwMagic == WINE_CRYPTCERTSTORE_MAGIC &&
          store->freeCert)
             store->freeCert(ref);

@@ -166,7 +166,6 @@ static void testMemStore(void)
         ret = CertDeleteCertificateFromStore(context);
         ok(ret, "CertDeleteCertificateFromStore failed: %08lx\n",
          GetLastError());
-        CertFreeCertificateContext(context);
     }
     /* add a cert to store1 */
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING, bigCert,
@@ -727,10 +726,7 @@ static void testRegStore(void)
         context = CertEnumCertificatesInStore(store, NULL);
         ok(context != NULL, "Expected a cert context\n");
         if (context)
-        {
             CertDeleteCertificateFromStore(context);
-            CertFreeCertificateContext(context);
-        }
         ret = CertControlStore(store, 0, CERT_STORE_CTRL_COMMIT, NULL);
         ok(ret, "CertControlStore failed: %08lx\n", GetLastError());
 
