@@ -61,8 +61,8 @@
 @ stdcall CheckMenuItem(long long long)
 @ stdcall CheckMenuRadioItem(long long long long long)
 @ stdcall CheckRadioButton(long long long long)
-@ stdcall ChildWindowFromPoint(long long long)
-@ stdcall ChildWindowFromPointEx(long long long long)
+@ stdcall ChildWindowFromPoint(long double)
+@ stdcall ChildWindowFromPointEx(long double long)
 @ stub CliImmSetHotKey
 @ stub ClientThreadConnect
 @ stub ClientThreadSetup
@@ -174,7 +174,7 @@
 @ stdcall DlgDirSelectComboBoxExW(long ptr long long)
 @ stdcall DlgDirSelectExA(long ptr long long)
 @ stdcall DlgDirSelectExW(long ptr long long)
-@ stdcall DragDetect(long long long)
+@ stdcall DragDetect(long double)
 @ stub DragObject
 @ stdcall DrawAnimatedRects(long long ptr ptr)
 @ stdcall DrawCaption(long long ptr long)
@@ -482,7 +482,7 @@
 @ stdcall MapVirtualKeyExW(long long long)
 @ stdcall MapVirtualKeyW(long long)
 @ stdcall MapWindowPoints(long long ptr long)
-@ stdcall MenuItemFromPoint(long long long long)
+@ stdcall MenuItemFromPoint(long long double)
 @ stub MenuWindowProcA
 @ stub MenuWindowProcW
 @ stdcall MessageBeep(long)
@@ -497,7 +497,7 @@
 # @ stub ModifyAccess
 @ stdcall ModifyMenuA(long long long long ptr)
 @ stdcall ModifyMenuW(long long long long ptr)
-@ stdcall MonitorFromPoint(long long long)
+@ stdcall MonitorFromPoint(double long)
 @ stdcall MonitorFromRect(ptr long)
 @ stdcall MonitorFromWindow(long long)
 @ stdcall MoveWindow(long long long long long long)
@@ -535,7 +535,7 @@
 @ stdcall PrivateExtractIconsW (wstr long long long ptr ptr long long)
 # @ stub PrivateSetDbgTag
 # @ stub PrivateSetRipFlags
-@ stdcall PtInRect(ptr long long)
+@ stdcall PtInRect(ptr double)
 @ stub QuerySendMessage
 # @ stub QueryUserCounters
 # @ stub RealChildWindowFromPoint
@@ -750,7 +750,7 @@
 @ stdcall WinHelpW(long wstr long long)
 # @ stub WinOldAppHackoMatic
 @ stdcall WindowFromDC(long)
-@ stdcall WindowFromPoint(long long)
+@ stdcall WindowFromPoint(double)
 # @ stub YieldTask
 # @ stub _SetProcessDefaultLayout
 @ stdcall keybd_event(long long long long)

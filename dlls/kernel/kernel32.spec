@@ -1008,7 +1008,7 @@
 @ stdcall SetFileAttributesA(str long)
 @ stdcall SetFileAttributesW(wstr long)
 @ stdcall SetFilePointer(long long ptr long)
-@ stdcall SetFilePointerEx(long long long ptr long)
+@ stdcall SetFilePointerEx(long double ptr long)
 # @ stub SetFileShortNameA
 # @ stub SetFileShortNameW
 @ stdcall SetFileTime(long ptr ptr ptr)
@@ -1111,8 +1111,8 @@
 @ stdcall VerLanguageNameW(long wstr long)
 @ stdcall -ret64 VerSetConditionMask(long long long long) ntdll.VerSetConditionMask
 @ stdcall VerifyConsoleIoHandle(long)
-@ stdcall VerifyVersionInfoA(long long long long)
-@ stdcall VerifyVersionInfoW(long long long long)
+@ stdcall VerifyVersionInfoA(long long double)
+@ stdcall VerifyVersionInfoW(long long double)
 @ stdcall VirtualAlloc(ptr long long long)
 @ stdcall VirtualAllocEx(long ptr long long long)
 @ stub VirtualBufferExceptionHandler

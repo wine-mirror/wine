@@ -149,12 +149,12 @@
 @ stdcall _adj_fdiv_m16i(long)
 @ stdcall _adj_fdiv_m32(long)
 @ stdcall _adj_fdiv_m32i(long)
-@ stdcall _adj_fdiv_m64(long long)
+@ stdcall _adj_fdiv_m64(double)
 @ cdecl _adj_fdiv_r()
 @ stdcall _adj_fdivr_m16i(long)
 @ stdcall _adj_fdivr_m32(long)
 @ stdcall _adj_fdivr_m32i(long)
-@ stdcall _adj_fdivr_m64(long long)
+@ stdcall _adj_fdivr_m64(double)
 @ cdecl _adj_fpatan()
 @ cdecl _adj_fprem()
 @ cdecl _adj_fprem1()
@@ -327,7 +327,7 @@
 @ cdecl _lrotr(long long)
 @ cdecl _lsearch(ptr ptr long long ptr)
 @ cdecl _lseek(long long long)
-@ cdecl -ret64 _lseeki64(long long long long)
+@ cdecl -ret64 _lseeki64(long double long)
 @ cdecl _ltoa(long ptr long) ntdll._ltoa
 @ cdecl _ltow(long ptr long) ntdll._ltow
 @ cdecl _makepath(str str str str str)

@@ -546,7 +546,7 @@
 # @ stub RtlEncodePointer
 # @ stub RtlEncodeSystemPointer
 @ stdcall -ret64 RtlEnlargedIntegerMultiply(long long)
-@ stdcall RtlEnlargedUnsignedDivide(long long long ptr)
+@ stdcall RtlEnlargedUnsignedDivide(double long ptr)
 @ stdcall -ret64 RtlEnlargedUnsignedMultiply(long long)
 @ stdcall RtlEnterCriticalSection(ptr)
 @ stub RtlEnumProcessHeaps
@@ -567,9 +567,9 @@
 @ stdcall RtlExitUserThread(long)
 @ stdcall RtlExpandEnvironmentStrings_U(ptr ptr ptr ptr)
 @ stub RtlExtendHeap
-@ stdcall -ret64 RtlExtendedIntegerMultiply(long long long)
-@ stdcall -ret64 RtlExtendedLargeIntegerDivide(long long long ptr)
-@ stdcall -ret64 RtlExtendedMagicDivide(long long long long long)
+@ stdcall -ret64 RtlExtendedIntegerMultiply(double long)
+@ stdcall -ret64 RtlExtendedLargeIntegerDivide(double long ptr)
+@ stdcall -ret64 RtlExtendedMagicDivide(double double long)
 @ stdcall RtlFillMemory(ptr long long)
 @ stdcall RtlFillMemoryUlong(ptr long long)
 @ stub RtlFinalReleaseOutOfProcessMemoryStream
@@ -581,11 +581,11 @@
 @ stdcall RtlFindClearRuns(ptr ptr long long)
 @ stdcall RtlFindLastBackwardRunClear(ptr long ptr)
 @ stdcall RtlFindLastBackwardRunSet(ptr long ptr)
-@ stdcall RtlFindLeastSignificantBit(long long)
+@ stdcall RtlFindLeastSignificantBit(double)
 @ stdcall RtlFindLongestRunClear(ptr long)
 @ stdcall RtlFindLongestRunSet(ptr long)
 @ stdcall RtlFindMessage(long long long long ptr)
-@ stdcall RtlFindMostSignificantBit(long long)
+@ stdcall RtlFindMostSignificantBit(double)
 @ stdcall RtlFindNextForwardRunClear(ptr long ptr)
 @ stdcall RtlFindNextForwardRunSet(ptr long ptr)
 @ stub RtlFindRange
@@ -673,7 +673,7 @@
 # @ stub RtlInitializeStackTraceDataBase
 @ stub RtlInsertElementGenericTable
 # @ stub RtlInsertElementGenericTableAvl
-@ stdcall RtlInt64ToUnicodeString(long long long ptr)
+@ stdcall RtlInt64ToUnicodeString(double long ptr)
 @ stdcall RtlIntegerToChar(long long long ptr)
 @ stdcall RtlIntegerToUnicodeString(long long ptr)
 # @ stub RtlInterlockedFlushSList
@@ -707,13 +707,13 @@
 # @ stub RtlIsThreadWithinLoaderCallout
 @ stdcall RtlIsValidHandle(ptr ptr)
 @ stdcall RtlIsValidIndexHandle(ptr long ptr)
-@ stdcall -ret64 RtlLargeIntegerAdd(long long long long)
-@ stdcall -ret64 RtlLargeIntegerArithmeticShift(long long long)
-@ stdcall -ret64 RtlLargeIntegerDivide(long long long long ptr)
-@ stdcall -ret64 RtlLargeIntegerNegate(long long)
-@ stdcall -ret64 RtlLargeIntegerShiftLeft(long long long)
-@ stdcall -ret64 RtlLargeIntegerShiftRight(long long long)
-@ stdcall -ret64 RtlLargeIntegerSubtract(long long long long)
+@ stdcall -ret64 RtlLargeIntegerAdd(double double)
+@ stdcall -ret64 RtlLargeIntegerArithmeticShift(double long)
+@ stdcall -ret64 RtlLargeIntegerDivide(double double ptr)
+@ stdcall -ret64 RtlLargeIntegerNegate(double)
+@ stdcall -ret64 RtlLargeIntegerShiftLeft(double long)
+@ stdcall -ret64 RtlLargeIntegerShiftRight(double long)
+@ stdcall -ret64 RtlLargeIntegerSubtract(double double)
 @ stdcall RtlLargeIntegerToChar(ptr long long ptr)
 @ stdcall RtlLeaveCriticalSection(ptr)
 @ stdcall RtlLengthRequiredSid(long)
@@ -866,7 +866,7 @@
 # @ stub RtlTraceDatabaseValidate
 @ stdcall RtlTryEnterCriticalSection(ptr)
 @ cdecl -i386 -norelay RtlUlongByteSwap() NTDLL_RtlUlongByteSwap
-@ cdecl -ret64 RtlUlonglongByteSwap(long long)
+@ cdecl -ret64 RtlUlonglongByteSwap(double)
 # @ stub RtlUnhandledExceptionFilter2
 # @ stub RtlUnhandledExceptionFilter
 @ stdcall RtlUnicodeStringToAnsiSize(ptr)
@@ -904,7 +904,7 @@
 @ stdcall RtlValidateHeap(long long ptr)
 @ stub RtlValidateProcessHeaps
 # @ stub RtlValidateUnicodeString
-@ stdcall RtlVerifyVersionInfo(ptr long long long)
+@ stdcall RtlVerifyVersionInfo(ptr long double)
 @ stub RtlWalkFrameChain
 @ stdcall RtlWalkHeap(long ptr)
 @ stub RtlWriteMemoryStream
@@ -927,7 +927,7 @@
 @ stdcall RtlxOemStringToUnicodeSize(ptr) RtlOemStringToUnicodeSize
 @ stdcall RtlxUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
 @ stdcall RtlxUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
-@ stdcall -ret64 VerSetConditionMask(long long long long)
+@ stdcall -ret64 VerSetConditionMask(double long long)
 @ stdcall ZwAcceptConnectPort(ptr long ptr long long ptr) NtAcceptConnectPort
 @ stdcall ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stub ZwAccessCheckAndAuditAlarm
@@ -1229,23 +1229,23 @@
 # @ stub __iscsym
 # @ stub __iscsymf
 # @ stub __toascii
-@ stdcall -ret64 _alldiv(long long long long)
+@ stdcall -ret64 _alldiv(double double)
 # @ stub _alldvrm
-@ stdcall -ret64 _allmul(long long long long)
+@ stdcall -ret64 _allmul(double double)
 @ stdcall -i386 _alloca_probe()
-@ stdcall -ret64 _allrem(long long long long)
+@ stdcall -ret64 _allrem(double double)
 # @ stub _allshl
 # @ stub _allshr
 @ cdecl -ret64 _atoi64(str)
-@ stdcall -ret64 _aulldiv(long long long long)
+@ stdcall -ret64 _aulldiv(double double)
 # @ stub _aulldvrm
-@ stdcall -ret64 _aullrem(long long long long)
+@ stdcall -ret64 _aullrem(double double)
 # @ stub _aullshr
 @ stdcall -i386 _chkstk()
 @ stub _fltused
 @ cdecl -ret64 _ftol() NTDLL__ftol
-@ cdecl _i64toa(long long ptr long)
-@ cdecl _i64tow(long long ptr long)
+@ cdecl _i64toa(double ptr long)
+@ cdecl _i64tow(double ptr long)
 @ cdecl _itoa(long ptr long)
 @ cdecl _itow(long ptr long)
 @ cdecl _lfind(ptr ptr ptr long ptr) lfind
@@ -1263,8 +1263,8 @@
 @ cdecl _strupr(str)
 # @ stub _tolower
 # @ stub _toupper
-@ cdecl _ui64toa(long long ptr long)
-@ cdecl _ui64tow(long long ptr long)
+@ cdecl _ui64toa(double ptr long)
+@ cdecl _ui64tow(double ptr long)
 @ cdecl _ultoa(long ptr long)
 @ cdecl _ultow(long ptr long)
 @ cdecl _vsnprintf(ptr long str ptr) vsnprintf

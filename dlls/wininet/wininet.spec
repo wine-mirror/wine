@@ -16,8 +16,8 @@
 122 stub -noname FreeP3PObject
 123 stub -noname GetP3PRequestStatus
 
-@ stdcall CommitUrlCacheEntryA(str str long long long long long str long str str)
-@ stdcall CommitUrlCacheEntryW(wstr wstr long long long long long wstr long wstr wstr)
+@ stdcall CommitUrlCacheEntryA(str str double double long str long str str)
+@ stdcall CommitUrlCacheEntryW(wstr wstr double double long wstr long wstr wstr)
 @ stdcall CreateMD5SSOHash(wstr wstr wstr ptr)
 @ stdcall CreateUrlCacheContainerA(long long long long long long long long)
 @ stdcall CreateUrlCacheContainerW(long long long long long long long long)
