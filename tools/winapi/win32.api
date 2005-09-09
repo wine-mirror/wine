@@ -3,7 +3,6 @@
 %long
 
 BOOL
-DWORD
 HRESULT
 ULONG
 
@@ -469,6 +468,7 @@ int
 %long --pointer
 
 DWORD_PTR
+INT_PTR
 UINT_PTR
 
 %longlong
@@ -591,6 +591,7 @@ void
 
 %long
 
+ALG_ID
 BOOL
 DWORD
 HANDLE
@@ -610,8 +611,11 @@ GUID *
 LPFILETIME
 LPWSTR *
 PCCERT_CONTEXT
+PCCERT_CONTEXT *
 PCCRL_CONTEXT
 PCCRL_CONTEXT *
+PCCTL_CONTEXT
+PCCTL_CONTEXT *
 PCERT_EXTENSION
 PCERT_INFO
 PCERT_NAME_INFO
@@ -623,10 +627,15 @@ PVOID
 SIP_ADD_NEWPROVIDER *
 SIP_DISPATCH_INFO *
 void *
+void **
 
 %str
 
 LPCSTR
+
+%void
+
+void
 
 %wstr
 
@@ -678,6 +687,7 @@ void
 BOOL
 HRESULT
 UINT
+int
 
 %ptr
 
@@ -1516,10 +1526,8 @@ HGLOBAL16
 HINSTANCE16
 HLOCAL16
 HMODULE16
-HQUEUE16
 HRSRC16
 HTASK16
-INT16
 UINT16
 
 %long --pointer
@@ -1648,7 +1656,6 @@ PHANDLER_ROUTINE
 PINPUT_RECORD
 PIO_COUNTERS
 PLARGE_INTEGER
-PLONG
 PMEMORY_BASIC_INFORMATION
 PSIZE_T
 PULONG_PTR
@@ -1667,6 +1674,7 @@ UILANGUAGE_ENUMPROCA
 UILANGUAGE_ENUMPROCW
 ULONG_PTR *
 WAITORTIMERCALLBACK
+WCHAR *
 WIN32_FIND_DATAA *
 WIN32_FIND_DATAW *
 WORD *
@@ -1775,7 +1783,7 @@ void
 LPCWSTR
 LPWSTR
 
-%%mciavi.drv
+%%mciavi32.dll
 
 %long
 
@@ -2078,6 +2086,7 @@ UINT
 %long
 
 BOOL
+DWORD
 HINSTANCE
 HRESULT
 INT
@@ -2110,6 +2119,7 @@ INSTALLTYPE
 INSTALLUILEVEL
 INT
 LANGID
+MSIDBERROR
 MSICOLINFO
 MSICONDITION
 MSIHANDLE
@@ -2340,6 +2350,10 @@ LRESULT
 UINT
 WORD
 int
+
+%long --pointer
+
+DWORD_PTR
 
 %ptr
 
@@ -3469,11 +3483,11 @@ unsigned long
 %ptr
 
 HANDLE *
-NTSTATUS *
 PCredHandle
 PCtxtHandle
 PHANDLE
 PLUID
+PNTSTATUS
 PSecBuffer
 PSecBufferDesc
 PSecPkgInfoA *
@@ -3687,6 +3701,10 @@ ULONG
 WORD
 WPARAM
 int
+
+%long --pointer
+
+DWORD_PTR
 
 %longlong
 
@@ -4030,17 +4048,21 @@ BOOL
 DWORD
 HRESULT
 HWND
+PARSEACTION
 QUERYOPTION
+UINT
 
 %ptr
 
 BINDINFO *
 DWORD *
+FORMATETC *
 IBindCtx *
 IBindCtx **
 IBindStatusCallback *
 IBindStatusCallback **
 IEnumFORMATETC *
+IEnumFORMATETC **
 IInternetSecurityManager **
 IInternetSession **
 IInternetZoneManager **
@@ -4320,6 +4342,7 @@ LPVOID
 MARGINS *
 POINT *
 PROPERTYORIGIN *
+PTHEMENAMES
 ParseThemeIniFileProc
 RECT *
 SIZE *
@@ -5022,6 +5045,8 @@ void
 %long
 
 INT
+HANDLE
+UCHAR
 ULONG
 int
 
@@ -5032,23 +5057,33 @@ BERVAL *
 PBERVAL *
 CHAR *
 CHAR **
+LDAPControlA *
+LDAPControlA **
+LDAPControlW *
+LDAPControlW **
 LDAPModA *[]
 LDAPModW *[]
+LDAP_TIMEVAL *
 PCHAR
 PCHAR *
 PCHAR[]
 PLDAPControlA *
 PLDAPControlW *
+PLDAPSortKeyA *
+PLDAPSortKeyW *
 PULONG
 PWCHAR
 PWCHAR *
 PWCHAR[]
 ULONG *
+WLDAP32_BerElement *
+WLDAP32_BerElement **
 WLDAP32_LDAP *
 WLDAP32_LDAPMessage *
 WLDAP32_LDAPMessage **
 int *
 struct WLDAP32_berval *
+struct WLDAP32_berval **
 struct l_timeval *
 void *
 
