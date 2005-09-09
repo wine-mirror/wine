@@ -389,7 +389,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
   /*DWORD tokenlen;*/
   DWORD tokentype;
   /** for input readers */
-  const char* curPos = NULL;
+  const BYTE* curPos = NULL;
   FLOAT x, y, z, w;
   SHORT u, v, r, t;
   DWORD dw;
@@ -419,7 +419,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
 	  return D3DERR_INVALIDCALL;
       } else {
           if (This->StateBlock->streamIsUP) {
-              curPos = ((char *) pVB) + (SkipnStrides * skip);   /* Not really a VB */
+              curPos = (BYTE *)pVB + (SkipnStrides * skip);   /* Not really a VB */
           } else {
               curPos = ((IDirect3DVertexBuffer8Impl*) pVB)->allocatedMemory + (SkipnStrides * skip);
           }
@@ -576,7 +576,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDevice8Im
   /*DWORD tokenlen;*/
   DWORD tokentype;
   /** for input readers */
-  const char* curPos = NULL;
+  const BYTE* curPos = NULL;
   int skip = 0;
 
   TRACE("(%p) - This:%p, skipstrides=%lu\n", vshader, This, SkipnStrides);
@@ -603,7 +603,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDevice8Im
 	  return D3DERR_INVALIDCALL;
       } else {
           if (This->StateBlock->streamIsUP) {
-              curPos = ((char *) pVB) + (SkipnStrides * skip);   /* Not really a VB */
+              curPos = ((BYTE *) pVB) + (SkipnStrides * skip);   /* Not really a VB */
           } else {
               curPos = ((IDirect3DVertexBuffer8Impl*) pVB)->allocatedMemory + (SkipnStrides * skip);
           }
