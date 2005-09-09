@@ -75,7 +75,7 @@ static CRITICAL_SECTION_DEBUG service_cs_debug =
     0, 0, &service_cs,
     { &service_cs_debug.ProcessLocksList, 
       &service_cs_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": service_cs") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": service_cs") }
 };
 static CRITICAL_SECTION service_cs = { &service_cs_debug, -1, 0, 0, 0, 0 };
 

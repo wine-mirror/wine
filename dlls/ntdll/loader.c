@@ -101,7 +101,7 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &loader_section,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": loader_section") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": loader_section") }
 };
 static RTL_CRITICAL_SECTION loader_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 

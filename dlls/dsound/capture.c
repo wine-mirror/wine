@@ -266,7 +266,7 @@ static HRESULT DirectSoundCaptureDevice_Create(
     device->state = STATE_STOPPED;
 
     InitializeCriticalSection( &(device->lock) );
-    device->lock.DebugInfo->Spare[1] = (DWORD)"DSCAPTURE_lock";
+    device->lock.DebugInfo->Spare[0] = (DWORD_PTR)"DSCAPTURE_lock";
 
     *ppDevice = device;
 
@@ -509,7 +509,7 @@ static ULONG DirectSoundCaptureDevice_Release(
         }
 
         HeapFree(GetProcessHeap(), 0, device->pwfx);
-        device->lock.DebugInfo->Spare[1] = 0;
+        device->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &(device->lock) );
         DSOUND_capture[device->drvdesc.dnDevNode] = NULL;
         HeapFree(GetProcessHeap(), 0, device);

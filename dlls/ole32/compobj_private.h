@@ -256,13 +256,8 @@ static inline APARTMENT* COM_CurrentApt(void)
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
 /* helpers for debugging */
-#ifdef __i386__
-# define DEBUG_SET_CRITSEC_NAME(cs, name) (cs)->DebugInfo->Spare[1] = (DWORD)(__FILE__ ": " name)
-# define DEBUG_CLEAR_CRITSEC_NAME(cs) (cs)->DebugInfo->Spare[1] = 0
-#else
-# define DEBUG_SET_CRITSEC_NAME(cs, name)
-# define DEBUG_CLEAR_CRITSEC_NAME(cs)
-#endif
+# define DEBUG_SET_CRITSEC_NAME(cs, name) (cs)->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": " name)
+# define DEBUG_CLEAR_CRITSEC_NAME(cs) (cs)->DebugInfo->Spare[0] = 0
 
 extern HINSTANCE OLE32_hInstance; /* FIXME: make static */
 

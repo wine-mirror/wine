@@ -37,7 +37,7 @@ static CRITICAL_SECTION_DEBUG MSCMS_handle_cs_debug =
     0, 0, &MSCMS_handle_cs,
     { &MSCMS_handle_cs_debug.ProcessLocksList,
       &MSCMS_handle_cs_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": MSCMS_handle_cs") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": MSCMS_handle_cs") }
 };
 static CRITICAL_SECTION MSCMS_handle_cs = { &MSCMS_handle_cs_debug, -1, 0, 0, 0, 0 };
 

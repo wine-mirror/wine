@@ -1176,7 +1176,7 @@ static int OSS_InitRingMessage(OSS_MSG_RING* omr)
     omr->ring_buffer_size = OSS_RING_BUFFER_INCREMENT;
     omr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(OSS_MSG));
     InitializeCriticalSection(&omr->msg_crst);
-    omr->msg_crst.DebugInfo->Spare[1] = (DWORD)"WINEOSS_msg_crst";
+    omr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)"WINEOSS_msg_crst";
     return 0;
 }
 

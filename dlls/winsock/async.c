@@ -121,7 +121,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &csWSgetXXXbyYYY,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": csWSgetXXXbyYYY") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": csWSgetXXXbyYYY") }
 };
 CRITICAL_SECTION csWSgetXXXbyYYY = { &critsect_debug, -1, 0, 0, 0, 0 };
 

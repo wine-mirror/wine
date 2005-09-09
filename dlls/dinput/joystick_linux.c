@@ -552,7 +552,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
 
     IDirectInputDevice_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);
     InitializeCriticalSection(&(newDevice->crit));
-    newDevice->crit.DebugInfo->Spare[1] = (DWORD)"DINPUT_Mouse";
+    newDevice->crit.DebugInfo->Spare[0] = (DWORD_PTR)"DINPUT_Mouse";
 
     newDevice->devcaps.dwSize = sizeof(newDevice->devcaps);
     newDevice->devcaps.dwFlags = DIDC_ATTACHED;
@@ -688,7 +688,7 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     /* release the data transform filter */
     release_DataFormat(This->transform);
 
-    This->crit.DebugInfo->Spare[1] = 0;
+    This->crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&(This->crit));
     IDirectInputDevice_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
 

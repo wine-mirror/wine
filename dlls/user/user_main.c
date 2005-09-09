@@ -43,7 +43,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &USER_SysLevel.crst,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": USER_SysLevel") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": USER_SysLevel") }
 };
 static SYSLEVEL USER_SysLevel = { { &critsect_debug, -1, 0, 0, 0, 0 }, 2 };
 

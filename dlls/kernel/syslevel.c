@@ -41,7 +41,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &Win16Mutex.crst,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": Win16Mutex") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": Win16Mutex") }
 };
 static SYSLEVEL Win16Mutex = { { &critsect_debug, -1, 0, 0, 0, 0 }, 1 };
 

@@ -114,7 +114,7 @@ DirectSoundFullDuplexCreate(
         This->lpVtbl = &dsfdvt;
 
         InitializeCriticalSection( &(This->lock) );
-        This->lock.DebugInfo->Spare[1] = (DWORD)"DSDUPLEX_lock";
+        This->lock.DebugInfo->Spare[0] = (DWORD_PTR)"DSDUPLEX_lock";
 
         hres = IDirectSoundFullDuplexImpl_Initialize( (LPDIRECTSOUNDFULLDUPLEX)This,
                                                       pcGuidCaptureDevice, pcGuidRenderDevice,
@@ -161,7 +161,7 @@ IDirectSoundFullDuplexImpl_Release( LPDIRECTSOUNDFULLDUPLEX iface )
     TRACE("(%p) ref was %ld\n", This, ref - 1);
 
     if (!ref) {
-        This->lock.DebugInfo->Spare[1] = 0;
+        This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &(This->lock) );
         HeapFree( GetProcessHeap(), 0, This );
 	TRACE("(%p) released\n", This);

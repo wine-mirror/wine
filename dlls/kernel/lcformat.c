@@ -88,7 +88,7 @@ static CRITICAL_SECTION_DEBUG NLS_FormatsCS_debug =
     0, 0, &NLS_FormatsCS,
     { &NLS_FormatsCS_debug.ProcessLocksList,
       &NLS_FormatsCS_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": NLS_Formats") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": NLS_Formats") }
 };
 static CRITICAL_SECTION NLS_FormatsCS = { &NLS_FormatsCS_debug, -1, 0, 0, 0, 0 };
 

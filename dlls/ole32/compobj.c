@@ -97,7 +97,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &csApartment,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": csApartment") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": csApartment") }
 };
 static CRITICAL_SECTION csApartment = { &critsect_debug, -1, 0, 0, 0, 0 };
 
@@ -134,7 +134,7 @@ static CRITICAL_SECTION_DEBUG class_cs_debug =
 {
     0, 0, &csRegisteredClassList,
     { &class_cs_debug.ProcessLocksList, &class_cs_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": csRegisteredClassList") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": csRegisteredClassList") }
 };
 static CRITICAL_SECTION csRegisteredClassList = { &class_cs_debug, -1, 0, 0, 0, 0 };
 
@@ -161,7 +161,7 @@ static CRITICAL_SECTION_DEBUG dll_cs_debug =
 {
     0, 0, &csOpenDllList,
     { &dll_cs_debug.ProcessLocksList, &dll_cs_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": csOpenDllList") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": csOpenDllList") }
 };
 static CRITICAL_SECTION csOpenDllList = { &dll_cs_debug, -1, 0, 0, 0, 0 };
 

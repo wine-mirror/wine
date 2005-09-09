@@ -59,7 +59,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &ASPI_CritSection,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": ASPI_CritSection") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": ASPI_CritSection") }
 };
 static CRITICAL_SECTION ASPI_CritSection = { &critsect_debug, -1, 0, 0, 0, 0 };
 

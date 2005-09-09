@@ -106,7 +106,7 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &csVirtual,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": csVirtual") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": csVirtual") }
 };
 static RTL_CRITICAL_SECTION csVirtual = { &critsect_debug, -1, 0, 0, 0, 0 };
 

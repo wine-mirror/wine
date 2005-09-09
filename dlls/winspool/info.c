@@ -69,7 +69,7 @@ static CRITICAL_SECTION_DEBUG printer_handles_cs_debug =
 {
     0, 0, &printer_handles_cs,
     { &printer_handles_cs_debug.ProcessLocksList, &printer_handles_cs_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": printer_handles_cs") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": printer_handles_cs") }
 };
 static CRITICAL_SECTION printer_handles_cs = { &printer_handles_cs_debug, -1, 0, 0, 0, 0 };
 

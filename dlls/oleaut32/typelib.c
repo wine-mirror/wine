@@ -2155,7 +2155,7 @@ static CRITICAL_SECTION_DEBUG cache_section_debug =
 {
     0, 0, &cache_section,
     { &cache_section_debug.ProcessLocksList, &cache_section_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": typelib loader cache") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": typelib loader cache") }
 };
 static CRITICAL_SECTION cache_section = { &cache_section_debug, -1, 0, 0, 0, 0 };
 

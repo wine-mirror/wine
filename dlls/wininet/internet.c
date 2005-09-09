@@ -109,7 +109,7 @@ static CRITICAL_SECTION_DEBUG WININET_cs_debug =
 {
     0, 0, &WININET_cs,
     { &WININET_cs_debug.ProcessLocksList, &WININET_cs_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": WININET_cs") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": WININET_cs") }
 };
 static CRITICAL_SECTION WININET_cs = { &WININET_cs_debug, -1, 0, 0, 0, 0 };
 

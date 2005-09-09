@@ -3985,7 +3985,11 @@ typedef struct _RTL_CRITICAL_SECTION_DEBUG
   LIST_ENTRY ProcessLocksList;
   DWORD EntryCount;
   DWORD ContentionCount;
+#ifdef __WINESRC__  /* in Wine we store the name here */
+  DWORD_PTR Spare[8/sizeof(DWORD_PTR)];
+#else
   DWORD Spare[ 2 ];
+#endif
 } RTL_CRITICAL_SECTION_DEBUG, *PRTL_CRITICAL_SECTION_DEBUG, RTL_RESOURCE_DEBUG, *PRTL_RESOURCE_DEBUG;
 
 typedef struct _RTL_CRITICAL_SECTION {

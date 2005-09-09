@@ -63,7 +63,7 @@ static CRITICAL_SECTION_DEBUG csRegIf_debug =
 {
     0, 0, &csRegIf,
     { &csRegIf_debug.ProcessLocksList, &csRegIf_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": dcom registered server interfaces") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": dcom registered server interfaces") }
 };
 static CRITICAL_SECTION csRegIf = { &csRegIf_debug, -1, 0, 0, 0, 0 };
 

@@ -325,7 +325,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &crtsc_fonts_X11,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": crtsc_fonts_X11") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": crtsc_fonts_X11") }
 };
 static CRITICAL_SECTION crtsc_fonts_X11 = { &critsect_debug, -1, 0, 0, 0, 0 };
 

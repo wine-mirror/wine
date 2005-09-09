@@ -53,7 +53,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &driver_section,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": driver_section") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": driver_section") }
 };
 static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 

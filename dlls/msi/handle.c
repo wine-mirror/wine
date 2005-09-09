@@ -37,7 +37,7 @@ static CRITICAL_SECTION_DEBUG MSI_handle_cs_debug =
     0, 0, &MSI_handle_cs,
     { &MSI_handle_cs_debug.ProcessLocksList, 
       &MSI_handle_cs_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": MSI_handle_cs") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": MSI_handle_cs") }
 };
 static CRITICAL_SECTION MSI_handle_cs = { &MSI_handle_cs_debug, -1, 0, 0, 0, 0 };
 
@@ -47,7 +47,7 @@ static CRITICAL_SECTION_DEBUG MSI_object_cs_debug =
     0, 0, &MSI_object_cs,
     { &MSI_object_cs_debug.ProcessLocksList, 
       &MSI_object_cs_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": MSI_object_cs") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": MSI_object_cs") }
 };
 static CRITICAL_SECTION MSI_object_cs = { &MSI_object_cs_debug, -1, 0, 0, 0, 0 };
 

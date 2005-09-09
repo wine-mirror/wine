@@ -545,13 +545,13 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     CopyMemory(dsb->pwfx, pdsb->pwfx, size);
 
     InitializeCriticalSection(&(dsb->lock));
-    dsb->lock.DebugInfo->Spare[1] = (DWORD)"DSOUNDBUFFER_lock";
+    dsb->lock.DebugInfo->Spare[0] = (DWORD_PTR)"DSOUNDBUFFER_lock";
 
     /* register buffer */
     hres = DSOUND_AddBuffer(This, dsb);
     if (hres != DS_OK) {
         IDirectSoundBuffer8_Release(psb);
-        dsb->lock.DebugInfo->Spare[1] = 0;
+        dsb->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&(dsb->lock));
         HeapFree(GetProcessHeap(),0,dsb->buffer);
         HeapFree(GetProcessHeap(),0,dsb->pwfx);
@@ -931,7 +931,7 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     device->pwfx->cbSize = 0;
 
     InitializeCriticalSection(&(device->mixlock));
-    device->mixlock.DebugInfo->Spare[1] = (DWORD)"DSOUND_mixlock";
+    device->mixlock.DebugInfo->Spare[0] = (DWORD_PTR)"DSOUND_mixlock";
 
     RtlInitializeResource(&(device->buffer_list_lock));
 
@@ -989,7 +989,7 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
 	HeapFree(GetProcessHeap(),0,device->tmp_buffer);
 	HeapFree(GetProcessHeap(),0,device->buffer);
         RtlDeleteResource(&device->buffer_list_lock);
-        device->mixlock.DebugInfo->Spare[1] = 0;
+        device->mixlock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&device->mixlock);
         HeapFree(GetProcessHeap(),0,device);
         TRACE("(%p) released\n", device); 

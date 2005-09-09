@@ -137,7 +137,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &xrender_cs,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": xrender_cs") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": xrender_cs") }
 };
 static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 

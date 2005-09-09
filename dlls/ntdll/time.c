@@ -52,7 +52,7 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &TIME_GetBias_section,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": TIME_GetBias_section") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": TIME_GetBias_section") }
 };
 static RTL_CRITICAL_SECTION TIME_GetBias_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 

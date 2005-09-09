@@ -51,7 +51,7 @@ static CRITICAL_SECTION_DEBUG dibs_cs_debug =
 {
     0, 0, &dibs_cs,
     { &dibs_cs_debug.ProcessLocksList, &dibs_cs_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": dibs_cs") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": dibs_cs") }
 };
 static CRITICAL_SECTION dibs_cs = { &dibs_cs_debug, -1, 0, 0, 0, 0 };
 

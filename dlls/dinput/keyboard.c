@@ -83,7 +83,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &keyboard_crit,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": keyboard_crit") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": keyboard_crit") }
 };
 static CRITICAL_SECTION keyboard_crit = { &critsect_debug, -1, 0, 0, 0, 0 };
 

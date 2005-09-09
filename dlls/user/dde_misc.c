@@ -55,7 +55,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &WDML_CritSect,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": WDML_CritSect") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": WDML_CritSect") }
 };
 CRITICAL_SECTION WDML_CritSect = { &critsect_debug, -1, 0, 0, 0, 0 };
 

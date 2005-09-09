@@ -102,7 +102,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &crit_sect,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": crit_sect") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": crit_sect") }
 };
 static CRITICAL_SECTION crit_sect = { &critsect_debug, -1, 0, 0, 0, 0 };
 
