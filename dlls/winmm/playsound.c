@@ -328,8 +328,8 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK))
 	goto errCleanUp;
 
-    TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
-	  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
+    TRACE("Chunk Found ckid=%.4s fccType=%08lx cksize=%08lX \n",
+	  (LPSTR)&mmckInfo.ckid, mmckInfo.fccType, mmckInfo.cksize);
 
     lpWaveFormat = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
     if (mmioRead(hmmio, (HPSTR)lpWaveFormat, mmckInfo.cksize) < sizeof(WAVEFORMAT))
@@ -349,8 +349,8 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK))
 	goto errCleanUp;
 
-    TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX\n",
-	  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
+    TRACE("Chunk Found ckid=%.4s fccType=%08lx cksize=%08lX\n",
+	  (LPSTR)&mmckInfo.ckid, mmckInfo.fccType, mmckInfo.cksize);
 
     s.hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 
