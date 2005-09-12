@@ -1501,7 +1501,7 @@ typedef struct tagEXTLOGPEN
     DWORD    elpWidth;
     UINT     elpBrushStyle;
     COLORREF elpColor;
-    LONG     elpHatch;
+    ULONG_PTR elpHatch;
     DWORD elpNumEntries;
     DWORD elpStyleEntry[1];
 } EXTLOGPEN, *PEXTLOGPEN, *NPEXTLOGPEN, *LPEXTLOGPEN;
