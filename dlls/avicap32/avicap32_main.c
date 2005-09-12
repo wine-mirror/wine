@@ -138,8 +138,8 @@ static BOOL query_video_device(int devnum, char *name, int namesize, char *versi
 #ifdef HAVE_V4L2
    memset(&caps, 0, sizeof(caps));
    if (xioctl(fd, VIDIOC_QUERYCAP, &caps) != -1) {
-      lstrcpynA(name, caps.card, namesize);
-      snprintf(version, versionsize, "%s v%u.%u.%u", caps.driver, (caps.version >> 16) & 0xFF,
+      lstrcpynA(name, (char *)caps.card, namesize);
+      snprintf(version, versionsize, "%s v%u.%u.%u", (char *)caps.driver, (caps.version >> 16) & 0xFF,
                              (caps.version >> 8) & 0xFF, caps.version & 0xFF);
       close(fd);
       return TRUE;
