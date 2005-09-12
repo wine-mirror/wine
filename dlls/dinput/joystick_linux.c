@@ -1131,7 +1131,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
         _dump_DIPROPHEADER(ph);
 
     if (!HIWORD(rguid)) {
-        switch ((DWORD)rguid) {
+        switch (LOWORD(rguid)) {
         case (DWORD) DIPROP_BUFFERSIZE: {
             LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
             TRACE("buffersize = %ld\n",pd->dwData);
@@ -1196,7 +1196,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
             break;
         }
         default:
-            FIXME("Unknown type %ld (%s)\n",(DWORD)rguid,debugstr_guid(rguid));
+            FIXME("Unknown type %p (%s)\n",rguid,debugstr_guid(rguid));
             break;
         }
     }
@@ -1212,7 +1212,7 @@ static HRESULT WINAPI JoystickAImpl_SetEventNotification(
 ) {
     JoystickImpl *This = (JoystickImpl *)iface;
 
-    TRACE("(this=%p,0x%08lx)\n",This,(DWORD)hnd);
+    TRACE("(this=%p,%p)\n",This,hnd);
     This->hEvent = hnd;
     return DI_OK;
 }
@@ -1427,7 +1427,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
         _dump_DIPROPHEADER(pdiph);
 
     if (!HIWORD(rguid)) {
-        switch ((DWORD)rguid) {
+        switch (LOWORD(rguid)) {
         case (DWORD) DIPROP_BUFFERSIZE: {
             LPDIPROPDWORD	pd = (LPDIPROPDWORD)pdiph;
             TRACE(" return buffersize = %d\n",This->queue_len);
@@ -1468,7 +1468,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
             break;
         }
         default:
-            FIXME("Unknown type %ld (%s)\n",(DWORD)rguid,debugstr_guid(rguid));
+            FIXME("Unknown type %p (%s)\n",rguid,debugstr_guid(rguid));
             break;
         }
     }

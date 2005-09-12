@@ -128,7 +128,7 @@ BOOL WINAPI FindCloseChangeNotification( HANDLE handle )
 */
 FARPROC16 WINAPI FileCDR16(FARPROC16 x)
 {
-    FIXME("(0x%8x): stub\n", (int) x);
+    FIXME("(%p): stub\n", x);
     return (FARPROC16)TRUE;
 }
 

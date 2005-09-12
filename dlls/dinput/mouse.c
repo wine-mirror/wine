@@ -361,7 +361,7 @@ static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
 {
     SysMouseImpl *This = (SysMouseImpl *)iface;
     
-    TRACE("(this=%p,0x%08lx,0x%08lx)\n",This,(DWORD)hwnd,dwflags);
+    TRACE("(this=%p,%p,0x%08lx)\n",This,hwnd,dwflags);
     
     if (TRACE_ON(dinput)) {
 	TRACE(" cooperative level : ");
@@ -824,7 +824,7 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
     TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
     
     if (!HIWORD(rguid)) {
-	switch ((DWORD)rguid) {
+	switch (LOWORD(rguid)) {
 	    case (DWORD) DIPROP_BUFFERSIZE: {
 		LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
 		
@@ -843,7 +843,7 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 		break;
 	    }
 	    default:
-	      FIXME("Unknown type %ld (%s)\n",(DWORD)rguid,debugstr_guid(rguid));
+	      FIXME("Unknown type %p (%s)\n",rguid,debugstr_guid(rguid));
 	      break;
 	}
     }
@@ -867,7 +867,7 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 	_dump_DIPROPHEADER(pdiph);
     
     if (!HIWORD(rguid)) {
-	switch ((DWORD)rguid) {
+	switch (LOWORD(rguid)) {
 	    case (DWORD) DIPROP_BUFFERSIZE: {
 		LPDIPROPDWORD	pd = (LPDIPROPDWORD)pdiph;
 		
@@ -902,7 +902,7 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 	    }
 	      
 	    default:
-	      FIXME("Unknown type %ld (%s)\n",(DWORD)rguid,debugstr_guid(rguid));
+	      FIXME("Unknown type %p (%s)\n",rguid,debugstr_guid(rguid));
 	      break;
 	  }
       }
@@ -919,7 +919,7 @@ static HRESULT WINAPI SysMouseAImpl_SetEventNotification(LPDIRECTINPUTDEVICE8A i
 							 HANDLE hnd) {
     SysMouseImpl *This = (SysMouseImpl *)iface;
     
-    TRACE("(this=%p,0x%08lx)\n",This,(DWORD)hnd);
+    TRACE("(this=%p,%p)\n",This,hnd);
     
     This->hEvent = hnd;
     

@@ -2004,9 +2004,9 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
     NTSTATUS    status = STATUS_SUCCESS;
     int fd, dev;
 
-    TRACE("%lx %s %lx %ld %lx %ld %p\n",
-          (DWORD)hDevice, iocodex(dwIoControlCode), (DWORD)lpInBuffer, nInBufferSize,
-          (DWORD)lpOutBuffer, nOutBufferSize, piosb);
+    TRACE("%p %s %p %ld %p %ld %p\n",
+          hDevice, iocodex(dwIoControlCode), lpInBuffer, nInBufferSize,
+          lpOutBuffer, nOutBufferSize, piosb);
 
     piosb->Information = 0;
 

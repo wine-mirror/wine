@@ -168,8 +168,8 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
     else
 #endif
         len2 = snprintf(buffer+len, size-len,
-                        " at address 0x%08lx.\nDo you wish to debug it ?",
-                        (DWORD)ptr->ExceptionRecord->ExceptionAddress);
+                        " at address %p.\nDo you wish to debug it ?",
+                        ptr->ExceptionRecord->ExceptionAddress);
     if ((len2<0) || (len>=size-len))
         return -1;
     return len+len2;

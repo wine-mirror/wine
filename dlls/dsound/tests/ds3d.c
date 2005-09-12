@@ -452,8 +452,8 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
             ok(rc==DS_OK && temp_buffer!=NULL,
                "IDirectSoundBuffer_QueryInterface() failed: %s\n",
                DXGetErrorString8(rc));
-            ok(temp_buffer==dsbo,"COM interface broken: 0x%08lx != 0x%08lx\n",
-               (DWORD)temp_buffer,(DWORD)dsbo);
+            ok(temp_buffer==dsbo,"COM interface broken: %p != %p\n",
+               temp_buffer,dsbo);
             ref=IDirectSoundBuffer_Release(temp_buffer);
             ok(ref==1,"IDirectSoundBuffer_Release() has %d references, "
                "should have 1\n",ref);
@@ -465,8 +465,8 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
             ok(rc==DS_OK && temp_buffer!=NULL,
                "IDirectSound3DBuffer_QueryInterface() failed: %s\n",
                DXGetErrorString8(rc));
-            ok(temp_buffer==dsbo,"COM interface broken: 0x%08lx != 0x%08lx\n",
-               (DWORD)temp_buffer,(DWORD)dsbo);
+            ok(temp_buffer==dsbo,"COM interface broken: %p != %p\n",
+               temp_buffer,dsbo);
             ref=IDirectSoundBuffer_Release(temp_buffer);
             ok(ref==1,"IDirectSoundBuffer_Release() has %d references, "
                "should have 1\n",ref);
@@ -1130,8 +1130,8 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
                "IDirectSoundBuffer_QueryInterface() failed: %s\n",
                DXGetErrorString8(rc));
             ok(temp_buffer==primary,
-               "COM interface broken: 0x%08lx != 0x%08lx\n",
-               (DWORD)temp_buffer,(DWORD)primary);
+               "COM interface broken: %p != %p\n",
+               temp_buffer,primary);
             if (rc==DS_OK && temp_buffer!=NULL) {
                 ref=IDirectSoundBuffer_Release(temp_buffer);
                 ok(ref==1,"IDirectSoundBuffer_Release() has %d references, "
@@ -1144,8 +1144,8 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
                    "IDirectSoundBuffer_QueryInterface() failed: %s\n",
                    DXGetErrorString8(rc));
                 ok(temp_buffer==primary,
-                   "COM interface broken: 0x%08lx != 0x%08lx\n",
-                   (DWORD)temp_buffer,(DWORD)primary);
+                   "COM interface broken: %p != %p\n",
+                   temp_buffer,primary);
                 ref=IDirectSoundBuffer_Release(temp_buffer);
                 ok(ref==1,"IDirectSoundBuffer_Release() has %d references, "
                    "should have 1\n",ref);

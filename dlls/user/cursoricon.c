@@ -691,8 +691,8 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
     hotspot.x = ICON_HOTSPOT;
     hotspot.y = ICON_HOTSPOT;
 
-    TRACE_(cursor)("%08x (%u bytes), ver %08x, %ix%i %s %s\n",
-                        (unsigned)bits, cbSize, (unsigned)dwVersion, width, height,
+    TRACE_(cursor)("%p (%u bytes), ver %08x, %ix%i %s %s\n",
+                   bits, cbSize, (unsigned)dwVersion, width, height,
                                   bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
     if (dwVersion == 0x00020000)
     {

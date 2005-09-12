@@ -86,7 +86,7 @@ HRESULT WINAPI DirectInputCreateEx(
 {
 	IDirectInputImpl* This;
 
-	TRACE("(0x%08lx,%04lx,%s,%p,%p)\n", (DWORD)hinst,dwVersion,debugstr_guid(riid),ppDI,punkOuter);
+	TRACE("(%p,%04lx,%s,%p,%p)\n", hinst,dwVersion,debugstr_guid(riid),ppDI,punkOuter);
 
 	if (IsEqualGUID(&IID_IDirectInputA,riid) ||
 	    IsEqualGUID(&IID_IDirectInput2A,riid) ||
@@ -141,7 +141,7 @@ HRESULT WINAPI DirectInputCreateEx(
 HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPUTA *ppDI, LPUNKNOWN punkOuter)
 {
 	IDirectInputImpl* This;
-	TRACE("(0x%08lx,%04lx,%p,%p)\n", (DWORD)hinst,dwVersion,ppDI,punkOuter);
+	TRACE("(%p,%04lx,%p,%p)\n", hinst,dwVersion,ppDI,punkOuter);
 	This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	This->lpVtbl = &ddi7avt;
 	This->ref = 1;
@@ -157,7 +157,7 @@ HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPU
 HRESULT WINAPI DirectInputCreateW(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPUTW *ppDI, LPUNKNOWN punkOuter)
 {
 	IDirectInputImpl* This;
-	TRACE("(0x%08lx,%04lx,%p,%p)\n", (DWORD)hinst,dwVersion,ppDI,punkOuter);
+	TRACE("(%p,%04lx,%p,%p)\n", hinst,dwVersion,ppDI,punkOuter);
 	This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	This->lpVtbl = &ddi7wvt;
 	This->ref = 1;
@@ -384,7 +384,7 @@ static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUT7A iface,
 							HWND hwndOwner,
 							DWORD dwFlags) {
   IDirectInputImpl *This = (IDirectInputImpl *)iface;
-  FIXME("(%p)->(%08lx,%08lx): stub\n",This, (DWORD) hwndOwner, dwFlags);
+  FIXME("(%p)->(%p,%08lx): stub\n",This, hwndOwner, dwFlags);
 
   return DI_OK;
 }

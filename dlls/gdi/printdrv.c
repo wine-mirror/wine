@@ -635,7 +635,7 @@ INT16 WINAPI WriteSpool16(HPJOB16 hJob, LPSTR lpData, INT16 cch)
     int nRet = SP_ERROR;
     PPRINTJOB pPrintJob = NULL;
 
-    TRACE("%04x %08lx %04x\n", hJob, (DWORD)lpData, cch);
+    TRACE("%04x %p %04x\n", hJob, lpData, cch);
 
     pPrintJob = FindPrintJobFromHandle(hJob);
     if (pPrintJob != NULL && pPrintJob->fd >= 0 && cch)

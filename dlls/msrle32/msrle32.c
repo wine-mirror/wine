@@ -1789,8 +1789,7 @@ LRESULT CALLBACK MSRLE32_DriverProc(DWORD dwDrvID, HDRVR hDrv, UINT uMsg,
 {
   CodecInfo *pi = (CodecInfo*)dwDrvID;
 
-  TRACE("(%p,%p,0x%04X,0x%08lX,0x%08lX)\n", (LPVOID)dwDrvID, (LPVOID)hDrv,
-	uMsg, lParam1, lParam2);
+  TRACE("(%lx,%p,0x%04X,0x%08lX,0x%08lX)\n", dwDrvID, hDrv, uMsg, lParam1, lParam2);
 
   switch (uMsg) {
     /* standard driver messages */

@@ -487,8 +487,8 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
                       "*", /*FIXME*/
                       &list, &count, NULL);
 
-    TRACE("ximFontSet = 0x%x\n", (unsigned int) fontSet);
-    TRACE("list = 0x%x, count = %d\n", (unsigned int) list, count);
+    TRACE("ximFontSet = %p\n", fontSet);
+    TRACE("list = %p, count = %d\n", list, count);
 
     if (list != NULL)
     {
@@ -521,7 +521,7 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
                         XNPreeditDrawCallback, &P_DrawCB,
                         XNPreeditCaretCallback, &P_CaretCB,
                         NULL);
-        TRACE("preedit = 0x%x\n", (unsigned int) preedit);
+        TRACE("preedit = %p\n", preedit);
     }
     else
     {
@@ -532,7 +532,7 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
                         XNPreeditCaretCallback, &P_CaretCB,
                         NULL);
 
-        TRACE("preedit = 0x%x\n", (unsigned int) preedit);
+        TRACE("preedit = %p\n", preedit);
     }
 
     if ((ximStyle & (XIMStatusNothing | XIMStatusNone)) == 0)
@@ -540,7 +540,7 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
         status = XVaCreateNestedList(0,
             XNFontSet, fontSet,
             NULL);
-        TRACE("status = 0x%x\n", (unsigned int) status);
+        TRACE("status = %p\n", status);
      }
 
     if (preedit != NULL && status != NULL)
@@ -580,7 +580,7 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
               NULL);
     }
 
-    TRACE("xic = 0x%x\n", (unsigned int) xic);
+    TRACE("xic = %p\n", xic);
 
     if (preedit != NULL)
         XFree(preedit);

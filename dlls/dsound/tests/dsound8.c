@@ -306,7 +306,7 @@ static HRESULT test_dsound8(LPGUID lpGuid)
             ok(ref==0,"IDirectSound8_Release() has %d references, "
                "should have 0\n",ref);
             ok(dso!=dso1,"DirectSound8 objects should be unique: "
-               "dso=0x%08lx,dso1=0x%08lx\n",(DWORD)dso,(DWORD)dso1);
+               "dso=%p,dso1=%p\n",dso,dso1);
         }
 
         /* Release the first DirectSound8 object */
@@ -410,14 +410,14 @@ static HRESULT test_primary8(LPGUID lpGuid)
     rc=IDirectSound8_CreateSoundBuffer(dso,0,&primary,NULL);
     ok(rc==DSERR_INVALIDPARAM && primary==0,
        "IDirectSound8_CreateSoundBuffer() should have returned "
-       "DSERR_INVALIDPARAM, returned: rc=%s,dsbo=0x%lx\n",
-       DXGetErrorString8(rc),(DWORD)primary);
+       "DSERR_INVALIDPARAM, returned: rc=%s,dsbo=%p\n",
+       DXGetErrorString8(rc),primary);
 
     /* DSOUND: Error: Invalid buffer description pointer */
     rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,0,NULL);
     ok(rc==DSERR_INVALIDPARAM && primary==0,
        "IDirectSound8_CreateSoundBuffer() should have failed: rc=%s,"
-       "dsbo=0x%lx\n",DXGetErrorString8(rc),(DWORD)primary);
+       "dsbo=%p\n",DXGetErrorString8(rc),primary);
 
     ZeroMemory(&bufdesc, sizeof(bufdesc));
 
@@ -426,7 +426,7 @@ static HRESULT test_primary8(LPGUID lpGuid)
     rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
     ok(rc==DSERR_INVALIDPARAM && primary==0,
        "IDirectSound8_CreateSoundBuffer() should have failed: rc=%s,"
-       "primary=0x%lx\n",DXGetErrorString8(rc),(DWORD)primary);
+       "primary=%p\n",DXGetErrorString8(rc),primary);
 
     /* We must call SetCooperativeLevel before calling CreateSoundBuffer */
     /* DSOUND: Setting DirectSound cooperative level to DSSCL_PRIORITY */

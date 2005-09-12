@@ -646,8 +646,8 @@ static BOOL X11DRV_CLIPBOARD_InsertClipboardData(UINT wFormat, HANDLE16 hData16,
 {
     LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(wFormat);
 
-    TRACE("format=%d lpData=%p hData16=%08x hData32=%08x flags=0x%08lx\n", 
-        wFormat, lpData, hData16, (unsigned int)hData32, flags);
+    TRACE("format=%d lpData=%p hData16=%08x hData32=%p flags=0x%08lx\n",
+        wFormat, lpData, hData16, hData32, flags);
 
     if (lpData)
     {
@@ -809,8 +809,8 @@ static BOOL X11DRV_CLIPBOARD_RenderFormat(LPWINE_CLIPDATA lpData)
 {
     BOOL bret = TRUE;
 
-    TRACE(" 0x%04x hData32(0x%08x) hData16(0x%08x)\n", 
-        lpData->wFormatID, (unsigned int)lpData->hData32, lpData->hData16);
+    TRACE(" 0x%04x hData32(%p) hData16(0x%08x)\n",
+        lpData->wFormatID, lpData->hData32, lpData->hData16);
 
     if (lpData->hData32 || lpData->hData16)
         return bret; /* Already rendered */
@@ -1897,7 +1897,7 @@ static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDW
 {
     HANDLE h = 0;
 
-    TRACE(" wFormat=%d hdata=%08x out=%d\n", wformat, (unsigned int) hdata, out);
+    TRACE(" wFormat=%d hdata=%p out=%d\n", wformat, hdata, out);
 
     if (out) /* Serialize out, caller should free memory */
     {
@@ -2404,8 +2404,8 @@ BOOL X11DRV_GetClipboardData(UINT wFormat, HANDLE16* phData16, HANDLE* phData32)
         if (phData32)
             *phData32 = lpRender->hData32;
 
-        TRACE(" returning hData16(%04x) hData32(%04x) (type %d)\n", 
-            lpRender->hData16, (unsigned int) lpRender->hData32, lpRender->wFormatID);
+        TRACE(" returning hData16(%04x) hData32(%p) (type %d)\n",
+            lpRender->hData16, lpRender->hData32, lpRender->wFormatID);
 
         return lpRender->hData16 || lpRender->hData32;
     }

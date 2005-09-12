@@ -114,8 +114,8 @@ DWORD WINAPI AllocateAndGetIfTableFromStack(PMIB_IFTABLE *ppIfTable,
 {
   DWORD ret;
 
-  TRACE("ppIfTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n", ppIfTable,
-   (DWORD)bOrder, (DWORD)heap, flags);
+  TRACE("ppIfTable %p, bOrder %d, heap %p, flags 0x%08lx\n", ppIfTable,
+        bOrder, heap, flags);
   if (!ppIfTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -155,8 +155,8 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack(PMIB_IPADDRTABLE *ppIpAddrTable,
 {
   DWORD ret;
 
-  TRACE("ppIpAddrTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n",
-   ppIpAddrTable, (DWORD)bOrder, (DWORD)heap, flags);
+  TRACE("ppIpAddrTable %p, bOrder %d, heap %p, flags 0x%08lx\n",
+   ppIpAddrTable, bOrder, heap, flags);
   if (!ppIpAddrTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -196,8 +196,8 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *
 {
   DWORD ret;
 
-  TRACE("ppIpForwardTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n",
-   ppIpForwardTable, (DWORD)bOrder, (DWORD)heap, flags);
+  TRACE("ppIpForwardTable %p, bOrder %d, heap %p, flags 0x%08lx\n",
+   ppIpForwardTable, bOrder, heap, flags);
   if (!ppIpForwardTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -237,8 +237,8 @@ DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable,
 {
   DWORD ret;
 
-  TRACE("ppIpNetTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n",
-   ppIpNetTable, (DWORD)bOrder, (DWORD)heap, flags);
+  TRACE("ppIpNetTable %p, bOrder %d, heap %p, flags 0x%08lx\n",
+   ppIpNetTable, bOrder, heap, flags);
   if (!ppIpNetTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -278,8 +278,8 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable,
 {
   DWORD ret;
 
-  TRACE("ppTcpTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n",
-   ppTcpTable, (DWORD)bOrder, (DWORD)heap, flags);
+  TRACE("ppTcpTable %p, bOrder %d, heap %p, flags 0x%08lx\n",
+   ppTcpTable, bOrder, heap, flags);
   if (!ppTcpTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -319,8 +319,8 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable,
 {
   DWORD ret;
 
-  TRACE("ppUdpTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n",
-   ppUdpTable, (DWORD)bOrder, (DWORD)heap, flags);
+  TRACE("ppUdpTable %p, bOrder %d, heap %p, flags 0x%08lx\n",
+   ppUdpTable, bOrder, heap, flags);
   if (!ppUdpTable)
     ret = ERROR_INVALID_PARAMETER;
   else {

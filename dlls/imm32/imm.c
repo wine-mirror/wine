@@ -740,7 +740,7 @@ HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
                 the_name, WS_POPUPWINDOW|WS_CAPTION, 0, 0, 120, 55, 0, 0,
                 hImeInst, 0);
 
-        TRACE("Default created (0x%x)\n",(INT)hwndDefault);
+        TRACE("Default created (%p)\n",hwndDefault);
   }
 
   return (HWND)hwndDefault;

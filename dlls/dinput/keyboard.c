@@ -342,7 +342,7 @@ static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
 	TRACE("(size=%ld,headersize=%ld,obj=%ld,how=%ld\n",
             ph->dwSize,ph->dwHeaderSize,ph->dwObj,ph->dwHow);
 	if (!HIWORD(rguid)) {
-		switch ((DWORD)rguid) {
+		switch (LOWORD(rguid)) {
 		case (DWORD) DIPROP_BUFFERSIZE: {
 			LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
 
@@ -356,7 +356,7 @@ static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
 			break;
 		}
 		default:
-			WARN("Unknown type %ld\n",(DWORD)rguid);
+			WARN("Unknown type %p\n",rguid);
 			break;
 		}
 	}
@@ -373,7 +373,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetProperty(
 	TRACE("(size=%ld,headersize=%ld,obj=%ld,how=%ld\n",
             ph->dwSize,ph->dwHeaderSize,ph->dwObj,ph->dwHow);
 	if (!HIWORD(rguid)) {
-		switch ((DWORD)rguid) {
+		switch (LOWORD(rguid)) {
 		case (DWORD) DIPROP_BUFFERSIZE: {
 			LPDIPROPDWORD	pd = (LPDIPROPDWORD)ph;
 
@@ -387,7 +387,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetProperty(
 			break;
 		}
 		default:
-			WARN("Unknown type %ld\n",(DWORD)rguid);
+			WARN("Unknown type %p\n",rguid);
 			break;
 		}
 	}
@@ -597,7 +597,7 @@ static HRESULT WINAPI SysKeyboardAImpl_SetEventNotification(LPDIRECTINPUTDEVICE8
 							    HANDLE hnd) {
   SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
 
-  TRACE("(this=%p,0x%08lx)\n",This,(DWORD)hnd);
+  TRACE("(this=%p,%p)\n",This,hnd);
 
   This->hEvent = hnd;
   return DI_OK;

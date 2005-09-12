@@ -91,9 +91,9 @@ DirectSoundFullDuplexCreate(
     LPUNKNOWN pUnkOuter)
 {
     IDirectSoundFullDuplexImpl** ippDSFD=(IDirectSoundFullDuplexImpl**)ppDSFD;
-    TRACE("(%s,%s,%p,%p,%lx,%lx,%p,%p,%p,%p)\n", debugstr_guid(pcGuidCaptureDevice),
+    TRACE("(%s,%s,%p,%p,%p,%lx,%p,%p,%p,%p)\n", debugstr_guid(pcGuidCaptureDevice),
 	debugstr_guid(pcGuidRenderDevice), pcDSCBufferDesc, pcDSBufferDesc,
-	(DWORD)hWnd, dwLevel, ppDSFD, ppDSCBuffer8, ppDSBuffer8, pUnkOuter);
+	hWnd, dwLevel, ppDSFD, ppDSCBuffer8, ppDSBuffer8, pUnkOuter);
 
     if ( pUnkOuter ) {
 	WARN("pUnkOuter != 0\n");
@@ -185,8 +185,8 @@ IDirectSoundFullDuplexImpl_Initialize(
     IDirectSoundCaptureBufferImpl** ippdscb=(IDirectSoundCaptureBufferImpl**)lplpDirectSoundCaptureBuffer8;
     IDirectSoundBufferImpl** ippdsc=(IDirectSoundBufferImpl**)lplpDirectSoundBuffer8;
 
-    FIXME( "(%p,%s,%s,%p,%p,%lx,%lx,%p,%p) stub!\n", This, debugstr_guid(pCaptureGuid),
-	debugstr_guid(pRendererGuid), lpDscBufferDesc, lpDsBufferDesc, (DWORD)hWnd, dwLevel,
+    FIXME( "(%p,%s,%s,%p,%p,%p,%lx,%p,%p) stub!\n", This, debugstr_guid(pCaptureGuid),
+	debugstr_guid(pRendererGuid), lpDscBufferDesc, lpDsBufferDesc, hWnd, dwLevel,
 	ippdscb, ippdsc);
 
     return E_FAIL;

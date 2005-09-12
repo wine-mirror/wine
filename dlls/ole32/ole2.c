@@ -1339,8 +1339,8 @@ HRESULT WINAPI OleSetMenuDescriptor(
 
   if ( lpFrame || lpActiveObject )
   {
-     FIXME("(%x, %p, %p, %p, %p), Context sensitive help filtering not implemented!\n",
-	(unsigned int)hOleMenu,
+     FIXME("(%p, %p, %p, %p, %p), Context sensitive help filtering not implemented!\n",
+	hOleMenu,
 	hwndFrame,
 	hwndActiveObject,
 	lpFrame,
