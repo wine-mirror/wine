@@ -799,13 +799,17 @@ int main(void) {
   fi
 
   dnl Check for -mpreferred-stack-boundary
-  AC_CACHE_CHECK([for gcc -mpreferred-stack-boundary=2 support], ac_cv_c_gcc_stack_boundary,
-      [WINE_TRY_CFLAGS([-mpreferred-stack-boundary=2],
-                      ac_cv_c_gcc_stack_boundary="yes",ac_cv_c_gcc_stack_boundary="no")])
-  if test "$ac_cv_c_gcc_stack_boundary" = "yes"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -mpreferred-stack-boundary=2"
-  fi
+  case $host_cpu in
+    *i[[3456789]]86*)
+      AC_CACHE_CHECK([for gcc -mpreferred-stack-boundary=2 support], ac_cv_c_gcc_stack_boundary,
+          [WINE_TRY_CFLAGS([-mpreferred-stack-boundary=2],
+                          ac_cv_c_gcc_stack_boundary="yes",ac_cv_c_gcc_stack_boundary="no")])
+      if test "$ac_cv_c_gcc_stack_boundary" = "yes"
+      then
+        EXTRACFLAGS="$EXTRACFLAGS -mpreferred-stack-boundary=2"
+      fi
+      ;;
+  esac
 
   dnl Check for -fno-strict-aliasing
   AC_CACHE_CHECK([for gcc -fno-strict-aliasing support], ac_cv_c_gcc_no_strict_aliasing,
@@ -822,6 +826,14 @@ int main(void) {
   if test "$ac_cv_c_gcc_gstabs" = "yes"
   then
     EXTRACFLAGS="$EXTRACFLAGS -gstabs+"
+  fi
+
+  dnl Check for -Wdeclaration-after-statement option
+  AC_CACHE_CHECK([for gcc -Wdeclaration-after-statement support], ac_cv_c_gcc_decl_after_statement,
+      [WINE_TRY_CFLAGS([-Wdeclaration-after-statement],ac_cv_c_gcc_decl_after_statement="yes", ac_cv_c_gcc_decl_after_statement="no")])
+  if test "$ac_cv_c_gcc_decl_after_statement" = "yes"
+  then
+    EXTRACFLAGS="$EXTRACFLAGS -Wdeclaration-after-statement"
   fi
 
   dnl Check for noisy string.h

@@ -11359,7 +11359,9 @@ _ACEOF
 
   fi
 
-    echo "$as_me:$LINENO: checking for gcc -mpreferred-stack-boundary=2 support" >&5
+    case $host_cpu in
+    *i[3456789]86*)
+      echo "$as_me:$LINENO: checking for gcc -mpreferred-stack-boundary=2 support" >&5
 echo $ECHO_N "checking for gcc -mpreferred-stack-boundary=2 support... $ECHO_C" >&6
 if test "${ac_cv_c_gcc_stack_boundary+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -11415,10 +11417,12 @@ CFLAGS=$ac_wine_try_cflags_saved
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_gcc_stack_boundary" >&5
 echo "${ECHO_T}$ac_cv_c_gcc_stack_boundary" >&6
-  if test "$ac_cv_c_gcc_stack_boundary" = "yes"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -mpreferred-stack-boundary=2"
-  fi
+      if test "$ac_cv_c_gcc_stack_boundary" = "yes"
+      then
+        EXTRACFLAGS="$EXTRACFLAGS -mpreferred-stack-boundary=2"
+      fi
+      ;;
+  esac
 
     echo "$as_me:$LINENO: checking for gcc -fno-strict-aliasing support" >&5
 echo $ECHO_N "checking for gcc -fno-strict-aliasing support... $ECHO_C" >&6
@@ -11540,6 +11544,67 @@ echo "${ECHO_T}$ac_cv_c_gcc_gstabs" >&6
   if test "$ac_cv_c_gcc_gstabs" = "yes"
   then
     EXTRACFLAGS="$EXTRACFLAGS -gstabs+"
+  fi
+
+    echo "$as_me:$LINENO: checking for gcc -Wdeclaration-after-statement support" >&5
+echo $ECHO_N "checking for gcc -Wdeclaration-after-statement support... $ECHO_C" >&6
+if test "${ac_cv_c_gcc_decl_after_statement+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wdeclaration-after-statement"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_gcc_decl_after_statement="yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_c_gcc_decl_after_statement="no"
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+echo "$as_me:$LINENO: result: $ac_cv_c_gcc_decl_after_statement" >&5
+echo "${ECHO_T}$ac_cv_c_gcc_decl_after_statement" >&6
+  if test "$ac_cv_c_gcc_decl_after_statement" = "yes"
+  then
+    EXTRACFLAGS="$EXTRACFLAGS -Wdeclaration-after-statement"
   fi
 
     saved_CFLAGS="$CFLAGS"
