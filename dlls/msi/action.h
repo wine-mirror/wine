@@ -129,7 +129,7 @@ typedef struct tagMSITEMPFILE
 typedef struct tagMSIAPPID
 {
     struct list entry;
-    WCHAR AppID[IDENTIFIER_SIZE]; /* Primary key */
+    LPWSTR AppID; /* Primary key */
     LPWSTR RemoteServerName;
     LPWSTR LocalServer;
     LPWSTR ServiceParameters;
@@ -143,8 +143,8 @@ typedef struct tagMSIPROGID MSIPROGID;
 typedef struct tagMSICLASS
 {
     struct list entry;
-    WCHAR CLSID[IDENTIFIER_SIZE];     /* Primary Key */
-    WCHAR Context[IDENTIFIER_SIZE];   /* Primary Key */
+    LPWSTR clsid;     /* Primary Key */
+    LPWSTR Context;   /* Primary Key */
     MSICOMPONENT *Component;
     MSIPROGID *ProgID;
     LPWSTR ProgIDText;
@@ -205,7 +205,7 @@ struct tagMSIMIME
     struct list entry;
     LPWSTR ContentType;  /* Primary Key */
     MSIEXTENSION *Extension;
-    WCHAR CLSID[IDENTIFIER_SIZE];
+    LPWSTR clsid;
     MSICLASS *Class;
     /* not in the table, set during installation */
     BOOL InstallMe;

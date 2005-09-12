@@ -56,7 +56,6 @@ extern const WCHAR szUnregisterProgIdInfo[];
 
 static MSIAPPID *load_appid( MSIPACKAGE* package, MSIRECORD *row )
 {
-    DWORD sz;
     LPCWSTR buffer;
     MSIAPPID *appid;
 
@@ -66,8 +65,7 @@ static MSIAPPID *load_appid( MSIPACKAGE* package, MSIRECORD *row )
     if (!appid)
         return NULL;
     
-    sz = IDENTIFIER_SIZE;
-    MSI_RecordGetStringW(row, 1, appid->AppID, &sz);
+    appid->AppID = load_dynamic_stringW( row, 1 );
     TRACE("loading appid %s\n", debugstr_w( appid->AppID ));
 
     buffer = MSI_RecordGetString(row,2);
@@ -228,7 +226,7 @@ static MSIPROGID *load_given_progid(MSIPACKAGE *package, LPCWSTR name)
 static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
 {
     MSICLASS *cls;
-    DWORD sz,i;
+    DWORD i;
     LPCWSTR buffer;
 
     /* fill in the data */
@@ -239,11 +237,9 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
 
     list_add_tail( &package->classes, &cls->entry );
 
-    sz = IDENTIFIER_SIZE;
-    MSI_RecordGetStringW(row, 1, cls->CLSID, &sz);
-    TRACE("loading class %s\n",debugstr_w(cls->CLSID));
-    sz = IDENTIFIER_SIZE;
-    MSI_RecordGetStringW(row, 2, cls->Context, &sz);
+    cls->clsid = load_dynamic_stringW( row, 1 );
+    TRACE("loading class %s\n",debugstr_w(cls->clsid));
+    cls->Context = load_dynamic_stringW( row, 2 );
     buffer = MSI_RecordGetString(row,3);
     cls->Component = get_loaded_component(package, buffer);
 
@@ -345,7 +341,7 @@ static MSICLASS *load_given_class(MSIPACKAGE *package, LPCWSTR classid)
     /* check for classes already loaded */
     LIST_FOR_EACH_ENTRY( cls, &package->classes, MSICLASS, entry )
     {
-        if (lstrcmpiW( cls->CLSID, classid )==0)
+        if (lstrcmpiW( cls->clsid, classid )==0)
         {
             TRACE("found class %s (%p)\n",debugstr_w(classid), cls);
             return cls;
@@ -366,7 +362,6 @@ static MSIEXTENSION *load_given_extension( MSIPACKAGE *package, LPCWSTR extensio
 
 static MSIMIME *load_mime( MSIPACKAGE* package, MSIRECORD *row )
 {
-    DWORD sz;
     LPCWSTR buffer;
     MSIMIME *mt;
 
@@ -382,9 +377,8 @@ static MSIMIME *load_mime( MSIPACKAGE* package, MSIRECORD *row )
     buffer = MSI_RecordGetString( row, 2 );
     mt->Extension = load_given_extension( package, buffer );
 
-    sz = IDENTIFIER_SIZE;
-    MSI_RecordGetStringW( row, 3, mt->CLSID, &sz );
-    mt->Class = load_given_class( package, mt->CLSID );
+    mt->clsid = load_dynamic_stringW( row, 3 );
+    mt->Class = load_given_class( package, mt->clsid );
 
     list_add_tail( &package->mimes, &mt->entry );
 
@@ -549,7 +543,7 @@ static UINT iterate_all_classes(MSIRECORD *rec, LPVOID param)
 
     LIST_FOR_EACH_ENTRY( cls, &package->classes, MSICLASS, entry )
     {
-        if (strcmpiW( clsid, cls->CLSID ))
+        if (strcmpiW( clsid, cls->clsid ))
             continue;
         if (strcmpW( context, cls->Context ))
             continue;
@@ -886,18 +880,18 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_ADVERTISED )))
         {
             TRACE("Skipping class %s reg due to disabled feature %s\n", 
-                            debugstr_w(cls->CLSID), 
+                            debugstr_w(cls->clsid), 
                             debugstr_w(feature->Feature));
 
             continue;
         }
 
-        TRACE("Registering class %s (%p)\n", debugstr_w(cls->CLSID), cls);
+        TRACE("Registering class %s (%p)\n", debugstr_w(cls->clsid), cls);
 
         cls->Installed = TRUE;
         mark_progid_for_install( package, cls->ProgID );
 
-        RegCreateKeyW( hkey, cls->CLSID, &hkey2 );
+        RegCreateKeyW( hkey, cls->clsid, &hkey2 );
 
         if (cls->Description)
             RegSetValueExW( hkey2, NULL, 0, REG_SZ, (LPBYTE)cls->Description,
@@ -1055,8 +1049,8 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                 if (ptr2)
                     *ptr2 = 0;
                 keyname = HeapAlloc(GetProcessHeap(),0,(strlenW(szFileType_fmt)+
-                                        strlenW(cls->CLSID) + 4) * sizeof(WCHAR));
-                sprintfW( keyname, szFileType_fmt, cls->CLSID, index );
+                                        strlenW(cls->clsid) + 4) * sizeof(WCHAR));
+                sprintfW( keyname, szFileType_fmt, cls->clsid, index );
 
                 RegCreateKeyW(HKEY_CLASSES_ROOT,keyname,&hkey2);
                 RegSetValueExW(hkey2,NULL,0,REG_SZ, (LPVOID)ptr,
@@ -1075,7 +1069,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         
         uirow = MSI_CreateRecord(1);
 
-        MSI_RecordSetStringW( uirow, 1, cls->CLSID );
+        MSI_RecordSetStringW( uirow, 1, cls->clsid );
         ui_actiondata(package,szRegisterClassInfo,uirow);
         msiobj_release(&uirow->hdr);
     }
@@ -1105,11 +1099,11 @@ static UINT register_progid_base(MSIPACKAGE* package, MSIPROGID* progid,
     if (progid->Class)
     {   
         RegCreateKeyW(hkey,szCLSID,&hkey2);
-        RegSetValueExW( hkey2, NULL, 0, REG_SZ, (LPBYTE)progid->Class->CLSID, 
-                        (strlenW(progid->Class->CLSID)+1) * sizeof(WCHAR) );
+        RegSetValueExW( hkey2, NULL, 0, REG_SZ, (LPBYTE)progid->Class->clsid, 
+                        (strlenW(progid->Class->clsid)+1) * sizeof(WCHAR) );
 
         if (clsid)
-            strcpyW( clsid, progid->Class->CLSID );
+            strcpyW( clsid, progid->Class->clsid );
 
         RegCloseKey(hkey2);
     }
@@ -1493,10 +1487,8 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
         HeapFree(GetProcessHeap(),0,extension);
         HeapFree(GetProcessHeap(),0,key);
 
-        if (mt->CLSID[0])
-        {
+        if (mt->clsid)
             FIXME("Handle non null for field 3\n");
-        }
 
         RegCloseKey(hkey);
 

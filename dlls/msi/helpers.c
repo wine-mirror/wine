@@ -528,6 +528,8 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSICLASS *cls = LIST_ENTRY( item, MSICLASS, entry );
 
         list_remove( &cls->entry );
+        HeapFree( GetProcessHeap(), 0, cls->clsid );
+        HeapFree( GetProcessHeap(), 0, cls->Context );
         HeapFree( GetProcessHeap(), 0, cls->Description );
         HeapFree( GetProcessHeap(), 0, cls->FileTypeMask );
         HeapFree( GetProcessHeap(), 0, cls->IconPath );
@@ -562,6 +564,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSIMIME *mt = LIST_ENTRY( item, MSIMIME, entry );
 
         list_remove( &mt->entry );
+        HeapFree( GetProcessHeap(), 0, mt->clsid );
         HeapFree( GetProcessHeap(), 0, mt->ContentType );
         HeapFree( GetProcessHeap(), 0, mt );
     }
@@ -571,6 +574,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSIAPPID *appid = LIST_ENTRY( item, MSIAPPID, entry );
 
         list_remove( &appid->entry );
+        HeapFree( GetProcessHeap(), 0, appid->AppID );
         HeapFree( GetProcessHeap(), 0, appid->RemoteServerName );
         HeapFree( GetProcessHeap(), 0, appid->LocalServer );
         HeapFree( GetProcessHeap(), 0, appid->ServiceParameters );
