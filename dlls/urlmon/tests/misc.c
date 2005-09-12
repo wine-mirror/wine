@@ -207,9 +207,12 @@ static const WCHAR url1[] = {'r','e','s',':','/','/','m','s','h','t','m','l','.'
 static const WCHAR url2[] = {'i','n','d','e','x','.','h','t','m',0};
 static const WCHAR url3[] = {'f','i','l','e',':','c',':','\\','I','n','d','e','x','.','h','t','m',0};
 static const WCHAR url4[] = {'f','i','l','e',':','s','o','m','e','%','2','0','f','i','l','e',
-        '%','2','E','j','p','g',0};
+        '%','2','e','j','p','g',0};
 static const WCHAR url5[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
         '.','o','r','g',0};
+static const WCHAR url6[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+static const WCHAR url7[] = {'f','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g','/',
+        'f','i','l','e','.','t','e','s','t',0};
 
 static const WCHAR url4e[] = {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e',
         '.','j','p','g',0};
@@ -219,6 +222,8 @@ static const WCHAR path4[] = {'s','o','m','e',' ','f','i','l','e','.','j','p','g
 
 static const WCHAR wszRes[] = {'r','e','s',0};
 static const WCHAR wszFile[] = {'f','i','l','e',0};
+static const WCHAR wszHttp[] = {'h','t','t','p',0};
+static const WCHAR wszAbout[] = {'a','b','o','u','t',0};
 static const WCHAR wszEmpty[] = {0};
 
 struct parse_test {
@@ -234,7 +239,9 @@ static const struct parse_test parse_tests[] = {
     {url1, S_OK,   url1,  E_INVALIDARG, NULL, wszRes},
     {url2, E_FAIL, url2,  E_INVALIDARG, NULL, wszEmpty},
     {url3, E_FAIL, url3,  S_OK, path3,        wszFile},
-    {url4, E_FAIL, url4e, S_OK, path4,        wszFile}
+    {url4, E_FAIL, url4e, S_OK, path4,        wszFile},
+    {url5, E_FAIL, url5,  E_INVALIDARG, NULL, wszHttp},
+    {url6, S_OK,   url6,  E_INVALIDARG, NULL, wszAbout}
 };
 
 static void test_CoInternetParseUrl(void)
@@ -267,7 +274,8 @@ static void test_CoInternetParseUrl(void)
         memset(buf, 0xf0, sizeof(buf));
         hres = CoInternetParseUrl(parse_tests[i].url, PARSE_PATH_FROM_URL, 0, buf,
                 sizeof(buf)/sizeof(WCHAR), &size, 0);
-        ok(hres == parse_tests[i].path_hres, "[%d] path failed: %08lx\n", i, hres);
+        ok(hres == parse_tests[i].path_hres, "[%d] path failed: %08lx, expected %08lx\n",
+                i, hres, parse_tests[i].path_hres);
         if(parse_tests[i].path) {
             ok(size == lstrlenW(parse_tests[i].path), "[%d] wrong size\n", i);
             ok(!lstrcmpW(parse_tests[i].path, buf), "[%d] wrong path\n", i);
@@ -282,9 +290,129 @@ static void test_CoInternetParseUrl(void)
     }
 }
 
+static const WCHAR mimeTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
+static const WCHAR mimeTextPlain[] = {'t','e','x','t','/','p','l','a','i','n',0};
+static const WCHAR mimeAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
+    'o','c','t','e','t','-','s','t','r','e','a','m',0};
+
+static const struct {
+    LPCWSTR url;
+    LPCWSTR mime;
+} mime_tests[] = {
+    {url1, mimeTextHtml},
+    {url2, mimeTextHtml},
+    {url3, mimeTextHtml},
+    {url4, NULL},
+    {url5, NULL},
+    {url6, NULL},
+    {url7, NULL}
+};
+
+static BYTE data1[] = "test data\n";
+static BYTE data2[] = {31,'t','e','s',0xfa,'t',' ','d','a','t','a','\n',0};
+static BYTE data3[] = {0,0,0};
+static BYTE data4[] = {'t','e','s',0xfa,'t',' ','d','a','t','a','\n',0,0};
+static BYTE data5[] = {0xa,0xa,0xa,'x',32,'x',0};
+static BYTE data6[] = {0xfa,0xfa,0xfa,0xfa,'\n','\r','\t','x','x','x',1};
+
+static const struct {
+    BYTE *data;
+    DWORD size;
+    LPCWSTR mime;
+} mime_tests2[] = {
+    {data1, sizeof(data1), mimeTextPlain},
+    {data2, sizeof(data2), mimeAppOctetStream},
+    {data3, sizeof(data3), mimeAppOctetStream},
+    {data4, sizeof(data4), mimeAppOctetStream},
+    {data5, sizeof(data5), mimeTextPlain},
+    {data6, sizeof(data6), mimeTextPlain}
+};
+
+static void test_FindMimeFromData(void)
+{
+    HRESULT hres;
+    LPWSTR mime;
+    int i;
+
+    for(i=0; i<sizeof(mime_tests)/sizeof(mime_tests[0]); i++) {
+        mime = (LPWSTR)0xf0f0f0f0;
+        hres = FindMimeFromData(NULL, mime_tests[i].url, NULL, 0, NULL, 0, &mime, 0);
+        if(mime_tests[i].mime) {
+            ok(hres == S_OK, "[%d] FindMimeFromData failed: %08lx\n", i, hres);
+            ok(!lstrcmpW(mime, mime_tests[i].mime), "[%d] wrong mime\n", i);
+            CoTaskMemFree(mime);
+        }else {
+            ok(hres == E_FAIL, "FindMimeFromData failed: %08lx, expected E_FAIL\n", hres);
+            ok(mime == (LPWSTR)0xf0f0f0f0, "[%d] mime != 0xf0f0f0f0\n", i);
+        }
+
+        mime = (LPWSTR)0xf0f0f0f0;
+        hres = FindMimeFromData(NULL, mime_tests[i].url, NULL, 0, mimeTextPlain, 0, &mime, 0);
+        ok(hres == S_OK, "[%d] FindMimeFromData failed: %08lx\n", i, hres);
+        ok(!lstrcmpW(mime, mimeTextPlain), "[%d] wrong mime\n", i);
+        CoTaskMemFree(mime);
+
+        mime = (LPWSTR)0xf0f0f0f0;
+        hres = FindMimeFromData(NULL, mime_tests[i].url, NULL, 0, mimeAppOctetStream, 0, &mime, 0);
+        ok(hres == S_OK, "[%d] FindMimeFromData failed: %08lx\n", i, hres);
+        ok(!lstrcmpW(mime, mimeAppOctetStream), "[%d] wrong mime\n", i);
+        CoTaskMemFree(mime);
+    }
+
+    for(i=0; i < sizeof(mime_tests2)/sizeof(mime_tests2[0]); i++) {
+        hres = FindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
+                NULL, 0, &mime, 0);
+        ok(hres == S_OK, "[%d] FindMimeFromData failed: %08lx\n", i, hres);
+        ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime\n", i);
+        CoTaskMemFree(mime);
+
+        hres = FindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
+                mimeTextHtml, 0, &mime, 0);
+        ok(hres == S_OK, "[%d] FindMimeFromData failed: %08lx\n", i, hres);
+        ok(!lstrcmpW(mime, mimeTextHtml), "[%d] wrong mime\n", i);
+        CoTaskMemFree(mime);
+    }
+
+    hres = FindMimeFromData(NULL, url1, data1, sizeof(data1), NULL, 0, &mime, 0);
+    ok(hres == S_OK, "FindMimeFromData failed: %08lx\n", hres);
+    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
+    CoTaskMemFree(mime);
+
+    hres = FindMimeFromData(NULL, url1, data1, sizeof(data1), mimeAppOctetStream, 0, &mime, 0);
+    ok(hres == S_OK, "FindMimeFromData failed: %08lx\n", hres);
+    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
+    CoTaskMemFree(mime);
+
+    hres = FindMimeFromData(NULL, url4, data1, sizeof(data1), mimeAppOctetStream, 0, &mime, 0);
+    ok(hres == S_OK, "FindMimeFromData failed: %08lx\n", hres);
+    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
+    CoTaskMemFree(mime);
+
+    hres = FindMimeFromData(NULL, NULL, NULL, 0, NULL, 0, &mime, 0);
+    ok(hres == E_INVALIDARG, "FindMimeFromData failed: %08lx, excepted E_INVALIDARG\n", hres);
+
+    hres = FindMimeFromData(NULL, NULL, NULL, 0, mimeTextPlain, 0, &mime, 0);
+    ok(hres == E_INVALIDARG, "FindMimeFromData failed: %08lx, expected E_INVALIDARG\n", hres);
+
+    hres = FindMimeFromData(NULL, NULL, data1, 0, NULL, 0, &mime, 0);
+    ok(hres == E_FAIL, "FindMimeFromData failed: %08lx, expected E_FAIL\n", hres);
+
+    hres = FindMimeFromData(NULL, url1, data1, 0, NULL, 0, &mime, 0);
+    ok(hres == E_FAIL, "FindMimeFromData failed: %08lx, expected E_FAIL\n", hres);
+
+    hres = FindMimeFromData(NULL, NULL, data1, 0, mimeTextPlain, 0, &mime, 0);
+    ok(hres == S_OK, "FindMimeFromData failed: %08lx\n", hres);
+    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
+    CoTaskMemFree(mime);
+
+    hres = FindMimeFromData(NULL, NULL, data1, 0, mimeTextPlain, 0, NULL, 0);
+    ok(hres == E_INVALIDARG, "FindMimeFromData failed: %08lx, expected E_INVALIDARG\n", hres);
+}
+
 START_TEST(misc)
 {
     test_CreateFormatEnum();
     test_RegisterFormatEnumerator();
     test_CoInternetParseUrl();
+    test_FindMimeFromData();
 }
