@@ -1926,16 +1926,16 @@ static int indent_tls_index;
 /***********************************************************************
  *           get_indent_level
  */
-inline static int get_indent_level(void)
+inline static INT_PTR get_indent_level(void)
 {
-    return (int)TlsGetValue( indent_tls_index );
+    return (INT_PTR)TlsGetValue( indent_tls_index );
 }
 
 
 /***********************************************************************
  *           set_indent_level
  */
-inline static void set_indent_level( int level )
+inline static void set_indent_level( INT_PTR level )
 {
     TlsSetValue( indent_tls_index, (void *)level );
 }

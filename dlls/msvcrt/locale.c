@@ -130,7 +130,7 @@ static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp)
 }
 
 static BOOL CALLBACK
-find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LONG lParam)
+find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LONG_PTR lParam)
 {
   locale_search_t *res = (locale_search_t *)lParam;
   const LCID lcid = MAKELCID(LangID, SORT_DEFAULT);
@@ -203,7 +203,7 @@ static LCID MSVCRT_locale_to_LCID(locale_search_t* locale)
   LCID lcid;
   EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
 			 (LPCSTR)LOCALE_ILANGUAGE,find_best_locale_proc,
-			 (LONG)locale);
+			 (LONG_PTR)locale);
 
   if (!locale->match_flags)
     return 0;

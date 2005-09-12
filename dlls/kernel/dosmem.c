@@ -224,7 +224,7 @@ UINT DOSMEM_MapLinearToDos(LPVOID ptr)
 {
     if (((char*)ptr >= DOSMEM_dosmem) &&
         ((char*)ptr < DOSMEM_dosmem + DOSMEM_SIZE))
-	  return (UINT)ptr - (UINT)DOSMEM_dosmem;
+          return (char *)ptr - DOSMEM_dosmem;
     return (UINT)ptr;
 }
 
@@ -236,7 +236,7 @@ UINT DOSMEM_MapLinearToDos(LPVOID ptr)
  */
 LPVOID DOSMEM_MapDosToLinear(UINT ptr)
 {
-    if (ptr < DOSMEM_SIZE) return (LPVOID)(ptr + (UINT)DOSMEM_dosmem);
+    if (ptr < DOSMEM_SIZE) return DOSMEM_dosmem + ptr;
     return (LPVOID)ptr;
 }
 

@@ -100,7 +100,7 @@ inline static int is_version_nt(void)
 static HKEY create_special_root_hkey( HANDLE hkey, DWORD access )
 {
     HKEY ret = 0;
-    int idx = (UINT)hkey - (UINT)HKEY_SPECIAL_ROOT_FIRST;
+    int idx = (UINT_PTR)hkey - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST;
 
     if (hkey == HKEY_CURRENT_USER)
     {
@@ -135,7 +135,7 @@ inline static HKEY get_special_root_hkey( HKEY hkey )
 
     if ((hkey >= HKEY_SPECIAL_ROOT_FIRST) && (hkey <= HKEY_SPECIAL_ROOT_LAST))
     {
-        if (!(ret = special_root_keys[(UINT)hkey - (UINT)HKEY_SPECIAL_ROOT_FIRST]))
+        if (!(ret = special_root_keys[(UINT_PTR)hkey - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST]))
             ret = create_special_root_hkey( hkey, KEY_ALL_ACCESS );
     }
     return ret;

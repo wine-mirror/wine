@@ -443,14 +443,14 @@ static HRESULT WINAPI DSPROPERTY_Description1(
                 DSDRIVERDESC desc;
                 ppd->WaveDeviceId = wod;
                 ppd->Devnode = wod;
-                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                 if (err == DS_OK) {
                     PIDSDRIVER drv = NULL;
                     lstrcpynA(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA));
                     lstrcpynA(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA));
                     MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, ppd->DescriptionW, sizeof(ppd->DescriptionW)/sizeof(WCHAR) );
                     MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, ppd->ModuleW, sizeof(ppd->ModuleW)/sizeof(WCHAR) );
-                    err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+                    err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                     if (err == DS_OK && drv)
                         ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                     else
@@ -474,14 +474,14 @@ static HRESULT WINAPI DSPROPERTY_Description1(
                 DSDRIVERDESC desc;
                 ppd->WaveDeviceId = wid;
                 ppd->Devnode = wid;
-                err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                 if (err == DS_OK) {
                     PIDSCDRIVER drv;
                     lstrcpynA(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA));
                     lstrcpynA(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA));
                     MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, ppd->DescriptionW, sizeof(ppd->DescriptionW)/sizeof(WCHAR) );
                     MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, ppd->ModuleW, sizeof(ppd->ModuleW)/sizeof(WCHAR) );
-                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD)&drv,0));
+                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&drv,0));
                     if (err == DS_OK && drv)
                         ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                     else
@@ -506,14 +506,14 @@ static HRESULT WINAPI DSPROPERTY_Description1(
                 ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
                 ppd->WaveDeviceId = wod;
                 ppd->Devnode = wod;
-                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                 if (err == DS_OK) {
                     PIDSDRIVER drv = NULL;
                     lstrcpynA(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA));
                     lstrcpynA(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA));
                     MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, ppd->DescriptionW, sizeof(ppd->DescriptionW)/sizeof(WCHAR) );
                     MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, ppd->ModuleW, sizeof(ppd->ModuleW)/sizeof(WCHAR) );
-                    err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+                    err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                     if (err == DS_OK && drv)
                         ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                     else
@@ -539,14 +539,14 @@ static HRESULT WINAPI DSPROPERTY_Description1(
                     ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
                     ppd->WaveDeviceId = wid;
                     ppd->Devnode = wid;
-                    err = mmErr(waveInMessage((HWAVEIN)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                    err = mmErr(waveInMessage((HWAVEIN)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                     if (err == DS_OK) {
                         PIDSDRIVER drv = NULL;
                         lstrcpynA(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA));
                         lstrcpynA(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA));
                         MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, ppd->DescriptionW, sizeof(ppd->DescriptionW)/sizeof(WCHAR) );
                         MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, ppd->ModuleW, sizeof(ppd->ModuleW)/sizeof(WCHAR) );
-                        err = mmErr(waveInMessage((HWAVEIN)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+                        err = mmErr(waveInMessage((HWAVEIN)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                         if (err == DS_OK && drv)
                             ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                         else
@@ -619,7 +619,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
             if (IsEqualGUID( &dev_guid, &DSOUND_renderer_guids[wod] ) ) {
                 DSDRIVERDESC desc;
                 ppd->WaveDeviceId = wod;
-                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                 if (err == DS_OK) {
                     PIDSDRIVER drv = NULL;
                     /* FIXME: this is a memory leak */
@@ -635,7 +635,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
                         ppd->Description = szDescription;
                         ppd->Module = szModule;
                         ppd->Interface = szInterface;
-                        err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+                        err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                         if (err == DS_OK && drv)
                             ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                         else
@@ -668,7 +668,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
             if (IsEqualGUID( &dev_guid, &DSOUND_capture_guids[wid] ) ) {
                 DSDRIVERDESC desc;
                 ppd->WaveDeviceId = wid;
-                err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                 if (err == DS_OK) {
                     PIDSCDRIVER drv;
                     /* FIXME: this is a memory leak */
@@ -684,7 +684,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
                         ppd->Description = szDescription;
                         ppd->Module = szModule;
                         ppd->Interface = szInterface;
-                        err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD)&drv,0));
+                        err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&drv,0));
                         if (err == DS_OK && drv)
                             ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                         else
@@ -716,7 +716,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
                 TRACE("DSOUND_renderer_guids[%ld]\n", wod);
                 ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
                 ppd->WaveDeviceId = wod;
-                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                 if (err == DS_OK) {
                     PIDSDRIVER drv = NULL;
                     /* FIXME: this is a memory leak */
@@ -732,7 +732,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
 			ppd->Description = szDescription;
 			ppd->Module = szModule;
 			ppd->Interface = szInterface;
-			err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+			err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
 			if (err == DS_OK && drv)
 				ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                         else
@@ -764,7 +764,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
                     DSDRIVERDESC desc;
                     TRACE("DSOUND_capture_guids[%ld]\n", wid);
                     ppd->WaveDeviceId = wid;
-                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                     if (err == DS_OK) {
                         PIDSCDRIVER drv;
                         /* FIXME: this is a memory leak */
@@ -780,7 +780,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
                             ppd->Description = szDescription;
                             ppd->Module = szModule;
                             ppd->Interface = szInterface;
-                            err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD)&drv,0));
+                            err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&drv,0));
                             if (err == DS_OK && drv)
                                 ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                             else
@@ -861,7 +861,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
                 DSDRIVERDESC desc;
                 TRACE("DSOUND_renderer_guids[%ld]\n", wod);
                 ppd->WaveDeviceId = wod;
-                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                 if (err == DS_OK) {
                     PIDSDRIVER drv = NULL;
                     /* FIXME: this is a memory leak */
@@ -877,7 +877,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
                         ppd->Description = wDescription;
                         ppd->Module = wModule;
                         ppd->Interface = wInterface;
-                        err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+                        err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                         if (err == DS_OK && drv)
                             ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                         else
@@ -910,7 +910,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
             if (IsEqualGUID( &dev_guid, &DSOUND_capture_guids[wid] ) ) {
                 DSDRIVERDESC desc;
                 ppd->WaveDeviceId = wid;
-                err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                 if (err == DS_OK) {
                     PIDSCDRIVER drv;
                     /* FIXME: this is a memory leak */
@@ -926,7 +926,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
                         ppd->Description = wDescription;
                         ppd->Module = wModule;
                         ppd->Interface = wInterface;
-                        err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD)&drv,0));
+                        err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&drv,0));
                         if (err == DS_OK && drv)
                             ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                         else
@@ -958,7 +958,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
                 TRACE("DSOUND_renderer_guids[%ld]\n", wod);
                 ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
                 ppd->WaveDeviceId = wod;
-                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                 if (err == DS_OK) {
                     PIDSDRIVER drv = NULL;
                     /* FIXME: this is a memory leak */
@@ -974,7 +974,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
 			ppd->Description = wDescription;
 			ppd->Module = wModule;
 			ppd->Interface = wInterface;
-			err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+			err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
 			if (err == DS_OK && drv)
                             ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                         else
@@ -1006,7 +1006,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
                     DSDRIVERDESC desc;
                     TRACE("DSOUND_capture_guids[%ld]\n", wid);
                     ppd->WaveDeviceId = wid;
-                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                     if (err == DS_OK) {
                         PIDSCDRIVER drv;
                         /* FIXME: this is a memory leak */
@@ -1022,7 +1022,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
                             ppd->Description = wDescription;
                             ppd->Module = wModule;
                             ppd->Interface = wInterface;
-                            err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD)&drv,0));
+                            err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&drv,0));
                             if (err == DS_OK && drv)
                                 ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                             else
@@ -1078,7 +1078,7 @@ static HRESULT WINAPI DSPROPERTY_Enumerate1(
 
                 devs = waveOutGetNumDevs();
                 for (wod = 0; wod < devs; ++wod) {
-                    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+                    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
                     if (err == DS_OK) {
                         PIDSCDRIVER drv;
                         ZeroMemory(&data, sizeof(data));
@@ -1092,7 +1092,7 @@ static HRESULT WINAPI DSPROPERTY_Enumerate1(
                         MultiByteToWideChar( CP_ACP, 0, data.ModuleA, -1, data.ModuleW, sizeof(data.ModuleW) );
 
                         data.Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
-                        err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+                        err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                         if (err == DS_OK && drv)
                             data.Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                         else
@@ -1105,7 +1105,7 @@ static HRESULT WINAPI DSPROPERTY_Enumerate1(
 
                 devs = waveInGetNumDevs();
                 for (wid = 0; wid < devs; ++wid) {
-                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
                     if (err == DS_OK) {
                         PIDSCDRIVER drv;
                         ZeroMemory(&data, sizeof(data));
@@ -1119,7 +1119,7 @@ static HRESULT WINAPI DSPROPERTY_Enumerate1(
                         MultiByteToWideChar( CP_ACP, 0, data.ModuleA, -1, data.ModuleW, sizeof(data.ModuleW) );
 
                         data.Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
-                        err = mmErr(waveInMessage((HWAVEIN)wid, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+                        err = mmErr(waveInMessage((HWAVEIN)wid, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                         if (err == DS_OK && drv)
                             data.Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                         else
@@ -1165,7 +1165,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
 
 		devs = waveOutGetNumDevs();
 		for (wod = 0; wod < devs; ++wod) {
-		    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+		    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
 		    if (err == DS_OK) {
 			DWORD size;
 			err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDEVICEINTERFACESIZE,(DWORD_PTR)&size,0));
@@ -1187,7 +1187,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
                                         data.Interface = szInterface;
 
                                         data.Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
-                                        err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+                                        err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                                         if (err == DS_OK && drv)
                                             data.Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                                         else
@@ -1206,7 +1206,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
 
 		devs = waveInGetNumDevs();
 		for (wid = 0; wid < devs; ++wid) {
-		    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+		    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
 		    if (err == DS_OK) {
 			DWORD size;
 			err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDEVICEINTERFACESIZE,(DWORD_PTR)&size,0));
@@ -1228,7 +1228,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
                                         data.Interface = szInterface;
 
                                         data.Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
-                                        err = mmErr(waveInMessage((HWAVEIN)wid, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+                                        err = mmErr(waveInMessage((HWAVEIN)wid, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                                         if (err == DS_OK && drv)
                                             data.Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                                         else
@@ -1280,7 +1280,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
 
 		devs = waveOutGetNumDevs();
 		for (wod = 0; wod < devs; ++wod) {
-		    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+		    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
 		    if (err == DS_OK) {
 			WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
 			WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
@@ -1306,7 +1306,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
                                         data.Interface = wInterface;
 
                                         data.Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
-                                        err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+                                        err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                                         if (err == DS_OK && drv)
                                             data.Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                                         else
@@ -1326,7 +1326,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
 
 		devs = waveInGetNumDevs();
 		for (wid = 0; wid < devs; ++wid) {
-		    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+		    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
 		    if (err == DS_OK) {
 			WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
 			WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
@@ -1351,7 +1351,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
                                         data.Module = wModule;
                                         data.Interface = wInterface;
                                         data.Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
-                                        err = mmErr(waveInMessage((HWAVEIN)wid, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+                                        err = mmErr(waveInMessage((HWAVEIN)wid, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                                         if (err == DS_OK && drv)
                                             data.Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                                         else

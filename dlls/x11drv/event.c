@@ -203,7 +203,7 @@ done:
  */
 static Bool filter_event( Display *display, XEvent *event, char *arg )
 {
-    DWORD mask = (ULONG_PTR)arg;
+    ULONG_PTR mask = (ULONG_PTR)arg;
 
     if ((mask & QS_ALLINPUT) == QS_ALLINPUT) return 1;
 
@@ -233,7 +233,7 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
 /***********************************************************************
  *           process_events
  */
-static int process_events( Display *display, DWORD mask )
+static int process_events( Display *display, ULONG_PTR mask )
 {
     XEvent event;
     HWND hwnd;

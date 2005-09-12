@@ -1748,7 +1748,7 @@ UINT X11DRV_GetKeyboardLayoutList(INT size, HKL *hkl)
     {
         if (hkl)
         {
-            DWORD layout = main_key_tab[i].lcid;
+            ULONG_PTR layout = main_key_tab[i].lcid;
             LANGID langid;
 
             /* see comment for GetKeyboardLayout */
@@ -1770,7 +1770,7 @@ UINT X11DRV_GetKeyboardLayoutList(INT size, HKL *hkl)
  */
 HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
 {
-    DWORD layout;
+    ULONG_PTR layout;
     LANGID langid;
 
     if (dwThreadid && dwThreadid != GetCurrentThreadId())

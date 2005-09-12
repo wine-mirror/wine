@@ -174,10 +174,8 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
 
     coff = (const IMAGE_COFF_SYMBOLS_HEADER*)msc_dbg->root;
 
-    coff_symbols = (const IMAGE_SYMBOL*)((unsigned int)coff + 
-                                         coff->LvaToFirstSymbol);
-    coff_linetab = (const IMAGE_LINENUMBER*)((unsigned int)coff + 
-                                             coff->LvaToFirstLinenumber);
+    coff_symbols = (const IMAGE_SYMBOL*)((const char *)coff + coff->LvaToFirstSymbol);
+    coff_linetab = (const IMAGE_LINENUMBER*)((const char *)coff + coff->LvaToFirstLinenumber);
     coff_strtab = (const char*)(coff_symbols + coff->NumberOfSymbols);
 
     linetab_indx = 0;

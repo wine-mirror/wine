@@ -637,7 +637,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
 			else
 			    DPRINTF(" ");
 		    }
-		    bitmap_ += (4 - (((unsigned int) bitmap_) & 0x03));
+		    bitmap_ += (4 - ((UINT_PTR)bitmap_ & 0x03));
 		    DPRINTF("\n");
 		}
 	    }

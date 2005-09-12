@@ -96,7 +96,7 @@ static NTSTATUS add_access_ace(PACL pAcl, DWORD dwAceRevision, DWORD dwAceFlags,
     /* calculate generic size of the ACE */
     dwLengthSid = RtlLengthSid(pSid);
     dwAceSize = sizeof(ACE_HEADER) + sizeof(DWORD) + dwLengthSid;
-    if ((DWORD)(pAceHeader + dwAceSize) > (DWORD)(pAcl + pAcl->AclSize))
+    if ((char *)pAceHeader + dwAceSize > (char *)pAcl + pAcl->AclSize)
         return STATUS_ALLOTTED_SPACE_EXCEEDED;
 
     /* fill the new ACE */
@@ -1084,11 +1084,11 @@ BOOLEAN WINAPI RtlFirstFreeAce(
 	*x = 0;
 	ace = (PACE_HEADER)(acl+1);
 	for (i=0;i<acl->AceCount;i++) {
-		if ((DWORD)ace>=(((DWORD)acl)+acl->AclSize))
+		if ((BYTE *)ace >= (BYTE *)acl + acl->AclSize)
 			return 0;
 		ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
 	}
-	if ((DWORD)ace>=(((DWORD)acl)+acl->AclSize))
+	if ((BYTE *)ace >= (BYTE *)acl + acl->AclSize)
 		return 0;
 	*x = ace;
 	return 1;
@@ -1112,11 +1112,11 @@ NTSTATUS WINAPI RtlAddAce(
 	if (!RtlFirstFreeAce(acl,&targetace))
 		return STATUS_INVALID_PARAMETER;
 	nrofaces=0;ace=acestart;
-	while (((DWORD)ace-(DWORD)acestart)<acelen) {
+	while (((BYTE *)ace - (BYTE *)acestart) < acelen) {
 		nrofaces++;
 		ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
 	}
-	if ((DWORD)targetace+acelen>(DWORD)acl+acl->AclSize) /* too much aces */
+	if ((BYTE *)targetace + acelen > (BYTE *)acl + acl->AclSize) /* too much aces */
 		return STATUS_INVALID_PARAMETER;
 	memcpy((LPBYTE)targetace,acestart,acelen);
 	acl->AceCount+=nrofaces;

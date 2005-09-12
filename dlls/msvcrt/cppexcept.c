@@ -381,11 +381,11 @@ DEFINE_REGS_ENTRYPOINT( __CxxFrameHandler, 16, 0 );
  */
 void _CxxThrowException( exception *object, const cxx_exception_type *type )
 {
-    DWORD args[3];
+    ULONG_PTR args[3];
 
     args[0] = CXX_FRAME_MAGIC;
-    args[1] = (DWORD)object;
-    args[2] = (DWORD)type;
+    args[1] = (ULONG_PTR)object;
+    args[2] = (ULONG_PTR)type;
     RaiseException( CXX_EXCEPTION, EH_NONCONTINUABLE, 3, args );
 }
 

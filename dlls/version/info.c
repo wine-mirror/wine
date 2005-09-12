@@ -592,7 +592,7 @@ static VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT
 {
     VS_VERSION_INFO_STRUCT16 *child = VersionInfo16_Children( info );
 
-    while ( (DWORD)child < (DWORD)info + info->wLength )
+    while ((char *)child < (char *)info + info->wLength )
     {
         if ( !strncasecmp( child->szKey, szKey, cbKey ) )
             return child;
@@ -612,7 +612,7 @@ static VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT
 {
     VS_VERSION_INFO_STRUCT32 *child = VersionInfo32_Children( info );
 
-    while ( (DWORD)child < (DWORD)info + info->wLength )
+    while ((char *)child < (char *)info + info->wLength )
     {
         if ( !strncmpiW( child->szKey, szKey, cbKey ) )
             return child;

@@ -367,7 +367,7 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID un
         }
         if (((void*)frame < NtCurrentTeb()->Tib.StackLimit) ||
             ((void*)(frame+1) > NtCurrentTeb()->Tib.StackBase) ||
-            (int)frame & 3)
+            (UINT_PTR)frame & 3)
         {
             newrec.ExceptionCode    = STATUS_BAD_STACK;
             newrec.ExceptionFlags   = EH_NONCONTINUABLE;

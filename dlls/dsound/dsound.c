@@ -468,7 +468,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     }
 
     /* FIXME: hack to make sure we have a secondary buffer */
-    if ((DWORD)((SecondaryBufferImpl *)psb)->dsb == (DWORD)This) {
+    if ((IDirectSoundImpl *)((SecondaryBufferImpl *)psb)->dsb == This) {
         WARN("trying to duplicate primary buffer\n");
         *ppdsb = NULL;
         return DSERR_INVALIDCALL;
@@ -711,7 +711,7 @@ static HRESULT WINAPI IDirectSoundImpl_Initialize(
     device->guid = devGUID;
 
     /* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
-    waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&device->driver, 0);
+    waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&device->driver, 0);
 
     /* Disable the direct sound driver to force emulation if requested. */
     if (ds_hw_accel == DS_HW_ACCEL_EMULATION)
@@ -744,7 +744,7 @@ static HRESULT WINAPI IDirectSoundImpl_Initialize(
 
         hr = mmErr(waveOutOpen(&(device->hwo),
                                 device->drvdesc.dnDevNode, device->pwfx,
-                                (DWORD)DSOUND_callback, (DWORD)device,
+                                (DWORD_PTR)DSOUND_callback, (DWORD)device,
                                 flags));
         if (hr != DS_OK) {
             WARN("waveOutOpen failed\n");
@@ -817,7 +817,7 @@ static HRESULT WINAPI IDirectSoundImpl_Initialize(
         DSOUND_renderer[device->drvdesc.dnDevNode] = device;
         timeBeginPeriod(DS_TIME_RES);
         DSOUND_renderer[device->drvdesc.dnDevNode]->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
-            (DWORD)DSOUND_renderer[device->drvdesc.dnDevNode], TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
+            (DWORD_PTR)DSOUND_renderer[device->drvdesc.dnDevNode], TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
     } else {
         WARN("DSOUND_PrimaryCreate failed\n");
     }

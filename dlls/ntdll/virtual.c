@@ -364,7 +364,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     struct file_view *view;
     struct list *ptr;
 
-    assert( !((unsigned int)base & page_mask) );
+    assert( !((UINT_PTR)base & page_mask) );
     assert( !(size & page_mask) );
 
     /* Create the view structure */
@@ -1029,7 +1029,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
          *        really make sure that the *new* base address is also > 2GB.
          *        Some DLLs really check the MSB of the module handle :-/
          */
-        if ((nt->OptionalHeader.ImageBase & 0x80000000) && !((DWORD)base & 0x80000000))
+        if ((nt->OptionalHeader.ImageBase & 0x80000000) && !((ULONG_PTR)base & 0x80000000))
             ERR( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
 
         if (!do_relocations( ptr, relocs, ptr - base, total_size ))

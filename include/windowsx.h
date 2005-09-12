@@ -36,28 +36,28 @@ extern "C" {
 #define GET_X_LPARAM(lp)                        ((int)(short)LOWORD(lp))
 #define GET_Y_LPARAM(lp)                        ((int)(short)HIWORD(lp))
 
-#define GET_EM_LINESCROLL_MPS(vert, horz)       (WPARAM)horz, (LONG)vert
+#define GET_EM_LINESCROLL_MPS(vert, horz)       (WPARAM)horz, (LPARAM)vert
 
 #define GET_EM_SETSEL_START(wp, lp)             (INT)(wp)
 #define GET_EM_SETSEL_END(wp, lp)               (lp)
-#define GET_EM_SETSEL_MPS(iStart, iEnd)         (WPARAM)(iStart), (LONG)(iEnd)
+#define GET_EM_SETSEL_MPS(iStart, iEnd)         (WPARAM)(iStart), (LPARAM)(iEnd)
 
 #define GET_WM_ACTIVATE_STATE(wp, lp)           LOWORD(wp)
 #define GET_WM_ACTIVATE_FMINIMIZED(wp, lp)      (BOOL)HIWORD(wp)
 #define GET_WM_ACTIVATE_HWND(wp, lp)            (HWND)(lp)
-#define GET_WM_ACTIVATE_MPS(s, fmin, hwnd)      (WPARAM)MAKELONG((s), (fmin)), (LONG)(hwnd)
+#define GET_WM_ACTIVATE_MPS(s, fmin, hwnd)      (WPARAM)MAKELONG((s), (fmin)), (LPARAM)(hwnd)
 
 #define GET_WM_CHANGECBCHAIN_HWNDNEXT(wp, lp)   (HWND)(lp)
 
 #define GET_WM_CHARTOITEM_CHAR(wp, lp)          (TCHAR)LOWORD(wp)
 #define GET_WM_CHARTOITEM_POS(wp, lp)           HIWORD(wp)
 #define GET_WM_CHARTOITEM_HWND(wp, lp)          (HWND)(lp)
-#define GET_WM_CHARTOITEM_MPS(ch, pos, hwnd)    (WPARAM)MAKELONG((pos), (ch)), (LONG)(hwnd)
+#define GET_WM_CHARTOITEM_MPS(ch, pos, hwnd)    (WPARAM)MAKELONG((pos), (ch)), (LPARAM)(hwnd)
 
 #define GET_WM_COMMAND_ID(wp, lp)               LOWORD(wp)
 #define GET_WM_COMMAND_HWND(wp, lp)             (HWND)(lp)
 #define GET_WM_COMMAND_CMD(wp, lp)              HIWORD(wp)
-#define GET_WM_COMMAND_MPS(id, hwnd, cmd)       (WPARAM)MAKELONG(id, cmd), (LONG)(hwnd)
+#define GET_WM_COMMAND_MPS(id, hwnd, cmd)       (WPARAM)MAKELONG(id, cmd), (LPARAM)(hwnd)
 
 #define WM_CTLCOLOR                             0x0019
 
@@ -65,46 +65,46 @@ extern "C" {
 #define GET_WM_CTLCOLOR_HWND(wp, lp, msg)       (HWND)(lp)
 #define GET_WM_CTLCOLOR_TYPE(wp, lp, msg)       (WORD)(msg - WM_CTLCOLORMSGBOX)
 #define GET_WM_CTLCOLOR_MSG(type)               (WORD)(WM_CTLCOLORMSGBOX+(type))
-#define GET_WM_CTLCOLOR_MPS(hdc, hwnd, type)    (WPARAM)(hdc), (LONG)(hwnd)
+#define GET_WM_CTLCOLOR_MPS(hdc, hwnd, type)    (WPARAM)(hdc), (LPARAM)(hwnd)
 
 #define GET_WM_HSCROLL_CODE(wp, lp)             LOWORD(wp)
 #define GET_WM_HSCROLL_POS(wp, lp)              HIWORD(wp)
 #define GET_WM_HSCROLL_HWND(wp, lp)             (HWND)(lp)
-#define GET_WM_HSCROLL_MPS(code, pos, hwnd)     (WPARAM)MAKELONG(code, pos), (LONG)(hwnd)
+#define GET_WM_HSCROLL_MPS(code, pos, hwnd)     (WPARAM)MAKELONG(code, pos), (LPARAM)(hwnd)
 
 #define GET_WM_MENUCHAR_CHAR(wp, lp)            (TCHAR)LOWORD(wp)
 #define GET_WM_MENUCHAR_HMENU(wp, lp)           (HMENU)(lp)
 #define GET_WM_MENUCHAR_FMENU(wp, lp)           (BOOL)HIWORD(wp)
-#define GET_WM_MENUCHAR_MPS(ch, hmenu, f)       (WPARAM)MAKELONG(ch, f), (LONG)(hmenu)
+#define GET_WM_MENUCHAR_MPS(ch, hmenu, f)       (WPARAM)MAKELONG(ch, f), (LPARAM)(hmenu)
 
 #define GET_WM_MENUSELECT_CMD(wp, lp)           LOWORD(wp)
 #define GET_WM_MENUSELECT_FLAGS(wp, lp)         (UINT)(int)(short)HIWORD(wp)
 #define GET_WM_MENUSELECT_HMENU(wp, lp)         (HMENU)(lp)
-#define GET_WM_MENUSELECT_MPS(cmd, f, hmenu)    (WPARAM)MAKELONG(cmd, f), (LONG)(hmenu)
+#define GET_WM_MENUSELECT_MPS(cmd, f, hmenu)    (WPARAM)MAKELONG(cmd, f), (LPARAM)(hmenu)
 
-#define GET_WM_MDIACTIVATE_FACTIVATE(hwnd, wp, lp) (lp == (LONG)hwnd)
+#define GET_WM_MDIACTIVATE_FACTIVATE(hwnd, wp, lp) (lp == (LPARAM)hwnd)
 #define GET_WM_MDIACTIVATE_HWNDDEACT(wp, lp)    (HWND)(wp)
 #define GET_WM_MDIACTIVATE_HWNDACTIVATE(wp, lp) (HWND)(lp)
 #define GET_WM_MDIACTIVATE_MPS(f, hwndD, hwndA) (WPARAM)(hwndA), 0
-#define GET_WM_MDISETMENU_MPS(hmenuF, hmenuW)   (WPARAM)hmenuF, (LONG)hmenuW
+#define GET_WM_MDISETMENU_MPS(hmenuF, hmenuW)   (WPARAM)hmenuF, (LPARAM)hmenuW
 
 #define GET_WM_PARENTNOTIFY_MSG(wp, lp)         LOWORD(wp)
 #define GET_WM_PARENTNOTIFY_ID(wp, lp)          HIWORD(wp)
 #define GET_WM_PARENTNOTIFY_HWNDCHILD(wp, lp)   (HWND)(lp)
 #define GET_WM_PARENTNOTIFY_X(wp, lp)           (int)(short)LOWORD(lp)
 #define GET_WM_PARENTNOTIFY_Y(wp, lp)           (int)(short)HIWORD(lp)
-#define GET_WM_PARENTNOTIFY_MPS(msg, id, hwnd)  (WPARAM)MAKELONG(id, msg), (LONG)(hwnd)
+#define GET_WM_PARENTNOTIFY_MPS(msg, id, hwnd)  (WPARAM)MAKELONG(id, msg), (LPARAM)(hwnd)
 #define GET_WM_PARENTNOTIFY2_MPS(msg, x, y)     (WPARAM)MAKELONG(0, msg), MAKELONG(x, y)
 
 #define GET_WM_VKEYTOITEM_CODE(wp, lp)          (int)(short)LOWORD(wp)
 #define GET_WM_VKEYTOITEM_ITEM(wp, lp)          HIWORD(wp)
 #define GET_WM_VKEYTOITEM_HWND(wp, lp)          (HWND)(lp)
-#define GET_WM_VKEYTOITEM_MPS(code, item, hwnd) (WPARAM)MAKELONG(item, code), (LONG)(hwnd)
+#define GET_WM_VKEYTOITEM_MPS(code, item, hwnd) (WPARAM)MAKELONG(item, code), (LPARAM)(hwnd)
 
 #define GET_WM_VSCROLL_CODE(wp, lp)             LOWORD(wp)
 #define GET_WM_VSCROLL_POS(wp, lp)              HIWORD(wp)
 #define GET_WM_VSCROLL_HWND(wp, lp)             (HWND)(lp)
-#define GET_WM_VSCROLL_MPS(code, pos, hwnd)     (WPARAM)MAKELONG(code, pos), (LONG)(hwnd)
+#define GET_WM_VSCROLL_MPS(code, pos, hwnd)     (WPARAM)MAKELONG(code, pos), (LPARAM)(hwnd)
 
 /****** KERNEL Macro APIs ******************************************************/
 

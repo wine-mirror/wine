@@ -711,7 +711,7 @@ static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STR
  *
  * helper for NtQueryDirectoryFile
  */
-static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG *pos, ULONG max_length,
+static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG_PTR *pos, ULONG max_length,
                                                 const char *long_name, const char *short_name,
                                                 const UNICODE_STRING *mask )
 {

@@ -521,8 +521,8 @@ void	dump_coff(unsigned long coffbase, unsigned long len, void* pmt)
 
     coff = (PIMAGE_COFF_SYMBOLS_HEADER)PRD(coffbase, len);
 
-    coff_symbols = (PIMAGE_SYMBOL) ((unsigned int) coff + coff->LvaToFirstSymbol);
-    coff_linetab = (PIMAGE_LINENUMBER) ((unsigned int) coff + coff->LvaToFirstLinenumber);
+    coff_symbols = (PIMAGE_SYMBOL) ((char *)coff + coff->LvaToFirstSymbol);
+    coff_linetab = (PIMAGE_LINENUMBER) ((char *)coff + coff->LvaToFirstLinenumber);
     coff_strtab = (char *) (coff_symbols + coff->NumberOfSymbols);
 
     printf("\nDebug table: COFF format. modbase %p, coffbase %p\n", PRD(0, 0), coff);

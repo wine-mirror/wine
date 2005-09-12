@@ -47,19 +47,19 @@ HANDLE  WINAPI GetConsoleInputWaitHandle(void);
 
 static inline BOOL is_console_handle(HANDLE h)
 {
-    return h != INVALID_HANDLE_VALUE && ((DWORD)h & 3) == 3;
+    return h != INVALID_HANDLE_VALUE && ((UINT_PTR)h & 3) == 3;
 }
 
 /* map a real wineserver handle onto a kernel32 console handle */
 static inline HANDLE console_handle_map(HANDLE h)
 {
-    return h != INVALID_HANDLE_VALUE ? (HANDLE)((DWORD)h ^ 3) : INVALID_HANDLE_VALUE;
+    return h != INVALID_HANDLE_VALUE ? (HANDLE)((UINT_PTR)h ^ 3) : INVALID_HANDLE_VALUE;
 }
 
 /* map a kernel32 console handle onto a real wineserver handle */
 static inline HANDLE console_handle_unmap(HANDLE h)
 {
-    return h != INVALID_HANDLE_VALUE ? (HANDLE)((DWORD)h ^ 3) : INVALID_HANDLE_VALUE;
+    return h != INVALID_HANDLE_VALUE ? (HANDLE)((UINT_PTR)h ^ 3) : INVALID_HANDLE_VALUE;
 }
 
 extern HMODULE kernel32_handle;

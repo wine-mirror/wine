@@ -73,7 +73,7 @@ static void CARET_DisplayCaret( HWND hwnd, const RECT *r )
 /*****************************************************************
  *               CARET_Callback
  */
-static void CALLBACK CARET_Callback( HWND hwnd, UINT msg, UINT id, DWORD ctime)
+static void CALLBACK CARET_Callback( HWND hwnd, UINT msg, UINT_PTR id, DWORD ctime)
 {
     BOOL ret;
     RECT r;

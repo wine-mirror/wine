@@ -341,7 +341,7 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
   if (This->pStream == NULL)
     return AVIERR_ERROR;
 
-  if ((LONG)lpbiWanted == AVIGETFRAMEF_BESTDISPLAYFMT) {
+  if (lpbiWanted == (LPBITMAPINFOHEADER)AVIGETFRAMEF_BESTDISPLAYFMT) {
     lpbi = NULL;
     bBestDisplay = TRUE;
   }

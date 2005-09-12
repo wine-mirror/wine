@@ -264,7 +264,7 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 			waveOutClose(device->hwo);
 			device->hwo = 0;
 			err = mmErr(waveOutOpen(&(device->hwo), device->drvdesc.dnDevNode,
-						device->pwfx, (DWORD)DSOUND_callback, (DWORD)device,
+						device->pwfx, (DWORD_PTR)DSOUND_callback, (DWORD)device,
 						flags));
 			if (err == DS_OK) {
 				err = IDsDriver_CreateSoundBuffer(device->driver,device->pwfx,
@@ -372,7 +372,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 		waveOutClose(device->hwo);
 		device->hwo = 0;
                 err = mmErr(waveOutOpen(&(device->hwo), device->drvdesc.dnDevNode,
-                                        device->pwfx, (DWORD)DSOUND_callback, (DWORD)device,
+                                        device->pwfx, (DWORD_PTR)DSOUND_callback, (DWORD)device,
                                         flags));
                 if (err == DS_OK) {
                     err = DSOUND_PrimaryOpen(device);

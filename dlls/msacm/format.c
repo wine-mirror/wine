@@ -271,7 +271,7 @@ static INT_PTR CALLBACK FormatChooseDlgProc(HWND hWnd, UINT msg,
 MMRESULT WINAPI acmFormatChooseA(PACMFORMATCHOOSEA pafmtc)
 {
     return DialogBoxParamA(MSACM_hInstance32, MAKEINTRESOURCEA(DLG_ACMFORMATCHOOSE_ID),
-			   pafmtc->hwndOwner, FormatChooseDlgProc, (INT)pafmtc);
+                           pafmtc->hwndOwner, FormatChooseDlgProc, (LPARAM)pafmtc);
 }
 
 /***********************************************************************
