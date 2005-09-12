@@ -547,13 +547,12 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         DWORD grfPI, DWORD dwReserved)
 {
     ResProtocol *This = PROTOCOL_THIS(iface);
-    DWORD grfBINDF = 0;
+    DWORD grfBINDF = 0, len;
     BINDINFO bindinfo;
-    int len;
-    WCHAR dll[MAX_PATH];
-    LPCWSTR url_dll, url_file;
+    LPWSTR url_dll, url_file, url;
     HMODULE hdll;
     HRSRC src;
+    HRESULT hres;
 
     static const WCHAR wszRes[] = {'r','e','s',':','/','/'};
 
@@ -567,36 +566,45 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     /* FIXME:
      * Implement MIME type checking
-     * Use CoInternetParseUrl (not implemented yet)
      */
 
-    len = strlenW(szUrl);
-    if(len < sizeof(wszRes)/sizeof(wszRes[0]) || memcmp(szUrl, wszRes, sizeof(wszRes))) {
-        WARN("Wrong protocol of url: %s\n", debugstr_w(szUrl));
+    len = strlenW(szUrl)+16;
+    url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    hres = CoInternetParseUrl(szUrl, PARSE_ENCODE, 0, url, len, &len, 0);
+    if(FAILED(hres)) {
+        WARN("CoInternetParseUrl failed: %08lx\n", hres);
+        HeapFree(GetProcessHeap(), 0, url);
+        IInternetProtocolSink_ReportResult(pOIProtSink, hres, 0, NULL);
+        return hres;
+    }
+
+    if(len < sizeof(wszRes)/sizeof(wszRes[0]) || memcmp(url, wszRes, sizeof(wszRes))) {
+        WARN("Wrong protocol of url: %s\n", debugstr_w(url));
         IInternetProtocolSink_ReportResult(pOIProtSink, MK_E_SYNTAX, 0, NULL);
+        HeapFree(GetProcessHeap(), 0, url);
         return MK_E_SYNTAX;
     }
 
-    url_dll = szUrl + sizeof(wszRes)/sizeof(wszRes[0]);
+    url_dll = url + sizeof(wszRes)/sizeof(wszRes[0]);
     if(!(url_file = strchrW(url_dll, '/'))) {
-        WARN("wrong url: %s\n", debugstr_w(szUrl));
+        WARN("wrong url: %s\n", debugstr_w(url));
         IInternetProtocolSink_ReportResult(pOIProtSink, MK_E_SYNTAX, 0, NULL);
+        HeapFree(GetProcessHeap(), 0, url);
         return MK_E_SYNTAX;
     }
 
-    memcpy(dll, url_dll, (url_file-url_dll)*sizeof(WCHAR));
-    dll[url_file-url_dll] = 0;
-
-    hdll = LoadLibraryExW(dll, NULL, LOAD_LIBRARY_AS_DATAFILE);
+    *url_file++ = 0;
+    hdll = LoadLibraryExW(url_dll, NULL, LOAD_LIBRARY_AS_DATAFILE);
     if(!hdll) {
-        WARN("Could not open dll: %s\n", debugstr_w(dll));
+        WARN("Could not open dll: %s\n", debugstr_w(url_dll));
         IInternetProtocolSink_ReportResult(pOIProtSink, HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    src = FindResourceW(hdll, ++url_file, (LPCWSTR)RT_HTML);
+    src = FindResourceW(hdll, url_file, (LPCWSTR)RT_HTML);
+    HeapFree(GetProcessHeap(), 0, url);
     if(!src) {
-        WARN("Could not find resource: %s\n", debugstr_w(url_file));
+        WARN("Could not find resource\n");
         IInternetProtocolSink_ReportResult(pOIProtSink, HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
         return HRESULT_FROM_WIN32(GetLastError());
     }
