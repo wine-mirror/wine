@@ -53,7 +53,7 @@ extern IClassFactoryImpl SHDOCVW_ClassFactory;
  * WebBrowser declaration for SHDOCVW.DLL
  */
 typedef struct {
-    const IWebBrowserVtbl               *lpWebBrowserVtbl;
+    const IWebBrowser2Vtbl              *lpWebBrowser2Vtbl;
     const IOleObjectVtbl                *lpOleObjectVtbl;
     const IOleInPlaceObjectVtbl         *lpOleInPlaceObjectVtbl;
     const IOleControlVtbl               *lpOleControlVtbl;
@@ -66,7 +66,8 @@ typedef struct {
     LONG ref;
 } WebBrowser;
 
-#define WEBBROWSER(x)   ((IWebBrowser*)                 &(x)->lpWebBrowserVtbl)
+#define WEBBROWSER(x)   ((IWebBrowser*)                 &(x)->lpWebBrowser2Vtbl)
+#define WEBBROWSER2(x)  ((IWebBrowser2*)                &(x)->lpWebBrowser2Vtbl)
 #define OLEOBJ(x)       ((IOleObject*)                  &(x)->lpOleObjectVtbl)
 #define INPLACEOBJ(x)   ((IOleInPlaceObject*)           &(x)->lpOleInPlaceObjectVtbl)
 #define CONTROL(x)      ((IOleControl*)                 &(x)->lpOleControlVtbl)
