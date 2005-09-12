@@ -156,6 +156,7 @@ UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
         if (res == -1) size *= 2;
         else if (res >= size) size = res + 1;
         else break;
+        HeapFree( GetProcessHeap(), 0, query );
     }
     /* perform the query */
     r = MSI_DatabaseOpenViewW(db, query, view);
@@ -219,6 +220,7 @@ MSIRECORD *MSI_QueryGetRecord( MSIDATABASE *db, LPCWSTR fmt, ... )
         if (res == -1) size *= 2;
         else if (res >= size) size = res + 1;
         else break;
+        HeapFree( GetProcessHeap(), 0, query );
     }
     /* perform the query */
     r = MSI_DatabaseOpenViewW(db, query, &view);
