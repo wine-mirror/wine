@@ -308,6 +308,72 @@ void write_type(FILE *h, type_t *t, var_t *v, const char *n)
   }
 }
 
+
+struct user_type
+{
+    struct user_type *next;
+    char name[1];
+};
+
+static struct user_type *user_type_list;
+
+static int user_type_registered(const char *name)
+{
+  struct user_type *ut;
+  for (ut = user_type_list; ut; ut = ut->next)
+    if (!strcmp(name, ut->name))
+        return 1;
+  return 0;
+}
+
+static void check_for_user_types(var_t *v)
+{
+  while (v) {
+    type_t *type = v->type;
+    const char *name = v->tname;
+    for (type = v->type; type; type = type->ref) {
+      if (type->user_types_registered) continue;
+      type->user_types_registered = 1;
+      if (is_attr(type->attrs, ATTR_WIREMARSHAL)) {
+        if (!user_type_registered(name))
+        {
+          struct user_type *ut = xmalloc(sizeof(struct user_type) + strlen(name));
+          strcpy(ut->name, name);
+          ut->next = user_type_list;
+          user_type_list = ut;
+        }
+        /* don't carry on parsing fields within this type as we are already
+         * using a wire marshaled type */
+        break;
+      }
+      else if (type->fields)
+      {
+        var_t *fields = type->fields;
+        while (NEXT_LINK(fields)) fields = NEXT_LINK(fields);
+        check_for_user_types(fields);
+      }
+      /* the wire_marshal attribute is always at least one reference away
+       * from the name of the type, so update it after the rest of the
+       * processing above */
+      if (type->name) name = type->name;
+    }
+    v = PREV_LINK(v);
+  }
+}
+
+void write_user_types(void)
+{
+  struct user_type *ut;
+  for (ut = user_type_list; ut; ut = ut->next)
+  {
+    const char *name = ut->name;
+    fprintf(header, "unsigned long   __RPC_USER %s_UserSize     (unsigned long *, unsigned long,   %s *);\n", name, name);
+    fprintf(header, "unsigned char * __RPC_USER %s_UserMarshal  (unsigned long *, unsigned char *, %s *);\n", name, name);
+    fprintf(header, "unsigned char * __RPC_USER %s_UserUnmarshal(unsigned long *, unsigned char *, %s *);\n", name, name);
+    fprintf(header, "void            __RPC_USER %s_UserFree     (unsigned long *, %s *);\n", name, name);
+  }
+}
+
 void write_typedef(type_t *type, var_t *names)
 {
   char *tname = names->tname;
@@ -324,22 +390,6 @@ void write_typedef(type_t *type, var_t *names)
     names = PREV_LINK(names);
   }
   fprintf(header, ";\n");
-
-  if (get_attrp(type->attrs, ATTR_WIREMARSHAL)) {
-    names = lname;
-    while (names) {
-      char *name = get_name(names);
-      fprintf(header, "unsigned long   __RPC_USER %s_UserSize     (unsigned long *, unsigned long,   %s *);\n", name, name);
-      fprintf(header, "unsigned char * __RPC_USER %s_UserMarshal  (unsigned long *, unsigned char *, %s *);\n", name, name);
-      fprintf(header, "unsigned char * __RPC_USER %s_UserUnmarshal(unsigned long *, unsigned char *, %s *);\n", name, name);
-      fprintf(header, "void            __RPC_USER %s_UserFree     (unsigned long *, %s *);\n", name, name);
-      if (PREV_LINK(names))
-        fprintf(header, ", ");
-      names = PREV_LINK(names);
-    }
-  }
-
-  fprintf(header, "\n");
 }
 
 static void do_write_expr(FILE *h, expr_t *e, int p)
@@ -625,6 +675,7 @@ static void write_method_proto(type_t *iface)
   while (cur) {
     var_t *def = cur->def;
     var_t *cas = is_callas(def->attrs);
+    var_t *args;
     if (!is_local(def->attrs)) {
       /* proxy prototype */
       write_type(header, def->type, def, def->tname);
@@ -641,6 +692,13 @@ static void write_method_proto(type_t *iface)
       fprintf(header, "    struct IRpcChannelBuffer* pRpcChannelBuffer,\n");
       fprintf(header, "    PRPC_MESSAGE pRpcMessage,\n");
       fprintf(header, "    DWORD* pdwStubPhase);\n");
+
+      args = cur->args;
+      if (args) {
+        while (NEXT_LINK(args))
+          args = NEXT_LINK(args);
+      }
+      check_for_user_types(args);
     }
     if (cas) {
       func_t *m = iface->funcs;

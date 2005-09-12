@@ -38,6 +38,7 @@
 #include "utils.h"
 #include "parser.h"
 #include "wine/wpp.h"
+#include "header.h"
 
 /* future options to reserve characters for: */
 /* a = alignment of structures */
@@ -310,6 +311,12 @@ int main(int argc,char *argv[])
   ret = yyparse();
 
   if(do_header) {
+    fprintf(header, "/* Begin additional prototypes for all interfaces */\n");
+    fprintf(header, "\n");
+    write_user_types();
+    fprintf(header, "\n");
+    fprintf(header, "/* End additional prototypes */\n");
+    fprintf(header, "\n");
     fprintf(header, "#ifdef __cplusplus\n");
     fprintf(header, "}\n");
     fprintf(header, "#endif\n");

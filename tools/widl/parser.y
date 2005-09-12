@@ -164,7 +164,9 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tPOINTERDEFAULT
 %token tPROPERTIES
 %token tPROPGET tPROPPUT tPROPPUTREF
+%token tPTR
 %token tPUBLIC
+%token tRANGE
 %token tREADONLY tREF
 %token tRESTRICTED
 %token tRETVAL
@@ -172,6 +174,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tSIGNED
 %token tSINGLE
 %token tSIZEIS tSIZEOF
+%token tSMALL
 %token tSOURCE
 %token tSTDCALL
 %token tSTRING tSTRUCT
@@ -377,6 +380,7 @@ attribute:
 	| tPROPPUT				{ $$ = make_attr(ATTR_PROPPUT); }
 	| tPROPPUTREF				{ $$ = make_attr(ATTR_PROPPUTREF); }
 	| tPUBLIC				{ $$ = make_attr(ATTR_PUBLIC); }
+	| tRANGE '(' expr_const ',' expr_const ')' { LINK($5, $3); $$ = make_attrp(ATTR_RANGE, $5); }
 	| tREADONLY				{ $$ = make_attr(ATTR_READONLY); }
 	| tRESTRICTED				{ $$ = make_attr(ATTR_RESTRICTED); }
 	| tRETVAL				{ $$ = make_attr(ATTR_RETVAL); }
@@ -545,6 +549,7 @@ ident:	  aIDENTIFIER				{ $$ = make_var($1); }
 	| aKNOWNTYPE				{ $$ = make_var($<str>1); }
 	| tASYNC				{ $$ = make_var($<str>1); }
 	| tID					{ $$ = make_var($<str>1); }
+	| tRANGE				{ $$ = make_var($<str>1); }
 	| tRETVAL				{ $$ = make_var($<str>1); }
 	| tVERSION				{ $$ = make_var($<str>1); }
 	;
@@ -580,6 +585,7 @@ m_int:
 
 int_std:  tINT					{ $$ = make_type(RPC_FC_LONG, &std_int); } /* win32 only */
 	| tSHORT m_int				{ $$ = make_type(RPC_FC_SHORT, NULL); }
+	| tSMALL				{ $$ = make_type(RPC_FC_SHORT, NULL); }
 	| tLONG m_int				{ $$ = make_type(RPC_FC_LONG, NULL); }
 	| tHYPER m_int				{ $$ = make_type(RPC_FC_HYPER, NULL); }
 	| tINT64				{ $$ = make_type(RPC_FC_HYPER, &std_int64); }
@@ -719,6 +725,7 @@ pident_list:
 pointer_type:
 	  tREF					{ $$ = RPC_FC_RP; }
 	| tUNIQUE				{ $$ = RPC_FC_UP; }
+	| tPTR					{ $$ = RPC_FC_FP; }
 	;
 
 structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = get_typev(RPC_FC_STRUCT, $2, tsSTRUCT);

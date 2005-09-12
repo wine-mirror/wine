@@ -274,8 +274,10 @@ static struct keyword {
 	{"propget",			tPROPGET},
 	{"propput",			tPROPPUT},
 	{"propputref",			tPROPPUTREF},
+        {"ptr",				tPTR},
 /* ... */
 	{"public",			tPUBLIC},
+        {"range",			tRANGE},
 /* ... */
 	{"readonly",			tREADONLY},
 	{"ref",				tREF},
@@ -288,6 +290,7 @@ static struct keyword {
 	{"single",			tSINGLE},
 	{"size_is",			tSIZEIS},
 	{"sizeof",			tSIZEOF},
+        {"small",			tSMALL},
 /* ... */
 	{"source",			tSOURCE},
 /* ... */	

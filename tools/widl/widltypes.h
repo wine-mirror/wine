@@ -99,6 +99,7 @@ enum attr_type
     ATTR_PROPPUT,
     ATTR_PROPPUTREF,
     ATTR_PUBLIC,
+    ATTR_RANGE,
     ATTR_READONLY,
     ATTR_RESTRICTED,
     ATTR_RETVAL,
@@ -185,7 +186,7 @@ struct _type_t {
   func_t *funcs;
   var_t *fields;
   int ignore, is_const, sign;
-  int defined, written;
+  int defined, written, user_types_registered;
   int typelib_idx;
   /* parser-internal */
   DECL_LINK(type_t)
