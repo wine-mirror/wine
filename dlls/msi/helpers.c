@@ -772,6 +772,9 @@ void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * record)
 BOOL ACTION_VerifyComponentForAction(MSIPACKAGE* package, MSICOMPONENT* comp,
                                             INSTALLSTATE check )
 {
+    if (!comp)
+        return FALSE;
+
     if (comp->Installed == check)
         return FALSE;
 
@@ -783,6 +786,9 @@ BOOL ACTION_VerifyComponentForAction(MSIPACKAGE* package, MSICOMPONENT* comp,
 
 BOOL ACTION_VerifyFeatureForAction( MSIFEATURE* feature, INSTALLSTATE check )
 {
+    if (!feature)
+        return FALSE;
+
     if (feature->Installed == check)
         return FALSE;
 
