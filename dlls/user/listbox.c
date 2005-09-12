@@ -2671,7 +2671,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
             SetLastError(ERROR_INVALID_INDEX);
             return LB_ERR;
         }
-        descr->items[wParam].data = (DWORD)lParam;
+        descr->items[wParam].data = lParam;
         return LB_OKAY;
 
     case LB_GETCOUNT16:
