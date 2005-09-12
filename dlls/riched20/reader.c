@@ -2755,7 +2755,7 @@ RTFFlushCPOutputBuffer(RTF_Info *info)
         int length;
 
         length = MultiByteToWideChar(info->codePage, 0, info->cpOutputBuffer,
-                                     info->dwCPOutputCount, buffer, bufferMax);
+                                     info->dwCPOutputCount, buffer, bufferMax/sizeof(WCHAR));
         info->dwCPOutputCount = 0;
 
         RTFPutUnicodeString(info, buffer, length);

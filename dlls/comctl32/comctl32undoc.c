@@ -579,7 +579,7 @@ INT WINAPI AddMRUStringA(HANDLE hList, LPCSTR lpszString)
     if (!stringW)
         return -1;
 
-    MultiByteToWideChar(CP_ACP, 0, lpszString, -1, stringW, len);
+    MultiByteToWideChar(CP_ACP, 0, lpszString, -1, stringW, len/sizeof(WCHAR));
     ret = AddMRUData(hList, stringW, len);
     Free(stringW);
     return ret;

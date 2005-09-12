@@ -903,7 +903,7 @@ HRESULT linuxinput_get_info_W(
 
     /* yes, this is windows behavior (print the GUID_Name for name) */
     MultiByteToWideChar(CP_ACP, 0, _dump_dinput_GUID(rguid), -1, 
-		        (WCHAR*)&(info->tszName), sizeof(WCHAR) * MAX_PATH);
+		        (WCHAR*)&(info->tszName), MAX_PATH);
 
     return DI_OK;
 }

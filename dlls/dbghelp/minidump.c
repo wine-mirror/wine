@@ -407,7 +407,7 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf)
         if (sizeof(ULONG) + ms->Length > sizeof(tmp))
             FIXME("Buffer overflow!!!\n");
         MultiByteToWideChar(CP_ACP, 0, dc->module[i].name, -1,
-                            ms->Buffer, ms->Length);
+                            ms->Buffer, ms->Length/sizeof(WCHAR));
 
         if (dc->cb)
         {

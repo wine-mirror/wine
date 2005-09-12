@@ -6483,23 +6483,24 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
 
         TRACE("TBN_GETINFOTIPA - got string %s\n", debugstr_a(tbgit.pszText));
 
-        len = -1 + MultiByteToWideChar(CP_ACP, 0, tbgit.pszText, -1, NULL, 0);
-        if (len > sizeof(lpnmtdi->szText)/sizeof(lpnmtdi->szText[0])-1)
+        len = MultiByteToWideChar(CP_ACP, 0, tbgit.pszText, -1, NULL, 0);
+        if (len > sizeof(lpnmtdi->szText)/sizeof(lpnmtdi->szText[0]))
         {
             /* need to allocate temporary buffer in infoPtr as there
              * isn't enough space in buffer passed to us by the
              * tooltip control */
-            infoPtr->pszTooltipText = Alloc((len+1)*sizeof(WCHAR));
+            infoPtr->pszTooltipText = Alloc(len*sizeof(WCHAR));
             if (infoPtr->pszTooltipText)
             {
-                MultiByteToWideChar(CP_ACP, 0, tbgit.pszText, len+1, infoPtr->pszTooltipText, (len+1)*sizeof(WCHAR));
+                MultiByteToWideChar(CP_ACP, 0, tbgit.pszText, -1, infoPtr->pszTooltipText, len);
                 lpnmtdi->lpszText = infoPtr->pszTooltipText;
                 return 0;
             }
         }
         else if (len > 0)
         {
-            MultiByteToWideChar(CP_ACP, 0, tbgit.pszText, len+1, lpnmtdi->lpszText, (len+1)*sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, tbgit.pszText, -1,
+                                lpnmtdi->lpszText, sizeof(lpnmtdi->szText)/sizeof(lpnmtdi->szText[0]));
             return 0;
         }
     }

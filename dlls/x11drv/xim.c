@@ -224,7 +224,7 @@ void X11DRV_XIMLookupChars( const char *str, DWORD count )
     WCHAR wcOutput[64];
     HWND focus;
 
-    dwOutput = MultiByteToWideChar(CP_UNIXCP, 0, str, count, wcOutput, sizeof(wcOutput));
+    dwOutput = MultiByteToWideChar(CP_UNIXCP, 0, str, count, wcOutput, sizeof(wcOutput)/sizeof(WCHAR));
 
     if (pImmAssociateContext && (focus = GetFocus()))
         pImmAssociateContext(focus,root_context);

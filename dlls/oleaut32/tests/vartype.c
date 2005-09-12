@@ -121,7 +121,7 @@ static HMODULE hOleaut32;
 
 #define CONVERT_STR(func,str,flags) \
   SetLastError(0); \
-  if (str) MultiByteToWideChar(CP_ACP,0,str,-1,buff,sizeof(buff)); \
+  if (str) MultiByteToWideChar(CP_ACP,0,str,-1,buff,sizeof(buff)/sizeof(WCHAR)); \
   hres = p##func(str ? buff : NULL,in,flags,&out)
 
 #define COPYTEST(val, vt, srcval, dstval, srcref, dstref, fs) do { \
@@ -3249,7 +3249,7 @@ static void test_VarDateFromDec(void)
 
 #define DFS(str) \
   buff[0] = '\0'; out = 0.0; \
-  if (str) MultiByteToWideChar(CP_ACP,0,str,-1,buff,sizeof(buff)); \
+  if (str) MultiByteToWideChar(CP_ACP,0,str,-1,buff,sizeof(buff)/sizeof(WCHAR)); \
   hres = pVarDateFromStr(str ? buff : NULL,lcid,LOCALE_NOUSEROVERRIDE,&out)
 
 #define MKRELDATE(day,mth) st.wMonth = mth; st.wDay = day; \

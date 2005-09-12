@@ -994,7 +994,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
         {
             WCHAR link[MAX_PATH];
 
-            MultiByteToWideChar( CP_ACP, 0, token, -1, link, sizeof(link) );
+            MultiByteToWideChar( CP_ACP, 0, token, -1, link, sizeof(link)/sizeof(WCHAR) );
             if( !Process_Link( link, bAgain ) )
             {
 	        WINE_ERR( "failed to build menu item for %s\n",token);

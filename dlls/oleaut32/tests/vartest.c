@@ -625,7 +625,7 @@ static HRESULT (WINAPI *pVarParseNumFromStr)(OLECHAR*,LCID,ULONG,NUMPARSE*,BYTE*
 
 /* Macros for converting and testing the result of VarParseNumFromStr */
 #define FAILDIG 255
-#define CONVERTN(str,dig,flags) MultiByteToWideChar(CP_ACP,0,str,-1,buff,sizeof(buff)); \
+#define CONVERTN(str,dig,flags) MultiByteToWideChar(CP_ACP,0,str,-1,buff,sizeof(buff)/sizeof(WCHAR)); \
   memset(rgb, FAILDIG, sizeof(rgb)); memset(&np,-1,sizeof(np)); np.cDig = dig; np.dwInFlags = flags; \
   hres = pVarParseNumFromStr(buff,lcid,LOCALE_NOUSEROVERRIDE,&np,rgb)
 #define CONVERT(str,flags) CONVERTN(str,sizeof(rgb),flags)

@@ -3082,7 +3082,7 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
 
     memcpy(&info, lpProtocolInfo, FIELD_OFFSET(WSAPROTOCOL_INFOW, szProtocol));
     len = MultiByteToWideChar(CP_ACP, 0, lpProtocolInfo->szProtocol, -1,
-                              info.szProtocol, WSAPROTOCOL_LEN * sizeof(WCHAR) + 1);
+                              info.szProtocol, WSAPROTOCOL_LEN + 1);
 
     if (!len)
     {

@@ -620,7 +620,7 @@ static PSecPkgInfoW _copyPackageInfoFlatAToW(PSecPkgInfoA infoA)
             {
                 ret->Comment = nextString;
                 MultiByteToWideChar(CP_ACP, 0, infoA->Comment, -1, nextString,
-                 nameLen);
+                 commentLen);
             }
             else
                 ret->Comment = NULL;

@@ -3452,7 +3452,7 @@ static  WINMM_MapType	MCI_UnMapMsg32WTo16(WORD uDevType, WORD wMsg, DWORD dwFlag
             UnMapLS( lParam );
 	    if (msip16) {
                 MultiByteToWideChar(CP_ACP, 0, MapSL(msip16->lpstrReturn), msip16->dwRetSize, 
-                                    msip32w->lpstrReturn, msip32w->dwRetSize);
+                                    msip32w->lpstrReturn, msip32w->dwRetSize/sizeof(WCHAR));
                 UnMapLS( msip16->lpstrReturn );
                 HeapFree( GetProcessHeap(), 0, MapSL(msip16->lpstrReturn) );
                 HeapFree( GetProcessHeap(), 0, (char*)msip16 - sizeof(LPMCI_SYSINFO_PARMSW) );

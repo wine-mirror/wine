@@ -848,7 +848,7 @@ static void LoadReplaceList(void)
 			    &dlen) == ERROR_SUCCESS) {
 	    TRACE("Got %s=%s\n", debugstr_a(value), debugstr_a(data));
             /* "NewName"="Oldname" */
-            if(!MultiByteToWideChar(CP_ACP, 0, data, -1, old_nameW, sizeof(old_nameW)))
+            if(!MultiByteToWideChar(CP_ACP, 0, data, -1, old_nameW, sizeof(old_nameW)/sizeof(WCHAR)))
                 break;
 
             /* Find the old family and hence all of the font files
@@ -3075,7 +3075,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
       * sizeof(WCHAR);
     style_nameW = HeapAlloc(GetProcessHeap(), 0, lensty);
     MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1,
-			style_nameW, lensty);
+			style_nameW, lensty/sizeof(WCHAR));
 
     /* These names should be read from the TT name table */
 
