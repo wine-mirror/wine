@@ -63,10 +63,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(listbox);
 /* Item structure */
 typedef struct
 {
-    LPWSTR  str;       /* Item text */
-    BOOL    selected;  /* Is item selected? */
-    UINT    height;    /* Item height (only for OWNERDRAWVARIABLE) */
-    DWORD   data;      /* User data */
+    LPWSTR    str;       /* Item text */
+    BOOL      selected;  /* Is item selected? */
+    UINT      height;    /* Item height (only for OWNERDRAWVARIABLE) */
+    ULONG_PTR data;      /* User data */
 } LB_ITEMDATA;
 
 /* Listbox structure */
@@ -841,7 +841,7 @@ static INT LISTBOX_FindStringPos( LB_DESCR *descr, LPCWSTR str, BOOL exact )
             /* note that some application (MetaStock) expects the second item
              * to be in the listbox */
             cis.itemID1    = -1;
-            cis.itemData1  = (DWORD)str;
+            cis.itemData1  = (ULONG_PTR)str;
             cis.itemID2    = index;
             cis.itemData2  = descr->items[index].data;
             cis.dwLocaleId = descr->locale;
@@ -955,9 +955,9 @@ static INT LISTBOX_FindString( LB_DESCR *descr, INT start, LPCWSTR str, BOOL exa
 
         /* Otherwise use a linear search */
         for (i = start + 1; i < descr->nb_items; i++, item++)
-            if (item->data == (DWORD)str) return i;
+            if (item->data == (ULONG_PTR)str) return i;
         for (i = 0, item = descr->items; i <= start; i++, item++)
-            if (item->data == (DWORD)str) return i;
+            if (item->data == (ULONG_PTR)str) return i;
     }
     return LB_ERR;
 }
@@ -1503,7 +1503,7 @@ static void LISTBOX_MoveCaret( LB_DESCR *descr, INT index, BOOL fully_visible )
  *           LISTBOX_InsertItem
  */
 static LRESULT LISTBOX_InsertItem( LB_DESCR *descr, INT index,
-                                   LPWSTR str, DWORD data )
+                                   LPWSTR str, ULONG_PTR data )
 {
     LB_ITEMDATA *item;
     INT max_items;
@@ -1594,7 +1594,7 @@ static LRESULT LISTBOX_InsertItem( LB_DESCR *descr, INT index,
 static LRESULT LISTBOX_InsertString( LB_DESCR *descr, INT index, LPCWSTR str )
 {
     LPWSTR new_str = NULL;
-    DWORD data = 0;
+    ULONG_PTR data = 0;
     LRESULT ret;
 
     if (HAS_STRINGS(descr))
@@ -1608,7 +1608,7 @@ static LRESULT LISTBOX_InsertString( LB_DESCR *descr, INT index, LPCWSTR str )
         }
         strcpyW(new_str, str);
     }
-    else data = (DWORD)str;
+    else data = (ULONG_PTR)str;
 
     if (index == -1) index = descr->nb_items;
     if ((ret = LISTBOX_InsertItem( descr, index, new_str, data )) != 0)
