@@ -33,6 +33,7 @@
 #include "wownt32.h"
 #include "x11drv.h"
 #include "gdi.h"
+#include "winternl.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -141,6 +142,22 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+#define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
+          ( ( (ULONG)_x4 << 24 ) |     \
+            ( (ULONG)_x3 << 16 ) |     \
+            ( (ULONG)_x2 <<  8 ) |     \
+              (ULONG)_x1         )
+
+#define MS_GASP_TAG MS_MAKE_TAG('g', 'a', 's', 'p')
+
+#define GASP_GRIDFIT 0x01
+#define GASP_DOGRAY  0x02
+
+#ifdef WORDS_BIGENDIAN
+#define get_be_word(x) (x)
+#else
+#define get_be_word(x) RtlUshortByteSwap(x)
+#endif
 
 /***********************************************************************
  *   X11DRV_XRender_Init
@@ -405,11 +422,48 @@ static int AllocEntry(void)
   return mru;
 }
 
-static int GetCacheEntry(LFANDSIZE *plfsz)
+static BOOL get_gasp_flags(X11DRV_PDEVICE *physDev, WORD *flags)
+{
+    DWORD size;
+    WORD *gasp;
+    WORD num_recs;
+    DWORD ppem;
+    TEXTMETRICW tm;
+
+    *flags = 0;
+
+    size = GetFontData(physDev->hdc, MS_GASP_TAG,  0, NULL, 0);
+    if(size == GDI_ERROR)
+        return FALSE;
+
+    gasp = HeapAlloc(GetProcessHeap(), 0, size);
+    GetFontData(physDev->hdc, MS_GASP_TAG,  0, gasp, size);
+
+    GetTextMetricsW(physDev->hdc, &tm);
+    ppem = abs(X11DRV_YWStoDS(physDev, tm.tmAscent + tm.tmDescent - tm.tmInternalLeading));
+
+    gasp++;
+    num_recs = get_be_word(*gasp);
+    gasp++;
+    while(num_recs--)
+    {
+        *flags = get_be_word(*(gasp + 1));
+        if(ppem <= get_be_word(*gasp))
+            break;
+        gasp += 2;
+    }
+    TRACE("got flags %04x for ppem %ld\n", *flags, ppem);
+
+    HeapFree(GetProcessHeap(), 0, gasp);
+    return TRUE;
+}
+
+static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
 {
     int ret;
     int format;
     gsCacheEntry *entry;
+    WORD flags;
 
     if((ret = LookupEntry(plfsz)) != -1) return ret;
 
@@ -421,7 +475,12 @@ static int GetCacheEntry(LFANDSIZE *plfsz)
     }
 
     if(antialias && plfsz->lf.lfQuality != NONANTIALIASED_QUALITY)
-        entry->aa_default = AA_Grey;
+    {
+        if(!get_gasp_flags(physDev, &flags) || flags & GASP_DOGRAY)
+            entry->aa_default = AA_Grey;
+        else
+            entry->aa_default = AA_None;
+    }
     else
         entry->aa_default = AA_None;
 
@@ -493,7 +552,7 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
     }
     else if(physDev->xrender->cache_index != -1)
         dec_ref_cache(physDev->xrender->cache_index);
-    physDev->xrender->cache_index = GetCacheEntry(&lfsz);
+    physDev->xrender->cache_index = GetCacheEntry(physDev, &lfsz);
     LeaveCriticalSection(&xrender_cs);
     return 0;
 }
