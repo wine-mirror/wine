@@ -455,7 +455,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
     const char *name = get_rva( module, descr->Name );
     DWORD len = strlen(name) + 1;
     PVOID protect_base;
-    DWORD protect_size = 0;
+    SIZE_T protect_size = 0;
     DWORD protect_old;
 
     thunk_list = get_rva( module, (DWORD)descr->FirstThunk );
@@ -1287,7 +1287,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     OBJECT_ATTRIBUTES attr;
     LARGE_INTEGER size;
     IMAGE_NT_HEADERS *nt;
-    DWORD len = 0;
+    SIZE_T len = 0;
     WINE_MODREF *wm;
     NTSTATUS status;
 

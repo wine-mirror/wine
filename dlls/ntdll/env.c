@@ -62,7 +62,7 @@ NTSTATUS WINAPI RtlCreateEnvironment(BOOLEAN inherit, PWSTR* env)
     }
     else 
     {
-        ULONG       size = 1;
+        SIZE_T      size = 1;
         PVOID       addr = NULL;
         nts = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0, &size,
                                       MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
@@ -77,7 +77,7 @@ NTSTATUS WINAPI RtlCreateEnvironment(BOOLEAN inherit, PWSTR* env)
  */
 NTSTATUS WINAPI RtlDestroyEnvironment(PWSTR env) 
 {
-    ULONG size = 0;
+    SIZE_T size = 0;
 
     TRACE("(%p)!\n", env);
 
@@ -220,7 +220,7 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
     if ((old_size + len) * sizeof(WCHAR) > mbi.RegionSize)
     {
         LPWSTR  new_env;
-        ULONG   new_size = (old_size + len) * sizeof(WCHAR);
+        SIZE_T  new_size = (old_size + len) * sizeof(WCHAR);
 
         new_env = NULL;
         nts = NtAllocateVirtualMemory(NtCurrentProcess(), (void**)&new_env, 0,
@@ -422,7 +422,7 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
     static const UNICODE_STRING null_str = { 0, 0, NULL };
 
     const RTL_USER_PROCESS_PARAMETERS *cur_params;
-    ULONG size, total_size;
+    SIZE_T size, total_size;
     void *ptr;
     NTSTATUS status;
 
@@ -482,6 +482,6 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
 void WINAPI RtlDestroyProcessParameters( RTL_USER_PROCESS_PARAMETERS *params )
 {
     void *ptr = params;
-    ULONG size = 0;
+    SIZE_T size = 0;
     NtFreeVirtualMemory( NtCurrentProcess(), &ptr, &size, MEM_RELEASE );
 }

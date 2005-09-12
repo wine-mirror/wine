@@ -126,7 +126,7 @@ static void fatal_perror( const char *err, ... )
 void server_exit_thread( int status )
 {
     struct wine_pthread_thread_info info;
-    ULONG size;
+    SIZE_T size;
 
     RtlAcquirePebLock();
     RemoveEntryList( &NtCurrentTeb()->TlsLinks );

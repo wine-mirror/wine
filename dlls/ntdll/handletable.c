@@ -74,7 +74,7 @@ void WINAPI RtlInitializeHandleTable(ULONG MaxHandleCount, ULONG HandleSize, RTL
  */
 NTSTATUS WINAPI RtlDestroyHandleTable(RTL_HANDLE_TABLE * HandleTable)
 {
-    ULONG Size = 0;
+    SIZE_T Size = 0;
 
     TRACE("(%p)\n", HandleTable);
 
@@ -104,7 +104,7 @@ static NTSTATUS RtlpAllocateSomeHandles(RTL_HANDLE_TABLE * HandleTable)
     if (!HandleTable->FirstHandle)
     {
         PVOID FirstHandleAddr = NULL;
-        ULONG MaxSize = HandleTable->MaxHandleCount * HandleTable->HandleSize;
+        SIZE_T MaxSize = HandleTable->MaxHandleCount * HandleTable->HandleSize;
 
         /* reserve memory for the handles, but don't commit it yet because we
          * probably won't use most of it and it will use up physical memory */
@@ -123,8 +123,7 @@ static NTSTATUS RtlpAllocateSomeHandles(RTL_HANDLE_TABLE * HandleTable)
     }
     if (!HandleTable->NextFree)
     {
-        ULONG CommitSize = 4096; /* one page */
-        ULONG Offset;
+        SIZE_T Offset, CommitSize = 4096; /* one page */
         RTL_HANDLE * FreeHandle = NULL;
         PVOID NextAvailAddr = HandleTable->ReservedMemory;
 

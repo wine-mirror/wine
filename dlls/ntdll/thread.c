@@ -84,7 +84,7 @@ static inline NTSTATUS init_teb( TEB *teb )
  */
 static inline void free_teb( TEB *teb )
 {
-    ULONG size = 0;
+    SIZE_T size = 0;
     void *addr = teb;
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
 
@@ -105,7 +105,7 @@ void thread_init(void)
 {
     TEB *teb;
     void *addr;
-    ULONG info_size;
+    SIZE_T info_size;
     struct ntdll_thread_data *thread_data;
     struct wine_pthread_thread_info thread_info;
     static struct debug_info debug_info;  /* debug info for initial thread */
@@ -193,7 +193,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     PRTL_THREAD_START_ROUTINE func = startup_info->entry_point;
     void *arg = startup_info->entry_arg;
     struct debug_info debug_info;
-    ULONG size;
+    SIZE_T size;
 
     debug_info.str_pos = debug_info.strings;
     debug_info.out_pos = debug_info.output;
@@ -323,7 +323,7 @@ error:
     if (thread_data) wine_ldt_free_fs( thread_data->teb_sel );
     if (addr)
     {
-        ULONG size = 0;
+        SIZE_T size = 0;
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
     if (info) RtlFreeHeap( GetProcessHeap(), 0, info );
