@@ -827,13 +827,13 @@ static void testNonExistentPath(void)
             modifiedPath[len++] = '\0';
             if (winetest_interactive)
                 printf("Changing CSIDL_FAVORITES to %s\n", modifiedPath);
-            if (!RegSetValueExA(key, "Favorites", 0, type, (LPBYTE)modifiedPath, len))
+            if (!RegSetValueExA(key, "Favorites", 0, type,
+             (LPBYTE)modifiedPath, len))
             {
                 char buffer[MAX_PATH];
                 STARTUPINFOA startup;
                 PROCESS_INFORMATION info;
                 HRESULT hr;
-                SHFILEOPSTRUCTA shFileOp;
 
                 wnsprintfA(buffer, sizeof(buffer), "%s tests/shellpath.c 1",
                  selfname);
@@ -869,16 +869,10 @@ static void testNonExistentPath(void)
                 ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0,
                  "child process termination\n");
 
-                /* Remove the directory.  In some Windows versions, it
-                 * contains the system file desktop.ini, so use SHFileOperation
-                 * to remove it and its contents.
-                 */
-                shFileOp.hwnd = NULL;
-                shFileOp.wFunc = FO_DELETE;
-                shFileOp.pFrom = modifiedPath;
-                shFileOp.fFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI |
-                 FOF_SILENT;
-                SHFileOperationA(&shFileOp);
+                strcpy(buffer, modifiedPath);
+                strcat(buffer, "\\desktop.ini");
+                DeleteFileA(buffer);
+                RemoveDirectoryA(modifiedPath);
             }
         }
         else if (winetest_interactive)
