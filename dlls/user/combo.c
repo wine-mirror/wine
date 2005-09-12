@@ -152,7 +152,7 @@ static LRESULT COMBO_NCCreate(HWND hwnd, LONG style)
     if (COMBO_Init() && (lphc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HEADCOMBO))) )
     {
         lphc->self = hwnd;
-        SetWindowLongW( hwnd, 0, (LONG)lphc );
+        SetWindowLongPtrW( hwnd, 0, (LONG_PTR)lphc );
 
        /* some braindead apps do try to use scrollbar/border flags */
 
@@ -190,7 +190,7 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
        if( (CB_GETTYPE(lphc) != CBS_SIMPLE) && lphc->hWndLBox )
    	   DestroyWindow( lphc->hWndLBox );
 
-       SetWindowLongW( lphc->self, 0, 0 );
+       SetWindowLongPtrW( lphc->self, 0, 0 );
        HeapFree( GetProcessHeap(), 0, lphc );
    }
    return 0;
@@ -1865,7 +1865,7 @@ static char *strdupA(LPCSTR str)
 static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
                                     WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
-      LPHEADCOMBO lphc = (LPHEADCOMBO)GetWindowLongW( hwnd, 0 );
+      LPHEADCOMBO lphc = (LPHEADCOMBO)GetWindowLongPtrW( hwnd, 0 );
 
       TRACE("[%p]: msg %s wp %08x lp %08lx\n",
             hwnd, SPY_GetMsgName(message, hwnd), wParam, lParam );

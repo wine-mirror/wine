@@ -2489,7 +2489,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
         descr->owner = lphc->self;
     }
 
-    SetWindowLongW( descr->self, 0, (LONG)descr );
+    SetWindowLongPtrW( descr->self, 0, (LONG_PTR)descr );
 
 /*    if (wnd->dwExStyle & WS_EX_NOPARENTNOTIFY) descr->style &= ~LBS_NOTIFY;
  */
@@ -2530,7 +2530,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
 static BOOL LISTBOX_Destroy( LB_DESCR *descr )
 {
     LISTBOX_ResetContent( descr );
-    SetWindowLongW( descr->self, 0, 0 );
+    SetWindowLongPtrW( descr->self, 0, 0 );
     HeapFree( GetProcessHeap(), 0, descr );
     return TRUE;
 }
@@ -2542,7 +2542,7 @@ static BOOL LISTBOX_Destroy( LB_DESCR *descr )
 static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
                                              WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
-    LB_DESCR *descr = (LB_DESCR *)GetWindowLongW( hwnd, 0 );
+    LB_DESCR *descr = (LB_DESCR *)GetWindowLongPtrW( hwnd, 0 );
     LPHEADCOMBO lphc = 0;
     LRESULT ret;
 
@@ -2555,7 +2555,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
 	    CREATESTRUCTW *lpcs = (CREATESTRUCTW *)lParam;
 	    if (lpcs->style & LBS_COMBOBOX) lphc = (LPHEADCOMBO)lpcs->lpCreateParams;
             if (!LISTBOX_Create( hwnd, lphc )) return -1;
-            TRACE("creating wnd=%p descr=%lx\n", hwnd, GetWindowLongW( hwnd, 0 ) );
+            TRACE("creating wnd=%p descr=%lx\n", hwnd, GetWindowLongPtrW( hwnd, 0 ) );
             return 0;
         }
         /* Ignore all other messages before we get a WM_CREATE */

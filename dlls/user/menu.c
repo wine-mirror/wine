@@ -3129,7 +3129,7 @@ static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     case WM_CREATE:
 	{
 	    CREATESTRUCTW *cs = (CREATESTRUCTW*)lParam;
-	    SetWindowLongW( hwnd, 0, (LONG)cs->lpCreateParams );
+	    SetWindowLongPtrW( hwnd, 0, (LONG_PTR)cs->lpCreateParams );
             return 0;
 	}
 
@@ -3141,7 +3141,7 @@ static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 	    PAINTSTRUCT ps;
 	    BeginPaint( hwnd, &ps );
 	    MENU_DrawPopupMenu( hwnd, ps.hdc,
-                                (HMENU)GetWindowLongW( hwnd, 0 ) );
+                                (HMENU)GetWindowLongPtrW( hwnd, 0 ) );
 	    EndPaint( hwnd, &ps );
             return 0;
 	}
@@ -3157,18 +3157,18 @@ static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 
 	if( wParam )
 	{
-            if (!GetWindowLongW( hwnd, 0 )) ERR("no menu to display\n");
+            if (!GetWindowLongPtrW( hwnd, 0 )) ERR("no menu to display\n");
 	}
 	else
-            SetWindowLongW( hwnd, 0, 0 );
+            SetWindowLongPtrW( hwnd, 0, 0 );
 	break;
 
     case MM_SETMENUHANDLE:
-        SetWindowLongW( hwnd, 0, wParam );
+        SetWindowLongPtrW( hwnd, 0, wParam );
         break;
 
     case MM_GETMENUHANDLE:
-        return GetWindowLongW( hwnd, 0 );
+        return GetWindowLongPtrW( hwnd, 0 );
 
     default:
         return DefWindowProcW( hwnd, message, wParam, lParam );

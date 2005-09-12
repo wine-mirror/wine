@@ -424,7 +424,7 @@ static inline LRESULT DefWindowProcT(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
                                           WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
-	EDITSTATE *es = (EDITSTATE *)GetWindowLongW( hwnd, 0 );
+	EDITSTATE *es = (EDITSTATE *)GetWindowLongPtrW( hwnd, 0 );
 	LRESULT result = 0;
 
         TRACE("hwnd=%p msg=%x (%s) wparam=%x lparam=%lx\n", hwnd, msg, SPY_GetMsgName(msg, hwnd), wParam, lParam);
@@ -4116,7 +4116,7 @@ static LRESULT EDIT_WM_Destroy(EDITSTATE *es)
 		pc = pp;
 	}
 
-        SetWindowLongW( es->hwndSelf, 0, 0 );
+        SetWindowLongPtrW( es->hwndSelf, 0, 0 );
 	HeapFree(GetProcessHeap(), 0, es);
 
 	return 0;
@@ -4615,7 +4615,7 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 
 	if (!(es = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*es))))
 		return FALSE;
-        SetWindowLongW( hwnd, 0, (LONG)es );
+        SetWindowLongPtrW( hwnd, 0, (LONG_PTR)es );
 
        /*
         *      Note: since the EDITSTATE has not been fully initialized yet,
