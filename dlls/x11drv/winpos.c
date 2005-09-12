@@ -989,7 +989,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 	    break;
     }
 
-    if (showFlag != wasVisible || cmd == SW_SHOWNA)
+    if ((showFlag != wasVisible || cmd == SW_SHOWNA) && cmd != SW_SHOWMAXIMIZED)
     {
         SendMessageW( hwnd, WM_SHOWWINDOW, showFlag, 0 );
         if (!IsWindow( hwnd )) return wasVisible;
