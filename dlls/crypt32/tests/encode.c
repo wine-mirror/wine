@@ -613,19 +613,29 @@ static const char surName[] = "Lang";
 static const char bogusIA5[] = "\x80";
 static const char bogusPrintable[] = "~";
 static const char bogusNumeric[] = "A";
+static const unsigned char bin39[] = {
+    0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,'J','u','a','n',' ','L','a','n','g',0};
+static const unsigned char bin40[] = {
+    0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x16,0x0a,'J','u','a','n',' ','L','a','n','g',0};
+static const unsigned char bin41[] = {
+    0x30,0x10,0x31,0x0e,0x30,0x0c,0x06,0x03,0x55,0x04,0x04,0x16,0x05,'L','a','n','g',0};
+static const unsigned char bin42[] = {
+    0x30,0x12,0x31,0x10,0x30,0x0e,0x06,0x00,0x13,0x0a,'J','u','a','n',' ','L','a','n','g',0};
+static const unsigned char bin43[] = {
+    0x30,0x0d,0x31,0x0b,0x30,0x09,0x06,0x03,0x55,0x04,0x03,0x16,0x02,0x80,0};
+static const unsigned char bin44[] = {
+    0x30,0x0d,0x31,0x0b,0x30,0x09,0x06,0x03,0x55,0x04,0x03,0x13,0x02,0x7e,0};
+static const unsigned char bin45[] = {
+    0x30,0x0d,0x31,0x0b,0x30,0x09,0x06,0x03,0x55,0x04,0x03,0x12,0x02,0x41,0};
 static const struct EncodedName names[] = {
  { { szOID_COMMON_NAME, CERT_RDN_PRINTABLE_STRING,
-   { sizeof(commonName), (BYTE *)commonName } },
- "\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x13\x0aJuan Lang" },
+   { sizeof(commonName), (BYTE *)commonName } }, bin39 },
  { { szOID_COMMON_NAME, CERT_RDN_IA5_STRING,
-   { sizeof(commonName), (BYTE *)commonName } },
- "\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x16\x0aJuan Lang" },
+   { sizeof(commonName), (BYTE *)commonName } }, bin40 },
  { { szOID_SUR_NAME, CERT_RDN_IA5_STRING,
-   { sizeof(surName), (BYTE *)surName } },
- "\x30\x10\x31\x0e\x30\x0c\x06\x03\x55\x04\x04\x16\x05Lang" },
+   { sizeof(surName), (BYTE *)surName } }, bin41 },
  { { NULL, CERT_RDN_PRINTABLE_STRING,
-   { sizeof(commonName), (BYTE *)commonName } },
- "\x30\x12\x31\x10\x30\x0e\x06\x00\x13\x0aJuan Lang" },
+   { sizeof(commonName), (BYTE *)commonName } }, bin42 },
 /* The following test isn't a very good one, because it doesn't encode any
  * Japanese characters.  I'm leaving it out for now.
  { { szOID_COMMON_NAME, CERT_RDN_T61_STRING,
@@ -637,21 +647,19 @@ static const struct EncodedName names[] = {
   * including them to justify my lazy encoding.
   */
  { { szOID_COMMON_NAME, CERT_RDN_IA5_STRING,
-   { sizeof(bogusIA5), (BYTE *)bogusIA5 } },
- "\x30\x0d\x31\x0b\x30\x09\x06\x03\x55\x04\x03\x16\x02\x80" },
+   { sizeof(bogusIA5), (BYTE *)bogusIA5 } }, bin43 },
  { { szOID_COMMON_NAME, CERT_RDN_PRINTABLE_STRING,
-   { sizeof(bogusPrintable), (BYTE *)bogusPrintable } },
- "\x30\x0d\x31\x0b\x30\x09\x06\x03\x55\x04\x03\x13\x02\x7e" },
+   { sizeof(bogusPrintable), (BYTE *)bogusPrintable } }, bin44 },
  { { szOID_COMMON_NAME, CERT_RDN_NUMERIC_STRING,
-   { sizeof(bogusNumeric), (BYTE *)bogusNumeric } },
- "\x30\x0d\x31\x0b\x30\x09\x06\x03\x55\x04\x03\x12\x02\x41" },
+   { sizeof(bogusNumeric), (BYTE *)bogusNumeric } }, bin45 },
 };
 
 static const BYTE emptyName[] = { 0x30, 0 };
 static const BYTE emptyRDNs[] = { 0x30, 0x02, 0x31, 0 };
-static const BYTE twoRDNs[] = "\x30\x23\x31\x21\x30\x0c\x06\x03\x55\x04\x04"
- "\x13\x05\x4c\x61\x6e\x67\x00\x30\x11\x06\x03\x55\x04\x03"
- "\x13\x0a\x4a\x75\x61\x6e\x20\x4c\x61\x6e\x67";
+static const BYTE twoRDNs[] = {
+    0x30,0x23,0x31,0x21,0x30,0x0c,0x06,0x03,0x55,0x04,0x04,
+    0x13,0x05,0x4c,0x61,0x6e,0x67,0x00,0x30,0x11,0x06,0x03,0x55,0x04,0x03,
+    0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0};
 
 static void test_encodeName(DWORD dwEncoding)
 {
