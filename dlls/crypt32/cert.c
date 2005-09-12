@@ -1786,6 +1786,7 @@ static PWINE_CERT_CONTEXT CRYPT_CreateCertificateContext(
 {
     PWINE_CERT_CONTEXT cert = NULL;
     BOOL ret;
+    PCERT_SIGNED_CONTENT_INFO signedCert = NULL;
     PCERT_INFO certInfo = NULL;
     DWORD size = 0;
 
@@ -1795,13 +1796,25 @@ static PWINE_CERT_CONTEXT CRYPT_CreateCertificateContext(
     /* First try to decode it as a signed cert. */
     ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT, pbCertEncoded,
      cbCertEncoded, CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
-     (BYTE *)&certInfo, &size);
+     (BYTE *)&signedCert, &size);
+    if (ret)
+    {
+        size = 0;
+        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT_TO_BE_SIGNED,
+         signedCert->ToBeSigned.pbData, signedCert->ToBeSigned.cbData,
+         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+         (BYTE *)&certInfo, &size);
+        LocalFree(signedCert);
+    }
     /* Failing that, try it as an unsigned cert */
     if (!ret)
+    {
+        size = 0;
         ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT_TO_BE_SIGNED,
          pbCertEncoded, cbCertEncoded,
          CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
          (BYTE *)&certInfo, &size);
+    }
     if (ret)
     {
         BYTE *data = NULL;
