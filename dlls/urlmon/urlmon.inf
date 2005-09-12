@@ -3,11 +3,11 @@ Signature="$CHICAGO$"
 
 
 [RegisterDll]
-AddReg=Protocols.Reg
+AddReg=Protocols.Reg, ZoneMap.Reg
 
 
 [UnregisterDll]
-DelReg=Protocols.Reg
+DelReg=Protocols.Reg, ZoneMap.Reg
 
 
 [Protocols.Reg]
@@ -27,3 +27,38 @@ HKCR,"PROTOCOLS\Handler\https",,,"https: Asynchronous Pluggable Protocol Handler
 HKCR,"PROTOCOLS\Handler\https","CLSID",,"%CLSID_HttpsProtocol%"
 HKCR,"PROTOCOLS\Handler\mk",,,"mk: Asynchronous Pluggable Protocol Handler"
 HKCR,"PROTOCOLS\Handler\mk","CLSID",,"%CLSID_MkProtocol%"
+
+
+;; [ZoneMap.Reg]
+HKCU,"Software\Microsoft\Windows\CurrentVersion\Internet Settings",,,
+HKCU,"%PATH_ZONEMAP%",,,
+HKLM,"%PATH_ZONEMAP%",,,
+HKCU,"%PATH_ZONEMAP%","ProxyByPass",  0x10001,0x1
+HKLM,"%PATH_ZONEMAP%","ProxyByPass",  0x10001,0x1
+HKCU,"%PATH_ZONEMAP%","IntranetName", 0x10001,0x1
+HKLM,"%PATH_ZONEMAP%","IntranetName", 0x10001,0x1
+HKCU,"%PATH_ZONEMAP%","UNCAsIntranet",0x10001,0x1
+HKLM,"%PATH_ZONEMAP%","UNCAsIntranet",0x10001,0x1
+HKCU,"%PATH_ZONEMAP_PROTOCOLS%",,,
+HKLM,"%PATH_ZONEMAP_PROTOCOLS%",,,
+HKCU,"%PATH_ZONEMAP_PROTOCOLS%","http", 0x10001,0x3
+HKLM,"%PATH_ZONEMAP_PROTOCOLS%","http", 0x10001,0x3
+HKCU,"%PATH_ZONEMAP_PROTOCOLS%","https",0x10001,0x3
+HKLM,"%PATH_ZONEMAP_PROTOCOLS%","https",0x10001,0x3
+HKCU,"%PATH_ZONEMAP_PROTOCOLS%","ftp",  0x10001,0x3
+HKLM,"%PATH_ZONEMAP_PROTOCOLS%","ftp",  0x10001,0x3
+HKCU,"%PATH_ZONEMAP_PROTOCOLS%","file", 0x10001,0x3
+HKLM,"%PATH_ZONEMAP_PROTOCOLS%","file", 0x10001,0x3
+HKCU,"%PATH_ZONEMAP_PROTOCOLS%","@ivt", 0x10001,0x1
+HKLM,"%PATH_ZONEMAP_PROTOCOLS%","@ivt",0x10001,0x1
+HKCU,"%PATH_ZONEMAP_DOMAINS%",,,
+HKLM,"%PATH_ZONEMAP_DOMAINS%",,,
+HKCU,"%PATH_ZONEMAP_RANGES%",,,
+HKLM,"%PATH_ZONEMAP_RANGES%",,,
+
+
+[Strings]
+PATH_ZONEMAP="Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap"
+PATH_ZONEMAP_PROTOCOLS="Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\ProtocolDefaults"
+PATH_ZONEMAP_DOMAINS="Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains"
+PATH_ZONEMAP_RANGES="Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Ranges"
