@@ -400,9 +400,25 @@ static HRESULT WINAPI AboutProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, L
         PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
         DWORD* pcchResult, DWORD dwReserved)
 {
-    FIXME("%p)->(%s %08x %08lx %p %ld %p %ld)\n", iface, debugstr_w(pwzUrl), ParseAction,
+    TRACE("%p)->(%s %08x %08lx %p %ld %p %ld)\n", iface, debugstr_w(pwzUrl), ParseAction,
             dwParseFlags, pwzResult, cchResult, pcchResult, dwReserved);
-    return E_NOTIMPL;
+
+    if(ParseAction == PARSE_SECURITY_URL) {
+        int len = lstrlenW(pwzUrl);
+
+        if(len >= cchResult)
+            return S_FALSE;
+
+        memcpy(pwzResult, pwzUrl, (len+1)*sizeof(WCHAR));
+        return S_OK;
+    }
+
+    if(ParseAction == PARSE_DOMAIN) {
+        /* Tests show that we don't have to do anything here */
+        return S_OK;
+    }
+
+    return INET_E_DEFAULT_ACTION;
 }
 
 static HRESULT WINAPI AboutProtocolInfo_CombineUrl(IInternetProtocolInfo *iface, LPCWSTR pwzBaseUrl,
@@ -749,9 +765,45 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
         PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
         DWORD* pcchResult, DWORD dwReserved)
 {
-    FIXME("%p)->(%s %08x %08lx %p %ld %p %ld)\n", iface, debugstr_w(pwzUrl), ParseAction,
+    TRACE("%p)->(%s %d %lx %p %ld %p %ld)\n", iface, debugstr_w(pwzUrl), ParseAction,
             dwParseFlags, pwzResult, cchResult, pcchResult, dwReserved);
-    return E_NOTIMPL;
+
+    if(ParseAction == PARSE_SECURITY_URL) {
+        WCHAR *ptr;
+        DWORD size;
+
+        static const WCHAR wszFile[] = {'f','i','l','e',':','/','/'};
+        static const WCHAR wszRes[] = {'r','e','s',':','/','/'};
+
+        if(strlenW(pwzUrl) <= sizeof(wszRes)/sizeof(WCHAR) || memcmp(pwzUrl, wszRes, sizeof(wszRes)))
+            return MK_E_SYNTAX;
+
+        ptr = strchrW(pwzUrl + sizeof(wszRes)/sizeof(WCHAR), '/');
+        if(!ptr)
+            return MK_E_SYNTAX;
+
+        size = ptr-pwzUrl + sizeof(wszFile)/sizeof(WCHAR) - sizeof(wszRes)/sizeof(WCHAR);
+        if(size >= cchResult)
+            return S_FALSE;
+
+        /* FIXME: return full path */
+        memcpy(pwzResult, wszFile, sizeof(wszFile));
+        memcpy(pwzResult + sizeof(wszFile)/sizeof(WCHAR),
+                pwzUrl + sizeof(wszRes)/sizeof(WCHAR),
+                size*sizeof(WCHAR) - sizeof(wszFile));
+        pwzResult[size] = 0;
+
+        if(pcchResult)
+            *pcchResult = size;
+        return S_OK;
+    }
+
+    if(ParseAction == PARSE_DOMAIN) {
+        /* Tests show that we don't have to do anything here */
+        return S_OK;
+    }
+
+    return INET_E_DEFAULT_ACTION;
 }
 
 static HRESULT WINAPI ResProtocolInfo_CombineUrl(IInternetProtocolInfo *iface, LPCWSTR pwzBaseUrl,

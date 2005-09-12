@@ -247,8 +247,48 @@ static void test_res_protocol(void)
     hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&protocol_info);
     ok(hres == S_OK, "Could not get IInternetProtocolInfo interface: %08lx\n", hres);
     if(SUCCEEDED(hres)) {
-        /* TODO: test IInternetProtocol interface */
-        IInternetProtocol_Release(protocol_info);
+        WCHAR buf[128];
+        DWORD size;
+        int i;
+
+        for(i = PARSE_CANONICALIZE; i <= PARSE_UNESCAPE; i++) {
+            if(i != PARSE_SECURITY_URL && i != PARSE_DOMAIN) {
+                hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, i, 0, buf,
+                        sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ok(hres == INET_E_DEFAULT_ACTION,
+                        "[%d] failed: %08lx, expected INET_E_DEFAULT_ACTION\n", i, hres);
+            }
+        }
+
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_SECURITY_URL, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == S_OK, "ParseUrl failed: %08lx\n", hres);
+
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_SECURITY_URL, 0, buf,
+                3, &size, 0);
+        ok(hres == S_FALSE, "ParseUrl failed: %08lx, expected S_FALSE\n", hres);
+
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url1, PARSE_SECURITY_URL, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == MK_E_SYNTAX, "ParseUrl failed: %08lx, expected MK_E_SYNTAX\n", hres);
+
+        buf[0] = '?';
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_DOMAIN, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == S_OK, "ParseUrl failed: %08lx\n", hres);
+        ok(buf[0] == '?', "buf changed\n");
+
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url1, PARSE_DOMAIN, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == S_OK, "ParseUrl failed: %08lx, expected MK_E_SYNTAX\n", hres);
+        ok(buf[0] == '?', "buf changed\n");
+
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_UNESCAPE+1, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == INET_E_DEFAULT_ACTION,
+                "ParseUrl failed: %08lx, expected INET_E_DEFAULT_ACTION\n", hres);
+
+        IInternetProtocolInfo_Release(protocol_info);
     }
 
     hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&factory);
@@ -352,8 +392,45 @@ static void test_about_protocol(void)
     hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&protocol_info);
     ok(hres == S_OK, "Could not get IInternetProtocolInfo interface: %08lx\n", hres);
     if(SUCCEEDED(hres)) {
-        /* TODO: test IInternetProtocol interface */
-        IInternetProtocol_Release(protocol_info);
+        WCHAR buf[128];
+        DWORD size;
+        int i;
+
+        for(i = PARSE_CANONICALIZE; i <= PARSE_UNESCAPE; i++) {
+            if(i != PARSE_SECURITY_URL && i != PARSE_DOMAIN) {
+                hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, i, 0, buf,
+                        sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ok(hres == INET_E_DEFAULT_ACTION,
+                        "[%d] failed: %08lx, expected INET_E_DEFAULT_ACTION\n", i, hres);
+            }
+        }
+
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_SECURITY_URL, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == S_OK, "ParseUrl failed: %08lx\n", hres);
+        ok(!lstrcmpW(blank_url, buf), "buf != blank_url\n");
+
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_SECURITY_URL, 0, buf,
+                3, &size, 0);
+        ok(hres == S_FALSE, "ParseUrl failed: %08lx, expected S_FALSE\n", hres);
+
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, test_url, PARSE_SECURITY_URL, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == S_OK, "ParseUrl failed: %08lx\n", hres);
+        ok(!lstrcmpW(test_url, buf), "buf != test_url\n");
+
+        buf[0] = '?';
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_DOMAIN, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == S_OK, "ParseUrl failed: %08lx\n", hres);
+        ok(buf[0] == '?', "buf changed\n");
+
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_UNESCAPE+1, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == INET_E_DEFAULT_ACTION,
+                "ParseUrl failed: %08lx, expected INET_E_DEFAULT_ACTION\n", hres);
+
+        IInternetProtocolInfo_Release(protocol_info);
     }
 
     hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&factory);
