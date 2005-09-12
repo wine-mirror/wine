@@ -2683,7 +2683,7 @@ static BOOL NLS_RegGetDword(HANDLE hKey, LPCWSTR szValueName, DWORD *lpVal)
 static BOOL NLS_GetLanguageGroupName(LGRPID lgrpid, LPWSTR szName, ULONG nameSize)
 {
     LANGID  langId;
-    LPCWSTR szResourceName = (LPCWSTR)(((lgrpid + 0x2000) >> 4) + 1);
+    LPCWSTR szResourceName = MAKEINTRESOURCEW(((lgrpid + 0x2000) >> 4) + 1);
     HRSRC   hResource;
     BOOL    bRet = FALSE;
 

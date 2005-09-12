@@ -150,7 +150,7 @@ static WORD MapHRsrc16ToType( NE_MODULE *pModule, HRSRC16 hRsrc16 )
  */
 static inline LPCSTR get_res_name( LPCSTR name )
 {
-    if (HIWORD(name) && name[0] == '#') name = (LPCSTR)atoi( name + 1 );
+    if (HIWORD(name) && name[0] == '#') name = MAKEINTRESOURCEA( atoi( name + 1 ) );
     return name;
 }
 

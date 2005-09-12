@@ -108,7 +108,7 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
     if (int_id)
     {
         /* Integer id, not documented (?). Only works for SS_ICON controls */
-        info->windowName = (LPCSTR)(UINT)GET_WORD(p+1);
+        info->windowName = MAKEINTRESOURCEA(GET_WORD(p+1));
         p += 3;
     }
     else
@@ -231,7 +231,7 @@ static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
         p++;
         break;
     case 0xff:
-        result->menuName = (LPCSTR)(UINT)GET_WORD( p + 1 );
+        result->menuName = MAKEINTRESOURCEA(GET_WORD( p + 1 ));
         p += 3;
         TRACE(" MENU %04x\n", LOWORD(result->menuName) );
         break;

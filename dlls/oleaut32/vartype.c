@@ -5014,7 +5014,7 @@ static BOOL VARIANT_GetLocalisedText(LANGID langId, DWORD dwId, WCHAR *lpszDest)
   HRSRC hrsrc;
 
   hrsrc = FindResourceExW( OLEAUT32_hModule, (LPWSTR)RT_STRING,
-                           (LPCWSTR)((dwId >> 4) + 1), langId );
+                           MAKEINTRESOURCEW((dwId >> 4) + 1), langId );
   if (hrsrc)
   {
     HGLOBAL hmem = LoadResource( OLEAUT32_hModule, hrsrc );

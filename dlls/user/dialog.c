@@ -212,7 +212,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
 
     if (GET_WORD(p) == 0xffff)  /* Is it an integer id? */
     {
-        info->windowName = (LPCWSTR)(UINT)GET_WORD(p + 1);
+        info->windowName = MAKEINTRESOURCEW(GET_WORD(p + 1));
         p += 2;
     }
     else
@@ -385,7 +385,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
         p++;
         break;
     case 0xffff:
-        result->menuName = (LPCWSTR)(UINT)GET_WORD( p + 1 );
+        result->menuName = MAKEINTRESOURCEW(GET_WORD( p + 1 ));
         p += 2;
         TRACE(" MENU %04x\n", LOWORD(result->menuName) );
         break;
@@ -405,7 +405,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
         p++;
         break;
     case 0xffff:
-        result->className = (LPCWSTR)(UINT)GET_WORD( p + 1 );
+        result->className = MAKEINTRESOURCEW(GET_WORD( p + 1 ));
         p += 2;
         TRACE(" CLASS %04x\n", LOWORD(result->className) );
         break;
