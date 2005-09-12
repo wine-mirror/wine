@@ -68,16 +68,28 @@ BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
  */
 LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  WINTRUST_DATA* ActionData )
 {
+    static const GUID WINTRUST_ACTION_GENERIC_VERIFY_V2 = { 0xaac56b, 0xcd44, 0x11d0,
+                                                          { 0x8c,0xc2,0x00,0xc0,0x4f,0xc2,0x95,0xee }};
+
     FIXME("%p %s %p\n", hwnd, debugstr_guid(ActionID), ActionData);
 
     /* Trust providers can be found at:
      * HKLM\SOFTWARE\Microsoft\Cryptography\Providers\Trust\CertCheck\
      *
-     * As we do not have any trust providers yet (or cater for it),
-     * return just that.
+     * Process Explorer expects a correct implementation, so we 
+     * return TRUST_E_PROVIDER_UNKNOWN.
+     *
+     * Girotel needs ERROR_SUCCESS.
+     *
+     * For now return TRUST_E_PROVIDER_UNKNOWN only when 
+     * ActionID = WINTRUST_ACTION_GENERIC_VERIFY_V2.
+     *
      */
 
-    return TRUST_E_PROVIDER_UNKNOWN;
+    if (IsEqualCLSID(ActionID, &WINTRUST_ACTION_GENERIC_VERIFY_V2))
+        return TRUST_E_PROVIDER_UNKNOWN;
+
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
