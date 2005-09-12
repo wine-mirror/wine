@@ -310,7 +310,7 @@ static HMODULE load_pe_exe( const WCHAR *name, HANDLE file )
     void *module;
     OBJECT_ATTRIBUTES attr;
     LARGE_INTEGER size;
-    DWORD len = 0;
+    SIZE_T len = 0;
 
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
@@ -362,7 +362,7 @@ static HMODULE load_pe_exe( const WCHAR *name, HANDLE file )
  */
 static BOOL build_initial_environment( char **environ )
 {
-    ULONG size = 1;
+    SIZE_T size = 1;
     char **e;
     WCHAR *p, *endptr;
     void *ptr;
@@ -738,7 +738,7 @@ static BOOL init_user_process_params( RTL_USER_PROCESS_PARAMETERS *params )
 {
     BOOL ret;
     void *ptr;
-    DWORD size, env_size, info_size;
+    SIZE_T size, env_size, info_size;
     HANDLE hstdin, hstdout, hstderr;
 
     size = info_size = params->AllocationSize;
