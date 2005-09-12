@@ -606,7 +606,7 @@ typedef struct
     BOOL fShowSuperHidden : 1;
     BOOL fNoNetCrawling : 1;
 
-    DWORD :0; /* Required for proper binary layout with gcc */
+    UINT :15; /* Required for proper binary layout with gcc */
     DWORD dwWin95Unused;
     UINT  uWin95Unused;
     LONG   lParamSort;
@@ -617,7 +617,7 @@ typedef struct
     BOOL fStartPanelOn: 1;
     BOOL fShowStartPage: 1;
     UINT fSpareFlags : 13;
-    UINT :0; /* Required for proper binary layout with gcc */
+    UINT :15; /* Required for proper binary layout with gcc */
 } SHELLSTATE, *LPSHELLSTATE;
 
 /**********************************************************************
@@ -641,7 +641,7 @@ typedef struct
 
 	BOOL fHideIcons : 1;
 	UINT fRestFlags : 3;
-	UINT :0; /* Required for proper binary layout with gcc */
+	UINT :15; /* Required for proper binary layout with gcc */
 } SHELLFLAGSTATE, * LPSHELLFLAGSTATE;
 
 VOID WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask);
@@ -1156,7 +1156,7 @@ typedef struct {
     BOOL fDontPrettyNames:1;
     BOOL fAdminsCreateCommonGroups:1;
     UINT fUnusedFlags:7;
-    UINT :0; /* Required for proper binary layout with gcc */
+    UINT :15; /* Required for proper binary layout with gcc */
     UINT fMenuEnumFilter;
 } CABINETSTATE, *LPCABINETSTATE;
 
