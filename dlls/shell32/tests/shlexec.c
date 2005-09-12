@@ -704,9 +704,7 @@ static void test_lnks()
     okChildInt("argcA", 5);
     okChildString("argvA3", "Open");
     sprintf(filename, "%s\\test file.shlexec", tmpdir);
-    todo_wine {
     okChildPath("argvA4", filename);
-    }
 
     sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
