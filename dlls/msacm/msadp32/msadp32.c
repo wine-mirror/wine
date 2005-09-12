@@ -716,8 +716,8 @@ static LRESULT ADPCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEAD
 LRESULT CALLBACK	ADPCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
 					 LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lx %08lx %04x %08lx %08lx);\n",
-	  dwDevID, (DWORD)hDriv, wMsg, dwParam1, dwParam2);
+    TRACE("(%08lx %p %04x %08lx %08lx);\n",
+          dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch (wMsg)
     {

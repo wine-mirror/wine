@@ -146,7 +146,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
             /* FIXME: Never access */
             IWineD3DSwapChainImpl *swapChainImpl;
             IWineD3DDevice_GetSwapChain((IWineD3DDevice *)This->wineD3DDevice, 0 , (IWineD3DSwapChain **)&swapChainImpl);
-            FIXME("Unable to render to a destination window %d\n", (int)hDestWindowOverride );
+            FIXME("Unable to render to a destination window %p\n", hDestWindowOverride );
             if(This == swapChainImpl){
                 /* FIXME: this will be fixed by moving to a context management system */
                 FIXME("Cannot change the target of the implicit swapchain\n");

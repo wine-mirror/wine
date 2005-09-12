@@ -2580,7 +2580,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    TRACE("handle=%08lx \n", (DWORD)pcm);
+    TRACE("handle=%p\n", pcm);
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
 	  wwo->format.Format.wBitsPerSample, wwo->format.Format.nAvgBytesPerSec,
 	  wwo->format.Format.nSamplesPerSec, wwo->format.Format.nChannels,

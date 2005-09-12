@@ -1660,8 +1660,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     int fd;
     INT ret = 0;
 
-    TRACE("socket: %04x, level 0x%x, name 0x%x, ptr %8x, len %d\n", s, level,
-          (int) optname, (int) optval, (int) *optlen);
+    TRACE("socket: %04x, level 0x%x, name 0x%x, ptr %p, len %d\n",
+          s, level, optname, optval, *optlen);
     /* SO_OPENTYPE does not require a valid socket handle. */
     if (level == WS_SOL_SOCKET && optname == WS_SO_OPENTYPE)
     {
@@ -2917,7 +2917,7 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
 {
     int ret;
 
-    TRACE("%08x, hEvent %p, lpEvent %08x\n", s, hEvent, (unsigned)lpEvent );
+    TRACE("%08x, hEvent %p, lpEvent %p\n", s, hEvent, lpEvent );
 
     SERVER_START_REQ( get_socket_event )
     {

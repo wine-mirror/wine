@@ -1049,7 +1049,7 @@ Main_DirectDraw_GetSurfaceFromDC(LPDIRECTDRAW7 iface, HDC hdc,
 				 LPDIRECTDRAWSURFACE7 *lpDDS)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    FIXME("(%p)->(%08ld,%p)\n", This, (DWORD) hdc, lpDDS);
+    FIXME("(%p)->(%p,%p)\n", This, hdc, lpDDS);
 
     return DD_OK;
 }
@@ -1104,7 +1104,7 @@ Main_DirectDraw_SetCooperativeLevel(LPDIRECTDRAW7 iface, HWND hwnd,
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
 
-    FIXME("(%p)->(%08lx,%08lx)\n",This,(DWORD)hwnd,cooplevel);
+    FIXME("(%p)->(%p,%08lx)\n",This,hwnd,cooplevel);
     DDRAW_dump_cooperativelevel(cooplevel);
 
     /* Makes realMYST test happy. */

@@ -3406,7 +3406,7 @@ static HRESULT WINAPI Videowindow_get_Owner(IVideoWindow *iface,
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%08lx)\n", This, iface, (DWORD) Owner);
+    TRACE("(%p/%p)->(%p)\n", This, iface, Owner);
 
     EnterCriticalSection(&This->cs);
 

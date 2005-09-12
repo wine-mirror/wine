@@ -68,8 +68,8 @@ static char* DUMPBITS(int x, char* buf)
 
 static inline void DUMPPACKET(WTPACKET packet)
 {
-    TRACE("pkContext: 0x%x pkStatus: 0x%x pkTime : 0x%x pkChanged: 0x%x pkSerialNumber: 0x%x pkCursor : %i pkButtons: %x pkX: %li pkY: %li pkZ: %li pkNormalPressure: %i pkTangentPressure: %i pkOrientation: (%i,%i,%i) pkRotation: (%i,%i,%i)\n"
-,(UINT)packet.pkContext,
+    TRACE("pkContext: %p pkStatus: 0x%x pkTime : 0x%x pkChanged: 0x%x pkSerialNumber: 0x%x pkCursor : %i pkButtons: %x pkX: %li pkY: %li pkZ: %li pkNormalPressure: %i pkTangentPressure: %i pkOrientation: (%i,%i,%i) pkRotation: (%i,%i,%i)\n",
+          packet.pkContext,
     (UINT)packet.pkStatus,
     (UINT)packet.pkTime,
     (UINT)packet.pkChanged,
@@ -132,7 +132,7 @@ int TABLET_PostTabletMessage(LPOPENCONTEXT newcontext, UINT msg, WPARAM wParam,
 {
     if ((send_always) || (newcontext->context.lcOptions & CXO_MESSAGES))
     {
-        TRACE("Posting message %x to %x\n",msg, (UINT)newcontext->hwndOwner);
+        TRACE("Posting message %x to %p\n",msg, newcontext->hwndOwner);
         return PostMessageA(newcontext->hwndOwner, msg, wParam, lParam);
     }
     return 0;

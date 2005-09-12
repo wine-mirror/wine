@@ -1308,7 +1308,7 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
                 /* send back the value of h on the other side */
                 push_data( data, &h, sizeof(HGLOBAL) );
                 lp = uiLo;
-                TRACE( "send dde-ack %x %08x => %08lx\n", uiLo, uiHi, (DWORD)h );
+                TRACE( "send dde-ack %x %08x => %p\n", uiLo, uiHi, h );
             }
         }
         else

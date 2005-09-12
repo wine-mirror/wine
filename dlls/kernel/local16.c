@@ -1624,7 +1624,7 @@ FARPROC16 WINAPI LocalNotify16( FARPROC16 func )
 	LOCAL_PrintHeap( ds );
 	return 0;
     }
-    TRACE("(%04x): %08lx\n", ds, (DWORD)func );
+    TRACE("(%04x): %p\n", ds, func );
     FIXME("Half implemented\n");
     oldNotify = pInfo->notify;
     pInfo->notify = func;

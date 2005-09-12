@@ -934,6 +934,6 @@ void WINAPI NetBIOSCall16( CONTEXT86 *context )
  */
 FARPROC16 WINAPI GetSetKernelDOSProc16( FARPROC16 DosProc )
 {
-    FIXME("(DosProc=0x%08x): stub\n", (UINT)DosProc);
+    FIXME("(DosProc=%p): stub\n", DosProc);
     return NULL;
 }

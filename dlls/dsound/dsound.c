@@ -575,7 +575,7 @@ static HRESULT WINAPI IDirectSoundImpl_SetCooperativeLevel(
     DWORD level)
 {
     IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
-    TRACE("(%p,%08lx,%s)\n",This,(DWORD)hwnd,dumpCooperativeLevel(level));
+    TRACE("(%p,%p,%s)\n",This,hwnd,dumpCooperativeLevel(level));
 
     if (level==DSSCL_PRIORITY || level==DSSCL_EXCLUSIVE) {
         WARN("level=%s not fully supported\n",
@@ -1170,7 +1170,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_SetCooperativeLevel(
     DWORD level)
 {
     IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
-    TRACE("(%p,%08lx,%s)\n",This,(DWORD)hwnd,dumpCooperativeLevel(level));
+    TRACE("(%p,%p,%s)\n",This,hwnd,dumpCooperativeLevel(level));
     return IDirectSoundImpl_SetCooperativeLevel(This->pds,hwnd,level);
 }
 
@@ -1409,7 +1409,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_SetCooperativeLevel(
     DWORD level)
 {
     IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
-    TRACE("(%p,%08lx,%s)\n",This,(DWORD)hwnd,dumpCooperativeLevel(level));
+    TRACE("(%p,%p,%s)\n",This,hwnd,dumpCooperativeLevel(level));
     return IDirectSoundImpl_SetCooperativeLevel(This->pds,hwnd,level);
 }
 
@@ -1570,7 +1570,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_SetCooperativeLevel(
     DWORD level)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
-    TRACE("(%p,%08lx,%s)\n",This,(DWORD)hwnd,dumpCooperativeLevel(level));
+    TRACE("(%p,%p,%s)\n",This,hwnd,dumpCooperativeLevel(level));
     return IDirectSoundImpl_SetCooperativeLevel(This->pds,hwnd,level);
 }
 

@@ -440,8 +440,8 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
     OFSTRUCT ofs;
     DWORD reslen = dwResLen;
 
-    TRACE("(%s,type=0x%lx,id=0x%lx,off=%ld,len=%ld,data=%p)\n",
-		debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId,
+    TRACE("(%s,type=%p,id=%p,off=%ld,len=%ld,data=%p)\n",
+		debugstr_a(lpszFileName), lpszResType, lpszResId,
                 dwFileOffset, dwResLen, lpvData );
 
     lzfd = LZOpenFileA( (LPSTR)lpszFileName, &ofs, OF_READ );

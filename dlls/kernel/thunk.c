@@ -355,15 +355,15 @@ UINT WINAPI ThunkConnect32(
     {
         directionSL = TRUE;
 
-        TRACE("SL01 thunk %s (%lx) <- %s (%s), Reason: %ld\n",
-                     module32, (DWORD)TD, module16, thunkfun16, dwReason);
+        TRACE("SL01 thunk %s (%p) <- %s (%s), Reason: %ld\n",
+              module32, TD, module16, thunkfun16, dwReason);
     }
     else if (!strncmp(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 
-        TRACE("LS01 thunk %s (%lx) -> %s (%s), Reason: %ld\n",
-                     module32, (DWORD)TD, module16, thunkfun16, dwReason);
+        TRACE("LS01 thunk %s (%p) -> %s (%s), Reason: %ld\n",
+              module32, TD, module16, thunkfun16, dwReason);
     }
     else
     {
@@ -401,8 +401,8 @@ UINT WINAPI ThunkConnect32(
                 tdb->next = SL32->data->targetDB;   /* FIXME: not thread-safe! */
                 SL32->data->targetDB = tdb;
 
-                TRACE("Process %08lx allocated TargetDB entry for ThunkDataSL %08lx\n",
-                             GetCurrentProcessId(), (DWORD)SL32->data);
+                TRACE("Process %08lx allocated TargetDB entry for ThunkDataSL %p\n",
+                      GetCurrentProcessId(), SL32->data);
             }
             else
             {
@@ -1379,15 +1379,15 @@ UINT WINAPI ThunkConnect16(
     {
         directionSL = TRUE;
 
-        TRACE("SL01 thunk %s (%lx) -> %s (%s), Reason: %ld\n",
-              module16, (DWORD)TD, module32, thunkfun32, dwReason);
+        TRACE("SL01 thunk %s (%p) -> %s (%s), Reason: %ld\n",
+              module16, TD, module32, thunkfun32, dwReason);
     }
     else if (!strncmp(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 
-        TRACE("LS01 thunk %s (%lx) <- %s (%s), Reason: %ld\n",
-              module16, (DWORD)TD, module32, thunkfun32, dwReason);
+        TRACE("LS01 thunk %s (%p) <- %s (%s), Reason: %ld\n",
+              module16, TD, module32, thunkfun32, dwReason);
     }
     else
     {
@@ -1515,7 +1515,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
             return;
         }
 
-        TRACE("Creating stub for ThunkDataSL %08lx\n", (DWORD)td);
+        TRACE("Creating stub for ThunkDataSL %p\n", td);
 
 
         /* We produce the following code:
@@ -1556,8 +1556,8 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         DWORD targetNr = LOWORD(context->Ecx) / 4;
         struct SLTargetDB *tdb;
 
-        TRACE("Process %08lx calling target %ld of ThunkDataSL %08lx\n",
-              GetCurrentProcessId(), targetNr, (DWORD)td);
+        TRACE("Process %08lx calling target %ld of ThunkDataSL %p\n",
+              GetCurrentProcessId(), targetNr, td);
 
         for (tdb = td->targetDB; tdb; tdb = tdb->next)
             if (tdb->process == GetCurrentProcessId())

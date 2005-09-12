@@ -193,7 +193,7 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam1, LPARAM lPar
     /* First driver to be loaded for this module, need to load correctly the module */
     if (DRIVER_GetNumberOfModuleRefs(lpNewDrv) == 0) {
 	if (DRIVER_SendMessage(lpNewDrv, DRV_LOAD, 0L, 0L) != DRV_SUCCESS) {
-	    TRACE("DRV_LOAD failed on driver 0x%08lx\n", (DWORD)lpNewDrv);
+	    TRACE("DRV_LOAD failed on driver %p\n", lpNewDrv);
 	    return FALSE;
 	}
 	/* returned value is not checked */
@@ -216,7 +216,7 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam1, LPARAM lPar
     lpNewDrv->dwDriverID = DRIVER_SendMessage(lpNewDrv, DRV_OPEN, lParam1, lParam2);
 
     if (lpNewDrv->dwDriverID == 0) {
-	TRACE("DRV_OPEN failed on driver 0x%08lx\n", (DWORD)lpNewDrv);
+	TRACE("DRV_OPEN failed on driver %p\n", lpNewDrv);
 	DRIVER_RemoveFromList(lpNewDrv);
 	return FALSE;
     }
@@ -305,7 +305,7 @@ HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lP
 	return 0;
     }
  the_end:
-    TRACE("=> %04x / %08lx\n", lpDrv->hDriver16, (DWORD)lpDrv);
+    TRACE("=> %04x / %p\n", lpDrv->hDriver16, lpDrv);
     return lpDrv->hDriver16;
 }
 

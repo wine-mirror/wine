@@ -162,7 +162,7 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
         /* FIXME: Handle flags in some way */
         address = (LPVOID )(page * psize);
         ret = VirtualAlloc ( address, ( npages * psize ), MEM_RESERVE, 0 );
-        TRACE("PageReserve: returning: %08lx\n", (DWORD )ret );
+        TRACE("PageReserve: returning: %p\n", ret );
         if ( ret == NULL )
           return -1;
         else
@@ -195,7 +195,7 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
 
         address = (LPVOID )(page * psize);
         ret = VirtualAlloc ( address, ( npages * psize ), MEM_COMMIT, virt_perm );
-        TRACE("PageCommit: Returning: %08lx\n", (DWORD )ret );
+        TRACE("PageCommit: Returning: %p\n", ret );
         return (DWORD )ret;
 
     }
@@ -269,7 +269,7 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
         }
 
         if ( ! VirtualProtect ( address, ( npages * psize ), virt_new_perm, &virt_old_perm ) ) {
-          ERR("Can't change page permissions for %08lx\n", (DWORD )address );
+          ERR("Can't change page permissions for %p\n", address );
           return 0xffffffff;
         }
         TRACE("Returning: %08lx\n", pg_old_perm );
@@ -282,8 +282,8 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
         LPVOID hmem = (LPVOID) stack32_pop( context );
         DWORD flags = (DWORD ) stack32_pop( context );
 
-        TRACE("PageFree: hmem: %08lx, flags: %08lx partial stub\n",
-              (DWORD )hmem, flags );
+        TRACE("PageFree: hmem: %p, flags: %08lx partial stub\n",
+              hmem, flags );
 
         ret = VirtualFree ( hmem, 0, MEM_RELEASE );
         TRACE("Returning: %d\n", ret );

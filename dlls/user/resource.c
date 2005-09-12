@@ -317,10 +317,10 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     int string_num;
     int i;
 
-    TRACE("inst=%04x id=%04x buff=%08x len=%d\n",
-          instance, resource_id, (int) buffer, buflen);
+    TRACE("inst=%04x id=%04x buff=%p len=%d\n",
+          instance, resource_id, buffer, buflen);
 
-    hrsrc = FindResource16( instance, (LPCSTR)((resource_id>>4)+1), (LPSTR)RT_STRING );
+    hrsrc = FindResource16( instance, MAKEINTRESOURCEA((resource_id>>4)+1), (LPSTR)RT_STRING );
     if (!hrsrc) return 0;
     hmem = LoadResource16( instance, hrsrc );
     if (!hmem) return 0;
@@ -364,12 +364,12 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 
     if (HIWORD(resource_id)==0xFFFF) /* netscape 3 passes this */
 	resource_id = (UINT)(-((INT)resource_id));
-    TRACE("instance = %p, id = %04x, buffer = %08x, length = %d\n",
-          instance, (int)resource_id, (int) buffer, buflen);
+    TRACE("instance = %p, id = %04x, buffer = %p, length = %d\n",
+          instance, resource_id, buffer, buflen);
 
     /* Use bits 4 - 19 (incremented by 1) as resourceid, mask out
      * 20 - 31. */
-    hrsrc = FindResourceW( instance, (LPCWSTR)(((resource_id>>4)&0xffff)+1),
+    hrsrc = FindResourceW( instance, MAKEINTRESOURCEW(((resource_id>>4)&0xffff)+1),
                            (LPWSTR)RT_STRING );
     if (!hrsrc) return 0;
     hmem = LoadResource( instance, hrsrc );
@@ -410,8 +410,8 @@ INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
     INT    retval;
     LPWSTR wbuf;
 
-    TRACE("instance = %p, id = %04x, buffer = %08x, length = %d\n",
-          instance, (int)resource_id, (int) buffer, buflen);
+    TRACE("instance = %p, id = %04x, buffer = %p, length = %d\n",
+          instance, resource_id, buffer, buflen);
 
     if(buffer == NULL) /* asked size of string */
 	return LoadStringW(instance, resource_id, NULL, 0);

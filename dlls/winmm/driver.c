@@ -178,7 +178,7 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam1, LPARAM lPar
         /* first of this driver in list ? */
 	if (DRIVER_GetNumberOfModuleRefs(lpNewDrv->d.d32.hModule, NULL) == 0) {
 	    if (DRIVER_SendMessage(lpNewDrv, DRV_LOAD, 0L, 0L) != DRV_SUCCESS) {
-		TRACE("DRV_LOAD failed on driver 0x%08lx\n", (DWORD)lpNewDrv);
+		TRACE("DRV_LOAD failed on driver %p\n", lpNewDrv);
 		return FALSE;
 	    }
 	    /* returned value is not checked */
@@ -204,7 +204,7 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam1, LPARAM lPar
 	lpNewDrv->d.d32.dwDriverID = DRIVER_SendMessage(lpNewDrv, DRV_OPEN, lParam1, lParam2);
 
 	if (lpNewDrv->d.d32.dwDriverID == 0) {
-	    TRACE("DRV_OPEN failed on driver 0x%08lx\n", (DWORD)lpNewDrv);
+	    TRACE("DRV_OPEN failed on driver %p\n", lpNewDrv);
 	    DRIVER_RemoveFromList(lpNewDrv);
 	    return FALSE;
 	}
@@ -385,7 +385,7 @@ HDRVR WINAPI OpenDriver(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lPar
     return 0;
 
  the_end:
-    if (lpDrv)	TRACE("=> %08lx\n", (DWORD)lpDrv);
+    if (lpDrv)	TRACE("=> %p\n", lpDrv);
     return (HDRVR)lpDrv;
 }
 

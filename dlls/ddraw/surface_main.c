@@ -1085,7 +1085,7 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
     if (TRACE_ON(ddraw)) {
-        TRACE("(%p)->Lock(%p,%p,%08lx,%08lx)\n",This,prect,pDDSD,flags,(DWORD)h);
+        TRACE("(%p)->Lock(%p,%p,%08lx,%p)\n",This,prect,pDDSD,flags,h);
 	TRACE(" - locking flags : "); DDRAW_dump_lockflag(flags);
     }
     if (WARN_ON(ddraw)) {

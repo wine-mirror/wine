@@ -183,7 +183,7 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd *prb)
   TRACE("SenseLen: %d\n", prb->SRB_SenseLen);
   TRACE("BufPtr: %p\n", prb->SRB_BufPointer);
   TRACE("CDB Length: %d\n", prb->SRB_CDBLen);
-  TRACE("POST Proc: %lx\n", (DWORD) prb->SRB_PostProc);
+  TRACE("POST Proc: %p\n", prb->SRB_PostProc);
   cdb = &prb->CDBByte[0];
   cmd = prb->CDBByte[0];
   if (TRACE_ON(aspi)) {
@@ -286,7 +286,7 @@ WNASPI32_DoPosting( SRB_ExecSCSICmd *lpPRB, DWORD status )
 	{
 		if (SRB_Flags & 0x1)
 		{
-			TRACE("Post Routine (%lx) called\n", (DWORD) SRB_PostProc);
+			TRACE("Post Routine (%p) called\n", SRB_PostProc);
 			/* Even though lpPRB could have been freed by
 			 * the program.. that's unlikely if it planned
 			 * to use it in the PostProc

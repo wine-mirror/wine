@@ -188,8 +188,8 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
            "acmDriverID(): rc = %08x, should be %08x\n",
            rc, MMSYSERR_NOERROR);
         ok(hid == hadid,
-           "acmDriverID() returned ID %08lx doesn't equal %08lx\n",
-           (DWORD)hid, (DWORD)hadid);
+           "acmDriverID() returned ID %p doesn't equal %p\n",
+           hid, hadid);
 
         /* try bad pointer */
         rc = acmMetrics((HACMOBJ)had, ACM_METRIC_MAX_SIZE_FORMAT, 0);

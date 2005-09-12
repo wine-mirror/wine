@@ -970,7 +970,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, LPCSTR name, LPCSTR type )
         if (!(pTypeInfo = NE_FindTypeSection( pResTab, pTypeInfo, type ))) break;
         if ((pNameInfo = NE_FindResourceFromType( pResTab, pTypeInfo, name )))
         {
-            TRACE("    Found id %08lx\n", (DWORD)name );
+            TRACE("    Found id %p\n", name );
             return (HRSRC16)( (char *)pNameInfo - (char *)pModule );
         }
         pTypeInfo = next_typeinfo(pTypeInfo);

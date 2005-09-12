@@ -240,8 +240,8 @@ VOID SendSyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
         }
     }
     
-    TRACE(" callback(%p) (%08lx (%p), %08lx, %ld (%s), %p, %ld)\n",
-	  hdr->lpfnStatusCB, (DWORD) hHttpSession, hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
+    TRACE(" callback(%p) (%p (%p), %08lx, %ld (%s), %p, %ld)\n",
+	  hdr->lpfnStatusCB, hHttpSession, hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
 	  lpvNewInfo, dwStatusInfoLength);
     
     hdr->lpfnStatusCB(hHttpSession, dwContext, dwInternetStatus,

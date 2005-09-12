@@ -854,11 +854,11 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 
     hInstanceSelector = GlobalHandleToSel16(hInstance);
 
-    TRACE("(%08lx, %04x);\n", (DWORD)func, hInstance);
+    TRACE("(%p, %04x);\n", func, hInstance);
 
     if (!HIWORD(func)) {
       /* Win95 actually protects via SEH, but this is better for debugging */
-      WARN("Ouch ! Called with invalid func 0x%08lx !\n", (DWORD)func);
+      WARN("Ouch ! Called with invalid func %p !\n", func);
       return (FARPROC16)0;
     }
 
@@ -887,8 +887,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     thunk = MapSL( thunkaddr );
     lfunc = MapSL( (SEGPTR)func );
 
-    TRACE("(%08lx,%04x): got thunk %08lx\n",
-          (DWORD)func, hInstance, (DWORD)thunkaddr );
+    TRACE("(%p,%04x): got thunk %08lx\n", func, hInstance, thunkaddr );
     if (((lfunc[0]==0x8c) && (lfunc[1]==0xd8)) || /* movw %ds, %ax */
     	((lfunc[0]==0x1e) && (lfunc[1]==0x58))    /* pushw %ds, popw %ax */
     ) {
@@ -910,7 +909,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
  */
 void WINAPI FreeProcInstance16( FARPROC16 func )
 {
-    TRACE("(%08lx)\n", (DWORD)func );
+    TRACE("(%p)\n", func );
     TASK_FreeThunk( (SEGPTR)func );
 }
 

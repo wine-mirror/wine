@@ -386,7 +386,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 
     /* FIXME: Create a WINE_ACMDRIVER32 */
     *phad = (HACMDRIVER)pad;
-    TRACE("'%s' => %08lx\n", debugstr_w(padid->pszDriverAlias), (DWORD)pad);
+    TRACE("'%s' => %p\n", debugstr_w(padid->pszDriverAlias), pad);
 
     return MMSYSERR_NOERROR;
  gotError:

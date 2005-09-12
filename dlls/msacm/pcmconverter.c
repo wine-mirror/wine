@@ -1025,8 +1025,8 @@ static LRESULT PCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
 LRESULT CALLBACK	PCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
 				       LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lx %08lx %u %08lx %08lx);\n",
-	  dwDevID, (DWORD)hDriv, wMsg, dwParam1, dwParam2);
+    TRACE("(%08lx %p %u %08lx %08lx);\n",
+          dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
     case DRV_LOAD:		return 1;
