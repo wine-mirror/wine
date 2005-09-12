@@ -374,7 +374,7 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
         {
             HWND *phwnd;
             UINT send_flags;
-            DWORD result;
+            DWORD_PTR result;
 
             /* Send a WM_QUERYENDSESSION message to every window */
             send_flags=(flags & EWX_FORCEIFHUNG) ? SMTO_ABORTIFHUNG : SMTO_NORMAL;

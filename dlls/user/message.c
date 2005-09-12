@@ -3426,6 +3426,6 @@ BOOL WINAPI GetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
  */
 BOOL WINAPI IsHungAppWindow( HWND hWnd )
 {
-    DWORD dwResult; 
-    return !SendMessageTimeoutA(hWnd, WM_NULL, 0, 0, SMTO_ABORTIFHUNG, 5000, &dwResult);	
+    DWORD_PTR dwResult;
+    return !SendMessageTimeoutA(hWnd, WM_NULL, 0, 0, SMTO_ABORTIFHUNG, 5000, &dwResult);
 }
