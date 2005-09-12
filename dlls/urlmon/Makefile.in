@@ -23,4 +23,6 @@ SUBDIRS = tests
 
 @MAKE_DLL_RULES@
 
+rsrc.res: urlmon.inf
+
 ### Dependencies:
