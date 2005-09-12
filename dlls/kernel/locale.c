@@ -425,9 +425,9 @@ static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCST
     }
 
     l_data.n_found = 0;
-    strcpynAtoW(l_data.lang, Lang, sizeof(l_data.lang));
+    strcpynAtoW(l_data.lang, Lang, sizeof(l_data.lang)/sizeof(WCHAR));
 
-    if (Country) strcpynAtoW(l_data.country, Country, sizeof(l_data.country));
+    if (Country) strcpynAtoW(l_data.country, Country, sizeof(l_data.country)/sizeof(WCHAR));
     else l_data.country[0] = 0;
 
     EnumResourceLanguagesW(kernel32_handle, (LPCWSTR)RT_STRING, (LPCWSTR)LOCALE_ILANGUAGE,
