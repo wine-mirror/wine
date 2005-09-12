@@ -318,6 +318,7 @@ static void test_file_protocol_url(LPCWSTR url)
 static void test_file_protocol(void) {
     IInternetProtocol *protocol;
     WCHAR buf[MAX_PATH];
+    DWORD size;
     ULONG len;
     HANDLE file;
     HRESULT hres;
@@ -332,10 +333,10 @@ static void test_file_protocol(void) {
 
     file = CreateFileW(wszIndexHtml, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != NULL, "CreateFile failed\n");
-    if(!file)
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+    if(file == INVALID_HANDLE_VALUE)
         return;
-    WriteFile(file, html_doc, sizeof(html_doc)-1, NULL, NULL);
+    WriteFile(file, html_doc, sizeof(html_doc)-1, &size, NULL);
     CloseHandle(file);
 
     file_name = wszIndexHtml;
