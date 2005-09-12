@@ -54,7 +54,7 @@ static LRESULT WINAPI DirectDrawSurface_WndProc(HWND hwnd, UINT msg, WPARAM wPar
     IDirectDrawSurfaceImpl *This;
     LRESULT ret;
 
-    This = (IDirectDrawSurfaceImpl *)GetWindowLongA(hwnd, 0);
+    This = (IDirectDrawSurfaceImpl *)GetWindowLongPtrA(hwnd, 0);
     if (This) {
 	HWND window = This->ddraw_owner->window;
 
@@ -96,7 +96,7 @@ static LRESULT WINAPI DirectDrawSurface_WndProc(HWND hwnd, UINT msg, WPARAM wPar
 	if (msg == WM_CREATE) {
 	    CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
 	    This = (IDirectDrawSurfaceImpl *)cs->lpCreateParams;
-	    SetWindowLongA(hwnd, 0, (LONG)This);
+	    SetWindowLongPtrA(hwnd, 0, (LONG_PTR)This);
 	}
 	ret = DefWindowProcA(hwnd, msg, wParam, lParam);
     }
