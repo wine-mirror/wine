@@ -25,6 +25,9 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#ifdef HAVE_SYS_TIMES_H
+#include <sys/times.h>
+#endif
 
 #include "ntstatus.h"
 #include "thread.h"
@@ -553,6 +556,46 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         }
         return status;
     case ThreadTimes:
+        {
+            KERNEL_USER_TIMES   kusrt;
+            /* We need to do a server call to get the creation time or exit time */
+            /* This works on any thread */
+            SERVER_START_REQ( get_thread_info )
+            {
+                req->handle = handle;
+                req->tid_in = 0;
+                status = wine_server_call( req );
+                if (status == STATUS_SUCCESS)
+                {
+                    RtlSecondsSince1970ToTime( reply->creation_time, &kusrt.CreateTime );
+                    RtlSecondsSince1970ToTime( reply->exit_time, &kusrt.ExitTime );
+                }
+            }
+            SERVER_END_REQ;
+            if (status == STATUS_SUCCESS)
+            {
+                /* We call times(2) for kernel time or user time */
+                /* We can only (portably) do this for the current thread */
+                if (handle == GetCurrentThread())
+                {
+                    struct tms time_buf;
+                    long clocks_per_sec = sysconf(_SC_CLK_TCK);
+
+                    times(&time_buf);
+                    kusrt.KernelTime.QuadPart = (ULONGLONG)time_buf.tms_stime * 10000000 / clocks_per_sec;
+                    kusrt.UserTime.QuadPart = (ULONGLONG)time_buf.tms_utime * 10000000 / clocks_per_sec;
+                }
+                else
+                {
+                    kusrt.KernelTime.QuadPart = 0;
+                    kusrt.UserTime.QuadPart = 0;
+                    FIXME("Cannot get kerneltime or usertime of other threads\n");
+                }
+                if (data) memcpy( data, &kusrt, min( length, sizeof(kusrt) ));
+                if (ret_len) *ret_len = min( length, sizeof(kusrt) );
+            }
+        }
+        return status;
     case ThreadPriority:
     case ThreadBasePriority:
     case ThreadAffinityMask:

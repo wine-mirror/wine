@@ -25,9 +25,6 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_TIMES_H
-#include <sys/times.h>
-#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -545,59 +542,38 @@ BOOL WINAPI GetThreadTimes(
     LPFILETIME kerneltime,   /* [out] Time thread spent in kernel mode */
     LPFILETIME usertime)     /* [out] Time thread spent in user mode */
 {
-    BOOL ret = TRUE;
+    KERNEL_USER_TIMES   kusrt;
+    NTSTATUS            status;
 
-    if (creationtime || exittime)
+    status = NtQueryInformationThread(thread, ThreadTimes, &kusrt,
+                                      sizeof(kusrt), NULL);
+    if (status)
     {
-        /* We need to do a server call to get the creation time or exit time */
-        /* This works on any thread */
-
-        SERVER_START_REQ( get_thread_info )
-        {
-            req->handle = thread;
-            req->tid_in = 0;
-            if ((ret = !wine_server_call_err( req )))
-            {
-                if (creationtime)
-                    RtlSecondsSince1970ToTime( reply->creation_time, (LARGE_INTEGER*)creationtime );
-                if (exittime)
-                    RtlSecondsSince1970ToTime( reply->exit_time, (LARGE_INTEGER*)exittime );
-            }
-        }
-        SERVER_END_REQ;
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-    if (ret && (kerneltime || usertime))
+    if (creationtime)
     {
-        /* We call times(2) for kernel time or user time */
-        /* We can only (portably) do this for the current thread */
-        if (thread == GetCurrentThread())
-        {
-            ULONGLONG time;
-            struct tms time_buf;
-            long clocks_per_sec = sysconf(_SC_CLK_TCK);
-
-            times(&time_buf);
-            if (kerneltime)
-            {
-                time = (ULONGLONG)time_buf.tms_stime * 10000000 / clocks_per_sec;
-                kerneltime->dwHighDateTime = time >> 32;
-                kerneltime->dwLowDateTime = (DWORD)time;
-            }
-            if (usertime)
-            {
-                time = (ULONGLONG)time_buf.tms_utime * 10000000 / clocks_per_sec;
-                usertime->dwHighDateTime = time >> 32;
-                usertime->dwLowDateTime = (DWORD)time;
-            }
-        }
-        else
-        {
-            if (kerneltime) kerneltime->dwHighDateTime = kerneltime->dwLowDateTime = 0;
-            if (usertime) usertime->dwHighDateTime = usertime->dwLowDateTime = 0;
-            FIXME("Cannot get kerneltime or usertime of other threads\n");
-        }
+        creationtime->dwLowDateTime = kusrt.CreateTime.u.LowPart;
+        creationtime->dwHighDateTime = kusrt.CreateTime.u.HighPart;
     }
-    return ret;
+    if (exittime)
+    {
+        exittime->dwLowDateTime = kusrt.ExitTime.u.LowPart;
+        exittime->dwHighDateTime = kusrt.ExitTime.u.HighPart;
+    }
+    if (kerneltime)
+    {
+        kerneltime->dwLowDateTime = kusrt.KernelTime.u.LowPart;
+        kerneltime->dwHighDateTime = kusrt.KernelTime.u.HighPart;
+    }
+    if (usertime)
+    {
+        usertime->dwLowDateTime = kusrt.UserTime.u.LowPart;
+        usertime->dwHighDateTime = kusrt.UserTime.u.HighPart;
+    }
+    
+    return TRUE;
 }
 
 
