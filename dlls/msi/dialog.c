@@ -994,7 +994,6 @@ static void
 msi_maskedit_create_children( struct msi_maskedit_info *info )
 {
     DWORD width, height, style, wx, ww;
-    LPCWSTR text, font = NULL;
     RECT rect;
     HWND hwnd;
     UINT i;
@@ -1005,9 +1004,6 @@ msi_maskedit_create_children( struct msi_maskedit_info *info )
 
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
-
-    if( text )
-        font = msi_dialog_get_style( &text );
 
     for( i = 0; i < info->num_groups; i++ )
     {
@@ -1024,8 +1020,7 @@ msi_maskedit_create_children( struct msi_maskedit_info *info )
 
         SendMessageW( hwnd, EM_LIMITTEXT, info->group[i].len, 0 );
 
-        msi_dialog_set_font( info->dialog, hwnd,
-                       font ? font : info->dialog->default_font );
+        msi_dialog_set_font( info->dialog, hwnd, info->dialog->default_font );
         info->group[i].hwnd = hwnd;
     }
 }
