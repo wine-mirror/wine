@@ -23,6 +23,7 @@
 import "ocidl.idl";
 import "docobj.idl";
 
+#include <olectl.h>
 #include <exdispid.h>
 
 /*****************************************************************************
@@ -54,36 +55,39 @@ interface IWebBrowser : IDispatch
         REFRESH_COMPLETELY = 3
     } RefreshConstants;
 
-    HRESULT GoBack();
-    HRESULT GoForward();
-    HRESULT GoHome();
-    HRESULT GoSearch();
+    [id(100)] HRESULT GoBack();
+    [id(101)] HRESULT GoForward();
+    [id(102)] HRESULT GoHome();
+    [id(103)] HRESULT GoSearch();
+
+    [id(104)]
     HRESULT Navigate(
         [in] BSTR URL,
-        [in] VARIANT *Flags,
-        [in] VARIANT *TargetFrameName,
-        [in] VARIANT *PostData,
-        [in] VARIANT *Headers);
-    HRESULT Refresh();
-    HRESULT Refresh2( [in] VARIANT *Level );
-    HRESULT Stop();
-    [propget] HRESULT Application([out] IDispatch** ppDisp);
-    [propget] HRESULT Parent([out] IDispatch** ppDisp);
-    [propget] HRESULT Container([out] IDispatch** ppDisp);
-    [propget] HRESULT Document([out] IDispatch** ppDisp);
-    [propget] HRESULT TopLevelContainer([out] VARIANT_BOOL* pBool);
-    [propget] HRESULT Type([out] BSTR* Type);
-    [propget] HRESULT Left([out] long *pl);
-    [propput] HRESULT Left([in] long Left);
-    [propget] HRESULT Top([out] long *pl);
-    [propput] HRESULT Top([in] long Top);
-    [propget] HRESULT Width([out] long *pl);
-    [propput] HRESULT Width([in] long Width);
-    [propget] HRESULT Height([out] long *pl);
-    [propput] HRESULT Height([in] long Height);
-    [propget] HRESULT LocationName([out] BSTR *LocationName);
-    [propget] HRESULT LocationURL([out] BSTR * LocationURL);
-    [propget] HRESULT Busy([out] VARIANT_BOOL *pBool);
+        [in, optional] VARIANT *Flags,
+        [in, optional] VARIANT *TargetFrameName,
+        [in, optional] VARIANT *PostData,
+        [in, optional] VARIANT *Headers);
+
+    [id(DISPID_REFRESH)] HRESULT Refresh();
+    [id(105)] HRESULT Refresh2([in, optional] VARIANT *Level);
+    [id(106)] HRESULT Stop();
+    [id(200), propget] HRESULT Application([out, retval] IDispatch** ppDisp);
+    [id(201), propget] HRESULT Parent([out, retval] IDispatch** ppDisp);
+    [id(202), propget] HRESULT Container([out, retval] IDispatch** ppDisp);
+    [id(203), propget] HRESULT Document([out] IDispatch** ppDisp);
+    [id(204), propget] HRESULT TopLevelContainer([out, retval] VARIANT_BOOL* pBool);
+    [id(205), propget] HRESULT Type([out, retval] BSTR* Type);
+    [id(206), propget] HRESULT Left([out, retval] long *pl);
+    [id(206), propput] HRESULT Left([in] long Left);
+    [id(207), propget] HRESULT Top([out, retval] long *pl);
+    [id(207), propput] HRESULT Top([in] long Top);
+    [id(208), propget] HRESULT Width([out, retval] long *pl);
+    [id(208), propput] HRESULT Width([in] long Width);
+    [id(209), propget] HRESULT Height([out, retval] long *pl);
+    [id(209), propput] HRESULT Height([in] long Height);
+    [id(210), propget] HRESULT LocationName([out, retval] BSTR *LocationName);
+    [id(211), propget] HRESULT LocationURL([out, retval] BSTR * LocationURL);
+    [id(212), propget] HRESULT Busy([out, retval] VARIANT_BOOL *pBool);
 }
 
 
@@ -97,26 +101,26 @@ interface IWebBrowser : IDispatch
 ]
 interface IWebBrowserApp : IWebBrowser
 {
-    HRESULT Quit();
-    HRESULT ClientToWindow([in,out] int* pcx, [in,out] int* pcy);
-    HRESULT PutProperty([in] BSTR szProperty, [in] VARIANT vtValue);
-    HRESULT GetProperty([in] BSTR szProperty, [out] VARIANT *pvtValue);
-    [propget] HRESULT Name([out] BSTR* Name);
-    [propget] HRESULT HWND([out] long *pHWND);
-    [propget] HRESULT FullName([out] BSTR* FullName);
-    [propget] HRESULT Path([out] BSTR* Path);
-    [propget] HRESULT Visible([out] VARIANT_BOOL* pBool);
-    [propput] HRESULT Visible([in] VARIANT_BOOL Value);
-    [propget] HRESULT StatusBar([out] VARIANT_BOOL* pBool);
-    [propput] HRESULT StatusBar([in] VARIANT_BOOL Value);
-    [propget] HRESULT StatusText([out] BSTR *StatusText);
-    [propput] HRESULT StatusText([in] BSTR StatusText);
-    [propget] HRESULT ToolBar([out] int * Value);
-    [propput] HRESULT ToolBar([in] int Value);
-    [propget] HRESULT MenuBar([out] VARIANT_BOOL * Value);
-    [propput] HRESULT MenuBar([in] VARIANT_BOOL Value);
-    [propget] HRESULT FullScreen([out] VARIANT_BOOL * pbFullScreen);
-    [propput] HRESULT FullScreen([in] VARIANT_BOOL bFullScreen);
+    [id(300)] HRESULT Quit();
+    [id(301)] HRESULT ClientToWindow([in,out] int* pcx, [in,out] int* pcy);
+    [id(302)] HRESULT PutProperty([in] BSTR szProperty, [in] VARIANT vtValue);
+    [id(303)] HRESULT GetProperty([in] BSTR szProperty, [out, retval] VARIANT *pvtValue);
+    [id(0), propget] HRESULT Name([out, retval] BSTR* Name);
+    [id(DISPID_HWND), propget] HRESULT HWND([out, retval] long *pHWND);
+    [id(400), propget] HRESULT FullName([out, retval] BSTR* FullName);
+    [id(401), propget] HRESULT Path([out, retval] BSTR* Path);
+    [id(402), propget] HRESULT Visible([out, retval] VARIANT_BOOL* pBool);
+    [id(402), propput] HRESULT Visible([in] VARIANT_BOOL Value);
+    [id(403), propget] HRESULT StatusBar([out, retval] VARIANT_BOOL* pBool);
+    [id(403), propput] HRESULT StatusBar([in] VARIANT_BOOL Value);
+    [id(404), propget] HRESULT StatusText([out, retval] BSTR *StatusText);
+    [id(404), propput] HRESULT StatusText([in] BSTR StatusText);
+    [id(405), propget] HRESULT ToolBar([out, retval] int * Value);
+    [id(405), propput] HRESULT ToolBar([in] int Value);
+    [id(406), propget] HRESULT MenuBar([out, retval] VARIANT_BOOL * Value);
+    [id(406), propput] HRESULT MenuBar([in] VARIANT_BOOL Value);
+    [id(407), propget] HRESULT FullScreen([out, retval] VARIANT_BOOL * pbFullScreen);
+    [id(407), propput] HRESULT FullScreen([in] VARIANT_BOOL bFullScreen);
 }
 
 /*****************************************************************************
@@ -129,31 +133,43 @@ interface IWebBrowserApp : IWebBrowser
 ]
 interface IWebBrowser2 : IWebBrowserApp
 {
-    HRESULT Navigate2(
+    [id(500)] HRESULT Navigate2(
         [in] VARIANT *URL,
-        [in] VARIANT *Flags,
-        [in] VARIANT *TargetFrameName,
-        [in] VARIANT *PostData,
-        [in] VARIANT *Headers);
-    HRESULT QueryStatusWB([in] OLECMDID cmdID, [out] OLECMDF *pcmdf);
-    HRESULT ExecWB([in] OLECMDID cmdID, [in] OLECMDEXECOPT cmdexecopt, [in] VARIANT *pvaIn, [out, in] VARIANT *pvaOut);
-    HRESULT ShowBrowserBar([in] VARIANT *pvaClsid, [in] VARIANT *pvarShow, [in] VARIANT *pvarSize);
+        [in, optional] VARIANT *Flags,
+        [in, optional] VARIANT *TargetFrameName,
+        [in, optional] VARIANT *PostData,
+        [in, optional] VARIANT *Headers);
 
-    [propget] HRESULT ReadyState([out] READYSTATE *plReadyState);
-    [propget] HRESULT Offline([out] VARIANT_BOOL *pbOffline);
-    [propput] HRESULT Offline([in] VARIANT_BOOL bOffline);
-    [propget] HRESULT Silent([out] VARIANT_BOOL *pbSilent);
-    [propput] HRESULT Silent([in] VARIANT_BOOL bSilent);
-    [propget] HRESULT RegisterAsBrowser([out] VARIANT_BOOL *pbRegister);
-    [propput] HRESULT RegisterAsBrowser([in] VARIANT_BOOL bRegister);
-    [propget] HRESULT RegisterAsDropTarget([out] VARIANT_BOOL *pbRegister);
-    [propput] HRESULT RegisterAsDropTarget([in] VARIANT_BOOL bRegister);
-    [propget] HRESULT TheaterMode([out] VARIANT_BOOL *pbRegister);
-    [propput] HRESULT TheaterMode([in] VARIANT_BOOL bRegister);
-    [propget] HRESULT AddressBar([out] VARIANT_BOOL *Value);
-    [propput] HRESULT AddressBar([in] VARIANT_BOOL Value);
-    [propget] HRESULT Resizable([out] VARIANT_BOOL *Value);
-    [propput] HRESULT Resizable([in] VARIANT_BOOL Value);
+    [id(501)] HRESULT QueryStatusWB(
+        [in] OLECMDID cmdID,
+        [out, retval] OLECMDF *pcmdf);
+
+    [id(502)] HRESULT ExecWB(
+        [in] OLECMDID cmdID,
+        [in] OLECMDEXECOPT cmdexecopt,
+        [in, optional] VARIANT *pvaIn,
+        [out, in, optional] VARIANT *pvaOut);
+
+    [id(503)] HRESULT ShowBrowserBar(
+        [in] VARIANT *pvaClsid,
+        [in, optional] VARIANT *pvarShow,
+        [in, optional] VARIANT *pvarSize);
+
+    [id(DISPID_READYSTATE), propget] HRESULT ReadyState([out, retval] READYSTATE *plReadyState);
+    [id(550), propget] HRESULT Offline([out, retval] VARIANT_BOOL *pbOffline);
+    [id(550), propput] HRESULT Offline([in] VARIANT_BOOL bOffline);
+    [id(551), propget] HRESULT Silent([out, retval] VARIANT_BOOL *pbSilent);
+    [id(551), propput] HRESULT Silent([in] VARIANT_BOOL bSilent);
+    [id(552), propget] HRESULT RegisterAsBrowser([out, retval] VARIANT_BOOL *pbRegister);
+    [id(552), propput] HRESULT RegisterAsBrowser([in] VARIANT_BOOL bRegister);
+    [id(553), propget] HRESULT RegisterAsDropTarget([out, retval] VARIANT_BOOL *pbRegister);
+    [id(553), propput] HRESULT RegisterAsDropTarget([in] VARIANT_BOOL bRegister);
+    [id(554), propget] HRESULT TheaterMode([out, retval] VARIANT_BOOL *pbRegister);
+    [id(554), propput] HRESULT TheaterMode([in] VARIANT_BOOL bRegister);
+    [id(555), propget] HRESULT AddressBar([out, retval] VARIANT_BOOL *Value);
+    [id(555), propput] HRESULT AddressBar([in] VARIANT_BOOL Value);
+    [id(556), propget] HRESULT Resizable([out, retval] VARIANT_BOOL *Value);
+    [id(556), propput] HRESULT Resizable([in] VARIANT_BOOL Value);
 }
 
 [
@@ -327,20 +343,20 @@ coclass WebBrowser
 interface IShellWindows : IDispatch
 {
     [propget] HRESULT Count( [out] long *Count );
-    HRESULT Item( [in] VARIANT index, [out] IDispatch **Folder );
-    HRESULT _NewEnum( [out] IUnknown **ppunk );
-    HRESULT Register( [in] IDispatch *pid, [in] long hWnd, [in] int swClass,
+    [id(0)] HRESULT Item( [in] VARIANT index, [out] IDispatch **Folder );
+    [id(-4)] HRESULT _NewEnum( [out] IUnknown **ppunk );
+    [hidden] HRESULT Register( [in] IDispatch *pid, [in] long hWnd, [in] int swClass,
                 [out] long *plCookie );
-    HRESULT RegisterPending( [in] long lThread, [in] VARIANT *pvarloc,
+    [hidden] HRESULT RegisterPending( [in] long lThread, [in] VARIANT *pvarloc,
                 [in] VARIANT *varlocRoot, [in] int swClass, [out] long *plCookie );
-    HRESULT Revoke( [in] long Cookie );
-    HRESULT OnNavigate( [in] long Cookie, [out] VARIANT *pvarLoc );
-    HRESULT OnActivated( [in] long Cookie, [in] VARIANT fActive );
-    HRESULT FindWindowSW( [in] VARIANT *pvarLoc, [in] VARIANT *pvarLocRoot, 
+    [hidden] HRESULT Revoke( [in] long Cookie );
+    [hidden] HRESULT OnNavigate( [in] long Cookie, [out] VARIANT *pvarLoc );
+    [hidden] HRESULT OnActivated( [in] long Cookie, [in] VARIANT fActive );
+    [hidden] HRESULT FindWindowSW( [in] VARIANT *pvarLoc, [in] VARIANT *pvarLocRoot, 
                 [in] int swClass, [out] long *phwnd, int swfwOptions,
                 IDispatch **ppdispOut );
-    HRESULT OnCreated( [in] long lCookie, [in] IUnknown *punk );
-    HRESULT ProcessAttachDetach( [in] VARIANT_BOOL fAttach );
+    [hidden] HRESULT OnCreated( [in] long lCookie, [in] IUnknown *punk );
+    [hidden] HRESULT ProcessAttachDetach( [in] VARIANT_BOOL fAttach );
 }
 
 [
