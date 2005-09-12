@@ -74,6 +74,7 @@ static const IMAGE_NT_HEADERS *main_exe;
 
 static load_dll_callback_t load_dll_callback;
 
+static const char default_dlldir[] = DLLDIR;
 static const char **dll_paths;
 static int nb_dll_paths;
 static int dll_path_maxlen;
@@ -83,7 +84,6 @@ extern void mmap_init(void);
 /* build the dll load path from the WINEDLLPATH variable */
 static void build_dll_path(void)
 {
-    static const char * const dlldir = DLLDIR;
     int len, count = 0;
     char *p, *path = getenv( "WINEDLLPATH" );
 
@@ -120,10 +120,10 @@ static void build_dll_path(void)
     }
 
     /* append default dll dir (if not empty) to path */
-    if ((len = strlen(dlldir)))
+    if ((len = sizeof(default_dlldir)-1))
     {
         if (len > dll_path_maxlen) dll_path_maxlen = len;
-        dll_paths[nb_dll_paths++] = dlldir;
+        dll_paths[nb_dll_paths++] = default_dlldir;
     }
 }
 
@@ -521,9 +521,10 @@ static void debug_usage(void)
  */
 void wine_init( int argc, char *argv[], char *error, int error_size )
 {
+    struct dll_path_context context;
+    char *path;
     char *wine_debug;
-    int file_exists;
-    void *ntdll;
+    void *ntdll = NULL;
     void (*init_func)(void);
 
     build_dll_path();
@@ -539,7 +540,18 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
         wine_dbg_parse_options( wine_debug );
     }
 
-    if (!(ntdll = dlopen_dll( "ntdll.dll", error, error_size, 0, &file_exists ))) return;
+    for (path = first_dll_path( "ntdll.dll", ".so", &context ); path; path = next_dll_path( &context ))
+    {
+        if ((ntdll = wine_dlopen( path, RTLD_NOW, error, error_size )))
+        {
+            /* if we didn't use the default dll dir, remove it from the search path */
+            if (sizeof(default_dlldir) > 1 && context.index < nb_dll_paths) nb_dll_paths--;
+            break;
+        }
+    }
+    free_dll_path( &context );
+
+    if (!ntdll) return;
     if (!(init_func = wine_dlsym( ntdll, "__wine_process_init", error, error_size ))) return;
     init_func();
 }
