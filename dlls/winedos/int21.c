@@ -521,7 +521,7 @@ static void INT21_FillHeap( INT21_HEAP *heap )
      */
     heap->filename_size = 8 + strlen(terminators);
     heap->filename_illegal_size = strlen(terminators);
-    strcpy( heap->filename_illegal_table, terminators );
+    memcpy( heap->filename_illegal_table, terminators, heap->filename_illegal_size );
 
     heap->filename_reserved1 = 0x01;
     heap->filename_lowest = 0x00;
@@ -1484,7 +1484,7 @@ static void INT21_SequentialWriteToFCB( CONTEXT86 *context )
             AL_result = 0x01; /* disk full */
         } else {
             disk_transfer_area = INT21_GetCurrentDTA(context);
-            bytes_written = _lwrite((HFILE) handle, disk_transfer_area, fcb->logical_record_size);
+            bytes_written = _lwrite((HFILE) handle, (LPCSTR)disk_transfer_area, fcb->logical_record_size);
             if (bytes_written != fcb->logical_record_size) {
                 TRACE("_lwrite(%d, %p, %d) failed with %d\n",
                       fcb->file_number, disk_transfer_area, fcb->logical_record_size, bytes_written);
@@ -1633,7 +1633,7 @@ static void INT21_WriteRandomRecordToFCB( CONTEXT86 *context )
             AL_result = 0x01; /* disk full */
         } else {
             disk_transfer_area = INT21_GetCurrentDTA(context);
-            bytes_written = _lwrite((HFILE) handle, disk_transfer_area, fcb->logical_record_size);
+            bytes_written = _lwrite((HFILE) handle, (LPCSTR)disk_transfer_area, fcb->logical_record_size);
             if (bytes_written != fcb->logical_record_size) {
                 TRACE("_lwrite(%d, %p, %d) failed with %d\n",
                       fcb->file_number, disk_transfer_area, fcb->logical_record_size, bytes_written);
@@ -1806,7 +1806,7 @@ static void INT21_RandomBlockWriteToFCB( CONTEXT86 *context )
             disk_transfer_area = INT21_GetCurrentDTA(context);
             records_requested = CX_reg(context);
             bytes_requested = (UINT) records_requested * fcb->logical_record_size;
-            bytes_written = _lwrite((HFILE) handle, disk_transfer_area, bytes_requested);
+            bytes_written = _lwrite((HFILE) handle, (LPCSTR)disk_transfer_area, bytes_requested);
             if (bytes_written != bytes_requested) {
                 TRACE("_lwrite(%d, %p, %d) failed with %d\n",
                       fcb->file_number, disk_transfer_area, bytes_requested, bytes_written);
@@ -2591,8 +2591,8 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
                 GetVolumeInformationW(drivespec, label, 12, &serial, NULL, NULL, fsname, 9);
                 *(WORD*)dataptr	= 0;
                 memcpy(dataptr+2,&serial,4);
-                WideCharToMultiByte(CP_OEMCP, 0, label, 11, dataptr + 6, 11, NULL, NULL);
-                WideCharToMultiByte(CP_OEMCP, 0, fsname, 8, dataptr + 17, 8, NULL, NULL);
+                WideCharToMultiByte(CP_OEMCP, 0, label, 11, (LPSTR)dataptr + 6, 11, NULL, NULL);
+                WideCharToMultiByte(CP_OEMCP, 0, fsname, 8, (LPSTR)dataptr + 17, 8, NULL, NULL);
             }
             break;
 
@@ -3435,7 +3435,7 @@ static int INT21_GetDiskSerialNumber( CONTEXT86 *context )
 
     *(WORD *)dataptr = 0;
     memcpy(dataptr + 2, &serial, sizeof(DWORD));
-    WideCharToMultiByte(CP_OEMCP, 0, label, 11, dataptr + 6, 11, NULL, NULL);
+    WideCharToMultiByte(CP_OEMCP, 0, label, 11, (LPSTR)dataptr + 6, 11, NULL, NULL);
     memcpy(dataptr + 17, "FAT16   ", 8);
     return 1;
 }
@@ -4776,7 +4776,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
                context->SegDs, DX_reg(context),
                BX_reg(context), CX_reg(context) );
         {
-            BYTE *ptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+            char *ptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
 
             if (!DOSVM_IsWin16() && 
                 (BX_reg(context) == 1 || BX_reg(context) == 2))
@@ -4979,7 +4979,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
         {
-            BYTE *program = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+            char *program = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
             BYTE *paramblk = CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx);
 
             TRACE( "EXEC %s\n", program );

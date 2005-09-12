@@ -2522,7 +2522,7 @@ static  WINMM_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlag
 /**************************************************************************
  * 			MCI_MapMsg16To32W			[internal]
  */
-static WINMM_MapType	MCI_MapMsg16To32W(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD* lParam)
+static WINMM_MapType	MCI_MapMsg16To32W(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD_PTR* lParam)
 {
     if (*lParam == 0)
 	return WINMM_MAP_OK;
@@ -2716,7 +2716,7 @@ static WINMM_MapType	MCI_MapMsg16To32W(WORD uDevType, WORD wMsg, DWORD dwFlags, 
 /**************************************************************************
  * 			MCI_UnMapMsg16To32W			[internal]
  */
-static  WINMM_MapType	MCI_UnMapMsg16To32W(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD lParam)
+static  WINMM_MapType	MCI_UnMapMsg16To32W(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD_PTR lParam)
 {
     switch (wMsg) {
 	/* case MCI_CAPTURE */
@@ -3007,7 +3007,7 @@ static	WINMM_MapType	MCI_MsgMapper32WTo16_Destroy(void* ptr, int size16, DWORD m
  *
  * Map a 32W bit MCI message to a 16 bit MCI message.
  */
-static  WINMM_MapType	MCI_MapMsg32WTo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD* lParam)
+static  WINMM_MapType	MCI_MapMsg32WTo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD_PTR* lParam)
 {
     int		size;
     BOOLEAN     keep = FALSE;
@@ -3318,7 +3318,7 @@ static  WINMM_MapType	MCI_MapMsg32WTo16(WORD uDevType, WORD wMsg, DWORD dwFlags,
 /**************************************************************************
  * 			MCI_UnMapMsg32WTo16			[internal]
  */
-static  WINMM_MapType	MCI_UnMapMsg32WTo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD lParam)
+static  WINMM_MapType	MCI_UnMapMsg32WTo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD_PTR lParam)
 {
     int		size = 0;
     BOOLEAN     kept = FALSE;	/* there is no need to compute size when kept is FALSE */

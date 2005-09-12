@@ -68,10 +68,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mci);
 
-WINMM_MapType  (*pFnMciMapMsg16To32W)  (WORD,WORD,DWORD,DWORD*) /* = NULL */;
-WINMM_MapType  (*pFnMciUnMapMsg16To32W)(WORD,WORD,DWORD,DWORD) /* = NULL */;
-WINMM_MapType  (*pFnMciMapMsg32WTo16)  (WORD,WORD,DWORD,DWORD*) /* = NULL */;
-WINMM_MapType  (*pFnMciUnMapMsg32WTo16)(WORD,WORD,DWORD,DWORD) /* = NULL */;
+WINMM_MapType  (*pFnMciMapMsg16To32W)  (WORD,WORD,DWORD,DWORD_PTR*) = NULL;
+WINMM_MapType  (*pFnMciUnMapMsg16To32W)(WORD,WORD,DWORD,DWORD_PTR) = NULL;
+WINMM_MapType  (*pFnMciMapMsg32WTo16)  (WORD,WORD,DWORD,DWORD_PTR*) = NULL;
+WINMM_MapType  (*pFnMciUnMapMsg32WTo16)(WORD,WORD,DWORD,DWORD_PTR) = NULL;
 
 /* First MCI valid device ID (0 means error) */
 #define MCI_MAGIC 0x0001
@@ -819,7 +819,7 @@ static	BOOL	MCI_UnLoadMciDriver(LPWINE_MCIDRIVER wmd)
 /**************************************************************************
  * 				MCI_OpenMciDriver		[internal]
  */
-static	BOOL	MCI_OpenMciDriver(LPWINE_MCIDRIVER wmd, LPCWSTR drvTyp, LPARAM lp)
+static	BOOL	MCI_OpenMciDriver(LPWINE_MCIDRIVER wmd, LPCWSTR drvTyp, DWORD_PTR lp)
 {
     WCHAR	libName[128];
 
@@ -890,7 +890,7 @@ static	DWORD	MCI_LoadMciDriver(LPCWSTR _strDevTyp, LPWINE_MCIDRIVER* lpwmd)
 
     modp.lpstrParams = NULL;
 
-    if (!MCI_OpenMciDriver(wmd, strDevTyp, (LPARAM)&modp)) {
+    if (!MCI_OpenMciDriver(wmd, strDevTyp, (DWORD_PTR)&modp)) {
 	/* silence warning if all is used... some bogus program use commands like
 	 * 'open all'...
 	 */
