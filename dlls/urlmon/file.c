@@ -102,6 +102,9 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     BINDINFO bindinfo;
     DWORD grfBINDF = 0;
     LARGE_INTEGER size;
+    DWORD len;
+    LPWSTR url;
+    HRESULT hres;
 
     static const WCHAR wszFile[]  = {'f','i','l','e',':'};
 
@@ -116,24 +119,35 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
             || memcmp(szUrl, wszFile, sizeof(wszFile)))
         return MK_E_SYNTAX;
 
+    len = lstrlenW(szUrl)+16;
+    url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    hres = CoInternetParseUrl(szUrl, PARSE_ENCODE, 0, url, len, &len, 0);
+    if(FAILED(hres)) {
+        HeapFree(GetProcessHeap(), 0, url);
+        return hres;
+    }
+
     /* FIXME:
      * Implement MIME type checking
      */
 
     if(!This->file) {
-        This->file = CreateFileW(szUrl+sizeof(wszFile)/sizeof(WCHAR), GENERIC_READ, FILE_SHARE_READ,
+        This->file = CreateFileW(url+sizeof(wszFile)/sizeof(WCHAR), GENERIC_READ, FILE_SHARE_READ,
                 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
         if(This->file == INVALID_HANDLE_VALUE) {
             This->file = NULL;
             IInternetProtocolSink_ReportResult(pOIProtSink, INET_E_RESOURCE_NOT_FOUND,
                     GetLastError(), NULL);
+            HeapFree(GetProcessHeap(), 0, url);
             return INET_E_RESOURCE_NOT_FOUND;
         }
 
         IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_CACHEFILENAMEAVAILABLE,
-                szUrl+sizeof(wszFile)/sizeof(WCHAR));
+                url+sizeof(wszFile)/sizeof(WCHAR));
         IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
+
+        HeapFree(GetProcessHeap(), 0, url);
     }
 
     if(GetFileSizeEx(This->file, &size))
