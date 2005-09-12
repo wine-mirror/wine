@@ -79,18 +79,18 @@ char* strmake(const char* fmt, ...)
 {
     int n;
     size_t size = 100;
-    char* p;
     va_list ap;
 
-    p = xmalloc (size);
     while (1)
     {
+        char *p = xmalloc (size);
         va_start(ap, fmt);
 	n = vsnprintf (p, size, fmt, ap);
 	va_end(ap);
-        if (n > -1 && (size_t)n < size) return p;
-	size = min( size*2, (size_t)n+1 );
-	p = xrealloc (p, size);
+        if (n == -1) size *= 2;
+        else if ((size_t)n >= size) size = n + 1;
+        else return p;
+        free(p);
     }
 }
 
