@@ -53,46 +53,36 @@ extern IClassFactoryImpl SHDOCVW_ClassFactory;
  * WebBrowser declaration for SHDOCVW.DLL
  */
 typedef struct {
-    const IWebBrowserVtbl         *lpWebBrowserVtbl;
-    const IOleObjectVtbl          *lpOleObjectVtbl;
-    const IOleInPlaceObjectVtbl   *lpOleInPlaceObjectVtbl;
-    const IOleControlVtbl         *lpOleControlVtbl;
-    const IPersistStorageVtbl     *lpPersistStorageVtbl;
-    const IPersistStreamInitVtbl  *lpPersistStreamInitVtbl;
-    const IProvideClassInfo2Vtbl  *lpProvideClassInfoVtbl;
-    const IQuickActivateVtbl      *lpQuickActivateVtbl;
+    const IWebBrowserVtbl               *lpWebBrowserVtbl;
+    const IOleObjectVtbl                *lpOleObjectVtbl;
+    const IOleInPlaceObjectVtbl         *lpOleInPlaceObjectVtbl;
+    const IOleControlVtbl               *lpOleControlVtbl;
+    const IPersistStorageVtbl           *lpPersistStorageVtbl;
+    const IPersistStreamInitVtbl        *lpPersistStreamInitVtbl;
+    const IProvideClassInfo2Vtbl        *lpProvideClassInfoVtbl;
+    const IQuickActivateVtbl            *lpQuickActivateVtbl;
+    const IConnectionPointContainerVtbl *lpConnectionPointContainerVtbl;
 
     LONG ref;
 } WebBrowser;
 
-#define WEBBROWSER(x)   ((IWebBrowser*)         &(x)->lpWebBrowserVtbl)
-#define OLEOBJ(x)       ((IOleObject*)          &(x)->lpOleObjectVtbl)
-#define INPLACEOBJ(x)   ((IOleInPlaceObject*)   &(x)->lpOleInPlaceObjectVtbl)
-#define CONTROL(x)      ((IOleControl*)         &(x)->lpOleControlVtbl)
-#define PERSTORAGE(x)   ((IPersistStorage*)     &(x)->lpPersistStorageVtbl)
-#define PERSTRINIT(x)   ((IPersistStreamInit*)  &(x)->lpPersistStreamInitVtbl)
-#define CLASSINFO(x)    ((IProvideClassInfo2*)  &(x)->lpProvideClassInfoVtbl)
-#define QUICKACT(x)     ((IQuickActivate*)      &(x)->lpQuickActivateVtbl)
+#define WEBBROWSER(x)   ((IWebBrowser*)                 &(x)->lpWebBrowserVtbl)
+#define OLEOBJ(x)       ((IOleObject*)                  &(x)->lpOleObjectVtbl)
+#define INPLACEOBJ(x)   ((IOleInPlaceObject*)           &(x)->lpOleInPlaceObjectVtbl)
+#define CONTROL(x)      ((IOleControl*)                 &(x)->lpOleControlVtbl)
+#define PERSTORAGE(x)   ((IPersistStorage*)             &(x)->lpPersistStorageVtbl)
+#define PERSTRINIT(x)   ((IPersistStreamInit*)          &(x)->lpPersistStreamInitVtbl)
+#define CLASSINFO(x)    ((IProvideClassInfo2*)          &(x)->lpProvideClassInfoVtbl)
+#define QUICKACT(x)     ((IQuickActivate*)              &(x)->lpQuickActivateVtbl)
+#define CONPTCONT(x)    ((IConnectionPointContainer*)   &(x)->lpConnectionPointContainerVtbl)
 
 void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_Persist_Init(WebBrowser*);
 void WebBrowser_ClassInfo_Init(WebBrowser*);
 void WebBrowser_Misc_Init(WebBrowser*);
+void WebBrowser_Events_Init(WebBrowser*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
-
-/**********************************************************************
- * IConnectionPointContainer declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IConnectionPointContainerVtbl *lpVtbl;
-    LONG ref;
-} IConnectionPointContainerImpl;
-
-extern IConnectionPointContainerImpl SHDOCVW_ConnectionPointContainer;
-
 
 /**********************************************************************
  * IConnectionPoint declaration for SHDOCVW.DLL

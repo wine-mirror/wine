@@ -78,8 +78,8 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser *iface, REFIID riid,
         TRACE("(%p)->(IID_IQuickActivate %p)\n", This, ppv);
         *ppv = QUICKACT(This);
     }else if(IsEqualGUID (&IID_IConnectionPointContainer, riid)) {
-        FIXME("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
-        *ppv = &SHDOCVW_ConnectionPointContainer;
+        TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
+        *ppv = CONPTCONT(This);
     }
 
     if(*ppv) {
@@ -388,6 +388,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     WebBrowser_Persist_Init(ret);
     WebBrowser_ClassInfo_Init(ret);
     WebBrowser_Misc_Init(ret);
+    WebBrowser_Events_Init(ret);
 
     hres = IWebBrowser_QueryInterface(WEBBROWSER(ret), riid, ppv);
     if(SUCCEEDED(hres)) {
