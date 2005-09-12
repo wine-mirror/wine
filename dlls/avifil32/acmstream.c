@@ -93,14 +93,17 @@ typedef struct _IAVIStreamImpl {
 
 /***********************************************************************/
 
-#define CONVERT_STREAM_to_THIS(a) { \
-           acmStreamSize(This->has,(a)*This->lpInFormat->nBlockAlign,\
-                         &(a), ACM_STREAMSIZEF_SOURCE); \
-           (a) /= This->lpOutFormat->nBlockAlign; }
-#define CONVERT_THIS_to_STREAM(a) { \
-           acmStreamSize(This->has,(a)*This->lpOutFormat->nBlockAlign,\
-                         &(a), ACM_STREAMSIZEF_DESTINATION); \
-           (a) /= This->lpInFormat->nBlockAlign; }
+#define CONVERT_STREAM_to_THIS(a) do { \
+           DWORD __bytes; \
+           acmStreamSize(This->has,*(a) * This->lpInFormat->nBlockAlign,\
+                         &__bytes, ACM_STREAMSIZEF_SOURCE); \
+           *(a) = __bytes / This->lpOutFormat->nBlockAlign; } while(0)
+
+#define CONVERT_THIS_to_STREAM(a) do { \
+           DWORD __bytes; \
+           acmStreamSize(This->has,*(a) * This->lpOutFormat->nBlockAlign,\
+                         &__bytes, ACM_STREAMSIZEF_DESTINATION); \
+           *(a) = __bytes / This->lpInFormat->nBlockAlign; } while(0)
 
 static HRESULT AVIFILE_OpenCompressor(IAVIStreamImpl *This);
 
@@ -304,7 +307,7 @@ static LONG WINAPI ACMStream_fnFindSample(IAVIStream *iface, LONG pos,
   }
 
   /* convert pos from our 'space' to This->pStream's one */
-  CONVERT_THIS_to_STREAM(pos);
+  CONVERT_THIS_to_STREAM(&pos);
 
   /* ask stream */
   pos = IAVIStream_FindSample(This->pStream, pos, flags);
@@ -312,7 +315,7 @@ static LONG WINAPI ACMStream_fnFindSample(IAVIStream *iface, LONG pos,
   if (pos != -1) {
     /* convert pos back to our 'space' if it's no size or physical pos */
     if ((flags & FIND_RET) == 0)
-      CONVERT_STREAM_to_THIS(pos);
+      CONVERT_STREAM_to_THIS(&pos);
   }
 
   return pos;
@@ -391,7 +394,7 @@ static HRESULT WINAPI ACMStream_fnSetFormat(IAVIStream *iface, LONG pos,
   if (FAILED(hr))
     return hr;
 
-  CONVERT_THIS_to_STREAM(pos);
+  CONVERT_THIS_to_STREAM(&pos);
 
   /* tell the nested stream the new format */
   return IAVIStream_SetFormat(This->pStream, pos, This->lpOutFormat,
@@ -453,7 +456,7 @@ static HRESULT WINAPI ACMStream_fnRead(IAVIStream *iface, LONG start,
   }
 
   /* map our positions to pStream positions */
-  CONVERT_THIS_to_STREAM(start);
+  CONVERT_THIS_to_STREAM(&start);
 
   /* our needed internal buffersize */
   size = samples * This->lpInFormat->nBlockAlign;
@@ -486,7 +489,7 @@ static HRESULT WINAPI ACMStream_fnRead(IAVIStream *iface, LONG start,
   /* read source data */
   hr = IAVIStream_Read(This->pStream, start, -1, This->acmStreamHdr.pbSrc,
 		       This->acmStreamHdr.cbSrcLength,
-		       &This->acmStreamHdr.cbSrcLength, NULL);
+		       (LONG *)&This->acmStreamHdr.cbSrcLength, NULL);
   if (FAILED(hr) || This->acmStreamHdr.cbSrcLength == 0)
     return hr;
 
@@ -553,8 +556,8 @@ static HRESULT WINAPI ACMStream_fnWrite(IAVIStream *iface, LONG start,
 
   /* map our sizes to pStream sizes */
   size = buffersize;
-  CONVERT_THIS_to_STREAM(size);
-  CONVERT_THIS_to_STREAM(start);
+  CONVERT_THIS_to_STREAM(&size);
+  CONVERT_THIS_to_STREAM(&start);
 
   /* no bytes to write? -- short circuit */
   if (size == 0) {
@@ -644,8 +647,8 @@ static HRESULT WINAPI ACMStream_fnDelete(IAVIStream *iface, LONG start,
     return AVIERR_NOCOMPRESSOR;
 
   /* map our positions to pStream positions */
-  CONVERT_THIS_to_STREAM(start);
-  CONVERT_THIS_to_STREAM(samples);
+  CONVERT_THIS_to_STREAM(&start);
+  CONVERT_THIS_to_STREAM(&samples);
 
   return IAVIStream_Delete(This->pStream, start, samples);
 }
@@ -736,9 +739,9 @@ static HRESULT AVIFILE_OpenCompressor(IAVIStreamImpl *This)
   SetRectEmpty(&This->sInfo.rcFrame);
 
   /* convert positions ansd sizes to output format */
-  CONVERT_STREAM_to_THIS(This->sInfo.dwStart);
-  CONVERT_STREAM_to_THIS(This->sInfo.dwLength);
-  CONVERT_STREAM_to_THIS(This->sInfo.dwSuggestedBufferSize);
+  CONVERT_STREAM_to_THIS(&This->sInfo.dwStart);
+  CONVERT_STREAM_to_THIS(&This->sInfo.dwLength);
+  CONVERT_STREAM_to_THIS(&This->sInfo.dwSuggestedBufferSize);
 
   return AVIERR_OK;
 }

@@ -212,7 +212,7 @@ struct tagME_InStream {
   EDITSTREAM *editstream;
   DWORD dwSize;
   DWORD dwUsed;
-  BYTE buffer[STREAMIN_BUFFER_SIZE];
+  char buffer[STREAMIN_BUFFER_SIZE];
 };
 typedef struct tagME_InStream ME_InStream;
 

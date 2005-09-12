@@ -515,9 +515,9 @@ void
 ME_StreamInFill(ME_InStream *stream)
 {
   stream->editstream->dwError = stream->editstream->pfnCallback(stream->editstream->dwCookie,
-                                                                stream->buffer,
+                                                                (BYTE *)stream->buffer,
                                                                 sizeof(stream->buffer),
-                                                                &stream->dwSize);
+                                                                (LONG *)&stream->dwSize);
   stream->dwUsed = 0;
 }
 
@@ -1188,7 +1188,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     UINT from, to;
     PUINT pfrom = wParam ? (PUINT)wParam : &from;
     PUINT pto = lParam ? (PUINT)lParam : &to;
-    ME_GetSelection(editor, pfrom, pto);
+    ME_GetSelection(editor, (int *)pfrom, (int *)pto);
     if ((*pfrom|*pto) & 0xFFFF0000)
       return -1;
     return MAKELONG(*pfrom,*pto);
