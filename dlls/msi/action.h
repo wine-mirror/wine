@@ -50,12 +50,12 @@ typedef struct tagMSICOMPONENT
 {
     struct list entry;
     DWORD magic;
-    WCHAR Component[IDENTIFIER_SIZE];
-    WCHAR ComponentId[IDENTIFIER_SIZE];
-    WCHAR Directory[IDENTIFIER_SIZE];
+    LPWSTR Component;
+    LPWSTR ComponentId;
+    LPWSTR Directory;
     INT Attributes;
     LPWSTR Condition;
-    WCHAR KeyPath[IDENTIFIER_SIZE];
+    LPWSTR KeyPath;
 
     INSTALLSTATE Installed;
     INSTALLSTATE ActionRequest;

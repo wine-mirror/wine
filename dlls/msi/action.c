@@ -969,32 +969,21 @@ static UINT ACTION_CreateFolders(MSIPACKAGE *package)
 static MSICOMPONENT* load_component( MSIRECORD * row )
 {
     MSICOMPONENT *comp;
-    DWORD sz;
 
     comp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSICOMPONENT) );
     if (!comp)
         return comp;
 
     /* fill in the data */
-    sz = IDENTIFIER_SIZE;       
-    MSI_RecordGetStringW(row,1,comp->Component,&sz);
+    comp->Component = load_dynamic_stringW( row, 1 );
 
-    TRACE("Loading Component %s\n",
-           debugstr_w(comp->Component));
+    TRACE("Loading Component %s\n", debugstr_w(comp->Component));
 
-    sz = 0x100;
-    if (!MSI_RecordIsNull(row,2))
-        MSI_RecordGetStringW(row,2,comp->ComponentId,&sz);
-            
-    sz = IDENTIFIER_SIZE;       
-    MSI_RecordGetStringW(row,3,comp->Directory,&sz);
-
+    comp->ComponentId = load_dynamic_stringW( row, 2 );
+    comp->Directory = load_dynamic_stringW( row, 3 );
     comp->Attributes = MSI_RecordGetInteger(row,4);
-
     comp->Condition = load_dynamic_stringW( row, 5 );
-
-    sz = IDENTIFIER_SIZE;       
-    MSI_RecordGetStringW(row,6,comp->KeyPath,&sz);
+    comp->KeyPath = load_dynamic_stringW( row, 6 );
 
     comp->Installed = INSTALLSTATE_ABSENT;
     comp->Action = INSTALLSTATE_UNKNOWN;
@@ -2264,11 +2253,9 @@ static UINT ACTION_LaunchConditions(MSIPACKAGE *package)
 static LPWSTR resolve_keypath( MSIPACKAGE* package, MSICOMPONENT *cmp )
 {
 
-    if (cmp->KeyPath[0]==0)
-    {
-        LPWSTR p = resolve_folder(package,cmp->Directory,FALSE,FALSE,NULL);
-        return p;
-    }
+    if (!cmp->KeyPath)
+        return resolve_folder(package,cmp->Directory,FALSE,FALSE,NULL);
+
     if (cmp->Attributes & msidbComponentAttributesRegistryKeyPath)
     {
         MSIRECORD * row = 0;
@@ -2380,7 +2367,7 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
     BOOL write = FALSE;
 
     /* only refcount DLLs */
-    if (comp->KeyPath[0]==0 || 
+    if (comp->KeyPath == NULL || 
         comp->Attributes & msidbComponentAttributesRegistryKeyPath || 
         comp->Attributes & msidbComponentAttributesODBCDataSource)
         write = FALSE;
@@ -2475,7 +2462,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
         ui_progress(package,2,0,0,0);
-        if (comp->ComponentId[0]!=0)
+        if (comp->ComponentId)
         {
             WCHAR *keypath = NULL;
             MSIRECORD * uirow;
@@ -3305,7 +3292,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
             WCHAR buf[21];
 
             memset(buf,0,sizeof(buf));
-            if ( component->ComponentId[0] )
+            if (component->ComponentId)
             {
                 TRACE("From %s\n",debugstr_w(component->ComponentId));
                 CLSIDFromString(component->ComponentId, &clsid);
