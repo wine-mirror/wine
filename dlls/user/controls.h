@@ -67,14 +67,14 @@ extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
 extern UINT MENU_FindSubMenu( HMENU *hmenu, HMENU hSubTarget );
 
 /* nonclient area */
-extern LONG NC_HandleNCPaint( HWND hwnd , HRGN clip);
-extern LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam );
-extern LONG NC_HandleNCCalcSize( HWND hwnd, RECT *winRect );
-extern LONG NC_HandleNCHitTest( HWND hwnd, POINT pt );
-extern LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam );
-extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam);
-extern LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam );
-extern LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam );
+extern LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip);
+extern LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam );
+extern LRESULT NC_HandleNCCalcSize( HWND hwnd, RECT *winRect );
+extern LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt );
+extern LRESULT NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam );
+extern LRESULT NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam);
+extern LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam );
+extern LRESULT NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam );
 extern BOOL NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down );
 extern void NC_GetSysPopupPos( HWND hwnd, RECT* rect );
 

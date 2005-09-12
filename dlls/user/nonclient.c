@@ -430,10 +430,10 @@ BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exSty
  *
  * Handle a WM_NCCALCSIZE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
+LRESULT NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
 {
     RECT tmpRect = { 0, 0, 0, 0 };
-    LONG result = 0;
+    LRESULT result = 0;
     LONG cls_style = GetClassLongW(hwnd, GCL_STYLE);
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     LONG exStyle = GetWindowLongW( hwnd, GWL_EXSTYLE );
@@ -546,7 +546,7 @@ END:
  * FIXME:  Just a modified copy of the Win 3.1 version.
  */
 
-static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
+static LRESULT NC_DoNCHitTest (WND *wndPtr, POINT pt )
 {
     RECT rect, rcClient;
     POINT ptClient;
@@ -696,9 +696,9 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
  *
  * Handle a WM_NCHITTEST message. Called from DefWindowProc().
  */
-LONG NC_HandleNCHitTest (HWND hwnd , POINT pt)
+LRESULT NC_HandleNCHitTest (HWND hwnd , POINT pt)
 {
-    LONG retvalue;
+    LRESULT retvalue;
     WND *wndPtr = WIN_GetPtr( hwnd );
 
     if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return HTERROR;
@@ -1125,7 +1125,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
  *
  * Handle a WM_NCPAINT message. Called from DefWindowProc().
  */
-LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
+LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip)
 {
     DWORD dwStyle = GetWindowLongW( hwnd, GWL_STYLE );
 
@@ -1145,7 +1145,7 @@ LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
  *
  * Handle a WM_NCACTIVATE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
+LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
 {
     WND* wndPtr = WIN_GetPtr( hwnd );
 
@@ -1174,7 +1174,7 @@ LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
  *
  * Handle a WM_SETCURSOR message. Called from DefWindowProc().
  */
-LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
+LRESULT NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     hwnd = WIN_GetFullHandle( (HWND)wParam );
 
@@ -1201,23 +1201,23 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
     case HTLEFT:
     case HTRIGHT:
-        return (LONG)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZEWE ) );
+        return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZEWE ) );
 
     case HTTOP:
     case HTBOTTOM:
-        return (LONG)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENS ) );
+        return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENS ) );
 
     case HTTOPLEFT:
     case HTBOTTOMRIGHT:
-        return (LONG)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENWSE ) );
+        return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENWSE ) );
 
     case HTTOPRIGHT:
     case HTBOTTOMLEFT:
-        return (LONG)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENESW ) );
+        return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENESW ) );
     }
 
     /* Default cursor: arrow */
-    return (LONG)SetCursor( LoadCursorA( 0, (LPSTR)IDC_ARROW ) );
+    return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)IDC_ARROW ) );
 }
 
 /***********************************************************************
@@ -1410,7 +1410,7 @@ static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
  *
  * Handle a WM_NCLBUTTONDOWN message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
+LRESULT NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
@@ -1490,7 +1490,7 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
  *
  * Handle a WM_NCLBUTTONDBLCLK message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
+LRESULT NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     /*
      * if this is an icon, send a restore since we are handling
@@ -1541,7 +1541,7 @@ LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
  *
  * Handle a WM_SYSCOMMAND message. Called from DefWindowProc().
  */
-LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
+LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     TRACE("Handling WM_SYSCOMMAND %x %lx\n", wParam, lParam );
 
