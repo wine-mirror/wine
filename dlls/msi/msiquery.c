@@ -139,62 +139,27 @@ UINT MSI_DatabaseOpenViewW(MSIDATABASE *db,
     return r;
 }
 
-static UINT MSI_OpenQueryV( MSIDATABASE *db, MSIQUERY **view,
-                             LPCWSTR fmt, va_list args )
-{
-    LPWSTR szQuery;
-    LPCWSTR p;
-    UINT sz, rc;
-    va_list va;
-
-    /* figure out how much space we need to allocate */
-    va = args;
-    sz = lstrlenW(fmt) + 1;
-    p = fmt;
-    while (*p)
-    {
-        p = strchrW(p, '%');
-        if (!p)
-            break;
-        p++;
-        switch (*p)
-        {
-        case 's':  /* a string */
-            sz += lstrlenW(va_arg(va,LPCWSTR));
-            break;
-        case 'd':
-        case 'i':  /* an integer -2147483648 seems to be longest */
-            sz += 3*sizeof(int);
-            (void)va_arg(va,int);
-            break;
-        case '%':  /* a single % - leave it alone */
-            break;
-        default:
-            FIXME("Unhandled character type %c\n",*p);
-        }
-        p++;
-    }
-
-    /* construct the string */
-    szQuery = HeapAlloc(GetProcessHeap(), 0, sz*sizeof(WCHAR));
-    va = args;
-    vsnprintfW(szQuery, sz, fmt, va);
-
-    /* perform the query */
-    rc = MSI_DatabaseOpenViewW(db, szQuery, view);
-    HeapFree(GetProcessHeap(), 0, szQuery);
-    return rc;
-}
-
 UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
 {
     UINT r;
-    va_list va;
+    int size = 100, res;
+    LPWSTR query;
 
-    va_start(va, fmt);
-    r = MSI_OpenQueryV( db, view, fmt, va );
-    va_end(va);
-
+    /* construct the string */
+    for (;;)
+    {
+        va_list va;
+        query = HeapAlloc( GetProcessHeap(), 0, size*sizeof(WCHAR) );
+        va_start(va, fmt);
+        res = vsnprintfW(query, size, fmt, va);
+        va_end(va);
+        if (res == -1) size *= 2;
+        else if (res >= size) size = res + 1;
+        else break;
+    }
+    /* perform the query */
+    r = MSI_DatabaseOpenViewW(db, query, view);
+    HeapFree(GetProcessHeap(), 0, query);
     return r;
 }
 
@@ -240,11 +205,24 @@ MSIRECORD *MSI_QueryGetRecord( MSIDATABASE *db, LPCWSTR fmt, ... )
     MSIRECORD *rec = NULL;
     MSIQUERY *view = NULL;
     UINT r;
-    va_list va;
+    int size = 100, res;
+    LPWSTR query;
 
-    va_start(va, fmt);
-    r = MSI_OpenQueryV( db, &view, fmt, va );
-    va_end(va);
+    /* construct the string */
+    for (;;)
+    {
+        va_list va;
+        query = HeapAlloc( GetProcessHeap(), 0, size*sizeof(WCHAR) );
+        va_start(va, fmt);
+        res = vsnprintfW(query, size, fmt, va);
+        va_end(va);
+        if (res == -1) size *= 2;
+        else if (res >= size) size = res + 1;
+        else break;
+    }
+    /* perform the query */
+    r = MSI_DatabaseOpenViewW(db, query, &view);
+    HeapFree(GetProcessHeap(), 0, query);
 
     if( r == ERROR_SUCCESS )
     {
