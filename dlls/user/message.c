@@ -1280,7 +1280,7 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
 {
     void*       ptr = NULL;
     int         size = 0;
-    UINT        uiLo, uiHi;
+    UINT_PTR    uiLo, uiHi;
     LPARAM      lp = 0;
     HGLOBAL     hunlock = 0;
     int         i;
@@ -1399,7 +1399,7 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
 static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                 void **buffer, size_t size )
 {
-    UINT	uiLo, uiHi;
+    UINT_PTR	uiLo, uiHi;
     HGLOBAL	hMem = 0;
     void*	ptr;
 
@@ -1413,7 +1413,7 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
             if (!buffer || !*buffer) return FALSE;
             uiLo = *lparam;
             memcpy( &hMem, *buffer, size );
-            uiHi = (UINT)hMem;
+            uiHi = (UINT_PTR)hMem;
             TRACE("recv dde-ack %x mem=%x[%lx]\n", uiLo, uiHi, GlobalSize( hMem ));
         }
         else
@@ -1445,7 +1445,7 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
                 return FALSE;
             }
         }
-        uiLo = (UINT)hMem;
+        uiLo = (UINT_PTR)hMem;
 
 	*lparam = PackDDElParam( message, uiLo, uiHi );
 	break;

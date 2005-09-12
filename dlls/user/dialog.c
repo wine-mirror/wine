@@ -55,7 +55,7 @@ typedef struct
     INT16      y;
     INT16      cx;
     INT16      cy;
-    UINT       id;
+    UINT_PTR   id;
     LPCWSTR    className;
     LPCWSTR    windowName;
     LPCVOID    data;
@@ -244,7 +244,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
     p++;
 
     /* Next control is on dword boundary */
-    return (const WORD *)((((int)p) + 3) & ~3);
+    return (const WORD *)(((UINT_PTR)p + 3) & ~3);
 }
 
 
@@ -446,7 +446,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     }
 
     /* First control is on dword boundary */
-    return (LPCSTR)((((int)p) + 3) & ~3);
+    return (LPCSTR)(((UINT_PTR)p + 3) & ~3);
 }
 
 

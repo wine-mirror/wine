@@ -202,7 +202,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
             TRACE("NameTable entry: type=%04x id=%04x\n",
                               pTypeInfo->type_id, pNameInfo->id );
             handle = LoadResource16( pModule->self,
-                                     (HRSRC16)((int)pNameInfo - (int)pModule) );
+                                     (HRSRC16)((char *)pNameInfo - (char *)pModule) );
             for(p = (WORD*)LockResource16(handle); p && *p; p = (WORD *)((char*)p+*p))
             {
                 TRACE("  type=%04x '%s' id=%04x '%s'\n",
@@ -226,7 +226,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
                     if (strcasecmp( resId, (char*)(p+3)+strlen((char*)(p+3))+1 )) continue;
 
                 }
-                else if (HIWORD(resId) || (((DWORD)resId & ~0x8000) != p[2]))
+                else if (HIWORD(resId) || ((LOWORD(resId) & ~0x8000) != p[2]))
                   continue;
 
                 /* If we get here, we've found the entry */
@@ -507,7 +507,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
     while (nbItems)
     {
         /* align on DWORD boundary (32-bit only) */
-        dialog32 = (LPVOID)((((int)dialog32) + 3) & ~3);
+        dialog32 = (LPVOID)(((UINT_PTR)dialog32 + 3) & ~3);
 
         if (dialogEx)
         {
@@ -636,7 +636,7 @@ WORD WINAPI GetDialog32Size16( LPVOID dialog32 )
     while (nbItems)
     {
         /* align on DWORD boundary */
-        p = (LPVOID)((((int)p) + 3) & ~3);
+        p = (LPVOID)(((UINT_PTR)p + 3) & ~3);
 
         if (dialogEx)
         {
@@ -736,7 +736,7 @@ VOID WINAPI ConvertMenu32To16( LPVOID menu32, DWORD size, LPVOID menu16 )
             menu32 = (LPWSTR)menu32 + strlenW( (LPWSTR)menu32 ) + 1;
 
             /* align on DWORD boundary (32-bit only) */
-            menu32 = (LPVOID)((((int)menu32) + 3) & ~3);
+            menu32 = (LPVOID)(((UINT_PTR)menu32 + 3) & ~3);
 
             /* If popup, transfer helpid */
             if ( flags & 1)
@@ -787,7 +787,7 @@ WORD WINAPI GetMenu32Size16( LPVOID menu32 )
             p = (LPWSTR)p + strlenW( (LPWSTR)p ) + 1;
 
             /* align on DWORD boundary (32-bit only) */
-            p = (LPVOID)((((int)p) + 3) & ~3);
+            p = (LPVOID)(((UINT_PTR)p + 3) & ~3);
 
             /* If popup, skip helpid */
             if ( flags & 1)

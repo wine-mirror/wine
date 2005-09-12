@@ -59,7 +59,7 @@ static HWND create_updown_control (HWND hWndEdit)
 	 NULL, NULL, hinst, NULL);
     assert (hWndUpDown);
     /* set the buddy. */
-    SendMessage (hWndUpDown, UDM_SETBUDDY, (LONG)hWndEdit, 0L );
+    SendMessage (hWndUpDown, UDM_SETBUDDY, (WPARAM)hWndEdit, 0L );
     /* set the range. */
     SendMessage (hWndUpDown, UDM_SETRANGE, 0L, (LPARAM) MAKELONG(32000, 0));
     /* maybe show it. */

@@ -50,7 +50,7 @@ typedef struct tagWND
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
     DWORD          clsStyle;      /* Class style at window creation */
-    UINT           wIDmenu;       /* ID or hmenu (from CreateWindow) */
+    UINT_PTR       wIDmenu;       /* ID or hmenu (from CreateWindow) */
     DWORD          helpContext;   /* Help context ID */
     UINT           flags;         /* Misc. flags (see below) */
     HMENU          hSysMenu;      /* window's copy of System Menu */

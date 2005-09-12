@@ -73,8 +73,8 @@ typedef struct {
     HBITMAP hCheckBit;		/* Bitmap when checked.  */
     HBITMAP hUnCheckBit;	/* Bitmap when unchecked.  */
     LPWSTR text;			/* Item text or bitmap handle.  */
-    DWORD dwItemData;		/* Application defined.  */
-    DWORD dwTypeData;		/* depends on fMask */
+    ULONG_PTR dwItemData;	/* Application defined.  */
+    LPWSTR dwTypeData;		/* depends on fMask */
     HBITMAP hbmpItem;		/* bitmap in win98 style menus */
     /* ----------- Wine stuff ----------- */
     RECT      rect;		/* Item area (relative to menu window) */
@@ -863,7 +863,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         mis.CtlType    = ODT_MENU;
         mis.CtlID      = 0;
         mis.itemID     = lpitem->wID;
-        mis.itemData   = (DWORD)lpitem->dwItemData;
+        mis.itemData   = lpitem->dwItemData;
         mis.itemHeight = ODitemheight;
         mis.itemWidth  = 0;
         SendMessageW( hwndOwner, WM_MEASUREITEM, 0, (LPARAM)&mis );
@@ -1188,7 +1188,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         dis.CtlType   = ODT_MENU;
 	dis.CtlID     = 0;
         dis.itemID    = lpitem->wID;
-        dis.itemData  = (DWORD)lpitem->dwItemData;
+        dis.itemData  = lpitem->dwItemData;
         dis.itemState = 0;
         if (lpitem->fState & MF_CHECKED) dis.itemState |= ODS_CHECKED;
         if (lpitem->fState & MF_GRAYED)  dis.itemState |= ODS_GRAYED|ODS_DISABLED;
@@ -1777,7 +1777,7 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT_PTR id,
     else item->text = NULL;
 
     if (flags & MF_OWNERDRAW)
-        item->dwItemData = (DWORD)str;
+        item->dwItemData = (DWORD_PTR)str;
     else
         item->dwItemData = 0;
 
@@ -1901,8 +1901,8 @@ static LPCSTR MENU_ParseResource( LPCSTR res, HMENU hMenu, BOOL unicode )
             if (!hSubMenu) return NULL;
             if (!(res = MENU_ParseResource( res, hSubMenu, unicode )))
                 return NULL;
-            if (!unicode) AppendMenuA( hMenu, flags, (UINT)hSubMenu, str );
-            else AppendMenuW( hMenu, flags, (UINT)hSubMenu, (LPCWSTR)str );
+            if (!unicode) AppendMenuA( hMenu, flags, (UINT_PTR)hSubMenu, str );
+            else AppendMenuW( hMenu, flags, (UINT_PTR)hSubMenu, (LPCWSTR)str );
         }
         else  /* Not a popup */
         {
@@ -1938,11 +1938,11 @@ static LPCSTR MENUEX_ParseResource( LPCSTR res, HMENU hMenu)
 	resinfo = GET_WORD(res); /* FIXME: for 16-bit apps this is a byte.  */
         res += sizeof(WORD);
 	/* Align the text on a word boundary.  */
-	res += (~((int)res - 1)) & 1;
+	res += (~((UINT_PTR)res - 1)) & 1;
 	mii.dwTypeData = (LPWSTR) res;
 	res += (1 + strlenW(mii.dwTypeData)) * sizeof(WCHAR);
 	/* Align the following fields on a dword boundary.  */
-	res += (~((int)res - 1)) & 3;
+	res += (~((UINT_PTR)res - 1)) & 3;
 
         TRACE("Menu item: [%08x,%08x,%04x,%04x,%s]\n",
               mii.fType, mii.fState, mii.wID, resinfo, debugstr_w(mii.dwTypeData));
@@ -3425,8 +3425,8 @@ BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
     if (IS_STRING_ITEM(flags) && str)
         TRACE("hMenu %p, pos %d, flags %08x, id %04x, str %s\n",
               hMenu, pos, flags, id, debugstr_w(str) );
-    else TRACE("hMenu %p, pos %d, flags %08x, id %04x, str %08lx (not a string)\n",
-               hMenu, pos, flags, id, (DWORD)str );
+    else TRACE("hMenu %p, pos %d, flags %08x, id %04x, str %p (not a string)\n",
+               hMenu, pos, flags, id, str );
 
     if (!(item = MENU_InsertItem( hMenu, pos, flags ))) return FALSE;
 
@@ -3552,7 +3552,7 @@ BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
     }
     else
     {
-        TRACE("%p %d %04x %04x %08lx\n", hMenu, pos, flags, id, (DWORD)str );
+        TRACE("%p %d %04x %04x %p\n", hMenu, pos, flags, id, str );
     }
 
     if (!(item = MENU_FindItem( &hMenu, &pos, flags ))) return FALSE;

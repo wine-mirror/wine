@@ -1820,7 +1820,7 @@ BOOL WINAPI EnumSystemLocalesA( LOCALE_ENUMPROCA lpfnLocaleEnum, DWORD dwFlags )
     TRACE("(%p,%08lx)\n", lpfnLocaleEnum, dwFlags);
     EnumResourceLanguagesA( kernel32_handle, (LPSTR)RT_STRING,
                             (LPCSTR)LOCALE_ILANGUAGE, enum_lang_proc_a,
-                            (LONG)lpfnLocaleEnum);
+                            (LONG_PTR)lpfnLocaleEnum);
     return TRUE;
 }
 
@@ -1835,7 +1835,7 @@ BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum, DWORD dwFlags )
     TRACE("(%p,%08lx)\n", lpfnLocaleEnum, dwFlags);
     EnumResourceLanguagesW( kernel32_handle, (LPWSTR)RT_STRING,
                             (LPCWSTR)LOCALE_ILANGUAGE, enum_lang_proc_w,
-                            (LONG)lpfnLocaleEnum);
+                            (LONG_PTR)lpfnLocaleEnum);
     return TRUE;
 }
 

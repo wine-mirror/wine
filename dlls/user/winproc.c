@@ -2434,7 +2434,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_DDE_DATA:
     case WM_DDE_POKE:
         {
-            UINT lo32, hi;
+            UINT_PTR lo32, hi;
             HANDLE16    lo16 = 0;
 
             *pwparam16 = HWND_16((HWND)wParam32);
@@ -2446,7 +2446,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         return 0; /* FIXME don't know how to free allocated memory (handle)  !! */
     case WM_DDE_ACK:
         {
-            UINT        lo, hi;
+            UINT_PTR    lo, hi;
             int         flag = 0;
             char        buf[2];
 

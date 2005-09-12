@@ -941,7 +941,7 @@ FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
         nts = LdrGetProcedureAddress( hModule, &str, 0, (void**)&fp );
     }
     else
-        nts = LdrGetProcedureAddress( hModule, NULL, (DWORD)function, (void**)&fp );
+        nts = LdrGetProcedureAddress( hModule, NULL, LOWORD(function), (void**)&fp );
     if (nts != STATUS_SUCCESS)
     {
         SetLastError( RtlNtStatusToDosError( nts ) );

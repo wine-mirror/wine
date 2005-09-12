@@ -545,7 +545,7 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define MAXDWORD      0xffffffff
 
 #define FIELD_OFFSET(type, field) \
-  ((LONG)(INT)&(((type *)0)->field))
+  ((LONG)(INT_PTR)&(((type *)0)->field))
 
 #define CONTAINING_RECORD(address, type, field) \
   ((type *)((PCHAR)(address) - (PCHAR)(&((type *)0)->field)))
