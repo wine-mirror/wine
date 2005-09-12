@@ -208,6 +208,8 @@ static const WCHAR url2[] = {'i','n','d','e','x','.','h','t','m',0};
 static const WCHAR url3[] = {'f','i','l','e',':','c',':','\\','I','n','d','e','x','.','h','t','m',0};
 static const WCHAR url4[] = {'f','i','l','e',':','s','o','m','e','%','2','0','f','i','l','e',
         '%','2','E','j','p','g',0};
+static const WCHAR url5[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
+        '.','o','r','g',0};
 
 static const WCHAR url4e[] = {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e',
         '.','j','p','g',0};
@@ -221,6 +223,7 @@ static const WCHAR wszEmpty[] = {0};
 
 struct parse_test {
     LPCWSTR url;
+    HRESULT secur_hres;
     LPCWSTR encoded_url;
     HRESULT path_hres;
     LPCWSTR path;
@@ -228,10 +231,10 @@ struct parse_test {
 };
 
 static const struct parse_test parse_tests[] = {
-    {url1, url1,  E_INVALIDARG, NULL, wszRes},
-    {url2, url2,  E_INVALIDARG, NULL, wszEmpty},
-    {url3, url3,  S_OK, path3,        wszFile},
-    {url4, url4e, S_OK, path4,        wszFile}
+    {url1, S_OK,   url1,  E_INVALIDARG, NULL, wszRes},
+    {url2, E_FAIL, url2,  E_INVALIDARG, NULL, wszEmpty},
+    {url3, E_FAIL, url3,  S_OK, path3,        wszFile},
+    {url4, E_FAIL, url4e, S_OK, path4,        wszFile}
 };
 
 static void test_CoInternetParseUrl(void)
@@ -248,6 +251,12 @@ static void test_CoInternetParseUrl(void)
     ok(hres == E_POINTER, "schema failed: %08lx, expected E_POINTER\n", hres);
 
     for(i=0; i < sizeof(parse_tests)/sizeof(parse_tests[0]); i++) {
+        memset(buf, 0xf0, sizeof(buf));
+        hres = CoInternetParseUrl(parse_tests[i].url, PARSE_SECURITY_URL, 0, buf,
+                sizeof(buf)/sizeof(WCHAR), &size, 0);
+        ok(hres == parse_tests[i].secur_hres, "[%d] security url failed: %08lx, expected %08lx\n",
+                i, hres, parse_tests[i].secur_hres);
+
         memset(buf, 0xf0, sizeof(buf));
         hres = CoInternetParseUrl(parse_tests[i].url, PARSE_ENCODE, 0, buf,
                 sizeof(buf)/sizeof(WCHAR), &size, 0);
