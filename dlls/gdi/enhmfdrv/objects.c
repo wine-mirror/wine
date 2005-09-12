@@ -155,7 +155,9 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 	emr.emr.iType = EMR_CREATEBRUSHINDIRECT;
 	emr.emr.nSize = sizeof(emr);
 	emr.ihBrush = index = EMFDRV_AddHandle( dev, hBrush );
-	emr.lb = logbrush;
+	emr.lb.lbStyle = logbrush.lbStyle;
+	emr.lb.lbColor = logbrush.lbColor;
+	emr.lb.lbHatch = logbrush.lbHatch;
 
 	if(!EMFDRV_WriteRecord( dev, &emr.emr ))
 	    index = 0;

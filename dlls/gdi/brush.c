@@ -119,14 +119,14 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
         ptr->logbrush.lbStyle = BS_PATTERN;
         /* fall through */
     case BS_PATTERN:
-        ptr->logbrush.lbHatch = (LONG)BITMAP_CopyBitmap( (HBITMAP) ptr->logbrush.lbHatch );
+        ptr->logbrush.lbHatch = (ULONG_PTR)BITMAP_CopyBitmap( (HBITMAP) ptr->logbrush.lbHatch );
         if (!ptr->logbrush.lbHatch) goto error;
         break;
 
     case BS_DIBPATTERNPT:
         ptr->logbrush.lbStyle = BS_DIBPATTERN;
-        ptr->logbrush.lbHatch = (LONG)dib_copy( (BITMAPINFO *) ptr->logbrush.lbHatch,
-                                                ptr->logbrush.lbColor);
+        ptr->logbrush.lbHatch = (ULONG_PTR)dib_copy( (BITMAPINFO *) ptr->logbrush.lbHatch,
+                                                     ptr->logbrush.lbColor);
         if (!ptr->logbrush.lbHatch) goto error;
         break;
 
@@ -247,7 +247,7 @@ HBRUSH WINAPI CreateDIBPatternBrush( HGLOBAL hbitmap, UINT coloruse )
     logbrush.lbStyle = BS_DIBPATTERN;
     logbrush.lbColor = coloruse;
 
-    logbrush.lbHatch = (LONG)hbitmap;
+    logbrush.lbHatch = (ULONG_PTR)hbitmap;
 
     return CreateBrushIndirect( &logbrush );
 }
@@ -284,7 +284,7 @@ HBRUSH WINAPI CreateDIBPatternBrushPt( const void* data, UINT coloruse )
 
     logbrush.lbStyle = BS_DIBPATTERNPT;
     logbrush.lbColor = coloruse;
-    logbrush.lbHatch = (LONG) data;
+    logbrush.lbHatch = (ULONG_PTR)data;
 
     return CreateBrushIndirect( &logbrush );
 }

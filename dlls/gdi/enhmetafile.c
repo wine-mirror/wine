@@ -873,8 +873,11 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_CREATEBRUSHINDIRECT:
       {
 	PEMRCREATEBRUSHINDIRECT pBrush = (PEMRCREATEBRUSHINDIRECT) mr;
-	(handletable->objectHandle)[pBrush->ihBrush] =
-	  CreateBrushIndirect(&pBrush->lb);
+        LOGBRUSH brush;
+        brush.lbStyle = pBrush->lb.lbStyle;
+        brush.lbColor = pBrush->lb.lbColor;
+        brush.lbHatch = pBrush->lb.lbHatch;
+        (handletable->objectHandle)[pBrush->ihBrush] = CreateBrushIndirect(&brush);
 	break;
       }
     case EMR_EXTCREATEFONTINDIRECTW:

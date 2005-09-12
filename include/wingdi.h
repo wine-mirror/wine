@@ -478,10 +478,17 @@ typedef struct
 
 typedef struct
 {
-    UINT     lbStyle;
+    UINT       lbStyle;
     COLORREF   lbColor;
-    INT      lbHatch;
+    ULONG_PTR  lbHatch;
 } LOGBRUSH, *PLOGBRUSH, *LPLOGBRUSH;
+
+typedef struct
+{
+    UINT       lbStyle;
+    COLORREF   lbColor;
+    ULONG      lbHatch;
+} LOGBRUSH32, *PLOGBRUSH32, *LPLOGBRUSH32;
 
 typedef LOGBRUSH PATTERN, *PPATTERN, *LPPATTERN;
 
@@ -2117,9 +2124,9 @@ typedef struct {
 } EMRBITBLT, *PEMRBITBLT;
 
 typedef struct {
-    EMR      emr;
-    DWORD    ihBrush;
-    LOGBRUSH lb;
+    EMR        emr;
+    DWORD      ihBrush;
+    LOGBRUSH32 lb;
 } EMRCREATEBRUSHINDIRECT, *PEMRCREATEBRUSHINDIRECT;
 
 typedef struct {

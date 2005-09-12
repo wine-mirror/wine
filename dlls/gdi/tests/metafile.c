@@ -412,8 +412,8 @@ static void test_mf_PatternBrush(void)
 
     orig_lb->lbStyle = BS_PATTERN;
     orig_lb->lbColor = RGB(0, 0, 0);
-    orig_lb->lbHatch = (INT) CreateBitmap (8, 8, 1, 1, SAMPLE_PATTERN_BRUSH);
-    ok((HBITMAP *)orig_lb->lbHatch != NULL, "CreateBitmap error %ld.\n", GetLastError());
+    orig_lb->lbHatch = (ULONG_PTR)CreateBitmap (8, 8, 1, 1, SAMPLE_PATTERN_BRUSH);
+    ok((HBITMAP)orig_lb->lbHatch != NULL, "CreateBitmap error %ld.\n", GetLastError());
 
     hBrush = CreateBrushIndirect (orig_lb);
     ok(hBrush != 0, "CreateBrushIndirect error %ld\n", GetLastError());
@@ -437,7 +437,7 @@ static void test_mf_PatternBrush(void)
     ok( ret, "DeleteMetaFile error %ld\n", GetLastError());
     ret = DeleteObject(hBrush);
     ok( ret, "DeleteObject(HBRUSH) error %ld\n", GetLastError());
-    ret = DeleteObject((HBITMAP *)orig_lb->lbHatch);
+    ret = DeleteObject((HBITMAP)orig_lb->lbHatch);
     ok( ret, "DeleteObject(HBITMAP) error %ld\n",
         GetLastError());
     HeapFree (GetProcessHeap(), 0, orig_lb);
