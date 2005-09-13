@@ -272,7 +272,7 @@ static void test_getsourcepath( void )
     MsiCloseHandle( hpkg );
 }
 
-void test_doaction( void )
+static void test_doaction( void )
 {
     MSIHANDLE hpkg;
     UINT r;
@@ -295,10 +295,40 @@ void test_doaction( void )
     MsiCloseHandle( hpkg );
 }
 
+static void test_gettargetpath_bad(void)
+{
+    char buffer[0x80];
+    MSIHANDLE hpkg;
+    DWORD sz;
+    UINT r;
+
+    hpkg = package_from_db(create_package_db());
+    ok( hpkg, "failed to create package\n");
+
+    r = MsiGetTargetPath( 0, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
+
+    r = MsiGetTargetPath( 0, NULL, NULL, &sz );
+    ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
+
+    r = MsiGetTargetPath( 0, "boo", NULL, NULL );
+    ok( r == ERROR_INVALID_HANDLE, "wrong return val\n");
+
+    r = MsiGetTargetPath( 0, "boo", NULL, NULL );
+    ok( r == ERROR_INVALID_HANDLE, "wrong return val\n");
+
+    r = MsiGetTargetPath( hpkg, "boo", NULL, NULL );
+    ok( r == ERROR_DIRECTORY, "wrong return val\n");
+
+    r = MsiGetTargetPath( hpkg, "boo", buffer, NULL );
+    ok( r == ERROR_DIRECTORY, "wrong return val\n");
+}
+
 START_TEST(package)
 {
     test_createpackage();
     test_getsourcepath_bad();
     test_getsourcepath();
     test_doaction();
+    test_gettargetpath_bad();
 }
