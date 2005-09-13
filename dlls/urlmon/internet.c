@@ -86,7 +86,7 @@ static IInternetProtocolInfo *get_protocol_info(LPCWSTR url)
     res = RegOpenKeyW(HKEY_CLASSES_ROOT, wszKey, &hkey);
     HeapFree(GetProcessHeap(), 0, wszKey);
     if(res != ERROR_SUCCESS) {
-        ERR("Could not open key %s\n", debugstr_w(wszProtocolsKey));
+        TRACE("Could not open key %s\n", debugstr_w(wszKey));
         return NULL;
     }
     
@@ -177,6 +177,27 @@ static HRESULT parse_path_from_url(LPCWSTR url, DWORD flags, LPWSTR result, DWOR
     return hres;
 }
 
+static HRESULT parse_security_domain(LPCWSTR url, DWORD flags, LPWSTR result,
+        DWORD size, DWORD *rsize)
+{
+    IInternetProtocolInfo *protocol_info;
+    HRESULT hres;
+
+    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
+
+    protocol_info = get_protocol_info(url);
+
+    if(protocol_info) {
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, url, PARSE_SECURITY_DOMAIN,
+                flags, result, size, rsize, 0);
+        if(SUCCEEDED(hres))
+            return hres;
+    }
+
+    return E_FAIL;
+}
+
+
 HRESULT WINAPI CoInternetParseUrl(LPCWSTR pwzUrl, PARSEACTION ParseAction, DWORD dwFlags,
         LPWSTR pszResult, DWORD cchResult, DWORD *pcchResult, DWORD dwReserved)
 {
@@ -192,6 +213,8 @@ HRESULT WINAPI CoInternetParseUrl(LPCWSTR pwzUrl, PARSEACTION ParseAction, DWORD
         return parse_path_from_url(pwzUrl, dwFlags, pszResult, cchResult, pcchResult);
     case PARSE_SCHEMA:
         return parse_schema(pwzUrl, dwFlags, pszResult, cchResult, pcchResult);
+    case PARSE_SECURITY_DOMAIN:
+        return parse_security_domain(pwzUrl, dwFlags, pszResult, cchResult, pcchResult);
     default:
         FIXME("not supported action %d\n", ParseAction);
     }
