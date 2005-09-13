@@ -961,6 +961,12 @@ static struct msi_maskedit_info * msi_dialog_parse_groups( LPCWSTR mask )
     p++;
     for( i=0; i<MASK_MAX_GROUPS; i++ )
     {
+        while (*p=='-')
+        {
+            total++;
+            p++;
+        }
+
         /* stop at the end of the string */
         if( p[0] == 0 || p[0] == '>' )
             break;
@@ -980,7 +986,7 @@ static struct msi_maskedit_info * msi_dialog_parse_groups( LPCWSTR mask )
         p += n;
     }
 
-    TRACE("%d characters in %d groups\n", total, info->num_groups );
+    TRACE("%d characters in %d groups\n", total, i );
     if( i == MASK_MAX_GROUPS )
         ERR("too many groups in PIDTemplate %s\n", debugstr_w(mask));
 
