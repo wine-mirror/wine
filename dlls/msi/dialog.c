@@ -1787,6 +1787,7 @@ msi_dialog *msi_dialog_create( MSIPACKAGE* package, LPCWSTR szDialogName,
     rec = msi_get_dialog_record( dialog );
     if( !rec )
     {
+        msiobj_release( &package->hdr );
         HeapFree( GetProcessHeap(), 0, dialog );
         return NULL;
     }
