@@ -2426,7 +2426,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 LRESULT WINAPI SendMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     DWORD_PTR res = 0;
-    SendMessageTimeoutW( hwnd, msg, wparam, lparam, SMTO_NORMAL, INFINITE, &res );
+    SendMessageTimeoutW( hwnd, msg, wparam, lparam, SMTO_NORMAL, 0, &res );
     return res;
 }
 
@@ -2437,7 +2437,7 @@ LRESULT WINAPI SendMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     DWORD_PTR res = 0;
-    SendMessageTimeoutA( hwnd, msg, wparam, lparam, SMTO_NORMAL, INFINITE, &res );
+    SendMessageTimeoutA( hwnd, msg, wparam, lparam, SMTO_NORMAL, 0, &res );
     return res;
 }
 

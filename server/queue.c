@@ -48,6 +48,7 @@ enum message_kind { SEND_MESSAGE, POST_MESSAGE };
 struct message_result
 {
     struct list            sender_entry;  /* entry in sender list */
+    struct message        *msg;           /* message the result is for */
     struct message_result *recv_next;     /* next in receiver list */
     struct msg_queue      *sender;        /* sender queue */
     struct msg_queue      *receiver;      /* receiver queue */
@@ -447,6 +448,7 @@ static void free_message( struct message *msg )
     struct message_result *result = msg->result;
     if (result)
     {
+        result->msg = NULL;
         if (result->sender)
         {
             result->receiver = NULL;
@@ -483,18 +485,35 @@ static void result_timeout( void *private )
     assert( !result->replied );
 
     result->timeout = NULL;
+
+    if (result->msg)  /* not received yet */
+    {
+        struct message *msg = result->msg;
+
+        result->msg = NULL;
+        msg->result = NULL;
+        remove_queue_message( result->receiver, msg, SEND_MESSAGE );
+        result->receiver = NULL;
+        if (!result->sender)
+        {
+            free_result( result );
+            return;
+        }
+    }
+
     store_message_result( result, 0, STATUS_TIMEOUT );
 }
 
 /* allocate and fill a message result structure */
 static struct message_result *alloc_message_result( struct msg_queue *send_queue,
                                                     struct msg_queue *recv_queue,
-                                                    struct message *msg, unsigned int timeout,
+                                                    struct message *msg, int timeout,
                                                     void *callback, unsigned int callback_data )
 {
     struct message_result *result = mem_alloc( sizeof(*result) );
     if (result)
     {
+        result->msg       = msg;
         result->sender    = send_queue;
         result->receiver  = recv_queue;
         result->replied   = 0;
@@ -534,7 +553,7 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
             list_add_head( &send_queue->send_result, &result->sender_entry );
         }
 
-        if (timeout != -1)
+        if (timeout)
         {
             struct timeval when;
             gettimeofday( &when, NULL );
@@ -575,6 +594,7 @@ static void receive_message( struct msg_queue *queue, struct message *msg,
     /* put the result on the receiver result stack */
     if (result)
     {
+        result->msg = NULL;
         result->recv_next  = queue->recv_result;
         queue->recv_result = result;
     }

@@ -5835,6 +5835,113 @@ static void test_DispatchMessage(void)
 }
 
 
+static const struct message WmUser[] = {
+    { WM_USER, sent },
+    { 0 }
+};
+
+struct thread_info
+{
+    HWND  hwnd;
+    DWORD timeout;
+    DWORD ret;
+};
+
+static DWORD CALLBACK send_msg_thread( LPVOID arg )
+{
+    struct thread_info *info = arg;
+    info->ret = SendMessageTimeoutA( info->hwnd, WM_USER, 0, 0, 0, info->timeout, NULL );
+    if (!info->ret) ok( GetLastError() == ERROR_TIMEOUT, "unexpected error %ld\n", GetLastError());
+    return 0;
+}
+
+static void wait_for_thread( HANDLE thread )
+{
+    while (MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_SENDMESSAGE) != WAIT_OBJECT_0)
+    {
+        MSG msg;
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage(&msg);
+    }
+}
+
+static LRESULT WINAPI send_msg_delay_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (message == WM_USER) Sleep(200);
+    return MsgCheckProcA( hwnd, message, wParam, lParam );
+}
+
+static void test_SendMessageTimeout(void)
+{
+    MSG msg;
+    HANDLE thread;
+    struct thread_info info;
+
+    info.hwnd = CreateWindowA( "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                               100, 100, 200, 200, 0, 0, 0, NULL);
+    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+
+    info.timeout = 1000;
+    info.ret = 0xdeadbeef;
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    wait_for_thread( thread );
+    CloseHandle( thread );
+    ok( info.ret == 1, "SendMessageTimeout failed\n" );
+    ok_sequence( WmUser, "WmUser", FALSE );
+
+    info.timeout = 1;
+    info.ret = 0xdeadbeef;
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    Sleep(100);  /* SendMessageTimeout should timeout here */
+    wait_for_thread( thread );
+    CloseHandle( thread );
+    ok( info.ret == 0, "SendMessageTimeout succeeded\n" );
+    ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
+
+    /* 0 means infinite timeout */
+    info.timeout = 0;
+    info.ret = 0xdeadbeef;
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    Sleep(100);
+    wait_for_thread( thread );
+    CloseHandle( thread );
+    ok( info.ret == 1, "SendMessageTimeout failed\n" );
+    ok_sequence( WmUser, "WmUser", FALSE );
+
+    /* timeout is treated as signed despite the prototype */
+    info.timeout = 0x7fffffff;
+    info.ret = 0xdeadbeef;
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    Sleep(100);
+    wait_for_thread( thread );
+    CloseHandle( thread );
+    ok( info.ret == 1, "SendMessageTimeout failed\n" );
+    ok_sequence( WmUser, "WmUser", FALSE );
+
+    info.timeout = 0x80000000;
+    info.ret = 0xdeadbeef;
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    Sleep(100);
+    wait_for_thread( thread );
+    CloseHandle( thread );
+    ok( info.ret == 0, "SendMessageTimeout succeeded\n" );
+    ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
+
+    /* now check for timeout during message processing */
+    SetWindowLongPtrA( info.hwnd, GWLP_WNDPROC, (LONG_PTR)send_msg_delay_proc );
+    info.timeout = 100;
+    info.ret = 0xdeadbeef;
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    wait_for_thread( thread );
+    CloseHandle( thread );
+    /* we should timeout but still get the message */
+    ok( info.ret == 0, "SendMessageTimeout failed\n" );
+    ok_sequence( WmUser, "WmUser", FALSE );
+
+    DestroyWindow( info.hwnd );
+}
+
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -5888,6 +5995,7 @@ START_TEST(msg)
     test_set_hook();
     test_DestroyWindow();
     test_DispatchMessage();
+    test_SendMessageTimeout();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)
