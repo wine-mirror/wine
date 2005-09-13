@@ -351,7 +351,17 @@ INT SIC_GetIconIndex (LPCWSTR sSourceFile, INT dwSourceIndex, DWORD dwFlags )
 
 	if ( INVALID_INDEX == index )
 	{
-	  ret = SIC_LoadIcon (sSourceFile, dwSourceIndex, dwFlags);
+	  if (0 == strcmpiW (sSourceFile, swShell32Name) &&
+	      -IDI_SHELL_MY_DOCUMENTS <= dwSourceIndex &&
+	      dwSourceIndex < IDI_SHELL_MY_DOCUMENTS)
+	  {
+	    /* Return default icon for icons not present in shell32 */
+	    ret = 0;
+	  }
+	  else
+	  {
+	    ret = SIC_LoadIcon (sSourceFile, dwSourceIndex, dwFlags);
+	  }
 	}
 	else
 	{
@@ -404,13 +414,11 @@ BOOL SIC_Initialize(void)
 	  hSm = (HICON)LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(index), IMAGE_ICON, cx_small, cy_small, LR_SHARED);
 	  hLg = (HICON)LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(index), IMAGE_ICON, cx_large, cy_large, LR_SHARED);
 
-	  if(!hSm)
+	  if(hSm)
 	  {
-	    hSm = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(1), IMAGE_ICON, cx_small, cy_small, LR_SHARED);
-	    hLg = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(1), IMAGE_ICON, cx_large, cy_large, LR_SHARED);
+            SIC_IconAppend (swShell32Name, index - 1, hSm, hLg, 0);
+            SIC_IconAppend (swShell32Name, -index, hSm, hLg, 0);
 	  }
-         SIC_IconAppend (swShell32Name, index - 1, hSm, hLg, 0);
-         SIC_IconAppend (swShell32Name, -index, hSm, hLg, 0);
 	}
 
 	TRACE("hIconSmall=%p hIconBig=%p\n",ShellSmallIconList, ShellBigIconList);
