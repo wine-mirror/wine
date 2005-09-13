@@ -397,7 +397,7 @@ ULONG WINAPI RtlFindSetBits(PCRTL_BITMAP lpBits, ULONG ulCount, ULONG ulHint)
   TRACE("(%p,%ld,%ld)\n", lpBits, ulCount, ulHint);
 
   if (!lpBits || !ulCount || ulCount > lpBits->SizeOfBitMap)
-    return ~0UL;
+    return ~0U;
 
   ulEnd = lpBits->SizeOfBitMap;
 
@@ -421,7 +421,7 @@ ULONG WINAPI RtlFindSetBits(PCRTL_BITMAP lpBits, ULONG ulCount, ULONG ulHint)
     else
       ulPos++;
   }
-  return ~0UL;
+  return ~0U;
 }
 
 /*************************************************************************
@@ -444,7 +444,7 @@ ULONG WINAPI RtlFindClearBits(PCRTL_BITMAP lpBits, ULONG ulCount, ULONG ulHint)
   TRACE("(%p,%ld,%ld)\n", lpBits, ulCount, ulHint);
 
   if (!lpBits || !ulCount || ulCount > lpBits->SizeOfBitMap)
-    return ~0UL;
+    return ~0U;
 
   ulEnd = lpBits->SizeOfBitMap;
 
@@ -468,7 +468,7 @@ ULONG WINAPI RtlFindClearBits(PCRTL_BITMAP lpBits, ULONG ulCount, ULONG ulHint)
     else
       ulPos++;
   }
-  return ~0UL;
+  return ~0U;
 }
 
 /*************************************************************************
@@ -491,7 +491,7 @@ ULONG WINAPI RtlFindSetBitsAndClear(PRTL_BITMAP lpBits, ULONG ulCount, ULONG ulH
   TRACE("(%p,%ld,%ld)\n", lpBits, ulCount, ulHint);
 
   ulPos = RtlFindSetBits(lpBits, ulCount, ulHint);
-  if (ulPos != ~0UL)
+  if (ulPos != ~0U)
     RtlClearBits(lpBits, ulPos, ulCount);
   return ulPos;
 }
@@ -516,7 +516,7 @@ ULONG WINAPI RtlFindClearBitsAndSet(PRTL_BITMAP lpBits, ULONG ulCount, ULONG ulH
   TRACE("(%p,%ld,%ld)\n", lpBits, ulCount, ulHint);
 
   ulPos = RtlFindClearBits(lpBits, ulCount, ulHint);
-  if (ulPos != ~0UL)
+  if (ulPos != ~0U)
     RtlSetBits(lpBits, ulPos, ulCount);
   return ulPos;
 }
@@ -724,7 +724,7 @@ static ULONG NTDLL_FindSetRun(PCRTL_BITMAP lpBits, ULONG ulStart, PULONG lpSize)
     ulStart = (ulStart & ~7u) + 8;
     lpOut++;
     if (ulStart >= lpBits->SizeOfBitMap)
-      return ~0UL;
+      return ~0U;
   }
 
   /* Count blocks of 8 set bits */
@@ -815,7 +815,7 @@ static ULONG NTDLL_FindClearRun(PCRTL_BITMAP lpBits, ULONG ulStart, PULONG lpSiz
     ulStart = (ulStart & ~7u) + 8;
     lpOut++;
     if (ulStart >= lpBits->SizeOfBitMap)
-      return ~0UL;
+      return ~0U;
   }
 
   /* Count blocks of 8 clear bits */
@@ -958,14 +958,14 @@ static ULONG WINAPI NTDLL_FindRuns(PCRTL_BITMAP lpBits, PRTL_BITMAP_RUN lpSeries
   TRACE("(%p,%p,%ld,%d)\n", lpBits, lpSeries, ulCount, bLongest);
 
   if (!ulCount)
-    return ~0UL;
+    return ~0U;
 
   while (ulPos < lpBits->SizeOfBitMap)
   {
     /* Find next set/clear run */
     ULONG ulSize, ulNextPos = fn(lpBits, ulPos, &ulSize);
 
-    if (ulNextPos == ~0UL)
+    if (ulNextPos == ~0U)
       break;
 
     if (bLongest && ulRuns == ulCount)

@@ -1357,7 +1357,7 @@ DWORD WINAPI GdiSetBatchLimit( DWORD limit )
 DWORD WINAPI GdiSeeGdiDo16( WORD wReqType, WORD wParam1, WORD wParam2,
                           WORD wParam3 )
 {
-    DWORD ret = ~0UL;
+    DWORD ret = ~0U;
 
     switch (wReqType)
     {

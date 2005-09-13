@@ -2136,18 +2136,18 @@ DWORD WINAPI TlsAlloc( void )
 
     RtlAcquirePebLock();
     index = RtlFindClearBitsAndSet( peb->TlsBitmap, 1, 0 );
-    if (index != ~0UL) NtCurrentTeb()->TlsSlots[index] = 0; /* clear the value */
+    if (index != ~0U) NtCurrentTeb()->TlsSlots[index] = 0; /* clear the value */
     else
     {
         index = RtlFindClearBitsAndSet( peb->TlsExpansionBitmap, 1, 0 );
-        if (index != ~0UL)
+        if (index != ~0U)
         {
             if (!NtCurrentTeb()->TlsExpansionSlots &&
                 !(NtCurrentTeb()->TlsExpansionSlots = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                          8 * sizeof(peb->TlsExpansionBitmapBits) * sizeof(void*) )))
             {
                 RtlClearBits( peb->TlsExpansionBitmap, index, 1 );
-                index = ~0UL;
+                index = ~0U;
                 SetLastError( ERROR_NOT_ENOUGH_MEMORY );
             }
             else

@@ -290,8 +290,8 @@ static VOID test_SuspendThread(void)
                            0,threadId);
     ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
     if (access_thread!=NULL) {
-      obey_ar(SuspendThread(access_thread)==~0UL);
-      obey_ar(ResumeThread(access_thread)==~0UL);
+      obey_ar(SuspendThread(access_thread)==~0U);
+      obey_ar(ResumeThread(access_thread)==~0U);
       ok(CloseHandle(access_thread)!=0,"CloseHandle Failed\n");
     }
   }
@@ -307,7 +307,7 @@ static VOID test_SuspendThread(void)
   }
   /* Trying to suspend a terminated thread should fail */
   error=SuspendThread(thread);
-  ok(error==~0UL, "wrong return code: %ld\n", error);
+  ok(error==~0U, "wrong return code: %ld\n", error);
   ok(GetLastError()==ERROR_ACCESS_DENIED || GetLastError()==ERROR_NO_MORE_ITEMS, "unexpected error code: %ld\n", GetLastError());
 
   ok(CloseHandle(thread)!=0,"CloseHandle Failed\n");

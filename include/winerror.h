@@ -1511,9 +1511,6 @@
 #define ERROR_SXS_THREAD_QUERIES_DISABLED                  14010
 #define ERROR_SXS_PROCESS_DEFAULT_ALREADY_SET              14011
 
-#define ERROR_AUDITING_DISABLED                            0xC0090001L
-#define ERROR_ALL_SIDS_FILTERED                            0xC0090002L
-
 /* HRESULT values for OLE, SHELL and other Interface stuff */
 /* the codes 4000-40ff are reserved for OLE */
 #undef NOERROR  /* arpa/nameser_compat.h defines this */
@@ -2208,5 +2205,8 @@
 #define SCARD_W_WRONG_CHV                                  _HRESULT_TYPEDEF_(0x8010006BL)
 #define SCARD_W_CHV_BLOCKED                                _HRESULT_TYPEDEF_(0x8010006CL)
 #define SCARD_W_CARD_NOT_AUTHENTICATED                     _HRESULT_TYPEDEF_(0x8010006FL)
+
+#define ERROR_AUDITING_DISABLED                            _HRESULT_TYPEDEF_(0xC0090001L)
+#define ERROR_ALL_SIDS_FILTERED                            _HRESULT_TYPEDEF_(0xC0090002L)
 
 #endif  /* __WINE_WINERROR_H */

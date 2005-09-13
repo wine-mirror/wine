@@ -173,7 +173,7 @@ static BOOL WINAPI HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
 
     TRACE("copying header: %s\n", debugstr_w(lpszHeader));
 
-    if( dwHeaderLength == ~0UL )
+    if( dwHeaderLength == ~0U )
         len = strlenW(lpszHeader);
     else
         len = dwHeaderLength;
@@ -279,7 +279,7 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
     len = MultiByteToWideChar( CP_ACP, 0, lpszHeader, dwHeaderLength, NULL, 0 );
     hdr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, lpszHeader, dwHeaderLength, hdr, len );
-    if( dwHeaderLength != ~0UL )
+    if( dwHeaderLength != ~0U )
         dwHeaderLength = len;
 
     r = HttpAddRequestHeadersW( hHttpRequest, hdr, dwHeaderLength, dwModifier );

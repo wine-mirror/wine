@@ -1768,8 +1768,8 @@ HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
             segSize++;
     }
 
-    if ( heapSize == -1L )
-        heapSize = 1024L*1024L;   /* FIXME */
+    if ( heapSize == (DWORD)-1 )
+        heapSize = 1024*1024;   /* FIXME */
 
     heapSize = (heapSize + 0xffff) & 0xffff0000;
     segSize  = (segSize  + 0x0fff) & 0xfffff000;

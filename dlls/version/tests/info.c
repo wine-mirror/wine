@@ -25,7 +25,7 @@
 #include "winerror.h"
 #include "winver.h"
 
-#define MY_LAST_ERROR -1L
+#define MY_LAST_ERROR ((DWORD)-1)
 #define EXPECT_BAD_PATH__NOT_FOUND \
     ok( (ERROR_PATH_NOT_FOUND == GetLastError()) || \
 	(ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) || \
