@@ -112,7 +112,7 @@ static void test_encodeInt(DWORD dwEncoding)
          NULL, NULL, &bufSize);
         ok(ret, "Expected success, got %ld\n", GetLastError());
         ret = CryptEncodeObjectEx(dwEncoding, X509_INTEGER, &ints[i].val,
-         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &bufSize);
         ok(ret, "CryptEncodeObjectEx failed: %ld\n", GetLastError());
         if (buf)
         {
@@ -131,7 +131,7 @@ static void test_encodeInt(DWORD dwEncoding)
          0, NULL, NULL, &bufSize);
         ok(ret, "Expected success, got %ld\n", GetLastError());
         ret = CryptEncodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, &blob,
-         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &bufSize);
         ok(ret, "CryptEncodeObjectEx failed: %ld\n", GetLastError());
         if (buf)
         {
@@ -155,7 +155,7 @@ static void test_encodeInt(DWORD dwEncoding)
          0, NULL, NULL, &bufSize);
         ok(ret, "Expected success, got %ld\n", GetLastError());
         ret = CryptEncodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, &blob,
-         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &bufSize);
         ok(ret, "CryptEncodeObjectEx failed: %ld\n", GetLastError());
         if (buf)
         {
@@ -178,7 +178,7 @@ static void test_encodeInt(DWORD dwEncoding)
          0, NULL, NULL, &bufSize);
         ok(ret, "Expected success, got %ld\n", GetLastError());
         ret = CryptEncodeObjectEx(dwEncoding, X509_MULTI_BYTE_UINT, &blob,
-         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &bufSize);
         ok(ret, "CryptEncodeObjectEx failed: %ld\n", GetLastError());
         if (buf)
         {
@@ -1123,10 +1123,19 @@ struct encodedOctets
     const BYTE *encoded;
 };
 
+static const unsigned char bin46[] = { 'h','i',0 };
+static const unsigned char bin47[] = { 0x04,0x02,'h','i',0 };
+static const unsigned char bin48[] = {
+     's','o','m','e','l','o','n','g',0xff,'s','t','r','i','n','g',0 };
+static const unsigned char bin49[] = {
+     0x04,0x0f,'s','o','m','e','l','o','n','g',0xff,'s','t','r','i','n','g',0 };
+static const unsigned char bin50[] = { 0 };
+static const unsigned char bin51[] = { 0x04,0x00,0 };
+
 static const struct encodedOctets octets[] = {
-    { "hi", "\x04\x02hi" },
-    { "somelong\xffstring", "\x04\x0fsomelong\xffstring" },
-    { "", "\x04\x00" },
+    { bin46, bin47 },
+    { bin48, bin49 },
+    { bin50, bin51 },
 };
 
 static void test_encodeOctets(DWORD dwEncoding)
@@ -1140,8 +1149,8 @@ static void test_encodeOctets(DWORD dwEncoding)
         BOOL ret;
         DWORD bufSize = 0;
 
-        blob.cbData = strlen(octets[i].val);
-        blob.pbData = (BYTE *)octets[i].val;
+        blob.cbData = strlen((const char*)octets[i].val);
+        blob.pbData = (BYTE*)octets[i].val;
         ret = CryptEncodeObjectEx(dwEncoding, X509_OCTET_STRING, &blob,
          CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
         ok(ret, "CryptEncodeObjectEx failed: %ld\n", GetLastError());
@@ -1198,14 +1207,22 @@ struct encodedBits
     const BYTE *decoded;
 };
 
+static const unsigned char bin52[] = { 0x03,0x03,0x00,0xff,0xff,0 };
+static const unsigned char bin53[] = { 0xff,0xff,0 };
+static const unsigned char bin54[] = { 0x03,0x03,0x01,0xff,0xfe,0 };
+static const unsigned char bin55[] = { 0xff,0xfe,0 };
+static const unsigned char bin56[] = { 0x03,0x02,0x01,0xfe,0 };
+static const unsigned char bin57[] = { 0xfe,0 };
+static const unsigned char bin58[] = { 0x03,0x01,0x00,0 };
+
 static const struct encodedBits bits[] = {
     /* normal test cases */
-    { 0, "\x03\x03\x00\xff\xff", 2, "\xff\xff" },
-    { 1, "\x03\x03\x01\xff\xfe", 2, "\xff\xfe" },
+    { 0, bin52, 2, bin53 },
+    { 1, bin54, 2, bin55 },
     /* strange test case, showing cUnusedBits >= 8 is allowed */
-    { 9, "\x03\x02\x01\xfe", 1, "\xfe" },
+    { 9, bin56, 1, bin57 },
     /* even stranger test case, showing cUnusedBits > cbData * 8 is allowed */
-    { 17, "\x03\x01\x00", 0, NULL },
+    { 17, bin58, 0, NULL },
 };
 
 static void test_encodeBits(DWORD dwEncoding)
@@ -1299,17 +1316,21 @@ struct Constraints2
     const BYTE *encoded;
 };
 
+static const unsigned char bin59[] = { 0x30,0x00,0 };
+static const unsigned char bin60[] = { 0x30,0x03,0x01,0x01,0xff,0 };
+static const unsigned char bin61[] = { 0x30,0x03,0x02,0x01,0x00,0 };
+static const unsigned char bin62[] = { 0x30,0x06,0x01,0x01,0xff,0x02,0x01,0x01,0 };
 static const struct Constraints2 constraints2[] = {
  /* empty constraints */
- { { FALSE, FALSE, 0}, "\x30\x00" },
+ { { FALSE, FALSE, 0}, bin59 },
  /* can be a CA */
- { { TRUE,  FALSE, 0}, "\x30\x03\x01\x01\xff" },
+ { { TRUE,  FALSE, 0}, bin60 },
  /* has path length constraints set (MSDN implies fCA needs to be TRUE as well,
   * but that's not the case
   */
- { { FALSE, TRUE,  0}, "\x30\x03\x02\x01\x00" },
+ { { FALSE, TRUE,  0}, bin61 },
  /* can be a CA and has path length constraints set */
- { { TRUE,  TRUE,  1}, "\x30\x06\x01\x01\xff\x02\x01\x01" },
+ { { TRUE,  TRUE,  1}, bin62 },
 };
 
 static void test_encodeBasicConstraints(DWORD dwEncoding)
@@ -1339,11 +1360,12 @@ static void test_encodeBasicConstraints(DWORD dwEncoding)
     }
 }
 
+static const unsigned char bin63[] = { 0x30,0x06,0x01,0x01,0x01,0x02,0x01,0x01,0 };
+
 static void test_decodeBasicConstraints(DWORD dwEncoding)
 {
     static const BYTE inverted[] = "\x30\x06\x02\x01\x01\x01\x01\xff";
-    static const struct Constraints2 badBool = { { TRUE, TRUE, 1 },
-     "\x30\x06\x01\x01\x01\x02\x01\x01" };
+    static const struct Constraints2 badBool = { { TRUE, TRUE, 1 }, bin63 };
     DWORD i;
     BOOL ret;
     BYTE *buf = NULL;
@@ -1398,6 +1420,8 @@ static void test_decodeBasicConstraints(DWORD dwEncoding)
 /* These are terrible public keys of course, I'm just testing encoding */
 static const BYTE modulus1[] = { 0,0,0,1,1,1,1,1 };
 static const BYTE modulus2[] = { 1,1,1,1,1,0,0,0 };
+static const BYTE mod1_encoded[] = { 0x30,0x0f,0x02,0x08,0x01,0x01,0x01,0x01,0x01,0x00,0x00,0x00,0x02,0x03,0x01,0x00,0x01 };
+static const BYTE mod2_encoded[] = { 0x30,0x0c,0x02,0x05,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x01,0x00,0x01 };
 
 struct EncodedRSAPubKey
 {
@@ -1408,12 +1432,8 @@ struct EncodedRSAPubKey
 };
 
 struct EncodedRSAPubKey rsaPubKeys[] = {
- { modulus1, sizeof(modulus1),
-   "\x30\x0f\x02\x08\x01\x01\x01\x01\x01\x00\x00\x00\x02\x03\x01\x00\x01",
-   sizeof(modulus1) },
- { modulus2, sizeof(modulus2),
-   "\x30\x0c\x02\x05\x01\x01\x01\x01\x01\x02\x03\x01\x00\x01",
-   5 },
+    { modulus1, sizeof(modulus1), mod1_encoded, sizeof(modulus1) },
+    { modulus2, sizeof(modulus2), mod2_encoded, 5 },
 };
 
 static void test_encodeRsaPublicKey(DWORD dwEncoding)
@@ -1662,17 +1682,24 @@ struct encodedExtensions
     const BYTE *encoded;
 };
 
+static BYTE crit_ext_data[] = { 0x30,0x06,0x01,0x01,0xff,0x02,0x01,0x01 };
+static BYTE noncrit_ext_data[] = { 0x30,0x06,0x01,0x01,0xff,0x02,0x01,0x01 };
+
 static CERT_EXTENSION criticalExt =
- { szOID_BASIC_CONSTRAINTS2, TRUE, { 8, "\x30\x06\x01\x01\xff\x02\x01\x01" } };
+ { szOID_BASIC_CONSTRAINTS2, TRUE, { 8, crit_ext_data } };
 static CERT_EXTENSION nonCriticalExt =
- { szOID_BASIC_CONSTRAINTS2, FALSE, { 8, "\x30\x06\x01\x01\xff\x02\x01\x01" } };
+ { szOID_BASIC_CONSTRAINTS2, FALSE, { 8, noncrit_ext_data } };
+
+static const BYTE ext0[] = { 0x30,0x00 };
+static const BYTE ext1[] = { 0x30,0x14,0x30,0x12,0x06,0x03,0x55,0x1d,0x13,0x01,0x01,
+                             0xff,0x04,0x08,0x30,0x06,0x01,0x01,0xff,0x02,0x01,0x01 };
+static const BYTE ext2[] = { 0x30,0x11,0x30,0x0f,0x06,0x03,0x55,0x1d,0x13,0x04,
+                             0x08,0x30,0x06,0x01,0x01,0xff,0x02,0x01,0x01 };
 
 static const struct encodedExtensions exts[] = {
- { { 0, NULL }, "\x30\x00" },
- { { 1, &criticalExt }, "\x30\x14\x30\x12\x06\x03\x55\x1d\x13\x01\x01\xff"
-  "\x04\x08\x30\x06\x01\x01\xff\x02\x01\x01" },
- { { 1, &nonCriticalExt }, "\x30\x11\x30\x0f\x06\x03\x55\x1d\x13"
-  "\x04\x08\x30\x06\x01\x01\xff\x02\x01\x01" },
+ { { 0, NULL }, ext0 },
+ { { 1, &criticalExt }, ext1 },
+ { { 1, &nonCriticalExt }, ext2 },
 };
 
 static void test_encodeExtensions(DWORD dwEncoding)
@@ -1686,7 +1713,7 @@ static void test_encodeExtensions(DWORD dwEncoding)
         DWORD bufSize = 0;
 
         ret = CryptEncodeObjectEx(dwEncoding, X509_EXTENSIONS, &exts[i].exts,
-         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &bufSize);
         ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
         if (buf)
         {
