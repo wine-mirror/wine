@@ -3621,6 +3621,7 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPWSTR pEnvironment,
         return FALSE;
     }
 
+    *pcReturned = number;
     return TRUE;
 }
 
