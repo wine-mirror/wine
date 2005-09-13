@@ -87,7 +87,7 @@ extern void wine_ldt_init_locking( void (*lock_func)(void), void (*unlock_func)(
 extern void wine_ldt_get_entry( unsigned short sel, LDT_ENTRY *entry );
 extern int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry );
 extern int wine_ldt_is_system( unsigned short sel );
-extern void *wine_ldt_get_ptr( unsigned short sel, unsigned int offset );
+extern void *wine_ldt_get_ptr( unsigned short sel, unsigned long offset );
 extern unsigned short wine_ldt_alloc_entries( int count );
 extern unsigned short wine_ldt_realloc_entries( unsigned short sel, int oldcount, int newcount );
 extern void wine_ldt_free_entries( unsigned short sel, int count );

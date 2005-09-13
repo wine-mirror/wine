@@ -157,7 +157,7 @@ static void DECLSPEC_NORETURN exit_thread( struct wine_pthread_thread_info *info
 /***********************************************************************
  *           abort_thread
  */
-static void DECLSPEC_NORETURN abort_thread( int status )
+static void DECLSPEC_NORETURN abort_thread( long status )
 {
     pthread_exit( (void *)status );
 }

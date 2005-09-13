@@ -295,7 +295,7 @@ int wine_ldt_is_system( unsigned short sel )
  * Convert a segment:offset pair to a linear pointer.
  * Note: we don't lock the LDT since this has to be fast.
  */
-void *wine_ldt_get_ptr( unsigned short sel, unsigned int offset )
+void *wine_ldt_get_ptr( unsigned short sel, unsigned long offset )
 {
     int index;
 
