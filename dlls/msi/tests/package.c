@@ -272,9 +272,33 @@ static void test_getsourcepath( void )
     MsiCloseHandle( hpkg );
 }
 
+void test_doaction( void )
+{
+    MSIHANDLE hpkg;
+    UINT r;
+
+    r = MsiDoAction( -1, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
+
+    hpkg = package_from_db(create_package_db());
+    ok( hpkg, "failed to create package\n");
+
+    r = MsiDoAction(hpkg, NULL);
+    ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
+
+    r = MsiDoAction(0, "boo");
+    ok( r == ERROR_INVALID_HANDLE, "wrong return val\n");
+
+    r = MsiDoAction(hpkg, "boo");
+    ok( r == ERROR_FUNCTION_NOT_CALLED, "wrong return val\n");
+
+    MsiCloseHandle( hpkg );
+}
+
 START_TEST(package)
 {
     test_createpackage();
     test_getsourcepath_bad();
     test_getsourcepath();
+    test_doaction();
 }

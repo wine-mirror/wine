@@ -41,24 +41,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
 {
     LPWSTR szwAction;
-    UINT rc;
+    UINT ret;
 
-    TRACE(" exteral attempt at action %s\n",szAction);
-
-    if (!szAction)
-        return ERROR_FUNCTION_FAILED;
-    if (hInstall == 0)
-        return ERROR_FUNCTION_FAILED;
+    TRACE("%s\n", debugstr_a(szAction));
 
     szwAction = strdupAtoW(szAction);
-
-    if (!szwAction)
+    if (szAction && !szwAction)
         return ERROR_FUNCTION_FAILED; 
 
-
-    rc = MsiDoActionW(hInstall, szwAction);
-    HeapFree(GetProcessHeap(),0,szwAction);
-    return rc;
+    ret = MsiDoActionW( hInstall, szwAction );
+    HeapFree( GetProcessHeap(), 0, szwAction );
+    return ret;
 }
 
 /***********************************************************************
@@ -67,16 +60,20 @@ UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
 UINT WINAPI MsiDoActionW( MSIHANDLE hInstall, LPCWSTR szAction )
 {
     MSIPACKAGE *package;
-    UINT ret = ERROR_INVALID_HANDLE;
+    UINT ret;
 
-    TRACE(" external attempt at action %s \n",debugstr_w(szAction));
+    TRACE("%s\n",debugstr_w(szAction));
 
-    package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
-    if( package )
-    {
-        ret = ACTION_PerformUIAction(package,szAction);
-        msiobj_release( &package->hdr );
-    }
+    if (!szAction)
+        return ERROR_INVALID_PARAMETER;
+
+    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+ 
+    ret = ACTION_PerformUIAction( package, szAction );
+    msiobj_release( &package->hdr );
+
     return ret;
 }
 
