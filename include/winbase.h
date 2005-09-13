@@ -2268,15 +2268,28 @@ VOID        WINAPI SetLastError(DWORD);
 
 #endif  /* __i386__ && __GNUC__ && __WINESRC__ && !_NTSYSTEM_ */
 
-/* FIXME: should handle platforms where sizeof(void*) != sizeof(long) */
 static inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID volatile *dest, PVOID xchg, PVOID compare )
 {
+#if defined(__x86_64__) && defined(__GNUC__)
+    PVOID ret;
+    __asm__ __volatile__( "lock; cmpxchgq %2,(%1)"
+                          : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
+    return ret;
+#else
     return (PVOID)InterlockedCompareExchange( (PLONG)dest, (LONG)xchg, (LONG)compare );
+#endif
 }
 
 static inline PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVOID val )
 {
+#if defined(__x86_64__) && defined(__GNUC__)
+    PVOID ret;
+    __asm__ __volatile__( "lock; xchgq %0,(%1)"
+                          : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
+    return ret;
+#else
     return (PVOID)InterlockedExchange( (PLONG)dest, (LONG)val );
+#endif
 }
 
 #ifdef __WINESRC__
