@@ -106,7 +106,7 @@ static SYSTEMTIME lazy_timeout_time;
       filetime.dwHighDateTime = ularge.HighPart )
 #endif /* NONAMELESSSTRUCT */
 
-#define TEN_MIL 10000000LL
+#define TEN_MIL ((ULONGLONG)10000000)
 
 /* returns time remaining in seconds */
 long RPCSS_GetLazyTimeRemaining(void)

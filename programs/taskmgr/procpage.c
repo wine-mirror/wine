@@ -205,17 +205,13 @@ void ProcessPageOnNotify(WPARAM wParam, LPARAM lParam)
                 DWORD dwHours;
                 DWORD dwMinutes;
                 DWORD dwSeconds;
+                ULONGLONG secs;
 
                 time = PerfDataGetCPUTime(Index);
-#ifdef _MSC_VER
-                dwHours = (DWORD)(time.QuadPart / 36000000000L);
-                dwMinutes = (DWORD)((time.QuadPart % 36000000000L) / 600000000L);
-                dwSeconds = (DWORD)(((time.QuadPart % 36000000000L) % 600000000L) / 10000000L);
-#else
-                dwHours = (DWORD)(time.QuadPart / 36000000000LL);
-                dwMinutes = (DWORD)((time.QuadPart % 36000000000LL) / 600000000LL);
-                dwSeconds = (DWORD)(((time.QuadPart % 36000000000LL) % 600000000LL) / 10000000LL);
-#endif
+                secs = time.QuadPart / 10000000;
+                dwHours = secs / 3600;
+                dwMinutes = (secs % 3600) / 60;
+                dwSeconds = (secs % 3600) % 60;
                 wsprintf(pnmdi->item.pszText, _T("%d:%02d:%02d"), dwHours, dwMinutes, dwSeconds);
             }
             if (ColumnDataHints[ColumnIndex] == COLUMN_MEMORYUSAGE)
