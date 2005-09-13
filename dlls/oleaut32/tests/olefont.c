@@ -25,6 +25,8 @@
 #include <float.h>
 #include <time.h>
 
+#define COBJMACROS
+
 #include <wine/test.h>
 #include <windef.h>
 #include <winbase.h>
@@ -33,9 +35,7 @@
 #include <winnls.h>
 #include <winerror.h>
 #include <winnt.h>
-
 #include <wtypes.h>
-#define COBJMACROS
 #include <olectl.h>
 
 static HMODULE hOleaut32;
@@ -131,6 +131,34 @@ void test_QueryInterface(void)
 	IFont_Release(font);
 }
 
+void test_type_info(void)
+{
+        LPVOID pvObj = NULL;
+        HRESULT hres;
+        IFontDisp*  fontdisp = NULL;
+	ITypeInfo* pTInfo;
+	WCHAR name_Name[] = {'N','a','m','e',0};
+	BSTR names[3];
+	UINT n;
+        LCID en_us = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),
+                SORT_DEFAULT);
+
+        pOleCreateFontIndirect(NULL, &IID_IFontDisp, &pvObj);
+        fontdisp = pvObj;
+
+	hres = IFontDisp_GetTypeInfo(fontdisp, 0, en_us, &pTInfo);
+	ok(hres == S_OK, "GTI returned 0x%08lx instead of S_OK.\n", hres);
+	ok(pTInfo != NULL, "GTI returned NULL.\n");
+
+	hres = ITypeInfo_GetNames(pTInfo, DISPID_FONT_NAME, names, 3, &n);
+	ok(hres == S_OK, "GetNames returned 0x%08lx instead of S_OK.\n", hres);
+	ok(n == 1, "GetNames returned %d names instead of 1.\n", n);
+	ok(!lstrcmpiW(names[0],name_Name), "DISPID_FONT_NAME doesn't get 'Names'.\n");
+
+	ITypeInfo_Release(pTInfo);
+	IFontDisp_Release(fontdisp);
+}
+
 START_TEST(olefont)
 {
 	hOleaut32 = LoadLibraryA("oleaut32.dll");    
@@ -139,6 +167,7 @@ START_TEST(olefont)
 	    return;
 
 	test_QueryInterface();
+	test_type_info();
 
 	/* Test various size operations and conversions. */
 	/* Add more as needed. */
