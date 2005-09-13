@@ -33,7 +33,7 @@
 #include "graphctl.h"
 #include "taskmgr.h"
 
-LONG OldGraphCtrlWndProc;
+WNDPROC OldGraphCtrlWndProc;
 
 static void GraphCtrl_Init(TGraphCtrl* this)
 {

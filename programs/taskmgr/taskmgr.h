@@ -124,8 +124,8 @@ extern	int			nOldWidth;					/* Holds the previous client area width */
 extern	int			nOldHeight;					/* Holds the previous client area height */
 extern	TASKMANAGER_SETTINGS	TaskManagerSettings;
 
-extern LONG OldProcessListWndProc;
-extern LONG OldGraphWndProc;
+extern WNDPROC OldProcessListWndProc;
+extern WNDPROC OldGraphWndProc;
 
 extern HWND hProcessPage;				/* Process List Property Page */
 extern HWND hProcessPageListCtrl;			/* Process ListCtrl Window */

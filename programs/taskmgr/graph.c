@@ -38,7 +38,7 @@
 #define RED		RGB(255, 0, 0)
 
 
-LONG                OldGraphWndProc;
+WNDPROC             OldGraphWndProc;
 
 void                Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd);
 void                Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd);

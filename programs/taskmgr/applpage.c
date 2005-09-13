@@ -282,14 +282,14 @@ BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 
     /* Get the icon for this window */
     hIcon = NULL;
-    SendMessageTimeout(hWnd, WM_GETICON, bLargeIcon ? ICON_BIG /*1*/ : ICON_SMALL /*0*/, 0, 0, 1000, (unsigned long*)&hIcon);
+    SendMessageTimeout(hWnd, WM_GETICON, bLargeIcon ? ICON_BIG /*1*/ : ICON_SMALL /*0*/, 0, 0, 1000, (PDWORD_PTR)&hIcon);
 
     if (!hIcon)
     {
         hIcon = (HICON)GetClassLongPtr(hWnd, bLargeIcon ? GCLP_HICON : GCLP_HICONSM);
         if (!hIcon) hIcon = (HICON)GetClassLongPtr(hWnd, bLargeIcon ? GCLP_HICONSM : GCLP_HICON);
-        if (!hIcon) SendMessageTimeout(hWnd, WM_QUERYDRAGICON, 0, 0, 0, 1000, (unsigned long*)&hIcon);
-        if (!hIcon) SendMessageTimeout(hWnd, WM_GETICON, bLargeIcon ? ICON_SMALL /*0*/ : ICON_BIG /*1*/, 0, 0, 1000, (unsigned long*)&hIcon);
+        if (!hIcon) SendMessageTimeout(hWnd, WM_QUERYDRAGICON, 0, 0, 0, 1000, (PDWORD_PTR)&hIcon);
+        if (!hIcon) SendMessageTimeout(hWnd, WM_GETICON, bLargeIcon ? ICON_SMALL /*0*/ : ICON_BIG /*1*/, 0, 0, 1000, (PDWORD_PTR)&hIcon);
     }
 
     if (!hIcon)

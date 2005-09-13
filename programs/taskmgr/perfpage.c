@@ -196,10 +196,10 @@ LRESULT CALLBACK PerformancePageWndProc(HWND hDlg, UINT message, WPARAM wParam, 
 		/* 
 		 *  Subclass graph buttons
 		 */ 
-        OldGraphWndProc = SetWindowLongPtr(hPerformancePageCpuUsageGraph, GWLP_WNDPROC, (LONG_PTR)Graph_WndProc);
+        OldGraphWndProc = (WNDPROC)SetWindowLongPtr(hPerformancePageCpuUsageGraph, GWLP_WNDPROC, (LONG_PTR)Graph_WndProc);
         SetWindowLongPtr(hPerformancePageMemUsageGraph, GWLP_WNDPROC, (LONG_PTR)Graph_WndProc);
-		OldGraphCtrlWndProc = SetWindowLongPtr(hPerformancePageMemUsageHistoryGraph, GWLP_WNDPROC, (LONG_PTR)GraphCtrl_WndProc);
-		SetWindowLongPtr(hPerformancePageCpuUsageHistoryGraph, GWLP_WNDPROC, (LONG_PTR)GraphCtrl_WndProc);
+	OldGraphCtrlWndProc = (WNDPROC)SetWindowLongPtr(hPerformancePageMemUsageHistoryGraph, GWLP_WNDPROC, (LONG_PTR)GraphCtrl_WndProc);
+	SetWindowLongPtr(hPerformancePageCpuUsageHistoryGraph, GWLP_WNDPROC, (LONG_PTR)GraphCtrl_WndProc);
 		return TRUE;
 
 	case WM_COMMAND:

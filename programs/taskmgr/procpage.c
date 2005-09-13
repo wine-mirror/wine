@@ -91,7 +91,7 @@ LRESULT CALLBACK ProcessPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPAR
         /*
          * Subclass the process list control so we can intercept WM_ERASEBKGND
          */
-        OldProcessListWndProc = SetWindowLongPtr(hProcessPageListCtrl, GWLP_WNDPROC, (LONG_PTR)ProcessListWndProc);
+        OldProcessListWndProc = (WNDPROC)SetWindowLongPtr(hProcessPageListCtrl, GWLP_WNDPROC, (LONG_PTR)ProcessListWndProc);
 
         /* Start our refresh thread */
          CreateThread(NULL, 0, ProcessPageRefreshThread, NULL, 0, NULL);
