@@ -32,6 +32,7 @@
 
 #include "resource.h"
 #include "chm.h"
+#include "webbrowser.h"
 
 /* Window type defaults */
 
@@ -45,6 +46,7 @@ typedef struct tagHHInfo
 {
     HH_WINTYPEW *pHHWinType;
     CHMInfo *pCHMInfo;
+    WBInfo *pWBInfo;
     HINSTANCE hInstance;
     LPWSTR szCmdLine;
     HWND hwndTabCtrl;
@@ -387,6 +389,9 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
     if (!hWnd)
         return FALSE;
 
+    if (!WB_EmbedBrowser(pHHInfo->pWBInfo, hwndParent))
+        return FALSE;
+
     /* store the pointer to the HH info struct */
     SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)pHHInfo);
 
@@ -572,6 +577,7 @@ static HHInfo *HH_OpenHH(HINSTANCE hInstance, LPWSTR szCmdLine)
 
     pHHInfo->pHHWinType = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HH_WINTYPEW));
     pHHInfo->pCHMInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(CHMInfo));
+    pHHInfo->pWBInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(WBInfo));
     pHHInfo->hInstance = hInstance;
     pHHInfo->szCmdLine = szCmdLine;
 
@@ -607,6 +613,21 @@ static void HH_Close(HHInfo *pHHInfo)
         CHM_CloseCHM(pHHInfo->pCHMInfo);
         HeapFree(GetProcessHeap(), 0, pHHInfo->pCHMInfo);
     }
+
+    if (pHHInfo->pWBInfo)
+    {
+        WB_UnEmbedBrowser(pHHInfo->pWBInfo);
+        HeapFree(GetProcessHeap(), 0, pHHInfo->pWBInfo);
+    }
+}
+
+static void HH_OpenDefaultTopic(HHInfo *pHHInfo)
+{
+    WCHAR url[MAX_PATH];
+    LPCWSTR defTopic = pHHInfo->pHHWinType->pszFile;
+
+    CHM_CreateITSUrl(pHHInfo->pCHMInfo, defTopic, url);
+    WB_Navigate(pHHInfo->pWBInfo, url);
 }
 
 static BOOL HH_OpenCHM(HHInfo *pHHInfo)
@@ -636,6 +657,8 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
         return -1;
     }
 
+    HH_OpenDefaultTopic(pHHInfo);
+    
     while (GetMessageW(&msg, 0, 0, 0))
     {
         TranslateMessage(&msg);
