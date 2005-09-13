@@ -1070,7 +1070,6 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
 {
     MSIPACKAGE* package = (MSIPACKAGE*)param;
     MSIFEATURE* feature;
-    DWORD sz;
     static const WCHAR Query1[] = 
         {'S','E','L','E','C','T',' ',
          '`','C','o','m','p','o','n','e','n','t','_','`',
@@ -1090,15 +1089,11 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
 
     list_init( &feature->Components );
     
-    sz = IDENTIFIER_SIZE;       
-    MSI_RecordGetStringW(row,1,feature->Feature,&sz);
+    feature->Feature = load_dynamic_stringW( row, 1 );
 
     TRACE("Loading feature %s\n",debugstr_w(feature->Feature));
 
-    sz = IDENTIFIER_SIZE;
-    if (!MSI_RecordIsNull(row,2))
-        MSI_RecordGetStringW(row,2,feature->Feature_Parent,&sz);
-
+    feature->Feature_Parent = load_dynamic_stringW( row, 2 );
     feature->Title = load_dynamic_stringW( row, 3 );
     feature->Description = load_dynamic_stringW( row, 4 );
 
@@ -1106,11 +1101,7 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
         feature->Display = MSI_RecordGetInteger(row,5);
   
     feature->Level= MSI_RecordGetInteger(row,6);
-
-    sz = IDENTIFIER_SIZE;
-    if (!MSI_RecordIsNull(row,7))
-        MSI_RecordGetStringW(row,7,feature->Directory,&sz);
-
+    feature->Directory = load_dynamic_stringW( row, 7 );
     feature->Attributes = MSI_RecordGetInteger(row,8);
 
     feature->Installed = INSTALLSTATE_ABSENT;
@@ -3280,7 +3271,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
         {
             size += 21;
         }
-        if (feature->Feature_Parent[0])
+        if (feature->Feature_Parent)
             size += strlenW( feature->Feature_Parent )+2;
 
         data = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
@@ -3301,7 +3292,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
                 strcatW(data,buf);
             }
         }
-        if (feature->Feature_Parent[0])
+        if (feature->Feature_Parent)
         {
             static const WCHAR sep[] = {'\2',0};
             strcatW(data,sep);
@@ -3312,18 +3303,22 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
         RegSetValueExW( hkey, feature->Feature, 0, REG_SZ, (LPBYTE)data,size );
         HeapFree(GetProcessHeap(),0,data);
 
+        size = 0;
+        if (feature->Feature_Parent)
+            size = strlenW(feature->Feature_Parent)*sizeof(WCHAR);
         if (!absent)
         {
-            size = strlenW(feature->Feature_Parent)*sizeof(WCHAR);
             RegSetValueExW(hukey,feature->Feature,0,REG_SZ,
                        (LPBYTE)feature->Feature_Parent,size);
         }
         else
         {
-            size = (strlenW(feature->Feature_Parent)+2)* sizeof(WCHAR);
+            size += 2*sizeof(WCHAR);
             data = HeapAlloc(GetProcessHeap(),0,size);
             data[0] = 0x6;
-            strcpyW( &data[1], feature->Feature_Parent );
+            data[1] = 0;
+            if (feature->Feature_Parent)
+                strcpyW( &data[1], feature->Feature_Parent );
             RegSetValueExW(hukey,feature->Feature,0,REG_SZ,
                        (LPBYTE)data,size);
             HeapFree(GetProcessHeap(),0,data);

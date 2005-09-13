@@ -23,18 +23,16 @@
 
 #include "wine/list.h"
 
-#define IDENTIFIER_SIZE 96
-
 typedef struct tagMSIFEATURE
 {
     struct list entry;
-    WCHAR Feature[IDENTIFIER_SIZE];
-    WCHAR Feature_Parent[IDENTIFIER_SIZE];
+    LPWSTR Feature;
+    LPWSTR Feature_Parent;
     LPWSTR Title;
     LPWSTR Description;
     INT Display;
     INT Level;
-    WCHAR Directory[IDENTIFIER_SIZE];
+    LPWSTR Directory;
     INT Attributes;
     
     INSTALLSTATE Installed;
