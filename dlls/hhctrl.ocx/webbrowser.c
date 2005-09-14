@@ -589,6 +589,9 @@ BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent)
 
     static const WCHAR hostNameW[] = {'H','o','s','t',' ','N','a','m','e',0};
 
+    /* clear out struct to keep from accessing invalid ptrs */
+    ZeroMemory(pWBInfo, sizeof(WBInfo));
+
     iOleClientSiteImpl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                    sizeof(IOleClientSiteImpl));
     if (!iOleClientSiteImpl)
@@ -604,6 +607,10 @@ BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent)
     hr = OleCreate(&CLSID_WebBrowser, &IID_IOleObject, OLERENDER_DRAW, 0,
                    (IOleClientSite *)iOleClientSiteImpl, &MyIStorage,
                    (void **)&browserObject);
+
+    pWBInfo->pOleClientSite = (IOleClientSite *)iOleClientSiteImpl;
+    pWBInfo->pBrowserObject = browserObject;
+
     if (FAILED(hr)) goto error;
 
     /* make the browser object accessible to the IOleClientSite implementation */
@@ -630,8 +637,6 @@ BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent)
         IWebBrowser2_put_Width(webBrowser2, rc.right);
         IWebBrowser2_put_Height(webBrowser2, rc.bottom);
 
-        pWBInfo->pOleClientSite = (IOleClientSite *)iOleClientSiteImpl;
-        pWBInfo->pBrowserObject = browserObject;
         pWBInfo->pWebBrowser2 = webBrowser2;
         pWBInfo->hwndParent = hwndParent;
 
@@ -640,10 +645,6 @@ BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent)
 
 error:
     WB_UnEmbedBrowser(pWBInfo);
-
-    if (webBrowser2)
-        IWebBrowser2_Release(webBrowser2);
-
     HeapFree(GetProcessHeap(), 0, iOleClientSiteImpl);
 
     return FALSE;
