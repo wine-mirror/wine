@@ -549,7 +549,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ResProtocol *This = PROTOCOL_THIS(iface);
     DWORD grfBINDF = 0, len;
     BINDINFO bindinfo;
-    LPWSTR url_dll, url_file, url;
+    LPWSTR url_dll, url_file, url, mime;
     HMODULE hdll;
     HRSRC src;
     HRESULT hres;
@@ -563,10 +563,6 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     bindinfo.cbSize = sizeof(BINDINFO);
     IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
     ReleaseBindInfo(&bindinfo);
-
-    /* FIXME:
-     * Implement MIME type checking
-     */
 
     len = strlenW(szUrl)+16;
     url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
@@ -602,10 +598,10 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     }
 
     src = FindResourceW(hdll, url_file, (LPCWSTR)RT_HTML);
-    HeapFree(GetProcessHeap(), 0, url);
     if(!src) {
         WARN("Could not find resource\n");
         IInternetProtocolSink_ReportResult(pOIProtSink, HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
+        HeapFree(GetProcessHeap(), 0, url);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
@@ -620,6 +616,13 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     This->cur = 0;
 
     FreeLibrary(hdll);
+
+    hres = FindMimeFromData(NULL, url_file, NULL, 0, NULL, 0, &mime, 0);
+    HeapFree(GetProcessHeap(), 0, url);
+    if(SUCCEEDED(hres)) {
+        IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_MIMETYPEAVAILABLE, mime);
+        CoTaskMemFree(mime);
+    }
 
     IInternetProtocolSink_ReportData(pOIProtSink,
             BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION | BSCF_DATAFULLYAVAILABLE,
