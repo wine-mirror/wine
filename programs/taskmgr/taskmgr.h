@@ -153,6 +153,7 @@ void Draw3dRect2(HDC hDC, LPRECT lpRect, COLORREF clrTopLeft, COLORREF clrBottom
 void Font_DrawText(HDC hDC, LPCTSTR lpszText, int x, int y);
 void LoadSettings(void);
 void SaveSettings(void);
+void TaskManager_OnRestoreMainWindow(void);
 void TaskManager_OnEnterMenuLoop(HWND hWnd);
 void TaskManager_OnExitMenuLoop(HWND hWnd);
 void TaskManager_OnMenuSelect(HWND hWnd, UINT nItemID, UINT nFlags, HMENU hSysMenu);
@@ -162,6 +163,9 @@ void TaskManager_OnViewUpdateSpeedLow(void);
 void TaskManager_OnViewUpdateSpeedPaused(void);
 void TaskManager_OnViewRefresh(void);
 void TaskManager_OnTabWndSelChange(void);
+
+#define OPTIONS_MENU_INDEX    1
+
 void TaskManager_OnOptionsAlwaysOnTop(void);
 void TaskManager_OnOptionsMinimizeOnUse(void);
 void TaskManager_OnOptionsHideWhenMinimized(void);
@@ -185,6 +189,8 @@ void ProcessPage_OnSetPriorityNormal(void);
 void ProcessPage_OnSetPriorityBelowNormal(void);
 void ProcessPage_OnSetPriorityLow(void);
 void ProcessPage_OnDebugChannels(void);
+
+#define WM_ONTRAYICON   WM_USER + 5
 
 HICON TrayIcon_GetProcessorUsageIcon(void);
 BOOL TrayIcon_ShellAddTrayIcon(void);

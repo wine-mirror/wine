@@ -155,7 +155,7 @@ BOOL TrayIcon_ShellAddTrayIcon(void)
     nid.hWnd = hMainWnd;
     nid.uID = 0;
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-    /* nid.uCallbackMessage = ??; */
+    nid.uCallbackMessage = WM_ONTRAYICON;
     nid.hIcon = hIcon;
     wsprintf(nid.szTip, _T("CPU Usage: %d%%"), PerfDataGetProcessorUsage());
 
@@ -178,7 +178,7 @@ BOOL TrayIcon_ShellRemoveTrayIcon(void)
     nid.hWnd = hMainWnd;
     nid.uID = 0;
     nid.uFlags = 0;
-    /* nid.uCallbackMessage = ??; */
+    nid.uCallbackMessage = WM_ONTRAYICON;
     
     bRetVal = Shell_NotifyIcon(NIM_DELETE, &nid);
     
@@ -199,7 +199,7 @@ BOOL TrayIcon_ShellUpdateTrayIcon(void)
     nid.hWnd = hMainWnd;
     nid.uID = 0;
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-    /* nid.uCallbackMessage = ??; */
+    nid.uCallbackMessage = WM_ONTRAYICON;
     nid.hIcon = hIcon;
     wsprintf(nid.szTip, _T("CPU Usage: %d%%"), PerfDataGetProcessorUsage());
     

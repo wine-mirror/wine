@@ -37,8 +37,6 @@
     
 #include "taskmgr.h"
 
-#define OPTIONS_MENU_INDEX    1
-
 void TaskManager_OnOptionsAlwaysOnTop(void)
 {
     HMENU    hMenu;
@@ -51,7 +49,7 @@ void TaskManager_OnOptionsAlwaysOnTop(void)
      * Check or uncheck the always on top menu item
      * and update main window.
      */
-    if (GetMenuState(hOptionsMenu, ID_OPTIONS_ALWAYSONTOP, MF_BYCOMMAND) & MF_CHECKED)
+    if ((GetWindowLong(hMainWnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0)
     {
         CheckMenuItem(hOptionsMenu, ID_OPTIONS_ALWAYSONTOP, MF_BYCOMMAND|MF_UNCHECKED);
         TaskManagerSettings.AlwaysOnTop = FALSE;
