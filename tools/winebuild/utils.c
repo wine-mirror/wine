@@ -501,3 +501,12 @@ const char *get_asm_short_keyword(void)
     default:            return ".short";
     }
 }
+
+const char *get_asm_string_section(void)
+{
+    switch (target_platform)
+    {
+    case PLATFORM_APPLE: return ".cstring";
+    default:             return ".section .rodata";
+    }
+}

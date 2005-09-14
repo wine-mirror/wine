@@ -188,6 +188,7 @@ extern const char *func_size( const char *func );
 extern const char *get_asm_ptr_keyword(void);
 extern const char *get_asm_string_keyword(void);
 extern const char *get_asm_short_keyword(void);
+extern const char *get_asm_string_section(void);
 
 extern void add_import_dll( const char *name, const char *filename );
 extern void add_delayed_import( const char *name );

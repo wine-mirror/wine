@@ -314,6 +314,7 @@ static void output_stubs( FILE *outfile, DLLSPEC *spec )
 
     if (pos)
     {
+        fprintf( outfile, "    \"\\t%s\\n\"\n", get_asm_string_section() );
         fprintf( outfile, "    \".L__wine_stub_strings:\\n\"\n" );
         for (i = 0; i < spec->nb_entry_points; i++)
         {
@@ -453,18 +454,10 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 
     if (target_platform == PLATFORM_APPLE)
         fprintf( outfile, "static char _end[4];\n" );
-    else
-        fprintf( outfile, "extern char _end[];\n" );
-
-    fprintf( outfile, "const char __wine_spec_file_name[] = \"%s\";\n", spec->file_name );
 
     /* Output the resources */
 
     resources_size = output_resources( outfile, spec );
-
-    /* Output the entry point function */
-
-    fprintf( outfile, "extern void %s();\n\n", spec->init_func );
 
     /* Output the NT header */
 
@@ -562,6 +555,12 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[13] */
     fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[14] */
     fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[15] */
+    fprintf( outfile, ");\n" );
+
+    fprintf( outfile, "asm(\"%s\\n\"\n", get_asm_string_section() );
+    fprintf( outfile, "    \"\\t.globl %s\\n\"\n", asm_name("__wine_spec_file_name") );
+    fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_spec_file_name"));
+    fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), spec->file_name );
     fprintf( outfile, ");\n" );
 
     output_stubs( outfile, spec );
