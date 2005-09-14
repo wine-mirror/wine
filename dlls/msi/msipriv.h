@@ -67,7 +67,7 @@ typedef struct tagMSIDATABASE
     IStorage *storage;
     string_table *strings;
     LPCWSTR mode;
-    MSITABLE *first_table, *last_table;
+    struct list tables;
 } MSIDATABASE;
 
 typedef struct tagMSIVIEW MSIVIEW;

@@ -53,8 +53,7 @@ struct tagMSITABLE
     USHORT **data;
     UINT ref_count;
     UINT row_count;
-    struct tagMSITABLE *next;
-    struct tagMSITABLE *prev;
+    struct list entry;
     WCHAR name[1];
 };
 
@@ -483,28 +482,13 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
 /* add this table to the list of cached tables in the database */
 void add_table(MSIDATABASE *db, MSITABLE *table)
 {
-    table->next = db->first_table;
-    table->prev = NULL;
-    if( db->first_table )
-        db->first_table->prev = table;
-    else
-        db->last_table = table;
-    db->first_table = table;
+    list_add_head( &db->tables, &table->entry );
 }
  
 /* remove from the list of cached tables */
 void remove_table( MSIDATABASE *db, MSITABLE *table )
 {
-    if( table->next )
-        table->next->prev = table->prev;
-    else
-        db->last_table = table->prev;
-    if( table->prev )
-        table->prev->next = table->next;
-    else
-        db->first_table = table->next;
-    table->next = NULL;
-    table->prev = NULL;
+    list_remove( &table->entry );
 }
 
 static void release_table( MSIDATABASE *db, MSITABLE *table )
@@ -523,10 +507,11 @@ static void release_table( MSIDATABASE *db, MSITABLE *table )
 
 void free_cached_tables( MSIDATABASE *db )
 {
-    while( db->first_table )
+    while( !list_empty( &db->tables ) )
     {
-        MSITABLE *t = db->first_table;
+        MSITABLE *t = LIST_ENTRY( list_head( &db->tables ), MSITABLE, entry );
 
+        list_remove( &t->entry );
         if ( --t->ref_count )
             ERR("table ref count not zero for %s\n", debugstr_w(t->name));
         remove_table( db, t );
@@ -539,7 +524,7 @@ UINT find_cached_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **ptable)
 {
     MSITABLE *t;
 
-    for( t = db->first_table; t; t=t->next )
+    LIST_FOR_EACH_ENTRY( t, &db->tables, MSITABLE, entry )
     {
         if( !lstrcmpW( name, t->name ) )
         {
@@ -1580,7 +1565,7 @@ UINT MSI_CommitTables( MSIDATABASE *db )
         return r;
     }
 
-    for( table = db->first_table; table; table = table->next )
+    LIST_FOR_EACH_ENTRY( table, &db->tables, MSITABLE, entry )
     {
         r = save_table( db, table );
         if( r != ERROR_SUCCESS )

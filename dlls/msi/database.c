@@ -134,14 +134,13 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
         goto end;
     }
 
-    if(( memcmp( &stat.clsid, &CLSID_MsiDatabase, sizeof (GUID) ) )
-     && ( memcmp( &stat.clsid, &CLSID_MsiPatch, sizeof (GUID) ) ))
+    if ( !IsEqualGUID( &stat.clsid, &CLSID_MsiDatabase ) &&
+         !IsEqualGUID( &stat.clsid, &CLSID_MsiPatch ) ) 
     {
         ERR("storage GUID is not a MSI database GUID %s\n",
              debugstr_guid(&stat.clsid) );
         goto end;
     }
-
 
     db = alloc_msiobject( MSIHANDLETYPE_DATABASE, sizeof (MSIDATABASE),
                               MSI_CloseDatabase );
@@ -156,6 +155,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
 
     db->storage = stg;
     db->mode = szMode;
+    list_init( &db->tables );
 
     ret = load_string_table( db );
     if( ret != ERROR_SUCCESS )
