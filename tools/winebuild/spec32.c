@@ -270,38 +270,62 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
 
 
 /*******************************************************************
- *         output_stub_funcs
+ *         output_stubs
  *
  * Output the functions for stub entry points
 */
-static void output_stub_funcs( FILE *outfile, DLLSPEC *spec )
+static void output_stubs( FILE *outfile, DLLSPEC *spec )
 {
-    int i;
+    const char *name, *exp_name;
+    int i, pos;
 
-    for (i = 0; i < spec->nb_entry_points; i++)
+    if (!has_stubs( spec )) return;
+
+    fprintf( outfile, "asm(\".text\\n\"\n" );
+
+    for (i = pos = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *odp = &spec->entry_points[i];
         if (odp->type != TYPE_STUB) continue;
-        fprintf( outfile, "#ifdef __GNUC__\n" );
-        fprintf( outfile, "extern void __wine_spec_unimplemented_stub( const char *module, const char *func ) __attribute__((noreturn));\n" );
-        fprintf( outfile, "#else\n" );
-        fprintf( outfile, "extern void __wine_spec_unimplemented_stub( const char *module, const char *func );\n" );
-        fprintf( outfile, "#endif\n\n" );
-        break;
+
+        name = make_internal_name( odp, spec, "stub" );
+        exp_name = odp->name ? odp->name : odp->export_name;
+        fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
+        fprintf( outfile, "    \"\\t%s\\n\"\n", func_declaration(name) );
+        fprintf( outfile, "    \"%s:\\n\"\n", asm_name(name) );
+        fprintf( outfile, "    \"\\tcall .L__wine_stub_getpc_%d\\n\"\n", i );
+        fprintf( outfile, "    \".L__wine_stub_getpc_%d:\\n\"\n", i );
+        fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
+        if (exp_name)
+        {
+            fprintf( outfile, "    \"\\tleal .L__wine_stub_strings+%d-.L__wine_stub_getpc_%d(%%eax),%%ecx\\n\"\n",
+                     pos, i );
+            fprintf( outfile, "    \"\\tpushl %%ecx\\n\"\n" );
+            pos += strlen(exp_name) + 1;
+        }
+        else
+            fprintf( outfile, "    \"\\tpushl $%d\\n\"\n", odp->ordinal );
+        fprintf( outfile, "    \"\\tleal %s-.L__wine_stub_getpc_%d(%%eax),%%ecx\\n\"\n",
+                 asm_name("__wine_spec_file_name"), i );
+        fprintf( outfile, "    \"\\tpushl %%ecx\\n\"\n" );
+        fprintf( outfile, "    \"\\tcall %s\\n\"\n", asm_name("__wine_spec_unimplemented_stub") );
+        fprintf( outfile, "    \"\\t%s\\n\"\n", func_size(name) );
     }
 
-    for (i = 0; i < spec->nb_entry_points; i++)
+    if (pos)
     {
-        const ORDDEF *odp = &spec->entry_points[i];
-        if (odp->type != TYPE_STUB) continue;
-        fprintf( outfile, "void %s(void) ", make_internal_name( odp, spec, "stub" ) );
-        if (odp->name)
-            fprintf( outfile, "{ __wine_spec_unimplemented_stub(__wine_spec_file_name, \"%s\"); }\n", odp->name );
-        else if (odp->export_name)
-            fprintf( outfile, "{ __wine_spec_unimplemented_stub(__wine_spec_file_name, \"%s\"); }\n", odp->export_name );
-        else
-            fprintf( outfile, "{ __wine_spec_unimplemented_stub(__wine_spec_file_name, \"%d\"); }\n", odp->ordinal );
+        fprintf( outfile, "    \".L__wine_stub_strings:\\n\"\n" );
+        for (i = 0; i < spec->nb_entry_points; i++)
+        {
+            ORDDEF *odp = &spec->entry_points[i];
+            if (odp->type != TYPE_STUB) continue;
+            exp_name = odp->name ? odp->name : odp->export_name;
+            if (exp_name)
+                fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), exp_name );
+        }
     }
+
+    fprintf( outfile, ");\n" );
 }
 
 
@@ -434,8 +458,6 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 
     fprintf( outfile, "const char __wine_spec_file_name[] = \"%s\";\n", spec->file_name );
 
-    output_stub_funcs( outfile, spec );
-
     /* Output the resources */
 
     resources_size = output_resources( outfile, spec );
@@ -542,6 +564,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[15] */
     fprintf( outfile, ");\n" );
 
+    output_stubs( outfile, spec );
     output_exports( outfile, spec );
     output_imports( outfile, spec );
     output_dll_init( outfile, "__wine_spec_init_ctor", NULL );

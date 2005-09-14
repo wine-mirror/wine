@@ -177,6 +177,7 @@ extern void dump_bytes( FILE *outfile, const unsigned char *data, int len,
 extern int remove_stdcall_decoration( char *name );
 extern DLLSPEC *alloc_dll_spec(void);
 extern void free_dll_spec( DLLSPEC *spec );
+extern int has_stubs( const DLLSPEC *spec );
 extern const char *make_c_identifier( const char *str );
 extern unsigned int get_alignment(unsigned int align);
 extern unsigned int get_page_size(void);

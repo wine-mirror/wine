@@ -368,6 +368,7 @@ static int parse_spec_stub( ORDDEF *odp, DLLSPEC *spec )
 {
     odp->u.func.arg_types[0] = '\0';
     odp->link_name = xstrdup("");
+    odp->flags |= FLAG_I386;  /* don't bother generating stubs for Winelib */
     return 1;
 }
 

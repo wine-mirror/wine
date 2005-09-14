@@ -297,6 +297,23 @@ void free_dll_spec( DLLSPEC *spec )
 
 
 /*******************************************************************
+ *         has_stubs
+ *
+ * Check if the spec file exports any stubs
+ */
+int has_stubs( const DLLSPEC *spec )
+{
+    int i;
+    for (i = 0; i < spec->nb_entry_points; i++)
+    {
+        ORDDEF *odp = &spec->entry_points[i];
+        if (odp->type == TYPE_STUB) return 1;
+    }
+    return 0;
+}
+
+
+/*******************************************************************
  *         make_c_identifier
  *
  * Map a string to a valid C identifier.

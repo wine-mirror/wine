@@ -454,18 +454,6 @@ static void add_import_func( struct import *imp, ORDDEF *func )
     if (imp->delay) total_delayed++;
 }
 
-/* check if the spec file exports any stubs */
-static int has_stubs( const DLLSPEC *spec )
-{
-    int i;
-    for (i = 0; i < spec->nb_entry_points; i++)
-    {
-        ORDDEF *odp = &spec->entry_points[i];
-        if (odp->type == TYPE_STUB) return 1;
-    }
-    return 0;
-}
-
 /* get the default entry point for a given spec file */
 static const char *get_default_entry_point( const DLLSPEC *spec )
 {
