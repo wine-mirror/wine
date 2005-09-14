@@ -28,6 +28,8 @@ extern HINSTANCE URLMON_hInstance;
 extern HRESULT SecManagerImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT ZoneMgrImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT FileProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
+extern HRESULT HttpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
+extern HRESULT FtpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for urlmon.dll
