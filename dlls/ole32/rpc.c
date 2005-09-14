@@ -42,7 +42,9 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "wtypes.h"
+#include "excpt.h"
 #include "wine/unicode.h"
+#include "wine/exception.h"
 
 #include "compobj_private.h"
 
@@ -105,7 +107,16 @@ struct dispatch_params
     IRpcChannelBuffer *chan; /* server channel buffer, if applicable */
     HANDLE             handle; /* handle that will become signaled when call finishes */
     RPC_STATUS         status; /* status (out) */
+    HRESULT            hr; /* hresult (out) */
 };
+
+static WINE_EXCEPTION_FILTER(ole_filter)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ||
+        GetExceptionCode() == EXCEPTION_PRIV_INSTRUCTION)
+        return EXCEPTION_CONTINUE_SEARCH;
+    return EXCEPTION_EXECUTE_HANDLER;
+}
 
 static HRESULT WINAPI RpcChannelBuffer_QueryInterface(LPRPCCHANNELBUFFER iface, REFIID riid, LPVOID *ppv)
 {
@@ -228,6 +239,7 @@ static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPC
     
     params->msg = olemsg;
     params->status = RPC_S_OK;
+    params->hr = S_OK;
 
     /* Note: this is an optimization in the Microsoft OLE runtime that we need
      * to copy, as shown by the test_no_couninitialize_client test. without
@@ -270,6 +282,8 @@ static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPC
     if (hr == S_OK)
         hr = CoWaitForMultipleHandles(0, INFINITE, 1, &params->handle, &index);
     CloseHandle(params->handle);
+
+    if (hr == S_OK) hr = params->hr;
 
     status = params->status;
     HeapFree(GetProcessHeap(), 0, params);
@@ -434,12 +448,19 @@ HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan)
 }
 
 
-HRESULT RPC_ExecuteCall(struct dispatch_params *params)
+void RPC_ExecuteCall(struct dispatch_params *params)
 {
-    HRESULT hr = IRpcStubBuffer_Invoke(params->stub, params->msg, params->chan);
+    __TRY
+    {
+        params->hr = IRpcStubBuffer_Invoke(params->stub, params->msg, params->chan);
+    }
+    __EXCEPT(ole_filter)
+    {
+        params->hr = GetExceptionCode();
+    }
+    __ENDTRY
     IRpcStubBuffer_Release(params->stub);
     if (params->handle) SetEvent(params->handle);
-    return hr;
 }
 
 static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)

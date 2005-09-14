@@ -200,7 +200,7 @@ struct dispatch_params;
 
 void    RPC_StartRemoting(struct apartment *apt);
 HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid, IRpcChannelBuffer **pipebuf);
-HRESULT RPC_ExecuteCall(struct dispatch_params *params);
+void    RPC_ExecuteCall(struct dispatch_params *params);
 HRESULT RPC_RegisterInterface(REFIID riid);
 void    RPC_UnregisterInterface(REFIID riid);
 void    RPC_StartLocalServer(REFCLSID clsid, IStream *stream);

@@ -419,7 +419,8 @@ static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LP
     switch (msg)
     {
     case DM_EXECUTERPC:
-        return RPC_ExecuteCall((struct dispatch_params *)lParam);
+        RPC_ExecuteCall((struct dispatch_params *)lParam);
+        return 0;
     default:
         return DefWindowProcW(hWnd, msg, wParam, lParam);
     }
