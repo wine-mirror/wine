@@ -142,7 +142,7 @@ extern HWND hApplicationPageNewTaskButton;   /* Application New Task button */
 
 
 /* Foward declarations of functions included in this code module: */
-LRESULT CALLBACK TaskManagerWndProc(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK TaskManagerWndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL OnCreate(HWND hWnd);
 void OnSize(UINT nType, int cx, int cy);
 void OnMove(UINT nType, int cx, int cy);
@@ -213,11 +213,11 @@ void UpdateApplicationListControlViewSetting(void);
 void RefreshPerformancePage(void);
 void RefreshProcessPage(void);
 
-LRESULT CALLBACK ApplicationPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK Graph_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK ApplicationPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK Graph_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ProcessListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK ProcessPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK PerformancePageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK ProcessPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK PerformancePageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 #ifdef __cplusplus
 }

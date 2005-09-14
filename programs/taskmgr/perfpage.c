@@ -115,7 +115,8 @@ static void AdjustCntrlPos(int ctrl_id, HWND hDlg, int nXDifference, int nYDiffe
     AdjustFrameSize(GetDlgItem(hDlg, ctrl_id), hDlg, nXDifference, nYDifference, 0);
 }
 		 
-LRESULT CALLBACK PerformancePageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK
+PerformancePageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	RECT	rc;
 	int		nXDifference;
