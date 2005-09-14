@@ -44,7 +44,6 @@
 #define INT16 X_INT16
 #define INT32 X_INT32
 #define INT64 X_INT64
-#define LONG64 X_LONG64
 #include <X11/Xmd.h>
 #include <X11/Xproto.h>
 #undef BOOL
