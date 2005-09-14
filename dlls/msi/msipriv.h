@@ -57,8 +57,6 @@ struct tagMSIOBJECTHDR
     UINT type;
     LONG refcount;
     msihandledestructor destructor;
-    struct tagMSIOBJECTHDR *next;
-    struct tagMSIOBJECTHDR *prev;
 };
 
 typedef struct tagMSIDATABASE
