@@ -170,6 +170,8 @@
 
 #define RPC_FC_USER_MARSHAL		0xb4
 
+#define RPC_FC_RANGE			0xb7
+
 #define RPC_FC_INT3264			0xb8
 #define RPC_FC_UINT3264			0xb9
 
