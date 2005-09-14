@@ -657,7 +657,7 @@ static void DumpFontList(void)
     return;
 }
 
-static Face *find_face_from_filename(WCHAR *name)
+static Face *find_face_from_filename(const WCHAR *name)
 {
     Family *family;
     Face *face;
@@ -687,7 +687,7 @@ static Face *find_face_from_filename(WCHAR *name)
     return ret;
 }
 
-static Family *find_family_from_name(WCHAR *name)
+static Family *find_family_from_name(const WCHAR *name)
 {
     Family *family;
 
@@ -895,6 +895,7 @@ static BOOL init_system_links(void)
     SYSTEM_LINKS *font_link, *system_font_link;
     CHILD_FONT *child_font;
     static const WCHAR Tahoma[] = {'T','a','h','o','m','a',0};
+    static const WCHAR tahoma_ttf[] = {'t','a','h','o','m','a','.','t','t','f',0};
     static const WCHAR System[] = {'S','y','s','t','e','m',0};
     FONTSIGNATURE fs;
     Family *family;
@@ -973,17 +974,23 @@ static BOOL init_system_links(void)
 
     /* Explicitly add an entry for the system font, this links to Tahoma and any links
        that Tahoma has */
+
     system_font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*system_font_link));
     system_font_link->font_name = strdupW(System);
     list_init(&system_font_link->links);    
-    child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
-    child_font->file_name = strdupA("Tahoma.ttf");
-    child_font->index = 0;
-    child_font->font = NULL;
-    list_add_tail(&system_font_link->links, &child_font->entry);
+
+    face = find_face_from_filename(tahoma_ttf);
+    if(face)
+    {
+        child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
+        child_font->file_name = strdupA(face->file);
+        child_font->index = 0;
+        child_font->font = NULL;
+        list_add_tail(&system_font_link->links, &child_font->entry);
+    }
     LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
     {
-        if(!strcmpW(font_link->font_name, Tahoma))
+        if(!strcmpiW(font_link->font_name, Tahoma))
         {
             CHILD_FONT *font_link_entry;
             LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
