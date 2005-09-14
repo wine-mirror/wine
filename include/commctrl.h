@@ -1235,6 +1235,7 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TBN_RESTORE	        (TBN_FIRST-21)
 #define TBN_SAVE	        (TBN_FIRST-22)
 #define TBN_INITCUSTOMIZE	(TBN_FIRST-23)
+#define TBN_WRAPHOTITEM         (TBN_FIRST-24) /* this is undocumented and the name is a guess */
 #define TBNRF_HIDEHELP		0x00000001
 
 
@@ -1551,6 +1552,22 @@ typedef struct
     INT cxButtonSpacing;
     INT cyButtonSpacing;
 } TBMETRICS, *LPTBMETRICS;
+
+/* these are undocumented and the names are guesses */
+typedef struct
+{
+    NMHDR hdr;
+    HWND hwndDialog;
+} NMTBINITCUSTOMIZE;
+
+typedef struct
+{
+    NMHDR hdr;
+    INT idNew;
+    INT iDirection; /* left is -1, right is 1 */
+    DWORD dwReason; /* HICF_* */
+} NMTBWRAPHOTITEM;
+
 
 HWND WINAPI
 CreateToolbar(HWND, DWORD, UINT, INT, HINSTANCE,
