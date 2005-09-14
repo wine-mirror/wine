@@ -450,12 +450,14 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
 	}
 
 	if(!FT_IS_SFNT(ft_face) && (FT_IS_SCALABLE(ft_face) || !(flags & ADDFONT_FORCE_BITMAP))) { /* for now we'll accept TT/OT or bitmap fonts*/
+	    WARN("Ignoring font %s\n", debugstr_a(file));
 	    pFT_Done_Face(ft_face);
 	    return FALSE;
 	}
 
         /* There are too many bugs in FreeType < 2.1.9 for bitmap font support */
         if(!FT_IS_SCALABLE(ft_face) && FT_SimpleVersion < ((2 << 16) | (1 << 8) | (9 << 0))) {
+	    WARN("FreeType version < 2.1.9, skipping bitmap font %s\n", debugstr_a(file));
 	    pFT_Done_Face(ft_face);
 	    return FALSE;
 	}
@@ -1187,6 +1189,7 @@ static void update_reg_entries(void)
     externalkey = 0;
     RegDeleteKeyW(HKEY_CURRENT_USER, external_fonts_reg_key);
 
+    /* @@ Wine registry key: HKCU\Software\Wine\Fonts\ExternalFonts */
     if(RegCreateKeyExW(HKEY_CURRENT_USER, external_fonts_reg_key,
                        0, NULL, 0, KEY_ALL_ACCESS, NULL, &externalkey, NULL) != ERROR_SUCCESS) {
         ERR("Can't create external font reg key\n");
@@ -1267,6 +1270,169 @@ BOOL WineEngRemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
     return TRUE;
 }
 
+static const struct nls_update_font_list
+{
+    UINT ansi_cp, oem_cp;
+    const char *oem, *fixed, *system;
+    const char *courier, *serif, *small, *sserif;
+} nls_update_font_list[] =
+{
+    /* Arabic */
+    { 1256, 720, "vgaoem.fon", "vgaf1256.fon", "vgas1256.fon",
+      "coue1256.fon", "sere1256.fon", "smae1256.fon", "ssee1256.fon",
+    },
+    /* Baltic */
+    { 1257, 775, "vga775.fon", "vgaf1257.fon", "vgas1257.fon",
+      "coue1257.fon", "sere1257.fon", "smae1257.fon", "ssee1257.fon",
+    },
+    /* Chinese Simplified */
+    { 936, 936, "vga936.fon", "svgafix.fon", "svgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+    },
+    /* Chinese Traditional */
+    { 950, 950, "vga950.fon", "cvgafix.fon", "cvgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+    },
+    /* Central European */
+    { 1250, 852, "vga852.fon", "vgafixe.fon", "vgasyse.fon",
+      "couree.fon", "serifee.fon", "smallee.fon", "sserifee.fon",
+    },
+    /* Cyrillic */
+    { 1251, 866, "vga866.fon", "vgafixr.fon", "vgasysr.fon",
+      "courer.fon", "serifer.fon", "smaller.fon", "sserifer.fon",
+    },
+    /* Greek */
+    { 1253, 737, "vga869.fon", "vgafixg.fon", "vgasysg.fon",
+      "coureg.fon", "serifeg.fon", "smalleg.fon", "sserifeg.fon",
+    },
+    /* Hebrew */
+    { 1255, 862, "vgaoem.fon", "vgaf1255.fon", "vgas1255.fon",
+      "coue1255.fon", "sere1255.fon", "smae1255.fon", "ssee1255.fon",
+    },
+    /* "Japanese */
+    { 932, 932, "vga932.fon", "jvgafix.fon", "jvgasys.fon",
+      "coure.fon", "serife.fon", "jsmalle.fon", "sserife.fon",
+    },
+    /* Korean */
+    { 949, 949, "vga949.fon", "hvgafix.fon", "hvgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+    },
+    /* Thai */
+    { 874, 874, "vga850.fon", "vgaf874.fon", "vgas874.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "ssee874.fon",
+    },
+    /* Turkish */
+    { 1254, 857, "vga857.fon", "vgafixt.fon", "vgasyst.fon",
+      "couret.fon", "serifet.fon", "smallet.fon", "sserifet.fon",
+    },
+    /* Vietnamese */
+    { 1258, 1258, "vga850.fon", "vgafix.fon", "vgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+    },
+    /* English (United States) */
+    { 1252, 437, "vgaoem.fon", "vgafix.fon", "vgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+    },
+    /* English (United Kingdom) */
+    { 1252, 850, "vga850.fon", "vgafix.fon", "vgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+    }
+};
+
+inline static HKEY create_fonts_NT_registry_key(void)
+{
+    HKEY hkey = 0;
+
+    RegCreateKeyExW(HKEY_LOCAL_MACHINE, winnt_font_reg_key, 0, NULL,
+                    0, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    return hkey;
+}
+
+inline static HKEY create_fonts_9x_registry_key(void)
+{
+    HKEY hkey = 0;
+
+    RegCreateKeyExW(HKEY_LOCAL_MACHINE, win9x_font_reg_key, 0, NULL,
+                    0, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    return hkey;
+}
+
+inline static HKEY create_config_fonts_registry_key(void)
+{
+    HKEY hkey = 0;
+
+    RegCreateKeyExW(HKEY_CURRENT_CONFIG, system_fonts_reg_key, 0, NULL,
+                    0, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    return hkey;
+}
+
+static void add_font_list(HKEY hkey, const struct nls_update_font_list *fl)
+{
+    RegSetValueExA(hkey, "Courier", 0, REG_SZ, (const BYTE *)fl->courier, strlen(fl->courier)+1);
+    RegSetValueExA(hkey, "MS Serif", 0, REG_SZ, (const BYTE *)fl->serif, strlen(fl->serif)+1);
+    RegSetValueExA(hkey, "MS Sans Serif", 0, REG_SZ, (const BYTE *)fl->sserif, strlen(fl->sserif)+1);
+    RegSetValueExA(hkey, "Small Fonts", 0, REG_SZ, (const BYTE *)fl->small, strlen(fl->small)+1);
+}
+
+static void update_font_info(void)
+{
+    char buf[80];
+    DWORD len, type;
+    HKEY hkey = 0;
+    UINT i, ansi_cp = 0, oem_cp = 0;
+    LCID lcid = GetUserDefaultLCID();
+
+    if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts", &hkey) != ERROR_SUCCESS)
+        return;
+
+    len = sizeof(buf);
+    if (RegQueryValueExA(hkey, "Locale", 0, &type, (BYTE *)buf, &len) == ERROR_SUCCESS && type == REG_SZ)
+    {
+        if (strtoul(buf, NULL, 16 ) == lcid)  /* already set correctly */
+        {
+            RegCloseKey(hkey);
+            return;
+        }
+        TRACE("updating registry, locale changed %s -> %08lx\n", debugstr_a(buf), lcid);
+    }
+    else TRACE("updating registry, locale changed none -> %08lx\n", lcid);
+
+    sprintf(buf, "%08lx", lcid);
+    RegSetValueExA(hkey, "Locale", 0, REG_SZ, (const BYTE *)buf, strlen(buf)+1);
+    RegCloseKey(hkey);
+
+    GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER|LOCALE_NOUSEROVERRIDE,
+                   (WCHAR *)&ansi_cp, sizeof(ansi_cp)/sizeof(WCHAR));
+    GetLocaleInfoW(lcid, LOCALE_IDEFAULTCODEPAGE|LOCALE_RETURN_NUMBER|LOCALE_NOUSEROVERRIDE,
+                   (WCHAR *)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR));
+
+    for (i = 0; i < sizeof(nls_update_font_list)/sizeof(nls_update_font_list[0]); i++)
+    {
+        if (nls_update_font_list[i].ansi_cp == ansi_cp &&
+            nls_update_font_list[i].oem_cp == oem_cp)
+        {
+            HKEY hkey;
+
+            hkey = create_config_fonts_registry_key();
+            RegSetValueExA(hkey, "OEMFONT.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].oem, strlen(nls_update_font_list[i].oem)+1);
+            RegSetValueExA(hkey, "FIXED.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].fixed, strlen(nls_update_font_list[i].fixed)+1);
+            RegSetValueExA(hkey, "FONTS.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].system, strlen(nls_update_font_list[i].system)+1);
+            RegCloseKey(hkey);
+
+            hkey = create_fonts_NT_registry_key();
+            add_font_list(hkey, &nls_update_font_list[i]);
+            RegCloseKey(hkey);
+
+            hkey = create_fonts_9x_registry_key();
+            add_font_list(hkey, &nls_update_font_list[i]);
+            RegCloseKey(hkey);
+
+            return;
+        }
+    }
+    FIXME("there is no font defaults for lcid %04lx/ansi_cp %u", lcid, ansi_cp);
+}
+
 /*************************************************************
  *    WineEngInit
  *
@@ -1284,6 +1450,9 @@ BOOL WineEngInit(void)
     HANDLE font_mutex;
 
     TRACE("\n");
+
+    /* update locale dependent font info in registry */
+    update_font_info();
 
     ft_handle = wine_dlopen(SONAME_LIBFREETYPE, RTLD_NOW, NULL, 0);
     if(!ft_handle) {
@@ -1925,9 +2094,14 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     }
 
     TRACE("not in cache\n");
-    if(list_empty(&font_list) || !have_installed_roman_font) /* No fonts installed */
+    if(list_empty(&font_list)) /* No fonts installed */
     {
 	TRACE("No fonts installed\n");
+	return NULL;
+    }
+    if(!have_installed_roman_font)
+    {
+	TRACE("No roman font installed\n");
 	return NULL;
     }
 
