@@ -28,13 +28,6 @@
 #include "winioctl.h"
 #include "wine/server.h"
 
-/* The per-thread signal stack size */
-#ifdef __i386__
-#define SIGNAL_STACK_SIZE  4096
-#else
-#define SIGNAL_STACK_SIZE  0  /* we don't need a signal stack on non-i386 */
-#endif
-
 #define MAX_NT_PATH_LENGTH 277
 
 extern void WINAPI __regs_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
@@ -50,6 +43,7 @@ extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handl
 
 /* init routines */
 extern BOOL SIGNAL_Init(void);
+extern size_t get_signal_stack_total_size(void);
 extern void version_init( const WCHAR *appname );
 extern void debug_init(void);
 extern void thread_init(void);

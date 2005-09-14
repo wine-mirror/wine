@@ -21,7 +21,9 @@
 #ifdef __sparc__
 
 #include "config.h"
+#include "wine/port.h"
 
+#include <assert.h>
 #include <signal.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -386,7 +388,20 @@ static HANDLER_DEF(usr1_handler)
 
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
     timeout.QuadPart = 0;
-    NTDLL_wait_for_multiple_objects( 0, NULL, 0, &timeout );
+    NTDLL_wait_for_multiple_objects( 0, NULL, 0, &timeout, 0 );
+}
+
+
+/**********************************************************************
+ *		get_signal_stack_total_size
+ *
+ * Retrieve the size to allocate for the signal stack, including the TEB at the bottom.
+ * Must be a power of two.
+ */
+size_t get_signal_stack_total_size(void)
+{
+    assert( sizeof(TEB) <= getpagesize() );
+    return getpagesize();  /* this is just for the TEB, we don't need a signal stack */
 }
 
 

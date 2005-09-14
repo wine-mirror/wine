@@ -55,6 +55,7 @@ static WCHAR current_dir[MAX_NT_PATH_LENGTH];
 static RTL_BITMAP tls_bitmap;
 static RTL_BITMAP tls_expansion_bitmap;
 static LIST_ENTRY tls_links;
+static size_t sigstack_total_size;
 
 struct wine_pthread_functions pthread_functions = { NULL };
 
@@ -93,7 +94,7 @@ static inline void free_teb( TEB *teb )
 
     NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     wine_ldt_free_fs( thread_data->teb_sel );
-    munmap( teb, SIGNAL_STACK_SIZE + sizeof(TEB) );
+    munmap( teb, sigstack_total_size );
 }
 
 
@@ -128,7 +129,8 @@ void thread_init(void)
     InitializeListHead( &ldr.InInitializationOrderModuleList );
     InitializeListHead( &tls_links );
 
-    thread_info.teb_size = SIGNAL_STACK_SIZE + sizeof(TEB);
+    sigstack_total_size = get_signal_stack_total_size();
+    thread_info.teb_size = sigstack_total_size;
     VIRTUAL_alloc_teb( &addr, thread_info.teb_size, TRUE );
     teb = addr;
     init_teb( teb );
@@ -280,7 +282,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         goto error;
     }
 
-    info->pthread_info.teb_size = SIGNAL_STACK_SIZE + sizeof(TEB);
+    info->pthread_info.teb_size = sigstack_total_size;
     if ((status = VIRTUAL_alloc_teb( &addr, info->pthread_info.teb_size, FALSE ))) goto error;
     teb = addr;
     if ((status = init_teb( teb ))) goto error;

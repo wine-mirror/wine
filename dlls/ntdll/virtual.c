@@ -549,6 +549,26 @@ static BOOL VIRTUAL_SetProt( FILE_VIEW *view, /* [in] Pointer to view */
 
 
 /***********************************************************************
+ *           unmap_extra_space
+ *
+ * Release the extra memory while keeping the range starting on the granularity boundary.
+ */
+static inline void *unmap_extra_space( void *ptr, size_t total_size, size_t wanted_size, size_t mask )
+{
+    if ((ULONG_PTR)ptr & mask)
+    {
+        size_t extra = mask + 1 - ((ULONG_PTR)ptr & mask);
+        munmap( ptr, extra );
+        ptr = (char *)ptr + extra;
+        total_size -= extra;
+    }
+    if (total_size > wanted_size)
+        munmap( (char *)ptr + wanted_size, total_size - wanted_size );
+    return ptr;
+}
+
+
+/***********************************************************************
  *           map_view
  *
  * Create a view and mmap the corresponding memory area.
@@ -608,18 +628,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
             if (is_beyond_limit( ptr, view_size, user_space_limit )) add_reserved_area( ptr, view_size );
             else break;
         }
-
-        /* Release the extra memory while keeping the range
-         * starting on the granularity boundary. */
-        if ((ULONG_PTR)ptr & granularity_mask)
-        {
-            size_t extra = granularity_mask + 1 - ((ULONG_PTR)ptr & granularity_mask);
-            munmap( ptr, extra );
-            ptr = (char *)ptr + extra;
-            view_size -= extra;
-        }
-        if (view_size > size)
-            munmap( (char *)ptr + size, view_size - size );
+        ptr = unmap_extra_space( ptr, view_size, size, granularity_mask );
     }
 
     status = create_view( view_ret, ptr, size, vprot );
@@ -1109,30 +1118,36 @@ static inline void virtual_init(void)
 /***********************************************************************
  *           VIRTUAL_alloc_teb
  *
- * Allocate a memory view for a new TEB. We don't care about granularity for TEBs.
+ * Allocate a memory view for a new TEB, properly aligned to a multiple of the size.
  */
 NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size, BOOL first )
 {
     void *ptr;
     NTSTATUS status;
     struct file_view *view;
+    size_t align_size = page_size;
     BYTE vprot = VPROT_READ | VPROT_WRITE | VPROT_COMMITTED;
 
     if (first) virtual_init();
 
     *ret = NULL;
     size = ROUND_SIZE( 0, size );
+    while (align_size < size) align_size *= 2;
 
     for (;;)
     {
-        if ((ptr = wine_anon_mmap( NULL, size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
+        if ((ptr = wine_anon_mmap( NULL, 2 * align_size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
         {
             if (errno == ENOMEM) return STATUS_NO_MEMORY;
             return STATUS_INVALID_PARAMETER;
         }
+        if (!is_beyond_limit( ptr, 2 * align_size, user_space_limit ))
+        {
+            ptr = unmap_extra_space( ptr, 2 * align_size, align_size, align_size - 1 );
+            break;
+        }
         /* if we got something beyond the user limit, unmap it and retry */
-        if (is_beyond_limit( ptr, size, user_space_limit )) add_reserved_area( ptr, size );
-        else break;
+        add_reserved_area( ptr, 2 * align_size );
     }
 
     if (!first) RtlEnterCriticalSection( &csVirtual );

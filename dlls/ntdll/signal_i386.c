@@ -443,6 +443,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 typedef int (*wine_signal_handler)(unsigned int sig);
 
+static size_t signal_stack_mask;
+static size_t signal_stack_size;
+
 static wine_signal_handler handlers[256];
 
 extern void DECLSPEC_NORETURN __wine_call_from_32_restore_regs( CONTEXT context );
@@ -506,7 +509,7 @@ static inline TEB *get_current_teb(void)
 {
     unsigned long esp;
     __asm__("movl %%esp,%0" : "=g" (esp) );
-    return (TEB *)((esp & ~4095) - 4096);
+    return (TEB *)(esp & ~signal_stack_mask);
 }
 
 
@@ -753,7 +756,7 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     /* stack sanity checks */
 
     if ((char *)stack >= (char *)get_signal_stack() &&
-        (char *)stack < (char *)get_signal_stack() + SIGNAL_STACK_SIZE)
+        (char *)stack < (char *)get_signal_stack() + signal_stack_size)
     {
         ERR( "nested exception on signal stack in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
              GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
@@ -1156,6 +1159,28 @@ static HANDLER_DEF(usr1_handler)
 }
 
 
+/**********************************************************************
+ *		get_signal_stack_total_size
+ *
+ * Retrieve the size to allocate for the signal stack, including the TEB at the bottom.
+ * Must be a power of two.
+ */
+size_t get_signal_stack_total_size(void)
+{
+    static const size_t teb_size = 4096;  /* we reserve one page for the TEB */
+
+    if (!signal_stack_size)
+    {
+        size_t size = 4096, min_size = teb_size + max( MINSIGSTKSZ, 4096 );
+        /* find the first power of two not smaller than min_size */
+        while (size < min_size) size *= 2;
+        signal_stack_mask = size - 1;
+        signal_stack_size = size - teb_size;
+    }
+    return signal_stack_size + teb_size;
+}
+
+
 /***********************************************************************
  *           set_handler
  *
@@ -1174,7 +1199,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
         sig_act.ksa_mask    = (1 << (SIGINT-1)) |
                               (1 << (SIGUSR2-1));
         /* point to the top of the signal stack */
-        sig_act.ksa_restorer = (char *)get_signal_stack() + SIGNAL_STACK_SIZE;
+        sig_act.ksa_restorer = (char *)get_signal_stack() + signal_stack_size;
         return wine_sigaction( sig, &sig_act, NULL );
     }
 #endif  /* linux */
@@ -1220,7 +1245,7 @@ BOOL SIGNAL_Init(void)
 #ifdef HAVE_SIGALTSTACK
     struct sigaltstack ss;
     ss.ss_sp    = get_signal_stack();
-    ss.ss_size  = SIGNAL_STACK_SIZE;
+    ss.ss_size  = signal_stack_size;
     ss.ss_flags = 0;
     if (!sigaltstack(&ss, NULL)) have_sigaltstack = 1;
 #ifdef linux
