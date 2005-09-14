@@ -215,10 +215,10 @@ static void file_protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL i
     ok(hres == S_OK, "Start failed: %08lx\n", hres);
 
     CHECK_CALLED(GetBindInfo);
-    todo_wine { CHECK_CALLED(ReportProgress_DIRECTBIND); }
+    CHECK_CALLED(ReportProgress_DIRECTBIND);
     if(is_first) {
         CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
-        todo_wine { CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE); }
+        CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(ReportResult);
     }
     CHECK_CALLED(ReportData);
@@ -373,7 +373,7 @@ static void test_file_protocol(void) {
     ok(hres == INET_E_RESOURCE_NOT_FOUND,
             "Start failed: %08lx expected INET_E_RESOURCE_NOT_FOUND\n", hres);
     CHECK_CALLED(GetBindInfo);
-    todo_wine { CHECK_CALLED(ReportProgress_DIRECTBIND); }
+    CHECK_CALLED(ReportProgress_DIRECTBIND);
     CHECK_CALLED(ReportResult);
 
     IInternetProtocol_Release(protocol);
@@ -392,7 +392,7 @@ static void test_file_protocol(void) {
     ok(hres == INET_E_RESOURCE_NOT_FOUND,
             "Start failed: %08lx, expected INET_E_RESOURCE_NOT_FOUND\n", hres);
     CHECK_CALLED(GetBindInfo);
-    todo_wine { CHECK_CALLED(ReportProgress_DIRECTBIND); }
+    CHECK_CALLED(ReportProgress_DIRECTBIND);
     CHECK_CALLED(ReportResult);
 
     IInternetProtocol_Release(protocol);
