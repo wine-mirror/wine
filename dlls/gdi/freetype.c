@@ -1605,11 +1605,14 @@ static void free_font(GdiFont font)
         struct list *first_hfont;
         HFONTLIST *hfontlist;
         list_remove(cursor);
-        first_hfont = list_head(&child->font->hfontlist);
-        hfontlist = LIST_ENTRY(first_hfont, HFONTLIST, entry);
-        DeleteObject(hfontlist->hfont);
-        HeapFree(GetProcessHeap(), 0, hfontlist);
-        free_font(child->font);
+        if(child->font)
+        {
+            first_hfont = list_head(&child->font->hfontlist);
+            hfontlist = LIST_ENTRY(first_hfont, HFONTLIST, entry);
+            DeleteObject(hfontlist->hfont);
+            HeapFree(GetProcessHeap(), 0, hfontlist);
+            free_font(child->font);
+        }
         HeapFree(GetProcessHeap(), 0, child->file_name);
         HeapFree(GetProcessHeap(), 0, child);
     }
@@ -3292,7 +3295,11 @@ static BOOL load_child_font(GdiFont font, CHILD_FONT *child)
     child->font = alloc_font();
     child->font->ft_face = OpenFontFile(child->font, child->file_name, child->index, 0, -font->ppem);
     if(!child->font->ft_face)
+    {
+        free_font(child->font);
+        child->font = NULL;
         return FALSE;
+    }
 
     child->font->orientation = font->orientation;
     hfontlist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hfontlist));
