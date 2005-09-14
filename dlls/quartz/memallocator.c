@@ -85,11 +85,7 @@ static const IMediaSample2Vtbl StdMediaSample2_VTable;
 
 #define AM_SAMPLE2_PROP_SIZE_WRITABLE (unsigned int)(&((AM_SAMPLE2_PROPERTIES *)0)->pbBuffer)
 
-#ifdef _I64_MAX
-#define INVALID_MEDIA_TIME _I64_MAX
-#else
-#define INVALID_MEDIA_TIME ((long long)(~0ull >> 1))
-#endif
+#define INVALID_MEDIA_TIME (((ULONGLONG)0x7fffffff << 32) | 0xffffffff)
 
 static HRESULT BaseMemAllocator_Init(HRESULT (* fnAlloc)(IMemAllocator *), HRESULT (* fnFree)(IMemAllocator *), BaseMemAllocator * pMemAlloc)
 {
