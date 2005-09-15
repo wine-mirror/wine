@@ -1278,39 +1278,6 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **
     return hres;
 }
 
-
-/***********************************************************************
- *           CoInternetGetSession (URLMON.@)
- *
- * Create a new internet session and return an IInternetSession interface
- * representing it.
- *
- * PARAMS
- *    dwSessionMode      [I] Mode for the internet session
- *    ppIInternetSession [O] Destination for creates IInternetSession object
- *    dwReserved         [I] Reserved, must be 0.
- *
- * RETURNS
- *    Success: S_OK. ppIInternetSession contains the IInternetSession interface.
- *    Failure: E_INVALIDARG, if any argument is invalid, or
- *             E_OUTOFMEMORY if memory allocation fails.
- */
-HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode, IInternetSession **ppIInternetSession, DWORD dwReserved)
-{
-    FIXME("(%ld, %p, %ld): stub\n", dwSessionMode, ppIInternetSession, dwReserved);
-
-    if(dwSessionMode) {
-      ERR("dwSessionMode: %ld, must be zero\n", dwSessionMode);
-    }
-
-    if(dwReserved) {
-      ERR("dwReserved: %ld, must be zero\n", dwReserved);
-    }
-
-    *ppIInternetSession=NULL;
-    return E_OUTOFMEMORY;
-}
-
 /***********************************************************************
  *           CoInternetQueryInfo (URLMON.@)
  *

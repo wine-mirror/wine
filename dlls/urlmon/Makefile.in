@@ -15,6 +15,7 @@ C_SRCS = \
 	internet.c \
 	regsvr.c \
 	sec_mgr.c \
+	session.c \
 	umon.c \
 	umstream.c \
 	urlmon_main.c
