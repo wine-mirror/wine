@@ -3142,3 +3142,16 @@ BOOL WINAPI CryptHashCertificate(HCRYPTPROV hCryptProv, ALG_ID Algid,
     }
     return ret;
 }
+
+HCRYPTOIDFUNCSET WINAPI CryptInitOIDFunctionSet(LPCSTR pszFuncName, DWORD dwFlags)
+{
+    FIXME("stub: %s %lx\n", debugstr_a(pszFuncName), dwFlags);
+    return NULL;
+}
+
+BOOL WINAPI CryptUnregisterDefaultOIDFunction(DWORD dwEncodingType,
+                                              LPCSTR pszFuncName, LPCWSTR pwszDll)
+{
+    FIXME("stub: %lx %s %s\n", dwEncodingType, debugstr_a(pszFuncName), debugstr_w(pwszDll));
+    return FALSE;
+}

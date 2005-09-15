@@ -117,7 +117,7 @@
 @ stub CryptImportPKCS8
 @ stub CryptImportPublicKeyInfo
 @ stub CryptImportPublicKeyInfoEx
-@ stub CryptInitOIDFunctionSet
+@ stdcall CryptInitOIDFunctionSet(str long)
 @ stub CryptInstallOIDFunctionAddress
 @ stub CryptLoadSip
 @ stub CryptMemAlloc
@@ -154,7 +154,7 @@
 @ stub CryptSignMessage
 @ stub CryptSignMessageWithKey
 @ stdcall CryptUnprotectData(ptr ptr ptr ptr ptr long ptr)
-@ stub CryptUnregisterDefaultOIDFunction
+@ stdcall CryptUnregisterDefaultOIDFunction(long str wstr)
 @ stdcall CryptUnregisterOIDFunction(long str str)
 @ stub CryptUnregisterOIDInfo
 @ stub CryptVerifyCertificateSignature
