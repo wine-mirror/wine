@@ -289,17 +289,19 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     *nt = *nt_descr;
 
     code_start = page_size;
-    data_start = ((BYTE *)nt->OptionalHeader.BaseOfData - addr) & ~page_mask;
+    data_start = ((BYTE *)nt_descr - addr) & ~page_mask;
     data_end   = (((BYTE *)nt->OptionalHeader.SizeOfImage - addr) + page_mask) & ~page_mask;
 
     nt->FileHeader.NumberOfSections                = nb_sections;
     nt->OptionalHeader.BaseOfCode                  = code_start;
+#ifndef _WIN64
     nt->OptionalHeader.BaseOfData                  = data_start;
+#endif
     nt->OptionalHeader.SizeOfCode                  = data_start - code_start;
     nt->OptionalHeader.SizeOfInitializedData       = data_end - data_start;
     nt->OptionalHeader.SizeOfUninitializedData     = 0;
     nt->OptionalHeader.SizeOfImage                 = data_end;
-    nt->OptionalHeader.ImageBase                   = (DWORD)addr;
+    nt->OptionalHeader.ImageBase                   = (ULONG_PTR)addr;
 
     fixup_rva_ptrs( &nt->OptionalHeader.AddressOfEntryPoint, addr, 1 );
 
