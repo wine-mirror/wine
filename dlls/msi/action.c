@@ -2340,8 +2340,7 @@ static UINT ACTION_WriteSharedDLLsCount(LPCWSTR path, UINT count)
 
     hkey = openSharedDLLsKey();
     if (count > 0)
-        RegSetValueExW(hkey,path,0,REG_DWORD,
-                    (LPBYTE)&count,sizeof(count));
+        msi_reg_set_val_dword( hkey, path, count );
     else
         RegDeleteValueW(hkey,path);
     RegCloseKey(hkey);
@@ -2484,19 +2483,16 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 
                 if (keypath)
                 {
-                    RegSetValueExW(hkey2,squished_pc,0,REG_SZ,(LPBYTE)keypath,
-                                (strlenW(keypath)+1)*sizeof(WCHAR));
+                    msi_reg_set_val_str( hkey2, squished_pc, keypath );
 
                     if (comp->Attributes & msidbComponentAttributesPermanent)
                     {
                         static const WCHAR szPermKey[] =
                             { '0','0','0','0','0','0','0','0','0','0','0','0',
-                              '0','0','0','0','0','0','0', '0','0','0','0','0',
+                              '0','0','0','0','0','0','0','0','0','0','0','0',
                               '0','0','0','0','0','0','0','0',0};
 
-                        RegSetValueExW(hkey2,szPermKey,0,REG_SZ,
-                                        (LPBYTE)keypath,
-                                        (strlenW(keypath)+1)*sizeof(WCHAR));
+                        msi_reg_set_val_str( hkey2, szPermKey, keypath );
                     }
                     
                     RegCloseKey(hkey2);
@@ -2976,16 +2972,12 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 
 
     buffer = load_dynamic_property(package,INSTALLPROPERTY_PRODUCTNAMEW,NULL);
-    size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hukey,INSTALLPROPERTY_PRODUCTNAMEW,0,REG_SZ, 
-            (LPBYTE)buffer,size);
+    msi_reg_set_val_str( hukey, INSTALLPROPERTY_PRODUCTNAMEW, buffer );
     HeapFree(GetProcessHeap(),0,buffer);
 
     buffer = load_dynamic_property(package,szProductLanguage,NULL);
-    size = sizeof(DWORD);
     langid = atoiW(buffer);
-    RegSetValueExW(hukey,INSTALLPROPERTY_LANGUAGEW,0,REG_DWORD, 
-            (LPBYTE)&langid,size);
+    msi_reg_set_val_dword( hkey, INSTALLPROPERTY_LANGUAGEW, langid );
     HeapFree(GetProcessHeap(),0,buffer);
 
     buffer = load_dynamic_property(package,szARPProductIcon,NULL);
@@ -2993,9 +2985,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     {
         LPWSTR path;
         build_icon_path(package,buffer,&path);
-        size = strlenW(path) * sizeof(WCHAR);
-        RegSetValueExW(hukey,INSTALLPROPERTY_PRODUCTICONW,0,REG_SZ,
-                (LPBYTE)path,size);
+        msi_reg_set_val_str( hukey, INSTALLPROPERTY_PRODUCTICONW, path );
     }
     HeapFree(GetProcessHeap(),0,buffer);
 
@@ -3003,9 +2993,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (buffer)
     {
         DWORD verdword = build_version_dword(buffer);
-        size = sizeof(DWORD);
-        RegSetValueExW(hukey,INSTALLPROPERTY_VERSIONW,0,REG_DWORD, (LPBYTE
-                    )&verdword,size);
+        msi_reg_set_val_dword( hkey, INSTALLPROPERTY_VERSIONW, verdword );
     }
     HeapFree(GetProcessHeap(),0,buffer);
     
@@ -3027,9 +3015,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
             LPWSTR ptr = strchrW(guidbuffer,';');
             if (ptr) *ptr = 0;
             squash_guid(guidbuffer,squashed);
-            size = strlenW(squashed)*sizeof(WCHAR);
-            RegSetValueExW(hukey,INSTALLPROPERTY_PACKAGECODEW,0,REG_SZ,
-                    (LPBYTE)squashed, size);
+            msi_reg_set_val_str( hukey, INSTALLPROPERTY_PACKAGECODEW, squashed );
         }
         else
         {
@@ -3299,8 +3285,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
             strcatW(data,feature->Feature_Parent);
         }
 
-        size = (strlenW(data)+1)*sizeof(WCHAR);
-        RegSetValueExW( hkey, feature->Feature, 0, REG_SZ, (LPBYTE)data,size );
+        msi_reg_set_val_str( hkey, feature->Feature, data );
         HeapFree(GetProcessHeap(),0,data);
 
         size = 0;
@@ -3337,8 +3322,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     LPWSTR buffer = NULL;
     UINT rc,i;
     DWORD size;
-    static WCHAR szNONE[] = {0};
-    static const WCHAR szWindowsInstaler[] = 
+    static const WCHAR szWindowsInstaller[] = 
     {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
     static const WCHAR szPropKeys[][80] = 
     {
@@ -3416,21 +3400,15 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     /* dump all the info i can grab */
     FIXME("Flesh out more information \n");
 
-    i = 0;
-    while (szPropKeys[i][0]!=0)
+    for( i=0; szPropKeys[i][0]; i++ )
     {
-        buffer = load_dynamic_property(package,szPropKeys[i],&rc);
-        if (rc != ERROR_SUCCESS)
-            buffer = szNONE;
-        size = strlenW(buffer)*sizeof(WCHAR);
-        RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,(LPBYTE)buffer,size);
+        buffer = load_dynamic_property( package, szPropKeys[i], NULL);
+        msi_reg_set_val_str( hkey, szRegKeys[i], buffer );
         HeapFree(GetProcessHeap(),0,buffer);
         i++;
     }
 
-    rc = 0x1;
-    size = sizeof(rc);
-    RegSetValueExW(hkey,szWindowsInstaler,0,REG_DWORD,(LPBYTE)&rc,size);
+    msi_reg_set_val_dword( hkey, szWindowsInstaller, 1 );
     
     /* copy the package locally */
     num = GetTickCount() & 0xffff;
@@ -3463,9 +3441,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         ERR("Unable to copy package (%s -> %s) (error %ld)\n",
             debugstr_w(package->msiFilePath), debugstr_w(packagefile),
             GetLastError());
-    size = strlenW(packagefile)*sizeof(WCHAR);
-    RegSetValueExW(hkey,INSTALLPROPERTY_LOCALPACKAGEW,0,REG_SZ,
-            (LPBYTE)packagefile,size);
+    msi_reg_set_val_str( hkey, INSTALLPROPERTY_LOCALPACKAGEW, packagefile );
 
     /* do ModifyPath and UninstallString */
     size = deformat_string(package,modpath_fmt,&buffer);
@@ -3474,37 +3450,27 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     HeapFree(GetProcessHeap(),0,buffer);
 
     FIXME("Write real Estimated Size when we have it\n");
-    size = 0;
-    RegSetValueExW(hkey,szEstimatedSize,0,REG_DWORD,(LPBYTE)&size,sizeof(DWORD));
+    msi_reg_set_val_dword( hkey, szEstimatedSize, 0 );
    
     GetLocalTime(&systime);
     size = 9*sizeof(WCHAR);
     buffer= HeapAlloc(GetProcessHeap(),0,size);
     sprintfW(buffer,date_fmt,systime.wYear,systime.wMonth,systime.wDay);
-    size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hkey,INSTALLPROPERTY_INSTALLDATEW,0,REG_SZ,
-            (LPBYTE)buffer,size);
+    msi_reg_set_val_str( hkey, INSTALLPROPERTY_INSTALLDATEW, buffer );
     HeapFree(GetProcessHeap(),0,buffer);
    
     buffer = load_dynamic_property(package,szProductLanguage,NULL);
-    size = atoiW(buffer);
-    RegSetValueExW(hkey,INSTALLPROPERTY_LANGUAGEW,0,REG_DWORD,
-            (LPBYTE)&size,sizeof(DWORD));
+    msi_reg_set_val_dword( hkey, INSTALLPROPERTY_LANGUAGEW, atoiW(buffer) );
     HeapFree(GetProcessHeap(),1,buffer);
 
     buffer = load_dynamic_property(package,szProductVersion,NULL);
     if (buffer)
     {
         DWORD verdword = build_version_dword(buffer);
-        DWORD vermajor = verdword>>24;
-        DWORD verminor = (verdword>>16)&0x00FF;
-        size = sizeof(DWORD);
-        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONW,0,REG_DWORD,
-                (LPBYTE)&verdword,size);
-        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONMAJORW,0,REG_DWORD,
-                (LPBYTE)&vermajor,size);
-        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONMINORW,0,REG_DWORD,
-                (LPBYTE)&verminor,size);
+
+        msi_reg_set_val_dword( hkey, INSTALLPROPERTY_VERSIONW, verdword );
+        msi_reg_set_val_dword( hkey, INSTALLPROPERTY_VERSIONMAJORW, verdword>>24 );
+        msi_reg_set_val_dword( hkey, INSTALLPROPERTY_VERSIONMINORW, (verdword>>16)&0x00FF );
     }
     HeapFree(GetProcessHeap(),0,buffer);
     
@@ -3516,11 +3482,11 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         WCHAR squashed[33];
         MSIREG_OpenUpgradeCodesKey(upgrade_code, &hkey2, TRUE);
         squash_guid(package->ProductCode,squashed);
-        RegSetValueExW(hkey2, squashed, 0,REG_SZ,NULL,0);
+        msi_reg_set_val_str( hkey2, squashed, NULL );
         RegCloseKey(hkey2);
         MSIREG_OpenUserUpgradeCodesKey(upgrade_code, &hkey2, TRUE);
         squash_guid(package->ProductCode,squashed);
-        RegSetValueExW(hkey2, squashed, 0,REG_SZ,NULL,0);
+        msi_reg_set_val_str( hkey2, squashed, NULL );
         RegCloseKey(hkey2);
 
         HeapFree(GetProcessHeap(),0,upgrade_code);
@@ -3591,8 +3557,7 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     'R','U','N','O','N','C','E','E','N','T','R','Y','=','\"','%','s','\"',0};
     WCHAR buffer[256], sysdir[MAX_PATH];
     HKEY hkey;
-    WCHAR  squished_pc[100];
-    DWORD size;
+    WCHAR squished_pc[100];
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -3604,8 +3569,7 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     snprintfW(buffer,sizeof(buffer)/sizeof(buffer[0]),msiexec_fmt,sysdir,
      squished_pc);
 
-    size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hkey,squished_pc,0,REG_SZ,(LPBYTE)buffer,size);
+    msi_reg_set_val_str( hkey, squished_pc, buffer );
     RegCloseKey(hkey);
 
     TRACE("Reboot command %s\n",debugstr_w(buffer));
@@ -3613,8 +3577,7 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     RegCreateKeyW(HKEY_LOCAL_MACHINE,InstallRunOnce,&hkey);
     sprintfW(buffer,install_fmt,package->ProductCode,squished_pc);
 
-    size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hkey,squished_pc,0,REG_SZ,(LPBYTE)buffer,size);
+    msi_reg_set_val_str( hkey, squished_pc, buffer );
     RegCloseKey(hkey);
 
     return ERROR_INSTALL_SUSPEND;
@@ -3677,7 +3640,6 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     LPWSTR buffer;
     LPWSTR productid;
     UINT rc,i;
-    DWORD size;
 
     static const WCHAR szPropKeys[][80] = 
     {
@@ -3709,14 +3671,8 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     i = 0;
     while (szPropKeys[i][0]!=0)
     {
-        buffer = load_dynamic_property(package,szPropKeys[i],&rc);
-        if (rc == ERROR_SUCCESS)
-        {
-            size = strlenW(buffer)*sizeof(WCHAR);
-            RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,(LPBYTE)buffer,size);
-        }
-        else
-            RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,NULL,0);
+        buffer = load_dynamic_property( package, szPropKeys[i], NULL );
+        msi_reg_set_val_str( hkey, szRegKeys[i], buffer );
         i++;
     }
 
@@ -3883,7 +3839,6 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
     LPWSTR name;
     LPCWSTR filename;
     MSIFILE *file;
-    DWORD size;
     static const WCHAR regfont1[] =
         {'S','o','f','t','w','a','r','e','\\',
          'M','i','c','r','o','s','o','f','t','\\',
@@ -3925,9 +3880,8 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
 
     if (name)
     {
-        size = strlenW( file->FileName ) * sizeof(WCHAR);
-        RegSetValueExW( hkey1, name, 0, REG_SZ, (LPBYTE)file->FileName, size );
-        RegSetValueExW( hkey2, name, 0, REG_SZ, (LPBYTE)file->FileName, size );
+        msi_reg_set_val_str( hkey1, name, file->FileName );
+        msi_reg_set_val_str( hkey2, name, file->FileName );
     }
 
     HeapFree(GetProcessHeap(),0,name);
@@ -4012,8 +3966,7 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
     if (text)
         strcatW(output,text);
 
-    sz = (lstrlenW(output)+2) * sizeof(WCHAR);
-    RegSetValueExW(hkey, qualifier,0,REG_MULTI_SZ, (LPBYTE)output, sz);
+    msi_reg_set_val_multi_str( hkey, qualifier, output );
     
 end:
     RegCloseKey(hkey);
