@@ -107,39 +107,39 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
 
     if (!nr_exports) return;
 
-    fprintf( outfile, "/* export table */\n" );
-    fprintf( outfile, "asm(\".data\\n\"\n" );
-    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
-    fprintf( outfile, "    \".L__wine_spec_exports:\\n\"\n" );
+    fprintf( outfile, "\n/* export table */\n\n" );
+    fprintf( outfile, "\t.data\n" );
+    fprintf( outfile, "\t.align %d\n", get_alignment(4) );
+    fprintf( outfile, ".L__wine_spec_exports:\n" );
 
     /* export directory header */
 
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* Characteristics */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* TimeDateStamp */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* MajorVersion/MinorVersion */
-    fprintf( outfile, "    \"\\t.long .L__wine_spec_exp_names\\n\"\n" ); /* Name */
-    fprintf( outfile, "    \"\\t.long %d\\n\"\n", spec->base );        /* Base */
-    fprintf( outfile, "    \"\\t.long %d\\n\"\n", nr_exports );        /* NumberOfFunctions */
-    fprintf( outfile, "    \"\\t.long %d\\n\"\n", spec->nb_names );    /* NumberOfNames */
-    fprintf( outfile, "    \"\\t.long .L__wine_spec_exports_funcs\\n\"\n" ); /* AddressOfFunctions */
+    fprintf( outfile, "\t.long 0\n" );                       /* Characteristics */
+    fprintf( outfile, "\t.long 0\n" );                       /* TimeDateStamp */
+    fprintf( outfile, "\t.long 0\n" );                       /* MajorVersion/MinorVersion */
+    fprintf( outfile, "\t.long .L__wine_spec_exp_names\n" ); /* Name */
+    fprintf( outfile, "\t.long %d\n", spec->base );          /* Base */
+    fprintf( outfile, "\t.long %d\n", nr_exports );          /* NumberOfFunctions */
+    fprintf( outfile, "\t.long %d\n", spec->nb_names );      /* NumberOfNames */
+    fprintf( outfile, "\t.long .L__wine_spec_exports_funcs\n" ); /* AddressOfFunctions */
     if (spec->nb_names)
     {
-        fprintf( outfile, "    \"\\t.long .L__wine_spec_exp_name_ptrs\\n\"\n" );     /* AddressOfNames */
-        fprintf( outfile, "    \"\\t.long .L__wine_spec_exp_ordinals\\n\"\n" );  /* AddressOfNameOrdinals */
+        fprintf( outfile, "\t.long .L__wine_spec_exp_name_ptrs\n" ); /* AddressOfNames */
+        fprintf( outfile, "\t.long .L__wine_spec_exp_ordinals\n" );  /* AddressOfNameOrdinals */
     }
     else
     {
-        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );  /* AddressOfNames */
-        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );  /* AddressOfNameOrdinals */
+        fprintf( outfile, "\t.long 0\n" );  /* AddressOfNames */
+        fprintf( outfile, "\t.long 0\n" );  /* AddressOfNameOrdinals */
     }
 
     /* output the function pointers */
 
-    fprintf( outfile, "    \".L__wine_spec_exports_funcs:\\n\"\n" );
+    fprintf( outfile, "\n.L__wine_spec_exports_funcs:\n" );
     for (i = spec->base; i <= spec->limit; i++)
     {
         ORDDEF *odp = spec->ordinals[i];
-        if (!odp) fprintf( outfile, "    \"\\t.long 0\\n\"\n" );
+        if (!odp) fprintf( outfile, "\t.long 0\n" );
         else switch(odp->type)
         {
         case TYPE_EXTERN:
@@ -148,16 +148,16 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
         case TYPE_CDECL:
             if (!(odp->flags & FLAG_FORWARD))
             {
-                fprintf( outfile, "    \"\\t.long %s\\n\"\n", asm_name(odp->link_name) );
+                fprintf( outfile, "\t.long %s\n", asm_name(odp->link_name) );
             }
             else
             {
-                fprintf( outfile, "    \"\\t.long .L__wine_spec_forwards+%d\\n\"\n", fwd_size );
+                fprintf( outfile, "\t.long .L__wine_spec_forwards+%d\n", fwd_size );
                 fwd_size += strlen(odp->link_name) + 1;
             }
             break;
         case TYPE_STUB:
-            fprintf( outfile, "    \"\\t.long %s\\n\"\n",
+            fprintf( outfile, "\t.long %s\n",
                      asm_name( make_internal_name( odp, spec, "stub" )) );
             break;
         default:
@@ -171,49 +171,49 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
 
         int namepos = strlen(spec->file_name) + 1;
 
-        fprintf( outfile, "    \".L__wine_spec_exp_name_ptrs:\\n\"\n" );
+        fprintf( outfile, "\n.L__wine_spec_exp_name_ptrs:\n" );
         for (i = 0; i < spec->nb_names; i++)
         {
-            fprintf( outfile, "    \"\\t.long .L__wine_spec_exp_names+%d\\n\"\n", namepos );
+            fprintf( outfile, "\t.long .L__wine_spec_exp_names+%d\n", namepos );
             namepos += strlen(spec->names[i]->name) + 1;
         }
 
         /* output the function ordinals */
 
-        fprintf( outfile, "    \".L__wine_spec_exp_ordinals:\\n\"\n" );
+        fprintf( outfile, "\n.L__wine_spec_exp_ordinals:\n" );
         for (i = 0; i < spec->nb_names; i++)
         {
-            fprintf( outfile, "    \"\\t%s %d\\n\"\n",
+            fprintf( outfile, "\t%s %d\n",
                      get_asm_short_keyword(), spec->names[i]->ordinal - spec->base );
         }
         if (spec->nb_names % 2)
         {
-            fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_short_keyword() );
+            fprintf( outfile, "\t%s 0\n", get_asm_short_keyword() );
         }
     }
 
     /* output the export name strings */
 
-    fprintf( outfile, "    \".L__wine_spec_exp_names:\\n\"\n" );
-    fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), spec->file_name );
+    fprintf( outfile, "\n.L__wine_spec_exp_names:\n" );
+    fprintf( outfile, "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
     for (i = 0; i < spec->nb_names; i++)
-        fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n",
+        fprintf( outfile, "\t%s \"%s\"\n",
                  get_asm_string_keyword(), spec->names[i]->name );
 
     /* output forward strings */
 
     if (fwd_size)
     {
-        fprintf( outfile, "    \".L__wine_spec_forwards:\\n\"\n" );
+        fprintf( outfile, "\n.L__wine_spec_forwards:\n" );
         for (i = spec->base; i <= spec->limit; i++)
         {
             ORDDEF *odp = spec->ordinals[i];
             if (odp && (odp->flags & FLAG_FORWARD))
-                fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), odp->link_name );
+                fprintf( outfile, "\t%s \"%s\"\n", get_asm_string_keyword(), odp->link_name );
         }
     }
-    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
-    fprintf( outfile, "    \".L__wine_spec_exports_end:\\n\"\n" );
+    fprintf( outfile, "\t.align %d\n", get_alignment(4) );
+    fprintf( outfile, ".L__wine_spec_exports_end:\n" );
 
     /* output relays */
 
@@ -244,15 +244,15 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
             switch(odp->type)
             {
             case TYPE_STDCALL:
-                fprintf( outfile, "    \"\\tjmp %s\\n\"\n", asm_name(odp->link_name) );
-                fprintf( outfile, "    \"\\tret $%d\\n\"\n", args );
-                fprintf( outfile, "    \"\\t.long %s,0x%08x\\n\"\n", asm_name(odp->link_name), mask );
+                fprintf( outfile, "\tjmp %s\n", asm_name(odp->link_name) );
+                fprintf( outfile, "\tret $%d\n", args );
+                fprintf( outfile, "\t.long %s,0x%08x\n", asm_name(odp->link_name), mask );
                 break;
             case TYPE_CDECL:
-                fprintf( outfile, "    \"\\tjmp %s\\n\"\n", asm_name(odp->link_name) );
-                fprintf( outfile, "    \"\\tret\\n\"\n" );
-                fprintf( outfile, "    \"\\t%s %d\\n\"\n", get_asm_short_keyword(), args );
-                fprintf( outfile, "    \"\\t.long %s,0x%08x\\n\"\n", asm_name(odp->link_name), mask );
+                fprintf( outfile, "\tjmp %s\n", asm_name(odp->link_name) );
+                fprintf( outfile, "\tret\n" );
+                fprintf( outfile, "\t%s %d\n", get_asm_short_keyword(), args );
+                fprintf( outfile, "\t.long %s,0x%08x\n", asm_name(odp->link_name), mask );
                 break;
             default:
                 assert(0);
@@ -260,12 +260,10 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
             continue;
 
         ignore:
-            fprintf( outfile, "    \"\\t.long 0,0,0,0\\n\"\n" );
+            fprintf( outfile, "\t.long 0,0,0,0\n" );
         }
     }
-    else fprintf( outfile, "    \"\\t.long 0\\n\"\n" );
-
-    fprintf( outfile, ");\n" );
+    else fprintf( outfile, "\t.long 0\n" );
 }
 
 
@@ -281,7 +279,8 @@ static void output_stubs( FILE *outfile, DLLSPEC *spec )
 
     if (!has_stubs( spec )) return;
 
-    fprintf( outfile, "asm(\".text\\n\"\n" );
+    fprintf( outfile, "\n/* stub functions */\n\n" );
+    fprintf( outfile, "\t.text\n" );
 
     for (i = pos = 0; i < spec->nb_entry_points; i++)
     {
@@ -290,43 +289,41 @@ static void output_stubs( FILE *outfile, DLLSPEC *spec )
 
         name = make_internal_name( odp, spec, "stub" );
         exp_name = odp->name ? odp->name : odp->export_name;
-        fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
-        fprintf( outfile, "    \"\\t%s\\n\"\n", func_declaration(name) );
-        fprintf( outfile, "    \"%s:\\n\"\n", asm_name(name) );
-        fprintf( outfile, "    \"\\tcall .L__wine_stub_getpc_%d\\n\"\n", i );
-        fprintf( outfile, "    \".L__wine_stub_getpc_%d:\\n\"\n", i );
-        fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
+        fprintf( outfile, "\t.align %d\n", get_alignment(4) );
+        fprintf( outfile, "\t%s\n", func_declaration(name) );
+        fprintf( outfile, "%s:\n", asm_name(name) );
+        fprintf( outfile, "\tcall .L__wine_stub_getpc_%d\n", i );
+        fprintf( outfile, ".L__wine_stub_getpc_%d:\n", i );
+        fprintf( outfile, "\tpopl %%eax\n" );
         if (exp_name)
         {
-            fprintf( outfile, "    \"\\tleal .L__wine_stub_strings+%d-.L__wine_stub_getpc_%d(%%eax),%%ecx\\n\"\n",
+            fprintf( outfile, "\tleal .L__wine_stub_strings+%d-.L__wine_stub_getpc_%d(%%eax),%%ecx\n",
                      pos, i );
-            fprintf( outfile, "    \"\\tpushl %%ecx\\n\"\n" );
+            fprintf( outfile, "\tpushl %%ecx\n" );
             pos += strlen(exp_name) + 1;
         }
         else
-            fprintf( outfile, "    \"\\tpushl $%d\\n\"\n", odp->ordinal );
-        fprintf( outfile, "    \"\\tleal %s-.L__wine_stub_getpc_%d(%%eax),%%ecx\\n\"\n",
+            fprintf( outfile, "\tpushl $%d\n", odp->ordinal );
+        fprintf( outfile, "\tleal %s-.L__wine_stub_getpc_%d(%%eax),%%ecx\n",
                  asm_name("__wine_spec_file_name"), i );
-        fprintf( outfile, "    \"\\tpushl %%ecx\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall %s\\n\"\n", asm_name("__wine_spec_unimplemented_stub") );
-        fprintf( outfile, "    \"\\t%s\\n\"\n", func_size(name) );
+        fprintf( outfile, "\tpushl %%ecx\n" );
+        fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
+        fprintf( outfile, "\t%s\n", func_size(name) );
     }
 
     if (pos)
     {
-        fprintf( outfile, "    \"\\t%s\\n\"\n", get_asm_string_section() );
-        fprintf( outfile, "    \".L__wine_stub_strings:\\n\"\n" );
+        fprintf( outfile, "\t%s\n", get_asm_string_section() );
+        fprintf( outfile, ".L__wine_stub_strings:\n" );
         for (i = 0; i < spec->nb_entry_points; i++)
         {
             ORDDEF *odp = &spec->entry_points[i];
             if (odp->type != TYPE_STUB) continue;
             exp_name = odp->name ? odp->name : odp->export_name;
             if (exp_name)
-                fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), exp_name );
+                fprintf( outfile, "\t%s \"%s\"\n", get_asm_string_keyword(), exp_name );
         }
     }
-
-    fprintf( outfile, ");\n" );
 }
 
 
@@ -421,6 +418,44 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
 
 
 /*******************************************************************
+ *         output_asm_constructor
+ *
+ * Output code for calling a dll constructor.
+ */
+static void output_asm_constructor( FILE *outfile, const char *constructor )
+{
+    if (target_platform == PLATFORM_APPLE)
+    {
+        /* Mach-O doesn't have an init section */
+        fprintf( outfile, "\n\t.mod_init_func\n" );
+        fprintf( outfile, "\t.align %d\n", get_alignment(4) );
+        fprintf( outfile, "\t.long %s\n", asm_name(constructor) );
+    }
+    else
+    {
+        fprintf( outfile, "\n\t.section \".init\",\"ax\"\n" );
+        switch(target_cpu)
+        {
+        case CPU_x86:
+        case CPU_x86_64:
+            fprintf( outfile, "\tcall %s\n", asm_name(constructor) );
+            break;
+        case CPU_SPARC:
+            fprintf( outfile, "\tcall %s\n", asm_name(constructor) );
+            fprintf( outfile, "\tnop\n" );
+            break;
+        case CPU_ALPHA:
+            fprintf( outfile, "\tjsr $26,%s\n", asm_name(constructor) );
+            break;
+        case CPU_POWERPC:
+            fprintf( outfile, "\tbl %s\n", asm_name(constructor) );
+            break;
+        }
+    }
+}
+
+
+/*******************************************************************
  *         BuildSpec32File
  *
  * Build a Win32 C file from a spec file.
@@ -435,26 +470,22 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 
     /* Reserve some space for the PE header */
 
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "static void __asm__dummy(void) {\n" );
-    fprintf( outfile, "#endif\n" );
-
-    fprintf( outfile, "asm(\".text\\n\\t\"\n" );
-    fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(page_size) );
-    fprintf( outfile, "    \"__wine_spec_pe_header:\\t\"\n" );
+    fprintf( outfile, "\t.text\n" );
+    fprintf( outfile, "\t.align %d\n", get_alignment(page_size) );
+    fprintf( outfile, "__wine_spec_pe_header:\n" );
     if (target_platform == PLATFORM_APPLE)
-        fprintf( outfile, "    \".space 65536\\n\\t\"\n" );
+        fprintf( outfile, "\t.space 65536\n" );
     else
-        fprintf( outfile, "    \".skip 65536\\n\\t\"\n" );
+        fprintf( outfile, "\t.skip 65536\n" );
 
     /* Output the NT header */
 
-    fprintf( outfile, "    \"\\t.data\\n\\t\"\n" );
-    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(get_ptr_size()) );
-    fprintf( outfile, "    \"\\t.globl %s\\n\"\n", asm_name("__wine_spec_nt_header") );
-    fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_spec_nt_header"));
+    fprintf( outfile, "\n\t.data\n" );
+    fprintf( outfile, "\t.align %d\n", get_alignment(get_ptr_size()) );
+    fprintf( outfile, "\t.globl %s\n", asm_name("__wine_spec_nt_header") );
+    fprintf( outfile, "%s:\n", asm_name("__wine_spec_nt_header"));
 
-    fprintf( outfile, "    \"\\t.long 0x%04x\\n\"\n", IMAGE_NT_SIGNATURE );    /* Signature */
+    fprintf( outfile, "\t.long 0x%04x\n", IMAGE_NT_SIGNATURE );    /* Signature */
     switch(target_cpu)
     {
     case CPU_x86:     machine = IMAGE_FILE_MACHINE_I386; break;
@@ -463,105 +494,98 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     case CPU_ALPHA:   machine = IMAGE_FILE_MACHINE_ALPHA; break;
     case CPU_SPARC:   machine = IMAGE_FILE_MACHINE_UNKNOWN; break;
     }
-    fprintf( outfile, "    \"\\t%s 0x%04x\\n\"\n",              /* Machine */
+    fprintf( outfile, "\t%s 0x%04x\n",              /* Machine */
              get_asm_short_keyword(), machine );
-    fprintf( outfile, "    \"\\t%s 0\\n\"\n",                   /* NumberOfSections */
+    fprintf( outfile, "\t%s 0\n",                   /* NumberOfSections */
              get_asm_short_keyword() );
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* TimeDateStamp */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* PointerToSymbolTable */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* NumberOfSymbols */
-    fprintf( outfile, "    \"\\t%s %d\\n\"\n",                  /* SizeOfOptionalHeader */
+    fprintf( outfile, "\t.long 0\n" );              /* TimeDateStamp */
+    fprintf( outfile, "\t.long 0\n" );              /* PointerToSymbolTable */
+    fprintf( outfile, "\t.long 0\n" );              /* NumberOfSymbols */
+    fprintf( outfile, "\t%s %d\n",                  /* SizeOfOptionalHeader */
              get_asm_short_keyword(),
              get_ptr_size() == 8 ? IMAGE_SIZEOF_NT_OPTIONAL64_HEADER : IMAGE_SIZEOF_NT_OPTIONAL32_HEADER );
-    fprintf( outfile, "    \"\\t%s 0x%04x\\n\"\n",              /* Characteristics */
+    fprintf( outfile, "\t%s 0x%04x\n",              /* Characteristics */
              get_asm_short_keyword(), spec->characteristics );
-    fprintf( outfile, "    \"\\t%s 0x%04x\\n\"\n",              /* Magic */
+    fprintf( outfile, "\t%s 0x%04x\n",              /* Magic */
              get_asm_short_keyword(),
              get_ptr_size() == 8 ? IMAGE_NT_OPTIONAL_HDR64_MAGIC : IMAGE_NT_OPTIONAL_HDR32_MAGIC );
-    fprintf( outfile, "    \"\\t.byte 0\\n\"\n" );              /* MajorLinkerVersion */
-    fprintf( outfile, "    \"\\t.byte 0\\n\"\n" );              /* MinorLinkerVersion */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* SizeOfCode */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* SizeOfInitializedData */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* SizeOfUninitializedData */
-    fprintf( outfile, "    \"\\t.long %s\\n\"\n",               /* AddressOfEntryPoint */
+    fprintf( outfile, "\t.byte 0\n" );              /* MajorLinkerVersion */
+    fprintf( outfile, "\t.byte 0\n" );              /* MinorLinkerVersion */
+    fprintf( outfile, "\t.long 0\n" );              /* SizeOfCode */
+    fprintf( outfile, "\t.long 0\n" );              /* SizeOfInitializedData */
+    fprintf( outfile, "\t.long 0\n" );              /* SizeOfUninitializedData */
+    fprintf( outfile, "\t.long %s\n",               /* AddressOfEntryPoint */
              asm_name(spec->init_func) );
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* BaseOfCode */
+    fprintf( outfile, "\t.long 0\n" );              /* BaseOfCode */
     if (get_ptr_size() == 4)
-        fprintf( outfile, "    \"\\t.long %s\\n\"\n", asm_name("__wine_spec_nt_header") ); /* BaseOfData */
-    fprintf( outfile, "    \"\\t%s __wine_spec_pe_header\\n\"\n",         /* ImageBase */
+        fprintf( outfile, "\t.long %s\n", asm_name("__wine_spec_nt_header") ); /* BaseOfData */
+    fprintf( outfile, "\t%s __wine_spec_pe_header\n",         /* ImageBase */
              get_asm_ptr_keyword() );
-    fprintf( outfile, "    \"\\t.long %u\\n\"\n", page_size );  /* SectionAlignment */
-    fprintf( outfile, "    \"\\t.long %u\\n\"\n", page_size );  /* FileAlignment */
-    fprintf( outfile, "    \"\\t%s 1,0\\n\"\n",                 /* Major/MinorOperatingSystemVersion */
+    fprintf( outfile, "\t.long %u\n", page_size );  /* SectionAlignment */
+    fprintf( outfile, "\t.long %u\n", page_size );  /* FileAlignment */
+    fprintf( outfile, "\t%s 1,0\n",                 /* Major/MinorOperatingSystemVersion */
              get_asm_short_keyword() );
-    fprintf( outfile, "    \"\\t%s 0,0\\n\"\n",                 /* Major/MinorImageVersion */
+    fprintf( outfile, "\t%s 0,0\n",                 /* Major/MinorImageVersion */
              get_asm_short_keyword() );
-    fprintf( outfile, "    \"\\t%s %u,%u\\n\"\n",               /* Major/MinorSubsystemVersion */
+    fprintf( outfile, "\t%s %u,%u\n",               /* Major/MinorSubsystemVersion */
              get_asm_short_keyword(), spec->subsystem_major, spec->subsystem_minor );
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* Win32VersionValue */
-    fprintf( outfile, "    \"\\t.long %s\\n\"\n",               /* SizeOfImage */
+    fprintf( outfile, "\t.long 0\n" );              /* Win32VersionValue */
+    fprintf( outfile, "\t.long %s\n",               /* SizeOfImage */
              asm_name("_end") );
-    fprintf( outfile, "    \"\\t.long %u\\n\"\n", page_size );  /* SizeOfHeaders */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* CheckSum */
-    fprintf( outfile, "    \"\\t%s 0x%04x\\n\"\n",              /* Subsystem */
+    fprintf( outfile, "\t.long %u\n", page_size );  /* SizeOfHeaders */
+    fprintf( outfile, "\t.long 0\n" );              /* CheckSum */
+    fprintf( outfile, "\t%s 0x%04x\n",              /* Subsystem */
              get_asm_short_keyword(), spec->subsystem );
-    fprintf( outfile, "    \"\\t%s 0\\n\"\n",                   /* DllCharacteristics */
+    fprintf( outfile, "\t%s 0\n",                   /* DllCharacteristics */
              get_asm_short_keyword() );
-    fprintf( outfile, "    \"\\t%s %u,%u\\n\"\n",               /* SizeOfStackReserve/Commit */
+    fprintf( outfile, "\t%s %u,%u\n",               /* SizeOfStackReserve/Commit */
              get_asm_ptr_keyword(), (spec->stack_size ? spec->stack_size : 1024) * 1024, page_size );
-    fprintf( outfile, "    \"\\t%s %u,%u\\n\"\n",               /* SizeOfHeapReserve/Commit */
+    fprintf( outfile, "\t%s %u,%u\n",               /* SizeOfHeapReserve/Commit */
              get_asm_ptr_keyword(), (spec->heap_size ? spec->heap_size : 1024) * 1024, page_size );
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* LoaderFlags */
-    fprintf( outfile, "    \"\\t.long 16\\n\"\n" );             /* NumberOfRvaAndSizes */
+    fprintf( outfile, "\t.long 0\n" );              /* LoaderFlags */
+    fprintf( outfile, "\t.long 16\n" );             /* NumberOfRvaAndSizes */
 
     if (spec->base <= spec->limit)   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT] */
-        fprintf( outfile, "    \"\\t.long .L__wine_spec_exports, .L__wine_spec_exports_end-.L__wine_spec_exports\\n\"\n" );
+        fprintf( outfile, "\t.long .L__wine_spec_exports, .L__wine_spec_exports_end-.L__wine_spec_exports\n" );
     else
-        fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );
+        fprintf( outfile, "\t.long 0,0\n" );
 
     if (has_imports())   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT] */
-        fprintf( outfile, "    \"\\t.long .L__wine_spec_imports, .L__wine_spec_imports_end-.L__wine_spec_imports\\n\"\n" );
+        fprintf( outfile, "\t.long .L__wine_spec_imports, .L__wine_spec_imports_end-.L__wine_spec_imports\n" );
     else
-        fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );
+        fprintf( outfile, "\t.long 0,0\n" );
 
     if (spec->nb_resources)   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE] */
-        fprintf( outfile, "    \"\\t.long .L__wine_spec_resources, .L__wine_spec_resources_end-.L__wine_spec_resources\\n\"\n" );
+        fprintf( outfile, "\t.long .L__wine_spec_resources, .L__wine_spec_resources_end-.L__wine_spec_resources\n" );
     else
-        fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );
+        fprintf( outfile, "\t.long 0,0\n" );
 
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[3] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[4] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[5] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[6] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[7] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[8] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[9] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[10] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[11] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[12] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[13] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[14] */
-    fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[15] */
-    fprintf( outfile, ");\n" );
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[3] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[4] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[5] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[6] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[7] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[8] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[9] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[10] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[11] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[12] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[13] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[14] */
+    fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[15] */
 
-    fprintf( outfile, "asm(\"%s\\n\"\n", get_asm_string_section() );
-    fprintf( outfile, "    \"\\t.globl %s\\n\"\n", asm_name("__wine_spec_file_name") );
-    fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_spec_file_name"));
-    fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), spec->file_name );
+    fprintf( outfile, "\n\t%s\n", get_asm_string_section() );
+    fprintf( outfile, "\t.globl %s\n", asm_name("__wine_spec_file_name") );
+    fprintf( outfile, "%s:\n", asm_name("__wine_spec_file_name"));
+    fprintf( outfile, "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
     if (target_platform == PLATFORM_APPLE)
-        fprintf( outfile, "    \"\\t.comm %s,4\\n\"\n", asm_name("_end") );
-
-    fprintf( outfile, ");\n" );
+        fprintf( outfile, "\t.comm %s,4\n", asm_name("_end") );
 
     output_stubs( outfile, spec );
     output_exports( outfile, spec );
     output_imports( outfile, spec );
     output_resources( outfile, spec );
-    output_dll_init( outfile, "__wine_spec_init_ctor", NULL );
-
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "}\n" );
-    fprintf( outfile, "#endif\n" );
+    output_asm_constructor( outfile, "__wine_spec_init_ctor" );
 }
 
 

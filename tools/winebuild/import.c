@@ -209,7 +209,7 @@ inline static ORDDEF *find_export( const char *name, ORDDEF **table, int size )
 inline static void output_function_size( FILE *outfile, const char *name )
 {
     const char *size = func_size( name );
-    if (size[0]) fprintf( outfile, "    \"\\t%s\\n\"\n", size );
+    if (size[0]) fprintf( outfile, "\t%s\n", size );
 }
 
 /* free an import structure */
@@ -613,10 +613,10 @@ int resolve_imports( DLLSPEC *spec )
 /* output a single import thunk */
 static void output_import_thunk( FILE *outfile, const char *name, const char *table, int pos )
 {
-    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
-    fprintf( outfile, "    \"\\t%s\\n\"\n", func_declaration(name) );
-    fprintf( outfile, "    \"\\t.globl %s\\n\"\n", asm_name(name) );
-    fprintf( outfile, "    \"%s:\\n\"\n", asm_name(name) );
+    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
+    fprintf( outfile, "\t%s\n", func_declaration(name) );
+    fprintf( outfile, "\t.globl %s\n", asm_name(name) );
+    fprintf( outfile, "%s:\n", asm_name(name) );
 
     switch(target_cpu)
     {
@@ -624,50 +624,50 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
     case CPU_x86:
         if (!UsePIC)
         {
-            if (strstr( name, "__wine_call_from_16" )) fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
-            fprintf( outfile, "    \"\\tjmp *(%s+%d)\\n\"\n", table, pos );
+            if (strstr( name, "__wine_call_from_16" )) fprintf( outfile, "\t.byte 0x2e\n" );
+            fprintf( outfile, "\tjmp *(%s+%d)\n", table, pos );
         }
         else
         {
             if (!strcmp( name, "__wine_call_from_32_regs" ))
             {
                 /* special case: need to preserve all registers */
-                fprintf( outfile, "    \"\\tpushl %%eax\\n\"\n" );
-                fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
-                fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
-                fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
+                fprintf( outfile, "\tpushl %%eax\n" );
+                fprintf( outfile, "\tcall .L__wine_spec_%s\n", name );
+                fprintf( outfile, ".L__wine_spec_%s:\n", name );
+                fprintf( outfile, "\tpopl %%eax\n" );
                 if (!strcmp( name, "__wine_call_from_16_regs" ))
-                    fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
-                fprintf( outfile, "    \"\\tmovl %s+%d-.L__wine_spec_%s(%%eax),%%eax\\n\"\n",
+                    fprintf( outfile, "\t.byte 0x2e\n" );
+                fprintf( outfile, "\tmovl %s+%d-.L__wine_spec_%s(%%eax),%%eax\n",
                          table, pos, name );
-                fprintf( outfile, "    \"\\txchgl %%eax,(%%esp)\\n\"\n" );
-                fprintf( outfile, "    \"\\tret\\n\"\n" );
+                fprintf( outfile, "\txchgl %%eax,(%%esp)\n" );
+                fprintf( outfile, "\tret\n" );
             }
             else if (!strcmp( name, "__wine_call_from_16_regs" ))
             {
                 /* special case: need to preserve all registers */
-                fprintf( outfile, "    \"\\tpushl %%eax\\n\"\n" );
-                fprintf( outfile, "    \"\\tpushl %%ecx\\n\"\n" );
-                fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
-                fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
-                fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
-                fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
-                fprintf( outfile, "    \"\\tmovl %s+%d-.L__wine_spec_%s(%%eax),%%eax\\n\"\n",
+                fprintf( outfile, "\tpushl %%eax\n" );
+                fprintf( outfile, "\tpushl %%ecx\n" );
+                fprintf( outfile, "\tcall .L__wine_spec_%s\n", name );
+                fprintf( outfile, ".L__wine_spec_%s:\n", name );
+                fprintf( outfile, "\tpopl %%eax\n" );
+                fprintf( outfile, "\t.byte 0x2e\n" );
+                fprintf( outfile, "\tmovl %s+%d-.L__wine_spec_%s(%%eax),%%eax\n",
                          table, pos, name );
-                fprintf( outfile, "    \"\\tmovzwl %%sp, %%ecx\\n\"\n" );
-                fprintf( outfile, "    \"\\t.byte 0x36\\n\"\n" );
-                fprintf( outfile, "    \"\\txchgl %%eax,4(%%ecx)\\n\"\n" );
-                fprintf( outfile, "    \"\\tpopl %%ecx\\n\"\n" );
-                fprintf( outfile, "    \"\\tret\\n\"\n" );
+                fprintf( outfile, "\tmovzwl %%sp, %%ecx\n" );
+                fprintf( outfile, "\t.byte 0x36\n" );
+                fprintf( outfile, "\txchgl %%eax,4(%%ecx)\n" );
+                fprintf( outfile, "\tpopl %%ecx\n" );
+                fprintf( outfile, "\tret\n" );
             }
             else
             {
-                fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
-                fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
-                fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
+                fprintf( outfile, "\tcall .L__wine_spec_%s\n", name );
+                fprintf( outfile, ".L__wine_spec_%s:\n", name );
+                fprintf( outfile, "\tpopl %%eax\n" );
                 if (strstr( name, "__wine_call_from_16" ))
-                    fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
-                fprintf( outfile, "    \"\\tjmp *%s+%d-.L__wine_spec_%s(%%eax)\\n\"\n",
+                    fprintf( outfile, "\t.byte 0x2e\n" );
+                fprintf( outfile, "\tjmp *%s+%d-.L__wine_spec_%s(%%eax)\n",
                          table, pos, name );
             }
         }
@@ -675,57 +675,56 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
     case CPU_SPARC:
         if ( !UsePIC )
         {
-            fprintf( outfile, "    \"\\tsethi %%hi(%s+%d), %%g1\\n\"\n", table, pos );
-            fprintf( outfile, "    \"\\tld [%%g1+%%lo(%s+%d)], %%g1\\n\"\n", table, pos );
-            fprintf( outfile, "    \"\\tjmp %%g1\\n\\tnop\\n\"\n" );
+            fprintf( outfile, "\tsethi %%hi(%s+%d), %%g1\n", table, pos );
+            fprintf( outfile, "\tld [%%g1+%%lo(%s+%d)], %%g1\n", table, pos );
+            fprintf( outfile, "\tjmp %%g1\n" );
+            fprintf( outfile, "\tnop\n" );
         }
         else
         {
             /* Hmpf.  Stupid sparc assembler always interprets global variable
                names as GOT offsets, so we have to do it the long way ... */
-            fprintf( outfile, "    \"\\tsave %%sp, -96, %%sp\\n\"\n" );
-            fprintf( outfile, "    \"0:\\tcall 1f\\n\\tnop\\n\"\n" );
-            fprintf( outfile, "    \"1:\\tsethi %%hi(%s+%d-0b), %%g1\\n\"\n", table, pos );
-            fprintf( outfile, "    \"\\tor %%g1, %%lo(%s+%d-0b), %%g1\\n\"\n", table, pos );
-            fprintf( outfile, "    \"\\tld [%%g1+%%o7], %%g1\\n\"\n" );
-            fprintf( outfile, "    \"\\tjmp %%g1\\n\\trestore\\n\"\n" );
+            fprintf( outfile, "\tsave %%sp, -96, %%sp\n" );
+            fprintf( outfile, "0:\tcall 1f\n" );
+            fprintf( outfile, "\tnop\n" );
+            fprintf( outfile, "1:\tsethi %%hi(%s+%d-0b), %%g1\n", table, pos );
+            fprintf( outfile, "\tor %%g1, %%lo(%s+%d-0b), %%g1\n", table, pos );
+            fprintf( outfile, "\tld [%%g1+%%o7], %%g1\n" );
+            fprintf( outfile, "\tjmp %%g1\n" );
+            fprintf( outfile, "\trestore\n" );
         }
         break;
     case CPU_ALPHA:
-        fprintf( outfile, "    \"\\tlda $0,%s\\n\"\n", table );
-        fprintf( outfile, "    \"\\tlda $0,%d($0)\\n\"\n", pos);
-        fprintf( outfile, "    \"\\tjmp $31,($0)\\n\"\n" );
+        fprintf( outfile, "\tlda $0,%s\n", table );
+        fprintf( outfile, "\tlda $0,%d($0)\n", pos );
+        fprintf( outfile, "\tjmp $31,($0)\n" );
         break;
     case CPU_POWERPC:
-        fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
-        fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(9), ppc_reg(1));
-        fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
-        fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(8), ppc_reg(1));
-        fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
-        fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(7), ppc_reg(1));
+        fprintf( outfile, "\taddi %s, %s, -0x4\n", ppc_reg(1), ppc_reg(1) );
+        fprintf( outfile, "\tstw  %s, 0(%s)\n",    ppc_reg(9), ppc_reg(1) );
+        fprintf( outfile, "\taddi %s, %s, -0x4\n", ppc_reg(1), ppc_reg(1) );
+        fprintf( outfile, "\tstw  %s, 0(%s)\n",    ppc_reg(8), ppc_reg(1) );
+        fprintf( outfile, "\taddi %s, %s, -0x4\n", ppc_reg(1), ppc_reg(1) );
+        fprintf( outfile, "\tstw  %s, 0(%s)\n",    ppc_reg(7), ppc_reg(1) );
         if (target_platform == PLATFORM_APPLE)
         {
-            fprintf(outfile, "    \"\\tlis %s, ha16(%s+%d)\\n\"\n",
-                    ppc_reg(9), table, pos);
-            fprintf(outfile, "    \"\\tla  %s, lo16(%s+%d)(%s)\\n\"\n",
-                    ppc_reg(8), table, pos, ppc_reg(9));
+            fprintf( outfile, "\tlis %s, ha16(%s+%d)\n", ppc_reg(9), table, pos );
+            fprintf( outfile, "\tla  %s, lo16(%s+%d)(%s)\n", ppc_reg(8), table, pos, ppc_reg(9) );
         }
         else
         {
-            fprintf(outfile, "    \"\\tlis %s, (%s+%d)@hi\\n\"\n",
-                    ppc_reg(9), table, pos);
-            fprintf(outfile, "    \"\\tla  %s, (%s+%d)@l(%s)\\n\"\n",
-                    ppc_reg(8), table, pos, ppc_reg(9));
+            fprintf( outfile, "\tlis %s, (%s+%d)@hi\n", ppc_reg(9), table, pos );
+            fprintf( outfile, "\tla  %s, (%s+%d)@l(%s)\n", ppc_reg(8), table, pos, ppc_reg(9) );
         }
-        fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n", ppc_reg(7), ppc_reg(8));
-        fprintf(outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg(7));
-        fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg(7), ppc_reg(1));
-        fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
-        fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg(8), ppc_reg(1));
-        fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
-        fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg(9), ppc_reg(1));
-        fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
-        fprintf(outfile, "    \"\\tbctr\\n\"\n");
+        fprintf( outfile, "\tlwz  %s, 0(%s)\n", ppc_reg(7), ppc_reg(8) );
+        fprintf( outfile, "\tmtctr %s\n", ppc_reg(7) );
+        fprintf( outfile, "\tlwz  %s, 0(%s)\n",   ppc_reg(7), ppc_reg(1) );
+        fprintf( outfile, "\taddi %s, %s, 0x4\n", ppc_reg(1), ppc_reg(1) );
+        fprintf( outfile, "\tlwz  %s, 0(%s)\n",   ppc_reg(8), ppc_reg(1) );
+        fprintf( outfile, "\taddi %s, %s, 0x4\n", ppc_reg(1), ppc_reg(1) );
+        fprintf( outfile, "\tlwz  %s, 0(%s)\n",   ppc_reg(9), ppc_reg(1) );
+        fprintf( outfile, "\taddi %s, %s, 0x4\n", ppc_reg(1), ppc_reg(1) );
+        fprintf( outfile, "\tbctr\n" );
         break;
     }
     output_function_size( outfile, name );
@@ -747,9 +746,10 @@ static void output_immediate_imports( FILE *outfile )
 
     /* main import header */
 
-    fprintf( outfile, "/* import table */\n" );
-    fprintf( outfile, "asm(\".data\\n\\t.align %d\\n\"\n", get_alignment(4) );
-    fprintf( outfile, "    \".L__wine_spec_imports:\\n\"\n" );
+    fprintf( outfile, "\n/* import table */\n" );
+    fprintf( outfile, "\n\t.data\n" );
+    fprintf( outfile, "\t.align %d\n", get_alignment(4) );
+    fprintf( outfile, ".L__wine_spec_imports:\n" );
 
     /* list of dlls */
 
@@ -757,22 +757,22 @@ static void output_immediate_imports( FILE *outfile )
     {
         if (dll_imports[i]->delay) continue;
         dll_name = make_c_identifier( dll_imports[i]->spec->file_name );
-        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* OriginalFirstThunk */
-        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* TimeDateStamp */
-        fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* ForwarderChain */
-        fprintf( outfile, "    \"\\t.long .L__wine_spec_import_name_%s\\n\"\n", dll_name ); /* Name */
-        fprintf( outfile, "    \"\\t.long .L__wine_spec_import_data_ptrs+%d\\n\"\n",  /* FirstThunk */
+        fprintf( outfile, "\t.long 0\n" );     /* OriginalFirstThunk */
+        fprintf( outfile, "\t.long 0\n" );     /* TimeDateStamp */
+        fprintf( outfile, "\t.long 0\n" );     /* ForwarderChain */
+        fprintf( outfile, "\t.long .L__wine_spec_import_name_%s\n", dll_name ); /* Name */
+        fprintf( outfile, "\t.long .L__wine_spec_import_data_ptrs+%d\n",  /* FirstThunk */
                  j * get_ptr_size() );
         j += dll_imports[i]->nb_imports + 1;
     }
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* OriginalFirstThunk */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* TimeDateStamp */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* ForwarderChain */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* Name */
-    fprintf( outfile, "    \"\\t.long 0\\n\"\n" );     /* FirstThunk */
+    fprintf( outfile, "\t.long 0\n" );     /* OriginalFirstThunk */
+    fprintf( outfile, "\t.long 0\n" );     /* TimeDateStamp */
+    fprintf( outfile, "\t.long 0\n" );     /* ForwarderChain */
+    fprintf( outfile, "\t.long 0\n" );     /* Name */
+    fprintf( outfile, "\t.long 0\n" );     /* FirstThunk */
 
-    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(get_ptr_size()) );
-    fprintf( outfile, "    \".L__wine_spec_import_data_ptrs:\\n\"\n" );
+    fprintf( outfile, "\n\t.align %d\n", get_alignment(get_ptr_size()) );
+    fprintf( outfile, ".L__wine_spec_import_data_ptrs:\n" );
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
@@ -781,14 +781,14 @@ static void output_immediate_imports( FILE *outfile )
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             if (!(odp->flags & FLAG_NONAME))
-                fprintf( outfile, "    \"\\t%s .L__wine_spec_import_data_%s_%s\\n\"\n",
+                fprintf( outfile, "\t%s .L__wine_spec_import_data_%s_%s\n",
                          get_asm_ptr_keyword(), dll_name, odp->name );
             else
-                fprintf( outfile, "    \"\\t%s %d\\n\"\n", get_asm_ptr_keyword(), odp->ordinal );
+                fprintf( outfile, "\t%s %d\n", get_asm_ptr_keyword(), odp->ordinal );
         }
-        fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );
+        fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );
     }
-    fprintf( outfile, "    \".L__wine_spec_imports_end:\\n\"\n" );
+    fprintf( outfile, ".L__wine_spec_imports_end:\n" );
 
     for (i = 0; i < nb_imports; i++)
     {
@@ -799,10 +799,10 @@ static void output_immediate_imports( FILE *outfile )
             ORDDEF *odp = dll_imports[i]->imports[j];
             if (!(odp->flags & FLAG_NONAME))
             {
-                fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(2) );
-                fprintf( outfile, "    \".L__wine_spec_import_data_%s_%s:\\n\"\n", dll_name, odp->name );
-                fprintf( outfile, "    \"\\t%s %d\\n\"\n", get_asm_short_keyword(), odp->ordinal );
-                fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), odp->name );
+                fprintf( outfile, "\t.align %d\n", get_alignment(2) );
+                fprintf( outfile, ".L__wine_spec_import_data_%s_%s:\n", dll_name, odp->name );
+                fprintf( outfile, "\t%s %d\n", get_asm_short_keyword(), odp->ordinal );
+                fprintf( outfile, "\t%s \"%s\"\n", get_asm_string_keyword(), odp->name );
             }
         }
     }
@@ -811,11 +811,9 @@ static void output_immediate_imports( FILE *outfile )
     {
         if (dll_imports[i]->delay) continue;
         dll_name = make_c_identifier( dll_imports[i]->spec->file_name );
-        fprintf( outfile, "    \".L__wine_spec_import_name_%s:\\t%s \\\"%s\\\"\\n\"\n",
+        fprintf( outfile, ".L__wine_spec_import_name_%s:\n\t%s \"%s\"\n",
                  dll_name, get_asm_string_keyword(), dll_imports[i]->spec->file_name );
     }
-
-    fprintf( outfile, ");\n" );
 }
 
 /* output the import thunks of a Win32 module */
@@ -827,9 +825,10 @@ static void output_immediate_import_thunks( FILE *outfile )
 
     if (!nb_imm) return;
 
-    fprintf( outfile, "/* immediate import thunks */\n" );
-    fprintf( outfile, "asm(\".text\\n\\t.align %d\\n\"\n", get_alignment(8) );
-    fprintf( outfile, "    \"%s:\\n\"\n", asm_name(import_thunks));
+    fprintf( outfile, "\n/* immediate import thunks */\n\n" );
+    fprintf( outfile, "\t.text\n" );
+    fprintf( outfile, "\t.align %d\n", get_alignment(8) );
+    fprintf( outfile, "%s:\n", asm_name(import_thunks));
 
     for (i = pos = 0; i < nb_imports; i++)
     {
@@ -843,7 +842,6 @@ static void output_immediate_import_thunks( FILE *outfile )
         pos += get_ptr_size();
     }
     output_function_size( outfile, import_thunks );
-    fprintf( outfile, ");\n" );
 }
 
 /* output the delayed import table of a Win32 module */
@@ -853,40 +851,41 @@ static void output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 
     if (!nb_delayed) return;
 
-    fprintf( outfile, "/* delayed imports */\n" );
-    fprintf( outfile, "asm(\".data\\n\\t.align %d\\n\"\n", get_alignment(get_ptr_size()) );
-    fprintf( outfile, "    \"\\t.globl %s\\n\"\n", asm_name("__wine_spec_delay_imports") );
-    fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_spec_delay_imports"));
+    fprintf( outfile, "\n/* delayed imports */\n\n" );
+    fprintf( outfile, "\t.data\n" );
+    fprintf( outfile, "\t.align %d\n", get_alignment(get_ptr_size()) );
+    fprintf( outfile, "\t.globl %s\n", asm_name("__wine_spec_delay_imports") );
+    fprintf( outfile, "%s:\n", asm_name("__wine_spec_delay_imports"));
 
     /* list of dlls */
 
     for (i = j = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
-        fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* grAttrs */
-        fprintf( outfile, "    \"\\t%s .L__wine_delay_name_%d\\n\"\n",       /* szName */
+        fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* grAttrs */
+        fprintf( outfile, "\t%s .L__wine_delay_name_%d\n",       /* szName */
                  get_asm_ptr_keyword(), i );
-        fprintf( outfile, "    \"\\t%s .L__wine_delay_modules+%d\\n\"\n",    /* phmod */
+        fprintf( outfile, "\t%s .L__wine_delay_modules+%d\n",    /* phmod */
                  get_asm_ptr_keyword(), i * get_ptr_size() );
-        fprintf( outfile, "    \"\\t%s .L__wine_delay_IAT+%d\\n\"\n",        /* pIAT */
+        fprintf( outfile, "\t%s .L__wine_delay_IAT+%d\n",        /* pIAT */
                  get_asm_ptr_keyword(), j * get_ptr_size() );
-        fprintf( outfile, "    \"\\t%s .L__wine_delay_INT+%d\\n\"\n",        /* pINT */
+        fprintf( outfile, "\t%s .L__wine_delay_INT+%d\n",        /* pINT */
                  get_asm_ptr_keyword(), j * get_ptr_size() );
-        fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* pBoundIAT */
-        fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* pUnloadIAT */
-        fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* dwTimeStamp */
+        fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* pBoundIAT */
+        fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* pUnloadIAT */
+        fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* dwTimeStamp */
         j += dll_imports[i]->nb_imports;
     }
-    fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* grAttrs */
-    fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* szName */
-    fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* phmod */
-    fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* pIAT */
-    fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* pINT */
-    fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* pBoundIAT */
-    fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* pUnloadIAT */
-    fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );   /* dwTimeStamp */
+    fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* grAttrs */
+    fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* szName */
+    fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* phmod */
+    fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* pIAT */
+    fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* pINT */
+    fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* pBoundIAT */
+    fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* pUnloadIAT */
+    fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* dwTimeStamp */
 
-    fprintf( outfile, "    \".L__wine_delay_IAT:\\n\"\n" );
+    fprintf( outfile, "\n.L__wine_delay_IAT:\n" );
     for (i = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
@@ -894,12 +893,12 @@ static void output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             const char *name = odp->name ? odp->name : odp->export_name;
-            fprintf( outfile, "    \"\\t%s .L__wine_delay_imp_%d_%s\\n\"\n",
+            fprintf( outfile, "\t%s .L__wine_delay_imp_%d_%s\n",
                      get_asm_ptr_keyword(), i, name );
         }
     }
 
-    fprintf( outfile, "    \".L__wine_delay_INT:\\n\"\n" );
+    fprintf( outfile, "\n.L__wine_delay_INT:\n" );
     for (i = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
@@ -907,24 +906,24 @@ static void output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             if (!odp->name)
-                fprintf( outfile, "    \"\\t%s %d\\n\"\n", get_asm_ptr_keyword(), odp->ordinal );
+                fprintf( outfile, "\t%s %d\n", get_asm_ptr_keyword(), odp->ordinal );
             else
-                fprintf( outfile, "    \"\\t%s .L__wine_delay_data_%d_%s\\n\"\n",
+                fprintf( outfile, "\t%s .L__wine_delay_data_%d_%s\n",
                          get_asm_ptr_keyword(), i, odp->name );
         }
     }
 
-    fprintf( outfile, "    \".L__wine_delay_modules:\\n\"\n" );
+    fprintf( outfile, "\n.L__wine_delay_modules:\n" );
     for (i = 0; i < nb_imports; i++)
     {
-        if (dll_imports[i]->delay) fprintf( outfile, "    \"\\t%s 0\\n\"\n", get_asm_ptr_keyword() );
+        if (dll_imports[i]->delay) fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );
     }
 
     for (i = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
-        fprintf( outfile, "    \".L__wine_delay_name_%d:\\n\"\n", i );
-        fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n",
+        fprintf( outfile, ".L__wine_delay_name_%d:\n", i );
+        fprintf( outfile, "\t%s \"%s\"\n",
                  get_asm_string_keyword(), dll_imports[i]->spec->file_name );
     }
 
@@ -935,12 +934,11 @@ static void output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             if (!odp->name) continue;
-            fprintf( outfile, "    \".L__wine_delay_data_%d_%s:\\n\"\n", i, odp->name );
-            fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), odp->name );
+            fprintf( outfile, ".L__wine_delay_data_%d_%s:\n", i, odp->name );
+            fprintf( outfile, "\t%s \"%s\"\n", get_asm_string_keyword(), odp->name );
         }
     }
     output_function_size( outfile, "__wine_spec_delay_imports" );
-    fprintf( outfile, ");\n" );
 }
 
 /* output the delayed import thunks of a Win32 module */
@@ -952,81 +950,87 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
 
     if (!nb_delayed) return;
 
-    fprintf( outfile, "/* delayed import thunks */\n" );
-    fprintf( outfile, "asm(\".text\\n\"\n" );
-    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(8) );
-    fprintf( outfile, "    \"%s:\\n\"\n", asm_name(delayed_import_loaders));
-    fprintf( outfile, "    \"\\t%s\\n\"\n", func_declaration("__wine_delay_load_asm") );
-    fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_delay_load_asm") );
+    fprintf( outfile, "\n/* delayed import thunks */\n\n" );
+    fprintf( outfile, "\t.text\n" );
+    fprintf( outfile, "\t.align %d\n", get_alignment(8) );
+    fprintf( outfile, "%s:\n", asm_name(delayed_import_loaders));
+    fprintf( outfile, "\t%s\n", func_declaration("__wine_delay_load_asm") );
+    fprintf( outfile, "%s:\n", asm_name("__wine_delay_load_asm") );
     switch(target_cpu)
     {
     case CPU_x86_64:  /* FIXME */
     case CPU_x86:
-        fprintf( outfile, "    \"\\tpushl %%ecx\\n\\tpushl %%edx\\n\\tpushl %%eax\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall %s\\n\"\n", asm_name("__wine_spec_delay_load") );
-        fprintf( outfile, "    \"\\tpopl %%edx\\n\\tpopl %%ecx\\n\\tjmp *%%eax\\n\"\n" );
+        fprintf( outfile, "\tpushl %%ecx\n" );
+        fprintf( outfile, "\tpushl %%edx\n" );
+        fprintf( outfile, "\tpushl %%eax\n" );
+        fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_delay_load") );
+        fprintf( outfile, "\tpopl %%edx\n" );
+        fprintf( outfile, "\tpopl %%ecx\n" );
+        fprintf( outfile, "\tjmp *%%eax\n" );
         break;
     case CPU_SPARC:
-        fprintf( outfile, "    \"\\tsave %%sp, -96, %%sp\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall %s\\n\"\n", asm_name("__wine_spec_delay_load") );
-        fprintf( outfile, "    \"\\tmov %%g1, %%o0\\n\"\n" );
-        fprintf( outfile, "    \"\\tjmp %%o0\\n\\trestore\\n\"\n" );
+        fprintf( outfile, "\tsave %%sp, -96, %%sp\n" );
+        fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_delay_load") );
+        fprintf( outfile, "\tmov %%g1, %%o0\n" );
+        fprintf( outfile, "\tjmp %%o0\n" );
+        fprintf( outfile, "\trestore\n" );
         break;
     case CPU_ALPHA:
-        fprintf( outfile, "    \"\\tjsr $26,%s\\n\"\n", asm_name("__wine_spec_delay_load") );
-        fprintf( outfile, "    \"\\tjmp $31,($0)\\n\"\n" );
+        fprintf( outfile, "\tjsr $26,%s\n", asm_name("__wine_spec_delay_load") );
+        fprintf( outfile, "\tjmp $31,($0)\n" );
         break;
     case CPU_POWERPC:
         if (target_platform == PLATFORM_APPLE) extra_stack_storage = 56;
 
         /* Save all callee saved registers into a stackframe. */
-        fprintf( outfile, "    \"\\tstwu %s, -%d(%s)\\n\"\n",ppc_reg(1), 48+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(3),  4+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(4),  8+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(5), 12+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(6), 16+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(7), 20+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(8), 24+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(9), 28+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(10),32+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(11),36+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(12),40+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tstwu %s, -%d(%s)\n",ppc_reg(1), 48+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tstw  %s, %d(%s)\n", ppc_reg(3),  4+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tstw  %s, %d(%s)\n", ppc_reg(4),  8+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tstw  %s, %d(%s)\n", ppc_reg(5), 12+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tstw  %s, %d(%s)\n", ppc_reg(6), 16+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tstw  %s, %d(%s)\n", ppc_reg(7), 20+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tstw  %s, %d(%s)\n", ppc_reg(8), 24+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tstw  %s, %d(%s)\n", ppc_reg(9), 28+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tstw  %s, %d(%s)\n", ppc_reg(10),32+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tstw  %s, %d(%s)\n", ppc_reg(11),36+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tstw  %s, %d(%s)\n", ppc_reg(12),40+extra_stack_storage, ppc_reg(1));
 
         /* r0 -> r3 (arg1) */
-        fprintf( outfile, "    \"\\tmr %s, %s\\n\"\n", ppc_reg(3), ppc_reg(0));
+        fprintf( outfile, "\tmr %s, %s\n", ppc_reg(3), ppc_reg(0));
 
         /* save return address */
-        fprintf( outfile, "    \"\\tmflr %s\\n\"\n", ppc_reg(0));
-        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(0), 44+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tmflr %s\n", ppc_reg(0));
+        fprintf( outfile, "\tstw  %s, %d(%s)\n", ppc_reg(0), 44+extra_stack_storage, ppc_reg(1));
 
         /* Call the __wine_delay_load function, arg1 is arg1. */
-        fprintf( outfile, "    \"\\tbl %s\\n\"\n", asm_name("__wine_spec_delay_load") );
+        fprintf( outfile, "\tbl %s\n", asm_name("__wine_spec_delay_load") );
 
         /* Load return value from call into ctr register */
-        fprintf( outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg(3));
+        fprintf( outfile, "\tmtctr %s\n", ppc_reg(3));
 
         /* restore all saved registers and drop stackframe. */
-        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(3),  4+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(4),  8+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(5), 12+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(6), 16+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(7), 20+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(8), 24+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(9), 28+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(10),32+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(11),36+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(12),40+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tlwz  %s, %d(%s)\n", ppc_reg(3),  4+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tlwz  %s, %d(%s)\n", ppc_reg(4),  8+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tlwz  %s, %d(%s)\n", ppc_reg(5), 12+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tlwz  %s, %d(%s)\n", ppc_reg(6), 16+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tlwz  %s, %d(%s)\n", ppc_reg(7), 20+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tlwz  %s, %d(%s)\n", ppc_reg(8), 24+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tlwz  %s, %d(%s)\n", ppc_reg(9), 28+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tlwz  %s, %d(%s)\n", ppc_reg(10),32+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tlwz  %s, %d(%s)\n", ppc_reg(11),36+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tlwz  %s, %d(%s)\n", ppc_reg(12),40+extra_stack_storage, ppc_reg(1));
 
         /* Load return value from call into return register */
-        fprintf( outfile, "    \"\\tlwz  %s,  %d(%s)\\n\"\n", ppc_reg(0), 44+extra_stack_storage, ppc_reg(1));
-        fprintf( outfile, "    \"\\tmtlr %s\\n\"\n", ppc_reg(0));
-        fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg(1), ppc_reg(1),  48+extra_stack_storage);
+        fprintf( outfile, "\tlwz  %s,  %d(%s)\n", ppc_reg(0), 44+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "\tmtlr %s\n", ppc_reg(0));
+        fprintf( outfile, "\taddi %s, %s, %d\n", ppc_reg(1), ppc_reg(1),  48+extra_stack_storage);
 
         /* branch to ctr register. */
-        fprintf( outfile, "    \"bctr\\n\"\n");
+        fprintf( outfile, "\tbctr\n");
         break;
     }
     output_function_size( outfile, "__wine_delay_load_asm" );
+    fprintf( outfile, "\n" );
 
     for (i = idx = 0; i < nb_imports; i++)
     {
@@ -1036,22 +1040,22 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
             ORDDEF *odp = dll_imports[i]->imports[j];
             const char *name = odp->name ? odp->name : odp->export_name;
 
-            fprintf( outfile, "    \".L__wine_delay_imp_%d_%s:\\n\"\n", i, name );
+            fprintf( outfile, ".L__wine_delay_imp_%d_%s:\n", i, name );
             switch(target_cpu)
             {
             case CPU_x86_64:  /* FIXME */
             case CPU_x86:
-                fprintf( outfile, "    \"\\tmovl $%d, %%eax\\n\"\n", (idx << 16) | j );
-                fprintf( outfile, "    \"\\tjmp %s\\n\"\n", asm_name("__wine_delay_load_asm") );
+                fprintf( outfile, "\tmovl $%d, %%eax\n", (idx << 16) | j );
+                fprintf( outfile, "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_SPARC:
-                fprintf( outfile, "    \"\\tset %d, %%g1\\n\"\n", (idx << 16) | j );
-                fprintf( outfile, "    \"\\tb,a %s\\n\"\n", asm_name("__wine_delay_load_asm") );
+                fprintf( outfile, "\tset %d, %%g1\n", (idx << 16) | j );
+                fprintf( outfile, "\tb,a %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_ALPHA:
-                fprintf( outfile, "    \"\\tlda $0,%d($31)\\n\"\n", j);
-                fprintf( outfile, "    \"\\tldah $0,%d($0)\\n\"\n", idx);
-                fprintf( outfile, "    \"\\tjmp $31,%s\\n\"\n", asm_name("__wine_delay_load_asm") );
+                fprintf( outfile, "\tlda $0,%d($31)\n", j);
+                fprintf( outfile, "\tldah $0,%d($0)\n", idx);
+                fprintf( outfile, "\tjmp $31,%s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_POWERPC:
                 switch(target_platform)
@@ -1059,24 +1063,24 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
                 case PLATFORM_APPLE:
                     /* On Darwin we can use r0 and r2 */
                     /* Upper part in r2 */
-                    fprintf( outfile, "    \"\\tlis %s, %d\\n\"\n", ppc_reg(2), idx);
+                    fprintf( outfile, "\tlis %s, %d\n", ppc_reg(2), idx);
                     /* Lower part + r2 -> r0, Note we can't use r0 directly */
-                    fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg(0), ppc_reg(2), j);
-                    fprintf( outfile, "    \"\\tb %s\\n\"\n", asm_name("__wine_delay_load_asm") );
+                    fprintf( outfile, "\taddi %s, %s, %d\n", ppc_reg(0), ppc_reg(2), j);
+                    fprintf( outfile, "\tb %s\n", asm_name("__wine_delay_load_asm") );
                     break;
                 default:
                     /* On linux we can't use r2 since r2 is not a scratch register (hold the TOC) */
                     /* Save r13 on the stack */
-                    fprintf( outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
-                    fprintf( outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(13), ppc_reg(1));
+                    fprintf( outfile, "\taddi %s, %s, -0x4\n", ppc_reg(1), ppc_reg(1));
+                    fprintf( outfile, "\tstw  %s, 0(%s)\n",    ppc_reg(13), ppc_reg(1));
                     /* Upper part in r13 */
-                    fprintf( outfile, "    \"\\tlis %s, %d\\n\"\n", ppc_reg(13), idx);
+                    fprintf( outfile, "\tlis %s, %d\n", ppc_reg(13), idx);
                     /* Lower part + r13 -> r0, Note we can't use r0 directly */
-                    fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg(0), ppc_reg(13), j);
+                    fprintf( outfile, "\taddi %s, %s, %d\n", ppc_reg(0), ppc_reg(13), j);
                     /* Restore r13 */
-                    fprintf( outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(13), ppc_reg(1));
-                    fprintf( outfile, "    \"\\taddic %s, %s, 0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
-                    fprintf( outfile, "    \"\\tb %s\\n\"\n", asm_name("__wine_delay_load_asm") );
+                    fprintf( outfile, "\tstw  %s, 0(%s)\n",    ppc_reg(13), ppc_reg(1));
+                    fprintf( outfile, "\taddic %s, %s, 0x4\n", ppc_reg(1), ppc_reg(1));
+                    fprintf( outfile, "\tb %s\n", asm_name("__wine_delay_load_asm") );
                     break;
                 }
                 break;
@@ -1086,8 +1090,8 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
     }
     output_function_size( outfile, delayed_import_loaders );
 
-    fprintf( outfile, "\n    \".align %d\\n\"\n", get_alignment(8) );
-    fprintf( outfile, "    \"%s:\\n\"\n", asm_name(delayed_import_thunks));
+    fprintf( outfile, "\n\t.align %d\n", get_alignment(get_ptr_size()) );
+    fprintf( outfile, "%s:\n", asm_name(delayed_import_thunks));
     for (i = pos = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
@@ -1099,7 +1103,6 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
         }
     }
     output_function_size( outfile, delayed_import_thunks );
-    fprintf( outfile, ");\n" );
 }
 
 /* output the import and delayed import tables of a Win32 module */

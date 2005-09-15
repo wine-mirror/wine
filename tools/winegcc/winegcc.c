@@ -142,9 +142,11 @@ static strarray* tmp_files;
 static sigset_t signal_mask;
 #endif
 
+enum processor { proc_cc, proc_cxx, proc_cpp, proc_as };
+
 struct options 
 {
-    enum { proc_cc = 0, proc_cxx = 1, proc_cpp = 2} processor;
+    enum processor processor;
     int shared;
     int use_msvcrt;
     int nostdinc;
@@ -209,13 +211,14 @@ static char* get_temp_file(const char* prefix, const char* suffix)
     return tmp;
 }
 
-static const strarray* get_translator(struct options* opts)
+static const strarray* get_translator(enum processor processor)
 {
     static strarray* cpp = 0;
+    static strarray* as = 0;
     static strarray* cc = 0;
     static strarray* cxx = 0;
 
-    switch(opts->processor)
+    switch(processor)
     {
         case proc_cpp: 
 	    if (!cpp) cpp = strarray_fromstring(CPP, " ");
@@ -226,6 +229,9 @@ static const strarray* get_translator(struct options* opts)
         case proc_cxx: 
 	    if (!cxx) cxx = strarray_fromstring(CXX, " ");
 	    return cxx;
+        case proc_as:
+	    if (!as) as = strarray_fromstring(AS, " ");
+	    return as;
     }
     error("Unknown processor");
 }
@@ -247,8 +253,9 @@ static void compile(struct options* opts, const char* lang)
 	case proc_cc:  gcc_defs = 0; break;
 	case proc_cxx: gcc_defs = 0; break;
 #endif
+	case proc_as:  gcc_defs = 0; break;
     }
-    strarray_addall(comp_args, get_translator(opts));
+    strarray_addall(comp_args, get_translator(opts->processor));
 
     if (opts->processor != proc_cpp)
     {
@@ -366,6 +373,48 @@ static const char* compile_to_object(struct options* opts, const char* file, con
     return copts.output_name;
 }
 
+static void assemble(struct options* opts)
+{
+    int i;
+
+    for (i = 0; i < opts->files->size; i++ )
+    {
+        if (opts->files->base[i][0] != '-')
+        {
+            strarray* as_args = strarray_alloc();
+            strarray_addall(as_args, get_translator(proc_as));
+
+            if (opts->output_name)
+            {
+                strarray_add(as_args, "-o");
+                strarray_add(as_args, opts->output_name);
+            }
+            strarray_add(as_args, opts->files->base[i]);
+            spawn(opts->prefix, as_args, 0);
+            strarray_free(as_args);
+        }
+    }
+}
+
+static const char* assemble_to_object(struct options* opts, const char* file)
+{
+    struct options copts;
+    char* base_name;
+
+    /* make a copy so we don't change any of the initial stuff */
+    /* a shallow copy is exactly what we want in this case */
+    base_name = get_basename(file);
+    copts = *opts;
+    copts.output_name = get_temp_file(base_name, ".o");
+    copts.files = strarray_alloc();
+    strarray_add(copts.files, file);
+    assemble(&copts);
+    strarray_free(copts.files);
+    free(base_name);
+
+    return copts.output_name;
+}
+
 /* check if there is a static lib associated to a given dll */
 static char *find_static_lib( const char *dll )
 {
@@ -381,11 +430,10 @@ static void build(struct options* opts)
     strarray *lib_dirs, *files;
     strarray *spec_args, *link_args;
     char *output_file;
-    const char *spec_c_name, *spec_o_name;
+    const char *spec_s_name, *spec_o_name;
     const char *output_name, *spec_file, *lang;
     const char* winebuild = getenv("WINEBUILD");
     int generate_app_loader = 1;
-    int old_processor;
     int j;
 
     /* NOTE: for the files array we'll use the following convention:
@@ -540,14 +588,14 @@ static void build(struct options* opts)
 
     /* run winebuild to generate the .spec.c file */
     spec_args = strarray_alloc();
-    spec_c_name = get_temp_file(output_name, ".spec.c");
+    spec_s_name = get_temp_file(output_name, ".spec.s");
     strarray_add(spec_args, winebuild);
     strarray_add(spec_args, "--ld-cmd");
     strarray_add(spec_args, LD);
     strarray_addall(spec_args, strarray_fromstring(DLLFLAGS, " "));
     strarray_add(spec_args, opts->shared ? "--dll" : "--exe");
     strarray_add(spec_args, "-o");
-    strarray_add(spec_args, spec_c_name);
+    strarray_add(spec_args, spec_s_name);
     if (spec_file)
     {
         strarray_add(spec_args, "-E");
@@ -593,16 +641,12 @@ static void build(struct options* opts)
 
     spawn(opts->prefix, spec_args, 0);
 
-    /* compile the .spec.c file into a .spec.o file */
-    old_processor = opts->processor;
-    /* Always compile spec.c as c, even if linking with g++ */
-    opts->processor = proc_cc;
-    spec_o_name = compile_to_object(opts, spec_c_name, 0);
-    opts->processor = old_processor;
+    /* assemble the .spec.s file into a .spec.o file */
+    spec_o_name = assemble_to_object(opts, spec_s_name);
 
     /* link everything together now */
     link_args = strarray_alloc();
-    strarray_addall(link_args, get_translator(opts));
+    strarray_addall(link_args, get_translator(opts->processor));
     strarray_addall(link_args, strarray_fromstring(LDDLLFLAGS, " "));
 
     strarray_add(link_args, "-o");
@@ -679,7 +723,7 @@ static void forward(int argc, char **argv, struct options* opts)
     strarray* args = strarray_alloc();
     int j;
 
-    strarray_addall(args, get_translator(opts));
+    strarray_addall(args, get_translator(opts->processor));
 
     for( j = 1; j < argc; j++ ) 
 	strarray_add(args, argv[j]);
