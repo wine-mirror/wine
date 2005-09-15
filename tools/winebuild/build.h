@@ -185,6 +185,7 @@ extern unsigned int get_ptr_size(void);
 extern const char *asm_name( const char *func );
 extern const char *func_declaration( const char *func );
 extern const char *func_size( const char *func );
+extern const char *asm_globl( const char *func );
 extern const char *get_asm_ptr_keyword(void);
 extern const char *get_asm_string_keyword(void);
 extern const char *get_asm_short_keyword(void);

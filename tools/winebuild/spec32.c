@@ -482,8 +482,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 
     fprintf( outfile, "\n\t.data\n" );
     fprintf( outfile, "\t.align %d\n", get_alignment(get_ptr_size()) );
-    fprintf( outfile, "\t.globl %s\n", asm_name("__wine_spec_nt_header") );
-    fprintf( outfile, "%s:\n", asm_name("__wine_spec_nt_header"));
+    fprintf( outfile, "%s\n", asm_globl("__wine_spec_nt_header") );
 
     fprintf( outfile, "\t.long 0x%04x\n", IMAGE_NT_SIGNATURE );    /* Signature */
     switch(target_cpu)
@@ -575,8 +574,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "\t.long 0,0\n" );  /* DataDirectory[15] */
 
     fprintf( outfile, "\n\t%s\n", get_asm_string_section() );
-    fprintf( outfile, "\t.globl %s\n", asm_name("__wine_spec_file_name") );
-    fprintf( outfile, "%s:\n", asm_name("__wine_spec_file_name"));
+    fprintf( outfile, "%s\n", asm_globl("__wine_spec_file_name") );
     fprintf( outfile, "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
     if (target_platform == PLATFORM_APPLE)
         fprintf( outfile, "\t.comm %s,4\n", asm_name("_end") );

@@ -615,8 +615,7 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
 {
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
     fprintf( outfile, "\t%s\n", func_declaration(name) );
-    fprintf( outfile, "\t.globl %s\n", asm_name(name) );
-    fprintf( outfile, "%s:\n", asm_name(name) );
+    fprintf( outfile, "%s\n", asm_globl(name) );
 
     switch(target_cpu)
     {
@@ -854,8 +853,7 @@ static void output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, "\n/* delayed imports */\n\n" );
     fprintf( outfile, "\t.data\n" );
     fprintf( outfile, "\t.align %d\n", get_alignment(get_ptr_size()) );
-    fprintf( outfile, "\t.globl %s\n", asm_name("__wine_spec_delay_imports") );
-    fprintf( outfile, "%s:\n", asm_name("__wine_spec_delay_imports"));
+    fprintf( outfile, "%s\n", asm_globl("__wine_spec_delay_imports") );
 
     /* list of dlls */
 

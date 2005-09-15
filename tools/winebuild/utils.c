@@ -470,6 +470,25 @@ const char *func_size( const char *func )
     }
 }
 
+/* return a global symbol declaration for an assembly symbol */
+const char *asm_globl( const char *func )
+{
+    static char buffer[256];
+
+    switch (target_platform)
+    {
+    case PLATFORM_APPLE:
+        sprintf( buffer, "\t.globl _%s\n\t.private_extern _%s\n_%s:", func, func, func );
+        return buffer;
+    case PLATFORM_WINDOWS:
+        sprintf( buffer, "\t.globl _%s\n_%s:", func, func );
+        return buffer;
+    default:
+        sprintf( buffer, "\t.globl %s\n\t.hidden %s\n%s:", func, func, func );
+        return buffer;
+    }
+}
+
 const char *get_asm_ptr_keyword(void)
 {
     switch(get_ptr_size())

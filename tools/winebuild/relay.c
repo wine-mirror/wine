@@ -36,8 +36,7 @@ static void function_header( FILE *outfile, const char *name )
 {
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
     fprintf( outfile, "\t%s\n", func_declaration(name) );
-    fprintf( outfile, "\t.globl %s\n", asm_name(name) );
-    fprintf( outfile, "%s:\n", asm_name(name) );
+    fprintf( outfile, "%s\n", asm_globl(name) );
 }
 
 
@@ -900,14 +899,12 @@ static void BuildPendingEventCheck( FILE *outfile )
 
     /* Start cleanup. Restore fs register. */
 
-    fprintf( outfile, "\t.globl %s\n", asm_name("DPMI_PendingEventCheck_Cleanup") );
-    fprintf( outfile, "%s:\n", asm_name("DPMI_PendingEventCheck_Cleanup") );
+    fprintf( outfile, "%s\n", asm_globl("DPMI_PendingEventCheck_Cleanup") );
     fprintf( outfile, "\tpopw %%fs\n" );
 
     /* Return from function. */
 
-    fprintf( outfile, "\t.globl %s\n", asm_name("DPMI_PendingEventCheck_Return") );
-    fprintf( outfile, "%s:\n", asm_name("DPMI_PendingEventCheck_Return") );
+    fprintf( outfile, "%s\n", asm_globl("DPMI_PendingEventCheck_Return") );
     fprintf( outfile, "\tiret\n" );
 
     function_footer( outfile, "DPMI_PendingEventCheck" );
@@ -934,8 +931,7 @@ void BuildRelays16( FILE *outfile )
 
     fprintf( outfile, "%s:\n\n", asm_name("__wine_spec_thunk_text_16") );
 
-    fprintf( outfile, "\t.globl %s\n", asm_name("__wine_call16_start") );
-    fprintf( outfile, "%s:\n", asm_name("__wine_call16_start") );
+    fprintf( outfile, "%s\n", asm_globl("__wine_call16_start") );
 
     /* Standard CallFrom16 routine (WORD return) */
     BuildCallFrom16Core( outfile, FALSE, FALSE, TRUE );
@@ -967,16 +963,13 @@ void BuildRelays16( FILE *outfile )
     /* Pending DPMI events check stub */
     BuildPendingEventCheck( outfile );
 
-    fprintf( outfile, "\t.globl %s\n", asm_name("__wine_call16_end") );
-    fprintf( outfile, "%s:\n", asm_name("__wine_call16_end") );
+    fprintf( outfile, "%s\n", asm_globl("__wine_call16_end") );
     function_footer( outfile, "__wine_spec_thunk_text_16" );
 
     /* Declare the return address and data selector variables */
     fprintf( outfile, "\n\t.data\n\t.align %d\n", get_alignment(4) );
-    fprintf( outfile, "\t.globl %s\n", asm_name("CallTo16_DataSelector") );
-    fprintf( outfile, "%s:\t.long 0\n", asm_name("CallTo16_DataSelector") );
-    fprintf( outfile, "\t.globl %s\n", asm_name("CallTo16_TebSelector") );
-    fprintf( outfile, "%s:\t.long 0\n", asm_name("CallTo16_TebSelector") );
+    fprintf( outfile, "%s\n\t.long 0\n", asm_globl("CallTo16_DataSelector") );
+    fprintf( outfile, "%s\n\t.long 0\n", asm_globl("CallTo16_TebSelector") );
     if (UsePIC) fprintf( outfile, "wine_ldt_copy_ptr:\t.long %s\n", asm_name("wine_ldt_copy") );
 }
 
