@@ -2377,6 +2377,18 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
     struct list *font_elem_ptr, *hfontlist_elem_ptr;
     int i = 0;
 
+    LIST_FOR_EACH_ENTRY(gdiFont, &child_font_list, struct tagGdiFont, entry)
+    {
+        struct list *first_hfont = list_head(&gdiFont->hfontlist);
+        hflist = LIST_ENTRY(first_hfont, HFONTLIST, entry);
+        if(hflist->hfont == handle)
+        {
+            TRACE("removing child font %p from child list\n", gdiFont);
+            list_remove(&gdiFont->entry);
+            return TRUE;
+        }
+    }
+
     TRACE("destroying hfont=%p\n", handle);
     if(TRACE_ON(font))
 	dump_gdi_font_list();
