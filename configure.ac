@@ -1018,19 +1018,25 @@ case $host_os in
           if test "$ac_cv_c_dll_macho" = "yes"
           then
             LIBEXT="dylib"
-            LDDLLFLAGS="-bundle -read_only_relocs warning"
+            LDDLLFLAGS="-bundle"
             LDSHARED="\$(CC) -dynamiclib"
-            CFLAGS="$CFLAGS -ffixed-r13 -no-cpp-precomp"
             STRIP="$STRIP -u -r"
-            dnl Relocate wine executable
-            AC_SUBST(LDEXECFLAGS,"-seg1addr 0x120000")
-            dnl Relocate libwine.dyld too
-            AC_SUBST(LDLIBWINEFLAGS,"-seg1addr 0x140000")
-	    dnl declare needed frameworks
-	    AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
-            AC_SUBST(IOKITLIB,"-framework IOKit")
-	    dnl using IOKit imply we use CoreFoundation too
-	    IOKITLIB="$IOKITLIB $COREFOUNDATIONLIB"
+            dnl declare needed frameworks
+            AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
+            AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
+            case $host_cpu in
+              *i[[3456789]]86*)
+                AC_SUBST(LDEXECFLAGS,"-image_base 0x7bf00000")
+                ;;
+              *powerpc*)
+                CFLAGS="$CFLAGS -ffixed-r13"
+                LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"
+                dnl Relocate wine executable (FIXME: is this really needed?)
+                AC_SUBST(LDEXECFLAGS,"-seg1addr 0x120000")
+                AC_SUBST(LDLIBWINEFLAGS,"-seg1addr 0x140000")
+                ;;
+            esac
+
           else
             AC_CACHE_CHECK(whether we can build an HP-UX dll, ac_cv_c_dll_hpux,
               [WINE_TRY_SHLIB_FLAGS([-shared], ac_cv_c_dll_hpux="yes", ac_cv_c_dll_hpux="no")])
