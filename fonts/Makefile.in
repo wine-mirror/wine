@@ -15,7 +15,15 @@ BITMAP_FONTS  = \
 	vgasys.fon \
 	vgasyse.fon \
 	vgasysr.fon \
+	vgasysg.fon \
+	vgasyst.fon \
+	vgas1255.fon \
+	vgas1256.fon \
+	vgas1257.fon \
+	vgas874.fon \
+	jvgasys.fon \
 	svgasys.fon \
+	hvgasys.fon \
 	cvgasys.fon 
 
 TRUETYPE_FONTS = \
@@ -80,8 +88,32 @@ system-1250-96-16.fnt: system.ttf $(SFNT2FNT)
 system-1251-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 1251 96 128 7
 
+system-1253-96-16.fnt: system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 1253 96 128 7
+
+system-1254-96-16.fnt: system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 1254 96 128 7
+
+system-1255-96-16.fnt: system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 1255 96 128 7
+
+system-1256-96-16.fnt: system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 1256 96 128 7
+
+system-1257-96-16.fnt: system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 1257 96 128 7
+
+system-874-96-16.fnt: system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 874 96 128 7
+
+system-932-96-16.fnt: system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 932 96 128 7
+
 system-936-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 936 96 128 7
+
+system-949-96-16.fnt: system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 949 96 128 7
 
 system-950-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 950 96 128 7
@@ -113,8 +145,32 @@ vgasyse.fon: system-1250-96-16.fnt $(FNT2FON)
 vgasysr.fon: system-1251-96-16.fnt $(FNT2FON)
 	$(FNT2FON) system-1251-96-16.fnt $@
 
+vgasysg.fon: system-1253-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-1253-96-16.fnt $@
+
+vgasyst.fon: system-1254-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-1254-96-16.fnt $@
+
+vgas1255.fon: system-1255-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-1255-96-16.fnt $@
+
+vgas1256.fon: system-1256-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-1255-96-16.fnt $@
+
+vgas1257.fon: system-1257-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-1255-96-16.fnt $@
+
+vgas874.fon: system-874-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-874-96-16.fnt $@
+
+jvgasys.fon: system-932-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-932-96-16.fnt $@
+
 svgasys.fon: system-936-96-16.fnt system-1252-96-16.fnt $(FNT2FON)
 	$(FNT2FON) system-936-96-16.fnt system-1252-96-16.fnt $@
+
+hvgasys.fon: system-949-96-16.fnt $(FNT2FON)
+	$(FNT2FON) system-949-96-16.fnt $@
 
 cvgasys.fon: system-950-96-16.fnt system-1252-96-16.fnt $(FNT2FON)
 	$(FNT2FON) system-950-96-16.fnt system-1252-96-16.fnt $@
