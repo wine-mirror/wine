@@ -389,7 +389,7 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
     if (!hWnd)
         return FALSE;
 
-    if (!WB_EmbedBrowser(pHHInfo->pWBInfo, hwndParent))
+    if (!WB_EmbedBrowser(pHHInfo->pWBInfo, hWnd))
         return FALSE;
 
     /* store the pointer to the HH info struct */
