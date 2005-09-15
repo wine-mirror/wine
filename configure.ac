@@ -462,14 +462,15 @@ then
     ac_xslt_libs="`$PKG_CONFIG --libs libxslt`"
     ac_xslt_cflags="`$PKG_CONFIG --cflags libxslt`"
     CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
-    AC_CHECK_HEADERS(libxslt/xslt.h \
-                     libxslt/pattern.h \
-                     libxslt/transform.h,
+    AC_CHECK_HEADERS([libxslt/pattern.h libxslt/transform.h],
         [AC_CHECK_LIB(xslt, xsltCompilePattern,
             [AC_DEFINE(HAVE_LIBXSLT, 1, [Define if you have the libxslt library])
              XSLTLIBS="$ac_xslt_libs"
              XSLTINCL="$ac_xslt_cflags"],,$ac_xslt_libs)
-        ])
+        ],,
+[#ifdef HAVE_LIBXSLT_PATTERN_H
+# include <libxslt/pattern.h>
+#endif])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 
