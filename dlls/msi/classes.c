@@ -743,13 +743,13 @@ static void mark_mime_for_install( MSIMIME *mime )
     mime->InstallMe = TRUE;
 }
 
-static LONG msi_reg_set_val_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
+LONG msi_reg_set_val_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
 {
-    DWORD len = (lstrlenW(value) + 1) * sizeof (WCHAR);
+    DWORD len = value ? (lstrlenW(value) + 1) * sizeof (WCHAR) : 0;
     return RegSetValueExW( hkey, name, 0, REG_SZ, (LPBYTE)value, len );
 }
 
-static LONG msi_reg_set_val_multi_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
+LONG msi_reg_set_val_multi_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
 {
     LPCWSTR p = value;
     while (*p) p += lstrlenW(p) + 1;
@@ -757,70 +757,68 @@ static LONG msi_reg_set_val_multi_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
                            (LPBYTE)value, (p + 1 - value) * sizeof(WCHAR) );
 }
 
+LONG msi_reg_set_val_dword( HKEY hkey, LPCWSTR name, DWORD val )
+{
+    return RegSetValueExW( hkey, name, 0, REG_DWORD, (LPBYTE)&val, sizeof (DWORD) );
+}
+
+LONG msi_reg_set_subkey_val( HKEY hkey, LPCWSTR path, LPCWSTR name, LPCWSTR val )
+{
+    HKEY hsubkey = 0;
+    LONG r;
+
+    r = RegCreateKeyW( hkey, path, &hsubkey );
+    if (r != ERROR_SUCCESS)
+        return r;
+    r = msi_reg_set_val_str( hsubkey, name, val );
+    RegCloseKey( hsubkey );
+    return r;
+}
+
 static UINT register_appid(MSIAPPID *appid, LPCWSTR app )
 {
     static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
+    static const WCHAR szRemoteServerName[] =
+         {'R','e','m','o','t','e','S','e','r','v','e','r','N','a','m','e',0};
+    static const WCHAR szLocalService[] =
+         {'L','o','c','a','l','S','e','r','v','i','c','e',0};
+    static const WCHAR szService[] =
+         {'S','e','r','v','i','c','e','P','a','r','a','m','e','t','e','r','s',0};
+    static const WCHAR szDLL[] =
+         {'D','l','l','S','u','r','r','o','g','a','t','e',0};
+    static const WCHAR szActivate[] =
+         {'A','c','t','i','v','a','t','e','A','s','S','t','o','r','a','g','e',0};
+    static const WCHAR szY[] = {'Y',0};
+    static const WCHAR szRunAs[] = {'R','u','n','A','s',0};
+    static const WCHAR szUser[] = 
+         {'I','n','t','e','r','a','c','t','i','v','e',' ','U','s','e','r',0};
+
     HKEY hkey2,hkey3;
 
     RegCreateKeyW(HKEY_CLASSES_ROOT,szAppID,&hkey2);
     RegCreateKeyW( hkey2, appid->AppID, &hkey3 );
+    RegCloseKey(hkey2);
     msi_reg_set_val_str( hkey3, NULL, app );
 
     if (appid->RemoteServerName)
-    {
-        static const WCHAR szRemoteServerName[] =
-             {'R','e','m','o','t','e','S','e','r','v','e','r','N','a','m','e',0};
-
         msi_reg_set_val_str( hkey3, szRemoteServerName, appid->RemoteServerName );
-    }
 
     if (appid->LocalServer)
-    {
-        static const WCHAR szLocalService[] =
-             {'L','o','c','a','l','S','e','r','v','i','c','e',0};
-
         msi_reg_set_val_str( hkey3, szLocalService, appid->LocalServer );
-    }
 
     if (appid->ServiceParameters)
-    {
-        static const WCHAR szService[] =
-             {'S','e','r','v','i','c','e',
-              'P','a','r','a','m','e','t','e','r','s',0};
-
         msi_reg_set_val_str( hkey3, szService, appid->ServiceParameters );
-    }
 
     if (appid->DllSurrogate)
-    {
-        static const WCHAR szDLL[] =
-             {'D','l','l','S','u','r','r','o','g','a','t','e',0};
-
         msi_reg_set_val_str( hkey3, szDLL, appid->DllSurrogate );
-    }
 
     if (appid->ActivateAtStorage)
-    {
-        static const WCHAR szActivate[] =
-             {'A','c','t','i','v','a','t','e','A','s',
-              'S','t','o','r','a','g','e',0};
-        static const WCHAR szY[] = {'Y',0};
-
         msi_reg_set_val_str( hkey3, szActivate, szY );
-    }
 
     if (appid->RunAsInteractiveUser)
-    {
-        static const WCHAR szRunAs[] = {'R','u','n','A','s',0};
-        static const WCHAR szUser[] = 
-             {'I','n','t','e','r','a','c','t','i','v','e',' ',
-              'U','s','e','r',0};
-
         msi_reg_set_val_str( hkey3, szRunAs, szUser );
-    }
 
     RegCloseKey(hkey3);
-    RegCloseKey(hkey2);
     return ERROR_SUCCESS;
 }
 
@@ -968,17 +966,12 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
             else
                 progid = cls->ProgIDText;
 
-            RegCreateKeyW(hkey2,szProgID,&hkey3);
-            msi_reg_set_val_str( hkey3, NULL, progid );
-            RegCloseKey(hkey3);
+            msi_reg_set_subkey_val( hkey2, szProgID, NULL, progid );
 
             if (cls->ProgID && cls->ProgID->VersionInd)
             {
-                LPWSTR viprogid = strdupW( cls->ProgID->VersionInd->ProgID );
-                RegCreateKeyW(hkey2,szVIProgID,&hkey3);
-                msi_reg_set_val_str( hkey3, NULL, viprogid );
-                RegCloseKey(hkey3);
-                HeapFree(GetProcessHeap(), 0, viprogid);
+                msi_reg_set_subkey_val( hkey2, szVIProgID, NULL, 
+                                        cls->ProgID->VersionInd->ProgID );
             }
         }
 
@@ -996,11 +989,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
             static const WCHAR szDefaultIcon[] = 
                 {'D','e','f','a','u','l','t','I','c','o','n',0};
 
-            RegCreateKeyW(hkey2,szDefaultIcon,&hkey3);
-
-            msi_reg_set_val_str( hkey3, NULL, cls->IconPath );
-
-            RegCloseKey(hkey3);
+            msi_reg_set_subkey_val( hkey2, szDefaultIcon, NULL, cls->IconPath );
         }
 
         if (cls->DefInprocHandler)
@@ -1008,20 +997,15 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
             static const WCHAR szInproc[] =
                 {'I','n','p','r','o','c','H','a','n','d','l','e','r',0};
 
-            RegCreateKeyW(hkey2,szInproc,&hkey3);
-            msi_reg_set_val_str( hkey3, NULL, cls->DefInprocHandler );
-            RegCloseKey(hkey3);
+            msi_reg_set_subkey_val( hkey2, szInproc, NULL, cls->DefInprocHandler );
         }
 
         if (cls->DefInprocHandler32)
         {
             static const WCHAR szInproc32[] =
                 {'I','n','p','r','o','c','H','a','n','d','l','e','r','3','2',0};
-            size = (strlenW(cls->DefInprocHandler32) + 1) * sizeof(WCHAR);
 
-            RegCreateKeyW(hkey2,szInproc32,&hkey3);
-            msi_reg_set_val_str( hkey3, NULL, cls->DefInprocHandler32 );
-            RegCloseKey(hkey3);
+            msi_reg_set_subkey_val( hkey2, szInproc32, NULL, cls->DefInprocHandler32 );
         }
         
         RegCloseKey(hkey2);
@@ -1042,9 +1026,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                                         strlenW(cls->clsid) + 4) * sizeof(WCHAR));
                 sprintfW( keyname, szFileType_fmt, cls->clsid, index );
 
-                RegCreateKeyW(HKEY_CLASSES_ROOT,keyname,&hkey2);
-                msi_reg_set_val_str( hkey2, NULL, ptr );
-                RegCloseKey(hkey2);
+                msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, keyname, NULL, ptr );
                 HeapFree(GetProcessHeap(), 0, keyname);
 
                 if (ptr2)
@@ -1073,7 +1055,7 @@ static UINT register_progid_base(MSIPACKAGE* package, MSIPROGID* progid,
     static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
     static const WCHAR szDefaultIcon[] =
         {'D','e','f','a','u','l','t','I','c','o','n',0};
-    HKEY hkey,hkey2;
+    HKEY hkey;
 
     RegCreateKeyW(HKEY_CLASSES_ROOT,progid->ProgID,&hkey);
 
@@ -1082,13 +1064,9 @@ static UINT register_progid_base(MSIPACKAGE* package, MSIPROGID* progid,
 
     if (progid->Class)
     {   
-        RegCreateKeyW(hkey,szCLSID,&hkey2);
-        msi_reg_set_val_str( hkey2, NULL, progid->Class->clsid );
-
+        msi_reg_set_subkey_val( hkey, szCLSID, NULL, progid->Class->clsid );
         if (clsid)
             strcpyW( clsid, progid->Class->clsid );
-
-        RegCloseKey(hkey2);
     }
     else
     {
@@ -1096,12 +1074,8 @@ static UINT register_progid_base(MSIPACKAGE* package, MSIPROGID* progid,
     }
 
     if (progid->IconPath)
-    {
-        RegCreateKeyW(hkey,szDefaultIcon,&hkey2);
+        msi_reg_set_subkey_val( hkey, szDefaultIcon, NULL, progid->IconPath );
 
-        msi_reg_set_val_str( hkey2, NULL, progid->IconPath );
-        RegCloseKey(hkey2);
-    }
     return ERROR_SUCCESS;
 }
 
@@ -1115,7 +1089,7 @@ static UINT register_progid(MSIPACKAGE *package, MSIPROGID* progid,
     else
     {
         DWORD disp;
-        HKEY hkey,hkey2;
+        HKEY hkey;
         static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
         static const WCHAR szDefaultIcon[] =
             {'D','e','f','a','u','l','t','I','c','o','n',0};
@@ -1136,29 +1110,17 @@ static UINT register_progid(MSIPACKAGE *package, MSIPROGID* progid,
         rc = register_progid( package, progid->Parent, clsid );
 
         /* clsid is same as parent */
-        RegCreateKeyW(hkey,szCLSID,&hkey2);
-        msi_reg_set_val_str( hkey2, NULL, clsid );
-
-        RegCloseKey(hkey2);
-
+        msi_reg_set_subkey_val( hkey, szCLSID, NULL, clsid );
 
         if (progid->Description)
             msi_reg_set_val_str( hkey, NULL, progid->Description );
 
         if (progid->IconPath)
-        {
-            RegCreateKeyW(hkey,szDefaultIcon,&hkey2);
-            msi_reg_set_val_str( hkey2, NULL, progid->IconPath );
-            RegCloseKey(hkey2);
-        }
+            msi_reg_set_subkey_val( hkey, szDefaultIcon, NULL, progid->IconPath );
 
         /* write out the current version */
         if (progid->CurVer)
-        {
-            RegCreateKeyW(hkey,szCurVer,&hkey2);
-            msi_reg_set_val_str( hkey2, NULL, progid->CurVer->ProgID );
-            RegCloseKey(hkey2);
-        }
+            msi_reg_set_subkey_val( hkey, szCurVer, NULL, progid->CurVer->ProgID );
 
         RegCloseKey(hkey);
     }
@@ -1265,9 +1227,7 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
      if (verb->Command)
      {
         keyname = build_directory_name(3, progid, szShell, verb->Verb);
-        RegCreateKeyW(HKEY_CLASSES_ROOT, keyname, &key);
-        msi_reg_set_val_str( key, NULL, verb->Command );
-        RegCloseKey(key);
+        msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, keyname, NULL, verb->Command );
         HeapFree(GetProcessHeap(),0,keyname);
      }
 
@@ -1277,9 +1237,7 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
         {
             *Sequence = verb->Sequence;
             keyname = build_directory_name(2, progid, szShell);
-            RegCreateKeyW(HKEY_CLASSES_ROOT, keyname, &key);
-            msi_reg_set_val_str( key, NULL, verb->Verb );
-            RegCloseKey(key);
+            msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, keyname, NULL, verb->Verb );
             HeapFree(GetProcessHeap(),0,keyname);
         }
     }
@@ -1402,7 +1360,6 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
 {
     static const WCHAR szExten[] = 
         {'E','x','t','e','n','s','i','o','n',0 };
-    HKEY hkey;
     MSIRECORD *uirow;
     MSIMIME *mt;
 
@@ -1447,16 +1404,13 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
         key = HeapAlloc(GetProcessHeap(),0,(strlenW(mime)+strlenW(fmt)+1) *
                                             sizeof(WCHAR));
         sprintfW(key,fmt,mime);
-        RegCreateKeyW(HKEY_CLASSES_ROOT,key,&hkey);
-        msi_reg_set_val_str( hkey, szExten, extension );
+        msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, key, szExten, extension );
 
         HeapFree(GetProcessHeap(),0,extension);
         HeapFree(GetProcessHeap(),0,key);
 
         if (mt->clsid)
             FIXME("Handle non null for field 3\n");
-
-        RegCloseKey(hkey);
 
         uirow = MSI_CreateRecord(2);
         MSI_RecordSetStringW(uirow,1,mt->ContentType);
