@@ -3882,14 +3882,14 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
   X11DRV_DIB_IMAGEBITS_DESCR descr;
   BITMAP bitmap;
-  LONG height, tmpheight;
+  LONG width, height, tmpheight;
   INT result;
 
   descr.physDev = physDev;
 
   if (!physBitmap) return 0;
 
-  if (DIB_GetBitmapInfo( &info->bmiHeader, &descr.infoWidth, &height,
+  if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height,
 			 &descr.infoBpp, &descr.compression ) == -1)
       return 0;
 
@@ -3936,6 +3936,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   descr.bits      = bits;
   descr.image     = NULL;
   descr.palentry  = NULL;
+  descr.infoWidth = width;
   descr.lines     = tmpheight >= 0 ? lines : -lines;
   descr.depth     = physBitmap->pixmap_depth;
   descr.drawable  = physBitmap->pixmap;
@@ -3969,7 +3970,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   PALETTEENTRY palette[256];
   size_t obj_size;
   int height;
-  LONG tempHeight;
+  LONG width, tempHeight;
   int bitmap_type;
   BOOL core_header;
   void* colorPtr;
@@ -3979,7 +3980,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   if (!physBitmap) return 0;
   if (!(obj_size = GetObjectW( hbitmap, sizeof(dib), &dib ))) return 0;
 
-  bitmap_type = DIB_GetBitmapInfo( (BITMAPINFOHEADER*) info, &descr.infoWidth, &tempHeight, &descr.infoBpp, &descr.compression);
+  bitmap_type = DIB_GetBitmapInfo( (BITMAPINFOHEADER*)info, &width, &tempHeight, &descr.infoBpp, &descr.compression);
   descr.lines = tempHeight;
   if (bitmap_type == -1)
   {
@@ -3989,8 +3990,8 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   core_header = (bitmap_type == 0);
   colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
 
-  TRACE("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
-        lines, dib.dsBm.bmWidth, dib.dsBm.bmHeight, (int)descr.infoWidth, descr.lines, startscan);
+  TRACE("%u scanlines of (%i,%i) -> (%li,%i) starting from %u\n",
+        lines, dib.dsBm.bmWidth, dib.dsBm.bmHeight, width, descr.lines, startscan);
 
   if( lines > dib.dsBm.bmHeight ) lines = dib.dsBm.bmHeight;
 
@@ -4050,6 +4051,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   descr.palentry  = palette;
   descr.bits      = bits;
   descr.image     = NULL;
+  descr.infoWidth = width;
   descr.lines     = lines;
   descr.depth     = physBitmap->pixmap_depth;
   descr.drawable  = physBitmap->pixmap;
