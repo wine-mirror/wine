@@ -427,7 +427,7 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
  */
 void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 {
-    int resources_size, machine = 0;
+    int machine = 0;
     unsigned int page_size = get_page_size();
 
     resolve_imports( spec );
@@ -436,8 +436,9 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     /* Reserve some space for the PE header */
 
     fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "static void __asm__dummy_header(void) {\n" );
+    fprintf( outfile, "static void __asm__dummy(void) {\n" );
     fprintf( outfile, "#endif\n" );
+
     fprintf( outfile, "asm(\".text\\n\\t\"\n" );
     fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(page_size) );
     fprintf( outfile, "    \"__wine_spec_pe_header:\\t\"\n" );
@@ -445,28 +446,11 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
         fprintf( outfile, "    \".space 65536\\n\\t\"\n" );
     else
         fprintf( outfile, "    \".skip 65536\\n\\t\"\n" );
-    fprintf( outfile, "    \".data\\n\\t\"\n" );
-    fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(4) );
-    fprintf( outfile, "    \".L__wine_spec_data_start:\\t.long 1\");\n" );
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "}\n" );
-    fprintf( outfile, "#endif\n" );
-
-    if (target_platform == PLATFORM_APPLE)
-        fprintf( outfile, "static char _end[4];\n" );
-
-    /* Output the resources */
-
-    resources_size = output_resources( outfile, spec );
 
     /* Output the NT header */
 
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "static void __asm__dummy(void) {\n" );
-    fprintf( outfile, "#endif\n" );
-
-    fprintf( outfile, "/* NT header */\n" );
-    fprintf( outfile, "asm(\".data\\n\\t.align %d\\n\"\n", get_alignment(4) );
+    fprintf( outfile, "    \"\\t.data\\n\\t\"\n" );
+    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(get_ptr_size()) );
     fprintf( outfile, "    \"\\t.globl %s\\n\"\n", asm_name("__wine_spec_nt_header") );
     fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_spec_nt_header"));
 
@@ -502,7 +486,8 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    \"\\t.long %s\\n\"\n",               /* AddressOfEntryPoint */
              asm_name(spec->init_func) );
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );              /* BaseOfCode */
-    fprintf( outfile, "    \"\\t.long .L__wine_spec_data_start\\n\"\n" ); /* BaseOfData */
+    if (get_ptr_size() == 4)
+        fprintf( outfile, "    \"\\t.long %s\\n\"\n", asm_name("__wine_spec_nt_header") ); /* BaseOfData */
     fprintf( outfile, "    \"\\t%s __wine_spec_pe_header\\n\"\n",         /* ImageBase */
              get_asm_ptr_keyword() );
     fprintf( outfile, "    \"\\t.long %u\\n\"\n", page_size );  /* SectionAlignment */
@@ -539,8 +524,10 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     else
         fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );
 
-    fprintf( outfile, "    \"\\t.long %s,%u\\n\"\n",  /* DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE] */
-             resources_size ? asm_name("__wine_spec_resources") : "0", resources_size );
+    if (spec->nb_resources)   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE] */
+        fprintf( outfile, "    \"\\t.long .L__wine_spec_resources, .L__wine_spec_resources_end-.L__wine_spec_resources\\n\"\n" );
+    else
+        fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );
 
     fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[3] */
     fprintf( outfile, "    \"\\t.long 0,0\\n\"\n" );  /* DataDirectory[4] */
@@ -561,11 +548,15 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    \"\\t.globl %s\\n\"\n", asm_name("__wine_spec_file_name") );
     fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_spec_file_name"));
     fprintf( outfile, "    \"\\t%s \\\"%s\\\"\\n\"\n", get_asm_string_keyword(), spec->file_name );
+    if (target_platform == PLATFORM_APPLE)
+        fprintf( outfile, "    \"\\t.comm %s,4\\n\"\n", asm_name("_end") );
+
     fprintf( outfile, ");\n" );
 
     output_stubs( outfile, spec );
     output_exports( outfile, spec );
     output_imports( outfile, spec );
+    output_resources( outfile, spec );
     output_dll_init( outfile, "__wine_spec_init_ctor", NULL );
 
     fprintf( outfile, "#ifndef __GNUC__\n" );
