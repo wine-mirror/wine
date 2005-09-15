@@ -96,6 +96,7 @@ static void print_version (void)
 {
     OSVERSIONINFOEX ver;
     BOOL ext;
+    int is_win2k3_r2;
 
     ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
     if (!(ext = GetVersionEx ((OSVERSIONINFO *) &ver)))
@@ -111,6 +112,10 @@ static void print_version (void)
              "    dwBuildNumber=%ld\n    PlatformId=%ld\n    szCSDVersion=%s\n",
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
              ver.dwPlatformId, ver.szCSDVersion);
+
+    is_win2k3_r2 = GetSystemMetrics(SM_SERVERR2);
+    if(is_win2k3_r2)
+        xprintf("    R2 build number=%d\n", is_win2k3_r2);
 
     if (!ext) return;
 
