@@ -9,6 +9,11 @@ BITMAP_FONTS  = \
 	coure.fon \
 	couree.fon \
 	courer.fon \
+	coureg.fon \
+	couret.fon \
+	coue1255.fon \
+	coue1256.fon \
+	coue1257.fon \
 	sserife.fon \
 	sserifee.fon \
 	sserifer.fon \
@@ -54,6 +59,21 @@ courier-1250-96-13.fnt: courier.ttf $(SFNT2FNT)
 
 courier-1251-96-13.fnt: courier.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 13 1251 96 128 8
+
+courier-1253-96-13.fnt: courier.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 13 1253 96 128 8
+
+courier-1254-96-13.fnt: courier.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 13 1254 96 128 8
+
+courier-1255-96-13.fnt: courier.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 13 1255 96 128 8
+
+courier-1256-96-13.fnt: courier.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 13 1256 96 128 8
+
+courier-1257-96-13.fnt: courier.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 13 1257 96 128 8
 
 ms_sans_serif-1252-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 13 1252 96 129 5
@@ -126,6 +146,21 @@ couree.fon: courier-1250-96-13.fnt $(FNT2FON)
 
 courer.fon: courier-1251-96-13.fnt $(FNT2FON)
 	$(FNT2FON) courier-1251-96-13.fnt $@
+
+coureg.fon: courier-1253-96-13.fnt $(FNT2FON)
+	$(FNT2FON) courier-1253-96-13.fnt $@
+
+couret.fon: courier-1254-96-13.fnt $(FNT2FON)
+	$(FNT2FON) courier-1254-96-13.fnt $@
+
+coue1255.fon: courier-1255-96-13.fnt $(FNT2FON)
+	$(FNT2FON) courier-1255-96-13.fnt $@
+
+coue1256.fon: courier-1256-96-13.fnt $(FNT2FON)
+	$(FNT2FON) courier-1256-96-13.fnt $@
+
+coue1257.fon: courier-1257-96-13.fnt $(FNT2FON)
+	$(FNT2FON) courier-1257-96-13.fnt $@
 
 sserife.fon: ms_sans_serif-1252-96-13.fnt ms_sans_serif-1252-96-16.fnt ms_sans_serif-1252-96-20.fnt $(FNT2FON)
 	$(FNT2FON) ms_sans_serif-1252-96-13.fnt ms_sans_serif-1252-96-16.fnt ms_sans_serif-1252-96-20.fnt $@
