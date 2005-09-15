@@ -475,7 +475,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
             strcatW(path,cszbs);
         }
 
-        check = load_dynamic_property(package, cszSourceDir,NULL);
+        check = msi_dup_property( package, cszSourceDir );
         if (!check)
             MSI_SetPropertyW(package, cszSourceDir, path);
         HeapFree(GetProcessHeap(), 0, check);
@@ -1355,7 +1355,7 @@ static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
             ERR("failed to load parent folder %s\n", debugstr_w(parent));
     }
 
-    folder->Property = load_dynamic_property( package, dir, NULL );
+    folder->Property = msi_dup_property( package, dir );
 
     msiobj_release(&row->hdr);
 
@@ -1413,7 +1413,7 @@ static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property,
     LPWSTR override;
     MSIFEATURE *feature;
 
-    override = load_dynamic_property(package, property, NULL);
+    override = msi_dup_property( package, property );
     if (!override)
         return FALSE;
  
@@ -1472,7 +1472,7 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
 
     TRACE("Checking Install Level\n");
 
-    level = load_dynamic_property(package,szlevel,NULL);
+    level = msi_dup_property( package, szlevel );
     if (level)
     {
         install_level = atoiW(level);
@@ -1800,7 +1800,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
     MSI_SetPropertyW(package,szCosting,szOne);
     /* set default run level if not set */
-    level = load_dynamic_property(package,szlevel,NULL);
+    level = msi_dup_property( package, szlevel );
     if (!level)
         MSI_SetPropertyW(package,szlevel, szOne);
     HeapFree(GetProcessHeap(),0,level);
@@ -1992,7 +1992,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
         case -1: 
             {
                 static const WCHAR szALLUSER[] = {'A','L','L','U','S','E','R','S',0};
-                LPWSTR all_users = load_dynamic_property(package, szALLUSER, NULL);
+                LPWSTR all_users = msi_dup_property( package, szALLUSER );
                 if (all_users && all_users[0] == '1')
                 {
                     root_key = HKEY_LOCAL_MACHINE;
@@ -2971,16 +2971,16 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         goto end;
 
 
-    buffer = load_dynamic_property(package,INSTALLPROPERTY_PRODUCTNAMEW,NULL);
+    buffer = msi_dup_property( package, INSTALLPROPERTY_PRODUCTNAMEW );
     msi_reg_set_val_str( hukey, INSTALLPROPERTY_PRODUCTNAMEW, buffer );
     HeapFree(GetProcessHeap(),0,buffer);
 
-    buffer = load_dynamic_property(package,szProductLanguage,NULL);
+    buffer = msi_dup_property( package, szProductLanguage );
     langid = atoiW(buffer);
     msi_reg_set_val_dword( hkey, INSTALLPROPERTY_LANGUAGEW, langid );
     HeapFree(GetProcessHeap(),0,buffer);
 
-    buffer = load_dynamic_property(package,szARPProductIcon,NULL);
+    buffer = msi_dup_property( package, szARPProductIcon );
     if (buffer)
     {
         LPWSTR path;
@@ -2989,7 +2989,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     }
     HeapFree(GetProcessHeap(),0,buffer);
 
-    buffer = load_dynamic_property(package,szProductVersion,NULL);
+    buffer = msi_dup_property( package, szProductVersion );
     if (buffer)
     {
         DWORD verdword = build_version_dword(buffer);
@@ -3081,10 +3081,10 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
     {
         folder = resolve_folder(package, dirproperty, FALSE, FALSE, NULL);
         if (!folder)
-            folder = load_dynamic_property(package,dirproperty,NULL);
+            folder = msi_dup_property( package, dirproperty );
     }
     else
-        folder = load_dynamic_property(package, szWindowsFolder, NULL);
+        folder = msi_dup_property( package, szWindowsFolder );
 
     if (!folder)
     {
@@ -3402,7 +3402,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 
     for( i=0; szPropKeys[i][0]; i++ )
     {
-        buffer = load_dynamic_property( package, szPropKeys[i], NULL);
+        buffer = msi_dup_property( package, szPropKeys[i] );
         msi_reg_set_val_str( hkey, szRegKeys[i], buffer );
         HeapFree(GetProcessHeap(),0,buffer);
         i++;
@@ -3459,11 +3459,11 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     msi_reg_set_val_str( hkey, INSTALLPROPERTY_INSTALLDATEW, buffer );
     HeapFree(GetProcessHeap(),0,buffer);
    
-    buffer = load_dynamic_property(package,szProductLanguage,NULL);
+    buffer = msi_dup_property( package, szProductLanguage );
     msi_reg_set_val_dword( hkey, INSTALLPROPERTY_LANGUAGEW, atoiW(buffer) );
     HeapFree(GetProcessHeap(),1,buffer);
 
-    buffer = load_dynamic_property(package,szProductVersion,NULL);
+    buffer = msi_dup_property( package, szProductVersion );
     if (buffer)
     {
         DWORD verdword = build_version_dword(buffer);
@@ -3475,7 +3475,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     HeapFree(GetProcessHeap(),0,buffer);
     
     /* Handle Upgrade Codes */
-    upgrade_code = load_dynamic_property(package,szUpgradeCode, NULL);
+    upgrade_code = msi_dup_property( package, szUpgradeCode );
     if (upgrade_code)
     {
         HKEY hkey2;
@@ -3660,7 +3660,7 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    productid = load_dynamic_property(package,INSTALLPROPERTY_PRODUCTIDW, &rc);
+    productid = msi_dup_property( package, INSTALLPROPERTY_PRODUCTIDW );
     if (!productid)
         return ERROR_SUCCESS;
 
@@ -3671,7 +3671,7 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     i = 0;
     while (szPropKeys[i][0]!=0)
     {
-        buffer = load_dynamic_property( package, szPropKeys[i], NULL );
+        buffer = msi_dup_property( package, szPropKeys[i] );
         msi_reg_set_val_str( hkey, szRegKeys[i], buffer );
         i++;
     }
@@ -3690,7 +3690,7 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
     static const WCHAR szTwo[] = {'2',0};
     UINT rc;
     LPWSTR level;
-    level = load_dynamic_property(package,szUILevel,NULL);
+    level = msi_dup_property( package, szUILevel );
 
     MSI_SetPropertyW(package,szUILevel,szTwo);
     package->script->InWhatSequence |= SEQUENCE_EXEC;

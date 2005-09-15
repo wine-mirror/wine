@@ -628,7 +628,7 @@ static LPWSTR msi_get_checkbox_value( msi_dialog *dialog, LPCWSTR prop )
     if (ret)
         return ret;
 
-    ret = load_dynamic_property(dialog->package, prop, NULL);
+    ret = msi_dup_property( dialog->package, prop );
     if( ret && !ret[0] )
     {
         HeapFree( GetProcessHeap(), 0, ret );
@@ -799,7 +799,7 @@ static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
     prop = MSI_RecordGetString( rec, 9 );
     if( prop )
         control->property = strdupW( prop );
-    val = load_dynamic_property( dialog->package, control->property, NULL );
+    val = msi_dup_property( dialog->package, control->property );
     SetWindowTextW( control->hwnd, val );
     HeapFree( GetProcessHeap(), 0, val );
     return ERROR_SUCCESS;
@@ -1041,7 +1041,7 @@ static UINT msi_dialog_maskedit_control( msi_dialog *dialog, MSIRECORD *rec )
     msi_control *control;
     LPCWSTR prop;
 
-    mask = load_dynamic_property( dialog->package, pidt, NULL );
+    mask = msi_dup_property( dialog->package, pidt );
     if( !mask )
     {
         ERR("PIDTemplate is empty\n");
@@ -1082,7 +1082,7 @@ static UINT msi_dialog_maskedit_control( msi_dialog *dialog, MSIRECORD *rec )
 
     if( prop )
     {
-        val = load_dynamic_property( dialog->package, prop, NULL );
+        val = msi_dup_property( dialog->package, prop );
         if( val )
         {
             msi_maskedit_set_text( info, val );
@@ -1448,7 +1448,7 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
     dialog->attributes = MSI_RecordGetInteger( rec, 6 );
     text = MSI_RecordGetString( rec, 7 );
 
-    dialog->default_font = load_dynamic_property( dialog->package, df, NULL );
+    dialog->default_font = msi_dup_property( dialog->package, df );
 
     deformat_string( dialog->package, text, &title );
     SetWindowTextW( hwnd, title );

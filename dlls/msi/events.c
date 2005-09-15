@@ -235,7 +235,7 @@ static UINT ControlEvent_AddSource(MSIPACKAGE* package, LPCWSTR argument,
 static UINT ControlEvent_SetTargetPath(MSIPACKAGE* package, LPCWSTR argument, 
                                    msi_dialog* dialog)
 {
-    LPWSTR path = load_dynamic_property(package,argument, NULL);
+    LPWSTR path = msi_dup_property( package, argument );
     UINT r;
     /* failure to set the path halts the executing of control events */
     r = MSI_SetTargetPathW(package, argument, path);

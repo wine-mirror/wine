@@ -68,7 +68,7 @@ static void append_productcode(MSIPACKAGE* package, LPCWSTR action_property,
     DWORD len;
     static const WCHAR separator[] = {';',0};
 
-    prop = load_dynamic_property(package, action_property, NULL);
+    prop = msi_dup_property(package, action_property );
     if (prop)
         len = strlenW(prop);
     else

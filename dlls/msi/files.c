@@ -529,7 +529,7 @@ static UINT ready_media_for_file(MSIPACKAGE *package, MSIFILE *file,
             last_path = strdupW(source);
             *(strrchrW(last_path,'\\')+1)=0;
 
-            path = load_dynamic_property(package,cszSourceDir,NULL);
+            path = msi_dup_property( package, cszSourceDir );
 
             MsiSourceListAddMediaDiskW(package->ProductCode, NULL, 
                 MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, count,
@@ -837,7 +837,7 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
         if (!dest_path)
         {
             /* try a Property */
-            dest_path = load_dynamic_property(package, destkey, NULL);
+            dest_path = msi_dup_property( package, destkey );
             if (!dest_path)
             {
                 FIXME("Unable to get destination folder, try AppSearch properties\n");

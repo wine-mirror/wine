@@ -678,7 +678,7 @@ LANGID WINAPI MsiGetLanguage(MSIHANDLE hInstall)
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    buffer = load_dynamic_property(package,szProductLanguage,NULL);
+    buffer = msi_dup_property( package, szProductLanguage );
     langid = atoiW(buffer);
 
     HeapFree(GetProcessHeap(),0,buffer);

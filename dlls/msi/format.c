@@ -219,15 +219,14 @@ static LPWSTR deformat_index(MSIRECORD* record, LPCWSTR key, DWORD* chunk )
 
 static LPWSTR deformat_property(MSIPACKAGE* package, LPCWSTR key, DWORD* chunk)
 {
-    UINT rc;
     LPWSTR value;
 
     if (!package)
         return NULL;
 
-    value = load_dynamic_property(package,key, &rc);
+    value = msi_dup_property( package, key );
 
-    if (rc == ERROR_SUCCESS)
+    if (value)
         *chunk = (strlenW(value)) * sizeof(WCHAR);
 
     return value;

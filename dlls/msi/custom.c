@@ -184,7 +184,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
             static const WCHAR szActionData[] = {
             'C','u','s','t','o','m','A','c','t','i','o','n','D','a','t','a',0};
             static const WCHAR szBlank[] = {0};
-            LPWSTR actiondata = load_dynamic_property(package,action,NULL);
+            LPWSTR actiondata = msi_dup_property( package, action );
             if (actiondata)
                 MSI_SetPropertyW(package,szActionData,actiondata);
             else
@@ -667,13 +667,12 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
     WCHAR *deformated;
     WCHAR *cmd;
     INT len;
-    UINT prc;
     static const WCHAR spc[] = {' ',0};
 
     memset(&si,0,sizeof(STARTUPINFOW));
     memset(&info,0,sizeof(PROCESS_INFORMATION));
 
-    prop = load_dynamic_property(package,source,&prc);
+    prop = msi_dup_property( package, source );
     if (!prop)
         return ERROR_SUCCESS;
 
@@ -707,10 +706,7 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
         return ERROR_SUCCESS;
     }
 
-    prc = process_handle(package, type, info.hThread, info.hProcess, action, 
-                         NULL);
-
-    return prc;
+    return process_handle(package, type, info.hThread, info.hProcess, action, NULL);
 }
 
 static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,

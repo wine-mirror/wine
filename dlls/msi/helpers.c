@@ -96,7 +96,7 @@ UINT build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name,
     static const WCHAR szFolder[] =
         {'A','p','p','D','a','t','a','F','o','l','d','e','r',0};
 
-    SystemFolder = load_dynamic_property(package,szFolder,NULL);
+    SystemFolder = msi_dup_property( package, szFolder );
 
     dest = build_directory_name(3, SystemFolder, szInstaller, package->ProductCode);
 
@@ -141,7 +141,7 @@ WCHAR *load_dynamic_stringW(MSIRECORD *row, INT index)
     return ret;
 }
 
-LPWSTR load_dynamic_property(MSIPACKAGE *package, LPCWSTR prop, UINT* rc)
+LPWSTR msi_dup_property(MSIPACKAGE *package, LPCWSTR prop)
 {
     DWORD sz = 0;
     LPWSTR str;
@@ -149,11 +149,8 @@ LPWSTR load_dynamic_property(MSIPACKAGE *package, LPCWSTR prop, UINT* rc)
 
     r = MSI_GetPropertyW(package, prop, NULL, &sz);
     if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA)
-    {
-        if (rc)
-            *rc = r;
         return NULL;
-    }
+
     sz++;
     str = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
     r = MSI_GetPropertyW(package, prop, str, &sz);
@@ -162,8 +159,6 @@ LPWSTR load_dynamic_property(MSIPACKAGE *package, LPCWSTR prop, UINT* rc)
         HeapFree(GetProcessHeap(),0,str);
         str = NULL;
     }
-    if (rc)
-        *rc = r;
     return str;
 }
 
@@ -264,10 +259,10 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
         if (!source)
         {
             LPWSTR check_path;
-            check_path = load_dynamic_property(package,cszTargetDir,NULL);
+            check_path = msi_dup_property( package, cszTargetDir );
             if (!check_path)
             {
-                check_path = load_dynamic_property(package,cszRootDrive,NULL);
+                check_path = msi_dup_property( package, cszRootDrive );
                 if (set_prop)
                     MSI_SetPropertyW(package,cszTargetDir,check_path);
             }
@@ -280,10 +275,10 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
         }
         else
         {
-            path = load_dynamic_property(package,cszSourceDir,NULL);
+            path = msi_dup_property( package, cszSourceDir );
             if (!path)
             {
-                path = load_dynamic_property(package,cszDatabase,NULL);
+                path = msi_dup_property( package, cszDatabase );
                 if (path)
                 {
                     p = strrchrW(path,'\\');
