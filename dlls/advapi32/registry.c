@@ -2223,20 +2223,20 @@ LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
         /* Use the local machine name */
         ret = RegOpenKeyW( hKey, NULL, phkResult );
     }
-    else if (lpMachineName[0] != '\\' || lpMachineName[1] != '\\')
-        ret = ERROR_BAD_NETPATH;
-    else
-    {
+    else {
         WCHAR compName[MAX_COMPUTERNAME_LENGTH + 1];
         DWORD len = sizeof(compName) / sizeof(WCHAR);
 
+        /* MSDN says lpMachineName must start with \\ : not so */
+        if( lpMachineName[0] == '\\' &&  lpMachineName[1] == '\\')
+            lpMachineName += 2;
         if (GetComputerNameW(compName, &len))
         {
-            if (!strcmpiW(lpMachineName + 2, compName))
+            if (!strcmpiW(lpMachineName, compName))
                 ret = RegOpenKeyW(hKey, NULL, phkResult);
             else
             {
-                FIXME("Cannot connect to %s\n",debugstr_w(lpMachineName));
+                FIXME("Connect to %s is not supported.\n",debugstr_w(lpMachineName));
                 ret = ERROR_BAD_NETPATH;
             }
         }

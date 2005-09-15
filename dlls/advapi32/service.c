@@ -1000,6 +1000,7 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
 
 error:
     sc_handle_free( &manager->hdr );
+    SetLastError( r);
     return NULL;
 }
 

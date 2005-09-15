@@ -24,6 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "winsvc.h"
 #include "winerror.h"
 
 static HKEY hkey_main;
@@ -593,6 +594,32 @@ static BOOL set_privileges(LPCSTR privilege, BOOL set)
     return TRUE;
 }
 
+/* tests that show that RegConnectRegistry and 
+   OpenSCManager accept computer names without the
+   \\ prefix (what MSDN says).   */
+static void test_regconnectregistry( void)
+{
+    CHAR compName[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD len = sizeof(compName) ;
+    BOOL ret;
+    LONG retl;
+    HKEY hkey;
+    SC_HANDLE schnd;
+
+    ret = GetComputerNameA(compName, &len);
+    ok( ret, "GetComputerName failed err = %ld\n", GetLastError());
+    if( !ret) return;
+
+    retl = RegConnectRegistryA( compName, HKEY_LOCAL_MACHINE, &hkey);
+    ok( !retl, "RegConnectRegistryA failed err = %ld\n", retl);
+    if( !retl) RegCloseKey( hkey);
+
+    schnd = OpenSCManagerA( compName, NULL, GENERIC_READ); 
+    ok( schnd != NULL, "OpenSCManagerA failed err = %ld\n", GetLastError());
+    CloseServiceHandle( schnd);
+
+}
+
 START_TEST(registry)
 {
     setup_main_key();
@@ -619,4 +646,6 @@ START_TEST(registry)
 
     /* cleanup */
     delete_key( hkey_main );
+    
+    test_regconnectregistry();
 }
