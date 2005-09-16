@@ -74,10 +74,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(server);
 /* data structure used to pass an fd with sendmsg/recvmsg */
 struct cmsg_fd
 {
-    int len;   /* size of structure */
-    int level; /* SOL_SOCKET */
-    int type;  /* SCM_RIGHTS */
-    int fd;    /* fd to pass */
+    struct
+    {
+        size_t len;   /* size of structure */
+        int    level; /* SOL_SOCKET */
+        int    type;  /* SCM_RIGHTS */
+    } header;
+    int fd;          /* fd to pass */
 };
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
@@ -339,12 +342,12 @@ void wine_server_send_fd( int fd )
     msghdr.msg_accrights    = (void *)&fd;
     msghdr.msg_accrightslen = sizeof(fd);
 #else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
-    cmsg.len   = sizeof(cmsg);
-    cmsg.level = SOL_SOCKET;
-    cmsg.type  = SCM_RIGHTS;
-    cmsg.fd    = fd;
+    cmsg.header.len   = sizeof(cmsg.header) + sizeof(fd);
+    cmsg.header.level = SOL_SOCKET;
+    cmsg.header.type  = SCM_RIGHTS;
+    cmsg.fd           = fd;
     msghdr.msg_control    = &cmsg;
-    msghdr.msg_controllen = sizeof(cmsg);
+    msghdr.msg_controllen = sizeof(cmsg.header) + sizeof(fd);
     msghdr.msg_flags      = 0;
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
@@ -382,12 +385,12 @@ static int receive_fd( obj_handle_t *handle )
     struct msghdr msghdr;
     struct cmsg_fd cmsg;
 
-    cmsg.len   = sizeof(cmsg);
-    cmsg.level = SOL_SOCKET;
-    cmsg.type  = SCM_RIGHTS;
-    cmsg.fd    = -1;
+    cmsg.header.len   = sizeof(cmsg.header) + sizeof(fd);
+    cmsg.header.level = SOL_SOCKET;
+    cmsg.header.type  = SCM_RIGHTS;
+    cmsg.fd           = -1;
     msghdr.msg_control    = &cmsg;
-    msghdr.msg_controllen = sizeof(cmsg);
+    msghdr.msg_controllen = sizeof(cmsg.header) + sizeof(fd);
     msghdr.msg_flags      = 0;
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 

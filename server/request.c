@@ -122,12 +122,15 @@ static struct msghdr msghdr;
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 struct cmsg_fd
 {
-    int len;   /* size of structure */
-    int level; /* SOL_SOCKET */
-    int type;  /* SCM_RIGHTS */
-    int fd;    /* fd to pass */
+    struct
+    {
+        size_t len;   /* size of structure */
+        int    level; /* SOL_SOCKET */
+        int    type;  /* SCM_RIGHTS */
+    } header;
+    int fd;           /* fd to pass */
 };
-static struct cmsg_fd cmsg = { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS, -1 };
+static struct cmsg_fd cmsg = { { sizeof(cmsg.header) + sizeof(cmsg.fd), SOL_SOCKET, SCM_RIGHTS }, -1 };
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
 /* complain about a protocol error and terminate the client connection */
@@ -350,7 +353,7 @@ int receive_fd( struct process *process )
     msghdr.msg_accrights = (void *)&fd;
 #else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
     msghdr.msg_control    = &cmsg;
-    msghdr.msg_controllen = sizeof(cmsg);
+    msghdr.msg_controllen = sizeof(cmsg.header) + sizeof(fd);
     cmsg.fd = -1;
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
@@ -420,7 +423,7 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
     msghdr.msg_accrights = (void *)&fd;
 #else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
     msghdr.msg_control    = &cmsg;
-    msghdr.msg_controllen = sizeof(cmsg);
+    msghdr.msg_controllen = sizeof(cmsg.header) + sizeof(fd);
     cmsg.fd = fd;
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
