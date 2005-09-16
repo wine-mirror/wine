@@ -619,7 +619,6 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
 
     switch(target_cpu)
     {
-    case CPU_x86_64:  /* FIXME */
     case CPU_x86:
         if (!UsePIC)
         {
@@ -670,6 +669,9 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
                          table, pos, name );
             }
         }
+        break;
+    case CPU_x86_64:
+        fprintf( outfile, "\tjmpq *%s+%d(%%rip)\n", table, pos );
         break;
     case CPU_SPARC:
         if ( !UsePIC )
@@ -956,7 +958,6 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, "%s:\n", asm_name("__wine_delay_load_asm") );
     switch(target_cpu)
     {
-    case CPU_x86_64:  /* FIXME */
     case CPU_x86:
         fprintf( outfile, "\tpushl %%ecx\n" );
         fprintf( outfile, "\tpushl %%edx\n" );
@@ -965,6 +966,15 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
         fprintf( outfile, "\tpopl %%edx\n" );
         fprintf( outfile, "\tpopl %%ecx\n" );
         fprintf( outfile, "\tjmp *%%eax\n" );
+        break;
+    case CPU_x86_64:
+        fprintf( outfile, "\tpushq %%rdi\n" );
+        fprintf( outfile, "\tsubq $8,%%rsp\n" );
+        fprintf( outfile, "\tmovq %%r11,%%rdi\n" );
+        fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_delay_load") );
+        fprintf( outfile, "\taddq $8,%%rsp\n" );
+        fprintf( outfile, "\tpopq %%rdi\n" );
+        fprintf( outfile, "\tjmp *%%rax\n" );
         break;
     case CPU_SPARC:
         fprintf( outfile, "\tsave %%sp, -96, %%sp\n" );
@@ -1041,9 +1051,12 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
             fprintf( outfile, ".L__wine_delay_imp_%d_%s:\n", i, name );
             switch(target_cpu)
             {
-            case CPU_x86_64:  /* FIXME */
             case CPU_x86:
                 fprintf( outfile, "\tmovl $%d, %%eax\n", (idx << 16) | j );
+                fprintf( outfile, "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
+                break;
+            case CPU_x86_64:
+                fprintf( outfile, "\tmovq $%d,%%r11\n", (idx << 16) | j );
                 fprintf( outfile, "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_SPARC:
