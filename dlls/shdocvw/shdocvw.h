@@ -64,6 +64,8 @@ typedef struct {
     const IConnectionPointContainerVtbl *lpConnectionPointContainerVtbl;
 
     LONG ref;
+
+    IOleClientSite *client;
 } WebBrowser;
 
 #define WEBBROWSER(x)   ((IWebBrowser*)                 &(x)->lpWebBrowser2Vtbl)

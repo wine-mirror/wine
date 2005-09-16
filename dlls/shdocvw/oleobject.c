@@ -56,15 +56,36 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
 static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE pClientSite)
 {
     WebBrowser *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pClientSite);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pClientSite);
+
+    if(This->client == pClientSite)
+        return S_OK;
+
+    if(This->client)
+        IOleClientSite_Release(This->client);
+
+    if(pClientSite)
+        IOleClientSite_AddRef(pClientSite);
+
+    This->client = pClientSite;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, LPOLECLIENTSITE *ppClientSite)
 {
     WebBrowser *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, ppClientSite);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppClientSite);
+
+    if(!ppClientSite)
+        return E_INVALIDARG;
+
+    if(This->client)
+        IOleClientSite_AddRef(This->client);
+    *ppClientSite = This->client;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szContainerApp,
@@ -427,4 +448,6 @@ void WebBrowser_OleObject_Init(WebBrowser *This)
     This->lpOleObjectVtbl        = &OleObjectVtbl;
     This->lpOleInPlaceObjectVtbl = &OleInPlaceObjectVtbl;
     This->lpOleControlVtbl       = &OleControlVtbl;
+
+    This->client = NULL;
 }
