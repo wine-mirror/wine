@@ -1284,23 +1284,15 @@ static const struct nls_update_font_list
     const char *courier, *serif, *small, *sserif;
 } nls_update_font_list[] =
 {
-    /* Arabic */
-    { 1256, 720, "vgaoem.fon", "vgaf1256.fon", "vgas1256.fon",
-      "coue1256.fon", "sere1256.fon", "smae1256.fon", "ssee1256.fon",
-    },
-    /* Baltic */
-    { 1257, 775, "vga775.fon", "vgaf1257.fon", "vgas1257.fon",
-      "coue1257.fon", "sere1257.fon", "smae1257.fon", "ssee1257.fon",
-    },
-    /* Chinese Simplified */
-    { 936, 936, "vga936.fon", "svgafix.fon", "svgasys.fon",
+    /* Latin 1 (United States) */
+    { 1252, 437, "vgaoem.fon", "vgafix.fon", "vgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
     },
-    /* Chinese Traditional */
-    { 950, 950, "vga950.fon", "cvgafix.fon", "cvgasys.fon",
+    /* Latin 1 (Multilingual) */
+    { 1252, 850, "vga850.fon", "vgafix.fon", "vgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
     },
-    /* Central European */
+    /* Eastern Europe */
     { 1250, 852, "vga852.fon", "vgafixe.fon", "vgasyse.fon",
       "couree.fon", "serifee.fon", "smallee.fon", "sserifee.fon",
     },
@@ -1312,36 +1304,44 @@ static const struct nls_update_font_list
     { 1253, 737, "vga869.fon", "vgafixg.fon", "vgasysg.fon",
       "coureg.fon", "serifeg.fon", "smalleg.fon", "sserifeg.fon",
     },
+    /* Turkish */
+    { 1254, 857, "vga857.fon", "vgafixt.fon", "vgasyst.fon",
+      "couret.fon", "serifet.fon", "smallet.fon", "sserifet.fon",
+    },
     /* Hebrew */
     { 1255, 862, "vgaoem.fon", "vgaf1255.fon", "vgas1255.fon",
       "coue1255.fon", "sere1255.fon", "smae1255.fon", "ssee1255.fon",
     },
-    /* "Japanese */
-    { 932, 932, "vga932.fon", "jvgafix.fon", "jvgasys.fon",
-      "coure.fon", "serife.fon", "jsmalle.fon", "sserife.fon",
+    /* Arabic */
+    { 1256, 720, "vgaoem.fon", "vgaf1256.fon", "vgas1256.fon",
+      "coue1256.fon", "sere1256.fon", "smae1256.fon", "ssee1256.fon",
     },
-    /* Korean */
-    { 949, 949, "vga949.fon", "hvgafix.fon", "hvgasys.fon",
+    /* Baltic */
+    { 1257, 775, "vga775.fon", "vgaf1257.fon", "vgas1257.fon",
+      "coue1257.fon", "sere1257.fon", "smae1257.fon", "ssee1257.fon",
+    },
+    /* Vietnamese */
+    { 1258, 1258, "vga850.fon", "vgafix.fon", "vgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
     },
     /* Thai */
     { 874, 874, "vga850.fon", "vgaf874.fon", "vgas874.fon",
       "coure.fon", "serife.fon", "smalle.fon", "ssee874.fon",
     },
-    /* Turkish */
-    { 1254, 857, "vga857.fon", "vgafixt.fon", "vgasyst.fon",
-      "couret.fon", "serifet.fon", "smallet.fon", "sserifet.fon",
+    /* Japanese */
+    { 932, 932, "vga932.fon", "jvgafix.fon", "jvgasys.fon",
+      "coure.fon", "serife.fon", "jsmalle.fon", "sserife.fon",
     },
-    /* Vietnamese */
-    { 1258, 1258, "vga850.fon", "vgafix.fon", "vgasys.fon",
+    /* Chinese Simplified */
+    { 936, 936, "vga936.fon", "svgafix.fon", "svgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
     },
-    /* English (United States) */
-    { 1252, 437, "vgaoem.fon", "vgafix.fon", "vgasys.fon",
+    /* Korean */
+    { 949, 949, "vga949.fon", "hvgafix.fon", "hvgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
     },
-    /* English (United Kingdom) */
-    { 1252, 850, "vga850.fon", "vgafix.fon", "vgasys.fon",
+    /* Chinese Traditional */
+    { 950, 950, "vga950.fon", "cvgafix.fon", "cvgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
     }
 };
