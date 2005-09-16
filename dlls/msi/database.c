@@ -157,9 +157,11 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     db->mode = szMode;
     list_init( &db->tables );
 
-    ret = load_string_table( db );
-    if( ret != ERROR_SUCCESS )
+    db->strings = load_string_table( stg );
+    if( !db->strings )
         goto end;
+
+    ret = ERROR_SUCCESS;
 
     msiobj_addref( &db->hdr );
     IStorage_AddRef( stg );

@@ -276,7 +276,7 @@ extern void free_table( MSIDATABASE *db, MSITABLE *table );
 extern void free_cached_tables( MSIDATABASE *db );
 extern UINT find_cached_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **table);
 extern UINT get_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **table);
-extern UINT load_string_table( MSIDATABASE *db );
+extern string_table *load_string_table( IStorage *stg );
 extern UINT MSI_CommitTables( MSIDATABASE *db );
 extern HRESULT init_string_table( IStorage *stg );
 

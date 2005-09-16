@@ -684,27 +684,22 @@ HRESULT init_string_table( IStorage *stg )
     return r;
 }
 
-UINT load_string_table( MSIDATABASE *db )
+string_table *load_string_table( IStorage *stg )
 {
+    string_table *st = NULL;
     CHAR *data;
     USHORT *pool;
-    UINT r, ret = ERROR_FUNCTION_FAILED, datasize = 0, poolsize = 0, codepage;
+    UINT r, datasize = 0, poolsize = 0, codepage;
     DWORD i, count, offset, len, n;
     static const WCHAR szStringData[] = {
         '_','S','t','r','i','n','g','D','a','t','a',0 };
     static const WCHAR szStringPool[] = {
         '_','S','t','r','i','n','g','P','o','o','l',0 };
 
-    if( db->strings )
-    {
-        msi_destroy_stringtable( db->strings );
-        db->strings = NULL;
-    }
-
-    r = read_stream_data( db->storage, szStringPool, &pool, &poolsize );
+    r = read_stream_data( stg, szStringPool, &pool, &poolsize );
     if( r != ERROR_SUCCESS)
         goto end;
-    r = read_stream_data( db->storage, szStringData, (USHORT**)&data, &datasize );
+    r = read_stream_data( stg, szStringData, (USHORT**)&data, &datasize );
     if( r != ERROR_SUCCESS)
         goto end;
 
@@ -713,7 +708,7 @@ UINT load_string_table( MSIDATABASE *db )
         codepage = pool[0] | ( pool[1] << 16 );
     else
         codepage = CP_ACP;
-    db->strings = msi_init_stringtable( count, codepage );
+    st = msi_init_stringtable( count, codepage );
 
     offset = 0;
     n = 1;
@@ -738,7 +733,7 @@ UINT load_string_table( MSIDATABASE *db )
         /* don't add the high word of a string's length as a string */
         if ( len || !pool[i*2+1] )
         {
-            r = msi_addstring( db->strings, n, data+offset, len, pool[i*2+1] );
+            r = msi_addstring( st, n, data+offset, len, pool[i*2+1] );
             if( r != n )
                 ERR("Failed to add string %ld\n", n );
             n++;
@@ -752,13 +747,11 @@ UINT load_string_table( MSIDATABASE *db )
 
     TRACE("Loaded %ld strings\n", count);
 
-    ret = ERROR_SUCCESS;
-
 end:
     HeapFree( GetProcessHeap(), 0, pool );
     HeapFree( GetProcessHeap(), 0, data );
 
-    return ret;
+    return st;
 }
 
 static UINT save_string_table( MSIDATABASE *db )
@@ -806,7 +799,7 @@ static UINT save_string_table( MSIDATABASE *db )
         }
         if( sz && (sz < (datasize - used ) ) )
             sz--;
-        TRACE("adding %u bytes %s\n", sz, data+used );
+        TRACE("adding %u bytes %s\n", sz, debugstr_a(data+used) );
         pool[ i*2 ] = sz;
         pool[ i*2 + 1 ] = msi_id_refcount( db->strings, i );
         used += sz;
