@@ -3405,7 +3405,6 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         buffer = msi_dup_property( package, szPropKeys[i] );
         msi_reg_set_val_str( hkey, szRegKeys[i], buffer );
         HeapFree(GetProcessHeap(),0,buffer);
-        i++;
     }
 
     msi_reg_set_val_dword( hkey, szWindowsInstaller, 1 );
@@ -3668,12 +3667,11 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    i = 0;
-    while (szPropKeys[i][0]!=0)
+    for( i = 0; szPropKeys[i][0]; i++ )
     {
         buffer = msi_dup_property( package, szPropKeys[i] );
         msi_reg_set_val_str( hkey, szRegKeys[i], buffer );
-        i++;
+        HeapFree( GetProcessHeap(), 0, buffer );
     }
 
 end:
