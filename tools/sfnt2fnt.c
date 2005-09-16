@@ -160,7 +160,7 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     il = ascent - (face->glyph->metrics.height >> 6);
 
     /* Hack: Courier has no internal leading, nor do any Chinese fonts */
-    if(!strcmp(face->family_name, "Wine Courier") || enc == 936 || enc == 950)
+    if(!strcmp(face->family_name, "Courier") || enc == 936 || enc == 950)
         il = 0;
 
     first_char = FT_Get_First_Char(face, &gi);
