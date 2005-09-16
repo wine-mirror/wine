@@ -29,6 +29,37 @@
 
 #include "wine/test.h"
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT(func) \
+    ok(expect_ ##func, "unexpected call\n"); \
+    expect_ ## func = FALSE; \
+    called_ ## func = TRUE
+
+#define CHECK_EXPECT2(func) \
+    ok(expect_ ##func, "unexpected call\n"); \
+    called_ ## func = TRUE
+
+#define CHECK_CALLED(func) \
+    ok(called_ ## func, "expected " #func "\n"); \
+    expect_ ## func = called_ ## func = FALSE
+
+DEFINE_EXPECT(GetBindInfo);
+DEFINE_EXPECT(OnStartBinding);
+DEFINE_EXPECT(OnProgress_FINDINGRESOURCE);
+DEFINE_EXPECT(OnProgress_CONNECTING);
+DEFINE_EXPECT(OnProgress_SENDINGREQUEST);
+DEFINE_EXPECT(OnProgress_MIMETYPEAVAILABLE);
+DEFINE_EXPECT(OnProgress_BEGINDOWNLOADDATA);
+DEFINE_EXPECT(OnProgress_DOWNLOADINGDATA);
+DEFINE_EXPECT(OnProgress_ENDDOWNLOADDATA);
+DEFINE_EXPECT(OnStopBinding);
+DEFINE_EXPECT(OnDataAvailable);
+
 static const WCHAR TEST_URL_1[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','\0'};
 static const WCHAR TEST_PART_URL_1[] = {'/','t','e','s','t','/','\0'};
 
@@ -84,11 +115,14 @@ static ULONG WINAPI statusclb_Release(IBindStatusCallback *iface)
     return ref;
 }
 
-static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallback *iface, DWORD dwReserved, IBinding *pib)
+static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallback *iface, DWORD dwReserved,
+        IBinding *pib)
 {
     statusclb *This = (statusclb*)iface;
     HRESULT hres;
     IMoniker *mon;
+
+    CHECK_EXPECT(OnStartBinding);
 
     This->pbind = pib;
     ok(pib != NULL, "pib should not be NULL\n");
@@ -105,23 +139,52 @@ static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallback *iface, DWORD
 
 static HRESULT WINAPI statusclb_GetPriority(IBindStatusCallback *iface, LONG *pnPriority)
 {
+    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI statusclb_OnLowResource(IBindStatusCallback *iface, DWORD reserved)
 {
+    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulProgress, ULONG ulProgressMax,
-                           ULONG ulStatusCode, LPCWSTR szStatusText)
+static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulProgress,
+        ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
 {
+    switch(ulStatusCode) {
+    case BINDSTATUS_FINDINGRESOURCE:
+        CHECK_EXPECT(OnProgress_FINDINGRESOURCE);
+        break;
+    case BINDSTATUS_CONNECTING:
+        CHECK_EXPECT(OnProgress_CONNECTING);
+        break;
+    case BINDSTATUS_SENDINGREQUEST:
+        CHECK_EXPECT(OnProgress_SENDINGREQUEST);
+        break;
+    case BINDSTATUS_MIMETYPEAVAILABLE:
+        CHECK_EXPECT(OnProgress_MIMETYPEAVAILABLE);
+        break;
+    case BINDSTATUS_BEGINDOWNLOADDATA:
+        CHECK_EXPECT(OnProgress_BEGINDOWNLOADDATA);
+        break;
+    case BINDSTATUS_DOWNLOADINGDATA:
+        CHECK_EXPECT2(OnProgress_DOWNLOADINGDATA);
+        break;
+    case BINDSTATUS_ENDDOWNLOADDATA:
+        CHECK_EXPECT(OnProgress_ENDDOWNLOADDATA);
+        break;
+    default:
+        todo_wine { ok(0, "unexpexted code %ld\n", ulStatusCode); }
+    };
     return S_OK;
 }
 
 static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallback *iface, HRESULT hresult, LPCWSTR szError)
 {
     statusclb *This = (statusclb*)iface;
+
+    CHECK_EXPECT(OnStopBinding);
 
     ok(SUCCEEDED(hresult), "Download failed: %08lx\n", hresult);
     ok(szError == NULL, "szError should be NULL\n");
@@ -138,6 +201,8 @@ static HRESULT WINAPI statusclb_GetBindInfo(IBindStatusCallback *iface, DWORD *g
 {
     DWORD cbSize;
 
+    CHECK_EXPECT(GetBindInfo);
+
     *grfBINDF = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
     cbSize = pbindinfo->cbSize;
     memset(pbindinfo, 0, cbSize);
@@ -153,6 +218,9 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
     HRESULT hres;
     DWORD readed;
     BYTE buf[512];
+
+    CHECK_EXPECT2(OnDataAvailable);
+
     if(!This->pstr) {
         ok(grfBSCF & BSCF_FIRSTDATANOTIFICATION, "pstr should be set when BSCF_FIRSTDATANOTIFICATION\n");
         This->pstr = U(*pstgmed).pstm;
@@ -169,6 +237,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
 
 static HRESULT WINAPI statusclb_OnObjectAvailable(IBindStatusCallback *iface, REFIID riid, IUnknown *punk)
 {
+    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
@@ -334,6 +403,18 @@ static void test_BindToStorage(void)
     ok(SUCCEEDED(hres), "GetDisplayName failed %08lx\n", hres);
     ok(!lstrcmpW(display_name, WINE_ABOUT_URL), "GetDisplayName got wrong name\n");
 
+    SET_EXPECT(GetBindInfo);
+    SET_EXPECT(OnStartBinding);
+    SET_EXPECT(OnProgress_FINDINGRESOURCE);
+    SET_EXPECT(OnProgress_CONNECTING);
+    SET_EXPECT(OnProgress_SENDINGREQUEST);
+    SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
+    SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
+    SET_EXPECT(OnDataAvailable);
+    SET_EXPECT(OnProgress_DOWNLOADINGDATA);
+    SET_EXPECT(OnProgress_ENDDOWNLOADDATA);
+    SET_EXPECT(OnStopBinding);
+
     hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
     ok(SUCCEEDED(hres), "IMoniker_BindToStorage failed: %08lx\n", hres);
     todo_wine {
@@ -351,6 +432,18 @@ static void test_BindToStorage(void)
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+
+    CHECK_CALLED(GetBindInfo);
+    CHECK_CALLED(OnStartBinding);
+    CHECK_CALLED(OnProgress_FINDINGRESOURCE);
+    CHECK_CALLED(OnProgress_CONNECTING);
+    CHECK_CALLED(OnProgress_SENDINGREQUEST);
+    todo_wine { CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE); }
+    CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
+    CHECK_CALLED(OnDataAvailable);
+    CHECK_CALLED(OnProgress_DOWNLOADINGDATA);
+    CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
+    CHECK_CALLED(OnStopBinding);
 
     ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
     ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
