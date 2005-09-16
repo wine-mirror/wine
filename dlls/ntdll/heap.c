@@ -244,7 +244,7 @@ static void HEAP_Dump( HEAP *heap )
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
                 DPRINTF( "%p Used %08lx back=%08lx\n",
-                        pArena, pArena->size & ARENA_SIZE_MASK, *((DWORD *)pArena - 1) );
+                        pArena, pArena->size & ARENA_SIZE_MASK, *((UINT_PTR *)pArena - 1) );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
                 usedSize += pArena->size & ARENA_SIZE_MASK;
@@ -476,7 +476,7 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, SIZE_T size )
         DWORD *pNext = (DWORD *)((char *)ptr + size);
         *pNext |= ARENA_FLAG_PREV_FREE;
         mark_block_initialized( pNext - 1, sizeof( ARENA_FREE * ) );
-        *(ARENA_FREE **)(pNext - 1) = pFree;
+        *((ARENA_FREE **)pNext - 1) = pFree;
     }
 
     /* Last, insert the new block into the free list */
@@ -851,7 +851,7 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
         {
             ERR("Heap %p: arena %p has wrong back ptr %08lx\n",
                 subheap->heap, pArena,
-                *((DWORD *)((char *)(pArena+1) + (pArena->size & ARENA_SIZE_MASK)) - 1));
+                *((UINT_PTR *)((char *)(pArena+1) + (pArena->size & ARENA_SIZE_MASK)) - 1));
             return FALSE;
         }
     }

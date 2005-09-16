@@ -120,15 +120,15 @@ static RTL_CRITICAL_SECTION csVirtual = { &critsect_debug, -1, 0, 0, 0, 0 };
 # define USER_SPACE_LIMIT     ((void *)0x80000000)  /* top of the user address space */
 #else
 static UINT page_shift;
-static UINT page_mask;
 static UINT page_size;
+static UINT_PTR page_mask;
 # define ADDRESS_SPACE_LIMIT  0   /* no limit needed on other platforms */
 # define USER_SPACE_LIMIT     0   /* no limit needed on other platforms */
 #endif  /* __i386__ */
-#define granularity_mask 0xffff  /* Allocation granularity (usually 64k) */
+static const UINT_PTR granularity_mask = 0xffff;  /* Allocation granularity (usually 64k) */
 
 #define ROUND_ADDR(addr,mask) \
-   ((void *)((UINT_PTR)(addr) & ~(mask)))
+   ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
 
 #define ROUND_SIZE(addr,size) \
    (((UINT)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
@@ -1125,13 +1125,14 @@ NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size, BOOL first )
     void *ptr;
     NTSTATUS status;
     struct file_view *view;
-    size_t align_size = page_size;
+    size_t align_size;
     BYTE vprot = VPROT_READ | VPROT_WRITE | VPROT_COMMITTED;
 
     if (first) virtual_init();
 
     *ret = NULL;
     size = ROUND_SIZE( 0, size );
+    align_size = page_size;
     while (align_size < size) align_size *= 2;
 
     for (;;)
