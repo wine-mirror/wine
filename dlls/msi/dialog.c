@@ -56,6 +56,7 @@ struct msi_control_tag
     HBITMAP hBitmap;
     HICON hIcon;
     LPWSTR tabnext;
+    HMODULE hDll;
     WCHAR name[1];
 };
 
@@ -134,7 +135,6 @@ static LRESULT WINAPI MSIRadioGroup_WndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 
 static DWORD uiThreadId;
 static HWND hMsiHiddenWindow;
-static HMODULE hRichedit;
 
 static INT msi_dialog_scale_unit( msi_dialog *dialog, INT val )
 {
@@ -303,6 +303,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     control->value = NULL;
     control->hBitmap = NULL;
     control->hIcon = NULL;
+    control->hDll = NULL;
     control->tabnext = strdupW( MSI_RecordGetString( rec, 11) );
 
     x = MSI_RecordGetInteger( rec, 4 );
@@ -702,10 +703,17 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
     LPCWSTR text;
     EDITSTREAM es;
     DWORD style;
+    HMODULE hRichedit;
+
+    hRichedit = LoadLibraryA("riched20");
 
     style = WS_BORDER | ES_MULTILINE | WS_VSCROLL |
             ES_READONLY | ES_AUTOVSCROLL | WS_TABSTOP;
     control = msi_dialog_add_control( dialog, rec, szRichEdit20W, style );
+    if (!control)
+        return ERROR_FUNCTION_FAILED;
+
+    control->hDll = hRichedit;
 
     text = MSI_RecordGetString( rec, 10 );
     info.string = strdupWtoA( text );
@@ -1903,6 +1911,9 @@ void msi_dialog_destroy( msi_dialog *dialog )
     if( dialog->hwnd )
         ShowWindow( dialog->hwnd, SW_HIDE );
     
+    if( dialog->hwnd )
+        DestroyWindow( dialog->hwnd );
+
     /* destroy the list of controls */
     while( dialog->control_list )
     {
@@ -1917,6 +1928,8 @@ void msi_dialog_destroy( msi_dialog *dialog )
             DestroyIcon( t->hIcon );
         HeapFree( GetProcessHeap(), 0, t->tabnext );
         HeapFree( GetProcessHeap(), 0, t );
+        if (t->hDll)
+            FreeLibrary( t->hDll );
     }
 
     /* destroy the list of fonts */
@@ -1928,9 +1941,6 @@ void msi_dialog_destroy( msi_dialog *dialog )
         HeapFree( GetProcessHeap(), 0, t );
     }
     HeapFree( GetProcessHeap(), 0, dialog->default_font );
-
-    if( dialog->hwnd )
-        DestroyWindow( dialog->hwnd );
 
     msiobj_release( &dialog->package->hdr );
     dialog->package = NULL;
@@ -1966,8 +1976,6 @@ BOOL msi_dialog_register_class( void )
     if( !hMsiHiddenWindow )
         return FALSE;
 
-    hRichedit = LoadLibraryA("riched20");
-
     return TRUE;
 }
 
@@ -1976,5 +1984,4 @@ void msi_dialog_unregister_class( void )
     DestroyWindow( hMsiHiddenWindow );
     UnregisterClassW( szMsiDialogClass, NULL );
     uiThreadId = 0;
-    FreeLibrary( hRichedit );
 }
