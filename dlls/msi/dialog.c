@@ -48,7 +48,7 @@ typedef UINT (*msi_handler)( msi_dialog *, msi_control *, WPARAM );
 
 struct msi_control_tag
 {
-    struct msi_control_tag *next;
+    struct list entry;
     HWND hwnd;
     msi_handler handler;
     LPWSTR property;
@@ -77,7 +77,7 @@ struct msi_dialog_tag
     HWND hwnd;
     LPWSTR default_font;
     msi_font *font_list;
-    msi_control *control_list;
+    struct list controls;
     HWND hWndFocus;
     WCHAR name[1];
 };
@@ -147,7 +147,7 @@ static msi_control *msi_dialog_find_control( msi_dialog *dialog, LPCWSTR name )
 
     if( !name )
         return NULL;
-    for( control = dialog->control_list; control; control = control->next )
+    LIST_FOR_EACH_ENTRY( control, &dialog->controls, msi_control, entry )
         if( !strcmpW( control->name, name ) ) /* FIXME: case sensitive? */
             break;
     return control;
@@ -157,7 +157,7 @@ static msi_control *msi_dialog_find_control_by_hwnd( msi_dialog *dialog, HWND hw
 {
     msi_control *control;
 
-    for( control = dialog->control_list; control; control = control->next )
+    LIST_FOR_EACH_ENTRY( control, &dialog->controls, msi_control, entry )
         if( hwnd == control->hwnd )
             break;
     return control;
@@ -306,8 +306,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     control = HeapAlloc( GetProcessHeap(), 0,
                          sizeof *control + strlenW(name)*sizeof(WCHAR) );
     strcpyW( control->name, name );
-    control->next = dialog->control_list;
-    dialog->control_list = control;
+    list_add_head( &dialog->controls, &control->entry );
     control->handler = NULL;
     control->property = NULL;
     control->value = NULL;
@@ -1418,7 +1417,7 @@ static UINT msi_dialog_set_tab_order( msi_dialog *dialog )
 {
     msi_control *control, *tab_next;
 
-    for( control = dialog->control_list; control; control = control->next )
+    LIST_FOR_EACH_ENTRY( control, &dialog->controls, msi_control, entry )
     {
         tab_next = msi_dialog_find_control( dialog, control->tabnext );
         if( !tab_next )
@@ -1804,6 +1803,7 @@ msi_dialog *msi_dialog_create( MSIPACKAGE* package, LPCWSTR szDialogName,
     dialog->package = package;
     dialog->event_handler = event_handler;
     dialog->finished = 0;
+    list_init( &dialog->controls );
 
     /* verify that the dialog exists */
     rec = msi_get_dialog_record( dialog );
@@ -1929,10 +1929,11 @@ void msi_dialog_destroy( msi_dialog *dialog )
         DestroyWindow( dialog->hwnd );
 
     /* destroy the list of controls */
-    while( dialog->control_list )
+    while( !list_empty( &dialog->controls ) )
     {
-        msi_control *t = dialog->control_list;
-        dialog->control_list = t->next;
+        msi_control *t = LIST_ENTRY( list_head( &dialog->controls ),
+                                     msi_control, entry );
+        list_remove( &t->entry );
         /* leave dialog->hwnd - destroying parent destroys child windows */
         HeapFree( GetProcessHeap(), 0, t->property );
         HeapFree( GetProcessHeap(), 0, t->value );
