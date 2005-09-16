@@ -40,8 +40,8 @@
 @ stub CryptSIPPutSignedDataMsg
 @ stub CryptSIPRemoveSignedDataMsg
 @ stub CryptSIPVerifyIndirectData
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub DriverCleanupPolicy
 @ stub DriverFinalPolicy
 @ stub DriverInitializePolicy
@@ -117,7 +117,7 @@
 @ stdcall WintrustGetRegPolicyFlags(ptr)
 @ stub WintrustLoadFunctionPointers
 @ stub WintrustRemoveActionID
-@ stub WintrustSetRegPolicyFlags
+@ stdcall WintrustSetRegPolicyFlags(long)
 @ stub mscat32DllRegisterServer
 @ stub mscat32DllUnregisterServer
 @ stub mssip32DllRegisterServer

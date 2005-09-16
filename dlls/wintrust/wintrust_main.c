@@ -104,10 +104,37 @@ BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
 }
 
 /***********************************************************************
- *		WintrustAddActionID (WINTRUST.@)
+ *		WintrustGetRegPolicyFlags (WINTRUST.@)
  */
 void WINAPI WintrustGetRegPolicyFlags( DWORD* pdwPolicyFlags )
 {
     FIXME("%p\n", pdwPolicyFlags);
     *pdwPolicyFlags = 0;
+}
+
+/***********************************************************************
+ *		WintrustSetRegPolicyFlags (WINTRUST.@)
+ */
+BOOL WINAPI WintrustSetRegPolicyFlags( DWORD dwPolicyFlags)
+{
+    FIXME("stub: %lx\n", dwPolicyFlags);
+    return TRUE;
+}
+
+/***********************************************************************
+  *             DllRegisterServer (WINTRUST.@)
+  */
+HRESULT WINAPI DllRegisterServer(void)
+{
+     FIXME("stub\n");
+     return S_OK;
+}
+
+/***********************************************************************
+  *             DllUnregisterServer (WINTRUST.@)
+  */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+     FIXME("stub\n");
+     return S_OK;
 }
