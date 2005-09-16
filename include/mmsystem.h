@@ -1515,6 +1515,12 @@ UINT		WINAPI	mixerSetControlDetails(HMIXEROBJ,LPMIXERCONTROLDETAILS,DWORD);
 #define MMIOERR_CANNOTEXPAND    (MMIOERR_BASE + 8)  /* cannot expand file */
 #define MMIOERR_CHUNKNOTFOUND   (MMIOERR_BASE + 9)  /* chunk not found */
 #define MMIOERR_UNBUFFERED      (MMIOERR_BASE + 10) /* file is unbuffered */
+#define MMIOERR_PATHNOTFOUND     (MMIOERR_BASE + 11)
+#define MMIOERR_ACCESSDENIED     (MMIOERR_BASE + 12)
+#define MMIOERR_SHARINGVIOLATION (MMIOERR_BASE + 13)
+#define MMIOERR_NETWORKERROR     (MMIOERR_BASE + 14)
+#define MMIOERR_TOOMANYOPENFILES (MMIOERR_BASE + 15)
+#define MMIOERR_INVALIDFILE      (MMIOERR_BASE + 16)
 
 #define CFSEPCHAR       '+'             /* compound file name separator char. */
 

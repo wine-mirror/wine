@@ -1,6 +1,7 @@
 Makefile
 capture.ok
 mixer.ok
+mmio.ok
 testlist.c
 timer.ok
 wave.ok

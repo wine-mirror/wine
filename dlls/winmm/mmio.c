@@ -1143,7 +1143,6 @@ MMRESULT WINAPI mmioDescend(HMMIO hmmio, LPMMCKINFO lpck,
     FOURCC		srchCkId;
     FOURCC		srchType;
 
-
     TRACE("(%p, %p, %p, %04X);\n", hmmio, lpck, lpckParent, uFlags);
 
     if (lpck == NULL)
@@ -1166,57 +1165,54 @@ MMRESULT WINAPI mmioDescend(HMMIO hmmio, LPMMCKINFO lpck,
      * examples disagree -Marcus,990216.
      */
 
+    srchCkId = 0;
     srchType = 0;
+
     /* find_chunk looks for 'ckid' */
     if (uFlags & MMIO_FINDCHUNK)
 	srchCkId = lpck->ckid;
+
     /* find_riff and find_list look for 'fccType' */
-    if (uFlags & MMIO_FINDLIST) {
+    if (uFlags & MMIO_FINDLIST)
+    {
 	srchCkId = FOURCC_LIST;
-	srchType = lpck->ckid;
+        srchType = lpck->fccType;
     }
-    if (uFlags & MMIO_FINDRIFF) {
+
+    if (uFlags & MMIO_FINDRIFF)
+    {
 	srchCkId = FOURCC_RIFF;
-	srchType = lpck->ckid;
+        srchType = lpck->fccType;
     }
 
-    if (uFlags & (MMIO_FINDCHUNK|MMIO_FINDLIST|MMIO_FINDRIFF)) {
-	TRACE("searching for %.4s.%.4s\n",
-	      (LPSTR)&srchCkId,
-	      srchType?(LPSTR)&srchType:"any ");
+    TRACE("searching for %4.4s.%4.4s\n",
+          (LPCSTR)&srchCkId, srchType ? (LPCSTR)&srchType : "any");
 
-	while (TRUE) {
-	    LONG ix;
+    while (TRUE)
+    {
+        LONG ix;
 
-	    ix = mmioRead(hmmio, (LPSTR)lpck, 3 * sizeof(DWORD));
-	    if (ix < 2*sizeof(DWORD)) {
-		mmioSeek(hmmio, dwOldPos, SEEK_SET);
-		WARN("return ChunkNotFound\n");
-		return MMIOERR_CHUNKNOTFOUND;
-	    }
-	    lpck->dwDataOffset = dwOldPos + 2 * sizeof(DWORD);
-	    TRACE("ckid=%.4s fcc=%.4s cksize=%08lX !\n",
-		  (LPSTR)&lpck->ckid,
-		  srchType?(LPSTR)&lpck->fccType:"<na>",
-		  lpck->cksize);
-	    if ((srchCkId == lpck->ckid) &&
-		(!srchType || (srchType == lpck->fccType))
-		)
-		break;
+        ix = mmioRead(hmmio, (LPSTR)lpck, 3 * sizeof(DWORD));
+        if (ix < 2*sizeof(DWORD))
+        {
+            mmioSeek(hmmio, dwOldPos, SEEK_SET);
+            WARN("return ChunkNotFound\n");
+            return MMIOERR_CHUNKNOTFOUND;
+        }
 
-	    dwOldPos = lpck->dwDataOffset + ((lpck->cksize + 1) & ~1);
-	    mmioSeek(hmmio, dwOldPos, SEEK_SET);
-	}
-    } else {
-	/* FIXME: unverified, does it do this? */
-	/* NB: This part is used by WAVE_mciOpen, among others */
-	if (mmioRead(hmmio, (LPSTR)lpck, 3 * sizeof(DWORD)) < 3 * sizeof(DWORD)) {
-	    mmioSeek(hmmio, dwOldPos, SEEK_SET);
-	    WARN("return ChunkNotFound 2nd\n");
-	    return MMIOERR_CHUNKNOTFOUND;
-	}
-	lpck->dwDataOffset = dwOldPos + 2 * sizeof(DWORD);
+        lpck->dwDataOffset = dwOldPos + 2 * sizeof(DWORD);
+        TRACE("ckid=%4.4s fcc=%4.4s cksize=%08lX !\n",
+              (LPCSTR)&lpck->ckid,
+              srchType ? (LPCSTR)&lpck->fccType:"<na>",
+              lpck->cksize);
+        if ( (!srchCkId || (srchCkId == lpck->ckid)) &&
+             (!srchType || (srchType == lpck->fccType)) )
+            break;
+
+        dwOldPos = lpck->dwDataOffset + ((lpck->cksize + 1) & ~1);
+        mmioSeek(hmmio, dwOldPos, SEEK_SET);
     }
+
     lpck->dwFlags = 0;
     /* If we were looking for RIFF/LIST chunks, the final file position
      * is after the chunkid. If we were just looking for the chunk
