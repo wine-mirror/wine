@@ -17,6 +17,12 @@ BITMAP_FONTS  = \
 	sserife.fon \
 	sserifee.fon \
 	sserifer.fon \
+	sserifeg.fon \
+	sserifet.fon \
+	ssee1255.fon \
+	ssee1256.fon \
+	ssee1257.fon \
+	ssee874.fon \
 	vgasys.fon \
 	vgasyse.fon \
 	vgasysr.fon \
@@ -99,6 +105,60 @@ ms_sans_serif-1251-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 ms_sans_serif-1251-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 20 1251 96 129 8
 
+ms_sans_serif-1253-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 13 1253 96 129 5
+
+ms_sans_serif-1253-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 1253 96 129 7
+
+ms_sans_serif-1253-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 20 1253 96 129 8
+
+ms_sans_serif-1254-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 13 1254 96 129 5
+
+ms_sans_serif-1254-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 1254 96 129 7
+
+ms_sans_serif-1254-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 20 1254 96 129 8
+
+ms_sans_serif-1255-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 13 1255 96 129 5
+
+ms_sans_serif-1255-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 1255 96 129 7
+
+ms_sans_serif-1255-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 20 1255 96 129 8
+
+ms_sans_serif-1256-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 13 1256 96 129 5
+
+ms_sans_serif-1256-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 1256 96 129 7
+
+ms_sans_serif-1256-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 20 1256 96 129 8
+
+ms_sans_serif-1257-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 13 1257 96 129 5
+
+ms_sans_serif-1257-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 1257 96 129 7
+
+ms_sans_serif-1257-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 20 1257 96 129 8
+
+ms_sans_serif-874-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 13 874 96 129 5
+
+ms_sans_serif-874-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 16 874 96 129 7
+
+ms_sans_serif-874-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 20 874 96 129 8
+
 system-1252-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 1252 96 128 7
 
@@ -170,6 +230,24 @@ sserifee.fon: ms_sans_serif-1250-96-13.fnt ms_sans_serif-1250-96-16.fnt $(FNT2FO
 
 sserifer.fon: ms_sans_serif-1251-96-13.fnt ms_sans_serif-1251-96-16.fnt ms_sans_serif-1251-96-20.fnt $(FNT2FON)
 	$(FNT2FON) ms_sans_serif-1251-96-13.fnt ms_sans_serif-1251-96-16.fnt ms_sans_serif-1251-96-20.fnt $@
+
+sserifeg.fon: ms_sans_serif-1253-96-13.fnt ms_sans_serif-1253-96-16.fnt ms_sans_serif-1253-96-20.fnt $(FNT2FON)
+	$(FNT2FON) ms_sans_serif-1253-96-13.fnt ms_sans_serif-1253-96-16.fnt ms_sans_serif-1253-96-20.fnt $@
+
+sserifet.fon: ms_sans_serif-1254-96-13.fnt ms_sans_serif-1254-96-16.fnt ms_sans_serif-1254-96-20.fnt $(FNT2FON)
+	$(FNT2FON) ms_sans_serif-1254-96-13.fnt ms_sans_serif-1254-96-16.fnt ms_sans_serif-1254-96-20.fnt $@
+
+ssee1255.fon: ms_sans_serif-1255-96-13.fnt ms_sans_serif-1255-96-16.fnt ms_sans_serif-1255-96-20.fnt $(FNT2FON)
+	$(FNT2FON) ms_sans_serif-1255-96-13.fnt ms_sans_serif-1255-96-16.fnt ms_sans_serif-1255-96-20.fnt $@
+
+ssee1256.fon: ms_sans_serif-1256-96-13.fnt ms_sans_serif-1256-96-16.fnt ms_sans_serif-1256-96-20.fnt $(FNT2FON)
+	$(FNT2FON) ms_sans_serif-1256-96-13.fnt ms_sans_serif-1256-96-16.fnt ms_sans_serif-1256-96-20.fnt $@
+
+ssee1257.fon: ms_sans_serif-1257-96-13.fnt ms_sans_serif-1257-96-16.fnt ms_sans_serif-1257-96-20.fnt $(FNT2FON)
+	$(FNT2FON) ms_sans_serif-1257-96-13.fnt ms_sans_serif-1257-96-16.fnt ms_sans_serif-1257-96-20.fnt $@
+
+ssee874.fon: ms_sans_serif-874-96-13.fnt ms_sans_serif-874-96-16.fnt ms_sans_serif-874-96-20.fnt $(FNT2FON)
+	$(FNT2FON) ms_sans_serif-874-96-13.fnt ms_sans_serif-874-96-16.fnt ms_sans_serif-874-96-20.fnt $@
 
 vgasys.fon: system-1252-96-16.fnt $(FNT2FON)
 	$(FNT2FON) system-1252-96-16.fnt $@
