@@ -4,10 +4,10 @@
 8 stdcall MsiCloseHandle(long)
 9 stdcall MsiCollectUserInfoA(str)
 10 stdcall MsiCollectUserInfoW(wstr)
-11 stub MsiConfigureFeatureA
+11 stdcall MsiConfigureFeatureA(str str long)
 12 stub MsiConfigureFeatureFromDescriptorA
 13 stub MsiConfigureFeatureFromDescriptorW
-14 stdcall MsiConfigureFeatureW(str str ptr)
+14 stdcall MsiConfigureFeatureW(wstr wstr ptr)
 15 stdcall MsiConfigureProductA(str long long)
 16 stdcall MsiConfigureProductW(wstr long long)
 17 stdcall MsiCreateRecord(long)

@@ -418,6 +418,10 @@ UINT WINAPI MsiConfigureProductExA(LPCSTR, int, INSTALLSTATE, LPCSTR);
 UINT WINAPI MsiConfigureProductExW(LPCWSTR, int, INSTALLSTATE, LPCWSTR);
 #define     MsiConfigureProductEx WINELIB_NAME_AW(MsiConfigureProductEx);
 
+UINT WINAPI MsiConfigureFeatureA(LPCSTR, LPCSTR, INSTALLSTATE);
+UINT WINAPI MsiConfigureFeatureW(LPCWSTR, LPCWSTR, INSTALLSTATE);
+#define     MsiConfigureFeature WINELIB_NAME_AW(MsiConfigureFeature);
+
 UINT WINAPI MsiGetProductCodeA(LPCSTR, LPSTR);
 UINT WINAPI MsiGetProductCodeW(LPCWSTR, LPWSTR);
 #define     MsiGetProductCode WINELIB_NAME_AW(MsiGetProductCode)

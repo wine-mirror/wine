@@ -1696,13 +1696,23 @@ UINT WINAPI MsiCollectUserInfoA(LPCSTR szProduct)
     return rc;
 }
 
-UINT WINAPI MsiConfigureFeatureW(LPWSTR szProduct, LPWSTR szFeature, INSTALLSTATE eInstallState)
+/***********************************************************************
+ * MsiConfigureFeatureA            [MSI.@]
+ */
+UINT WINAPI MsiConfigureFeatureA(LPCSTR szProduct, LPCSTR szFeature, INSTALLSTATE eInstallState)
+{
+    FIXME("%s %s %i\n", debugstr_a(szProduct), debugstr_a(szFeature), eInstallState);
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ * MsiConfigureFeatureW            [MSI.@]
+ */
+UINT WINAPI MsiConfigureFeatureW(LPCWSTR szProduct, LPCWSTR szFeature, INSTALLSTATE eInstallState)
 {
     FIXME("%s %s %i\n", debugstr_w(szProduct), debugstr_w(szFeature), eInstallState);
     return ERROR_SUCCESS;
 }
-
-
 
 UINT WINAPI MsiCreateAndVerifyInstallerDirectory(DWORD dwReserved)
 {
