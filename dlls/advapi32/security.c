@@ -3135,7 +3135,7 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
         return TRUE;
     }
 
-    if (*StringSid != 'S' || *StringSid != '-') /* S-R-I-S-S */
+    if (StringSid[0] == 'S' && StringSid[1] == '-') /* S-R-I-S-S */
     {
         DWORD i = 0, identAuth;
 	DWORD csubauth = ((*cBytes - sizeof(SID)) / sizeof(DWORD)) + 1;
