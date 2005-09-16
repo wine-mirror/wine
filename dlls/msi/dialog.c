@@ -163,16 +163,26 @@ static msi_control *msi_dialog_find_control_by_hwnd( msi_dialog *dialog, HWND hw
     return control;
 }
 
+static LPWSTR msi_get_deformatted_field( MSIPACKAGE *package, MSIRECORD *rec, int field )
+{
+    LPCWSTR str = MSI_RecordGetString( rec, field );
+    LPWSTR ret = NULL;
+
+    if (str)
+        deformat_string( package, str, &ret );
+    return ret;
+}
+
 /*
  * msi_dialog_get_style
  *
  * Extract the {\style} string from the front of the text to display and
  *  update the pointer.
  */
-static LPWSTR msi_dialog_get_style( LPCWSTR *text )
+static LPWSTR msi_dialog_get_style( LPWSTR *text )
 {
     LPWSTR ret = NULL;
-    LPCWSTR p = *text, q;
+    LPWSTR p = *text, q;
     DWORD len;
 
     if( *p++ != '{' )
@@ -318,8 +328,8 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
 
     if( text )
     {
-        font = msi_dialog_get_style( &text );
         deformat_string( dialog->package, text, &title );
+        font = msi_dialog_get_style( &title );
     }
 
     control->hwnd = CreateWindowW( szCls, title, style,
@@ -573,7 +583,7 @@ static UINT msi_dialog_button_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
     UINT attributes, style;
-    LPCWSTR text;
+    LPWSTR text;
 
     TRACE("%p %p\n", dialog, rec);
 
@@ -589,10 +599,11 @@ static UINT msi_dialog_button_control( msi_dialog *dialog, MSIRECORD *rec )
     control->handler = msi_dialog_button_handler;
 
     /* set the icon */
-    text = MSI_RecordGetString( rec, 10 );
+    text = msi_get_deformatted_field( dialog->package, rec, 10 );
     control->hIcon = msi_load_icon( dialog->package->db, text, attributes );
     if( attributes & msidbControlAttributesIcon )
         SendMessageW( control->hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) control->hIcon );
+    HeapFree( GetProcessHeap(), 0, text );
 
     return ERROR_SUCCESS;
 }
@@ -735,7 +746,7 @@ static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     UINT cx, cy, flags, style, attributes;
     msi_control *control;
-    LPCWSTR text;
+    LPWSTR text;
 
     flags = LR_LOADFROMFILE;
     style = SS_BITMAP | SS_LEFT | WS_GROUP;
@@ -748,12 +759,12 @@ static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
     }
 
     control = msi_dialog_add_control( dialog, rec, szStatic, style );
-    text = MSI_RecordGetString( rec, 10 );
     cx = MSI_RecordGetInteger( rec, 6 );
     cy = MSI_RecordGetInteger( rec, 7 );
     cx = msi_dialog_scale_unit( dialog, cx );
     cy = msi_dialog_scale_unit( dialog, cy );
 
+    text = msi_get_deformatted_field( dialog->package, rec, 10 );
     control->hBitmap = msi_load_image( dialog->package->db, text,
                                        IMAGE_BITMAP, cx, cy, flags );
     if( control->hBitmap )
@@ -761,6 +772,8 @@ static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
                       IMAGE_BITMAP, (LPARAM) control->hBitmap );
     else
         ERR("Failed to load bitmap %s\n", debugstr_w(text));
+
+    HeapFree( GetProcessHeap(), 0, text );
     
     return ERROR_SUCCESS;
 }
@@ -769,7 +782,7 @@ static UINT msi_dialog_icon_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
     DWORD attributes;
-    LPCWSTR text;
+    LPWSTR text;
 
     TRACE("\n");
 
@@ -777,12 +790,13 @@ static UINT msi_dialog_icon_control( msi_dialog *dialog, MSIRECORD *rec )
                             SS_ICON | SS_CENTERIMAGE | WS_GROUP );
             
     attributes = MSI_RecordGetInteger( rec, 8 );
-    text = MSI_RecordGetString( rec, 10 );
+    text = msi_get_deformatted_field( dialog->package, rec, 10 );
     control->hIcon = msi_load_icon( dialog->package->db, text, attributes );
     if( control->hIcon )
         SendMessageW( control->hwnd, STM_SETICON, (WPARAM) control->hIcon, 0 );
     else
         ERR("Failed to load bitmap %s\n", debugstr_w(text));
+    HeapFree( GetProcessHeap(), 0, text );
     return ERROR_SUCCESS;
 }
 
@@ -1121,8 +1135,7 @@ static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
     msi_dialog *dialog = group->dialog;
     msi_control *control;
     LPCWSTR prop, text, name;
-    DWORD style;
-    DWORD attributes = group->attributes;
+    DWORD style, attributes = group->attributes;
 
     style = WS_CHILD | BS_AUTORADIOBUTTON | BS_MULTILINE | WS_TABSTOP;
     name = MSI_RecordGetString( rec, 3 );
@@ -1134,6 +1147,8 @@ static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
 
     control = msi_dialog_create_window( dialog, rec, szButton, name, text,
                                         style, group->parent->hwnd );
+    if (!control)
+        return ERROR_FUNCTION_FAILED;
     control->handler = msi_dialog_radiogroup_handler;
 
     prop = MSI_RecordGetString( rec, 1 );
@@ -1431,7 +1446,6 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
         'D','e','f','a','u','l','t','U','I','F','o','n','t',0 };
     msi_dialog *dialog = (msi_dialog*) cs->lpCreateParams;
     MSIRECORD *rec = NULL;
-    LPCWSTR text;
     LPWSTR title = NULL;
     SIZE size;
 
@@ -1454,16 +1468,16 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
     msi_dialog_adjust_dialog_size( dialog, &size );
 
     dialog->attributes = MSI_RecordGetInteger( rec, 6 );
-    text = MSI_RecordGetString( rec, 7 );
 
     dialog->default_font = msi_dup_property( dialog->package, df );
 
-    deformat_string( dialog->package, text, &title );
+    title = msi_get_deformatted_field( dialog->package, rec, 7 );
     SetWindowTextW( hwnd, title );
+    HeapFree( GetProcessHeap(), 0, title );
+
     SetWindowPos( hwnd, 0, 0, 0, size.cx, size.cy,
                   SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOREDRAW );
 
-    HeapFree( GetProcessHeap(), 0, title );
 
     msi_dialog_build_font_list( dialog );
     msi_dialog_fill_controls( dialog );
