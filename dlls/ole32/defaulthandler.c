@@ -152,431 +152,8 @@ static inline DefaultHandler *impl_from_IRunnableObject( IRunnableObject *iface 
 /*
  * Prototypes for the methods of the DefaultHandler class.
  */
-static DefaultHandler* DefaultHandler_Construct(REFCLSID  clsid,
-						LPUNKNOWN pUnkOuter);
 static void            DefaultHandler_Destroy(DefaultHandler* ptrToDestroy);
 
-/*
- * Prototypes for the methods of the DefaultHandler class
- * that implement non delegating IUnknown methods.
- */
-static HRESULT WINAPI DefaultHandler_NDIUnknown_QueryInterface(
-            IUnknown*      iface,
-            REFIID         riid,
-            void**         ppvObject);
-static ULONG WINAPI DefaultHandler_NDIUnknown_AddRef(
-            IUnknown*      iface);
-static ULONG WINAPI DefaultHandler_NDIUnknown_Release(
-            IUnknown*      iface);
-
-/*
- * Prototypes for the methods of the DefaultHandler class
- * that implement IOleObject methods.
- */
-static HRESULT WINAPI DefaultHandler_QueryInterface(
-            IOleObject*      iface,
-            REFIID           riid,
-            void**           ppvObject);
-static ULONG WINAPI DefaultHandler_AddRef(
-            IOleObject*        iface);
-static ULONG WINAPI DefaultHandler_Release(
-            IOleObject*        iface);
-static HRESULT WINAPI DefaultHandler_SetClientSite(
-	    IOleObject*        iface,
-	    IOleClientSite*    pClientSite);
-static HRESULT WINAPI DefaultHandler_GetClientSite(
-	    IOleObject*        iface,
-	    IOleClientSite**   ppClientSite);
-static HRESULT WINAPI DefaultHandler_SetHostNames(
-	    IOleObject*        iface,
-	    LPCOLESTR          szContainerApp,
-	    LPCOLESTR          szContainerObj);
-static HRESULT WINAPI DefaultHandler_Close(
-	    IOleObject*        iface,
-	    DWORD              dwSaveOption);
-static HRESULT WINAPI DefaultHandler_SetMoniker(
-	    IOleObject*        iface,
-	    DWORD              dwWhichMoniker,
-	    IMoniker*          pmk);
-static HRESULT WINAPI DefaultHandler_GetMoniker(
-	    IOleObject*        iface,
-	    DWORD              dwAssign,
-	    DWORD              dwWhichMoniker,
-	    IMoniker**         ppmk);
-static HRESULT WINAPI DefaultHandler_InitFromData(
-	    IOleObject*        iface,
-	    IDataObject*       pDataObject,
-	    BOOL               fCreation,
-	    DWORD              dwReserved);
-static HRESULT WINAPI DefaultHandler_GetClipboardData(
-	    IOleObject*        iface,
-	    DWORD              dwReserved,
-	    IDataObject**      ppDataObject);
-static HRESULT WINAPI DefaultHandler_DoVerb(
-	    IOleObject*        iface,
-	    LONG               iVerb,
-	    struct tagMSG*     lpmsg,
-	    IOleClientSite*    pActiveSite,
-	    LONG               lindex,
-	    HWND               hwndParent,
-	    LPCRECT            lprcPosRect);
-static HRESULT WINAPI DefaultHandler_EnumVerbs(
-	    IOleObject*        iface,
-	    IEnumOLEVERB**     ppEnumOleVerb);
-static HRESULT WINAPI DefaultHandler_Update(
-	    IOleObject*        iface);
-static HRESULT WINAPI DefaultHandler_IsUpToDate(
-	    IOleObject*        iface);
-static HRESULT WINAPI DefaultHandler_GetUserClassID(
-	    IOleObject*        iface,
-	    CLSID*             pClsid);
-static HRESULT WINAPI DefaultHandler_GetUserType(
-	    IOleObject*        iface,
-	    DWORD              dwFormOfType,
-	    LPOLESTR*          pszUserType);
-static HRESULT WINAPI DefaultHandler_SetExtent(
-	    IOleObject*        iface,
-	    DWORD              dwDrawAspect,
-	    SIZEL*             psizel);
-static HRESULT WINAPI DefaultHandler_GetExtent(
-	    IOleObject*        iface,
-	    DWORD              dwDrawAspect,
-	    SIZEL*             psizel);
-static HRESULT WINAPI DefaultHandler_Advise(
-	    IOleObject*        iface,
-	    IAdviseSink*       pAdvSink,
-	    DWORD*             pdwConnection);
-static HRESULT WINAPI DefaultHandler_Unadvise(
-	    IOleObject*        iface,
-	    DWORD              dwConnection);
-static HRESULT WINAPI DefaultHandler_EnumAdvise(
-	    IOleObject*        iface,
-	    IEnumSTATDATA**    ppenumAdvise);
-static HRESULT WINAPI DefaultHandler_GetMiscStatus(
-	    IOleObject*        iface,
-	    DWORD              dwAspect,
-	    DWORD*             pdwStatus);
-static HRESULT WINAPI DefaultHandler_SetColorScheme(
-	    IOleObject*           iface,
-	    struct tagLOGPALETTE* pLogpal);
-
-/*
- * Prototypes for the methods of the DefaultHandler class
- * that implement IDataObject methods.
- */
-static HRESULT WINAPI DefaultHandler_IDataObject_QueryInterface(
-            IDataObject*     iface,
-            REFIID           riid,
-            void**           ppvObject);
-static ULONG WINAPI DefaultHandler_IDataObject_AddRef(
-            IDataObject*     iface);
-static ULONG WINAPI DefaultHandler_IDataObject_Release(
-            IDataObject*     iface);
-static HRESULT WINAPI DefaultHandler_GetData(
-	    IDataObject*     iface,
-	    LPFORMATETC      pformatetcIn,
-	    STGMEDIUM*       pmedium);
-static HRESULT WINAPI DefaultHandler_GetDataHere(
-	    IDataObject*     iface,
-	    LPFORMATETC      pformatetc,
-	    STGMEDIUM*       pmedium);
-static HRESULT WINAPI DefaultHandler_QueryGetData(
-	    IDataObject*     iface,
-	    LPFORMATETC      pformatetc);
-static HRESULT WINAPI DefaultHandler_GetCanonicalFormatEtc(
-	    IDataObject*     iface,
-	    LPFORMATETC      pformatectIn,
-	    LPFORMATETC      pformatetcOut);
-static HRESULT WINAPI DefaultHandler_SetData(
-	    IDataObject*     iface,
-	    LPFORMATETC      pformatetc,
-	    STGMEDIUM*       pmedium,
-	    BOOL             fRelease);
-static HRESULT WINAPI DefaultHandler_EnumFormatEtc(
-	    IDataObject*     iface,
-	    DWORD            dwDirection,
-	    IEnumFORMATETC** ppenumFormatEtc);
-static HRESULT WINAPI DefaultHandler_DAdvise(
-	    IDataObject*     iface,
-	    FORMATETC*       pformatetc,
-	    DWORD            advf,
-	    IAdviseSink*     pAdvSink,
-	    DWORD*           pdwConnection);
-static HRESULT WINAPI DefaultHandler_DUnadvise(
-	    IDataObject*     iface,
-	    DWORD            dwConnection);
-static HRESULT WINAPI DefaultHandler_EnumDAdvise(
-	    IDataObject*     iface,
-	    IEnumSTATDATA**  ppenumAdvise);
-
-/*
- * Prototypes for the methods of the DefaultHandler class
- * that implement IRunnableObject methods.
- */
-static HRESULT WINAPI DefaultHandler_IRunnableObject_QueryInterface(
-            IRunnableObject*     iface,
-            REFIID               riid,
-            void**               ppvObject);
-static ULONG WINAPI DefaultHandler_IRunnableObject_AddRef(
-            IRunnableObject*     iface);
-static ULONG WINAPI DefaultHandler_IRunnableObject_Release(
-            IRunnableObject*     iface);
-static HRESULT WINAPI DefaultHandler_GetRunningClass(
-            IRunnableObject*     iface,
-	    LPCLSID              lpClsid);
-static HRESULT WINAPI DefaultHandler_Run(
-            IRunnableObject*     iface,
-	    IBindCtx*            pbc);
-static BOOL    WINAPI DefaultHandler_IsRunning(
-            IRunnableObject*     iface);
-static HRESULT WINAPI DefaultHandler_LockRunning(
-            IRunnableObject*     iface,
-	    BOOL                 fLock,
-	    BOOL                 fLastUnlockCloses);
-static HRESULT WINAPI DefaultHandler_SetContainedObject(
-            IRunnableObject*     iface,
-	    BOOL                 fContained);
-
-
-/*
- * Virtual function tables for the DefaultHandler class.
- */
-static const IOleObjectVtbl DefaultHandler_IOleObject_VTable =
-{
-  DefaultHandler_QueryInterface,
-  DefaultHandler_AddRef,
-  DefaultHandler_Release,
-  DefaultHandler_SetClientSite,
-  DefaultHandler_GetClientSite,
-  DefaultHandler_SetHostNames,
-  DefaultHandler_Close,
-  DefaultHandler_SetMoniker,
-  DefaultHandler_GetMoniker,
-  DefaultHandler_InitFromData,
-  DefaultHandler_GetClipboardData,
-  DefaultHandler_DoVerb,
-  DefaultHandler_EnumVerbs,
-  DefaultHandler_Update,
-  DefaultHandler_IsUpToDate,
-  DefaultHandler_GetUserClassID,
-  DefaultHandler_GetUserType,
-  DefaultHandler_SetExtent,
-  DefaultHandler_GetExtent,
-  DefaultHandler_Advise,
-  DefaultHandler_Unadvise,
-  DefaultHandler_EnumAdvise,
-  DefaultHandler_GetMiscStatus,
-  DefaultHandler_SetColorScheme
-};
-
-static const IUnknownVtbl DefaultHandler_NDIUnknown_VTable =
-{
-  DefaultHandler_NDIUnknown_QueryInterface,
-  DefaultHandler_NDIUnknown_AddRef,
-  DefaultHandler_NDIUnknown_Release,
-};
-
-static const IDataObjectVtbl DefaultHandler_IDataObject_VTable =
-{
-  DefaultHandler_IDataObject_QueryInterface,
-  DefaultHandler_IDataObject_AddRef,
-  DefaultHandler_IDataObject_Release,
-  DefaultHandler_GetData,
-  DefaultHandler_GetDataHere,
-  DefaultHandler_QueryGetData,
-  DefaultHandler_GetCanonicalFormatEtc,
-  DefaultHandler_SetData,
-  DefaultHandler_EnumFormatEtc,
-  DefaultHandler_DAdvise,
-  DefaultHandler_DUnadvise,
-  DefaultHandler_EnumDAdvise
-};
-
-static const IRunnableObjectVtbl DefaultHandler_IRunnableObject_VTable =
-{
-  DefaultHandler_IRunnableObject_QueryInterface,
-  DefaultHandler_IRunnableObject_AddRef,
-  DefaultHandler_IRunnableObject_Release,
-  DefaultHandler_GetRunningClass,
-  DefaultHandler_Run,
-  DefaultHandler_IsRunning,
-  DefaultHandler_LockRunning,
-  DefaultHandler_SetContainedObject
-};
-
-/******************************************************************************
- * OleCreateDefaultHandler [OLE32.@]
- */
-HRESULT WINAPI OleCreateDefaultHandler(
-  REFCLSID  clsid,
-  LPUNKNOWN pUnkOuter,
-  REFIID    riid,
-  LPVOID*   ppvObj)
-{
-  DefaultHandler* newHandler = NULL;
-  HRESULT         hr         = S_OK;
-
-  TRACE("(%s, %p, %s, %p)\n", debugstr_guid(clsid), pUnkOuter, debugstr_guid(riid), ppvObj);
-
-  /*
-   * Sanity check
-   */
-  if (ppvObj==0)
-    return E_POINTER;
-
-  *ppvObj = 0;
-
-  /*
-   * If this handler is constructed for aggregation, make sure
-   * the caller is requesting the IUnknown interface.
-   * This is necessary because it's the only time the non-delegating
-   * IUnknown pointer can be returned to the outside.
-   */
-  if ( (pUnkOuter!=NULL) &&
-       (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) != 0) )
-    return CLASS_E_NOAGGREGATION;
-
-  /*
-   * Try to construct a new instance of the class.
-   */
-  newHandler = DefaultHandler_Construct(clsid,
-					pUnkOuter);
-
-  if (newHandler == 0)
-    return E_OUTOFMEMORY;
-
-  /*
-   * Make sure it supports the interface required by the caller.
-   */
-  hr = IUnknown_QueryInterface((IUnknown*)&(newHandler->lpvtblIUnknown), riid, ppvObj);
-
-  /*
-   * Release the reference obtained in the constructor. If
-   * the QueryInterface was unsuccessful, it will free the class.
-   */
-  IUnknown_Release((IUnknown*)&(newHandler->lpvtblIUnknown));
-
-  return hr;
-}
-
-/*********************************************************
- * Methods implementation for the DefaultHandler class.
- */
-static DefaultHandler* DefaultHandler_Construct(
-  REFCLSID  clsid,
-  LPUNKNOWN pUnkOuter)
-{
-  DefaultHandler* newObject = 0;
-
-  /*
-   * Allocate space for the object.
-   */
-  newObject = HeapAlloc(GetProcessHeap(), 0, sizeof(DefaultHandler));
-
-  if (newObject==0)
-    return newObject;
-
-  /*
-   * Initialize the virtual function table.
-   */
-  newObject->lpVtbl = &DefaultHandler_IOleObject_VTable;
-  newObject->lpvtblIUnknown = &DefaultHandler_NDIUnknown_VTable;
-  newObject->lpvtblIDataObject = &DefaultHandler_IDataObject_VTable;
-  newObject->lpvtblIRunnableObject = &DefaultHandler_IRunnableObject_VTable;
-
-  /*
-   * Start with one reference count. The caller of this function
-   * must release the interface pointer when it is done.
-   */
-  newObject->ref = 1;
-
-  /*
-   * Initialize the outer unknown
-   * We don't keep a reference on the outer unknown since, the way
-   * aggregation works, our lifetime is at least as large as it's
-   * lifetime.
-   */
-  if (pUnkOuter==NULL)
-    pUnkOuter = (IUnknown*)&(newObject->lpvtblIUnknown);
-
-  newObject->outerUnknown = pUnkOuter;
-
-  /*
-   * Create a datacache object.
-   * We aggregate with the datacache. Make sure we pass our outer
-   * unknown as the datacache's outer unknown.
-   */
-  CreateDataCache(newObject->outerUnknown,
-		  clsid,
-		  &IID_IUnknown,
-		  (void**)&newObject->dataCache);
-
-  /*
-   * Initialize the other data members of the class.
-   */
-  memcpy(&(newObject->clsid), clsid, sizeof(CLSID));
-  newObject->clientSite = NULL;
-  newObject->oleAdviseHolder = NULL;
-  newObject->dataAdviseHolder = NULL;
-  newObject->containerApp = NULL;
-  newObject->containerObj = NULL;
-
-  return newObject;
-}
-
-static void DefaultHandler_Destroy(
-  DefaultHandler* ptrToDestroy)
-{
-  /*
-   * Free the strings idenfitying the object
-   */
-  HeapFree( GetProcessHeap(), 0, ptrToDestroy->containerApp );
-  ptrToDestroy->containerApp = NULL;
-  HeapFree( GetProcessHeap(), 0, ptrToDestroy->containerObj );
-  ptrToDestroy->containerObj = NULL;
-
-  /*
-   * Release our reference to the data cache.
-   */
-  if (ptrToDestroy->dataCache!=NULL)
-  {
-    IUnknown_Release(ptrToDestroy->dataCache);
-    ptrToDestroy->dataCache = NULL;
-  }
-
-  /*
-   * Same thing for the client site.
-   */
-  if (ptrToDestroy->clientSite!=NULL)
-  {
-    IOleClientSite_Release(ptrToDestroy->clientSite);
-    ptrToDestroy->clientSite = NULL;
-  }
-
-  /*
-   * And the advise holder.
-   */
-  if (ptrToDestroy->oleAdviseHolder!=NULL)
-  {
-    IOleAdviseHolder_Release(ptrToDestroy->oleAdviseHolder);
-    ptrToDestroy->oleAdviseHolder = NULL;
-  }
-
-  /*
-   * And the data advise holder.
-   */
-  if (ptrToDestroy->dataAdviseHolder!=NULL)
-  {
-    IDataAdviseHolder_Release(ptrToDestroy->dataAdviseHolder);
-    ptrToDestroy->dataAdviseHolder = NULL;
-  }
-
-
-  /*
-   * Free the actual default handler structure.
-   */
-  HeapFree(GetProcessHeap(), 0, ptrToDestroy);
-}
 
 /*********************************************************
  * Method implementation for the  non delegating IUnknown
@@ -1695,4 +1272,244 @@ static HRESULT WINAPI DefaultHandler_SetContainedObject(
 {
   TRACE("()\n");
   return S_OK;
+}
+
+/*
+ * Virtual function tables for the DefaultHandler class.
+ */
+static const IOleObjectVtbl DefaultHandler_IOleObject_VTable =
+{
+  DefaultHandler_QueryInterface,
+  DefaultHandler_AddRef,
+  DefaultHandler_Release,
+  DefaultHandler_SetClientSite,
+  DefaultHandler_GetClientSite,
+  DefaultHandler_SetHostNames,
+  DefaultHandler_Close,
+  DefaultHandler_SetMoniker,
+  DefaultHandler_GetMoniker,
+  DefaultHandler_InitFromData,
+  DefaultHandler_GetClipboardData,
+  DefaultHandler_DoVerb,
+  DefaultHandler_EnumVerbs,
+  DefaultHandler_Update,
+  DefaultHandler_IsUpToDate,
+  DefaultHandler_GetUserClassID,
+  DefaultHandler_GetUserType,
+  DefaultHandler_SetExtent,
+  DefaultHandler_GetExtent,
+  DefaultHandler_Advise,
+  DefaultHandler_Unadvise,
+  DefaultHandler_EnumAdvise,
+  DefaultHandler_GetMiscStatus,
+  DefaultHandler_SetColorScheme
+};
+
+static const IUnknownVtbl DefaultHandler_NDIUnknown_VTable =
+{
+  DefaultHandler_NDIUnknown_QueryInterface,
+  DefaultHandler_NDIUnknown_AddRef,
+  DefaultHandler_NDIUnknown_Release,
+};
+
+static const IDataObjectVtbl DefaultHandler_IDataObject_VTable =
+{
+  DefaultHandler_IDataObject_QueryInterface,
+  DefaultHandler_IDataObject_AddRef,
+  DefaultHandler_IDataObject_Release,
+  DefaultHandler_GetData,
+  DefaultHandler_GetDataHere,
+  DefaultHandler_QueryGetData,
+  DefaultHandler_GetCanonicalFormatEtc,
+  DefaultHandler_SetData,
+  DefaultHandler_EnumFormatEtc,
+  DefaultHandler_DAdvise,
+  DefaultHandler_DUnadvise,
+  DefaultHandler_EnumDAdvise
+};
+
+static const IRunnableObjectVtbl DefaultHandler_IRunnableObject_VTable =
+{
+  DefaultHandler_IRunnableObject_QueryInterface,
+  DefaultHandler_IRunnableObject_AddRef,
+  DefaultHandler_IRunnableObject_Release,
+  DefaultHandler_GetRunningClass,
+  DefaultHandler_Run,
+  DefaultHandler_IsRunning,
+  DefaultHandler_LockRunning,
+  DefaultHandler_SetContainedObject
+};
+
+/*********************************************************
+ * Methods implementation for the DefaultHandler class.
+ */
+static DefaultHandler* DefaultHandler_Construct(
+  REFCLSID  clsid,
+  LPUNKNOWN pUnkOuter)
+{
+  DefaultHandler* newObject = 0;
+
+  /*
+   * Allocate space for the object.
+   */
+  newObject = HeapAlloc(GetProcessHeap(), 0, sizeof(DefaultHandler));
+
+  if (newObject==0)
+    return newObject;
+
+  /*
+   * Initialize the virtual function table.
+   */
+  newObject->lpVtbl = &DefaultHandler_IOleObject_VTable;
+  newObject->lpvtblIUnknown = &DefaultHandler_NDIUnknown_VTable;
+  newObject->lpvtblIDataObject = &DefaultHandler_IDataObject_VTable;
+  newObject->lpvtblIRunnableObject = &DefaultHandler_IRunnableObject_VTable;
+
+  /*
+   * Start with one reference count. The caller of this function
+   * must release the interface pointer when it is done.
+   */
+  newObject->ref = 1;
+
+  /*
+   * Initialize the outer unknown
+   * We don't keep a reference on the outer unknown since, the way
+   * aggregation works, our lifetime is at least as large as it's
+   * lifetime.
+   */
+  if (pUnkOuter==NULL)
+    pUnkOuter = (IUnknown*)&(newObject->lpvtblIUnknown);
+
+  newObject->outerUnknown = pUnkOuter;
+
+  /*
+   * Create a datacache object.
+   * We aggregate with the datacache. Make sure we pass our outer
+   * unknown as the datacache's outer unknown.
+   */
+  CreateDataCache(newObject->outerUnknown,
+		  clsid,
+		  &IID_IUnknown,
+		  (void**)&newObject->dataCache);
+
+  /*
+   * Initialize the other data members of the class.
+   */
+  memcpy(&(newObject->clsid), clsid, sizeof(CLSID));
+  newObject->clientSite = NULL;
+  newObject->oleAdviseHolder = NULL;
+  newObject->dataAdviseHolder = NULL;
+  newObject->containerApp = NULL;
+  newObject->containerObj = NULL;
+
+  return newObject;
+}
+
+static void DefaultHandler_Destroy(
+  DefaultHandler* ptrToDestroy)
+{
+  /*
+   * Free the strings idenfitying the object
+   */
+  HeapFree( GetProcessHeap(), 0, ptrToDestroy->containerApp );
+  ptrToDestroy->containerApp = NULL;
+  HeapFree( GetProcessHeap(), 0, ptrToDestroy->containerObj );
+  ptrToDestroy->containerObj = NULL;
+
+  /*
+   * Release our reference to the data cache.
+   */
+  if (ptrToDestroy->dataCache!=NULL)
+  {
+    IUnknown_Release(ptrToDestroy->dataCache);
+    ptrToDestroy->dataCache = NULL;
+  }
+
+  /*
+   * Same thing for the client site.
+   */
+  if (ptrToDestroy->clientSite!=NULL)
+  {
+    IOleClientSite_Release(ptrToDestroy->clientSite);
+    ptrToDestroy->clientSite = NULL;
+  }
+
+  /*
+   * And the advise holder.
+   */
+  if (ptrToDestroy->oleAdviseHolder!=NULL)
+  {
+    IOleAdviseHolder_Release(ptrToDestroy->oleAdviseHolder);
+    ptrToDestroy->oleAdviseHolder = NULL;
+  }
+
+  /*
+   * And the data advise holder.
+   */
+  if (ptrToDestroy->dataAdviseHolder!=NULL)
+  {
+    IDataAdviseHolder_Release(ptrToDestroy->dataAdviseHolder);
+    ptrToDestroy->dataAdviseHolder = NULL;
+  }
+
+
+  /*
+   * Free the actual default handler structure.
+   */
+  HeapFree(GetProcessHeap(), 0, ptrToDestroy);
+}
+
+/******************************************************************************
+ * OleCreateDefaultHandler [OLE32.@]
+ */
+HRESULT WINAPI OleCreateDefaultHandler(
+  REFCLSID  clsid,
+  LPUNKNOWN pUnkOuter,
+  REFIID    riid,
+  LPVOID*   ppvObj)
+{
+  DefaultHandler* newHandler = NULL;
+  HRESULT         hr         = S_OK;
+
+  TRACE("(%s, %p, %s, %p)\n", debugstr_guid(clsid), pUnkOuter, debugstr_guid(riid), ppvObj);
+
+  /*
+   * Sanity check
+   */
+  if (!ppvObj)
+    return E_POINTER;
+
+  *ppvObj = NULL;
+
+  /*
+   * If this handler is constructed for aggregation, make sure
+   * the caller is requesting the IUnknown interface.
+   * This is necessary because it's the only time the non-delegating
+   * IUnknown pointer can be returned to the outside.
+   */
+  if ( (pUnkOuter!=NULL) &&
+       (IsEqualIID(&IID_IUnknown, riid)) )
+    return CLASS_E_NOAGGREGATION;
+
+  /*
+   * Try to construct a new instance of the class.
+   */
+  newHandler = DefaultHandler_Construct(clsid,
+					pUnkOuter);
+
+  if (!newHandler)
+    return E_OUTOFMEMORY;
+
+  /*
+   * Make sure it supports the interface required by the caller.
+   */
+  hr = IUnknown_QueryInterface((IUnknown*)&(newHandler->lpvtblIUnknown), riid, ppvObj);
+
+  /*
+   * Release the reference obtained in the constructor. If
+   * the QueryInterface was unsuccessful, it will free the class.
+   */
+  IUnknown_Release((IUnknown*)&(newHandler->lpvtblIUnknown));
+
+  return hr;
 }
