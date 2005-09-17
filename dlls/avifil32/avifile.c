@@ -1612,7 +1612,6 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
   memset(This->ppStreams, 0, sizeof(This->ppStreams));
 
   /* try to get "RIFF" chunk -- must not be at beginning of file! */
-  memset(&ckRIFF, 0, sizeof(ckRIFF));
   ckRIFF.fccType = formtypeAVI;
   if (mmioDescend(This->hmmio, &ckRIFF, NULL, MMIO_FINDRIFF) != S_OK) {
     ERR(": not an AVI!\n");
@@ -1620,14 +1619,12 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
   }
 
   /* get "LIST" "hdrl" */
-  memset(&ckLIST1, 0, sizeof(ckLIST1));
   ckLIST1.fccType = listtypeAVIHEADER;
   hr = FindChunkAndKeepExtras(&This->fileextra, This->hmmio, &ckLIST1, &ckRIFF, MMIO_FINDLIST);
   if (FAILED(hr))
     return hr;
 
   /* get "avih" chunk */
-  memset(&ck, 0, sizeof(ck));
   ck.ckid = ckidAVIMAINHDR;
   hr = FindChunkAndKeepExtras(&This->fileextra, This->hmmio, &ck, &ckLIST1, MMIO_FINDCHUNK);
   if (FAILED(hr))
@@ -1672,7 +1669,6 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
     return AVIERR_FILEREAD;
 
   /* foreach stream exists a "LIST","strl" chunk */
-  memset(&ckLIST2, 0, sizeof(ckLIST2));
   for (nStream = 0; nStream < This->fInfo.dwStreams; nStream++) {
     /* get next nested chunk in this "LIST","strl" */
     if (mmioDescend(This->hmmio, &ckLIST2, &ckLIST1, 0) != S_OK)
