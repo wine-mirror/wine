@@ -204,7 +204,7 @@ static void thread_detach(void)
 
     WDML_NotifyThreadDetach();
 
-    WIN_DestroyThreadWindows( GetDesktopWindow() );
+    WIN_DestroyThreadWindows( get_user_thread_info()->desktop );
     CloseHandle( get_user_thread_info()->server_queue );
 
     exiting_thread_id = 0;
