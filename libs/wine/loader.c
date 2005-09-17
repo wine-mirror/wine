@@ -198,35 +198,63 @@ static void *dlopen_dll( const char *name, char *error, int errorsize,
 
 
 /* adjust an array of pointers to make them into RVAs */
-static inline void fixup_rva_ptrs( void *array, void *base, unsigned int count )
+static inline void fixup_rva_ptrs( void *array, BYTE *base, unsigned int count )
 {
-    void **ptr = (void **)array;
+    void **src = (void **)array;
+    DWORD *dst = (DWORD *)array;
     while (count--)
     {
-        if (*ptr) *ptr = (void *)((char *)*ptr - (char *)base);
+        *dst++ = *src ? (BYTE *)*src - base : 0;
+        src++;
+    }
+}
+
+/* fixup an array of RVAs by adding the specified delta */
+static inline void fixup_rva_dwords( DWORD *ptr, int delta, unsigned int count )
+{
+    while (count--)
+    {
+        if (*ptr) *ptr += delta;
         ptr++;
     }
 }
 
 
 /* fixup RVAs in the import directory */
-static void fixup_imports( IMAGE_IMPORT_DESCRIPTOR *dir, DWORD size, void *base )
+static void fixup_imports( IMAGE_IMPORT_DESCRIPTOR *dir, BYTE *base, int delta )
 {
-    int count = size / sizeof(void *);
-    void **ptr = (void **)dir;
+    UINT_PTR *ptr;
 
-    /* everything is either a pointer or an ordinal value below 0x10000 */
-    while (count--)
+    while (dir->Name)
     {
-        if (*ptr >= (void *)0x10000) *ptr = (void *)((char *)*ptr - (char *)base);
-        else if (*ptr) *ptr = (void *)(IMAGE_ORDINAL_FLAG | (UINT_PTR)*ptr);
-        ptr++;
+        fixup_rva_dwords( &dir->u.OriginalFirstThunk, delta, 1 );
+        fixup_rva_dwords( &dir->Name, delta, 1 );
+        fixup_rva_dwords( &dir->FirstThunk, delta, 1 );
+        ptr = (UINT_PTR *)(base + dir->FirstThunk);
+        while (*ptr)
+        {
+            if (!(*ptr & IMAGE_ORDINAL_FLAG)) *ptr += delta;
+            ptr++;
+        }
+        dir++;
     }
 }
 
 
+/* fixup RVAs in the export directory */
+static void fixup_exports( IMAGE_EXPORT_DIRECTORY *dir, BYTE *base, int delta )
+{
+    fixup_rva_dwords( &dir->Name, delta, 1 );
+    fixup_rva_dwords( &dir->AddressOfFunctions, delta, 1 );
+    fixup_rva_dwords( &dir->AddressOfNames, delta, 1 );
+    fixup_rva_dwords( &dir->AddressOfNameOrdinals, delta, 1 );
+    fixup_rva_dwords( (DWORD *)(base + dir->AddressOfNames), delta, dir->NumberOfNames );
+    fixup_rva_ptrs( (base + dir->AddressOfFunctions), base, dir->NumberOfFunctions );
+}
+
+
 /* fixup RVAs in the resource directory */
-static void fixup_resources( IMAGE_RESOURCE_DIRECTORY *dir, char *root, void *base )
+static void fixup_resources( IMAGE_RESOURCE_DIRECTORY *dir, BYTE *root, int delta )
 {
     IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
     int i;
@@ -235,11 +263,11 @@ static void fixup_resources( IMAGE_RESOURCE_DIRECTORY *dir, char *root, void *ba
     for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
     {
         void *ptr = root + entry->u2.s3.OffsetToDirectory;
-        if (entry->u2.s3.DataIsDirectory) fixup_resources( ptr, root, base );
+        if (entry->u2.s3.DataIsDirectory) fixup_resources( ptr, root, delta );
         else
         {
             IMAGE_RESOURCE_DATA_ENTRY *data = ptr;
-            fixup_rva_ptrs( &data->OffsetToData, base, 1 );
+            fixup_rva_dwords( &data->OffsetToData, delta, 1 );
         }
     }
 }
@@ -257,7 +285,7 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     DWORD code_start, data_start, data_end;
     const size_t page_size = getpagesize();
     const size_t page_mask = page_size - 1;
-    int nb_sections = 2;  /* code + data */
+    int i, delta, nb_sections = 2;  /* code + data */
 
     size_t size = (sizeof(IMAGE_DOS_HEADER)
                    + sizeof(IMAGE_NT_HEADERS)
@@ -288,9 +316,12 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
 
     *nt = *nt_descr;
 
+    delta      = (BYTE *)nt_descr - addr;
     code_start = page_size;
-    data_start = ((BYTE *)nt_descr - addr) & ~page_mask;
-    data_end   = (((BYTE *)nt->OptionalHeader.SizeOfImage - addr) + page_mask) & ~page_mask;
+    data_start = delta & ~page_mask;
+    data_end   = (nt->OptionalHeader.SizeOfImage + delta + page_mask) & ~page_mask;
+
+    fixup_rva_ptrs( &nt->OptionalHeader.AddressOfEntryPoint, addr, 1 );
 
     nt->FileHeader.NumberOfSections                = nb_sections;
     nt->OptionalHeader.BaseOfCode                  = code_start;
@@ -302,8 +333,6 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     nt->OptionalHeader.SizeOfUninitializedData     = 0;
     nt->OptionalHeader.SizeOfImage                 = data_end;
     nt->OptionalHeader.ImageBase                   = (ULONG_PTR)addr;
-
-    fixup_rva_ptrs( &nt->OptionalHeader.AddressOfEntryPoint, addr, 1 );
 
     /* Build the code section */
 
@@ -326,14 +355,16 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
                              IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ);
     sec++;
 
+    for (i = 0; i < nt->OptionalHeader.NumberOfRvaAndSizes; i++)
+        fixup_rva_dwords( &nt->OptionalHeader.DataDirectory[i].VirtualAddress, delta, 1 );
+
     /* Build the import directory */
 
     dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
     if (dir->Size)
     {
-        IMAGE_IMPORT_DESCRIPTOR *imports = (void *)dir->VirtualAddress;
-        fixup_rva_ptrs( &dir->VirtualAddress, addr, 1 );
-        fixup_imports( imports, dir->Size, addr );
+        IMAGE_IMPORT_DESCRIPTOR *imports = (void *)(addr + dir->VirtualAddress);
+        fixup_imports( imports, addr, delta );
     }
 
     /* Build the resource directory */
@@ -341,9 +372,8 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
     if (dir->Size)
     {
-        void *ptr = (void *)dir->VirtualAddress;
-        fixup_rva_ptrs( &dir->VirtualAddress, addr, 1 );
-        fixup_resources( ptr, ptr, addr );
+        void *ptr = (void *)(addr + dir->VirtualAddress);
+        fixup_resources( ptr, ptr, delta );
     }
 
     /* Build the export directory */
@@ -351,14 +381,8 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
     if (dir->Size)
     {
-        IMAGE_EXPORT_DIRECTORY *exports = (void *)dir->VirtualAddress;
-        fixup_rva_ptrs( &dir->VirtualAddress, addr, 1 );
-        fixup_rva_ptrs( (void *)exports->AddressOfFunctions, addr, exports->NumberOfFunctions );
-        fixup_rva_ptrs( (void *)exports->AddressOfNames, addr, exports->NumberOfNames );
-        fixup_rva_ptrs( &exports->Name, addr, 1 );
-        fixup_rva_ptrs( &exports->AddressOfFunctions, addr, 1 );
-        fixup_rva_ptrs( &exports->AddressOfNames, addr, 1 );
-        fixup_rva_ptrs( &exports->AddressOfNameOrdinals, addr, 1 );
+        IMAGE_EXPORT_DIRECTORY *exports = (void *)(addr + dir->VirtualAddress);
+        fixup_exports( exports, addr, delta );
     }
     return addr;
 #else  /* HAVE_MMAP */

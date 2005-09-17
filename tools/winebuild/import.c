@@ -761,8 +761,9 @@ static void output_immediate_imports( FILE *outfile )
         fprintf( outfile, "\t.long 0\n" );     /* OriginalFirstThunk */
         fprintf( outfile, "\t.long 0\n" );     /* TimeDateStamp */
         fprintf( outfile, "\t.long 0\n" );     /* ForwarderChain */
-        fprintf( outfile, "\t.long .L__wine_spec_import_name_%s\n", dll_name ); /* Name */
-        fprintf( outfile, "\t.long .L__wine_spec_import_data_ptrs+%d\n",  /* FirstThunk */
+        fprintf( outfile, "\t.long .L__wine_spec_import_name_%s-.L__wine_spec_rva_base\n", /* Name */
+                 dll_name );
+        fprintf( outfile, "\t.long .L__wine_spec_import_data_ptrs+%d-.L__wine_spec_rva_base\n",  /* FirstThunk */
                  j * get_ptr_size() );
         j += dll_imports[i]->nb_imports + 1;
     }
@@ -782,10 +783,15 @@ static void output_immediate_imports( FILE *outfile )
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             if (!(odp->flags & FLAG_NONAME))
-                fprintf( outfile, "\t%s .L__wine_spec_import_data_%s_%s\n",
+                fprintf( outfile, "\t%s .L__wine_spec_import_data_%s_%s-.L__wine_spec_rva_base\n",
                          get_asm_ptr_keyword(), dll_name, odp->name );
             else
-                fprintf( outfile, "\t%s %d\n", get_asm_ptr_keyword(), odp->ordinal );
+            {
+                if (get_ptr_size() == 8)
+                    fprintf( outfile, "\t.quad 0x800000000000%04x\n", odp->ordinal );
+                else
+                    fprintf( outfile, "\t.long 0x8000%04x\n", odp->ordinal );
+            }
         }
         fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );
     }
