@@ -396,6 +396,15 @@ end:
     return ret;
 }
 
+static void free_table( MSITABLE *table )
+{
+    int i;
+    for( i=0; i<table->row_count; i++ )
+        HeapFree( GetProcessHeap(), 0, table->data[i] );
+    HeapFree( GetProcessHeap(), 0, table->data );
+    HeapFree( GetProcessHeap(), 0, table );
+}
+
 static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **ptable)
 {
     MSITABLE *t;
@@ -443,7 +452,10 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
     t->data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
                          t->row_count * sizeof (USHORT*) );
     if( !t->data )
-        return ERROR_NOT_ENOUGH_MEMORY;  /* FIXME: memory leak */
+    {
+        r = ERROR_NOT_ENOUGH_MEMORY;
+        goto err;
+    }
 
     /* transpose all the data */
     TRACE("Transposing data from %d columns\n", t->row_count );
@@ -451,7 +463,10 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
     {
         t->data[i] = HeapAlloc( GetProcessHeap(), 0, row_size );
         if( !t->data[i] )
-            return ERROR_NOT_ENOUGH_MEMORY;  /* FIXME: memory leak */
+        {
+            r = ERROR_NOT_ENOUGH_MEMORY;
+            goto err;
+        }
         for( j=0; j<num_cols; j++ )
         {
             UINT ofs = cols[j].offset/2;
@@ -468,7 +483,8 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
                 break;
             default:
                 ERR("oops - unknown column width %d\n", n);
-                return ERROR_FUNCTION_FAILED;
+                r = ERROR_FUNCTION_FAILED;
+                goto err;
             }
         }
     }
@@ -477,6 +493,12 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
     HeapFree( GetProcessHeap(), 0, rawdata );
 
     return ERROR_SUCCESS;
+
+err:
+    HeapFree( GetProcessHeap(), 0, cols );
+    HeapFree( GetProcessHeap(), 0, rawdata );
+    free_table( t );
+    return r;
 }
 
 /* add this table to the list of cached tables in the database */
@@ -499,9 +521,8 @@ static void release_table( MSIDATABASE *db, MSITABLE *table )
     if( !table->ref_count )
     {
         remove_table( db, table );
-        HeapFree( GetProcessHeap(), 0, table->data );
-        HeapFree( GetProcessHeap(), 0, table );
-        TRACE("Destroyed table %s\n", debugstr_w(table->name));
+        TRACE("Destroying table %s\n", debugstr_w(table->name));
+        free_table( table );
     }
 }
 
