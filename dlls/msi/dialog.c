@@ -185,6 +185,8 @@ static LPWSTR msi_dialog_get_style( LPWSTR *text )
     LPWSTR p = *text, q;
     DWORD len;
 
+    if( !*text )
+        return ret;
     if( *p++ != '{' )
         return ret;
     q = strchrW( p, '}' );
@@ -1018,7 +1020,7 @@ static struct msi_maskedit_info * msi_dialog_parse_groups( LPCWSTR mask )
 }
 
 static void
-msi_maskedit_create_children( struct msi_maskedit_info *info )
+msi_maskedit_create_children( struct msi_maskedit_info *info, LPCWSTR font )
 {
     DWORD width, height, style, wx, ww;
     RECT rect;
@@ -1047,7 +1049,8 @@ msi_maskedit_create_children( struct msi_maskedit_info *info )
 
         SendMessageW( hwnd, EM_LIMITTEXT, info->group[i].len, 0 );
 
-        msi_dialog_set_font( info->dialog, hwnd, info->dialog->default_font );
+        msi_dialog_set_font( info->dialog, hwnd,
+                             font?font:info->dialog->default_font );
         info->group[i].hwnd = hwnd;
     }
 }
@@ -1055,17 +1058,19 @@ msi_maskedit_create_children( struct msi_maskedit_info *info )
 /* office 2003 uses "73931<````=````=````=````=`````>@@@@@" */
 static UINT msi_dialog_maskedit_control( msi_dialog *dialog, MSIRECORD *rec )
 {
-    const static WCHAR pidt[] = {'P','I','D','T','e','m','p','l','a','t','e',0};
-    LPWSTR mask = NULL, title = NULL, val = NULL;
+    LPWSTR mask, title = NULL, val = NULL, font;
     struct msi_maskedit_info *info = NULL;
     UINT ret = ERROR_SUCCESS;
     msi_control *control;
     LPCWSTR prop;
 
-    mask = msi_dup_property( dialog->package, pidt );
+    TRACE("\n");
+
+    mask = msi_get_deformatted_field( dialog->package, rec, 10 );
+    font = msi_dialog_get_style( &mask );
     if( !mask )
     {
-        ERR("PIDTemplate is empty\n");
+        ERR("mask template is empty\n");
         goto end;
     }
 
@@ -1099,7 +1104,7 @@ static UINT msi_dialog_maskedit_control( msi_dialog *dialog, MSIRECORD *rec )
     if( prop )
         info->prop = strdupW( prop );
 
-    msi_maskedit_create_children( info );
+    msi_maskedit_create_children( info, font );
 
     if( prop )
     {
