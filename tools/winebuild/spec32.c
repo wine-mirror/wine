@@ -292,21 +292,33 @@ static void output_stubs( FILE *outfile, DLLSPEC *spec )
         fprintf( outfile, "\t.align %d\n", get_alignment(4) );
         fprintf( outfile, "\t%s\n", func_declaration(name) );
         fprintf( outfile, "%s:\n", asm_name(name) );
-        fprintf( outfile, "\tcall .L__wine_stub_getpc_%d\n", i );
-        fprintf( outfile, ".L__wine_stub_getpc_%d:\n", i );
-        fprintf( outfile, "\tpopl %%eax\n" );
-        if (exp_name)
+
+        if (UsePIC)
         {
-            fprintf( outfile, "\tleal .L__wine_stub_strings+%d-.L__wine_stub_getpc_%d(%%eax),%%ecx\n",
-                     pos, i );
+            fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+            fprintf( outfile, "1:" );
+            if (exp_name)
+            {
+                fprintf( outfile, "\tleal .L__wine_stub_strings+%d-1b(%%eax),%%ecx\n", pos );
+                fprintf( outfile, "\tpushl %%ecx\n" );
+                pos += strlen(exp_name) + 1;
+            }
+            else
+                fprintf( outfile, "\tpushl $%d\n", odp->ordinal );
+            fprintf( outfile, "\tleal %s-1b(%%eax),%%ecx\n", asm_name("__wine_spec_file_name") );
             fprintf( outfile, "\tpushl %%ecx\n" );
-            pos += strlen(exp_name) + 1;
         }
         else
-            fprintf( outfile, "\tpushl $%d\n", odp->ordinal );
-        fprintf( outfile, "\tleal %s-.L__wine_stub_getpc_%d(%%eax),%%ecx\n",
-                 asm_name("__wine_spec_file_name"), i );
-        fprintf( outfile, "\tpushl %%ecx\n" );
+        {
+            if (exp_name)
+            {
+                fprintf( outfile, "\tpushl $.L__wine_stub_strings+%d\n", pos );
+                pos += strlen(exp_name) + 1;
+            }
+            else
+                fprintf( outfile, "\tpushl $%d\n", odp->ordinal );
+            fprintf( outfile, "\tpushl $%s\n", asm_name("__wine_spec_file_name") );
+        }
         fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
         fprintf( outfile, "\t%s\n", func_size(name) );
     }

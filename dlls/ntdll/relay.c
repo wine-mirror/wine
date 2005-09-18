@@ -516,10 +516,11 @@ static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
  * Stack layout (esp is context->Esp, not the current %esp):
  *
  * ...
- * (esp+4) first arg
- * (esp)   return addr to caller
- * (esp-4) return addr to DEBUG_ENTRY_POINT
- * (esp-8) ptr to relay entry code for RELAY_CallFrom32Regs
+ * (esp+4)  first arg
+ * (esp)    return addr to caller
+ * (esp-4)  return addr to DEBUG_ENTRY_POINT
+ * (esp-8)  saved %eax
+ * (esp-12) ptr to relay entry code for RELAY_CallFrom32Regs
  *  ...    >128 bytes space free to be modified (ensured by the assembly glue)
  */
 void WINAPI __regs_RELAY_CallFrom32Regs( CONTEXT86 *context )
@@ -541,7 +542,8 @@ void WINAPI __regs_RELAY_CallFrom32Regs( CONTEXT86 *context )
         context->Esp += nb_args * sizeof(int);
 
     entry_point = (BYTE *)relay->orig;
-    assert( *entry_point == 0xe8 /* lcall */ );
+    assert( entry_point[0] == 0x50 /* pushl %eax */ );
+    assert( entry_point[1] == 0xe8 /* call */ );
 
     if (TRACE_ON(relay))
     {
@@ -564,7 +566,7 @@ void WINAPI __regs_RELAY_CallFrom32Regs( CONTEXT86 *context )
     memcpy( args_copy, args, nb_args * sizeof(args[0]) );
     args_copy[nb_args] = (int)context;  /* append context argument */
 
-    call_entry_point( (entry_point + 5 + *(DWORD *)(entry_point + 5)), nb_args+1, args_copy );
+    call_entry_point( (entry_point + 6 + *(DWORD *)(entry_point + 6)), nb_args+1, args_copy );
 
     if (TRACE_ON(relay))
     {
@@ -591,9 +593,10 @@ static BOOL is_register_entry_point( const BYTE *addr )
     const int *offset;
     const void *ptr;
 
-    if (*addr != 0xe8) return FALSE;  /* not a call */
+    if (addr[0] != 0x50) return FALSE;  /* pushl %eax */
+    if (addr[1] != 0xe8) return FALSE;  /* call */
     /* check if call target is __wine_call_from_32_regs */
-    offset = (const int *)(addr + 1);
+    offset = (const int *)(addr + 2);
     if (*offset == (const char *)__wine_call_from_32_regs - (const char *)(offset + 1)) return TRUE;
     /* now check if call target is an import table jump to __wine_call_from_32_regs */
     addr = (const BYTE *)(offset + 1) + *offset;
@@ -606,11 +609,9 @@ static BOOL is_register_entry_point( const BYTE *addr )
     }
     else  /* check for import thunk */
     {
-        if (addr[0] != 0x50) return FALSE;  /* pushl %eax */
-        if (addr[1] != 0xe8 || addr[2] || addr[3] || addr[4] || addr[5]) return FALSE;  /* call .+0 */
-        if (addr[6] != 0x58) return FALSE;  /* popl %eax */
-        if (addr[7] != 0x8b || addr[8] != 0x80) return FALSE;  /* movl offset(%eax),%eax */
-        ptr = addr + 6 + *(const int *)(addr + 9);
+        if (addr[0] != 0xe8) return FALSE;  /* call get_pc_thunk */
+        if (addr[5] != 0xff || addr[6] != 0xa0) return FALSE;  /* jmp *offset(%eax) */
+        ptr = addr + 5 + *(const int *)(addr + 7);
     }
     return (*(const char * const*)ptr == (char *)__wine_call_from_32_regs);
 }

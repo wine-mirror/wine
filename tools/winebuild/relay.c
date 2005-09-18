@@ -736,8 +736,9 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
  *
  * Stack layout:
  *   ...
- * (ebp+12)  first arg
- * (ebp+8)   ret addr to user code
+ * (ebp+16)  first arg
+ * (ebp+12)  ret addr to user code
+ * (ebp+8)   eax saved by relay code
  * (ebp+4)   ret addr to relay code
  * (ebp+0)   saved ebp
  * (ebp-128) buffer area to allow stack frame manipulation
@@ -767,12 +768,13 @@ static void BuildCallFrom32Regs( FILE *outfile )
 
     /* Build the context structure */
 
-    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Eax) - STACK_SPACE );
     fprintf( outfile, "\tpushfl\n" );
     fprintf( outfile, "\tpopl %%eax\n" );
     fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(EFlags) - STACK_SPACE );
     fprintf( outfile, "\tmovl 0(%%ebp),%%eax\n" );
     fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Ebp) - STACK_SPACE );
+    fprintf( outfile, "\tmovl 4(%%ebp),%%eax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Eax) - STACK_SPACE );
     fprintf( outfile, "\tmovl %%ebx,%d(%%ebp)\n", CONTEXTOFFSET(Ebx) - STACK_SPACE );
     fprintf( outfile, "\tmovl %%ecx,%d(%%ebp)\n", CONTEXTOFFSET(Ecx) - STACK_SPACE );
     fprintf( outfile, "\tmovl %%edx,%d(%%ebp)\n", CONTEXTOFFSET(Edx) - STACK_SPACE );
@@ -797,7 +799,7 @@ static void BuildCallFrom32Regs( FILE *outfile )
     fprintf( outfile, "\tmovl $0x%x,%%eax\n", CONTEXT86_FULL );
     fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(ContextFlags) - STACK_SPACE );
 
-    fprintf( outfile, "\tmovl 8(%%ebp),%%eax\n" ); /* Get %eip at time of call */
+    fprintf( outfile, "\tmovl 12(%%ebp),%%eax\n" ); /* Get %eip at time of call */
     fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Eip) - STACK_SPACE );
 
     /* Transfer the arguments */
@@ -807,14 +809,14 @@ static void BuildCallFrom32Regs( FILE *outfile )
     fprintf( outfile, "\tmovzbl 4(%%ebx),%%ecx\n" ); /* fetch number of args to copy */
     fprintf( outfile, "\tjecxz 1f\n" );
     fprintf( outfile, "\tsubl %%ecx,%%esp\n" );
-    fprintf( outfile, "\tleal 12(%%ebp),%%esi\n" );  /* get %esp at time of call */
+    fprintf( outfile, "\tleal 16(%%ebp),%%esi\n" );  /* get %esp at time of call */
     fprintf( outfile, "\tmovl %%esp,%%edi\n" );
     fprintf( outfile, "\tshrl $2,%%ecx\n" );
     fprintf( outfile, "\tcld\n" );
     fprintf( outfile, "\trep\n\tmovsl\n" );  /* copy args */
 
     fprintf( outfile, "1:\tmovzbl 5(%%ebx),%%eax\n" ); /* fetch number of args to remove */
-    fprintf( outfile, "\tleal 12(%%ebp,%%eax),%%eax\n" );
+    fprintf( outfile, "\tleal 16(%%ebp,%%eax),%%eax\n" );
     fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Esp) - STACK_SPACE );
 
     /* Call the entry point */

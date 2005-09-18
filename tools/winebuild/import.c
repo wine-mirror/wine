@@ -610,6 +610,21 @@ int resolve_imports( DLLSPEC *spec )
     return 1;
 }
 
+/* output the get_pc thunk if needed */
+static void output_get_pc_thunk( FILE *outfile )
+{
+    if (target_cpu != CPU_x86) return;
+    if (!UsePIC) return;
+    fprintf( outfile, "\n\t.text\n" );
+    fprintf( outfile, "\t.align %d\n", get_alignment(4) );
+    fprintf( outfile, "\t%s\n", func_declaration("__wine_spec_get_pc_thunk_eax") );
+    fprintf( outfile, "%s:\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+    fprintf( outfile, "\tpopl %%eax\n" );
+    fprintf( outfile, "\tpushl %%eax\n" );
+    fprintf( outfile, "\tret\n" );
+    output_function_size( outfile, "__wine_spec_get_pc_thunk_eax" );
+}
+
 /* output a single import thunk */
 static void output_import_thunk( FILE *outfile, const char *name, const char *table, int pos )
 {
@@ -627,31 +642,15 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
         }
         else
         {
-            if (!strcmp( name, "__wine_call_from_32_regs" ))
-            {
-                /* special case: need to preserve all registers */
-                fprintf( outfile, "\tpushl %%eax\n" );
-                fprintf( outfile, "\tcall .L__wine_spec_%s\n", name );
-                fprintf( outfile, ".L__wine_spec_%s:\n", name );
-                fprintf( outfile, "\tpopl %%eax\n" );
-                if (!strcmp( name, "__wine_call_from_16_regs" ))
-                    fprintf( outfile, "\t.byte 0x2e\n" );
-                fprintf( outfile, "\tmovl %s+%d-.L__wine_spec_%s(%%eax),%%eax\n",
-                         table, pos, name );
-                fprintf( outfile, "\txchgl %%eax,(%%esp)\n" );
-                fprintf( outfile, "\tret\n" );
-            }
-            else if (!strcmp( name, "__wine_call_from_16_regs" ))
+            if (!strcmp( name, "__wine_call_from_16_regs" ))
             {
                 /* special case: need to preserve all registers */
                 fprintf( outfile, "\tpushl %%eax\n" );
                 fprintf( outfile, "\tpushl %%ecx\n" );
-                fprintf( outfile, "\tcall .L__wine_spec_%s\n", name );
+                fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
                 fprintf( outfile, ".L__wine_spec_%s:\n", name );
-                fprintf( outfile, "\tpopl %%eax\n" );
-                fprintf( outfile, "\t.byte 0x2e\n" );
-                fprintf( outfile, "\tmovl %s+%d-.L__wine_spec_%s(%%eax),%%eax\n",
-                         table, pos, name );
+                fprintf( outfile, "1:\t.byte 0x2e\n" );
+                fprintf( outfile, "\tmovl %s+%d-1b(%%eax),%%eax\n", table, pos );
                 fprintf( outfile, "\tmovzwl %%sp, %%ecx\n" );
                 fprintf( outfile, "\t.byte 0x36\n" );
                 fprintf( outfile, "\txchgl %%eax,4(%%ecx)\n" );
@@ -660,13 +659,11 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
             }
             else
             {
-                fprintf( outfile, "\tcall .L__wine_spec_%s\n", name );
-                fprintf( outfile, ".L__wine_spec_%s:\n", name );
-                fprintf( outfile, "\tpopl %%eax\n" );
+                fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+                fprintf( outfile, "1:" );
                 if (strstr( name, "__wine_call_from_16" ))
                     fprintf( outfile, "\t.byte 0x2e\n" );
-                fprintf( outfile, "\tjmp *%s+%d-.L__wine_spec_%s(%%eax)\n",
-                         table, pos, name );
+                fprintf( outfile, "\tjmp *%s+%d-1b(%%eax)\n", table, pos );
             }
         }
         break;
@@ -1129,4 +1126,5 @@ void output_imports( FILE *outfile, DLLSPEC *spec )
     output_delayed_imports( outfile, spec );
     output_immediate_import_thunks( outfile );
     output_delayed_import_thunks( outfile, spec );
+    if (nb_imports || has_stubs(spec)) output_get_pc_thunk( outfile );
 }
