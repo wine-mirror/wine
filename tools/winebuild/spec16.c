@@ -28,27 +28,9 @@
 #include <assert.h>
 #include <ctype.h>
 
-#include "wine/exception.h"
 #include "wine/winbase16.h"
 
 #include "build.h"
-
-
-/*******************************************************************
- *         get_cs
- */
-static inline unsigned short get_cs(void)
-{
-    unsigned short res = 0;
-#ifdef __i386__
-# ifdef __GNUC__
-    __asm__("movw %%cs,%w0" : "=r"(res));
-# elif defined(_MSC_VER)
-    __asm { mov res, cs }
-# endif
-#endif /* __i386__ */
-    return res;
-}
 
 
 /*******************************************************************
@@ -404,16 +386,11 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     unsigned int et_size, et_offset;
 
     char constructor[100], destructor[100];
-    unsigned short code_selector = get_cs();
 
     /* File header */
 
     output_file_header( outfile );
     fprintf( outfile, "static const char __wine_spec16_file_name[] = \"%s\";\n", spec->file_name );
-    fprintf( outfile, "extern unsigned short __wine_call_from_16_word();\n" );
-    fprintf( outfile, "extern unsigned int __wine_call_from_16_long();\n" );
-    fprintf( outfile, "extern void __wine_call_from_16_regs();\n" );
-    fprintf( outfile, "extern void __wine_call_from_16_thunk();\n" );
 
     data_buffer = xmalloc( 0x10000 );
     memset( data_buffer, 0, 16 );
@@ -471,7 +448,7 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     /* compute code and data sizes, set offsets, and output prototypes */
 
     entrypoint_size = 2 + 5 + 4;    /* pushw bp + pushl target + call */
-    callfrom_size = 5 + 7 + 4 + 8;  /* pushl relay + lcall cs:glue + lret n + args */
+    callfrom_size = 5 + 7 + 10 + 2 + 8;  /* pushl relay + lcall cs:glue + ret sequence + movl + args */
     code_size = nTypes * callfrom_size;
 
     for (i = 0; i <= spec->limit; i++)
@@ -508,7 +485,7 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
 
     /* DOS header */
 
-    fprintf( outfile, "\n#include \"pshpack1.h\"\n" );
+    fprintf( outfile, "\n#pragma pack(1)\n" );
     fprintf( outfile, "static const struct module_data\n{\n" );
     fprintf( outfile, "  struct\n  {\n" );
     fprintf( outfile, "    unsigned short e_magic;\n" );
@@ -623,8 +600,8 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    unsigned char lcall;\n" );      /* lcall __FLATCS__:glue */
     fprintf( outfile, "    void *glue;\n" );
     fprintf( outfile, "    unsigned short flatcs;\n" );
-    fprintf( outfile, "    unsigned short lret;\n" );      /* lret $args */
-    fprintf( outfile, "    unsigned short args;\n" );
+    fprintf( outfile, "    unsigned short ret[5];\n" );    /* return sequence */
+    fprintf( outfile, "    unsigned short movl;\n" );      /* movl arg_types[1],arg_types[0](%esi) */
     fprintf( outfile, "    unsigned int arg_types[2];\n" );
     fprintf( outfile, "  } call[%d];\n", nTypes );
     fprintf( outfile, "  struct {\n" );
@@ -778,19 +755,37 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
             arg_types[j / 10] |= type << (3 * (j % 10));
         }
         if (typelist[i]->type == TYPE_VARARGS) arg_types[j / 10] |= ARG_VARARG << (3 * (j % 10));
-        if (typelist[i]->flags & FLAG_REGISTER) arg_types[0] |= ARG_REGISTER;
-        if (typelist[i]->flags & FLAG_RET16) arg_types[0] |= ARG_RET16;
 
-        fprintf( outfile, "    { 0x68, __wine_%s_CallFrom16_%s, 0x9a, __wine_call_from_16_%s,\n",
-                 make_c_identifier(spec->file_name), profile,
-                 (typelist[i]->flags & FLAG_REGISTER) ? "regs":
-                 (typelist[i]->flags & FLAG_RET16) ? "word" : "long" );
-        if (argsize)
-            fprintf( outfile, "      0x%04x, 0xca66, %d, { 0x%08x, 0x%08x } },\n",
-                     code_selector, argsize, arg_types[0], arg_types[1] );
+        fprintf( outfile, "    { 0x68, __wine_%s_CallFrom16_%s, 0x9a, 0, 0,\n      ",
+                 make_c_identifier(spec->file_name), profile );
+
+        if (typelist[i]->flags & FLAG_REGISTER)
+        {
+            /* ret sequence: ret $n; nop */
+            if (argsize)
+                fprintf( outfile, "{ 0xca66, %d, 0xb68d, 0x0000, 0x0000 },", argsize );
+            else
+                fprintf( outfile, "{ 0xcb66, 0x748d, 0x0026, 0x748d, 0x0026 }," );
+        }
+        else if (typelist[i]->flags & FLAG_RET16)
+        {
+            /* ret sequence: orl %eax,%eax; ret $n; nop */
+            if (argsize)
+                fprintf( outfile, "{ 0xc009, 0xca66, %d, 0x748d, 0x0026 },", argsize );
+            else
+                fprintf( outfile, "{ 0xc009, 0xcb66, 0xb68d, 0x0000, 0x0000 }," );
+        }
         else
-            fprintf( outfile, "      0x%04x, 0xcb66, 0x9090, { 0x%08x, 0x%08x } },\n",
-                     code_selector, arg_types[0], arg_types[1] );
+        {
+            /* ret sequence: shld $16,%eax,%edx; orl %eax,%eax; ret $n [; nop] */
+            if (argsize)
+                fprintf( outfile, "{ 0xa40f, 0x10c2, 0xc009, 0xca66, %d },", argsize );
+            else
+                fprintf( outfile, "{ 0xa40f, 0x10c2, 0xc009, 0xcb66, 0xf689 }," );
+        }
+        /* the movl is here so that the code contains only valid instructions, */
+        /* it's never actually executed, we only care about the arg_types[] values */
+        fprintf( outfile, " 0x86c7, { 0x%08x, 0x%08x } },\n", arg_types[0], arg_types[1] );
     }
     fprintf( outfile, "  },\n  {\n" );
 
@@ -835,7 +830,7 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     }
 
     fprintf( outfile, "};\n" );
-    fprintf( outfile, "#include \"poppack.h\"\n\n" );
+    fprintf( outfile, "#pragma pack()\n\n" );
 
     /* Output the DLL constructor */
 

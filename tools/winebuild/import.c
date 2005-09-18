@@ -637,34 +637,12 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
     case CPU_x86:
         if (!UsePIC)
         {
-            if (strstr( name, "__wine_call_from_16" )) fprintf( outfile, "\t.byte 0x2e\n" );
             fprintf( outfile, "\tjmp *(%s+%d)\n", table, pos );
         }
         else
         {
-            if (!strcmp( name, "__wine_call_from_16_regs" ))
-            {
-                /* special case: need to preserve all registers */
-                fprintf( outfile, "\tpushl %%eax\n" );
-                fprintf( outfile, "\tpushl %%ecx\n" );
-                fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-                fprintf( outfile, ".L__wine_spec_%s:\n", name );
-                fprintf( outfile, "1:\t.byte 0x2e\n" );
-                fprintf( outfile, "\tmovl %s+%d-1b(%%eax),%%eax\n", table, pos );
-                fprintf( outfile, "\tmovzwl %%sp, %%ecx\n" );
-                fprintf( outfile, "\t.byte 0x36\n" );
-                fprintf( outfile, "\txchgl %%eax,4(%%ecx)\n" );
-                fprintf( outfile, "\tpopl %%ecx\n" );
-                fprintf( outfile, "\tret\n" );
-            }
-            else
-            {
-                fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-                fprintf( outfile, "1:" );
-                if (strstr( name, "__wine_call_from_16" ))
-                    fprintf( outfile, "\t.byte 0x2e\n" );
-                fprintf( outfile, "\tjmp *%s+%d-1b(%%eax)\n", table, pos );
-            }
+            fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+            fprintf( outfile, "1:\tjmp *%s+%d-1b(%%eax)\n", table, pos );
         }
         break;
     case CPU_x86_64:

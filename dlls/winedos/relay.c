@@ -167,6 +167,7 @@ void DOSVM_RelayHandler( CONTEXT86 *context )
  */
 void DOSVM_BuildCallFrame( CONTEXT86 *context, DOSRELAY relay, LPVOID data )
 {
+    static void (*__wine_call_from_16_regs_ptr)();
     WORD  code_sel = DOSVM_dpmi_segments->relay_code_sel;
 
     /*
@@ -195,6 +196,9 @@ void DOSVM_BuildCallFrame( CONTEXT86 *context, DOSRELAY relay, LPVOID data )
     /*
      * Adjust code pointer.
      */
+    if (!__wine_call_from_16_regs_ptr)
+        __wine_call_from_16_regs_ptr = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),
+                                                              "__wine_call_from_16_regs" );
     context->SegCs = wine_get_cs();
-    context->Eip = (DWORD)__wine_call_from_16_regs;
+    context->Eip = (DWORD)__wine_call_from_16_regs_ptr;
 }

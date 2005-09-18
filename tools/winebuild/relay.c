@@ -118,15 +118,12 @@ static inline const char *data16_prefix(void)
  * (sp-20) long   saved edx
  * (sp-24) long   saved previous stack
  */
-static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int short_ret )
+static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
 {
-    const char *name = thunk? "thunk" : reg_func? "regs" : short_ret? "word" : "long";
-
     /* Function header */
     if (thunk) function_header( outfile, "__wine_call_from_16_thunk" );
     else if (reg_func) function_header( outfile, "__wine_call_from_16_regs" );
-    else if (short_ret) function_header( outfile, "__wine_call_from_16_word" );
-    else function_header( outfile, "__wine_call_from_16_long" );
+    else function_header( outfile, "__wine_call_from_16" );
 
     /* Create STACK16FRAME (except STACK32FRAME link) */
     fprintf( outfile, "\tpushw %%gs\n" );
@@ -142,11 +139,10 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
 
     if ( UsePIC )
     {
-        fprintf( outfile, "\tcall .Lcall_from_16_%s.getpc\n", name );
-        fprintf( outfile, ".Lcall_from_16_%s.getpc:\n", name );
-        fprintf( outfile, "\tpopl %%ecx\n" );
-        fprintf( outfile, "\t.byte 0x2e\n\tmovl %s-.Lcall_from_16_%s.getpc(%%ecx),%%edx\n",
-                 asm_name("CallTo16_DataSelector"), name );
+        fprintf( outfile, "\tcall 1f\n" );
+        fprintf( outfile, "1:\tpopl %%ecx\n" );
+        fprintf( outfile, "\t.byte 0x2e\n\tmovl %s-1b(%%ecx),%%edx\n",
+                 asm_name("CallTo16_DataSelector") );
     }
     else
         fprintf( outfile, "\t.byte 0x2e\n\tmovl %s,%%edx\n", asm_name("CallTo16_DataSelector") );
@@ -156,8 +152,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     fprintf( outfile, "%s\tmovw %%dx, %%es\n", data16_prefix() );
 
     if ( UsePIC )
-        fprintf( outfile, "\tmovw %s-.Lcall_from_16_%s.getpc(%%ecx), %%fs\n",
-                 asm_name("CallTo16_TebSelector"), name );
+        fprintf( outfile, "\tmovw %s-1b(%%ecx), %%fs\n", asm_name("CallTo16_TebSelector") );
     else
         fprintf( outfile, "\tmovw %s, %%fs\n", asm_name("CallTo16_TebSelector") );
 
@@ -169,7 +164,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     fprintf( outfile, "\tshrl $1, %%edx\n" );
     if (UsePIC)
     {
-        fprintf( outfile, "\taddl wine_ldt_copy_ptr-.Lcall_from_16_%s.getpc(%%ecx),%%edx\n", name );
+        fprintf( outfile, "\taddl wine_ldt_copy_ptr-1b(%%ecx),%%edx\n" );
         fprintf( outfile, "\tmovl (%%edx), %%edx\n" );
     }
     else
@@ -352,18 +347,12 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
         fprintf( outfile, "\tpopw %%fs\n" );
         fprintf( outfile, "\tpopw %%gs\n" );
 
-        /* Prepare return value and set flags accordingly */
-        if ( !short_ret )
-            fprintf( outfile, "\tshldl $16, %%eax, %%edx\n" );
-        fprintf( outfile, "\torl %%eax, %%eax\n" );
-
         /* Return to return stub which will return to caller */
         fprintf( outfile, "\tlret $12\n" );
     }
     if (thunk) function_footer( outfile, "__wine_call_from_16_thunk" );
     else if (reg_func) function_footer( outfile, "__wine_call_from_16_regs" );
-    else if (short_ret) function_footer( outfile, "__wine_call_from_16_word" );
-    else function_footer( outfile, "__wine_call_from_16_long" );
+    else function_footer( outfile, "__wine_call_from_16" );
 }
 
 
@@ -935,17 +924,14 @@ void BuildRelays16( FILE *outfile )
 
     fprintf( outfile, "%s\n", asm_globl("__wine_call16_start") );
 
-    /* Standard CallFrom16 routine (WORD return) */
-    BuildCallFrom16Core( outfile, FALSE, FALSE, TRUE );
-
-    /* Standard CallFrom16 routine (DWORD return) */
-    BuildCallFrom16Core( outfile, FALSE, FALSE, FALSE );
+    /* Standard CallFrom16 routine */
+    BuildCallFrom16Core( outfile, FALSE, FALSE );
 
     /* Register CallFrom16 routine */
-    BuildCallFrom16Core( outfile, TRUE, FALSE, FALSE );
+    BuildCallFrom16Core( outfile, TRUE, FALSE );
 
     /* C16ThkSL CallFrom16 routine */
-    BuildCallFrom16Core( outfile, FALSE, TRUE, FALSE );
+    BuildCallFrom16Core( outfile, FALSE, TRUE );
 
     /* Standard CallTo16 routine */
     BuildCallTo16Core( outfile, 0 );

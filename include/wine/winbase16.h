@@ -217,14 +217,6 @@ enum arg_types
     ARG_VARARG    /* start of varargs */
 };
 
-/* flags added to arg_types[0] */
-#define ARG_RET16    0x80000000  /* function returns 16-bit value */
-#define ARG_REGISTER 0x40000000  /* function is register */
-
-extern WORD __wine_call_from_16_word();
-extern LONG __wine_call_from_16_long();
-extern void __wine_call_from_16_regs();
-
 #include <poppack.h>
 
 #define INVALID_HANDLE_VALUE16  ((HANDLE16) -1)

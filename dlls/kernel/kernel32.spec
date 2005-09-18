@@ -1247,9 +1247,7 @@
 # 16-bit relays
 @ cdecl __wine_dll_register_16(ptr str)
 @ cdecl __wine_dll_unregister_16(ptr)
-@ varargs __wine_call_from_16_word()
-@ varargs __wine_call_from_16_long()
-@ varargs __wine_call_from_16_regs()
+@ varargs -private __wine_call_from_16_regs()
 
 # Unix files
 @ cdecl wine_get_unix_file_name(wstr)

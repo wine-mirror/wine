@@ -112,8 +112,15 @@ inline static void patch_code_segment( NE_MODULE *pModule )
 
     call = GlobalLock16( pSeg->hSeg );
 
-    if (call->flatcs != wine_get_cs())  /* need to patch cs values */
-        for (i = 0; call[i].pushl == 0x68; i++) call[i].flatcs = wine_get_cs();
+    /* patch glue code address and code selector */
+    for (i = 0; call[i].pushl == 0x68; i++)
+    {
+        if (call[i].ret[0] == 0xca66 || call[i].ret[0] == 0xcb66)  /* register entry point? */
+            call[i].glue = __wine_call_from_16_regs;
+        else
+            call[i].glue = __wine_call_from_16;
+        call[i].flatcs = wine_get_cs();
+    }
 
     if (TRACE_ON(relay))  /* patch relay functions to all point to relay_call_from_16 */
         for (i = 0; call[i].pushl == 0x68; i++) call[i].relay = relay_call_from_16;

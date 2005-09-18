@@ -126,8 +126,8 @@ typedef struct
     BYTE   lcall;                  /* lcall __FLATCS__:glue */
     void  *glue;
     WORD   flatcs;
-    WORD   lret;                   /* lret $nArgs */
-    WORD   nArgs;
+    WORD   ret[5];                 /* return sequence */
+    WORD   movl;                   /* movl arg_types[1],arg_types[0](%esi) */
     DWORD  arg_types[2];           /* type of each argument */
 } CALLFROM16;
 
@@ -146,6 +146,9 @@ typedef struct _THHOOK
     HTASK16    LoadTDB;             /* 12 (unused) */
     HTASK16    LockTDB;             /* 14 hLockedTask */
 } THHOOK;
+
+extern LONG __wine_call_from_16();
+extern void __wine_call_from_16_regs();
 
 extern THHOOK *pThhook;
 

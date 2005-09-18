@@ -277,7 +277,7 @@ static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR module, LPS
     /* Retrieve entry point call structure */
     p = MapSL( MAKESEGPTR( frame->module_cs, frame->callfrom_ip ) );
     /* p now points to lret, get the start of CALLFROM16 structure */
-    return (CALLFROM16 *)(p - (BYTE *)&((CALLFROM16 *)0)->lret);
+    return (CALLFROM16 *)(p - (BYTE *)&((CALLFROM16 *)0)->ret);
 }
 
 
@@ -304,10 +304,14 @@ __ASM_GLOBAL_FUNC( call_entry_point,
 static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16, CONTEXT86 *context,
                                         const CALLFROM16 *call )
 {
-    int i, nb_args, args32[20];
+    unsigned int i, j, nb_args = 0;
+    int args32[20];
 
-    nb_args = 0;
-    if (call->lret == 0xcb66)  /* cdecl */
+    /* look for the ret instruction */
+    for (j = 0; j < sizeof(call->ret)/sizeof(call->ret[0]); j++)
+        if (call->ret[j] == 0xca66 || call->ret[j] == 0xcb66) break;
+
+    if (call->ret[j] == 0xcb66)  /* cdecl */
     {
         for (i = 0; i < 20; i++, nb_args++)
         {
@@ -345,7 +349,7 @@ static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16
     else  /* not cdecl */
     {
         /* Start with the last arg */
-        args16 += call->nArgs;
+        args16 += call->ret[j + 1];
         for (i = 0; i < 20; i++, nb_args++)
         {
             int type = (call->arg_types[i / 10] >> (3 * (i % 10))) & 7;
@@ -377,7 +381,8 @@ static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16
         }
     }
 
-    if (call->arg_types[0] & ARG_REGISTER) args32[nb_args++] = (int)context;
+    if (!j)  /* register function */
+        args32[nb_args++] = (int)context;
 
     SYSLEVEL_CheckNotLevel( 2 );
 
@@ -394,7 +399,8 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
 {
     STACK16FRAME *frame;
     WORD ordinal;
-    int i, ret_val, nb_args, args32[20];
+    unsigned int i, j, nb_args = 0;
+    int ret_val, args32[20];
     char module[10], func[64];
     const CALLFROM16 *call;
 
@@ -405,8 +411,11 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
 
     DPRINTF( "%04lx:Call %s.%d: %s(",GetCurrentThreadId(), module, ordinal, func );
 
-    nb_args = 0;
-    if (call->lret == 0xcb66)  /* cdecl */
+    /* look for the ret instruction */
+    for (j = 0; j < sizeof(call->ret)/sizeof(call->ret[0]); j++)
+        if (call->ret[j] == 0xca66 || call->ret[j] == 0xcb66) break;
+
+    if (call->ret[j] == 0xcb66)  /* cdecl */
     {
         for (i = 0; i < 20; i++, nb_args++)
         {
@@ -460,7 +469,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
     else  /* not cdecl */
     {
         /* Start with the last arg */
-        args16 += call->nArgs;
+        args16 += call->ret[j + 1];
         for (i = 0; i < 20; i++, nb_args++)
         {
             int type = (call->arg_types[i / 10] >> (3 * (i % 10))) & 7;
@@ -513,7 +522,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
 
     DPRINTF( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
 
-    if (call->arg_types[0] & ARG_REGISTER)
+    if (!j)  /* register function */
     {
         args32[nb_args++] = (int)context;
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
@@ -529,7 +538,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
     SYSLEVEL_CheckNotLevel( 2 );
 
     DPRINTF( "%04lx:Ret  %s.%d: %s() ",GetCurrentThreadId(), module, ordinal, func );
-    if (call->arg_types[0] & ARG_REGISTER)
+    if (!j)  /* register function */
     {
         DPRINTF("retval=none ret=%04x:%04x ds=%04x\n",
                 (WORD)context->SegCs, LOWORD(context->Eip), (WORD)context->SegDs);
@@ -541,7 +550,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
     else
     {
         frame = CURRENT_STACK16;  /* might have be changed by the entry point */
-        if (call->arg_types[0] & ARG_RET16)
+        if (j == 1)  /* 16-bit return sequence */
             DPRINTF( "retval=%04x ret=%04x:%04x ds=%04x\n",
                      ret_val & 0xffff, frame->cs, frame->ip, frame->ds );
         else
@@ -557,22 +566,6 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
  * Stubs for the CallTo16/CallFrom16 routines on non-Intel architectures
  * (these will never be called but need to be present to satisfy the linker ...)
  */
-
-/***********************************************************************
- *		__wine_call_from_16_word (KERNEL32.@)
- */
-WORD __wine_call_from_16_word()
-{
-    assert( FALSE );
-}
-
-/***********************************************************************
- *		__wine_call_from_16_long (KERNEL32.@)
- */
-LONG __wine_call_from_16_long()
-{
-    assert( FALSE );
-}
 
 /***********************************************************************
  *		__wine_call_from_16_regs (KERNEL32.@)
