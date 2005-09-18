@@ -30,6 +30,7 @@
 #include "Es.rc"
 #include "Fr.rc"
 #include "It.rc"
+#include "No.rc"
 #include "Pt.rc"
 
 /* BINRES uninstaller.ico */
