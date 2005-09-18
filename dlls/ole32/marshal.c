@@ -628,6 +628,7 @@ static HRESULT proxy_manager_create_ifproxy(
     if (IsEqualIID(riid, &IID_IUnknown))
     {
         ifproxy->iface = (void *)&This->lpVtbl;
+        IMultiQI_AddRef((IMultiQI *)&This->lpVtbl);
         hr = S_OK;
     }
     else
@@ -702,18 +703,19 @@ static void proxy_manager_disconnect(struct proxy_manager * This)
     TRACE("oxid = %s, oid = %s\n", wine_dbgstr_longlong(This->oxid),
         wine_dbgstr_longlong(This->oid));
 
+    EnterCriticalSection(&This->cs);
+
     /* SORFP_NOLIFTIMEMGMT proxies (for IRemUnknown) shouldn't be
      * disconnected - it won't do anything anyway, except cause
      * problems for other objects that depend on this proxy always
      * working */
-    if (This->sorflags & SORFP_NOLIFETIMEMGMT) return;
-
-    EnterCriticalSection(&This->cs);
-
-    LIST_FOR_EACH(cursor, &This->interfaces)
+    if (!(This->sorflags & SORFP_NOLIFETIMEMGMT))
     {
-        struct ifproxy * ifproxy = LIST_ENTRY(cursor, struct ifproxy, entry);
-        ifproxy_disconnect(ifproxy);
+        LIST_FOR_EACH(cursor, &This->interfaces)
+        {
+            struct ifproxy * ifproxy = LIST_ENTRY(cursor, struct ifproxy, entry);
+            ifproxy_disconnect(ifproxy);
+        }
     }
 
     /* apartment is being destroyed so don't keep a pointer around to it */
@@ -986,12 +988,11 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
                 hr = proxy_manager_create_ifproxy(proxy_manager, stdobjref,
                                                   riid, chanbuf, &ifproxy);
         }
+        else
+            IUnknown_AddRef((IUnknown *)ifproxy->iface);
 
         if (hr == S_OK)
-        {
-            ClientIdentity_AddRef((IMultiQI*)&proxy_manager->lpVtbl);
             *object = ifproxy->iface;
-        }
     }
 
     /* release our reference to the proxy manager - the client/apartment

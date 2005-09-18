@@ -1967,13 +1967,14 @@ PSFacBuf_CreateProxy(
 	}
     }
     proxy->lpvtbl2	= &tmproxyvtable;
-    /* 1 reference for the proxy and 1 for the object */
-    proxy->ref		= 2;
+    /* one reference for the proxy */
+    proxy->ref		= 1;
     proxy->tinfo	= tinfo;
     memcpy(&proxy->iid,riid,sizeof(*riid));
     proxy->chanbuf      = 0;
     *ppv		= (LPVOID)proxy;
     *ppProxy		= (IRpcProxyBuffer *)&(proxy->lpvtbl2);
+    IUnknown_AddRef((IUnknown *)*ppv);
     return S_OK;
 }
 

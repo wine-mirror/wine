@@ -1282,6 +1282,82 @@ static void test_proxy_interfaces(void)
     end_host_object(tid, thread);
 }
 
+typedef struct
+{
+    const IUnknownVtbl *lpVtbl;
+    ULONG refs;
+} HeapUnknown;
+
+static HRESULT WINAPI HeapUnknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *ppv = (LPVOID)iface;
+        return S_OK;
+    }
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HeapUnknown_AddRef(IUnknown *iface)
+{
+    HeapUnknown *This = (HeapUnknown *)iface;
+    trace("HeapUnknown_AddRef(%p)\n", iface);
+    return InterlockedIncrement((LONG*)&This->refs);
+}
+
+static ULONG WINAPI HeapUnknown_Release(IUnknown *iface)
+{
+    HeapUnknown *This = (HeapUnknown *)iface;
+    ULONG refs = InterlockedDecrement((LONG*)&This->refs);
+    trace("HeapUnknown_Release(%p)\n", iface);
+    if (!refs) HeapFree(GetProcessHeap(), 0, This);
+    return refs;
+}
+
+static const IUnknownVtbl HeapUnknown_Vtbl =
+{
+    HeapUnknown_QueryInterface,
+    HeapUnknown_AddRef,
+    HeapUnknown_Release
+};
+
+static void test_proxybuffer(REFIID riid)
+{
+    HRESULT hr;
+    IPSFactoryBuffer *psfb;
+    IRpcProxyBuffer *proxy;
+    LPVOID lpvtbl;
+    ULONG refs;
+    CLSID clsid;
+    HeapUnknown *pUnkOuter = (HeapUnknown *)HeapAlloc(GetProcessHeap(), 0, sizeof(*pUnkOuter));
+
+    pUnkOuter->lpVtbl = &HeapUnknown_Vtbl;
+    pUnkOuter->refs = 1;
+
+    hr = CoGetPSClsid(riid, &clsid);
+    ok_ole_success(hr, CoGetPSClsid);
+
+    hr = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IPSFactoryBuffer, (LPVOID*)&psfb);
+    ok_ole_success(hr, CoGetClassObject);
+
+    hr = IPSFactoryBuffer_CreateProxy(psfb, (IUnknown*)pUnkOuter, riid, &proxy, &lpvtbl);
+    ok_ole_success(hr, IPSFactoryBuffer_CreateProxy);
+    ok(lpvtbl != NULL, "IPSFactoryBuffer_CreateProxy succeeded, but returned a NULL vtable!\n");
+
+    refs = IPSFactoryBuffer_Release(psfb);
+#if 0 /* not reliable on native. maybe it leaks references! */
+    ok(refs == 0, "Ref-count leak of %ld on IPSFactoryBuffer\n", refs);
+#endif
+
+    refs = IUnknown_Release((IUnknown *)lpvtbl);
+    ok(refs == 1, "Ref-count leak of %ld on IRpcProxyBuffer\n", refs-1);
+
+    refs = IRpcProxyBuffer_Release(proxy);
+    ok(refs == 0, "Ref-count leak of %ld on IRpcProxyBuffer\n", refs);
+}
+
 static void test_stubbuffer(REFIID riid)
 {
     HRESULT hr;
@@ -1427,96 +1503,6 @@ static void UnlockModuleOOP()
 }
 
 static HWND hwnd_app;
-
-static HRESULT WINAPI TestRE_IClassFactory_CreateInstance(
-    LPCLASSFACTORY iface,
-    LPUNKNOWN pUnkOuter,
-    REFIID riid,
-    LPVOID *ppvObj)
-{
-    DWORD res;
-    BOOL ret = SendMessageTimeout(hwnd_app, WM_NULL, 0, 0, SMTO_BLOCK, 500, &res);
-    todo_wine { ok(ret, "Timed out sending a message to originating window during RPC call\n"); }
-    return S_FALSE;
-}
-
-static const IClassFactoryVtbl TestREClassFactory_Vtbl =
-{
-    Test_IClassFactory_QueryInterface,
-    Test_IClassFactory_AddRef,
-    Test_IClassFactory_Release,
-    TestRE_IClassFactory_CreateInstance,
-    Test_IClassFactory_LockServer
-};
-
-IClassFactory TestRE_ClassFactory = { &TestREClassFactory_Vtbl };
-
-static LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    switch (msg)
-    {
-    case WM_USER:
-    {
-        HRESULT hr;
-        IStream *pStream = NULL;
-        IClassFactory *proxy = NULL;
-        IUnknown *object;
-        DWORD tid;
-        HANDLE thread;
-
-        cLocks = 0;
-
-        hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
-        ok_ole_success(hr, CreateStreamOnHGlobal);
-        tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&TestRE_ClassFactory, MSHLFLAGS_NORMAL, &thread);
-
-        ok_more_than_one_lock();
-
-        IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
-        hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&proxy);
-        ok_ole_success(hr, CoReleaseMarshalData);
-        IStream_Release(pStream);
-
-        ok_more_than_one_lock();
-
-        hr = IClassFactory_CreateInstance(proxy, NULL, &IID_IUnknown, (void **)&object);
-
-        IClassFactory_Release(proxy);
-
-        ok_no_locks();
-
-        end_host_object(tid, thread);
-
-        PostMessage(hwnd, WM_QUIT, 0, 0);
-
-        return 0;
-    }
-    default:
-        return DefWindowProc(hwnd, msg, wparam, lparam);
-    }
-}
-
-static void test_message_reentrancy()
-{
-    WNDCLASS wndclass;
-    MSG msg;
-
-    memset(&wndclass, 0, sizeof(wndclass));
-    wndclass.lpfnWndProc = window_proc;
-    wndclass.lpszClassName = "WineCOMTest";
-    RegisterClass(&wndclass);
-
-    hwnd_app = CreateWindow("WineCOMTest", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, 0);
-    ok(hwnd_app != NULL, "Window creation failed\n");
-
-    PostMessage(hwnd_app, WM_USER, 0, 0);
-
-    while (GetMessage(&msg, NULL, 0, 0))
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
 
 static HRESULT WINAPI TestOOP_IClassFactory_QueryInterface(
     LPCLASSFACTORY iface,
@@ -1717,6 +1703,7 @@ START_TEST(marshal)
     test_bad_marshal_stream();
     test_proxy_interfaces();
     test_stubbuffer(&IID_IClassFactory);
+    test_proxybuffer(&IID_IClassFactory);
     test_message_reentrancy();
 
 /*    test_out_of_process_com(); */
