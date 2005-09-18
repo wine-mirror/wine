@@ -229,13 +229,13 @@ static const WCHAR METRICS_MENULOGFONT_VALNAME[]=     {'M','e','n','u','F','o','
 static const WCHAR METRICS_MESSAGELOGFONT_VALNAME[]=  {'M','e','s','s','a','g','e','F','o','n','t',0};
 static const WCHAR METRICS_STATUSLOGFONT_VALNAME[]=   {'S','t','a','t','u','s','F','o','n','t',0};
 
-/* volatile registry branch under CURRENT_USER_REGKEY for temporary values storage */
 static const WCHAR WINE_CURRENT_USER_REGKEY[] = {'S','o','f','t','w','a','r','e','\\',
-                                                 'W','i','n','e','\\',
-                                                 'T','e','m','p','o','r','a','r','y',' ',
-                                                 'S','y','s','t','e','m',' ',
-                                                 'P','a','r','a','m','e','t','e','r','s',0};
+                                                 'W','i','n','e',0};
 
+/* volatile registry branch under WINE_CURRENT_USER_REGKEY for temporary values storage */
+static const WCHAR WINE_CURRENT_USER_REGKEY_TEMP_PARAMS[] = {'T','e','m','p','o','r','a','r','y',' ',
+                                                             'S','y','s','t','e','m',' ',
+                                                             'P','a','r','a','m','e','t','e','r','s',0};
 
 static const WCHAR Yes[]=                                    {'Y','e','s',0};
 static const WCHAR No[]=                                     {'N','o',0};
@@ -452,11 +452,24 @@ static HKEY get_volatile_regkey(void)
 
     if (!volatile_key)
     {
-        /* @@ Wine registry key: HKCU\Software\Wine\Temporary System Parameters */
+        HKEY key;
+        /* This must be non-volatile! */
         if (RegCreateKeyExW( HKEY_CURRENT_USER, WINE_CURRENT_USER_REGKEY,
-                             0, 0, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, 0,
-                             &volatile_key, 0 ) != ERROR_SUCCESS)
-            ERR("Can't create wine configuration registry branch\n");
+                             0, 0, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, 0,
+                             &key, 0 ) != ERROR_SUCCESS)
+        {
+            ERR("Can't create wine registry branch\n");
+        }
+        else
+        {
+            /* @@ Wine registry key: HKCU\Software\Wine\Temporary System Parameters */
+            if (RegCreateKeyExW( key, WINE_CURRENT_USER_REGKEY_TEMP_PARAMS,
+                                 0, 0, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, 0,
+                                 &volatile_key, 0 ) != ERROR_SUCCESS)
+                ERR("Can't create non-permanent wine registry branch\n");
+
+            RegCloseKey(key);
+        }
     }
     return volatile_key;
 }
