@@ -243,8 +243,8 @@ static void HEAP_Dump( HEAP *heap )
             else if (*(DWORD *)ptr & ARENA_FLAG_PREV_FREE)
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DPRINTF( "%p Used %08lx back=%08lx\n",
-                        pArena, pArena->size & ARENA_SIZE_MASK, *((UINT_PTR *)pArena - 1) );
+                DPRINTF( "%p Used %08lx back=%p\n",
+                        pArena, pArena->size & ARENA_SIZE_MASK, *((ARENA_FREE **)pArena - 1) );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
                 usedSize += pArena->size & ARENA_SIZE_MASK;
@@ -849,9 +849,9 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
         if (*((ARENA_FREE **)((char *)(pArena + 1) +
             (pArena->size & ARENA_SIZE_MASK)) - 1) != pArena)
         {
-            ERR("Heap %p: arena %p has wrong back ptr %08lx\n",
+            ERR("Heap %p: arena %p has wrong back ptr %p\n",
                 subheap->heap, pArena,
-                *((UINT_PTR *)((char *)(pArena+1) + (pArena->size & ARENA_SIZE_MASK)) - 1));
+                *((ARENA_FREE **)((char *)(pArena+1) + (pArena->size & ARENA_SIZE_MASK)) - 1));
             return FALSE;
         }
     }
