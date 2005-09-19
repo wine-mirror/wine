@@ -107,7 +107,7 @@
 @ cdecl __p___wargv()
 @ cdecl __p___winitenv()
 @ cdecl __p__acmdln()
-@ stub __p__amblksiz #()
+@ cdecl __p__amblksiz()
 @ cdecl __p__commode()
 @ cdecl __p__daylight() MSVCRT___p__daylight
 @ stub __p__dstbias #()

@@ -50,6 +50,9 @@ typedef struct _heapinfo
 } _HEAPINFO;
 #endif /* _HEAPINFO_DEFINED */
 
+extern unsigned int* __p__amblksiz(void);
+#define _amblksiz (*__p__amblksiz());
+
 #ifdef __cplusplus
 extern "C" {
 #endif

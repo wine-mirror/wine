@@ -37,6 +37,8 @@ typedef void (*MSVCRT_new_handler_func)(unsigned long size);
 static MSVCRT_new_handler_func MSVCRT_new_handler;
 static int MSVCRT_new_mode;
 
+/* FIXME - According to documentation it should be 8*1024, at runtime it returns 16 */ 
+static unsigned int MSVCRT_amblksiz = 16;
 
 /*********************************************************************
  *		??2@YAPAXI@Z (MSVCRT.@)
@@ -280,4 +282,12 @@ void* MSVCRT_realloc(void* ptr, MSVCRT_size_t size)
   if (size) return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
   MSVCRT_free(ptr);
   return NULL;
+}
+
+/*********************************************************************
+ *		__p__amblksiz (MSVCRT.@)
+ */
+unsigned int* __p__amblksiz(void)
+{
+  return &MSVCRT_amblksiz;
 }
