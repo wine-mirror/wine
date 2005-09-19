@@ -92,7 +92,7 @@ static HRESULT WINAPI InternetSession_UnregisterMimeFilter(IInternetSession *ifa
 
 static HRESULT WINAPI InternetSession_CreateBinding(IInternetSession *iface,
         LPBC pBC, LPCWSTR szUrl, IUnknown *pUnkOuter, IUnknown **ppUnk,
-        void **ppOInetProt, DWORD dwOption)
+        IInternetProtocol **ppOInetProt, DWORD dwOption)
 {
     FIXME("(%p %s %p %p %p %08lx)\n", pBC, debugstr_w(szUrl), pUnkOuter, ppUnk,
             ppOInetProt, dwOption);

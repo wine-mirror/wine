@@ -293,6 +293,49 @@ interface IAuthenticate : IUnknown
 }
 
 /*****************************************************************************
+ * IHttpNegotiate interface
+ */
+[
+    object,
+    uuid(79EAC9D2-BAF9-11CE-8C82-00AA004BA90B),
+    pointer_default(unique)
+]
+interface IHttpNegotiate : IUnknown
+{
+    typedef [unique] IHttpNegotiate *LPHTTPNEGOTIATE;
+
+    HRESULT BeginningTransaction(
+        [in] LPCWSTR szURL,
+        [in, unique] LPCWSTR szHeaders,
+        [in] DWORD dwReserved,
+        [out] LPWSTR *pszAdditionalHeaders);
+
+    HRESULT OnResponse(
+        [in] DWORD dwResponseCode,
+        [in, unique] LPCWSTR szResponseHeaders,
+        [in, unique] LPCWSTR szRequestHeaders,
+        [out] LPWSTR *pszAdditionalRequestHeaders);
+}
+
+/*****************************************************************************
+ * IHttpNegotiate2 interface
+ */
+[
+    object,
+    uuid(4F9F9FCB-E0F4-48eb-B7AB-FA2EA9365CB4),
+    pointer_default(unique)
+]
+interface IHttpNegotiate2 : IHttpNegotiate
+{
+    typedef [unique] IHttpNegotiate2 *LPHTTPNEGOTIATE2;
+
+    HRESULT GetRootSecurityId(
+         [out, size_is(*pcbSecurityId)] BYTE *pbSecurityId,
+         [in, out] DWORD *pcbSecurityId,
+         [in] DWORD_PTR dwReserved);
+}
+
+/*****************************************************************************
  * IBindHost interface
  */
 cpp_quote("#define SID_IBindHost IID_IBindHost")
@@ -490,7 +533,10 @@ interface IInternetBindInfo : IUnknown
         BINDSTRING_ACCEPT_ENCODINGS,
         BINDSTRING_POST_COOKIE,
         BINDSTRING_POST_DATA_MIME,
-        BINDSTRING_URL
+        BINDSTRING_URL,
+        BINDSTRING_IID,
+        BINDSTRING_FLAG_BIND_TO_OBJECT,
+        BINDSTRING_PTR_BIND_CONTEXT
     } BINDSTRING;
 
     HRESULT GetBindInfo(
@@ -777,7 +823,7 @@ interface IInternetSession : IUnknown
         [in] LPCWSTR szUrl,
         [in] IUnknown *pUnkOuter,
         [out, unique] IUnknown **ppUnk,
-        [out, unique] /*IInternetProtocol*/ void **ppOInetProt,
+        [out, unique] IInternetProtocol **ppOInetProt,
         [in] DWORD dwOption);
 
     HRESULT SetSessionOption(
