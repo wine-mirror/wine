@@ -425,7 +425,7 @@ static int AllocEntry(void)
 static BOOL get_gasp_flags(X11DRV_PDEVICE *physDev, WORD *flags)
 {
     DWORD size;
-    WORD *gasp;
+    WORD *gasp, *buffer;
     WORD num_recs;
     DWORD ppem;
     TEXTMETRICW tm;
@@ -436,7 +436,7 @@ static BOOL get_gasp_flags(X11DRV_PDEVICE *physDev, WORD *flags)
     if(size == GDI_ERROR)
         return FALSE;
 
-    gasp = HeapAlloc(GetProcessHeap(), 0, size);
+    gasp = buffer = HeapAlloc(GetProcessHeap(), 0, size);
     GetFontData(physDev->hdc, MS_GASP_TAG,  0, gasp, size);
 
     GetTextMetricsW(physDev->hdc, &tm);
@@ -454,7 +454,7 @@ static BOOL get_gasp_flags(X11DRV_PDEVICE *physDev, WORD *flags)
     }
     TRACE("got flags %04x for ppem %ld\n", *flags, ppem);
 
-    HeapFree(GetProcessHeap(), 0, gasp);
+    HeapFree(GetProcessHeap(), 0, buffer);
     return TRUE;
 }
 
