@@ -1,7 +1,7 @@
 /*
- * Resources for MSI
+ * Finnish resources for MSI
  *
- * Copyright 2005 Mike McCormack
+ * Copyright 2005 Kimmo Myllyvirta
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,20 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winnls.h"
+LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#include "version.rc"
-
-#include "msi_De.rc"
-#include "msi_En.rc"
-#include "msi_Es.rc"
-#include "msi_Fi.rc"
-#include "msi_Fr.rc"
-#include "msi_Nl.rc"
-#include "msi_No.rc"
-#include "msi_Pt.rc"
+STRINGTABLE DISCARDABLE
+{
+	5 "Polkua %s ei löydy."
+	9 "Anna levy %s"
+	10 "Virheelliset parametrit."
+	11 "Anna kansio, joka sisältää %s"
+	12 "Ominaisuuden asennuslähde puuttuu."
+	13 "Ominaisuuden verkkolevy puuttuu."
+	14 "Ominaisuus:"
+	15 "Valitse kansio, joka sisältää %s"
+}
