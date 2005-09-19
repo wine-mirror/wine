@@ -349,3 +349,38 @@ interface IHlinkTarget : IUnknown
         [in,unique]  LPCWSTR pwzLocation,
         [out] LPWSTR *ppwzFriendlyName);
 }
+
+/*****************************************************************************
+ *    IHlinkFrame interface
+ */
+[
+    object,
+    uuid(79eac9c5-baf9-11ce-8c82-00aa004ba90b),
+    pointer_default(unique)
+]
+
+interface IHlinkFrame : IUnknown
+{
+    typedef IHlinkFrame *LPHLINKFRAME;
+
+    HRESULT SetBrowseContext( 
+        [in, unique] IHlinkBrowseContext * pihlbc);
+    HRESULT GetBrowseContext( 
+        [out] IHlinkBrowseContext ** ppihlbc);
+    HRESULT Navigate( 
+        [in] DWORD grfHLNF, 
+        [in, unique] LPBC pbc, 
+        [in, unique] IBindStatusCallback *pibsc, 
+        [in, unique] IHlink *pihlNavigate);
+    HRESULT OnNavigate( 
+        [in] DWORD grfHLNF, 
+        [in, unique] IMoniker *pimkTarget, 
+        [in, unique] LPCWSTR pwzLocation, 
+        [in, unique] LPCWSTR pwzFriendlyName, 
+        [in] DWORD dwreserved);
+    HRESULT UpdateHlink( 
+        [in] ULONG uHLID, 
+        [in, unique] IMoniker *pimkTarget, 
+        [in, unique] LPCWSTR pwzLocation, 
+        [in, unique] LPCWSTR pwzFriendlyName);
+}
