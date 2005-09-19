@@ -131,6 +131,7 @@ extern enum target_platform target_platform;
 #define FLAG_PRIVATE   0x40  /* function is private (cannot be imported) */
 
 #define FLAG_FORWARD   0x80  /* function is a forwarded name */
+#define FLAG_EXT_LINK  0x100 /* function links to an external symbol */
 
   /* Offset of a structure field relative to the start of the struct */
 #define STRUCTOFFSET(type,field) ((int)&((type *)0)->field)
@@ -239,6 +240,7 @@ extern const char *output_file_name;
 extern char **debug_channels;
 extern char **lib_path;
 
+extern char *as_command;
 extern char *ld_command;
 extern char *nm_command;
 

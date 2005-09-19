@@ -78,6 +78,7 @@ char *input_file_name = NULL;
 char *spec_file_name = NULL;
 const char *output_file_name = NULL;
 
+char *as_command = NULL;
 char *ld_command = NULL;
 char *nm_command = NULL;
 
@@ -205,6 +206,12 @@ static void set_target( const char *target )
 
     free( spec );
 
+    if (!as_command)
+    {
+        as_command = xmalloc( strlen(target) + sizeof("-as") );
+        strcpy( as_command, target );
+        strcat( as_command, "-as" );
+    }
     if (!ld_command)
     {
         ld_command = xmalloc( strlen(target) + sizeof("-ld") );
@@ -237,6 +244,7 @@ static void exit_on_signal( int sig )
 static const char usage_str[] =
 "Usage: winebuild [OPTIONS] [FILES]\n\n"
 "Options:\n"
+"       --as-cmd=AS          Command to use for assembling (default: as)\n"
 "   -C, --source-dir=DIR     Look for source files in DIR\n"
 "   -d, --delay-lib=LIB      Import the specified library in delayed mode\n"
 "   -D SYM                   Ignored for C flags compatibility\n"
@@ -278,6 +286,7 @@ enum long_options_values
     LONG_OPT_DEF,
     LONG_OPT_EXE,
     LONG_OPT_DEBUG,
+    LONG_OPT_ASCMD,
     LONG_OPT_LDCMD,
     LONG_OPT_NMCMD,
     LONG_OPT_RELAY16,
@@ -295,6 +304,7 @@ static const struct option long_options[] =
     { "def",      0, 0, LONG_OPT_DEF },
     { "exe",      0, 0, LONG_OPT_EXE },
     { "debug",    0, 0, LONG_OPT_DEBUG },
+    { "as-cmd",   1, 0, LONG_OPT_ASCMD },
     { "ld-cmd",   1, 0, LONG_OPT_LDCMD },
     { "nm-cmd",   1, 0, LONG_OPT_NMCMD },
     { "relay16",  0, 0, LONG_OPT_RELAY16 },
@@ -443,6 +453,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_DEBUG:
             set_exec_mode( MODE_DEBUG );
+            break;
+        case LONG_OPT_ASCMD:
+            as_command = xstrdup( optarg );
             break;
         case LONG_OPT_LDCMD:
             ld_command = xstrdup( optarg );

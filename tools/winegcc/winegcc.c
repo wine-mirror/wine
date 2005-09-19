@@ -590,6 +590,8 @@ static void build(struct options* opts)
     spec_args = strarray_alloc();
     spec_s_name = get_temp_file(output_name, ".spec.s");
     strarray_add(spec_args, winebuild);
+    strarray_add(spec_args, "--as-cmd");
+    strarray_add(spec_args, AS);
     strarray_add(spec_args, "--ld-cmd");
     strarray_add(spec_args, LD);
     strarray_addall(spec_args, strarray_fromstring(DLLFLAGS, " "));

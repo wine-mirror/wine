@@ -62,6 +62,7 @@ static struct name_table undef_symbols;    /* list of undefined symbols */
 static struct name_table ignore_symbols;   /* list of symbols to ignore */
 static struct name_table extra_ld_symbols; /* list of extra symbols that ld should resolve */
 static struct name_table delayed_imports;  /* list of delayed import dlls */
+static struct name_table ext_link_imports; /* list of external symbols to link to */
 
 static struct import **dll_imports = NULL;
 static int nb_imports = 0;      /* number of imported dlls (delayed or not) */
@@ -483,22 +484,73 @@ static int check_unused( const struct import* imp, const DLLSPEC *spec )
     return 1;
 }
 
-/* combine a list of object files with ld into a single object file */
-/* returns the name of the combined file */
-static const char *ldcombine_files( char **argv )
+/* flag the dll exports that link to an undefined symbol */
+static void check_undefined_exports( DLLSPEC *spec )
 {
-    unsigned int i, len = 0;
-    char *cmd, *p, *ld_tmp_file;
+    int i;
+
+    for (i = 0; i < spec->nb_entry_points; i++)
+    {
+        ORDDEF *odp = &spec->entry_points[i];
+        if (odp->type == TYPE_STUB) continue;
+        if (odp->flags & FLAG_FORWARD) continue;
+        if (find_name( odp->link_name, &undef_symbols ))
+        {
+            odp->flags |= FLAG_EXT_LINK;
+            add_name( &ext_link_imports, odp->link_name );
+        }
+    }
+}
+
+/* create a .o file that references all the undefined symbols we want to resolve */
+static char *create_undef_symbols_file( DLLSPEC *spec )
+{
+    char *cmd, *as_file, *obj_file;
+    unsigned int i;
+    FILE *f;
     int err;
 
+    if (!as_command) as_command = xstrdup("as");
+
+    as_file = get_temp_file_name( output_file_name, ".s" );
+    if (!(f = fopen( as_file, "w" ))) fatal_error( "Cannot create %s\n", as_file );
+    fprintf( f, "\t.data\n" );
+
+    for (i = 0; i < spec->nb_entry_points; i++)
+    {
+        ORDDEF *odp = &spec->entry_points[i];
+        if (odp->type == TYPE_STUB) continue;
+        if (odp->flags & FLAG_FORWARD) continue;
+        fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(odp->link_name) );
+    }
+    for (i = 0; i < extra_ld_symbols.count; i++)
+        fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(extra_ld_symbols.names[i]) );
+    fclose( f );
+
+    obj_file = get_temp_file_name( output_file_name, ".o" );
+    cmd = xmalloc( strlen(as_command) + strlen(obj_file) + strlen(as_file) + 6 );
+    sprintf( cmd, "%s -o %s %s", as_command, obj_file, as_file );
+    err = system( cmd );
+    if (err) fatal_error( "%s failed with status %d\n", as_command, err );
+    free( cmd );
+    return obj_file;
+}
+
+/* combine a list of object files with ld into a single object file */
+/* returns the name of the combined file */
+static const char *ldcombine_files( DLLSPEC *spec, char **argv )
+{
+    unsigned int i, len = 0;
+    char *cmd, *p, *ld_tmp_file, *undef_file;
+    int err;
+
+    undef_file = create_undef_symbols_file( spec );
+    len += strlen(undef_file) + 1;
     ld_tmp_file = get_temp_file_name( output_file_name, ".o" );
     if (!ld_command) ld_command = xstrdup("ld");
-    for (i = 0; i < extra_ld_symbols.count; i++) len += strlen(extra_ld_symbols.names[i]) + 5;
     for (i = 0; argv[i]; i++) len += strlen(argv[i]) + 1;
     cmd = p = xmalloc( len + strlen(ld_tmp_file) + 8 + strlen(ld_command)  );
-    p += sprintf( cmd, "%s -r -o %s", ld_command, ld_tmp_file );
-    for (i = 0; i < extra_ld_symbols.count; i++)
-        p += sprintf( p, " -u %s", asm_name(extra_ld_symbols.names[i]) );
+    p += sprintf( cmd, "%s -r -o %s %s", ld_command, ld_tmp_file, undef_file );
     for (i = 0; argv[i]; i++)
         p += sprintf( p, " %s", argv[i] );
     err = system( cmd );
@@ -523,7 +575,7 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
     strcpy( name_prefix, asm_name("") );
     prefix_len = strlen( name_prefix );
 
-    name = ldcombine_files( argv );
+    name = ldcombine_files( spec, argv );
 
     if (!nm_command) nm_command = xstrdup("nm");
     cmd = xmalloc( strlen(nm_command) + strlen(name) + 5 );
@@ -578,6 +630,10 @@ int resolve_imports( DLLSPEC *spec )
             i--;
         }
     }
+
+    sort_names( &undef_symbols );
+    check_undefined_exports( spec );
+
     return 1;
 }
 
@@ -1068,6 +1124,43 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
     output_function_size( outfile, delayed_import_thunks );
 }
 
+/* output import stubs for exported entry points that link to external symbols */
+static void output_external_link_imports( FILE *outfile, DLLSPEC *spec )
+{
+    unsigned int i, pos;
+
+    if (!ext_link_imports.count) return;  /* nothing to do */
+
+    sort_names( &ext_link_imports );
+
+    /* get rid of duplicate names */
+    for (i = 1; i < ext_link_imports.count; i++)
+    {
+        if (!strcmp( ext_link_imports.names[i-1], ext_link_imports.names[i] ))
+            remove_name( &ext_link_imports, i-- );
+    }
+
+    fprintf( outfile, "\n/* external link thunks */\n\n" );
+    fprintf( outfile, "\t.data\n" );
+    fprintf( outfile, "\t.align %d\n", get_alignment(get_ptr_size()) );
+    fprintf( outfile, ".L__wine_spec_external_links:\n" );
+    for (i = 0; i < ext_link_imports.count; i++)
+        fprintf( outfile, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(ext_link_imports.names[i]) );
+
+    fprintf( outfile, "\n\t.text\n" );
+    fprintf( outfile, "\t.align %d\n", get_alignment(get_ptr_size()) );
+    fprintf( outfile, "%s:\n", asm_name("__wine_spec_external_link_thunks") );
+
+    for (i = pos = 0; i < ext_link_imports.count; i++)
+    {
+        char buffer[256];
+        sprintf( buffer, "__wine_spec_ext_link_%s", ext_link_imports.names[i] );
+        output_import_thunk( outfile, buffer, ".L__wine_spec_external_links", pos );
+        pos += get_ptr_size();
+    }
+    output_function_size( outfile, "__wine_spec_external_link_thunks" );
+}
+
 /* output the import and delayed import tables of a Win32 module */
 void output_imports( FILE *outfile, DLLSPEC *spec )
 {
@@ -1075,5 +1168,6 @@ void output_imports( FILE *outfile, DLLSPEC *spec )
     output_delayed_imports( outfile, spec );
     output_immediate_import_thunks( outfile );
     output_delayed_import_thunks( outfile, spec );
-    if (nb_imports || has_stubs(spec)) output_get_pc_thunk( outfile );
+    output_external_link_imports( outfile, spec );
+    if (nb_imports || ext_link_imports.count || has_stubs(spec)) output_get_pc_thunk( outfile );
 }

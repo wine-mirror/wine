@@ -64,6 +64,10 @@ Generate the assembly code for the 32-bit relay routines. This is for
 Wine internal usage only, you should never need to use this option.
 .SH OPTIONS
 .TP
+.BI \--as-cmd= as-command
+Specify the command to use to compile assembly files; the default is
+\fBas\fR.
+.TP
 .BI \-C,\ --source-dir= directory
 Change to the specified directory before reading source files. Only
 meaningful in
@@ -131,10 +135,6 @@ Ignored for compatibility with the C compiler.
 Specify the command to use to link the object files; the default is
 \fBld\fR.
 .TP
-.BI \--nm-cmd= nm-command
-Specify the command to use to get the list of undefined symbols; the
-default is \fBnm\fR.
-.TP
 .BI \-L,\ --library-path= directory
 Append the specified directory to the list of directories that are
 searched for import libraries.
@@ -154,6 +154,10 @@ Set the internal name of the module. It is only used in Win16
 modules. The default is to use the base name of the spec file (without
 any extension). This is used for KERNEL, since it lives in
 KRNL386.EXE. It shouldn't be needed otherwise.
+.TP
+.BI \--nm-cmd= nm-command
+Specify the command to use to get the list of undefined symbols; the
+default is \fBnm\fR.
 .TP
 .BI \-o,\ --output= file
 Set the name of the output file (default is standard output).

@@ -146,18 +146,23 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
         case TYPE_STDCALL:
         case TYPE_VARARGS:
         case TYPE_CDECL:
-            if (!(odp->flags & FLAG_FORWARD))
+            if (odp->flags & FLAG_FORWARD)
             {
-                fprintf( outfile, "\t.long %s\n", asm_name(odp->link_name) );
+                fprintf( outfile, "\t%s .L__wine_spec_forwards+%u\n", get_asm_ptr_keyword(), fwd_size );
+                fwd_size += strlen(odp->link_name) + 1;
+            }
+            else if (odp->flags & FLAG_EXT_LINK)
+            {
+                fprintf( outfile, "\t%s %s_%s\n",
+                         get_asm_ptr_keyword(), asm_name("__wine_spec_ext_link"), odp->link_name );
             }
             else
             {
-                fprintf( outfile, "\t.long .L__wine_spec_forwards+%d\n", fwd_size );
-                fwd_size += strlen(odp->link_name) + 1;
+                fprintf( outfile, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(odp->link_name) );
             }
             break;
         case TYPE_STUB:
-            fprintf( outfile, "\t.long %s\n",
+            fprintf( outfile, "\t%s %s\n", get_asm_ptr_keyword(),
                      asm_name( make_internal_name( odp, spec, "stub" )) );
             break;
         default:

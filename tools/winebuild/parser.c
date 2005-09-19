@@ -274,7 +274,8 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
         else if (!strcmp(token, "double"))
         {
             odp->u.func.arg_types[i++] = 'l';
-            if (i < sizeof(odp->u.func.arg_types)) odp->u.func.arg_types[i] = 'l';
+            if (get_ptr_size() == 4 && i < sizeof(odp->u.func.arg_types))
+                odp->u.func.arg_types[i] = 'l';
         }
         else
         {
