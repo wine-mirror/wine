@@ -1738,7 +1738,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 {
     BOOL ret = FALSE;
     LPWSTR reordered_str = (LPWSTR)str;
-    const WORD *glyphs = NULL;
+    WORD *glyphs = NULL;
     UINT align = GetTextAlign( hdc );
     POINT pt;
     TEXTMETRICW tm;
@@ -1794,7 +1794,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
           lprect, debugstr_wn(str, count), count, lpDx);
 
     if(flags & ETO_GLYPH_INDEX)
-        glyphs = (const WORD*)reordered_str;
+        glyphs = reordered_str;
 
     if(lprect)
         TRACE("rect: %ld,%ld - %ld,%ld\n", lprect->left, lprect->top, lprect->right,
@@ -1980,9 +1980,9 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     {
         HFONT orig_font = dc->hFont, cur_font;
         UINT glyph;
-        WORD *glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WORD));
         INT span = 0, *offsets = NULL, i;
 
+        glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WORD));
         for(i = 0; i < count; i++)
         {
             WineEngGetLinkedHFont(dc, reordered_str[i], &cur_font, &glyph);
@@ -2026,14 +2026,12 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                                              (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc,
                                              glyphs, span, deltas ? deltas + count - span : NULL);
                 SelectObject(hdc, orig_font);
-                HeapFree(GetProcessHeap(), 0, glyphs); 
                 HeapFree(GetProcessHeap(), 0, offsets);
            }
         }
     }
     else
     {
-        WORD *glyphs = NULL;
         if(!(flags & ETO_GLYPH_INDEX) && dc->gdiFont)
         {
             glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WORD));
@@ -2041,8 +2039,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             flags |= ETO_GLYPH_INDEX;
         }
         ret = dc->funcs->pExtTextOut(dc->physDev, x, y, (flags & ~ETO_OPAQUE), &rc,
-                                     (flags & ETO_GLYPH_INDEX) ? glyphs: reordered_str, count, deltas);
-        HeapFree(GetProcessHeap(), 0, glyphs);
+                                     glyphs ? glyphs : reordered_str, count, deltas);
     }
 
     if (lf.lfUnderline || lf.lfStrikeOut)
@@ -2108,6 +2105,8 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
 done:
     HeapFree(GetProcessHeap(), 0, deltas);
+    if(glyphs != reordered_str)
+        HeapFree(GetProcessHeap(), 0, glyphs);
     if(reordered_str != str)
         HeapFree(GetProcessHeap(), 0, reordered_str);
 
