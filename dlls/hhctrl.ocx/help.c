@@ -335,10 +335,10 @@ static BOOL HH_AddNavigationPane(HHInfo *pHHInfo)
     if (!hwndTabCtrl)
         return FALSE;
 
-    if (pHHInfo->pHHWinType->pszToc)
+    if (*pHHInfo->pHHWinType->pszToc)
         NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_CONTENTS, dwIndex++);
 
-    if (pHHInfo->pHHWinType->pszIndex)
+    if (*pHHInfo->pHHWinType->pszIndex)
         NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_INDEX, dwIndex++);
 
     if (pHHInfo->pHHWinType->fsWinProperties & HHWIN_PROP_TAB_SEARCH)
