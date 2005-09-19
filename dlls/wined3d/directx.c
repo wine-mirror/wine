@@ -811,7 +811,7 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINE
             pMode->Height       = DevModeW.dmPelsHeight;
             bpp                 = min(DevModeW.dmBitsPerPel, bpp);
             pMode->RefreshRate  = D3DADAPTER_DEFAULT;
-            if (DevModeW.dmFields&DM_DISPLAYFREQUENCY)
+            if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
             {
                 pMode->RefreshRate = DevModeW.dmDisplayFrequency;
             }
@@ -821,8 +821,8 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINE
                 switch (bpp) {
                 case  8: pMode->Format = D3DFMT_R3G3B2;   break;
                 case 16: pMode->Format = D3DFMT_R5G6B5;   break;
-                case 24: /* pMode->Format = D3DFMT_R5G6B5;   break;*/ /* Make 24bit appear as 32 bit */
-                case 32: pMode->Format = D3DFMT_A8R8G8B8; break;
+                case 24: /* Robots needs 24 and 32 bit as X8R8G8B8 to start */
+                case 32: pMode->Format = D3DFMT_X8R8G8B8; break;
                 default: pMode->Format = D3DFMT_UNKNOWN;
                 }
             } else {
@@ -1113,7 +1113,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter
     if (hr != D3D_OK)
         TRACE_(d3d_caps)("Failed to match stencil format to device\b");
 
-    TRACE_(d3d_caps)("(%p) : Returning %d\n", This, hr);
+    TRACE_(d3d_caps)("(%p) : Returning %lx\n", This, hr);
     return hr;
 }
 
