@@ -63,8 +63,6 @@ static struct name_table ignore_symbols;   /* list of symbols to ignore */
 static struct name_table extra_ld_symbols; /* list of extra symbols that ld should resolve */
 static struct name_table delayed_imports;  /* list of delayed import dlls */
 
-static char *ld_tmp_file;  /* ld temp file name */
-
 static struct import **dll_imports = NULL;
 static int nb_imports = 0;      /* number of imported dlls (delayed or not) */
 static int nb_delayed = 0;      /* number of delayed dlls */
@@ -220,12 +218,6 @@ static void free_imports( struct import *imp )
     free_dll_spec( imp->spec );
     free( imp->full_name );
     free( imp );
-}
-
-/* remove the temp file at exit */
-static void remove_ld_tmp_file(void)
-{
-    if (ld_tmp_file) unlink( ld_tmp_file );
 }
 
 /* check whether a given dll is imported in delayed mode */
@@ -496,21 +488,10 @@ static int check_unused( const struct import* imp, const DLLSPEC *spec )
 static const char *ldcombine_files( char **argv )
 {
     unsigned int i, len = 0;
-    char *cmd, *p;
-    int fd, err;
+    char *cmd, *p, *ld_tmp_file;
+    int err;
 
-    if (output_file_name && output_file_name[0])
-    {
-        ld_tmp_file = xmalloc( strlen(output_file_name) + 10 );
-        strcpy( ld_tmp_file, output_file_name );
-        strcat( ld_tmp_file, ".XXXXXX.o" );
-    }
-    else ld_tmp_file = xstrdup( "/tmp/winebuild.tmp.XXXXXX.o" );
-
-    if ((fd = mkstemps( ld_tmp_file, 2 ) == -1)) fatal_error( "could not generate a temp file\n" );
-    close( fd );
-    atexit( remove_ld_tmp_file );
-
+    ld_tmp_file = get_temp_file_name( output_file_name, ".o" );
     if (!ld_command) ld_command = xstrdup("ld");
     for (i = 0; i < extra_ld_symbols.count; i++) len += strlen(extra_ld_symbols.names[i]) + 5;
     for (i = 0; argv[i]; i++) len += strlen(argv[i]) + 1;
@@ -565,25 +546,14 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
     free( cmd );
 }
 
-static void remove_ignored_symbols(void)
-{
-    unsigned int i;
-
-    if (!ignore_symbols.size) init_ignored_symbols();
-    sort_names( &ignore_symbols );
-    for (i = 0; i < undef_symbols.count; i++)
-    {
-        if (find_name( undef_symbols.names[i], &ignore_symbols ))
-            remove_name( &undef_symbols, i-- );
-    }
-}
-
 /* resolve the imports for a Win32 module */
 int resolve_imports( DLLSPEC *spec )
 {
     unsigned int i, j, removed;
+    ORDDEF *odp;
 
-    remove_ignored_symbols();
+    if (!ignore_symbols.size) init_ignored_symbols();
+    sort_names( &ignore_symbols );
 
     for (i = 0; i < nb_imports; i++)
     {
@@ -591,7 +561,8 @@ int resolve_imports( DLLSPEC *spec )
 
         for (j = removed = 0; j < undef_symbols.count; j++)
         {
-            ORDDEF *odp = find_export( undef_symbols.names[j], imp->exports, imp->nb_exports );
+            if (find_name( undef_symbols.names[j], &ignore_symbols )) continue;
+            odp = find_export( undef_symbols.names[j], imp->exports, imp->nb_exports );
             if (odp)
             {
                 add_import_func( imp, odp );

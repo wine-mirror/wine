@@ -169,6 +169,7 @@ extern void error( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void warning( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
+extern char *get_temp_file_name( const char *prefix, const char *suffix );
 extern void output_standard_file_header( FILE *outfile );
 extern FILE *open_input_file( const char *srcdir, const char *name );
 extern void close_input_file( FILE *file );

@@ -27,8 +27,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #include "build.h"
+
+#define MAX_TMP_FILES 8
+static const char *tmp_files[MAX_TMP_FILES];
+static unsigned int nb_tmp_files;
+
+/* atexit handler to clean tmp files */
+static void cleanup_tmp_files(void)
+{
+    unsigned int i;
+    for (i = 0; i < MAX_TMP_FILES; i++) if (tmp_files[i]) unlink( tmp_files[i] );
+}
+
 
 void *xmalloc (size_t size)
 {
@@ -145,6 +160,31 @@ void warning( const char *msg, ... )
     fprintf( stderr, "warning: " );
     vfprintf( stderr, msg, valist );
     va_end( valist );
+}
+
+/* get a name for a temp file, automatically cleaned up on exit */
+char *get_temp_file_name( const char *prefix, const char *suffix )
+{
+    char *name;
+    int fd;
+
+    assert( nb_tmp_files < MAX_TMP_FILES );
+    if (!nb_tmp_files) atexit( cleanup_tmp_files );
+
+    if (!prefix || !prefix[0]) prefix = "winebuild.tmp";
+    if (!suffix) suffix = "";
+    name = xmalloc( strlen(prefix) + strlen(suffix) + sizeof("/tmp/.XXXXXX") );
+    sprintf( name, "%s.XXXXXX%s", prefix, suffix );
+
+    if ((fd = mkstemps( name, strlen(suffix) ) == -1))
+    {
+        sprintf( name, "/tmp/%s.XXXXXX%s", prefix, suffix );
+        if ((fd = mkstemps( name, strlen(suffix) ) == -1))
+            fatal_error( "could not generate a temp file\n" );
+    }
+    close( fd );
+    tmp_files[nb_tmp_files++] = name;
+    return name;
 }
 
 /* output a standard header for generated files */
