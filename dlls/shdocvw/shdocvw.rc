@@ -23,6 +23,7 @@
 
 #include "version.rc"
 
+#include "Bg.rc"
 #include "De.rc"
 #include "En.rc"
 #include "Es.rc"

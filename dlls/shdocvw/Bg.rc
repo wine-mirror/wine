@@ -1,7 +1,5 @@
 /*
- * Regedit resources
- *
- * Copyright 2002 Robert Dickenson
+ * Copyright 2005 Milko Krachounov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,38 +16,21 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windows.h"
-#include "resource.h"
+LANGUAGE LANG_BULGARIAN, SUBLANG_DEFAULT
 
-/* define language neutral resources */
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-IDC_REGEDIT ACCELERATORS
+100 DIALOG LOADONCALL MOVEABLE DISCARDABLE  0, 0, 220, 62
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Изтегляне на Mozilla Active X контрола"
+FONT 8, "MS Shell Dlg"
 {
-    "^F",	ID_EDIT_FIND
-    "^P",	ID_REGISTRY_PRINT
-    VK_DELETE,	ID_EDIT_DELETE, VIRTKEY
-    VK_F1,	ID_HELP_HELPTOPICS, VIRTKEY
-    VK_F2,	ID_EDIT_RENAME, VIRTKEY
-    VK_F3,	ID_EDIT_FINDNEXT, VIRTKEY
-    VK_F5,	ID_VIEW_REFRESH, VIRTKEY
+ CONTROL "Progress1",1000,"msctls_progress32",WS_BORDER|PBS_SMOOTH,10,10,200,12
+ LTEXT "", 104, 10, 30, 200, 10, SS_CENTER
+ PUSHBUTTON "Cancel", IDCANCEL, 85, 44, 50, 15, WS_GROUP | WS_TABSTOP
 }
 
-#include "resource.rc"
-
-/* include localised resources */
-
-#include "Bg.rc"
-#include "Cs.rc"
-#include "De.rc"
-#include "En.rc"
-#include "Es.rc"
-#include "Fr.rc"
-#include "It.rc"
-#include "Ja.rc"
-#include "Nl.rc"
-#include "Pl.rc"
-#include "Pt.rc"
-#include "Ru.rc"
-#include "Si.rc"
+STRINGTABLE
+BEGIN
+ 1001	"Приложението се опитва да извика ActiveX обект,\n" \
+        "но Mozilla Active X контролата не е инсталирана." \
+        "Желаете ли да я изтеглите и инсталирате?"
+END

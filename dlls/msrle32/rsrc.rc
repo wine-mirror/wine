@@ -31,6 +31,7 @@
  * get localized bitmaps for example.
  */
 
+#include "msrle_Bg.rc"
 #include "msrle_Cs.rc"
 #include "msrle_De.rc"
 #include "msrle_En.rc"

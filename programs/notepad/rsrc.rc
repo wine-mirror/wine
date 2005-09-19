@@ -44,6 +44,7 @@ ID_ACCEL ACCELERATORS
     VK_INSERT, CMD_PASTE, VIRTKEY, SHIFT
 }
 
+#include "Bg.rc"
 #include "Cs.rc"
 #include "Da.rc"
 #include "De.rc"

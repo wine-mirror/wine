@@ -40,6 +40,7 @@
  * which also have a neutral version. This is to
  * get localized bitmaps for example.
  */
+#include "wininet_Bg.rc"
 #include "wininet_Cs.rc"
 #include "wininet_De.rc"
 #include "wininet_En.rc"

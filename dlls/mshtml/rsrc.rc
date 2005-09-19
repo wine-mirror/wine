@@ -21,6 +21,7 @@
 
 #include "resource.h"
 
+#include "Bg.rc"
 #include "De.rc"
 #include "En.rc"
 #include "Fi.rc"

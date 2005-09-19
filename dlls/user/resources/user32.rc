@@ -43,6 +43,7 @@
  * which also have a neutral version. This is to
  * get localized bitmaps for example.
  */
+#include "resources/user32_Bg.rc"
 #include "resources/user32_Ca.rc"
 #include "resources/user32_Cs.rc"
 #include "resources/user32_Da.rc"

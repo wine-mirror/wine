@@ -1,0 +1,244 @@
+/*
+ * Copyright 2005 Milko Krachounov
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
+LANGUAGE LANG_BULGARIAN, SUBLANG_DEFAULT
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_HTMLDISABLED    "HTML изобразяването е изключено."
+    IDS_HTMLDOCUMENT    "HTML документ"
+}
+
+/* FIXME: This should be in shdoclc.dll */
+
+IDR_BROWSE_CONTEXT_MENU MENU
+{
+    POPUP "Default"
+    {
+        MENUITEM "На&зад",                  IDM_BACK
+        MENUITEM "На&пред",               IDM_FORWARD
+        MENUITEM SEPARATOR
+        MENUITEM "&Съхрани фона като...", IDM_SAVEBACKGROUNDAS
+        MENUITEM "Постави като &фон на работния плот",     IDM_SETASBACKGROUND
+        MENUITEM "&Копирай фона",       IDM_COPYBACKGROUND
+        MENUITEM "Постави като елемент на &работния плот",   IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "Маркирай &всичко",            IDM_SELECTALL
+        MENUITEM "&Вмъкни",                 IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Създай препра&тка",       IDM_CREATESHORTCUT
+        MENUITEM "Добави към &отметките",     IDM_ADDTOFAVOURITES
+        MENUITEM "Пре&гледай изходния код",           IDM_VIEWSOURCE
+        MENUITEM SEPARATOR
+        MENUITEM "Ко&дировка",              IDM_ENCODING 
+        MENUITEM SEPARATOR
+        MENUITEM "Пе&чат",                 IDM_PRINT
+        MENUITEM "Опр&есни",               IDM_REFRESH 
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Сво&йства",            IDM_PROPERTIES
+    }
+
+    POPUP "Image"
+    {
+        MENUITEM "&Отвори връзката",               IDM_OPENLINK
+        MENUITEM "Отвори връзката в &нов прозорец", IDM_OPENINNEWWINDOW
+        MENUITEM "Запи&ши целта като...",       IDM_SAVETARGETAS
+        MENUITEM "Раз&печатай целта",            IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "По&кажи изображението",            IDM_SHOWPICTURE
+        MENUITEM "&Съхрани изображението като...",      IDM_SAVEPICTUREAS
+        MENUITEM "Изпрати изображението по по&щата...",       IDM_EMAILPICTURE
+        MENUITEM "&Разпечатай изображението...",        IDM_PRINTPICTURE
+        MENUITEM "И&ди в Моите Снимки",       IDM_GOTOMYPICTURES
+        MENUITEM "Постави като &фон",       IDM_SETASBACKGROUND
+        MENUITEM "Постави като елемент на &работния плот...",  IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Изрежи",                     IDM_CUT
+        MENUITEM "&Копирай",                    IDM_COPY
+        MENUITEM "Копирай препра&тката",           IDM_COPYSHORTCUT
+        MENUITEM "&Вмъкни",                   IDM_PASTE 
+        MENUITEM SEPARATOR
+        MENUITEM "Добави към от&метките...",     IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Сво&йства",              IDM_PROPERTIES
+    }
+
+    POPUP "Control"
+    {
+        MENUITEM "&Отмени",       IDM_UNDO 
+        MENUITEM SEPARATOR
+        MENUITEM "&Изрежи",        IDM_CUT
+        MENUITEM "&Копирай",       IDM_COPY
+        MENUITEM "&Вмъкни",      IDM_PASTE
+        MENUITEM "Из&трий",     IDM_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Маркирай &всичко", IDM_SELECTALL
+    }
+
+    POPUP "Table"
+    {
+        POPUP "&Избери"
+        {
+            MENUITEM "&Клетка",         IDM_CELL 
+            MENUITEM "&Ред",          IDM_ROW
+            MENUITEM "&Колона",       IDM_COLUMN
+            MENUITEM "&Таблица",        IDM_TABLE
+        }
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Свойства на клетката",  IDM_CELLPROPERTIES
+        MENUITEM "&Свойства на таблицата", IDM_TABLEPROPERTIES
+    }
+
+    POPUP "1DSite Select"
+    {
+        MENUITEM "&Изрежи",        IDM_CUT
+        MENUITEM "&Копирай",       IDM_COPY
+        MENUITEM "&Вмъкни",       IDM_PASTE
+        MENUITEM "Маркирай &всичко", IDM_SELECTALL 
+        MENUITEM "&Печат",      IDM_PRINT
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "Anchor"
+    {
+        MENUITEM "&Отвори",                IDM_OPENLINK
+        MENUITEM "Отвори в &нов прозорец",  IDM_OPENINNEWWINDOW
+        MENUITEM "Запи&ши целта като...",   IDM_SAVETARGETAS
+        MENUITEM "Раз&печатай целта",        IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "&Изрежи",                  IDM_CUT
+        MENUITEM "&Копирай",                IDM_COPY
+        MENUITEM "Копирай препра&тката",       IDM_COPYSHORTCUT
+        MENUITEM "&Вмъкни",               IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Добави към от&метките...", IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Свойства",          IDM_PROPERTIES
+    }
+
+    POPUP "Context Unknown"
+    {
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "DYNSRC Image"
+    {
+        MENUITEM "&Отвори връзката",               IDM_OPENLINK
+        MENUITEM "Отвори връзката в &нов прозорец", IDM_OPENINNEWWINDOW
+        MENUITEM "Запи&ши целта като...",       IDM_SAVETARGETAS
+        MENUITEM "Раз&печатай целта",            IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "По&кажи изображението",            IDM_SHOWPICTURE
+        MENUITEM "&Съхрани видео изображението като...",        IDM_SAVEPICTUREAS
+        MENUITEM "Постави като &фон",       IDM_SETASBACKGROUND
+        MENUITEM "Постави като елемент на &работния плот...",  IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Изрежи",                     IDM_CUT
+        MENUITEM "&Копирай",                    IDM_COPY
+        MENUITEM "Копирай препра&тката",           IDM_COPYSHORTCUT
+        MENUITEM "&Вмъкни",                   IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Добави към от&метките...",     IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Възпроизведи",                     IDM_PLAY
+        MENUITEM "Спри",                     IDM_STOP
+        MENUITEM "&Свойства",              IDM_PROPERTIES
+    }
+
+    POPUP "ART Image"
+    {
+        MENUITEM "&Отвори връзката",               IDM_OPENLINK
+        MENUITEM "Отвори връзката в &нов прозорец", IDM_OPENINNEWWINDOW
+        MENUITEM "Запи&ши целта като...",       IDM_SAVETARGETAS
+        MENUITEM "Раз&печатай целта",            IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "По&кажи изображението",            IDM_SHOWPICTURE
+        MENUITEM "&Съхрани изображението като...",      IDM_SAVEPICTUREAS
+        MENUITEM "Постави като &фон",       IDM_SETASBACKGROUND
+        MENUITEM "Постави като елемент на &работния плот......",  IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Изрежи",                     IDM_CUT
+        MENUITEM "&Копирай",                    IDM_COPY
+        MENUITEM "Копирай препра&тката",           IDM_COPYSHORTCUT
+        MENUITEM "&Вмъкни",                   IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Добави към от&метките...",     IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM "Възпроизведи",                     IDM_PLAY
+        MENUITEM "Спри",                     IDM_STOP
+        MENUITEM "Върни се в началото",                   IDM_REWIND
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Свойства",              IDM_PROPERTIES
+    }
+
+    POPUP "Debug"
+    {
+        MENUITEM "Trace Tags",         IDM_TRACETAGS 
+        MENUITEM "Resource Failures",  IDM_RESOURCEFAILURES
+        MENUITEM "Dump Tracking Info", IDM_DUMPTRACKINGINFO
+        MENUITEM "Debug Break",        IDM_DEBUGBREAK
+        MENUITEM "Debug View",         IDM_DEBUGVIEW
+        MENUITEM "Dump Tree",          IDM_DUMPTREE
+        MENUITEM "Dump Lines",         IDM_DUMPLINES
+        MENUITEM "Dump DisplayTree",   IDM_DUMPDISPLAYTREE
+        MENUITEM "Dump FormatCaches",  IDM_DUMPFORMATCACHES
+        MENUITEM "Dump LayoutRects",   IDM_DUMPLAYOUTRECTS
+        MENUITEM "Memory Monitor",     IDM_MEMORYMONITOR
+        MENUITEM "Performance Meters", IDM_PERFORMANCEMETERS
+        MENUITEM "Save HTML",          IDM_SAVEHTML
+        MENUITEM SEPARATOR
+        MENUITEM "&Browse View",       IDM_BROWSEVIEW
+        MENUITEM "&Edit View",         IDM_EDITVIEW
+    }
+
+    POPUP "Vertical Scrollbar"
+    {
+        MENUITEM "Превърти тук",  IDM_SCROLLHERE
+        MENUITEM SEPARATOR
+        MENUITEM "Най-горе",          IDM_TOP
+        MENUITEM "Най-долу",       IDM_BOTTOM
+        MENUITEM SEPARATOR
+        MENUITEM "Страница нагоре",      IDM_PAGEUP
+        MENUITEM "Страница надолу",    IDM_PAGEDOWN
+        MENUITEM SEPARATOR
+        MENUITEM "Превърти нагоре",    IDM_SCROLLUP
+        MENUITEM "Превърти надолу",  IDM_SCROLLDOWN
+    }
+
+    POPUP "Horizontal Scrollbar"
+    {
+        MENUITEM "Превърти тук",  IDM_SCROLLHERE
+        MENUITEM SEPARATOR
+        MENUITEM "Най-вляво",    IDM_LEFTEDGE
+        MENUITEM "Най-вдясно",   IDM_RIGHTEDGE
+        MENUITEM SEPARATOR
+        MENUITEM "Страница наляво",    IDM_PAGELEFT
+        MENUITEM "Страница надясно",   IDM_PAGERIGHT
+        MENUITEM SEPARATOR
+        MENUITEM "Превърти наляво",  IDM_SCROLLLEFT
+        MENUITEM "Превърти надясно", IDM_SCROLLRIGHT
+    }
+}
