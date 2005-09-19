@@ -1066,6 +1066,12 @@ HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter
                                                    WINED3DFORMAT RenderTargetFormat,
                                                    WINED3DFORMAT DepthStencilFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    HRESULT hr = D3DERR_NOTAVAILABLE;
+    WineD3D_Context* ctx = NULL;
+    GLXFBConfig* cfgs = NULL;
+    int nCfgs = 0;
+    int it;
+
     WARN_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n",
            This, Adapter,
            DeviceType, debug_d3ddevicetype(DeviceType),
@@ -1074,18 +1080,18 @@ HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter
            DepthStencilFormat, debug_d3dformat(DepthStencilFormat));
 
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
+        TRACE("(%p) Failed: Atapter (%u) higher than supported adapters (%u) returning D3DERR_INVALIDCALL\n", This, Adapter, IWineD3D_GetAdapterCount(iface));
         return D3DERR_INVALIDCALL;
     }
-
-    {
-      GLXFBConfig* cfgs = NULL;
-      int nCfgs = 0;
-      int it;
-      HRESULT hr = D3DERR_NOTAVAILABLE;
-
-      WineD3D_Context* ctx = WineD3D_CreateFakeGLContext();
-      if (NULL != ctx) {
+    /* TODO: use the real context if it's available */
+    ctx = WineD3D_CreateFakeGLContext();
+    if(NULL !=  ctx) {
         cfgs = glXGetFBConfigs(ctx->display, DefaultScreen(ctx->display), &nCfgs);
+    } else {
+        TRACE_(d3d_caps)("(%p) : Unable to create a fake context at this time (there may already be an active context)\n", This);
+    }
+
+    if (NULL != cfgs) {
         for (it = 0; it < nCfgs; ++it) {
             if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx, cfgs[it], RenderTargetFormat)) {
                 if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(ctx, cfgs[it], DepthStencilFormat)) {
@@ -1095,13 +1101,20 @@ HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter
             }
         }
         XFree(cfgs);
-
-        WineD3D_ReleaseFakeGLContext(ctx);
-        return hr;
-      }
+        cfgs = NULL;
+    } else {
+        /* If there's a corrent context then we cannot create a fake one so pass everything */
+        hr = D3D_OK;
     }
 
-    return D3DERR_NOTAVAILABLE;
+    if (ctx != NULL)
+        WineD3D_ReleaseFakeGLContext(ctx);
+
+    if (hr != D3D_OK)
+        TRACE_(d3d_caps)("Failed to match stencil format to device\b");
+
+    TRACE_(d3d_caps)("(%p) : Returning %d\n", This, hr);
+    return hr;
 }
 
 HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, 
