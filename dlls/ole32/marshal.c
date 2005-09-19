@@ -1024,7 +1024,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
 
     /* read STDOBJREF from wire */
     hres = IStream_Read(pStm, &stdobjref, sizeof(stdobjref), &res);
-    if (hres) return hres;
+    if (hres) return STG_E_READFAULT;
 
     hres = apartment_getoxid(apt, &oxid);
     if (hres) return hres;
@@ -1094,7 +1094,7 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm)
     TRACE("iface=%p, pStm=%p\n", iface, pStm);
     
     hres = IStream_Read(pStm, &stdobjref, sizeof(stdobjref), &res);
-    if (hres) return hres;
+    if (hres) return STG_E_READFAULT;
 
     TRACE("oxid = %s, oid = %s, ipid = %s\n",
         wine_dbgstr_longlong(stdobjref.oxid),
