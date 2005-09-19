@@ -1195,7 +1195,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     if ((rect.right - rect.left == cx && rect.bottom - rect.top == cy) ||
         IsIconic(hwnd) ||
-        (IsRectEmpty( &rect ) && cx == 1 && cy == 1))
+        (IsRectEmpty( &rect ) && event->width == 1 && event->height == 1))
     {
         if (flags & SWP_NOMOVE) return;  /* if nothing changed, don't do anything */
         flags |= SWP_NOSIZE;
