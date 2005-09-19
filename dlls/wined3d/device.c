@@ -3635,6 +3635,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDevice *iface, IWineD3
     return D3D_OK;
 }
 
+/* FIXME: Vertex shaders don't work properly with stateblocks */
 #define GET_SHADER_CONSTANT(_vertexshaderconstant, _count, _sizecount) \
 int count = min(_count, MAX_VSHADER_CONSTANTS - (StartRegister + 1)); \
 if (NULL == pConstantData || count < 0 /* || _count != count */ ) \

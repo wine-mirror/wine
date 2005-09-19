@@ -346,12 +346,14 @@ should really perform a delta so that only the changes get updated*/
             toDo = toDo->next;
         }
 
-        if (This->changed.vertexShader) {
+        if (This->set.vertexShader && This->changed.vertexShader) {
             IWineD3DDevice_SetVertexShader(pDevice, This->vertexShader);
             /* TODO: Vertex Shader Constants */
+#if 0       /* FIXME: This isn't the correct place to set vs constants (The Fur demo fails) */
             IWineD3DDevice_SetVertexShaderConstantB(pDevice, 0 , This->vertexShaderConstantB , MAX_VSHADER_CONSTANTS);
             IWineD3DDevice_SetVertexShaderConstantI(pDevice, 0 , This->vertexShaderConstantI , MAX_VSHADER_CONSTANTS);
             IWineD3DDevice_SetVertexShaderConstantF(pDevice, 0 , This->vertexShaderConstantF , MAX_VSHADER_CONSTANTS);
+#endif
         }
 
     }
