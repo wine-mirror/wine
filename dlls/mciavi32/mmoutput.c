@@ -597,10 +597,8 @@ void MCIAVI_PlayAudioBlocks(WINE_MCIAVI* wma, unsigned nHdr, LPWAVEHDR waveHdr)
 
 LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
 {
-    void* 		pBitmapData = NULL;
-    LPBITMAPINFO	pBitmapInfo = NULL;
-    HDC 		hdcMem;
-    HBITMAP		hbmOld;
+    void* 		pBitmapData;
+    LPBITMAPINFO	pBitmapInfo;
     int 		nWidth;
     int 		nHeight;
 
@@ -619,7 +617,6 @@ LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
             mmioSeek(wma->hFile, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset, SEEK_SET);
             mmioRead(wma->hFile, wma->indata, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize);
 
-            /* FIXME ? */
             wma->inbih->biSizeImage = wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize;
 
             if (wma->hic && ICDecompress(wma->hic, 0, wma->inbih, wma->indata,
@@ -647,21 +644,12 @@ LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
         nHeight = wma->inbih->biHeight;
     }
 
-    if (!wma->hbmFrame)
-        wma->hbmFrame = CreateCompatibleBitmap(hDC, nWidth, nHeight);
+    StretchDIBits(hDC,
+                  wma->dest.left, wma->dest.top,
+                  wma->dest.right - wma->dest.left, wma->dest.bottom - wma->dest.top,
+                  wma->source.left, wma->source.top,
+                  wma->source.right - wma->source.left, wma->source.bottom - wma->source.top,
+                  pBitmapData, pBitmapInfo, DIB_RGB_COLORS, SRCCOPY);
 
-    SetDIBits(hDC, wma->hbmFrame, 0, nHeight, pBitmapData, pBitmapInfo, DIB_RGB_COLORS);
-
-    hdcMem = CreateCompatibleDC(hDC);
-    hbmOld = SelectObject(hdcMem, wma->hbmFrame);
-
-    StretchBlt(hDC,
-               wma->dest.left, wma->dest.top, wma->dest.right, wma->dest.bottom,
-               hdcMem,
-               wma->source.left, wma->source.top, wma->source.right, wma->source.bottom,
-               SRCCOPY);
-
-    SelectObject(hdcMem, hbmOld);
-    DeleteDC(hdcMem);
     return TRUE;
 }
