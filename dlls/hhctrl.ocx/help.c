@@ -161,6 +161,49 @@ static void HH_RegisterChildWndClass(HHInfo *pHHInfo)
 
 #define ICON_SIZE   20
 
+static void TB_OnClick(HWND hWnd, DWORD dwID)
+{
+    HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+
+    switch (dwID)
+    {
+        case IDTB_STOP:
+            WB_DoPageAction(pHHInfo->pWBInfo, WB_STOP);
+            break;
+        case IDTB_REFRESH:
+            WB_DoPageAction(pHHInfo->pWBInfo, WB_REFRESH);
+            break;
+        case IDTB_BACK:
+            WB_DoPageAction(pHHInfo->pWBInfo, WB_GOBACK);
+            break;
+        case IDTB_HOME:
+        {
+            WCHAR szUrl[MAX_PATH];
+
+            CHM_CreateITSUrl(pHHInfo->pCHMInfo, pHHInfo->pHHWinType->pszHome, szUrl);
+            WB_Navigate(pHHInfo->pWBInfo, szUrl);
+            break;
+        }
+        case IDTB_FORWARD:
+            WB_DoPageAction(pHHInfo->pWBInfo, WB_GOFORWARD);
+            break;
+        case IDTB_EXPAND:
+        case IDTB_CONTRACT:
+        case IDTB_SYNC:
+        case IDTB_PRINT:
+        case IDTB_OPTIONS:
+        case IDTB_BROWSE_FWD:
+        case IDTB_BROWSE_BACK:
+        case IDTB_JUMP1:
+        case IDTB_JUMP2:
+        case IDTB_CUSTOMIZE:
+        case IDTB_ZOOM:
+        case IDTB_TOC_NEXT:
+        case IDTB_TOC_PREV:
+            break;
+    }
+}
+
 static void TB_AddButton(TBBUTTON *pButtons, DWORD dwIndex, DWORD dwID)
 {
     /* FIXME: Load the correct button bitmaps */
@@ -437,6 +480,10 @@ LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
     switch (message)
     {
+        case WM_COMMAND:
+            if (HIWORD(wParam) == BN_CLICKED)
+                TB_OnClick(hWnd, LOWORD(wParam));
+            break;
         case WM_SIZE:
             Help_OnSize(hWnd, lParam);
             break;
