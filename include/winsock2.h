@@ -52,9 +52,6 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-/* proper 4-byte packing */
-#include <pshpack4.h>
-
 
 #ifndef USE_WS_PREFIX
 #define SO_GROUP_ID                0x2001
@@ -699,8 +696,6 @@ typedef DWORD (WINAPI *LPFN_WSAWAITFORMULTIPLEEVENTS)(DWORD,const WSAEVENT*,BOOL
 #define CF_ACCEPT       0x0000
 #define CF_REJECT       0x0001
 #define CF_DEFER        0x0002
-
-#include <poppack.h>
 
 #ifdef __cplusplus
 }
