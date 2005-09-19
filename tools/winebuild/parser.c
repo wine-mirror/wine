@@ -559,11 +559,13 @@ error:
 }
 
 
-static int name_compare( const void *name1, const void *name2 )
+static int name_compare( const void *ptr1, const void *ptr2 )
 {
-    const ORDDEF *odp1 = *(const ORDDEF * const *)name1;
-    const ORDDEF *odp2 = *(const ORDDEF * const *)name2;
-    return strcmp( odp1->name, odp2->name );
+    const ORDDEF *odp1 = *(const ORDDEF * const *)ptr1;
+    const ORDDEF *odp2 = *(const ORDDEF * const *)ptr2;
+    const char *name1 = odp1->name ? odp1->name : odp1->export_name;
+    const char *name2 = odp2->name ? odp2->name : odp2->export_name;
+    return strcmp( name1, name2 );
 }
 
 /*******************************************************************
@@ -573,30 +575,47 @@ static int name_compare( const void *name1, const void *name2 )
  */
 static void assign_names( DLLSPEC *spec )
 {
-    int i, j;
+    int i, j, nb_exp_names = 0;
+    ORDDEF **all_names;
 
     spec->nb_names = 0;
     for (i = 0; i < spec->nb_entry_points; i++)
         if (spec->entry_points[i].name) spec->nb_names++;
-    if (!spec->nb_names) return;
+        else if (spec->entry_points[i].export_name) nb_exp_names++;
 
-    spec->names = xmalloc( spec->nb_names * sizeof(spec->names[0]) );
+    if (!spec->nb_names && !nb_exp_names) return;
+
+    /* check for duplicates */
+
+    all_names = xmalloc( (spec->nb_names + nb_exp_names) * sizeof(all_names[0]) );
     for (i = j = 0; i < spec->nb_entry_points; i++)
-        if (spec->entry_points[i].name) spec->names[j++] = &spec->entry_points[i];
+        if (spec->entry_points[i].name || spec->entry_points[i].export_name)
+            all_names[j++] = &spec->entry_points[i];
 
-    /* sort the list of names */
-    qsort( spec->names, spec->nb_names, sizeof(spec->names[0]), name_compare );
+    qsort( all_names, j, sizeof(all_names[0]), name_compare );
 
-    /* check for duplicate names */
-    for (i = 0; i < spec->nb_names - 1; i++)
+    for (i = 0; i < j - 1; i++)
     {
-        if (!strcmp( spec->names[i]->name, spec->names[i+1]->name ))
+        const char *name1 = all_names[i]->name ? all_names[i]->name : all_names[i]->export_name;
+        const char *name2 = all_names[i+1]->name ? all_names[i+1]->name : all_names[i+1]->export_name;
+        if (!strcmp( name1, name2 ))
         {
-            current_line = max( spec->names[i]->lineno, spec->names[i+1]->lineno );
+            current_line = max( all_names[i]->lineno, all_names[i+1]->lineno );
             error( "'%s' redefined\n%s:%d: First defined here\n",
-                   spec->names[i]->name, input_file_name,
-                   min( spec->names[i]->lineno, spec->names[i+1]->lineno ) );
+                   name1, input_file_name,
+                   min( all_names[i]->lineno, all_names[i+1]->lineno ) );
         }
+    }
+    free( all_names );
+
+    if (spec->nb_names)
+    {
+        spec->names = xmalloc( spec->nb_names * sizeof(spec->names[0]) );
+        for (i = j = 0; i < spec->nb_entry_points; i++)
+            if (spec->entry_points[i].name) spec->names[j++] = &spec->entry_points[i];
+
+        /* sort the list of names */
+        qsort( spec->names, spec->nb_names, sizeof(spec->names[0]), name_compare );
     }
 }
 
