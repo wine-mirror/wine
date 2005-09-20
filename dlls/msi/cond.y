@@ -412,7 +412,7 @@ symbol_i:
       
             MSI_GetComponentStateW(cond->package, $2, &install, &action );
             $$ = action;
-            HeapFree( GetProcessHeap(), 0, $2 );
+            msi_free( $2 );
         }
   | COND_QUESTION identifier
         {
@@ -421,7 +421,7 @@ symbol_i:
       
             MSI_GetComponentStateW(cond->package, $2, &install, &action );
             $$ = install;
-            HeapFree( GetProcessHeap(), 0, $2 );
+            msi_free( $2 );
         }
   | COND_AMPER identifier
         {
@@ -430,7 +430,7 @@ symbol_i:
       
             MSI_GetFeatureStateW(cond->package, $2, &install, &action );
             $$ = action;
-            HeapFree( GetProcessHeap(), 0, $2 );
+            msi_free( $2 );
         }
   | COND_EXCLAM identifier
         {
@@ -439,7 +439,7 @@ symbol_i:
       
             MSI_GetFeatureStateW(cond->package, $2, &install, &action );
             $$ = install;
-            HeapFree( GetProcessHeap(), 0, $2 );
+            msi_free( $2 );
         }
     ;
 
@@ -453,30 +453,30 @@ symbol_s:
             MSI_GetPropertyW(cond->package, $1, NULL, &sz);
             if (sz == 0)
             {
-                $$ = HeapAlloc( GetProcessHeap(), 0 ,sizeof(WCHAR));
+                $$ = msi_alloc( sizeof(WCHAR));
                 $$[0] = 0;
             }
             else
             {
                 sz ++;
-                $$ = HeapAlloc( GetProcessHeap(), 0, sz*sizeof (WCHAR) );
+                $$ = msi_alloc( sz*sizeof (WCHAR) );
 
                 /* Lookup the identifier */
 
                 MSI_GetPropertyW(cond->package,$1,$$,&sz);
             }
-            HeapFree( GetProcessHeap(), 0, $1 );
+            msi_free( $1 );
         }
     | COND_PERCENT identifier
         {
             UINT len = GetEnvironmentVariableW( $2, NULL, 0 );
             if( len++ )
             {
-                $$ = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
+                $$ = msi_alloc( len*sizeof (WCHAR) );
                 if( $$ )
                     GetEnvironmentVariableW( $2, $$, len );
             }
-            HeapFree( GetProcessHeap(), 0, $2 );
+            msi_free( $2 );
         }
     ;
 
@@ -496,7 +496,7 @@ integer:
             if( !szNum )
                 YYABORT;
             $$ = atoiW( szNum );
-            HeapFree( GetProcessHeap(), 0, szNum );
+            msi_free( szNum );
         }
     ;
 
@@ -698,7 +698,7 @@ static LPWSTR COND_GetString( struct cond_str *str )
 {
     LPWSTR ret;
 
-    ret = HeapAlloc( GetProcessHeap(), 0, (str->len+1) * sizeof (WCHAR) );
+    ret = msi_alloc( (str->len+1) * sizeof (WCHAR) );
     if( ret )
     {
         memcpy( ret, str->data, str->len * sizeof(WCHAR));
@@ -712,7 +712,7 @@ static LPWSTR COND_GetLiteral( struct cond_str *str )
 {
     LPWSTR ret;
 
-    ret = HeapAlloc( GetProcessHeap(), 0, (str->len-1) * sizeof (WCHAR) );
+    ret = msi_alloc( (str->len-1) * sizeof (WCHAR) );
     if( ret )
     {
         memcpy( ret, str->data+1, (str->len-2) * sizeof(WCHAR) );
@@ -771,13 +771,13 @@ MSICONDITION WINAPI MsiEvaluateConditionA( MSIHANDLE hInstall, LPCSTR szConditio
     if( szCondition )
     {
         UINT len = MultiByteToWideChar( CP_ACP, 0, szCondition, -1, NULL, 0 );
-        szwCond = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
+        szwCond = msi_alloc( len * sizeof (WCHAR) );
         MultiByteToWideChar( CP_ACP, 0, szCondition, -1, szwCond, len );
     }
 
     r = MsiEvaluateConditionW( hInstall, szwCond );
 
-    HeapFree( GetProcessHeap(), 0, szwCond );
+    msi_free( szwCond );
 
     return r;
 }

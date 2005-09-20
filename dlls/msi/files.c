@@ -72,7 +72,7 @@ static UINT create_component_directory( MSIPACKAGE* package, MSICOMPONENT *comp 
         create_full_pathW(install_path);
         folder->State = 2;
     }
-    HeapFree(GetProcessHeap(), 0, install_path);
+    msi_free(install_path);
 
     return rc;
 }
@@ -115,7 +115,7 @@ static UINT writeout_cabinet_stream(MSIPACKAGE *package, LPCWSTR stream_name,
     CloseHandle(the_file);
     TRACE("wrote %li bytes to %s\n",write,debugstr_w(source));
 end:
-    HeapFree(GetProcessHeap(),0,data);
+    msi_free(data);
     return rc;
 }
 
@@ -129,12 +129,12 @@ typedef struct
 
 static void * cabinet_alloc(ULONG cb)
 {
-    return HeapAlloc(GetProcessHeap(), 0, cb);
+    return msi_alloc(cb);
 }
 
 static void cabinet_free(void *pv)
 {
-    HeapFree(GetProcessHeap(), 0, pv);
+    msi_free(pv);
 }
 
 static INT_PTR cabinet_open(char *pszFile, int oflag, int pmode)
@@ -218,14 +218,14 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         if (!f)
         {
             ERR("Unknown File in Cabinent (%s)\n",debugstr_w(given_file));
-            HeapFree(GetProcessHeap(),0,given_file);
+            msi_free(given_file);
             return 0;
         }
 
         if (!((f->State == 1 || f->State == 2)))
         {
             TRACE("Skipping extraction of %s\n",debugstr_w(given_file));
-            HeapFree(GetProcessHeap(),0,given_file);
+            msi_free(given_file);
             return 0;
         }
 
@@ -238,7 +238,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         /* track this file so it can be deleted if not installed */
         trackpath=strdupAtoW(file);
         tracknametmp=strdupAtoW(strrchr(file,'\\')+1);
-        trackname = HeapAlloc(GetProcessHeap(),0,(strlenW(tracknametmp) + 
+        trackname = msi_alloc((strlenW(tracknametmp) + 
                                   strlenW(tmpprefix)+1) * sizeof(WCHAR));
 
         strcpyW(trackname,tmpprefix);
@@ -246,9 +246,9 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 
         track_tempfile(data->package, trackname, trackpath);
 
-        HeapFree(GetProcessHeap(),0,trackpath);
-        HeapFree(GetProcessHeap(),0,trackname);
-        HeapFree(GetProcessHeap(),0,tracknametmp);
+        msi_free(trackpath);
+        msi_free(trackname);
+        msi_free(tracknametmp);
 
         /* the UI chunk */
         uirow=MSI_CreateRecord(9);
@@ -259,7 +259,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         MSI_RecordSetInteger( uirow, 6, f->FileSize );
         ui_actiondata(data->package,szInstallFiles,uirow);
         msiobj_release( &uirow->hdr );
-        HeapFree(GetProcessHeap(),0,uipath);
+        msi_free(uipath);
 
         ui_progress( data->package, 2, f->FileSize, 0, 0);
 
@@ -324,7 +324,7 @@ static BOOL extract_cabinet_file(MSIPACKAGE* package, LPCWSTR source,
     if (!(cab_path = strdupWtoA( path )))
     {
         FDIDestroy(hfdi);
-        HeapFree(GetProcessHeap(), 0, cabinet);
+        msi_free(cabinet);
         return FALSE;
     }
 
@@ -338,8 +338,8 @@ static BOOL extract_cabinet_file(MSIPACKAGE* package, LPCWSTR source,
 
     FDIDestroy(hfdi);
 
-    HeapFree(GetProcessHeap(), 0, cabinet);
-    HeapFree(GetProcessHeap(), 0, cab_path);
+    msi_free(cabinet);
+    msi_free(cab_path);
 
     return ret;
 }
@@ -352,7 +352,7 @@ static VOID set_file_source(MSIPACKAGE* package, MSIFILE* file, MSICOMPONENT*
         LPWSTR p;
         p = resolve_folder(package, comp->Directory, TRUE, FALSE, NULL);
         file->SourcePath = build_directory_name(2, p, file->ShortName);
-        HeapFree(GetProcessHeap(),0,p);
+        msi_free(p);
     }
     else
         file->SourcePath = build_directory_name(2, path, file->File);
@@ -419,15 +419,15 @@ static UINT ready_volume(MSIPACKAGE* package, LPCWSTR path, LPWSTR last_volume,
         prompt = MSI_RecordGetString(row,3);
         msg = generate_error_string(package, 1302, 1, prompt);
         rc = MessageBoxW(NULL,msg,NULL,MB_OKCANCEL);
-        HeapFree(GetProcessHeap(),0,volume);
-        HeapFree(GetProcessHeap(),0,msg);
+        msi_free(volume);
+        msi_free(msg);
         if (rc == IDOK)
             ok = check_for_sourcefile(path);
         else
             return ERROR_INSTALL_USEREXIT;
     }
 
-    HeapFree(GetProcessHeap(),0,last_volume);
+    msi_free(last_volume);
     last_volume = strdupW(volume);
     return ERROR_SUCCESS;
 }
@@ -457,8 +457,8 @@ static UINT ready_media_for_file(MSIPACKAGE *package, MSIFILE *file,
     /* cleanup signal */
     if (!package)
     {
-        HeapFree(GetProcessHeap(),0,last_path);
-        HeapFree(GetProcessHeap(),0,last_volume);
+        msi_free(last_path);
+        msi_free(last_volume);
         last_sequence = 0;
         last_path = NULL;
         last_volume = NULL;
@@ -488,7 +488,7 @@ static UINT ready_media_for_file(MSIPACKAGE *package, MSIFILE *file,
     volume = MSI_RecordGetString(row, 5);
     prompt = MSI_RecordGetString(row, 3);
 
-    HeapFree(GetProcessHeap(),0,last_path);
+    msi_free(last_path);
     last_path = NULL;
 
     if (file->Attributes & msidbFileAttributesNoncompressed)
@@ -540,12 +540,12 @@ static UINT ready_media_for_file(MSIPACKAGE *package, MSIFILE *file,
                 MSICODE_PRODUCT|MSISOURCETYPE_NETWORK,
                 INSTALLPROPERTY_LASTUSEDSOURCEW, path);
 
-            HeapFree(GetProcessHeap(),0,path);
+            msi_free(path);
         }
         else
         {
             sz = MAX_PATH;
-            last_path = HeapAlloc(GetProcessHeap(),0,MAX_PATH*sizeof(WCHAR));
+            last_path = msi_alloc(MAX_PATH*sizeof(WCHAR));
             if (MSI_GetPropertyW(package, cszSourceDir, source, &sz))
             {
                 ERR("No Source dir defined \n");
@@ -581,7 +581,7 @@ static UINT ready_media_for_file(MSIPACKAGE *package, MSIFILE *file,
     else
     {
         sz = MAX_PATH;
-        last_path = HeapAlloc(GetProcessHeap(),0,MAX_PATH*sizeof(WCHAR));
+        last_path = msi_alloc(MAX_PATH*sizeof(WCHAR));
         MSI_GetPropertyW(package,cszSourceDir,source,&sz);
         strcpyW(last_path,source);
         rc = ready_volume(package, last_path, last_volume, row, &type);
@@ -699,10 +699,10 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             }
 
             p = resolve_folder(package, comp->Directory, FALSE, FALSE, NULL);
-            HeapFree(GetProcessHeap(),0,file->TargetPath);
+            msi_free(file->TargetPath);
 
             file->TargetPath = build_directory_name(2, p, file->FileName);
-            HeapFree(GetProcessHeap(),0,p);
+            msi_free(p);
         }
     }
 
@@ -808,7 +808,7 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
     if (rc != ERROR_SUCCESS)
     {
         ERR("Original file unknown %s\n",debugstr_w(file_key));
-        HeapFree(GetProcessHeap(),0,file_source);
+        msi_free(file_source);
         return ERROR_SUCCESS;
     }
 
@@ -841,7 +841,7 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
             if (!dest_path)
             {
                 FIXME("Unable to get destination folder, try AppSearch properties\n");
-                HeapFree(GetProcessHeap(),0,file_source);
+                msi_free(file_source);
                 return ERROR_SUCCESS;
             }
         }
@@ -862,9 +862,9 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
 
     FIXME("We should track these duplicate files as well\n");   
 
-    HeapFree(GetProcessHeap(),0,dest_path);
-    HeapFree(GetProcessHeap(),0,dest);
-    HeapFree(GetProcessHeap(),0,file_source);
+    msi_free(dest_path);
+    msi_free(dest);
+    msi_free(file_source);
 
     return ERROR_SUCCESS;
 }

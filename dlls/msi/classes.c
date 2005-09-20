@@ -61,7 +61,7 @@ static MSIAPPID *load_appid( MSIPACKAGE* package, MSIRECORD *row )
 
     /* fill in the data */
 
-    appid = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSIAPPID) );
+    appid = msi_alloc_zero( sizeof(MSIAPPID) );
     if (!appid)
         return NULL;
     
@@ -125,7 +125,7 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
 
     /* fill in the data */
 
-    progid = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSIPROGID) );
+    progid = msi_alloc_zero( sizeof(MSIPROGID) );
     if (!progid)
         return NULL;
 
@@ -155,14 +155,12 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
 
         build_icon_path(package,FileName,&FilePath);
        
-        progid->IconPath = 
-                HeapAlloc(GetProcessHeap(),0,(strlenW(FilePath)+10)*
-                                sizeof(WCHAR));
+        progid->IconPath = msi_alloc( (strlenW(FilePath)+10)* sizeof(WCHAR) );
 
         sprintfW(progid->IconPath,fmt,FilePath,icon_index);
 
-        HeapFree(GetProcessHeap(),0,FilePath);
-        HeapFree(GetProcessHeap(),0,FileName);
+        msi_free(FilePath);
+        msi_free(FileName);
     }
     else
     {
@@ -231,7 +229,7 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
 
     /* fill in the data */
 
-    cls = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSICLASS) );
+    cls = msi_alloc_zero( sizeof(MSICLASS) );
     if (!cls)
         return NULL;
 
@@ -264,14 +262,12 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
 
         build_icon_path(package,FileName,&FilePath);
        
-        cls->IconPath = 
-                HeapAlloc(GetProcessHeap(),0,(strlenW(FilePath)+5)*
-                                sizeof(WCHAR));
+        cls->IconPath = msi_alloc( (strlenW(FilePath)+5)* sizeof(WCHAR) );
 
         sprintfW(cls->IconPath,fmt,FilePath,icon_index);
 
-        HeapFree(GetProcessHeap(),0,FilePath);
-        HeapFree(GetProcessHeap(),0,FileName);
+        msi_free(FilePath);
+        msi_free(FileName);
     }
     else
     {
@@ -367,7 +363,7 @@ static MSIMIME *load_mime( MSIPACKAGE* package, MSIRECORD *row )
 
     /* fill in the data */
 
-    mt = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSIMIME) );
+    mt = msi_alloc_zero( sizeof(MSIMIME) );
     if (!mt)
         return mt;
 
@@ -425,7 +421,7 @@ static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
 
     /* fill in the data */
 
-    ext = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSIEXTENSION) );
+    ext = msi_alloc_zero( sizeof(MSIEXTENSION) );
     if (!ext)
         return NULL;
 
@@ -506,7 +502,7 @@ static UINT iterate_load_verb(MSIRECORD *row, LPVOID param)
 
     /* fill in the data */
 
-    verb = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MSIVERB) );
+    verb = msi_alloc_zero( sizeof(MSIVERB) );
     if (!verb)
         return ERROR_OUTOFMEMORY;
 
@@ -919,7 +915,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                     size += sizeof(WCHAR);
                 }
 
-                argument = HeapAlloc(GetProcessHeap(), 0, size + sizeof(WCHAR));
+                argument = msi_alloc( size + sizeof(WCHAR));
                 GetShortPathNameW( file->TargetPath, argument, sz );
 
                 if (cls->Argument)
@@ -939,7 +935,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                 size += sizeof(WCHAR);
             }
 
-            argument = HeapAlloc(GetProcessHeap(), 0, size + sizeof(WCHAR));
+            argument = msi_alloc( size + sizeof(WCHAR));
             strcpyW( argument, file->TargetPath );
 
             if (cls->Argument)
@@ -952,7 +948,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         if (argument)
         {
             msi_reg_set_val_str( hkey3, NULL, argument );
-            HeapFree(GetProcessHeap(),0,argument);
+            msi_free(argument);
         }
 
         RegCloseKey(hkey3);
@@ -1022,12 +1018,11 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                 ptr2 = strchrW(ptr,';');
                 if (ptr2)
                     *ptr2 = 0;
-                keyname = HeapAlloc(GetProcessHeap(),0,(strlenW(szFileType_fmt)+
-                                        strlenW(cls->clsid) + 4) * sizeof(WCHAR));
+                keyname = msi_alloc( (strlenW(szFileType_fmt) + strlenW(cls->clsid) + 4) * sizeof(WCHAR));
                 sprintfW( keyname, szFileType_fmt, cls->clsid, index );
 
                 msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, keyname, NULL, ptr );
-                HeapFree(GetProcessHeap(), 0, keyname);
+                msi_free(keyname);
 
                 if (ptr2)
                     ptr = ptr2+1;
@@ -1188,14 +1183,14 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
         size += strlenW(verb->Argument);
      size += 4;
 
-     command = HeapAlloc(GetProcessHeap(),0, size * sizeof (WCHAR));
+     command = msi_alloc(size * sizeof (WCHAR));
      if (verb->Argument)
         sprintfW(command, fmt, component->FullKeypath, verb->Argument);
      else
         sprintfW(command, fmt2, component->FullKeypath);
 
      msi_reg_set_val_str( key, NULL, command );
-     HeapFree(GetProcessHeap(),0,command);
+     msi_free(command);
 
      advertise = create_component_advertise_string(package, component, 
                                                    extension->Feature->Feature);
@@ -1206,7 +1201,7 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
          size += strlenW(verb->Argument);
      size += 4;
 
-     command = HeapAlloc(GetProcessHeap(),0, size * sizeof (WCHAR));
+     command = msi_alloc(size * sizeof (WCHAR));
      memset(command,0,size*sizeof(WCHAR));
 
      strcpyW(command,advertise);
@@ -1220,15 +1215,15 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
      msi_reg_set_val_multi_str( key, szCommand, command );
      
      RegCloseKey(key);
-     HeapFree(GetProcessHeap(),0,keyname);
-     HeapFree(GetProcessHeap(),0,advertise);
-     HeapFree(GetProcessHeap(),0,command);
+     msi_free(keyname);
+     msi_free(advertise);
+     msi_free(command);
 
      if (verb->Command)
      {
         keyname = build_directory_name(3, progid, szShell, verb->Verb);
         msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, keyname, NULL, verb->Command );
-        HeapFree(GetProcessHeap(),0,keyname);
+        msi_free(keyname);
      }
 
      if (verb->Sequence != MSI_NULL_INTEGER)
@@ -1238,7 +1233,7 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
             *Sequence = verb->Sequence;
             keyname = build_directory_name(2, progid, szShell);
             msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, keyname, NULL, verb->Verb );
-            HeapFree(GetProcessHeap(),0,keyname);
+            msi_free(keyname);
         }
     }
     return ERROR_SUCCESS;
@@ -1299,13 +1294,12 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
 
         mark_mime_for_install(ext->Mime);
 
-        extension = HeapAlloc( GetProcessHeap(), 0,
-                               (lstrlenW( ext->Extension ) + 2)*sizeof(WCHAR) );
+        extension = msi_alloc( (lstrlenW( ext->Extension ) + 2)*sizeof(WCHAR) );
         extension[0] = '.';
         lstrcpyW(extension+1,ext->Extension);
 
         RegCreateKeyW(HKEY_CLASSES_ROOT,extension,&hkey);
-        HeapFree( GetProcessHeap(), 0, extension );
+        msi_free( extension );
 
         if (ext->Mime)
             msi_reg_set_val_str( hkey, szContentType, ext->Mime->ContentType );
@@ -1327,15 +1321,14 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
 
             msi_reg_set_val_str( hkey, NULL, progid );
 
-            newkey = HeapAlloc(GetProcessHeap(),0,
-                           (strlenW(progid)+strlenW(szSN)+1) * sizeof(WCHAR)); 
+            newkey = msi_alloc( (strlenW(progid)+strlenW(szSN)+1) * sizeof(WCHAR)); 
 
             strcpyW(newkey,progid);
             strcatW(newkey,szSN);
             RegCreateKeyW(hkey,newkey,&hkey2);
             RegCloseKey(hkey2);
 
-            HeapFree(GetProcessHeap(),0,newkey);
+            msi_free(newkey);
 
             /* do all the verbs */
             LIST_FOR_EACH_ENTRY( verb, &ext->verbs, MSIVERB, entry )
@@ -1396,18 +1389,16 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
         mime = mt->ContentType;
         exten = mt->Extension->Extension;
 
-        extension = HeapAlloc( GetProcessHeap(), 0,
-                               (lstrlenW( exten ) + 2)*sizeof(WCHAR) );
+        extension = msi_alloc( (lstrlenW( exten ) + 2)*sizeof(WCHAR) );
         extension[0] = '.';
         lstrcpyW(extension+1,exten);
 
-        key = HeapAlloc(GetProcessHeap(),0,(strlenW(mime)+strlenW(fmt)+1) *
-                                            sizeof(WCHAR));
+        key = msi_alloc( (strlenW(mime)+strlenW(fmt)+1) * sizeof(WCHAR) );
         sprintfW(key,fmt,mime);
         msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, key, szExten, extension );
 
-        HeapFree(GetProcessHeap(),0,extension);
-        HeapFree(GetProcessHeap(),0,key);
+        msi_free(extension);
+        msi_free(key);
 
         if (mt->clsid)
             FIXME("Handle non null for field 3\n");

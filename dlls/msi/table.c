@@ -96,7 +96,7 @@ static LPWSTR encode_streamname(BOOL bTable, LPCWSTR in)
 
     if( !bTable )
         count = lstrlenW( in )+2;
-    out = HeapAlloc( GetProcessHeap(), 0, count*sizeof(WCHAR) );
+    out = msi_alloc( count*sizeof(WCHAR) );
     p = out;
 
     if( bTable )
@@ -130,7 +130,7 @@ static LPWSTR encode_streamname(BOOL bTable, LPCWSTR in)
         *p++ = ch;
     }
     ERR("Failed to encode stream name (%s)\n",debugstr_w(in));
-    HeapFree( GetProcessHeap(), 0, out );
+    msi_free( out );
     return NULL;
 }
 
@@ -218,7 +218,7 @@ static UINT read_stream_data( IStorage *stg, LPCWSTR stname,
 
     r = IStorage_OpenStream(stg, encname, NULL, 
             STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm);
-    HeapFree( GetProcessHeap(), 0, encname );
+    msi_free( encname );
     if( FAILED( r ) )
     {
         WARN("open stream failed r = %08lx - empty table?\n",r);
@@ -239,7 +239,7 @@ static UINT read_stream_data( IStorage *stg, LPCWSTR stname,
     }
         
     sz = stat.cbSize.QuadPart;
-    data = HeapAlloc( GetProcessHeap(), 0, sz );
+    data = msi_alloc( sz );
     if( !data )
     {
         WARN("couldn't allocate memory r=%08lx!\n",r);
@@ -250,7 +250,7 @@ static UINT read_stream_data( IStorage *stg, LPCWSTR stname,
     r = IStream_Read(stm, data, sz, &count );
     if( FAILED( r ) || ( count != sz ) )
     {
-        HeapFree( GetProcessHeap(), 0, data );
+        msi_free( data );
         WARN("read stream failed r = %08lx!\n",r);
         goto end;
     }
@@ -276,7 +276,7 @@ UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
 
     r = IStorage_OpenStream(db->storage, encname, NULL, 
             STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm);
-    HeapFree( GetProcessHeap(), 0, encname );
+    msi_free( encname );
     if( FAILED( r ) )
     {
         WARN("open stream failed r = %08lx - empty table?\n",r);
@@ -313,7 +313,7 @@ UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
     }
         
     sz = stat.cbSize.QuadPart;
-    data = HeapAlloc( GetProcessHeap(), 0, sz );
+    data = msi_alloc( sz );
     if( !data )
     {
         WARN("couldn't allocate memory r=%08lx!\n",r);
@@ -324,7 +324,7 @@ UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
     r = IStream_Read(stm, data, sz, &count );
     if( FAILED( r ) || ( count != sz ) )
     {
-        HeapFree( GetProcessHeap(), 0, data );
+        msi_free( data );
         WARN("read stream failed r = %08lx!\n",r);
         goto end;
     }
@@ -358,7 +358,7 @@ static UINT write_stream_data( IStorage *stg, LPCWSTR stname,
         r = IStorage_CreateStream( stg, encname,
                 STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
     }
-    HeapFree( GetProcessHeap(), 0, encname );
+    msi_free( encname );
     if( FAILED( r ) )
     {
         WARN("open stream failed r = %08lx\n",r);
@@ -400,9 +400,9 @@ static void free_table( MSITABLE *table )
 {
     int i;
     for( i=0; i<table->row_count; i++ )
-        HeapFree( GetProcessHeap(), 0, table->data[i] );
-    HeapFree( GetProcessHeap(), 0, table->data );
-    HeapFree( GetProcessHeap(), 0, table );
+        msi_free( table->data[i] );
+    msi_free( table->data );
+    msi_free( table );
 }
 
 static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **ptable)
@@ -415,15 +415,14 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
     TRACE("%s\n",debugstr_w(name));
 
     /* nonexistent tables should be interpreted as empty tables */
-    t = HeapAlloc( GetProcessHeap(), 0, 
-                   sizeof (MSITABLE) + lstrlenW(name)*sizeof (WCHAR) );
+    t = msi_alloc( sizeof (MSITABLE) + lstrlenW(name)*sizeof (WCHAR) );
     if( !t )
         return ERROR_NOT_ENOUGH_MEMORY;
 
     r = table_get_column_info( db, name, &cols, &num_cols );
     if( r != ERROR_SUCCESS )
     {
-        HeapFree( GetProcessHeap(), 0, t );
+        msi_free( t );
         return r;
     }
     last_col = &cols[num_cols-1];
@@ -449,8 +448,7 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
     }
 
     t->row_count = rawsize / row_size;
-    t->data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                         t->row_count * sizeof (USHORT*) );
+    t->data = msi_alloc_zero( t->row_count * sizeof (USHORT*) );
     if( !t->data )
     {
         r = ERROR_NOT_ENOUGH_MEMORY;
@@ -461,7 +459,7 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
     TRACE("Transposing data from %d columns\n", t->row_count );
     for( i=0; i<t->row_count; i++ )
     {
-        t->data[i] = HeapAlloc( GetProcessHeap(), 0, row_size );
+        t->data[i] = msi_alloc( row_size );
         if( !t->data[i] )
         {
             r = ERROR_NOT_ENOUGH_MEMORY;
@@ -489,14 +487,14 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
         }
     }
 
-    HeapFree( GetProcessHeap(), 0, cols );
-    HeapFree( GetProcessHeap(), 0, rawdata );
+    msi_free( cols );
+    msi_free( rawdata );
 
     return ERROR_SUCCESS;
 
 err:
-    HeapFree( GetProcessHeap(), 0, cols );
-    HeapFree( GetProcessHeap(), 0, rawdata );
+    msi_free( cols );
+    msi_free( rawdata );
     free_table( t );
     return r;
 }
@@ -536,8 +534,8 @@ void free_cached_tables( MSIDATABASE *db )
         if ( --t->ref_count )
             ERR("table ref count not zero for %s\n", debugstr_w(t->name));
         remove_table( db, t );
-        HeapFree( GetProcessHeap(), 0, t->data );
-        HeapFree( GetProcessHeap(), 0, t );
+        msi_free( t->data );
+        msi_free( t );
     }
 }
 
@@ -574,14 +572,14 @@ static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name, MSICOLUMNINFO 
 
     TRACE("Table %s found\n", debugstr_w(name) );
 
-    columns = HeapAlloc( GetProcessHeap(), 0, column_count*sizeof (MSICOLUMNINFO));
+    columns = msi_alloc( column_count*sizeof (MSICOLUMNINFO));
     if( !columns )
         return ERROR_FUNCTION_FAILED;
 
     r = get_tablecolumns( db, name, columns, &column_count );
     if( r != ERROR_SUCCESS )
     {
-        HeapFree( GetProcessHeap(), 0, columns );
+        msi_free( columns );
         return ERROR_FUNCTION_FAILED;
     }
 
@@ -632,7 +630,7 @@ static UINT save_table( MSIDATABASE *db, MSITABLE *t )
     row_size = last_col->offset + bytes_per_column( last_col );
 
     rawsize = t->row_count * row_size;
-    rawdata = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, rawsize );
+    rawdata = msi_alloc_zero( rawsize );
     if( !rawdata )
         return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -652,7 +650,7 @@ static UINT save_table( MSIDATABASE *db, MSITABLE *t )
     TRACE("writing %d bytes\n", rawsize);
     r = write_stream_data( db->storage, t->name, rawdata, rawsize );
 
-    HeapFree( GetProcessHeap(), 0, rawdata );
+    msi_free( rawdata );
 
     return r;
 }
@@ -674,7 +672,7 @@ HRESULT init_string_table( IStorage *stg )
     /* create the StringPool stream... add the zero string to it*/
     r = IStorage_CreateStream( stg, encname,
             STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
-    HeapFree( GetProcessHeap(), 0, encname );
+    msi_free( encname );
     if( r ) 
     {
         TRACE("Failed\n");
@@ -694,7 +692,7 @@ HRESULT init_string_table( IStorage *stg )
     encname = encode_streamname(TRUE, szStringData );
     r = IStorage_CreateStream( stg, encname,
             STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
-    HeapFree( GetProcessHeap(), 0, encname );
+    msi_free( encname );
     if( r ) 
     {
         TRACE("Failed\n");
@@ -769,8 +767,8 @@ string_table *load_string_table( IStorage *stg )
     TRACE("Loaded %ld strings\n", count);
 
 end:
-    HeapFree( GetProcessHeap(), 0, pool );
-    HeapFree( GetProcessHeap(), 0, data );
+    msi_free( pool );
+    msi_free( data );
 
     return st;
 }
@@ -792,13 +790,13 @@ static UINT save_string_table( MSIDATABASE *db )
     datasize = msi_string_totalsize( db->strings, &count );
     poolsize = count*2*sizeof(USHORT);
 
-    pool = HeapAlloc( GetProcessHeap(), 0, poolsize );
+    pool = msi_alloc( poolsize );
     if( ! pool )
     {
         WARN("Failed to alloc pool %d bytes\n", poolsize );
         goto err;
     }
-    data = HeapAlloc( GetProcessHeap(), 0, datasize );
+    data = msi_alloc( datasize );
     if( ! data )
     {
         WARN("Failed to alloc data %d bytes\n", poolsize );
@@ -850,8 +848,8 @@ static UINT save_string_table( MSIDATABASE *db )
     ret = ERROR_SUCCESS;
 
 err:
-    HeapFree( GetProcessHeap(), 0, data );
-    HeapFree( GetProcessHeap(), 0, pool );
+    msi_free( data );
+    msi_free( pool );
 
     return ret;
 }
@@ -920,13 +918,13 @@ LPWSTR MSI_makestring( MSIDATABASE *db, UINT stringid)
     r = msi_id2stringW( db->strings, stringid, NULL, &sz );
     if( r != ERROR_SUCCESS )
         return NULL;
-    str = HeapAlloc( GetProcessHeap(), 0, sz*sizeof (WCHAR));
+    str = msi_alloc( sz*sizeof (WCHAR));
     if( !str )
         return str;
     r = msi_id2stringW( db->strings, stringid, str, &sz );
     if( r == ERROR_SUCCESS )
         return str;
-    HeapFree(  GetProcessHeap(), 0, str );
+    msi_free(  str );
     return NULL;
 }
 
@@ -1140,7 +1138,7 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
         return ERROR_INVALID_PARAMETER;
 
     len = lstrlenW( tv->name ) + 2 + lstrlenW( sval );
-    full_name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+    full_name = msi_alloc( len*sizeof(WCHAR) );
     lstrcpyW( full_name, tv->name );
     lstrcatW( full_name, szDot );
     lstrcatW( full_name, sval );
@@ -1148,8 +1146,8 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     r = db_get_raw_stream( tv->db, full_name, stm );
     if( r )
         ERR("fetching stream %s, error = %d\n",debugstr_w(full_name), r);
-    HeapFree( GetProcessHeap(), 0, full_name );
-    HeapFree( GetProcessHeap(), 0, sval );
+    msi_free( full_name );
+    msi_free( sval );
 
     return r;
 }
@@ -1202,18 +1200,18 @@ static UINT table_create_new_row( struct tagMSIVIEW *view, UINT *num )
     if( !tv->table )
         return ERROR_INVALID_PARAMETER;
 
-    row = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, tv->row_size );
+    row = msi_alloc_zero( tv->row_size );
     if( !row )
         return ERROR_NOT_ENOUGH_MEMORY;
 
     sz = (tv->table->row_count + 1) * sizeof (UINT*);
     if( tv->table->data )
-        p = HeapReAlloc( GetProcessHeap(), 0, tv->table->data, sz );
+        p = msi_realloc( tv->table->data, sz );
     else
-        p = HeapAlloc( GetProcessHeap(), 0, sz );
+        p = msi_alloc( sz );
     if( !p )
     {
-        HeapFree( GetProcessHeap(), 0, row );
+        msi_free( row );
         return ERROR_NOT_ENOUGH_MEMORY;
     }
 
@@ -1478,14 +1476,14 @@ static UINT TABLE_delete( struct tagMSIVIEW *view )
         UINT i;
         for( i=0; i<tv->num_cols; i++)
         {
-            HeapFree( GetProcessHeap(), 0, tv->columns[i].colname );
-            HeapFree( GetProcessHeap(), 0, tv->columns[i].tablename );
+            msi_free( tv->columns[i].colname );
+            msi_free( tv->columns[i].tablename );
         }
-        HeapFree( GetProcessHeap(), 0, tv->columns );
+        msi_free( tv->columns );
     }
     tv->columns = NULL;
 
-    HeapFree( GetProcessHeap(), 0, tv );
+    msi_free( tv );
 
     return ERROR_SUCCESS;
 }
@@ -1526,22 +1524,22 @@ UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view )
     TRACE("Table found\n");
 
     sz = sizeof *tv + lstrlenW(name)*sizeof name[0] ;
-    tv = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sz );
+    tv = msi_alloc_zero( sz );
     if( !tv )
         return ERROR_FUNCTION_FAILED;
     
-    columns = HeapAlloc( GetProcessHeap(), 0, column_count*sizeof (MSICOLUMNINFO));
+    columns = msi_alloc( column_count*sizeof (MSICOLUMNINFO));
     if( !columns )
     {
-        HeapFree( GetProcessHeap(), 0, tv );
+        msi_free( tv );
         return ERROR_FUNCTION_FAILED;
     }
 
     r = get_tablecolumns( db, name, columns, &column_count );
     if( r != ERROR_SUCCESS )
     {
-        HeapFree( GetProcessHeap(), 0, columns );
-        HeapFree( GetProcessHeap(), 0, tv );
+        msi_free( columns );
+        msi_free( tv );
         return ERROR_FUNCTION_FAILED;
     }
 

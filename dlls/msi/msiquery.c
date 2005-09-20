@@ -49,7 +49,7 @@ static void MSI_CloseView( MSIOBJECTHDR *arg )
 
     LIST_FOR_EACH_SAFE( ptr, t, &query->mem )
     {
-        HeapFree( GetProcessHeap(), 0, ptr );
+        msi_free( ptr );
     }
 }
 
@@ -71,7 +71,7 @@ UINT VIEW_find_column( MSIVIEW *table, LPCWSTR name, UINT *n )
         if( r != ERROR_SUCCESS )
             return r;
         x = lstrcmpW( name, col_name );
-        HeapFree( GetProcessHeap(), 0, col_name );
+        msi_free( col_name );
         if( !x )
         {
             *n = i;
@@ -101,7 +101,7 @@ UINT WINAPI MsiDatabaseOpenViewA(MSIHANDLE hdb,
 
     r = MsiDatabaseOpenViewW( hdb, szwQuery, phView);
 
-    HeapFree( GetProcessHeap(), 0, szwQuery );
+    msi_free( szwQuery );
     return r;
 }
 
@@ -149,18 +149,18 @@ UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
     for (;;)
     {
         va_list va;
-        query = HeapAlloc( GetProcessHeap(), 0, size*sizeof(WCHAR) );
+        query = msi_alloc( size*sizeof(WCHAR) );
         va_start(va, fmt);
         res = vsnprintfW(query, size, fmt, va);
         va_end(va);
         if (res == -1) size *= 2;
         else if (res >= size) size = res + 1;
         else break;
-        HeapFree( GetProcessHeap(), 0, query );
+        msi_free( query );
     }
     /* perform the query */
     r = MSI_DatabaseOpenViewW(db, query, view);
-    HeapFree(GetProcessHeap(), 0, query);
+    msi_free(query);
     return r;
 }
 
@@ -213,18 +213,18 @@ MSIRECORD *MSI_QueryGetRecord( MSIDATABASE *db, LPCWSTR fmt, ... )
     for (;;)
     {
         va_list va;
-        query = HeapAlloc( GetProcessHeap(), 0, size*sizeof(WCHAR) );
+        query = msi_alloc( size*sizeof(WCHAR) );
         va_start(va, fmt);
         res = vsnprintfW(query, size, fmt, va);
         va_end(va);
         if (res == -1) size *= 2;
         else if (res >= size) size = res + 1;
         else break;
-        HeapFree( GetProcessHeap(), 0, query );
+        msi_free( query );
     }
     /* perform the query */
     r = MSI_DatabaseOpenViewW(db, query, &view);
-    HeapFree(GetProcessHeap(), 0, query);
+    msi_free(query);
 
     if( r == ERROR_SUCCESS )
     {
@@ -315,7 +315,7 @@ UINT MSI_ViewFetch(MSIQUERY *query, MSIRECORD **prec)
 
                 sval = MSI_makestring( query->db, ival );
                 MSI_RecordSetStringW( rec, i, sval );
-                HeapFree( GetProcessHeap(), 0, sval );
+                msi_free( sval );
             }
             else
             {
@@ -492,7 +492,7 @@ UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE hView, MSICOLINFO info, MSIHANDLE *hR
         if( r != ERROR_SUCCESS )
             continue;
         MSI_RecordSetStringW( rec, i+1, name );
-        HeapFree( GetProcessHeap(), 0, name );
+        msi_free( name );
     }
 
     *hRec = alloc_msihandle( &rec->hdr );
@@ -765,7 +765,7 @@ UINT WINAPI MsiDatabaseGetPrimaryKeysA(MSIHANDLE hdb,
             return ERROR_OUTOFMEMORY;
     }
     r = MsiDatabaseGetPrimaryKeysW( hdb, szwTable, phRec );
-    HeapFree( GetProcessHeap(), 0, szwTable );
+    msi_free( szwTable );
 
     return r;
 }

@@ -104,8 +104,8 @@ UINT build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name,
 
     *FilePath = build_directory_name(2, dest, icon_name);
 
-    HeapFree(GetProcessHeap(),0,SystemFolder);
-    HeapFree(GetProcessHeap(),0,dest);
+    msi_free(SystemFolder);
+    msi_free(dest);
     return ERROR_SUCCESS;
 }
 
@@ -124,18 +124,18 @@ WCHAR *load_dynamic_stringW(MSIRECORD *row, INT index)
     /* having an empty string is different than NULL */
     if (sz == 0)
     {
-        ret = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR));
+        ret = msi_alloc(sizeof(WCHAR));
         ret[0] = 0;
         return ret;
     }
 
     sz ++;
-    ret = HeapAlloc(GetProcessHeap(),0,sz * sizeof (WCHAR));
+    ret = msi_alloc(sz * sizeof (WCHAR));
     rc = MSI_RecordGetStringW(row,index,ret,&sz);
     if (rc!=ERROR_SUCCESS)
     {
         ERR("Unable to load dynamic string\n");
-        HeapFree(GetProcessHeap(), 0, ret);
+        msi_free(ret);
         ret = NULL;
     }
     return ret;
@@ -152,11 +152,11 @@ LPWSTR msi_dup_property(MSIPACKAGE *package, LPCWSTR prop)
         return NULL;
 
     sz++;
-    str = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
+    str = msi_alloc(sz*sizeof(WCHAR));
     r = MSI_GetPropertyW(package, prop, str, &sz);
     if (r != ERROR_SUCCESS)
     {
-        HeapFree(GetProcessHeap(),0,str);
+        msi_free(str);
         str = NULL;
     }
     return str;
@@ -215,7 +215,7 @@ int track_tempfile( MSIPACKAGE *package, LPCWSTR name, LPCWSTR path )
         }
     }
 
-    temp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof (MSITEMPFILE) );
+    temp = msi_alloc_zero( sizeof (MSITEMPFILE) );
     if (!temp)
         return -1;
 
@@ -271,7 +271,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
             path = build_directory_name(2, check_path, NULL);
             if (strcmpiW(path,check_path)!=0)
                 MSI_SetPropertyW(package,cszTargetDir,path);
-            HeapFree(GetProcessHeap(),0,check_path);
+            msi_free(check_path);
         }
         else
         {
@@ -347,7 +347,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
             TRACE("   (source)resolved into %s\n",debugstr_w(path));
             f->ResolvedSource = strdupW( path );
         }
-        HeapFree(GetProcessHeap(),0,p);
+        msi_free(p);
     }
     return path;
 }
@@ -365,7 +365,7 @@ DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data )
         if (size >= 0)
         {
             size++;
-            *data = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
+            *data = msi_alloc(size*sizeof(WCHAR));
             if (size > 1)
                 MSI_FormatRecordW(package,rec,*data,&size);
             else
@@ -394,11 +394,10 @@ UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action)
     count = package->script->ActionCount[script];
     package->script->ActionCount[script]++;
     if (count != 0)
-        newbuf = HeapReAlloc(GetProcessHeap(),0,
-                        package->script->Actions[script],
+        newbuf = msi_realloc( package->script->Actions[script],
                         package->script->ActionCount[script]* sizeof(LPWSTR));
     else
-        newbuf = HeapAlloc(GetProcessHeap(),0, sizeof(LPWSTR));
+        newbuf = msi_alloc( sizeof(LPWSTR));
 
     newbuf[count] = strdupW(action);
     package->script->Actions[script] = newbuf;
@@ -417,9 +416,9 @@ static void remove_tracked_tempfiles(MSIPACKAGE* package)
         list_remove( &temp->entry );
         TRACE("deleting temp file %s\n", debugstr_w( temp->Path ));
         DeleteFileW( temp->Path );
-        HeapFree( GetProcessHeap(), 0, temp->File );
-        HeapFree( GetProcessHeap(), 0, temp->Path );
-        HeapFree( GetProcessHeap(), 0, temp );
+        msi_free( temp->File );
+        msi_free( temp->Path );
+        msi_free( temp );
     }
 }
 
@@ -431,14 +430,14 @@ static void free_feature( MSIFEATURE *feature )
     {
         ComponentList *cl = LIST_ENTRY( item, ComponentList, entry );
         list_remove( &cl->entry );
-        HeapFree( GetProcessHeap(), 0, cl );
+        msi_free( cl );
     }
-    HeapFree( GetProcessHeap(), 0, feature->Feature );
-    HeapFree( GetProcessHeap(), 0, feature->Feature_Parent );
-    HeapFree( GetProcessHeap(), 0, feature->Directory );
-    HeapFree( GetProcessHeap(), 0, feature->Description );
-    HeapFree( GetProcessHeap(), 0, feature->Title );
-    HeapFree( GetProcessHeap(), 0, feature );
+    msi_free( feature->Feature );
+    msi_free( feature->Feature_Parent );
+    msi_free( feature->Directory );
+    msi_free( feature->Description );
+    msi_free( feature->Title );
+    msi_free( feature );
 }
 
 void free_extension( MSIEXTENSION *ext )
@@ -450,15 +449,15 @@ void free_extension( MSIEXTENSION *ext )
         MSIVERB *verb = LIST_ENTRY( item, MSIVERB, entry );
 
         list_remove( &verb->entry );
-        HeapFree( GetProcessHeap(), 0, verb->Verb );
-        HeapFree( GetProcessHeap(), 0, verb->Command );
-        HeapFree( GetProcessHeap(), 0, verb->Argument );
-        HeapFree( GetProcessHeap(), 0, verb );
+        msi_free( verb->Verb );
+        msi_free( verb->Command );
+        msi_free( verb->Argument );
+        msi_free( verb );
     }
 
-    HeapFree( GetProcessHeap(), 0, ext->Extension );
-    HeapFree( GetProcessHeap(), 0, ext->ProgIDText );
-    HeapFree( GetProcessHeap(), 0, ext );
+    msi_free( ext->Extension );
+    msi_free( ext->ProgIDText );
+    msi_free( ext );
 }
 
 /* Called when the package is being closed */
@@ -483,12 +482,12 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSIFOLDER *folder = LIST_ENTRY( item, MSIFOLDER, entry );
 
         list_remove( &folder->entry );
-        HeapFree( GetProcessHeap(), 0, folder->Directory );
-        HeapFree( GetProcessHeap(), 0, folder->TargetDefault );
-        HeapFree( GetProcessHeap(), 0, folder->SourceDefault );
-        HeapFree( GetProcessHeap(), 0, folder->ResolvedTarget );
-        HeapFree( GetProcessHeap(), 0, folder->ResolvedSource );
-        HeapFree( GetProcessHeap(), 0, folder->Property );
+        msi_free( folder->Directory );
+        msi_free( folder->TargetDefault );
+        msi_free( folder->SourceDefault );
+        msi_free( folder->ResolvedTarget );
+        msi_free( folder->ResolvedSource );
+        msi_free( folder->Property );
     }
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->components )
@@ -496,13 +495,13 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSICOMPONENT *comp = LIST_ENTRY( item, MSICOMPONENT, entry );
         
         list_remove( &comp->entry );
-        HeapFree( GetProcessHeap(), 0, comp->Component );
-        HeapFree( GetProcessHeap(), 0, comp->ComponentId );
-        HeapFree( GetProcessHeap(), 0, comp->Directory );
-        HeapFree( GetProcessHeap(), 0, comp->Condition );
-        HeapFree( GetProcessHeap(), 0, comp->KeyPath );
-        HeapFree( GetProcessHeap(), 0, comp->FullKeypath );
-        HeapFree( GetProcessHeap(), 0, comp );
+        msi_free( comp->Component );
+        msi_free( comp->ComponentId );
+        msi_free( comp->Directory );
+        msi_free( comp->Condition );
+        msi_free( comp->KeyPath );
+        msi_free( comp->FullKeypath );
+        msi_free( comp );
     }
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->files )
@@ -510,14 +509,14 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSIFILE *file = LIST_ENTRY( item, MSIFILE, entry );
 
         list_remove( &file->entry );
-        HeapFree( GetProcessHeap(), 0, file->File );
-        HeapFree( GetProcessHeap(), 0, file->FileName );
-        HeapFree( GetProcessHeap(), 0, file->ShortName );
-        HeapFree( GetProcessHeap(), 0, file->Version );
-        HeapFree( GetProcessHeap(), 0, file->Language );
-        HeapFree( GetProcessHeap(), 0, file->SourcePath );
-        HeapFree( GetProcessHeap(), 0, file->TargetPath );
-        HeapFree( GetProcessHeap(), 0, file );
+        msi_free( file->File );
+        msi_free( file->FileName );
+        msi_free( file->ShortName );
+        msi_free( file->Version );
+        msi_free( file->Language );
+        msi_free( file->SourcePath );
+        msi_free( file->TargetPath );
+        msi_free( file );
     }
 
     /* clean up extension, progid, class and verb structures */
@@ -526,16 +525,16 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSICLASS *cls = LIST_ENTRY( item, MSICLASS, entry );
 
         list_remove( &cls->entry );
-        HeapFree( GetProcessHeap(), 0, cls->clsid );
-        HeapFree( GetProcessHeap(), 0, cls->Context );
-        HeapFree( GetProcessHeap(), 0, cls->Description );
-        HeapFree( GetProcessHeap(), 0, cls->FileTypeMask );
-        HeapFree( GetProcessHeap(), 0, cls->IconPath );
-        HeapFree( GetProcessHeap(), 0, cls->DefInprocHandler );
-        HeapFree( GetProcessHeap(), 0, cls->DefInprocHandler32 );
-        HeapFree( GetProcessHeap(), 0, cls->Argument );
-        HeapFree( GetProcessHeap(), 0, cls->ProgIDText );
-        HeapFree( GetProcessHeap(), 0, cls );
+        msi_free( cls->clsid );
+        msi_free( cls->Context );
+        msi_free( cls->Description );
+        msi_free( cls->FileTypeMask );
+        msi_free( cls->IconPath );
+        msi_free( cls->DefInprocHandler );
+        msi_free( cls->DefInprocHandler32 );
+        msi_free( cls->Argument );
+        msi_free( cls->ProgIDText );
+        msi_free( cls );
     }
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->extensions )
@@ -551,10 +550,10 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSIPROGID *progid = LIST_ENTRY( item, MSIPROGID, entry );
 
         list_remove( &progid->entry );
-        HeapFree( GetProcessHeap(), 0, progid->ProgID );
-        HeapFree( GetProcessHeap(), 0, progid->Description );
-        HeapFree( GetProcessHeap(), 0, progid->IconPath );
-        HeapFree( GetProcessHeap(), 0, progid );
+        msi_free( progid->ProgID );
+        msi_free( progid->Description );
+        msi_free( progid->IconPath );
+        msi_free( progid );
     }
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->mimes )
@@ -562,9 +561,9 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSIMIME *mt = LIST_ENTRY( item, MSIMIME, entry );
 
         list_remove( &mt->entry );
-        HeapFree( GetProcessHeap(), 0, mt->clsid );
-        HeapFree( GetProcessHeap(), 0, mt->ContentType );
-        HeapFree( GetProcessHeap(), 0, mt );
+        msi_free( mt->clsid );
+        msi_free( mt->ContentType );
+        msi_free( mt );
     }
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->appids )
@@ -572,12 +571,12 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSIAPPID *appid = LIST_ENTRY( item, MSIAPPID, entry );
 
         list_remove( &appid->entry );
-        HeapFree( GetProcessHeap(), 0, appid->AppID );
-        HeapFree( GetProcessHeap(), 0, appid->RemoteServerName );
-        HeapFree( GetProcessHeap(), 0, appid->LocalServer );
-        HeapFree( GetProcessHeap(), 0, appid->ServiceParameters );
-        HeapFree( GetProcessHeap(), 0, appid->DllSurrogate );
-        HeapFree( GetProcessHeap(), 0, appid );
+        msi_free( appid->AppID );
+        msi_free( appid->RemoteServerName );
+        msi_free( appid->LocalServer );
+        msi_free( appid->ServiceParameters );
+        msi_free( appid->DllSurrogate );
+        msi_free( appid );
     }
 
     if (package->script)
@@ -586,21 +585,21 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         {
             int j;
             for (j = 0; j < package->script->ActionCount[i]; j++)
-                HeapFree(GetProcessHeap(),0,package->script->Actions[i][j]);
+                msi_free(package->script->Actions[i][j]);
         
-            HeapFree(GetProcessHeap(),0,package->script->Actions[i]);
+            msi_free(package->script->Actions[i]);
         }
 
         for (i = 0; i < package->script->UniqueActionsCount; i++)
-            HeapFree(GetProcessHeap(),0,package->script->UniqueActions[i]);
+            msi_free(package->script->UniqueActions[i]);
 
-        HeapFree(GetProcessHeap(),0,package->script->UniqueActions);
-        HeapFree(GetProcessHeap(),0,package->script);
+        msi_free(package->script->UniqueActions);
+        msi_free(package->script);
     }
 
-    HeapFree(GetProcessHeap(),0,package->PackagePath);
-    HeapFree(GetProcessHeap(),0,package->msiFilePath);
-    HeapFree(GetProcessHeap(),0,package->ProductCode);
+    msi_free(package->PackagePath);
+    msi_free(package->msiFilePath);
+    msi_free(package->ProductCode);
 
     /* cleanup control event subscriptions */
     ControlEvent_CleanupSubscriptions(package);
@@ -641,7 +640,7 @@ LPWSTR build_directory_name(DWORD count, ...)
     }
     va_end(va);
 
-    dir = HeapAlloc(GetProcessHeap(), 0, sz*sizeof(WCHAR));
+    dir = msi_alloc(sz*sizeof(WCHAR));
     dir[0]=0;
 
     va_start(va,count);
@@ -670,8 +669,7 @@ BOOL create_full_pathW(const WCHAR *path)
     int len;
     WCHAR *new_path;
 
-    new_path = HeapAlloc(GetProcessHeap(), 0, (strlenW(path) + 1) *
-                                              sizeof(WCHAR));
+    new_path = msi_alloc( (strlenW(path) + 1) * sizeof(WCHAR));
 
     strcpyW(new_path, path);
 
@@ -707,7 +705,7 @@ BOOL create_full_pathW(const WCHAR *path)
         new_path[len] = '\\';
     }
 
-    HeapFree(GetProcessHeap(), 0, new_path);
+    msi_free(new_path);
     return ret;
 }
 
@@ -752,10 +750,10 @@ void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * record)
         }
 
         /* update the cached actionformat */
-        HeapFree(GetProcessHeap(),0,package->ActionFormat);
+        msi_free(package->ActionFormat);
         package->ActionFormat = load_dynamic_stringW(row,3);
 
-        HeapFree(GetProcessHeap(),0,package->LastAction);
+        msi_free(package->LastAction);
         package->LastAction = strdupW(action);
 
         msiobj_release(&row->hdr);
@@ -857,7 +855,7 @@ LPWSTR create_component_advertise_string(MSIPACKAGE* package,
     sz+=3;
     sz *= sizeof(WCHAR);
            
-    output = HeapAlloc(GetProcessHeap(),0,sz);
+    output = msi_alloc(sz);
     memset(output,0,sz);
 
     if (component)
@@ -945,11 +943,10 @@ UINT register_unique_action(MSIPACKAGE *package, LPCWSTR action)
     count = package->script->UniqueActionsCount;
     package->script->UniqueActionsCount++;
     if (count != 0)
-        newbuf = HeapReAlloc(GetProcessHeap(),0,
-                        package->script->UniqueActions,
+        newbuf = msi_realloc( package->script->UniqueActions,
                         package->script->UniqueActionsCount* sizeof(LPWSTR));
     else
-        newbuf = HeapAlloc(GetProcessHeap(),0, sizeof(LPWSTR));
+        newbuf = msi_alloc( sizeof(LPWSTR));
 
     newbuf[count] = strdupW(action);
     package->script->UniqueActions = newbuf;
@@ -1006,7 +1003,7 @@ WCHAR* generate_error_string(MSIPACKAGE *package, UINT error, DWORD count, ... )
     if (size >= 0)
     {
         size++;
-        data = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
+        data = msi_alloc(size*sizeof(WCHAR));
         if (size > 1)
             MSI_FormatRecordW(package,rec,data,&size);
         else

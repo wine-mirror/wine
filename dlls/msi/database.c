@@ -93,7 +93,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
         /* UINT len = lstrlenW( szPerist ) + 1; */
         FIXME("don't support persist files yet\b");
         return ERROR_INVALID_PARAMETER;
-        /* szMode = HeapAlloc( GetProcessHeap(), 0, len * sizeof (DWORD) ); */
+        /* szMode = msi_alloc( len * sizeof (DWORD) ); */
     }
     else if( szPersist == MSIDBOPEN_READONLY )
     {
@@ -220,8 +220,8 @@ UINT WINAPI MsiOpenDatabaseA(LPCSTR szDBPath, LPCSTR szPersist, MSIHANDLE *phDB)
 
 end:
     if( HIWORD(szPersist) )
-        HeapFree( GetProcessHeap(), 0, szwPersist );
-    HeapFree( GetProcessHeap(), 0, szwDBPath );
+        msi_free( szwPersist );
+    msi_free( szwDBPath );
 
     return r;
 }
@@ -276,8 +276,8 @@ UINT WINAPI MsiDatabaseImportA( MSIHANDLE handle,
     r = MsiDatabaseImportW( handle, path, file );
 
 end:
-    HeapFree( GetProcessHeap(), 0, path );
-    HeapFree( GetProcessHeap(), 0, file );
+    msi_free( path );
+    msi_free( file );
 
     return r;
 }
@@ -344,9 +344,9 @@ UINT WINAPI MsiDatabaseExportA( MSIHANDLE handle, LPCSTR szTable,
     r = MsiDatabaseExportW( handle, table, path, file );
 
 end:
-    HeapFree( GetProcessHeap(), 0, table );
-    HeapFree( GetProcessHeap(), 0, path );
-    HeapFree( GetProcessHeap(), 0, file );
+    msi_free( table );
+    msi_free( path );
+    msi_free( file );
 
     return r;
 }
