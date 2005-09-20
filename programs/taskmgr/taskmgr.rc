@@ -27,6 +27,7 @@
 #include "De.rc"
 #include "En.rc"
 #include "Fr.rc"
+#include "No.rc"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
