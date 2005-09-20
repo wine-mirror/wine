@@ -107,15 +107,6 @@ HRESULT WINAPI  OleCreateLinkFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
   return E_NOTIMPL;
 }
 
-/******************************************************************************
- *              OleIsRunning        [OLE32.@]
- */
-BOOL WINAPI OleIsRunning(LPOLEOBJECT pObject)
-{
-  FIXME("(%p), stub!\n", pObject);
-  return TRUE;
-}
-
 /***********************************************************************
  *           OleRegEnumVerbs    [OLE32.@]
  */

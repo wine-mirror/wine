@@ -2337,6 +2337,25 @@ HRESULT WINAPI OleDoAutoConvert16(LPSTORAGE pStg, LPCLSID pClsidNew)
     return E_NOTIMPL;
 }
 
+/******************************************************************************
+ *              OleIsRunning        [OLE32.@]
+ */
+BOOL WINAPI OleIsRunning(LPOLEOBJECT pObject)
+{
+    IRunnableObject *pRunnable;
+    HRESULT hr;
+    BOOL running;
+
+    TRACE("(%p)\n", pObject);
+
+    hr = IOleObject_QueryInterface(pObject, &IID_IRunnableObject, (void **)&pRunnable);
+    if (FAILED(hr))
+        return FALSE;
+    running = IRunnableObject_IsRunning(pRunnable);
+    IRunnableObject_Release(pRunnable);
+    return running;
+}
+
 /***********************************************************************
  *           OLE_FreeClipDataArray   [internal]
  *
