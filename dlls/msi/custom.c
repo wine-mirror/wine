@@ -368,7 +368,7 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
         }
 
         CloseHandle(ThreadHandle);
-        if (ProcessHandle);
+        if (ProcessHandle)
             CloseHandle(ProcessHandle);
         if (finished)
             *finished = TRUE;
@@ -390,7 +390,7 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
         else
         {
             CloseHandle(ThreadHandle);
-            if (ProcessHandle);
+            if (ProcessHandle)
                 CloseHandle(ProcessHandle);
         }
         if (finished)
