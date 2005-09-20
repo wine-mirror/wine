@@ -40,7 +40,7 @@
 #define WINTYPE_DEFAULT_Y           100
 #define WINTYPE_DEFAULT_WIDTH       740
 #define WINTYPE_DEFAULT_HEIGHT      640
-#define WINTYPE_DEFAULT_NAVWIDTH    251
+#define WINTYPE_DEFAULT_NAVWIDTH    250
 
 typedef struct tagHHInfo
 {
@@ -109,15 +109,12 @@ static void Child_OnPaint(HWND hWnd)
         SelectObject(hdc, GetStockObject(DC_PEN));
         SetDCPenColor(hdc, GetSysColor(COLOR_BTNSHADOW));
 
-        /* Draw the top and right borders */
-        MoveToEx(hdc, 0, 0, NULL);
-        LineTo(hdc, rc.right - 1, 0);
-        LineTo(hdc, rc.right - 1, rc.bottom);
+        /* Draw the top border */
+        LineTo(hdc, rc.right, 0);
 
-        /* Fill in the background, taking the border lines into account */
-        rc.top += 2;
-        rc.right -= 1;
-        FillRect(hdc, &rc, GetSysColorBrush(COLOR_3DFACE));
+        SelectObject(hdc, GetStockObject(WHITE_PEN));
+        MoveToEx(hdc, 0, 1, NULL);
+        LineTo(hdc, rc.right, 1);
     }
 
     EndPaint(hWnd, &ps);
@@ -149,7 +146,7 @@ static void HH_RegisterChildWndClass(HHInfo *pHHInfo)
     wcex.hInstance      = pHHInfo->hInstance;
     wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_3DFACE);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_BTNFACE + 1);
     wcex.lpszMenuName   = NULL;
     wcex.lpszClassName  = szChildClass;
     wcex.hIconSm        = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
@@ -318,7 +315,6 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
 
 /* Navigation Pane */
 
-#define TAB_PADDING         2
 #define TAB_TOP_PADDING     8
 #define TAB_RIGHT_PADDING   4
 
@@ -371,9 +367,9 @@ static BOOL HH_AddNavigationPane(HHInfo *pHHInfo)
         return FALSE;
 
     hwndTabCtrl = CreateWindowExW(dwExStyles, WC_TABCONTROLW, szEmpty, dwStyles,
-                                  TAB_PADDING, TAB_TOP_PADDING,
-                                  rc.right - TAB_PADDING - TAB_RIGHT_PADDING,
-                                  rc.bottom - TAB_PADDING - TAB_TOP_PADDING,
+                                  0, TAB_TOP_PADDING,
+                                  rc.right - TAB_RIGHT_PADDING,
+                                  rc.bottom - TAB_TOP_PADDING,
                                   hWnd, NULL, pHHInfo->hInstance, NULL);
     if (!hwndTabCtrl)
         return FALSE;
@@ -464,8 +460,8 @@ static void Help_OnSize(HWND hWnd, LPARAM lParam)
 
         GetClientRect(pHHInfo->pHHWinType->hwndNavigation, &rc);
         SetWindowPos(pHHInfo->hwndTabCtrl, HWND_TOP, 0, 0,
-                     rc.right - TAB_PADDING - TAB_RIGHT_PADDING,
-                     rc.bottom - TAB_PADDING - TAB_TOP_PADDING, SWP_NOMOVE);
+                     rc.right - TAB_RIGHT_PADDING,
+                     rc.bottom - TAB_TOP_PADDING, SWP_NOMOVE);
     }
 
     HP_GetHTMLRect(pHHInfo, &rc);
