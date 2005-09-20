@@ -127,6 +127,7 @@ typedef struct tagWDML_CONV
     struct tagWDML_INSTANCE*	instance;
     HSZ				hszService;	/* pmt used for connection */
     HSZ				hszTopic;	/* pmt used for connection */
+    UINT			magic;		/* magic number to check validity */
     UINT			afCmd;		/* service name flag */
     CONVCONTEXT			convContext;
     HWND			hwndClient;	/* source of conversation (ClientConvClass) */
@@ -136,6 +137,8 @@ typedef struct tagWDML_CONV
     DWORD			wStatus;	/* same bits as convinfo.wStatus */
     DWORD			wConvst;	/* same values as convinfo.wConvst */
 } WDML_CONV;
+
+#define WDML_CONV_MAGIC  0xbabe1234
 
 /* DDE_LINK struct defines hot, warm, and cold links */
 typedef struct tagWDML_LINK {

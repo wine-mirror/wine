@@ -1742,6 +1742,7 @@ WDML_CONV*	WDML_AddConv(WDML_INSTANCE* pInstance, WDML_SIDE side,
     pConv->instance = pInstance;
     WDML_IncHSZ(pInstance, pConv->hszService = hszService);
     WDML_IncHSZ(pInstance, pConv->hszTopic = hszTopic);
+    pConv->magic = WDML_CONV_MAGIC;
     pConv->hwndServer = hwndServer;
     pConv->hwndClient = hwndClient;
     pConv->transactions = NULL;
@@ -1835,7 +1836,7 @@ void WDML_RemoveConv(WDML_CONV* pRef, WDML_SIDE side)
 	    {
 		pPrev->next = pCurrent->next;
 	    }
-
+	    pCurrent->magic = 0;
 	    HeapFree(GetProcessHeap(), 0, pCurrent);
 	    break;
 	}
@@ -1913,7 +1914,7 @@ WDML_CONV*	WDML_GetConv(HCONV hConv, BOOL checkConnected)
     WDML_CONV*	pConv = (WDML_CONV*)hConv;
 
     /* FIXME: should do better checking */
-    if (pConv == NULL) return NULL;
+    if (pConv == NULL || pConv->magic != WDML_CONV_MAGIC) return NULL;
 
     if (checkConnected && !(pConv->wStatus & ST_CONNECTED))
     {
