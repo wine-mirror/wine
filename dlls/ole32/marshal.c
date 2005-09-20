@@ -1110,7 +1110,7 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm)
 
     if (!(stubmgr = get_stub_manager(apt, stdobjref.oid)))
     {
-        ERR("could not map MID to stub manager, oxid=%s, oid=%s\n",
+        ERR("could not map object ID to stub manager, oxid=%s, oid=%s\n",
             wine_dbgstr_longlong(stdobjref.oxid), wine_dbgstr_longlong(stdobjref.oid));
         return RPC_E_INVALID_OBJREF;
     }
@@ -1621,13 +1621,20 @@ HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(
 
     TRACE("(%s, %p, %p)\n",debugstr_guid(riid), pUnk, ppStm);
 
-    hres = CreateStreamOnHGlobal(0, TRUE, ppStm);
+    hres = CreateStreamOnHGlobal(NULL, TRUE, ppStm);
     if (FAILED(hres)) return hres;
     hres = CoMarshalInterface(*ppStm, riid, pUnk, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
 
-    /* FIXME: is this needed? */
-    memset(&seekto,0,sizeof(seekto));
-    IStream_Seek(*ppStm,seekto,SEEK_SET,&xpos);
+    if (SUCCEEDED(hres))
+    {
+        memset(&seekto, 0, sizeof(seekto));
+        IStream_Seek(*ppStm, seekto, SEEK_SET, &xpos);
+    }
+    else
+    {
+        IStream_Release(*ppStm);
+        *ppStm = NULL;
+    }
 
     return hres;
 }
