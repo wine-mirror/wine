@@ -422,28 +422,55 @@ extern DWORD gUIFilter;
 extern LPVOID gUIContext;
 extern WCHAR gszLogFile[MAX_PATH];
 
+/* memory allocation macro functions */
+static inline void *msi_alloc( size_t len )
+{
+    return HeapAlloc( GetProcessHeap(), 0, len );
+}
+
+static inline void *msi_alloc_zero( size_t len )
+{
+    return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
+}
+
+static inline void *msi_realloc( void *mem, size_t len )
+{
+    return HeapReAlloc( GetProcessHeap(), 0, mem, len );
+}
+
+static inline void *msi_realloc_zero( void *mem, size_t len )
+{
+    return HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, mem, len );
+}
+
+static inline BOOL msi_free( void *mem )
+{
+    return HeapFree( GetProcessHeap(), 0, mem );
+}
+
 inline static char *strdupWtoA( LPCWSTR str )
 {
     LPSTR ret = NULL;
-    if (str)
-    {
-        DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL
-);
-        if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
-            WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
-    }
+    DWORD len;
+
+    if (!str) return ret;
+    len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
+    ret = msi_alloc( len );
+    if (ret)
+        WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     return ret;
 }
 
 inline static LPWSTR strdupAtoW( LPCSTR str )
 {
     LPWSTR ret = NULL;
-    if (str)
-    {
-        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-        if ((ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-            MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
-    }
+    DWORD len;
+
+    if (!str) return ret;
+    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+    ret = msi_alloc( len * sizeof(WCHAR) );
+    if (ret)
+        MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
     return ret;
 }
 
@@ -451,8 +478,9 @@ inline static LPWSTR strdupW( LPCWSTR src )
 {
     LPWSTR dest;
     if (!src) return NULL;
-    dest = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(src)+1)*sizeof(WCHAR));
-    lstrcpyW(dest, src);
+    dest = msi_alloc( (lstrlenW(src)+1)*sizeof(WCHAR) );
+    if (dest)
+        lstrcpyW(dest, src);
     return dest;
 }
 

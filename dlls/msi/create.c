@@ -199,7 +199,7 @@ static UINT CREATE_delete( struct tagMSIVIEW *view )
     TRACE("%p\n", cv );
 
     msiobj_release( &cv->db->hdr );
-    HeapFree( GetProcessHeap(), 0, cv );
+    msi_free( cv );
 
     return ERROR_SUCCESS;
 }
@@ -226,7 +226,7 @@ UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
 
     TRACE("%p\n", cv );
 
-    cv = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof *cv );
+    cv = msi_alloc_zero( sizeof *cv );
     if( !cv )
         return ERROR_FUNCTION_FAILED;
     

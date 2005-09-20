@@ -129,7 +129,7 @@ static UINT find_given_source(HKEY key, LPCWSTR szSource, media_info *ss)
         rc = RegEnumValueW(key, index, szIndex, &size, NULL, NULL, NULL, &val_size);
         if (rc != ERROR_NO_MORE_ITEMS)
         {
-            val = HeapAlloc(GetProcessHeap(),0,val_size);
+            val = msi_alloc(val_size);
             RegEnumValueW(key, index, szIndex, &size, NULL, NULL, (LPBYTE)val, 
                 &val_size);
             if (lstrcmpiW(szSource,val)==0)
@@ -141,7 +141,7 @@ static UINT find_given_source(HKEY key, LPCWSTR szSource, media_info *ss)
             else
                 strcpyW(ss->szIndex,szIndex);
 
-            HeapFree(GetProcessHeap(),0,val);
+            msi_free(val);
             index ++;
         }
     }
@@ -221,7 +221,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         else
         {
             LPWSTR ptr;
-            buffer = HeapAlloc(GetProcessHeap(),0,size);
+            buffer = msi_alloc(size);
             rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW,
                     0, 0, (LPBYTE)buffer,&size); 
             ptr = strchrW(buffer,';');
@@ -240,7 +240,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
                 else
                     rc = ERROR_SUCCESS;
             }
-            HeapFree(GetProcessHeap(),0,buffer);
+            msi_free(buffer);
         }
     }
     else if (strcmpW(INSTALLPROPERTY_LASTUSEDTYPEW, szProperty)==0)
@@ -254,7 +254,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
             rc = ERROR_UNKNOWN_PROPERTY;
         else
         {
-            buffer = HeapAlloc(GetProcessHeap(),0,size);
+            buffer = msi_alloc(size);
             rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW,
                     0, 0, (LPBYTE)buffer,&size); 
             if (*pcchValue < 1)
@@ -267,7 +267,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
                 szValue[0] = buffer[0];
                 rc = ERROR_SUCCESS;
             }
-            HeapFree(GetProcessHeap(),0,buffer);
+            msi_free(buffer);
         }
     }
     else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEW, szProperty)==0)
@@ -369,13 +369,13 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
             ERR("Unknown source type! 0x%lx\n",dwOptions);
         
         size = (lstrlenW(szValue)+5)*sizeof(WCHAR);
-        buffer = HeapAlloc(GetProcessHeap(),0,size);
+        buffer = msi_alloc(size);
         sprintfW(buffer, LastUsedSource_Fmt, typechar, 1, szValue);
         rc = RegSetValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW, 0, 
                 REG_EXPAND_SZ, (LPBYTE)buffer, size);
         if (rc != ERROR_SUCCESS)
             rc = ERROR_UNKNOWN_PROPERTY;
-        HeapFree( GetProcessHeap(), 0, buffer );
+        msi_free( buffer );
     }
     else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEW, szProperty)==0)
     {
@@ -547,11 +547,11 @@ UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR szProduct, LPCWSTR szUserSid,
 
     size *=sizeof(WCHAR);
 
-    buffer = HeapAlloc(GetProcessHeap(),0,size);
+    buffer = msi_alloc(size);
     sprintfW(buffer,disk_fmt,pt1,pt2);
 
     RegSetValueExW(mediakey, szIndex, 0, REG_SZ, (LPBYTE)buffer, size);
-    HeapFree( GetProcessHeap(), 0, buffer );
+    msi_free( buffer );
 
     RegCloseKey(sourcekey);
     RegCloseKey(mediakey);

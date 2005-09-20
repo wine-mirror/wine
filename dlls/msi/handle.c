@@ -132,7 +132,7 @@ void *alloc_msiobject(UINT type, UINT size, msihandledestructor destroy )
 {
     MSIOBJECTHDR *info;
 
-    info = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
+    info = msi_alloc_zero( size );
     if( info )
     {
         info->magic = MSIHANDLE_MAGIC;
@@ -190,7 +190,7 @@ int msiobj_release( MSIOBJECTHDR *info )
     {
         if( info->destructor )
             info->destructor( info );
-        HeapFree( GetProcessHeap(), 0, info );
+        msi_free( info );
         TRACE("object %p destroyed\n", info);
     }
 

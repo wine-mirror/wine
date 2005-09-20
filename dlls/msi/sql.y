@@ -608,7 +608,7 @@ static void *parser_alloc( void *info, unsigned int sz )
     SQL_input* sql = (SQL_input*) info;
     struct list *mem;
 
-    mem = HeapAlloc( GetProcessHeap(), 0, sizeof (struct list) + sz );
+    mem = msi_alloc( sizeof (struct list) + sz );
     list_add_tail( sql->mem, mem );
     return &mem[1];
 }

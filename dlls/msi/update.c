@@ -172,7 +172,7 @@ static UINT UPDATE_delete( struct tagMSIVIEW *view )
     if( wv )
         wv->ops->delete( wv );
     msiobj_release( &uv->db->hdr );
-    HeapFree( GetProcessHeap(), 0, uv );
+    msi_free( uv );
 
     return ERROR_SUCCESS;
 }
@@ -223,7 +223,7 @@ UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
         return r;
     }
 
-    uv = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof *uv );
+    uv = msi_alloc_zero( sizeof *uv );
     if( !uv )
         return ERROR_FUNCTION_FAILED;
 

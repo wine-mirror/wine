@@ -454,7 +454,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     size  = 0;
     MSI_GetPropertyW(package,szProductCode,NULL,&size);
     size ++;
-    package->ProductCode = HeapAlloc(GetProcessHeap(),0,size * sizeof(WCHAR));
+    package->ProductCode = msi_alloc(size * sizeof(WCHAR));
     MSI_GetPropertyW(package,szProductCode,package->ProductCode, &size);
     
     *pPackage = package;
@@ -522,7 +522,7 @@ UINT WINAPI MsiOpenPackageExA(LPCSTR szPackage, DWORD dwOptions, MSIHANDLE *phPa
 
     ret = MsiOpenPackageExW( szwPack, dwOptions, phPackage );
 
-    HeapFree( GetProcessHeap(), 0, szwPack );
+    msi_free( szwPack );
 
     return ret;
 }
@@ -583,7 +583,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_PROGRESS)
         log_type |= 0x800;
 
-    message = HeapAlloc(GetProcessHeap(),0,1*sizeof (WCHAR));
+    message = msi_alloc(1*sizeof (WCHAR));
     message[0]=0;
     msg_field = MSI_RecordGetFieldCount(record);
     for (i = 1; i <= msg_field; i++)
@@ -596,8 +596,8 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
         MSI_RecordGetStringW(record,i,NULL,&sz);
         sz+=4;
         total_size+=sz*sizeof(WCHAR);
-        tmp = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
-        message = HeapReAlloc(GetProcessHeap(),0,message,total_size*sizeof (WCHAR));
+        tmp = msi_alloc(sz*sizeof(WCHAR));
+        message = msi_realloc(message,total_size*sizeof (WCHAR));
 
         MSI_RecordGetStringW(record,i,tmp,&sz);
 
@@ -610,7 +610,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
         if (msg_field > 1)
             strcatW(message,space);
 
-        HeapFree(GetProcessHeap(),0,tmp);
+        msi_free(tmp);
     }
 
     TRACE("(%p %lx %lx %s)\n",gUIHandlerA, gUIFilter, log_type,
@@ -619,7 +619,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     /* convert it to ASCII */
     len = WideCharToMultiByte( CP_ACP, 0, message, -1,
                                NULL, 0, NULL, NULL );
-    msg = HeapAlloc( GetProcessHeap(), 0, len );
+    msg = msi_alloc( len );
     WideCharToMultiByte( CP_ACP, 0, message, -1,
                          msg, len, NULL, NULL );
 
@@ -643,9 +643,9 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
             CloseHandle(log_file);
         }
     }
-    HeapFree( GetProcessHeap(), 0, msg );
+    msi_free( msg );
     
-    HeapFree(GetProcessHeap(),0,message);
+    msi_free( message);
     return ERROR_SUCCESS;
 }
 
@@ -697,8 +697,8 @@ UINT WINAPI MsiSetPropertyA( MSIHANDLE hInstall, LPCSTR szName, LPCSTR szValue)
     hr = MsiSetPropertyW( hInstall, szwName, szwValue);
 
 end:
-    HeapFree( GetProcessHeap(), 0, szwName );
-    HeapFree( GetProcessHeap(), 0, szwValue );
+    msi_free( szwName );
+    msi_free( szwValue );
 
     return hr;
 }
@@ -792,11 +792,11 @@ static UINT MSI_GetPropertyRow(MSIPACKAGE *package, LPCWSTR szName, MSIRECORD **
         return ERROR_INVALID_PARAMETER;
 
     sz = sizeof select + strlenW(szName)*sizeof(WCHAR);
-    query = HeapAlloc(GetProcessHeap(), 0, sz);
+    query = msi_alloc( sz);
     sprintfW(query,select,szName);
 
     rc = MSI_DatabaseOpenViewW(package->db, query, &view);
-    HeapFree(GetProcessHeap(), 0, query);
+    msi_free(query);
     if (rc == ERROR_SUCCESS)
     {
         rc = MSI_ViewExecute(view, 0);
@@ -877,7 +877,7 @@ UINT MSI_GetPropertyA(MSIPACKAGE *package, LPCSTR szName,
         *pchValueBuf = 0;
         TRACE("property not found\n");
     }
-    HeapFree( GetProcessHeap(), 0, szwName );
+    msi_free( szwName );
 
     return rc;
 }

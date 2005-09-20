@@ -95,7 +95,7 @@ static const WCHAR szSumInfo[] = { 5 ,'S','u','m','m','a','r','y',
 static void free_prop( PROPVARIANT *prop )
 {
     if (prop->vt == VT_LPSTR )
-        HeapFree( GetProcessHeap(), 0, prop->u.pszVal );
+        msi_free( prop->u.pszVal );
     prop->vt = VT_EMPTY;
 }
 
@@ -207,7 +207,7 @@ static void read_properties_from_data( PROPVARIANT *prop, LPBYTE data, DWORD sz 
 
         if( type == VT_LPSTR )
         {
-            LPSTR str = HeapAlloc( GetProcessHeap(), 0, propdata->u.str.len );
+            LPSTR str = msi_alloc( propdata->u.str.len );
             memcpy( str, propdata->u.str.str, propdata->u.str.len );
             str[ propdata->u.str.len - 1 ] = 0;
             property->u.pszVal = str;
@@ -273,7 +273,7 @@ static UINT load_summary_info( MSISUMMARYINFO *si, IStream *stm )
         return ret;
     }
 
-    data = HeapAlloc( GetProcessHeap(), 0, section_hdr.cbSection);
+    data = msi_alloc( section_hdr.cbSection);
     if( !data )
         return ret;
 
@@ -287,7 +287,7 @@ static UINT load_summary_info( MSISUMMARYINFO *si, IStream *stm )
     else
         ERR("failed to read properties %ld %ld\n", count, sz);
 
-    HeapFree( GetProcessHeap(), 0, data );
+    msi_free( data );
     return ret;
 }
 
@@ -394,7 +394,7 @@ static UINT save_summary_info( MSISUMMARYINFO * si, IStream *stm )
         section_hdr.cbSection += sz;
     }
 
-    data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, section_hdr.cbSection );
+    data = msi_alloc_zero( section_hdr.cbSection );
 
     sz = 0;
     memcpy( &data[sz], &section_hdr, sizeof section_hdr );
@@ -408,7 +408,7 @@ static UINT save_summary_info( MSISUMMARYINFO * si, IStream *stm )
         sz += write_property_to_data( &si->property[i], &data[sz] );
 
     r = IStream_Write( stm, data, sz, &count );
-    HeapFree( GetProcessHeap(), 0, data );
+    msi_free( data );
     if( FAILED(r) || count != sz )
         return ret;
 
@@ -501,7 +501,7 @@ UINT WINAPI MsiGetSummaryInformationA(MSIHANDLE hDatabase,
 
     ret = MsiGetSummaryInformationW(hDatabase, szwDatabase, uiUpdateCount, pHandle);
 
-    HeapFree( GetProcessHeap(), 0, szwDatabase );
+    msi_free( szwDatabase );
 
     return ret;
 }
@@ -676,14 +676,14 @@ static UINT set_prop( MSIHANDLE handle, UINT uiProperty, UINT uiDataType,
         {
             len = WideCharToMultiByte( CP_ACP, 0, str->str.w, -1,
                                        NULL, 0, NULL, NULL );
-            prop->u.pszVal = HeapAlloc( GetProcessHeap(), 0, len );
+            prop->u.pszVal = msi_alloc( len );
             WideCharToMultiByte( CP_ACP, 0, str->str.w, -1,
                                  prop->u.pszVal, len, NULL, NULL );
         }
         else
         {
             len = lstrlenA( str->str.a ) + 1;
-            prop->u.pszVal = HeapAlloc( GetProcessHeap(), 0, len );
+            prop->u.pszVal = msi_alloc( len );
             lstrcpyA( prop->u.pszVal, str->str.a );
         }
         break;
