@@ -762,7 +762,7 @@ static void BuildCallFrom32Regs( FILE *outfile )
     fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(EFlags) - STACK_SPACE );
     fprintf( outfile, "\tmovl 0(%%ebp),%%eax\n" );
     fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Ebp) - STACK_SPACE );
-    fprintf( outfile, "\tmovl 4(%%ebp),%%eax\n" );
+    fprintf( outfile, "\tmovl 8(%%ebp),%%eax\n" );
     fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Eax) - STACK_SPACE );
     fprintf( outfile, "\tmovl %%ebx,%d(%%ebp)\n", CONTEXTOFFSET(Ebx) - STACK_SPACE );
     fprintf( outfile, "\tmovl %%ecx,%d(%%ebp)\n", CONTEXTOFFSET(Ecx) - STACK_SPACE );
