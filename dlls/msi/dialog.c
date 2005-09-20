@@ -1973,7 +1973,7 @@ BOOL msi_dialog_register_class( void )
     cls.hInstance     = NULL;
     cls.hIcon         = LoadIconW(0, (LPWSTR)IDI_APPLICATION);
     cls.hCursor       = LoadCursorW(0, (LPWSTR)IDC_ARROW);
-    cls.hbrBackground = (HBRUSH)(COLOR_WINDOW);
+    cls.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     cls.lpszMenuName  = NULL;
     cls.lpszClassName = szMsiDialogClass;
 
