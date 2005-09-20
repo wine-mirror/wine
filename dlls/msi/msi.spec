@@ -125,8 +125,8 @@
 129 stdcall MsiReinstallFeatureW(wstr wstr long)
 130 stdcall MsiReinstallProductA(str long)
 131 stdcall MsiReinstallProductW(wstr long)
-132 stub MsiSequenceA
-133 stub MsiSequenceW
+132 stdcall MsiSequenceA(long str long)
+133 stdcall MsiSequenceW(long wstr long)
 134 stdcall MsiSetComponentStateA(long str long)
 135 stdcall MsiSetComponentStateW(long wstr long)
 136 stdcall MsiSetExternalUIA(ptr long ptr)

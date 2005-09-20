@@ -77,6 +77,24 @@ UINT WINAPI MsiDoActionW( MSIHANDLE hInstall, LPCWSTR szAction )
     return ret;
 }
 
+/***********************************************************************
+ * MsiSequenceA       (MSI.@)
+ */
+UINT WINAPI MsiSequenceA( MSIHANDLE hInstall, LPCSTR szAction, INT iSequenceMode )
+{
+    TRACE("%s\n", debugstr_a(szAction));
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ * MsiSequenceW       (MSI.@)
+ */
+UINT WINAPI MsiSequenceW( MSIHANDLE hInstall, LPCWSTR szAction, INT iSequenceMode )
+{
+    TRACE("%s\n", debugstr_w(szAction));
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 static UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
 {
     UINT len, r = ERROR_SUCCESS;
