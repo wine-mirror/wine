@@ -183,7 +183,8 @@ UINT MSI_IterateRecords( MSIQUERY *view, DWORD *count,
         r = MSI_ViewFetch( view, &rec );
         if( r != ERROR_SUCCESS )
             break;
-        r = func( rec, param );
+        if (func)
+            r = func( rec, param );
         msiobj_release( &rec->hdr );
         if( r != ERROR_SUCCESS )
             break;

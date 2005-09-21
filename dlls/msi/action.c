@@ -2145,47 +2145,25 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
          '`','R','e','g','i','s','t','r','y','`',0};
     UINT rc;
     MSIQUERY * view;
-    MSIRECORD * row = 0;
     MSIFEATURE *feature;
     MSIFILE *file;
 
-    TRACE(" InstallValidate \n");
+    TRACE("InstallValidate\n");
 
     rc = MSI_DatabaseOpenViewW(package->db, q1, &view);
-    if (rc != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
+    if (rc == ERROR_SUCCESS)
     {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
+        MSI_IterateRecords( view, &progress, NULL, package );
+        msiobj_release( &view->hdr );
+        total += progress * REG_PROGRESS_VALUE;
     }
-    while (1)
-    {
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-        progress +=1;
 
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
-
-    total = total + progress * REG_PROGRESS_VALUE;
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
-    {
         total += COMPONENT_PROGRESS_VALUE;
-    }
+
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
-    {
         total += file->FileSize;
-    }
+
     ui_progress(package,0,total,0,0);
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
