@@ -42,6 +42,8 @@
 #define WINTYPE_DEFAULT_HEIGHT      640
 #define WINTYPE_DEFAULT_NAVWIDTH    250
 
+static const WCHAR szEmpty[] = {0};
+
 typedef struct tagHHInfo
 {
     HH_WINTYPEW *pHHWinType;
@@ -50,6 +52,7 @@ typedef struct tagHHInfo
     HINSTANCE hInstance;
     LPWSTR szCmdLine;
     HWND hwndTabCtrl;
+    HWND hwndSizeBar;
     HFONT hFont;
 } HHInfo;
 
@@ -82,13 +85,116 @@ static LPWSTR HH_LoadString(DWORD dwID)
     return string;
 }
 
+/* Size Bar */
+
+#define SIZEBAR_WIDTH   4
+
+static const WCHAR szSizeBarClass[] = {
+    'H','H',' ','S','i','z','e','B','a','r',0
+};
+
+/* Draw the SizeBar */
+static void SB_OnPaint(HWND hWnd)
+{
+    PAINTSTRUCT ps;
+    HDC hdc;
+    RECT rc;
+    
+    hdc = BeginPaint(hWnd, &ps);
+
+    GetClientRect(hWnd, &rc);
+
+    /* dark frame */
+    rc.right += 1;
+    rc.bottom -= 1;
+    FrameRect(hdc, &rc, GetStockObject(GRAY_BRUSH));
+
+    /* white highlight */
+    SelectObject(hdc, GetStockObject(WHITE_PEN));
+    MoveToEx(hdc, rc.right, 1, NULL);
+    LineTo(hdc, 1, 1);
+    LineTo(hdc, 1, rc.bottom - 1);
+
+    
+    MoveToEx(hdc, 0, rc.bottom, NULL);
+    LineTo(hdc, rc.right, rc.bottom);
+
+    EndPaint(hWnd, &ps);
+}
+
+LRESULT CALLBACK SizeBar_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+        case WM_PAINT:
+            SB_OnPaint(hWnd);
+            break;
+        default:
+            return DefWindowProcW(hWnd, message, wParam, lParam);
+    }
+
+    return 0;
+}
+
+static void HH_RegisterSizeBarClass(HHInfo *pHHInfo)
+{
+    WNDCLASSEXW wcex;
+
+    wcex.cbSize         = sizeof(WNDCLASSEXW);
+    wcex.style          = 0;
+    wcex.lpfnWndProc    = (WNDPROC)SizeBar_WndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = pHHInfo->hInstance;
+    wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
+    wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_SIZEWE);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_MENU + 1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = szSizeBarClass;
+    wcex.hIconSm        = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
+
+    RegisterClassExW(&wcex);
+}
+
+static void SB_GetSizeBarRect(HHInfo *pHHInfo, RECT *rc)
+{
+    RECT rectWND, rectTB, rectNP;
+
+    GetClientRect(pHHInfo->pHHWinType->hwndHelp, &rectWND);
+    GetClientRect(pHHInfo->pHHWinType->hwndToolBar, &rectTB);
+    GetClientRect(pHHInfo->pHHWinType->hwndNavigation, &rectNP);
+
+    rc->left = rectNP.right;
+    rc->top = rectTB.bottom;
+    rc->bottom = rectWND.bottom - rectTB.bottom;
+    rc->right = SIZEBAR_WIDTH;
+}
+
+static BOOL HH_AddSizeBar(HHInfo *pHHInfo)
+{
+    HWND hWnd;
+    HWND hwndParent = pHHInfo->pHHWinType->hwndHelp;
+    DWORD dwStyles = WS_CHILDWINDOW | WS_VISIBLE | WS_OVERLAPPED;
+    DWORD dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
+    RECT rc;
+
+    SB_GetSizeBarRect(pHHInfo, &rc);
+
+    hWnd = CreateWindowExW(dwExStyles, szSizeBarClass, szEmpty, dwStyles,
+                           rc.left, rc.top, rc.right, rc.bottom,
+                           hwndParent, NULL, pHHInfo->hInstance, NULL);
+    if (!hWnd)
+        return FALSE;
+
+    pHHInfo->hwndSizeBar = hWnd;
+    return TRUE;
+}
+
 /* Child Window */
 
 static const WCHAR szChildClass[] = {
     'H','H',' ','C','h','i','l','d',0
 };
-
-static const WCHAR szEmpty[] = {0};
 
 static void Child_OnPaint(HWND hWnd)
 {
@@ -397,18 +503,16 @@ static BOOL HH_AddNavigationPane(HHInfo *pHHInfo)
 
 static void HP_GetHTMLRect(HHInfo *pHHInfo, RECT *rc)
 {
-    HWND hwndParent = pHHInfo->pHHWinType->hwndHelp;
-    HWND hwndToolbar = pHHInfo->pHHWinType->hwndToolBar;
-    HWND hwndNavigation = pHHInfo->pHHWinType->hwndNavigation;
-    RECT rectTB, rectWND, rectNP;
+    RECT rectTB, rectWND, rectNP, rectSB;
 
-    GetClientRect(hwndParent, &rectWND);
-    GetClientRect(hwndToolbar, &rectTB);
-    GetClientRect(hwndNavigation, &rectNP);
+    GetClientRect(pHHInfo->pHHWinType->hwndHelp, &rectWND);
+    GetClientRect(pHHInfo->pHHWinType->hwndToolBar, &rectTB);
+    GetClientRect(pHHInfo->pHHWinType->hwndNavigation, &rectNP);
+    GetClientRect(pHHInfo->hwndSizeBar, &rectSB);
 
-    rc->left = rectNP.right;
+    rc->left = rectNP.right + rectSB.right;
     rc->top = rectTB.bottom;
-    rc->right = rectWND.right - rectNP.right;
+    rc->right = rectWND.right - rc->left;
     rc->bottom = rectWND.bottom - rectTB.bottom;
 }
 
@@ -451,7 +555,7 @@ static void Help_OnSize(HWND hWnd, LPARAM lParam)
     if (!pHHInfo)
         return;
 
-    /* Only resize the Navigation pane vertically */
+    /* Only resize the Navigation pane and SizeBar vertically */
     if (HIWORD(lParam))
     {
         NP_GetNavigationRect(pHHInfo, &rc);
@@ -462,6 +566,10 @@ static void Help_OnSize(HWND hWnd, LPARAM lParam)
         SetWindowPos(pHHInfo->hwndTabCtrl, HWND_TOP, 0, 0,
                      rc.right - TAB_RIGHT_PADDING,
                      rc.bottom - TAB_TOP_PADDING, SWP_NOMOVE);
+
+        SB_GetSizeBarRect(pHHInfo, &rc);
+        SetWindowPos(pHHInfo->hwndSizeBar, HWND_TOP, 0, 0,
+                     rc.right, rc.bottom, SWP_NOMOVE);
     }
 
     HP_GetHTMLRect(pHHInfo, &rc);
@@ -606,6 +714,11 @@ static BOOL HH_CreateViewer(HHInfo *pHHInfo)
     HH_RegisterChildWndClass(pHHInfo);
 
     if (!HH_AddNavigationPane(pHHInfo))
+        return FALSE;
+
+    HH_RegisterSizeBarClass(pHHInfo);
+
+    if (!HH_AddSizeBar(pHHInfo))
         return FALSE;
 
     if (!HH_AddHTMLPane(pHHInfo))
