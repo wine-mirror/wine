@@ -776,7 +776,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
     {
         LPITEMIDLIST pidl = NULL;
         IShellLinkW_GetIDList( sl, &pidl );
-        if( pidl && SHGetPathFromIDListW( pidl, szPath ) );
+        if( pidl && SHGetPathFromIDListW( pidl, szPath ) )
             WINE_TRACE("pidl path  : %s\n", wine_dbgstr_w(szPath));
     }
 

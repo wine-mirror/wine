@@ -888,7 +888,7 @@ static int TIME_GetTimeZoneInfoFromReg(RTL_TIME_ZONE_INFORMATION *tzinfo)
         if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, KpInfo,\
                     sizeof(buf), &size )) { \
             if( size >= (sizeof((tofield)) + \
-                    offsetof(KEY_VALUE_PARTIAL_INFORMATION,Data))); { \
+                    offsetof(KEY_VALUE_PARTIAL_INFORMATION,Data))) { \
                 memcpy(&(tofield), \
                         KpInfo->Data, sizeof(tofield)); \
             } \

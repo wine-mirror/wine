@@ -3687,16 +3687,25 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
         if(pBstrName)
         {
             if (This->Name)
-                if(!(*pBstrName = SysAllocString(This->Name))) goto memerr1;else;
+            {
+                if(!(*pBstrName = SysAllocString(This->Name)))
+                    goto memerr1;
+            }
             else
                 *pBstrName = NULL;
         }
         if(pBstrDocString)
         {
             if (This->DocString)
-                if(!(*pBstrDocString = SysAllocString(This->DocString))) goto memerr2;else;
+            {
+                if(!(*pBstrDocString = SysAllocString(This->DocString)))
+                    goto memerr2;
+            }
             else if (This->Name)
-                if(!(*pBstrDocString = SysAllocString(This->Name))) goto memerr2;else;
+            {
+                if(!(*pBstrDocString = SysAllocString(This->Name)))
+                    goto memerr2;
+            }
             else
                 *pBstrDocString = NULL;
         }
@@ -3707,7 +3716,10 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
         if(pBstrHelpFile)
         {
             if (This->HelpFile)
-                if(!(*pBstrHelpFile = SysAllocString(This->HelpFile))) goto memerr3;else;
+            {
+                if(!(*pBstrHelpFile = SysAllocString(This->HelpFile)))
+                    goto memerr3;
+            }
             else
                 *pBstrHelpFile = NULL;
         }
