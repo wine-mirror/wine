@@ -513,19 +513,20 @@
 @ stdcall SetupTerminateFileLog(long)
 @ stub ShouldDeviceBeExcluded
 @ stdcall StampFileSecurity(wstr ptr)
-@ stub StringTableAddString
-@ stub StringTableAddStringEx
-@ stub StringTableDestroy
-@ stub StringTableDuplicate
+@ stdcall StringTableAddString(ptr wstr long)
+@ stdcall StringTableAddStringEx(ptr wstr long ptr long)
+@ stdcall StringTableDestroy(ptr)
+@ stdcall StringTableDuplicate(ptr)
 @ stub StringTableEnum
-@ stub StringTableGetExtraData
-@ stub StringTableInitialize
-@ stub StringTableInitializeEx
-@ stub StringTableLookUpString
-@ stub StringTableLookUpStringEx
-@ stub StringTableSetExtraData
-@ stub StringTableStringFromId
-@ stub StringTableTrim
+@ stdcall StringTableGetExtraData(ptr long ptr long)
+@ stdcall StringTableInitialize()
+@ stdcall StringTableInitializeEx(long long)
+@ stdcall StringTableLookUpString(ptr wstr long)
+@ stdcall StringTableLookUpStringEx(ptr wstr long ptr ptr)
+@ stdcall StringTableSetExtraData(ptr long ptr long)
+@ stdcall StringTableStringFromId(ptr long)
+@ stdcall StringTableStringFromIdEx(ptr long ptr ptr)
+@ stdcall StringTableTrim(ptr)
 @ stdcall TakeOwnershipOfFile(wstr)
 @ stdcall UnicodeToMultiByte(wstr long)
 @ stdcall UnmapAndCloseFile(long long ptr)
@@ -549,4 +550,15 @@
 @ stub pSetupSetQueueFlags
 @ stub pSetupSetSystemSourceFlags
 @ stub pSetupStringFromGuid
+@ stdcall pSetupStringTableAddString(ptr wstr long) StringTableAddString
+@ stdcall pSetupStringTableAddStringEx(ptr wstr long ptr long) StringTableAddStringEx
+@ stdcall pSetupStringTableDestroy(ptr) StringTableDestroy
+@ stdcall pSetupStringTableDuplicate(ptr) StringTableDuplicate
+@ stub pSetupStringTableEnum
+@ stdcall pSetupStringTableGetExtraData(ptr long ptr long) StringTableGetExtraData
+@ stdcall pSetupStringTableInitialize() StringTableInitialize
+@ stdcall pSetupStringTableInitializeEx(long long) StringTableInitializeEx
+@ stdcall pSetupStringTableLookUpString(ptr wstr long) StringTableLookUpString
+@ stdcall pSetupStringTableLookUpStringEx(ptr wstr long ptr ptr) StringTableLookUpStringEx
+@ stdcall pSetupStringTableSetExtraData(ptr long ptr long) StringTableSetExtraData
 @ stub pSetupVerifyQueuedCatalogs
