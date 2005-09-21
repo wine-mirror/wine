@@ -340,7 +340,7 @@ static inline void output_res_dir( FILE *outfile, unsigned int nb_names, unsigne
 /* output the resource definitions */
 void output_resources( FILE *outfile, DLLSPEC *spec )
 {
-    int j, k, nb_id_types;
+    int k, nb_id_types;
     unsigned int i, n, offset, data_offset;
     struct res_tree *tree;
     struct res_type *type;
@@ -453,16 +453,9 @@ void output_resources( FILE *outfile, DLLSPEC *spec )
 
     for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
     {
-        const unsigned char *p = res->data;
         fprintf( outfile, "\n\t.align %d\n", get_alignment(get_ptr_size()) );
         fprintf( outfile, ".L__wine_spec_res_%d:\n", i );
-        fprintf( outfile, "\t.byte " );
-        for (j = 0; j < res->data_size - 1; j++, p++)
-        {
-            if ((j % 16) == 15) fprintf( outfile, "0x%02x\n\t.byte ", *p );
-            else fprintf( outfile, "0x%02x,", *p );
-        }
-        fprintf( outfile, "0x%02x\n", *p );
+        dump_bytes( outfile, res->data, res->data_size );
     }
     fprintf( outfile, ".L__wine_spec_resources_end:\n" );
     fprintf( outfile, "\t.byte 0\n" );

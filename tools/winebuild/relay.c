@@ -40,12 +40,6 @@ static void function_header( FILE *outfile, const char *name )
 }
 
 
-static void function_footer( FILE *outfile, const char *name )
-{
-    const char *size = func_size( name );
-    if (size[0]) fprintf( outfile, "\t%s\n", size );
-}
-
 static inline const char *data16_prefix(void)
 {
     return (target_platform == PLATFORM_SVR4) ? "\tdata16\n" : "";
@@ -350,9 +344,9 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
         /* Return to return stub which will return to caller */
         fprintf( outfile, "\tlret $12\n" );
     }
-    if (thunk) function_footer( outfile, "__wine_call_from_16_thunk" );
-    else if (reg_func) function_footer( outfile, "__wine_call_from_16_regs" );
-    else function_footer( outfile, "__wine_call_from_16" );
+    if (thunk) output_function_size( outfile, "__wine_call_from_16_thunk" );
+    else if (reg_func) output_function_size( outfile, "__wine_call_from_16_regs" );
+    else output_function_size( outfile, "__wine_call_from_16" );
 }
 
 
@@ -513,7 +507,7 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
     fprintf( outfile, "\tlret\n" );
 
     /* Function footer */
-    function_footer( outfile, name );
+    output_function_size( outfile, name );
 }
 
 
@@ -549,7 +543,7 @@ static void BuildRet16Func( FILE *outfile )
     /* Return to caller */
 
     fprintf( outfile, "\tlret\n" );
-    function_footer( outfile, "__wine_call_to_16_ret" );
+    output_function_size( outfile, "__wine_call_to_16_ret" );
 }
 
 
@@ -695,7 +689,7 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
     fprintf( outfile, "\tpopl %%edi\n" );
     fprintf( outfile, "\tpopl %%ebp\n" );
     fprintf( outfile, "\tret\n" );
-    function_footer( outfile, isEx ? "CALL32_CBClientEx" : "CALL32_CBClient" );
+    output_function_size( outfile, isEx ? "CALL32_CBClientEx" : "CALL32_CBClient" );
 
     /* '16-bit' return stub */
 
@@ -713,7 +707,7 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\tlssl %%ss:-12(%%ebx), %%esp\n" );
     }
     fprintf( outfile, "\tlret\n" );
-    function_footer( outfile, isEx ? "CALL32_CBClientEx_Ret" : "CALL32_CBClient_Ret" );
+    output_function_size( outfile, isEx ? "CALL32_CBClientEx_Ret" : "CALL32_CBClient_Ret" );
 }
 
 
@@ -842,12 +836,12 @@ static void BuildCallFrom32Regs( FILE *outfile )
 
     fprintf( outfile, "\tpopl %%ds\n" );
     fprintf( outfile, "\tiret\n" );
-    function_footer( outfile, "__wine_call_from_32_regs" );
+    output_function_size( outfile, "__wine_call_from_32_regs" );
 
     function_header( outfile, "__wine_call_from_32_restore_regs" );
     fprintf( outfile, "\tleal 4(%%esp),%%ecx\n" );
     fprintf( outfile, "\tjmp 2b\n" );
-    function_footer( outfile, "__wine_call_from_32_restore_regs" );
+    output_function_size( outfile, "__wine_call_from_32_restore_regs" );
 }
 
 
@@ -898,7 +892,7 @@ static void BuildPendingEventCheck( FILE *outfile )
     fprintf( outfile, "%s\n", asm_globl("DPMI_PendingEventCheck_Return") );
     fprintf( outfile, "\tiret\n" );
 
-    function_footer( outfile, "DPMI_PendingEventCheck" );
+    output_function_size( outfile, "DPMI_PendingEventCheck" );
 }
 
 
@@ -952,7 +946,7 @@ void BuildRelays16( FILE *outfile )
     BuildPendingEventCheck( outfile );
 
     fprintf( outfile, "%s\n", asm_globl("__wine_call16_end") );
-    function_footer( outfile, "__wine_spec_thunk_text_16" );
+    output_function_size( outfile, "__wine_spec_thunk_text_16" );
 
     /* Declare the return address and data selector variables */
     fprintf( outfile, "\n\t.data\n\t.align %d\n", get_alignment(4) );
@@ -983,5 +977,5 @@ void BuildRelays32( FILE *outfile )
     /* 32-bit register entry point */
     BuildCallFrom32Regs( outfile );
 
-    function_footer( outfile, "__wine_spec_thunk_text_32" );
+    output_function_size( outfile, "__wine_spec_thunk_text_32" );
 }

@@ -205,20 +205,19 @@ void output_standard_file_header( FILE *outfile )
 }
 
 /* dump a byte stream into the assembly code */
-void dump_bytes( FILE *outfile, const unsigned char *data, int len,
-                 const char *label, int constant )
+void dump_bytes( FILE *outfile, const void *buffer, unsigned int size )
 {
-    int i;
+    unsigned int i;
+    const unsigned char *ptr = buffer;
 
-    fprintf( outfile, "\nstatic %sunsigned char %s[%d] = {",
-             constant ? "const " : "", label, len );
-    for (i = 0; i < len; i++)
+    if (!size) return;
+    fprintf( outfile, "\t.byte " );
+    for (i = 0; i < size - 1; i++, ptr++)
     {
-        if (!(i & 7)) fprintf( outfile, "\n  " );
-        fprintf( outfile, "0x%02x", *data++ );
-        if (i < len - 1) fprintf( outfile, "," );
+        if ((i % 16) == 15) fprintf( outfile, "0x%02x\n\t.byte ", *ptr );
+        else fprintf( outfile, "0x%02x,", *ptr );
     }
-    fprintf( outfile, "\n};\n" );
+    fprintf( outfile, "0x%02x\n", *ptr );
 }
 
 
@@ -523,19 +522,17 @@ const char *func_declaration( const char *func )
     return buffer;
 }
 
-/* return a size declaration for an assembly function */
-const char *func_size( const char *func )
+/* output a size declaration for an assembly function */
+void output_function_size( FILE *outfile, const char *name )
 {
-    static char buffer[256];
-
     switch (target_platform)
     {
     case PLATFORM_APPLE:
     case PLATFORM_WINDOWS:
-        return "";
+        break;
     default:
-        sprintf( buffer, ".size %s, .-%s", func, func );
-        return buffer;
+        fprintf( outfile, "\t.size %s, .-%s\n", name, name );
+        break;
     }
 }
 

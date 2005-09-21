@@ -205,12 +205,6 @@ inline static ORDDEF *find_export( const char *name, ORDDEF **table, int size )
     return res ? *res : NULL;
 }
 
-inline static void output_function_size( FILE *outfile, const char *name )
-{
-    const char *size = func_size( name );
-    if (size[0]) fprintf( outfile, "\t%s\n", size );
-}
-
 /* free an import structure */
 static void free_imports( struct import *imp )
 {
@@ -1220,7 +1214,7 @@ void output_stubs( FILE *outfile, DLLSPEC *spec )
             fprintf( outfile, "\tpushl $.L__wine_spec_file_name\n" );
         }
         fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
-        fprintf( outfile, "\t%s\n", func_size(name) );
+        output_function_size( outfile, name );
     }
 
     if (pos)

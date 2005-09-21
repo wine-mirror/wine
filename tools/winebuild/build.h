@@ -174,8 +174,7 @@ extern char *get_temp_file_name( const char *prefix, const char *suffix );
 extern void output_standard_file_header( FILE *outfile );
 extern FILE *open_input_file( const char *srcdir, const char *name );
 extern void close_input_file( FILE *file );
-extern void dump_bytes( FILE *outfile, const unsigned char *data, int len,
-                        const char *label, int constant );
+extern void dump_bytes( FILE *outfile, const void *buffer, unsigned int size );
 extern int remove_stdcall_decoration( char *name );
 extern void assemble_file( const char *src_file, const char *obj_file );
 extern DLLSPEC *alloc_dll_spec(void);
@@ -187,12 +186,12 @@ extern unsigned int get_page_size(void);
 extern unsigned int get_ptr_size(void);
 extern const char *asm_name( const char *func );
 extern const char *func_declaration( const char *func );
-extern const char *func_size( const char *func );
 extern const char *asm_globl( const char *func );
 extern const char *get_asm_ptr_keyword(void);
 extern const char *get_asm_string_keyword(void);
 extern const char *get_asm_short_keyword(void);
 extern const char *get_asm_string_section(void);
+extern void output_function_size( FILE *outfile, const char *name );
 
 extern void add_import_dll( const char *name, const char *filename );
 extern void add_delayed_import( const char *name );
