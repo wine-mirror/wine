@@ -28,6 +28,33 @@
 /* FIXME: This gets defined by some Unix (Linux) header and messes things */
 #undef s6_addr
 
+/* for addrinfo calls */
+typedef struct WS(addrinfo)
+{
+    int                ai_flags;
+    int                ai_family;
+    int                ai_socktype;
+    int                ai_protocol;
+    size_t             ai_addrlen;
+    char *             ai_canonname;
+    struct WS(sockaddr)*   ai_addr;
+    struct WS(addrinfo)*   ai_next;
+} ADDRINFOA, *PADDRINFOA;
+
+typedef struct WS(addrinfoW)
+{
+    int                ai_flags;
+    int                ai_family;
+    int                ai_socktype;
+    int                ai_protocol;
+    size_t             ai_addrlen;
+    PWSTR              ai_canonname;
+    struct WS(sockaddr)*   ai_addr;
+    struct WS(addrinfoW)*   ai_next;
+} ADDRINFOW, *PADDRINFOW;
+
+typedef ADDRINFOA ADDRINFO;
+
 /*
  * Multicast group information
  */
