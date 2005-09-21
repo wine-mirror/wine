@@ -86,4 +86,11 @@ void SECUR32_initSchannelSP(void);
 void SECUR32_initNegotiateSP(void);
 void SECUR32_initNTLMSP(void);
 
+/* Functions from base64_codec.c used elsewhere */
+SECURITY_STATUS encodeBase64(PBYTE in_buf, int in_len, char* out_buf, 
+        int max_len, int *out_len);
+
+SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf, 
+        int max_len, int *out_len);
+
 #endif /* ndef __SECUR32_PRIV_H__ */
