@@ -780,8 +780,7 @@ static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
         if (!count) continue;
 
         /* sanity checks */
-        if ((char *)rel + rel->SizeOfBlock > base + dir->VirtualAddress + dir->Size ||
-            page > base + total_size)
+        if ((char *)rel + rel->SizeOfBlock > base + dir->VirtualAddress + dir->Size)
         {
             ERR_(module)("invalid relocation %p,%lx,%ld at %p,%lx,%lx\n",
                          rel, rel->VirtualAddress, rel->SizeOfBlock,
@@ -789,7 +788,14 @@ static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
             return 0;
         }
 
-        TRACE_(module)("%ld relocations for page %lx\n", rel->SizeOfBlock, rel->VirtualAddress);
+        if (page > base + total_size)
+        {
+            WARN_(module)("skipping %d relocations for page %p beyond module %p-%p\n",
+                          count, page, base, base + total_size );
+            continue;
+        }
+
+        TRACE_(module)("%d relocations for page %lx\n", count, rel->VirtualAddress);
 
         /* patching in reverse order */
         for (i = 0 ; i < count; i++)
