@@ -1748,7 +1748,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     SIZE sz;
     RECT rc;
     BOOL done_extents = FALSE;
-    INT width, xwidth, ywidth;
+    INT width, xwidth = 0, ywidth = 0;
     DWORD type;
     DC * dc = DC_GetDCUpdate( hdc );
 
@@ -2042,14 +2042,23 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                                      glyphs ? glyphs : reordered_str, count, deltas);
     }
 
-    if (lf.lfUnderline || lf.lfStrikeOut)
+done:
+    HeapFree(GetProcessHeap(), 0, deltas);
+    if(glyphs != reordered_str)
+        HeapFree(GetProcessHeap(), 0, glyphs);
+    if(reordered_str != str)
+        HeapFree(GetProcessHeap(), 0, reordered_str);
+
+    GDI_ReleaseObj( hdc );
+
+    if (ret && (lf.lfUnderline || lf.lfStrikeOut))
     {
         int underlinePos, strikeoutPos;
         int underlineWidth, strikeoutWidth;
-        UINT nMetricsSize = GetOutlineTextMetricsW(hdc, 0, NULL);
+        UINT size = GetOutlineTextMetricsW(hdc, 0, NULL);
         OUTLINETEXTMETRICW* otm = NULL;
 
-        if(!nMetricsSize)
+        if(!size)
         {
             TEXTMETRICW tm;
             GetTextMetricsW(hdc, &tm);
@@ -2060,20 +2069,19 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         }
         else
         {
-            otm = HeapAlloc(GetProcessHeap(), 0, nMetricsSize);
-            if (!otm) goto done;
-
-            GetOutlineTextMetricsW(hdc, nMetricsSize, otm);
+            otm = HeapAlloc(GetProcessHeap(), 0, size);
+            GetOutlineTextMetricsW(hdc, size, otm);
             underlinePos = otm->otmsUnderscorePosition;
             underlineWidth = otm->otmsUnderscoreSize;
             strikeoutPos = otm->otmsStrikeoutPosition;
             strikeoutWidth = otm->otmsStrikeoutSize;
+            HeapFree(GetProcessHeap(), 0, otm);
         }
 
         if(lf.lfUnderline)
         {
             POINT pts[2], oldpt;
-            HPEN hpen = CreatePen(PS_SOLID, underlineWidth, dc->textColor);
+            HPEN hpen = CreatePen(PS_SOLID, underlineWidth, GetTextColor(hdc));
             hpen = SelectObject(hdc, hpen);
             pts[0].x = x;
             pts[0].y = y;
@@ -2089,7 +2097,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         if(lf.lfStrikeOut)
         {
             POINT pts[2], oldpt;
-            HPEN hpen = CreatePen(PS_SOLID, strikeoutWidth, dc->textColor);
+            HPEN hpen = CreatePen(PS_SOLID, strikeoutWidth, GetTextColor(hdc));
             hpen = SelectObject(hdc, hpen);
             pts[0].x = x;
             pts[0].y = y;
@@ -2103,14 +2111,6 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         }
     }
 
-done:
-    HeapFree(GetProcessHeap(), 0, deltas);
-    if(glyphs != reordered_str)
-        HeapFree(GetProcessHeap(), 0, glyphs);
-    if(reordered_str != str)
-        HeapFree(GetProcessHeap(), 0, reordered_str);
-
-    GDI_ReleaseObj( hdc );
     return ret;
 }
 
