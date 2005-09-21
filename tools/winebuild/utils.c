@@ -362,23 +362,6 @@ void free_dll_spec( DLLSPEC *spec )
 
 
 /*******************************************************************
- *         has_stubs
- *
- * Check if the spec file exports any stubs
- */
-int has_stubs( const DLLSPEC *spec )
-{
-    int i;
-    for (i = 0; i < spec->nb_entry_points; i++)
-    {
-        ORDDEF *odp = &spec->entry_points[i];
-        if (odp->type == TYPE_STUB) return 1;
-    }
-    return 0;
-}
-
-
-/*******************************************************************
  *         make_c_identifier
  *
  * Map a string to a valid C identifier.
@@ -394,6 +377,27 @@ const char *make_c_identifier( const char *str )
         else *p = '_';
     }
     *p = 0;
+    return buffer;
+}
+
+
+/*******************************************************************
+ *         get_stub_name
+ *
+ * Generate an internal name for a stub entry point.
+ */
+const char *get_stub_name( const ORDDEF *odp, const DLLSPEC *spec )
+{
+    static char buffer[256];
+    if (odp->name || odp->export_name)
+    {
+        char *p;
+        sprintf( buffer, "__wine_stub_%s", odp->name ? odp->name : odp->export_name );
+        /* make sure name is a legal C identifier */
+        for (p = buffer; *p; p++) if (!isalnum(*p) && *p != '_') break;
+        if (!*p) return buffer;
+    }
+    sprintf( buffer, "__wine_stub_%s_%d", make_c_identifier(spec->file_name), odp->ordinal );
     return buffer;
 }
 

@@ -455,6 +455,18 @@ static const char *get_default_entry_point( const DLLSPEC *spec )
     return "__wine_spec_exe_entry";
 }
 
+/* check if the spec file exports any stubs */
+static int has_stubs( const DLLSPEC *spec )
+{
+    int i;
+    for (i = 0; i < spec->nb_entry_points; i++)
+    {
+        ORDDEF *odp = &spec->entry_points[i];
+        if (odp->type == TYPE_STUB) return 1;
+    }
+    return 0;
+}
+
 /* add the extra undefined symbols that will be contained in the generated spec file itself */
 static void add_extra_undef_symbols( DLLSPEC *spec )
 {
@@ -632,7 +644,7 @@ int resolve_imports( DLLSPEC *spec )
 }
 
 /* output the get_pc thunk if needed */
-static void output_get_pc_thunk( FILE *outfile )
+void output_get_pc_thunk( FILE *outfile )
 {
     if (target_cpu != CPU_x86) return;
     if (!UsePIC) return;
@@ -1153,6 +1165,77 @@ static void output_external_link_imports( FILE *outfile, DLLSPEC *spec )
         pos += get_ptr_size();
     }
     output_function_size( outfile, "__wine_spec_external_link_thunks" );
+}
+
+/*******************************************************************
+ *         output_stubs
+ *
+ * Output the functions for stub entry points
+ */
+void output_stubs( FILE *outfile, DLLSPEC *spec )
+{
+    const char *name, *exp_name;
+    int i, pos;
+
+    if (!has_stubs( spec )) return;
+
+    fprintf( outfile, "\n/* stub functions */\n\n" );
+    fprintf( outfile, "\t.text\n" );
+
+    for (i = pos = 0; i < spec->nb_entry_points; i++)
+    {
+        ORDDEF *odp = &spec->entry_points[i];
+        if (odp->type != TYPE_STUB) continue;
+
+        name = get_stub_name( odp, spec );
+        exp_name = odp->name ? odp->name : odp->export_name;
+        fprintf( outfile, "\t.align %d\n", get_alignment(4) );
+        fprintf( outfile, "\t%s\n", func_declaration(name) );
+        fprintf( outfile, "%s:\n", asm_name(name) );
+
+        if (UsePIC)
+        {
+            fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+            fprintf( outfile, "1:" );
+            if (exp_name)
+            {
+                fprintf( outfile, "\tleal .L__wine_stub_strings+%d-1b(%%eax),%%ecx\n", pos );
+                fprintf( outfile, "\tpushl %%ecx\n" );
+                pos += strlen(exp_name) + 1;
+            }
+            else
+                fprintf( outfile, "\tpushl $%d\n", odp->ordinal );
+            fprintf( outfile, "\tleal .L__wine_spec_file_name-1b(%%eax),%%ecx\n" );
+            fprintf( outfile, "\tpushl %%ecx\n" );
+        }
+        else
+        {
+            if (exp_name)
+            {
+                fprintf( outfile, "\tpushl $.L__wine_stub_strings+%d\n", pos );
+                pos += strlen(exp_name) + 1;
+            }
+            else
+                fprintf( outfile, "\tpushl $%d\n", odp->ordinal );
+            fprintf( outfile, "\tpushl $.L__wine_spec_file_name\n" );
+        }
+        fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
+        fprintf( outfile, "\t%s\n", func_size(name) );
+    }
+
+    if (pos)
+    {
+        fprintf( outfile, "\t%s\n", get_asm_string_section() );
+        fprintf( outfile, ".L__wine_stub_strings:\n" );
+        for (i = 0; i < spec->nb_entry_points; i++)
+        {
+            ORDDEF *odp = &spec->entry_points[i];
+            if (odp->type != TYPE_STUB) continue;
+            exp_name = odp->name ? odp->name : odp->export_name;
+            if (exp_name)
+                fprintf( outfile, "\t%s \"%s\"\n", get_asm_string_keyword(), exp_name );
+        }
+    }
 }
 
 /* output the import and delayed import tables of a Win32 module */

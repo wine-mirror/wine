@@ -45,28 +45,6 @@ static int string_compare( const void *ptr1, const void *ptr2 )
 
 
 /*******************************************************************
- *         make_internal_name
- *
- * Generate an internal name for an entry point. Used for stubs etc.
- */
-static const char *make_internal_name( const ORDDEF *odp, DLLSPEC *spec, const char *prefix )
-{
-    static char buffer[256];
-    if (odp->name || odp->export_name)
-    {
-        char *p;
-        sprintf( buffer, "__wine_%s_%s_%s", prefix, spec->file_name,
-                 odp->name ? odp->name : odp->export_name );
-        /* make sure name is a legal C identifier */
-        for (p = buffer; *p; p++) if (!isalnum(*p) && *p != '_') break;
-        if (!*p) return buffer;
-    }
-    sprintf( buffer, "__wine_%s_%s_%d", prefix, make_c_identifier(spec->file_name), odp->ordinal );
-    return buffer;
-}
-
-
-/*******************************************************************
  *         output_debug
  *
  * Output the debug channels.
@@ -163,7 +141,7 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
             break;
         case TYPE_STUB:
             fprintf( outfile, "\t%s %s\n", get_asm_ptr_keyword(),
-                     asm_name( make_internal_name( odp, spec, "stub" )) );
+                     asm_name( get_stub_name( odp, spec )) );
             break;
         default:
             assert(0);
@@ -269,78 +247,6 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
         }
     }
     else fprintf( outfile, "\t.long 0\n" );
-}
-
-
-/*******************************************************************
- *         output_stubs
- *
- * Output the functions for stub entry points
-*/
-static void output_stubs( FILE *outfile, DLLSPEC *spec )
-{
-    const char *name, *exp_name;
-    int i, pos;
-
-    if (!has_stubs( spec )) return;
-
-    fprintf( outfile, "\n/* stub functions */\n\n" );
-    fprintf( outfile, "\t.text\n" );
-
-    for (i = pos = 0; i < spec->nb_entry_points; i++)
-    {
-        ORDDEF *odp = &spec->entry_points[i];
-        if (odp->type != TYPE_STUB) continue;
-
-        name = make_internal_name( odp, spec, "stub" );
-        exp_name = odp->name ? odp->name : odp->export_name;
-        fprintf( outfile, "\t.align %d\n", get_alignment(4) );
-        fprintf( outfile, "\t%s\n", func_declaration(name) );
-        fprintf( outfile, "%s:\n", asm_name(name) );
-
-        if (UsePIC)
-        {
-            fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-            fprintf( outfile, "1:" );
-            if (exp_name)
-            {
-                fprintf( outfile, "\tleal .L__wine_stub_strings+%d-1b(%%eax),%%ecx\n", pos );
-                fprintf( outfile, "\tpushl %%ecx\n" );
-                pos += strlen(exp_name) + 1;
-            }
-            else
-                fprintf( outfile, "\tpushl $%d\n", odp->ordinal );
-            fprintf( outfile, "\tleal %s-1b(%%eax),%%ecx\n", asm_name("__wine_spec_file_name") );
-            fprintf( outfile, "\tpushl %%ecx\n" );
-        }
-        else
-        {
-            if (exp_name)
-            {
-                fprintf( outfile, "\tpushl $.L__wine_stub_strings+%d\n", pos );
-                pos += strlen(exp_name) + 1;
-            }
-            else
-                fprintf( outfile, "\tpushl $%d\n", odp->ordinal );
-            fprintf( outfile, "\tpushl $%s\n", asm_name("__wine_spec_file_name") );
-        }
-        fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
-        fprintf( outfile, "\t%s\n", func_size(name) );
-    }
-
-    if (pos)
-    {
-        fprintf( outfile, "\t%s\n", get_asm_string_section() );
-        fprintf( outfile, ".L__wine_stub_strings:\n" );
-        for (i = 0; i < spec->nb_entry_points; i++)
-        {
-            ORDDEF *odp = &spec->entry_points[i];
-            if (odp->type != TYPE_STUB) continue;
-            exp_name = odp->name ? odp->name : odp->export_name;
-            if (exp_name)
-                fprintf( outfile, "\t%s \"%s\"\n", get_asm_string_keyword(), exp_name );
-        }
-    }
 }
 
 
@@ -599,6 +505,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 
     fprintf( outfile, "\n\t%s\n", get_asm_string_section() );
     fprintf( outfile, "%s\n", asm_globl("__wine_spec_file_name") );
+    fprintf( outfile, ".L__wine_spec_file_name:\n" );
     fprintf( outfile, "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
     if (target_platform == PLATFORM_APPLE)
         fprintf( outfile, "\t.lcomm %s,4\n", asm_name("_end") );
