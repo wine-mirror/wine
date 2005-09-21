@@ -49,18 +49,13 @@ C_SRCS = \
 	virtual.c \
 	wcstring.c
 
-ASM_SRCS = relay32.s
-
-EXTRA_OBJS = $(ASM_SRCS:.s=.o)
+EXTRA_OBJS = relay32.o
 
 SUBDIRS = tests
 
 @MAKE_DLL_RULES@
 
-relay32.s: $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --relay32
-
-clean::
-	$(RM) $(ASM_SRCS)
+relay32.o: $(WINEBUILD)
+	$(WINEBUILD) $(WINEBUILDFLAGS) -o $@ --relay32
 
 ### Dependencies:

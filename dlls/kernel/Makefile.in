@@ -84,8 +84,6 @@ C_SRCS16 = \
 	toolhelp16.c \
 	win87em.c
 
-ASM_SRCS = relay16asm.s
-
 RC_SRCS = kernel.rc
 
 RC_SRCS16 = \
@@ -94,7 +92,7 @@ RC_SRCS16 = \
 MC_SRCS = \
 	messages/winerr_enu.mc
 
-EXTRA_OBJS   = $(ASM_SRCS:.s=.o)
+EXTRA_OBJS   = relay16asm.o
 SUBDIRS      = tests
 EXTRASUBDIRS = messages nls
 
@@ -102,18 +100,15 @@ EXTRASUBDIRS = messages nls
 
 kernel.res: $(MC_SRCS:.mc=.mc.rc)
 
-relay16asm.s: $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --relay16
+relay16asm.o: $(WINEBUILD)
+	$(WINEBUILD) $(WINEBUILDFLAGS) -o $@ --relay16
 
 # Special rules for 16-bit resource and spec files
 
-krnl386.exe.spec.c: krnl386.exe.spec version16.res
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) --dll -o $@ --dll-name kernel --main-module $(MODULE) --res version16.res --export $(SRCDIR)/krnl386.exe.spec
+krnl386.exe.spec.o: krnl386.exe.spec version16.res
+	$(WINEBUILD) $(WINEBUILDFLAGS) --dll -o $@ --dll-name kernel --main-module $(MODULE) --res version16.res --export $(SRCDIR)/krnl386.exe.spec
 
 version16.res: version16.rc
 	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/version16.rc
-
-clean::
-	$(RM) $(ASM_SRCS)
 
 ### Dependencies:

@@ -59,6 +59,7 @@ EXTRACFLAGS  = @EXTRACFLAGS@
 ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
 ALLLINTFLAGS = $(INCLUDES) $(DEFS) $(LINTFLAGS)
 IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
+WINEBUILDFLAGS = $(DLLFLAGS) --as-cmd "$(AS)"
 MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs -m 755
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi/winapi_check
 WINEWRAPPER  = $(TOPSRCDIR)/tools/winewrapper
@@ -107,7 +108,7 @@ prog_manext     = 1
 api_manext      = 3w
 conf_manext     = 5
 CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
-                  *.flc *.spec.c *.dbg.c *.tab.c *.tab.h @LEX_OUTPUT_ROOT@.c core
+                  *.flc *.dbg.c *.tab.c *.tab.h @LEX_OUTPUT_ROOT@.c core
 
 OBJS = $(C_SRCS:.c=.o) $(EXTRA_OBJS)
 
@@ -116,7 +117,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .idl .tlb .h .ok .sfd .ttf
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .ok .sfd .ttf
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -133,8 +134,8 @@ LINTS  = $(C_SRCS:.c=.ln)
 .res.res.o:
 	$(WINDRES) -i $< -o $@
 
-.spec.spec.c:
-	$(WINEBUILD) $(DEFS) --dll -o $@ --main-module $(MODULE) --export $<
+.spec.spec.o:
+	$(WINEBUILD) $(WINEBUILDFLAGS) --dll -o $@ --main-module $(MODULE) --export $<
 
 .idl.h:
 	$(WIDL) $(IDLFLAGS) -h -H $@ $<
