@@ -5844,8 +5844,27 @@ BOOL     WINAPI  IWineD3DDeviceImpl_ShowCursor(IWineD3DDevice* iface, BOOL bShow
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_TestCooperativeLevel(IWineD3DDevice* iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    FIXME("(%p) : stub\n", This); /* No way of notifying yet! */
-    return D3D_OK;
+    TRACE("(%p) : state (%lu)\n", This, This->state);
+    /* TODO: Implement wrapping of the WndProc so that mimimize and maxamise can be monitored and the states adjusted. */
+    switch (This->state) {
+    case D3D_OK:
+        return D3D_OK;
+    case D3DERR_DEVICELOST:
+        {
+            ResourceList *resourceList  = This->resources;
+            while (NULL != resourceList) {
+                if (((IWineD3DResourceImpl *)resourceList->resource)->resource.pool == D3DPOOL_DEFAULT /* TODO: IWineD3DResource_GetPool(resourceList->resource)*/)
+                return D3DERR_DEVICENOTRESET;
+                resourceList = resourceList->next;
+            }
+            return D3DERR_DEVICELOST;
+        }
+    case D3DERR_DRIVERINTERNALERROR:
+        return D3DERR_DRIVERINTERNALERROR;
+    }
+
+    /* Unknown state */
+    return D3DERR_DRIVERINTERNALERROR;
 }
 
 

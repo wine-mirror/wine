@@ -536,6 +536,9 @@ typedef struct IWineD3DDeviceImpl
     /* Debug stream management */
     BOOL                     debug;
 
+    /* Device state management */
+    HRESULT                 state;
+
     /* Screen buffer resources */
     glContext contextCache[CONTEXT_CACHE];
 

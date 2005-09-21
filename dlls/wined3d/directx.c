@@ -1639,6 +1639,9 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     IWineD3D_AddRef(object->wineD3D);
     object->parent  = parent;
 
+    /* Set the state up as invalid until the device is fully created */
+    object->state   = D3DERR_DRIVERINTERNALERROR;
+
     TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
           hFocusWindow, BehaviourFlags, pPresentationParameters, ppReturnedDeviceInterface);
     TRACE("(%p)->(DepthStencil:(%u,%s), BackBufferFormat:(%u,%s))\n", This,
@@ -1736,8 +1739,15 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
 
     }
 
+    /* set the state of the device to valid */
+    object->state = D3D_OK;
+
     return D3D_OK;
 create_device_error:
+
+    /* Set the device state to error */
+    object->state = D3DERR_DRIVERINTERNALERROR;
+
     if (object->updateStateBlock != NULL) {
         IWineD3DStateBlock_Release((IWineD3DStateBlock *)object->updateStateBlock);
         object->updateStateBlock = NULL;
