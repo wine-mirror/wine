@@ -179,24 +179,31 @@ static LPWSTR msi_get_deformatted_field( MSIPACKAGE *package, MSIRECORD *rec, in
  * Extract the {\style} string from the front of the text to display and
  *  update the pointer.
  */
-static LPWSTR msi_dialog_get_style( LPWSTR *text )
+static LPWSTR msi_dialog_get_style( LPCWSTR p, LPCWSTR *rest )
 {
     LPWSTR ret = NULL;
-    LPWSTR p = *text, q;
+    LPCWSTR q, i;
     DWORD len;
 
-    if( !*text )
+    *rest = p;
+    if( !p )
         return ret;
     if( *p++ != '{' )
         return ret;
     q = strchrW( p, '}' );
     if( !q )
         return ret;
-    *text = ++q;
     if( *p++ != '\\' )
         return ret;
-    len = q - p;
+
+    /* little bit of sanity checking to stop us getting confused with RTF */
+    for( i=p; i<q; i++ )
+        if( *i == '}' || *i == '\\' )
+            return ret;
     
+    *rest = ++q;
+    len = q - p;
+
     ret = msi_alloc( len*sizeof(WCHAR) );
     if( !ret )
         return ret;
@@ -299,7 +306,8 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
                 DWORD style, HWND parent )
 {
     DWORD x, y, width, height;
-    LPWSTR font = NULL, title = NULL;
+    LPWSTR font = NULL, title_font = NULL;
+    LPCWSTR title = NULL;
     msi_control *control;
 
     style |= WS_CHILD;
@@ -327,8 +335,8 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
 
     if( text )
     {
-        deformat_string( dialog->package, text, &title );
-        font = msi_dialog_get_style( &title );
+        deformat_string( dialog->package, text, &title_font );
+        font = msi_dialog_get_style( title_font, &title );
     }
 
     control->hwnd = CreateWindowW( szCls, title, style,
@@ -340,8 +348,8 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     msi_dialog_set_font( dialog, control->hwnd,
                          font ? font : dialog->default_font );
 
+    msi_free( title_font );
     msi_free( font );
-    msi_free( title );
 
     return control;
 }
@@ -1056,16 +1064,16 @@ msi_maskedit_create_children( struct msi_maskedit_info *info, LPCWSTR font )
 /* office 2003 uses "73931<````=````=````=````=`````>@@@@@" */
 static UINT msi_dialog_maskedit_control( msi_dialog *dialog, MSIRECORD *rec )
 {
-    LPWSTR mask, title = NULL, val = NULL, font;
+    LPWSTR font_mask, val = NULL, font;
     struct msi_maskedit_info *info = NULL;
     UINT ret = ERROR_SUCCESS;
     msi_control *control;
-    LPCWSTR prop;
+    LPCWSTR prop, mask;
 
     TRACE("\n");
 
-    mask = msi_get_deformatted_field( dialog->package, rec, 10 );
-    font = msi_dialog_get_style( &mask );
+    font_mask = msi_get_deformatted_field( dialog->package, rec, 10 );
+    font = msi_dialog_get_style( font_mask, &mask );
     if( !mask )
     {
         ERR("mask template is empty\n");
@@ -1117,8 +1125,8 @@ static UINT msi_dialog_maskedit_control( msi_dialog *dialog, MSIRECORD *rec )
 end:
     if( ret != ERROR_SUCCESS )
         msi_free( info );
-    msi_free( title );
-    msi_free( mask );
+    msi_free( font_mask );
+    msi_free( font );
     return ret;
 }
 
