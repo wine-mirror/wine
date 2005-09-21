@@ -971,12 +971,19 @@ typedef struct IWineD3DQueryImpl
     /* IWineD3DQuery fields */
 
     D3DQUERYTYPE              type;
+    /* TODO: Think about using a IUnknown instead of a void* */
     void                     *extendedData;
     
   
 } IWineD3DQueryImpl;
 
 extern const IWineD3DQueryVtbl IWineD3DQuery_Vtbl;
+
+/* Datastructures for IWineD3DQueryImpl.extendedData */
+typedef struct  WineQueryOcclusionData {
+       unsigned int queryId;
+} WineQueryOcclusionData;
+
 
 /*****************************************************************************
  * IWineD3DSwapChainImpl implementation structure (extends IUnknown)

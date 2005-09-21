@@ -666,6 +666,54 @@ typedef void (APIENTRY * PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC) (GLenum stage, 
 #define GL_COORD_REPLACE_ARB              0x8862
 #endif
 
+/* TODO: GL_NV_point_sprite */
+
+/* Occlusion Queries */
+
+typedef void (APIENTRY * PGLFNGENQUERIESARBPROC) (GLsizei n, GLuint *queries);
+typedef void (APIENTRY * PGLFNDELETEQUERIESARBPROC) (GLsizei n, const GLuint *queries);
+typedef GLboolean (APIENTRY * PGLFNISQUERYARBPROC) (GLuint query);
+typedef void (APIENTRY * PGLFNBEGINQUERYARBPROC) (GLenum target, GLuint query);
+typedef void (APIENTRY * PGLFNENDQUERYARBPROC) (GLenum target);
+typedef void (APIENTRY * PGLFNGETQUERYIVARBPROC) (GLenum target, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETQUERYOBJECTIVARBPROC) (GLuint query, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETQUERYOBJECTUIVARBPROC) (GLuint query, GLenum pname, GLuint *params);
+
+#ifndef GL_ARB_occlusion_query
+#define GL_ARB_occlusion_query 1
+
+#define GL_SAMPLES_PASSED_ARB                             0x8914
+#define GL_QUERY_COUNTER_BITS_ARB                         0x8864
+#define GL_CURRENT_QUERY_ARB                              0x8865
+#define GL_QUERY_RESULT_ARB                               0x8866
+#define GL_QUERY_RESULT_AVAILABLE_ARB                     0x8867
+#endif
+
+typedef void (APIENTRY * PGLFNGENOCCLUSIONQUERIESNVPROC) (GLsizei n, GLuint *ids);
+typedef void (APIENTRY * PGLFNDELETEOCCLUSIONQUERIESNVPROC) (GLsizei n, const GLuint *ids);
+typedef GLboolean (APIENTRY * PGLFNISOCCLUSIONQUERYNVPROC) (GLuint id);
+typedef void (APIENTRY * PGLFNBEGINOCCLUSIONQUERYNVPROC) (GLuint id);
+typedef void (APIENTRY * PGLFNENDOCCLUSIONQUERYNVPROC) (void);
+typedef void (APIENTRY * PGLFNGETOCCLUSIONQUERYIVNVPROC) (GLuint id, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETOCCLUSIONQUERYUIVNVPROC) (GLuint id, GLenum pname, GLuint *params);
+
+/* GL_HP_occlusion_test isn't complete, but it's constants are used by GL_NV_occlusion_query */
+#ifndef GL_HP_occlusion_test
+#define GL_HP_occlusion_test 1
+#define GL_OCCLUSION_TEST_HP                 0x8165
+#define GL_OCCLUSION_TEST_RESULT_HP          0x8165
+#endif
+
+
+#ifndef GL_NV_occlusion_query
+#define GL_NV_occlusion_query 1
+#define GL_PIXEL_COUNTER_BITS_NV          0x8864
+#define GL_CURRENT_OCCLUSION_QUERY_ID_NV  0x8865
+#define GL_PIXEL_COUNT_NV                 0x8866
+#define GL_PIXEL_COUNT_AVAILABLE_NV       0x8867
+#endif
+
+
 
 /****************************************************
  * OpenGL Official Version 
@@ -762,6 +810,7 @@ typedef enum _GL_SupportedExt {
   ARB_FRAGMENT_PROGRAM,
   ARB_MULTISAMPLE,
   ARB_MULTITEXTURE,
+  ARB_OCCLUSION_QUERY,
   ARB_POINT_PARAMETERS,
   ARB_POINT_SPRITE,
   ARB_TEXTURE_COMPRESSION,
@@ -792,6 +841,7 @@ typedef enum _GL_SupportedExt {
   /* NVIDIA */
   NV_FOG_DISTANCE,
   NV_FRAGMENT_PROGRAM,
+  NV_OCCLUSION_QUERY,
   NV_REGISTER_COMBINERS,
   NV_REGISTER_COMBINERS2,
   NV_TEXGEN_REFLECTION,

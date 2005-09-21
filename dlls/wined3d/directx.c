@@ -470,6 +470,9 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             } else if (strcmp(ThisExtn, "GL_ARB_vertex_buffer_object") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Vertex Buffer support\n");
                 gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_ARB_occlusion_query") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ARB Occlusion Query support\n");
+                gl_info->supported[ARB_OCCLUSION_QUERY] = TRUE;
             /**
              * EXT
              */
@@ -545,6 +548,9 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             } else if (strcmp(ThisExtn, "GL_NV_texture_shader3") == 0) {
                 TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Shader (3) support\n");
                 gl_info->supported[NV_TEXTURE_SHADER3] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_NV_occlusion_query") == 0) {
+                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Occlusion Query (3) support\n");
+                gl_info->supported[NV_OCCLUSION_QUERY] = TRUE;
             } else if (strstr(ThisExtn, "GL_NV_vertex_program")) {
                 gl_info->vs_nv_version = max(gl_info->vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program1_1")) ? VS_VERSION_11 : VS_VERSION_10);
                 gl_info->vs_nv_version = max(gl_info->vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program2"))   ? VS_VERSION_20 : VS_VERSION_10);

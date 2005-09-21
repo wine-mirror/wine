@@ -991,7 +991,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUER
         case WINED3DQUERYTYPE_RESOURCEMANAGER:
         case WINED3DQUERYTYPE_VERTEXSTATS:
         case WINED3DQUERYTYPE_EVENT:
-        case WINED3DQUERYTYPE_OCCLUSION:
         case WINED3DQUERYTYPE_TIMESTAMP:
         case WINED3DQUERYTYPE_TIMESTAMPDISJOINT:
         case WINED3DQUERYTYPE_TIMESTAMPFREQ:
@@ -1001,7 +1000,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUER
         case WINED3DQUERYTYPE_PIXELTIMINGS:
         case WINED3DQUERYTYPE_BANDWIDTHTIMINGS:
         case WINED3DQUERYTYPE_CACHEUTILIZATION:
-            hr = D3D_OK;
+        break;
+        case WINED3DQUERYTYPE_OCCLUSION:
+            TRACE("(%p) occlusion query\n", This);
+            if (GL_SUPPORT(ARB_OCCLUSION_QUERY) || GL_SUPPORT(NV_OCCLUSION_QUERY))
+                hr = D3D_OK;
         break;
         default:
             FIXME("(%p) Unhandled query type %d\n",This , Type);
@@ -1012,7 +1015,31 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUER
 
     D3DCREATEOBJECTINSTANCE(object, Query)
     object->type         = Type;
-    object->extendedData = 0;
+    /* allocated the 'extended' data based on the type of query requested */
+    switch(Type){
+    case D3DQUERYTYPE_OCCLUSION:
+        if(GL_SUPPORT(ARB_OCCLUSION_QUERY) || GL_SUPPORT(NV_OCCLUSION_QUERY)) {
+            TRACE("(%p) Allocating data for an occlusion query\n", This);
+            object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryOcclusionData));
+            break;
+        }
+    case D3DQUERYTYPE_VCACHE:
+    case D3DQUERYTYPE_RESOURCEMANAGER:
+    case D3DQUERYTYPE_VERTEXSTATS:
+    case D3DQUERYTYPE_EVENT:
+    case D3DQUERYTYPE_TIMESTAMP:
+    case D3DQUERYTYPE_TIMESTAMPDISJOINT:
+    case D3DQUERYTYPE_TIMESTAMPFREQ:
+    case D3DQUERYTYPE_PIPELINETIMINGS:
+    case D3DQUERYTYPE_INTERFACETIMINGS:
+    case D3DQUERYTYPE_VERTEXTIMINGS:
+    case D3DQUERYTYPE_PIXELTIMINGS:
+    case D3DQUERYTYPE_BANDWIDTHTIMINGS:
+    case D3DQUERYTYPE_CACHEUTILIZATION:
+    default:
+        object->extendedData = 0;
+        FIXME("(%p) Unhandled query type %d\n",This , Type);
+    }
     TRACE("(%p) : Created Query %p\n", This, object);
     return D3D_OK;
 }
