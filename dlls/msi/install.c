@@ -80,19 +80,40 @@ UINT WINAPI MsiDoActionW( MSIHANDLE hInstall, LPCWSTR szAction )
 /***********************************************************************
  * MsiSequenceA       (MSI.@)
  */
-UINT WINAPI MsiSequenceA( MSIHANDLE hInstall, LPCSTR szAction, INT iSequenceMode )
+UINT WINAPI MsiSequenceA( MSIHANDLE hInstall, LPCSTR szTable, INT iSequenceMode )
 {
-    TRACE("%s\n", debugstr_a(szAction));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    LPWSTR szwTable;
+    UINT ret;
+
+    TRACE("%s\n", debugstr_a(szTable));
+
+    szwTable = strdupAtoW(szTable);
+    if (szTable && !szwTable)
+        return ERROR_FUNCTION_FAILED; 
+
+    ret = MsiSequenceW( hInstall, szwTable, iSequenceMode );
+    msi_free( szwTable );
+    return ret;
 }
 
 /***********************************************************************
  * MsiSequenceW       (MSI.@)
  */
-UINT WINAPI MsiSequenceW( MSIHANDLE hInstall, LPCWSTR szAction, INT iSequenceMode )
+UINT WINAPI MsiSequenceW( MSIHANDLE hInstall, LPCWSTR szTable, INT iSequenceMode )
 {
-    TRACE("%s\n", debugstr_w(szAction));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    MSIPACKAGE *package;
+    UINT ret;
+
+    TRACE("%s\n", debugstr_w(szTable));
+
+    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    ret = MSI_Sequence( package, szTable, iSequenceMode );
+    msiobj_release( &package->hdr );
+ 
+    return ret;
 }
 
 static UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )

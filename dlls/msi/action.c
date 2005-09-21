@@ -690,6 +690,40 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
     return rc;
 }
 
+UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR szTable, INT iSequenceMode )
+{
+    MSIQUERY * view;
+    UINT r;
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','%','s','`',
+         ' ','W','H','E','R','E',' ', 
+         '`','S','e','q','u','e','n','c','e','`',' ',
+         '>',' ','0',' ','O','R','D','E','R',' ','B','Y',' ',
+         '`','S','e','q','u','e','n','c','e','`',0};
+    iterate_action_param iap;
+
+    /*
+     * FIXME: probably should be checking UILevel in the
+     *       ACTION_PerformUIAction/ACTION_PerformAction
+     *       rather than saving the UI level here. Those
+     *       two functions can be merged too.
+     */
+    iap.package = package;
+    iap.UI = TRUE;
+
+    TRACE("%p %s %i\n", package, debugstr_w(szTable), iSequenceMode );
+
+    r = MSI_OpenQuery( package->db, &view, query, szTable );
+    if (r == ERROR_SUCCESS)
+    {
+        r = MSI_IterateRecords( view, NULL, ITERATE_Actions, &iap );
+        msiobj_release(&view->hdr);
+    }
+
+    return r;
+}
+
 static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
 {
     MSIQUERY * view;
