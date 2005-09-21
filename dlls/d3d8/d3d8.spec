@@ -1,5 +1,5 @@
 @ stdcall D3D8GetSWInfo()
 @ stdcall DebugSetMute()
 @ stdcall Direct3DCreate8(long)
-@ stdcall ValidatePixelShader(ptr ptr)
-@ stdcall ValidateVertexShader(ptr)
+@ stdcall ValidatePixelShader(ptr long long ptr)
+@ stdcall ValidateVertexShader(ptr long long ptr)
