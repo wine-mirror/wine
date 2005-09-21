@@ -488,6 +488,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         msi_free( folder->ResolvedTarget );
         msi_free( folder->ResolvedSource );
         msi_free( folder->Property );
+        msi_free( folder );
     }
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->components )

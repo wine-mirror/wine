@@ -1524,6 +1524,7 @@ static UINT msi_dialog_set_property( msi_dialog *dialog, LPCWSTR event, LPCWSTR 
         if( strcmpW( szNullArg, arg ) )
             deformat_string( dialog->package, arg, &arg_fmt );
         MSI_SetPropertyW( dialog->package, prop, arg_fmt );
+        msi_free( arg_fmt );
     }
     else
         ERR("Badly formatted property string - what happens?\n");

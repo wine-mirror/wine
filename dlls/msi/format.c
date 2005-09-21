@@ -368,6 +368,7 @@ static LPWSTR deformat_group(MSIPACKAGE* package, LPWSTR group, DWORD len,
      }
      else
      {
+         msi_free(value);
          *size = 0;
          return NULL;
      }
@@ -423,6 +424,7 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
         {
             value = deformat_group(package, key, strlenW(key)+1, record, 
                             &chunk);
+            msi_free( key );
             key = NULL;
             nested = FALSE;
         }
