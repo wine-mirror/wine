@@ -505,12 +505,9 @@ static void check_undefined_exports( DLLSPEC *spec )
 /* create a .o file that references all the undefined symbols we want to resolve */
 static char *create_undef_symbols_file( DLLSPEC *spec )
 {
-    char *cmd, *as_file, *obj_file;
+    char *as_file, *obj_file;
     unsigned int i;
     FILE *f;
-    int err;
-
-    if (!as_command) as_command = xstrdup("as");
 
     as_file = get_temp_file_name( output_file_name, ".s" );
     if (!(f = fopen( as_file, "w" ))) fatal_error( "Cannot create %s\n", as_file );
@@ -528,11 +525,7 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
     fclose( f );
 
     obj_file = get_temp_file_name( output_file_name, ".o" );
-    cmd = xmalloc( strlen(as_command) + strlen(obj_file) + strlen(as_file) + 6 );
-    sprintf( cmd, "%s -o %s %s", as_command, obj_file, as_file );
-    err = system( cmd );
-    if (err) fatal_error( "%s failed with status %d\n", as_command, err );
-    free( cmd );
+    assemble_file( as_file, obj_file );
     return obj_file;
 }
 
@@ -553,6 +546,7 @@ static const char *ldcombine_files( DLLSPEC *spec, char **argv )
     p += sprintf( cmd, "%s -r -o %s %s", ld_command, ld_tmp_file, undef_file );
     for (i = 0; argv[i]; i++)
         p += sprintf( p, " %s", argv[i] );
+    if (verbose) fprintf( stderr, "%s\n", cmd );
     err = system( cmd );
     if (err) fatal_error( "%s -r failed with status %d\n", ld_command, err );
     free( cmd );

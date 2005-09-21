@@ -46,6 +46,8 @@ int nb_lib_paths = 0;
 int nb_errors = 0;
 int display_warnings = 0;
 int kill_at = 0;
+int verbose = 0;
+int save_temps = 0;
 
 #ifdef __i386__
 enum target_cpu target_cpu = CPU_x86;
@@ -77,6 +79,7 @@ char **lib_path = NULL;
 char *input_file_name = NULL;
 char *spec_file_name = NULL;
 const char *output_file_name = NULL;
+static const char *output_file_source_name;
 
 char *as_command = NULL;
 char *ld_command = NULL;
@@ -266,9 +269,11 @@ static const char usage_str[] =
 "   -N, --dll-name=DLLNAME   Set the DLL name (default: from input file name)\n"
 "   -o, --output=NAME        Set the output file name (default: stdout)\n"
 "   -r, --res=RSRC.RES       Load resources from RSRC.RES\n"
+"       --save-temps         Do not delete the generated intermediate files\n"
 "       --subsystem=SUBSYS   Set the subsystem (one of native, windows, console)\n"
 "       --target=TARGET      Specify target CPU and platform for cross-compiling\n"
 "   -u, --undefined=SYMBOL   Add an undefined reference to SYMBOL when linking\n"
+"   -v, --verbose            Display the programs invoked\n"
 "       --version            Print the version and exit\n"
 "   -w, --warnings           Turn on warnings\n"
 "\nMode options:\n"
@@ -291,12 +296,13 @@ enum long_options_values
     LONG_OPT_NMCMD,
     LONG_OPT_RELAY16,
     LONG_OPT_RELAY32,
+    LONG_OPT_SAVE_TEMPS,
     LONG_OPT_SUBSYSTEM,
     LONG_OPT_TARGET,
     LONG_OPT_VERSION
 };
 
-static const char short_options[] = "C:D:E:F:H:I:K:L:M:N:d:e:f:hi:kl:m:o:r:u:w";
+static const char short_options[] = "C:D:E:F:H:I:K:L:M:N:d:e:f:hi:kl:m:o:r:u:vw";
 
 static const struct option long_options[] =
 {
@@ -309,6 +315,7 @@ static const struct option long_options[] =
     { "nm-cmd",   1, 0, LONG_OPT_NMCMD },
     { "relay16",  0, 0, LONG_OPT_RELAY16 },
     { "relay32",  0, 0, LONG_OPT_RELAY32 },
+    { "save-temps",0, 0, LONG_OPT_SAVE_TEMPS },
     { "subsystem",1, 0, LONG_OPT_SUBSYSTEM },
     { "target",   1, 0, LONG_OPT_TARGET },
     { "version",  0, 0, LONG_OPT_VERSION },
@@ -329,6 +336,7 @@ static const struct option long_options[] =
     { "output",        1, 0, 'o' },
     { "res",           1, 0, 'r' },
     { "undefined",     1, 0, 'u' },
+    { "verbose",       0, 0, 'v' },
     { "warnings",      0, 0, 'w' },
     { NULL,            0, 0, 0 }
 };
@@ -424,12 +432,25 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             add_import_dll( optarg, NULL );
             break;
         case 'o':
-            if (unlink( optarg ) == -1 && errno != ENOENT)
-                fatal_error( "Unable to create output file '%s'\n", optarg );
-            if (!(output_file = fopen( optarg, "w" )))
-                fatal_error( "Unable to create output file '%s'\n", optarg );
-            output_file_name = xstrdup(optarg);
-            atexit( cleanup );  /* make sure we remove the output file on exit */
+            {
+                char *ext = strrchr( optarg, '.' );
+
+                if (unlink( optarg ) == -1 && errno != ENOENT)
+                    fatal_error( "Unable to create output file '%s'\n", optarg );
+                if (ext && !strcmp( ext, ".o" ))
+                {
+                    output_file_source_name = get_temp_file_name( optarg, ".s" );
+                    if (!(output_file = fopen( output_file_source_name, "w" )))
+                        fatal_error( "Unable to create output file '%s'\n", optarg );
+                }
+                else
+                {
+                    if (!(output_file = fopen( optarg, "w" )))
+                        fatal_error( "Unable to create output file '%s'\n", optarg );
+                }
+                output_file_name = xstrdup(optarg);
+                atexit( cleanup );  /* make sure we remove the output file on exit */
+            }
             break;
         case 'r':
             res_files = xrealloc( res_files, (nb_res_files+1) * sizeof(*res_files) );
@@ -437,6 +458,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case 'u':
             add_extra_ld_symbol( optarg );
+            break;
+        case 'v':
+            verbose++;
             break;
         case 'w':
             display_warnings = 1;
@@ -468,6 +492,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_RELAY32:
             set_exec_mode( MODE_RELAY32 );
+            break;
+        case LONG_OPT_SAVE_TEMPS:
+            save_temps = 1;
             break;
         case LONG_OPT_SUBSYSTEM:
             set_subsystem( optarg, spec );
@@ -624,6 +651,7 @@ int main(int argc, char **argv)
     if (output_file_name)
     {
         fclose( output_file );
+        if (output_file_source_name) assemble_file( output_file_source_name, output_file_name );
         output_file_name = NULL;
     }
     return 0;

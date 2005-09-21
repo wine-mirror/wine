@@ -177,6 +177,7 @@ extern void close_input_file( FILE *file );
 extern void dump_bytes( FILE *outfile, const unsigned char *data, int len,
                         const char *label, int constant );
 extern int remove_stdcall_decoration( char *name );
+extern void assemble_file( const char *src_file, const char *obj_file );
 extern DLLSPEC *alloc_dll_spec(void);
 extern void free_dll_spec( DLLSPEC *spec );
 extern int has_stubs( const DLLSPEC *spec );
@@ -233,6 +234,8 @@ extern int nb_lib_paths;
 extern int nb_errors;
 extern int display_warnings;
 extern int kill_at;
+extern int verbose;
+extern int save_temps;
 
 extern char *input_file_name;
 extern char *spec_file_name;

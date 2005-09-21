@@ -166,22 +166,27 @@ void warning( const char *msg, ... )
 char *get_temp_file_name( const char *prefix, const char *suffix )
 {
     char *name;
+    const char *ext;
     int fd;
 
     assert( nb_tmp_files < MAX_TMP_FILES );
-    if (!nb_tmp_files) atexit( cleanup_tmp_files );
+    if (!nb_tmp_files && !save_temps) atexit( cleanup_tmp_files );
 
-    if (!prefix || !prefix[0]) prefix = "winebuild.tmp";
+    if (!prefix || !prefix[0]) prefix = "winebuild";
     if (!suffix) suffix = "";
-    name = xmalloc( strlen(prefix) + strlen(suffix) + sizeof("/tmp/.XXXXXX") );
-    sprintf( name, "%s.XXXXXX%s", prefix, suffix );
+    if (!(ext = strchr( prefix, '.' ))) ext = prefix + strlen(prefix);
+    name = xmalloc( sizeof("/tmp/") + (ext - prefix) + sizeof(".XXXXXX") + strlen(suffix) );
+    strcpy( name, "/tmp/" );
+    memcpy( name + 5, prefix, ext - prefix );
+    strcpy( name + 5 + (ext - prefix), ".XXXXXX" );
+    strcat( name, suffix );
 
-    if ((fd = mkstemps( name, strlen(suffix) ) == -1))
-    {
-        sprintf( name, "/tmp/%s.XXXXXX%s", prefix, suffix );
-        if ((fd = mkstemps( name, strlen(suffix) ) == -1))
-            fatal_error( "could not generate a temp file\n" );
-    }
+    /* first try without the /tmp/ prefix */
+    if ((fd = mkstemps( name + 5, strlen(suffix) )) != -1)
+        name += 5;
+    else if ((fd = mkstemps( name, strlen(suffix) )) == -1)
+        fatal_error( "could not generate a temp file\n" );
+
     close( fd );
     tmp_files[nb_tmp_files++] = name;
     return name;
@@ -272,6 +277,26 @@ int remove_stdcall_decoration( char *name )
     for (p = end + 1; *p; p++) if (!isdigit(*p)) return -1;
     *end = 0;
     return atoi( end + 1 );
+}
+
+
+/*******************************************************************
+ *         assemble_file
+ *
+ * Run a file through the assembler.
+ */
+void assemble_file( const char *src_file, const char *obj_file )
+{
+    char *cmd;
+    int err;
+
+    if (!as_command) as_command = xstrdup("as");
+    cmd = xmalloc( strlen(as_command) + strlen(obj_file) + strlen(src_file) + 6 );
+    sprintf( cmd, "%s -o %s %s", as_command, obj_file, src_file );
+    if (verbose) fprintf( stderr, "%s\n", cmd );
+    err = system( cmd );
+    if (err) fatal_error( "%s failed with status %d\n", as_command, err );
+    free( cmd );
 }
 
 
