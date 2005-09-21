@@ -1,4 +1,3 @@
 Makefile
 libwinedos.def
 winedos.dll.dbg.c
-wprocs.spec.c

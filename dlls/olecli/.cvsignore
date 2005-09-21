@@ -1,4 +1,3 @@
 Makefile
 libolecli32.def
-olecli.spec.c
 olecli32.dll.dbg.c

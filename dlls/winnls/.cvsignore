@@ -1,4 +1,3 @@
 Makefile
 libwinnls32.def
-winnls.spec.c
 winnls32.dll.dbg.c

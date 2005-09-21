@@ -1,4 +1,3 @@
 Makefile
 libwintab32.def
-wintab.spec.c
 wintab32.dll.dbg.c

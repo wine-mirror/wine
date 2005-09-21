@@ -1,4 +1,3 @@
 Makefile
 libversion.def
-ver.spec.c
 version.dll.dbg.c

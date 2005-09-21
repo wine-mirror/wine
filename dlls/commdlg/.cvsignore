@@ -2,7 +2,6 @@
 Makefile
 cdrom.ico
 comdlg32.dll.dbg.c
-commdlg.spec.c
 floppy.ico
 folder.ico
 folder2.ico

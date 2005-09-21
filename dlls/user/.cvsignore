@@ -1,8 +1,3 @@
 Makefile
-ddeml.spec.c
-display.drv.spec.c
-keyboard.drv.spec.c
 libuser32.def
-mouse.drv.spec.c
-user.exe.spec.c
 user32.dll.dbg.c

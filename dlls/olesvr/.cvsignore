@@ -1,4 +1,3 @@
 Makefile
 libolesvr32.def
-olesvr.spec.c
 olesvr32.dll.dbg.c

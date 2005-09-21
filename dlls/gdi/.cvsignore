@@ -1,8 +1,5 @@
 Makefile
-dispdib.spec.c
-gdi.exe.spec.c
 gdi32.dll.dbg.c
 libgdi32.def
 version.res
 version16.res
-wing.spec.c

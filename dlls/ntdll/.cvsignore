@@ -1,4 +1,3 @@
 Makefile
 libntdll.def
 ntdll.dll.dbg.c
-relay32.s

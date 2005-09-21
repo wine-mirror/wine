@@ -1,13 +1,5 @@
 Makefile
-comm.drv.spec.c
 kernel.res
 kernel32.dll.dbg.c
-krnl386.exe.spec.c
 libkernel32.def
-relay16asm.s
-stress.spec.c
-system.drv.spec.c
-toolhelp.spec.c
 version16.res
-win87em.spec.c
-windebug.spec.c

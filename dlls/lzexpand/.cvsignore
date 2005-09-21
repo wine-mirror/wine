@@ -1,4 +1,3 @@
 Makefile
 liblz32.def
 lz32.dll.dbg.c
-lzexpand.spec.c

@@ -1,16 +1,9 @@
 Makefile
-compobj.spec.c
 dcom.h
 drag_copy.cur
 drag_link.cur
 drag_move.cur
 libole32.def
 nodrop.cur
-ole2.spec.c
-ole2conv.spec.c
-ole2nls.spec.c
-ole2prox.spec.c
-ole2thk.spec.c
 ole32.dll.dbg.c
 ole32res.res
-storage.spec.c
