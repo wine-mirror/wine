@@ -63,7 +63,7 @@ typedef struct
 
 typedef struct
 {
-    int value;
+    unsigned short value;
 } ORD_ABS;
 
 typedef struct

@@ -355,6 +355,11 @@ static int parse_spec_equate( ORDDEF *odp, DLLSPEC *spec )
         error( "Expected number value, got '%s'\n", token );
         return 0;
     }
+    if (value < -0x8000 || value > 0xffff)
+    {
+        error( "Value %d for absolute symbol doesn't fit in 16 bits\n", value );
+        value = 0;
+    }
     odp->u.abs.value = value;
     return 1;
 }
