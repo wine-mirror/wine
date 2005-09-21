@@ -269,12 +269,7 @@ extern void msiobj_lock(MSIOBJECTHDR *);
 extern void msiobj_unlock(MSIOBJECTHDR *);
 extern MSIHANDLE msiobj_findhandle( MSIOBJECTHDR *hdr );
 
-/* add this table to the list of cached tables in the database */
-extern void add_table(MSIDATABASE *db, MSITABLE *table);
-extern void remove_table( MSIDATABASE *db, MSITABLE *table );
 extern void free_cached_tables( MSIDATABASE *db );
-extern UINT find_cached_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **table);
-extern UINT get_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **table);
 extern string_table *load_string_table( IStorage *stg );
 extern UINT MSI_CommitTables( MSIDATABASE *db );
 extern HRESULT init_string_table( IStorage *stg );

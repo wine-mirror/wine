@@ -51,7 +51,6 @@ typedef struct tagMSICOLUMNINFO
 struct tagMSITABLE
 {
     USHORT **data;
-    UINT ref_count;
     UINT row_count;
     struct list entry;
     WCHAR name[1];
@@ -405,55 +404,48 @@ static void free_table( MSITABLE *table )
     msi_free( table );
 }
 
-static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **ptable)
+static MSITABLE *read_table_from_storage( MSIDATABASE *db, LPCWSTR name )
 {
     MSITABLE *t;
     USHORT *rawdata = NULL;
     UINT rawsize = 0, r, i, j, row_size = 0, num_cols = 0;
-    MSICOLUMNINFO *cols, *last_col;
+    MSICOLUMNINFO *cols = NULL, *last_col;
 
     TRACE("%s\n",debugstr_w(name));
 
     /* nonexistent tables should be interpreted as empty tables */
     t = msi_alloc( sizeof (MSITABLE) + lstrlenW(name)*sizeof (WCHAR) );
     if( !t )
-        return ERROR_NOT_ENOUGH_MEMORY;
+        return t;
 
     r = table_get_column_info( db, name, &cols, &num_cols );
     if( r != ERROR_SUCCESS )
-    {
-        msi_free( t );
-        return r;
-    }
+        goto err;
+
     last_col = &cols[num_cols-1];
     row_size = last_col->offset + bytes_per_column( last_col );
 
     t->row_count = 0;
     t->data = NULL;
     lstrcpyW( t->name, name );
-    t->ref_count = 1;
-    *ptable = t;
 
     /* if we can't read the table, just assume that it's empty */
     read_stream_data( db->storage, name, &rawdata, &rawsize );
     if( !rawdata )
-        return ERROR_SUCCESS;
+        return t;
 
     TRACE("Read %d bytes\n", rawsize );
 
     if( rawsize % row_size )
     {
         WARN("Table size is invalid %d/%d\n", rawsize, row_size );
-        return ERROR_FUNCTION_FAILED;
+        goto err;
     }
 
     t->row_count = rawsize / row_size;
     t->data = msi_alloc_zero( t->row_count * sizeof (USHORT*) );
     if( !t->data )
-    {
-        r = ERROR_NOT_ENOUGH_MEMORY;
         goto err;
-    }
 
     /* transpose all the data */
     TRACE("Transposing data from %d columns\n", t->row_count );
@@ -461,10 +453,8 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
     {
         t->data[i] = msi_alloc( row_size );
         if( !t->data[i] )
-        {
-            r = ERROR_NOT_ENOUGH_MEMORY;
             goto err;
-        }
+
         for( j=0; j<num_cols; j++ )
         {
             UINT ofs = cols[j].offset/2;
@@ -481,7 +471,6 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
                 break;
             default:
                 ERR("oops - unknown column width %d\n", n);
-                r = ERROR_FUNCTION_FAILED;
                 goto err;
             }
         }
@@ -490,38 +479,13 @@ static UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **p
     msi_free( cols );
     msi_free( rawdata );
 
-    return ERROR_SUCCESS;
+    return t;
 
 err:
     msi_free( cols );
     msi_free( rawdata );
     free_table( t );
-    return r;
-}
-
-/* add this table to the list of cached tables in the database */
-void add_table(MSIDATABASE *db, MSITABLE *table)
-{
-    list_add_head( &db->tables, &table->entry );
-}
- 
-/* remove from the list of cached tables */
-void remove_table( MSIDATABASE *db, MSITABLE *table )
-{
-    list_remove( &table->entry );
-}
-
-static void release_table( MSIDATABASE *db, MSITABLE *table )
-{
-    if( !table->ref_count )
-        ERR("Trying to destroy table with refcount 0\n");
-    table->ref_count --;
-    if( !table->ref_count )
-    {
-        remove_table( db, table );
-        TRACE("Destroying table %s\n", debugstr_w(table->name));
-        free_table( table );
-    }
+    return NULL;
 }
 
 void free_cached_tables( MSIDATABASE *db )
@@ -531,28 +495,19 @@ void free_cached_tables( MSIDATABASE *db )
         MSITABLE *t = LIST_ENTRY( list_head( &db->tables ), MSITABLE, entry );
 
         list_remove( &t->entry );
-        if ( --t->ref_count )
-            ERR("table ref count not zero for %s\n", debugstr_w(t->name));
-        remove_table( db, t );
-        msi_free( t->data );
-        msi_free( t );
+        free_table( t );
     }
 }
 
-UINT find_cached_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **ptable)
+static MSITABLE *find_cached_table(MSIDATABASE *db, LPCWSTR name )
 {
     MSITABLE *t;
 
     LIST_FOR_EACH_ENTRY( t, &db->tables, MSITABLE, entry )
-    {
         if( !lstrcmpW( name, t->name ) )
-        {
-            *ptable = t;
-            return ERROR_SUCCESS;
-        }
-    }
+            return t;
 
-    return ERROR_FUNCTION_FAILED;
+    return NULL;
 }
 
 static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name, MSICOLUMNINFO **pcols, UINT *pcount )
@@ -589,29 +544,20 @@ static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name, MSICOLUMNINFO 
     return r;
 }
 
-UINT get_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **ptable)
+static MSITABLE *get_table( MSIDATABASE *db, LPCWSTR name )
 {
-    UINT r;
-
-    *ptable = NULL;
+    MSITABLE *table;
 
     /* first, see if the table is cached */
-    r = find_cached_table( db, name, ptable );
-    if( r == ERROR_SUCCESS )
-    {
-        (*ptable)->ref_count++;
-        return r;
-    }
+    table = find_cached_table( db, name );
+    if( table )
+        return table;
 
-    r = read_table_from_storage( db, name, ptable );
-    if( r != ERROR_SUCCESS )
-        return r;
+    table = read_table_from_storage( db, name );
+    if( table )
+        list_add_head( &db->tables, &table->entry );
 
-    /* add the table to the list */
-    add_table( db, *ptable );
-    (*ptable)->ref_count++;
-
-    return ERROR_SUCCESS;
+    return table;
 }
 
 static UINT save_table( MSIDATABASE *db, MSITABLE *t )
@@ -918,13 +864,13 @@ LPWSTR MSI_makestring( MSIDATABASE *db, UINT stringid)
     r = msi_id2stringW( db->strings, stringid, NULL, &sz );
     if( r != ERROR_SUCCESS )
         return NULL;
-    str = msi_alloc( sz*sizeof (WCHAR));
+    str = msi_alloc( sz*sizeof (WCHAR) );
     if( !str )
         return str;
     r = msi_id2stringW( db->strings, stringid, str, &sz );
     if( r == ERROR_SUCCESS )
         return str;
-    msi_free(  str );
+    msi_free( str );
     return NULL;
 }
 
@@ -933,25 +879,23 @@ static UINT get_tablecolumns( MSIDATABASE *db,
 {
     UINT r, i, n=0, table_id, count, maxcount = *sz;
     MSITABLE *table = NULL;
-    static const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
 
     /* first check if there is a default table with that name */
     r = get_defaulttablecolumns( szTableName, colinfo, sz );
     if( ( r == ERROR_SUCCESS ) && *sz )
         return r;
 
-    r = get_table( db, szColumns, &table);
-    if( r != ERROR_SUCCESS )
+    table = get_table( db, szColumns );
+    if( !table )
     {
         WARN("table %s not available\n", debugstr_w(szColumns));
-        return r;
+        return ERROR_FUNCTION_FAILED;
     }
 
     /* convert table and column names to IDs from the string table */
     r = msi_string2idW( db->strings, szTableName, &table_id );
     if( r != ERROR_SUCCESS )
     {
-        release_table( db, table );
         WARN("Couldn't find id for %s\n", debugstr_w(szTableName));
         return r;
     }
@@ -993,16 +937,12 @@ static UINT get_tablecolumns( MSIDATABASE *db,
     }
     *sz = n;
 
-    release_table( db, table );
-
     return ERROR_SUCCESS;
 }
 
 /* try to find the table name in the _Tables table */
 BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name )
 {
-    static const WCHAR szTables[] = { '_','T','a','b','l','e','s',0 };
-    static const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
     UINT r, table_id = 0, i, count;
     MSITABLE *table = NULL;
 
@@ -1018,8 +958,8 @@ BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name )
         return FALSE;
     }
 
-    r = get_table( db, szTables, &table);
-    if( r != ERROR_SUCCESS )
+    table = get_table( db, szTables );
+    if( !table )
     {
         TRACE("table %s not available\n", debugstr_w(szTables));
         return FALSE;
@@ -1030,8 +970,6 @@ BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name )
     for( i=0; i<count; i++ )
         if( table->data[ i ][ 0 ] == table_id )
             break;
-
-    release_table( db, table );
 
     if (i!=count)
         return TRUE;
@@ -1226,19 +1164,12 @@ static UINT table_create_new_row( struct tagMSIVIEW *view, UINT *num )
 static UINT TABLE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
-    UINT r;
 
     TRACE("%p %p\n", tv, record);
 
-    if( tv->table )
-    {
-        release_table( tv->db, tv->table );
-        tv->table = NULL;
-    }
-
-    r = get_table( tv->db, tv->name, &tv->table );
-    if( r != ERROR_SUCCESS )
-        return r;
+    tv->table = get_table( tv->db, tv->name );
+    if( !tv->table )
+        return ERROR_FUNCTION_FAILED;
 
     return ERROR_SUCCESS;
 }
@@ -1252,7 +1183,6 @@ static UINT TABLE_close( struct tagMSIVIEW *view )
     if( !tv->table )
         return ERROR_FUNCTION_FAILED;
 
-    release_table( tv->db, tv->table );
     tv->table = NULL;
     
     return ERROR_SUCCESS;
@@ -1467,8 +1397,6 @@ static UINT TABLE_delete( struct tagMSIVIEW *view )
 
     TRACE("%p\n", view );
 
-    if( tv->table )
-        release_table( tv->db, tv->table );
     tv->table = NULL;
 
     if( tv->columns )
@@ -1506,7 +1434,7 @@ MSIVIEWOPS table_ops =
 UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view )
 {
     MSITABLEVIEW *tv ;
-    UINT r, sz, column_count;
+    UINT r, sz, column_count = 0;
     MSICOLUMNINFO *columns, *last_col;
 
     TRACE("%p %s %p\n", db, debugstr_w(name), view );
