@@ -373,48 +373,6 @@ static const char* compile_to_object(struct options* opts, const char* file, con
     return copts.output_name;
 }
 
-static void assemble(struct options* opts)
-{
-    int i;
-
-    for (i = 0; i < opts->files->size; i++ )
-    {
-        if (opts->files->base[i][0] != '-')
-        {
-            strarray* as_args = strarray_alloc();
-            strarray_addall(as_args, get_translator(proc_as));
-
-            if (opts->output_name)
-            {
-                strarray_add(as_args, "-o");
-                strarray_add(as_args, opts->output_name);
-            }
-            strarray_add(as_args, opts->files->base[i]);
-            spawn(opts->prefix, as_args, 0);
-            strarray_free(as_args);
-        }
-    }
-}
-
-static const char* assemble_to_object(struct options* opts, const char* file)
-{
-    struct options copts;
-    char* base_name;
-
-    /* make a copy so we don't change any of the initial stuff */
-    /* a shallow copy is exactly what we want in this case */
-    base_name = get_basename(file);
-    copts = *opts;
-    copts.output_name = get_temp_file(base_name, ".o");
-    copts.files = strarray_alloc();
-    strarray_add(copts.files, file);
-    assemble(&copts);
-    strarray_free(copts.files);
-    free(base_name);
-
-    return copts.output_name;
-}
-
 /* check if there is a static lib associated to a given dll */
 static char *find_static_lib( const char *dll )
 {
@@ -430,7 +388,7 @@ static void build(struct options* opts)
     strarray *lib_dirs, *files;
     strarray *spec_args, *link_args;
     char *output_file;
-    const char *spec_s_name, *spec_o_name;
+    const char *spec_o_name;
     const char *output_name, *spec_file, *lang;
     const char* winebuild = getenv("WINEBUILD");
     int generate_app_loader = 1;
@@ -586,10 +544,12 @@ static void build(struct options* opts)
         free( fullname );
     }
 
-    /* run winebuild to generate the .spec.c file */
+    /* run winebuild to generate the .spec.o file */
     spec_args = strarray_alloc();
-    spec_s_name = get_temp_file(output_name, ".spec.s");
+    spec_o_name = get_temp_file(output_name, ".spec.o");
     strarray_add(spec_args, winebuild);
+    if (verbose) strarray_add(spec_args, "-v");
+    if (keep_generated) strarray_add(spec_args, "--save-temps");
     strarray_add(spec_args, "--as-cmd");
     strarray_add(spec_args, AS);
     strarray_add(spec_args, "--ld-cmd");
@@ -597,7 +557,7 @@ static void build(struct options* opts)
     strarray_addall(spec_args, strarray_fromstring(DLLFLAGS, " "));
     strarray_add(spec_args, opts->shared ? "--dll" : "--exe");
     strarray_add(spec_args, "-o");
-    strarray_add(spec_args, spec_s_name);
+    strarray_add(spec_args, spec_o_name);
     if (spec_file)
     {
         strarray_add(spec_args, "-E");
@@ -642,9 +602,6 @@ static void build(struct options* opts)
     }
 
     spawn(opts->prefix, spec_args, 0);
-
-    /* assemble the .spec.s file into a .spec.o file */
-    spec_o_name = assemble_to_object(opts, spec_s_name);
 
     /* link everything together now */
     link_args = strarray_alloc();
