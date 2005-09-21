@@ -866,7 +866,14 @@ typedef struct SAVEDSTATES {
         BOOL                      vertexDecl;
         BOOL                      pixelShader;
         BOOL                      vertexShader;
+        BOOL                      vertexShaderConstants[MAX_VSHADER_CONSTANTS];
 } SAVEDSTATES;
+
+typedef enum {
+    WINESHADERCNST_FLOAT    = 0,
+    WINESHADERCNST_INTEGER  = 1,
+    WINESHADERCNST_BOOL     = 2
+} WINESHADERCNST;
 
 struct IWineD3DStateBlockImpl
 {
@@ -894,8 +901,9 @@ struct IWineD3DStateBlockImpl
     BOOL                       vertexShaderConstantB[MAX_VSHADER_CONSTANTS];
     INT                        vertexShaderConstantI[MAX_VSHADER_CONSTANTS * 4];
     float                      vertexShaderConstantF[MAX_VSHADER_CONSTANTS * 4];
+    WINESHADERCNST             vertexShaderConstantT[MAX_VSHADER_CONSTANTS]; /* TODO: Think about changing this to a char to possibly save a little memory */
 
-    BOOL                      softwareVertexProcessing;
+    BOOL                       softwareVertexProcessing;
 
     /* Stream Source */
     BOOL                      streamIsUP;

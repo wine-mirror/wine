@@ -157,7 +157,22 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
             TRACE("Updating vertex shader to %p\n", targetStateBlock->vertexShader);
         }
 
-        /* TODO: Vertex Shader Constants */
+        /* Vertex Shader Constants */
+        for (i = 0; i < MAX_VSHADER_CONSTANTS; ++i) {
+            if (This->set.vertexShaderConstants[i]) {
+                TRACE("Setting %p from %p %d to %f\n", This, targetStateBlock, i,  targetStateBlock->vertexShaderConstantF[i * 4 + 1]);
+                This->vertexShaderConstantB[i] = targetStateBlock->vertexShaderConstantB[i];
+                This->vertexShaderConstantF[i * 4]      = targetStateBlock->vertexShaderConstantF[i * 4];
+                This->vertexShaderConstantF[i * 4 + 1]  = targetStateBlock->vertexShaderConstantF[i * 4 + 1];
+                This->vertexShaderConstantF[i * 4 + 2]  = targetStateBlock->vertexShaderConstantF[i * 4 + 2];
+                This->vertexShaderConstantF[i * 4 + 3]  = targetStateBlock->vertexShaderConstantF[i * 4 + 3];
+                This->vertexShaderConstantI[i * 4]      = targetStateBlock->vertexShaderConstantI[i * 4];
+                This->vertexShaderConstantI[i * 4 + 1]  = targetStateBlock->vertexShaderConstantI[i * 4 + 1];
+                This->vertexShaderConstantI[i * 4 + 2]  = targetStateBlock->vertexShaderConstantI[i * 4 + 2];
+                This->vertexShaderConstantI[i * 4 + 3]  = targetStateBlock->vertexShaderConstantI[i * 4 + 3];
+                This->vertexShaderConstantT[i]          = targetStateBlock->vertexShaderConstantT[i];
+            }
+        }
 
         /* Lights... For a recorded state block, we just had a chain of actions to perform,
              so we need to walk that chain and update any actions which differ */
@@ -346,14 +361,26 @@ should really perform a delta so that only the changes get updated*/
             toDo = toDo->next;
         }
 
+        /* Vertex Shader */
         if (This->set.vertexShader && This->changed.vertexShader) {
             IWineD3DDevice_SetVertexShader(pDevice, This->vertexShader);
-            /* TODO: Vertex Shader Constants */
-#if 0       /* FIXME: This isn't the correct place to set vs constants (The Fur demo fails) */
-            IWineD3DDevice_SetVertexShaderConstantB(pDevice, 0 , This->vertexShaderConstantB , MAX_VSHADER_CONSTANTS);
-            IWineD3DDevice_SetVertexShaderConstantI(pDevice, 0 , This->vertexShaderConstantI , MAX_VSHADER_CONSTANTS);
-            IWineD3DDevice_SetVertexShaderConstantF(pDevice, 0 , This->vertexShaderConstantF , MAX_VSHADER_CONSTANTS);
-#endif
+        }
+
+        /* Vertex Shader Constants */
+        for (i = 0; i < MAX_VSHADER_CONSTANTS; ++i) {
+            if (This->set.vertexShaderConstants[i] && This->changed.vertexShaderConstants[i]) {
+                switch (This->vertexShaderConstantT[i]) {
+                case WINESHADERCNST_FLOAT:
+                    IWineD3DDevice_SetVertexShaderConstantF(pDevice, i, This->vertexShaderConstantF + i * 4, 1);
+                break;
+                case WINESHADERCNST_BOOL:
+                    IWineD3DDevice_SetVertexShaderConstantB(pDevice, i, This->vertexShaderConstantB + i, 1);
+                break;
+                case WINESHADERCNST_INTEGER:
+                    IWineD3DDevice_SetVertexShaderConstantI(pDevice, i, This->vertexShaderConstantI + i * 4, 1);
+                break;
+                }
+            }
         }
 
     }
