@@ -1652,6 +1652,7 @@ dlls/secur32/tests/Makefile
 dlls/sensapi/Makefile
 dlls/serialui/Makefile
 dlls/setupapi/Makefile
+dlls/setupapi/tests/Makefile
 dlls/shdocvw/Makefile
 dlls/shell32/Makefile
 dlls/shell32/tests/Makefile
