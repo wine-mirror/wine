@@ -50,7 +50,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
-WINE_DECLARE_DEBUG_CHANNEL(accel);
 
 #define HICON_16(h32)		(LOWORD(h32))
 #define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))

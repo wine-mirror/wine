@@ -20,7 +20,6 @@
 #include "dmstyle_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
-WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
 /*****************************************************************************
  * IDirectMusicMuteTrack implementation

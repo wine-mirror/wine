@@ -21,7 +21,6 @@
 #include "dmime_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
-WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
 LONG DMIME_refCount = 0;
 

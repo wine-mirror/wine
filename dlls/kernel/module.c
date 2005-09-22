@@ -45,8 +45,6 @@
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
-WINE_DECLARE_DEBUG_CHANNEL(loaddll);
-
 
 static WCHAR *dll_directory;  /* extra path for SetDllDirectoryW */
 

@@ -30,7 +30,6 @@
 #include "wintab.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
-WINE_DECLARE_DEBUG_CHANNEL(event);
 
 typedef struct tagWTI_CURSORS_INFO
 {

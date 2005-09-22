@@ -42,7 +42,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
-WINE_DECLARE_DEBUG_CHANNEL(x11drv);
 
 static struct list dibs_list = LIST_INIT(dibs_list);
 

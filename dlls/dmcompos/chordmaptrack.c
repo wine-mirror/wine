@@ -20,7 +20,6 @@
 #include "dmcompos_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
-WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
 /*****************************************************************************
  * IDirectMusicChordMapTrack implementation

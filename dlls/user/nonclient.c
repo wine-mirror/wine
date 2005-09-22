@@ -35,7 +35,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nonclient);
-WINE_DECLARE_DEBUG_CHANNEL(shell);
 
 BOOL NC_DrawGrayButton(HDC hdc, int x, int y);
 
