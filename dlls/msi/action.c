@@ -2815,12 +2815,12 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
 
     if (!MSI_RecordIsNull(row,9))
     {
-        WCHAR *Path = NULL;
+        LPWSTR Path;
         INT index; 
 
         buffer = MSI_RecordGetString(row,9);
 
-        build_icon_path(package,buffer,&Path);
+        Path = build_icon_path(package,buffer);
         index = MSI_RecordGetInteger(row,10);
 
         IShellLinkW_SetIconLocation(sl,Path,index);
@@ -2885,8 +2885,8 @@ static UINT ITERATE_PublishProduct(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE* package = (MSIPACKAGE*)param;
     HANDLE the_file;
-    LPWSTR FilePath=NULL;
-    LPCWSTR FileName=NULL;
+    LPWSTR FilePath;
+    LPCWSTR FileName;
     CHAR buffer[1024];
     DWORD sz;
     UINT rc;
@@ -2898,7 +2898,7 @@ static UINT ITERATE_PublishProduct(MSIRECORD *row, LPVOID param)
         return ERROR_SUCCESS;
     }
 
-    build_icon_path(package,FileName,&FilePath);
+    FilePath = build_icon_path(package,FileName);
 
     TRACE("Creating icon file at %s\n",debugstr_w(FilePath));
 
@@ -2995,9 +2995,9 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     buffer = msi_dup_property( package, szARPProductIcon );
     if (buffer)
     {
-        LPWSTR path;
-        build_icon_path(package,buffer,&path);
+        LPWSTR path = build_icon_path(package,buffer);
         msi_reg_set_val_str( hukey, INSTALLPROPERTY_PRODUCTICONW, path );
+        msi_free( path );
     }
     msi_free(buffer);
 

@@ -84,11 +84,9 @@ DWORD build_version_dword(LPCWSTR version_string)
     return rc;
 }
 
-UINT build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name, 
-                            LPWSTR *FilePath)
+LPWSTR build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name )
 {
-    LPWSTR SystemFolder;
-    LPWSTR dest;
+    LPWSTR SystemFolder, dest, FilePath;
 
     static const WCHAR szInstaller[] = 
         {'M','i','c','r','o','s','o','f','t','\\',
@@ -102,11 +100,11 @@ UINT build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name,
 
     create_full_pathW(dest);
 
-    *FilePath = build_directory_name(2, dest, icon_name);
+    FilePath = build_directory_name(2, dest, icon_name);
 
     msi_free(SystemFolder);
     msi_free(dest);
-    return ERROR_SUCCESS;
+    return FilePath;
 }
 
 WCHAR *load_dynamic_stringW(MSIRECORD *row, INT index)

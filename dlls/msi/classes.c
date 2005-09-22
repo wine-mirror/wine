@@ -153,7 +153,7 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
         LPWSTR FilePath;
         static const WCHAR fmt[] = {'%','s',',','%','i',0};
 
-        build_icon_path(package,FileName,&FilePath);
+        FilePath = build_icon_path(package,FileName);
        
         progid->IconPath = msi_alloc( (strlenW(FilePath)+10)* sizeof(WCHAR) );
 
@@ -166,7 +166,7 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
     {
         buffer = MSI_RecordGetString(row,5);
         if (buffer)
-            build_icon_path(package,buffer,&(progid->IconPath));
+            progid->IconPath = build_icon_path(package,buffer);
     }
 
     progid->CurVer = NULL;
@@ -260,7 +260,7 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
         LPWSTR FilePath;
         static const WCHAR fmt[] = {'%','s',',','%','i',0};
 
-        build_icon_path(package,FileName,&FilePath);
+        FilePath = build_icon_path(package,FileName);
        
         cls->IconPath = msi_alloc( (strlenW(FilePath)+5)* sizeof(WCHAR) );
 
@@ -273,7 +273,7 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
     {
         buffer = MSI_RecordGetString(row,8);
         if (buffer)
-            build_icon_path(package,buffer,&(cls->IconPath));
+            cls->IconPath = build_icon_path(package,buffer);
     }
 
     if (!MSI_RecordIsNull(row,10))
@@ -300,8 +300,7 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
         }
         else
         {
-            cls->DefInprocHandler32 = load_dynamic_stringW(
-                            row, 10);
+            cls->DefInprocHandler32 = load_dynamic_stringW( row, 10);
             reduce_to_longfilename(cls->DefInprocHandler32);
         }
     }
