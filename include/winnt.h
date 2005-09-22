@@ -300,7 +300,11 @@ typedef VOID           *PVOID64;
 typedef BYTE            BOOLEAN,    *PBOOLEAN;
 typedef char            CHAR,       *PCHAR;
 typedef short           SHORT,      *PSHORT;
+#if defined(_WIN64) && !defined(_MSC_VER)
+typedef int             LONG,       *PLONG;
+#else
 typedef long            LONG,       *PLONG;
+#endif
 
 /* Some systems might have wchar_t, but we really need 16 bit characters */
 #ifdef WINE_UNICODE_NATIVE

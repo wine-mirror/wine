@@ -41,6 +41,10 @@ extern "C" {
 # define _X86_
 #endif
 
+#ifdef __x86_64__
+#define _WIN64
+#endif
+
 #ifndef __stdcall
 # ifdef __i386__
 #  ifdef __GNUC__
@@ -174,11 +178,17 @@ typedef unsigned short  WORD,       *PWORD,    *LPWORD;
 typedef unsigned short  USHORT,     *PUSHORT;
 typedef int             INT,        *PINT,     *LPINT;
 typedef unsigned int    UINT,       *PUINT;
+typedef float           FLOAT,      *PFLOAT;
+typedef char                        *PSZ;
+#if defined(_WIN64) && !defined(_MSC_VER)
+typedef int                                    *LPLONG;
+typedef unsigned int    DWORD,      *PDWORD,   *LPDWORD;
+typedef unsigned int    ULONG,      *PULONG;
+#else
 typedef long                                   *LPLONG;
 typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
 typedef unsigned long   ULONG,      *PULONG;
-typedef float           FLOAT,      *PFLOAT;
-typedef char                        *PSZ;
+#endif
 
 /* Macros to map Winelib names to the correct implementation name */
 /* Note that Winelib is purely Win32.                             */

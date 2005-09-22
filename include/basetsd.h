@@ -38,6 +38,10 @@ extern "C" {
  * type model where int and long are 32 bit and pointer is 64-bit.
  */
 
+#ifdef __x86_64__
+#define _WIN64
+#endif
+
 /* Type model independent typedefs */
 /* The __intXX types are native types defined by the MS C compiler.
  * Apps that make use of them before they get defined here, can
@@ -55,7 +59,11 @@ extern "C" {
 #    define __int32 int
 #  endif
 #  ifndef __int64
-#    define __int64 long long
+#    ifdef _WIN64
+#      define __int64 long
+#    else
+#      define __int64 long long
+#    endif
 #  endif
 #endif /* !defined(_MSC_VER) */
 
