@@ -149,8 +149,8 @@ static msi_control *msi_dialog_find_control( msi_dialog *dialog, LPCWSTR name )
         return NULL;
     LIST_FOR_EACH_ENTRY( control, &dialog->controls, msi_control, entry )
         if( !strcmpW( control->name, name ) ) /* FIXME: case sensitive? */
-            break;
-    return control;
+            return control;
+    return NULL;
 }
 
 static msi_control *msi_dialog_find_control_by_hwnd( msi_dialog *dialog, HWND hwnd )
@@ -159,8 +159,8 @@ static msi_control *msi_dialog_find_control_by_hwnd( msi_dialog *dialog, HWND hw
 
     LIST_FOR_EACH_ENTRY( control, &dialog->controls, msi_control, entry )
         if( hwnd == control->hwnd )
-            break;
-    return control;
+            return control;
+    return NULL;
 }
 
 static LPWSTR msi_get_deformatted_field( MSIPACKAGE *package, MSIRECORD *rec, int field )
