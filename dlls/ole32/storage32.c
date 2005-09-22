@@ -1058,23 +1058,29 @@ HRESULT WINAPI StorageImpl_CreateStorage(
     return STG_E_INVALIDNAME;
 
   /*
+   * Initialize the out parameter
+   */
+  *ppstg = NULL;
+
+  /*
    * Validate the STGM flags
    */
   if ( FAILED( validateSTGM(grfMode) ) ||
        (grfMode & STGM_DELETEONRELEASE) )
+  {
+    WARN("bad grfMode: 0x%lx\n", grfMode);
     return STG_E_INVALIDFLAG;
+  }
 
   /*
    * Check that we're compatible with the parent's storage mode
    */
   parent_grfMode = STGM_ACCESS_MODE( This->base.ancestorStorage->base.openFlags );
   if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+  {
+    WARN("access denied\n");
     return STG_E_ACCESSDENIED;
-
-  /*
-   * Initialize the out parameter
-   */
-  *ppstg = 0;
+  }
 
   /*
    * Create a property enumeration and search the properties
@@ -1095,7 +1101,10 @@ HRESULT WINAPI StorageImpl_CreateStorage(
     if (STGM_CREATE_MODE(grfMode) == STGM_CREATE)
       IStorage_DestroyElement(iface, pwcsName);
     else
+    {
+      WARN("file already exists\n");
       return STG_E_FILEALREADYEXISTS;
+    }
   }
 
   /*
@@ -1106,7 +1115,10 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   newProperty.sizeOfNameString = (lstrlenW(pwcsName)+1)*sizeof(WCHAR);
 
   if (newProperty.sizeOfNameString > PROPERTY_NAME_BUFFER_LEN)
+  {
+    FIXME("name too long\n");
     return STG_E_INVALIDNAME;
+  }
 
   strcpyW(newProperty.name, pwcsName);
 
@@ -6117,7 +6129,8 @@ HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid)
 {
   HRESULT hRes;
 
-  assert(pStg != 0);
+  if(!pStg)
+    return E_INVALIDARG;
 
   hRes = IStorage_SetClass(pStg, rclsid);
 
@@ -6134,10 +6147,11 @@ HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid){
     STATSTG pstatstg;
     HRESULT hRes;
 
-    TRACE("()\n");
+    TRACE("(%p, %p)\n", pstg, pclsid);
 
-    if(pclsid==NULL)
-        return E_POINTER;
+    if(!pstg || !pclsid)
+        return E_INVALIDARG;
+
    /*
     * read a STATSTG structure (contains the clsid) from the storage
     */
