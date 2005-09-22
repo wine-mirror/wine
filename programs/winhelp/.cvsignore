@@ -1,5 +1,4 @@
 Makefile
-hlp2sgml
 lex.yy.c
 rsrc.res
 winhelp.exe.dbg.c
