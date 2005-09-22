@@ -2466,13 +2466,12 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         ui_progress(package,2,0,0,0);
         if (comp->ComponentId)
         {
-            WCHAR *keypath = NULL;
             MSIRECORD * uirow;
 
             squash_guid(comp->ComponentId,squished_cc);
            
-            keypath = resolve_keypath( package, comp );
-            comp->FullKeypath = keypath;
+            msi_free(comp->FullKeypath);
+            comp->FullKeypath = resolve_keypath( package, comp );
 
             /* do the refcounting */
             ACTION_RefCountComponent( package, comp );
@@ -2493,9 +2492,9 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                 if (rc != ERROR_SUCCESS)
                     continue;
 
-                if (keypath)
+                if (comp->FullKeypath)
                 {
-                    msi_reg_set_val_str( hkey2, squished_pc, keypath );
+                    msi_reg_set_val_str( hkey2, squished_pc, comp->FullKeypath );
 
                     if (comp->Attributes & msidbComponentAttributesPermanent)
                     {
@@ -2504,7 +2503,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                               '0','0','0','0','0','0','0','0','0','0','0','0',
                               '0','0','0','0','0','0','0','0',0};
 
-                        msi_reg_set_val_str( hkey2, szPermKey, keypath );
+                        msi_reg_set_val_str( hkey2, szPermKey, comp->FullKeypath );
                     }
                     
                     RegCloseKey(hkey2);
@@ -2513,7 +2512,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                     uirow = MSI_CreateRecord(3);
                     MSI_RecordSetStringW(uirow,1,package->ProductCode);
                     MSI_RecordSetStringW(uirow,2,comp->ComponentId);
-                    MSI_RecordSetStringW(uirow,3,keypath);
+                    MSI_RecordSetStringW(uirow,3,comp->FullKeypath);
                     ui_actiondata(package,szProcessComponents,uirow);
                     msiobj_release( &uirow->hdr );
                }
@@ -2788,11 +2787,8 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     }
     else
     {
-        LPWSTR keypath;
         FIXME("poorly handled shortcut format, advertised shortcut\n");
-        keypath = strdupW( comp->FullKeypath );
-        IShellLinkW_SetPath(sl,keypath);
-        msi_free(keypath);
+        IShellLinkW_SetPath(sl,comp->FullKeypath);
     }
 
     if (!MSI_RecordIsNull(row,6))
