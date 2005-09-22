@@ -285,49 +285,6 @@ then {
 }
 fi # BINDIST
 
-# setup a no-windows installation
-# set an appropriate DCROOT
-if [ `whoami` != 'root' ]
-then DCROOT=~/.wine/drive_c
-else DCROOT=/c
-fi
-
-conf_question low drivec_path \
-   "Configuring Wine without Windows." \
-   "Some fake Windows directories must be created, to hold any .ini files, DLLs," \
-   "start menu entries, and other things your applications may need to install." \
-   "Where would you like your fake C drive to be placed?"
-while [ -z "$CROOT" ]
-do {
-  conf_string_answer "(default is $DCROOT) "
-  [ -z "$ANSWER" ] && ANSWER="$DCROOT"
-  if ! [ -d "$ANSWER" ]
-  then {
-    if mkdir -p "$ANSWER"
-    then CROOT="$ANSWER"
-    else
-        echo "Directory $ANSWER can't be created !"
-        conf_reset_question drivec_path
-    fi
-  }
-  else CROOT="$ANSWER"
-  fi
-}
-done
-echo "Configuring Wine for a no-windows install in $CROOT..."
-
-if [ ! -d ~/.wine/dosdevices ]
-then
-  [ -d ~/.wine ] || mkdir ~/.wine
-  mkdir ~/.wine/dosdevices
-  ln -s /mnt/fd0 ~/.wine/dosdevices/a:
-  ln -s $CROOT ~/.wine/dosdevices/c:
-  ln -s /cdrom ~/.wine/dosdevices/d:
-  ln -s /tmp ~/.wine/dosdevices/e:
-  ln -s ~ ~/.wine/dosdevices/f:
-  ln -s / ~/.wine/dosdevices/z:
-fi
-
 if [ "$WINEINSTALLED" = 'no' ]
 then
     tools/wineprefixcreate --use-wine-tree .
