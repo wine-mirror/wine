@@ -214,18 +214,17 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 
         given_file = strdupAtoW(pfdin->psz1);
         f = get_loaded_file(data->package, given_file);
+        msi_free(given_file);
 
         if (!f)
         {
-            ERR("Unknown File in Cabinent (%s)\n",debugstr_w(given_file));
-            msi_free(given_file);
+            ERR("Unknown File in Cabinet (%s)\n",debugstr_a(pfdin->psz1));
             return 0;
         }
 
         if (!((f->State == 1 || f->State == 2)))
         {
-            TRACE("Skipping extraction of %s\n",debugstr_w(given_file));
-            msi_free(given_file);
+            TRACE("Skipping extraction of %s\n",debugstr_a(pfdin->psz1));
             return 0;
         }
 

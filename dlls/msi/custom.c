@@ -193,7 +193,10 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
         }
     }
     else if (!check_execution_scheduling_options(package,action,type))
+    {
+        msiobj_release(&row->hdr);
         return ERROR_SUCCESS;
+    }
 
     switch (type & CUSTOM_ACTION_TYPE_MASK)
     {

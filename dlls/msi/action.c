@@ -3967,6 +3967,7 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
     output = msi_alloc(sz);
     memset(output,0,sz);
     strcpyW(output,advertise);
+    msi_free(advertise);
 
     if (text)
         strcatW(output,text);

@@ -182,6 +182,7 @@ term:
   | value_s
         {
             $$ = ($1 && $1[0]) ? MSICONDITION_TRUE : MSICONDITION_FALSE;
+            msi_free( $1 );
         }
   | value_i comp_op_i value_i
         {
@@ -190,18 +191,24 @@ term:
   | value_s comp_op_s value_s
         {
             $$ = $2( $1, $3, FALSE );
+            msi_free( $1 );
+            msi_free( $3 );
         }
   | value_s COND_TILDA comp_op_s value_s
         {
             $$ = $3( $1, $4, TRUE );
+            msi_free( $1 );
+            msi_free( $4 );
         }
   | value_s comp_op_m1 value_i
         {
             $$ = $2( $1, $3 );
+            msi_free( $1 );
         }
   | value_i comp_op_m2 value_s
         {
             $$ = $2( $1, $3 );
+            msi_free( $3 );
         }
   | COND_LPAR expression COND_RPAR
         {
