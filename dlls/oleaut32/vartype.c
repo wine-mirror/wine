@@ -2962,7 +2962,8 @@ HRESULT WINAPI VarR4FromDec(DECIMAL* pDecIn, float *pFltOut)
   if (DEC_HI32(pDecIn))
   {
     highPart = (double)DEC_HI32(pDecIn) / (double)divisor;
-    highPart *= 1.0e64;
+    highPart *= 4294967296.0F;
+    highPart *= 4294967296.0F;
   }
   else
     highPart = 0.0;
@@ -3281,7 +3282,8 @@ HRESULT WINAPI VarR8FromDec(DECIMAL* pDecIn, double *pDblOut)
   if (DEC_HI32(pDecIn))
   {
     highPart = (double)DEC_HI32(pDecIn) / divisor;
-    highPart *= 1.0e64;
+    highPart *= 4294967296.0F;
+    highPart *= 4294967296.0F;
   }
   else
     highPart = 0.0;
