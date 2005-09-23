@@ -177,6 +177,7 @@ DECL_WINELIB_TYPE_AW(LPDIRECTINPUTDEVICE8)
 #define DIERR_EFFECTPLAYING             0x80040208L
 #define DIERR_UNPLUGGED                 0x80040209L
 #define DIERR_REPORTFULL                0x8004020AL
+#define DIERR_MAPFILEFAIL               0x8004020BL
 
 #define DIENUM_STOP                     0
 #define DIENUM_CONTINUE                 1
