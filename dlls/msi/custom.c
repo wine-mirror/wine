@@ -154,10 +154,8 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
         {
             FIXME("Rollback only action... rollbacks not supported yet\n");
             schedule_action(package, ROLLBACK_SCRIPT, action);
-            msi_free(source);
-            msi_free(target);
-            msiobj_release(&row->hdr);
-            return ERROR_SUCCESS;
+            rc = ERROR_SUCCESS;
+            goto end;
         }
         if (!execute)
         {
@@ -172,10 +170,8 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
                 schedule_action(package, INSTALL_SCRIPT, action);
             }
 
-            msi_free(source);
-            msi_free(target);
-            msiobj_release(&row->hdr);
-            return ERROR_SUCCESS;
+            rc = ERROR_SUCCESS;
+            goto end;
         }
         else
         {
@@ -194,8 +190,8 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
     }
     else if (!check_execution_scheduling_options(package,action,type))
     {
-        msiobj_release(&row->hdr);
-        return ERROR_SUCCESS;
+        rc = ERROR_SUCCESS;
+        goto end;
     }
 
     switch (type & CUSTOM_ACTION_TYPE_MASK)
@@ -234,6 +230,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
              debugstr_w(target));
     }
 
+end:
     msi_free(source);
     msi_free(target);
     msiobj_release(&row->hdr);
@@ -248,8 +245,7 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
     static const WCHAR f1[] = {'m','s','i',0};
     WCHAR fmt[MAX_PATH];
 
-    if (MSI_GetPropertyW(package, cszTempFolder, fmt, &sz) 
-        != ERROR_SUCCESS)
+    if (MSI_GetPropertyW(package, cszTempFolder, fmt, &sz) != ERROR_SUCCESS)
         GetTempPathW(MAX_PATH,fmt);
 
     if (GetTempFileNameW(fmt,f1,0,tmp_file) == 0)
