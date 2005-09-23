@@ -89,7 +89,6 @@ DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 static BOOL synchronous;  /* run in synchronous mode? */
 static BOOL desktop_dbl_buf = TRUE;
 static char *desktop_geometry;
-static XVisualInfo *desktop_vi;
 
 static x11drv_error_callback err_callback;   /* current callback for error */
 static Display *err_callback_display;        /* display callback is set for */
@@ -374,6 +373,7 @@ static void setup_options(void)
 static BOOL process_attach(void)
 {
     Display *display;
+    XVisualInfo *desktop_vi = NULL;
 
     setup_options();
 
@@ -429,6 +429,8 @@ static BOOL process_attach(void)
         root_window = X11DRV_create_desktop( desktop_vi, desktop_geometry );
         using_wine_desktop = 1;
     }
+    if(desktop_vi)
+        XFree(desktop_vi);
 
 #ifdef HAVE_LIBXXF86VM
     /* initialize XVidMode */
