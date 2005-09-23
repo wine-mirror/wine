@@ -40,7 +40,10 @@ BEGIN {
 			i = 1
 			len = length(array[word]) + 1
 			while (i < len) {
-				printf "'%s',", substr(array[word],i,1)
+				if (substr(array[word],i,1) == "\'")
+					printf "'\\'',"
+				else
+					printf "'%s',", substr(array[word],i,1)
 				i++
 			}
 			if (word < NF )
