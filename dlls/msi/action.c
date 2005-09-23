@@ -87,6 +87,7 @@ static UINT ACTION_PublishComponents(MSIPACKAGE *package);
 static UINT ACTION_RemoveIniValues(MSIPACKAGE *package);
 static UINT ACTION_MoveFiles(MSIPACKAGE *package);
 static UINT ACTION_PatchFiles(MSIPACKAGE *package);
+static UINT ACTION_BindImage(MSIPACKAGE *package);
 
 /*
  * consts and values used
@@ -273,7 +274,7 @@ struct _actions {
 static struct _actions StandardActions[] = {
     { szAllocateRegistrySpace, NULL},
     { szAppSearch, ACTION_AppSearch },
-    { szBindImage, NULL},
+    { szBindImage, ACTION_BindImage },
     { szCCPSearch, NULL},
     { szCostFinalize, ACTION_CostFinalize },
     { szCostInitialize, ACTION_CostInitialize },
@@ -4054,6 +4055,27 @@ static UINT ACTION_PatchFiles(MSIPACKAGE *package)
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         'P','a','t','c','h',0 };
+    MSIQUERY *view = NULL;
+    DWORD count = 0;
+    UINT rc;
+    
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords(view, &count, NULL, package);
+        if (count)
+            FIXME("%lu ignored Patch table values\n", count);
+        msiobj_release(&view->hdr);
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_BindImage(MSIPACKAGE *package)
+{
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'B','i','n','d','I','m','a','g','e',0 };
     MSIQUERY *view = NULL;
     DWORD count = 0;
     UINT rc;
