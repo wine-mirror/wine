@@ -625,7 +625,6 @@ static LPWSTR msi_get_checkbox_value( msi_dialog *dialog, LPCWSTR prop )
         '\'','%','s','\'',0
     };
     MSIRECORD *rec = NULL;
-    LPCWSTR val = NULL;
     LPWSTR ret = NULL;
 
     /* find if there is a value associated with the checkbox */
@@ -633,15 +632,11 @@ static LPWSTR msi_get_checkbox_value( msi_dialog *dialog, LPCWSTR prop )
     if (!rec)
         return ret;
 
-    val = MSI_RecordGetString( rec, 2 );
-    if (val)
+    ret = msi_get_deformatted_field( dialog->package, rec, 2 );
+    if( ret && !ret[0] )
     {
-        deformat_string( dialog->package, val, &ret );
-        if( ret && !ret[0] )
-        {
-            msi_free( ret );
-            ret = NULL;
-        }
+        msi_free( ret );
+        ret = NULL;
     }
     msiobj_release( &rec->hdr );
     if (ret)
