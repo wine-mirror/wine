@@ -1740,15 +1740,33 @@ UINT WINAPI MsiGetShortcutTargetA( LPCSTR szShortcutTarget,
                                    LPSTR szProductCode, LPSTR szFeatureId,
                                    LPSTR szComponentCode )
 {
-    FIXME("\n");
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    LPWSTR target;
+    const int len = MAX_FEATURE_CHARS+1;
+    WCHAR product[MAX_FEATURE_CHARS+1], feature[MAX_FEATURE_CHARS+1], component[MAX_FEATURE_CHARS+1];
+    UINT r;
+
+    target = strdupAtoW( szShortcutTarget );
+    if (szShortcutTarget && !target )
+        return ERROR_OUTOFMEMORY;
+    product[0] = 0;
+    feature[0] = 0;
+    component[0] = 0;
+    r = MsiGetShortcutTargetW( target, product, feature, component );
+    msi_free( target );
+    if (r == ERROR_SUCCESS)
+    {
+        WideCharToMultiByte( CP_ACP, 0, product, -1, szProductCode, len, NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, feature, -1, szFeatureId, len, NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, component, -1, szComponentCode, len, NULL, NULL );
+    }
+    return r;
 }
 
 UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
                                    LPWSTR szProductCode, LPWSTR szFeatureId,
                                    LPWSTR szComponentCode )
 {
-    FIXME("\n");
+    FIXME("%s\n", debugstr_w(szShortcutTarget));
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
