@@ -108,15 +108,6 @@ HRESULT WINAPI  OleCreateLinkFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
 }
 
 /***********************************************************************
- *           OleRegEnumVerbs    [OLE32.@]
- */
-HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
-{
-    FIXME("(%p,%p), stub!\n", clsid, ppenum);
-    return OLEOBJ_E_NOVERBS;
-}
-
-/***********************************************************************
  *           OleRegEnumFormatEtc    [OLE32.@]
  */
 HRESULT     WINAPI OleRegEnumFormatEtc (

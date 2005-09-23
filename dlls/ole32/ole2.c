@@ -674,6 +674,272 @@ HRESULT WINAPI OleRegGetMiscStatus(
   return S_OK;
 }
 
+static HRESULT EnumOLEVERB_Construct(HKEY hkeyVerb, ULONG index, IEnumOLEVERB **ppenum);
+
+typedef struct
+{
+    const IEnumOLEVERBVtbl *lpvtbl;
+    LONG ref;
+
+    HKEY hkeyVerb;
+    ULONG index;
+} EnumOLEVERB;
+
+static HRESULT WINAPI EnumOLEVERB_QueryInterface(
+    IEnumOLEVERB *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IEnumOLEVERB))
+    {
+        IUnknown_AddRef(iface);
+        *ppv = iface;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI EnumOLEVERB_AddRef(
+    IEnumOLEVERB *iface)
+{
+    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+    TRACE("()\n");
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI EnumOLEVERB_Release(
+    IEnumOLEVERB *iface)
+{
+    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+    LONG refs = InterlockedDecrement(&This->ref);
+    TRACE("()\n");
+    if (!refs)
+    {
+        RegCloseKey(This->hkeyVerb);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return refs;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Next(
+    IEnumOLEVERB *iface, ULONG celt, LPOLEVERB rgelt,
+    ULONG *pceltFetched)
+{
+    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+    HRESULT hr = S_OK;
+
+    TRACE("(%ld, %p, %p)\n", celt, rgelt, pceltFetched);
+
+    if (pceltFetched)
+        *pceltFetched = 0;
+
+    for (; celt; celt--, rgelt++)
+    {
+        WCHAR wszSubKey[20];
+        LONG cbData;
+        LPWSTR pwszOLEVERB;
+        LPWSTR pwszMenuFlags;
+        LPWSTR pwszAttribs;
+        LONG res = RegEnumKeyW(This->hkeyVerb, This->index, wszSubKey, sizeof(wszSubKey)/sizeof(wszSubKey[0]));
+        if (res == ERROR_NO_MORE_ITEMS)
+        {
+            hr = S_FALSE;
+            break;
+        }
+        else if (res != ERROR_SUCCESS)
+        {
+            ERR("RegEnumKeyW failed with error %ld\n", res);
+            hr = REGDB_E_READREGDB;
+            break;
+        }
+        res = RegQueryValueW(This->hkeyVerb, wszSubKey, NULL, &cbData);
+        if (res != ERROR_SUCCESS)
+        {
+            ERR("RegQueryValueW failed with error %ld\n", res);
+            hr = REGDB_E_READREGDB;
+            break;
+        }
+        pwszOLEVERB = CoTaskMemAlloc(cbData);
+        if (!pwszOLEVERB)
+        {
+            hr = E_OUTOFMEMORY;
+            break;
+        }
+        res = RegQueryValueW(This->hkeyVerb, wszSubKey, pwszOLEVERB, &cbData);
+        if (res != ERROR_SUCCESS)
+        {
+            ERR("RegQueryValueW failed with error %ld\n", res);
+            hr = REGDB_E_READREGDB;
+            CoTaskMemFree(pwszOLEVERB);
+            break;
+        }
+
+        TRACE("verb string: %s\n", debugstr_w(pwszOLEVERB));
+        pwszMenuFlags = strchrW(pwszOLEVERB, ',');
+        if (!pwszMenuFlags)
+        {
+            hr = OLEOBJ_E_INVALIDVERB;
+            CoTaskMemFree(pwszOLEVERB);
+            break;
+        }
+        /* nul terminate the name string and advance to first character */
+        *pwszMenuFlags = '\0';
+        pwszMenuFlags++;
+        pwszAttribs = strchrW(pwszMenuFlags, ',');
+        if (!pwszAttribs)
+        {
+            hr = OLEOBJ_E_INVALIDVERB;
+            CoTaskMemFree(pwszOLEVERB);
+            break;
+        }
+        /* nul terminate the menu string and advance to first character */
+        *pwszAttribs = '\0';
+        pwszAttribs++;
+
+        /* fill out structure for this verb */
+        rgelt->lVerb = atolW(wszSubKey);
+        rgelt->lpszVerbName = pwszOLEVERB; /* user should free */
+        rgelt->fuFlags = atolW(pwszMenuFlags);
+        rgelt->grfAttribs = atolW(pwszAttribs);
+
+        if (pceltFetched)
+            *pceltFetched++;
+        This->index++;
+    }
+    return hr;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Skip(
+    IEnumOLEVERB *iface, ULONG celt)
+{
+    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+
+    TRACE("(%ld)\n", celt);
+
+    This->index += celt;
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Reset(
+    IEnumOLEVERB *iface)
+{
+    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+
+    TRACE("()\n");
+
+    This->index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Clone(
+    IEnumOLEVERB *iface,
+    IEnumOLEVERB **ppenum)
+{
+    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+    HKEY hkeyVerb;
+    TRACE("(%p)\n", ppenum);
+    if (!DuplicateHandle(GetCurrentProcess(), This->hkeyVerb, GetCurrentProcess(), (HANDLE *)&hkeyVerb, 0, FALSE, DUPLICATE_SAME_ACCESS))
+        return HRESULT_FROM_WIN32(GetLastError());
+    return EnumOLEVERB_Construct(hkeyVerb, This->index, ppenum);
+}
+
+static const IEnumOLEVERBVtbl EnumOLEVERB_VTable =
+{
+    EnumOLEVERB_QueryInterface,
+    EnumOLEVERB_AddRef,
+    EnumOLEVERB_Release,
+    EnumOLEVERB_Next,
+    EnumOLEVERB_Skip,
+    EnumOLEVERB_Reset,
+    EnumOLEVERB_Clone
+};
+
+static HRESULT EnumOLEVERB_Construct(HKEY hkeyVerb, ULONG index, IEnumOLEVERB **ppenum)
+{
+    EnumOLEVERB *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+    {
+        RegCloseKey(hkeyVerb);
+        return E_OUTOFMEMORY;
+    }
+    This->lpvtbl = &EnumOLEVERB_VTable;
+    This->ref = 1;
+    This->index = index;
+    This->hkeyVerb = hkeyVerb;
+    *ppenum = (IEnumOLEVERB *)&This->lpvtbl;
+    return S_OK;    
+}
+
+/***********************************************************************
+ *           OleRegEnumVerbs    [OLE32.@]
+ *
+ * Enumerates verbs associated with a class stored in the registry.
+ *
+ * PARAMS
+ *  clsid  [I] Class ID to enumerate the verbs for.
+ *  ppenum [O] Enumerator.
+ *
+ * RETURNS
+ *  S_OK: Success.
+ *  REGDB_E_CLASSNOTREG: The specified class does not have a key in the registry.
+ *  REGDB_E_READREGDB: The class key could not be opened for some other reason.
+ *  OLE_E_REGDB_KEY: The Verb subkey for the class is not present.
+ *  OLEOBJ_E_NOVERBS: The Verb subkey for the class is empty.
+ */
+HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
+{
+    LONG res;
+    HKEY hkeyClass;
+    HKEY hkeyVerb;
+    DWORD dwSubKeys;
+    static const WCHAR wszVerb[] = {'V','e','r','b',0};
+
+    TRACE("(%s, %p)\n", debugstr_guid(clsid), ppenum);
+
+    res = COM_OpenKeyForCLSID(clsid, KEY_READ, &hkeyClass);
+    if (res == ERROR_FILE_NOT_FOUND)
+    {
+        ERR("CLSID %s not registered\n", debugstr_guid(clsid));
+        return REGDB_E_CLASSNOTREG;
+    }
+    else if (res != ERROR_SUCCESS)
+    {
+        ERR("failed to open key for CLSID %s with error %ld\n",
+            debugstr_guid(clsid), res);
+        return REGDB_E_READREGDB;
+    }
+    res = RegOpenKeyExW(hkeyClass, wszVerb, 0, KEY_READ, &hkeyVerb);
+    RegCloseKey(hkeyClass);
+    if (res == ERROR_FILE_NOT_FOUND)
+    {
+        ERR("no Verbs key for class %s\n", debugstr_guid(clsid));
+        return REGDB_E_KEYMISSING;
+    }
+    else if (res != ERROR_SUCCESS)
+    {
+        ERR("failed to open Verbs key for CLSID %s with error %ld\n",
+            debugstr_guid(clsid), res);
+        return REGDB_E_READREGDB;
+    }
+
+    res = RegQueryInfoKeyW(hkeyVerb, NULL, NULL, NULL, &dwSubKeys, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL);
+    if (res != ERROR_SUCCESS)
+    {
+        ERR("failed to get subkey count with error %ld\n", GetLastError());
+        return REGDB_E_READREGDB;
+    }
+
+    if (!dwSubKeys)
+    {
+        WARN("class %s has no verbs\n", debugstr_guid(clsid));
+        RegCloseKey(hkeyVerb);
+        return OLEOBJ_E_NOVERBS;
+    }
+
+    return EnumOLEVERB_Construct(hkeyVerb, 0, ppenum);
+}
+
 /******************************************************************************
  *              OleSetContainedObject        [OLE32.@]
  */
