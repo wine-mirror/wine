@@ -431,12 +431,41 @@ static UINT ready_volume(MSIPACKAGE* package, LPCWSTR path, LPWSTR last_volume,
     return ERROR_SUCCESS;
 }
 
-static UINT ready_media_for_file(MSIPACKAGE *package, MSIFILE *file,
-                                 MSICOMPONENT* comp)
+struct media_info {
+    UINT last_sequence; 
+    LPWSTR last_volume;
+    LPWSTR last_path;
+    DWORD count;
+    WCHAR source[MAX_PATH];
+};
+
+static struct media_info *create_media_info( void )
+{
+    struct media_info *mi;
+
+    mi = msi_alloc( sizeof *mi  );
+    if (mi)
+    {
+        mi->last_sequence = 0; 
+        mi->last_volume = NULL;
+        mi->last_path = NULL;
+        mi->count = 0;
+        mi->source[0] = 0;
+    }
+
+    return mi;
+}
+
+static void free_media_info( struct media_info *mi )
+{
+    msi_free( mi );
+}
+
+static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
+                                  MSIFILE *file, MSICOMPONENT* comp )
 {
     UINT rc = ERROR_SUCCESS;
     MSIRECORD * row = 0;
-    static WCHAR source[MAX_PATH];
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
          '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
@@ -446,34 +475,17 @@ static UINT ready_media_for_file(MSIPACKAGE *package, MSIFILE *file,
     LPCWSTR cab, volume;
     DWORD sz;
     INT seq;
-    static UINT last_sequence = 0; 
-    static LPWSTR last_volume = NULL;
-    static LPWSTR last_path = NULL;
     UINT type;
     LPCWSTR prompt;
-    static DWORD count = 0;
 
-    /* cleanup signal */
-    if (!package)
+    if (file->Sequence <= mi->last_sequence)
     {
-        msi_free(last_path);
-        msi_free(last_volume);
-        last_sequence = 0;
-        last_path = NULL;
-        last_volume = NULL;
-        count = 0;
-        memset(source,0,sizeof(source));
+        set_file_source(package,file,comp,mi->last_path);
+        TRACE("Media already ready (%u, %u)\n",file->Sequence,mi->last_sequence);
         return ERROR_SUCCESS;
     }
 
-    if (file->Sequence <= last_sequence)
-    {
-        set_file_source(package,file,comp,last_path);
-        TRACE("Media already ready (%u, %u)\n",file->Sequence,last_sequence);
-        return ERROR_SUCCESS;
-    }
-
-    count ++;
+    mi->count ++;
     row = MSI_QueryGetRecord(package->db, ExecSeqQuery, file->Sequence);
     if (!row)
     {
@@ -482,22 +494,22 @@ static UINT ready_media_for_file(MSIPACKAGE *package, MSIFILE *file,
     }
 
     seq = MSI_RecordGetInteger(row,2);
-    last_sequence = seq;
+    mi->last_sequence = seq;
 
     volume = MSI_RecordGetString(row, 5);
     prompt = MSI_RecordGetString(row, 3);
 
-    msi_free(last_path);
-    last_path = NULL;
+    msi_free(mi->last_path);
+    mi->last_path = NULL;
 
     if (file->Attributes & msidbFileAttributesNoncompressed)
     {
-        last_path = resolve_folder(package, comp->Directory, TRUE, FALSE, NULL);
-        set_file_source(package,file,comp,last_path);
-        rc = ready_volume(package, file->SourcePath, last_volume, row,&type);
+        mi->last_path = resolve_folder(package, comp->Directory, TRUE, FALSE, NULL);
+        set_file_source(package,file,comp,mi->last_path);
+        rc = ready_volume(package, file->SourcePath, mi->last_volume, row,&type);
 
         MsiSourceListAddMediaDiskW(package->ProductCode, NULL, 
-            MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, count, volume,
+            MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->count, volume,
             prompt);
 
         if (type == DRIVE_REMOVABLE || type == DRIVE_CDROM || 
@@ -505,12 +517,12 @@ static UINT ready_media_for_file(MSIPACKAGE *package, MSIFILE *file,
             MsiSourceListSetInfoW(package->ProductCode, NULL, 
                 MSIINSTALLCONTEXT_USERMANAGED, 
                 MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
+                INSTALLPROPERTY_LASTUSEDSOURCEW, mi->last_path);
         else
             MsiSourceListSetInfoW(package->ProductCode, NULL, 
                 MSIINSTALLCONTEXT_USERMANAGED, 
                 MSICODE_PRODUCT|MSISOURCETYPE_NETWORK,
-                INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
+                INSTALLPROPERTY_LASTUSEDSOURCEW, mi->last_path);
         msiobj_release(&row->hdr);
         return rc;
     }
@@ -524,14 +536,14 @@ static UINT ready_media_for_file(MSIPACKAGE *package, MSIFILE *file,
         {
             LPWSTR path;
 
-            writeout_cabinet_stream(package,&cab[1],source);
-            last_path = strdupW(source);
-            *(strrchrW(last_path,'\\')+1)=0;
+            writeout_cabinet_stream(package,&cab[1],mi->source);
+            mi->last_path = strdupW(mi->source);
+            *(strrchrW(mi->last_path,'\\')+1)=0;
 
             path = msi_dup_property( package, cszSourceDir );
 
             MsiSourceListAddMediaDiskW(package->ProductCode, NULL, 
-                MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, count,
+                MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->count,
                 volume, prompt);
 
             MsiSourceListSetInfoW(package->ProductCode, NULL,
@@ -544,63 +556,63 @@ static UINT ready_media_for_file(MSIPACKAGE *package, MSIFILE *file,
         else
         {
             sz = MAX_PATH;
-            last_path = msi_alloc(MAX_PATH*sizeof(WCHAR));
-            if (MSI_GetPropertyW(package, cszSourceDir, source, &sz))
+            mi->last_path = msi_alloc(MAX_PATH*sizeof(WCHAR));
+            if (MSI_GetPropertyW(package, cszSourceDir, mi->source, &sz))
             {
                 ERR("No Source dir defined \n");
                 rc = ERROR_FUNCTION_FAILED;
             }
             else
             {
-                strcpyW(last_path,source);
-                strcatW(source,cab);
+                strcpyW(mi->last_path,mi->source);
+                strcatW(mi->source,cab);
 
-                rc = ready_volume(package, source, last_volume, row, &type);
+                rc = ready_volume(package, mi->source, mi->last_volume, row, &type);
                 if (type == DRIVE_REMOVABLE || type == DRIVE_CDROM || 
                         type == DRIVE_RAMDISK)
                     MsiSourceListSetInfoW(package->ProductCode, NULL,
                             MSIINSTALLCONTEXT_USERMANAGED,
                             MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                            INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
+                            INSTALLPROPERTY_LASTUSEDSOURCEW, mi->last_path);
                 else
                     MsiSourceListSetInfoW(package->ProductCode, NULL,
                             MSIINSTALLCONTEXT_USERMANAGED,
                             MSICODE_PRODUCT|MSISOURCETYPE_NETWORK,
-                            INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
+                            INSTALLPROPERTY_LASTUSEDSOURCEW, mi->last_path);
 
                 /* extract the cab file into a folder in the temp folder */
                 sz = MAX_PATH;
-                if (MSI_GetPropertyW(package, cszTempFolder,last_path, &sz) 
+                if (MSI_GetPropertyW(package, cszTempFolder,mi->last_path, &sz) 
                                     != ERROR_SUCCESS)
-                    GetTempPathW(MAX_PATH,last_path);
+                    GetTempPathW(MAX_PATH,mi->last_path);
             }
         }
-        rc = !extract_cabinet_file(package, source, last_path);
+        rc = !extract_cabinet_file(package, mi->source, mi->last_path);
     }
     else
     {
         sz = MAX_PATH;
-        last_path = msi_alloc(MAX_PATH*sizeof(WCHAR));
-        MSI_GetPropertyW(package,cszSourceDir,source,&sz);
-        strcpyW(last_path,source);
-        rc = ready_volume(package, last_path, last_volume, row, &type);
+        mi->last_path = msi_alloc(MAX_PATH*sizeof(WCHAR));
+        MSI_GetPropertyW(package,cszSourceDir,mi->source,&sz);
+        strcpyW(mi->last_path,mi->source);
+        rc = ready_volume(package, mi->last_path, mi->last_volume, row, &type);
 
         if (type == DRIVE_REMOVABLE || type == DRIVE_CDROM || 
                 type == DRIVE_RAMDISK)
             MsiSourceListSetInfoW(package->ProductCode, NULL,
                     MSIINSTALLCONTEXT_USERMANAGED,
                     MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                    INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
+                    INSTALLPROPERTY_LASTUSEDSOURCEW, mi->last_path);
         else
             MsiSourceListSetInfoW(package->ProductCode, NULL,
                     MSIINSTALLCONTEXT_USERMANAGED,
                     MSICODE_PRODUCT|MSISOURCETYPE_NETWORK,
-                    INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
+                    INSTALLPROPERTY_LASTUSEDSOURCEW, mi->last_path);
     }
-    set_file_source(package, file, comp, last_path);
+    set_file_source(package, file, comp, mi->last_path);
 
     MsiSourceListAddMediaDiskW(package->ProductCode, NULL,
-            MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, count, volume,
+            MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->count, volume,
             prompt);
 
     msiobj_release(&row->hdr);
@@ -642,6 +654,7 @@ static UINT get_file_target(MSIPACKAGE *package, LPCWSTR file_key,
  */
 UINT ACTION_InstallFiles(MSIPACKAGE *package)
 {
+    struct media_info *mi;
     UINT rc = ERROR_SUCCESS;
     LPWSTR ptr;
     MSIFILE *file;
@@ -705,6 +718,8 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         }
     }
 
+    mi = create_media_info();
+
     /* Pass 2 */
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
@@ -712,7 +727,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         {
             TRACE("Pass 2: %s\n",debugstr_w(file->File));
 
-            rc = ready_media_for_file( package, file, file->Component );
+            rc = ready_media_for_file( package, mi, file, file->Component );
             if (rc != ERROR_SUCCESS)
             {
                 ERR("Unable to ready media\n");
@@ -764,7 +779,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     }
 
     /* cleanup */
-    ready_media_for_file(NULL, NULL, NULL);
+    free_media_info( mi );
     return rc;
 }
 
