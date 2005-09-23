@@ -2,12 +2,8 @@ WINE_1.0
 {
   global:
     __wine_dbg_register;
+    __wine_dbg_set_functions;
     __wine_dbg_unregister;
-    __wine_dbg_vlog;
-    __wine_dbg_vprintf;
-    __wine_dbg_vsprintf;
-    __wine_dbgstr_an;
-    __wine_dbgstr_wn;
     __wine_dll_register;
     __wine_main_argc;
     __wine_main_argv;

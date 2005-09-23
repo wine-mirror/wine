@@ -56,14 +56,17 @@ static int output_debug( FILE *outfile )
     if (!nb_debug_channels) return 0;
     qsort( debug_channels, nb_debug_channels, sizeof(debug_channels[0]), string_compare );
 
+    fprintf( outfile, "#include \"wine/debug.h\"\n\n" );
+
     for (i = 0; i < nb_debug_channels; i++)
-        fprintf( outfile, "char __wine_dbch_%s[] = \"\\003%s\";\n",
+        fprintf( outfile, "struct __wine_debug_channel __wine_dbch_%s = { 3, \"%s\" };\n",
                  debug_channels[i], debug_channels[i] );
 
-    fprintf( outfile, "\nstatic char * const debug_channels[%d] =\n{\n", nb_debug_channels );
+    fprintf( outfile, "\nstatic struct __wine_debug_channel * const debug_channels[%d] =\n{\n",
+             nb_debug_channels );
     for (i = 0; i < nb_debug_channels; i++)
     {
-        fprintf( outfile, "    __wine_dbch_%s", debug_channels[i] );
+        fprintf( outfile, "    &__wine_dbch_%s", debug_channels[i] );
         if (i < nb_debug_channels - 1) fprintf( outfile, ",\n" );
     }
     fprintf( outfile, "\n};\n\n" );
@@ -647,7 +650,7 @@ void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv )
     fprintf( outfile,
              "void %s(void)\n"
              "{\n"
-             "    extern void *__wine_dbg_register( char * const *, int );\n"
+             "    extern void *__wine_dbg_register( struct __wine_debug_channel * const *, int );\n"
              "    if (!debug_registration) debug_registration = __wine_dbg_register( debug_channels, %d );\n"
              "}\n\n", constructor, nr_debug );
     fprintf( outfile,

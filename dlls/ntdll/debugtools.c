@@ -282,7 +282,7 @@ static int NTDLL_dbg_vprintf( const char *format, va_list args )
 /***********************************************************************
  *		NTDLL_dbg_vlog
  */
-static int NTDLL_dbg_vlog( unsigned int cls, const char *channel,
+static int NTDLL_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
                            const char *function, const char *format, va_list args )
 {
     static const char * const classes[] = { "fixme", "err", "warn", "trace" };
@@ -295,12 +295,22 @@ static int NTDLL_dbg_vlog( unsigned int cls, const char *channel,
         if (TRACE_ON(tid))
             ret = wine_dbg_printf( "%04lx:", GetCurrentThreadId() );
         if (cls < sizeof(classes)/sizeof(classes[0]))
-            ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
+            ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel->name, function );
     }
     if (format)
         ret += NTDLL_dbg_vprintf( format, args );
     return ret;
 }
+
+
+static const struct __wine_debug_functions funcs =
+{
+    NTDLL_dbgstr_an,
+    NTDLL_dbgstr_wn,
+    NTDLL_dbg_vsprintf,
+    NTDLL_dbg_vprintf,
+    NTDLL_dbg_vlog
+};
 
 /***********************************************************************
  *		debug_init
@@ -309,10 +319,6 @@ void debug_init(void)
 {
     extern void __wine_dbg_ntdll_init(void);
 
-    __wine_dbgstr_an    = NTDLL_dbgstr_an;
-    __wine_dbgstr_wn    = NTDLL_dbgstr_wn;
-    __wine_dbg_vsprintf = NTDLL_dbg_vsprintf;
-    __wine_dbg_vprintf  = NTDLL_dbg_vprintf;
-    __wine_dbg_vlog     = NTDLL_dbg_vlog;
+    __wine_dbg_set_functions( &funcs, sizeof(funcs) );
     __wine_dbg_ntdll_init();  /* hack: register debug channels early */
 }

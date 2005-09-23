@@ -37,7 +37,8 @@ struct _GUID;
  * Internal definitions (do not use these directly)
  */
 
-enum __WINE_DEBUG_CLASS {
+enum __wine_debug_class
+{
     __WINE_DBCL_FIXME,
     __WINE_DBCL_ERR,
     __WINE_DBCL_WARN,
@@ -45,22 +46,28 @@ enum __WINE_DEBUG_CLASS {
     __WINE_DBCL_COUNT
 };
 
+struct __wine_debug_channel
+{
+    unsigned char flags;
+    char name[15];
+};
+
 #ifndef WINE_NO_TRACE_MSGS
-# define __WINE_GET_DEBUGGING_TRACE(dbch) ((dbch)[0] & (1 << __WINE_DBCL_TRACE))
+# define __WINE_GET_DEBUGGING_TRACE(dbch) ((dbch)->flags & (1 << __WINE_DBCL_TRACE))
 #else
 # define __WINE_GET_DEBUGGING_TRACE(dbch) 0
 #endif
 
 #ifndef WINE_NO_DEBUG_MSGS
-# define __WINE_GET_DEBUGGING_WARN(dbch)  ((dbch)[0] & (1 << __WINE_DBCL_WARN))
-# define __WINE_GET_DEBUGGING_FIXME(dbch) ((dbch)[0] & (1 << __WINE_DBCL_FIXME))
+# define __WINE_GET_DEBUGGING_WARN(dbch)  ((dbch)->flags & (1 << __WINE_DBCL_WARN))
+# define __WINE_GET_DEBUGGING_FIXME(dbch) ((dbch)->flags & (1 << __WINE_DBCL_FIXME))
 #else
 # define __WINE_GET_DEBUGGING_WARN(dbch)  0
 # define __WINE_GET_DEBUGGING_FIXME(dbch) 0
 #endif
 
 /* define error macro regardless of what is configured */
-#define __WINE_GET_DEBUGGING_ERR(dbch)  ((dbch)[0] & (1 << __WINE_DBCL_ERR))
+#define __WINE_GET_DEBUGGING_ERR(dbch)  ((dbch)->flags & (1 << __WINE_DBCL_ERR))
 
 #define __WINE_GET_DEBUGGING(dbcl,dbch)  __WINE_GET_DEBUGGING##dbcl(dbch)
 #define __WINE_SET_DEBUGGING(dbcl,dbch,on) \
@@ -70,8 +77,8 @@ enum __WINE_DEBUG_CLASS {
 
 #define __WINE_DPRINTF(dbcl,dbch) \
   do { if(__WINE_GET_DEBUGGING(dbcl,(dbch))) { \
-       const char * const __dbch = (dbch); \
-       const enum __WINE_DEBUG_CLASS __dbcl = __WINE_DBCL##dbcl; \
+       struct __wine_debug_channel * const __dbch = (dbch); \
+       const enum __wine_debug_class __dbcl = __WINE_DBCL##dbcl; \
        __WINE_DBG_LOG
 
 #define __WINE_DBG_LOG(args...) \
@@ -96,7 +103,7 @@ enum __WINE_DEBUG_CLASS {
 
 #define __WINE_DPRINTF(dbcl,dbch) \
   do { if(__WINE_GET_DEBUGGING(dbcl,(dbch))) { \
-       const char * const __dbch = (dbch); \
+       struct __wine_debug_channel * const __dbch = (dbch); \
        const enum __WINE_DEBUG_CLASS __dbcl = __WINE_DBCL##dbcl; \
        __WINE_DBG_LOG
 
@@ -128,6 +135,17 @@ enum __WINE_DEBUG_CLASS {
 
 #endif  /* !__GNUC__ && !__SUNPRO_C */
 
+struct __wine_debug_functions
+{
+    const char * (*dbgstr_an)( const char * s, int n );
+    const char * (*dbgstr_wn)( const WCHAR *s, int n );
+    const char * (*dbg_vsprintf)( const char *format, va_list args );
+    int (*dbg_vprintf)( const char *format, va_list args );
+    int (*dbg_vlog)( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                     const char *function, const char *format, va_list args );
+};
+
+extern void __wine_dbg_set_functions( const struct __wine_debug_functions *funcs, size_t size );
 
 /*
  * Exported definitions and macros
@@ -138,13 +156,21 @@ enum __WINE_DEBUG_CLASS {
    as strings are re-used.  */
 extern const char *wine_dbgstr_an( const char * s, int n );
 extern const char *wine_dbgstr_wn( const WCHAR *s, int n );
-extern const char *wine_dbgstr_a( const char *s );
-extern const char *wine_dbgstr_w( const WCHAR *s );
 extern const char *wine_dbg_sprintf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
 
 extern int wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
-extern int wine_dbg_log( unsigned int cls, const char *ch, const char *func,
+extern int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *ch, const char *func,
                          const char *format, ... ) __WINE_PRINTF_ATTR(4,5);
+
+extern inline const char *wine_dbgstr_a( const char *s )
+{
+    return wine_dbgstr_an( s, -1 );
+}
+
+extern inline const char *wine_dbgstr_w( const WCHAR *s )
+{
+    return wine_dbgstr_wn( s, -1 );
+}
 
 static inline const char *wine_dbgstr_guid( const GUID *id )
 {
@@ -176,37 +202,38 @@ static inline const char *wine_dbgstr_rect( const RECT *rect )
 
 static inline const char *wine_dbgstr_longlong( ULONGLONG ll )
 {
-    if (ll >> 32) return wine_dbg_sprintf( "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll );
+    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
+        return wine_dbg_sprintf( "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll );
     else return wine_dbg_sprintf( "%lx", (unsigned long)ll );
 }
 
 #ifndef WINE_TRACE
 #define WINE_TRACE                 __WINE_DPRINTF(_TRACE,__wine_dbch___default)
-#define WINE_TRACE_(ch)            __WINE_DPRINTF(_TRACE,__wine_dbch_##ch)
+#define WINE_TRACE_(ch)            __WINE_DPRINTF(_TRACE,&__wine_dbch_##ch)
 #endif
-#define WINE_TRACE_ON(ch)          __WINE_GET_DEBUGGING(_TRACE,__wine_dbch_##ch)
+#define WINE_TRACE_ON(ch)          __WINE_GET_DEBUGGING(_TRACE,&__wine_dbch_##ch)
 
 #ifndef WINE_WARN
 #define WINE_WARN                  __WINE_DPRINTF(_WARN,__wine_dbch___default)
-#define WINE_WARN_(ch)             __WINE_DPRINTF(_WARN,__wine_dbch_##ch)
+#define WINE_WARN_(ch)             __WINE_DPRINTF(_WARN,&__wine_dbch_##ch)
 #endif
-#define WINE_WARN_ON(ch)           __WINE_GET_DEBUGGING(_WARN,__wine_dbch_##ch)
+#define WINE_WARN_ON(ch)           __WINE_GET_DEBUGGING(_WARN,&__wine_dbch_##ch)
 
 #ifndef WINE_FIXME
 #define WINE_FIXME                 __WINE_DPRINTF(_FIXME,__wine_dbch___default)
-#define WINE_FIXME_(ch)            __WINE_DPRINTF(_FIXME,__wine_dbch_##ch)
+#define WINE_FIXME_(ch)            __WINE_DPRINTF(_FIXME,&__wine_dbch_##ch)
 #endif
-#define WINE_FIXME_ON(ch)          __WINE_GET_DEBUGGING(_FIXME,__wine_dbch_##ch)
+#define WINE_FIXME_ON(ch)          __WINE_GET_DEBUGGING(_FIXME,&__wine_dbch_##ch)
 
 #define WINE_ERR                   __WINE_DPRINTF(_ERR,__wine_dbch___default)
-#define WINE_ERR_(ch)              __WINE_DPRINTF(_ERR,__wine_dbch_##ch)
-#define WINE_ERR_ON(ch)            __WINE_GET_DEBUGGING(_ERR,__wine_dbch_##ch)
+#define WINE_ERR_(ch)              __WINE_DPRINTF(_ERR,&__wine_dbch_##ch)
+#define WINE_ERR_ON(ch)            __WINE_GET_DEBUGGING(_ERR,&__wine_dbch_##ch)
 
 #define WINE_DECLARE_DEBUG_CHANNEL(ch) \
-    extern char __wine_dbch_##ch[]
+    extern struct __wine_debug_channel __wine_dbch_##ch
 #define WINE_DEFAULT_DEBUG_CHANNEL(ch) \
-    extern char __wine_dbch_##ch[]; \
-    static char * const __wine_dbch___default = __wine_dbch_##ch
+    extern struct __wine_debug_channel __wine_dbch_##ch; \
+    static struct __wine_debug_channel * const __wine_dbch___default = &__wine_dbch_##ch
 
 #define WINE_DPRINTF               wine_dbg_printf
 #define WINE_MESSAGE               wine_dbg_printf

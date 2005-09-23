@@ -35,7 +35,7 @@ struct dll
 {
     struct dll   *next;        /* linked list of dlls */
     struct dll   *prev;
-    char * const *channels;    /* array of channels */
+    struct __wine_debug_channel * const *channels;    /* array of channels */
     int           nb_channels; /* number of channels in array */
 };
 
@@ -51,14 +51,15 @@ struct debug_option
 
 static struct debug_option *first_option;
 static struct debug_option *last_option;
+static struct __wine_debug_functions funcs;
 
 static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 
 static int cmp_name( const void *p1, const void *p2 )
 {
     const char *name = p1;
-    const char * const *chan = p2;
-    return strcmp( name, *chan + 1 );
+    const struct __wine_debug_channel * const *chan = p2;
+    return strcmp( name, (*chan)->name );
 }
 
 /* apply a debug option to the channels of a given dll */
@@ -66,20 +67,20 @@ static void apply_option( struct dll *dll, const struct debug_option *opt )
 {
     if (opt->name[0])
     {
-        char **dbch = bsearch( opt->name, dll->channels, dll->nb_channels,
-                               sizeof(*dll->channels), cmp_name );
-        if (dbch) **dbch = (**dbch & ~opt->clear) | opt->set;
+        struct __wine_debug_channel * const *dbch = bsearch( opt->name, dll->channels, dll->nb_channels,
+                                                             sizeof(*dll->channels), cmp_name );
+        if (dbch) (*dbch)->flags = ((*dbch)->flags & ~opt->clear) | opt->set;
     }
     else /* all */
     {
         int i;
         for (i = 0; i < dll->nb_channels; i++)
-            dll->channels[i][0] = (dll->channels[i][0] & ~opt->clear) | opt->set;
+            dll->channels[i]->flags = (dll->channels[i]->flags & ~opt->clear) | opt->set;
     }
 }
 
 /* register a new set of channels for a dll */
-void *__wine_dbg_register( char * const *channels, int nb )
+void *__wine_dbg_register( struct __wine_debug_channel * const *channels, int nb )
 {
     struct debug_option *opt = first_option;
     struct dll *dll = malloc( sizeof(*dll) );
@@ -204,7 +205,7 @@ int wine_dbg_printf( const char *format, ... )
     va_list valist;
 
     va_start(valist, format);
-    ret = __wine_dbg_vprintf( format, valist );
+    ret = funcs.dbg_vprintf( format, valist );
     va_end(valist);
     return ret;
 }
@@ -217,20 +218,21 @@ const char *wine_dbg_sprintf( const char *format, ... )
     va_list valist;
 
     va_start(valist, format);
-    ret = __wine_dbg_vsprintf( format, valist );
+    ret = funcs.dbg_vsprintf( format, valist );
     va_end(valist);
     return ret;
 }
 
 
 /* varargs wrapper for __wine_dbg_vlog */
-int wine_dbg_log( unsigned int cls, const char *channel, const char *func, const char *format, ... )
+int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                  const char *func, const char *format, ... )
 {
     int ret;
     va_list valist;
 
     va_start(valist, format);
-    ret = __wine_dbg_vlog( cls, channel, func, format, valist );
+    ret = funcs.dbg_vlog( cls, channel, func, format, valist );
     va_end(valist);
     return ret;
 }
@@ -372,46 +374,50 @@ static int default_dbg_vprintf( const char *format, va_list args )
 
 
 /* default implementation of wine_dbg_vlog */
-static int default_dbg_vlog( unsigned int cls, const char *channel, const char *func,
-                             const char *format, va_list args )
+static int default_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                             const char *func, const char *format, va_list args )
 {
     int ret = 0;
 
     if (cls < sizeof(debug_classes)/sizeof(debug_classes[0]))
-        ret += wine_dbg_printf( "%s:%s:%s ", debug_classes[cls], channel + 1, func );
+        ret += wine_dbg_printf( "%s:%s:%s ", debug_classes[cls], channel->name, func );
     if (format)
-        ret += __wine_dbg_vprintf( format, args );
+        ret += funcs.dbg_vprintf( format, args );
     return ret;
 }
-
-
-/* exported function pointers so that debugging functions can be redirected at run-time */
-
-const char * (*__wine_dbgstr_an)( const char * s, int n ) = default_dbgstr_an;
-const char * (*__wine_dbgstr_wn)( const WCHAR *s, int n ) = default_dbgstr_wn;
-const char * (*__wine_dbg_vsprintf)( const char *format, va_list args ) = default_dbg_vsprintf;
-int (*__wine_dbg_vprintf)( const char *format, va_list args ) = default_dbg_vprintf;
-int (*__wine_dbg_vlog)( unsigned int cls, const char *channel, const char *function,
-                        const char *format, va_list args ) = default_dbg_vlog;
 
 /* wrappers to use the function pointers */
 
 const char *wine_dbgstr_an( const char * s, int n )
 {
-    return __wine_dbgstr_an(s, n);
+    return funcs.dbgstr_an(s, n);
 }
 
 const char *wine_dbgstr_wn( const WCHAR *s, int n )
 {
-    return __wine_dbgstr_wn(s, n);
+    return funcs.dbgstr_wn(s, n);
 }
 
 const char *wine_dbgstr_a( const char *s )
 {
-    return __wine_dbgstr_an( s, -1 );
+    return funcs.dbgstr_an( s, -1 );
 }
 
 const char *wine_dbgstr_w( const WCHAR *s )
 {
-    return __wine_dbgstr_wn( s, -1 );
+    return funcs.dbgstr_wn( s, -1 );
 }
+
+void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs, size_t size )
+{
+    memcpy( &funcs, new_funcs, min(sizeof(funcs),size) );
+}
+
+static struct __wine_debug_functions funcs =
+{
+    default_dbgstr_an,
+    default_dbgstr_wn,
+    default_dbg_vsprintf,
+    default_dbg_vprintf,
+    default_dbg_vlog
+};

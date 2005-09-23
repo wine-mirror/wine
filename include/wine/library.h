@@ -58,13 +58,6 @@ extern void wine_init( int argc, char *argv[], char *error, int error_size );
 
 /* debugging */
 
-extern const char * (*__wine_dbgstr_an)( const char * s, int n );
-extern const char * (*__wine_dbgstr_wn)( const WCHAR *s, int n );
-extern const char * (*__wine_dbg_vsprintf)( const char *format, va_list args );
-extern int (*__wine_dbg_vprintf)( const char *format, va_list args );
-extern int (*__wine_dbg_vlog)( unsigned int cls, const char *channel,
-                               const char *function, const char *format, va_list args );
-
 extern void wine_dbg_add_option( const char *name, unsigned char set, unsigned char clear );
 extern int wine_dbg_parse_options( const char *str );
 
