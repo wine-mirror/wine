@@ -673,8 +673,6 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     /** FIXME: Check that the format is supported
     *    by the device.
       *******************************/
-    /* TODO: add support for dxt2 and dxt4 formats */
-    if (Format == D3DFMT_DXT2 || Format == D3DFMT_DXT4) return D3DERR_NOTAVAILABLE;
 
     /* Non-power2 support */
 
