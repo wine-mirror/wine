@@ -1389,7 +1389,14 @@ HRESULT WINAPI CoRegisterClassObject(
    */
   hr = COM_GetRegisteredClassObject(rclsid, dwClsContext, &foundObject);
   if (hr == S_OK) {
+    if (flags & REGCLS_MULTIPLEUSE) {
+      if (dwClsContext & CLSCTX_LOCAL_SERVER)
+        hr = CoLockObjectExternal(foundObject, TRUE, FALSE);
+      IUnknown_Release(foundObject);
+      return hr;
+    }
     IUnknown_Release(foundObject);
+    ERR("object already registered for class %s\n", debugstr_guid(rclsid));
     return CO_E_OBJISREG;
   }
 
