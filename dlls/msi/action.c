@@ -86,6 +86,7 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package);
 static UINT ACTION_PublishComponents(MSIPACKAGE *package);
 static UINT ACTION_RemoveIniValues(MSIPACKAGE *package);
 static UINT ACTION_MoveFiles(MSIPACKAGE *package);
+static UINT ACTION_PatchFiles(MSIPACKAGE *package);
 
 /*
  * consts and values used
@@ -301,7 +302,7 @@ static struct _actions StandardActions[] = {
     { szMsiUnpublishAssemblies, NULL},
     { szInstallODBC, NULL},
     { szInstallServices, NULL},
-    { szPatchFiles, NULL},
+    { szPatchFiles, ACTION_PatchFiles },
     { szProcessComponents, ACTION_ProcessComponents },
     { szPublishComponents, ACTION_PublishComponents },
     { szPublishFeatures, ACTION_PublishFeatures },
@@ -4042,6 +4043,27 @@ static UINT ACTION_MoveFiles(MSIPACKAGE *package)
         rc = MSI_IterateRecords(view, &count, NULL, package);
         if (count)
             FIXME("%lu ignored MoveFile table values\n", count);
+        msiobj_release(&view->hdr);
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_PatchFiles(MSIPACKAGE *package)
+{
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'P','a','t','c','h',0 };
+    MSIQUERY *view = NULL;
+    DWORD count = 0;
+    UINT rc;
+    
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords(view, &count, NULL, package);
+        if (count)
+            FIXME("%lu ignored Patch table values\n", count);
         msiobj_release(&view->hdr);
     }
 
