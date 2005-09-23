@@ -196,8 +196,12 @@ static void IDirectSoundCapture_tests(void)
     /* try the COM class factory method of creation with no device specified */
     rc=CoCreateInstance(&CLSID_DirectSoundCapture, NULL, CLSCTX_INPROC_SERVER,
                         &IID_IDirectSoundCapture, (void**)&dsco);
-    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundCapture) failed: %s\n",
+    ok(rc==S_OK||rc==REGDB_E_CLASSNOTREG,"CoCreateInstance(CLSID_DirectSoundCapture) failed: %s\n",
        DXGetErrorString8(rc));
+    if (rc==REGDB_E_CLASSNOTREG) {
+        trace("  Class Not Registered\n");
+        return;
+    }
     if (dsco)
         IDirectSoundCapture_test(dsco, FALSE, NULL);
 
