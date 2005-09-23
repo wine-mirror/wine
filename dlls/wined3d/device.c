@@ -362,6 +362,9 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         if (((IWineD3DImpl *)This->wineD3D)->dxVersion > 8) { /*We don't create a state block in d3d8 yet*/
             /* NOTE: You must release the parent if the object was created via a callback
             ** ***************************/
+            /* TODO: this is exactly the same as required by _Reset.., so at some point we need to move the code so that is can be called by reset add release...  */
+            /* Release all of the swapchains, except the implicite swapchain */
+            IUnknown* stencilBufferParent;
             IUnknown* swapChainParent;
 
             /* NOTE: Don't release swapchain 0 here, it's 'special' */
@@ -380,9 +383,41 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
                 /* NOTE: no need to free the list element, it will be done by the release callback
                    HeapFree(GetProcessHeap(), 0, prevSwapchain); */
             }
+             /* Release the buffers (with sanity checks)*/
+            if(This->stencilBufferTarget != NULL && (IWineD3DSurface_Release(This->stencilBufferTarget) >0)){
+                if(This->depthStencilBuffer != This->stencilBufferTarget)
+                    FIXME("(%p) Something's still holding the depthStencilBuffer\n",This);
+            }
+            This->stencilBufferTarget = NULL;
 
-            if (This->stateBlock != NULL) {
-                IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
+            if(IWineD3DSurface_Release(This->renderTarget) >0){
+                 /* This check is a bit silly, itshould be in swapchain_release FIXME("(%p) Something's still holding the renderTarget\n",This); */
+            }
+            This->renderTarget = NULL;
+
+            IWineD3DSurface_GetParent(This->depthStencilBuffer, &stencilBufferParent);
+            IUnknown_Release(stencilBufferParent);          /* once for the get parent */
+            if(IUnknown_Release(stencilBufferParent)  >0){  /* the second time for when it was created */
+                FIXME("(%p) Something's still holding the depthStencilBuffer\n",This);
+            }
+            This->depthStencilBuffer = NULL;
+
+            /* Release the update stateblock */
+            if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
+                if(This->updateStateBlock != This->stateBlock)
+                    FIXME("(%p) Something's still holding the Update stateblock\n",This);
+            }
+            This->updateStateBlock = NULL;
+            { /* because were not doing proper internal refcounts releasing the primary state block
+                causes recursion with the extra checks in ResourceReleased, to avoid this we have
+                to set this->stateBlock = NULL; first */
+                IWineD3DStateBlock *stateBlock = (IWineD3DStateBlock *)This->stateBlock;
+                This->stateBlock = NULL;
+
+                /* Release the stateblock */
+                if(IWineD3DStateBlock_Release(stateBlock) > 0){
+                        FIXME("(%p) Something's still holding the Update stateblock\n",This);
+                }
             }
 
             if (This->swapchains != NULL) {
@@ -394,9 +429,21 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
                 }
             }
 
+            if (This->resources != NULL ) {
+                FIXME("(%p) Device released with resources still bound, acceptable but unexpected\n", This);
+
+#if 0           /* TODO: Dump a list of all the resources still bound */
+                dumpResources(This->resources);
+#endif
+                /* TODO: set the resources to a lost state */
+            }
+
         }
         IWineD3D_Release(This->wineD3D);
+        This->wineD3D = NULL;
         HeapFree(GetProcessHeap(), 0, This);
+        TRACE("Freed device  %p \n",This);
+        This = NULL;
     }
     return refCount;
 }
