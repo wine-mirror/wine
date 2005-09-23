@@ -122,15 +122,14 @@ static void test_StringTableStringFromId(void)
     ok(string2!=NULL,"Failed to look up string by ID from String Table\n");
     
     result=lstrcmpiW(string, string2);
-    ok(result==0,"String %p does not match requested StringID %p\n",string,string2);
+    ok(result==0,"StringID %p does not match requested StringID %p\n",string,string2);
 
+    /* This should never work */
     string3=pStringTableStringFromId(table,0);
     ok(string3!=NULL,"Failed to look up string by ID from String Table\n");
 
-    todo_wine {
-        result=lstrcmpiW(string, string3);
-        ok(result!=0,"String %p does not match requested StringID %p\n",string,string2);
-    }
+    result=lstrcmpiW(string, string3);
+    ok(result!=0,"StringID %p matches requested StringID %p\n",string,string3);
 }
 
 START_TEST(stringtable)

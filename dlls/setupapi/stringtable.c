@@ -239,14 +239,14 @@ StringTableAddString(HSTRING_TABLE hStringTable,
             {
                 if (!lstrcmpW(pStringTable->pSlots[i].pString, lpString))
                 {
-                    return i;
+                    return i + 1;
                 }
             }
             else
             {
                 if (!lstrcmpiW(pStringTable->pSlots[i].pString, lpString))
                 {
-                    return i;
+                    return i + 1;
                 }
             }
         }
@@ -275,7 +275,7 @@ StringTableAddString(HSTRING_TABLE hStringTable,
 
             pStringTable->dwUsedSlots++;
 
-            return i;
+            return i + 1;
         }
     }
 
@@ -436,20 +436,20 @@ StringTableGetExtraData(HSTRING_TABLE hStringTable,
         return FALSE;
     }
 
-    if (dwId >= pStringTable->dwMaxSlots)
+    if (dwId == 0 || dwId > pStringTable->dwMaxSlots)
     {
         ERR("Invalid Slot id!\n");
         return FALSE;
     }
 
-    if (pStringTable->pSlots[dwId].dwSize < dwExtraDataSize)
+    if (pStringTable->pSlots[dwId - 1].dwSize < dwExtraDataSize)
     {
         ERR("Data size is too large!\n");
         return FALSE;
     }
 
     memcpy(lpExtraData,
-           pStringTable->pSlots[dwId].pData,
+           pStringTable->pSlots[dwId - 1].pData,
            dwExtraDataSize);
 
     return TRUE;
@@ -496,12 +496,12 @@ StringTableLookUpString(HSTRING_TABLE hStringTable,
             if (dwFlags & 1)
             {
                 if (!lstrcmpW(pStringTable->pSlots[i].pString, lpString))
-                    return i;
+                    return i + 1;
             }
             else
             {
                 if (!lstrcmpiW(pStringTable->pSlots[i].pString, lpString))
-                    return i;
+                    return i + 1;
             }
         }
     }
@@ -572,7 +572,7 @@ StringTableSetExtraData(HSTRING_TABLE hStringTable,
         return FALSE;
     }
 
-    if (dwId >= pStringTable->dwMaxSlots)
+    if (dwId == 0 || dwId > pStringTable->dwMaxSlots)
     {
         ERR("Invalid Slot id!\n");
         return FALSE;
@@ -584,17 +584,17 @@ StringTableSetExtraData(HSTRING_TABLE hStringTable,
         return FALSE;
     }
 
-    pStringTable->pSlots[dwId].pData = MyMalloc(dwExtraDataSize);
-    if (pStringTable->pSlots[dwId].pData == NULL)
+    pStringTable->pSlots[dwId - 1].pData = MyMalloc(dwExtraDataSize);
+    if (pStringTable->pSlots[dwId - 1].pData == NULL)
     {
         ERR("\n");
         return FALSE;
     }
 
-    memcpy(pStringTable->pSlots[dwId].pData,
+    memcpy(pStringTable->pSlots[dwId - 1].pData,
            lpExtraData,
            dwExtraDataSize);
-    pStringTable->pSlots[dwId].dwSize = dwExtraDataSize;
+    pStringTable->pSlots[dwId - 1].dwSize = dwExtraDataSize;
 
     return TRUE;
 }
@@ -618,6 +618,7 @@ StringTableStringFromId(HSTRING_TABLE hStringTable,
                         DWORD dwId)
 {
     PSTRING_TABLE pStringTable;
+    static WCHAR empty[] = {0};
 
     TRACE("%p %lx\n", hStringTable, dwId);
 
@@ -628,10 +629,10 @@ StringTableStringFromId(HSTRING_TABLE hStringTable,
         return NULL;
     }
 
-    if (dwId >= pStringTable->dwMaxSlots)
-        return NULL;
+    if (dwId == 0 || dwId > pStringTable->dwMaxSlots)
+        return empty;
 
-    return pStringTable->pSlots[dwId].pString;
+    return pStringTable->pSlots[dwId - 1].pString;
 }
 
 
@@ -670,18 +671,18 @@ StringTableStringFromIdEx(HSTRING_TABLE hStringTable,
         return FALSE;
     }
 
-    if (dwId >= pStringTable->dwMaxSlots ||
-        pStringTable->pSlots[dwId].pString == NULL)
+    if (dwId == 0 || dwId > pStringTable->dwMaxSlots ||
+        pStringTable->pSlots[dwId - 1].pString == NULL)
     {
         WARN("Invalid string ID!\n");
         *lpBufferLength = 0;
         return FALSE;
     }
 
-    dwLength = (lstrlenW(pStringTable->pSlots[dwId].pString) + 1) * sizeof(WCHAR);
+    dwLength = (lstrlenW(pStringTable->pSlots[dwId - 1].pString) + 1) * sizeof(WCHAR);
     if (dwLength <= *lpBufferLength)
     {
-        lstrcpyW(lpBuffer, pStringTable->pSlots[dwId].pString);
+        lstrcpyW(lpBuffer, pStringTable->pSlots[dwId - 1].pString);
         bResult = TRUE;
     }
 
