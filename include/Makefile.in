@@ -90,6 +90,7 @@ WINDOWS_INCLUDES = \
 	dde.h \
 	ddeml.h \
 	ddk/cfgmgr32.h \
+	ddk/wdm.h \
 	ddk/winsplp.h \
 	ddraw.h \
 	ddrawi.h \
