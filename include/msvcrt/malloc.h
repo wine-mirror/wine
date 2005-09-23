@@ -71,6 +71,9 @@ void        free(void*);
 void*       malloc(size_t);
 void*       realloc(void*,size_t);
 
+size_t _get_sbh_threshold(void);
+int _set_sbh_threshold(size_t size);
+
 #ifdef __cplusplus
 }
 #endif

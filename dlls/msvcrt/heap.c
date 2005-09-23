@@ -39,6 +39,8 @@ static int MSVCRT_new_mode;
 
 /* FIXME - According to documentation it should be 8*1024, at runtime it returns 16 */ 
 static unsigned int MSVCRT_amblksiz = 16;
+/* FIXME - According to documentation it should be 480 bytes, at runtime default is 0 */
+static size_t MSVCRT_sbh_threshold = 0;
 
 /*********************************************************************
  *		??2@YAPAXI@Z (MSVCRT.@)
@@ -290,4 +292,24 @@ void* MSVCRT_realloc(void* ptr, MSVCRT_size_t size)
 unsigned int* __p__amblksiz(void)
 {
   return &MSVCRT_amblksiz;
+}
+
+/*********************************************************************
+ *		_get_sbh_threshold (MSVCRT.@)
+ */
+size_t _get_sbh_threshold(void)
+{
+  return MSVCRT_sbh_threshold;
+}
+
+/*********************************************************************
+ *		_set_sbh_threshold (MSVCRT.@)
+ */
+int _set_sbh_threshold(size_t threshold)
+{
+  if(threshold > 1016)
+     return 0;
+  else
+     MSVCRT_sbh_threshold = threshold;
+  return 1;
 }

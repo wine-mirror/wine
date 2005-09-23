@@ -248,7 +248,7 @@
 @ cdecl _futime(long ptr)
 @ cdecl _gcvt(double long str)
 @ cdecl _get_osfhandle(long)
-@ stub _get_sbh_threshold #()
+@ cdecl _get_sbh_threshold()
 @ cdecl _getch()
 @ cdecl _getche()
 @ cdecl _getcwd(str long)
@@ -424,7 +424,7 @@
 @ cdecl _searchenv(str str ptr)
 @ stdcall -i386 _seh_longjmp_unwind(ptr)
 @ cdecl _set_error_mode(long)
-@ stub _set_sbh_threshold #(long)
+@ cdecl _set_sbh_threshold(long)
 @ cdecl _seterrormode(long)
 @ cdecl -i386 _setjmp(ptr) MSVCRT__setjmp
 @ cdecl -i386 _setjmp3(ptr long) MSVCRT__setjmp3
