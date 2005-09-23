@@ -84,6 +84,7 @@ static UINT ACTION_ResolveSource(MSIPACKAGE *package);
 static UINT ACTION_ExecuteAction(MSIPACKAGE *package);
 static UINT ACTION_RegisterFonts(MSIPACKAGE *package);
 static UINT ACTION_PublishComponents(MSIPACKAGE *package);
+static UINT ACTION_RemoveIniValues(MSIPACKAGE *package);
 
 /*
  * consts and values used
@@ -318,7 +319,7 @@ static struct _actions StandardActions[] = {
     { szRemoveExistingProducts, NULL},
     { szRemoveFiles, NULL},
     { szRemoveFolders, NULL},
-    { szRemoveIniValues, NULL},
+    { szRemoveIniValues, ACTION_RemoveIniValues },
     { szRemoveODBC, NULL},
     { szRemoveRegistryValues, NULL},
     { szRemoveShortcuts, NULL},
@@ -4002,4 +4003,25 @@ static UINT ACTION_PublishComponents(MSIPACKAGE *package)
     msiobj_release(&view->hdr);
 
     return rc;
+}
+
+static UINT ACTION_RemoveIniValues(MSIPACKAGE *package)
+{
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'R','e','m','o','v','e','I','n','i','F','i','l','e',0 };
+    MSIQUERY *view = NULL;
+    DWORD count = 0;
+    UINT rc;
+    
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords(view, &count, NULL, package);
+        if (count)
+            FIXME("%lu ignored RemoveIniFile table values\n", count);
+        msiobj_release(&view->hdr);
+    }
+
+    return ERROR_SUCCESS;
 }
