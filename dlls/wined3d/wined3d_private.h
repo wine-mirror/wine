@@ -110,21 +110,26 @@ UINT static const glTypeLookup[D3DDECLTYPE_UNUSED][5] = {
 /**
  * Settings 
  */
-#define VS_NONE 0
-#define VS_HW   1
-#define VS_SW   2
+#define VS_NONE    0
+#define VS_HW      1
+#define VS_SW      2
 
-#define PS_NONE 0
-#define PS_HW   1
+#define PS_NONE    0
+#define PS_HW      1
 
-#define VBO_NONE 0
-#define VBO_HW   1
+#define VBO_NONE   0
+#define VBO_HW     1
+
+#define NP2_NONE   0
+#define NP2_REPACK 1
 
 typedef struct wined3d_settings_s {
 /* vertex and pixel shader modes */
   int vs_mode;
   int ps_mode;
   int vbo_mode;
+/* nonpower 2 function */
+  int nonpower2_mode;
 } wined3d_settings_t;
 
 extern wined3d_settings_t wined3d_settings;

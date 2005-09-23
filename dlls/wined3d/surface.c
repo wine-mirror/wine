@@ -284,8 +284,13 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
     else if (This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
              This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) /* DXT2/3/4/5 is 16 bytes per block */
         pLockedRect->Pitch = (This->currentDesc.Width >> 2) << 4;
-    else
-        pLockedRect->Pitch = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */
+    else {
+        if (NP2_REPACK == wined3d_settings.nonpower2_mode) {
+            pLockedRect->Pitch = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */
+        } else {
+            pLockedRect->Pitch = This->bytesPerPixel * This->pow2Width;
+        }
+    }
 
     if (NULL == pRect) {
         pLockedRect->pBits = This->resource.allocatedMemory;
@@ -355,6 +360,65 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
                             This->glDescription.glType,
                             This->resource.allocatedMemory);
                 vcheckGLcall("glGetTexImage");
+                if (NP2_REPACK == wined3d_settings.nonpower2_mode) {
+                    /* some games (e.g. warhammer 40k) don't work with the odd pitchs properly, preventing
+                    the surface pitch from being used to box non-power2 textures. Instead we have to use a hack to
+                    repack the texture so that the bpp * width pitch can be used instead of the bpp * pow2width.
+    
+                    Were doing this...
+    
+                    instead of boxing the texture :
+                    |<-texture width ->|  -->pow2width|   /\
+                    |111111111111111111|              |   |
+                    |222 Texture 222222| boxed empty  | texture height
+                    |3333 Data 33333333|              |   |
+                    |444444444444444444|              |   \/
+                    -----------------------------------   |
+                    |     boxed  empty | boxed empty  | pow2height
+                    |                  |              |   \/
+                    -----------------------------------
+    
+    
+                    were repacking the data to the expected texture width
+    
+                    |<-texture width ->|  -->pow2width|   /\
+                    |111111111111111111222222222222222|   |
+                    |222333333333333333333444444444444| texture height
+                    |444444                           |   |
+                    |                                 |   \/
+                    |                                 |   |
+                    |            empty                | pow2height
+                    |                                 |   \/
+                    -----------------------------------
+    
+                    == is the same as
+    
+                    |<-texture width ->|    /\
+                    |111111111111111111|
+                    |222222222222222222|texture height
+                    |333333333333333333|
+                    |444444444444444444|    \/
+                    --------------------
+    
+                    this also means that any references to allocatedMemory should work with the data as if were a standard texture with a non-power2 width instead of texture boxed up to be a power2 texture.
+    
+                    internally the texture is still stored in a boxed format so any references to textureName will get a boxed texture with width pow2width and not a texture of width currentDesc.Width.
+                    */
+                    if (This->nonpow2) {
+                        BYTE* dataa, *datab;
+                        int pitcha = 0, pitchb = 0;
+                        int y;
+                        pitcha = This->bytesPerPixel * This->currentDesc.Width;
+                        pitchb = This->bytesPerPixel * This->pow2Width;
+                        datab = dataa = This->resource.allocatedMemory;
+                        FIXME("(%p) : Repacking the surface data from pitch %d to pitch %d\n", This, pitcha, pitchb);
+                        for (y = 1 ; y < This->currentDesc.Height; y++) {
+                            dataa += pitcha; /* skip the first row */
+                            datab += pitchb;
+                            memcpy(dataa, datab, pitcha);
+                        }
+                    }
+                }
             }
             LEAVE_GL();
         } else { /* Nothing to do */
@@ -945,7 +1009,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     } else {
 
        /* TODO: possibly use texture rectangle (though we are probably more compatible without it) */
-        if (This->nonpow2 == TRUE) {
+        if (NP2_REPACK == wined3d_settings.nonpower2_mode && This->nonpow2 == TRUE) {
+
 
             TRACE("non power of two support\n");
             ENTER_GL();
@@ -997,8 +1062,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
                 This->glDescription.level,
                 debug_d3dformat(This->resource.format),
                 This->glDescription.glFormatInternal,
-                This->currentDesc.Width,
-                This->currentDesc.Height,
+                This->pow2Width,
+                This->pow2Height,
                 0,
                 This->glDescription.glFormat,
                 This->glDescription.glType,
@@ -1008,8 +1073,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             glTexImage2D(This->glDescription.target,
                         This->glDescription.level,
                         This->glDescription.glFormatInternal,
-                        This->currentDesc.Width,
-                        This->currentDesc.Height,
+                        This->pow2Width,
+                        This->pow2Height,
                         0 /* border */,
                         This->glDescription.glFormat,
                         This->glDescription.glType,

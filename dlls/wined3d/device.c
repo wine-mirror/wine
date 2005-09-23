@@ -716,7 +716,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
                Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
        Size = ((max(pow2Width,4) * D3DFmtGetBpp(This, Format)) * max(pow2Height,4));
     } else {
-       Size = (pow2Width     * D3DFmtGetBpp(This, Format)) * pow2Height;
+       Size = (pow2Width * D3DFmtGetBpp(This, Format)) * pow2Height;
     }
 
     /** Create the and initilise surface resource **/
@@ -5161,21 +5161,35 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
 
 
         } else {
-            /* some applications cannot handle odd pitches returned by soft non-power2, so we have
-               to repack the data from pow2Width/Height to expected Width,Height, this makes the
-               data returned by GetData non-power2 width/height with hardware non-power2
-               pow2Width/height are set to surface width height, repacking isn't needed so it
-               doesn't matter which function gets called. */
-            glTexSubImage2D(glDescription->target
+            if (NP2_REPACK == wined3d_settings.nonpower2_mode) {
+                /* some applications cannot handle odd pitches returned by soft non-power2, so we have
+                to repack the data from pow2Width/Height to expected Width,Height, this makes the
+                data returned by GetData non-power2 width/height with hardware non-power2
+                pow2Width/height are set to surface width height, repacking isn't needed so it
+                doesn't matter which function gets called. */
+                glTexSubImage2D(glDescription->target
+                        ,glDescription->level
+                        ,destLeft
+                        ,destTop
+                        ,srcWidth
+                        ,srcHeight
+                        ,glDescription->glFormat
+                        ,glDescription->glType
+                        ,IWineD3DSurface_GetData(pSourceSurface)
+                    );
+            } else {
+                /* not repacked, the data returned by IWineD3DSurface_GetData is pow2Width x pow2Height */
+                glTexSubImage2D(glDescription->target
                     ,glDescription->level
                     ,destLeft
                     ,destTop
-                    ,srcWidth
-                    ,srcHeight
+                    ,((IWineD3DSurfaceImpl *)pSourceSurface)->pow2Width
+                    ,((IWineD3DSurfaceImpl *)pSourceSurface)->pow2Height
                     ,glDescription->glFormat
                     ,glDescription->glType
                     ,IWineD3DSurface_GetData(pSourceSurface)
                 );
+            }
 
         }
      }

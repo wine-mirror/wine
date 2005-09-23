@@ -113,24 +113,24 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
        len = GetModuleFileNameA( 0, buffer, MAX_PATH );
        if (len && len < MAX_PATH)
        {
-	   HKEY tmpkey;
-	   /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\Direct3D */
-	   if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey ))
-           {
-	       char *p, *appname = buffer;
-	       if ((p = strrchr( appname, '/' ))) appname = p + 1;
-	       if ((p = strrchr( appname, '\\' ))) appname = p + 1;
-	       strcat( appname, "\\Direct3D" );
-	       TRACE("appname = [%s] \n", appname);
-	       if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
-	       RegCloseKey( tmpkey );
-	   }
+            HKEY tmpkey;
+            /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\Direct3D */
+            if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey ))
+            {
+                char *p, *appname = buffer;
+                if ((p = strrchr( appname, '/' ))) appname = p + 1;
+                if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+                strcat( appname, "\\Direct3D" );
+                TRACE("appname = [%s] \n", appname);
+                if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
+                RegCloseKey( tmpkey );
+            }
        }
 
        if ( 0 != hkey || 0 != appkey )
        {
-           if ( !get_config_key( hkey, appkey, "VertexShaderMode", buffer, size) )
-           {
+            if ( !get_config_key( hkey, appkey, "VertexShaderMode", buffer, size) )
+            {
                 if (!strcmp(buffer,"none"))
                 {
                     TRACE("Disable vertex shaders\n");
@@ -141,33 +141,48 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                     TRACE("Force SW vertex shaders\n");
                     wined3d_settings.vs_mode = VS_SW;
                 }
-           }
-           if ( !get_config_key( hkey, appkey, "PixelShaderMode", buffer, size) )
-           {
+            }
+            if ( !get_config_key( hkey, appkey, "PixelShaderMode", buffer, size) )
+            {
                 if (!strcmp(buffer,"enabled"))
                 {
                     TRACE("Allow pixel shaders\n");
                     wined3d_settings.ps_mode = PS_HW;
                 }
-		if (!strcmp(buffer,"disabled"))
+                if (!strcmp(buffer,"disabled"))
                 {
                     TRACE("Disable pixel shaders\n");
                     wined3d_settings.ps_mode = PS_NONE;
                 }
-           }
-	   if ( !get_config_key( hkey, appkey, "VertexBufferMode", buffer, size) )
-           {
+            }
+            if ( !get_config_key( hkey, appkey, "VertexBufferMode", buffer, size) )
+            {
                 if (!strcmp(buffer,"none"))
                 {
                     TRACE("Disable Vertex Buffer Hardware support\n");
-                    wined3d_settings.vbo_mode = VS_NONE;
+                    wined3d_settings.vbo_mode = VBO_NONE;
                 }
                 else if (!strcmp(buffer,"hardware"))
                 {
-  	            TRACE("Allow Vertex Buffer Hardware support\n");
-		    wined3d_settings.vbo_mode = VS_HW;
+                    TRACE("Allow Vertex Buffer Hardware support\n");
+                    wined3d_settings.vbo_mode = VBO_HW;
                 }
-           }
+            }
+            if ( !get_config_key( hkey, appkey, "Nonpower2Mode", buffer, size) )
+            {
+                if (!strcmp(buffer,"none"))
+                {
+                    TRACE("Using default non-power2 textures\n");
+                    wined3d_settings.nonpower2_mode = NP2_NONE;
+
+                }
+                else if (!strcmp(buffer,"repack"))
+                {
+                    TRACE("Repacking non-power2 textre\n");
+                    wined3d_settings.nonpower2_mode = NP2_REPACK;
+                }
+                /* There will be a couple of other choices for nonpow2, they are: TextureRecrangle and OpenGL 2 */
+            }
        }
        if (wined3d_settings.vs_mode == VS_HW)
            TRACE("Allow HW vertex shaders\n");
@@ -175,6 +190,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
            TRACE("Disable pixel shaders\n");
        if (wined3d_settings.vbo_mode == VBO_NONE)
            TRACE("Disable Vertex Buffer Hardware support\n");
+       if (wined3d_settings.nonpower2_mode == NP2_REPACK)
+           TRACE("Repacking non-power2 textures\n");
 
        if (appkey) RegCloseKey( appkey );
        if (hkey) RegCloseKey( hkey );
