@@ -103,6 +103,10 @@ struct DefaultHandler
   LPWSTR containerApp;
   LPWSTR containerObj;
 
+  /* IOleObject delegate */
+  IOleObject *pOleDelegate;
+  /* IPersistStorage delegate */
+  IPersistStorage *pPSDelegate;
 };
 
 typedef struct DefaultHandler DefaultHandler;
@@ -1117,17 +1121,13 @@ static ULONG WINAPI DefaultHandler_IRunnableObject_Release(
 /************************************************************************
  * DefaultHandler_GetRunningClass (IRunnableObject)
  *
- * According to Brockscmidt, Chapter 19, the default handler's
- * implementation of IRunnableobject does nothing until the object
- * is actually running.
- *
  * See Windows documentation for more details on IRunnableObject methods.
  */
 static HRESULT WINAPI DefaultHandler_GetRunningClass(
             IRunnableObject*     iface,
 	    LPCLSID              lpClsid)
 {
-  TRACE("()\n");
+  FIXME("()\n");
   return S_OK;
 }
 
@@ -1135,32 +1135,64 @@ static HRESULT WINAPI DefaultHandler_Run(
             IRunnableObject*     iface,
 	    IBindCtx*            pbc)
 {
-  FIXME(": Stub\n");
-  return E_NOTIMPL;
+  DefaultHandler *This = impl_from_IRunnableObject(iface);
+  HRESULT hr;
+
+  FIXME("(%p): semi-stub\n", pbc);
+
+  /* already running? if so nothing to do */
+  if (This->pOleDelegate)
+    return S_OK;
+
+  hr = CoCreateInstance(&This->clsid, NULL, CLSCTX_LOCAL_SERVER, &IID_IOleObject, (void **)&This->pOleDelegate);
+  if (FAILED(hr))
+    return hr;
+
+  if (This->clientSite)
+    hr = IOleObject_SetClientSite(This->pOleDelegate, This->clientSite);
+
+  if (SUCCEEDED(hr))
+  {
+    IOleObject_QueryInterface(This->pOleDelegate, &IID_IPersistStorage, (void **)&This->pPSDelegate);
+    if (This->pPSDelegate)
+      hr = IPersistStorage_InitNew(This->pPSDelegate, NULL);
+  }
+
+  if (SUCCEEDED(hr) && This->containerApp)
+    hr = IOleObject_SetHostNames(This->pOleDelegate, This->containerApp, This->containerObj);
+
+  /* FIXME: do more stuff here:
+   * - IOleObject_GetMiscStatus
+   * - IOleObject_Advise
+   * - IOleObject_GetMoniker
+   * - advise data cache that we've connected some how?
+   */
+
+  /* FIXME: if we failed, Close the object */
+
+  return hr;
 }
 
 /************************************************************************
  * DefaultHandler_IsRunning (IRunnableObject)
- *
- * According to Brockscmidt, Chapter 19, the default handler's
- * implementation of IRunnableobject does nothing until the object
- * is actually running.
  *
  * See Windows documentation for more details on IRunnableObject methods.
  */
 static BOOL    WINAPI DefaultHandler_IsRunning(
             IRunnableObject*     iface)
 {
+  DefaultHandler *This = impl_from_IRunnableObject(iface);
+
   TRACE("()\n");
-  return S_FALSE;
+
+  if (This->pOleDelegate)
+    return TRUE;
+  else
+    return FALSE;
 }
 
 /************************************************************************
  * DefaultHandler_LockRunning (IRunnableObject)
- *
- * According to Brockscmidt, Chapter 19, the default handler's
- * implementation of IRunnableobject does nothing until the object
- * is actually running.
  *
  * See Windows documentation for more details on IRunnableObject methods.
  */
@@ -1169,16 +1201,12 @@ static HRESULT WINAPI DefaultHandler_LockRunning(
 	    BOOL                 fLock,
 	    BOOL                 fLastUnlockCloses)
 {
-  TRACE("()\n");
+  FIXME("()\n");
   return S_OK;
 }
 
 /************************************************************************
  * DefaultHandler_SetContainedObject (IRunnableObject)
- *
- * According to Brockscmidt, Chapter 19, the default handler's
- * implementation of IRunnableobject does nothing until the object
- * is actually running.
  *
  * See Windows documentation for more details on IRunnableObject methods.
  */
@@ -1186,7 +1214,7 @@ static HRESULT WINAPI DefaultHandler_SetContainedObject(
             IRunnableObject*     iface,
 	    BOOL                 fContained)
 {
-  TRACE("()\n");
+  FIXME("()\n");
   return S_OK;
 }
 
@@ -1314,6 +1342,8 @@ static DefaultHandler* DefaultHandler_Construct(
   This->dataAdviseHolder = NULL;
   This->containerApp = NULL;
   This->containerObj = NULL;
+  This->pOleDelegate = NULL;
+  This->pPSDelegate = NULL;
 
   return This;
 }
@@ -1321,6 +1351,11 @@ static DefaultHandler* DefaultHandler_Construct(
 static void DefaultHandler_Destroy(
   DefaultHandler* This)
 {
+  if (This->pOleDelegate)
+    IOleObject_Release(This->pOleDelegate);
+  if (This->pPSDelegate)
+    IPersistStorage_Release(This->pPSDelegate);
+
   /* Free the strings idenfitying the object */
   HeapFree( GetProcessHeap(), 0, This->containerApp );
   This->containerApp = NULL;
