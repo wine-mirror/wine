@@ -275,7 +275,7 @@ static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
 
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI Graphbuilder_QueryInterface(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_QueryInterface(IGraphBuilder *iface,
 						  REFIID riid,
 						  LPVOID*ppvObj) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
@@ -284,7 +284,7 @@ static HRESULT WINAPI Graphbuilder_QueryInterface(IGraphBuilder *iface,
     return Filtergraph_QueryInterface(This, riid, ppvObj);
 }
 
-static ULONG WINAPI Graphbuilder_AddRef(IGraphBuilder *iface) {
+static ULONG WINAPI GraphBuilder_AddRef(IGraphBuilder *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
     
     TRACE("(%p/%p)->() calling FilterGraph AddRef\n", This, iface);
@@ -292,7 +292,7 @@ static ULONG WINAPI Graphbuilder_AddRef(IGraphBuilder *iface) {
     return Filtergraph_AddRef(This);
 }
 
-static ULONG WINAPI Graphbuilder_Release(IGraphBuilder *iface) {
+static ULONG WINAPI GraphBuilder_Release(IGraphBuilder *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
     
     TRACE("(%p/%p)->() calling FilterGraph Release\n", This, iface);
@@ -301,7 +301,7 @@ static ULONG WINAPI Graphbuilder_Release(IGraphBuilder *iface) {
 }
 
 /*** IFilterGraph methods ***/
-static HRESULT WINAPI Graphbuilder_AddFilter(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_AddFilter(IGraphBuilder *iface,
 					     IBaseFilter *pFilter,
 					     LPCWSTR pName) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
@@ -396,7 +396,7 @@ static HRESULT WINAPI Graphbuilder_AddFilter(IGraphBuilder *iface,
     return hr;
 }
 
-static HRESULT WINAPI Graphbuilder_RemoveFilter(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_RemoveFilter(IGraphBuilder *iface,
 						IBaseFilter *pFilter) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
     int i;
@@ -436,7 +436,7 @@ static HRESULT WINAPI Graphbuilder_RemoveFilter(IGraphBuilder *iface,
     return hr; /* FIXME: check this error code */
 }
 
-static HRESULT WINAPI Graphbuilder_EnumFilters(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_EnumFilters(IGraphBuilder *iface,
 					      IEnumFilters **ppEnum) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
 
@@ -445,7 +445,7 @@ static HRESULT WINAPI Graphbuilder_EnumFilters(IGraphBuilder *iface,
     return IEnumFiltersImpl_Construct(This->ppFiltersInGraph, This->nFilters, ppEnum);
 }
 
-static HRESULT WINAPI Graphbuilder_FindFilterByName(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_FindFilterByName(IGraphBuilder *iface,
 						    LPCWSTR pName,
 						    IBaseFilter **ppFilter) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
@@ -470,7 +470,7 @@ static HRESULT WINAPI Graphbuilder_FindFilterByName(IGraphBuilder *iface,
 
 /* NOTE: despite the implication, it doesn't matter which
  * way round you put in the input and output pins */
-static HRESULT WINAPI Graphbuilder_ConnectDirect(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_ConnectDirect(IGraphBuilder *iface,
 						 IPin *ppinIn,
 						 IPin *ppinOut,
 						 const AM_MEDIA_TYPE *pmt) {
@@ -514,7 +514,7 @@ static HRESULT WINAPI Graphbuilder_ConnectDirect(IGraphBuilder *iface,
     return hr;
 }
 
-static HRESULT WINAPI Graphbuilder_Reconnect(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_Reconnect(IGraphBuilder *iface,
 					     IPin *ppin) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
     IPin *pConnectedTo = NULL;
@@ -540,7 +540,7 @@ static HRESULT WINAPI Graphbuilder_Reconnect(IGraphBuilder *iface,
     return hr;
 }
 
-static HRESULT WINAPI Graphbuilder_Disconnect(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_Disconnect(IGraphBuilder *iface,
 					      IPin *ppin) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
 
@@ -549,7 +549,7 @@ static HRESULT WINAPI Graphbuilder_Disconnect(IGraphBuilder *iface,
     return IPin_Disconnect(ppin);
 }
 
-static HRESULT WINAPI Graphbuilder_SetDefaultSyncSource(IGraphBuilder *iface) {
+static HRESULT WINAPI GraphBuilder_SetDefaultSyncSource(IGraphBuilder *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
 
     TRACE("(%p/%p)->(): stub !!!\n", iface, This);
@@ -650,7 +650,7 @@ static HRESULT GetInternalConnections(IBaseFilter* pfilter, IPin* pinputpin, IPi
 }
 
 /*** IGraphBuilder methods ***/
-static HRESULT WINAPI Graphbuilder_Connect(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_Connect(IGraphBuilder *iface,
 					   IPin *ppinOut,
 					   IPin *ppinIn) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
@@ -827,7 +827,7 @@ error:
     return S_OK;
 }
 
-static HRESULT WINAPI Graphbuilder_Render(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_Render(IGraphBuilder *iface,
 					  IPin *ppinOut) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
     IEnumMediaTypes* penummt;
@@ -950,7 +950,7 @@ error:
     return S_OK;
 }
 
-static HRESULT WINAPI Graphbuilder_RenderFile(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
 					      LPCWSTR lpcwstrFile,
 					      LPCWSTR lpcwstrPlayList) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
@@ -1090,7 +1090,7 @@ static HRESULT WINAPI Graphbuilder_RenderFile(IGraphBuilder *iface,
     return hr;
 }
 
-static HRESULT WINAPI Graphbuilder_AddSourceFilter(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_AddSourceFilter(IGraphBuilder *iface,
 						   LPCWSTR lpcwstrFileName,
 						   LPCWSTR lpcwstrFilterName,
 						   IBaseFilter **ppFilter) {
@@ -1153,7 +1153,7 @@ error:
     return hr;
 }
 
-static HRESULT WINAPI Graphbuilder_SetLogFile(IGraphBuilder *iface,
+static HRESULT WINAPI GraphBuilder_SetLogFile(IGraphBuilder *iface,
 					      DWORD_PTR hFile) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
 
@@ -1162,7 +1162,7 @@ static HRESULT WINAPI Graphbuilder_SetLogFile(IGraphBuilder *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Graphbuilder_Abort(IGraphBuilder *iface) {
+static HRESULT WINAPI GraphBuilder_Abort(IGraphBuilder *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
 
     TRACE("(%p/%p)->(): stub !!!\n", This, iface);
@@ -1170,7 +1170,7 @@ static HRESULT WINAPI Graphbuilder_Abort(IGraphBuilder *iface) {
     return S_OK;
 }
 
-static HRESULT WINAPI Graphbuilder_ShouldOperationContinue(IGraphBuilder *iface) {
+static HRESULT WINAPI GraphBuilder_ShouldOperationContinue(IGraphBuilder *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
 
     TRACE("(%p/%p)->(): stub !!!\n", This, iface);
@@ -1181,28 +1181,28 @@ static HRESULT WINAPI Graphbuilder_ShouldOperationContinue(IGraphBuilder *iface)
 
 static const IGraphBuilderVtbl IGraphBuilder_VTable =
 {
-    Graphbuilder_QueryInterface,
-    Graphbuilder_AddRef,
-    Graphbuilder_Release,
-    Graphbuilder_AddFilter,
-    Graphbuilder_RemoveFilter,
-    Graphbuilder_EnumFilters,
-    Graphbuilder_FindFilterByName,
-    Graphbuilder_ConnectDirect,
-    Graphbuilder_Reconnect,
-    Graphbuilder_Disconnect,
-    Graphbuilder_SetDefaultSyncSource,
-    Graphbuilder_Connect,
-    Graphbuilder_Render,
-    Graphbuilder_RenderFile,
-    Graphbuilder_AddSourceFilter,
-    Graphbuilder_SetLogFile,
-    Graphbuilder_Abort,
-    Graphbuilder_ShouldOperationContinue
+    GraphBuilder_QueryInterface,
+    GraphBuilder_AddRef,
+    GraphBuilder_Release,
+    GraphBuilder_AddFilter,
+    GraphBuilder_RemoveFilter,
+    GraphBuilder_EnumFilters,
+    GraphBuilder_FindFilterByName,
+    GraphBuilder_ConnectDirect,
+    GraphBuilder_Reconnect,
+    GraphBuilder_Disconnect,
+    GraphBuilder_SetDefaultSyncSource,
+    GraphBuilder_Connect,
+    GraphBuilder_Render,
+    GraphBuilder_RenderFile,
+    GraphBuilder_AddSourceFilter,
+    GraphBuilder_SetLogFile,
+    GraphBuilder_Abort,
+    GraphBuilder_ShouldOperationContinue
 };
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI Mediacontrol_QueryInterface(IMediaControl *iface,
+static HRESULT WINAPI MediaControl_QueryInterface(IMediaControl *iface,
 						  REFIID riid,
 						  LPVOID*ppvObj) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
@@ -1212,7 +1212,7 @@ static HRESULT WINAPI Mediacontrol_QueryInterface(IMediaControl *iface,
     return Filtergraph_QueryInterface(This, riid, ppvObj);
 }
 
-static ULONG WINAPI Mediacontrol_AddRef(IMediaControl *iface) {
+static ULONG WINAPI MediaControl_AddRef(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -1220,7 +1220,7 @@ static ULONG WINAPI Mediacontrol_AddRef(IMediaControl *iface) {
     return Filtergraph_AddRef(This);
 }
 
-static ULONG WINAPI Mediacontrol_Release(IMediaControl *iface) {
+static ULONG WINAPI MediaControl_Release(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -1230,7 +1230,7 @@ static ULONG WINAPI Mediacontrol_Release(IMediaControl *iface) {
 }
 
 /*** IDispatch methods ***/
-static HRESULT WINAPI Mediacontrol_GetTypeInfoCount(IMediaControl *iface,
+static HRESULT WINAPI MediaControl_GetTypeInfoCount(IMediaControl *iface,
 						    UINT*pctinfo) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
@@ -1239,7 +1239,7 @@ static HRESULT WINAPI Mediacontrol_GetTypeInfoCount(IMediaControl *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediacontrol_GetTypeInfo(IMediaControl *iface,
+static HRESULT WINAPI MediaControl_GetTypeInfo(IMediaControl *iface,
 					       UINT iTInfo,
 					       LCID lcid,
 					       ITypeInfo**ppTInfo) {
@@ -1250,7 +1250,7 @@ static HRESULT WINAPI Mediacontrol_GetTypeInfo(IMediaControl *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediacontrol_GetIDsOfNames(IMediaControl *iface,
+static HRESULT WINAPI MediaControl_GetIDsOfNames(IMediaControl *iface,
 						 REFIID riid,
 						 LPOLESTR*rgszNames,
 						 UINT cNames,
@@ -1263,7 +1263,7 @@ static HRESULT WINAPI Mediacontrol_GetIDsOfNames(IMediaControl *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediacontrol_Invoke(IMediaControl *iface,
+static HRESULT WINAPI MediaControl_Invoke(IMediaControl *iface,
 					  DISPID dispIdMember,
 					  REFIID riid,
 					  LCID lcid,
@@ -1398,7 +1398,7 @@ static HRESULT SendFilterMessage(IMediaControl *iface, fnFoundFilter FoundFilter
 }
 
 /*** IMediaControl methods ***/
-static HRESULT WINAPI Mediacontrol_Run(IMediaControl *iface) {
+static HRESULT WINAPI MediaControl_Run(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -1411,7 +1411,7 @@ static HRESULT WINAPI Mediacontrol_Run(IMediaControl *iface) {
     return S_FALSE;
 }
 
-static HRESULT WINAPI Mediacontrol_Pause(IMediaControl *iface) {
+static HRESULT WINAPI MediaControl_Pause(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -1424,7 +1424,7 @@ static HRESULT WINAPI Mediacontrol_Pause(IMediaControl *iface) {
     return S_FALSE;
 }
 
-static HRESULT WINAPI Mediacontrol_Stop(IMediaControl *iface) {
+static HRESULT WINAPI MediaControl_Stop(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -1438,7 +1438,7 @@ static HRESULT WINAPI Mediacontrol_Stop(IMediaControl *iface) {
     return S_FALSE;
 }
 
-static HRESULT WINAPI Mediacontrol_GetState(IMediaControl *iface,
+static HRESULT WINAPI MediaControl_GetState(IMediaControl *iface,
 					    LONG msTimeout,
 					    OAFilterState *pfs) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
@@ -1454,7 +1454,7 @@ static HRESULT WINAPI Mediacontrol_GetState(IMediaControl *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediacontrol_RenderFile(IMediaControl *iface,
+static HRESULT WINAPI MediaControl_RenderFile(IMediaControl *iface,
 					      BSTR strFilename) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
@@ -1463,7 +1463,7 @@ static HRESULT WINAPI Mediacontrol_RenderFile(IMediaControl *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediacontrol_AddSourceFilter(IMediaControl *iface,
+static HRESULT WINAPI MediaControl_AddSourceFilter(IMediaControl *iface,
 						   BSTR strFilename,
 						   IDispatch **ppUnk) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
@@ -1473,7 +1473,7 @@ static HRESULT WINAPI Mediacontrol_AddSourceFilter(IMediaControl *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediacontrol_get_FilterCollection(IMediaControl *iface,
+static HRESULT WINAPI MediaControl_get_FilterCollection(IMediaControl *iface,
 							IDispatch **ppUnk) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
@@ -1482,7 +1482,7 @@ static HRESULT WINAPI Mediacontrol_get_FilterCollection(IMediaControl *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediacontrol_get_RegFilterCollection(IMediaControl *iface,
+static HRESULT WINAPI MediaControl_get_RegFilterCollection(IMediaControl *iface,
 							   IDispatch **ppUnk) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
@@ -1491,7 +1491,7 @@ static HRESULT WINAPI Mediacontrol_get_RegFilterCollection(IMediaControl *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediacontrol_StopWhenReady(IMediaControl *iface) {
+static HRESULT WINAPI MediaControl_StopWhenReady(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
     TRACE("(%p/%p)->(): stub !!!\n", This, iface);
@@ -1502,27 +1502,27 @@ static HRESULT WINAPI Mediacontrol_StopWhenReady(IMediaControl *iface) {
 
 static const IMediaControlVtbl IMediaControl_VTable =
 {
-    Mediacontrol_QueryInterface,
-    Mediacontrol_AddRef,
-    Mediacontrol_Release,
-    Mediacontrol_GetTypeInfoCount,
-    Mediacontrol_GetTypeInfo,
-    Mediacontrol_GetIDsOfNames,
-    Mediacontrol_Invoke,
-    Mediacontrol_Run,
-    Mediacontrol_Pause,
-    Mediacontrol_Stop,
-    Mediacontrol_GetState,
-    Mediacontrol_RenderFile,
-    Mediacontrol_AddSourceFilter,
-    Mediacontrol_get_FilterCollection,
-    Mediacontrol_get_RegFilterCollection,
-    Mediacontrol_StopWhenReady
+    MediaControl_QueryInterface,
+    MediaControl_AddRef,
+    MediaControl_Release,
+    MediaControl_GetTypeInfoCount,
+    MediaControl_GetTypeInfo,
+    MediaControl_GetIDsOfNames,
+    MediaControl_Invoke,
+    MediaControl_Run,
+    MediaControl_Pause,
+    MediaControl_Stop,
+    MediaControl_GetState,
+    MediaControl_RenderFile,
+    MediaControl_AddSourceFilter,
+    MediaControl_get_FilterCollection,
+    MediaControl_get_RegFilterCollection,
+    MediaControl_StopWhenReady
 };
 
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI Mediaseeking_QueryInterface(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_QueryInterface(IMediaSeeking *iface,
 						  REFIID riid,
 						  LPVOID*ppvObj) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
@@ -1532,7 +1532,7 @@ static HRESULT WINAPI Mediaseeking_QueryInterface(IMediaSeeking *iface,
     return Filtergraph_QueryInterface(This, riid, ppvObj);
 }
 
-static ULONG WINAPI Mediaseeking_AddRef(IMediaSeeking *iface) {
+static ULONG WINAPI MediaSeeking_AddRef(IMediaSeeking *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -1540,7 +1540,7 @@ static ULONG WINAPI Mediaseeking_AddRef(IMediaSeeking *iface) {
     return Filtergraph_AddRef(This);
 }
 
-static ULONG WINAPI Mediaseeking_Release(IMediaSeeking *iface) {
+static ULONG WINAPI MediaSeeking_Release(IMediaSeeking *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -1549,7 +1549,7 @@ static ULONG WINAPI Mediaseeking_Release(IMediaSeeking *iface) {
 }
 
 /*** IMediaSeeking methods ***/
-static HRESULT WINAPI Mediaseeking_GetCapabilities(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_GetCapabilities(IMediaSeeking *iface,
 						   DWORD *pCapabilities) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1558,7 +1558,7 @@ static HRESULT WINAPI Mediaseeking_GetCapabilities(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_CheckCapabilities(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_CheckCapabilities(IMediaSeeking *iface,
 						     DWORD *pCapabilities) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1567,7 +1567,7 @@ static HRESULT WINAPI Mediaseeking_CheckCapabilities(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_IsFormatSupported(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_IsFormatSupported(IMediaSeeking *iface,
 						     const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1576,7 +1576,7 @@ static HRESULT WINAPI Mediaseeking_IsFormatSupported(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_QueryPreferredFormat(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_QueryPreferredFormat(IMediaSeeking *iface,
 							GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1585,7 +1585,7 @@ static HRESULT WINAPI Mediaseeking_QueryPreferredFormat(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_GetTimeFormat(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_GetTimeFormat(IMediaSeeking *iface,
 						 GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1594,7 +1594,7 @@ static HRESULT WINAPI Mediaseeking_GetTimeFormat(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_IsUsingTimeFormat(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_IsUsingTimeFormat(IMediaSeeking *iface,
 						     const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1603,7 +1603,7 @@ static HRESULT WINAPI Mediaseeking_IsUsingTimeFormat(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_SetTimeFormat(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_SetTimeFormat(IMediaSeeking *iface,
 						 const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1612,7 +1612,7 @@ static HRESULT WINAPI Mediaseeking_SetTimeFormat(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_GetDuration(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_GetDuration(IMediaSeeking *iface,
 					       LONGLONG *pDuration) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1621,7 +1621,7 @@ static HRESULT WINAPI Mediaseeking_GetDuration(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_GetStopPosition(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_GetStopPosition(IMediaSeeking *iface,
 						   LONGLONG *pStop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1630,7 +1630,7 @@ static HRESULT WINAPI Mediaseeking_GetStopPosition(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_GetCurrentPosition(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface,
 						      LONGLONG *pCurrent) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1639,7 +1639,7 @@ static HRESULT WINAPI Mediaseeking_GetCurrentPosition(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_ConvertTimeFormat(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_ConvertTimeFormat(IMediaSeeking *iface,
 						     LONGLONG *pTarget,
 						     const GUID *pTargetFormat,
 						     LONGLONG Source,
@@ -1651,7 +1651,7 @@ static HRESULT WINAPI Mediaseeking_ConvertTimeFormat(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_SetPositions(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface,
 						LONGLONG *pCurrent,
 						DWORD dwCurrentFlags,
 						LONGLONG *pStop,
@@ -1663,7 +1663,7 @@ static HRESULT WINAPI Mediaseeking_SetPositions(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_GetPositions(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_GetPositions(IMediaSeeking *iface,
 						LONGLONG *pCurrent,
 						LONGLONG *pStop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
@@ -1673,7 +1673,7 @@ static HRESULT WINAPI Mediaseeking_GetPositions(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_GetAvailable(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_GetAvailable(IMediaSeeking *iface,
 						LONGLONG *pEarliest,
 						LONGLONG *pLatest) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
@@ -1683,7 +1683,7 @@ static HRESULT WINAPI Mediaseeking_GetAvailable(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_SetRate(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_SetRate(IMediaSeeking *iface,
 					   double dRate) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1692,7 +1692,7 @@ static HRESULT WINAPI Mediaseeking_SetRate(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_GetRate(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_GetRate(IMediaSeeking *iface,
 					   double *pdRate) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1701,7 +1701,7 @@ static HRESULT WINAPI Mediaseeking_GetRate(IMediaSeeking *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaseeking_GetPreroll(IMediaSeeking *iface,
+static HRESULT WINAPI MediaSeeking_GetPreroll(IMediaSeeking *iface,
 					      LONGLONG *pllPreroll) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
@@ -1713,26 +1713,26 @@ static HRESULT WINAPI Mediaseeking_GetPreroll(IMediaSeeking *iface,
 
 static const IMediaSeekingVtbl IMediaSeeking_VTable =
 {
-    Mediaseeking_QueryInterface,
-    Mediaseeking_AddRef,
-    Mediaseeking_Release,
-    Mediaseeking_GetCapabilities,
-    Mediaseeking_CheckCapabilities,
-    Mediaseeking_IsFormatSupported,
-    Mediaseeking_QueryPreferredFormat,
-    Mediaseeking_GetTimeFormat,
-    Mediaseeking_IsUsingTimeFormat,
-    Mediaseeking_SetTimeFormat,
-    Mediaseeking_GetDuration,
-    Mediaseeking_GetStopPosition,
-    Mediaseeking_GetCurrentPosition,
-    Mediaseeking_ConvertTimeFormat,
-    Mediaseeking_SetPositions,
-    Mediaseeking_GetPositions,
-    Mediaseeking_GetAvailable,
-    Mediaseeking_SetRate,
-    Mediaseeking_GetRate,
-    Mediaseeking_GetPreroll
+    MediaSeeking_QueryInterface,
+    MediaSeeking_AddRef,
+    MediaSeeking_Release,
+    MediaSeeking_GetCapabilities,
+    MediaSeeking_CheckCapabilities,
+    MediaSeeking_IsFormatSupported,
+    MediaSeeking_QueryPreferredFormat,
+    MediaSeeking_GetTimeFormat,
+    MediaSeeking_IsUsingTimeFormat,
+    MediaSeeking_SetTimeFormat,
+    MediaSeeking_GetDuration,
+    MediaSeeking_GetStopPosition,
+    MediaSeeking_GetCurrentPosition,
+    MediaSeeking_ConvertTimeFormat,
+    MediaSeeking_SetPositions,
+    MediaSeeking_GetPositions,
+    MediaSeeking_GetAvailable,
+    MediaSeeking_SetRate,
+    MediaSeeking_GetRate,
+    MediaSeeking_GetPreroll
 };
 
 static HRESULT GetTargetInterface(IFilterGraphImpl* pGraph, REFIID riid, LPVOID* ppvObj)
@@ -1781,7 +1781,7 @@ static HRESULT GetTargetInterface(IFilterGraphImpl* pGraph, REFIID riid, LPVOID*
 }
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI Basicaudio_QueryInterface(IBasicAudio *iface,
+static HRESULT WINAPI BasicAudio_QueryInterface(IBasicAudio *iface,
 						REFIID riid,
 						LPVOID*ppvObj) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
@@ -1791,7 +1791,7 @@ static HRESULT WINAPI Basicaudio_QueryInterface(IBasicAudio *iface,
     return Filtergraph_QueryInterface(This, riid, ppvObj);
 }
 
-static ULONG WINAPI Basicaudio_AddRef(IBasicAudio *iface) {
+static ULONG WINAPI BasicAudio_AddRef(IBasicAudio *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -1799,7 +1799,7 @@ static ULONG WINAPI Basicaudio_AddRef(IBasicAudio *iface) {
     return Filtergraph_AddRef(This);
 }
 
-static ULONG WINAPI Basicaudio_Release(IBasicAudio *iface) {
+static ULONG WINAPI BasicAudio_Release(IBasicAudio *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -1808,7 +1808,7 @@ static ULONG WINAPI Basicaudio_Release(IBasicAudio *iface) {
 }
 
 /*** IDispatch methods ***/
-static HRESULT WINAPI Basicaudio_GetTypeInfoCount(IBasicAudio *iface,
+static HRESULT WINAPI BasicAudio_GetTypeInfoCount(IBasicAudio *iface,
 						  UINT*pctinfo) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
     IBasicAudio* pBasicAudio;
@@ -1828,7 +1828,7 @@ static HRESULT WINAPI Basicaudio_GetTypeInfoCount(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicaudio_GetTypeInfo(IBasicAudio *iface,
+static HRESULT WINAPI BasicAudio_GetTypeInfo(IBasicAudio *iface,
 					     UINT iTInfo,
 					     LCID lcid,
 					     ITypeInfo**ppTInfo) {
@@ -1850,7 +1850,7 @@ static HRESULT WINAPI Basicaudio_GetTypeInfo(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicaudio_GetIDsOfNames(IBasicAudio *iface,
+static HRESULT WINAPI BasicAudio_GetIDsOfNames(IBasicAudio *iface,
 					       REFIID riid,
 					       LPOLESTR*rgszNames,
 					       UINT cNames,
@@ -1874,7 +1874,7 @@ static HRESULT WINAPI Basicaudio_GetIDsOfNames(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicaudio_Invoke(IBasicAudio *iface,
+static HRESULT WINAPI BasicAudio_Invoke(IBasicAudio *iface,
 					DISPID dispIdMember,
 					REFIID riid,
 					LCID lcid,
@@ -1902,7 +1902,7 @@ static HRESULT WINAPI Basicaudio_Invoke(IBasicAudio *iface,
 }
 
 /*** IBasicAudio methods ***/
-static HRESULT WINAPI Basicaudio_put_Volume(IBasicAudio *iface,
+static HRESULT WINAPI BasicAudio_put_Volume(IBasicAudio *iface,
 					    long lVolume) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
     IBasicAudio* pBasicAudio;
@@ -1922,7 +1922,7 @@ static HRESULT WINAPI Basicaudio_put_Volume(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicaudio_get_Volume(IBasicAudio *iface,
+static HRESULT WINAPI BasicAudio_get_Volume(IBasicAudio *iface,
 					    long *plVolume) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
     IBasicAudio* pBasicAudio;
@@ -1942,7 +1942,7 @@ static HRESULT WINAPI Basicaudio_get_Volume(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicaudio_put_Balance(IBasicAudio *iface,
+static HRESULT WINAPI BasicAudio_put_Balance(IBasicAudio *iface,
 					     long lBalance) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
     IBasicAudio* pBasicAudio;
@@ -1962,7 +1962,7 @@ static HRESULT WINAPI Basicaudio_put_Balance(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicaudio_get_Balance(IBasicAudio *iface,
+static HRESULT WINAPI BasicAudio_get_Balance(IBasicAudio *iface,
 					     long *plBalance) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
     IBasicAudio* pBasicAudio;
@@ -1984,21 +1984,21 @@ static HRESULT WINAPI Basicaudio_get_Balance(IBasicAudio *iface,
 
 static const IBasicAudioVtbl IBasicAudio_VTable =
 {
-    Basicaudio_QueryInterface,
-    Basicaudio_AddRef,
-    Basicaudio_Release,
-    Basicaudio_GetTypeInfoCount,
-    Basicaudio_GetTypeInfo,
-    Basicaudio_GetIDsOfNames,
-    Basicaudio_Invoke,
-    Basicaudio_put_Volume,
-    Basicaudio_get_Volume,
-    Basicaudio_put_Balance,
-    Basicaudio_get_Balance
+    BasicAudio_QueryInterface,
+    BasicAudio_AddRef,
+    BasicAudio_Release,
+    BasicAudio_GetTypeInfoCount,
+    BasicAudio_GetTypeInfo,
+    BasicAudio_GetIDsOfNames,
+    BasicAudio_Invoke,
+    BasicAudio_put_Volume,
+    BasicAudio_get_Volume,
+    BasicAudio_put_Balance,
+    BasicAudio_get_Balance
 };
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI Basicvideo_QueryInterface(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_QueryInterface(IBasicVideo *iface,
 						REFIID riid,
 						LPVOID*ppvObj) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
@@ -2008,7 +2008,7 @@ static HRESULT WINAPI Basicvideo_QueryInterface(IBasicVideo *iface,
     return Filtergraph_QueryInterface(This, riid, ppvObj);
 }
 
-static ULONG WINAPI Basicvideo_AddRef(IBasicVideo *iface) {
+static ULONG WINAPI BasicVideo_AddRef(IBasicVideo *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -2016,7 +2016,7 @@ static ULONG WINAPI Basicvideo_AddRef(IBasicVideo *iface) {
     return Filtergraph_AddRef(This);
 }
 
-static ULONG WINAPI Basicvideo_Release(IBasicVideo *iface) {
+static ULONG WINAPI BasicVideo_Release(IBasicVideo *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -2025,7 +2025,7 @@ static ULONG WINAPI Basicvideo_Release(IBasicVideo *iface) {
 }
 
 /*** IDispatch methods ***/
-static HRESULT WINAPI Basicvideo_GetTypeInfoCount(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_GetTypeInfoCount(IBasicVideo *iface,
 						  UINT*pctinfo) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2045,7 +2045,7 @@ static HRESULT WINAPI Basicvideo_GetTypeInfoCount(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_GetTypeInfo(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_GetTypeInfo(IBasicVideo *iface,
 					     UINT iTInfo,
 					     LCID lcid,
 					     ITypeInfo**ppTInfo) {
@@ -2067,7 +2067,7 @@ static HRESULT WINAPI Basicvideo_GetTypeInfo(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_GetIDsOfNames(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_GetIDsOfNames(IBasicVideo *iface,
 					       REFIID riid,
 					       LPOLESTR*rgszNames,
 					       UINT cNames,
@@ -2091,7 +2091,7 @@ static HRESULT WINAPI Basicvideo_GetIDsOfNames(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_Invoke(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_Invoke(IBasicVideo *iface,
 					DISPID dispIdMember,
 					REFIID riid,
 					LCID lcid,
@@ -2119,7 +2119,7 @@ static HRESULT WINAPI Basicvideo_Invoke(IBasicVideo *iface,
 }
 
 /*** IBasicVideo methods ***/
-static HRESULT WINAPI Basicvideo_get_AvgTimePerFrame(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_AvgTimePerFrame(IBasicVideo *iface,
 						     REFTIME *pAvgTimePerFrame) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2139,7 +2139,7 @@ static HRESULT WINAPI Basicvideo_get_AvgTimePerFrame(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_BitRate(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_BitRate(IBasicVideo *iface,
 					     long *pBitRate) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2159,7 +2159,7 @@ static HRESULT WINAPI Basicvideo_get_BitRate(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_BitErrorRate(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_BitErrorRate(IBasicVideo *iface,
 						  long *pBitErrorRate) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2179,7 +2179,7 @@ static HRESULT WINAPI Basicvideo_get_BitErrorRate(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_VideoWidth(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_VideoWidth(IBasicVideo *iface,
 						long *pVideoWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2199,7 +2199,7 @@ static HRESULT WINAPI Basicvideo_get_VideoWidth(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_VideoHeight(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_VideoHeight(IBasicVideo *iface,
 						 long *pVideoHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2219,7 +2219,7 @@ static HRESULT WINAPI Basicvideo_get_VideoHeight(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_put_SourceLeft(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_put_SourceLeft(IBasicVideo *iface,
 						long SourceLeft) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2239,7 +2239,7 @@ static HRESULT WINAPI Basicvideo_put_SourceLeft(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_SourceLeft(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_SourceLeft(IBasicVideo *iface,
 						long *pSourceLeft) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2259,7 +2259,7 @@ static HRESULT WINAPI Basicvideo_get_SourceLeft(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_put_SourceWidth(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_put_SourceWidth(IBasicVideo *iface,
 						 long SourceWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2279,7 +2279,7 @@ static HRESULT WINAPI Basicvideo_put_SourceWidth(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_SourceWidth(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_SourceWidth(IBasicVideo *iface,
 						 long *pSourceWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2299,7 +2299,7 @@ static HRESULT WINAPI Basicvideo_get_SourceWidth(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_put_SourceTop(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_put_SourceTop(IBasicVideo *iface,
 					       long SourceTop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2319,7 +2319,7 @@ static HRESULT WINAPI Basicvideo_put_SourceTop(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_SourceTop(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_SourceTop(IBasicVideo *iface,
 					       long *pSourceTop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2339,7 +2339,7 @@ static HRESULT WINAPI Basicvideo_get_SourceTop(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_put_SourceHeight(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_put_SourceHeight(IBasicVideo *iface,
 						  long SourceHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2359,7 +2359,7 @@ static HRESULT WINAPI Basicvideo_put_SourceHeight(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_SourceHeight(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_SourceHeight(IBasicVideo *iface,
 						  long *pSourceHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2379,7 +2379,7 @@ static HRESULT WINAPI Basicvideo_get_SourceHeight(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_put_DestinationLeft(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_put_DestinationLeft(IBasicVideo *iface,
 						     long DestinationLeft) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2399,7 +2399,7 @@ static HRESULT WINAPI Basicvideo_put_DestinationLeft(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_DestinationLeft(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_DestinationLeft(IBasicVideo *iface,
 						     long *pDestinationLeft) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2419,7 +2419,7 @@ static HRESULT WINAPI Basicvideo_get_DestinationLeft(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_put_DestinationWidth(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_put_DestinationWidth(IBasicVideo *iface,
 						      long DestinationWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2439,7 +2439,7 @@ static HRESULT WINAPI Basicvideo_put_DestinationWidth(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_DestinationWidth(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_DestinationWidth(IBasicVideo *iface,
 						      long *pDestinationWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2459,7 +2459,7 @@ static HRESULT WINAPI Basicvideo_get_DestinationWidth(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_put_DestinationTop(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_put_DestinationTop(IBasicVideo *iface,
 						    long DestinationTop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2479,7 +2479,7 @@ static HRESULT WINAPI Basicvideo_put_DestinationTop(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_DestinationTop(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_DestinationTop(IBasicVideo *iface,
 						    long *pDestinationTop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2499,7 +2499,7 @@ static HRESULT WINAPI Basicvideo_get_DestinationTop(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_put_DestinationHeight(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_put_DestinationHeight(IBasicVideo *iface,
 						       long DestinationHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2519,7 +2519,7 @@ static HRESULT WINAPI Basicvideo_put_DestinationHeight(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_get_DestinationHeight(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_get_DestinationHeight(IBasicVideo *iface,
 						       long *pDestinationHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
@@ -2539,7 +2539,7 @@ static HRESULT WINAPI Basicvideo_get_DestinationHeight(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_SetSourcePosition(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_SetSourcePosition(IBasicVideo *iface,
 						   long Left,
 						   long Top,
 						   long Width,
@@ -2562,7 +2562,7 @@ static HRESULT WINAPI Basicvideo_SetSourcePosition(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_GetSourcePosition(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_GetSourcePosition(IBasicVideo *iface,
 						   long *pLeft,
 						   long *pTop,
 						   long *pWidth,
@@ -2585,7 +2585,7 @@ static HRESULT WINAPI Basicvideo_GetSourcePosition(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_SetDefaultSourcePosition(IBasicVideo *iface) {
+static HRESULT WINAPI BasicVideo_SetDefaultSourcePosition(IBasicVideo *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -2604,7 +2604,7 @@ static HRESULT WINAPI Basicvideo_SetDefaultSourcePosition(IBasicVideo *iface) {
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_SetDestinationPosition(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_SetDestinationPosition(IBasicVideo *iface,
 							long Left,
 							long Top,
 							long Width,
@@ -2627,7 +2627,7 @@ static HRESULT WINAPI Basicvideo_SetDestinationPosition(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_GetDestinationPosition(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_GetDestinationPosition(IBasicVideo *iface,
 							long *pLeft,
 							long *pTop,
 							long *pWidth,
@@ -2650,7 +2650,7 @@ static HRESULT WINAPI Basicvideo_GetDestinationPosition(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_SetDefaultDestinationPosition(IBasicVideo *iface) {
+static HRESULT WINAPI BasicVideo_SetDefaultDestinationPosition(IBasicVideo *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -2669,7 +2669,7 @@ static HRESULT WINAPI Basicvideo_SetDefaultDestinationPosition(IBasicVideo *ifac
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_GetVideoSize(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_GetVideoSize(IBasicVideo *iface,
 					      long *pWidth,
 					      long *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
@@ -2690,7 +2690,7 @@ static HRESULT WINAPI Basicvideo_GetVideoSize(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_GetVideoPaletteEntries(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_GetVideoPaletteEntries(IBasicVideo *iface,
 							long StartIndex,
 							long Entries,
 							long *pRetrieved,
@@ -2713,7 +2713,7 @@ static HRESULT WINAPI Basicvideo_GetVideoPaletteEntries(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_GetCurrentImage(IBasicVideo *iface,
+static HRESULT WINAPI BasicVideo_GetCurrentImage(IBasicVideo *iface,
 						 long *pBufferSize,
 						 long *pDIBImage) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
@@ -2734,7 +2734,7 @@ static HRESULT WINAPI Basicvideo_GetCurrentImage(IBasicVideo *iface,
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_IsUsingDefaultSource(IBasicVideo *iface) {
+static HRESULT WINAPI BasicVideo_IsUsingDefaultSource(IBasicVideo *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -2753,7 +2753,7 @@ static HRESULT WINAPI Basicvideo_IsUsingDefaultSource(IBasicVideo *iface) {
     return hr;
 }
 
-static HRESULT WINAPI Basicvideo_IsUsingDefaultDestination(IBasicVideo *iface) {
+static HRESULT WINAPI BasicVideo_IsUsingDefaultDestination(IBasicVideo *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -2775,50 +2775,50 @@ static HRESULT WINAPI Basicvideo_IsUsingDefaultDestination(IBasicVideo *iface) {
 
 static const IBasicVideoVtbl IBasicVideo_VTable =
 {
-    Basicvideo_QueryInterface,
-    Basicvideo_AddRef,
-    Basicvideo_Release,
-    Basicvideo_GetTypeInfoCount,
-    Basicvideo_GetTypeInfo,
-    Basicvideo_GetIDsOfNames,
-    Basicvideo_Invoke,
-    Basicvideo_get_AvgTimePerFrame,
-    Basicvideo_get_BitRate,
-    Basicvideo_get_BitErrorRate,
-    Basicvideo_get_VideoWidth,
-    Basicvideo_get_VideoHeight,
-    Basicvideo_put_SourceLeft,
-    Basicvideo_get_SourceLeft,
-    Basicvideo_put_SourceWidth,
-    Basicvideo_get_SourceWidth,
-    Basicvideo_put_SourceTop,
-    Basicvideo_get_SourceTop,
-    Basicvideo_put_SourceHeight,
-    Basicvideo_get_SourceHeight,
-    Basicvideo_put_DestinationLeft,
-    Basicvideo_get_DestinationLeft,
-    Basicvideo_put_DestinationWidth,
-    Basicvideo_get_DestinationWidth,
-    Basicvideo_put_DestinationTop,
-    Basicvideo_get_DestinationTop,
-    Basicvideo_put_DestinationHeight,
-    Basicvideo_get_DestinationHeight,
-    Basicvideo_SetSourcePosition,
-    Basicvideo_GetSourcePosition,
-    Basicvideo_SetDefaultSourcePosition,
-    Basicvideo_SetDestinationPosition,
-    Basicvideo_GetDestinationPosition,
-    Basicvideo_SetDefaultDestinationPosition,
-    Basicvideo_GetVideoSize,
-    Basicvideo_GetVideoPaletteEntries,
-    Basicvideo_GetCurrentImage,
-    Basicvideo_IsUsingDefaultSource,
-    Basicvideo_IsUsingDefaultDestination
+    BasicVideo_QueryInterface,
+    BasicVideo_AddRef,
+    BasicVideo_Release,
+    BasicVideo_GetTypeInfoCount,
+    BasicVideo_GetTypeInfo,
+    BasicVideo_GetIDsOfNames,
+    BasicVideo_Invoke,
+    BasicVideo_get_AvgTimePerFrame,
+    BasicVideo_get_BitRate,
+    BasicVideo_get_BitErrorRate,
+    BasicVideo_get_VideoWidth,
+    BasicVideo_get_VideoHeight,
+    BasicVideo_put_SourceLeft,
+    BasicVideo_get_SourceLeft,
+    BasicVideo_put_SourceWidth,
+    BasicVideo_get_SourceWidth,
+    BasicVideo_put_SourceTop,
+    BasicVideo_get_SourceTop,
+    BasicVideo_put_SourceHeight,
+    BasicVideo_get_SourceHeight,
+    BasicVideo_put_DestinationLeft,
+    BasicVideo_get_DestinationLeft,
+    BasicVideo_put_DestinationWidth,
+    BasicVideo_get_DestinationWidth,
+    BasicVideo_put_DestinationTop,
+    BasicVideo_get_DestinationTop,
+    BasicVideo_put_DestinationHeight,
+    BasicVideo_get_DestinationHeight,
+    BasicVideo_SetSourcePosition,
+    BasicVideo_GetSourcePosition,
+    BasicVideo_SetDefaultSourcePosition,
+    BasicVideo_SetDestinationPosition,
+    BasicVideo_GetDestinationPosition,
+    BasicVideo_SetDefaultDestinationPosition,
+    BasicVideo_GetVideoSize,
+    BasicVideo_GetVideoPaletteEntries,
+    BasicVideo_GetCurrentImage,
+    BasicVideo_IsUsingDefaultSource,
+    BasicVideo_IsUsingDefaultDestination
 };
 
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_QueryInterface(IVideoWindow *iface,
 						 REFIID riid,
 						 LPVOID*ppvObj) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
@@ -2828,7 +2828,7 @@ static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface,
     return Filtergraph_QueryInterface(This, riid, ppvObj);
 }
 
-static ULONG WINAPI Videowindow_AddRef(IVideoWindow *iface) {
+static ULONG WINAPI VideoWindow_AddRef(IVideoWindow *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -2836,7 +2836,7 @@ static ULONG WINAPI Videowindow_AddRef(IVideoWindow *iface) {
     return Filtergraph_AddRef(This);
 }
 
-static ULONG WINAPI Videowindow_Release(IVideoWindow *iface) {
+static ULONG WINAPI VideoWindow_Release(IVideoWindow *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -2845,7 +2845,7 @@ static ULONG WINAPI Videowindow_Release(IVideoWindow *iface) {
 }
 
 /*** IDispatch methods ***/
-static HRESULT WINAPI Videowindow_GetTypeInfoCount(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_GetTypeInfoCount(IVideoWindow *iface,
 						   UINT*pctinfo) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -2865,7 +2865,7 @@ static HRESULT WINAPI Videowindow_GetTypeInfoCount(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_GetTypeInfo(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_GetTypeInfo(IVideoWindow *iface,
 					      UINT iTInfo,
 					      LCID lcid,
 					      ITypeInfo**ppTInfo) {
@@ -2887,7 +2887,7 @@ static HRESULT WINAPI Videowindow_GetTypeInfo(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_GetIDsOfNames(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_GetIDsOfNames(IVideoWindow *iface,
 						REFIID riid,
 						LPOLESTR*rgszNames,
 						UINT cNames,
@@ -2911,7 +2911,7 @@ static HRESULT WINAPI Videowindow_GetIDsOfNames(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_Invoke(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_Invoke(IVideoWindow *iface,
 					 DISPID dispIdMember,
 					 REFIID riid,
 					 LCID lcid,
@@ -2940,7 +2940,7 @@ static HRESULT WINAPI Videowindow_Invoke(IVideoWindow *iface,
 
 
 /*** IVideoWindow methods ***/
-static HRESULT WINAPI Videowindow_put_Caption(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_Caption(IVideoWindow *iface,
 					      BSTR strCaption) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -2960,7 +2960,7 @@ static HRESULT WINAPI Videowindow_put_Caption(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_Caption(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_Caption(IVideoWindow *iface,
 					      BSTR *strCaption) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -2980,7 +2980,7 @@ static HRESULT WINAPI Videowindow_get_Caption(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_WindowStyle(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_WindowStyle(IVideoWindow *iface,
 						  long WindowStyle) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3000,7 +3000,7 @@ static HRESULT WINAPI Videowindow_put_WindowStyle(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_WindowStyle(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_WindowStyle(IVideoWindow *iface,
 						  long *WindowStyle) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3020,7 +3020,7 @@ static HRESULT WINAPI Videowindow_get_WindowStyle(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_WindowStyleEx(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_WindowStyleEx(IVideoWindow *iface,
 						    long WindowStyleEx) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3040,7 +3040,7 @@ static HRESULT WINAPI Videowindow_put_WindowStyleEx(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_WindowStyleEx(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_WindowStyleEx(IVideoWindow *iface,
 						    long *WindowStyleEx) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3060,7 +3060,7 @@ static HRESULT WINAPI Videowindow_get_WindowStyleEx(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_AutoShow(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_AutoShow(IVideoWindow *iface,
 					       long AutoShow) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3080,7 +3080,7 @@ static HRESULT WINAPI Videowindow_put_AutoShow(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_AutoShow(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_AutoShow(IVideoWindow *iface,
 					       long *AutoShow) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3100,7 +3100,7 @@ static HRESULT WINAPI Videowindow_get_AutoShow(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_WindowState(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_WindowState(IVideoWindow *iface,
 						  long WindowState) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3120,7 +3120,7 @@ static HRESULT WINAPI Videowindow_put_WindowState(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_WindowState(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_WindowState(IVideoWindow *iface,
 						  long *WindowState) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3140,7 +3140,7 @@ static HRESULT WINAPI Videowindow_get_WindowState(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_BackgroundPalette(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_BackgroundPalette(IVideoWindow *iface,
 							long BackgroundPalette) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3160,7 +3160,7 @@ static HRESULT WINAPI Videowindow_put_BackgroundPalette(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_BackgroundPalette(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_BackgroundPalette(IVideoWindow *iface,
 							long *pBackgroundPalette) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3180,7 +3180,7 @@ static HRESULT WINAPI Videowindow_get_BackgroundPalette(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_Visible(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_Visible(IVideoWindow *iface,
 					      long Visible) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3200,7 +3200,7 @@ static HRESULT WINAPI Videowindow_put_Visible(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_Visible(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_Visible(IVideoWindow *iface,
 					      long *pVisible) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3220,7 +3220,7 @@ static HRESULT WINAPI Videowindow_get_Visible(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_Left(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_Left(IVideoWindow *iface,
 					   long Left) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3240,7 +3240,7 @@ static HRESULT WINAPI Videowindow_put_Left(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_Left(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_Left(IVideoWindow *iface,
 					   long *pLeft) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3260,7 +3260,7 @@ static HRESULT WINAPI Videowindow_get_Left(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_Width(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_Width(IVideoWindow *iface,
 					    long Width) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3280,7 +3280,7 @@ static HRESULT WINAPI Videowindow_put_Width(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_Width(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_Width(IVideoWindow *iface,
 					    long *pWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3300,7 +3300,7 @@ static HRESULT WINAPI Videowindow_get_Width(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_Top(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_Top(IVideoWindow *iface,
 					  long Top) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3320,7 +3320,7 @@ static HRESULT WINAPI Videowindow_put_Top(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_Top(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_Top(IVideoWindow *iface,
 					  long *pTop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3340,7 +3340,7 @@ static HRESULT WINAPI Videowindow_get_Top(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_Height(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_Height(IVideoWindow *iface,
 					     long Height) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3360,7 +3360,7 @@ static HRESULT WINAPI Videowindow_put_Height(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_Height(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_Height(IVideoWindow *iface,
 					     long *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3380,7 +3380,7 @@ static HRESULT WINAPI Videowindow_get_Height(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_Owner(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_Owner(IVideoWindow *iface,
 					    OAHWND Owner) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3400,7 +3400,7 @@ static HRESULT WINAPI Videowindow_put_Owner(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_Owner(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_Owner(IVideoWindow *iface,
 					    OAHWND *Owner) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3420,7 +3420,7 @@ static HRESULT WINAPI Videowindow_get_Owner(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_MessageDrain(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_MessageDrain(IVideoWindow *iface,
 						   OAHWND Drain) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3440,7 +3440,7 @@ static HRESULT WINAPI Videowindow_put_MessageDrain(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_MessageDrain(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_MessageDrain(IVideoWindow *iface,
 						   OAHWND *Drain) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3460,7 +3460,7 @@ static HRESULT WINAPI Videowindow_get_MessageDrain(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_BorderColor(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_BorderColor(IVideoWindow *iface,
 						  long *Color) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3480,7 +3480,7 @@ static HRESULT WINAPI Videowindow_get_BorderColor(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_BorderColor(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_BorderColor(IVideoWindow *iface,
 						  long Color) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3500,7 +3500,7 @@ static HRESULT WINAPI Videowindow_put_BorderColor(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_get_FullScreenMode(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface,
 						     long *FullScreenMode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3520,7 +3520,7 @@ static HRESULT WINAPI Videowindow_get_FullScreenMode(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_put_FullScreenMode(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface,
 						     long FullScreenMode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3540,7 +3540,7 @@ static HRESULT WINAPI Videowindow_put_FullScreenMode(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_SetWindowForeground(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_SetWindowForeground(IVideoWindow *iface,
 						      long Focus) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3560,7 +3560,7 @@ static HRESULT WINAPI Videowindow_SetWindowForeground(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_NotifyOwnerMessage(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_NotifyOwnerMessage(IVideoWindow *iface,
 						     OAHWND hwnd,
 						     long uMsg,
 						     LONG_PTR wParam,
@@ -3583,7 +3583,7 @@ static HRESULT WINAPI Videowindow_NotifyOwnerMessage(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_SetWindowPosition(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_SetWindowPosition(IVideoWindow *iface,
 						    long Left,
 						    long Top,
 						    long Width,
@@ -3606,7 +3606,7 @@ static HRESULT WINAPI Videowindow_SetWindowPosition(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_GetWindowPosition(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_GetWindowPosition(IVideoWindow *iface,
 						    long *pLeft,
 						    long *pTop,
 						    long *pWidth,
@@ -3629,7 +3629,7 @@ static HRESULT WINAPI Videowindow_GetWindowPosition(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_GetMinIdealImageSize(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_GetMinIdealImageSize(IVideoWindow *iface,
 						       long *pWidth,
 						       long *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
@@ -3650,7 +3650,7 @@ static HRESULT WINAPI Videowindow_GetMinIdealImageSize(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_GetMaxIdealImageSize(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_GetMaxIdealImageSize(IVideoWindow *iface,
 						       long *pWidth,
 						       long *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
@@ -3671,7 +3671,7 @@ static HRESULT WINAPI Videowindow_GetMaxIdealImageSize(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_GetRestorePosition(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_GetRestorePosition(IVideoWindow *iface,
 						     long *pLeft,
 						     long *pTop,
 						     long *pWidth,
@@ -3694,7 +3694,7 @@ static HRESULT WINAPI Videowindow_GetRestorePosition(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_HideCursor(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_HideCursor(IVideoWindow *iface,
 					     long HideCursor) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3714,7 +3714,7 @@ static HRESULT WINAPI Videowindow_HideCursor(IVideoWindow *iface,
     return hr;
 }
 
-static HRESULT WINAPI Videowindow_IsCursorHidden(IVideoWindow *iface,
+static HRESULT WINAPI VideoWindow_IsCursorHidden(IVideoWindow *iface,
 						 long *CursorHidden) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
@@ -3737,57 +3737,57 @@ static HRESULT WINAPI Videowindow_IsCursorHidden(IVideoWindow *iface,
 
 static const IVideoWindowVtbl IVideoWindow_VTable =
 {
-    Videowindow_QueryInterface,
-    Videowindow_AddRef,
-    Videowindow_Release,
-    Videowindow_GetTypeInfoCount,
-    Videowindow_GetTypeInfo,
-    Videowindow_GetIDsOfNames,
-    Videowindow_Invoke,
-    Videowindow_put_Caption,
-    Videowindow_get_Caption,
-    Videowindow_put_WindowStyle,
-    Videowindow_get_WindowStyle,
-    Videowindow_put_WindowStyleEx,
-    Videowindow_get_WindowStyleEx,
-    Videowindow_put_AutoShow,
-    Videowindow_get_AutoShow,
-    Videowindow_put_WindowState,
-    Videowindow_get_WindowState,
-    Videowindow_put_BackgroundPalette,
-    Videowindow_get_BackgroundPalette,
-    Videowindow_put_Visible,
-    Videowindow_get_Visible,
-    Videowindow_put_Left,
-    Videowindow_get_Left,
-    Videowindow_put_Width,
-    Videowindow_get_Width,
-    Videowindow_put_Top,
-    Videowindow_get_Top,
-    Videowindow_put_Height,
-    Videowindow_get_Height,
-    Videowindow_put_Owner,
-    Videowindow_get_Owner,
-    Videowindow_put_MessageDrain,
-    Videowindow_get_MessageDrain,
-    Videowindow_get_BorderColor,
-    Videowindow_put_BorderColor,
-    Videowindow_get_FullScreenMode,
-    Videowindow_put_FullScreenMode,
-    Videowindow_SetWindowForeground,
-    Videowindow_NotifyOwnerMessage,
-    Videowindow_SetWindowPosition,
-    Videowindow_GetWindowPosition,
-    Videowindow_GetMinIdealImageSize,
-    Videowindow_GetMaxIdealImageSize,
-    Videowindow_GetRestorePosition,
-    Videowindow_HideCursor,
-    Videowindow_IsCursorHidden
+    VideoWindow_QueryInterface,
+    VideoWindow_AddRef,
+    VideoWindow_Release,
+    VideoWindow_GetTypeInfoCount,
+    VideoWindow_GetTypeInfo,
+    VideoWindow_GetIDsOfNames,
+    VideoWindow_Invoke,
+    VideoWindow_put_Caption,
+    VideoWindow_get_Caption,
+    VideoWindow_put_WindowStyle,
+    VideoWindow_get_WindowStyle,
+    VideoWindow_put_WindowStyleEx,
+    VideoWindow_get_WindowStyleEx,
+    VideoWindow_put_AutoShow,
+    VideoWindow_get_AutoShow,
+    VideoWindow_put_WindowState,
+    VideoWindow_get_WindowState,
+    VideoWindow_put_BackgroundPalette,
+    VideoWindow_get_BackgroundPalette,
+    VideoWindow_put_Visible,
+    VideoWindow_get_Visible,
+    VideoWindow_put_Left,
+    VideoWindow_get_Left,
+    VideoWindow_put_Width,
+    VideoWindow_get_Width,
+    VideoWindow_put_Top,
+    VideoWindow_get_Top,
+    VideoWindow_put_Height,
+    VideoWindow_get_Height,
+    VideoWindow_put_Owner,
+    VideoWindow_get_Owner,
+    VideoWindow_put_MessageDrain,
+    VideoWindow_get_MessageDrain,
+    VideoWindow_get_BorderColor,
+    VideoWindow_put_BorderColor,
+    VideoWindow_get_FullScreenMode,
+    VideoWindow_put_FullScreenMode,
+    VideoWindow_SetWindowForeground,
+    VideoWindow_NotifyOwnerMessage,
+    VideoWindow_SetWindowPosition,
+    VideoWindow_GetWindowPosition,
+    VideoWindow_GetMinIdealImageSize,
+    VideoWindow_GetMaxIdealImageSize,
+    VideoWindow_GetRestorePosition,
+    VideoWindow_HideCursor,
+    VideoWindow_IsCursorHidden
 };
 
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI Mediaevent_QueryInterface(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_QueryInterface(IMediaEventEx *iface,
 						REFIID riid,
 						LPVOID*ppvObj) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
@@ -3797,7 +3797,7 @@ static HRESULT WINAPI Mediaevent_QueryInterface(IMediaEventEx *iface,
     return Filtergraph_QueryInterface(This, riid, ppvObj);
 }
 
-static ULONG WINAPI Mediaevent_AddRef(IMediaEventEx *iface) {
+static ULONG WINAPI MediaEvent_AddRef(IMediaEventEx *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -3805,7 +3805,7 @@ static ULONG WINAPI Mediaevent_AddRef(IMediaEventEx *iface) {
     return Filtergraph_AddRef(This);
 }
 
-static ULONG WINAPI Mediaevent_Release(IMediaEventEx *iface) {
+static ULONG WINAPI MediaEvent_Release(IMediaEventEx *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -3814,7 +3814,7 @@ static ULONG WINAPI Mediaevent_Release(IMediaEventEx *iface) {
 }
 
 /*** IDispatch methods ***/
-static HRESULT WINAPI Mediaevent_GetTypeInfoCount(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_GetTypeInfoCount(IMediaEventEx *iface,
 						  UINT*pctinfo) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
@@ -3823,7 +3823,7 @@ static HRESULT WINAPI Mediaevent_GetTypeInfoCount(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaevent_GetTypeInfo(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_GetTypeInfo(IMediaEventEx *iface,
 					     UINT iTInfo,
 					     LCID lcid,
 					     ITypeInfo**ppTInfo) {
@@ -3834,7 +3834,7 @@ static HRESULT WINAPI Mediaevent_GetTypeInfo(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaevent_GetIDsOfNames(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_GetIDsOfNames(IMediaEventEx *iface,
 					       REFIID riid,
 					       LPOLESTR*rgszNames,
 					       UINT cNames,
@@ -3847,7 +3847,7 @@ static HRESULT WINAPI Mediaevent_GetIDsOfNames(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaevent_Invoke(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_Invoke(IMediaEventEx *iface,
 					DISPID dispIdMember,
 					REFIID riid,
 					LCID lcid,
@@ -3864,7 +3864,7 @@ static HRESULT WINAPI Mediaevent_Invoke(IMediaEventEx *iface,
 }
 
 /*** IMediaEvent methods ***/
-static HRESULT WINAPI Mediaevent_GetEventHandle(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_GetEventHandle(IMediaEventEx *iface,
 						OAEVENT *hEvent) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
@@ -3875,7 +3875,7 @@ static HRESULT WINAPI Mediaevent_GetEventHandle(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaevent_GetEvent(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface,
 					  long *lEventCode,
 					  LONG_PTR *lParam1,
 					  LONG_PTR *lParam2,
@@ -3897,7 +3897,7 @@ static HRESULT WINAPI Mediaevent_GetEvent(IMediaEventEx *iface,
     return E_ABORT;
 }
 
-static HRESULT WINAPI Mediaevent_WaitForCompletion(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_WaitForCompletion(IMediaEventEx *iface,
 						   long msTimeout,
 						   long *pEvCode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
@@ -3914,7 +3914,7 @@ static HRESULT WINAPI Mediaevent_WaitForCompletion(IMediaEventEx *iface,
     return E_ABORT;
 }
 
-static HRESULT WINAPI Mediaevent_CancelDefaultHandling(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_CancelDefaultHandling(IMediaEventEx *iface,
 						       long lEvCode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
@@ -3930,7 +3930,7 @@ static HRESULT WINAPI Mediaevent_CancelDefaultHandling(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaevent_RestoreDefaultHandling(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_RestoreDefaultHandling(IMediaEventEx *iface,
 							long lEvCode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
@@ -3946,7 +3946,7 @@ static HRESULT WINAPI Mediaevent_RestoreDefaultHandling(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaevent_FreeEventParams(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_FreeEventParams(IMediaEventEx *iface,
 						 long lEvCode,
 						 LONG_PTR lParam1,
 						 LONG_PTR lParam2) {
@@ -3958,7 +3958,7 @@ static HRESULT WINAPI Mediaevent_FreeEventParams(IMediaEventEx *iface,
 }
 
 /*** IMediaEventEx methods ***/
-static HRESULT WINAPI Mediaevent_SetNotifyWindow(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_SetNotifyWindow(IMediaEventEx *iface,
 						 OAHWND hwnd,
 						 long lMsg,
 						 LONG_PTR lInstanceData) {
@@ -3973,7 +3973,7 @@ static HRESULT WINAPI Mediaevent_SetNotifyWindow(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaevent_SetNotifyFlags(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface,
 						long lNoNotifyFlags) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
@@ -3987,7 +3987,7 @@ static HRESULT WINAPI Mediaevent_SetNotifyFlags(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Mediaevent_GetNotifyFlags(IMediaEventEx *iface,
+static HRESULT WINAPI MediaEvent_GetNotifyFlags(IMediaEventEx *iface,
 						long *lplNoNotifyFlags) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
@@ -4004,22 +4004,22 @@ static HRESULT WINAPI Mediaevent_GetNotifyFlags(IMediaEventEx *iface,
 
 static const IMediaEventExVtbl IMediaEventEx_VTable =
 {
-    Mediaevent_QueryInterface,
-    Mediaevent_AddRef,
-    Mediaevent_Release,
-    Mediaevent_GetTypeInfoCount,
-    Mediaevent_GetTypeInfo,
-    Mediaevent_GetIDsOfNames,
-    Mediaevent_Invoke,
-    Mediaevent_GetEventHandle,
-    Mediaevent_GetEvent,
-    Mediaevent_WaitForCompletion,
-    Mediaevent_CancelDefaultHandling,
-    Mediaevent_RestoreDefaultHandling,
-    Mediaevent_FreeEventParams,
-    Mediaevent_SetNotifyWindow,
-    Mediaevent_SetNotifyFlags,
-    Mediaevent_GetNotifyFlags
+    MediaEvent_QueryInterface,
+    MediaEvent_AddRef,
+    MediaEvent_Release,
+    MediaEvent_GetTypeInfoCount,
+    MediaEvent_GetTypeInfo,
+    MediaEvent_GetIDsOfNames,
+    MediaEvent_Invoke,
+    MediaEvent_GetEventHandle,
+    MediaEvent_GetEvent,
+    MediaEvent_WaitForCompletion,
+    MediaEvent_CancelDefaultHandling,
+    MediaEvent_RestoreDefaultHandling,
+    MediaEvent_FreeEventParams,
+    MediaEvent_SetNotifyWindow,
+    MediaEvent_SetNotifyFlags,
+    MediaEvent_GetNotifyFlags
 };
 
 
