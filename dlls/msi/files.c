@@ -458,6 +458,7 @@ static struct media_info *create_media_info( void )
 
 static void free_media_info( struct media_info *mi )
 {
+    msi_free( mi->last_path );
     msi_free( mi );
 }
 
