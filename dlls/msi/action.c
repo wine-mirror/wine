@@ -88,6 +88,7 @@ static UINT ACTION_RemoveIniValues(MSIPACKAGE *package);
 static UINT ACTION_MoveFiles(MSIPACKAGE *package);
 static UINT ACTION_PatchFiles(MSIPACKAGE *package);
 static UINT ACTION_BindImage(MSIPACKAGE *package);
+static UINT ACTION_IsolateComponents(MSIPACKAGE *package);
 
 /*
  * consts and values used
@@ -295,7 +296,7 @@ static struct _actions StandardActions[] = {
     { szInstallInitialize, ACTION_InstallInitialize },
     { szInstallSFPCatalogFile, NULL},
     { szInstallValidate, ACTION_InstallValidate },
-    { szIsolateComponents, NULL},
+    { szIsolateComponents, ACTION_IsolateComponents },
     { szLaunchConditions, ACTION_LaunchConditions },
     { szMigrateFeatureStates, NULL},
     { szMoveFiles, ACTION_MoveFiles },
@@ -4086,6 +4087,27 @@ static UINT ACTION_BindImage(MSIPACKAGE *package)
         rc = MSI_IterateRecords(view, &count, NULL, package);
         if (count)
             FIXME("%lu ignored Patch table values\n", count);
+        msiobj_release(&view->hdr);
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_IsolateComponents(MSIPACKAGE *package)
+{
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'I','s','o','l','a','t','e','C','o','m','p','o','n','e','n','t',0 };
+    MSIQUERY *view = NULL;
+    DWORD count = 0;
+    UINT rc;
+    
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords(view, &count, NULL, package);
+        if (count)
+            FIXME("%lu ignored IsolatedComponents table values\n", count);
         msiobj_release(&view->hdr);
     }
 
