@@ -406,6 +406,34 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
     return package;
 }
 
+/*
+ * copy_package_to_temp   [internal]
+ *
+ * copy the msi file to a temp file to prevent locking a CD
+ * with a multi disc install 
+ *
+ * FIXME: I think this is wrong, and instead of copying the package,
+ *        we should read all the tables to memory, then open the
+ *        database to read binary streams on demand.
+ */ 
+static LPCWSTR copy_package_to_temp( LPCWSTR szPackage, LPWSTR filename )
+{
+    WCHAR path[MAX_PATH];
+    static const WCHAR szMSI[] = {'M','S','I',0};
+
+    GetTempPathW( MAX_PATH, path );
+    GetTempFileNameW( path, szMSI, 0, filename );
+
+    if( !CopyFileW( szPackage, filename, FALSE ) )
+    {
+        ERR("failed to copy package to temp path %s\n", debugstr_w(filename) );
+        return szPackage;
+    }
+
+    TRACE("Opening relocated package %s\n", debugstr_w( filename ));
+    return filename;
+}
+
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
     MSIDATABASE *db = NULL;
@@ -413,6 +441,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     MSIHANDLE handle;
     DWORD size;
     static const WCHAR szProductCode[]= {'P','r','o','d','u','c','t','C','o','d','e',0};
+    UINT r;
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
 
@@ -425,7 +454,14 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     }
     else
     {
-        UINT r = MSI_OpenDatabaseW(szPackage, MSIDBOPEN_READONLY, &db);
+        WCHAR temppath[MAX_PATH];
+        LPCWSTR file = copy_package_to_temp( szPackage, temppath );
+
+        r = MSI_OpenDatabaseW( file, MSIDBOPEN_READONLY, &db );
+
+        if (file != szPackage)
+            DeleteFileW( file );
+
         if( r != ERROR_SUCCESS )
             return r;
     }
@@ -466,39 +502,18 @@ UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phP
 {
     MSIPACKAGE *package = NULL;
     UINT ret;
-    WCHAR path[MAX_PATH];
-    WCHAR filename[MAX_PATH];
-    static const WCHAR szMSI[] = {'M','S','I',0};
 
-    TRACE("%s %08lx %p\n",debugstr_w(szPackage), dwOptions, phPackage);
+    TRACE("%s %08lx %p\n", debugstr_w(szPackage), dwOptions, phPackage );
 
-    /* copy the msi file to a temp file to pervent locking a CD
-     * with a multi disc install 
-     */ 
-    if( szPackage[0] == '#' )
-        strcpyW(filename,szPackage);
-    else
-    {
-        GetTempPathW(MAX_PATH, path);
-        GetTempFileNameW(path, szMSI, 0, filename);
-
-        CopyFileW(szPackage, filename, FALSE);
-
-        TRACE("Opening relocated package %s\n",debugstr_w(filename));
-    }
-    
     if( dwOptions )
         FIXME("dwOptions %08lx not supported\n", dwOptions);
 
-    ret = MSI_OpenPackageW( filename, &package);
+    ret = MSI_OpenPackageW( szPackage, &package );
     if( ret == ERROR_SUCCESS )
     {
         *phPackage = alloc_msihandle( &package->hdr );
         msiobj_release( &package->hdr );
     }
-
-    if( szPackage[0] != '#' )
-        DeleteFileW(filename);
 
     return ret;
 }
