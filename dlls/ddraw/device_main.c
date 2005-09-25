@@ -1,6 +1,8 @@
-/* Direct3D Device
- * Copyright (c) 1998-2004 Lionel ULMER
- * Copyright (c) 2002-2004 Christian Costa
+/*
+ * Direct3D Device
+ *
+ * Copyright (c) 1998-2004 Lionel Ulmer
+ * Copyright (c) 2002-2005 Christian Costa
  *
  * This file contains all the common stuff for D3D devices.
  *
@@ -284,7 +286,7 @@ Main_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	    if (This->current_texture[i] != NULL)
 	        IDirect3DTexture2_Release(ICOM_INTERFACE(This->current_texture[i], IDirect3DTexture2));
 	}
-	    	  
+	HeapFree(GetProcessHeap(), 0, This->vertex_buffer);
 	HeapFree(GetProcessHeap(), 0, This);
 	return 0;
     }
@@ -1175,8 +1177,15 @@ Main_IDirect3DDeviceImpl_3_Begin(LPDIRECT3DDEVICE3 iface,
                                  DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-    FIXME("(%p/%p)->(%08x,%08lx,%08lx): stub!\n", This, iface, d3dptPrimitiveType, dwVertexTypeDesc, dwFlags);
-    return DD_OK;
+    TRACE("(%p/%p)->(%08x,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, dwVertexTypeDesc, dwFlags);
+
+    This->primitive_type = d3dptPrimitiveType;
+    This->vertex_type = dwVertexTypeDesc;
+    This->render_flags = dwFlags;
+    This->vertex_size = get_flexible_vertex_size(This->vertex_type);
+    This->nb_vertices = 0;
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI
@@ -1197,8 +1206,24 @@ Main_IDirect3DDeviceImpl_3_2T_Vertex(LPDIRECT3DDEVICE3 iface,
                                      LPVOID lpVertexType)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-    FIXME("(%p/%p)->(%p): stub!\n", This, iface, lpVertexType);
-    return DD_OK;
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpVertexType);
+
+    if ((This->nb_vertices+1)*This->vertex_size > This->buffer_size)
+    {
+	LPBYTE old_buffer;
+	This->buffer_size = This->buffer_size ? This->buffer_size * 2 : This->vertex_size * 3;
+	old_buffer = This->vertex_buffer;
+	This->vertex_buffer = HeapAlloc(GetProcessHeap(), 0, This->buffer_size);
+	if (old_buffer)
+	{
+	    CopyMemory(This->vertex_buffer, old_buffer, This->nb_vertices * This->vertex_size);
+	    HeapFree(GetProcessHeap(), 0, old_buffer);
+	}
+    }
+
+    CopyMemory(This->vertex_buffer + This->nb_vertices++ * This->vertex_size, lpVertexType, This->vertex_size);
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI
@@ -1215,8 +1240,11 @@ Main_IDirect3DDeviceImpl_3_2T_End(LPDIRECT3DDEVICE3 iface,
                                   DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-    FIXME("(%p/%p)->(%08lx): stub!\n", This, iface, dwFlags);
-    return DD_OK;
+    TRACE("(%p/%p)->(%08lx)\n", This, iface, dwFlags);
+
+    IDirect3DDevice3_DrawPrimitive(iface, This->primitive_type, This->vertex_type, This->vertex_buffer, This->nb_vertices, This->render_flags);
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI

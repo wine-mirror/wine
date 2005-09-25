@@ -1,6 +1,8 @@
-/* Direct3D Device
- * Copyright (c) 1998-2004 Lionel ULMER
- * Copyright (c) 2002-2004 Christian Costa
+/*
+ * Direct3D Device
+ *
+ * Copyright (c) 1998-2004 Lionel Ulmer
+ * Copyright (c) 2002-2005 Christian Costa
  *
  * This file contains the MESA implementation of all the D3D devices that
  * Wine supports.
@@ -427,16 +429,14 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	This->d3d->d3d_removed_device(This->d3d, This);
 
         /* Free light arrays */
-        if (This->light_parameters)
-            HeapFree(GetProcessHeap(), 0, This->light_parameters);
+        HeapFree(GetProcessHeap(), 0, This->light_parameters);
         HeapFree(GetProcessHeap(), 0, This->active_lights);
 
 	HeapFree(GetProcessHeap(), 0, This->world_mat);
 	HeapFree(GetProcessHeap(), 0, This->view_mat);
 	HeapFree(GetProcessHeap(), 0, This->proj_mat);
 
-	if (glThis->surface_ptr)
-	    HeapFree(GetProcessHeap(), 0, glThis->surface_ptr);
+	HeapFree(GetProcessHeap(), 0, glThis->surface_ptr);
 
 	DeleteCriticalSection(&(This->crit));
 	
@@ -446,6 +446,7 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	glXDestroyContext(glThis->display, glThis->gl_context);
 	LEAVE_GL();
 	HeapFree(GetProcessHeap(), 0, This->clipping_planes);
+	HeapFree(GetProcessHeap(), 0, This->vertex_buffer);
 
 	HeapFree(GetProcessHeap(), 0, This);
 	return 0;

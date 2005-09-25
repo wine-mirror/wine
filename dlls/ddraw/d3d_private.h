@@ -1,6 +1,8 @@
-/* Direct3D private include file
- * Copyright (c) 1998-2004 Lionel ULMER
- * Copyright (c) 2002-2004 Christian Costa
+/*
+ * Direct3D private include file
+ *
+ * Copyright (c) 1998-2004 Lionel Ulmer
+ * Copyright (c) 2002-2005 Christian Costa
  *
  * This file contains all the structure that are not exported
  * through d3d.h and all common macros.
@@ -230,7 +232,7 @@ struct IDirect3DDeviceImpl
     LPD3DLIGHT7 light_parameters;
     DWORD *active_lights;
 
-    /* clipping planes */
+    /* Clipping planes */
     DWORD max_clipping_planes;
     d3d7clippingplane *clipping_planes;
     
@@ -251,6 +253,15 @@ struct IDirect3DDeviceImpl
 
     /* Used to prevent locks and rendering to overlap */
     CRITICAL_SECTION crit;
+
+    /* Rendering functions */
+    D3DPRIMITIVETYPE primitive_type;
+    DWORD vertex_type;
+    DWORD render_flags;
+    DWORD nb_vertices;
+    LPBYTE vertex_buffer;
+    DWORD vertex_size;
+    DWORD buffer_size;
 };
 
 /*****************************************************************************
