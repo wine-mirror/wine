@@ -1,0 +1,244 @@
+/*
+ * Copyright 2005 Alexander N. Sørnes <alex@thehandofagony.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
+LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_HTMLDISABLED    "HTML-tegning er for øyeblikket deaktivert."
+    IDS_HTMLDOCUMENT    "HTML-dokument"
+}
+
+/* FIXME: This should be in shdoclc.dll */
+
+IDR_BROWSE_CONTEXT_MENU MENU
+{
+    POPUP "Standard"
+    {
+        MENUITEM "Til&bake",                  IDM_BACK
+        MENUITEM "&Fram",               IDM_FORWARD
+        MENUITEM SEPARATOR
+        MENUITEM "Lagre bakgrunn &som . . .", IDM_SAVEBACKGROUNDAS
+        MENUITEM "Bruk som bak&grunn",     IDM_SETASBACKGROUND
+        MENUITEM "&Kopier bakgrunn",       IDM_COPYBACKGROUND
+        MENUITEM "Bruk som skrivebor&dsobjekt",   IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "Merk &alt",            IDM_SELECTALL
+        MENUITEM "&Lim inn",                 IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Lag s&narvei",       IDM_CREATESHORTCUT
+        MENUITEM "Legg til i &favoritter",     IDM_ADDTOFAVOURITES
+        MENUITEM "&Vis kildekode",           IDM_VIEWSOURCE
+        MENUITEM SEPARATOR
+        MENUITEM "K&oding",              IDM_ENCODING 
+        MENUITEM SEPARATOR
+        MENUITEM "Skr&iv ut",                 IDM_PRINT
+        MENUITEM "Oppdate&r",               IDM_REFRESH 
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Egenska&per",            IDM_PROPERTIES
+    }
+
+    POPUP "Bilde"
+    {
+        MENUITEM "Åpne k&obling",               IDM_OPENLINK
+        MENUITEM "Åpne kobling i &nytt vindu", IDM_OPENINNEWWINDOW
+        MENUITEM "L&agre mål som . . .",       IDM_SAVETARGETAS
+        MENUITEM "Skriv &ut mål",            IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "&Vis bilde",            IDM_SHOWPICTURE
+        MENUITEM "Lagre bilde &som . . .",      IDM_SAVEPICTUREAS
+        MENUITEM "Send bilde via &e-post . . .",       IDM_EMAILPICTURE
+        MENUITEM "Skr&iv ut bilde . . .",        IDM_PRINTPICTURE
+        MENUITEM "&Gå til mine bilder",       IDM_GOTOMYPICTURES
+        MENUITEM "Bruk som bak&grunn",       IDM_SETASBACKGROUND
+        MENUITEM "Bruk som skrivebor&dsobjekt . . .",  IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "Klipp u&t",                     IDM_CUT
+        MENUITEM "&Kopier",                    IDM_COPY
+        MENUITEM "Kopier snar&veiCopy Shor&tcut",           IDM_COPYSHORTCUT
+        MENUITEM "&Lim inn",                   IDM_PASTE 
+        MENUITEM SEPARATOR
+        MENUITEM "Legg til i &favoritter . . .",     IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Egenskape&r",              IDM_PROPERTIES
+    }
+
+    POPUP "Kontroller"
+    {
+        MENUITEM "An&gre",       IDM_UNDO 
+        MENUITEM SEPARATOR
+        MENUITEM "Klipp u&t",        IDM_CUT
+        MENUITEM "&Kopier",       IDM_COPY
+        MENUITEM "&Lim inn",      IDM_PASTE
+        MENUITEM "&Slett",     IDM_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Merk &alt", IDM_SELECTALL
+    }
+
+    POPUP "Tabell"
+    {
+        POPUP "&Merk"
+        {
+            MENUITEM "&Celle",         IDM_CELL 
+            MENUITEM "&Rad",          IDM_ROW
+            MENUITEM "&Kolonne",       IDM_COLUMN
+            MENUITEM "&Tabell",        IDM_TABLE
+        }
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Egenskaper for &celle",  IDM_CELLPROPERTIES
+        MENUITEM "Egenskaper for &tabell", IDM_TABLEPROPERTIES
+    }
+
+    POPUP "1DSidevelging"
+    {
+        MENUITEM "Klipp u&t",        IDM_CUT
+        MENUITEM "&Kopier",       IDM_COPY
+        MENUITEM "Lim inn",       IDM_PASTE
+        MENUITEM "Merk &alt", IDM_SELECTALL 
+        MENUITEM "&Skriv ut",      IDM_PRINT
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "Anker"
+    {
+        MENUITEM "&Åpne",                IDM_OPENLINK
+        MENUITEM "Åpne i &nytt vindu",  IDM_OPENINNEWWINDOW
+        MENUITEM "L&agre mål som . . .",   IDM_SAVETARGETAS
+        MENUITEM "&Skriv ut mål",        IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "Klipp ut",                  IDM_CUT
+        MENUITEM "&Kopier",                IDM_COPY
+        MENUITEM "Kopier snarve&i",       IDM_COPYSHORTCUT
+        MENUITEM "&Lim inn",               IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Legg til i &favoritter . . .", IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Egenskape&r",          IDM_PROPERTIES
+    }
+
+    POPUP "Ukjent sammenheng"
+    {
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "DYNSRC-bilde"
+    {
+        MENUITEM "Åpne k&obling",               IDM_OPENLINK
+        MENUITEM "Åpne kobling i &nytt vindu", IDM_OPENINNEWWINDOW
+        MENUITEM "L&agre mål som . . .",       IDM_SAVETARGETAS
+        MENUITEM "Skriv &ut mål",            IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "&Vis bilde",            IDM_SHOWPICTURE
+        MENUITEM "Lagre video &som . . .",        IDM_SAVEPICTUREAS
+        MENUITEM "Bruk som bakgrunn",       IDM_SETASBACKGROUND
+        MENUITEM "Bruk som skrivebor&dselement . . .",  IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "Klipp u&t",                     IDM_CUT
+        MENUITEM "&Kopier",                    IDM_COPY
+        MENUITEM "Kopier snar&vei",           IDM_COPYSHORTCUT
+        MENUITEM "&Lim inn",                   IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Legg til i &favoritter . . .",     IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Spill av",                     IDM_PLAY
+        MENUITEM "Stopp",                     IDM_STOP
+        MENUITEM "Egenskape&r",              IDM_PROPERTIES
+    }
+
+    POPUP "ART-bilde"
+    {
+        MENUITEM "&Åpne kobling",               IDM_OPENLINK
+        MENUITEM "Åpne kobling i &nytt vindu", IDM_OPENINNEWWINDOW
+        MENUITEM "L&agre mål som . . .",       IDM_SAVETARGETAS
+        MENUITEM "Skriv &ut mål",            IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "&Vis bilde",            IDM_SHOWPICTURE
+        MENUITEM "Lagre bilde &som . . .",      IDM_SAVEPICTUREAS
+        MENUITEM "Bruk som bak&grunn",       IDM_SETASBACKGROUND
+        MENUITEM "Bruk som skrivebor&dobjekt . . .",  IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "Klipp u&t",                     IDM_CUT
+        MENUITEM "&Kopier",                    IDM_COPY
+        MENUITEM "Kopier s&narvei",           IDM_COPYSHORTCUT
+        MENUITEM "&Lim inn",                   IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Legg til i &Favoritter . . .",     IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM "Spill av",                     IDM_PLAY
+        MENUITEM "Stopp",                     IDM_STOP
+        MENUITEM "Spol tilbake",                   IDM_REWIND
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Egenskape&r",              IDM_PROPERTIES
+    }
+
+    POPUP "Feilsøking"
+    {
+        MENUITEM "Sporingsmerkelapper",         IDM_TRACETAGS 
+        MENUITEM "Ressursfeil",  IDM_RESOURCEFAILURES
+        MENUITEM "Dump sporingsinformasjon", IDM_DUMPTRACKINGINFO
+        MENUITEM "Feilsøkingspause",        IDM_DEBUGBREAK
+        MENUITEM "Feilsøkingsvisning",         IDM_DEBUGVIEW
+        MENUITEM "Dump 'Tree'",          IDM_DUMPTREE
+        MENUITEM "Dump 'Lines'",         IDM_DUMPLINES
+        MENUITEM "Dump 'DisplayTree'",   IDM_DUMPDISPLAYTREE
+        MENUITEM "Dump 'FormatCaches'",  IDM_DUMPFORMATCACHES
+        MENUITEM "Dump 'LayoutRects'",   IDM_DUMPLAYOUTRECTS
+        MENUITEM "Minneovervåker",     IDM_MEMORYMONITOR
+        MENUITEM "Ytelsesmålere", IDM_PERFORMANCEMETERS
+        MENUITEM "Lagre HTML",          IDM_SAVEHTML
+        MENUITEM SEPARATOR
+        MENUITEM "&Bla-visning",       IDM_BROWSEVIEW
+        MENUITEM "R&edigerings-visning",         IDM_EDITVIEW
+    }
+
+    POPUP "Loddrett rullefelt"
+    {
+        MENUITEM "Rull her",  IDM_SCROLLHERE
+        MENUITEM SEPARATOR
+        MENUITEM "Topp",          IDM_TOP
+        MENUITEM "Bunn",       IDM_BOTTOM
+        MENUITEM SEPARATOR
+        MENUITEM "Side opp",      IDM_PAGEUP
+        MENUITEM "Side ned",    IDM_PAGEDOWN
+        MENUITEM SEPARATOR
+        MENUITEM "Rull opp",    IDM_SCROLLUP
+        MENUITEM "Rull ned",  IDM_SCROLLDOWN
+    }
+
+    POPUP "Vannrett rullefelt"
+    {
+        MENUITEM "Rull her",  IDM_SCROLLHERE
+        MENUITEM SEPARATOR
+        MENUITEM "Venstre kant",    IDM_LEFTEDGE
+        MENUITEM "Høyre kant",   IDM_RIGHTEDGE
+        MENUITEM SEPARATOR
+        MENUITEM "Side venstre",    IDM_PAGELEFT
+        MENUITEM "Side høyre",   IDM_PAGERIGHT
+        MENUITEM SEPARATOR
+        MENUITEM "Rull til venstre",  IDM_SCROLLLEFT
+        MENUITEM "Rull til høyre", IDM_SCROLLRIGHT
+    }
+}
