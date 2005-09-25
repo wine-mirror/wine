@@ -633,12 +633,12 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
 			    bitmask = 0x80;
 			}
 			if (*bitmap_ & bitmask)
-			    DPRINTF("*");
+			    TRACE("*");
 			else
-			    DPRINTF(" ");
+			    TRACE(" ");
 		    }
 		    bitmap_ += (4 - ((UINT_PTR)bitmap_ & 0x03));
-		    DPRINTF("\n");
+		    TRACE("\n");
 		}
 	    }
 	}

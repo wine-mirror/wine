@@ -164,27 +164,27 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
     char *addr = view->base;
     BYTE prot = view->prot[0];
 
-    DPRINTF( "View: %p - %p", addr, addr + view->size - 1 );
+    TRACE( "View: %p - %p", addr, addr + view->size - 1 );
     if (view->flags & VFLAG_SYSTEM)
-        DPRINTF( " (system)\n" );
+        TRACE( " (system)\n" );
     else if (view->flags & VFLAG_VALLOC)
-        DPRINTF( " (valloc)\n" );
+        TRACE( " (valloc)\n" );
     else if (view->mapping)
-        DPRINTF( " %p\n", view->mapping );
+        TRACE( " %p\n", view->mapping );
     else
-        DPRINTF( " (anonymous)\n");
+        TRACE( " (anonymous)\n");
 
     for (count = i = 1; i < view->size >> page_shift; i++, count++)
     {
         if (view->prot[i] == prot) continue;
-        DPRINTF( "      %p - %p %s\n",
+        TRACE( "      %p - %p %s\n",
                  addr, addr + (count << page_shift) - 1, VIRTUAL_GetProtStr(prot) );
         addr += (count << page_shift);
         prot = view->prot[i];
         count = 0;
     }
     if (count)
-        DPRINTF( "      %p - %p %s\n",
+        TRACE( "      %p - %p %s\n",
                  addr, addr + (count << page_shift) - 1, VIRTUAL_GetProtStr(prot) );
 }
 
@@ -196,7 +196,7 @@ void VIRTUAL_Dump(void)
 {
     struct file_view *view;
 
-    DPRINTF( "\nDump of all virtual memory views:\n\n" );
+    TRACE( "Dump of all virtual memory views:\n" );
     RtlEnterCriticalSection(&csVirtual);
     LIST_FOR_EACH_ENTRY( view, &views_list, FILE_VIEW, entry )
     {

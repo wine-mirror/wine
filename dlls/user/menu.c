@@ -201,7 +201,7 @@ const struct builtin_class_descr MENU_builtin_class =
   if(!TRACE_ON(menu)) ; else do_debug_print_menuitem(pre, mp, post)
 
 #define MENUOUT(text) \
-  DPRINTF("%s%s", (count++ ? "," : ""), (text))
+  TRACE("%s%s", (count++ ? "," : ""), (text))
 
 #define MENUFLAG(bit,text) \
   do { \
@@ -215,12 +215,12 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
     if (mp) {
 	UINT flags = mp->fType;
 	int type = MENU_ITEM_TYPE(flags);
-	DPRINTF( "{ ID=0x%x", mp->wID);
+	TRACE( "{ ID=0x%x", mp->wID);
 	if (flags & MF_POPUP)
-	    DPRINTF( ", Sub=%p", mp->hSubMenu);
+	    TRACE( ", Sub=%p", mp->hSubMenu);
 	if (flags) {
 	    int count = 0;
-	    DPRINTF( ", Type=");
+	    TRACE( ", Type=");
 	    if (type == MFT_STRING)
 		/* Nothing */ ;
 	    else if (type == MFT_SEPARATOR)
@@ -242,12 +242,12 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
 	    MENUFLAG(MFT_RIGHTJUSTIFY, "right");	/* same as MF_HELP */
 
 	    if (flags)
-		DPRINTF( "+0x%x", flags);
+		TRACE( "+0x%x", flags);
 	}
 	flags = mp->fState;
 	if (flags) {
 	    int count = 0;
-	    DPRINTF( ", State=");
+	    TRACE( ", State=");
 	    MENUFLAG(MFS_GRAYED, "grey");
 	    MENUFLAG(MFS_DEFAULT, "default");
 	    MENUFLAG(MFS_DISABLED, "dis");
@@ -256,30 +256,30 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
 	    MENUFLAG(MF_USECHECKBITMAPS, "usebit");
 	    MENUFLAG(MF_MOUSESELECT, "mouse");
 	    if (flags)
-		DPRINTF( "+0x%x", flags);
+		TRACE( "+0x%x", flags);
 	}
 	if (mp->hCheckBit)
-	    DPRINTF( ", Chk=%p", mp->hCheckBit);
+	    TRACE( ", Chk=%p", mp->hCheckBit);
 	if (mp->hUnCheckBit)
-	    DPRINTF( ", Unc=%p", mp->hUnCheckBit);
+	    TRACE( ", Unc=%p", mp->hUnCheckBit);
 
 	if (type == MFT_STRING) {
 	    if (mp->text)
-		DPRINTF( ", Text=%s", debugstr_w(mp->text));
+		TRACE( ", Text=%s", debugstr_w(mp->text));
 	    else
-		DPRINTF( ", Text=Null");
+		TRACE( ", Text=Null");
 	} else if (mp->text == NULL)
 	    /* Nothing */ ;
 	else
-	    DPRINTF( ", Text=%p", mp->text);
+	    TRACE( ", Text=%p", mp->text);
 	if (mp->dwItemData)
-	    DPRINTF( ", ItemData=0x%08lx", mp->dwItemData);
-	DPRINTF( " }");
+	    TRACE( ", ItemData=0x%08lx", mp->dwItemData);
+	TRACE( " }");
     } else {
-	DPRINTF( "NULL");
+	TRACE( "NULL");
     }
 
-    DPRINTF(" %s\n", postfix);
+    TRACE(" %s\n", postfix);
 }
 
 #undef MENUOUT

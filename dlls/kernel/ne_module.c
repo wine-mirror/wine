@@ -263,72 +263,72 @@ void NE_DumpModule( HMODULE16 hModule )
 
     if (!(pModule = NE_GetPtr( hModule )))
     {
-        MESSAGE( "**** %04x is not a module handle\n", hModule );
+        ERR( "**** %04x is not a module handle\n", hModule );
         return;
     }
 
       /* Dump the module info */
-    DPRINTF( "---\n" );
-    DPRINTF( "Module %04x:\n", hModule );
-    DPRINTF( "count=%d flags=%04x heap=%d stack=%d\n",
+    TRACE( "---\n" );
+    TRACE( "Module %04x:\n", hModule );
+    TRACE( "count=%d flags=%04x heap=%d stack=%d\n",
              pModule->count, pModule->ne_flags,
              pModule->ne_heap, pModule->ne_stack );
-    DPRINTF( "cs:ip=%04x:%04x ss:sp=%04x:%04x ds=%04x nb seg=%d modrefs=%d\n",
+    TRACE( "cs:ip=%04x:%04x ss:sp=%04x:%04x ds=%04x nb seg=%d modrefs=%d\n",
              SELECTOROF(pModule->ne_csip), OFFSETOF(pModule->ne_csip),
              SELECTOROF(pModule->ne_sssp), OFFSETOF(pModule->ne_sssp),
              pModule->ne_autodata, pModule->ne_cseg, pModule->ne_cmod );
-    DPRINTF( "os_flags=%d swap_area=%d version=%04x\n",
+    TRACE( "os_flags=%d swap_area=%d version=%04x\n",
              pModule->ne_exetyp, pModule->ne_swaparea, pModule->ne_expver );
     if (pModule->ne_flags & NE_FFLAGS_WIN32)
-        DPRINTF( "PE module=%p\n", pModule->module32 );
+        TRACE( "PE module=%p\n", pModule->module32 );
 
       /* Dump the file info */
-    DPRINTF( "---\n" );
-    DPRINTF( "Filename: '%s'\n", NE_MODULE_NAME(pModule) );
+    TRACE( "---\n" );
+    TRACE( "Filename: '%s'\n", NE_MODULE_NAME(pModule) );
 
       /* Dump the segment table */
-    DPRINTF( "---\n" );
-    DPRINTF( "Segment table:\n" );
+    TRACE( "---\n" );
+    TRACE( "Segment table:\n" );
     pSeg = NE_SEG_TABLE( pModule );
     for (i = 0; i < pModule->ne_cseg; i++, pSeg++)
-        DPRINTF( "%02x: pos=%d size=%d flags=%04x minsize=%d hSeg=%04x\n",
+        TRACE( "%02x: pos=%d size=%d flags=%04x minsize=%d hSeg=%04x\n",
                  i + 1, pSeg->filepos, pSeg->size, pSeg->flags,
                  pSeg->minsize, pSeg->hSeg );
 
       /* Dump the resource table */
-    DPRINTF( "---\n" );
-    DPRINTF( "Resource table:\n" );
+    TRACE( "---\n" );
+    TRACE( "Resource table:\n" );
     if (pModule->ne_rsrctab)
     {
         pword = (WORD *)((BYTE *)pModule + pModule->ne_rsrctab);
-        DPRINTF( "Alignment: %d\n", *pword++ );
+        TRACE( "Alignment: %d\n", *pword++ );
         while (*pword)
         {
             NE_TYPEINFO *ptr = (NE_TYPEINFO *)pword;
             NE_NAMEINFO *pname = (NE_NAMEINFO *)(ptr + 1);
-            DPRINTF( "id=%04x count=%d\n", ptr->type_id, ptr->count );
+            TRACE( "id=%04x count=%d\n", ptr->type_id, ptr->count );
             for (i = 0; i < ptr->count; i++, pname++)
-                DPRINTF( "offset=%d len=%d id=%04x\n",
+                TRACE( "offset=%d len=%d id=%04x\n",
 		      pname->offset, pname->length, pname->id );
             pword = (WORD *)pname;
         }
     }
-    else DPRINTF( "None\n" );
+    else TRACE( "None\n" );
 
       /* Dump the resident name table */
-    DPRINTF( "---\n" );
-    DPRINTF( "Resident-name table:\n" );
+    TRACE( "---\n" );
+    TRACE( "Resident-name table:\n" );
     pstr = (BYTE*) pModule + pModule->ne_restab;
     while (*pstr)
     {
-        DPRINTF( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
+        TRACE( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
                  *(WORD *)(pstr + *pstr + 1) );
         pstr += *pstr + 1 + sizeof(WORD);
     }
 
       /* Dump the module reference table */
-    DPRINTF( "---\n" );
-    DPRINTF( "Module ref table:\n" );
+    TRACE( "---\n" );
+    TRACE( "Module ref table:\n" );
     if (pModule->ne_modtab)
     {
         pword = (WORD *)((BYTE *)pModule + pModule->ne_modtab);
@@ -336,43 +336,43 @@ void NE_DumpModule( HMODULE16 hModule )
         {
             char name[10];
             GetModuleName16( *pword, name, sizeof(name) );
-            DPRINTF( "%d: %04x -> '%s'\n", i, *pword, name );
+            TRACE( "%d: %04x -> '%s'\n", i, *pword, name );
         }
     }
-    else DPRINTF( "None\n" );
+    else TRACE( "None\n" );
 
       /* Dump the entry table */
-    DPRINTF( "---\n" );
-    DPRINTF( "Entry table:\n" );
+    TRACE( "---\n" );
+    TRACE( "Entry table:\n" );
     bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->ne_enttab);
     do {
         entry = (ET_ENTRY *)((BYTE *)bundle+6);
-        DPRINTF( "Bundle %d-%d: %02x\n", bundle->first, bundle->last, entry->type);
+        TRACE( "Bundle %d-%d: %02x\n", bundle->first, bundle->last, entry->type);
         ordinal = bundle->first;
         while (ordinal < bundle->last)
         {
             if (entry->type == 0xff)
-                DPRINTF("%d: %02x:%04x (moveable)\n", ordinal++, entry->segnum, entry->offs);
+                TRACE("%d: %02x:%04x (moveable)\n", ordinal++, entry->segnum, entry->offs);
             else
-                DPRINTF("%d: %02x:%04x (fixed)\n", ordinal++, entry->segnum, entry->offs);
+                TRACE("%d: %02x:%04x (fixed)\n", ordinal++, entry->segnum, entry->offs);
             entry++;
         }
     } while ( (bundle->next) && (bundle = ((ET_BUNDLE *)((BYTE *)pModule + bundle->next))) );
 
     /* Dump the non-resident names table */
-    DPRINTF( "---\n" );
-    DPRINTF( "Non-resident names table:\n" );
+    TRACE( "---\n" );
+    TRACE( "Non-resident names table:\n" );
     if (pModule->nrname_handle)
     {
         pstr = GlobalLock16( pModule->nrname_handle );
         while (*pstr)
         {
-            DPRINTF( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
+            TRACE( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
                    *(WORD *)(pstr + *pstr + 1) );
             pstr += *pstr + 1 + sizeof(WORD);
         }
     }
-    DPRINTF( "\n" );
+    TRACE( "\n" );
 }
 
 

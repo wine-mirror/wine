@@ -78,7 +78,7 @@ inline static void call_dtor( void *func, void *object )
 
 static inline void dump_type( const cxx_type_info *type )
 {
-    DPRINTF( "flags %x type %p %s offsets %d,%d,%d size %d copy ctor %p\n",
+    TRACE( "flags %x type %p %s offsets %d,%d,%d size %d copy ctor %p\n",
              type->flags, type->type_info, dbgstr_type_info(type->type_info),
              type->offsets.this_offset, type->offsets.vbase_descr, type->offsets.vbase_offset,
              type->size, type->copy_ctor );
@@ -88,12 +88,11 @@ static void dump_exception_type( const cxx_exception_type *type )
 {
     UINT i;
 
-    DPRINTF( "exception type:\n" );
-    DPRINTF( "flags %x destr %p handler %p type info %p\n",
+    TRACE( "flags %x destr %p handler %p type info %p\n",
              type->flags, type->destructor, type->custom_handler, type->type_info_table );
     for (i = 0; i < type->type_info_table->count; i++)
     {
-        DPRINTF( "    %d: ", i );
+        TRACE( "    %d: ", i );
         dump_type( type->type_info_table->info[i] );
     }
 }
@@ -103,25 +102,24 @@ static void dump_function_descr( const cxx_function_descr *descr, const cxx_exce
     UINT i;
     int j;
 
-    DPRINTF( "function descr:\n" );
-    DPRINTF( "magic %x\n", descr->magic );
-    DPRINTF( "unwind table: %p %d\n", descr->unwind_table, descr->unwind_count );
+    TRACE( "magic %x\n", descr->magic );
+    TRACE( "unwind table: %p %d\n", descr->unwind_table, descr->unwind_count );
     for (i = 0; i < descr->unwind_count; i++)
     {
-        DPRINTF( "    %d: prev %d func %p\n", i,
+        TRACE( "    %d: prev %d func %p\n", i,
                  descr->unwind_table[i].prev, descr->unwind_table[i].handler );
     }
-    DPRINTF( "try table: %p %d\n", descr->tryblock, descr->tryblock_count );
+    TRACE( "try table: %p %d\n", descr->tryblock, descr->tryblock_count );
     for (i = 0; i < descr->tryblock_count; i++)
     {
-        DPRINTF( "    %d: start %d end %d catchlevel %d catch %p %d\n", i,
+        TRACE( "    %d: start %d end %d catchlevel %d catch %p %d\n", i,
                  descr->tryblock[i].start_level, descr->tryblock[i].end_level,
                  descr->tryblock[i].catch_level, descr->tryblock[i].catchblock,
                  descr->tryblock[i].catchblock_count );
         for (j = 0; j < descr->tryblock[i].catchblock_count; j++)
         {
             catchblock_info *ptr = &descr->tryblock[i].catchblock[j];
-            DPRINTF( "        %d: flags %x offset %d handler %p type %p %s\n",
+            TRACE( "        %d: flags %x offset %d handler %p type %p %s\n",
                      j, ptr->flags, ptr->offset, ptr->handler,
                      ptr->type_info, dbgstr_type_info( ptr->type_info ) );
         }

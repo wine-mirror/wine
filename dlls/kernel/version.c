@@ -360,5 +360,5 @@ BOOL16 WINAPI DiagQuery16(void)
 void WINAPI DiagOutput16(LPCSTR str)
 {
         /* FIXME */
-        DPRINTF("DIAGOUTPUT:%s\n", debugstr_a(str));
+        TRACE("DIAGOUTPUT:%s\n", debugstr_a(str));
 }

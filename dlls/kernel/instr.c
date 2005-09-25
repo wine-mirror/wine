@@ -381,15 +381,15 @@ static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
         switch(size)
         {
         case 1:
-            DPRINTF( "0x%x < %02x @ %04x:%04x\n", port, LOBYTE(res),
+            TRACE_(io)( "0x%x < %02x @ %04x:%04x\n", port, LOBYTE(res),
                      (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         case 2:
-            DPRINTF( "0x%x < %04x @ %04x:%04x\n", port, LOWORD(res),
+            TRACE_(io)( "0x%x < %04x @ %04x:%04x\n", port, LOWORD(res),
                      (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         case 4:
-            DPRINTF( "0x%x < %08lx @ %04x:%04x\n", port, res,
+            TRACE_(io)( "0x%x < %08lx @ %04x:%04x\n", port, res,
                      (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         }
@@ -413,15 +413,15 @@ static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
         switch(size)
         {
         case 1:
-            DPRINTF("0x%x > %02x @ %04x:%04x\n", port, LOBYTE(val),
+            TRACE_(io)("0x%x > %02x @ %04x:%04x\n", port, LOBYTE(val),
                     (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         case 2:
-            DPRINTF("0x%x > %04x @ %04x:%04x\n", port, LOWORD(val),
+            TRACE_(io)("0x%x > %04x @ %04x:%04x\n", port, LOWORD(val),
                     (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         case 4:
-            DPRINTF("0x%x > %08lx @ %04x:%04x\n", port, val,
+            TRACE_(io)("0x%x > %08lx @ %04x:%04x\n", port, val,
                     (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         }

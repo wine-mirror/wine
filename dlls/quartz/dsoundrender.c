@@ -245,10 +245,10 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
         for(i = 0; i < cbSrcStream; i++)
         {
 	    if ((i!=0) && !(i%16))
-	        DPRINTF("\n");
-	    DPRINTF("%02x ", pbSrcStream[i]);
+                TRACE("\n");
+            TRACE("%02x ", pbSrcStream[i]);
         }
-        DPRINTF("\n");
+        TRACE("\n");
     }
 #endif
   

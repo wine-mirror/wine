@@ -346,42 +346,42 @@ static void LOCAL_PrintHeap( HANDLE16 ds )
 
     if (!pInfo)
     {
-        DPRINTF( "Local Heap corrupted!  ds=%04x\n", ds );
+        ERR( "Local Heap corrupted!  ds=%04x\n", ds );
         return;
     }
-    DPRINTF( "Local Heap  ds=%04x first=%04x last=%04x items=%d\n",
+    TRACE( "Local Heap  ds=%04x first=%04x last=%04x items=%d\n",
              ds, pInfo->first, pInfo->last, pInfo->items );
 
     arena = pInfo->first;
     for (;;)
     {
         LOCALARENA *pArena = ARENA_PTR(ptr,arena);
-        DPRINTF( "  %04x: prev=%04x next=%04x type=%d\n", arena,
-	      pArena->prev & ~3, pArena->next, pArena->prev & 3 );
+        TRACE( "  %04x: prev=%04x next=%04x type=%d\n", arena,
+               pArena->prev & ~3, pArena->next, pArena->prev & 3 );
         if (arena == pInfo->first)
 	{
-            DPRINTF( "        size=%d free_prev=%04x free_next=%04x\n",
+            TRACE( "        size=%d free_prev=%04x free_next=%04x\n",
                      pArena->size, pArena->free_prev, pArena->free_next );
 	}
         if ((pArena->prev & 3) == LOCAL_ARENA_FREE)
         {
-            DPRINTF( "        size=%d free_prev=%04x free_next=%04x\n",
+            TRACE( "        size=%d free_prev=%04x free_next=%04x\n",
                      pArena->size, pArena->free_prev, pArena->free_next );
             if (pArena->next == arena) break;  /* last one */
             if (ARENA_PTR(ptr,pArena->free_next)->free_prev != arena)
             {
-                DPRINTF( "*** arena->free_next->free_prev != arena\n" );
+                TRACE( "*** arena->free_next->free_prev != arena\n" );
                 break;
             }
         }
         if (pArena->next == arena)
         {
-	    DPRINTF( "*** last block is not marked free\n" );
+            TRACE( "*** last block is not marked free\n" );
             break;
         }
         if ((ARENA_PTR(ptr,pArena->next)->prev & ~3) != arena)
         {
-            DPRINTF( "*** arena->next->prev != arena (%04x, %04x)\n",
+            TRACE( "*** arena->next->prev != arena (%04x, %04x)\n",
                      pArena->next, ARENA_PTR(ptr,pArena->next)->prev);
             break;
         }

@@ -57,9 +57,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 
 static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
-  DPRINTF("  - size / version : %d / %d\n", ppfd->nSize, ppfd->nVersion);
-  DPRINTF("  - dwFlags : ");
-#define TEST_AND_DUMP(t,tv) if ((t) & (tv)) DPRINTF(#tv " ")
+  TRACE("  - size / version : %d / %d\n", ppfd->nSize, ppfd->nVersion);
+  TRACE("  - dwFlags : ");
+#define TEST_AND_DUMP(t,tv) if ((t) & (tv)) TRACE(#tv " ")
   TEST_AND_DUMP(ppfd->dwFlags, PFD_DEPTH_DONTCARE);
   TEST_AND_DUMP(ppfd->dwFlags, PFD_DOUBLEBUFFER);
   TEST_AND_DUMP(ppfd->dwFlags, PFD_DOUBLEBUFFER_DONTCARE);
@@ -77,32 +77,32 @@ static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
   TEST_AND_DUMP(ppfd->dwFlags, PFD_SWAP_EXCHANGE);
   TEST_AND_DUMP(ppfd->dwFlags, PFD_SWAP_LAYER_BUFFERS);
 #undef TEST_AND_DUMP
-  DPRINTF("\n");
+  TRACE("\n");
 
-  DPRINTF("  - iPixelType : ");
+  TRACE("  - iPixelType : ");
   switch (ppfd->iPixelType) {
-  case PFD_TYPE_RGBA: DPRINTF("PFD_TYPE_RGBA"); break;
-  case PFD_TYPE_COLORINDEX: DPRINTF("PFD_TYPE_COLORINDEX"); break;
+  case PFD_TYPE_RGBA: TRACE("PFD_TYPE_RGBA"); break;
+  case PFD_TYPE_COLORINDEX: TRACE("PFD_TYPE_COLORINDEX"); break;
   }
-  DPRINTF("\n");
+  TRACE("\n");
 
-  DPRINTF("  - Color   : %d\n", ppfd->cColorBits);
-  DPRINTF("  - Red     : %d\n", ppfd->cRedBits);
-  DPRINTF("  - Green   : %d\n", ppfd->cGreenBits);
-  DPRINTF("  - Blue    : %d\n", ppfd->cBlueBits);
-  DPRINTF("  - Alpha   : %d\n", ppfd->cAlphaBits);
-  DPRINTF("  - Accum   : %d\n", ppfd->cAccumBits);
-  DPRINTF("  - Depth   : %d\n", ppfd->cDepthBits);
-  DPRINTF("  - Stencil : %d\n", ppfd->cStencilBits);
-  DPRINTF("  - Aux     : %d\n", ppfd->cAuxBuffers);
+  TRACE("  - Color   : %d\n", ppfd->cColorBits);
+  TRACE("  - Red     : %d\n", ppfd->cRedBits);
+  TRACE("  - Green   : %d\n", ppfd->cGreenBits);
+  TRACE("  - Blue    : %d\n", ppfd->cBlueBits);
+  TRACE("  - Alpha   : %d\n", ppfd->cAlphaBits);
+  TRACE("  - Accum   : %d\n", ppfd->cAccumBits);
+  TRACE("  - Depth   : %d\n", ppfd->cDepthBits);
+  TRACE("  - Stencil : %d\n", ppfd->cStencilBits);
+  TRACE("  - Aux     : %d\n", ppfd->cAuxBuffers);
 
-  DPRINTF("  - iLayerType : ");
+  TRACE("  - iLayerType : ");
   switch (ppfd->iLayerType) {
-  case PFD_MAIN_PLANE: DPRINTF("PFD_MAIN_PLANE"); break;
-  case PFD_OVERLAY_PLANE: DPRINTF("PFD_OVERLAY_PLANE"); break;
-  case (BYTE)PFD_UNDERLAY_PLANE: DPRINTF("PFD_UNDERLAY_PLANE"); break;
+  case PFD_MAIN_PLANE: TRACE("PFD_MAIN_PLANE"); break;
+  case PFD_OVERLAY_PLANE: TRACE("PFD_OVERLAY_PLANE"); break;
+  case (BYTE)PFD_UNDERLAY_PLANE: TRACE("PFD_UNDERLAY_PLANE"); break;
   }
-  DPRINTF("\n");
+  TRACE("\n");
 }
 
 /* No need to load any other libraries as according to the ABI, libGL should be self-sufficient and
