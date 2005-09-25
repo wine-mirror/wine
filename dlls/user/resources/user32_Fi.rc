@@ -1,5 +1,6 @@
 /*
  * Copyright 1995 Jukka Iivonen
+ * Copyright 2005 Kimmo Myllyvirta
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,7 +31,7 @@ SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
  MENUITEM SEPARATOR
  MENUITEM "&Vaihda...\tCtrl+Esc", 61744
  MENUITEM SEPARATOR
- MENUITEM "&Tietoja WINEista...", 61761
+ MENUITEM "&Tietoja WINE:sta...", 61761
  MENUITEM SEPARATOR
  MENUITEM "&Lis‰‰ merkki 'Debug mark' debug lokiin", 61762
 }
@@ -39,7 +40,7 @@ EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
 	POPUP ""
 	BEGIN
-		MENUITEM "Pala&uta", EM_UNDO
+		MENUITEM "K&umoa", EM_UNDO
 		MENUITEM SEPARATOR
 		MENUITEM "&Leikkaa", WM_CUT
 		MENUITEM "&Kopio", WM_COPY
@@ -63,3 +64,20 @@ BEGIN
         PUSHBUTTON "&Kyll‰", 6, 256, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Ei", 7, 304, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
+
+MDI_MOREWINDOWS DIALOG FIXED IMPURE 20, 20, 232, 122
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Valitse Ikkuna"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LISTBOX         MDI_IDC_LISTBOX, 5, 7, 222, 90, WS_VSCROLL | WS_HSCROLL /* defined in mdi.h */
+    DEFPUSHBUTTON   "OK", IDOK, 75, 100, 35, 14
+    PUSHBUTTON      "Peruuta", IDCANCEL, 120, 100, 35, 14
+END
+
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_ERROR "Virhe"
+    IDS_MDI_MOREWINDOWS "&Lis‰‰ Ikkunoita..."
+}
