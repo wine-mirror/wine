@@ -547,34 +547,35 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
 
 /* Viewer Window */
 
-static void Help_OnSize(HWND hWnd, LPARAM lParam)
+static void Help_OnSize(HWND hWnd)
 {
     HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+    DWORD dwSize;
     RECT rc;
 
     if (!pHHInfo)
         return;
 
-    /* Only resize the Navigation pane and SizeBar vertically */
-    if (HIWORD(lParam))
-    {
-        NP_GetNavigationRect(pHHInfo, &rc);
-        SetWindowPos(pHHInfo->pHHWinType->hwndNavigation, HWND_TOP, 0, 0,
-                     rc.right, rc.bottom, SWP_NOMOVE);
+    NP_GetNavigationRect(pHHInfo, &rc);
+    SetWindowPos(pHHInfo->pHHWinType->hwndNavigation, HWND_TOP, 0, 0,
+                 rc.right, rc.bottom, SWP_NOMOVE);
 
-        GetClientRect(pHHInfo->pHHWinType->hwndNavigation, &rc);
-        SetWindowPos(pHHInfo->hwndTabCtrl, HWND_TOP, 0, 0,
-                     rc.right - TAB_RIGHT_PADDING,
-                     rc.bottom - TAB_TOP_PADDING, SWP_NOMOVE);
+    GetClientRect(pHHInfo->pHHWinType->hwndNavigation, &rc);
+    SetWindowPos(pHHInfo->hwndTabCtrl, HWND_TOP, 0, 0,
+                 rc.right - TAB_RIGHT_PADDING,
+                 rc.bottom - TAB_TOP_PADDING, SWP_NOMOVE);
 
-        SB_GetSizeBarRect(pHHInfo, &rc);
-        SetWindowPos(pHHInfo->hwndSizeBar, HWND_TOP, 0, 0,
-                     rc.right, rc.bottom, SWP_NOMOVE);
-    }
+    SB_GetSizeBarRect(pHHInfo, &rc);
+    SetWindowPos(pHHInfo->hwndSizeBar, HWND_TOP, rc.left, rc.top,
+                 rc.right, rc.bottom, SWP_SHOWWINDOW);
 
     HP_GetHTMLRect(pHHInfo, &rc);
-    SetWindowPos(pHHInfo->pHHWinType->hwndHTML, HWND_TOP, 0, 0,
-                 LOWORD(lParam), HIWORD(lParam), SWP_NOMOVE);
+    SetWindowPos(pHHInfo->pHHWinType->hwndHTML, HWND_TOP, rc.left, rc.top,
+                 rc.right, rc.bottom, SWP_SHOWWINDOW);
+
+    /* Resize browser window taking the frame size into account */
+    dwSize = GetSystemMetrics(SM_CXFRAME);
+    WB_ResizeBrowser(pHHInfo->pWBInfo, rc.right - dwSize, rc.bottom - dwSize);
 }
 
 LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -589,7 +590,7 @@ LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                 TB_OnClick(hWnd, LOWORD(wParam));
             break;
         case WM_SIZE:
-            Help_OnSize(hWnd, lParam);
+            Help_OnSize(hWnd);
             break;
         case WM_PAINT:
             hdc = BeginPaint(hWnd, &ps);
