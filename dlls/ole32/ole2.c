@@ -47,19 +47,12 @@
 #include "wownt32.h"
 
 #include "wine/unicode.h"
-#include "wine/winbase16.h"
-#include "wine/wingdi16.h"
-#include "wine/winuser16.h"
 #include "compobj_private.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(accel);
-
-#define HICON_16(h32)		(LOWORD(h32))
-#define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
-#define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
 
 /******************************************************************************
  * These are static/global variables and internal data structures that the
@@ -2589,15 +2582,6 @@ done:
  *              OleDoAutoConvert        [OLE32.@]
  */
 HRESULT WINAPI OleDoAutoConvert(LPSTORAGE pStg, LPCLSID pClsidNew)
-{
-    FIXME("(%p,%p) : stub\n",pStg,pClsidNew);
-    return E_NOTIMPL;
-}
-
-/******************************************************************************
- *              OleDoAutoConvert        [OLE2.79]
- */
-HRESULT WINAPI OleDoAutoConvert16(LPSTORAGE pStg, LPCLSID pClsidNew)
 {
     FIXME("(%p,%p) : stub\n",pStg,pClsidNew);
     return E_NOTIMPL;

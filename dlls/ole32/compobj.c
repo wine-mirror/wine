@@ -56,23 +56,19 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winerror.h"
+#include "winreg.h"
 #include "winuser.h"
 #include "objbase.h"
 #include "ole2.h"
 #include "ole2ver.h"
-#include "rpc.h"
-#include "winerror.h"
-#include "winreg.h"
-#include "wownt32.h"
-#include "wine/unicode.h"
-#include "objbase.h"
+
 #include "compobj_private.h"
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
-
-typedef LPCSTR LPCOLESTR16;
 
 HINSTANCE OLE32_hInstance = 0; /* FIXME: make static ... */
 
@@ -1048,42 +1044,6 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID)
 }
 
 /******************************************************************************
- *		CLSIDFromProgID [COMPOBJ.61]
- *
- * Converts a program ID into the respective GUID.
- *
- * PARAMS
- *  progid       [I] program id as found in registry
- *  riid         [O] associated CLSID
- *
- * RETURNS
- *	Success: S_OK
- *  Failure: CO_E_CLASSSTRING - the given ProgID cannot be found.
- */
-HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid)
-{
-	char	*buf,buf2[80];
-	LONG	buf2len;
-	HRESULT	err;
-	HKEY	xhkey;
-
-	buf = HeapAlloc(GetProcessHeap(),0,strlen(progid)+8);
-	sprintf(buf,"%s\\CLSID",progid);
-	if ((err=RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&xhkey))) {
-		HeapFree(GetProcessHeap(),0,buf);
-                return CO_E_CLASSSTRING;
-	}
-	HeapFree(GetProcessHeap(),0,buf);
-	buf2len = sizeof(buf2);
-	if ((err=RegQueryValueA(xhkey,NULL,buf2,&buf2len))) {
-		RegCloseKey(xhkey);
-                return CO_E_CLASSSTRING;
-	}
-	RegCloseKey(xhkey);
-	return __CLSIDFromStringA(buf2,riid);
-}
-
-/******************************************************************************
  *		CLSIDFromProgID	[OLE32.@]
  *
  * Converts a program id into the respective GUID.
@@ -1121,7 +1081,6 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid)
     RegCloseKey(xhkey);
     return CLSIDFromString(buf2,riid);
 }
-
 
 
 /*****************************************************************************
@@ -1671,22 +1630,6 @@ HRESULT WINAPI CoGetClassObject(
 }
 
 /***********************************************************************
- *           CoGetClassObject [COMPOBJ.7]
- *
- */
-HRESULT WINAPI CoGetClassObject16(
-    REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
-    REFIID iid, LPVOID *ppv)
-{
-    FIXME(", stub!\n\tCLSID:\t%s,\n\tIID:\t%s\n", debugstr_guid(rclsid), debugstr_guid(iid));
-
-    if (pServerInfo) {
-	FIXME("\tpServerInfo: name=%s\n",debugstr_w(pServerInfo->pwszName));
-	FIXME("\t\tpAuthInfo=%p\n",pServerInfo->pAuthInfo);
-    }
-    return E_NOTIMPL;
-}
-/***********************************************************************
  *        CoResumeClassObjects (OLE32.@)
  *
  * Resumes all class objects registered with REGCLS_SUSPENDED.
@@ -1860,23 +1803,6 @@ HRESULT WINAPI CoCreateInstance(
 		debugstr_guid(iid), debugstr_guid(rclsid),hres);
 
 	return hres;
-}
-
-/***********************************************************************
- *           CoCreateInstance [COMPOBJ.13]
- */
-HRESULT WINAPI CoCreateInstance16(
-	REFCLSID rclsid,
-	LPUNKNOWN pUnkOuter,
-	DWORD dwClsContext,
-	REFIID iid,
-	LPVOID *ppv)
-{
-  FIXME("(%s, %p, %lx, %s, %p), stub!\n", 
-	debugstr_guid(rclsid), pUnkOuter, dwClsContext, debugstr_guid(iid),
-	ppv
-  );
-  return E_NOTIMPL;
 }
 
 /***********************************************************************

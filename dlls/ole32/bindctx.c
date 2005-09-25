@@ -526,15 +526,6 @@ static HRESULT BindCtxImpl_Construct(BindCtxImpl* This)
 }
 
 /******************************************************************************
- *        CreateBindCtx16
- ******************************************************************************/
-HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC * ppbc)
-{
-    FIXME("(%ld,%p),stub!\n",reserved,ppbc);
-    return E_NOTIMPL;
-}
-
-/******************************************************************************
  *        CreateBindCtx (OLE32.@)
  ******************************************************************************/
 HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC * ppbc)

@@ -208,3 +208,39 @@ HRESULT WINAPI OleLoad16(
   FIXME("(%lx,%s,%lx,%p), stub!\n", pStg, debugstr_guid(riid), pClientSite, ppvObj);
   return E_NOTIMPL;
 }
+
+/******************************************************************************
+ *              OleDoAutoConvert        [OLE2.79]
+ */
+HRESULT WINAPI OleDoAutoConvert16(LPSTORAGE pStg, LPCLSID pClsidNew)
+{
+    FIXME("(%p,%p) : stub\n",pStg,pClsidNew);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *           OleSetClipboard                            [OLE2.49]
+ */
+HRESULT WINAPI OleSetClipboard16(IDataObject* pDataObj)
+{
+  FIXME("(%p): stub\n", pDataObj);
+  return S_OK;
+}
+
+/***********************************************************************
+ *           OleGetClipboard                            [OLE2.50]
+ */
+HRESULT WINAPI OleGetClipboard16(IDataObject** ppDataObj)
+{
+  FIXME("(%p): stub\n", ppDataObj);
+  return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *           OleFlushClipboard   [OLE2.76]
+ */
+
+HRESULT WINAPI OleFlushClipboard16(void)
+{
+  return OleFlushClipboard();
+}

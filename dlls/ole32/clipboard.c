@@ -478,16 +478,6 @@ HRESULT WINAPI OleGetClipboard(IDataObject** ppDataObj)
   return hr;
 }
 
-/***********************************************************************
- *           OleFlushClipboard   [OLE2.76]
- */
-
-HRESULT WINAPI OleFlushClipboard16(void)
-{
-  return OleFlushClipboard();
-}
-
-
 /******************************************************************************
  *              OleFlushClipboard        [OLE32.@]
  *  Renders the data from the source IDataObject into the windows clipboard
