@@ -322,6 +322,8 @@ static void test_gettargetpath_bad(void)
 
     r = MsiGetTargetPath( hpkg, "boo", buffer, NULL );
     ok( r == ERROR_DIRECTORY, "wrong return val\n");
+
+    MsiCloseHandle( hpkg );
 }
 
 START_TEST(package)

@@ -613,6 +613,7 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     ok( sz == 11, "size wrong\n");
     ok( 0 == strcmp(buffer,"boo [~] hoo"), "wrong output (%s)\n",buffer);
+    MsiCloseHandle(hrec);
 }
 
 static void test_formatrecord_package(void)
@@ -781,6 +782,8 @@ static void test_formatrecord_package(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     ok( sz == 9, "size wrong(%li)\n",sz);
     ok( 0 == strcmp(buffer,"boo hoo h"), "wrong output (%s)\n",buffer);
+
+    MsiCloseHandle(hrec);
 
     r = MsiCloseHandle(package);
     ok(r==ERROR_SUCCESS, "Unable to close package\n");
