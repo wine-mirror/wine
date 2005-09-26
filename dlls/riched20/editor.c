@@ -1097,7 +1097,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   SCROLLINFO si;
   ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongW(hWnd, 0);
   
-  TRACE("hWnd %p msg %d (%s) %08x %08lx\n",
+  TRACE("hWnd %p msg %04x (%s) %08x %08lx\n",
         hWnd, msg, get_msg_name(msg), wParam, lParam);
   
   switch(msg) {
@@ -1359,13 +1359,14 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     if (nPos<0)
       nPos = 0;
     if (nPos != editor->nScrollPosY) {
+      int dy = editor->nScrollPosY - nPos;
+      editor->nScrollPosY = nPos;
+      SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
       if (editor->bRedraw)
       {
-        ScrollWindow(hWnd, 0, editor->nScrollPosY-nPos, NULL, NULL);
-        SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
+        ScrollWindow(hWnd, 0, dy, NULL, NULL);
         UpdateWindow(hWnd);
       }
-      editor->nScrollPosY = nPos;
     }
     return TRUE; /* Should return false if a single line richedit control */
   }
@@ -1849,13 +1850,14 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       break;
     }
     if (nPos != editor->nScrollPosY) {
+      int dy = editor->nScrollPosY - nPos;
+      editor->nScrollPosY = nPos;
+      SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
       if (editor->bRedraw)
       {
-        ScrollWindow(hWnd, 0, editor->nScrollPosY-nPos, NULL, NULL);
-        SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
+        ScrollWindow(hWnd, 0, dy, NULL, NULL);
         UpdateWindow(hWnd);
       }
-      editor->nScrollPosY = nPos;
     }
     break;
   }
@@ -1872,13 +1874,14 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     if (nPos<0)
       nPos = 0;
     if (nPos != editor->nScrollPosY) {
+      int dy = editor->nScrollPosY - nPos;
+      editor->nScrollPosY = nPos;
+      SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
       if (editor->bRedraw)
       {
-        ScrollWindow(hWnd, 0, editor->nScrollPosY-nPos, NULL, NULL);
-        SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
+        ScrollWindow(hWnd, 0, dy, NULL, NULL);
         UpdateWindow(hWnd);
       }
-      editor->nScrollPosY = nPos;
     }
     break;
   }
