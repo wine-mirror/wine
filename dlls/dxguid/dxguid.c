@@ -44,3 +44,4 @@
 #include "dinput.h"
 #include "ddrawi.h"
 #include "dxfile.h"
+#include "d3drm.h"
