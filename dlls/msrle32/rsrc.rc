@@ -40,6 +40,7 @@
 #include "msrle_It.rc"
 #include "msrle_Ja.rc"
 #include "msrle_Nl.rc"
+#include "msrle_No.rc"
 #include "msrle_Pt.rc"
 #include "msrle_Ru.rc"
 #include "msrle_Si.rc"

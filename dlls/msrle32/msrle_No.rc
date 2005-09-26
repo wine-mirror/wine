@@ -1,7 +1,7 @@
 /*
- * Top level resource file for shlwapi
+ * Norwegian Bokmål resource file for MS-RLE
  *
- * Copyright 2004 Jon Griffiths
+ * Copyright 2005 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,18 +18,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "resource.h"
+LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-#include "version.rc"
-
-#include "shlwapi_De.rc"
-#include "shlwapi_En.rc"
-#include "shlwapi_Es.rc"
-#include "shlwapi_Nl.rc"
-#include "shlwapi_No.rc"
-#include "shlwapi_It.rc"
-#include "shlwapi_Ja.rc"
-#include "shlwapi_Pt.rc"
+STRINGTABLE DISCARDABLE
+{
+	IDS_NAME	"WINE-MS-RLE"
+	IDS_DESCRIPTION	"Wine MS-RLE-videokodek"
+	IDS_ABOUT       "Wine MS-RLE-videokodek\nKopirett 2002 tilhører Michael Günnewig"
+}

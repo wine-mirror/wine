@@ -1,7 +1,5 @@
 /*
- * Top level resource file for shlwapi
- *
- * Copyright 2004 Jon Griffiths
+ * Copyright 2005 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,18 +16,21 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "resource.h"
+LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-#include "version.rc"
+100 DIALOG LOADONCALL MOVEABLE DISCARDABLE  0, 0, 220, 62
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Last ned Mozilla Active X-kontrolleren"
+FONT 8, "MS Shell Dlg"
+{
+ CONTROL "Progress1",1000,"msctls_progress32",WS_BORDER|PBS_SMOOTH,10,10,200,12
+ LTEXT "", 104, 10, 30, 200, 10, SS_CENTER
+ PUSHBUTTON "Avbryt", IDCANCEL, 85, 44, 50, 15, WS_GROUP | WS_TABSTOP
+}
 
-#include "shlwapi_De.rc"
-#include "shlwapi_En.rc"
-#include "shlwapi_Es.rc"
-#include "shlwapi_Nl.rc"
-#include "shlwapi_No.rc"
-#include "shlwapi_It.rc"
-#include "shlwapi_Ja.rc"
-#include "shlwapi_Pt.rc"
+STRINGTABLE
+BEGIN
+ 1001	"Dette programmet ber om et Active X-nettleserobjekt,\n" \
+        "men Mozilla Active X-kontrolleren er ikke installert." \
+        "Vil du laste den ned og installere den?"
+END
