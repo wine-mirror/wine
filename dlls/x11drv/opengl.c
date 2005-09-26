@@ -122,6 +122,8 @@ MAKE_FUNCPTR(glXQueryExtension)
 MAKE_FUNCPTR(glXGetFBConfigs)
 MAKE_FUNCPTR(glXChooseFBConfig)
 MAKE_FUNCPTR(glXGetFBConfigAttrib)
+MAKE_FUNCPTR(glXCreateGLXPixmap)
+MAKE_FUNCPTR(glXDestroyGLXPixmap)
 #undef MAKE_FUNCPTR
 
 static BOOL has_opengl(void)
@@ -147,6 +149,8 @@ LOAD_FUNCPTR(glXQueryExtension)
 LOAD_FUNCPTR(glXGetFBConfigs)
 LOAD_FUNCPTR(glXChooseFBConfig)
 LOAD_FUNCPTR(glXGetFBConfigAttrib)
+LOAD_FUNCPTR(glXCreateGLXPixmap)
+LOAD_FUNCPTR(glXDestroyGLXPixmap)
 #undef LOAD_FUNCPTR
 
     wine_tsx11_lock();
@@ -499,6 +503,32 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
     return visual;
 }
 
+XID create_glxpixmap(X11DRV_PDEVICE *physDev)
+{
+    GLXPixmap ret;
+    XVisualInfo *vis;
+    XVisualInfo template;
+    int num;
+
+    wine_tsx11_lock();
+    template.visualid = XVisualIDFromVisual(visual);
+    vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
+
+    ret = pglXCreateGLXPixmap(gdi_display, vis, physDev->bitmap->pixmap);
+    XFree(vis);
+    wine_tsx11_unlock(); 
+    TRACE("return %lx\n", ret);
+    return ret;
+}
+
+BOOL destroy_glxpixmap(XID glxpixmap)
+{
+    wine_tsx11_lock(); 
+    pglXDestroyGLXPixmap(gdi_display, glxpixmap);
+    wine_tsx11_unlock(); 
+    return TRUE;
+}
+
 #else  /* no OpenGL includes */
 
 void X11DRV_OpenGL_Init(Display *display)
@@ -559,6 +589,16 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
 XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
 {
   return NULL;
+}
+
+XID create_glxpixmap(X11DRV_PDEVICE *physDev)
+{
+    return NULL;
+}
+
+BOOL destroy_glxpixmap(XID glxpixmap)
+{
+    return FALSE;
 }
 
 #endif /* defined(HAVE_OPENGL) */

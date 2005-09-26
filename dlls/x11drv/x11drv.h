@@ -99,6 +99,7 @@ typedef struct
 {
     HBITMAP      hbitmap;
     Pixmap       pixmap;
+    XID          glxpixmap;
     int          pixmap_depth;
     /* the following fields are only used for DIB section bitmaps */
     int          status, p_status;  /* mapping status */
@@ -274,6 +275,8 @@ extern BOOL X11DRV_XRender_ExtTextOut(X11DRV_PDEVICE *physDev, INT x, INT y, UIN
 extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
 
 extern XVisualInfo *X11DRV_setup_opengl_visual(Display *display);
+extern XID create_glxpixmap(X11DRV_PDEVICE *physDev);
+extern BOOL destroy_glxpixmap(XID glxpixmap);
 
 /* XIM support */
 extern XIC X11DRV_CreateIC(XIM xim, Display *display, Window win);
@@ -479,6 +482,7 @@ enum x11drv_escape_codes
     X11DRV_END_EXPOSURES,    /* end graphics exposures */
     X11DRV_GET_DCE,          /* get the DCE pointer */
     X11DRV_SET_DCE,          /* set the DCE pointer */
+    X11DRV_GET_GLX_DRAWABLE  /* get current glx drawable for a DC */
 };
 
 struct x11drv_escape_set_drawable
