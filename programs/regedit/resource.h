@@ -40,7 +40,9 @@
 #define IDI_OPEN_FILE                   132
 #define IDD_DIALOG2                     132
 #define IDI_CLOSED_FILE                 133
+#define IDD_ADDFAVORITE                 133
 #define IDI_ROOT                        134
+#define IDD_DELFAVORITE                 134
 #define IDI_STRING                      135
 #define IDI_BIN                         136
 #define IDR_POPUP_MENUS                 137
@@ -120,10 +122,13 @@
 #define IDS_BAD_KEY			32862
 #define ID_EDIT_MODIFY_BIN		32870
 #define ID_SWITCH_PANELS                32871
+#define ID_FAVORITE_FIRST               33000
+#define ID_FAVORITE_LAST                33099
 
 #define IDD_EDIT_STRING			2000
 #define IDC_VALUE_NAME			2001
 #define IDC_VALUE_DATA			2002
 #define IDD_EDIT_BINARY			2003
+#define IDC_NAME_LIST			2004
 
 #define IDC_STATIC                      -1

@@ -100,9 +100,7 @@ BEGIN
     POPUP "&Favoritos"
     BEGIN
         MENUITEM "&Adicionar aos Favoritos",     ID_FAVORITES_ADDTOFAVORITES
-        , GRAYED
         MENUITEM "&Remover Favorito",            ID_FAVORITES_REMOVEFAVORITE
-        , GRAYED
     END
     POPUP "Aj&uda"
     BEGIN
@@ -160,9 +158,7 @@ BEGIN
     POPUP "&Favoritos"
     BEGIN
         MENUITEM "&Adicionar aos Favoritos",     ID_FAVORITES_ADDTOFAVORITES
-        , GRAYED
         MENUITEM "&Remover Favorito",            ID_FAVORITES_REMOVEFAVORITE
-        , GRAYED
     END
     POPUP "Aj&uda"
     BEGIN

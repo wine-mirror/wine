@@ -82,9 +82,7 @@ BEGIN
     POPUP "&Favorieten"
     BEGIN
         MENUITEM "&Toevoegen aan favorieten",         ID_FAVORITES_ADDTOFAVORITES
-        , GRAYED
         MENUITEM "&Verwijderen uit favorieten",       ID_FAVORITES_REMOVEFAVORITE
-        , GRAYED
     END
     POPUP "&Help"
     BEGIN

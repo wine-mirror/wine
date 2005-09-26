@@ -89,6 +89,8 @@ extern LPCTSTR g_pszDefaultValueName;
 extern void ShowAboutBox(HWND hWnd);
 
 /* childwnd.c */
+extern LPCTSTR GetRootKeyName(HKEY hRootKey);
+extern LPTSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull);
 extern LRESULT CALLBACK ChildWndProc(HWND, UINT, WPARAM, LPARAM);
 
 /* framewnd.c */
@@ -108,11 +110,11 @@ extern BOOL IsDefaultValue(HWND hwndLV, int i);
 extern HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, int id);
 extern BOOL RefreshTreeView(HWND hWndTV);
 extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEW* pnmtv);
-extern void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BOOL bRefreshLV);
 extern LPCTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
 extern BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem);
 extern HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPTSTR name);
 extern HWND StartKeyRename(HWND hwndTV);
+extern HTREEITEM FindPathInTree(HWND hwndTV, LPCTSTR lpKeyName);
 
 /* edit.c */
 extern BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPTSTR newKeyName);

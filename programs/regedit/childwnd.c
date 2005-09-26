@@ -37,7 +37,7 @@ ChildWnd* g_pChildWnd;
  * Local module support methods
  */
 
-static LPCTSTR get_root_key_name(HKEY hRootKey)
+LPCTSTR GetRootKeyName(HKEY hRootKey)
 {
     if (hRootKey == HKEY_CLASSES_ROOT) return _T("HKEY_CLASSES_ROOT");
     if (hRootKey == HKEY_CURRENT_USER) return _T("HKEY_CURRENT_USER");
@@ -45,7 +45,7 @@ static LPCTSTR get_root_key_name(HKEY hRootKey)
     if (hRootKey == HKEY_USERS) return _T("HKEY_USERS");
     if (hRootKey == HKEY_CURRENT_CONFIG) return _T("HKEY_CURRENT_CONFIG");
     if (hRootKey == HKEY_DYN_DATA) return _T("HKEY_DYN_DATA");
-    return _T("UKNOWN HKEY, PLEASE REPORT");
+    return _T("UNKNOWN HKEY, PLEASE REPORT");
 }
 
 static void draw_splitbar(HWND hWnd, int x)
@@ -83,33 +83,61 @@ static void OnPaint(HWND hWnd)
     EndPaint(hWnd, &ps);
 }
 
-void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BOOL bRefreshLV)
-{
-    LPCTSTR keyPath, rootName;
-    LPTSTR fullPath;
-    HKEY hRootKey;
-
-    keyPath = GetItemPath(hwndTV, hItem, &hRootKey);
-    if (keyPath) {
-        if (bRefreshLV)
-            RefreshListView(hwndLV, hRootKey, keyPath, NULL);
-        rootName = get_root_key_name(hRootKey);
-        fullPath = HeapAlloc(GetProcessHeap(), 0, (lstrlen(rootName) + 1 + lstrlen(keyPath) + 1) * sizeof(TCHAR));
-        if (fullPath) {
-            _stprintf(fullPath, "%s\\%s", rootName, keyPath);
-            SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)fullPath);
-            HeapFree(GetProcessHeap(), 0, fullPath);
+static LPTSTR CombinePaths(LPCTSTR pPaths[], int nPaths) {
+    int i, len, pos;
+    LPTSTR combined;
+    for (i=0, len=0; i<nPaths; i++) {
+        if (pPaths[i] && *pPaths[i]) {
+            len += lstrlen(pPaths[i])+1;
         }
     }
-    else {
-        /* else the computer icon is being selected, so display computer name */
-        TCHAR text[260];
-        DWORD size;
-    
-        size = sizeof(text)/sizeof(TCHAR);
-        GetComputerName(text, &size);
-        SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)text);
+    combined = HeapAlloc(GetProcessHeap(), 0, len * sizeof(TCHAR));
+    *combined = '\0';
+    for (i=0, pos=0; i<nPaths; i++) {
+        if (pPaths[i] && *pPaths[i]) {
+            int llen = _tcslen(pPaths[i]);
+            if (!*combined)
+                _tcscpy(combined, pPaths[i]);
+            else {
+                combined[pos++] = (TCHAR)'\\';
+                _tcscpy(combined+pos, pPaths[i]);
+            }
+            pos += llen;
+        }
     }
+    return combined;
+}
+
+LPTSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
+    LPCTSTR parts[3] = {_T(""), _T(""), _T("")};
+    TCHAR text[260];
+    HKEY hRootKey = NULL;
+    if (!hItem)
+        hItem = TreeView_GetSelection(hwndTV);
+    parts[2] = GetItemPath(hwndTV, hItem, &hRootKey);
+    if (!parts[2])
+        parts[2] = _T("");
+    if (!bFull && !hRootKey && !*parts[2])
+        return NULL;
+    if (hRootKey)
+        parts[1] = GetRootKeyName(hRootKey);
+    if (bFull) {
+        DWORD dwSize = sizeof(text)/sizeof(TCHAR);
+        GetComputerName(text, &dwSize);
+        parts[0] = text;
+    }
+    return CombinePaths(parts, 3);
+}
+
+static void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BOOL bRefreshLV)
+{
+    if (bRefreshLV) {
+        LPCTSTR keyPath;
+        HKEY hRootKey = NULL;
+        keyPath = GetItemPath(hwndTV, hItem, &hRootKey);
+        RefreshListView(hwndLV, hRootKey, keyPath, NULL);
+    }
+    UpdateStatusBar();
 }
 
 /*******************************************************************************

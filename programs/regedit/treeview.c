@@ -104,6 +104,77 @@ LPCTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
     return pathBuffer;
 }
 
+static LPTSTR get_path_component(LPCTSTR *lplpKeyName) {
+     LPCTSTR lpPos = *lplpKeyName;
+     LPTSTR lpResult = NULL;
+     int len;
+     if (!lpPos)
+         return NULL;
+     while(*lpPos && *lpPos != '\\')
+         lpPos++;
+     if (*lpPos && lpPos == *lplpKeyName)
+         return NULL;
+     len = (lpPos+1-(*lplpKeyName)) * sizeof(TCHAR);
+     lpResult = HeapAlloc(GetProcessHeap(), 0, len);
+     if (!lpResult) /* that would be very odd */
+         return NULL;
+     memcpy(lpResult, *lplpKeyName, len-1);
+     lpResult[len-1] = '\0';
+     *lplpKeyName = *lpPos ? lpPos+1 : NULL;
+     return lpResult;
+}
+
+#define CHECK_PAIR(name) \
+    if (!_tcsicmp(lpKeyName, _T(#name))) return name;
+
+static HKEY get_predefined_key(LPCTSTR lpKeyName) {
+    CHECK_PAIR(HKEY_CLASSES_ROOT)
+    CHECK_PAIR(HKEY_CURRENT_USER)
+    CHECK_PAIR(HKEY_LOCAL_MACHINE)
+    CHECK_PAIR(HKEY_USERS)
+    CHECK_PAIR(HKEY_DYN_DATA)
+    CHECK_PAIR(HKEY_PERFORMANCE_DATA)
+    return NULL;
+}
+
+HTREEITEM FindPathInTree(HWND hwndTV, LPCTSTR lpKeyName) {
+    TVITEMEX tvi;
+    TCHAR buf[261]; /* tree view has 260 character limitation on item name */
+    HTREEITEM hItem, hOldItem;
+
+    buf[260] = '\0';
+    hItem = TreeView_GetRoot(hwndTV);
+    TreeView_Expand(hwndTV, hItem, TVE_EXPAND);
+    hItem = TreeView_GetChild(hwndTV, hItem);
+    hOldItem = hItem;
+    while(1) {
+        LPTSTR lpItemName = get_path_component(&lpKeyName);
+        if (lpItemName) {
+            while(hItem) {
+                tvi.mask = TVIF_TEXT | TVIF_HANDLE;
+                tvi.hItem = hItem;
+                tvi.pszText = buf;
+                tvi.cchTextMax = 260;
+                TreeView_GetItem(hwndTV, &tvi);
+                if (!_tcsicmp(tvi.pszText, lpItemName)) {
+                     TreeView_Expand(hwndTV, hItem, TVE_EXPAND);
+                     if (!lpKeyName)
+                         return hItem;
+                     hOldItem = hItem;
+                     hItem = TreeView_GetChild(hwndTV, hItem);
+                     break;
+                }
+                hItem = TreeView_GetNextSibling(hwndTV, hItem);
+            }
+            if (!hItem)
+                return hOldItem;
+            HeapFree(GetProcessHeap(), 0, lpItemName);
+        }
+        else
+            return hItem;
+    }
+}
+
 BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem)
 {
     if (!hItem) hItem = TreeView_GetSelection(hwndTV);

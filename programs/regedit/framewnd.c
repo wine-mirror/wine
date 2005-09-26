@@ -36,7 +36,9 @@
  * Global and Local Variables:
  */
 
+static TCHAR favoritesKey[] =  _T("Software\\Microsoft\\Windows\\CurrentVersion\\Applets\\RegEdit\\Favorites");
 static BOOL bInMenuLoop = FALSE;        /* Tells us if we are in the menu loop */
+static TCHAR favoriteName[128];
 
 /*******************************************************************************
  * Local module support methods
@@ -90,6 +92,58 @@ static void OnExitMenuLoop(HWND hWnd)
     UpdateStatusBar();
 }
 
+static void UpdateMenuItems(HMENU hMenu) {
+    HWND hwndTV = g_pChildWnd->hTreeWnd;
+    BOOL bIsKeySelected = FALSE;
+    HKEY hRootKey = NULL;
+    LPCTSTR keyName;
+    keyName = GetItemPath(hwndTV, TreeView_GetSelection(hwndTV), &hRootKey);
+    if (keyName && *keyName) { /* can't modify root keys */
+        bIsKeySelected = TRUE;
+    }
+    EnableMenuItem(hMenu, ID_EDIT_MODIFY, (bIsKeySelected ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
+    EnableMenuItem(hMenu, ID_EDIT_DELETE, (bIsKeySelected ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
+    EnableMenuItem(hMenu, ID_EDIT_RENAME, (bIsKeySelected ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
+    EnableMenuItem(hMenu, ID_FAVORITES_ADDTOFAVORITES, (hRootKey ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
+    EnableMenuItem(hMenu, ID_FAVORITES_REMOVEFAVORITE, 
+        (GetMenuItemCount(hMenu)>2 ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
+}
+
+static void OnInitMenuPopup(HWND hWnd, HMENU hMenu, short wItem)
+{
+    if (wItem == 3) {
+        HKEY hKey;
+        while(GetMenuItemCount(hMenu)>2)
+            DeleteMenu(hMenu, 2, MF_BYPOSITION);
+        if (RegOpenKeyEx(HKEY_CURRENT_USER, favoritesKey, 
+            0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+            TCHAR namebuf[KEY_MAX_LEN];
+            BYTE valuebuf[4096];
+            int i = 0;
+            BOOL sep = FALSE;
+            DWORD ksize, vsize, type;
+            LONG error;
+            do {
+                ksize = KEY_MAX_LEN;
+                vsize = sizeof(valuebuf);
+                error = RegEnumValue(hKey, i, namebuf, &ksize, NULL, &type, valuebuf, &vsize);
+                if (error != ERROR_SUCCESS)
+                    break;
+                if (type == REG_SZ) {
+                    if (!sep) {
+                        AppendMenu(hMenu, MF_SEPARATOR, -1, NULL);
+                        sep = TRUE;
+                    }
+                    AppendMenu(hMenu, MF_STRING, ID_FAVORITE_FIRST+i, namebuf);
+                }
+                i++;
+            } while(error == ERROR_SUCCESS);
+            RegCloseKey(hKey);
+        }
+    }
+    UpdateMenuItems(hMenu);
+}
+
 static void OnMenuSelect(HWND hWnd, UINT nItemID, UINT nFlags, HMENU hSysMenu)
 {
     TCHAR str[100];
@@ -126,11 +180,9 @@ void SetupStatusBar(HWND hWnd, BOOL bResize)
 
 void UpdateStatusBar(void)
 {
-    /* real updating of status bar happens in the treeview selection
-     * change handler, so fake a selection change to it, but don't
-     * refresh the listview or the current selection will change */
-    OnTreeSelectionChanged(g_pChildWnd->hTreeWnd, g_pChildWnd->hListWnd,
-        TreeView_GetSelection(g_pChildWnd->hTreeWnd), FALSE);
+    LPTSTR fullPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, TRUE);
+    SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)fullPath);
+    HeapFree(GetProcessHeap(), 0, fullPath);
 }
 
 static void toggle_child(HWND hWnd, UINT cmd, HWND hchild)
@@ -392,9 +444,12 @@ static BOOL CopyKeyName(HWND hWnd, LPCTSTR keyName)
     if (result) {
         result = EmptyClipboard();
         if (result) {
-
-            /*HANDLE hClipData;*/
-            /*hClipData = SetClipboardData(UINT uFormat, HANDLE hMem);*/
+            int len = (_tcslen(keyName)+1)*sizeof(TCHAR);
+            HANDLE hClipData = GlobalAlloc(GHND, len);
+            LPVOID pLoc = GlobalLock(hClipData);
+            _tcscpy(pLoc, keyName);
+            GlobalUnlock(hClipData);
+            hClipData = SetClipboardData(CF_TEXT, hClipData);
 
         } else {
             /* error emptying clipboard*/
@@ -414,6 +469,103 @@ static BOOL CopyKeyName(HWND hWnd, LPCTSTR keyName)
     return result;
 }
 
+static INT_PTR CALLBACK addtofavorites_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    HWND hwndValue = GetDlgItem(hwndDlg, IDC_VALUE_NAME);
+            
+    switch(uMsg) {
+        case WM_INITDIALOG:
+            EnableWindow(GetDlgItem(hwndDlg, IDOK), FALSE);
+            SendMessage(hwndValue, EM_SETLIMITTEXT, 127, 0);
+            return TRUE;
+        case WM_COMMAND:
+            switch(LOWORD(wParam)) {
+            case IDC_VALUE_NAME:
+                if (HIWORD(wParam) == EN_UPDATE) {
+                    EnableWindow(GetDlgItem(hwndDlg, IDOK),  GetWindowTextLength(hwndValue)>0);
+                    return TRUE;
+                }
+                break;
+            case IDOK:
+                if (GetWindowTextLength(hwndValue)>0) {
+                    GetWindowText(hwndValue, favoriteName, 128);
+                    EndDialog(hwndDlg, IDOK);
+                }
+                return TRUE;
+            case IDCANCEL:
+                EndDialog(hwndDlg, IDCANCEL);
+                return TRUE;
+            }
+            break;
+    }
+    return FALSE;
+}
+                    
+static INT_PTR CALLBACK removefavorite_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    HWND hwndList = GetDlgItem(hwndDlg, IDC_NAME_LIST);
+            
+    switch(uMsg) {
+        case WM_INITDIALOG: {
+            HKEY hKey;
+            int i = 0;
+            EnableWindow(GetDlgItem(hwndDlg, IDOK), FALSE);
+            if (RegOpenKeyEx(HKEY_CURRENT_USER, favoritesKey, 
+                0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+                TCHAR namebuf[KEY_MAX_LEN];
+                BYTE valuebuf[4096];
+                DWORD ksize, vsize, type;
+                LONG error;
+                do {
+                    ksize = KEY_MAX_LEN;
+                    vsize = sizeof(valuebuf);
+                    error = RegEnumValue(hKey, i, namebuf, &ksize, NULL, &type, valuebuf, &vsize);
+                    if (error != ERROR_SUCCESS)
+                        break;
+                    if (type == REG_SZ) {
+                        SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)namebuf);
+                    }
+                    i++;
+                } while(error == ERROR_SUCCESS);
+                RegCloseKey(hKey);
+            }
+            else
+                return FALSE;
+            EnableWindow(GetDlgItem(hwndDlg, IDOK), i != 0);
+            SendMessage(hwndList, LB_SETCURSEL, 0, 0);
+            return TRUE;
+        }
+        case WM_COMMAND:
+            switch(LOWORD(wParam)) {
+            case IDC_NAME_LIST:
+                if (HIWORD(wParam) == LBN_SELCHANGE) {
+                    EnableWindow(GetDlgItem(hwndDlg, IDOK),  lParam != -1);
+                    return TRUE;
+                }
+                break;
+            case IDOK: {
+                int pos = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+                int len = SendMessage(hwndList, LB_GETTEXTLEN, pos, 0);
+                if (len>0) {
+                    LPTSTR lpName = HeapAlloc(GetProcessHeap(), 0, sizeof(TCHAR)*(len+1));
+                    SendMessage(hwndList, LB_GETTEXT, pos, (LPARAM)lpName);
+                    if (len>127)
+                        lpName[127] = '\0';
+                    _tcscpy(favoriteName, lpName);
+                    EndDialog(hwndDlg, IDOK);
+                    HeapFree(GetProcessHeap(), 0, lpName);
+                }
+                return TRUE;
+            }
+            case IDCANCEL:
+                EndDialog(hwndDlg, IDCANCEL);
+                return TRUE;
+            }
+            break;
+    }
+    return FALSE;
+}
+                    
 /*******************************************************************************
  *
  *  FUNCTION: _CmdWndProc(HWND, unsigned, WORD, LONG)
@@ -432,6 +584,22 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
     valueName = GetValueName(g_pChildWnd->hListWnd);
 
+    if (LOWORD(wParam) >= ID_FAVORITE_FIRST && LOWORD(wParam) <= ID_FAVORITE_LAST) {
+        HKEY hKey;
+        if (RegOpenKeyEx(HKEY_CURRENT_USER, favoritesKey, 
+            0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+            TCHAR namebuf[KEY_MAX_LEN];
+            BYTE valuebuf[4096];
+            DWORD ksize = KEY_MAX_LEN, vsize = sizeof(valuebuf), type = 0;
+            if (RegEnumValue(hKey, LOWORD(wParam) - ID_FAVORITE_FIRST, namebuf, &ksize, NULL, 
+                &type, valuebuf, &vsize) == ERROR_SUCCESS) {
+                TreeView_SelectItem(g_pChildWnd->hTreeWnd, 
+                                    FindPathInTree(g_pChildWnd->hTreeWnd, (TCHAR *)valuebuf));
+            }
+            RegCloseKey(hKey);
+        }
+        return TRUE;
+    }
     switch (LOWORD(wParam)) {
     case ID_REGISTRY_IMPORTREGISTRYFILE:
         ImportRegistryFile(hWnd);
@@ -463,8 +631,14 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, valueName);
         break;
     case ID_EDIT_COPYKEYNAME:
-        CopyKeyName(hWnd, _T(""));
+    {
+        LPTSTR fullPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
+        if (fullPath) {
+            CopyKeyName(hWnd, fullPath);
+            HeapFree(GetProcessHeap(), 0, fullPath);
+        }
         break;
+    }
     case ID_EDIT_NEW_KEY:
 	if (CreateKey(hWnd, hKeyRoot, keyPath, newKey)) {
 	    if (InsertNode(g_pChildWnd->hTreeWnd, 0, newKey))
@@ -508,6 +682,35 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_REGISTRY_EXIT:
         DestroyWindow(hWnd);
         break;
+    case ID_FAVORITES_ADDTOFAVORITES:
+    {
+    	HKEY hKey;
+    	LPTSTR lpKeyPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
+    	if (lpKeyPath) {
+            if (DialogBox(0, MAKEINTRESOURCE(IDD_ADDFAVORITE), hWnd, addtofavorites_dlgproc) == IDOK) {
+                if (RegCreateKeyEx(HKEY_CURRENT_USER, favoritesKey, 
+                    0, NULL, 0, 
+                    KEY_READ|KEY_WRITE, NULL, &hKey, NULL) == ERROR_SUCCESS) {
+                    RegSetValueEx(hKey, favoriteName, 0, REG_SZ, (BYTE *)lpKeyPath, (_tcslen(lpKeyPath)+1)*sizeof(TCHAR));
+                    RegCloseKey(hKey);
+                }
+            }
+            HeapFree(GetProcessHeap(), 0, lpKeyPath);
+        }
+        break;
+    }
+    case ID_FAVORITES_REMOVEFAVORITE:
+    {
+        if (DialogBox(0, MAKEINTRESOURCE(IDD_DELFAVORITE), hWnd, removefavorite_dlgproc) == IDOK) {
+            HKEY hKey;
+            if (RegOpenKeyEx(HKEY_CURRENT_USER, favoritesKey, 
+                0, KEY_READ|KEY_WRITE, &hKey) == ERROR_SUCCESS) {
+                RegDeleteValue(hKey, favoriteName); 
+                RegCloseKey(hKey);
+            }
+        }
+        break;
+    }
     case ID_VIEW_REFRESH:
         RefreshTreeView(g_pChildWnd->hTreeWnd);
         /*RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL); */
@@ -582,6 +785,10 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         break;
     case WM_EXITMENULOOP:
         OnExitMenuLoop(hWnd);
+        break;
+    case WM_INITMENUPOPUP:
+        if (!HIWORD(lParam))
+            OnInitMenuPopup(hWnd, (HMENU)wParam, LOWORD(lParam));
         break;
     case WM_MENUSELECT:
         OnMenuSelect(hWnd, LOWORD(wParam), HIWORD(wParam), (HMENU)lParam);
