@@ -195,11 +195,11 @@ sub _check_function($$$$$$) {
 
 	    # FIXME: Kludge
 	    if(defined($kind) && $kind eq "struct16") {
-		$n+=4;
-		("long", "long", "long", "long");
-	    } elsif(defined($kind) && $kind eq "longlong") {
 		$n+=2;
-		("long", "long");
+		("double", "double");
+	    } elsif(defined($kind) && $kind eq "longlong") {
+		$n+=1;
+		"double";
 	    } else {
 		$n++;
 		$kind;

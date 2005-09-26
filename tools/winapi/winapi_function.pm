@@ -387,7 +387,7 @@ sub _argument_kinds($$) {
 	my $argument_kind = $winapi->translate_argument($argument_type);
 
 	if(defined($argument_kind) && $argument_kind eq "longlong") {
-	    push @argument_kinds, ("long", "long");
+	    push @argument_kinds, "double";
 	} else {
 	    push @argument_kinds, $argument_kind;
 	}
