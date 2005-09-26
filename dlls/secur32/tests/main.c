@@ -235,9 +235,8 @@ static void testEnumerateSecurityPackages(void)
     
     trace("Number of packages: %ld\n", num_packages);
     for(i = 0; i < num_packages; ++i){
-        trace("%ld: ", i);
-        trace("Package \"%s\"\n", pkg_info[i].Name);
-        trace("Flags supported: \n");
+        trace("%ld: Package \"%s\"\n", i, pkg_info[i].Name);
+        trace("Supported flags:\n");
         if(pkg_info[i].fCapabilities & SECPKG_FLAG_INTEGRITY)
             trace("\tSECPKG_FLAG_INTEGRITY\n");
         if(pkg_info[i].fCapabilities & SECPKG_FLAG_PRIVACY)

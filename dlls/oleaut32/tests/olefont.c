@@ -73,7 +73,7 @@ static void test_ifont_sizes(long lo_size, long hi_size,
 	/* Create font, test that it worked. */
 	hres = pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj);
 	ifnt = pvObj;
-	ok(hres == S_OK,"%s: OCFI returns 0x%08lx instead of S_OK.",
+	ok(hres == S_OK,"%s: OCFI returns 0x%08lx instead of S_OK.\n",
 		test_name, hres);
 	ok(pvObj != NULL,"%s: OCFI returns NULL.\n", test_name);
 
