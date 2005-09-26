@@ -75,14 +75,14 @@ string_table *msi_init_stringtable( int entries, UINT codepage )
     st = msi_alloc( sizeof (string_table) );
     if( !st )
         return NULL;    
+    if( entries < 1 )
+        entries = 1;
     st->strings = msi_alloc_zero( sizeof (msistring) * entries );
     if( !st )
     {
         msi_free( st );
         return NULL;    
     }
-    if( entries < 1 )
-        entries = 1;
     st->maxcount = entries;
     st->freeslot = 1;
     st->codepage = codepage;
