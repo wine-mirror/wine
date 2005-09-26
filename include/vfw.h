@@ -1027,6 +1027,8 @@ DECLARE_INTERFACE_(IAVIStream,IUnknown)
 #define IAVIStream_SetInfo(p,a,b)         (p)->lpVtbl->SetInfo(p,a,b)
 #endif
 
+#define AVISTREAMREAD_CONVENIENT	  (-1L)
+
 ULONG WINAPI AVIStreamAddRef(PAVISTREAM iface);
 ULONG WINAPI AVIStreamRelease(PAVISTREAM iface);
 HRESULT WINAPI AVIStreamCreate(PAVISTREAM*,LONG,LONG,CLSID*);
