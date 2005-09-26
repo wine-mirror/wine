@@ -2140,6 +2140,7 @@ static void dump_cancel_async_request( const struct cancel_async_request *req )
 
 static void dump_create_named_pipe_request( const struct create_named_pipe_request *req )
 {
+    fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " maxinstances=%08x,", req->maxinstances );

@@ -1133,10 +1133,10 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
 
     SetLastError(0);
         
-    status = NtCreateNamedPipeFile(&handle, 0, &attr, &iosb, 0, FILE_OVERWRITE_IF,
-                                   options, pipe_type, read_mode, non_block, 
-                                   nMaxInstances, nInBufferSize, nOutBufferSize,
-                                   &timeout);
+    status = NtCreateNamedPipeFile(&handle, GENERIC_READ|GENERIC_WRITE, &attr, &iosb,
+                                   0, FILE_OVERWRITE_IF, options, pipe_type,
+                                   read_mode, non_block, nMaxInstances,
+                                   nInBufferSize, nOutBufferSize, &timeout);
 
     RtlFreeUnicodeString( &nt_name );
     if (status)
@@ -1537,31 +1537,58 @@ BOOL WINAPI CallNamedPipeW(
 BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
                         LPSECURITY_ATTRIBUTES sa, DWORD size )
 {
-    static unsigned  index = 0;
-    WCHAR       name[64];
-    HANDLE      hr, hw;
-    unsigned    in_index = index;
+    static unsigned     index /* = 0 */;
+    WCHAR               name[64];
+    HANDLE              hr, hw;
+    unsigned            in_index = index;
+    UNICODE_STRING      nt_name;
+    OBJECT_ATTRIBUTES   attr;
+    NTSTATUS            status;
+    IO_STATUS_BLOCK     iosb;
+    LARGE_INTEGER       timeout;
 
     *hReadPipe = *hWritePipe = INVALID_HANDLE_VALUE;
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = &nt_name;
+    attr.Attributes               = OBJ_CASE_INSENSITIVE |
+        (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    timeout.QuadPart = (ULONGLONG)NMPWAIT_USE_DEFAULT_WAIT * -10000;
     /* generate a unique pipe name (system wide) */
     do
     {
-        static const WCHAR nameFmt[] = { '\\','\\','.','\\','p','i','p','e',
+        static const WCHAR nameFmt[] = { '\\','?','?','\\','p','i','p','e',
          '\\','W','i','n','3','2','.','P','i','p','e','s','.','%','0','8','l',
          'u','.','%','0','8','u','\0' };
+
         snprintfW(name, sizeof(name) / sizeof(name[0]), nameFmt,
                   GetCurrentProcessId(), ++index);
-        hr = CreateNamedPipeW(name, PIPE_ACCESS_INBOUND, 
-                              PIPE_TYPE_BYTE | PIPE_WAIT, 1, size, size, 
-                              NMPWAIT_USE_DEFAULT_WAIT, sa);
+        RtlInitUnicodeString(&nt_name, name);
+        status = NtCreateNamedPipeFile(&hr, GENERIC_READ | SYNCHRONIZE, &attr, &iosb,
+                                       0, FILE_OVERWRITE_IF,
+                                       FILE_SYNCHRONOUS_IO_ALERT | FILE_PIPE_INBOUND,
+                                       FALSE, FALSE, FALSE, 
+                                       1, size, size, &timeout);
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError(status) );
+            hr = INVALID_HANDLE_VALUE;
+        }
     } while (hr == INVALID_HANDLE_VALUE && index != in_index);
     /* from completion sakeness, I think system resources might be exhausted before this happens !! */
     if (hr == INVALID_HANDLE_VALUE) return FALSE;
 
-    hw = CreateFileW(name, GENERIC_WRITE, 0, sa, OPEN_EXISTING, 0, 0);
-    if (hw == INVALID_HANDLE_VALUE) 
+    status = NtOpenFile(&hw, GENERIC_WRITE | SYNCHRONIZE, &attr, &iosb, 0,
+                        FILE_SYNCHRONOUS_IO_ALERT | FILE_NON_DIRECTORY_FILE);
+
+    if (status) 
     {
-        CloseHandle(hr);
+        SetLastError( RtlNtStatusToDosError(status) );
+        NtClose(hr);
         return FALSE;
     }
 

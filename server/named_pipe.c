@@ -583,7 +583,7 @@ DECL_HANDLER(create_named_pipe)
     if (server)
     {
         reply->handle = alloc_handle( current->process, server,
-                                      GENERIC_READ|GENERIC_WRITE, req->inherit );
+                                      req->access, req->inherit );
         server->pipe->instances++;
         release_object( server );
     }

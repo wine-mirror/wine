@@ -2366,6 +2366,7 @@ struct cancel_async_reply
 struct create_named_pipe_request
 {
     struct request_header __header;
+    unsigned int   access;
     unsigned int   options;
     unsigned int   flags;
     unsigned int   maxinstances;
@@ -4206,6 +4207,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 192
+#define SERVER_PROTOCOL_VERSION 193
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

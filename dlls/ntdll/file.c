@@ -1940,7 +1940,8 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
 
     SERVER_START_REQ( create_named_pipe )
     {
-        req->options = options; /* FIXME not used in server yet !!!! */
+        req->access  = access;
+        req->options = options;
         req->flags = 
             (pipe_type) ? NAMED_PIPE_MESSAGE_STREAM_WRITE : 0 |
             (read_mode) ? NAMED_PIPE_MESSAGE_STREAM_READ  : 0 |
