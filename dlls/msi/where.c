@@ -242,6 +242,7 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     if( r != ERROR_SUCCESS )
         return r;
 
+    msi_free( wv->reorder );
     wv->reorder = msi_alloc( count*sizeof(UINT) );
     if( !wv->reorder )
         return ERROR_FUNCTION_FAILED;
@@ -328,6 +329,7 @@ static UINT WHERE_delete( struct tagMSIVIEW *view )
 
     if( wv->table )
         wv->table->ops->delete( wv->table );
+    wv->table = 0;
 
     msi_free( wv->reorder );
     wv->reorder = NULL;
@@ -444,7 +446,7 @@ UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
     MSIWHEREVIEW *wv = NULL;
     UINT count = 0, r, valid = 0;
 
-    TRACE("%p\n", wv );
+    TRACE("%p\n", table );
 
     r = table->ops->get_dimensions( table, NULL, &count );
     if( r != ERROR_SUCCESS )

@@ -349,11 +349,15 @@ unorderedsel:
   | TK_SELECT TK_DISTINCT selectfrom
         {
             SQL_input* sql = (SQL_input*) info;
+            UINT r;
 
             $$ = NULL;
-            DISTINCT_CreateView( sql->db, &$$, $3 );
-            if( !$$ )
+            r = DISTINCT_CreateView( sql->db, &$$, $3 );
+            if (r != ERROR_SUCCESS)
+            {
+                $3->ops->delete($3);
                 YYABORT;
+            }
         }
     ;
 
@@ -361,15 +365,20 @@ selectfrom:
     selcollist from 
         {
             SQL_input* sql = (SQL_input*) info;
+            UINT r;
 
             $$ = NULL;
             if( $1 )
-                SELECT_CreateView( sql->db, &$$, $2, $1 );
+            {
+                r = SELECT_CreateView( sql->db, &$$, $2, $1 );
+                if (r != ERROR_SUCCESS)
+                {
+                    $2->ops->delete($2);
+                    YYABORT;
+                }
+            }
             else
                 $$ = $2;
-
-            if( !$$ )
-                YYABORT;
         }
     ;
 
@@ -394,8 +403,11 @@ from:
 
             $$ = NULL;
             r = WHERE_CreateView( sql->db, &$$, $1, $3 );
-            if( r != ERROR_SUCCESS || !$$ )
+            if( r != ERROR_SUCCESS )
+            {
+                $1->ops->delete( $1 );
                 YYABORT;
+            }
         }
     ;
 
@@ -641,7 +653,7 @@ int SQL_lex( void *SQL_lval, SQL_input *sql )
         if( ! sql->command[sql->n] )
             return 0;  /* end of input */
 
-        TRACE("string : %s\n", debugstr_w(&sql->command[sql->n]));
+        /* TRACE("string : %s\n", debugstr_w(&sql->command[sql->n])); */
         sql->len = sqliteGetToken( &sql->command[sql->n], &token );
         if( sql->len==0 )
             break;
@@ -650,7 +662,7 @@ int SQL_lex( void *SQL_lval, SQL_input *sql )
     }
     while( token == TK_SPACE );
 
-    TRACE("token : %d (%s)\n", token, debugstr_wn(&sql->command[sql->n], sql->len));
+    /* TRACE("token : %d (%s)\n", token, debugstr_wn(&sql->command[sql->n], sql->len)); */
     
     return token;
 }
@@ -800,8 +812,6 @@ UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview,
     TRACE("Parse returned %d\n", r);
     if( r )
     {
-        if( *sql.view )
-            (*sql.view)->ops->delete( *sql.view );
         *sql.view = NULL;
         return ERROR_BAD_QUERY_SYNTAX;
     }

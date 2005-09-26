@@ -189,6 +189,7 @@ static UINT SELECT_delete( struct tagMSIVIEW *view )
 
     if( sv->table )
         sv->table->ops->delete( sv->table );
+    sv->table = NULL;
 
     msi_free( sv );
 
@@ -278,13 +279,10 @@ UINT SELECT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
         columns = columns->next;
     }
 
-    if( r != ERROR_SUCCESS )
-    {
-        sv->view.ops->delete( &sv->view );
-        sv = NULL;
-    }
-
-    *view = &sv->view;
+    if( r == ERROR_SUCCESS )
+        *view = &sv->view;
+    else
+        msi_free( sv );
 
     return r;
 }

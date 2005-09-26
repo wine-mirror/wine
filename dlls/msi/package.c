@@ -757,19 +757,15 @@ UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
         MSI_RecordSetStringW(row,2,szValue);
     }
 
-
     rc = MSI_DatabaseOpenViewW(package->db,Query,&view);
-    if (rc!= ERROR_SUCCESS)
+    if (rc == ERROR_SUCCESS)
     {
-        msiobj_release(&row->hdr);
-        return rc;
+        rc = MSI_ViewExecute(view,row);
+
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
     }
-
-    rc = MSI_ViewExecute(view,row);
-
     msiobj_release(&row->hdr);
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
 
     return rc;
 }
