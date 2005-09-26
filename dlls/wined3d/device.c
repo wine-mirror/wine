@@ -363,7 +363,7 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
             /* NOTE: You must release the parent if the object was created via a callback
             ** ***************************/
             /* TODO: this is exactly the same as required by _Reset.., so at some point we need to move the code so that is can be called by reset add release...  */
-            /* Release all of the swapchains, except the implicite swapchain */
+            /* Release all of the swapchains, except the implicit swapchain */
             IUnknown* stencilBufferParent;
             IUnknown* swapChainParent;
 

@@ -1165,7 +1165,7 @@ static HRESULT WINAPI DefaultHandler_Run(
    * - IOleObject_GetMiscStatus
    * - IOleObject_Advise
    * - IOleObject_GetMoniker
-   * - advise data cache that we've connected some how?
+   * - advise data cache that we've connected somehow?
    */
 
   /* FIXME: if we failed, Close the object */

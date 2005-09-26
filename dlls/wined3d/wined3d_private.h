@@ -1120,7 +1120,10 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
     /*** class static members ***/
     void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface);
 
-/* an emul for the type of constants that are used... adressing causes problems with being able to work out what's used and what's not.. so maybe we'll have to rely on the server vertex shader const functions? */
+/* An enum for the type of constants that are used... addressing causes
+ * problems with being able to work out what's used and what's not.. so
+ * maybe we'll have to rely on the server vertex shader const functions?
+ */
 enum vsConstantsEnum {
     VS_CONSTANT_NOT_USED = 0,
     VS_CONSTANT_CONSTANT,

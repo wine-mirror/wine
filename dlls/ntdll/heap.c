@@ -734,7 +734,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
     /* make sure that we have a big enough size *committed* to fit another
      * last free arena in !
      * So just one heap struct, one first free arena which will eventually
-     * get inuse, and a second free arena that might get assigned all remaining
+     * get used, and a second free arena that might get assigned all remaining
      * free space in HEAP_ShrinkBlock() */
     size += ROUND_SIZE(sizeof(SUBHEAP)) + sizeof(ARENA_INUSE) + sizeof(ARENA_FREE);
     if (!(subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, size,

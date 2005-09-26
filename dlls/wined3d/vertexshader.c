@@ -1380,7 +1380,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
 
             }
         }
-        /* TODO: loop register counts as an addres register */
+        /* TODO: loop register counts as an address register */
         for (i = 0; i < nUseAddressRegister; i++) {
             sprintf(tmpLine, "ADDRESS A%ld;\n", i);
             ++lineNum;
@@ -1395,7 +1395,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             numConstants = 95;
         }
         /* FIXME: We should  be counting the number of constants in the first pass and then validating that many are supported
-                Looking at some of the shaders inuse by applications we'd need to create a list of all used env variables
+                Looking at some of the shaders in use by applications we'd need to create a list of all used env variables
         */
         sprintf(tmpLine, "PARAM C[%d] = { program.env[0..%d] };\n", numConstants, numConstants - 1);
         TRACE("GL HW (%u,%u) : %s", lineNum, pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
