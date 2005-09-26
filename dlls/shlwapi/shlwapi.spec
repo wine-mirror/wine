@@ -546,7 +546,7 @@
 550 stub -noname GetTemplateInfoFromHandle
 551 stub -noname IShellFolder_CompareIDs
 
-@ stdcall AssocCreate(long long long long ptr ptr)
+@ stdcall AssocCreate(double double ptr ptr)
 @ stdcall AssocIsDangerous(long)
 @ stdcall AssocQueryKeyA(long long str ptr ptr)
 @ stdcall AssocQueryKeyW(long long wstr ptr ptr)
