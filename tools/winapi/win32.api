@@ -3,21 +3,24 @@
 %long
 
 BOOL
+DWORD
 HRESULT
 ULONG
 
 %ptr
 
+IADsContainer *
+IEnumVARIANT *
+IEnumVARIANT **
 LPVOID
-LPVOID *
-LPVOID **
 REFIID
 ULONG *
+VARIANT *
 VOID **
 
 %wstr
 
-LPWSTR
+LPCWSTR
 
 %%advapi32.dll
 

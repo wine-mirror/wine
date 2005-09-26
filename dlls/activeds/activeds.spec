@@ -4,7 +4,7 @@
 6 stdcall ADsEnumerateNext(ptr long ptr ptr)
 7 stub ADsBuildVarArrayStr
 8 stub ADsBuildVarArrayInt
-9 stdcall ADsOpenObject(wstr ptr ptr)
+9 stdcall ADsOpenObject(wstr wstr wstr long ptr ptr)
 12 stub ADsSetLastError
 13 stub ADsGetLastError
 14 stub AllocADsMem

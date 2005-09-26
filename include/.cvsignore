@@ -12,6 +12,7 @@ docobj.h
 downloadmgr.h
 exdisp.h
 hlink.h
+iads.h
 mediaobj.h
 mimeinfo.h
 mlang.h

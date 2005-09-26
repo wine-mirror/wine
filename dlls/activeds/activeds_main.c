@@ -33,6 +33,10 @@
 #include "winver.h"
 #include "winnls.h"
 
+#include "objbase.h"
+#include "iads.h"
+#include "adshlp.h"
+
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -41,7 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(activeds);
 /*****************************************************
  * DllMain
  */
-
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(%p, %ld, %p)\n",hinstDLL, fdwReason, lpvReserved);
@@ -52,8 +55,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 /*****************************************************
  * ADsGetObject     [ACTIVEDS.3]
  */
-
-HRESULT WINAPI ADsGetObject(LPWSTR lpszPathName, REFIID riid, VOID** ppObject)
+HRESULT WINAPI ADsGetObject(LPCWSTR lpszPathName, REFIID riid, VOID** ppObject)
 {
     FIXME("(%s)->(%s,%p)!stub\n",debugstr_w(lpszPathName), debugstr_guid(riid), ppObject);
     return E_NOTIMPL;
@@ -62,9 +64,7 @@ HRESULT WINAPI ADsGetObject(LPWSTR lpszPathName, REFIID riid, VOID** ppObject)
 /*****************************************************
  * ADsBuildEnumerator    [ACTIVEDS.4]
  */
-
-/* HRESULT WINAPI ADsBuildEnumerator(IADsContainer * pADsContainer, IEnumVariant ** ppEnumVariant) */
-HRESULT WINAPI ADsBuildEnumerator(LPVOID * pADsContainer, LPVOID ** ppEnumVariant)
+HRESULT WINAPI ADsBuildEnumerator(IADsContainer * pADsContainer, IEnumVARIANT** ppEnumVariant)
 {
     FIXME("(%p)->(%p)!stub\n",pADsContainer, ppEnumVariant);
     return E_NOTIMPL;
@@ -73,9 +73,7 @@ HRESULT WINAPI ADsBuildEnumerator(LPVOID * pADsContainer, LPVOID ** ppEnumVarian
 /*****************************************************
  * ADsEnumerateNext     [ACTIVEDS.6]
  */
-
-/* HRESULT WINAPI ADsEnumerateNext(IEnumVariant * pEnumVariant, ULONG cElements, VARIANT * pvar, ULONG * pcElementsFetched) */
-HRESULT WINAPI ADsEnumerateNext(LPVOID * pEnumVariant, ULONG cElements, LPVOID * pvar, ULONG * pcElementsFetched)
+HRESULT WINAPI ADsEnumerateNext(IEnumVARIANT* pEnumVariant, ULONG cElements, VARIANT* pvar, ULONG * pcElementsFetched)
 {
     FIXME("(%p)->(%lu, %p, %p)!stub\n",pEnumVariant, cElements, pvar, pcElementsFetched);
     return E_NOTIMPL;
@@ -84,10 +82,10 @@ HRESULT WINAPI ADsEnumerateNext(LPVOID * pEnumVariant, ULONG cElements, LPVOID *
 /*****************************************************
  * ADsOpenObject     [ACTIVEDS.9]
  */
-
-HRESULT WINAPI ADsOpenObject(LPWSTR lpszPathName, REFIID riid, VOID** ppObject)
+HRESULT WINAPI ADsOpenObject(LPCWSTR lpszPathName, LPCWSTR lpszUserName, LPCWSTR lpszPassword, DWORD dwReserved, REFIID riid, VOID** ppObject)
 {
-    FIXME("(%s)->(%s,%p)!stub\n",debugstr_w(lpszPathName), debugstr_guid(riid), ppObject);
+    FIXME("(%s,%s,%lu,%p,%p)!stub\n", debugstr_w(lpszPathName),
+          debugstr_w(lpszUserName), dwReserved, debugstr_guid(riid), ppObject);
     return E_NOTIMPL;
 }
 
