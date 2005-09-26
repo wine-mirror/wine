@@ -1314,9 +1314,9 @@ static unsigned split_oflags(unsigned oflags)
     unsigned unsupp; /* until we support everything */
 
     if (oflags & MSVCRT__O_APPEND)              wxflags |= WX_APPEND;
-    if (oflags & MSVCRT__O_BINARY)              ;
+    if (oflags & MSVCRT__O_BINARY)              {/* Nothing to do */}
     else if (oflags & MSVCRT__O_TEXT)           wxflags |= WX_TEXT;
-    else if (*__p__fmode() & MSVCRT__O_BINARY)  ;
+    else if (*__p__fmode() & MSVCRT__O_BINARY)  {/* Nothing to do */}
     else                                        wxflags |= WX_TEXT; /* default to TEXT*/
     if (oflags & MSVCRT__O_NOINHERIT)           wxflags |= WX_DONTINHERIT;
 
