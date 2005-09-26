@@ -1110,7 +1110,7 @@ sub parse_c_file($$$$) {
 	    $declaration .= $&;
 
 	    if($declaration =~ /^typedef/s ||
-	       $declaration =~ /^(?:const\s+|extern\s+|static\s+)*(?:struct|union)(?:\s+\w+)?\s*\{/s)
+	       $declaration =~ /^(?:const\s+|extern\s+|static\s+|volatile\s+)*(?:struct|union)(?:\s+\w+)?\s*\{/s)
 	    {
 		# Nothing
 	    } elsif($plevel == 1 && $blevel == 1) {
@@ -1128,7 +1128,7 @@ sub parse_c_file($$$$) {
 	    $declaration .= $&;
 	    if(0 && $blevel == 1 &&
 	       $declaration !~ /^typedef/ &&
-	       $declaration !~ /^(?:const\s+|extern\s+|static\s+)?(?:struct|union)(?:\s+\w+)?\s*\{/s &&
+	       $declaration !~ /^(?:const\s+|extern\s+|static\s+|volatile\s+)?(?:struct|union)(?:\s+\w+)?\s*\{/s &&
 	       $declaration =~ /^(?:\w+(?:\s*\*)*\s+)*(\w+)\s*\(\s*(?:(?:\w+\s*,\s*)*(\w+))?\s*\)\s*(.*?);$/s &&
 	       $1 ne "ICOM_VTABLE" && defined($2) && $2 ne "void" && $3) # K&R
 	    {
@@ -1233,7 +1233,7 @@ sub parse_c_function($$$$$) {
 
 
 	# FIXME: ???: Old variant of __attribute((const))
-	$self->_parse_c('const', \$_, \$line, \$column);
+	$self->_parse_c('(?:const|volatile)', \$_, \$line, \$column);
 
 	if(!$self->_parse_c('(?:operator\s*!=|(?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)', \$_, \$line, \$column, \$name)) {
 	    return 0;
@@ -1781,7 +1781,7 @@ sub parse_c_type($$$$$) {
 
     my $type;
 
-    $self->_parse_c("const", \$_, \$line, \$column);
+    $self->_parse_c("(?:const|volatile)", \$_, \$line, \$column);
 
     if(0) {
 	# Nothing
@@ -1998,7 +1998,7 @@ sub parse_c_variable($$$$$$$) {
 	}
 
 	$finished = 1;
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\b(?:\s+DECLSPEC_ALIGN\(.*?\)|\s*(?:const\s*)?\*)*)\s*(\w+)\s*(\[.*?\]$|:\s*(\d+)$|\{)?//s) {
+    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\b(?:\s+DECLSPEC_ALIGN\(.*?\)|\s*(?:const\s*|volatile\s*)?\*)*)\s*(\w+)\s*(\[.*?\]$|:\s*(\d+)$|\{)?//s) {
 	$type = "$sign$1";
 	$name = $2;
 
@@ -2091,7 +2091,7 @@ sub parse_c_variable($$$$$$$) {
         if(!s/^(?:=\s*|,\s*|$)//) {
 	    return 0;
 	}
-    } elsif(s/^(?:\*\s*)*(?:const\s+)?(\w+)\s*(?:\[[^\]]*\]\s*)*\s*(?:=\s*|,\s*|$)//) {
+    } elsif(s/^(?:\*\s*)*(?:const\s+|volatile\s+)?(\w+)\s*(?:\[[^\]]*\]\s*)*\s*(?:=\s*|,\s*|$)//) {
 	$self->_update_c_position($&, \$line, \$column);
 
 	$name = $1;
