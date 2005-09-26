@@ -198,7 +198,7 @@ const struct builtin_class_descr MENU_builtin_class =
  */
 
 #define debug_print_menuitem(pre, mp, post) \
-  if(!TRACE_ON(menu)) ; else do_debug_print_menuitem(pre, mp, post)
+    do { if (TRACE_ON(menu)) do_debug_print_menuitem(pre, mp, post); } while (0)
 
 #define MENUOUT(text) \
   TRACE("%s%s", (count++ ? "," : ""), (text))

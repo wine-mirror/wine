@@ -134,7 +134,7 @@ static const UINT_PTR granularity_mask = 0xffff;  /* Allocation granularity (usu
    (((UINT)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
 
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
-   if (!TRACE_ON(virtual)); else VIRTUAL_DumpView(view)
+    do { if (TRACE_ON(virtual)) VIRTUAL_DumpView(view); } while (0)
 
 static void *user_space_limit = USER_SPACE_LIMIT;
 
