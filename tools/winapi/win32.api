@@ -608,6 +608,7 @@ CRYPT_ATTRIBUTE[]
 DATA_BLOB *
 DWORD *
 GUID *
+HCRYPTOIDFUNCSET
 LPFILETIME
 LPWSTR *
 PCCERT_CONTEXT
@@ -2176,7 +2177,6 @@ HRESULT
 
 %ptr
 
-IID *
 LPVOID *
 REFCLSID
 
@@ -2220,6 +2220,7 @@ NTSTATUS
 int
 long
 short
+size_t
 unsigned int
 unsigned long
 unsigned short int
@@ -3572,6 +3573,7 @@ HINF
 HINSTANCE
 HKEY
 HSPFILEQ
+HSTRING_TABLE
 HWND
 INT
 LONG
@@ -4284,7 +4286,7 @@ void
 LPCWSTR
 LPWSTR
 
-%%usp10
+%%usp10.dll
 
 %long
 
@@ -5054,7 +5056,6 @@ int
 
 BerElement *
 BERVAL *
-PBERVAL *
 CHAR *
 CHAR **
 LDAPControlA *
@@ -5064,6 +5065,7 @@ LDAPControlW **
 LDAPModA *[]
 LDAPModW *[]
 LDAP_TIMEVAL *
+PBERVAL *
 PCHAR
 PCHAR *
 PCHAR[]
