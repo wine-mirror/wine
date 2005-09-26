@@ -2364,18 +2364,24 @@ HRESULT WINAPI IDirect3DPixelShaderImpl_GetConstantF(IDirect3DPixelShaderImpl* T
 
 /***********************************************************************
  *		ValidateVertexShader (D3D8.@)
+ *
+ * PARAMS
+ * toto       result?
  */
-BOOL WINAPI ValidateVertexShader(LPVOID pFunction, int param1, int param2, LPVOID toto/* result? */) {
-
+BOOL WINAPI ValidateVertexShader(LPVOID pFunction, int param1, int param2, LPVOID toto)
+{
       FIXME("(void): stub: pFunction %p, param1 %d, param2 %d, result? %p\n",  pFunction, param1, param2, toto);
         return 0;
 }
 
 /***********************************************************************
- *  *              ValidatePixelShader (D3D8.@)
- *   */
-BOOL WINAPI ValidatePixelShader(LPVOID pFunction, int param1, int param2, LPVOID toto/* result? */) {
-
+ *              ValidatePixelShader (D3D8.@)
+ *
+ * PARAMS
+ * toto       result?
+ */
+BOOL WINAPI ValidatePixelShader(LPVOID pFunction, int param1, int param2, LPVOID toto)
+{
       FIXME("(void): stub: pFunction %p, param1 %d, param2 %d, result? %p\n",  pFunction, param1, param2, toto);
         return TRUE;
 }
