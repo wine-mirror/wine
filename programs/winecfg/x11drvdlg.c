@@ -95,7 +95,24 @@ static void update_gui_for_desktop_mode(HWND dialog) {
     updating_ui = FALSE;
 }
 
-static void init_dialog (HWND dialog)
+static void init_screen_depth(HWND dialog)
+{
+    char* buf;
+    buf = get_reg_key(config_key, keypath("X11 Driver"), "ScreenDepth", "24");
+    if (strcmp(buf, "8") == 0)
+	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 0, 0);
+    else if (strcmp(buf, "16") == 0)
+	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 1, 0);
+    else if (strcmp(buf, "24") == 0)
+	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 2, 0);
+    else if (strcmp(buf, "32") == 0)
+	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 3, 0);
+    else
+	WINE_ERR("Invalid screen depth read from registry (%s)\n", buf);
+    HeapFree(GetProcessHeap(), 0, buf);
+}
+
+static void init_dialog(HWND dialog)
 {
     unsigned int it;
     char* buf;
@@ -110,19 +127,6 @@ static void init_dialog (HWND dialog)
     SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "24 bit");
     SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "32 bit"); /* is this valid? */
 
-    buf = get_reg_key(config_key, keypath("X11 Driver"), "ScreenDepth", "24");
-    if (strcmp(buf, "8") == 0)
-	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 0, 0);
-    else if (strcmp(buf, "16") == 0)
-	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 1, 0);
-    else if (strcmp(buf, "24") == 0)
-	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 2, 0);
-    else if (strcmp(buf, "32") == 0)
-	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 3, 0);
-    else
-	WINE_ERR("Invalid screen depth read from registry (%s)\n", buf);
-    HeapFree(GetProcessHeap(), 0, buf);
-
     SendDlgItemMessage(dialog, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
     SendDlgItemMessage(dialog, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
 
@@ -134,10 +138,15 @@ static void init_dialog (HWND dialog)
     HeapFree(GetProcessHeap(), 0, buf);
 
     buf = get_reg_key(config_key, keypath("X11 Driver"), "DesktopDoubleBuffered", "Y");
-    if (IS_OPTION_TRUE(*buf))
+    if (IS_OPTION_TRUE(*buf)) {
 	CheckDlgButton(dialog, IDC_DOUBLE_BUFFER, BST_CHECKED);
-    else
+	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, -1, 0);
+	disable(IDC_SCREEN_DEPTH);
+    } else {
 	CheckDlgButton(dialog, IDC_DOUBLE_BUFFER, BST_UNCHECKED);
+    	init_screen_depth(dialog);
+	enable(IDC_SCREEN_DEPTH);
+    }
     HeapFree(GetProcessHeap(), 0, buf);
 
     SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_RESETCONTENT, 0, 0);
@@ -228,10 +237,15 @@ static void on_dx_mouse_grab_clicked(HWND dialog) {
 
 
 static void on_double_buffer_clicked(HWND dialog) {
-    if (IsDlgButtonChecked(dialog, IDC_DOUBLE_BUFFER) == BST_CHECKED)
+    if (IsDlgButtonChecked(dialog, IDC_DOUBLE_BUFFER) == BST_CHECKED) {
         set_reg_key(config_key, keypath("X11 Driver"), "DesktopDoubleBuffered", "Y");
-    else
+	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, -1, 0);
+	disable(IDC_SCREEN_DEPTH);
+    } else {
         set_reg_key(config_key, keypath("X11 Driver"), "DesktopDoubleBuffered", "N");
+    	init_screen_depth(dialog);
+	enable(IDC_SCREEN_DEPTH);
+    }
 }
 
 static void on_d3d_vshader_mode_changed(HWND dialog) {
@@ -247,7 +261,7 @@ static void on_d3d_pshader_mode_clicked(HWND dialog) {
 }
 
 INT_PTR CALLBACK
-GraphDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
 	case WM_INITDIALOG:
