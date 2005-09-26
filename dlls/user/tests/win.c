@@ -1909,6 +1909,35 @@ static void test_children_zorder(HWND parent)
     test_window_tree(parent, complex_style, complex_order_5, 5);
 }
 
+static void test_vis_rgn( HWND hwnd )
+{
+    RECT win_rect, rgn_rect;
+    HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
+    HDC hdc;
+
+    ShowWindow(hwnd,SW_SHOW);
+    hdc = GetDC( hwnd );
+    ok( GetRandomRgn( hdc, hrgn, SYSRGN ) != 0, "GetRandomRgn failed\n" );
+    GetWindowRect( hwnd, &win_rect );
+    GetRgnBox( hrgn, &rgn_rect );
+    if (GetVersion() & 0x80000000)
+    {
+        trace("win9x, mapping to screen coords\n");
+        MapWindowPoints( hwnd, 0, (POINT *)&rgn_rect, 2 );
+    }
+    trace("win: %ld,%ld-%ld,%ld\n", win_rect.left, win_rect.top, win_rect.right, win_rect.bottom );
+    trace("rgn: %ld,%ld-%ld,%ld\n", rgn_rect.left, rgn_rect.top, rgn_rect.right, rgn_rect.bottom );
+    ok( win_rect.left <= rgn_rect.left, "rgn left %ld not inside win rect %ld\n",
+        rgn_rect.left, win_rect.left );
+    ok( win_rect.top <= rgn_rect.top, "rgn top %ld not inside win rect %ld\n",
+        rgn_rect.top, win_rect.top );
+    ok( win_rect.right >= rgn_rect.right, "rgn right %ld not inside win rect %ld\n",
+        rgn_rect.right, win_rect.right );
+    ok( win_rect.bottom >= rgn_rect.bottom, "rgn bottom %ld not inside win rect %ld\n",
+        rgn_rect.bottom, win_rect.bottom );
+    ReleaseDC( hwnd, hdc );
+}
+
 static void test_SetFocus(HWND hwnd)
 {
     HWND child;
@@ -3414,6 +3443,7 @@ START_TEST(win)
     test_scrollvalidate( hwndMain);
     test_scroll();
     test_IsWindowUnicode();
+    test_vis_rgn(hwndMain);
 
     UnhookWindowsHookEx(hhook);
 
