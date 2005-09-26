@@ -62,6 +62,7 @@ static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name,
        MSICOLUMNINFO **pcols, UINT *pcount );
 static UINT get_tablecolumns( MSIDATABASE *db, 
        LPCWSTR szTableName, MSICOLUMNINFO *colinfo, UINT *sz);
+static void msi_free_colinfo( MSICOLUMNINFO *colinfo, UINT count );
 
 static inline UINT bytes_per_column( const MSICOLUMNINFO *col )
 {
@@ -404,6 +405,14 @@ static void free_table( MSITABLE *table )
     msi_free( table );
 }
 
+static UINT msi_table_get_row_size( const MSICOLUMNINFO *cols, UINT count )
+{
+    const MSICOLUMNINFO *last_col = &cols[count-1];
+    if (!count)
+        return 0;
+    return last_col->offset + bytes_per_column( last_col );
+}
+
 /* add this table to the list of cached tables in the database */
 static MSITABLE *read_table_from_storage( IStorage *stg, LPCWSTR name,
                                     const MSICOLUMNINFO *cols, UINT num_cols )
@@ -411,7 +420,6 @@ static MSITABLE *read_table_from_storage( IStorage *stg, LPCWSTR name,
     MSITABLE *t;
     USHORT *rawdata = NULL;
     UINT rawsize = 0, i, j, row_size = 0;
-    const MSICOLUMNINFO *last_col;
 
     TRACE("%s\n",debugstr_w(name));
 
@@ -420,8 +428,7 @@ static MSITABLE *read_table_from_storage( IStorage *stg, LPCWSTR name,
     if( !t )
         return t;
 
-    last_col = &cols[num_cols-1];
-    row_size = last_col->offset + bytes_per_column( last_col );
+    row_size = msi_table_get_row_size( cols, num_cols );
 
     t->row_count = 0;
     t->data = NULL;
@@ -559,7 +566,7 @@ static UINT save_table( MSIDATABASE *db, MSITABLE *t )
 {
     USHORT *rawdata = NULL, *p;
     UINT rawsize, r, i, j, row_size, num_cols = 0;
-    MSICOLUMNINFO *cols, *last_col;
+    MSICOLUMNINFO *cols = NULL;
 
     TRACE("Saving %s\n", debugstr_w( t->name ) );
 
@@ -567,13 +574,15 @@ static UINT save_table( MSIDATABASE *db, MSITABLE *t )
     if( r != ERROR_SUCCESS )
         return r;
     
-    last_col = &cols[num_cols-1];
-    row_size = last_col->offset + bytes_per_column( last_col );
+    row_size = msi_table_get_row_size( cols, num_cols );
 
     rawsize = t->row_count * row_size;
     rawdata = msi_alloc_zero( rawsize );
     if( !rawdata )
-        return ERROR_NOT_ENOUGH_MEMORY;
+    {
+        r = ERROR_NOT_ENOUGH_MEMORY;
+        goto err;
+    }
 
     p = rawdata;
     for( i=0; i<num_cols; i++ )
@@ -591,6 +600,9 @@ static UINT save_table( MSIDATABASE *db, MSITABLE *t )
     TRACE("writing %d bytes\n", rawsize);
     r = write_stream_data( db->storage, t->name, rawdata, rawsize );
 
+err:
+    msi_free_colinfo( cols, num_cols );
+    msi_free( cols );
     msi_free( rawdata );
 
     return r;
@@ -1436,7 +1448,7 @@ UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view )
 {
     MSITABLEVIEW *tv ;
     UINT r, sz, column_count;
-    MSICOLUMNINFO *columns, *last_col;
+    MSICOLUMNINFO *columns;
 
     TRACE("%p %s %p\n", db, debugstr_w(name), view );
 
@@ -1474,15 +1486,13 @@ UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view )
 
     TRACE("Table has %d columns\n", column_count);
 
-    last_col = &columns[column_count-1];
-
     /* fill the structure */
     tv->view.ops = &table_ops;
     tv->db = db;
     tv->columns = columns;
     tv->num_cols = column_count;
     tv->table = NULL;
-    tv->row_size = last_col->offset + bytes_per_column( last_col );
+    tv->row_size = msi_table_get_row_size( columns, column_count );
 
     TRACE("%s one row is %d bytes\n", debugstr_w(name), tv->row_size );
 
