@@ -1,0 +1,308 @@
+/*
+ * Regedit Norwegian Bokmål resources
+ *
+ * Copyright 2005 Alexander N. Sørnes <alex@thehandofagony.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
+
+/*
+ * Menu
+ */
+
+IDC_REGEDIT MENU DISCARDABLE
+BEGIN
+    POPUP "&Fil"
+    BEGIN
+        MENUITEM "&Avslutt",                       ID_REGISTRY_EXIT
+    END
+    POPUP "&Hjelp"
+    BEGIN
+        MENUITEM "&Om . . .",                  ID_HELP_ABOUT
+    END
+END
+
+IDR_REGEDIT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "&Register"
+    BEGIN
+        MENUITEM "&Importer registerfil . . .",    ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "&Eksporter registerfil . . .",    ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "Koble &til nettverksregister . . .", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "Koble &fra nettverksregister . . .", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Skriv ut\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Avslutt",                       ID_REGISTRY_EXIT
+    END
+    POPUP "R&ediger"
+    BEGIN
+        MENUITEM "&Endre",                     ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "&Ny"
+        BEGIN
+            MENUITEM "Nø&kkel",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Strengverdi",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binærverdi",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD-verdi",                ID_EDIT_NEW_DWORDVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Slett\tDel",                ID_EDIT_DELETE
+        MENUITEM "&Gi nytt navn\tF2",                 ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Kopier nøkkelnavn",              ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Finn\tCtrl+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "Finn &neste\tF3",              ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "&Vis"
+    BEGIN
+        MENUITEM "&Statuslinje",                 ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "De&l opp",                      ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "Oppdate&r\tF5",                ID_VIEW_REFRESH
+    END
+    POPUP "&Favoritters"
+    BEGIN
+        MENUITEM "Legg til i f&avoritter",          ID_FAVORITES_ADDTOFAVORITES
+        , GRAYED
+        MENUITEM "Fje&rn favoritt",           ID_FAVORITES_REMOVEFAVORITE
+        , GRAYED
+    END
+    POPUP "&Hjelp"
+    BEGIN
+        MENUITEM "Emner i &hjelp\tF1",            ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "&Om Registerredigering",      ID_HELP_ABOUT
+    END
+END
+
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "&Endre",                     ID_EDIT_MODIFY
+	MENUITEM "Modify Binary Data",          ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "&Slett\tDel",                ID_EDIT_DELETE
+	MENUITEM "&Gi nytt navn",                     ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "&Ny"
+        BEGIN
+            MENUITEM "Nø&kkel",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Strengverdi",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binærverdi",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD-verdi",                ID_EDIT_NEW_DWORDVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Slett\tDel",                ID_EDIT_DELETE
+        MENUITEM "&Gi nytt navn\tF2",                 ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Kopier nøkkelnavn",              ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Finn\tCtrl+F",               ID_EDIT_FIND, GRAYED
+  END
+END
+
+
+/*
+ * Dialog
+ */
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Om"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    ICON            IDI_REGEDIT,IDI_REGEDIT,14,9,16,16
+    LTEXT           "ReactOS Registerredigerer versjon 1.0",IDC_STATIC,49,10,119,8,
+                    SS_NOPREFIX
+    LTEXT           "Kopirett 2002 tilhører ReactOS-laget. Oversatt av Alexander N. Sørnes.",IDC_STATIC,49,20,119,8
+    DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Rediger streng"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Verdinavn:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "Verdidata:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,140,60,30,11,WS_GROUP
+    PUSHBUTTON   "Avbryt",IDCANCEL,175,60,30,11,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Rediger DWORD"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Verdinavn:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "Verdidata:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Base", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "Heksadesimal", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Desimal", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Avbryt",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Rediger binær"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Verdinavn:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "Verdidata:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,4,40,160,40
+    DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Avbryt",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+/*
+ * String Table
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "Navn"
+    IDS_LIST_COLUMN_TYPE    "Type"
+    IDS_LIST_COLUMN_DATA    "Data"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "Registerredigering"
+    IDC_REGEDIT             "REGEDIT"
+    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_MENU        "Inneholder kommandoer for å arbeide med hele registeret"
+    ID_EDIT_MENU            "Inneholder kommandoer for å redigere verdier og nøkler"
+    ID_VIEW_MENU            "Inneholder kommanoder for å tilpasse registervinduet"
+    ID_FAVORITES_MENU       "Inneholder kommandoer for å få tilgang til nøkler som brukes ofte"
+    ID_HELP_MENU            "Inneholder kommandoer for å vise hjelp og informasjon om Registerredigering"
+    ID_EDIT_NEW_MENU        "Inneholder kommandoer for å opprette nye nøkler eller verdier"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_EDIT_MODIFY          "Endrer verdiens data"
+    ID_EDIT_NEW_KEY         "Legger til en ny nøkkel"
+    ID_EDIT_NEW_STRINGVALUE "Legger til en ny strengverdi"
+    ID_EDIT_NEW_BINARYVALUE "Legger til en ny binærverdis"
+    ID_EDIT_NEW_DWORDVALUE  "Legger til en ny dobbeltord-verdi"
+    ID_REGISTRY_IMPORTREGISTRYFILE "Importerer en tekstfil inn i registeret"
+    ID_REGISTRY_EXPORTREGISTRYFILE
+                            "Eksporterer hele eller deler av registeret til en tekstfil"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY
+                            "Kobler til registeret på en annen maskin"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY
+                            "Kobler fra registeret på en annen maskin"
+    ID_REGISTRY_PRINT       "Skriver ut hele eller deler av registeret"
+/*    ID_HELP_HELPTOPICS      "Viser hjelp til Registerredigering" */
+    ID_HELP_ABOUT           "Viser programinformasjon, versjonnummer og kopirett"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_EXIT        "Avslutter Registerredigering"
+    ID_FAVORITES_ADDTOFAVORITES "Legger nøkler til i favorittlisten"
+    ID_FAVORITES_REMOVEFAVORITE "Fjerner nøkler fra favorittlisten"
+    ID_VIEW_STATUSBAR       "Viser eller skjuler statuslinjens"
+    ID_VIEW_SPLIT           "Endrer posisjonen til delingslinjen mellom to ruter"
+    ID_VIEW_REFRESH         "Oppdaterer vinduet"
+    ID_EDIT_DELETE          "Sletter utvalget"
+    ID_EDIT_RENAME          "Gir nytt navn til utvalget"
+    ID_EDIT_COPYKEYNAME     "Kopierer navnet til den valgte nøkkelen til utklippstavlen"
+    ID_EDIT_FIND            "Finner en tekststreng i en nøkkel, verdi eller data"
+    ID_EDIT_FINDNEXT        "Finner neste treff til teksten spesifisert i forrige søk"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR		    "Feil"
+    IDS_BAD_KEY		    "Kunne ikke spørre nøkkelen '%s'"
+    IDS_BAD_VALUE           "Kunne ikke spøøre verdien '%s'"
+    IDS_UNSUPPORTED_TYPE    "Kunne ikke redigere nøkler av typen '%ld'"
+    IDS_TOO_BIG_VALUE       "Verdien er for stor (%ld)"
+    IDS_DELETE_BOX_TITLE    "Bekreft sletting av verdi"
+    IDS_DELETE_BOX_TEXT     "Virkelig slette verdien '%s'?"
+    IDS_NEWKEY              "Ny nøkkel #%d"
+    IDS_NEWVALUE            "Ny verdi #%d"
+END
+
+/*****************************************************************/
+
+
+/*
+ * Dialog
+ */
+
+IDD_DIALOG1 DIALOG DISCARDABLE  50, 50, 268, 98
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+END
+
+IDD_DIALOG2 DIALOG DISCARDABLE  0, 0, 187, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,130,7,50,14
+    PUSHBUTTON      "Avbryt",IDCANCEL,130,24,50,14
+END
+
+
+/*
+ * TEXTINCLUDE
+ */
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+
+
+/*
+ * String Table
+ */
+
+/*
+ *STRINGTABLE DISCARDABLE
+ *BEGIN
+ *    ID_HELP_HELPTOPICS      "Viser hjelp til Registerredigering."
+ *    ID_HELP_ABOUT           "Viser programinformasjon, versjonnummer og kopirett."
+ *END
+ */
+
+/*****************************************************************/
