@@ -608,18 +608,64 @@ MSIDBERROR WINAPI MsiViewGetErrorA( MSIHANDLE handle, LPSTR szColumnNameBuffer,
     return r;
 }
 
-UINT WINAPI MsiDatabaseApplyTransformA( MSIHANDLE hdb, 
-                 LPCSTR szTransformFile, int iErrorCond)
+DEFINE_GUID( CLSID_MsiTransform, 0x000c1082, 0x0000, 0x0000, 0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
+
+static UINT MSI_DatabaseApplyTransformW( MSIDATABASE *db, 
+                 LPCWSTR szTransformFile, int iErrorCond )
 {
-    FIXME("%ld %s %d\n", hdb, debugstr_a(szTransformFile), iErrorCond);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    UINT r;
+    IStorage *stg = NULL;
+ 
+    TRACE("%p %s %d\n", db, debugstr_w(szTransformFile), iErrorCond);
+
+    r = StgOpenStorage( szTransformFile, NULL,
+           STGM_DIRECT|STGM_READ|STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
+    if( r )
+        return r;
+
+    if( TRACE_ON( msi ) )
+        enum_stream_names( stg );
+
+    /* r = table_apply_transform( db, stg ); */
+    FIXME("should apply transform %s\n", debugstr_w(szTransformFile) );
+
+    IStorage_Release( stg );
+
+    return r;
 }
 
 UINT WINAPI MsiDatabaseApplyTransformW( MSIHANDLE hdb, 
                  LPCWSTR szTransformFile, int iErrorCond)
 {
-    FIXME("%ld %s %d\n", hdb, debugstr_w(szTransformFile), iErrorCond);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    MSIDATABASE *db;
+    UINT r;
+
+    db = msihandle2msiinfo( hdb, MSIHANDLETYPE_DATABASE );
+    if( !db )
+        return ERROR_INVALID_HANDLE;
+
+    r = MSI_DatabaseApplyTransformW( db, szTransformFile, iErrorCond );
+    msiobj_release( &db->hdr );
+    return r;
+}
+
+UINT WINAPI MsiDatabaseApplyTransformA( MSIHANDLE hdb, 
+                 LPCSTR szTransformFile, int iErrorCond)
+{
+    LPWSTR wstr;
+    UINT ret;
+
+    TRACE("%ld %s %d\n", hdb, debugstr_a(szTransformFile), iErrorCond);
+
+    wstr = strdupAtoW( szTransformFile );
+    if( szTransformFile && !wstr )
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    ret = MsiDatabaseApplyTransformW( hdb, wstr, iErrorCond);
+
+    msi_free( wstr );
+
+    return ret;
 }
 
 UINT WINAPI MsiDatabaseGenerateTransformA( MSIHANDLE hdb, MSIHANDLE hdbref,
