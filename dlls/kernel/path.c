@@ -849,16 +849,21 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
  */
 BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
 {
+    static const int buffer_size = 65536;
     HANDLE h1, h2;
     BY_HANDLE_FILE_INFORMATION info;
-    FILETIME filetime;
     DWORD count;
     BOOL ret = FALSE;
-    char buffer[2048];
+    char *buffer;
 
     if (!source || !dest)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, buffer_size )))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return FALSE;
     }
 
@@ -887,7 +892,7 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
         return FALSE;
     }
 
-    while (ReadFile( h1, buffer, sizeof(buffer), &count, NULL ) && count)
+    while (ReadFile( h1, buffer, buffer_size, &count, NULL ) && count)
     {
         char *p = buffer;
         while (count != 0)
@@ -901,9 +906,8 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
     ret =  TRUE;
 done:
     /* Maintain the timestamp of source file to destination file */
-    GetFileTime(h1, NULL, NULL, &filetime);
-    SetFileTime(h2, NULL, NULL, &filetime);
-
+    SetFileTime(h2, NULL, NULL, &info.ftLastWriteTime);
+    HeapFree( GetProcessHeap(), 0, buffer );
     CloseHandle( h1 );
     CloseHandle( h2 );
     return ret;
