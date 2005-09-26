@@ -89,6 +89,12 @@ static UINT ACTION_MoveFiles(MSIPACKAGE *package);
 static UINT ACTION_PatchFiles(MSIPACKAGE *package);
 static UINT ACTION_BindImage(MSIPACKAGE *package);
 static UINT ACTION_IsolateComponents(MSIPACKAGE *package);
+static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package );
+static UINT ACTION_SelfUnregModules( MSIPACKAGE *package );
+static UINT ACTION_InstallServices( MSIPACKAGE *package );
+static UINT ACTION_StartServices( MSIPACKAGE *package );
+static UINT ACTION_StopServices( MSIPACKAGE *package );
+static UINT ACTION_DeleteServices( MSIPACKAGE *package );
 
 /*
  * consts and values used
@@ -281,7 +287,7 @@ static struct _actions StandardActions[] = {
     { szCostInitialize, ACTION_CostInitialize },
     { szCreateFolders, ACTION_CreateFolders },
     { szCreateShortcuts, ACTION_CreateShortcuts },
-    { szDeleteServices, NULL},
+    { szDeleteServices, ACTION_DeleteServices },
     { szDisableRollback, NULL},
     { szDuplicateFiles, ACTION_DuplicateFiles },
     { szExecuteAction, ACTION_ExecuteAction },
@@ -298,12 +304,12 @@ static struct _actions StandardActions[] = {
     { szInstallValidate, ACTION_InstallValidate },
     { szIsolateComponents, ACTION_IsolateComponents },
     { szLaunchConditions, ACTION_LaunchConditions },
-    { szMigrateFeatureStates, NULL},
+    { szMigrateFeatureStates, ACTION_MigrateFeatureStates },
     { szMoveFiles, ACTION_MoveFiles },
     { szMsiPublishAssemblies, NULL},
     { szMsiUnpublishAssemblies, NULL},
     { szInstallODBC, NULL},
-    { szInstallServices, NULL},
+    { szInstallServices, ACTION_InstallServices },
     { szPatchFiles, ACTION_PatchFiles },
     { szProcessComponents, ACTION_ProcessComponents },
     { szPublishComponents, ACTION_PublishComponents },
@@ -331,10 +337,10 @@ static struct _actions StandardActions[] = {
     { szRMCCPSearch, NULL},
     { szScheduleReboot, NULL},
     { szSelfRegModules, ACTION_SelfRegModules },
-    { szSelfUnregModules, NULL},
+    { szSelfUnregModules, ACTION_SelfUnregModules },
     { szSetODBCFolders, NULL},
-    { szStartServices, NULL},
-    { szStopServices, NULL},
+    { szStartServices, ACTION_StartServices },
+    { szStopServices, ACTION_StopServices },
     { szUnpublishComponents, NULL},
     { szUnpublishFeatures, NULL},
     { szUnregisterClassInfo, NULL},
@@ -4009,107 +4015,98 @@ static UINT ACTION_PublishComponents(MSIPACKAGE *package)
     return rc;
 }
 
-static UINT ACTION_RemoveIniValues(MSIPACKAGE *package)
-{
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'R','e','m','o','v','e','I','n','i','F','i','l','e',0 };
-    MSIQUERY *view = NULL;
-    DWORD count = 0;
-    UINT rc;
-    
-    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
-    if (rc == ERROR_SUCCESS)
-    {
-        rc = MSI_IterateRecords(view, &count, NULL, package);
-        if (count)
-            FIXME("%lu ignored RemoveIniFile table values\n", count);
-        msiobj_release(&view->hdr);
-    }
-
-    return ERROR_SUCCESS;
-}
-
-static UINT ACTION_MoveFiles(MSIPACKAGE *package)
-{
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'M','o','v','e','F','i','l','e',0 };
-    MSIQUERY *view = NULL;
-    DWORD count = 0;
-    UINT rc;
-    
-    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
-    if (rc == ERROR_SUCCESS)
-    {
-        rc = MSI_IterateRecords(view, &count, NULL, package);
-        if (count)
-            FIXME("%lu ignored MoveFile table values\n", count);
-        msiobj_release(&view->hdr);
-    }
-
-    return ERROR_SUCCESS;
-}
-
-static UINT ACTION_PatchFiles(MSIPACKAGE *package)
+static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
+                                           LPCSTR action, LPCWSTR table )
 {
     static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'P','a','t','c','h',0 };
+        'S','E','L','E','C','T',' ','*',' ',
+        'F','R','O','M',' ','`','%','s','`',0 };
     MSIQUERY *view = NULL;
     DWORD count = 0;
-    UINT rc;
+    UINT r;
     
-    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
-    if (rc == ERROR_SUCCESS)
+    r = MSI_OpenQuery( package->db, &view, query, table );
+    if (r == ERROR_SUCCESS)
     {
-        rc = MSI_IterateRecords(view, &count, NULL, package);
-        if (count)
-            FIXME("%lu ignored Patch table values\n", count);
+        r = MSI_IterateRecords(view, &count, NULL, package);
         msiobj_release(&view->hdr);
     }
+
+    if (count)
+        FIXME("%s -> %lu ignored %s table values\n",
+              action, count, debugstr_w(table));
 
     return ERROR_SUCCESS;
 }
 
-static UINT ACTION_BindImage(MSIPACKAGE *package)
+static UINT ACTION_RemoveIniValues( MSIPACKAGE *package )
 {
-    static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'B','i','n','d','I','m','a','g','e',0 };
-    MSIQUERY *view = NULL;
-    DWORD count = 0;
-    UINT rc;
-    
-    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
-    if (rc == ERROR_SUCCESS)
-    {
-        rc = MSI_IterateRecords(view, &count, NULL, package);
-        if (count)
-            FIXME("%lu ignored Patch table values\n", count);
-        msiobj_release(&view->hdr);
-    }
-
-    return ERROR_SUCCESS;
+    static const WCHAR table[] =
+         {'R','e','m','o','v','e','I','n','i','F','i','l','e',0 };
+    return msi_unimplemented_action_stub( package, "RemoveIniValues", table );
 }
 
-static UINT ACTION_IsolateComponents(MSIPACKAGE *package)
+static UINT ACTION_MoveFiles( MSIPACKAGE *package )
 {
-    static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+    static const WCHAR table[] = { 'M','o','v','e','F','i','l','e',0 };
+    return msi_unimplemented_action_stub( package, "MoveFiles", table );
+}
+
+static UINT ACTION_PatchFiles( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = { 'P','a','t','c','h',0 };
+    return msi_unimplemented_action_stub( package, "PatchFiles", table );
+}
+
+static UINT ACTION_BindImage( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = { 'B','i','n','d','I','m','a','g','e',0 };
+    return msi_unimplemented_action_stub( package, "BindImage", table );
+}
+
+static UINT ACTION_IsolateComponents( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = {
         'I','s','o','l','a','t','e','C','o','m','p','o','n','e','n','t',0 };
-    MSIQUERY *view = NULL;
-    DWORD count = 0;
-    UINT rc;
-    
-    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
-    if (rc == ERROR_SUCCESS)
-    {
-        rc = MSI_IterateRecords(view, &count, NULL, package);
-        if (count)
-            FIXME("%lu ignored IsolatedComponents table values\n", count);
-        msiobj_release(&view->hdr);
-    }
+    return msi_unimplemented_action_stub( package, "IsolateComponents", table );
+}
 
-    return ERROR_SUCCESS;
+static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
+    return msi_unimplemented_action_stub( package, "MigrateFeatureStates", table );
+}
+
+static UINT ACTION_SelfUnregModules( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = { 'S','e','l','f','R','e','g',0 };
+    return msi_unimplemented_action_stub( package, "SelfUnregModules", table );
+}
+
+static UINT ACTION_InstallServices( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = {
+        'S','e','r','v','i','c','e','I','n','s','t','a','l','l',0 };
+    return msi_unimplemented_action_stub( package, "InstallServices", table );
+}
+
+static UINT ACTION_StartServices( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = {
+        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
+    return msi_unimplemented_action_stub( package, "StartServices", table );
+}
+
+static UINT ACTION_StopServices( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = {
+        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
+    return msi_unimplemented_action_stub( package, "StopServices", table );
+}
+
+static UINT ACTION_DeleteServices( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = {
+        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
+    return msi_unimplemented_action_stub( package, "DeleteServices", table );
 }
