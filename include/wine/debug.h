@@ -137,15 +137,17 @@ struct __wine_debug_channel
 
 struct __wine_debug_functions
 {
+    char * (*get_temp_buffer)( size_t n );
+    void   (*release_temp_buffer)( char *buffer, size_t n );
     const char * (*dbgstr_an)( const char * s, int n );
     const char * (*dbgstr_wn)( const WCHAR *s, int n );
-    const char * (*dbg_vsprintf)( const char *format, va_list args );
     int (*dbg_vprintf)( const char *format, va_list args );
     int (*dbg_vlog)( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
                      const char *function, const char *format, va_list args );
 };
 
-extern void __wine_dbg_set_functions( const struct __wine_debug_functions *funcs, size_t size );
+extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs,
+                                      struct __wine_debug_functions *old_funcs, size_t size );
 
 /*
  * Exported definitions and macros

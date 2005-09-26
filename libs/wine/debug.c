@@ -198,7 +198,7 @@ int wine_dbg_parse_options( const char *str )
     return errors;
 }
 
-/* varargs wrapper for __wine_dbg_vprintf */
+/* varargs wrapper for funcs.dbg_vprintf */
 int wine_dbg_printf( const char *format, ... )
 {
     int ret;
@@ -210,21 +210,25 @@ int wine_dbg_printf( const char *format, ... )
     return ret;
 }
 
-
-/* varargs wrapper for __wine_dbg_vsprintf */
+/* printf with temp buffer allocation */
 const char *wine_dbg_sprintf( const char *format, ... )
 {
-    const char *ret;
+    static const int max_size = 200;
+    char *ret;
+    int len;
     va_list valist;
 
     va_start(valist, format);
-    ret = funcs.dbg_vsprintf( format, valist );
+    ret = funcs.get_temp_buffer( max_size );
+    len = vsnprintf( ret, max_size, format, valist );
+    if (len == -1 || len >= max_size) ret[max_size-1] = 0;
+    else funcs.release_temp_buffer( ret, len + 1 );
     va_end(valist);
     return ret;
 }
 
 
-/* varargs wrapper for __wine_dbg_vlog */
+/* varargs wrapper for funcs.dbg_vlog */
 int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
                   const char *func, const char *format, ... )
 {
@@ -240,7 +244,7 @@ int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *chan
 
 /* allocate some tmp string space */
 /* FIXME: this is not 100% thread-safe */
-static char *get_tmp_space( int size )
+static char *get_temp_buffer( size_t size )
 {
     static char *list[32];
     static int pos;
@@ -253,24 +257,33 @@ static char *get_tmp_space( int size )
 }
 
 
+/* release unused part of the buffer */
+static void release_temp_buffer( char *buffer, size_t size )
+{
+    /* don't bother doing anything */
+}
+
+
 /* default implementation of wine_dbgstr_an */
 static const char *default_dbgstr_an( const char *str, int n )
 {
+    static const char hex[16] = "0123456789abcdef";
     char *dst, *res;
+    size_t size;
 
-    if (!HIWORD(str))
+    if (!((ULONG_PTR)str >> 16))
     {
         if (!str) return "(null)";
-        res = get_tmp_space( 6 );
+        res = funcs.get_temp_buffer( 6 );
         sprintf( res, "#%04x", LOWORD(str) );
         return res;
     }
     if (n == -1) n = strlen(str);
     if (n < 0) n = 0;
-    else if (n > 200) n = 200;
-    dst = res = get_tmp_space( n * 4 + 6 );
+    size = 10 + min( 300, n * 4 );
+    dst = res = funcs.get_temp_buffer( size );
     *dst++ = '"';
-    while (n-- > 0)
+    while (n-- > 0 && dst <= res + size - 9)
     {
         unsigned char c = *str++;
         switch (c)
@@ -286,9 +299,9 @@ static const char *default_dbgstr_an( const char *str, int n )
             else
             {
                 *dst++ = '\\';
-                *dst++ = '0' + ((c >> 6) & 7);
-                *dst++ = '0' + ((c >> 3) & 7);
-                *dst++ = '0' + ((c >> 0) & 7);
+                *dst++ = 'x';
+                *dst++ = hex[(c >> 4) & 0x0f];
+                *dst++ = hex[c & 0x0f];
             }
         }
     }
@@ -299,7 +312,8 @@ static const char *default_dbgstr_an( const char *str, int n )
         *dst++ = '.';
         *dst++ = '.';
     }
-    *dst = 0;
+    *dst++ = 0;
+    funcs.release_temp_buffer( res, dst - res );
     return res;
 }
 
@@ -308,21 +322,22 @@ static const char *default_dbgstr_an( const char *str, int n )
 static const char *default_dbgstr_wn( const WCHAR *str, int n )
 {
     char *dst, *res;
+    size_t size;
 
-    if (!HIWORD(str))
+    if (!((ULONG_PTR)str >> 16))
     {
         if (!str) return "(null)";
-        res = get_tmp_space( 6 );
+        res = funcs.get_temp_buffer( 6 );
         sprintf( res, "#%04x", LOWORD(str) );
         return res;
     }
     if (n == -1) n = strlenW(str);
     if (n < 0) n = 0;
-    else if (n > 200) n = 200;
-    dst = res = get_tmp_space( n * 5 + 7 );
+    size = 12 + min( 300, n * 5 );
+    dst = res = funcs.get_temp_buffer( n * 5 + 7 );
     *dst++ = 'L';
     *dst++ = '"';
-    while (n-- > 0)
+    while (n-- > 0 && dst <= res + size - 10)
     {
         WCHAR c = *str++;
         switch (c)
@@ -350,21 +365,11 @@ static const char *default_dbgstr_wn( const WCHAR *str, int n )
         *dst++ = '.';
         *dst++ = '.';
     }
-    *dst = 0;
+    *dst++ = 0;
+    funcs.release_temp_buffer( res, dst - res );
     return res;
 }
 
-
-/* default implementation of wine_dbg_vsprintf */
-static const char *default_dbg_vsprintf( const char *format, va_list args )
-{
-    static const int max_size = 200;
-
-    char *res = get_tmp_space( max_size );
-    int len = vsnprintf( res, max_size, format, args );
-    if (len == -1 || len >= max_size) res[max_size-1] = 0;
-    return res;
-}
 
 /* default implementation of wine_dbg_vprintf */
 static int default_dbg_vprintf( const char *format, va_list args )
@@ -408,16 +413,19 @@ const char *wine_dbgstr_w( const WCHAR *s )
     return funcs.dbgstr_wn( s, -1 );
 }
 
-void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs, size_t size )
+void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs,
+                               struct __wine_debug_functions *old_funcs, size_t size )
 {
-    memcpy( &funcs, new_funcs, min(sizeof(funcs),size) );
+    if (old_funcs) memcpy( old_funcs, &funcs, min(sizeof(funcs),size) );
+    if (new_funcs) memcpy( &funcs, new_funcs, min(sizeof(funcs),size) );
 }
 
 static struct __wine_debug_functions funcs =
 {
+    get_temp_buffer,
+    release_temp_buffer,
     default_dbgstr_an,
     default_dbgstr_wn,
-    default_dbg_vsprintf,
     default_dbg_vprintf,
     default_dbg_vlog
 };

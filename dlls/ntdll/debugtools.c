@@ -42,6 +42,8 @@
 
 WINE_DECLARE_DEBUG_CHANNEL(tid);
 
+static struct __wine_debug_functions default_funcs;
+
 /* ---------------------------------------------------------------------- */
 
 /* filter for page-fault exceptions */
@@ -59,7 +61,7 @@ static inline struct debug_info *get_info(void)
 }
 
 /* allocate some tmp space for a string */
-static void *gimme1(int n)
+static char *get_temp_buffer( size_t n )
 {
     struct debug_info *info = get_info();
     char *res = info->str_pos;
@@ -70,101 +72,10 @@ static void *gimme1(int n)
 }
 
 /* release extra space that we requested in gimme1() */
-static inline void release( void *ptr )
+static void release_temp_buffer( char *ptr, size_t size )
 {
     struct debug_info *info = get_info();
-    info->str_pos = ptr;
-}
-
-/* put an ASCII string into the debug buffer */
-inline static char *put_string_a( const char *src, int n )
-{
-    static const char hex[16] = "0123456789abcdef";
-    char *dst, *res;
-    size_t size;
-
-    if (n == -1) n = strlen(src);
-    if (n < 0) n = 0;
-    size = 10 + min( 300, n * 4 );
-    dst = res = gimme1( size );
-    *dst++ = '"';
-    while (n-- > 0 && dst <= res + size - 9)
-    {
-        unsigned char c = *src++;
-        switch (c)
-        {
-        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
-        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
-        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
-        case '"': *dst++ = '\\'; *dst++ = '"'; break;
-        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
-        default:
-            if (c >= ' ' && c <= 126)
-                *dst++ = c;
-            else
-            {
-                *dst++ = '\\';
-                *dst++ = 'x';
-                *dst++ = hex[(c >> 4) & 0x0f];
-                *dst++ = hex[c & 0x0f];
-            }
-        }
-    }
-    *dst++ = '"';
-    if (*src)
-    {
-        *dst++ = '.';
-        *dst++ = '.';
-        *dst++ = '.';
-    }
-    *dst++ = '\0';
-    release( dst );
-    return res;
-}
-
-/* put a Unicode string into the debug buffer */
-inline static char *put_string_w( const WCHAR *src, int n )
-{
-    char *dst, *res;
-    size_t size;
-
-    if (n == -1) n = strlenW(src);
-    if (n < 0) n = 0;
-    size = 12 + min( 300, n * 5 );
-    dst = res = gimme1( size );
-    *dst++ = 'L';
-    *dst++ = '"';
-    while (n-- > 0 && dst <= res + size - 10)
-    {
-        WCHAR c = *src++;
-        switch (c)
-        {
-        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
-        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
-        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
-        case '"': *dst++ = '\\'; *dst++ = '"'; break;
-        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
-        default:
-            if (c >= ' ' && c <= 126)
-                *dst++ = c;
-            else
-            {
-                *dst++ = '\\';
-                sprintf(dst,"%04x",c);
-                dst+=4;
-            }
-        }
-    }
-    *dst++ = '"';
-    if (*src)
-    {
-        *dst++ = '.';
-        *dst++ = '.';
-        *dst++ = '.';
-    }
-    *dst++ = '\0';
-    release( dst );
-    return res;
+    info->str_pos = ptr + size;
 }
 
 /***********************************************************************
@@ -172,25 +83,18 @@ inline static char *put_string_w( const WCHAR *src, int n )
  */
 static const char *NTDLL_dbgstr_an( const char *src, int n )
 {
-    char *res, *old_pos;
+    const char *res;
     struct debug_info *info = get_info();
-
-    if (!HIWORD(src))
-    {
-        if (!src) return "(null)";
-        res = gimme1(6);
-        sprintf(res, "#%04x", LOWORD(src) );
-        return res;
-    }
     /* save current position to restore it on exception */
-    old_pos = info->str_pos;
+    char *old_pos = info->str_pos;
+
     __TRY
     {
-        res = put_string_a( src, n );
+        res = default_funcs.dbgstr_an( src, n );
     }
     __EXCEPT(page_fault)
     {
-        release( old_pos );
+        release_temp_buffer( old_pos, 0 );
         return "(invalid)";
     }
     __ENDTRY
@@ -202,44 +106,22 @@ static const char *NTDLL_dbgstr_an( const char *src, int n )
  */
 static const char *NTDLL_dbgstr_wn( const WCHAR *src, int n )
 {
-    char *res, *old_pos;
+    const char *res;
     struct debug_info *info = get_info();
-
-    if (!HIWORD(src))
-    {
-        if (!src) return "(null)";
-        res = gimme1(6);
-        sprintf(res, "#%04x", LOWORD(src) );
-        return res;
-    }
-
     /* save current position to restore it on exception */
-    old_pos = info->str_pos;
+    char *old_pos = info->str_pos;
+
     __TRY
     {
-        res = put_string_w( src, n );
+        res = default_funcs.dbgstr_wn( src, n );
     }
     __EXCEPT(page_fault)
     {
-        release( old_pos );
+        release_temp_buffer( old_pos, 0 );
         return "(invalid)";
     }
     __ENDTRY
      return res;
-}
-
-/***********************************************************************
- *		NTDLL_dbg_vsprintf
- */
-static const char *NTDLL_dbg_vsprintf( const char *format, va_list args )
-{
-    static const int max_size = 200;
-
-    char *res = gimme1( max_size );
-    int len = vsnprintf( res, max_size, format, args );
-    if (len == -1 || len >= max_size) res[max_size-1] = 0;
-    else release( res + len + 1 );
-    return res;
 }
 
 /***********************************************************************
@@ -305,9 +187,10 @@ static int NTDLL_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_chan
 
 static const struct __wine_debug_functions funcs =
 {
+    get_temp_buffer,
+    release_temp_buffer,
     NTDLL_dbgstr_an,
     NTDLL_dbgstr_wn,
-    NTDLL_dbg_vsprintf,
     NTDLL_dbg_vprintf,
     NTDLL_dbg_vlog
 };
@@ -319,6 +202,6 @@ void debug_init(void)
 {
     extern void __wine_dbg_ntdll_init(void);
 
-    __wine_dbg_set_functions( &funcs, sizeof(funcs) );
+    __wine_dbg_set_functions( &funcs, &default_funcs, sizeof(funcs) );
     __wine_dbg_ntdll_init();  /* hack: register debug channels early */
 }
