@@ -1,0 +1,228 @@
+/*
+ * Wine command prompt
+ * Norwegian Bokmål Language Support
+ *
+ * Copyright (C) 2005 Alexander N. Sørnes <alex@thehandofagony.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
+
+STRINGTABLE
+{
+  WCMD_ATTRIB, "Hjelp til ATTRIB\n"
+  WCMD_CALL,
+"«CALL <satsvisfilnavn>» brukes i en satsvis fil for å utføre kommandoer\n\
+fra en annen satsvis fil. Når den satsvise filen avslutter, returneres\n\
+kontrollen til filen som kalte den. CALL-kommandoen kan gi parametere\n\
+til den kalte prosedyren.\n\
+\n\
+Endringer til standardkatalogen, miljøvariabler etc. gjort av den kalte\n\
+prosedyren arves av påkalleren.\n"
+
+  WCMD_CD,     "Hjelp til CD\n"
+  WCMD_CHDIR,  "Hjelp til CHDIR\n"
+
+  WCMD_CLS,    "CLS tømmer konsollskjermen\n"
+
+  WCMD_COPY,   "Hjelp til COPY\n"
+  WCMD_CTTY,   "Hjelp til CTTY\n"
+  WCMD_DATE,   "Hjelp til DATE\n"
+  WCMD_DEL,    "Hjelp til DEL\n"
+  WCMD_DIR,    "Hjelp til DIR\n"
+
+  WCMD_ECHO,
+"«ECHO <streng> viser <streng>» på den gjeldende terminalenheten.\n\
+\n\
+«ECHO ON» forårsaker at alle kommandoer i en satsvis fil vises på\n\
+terminalenheten før de kjøres.\n\
+\n\
+«ECHO OFF» reverserer effekten av en tidligere «ECHO ON» (ECHO er OFF som\n\
+standard). «ECHO OFF»-kommandoen kan hindres fra å vises ved å plassere\n\
+et @-tegn foran den.\n"
+
+  WCMD_ERASE,  "Hjelp til ERASE\n"
+
+  WCMD_FOR,
+"FOR-kommandoen brukes til å kjøre en kommando for hver fil i et sett filer.\n\
+\n\
+Syntaks: FOR %variabel IN (sett) DO kommando\n\
+\n\
+Kravet om to %-tegn når FOR brukes i en satsvis fil finnes ikke i WCMD.\n"
+
+  WCMD_GOTO,
+"GOTO-kommandoen flytter kjøringen til et annet sted i en satsvis fil.\n\
+\n\
+Merkelappen som er målet til GOTO kan være opptil 255 tegn langt,\n\
+men kan ikke inneholde mellomrom (dette er forskjellig fra andre\n\
+operativsystemer). Hvis det finnes to eller flere identiske merkelapper\n\
+i en satsvis fil, kjøres alltid den første. Å peke GOTO til en ikke-\n\
+eksisterende merkelapp avbryter kjøringen av den satsvise filen.\n\
+\n\
+GOTO har ingen effekt når den brukes interaktivt.\n"
+
+  WCMD_HELP,   "Hjelp til HELP\n"
+
+  WCMD_IF,
+"IF brukes til å kjøre en kommando på betingelser.\n\
+\n\
+Syntax:	IF [NOT] EXIST filnavn kommando\n\
+	IF [NOT] streng1==streng2 kommando\n\
+	IF [NOT] ERRORLEVEL nummer kommando\n\
+\n\
+I kommandoform nummer to må streng1 og streng2 omsluttes av doble\n\ anførselstegn. Det skiller ikke mellom store og små bokstaver.\n"
+
+  WCMD_LABEL,  "LABEL brukes for å navgi et stasjonsvolum.  \n\
+\n\
+Syntaks: LABEL [stasjon:]\n\
+Kommandoen vil be om det nye volumnavnet for stasjonen.\n\
+Du kan vise en stasjons volumnavn med VOL-kommandoen.\n"
+
+  WCMD_MD,     "Hjelp til MD\n"
+  WCMD_MKDIR,  "Hjelp til MKDIR\n"
+  WCMD_MOVE,
+"MOVE flytter en fil eller katalog til et nytt sted innenfor\n\
+filsystemet.\n\
+\n\
+Hvis elementet som flyttes er en katalog, flyttes også filene og\n\
+underkatalogene i den.\n\
+\n\
+MOVE feiler hvis den gamle og nye plasseringen har forskjellige\n\
+stasjonsbokstaver.\n"
+
+  WCMD_PATH,
+"PATH viser eller endrer WCMDs søkesti.\n\
+\n\
+Å skrive inn PATH viser den gjeldende PATH-innstillingen (dette er\n\
+i begynnelsen verdien oppgitt i filen «wine.conf»). Etterfølg PATH-\n\
+kommandoen med et nytt navn for å endre innstillingen.\n\
+\n\
+Det er også mulig å endre PATH ved å bruke miljøvariablen PATH, for\n\
+eksempel:\n\
+		PATH %PATH%;c:\\temp \n"
+
+  WCMD_PAUSE,
+"PAUSE viser meldingen 'Trykk Enter for å fortsette', og venter på at\n\ brukeren trykker Enter. Dette er hovedsakelig nyttig i satsvise filer,\n\
+for å la brukeren lese utdata fra en tidligere kommando før den ruller\n\
+vekk fra skjermen..\n"
+
+  WCMD_PROMPT,
+"PROMPT oppgir kommandolinje-klartegnet.\n\
+\n\
+Strengen som etterfølger PROMPT-kommandoen (og mellomrommet rett etter)\n\
+vises ved begynnelsen av linjen når vcmd venter på inndata.\n\
+\n\
+Følgende tegnstrenger har den spesielle betydningen som vises:\n\
+\n\
+$$   Dollar-tegn       $_   Linjemating         $b   Rørtegn sign (|)\n\
+$d   Gjeldende dato    $e   Escape              $g   Større enn-tegn\n\
+$l   Mindre enn-tegn   $n   Gjeldende stasjon   $p   Gjeldende sti\n\
+$q   Likhetstegn       $t   Gjeldende tid       $v   WCMD-versjon\n\
+\n\
+Merk at å bruke PROMPT-kommandoen uten en klartegn-streng tilbakestiller\n\
+klartegnet til standardverdien, som er arbeidskatalogen (inkludert\n\
+stasjonsbokstaven) etterfulgt av et større enn-tegn (>).\n\
+(Som en kommando PROMPT $p$g.)\n\
+\n\
+Klartegnet kan også endres ved endre miljøvariablen PROMPT, så\n\
+kommandoen «SET PROMPT=tekst» har samme effekt som «PROMPT tekst».\n"
+
+  WCMD_REM,
+"En kommandolinje som begynner med REM (etterfulgt av et mellomrom)\n\
+utfører ingen handling, og kan derfor brukes som kommantar i en satsvis\n\
+fil.\n"
+
+  WCMD_REN,    "Hjelp til REN\n"
+  WCMD_RENAME, "Hjelp til RENAME\n"
+  WCMD_RD,     "Hjelp til RD\n"
+  WCMD_RMDIR,  "Hjelp til RMDIR\n"
+
+  WCMD_SET,
+"SET viser eller endrer miljøvariablene i WCMD.\n\
+\n\
+SET uten parametere viser alle gjeldende miljøvariabler.\n\
+\n\
+Syntaksen for å opprette eller endre en miljøvariabel er:\n\
+\n\
+      SET <variabel>=<verdi>\n\
+\n\
+hvor <variabel> og <verdi> er tegnstrenger. Det må ikke være mellomrom\n\
+før likhetstegnet, og variabelnavnet kan heller ikke ha innebygde\n\
+mellomrom.\n\
+\n\
+I Wine er miljøvariablene i det underliggende operativsystemet\n\ inkludert i Win32-miljøet, og det er derfor vanligvis mange flere\n\
+verdier enn i et vanlig Win32-miljø. Vær oppmerksom på at det ikke går\n\
+an å endre mijøet i det underliggende operativsystemet fra WCMD.\n"
+
+  WCMD_SHIFT,
+"SHIFT bruker i en satsvis fil for å fjerne den første parameteren i en\n\
+liste, sånn at parameter 2 blir parameter 1 og så videre. Det har ingen\n\
+effekt hvis det brukes fra kommandolinjen.\n"
+
+  WCMD_TIME,   "Hjelp til TIME\n"
+
+  WCMD_TITLE,  "Angir tittelen for WCMD-vinduet, syntaksen er\n\
+  TITLE [streng]\n"
+
+  WCMD_TYPE,
+"«TYPE <filnavn>» kopierer <filnavn> til konsollenheten (eller et annet\n\
+sted hvis det omdirigeres). Det kontrolleres ikke om filen er leselig tekst.\n"
+
+  WCMD_VERIFY,
+"VERIFY brukes til å aktivere, deaktivere eller teste «verify»-flagget.\n\ Gyldige måter er:\n\
+\n\
+VERIFY ON	Aktiverer flagget\n\
+VERIFY OFF	Deaktiverer flagget\n\
+VERIFY		Viser ON hvis på ellerr OFF hvis av.\n\
+\n\
+«Verify»-flagget har ingen funksjon i Wine.\n"
+
+  WCMD_VER,
+"VER viser versjonnummeret til WCMD\n"
+
+  WCMD_VOL,    "Hjelp til VOL\n"
+
+  WCMD_EXIT,
+"EXIT avslutter gjeldende kommandoøkt og returnerer til operativsystemet\n\
+eller skallet WCMD ble startet fra.\n"
+
+  1000, "Innebygde kommandoer i WCMD:\n\
+ATTRIB\t\tViser eller endrer DOS-filattributter\n\
+CALL\t\tKall en satsvis fil inne i en annen\n\
+CD (CHDIR)\tBytter arbeidskatalog\n\
+CLS\t\tTømmer konsollskjermen\n\
+COPY\t\tKopierer filer\n\
+CTTY\t\tEndrer inn/ut-enhet\n\
+DATE\t\tViser eller endrer systemdatoen\n\
+DEL (ERASE)\tSletter en eller flere filer\n\
+DIR\t\tViser innholdet i en katalgo\n\
+ECHO\t\tKopierer tekst direkte til konsoll-utdataen\n\
+HELP\t\tViser en kort hjelpebeskrivelse om et emne\n\
+MD (MKDIR)\tLager en underkatalog\n\
+MOVE\t\tFlytter en eller flere filer, eller en katalogtre\n\
+PATH\t\tEndrer eller viser søkestien\n\
+PROMPT\t\tEndrer kommando-klartegnet\n\
+REN (RENAME)\tGir nytt navn til en fil\n\
+RD (RMDIR)\tSletter en underkatalog\n\
+SET\t\tAngir eller viser miljøvariabler\n\
+TIME\t\tAngir eller viser gjeldende systemtid\n\
+TITLE\t\tAngir vindustittelen for WCMD-økten\n\
+TYPE\t\tViser innholdet i en fil\n\
+VER\t\tViser WCMDs versjonnummer\n\
+VOL\t\tViser volumnavnet til en stasjon\n\
+EXIT\t\tAvslutter WCMD\n\n\
+Skriv «HELP <kommando>» for mer informasjon om kommandoene ovenfor\n"
+}

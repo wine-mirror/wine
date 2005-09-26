@@ -31,6 +31,7 @@
 #include "wineconsole_Es.rc"
 #include "wineconsole_Hu.rc"
 #include "wineconsole_Nl.rc"
+#include "wineconsole_No.rc"
 #include "wineconsole_Pl.rc"
 #include "wineconsole_Pt.rc"
 #include "wineconsole_Ru.rc"
