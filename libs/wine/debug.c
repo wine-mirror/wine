@@ -243,7 +243,7 @@ int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *chan
 static char *get_tmp_space( int size )
 {
     static char *list[32];
-    static long pos;
+    static int pos;
     char *ret;
     int idx;
 

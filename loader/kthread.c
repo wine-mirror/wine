@@ -166,7 +166,7 @@ static inline void writejump( const char *symbol, void *dest )
 #define TEMP_STACK_SIZE 1024
 #define NB_TEMP_STACKS  8
 static char temp_stacks[NB_TEMP_STACKS][TEMP_STACK_SIZE];
-static LONG next_temp_stack;  /* next temp stack to use */
+static int next_temp_stack;  /* next temp stack to use */
 
 /***********************************************************************
  *           get_temp_stack
@@ -543,10 +543,10 @@ int pthread_attr_setstack(pthread_attr_t *attr, void *addr, size_t size)
 int __pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
 {
     static pthread_once_t the_once = PTHREAD_ONCE_INIT;
-    long once_now;
+    int once_now;
 
     memcpy(&once_now,&the_once,sizeof(once_now));
-    if (interlocked_cmpxchg((long*)once_control, once_now+1, once_now) == once_now)
+    if (interlocked_cmpxchg((int*)once_control, once_now+1, once_now) == once_now)
         (*init_routine)();
     return 0;
 }
@@ -694,7 +694,7 @@ strong_alias(__pthread_mutexattr_gettype, pthread_mutexattr_gettype);
 
 int __pthread_key_create(pthread_key_t *key, void (*destr_function)(void *))
 {
-    static long keycnt = FIRST_KEY;
+    static int keycnt = FIRST_KEY;
     *key = interlocked_xchg_add(&keycnt, 1);
     return 0;
 }

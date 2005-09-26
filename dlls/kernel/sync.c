@@ -1919,7 +1919,7 @@ __ASM_GLOBAL_FUNC(InterlockedDecrement,
  */
 LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 {
-    return interlocked_cmpxchg( dest, xchg, compare );
+    return interlocked_cmpxchg( (int *)dest, xchg, compare );
 }
 
 /***********************************************************************
@@ -1936,7 +1936,7 @@ LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG com
  */
 LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
 {
-    return interlocked_xchg( dest, val );
+    return interlocked_xchg( (int *)dest, val );
 }
 
 /***********************************************************************
@@ -1953,7 +1953,7 @@ LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
  */
 LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
 {
-    return interlocked_xchg_add( dest, incr );
+    return interlocked_xchg_add( (int *)dest, incr );
 }
 
 /***********************************************************************
@@ -1969,7 +1969,7 @@ LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
  */
 LONG WINAPI InterlockedIncrement( LONG volatile *dest )
 {
-    return interlocked_xchg_add( dest, 1 ) + 1;
+    return interlocked_xchg_add( (int *)dest, 1 ) + 1;
 }
 
 /***********************************************************************
@@ -1985,7 +1985,7 @@ LONG WINAPI InterlockedIncrement( LONG volatile *dest )
  */
 LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 {
-    return interlocked_xchg_add( dest, -1 ) - 1;
+    return interlocked_xchg_add( (int *)dest, -1 ) - 1;
 }
 
 #endif  /* __i386__ */

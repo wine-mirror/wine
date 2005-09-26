@@ -55,7 +55,7 @@ struct change
     struct list    entry;    /* entry in global change notifications list */
     int            subtree;  /* watch all the subtree */
     unsigned int   filter;   /* notification filter */
-    long           notified; /* SIGIO counter */
+    int            notified; /* SIGIO counter */
     long           signaled; /* the file changed */
 };
 

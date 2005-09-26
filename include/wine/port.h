@@ -383,15 +383,15 @@ extern int spawnvp(int mode, const char *cmdname, const char * const argv[]);
 
 #if defined(__i386__) && defined(__GNUC__)
 
-extern inline long interlocked_cmpxchg( long *dest, long xchg, long compare );
+extern inline int interlocked_cmpxchg( int *dest, int xchg, int compare );
 extern inline void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
-extern inline long interlocked_xchg( long *dest, long val );
+extern inline int interlocked_xchg( int *dest, int val );
 extern inline void *interlocked_xchg_ptr( void **dest, void *val );
-extern inline long interlocked_xchg_add( long *dest, long incr );
+extern inline int interlocked_xchg_add( int *dest, int incr );
 
-extern inline long interlocked_cmpxchg( long *dest, long xchg, long compare )
+extern inline int interlocked_cmpxchg( int *dest, int xchg, int compare )
 {
-    long ret;
+    int ret;
     __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
                           : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
     return ret;
@@ -405,9 +405,9 @@ extern inline void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *comp
     return ret;
 }
 
-extern inline long interlocked_xchg( long *dest, long val )
+extern inline int interlocked_xchg( int *dest, int val )
 {
-    long ret;
+    int ret;
     __asm__ __volatile__( "lock; xchgl %0,(%1)"
                           : "=r" (ret) : "r" (dest), "0" (val) : "memory" );
     return ret;
@@ -421,9 +421,9 @@ extern inline void *interlocked_xchg_ptr( void **dest, void *val )
     return ret;
 }
 
-extern inline long interlocked_xchg_add( long *dest, long incr )
+extern inline int interlocked_xchg_add( int *dest, int incr )
 {
-    long ret;
+    int ret;
     __asm__ __volatile__( "lock; xaddl %0,(%1)"
                           : "=r" (ret) : "r" (dest), "0" (incr) : "memory" );
     return ret;
@@ -431,11 +431,11 @@ extern inline long interlocked_xchg_add( long *dest, long incr )
 
 #else  /* __i386___ && __GNUC__ */
 
-extern long interlocked_cmpxchg( long *dest, long xchg, long compare );
+extern int interlocked_cmpxchg( int *dest, int xchg, int compare );
 extern void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
-extern long interlocked_xchg( long *dest, long val );
+extern int interlocked_xchg( int *dest, int val );
 extern void *interlocked_xchg_ptr( void **dest, void *val );
-extern long interlocked_xchg_add( long *dest, long incr );
+extern int interlocked_xchg_add( int *dest, int incr );
 
 #endif  /* __i386___ && __GNUC__ */
 

@@ -55,7 +55,7 @@ __ASM_GLOBAL_FUNC(interlocked_xchg_add,
 
 #elif defined(_MSC_VER)
 
-__declspec(naked) long interlocked_cmpxchg( long *dest, long xchg, long compare )
+__declspec(naked) int interlocked_cmpxchg( int *dest, int xchg, int compare )
 {
     __asm mov eax, 12[esp];
     __asm mov ecx, 8[esp];
@@ -73,7 +73,7 @@ __declspec(naked) void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *
     __asm ret;
 }
 
-__declspec(naked) long interlocked_xchg( long *dest, long val )
+__declspec(naked) int interlocked_xchg( int *dest, int val )
 {
     __asm mov eax, 8[esp];
     __asm mov edx, 4[esp];
@@ -89,7 +89,7 @@ __declspec(naked) void *interlocked_xchg_ptr( void **dest, void *val )
     __asm ret;
 }
 
-__declspec(naked) long interlocked_xchg_add( long *dest, long incr )
+__declspec(naked) int interlocked_xchg_add( int *dest, int incr )
 {
     __asm mov eax, 8[esp];
     __asm mov edx, 4[esp];
@@ -133,8 +133,8 @@ __ASM_GLOBAL_FUNC(interlocked_xchg_add,
 #elif defined(__powerpc__)
 void* interlocked_cmpxchg_ptr( void **dest, void* xchg, void* compare)
 {
-    long ret = 0;
-    long scratch;
+    void *ret = 0;
+    void *scratch;
     __asm__ __volatile__(
         "0:    lwarx %0,0,%2\n"
         "      xor. %1,%4,%0\n"
@@ -146,13 +146,13 @@ void* interlocked_cmpxchg_ptr( void **dest, void* xchg, void* compare)
         : "=&r"(ret), "=&r"(scratch)
         : "r"(dest), "r"(xchg), "r"(compare)
         : "cr0","memory");
-    return (void*)ret;
+    return ret;
 }
 
-long interlocked_cmpxchg( long *dest, long xchg, long compare)
+int interlocked_cmpxchg( int *dest, int xchg, int compare)
 {
-    long ret = 0;
-    long scratch;
+    int ret = 0;
+    int scratch;
     __asm__ __volatile__(
         "0:    lwarx %0,0,%2\n"
         "      xor. %1,%4,%0\n"
@@ -167,10 +167,10 @@ long interlocked_cmpxchg( long *dest, long xchg, long compare)
     return ret;
 }
 
-long interlocked_xchg_add( long *dest, long incr )
+int interlocked_xchg_add( int *dest, int incr )
 {
-    long ret = 0;
-    long zero = 0;
+    int ret = 0;
+    int zero = 0;
     __asm__ __volatile__(
         "0:    lwarx %0, %3, %1\n"
         "      add %0, %2, %0\n"
@@ -184,9 +184,9 @@ long interlocked_xchg_add( long *dest, long incr )
     return ret-incr;
 }
 
-long interlocked_xchg( long* dest, long val )
+int interlocked_xchg( int* dest, int val )
 {
-    long ret = 0;
+    int ret = 0;
     __asm__ __volatile__(
         "0:    lwarx %0,0,%1\n"
         "      stwcx. %2,0,%1\n"
@@ -226,7 +226,7 @@ void* interlocked_xchg_ptr( void** dest, void* val )
 #include <synch.h>
 static lwp_mutex_t interlocked_mutex = DEFAULTMUTEX;
 
-long interlocked_cmpxchg( long *dest, long xchg, long compare )
+int interlocked_cmpxchg( int *dest, int xchg, int compare )
 {
     _lwp_mutex_lock( &interlocked_mutex );
     if (*dest == compare) *dest = xchg;
@@ -244,9 +244,9 @@ void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
     return compare;
 }
 
-long interlocked_xchg( long *dest, long val )
+int interlocked_xchg( int *dest, int val )
 {
-    long retv;
+    int retv;
     _lwp_mutex_lock( &interlocked_mutex );
     retv = *dest;
     *dest = val;
@@ -256,7 +256,7 @@ long interlocked_xchg( long *dest, long val )
 
 void *interlocked_xchg_ptr( void **dest, void *val )
 {
-    long retv;
+    void *retv;
     _lwp_mutex_lock( &interlocked_mutex );
     retv = *dest;
     *dest = val;
@@ -264,9 +264,9 @@ void *interlocked_xchg_ptr( void **dest, void *val )
     return retv;
 }
 
-long interlocked_xchg_add( long *dest, long incr )
+int interlocked_xchg_add( int *dest, int incr )
 {
-    long retv;
+    int retv;
     _lwp_mutex_lock( &interlocked_mutex );
     retv = *dest;
     *dest += incr;
