@@ -1491,17 +1491,22 @@ BOOL WINAPI GetCommState(
 
      fd = get_comm_fd( handle, GENERIC_READ );
      if (fd < 0) return FALSE;
-     if (tcgetattr(fd, &port) == -1
-#ifdef TIOCMGET
-             || ioctl(fd, TIOCMGET, &stat) == -1
-#endif
-             ) {
+     if (tcgetattr(fd, &port) == -1) {
                 int save_error=errno;
-                ERR("tcgetattr or ioctl error '%s'\n", strerror(save_error));
+                ERR("tcgetattr error '%s'\n", strerror(save_error));
                 COMM_SetCommError(handle,CE_IOE);
                 release_comm_fd( handle, fd );
 		return FALSE;
 	}
+	
+#ifdef TIOCMGET
+     if (ioctl(fd, TIOCMGET, &stat) == -1)
+     {
+          int save_error=errno;
+          WARN("ioctl error '%s'\n", strerror(save_error));
+          stat = DTR_CONTROL_ENABLE | RTS_CONTROL_ENABLE;
+     }
+#endif
      release_comm_fd( handle, fd );
 #ifndef __EMX__
 #ifdef CBAUD
