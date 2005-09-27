@@ -339,8 +339,7 @@ struct get_process_info_reply
     process_id_t ppid;
     int          exit_code;
     int          priority;
-    int          process_affinity;
-    int          system_affinity;
+    int          affinity;
     void*        peb;
 };
 
@@ -4207,6 +4206,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 193
+#define SERVER_PROTOCOL_VERSION 194
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

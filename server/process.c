@@ -1034,8 +1034,7 @@ DECL_HANDLER(get_process_info)
         reply->ppid             = process->parent ? get_process_id( process->parent ) : 0;
         reply->exit_code        = process->exit_code;
         reply->priority         = process->priority;
-        reply->process_affinity = process->affinity;
-        reply->system_affinity  = 1;
+        reply->affinity         = process->affinity;
         reply->peb              = process->peb;
         release_object( process );
     }

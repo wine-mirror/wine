@@ -309,8 +309,7 @@ struct security_descriptor
     process_id_t ppid;             /* server process id of parent */
     int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
-    int          process_affinity; /* process affinity mask */
-    int          system_affinity;  /* system affinity mask */
+    int          affinity;         /* process affinity mask */
     void*        peb;              /* PEB address in process address space */
 @END
 

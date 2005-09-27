@@ -699,8 +699,7 @@ static void dump_get_process_info_reply( const struct get_process_info_reply *re
     fprintf( stderr, " ppid=%04x,", req->ppid );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
-    fprintf( stderr, " process_affinity=%d,", req->process_affinity );
-    fprintf( stderr, " system_affinity=%d,", req->system_affinity );
+    fprintf( stderr, " affinity=%d,", req->affinity );
     fprintf( stderr, " peb=%p", req->peb );
 }
 

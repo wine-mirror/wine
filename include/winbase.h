@@ -1559,7 +1559,7 @@ BOOL        WINAPI GetPrivateProfileStructA(LPCSTR,LPCSTR,LPVOID,UINT,LPCSTR);
 BOOL        WINAPI GetPrivateProfileStructW(LPCWSTR,LPCWSTR,LPVOID,UINT,LPCWSTR);
 #define     GetPrivateProfileStruct WINELIB_NAME_AW(GetPrivateProfileStruct)
 FARPROC     WINAPI GetProcAddress(HMODULE,LPCSTR);
-BOOL        WINAPI GetProcessAffinityMask(HANDLE,PDWORD,PDWORD);
+BOOL        WINAPI GetProcessAffinityMask(HANDLE,PDWORD_PTR,PDWORD_PTR);
 DWORD       WINAPI GetProcessHeaps(DWORD,PHANDLE);
 DWORD       WINAPI GetProcessId(HANDLE);
 BOOL        WINAPI GetProcessIoCounters(HANDLE,PIO_COUNTERS);

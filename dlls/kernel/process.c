@@ -2676,16 +2676,16 @@ DWORD WINAPI GetPriorityClass(HANDLE hProcess)
  */
 BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD_PTR affmask )
 {
-    BOOL ret;
-    SERVER_START_REQ( set_process_info )
+    NTSTATUS status;
+
+    status = NtSetInformationProcess(hProcess, ProcessAffinityMask,
+                                     &affmask, sizeof(DWORD_PTR));
+    if (!status)
     {
-        req->handle   = hProcess;
-        req->affinity = affmask;
-        req->mask     = SET_PROCESS_INFO_AFFINITY;
-        ret = !wine_server_call_err( req );
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-    SERVER_END_REQ;
-    return ret;
+    return TRUE;
 }
 
 
@@ -2693,22 +2693,24 @@ BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD_PTR affmask )
  *          GetProcessAffinityMask    (KERNEL32.@)
  */
 BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess,
-                                      LPDWORD lpProcessAffinityMask,
-                                      LPDWORD lpSystemAffinityMask )
+                                    PDWORD_PTR lpProcessAffinityMask,
+                                    PDWORD_PTR lpSystemAffinityMask )
 {
-    BOOL ret = FALSE;
-    SERVER_START_REQ( get_process_info )
+    PROCESS_BASIC_INFORMATION   pbi;
+    NTSTATUS                    status;
+
+    status = NtQueryInformationProcess(hProcess,
+                                       ProcessBasicInformation,
+                                       &pbi, sizeof(pbi), NULL);
+    if (status)
     {
-        req->handle = hProcess;
-        if (!wine_server_call_err( req ))
-        {
-            if (lpProcessAffinityMask) *lpProcessAffinityMask = reply->process_affinity;
-            if (lpSystemAffinityMask) *lpSystemAffinityMask = reply->system_affinity;
-            ret = TRUE;
-        }
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-    SERVER_END_REQ;
-    return ret;
+    if (lpProcessAffinityMask) *lpProcessAffinityMask = pbi.AffinityMask;
+    /* FIXME */
+    if (lpSystemAffinityMask)  *lpSystemAffinityMask = 1;
+    return TRUE;
 }
 
 
