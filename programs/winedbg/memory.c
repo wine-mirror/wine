@@ -151,7 +151,11 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
     ADDRESS             addr;
     void               *linear;
 
-    if (lvalue->type.id == dbg_itype_none) addr = lvalue->addr;
+    if (lvalue->type.id == dbg_itype_none)
+    {
+        be_cpu->build_addr(dbg_curr_thread->handle, &dbg_context,
+                           &addr, lvalue->addr.Segment, lvalue->addr.Offset);
+    }
     else
     {
         addr.Mode = AddrModeFlat;
@@ -638,8 +642,16 @@ void memory_disassemble(const struct dbg_lvalue* xstart,
     {
         if (xstart)
         {
-            last.Mode = AddrModeFlat;
-            last.Offset = types_extract_as_integer(xstart);
+            if (xstart->type.id == dbg_itype_none)
+            {
+                be_cpu->build_addr(dbg_curr_thread->handle, &dbg_context,
+                                   &last, xstart->addr.Segment, xstart->addr.Offset);
+            }
+            else
+            {
+                last.Mode = AddrModeFlat;
+                last.Offset = types_extract_as_integer( xstart );
+            }
         }
         if (xend) 
             stop = types_extract_as_integer(xend);
