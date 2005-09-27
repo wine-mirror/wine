@@ -49,19 +49,27 @@ C_SRCS = \
 	winstation.c
 
 PROGRAMS = wineserver
+MANPAGES = wineserver.man
 
-all: $(PROGRAMS)
+all: $(PROGRAMS) $(MANPAGES)
 
 @MAKE_RULES@
 
 wineserver: $(OBJS)
 	$(CC) -o $(PROGRAMS) $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LDFLAGS) $(LIBS)
 
-install:: $(PROGRAMS)
-	$(MKINSTALLDIRS) $(bindir)
+wineserver.man: wineserver.man.in
+	sed -e 's,@bindir\@,$(bindir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wineserver.man.in >$@ || ($(RM) $@ && false)
+
+install:: $(PROGRAMS) $(MANPAGES)
+	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_PROGRAM) wineserver $(bindir)/wineserver
+	$(INSTALL_DATA) wineserver.man $(mandir)/man$(prog_manext)/wineserver.$(prog_manext)
 
 uninstall::
-	$(RM) $(bindir)/wineserver
+	$(RM) $(bindir)/wineserver $(mandir)/man$(prog_manext)/wineserver.$(prog_manext)
+
+clean::
+	$(RM) $(MANPAGES)
 
 ### Dependencies:
