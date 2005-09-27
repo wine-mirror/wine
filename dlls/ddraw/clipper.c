@@ -157,6 +157,13 @@ HRESULT WINAPI Main_DirectDrawClipper_GetClipList(
             HRGN hRgn = CreateRectRgn(0,0,0,0);
             if (GetRandomRgn(hDC, hRgn, SYSRGN))
             {
+                if (GetVersion() & 0x80000000)
+                {
+                    /* map region to screen coordinates */
+                    POINT org;
+                    GetDCOrgEx( hDC, &org );
+                    OffsetRgn( hRgn, org.x, org.y );
+                }
                 if (lpRect)
                 {
                     HRGN hRgnClip = CreateRectRgn(lpRect->left, lpRect->top,
