@@ -127,8 +127,8 @@ static void handle_table_dump( struct object *obj, int verbose )
     for (i = 0; i <= table->last; i++, entry++)
     {
         if (!entry->ptr) continue;
-        fprintf( stderr, "%9u: %p %08x ",
-                 (unsigned int)index_to_handle(i), entry->ptr, entry->access );
+        fprintf( stderr, "    %p: %p %08x ",
+                 index_to_handle(i), entry->ptr, entry->access );
         entry->ptr->ops->dump( entry->ptr, 0 );
     }
 }
