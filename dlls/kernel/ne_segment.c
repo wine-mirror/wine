@@ -385,16 +385,19 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                                                            0xff00 - sizeof(STACK16FRAME));
 
         hFile16 = NE_OpenFile( pModule );
-        TRACE_(dll)("CallLoadAppSegProc(hmodule=0x%04x,hf=%x,segnum=%d\n",
+        TRACE_(dll)("Call LoadAppSegProc(hmodule=0x%04x,hf=%x,segnum=%d)\n",
                     pModule->self,hFile16,segnum );
         args[2] = pModule->self;
         args[1] = hFile16;
         args[0] = segnum;
         WOWCallback16Ex( (DWORD)selfloadheader->LoadAppSeg, WCB16_PASCAL, sizeof(args), args, &ret );
         pSeg->hSeg = LOWORD(ret);
-	TRACE_(dll)("Ret CallLoadAppSegProc: hSeg = 0x%04x\n", pSeg->hSeg);
+        TRACE_(dll)("Ret LoadAppSegProc: hSeg=0x%04x\n", pSeg->hSeg);
         _lclose16( hFile16 );
         NtCurrentTeb()->WOW32Reserved = oldstack;
+
+        pSeg->flags |= NE_SEGFLAGS_LOADED;
+        return TRUE;
     }
     else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
     {
@@ -539,47 +542,45 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
     bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->ne_enttab);
 
     do {
-	TRACE("num_entries: %d, bundle: %p, next: %04x, pSeg: %p\n", bundle->last - bundle->first, bundle, bundle->next, pSeg);
-	if (!(num_entries = bundle->last - bundle->first))
-	    return;
-	entry = (ET_ENTRY *)((BYTE *)bundle+6);
-	while (num_entries--)
-    {
-	    /*TRACE("entry: %p, entry->segnum: %d, entry->offs: %04x\n", entry, entry->segnum, entry->offs);*/
-	    if (entry->segnum == segnum)
+        TRACE("num_entries: %d, bundle: %p, next: %04x, pSeg: %p\n", bundle->last - bundle->first, bundle, bundle->next, pSeg);
+        if (!(num_entries = bundle->last - bundle->first))
+            return;
+        entry = (ET_ENTRY *)((BYTE *)bundle+6);
+        while (num_entries--)
         {
-		pFunc = ((BYTE *)pSeg+entry->offs);
-		TRACE("pFunc: %p, *(DWORD *)pFunc: %08lx, num_entries: %d\n", pFunc, *(DWORD *)pFunc, num_entries);
-		if (*(pFunc+2) == 0x90)
-        {
-		    if (*(WORD *)pFunc == 0x581e) /* push ds, pop ax */
-		    {
-			TRACE("patch %04x:%04x -> mov ax, ds\n", sel, entry->offs);
-			*(WORD *)pFunc = 0xd88c; /* mov ax, ds */
-        }
-
-		    if (*(WORD *)pFunc == 0xd88c)
-                        {
-			if ((entry->flags & 2)) /* public data ? */
-                        {
-			    TRACE("patch %04x:%04x -> mov ax, dgroup [%04x]\n", sel, entry->offs, dgroup);
-			    *pFunc = 0xb8; /* mov ax, */
-			    *(WORD *)(pFunc+1) = dgroup;
-                    }
-                    else
-			if ((pModule->ne_flags & NE_FFLAGS_MULTIPLEDATA)
-			&& (entry->flags & 1)) /* exported ? */
+            /*TRACE("entry: %p, entry->segnum: %d, entry->offs: %04x\n", entry, entry->segnum, entry->offs);*/
+            if (entry->segnum == segnum)
+            {
+                pFunc = ((BYTE *)pSeg+entry->offs);
+                TRACE("pFunc: %p, *(DWORD *)pFunc: %08lx, num_entries: %d\n", pFunc, *(DWORD *)pFunc, num_entries);
+                if (*(pFunc+2) == 0x90)
+                {
+                    if (*(WORD *)pFunc == 0x581e) /* push ds, pop ax */
                     {
-			    TRACE("patch %04x:%04x -> nop, nop\n", sel, entry->offs);
-			    *(WORD *)pFunc = 0x9090; /* nop, nop */
-			}
+                        TRACE("patch %04x:%04x -> mov ax, ds\n", sel, entry->offs);
+                        *(WORD *)pFunc = 0xd88c; /* mov ax, ds */
                     }
-		}
+
+                    if (*(WORD *)pFunc == 0xd88c)
+                    {
+                        if ((entry->flags & 2)) /* public data ? */
+                        {
+                            TRACE("patch %04x:%04x -> mov ax, dgroup [%04x]\n", sel, entry->offs, dgroup);
+                            *pFunc = 0xb8; /* mov ax, */
+                            *(WORD *)(pFunc+1) = dgroup;
+                        }
+                        else if ((pModule->ne_flags & NE_FFLAGS_MULTIPLEDATA)
+                                 && (entry->flags & 1)) /* exported ? */
+                        {
+                            TRACE("patch %04x:%04x -> nop, nop\n", sel, entry->offs);
+                            *(WORD *)pFunc = 0x9090; /* nop, nop */
+                        }
+                    }
+                }
             }
-	    entry++;
-	}
-    } while ( (bundle->next)
-	 && (bundle = ((ET_BUNDLE *)((BYTE *)pModule + bundle->next))) );
+            entry++;
+        }
+    } while ( (bundle->next) && (bundle = ((ET_BUNDLE *)((BYTE *)pModule + bundle->next))) );
 }
 
 
