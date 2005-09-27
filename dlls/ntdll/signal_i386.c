@@ -296,31 +296,32 @@ typedef struct
 # include <sys/types.h>
 # include <signal.h>
 
-typedef siginfo_t siginfo;
-typedef struct sigcontext SIGCONTEXT;
+typedef ucontext_t SIGCONTEXT;
 
-#define EAX_sig(context)     ((context)->sc_eax)
-#define EBX_sig(context)     ((context)->sc_ebx)
-#define ECX_sig(context)     ((context)->sc_ecx)
-#define EDX_sig(context)     ((context)->sc_edx)
-#define ESI_sig(context)     ((context)->sc_esi)
-#define EDI_sig(context)     ((context)->sc_edi)
-#define EBP_sig(context)     ((context)->sc_ebp)
+#define EAX_sig(context)     ((context)->uc_mcontext->sc.sc_eax)
+#define EBX_sig(context)     ((context)->uc_mcontext->sc.sc_ebx)
+#define ECX_sig(context)     ((context)->uc_mcontext->sc.sc_ecx)
+#define EDX_sig(context)     ((context)->uc_mcontext->sc.sc_edx)
+#define ESI_sig(context)     ((context)->uc_mcontext->sc.sc_esi)
+#define EDI_sig(context)     ((context)->uc_mcontext->sc.sc_edi)
+#define EBP_sig(context)     ((context)->uc_mcontext->sc.sc_ebp)
 
-#define CS_sig(context)      ((context)->sc_cs)
-#define DS_sig(context)      ((context)->sc_ds)
-#define ES_sig(context)      ((context)->sc_es)
-#define FS_sig(context)      ((context)->sc_fs)
-#define GS_sig(context)      ((context)->sc_gs)
-#define SS_sig(context)      ((context)->sc_ss)
+#define CS_sig(context)      ((context)->uc_mcontext->sc.sc_cs)
+#define DS_sig(context)      ((context)->uc_mcontext->sc.sc_ds)
+#define ES_sig(context)      ((context)->uc_mcontext->sc.sc_es)
+#define FS_sig(context)      ((context)->uc_mcontext->sc.sc_fs)
+#define GS_sig(context)      ((context)->uc_mcontext->sc.sc_gs)
+#define SS_sig(context)      ((context)->uc_mcontext->sc.sc_ss)
 
-#define EFL_sig(context)     ((context)->sc_eflags)
+#define EFL_sig(context)     ((context)->uc_mcontext->sc.sc_eflags)
 
-#define EIP_sig(context)     (*((unsigned long*)&(context)->sc_eip))
-#define ESP_sig(context)     (*((unsigned long*)&(context)->sc_esp))
+#define EIP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->sc.sc_eip))
+#define ESP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->sc.sc_esp))
 
-# define HANDLER_DEF(name) void name( int __signal, siginfo *__siginfo, SIGCONTEXT *__context )
-# define HANDLER_CONTEXT (__context)
+#define HANDLER_DEF(name) void name( int __signal, siginfo_t *__siginfo, SIGCONTEXT *__context )
+#define HANDLER_CONTEXT (__context)
+
+#define FAULT_ADDRESS        (__siginfo->si_addr)
 
 #endif /* __APPLE__ */
 
@@ -1210,7 +1211,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
 
 #if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     sig_act.sa_flags = SA_RESTART;
-#elif defined (__svr4__) || defined(_SCO_DS)
+#elif defined (__svr4__) || defined(_SCO_DS) || defined(__APPLE__)
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART;
 #else
     sig_act.sa_flags = 0;
@@ -1247,6 +1248,9 @@ BOOL SIGNAL_Init(void)
     ss.ss_sp    = get_signal_stack();
     ss.ss_size  = signal_stack_size;
     ss.ss_flags = 0;
+#ifdef __APPLE__  /* work around MacOS bug */
+    ss.ss_sp = (char *)ss.ss_sp + ss.ss_size;
+#endif
     if (!sigaltstack(&ss, NULL)) have_sigaltstack = 1;
 #ifdef linux
     /* sigaltstack may fail because the kernel is too old, or
