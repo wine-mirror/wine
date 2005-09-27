@@ -285,7 +285,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
              This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) /* DXT2/3/4/5 is 16 bytes per block */
         pLockedRect->Pitch = (This->currentDesc.Width >> 2) << 4;
     else {
-        if (NP2_REPACK == wined3d_settings.nonpower2_mode) {
+        if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & D3DUSAGE_RENDERTARGET) {
+            /* Front and back buffers are always lockes/unlocked on currentDesc.Width */
             pLockedRect->Pitch = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */
         } else {
             pLockedRect->Pitch = This->bytesPerPixel * This->pow2Width;
