@@ -118,7 +118,7 @@ BOOL16 VFWAPI DrawDibStart16(HDRAWDIB16 hdd, DWORD rate)
 /*************************************************************************
  *		DrawDibStop		[MSVIDEO.119]
  */
-BOOL16 DrawDibStop16(HDRAWDIB16 hdd)
+BOOL16 VFWAPI DrawDibStop16(HDRAWDIB16 hdd)
 {
     return DrawDibStop(HDRAWDIB_32(hdd));
 }
