@@ -1116,80 +1116,141 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
 #include <stdio.h>
 HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const char* filename) {
     FILE* f = NULL;
-    ULONG i;
+    UINT i, y;
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    char *allocatedMemory;
+    char *textureRow;
+    IWineD3DSwapChain *swapChain = NULL;
+    int width, height;
+    GLuint tmpTexture;
+    DWORD color;
+    /*FIXME:
+    Textures my not be stored in ->allocatedgMemory and a GlTexture
+    so we should lock the surface before saving a snapshot, or atleast check that
+    */
+    /* TODO: Compressed texture images can be obtained from the GL in uncompressed form
+    by calling GetTexImage and in compressed form by calling
+    GetCompressedTexImageARB.  Queried compressed images can be saved and
+    later reused by calling CompressedTexImage[123]DARB.  Pre-compressed
+    texture images do not need to be processed by the GL and should
+    significantly improve texture loading performance relative to uncompressed
+    images. */
+
+/* Setup the width and height to be the internal texture width and height. */
+    width  = This->pow2Width;
+    height = This->pow2Height;
+/* check to see if were a 'virtual' texture e.g. were not a pbuffer of texture were a back buffer*/
+    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapChain);
+
+    if (swapChain || This->inPBuffer) { /* if were not a real texture then read the back buffer into a real texture*/
+/* we don't want to interfere with the back buffer so read the data into a tempory texture and then save the data out of the tempory texture */
+        GLint prevRead;
+        ENTER_GL();
+        FIXME("(%p) This surface needs to be locked before a snapshot can be taken\n", This);
+        glEnable(GL_TEXTURE_2D);
+
+        glGenTextures(1, &tmpTexture);
+        glBindTexture(GL_TEXTURE_2D, tmpTexture);
+
+        glTexImage2D(GL_TEXTURE_2D,
+                        0,
+                        GL_RGBA,
+                        width,
+                        height,
+                        0/*border*/,
+                        GL_RGBA,
+                        GL_UNSIGNED_INT_8_8_8_8_REV,
+                        NULL);
+
+        glGetIntegerv(GL_READ_BUFFER, &prevRead);
+        vcheckGLcall("glGetIntegerv");
+        glReadBuffer(GL_BACK);
+        vcheckGLcall("glReadBuffer");
+        glCopyTexImage2D(GL_TEXTURE_2D,
+                            0,
+                            GL_RGBA,
+                            0,
+                            0,
+                            width,
+                            height,
+                            0);
+
+        checkGLcall("glCopyTexImage2D");
+        glReadBuffer(prevRead);
+        LEAVE_GL();
+
+    } else { /* bind the real texture */
+        IWineD3DSurface_PreLoad(iface);
+    }
+    allocatedMemory = HeapAlloc(GetProcessHeap(), 0, width  * height * 4);
+    ENTER_GL();
+    FIXME("Saving texture level %d width %d height %d\n", This->glDescription.level, width, height);
+    glGetTexImage(GL_TEXTURE_2D,
+                This->glDescription.level,
+                GL_RGBA,
+                GL_UNSIGNED_INT_8_8_8_8_REV,
+                allocatedMemory);
+    checkGLcall("glTexImage2D");
+    if (tmpTexture) {
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDeleteTextures(1, &tmpTexture);
+    }
+    LEAVE_GL();
 
     f = fopen(filename, "w+");
     if (NULL == f) {
         ERR("opening of %s failed with: %s\n", filename, strerror(errno));
         return D3DERR_INVALIDCALL;
     }
+/* Save the dat out to a TGA file because 1: it's an easy raw format, 2: it supports an alpha chanel*/
+    TRACE("(%p) opened %s with format %s\n", This, filename, debug_d3dformat(This->resource.format));
+/* TGA header */
+    fputc(0,f);
+    fputc(0,f);
+    fputc(2,f);
+    fputc(0,f);
+    fputc(0,f);
+    fputc(0,f);
+    fputc(0,f);
+    fputc(0,f);
+    fputc(0,f);
+    fputc(0,f);
+    fputc(0,f);
+    fputc(0,f);
+/* short width*/
+    fwrite(&width,2,1,f);
+/* short height */
+    fwrite(&height,2,1,f);
+/* format rgba */
+    fputc(0x20,f);
+    fputc(0x28,f);
+/* raw data */
+    /* if  the data is upside down if we've fetched it from a back buffer, so it needs flipping again to make it the correct way up*/
+    if(swapChain)
+        textureRow = allocatedMemory + (width * (height - 1) *4);
+    else
+        textureRow = allocatedMemory;
+    for (y = 0 ; y < height; y++) {
+        for (i = 0; i < width;  i++) {
+            color = *((DWORD*)textureRow);
+            fputc((color >> 16) & 0xFF, f); /* B */
+            fputc((color >>  8) & 0xFF, f); /* G */
+            fputc((color >>  0) & 0xFF, f); /* R */
+            fputc((color >> 24) & 0xFF, f); /* A */
+            textureRow += 4;
+        }
+        /* take two rows of the pointer to the texture memory */
+        if(swapChain)
+            (textureRow-= width << 3);
 
-    TRACE("opened %s with format %s\n", filename, debug_d3dformat(This->resource.format));
-
-    fprintf(f, "P6\n%u %u\n255\n", This->currentDesc.Width, This->currentDesc.Height);
-    switch (This->resource.format) {
-    case WINED3DFMT_X8R8G8B8:
-    case WINED3DFMT_A8R8G8B8:
-        {
-            DWORD color;
-            for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
-                color = ((DWORD*) This->resource.allocatedMemory)[i];
-                fputc((color >> 16) & 0xFF, f);
-                fputc((color >>  8) & 0xFF, f);
-                fputc((color >>  0) & 0xFF, f);
-            }
-        }
-        break;
-    case WINED3DFMT_R8G8B8:
-        {
-            BYTE* color;
-            for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
-                color = ((BYTE*) This->resource.allocatedMemory) + (3 * i);
-                fputc((color[0]) & 0xFF, f);
-                fputc((color[1]) & 0xFF, f);
-                fputc((color[2]) & 0xFF, f);
-            }
-        }
-        break;
-    case WINED3DFMT_A1R5G5B5:
-        {
-            WORD color;
-            for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
-                color = ((WORD*) This->resource.allocatedMemory)[i];
-                fputc(((color >> 10) & 0x1F) * 255 / 31, f);
-                fputc(((color >>  5) & 0x1F) * 255 / 31, f);
-                fputc(((color >>  0) & 0x1F) * 255 / 31, f);
-            }
-        }
-        break;
-    case WINED3DFMT_A4R4G4B4:
-        {
-            WORD color;
-            for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
-                color = ((WORD*) This->resource.allocatedMemory)[i];
-                fputc(((color >>  8) & 0x0F) * 255 / 15, f);
-                fputc(((color >>  4) & 0x0F) * 255 / 15, f);
-                fputc(((color >>  0) & 0x0F) * 255 / 15, f);
-            }
-        }
-        break;
-
-    case WINED3DFMT_R5G6B5:
-        {
-            WORD color;
-            for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
-                color = ((WORD*) This->resource.allocatedMemory)[i];
-                fputc(((color >> 11) & 0x1F) * 255 / 31, f);
-                fputc(((color >>  5) & 0x3F) * 255 / 63, f);
-                fputc(((color >>  0) & 0x1F) * 255 / 31, f);
-            }
-        }
-        break;
-    default:
-        FIXME("Unimplemented dump mode format(%u,%s)\n", This->resource.format, debug_d3dformat(This->resource.format));
     }
+    TRACE("Closing file\n");
     fclose(f);
+
+    if(swapChain) {
+        IWineD3DSwapChain_Release(swapChain);
+    }
+    HeapFree(GetProcessHeap(), 0, allocatedMemory);
     return D3D_OK;
 }
 

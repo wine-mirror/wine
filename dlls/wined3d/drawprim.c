@@ -28,6 +28,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
 
+#ifdef SHOW_FRAME_MAKEUP
+#include <stdio.h>
+#endif
+
 #if 0 /* TODO */
 extern IWineD3DVertexShaderImpl*            VertexShaders[64];
 extern IWineD3DVertexDeclarationImpl*       VertexShaderDeclarations[64];
@@ -2058,34 +2062,42 @@ void drawPrimitive(IWineD3DDevice *iface,
     TRACE("Done all gl drawing\n");
 
     /* Diagnostics */
-#if defined(SHOW_FRAME_MAKEUP)
+#ifdef SHOW_FRAME_MAKEUP
     {
-        if (isDumpingFrames) {
+        static long int primCounter = 0;
+        /* NOTE: set primCounter to the value reported by drawprim 
+           before you want to to write frame makeup to /tmp */
+        if (primCounter >= 0) {
             D3DLOCKED_RECT r;
             char buffer[80];
             IWineD3DSurface_LockRect(This->renderTarget, &r, NULL, D3DLOCK_READONLY);
-            sprintf(buffer, "/tmp/backbuffer_%ld.ppm", primCounter);
+            sprintf(buffer, "/tmp/backbuffer_%ld.tga", primCounter);
             TRACE("Saving screenshot %s\n", buffer);
             IWineD3DSurface_SaveSnapshot(This->renderTarget, buffer);
             IWineD3DSurface_UnlockRect(This->renderTarget);
 
-#if defined(SHOW_TEXTURE_MAKEUP)
+#ifdef SHOW_TEXTURE_MAKEUP
            {
             IWineD3DSurface *pSur;
             int textureNo;
             for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
                 if (This->stateBlock->textures[textureNo] != NULL) {
-                    sprintf(buffer, "/tmp/texture_%ld_%d.ppm", primCounter, textureNo);
+                    sprintf(buffer, "/tmp/texture_%p_%ld_%d.tga", This->stateBlock->textures[textureNo], primCounter, textureNo);
                     TRACE("Saving texture %s\n", buffer);
-                    IWineD3DTexture_GetSurfaceLevel(This->stateBlock->textures[textureNo], 0, &pSur);
-                    IWineD3DSurface_SaveSnapshot(pSur, buffer);
-                    IWineD3DSurface_Release(pSur);
+                    if (IWineD3DBaseTexture_GetType(This->stateBlock->textures[textureNo]) == D3DRTYPE_TEXTURE) {
+                            IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)This->stateBlock->textures[textureNo], 0, &pSur);
+                            IWineD3DSurface_SaveSnapshot(pSur, buffer);
+                            IWineD3DSurface_Release(pSur);
+                    } else  {
+                        FIXME("base Texture isn't of type texture %d\n", IWineD3DBaseTexture_GetType(This->stateBlock->textures[textureNo]));
+                    }
                 }
             }
            }
 #endif
-           ++primCounter;
         }
+        TRACE("drawprim #%ld\n", primCounter);
+        ++primCounter;
     }
 #endif
 }
