@@ -76,8 +76,15 @@ struct tm {
 extern "C" {
 #endif
 
-/* FIXME: Must do something for _daylight, _dstbias, _timezone, _tzname */
+#define _daylight (*__p__daylight())
+#define _dstbias (*__p__dstbias())
+#define _timezone (*__p__timezone())
+#define _tzname (__p__tzname())
 
+int *__p__daylight(void);
+long *__p__dstbias(void);
+long *__p__timezone(void);
+char **__p__tzname(void);
 
 unsigned    _getsystime(struct tm*);
 unsigned    _setsystime(struct tm*,unsigned);

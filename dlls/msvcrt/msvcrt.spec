@@ -110,7 +110,7 @@
 @ cdecl __p__amblksiz()
 @ cdecl __p__commode()
 @ cdecl __p__daylight() MSVCRT___p__daylight
-@ stub __p__dstbias #()
+@ cdecl __p__dstbias()
 @ cdecl __p__environ()
 @ stub __p__fileinfo #()
 @ cdecl __p__fmode()
@@ -194,7 +194,7 @@
 @ extern _ctype MSVCRT__ctype
 @ cdecl _cwait(ptr long long)
 @ extern _daylight MSVCRT___daylight
-# extern _dstbias
+@ extern _dstbias MSVCRT__dstbias
 @ cdecl _dup (long)
 @ cdecl _dup2 (long long)
 @ cdecl _ecvt(double long ptr ptr)

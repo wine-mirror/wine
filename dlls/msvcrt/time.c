@@ -311,6 +311,19 @@ int *MSVCRT___p__daylight(void)
 }
 
 /*********************************************************************
+ *		_dstbias (MSVCRT.@)
+ */
+int MSVCRT__dstbias = 0;
+
+/*********************************************************************
+ *		__p_dstbias (MSVCRT.@)
+ */
+int *__p__dstbias(void)
+{
+    return &MSVCRT__dstbias;
+}
+
+/*********************************************************************
  *		_timezone (MSVCRT.@)
  */
 long MSVCRT___timezone = 0;
