@@ -29,6 +29,7 @@
 
 /* THIS FILE MUST NOT CONTAIN X11 or MESA DEFINES */
 #define XMD_H /* This is to prevent the Xmd.h inclusion bug :-/ */
+#define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #define GLX_GLXEXT_PROTOTYPES
 #include <GL/glx.h>
