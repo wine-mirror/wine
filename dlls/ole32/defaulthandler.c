@@ -1422,7 +1422,7 @@ HRESULT WINAPI OleCreateDefaultHandler(
    * This is necessary because it's the only time the non-delegating
    * IUnknown pointer can be returned to the outside.
    */
-  if (pUnkOuter && IsEqualIID(&IID_IUnknown, riid))
+  if (pUnkOuter && !IsEqualIID(&IID_IUnknown, riid))
     return CLASS_E_NOAGGREGATION;
 
   /*
