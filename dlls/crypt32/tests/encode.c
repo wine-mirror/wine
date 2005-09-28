@@ -1420,8 +1420,12 @@ static void test_decodeBasicConstraints(DWORD dwEncoding)
 /* These are terrible public keys of course, I'm just testing encoding */
 static const BYTE modulus1[] = { 0,0,0,1,1,1,1,1 };
 static const BYTE modulus2[] = { 1,1,1,1,1,0,0,0 };
+static const BYTE modulus3[] = { 0x80,1,1,1,1,0,0,0 };
+static const BYTE modulus4[] = { 1,1,1,1,1,0,0,0x80 };
 static const BYTE mod1_encoded[] = { 0x30,0x0f,0x02,0x08,0x01,0x01,0x01,0x01,0x01,0x00,0x00,0x00,0x02,0x03,0x01,0x00,0x01 };
 static const BYTE mod2_encoded[] = { 0x30,0x0c,0x02,0x05,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x01,0x00,0x01 };
+static const BYTE mod3_encoded[] = { 0x30,0x0c,0x02,0x05,0x01,0x01,0x01,0x01,0x80,0x02,0x03,0x01,0x00,0x01 };
+static const BYTE mod4_encoded[] = { 0x30,0x10,0x02,0x09,0x00,0x80,0x00,0x00,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x01,0x00,0x01 };
 
 struct EncodedRSAPubKey
 {
@@ -1434,6 +1438,8 @@ struct EncodedRSAPubKey
 struct EncodedRSAPubKey rsaPubKeys[] = {
     { modulus1, sizeof(modulus1), mod1_encoded, sizeof(modulus1) },
     { modulus2, sizeof(modulus2), mod2_encoded, 5 },
+    { modulus3, sizeof(modulus3), mod3_encoded, 5 },
+    { modulus4, sizeof(modulus4), mod4_encoded, 8 },
 };
 
 static void test_encodeRsaPublicKey(DWORD dwEncoding)
@@ -1443,7 +1449,7 @@ static void test_encodeRsaPublicKey(DWORD dwEncoding)
     RSAPUBKEY *rsaPubKey = (RSAPUBKEY *)(toEncode + sizeof(BLOBHEADER));
     BOOL ret;
     BYTE *buf = NULL;
-    DWORD bufSize = 0;
+    DWORD bufSize = 0, i;
 
     /* Try with a bogus blob type */
     hdr->bType = 2;
@@ -1501,19 +1507,24 @@ static void test_encodeRsaPublicKey(DWORD dwEncoding)
         ok(!memcmp(buf, rsaPubKeys[0].encoded, bufSize), "Unexpected value\n");
         LocalFree(buf);
     }
-    /* Finally, all valid, but change the modulus */
+    /* Finally, all valid */
     hdr->aiKeyAlg = CALG_RSA_KEYX;
-    memcpy(toEncode + sizeof(BLOBHEADER) + sizeof(RSAPUBKEY), modulus2,
-     sizeof(modulus2));
-    ret = CryptEncodeObjectEx(dwEncoding, RSA_CSP_PUBLICKEYBLOB,
-     toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
-     &bufSize);
-    if (buf)
+    for (i = 0; i < sizeof(rsaPubKeys) / sizeof(rsaPubKeys[0]); i++)
     {
-        ok(bufSize == rsaPubKeys[1].encoded[1] + 2,
-         "Expected size %d, got %ld\n", rsaPubKeys[1].encoded[1] + 2, bufSize);
-        ok(!memcmp(buf, rsaPubKeys[1].encoded, bufSize), "Unexpected value\n");
-        LocalFree(buf);
+        memcpy(toEncode + sizeof(BLOBHEADER) + sizeof(RSAPUBKEY),
+         rsaPubKeys[i].modulus, rsaPubKeys[i].modulusLen);
+        ret = CryptEncodeObjectEx(dwEncoding, RSA_CSP_PUBLICKEYBLOB,
+         toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            ok(bufSize == rsaPubKeys[i].encoded[1] + 2,
+             "Expected size %d, got %ld\n", rsaPubKeys[i].encoded[1] + 2,
+             bufSize);
+            ok(!memcmp(buf, rsaPubKeys[i].encoded, bufSize),
+             "Unexpected value\n");
+            LocalFree(buf);
+        }
     }
 }
 
