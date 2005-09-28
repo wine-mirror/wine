@@ -1,4 +1,4 @@
 Makefile
 lex.yy.c
-y.tab.c
-y.tab.h
+ppy.tab.c
+ppy.tab.h

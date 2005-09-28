@@ -25,7 +25,7 @@
 #include <stdarg.h>
 
 #include "debugger.h"
-#include "y.tab.h"
+#include "dbg.tab.h"
 
 #undef YY_INPUT
 

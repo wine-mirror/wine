@@ -2,7 +2,6 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-YACCOPT   = #-v
 EXEEXT    = @EXEEXT@
 
 PROGRAMS = wmc$(EXEEXT)
@@ -16,23 +15,23 @@ C_SRCS = \
 	write.c
 
 EXTRA_SRCS = mcy.y
-EXTRA_OBJS = y.tab.o
+EXTRA_OBJS = mcy.tab.o
 
 all: $(PROGRAMS)
 
-mcl.o: y.tab.h
+mcl.o: mcy.tab.h
 
 @MAKE_RULES@
 
 wmc$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBUNICODE) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
 
-y.tab.c y.tab.h: mcy.y
-	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/mcy.y
+mcy.tab.c mcy.tab.h: mcy.y
+	$(BISON) -d -t $(SRCDIR)/mcy.y -o mcy.tab.c
 
 # hack to allow parallel make
-y.tab.h: y.tab.c
-y.tab.o: y.tab.h
+mcy.tab.h: mcy.tab.c
+mcy.tab.o: mcy.tab.h
 
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)

@@ -27,7 +27,6 @@ CFLAGS    = @CFLAGS@
 CPPFLAGS  = @CPPFLAGS@
 LIBS      = @LIBS@
 BISON     = @BISON@
-YACC      = $(BISON) -y
 LEX       = @LEX@
 LEXLIB    = @LEXLIB@
 EXEEXT    = @EXEEXT@

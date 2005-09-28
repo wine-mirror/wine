@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LEXOPT    = -Cf #-w -b
-YACCOPT   = #-v
 MODULE    = libwpp.a
 
 C_SRCS = \
@@ -11,7 +10,7 @@ C_SRCS = \
 	wpp.c
 
 EXTRA_SRCS = ppy.y ppl.l
-EXTRA_OBJS = y.tab.o @LEX_OUTPUT_ROOT@.o
+EXTRA_OBJS = ppy.tab.o @LEX_OUTPUT_ROOT@.o
 
 all: $(MODULE)
 
@@ -22,16 +21,16 @@ $(MODULE): $(OBJS)
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
-y.tab.c y.tab.h: ppy.y
-	$(YACC) $(YACCOPT) -ppp -d -t $(SRCDIR)/ppy.y
+ppy.tab.c ppy.tab.h: ppy.y
+	$(BISON) -ppp -d -t $(SRCDIR)/ppy.y -o ppy.tab.c
 
 # hack to allow parallel make
-y.tab.h: y.tab.c
-y.tab.o: y.tab.h
+ppy.tab.h: ppy.tab.c
+ppy.tab.o: ppy.tab.h
 
 @LEX_OUTPUT_ROOT@.c: ppl.l
 	$(LEX) $(LEXOPT) -d -Ppp -o$@ -8 $(SRCDIR)/ppl.l
 
-@LEX_OUTPUT_ROOT@.o: y.tab.h
+@LEX_OUTPUT_ROOT@.o: ppy.tab.h
 
 ### Dependencies:

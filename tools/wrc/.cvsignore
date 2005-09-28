@@ -1,7 +1,5 @@
 Makefile
 lex.yy.c
+parser.tab.c
+parser.tab.h
 wrc
-y.tab.c
-y.tab.h
-y.output
-lex.backup

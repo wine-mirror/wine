@@ -30,7 +30,7 @@
 #include "wmc.h"
 #include "lang.h"
 
-#include "y.tab.h"
+#include "mcy.tab.h"
 
 /*
  * Keywords are case insenitive. All normal input is treated as

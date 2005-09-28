@@ -1,5 +1,5 @@
 Makefile
 lex.yy.c
+parser.tab.c
+parser.tab.h
 widl
-y.tab.c
-y.tab.h

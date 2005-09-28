@@ -1,4 +1,4 @@
 Makefile
+mcy.tab.c
+mcy.tab.h
 wmc
-y.tab.c
-y.tab.h

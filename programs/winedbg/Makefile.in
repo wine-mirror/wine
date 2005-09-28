@@ -27,21 +27,21 @@ C_SRCS = \
 	winedbg.c
 
 EXTRA_SRCS = dbg.y debug.l
-EXTRA_OBJS = y.tab.o @LEX_OUTPUT_ROOT@.o
+EXTRA_OBJS = dbg.tab.o @LEX_OUTPUT_ROOT@.o
 
 @MAKE_PROG_RULES@
 
-y.tab.c y.tab.h: dbg.y
-	$(YACC) -d -t $(SRCDIR)/dbg.y
+dbg.tab.c dbg.tab.h: dbg.y
+	$(BISON) -d -t $(SRCDIR)/dbg.y -o dbg.tab.c
 
 # hack to allow parallel make
-y.tab.h: y.tab.c
-y.tab.o: y.tab.h
+dbg.tab.h: dbg.tab.c
+dbg.tab.o: dbg.tab.h
 
 @LEX_OUTPUT_ROOT@.c: debug.l
 	$(LEX) -8 -I $(SRCDIR)/debug.l
 
-@LEX_OUTPUT_ROOT@.o: y.tab.h
+@LEX_OUTPUT_ROOT@.o: dbg.tab.h
 
 install::
 	$(MKINSTALLDIRS) $(mandir)/man$(prog_manext)

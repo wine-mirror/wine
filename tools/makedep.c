@@ -452,7 +452,7 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
         *ext++ = 0;
         if (!strcmp( ext, "y" ))  /* yacc file */
         {
-            *column += fprintf( file, "y.tab.o: y.tab.c" );
+            *column += fprintf( file, "%s.tab.o: %s.tab.c", obj, obj );
         }
         else if (!strcmp( ext, "l" ))  /* lex file */
         {

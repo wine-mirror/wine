@@ -50,7 +50,7 @@ uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
 #include "parser.h"
 #include "wine/wpp.h"
 
-#include "y.tab.h"
+#include "parser.tab.h"
 
 #define YY_USE_PROTOS
 #define YY_NO_UNPUT
