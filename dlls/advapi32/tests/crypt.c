@@ -384,7 +384,7 @@ static void test_enum_providers(void)
 	DWORD providerLen;
 	DWORD type;
 	DWORD count;
-	BOOL result;
+	DWORD result;
 	DWORD notNull = 5;
 	DWORD notZeroFlags = 5;
 	
@@ -395,7 +395,10 @@ static void test_enum_providers(void)
 	}
 	
 	if (!FindProvRegVals(dwIndex, &dwType, &pszProvName, &cbName, &provCount))
-		return;
+	{
+	    trace("could not find providers in registry, skipping the test\n");
+	    return;
+	}
 	
 	/* check pdwReserved flag for NULL */
 	result = pCryptEnumProvidersA(dwIndex, &notNull, 0, &type, NULL, &providerLen);
@@ -439,12 +442,13 @@ static void test_enum_providers(void)
 	if (!(provider = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, providerLen))))
 		return;
 		
+	providerLen = 0xdeadbeef;
 	result = pCryptEnumProvidersA(dwIndex, NULL, 0, &type, provider, &providerLen);
-	ok(result && type==dwType, "expected %ld, got %ld\n", 
-		dwType, type);
-	ok(result && !strcmp(pszProvName, provider), "expected %s, got %s\n", pszProvName, provider);
-	ok(result && cbName==providerLen, "expected %ld, got %ld\n", 
-		cbName, providerLen);
+	ok(result, "expected TRUE, got %ld\n", result);
+	ok(type==dwType, "expected %ld, got %ld\n", dwType, type);
+	if (pszProvName)
+	    ok(!strcmp(pszProvName, provider), "expected %s, got %s\n", pszProvName, provider);
+	ok(cbName==providerLen, "expected %ld, got %ld\n", cbName, providerLen);
 
 	LocalFree(provider);
 }
@@ -656,7 +660,11 @@ static void test_get_default_provider(void)
 	    return;
 	}
 	
-	FindDfltProvRegVals(dwProvType, dwFlags, &pszProvName, &cbProvName);
+	if(!FindDfltProvRegVals(dwProvType, dwFlags, &pszProvName, &cbProvName))
+	{
+	    trace("could not find default provider in registry, skipping the test\n");
+	    return;
+	}
 	
 	/* check pdwReserved for NULL */
 	result = pCryptGetDefaultProviderA(provType, &notNull, flags, provName, &provNameSize);
@@ -701,9 +709,12 @@ static void test_get_default_provider(void)
 	if (!(provName = LocalAlloc(LMEM_ZEROINIT, provNameSize)))
 		return;
 	
+	provNameSize = 0xdeadbeef;
 	result = pCryptGetDefaultProviderA(provType, NULL, flags, provName, &provNameSize);
-	ok(result && !strcmp(pszProvName, provName), "expected %s, got %s\n", pszProvName, provName);
-	ok(result && provNameSize==cbProvName, "expected %ld, got %ld\n", cbProvName, provNameSize);
+	ok(result, "expected TRUE, got %ld\n", result);
+	if(pszProvName)
+	    ok(!strcmp(pszProvName, provName), "expected %s, got %s\n", pszProvName, provName);
+	ok(provNameSize==cbProvName, "expected %ld, got %ld\n", cbProvName, provNameSize);
 
 	LocalFree(provName);
 }
