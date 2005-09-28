@@ -41,7 +41,7 @@ $(MODULE): $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) Makefile.in
 
 # Rules for import libraries
 
-.PHONY: implib static_implib $(IMPLIB_OBJS:%=__static_implib__%)
+.PHONY: implib $(IMPLIB_OBJS:%=__static_implib__%)
 
 all implib: $(IMPORTLIB) $(IMPLIB_OBJS:%=__static_implib__%)
 
@@ -59,6 +59,8 @@ lib$(BASEMODULE).a: $(SPEC_DEF) $(IMPLIB_OBJS)
 	$(DLLTOOL) -k -l $@ -d $(SPEC_DEF)
 	$(AR) $@ $(IMPLIB_OBJS)
 	$(RANLIB) $@
+
+$(SUBDIRS): implib
 
 # Rules for checking that no imports are missing
 
