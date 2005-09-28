@@ -174,13 +174,16 @@ static HRESULT WINAPI DefaultHandler_NDIUnknown_QueryInterface(
     *ppvObject = (IDataObject*)&This->lpvtblIDataObject;
   else if (IsEqualIID(&IID_IRunnableObject, riid))
     *ppvObject = (IRunnableObject*)&This->lpvtblIRunnableObject;
-  else
+  else if (IsEqualIID(&IID_IPersist, riid) ||
+           IsEqualIID(&IID_IPersistStorage, riid) ||
+           IsEqualIID(&IID_IViewObject, riid) ||
+           IsEqualIID(&IID_IViewObject2, riid) ||
+           IsEqualIID(&IID_IOleCache, riid) ||
+           IsEqualIID(&IID_IOleCache2, riid))
   {
-    /*
-     * Blind aggregate the data cache to "inherit" it's interfaces.
-     */
-    if (IUnknown_QueryInterface(This->dataCache, riid, ppvObject) == S_OK)
-	return S_OK;
+    HRESULT hr = IUnknown_QueryInterface(This->dataCache, riid, ppvObject);
+    if (FAILED(hr)) FIXME("interface %s not implemented by data cache\n", debugstr_guid(riid));
+    return hr;
   }
 
   /* Check that we obtained an interface. */
@@ -511,10 +514,17 @@ static HRESULT WINAPI DefaultHandler_EnumVerbs(
 	    IEnumOLEVERB**     ppEnumOleVerb)
 {
   DefaultHandler *This = impl_from_IOleObject(iface);
+  HRESULT hr = OLE_S_USEREG;
 
   TRACE("(%p, %p)\n", iface, ppEnumOleVerb);
 
-  return OleRegEnumVerbs(&This->clsid, ppEnumOleVerb);
+  if (This->pOleDelegate)
+    hr = IOleObject_EnumVerbs(This->pOleDelegate, ppEnumOleVerb);
+
+  if (hr == OLE_S_USEREG)
+    return OleRegEnumVerbs(&This->clsid, ppEnumOleVerb);
+  else
+    return hr;
 }
 
 static HRESULT WINAPI DefaultHandler_Update(
@@ -553,6 +563,9 @@ static HRESULT WINAPI DefaultHandler_GetUserClassID(
   DefaultHandler *This = impl_from_IOleObject(iface);
 
   TRACE("(%p, %p)\n", iface, pClsid);
+
+  if (This->pOleDelegate)
+    return IOleObject_GetUserClassID(This->pOleDelegate, pClsid);
 
   /* Sanity check. */
   if (!pClsid)
@@ -754,6 +767,9 @@ static HRESULT WINAPI DefaultHandler_GetMiscStatus(
 
   TRACE("(%p, %lx, %p)\n", iface, dwAspect, pdwStatus);
 
+  if (This->pOleDelegate)
+    return IOleObject_GetMiscStatus(This->pOleDelegate, dwAspect, pdwStatus);
+
   hres = OleRegGetMiscStatus(&This->clsid, dwAspect, pdwStatus);
 
   if (FAILED(hres))
@@ -910,12 +926,20 @@ static HRESULT WINAPI DefaultHandler_QueryGetData(
  */
 static HRESULT WINAPI DefaultHandler_GetCanonicalFormatEtc(
 	    IDataObject*     iface,
-	    LPFORMATETC      pformatectIn,
+	    LPFORMATETC      pformatetcIn,
 	    LPFORMATETC      pformatetcOut)
 {
-  FIXME("(%p, %p, %p)\n", iface, pformatectIn, pformatetcOut);
+  DefaultHandler *This = impl_from_IDataObject(iface);
+  IDataObject *pDataObject;
+  HRESULT hr;
 
-  return OLE_E_NOTRUNNING;
+  TRACE("(%p, %p, %p)\n", iface, pformatetcIn, pformatetcOut);
+
+  if (!This->pOleDelegate)
+    return OLE_E_NOTRUNNING;
+
+  hr = IOleObject_QueryInterface(This->pOleDelegate, &IID_IDataObject, (void **)&pDataObject);
+  return IDataObject_GetCanonicalFormatEtc(pDataObject, pformatetcIn, pformatetcOut);
 }
 
 /************************************************************************
@@ -932,10 +956,9 @@ static HRESULT WINAPI DefaultHandler_SetData(
 	    STGMEDIUM*       pmedium,
 	    BOOL             fRelease)
 {
+  DefaultHandler *This = impl_from_IDataObject(iface);
   IDataObject* cacheDataObject = NULL;
   HRESULT      hres;
-
-  DefaultHandler *This = impl_from_IDataObject(iface);
 
   TRACE("(%p, %p, %p, %d)\n", iface, pformatetc, pmedium, fRelease);
 
