@@ -189,6 +189,53 @@ static const struct message WmSWP_MoveSeq[] = {
     { 0 }
 };
 
+/* SetWindowPos(SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|
+                SWP_NOZORDER|SWP_FRAMECHANGED)
+ * for a visible overlapped window with WS_CLIPCHILDREN style set.
+ */
+static const struct message WmSWP_FrameChanged_clip[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam|parent, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_FRAMECHANGED },
+    { WM_NCCALCSIZE, sent|wparam|parent, 1 },
+    { WM_NCPAINT, sent|parent }, /* wparam != 1 */
+    { WM_ERASEBKGND, sent|parent|optional }, /* FIXME: remove optional once Wine is fixed */
+    { WM_NCPAINT, sent }, /* wparam != 1 */
+    { WM_ERASEBKGND, sent },
+    { WM_WINDOWPOSCHANGED, sent|wparam|parent, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_FRAMECHANGED|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_PAINT, sent },
+    { 0 }
+};
+/* SetWindowPos(SWP_NOSIZE|SWP_NOMOVE|SWP_DEFERERASE|SWP_NOACTIVATE|
+                SWP_NOZORDER|SWP_FRAMECHANGED)
+ * for a visible overlapped window.
+ */
+static const struct message WmSWP_FrameChangedDeferErase[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam|parent, SWP_NOSIZE|SWP_NOMOVE|SWP_DEFERERASE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_FRAMECHANGED },
+    { WM_NCCALCSIZE, sent|wparam|parent, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam|parent, SWP_NOSIZE|SWP_NOMOVE|SWP_DEFERERASE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_FRAMECHANGED|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_PAINT, sent|parent },
+    { WM_NCPAINT, sent|beginpaint|parent }, /* wparam != 1 */
+    { WM_PAINT, sent },
+    { WM_NCPAINT, sent|beginpaint }, /* wparam != 1 */
+    { WM_ERASEBKGND, sent|beginpaint },
+    { 0 }
+};
+
+/* SetWindowPos(SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|
+                SWP_NOZORDER|SWP_FRAMECHANGED)
+ * for a visible overlapped window without WS_CLIPCHILDREN style set.
+ */
+static const struct message WmSWP_FrameChanged_noclip[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam|parent, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_FRAMECHANGED },
+    { WM_NCCALCSIZE, sent|wparam|parent, 1 },
+    { WM_NCPAINT, sent|parent }, /* wparam != 1 */
+    { WM_ERASEBKGND, sent|parent|optional }, /* FIXME: remove optional once Wine is fixed */
+    { WM_WINDOWPOSCHANGED, sent|wparam|parent, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_FRAMECHANGED|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_PAINT, sent },
+    { WM_NCPAINT, sent|beginpaint }, /* wparam != 1 */
+    { WM_ERASEBKGND, sent|beginpaint },
+    { 0 }
+};
+
 /* ShowWindow(SW_SHOW) for a not visible overlapped window */
 static const struct message WmShowOverlappedSeq[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
@@ -923,7 +970,7 @@ static const struct message WmSetMenuVisibleSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { EVENT_OBJECT_REORDER, winevent_hook|wparam|lparam, 0, 0 },
-    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_NCPAINT, sent }, /* wparam != 1 */
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_ACTIVATE, sent|optional },
@@ -932,7 +979,7 @@ static const struct message WmSetMenuVisibleSizeChangeSeq[] = {
     { WM_SIZE, sent|defwinproc },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_NCCALCSIZE, sent|wparam|optional, 1 },
-    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_NCPAINT, sent|optional }, /* wparam != 1 */
     { WM_ERASEBKGND, sent|optional },
     { 0 }
 };
@@ -940,7 +987,7 @@ static const struct message WmSetMenuVisibleSizeChangeSeq[] = {
 static const struct message WmSetMenuVisibleNoSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
     { WM_NCCALCSIZE, sent|wparam, 1 },
-    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_NCPAINT, sent }, /* wparam != 1 */
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_ACTIVATE, sent|optional },
@@ -953,7 +1000,7 @@ static const struct message WmDrawMenuBarSeq[] =
 {
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
     { WM_NCCALCSIZE, sent|wparam, 1 },
-    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_NCPAINT, sent }, /* wparam != 1 */
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
@@ -3219,14 +3266,20 @@ static void test_messages(void)
     ok (SetMenu(hwnd, 0), "SetMenu\n");
     ok_sequence(WmSetMenuNonVisibleNoSizeChangeSeq, "SetMenu:NonVisibleNoSizeChange", FALSE);
     ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow( hwnd );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     flush_sequence();
     ok (SetMenu(hwnd, 0), "SetMenu\n");
-    ok_sequence(WmSetMenuVisibleNoSizeChangeSeq, "SetMenu:VisibleNoSizeChange", TRUE);
+    ok_sequence(WmSetMenuVisibleNoSizeChangeSeq, "SetMenu:VisibleNoSizeChange", FALSE);
     ok (SetMenu(hwnd, hmenu), "SetMenu\n");
-    ok_sequence(WmSetMenuVisibleSizeChangeSeq, "SetMenu:VisibleSizeChange", TRUE);
+    ok_sequence(WmSetMenuVisibleSizeChangeSeq, "SetMenu:VisibleSizeChange", FALSE);
 
+    UpdateWindow( hwnd );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
     ok(DrawMenuBar(hwnd), "DrawMenuBar\n");
-    ok_sequence(WmDrawMenuBarSeq, "DrawMenuBar", TRUE);
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence(WmDrawMenuBarSeq, "DrawMenuBar", FALSE);
 
     DestroyWindow(hwnd);
     flush_sequence();
@@ -4001,11 +4054,53 @@ static void test_paint_messages(void)
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     ok_sequence( WmParentOnlyPaint, "WmParentOnlyPaint", FALSE );
 
+    assert( GetWindowLong(hparent, GWL_STYLE) & WS_CLIPCHILDREN );
+    UpdateWindow( hparent );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+    trace("testing SWP_FRAMECHANGED on parent with WS_CLIPCHILDREN\n");
+    RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+    SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence(WmSWP_FrameChanged_clip, "SetWindowPos:FrameChanged_clip", FALSE );
+
+    UpdateWindow( hparent );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+    trace("testing SWP_FRAMECHANGED|SWP_DEFERERASE on parent with WS_CLIPCHILDREN\n");
+    RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+    SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_DEFERERASE |
+                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence(WmSWP_FrameChangedDeferErase, "SetWindowPos:FrameChangedDeferErase", FALSE );
+
     SetWindowLong( hparent, GWL_STYLE, GetWindowLong(hparent,GWL_STYLE) & ~WS_CLIPCHILDREN );
     ok_sequence( WmSetParentStyle, "WmSetParentStyle", FALSE );
     RedrawWindow( hparent, NULL, 0, RDW_INTERNALPAINT );
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     ok_sequence( WmParentPaint, "WmParentPaint", FALSE );
+
+    assert( !(GetWindowLong(hparent, GWL_STYLE) & WS_CLIPCHILDREN) );
+    UpdateWindow( hparent );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+    trace("testing SWP_FRAMECHANGED on parent without WS_CLIPCHILDREN\n");
+    RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+    SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence(WmSWP_FrameChanged_noclip, "SetWindowPos:FrameChanged_noclip", FALSE );
+
+    UpdateWindow( hparent );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+    trace("testing SWP_FRAMECHANGED|SWP_DEFERERASE on parent without WS_CLIPCHILDREN\n");
+    RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+    SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_DEFERERASE |
+                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence(WmSWP_FrameChangedDeferErase, "SetWindowPos:FrameChangedDeferErase", FALSE );
 
     log_all_parent_messages--;
     DestroyWindow( hparent );
@@ -4675,6 +4770,36 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
 	message == WM_ENABLE ||	message == WM_ENTERIDLE ||
 	message == WM_IME_SETCONTEXT)
     {
+        switch (message)
+        {
+            case WM_ERASEBKGND:
+            {
+                RECT rc;
+                INT ret = GetClipBox((HDC)wParam, &rc);
+
+                trace("WM_ERASEBKGND: GetClipBox()=%d, (%ld,%ld-%ld,%ld)\n",
+                       ret, rc.left, rc.top, rc.right, rc.bottom);
+                break;
+            }
+
+            case WM_WINDOWPOSCHANGING:
+            case WM_WINDOWPOSCHANGED:
+            {
+                WINDOWPOS *winpos = (WINDOWPOS *)lParam;
+
+                trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
+                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+                      winpos->hwnd, winpos->hwndInsertAfter,
+                      winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+
+                /* Log only documented flags, win2k uses 0x1000 and 0x2000
+                 * in the high word for internal purposes
+                 */
+                wParam = winpos->flags & 0xffff;
+                break;
+            }
+        }
+
         msg.message = message;
         msg.flags = sent|parent|wparam|lparam;
         if (defwndproc_counter) msg.flags |= defwinproc;

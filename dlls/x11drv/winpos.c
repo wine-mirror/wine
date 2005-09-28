@@ -727,6 +727,13 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
                                 &newWindowRect, &newClientRect, orig_flags, valid_rects ))
         return FALSE;
 
+    if (!(orig_flags & SWP_SHOWWINDOW))
+    {
+        UINT rdw_flags = RDW_FRAME | RDW_ERASE;
+        if ( !(orig_flags & SWP_DEFERERASE) ) rdw_flags |= RDW_ERASENOW;
+        RedrawWindow( winpos->hwnd, NULL, NULL, rdw_flags );
+    }
+
     if( winpos->flags & SWP_HIDEWINDOW )
         HideCaret(winpos->hwnd);
     else if (winpos->flags & SWP_SHOWWINDOW)
