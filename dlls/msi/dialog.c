@@ -33,6 +33,7 @@
 #include "ocidl.h"
 #include "olectl.h"
 #include "richedit.h"
+#include "commctrl.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -115,6 +116,8 @@ static const WCHAR szComboBox[] = { 'C','o','m','b','o','B','o','x',0 };
 static const WCHAR szEdit[] = { 'E','d','i','t',0 };
 static const WCHAR szMaskedEdit[] = { 'M','a','s','k','e','d','E','d','i','t',0 };
 static const WCHAR szPathEdit[] = { 'P','a','t','h','E','d','i','t',0 };
+static const WCHAR szProgressBar[] = {
+     'P','r','o','g','r','e','s','s','B','a','r',0 };
 static const WCHAR szRadioButtonGroup[] = { 
     'R','a','d','i','o','B','u','t','t','o','n','G','r','o','u','p',0 };
 static const WCHAR szIcon[] = { 'I','c','o','n',0 };
@@ -456,7 +459,10 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     if (!ctrl)
         return;
     if( lstrcmpW(attribute, szText) )
+    {
+        ERR("Attribute %s\n", debugstr_w(attribute));
         return;
+    }
     text = MSI_RecordGetString( rec , 1 );
     SetWindowTextW( ctrl->hwnd, text );
     msi_dialog_check_messages( NULL );
@@ -1125,6 +1131,14 @@ end:
     return ret;
 }
 
+/******************** Progress Bar *****************************************/
+
+static UINT msi_dialog_progress_bar( msi_dialog *dialog, MSIRECORD *rec )
+{
+    msi_dialog_add_control( dialog, rec, PROGRESS_CLASSW, WS_VISIBLE );
+    return ERROR_SUCCESS;
+}
+
 /******************** Path Edit ********************************************/
 
 static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
@@ -1226,6 +1240,7 @@ struct control_handler msi_dialog_handler[] =
     { szEdit, msi_dialog_edit_control },
     { szMaskedEdit, msi_dialog_maskedit_control },
     { szPathEdit, msi_dialog_pathedit_control },
+    { szProgressBar, msi_dialog_progress_bar },
     { szRadioButtonGroup, msi_dialog_radiogroup_control },
     { szIcon, msi_dialog_icon_control },
 };
