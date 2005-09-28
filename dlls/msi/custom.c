@@ -633,7 +633,7 @@ static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
       'S','E','L','E','C','T',' ','`','M','e','s','s','a','g','e','`',' ',
       'F','R','O','M',' ','`','E','r','r','o','r','`',' ',
       'W','H','E','R','E',' ','`','E','r','r','o','r','`',' ','=',' ',
-      '\'','%','s','\'',0
+      '%','s',0
     };
     MSIRECORD *row = 0;
     LPWSTR deformated = NULL;
