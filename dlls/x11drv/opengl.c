@@ -593,7 +593,7 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
 
 XID create_glxpixmap(X11DRV_PDEVICE *physDev)
 {
-    return NULL;
+    return 0;
 }
 
 BOOL destroy_glxpixmap(XID glxpixmap)
