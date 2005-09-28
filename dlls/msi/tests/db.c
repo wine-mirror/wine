@@ -480,6 +480,231 @@ static void test_viewmodify(void)
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase close failed\n");
 }
 
+static MSIHANDLE create_db(void)
+{
+    MSIHANDLE hdb = 0;
+    UINT res;
+
+    DeleteFile(msifile);
+
+    /* create an empty database */
+    res = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb );
+    ok( res == ERROR_SUCCESS , "Failed to create database\n" );
+    if( res != ERROR_SUCCESS )
+        return hdb;
+
+    res = MsiDatabaseCommit( hdb );
+    ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
+
+    return hdb;
+}
+
+static void test_getcolinfo(void)
+{
+    MSIHANDLE hdb, hview = 0, rec = 0;
+    UINT r;
+    DWORD sz;
+    char buffer[0x20];
+
+    /* create an empty db */
+    hdb = create_db();
+    ok( hdb, "failed to create db\n");
+
+    /* tables should be present */
+    r = MsiDatabaseOpenView(hdb, "select * from _Tables", &hview);
+    ok( r == ERROR_SUCCESS, "failed to open query\n");
+
+    r = MsiViewExecute(hview, 0);
+    ok( r == ERROR_SUCCESS, "failed to execute query\n");
+
+    /* check that NAMES works */
+    rec = 0;
+    r = MsiViewGetColumnInfo( hview, MSICOLINFO_NAMES, &rec );
+    ok( r == ERROR_SUCCESS, "failed to get names\n");
+    sz = sizeof buffer;
+    r = MsiRecordGetString(rec, 1, buffer, &sz );
+    ok( r == ERROR_SUCCESS, "failed to get string\n");
+    ok( !strcmp(buffer,"Name"), "_Tables has wrong column name\n");
+    r = MsiCloseHandle( rec );
+    ok( r == ERROR_SUCCESS, "failed to close record handle\n");
+
+    /* check that TYPES works */
+    rec = 0;
+    r = MsiViewGetColumnInfo( hview, MSICOLINFO_TYPES, &rec );
+    ok( r == ERROR_SUCCESS, "failed to get names\n");
+    sz = sizeof buffer;
+    r = MsiRecordGetString(rec, 1, buffer, &sz );
+    ok( r == ERROR_SUCCESS, "failed to get string\n");
+    ok( !strcmp(buffer,"s64"), "_Tables has wrong column type\n");
+    r = MsiCloseHandle( rec );
+    ok( r == ERROR_SUCCESS, "failed to close record handle\n");
+
+    /* check that invalid values fail */
+    rec = 0;
+    r = MsiViewGetColumnInfo( hview, 100, &rec );
+    ok( r == ERROR_INVALID_PARAMETER, "wrong error code\n");
+    ok( rec == 0, "returned a record\n");
+
+    r = MsiViewGetColumnInfo( hview, MSICOLINFO_TYPES, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "wrong error code\n");
+
+    r = MsiViewGetColumnInfo( 0, MSICOLINFO_TYPES, &rec );
+    ok( r == ERROR_INVALID_HANDLE, "wrong error code\n");
+
+    r = MsiViewClose(hview);
+    ok( r == ERROR_SUCCESS, "failed to close view\n");
+    r = MsiCloseHandle(hview);
+    ok( r == ERROR_SUCCESS, "failed to close view handle\n");
+    r = MsiCloseHandle(hdb);
+    ok( r == ERROR_SUCCESS, "failed to close database\n");
+}
+
+static MSIHANDLE get_column_info(MSIHANDLE hdb, const char *query, MSICOLINFO type)
+{
+    MSIHANDLE hview = 0, rec = 0;
+    UINT r;
+
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    r = MsiViewExecute(hview, 0);
+    if( r == ERROR_SUCCESS )
+    {
+        MsiViewGetColumnInfo( hview, type, &rec );
+        MsiViewClose(hview);
+    }
+    MsiCloseHandle(hview);
+    return rec;
+}
+
+static UINT get_columns_table_type(MSIHANDLE hdb, const char *table, UINT field)
+{
+    MSIHANDLE hview = 0, rec = 0;
+    UINT r, type = 0;
+    char query[0x100];
+
+    sprintf(query, "select * from `_Columns` where  `Table` = '%s'", table );
+
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    r = MsiViewExecute(hview, 0);
+    if( r == ERROR_SUCCESS )
+    {
+        while (1)
+        {
+            r = MsiViewFetch( hview, &rec );
+            if( r != ERROR_SUCCESS)
+                break;
+            r = MsiRecordGetInteger( rec, 2 );
+            if (r == field)
+                type = MsiRecordGetInteger( rec, 4 );
+            MsiCloseHandle( rec );
+        }            
+
+        MsiViewClose(hview);
+    }
+    MsiCloseHandle(hview);
+    return type;
+}
+
+static BOOL check_record( MSIHANDLE rec, UINT field, LPSTR val )
+{
+    CHAR buffer[0x20];
+    UINT r;
+    DWORD sz;
+
+    sz = sizeof buffer;
+    r = MsiRecordGetString( rec, field, buffer, &sz );
+    return (r == ERROR_SUCCESS ) && !strcmp(val, buffer);
+}
+
+static void test_viewgetcolumninfo(void)
+{
+    MSIHANDLE hdb = 0, rec;
+    UINT r;
+
+    hdb = create_db();
+    ok( hdb, "failed to create db\n");
+
+    r = run_query( hdb,
+            "CREATE TABLE `Properties` "
+            "( `Property` CHAR(255), `Value` CHAR(1)  PRIMARY KEY `Property`)" );
+    ok( r == ERROR_SUCCESS , "Failed to create table\n" );
+
+    /* check the column types */
+    rec = get_column_info( hdb, "select * from `Properties`", MSICOLINFO_TYPES );
+    ok( rec, "failed to get column info record\n" );
+
+    ok( check_record( rec, 1, "S255"), "wrong record type\n");
+    ok( check_record( rec, 2, "S1"), "wrong record type\n");
+
+    MsiCloseHandle( rec );
+
+    /* check the type in _Columns */
+    ok( 0x3dff == get_columns_table_type(hdb, "Properties", 1 ), "_columns table wrong\n");
+    ok( 0x1d01 == get_columns_table_type(hdb, "Properties", 2 ), "_columns table wrong\n");
+
+    /* now try the names */
+    rec = get_column_info( hdb, "select * from `Properties`", MSICOLINFO_NAMES );
+    ok( rec, "failed to get column info record\n" );
+
+    ok( check_record( rec, 1, "Property"), "wrong record type\n");
+    ok( check_record( rec, 2, "Value"), "wrong record type\n");
+
+    MsiCloseHandle( rec );
+
+    r = run_query( hdb,
+            "CREATE TABLE `Binary` "
+            "( `Name` CHAR(255), `Data` OBJECT  PRIMARY KEY `Name`)" );
+    ok( r == ERROR_SUCCESS , "Failed to create table\n" );
+
+    /* check the column types */
+    rec = get_column_info( hdb, "select * from `Binary`", MSICOLINFO_TYPES );
+    ok( rec, "failed to get column info record\n" );
+
+    ok( check_record( rec, 1, "S255"), "wrong record type\n");
+    ok( check_record( rec, 2, "V0"), "wrong record type\n");
+
+    MsiCloseHandle( rec );
+
+    /* check the type in _Columns */
+    ok( 0x3dff == get_columns_table_type(hdb, "Binary", 1 ), "_columns table wrong\n");
+    ok( 0x1900 == get_columns_table_type(hdb, "Binary", 2 ), "_columns table wrong\n");
+
+    /* now try the names */
+    rec = get_column_info( hdb, "select * from `Binary`", MSICOLINFO_NAMES );
+    ok( rec, "failed to get column info record\n" );
+
+    ok( check_record( rec, 1, "Name"), "wrong record type\n");
+    ok( check_record( rec, 2, "Data"), "wrong record type\n");
+    MsiCloseHandle( rec );
+
+    r = run_query( hdb,
+            "CREATE TABLE `UIText` "
+            "( `Key` CHAR(72) NOT NULL, `Text` CHAR(255) LOCALIZABLE PRIMARY KEY `Key`)" );
+    ok( r == ERROR_SUCCESS , "Failed to create table\n" );
+
+    ok( 0x2d48 == get_columns_table_type(hdb, "UIText", 1 ), "_columns table wrong\n");
+    ok( 0x1fff == get_columns_table_type(hdb, "UIText", 2 ), "_columns table wrong\n");
+
+    rec = get_column_info( hdb, "select * from `UIText`", MSICOLINFO_NAMES );
+    ok( rec, "failed to get column info record\n" );
+    ok( check_record( rec, 1, "Key"), "wrong record type\n");
+    ok( check_record( rec, 2, "Text"), "wrong record type\n");
+    MsiCloseHandle( rec );
+
+    rec = get_column_info( hdb, "select * from `UIText`", MSICOLINFO_TYPES );
+    ok( rec, "failed to get column info record\n" );
+    ok( check_record( rec, 1, "s72"), "wrong record type\n");
+    ok( check_record( rec, 2, "L255"), "wrong record type\n");
+    MsiCloseHandle( rec );
+
+    MsiCloseHandle( hdb );
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -487,4 +712,6 @@ START_TEST(db)
     test_msidecomposedesc();
     test_msibadqueries();
     test_viewmodify();
+    test_viewgetcolumninfo();
+    test_getcolinfo();
 }

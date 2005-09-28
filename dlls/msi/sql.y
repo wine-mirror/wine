@@ -258,19 +258,18 @@ column_and_type:
     column column_type
         {
             $$ = $1;
-            $$->type = $2;
+            $$->type = $2 | MSITYPE_VALID;
         }
     ;
 
 column_type:
     data_type_l
         {
-            $$ = $1 | MSITYPE_VALID;
+            $$ = $1;
         }
   | data_type_l TK_LOCALIZABLE
         {
-            FIXME("LOCALIZABLE ignored\n");
-            $$ = $1 | MSITYPE_VALID;
+            $$ = $1 | MSITYPE_LOCALIZABLE;
         }
     ;
 
@@ -312,7 +311,7 @@ data_type:
         }
   | TK_OBJECT
         {
-            $$ = 0;
+            $$ = MSITYPE_STRING | MSITYPE_VALID;
         }
     ;
 

@@ -817,13 +817,13 @@ static const WCHAR szNumber[]  = { 'N','u','m','b','e','r',0 };
 static const WCHAR szType[]    = { 'T','y','p','e',0 };
 
 static const MSICOLUMNINFO _Columns_cols[4] = {
-    { szColumns, 1, szTable,  MSITYPE_VALID | MSITYPE_STRING | 32, 0 },
+    { szColumns, 1, szTable,  MSITYPE_VALID | MSITYPE_STRING | 64, 0 },
     { szColumns, 2, szNumber, MSITYPE_VALID | 2,                   2 },
-    { szColumns, 3, szName,   MSITYPE_VALID | MSITYPE_STRING | 32, 4 },
+    { szColumns, 3, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 4 },
     { szColumns, 4, szType,   MSITYPE_VALID | 2,                   6 },
 };
 static const MSICOLUMNINFO _Tables_cols[1] = {
-    { szTables,  1, szName,   MSITYPE_VALID | MSITYPE_STRING | 32, 0 },
+    { szTables,  1, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 0 },
 };
 
 static UINT get_defaulttablecolumns( LPCWSTR name, MSICOLUMNINFO *colinfo, UINT *sz)
@@ -930,7 +930,7 @@ static UINT get_tablecolumns( MSIDATABASE *db,
             colinfo[n].tablename = MSI_makestring( db, table_id );
             colinfo[n].number = table->data[ i ][ 1 ] - (1<<15);
             colinfo[n].colname = MSI_makestring( db, id );
-            colinfo[n].type = table->data[ i ] [ 3 ];
+            colinfo[n].type = table->data[ i ] [ 3 ] ^ 0x8000;
             /* this assumes that columns are in order in the table */
             if( n )
                 colinfo[n].offset = colinfo[n-1].offset

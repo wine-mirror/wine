@@ -294,8 +294,7 @@ UINT MSI_ViewFetch(MSIQUERY *query, MSIRECORD **prec)
             ERR("Error getting column type for %d\n", i );
             continue;
         }
-        if (( type != MSITYPE_BINARY) && (type != (MSITYPE_BINARY |
-                                                   MSITYPE_NULLABLE)))
+        if (!MSITYPE_IS_BINARY(type))
         {
             ret = view->ops->fetch_int( view, query->row, i, &ival );
             if( ret )
@@ -449,6 +448,29 @@ out:
     return ret;
 }
 
+static UINT msi_set_record_type_string( MSIRECORD *rec, UINT field, UINT type )
+{
+    static const WCHAR fmt[] = { '%','d',0 };
+    WCHAR szType[0x10];
+
+    if (MSITYPE_IS_BINARY(type))
+        szType[0] = 'v';
+    else if (type & MSITYPE_LOCALIZABLE)
+        szType[0] = 'l';
+    else if (type & MSITYPE_STRING)
+        szType[0] = 's';
+    else
+        szType[0] = 'i';
+    if (type & MSITYPE_NULLABLE)
+        szType[0] &= ~0x20;
+
+    sprintfW( &szType[1], fmt, (type&0xff) );
+
+    TRACE("type %04x -> %s\n", type, debugstr_w(szType) );
+
+    return MSI_RecordSetStringW( rec, field, szType );
+}
+
 UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE hView, MSICOLINFO info, MSIHANDLE *hRec)
 {
     MSIVIEW *view = NULL;
@@ -458,6 +480,12 @@ UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE hView, MSICOLINFO info, MSIHANDLE *hR
     LPWSTR name;
 
     TRACE("%ld %d %p\n", hView, info, hRec);
+
+    if( !hRec )
+        return ERROR_INVALID_PARAMETER;
+
+    if( info != MSICOLINFO_NAMES && info != MSICOLINFO_TYPES )
+        return ERROR_INVALID_PARAMETER;
 
     query = msihandle2msiinfo( hView, MSIHANDLETYPE_VIEW );
     if( !query )
@@ -492,7 +520,10 @@ UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE hView, MSICOLINFO info, MSIHANDLE *hR
         r = view->ops->get_column_info( view, i+1, &name, &type );
         if( r != ERROR_SUCCESS )
             continue;
-        MSI_RecordSetStringW( rec, i+1, name );
+        if (info == MSICOLINFO_NAMES)
+            MSI_RecordSetStringW( rec, i+1, name );
+        else
+            msi_set_record_type_string( rec, i+1, type);
         msi_free( name );
     }
 
