@@ -639,7 +639,7 @@ foreach my $file (@c_files) {
     });
 
     if($options->config_unnecessary) {
-	if($config && $conditional == 0) {
+	if($config && $conditional == 0 && !exists($include2info{"include/wine/port.h"})) {
 	    $output->write("$file: include2info config.h but do not use any conditionals\n");
 	}
     }
