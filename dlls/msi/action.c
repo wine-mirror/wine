@@ -442,6 +442,75 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
     msiobj_release(&row->hdr);
 }
 
+static UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
+{
+    LPCWSTR ptr,ptr2;
+    BOOL quote;
+    DWORD len;
+    LPWSTR prop = NULL, val = NULL;
+
+    if (!szCommandLine)
+        return ERROR_SUCCESS;
+
+    ptr = szCommandLine;
+       
+    while (*ptr)
+    {
+        if (*ptr==' ')
+        {
+            ptr++;
+            continue;
+        }
+
+        TRACE("Looking at %s\n",debugstr_w(ptr));
+
+        ptr2 = strchrW(ptr,'=');
+        if (!ptr2)
+        {
+            ERR("command line contains unknown string : %s\n", debugstr_w(ptr));
+            break;
+        }
+ 
+        quote = FALSE;
+
+        len = ptr2-ptr;
+        prop = msi_alloc((len+1)*sizeof(WCHAR));
+        memcpy(prop,ptr,len*sizeof(WCHAR));
+        prop[len]=0;
+        ptr2++;
+       
+        len = 0; 
+        ptr = ptr2; 
+        while (*ptr && (quote || (!quote && *ptr!=' ')))
+        {
+            if (*ptr == '"')
+                quote = !quote;
+            ptr++;
+            len++;
+        }
+       
+        if (*ptr2=='"')
+        {
+            ptr2++;
+            len -= 2;
+        }
+        val = msi_alloc((len+1)*sizeof(WCHAR));
+        memcpy(val,ptr2,len*sizeof(WCHAR));
+        val[len] = 0;
+
+        if (lstrlenW(prop) > 0)
+        {
+            TRACE("Found commandline property (%s) = (%s)\n", 
+                   debugstr_w(prop), debugstr_w(val));
+            MSI_SetPropertyW(package,prop,val);
+        }
+        msi_free(val);
+        msi_free(prop);
+    }
+
+    return ERROR_SUCCESS;
+}
+
 /****************************************************
  * TOP level entry points 
  *****************************************************/
@@ -493,62 +562,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
         msi_free(path);
     }
 
-    if (szCommandLine)
-    {
-        LPWSTR ptr,ptr2;
-        ptr = (LPWSTR)szCommandLine;
-       
-        while (*ptr)
-        {
-            WCHAR *prop = NULL;
-            WCHAR *val = NULL;
-
-            TRACE("Looking at %s\n",debugstr_w(ptr));
-
-            ptr2 = strchrW(ptr,'=');
-            if (ptr2)
-            {
-                BOOL quote=FALSE;
-                DWORD len = 0;
-
-                while (*ptr == ' ') ptr++;
-                len = ptr2-ptr;
-                prop = msi_alloc((len+1)*sizeof(WCHAR));
-                memcpy(prop,ptr,len*sizeof(WCHAR));
-                prop[len]=0;
-                ptr2++;
-           
-                len = 0; 
-                ptr = ptr2; 
-                while (*ptr && (quote || (!quote && *ptr!=' ')))
-                {
-                    if (*ptr == '"')
-                        quote = !quote;
-                    ptr++;
-                    len++;
-                }
-               
-                if (*ptr2=='"')
-                {
-                    ptr2++;
-                    len -= 2;
-                }
-                val = msi_alloc((len+1)*sizeof(WCHAR));
-                memcpy(val,ptr2,len*sizeof(WCHAR));
-                val[len] = 0;
-
-                if (strlenW(prop) > 0)
-                {
-                    TRACE("Found commandline property (%s) = (%s)\n", 
-                                       debugstr_w(prop), debugstr_w(val));
-                    MSI_SetPropertyW(package,prop,val);
-                }
-                msi_free(val);
-                msi_free(prop);
-            }
-            ptr++;
-        }
-    }
+    msi_parse_command_line( package, szCommandLine );
   
     sz = 10; 
     if (MSI_GetPropertyW(package,szUILevel,buffer,&sz) == ERROR_SUCCESS)
