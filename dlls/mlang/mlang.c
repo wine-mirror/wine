@@ -1254,8 +1254,24 @@ static HRESULT WINAPI fnIMLangFontLink_CodePageToCodePages(
         UINT uCodePage,
         DWORD* pdwCodePages)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink, iface);
+    CHARSETINFO cs;
+    BOOL rc; 
+
+    TRACE("(%p) Seeking %u\n",This, uCodePage);
+    memset(&cs, 0, sizeof(cs));
+
+    rc = TranslateCharsetInfo((DWORD*)uCodePage, &cs, TCI_SRCCODEPAGE);
+
+    if (rc)
+    {
+        *pdwCodePages = cs.fs.fsCsb[0];
+        TRACE("resulting CodePages 0x%lx\n",*pdwCodePages);
+    }
+    else
+        TRACE("CodePage Not Found\n");
+
+    return S_OK;
 }
 
 static HRESULT WINAPI fnIMLangFontLink_CodePagesToCodePage(
@@ -1264,8 +1280,49 @@ static HRESULT WINAPI fnIMLangFontLink_CodePagesToCodePage(
         UINT uDefaultCodePage,
         UINT* puCodePage)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink, iface);
+    DWORD mask = 0x00000000;
+    UINT i;
+    CHARSETINFO cs;
+    BOOL rc; 
+
+    TRACE("(%p) scanning  0x%lx  default page %u\n",This, dwCodePages,
+            uDefaultCodePage);
+
+    *puCodePage = 0x00000000;
+
+    rc = TranslateCharsetInfo((DWORD*)uDefaultCodePage, &cs, TCI_SRCCODEPAGE);
+  
+    if (rc && (dwCodePages & cs.fs.fsCsb[0]))
+    {
+        TRACE("Found Default Codepage\n");
+        *puCodePage = uDefaultCodePage;
+        return S_OK;
+    }
+
+    
+    for (i = 0; i < 32; i++)
+    {
+
+        mask = 1 << i;
+        if (dwCodePages & mask)
+        {
+            DWORD Csb[2];
+            Csb[0] = mask;
+            Csb[1] = 0x0;
+            rc = TranslateCharsetInfo((DWORD*)Csb, &cs, TCI_SRCFONTSIG);
+            if (!rc)
+                continue;
+
+            TRACE("Falling back to least significant found CodePage %u\n",
+                    cs.ciACP);
+            *puCodePage = cs.ciACP;
+            return S_OK;
+        }
+    }
+
+    TRACE("no codepage found\n");
+    return E_FAIL;
 }
 
 static HRESULT WINAPI fnIMLangFontLink_GetFontCodePages(
@@ -1274,8 +1331,20 @@ static HRESULT WINAPI fnIMLangFontLink_GetFontCodePages(
         HFONT hFont,
         DWORD* pdwCodePages)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HFONT old_font;
+    FONTSIGNATURE fontsig;
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink, iface);
+
+    TRACE("(%p)\n",This);
+
+    old_font = SelectObject(hDC,hFont);
+    GetTextCharsetInfo(hDC,&fontsig, 0);
+    SelectObject(hDC,old_font);
+
+    *pdwCodePages = fontsig.fsCsb[0];
+    TRACE("CodePages is 0x%lx\n",fontsig.fsCsb[0]);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI fnIMLangFontLink_MapFont(

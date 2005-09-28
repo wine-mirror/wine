@@ -606,9 +606,45 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
     IEnumScript_Release(iEnumScript);
 }
 
+void IMLangFontLink_Test(IMLangFontLink* iMLFL)
+{
+    DWORD   dwCodePages = 0;
+    DWORD   dwManyCodePages = 0;
+    UINT    CodePage = 0;
+
+    ok(IMLangFontLink_CodePageToCodePages(iMLFL, 932, &dwCodePages)==S_OK,
+            "IMLangFontLink_CodePageToCodePages failed\n");
+    ok (dwCodePages != 0, "No CodePages returned\n");
+    ok(IMLangFontLink_CodePagesToCodePage(iMLFL, dwCodePages, 1035,
+                &CodePage)==S_OK, 
+            "IMLangFontLink_CodePagesToCodePage failed\n");
+    ok(CodePage == 932, "Incorrect CodePage Returned (%i)\n",CodePage);
+
+    ok(IMLangFontLink_CodePageToCodePages(iMLFL, 1252, &dwCodePages)==S_OK,
+            "IMLangFontLink_CodePageToCodePages failed\n");
+    dwManyCodePages = dwManyCodePages | dwCodePages;
+    ok(IMLangFontLink_CodePageToCodePages(iMLFL, 1256, &dwCodePages)==S_OK,
+            "IMLangFontLink_CodePageToCodePages failed\n");
+    dwManyCodePages = dwManyCodePages | dwCodePages;
+    ok(IMLangFontLink_CodePageToCodePages(iMLFL, 874, &dwCodePages)==S_OK,
+            "IMLangFontLink_CodePageToCodePages failed\n");
+    dwManyCodePages = dwManyCodePages | dwCodePages;
+
+    ok(IMLangFontLink_CodePagesToCodePage(iMLFL, dwManyCodePages, 1256,
+                &CodePage)==S_OK, 
+            "IMLangFontLink_CodePagesToCodePage failed\n");
+    ok(CodePage == 1256, "Incorrect CodePage Returned (%i)\n",CodePage);
+
+    ok(IMLangFontLink_CodePagesToCodePage(iMLFL, dwManyCodePages, 936,
+                &CodePage)==S_OK, 
+            "IMLangFontLink_CodePagesToCodePage failed\n");
+    ok(CodePage == 1252, "Incorrect CodePage Returned (%i)\n",CodePage);
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage2 *iML2 = NULL;
+    IMLangFontLink  *iMLFL = NULL;
     HRESULT ret;
 
     pGetCPInfoExA = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetCPInfoExA");
@@ -644,5 +680,14 @@ START_TEST(mlang)
 
     IMultiLanguage2_Release(iML2);
 
+    ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_IMLangFontLink, (void **)&iMLFL);
+
+    trace("ret = %08lx, IMLangFontLink iMLFL = %p\n", ret, iMLFL);
+    if (ret != S_OK || !iML2) return;
+
+    IMLangFontLink_Test(iMLFL);
+    IMLangFontLink_Release(iMLFL);
+    
     CoUninitialize();
 }
