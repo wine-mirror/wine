@@ -2470,6 +2470,114 @@ static void test_registerOIDFunction(void)
     ok(ret, "CryptUnregisterOIDFunction failed: %ld\n", GetLastError());
 }
 
+/* Free *pInfo with HeapFree */
+static void testExportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO *pInfo)
+{
+    BOOL ret;
+    DWORD size = 0;
+    HCRYPTKEY key;
+
+    /* This crashes
+    ret = CryptExportPublicKeyInfoEx(0, 0, 0, NULL, 0, NULL, NULL, NULL);
+     */
+    ret = CryptExportPublicKeyInfoEx(0, 0, 0, NULL, 0, NULL, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+    ret = CryptExportPublicKeyInfoEx(0, AT_SIGNATURE, 0, NULL, 0, NULL, NULL,
+     &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+    ret = CryptExportPublicKeyInfoEx(0, 0, X509_ASN_ENCODING, NULL, 0, NULL,
+     NULL, &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+    ret = CryptExportPublicKeyInfoEx(0, AT_SIGNATURE, X509_ASN_ENCODING, NULL,
+     0, NULL, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+    /* Test with no key */
+    ret = CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE, X509_ASN_ENCODING, NULL,
+     0, NULL, NULL, &size);
+    ok(!ret && GetLastError() == NTE_NO_KEY, "Expected NTE_NO_KEY, got %08lx\n",
+     GetLastError());
+    ret = CryptGenKey(csp, AT_SIGNATURE, 0, &key);
+    ok(ret, "CryptGenKey failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        ret = CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE, X509_ASN_ENCODING,
+         NULL, 0, NULL, NULL, &size);
+        ok(ret, "CryptExportPublicKeyInfoEx failed: %08lx\n", GetLastError());
+        *pInfo = HeapAlloc(GetProcessHeap(), 0, size);
+        if (*pInfo)
+        {
+            ret = CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE,
+             X509_ASN_ENCODING, NULL, 0, NULL, *pInfo, &size);
+            ok(ret, "CryptExportPublicKeyInfoEx failed: %08lx\n",
+             GetLastError());
+            if (ret)
+            {
+                /* By default (we passed NULL as the OID) the OID is
+                 * szOID_RSA_RSA.
+                 */
+                ok(!strcmp((*pInfo)->Algorithm.pszObjId, szOID_RSA_RSA),
+                 "Expected %s, got %s\n", szOID_RSA_RSA,
+                 (*pInfo)->Algorithm.pszObjId);
+            }
+        }
+    }
+}
+
+static void testImportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO info)
+{
+    BOOL ret;
+    HCRYPTKEY key;
+
+    /* These crash
+    ret = CryptImportPublicKeyInfoEx(0, 0, NULL, 0, 0, NULL, NULL);
+    ret = CryptImportPublicKeyInfoEx(0, 0, NULL, 0, 0, NULL, &key);
+    ret = CryptImportPublicKeyInfoEx(0, 0, info, 0, 0, NULL, NULL);
+    ret = CryptImportPublicKeyInfoEx(csp, X509_ASN_ENCODING, info, 0, 0, NULL,
+     NULL);
+     */
+    ret = CryptImportPublicKeyInfoEx(0, 0, info, 0, 0, NULL, &key);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    ret = CryptImportPublicKeyInfoEx(csp, 0, info, 0, 0, NULL, &key);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    ret = CryptImportPublicKeyInfoEx(0, X509_ASN_ENCODING, info, 0, 0, NULL,
+     &key);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+    ret = CryptImportPublicKeyInfoEx(csp, X509_ASN_ENCODING, info, 0, 0, NULL,
+     &key);
+    ok(ret, "CryptImportPublicKeyInfoEx failed: %08lx\n", GetLastError());
+    CryptDestroyKey(key);
+}
+
+static const char cspName[] = "WineCryptTemp";
+
+static void testPortPublicKeyInfo(void)
+{
+    HCRYPTPROV csp;
+    BOOL ret;
+    PCERT_PUBLIC_KEY_INFO info = NULL;
+
+    /* Just in case a previous run failed, delete this thing */
+    CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+    ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+     CRYPT_NEWKEYSET);
+
+    testExportPublicKey(csp, &info);
+    testImportPublicKey(csp, info);
+
+    HeapFree(GetProcessHeap(), 0, info);
+    CryptReleaseContext(csp, 0);
+    ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+}
+
 START_TEST(encode)
 {
     static const DWORD encodings[] = { X509_ASN_ENCODING, PKCS_7_ASN_ENCODING,
@@ -2510,4 +2618,5 @@ START_TEST(encode)
         test_decodeCRLToBeSigned(encodings[i]);
     }
     test_registerOIDFunction();
+    testPortPublicKeyInfo();
 }

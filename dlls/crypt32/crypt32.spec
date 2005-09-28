@@ -98,8 +98,8 @@
 @ stub CryptEnumOIDInfo
 @ stub CryptEnumProvidersU
 @ stub CryptExportPKCS8
-@ stub CryptExportPublicKeyInfo
-@ stub CryptExportPublicKeyInfoEx
+@ stdcall CryptExportPublicKeyInfo(long long long ptr ptr)
+@ stdcall CryptExportPublicKeyInfoEx(long long long str long ptr ptr ptr)
 @ stub CryptFindOIDInfo
 @ stub CryptFormatObject
 @ stub CryptFreeOIDFunctionAddress
@@ -115,8 +115,8 @@
 @ stub CryptHashPublicKeyInfo
 @ stub CryptHashToBeSigned
 @ stub CryptImportPKCS8
-@ stub CryptImportPublicKeyInfo
-@ stub CryptImportPublicKeyInfoEx
+@ stdcall CryptImportPublicKeyInfo(long long ptr ptr)
+@ stdcall CryptImportPublicKeyInfoEx(long long ptr long long ptr ptr)
 @ stdcall CryptInitOIDFunctionSet(str long)
 @ stub CryptInstallOIDFunctionAddress
 @ stub CryptLoadSip

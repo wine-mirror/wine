@@ -2352,6 +2352,8 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     }
     else if (!strcmp(lpszStructType, szOID_CERT_EXTENSIONS))
         encodeFunc = CRYPT_AsnEncodeExtensions;
+    else if (!strcmp(lpszStructType, szOID_RSA_RSA))
+        encodeFunc = CRYPT_AsnEncodeRsaPubKey;
     else if (!strcmp(lpszStructType, szOID_RSA_signingTime))
         encodeFunc = CRYPT_AsnEncodeUtcTime;
     else if (!strcmp(lpszStructType, szOID_CRL_REASON_CODE))
@@ -5438,6 +5440,8 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     }
     else if (!strcmp(lpszStructType, szOID_CERT_EXTENSIONS))
         decodeFunc = CRYPT_AsnDecodeExtensions;
+    else if (!strcmp(lpszStructType, szOID_RSA_RSA))
+        decodeFunc = CRYPT_AsnDecodeRsaPubKey;
     else if (!strcmp(lpszStructType, szOID_RSA_signingTime))
         decodeFunc = CRYPT_AsnDecodeUtcTime;
     else if (!strcmp(lpszStructType, szOID_CRL_REASON_CODE))
@@ -5471,5 +5475,130 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         SetLastError(ERROR_FILE_NOT_FOUND);
     if (lib)
         FreeLibrary(lib);
+    return ret;
+}
+
+BOOL WINAPI CryptExportPublicKeyInfo(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
+ DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pInfo, DWORD *pcbInfo)
+{
+    return CryptExportPublicKeyInfoEx(hCryptProv, dwKeySpec, dwCertEncodingType,
+     NULL, 0, NULL, pInfo, pcbInfo);
+}
+
+BOOL WINAPI CryptExportPublicKeyInfoEx(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
+ DWORD dwCertEncodingType, LPSTR pszPublicKeyObjId, DWORD dwFlags,
+ void *pvAuxInfo, PCERT_PUBLIC_KEY_INFO pInfo, DWORD *pcbInfo)
+{
+    BOOL ret;
+    HCRYPTKEY key;
+
+    TRACE("(%ld, %ld, %08lx, %s, %08lx, %p, %p, %p)\n", hCryptProv, dwKeySpec,
+     dwCertEncodingType, debugstr_a(pszPublicKeyObjId), dwFlags, pvAuxInfo,
+     pInfo, pcbInfo);
+
+    if (!hCryptProv)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!pszPublicKeyObjId)
+        pszPublicKeyObjId = szOID_RSA_RSA;
+    if ((ret = CryptGetUserKey(hCryptProv, dwKeySpec, &key)))
+    {
+        DWORD keySize = 0;
+
+        ret = CryptExportKey(key, 0, PUBLICKEYBLOB, 0, NULL, &keySize);
+        if (ret)
+        {
+            LPBYTE pubKey = HeapAlloc(GetProcessHeap(), 0, keySize);
+
+            if (pubKey)
+            {
+                ret = CryptExportKey(key, 0, PUBLICKEYBLOB, 0, pubKey,
+                 &keySize);
+                if (ret)
+                {
+                    DWORD encodedLen = 0;
+
+                    ret = CryptEncodeObject(dwCertEncodingType,
+                     pszPublicKeyObjId, pubKey, NULL, &encodedLen);
+                    if (ret)
+                    {
+                        DWORD sizeNeeded = sizeof(CERT_PUBLIC_KEY_INFO) +
+                         strlen(pszPublicKeyObjId) + 1 + encodedLen;
+
+                        if (!pInfo)
+                            *pcbInfo = sizeNeeded;
+                        else if (*pcbInfo < sizeNeeded)
+                        {
+                            SetLastError(ERROR_MORE_DATA);
+                            *pcbInfo = sizeNeeded;
+                            ret = FALSE;
+                        }
+                        else
+                        {
+                            pInfo->Algorithm.pszObjId = (char *)pInfo +
+                             sizeof(CERT_PUBLIC_KEY_INFO);
+                            lstrcpyA(pInfo->Algorithm.pszObjId,
+                             pszPublicKeyObjId);
+                            pInfo->Algorithm.Parameters.cbData = 0;
+                            pInfo->Algorithm.Parameters.pbData = NULL;
+                            pInfo->PublicKey.pbData = (BYTE *)pInfo->Algorithm.pszObjId
+                             + lstrlenA(pInfo->Algorithm.pszObjId) + 1;
+                            pInfo->PublicKey.cbData = encodedLen;
+                            pInfo->PublicKey.cUnusedBits = 0;
+                            ret = CryptEncodeObject(dwCertEncodingType,
+                             pszPublicKeyObjId, pubKey, pInfo->PublicKey.pbData,
+                             &pInfo->PublicKey.cbData);
+                        }
+                    }
+                }
+                HeapFree(GetProcessHeap(), 0, pubKey);
+            }
+            else
+                ret = FALSE;
+        }
+        CryptDestroyKey(key);
+    }
+    return ret;
+}
+
+BOOL WINAPI CryptImportPublicKeyInfo(HCRYPTPROV hCryptProv,
+ DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pInfo, HCRYPTKEY *phKey)
+{
+    return CryptImportPublicKeyInfoEx(hCryptProv, dwCertEncodingType, pInfo,
+     0, 0, NULL, phKey);
+}
+
+BOOL WINAPI CryptImportPublicKeyInfoEx(HCRYPTPROV hCryptProv,
+ DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pInfo, ALG_ID aiKeyAlg,
+ DWORD dwFlags, void *pvAuxInfo, HCRYPTKEY *phKey)
+{
+    BOOL ret;
+    DWORD pubKeySize = 0;
+
+    TRACE("(%ld, %ld, %p, %d, %08lx, %p, %p)\n", hCryptProv,
+     dwCertEncodingType, pInfo, aiKeyAlg, dwFlags, pvAuxInfo, phKey);
+
+    ret = CryptDecodeObject(dwCertEncodingType, pInfo->Algorithm.pszObjId,
+     pInfo->PublicKey.pbData, pInfo->PublicKey.cbData, 0, NULL, &pubKeySize);
+    if (ret)
+    {
+        LPBYTE pubKey = HeapAlloc(GetProcessHeap(), 0, pubKeySize);
+
+        if (pubKey)
+        {
+            ret = CryptDecodeObject(dwCertEncodingType,
+             pInfo->Algorithm.pszObjId, pInfo->PublicKey.pbData,
+             pInfo->PublicKey.cbData, 0, pubKey, &pubKeySize);
+            if (ret)
+                ret = CryptImportKey(hCryptProv, pubKey, pubKeySize, 0, 0,
+                 phKey);
+            HeapFree(GetProcessHeap(), 0, pubKey);
+        }
+        else
+            ret = FALSE;
+    }
     return ret;
 }
