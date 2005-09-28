@@ -916,6 +916,7 @@ typedef struct _CERT_CREATE_CONTEXT_PARA {
 #define ALG_SID_SSL2_MASTER             5
 #define ALG_SID_TLS1_MASTER             6
 #define ALG_SID_SCHANNEL_ENC_KEY        7
+#define ALG_SID_EXAMPLE                80
 
 /* Algorithm Definitions */
 #define CALG_MD2                  (ALG_CLASS_HASH         | ALG_TYPE_ANY           | ALG_SID_MD2)
@@ -2469,6 +2470,17 @@ PCERT_RDN_ATTR WINAPI CertFindRDNAttr(LPCSTR pszObjId, PCERT_NAME_INFO pName);
 
 LONG WINAPI CertVerifyTimeValidity(LPFILETIME pTimeToVerify,
  PCERT_INFO pCertInfo);
+
+BOOL WINAPI CryptExportPublicKeyInfo(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
+ DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pInfo, DWORD *pcbInfo);
+BOOL WINAPI CryptExportPublicKeyInfoEx(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
+ DWORD dwCertEncodingType, LPSTR pszPublicKeyObjId, DWORD dwFlags,
+ void *pvAuxInfo, PCERT_PUBLIC_KEY_INFO pInfo, DWORD *pcbInfo);
+BOOL WINAPI CryptImportPublicKeyInfo(HCRYPTPROV hCryptProv,
+ DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pInfo, HCRYPTKEY *phKey);
+BOOL WINAPI CryptImportPublicKeyInfoEx(HCRYPTPROV hCryptProv,
+ DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pInfo, ALG_ID aiKeyAlg,
+ DWORD dwFlags, void *pvAuxInfo, HCRYPTKEY *phKey);
 
 BOOL WINAPI CryptProtectData( DATA_BLOB* pDataIn, LPCWSTR szDataDescr,
  DATA_BLOB* pOptionalEntropy, PVOID pvReserved,
