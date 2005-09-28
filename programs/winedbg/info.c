@@ -678,21 +678,10 @@ void info_win32_virtual(DWORD pid)
     if (pid != dbg_curr_pid) CloseHandle(hProc);
 }
 
-struct dll_option_layout
-{
-    void*               next;
-    void*               prev;
-    char* const*        channels;
-    int                 nb_channels;
-};
-
-void info_wine_dbg_channel(BOOL turn_on, const char* chnl, const char* name)
+void info_wine_dbg_channel(BOOL turn_on, const char* cls, const char* name)
 {
     struct dbg_lvalue           lvalue;
-    struct dll_option_layout    dol;
-    int                         i;
-    char*                       str;
-    char                        buffer[32];
+    struct __wine_debug_channel channel;
     unsigned char               mask;
     int                         done = 0;
     BOOL                        bAll;
@@ -704,32 +693,34 @@ void info_wine_dbg_channel(BOOL turn_on, const char* chnl, const char* name)
         return;
     }
 
-    if (symbol_get_lvalue("first_dll", -1, &lvalue, FALSE) != sglv_found)
+    if (symbol_get_lvalue("debug_options", -1, &lvalue, FALSE) != sglv_found)
     {
         return;
     }
     addr = memory_to_linear_addr(&lvalue.addr);
-    if (!chnl)                          mask = 15;
-    else if (!strcmp(chnl, "fixme"))    mask = 1;
-    else if (!strcmp(chnl, "err"))      mask = 2;
-    else if (!strcmp(chnl, "warn"))     mask = 4;
-    else if (!strcmp(chnl, "trace"))    mask = 8;
-    else { dbg_printf("Unknown channel %s\n", chnl); return; }
+
+    if (!cls)                          mask = ~0;
+    else if (!strcmp(cls, "fixme"))    mask = (1 << __WINE_DBCL_FIXME);
+    else if (!strcmp(cls, "err"))      mask = (1 << __WINE_DBCL_ERR);
+    else if (!strcmp(cls, "warn"))     mask = (1 << __WINE_DBCL_WARN);
+    else if (!strcmp(cls, "trace"))    mask = (1 << __WINE_DBCL_TRACE);
+    else
+    {
+        dbg_printf("Unknown debug class %s\n", cls);
+        return;
+    }
 
     bAll = !strcmp("all", name);
-    while (addr && dbg_read_memory(addr, &dol, sizeof(dol)))
+    while (addr && dbg_read_memory(addr, &channel, sizeof(channel)))
     {
-        for (i = 0; i < dol.nb_channels; i++)
+        if (!channel.name[0]) break;
+        if (bAll || !strcmp( channel.name, name ))
         {
-            if (dbg_read_memory(dol.channels + i, &str, sizeof(str)) &&
-                dbg_read_memory(str, buffer, sizeof(buffer)) &&
-                (!strcmp(buffer + 1, name) || bAll))
-            {
-                if (turn_on) buffer[0] |= mask; else buffer[0] &= ~mask;
-                if (dbg_write_memory(str, buffer, 1)) done++;
-            }
+            if (turn_on) channel.flags |= mask;
+            else channel.flags &= ~mask;
+            if (dbg_write_memory(addr, &channel, sizeof(channel))) done++;
         }
-        addr = dol.next;
+        addr = (struct __wine_debug_channel *)addr + 1;
     }
     if (!done) dbg_printf("Unable to find debug channel %s\n", name);
     else WINE_TRACE("Changed %d channel instances\n", done);

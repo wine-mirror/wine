@@ -80,6 +80,7 @@ static int nb_dll_paths;
 static int dll_path_maxlen;
 
 extern void mmap_init(void);
+extern void debug_init(void);
 
 /* build the dll load path from the WINEDLLPATH variable */
 static void build_dll_path(void)
@@ -525,22 +526,6 @@ int wine_dll_get_owner( const char *name, char *buffer, int size, int *exists )
 
 
 /***********************************************************************
- *           debug_usage
- */
-static void debug_usage(void)
-{
-    static const char usage[] =
-        "Syntax of the WINEDEBUG variable:\n"
-        "  WINEDEBUG=[class]+xxx,[class]-yyy,...\n\n"
-        "Example: WINEDEBUG=+all,warn-heap\n"
-        "    turns on all messages except warning heap messages\n"
-        "Available message classes: err, warn, fixme, trace\n";
-    write( 2, usage, sizeof(usage) - 1 );
-    exit(1);
-}
-
-
-/***********************************************************************
  *           wine_init
  *
  * Main Wine initialisation.
@@ -549,7 +534,6 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
 {
     struct dll_path_context context;
     char *path;
-    char *wine_debug;
     void *ntdll = NULL;
     void (*init_func)(void);
 
@@ -559,12 +543,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     __wine_main_argv = argv;
     __wine_main_environ = environ;
     mmap_init();
-
-    if ((wine_debug = getenv("WINEDEBUG")))
-    {
-        if (!strcmp( wine_debug, "help" )) debug_usage();
-        wine_dbg_parse_options( wine_debug );
-    }
+    debug_init();
 
     for (path = first_dll_path( "ntdll.dll", ".so", &context ); path; path = next_dll_path( &context ))
     {

@@ -10,9 +10,7 @@ WINE_1.0
     __wine_main_environ;
     __wine_main_wargv;
     wine_anon_mmap;
-    wine_dbg_add_option;
     wine_dbg_log;
-    wine_dbg_parse_options;
     wine_dbg_printf;
     wine_dbg_sprintf;
     wine_dbgstr_a;

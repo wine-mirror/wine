@@ -43,7 +43,8 @@ enum __wine_debug_class
     __WINE_DBCL_ERR,
     __WINE_DBCL_WARN,
     __WINE_DBCL_TRACE,
-    __WINE_DBCL_COUNT
+
+    __WINE_DBCL_INIT = 7  /* lazy init flag */
 };
 
 struct __wine_debug_channel
@@ -70,8 +71,9 @@ struct __wine_debug_channel
 #define __WINE_GET_DEBUGGING_ERR(dbch)  ((dbch)->flags & (1 << __WINE_DBCL_ERR))
 
 #define __WINE_GET_DEBUGGING(dbcl,dbch)  __WINE_GET_DEBUGGING##dbcl(dbch)
-#define __WINE_SET_DEBUGGING(dbcl,dbch,on) \
-    ((on) ? ((dbch)[0] |= 1 << (dbcl)) : ((dbch)[0] &= ~(1 << (dbcl))))
+
+#define __WINE_IS_DEBUG_ON(dbcl,dbch) \
+  (__WINE_GET_DEBUGGING##dbcl(dbch) && wine_dbg_log(__WINE_DBCL##dbcl, (dbch), 0, 0) != -1)
 
 #ifdef __GNUC__
 
@@ -128,7 +130,7 @@ struct __wine_debug_channel
 
 #define __WINE_DPRINTF(dbcl,dbch) \
     (!__WINE_GET_DEBUGGING(dbcl,(dbch)) || \
-     (wine_dbg_log(__WINE_DBCL##dbcl,(dbch),__FILE__,"%d: ",__LINE__),0)) ? \
+     (wine_dbg_log(__WINE_DBCL##dbcl,(dbch),__FILE__,"%d: ",__LINE__) == -1)) ? \
      (void)0 : (void)wine_dbg_printf
 
 #define __WINE_PRINTF_ATTR(fmt, args)
@@ -213,23 +215,23 @@ static inline const char *wine_dbgstr_longlong( ULONGLONG ll )
 #define WINE_TRACE                 __WINE_DPRINTF(_TRACE,__wine_dbch___default)
 #define WINE_TRACE_(ch)            __WINE_DPRINTF(_TRACE,&__wine_dbch_##ch)
 #endif
-#define WINE_TRACE_ON(ch)          __WINE_GET_DEBUGGING(_TRACE,&__wine_dbch_##ch)
+#define WINE_TRACE_ON(ch)          __WINE_IS_DEBUG_ON(_TRACE,&__wine_dbch_##ch)
 
 #ifndef WINE_WARN
 #define WINE_WARN                  __WINE_DPRINTF(_WARN,__wine_dbch___default)
 #define WINE_WARN_(ch)             __WINE_DPRINTF(_WARN,&__wine_dbch_##ch)
 #endif
-#define WINE_WARN_ON(ch)           __WINE_GET_DEBUGGING(_WARN,&__wine_dbch_##ch)
+#define WINE_WARN_ON(ch)           __WINE_IS_DEBUG_ON(_WARN,&__wine_dbch_##ch)
 
 #ifndef WINE_FIXME
 #define WINE_FIXME                 __WINE_DPRINTF(_FIXME,__wine_dbch___default)
 #define WINE_FIXME_(ch)            __WINE_DPRINTF(_FIXME,&__wine_dbch_##ch)
 #endif
-#define WINE_FIXME_ON(ch)          __WINE_GET_DEBUGGING(_FIXME,&__wine_dbch_##ch)
+#define WINE_FIXME_ON(ch)          __WINE_IS_DEBUG_ON(_FIXME,&__wine_dbch_##ch)
 
 #define WINE_ERR                   __WINE_DPRINTF(_ERR,__wine_dbch___default)
 #define WINE_ERR_(ch)              __WINE_DPRINTF(_ERR,&__wine_dbch_##ch)
-#define WINE_ERR_ON(ch)            __WINE_GET_DEBUGGING(_ERR,&__wine_dbch_##ch)
+#define WINE_ERR_ON(ch)            __WINE_IS_DEBUG_ON(_ERR,&__wine_dbch_##ch)
 
 #define WINE_DECLARE_DEBUG_CHANNEL(ch) \
     extern struct __wine_debug_channel __wine_dbch_##ch

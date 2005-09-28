@@ -31,126 +31,98 @@
 #include "wine/library.h"
 #include "wine/unicode.h"
 
-struct dll
-{
-    struct dll   *next;        /* linked list of dlls */
-    struct dll   *prev;
-    struct __wine_debug_channel * const *channels;    /* array of channels */
-    int           nb_channels; /* number of channels in array */
-};
-
-static struct dll *first_dll;
-
-struct debug_option
-{
-    struct debug_option *next;       /* next option in list */
-    unsigned char        set;        /* bits to set */
-    unsigned char        clear;      /* bits to clear */
-    char                 name[14];   /* channel name, or empty for "all" */
-};
-
-static struct debug_option *first_option;
-static struct debug_option *last_option;
-static struct __wine_debug_functions funcs;
-
 static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
+
+#define MAX_DEBUG_OPTIONS 256
+
+static unsigned char default_flags = (1 << __WINE_DBCL_ERR) | (1 << __WINE_DBCL_FIXME);
+static unsigned int nb_debug_options = 0;
+static struct __wine_debug_channel debug_options[MAX_DEBUG_OPTIONS];
+
+static struct __wine_debug_functions funcs;
 
 static int cmp_name( const void *p1, const void *p2 )
 {
     const char *name = p1;
-    const struct __wine_debug_channel * const *chan = p2;
-    return strcmp( name, (*chan)->name );
+    const struct __wine_debug_channel *chan = p2;
+    return strcmp( name, chan->name );
 }
 
-/* apply a debug option to the channels of a given dll */
-static void apply_option( struct dll *dll, const struct debug_option *opt )
+/* get the flags to use for a given channel, possibly setting them too in case of lazy init */
+static inline unsigned char get_channel_flags( struct __wine_debug_channel *channel )
 {
-    if (opt->name[0])
+    if (nb_debug_options)
     {
-        struct __wine_debug_channel * const *dbch = bsearch( opt->name, dll->channels, dll->nb_channels,
-                                                             sizeof(*dll->channels), cmp_name );
-        if (dbch) (*dbch)->flags = ((*dbch)->flags & ~opt->clear) | opt->set;
+        struct __wine_debug_channel *opt = bsearch( channel->name, debug_options, nb_debug_options,
+                                                    sizeof(debug_options[0]), cmp_name );
+        if (opt) return opt->flags;
     }
-    else /* all */
-    {
-        int i;
-        for (i = 0; i < dll->nb_channels; i++)
-            dll->channels[i]->flags = (dll->channels[i]->flags & ~opt->clear) | opt->set;
-    }
+    /* no option for this channel */
+    if (channel->flags & (1 << __WINE_DBCL_INIT)) channel->flags = default_flags;
+    return default_flags;
 }
 
 /* register a new set of channels for a dll */
 void *__wine_dbg_register( struct __wine_debug_channel * const *channels, int nb )
 {
-    struct debug_option *opt = first_option;
-    struct dll *dll = malloc( sizeof(*dll) );
-    if (dll)
-    {
-        dll->channels = channels;
-        dll->nb_channels = nb;
-        dll->prev = NULL;
-        if ((dll->next = first_dll)) dll->next->prev = dll;
-        first_dll = dll;
+    int i;
 
-        /* apply existing options to this dll */
-        while (opt)
-        {
-            apply_option( dll, opt );
-            opt = opt->next;
-        }
+    for (i = 0; i < nb; i++)
+    {
+        channels[i]->flags = ~0;
+        get_channel_flags( channels[i] );
     }
-    return dll;
+    return NULL;
 }
 
 
 /* unregister a set of channels; must pass the pointer obtained from wine_dbg_register */
 void __wine_dbg_unregister( void *channel )
 {
-    struct dll *dll = channel;
-    if (dll)
-    {
-        if (dll->next) dll->next->prev = dll->prev;
-        if (dll->prev) dll->prev->next = dll->next;
-        else first_dll = dll->next;
-        free( dll );
-    }
 }
 
 
 /* add a new debug option at the end of the option list */
-void wine_dbg_add_option( const char *name, unsigned char set, unsigned char clear )
+static void add_option( const char *name, unsigned char set, unsigned char clear )
 {
-    struct dll *dll = first_dll;
-    struct debug_option *opt;
-    size_t len = strlen(name);
+    int min = 0, max = nb_debug_options - 1, pos, res;
 
-    if (!(opt = malloc( sizeof(*opt) ))) return;
-    opt->next  = NULL;
-    opt->set   = set;
-    opt->clear = clear;
-    if (len >= sizeof(opt->name)) len = sizeof(opt->name) - 1;
-    memcpy( opt->name, name, len );
-    opt->name[len] = 0;
-    if (last_option) last_option->next = opt;
-    else first_option = opt;
-    last_option = opt;
-
-    /* apply option to all existing dlls */
-    while (dll)
+    if (!name[0])  /* "all" option */
     {
-        apply_option( dll, opt );
-        dll = dll->next;
+        default_flags = (default_flags & ~clear) | set;
+        return;
     }
+    if (strlen(name) >= sizeof(debug_options[0].name)) return;
+
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        res = strcmp( name, debug_options[pos].name );
+        if (!res)
+        {
+            debug_options[pos].flags = (debug_options[pos].flags & ~clear) | set;
+            return;
+        }
+        if (res < 0) max = pos - 1;
+        else min = pos + 1;
+    }
+    if (nb_debug_options >= MAX_DEBUG_OPTIONS) return;
+
+    pos = min;
+    if (pos < nb_debug_options) memmove( &debug_options[pos + 1], &debug_options[pos],
+                                         (nb_debug_options - pos) * sizeof(debug_options[0]) );
+    strcpy( debug_options[pos].name, name );
+    debug_options[pos].flags = (default_flags & ~clear) | set;
+    nb_debug_options++;
 }
 
 /* parse a set of debugging option specifications and add them to the option list */
-int wine_dbg_parse_options( const char *str )
+static void parse_options( const char *str )
 {
     char *opt, *next, *options;
     unsigned int i;
-    int errors = 0;
 
-    if (!(options = strdup(str))) return -1;
+    if (!(options = strdup(str))) return;
     for (opt = options; opt; opt = next)
     {
         const char *p;
@@ -175,10 +147,7 @@ int wine_dbg_parse_options( const char *str )
                 }
             }
             if (i == sizeof(debug_classes)/sizeof(debug_classes[0])) /* bad class name, skip it */
-            {
-                errors++;
                 continue;
-            }
         }
         else
         {
@@ -186,16 +155,41 @@ int wine_dbg_parse_options( const char *str )
             else set = ~0;
         }
         if (*p == '+' || *p == '-') p++;
-        if (!p[0])
-        {
-            errors++;
-            continue;
-        }
-        if (!strcmp( p, "all" )) p = "";  /* empty string means all */
-        wine_dbg_add_option( p, set, clear );
+        if (!p[0]) continue;
+
+        if (!strcmp( p, "all" ))
+            default_flags = (default_flags & ~clear) | set;
+        else
+            add_option( p, set, clear );
     }
     free( options );
-    return errors;
+}
+
+
+/* print the usage message */
+static void debug_usage(void)
+{
+    static const char usage[] =
+        "Syntax of the WINEDEBUG variable:\n"
+        "  WINEDEBUG=[class]+xxx,[class]-yyy,...\n\n"
+        "Example: WINEDEBUG=+all,warn-heap\n"
+        "    turns on all messages except warning heap messages\n"
+        "Available message classes: err, warn, fixme, trace\n";
+    write( 2, usage, sizeof(usage) - 1 );
+    exit(1);
+}
+
+
+/* initialize all options at startup */
+void debug_init(void)
+{
+    char *wine_debug;
+
+    if ((wine_debug = getenv("WINEDEBUG")))
+    {
+        if (!strcmp( wine_debug, "help" )) debug_usage();
+        parse_options( wine_debug );
+    }
 }
 
 /* varargs wrapper for funcs.dbg_vprintf */
@@ -234,6 +228,9 @@ int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *chan
 {
     int ret;
     va_list valist;
+
+    if (!(get_channel_flags( channel ) & (1 << cls))) return -1;
+    if (!format) return 0;
 
     va_start(valist, format);
     ret = funcs.dbg_vlog( cls, channel, func, format, valist );

@@ -22,6 +22,7 @@
     
 #define WIN32_LEAN_AND_MEAN    /* Exclude rarely-used stuff from Windows headers */
 #include <windows.h>
+#include <ctype.h>
 #include <commctrl.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -34,7 +35,7 @@
 #include "taskmgr.h"
 #include "perfdata.h"
 #include "column.h"
-#include <ctype.h>
+#include "wine/debug.h"
 
 /* TODO:
  *      - the dialog box could be non modal
@@ -104,7 +105,7 @@ static DWORD    get_selected_pid(void)
     return dwProcessId;
 }
 
-static int     list_channel_CB(HANDLE hProcess, void* addr, char* buffer, void* user)
+static int     list_channel_CB(HANDLE hProcess, void* addr, struct __wine_debug_channel* channel, void* user)
 {
     int         j;
     char        val[2];
@@ -115,7 +116,7 @@ static int     list_channel_CB(HANDLE hProcess, void* addr, char* buffer, void* 
     memset(&lvi, 0, sizeof(lvi));
 
     lvi.mask = LVIF_TEXT;
-    lvi.pszText = buffer + 1;
+    lvi.pszText = channel->name;
 
     index = ListView_InsertItem(hChannelLV, &lvi);
     if (index == -1) return 0;
@@ -123,7 +124,7 @@ static int     list_channel_CB(HANDLE hProcess, void* addr, char* buffer, void* 
     val[1] = '\0';
     for (j = 0; j < 4; j++)
     {
-        val[0] = (buffer[0] & (1 << j)) ? 'x' : ' ';
+        val[0] = (channel->flags & (1 << j)) ? 'x' : ' ';
         ListView_SetItemText(hChannelLV, index, j + 1, val);
     }
     return 1;
@@ -142,14 +143,14 @@ struct cce_user
  *
  * Callback used for changing a given channel attributes
  */
-static int change_channel_CB(HANDLE hProcess, void* addr, char* buffer, void* pmt)
+static int change_channel_CB(HANDLE hProcess, void* addr, struct __wine_debug_channel *channel, void* pmt)
 {
     struct cce_user* user = (struct cce_user*)pmt;
 
-    if (!user->name || !strcmp(buffer + 1, user->name))
+    if (!user->name || !strcmp(channel->name, user->name))
     {
-        buffer[0] = (buffer[0] & ~user->mask) | (user->value & user->mask);
-        if (WriteProcessMemory(hProcess, addr, buffer, 1, NULL))
+        channel->flags = (channel->flags & ~user->mask) | (user->value & user->mask);
+        if (WriteProcessMemory(hProcess, addr, channel, sizeof(*channel), NULL))
             user->done++;
         else
             user->notdone++;
@@ -187,7 +188,7 @@ struct dll_option_layout
     int                 nb_channels;
 };
 
-typedef int (*EnumChannelCB)(HANDLE, void*, char*, void*);
+typedef int (*EnumChannelCB)(HANDLE, void*, struct __wine_debug_channel*, void*);
 
 /******************************************************************
  *		enum_channel
@@ -197,49 +198,25 @@ typedef int (*EnumChannelCB)(HANDLE, void*, char*, void*);
  */
 static int enum_channel(HANDLE hProcess, EnumChannelCB ce, void* user, unsigned unique)
 {
-    struct dll_option_layout    dol;
-    int                         i, ret = 1;
+    struct __wine_debug_channel channel;
+    int                         ret = 1;
     unsigned int                j;
-    void*                       buf_addr;
-    char                        buffer[32];
     void*                       addr;
     const char**                cache = NULL;
     unsigned                    num_cache, used_cache;
 
-    if (!(addr = get_symbol(hProcess, "first_dll", "libwine.so"))) return -1;
+    if (!(addr = get_symbol(hProcess, "debug_options", "libwine.so"))) return -1;
     if (unique)
         cache = HeapAlloc(GetProcessHeap(), 0, (num_cache = 32) * sizeof(char*));
     else
         num_cache = 0;
     used_cache = 0;
 
-    for (;
-         ret && addr && ReadProcessMemory(hProcess, addr, &dol, sizeof(dol), NULL);
-         addr = dol.next)
+    while (ret && addr && ReadProcessMemory(hProcess, addr, &channel, sizeof(channel), NULL))
     {
-        for (i = 0; i < dol.nb_channels; i++)
-        {
-            if (ReadProcessMemory(hProcess, (void const *)(dol.channels + i), &buf_addr, sizeof(buf_addr), NULL) &&
-                ReadProcessMemory(hProcess, buf_addr, buffer, sizeof(buffer), NULL))
-            {
-                if (unique)
-                {
-                    /* since some channels are defined in multiple compilation units, 
-                     * they will appear several times...
-                     * so cache the channel's names we already reported and don't report
-                     * them again
-                     */
-                    for (j = 0; j < used_cache; j++)
-                        if (!strcmp(cache[j], buffer + 1)) break;
-                    if (j != used_cache) continue;
-                    if (used_cache == num_cache)
-                        cache = HeapReAlloc(GetProcessHeap(), 0, cache, (num_cache *= 2) * sizeof(char*));
-                    cache[used_cache++] = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(buffer + 1) + 1), 
-                                                 buffer + 1);
-                }
-                ret = ce(hProcess, buf_addr, buffer, user);
-            }
-        }
+        if (!channel.name[0]) break;
+        ret = ce(hProcess, addr, &channel, user);
+        addr = (struct __wine_debug_channel *)addr + 1;
     }
     if (unique)
     {
