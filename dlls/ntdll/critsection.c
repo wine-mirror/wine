@@ -22,9 +22,11 @@
 #include "wine/port.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <time.h>
 #include "windef.h"
 #include "winternl.h"
 #include "wine/debug.h"
@@ -52,6 +54,48 @@ inline static void small_pause(void)
 #endif
 }
 
+#if defined(linux) && defined(__i386__)
+
+static inline int futex_wait( int *addr, int val, struct timespec *timeout )
+{
+    int res;
+    __asm__ __volatile__( "xchgl %2,%%ebx\n\t"
+                          "int $0x80\n\t"
+                          "xchgl %2,%%ebx"
+                          : "=a" (res)
+                          : "0" (240) /* SYS_futex */, "D" (addr),
+                            "c" (0) /* FUTEX_WAIT */, "d" (val), "S" (timeout) );
+    return res;
+}
+
+static inline int futex_wake( int *addr, int val )
+{
+    int res;
+    __asm__ __volatile__( "xchgl %2,%%ebx\n\t"
+                          "int $0x80\n\t"
+                          "xchgl %2,%%ebx"
+                          : "=a" (res)
+                          : "0" (240) /* SYS_futex */, "D" (addr),
+                            "c" (1)  /* FUTEX_WAKE */, "d" (val) );
+    return res;
+}
+
+static inline int use_futexes(void)
+{
+    static int supported = -1;
+
+    if (supported == -1) supported = (futex_wait( &supported, 10, NULL ) != -ENOSYS);
+    return supported;
+}
+
+#else  /* linux */
+
+static inline int futex_wait( int *addr, int val, struct timespec *timeout ) { return -ENOSYS; }
+static inline int futex_wake( int *addr, int val ) { return -ENOSYS; }
+static inline int use_futexes(void) { return 0; }
+
+#endif
+
 /***********************************************************************
  *           get_semaphore
  */
@@ -69,6 +113,37 @@ static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
             NtClose(sem);  /* somebody beat us to it */
     }
     return ret;
+}
+
+/***********************************************************************
+ *           wait_semaphore
+ */
+static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
+{
+    if (use_futexes() && crit->DebugInfo)  /* debug info is cleared by MakeCriticalSectionGlobal */
+    {
+        int val;
+        struct timespec timespec;
+
+        timespec.tv_sec  = timeout;
+        timespec.tv_nsec = 0;
+        while ((val = interlocked_cmpxchg( (int *)&crit->LockSemaphore, 0, 1 )) != 1)
+        {
+            /* note: this may wait longer than specified in case of signals or */
+            /*       multiple wake-ups, but that shouldn't be a problem */
+            if (futex_wait( (int *)&crit->LockSemaphore, val, &timespec ) == -ETIMEDOUT)
+                return STATUS_TIMEOUT;
+        }
+        return STATUS_WAIT_0;
+    }
+    else
+    {
+        HANDLE sem = get_semaphore( crit );
+        LARGE_INTEGER time;
+
+        time.QuadPart = timeout * (LONGLONG)-10000000;
+        return NtWaitForSingleObject( sem, FALSE, &time );
+    }
 }
 
 /***********************************************************************
@@ -224,12 +299,8 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
     for (;;)
     {
         EXCEPTION_RECORD rec;
-        HANDLE sem = get_semaphore( crit );
-        LARGE_INTEGER time;
-        DWORD status;
+        NTSTATUS status = wait_semaphore( crit, 5 );
 
-        time.QuadPart = -5000 * 10000;  /* 5 seconds */
-        status = NtWaitForSingleObject( sem, FALSE, &time );
         if ( status == STATUS_TIMEOUT )
         {
             const char *name = NULL;
@@ -237,17 +308,15 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
             if (!name) name = "?";
             ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (60 sec)\n",
                  crit, debugstr_a(name), GetCurrentThreadId(), (DWORD)crit->OwningThread );
-            time.QuadPart = -60000 * 10000;
-            status = NtWaitForSingleObject( sem, FALSE, &time );
+            status = wait_semaphore( crit, 60 );
             if ( status == STATUS_TIMEOUT && TRACE_ON(relay) )
             {
                 ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (5 min)\n",
                      crit, debugstr_a(name), GetCurrentThreadId(), (DWORD) crit->OwningThread );
-                time.QuadPart = -300000 * (ULONGLONG)10000;
-                status = NtWaitForSingleObject( sem, FALSE, &time );
+                status = wait_semaphore( crit, 300 );
             }
         }
-        if (status == STATUS_WAIT_0) return STATUS_SUCCESS;
+        if (status == STATUS_WAIT_0) break;
 
         /* Throw exception only for Wine internal locks */
         if ((!crit->DebugInfo) || (!crit->DebugInfo->Spare[0])) continue;
@@ -260,6 +329,8 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         rec.ExceptionInformation[0] = (ULONG_PTR)crit;
         RtlRaiseException( &rec );
     }
+    if (crit->DebugInfo) crit->DebugInfo->ContentionCount++;
+    return STATUS_SUCCESS;
 }
 
 
@@ -287,10 +358,19 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
-    HANDLE sem = get_semaphore( crit );
-    NTSTATUS res = NtReleaseSemaphore( sem, 1, NULL );
-    if (res) RtlRaiseStatus( res );
-    return res;
+    if (use_futexes() && crit->DebugInfo)  /* debug info is cleared by MakeCriticalSectionGlobal */
+    {
+        *(int *)&crit->LockSemaphore = 1;
+        futex_wake( (int *)&crit->LockSemaphore, 1 );
+        return STATUS_SUCCESS;
+    }
+    else
+    {
+        HANDLE sem = get_semaphore( crit );
+        NTSTATUS res = NtReleaseSemaphore( sem, 1, NULL );
+        if (res) RtlRaiseStatus( res );
+        return res;
+    }
 }
 
 
