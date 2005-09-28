@@ -28,6 +28,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winternl.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -271,41 +272,67 @@ DWORD WINAPI SetLogonNotifyWindow(HWINSTA hwinsta,HWND hwnd)
     return 1;
 }
 
+static const WCHAR primary_device_name[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
+static const WCHAR primary_device_string[] = {'X','1','1',' ','W','i','n','d','o','w','i','n','g',' ',
+                                              'S','y','s','t','e','m',0};
+
 /***********************************************************************
  *		EnumDisplayDevicesA (USER32.@)
  */
-BOOL WINAPI EnumDisplayDevicesA( LPVOID unused, DWORD i, LPDISPLAY_DEVICEA lpDisplayDevice,
+BOOL WINAPI EnumDisplayDevicesA( LPCSTR lpDevice, DWORD i, LPDISPLAY_DEVICEA lpDispDev,
                                  DWORD dwFlags )
 {
-    if (i)
-        return FALSE;
-    FIXME("(%p,%ld,%p,0x%08lx), stub!\n",unused,i,lpDisplayDevice,dwFlags);
-    strcpy(lpDisplayDevice->DeviceName,"X11");
-    strcpy(lpDisplayDevice->DeviceString,"X 11 Windowing System");
-    lpDisplayDevice->StateFlags =
-        DISPLAY_DEVICE_ATTACHED_TO_DESKTOP |
-        DISPLAY_DEVICE_PRIMARY_DEVICE |
-        DISPLAY_DEVICE_VGA_COMPATIBLE;
+    UNICODE_STRING deviceW;
+    DISPLAY_DEVICEW ddW;
+    BOOL ret;
+
+    if(lpDevice)
+        RtlCreateUnicodeStringFromAsciiz(&deviceW, lpDevice); 
+    else
+        deviceW.Buffer = NULL;
+
+    ddW.cb = sizeof(ddW);
+    ret = EnumDisplayDevicesW(deviceW.Buffer, i, &ddW, dwFlags);
+    RtlFreeUnicodeString(&deviceW);
+
+    if(!ret) return ret;
+
+    WideCharToMultiByte(CP_ACP, 0, ddW.DeviceName, -1, lpDispDev->DeviceName, sizeof(lpDispDev->DeviceName), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, ddW.DeviceString, -1, lpDispDev->DeviceString, sizeof(lpDispDev->DeviceString), NULL, NULL);
+    lpDispDev->StateFlags = ddW.StateFlags;
+
+    if(lpDispDev->cb >= offsetof(DISPLAY_DEVICEA, DeviceID) + sizeof(lpDispDev->DeviceID))
+        WideCharToMultiByte(CP_ACP, 0, ddW.DeviceID, -1, lpDispDev->DeviceID, sizeof(lpDispDev->DeviceID), NULL, NULL);
+    if(lpDispDev->cb >= offsetof(DISPLAY_DEVICEA, DeviceKey) + sizeof(lpDispDev->DeviceKey))
+        WideCharToMultiByte(CP_ACP, 0, ddW.DeviceKey, -1, lpDispDev->DeviceKey, sizeof(lpDispDev->DeviceKey), NULL, NULL);
+
     return TRUE;
 }
 
 /***********************************************************************
  *		EnumDisplayDevicesW (USER32.@)
  */
-BOOL WINAPI EnumDisplayDevicesW( LPVOID unused, DWORD i, LPDISPLAY_DEVICEW lpDisplayDevice,
+BOOL WINAPI EnumDisplayDevicesW( LPCWSTR lpDevice, DWORD i, LPDISPLAY_DEVICEW lpDisplayDevice,
                                  DWORD dwFlags )
 {
+    FIXME("(%s,%ld,%p,0x%08lx), stub!\n",debugstr_w(lpDevice),i,lpDisplayDevice,dwFlags);
+
     if (i)
         return FALSE;
-    FIXME("(%p,%ld,%p,0x%08lx), stub!\n",unused,i,lpDisplayDevice,dwFlags);
-    MultiByteToWideChar( CP_ACP, 0, "X11", -1, lpDisplayDevice->DeviceName,
-                         sizeof(lpDisplayDevice->DeviceName)/sizeof(WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, "X11 Windowing System", -1, lpDisplayDevice->DeviceString,
-                         sizeof(lpDisplayDevice->DeviceString)/sizeof(WCHAR) );
+
+    memcpy(lpDisplayDevice->DeviceName, primary_device_name, sizeof(primary_device_name));
+    memcpy(lpDisplayDevice->DeviceString, primary_device_string, sizeof(primary_device_string));
+  
     lpDisplayDevice->StateFlags =
         DISPLAY_DEVICE_ATTACHED_TO_DESKTOP |
         DISPLAY_DEVICE_PRIMARY_DEVICE |
         DISPLAY_DEVICE_VGA_COMPATIBLE;
+
+    if(lpDisplayDevice->cb >= offsetof(DISPLAY_DEVICEW, DeviceID) + sizeof(lpDisplayDevice->DeviceID))
+        lpDisplayDevice->DeviceID[0] = 0;
+    if(lpDisplayDevice->cb >= offsetof(DISPLAY_DEVICEW, DeviceKey) + sizeof(lpDisplayDevice->DeviceKey))
+        lpDisplayDevice->DeviceKey[0] = 0;
+
     return TRUE;
 }
 
@@ -366,26 +393,21 @@ HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
  */
 BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
-    RECT rcWork;
+    MONITORINFOEXW miW;
+    MONITORINFOEXA *miA = (MONITORINFOEXA*)lpMonitorInfo;
+    BOOL ret;
 
-    if ((hMonitor == xPRIMARY_MONITOR) &&
-        lpMonitorInfo &&
-        (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
-        SystemParametersInfoA(SPI_GETWORKAREA, 0, &rcWork, 0))
-    {
-        SetRect( &lpMonitorInfo->rcMonitor, 0, 0,
-                 GetSystemMetrics(SM_CXSCREEN),
-                 GetSystemMetrics(SM_CYSCREEN) );
-        lpMonitorInfo->rcWork = rcWork;
-        lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
+    miW.cbSize = sizeof(miW);
 
-	if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEXA))
-            strcpy(((MONITORINFOEXA*)lpMonitorInfo)->szDevice, "DISPLAY");
+    ret = GetMonitorInfoW(hMonitor, (MONITORINFO*)&miW);
+    if(!ret) return ret;
 
-        return TRUE;
-    }
-
-    return FALSE;
+    miA->rcMonitor = miW.rcMonitor;
+    miA->rcWork = miW.rcWork;
+    miA->dwFlags = miW.dwFlags;
+    if(miA->cbSize >= offsetof(MONITORINFOEXA, szDevice) + sizeof(miA->szDevice))
+        WideCharToMultiByte(CP_ACP, 0, miW.szDevice, -1, miA->szDevice, sizeof(miA->szDevice), NULL, NULL);
+    return ret;
 }
 
 /***********************************************************************
@@ -393,7 +415,6 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
  */
 BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
-    static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
     RECT rcWork;
 
     if ((hMonitor == xPRIMARY_MONITOR) &&
@@ -408,7 +429,7 @@ BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 
         if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEXW))
-            strcpyW(((MONITORINFOEXW*)lpMonitorInfo)->szDevice, displayW);
+            strcpyW(((MONITORINFOEXW*)lpMonitorInfo)->szDevice, primary_device_name);
 
         return TRUE;
     }
