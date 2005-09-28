@@ -207,14 +207,28 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
             src = src->next;
         }
 
-
-#if 0 /*TODO: Pixel shaders*/
-        if (This->set.pixelShader && This->pixelShader != pDeviceImpl->stateBlock->pixelShader) {
-            TRACE("Updating pixel shader to %p\n", pDeviceImpl->stateBlock->pixelShader);
+        /* Recorded => Only update 'changed' values */
+        if (This->pixelShader != targetStateBlock->pixelShader) {
             This->pixelShader = targetStateBlock->pixelShader;
+            TRACE("Updating pixrl shader to %p\n", targetStateBlock->pixelShader);
         }
-#endif
-        /* TODO: Pixel Shader Constants */
+
+        /* Pixel Shader Constants */
+        for (i = 0; i < MAX_PSHADER_CONSTANTS; ++i) {
+            if (This->set.pixelShaderConstants[i]) {
+                TRACE("Setting %p from %p %d to %f\n", This, targetStateBlock, i,  targetStateBlock->pixelShaderConstantF[i * 4 + 1]);
+                This->pixelShaderConstantB[i] = targetStateBlock->pixelShaderConstantB[i];
+                This->pixelShaderConstantF[i * 4]      = targetStateBlock->pixelShaderConstantF[i * 4];
+                This->pixelShaderConstantF[i * 4 + 1]  = targetStateBlock->pixelShaderConstantF[i * 4 + 1];
+                This->pixelShaderConstantF[i * 4 + 2]  = targetStateBlock->pixelShaderConstantF[i * 4 + 2];
+                This->pixelShaderConstantF[i * 4 + 3]  = targetStateBlock->pixelShaderConstantF[i * 4 + 3];
+                This->pixelShaderConstantI[i * 4]      = targetStateBlock->pixelShaderConstantI[i * 4];
+                This->pixelShaderConstantI[i * 4 + 1]  = targetStateBlock->pixelShaderConstantI[i * 4 + 1];
+                This->pixelShaderConstantI[i * 4 + 2]  = targetStateBlock->pixelShaderConstantI[i * 4 + 2];
+                This->pixelShaderConstantI[i * 4 + 3]  = targetStateBlock->pixelShaderConstantI[i * 4 + 3];
+                This->pixelShaderConstantT[i]          = targetStateBlock->pixelShaderConstantT[i];
+            }
+        }
 
         /* Others + Render & Texture */
         for (i = 1; i <= HIGHEST_TRANSFORMSTATE; i++) {
@@ -385,15 +399,30 @@ should really perform a delta so that only the changes get updated*/
 
     }
 
-#if 0 /*TODO: Pixel Shaders*/
     if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */ This->blockType == D3DSBT_ALL || This->blockType == D3DSBT_PIXELSTATE) {
 
-        if (This->set.pixelShader && This->changed.pixelShader)
+        /* Pixel Shader */
+        if (This->set.pixelShader && This->changed.pixelShader) {
             IWineD3DDevice_SetPixelShader(pDevice, This->pixelShader);
+        }
 
-        /* TODO: Pixel Shader Constants */
+        /* Pixel Shader Constants */
+        for (i = 0; i < MAX_PSHADER_CONSTANTS; ++i) {
+            if (This->set.pixelShaderConstants[i] && This->changed.pixelShaderConstants[i]) {
+                switch (This->pixelShaderConstantT[i]) {
+                case WINESHADERCNST_FLOAT:
+                    IWineD3DDevice_SetPixelShaderConstantF(pDevice, i, This->pixelShaderConstantF + i * 4, 1);
+                break;
+                case WINESHADERCNST_BOOL:
+                    IWineD3DDevice_SetPixelShaderConstantB(pDevice, i, This->pixelShaderConstantB + i, 1);
+                break;
+                case WINESHADERCNST_INTEGER:
+                    IWineD3DDevice_SetPixelShaderConstantI(pDevice, i, This->pixelShaderConstantI + i * 4, 1);
+                break;
+                }
+            }
+        }
     }
-#endif
 
     if (This->set.fvf && This->changed.fvf) {
         IWineD3DDevice_SetFVF(pDevice, This->fvf);

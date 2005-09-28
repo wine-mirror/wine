@@ -873,6 +873,7 @@ typedef struct SAVEDSTATES {
         BOOL                      clipplane[MAX_CLIPPLANES];
         BOOL                      vertexDecl;
         BOOL                      pixelShader;
+        BOOL                      pixelShaderConstants[MAX_PSHADER_CONSTANTS];
         BOOL                      vertexShader;
         BOOL                      vertexShaderConstants[MAX_VSHADER_CONSTANTS];
 } SAVEDSTATES;
@@ -903,7 +904,7 @@ struct IWineD3DStateBlockImpl
     /* Vertex Shader Declaration */
     IWineD3DVertexDeclaration *vertexDecl;
 
-    IWineD3DVertexShader      *vertexShader; /* @TODO: Replace void * with IWineD3DVertexShader * */
+    IWineD3DVertexShader      *vertexShader;
 
     /* Vertex Shader Constants */
     BOOL                       vertexShaderConstantB[MAX_VSHADER_CONSTANTS];
@@ -942,12 +943,13 @@ struct IWineD3DStateBlockImpl
     WINED3DMATERIAL           material;
 
     /* Pixel Shader */
-    IWineD3DPixelShader      *pixelShader; /* TODO: Replace void * with IWineD3DPixelShader */
+    IWineD3DPixelShader      *pixelShader;
 
     /* Pixel Shader Constants */
     BOOL                       pixelShaderConstantB[MAX_PSHADER_CONSTANTS];
-    UINT                       pixelShaderConstantI[MAX_PSHADER_CONSTANTS * 4];
+    INT                        pixelShaderConstantI[MAX_PSHADER_CONSTANTS * 4];
     float                      pixelShaderConstantF[MAX_PSHADER_CONSTANTS * 4];
+    WINESHADERCNST             pixelShaderConstantT[MAX_PSHADER_CONSTANTS]; /* TODO: Think about changing this to a char to possibly save a little memory */
 
     /* Indexed Vertex Blending */
     D3DVERTEXBLENDFLAGS       vertex_blend;
@@ -1172,21 +1174,22 @@ extern const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl;
  * IDirect3DPixelShader implementation structure
  */
 typedef struct IWineD3DPixelShaderImpl {
-    /* IUnknown parts*/   
+    /* IUnknown parts */
     const IWineD3DPixelShaderVtbl *lpVtbl;
     LONG                        ref;     /* Note: Ref counting not required */
-    
+
     IUnknown                   *parent;
     IWineD3DDeviceImpl         *wineD3DDevice;
 
-    
     /* IWineD3DPixelShaderImpl */
     CONST DWORD                *function;
     UINT                        functionLength;
-        
+    DWORD                       version;
+
+    /* run time data */
+    PSHADERDATA                *data;
+
 #if 0 /* needs reworking */
-    /* run time datas */
-    PSHADERDATA* data;
     PSHADERINPUTDATA input;
     PSHADEROUTPUTDATA output;
 #endif
