@@ -933,11 +933,8 @@ static BOOL process_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
     PEB *peb = NtCurrentTeb()->Peb;
-    extern void __wine_dbg_kernel32_init(void);
 
     PTHREAD_Init();
-
-    __wine_dbg_kernel32_init();  /* hack: register debug channels early */
 
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);

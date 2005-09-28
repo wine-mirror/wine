@@ -200,8 +200,5 @@ static const struct __wine_debug_functions funcs =
  */
 void debug_init(void)
 {
-    extern void __wine_dbg_ntdll_init(void);
-
     __wine_dbg_set_functions( &funcs, &default_funcs, sizeof(funcs) );
-    __wine_dbg_ntdll_init();  /* hack: register debug channels early */
 }

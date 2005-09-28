@@ -7,8 +7,6 @@ MODULE    = libdxerr8.a
 C_SRCS = \
 	dxerr8.c
 
-EXTRA_OBJS = $(MODULE).dbg.o
-
 @MAKE_IMPLIB_RULES@
 
 ### Dependencies:

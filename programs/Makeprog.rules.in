@@ -12,7 +12,6 @@
 DLLDEFS     = @DLLDEFS@
 DLLFLAGS    = @DLLFLAGS@
 DEFS        = $(DLLDEFS) $(EXTRADEFS)
-ALL_OBJS    = $(OBJS) $(MODULE).dbg.o
 ALL_IMPORTS = $(DELAYIMPORTS) $(IMPORTS)
 ALL_LIBS    = $(ALL_IMPORTS:%=-l%) $(LIBWINE) $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
 DLL_LDPATH  = -L$(DLLDIR) $(ALL_IMPORTS:%=-L$(DLLDIR)/%)
@@ -25,16 +24,16 @@ all: $(MODULE)$(DLLEXT) $(BASEMODULE)$(EXEEXT)
 
 # Rules for .so main module
 
-$(MODULE).so: $(ALL_OBJS) $(RC_SRCS:.rc=.res) Makefile.in
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild $(APPMODE) $(ALL_OBJS) $(RC_SRCS:.rc=.res) -o $@ $(DLL_LDPATH) $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
+$(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild $(APPMODE) $(OBJS) $(RC_SRCS:.rc=.res) -o $@ $(DLL_LDPATH) $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
 
 $(BASEMODULE): $(WINEWRAPPER)
 	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
 
 # Rules for .exe main module
 
-$(MODULE): $(ALL_OBJS) $(RCOBJS) Makefile.in
-	$(CC) $(APPMODE) $(ALL_OBJS) $(RCOBJS) -o $@ $(ALL_LIBS)
+$(MODULE): $(OBJS) $(RCOBJS) Makefile.in
+	$(CC) $(APPMODE) $(OBJS) $(RCOBJS) -o $@ $(ALL_LIBS)
 
 # Rules for testing
 
