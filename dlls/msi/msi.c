@@ -81,14 +81,14 @@ UINT WINAPI MsiOpenProductA(LPCSTR szProduct, MSIHANDLE *phProduct)
     return r;
 }
 
-UINT WINAPI MsiOpenProductW(LPCWSTR szProduct, MSIHANDLE *phProduct)
+static UINT MSI_OpenProductW( LPCWSTR szProduct, MSIPACKAGE **ppackage )
 {
     LPWSTR path = NULL;
     UINT r;
     HKEY hKeyProduct = NULL;
     DWORD count, type;
 
-    TRACE("%s %p\n",debugstr_w(szProduct), phProduct);
+    TRACE("%s %p\n", debugstr_w(szProduct), ppackage );
 
     r = MSIREG_OpenUninstallKey(szProduct,&hKeyProduct,FALSE);
     if( r != ERROR_SUCCESS )
@@ -120,7 +120,7 @@ UINT WINAPI MsiOpenProductW(LPCWSTR szProduct, MSIHANDLE *phProduct)
         goto end;
     }
 
-    r = MsiOpenPackageW( path, phProduct );
+    r = MSI_OpenPackageW( path, ppackage );
 
 end:
     msi_free( path );
@@ -128,6 +128,20 @@ end:
         RegCloseKey( hKeyProduct );
 
     return r;
+}
+
+UINT WINAPI MsiOpenProductW( LPCWSTR szProduct, MSIHANDLE *phProduct )
+{
+   MSIPACKAGE *package = NULL;
+   UINT r;
+
+   r = MSI_OpenProductW( szProduct, &package );
+   if( r == ERROR_SUCCESS )
+   {
+       *phProduct = alloc_msihandle( &package->hdr );
+       msiobj_release( &package->hdr );
+   }
+   return r;
 }
 
 UINT WINAPI MsiAdvertiseProductA(LPCSTR szPackagePath, LPCSTR szScriptfilePath,
@@ -198,21 +212,15 @@ UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
 {
     MSIPACKAGE *package = NULL;
     UINT r;
-    MSIHANDLE handle;
 
     FIXME("%s %s\n",debugstr_w(szPackagePath), debugstr_w(szCommandLine));
 
     r = MSI_OpenPackageW( szPackagePath, &package );
-    if (r != ERROR_SUCCESS)
-        return r;
-
-    handle = alloc_msihandle( &package->hdr );
-
-    r = ACTION_DoTopLevelINSTALL(package, szPackagePath, szCommandLine, 
-                                 szPackagePath);
-
-    MsiCloseHandle(handle);
-    msiobj_release( &package->hdr );
+    if (r == ERROR_SUCCESS)
+    {
+        r = ACTION_DoTopLevelINSTALL(package, szPackagePath, szCommandLine, szPackagePath );
+        msiobj_release( &package->hdr );
+    }
 
     return r;
 }
@@ -248,9 +256,8 @@ UINT WINAPI MsiApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szInstallPackage,
 UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
                         INSTALLSTATE eInstallState, LPCWSTR szCommandLine)
 {
-    MSIHANDLE handle = -1;
-    MSIPACKAGE* package;
-    UINT rc;
+    MSIPACKAGE* package = NULL;
+    UINT r;
     DWORD sz;
     WCHAR sourcepath[MAX_PATH];
     WCHAR filename[MAX_PATH];
@@ -277,7 +284,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED, 
             MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAMEW, filename, &sz);
 
-    strcatW(sourcepath,filename);
+    lstrcatW(sourcepath,filename);
 
     /*
      * ok 1, we need to find the msi file for this product.
@@ -286,42 +293,37 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
      *    4, cleanupany runonce entry.
      */
 
-    rc = MsiOpenProductW(szProduct,&handle);
-    if (rc != ERROR_SUCCESS)
-        goto end;
+    r = MSI_OpenProductW( szProduct, &package );
+    if (r != ERROR_SUCCESS)
+        return r;
 
-    package = msihandle2msiinfo(handle, MSIHANDLETYPE_PACKAGE);
-    if (!package)
-    {
-        rc = ERROR_INVALID_HANDLE;
-        goto end;
-    }
-
-    sz = lstrlenW(szInstalled);
+    sz = lstrlenW(szInstalled) + 1;
 
     if (szCommandLine)
         sz += lstrlenW(szCommandLine);
 
     commandline = msi_alloc(sz * sizeof(WCHAR));
+    if (!commandline )
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto end;
+    }
 
+    commandline[0] = 0;
     if (szCommandLine)
         lstrcpyW(commandline,szCommandLine);
-    else
-        commandline[0] = 0;
 
     if (MsiQueryProductStateW(szProduct) != INSTALLSTATE_UNKNOWN)
         lstrcatW(commandline,szInstalled);
 
-    rc = ACTION_DoTopLevelINSTALL(package, sourcepath, commandline, sourcepath);
-
-    msiobj_release( &package->hdr );
+    r = ACTION_DoTopLevelINSTALL(package, sourcepath, commandline, sourcepath);
 
     msi_free(commandline);
-end:
-    if (handle != -1)
-        MsiCloseHandle(handle);
 
-    return rc;
+end:
+    msiobj_release( &package->hdr );
+
+    return r;
 }
 
 UINT WINAPI MsiConfigureProductExA(LPCSTR szProduct, int iInstallLevel,
@@ -1753,9 +1755,8 @@ UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
 UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
                                   DWORD dwReinstallMode )
 {
-    MSIHANDLE handle = -1;
-    MSIPACKAGE* package;
-    UINT rc;
+    MSIPACKAGE* package = NULL;
+    UINT r;
     DWORD sz;
     WCHAR sourcepath[MAX_PATH];
     WCHAR filename[MAX_PATH];
@@ -1805,20 +1806,13 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
 
     strcatW(sourcepath,filename);
 
-    if (!(dwReinstallMode & REINSTALLMODE_PACKAGE))
-        rc = MsiOpenProductW(szProduct,&handle);
+    if (dwReinstallMode & REINSTALLMODE_PACKAGE)
+        r = MSI_OpenPackageW( sourcepath, &package );
     else
-        rc = MsiOpenPackageW(sourcepath,&handle);
+        r = MSI_OpenProductW( szProduct, &package );
 
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    package = msihandle2msiinfo(handle, MSIHANDLETYPE_PACKAGE);
-    if (!package)
-    {
-        rc = ERROR_INVALID_HANDLE;
-        goto end;
-    }
+    if (r != ERROR_SUCCESS)
+        return r;
 
     MSI_SetPropertyW(package,REINSTALLMODE,reinstallmode);
     
@@ -1831,16 +1825,13 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
     sprintfW(commandline,fmt,szFeature);
     lstrcatW(commandline,szInstalled);
 
-    rc = ACTION_DoTopLevelINSTALL(package, sourcepath, commandline, sourcepath);
+    r = ACTION_DoTopLevelINSTALL(package, sourcepath, commandline, sourcepath);
 
     msiobj_release( &package->hdr );
 
     msi_free(commandline);
-end:
-    if (handle != -1)
-        MsiCloseHandle(handle);
 
-    return rc;
+    return r;
 }
 
 UINT WINAPI MsiReinstallFeatureA( LPCSTR szProduct, LPCSTR szFeature,

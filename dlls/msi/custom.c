@@ -430,11 +430,11 @@ static DWORD WINAPI ACTION_CallDllFunction(thread_struct *stuff)
             MSIPACKAGE *package = stuff->package;
 
             TRACE("Calling function %s\n", proc);
-            hPackage = msiobj_findhandle( &package->hdr );
-            if (hPackage )
+            hPackage = alloc_msihandle( &package->hdr );
+            if (hPackage)
             {
-                rc = fn(hPackage);
-                msiobj_release( &package->hdr );
+                rc = fn( hPackage );
+                MsiCloseHandle( hPackage );
             }
             else
                 ERR("Handle for object %p not found\n", package );

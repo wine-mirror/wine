@@ -267,7 +267,6 @@ extern void msiobj_addref(MSIOBJECTHDR *);
 extern int msiobj_release(MSIOBJECTHDR *);
 extern void msiobj_lock(MSIOBJECTHDR *);
 extern void msiobj_unlock(MSIOBJECTHDR *);
-extern MSIHANDLE msiobj_findhandle( MSIOBJECTHDR *hdr );
 
 extern void free_cached_tables( MSIDATABASE *db );
 extern string_table *load_string_table( IStorage *stg );

@@ -109,25 +109,6 @@ out:
     return (void*) ret;
 }
 
-MSIHANDLE msiobj_findhandle( MSIOBJECTHDR *hdr )
-{
-    MSIHANDLE ret = 0;
-    UINT i;
-
-    TRACE("%p\n", hdr);
-
-    EnterCriticalSection( &MSI_handle_cs );
-    for(i=0; (i<MSIMAXHANDLES) && !ret; i++)
-        if( msihandletable[i].obj == hdr )
-            ret = i+1;
-    LeaveCriticalSection( &MSI_handle_cs );
-
-    TRACE("%p -> %ld\n", hdr, ret);
-
-    msiobj_addref( hdr );
-    return ret;
-}
-
 void *alloc_msiobject(UINT type, UINT size, msihandledestructor destroy )
 {
     MSIOBJECTHDR *info;
