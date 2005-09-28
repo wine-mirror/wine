@@ -34,6 +34,8 @@
 #include "chm.h"
 #include "webbrowser.h"
 
+static void Help_OnSize(HWND hWnd);
+
 /* Window type defaults */
 
 #define WINTYPE_DEFAULT_X           280
@@ -122,10 +124,43 @@ static void SB_OnPaint(HWND hWnd)
     EndPaint(hWnd, &ps);
 }
 
+static void SB_OnLButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+    SetCapture(hWnd);
+}
+
+static void SB_OnLButtonUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+    HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+    POINTS pt = MAKEPOINTS(lParam);
+
+    /* update the window sizes */
+    pHHInfo->pHHWinType->iNavWidth += pt.x;
+    Help_OnSize(hWnd);
+
+    ReleaseCapture();
+}
+
+static void SB_OnMouseMove(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+    /* ignore WM_MOUSEMOVE if not dragging the SizeBar */
+    if (!(wParam & MK_LBUTTON))
+        return;
+}
+
 LRESULT CALLBACK SizeBar_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+        case WM_LBUTTONDOWN:
+            SB_OnLButtonDown(hWnd, wParam, lParam);
+            break;
+        case WM_LBUTTONUP:
+            SB_OnLButtonUp(hWnd, wParam, lParam);
+            break;
+        case WM_MOUSEMOVE:
+            SB_OnMouseMove(hWnd, wParam, lParam);
+            break;
         case WM_PAINT:
             SB_OnPaint(hWnd);
             break;
@@ -185,6 +220,9 @@ static BOOL HH_AddSizeBar(HHInfo *pHHInfo)
                            hwndParent, NULL, pHHInfo->hInstance, NULL);
     if (!hWnd)
         return FALSE;
+
+    /* store the pointer to the HH info struct */
+    SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)pHHInfo);
 
     pHHInfo->hwndSizeBar = hWnd;
     return TRUE;
@@ -437,10 +475,13 @@ static void NP_GetNavigationRect(HHInfo *pHHInfo, RECT *rc)
     rc->top = rectTB.bottom;
     rc->bottom = rectWND.bottom - rectTB.bottom;
 
-    if (pHHInfo->pHHWinType->fsValidMembers & HHWIN_PARAM_NAV_WIDTH)
-        rc->right = pHHInfo->pHHWinType->iNavWidth;
-    else
-        rc->right = WINTYPE_DEFAULT_NAVWIDTH;
+    if (!(pHHInfo->pHHWinType->fsValidMembers & HHWIN_PARAM_NAV_WIDTH) &&
+          pHHInfo->pHHWinType->iNavWidth == 0)
+    {
+        pHHInfo->pHHWinType->iNavWidth = WINTYPE_DEFAULT_NAVWIDTH;
+    }
+
+    rc->right = pHHInfo->pHHWinType->iNavWidth;
 }
 
 static void NP_CreateTab(HINSTANCE hInstance, HWND hwndTabCtrl, DWORD dwStrID, DWORD dwIndex)
