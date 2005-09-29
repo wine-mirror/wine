@@ -71,6 +71,7 @@ struct DefaultHandler
   const IUnknownVtbl*        lpvtblIUnknown;
   const IDataObjectVtbl*     lpvtblIDataObject;
   const IRunnableObjectVtbl* lpvtblIRunnableObject;
+  const IAdviseSinkVtbl     *lpvtblIAdviseSink;
 
   /* Reference count of this object */
   LONG ref;
@@ -107,6 +108,9 @@ struct DefaultHandler
   IOleObject *pOleDelegate;
   /* IPersistStorage delegate */
   IPersistStorage *pPSDelegate;
+
+  /* connection cookie for the advise on the delegate OLE object */
+  DWORD dwAdvConn;
 };
 
 typedef struct DefaultHandler DefaultHandler;
@@ -135,6 +139,11 @@ static inline DefaultHandler *impl_from_IDataObject( IDataObject *iface )
 static inline DefaultHandler *impl_from_IRunnableObject( IRunnableObject *iface )
 {
     return (DefaultHandler *)((char*)iface - FIELD_OFFSET(DefaultHandler, lpvtblIRunnableObject));
+}
+
+static inline DefaultHandler *impl_from_IAdviseSink( IAdviseSink *iface )
+{
+    return (DefaultHandler *)((char*)iface - FIELD_OFFSET(DefaultHandler, lpvtblIAdviseSink));
 }
 
 static void DefaultHandler_Destroy(DefaultHandler* This);
@@ -397,7 +406,7 @@ static HRESULT WINAPI DefaultHandler_Close(
 	    IOleObject*        iface,
 	    DWORD              dwSaveOption)
 {
-  TRACE("()\n");
+  FIXME("()\n");
   return S_OK;
 }
 
@@ -563,6 +572,9 @@ static HRESULT WINAPI DefaultHandler_GetUserClassID(
   DefaultHandler *This = impl_from_IOleObject(iface);
 
   TRACE("(%p, %p)\n", iface, pClsid);
+
+  if (This->pOleDelegate)
+    return IOleObject_GetUserClassID(This->pOleDelegate, pClsid);
 
   if (This->pOleDelegate)
     return IOleObject_GetUserClassID(This->pOleDelegate, pClsid);
@@ -766,6 +778,9 @@ static HRESULT WINAPI DefaultHandler_GetMiscStatus(
   DefaultHandler *This = impl_from_IOleObject(iface);
 
   TRACE("(%p, %lx, %p)\n", iface, dwAspect, pdwStatus);
+
+  if (This->pOleDelegate)
+    return IOleObject_GetMiscStatus(This->pOleDelegate, dwAspect, pdwStatus);
 
   if (This->pOleDelegate)
     return IOleObject_GetMiscStatus(This->pOleDelegate, dwAspect, pdwStatus);
@@ -1171,7 +1186,9 @@ static HRESULT WINAPI DefaultHandler_Run(
   if (FAILED(hr))
     return hr;
 
-  if (This->clientSite)
+  hr = IOleObject_Advise(This->pOleDelegate, (IAdviseSink *)&This->lpvtblIAdviseSink, &This->dwAdvConn);
+
+  if (SUCCEEDED(hr) && This->clientSite)
     hr = IOleObject_SetClientSite(This->pOleDelegate, This->clientSite);
 
   if (SUCCEEDED(hr))
@@ -1186,7 +1203,6 @@ static HRESULT WINAPI DefaultHandler_Run(
 
   /* FIXME: do more stuff here:
    * - IOleObject_GetMiscStatus
-   * - IOleObject_Advise
    * - IOleObject_GetMoniker
    * - advise data cache that we've connected somehow?
    */
@@ -1239,6 +1255,73 @@ static HRESULT WINAPI DefaultHandler_SetContainedObject(
 {
   FIXME("()\n");
   return S_OK;
+}
+
+static HRESULT WINAPI DefaultHandler_IAdviseSink_QueryInterface(
+    IAdviseSink *iface,
+    REFIID riid,
+    void **ppvObject)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IAdviseSink))
+    {
+        *ppvObject = iface;
+        IAdviseSink_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI DefaultHandler_IAdviseSink_AddRef(
+    IAdviseSink *iface)
+{
+    DefaultHandler *This = impl_from_IAdviseSink(iface);
+
+    return IUnknown_AddRef((IUnknown *)&This->lpvtblIUnknown);
+}
+
+static ULONG WINAPI DefaultHandler_IAdviseSink_Release(
+            IAdviseSink *iface)
+{
+    DefaultHandler *This = impl_from_IAdviseSink(iface);
+
+    return IUnknown_Release((IUnknown *)&This->lpvtblIUnknown);
+}
+
+static void WINAPI DefaultHandler_IAdviseSink_OnDataChange(
+    IAdviseSink *iface,
+    FORMATETC *pFormatetc,
+    STGMEDIUM *pStgmed)
+{
+    FIXME(": stub\n");
+}
+
+static void WINAPI DefaultHandler_IAdviseSink_OnViewChange(
+    IAdviseSink *iface,
+    DWORD dwAspect,
+    LONG lindex)
+{
+    FIXME(": stub\n");
+}
+
+static void WINAPI DefaultHandler_IAdviseSink_OnRename(
+    IAdviseSink *iface,
+    IMoniker *pmk)
+{
+    FIXME(": stub\n");
+}
+
+static void WINAPI DefaultHandler_IAdviseSink_OnSave(
+    IAdviseSink *iface)
+{
+    FIXME(": stub\n");
+}
+
+static void WINAPI DefaultHandler_IAdviseSink_OnClose(
+    IAdviseSink *iface)
+{
+    FIXME(": stub\n");
 }
 
 /*
@@ -1307,6 +1390,18 @@ static const IRunnableObjectVtbl DefaultHandler_IRunnableObject_VTable =
   DefaultHandler_SetContainedObject
 };
 
+static const IAdviseSinkVtbl DefaultHandler_IAdviseSink_VTable =
+{
+  DefaultHandler_IAdviseSink_QueryInterface,
+  DefaultHandler_IAdviseSink_AddRef,
+  DefaultHandler_IAdviseSink_Release,
+  DefaultHandler_IAdviseSink_OnDataChange,
+  DefaultHandler_IAdviseSink_OnViewChange,
+  DefaultHandler_IAdviseSink_OnRename,
+  DefaultHandler_IAdviseSink_OnSave,
+  DefaultHandler_IAdviseSink_OnClose
+};
+
 /*********************************************************
  * Methods implementation for the DefaultHandler class.
  */
@@ -1328,6 +1423,7 @@ static DefaultHandler* DefaultHandler_Construct(
   This->lpvtblIUnknown = &DefaultHandler_NDIUnknown_VTable;
   This->lpvtblIDataObject = &DefaultHandler_IDataObject_VTable;
   This->lpvtblIRunnableObject = &DefaultHandler_IRunnableObject_VTable;
+  This->lpvtblIAdviseSink = &DefaultHandler_IAdviseSink_VTable;
 
   /*
    * Start with one reference count. The caller of this function
@@ -1367,6 +1463,8 @@ static DefaultHandler* DefaultHandler_Construct(
   This->containerObj = NULL;
   This->pOleDelegate = NULL;
   This->pPSDelegate = NULL;
+
+  This->dwAdvConn = 0;
 
   return This;
 }
