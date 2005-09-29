@@ -409,10 +409,53 @@ static void test_FindMimeFromData(void)
     ok(hres == E_INVALIDARG, "FindMimeFromData failed: %08lx, expected E_INVALIDARG\n", hres);
 }
 
+static struct secmgr_test {
+    LPCWSTR url;
+    DWORD zone;
+    HRESULT zone_hres;
+} secmgr_tests[] = {
+    {url1, 0,   S_OK},
+    {url2, 100, 0x80041001},
+    {url3, 0,   S_OK},
+    {url4, 3,   S_OK},
+    {url5, 3,   S_OK},
+    {url6, 3,   S_OK},
+    {url7, 3,   S_OK}
+};
+
+static void test_SecurityManager(void)
+{
+    int i;
+    IInternetSecurityManager *secmgr = NULL;
+    DWORD zone;
+    HRESULT hres;
+
+    hres = CoInternetCreateSecurityManager(NULL, &secmgr, 0);
+    ok(hres == S_OK, "CoInternetCreateSecurityManager failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    for(i=0; i < sizeof(secmgr_tests)/sizeof(secmgr_tests[0]); i++) {
+        zone = 100;
+        hres = IInternetSecurityManager_MapUrlToZone(secmgr, secmgr_tests[i].url, &zone, 0);
+        ok(hres == secmgr_tests[i].zone_hres, "[%d] MapUrlToZone failed: %08lx, expected %08lx\n",
+                i, hres, secmgr_tests[i].zone_hres);
+        ok(zone == secmgr_tests[i].zone, "[%d] zone=%ld, expected %ld\n", i, zone,
+                secmgr_tests[i].zone);
+    }
+
+    zone = 100;
+    hres = IInternetSecurityManager_MapUrlToZone(secmgr, NULL, &zone, 0);
+    ok(hres == E_INVALIDARG, "MapUrlToZone failed: %08lx, expected E_INVALIDARG\n", hres);
+
+    IInternetSecurityManager_Release(secmgr);
+}
+
 START_TEST(misc)
 {
     test_CreateFormatEnum();
     test_RegisterFormatEnumerator();
     test_CoInternetParseUrl();
     test_FindMimeFromData();
+    test_SecurityManager();
 }

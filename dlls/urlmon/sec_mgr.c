@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "wine/debug.h"
 #include "ole2.h"
 #include "wine/unicode.h"
@@ -49,6 +50,70 @@ typedef struct {
 } SecManagerImpl;
 
 #define SECMGR_THIS(iface) DEFINE_THIS(SecManagerImpl, InternetSecurityManager, iface)
+
+static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone)
+{
+    WCHAR schema[64];
+    DWORD res, size=0;
+    HKEY hkey;
+    HRESULT hres;
+
+    static const WCHAR wszZoneMapProtocolKey[] =
+        {'S','o','f','t','w','a','r','e','\\',
+                    'M','i','c','r','o','s','o','f','t','\\',
+                    'W','i','n','d','o','w','s','\\',
+                    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                    'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
+                    'Z','o','n','e','M','a','p','\\',
+                    'P','r','o','t','o','c','o','l','D','e','f','a','u','l','t','s',0};
+    static const WCHAR wszFile[] = {'f','i','l','e',0};
+
+    hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(WCHAR), &size, 0);
+    if(FAILED(hres))
+        return hres;
+    if(!*schema)
+        return 0x80041001;
+
+    /* file protocol is a special case */
+    if(!strcmpW(schema, wszFile)) {
+        WCHAR path[MAX_PATH];
+
+        hres = CoInternetParseUrl(url, PARSE_PATH_FROM_URL, 0, path,
+                sizeof(path)/sizeof(WCHAR), &size, 0);
+
+        if(SUCCEEDED(hres) && strchrW(path, '\\')) {
+            *zone = 0;
+            return S_OK;
+        }
+    }
+
+    WARN("domains are not yet implemented\n");
+
+    res = RegOpenKeyW(HKEY_CURRENT_USER, wszZoneMapProtocolKey, &hkey);
+    if(res != ERROR_SUCCESS) {
+        ERR("Could not open key %s\n", debugstr_w(wszZoneMapProtocolKey));
+        return E_UNEXPECTED;
+    }
+
+    size = sizeof(DWORD);
+    res = RegQueryValueExW(hkey, schema, NULL, NULL, (PBYTE)zone, &size);
+    if(res == ERROR_SUCCESS)
+        return S_OK;
+
+    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, wszZoneMapProtocolKey, &hkey);
+    if(res != ERROR_SUCCESS) {
+        ERR("Could not open key %s\n", debugstr_w(wszZoneMapProtocolKey));
+        return E_UNEXPECTED;
+    }
+
+    size = sizeof(DWORD);
+    res = RegQueryValueExW(hkey, schema, NULL, NULL, (PBYTE)zone, &size);
+    if(res == ERROR_SUCCESS)
+                            return S_OK;
+
+    *zone = 3;
+    return S_OK;
+}
 
 static HRESULT WINAPI SecManagerImpl_QueryInterface(IInternetSecurityManager* iface,REFIID riid,void** ppvObject)
 {
@@ -169,6 +234,8 @@ static HRESULT WINAPI SecManagerImpl_MapUrlToZone(IInternetSecurityManager *ifac
                                                   DWORD dwFlags)
 {
     SecManagerImpl *This = SECMGR_THIS(iface);
+    LPWSTR url;
+    DWORD size;
     HRESULT hres;
 
     TRACE("(%p)->(%s %p %08lx)\n", iface, debugstr_w(pwszUrl), pdwZone, dwFlags);
@@ -180,8 +247,24 @@ static HRESULT WINAPI SecManagerImpl_MapUrlToZone(IInternetSecurityManager *ifac
             return hres;
     }
 
-    FIXME("Default action is not implemented\n");
-    return E_NOTIMPL;
+    if(!pwszUrl)
+        return E_INVALIDARG;
+
+    if(dwFlags)
+        FIXME("not supported flags: %08lx\n", dwFlags);
+
+    size = (strlenW(pwszUrl)+16) * sizeof(WCHAR);
+    url = HeapAlloc(GetProcessHeap(), 0, size);
+
+    hres = CoInternetParseUrl(pwszUrl, PARSE_SECURITY_URL, 0, url, size/sizeof(WCHAR), &size, 0);
+    if(FAILED(hres))
+        memcpy(url, pwszUrl, size);
+
+    hres = map_url_to_zone(url, pdwZone);
+
+    HeapFree(GetProcessHeap(), 0, url);
+
+    return hres;
 }
 
 static HRESULT WINAPI SecManagerImpl_GetSecurityId(IInternetSecurityManager *iface, 
