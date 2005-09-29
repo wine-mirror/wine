@@ -1911,7 +1911,7 @@ UINT msi_dialog_run_message_loop( msi_dialog *dialog )
     }
 
     ShowWindow( hwnd, SW_SHOW );
-    UpdateWindow( hwnd );
+    /* UpdateWindow( hwnd ); - and causes the transparent static controls not to paint */
 
     if( dialog->attributes & msidbDialogAttributesModal )
     {
