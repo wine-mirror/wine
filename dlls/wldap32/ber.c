@@ -25,7 +25,7 @@
 #include "windef.h"
 #include "winldap.h"
 
-#define LBER_ERROR (~0UL)
+#define LBER_ERROR (~0U)
 
 BerElement *ber_alloc_t( INT options )
 {

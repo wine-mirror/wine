@@ -98,7 +98,7 @@ typedef struct {
 
 static opened_printer_t **printer_handles;
 static int nb_printer_handles;
-static long next_job_id = 1;
+static LONG next_job_id = 1;
 
 static DWORD (WINAPI *GDI_CallDeviceCapabilities16)( LPCSTR lpszDevice, LPCSTR lpszPort,
                                                      WORD fwCapability, LPSTR lpszOutput,
@@ -612,7 +612,7 @@ void WINSPOOL_LoadSystemPrinters(void)
  */
 static HANDLE get_opened_printer_entry( LPCWSTR name )
 {
-    UINT handle = nb_printer_handles, i;
+    UINT_PTR handle = nb_printer_handles, i;
     queue_t *queue = NULL;
     opened_printer_t *printer;
 
@@ -681,7 +681,7 @@ end:
  */
 static opened_printer_t *get_opened_printer(HANDLE hprn)
 {
-    int idx = (int)hprn;
+    UINT_PTR idx = (UINT_PTR)hprn;
     opened_printer_t *ret = NULL;
 
     EnterCriticalSection(&printer_handles_cs);
@@ -1655,7 +1655,7 @@ HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
  */
 BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 {
-    int i = (int)hPrinter;
+    UINT_PTR i = (UINT_PTR)hPrinter;
     opened_printer_t *printer = NULL;
     BOOL ret = FALSE;
 
