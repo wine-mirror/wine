@@ -207,24 +207,20 @@ extern void output_resources( FILE *outfile, DLLSPEC *spec );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
 extern void output_res16_data( FILE *outfile, DLLSPEC *spec );
 extern void output_res16_directory( FILE *outfile, DLLSPEC *spec, const char *header_name );
-extern void output_dll_init( FILE *outfile, const char *constructor, const char *destructor );
 
 extern void BuildRelays16( FILE *outfile );
 extern void BuildRelays32( FILE *outfile );
 extern void BuildSpec16File( FILE *outfile, DLLSPEC *spec );
 extern void BuildSpec32File( FILE *outfile, DLLSPEC *spec );
 extern void BuildDef32File( FILE *outfile, DLLSPEC *spec );
-extern void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv );
 
 extern int parse_spec_file( FILE *file, DLLSPEC *spec );
 extern int parse_def_file( FILE *file, DLLSPEC *spec );
-extern int parse_debug_channels( const char *srcdir, const char *filename );
 
 /* global variables */
 
 extern int current_line;
 extern int UsePIC;
-extern int nb_debug_channels;
 extern int nb_lib_paths;
 extern int nb_errors;
 extern int display_warnings;
@@ -235,7 +231,6 @@ extern int save_temps;
 extern char *input_file_name;
 extern char *spec_file_name;
 extern const char *output_file_name;
-extern char **debug_channels;
 extern char **lib_path;
 
 extern char *as_command;

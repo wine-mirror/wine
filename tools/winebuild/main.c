@@ -41,7 +41,6 @@
 #include "build.h"
 
 int UsePIC = 0;
-int nb_debug_channels = 0;
 int nb_lib_paths = 0;
 int nb_errors = 0;
 int display_warnings = 0;
@@ -73,7 +72,6 @@ enum target_platform target_platform = PLATFORM_WINDOWS;
 enum target_platform target_platform = PLATFORM_UNSPECIFIED;
 #endif
 
-char **debug_channels = NULL;
 char **lib_path = NULL;
 
 char *input_file_name = NULL;
@@ -86,7 +84,6 @@ char *ld_command = NULL;
 char *nm_command = NULL;
 
 static FILE *output_file;
-static const char *current_src_dir;
 static int nb_res_files;
 static char **res_files;
 
@@ -97,7 +94,6 @@ enum exec_mode_values
     MODE_DLL,
     MODE_EXE,
     MODE_DEF,
-    MODE_DEBUG,
     MODE_RELAY16,
     MODE_RELAY32
 };
@@ -248,7 +244,6 @@ static const char usage_str[] =
 "Usage: winebuild [OPTIONS] [FILES]\n\n"
 "Options:\n"
 "       --as-cmd=AS          Command to use for assembling (default: as)\n"
-"   -C, --source-dir=DIR     Look for source files in DIR\n"
 "   -d, --delay-lib=LIB      Import the specified library in delayed mode\n"
 "   -D SYM                   Ignored for C flags compatibility\n"
 "   -E, --export=FILE        Export the symbols defined in the .spec or .def file\n"
@@ -280,7 +275,6 @@ static const char usage_str[] =
 "       --dll                Build a .c file from a .spec or .def file\n"
 "       --def                Build a .def file from a .spec file\n"
 "       --exe                Build a .c file for an executable\n"
-"       --debug [FILES]      Build a .c file with the debug channels declarations\n"
 "       --relay16            Build the 16-bit relay assembly routines\n"
 "       --relay32            Build the 32-bit relay assembly routines\n\n"
 "The mode options are mutually exclusive; you must specify one and only one.\n\n";
@@ -290,7 +284,6 @@ enum long_options_values
     LONG_OPT_DLL = 1,
     LONG_OPT_DEF,
     LONG_OPT_EXE,
-    LONG_OPT_DEBUG,
     LONG_OPT_ASCMD,
     LONG_OPT_LDCMD,
     LONG_OPT_NMCMD,
@@ -309,7 +302,6 @@ static const struct option long_options[] =
     { "dll",      0, 0, LONG_OPT_DLL },
     { "def",      0, 0, LONG_OPT_DEF },
     { "exe",      0, 0, LONG_OPT_EXE },
-    { "debug",    0, 0, LONG_OPT_DEBUG },
     { "as-cmd",   1, 0, LONG_OPT_ASCMD },
     { "ld-cmd",   1, 0, LONG_OPT_LDCMD },
     { "nm-cmd",   1, 0, LONG_OPT_NMCMD },
@@ -320,7 +312,6 @@ static const struct option long_options[] =
     { "target",   1, 0, LONG_OPT_TARGET },
     { "version",  0, 0, LONG_OPT_VERSION },
     /* aliases for short options */
-    { "source-dir",    1, 0, 'C' },
     { "delay-lib",     1, 0, 'd' },
     { "export",        1, 0, 'E' },
     { "entry",         1, 0, 'e' },
@@ -363,9 +354,6 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
     {
         switch(optc)
         {
-        case 'C':
-            current_src_dir = optarg;
-            break;
         case 'D':
             /* ignored */
             break;
@@ -474,9 +462,6 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
         case LONG_OPT_EXE:
             set_exec_mode( MODE_EXE );
             if (!spec->subsystem) spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
-            break;
-        case LONG_OPT_DEBUG:
-            set_exec_mode( MODE_DEBUG );
             break;
         case LONG_OPT_ASCMD:
             as_command = xstrdup( optarg );
@@ -631,9 +616,6 @@ int main(int argc, char **argv)
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
         BuildDef32File( output_file, spec );
-        break;
-    case MODE_DEBUG:
-        BuildDebugFile( output_file, current_src_dir, argv );
         break;
     case MODE_RELAY16:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );

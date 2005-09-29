@@ -6,9 +6,8 @@ winebuild \- Wine dll builder
 .BI winebuild\  [options]\ [input\ files]
 .SH DESCRIPTION
 .B winebuild
-generates the C and assembly files that are necessary to build a Wine
-dll, which is basically a Win32 dll encapsulated inside a Unix
-library.
+generates the assembly files that are necessary to build a Wine dll,
+which is basically a Win32 dll encapsulated inside a Unix library.
 .PP
 .B winebuild
 has different modes, depending on what kind of file it is asked to
@@ -47,14 +46,6 @@ executable, and all the other object files must be listed as
 Build a .def file from a spec file. The .spec file is specified via the
 -E option. This is used when building dlls with a PE (Win32) compiler.
 .TP
-.B \--debug
-Build a C file containing the definitions for debugging channels. In
-that mode the
-.I input files
-should be a list of C files to search for debug channel
-definitions. The resulting C file must be compiled and linked with the
-dll.
-.TP
 .B \--relay16
 Generate the assembly code for the 16-bit relay routines. This is for
 Wine internal usage only, you should never need to use this option.
@@ -67,11 +58,6 @@ Wine internal usage only, you should never need to use this option.
 .BI \--as-cmd= as-command
 Specify the command to use to compile assembly files; the default is
 \fBas\fR.
-.TP
-.BI \-C,\ --source-dir= directory
-Change to the specified directory before reading source files. Only
-meaningful in
-.BR \--debug\  mode.
 .TP
 .BI \-d,\ --delay-lib= name
 Set the delayed import mode for the specified library, which must be
