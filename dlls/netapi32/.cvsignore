@@ -1,3 +1,2 @@
 Makefile
 libnetapi32.def
-netapi32.dll.dbg.c

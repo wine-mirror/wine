@@ -1,4 +1,3 @@
 Makefile
 liburlmon.def
 rsrc.res
-urlmon.dll.dbg.c

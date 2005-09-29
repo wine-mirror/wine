@@ -1,4 +1,3 @@
 Makefile
 libwinmm.def
-winmm.dll.dbg.c
 winmm_res.res

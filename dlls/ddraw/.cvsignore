@@ -1,4 +1,3 @@
 Makefile
-ddraw.dll.dbg.c
 libddraw.def
 version.res

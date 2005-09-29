@@ -1,4 +1,3 @@
 Makefile
-dplayx.dll.dbg.c
 libdplayx.def
 version.res

@@ -1,6 +1,4 @@
 Makefile
-comctl32.dll
-comctl32.dll.dbg.c
 idb_hist_large.bmp
 idb_hist_small.bmp
 idb_std_large.bmp

@@ -1,4 +1,3 @@
 Makefile
 libquartz.def
-quartz.dll.dbg.c
 version.res

@@ -1,4 +1,3 @@
 Makefile
-cabinet.dll.dbg.c
 cabinet.res
 libcabinet.def

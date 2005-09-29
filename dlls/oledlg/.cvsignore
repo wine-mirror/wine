@@ -1,4 +1,3 @@
 Makefile
 liboledlg.def
-oledlg.dll.dbg.c
 rsrc.res

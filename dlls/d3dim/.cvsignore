@@ -1,4 +1,3 @@
 Makefile
-d3dim.dll.dbg.c
 libd3dim.def
 version.res

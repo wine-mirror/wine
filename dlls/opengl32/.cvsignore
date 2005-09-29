@@ -1,4 +1,3 @@
 Makefile
 libopengl32.def
-opengl32.dll.dbg.c
 version.res

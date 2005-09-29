@@ -1,4 +1,3 @@
 Makefile
 libmscms.def
-mscms.dll.dbg.c
 version.res

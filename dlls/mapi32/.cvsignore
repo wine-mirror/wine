@@ -1,4 +1,2 @@
 Makefile
 libmapi32.def
-mapi32.dll
-mapi32.dll.dbg.c

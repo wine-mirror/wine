@@ -1,3 +1,2 @@
 Makefile
 libmsvcrt.def
-msvcrt.dll.dbg.c

@@ -1,3 +1,2 @@
 Makefile
-crtdll.dll.dbg.c
 libcrtdll.def

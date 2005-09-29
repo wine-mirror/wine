@@ -1,4 +1,3 @@
 Makefile
-dinput8.dll.dbg.c
 libdinput8.def
 version.res

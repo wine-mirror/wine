@@ -1,5 +1,4 @@
 Makefile
 libmshtml.def
-mshtml.dll.dbg.c
 nsiface.h
 rsrc.res

@@ -1,4 +1,3 @@
 Makefile
 idb_wine.bmp
-winecfg.exe.dbg.c
 winecfg.res

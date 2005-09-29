@@ -1,4 +1,3 @@
 Makefile
 libserialui.def
-serialui.dll.dbg.c
 serialui_rc.res

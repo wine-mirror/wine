@@ -1,3 +1,2 @@
 Makefile
 libuser32.def
-user32.dll.dbg.c

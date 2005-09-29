@@ -1,5 +1,3 @@
 Makefile
 libshdocvw.def
-shdocvw.dll
-shdocvw.dll.dbg.c
 shdocvw.res

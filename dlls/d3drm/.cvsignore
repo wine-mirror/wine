@@ -1,4 +1,3 @@
 Makefile
-d3drm.dll.dbg.c
 libd3drm.def
 version.res

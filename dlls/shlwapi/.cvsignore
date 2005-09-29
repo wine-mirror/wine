@@ -1,4 +1,3 @@
 Makefile
 libshlwapi.def
-shlwapi.dll.dbg.c
 shlwapi.res

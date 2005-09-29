@@ -1,4 +1,3 @@
 Makefile
 libws2_32.def
 version.res
-ws2_32.dll.dbg.c

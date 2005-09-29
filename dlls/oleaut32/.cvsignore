@@ -1,4 +1,3 @@
 Makefile
 liboleaut32.def
-oleaut32.dll.dbg.c
 oleaut32.res

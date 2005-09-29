@@ -1,4 +1,3 @@
 Makefile
 libmswsock.def
-mswsock.dll.dbg.c
 version.res

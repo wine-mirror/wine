@@ -1,4 +1,3 @@
 Makefile
-avifil32.dll.dbg.c
 libavifil32.def
 rsrc.res

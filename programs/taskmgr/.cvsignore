@@ -1,6 +1,5 @@
 Makefile
 font.bmp
-taskmgr.exe.dbg.c
 taskmgr.ico
 taskmgr.res
 trayicon.bmp

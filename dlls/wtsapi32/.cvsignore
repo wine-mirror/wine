@@ -1,3 +1,2 @@
 Makefile
 libwtsapi32.def
-wtsapi32.dll.dbg.c

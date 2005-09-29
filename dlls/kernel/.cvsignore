@@ -1,5 +1,4 @@
 Makefile
 kernel.res
-kernel32.dll.dbg.c
 libkernel32.def
 version16.res

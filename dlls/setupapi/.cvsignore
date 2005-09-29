@@ -1,4 +1,3 @@
 Makefile
 libsetupapi.def
-setupapi.dll.dbg.c
 setupapi.res

@@ -1,3 +1,2 @@
 Makefile
 libw32skrnl.def
-w32skrnl.dll.dbg.c
