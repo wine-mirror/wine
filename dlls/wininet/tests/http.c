@@ -350,19 +350,19 @@ static void InternetCrackUrl_test(void)
   /* 1. When extra info split out explicitly */
   zero_compsA(&urlComponents, 0, 1, 0, 0, 1, 1);
   ok(InternetCrackUrlA(TEST_URL2, 0, 0, &urlComponents),"InternetCrackUrl failed, error 0x%lx\n", GetLastError());
-  ok(urlComponents.dwUrlPathLength == strlen(TEST_URL2_PATH),".dwUrlPathLength should be %d, but is %ld\n", strlen(TEST_URL2_PATH), urlComponents.dwUrlPathLength);
+  ok(urlComponents.dwUrlPathLength == strlen(TEST_URL2_PATH),".dwUrlPathLength should be %ld, but is %ld\n", (DWORD)strlen(TEST_URL2_PATH), urlComponents.dwUrlPathLength);
   ok(!strncmp(urlComponents.lpszUrlPath,TEST_URL2_PATH,strlen(TEST_URL2_PATH)),"lpszUrlPath should be %s but is %s\n", TEST_URL2_PATH, urlComponents.lpszUrlPath);
-  ok(urlComponents.dwHostNameLength == strlen(TEST_URL2_SERVER),".dwHostNameLength should be %d, but is %ld\n", strlen(TEST_URL2_SERVER), urlComponents.dwHostNameLength);
+  ok(urlComponents.dwHostNameLength == strlen(TEST_URL2_SERVER),".dwHostNameLength should be %ld, but is %ld\n", (DWORD)strlen(TEST_URL2_SERVER), urlComponents.dwHostNameLength);
   ok(!strncmp(urlComponents.lpszHostName,TEST_URL2_SERVER,strlen(TEST_URL2_SERVER)),"lpszHostName should be %s but is %s\n", TEST_URL2_SERVER, urlComponents.lpszHostName);
-  ok(urlComponents.dwExtraInfoLength == strlen(TEST_URL2_EXTRA),".dwExtraInfoLength should be %d, but is %ld\n", strlen(TEST_URL2_EXTRA), urlComponents.dwExtraInfoLength);
+  ok(urlComponents.dwExtraInfoLength == strlen(TEST_URL2_EXTRA),".dwExtraInfoLength should be %ld, but is %ld\n", (DWORD)strlen(TEST_URL2_EXTRA), urlComponents.dwExtraInfoLength);
   ok(!strncmp(urlComponents.lpszExtraInfo,TEST_URL2_EXTRA,strlen(TEST_URL2_EXTRA)),"lpszExtraInfo should be %s but is %s\n", TEST_URL2_EXTRA, urlComponents.lpszHostName);
 
   /* 2. When extra info is not split out explicitly and is in url path */
   zero_compsA(&urlComponents, 0, 1, 0, 0, 1, 0);
   ok(InternetCrackUrlA(TEST_URL2, 0, 0, &urlComponents),"InternetCrackUrl failed with GLE 0x%lx\n",GetLastError());
-  ok(urlComponents.dwUrlPathLength == strlen(TEST_URL2_PATHEXTRA),".dwUrlPathLength should be %d, but is %ld\n", strlen(TEST_URL2_PATHEXTRA), urlComponents.dwUrlPathLength);
+  ok(urlComponents.dwUrlPathLength == strlen(TEST_URL2_PATHEXTRA),".dwUrlPathLength should be %ld, but is %ld\n", (DWORD)strlen(TEST_URL2_PATHEXTRA), urlComponents.dwUrlPathLength);
   ok(!strncmp(urlComponents.lpszUrlPath,TEST_URL2_PATHEXTRA,strlen(TEST_URL2_PATHEXTRA)),"lpszUrlPath should be %s but is %s\n", TEST_URL2_PATHEXTRA, urlComponents.lpszUrlPath);
-  ok(urlComponents.dwHostNameLength == strlen(TEST_URL2_SERVER),".dwHostNameLength should be %d, but is %ld\n", strlen(TEST_URL2_SERVER), urlComponents.dwHostNameLength);
+  ok(urlComponents.dwHostNameLength == strlen(TEST_URL2_SERVER),".dwHostNameLength should be %ld, but is %ld\n", (DWORD)strlen(TEST_URL2_SERVER), urlComponents.dwHostNameLength);
   ok(!strncmp(urlComponents.lpszHostName,TEST_URL2_SERVER,strlen(TEST_URL2_SERVER)),"lpszHostName should be %s but is %s\n", TEST_URL2_SERVER, urlComponents.lpszHostName);
 
   /*3. Check for %20 */
