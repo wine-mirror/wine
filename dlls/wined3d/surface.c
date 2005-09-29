@@ -758,6 +758,25 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                     vcheckGLcall("glDrawPixels");
                 }
                 break;
+            case WINED3DFMT_X1R5G5B5:
+                {
+                    int size;
+                    unsigned short *data;
+                    data = (unsigned short *)This->resource.allocatedMemory;
+                    size = (This->lockedRect.bottom - This->lockedRect.top) * (This->lockedRect.right - This->lockedRect.left);
+                    while(size > 0) {
+                            *data |= 0x8000;
+                            data++;
+                            size--;
+                    }
+                }
+            case WINED3DFMT_A1R5G5B5:
+                {
+                    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
+                                 GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, This->resource.allocatedMemory);
+                    vcheckGLcall("glDrawPixels");
+                }
+                break;
             case WINED3DFMT_R8G8B8:
                 {
                     glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
