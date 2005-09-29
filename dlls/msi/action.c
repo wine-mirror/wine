@@ -327,6 +327,14 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
     msiobj_release(&row->hdr);
 }
 
+static int msi_get_property_int( MSIPACKAGE *package, LPCWSTR prop, int def )
+{
+    LPWSTR str = msi_dup_property( package, prop );
+    int val = str ? atoiW( str ) : def;
+    msi_free( str );
+    return val;
+}
+
 static UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
 {
     LPCWSTR ptr,ptr2;
@@ -403,8 +411,6 @@ static UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
 UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
                               LPCWSTR szCommandLine, LPCWSTR msiFilePath)
 {
-    DWORD sz;
-    WCHAR buffer[10];
     UINT rc;
     BOOL ui = FALSE;
     static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
@@ -448,23 +454,17 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     }
 
     msi_parse_command_line( package, szCommandLine );
-  
-    sz = 10; 
-    if (MSI_GetPropertyW(package,szUILevel,buffer,&sz) == ERROR_SUCCESS)
+
+    if ( msi_get_property_int(package, szUILevel, 0) >= INSTALLUILEVEL_REDUCED )
     {
-        if (atoiW(buffer) >= INSTALLUILEVEL_REDUCED)
+        package->script->InWhatSequence |= SEQUENCE_UI;
+        rc = ACTION_ProcessUISequence(package);
+        ui = TRUE;
+        if (rc == ERROR_SUCCESS)
         {
-            package->script->InWhatSequence |= SEQUENCE_UI;
-            rc = ACTION_ProcessUISequence(package);
-            ui = TRUE;
-            if (rc == ERROR_SUCCESS)
-            {
-                package->script->InWhatSequence |= SEQUENCE_EXEC;
-                rc = ACTION_ProcessExecSequence(package,TRUE);
-            }
+            package->script->InWhatSequence |= SEQUENCE_EXEC;
+            rc = ACTION_ProcessExecSequence(package,TRUE);
         }
-        else
-            rc = ACTION_ProcessExecSequence(package,FALSE);
     }
     else
         rc = ACTION_ProcessExecSequence(package,FALSE);
@@ -1399,8 +1399,7 @@ static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property,
 
 static UINT SetFeatureStates(MSIPACKAGE *package)
 {
-    LPWSTR level;
-    INT install_level;
+    int install_level;
     static const WCHAR szlevel[] =
         {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szAddLocal[] =
@@ -1416,14 +1415,7 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
 
     TRACE("Checking Install Level\n");
 
-    level = msi_dup_property( package, szlevel );
-    if (level)
-    {
-        install_level = atoiW(level);
-        msi_free(level);
-    }
-    else
-        install_level = 1;
+    install_level = msi_get_property_int( package, szlevel, 1 );
 
     /* ok hereis the _real_ rub
      * all these activation/deactivation things happen in order and things
@@ -2893,10 +2885,8 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     msi_reg_set_val_str( hukey, INSTALLPROPERTY_PRODUCTNAMEW, buffer );
     msi_free(buffer);
 
-    buffer = msi_dup_property( package, szProductLanguage );
-    langid = atoiW(buffer);
+    langid = msi_get_property_int( package, szProductLanguage, 0 );
     msi_reg_set_val_dword( hkey, INSTALLPROPERTY_LANGUAGEW, langid );
-    msi_free(buffer);
 
     buffer = msi_dup_property( package, szARPProductIcon );
     if (buffer)
@@ -3239,7 +3229,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     HKEY hkey=0;
     LPWSTR buffer = NULL;
     UINT rc,i;
-    DWORD size;
+    DWORD size, langid;
     static const WCHAR szWindowsInstaller[] = 
     {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
     static const WCHAR szPropKeys[][80] = 
@@ -3376,9 +3366,8 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     msi_reg_set_val_str( hkey, INSTALLPROPERTY_INSTALLDATEW, buffer );
     msi_free(buffer);
    
-    buffer = msi_dup_property( package, szProductLanguage );
-    msi_reg_set_val_dword( hkey, INSTALLPROPERTY_LANGUAGEW, atoiW(buffer) );
-    msi_free(buffer);
+    langid = msi_get_property_int( package, szProductLanguage, 0 );
+    msi_reg_set_val_dword( hkey, INSTALLPROPERTY_LANGUAGEW, langid );
 
     buffer = msi_dup_property( package, szProductVersion );
     if (buffer)
