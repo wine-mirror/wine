@@ -453,8 +453,8 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             if (ret) return ret;
         }
 
-        /* Caption clicks are handled by the NC_HandleNCLButtonDown() */
-        return (LOWORD(lParam) >= HTCLIENT) ? MA_ACTIVATE : MA_NOACTIVATE;
+        /* Caption clicks are handled by NC_HandleNCLButtonDown() */
+        return MA_ACTIVATE;
 
     case WM_ACTIVATE:
         /* The default action in Windows is to set the keyboard focus to
