@@ -1623,7 +1623,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_LINELENGTH:
   {
     ME_DisplayItem *item, *item_end;
-    int nChars = 0;
+    int nChars = 0, nThisLineOfs = 0, nNextLineOfs = 0;
     
     if (wParam > ME_GetTextLength(editor))
       return 0;
@@ -1634,17 +1634,13 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     }
     item = ME_FindItemAtOffset(editor, diRun, wParam, NULL);
     item = ME_RowStart(item);
-    item_end = ME_RowEnd(item);
-    if (!item_end)
-    {
-      /* Empty buffer, no runs */
-      nChars = 0;
-    }
+    nThisLineOfs = ME_CharOfsFromRunOfs(editor, ME_FindItemFwd(item, diRun), 0);
+    item_end = ME_FindItemFwd(item, diStartRow);
+    if (item_end)
+      nNextLineOfs = ME_CharOfsFromRunOfs(editor, ME_FindItemFwd(item_end, diRun), 0);
     else
-    {
-      nChars = ME_CharOfsFromRunOfs(editor, item_end, ME_StrLen(item_end->member.run.strText));
-      nChars -= ME_CharOfsFromRunOfs(editor, item, 0);
-    }
+      nNextLineOfs = ME_FindItemFwd(item, diParagraphOrEnd)->member.para.nCharOfs-1;
+    nChars = nNextLineOfs - nThisLineOfs;
     TRACE("EM_LINELENGTH(%d)==%d\n",wParam, nChars);
     return nChars;
   }
