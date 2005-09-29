@@ -1514,6 +1514,11 @@ BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
 	dwURLFlags |= URL_UNESCAPE;
 	dwFlags &= ~ICU_ESCAPE;
     }
+    if(dwFlags & ICU_BROWSER_MODE)
+    {
+        dwURLFlags |= URL_BROWSER_MODE;
+        dwFlags &= ~ICU_BROWSER_MODE;
+    }
     if(dwFlags)
 	FIXME("Unhandled flags 0x%08lx\n", dwFlags);
     TRACE("%s %p %p %08lx\n", debugstr_a(lpszUrl), lpszBuffer,
@@ -1552,6 +1557,11 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
     {
 	dwURLFlags |= URL_UNESCAPE;
 	dwFlags &= ~ICU_ESCAPE;
+    }
+    if(dwFlags & ICU_BROWSER_MODE)
+    {
+        dwURLFlags |= URL_BROWSER_MODE;
+        dwFlags &= ~ICU_BROWSER_MODE;
     }
     if(dwFlags)
 	FIXME("Unhandled flags 0x%08lx\n", dwFlags);
