@@ -1685,7 +1685,6 @@ sub generate_project_files($)
   print FILEO "CC = winegcc\n";
   print FILEO "CXX = wineg++\n";
   print FILEO "RC = wrc\n";
-  print FILEO "WINEBUILD = winebuild\n";
   print FILEO "\n\n";
 
   print FILEO "### Generic targets\n\n";
@@ -1723,14 +1722,12 @@ sub generate_project_files($)
   print FILEO "\n";
   print FILEO "# Rules for cleaning\n";
   print FILEO "\n";
-  print FILEO "CLEAN_FILES     = *.dbg.c y.tab.c y.tab.h lex.yy.c \\\n";
-  print FILEO "                  core *.orig *.rej \\\n";
+  print FILEO "CLEAN_FILES     = y.tab.c y.tab.h lex.yy.c core *.orig *.rej \\\n";
   print FILEO "                  \\\\\\#*\\\\\\# *~ *% .\\\\\\#*\n";
   print FILEO "\n";
   print FILEO "clean:: \$(SUBDIRS:%=%/__clean__) \$(EXTRASUBDIRS:%=%/__clean__)\n";
   print FILEO "\t\$(RM) \$(CLEAN_FILES) \$(RC_SRCS:.rc=.res) \$(C_SRCS:.c=.o) \$(CXX_SRCS:.cpp=.o)\n";
-  print FILEO "\t\$(RM) \$(DLLS:%=%.dbg.o) \$(DLLS:%=%.so)\n";
-  print FILEO "\t\$(RM) \$(EXES:%=%.dbg.o) \$(EXES:%=%.so) \$(EXES:%.exe=%)\n";
+  print FILEO "\t\$(RM) \$(DLLS:%=%.so) \$(EXES:%=%.so) \$(EXES:%.exe=%)\n";
   print FILEO "\n";
   print FILEO "\$(SUBDIRS:%=%/__clean__): dummy\n";
   print FILEO "\tcd `dirname \$\@` && \$(MAKE) clean\n";
@@ -1746,16 +1743,13 @@ sub generate_project_files($)
       my $canon=canonize("@$target[$T_NAME]");
       $canon =~ s/_so$//;
 
-      print FILEO "\$(${canon}_MODULE).dbg.c: \$(${canon}_C_SRCS) \$(${canon}_CXX_SRCS)\n";
-      print FILEO "\t\$(WINEBUILD) -o \$\@ --debug -C\$(SRCDIR) \$(${canon}_C_SRCS) \$(${canon}_CXX_SRCS)\n";
-      print FILEO "\n";
-      print FILEO "\$(${canon}_MODULE).so: \$(${canon}_MODULE).dbg.o \$(${canon}_OBJS)\n";
+      print FILEO "\$(${canon}_MODULE).so: \$(${canon}_OBJS)\n";
       if (@{@$target[$T_SOURCES_CXX]} > 0 or @{@$project_settings[$T_SOURCES_CXX]} > 0) {
         print FILEO "\t\$(CXX)";
       } else {
         print FILEO "\t\$(CC)";
       }
-      print FILEO " \$(${canon}_LDFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_MODULE).dbg.o \$(${canon}_LIBRARY_PATH) \$(DEFLIB) \$(${canon}_DLLS:%=-l%) \$(${canon}_LIBRARIES:%=-l%)\n";
+      print FILEO " \$(${canon}_LDFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_LIBRARY_PATH) \$(DEFLIB) \$(${canon}_DLLS:%=-l%) \$(${canon}_LIBRARIES:%=-l%)\n";
       print FILEO "\n\n";
     }
   }
