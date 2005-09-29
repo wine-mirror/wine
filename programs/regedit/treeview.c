@@ -124,19 +124,6 @@ static LPTSTR get_path_component(LPCTSTR *lplpKeyName) {
      return lpResult;
 }
 
-#define CHECK_PAIR(name) \
-    if (!_tcsicmp(lpKeyName, _T(#name))) return name;
-
-static HKEY get_predefined_key(LPCTSTR lpKeyName) {
-    CHECK_PAIR(HKEY_CLASSES_ROOT)
-    CHECK_PAIR(HKEY_CURRENT_USER)
-    CHECK_PAIR(HKEY_LOCAL_MACHINE)
-    CHECK_PAIR(HKEY_USERS)
-    CHECK_PAIR(HKEY_DYN_DATA)
-    CHECK_PAIR(HKEY_PERFORMANCE_DATA)
-    return NULL;
-}
-
 HTREEITEM FindPathInTree(HWND hwndTV, LPCTSTR lpKeyName) {
     TVITEMEX tvi;
     TCHAR buf[261]; /* tree view has 260 character limitation on item name */
