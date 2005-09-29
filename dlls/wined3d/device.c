@@ -5418,10 +5418,6 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice* iface
 HRESULT WINAPI static IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
                                                 IWineD3DSurface *RenderSurface);
 
-HRESULT WINAPI static IWineD3DDeviceImpl_CleanRender(IWineD3DDevice* iface, IWineD3DSwapChainImpl *swapchain);
-
-HRESULT WINAPI static IWineD3DDeviceImpl_FindGLContext(IWineD3DDevice *iface, IWineD3DSurface *pSurface, glContext **context);
-
 HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD RenderTargetIndex, IWineD3DSurface *pRenderTarget) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     HRESULT  hr = D3D_OK;
@@ -5521,6 +5517,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface, 
 }
 
 
+#ifdef GL_VERSION_1_3
 /* Internal functions not in DirectX */
  /** TODO: move this off to the opengl context manager
  *(the swapchain doesn't need to know anything about offscreen rendering!)
@@ -5602,6 +5599,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_FindGLContext(IWineD3DDevice *iface, IWineD3DS
     else
         return E_OUTOFMEMORY;
 }
+#endif
 
 /** FIXME: This is currently used called whenever SetRenderTarget or SetStencilBuffer are called
 * the functionality needs splitting up so that we don't do more than we should do.
@@ -5609,11 +5607,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_FindGLContext(IWineD3DDevice *iface, IWineD3DS
  ******************************/
 HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
                                                IWineD3DSurface *RenderSurface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    IWineD3DSurface *StencilSurface = This->stencilBufferTarget;
     HRESULT ret =  D3DERR_INVALIDCALL;
-    IWineD3DSurface *tmp;
+
     /**
     * Currently only active for GLX >= 1.3
     * for others versions we'll have to use GLXPixmaps
@@ -5631,6 +5626,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     */
 #if defined(GL_VERSION_1_3)
 
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSurface *StencilSurface = This->stencilBufferTarget;
+    IWineD3DSurface *tmp;
     /** TODO: we only need to look up the configuration !IF! we are setting the target to a texture **/
     GLXFBConfig* cfgs = NULL;
     int nCfgs = 0;
