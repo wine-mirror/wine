@@ -406,7 +406,9 @@ SHORT D3DFmtGetBpp(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
     case D3DFMT_X8L8V8U8:         retVal = 4; break;
     /* Compressed */				  
     case D3DFMT_DXT1:             retVal = 1; break; /* Actually  8 bytes per 16 pixels - Special cased later */
+    case D3DFMT_DXT2:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
     case D3DFMT_DXT3:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
+    case D3DFMT_DXT4:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
     case D3DFMT_DXT5:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
     /* to see */
     case D3DFMT_A8:               retVal = 1; break;      
@@ -431,7 +433,9 @@ GLint D3DFmt2GLIntFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
       switch (fmt) {
       case D3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+      case D3DFMT_DXT2:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
       case D3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+      case D3DFMT_DXT4:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
       case D3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
       default:
 	/* stupid compiler */
@@ -480,7 +484,9 @@ GLenum D3DFmt2GLFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
       switch (fmt) {
       case D3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+      case D3DFMT_DXT2:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
       case D3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+      case D3DFMT_DXT4:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
       case D3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
       default:
 	/* stupid compiler */
@@ -530,7 +536,9 @@ GLenum D3DFmt2GLType(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
       switch (fmt) {
       case D3DFMT_DXT1:             retVal = 0; break;
+      case D3DFMT_DXT2:             retVal = 0; break;
       case D3DFMT_DXT3:             retVal = 0; break;
+      case D3DFMT_DXT4:             retVal = 0; break;
       case D3DFMT_DXT5:             retVal = 0; break;
       default:
 	/* stupid compiler */

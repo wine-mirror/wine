@@ -167,11 +167,12 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
     }
 
     /* DXTn formats don't have exact pitches as they are to the new row of blocks,
-         where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt3/5)      
+         where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt2/3/4/5)      
           ie pitch = (width/4) * bytes per block                                  */
     if (This->myDesc.Format == D3DFMT_DXT1) /* DXT1 is 8 bytes per block */
         pLockedRect->Pitch = (This->myDesc.Width/4) * 8;
-    else if (This->myDesc.Format == D3DFMT_DXT3 || This->myDesc.Format == D3DFMT_DXT5) /* DXT3/5 is 16 bytes per block */
+    else if (This->myDesc.Format == D3DFMT_DXT2 || This->myDesc.Format == D3DFMT_DXT3 ||
+             This->myDesc.Format == D3DFMT_DXT4 || This->myDesc.Format == D3DFMT_DXT5) /* DXT2/3/4/5 is 16 bytes per block */
         pLockedRect->Pitch = (This->myDesc.Width/4) * 16;
     else
         pLockedRect->Pitch = This->bytesPerPixel * This->myDesc.Width;  /* Bytes / row */    
@@ -495,7 +496,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, UINT 
     if (gl_level != 0)
       FIXME("Surface in texture is only supported for level 0\n");
     else if (This->myDesc.Format == D3DFMT_P8 || This->myDesc.Format == D3DFMT_A8P8 ||
-        This->myDesc.Format == D3DFMT_DXT1 || This->myDesc.Format == D3DFMT_DXT3 ||
+        This->myDesc.Format == D3DFMT_DXT1 || This->myDesc.Format == D3DFMT_DXT2 ||
+        This->myDesc.Format == D3DFMT_DXT3 || This->myDesc.Format == D3DFMT_DXT4 ||
         This->myDesc.Format == D3DFMT_DXT5)
       FIXME("Format %d not supported\n", This->myDesc.Format);
     else {
@@ -568,7 +570,9 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, UINT 
   }
 
   if (This->myDesc.Format == D3DFMT_DXT1 || 
+      This->myDesc.Format == D3DFMT_DXT2 || 
       This->myDesc.Format == D3DFMT_DXT3 || 
+      This->myDesc.Format == D3DFMT_DXT4 || 
       This->myDesc.Format == D3DFMT_DXT5) {
     if (GL_SUPPORT_DEV(EXT_TEXTURE_COMPRESSION_S3TC, This->Device)) {
       TRACE("Calling glCompressedTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, sz=%d, Mem=%p\n",
