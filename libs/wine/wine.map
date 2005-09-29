@@ -1,9 +1,8 @@
 WINE_1.0
 {
   global:
-    __wine_dbg_register;
+    __wine_dbg_get_channel_flags;
     __wine_dbg_set_functions;
-    __wine_dbg_unregister;
     __wine_dll_register;
     __wine_main_argc;
     __wine_main_argv;
@@ -13,9 +12,7 @@ WINE_1.0
     wine_dbg_log;
     wine_dbg_printf;
     wine_dbg_sprintf;
-    wine_dbgstr_a;
     wine_dbgstr_an;
-    wine_dbgstr_w;
     wine_dbgstr_wn;
     wine_dlclose;
     wine_dll_get_owner;

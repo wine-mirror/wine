@@ -73,7 +73,7 @@ struct __wine_debug_channel
 #define __WINE_GET_DEBUGGING(dbcl,dbch)  __WINE_GET_DEBUGGING##dbcl(dbch)
 
 #define __WINE_IS_DEBUG_ON(dbcl,dbch) \
-  (__WINE_GET_DEBUGGING##dbcl(dbch) && wine_dbg_log(__WINE_DBCL##dbcl, (dbch), 0, 0) != -1)
+  (__WINE_GET_DEBUGGING##dbcl(dbch) && (__wine_dbg_get_channel_flags(dbch) & (1 << __WINE_DBCL##dbcl)))
 
 #ifdef __GNUC__
 
@@ -148,6 +148,7 @@ struct __wine_debug_functions
                      const char *function, const char *format, va_list args );
 };
 
+extern unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel );
 extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs,
                                       struct __wine_debug_functions *old_funcs, size_t size );
 
@@ -166,12 +167,12 @@ extern int wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
 extern int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *ch, const char *func,
                          const char *format, ... ) __WINE_PRINTF_ATTR(4,5);
 
-extern inline const char *wine_dbgstr_a( const char *s )
+static inline const char *wine_dbgstr_a( const char *s )
 {
     return wine_dbgstr_an( s, -1 );
 }
 
-extern inline const char *wine_dbgstr_w( const WCHAR *s )
+static inline const char *wine_dbgstr_w( const WCHAR *s )
 {
     return wine_dbgstr_wn( s, -1 );
 }

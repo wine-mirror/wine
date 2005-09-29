@@ -49,7 +49,7 @@ static int cmp_name( const void *p1, const void *p2 )
 }
 
 /* get the flags to use for a given channel, possibly setting them too in case of lazy init */
-static inline unsigned char get_channel_flags( struct __wine_debug_channel *channel )
+unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
 {
     if (nb_debug_options)
     {
@@ -61,26 +61,6 @@ static inline unsigned char get_channel_flags( struct __wine_debug_channel *chan
     if (channel->flags & (1 << __WINE_DBCL_INIT)) channel->flags = default_flags;
     return default_flags;
 }
-
-/* register a new set of channels for a dll */
-void *__wine_dbg_register( struct __wine_debug_channel * const *channels, int nb )
-{
-    int i;
-
-    for (i = 0; i < nb; i++)
-    {
-        channels[i]->flags = ~0;
-        get_channel_flags( channels[i] );
-    }
-    return NULL;
-}
-
-
-/* unregister a set of channels; must pass the pointer obtained from wine_dbg_register */
-void __wine_dbg_unregister( void *channel )
-{
-}
-
 
 /* add a new debug option at the end of the option list */
 static void add_option( const char *name, unsigned char set, unsigned char clear )
@@ -229,8 +209,7 @@ int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *chan
     int ret;
     va_list valist;
 
-    if (!(get_channel_flags( channel ) & (1 << cls))) return -1;
-    if (!format) return 0;
+    if (!(__wine_dbg_get_channel_flags( channel ) & (1 << cls))) return -1;
 
     va_start(valist, format);
     ret = funcs.dbg_vlog( cls, channel, func, format, valist );
@@ -398,16 +377,6 @@ const char *wine_dbgstr_an( const char * s, int n )
 const char *wine_dbgstr_wn( const WCHAR *s, int n )
 {
     return funcs.dbgstr_wn(s, n);
-}
-
-const char *wine_dbgstr_a( const char *s )
-{
-    return funcs.dbgstr_an( s, -1 );
-}
-
-const char *wine_dbgstr_w( const WCHAR *s )
-{
-    return funcs.dbgstr_wn( s, -1 );
 }
 
 void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs,
