@@ -1433,6 +1433,7 @@ static const WCHAR CERT_GROUP_POLICY_SYSTEM_STORE_REGPATH[] =
 #define CERT_STORE_ADD_NEWER                               6
 #define CERT_STORE_ADD_NEWER_INHERIT_PROPERTIES            7
 
+/* Installable OID function defs */
 #define CRYPT_OID_OPEN_STORE_PROV_FUNC     "CertDllOpenStoreProv"
 #define CRYPT_OID_ENCODE_OBJECT_FUNC       "CryptDllEncodeObject"
 #define CRYPT_OID_DECODE_OBJECT_FUNC       "CryptDllDecodeObject"
@@ -1444,6 +1445,43 @@ static const WCHAR CERT_GROUP_POLICY_SYSTEM_STORE_REGPATH[] =
 #define CRYPT_OID_FORMAT_OBJECT_FUNC       "CryptDllFormatObject"
 #define CRYPT_OID_FIND_OID_INFO_FUNC       "CryptDllFindOIDInfo"
 #define CRYPT_OID_FIND_LOCALIZED_NAME_FUNC "CryptDllFindLocalizedName"
+#define CRYPT_OID_EXPORT_PUBLIC_KEY_INFO_FUNC  "CryptDllExportPublicKeyInfoEx"
+#define CRYPT_OID_IMPORT_PUBLIC_KEY_INFO_FUNC  "CryptDllImportPublicKeyInfoEx"
+#define CRYPT_OID_EXPORT_PRIVATE_KEY_INFO_FUNC "CryptDllExportPrivateKeyInfoEx"
+#define CRYPT_OID_IMPORT_PRIVATE_KEY_INFO_FUNC "CryptDllImportPrivateKeyInfoEx"
+#define CRYPT_OID_VERIFY_CERTIFICATE_CHAIN_POLICY_FUNC \
+ "CertDllVerifyCertificateChainPolicy"
+#define URL_OID_GET_OBJECT_URL_FUNC    "UrlDllGetObjectUrl"
+#define TIME_VALID_OID_GET_OBJECT_FUNC "TimeValidDllGetObject"
+
+#define CRYPT_OID_REGPATH "Software\\Microsoft\\Cryptography\\OID"
+#define CRYPT_OID_REG_ENCODING_TYPE_PREFIX "EncodingType "
+#if defined(__GNUC__)
+# define CRYPT_OID_REG_DLL_VALUE_NAME (const WCHAR []){ 'D','l','l',0 }
+# define CRYPT_OID_REG_FUNC_NAME_VALUE_NAME \
+ (const WCHAR []){ 'F','u','n','c','N','a','m','e',0 }
+# define CRYPT_OID_REG_FLAGS_VALUE_NAME \
+ (const WCHAR []){ 'C','r','y','p','t','F','l','a','g','s',0 }
+#elif defined(_MSC_VER)
+# define CRYPT_OID_REG_DLL_VALUE_NAME       L"Dll"
+# define CRYPT_OID_REG_FUNC_NAME_VALUE_NAME L"FuncName"
+# define CRYPT_OID_REG_FLAGS_VALUE_NAME     L"CryptFlags"
+#else
+static const WCHAR CRYPT_OID_REG_DLL_VALUE_NAME[] = { 'D','l','l',0 };
+static const WCHAR CRYPT_OID_REG_FUNC_NAME_VALUE_NAME[] =
+ { 'F','u','n','c','N','a','m','e',0 };
+static const WCHAR CRYPT_OID_REG_FLAGS_VALUE_NAME[] =
+ { 'C','r','y','p','t','F','l','a','g','s',0 };
+#endif
+#define CRYPT_OID_REG_FUNC_NAME_VALUE_NAME_A "FuncName"
+#define CRYPT_DEFAULT_OID                    "DEFAULT"
+
+#define CRYPT_INSTALL_OID_FUNC_BEFORE_FLAG 1
+
+#define CRYPT_GET_INSTALLED_OID_FUNC_FLAG  0x1
+
+#define CRYPT_REGISTER_FIRST_INDEX 0
+#define CRYPT_REGISTER_LAST_INDEX  0xffffffff
 
 /* values for CERT_STORE_PROV_INFO's dwStoreProvFlags */
 #define CERT_STORE_PROV_EXTERNAL_FLAG        0x1
