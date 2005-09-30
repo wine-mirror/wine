@@ -446,7 +446,7 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
     attr.Attributes               = OBJ_CASE_INSENSITIVE |
-                                    (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+                                    ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
     if (name)
@@ -503,8 +503,7 @@ HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE |
-                                    (inherit) ? OBJ_INHERIT : 0;
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
     if (name)
@@ -642,7 +641,7 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
     attr.Attributes               = OBJ_CASE_INSENSITIVE |
-                                    (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+                                    ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
     if (name)
@@ -690,8 +689,7 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE | 
-                                    (inherit) ? OBJ_INHERIT : 0;
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
     if (name)
@@ -765,7 +763,7 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
     attr.Attributes               = OBJ_CASE_INSENSITIVE | 
-                                    (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+                                    ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
     if (name)
@@ -813,8 +811,7 @@ HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE |
-                                    (inherit) ? OBJ_INHERIT : 0;
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
     if (name)
@@ -881,7 +878,7 @@ HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWST
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
     attr.Attributes               = OBJ_CASE_INSENSITIVE |
-                                    (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+                                    ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
     if (name)
@@ -930,8 +927,7 @@ HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE |
-                                    (inherit) ? OBJ_INHERIT : 0;
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
     if (name)
@@ -1113,7 +1109,7 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
     attr.RootDirectory            = 0;
     attr.ObjectName               = &nt_name;
     attr.Attributes               = OBJ_CASE_INSENSITIVE |
-                                    (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+                                    ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
 
