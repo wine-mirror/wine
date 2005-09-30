@@ -1,16 +1,15 @@
-This is release 20050830 of Wine, a free implementation of Windows on
+This is release 20050930 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
 
-WHAT'S NEW with Wine-20050830: (see ChangeLog for details)
-        - A lot more theming support.
-        - Many improvements to the various crypto dlls.
-        - More LDAP support.
-        - Beginnings of an MSXML implementation.
-        - Better MSHTML support.
-        - Emulated version now set to Windows 2000 by default.
-        - Direct3D fixes and improvements.
+WHAT'S NEW with Wine-20050930: (see ChangeLog for details)
+        - Joystick force feedback support.
+        - Beginnings of Win64 support.
+        - Many MSI fixes and cleanups.
+        - Font linking support.
+        - Several OLE fixes.
+        - Some fixes for MacOS/x86.
         - Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -19,8 +18,8 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20050830.tar.gz
-  http://prdownloads.sourceforge.net/wine/Wine-20050830.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20050930.tar.gz
+  http://prdownloads.sourceforge.net/wine/Wine-20050930.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 These locations also hold pre-built documentation packages in various
