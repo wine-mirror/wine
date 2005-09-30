@@ -13,6 +13,7 @@ CTESTS = \
 	info.c \
 	large_int.c \
 	path.c \
+	om.c \
 	reg.c \
 	rtl.c \
 	rtlbitmap.c \
