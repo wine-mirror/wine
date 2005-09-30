@@ -451,6 +451,41 @@ static void test_SecurityManager(void)
     IInternetSecurityManager_Release(secmgr);
 }
 
+static void test_ZoneManager(void)
+{
+    IInternetZoneManager *zonemgr = NULL;
+    BYTE buf[32];
+    HRESULT hres;
+
+    hres = CoInternetCreateZoneManager(NULL, &zonemgr, 0);
+    ok(hres == S_OK, "CoInternetCreateZoneManager failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, 0x1a10, buf,
+            sizeof(DWORD), URLZONEREG_DEFAULT);
+    ok(hres == S_OK, "GetZoneActionPolicy failed: %08lx\n", hres);
+    ok(*(DWORD*)buf == 1, "policy=%ld, expected 1\n", *(DWORD*)buf);
+
+    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, 0x1a10, NULL,
+            sizeof(DWORD), URLZONEREG_DEFAULT);
+    ok(hres == E_INVALIDARG, "GetZoneActionPolicy failed: %08lx, expected E_INVALIDARG\n", hres);
+
+    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, 0x1a10, buf,
+            2, URLZONEREG_DEFAULT);
+    ok(hres == E_INVALIDARG, "GetZoneActionPolicy failed: %08lx, expected E_INVALIDARG\n", hres);
+
+    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, 0x1fff, buf,
+            sizeof(DWORD), URLZONEREG_DEFAULT);
+    ok(hres == E_FAIL, "GetZoneActionPolicy failed: %08lx, expected E_FAIL\n", hres);
+
+    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 13, 0x1a10, buf,
+            sizeof(DWORD), URLZONEREG_DEFAULT);
+    ok(hres == E_INVALIDARG, "GetZoneActionPolicy failed: %08lx, expected E_INVALIDARG\n", hres);
+
+    IInternetZoneManager_Release(zonemgr);
+}
+
 START_TEST(misc)
 {
     test_CreateFormatEnum();
@@ -458,4 +493,5 @@ START_TEST(misc)
     test_CoInternetParseUrl();
     test_FindMimeFromData();
     test_SecurityManager();
+    test_ZoneManager();
 }

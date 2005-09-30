@@ -420,6 +420,46 @@ typedef struct {
     LONG ref;
 } ZoneMgrImpl;
 
+static HRESULT open_zone_key(DWORD zone, HKEY *hkey, URLZONEREG zone_reg)
+{
+    static const WCHAR wszZonesKey[] =
+        {'S','o','f','t','w','a','r','e','\\',
+            'M','i','c','r','o','s','o','f','t','\\',
+            'W','i','n','d','o','w','s','\\',
+            'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+            'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
+            'Z','o','n','e','s','\\',0};
+    static const WCHAR wszFormat[] = {'%','s','%','l','d',0};
+
+    WCHAR key_name[sizeof(wszZonesKey)/sizeof(WCHAR)+8];
+    HKEY parent_key;
+    DWORD res;
+
+    switch(zone_reg) {
+    case URLZONEREG_DEFAULT: /* FIXME: TEST */
+    case URLZONEREG_HKCU:
+        parent_key = HKEY_CURRENT_USER;
+        break;
+    case URLZONEREG_HKLM:
+        parent_key = HKEY_LOCAL_MACHINE;
+        break;
+    default:
+        WARN("Unknown URLZONEREG: %d\n", zone_reg);
+        return E_FAIL;
+    };
+
+    wsprintfW(key_name, wszFormat, wszZonesKey, zone);
+
+    res = RegOpenKeyW(parent_key, key_name, hkey);
+
+    if(res != ERROR_SUCCESS) {
+        WARN("RegOpenKey failed\n");
+        return E_INVALIDARG;
+    }
+
+    return S_OK;
+}
+
 /********************************************************************
  *      IInternetZoneManager_QueryInterface
  */
@@ -531,15 +571,41 @@ static HRESULT WINAPI ZoneMgrImpl_SetZoneCustomPolicy(IInternetZoneManager* ifac
  *      IInternetZoneManager_GetZoneActionPolicy
  */
 static HRESULT WINAPI ZoneMgrImpl_GetZoneActionPolicy(IInternetZoneManager* iface,
-                                                      DWORD dwZone,
-                                                      DWORD dwAction,
-                                                      BYTE* pPolicy,
-                                                      DWORD cbPolicy,
-                                                      URLZONEREG urlZoneReg)
+        DWORD dwZone, DWORD dwAction, BYTE* pPolicy, DWORD cbPolicy, URLZONEREG urlZoneReg)
 {
-    FIXME("(%p)->(%08lx %08lx %p %08lx %08x) stub\n", iface, dwZone, dwAction, pPolicy,
-                                                       cbPolicy, urlZoneReg);
-    return E_NOTIMPL;
+    WCHAR action[16];
+    HKEY hkey;
+    LONG res;
+    DWORD size = cbPolicy;
+    HRESULT hres;
+
+    static const WCHAR wszFormat[] = {'%','l','X',0};
+
+    TRACE("(%p)->(%ld %08lx %p %ld %d)\n", iface, dwZone, dwAction, pPolicy,
+            cbPolicy, urlZoneReg);
+
+    if(!pPolicy)
+        return E_INVALIDARG;
+
+    hres = open_zone_key(dwZone, &hkey, urlZoneReg);
+    if(FAILED(hres))
+        return hres;
+
+    wsprintfW(action, wszFormat, dwAction);
+
+    res = RegQueryValueExW(hkey, action, NULL, NULL, pPolicy, &size);
+    if(res == ERROR_MORE_DATA) {
+        hres = E_INVALIDARG;
+    }else if(res == ERROR_FILE_NOT_FOUND) {
+        hres = E_FAIL;
+    }else if(res != ERROR_SUCCESS) {
+        ERR("RegQueryValue failed: %ld\n", res);
+        hres = E_UNEXPECTED;
+    }
+
+    RegCloseKey(hkey);
+
+    return hres;
 }
 
 /********************************************************************
