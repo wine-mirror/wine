@@ -1507,6 +1507,16 @@ static void test_encodeRsaPublicKey(DWORD dwEncoding)
         ok(!memcmp(buf, rsaPubKeys[0].encoded, bufSize), "Unexpected value\n");
         LocalFree(buf);
     }
+    /* Check a couple of RSA-related OIDs */
+    hdr->aiKeyAlg = CALG_RSA_KEYX;
+    ret = CryptEncodeObjectEx(dwEncoding, szOID_RSA_RSA,
+     toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    ret = CryptEncodeObjectEx(dwEncoding, szOID_RSA_SHA1RSA,
+     toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
     /* Finally, all valid */
     hdr->aiKeyAlg = CALG_RSA_KEYX;
     for (i = 0; i < sizeof(rsaPubKeys) / sizeof(rsaPubKeys[0]); i++)
@@ -1541,6 +1551,17 @@ static void test_decodeRsaPublicKey(DWORD dwEncoding)
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
     ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
      "Expected CRYPT_E_ASN1_EOD, got %08lx\n", CRYPT_E_ASN1_EOD);
+    /* Try with a couple of RSA-related OIDs */
+    ret = CryptDecodeObjectEx(dwEncoding, szOID_RSA_RSA,
+     rsaPubKeys[0].encoded, rsaPubKeys[0].encoded[1] + 2,
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    ret = CryptDecodeObjectEx(dwEncoding, szOID_RSA_SHA1RSA,
+     rsaPubKeys[0].encoded, rsaPubKeys[0].encoded[1] + 2,
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
     /* Now try success cases */
     for (i = 0; i < sizeof(rsaPubKeys) / sizeof(rsaPubKeys[0]); i++)
     {
