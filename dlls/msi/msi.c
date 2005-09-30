@@ -218,7 +218,7 @@ UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
     r = MSI_OpenPackageW( szPackagePath, &package );
     if (r == ERROR_SUCCESS)
     {
-        r = ACTION_DoTopLevelINSTALL(package, szPackagePath, szCommandLine, szPackagePath );
+        r = MSI_InstallPackage( package, szPackagePath, szCommandLine );
         msiobj_release( &package->hdr );
     }
 
@@ -316,7 +316,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     if (MsiQueryProductStateW(szProduct) != INSTALLSTATE_UNKNOWN)
         lstrcatW(commandline,szInstalled);
 
-    r = ACTION_DoTopLevelINSTALL(package, sourcepath, commandline, sourcepath);
+    r = MSI_InstallPackage( package, sourcepath, commandline );
 
     msi_free(commandline);
 
@@ -1825,7 +1825,7 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
     sprintfW(commandline,fmt,szFeature);
     lstrcatW(commandline,szInstalled);
 
-    r = ACTION_DoTopLevelINSTALL(package, sourcepath, commandline, sourcepath);
+    r = MSI_InstallPackage( package, sourcepath, commandline );
 
     msiobj_release( &package->hdr );
 

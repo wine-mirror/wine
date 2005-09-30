@@ -203,7 +203,6 @@ typedef struct tagMSIPACKAGE
     struct list RunningActions;
 
     LPWSTR PackagePath;
-    LPWSTR msiFilePath;
     LPWSTR ProductCode;
 
     UINT CurrentInstallState;
@@ -302,7 +301,7 @@ extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
                               USHORT **pdata, UINT *psz );
 
 /* action internals */
-extern UINT ACTION_DoTopLevelINSTALL( MSIPACKAGE *, LPCWSTR, LPCWSTR, LPCWSTR );
+extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern void ACTION_free_package_structures( MSIPACKAGE* );
 extern UINT ACTION_DialogBox( MSIPACKAGE*, LPCWSTR);
 extern UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR szTable, INT iSequenceMode );

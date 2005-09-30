@@ -408,8 +408,8 @@ static UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
  * TOP level entry points 
  *****************************************************/
 
-UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
-                              LPCWSTR szCommandLine, LPCWSTR msiFilePath)
+UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
+                         LPCWSTR szCommandLine )
 {
     UINT rc;
     BOOL ui = FALSE;
@@ -423,8 +423,6 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     memset(package->script,0,sizeof(MSISCRIPT));
 
     package->script->InWhatSequence = SEQUENCE_INSTALL;
-
-    package->msiFilePath= strdupW(msiFilePath);
 
     if (szPackagePath)   
     {
@@ -3224,6 +3222,65 @@ end:
     return rc;
 }
 
+static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
+{
+    static const WCHAR installerPathFmt[] = {
+        '%','s','\\','I','n','s','t','a','l','l','e','r','\\',0};
+    static const WCHAR fmt[] = {
+        '%','s','\\',
+        'I','n','s','t','a','l','l','e','r','\\',
+        '%','x','.','m','s','i',0};
+    static const WCHAR szOriginalDatabase[] =
+        {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
+    WCHAR windir[MAX_PATH], path[MAX_PATH], packagefile[MAX_PATH];
+    INT num, start;
+    LPWSTR msiFilePath;
+    BOOL r;
+
+    /* copy the package locally */
+    num = GetTickCount() & 0xffff;
+    if (!num) 
+        num = 1;
+    start = num;
+    GetWindowsDirectoryW( windir, MAX_PATH );
+    snprintfW( packagefile, MAX_PATH, fmt, windir, num );
+    do 
+    {
+        HANDLE handle = CreateFileW(packagefile,GENERIC_WRITE, 0, NULL,
+                                  CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(handle);
+            break;
+        }
+        if (GetLastError() != ERROR_FILE_EXISTS &&
+            GetLastError() != ERROR_SHARING_VIOLATION)
+            break;
+        if (!(++num & 0xffff)) num = 1;
+        sprintfW(packagefile,fmt,num);
+    } while (num != start);
+
+    snprintfW( path, MAX_PATH, installerPathFmt, windir );
+    create_full_pathW(path);
+
+    TRACE("Copying to local package %s\n",debugstr_w(packagefile));
+
+    msiFilePath = msi_dup_property( package, szOriginalDatabase );
+    r = CopyFileW( msiFilePath, packagefile, FALSE);
+    msi_free( msiFilePath );
+
+    if (!r)
+    {
+        ERR("Unable to copy package (%s -> %s) (error %ld)\n",
+            debugstr_w(msiFilePath), debugstr_w(packagefile), GetLastError());
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    /* FIXME: maybe set this key in ACTION_RegisterProduct instead */
+    msi_reg_set_val_str( hkey, INSTALLPROPERTY_LOCALPACKAGEW, packagefile );
+    return ERROR_SUCCESS;
+}
+
 static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {
     HKEY hkey=0;
@@ -3269,14 +3326,6 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {'U','R','L','U','p','d','a','t','e','I','n','f','o',0},
 {0},
     };
-
-    static const WCHAR installerPathFmt[] = {
-    '%','s','\\',
-    'I','n','s','t','a','l','l','e','r','\\',0};
-    static const WCHAR fmt[] = {
-    '%','s','\\',
-    'I','n','s','t','a','l','l','e','r','\\',
-    '%','x','.','m','s','i',0};
     static const WCHAR szUpgradeCode[] = 
         {'U','p','g','r','a','d','e','C','o','d','e',0};
     static const WCHAR modpath_fmt[] = 
@@ -3295,8 +3344,6 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     SYSTEMTIME systime;
     static const WCHAR date_fmt[] = {'%','i','%','i','%','i',0};
     LPWSTR upgrade_code;
-    WCHAR windir[MAX_PATH], path[MAX_PATH], packagefile[MAX_PATH];
-    INT num,start;
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -3317,38 +3364,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 
     msi_reg_set_val_dword( hkey, szWindowsInstaller, 1 );
     
-    /* copy the package locally */
-    num = GetTickCount() & 0xffff;
-    if (!num) 
-        num = 1;
-    start = num;
-    GetWindowsDirectoryW(windir, sizeof(windir) / sizeof(windir[0]));
-    snprintfW(packagefile,sizeof(packagefile)/sizeof(packagefile[0]),fmt,
-     windir,num);
-    do 
-    {
-        HANDLE handle = CreateFileW(packagefile,GENERIC_WRITE, 0, NULL,
-                                  CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
-        if (handle != INVALID_HANDLE_VALUE)
-        {
-            CloseHandle(handle);
-            break;
-        }
-        if (GetLastError() != ERROR_FILE_EXISTS &&
-            GetLastError() != ERROR_SHARING_VIOLATION)
-            break;
-        if (!(++num & 0xffff)) num = 1;
-        sprintfW(packagefile,fmt,num);
-    } while (num != start);
-
-    snprintfW(path,sizeof(path)/sizeof(path[0]),installerPathFmt,windir);
-    create_full_pathW(path);
-    TRACE("Copying to local package %s\n",debugstr_w(packagefile));
-    if (!CopyFileW(package->msiFilePath,packagefile,FALSE))
-        ERR("Unable to copy package (%s -> %s) (error %ld)\n",
-            debugstr_w(package->msiFilePath), debugstr_w(packagefile),
-            GetLastError());
-    msi_reg_set_val_str( hkey, INSTALLPROPERTY_LOCALPACKAGEW, packagefile );
+    msi_make_package_local( package, hkey );
 
     /* do ModifyPath and UninstallString */
     size = deformat_string(package,modpath_fmt,&buffer);
