@@ -904,11 +904,11 @@ NTSTATUS WINAPI NtQuerySystemInformation(
  */
 NTSTATUS WINAPI NtCreatePagingFile(
 	PUNICODE_STRING PageFileName,
-	PLARGE_INTEGER MiniumSize,
-	PLARGE_INTEGER MaxiumSize,
+	PLARGE_INTEGER MinimumSize,
+	PLARGE_INTEGER MaximumSize,
 	PLARGE_INTEGER ActualSize)
 {
-    FIXME("%p %p %p %p\n", PageFileName, MiniumSize, MaxiumSize, ActualSize);
+    FIXME("(%p %p %p %p) stub\n", PageFileName, MinimumSize, MaximumSize, ActualSize);
     return STATUS_SUCCESS;
 }
 
