@@ -1200,6 +1200,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
         case N_RSYM:
         case N_LSYM:
         case N_ROSYM:
+        case N_PSYM:
             if (strchr(ptr, '=') != NULL)
             {
                 /*
@@ -1456,8 +1457,13 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                 int len = strlen(ptr);
                 if (ptr[len-1] != '/')
                 {
-                    strcpy(currpath, srcpath);
-                    strcat(currpath, ptr);
+		    if (ptr[0] == '/')
+		        strcpy(currpath, ptr);
+		    else
+		    {
+                        strcpy(currpath, srcpath);
+                        strcat(currpath, ptr);
+		    }
                     stabs_reset_includes();
                     compiland = symt_new_compiland(module, currpath);
                     source_idx = source_new(module, currpath);
