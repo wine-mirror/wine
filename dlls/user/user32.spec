@@ -713,7 +713,7 @@
 @ stdcall UnpackDDElParam(long long ptr ptr)
 @ stdcall UnregisterClassA(str long)
 @ stdcall UnregisterClassW(wstr long)
-@ stub    UnregisterDeviceNotification
+@ stdcall UnregisterDeviceNotification(long)
 @ stdcall UnregisterHotKey(long long)
 # @ stub UnregisterMessagePumpHook
 # @ stub UnregisterUserApiHook

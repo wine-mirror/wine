@@ -572,6 +572,16 @@ HDEVNOTIFY WINAPI RegisterDeviceNotificationW(HANDLE hRecepient, LPVOID pNotific
 }
 
 /***********************************************************************
+ *		UnregisterDeviceNotification (USER32.@)
+ *
+ */
+BOOL  WINAPI UnregisterDeviceNotification(HDEVNOTIFY hnd)
+{
+    FIXME("(handle=%p), STUB!\n", hnd);
+    return TRUE;
+}
+
+/***********************************************************************
  *           GetAppCompatFlags   (USER32.@)
  */
 DWORD WINAPI GetAppCompatFlags( HTASK hTask )
