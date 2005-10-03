@@ -512,7 +512,7 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
         /* and store it back into the cache */
         SERVER_START_REQ( set_handle_fd )
         {
-            req->handle    = handle;
+            req->handle    = fd_handle;
             req->fd        = fd;
             req->removable = removable;
             if (!(ret = wine_server_call( req )))
