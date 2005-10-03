@@ -483,7 +483,12 @@ static void ME_RTFReadHook(RTF_Info *info) {
         {
           ME_Style *s;
           RTFFlushOutputBuffer(info);
+          if (info->stackTop<=1) {
+            info->rtfClass = rtfEOF;
+            return;
+          }
           info->stackTop--;
+          assert(info->stackTop >= 0);
           if (info->styleChanged)
           {
             /* FIXME too slow ? how come ? */
