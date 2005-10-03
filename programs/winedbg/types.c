@@ -256,14 +256,13 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index,
         if (index < 0 || index >= count) return FALSE;
         /* fall through */
     case SymTagPointerType:
+        /* Contents of array share same data (addr mode, module...) */
+        *result = *lvalue;
         /*
          * Get the base type, so we know how much to index by.
          */
         types_get_info(&lvalue->type, TI_GET_TYPE, &result->type.id);
-        result->type.module = lvalue->type.module;
         types_get_info(&result->type, TI_GET_LENGTH, &length);
-        /* Contents of array must be on same target */
-        result->addr.Mode = lvalue->addr.Mode;
         memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset);
         result->addr.Offset += index * length;
         break;
