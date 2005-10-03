@@ -1360,7 +1360,6 @@ HINSTANCE WINAPI ShellExecuteA(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile,
                                LPCSTR lpParameters,LPCSTR lpDirectory, INT iShowCmd)
 {
     SHELLEXECUTEINFOA sei;
-    HANDLE hProcess = 0;
 
     TRACE("%p,%s,%s,%s,%s,%d\n",
           hWnd, debugstr_a(lpOperation), debugstr_a(lpFile),
@@ -1378,7 +1377,7 @@ HINSTANCE WINAPI ShellExecuteA(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile,
     sei.lpClass = 0;
     sei.hkeyClass = 0;
     sei.dwHotKey = 0;
-    sei.hProcess = hProcess;
+    sei.hProcess = 0;
 
     ShellExecuteExA (&sei);
     return sei.hInstApp;
@@ -1450,7 +1449,6 @@ HINSTANCE WINAPI ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
                                LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
 {
     SHELLEXECUTEINFOW sei;
-    HANDLE hProcess = 0;
 
     TRACE("\n");
     sei.cbSize = sizeof(sei);
@@ -1465,7 +1463,7 @@ HINSTANCE WINAPI ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
     sei.lpClass = 0;
     sei.hkeyClass = 0;
     sei.dwHotKey = 0;
-    sei.hProcess = hProcess;
+    sei.hProcess = 0;
 
     ShellExecuteExW32 (&sei, SHELL_ExecuteW);
     return sei.hInstApp;
