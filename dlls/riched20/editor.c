@@ -290,7 +290,7 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
     }
     
     ME_InsertTextFromCursor(editor, 0, pText, nWideChars, style);
-    if (stream->dwSize < STREAMIN_BUFFER_SIZE)
+    if (stream->dwSize == 0)
       break;
     stream->dwSize = 0;
   } while(1);
