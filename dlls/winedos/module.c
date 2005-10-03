@@ -731,8 +731,8 @@ BOOL WINAPI MZ_Current( void )
  */
 void WINAPI wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
 {
-  WARN("DOS executables not supported on this platform\n");
-  SetLastError(ERROR_BAD_FORMAT);
+    FIXME("DOS executables not supported on this platform\n");
+    SetLastError(ERROR_BAD_FORMAT);
 }
 
 /***********************************************************************
@@ -750,7 +750,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
  */
 void WINAPI MZ_AllocDPMITask( void )
 {
-    ERR("Actual real-mode calls not supported on this platform!\n");
+    FIXME("Actual real-mode calls not supported on this platform!\n");
 }
 
 /***********************************************************************
