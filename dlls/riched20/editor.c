@@ -43,7 +43,7 @@
   - EM_GETCHARFORMAT (partly done)
   - EM_GETEDITSTYLE
   + EM_GETEVENTMASK
-  - EM_GETFIRSTVISIBLELINE
+  + EM_GETFIRSTVISIBLELINE (can be optimized if needed)
   - EM_GETIMECOLOR 1.0asian
   - EM_GETIMECOMPMODE 2.0
   - EM_GETIMEOPTIONS 1.0asian
@@ -81,7 +81,7 @@
   + EM_LINELENGTH
   + EM_LINESCROLL
   - EM_PASTESPECIAL
-  - EM_POSFROMCHARS
+  + EM_POSFROMCHAR
   + EM_REDO 2.0
   - EM_REQUESTRESIZE
   + EM_REPLACESEL (proper style?) ANSI&Unicode
@@ -1111,7 +1111,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETAUTOURLDETECT)
   UNSUPPORTED_MSG(EM_GETBIDIOPTIONS)
   UNSUPPORTED_MSG(EM_GETEDITSTYLE)
-  UNSUPPORTED_MSG(EM_GETFIRSTVISIBLELINE)
   UNSUPPORTED_MSG(EM_GETIMECOMPMODE)
   /* UNSUPPORTED_MSG(EM_GETIMESTATUS) missing in Wine headers */
   UNSUPPORTED_MSG(EM_GETLANGOPTIONS)
@@ -1130,7 +1129,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_HIDESELECTION)
   UNSUPPORTED_MSG(EM_LIMITTEXT) /* also known as EM_SETLIMITTEXT */
   UNSUPPORTED_MSG(EM_PASTESPECIAL)
-/*  UNSUPPORTED_MSG(EM_POSFROMCHARS) missing in Wine headers */
   UNSUPPORTED_MSG(EM_REQUESTRESIZE)
   UNSUPPORTED_MSG(EM_SCROLL)
   UNSUPPORTED_MSG(EM_SCROLLCARET)
@@ -1350,6 +1348,30 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_GETPARAFORMAT:
     ME_GetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
     return 0;
+  case EM_GETFIRSTVISIBLELINE:
+  {
+    ME_DisplayItem *p = editor->pBuffer->pFirst;
+    int y = editor->nScrollPosY;
+    int ypara = 0;
+    int count = 0;
+    int ystart, yend;
+    while(p) {
+      p = ME_FindItemFwd(p, diStartRowOrParagraphOrEnd);
+      if (p->type == diTextEnd)
+        break;
+      if (p->type == diParagraph) {
+        ypara = p->member.para.nYPos;
+        continue;
+      }
+      ystart = ypara + p->member.row.nYPos;
+      yend = ystart + p->member.row.nHeight;
+      if (y < yend) {
+        break;
+      }
+      count++;
+    }
+    return count;
+  }
   case EM_LINESCROLL:
   {
     int nPos = editor->nScrollPosY, nEnd= editor->nTotalLength - editor->sizeWindow.cy;
@@ -1684,6 +1706,29 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     return ME_SetZoom(editor, wParam, lParam);
   case EM_CHARFROMPOS:
     return ME_CharFromPos(editor, ((POINTL *)lParam)->x, ((POINTL *)lParam)->y);
+  case EM_POSFROMCHAR:
+  {
+    ME_DisplayItem *pRun;
+    int nCharOfs, nOffset, nLength;
+    POINTL pt = {0,0};
+    
+    nCharOfs = wParam; 
+    /* detect which API version we're dealing with */
+    if (wParam >= 0x40000)
+        nCharOfs = lParam;
+    nLength = ME_GetTextLength(editor);
+    
+    if (nCharOfs < nLength-1) { 
+        ME_RunOfsFromCharOfs(editor, nCharOfs, &pRun, &nOffset);
+        pt.y = pRun->member.run.pt.y;
+        pt.x = pRun->member.run.pt.x + ME_PointFromChar(editor, &pRun->member.run, nOffset);
+    }
+    pt.y += ME_GetParagraph(pRun)->member.para.nYPos;
+    if (wParam >= 0x40000) {
+        *(POINTL *)wParam = pt;
+    }
+    return MAKELONG( pt.x, pt.y );
+  }
   case WM_CREATE:
     ME_CommitUndo(editor);
     ME_WrapMarkedParagraphs(editor);
