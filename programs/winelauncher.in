@@ -195,7 +195,11 @@ fi
 #------------------------------------------------------------------------------
 #  Okay, set the paths and move on.
 #------------------------------------------------------------------------------
-export LD_LIBRARY_PATH=$WINELIB:$LD_LIBRARY_PATH
+if [ -n "$LD_LIBRARY_PATH" ]; then
+	export LD_LIBRARY_PATH=$WINELIB:$LD_LIBRARY_PATH
+else
+	export LD_LIBRARY_PATH=$WINELIB
+fi
 export PATH=$WINEBIN:$PATH
 export WINELOADER=$WINEBIN/$WINE_BIN_NAME
 export WINEDLLPATH
