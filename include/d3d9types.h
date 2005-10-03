@@ -1225,7 +1225,10 @@ typedef enum _D3DSAMPLERSTATETYPE {
 /*****************************************************************************
  * Direct 3D v9 typedefs
  */
+#ifndef D3DCOLOR_DEFINED
 typedef DWORD D3DCOLOR;
+#define D3DCOLOR_DEFINED
+#endif
 
 /*****************************************************************************
  * Direct 3D v9 structures
@@ -1260,12 +1263,15 @@ typedef struct _D3DCLIPSTATUS9 {
    DWORD ClipIntersection;
 } D3DCLIPSTATUS9;
 
+#ifndef D3DCOLORVALUE_DEFINED
 typedef struct _D3DCOLORVALUE {
     float r;
     float g;
     float b;
     float a;
 } D3DCOLORVALUE;
+#define D3DCOLORVALUE_DEFINED
+#endif
 
 typedef struct _D3DDEVICE_CREATION_PARAMETERS {
     UINT          AdapterOrdinal;
@@ -1364,11 +1370,14 @@ typedef struct _D3DINDEXBUFFER_DESC {
     UINT                Size;
 } D3DINDEXBUFFER_DESC;
 
+#ifndef D3DVECTOR_DEFINED
 typedef struct _D3DVECTOR {
     float x;
     float y;
     float z;
 } D3DVECTOR;
+#define D3DVECTOR_DEFINED
+#endif
 
 typedef struct _D3DLIGHT9 {
     D3DLIGHTTYPE    Type;
@@ -1410,6 +1419,7 @@ typedef struct _D3DMATERIAL9 {
     float           Power;
 } D3DMATERIAL9;
 
+#ifndef D3DMATRIX_DEFINED
 typedef struct _D3DMATRIX {
     union {
         struct {
@@ -1421,6 +1431,8 @@ typedef struct _D3DMATRIX {
         float m[4][4];
     } DUMMYUNIONNAME;
 } D3DMATRIX;
+#define D3DMATRIX_DEFINED
+#endif
 
 typedef struct _D3DPRESENT_PARAMETERS_ {
     UINT                    BackBufferWidth;
@@ -1453,12 +1465,15 @@ typedef struct _D3DRASTER_STATUS {
     UINT            ScanLine;
 } D3DRASTER_STATUS;
 
+#ifndef D3DRECT_DEFINED
 typedef struct _D3DRECT {
     LONG x1;
     LONG y1;
     LONG x2;
     LONG y2;
 } D3DRECT;
+#define D3DRECT_DEFINED
+#endif
 
 typedef struct _D3DRECTPATCH_INFO {
     UINT                StartVertexOffsetWidth;
