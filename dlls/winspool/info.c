@@ -3094,7 +3094,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
                                  unicode)) {
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
-            WINSPOOL_GetStringFromReg(hkeyDriver, MonitorW, strPtr,
+            WINSPOOL_GetStringFromReg(hkeyDriver, DatatypeW, strPtr,
                                       size, &tmp, unicode);
         if(ptr)
             ((PDRIVER_INFO_3W) ptr)->pDefaultDataType = (LPWSTR)strPtr;
