@@ -46,8 +46,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 /**********************************************************************/
 
-static WORD wDragWidth = 4;
-static WORD wDragHeight= 3;
 
 static void *user_handles[NB_USER_HANDLES];
 
@@ -2965,6 +2963,8 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
 {
     MSG msg;
     RECT rect;
+    WORD wDragWidth = GetSystemMetrics(SM_CXDRAG);
+    WORD wDragHeight= GetSystemMetrics(SM_CYDRAG);
 
     rect.left = pt.x - wDragWidth;
     rect.right = pt.x + wDragWidth;
