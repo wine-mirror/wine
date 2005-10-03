@@ -9,22 +9,33 @@ BEGIN {
 	if (NF > 0 && length(array[1]) > 0) {
 		lines++
 
-		# save the first word is the names array
-		names[lines] = array[1] 
+		# save the first word (or '&' seperated list of words) in the names array
+		if (array[2] == "&") {
+			if (array[4] == "&") {
+				names[lines] = array[1] " " array[2] " " array[3] " " array[4] " " array[5]
+				start =  6
+			} else {
+				names[lines] = array[1] " " array[2] " " array[3]
+				start = 4 
+			}
+		} else {
+			names[lines] = array[1] 
+			start = 2
+		}
 
 		# create the WCHAR version of the name
 		printf "static const WCHAR name%dW[] = { ", lines
 		i = 1
-		len = length(array[1]) + 1
+		len = length(names[lines]) + 1
 		while (i < len) {
-			printf "'%s',", substr(array[1],i,1)
+			printf "'%s',", substr(names[lines],i,1)
 			i++
 		}
 		print  "0 };"
 	
 		# create the CHAR version of the description
 		printf "static const CHAR description%dA[] = \"", lines
-		word = 2
+		word = start 
 		while (word < (NF + 1)) {
 			printf "%s", array[word]
 			if (word < NF )
@@ -35,7 +46,7 @@ BEGIN {
 	
 		# create the WCHAR version of the description
 		printf "static const WCHAR description%dW[] = { ", lines
-		word = 2
+		word = start
 		while (word < (NF + 1)) {
 			i = 1
 			len = length(array[word]) + 1
@@ -59,8 +70,9 @@ END {
 
 	i = 1 
 	while ( i <= lines) { 
+		split(names[i], words, FS)
 		printf "    { %s, \"%s\", name%dW, description%dA, description%dW },\n", 
-			names[i], names[i], i, i,i 
+			words[1], names[i], i, i,i 
 		i++
 	}
 
