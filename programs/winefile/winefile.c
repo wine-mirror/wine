@@ -2246,9 +2246,11 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 					if (ChooseFont(&chFont)) {
 						HWND childWnd;
+						HFONT hFontOld;
 
+						DeleteObject(Globals.hfont);
 						Globals.hfont = CreateFontIndirect(&lFont);
-						SelectFont(hdc, Globals.hfont);
+						hFontOld = SelectFont(hdc, Globals.hfont);
 						GetTextExtentPoint32(hdc, sSpace, 1, &Globals.spaceSize);
 
 						/* change font in all open child windows */
@@ -2261,6 +2263,8 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 							InvalidateRect(child->left.hwnd, NULL, TRUE);
 							InvalidateRect(child->right.hwnd, NULL, TRUE);
 						}
+
+						SelectFont(hdc, hFontOld);
 					}
 					else if (CommDlgExtendedError()) {
 						LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_NAME, dlg_name, BUFFER_LEN);
@@ -4756,6 +4760,7 @@ static void ExitInstance(void)
 	CoUninitialize();
 #endif
 
+	DeleteObject(Globals.hfont);
 	ImageList_Destroy(Globals.himl);
 }
 
