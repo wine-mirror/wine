@@ -2622,6 +2622,12 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                 TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
                 TranslateMessage(&msg);
                 DispatchMessageW(&msg);
+                if (msg.message == WM_QUIT)
+                {
+                    TRACE("resending WM_QUIT to outer message loop\n");
+                    PostQuitMessage(msg.wParam);
+                    goto done;
+                }
             }
         }
         else if ((res >= WAIT_OBJECT_0) && (res < WAIT_OBJECT_0 + cHandles))
@@ -2642,6 +2648,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
             break;
         }
     }
+done:
     TRACE("-- 0x%08lx\n", hr);
     return hr;
 }
