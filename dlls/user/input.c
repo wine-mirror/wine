@@ -183,7 +183,19 @@ HWND WINAPI SetCapture( HWND hwnd )
  */
 BOOL WINAPI ReleaseCapture(void)
 {
-    return (SetCapture(0) != 0);
+    BOOL ret;
+    HWND previous = 0;
+
+    SERVER_START_REQ( set_capture_window )
+    {
+        req->handle = 0;
+        req->flags  = 0;
+        if ((ret = !wine_server_call_err( req ))) previous = reply->previous;
+    }
+    SERVER_END_REQ;
+
+    if (previous) SendMessageW( previous, WM_CAPTURECHANGED, 0, 0 );
+    return ret;
 }
 
 

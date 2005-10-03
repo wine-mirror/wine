@@ -2173,6 +2173,8 @@ static void test_capture_2(void)
 
 static void test_capture_3(HWND hwnd1, HWND hwnd2)
 {
+    BOOL ret;
+
     ShowWindow(hwnd1, SW_HIDE);
     ShowWindow(hwnd2, SW_HIDE);
 
@@ -2188,7 +2190,10 @@ static void test_capture_3(HWND hwnd1, HWND hwnd2)
     ShowWindow(hwnd1, SW_SHOW);
     check_wnd_state(hwnd1, hwnd1, hwnd1, hwnd2);
 
-    ReleaseCapture();
+    ret = ReleaseCapture();
+    ok (ret, "releasecapture did not return TRUE.\n");
+    ret = ReleaseCapture();
+    ok (ret, "releasecapture did not return TRUE after second try.\n");
 }
 
 static void test_keyboard_input(HWND hwnd)
