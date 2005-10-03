@@ -150,18 +150,21 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue,
 
     types_get_info(type, TI_GET_TYPE, &lvalue->type.id);
     lvalue->type.module = type->module;
-    types_get_info(type, TI_GET_OFFSET, &offset);
+    if (!types_get_info(type, TI_GET_OFFSET, &offset)) return FALSE;
+    lvalue->addr.Offset += offset;
 
     if (types_get_info(type, TI_GET_BITPOSITION, &bitoffset))
     {
-        if (!types_get_info(type, TI_GET_LENGTH, &length) ||
-            length > sizeof(*tmpbuf))
-            return FALSE;
+        types_get_info(type, TI_GET_LENGTH, &length);
+        /* FIXME: this test isn't sufficient, depending on start of bitfield
+         * (ie a 32 bit field can spread across 5 bytes)
+         */
+        if (length > 8 * sizeof(*tmpbuf)) return FALSE;
+        lvalue->addr.Offset += bitoffset >> 3;
         /*
          * Bitfield operation.  We have to extract the field and store
          * it in a temporary buffer so that we get it all right.
          */
-        lvalue->addr.Offset += offset;
         if (!memory_read_value(lvalue, sizeof(*tmpbuf), tmpbuf)) return FALSE;
         mask = 0xffffffff << length;
         *tmpbuf >>= bitoffset & 7;
@@ -180,14 +183,13 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue,
         {
             *tmpbuf |= mask;
         }
-        return TRUE;
     }
-    if (types_get_info(type, TI_GET_OFFSET, &offset))
+    else
     {
-        lvalue->addr.Offset += offset;
-        return TRUE;
+        if (!memory_read_value(lvalue, sizeof(*tmpbuf), tmpbuf)) return FALSE;
+
     }
-    return FALSE;
+    return TRUE;
 }
 
 /******************************************************************
