@@ -751,6 +751,7 @@ int p = 0;
         *q = '\0';
 	break;
       case ' ':
+      case '\t':
 	s++;
 	break;
       case '"':
@@ -768,7 +769,7 @@ int p = 0;
       case '\0':
         return;
       default:
-	while ((*s != '\0') && (*s != ' ')) {
+	while ((*s != '\0') && (*s != ' ') && (*s != '\t')) {
 	  if (p == 0) *p1++ = *s++;
 	  else if (p == 1) *p2++ = *s++;
 	  else s++;
