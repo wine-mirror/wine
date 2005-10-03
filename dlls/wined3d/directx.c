@@ -588,7 +588,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
 
 
     for (i = 0; i < MAX_LOOKUPS; i++) {
-        stateLookup[i] = HeapAlloc(GetProcessHeap(), 0, sizeof(*stateLookup[i]) * (1 + maxLookup[i] - minLookup[MAX_LOOKUPS]) );
+        stateLookup[i] = HeapAlloc(GetProcessHeap(), 0, sizeof(*stateLookup[i]) * (1 + maxLookup[i] - minLookup[i]) );
     }
 
     stateLookup[WINELOOKUP_WARPPARAM][D3DTADDRESS_WRAP   - minLookup[WINELOOKUP_WARPPARAM]] = GL_REPEAT;
@@ -622,7 +622,6 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
     GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
     minMipLookup[D3DTEXF_ANISOTROPIC][D3DTEXF_POINT]  = gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC] ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR;
     minMipLookup[D3DTEXF_ANISOTROPIC][D3DTEXF_LINEAR] = gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC] ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
-
 
 /* TODO: config lookups */
 
