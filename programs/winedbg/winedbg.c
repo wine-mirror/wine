@@ -552,6 +552,35 @@ static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
         be_cpu->print_segment_info(dbg_curr_thread->handle, &dbg_context);
 	stack_backtrace(dbg_curr_tid, TRUE);
     }
+    else
+    {
+        static char*        last_name;
+        static char*        last_file;
+
+        char                buffer[sizeof(SYMBOL_INFO) + 256];
+        SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
+        void*               lin = memory_to_linear_addr(&addr);
+        DWORD64             disp64;
+        IMAGEHLP_LINE       il;
+        DWORD               disp;
+
+        si->SizeOfStruct = sizeof(*si);
+        si->MaxNameLen   = 256;
+        il.SizeOfStruct = sizeof(il);
+        if (SymFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp64, si) &&
+            SymGetLineFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp, &il))
+        {
+            if ((!last_name || strcmp(last_name, si->Name)) ||
+                (!last_file || strcmp(last_file, il.FileName)))
+            {
+                HeapFree(GetProcessHeap(), 0, last_name);
+                HeapFree(GetProcessHeap(), 0, last_file);
+                last_name = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(si->Name) + 1), si->Name);
+                last_file = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(il.FileName) + 1), il.FileName);
+                dbg_printf("%s () at %s:%ld\n", last_name, last_file, il.LineNumber);
+            }
+        }
+    }
     if (!is_debug || is_break ||
         dbg_curr_thread->exec_mode == dbg_exec_step_over_insn ||
         dbg_curr_thread->exec_mode == dbg_exec_step_into_insn)
