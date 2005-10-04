@@ -341,6 +341,7 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
                 case IDC_ABOUT:
                     MessageBoxW(0, sAbout, sAboutTitle, MB_OK);
                     break;
+                case IDCANCEL:
                 case IDC_EXIT:
                     EndDialog(hwnd, 0);
                     break;
