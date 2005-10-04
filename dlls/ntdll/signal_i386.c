@@ -813,6 +813,7 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     /* now modify the sigcontext to return to the raise function */
     ESP_sig(sigcontext) = (DWORD)stack;
     EIP_sig(sigcontext) = (DWORD)func;
+    EFL_sig(sigcontext) &= ~0x100;  /* clear single-step flag */
     CS_sig(sigcontext)  = wine_get_cs();
     DS_sig(sigcontext)  = wine_get_ds();
     ES_sig(sigcontext)  = wine_get_es();
@@ -1059,7 +1060,6 @@ static HANDLER_DEF(trap_handler)
     {
     case T_TRCTRAP:  /* Single-step exception */
         rec->ExceptionCode = EXCEPTION_SINGLE_STEP;
-        EFL_sig(HANDLER_CONTEXT) &= ~0x100;  /* clear single-step flag */
         break;
     case T_BPTFLT:   /* Breakpoint exception */
         rec->ExceptionAddress = (char *)rec->ExceptionAddress - 1;  /* back up over the int3 instruction */
