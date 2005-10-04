@@ -92,31 +92,6 @@ else
     XMESSAGE="xmessage $COLOR"
 fi
 
-launch_winesetup()
-{
-    which winesetup
-    if [ $? -eq 0 ] ; then
-        winesetup
-    else
-        if [ -x /opt/wine/bin/winesetup ] ; then
-            /opt/wine/bin/winesetup
-        else
-            $XMESSAGE -title "Error" \
-        "Error:  Unable to find winesetup in your PATH or in /opt/wine/bin:
-        I am not able to configure Wine.
-
-        If winesetup is being distributed in a separate package
-        that is not installed yet on your system, then please install this
-        package.
-        winesetup can also be downloaded from www.codeweavers.com.
-
-        If you choose to not use winesetup for configuration, then
-        you can find information on how to prepare a Wine config file manually
-        in the Wine README / README.gz file or in the Wine User Guide."
-        fi
-    fi
-}
-
 #------------------------------------------------------------------------------
 #  We're going to do a lot of fancy footwork below.
 #    Before we get started, it would be nice to know the argv0
@@ -280,67 +255,13 @@ if [ $no_args -eq 1 ] ; then
     fi
 
     if [ $welcome_rc -eq 2 ] ; then
-        launch_winesetup
+        winecfg
         exit
     fi
 
     use_info_message=0
     always_see_output=1
 fi
-
-#------------------------------------------------------------------------------
-#  No config file?  Offer to help 'em out...
-#------------------------------------------------------------------------------
-conf=0
-
-while [ $conf -eq 0 ] ; do
-
-    if [ -f ~/.winerc ] ; then
-        conf=1
-    fi
-    if [ -f ~/.wine/config ] ; then
-        conf=2
-    fi
-    if [ -f /etc/wine.conf ] ; then
-        conf=3
-    fi
-
-    if [ $conf -ne 0 ] ; then
-        break;
-    fi
-
-    echo "No configuration file detected."
-    $XMESSAGE -buttons "    Cancel    ":0,"  Proceed   ":1,"  Configure Wine  ":2 \
-        -title "Welcome to Wine" \
-        "
-
-        You have started Wine, but we cannot find a Wine
-        configuration file.
-
-        This is normal if you have never run Wine before.
-        If this is the case, select the 'Configure Wine'
-        option, below, to create a configuration file.
-
-        "
-    init_rc=$?
-    if [ $init_rc -eq 0 ] ; then
-        exit
-    fi
-
-    if [ $init_rc -eq 1 ] ; then
-        break
-    fi
-
-    if [ $init_rc -eq 2 ] ; then
-        launch_winesetup
-    fi
-
-    # 127 == xmessage not available
-    if [ $init_rc -eq 127 ] ; then
-      exit
-    fi
-
-done
 
 #------------------------------------------------------------------------------
 #  Optionally Warn the user we're going to be launching Wine...
@@ -482,10 +403,6 @@ You can choose to run Wine again with a higher level
 of debug messages (the debug option, below).
 
 You can attempt to reconfigure Wine to make it work better.
-Note that one change you can make that will dramatically
-effect Wine's behaviour is to change whether or not
-Wine uses a true Windows partition, mounted under Linux,
-or whether it uses an empty Windows directory.
 The Wine Configuration program can assist you in making
 those changes (select Configure, below, for more).
 
@@ -523,7 +440,7 @@ You may view this file by selecting View Log, below."
         #  Process a configure instruction
         #------------------------------------------------------------------------------
         if [ $debug_return -eq 4 ] ; then
-            launch_winesetup
+            winecfg
             continue;
         fi
 
