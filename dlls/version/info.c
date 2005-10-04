@@ -544,6 +544,8 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
     }
     else 
     {
+        static const char signature[] = "FE2X";
+        DWORD bufsize = vvis->wLength + strlen(signature);
         DWORD convbuf;
  
         /* We have a 32bit resource.
@@ -552,8 +554,12 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
          * This extra buffer is used for Unicode to ANSI conversions in A-Calls
          */
 
-        convbuf = datasize - vvis->wLength;
-        memcpy( ((char*)(data))+vvis->wLength, "FE2X", convbuf > 4 ? 4 : convbuf );
+        /* information is truncated to datasize bytes */
+        if (datasize >= bufsize)
+        {
+            convbuf = datasize - vvis->wLength;
+            memcpy( ((char*)(data))+vvis->wLength, signature, convbuf > 4 ? 4 : convbuf );
+        }
     }
 
     SetLastError(0);
