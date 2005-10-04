@@ -451,7 +451,7 @@ BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     /* Try registered DLL first.. */
     pCryptEncodeObject =
      (CryptEncodeObjectFunc)CRYPT_GetFunc(dwCertEncodingType,
-     lpszStructType, "CryptEncodeObject", &lib);
+     lpszStructType, CRYPT_OID_ENCODE_OBJECT_FUNC, &lib);
     if (pCryptEncodeObject)
     {
         ret = pCryptEncodeObject(dwCertEncodingType, lpszStructType,
@@ -2385,7 +2385,7 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
          debugstr_a(lpszStructType));
     if (!encodeFunc)
         encodeFunc = (CryptEncodeObjectExFunc)CRYPT_GetFunc(dwCertEncodingType,
-         lpszStructType, "CryptEncodeObjectEx", &lib);
+         lpszStructType, CRYPT_OID_ENCODE_OBJECT_EX_FUNC, &lib);
     if (encodeFunc)
         ret = encodeFunc(dwCertEncodingType, lpszStructType, pvStructInfo,
          dwFlags, pEncodePara, pvEncoded, pcbEncoded);
@@ -2417,7 +2417,7 @@ BOOL WINAPI CryptDecodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     /* Try registered DLL first.. */
     pCryptDecodeObject =
      (CryptDecodeObjectFunc)CRYPT_GetFunc(dwCertEncodingType,
-     lpszStructType, "CryptDecodeObject", &lib);
+     lpszStructType, CRYPT_OID_DECODE_OBJECT_FUNC, &lib);
     if (pCryptDecodeObject)
     {
         ret = pCryptDecodeObject(dwCertEncodingType, lpszStructType,
@@ -5509,7 +5509,7 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
          debugstr_a(lpszStructType));
     if (!decodeFunc)
         decodeFunc = (CryptDecodeObjectExFunc)CRYPT_GetFunc(dwCertEncodingType,
-         lpszStructType, "CryptDecodeObjectEx", &lib);
+         lpszStructType, CRYPT_OID_DECODE_OBJECT_EX_FUNC, &lib);
     if (decodeFunc)
         ret = decodeFunc(dwCertEncodingType, lpszStructType, pbEncoded,
          cbEncoded, dwFlags, pDecodePara, pvStructInfo, pcbStructInfo);
