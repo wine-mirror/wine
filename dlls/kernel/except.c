@@ -331,16 +331,16 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 	}
     }
 
-    /* remove WINEDEBUG from the environment */
+    /* make WINEDEBUG empty in the environment */
     env = GetEnvironmentStringsA();
     for (p = env; *p; p += strlen(p) + 1)
     {
         if (!memcmp( p, "WINEDEBUG=", sizeof("WINEDEBUG=")-1 ))
         {
-            char *next = p + strlen(p) + 1;
-            char *end = next;
+            char *next = p + strlen(p);
+            char *end = next + 1;
             while (*end) end += strlen(end) + 1;
-            memmove( p, next, end + 1 - next );
+            memmove( p + sizeof("WINEDEBUG=") - 1, next, end + 1 - next );
             break;
         }
     }
