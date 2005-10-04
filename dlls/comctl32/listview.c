@@ -3277,7 +3277,9 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
         notify_listview(infoPtr, LVN_BEGINDRAG, &nmlv);
 
         return 0;
-    } 
+    }
+    else
+        infoPtr->bLButtonDown = FALSE;
 
   /* see if we are supposed to be tracking mouse hovering */
   if(infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT) {
