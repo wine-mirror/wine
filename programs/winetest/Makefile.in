@@ -18,12 +18,14 @@ RC_SRCS = \
 RC_BINSRC = winetest.rc
 RC_BINARIES = wine.ico 
 
+XFILES = ddraw_test.exe$(DLLEXT)
+
 TESTBINS = \
+	@XFILES@ \
 	advpack_test.exe$(DLLEXT) \
 	advapi32_test.exe$(DLLEXT) \
 	comctl32_test.exe$(DLLEXT) \
 	crypt32_test.exe$(DLLEXT) \
-	ddraw_test.exe$(DLLEXT) \
 	dinput_test.exe$(DLLEXT) \
 	dsound_test.exe$(DLLEXT) \
 	gdi32_test.exe$(DLLEXT) \
