@@ -41,6 +41,10 @@ extern "C" {
 # define _X86_
 #endif
 
+#if defined(_X86_) && !defined(__i386__)
+# define __i386__
+#endif
+
 #ifdef __x86_64__
 #define _WIN64
 #endif
@@ -124,6 +128,10 @@ extern "C" {
 # ifndef __declspec
 #  define __declspec(x)   __ONLY_IN_WINELIB()
 # endif
+#endif
+
+#ifdef _MSC_VER
+# define inline __inline
 #endif
 
 #define CALLBACK    __stdcall
