@@ -980,6 +980,7 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, 
 }
 
 static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(WineD3D_Context* ctx, GLXFBConfig cfgs, WINED3DFORMAT Format) {
+#if 0 /* This code performs a strict test between the format and the current X11  buffer depth, which may give the best performance */
   int gl_test;
   int rb, gb, bb, ab, type, buf_sz;
 
@@ -1024,9 +1025,29 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(WineD3D_Context* c
     break;
   }
   return FALSE;
+#else /* Most of the time performance is less of an issue than compatability, this code allows for most common opengl/d3d formats */
+switch (Format) {
+  case WINED3DFMT_X8R8G8B8:
+  case WINED3DFMT_R8G8B8:
+  case WINED3DFMT_A8R8G8B8:
+  case WINED3DFMT_A2R10G10B10:
+  case WINED3DFMT_X1R5G5B5:
+  case WINED3DFMT_A1R5G5B5:
+  case WINED3DFMT_R5G6B5:
+  case WINED3DFMT_R3G3B2:
+  case WINED3DFMT_A8P8:
+  case WINED3DFMT_P8:
+return TRUE;
+  default:
+    ERR("unsupported format %s\n", debug_d3dformat(Format));
+    break;
+  }
+return FALSE;
+#endif
 }
 
 static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(WineD3D_Context* ctx, GLXFBConfig cfgs, WINED3DFORMAT Format) {
+#if 0/* This code performs a strict test between the format and the current X11  buffer depth, which may give the best performance */
   int gl_test;
   int db, sb;
 
@@ -1064,6 +1085,24 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(WineD3D_Context* ct
     break;
   }
   return FALSE;
+#else /* Most of the time performance is less of an issue than compatability, this code allows for most common opengl/d3d formats */
+  switch (Format) {
+  case WINED3DFMT_D16:
+  case WINED3DFMT_D16_LOCKABLE:
+  case WINED3DFMT_D32:
+  case WINED3DFMT_D15S1:
+  case WINED3DFMT_D24S8:
+  case WINED3DFMT_D24FS8:
+  case WINED3DFMT_D24X8:
+  case WINED3DFMT_D24X4S4:
+  case WINED3DFMT_D32F_LOCKABLE:
+    return TRUE;
+  default:
+    ERR("unsupported format %s\n", debug_d3dformat(Format));
+    break;
+  }
+  return FALSE;
+#endif
 }
 
 HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType,
