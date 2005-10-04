@@ -8015,7 +8015,13 @@ static LRESULT LISTVIEW_KeyDown(LISTVIEW_INFO *infoPtr, INT nVirtualKey, LONG lK
 
   case VK_PRIOR:
     if (uView == LVS_REPORT)
-      nItem = infoPtr->nFocusedItem - LISTVIEW_GetCountPerColumn(infoPtr);
+    {
+      INT topidx = LISTVIEW_GetTopIndex(infoPtr);
+      if (infoPtr->nFocusedItem == topidx)
+        nItem = topidx - LISTVIEW_GetCountPerColumn(infoPtr) + 1;
+      else
+        nItem = topidx;
+    }
     else
       nItem = infoPtr->nFocusedItem - LISTVIEW_GetCountPerColumn(infoPtr)
                                     * LISTVIEW_GetCountPerRow(infoPtr);
@@ -8024,7 +8030,14 @@ static LRESULT LISTVIEW_KeyDown(LISTVIEW_INFO *infoPtr, INT nVirtualKey, LONG lK
 
   case VK_NEXT:
     if (uView == LVS_REPORT)
-      nItem = infoPtr->nFocusedItem + LISTVIEW_GetCountPerColumn(infoPtr);
+    {
+      INT topidx = LISTVIEW_GetTopIndex(infoPtr);
+      INT cnt = LISTVIEW_GetCountPerColumn(infoPtr);
+      if (infoPtr->nFocusedItem == topidx + cnt - 1)
+        nItem = infoPtr->nFocusedItem + cnt - 1;
+      else
+        nItem = topidx + cnt - 1;
+    }
     else
       nItem = infoPtr->nFocusedItem + LISTVIEW_GetCountPerColumn(infoPtr)
                                     * LISTVIEW_GetCountPerRow(infoPtr);
