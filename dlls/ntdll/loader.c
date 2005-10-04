@@ -588,15 +588,9 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
                                                   IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
         return STATUS_SUCCESS;
 
-    nb_imports = size / sizeof(*imports);
-    for (i = 0; i < nb_imports; i++)
-    {
-        if (!imports[i].Name)
-        {
-            nb_imports = i;
-            break;
-        }
-    }
+    nb_imports = 0;
+    while (imports[nb_imports].Name && imports[nb_imports].FirstThunk) nb_imports++;
+
     if (!nb_imports) return STATUS_SUCCESS;  /* no imports */
 
     /* Allocate module dependency list */
