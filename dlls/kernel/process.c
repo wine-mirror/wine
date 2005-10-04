@@ -1426,6 +1426,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     BOOL ret, success = FALSE;
     HANDLE process_info;
     WCHAR *env_end;
+    char *winedebug = NULL;
     RTL_USER_PROCESS_PARAMETERS *params;
     int startfd[2];
     int execfd[2];
@@ -1442,7 +1443,17 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         return FALSE;
     }
     env_end = params->Environment;
-    while (*env_end) env_end += strlenW(env_end) + 1;
+    while (*env_end)
+    {
+        static const WCHAR WINEDEBUG[] = {'W','I','N','E','D','E','B','U','G','=',0};
+        if (!winedebug && !strncmpW( env_end, WINEDEBUG, sizeof(WINEDEBUG)/sizeof(WCHAR) - 1 ))
+        {
+            DWORD len = WideCharToMultiByte( CP_UNIXCP, 0, env_end, -1, NULL, 0, NULL, NULL );
+            if ((winedebug = HeapAlloc( GetProcessHeap(), 0, len )))
+                WideCharToMultiByte( CP_UNIXCP, 0, env_end, -1, winedebug, len, NULL, NULL );
+        }
+        env_end += strlenW(env_end) + 1;
+    }
     env_end++;
 
     sprintf( preloader_reserve, "WINEPRELOADRESERVE=%lx-%lx%c",
@@ -1453,6 +1464,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     if (pipe( startfd ) == -1)
     {
         if (!env) RtlReleasePebLock();
+        HeapFree( GetProcessHeap(), 0, winedebug );
         SetLastError( ERROR_TOO_MANY_OPEN_FILES );
         RtlDestroyProcessParameters( params );
         return FALSE;
@@ -1460,6 +1472,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     if (pipe( execfd ) == -1)
     {
         if (!env) RtlReleasePebLock();
+        HeapFree( GetProcessHeap(), 0, winedebug );
         SetLastError( ERROR_TOO_MANY_OPEN_FILES );
         close( startfd[0] );
         close( startfd[1] );
@@ -1486,6 +1499,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         signal( SIGCHLD, SIG_DFL );
 
         putenv( preloader_reserve );
+        if (winedebug) putenv( winedebug );
         if (unixdir) chdir(unixdir);
 
         if (argv)
@@ -1505,6 +1519,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     close( startfd[0] );
     close( execfd[1] );
+    HeapFree( GetProcessHeap(), 0, winedebug );
     if (pid == -1)
     {
         if (!env) RtlReleasePebLock();
