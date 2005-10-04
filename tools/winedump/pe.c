@@ -520,7 +520,6 @@ static void dump_image_thunk_data32(IMAGE_THUNK_DATA32 *il)
 static	void	dump_dir_imported_functions(void)
 {
     IMAGE_IMPORT_DESCRIPTOR	*importDesc = get_dir(IMAGE_FILE_IMPORT_DIRECTORY);
-    unsigned			nb_imp, i;
     DWORD directorySize;
 
     if (!importDesc)	return;
@@ -534,29 +533,21 @@ static	void	dump_dir_imported_functions(void)
         IMAGE_OPTIONAL_HEADER32 *opt = (IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader;
         directorySize = opt->DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size;
     }
-    nb_imp = directorySize / sizeof(*importDesc);
-    if (!nb_imp) return;
 
     printf("Import Table size: %08lx\n", directorySize);/* FIXME */
 
-    for (i = 0; i < nb_imp - 1; i++) /* the last descr is set as 0 as a sentinel */
+    for (;;)
     {
 	IMAGE_THUNK_DATA32*	il;
 
-	if (!importDesc->Name ||
-	    (importDesc->u.OriginalFirstThunk == 0 && importDesc->FirstThunk == 0))
-	{
-	    /* FIXME */
-	    printf("<<<<<<<null entry\n");
-	    break;
-	}
+        if (!importDesc->Name || !importDesc->FirstThunk) break;
+
 	printf("  offset %08lx %s\n", Offset(importDesc), (char*)RVA(importDesc->Name, sizeof(DWORD)));
 	printf("  Hint/Name Table: %08lX\n", (DWORD)importDesc->u.OriginalFirstThunk);
 	printf("  TimeDataStamp:   %08lX (%s)\n",
 	       importDesc->TimeDateStamp, get_time_str(importDesc->TimeDateStamp));
 	printf("  ForwarderChain:  %08lX\n", importDesc->ForwarderChain);
-	printf("  First thunk RVA: %08lX (delta: %u 0x%x)\n",
-	       (DWORD)importDesc->FirstThunk, -1, -1); /* FIXME */
+	printf("  First thunk RVA: %08lX\n", (DWORD)importDesc->FirstThunk);
 
 	printf("  Ordn  Name\n");
 
@@ -564,13 +555,16 @@ static	void	dump_dir_imported_functions(void)
 	    RVA((DWORD)importDesc->u.OriginalFirstThunk, sizeof(DWORD)) :
 	    RVA((DWORD)importDesc->FirstThunk, sizeof(DWORD));
 
-	if (!il) {printf("Can't grab thunk data, going to next imported DLL\n"); continue;}
-
-        if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-            dump_image_thunk_data64((IMAGE_THUNK_DATA64*)il);
+	if (!il)
+            printf("Can't grab thunk data, going to next imported DLL\n");
         else
-            dump_image_thunk_data32(il);
-	printf("\n");
+        {
+            if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+                dump_image_thunk_data64((IMAGE_THUNK_DATA64*)il);
+            else
+                dump_image_thunk_data32(il);
+            printf("\n");
+        }
 	importDesc++;
     }
     printf("\n");
