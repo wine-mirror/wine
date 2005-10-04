@@ -257,12 +257,21 @@ static void set_dllmode(HWND dialog, DWORD id)
 
 static void on_add_click(HWND dialog)
 {
-    char buffer[1024];
+    static const char dotDll[] = ".dll";
+    char buffer[1024], *ptr;
 
     ZeroMemory(buffer, sizeof(buffer));
 
     SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_GETTEXT, sizeof(buffer), (LPARAM) buffer);
-
+    if (lstrlenA(buffer) >= sizeof(dotDll))
+    {
+        ptr = buffer + lstrlenA(buffer) - sizeof(dotDll) + 1;
+        if (!lstrcmpiA(ptr, dotDll))
+        {
+            WINE_TRACE("Stripping dll extension\n");
+            *ptr = '\0';
+        }
+    }
     SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_SETTEXT, 0, (LPARAM) "");
     disable(IDC_DLLS_ADDDLL);
     
