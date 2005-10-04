@@ -116,7 +116,7 @@ static	void*	get_dir(unsigned idx)
     return get_dir_and_size(idx, 0);
 }
 
-static const char*	DirectoryNames[16] = {
+static const char * const DirectoryNames[16] = {
     "EXPORT",		"IMPORT",	"RESOURCE", 	"EXCEPTION",
     "SECURITY", 	"BASERELOC", 	"DEBUG", 	"ARCHITECTURE",
     "GLOBALPTR", 	"TLS", 		"LOAD_CONFIG",	"Bound IAT",
@@ -491,7 +491,7 @@ static void dump_image_thunk_data64(IMAGE_THUNK_DATA64 *il)
         else
         {
             iibn = RVA((DWORD)il->u1.AddressOfData, sizeof(DWORD));
-            if (!il)
+            if (!iibn)
                 printf("Can't grab import by name info, skipping to next ordinal\n");
             else
                 printf("  %4u  %s %lx\n", iibn->Hint, iibn->Name, (DWORD)il->u1.AddressOfData);
@@ -509,7 +509,7 @@ static void dump_image_thunk_data32(IMAGE_THUNK_DATA32 *il)
         else
         {
             iibn = RVA((DWORD)il->u1.AddressOfData, sizeof(DWORD));
-            if (!il)
+            if (!iibn)
                 printf("Can't grab import by name info, skipping to next ordinal\n");
             else
                 printf("  %4u  %s %lx\n", iibn->Hint, iibn->Name, (DWORD)il->u1.AddressOfData);
@@ -537,7 +537,7 @@ static	void	dump_dir_imported_functions(void)
     nb_imp = directorySize / sizeof(*importDesc);
     if (!nb_imp) return;
 
-    printf("Import Table size: %lu\n", directorySize);/* FIXME */
+    printf("Import Table size: %08lx\n", directorySize);/* FIXME */
 
     for (i = 0; i < nb_imp - 1; i++) /* the last descr is set as 0 as a sentinel */
     {
@@ -550,7 +550,7 @@ static	void	dump_dir_imported_functions(void)
 	    printf("<<<<<<<null entry\n");
 	    break;
 	}
-	printf("  offset %lu %s\n", Offset(importDesc), (char*)RVA(importDesc->Name, sizeof(DWORD)));
+	printf("  offset %08lx %s\n", Offset(importDesc), (char*)RVA(importDesc->Name, sizeof(DWORD)));
 	printf("  Hint/Name Table: %08lX\n", (DWORD)importDesc->u.OriginalFirstThunk);
 	printf("  TimeDataStamp:   %08lX (%s)\n",
 	       importDesc->TimeDateStamp, get_time_str(importDesc->TimeDateStamp));
@@ -572,6 +572,75 @@ static	void	dump_dir_imported_functions(void)
             dump_image_thunk_data32(il);
 	printf("\n");
 	importDesc++;
+    }
+    printf("\n");
+}
+
+static void dump_dir_delay_imported_functions(void)
+{
+    struct ImgDelayDescr
+    {
+        DWORD grAttrs;
+        DWORD szName;
+        DWORD phmod;
+        DWORD pIAT;
+        DWORD pINT;
+        DWORD pBoundIAT;
+        DWORD pUnloadIAT;
+        DWORD dwTimeStamp;
+    } *importDesc = get_dir(IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT);
+    unsigned nb_imp, i;
+    DWORD directorySize;
+
+    if (!importDesc) return;
+    if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
+        IMAGE_OPTIONAL_HEADER64 *opt = (IMAGE_OPTIONAL_HEADER64 *)&PE_nt_headers->OptionalHeader;
+        directorySize = opt->DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size;
+    }
+    else
+    {
+        IMAGE_OPTIONAL_HEADER32 *opt = (IMAGE_OPTIONAL_HEADER32 *)&PE_nt_headers->OptionalHeader;
+        directorySize = opt->DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size;
+    }
+    nb_imp = directorySize / sizeof(*importDesc);
+    if (!nb_imp) return;
+
+    printf("Delay Import Table size: %08lx\n", directorySize); /* FIXME */
+
+    for (i = 0; i < nb_imp - 1; i++) /* the last descr is set as 0 as a sentinel */
+    {
+        BOOL use_rva = importDesc->grAttrs & 1;
+        IMAGE_THUNK_DATA32 *il;
+
+        if (!importDesc->szName || !importDesc->pIAT || !importDesc->pINT)
+        {
+            /* FIXME */
+            printf("<<<<<<<null entry\n");
+            break;
+        }
+        printf("  grAttrs %08lx offset %08lx %s\n", importDesc->grAttrs, Offset(importDesc),
+               use_rva ? (char *)RVA(importDesc->szName, sizeof(DWORD)) : (char *)importDesc->szName);
+        printf("  Hint/Name Table: %08lx\n", importDesc->pINT);
+        printf("  TimeDataStamp:   %08lX (%s)\n",
+               importDesc->dwTimeStamp, get_time_str(importDesc->dwTimeStamp));
+
+        printf("  Ordn  Name\n");
+
+        il = use_rva ? (IMAGE_THUNK_DATA32 *)RVA(importDesc->pINT, sizeof(DWORD)) : (IMAGE_THUNK_DATA32 *)importDesc->pINT;
+
+        if (!il)
+        {
+            printf("Can't grab thunk data, going to next imported DLL\n");
+            continue;
+        }
+
+        if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+            dump_image_thunk_data64((IMAGE_THUNK_DATA64 *)il);
+        else
+            dump_image_thunk_data32(il);
+        printf("\n");
+        importDesc++;
     }
     printf("\n");
 }
@@ -1026,7 +1095,10 @@ void pe_dump(void* pmt)
     if (globals.dumpsect)
     {
 	if (all || !strcmp(globals.dumpsect, "import"))
+        {
 	    dump_dir_imported_functions();
+	    dump_dir_delay_imported_functions();
+        }
 	if (all || !strcmp(globals.dumpsect, "export"))
 	    dump_dir_exported_functions();
 	if (all || !strcmp(globals.dumpsect, "debug"))

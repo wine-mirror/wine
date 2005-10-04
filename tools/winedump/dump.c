@@ -83,8 +83,16 @@ const char*	get_time_str(unsigned long _t)
 {
     time_t 	t = (time_t)_t;
     const char *str = ctime(&t);
-    size_t len = strlen(str);
+    size_t len;
     static char	buf[128];
+
+    if (!str) /* not valid time */
+    {
+        strcpy(buf, "not valid time");
+        return buf;
+    }
+
+    len = strlen(str);
     /* FIXME: I don't get the same values from MS' pedump running under Wine...
      * I wonder if Wine isn't broken wrt to GMT settings...
      */
