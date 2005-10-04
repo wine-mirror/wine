@@ -6,36 +6,36 @@ MODULE    = none
 fontdir   = $(datadir)/fonts/wine
 
 BITMAP_FONTS  = \
-	coure.fon \
-	couree.fon \
-	courer.fon \
-	coureg.fon \
-	couret.fon \
 	coue1255.fon \
 	coue1256.fon \
 	coue1257.fon \
+	coure.fon \
+	couree.fon \
+	coureg.fon \
+	courer.fon \
+	couret.fon \
+	cvgasys.fon \
+	hvgasys.fon \
+	jvgasys.fon \
 	sserife.fon \
 	sserifee.fon \
-	sserifer.fon \
 	sserifeg.fon \
+	sserifer.fon \
 	sserifet.fon \
 	ssee1255.fon \
 	ssee1256.fon \
 	ssee1257.fon \
 	ssee874.fon \
+	svgasys.fon \
 	vgasys.fon \
 	vgasyse.fon \
-	vgasysr.fon \
 	vgasysg.fon \
+	vgasysr.fon \
 	vgasyst.fon \
 	vgas1255.fon \
 	vgas1256.fon \
 	vgas1257.fon \
-	vgas874.fon \
-	jvgasys.fon \
-	svgasys.fon \
-	hvgasys.fon \
-	cvgasys.fon 
+	vgas874.fon
 
 TRUETYPE_FONTS = \
 	marlett.ttf
