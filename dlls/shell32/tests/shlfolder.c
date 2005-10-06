@@ -542,10 +542,10 @@ static void test_GetAttributesOf(void)
     LPCITEMIDLIST pidlEmpty = (LPCITEMIDLIST)&emptyitem;
     LPITEMIDLIST pidlMyComputer;
     DWORD dwFlags;
-    const static DWORD dwDesktopFlags = /* As observed on WinXP SP2 */
+    static const DWORD dwDesktopFlags = /* As observed on WinXP SP2 */
         SFGAO_STORAGE | SFGAO_HASPROPSHEET | SFGAO_STORAGEANCESTOR |
         SFGAO_FILESYSANCESTOR | SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_HASSUBFOLDER;
-    const static DWORD dwMyComputerFlags = /* As observed on WinXP SP2 */
+    static const DWORD dwMyComputerFlags = /* As observed on WinXP SP2 */
         SFGAO_CANRENAME | SFGAO_CANDELETE | SFGAO_HASPROPSHEET |
         SFGAO_DROPTARGET | SFGAO_FILESYSANCESTOR | SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
     WCHAR wszMyComputer[] = { 

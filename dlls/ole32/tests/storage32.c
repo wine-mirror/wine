@@ -434,7 +434,7 @@ static void test_open_storage(void)
     ok(r==S_OK, "StgOpenStorage failed\n");
     if(stg)
     { 
-        const static WCHAR stmname[] =  { 'w','i','n','e','t','e','s','t',0};
+        static const WCHAR stmname[] =  { 'w','i','n','e','t','e','s','t',0};
         IStream *stm = NULL;
         IStorage *stg2 = NULL;
 

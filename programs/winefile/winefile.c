@@ -178,23 +178,23 @@ WINEFILE_GLOBALS Globals;
 static int last_split;
 
 /* some common string constants */
-const static TCHAR sEmpty[] = {'\0'};
-const static TCHAR sSpace[] = {' ', '\0'};
-const static TCHAR sNumFmt[] = {'%','d','\0'};
-const static TCHAR sQMarks[] = {'?','?','?','\0'};
+static const TCHAR sEmpty[] = {'\0'};
+static const TCHAR sSpace[] = {' ', '\0'};
+static const TCHAR sNumFmt[] = {'%','d','\0'};
+static const TCHAR sQMarks[] = {'?','?','?','\0'};
 
 /* window class names */
-const static TCHAR sWINEFILEFRAME[] = {'W','F','S','_','F','r','a','m','e','\0'};
-const static TCHAR sWINEFILETREE[] = {'W','F','S','_','T','r','e','e','\0'};
+static const TCHAR sWINEFILEFRAME[] = {'W','F','S','_','F','r','a','m','e','\0'};
+static const TCHAR sWINEFILETREE[] = {'W','F','S','_','T','r','e','e','\0'};
 
 #ifdef _MSC_VER
 /* #define LONGLONGARG _T("I64") */
-const static TCHAR sLongHexFmt[] = {'%','I','6','4','X','\0'};
-const static TCHAR sLongNumFmt[] = {'%','I','6','4','d','\0'};
+static const TCHAR sLongHexFmt[] = {'%','I','6','4','X','\0'};
+static const TCHAR sLongNumFmt[] = {'%','I','6','4','d','\0'};
 #else
 /* #define LONGLONGARG _T("L") */
-const static TCHAR sLongHexFmt[] = {'%','L','X','\0'};
-const static TCHAR sLongNumFmt[] = {'%','L','d','\0'};
+static const TCHAR sLongHexFmt[] = {'%','L','X','\0'};
+static const TCHAR sLongNumFmt[] = {'%','L','d','\0'};
 #endif
 
 
@@ -1338,9 +1338,9 @@ static void read_directory(Entry* dir, LPCTSTR path, SORT_ORDER sortOrder, HWND 
 static Entry* read_tree(Root* root, LPCTSTR path, LPITEMIDLIST pidl, LPTSTR drv, SORT_ORDER sortOrder, HWND hwnd)
 {
 #if !defined(_NO_EXTENSIONS) && defined(__WINE__)
-	const static TCHAR sSlash[] = {'/', '\0'};
+	static const TCHAR sSlash[] = {'/', '\0'};
 #endif
-	const static TCHAR sBackslash[] = {'\\', '\0'};
+	static const TCHAR sBackslash[] = {'\\', '\0'};
 
 #ifdef _SHELL_FOLDERS
 	if (pidl)
@@ -1401,7 +1401,7 @@ static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 {
 	TCHAR drv[_MAX_DRIVE+1], dir[_MAX_DIR], name[_MAX_FNAME], ext[_MAX_EXT];
 	TCHAR b1[BUFFER_LEN];
-	const static TCHAR sAsterics[] = {'*', '\0'};
+	static const TCHAR sAsterics[] = {'*', '\0'};
 
 	ChildWnd* child = (ChildWnd*) malloc(sizeof(ChildWnd));
 	Root* root = &child->root;
@@ -1891,7 +1891,7 @@ static INT_PTR CALLBACK PropertiesDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wpa
 
 	switch(nmsg) {
 		case WM_INITDIALOG: {
-			const static TCHAR sByteFmt[] = {'%','s',' ','B','y','t','e','s','\0'};
+			static const TCHAR sByteFmt[] = {'%','s',' ','B','y','t','e','s','\0'};
 			TCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
 			LPWIN32_FIND_DATA pWFD;
 			ULONGLONG size;
@@ -2527,7 +2527,7 @@ static HWND create_header(HWND parent, Pane* pane, int id)
 
 static void init_output(HWND hwnd)
 {
-	const static TCHAR s1000[] = {'1','0','0','0','\0'};
+	static const TCHAR s1000[] = {'1','0','0','0','\0'};
 
 	TCHAR b[16];
 	HFONT old_font;
@@ -2819,9 +2819,9 @@ static int insert_entries(Pane* pane, Entry* dir, LPCTSTR pattern, int filter_fl
 
 static void format_bytes(LPTSTR buffer, LONGLONG bytes)
 {
-	const static TCHAR sFmtGB[] = {'%', '.', '1', 'f', ' ', 'G', 'B', '\0'};
-	const static TCHAR sFmtMB[] = {'%', '.', '1', 'f', ' ', 'M', 'B', '\0'};
-	const static TCHAR sFmtkB[] = {'%', '.', '1', 'f', ' ', 'k', 'B', '\0'};
+	static const TCHAR sFmtGB[] = {'%', '.', '1', 'f', ' ', 'G', 'B', '\0'};
+	static const TCHAR sFmtMB[] = {'%', '.', '1', 'f', ' ', 'M', 'B', '\0'};
+	static const TCHAR sFmtkB[] = {'%', '.', '1', 'f', ' ', 'k', 'B', '\0'};
 
 	float fBytes = (float)bytes;
 
@@ -2855,7 +2855,7 @@ static WNDPROC g_orgTreeWndProc;
 
 static void create_tree_window(HWND parent, Pane* pane, int id, int id_header, LPCTSTR pattern, int filter_flags)
 {
-	const static TCHAR sListBox[] = {'L','i','s','t','B','o','x','\0'};
+	static const TCHAR sListBox[] = {'L','i','s','t','B','o','x','\0'};
 
 	static int s_init = 0;
 	Entry* entry = pane->root;
@@ -3342,10 +3342,10 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 	/* show file attributes */
 	if (visible_cols & COL_ATTRIBUTES) {
 #ifdef _NO_EXTENSIONS
-		const static TCHAR s4Tabs[] = {' ','\t',' ','\t',' ','\t',' ','\t',' ','\0'};
+		static const TCHAR s4Tabs[] = {' ','\t',' ','\t',' ','\t',' ','\t',' ','\0'};
 		lstrcpy(buffer, s4Tabs);
 #else
-		const static TCHAR s11Tabs[] = {' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\0'};
+		static const TCHAR s11Tabs[] = {' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\0'};
 		lstrcpy(buffer, s11Tabs);
 #endif
 
@@ -3377,7 +3377,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 /*TODO
 	if (flags.security) {
-		const static TCHAR sSecTabs[] = {
+		static const TCHAR sSecTabs[] = {
 			' ','\t',' ','\t',' ','\t',' ',
 			' ','\t',' ',
 			' ','\t',' ','\t',' ','\t',' ',
@@ -4043,7 +4043,7 @@ static BOOL prompt_target(Pane* pane, LPTSTR source, LPTSTR target)
 	/* If the target already exists as directory, create a new target below this. */
 	if (is_directory(path)) {
 		TCHAR fname[_MAX_FNAME], ext[_MAX_EXT];
-		const static TCHAR sAppend[] = {'%','s','/','%','s','%','s','\0'};
+		static const TCHAR sAppend[] = {'%','s','/','%','s','%','s','\0'};
 
 		_tsplitpath(source, NULL, NULL, fname, ext);
 
@@ -4558,7 +4558,7 @@ static LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM 
 
 static void InitInstance(HINSTANCE hinstance)
 {
-	const static TCHAR sFont[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
+	static const TCHAR sFont[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
 
 	WNDCLASSEX wcFrame;
 	WNDCLASS wcChild;
@@ -4656,7 +4656,7 @@ static void InitInstance(HINSTANCE hinstance)
 
 static void show_frame(HWND hwndParent, int cmdshow)
 {
-	const static TCHAR sMDICLIENT[] = {'M','D','I','C','L','I','E','N','T','\0'};
+	static const TCHAR sMDICLIENT[] = {'M','D','I','C','L','I','E','N','T','\0'};
 
 	TCHAR path[MAX_PATH], b1[BUFFER_LEN];
 	ChildWnd* child;

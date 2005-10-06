@@ -2025,7 +2025,7 @@ static void TAB_DrawItem(
       if ((theme = GetWindowTheme (infoPtr->hwnd)) 
           && ((lStyle & (TCS_VERTICAL | TCS_BOTTOM)) == 0))
       {
-          const static int partIds[8] = {
+          static const int partIds[8] = {
               /* Normal item */
               TABP_TABITEM,
               TABP_TABITEMLEFTEDGE,

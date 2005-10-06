@@ -91,7 +91,7 @@ MAKE_SUBCLASS_PROC(2)
 MAKE_SUBCLASS_PROC(3)
 MAKE_SUBCLASS_PROC(4)
 
-const static WNDPROC subclassProcs[NUM_SUBCLASSES] = {
+static const WNDPROC subclassProcs[NUM_SUBCLASSES] = {
     subclass_proc0,
     subclass_proc1,
     subclass_proc2,
