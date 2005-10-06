@@ -464,6 +464,7 @@ static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
     int format;
     gsCacheEntry *entry;
     WORD flags;
+    static int hinter = -1;
 
     if((ret = LookupEntry(plfsz)) != -1) return ret;
 
@@ -476,7 +477,13 @@ static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
 
     if(antialias && plfsz->lf.lfQuality != NONANTIALIASED_QUALITY)
     {
-        if(!get_gasp_flags(physDev, &flags) || flags & GASP_DOGRAY)
+        if(hinter == -1)
+        {
+            RASTERIZER_STATUS status;
+            GetRasterizerCaps(&status, sizeof(status));
+            hinter = status.wFlags & WINE_TT_HINTER_ENABLED;
+        }
+        if(!hinter || !get_gasp_flags(physDev, &flags) || flags & GASP_DOGRAY)
             entry->aa_default = AA_Grey;
         else
             entry->aa_default = AA_None;
