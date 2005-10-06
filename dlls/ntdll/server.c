@@ -91,6 +91,16 @@ extern struct wine_pthread_functions pthread_functions;
 static sigset_t block_set;  /* signals to block during server calls */
 static int fd_socket = -1;  /* socket to exchange file descriptors with the server */
 
+static RTL_CRITICAL_SECTION fd_cache_section;
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &fd_cache_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": fd_cache_section") }
+};
+static RTL_CRITICAL_SECTION fd_cache_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
 static void fatal_perror( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
@@ -473,6 +483,8 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
     obj_handle_t fd_handle;
     int ret, removable = -1, fd = -1;
 
+    RtlEnterCriticalSection( &fd_cache_section );
+
     *unix_fd = -1;
     for (;;)
     {
@@ -488,17 +500,21 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
             }
         }
         SERVER_END_REQ;
-        if (ret) return ret;
+        if (ret) break;
 
         if (fd != -1)
         {
-            if ((fd = dup(fd)) == -1) return FILE_GetNtStatus();
+            if ((fd = dup(fd)) == -1) ret = FILE_GetNtStatus();
             break;
         }
 
         /* it wasn't in the cache, get it from the server */
         fd = receive_fd( &fd_handle );
-        if (fd == -1) return STATUS_TOO_MANY_OPENED_FILES;
+        if (fd == -1)
+        {
+            ret = STATUS_TOO_MANY_OPENED_FILES;
+            break;
+        }
         if (fd_handle != handle) removable = -1;
 
         if (removable == -1)
@@ -530,7 +546,7 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
             }
         }
         SERVER_END_REQ;
-        if (ret) return ret;
+        if (ret) break;
 
         if (fd_handle == handle) break;
         /* if we received a different handle this means there was
@@ -540,8 +556,9 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
         close( fd );
     }
 
-    *unix_fd = fd;
-    return STATUS_SUCCESS;
+    RtlLeaveCriticalSection( &fd_cache_section );
+    if (!ret) *unix_fd = fd;
+    return ret;
 }
 
 
