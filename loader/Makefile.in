@@ -17,9 +17,9 @@ PTHREAD_OBJS = pthread.o main.o
 WINE_BINARIES = @WINE_BINARIES@
 MAIN_BINARY   = @MAIN_BINARY@
 
-MAN_TARGETS = wine.man
+MANPAGES = wine.man
 
-all: $(WINE_BINARIES) $(MODULE) $(MAN_TARGETS)
+all: $(WINE_BINARIES) $(MODULE) $(MANPAGES)
 
 @MAKE_RULES@
 
@@ -41,10 +41,7 @@ wine-pthread: $(PTHREAD_OBJS) Makefile.in
 $(MODULE): $(MAIN_BINARY)
 	$(RM) $(MODULE) && $(LN_S) $(MAIN_BINARY) $(MODULE)
 
-wine.man: wine.man.in
-	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.man.in >$@ || ($(RM) $@ && false)
-
-install:: $(WINE_BINARIES) $(MAN_TARGETS)
+install:: $(WINE_BINARIES) $(MANPAGES)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	for f in $(WINE_BINARIES); do \
 	  if [ "$(MAIN_BINARY)" = "$$f" ]; \
@@ -59,6 +56,6 @@ uninstall::
 	$(RM) $(mandir)/man$(prog_manext)/wine.$(prog_manext)
 
 clean::
-	$(RM) $(WINE_BINARIES) $(MODULE) $(MAN_TARGETS)
+	$(RM) $(WINE_BINARIES) $(MODULE)
 
 ### Dependencies:

@@ -58,9 +58,6 @@ all: $(PROGRAMS) $(MANPAGES)
 wineserver: $(OBJS)
 	$(CC) -o $(PROGRAMS) $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LDFLAGS) $(LIBS)
 
-wineserver.man: wineserver.man.in
-	sed -e 's,@bindir\@,$(bindir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wineserver.man.in >$@ || ($(RM) $@ && false)
-
 install:: $(PROGRAMS) $(MANPAGES)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_PROGRAM) wineserver $(bindir)/wineserver
@@ -68,8 +65,5 @@ install:: $(PROGRAMS) $(MANPAGES)
 
 uninstall::
 	$(RM) $(bindir)/wineserver $(mandir)/man$(prog_manext)/wineserver.$(prog_manext)
-
-clean::
-	$(RM) $(MANPAGES)
 
 ### Dependencies:

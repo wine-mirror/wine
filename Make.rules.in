@@ -116,7 +116,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .ok .sfd .ttf
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .ok .sfd .ttf .man.in .man
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -150,6 +150,9 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 .sfd.ttf:
 	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
+
+.man.in.man:
+	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $< >$@ || ($(RM) $@ && false)
 
 # 'all' target first in case the enclosing Makefile didn't define any target
 
@@ -217,7 +220,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 testclean:: $(SUBDIRS:%=%/__testclean__)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(IDL_SRCS:.idl=.h) $(PROGRAMS) $(RC_BINARIES) $(RC_TLB)
+	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(IDL_SRCS:.idl=.h) $(PROGRAMS) $(RC_BINARIES) $(RC_TLB) $(MANPAGES)
 
 .PHONY: clean testclean $(SUBDIRS:%=%/__clean__) $(SUBDIRS:%=%/__testclean__) $(EXTRASUBDIRS:%=%/__clean__)
 
