@@ -226,6 +226,7 @@ WINDOWS_INCLUDES = \
 	schnlsp.h \
 	sddl.h \
 	secext.h \
+	security.h \
 	sensapi.h \
 	setupapi.h \
 	shellapi.h \
