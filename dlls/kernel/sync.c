@@ -1549,7 +1549,7 @@ BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
     attr.RootDirectory            = 0;
     attr.ObjectName               = &nt_name;
     attr.Attributes               = OBJ_CASE_INSENSITIVE |
-        (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+                                    ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
 
