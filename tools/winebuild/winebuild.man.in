@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINEBUILD 1 "September 2005" "@PACKAGE_STRING@" "Wine dll builder"
+.TH WINEBUILD 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 winebuild \- Wine dll builder
 .SH SYNOPSIS

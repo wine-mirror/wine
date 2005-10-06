@@ -1,4 +1,5 @@
-.TH WRC 1 "August 24, 2000" "Version 1.1.8" "Wine Resource Compiler"
+.\" -*- nroff -*-
+.TH WRC 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 wrc \- Wine Resource Compiler
 .SH SYNOPSIS
@@ -133,9 +134,7 @@ __WRC__         Major version of wrc
 .br
 __WRC_MINOR__   Minor version of wrc
 .br
-__WRC_MICRO__   Patch level
-.br
-__WRC_PATCH__   Same as __WRC_MICRO__
+__WRC_PATCHLEVEL__   Patch level
 .PP
 Win32 compilation mode also sets __WIN32__ to 1 and __FLAT__ to 1.
 .PP

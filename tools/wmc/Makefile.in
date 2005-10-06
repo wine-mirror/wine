@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 EXEEXT    = @EXEEXT@
 
 PROGRAMS = wmc$(EXEEXT)
+MANPAGES = wmc.man
 MODULE   = none
 
 C_SRCS = \
@@ -17,7 +18,7 @@ C_SRCS = \
 EXTRA_SRCS = mcy.y
 EXTRA_OBJS = mcy.tab.o
 
-all: $(PROGRAMS)
+all: $(PROGRAMS) $(MANPAGES)
 
 mcl.o: mcy.tab.h
 
@@ -33,9 +34,9 @@ mcy.tab.c mcy.tab.h: mcy.y
 mcy.tab.h: mcy.tab.c
 mcy.tab.o: mcy.tab.h
 
-install:: $(PROGRAMS)
+install:: $(PROGRAMS) $(MANPAGES)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
-	$(INSTALL_DATA) $(SRCDIR)/wmc.man $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
+	$(INSTALL_DATA) wmc.man $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
 	$(INSTALL_PROGRAM) wmc$(EXEEXT) $(bindir)/wmc$(EXEEXT)
 
 uninstall::

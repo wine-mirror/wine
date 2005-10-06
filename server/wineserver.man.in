@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINESERVER 1 "September 2005" "@PACKAGE_STRING@" "Wine server"
+.TH WINESERVER 1 "October 2005" "@PACKAGE_STRING@" "Windows on Unix"
 .SH NAME
 wineserver \- the Wine server
 .SH SYNOPSIS

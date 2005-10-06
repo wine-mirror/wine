@@ -1,4 +1,5 @@
-.TH WIDL 1 "March 2004" "Wine Manpage" "Wine Developers Manual"
+.\" -*- nroff -*-
+.TH WIDL 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 widl \- Wine Interface Definition Language Compiler
 .SH SYNOPSIS

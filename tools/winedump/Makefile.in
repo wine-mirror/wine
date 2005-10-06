@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 EXEEXT    = @EXEEXT@
 
 PROGRAMS = winedump$(EXEEXT)
-
+MANPAGES = winedump.man
 MODULE   = none
 
 C_SRCS = \
@@ -24,17 +24,17 @@ C_SRCS = \
 	search.c \
 	symbol.c
 
-all: $(PROGRAMS)
+all: $(PROGRAMS) $(MANPAGES)
 
 @MAKE_RULES@
 
 winedump$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o winedump$(EXEEXT) $(OBJS) $(LIBPORT) $(LDFLAGS)
 
-install:: $(PROGRAMS)
+install:: $(PROGRAMS) $(MANPAGES)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_PROGRAM) winedump$(EXEEXT) $(bindir)/winedump$(EXEEXT)
-	$(INSTALL_DATA) $(SRCDIR)/winedump.man $(mandir)/man$(prog_manext)/winedump.$(prog_manext)
+	$(INSTALL_DATA) winedump.man $(mandir)/man$(prog_manext)/winedump.$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/function_grep.pl $(bindir)/function_grep.pl
 
 uninstall::

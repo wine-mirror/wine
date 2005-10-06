@@ -7,6 +7,7 @@ LEXOPT    = -Cf #-w -b
 EXEEXT    = @EXEEXT@
 
 PROGRAMS = wrc$(EXEEXT)
+MANPAGES = wrc.man
 MODULE   = none
 
 C_SRCS = \
@@ -22,7 +23,7 @@ C_SRCS = \
 EXTRA_SRCS = parser.y parser.l
 EXTRA_OBJS = parser.tab.o @LEX_OUTPUT_ROOT@.o
 
-all: $(PROGRAMS)
+all: $(PROGRAMS) $(MANPAGES)
 
 @MAKE_RULES@
 
@@ -41,9 +42,9 @@ parser.tab.o: parser.tab.h
 
 @LEX_OUTPUT_ROOT@.o: parser.tab.h
 
-install:: $(PROGRAMS)
+install:: $(PROGRAMS) $(MANPAGES)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
-	$(INSTALL_DATA) $(SRCDIR)/wrc.man $(mandir)/man$(prog_manext)/wrc.$(prog_manext)
+	$(INSTALL_DATA) wrc.man $(mandir)/man$(prog_manext)/wrc.$(prog_manext)
 	$(INSTALL_PROGRAM) wrc$(EXEEXT) $(bindir)/wrc$(EXEEXT)
 
 uninstall::

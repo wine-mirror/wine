@@ -17,6 +17,9 @@ PROGRAMS = \
 	sfnt2fnt$(EXEEXT) \
 	wineprefixcreate
 
+MANPAGES = \
+	winemaker.man
+
 C_SRCS = \
 	bin2res.c \
 	fnt2bdf.c \
@@ -39,7 +42,7 @@ SUBDIRS = \
 
 UPDATE_DESKTOP_DATABASE = update-desktop-database
 
-all: $(PROGRAMS) $(SUBDIRS)
+all: $(PROGRAMS) $(MANPAGES) $(SUBDIRS)
 
 @MAKE_RULES@
 
@@ -72,10 +75,10 @@ install install-lib:: wineprefixcreate
 	$(INSTALL_DATA) $(SRCDIR)/wine.desktop $(datadir)/applications/wine.desktop
 	-$(UPDATE_DESKTOP_DATABASE)
 
-install install-dev:: $(INSTALLSUBDIRS:%=%/__install__)
+install install-dev:: $(INSTALLSUBDIRS:%=%/__install__) $(MANPAGES)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
-	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
+	$(INSTALL_DATA) winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 uninstall::
 	$(RM) $(bindir)/winemaker $(bindir)/wineprefixcreate $(mandir)/man$(prog_manext)/winemaker.$(prog_manext) \
