@@ -372,7 +372,8 @@ static void    WCEL_FindPrevInHist(WCEL_Context* ctx)
 static void WCEL_Done(WCEL_Context* ctx)
 {
     WCHAR       nl = '\n';
-    if (!WCEL_Grow(ctx, 1)) return;
+    if (!WCEL_Grow(ctx, 2)) return;
+    ctx->line[ctx->len++] = '\r';
     ctx->line[ctx->len++] = '\n';
     ctx->line[ctx->len] = 0;
     WriteConsoleW(ctx->hConOut, &nl, 1, NULL, NULL);
