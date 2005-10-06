@@ -2257,6 +2257,7 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
     CONST RSAPUBKEY *pRSAPubKey = (CONST RSAPUBKEY*)(pBlobHeader+1);
     CONST ALG_ID *pAlgid = (CONST ALG_ID*)(pBlobHeader+1);
     CONST BYTE *pbKeyStream = (CONST BYTE*)(pAlgid + 1);
+    ALG_ID algID;
     BYTE *pbDecrypted;
     DWORD dwKeyLen;
 
@@ -2304,7 +2305,13 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
                 return FALSE;
             }
     
-            *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey); 
+            /* Since this is a public key blob, only the public key is
+             * available, so only signature verification is possible.
+             */
+            algID = pBlobHeader->aiKeyAlg;
+            if (algID == CALG_RSA_KEYX)
+                algID = CALG_RSA_SIGN;
+            *phKey = new_key(hProv, algID, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey); 
             if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE; 
             setup_key(pCryptKey);
             return import_public_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
