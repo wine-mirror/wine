@@ -145,6 +145,7 @@ HRESULT WINAPI AtlAdvise(IUnknown *pUnkCP, IUnknown *pUnk, const IID * iid, LPDW
 HRESULT WINAPI AtlFreeMarshalStream(IStream *pStream);
 HRESULT WINAPI AtlInternalQueryInterface(LPVOID pThis, const _ATL_INTMAP_ENTRY* pEntries, REFIID iid, LPVOID* ppvObject);
 HRESULT WINAPI AtlMarshalPtrInProc(IUnknown *pUnk, const IID *iid, IStream **ppStream);
+HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULEW *pM, _ATL_TERMFUNC pFunc, DWORD dw);
 HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE h);
 HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEA* pM, DWORD dwClsContext, DWORD dwFlags);
 HRESULT WINAPI AtlModuleRegisterServer(_ATL_MODULEW* pM, BOOL bRegTypeLib, const CLSID* pCLSID);

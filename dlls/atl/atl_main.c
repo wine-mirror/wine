@@ -91,7 +91,35 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE 
 
 HRESULT WINAPI AtlModuleTerm(_ATL_MODULEA* pM)
 {
+    _ATL_TERMFUNC_ELEM *iter = pM->m_pTermFuncs, *tmp;
+
+    TRACE("(%p)\n", pM);
+
+    while(iter) {
+        iter->pFunc(iter->dw);
+        tmp = iter;
+        iter = iter->pNext;
+        HeapFree(GetProcessHeap(), 0, tmp);
+    }
+
     HeapFree(GetProcessHeap(), 0, pM);
+
+    return S_OK;
+}
+
+HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULEW *pM, _ATL_TERMFUNC pFunc, DWORD dw)
+{
+    _ATL_TERMFUNC_ELEM *termfunc_elem;
+
+    TRACE("(%p %p %ld)\n", pM, pFunc, dw);
+
+    termfunc_elem = HeapAlloc(GetProcessHeap(), 0, sizeof(_ATL_TERMFUNC_ELEM));
+    termfunc_elem->pFunc = pFunc;
+    termfunc_elem->dw = dw;
+    termfunc_elem->pNext = pM->m_pTermFuncs;
+
+    pM->m_pTermFuncs = termfunc_elem;
+
     return S_OK;
 }
 
