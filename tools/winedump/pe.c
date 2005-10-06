@@ -583,7 +583,6 @@ static void dump_dir_delay_imported_functions(void)
         DWORD pUnloadIAT;
         DWORD dwTimeStamp;
     } *importDesc = get_dir(IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT);
-    unsigned nb_imp, i;
     DWORD directorySize;
 
     if (!importDesc) return;
@@ -597,22 +596,16 @@ static void dump_dir_delay_imported_functions(void)
         IMAGE_OPTIONAL_HEADER32 *opt = (IMAGE_OPTIONAL_HEADER32 *)&PE_nt_headers->OptionalHeader;
         directorySize = opt->DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size;
     }
-    nb_imp = directorySize / sizeof(*importDesc);
-    if (!nb_imp) return;
 
     printf("Delay Import Table size: %08lx\n", directorySize); /* FIXME */
 
-    for (i = 0; i < nb_imp - 1; i++) /* the last descr is set as 0 as a sentinel */
+    for (;;)
     {
         BOOL use_rva = importDesc->grAttrs & 1;
         IMAGE_THUNK_DATA32 *il;
 
-        if (!importDesc->szName || !importDesc->pIAT || !importDesc->pINT)
-        {
-            /* FIXME */
-            printf("<<<<<<<null entry\n");
-            break;
-        }
+        if (!importDesc->szName || !importDesc->pIAT || !importDesc->pINT) break;
+
         printf("  grAttrs %08lx offset %08lx %s\n", importDesc->grAttrs, Offset(importDesc),
                use_rva ? (char *)RVA(importDesc->szName, sizeof(DWORD)) : (char *)importDesc->szName);
         printf("  Hint/Name Table: %08lx\n", importDesc->pINT);
@@ -624,16 +617,15 @@ static void dump_dir_delay_imported_functions(void)
         il = use_rva ? (IMAGE_THUNK_DATA32 *)RVA(importDesc->pINT, sizeof(DWORD)) : (IMAGE_THUNK_DATA32 *)importDesc->pINT;
 
         if (!il)
-        {
             printf("Can't grab thunk data, going to next imported DLL\n");
-            continue;
-        }
-
-        if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-            dump_image_thunk_data64((IMAGE_THUNK_DATA64 *)il);
         else
-            dump_image_thunk_data32(il);
-        printf("\n");
+        {
+            if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+                dump_image_thunk_data64((IMAGE_THUNK_DATA64 *)il);
+            else
+                dump_image_thunk_data32(il);
+            printf("\n");
+        }
         importDesc++;
     }
     printf("\n");
