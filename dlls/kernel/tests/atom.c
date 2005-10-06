@@ -209,7 +209,8 @@ static void test_get_atom_name(void)
         len = GlobalGetAtomNameA( (ATOM)i, buf, 2);
 	if (!len) /* the NT way */
 	{
-	    ok(GetLastError() == (i ? ERROR_MORE_DATA : ERROR_INVALID_PARAMETER),
+	    ok(GetLastError() == (i ? ERROR_MORE_DATA : ERROR_INVALID_PARAMETER) ||
+               GetLastError() == 0xdeadbeef,  /* the Win 9x way */
 	       "wrong error conditions %lu for %u\n", GetLastError(), i);
 	}
 	else /* the Win 9x way */
@@ -462,9 +463,13 @@ static void test_local_get_atom_name(void)
         len = GetAtomNameA( (ATOM)i, buf, 1);
         ok(!len, "succeed\n");
         if (i)
-            todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error conditions %lu for %u\n", GetLastError(), i);
+            todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
+                         GetLastError() == 0xdeadbeef, /* the Win 9x way */
+                         "wrong error conditions %lu for %u\n", GetLastError(), i);
         else
-            ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error conditions %lu for %u\n", GetLastError(), i);
+            ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+               GetLastError() == 0xdeadbeef, /* the Win 9x way */
+               "wrong error conditions %lu for %u\n", GetLastError(), i);
     }
     /* test string limits & overflow */
     do_initA(in, "abcdefghij", 255);
@@ -489,7 +494,8 @@ static void test_local_get_atom_name(void)
     do_initA(in, "abcdefghij", 256);
     atom = AddAtomA(in);
     ok(!atom, "succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error code (%lu)\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == 0xdeadbeef, /* the Win 9x way */
+       "wrong error code (%lu)\n", GetLastError());
 
     if (unicode_OS)
     {
