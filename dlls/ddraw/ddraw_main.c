@@ -1116,13 +1116,65 @@ Main_DirectDraw_SetCooperativeLevel(LPDIRECTDRAW7 iface, HWND hwnd,
      * created." Otherwise the window can be changed???
      *
      * This appears to be wrong - comment it out for now.
+     * This seems to be true at least for DDSCL_SETFOCUSWINDOW
+     * It looks like Windows doesn't store the HWND in all cases,
+     * probably if DDSCL_NORMAL is specified, but that's not sure
     if (This->window)
 	return DDERR_HWNDALREADYSET;
     */
 
-    if (!(cooplevel & (DDSCL_EXCLUSIVE|DDSCL_NORMAL)))
-	return DDERR_INVALIDPARAMS;
+    /* DDSCL_EXCLUSIVE or DDSCL_NORMAL or DDSCL_SETFOCUSWINDOW must be given */
+    if (!(cooplevel & (DDSCL_EXCLUSIVE|DDSCL_NORMAL|DDSCL_SETFOCUSWINDOW)))
+    {
+        ERR("(%p) : Call to SetCooperativeLevel failed: cooplevel  != DDSCL_EXCLUSIVE|DDSCL_NORMAL|DDSCL_SETFOCUSWINDOW, returning DDERR_INVALIDPARAMS\n", This);
+        return DDERR_INVALIDPARAMS;
+    }
+    /* Device window and focus Window. They only really matter in a
+     * Multi-Monitor application, but some games specify them and we
+     * have to react correctly. */
+    if(cooplevel & DDSCL_SETFOCUSWINDOW)
+    {
+        /* This flag is a biest: It is only valid when DDSCL_NORMAL has been set
+         * or no hwnd is set and no other flags are allowed, except DDSCL_NOWINDOWCHANGES
+         */
+        if(This->window)
+            if(!(This->cooperative_level & DDSCL_NORMAL))
+            {
+                ERR("(%p) : Call to SetCooperativeLevel failed: DDSCL_SETFOCUSWINDOW may not be used in Cooplevel %08lx, returning DDERR_HWNDALREADYSET\n",
+                            This, This->cooperative_level);
+                return DDERR_HWNDALREADYSET;
+            }
+        if((cooplevel != DDSCL_SETFOCUSWINDOW))
+            if(cooplevel != (DDSCL_SETFOCUSWINDOW | DDSCL_NOWINDOWCHANGES) )
+            {
+                ERR("(%p) : Call to SetCooperativeLevel failed: Invalid use of DDSCL_SETFOCUSWINDOW, returning DDERR_INVALIDPARAMS\n", This);
+                return DDERR_INVALIDPARAMS;
+            }
 
+        /* Don't know what exactly to do, but it's perfectly valid
+         * to pass DDSCL_SETFOCUSWINDOW only */
+        FIXME("(%p) : Poorly handled flag DDSCL_SETFOCUSWINDOW\n", This);
+
+        /* Store the flag in the cooperative level. I don't think that all other
+         * flags should be overwritten, so just add it 
+         * (In the most cases this will be DDSCL_SETFOCUSWINDOW | DDSCL_NORMAL) */
+        cooplevel |= DDSCL_SETFOCUSWINDOW;
+
+        return DD_OK;
+    }
+
+    /* DDSCL_EXCLUSE mode requires  DDSCL_FULLSCREEN and vice versa */
+    if((cooplevel & DDSCL_EXCLUSIVE) && !(cooplevel & DDSCL_FULLSCREEN))
+        return DDERR_INVALIDPARAMS;
+    /* The other case is checked above */
+
+    /* Unhandled flags. Give a warning */
+    if(cooplevel & DDSCL_SETDEVICEWINDOW)
+        FIXME("(%p) : Unhandled flag DDSCL_SETDEVICEWINDOW.\n", This);
+    if(cooplevel & DDSCL_CREATEDEVICEWINDOW)
+        FIXME("(%p) : Unhandled flag DDSCL_CREATEDEVICEWINDOW.\n", This);
+
+    /* Perhaps the hwnd is only set in DDSCL_EXLUSIVE and DDSCL_FULLSCREEN mode. Not sure */
     This->window = hwnd;
     This->cooperative_level = cooplevel;
 
