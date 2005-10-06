@@ -100,7 +100,8 @@ static ULONG WINAPI domdoc_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        IXMLDOMElement_Release( This->node );
+        if ( This->node )
+            IXMLDOMElement_Release( This->node );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
