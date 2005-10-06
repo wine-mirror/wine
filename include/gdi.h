@@ -84,6 +84,10 @@ typedef struct tagPALETTEOBJ
 extern void *GDI_GetObjPtr( HGDIOBJ, WORD );
 extern void GDI_ReleaseObj( HGDIOBJ );
 
+/* GetGlyphOutline */
 #define WINE_GGO_GRAY16_BITMAP 0x7f
+
+/* GetRasterizerCaps */
+#define WINE_TT_HINTER_ENABLED 0x8000
 
 #endif  /* __WINE_GDI_H */

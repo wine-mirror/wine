@@ -2431,19 +2431,6 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD fHidden,
     return FALSE; /* create failed */
 }
 
-
-/*************************************************************************
- *             GetRasterizerCaps   (GDI32.@)
- */
-BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
-{
-  lprs->nSize = sizeof(RASTERIZER_STATUS);
-  lprs->wFlags = TT_AVAILABLE|TT_ENABLED;
-  lprs->nLanguageID = 0;
-  return TRUE;
-}
-
-
 /*************************************************************************
  *             GetKerningPairsA   (GDI32.@)
  */

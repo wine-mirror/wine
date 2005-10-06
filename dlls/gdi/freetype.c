@@ -103,6 +103,7 @@ static void *ft_handle = NULL;
 MAKE_FUNCPTR(FT_Vector_Unit);
 MAKE_FUNCPTR(FT_Done_Face);
 MAKE_FUNCPTR(FT_Get_Char_Index);
+MAKE_FUNCPTR(FT_Get_Module);
 MAKE_FUNCPTR(FT_Get_Sfnt_Table);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Load_Glyph);
@@ -1476,6 +1477,7 @@ BOOL WineEngInit(void)
     LOAD_FUNCPTR(FT_Vector_Unit)
     LOAD_FUNCPTR(FT_Done_Face)
     LOAD_FUNCPTR(FT_Get_Char_Index)
+    LOAD_FUNCPTR(FT_Get_Module)
     LOAD_FUNCPTR(FT_Get_Sfnt_Table)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Load_Glyph)
@@ -3752,6 +3754,32 @@ BOOL WINAPI FontIsLinked(HDC hdc)
     return ret;
 }
 
+static BOOL is_hinting_enabled(void)
+{
+    FT_Module mod = pFT_Get_Module(library, "truetype");
+    if(mod && FT_DRIVER_HAS_HINTER(mod))
+        return TRUE;
+
+    return FALSE;
+}
+
+/*************************************************************************
+ *             GetRasterizerCaps   (GDI32.@)
+ */
+BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
+{
+    static int hinting = -1;
+
+    if(hinting == -1)
+        hinting = is_hinting_enabled();
+
+    lprs->nSize = sizeof(RASTERIZER_STATUS);
+    lprs->wFlags = TT_AVAILABLE | TT_ENABLED | (hinting ? WINE_TT_HINTER_ENABLED : 0);
+    lprs->nLanguageID = 0;
+    return TRUE;
+}
+
+
 #else /* HAVE_FREETYPE */
 
 BOOL WineEngInit(void)
@@ -3867,4 +3895,16 @@ BOOL WINAPI FontIsLinked(HDC hdc)
 {
     return FALSE;
 }
+
+/*************************************************************************
+ *             GetRasterizerCaps   (GDI32.@)
+ */
+BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
+{
+    lprs->nSize = sizeof(RASTERIZER_STATUS);
+    lprs->wFlags = 0;
+    lprs->nLanguageID = 0;
+    return TRUE;
+}
+
 #endif /* HAVE_FREETYPE */
