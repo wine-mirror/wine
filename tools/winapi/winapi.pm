@@ -133,7 +133,6 @@ sub parse_api_file($$) {
     my $module;
     my $kind;
     my $format;
-    my $extension = 0;
     my $forbidden = 0;
 
     $output->lazy_progress("$file");
@@ -154,13 +153,10 @@ sub parse_api_file($$) {
 	    $kind = $1;
 	    $format = undef;
 	    $forbidden = 0;
-	    $extension = 0;
 
 	    $$allowed_kind{$kind} = 1;
 	    if(/^--forbidden/) {
 		$forbidden = 1;
-	    } elsif(/^--extension/) {
-		$extension = 1;
 	    } elsif(/^--format=(\".*?\"|\S*)/) {
 		$format = $1;
 		$format =~ s/^\"(.*?)\"$/$1/;
