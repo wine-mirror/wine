@@ -242,6 +242,14 @@ static void test_file_write_read( void )
   ok( memcmp(mytext,btext,strlen(mytext)) == 0,
       "problems with _O_TEXT _write / _read\n");
   _close(tempfd);
+
+  memset(btext, 0, LLEN);
+  tempfd = _open(tempf,_O_APPEND|_O_RDWR); /* open for APPEND in default mode */
+  ok(tell(tempfd) == 0, "bad position %lu expecting 0\n", tell(tempfd));
+  ok(_read(tempfd,btext,LLEN) == lstrlenA(mytext), "_read _O_APPEND got bad length\n");
+  ok( memcmp(mytext,btext,strlen(mytext)) == 0, "problems with _O_APPEND _read\n");
+  _close(tempfd);
+
   ret = unlink(tempf);
   ok( ret !=-1 ,"Can't unlink '%s': %d\n", tempf, errno);
 

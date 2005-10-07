@@ -1480,13 +1480,6 @@ int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
   fd = msvcrt_alloc_fd(hand, wxflag);
 
   TRACE(":fd (%d) handle (%p)\n",fd, hand);
-
-  if (fd > 0)
-  {
-    if (oflags & MSVCRT__O_APPEND)
-      _lseek(fd, 0, FILE_END);
-  }
-
   return fd;
 }
 
