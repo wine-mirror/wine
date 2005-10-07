@@ -640,14 +640,17 @@ void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd)
         };
 #undef STRUCT
 
-    if (lpddsd->dwSize >= sizeof(DDSURFACEDESC2)) {
-        DDRAW_dump_members(lpddsd->dwFlags, lpddsd, members_caps2, 1);
+    if (NULL == lpddsd) {
+        DPRINTF("(null)\n");
     } else {
-        DDRAW_dump_members(lpddsd->dwFlags, lpddsd, members_caps, 1);
+      if (lpddsd->dwSize >= sizeof(DDSURFACEDESC2)) {
+          DDRAW_dump_members(lpddsd->dwFlags, lpddsd, members_caps2, 1);
+      } else {
+          DDRAW_dump_members(lpddsd->dwFlags, lpddsd, members_caps, 1);
+      }
+      DDRAW_dump_members(lpddsd->dwFlags, lpddsd, members,
+			 sizeof(members)/sizeof(members[0]));
     }
-                                                  
-    DDRAW_dump_members(lpddsd->dwFlags, lpddsd, members,
-                       sizeof(members)/sizeof(members[0]));
 }
 
 void DDRAW_dump_cooperativelevel(DWORD cooplevel)
