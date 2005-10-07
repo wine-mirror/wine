@@ -1904,6 +1904,7 @@ static HRESULT _SHRegisterUserShellFolders(BOOL bDefault)
      CSIDL_PROGRAMS,
      CSIDL_PERSONAL,
      CSIDL_FAVORITES,
+     CSIDL_APPDATA,
      CSIDL_STARTUP,
      CSIDL_RECENT,
      CSIDL_SENDTO,
