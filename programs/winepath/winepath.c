@@ -27,8 +27,6 @@
 
 #include "wine/debug.h"
 
-#define VERSION "0.1 (" PACKAGE_STRING ")"
-
 enum {
     SHORTFORMAT = 1,
     LONGFORMAT  = 2,
@@ -63,7 +61,7 @@ static int option(int shortopt, const WCHAR *longopt)
             printf(helpmsg);
             exit(0);
         case 'v':
-            printf("%s version " VERSION "\n", progname);
+            printf("%s version " PACKAGE_VERSION "\n", progname);
             exit(0);
         case 'l':
             return LONGFORMAT;
