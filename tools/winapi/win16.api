@@ -819,7 +819,6 @@ IUnknown *
 IUnknown **
 LPBSTR16
 REFCLSID
-char *
 unsigned long *
 void *
 
@@ -830,6 +829,7 @@ BSTR16
 %str
 
 LPCOLESTR16
+char *
 
 %void
 
@@ -1086,7 +1086,7 @@ UINT16
 
 DWORD
 
-%ptr
+%str
 
 char *
 
@@ -1528,7 +1528,6 @@ u_long
 INT16 *
 LPWSADATA16
 ULONG *
-char *
 struct WS_in_addr
 struct WS_sockaddr *
 struct WS_timeval *
@@ -1542,6 +1541,7 @@ SEGPTR
 %str
 
 LPCSTR
+char *
 
 %void
 

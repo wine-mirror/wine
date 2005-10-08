@@ -107,7 +107,6 @@ PACL *
 PACTRL_ACCESSW *
 PACTRL_AUDITW *
 PBOOL
-PCHAR
 PDWORD
 PEXPLICIT_ACCESSA
 PEXPLICIT_ACCESSA *
@@ -155,7 +154,6 @@ PVALENTA
 PVALENTW
 SC_LOCK
 SECURITY_ATTRIBUTES *
-WCHAR *
 WMIDPREQUEST
 unsigned char *
 
@@ -163,6 +161,7 @@ unsigned char *
 
 LPCSTR
 LPSTR
+PCHAR
 
 %void
 
@@ -172,6 +171,7 @@ VOID
 
 LPCWSTR
 LPWSTR
+WCHAR *
 
 %%advpack.dll
 
@@ -370,12 +370,12 @@ PFNOPEN
 PFNREAD
 PFNSEEK
 PFNWRITE
-char *
 void *
 
 %str
 
 LPCSTR
+char *
 
 %%capi2032.dll
 
@@ -388,6 +388,9 @@ DWORD
 DWORD *
 PVOID
 PVOID *
+
+%str
+
 char *
 
 %%cards.dll
@@ -417,11 +420,11 @@ ULONG
 %ptr
 
 LPVOID
-PCHAR
 ULONG *
 
 %str
 
+PCHAR
 PCSTR
 
 %%comcat.dll
@@ -578,10 +581,13 @@ unsigned int
 
 %ptr
 
-char *
 char ***
 int *
 struct crtdll_stat *
+
+%str
+
+char *
 
 %void
 
@@ -762,7 +768,6 @@ PSYMBOL_INFO
 PTRANSLATE_ADDRESS_ROUTINE
 PVOID
 ULONG *
-char *
 char **
 void *
 void **
@@ -773,6 +778,7 @@ LPCSTR
 LPSTR
 PCSTR
 PSTR
+char *
 
 %%dciman32.dll
 
@@ -1225,8 +1231,11 @@ int
 
 %ptr
 
-char *
 void *
+
+%str
+
+char *
 
 %void
 
@@ -1342,7 +1351,6 @@ DIGEST_HANDLE
 LPDWORD
 LPSYSTEMTIME
 LPVOID
-PCHAR
 PCHAR *
 PDWORD
 PIMAGEHLP_STATUS_ROUTINE
@@ -1355,6 +1363,7 @@ ULONG *
 %str
 
 LPSTR
+PCHAR
 
 %void
 
@@ -1672,11 +1681,9 @@ UILANGUAGE_ENUMPROCA
 UILANGUAGE_ENUMPROCW
 ULONG_PTR *
 WAITORTIMERCALLBACK
-WCHAR *
 WIN32_FIND_DATAA *
 WIN32_FIND_DATAW *
 WORD *
-char *
 struct ThunkDataCommon *
 va_list
 va_list *
@@ -1686,6 +1693,7 @@ void *
 
 LPCSTR
 LPSTR
+char *
 
 %void
 
@@ -1696,6 +1704,7 @@ void
 
 LPCWSTR
 LPWSTR
+WCHAR *
 
 %%mapi32.dll
 
@@ -2057,12 +2066,12 @@ DMO_PARTIAL_MEDIATYPE *
 IEnumDMO **
 REFCLSID
 REFGUID
-WCHAR *
 unsigned long *
 
 %wstr
 
 LPCWSTR
+WCHAR *
 
 %%msg711.acm
 
@@ -2143,12 +2152,12 @@ REFCLSID
 REFIID
 UINT *
 WORD *
-char *
 
 %str
 
 LPCSTR
 LPSTR
+char *
 
 %wstr
 
@@ -2239,18 +2248,15 @@ MSVCRT_new_handler_func
 MSVCRT_terminate_function
 MSVCRT_unexpected_function
 MSVCRT_time_t *
-MSVCRT_wchar_t *
 MSVCRT_wchar_t **
 MSVCRT_wchar_t ***
 MSVCRT_wint_t
 PCONTEXT
 PEXCEPTION_POINTERS
 PEXCEPTION_RECORD
-WCHAR *
 WCHAR **
 WORD **
 _INITTERMFUN *
-char *
 char **
 char ***
 cxx_exception_type *
@@ -2283,6 +2289,15 @@ void (*)(void)
 void *
 __sighandler_t
 
+%str
+
+char *
+
+%wstr
+
+MSVCRT_wchar_t *
+WCHAR *
+
 %unknown
 
 MSVCRT_div_t
@@ -2303,9 +2318,12 @@ unsigned long
 
 %ptr
 
-char *
 int *
 void *
+
+%str
+
+char *
 
 %%msvcrt20.dll
 
@@ -2444,8 +2462,8 @@ PVOID *
 
 %wstr
 
-LPCWSTR
 LMSTR
+LPCWSTR
 LPWSTR
 
 %%newdev.dll
@@ -2594,7 +2612,6 @@ PANSI_STRING
 PBOOLEAN
 PBYTE
 PCANSI_STRING
-PCHAR
 PCRTL_BITMAP
 PCSZ
 PDEBUG_BUFFER
@@ -2665,9 +2682,7 @@ ULONGLONG *
 USHORT *
 UNICODE_STRING *
 VOID *
-WCHAR *
 WCHAR **
-char *
 enum loadorder_type[]
 int *
 obj_handle_t *
@@ -2682,6 +2697,8 @@ wine_signal_handler
 
 LPCSTR
 LPSTR
+PCHAR
+char *
 
 %void
 
@@ -2694,6 +2711,7 @@ LPCWSTR
 LPWSTR
 PCWSTR
 PWSTR
+WCHAR *
 
 %%odbc32.dll
 
@@ -2724,6 +2742,9 @@ SQLPOINTER *
 SQLSMALLINT *
 SQLUINTEGER *
 SQLUSMALLINT *
+
+%wstr
+
 WCHAR *
 
 %%odbccp32.dll
@@ -2846,7 +2867,6 @@ LPUNKNOWN *
 LPVOID
 LPVOID *
 MULTI_QI *
-OLECHAR *
 OLECHAR **
 PROPVARIANT *
 PSECURITY_DESCRIPTOR
@@ -2858,7 +2878,6 @@ SOLE_AUTHENTICATION_SERVICE *
 STGMEDIUM *
 STGOPTIONS *
 ULONG *
-WCHAR *
 WORD *
 void *
 void **
@@ -2871,6 +2890,8 @@ LPOLESTR
 %wstr
 
 BSTR
+OLECHAR *
+WCHAR *
 
 %void
 
@@ -2985,7 +3006,6 @@ LPVARIANT
 LPVOID
 LPVOID *
 NUMPARSE *
-OLECHAR *
 OLECHAR **
 REFCLSID
 REFGUID
@@ -3014,7 +3034,6 @@ void **
 unsigned char *
 unsigned long *
 
-
 %str
 
 LPCOLESTR
@@ -3028,6 +3047,7 @@ void
 %wstr
 
 BSTR
+OLECHAR *
 
 %%olecli32.dll
 
@@ -3485,9 +3505,7 @@ PTimeStamp
 PULONG
 PVOID
 PVOID *
-SEC_CHAR *
 SEC_GET_KEY_FN
-SEC_WCHAR *
 unsigned long *
 void *
 void **
@@ -3496,11 +3514,13 @@ void **
 
 LPSTR
 LPCSTR
+SEC_CHAR *
 
 %wstr
 
 LPWSTR
 LPCWSTR
+SEC_WCHAR *
 
 %%sensapi.dll
 
@@ -4157,9 +4177,9 @@ POINT
 BOOL *
 COLORREF *
 DLGPROC
-DLGPROC16
 DESKTOPENUMPROCA
 DESKTOPENUMPROCW
+DLGPROC16
 DRAWSTATEPROC
 DWORD *
 GRAYSTRINGPROC
@@ -4281,8 +4301,11 @@ SCRIPT_FONTPROPERTIES *
 SCRIPT_ITEM *
 SCRIPT_PROPERTIES ***
 SCRIPT_STATE *
-WCHAR *
 int *
+
+%wstr
+
+WCHAR *
 
 %%uxtheme.dll
 
@@ -4327,12 +4350,15 @@ RECT *
 SIZE *
 TEXTMETRICW *
 WORD *
-char *
 int *
 
 %void
 
 void
+
+%str
+
+char *
 
 %wstr
 
@@ -5033,7 +5059,6 @@ int
 
 BerElement *
 BERVAL *
-CHAR *
 CHAR **
 LDAPControlA *
 LDAPControlA **
@@ -5043,7 +5068,6 @@ LDAPModA *[]
 LDAPModW *[]
 LDAP_TIMEVAL *
 PBERVAL *
-PCHAR
 PCHAR *
 PCHAR[]
 PLDAPControlA *
@@ -5051,7 +5075,6 @@ PLDAPControlW *
 PLDAPSortKeyA *
 PLDAPSortKeyW *
 PULONG
-PWCHAR
 PWCHAR *
 PWCHAR[]
 ULONG *
@@ -5068,17 +5091,20 @@ void *
 
 %str
 
+CHAR *
 LPCSTR
 LPSTR
-
-%void
-
-void
+PCHAR
 
 %wstr
 
 LPCWSTR
 LPWSTR
+PWCHAR
+
+%void
+
+void
 
 %%wnaspi32.dll
 
@@ -5162,7 +5188,6 @@ LPWSASERVICECLASSINFOW
 LPWSAQUERYSETA
 LPWSAQUERYSETW
 WS_fd_set *
-char *
 int *
 struct WS_hostent *
 struct WS_protoent *
@@ -5176,6 +5201,7 @@ u_short *
 
 LPCSTR
 LPSTR
+char *
 
 %wstr
 
@@ -5209,13 +5235,13 @@ LPSERVICE_ASYNC_INFO
 LPSERVICE_INFOA
 LPSERVICE_INFOW
 LPVOID
-char *
 struct netent *
 
 %str
 
 LPCSTR
 LPSTR
+char *
 
 %void
 
