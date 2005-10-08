@@ -250,6 +250,19 @@ static void test_file_write_read( void )
   ok( memcmp(mytext,btext,strlen(mytext)) == 0, "problems with _O_APPEND _read\n");
   _close(tempfd);
 
+  /* Test reading only \n or \r */
+  tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
+  _lseek(tempfd, -1, FILE_END);
+  ok(_read(tempfd,btext,LLEN) == 1, "_read expected 0 got '\\n'\n");
+  _lseek(tempfd, -2, FILE_END);
+  ret = _read(tempfd,btext,LLEN);
+  ok(ret == 1 && *btext == '\n', "_read expected '\\n' got bad length: %d\n", ret);
+  _lseek(tempfd, -3, FILE_END);
+  ret = _read(tempfd,btext,2);
+  todo_wine ok(ret == 1 && *btext == 'e', "_read expected 'e' got \"%.*s\" bad length: %d\n", ret, btext, ret);
+  todo_wine ok(tell(tempfd) == 42, "bad position %lu expecting 42\n", tell(tempfd));
+  _close(tempfd);
+
   ret = unlink(tempf);
   ok( ret !=-1 ,"Can't unlink '%s': %d\n", tempf, errno);
 
