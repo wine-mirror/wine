@@ -21,7 +21,7 @@
 
 #include "editor.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(riched20);
+WINE_DEFAULT_DEBUG_CHANNEL(richedit_lists);
 
 void ME_InsertBefore(ME_DisplayItem *diWhere, ME_DisplayItem *diWhat)
 {
