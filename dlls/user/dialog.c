@@ -1040,7 +1040,7 @@ static void DIALOG_FixChildrenOnChangeFocus (HWND hwndDlg, HWND hwndNext)
             }
         }
     }
-    else
+    else if ((dlgcode_next & DLGC_BUTTON) && (dlgcode_next & DLGC_UNDEFPUSHBUTTON))
     {
         SendMessageW (hwndNext, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE);
         /* I wonder why it doesn't send a DM_SETDEFID */
