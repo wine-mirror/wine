@@ -650,7 +650,8 @@ static unsigned WCCURSES_FillCode(struct inner_data* data, INPUT_RECORD* ir, int
     case KEY_F( 8):
     case KEY_F( 9):
     case KEY_F(10):
-        numEvent = WCCURSES_FillComplexChar(ir, 0x3b + inchar - KEY_F(1), 0, 0);
+        numEvent = WCCURSES_FillComplexChar(ir, 0x3b + inchar - KEY_F(1),
+                                            0x70 + inchar - KEY_F(1), 0);
         break;
     case KEY_F(11):
     case KEY_F(12):
@@ -660,7 +661,8 @@ static unsigned WCCURSES_FillCode(struct inner_data* data, INPUT_RECORD* ir, int
         }
         else
         {
-            numEvent = WCCURSES_FillComplexChar(ir, 0xd9 + inchar - KEY_F(11), 0, 0);
+            numEvent = WCCURSES_FillComplexChar(ir, 0xd9 + inchar - KEY_F(11),
+                                                0x7a + inchar - KEY_F(11), 0);
         }
         break;
 		    
