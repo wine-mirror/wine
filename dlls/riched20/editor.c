@@ -2068,10 +2068,10 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
       
     if (item->member.run.nFlags & MERF_ENDPARA)
     {
-      *buffer++ = '\r';
+      *buffer = '\r';
       if (bCRLF)
       {
-        *buffer = '\n';
+        *(++buffer) = '\n';
         nWritten++;
       }
       assert(nLen == 1);
