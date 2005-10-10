@@ -145,6 +145,7 @@ void ME_RunOfsFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem **
 
     if (nCharOfs < pPara->member.para.next_para->member.para.nCharOfs)
     {
+      int eollen = 1;
       *ppRun = ME_FindItemFwd(pPara, diRun);
       assert(*ppRun);
       while (!((*ppRun)->member.run.nFlags & MERF_ENDPARA))
@@ -159,7 +160,10 @@ void ME_RunOfsFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem **
         }
         *ppRun = pNext;
       }
-      if (nCharOfs == nParaOfs + (*ppRun)->member.run.nCharOfs) {
+      /* the handling of bEmulateVersion10 may be a source of many bugs, I'm afraid */
+      eollen = (editor->bEmulateVersion10 ? 2 : 1);
+      if (nCharOfs >= nParaOfs + (*ppRun)->member.run.nCharOfs &&
+        nCharOfs < nParaOfs + (*ppRun)->member.run.nCharOfs + eollen) {
         *pOfs = 0;
         return;
       }
