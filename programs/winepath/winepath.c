@@ -1,8 +1,9 @@
 /*
- * Translate between Wine and Unix paths
+ * Translate between Windows and Unix paths formats
  *
  * Copyright 2002 Mike Wetherell
  * Copyright 2005 Dmitry Timoshkov
+ * Copyright 2005 Francois Gouget
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,15 +29,14 @@
 #include "wine/debug.h"
 
 enum {
-    SHORTFORMAT = 1,
-    LONGFORMAT  = 2,
-    UNIXFORMAT  = 4
+    SHORTFORMAT   = 1,
+    LONGFORMAT    = 2,
+    UNIXFORMAT    = 4,
+    WINDOWSFORMAT = 8
 };
 
 static const char progname[] = "winepath";
 
-/* Wine specific functions */
-typedef LPSTR (*wine_get_unix_file_name_t) ( LPCWSTR dos );
 /*
  * handle an option
  */
@@ -45,15 +45,16 @@ static int option(int shortopt, const WCHAR *longopt)
     static const char helpmsg[] =
     "Convert PATH(s) to Unix or Windows long or short paths.\n"
     "\n"
-    "  -u, --unix    output Unix format\n"
-    "  -l, --long    output Windows long format\n"
-    "  -s, --short   output Windows short format \n"
+    "  -u, --unix    converts a Windows path to a Unix path\n"
+    "  -w, --windows converts a Unix path to a long Windows path\n"
+    "  -l, --long    converts a short Windows path to the long format\n"
+    "  -s, --short   converts a long Windows path to the short format\n"
     "  -h, --help    output this help message and exit\n"
     "  -v, --version output version information and exit\n"
     "\n"
-    "The input paths can be in any format. If more than one option is given\n"
-    "then the input paths are output in all formats specified, in the order\n"
-    "Unix, long, short. If no option is given the default is Unix format.\n";
+    "If more than one option is given then the input paths are output in\n"
+    "all formats specified, in the order long, short, Unix, Windows.\n"
+    "If no option is given the default is Unix format.\n";
 
     switch (shortopt) {
         case 'h':
@@ -69,6 +70,8 @@ static int option(int shortopt, const WCHAR *longopt)
             return SHORTFORMAT;
         case 'u':
             return UNIXFORMAT;
+        case 'w':
+            return WINDOWSFORMAT;
     }
 
     fprintf(stderr, "%s: invalid option ", progname);
@@ -88,10 +91,11 @@ static int parse_options(const WCHAR *argv[])
     static const WCHAR longW[] = { 'l','o','n','g',0 };
     static const WCHAR shortW[] = { 's','h','o','r','t',0 };
     static const WCHAR unixW[] = { 'u','n','i','x',0 };
+    static const WCHAR windowsW[] = { 'w','i','n','d','o','w','s',0 };
     static const WCHAR helpW[] = { 'h','e','l','p',0 };
     static const WCHAR versionW[] = { 'v','e','r','s','i','o','n',0 };
     static const WCHAR nullW[] = { 0 };
-    static const WCHAR *longopts[] = { longW, shortW, unixW, helpW, versionW, nullW };
+    static const WCHAR *longopts[] = { longW, shortW, unixW, windowsW, helpW, versionW, nullW };
     int outputformats = 0;
     int done = 0;
     int i, j;
@@ -134,7 +138,8 @@ static int parse_options(const WCHAR *argv[])
  */
 int wmain(int argc, const WCHAR *argv[])
 {
-    wine_get_unix_file_name_t wine_get_unix_file_name_ptr = NULL;
+    LPSTR (*wine_get_unix_file_name_ptr)(LPCWSTR) = NULL;
+    LPWSTR (*wine_get_dos_file_name_ptr)(LPCSTR) = NULL;
     WCHAR dos_pathW[MAX_PATH];
     char path[MAX_PATH];
     int outputformats;
@@ -145,12 +150,23 @@ int wmain(int argc, const WCHAR *argv[])
         outputformats = UNIXFORMAT;
 
     if (outputformats & UNIXFORMAT) {
-        wine_get_unix_file_name_ptr = (wine_get_unix_file_name_t)
+        wine_get_unix_file_name_ptr = (void*)
             GetProcAddress(GetModuleHandle("KERNEL32"),
                            "wine_get_unix_file_name");
         if (wine_get_unix_file_name_ptr == NULL) {
             fprintf(stderr, "%s: cannot get the address of "
                             "'wine_get_unix_file_name'\n", progname);
+            exit(3);
+        }
+    }
+
+    if (outputformats & WINDOWSFORMAT) {
+        wine_get_dos_file_name_ptr = (void*)
+            GetProcAddress(GetModuleHandle("KERNEL32"),
+                           "wine_get_dos_file_name");
+        if (wine_get_dos_file_name_ptr == NULL) {
+            fprintf(stderr, "%s: cannot get the address of "
+                            "'wine_get_dos_file_name'\n", progname);
             exit(3);
         }
     }
@@ -177,6 +193,24 @@ int wmain(int argc, const WCHAR *argv[])
                 HeapFree( GetProcessHeap(), 0, unix_name );
             }
             else printf( "\n" );
+        }
+        if (outputformats & WINDOWSFORMAT) {
+            WCHAR* windows_name;
+            char* unix_name;
+            DWORD size;
+
+            size=WideCharToMultiByte(CP_UNIXCP, 0, argv[i], -1, NULL, 0, NULL, NULL);
+            unix_name=HeapAlloc(GetProcessHeap(), 0, size);
+            WideCharToMultiByte(CP_UNIXCP, 0, argv[i], -1, unix_name, size, NULL, NULL);
+
+            if ((windows_name = wine_get_dos_file_name_ptr(unix_name)))
+            {
+                WideCharToMultiByte(CP_UNIXCP, 0, windows_name, -1, path, MAX_PATH, NULL, NULL);
+                printf("%s\n", path);
+                HeapFree( GetProcessHeap(), 0, windows_name );
+            }
+            else printf( "\n" );
+            HeapFree( GetProcessHeap(), 0, unix_name );
         }
     }
 
