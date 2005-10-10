@@ -253,7 +253,8 @@ static void test_file_write_read( void )
   /* Test reading only \n or \r */
   tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
   _lseek(tempfd, -1, FILE_END);
-  ok(_read(tempfd,btext,LLEN) == 1, "_read expected 0 got '\\n'\n");
+  ret = _read(tempfd,btext,LLEN);
+  ok(ret == 1, "_read expected 1 got bad length: %d\n", ret);
   _lseek(tempfd, -2, FILE_END);
   ret = _read(tempfd,btext,LLEN);
   ok(ret == 1 && *btext == '\n', "_read expected '\\n' got bad length: %d\n", ret);
