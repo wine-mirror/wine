@@ -1724,10 +1724,15 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
         nCharOfs = lParam;
     nLength = ME_GetTextLength(editor);
     
-    if (nCharOfs < nLength-1) { 
+    if (nCharOfs < nLength) { 
         ME_RunOfsFromCharOfs(editor, nCharOfs, &pRun, &nOffset);
+        assert(pRun->type == diRun);
         pt.y = pRun->member.run.pt.y;
         pt.x = pRun->member.run.pt.x + ME_PointFromChar(editor, &pRun->member.run, nOffset);
+        pt.y += ME_GetParagraph(pRun)->member.para.nYPos;
+    } else {
+        pt.x = 0;
+        pt.y = editor->pBuffer->pLast->member.para.nYPos;
     }
     pt.y += ME_GetParagraph(pRun)->member.para.nYPos;
     if (wParam >= 0x40000) {
