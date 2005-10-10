@@ -459,17 +459,28 @@ Main_DirectDrawSurface_EnumAttachedSurfaces(LPDIRECTDRAWSURFACE7 iface,
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl* surf;
-
+    DDSURFACEDESC2 desc;
+    
     TRACE("(%p)->(%p,%p)\n",This,context,cb);
 
     for (surf = This->attached; surf != NULL; surf = surf->next_attached)
     {
+	LPDIRECTDRAWSURFACE7 isurf = ICOM_INTERFACE(surf, IDirectDrawSurface7);
+
+	if (TRACE_ON(ddraw)) {
+	    TRACE("  => enumerating surface %p (priv. %p) with description:\n", isurf, surf);
+	    DDRAW_dump_surface_desc(&surf->surface_desc);
+	}
+
+	IDirectDrawSurface7_AddRef(isurf);
+	desc = surf->surface_desc;
 	/* check: != DDENUMRET_OK or == DDENUMRET_CANCEL? */
-	if (cb(ICOM_INTERFACE(surf, IDirectDrawSurface7), &surf->surface_desc,
-	       context) == DDENUMRET_CANCEL)
+	if (cb(isurf, &desc, context) == DDENUMRET_CANCEL)
 	    break;
     }
 
+    TRACE(" end of enumeration.\n");
+    
     return DD_OK;
 }
 
@@ -1097,7 +1108,7 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
         return DDERR_INVALIDPARAMS;
     }
     if (NULL == pDDSD) {
-        return DDERR_INVALIDPARAMS; /** really ? */
+        return DDERR_INVALIDPARAMS;
     }
 
     /* If the surface is already locked, return busy */
