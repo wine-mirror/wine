@@ -46,6 +46,7 @@
 	    	DWORD __size = (to)->dwSize;		\
 	    	DWORD __copysize = __size;		\
 	    	DWORD __resetsize = __size;		\
+		assert(to != from);                     \
 	        if (__resetsize > sizeof(*to))		\
 		    __resetsize = sizeof(*to);		\
 	    	memset(to,0,__resetsize);               \
