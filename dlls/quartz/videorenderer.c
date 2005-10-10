@@ -148,7 +148,7 @@ static BOOL CreateRenderingWindow(VideoRendererImpl* This)
     winclass.hInstance = NULL;
     winclass.hIcon = NULL;
     winclass.hCursor = NULL;
-    winclass.hbrBackground = NULL;
+    winclass.hbrBackground = GetStockObject(BLACK_BRUSH);
     winclass.lpszMenuName = NULL;
     winclass.lpszClassName = "Wine ActiveMovie Class";
 
@@ -391,13 +391,22 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 
 static HRESULT VideoRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 {
-    if ((IsEqualIID(&pmt->majortype, &MEDIATYPE_Video) && IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB32)) ||
-        (IsEqualIID(&pmt->majortype, &MEDIATYPE_Video) && IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB24)) ||
-        (IsEqualIID(&pmt->majortype, &MEDIATYPE_Video) && IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB565)) ||
-        (IsEqualIID(&pmt->majortype, &MEDIATYPE_Video) && IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB8)))
+    if (!IsEqualIID(&pmt->majortype, &MEDIATYPE_Video))
+        return S_FALSE;
+
+    if (IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB32) ||
+        IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB24) ||
+        IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB565) ||
+        IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB8))
     {
         VideoRendererImpl* This = (VideoRendererImpl*) iface;
         VIDEOINFOHEADER* format = (VIDEOINFOHEADER*)pmt->pbFormat;
+
+        if (!IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo))
+        {
+            WARN("Format type %s not supported\n", debugstr_guid(&pmt->formattype));
+            return S_FALSE;
+        }
         This->SourceRect.left = 0;
         This->SourceRect.top = 0;
         This->SourceRect.right = This->VideoWidth = format->bmiHeader.biWidth;
