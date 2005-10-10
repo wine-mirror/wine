@@ -45,6 +45,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound_AddRef(LPDIRECTSOUND iface);
 static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(LPDIRECTSOUND8 iface);
 
 static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice);
+static ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device);
 static ULONG DirectSoundDevice_Release(DirectSoundDevice * device);
 
 static const char * dumpCooperativeLevel(DWORD level)
@@ -691,7 +692,7 @@ static HRESULT WINAPI IDirectSoundImpl_Initialize(
     if (DSOUND_renderer[wod]) {
         if (IsEqualGUID(&devGUID, &DSOUND_renderer[wod]->guid)) {
             device = DSOUND_renderer[wod];
-            device->ref++;
+            DirectSoundDevice_AddRef(device);
             This->device = device;
             return DS_OK;
         } else {
@@ -940,14 +941,20 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     return DS_OK;
 }
 
+static ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device)
+{
+    ULONG ref = InterlockedIncrement(&(device->ref));
+    TRACE("(%p) ref was %ld\n", device, ref - 1);
+    return ref;
+}
+
 static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
 {
-    int i;
     HRESULT hr;
-    TRACE("(%p) ref was %lu\n", device, device->ref);
-
-    device->ref--;
-    if (device->ref == 0) {
+    ULONG ref = InterlockedDecrement(&(device->ref));
+    TRACE("(%p) ref was %lu\n", device, ref + 1);
+    if (!ref) {
+        int i;
         timeKillEvent(device->timerID);
         timeEndPeriod(DS_TIME_RES);
         /* wait for timer to expire */
@@ -994,7 +1001,7 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
         HeapFree(GetProcessHeap(),0,device);
         TRACE("(%p) released\n", device); 
     }
-    return device->ref;
+    return ref;
 }
 
 HRESULT WINAPI IDirectSoundImpl_Create(
