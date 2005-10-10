@@ -197,7 +197,12 @@ static void IDirectSound8_tests(void)
     /* try the COM class factory method of creation with no device specified */
     rc=CoCreateInstance(&CLSID_DirectSound8, NULL, CLSCTX_INPROC_SERVER,
                         &IID_IDirectSound8, (void**)&dso);
-    ok(rc==S_OK,"CoCreateInstance() failed: %s\n",DXGetErrorString8(rc));
+    ok(rc==S_OK||rc==REGDB_E_CLASSNOTREG,"CoCreateInstance() failed: %s\n",
+       DXGetErrorString8(rc));
+    if (rc==REGDB_E_CLASSNOTREG) {
+        trace("  Class Not Registered\n");
+        return;
+    }
     if (dso)
         IDirectSound8_test(dso, FALSE, NULL);
 
