@@ -2071,5 +2071,8 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
 error:  /* We get here if there was an error opening the file */
     ofs->nErrCode = GetLastError();
     WARN("(%s): return = HFILE_ERROR error= %d\n", name,ofs->nErrCode );
-    return HFILE_ERROR;
+    if (mode & OF_EXIST)
+        return FALSE;
+    else
+        return HFILE_ERROR;
 }

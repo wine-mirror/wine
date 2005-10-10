@@ -1390,6 +1390,30 @@ static void test_read_write(void)
     ok( ret, "DeleteFileA: error %ld\n", GetLastError());
 }
 
+static void test_OpenFile_exists(void)
+{
+    HFILE hFile;
+    OFSTRUCT ofs;
+    
+    static const char *file = "\\winver.exe";
+    char buff[MAX_PATH];
+    UINT length;
+    
+    length = GetSystemDirectoryA(buff, MAX_PATH);
+
+    if ((length + lstrlen(file) < MAX_PATH))
+    {
+	lstrcat(buff, file);
+
+	hFile = OpenFile(buff, &ofs, OF_EXIST);
+	ok( hFile == TRUE, "%s not found : %ld\n", buff, GetLastError());
+    }
+
+    hFile = OpenFile(".\\foo-bar-foo.baz", &ofs, OF_EXIST);
+    ok( hFile == FALSE, "hFile != FALSE : %ld\n", GetLastError());
+}
+
+
 START_TEST(file)
 {
     test__hread(  );
@@ -1418,4 +1442,5 @@ START_TEST(file)
     test_GetFileType();
     test_async_file_errors();
     test_read_write();
+    test_OpenFile_exists();
 }
