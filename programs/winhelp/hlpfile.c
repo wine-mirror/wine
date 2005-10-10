@@ -1448,6 +1448,8 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             WINE_WARN("Unsupported SystemRecord[%d]\n", GET_USHORT(ptr, 0));
 	}
     }
+    if (!hlpfile->lpszTitle)
+        hlpfile->lpszTitle = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 1);
     return TRUE;
 }
 
