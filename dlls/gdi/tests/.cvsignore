@@ -1,6 +1,7 @@
 Makefile
 bitmap.ok
 brush.ok
+clipping.ok
 gdiobj.ok
 generated.ok
 metafile.ok

@@ -578,8 +578,8 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
     if (rgn) CombineRgn( hRgn, rgn, 0, RGN_COPY );
     GDI_ReleaseObj( hDC );
 
-    /* On Windows NT/2000, the region returned is in screen coordinates */
-    if (!(GetVersion() & 0x80000000))
+    /* On Windows NT/2000, the SYSRGN returned is in screen coordinates */
+    if (iCode == SYSRGN && !(GetVersion() & 0x80000000))
     {
         POINT org;
         GetDCOrgEx( hDC, &org );
