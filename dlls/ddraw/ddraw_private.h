@@ -415,6 +415,7 @@ extern void DDRAW_dump_cooperativelevel(DWORD cooplevel);
 extern void DDRAW_dump_lockflag(DWORD lockflag);
 extern void DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *in);
 extern void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps);
+extern void DDRAW_dump_DDENUMSURFACES(DWORD flagmask);
 extern void DDRAW_dump_surface_to_disk(IDirectDrawSurfaceImpl *surface, FILE *f, int scale) ;
 
 /* Used for generic dumping */

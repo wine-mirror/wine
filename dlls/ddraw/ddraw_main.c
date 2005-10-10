@@ -874,18 +874,23 @@ Main_DirectDraw_EnumExistingSurfaces(IDirectDrawImpl *This, DWORD dwFlags,
 	    || (nomatch != Main_DirectDraw_DDSD_Match(lpDDSD2,
 						      &surf->surface_desc)))
 	{
-	    LPDIRECTDRAWSURFACE7 surface = ICOM_INTERFACE(surf,
-							  IDirectDrawSurface7);
+	    LPDIRECTDRAWSURFACE7 isurf = ICOM_INTERFACE(surf, IDirectDrawSurface7);
+	    DDSURFACEDESC2 desc;
 
-	    /* BOGUS! Violates COM rules, but MSDN says so. */
-	    IDirectDrawSurface7_AddRef(surface);
+	    if (TRACE_ON(ddraw)) {
+		TRACE("  => enumerating surface %p (priv. %p) with description:\n", isurf, surf);
+		DDRAW_dump_surface_desc(&surf->surface_desc);
+	    }
 
-	    if (callback(surface, &surf->surface_desc, context)
-		== DDENUMRET_CANCEL)
+	    IDirectDrawSurface7_AddRef(isurf);
+
+	    desc = surf->surface_desc;
+	    if (callback(isurf, &desc, context)	== DDENUMRET_CANCEL)
 		break;
 	}
     }
-
+    TRACE(" end of enumeration.\n");
+    
     return DD_OK;
 }
 
@@ -921,7 +926,10 @@ Main_DirectDraw_EnumSurfaces(LPDIRECTDRAW7 iface, DWORD dwFlags,
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->(0x%lx, %p, %p, %p)\n", iface, dwFlags, lpDDSD2, context,
 	  callback);
-
+    if (TRACE_ON(ddraw)) {
+	TRACE(" flags: "); DDRAW_dump_DDENUMSURFACES(dwFlags);
+    }
+    
     if (callback == NULL)
 	return DDERR_INVALIDPARAMS;
 

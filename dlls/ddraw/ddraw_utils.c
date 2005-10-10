@@ -838,6 +838,19 @@ void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps) {
     DPRINTF(" - ddsCaps : "); DDRAW_dump_DDSCAPS2(&lpcaps->ddsCaps); DPRINTF("\n");
 }
 
+void DDRAW_dump_DDENUMSURFACES(DWORD flagmask)
+{
+    static const flag_info flags[] =
+	{
+	    FE(DDENUMSURFACES_ALL),
+	    FE(DDENUMSURFACES_MATCH),
+	    FE(DDENUMSURFACES_NOMATCH),
+	    FE(DDENUMSURFACES_CANBECREATED),
+	    FE(DDENUMSURFACES_DOESEXIST)
+	};
+    DDRAW_dump_flags(flagmask, flags, sizeof(flags)/sizeof(flags[0]));
+}
+
 /* Debug function that can be helpful to debug various surface-related problems */
 static int get_shift(DWORD color_mask) {
     int shift = 0;
