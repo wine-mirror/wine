@@ -804,6 +804,8 @@ BOOL WINAPI DefineDosDeviceW( DWORD flags, LPCWSTR devname, LPCWSTR targetpath )
     BOOL ret = FALSE;
     char *path = NULL, *target, *p;
 
+    TRACE("%lx, %s, %s\n", flags, debugstr_w(devname), debugstr_w(targetpath));
+
     if (!(flags & DDD_REMOVE_DEFINITION))
     {
         if (!(flags & DDD_RAW_TARGET_PATH))
