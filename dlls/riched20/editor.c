@@ -2069,6 +2069,9 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
         nWritten++;
       }
       assert(nLen == 1);
+      /* our end paragraph consists of 2 characters now */
+      if (editor->bEmulateVersion10)
+        nChars--;
     }
     else      
       CopyMemory(buffer, item->member.run.strText->szData, sizeof(WCHAR)*nLen);
