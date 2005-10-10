@@ -25,16 +25,6 @@
 
 #include "wmctypes.h"
 
-#define WMC_MAJOR_VERSION	1
-#define WMC_MINOR_VERSION	0
-#define WMC_MICRO_VERSION	0
-#define WMC_RELEASEDATE		"(12-Jun-2000)"
-
-#define WMC_STRINGIZE(a)	#a
-#define WMC_VERSIONIZE(a,b,c)	WMC_STRINGIZE(a) "." WMC_STRINGIZE(b) "." WMC_STRINGIZE(c)
-#define WMC_VERSION		WMC_VERSIONIZE(WMC_MAJOR_VERSION, WMC_MINOR_VERSION, WMC_MICRO_VERSION)
-#define WMC_FULLVERSION 	WMC_VERSION " " WMC_RELEASEDATE
-
 /*
  * The default codepage setting is only to
  * read and convert input which is non-message

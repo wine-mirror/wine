@@ -88,7 +88,7 @@
  */
 
 static char str_header[] =
-	"/* This file is generated with wmc version " WMC_FULLVERSION ". Do not edit! */\n"
+	"/* This file is generated with wmc version " PACKAGE_VERSION ". Do not edit! */\n"
 	"/* Source : %s */\n"
 	"/* Cmdline: %s */\n"
 	"/* Date   : %s */\n"

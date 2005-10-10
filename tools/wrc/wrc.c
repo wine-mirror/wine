@@ -103,7 +103,7 @@ static char usage[] =
 	"with -o, then the output is written to \"wrc.tab.res\"\n"
 	;
 
-static const char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
+static const char version_string[] = "Wine Resource Compiler version " PACKAGE_VERSION "\n"
 			"Copyright 1998-2000 Bertho A. Stultiens\n"
 			"          1994 Martin von Loewis\n";
 
@@ -198,6 +198,32 @@ static struct option long_options[] = {
 	{ 0, 0, 0, 0 }
 };
 
+static void set_version_defines(void)
+{
+    char *version = xstrdup( PACKAGE_VERSION );
+    char *major, *minor, *patchlevel;
+    char buffer[100];
+
+    if ((minor = strchr( version, '.' )))
+    {
+        major = version;
+        *minor++ = 0;
+        if ((patchlevel = strchr( minor, '.' ))) *patchlevel++ = 0;
+    }
+    else  /* pre 0.9 version */
+    {
+        major = NULL;
+        patchlevel = version;
+    }
+    sprintf( buffer, "__WRC__=%s", major ? major : "0" );
+    wpp_add_cmdline_define(buffer);
+    sprintf( buffer, "__WRC_MINOR__=%s", minor ? minor : "0" );
+    wpp_add_cmdline_define(buffer);
+    sprintf( buffer, "__WRC_PATCHLEVEL__=%s", patchlevel ? patchlevel : "0" );
+    wpp_add_cmdline_define(buffer);
+    free( version );
+}
+
 int main(int argc,char *argv[])
 {
 	extern char* optarg;
@@ -215,11 +241,7 @@ int main(int argc,char *argv[])
 	now = time(NULL);
 
 	/* Set the default defined stuff */
-	wpp_add_cmdline_define("__WRC__=" WRC_EXP_STRINGIZE(WRC_MAJOR_VERSION));
-	wpp_add_cmdline_define("__WRC_MINOR__=" WRC_EXP_STRINGIZE(WRC_MINOR_VERSION));
-	wpp_add_cmdline_define("__WRC_MICRO__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
-	wpp_add_cmdline_define("__WRC_PATCH__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
-
+        set_version_defines();
 	wpp_add_cmdline_define("RC_INVOKED=1");
 	wpp_add_cmdline_define("__WIN32__=1");
 	wpp_add_cmdline_define("__FLAT__=1");

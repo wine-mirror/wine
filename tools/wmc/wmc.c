@@ -59,7 +59,7 @@ static char usage[] =
 	;
 
 static char version_string[] =
-	"Wine Message Compiler Version " WMC_FULLVERSION "\n"
+	"Wine Message Compiler version " PACKAGE_VERSION "\n"
 	"Copyright 2000 Bertho A. Stultiens\n"
 	;
 
