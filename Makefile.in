@@ -23,8 +23,6 @@ TOPOBJDIR = .
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
-LDCONFIG  = @LDCONFIG@
-LDD       = @LDD@
 MODULE    = none
 
 FONTSSUBDIRS = @FONTSSUBDIRS@
@@ -86,18 +84,6 @@ install-lib:: $(INSTALLLIBSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__in
 install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__install-dev__) install-aclocal
 
 install:: install-lib install-dev install-aclocal
-	-$(LDCONFIG)
-	@if test -n "`LANG=C $(LDD) $(bindir)/wine|grep not.found`";	\
-	then								\
-		echo "*************************************************" ; \
-		echo "*************************************************" ; \
-		echo "The installed Wine libraries will not be found!" ; \
-		echo "You can either:" ; 				\
-		echo "   Add the line '$(libdir)' to /etc/ld.so.conf and run /sbin/ldconfig" ;	\
-		echo '   export LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(libdir)' ; \
-		echo "*************************************************" ; \
-		echo "*************************************************" ; \
-	fi
 
 uninstall:: $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
 	$(RM) $(datadir)/aclocal/wine.m4
