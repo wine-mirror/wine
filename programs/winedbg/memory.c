@@ -347,10 +347,13 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         {
             char    buffer[1024];
 
-            memory_get_string(dbg_curr_process, val_ptr, 
-                              lvalue->cookie == DLV_TARGET,
-                              size == 2, buffer, sizeof(buffer));
-            dbg_printf("\"%s\"", buffer);
+            if (!val_ptr) dbg_printf("0x0");
+            else if (memory_get_string(dbg_curr_process, val_ptr, 
+                                       lvalue->cookie == DLV_TARGET,
+                                       size == 2, buffer, sizeof(buffer)))
+                dbg_printf("\"%s\"", buffer);
+            else
+                dbg_printf("*** invalid address %p ***", val_ptr);
         }
         else dbg_printf("%p", val_ptr);
         break;
