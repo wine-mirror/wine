@@ -384,12 +384,12 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSW lpO
 	    if (strlenW(lpOpenParms->lpstrElementName) > 0) {
 	        lpOpenParms->lpstrElementName = lpOpenParms->lpstrElementName;
 
-		/* FIXME : what should be done id wmw->hFile is already != 0, or the driver is playin' */
+		/* FIXME : what should be done if wmw->hFile is already != 0, or the driver is playin' */
 		TRACE("MCI_OPEN_ELEMENT %s!\n", debugstr_w(lpOpenParms->lpstrElementName));
 
 		if (lpOpenParms->lpstrElementName && (strlenW(lpOpenParms->lpstrElementName) > 0)) {
 		    wmw->hFile = mmioOpenW((LPWSTR)lpOpenParms->lpstrElementName, NULL,
-                                           MMIO_ALLOCBUF | MMIO_DENYWRITE | MMIO_READWRITE);
+                                           MMIO_ALLOCBUF | MMIO_DENYWRITE | MMIO_READ);
 
 		    if (wmw->hFile == 0) {
 			WARN("can't find file=%s!\n", debugstr_w(lpOpenParms->lpstrElementName));
