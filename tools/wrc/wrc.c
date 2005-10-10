@@ -245,6 +245,8 @@ int main(int argc,char *argv[])
 	wpp_add_cmdline_define("RC_INVOKED=1");
 	wpp_add_cmdline_define("__WIN32__=1");
 	wpp_add_cmdline_define("__FLAT__=1");
+	/* Microsoft RC always searches current directory */
+	wpp_add_include_path(".");
 
 	/* First rebuild the commandline to put in destination */
 	/* Could be done through env[], but not all OS-es support it */
