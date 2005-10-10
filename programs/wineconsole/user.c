@@ -1050,6 +1050,9 @@ static void    WCUSER_GenerateMouseInputRecord(struct inner_data* data, COORD c,
     if (wParam & MK_LBUTTON) ir.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
     if (wParam & MK_MBUTTON) ir.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
     if (wParam & MK_RBUTTON) ir.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
+    if (wParam & MK_CONTROL) ir.Event.MouseEvent.dwButtonState |= LEFT_CTRL_PRESSED;
+    if (wParam & MK_SHIFT)   ir.Event.MouseEvent.dwButtonState |= SHIFT_PRESSED;
+    if (event == MOUSE_WHEELED) ir.Event.MouseEvent.dwButtonState |= wParam & 0xFFFF0000;
     ir.Event.MouseEvent.dwControlKeyState = WCUSER_GetCtrlKeyState(keyState);
     ir.Event.MouseEvent.dwEventFlags = event;
 
@@ -1156,11 +1159,17 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     case WM_RBUTTONUP:
         /* no need to track for rbutton up when opening the popup... the event will be
          * swallowed by TrackPopupMenu */
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
         WCUSER_GenerateMouseInputRecord(data, WCUSER_GetCell(data, lParam), wParam, 0);
 	break;
+    case WM_LBUTTONDBLCLK:
+    case WM_MBUTTONDBLCLK:
+    case WM_RBUTTONDBLCLK:
+        WCUSER_GenerateMouseInputRecord(data, WCUSER_GetCell(data, lParam), wParam, DOUBLE_CLICK);
+        break;
     case WM_MOUSEWHEEL:
-        /* FIXME: should we scroll too ? */
-        WCUSER_GenerateMouseInputRecord(data, WCUSER_GetCell(data, lParam), wParam, MOUSE_WHEELED);
+        WCUSER_GenerateMouseInputRecord(data,  WCUSER_GetCell(data, lParam), wParam, MOUSE_WHEELED);
 	break;
     case WM_SETFOCUS:
 	if (data->curcfg.cursor_visible)
@@ -1373,7 +1382,7 @@ enum init_return WCUSER_InitBackend(struct inner_data* data)
     data->fnScroll = WCUSER_Scroll;
     data->fnDeleteBackend = WCUSER_DeleteBackend;
 
-    wndclass.style         = 0;
+    wndclass.style         = CS_DBLCLKS;
     wndclass.lpfnWndProc   = WCUSER_Proc;
     wndclass.cbClsExtra    = 0;
     wndclass.cbWndExtra    = sizeof(DWORD);
