@@ -1666,7 +1666,8 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     if (item_end)
       nNextLineOfs = ME_CharOfsFromRunOfs(editor, ME_FindItemFwd(item_end, diRun), 0);
     else
-      nNextLineOfs = ME_FindItemFwd(item, diParagraphOrEnd)->member.para.nCharOfs-1;
+      nNextLineOfs = ME_FindItemFwd(item, diParagraphOrEnd)->member.para.nCharOfs
+       - (editor->bEmulateVersion10?2:1);
     nChars = nNextLineOfs - nThisLineOfs;
     TRACE("EM_LINELENGTH(%d)==%d\n",wParam, nChars);
     return nChars;
