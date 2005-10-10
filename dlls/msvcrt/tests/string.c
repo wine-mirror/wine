@@ -79,7 +79,7 @@ void test_ismbblead()
     unsigned int s = '\354';
 
     _setmbcp(936);
-    todo_wine ok(_ismbblead(s) == 4, "got result %d\n", _ismbblead(s));
+    todo_wine ok(_ismbblead(s), "got result %d\n", _ismbblead(s));
     _setmbcp(1252);
 }
 
