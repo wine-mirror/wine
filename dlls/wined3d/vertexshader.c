@@ -1125,7 +1125,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
 
             if (NULL == curOpcode) {
                 while (*pToken & 0x80000000) {
-                    TRACE("unrecognized opcode: %08lx\n", *pToken);
+                    FIXME("unrecognized opcode: %08lx\n", *pToken);
                     /* skip unrecognized opcode */
                     ++pToken;
                 }
@@ -1419,7 +1419,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
       if (NULL == curOpcode) {
         /* unkown current opcode ... (shouldn't be any!) */
         while (*pToken & 0x80000000) {
-            TRACE("unrecognized opcode: %08lx\n", *pToken);
+            FIXME("unrecognized opcode: %08lx\n", *pToken);
             ++pToken;
         }
       } else if (GLNAME_REQUIRE_GLSL == curOpcode->glname) {
@@ -1715,9 +1715,9 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
             /* TODO: Think of a name for 0x80000000 and repalce it's use with a constant */
             while (*pToken & 0x80000000) {
                 if (i == 0) {
-                    TRACE("unrecognized opcode: pos=%d token=%08lX\n", (pToken - 1) - This->function, *(pToken - 1));
+                    FIXME("unrecognized opcode: pos=%d token=%08lX\n", (pToken - 1) - This->function, *(pToken - 1));
                 }
-                TRACE("unrecognized opcode param: pos=%d token=%08lX what=", pToken - This->function, *pToken);
+                FIXME("unrecognized opcode param: pos=%d token=%08lX what=", pToken - This->function, *pToken);
                 vshader_program_dump_param(*pToken, i);
                 TRACE("\n");
                 ++i;
@@ -2060,7 +2060,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
                 /* TODO: Think of a good name for 0x80000000 and replace it with a constant */
                 while (*pToken & 0x80000000) {
                     /* unkown current opcode ... */
-                        TRACE("unrecognized opcode: %08lx", *pToken);
+                    FIXME("unrecognized opcode: %08lx", *pToken);
                     ++pToken;
                     ++len;
                     TRACE("\n");
