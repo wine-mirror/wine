@@ -428,8 +428,8 @@ void     WINECON_SetConfig(struct inner_data* data,
                             SetConsoleScreenBufferSize(data->hConOut, c);\
                         } while (0)
 #define ChgWinWidth()   do {pos.Left = pos.Top = 0; \
-                            pos.Right = cfg->win_width - 1; \
-                            pos.Bottom = data->curcfg.win_height - 1; \
+                            pos.Right = cfg->win_width - data->curcfg.win_width; \
+                            pos.Bottom = 0; \
                             SetConsoleWindowInfo(data->hConOut, FALSE, &pos);\
                         } while (0)
 #define TstSBfHeight()  (force || data->curcfg.sb_height != cfg->sb_height)
@@ -441,8 +441,8 @@ void     WINECON_SetConfig(struct inner_data* data,
                             SetConsoleScreenBufferSize(data->hConOut, c); \
                         } while (0)
 #define ChgWinHeight()  do {pos.Left = pos.Top = 0; \
-                            pos.Right = cfg->win_width - 1; \
-                            pos.Bottom = cfg->win_height - 1; \
+                            pos.Right = 0; \
+                            pos.Bottom = cfg->win_height - data->curcfg.win_height; \
                             SetConsoleWindowInfo(data->hConOut, FALSE, &pos);\
                         } while (0)
 
