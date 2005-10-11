@@ -247,9 +247,13 @@ static ULONG WINAPI IDirectSoundImpl_Release(
     TRACE("(%p) ref was %ld\n", This, ref + 1);
 
     if (!ref) {
-        if (This->device)
-            DirectSoundDevice_Release(This->device);
-
+        if (This->device) {
+            if (DirectSoundDevice_Release(This->device) != 0) {
+                /* device not released so make sure primary reference to This removed */
+                if (This->device->primary)
+                    This->device->primary->dsound = NULL;
+            }
+        }
         HeapFree(GetProcessHeap(),0,This);
         TRACE("(%p) released\n", This);
     }
@@ -325,6 +329,7 @@ static HRESULT WINAPI DSOUND_CreateSoundBuffer(
             WARN("Primary Buffer already created\n");
             IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(This->device->primary));
             *ppdsb = (LPDIRECTSOUNDBUFFER)(This->device->primary);
+            This->device->primary->dsound = This;
         } else {
            This->device->dsbd = *dsbd;
            hres = PrimaryBufferImpl_Create(This, (PrimaryBufferImpl**)&(This->device->primary), &(This->device->dsbd));
