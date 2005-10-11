@@ -736,9 +736,13 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
  */
 BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
 {
-    DC * dc = DC_GetDCUpdate( hdc );
+    DC * dc;
     BOOL ret;
 
+    /* cbPoints must be 3 * n (where n>=1) */
+    if (!cPoints || (cPoints % 3) != 0) return FALSE;
+
+    dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
 
     if(PATH_IsPathOpen(dc->path))
@@ -1110,8 +1114,8 @@ POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut )
     POINT *out;
     INT Bezier, dwOut = BEZIER_INITBUFSIZE, i;
 
-    if((count - 1) % 3 != 0) {
-        ERR("Invalid no. of points\n");
+    if (count == 1 || (count - 1) % 3 != 0) {
+        ERR("Invalid no. of points %d\n", count);
 	return NULL;
     }
     *nPtsOut = 0;
