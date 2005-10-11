@@ -95,6 +95,8 @@ static void clean_after_shfo_tests(void)
     DeleteFileA(".\\testdir2\\test4.txt\\test1.txt");
     RemoveDirectoryA(".\\testdir2\\test4.txt");
     RemoveDirectoryA(".\\testdir2");
+    DeleteFileA(".\\nonexistent\\test2.txt");
+    RemoveDirectoryA(".\\nonexistent");
 }
 
 /*
@@ -331,6 +333,19 @@ static void test_copy(void)
     }
     ok(!file_exists(".\\testdir2\\test2.txt"), "The file is copied\n");
     shfo.fFlags = tmp_flags;
+
+    /* copy into a nonexistent directory */
+    init_shfo_tests();
+    shfo.fFlags = FOF_NOCONFIRMMKDIR;
+    set_curr_dir_path(from, "test1.txt\0");
+    set_curr_dir_path(to, "nonexistent\\test2.txt\0");
+    retval= SHFileOperation(&shfo);
+
+    todo_wine
+    {
+        ok(!retval, "Error copying into nonexistent directory\n");
+        ok(file_exists(".\\nonexistent\\test2.txt"), "Directory not created\n");
+    }
 }
 
 /* tests the FO_MOVE action */
