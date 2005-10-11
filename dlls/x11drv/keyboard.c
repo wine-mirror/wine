@@ -312,13 +312,13 @@ static const char main_key_IS[MAIN_LEN][4] =
  "<>"
 };
 
-/*** German keyboard layout (contributed by Ulrich Weigand) */
+/*** German keyboard layout (setxkbmap de) */
 static const char main_key_DE[MAIN_LEN][4] =
 {
- "^°","1!","2\"²","3§³","4$","5%","6&","7/{","8([","9)]","0=}","ß?\\","'`",
- "qQ@","wW","eE€","rR","tT","zZ","uU","iI","oO","pP","üÜ","+*~",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","#´",
- "yY","xX","cC","vV","bB","nN","mMµ",",;",".:","-_",
+ "^°","1!","2\"","3§","4$","5%","6&","7/","8(","9)","0=","ß?","´`",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","üÜ","+*",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","#'",
+ "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>|"
 };
 
@@ -584,10 +584,10 @@ static const char main_key_BE[MAIN_LEN][4] =
  "<>\\"
 };
 
-/*** Hungarian keyboard layout (contributed by Zoltán Kovács) */
+/*** Hungarian keyboard layout (setxkbmap hu) */
 static const char main_key_HU[MAIN_LEN][4] =
 {
- "0§","1'~","2\"·","3+^","4!¢","5%°","6/²","7=`","8(ÿ","9)´","öÖ½","üÜ¨","óÓ¸",
+ "0§","1'~","2\"·","3+^","4!¢","5%0°","6/²","7=`","8(ÿ","9)´","öÖ½","üÜ¨","óÓ¸",
  "qQ\\","wW|","eE","rR","tT","zZ","uU","iIÍ","oOø","pP","õÕ÷","úÚ×",
  "aA","sSð","dDÐ","fF[","gG]","hH","jJí","kK³","lL£","éÉ$","áÁß","ûÛ¤",
  "yY>","xX#","cC&","vV@","bB{","nN}","mM",",?;",".:>","-_*",
