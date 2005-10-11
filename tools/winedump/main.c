@@ -198,7 +198,7 @@ static void do_dumpall(void)
     globals.dumpsect = "ALL";
 }
 
-struct option
+struct my_option
 {
   const char *name;
   Mode mode;
@@ -207,7 +207,7 @@ struct option
   const char *usage;
 };
 
-static const struct option option_table[] = {
+static const struct my_option option_table[] = {
   {"--help",NONE, 0, do_usage,    "--help       Display this help message"},
   {"-h",    NONE, 0, do_usage,    "-h           Synonym for --help"},
   {"-?",    NONE, 0, do_usage,    "-?           Synonym for --help"},
@@ -237,7 +237,7 @@ static const struct option option_table[] = {
 
 void do_usage (void)
 {
-    const struct option *opt;
+    const struct my_option *opt;
     printf ("Usage: winedump [-h | sym <sym> | spec <dll> | dump <dll> | emf <emf> | lnk <lnk>]\n");
     printf ("Mode options (can be put as the mode (sym/spec/dump...) is declared):\n");
     printf ("\tWhen used in --help mode\n");
@@ -277,7 +277,7 @@ void do_usage (void)
  */
 static void parse_options (char *argv[])
 {
-  const struct option *opt;
+  const struct my_option *opt;
   char *const *ptr;
   const char *arg = NULL;
 
