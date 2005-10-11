@@ -58,11 +58,8 @@ static void test_GetRandomRgn(void)
     ret = GetRandomRgn(hdc, hrgn, 2);
     ok(ret == 0, "GetRandomRgn rets %d\n", ret);
 
-    todo_wine
-    {
-        ret = GetRandomRgn(hdc, hrgn, 3);
-        ok(ret != 0, "GetRandomRgn rets %d\n", ret);
-    }
+    ret = GetRandomRgn(hdc, hrgn, 3);
+    ok(ret != 0, "GetRandomRgn rets %d\n", ret);
     GetRgnBox(hrgn, &ret_rc);
     ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %ld,%ld - %ld,%ld\n",
        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom);
@@ -78,11 +75,8 @@ static void test_GetRandomRgn(void)
     ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %ld,%ld - %ld,%ld\n",
        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom);
 
-    todo_wine
-    {
-        ret = GetRandomRgn(hdc, hrgn, 3);
-        ok(ret != 0, "GetRandomRgn rets %d\n", ret);
-    }
+    ret = GetRandomRgn(hdc, hrgn, 3);
+    ok(ret != 0, "GetRandomRgn rets %d\n", ret);
     GetRgnBox(hrgn, &ret_rc);
     ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %ld,%ld - %ld,%ld\n",
        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom);

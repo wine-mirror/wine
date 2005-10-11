@@ -566,6 +566,8 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
         break;
     case 3:
         rgn = dc->hMetaClipRgn;
+        if(!rgn) rgn = dc->hClipRgn;
+        if(!rgn) rgn = dc->hMetaRgn;
         break;
     case SYSRGN: /* == 4 */
         rgn = dc->hVisRgn;
