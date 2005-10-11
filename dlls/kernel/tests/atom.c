@@ -461,13 +461,17 @@ static void test_local_get_atom_name(void)
             ok( !len, "bad length %d\n", len );
 
         len = GetAtomNameA( (ATOM)i, buf, 1);
-        ok(!len, "succeed\n");
+        ok(!len, "succeed with %u for %u\n", len, i);
+
+        /* ERROR_MORE_DATA is on nt3.51 sp5 */
         if (i)
-            todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
-                         GetLastError() == 0xdeadbeef, /* the Win 9x way */
-                         "wrong error conditions %lu for %u\n", GetLastError(), i);
+            ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
+               GetLastError() == ERROR_MORE_DATA ||
+               GetLastError() == 0xdeadbeef, /* the Win 9x way */
+               "wrong error conditions %lu for %u\n", GetLastError(), i);
         else
             ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+               GetLastError() == ERROR_MORE_DATA ||
                GetLastError() == 0xdeadbeef, /* the Win 9x way */
                "wrong error conditions %lu for %u\n", GetLastError(), i);
     }
@@ -494,7 +498,11 @@ static void test_local_get_atom_name(void)
     do_initA(in, "abcdefghij", 256);
     atom = AddAtomA(in);
     ok(!atom, "succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == 0xdeadbeef, /* the Win 9x way */
+
+    /* ERROR_MORE_DATA is on nt3.51 sp5 */
+    ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+       GetLastError() == ERROR_MORE_DATA ||
+       GetLastError() == 0xdeadbeef, /* the Win 9x way */
        "wrong error code (%lu)\n", GetLastError());
 
     if (unicode_OS)
@@ -520,8 +528,11 @@ static void test_local_get_atom_name(void)
                 ok( !len, "bad length %d\n", len );
 
             len = GetAtomNameW( (ATOM)i, outW, 1);
-            ok(!len, "succeed\n");
-            ok(GetLastError() == (i ? ERROR_INSUFFICIENT_BUFFER : ERROR_INVALID_PARAMETER),
+            ok(!len, "succeed with %u for %u\n", len, i);
+
+            /* ERROR_MORE_DATA is on nt3.51 sp5 */
+            ok(GetLastError() == ERROR_MORE_DATA ||
+               GetLastError() == (i ? ERROR_INSUFFICIENT_BUFFER : ERROR_INVALID_PARAMETER),
                "wrong error conditions %lu for %u\n", GetLastError(), i);
         }
         do_initW(inW, "abcdefghij", 255);
@@ -546,7 +557,11 @@ static void test_local_get_atom_name(void)
         do_initW(inW, "abcdefghij", 256);
         atom = AddAtomW(inW);
         ok(!atom, "succeeded\n");
-        ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error code (%lu)\n", GetLastError());
+
+        /* ERROR_MORE_DATA is on nt3.51 sp5 */
+        ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+           GetLastError() == ERROR_MORE_DATA,
+           "wrong error code (%lu)\n", GetLastError());
     }
 }
 
