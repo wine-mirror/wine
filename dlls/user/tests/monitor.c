@@ -23,6 +23,21 @@
 #include "wingdi.h"
 #include "winuser.h"
 
+static HMODULE hdll;
+static BOOL (WINAPI *pEnumDisplayMonitors)(HDC,LPRECT,MONITORENUMPROC,LPARAM);
+static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
+
+static void init_function_pointers(void)
+{
+    hdll = GetModuleHandleA("user32.dll");
+
+    if(hdll)
+    {
+       pEnumDisplayMonitors = (void*)GetProcAddress(hdll, "EnumDisplayMonitors");
+       pGetMonitorInfoA = (void*)GetProcAddress(hdll, "GetMonitorInfoA");
+    }
+}
+
 static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc,
                                        LPARAM lparam)
 {
@@ -31,7 +46,7 @@ static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc,
 
     mi.cbSize = sizeof(mi);
 
-    ok(GetMonitorInfoA(hmon, (MONITORINFO*)&mi), "GetMonitorInfo failed\n");
+    ok(pGetMonitorInfoA(hmon, (MONITORINFO*)&mi), "GetMonitorInfo failed\n");
     if(mi.dwFlags == MONITORINFOF_PRIMARY)
         strcpy(primary, mi.szDevice);
 
@@ -61,17 +76,19 @@ static void test_enumdisplaydevices(void)
     }
     ok(primary_num != -1, "Didn't get the primary device\n");
 
-    ok(EnumDisplayMonitors(NULL, NULL, monitor_enum_proc, (LPARAM)primary_monitor_device_name),
-       "EnumDisplayMonitors failed\n");
+    if(pEnumDisplayMonitors && pGetMonitorInfoA) {
+        ok(pEnumDisplayMonitors(NULL, NULL, monitor_enum_proc, (LPARAM)primary_monitor_device_name),
+           "EnumDisplayMonitors failed\n");
 
-    ok(!strcmp(primary_monitor_device_name, primary_device_name),
-       "monitor device name %s, device name %s\n", primary_monitor_device_name,
-       primary_device_name);
+        ok(!strcmp(primary_monitor_device_name, primary_device_name),
+           "monitor device name %s, device name %s\n", primary_monitor_device_name,
+           primary_device_name);
+    }
 }
-
 
 
 START_TEST(monitor)
 {
+    init_function_pointers();
     test_enumdisplaydevices();
 }
