@@ -1112,10 +1112,12 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
 	else 
 	    /* PROFILE_GetString can handle the 'entry == NULL' case */
             ret = PROFILE_GetString( section, entry, pDefVal, buffer, len, win32 );
-    } else {
+    } else if (buffer && pDefVal) {
        lstrcpynW( buffer, pDefVal, len );
        ret = strlenW( buffer );
     }
+    else
+       ret = 0;
 
     RtlLeaveCriticalSection( &PROFILE_CritSect );
 
