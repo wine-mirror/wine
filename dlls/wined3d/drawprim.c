@@ -1949,7 +1949,13 @@ void drawPrimitive(IWineD3DDevice *iface,
     Direct3DVertexStridedData     dataLocations;
     int                           useHW = FALSE;
 
-    useVertexShaderFunction = This->stateBlock->vertexShader != NULL ? wined3d_settings.vs_mode != VS_NONE ? ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->function != NULL ? TRUE: FALSE : FALSE : FALSE;
+    if (This->stateBlock->vertexShader != NULL && wined3d_settings.vs_mode != VS_NONE 
+            &&((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->function != NULL 
+            && GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+        useVertexShaderFunction = TRUE;
+    } else {
+        useVertexShaderFunction = FALSE;
+    }
 
     if (This->stateBlock->vertexDecl == NULL) {
         /* Work out what the FVF should look like */

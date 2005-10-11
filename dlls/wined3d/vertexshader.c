@@ -1614,23 +1614,25 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     PNSTRCAT(pgmStr, tmpLine);
 
   }
-/* finally null terminate the pgmStr*/
+  /* finally null terminate the pgmStr*/
   pgmStr[pgmLength] = 0;
-  /*  Create the hw shader */
-    /* TODO: change to resource.glObjectHandel or something like that */
-  GL_EXTCALL(glGenProgramsARB(1, &This->prgId));
-  TRACE("Creating a hw vertex shader, prg=%d\n", This->prgId);
 
-  GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, This->prgId));
+  /* Check that Vertex Shaders are supported */
+  if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+      /*  Create the hw shader */
+      /* TODO: change to resource.glObjectHandel or something like that */
+      GL_EXTCALL(glGenProgramsARB(1, &This->prgId));
+      TRACE("Creating a hw vertex shader, prg=%d\n", This->prgId);
+      GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, This->prgId));
 
-
-  /* Create the program and check for errors */
-  GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(pgmStr)/*pgmLength*/, pgmStr));
-  if (glGetError() == GL_INVALID_OPERATION) {
-    GLint errPos;
-    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
-    FIXME("HW VertexShader Error at position: %d\n%s\n", errPos, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
-    This->prgId = -1;
+      /* Create the program and check for errors */
+      GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(pgmStr)/*pgmLength*/, pgmStr));
+      if (glGetError() == GL_INVALID_OPERATION) {
+          GLint errPos;
+          glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
+          FIXME("HW VertexShader Error at position: %d\n%s\n", errPos, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+          This->prgId = -1;
+      }
   }
 #if 1 /* if were using the data buffer of device then we don't need to free it */
   HeapFree(GetProcessHeap(), 0, pgmStr);
