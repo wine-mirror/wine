@@ -471,8 +471,6 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
             ok(ref==1,"IDirectSoundBuffer_Release() has %d references, "
                "should have 1\n",ref);
 
-#if 0
-            /* FIXME: this works on windows */
             ref=IDirectSoundBuffer_Release(dsbo);
             ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
                "should have 0\n",ref);
@@ -482,7 +480,6 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
                                                    (LPVOID *)&dsbo);
             ok(rc==DS_OK && dsbo!=NULL,"IDirectSound3DBuffer_QueryInterface() "
                "failed: %s\n",DXGetErrorString8(rc));
-#endif
 
             /* DSOUND: Error: Invalid buffer */
             rc=IDirectSound3DBuffer_GetAllParameters(buffer,0);
