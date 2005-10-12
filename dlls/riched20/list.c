@@ -181,7 +181,7 @@ void ME_DumpDocument(ME_TextBuffer *buffer)
           pItem->member.run.nCharOfs);
         break;
       case diTextEnd:
-        TRACE("\nEnd\n");
+        TRACE("\nEnd(ofs=%d)\n", pItem->member.para.nCharOfs);
         break;
       default:
         break;
