@@ -903,12 +903,14 @@ HRESULT d3dtexture_create(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surf, BO
 	private->tex_name = 0;
 	if (surf->mipmap_level == 0) {
 	    private->main = NULL;
+	    private->__global_dirty_flag = SURFACE_MEMORY_DIRTY;
 	    private->global_dirty_flag = &(private->__global_dirty_flag);
 	} else {
 	    private->main = main;
 	    private->global_dirty_flag = &(((IDirect3DTextureGLImpl *) (private->main->tex_private))->__global_dirty_flag);
 	}
 	private->initial_upload_done = FALSE;
+	private->dirty_flag = SURFACE_MEMORY_DIRTY;
     }
 
     return D3D_OK;
@@ -925,15 +927,11 @@ GLuint gltex_get_tex_name(IDirectDrawSurfaceImpl *surf)
 	    glGenTextures(1, &(private->tex_name));
 	    if (private->tex_name == 0) ERR("Error at creation of OpenGL texture ID !\n");
 	    TRACE(" GL texture id is : %d.\n", private->tex_name);
-	    private->__global_dirty_flag = SURFACE_MEMORY_DIRTY;
 	} else {
 	    private->tex_name = gltex_get_tex_name(private->main);
 	    TRACE(" GL texture id reusing id %d from surface %p (private at %p)).\n", private->tex_name, private->main, private->main->tex_private);
 	}
 	LEAVE_GL();
-
-	/* And set the dirty flag accordingly */
-	private->dirty_flag = SURFACE_MEMORY_DIRTY;
     }
     return ((IDirect3DTextureGLImpl *) (surf->tex_private))->tex_name;
 }

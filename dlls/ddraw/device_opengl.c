@@ -1325,6 +1325,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
     int num_active_stages = 0;
     int num_tex_index = GET_TEXCOUNT_FROM_FVF(d3dvtVertexType);
+    BOOL reenable_depth_test = FALSE;
     
     /* I put the trace before the various locks... So as to better understand where locks occur :-) */
     if (TRACE_ON(ddraw)) {
@@ -1349,9 +1350,12 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	
 	hr = IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(This->surface, IDirectDrawSurface7),
 						    (DDSCAPS2 *) &zbuf_caps, &zbuf);
-	if (!FAILED(hr)) {
+	if (SUCCEEDED(hr)) {
 	    This->current_zbuffer = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, zbuf);
 	    IDirectDrawSurface7_Release(zbuf);
+	} else if (glThis->depth_test) {
+	    glDisable(GL_DEPTH_TEST);
+	    reenable_depth_test = TRUE;
 	}
     }
     if (This->current_zbuffer != NULL) {
@@ -1614,6 +1618,9 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 
     /* Whatever the case, disable the color material stuff */
     glDisable(GL_COLOR_MATERIAL);
+
+    if (reenable_depth_test)
+	glEnable(GL_DEPTH_TEST);
 
     LEAVE_GL();
     TRACE("End\n");    
