@@ -826,8 +826,8 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINE
                 switch (bpp) {
                 case  8: pMode->Format = D3DFMT_R3G3B2;   break;
                 case 16: pMode->Format = D3DFMT_R5G6B5;   break;
-                case 24: /* Robots needs 24 and 32 bit as X8R8G8B8 to start */
-                case 32: pMode->Format = D3DFMT_X8R8G8B8; break;
+                case 24: /* Robots and EVE Online need 24 and 32 bit as A8R8G8B8 to start */
+                case 32: pMode->Format = D3DFMT_A8R8G8B8; break;
                 default: pMode->Format = D3DFMT_UNKNOWN;
                 }
             } else {
@@ -886,7 +886,7 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT Adapter,
         case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
         case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
         case 24: pMode->Format       = D3DFMT_X8R8G8B8; break; /* Robots needs 24bit to be X8R8G8B8 */
-        case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
+        case 32: pMode->Format       = D3DFMT_X8R8G8B8; break; /* EVE online and the Fur demo need 32bit AdapterDisplatMode to return X8R8G8B8 */
         default: pMode->Format       = D3DFMT_UNKNOWN;
         }
 
