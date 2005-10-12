@@ -2147,7 +2147,7 @@ BOOL WINAPI EnumEnhMetaFile(
     enum_emh_data *info;
     SIZE vp_size, win_size;
     POINT vp_org, win_org;
-    INT mapMode = MM_TEXT;
+    INT mapMode = MM_TEXT, old_align = 0, old_rop2 = 0, old_arcdir = 0, old_polyfill = 0, old_stretchblt = 0;
     COLORREF old_text_color = 0, old_bk_color = 0;
 
     if(!lpRect && hdc)
@@ -2201,6 +2201,11 @@ BOOL WINAPI EnumEnhMetaFile(
 
         old_text_color = SetTextColor(hdc, RGB(0,0,0));
         old_bk_color = SetBkColor(hdc, RGB(0xff, 0xff, 0xff));
+        old_align = SetTextAlign(hdc, 0);
+        old_rop2 = SetROP2(hdc, R2_COPYPEN);
+        old_arcdir = SetArcDirection(hdc, AD_COUNTERCLOCKWISE);
+        old_polyfill = SetPolyFillMode(hdc, ALTERNATE);
+        old_stretchblt = SetStretchBltMode(hdc, BLACKONWHITE);
     }
 
     info->mode = MM_TEXT;
@@ -2280,6 +2285,11 @@ BOOL WINAPI EnumEnhMetaFile(
 
     if (hdc)
     {
+        SetStretchBltMode(hdc, old_stretchblt);
+        SetPolyFillMode(hdc, old_polyfill);
+        SetArcDirection(hdc, old_arcdir);
+        SetROP2(hdc, old_rop2);
+        SetTextAlign(hdc, old_align);
         SetBkColor(hdc, old_bk_color);
         SetTextColor(hdc, old_text_color);
 

@@ -55,6 +55,18 @@ static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     switch (emr->iType)
     {
     case EMR_HEADER:
+        ok(GetTextAlign(hdc) == 0, "text align %08x\n", GetTextAlign(hdc));
+        ok(GetBkColor(hdc) == RGB(0xff, 0xff, 0xff), "bk color %08lx\n", GetBkColor(hdc));
+        ok(GetTextColor(hdc) == RGB(0x0, 0x0, 0x0), "text color %08lx\n", GetTextColor(hdc));
+        ok(GetROP2(hdc) == R2_COPYPEN, "rop %d\n", GetROP2(hdc));
+        ok(GetArcDirection(hdc) == AD_COUNTERCLOCKWISE, "arc dir %d\n", GetArcDirection(hdc));
+        ok(GetPolyFillMode(hdc) == ALTERNATE, "poly fill %d\n", GetPolyFillMode(hdc));
+        ok(GetStretchBltMode(hdc) == BLACKONWHITE, "stretchblt mode %d\n", GetStretchBltMode(hdc));
+
+        /* GetBkMode, GetRelAbs do not get reset to the default value */
+        ok(GetBkMode(hdc) == OPAQUE, "bk mode %d\n", GetBkMode(hdc));
+        ok(GetRelAbs(hdc, 0) == RELATIVE, "relabs %d\n", GetRelAbs(hdc, 0));
+
         n_record = 0;
         break;
 
@@ -189,8 +201,28 @@ static void test_ExtTextOut(void)
     ret = PlayEnhMetaFile(hdcDisplay, hMetafile, &rc);
     ok( ret, "PlayEnhMetaFile error %ld\n", GetLastError());
 
+    SetTextAlign(hdcDisplay, TA_UPDATECP | TA_CENTER | TA_BASELINE | TA_RTLREADING );
+    SetBkColor(hdcDisplay, RGB(0xff, 0, 0));
+    SetTextColor(hdcDisplay, RGB(0, 0xff, 0));
+    SetROP2(hdcDisplay, R2_NOT);
+    SetArcDirection(hdcDisplay, AD_CLOCKWISE);
+    SetPolyFillMode(hdcDisplay, WINDING);
+    SetStretchBltMode(hdcDisplay, HALFTONE);
+
+    SetRelAbs(hdcDisplay, RELATIVE);
+    SetBkMode(hdcDisplay, OPAQUE);
+
     ret = EnumEnhMetaFile(hdcDisplay, hMetafile, emf_enum_proc, dx, &rc);
     ok( ret, "EnumEnhMetaFile error %ld\n", GetLastError());
+
+    ok( GetTextAlign(hdcDisplay) == (TA_UPDATECP | TA_CENTER | TA_BASELINE | TA_RTLREADING),
+        "text align %08x\n", GetTextAlign(hdcDisplay));
+    ok( GetBkColor(hdcDisplay) == RGB(0xff, 0, 0), "bk color %08lx\n", GetBkColor(hdcDisplay));
+    ok( GetTextColor(hdcDisplay) == RGB(0, 0xff, 0), "text color %08lx\n", GetTextColor(hdcDisplay));
+    ok( GetROP2(hdcDisplay) == R2_NOT, "rop2 %d\n", GetROP2(hdcDisplay));
+    ok( GetArcDirection(hdcDisplay) == AD_CLOCKWISE, "arc dir  %d\n", GetArcDirection(hdcDisplay));
+    ok( GetPolyFillMode(hdcDisplay) == WINDING, "poly fill %d\n", GetPolyFillMode(hdcDisplay));
+    ok( GetStretchBltMode(hdcDisplay) == HALFTONE, "stretchblt mode %d\n", GetStretchBltMode(hdcDisplay));
 
     ok(emr_processed, "EnumEnhMetaFile couldn't find EMR_EXTTEXTOUTA or EMR_EXTTEXTOUTW record\n");
 
