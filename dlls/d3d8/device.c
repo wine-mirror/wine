@@ -1154,8 +1154,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDi
 	    IDirect3DSurface8* dstSur = NULL;
 	    for (j = 0; j < 5; ++j) {
 	      hr = IDirect3DCubeTexture8Impl_GetCubeMapSurface((LPDIRECT3DCUBETEXTURE8) src, j, i, &srcSur);
-	      hr = IDirect3DCubeTexture8Impl_GetCubeMapSurface((LPDIRECT3DCUBETEXTURE8) dst, j, i - skipLevels, &srcSur);
-	      FIXME("D3DRTYPE_CUBETEXTURE does not support UpdateTexture yet\n");
+	      hr = IDirect3DCubeTexture8Impl_GetCubeMapSurface((LPDIRECT3DCUBETEXTURE8) dst, j, i - skipLevels, &dstSur);
+	      
+	      IDirect3DDevice8Impl_CopyRects(iface, srcSur, NULL, 0, dstSur, NULL);
+
 	      IDirect3DSurface8Impl_Release(srcSur);
 	      IDirect3DSurface8Impl_Release(dstSur);
 	    }
