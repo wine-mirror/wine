@@ -189,8 +189,46 @@ static HRESULT remove_value(HKEY root, const char *subkey, const char *name)
 }
 
 /* removes the requested subkey from the registry, assuming it exists */
-static HRESULT remove_path(HKEY root, char *section) {
+static LONG remove_path(HKEY root, char *section) {
+    HKEY branch_key;
+    DWORD max_sub_key_len;
+    DWORD subkeys;
+    DWORD curr_len;
+    LONG ret = ERROR_SUCCESS;
+    long int i;
+    char *buffer;
+
     WINE_TRACE("section=%s\n", section);
+
+    if ((ret = RegOpenKey(root, section, &branch_key)) != ERROR_SUCCESS)
+        return ret;
+
+    /* get size information and resize the buffers if necessary */
+    if ((ret = RegQueryInfoKey(branch_key, NULL, NULL, NULL,
+                               &subkeys, &max_sub_key_len,
+                               NULL, NULL, NULL, NULL, NULL, NULL
+                              )) != ERROR_SUCCESS)
+        return ret;
+
+    curr_len = strlen(section);
+    buffer = HeapAlloc(GetProcessHeap(), 0, max_sub_key_len + curr_len + 1);
+    strcpy(buffer, section);
+
+    buffer[curr_len] = '\\';
+    for (i = subkeys - 1; i >= 0; i--)
+    {
+        DWORD buf_len = max_sub_key_len - curr_len - 1;
+
+        ret = RegEnumKeyEx(branch_key, i, buffer + curr_len + 1,
+                           &buf_len, NULL, NULL, NULL, NULL);
+        if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA &&
+            ret != ERROR_NO_MORE_ITEMS)
+            break;
+        else
+            remove_path(root, buffer);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+    RegCloseKey(branch_key);
 
     return RegDeleteKey(root, section);
 }
