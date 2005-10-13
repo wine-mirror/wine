@@ -28,11 +28,10 @@ IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
 STYLE WS_CHILD
 FONT 9, "MS UI Gothic"
 BEGIN
-    LTEXT           "Wine ÉoÅ[ÉWÉáÉì:",IDC_STATIC,119,17,55,8
-    LTEXT           "CVS",IDC_WINEVER,179,17,56,8
+    LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    CTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
+    LTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_STATIC,119,44,124,72
 END
 
