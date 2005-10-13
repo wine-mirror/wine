@@ -1734,7 +1734,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
         pt.x = 0;
         pt.y = editor->pBuffer->pLast->member.para.nYPos;
     }
-    pt.y += ME_GetParagraph(pRun)->member.para.nYPos;
     if (wParam >= 0x40000) {
         *(POINTL *)wParam = pt;
     }
