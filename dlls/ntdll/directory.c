@@ -268,6 +268,16 @@ static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
                 return device + 4;
             }
         }
+        else if (!stat( entry->mnt_fsname, &st ) && S_ISREG(st.st_mode))
+        {
+            /* if device is a regular file check for a loop mount */
+            if ((device = strstr( entry->mnt_opts, "loop=" )))
+            {
+                char *p = strchr( device + 5, ',' );
+                if (p) *p = 0;
+                return device + 5;
+            }
+        }
         else
             return entry->mnt_fsname;
     }
