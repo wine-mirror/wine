@@ -2627,19 +2627,10 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
         break;
 
     case 0x0f: /* SET LOGICAL DRIVE MAP */
-        {
-            WCHAR dev[3], tgt[4];
-
-            TRACE("IOCTL - SET LOGICAL DRIVE MAP for drive %s\n",
-		  INT21_DriveName( BL_reg(context)));
-            dev[0] = 'A' + drive; dev[1] = ':'; dev[2] = 0;
-            tgt[0] = 'A' + drive + 1; tgt[1] = ':'; tgt[2] = '\\'; tgt[3] = 0;
-            if (!DefineDosDeviceW(DDD_RAW_TARGET_PATH, dev, tgt))
-	    {
-		SET_CFLAG(context);
-		SET_AX( context, 0x000F );  /* invalid drive */
-	    }
-        }
+        TRACE("IOCTL - SET LOGICAL DRIVE MAP for drive %s\n",
+              INT21_DriveName( BL_reg(context)));
+        /* FIXME: as of today, we don't support logical drive mapping... */
+        SET_AL( context, 0 );
         break;
 
     case 0x11: /* QUERY GENERIC IOCTL CAPABILITY */
