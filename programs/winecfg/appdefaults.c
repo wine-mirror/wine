@@ -63,53 +63,52 @@ static const struct
 
 static void update_comboboxes(HWND dialog)
 {
-  int i;
+    int i;
 
-  char *winver;
+    char *winver;
   
-  /* retrieve the registry values */
-  winver = get_reg_key(config_key, keypath(""), "Version", "");
+    /* retrieve the registry values */
+    winver = get_reg_key(config_key, keypath(""), "Version", "");
 
-  /* empty winver means use automatic mode (ie the builtin dll linkage heuristics)  */
-  WINE_TRACE("winver is %s\n", *winver != '\0' ? winver : "null (automatic mode)");
+    if (*winver == '\0')
+    {
+        HeapFree(GetProcessHeap(), 0, winver);
 
-  /* normalize the version strings */
-  if (*winver != '\0')
-  {
-      for (i = 0; i < NB_VERSIONS; i++)
-      {
-	if (!strcasecmp (win_versions[i].szVersion, winver))
-	{
-	  SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL, (WPARAM) (i + 1), 0);
-	  WINE_TRACE("match with %s\n", win_versions[i].szVersion);
+        if (current_app) /* no explicit setting */
+        {
+            WINE_TRACE("setting winver combobox to default\n");
+            SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL, 0, 0);
+            return;
+        }
+        winver = strdupA("win2k");
+    }
+    WINE_TRACE("winver is %s\n", winver);
+
+    /* normalize the version strings */
+    for (i = 0; i < NB_VERSIONS; i++)
+    {
+        if (!strcasecmp (win_versions[i].szVersion, winver))
+        {
+            SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL,
+                                (WPARAM) i + (current_app?1:0), 0);
+            WINE_TRACE("match with %s\n", win_versions[i].szVersion);
+            break;
 	}
-      }
-  }
-  else /* no explicit setting */
-  {
-    WINE_TRACE("setting winver combobox to automatic/default\n");
-    SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL, 0, 0);
-  }
+    }
 
-  HeapFree(GetProcessHeap(), 0, winver);
+    HeapFree(GetProcessHeap(), 0, winver);
 }
 
 static void
 init_comboboxes (HWND dialog)
 {
-  int i;
+    int i;
 
-  SendDlgItemMessage(dialog, IDC_WINVER, CB_RESETCONTENT, 0, 0);
+    SendDlgItemMessage(dialog, IDC_WINVER, CB_RESETCONTENT, 0, 0);
 
-  /* add the default entries (automatic) which correspond to no setting  */
-  if (current_app)
-  {
-      SendDlgItemMessage(dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM) "Use global settings");
-  }
-  else
-  {
-      SendDlgItemMessage(dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM) "Automatically detect required version");
-  }
+    /* add the default entries (automatic) which correspond to no setting  */
+    if (current_app)
+        SendDlgItemMessage(dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM) "Use global settings");
 
     for (i = 0; i < NB_VERSIONS; i++)
     {
@@ -313,18 +312,19 @@ static void on_winver_change(HWND dialog)
 {
     int selection = SendDlgItemMessage(dialog, IDC_WINVER, CB_GETCURSEL, 0, 0);
 
-    if (selection == 0)
+    if (!selection && current_app)
     {
-        WINE_TRACE("automatic/default selected so removing current setting\n");
+        WINE_TRACE("default selected so removing current setting\n");
         set_reg_key(config_key, keypath(""), "Version", NULL);
     }
     else
     {
-        WINE_TRACE("setting Version key to value '%s'\n", win_versions[selection - 1].szVersion);
-        set_reg_key(config_key, keypath(""), "Version", win_versions[selection - 1].szVersion);
+        if (current_app) selection--;
+        WINE_TRACE("setting Version key to value '%s'\n", win_versions[selection].szVersion);
+        set_reg_key(config_key, keypath(""), "Version", win_versions[selection].szVersion);
     }
     /* global version only */
-    if (!current_app && selection != 0)
+    if (!current_app)
     {
         static const char szKey9x[] = "Software\\Microsoft\\Windows\\CurrentVersion";
         static const char szKeyNT[] = "Software\\Microsoft\\Windows NT\\CurrentVersion";
@@ -332,13 +332,13 @@ static void on_winver_change(HWND dialog)
         static const char szKeyWindNT[] = "System\\CurrentControlSet\\Control\\Windows";
         char Buffer[40];
 
-        switch (win_versions[selection-1].dwPlatformId)
+        switch (win_versions[selection].dwPlatformId)
         {
         case VER_PLATFORM_WIN32_WINDOWS:
-            snprintf(Buffer, sizeof(Buffer), "%ld.%ld.%ld", win_versions[selection-1].dwMajorVersion,
-                     win_versions[selection-1].dwMinorVersion, win_versions[selection-1].dwBuildNumber);
+            snprintf(Buffer, sizeof(Buffer), "%ld.%ld.%ld", win_versions[selection].dwMajorVersion,
+                     win_versions[selection].dwMinorVersion, win_versions[selection].dwBuildNumber);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", Buffer);
-            set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", win_versions[selection-1].szCSDVersion);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", win_versions[selection].szCSDVersion);
 
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL);
@@ -348,16 +348,16 @@ static void on_winver_change(HWND dialog)
             break;
 
         case VER_PLATFORM_WIN32_NT:
-            snprintf(Buffer, sizeof(Buffer), "%ld.%ld", win_versions[selection-1].dwMajorVersion,
-                     win_versions[selection-1].dwMinorVersion);
+            snprintf(Buffer, sizeof(Buffer), "%ld.%ld", win_versions[selection].dwMajorVersion,
+                     win_versions[selection].dwMinorVersion);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", Buffer);
-            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", win_versions[selection-1].szCSDVersion);
-            snprintf(Buffer, sizeof(Buffer), "%ld", win_versions[selection-1].dwBuildNumber);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", win_versions[selection].szCSDVersion);
+            snprintf(Buffer, sizeof(Buffer), "%ld", win_versions[selection].dwBuildNumber);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", Buffer);
-            set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", win_versions[selection-1].szProductType);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", win_versions[selection].szProductType);
             set_reg_key_dword(HKEY_LOCAL_MACHINE, szKeyWindNT, "CSDVersion",
-                              MAKEWORD( win_versions[selection-1].wServicePackMinor,
-                                        win_versions[selection-1].wServicePackMajor ));
+                              MAKEWORD( win_versions[selection].wServicePackMinor,
+                                        win_versions[selection].wServicePackMajor ));
 
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", NULL);
