@@ -566,9 +566,6 @@ int WINAPI GetCalendarInfoA(LCID lcid, CALID Calendar, CALTYPE CalType,
     int ret;
     LPWSTR lpCalDataW = NULL;
 
-    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): quarter-stub\n",
-          lcid, Calendar, CalType, lpCalData, cchData, lpValue);
-
     lcid = ConvertDefaultLocale(lcid);
 
     if (NLS_IsUnicodeOnlyLcid(lcid))
@@ -597,9 +594,6 @@ int WINAPI GetCalendarInfoA(LCID lcid, CALID Calendar, CALTYPE CalType,
 int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 			    LPWSTR lpCalData, int cchData, LPDWORD lpValue)
 {
-    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): quarter-stub\n",
-	  Locale, Calendar, CalType, lpCalData, cchData, lpValue);
-
     if (CalType & CAL_NOUSEROVERRIDE)
 	FIXME("flag CAL_NOUSEROVERRIDE used, not fully implemented\n");
     if (CalType & CAL_USE_CP_ACP)
