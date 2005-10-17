@@ -290,6 +290,12 @@ User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
 
     TRACE("(%p)->(0x%08lx,%p,%p,%p)\n",iface,dwFlags,pDDSD,context,callback);
 
+    if (pDDSD && TRACE_ON(ddraw))
+    {
+	TRACE("Enumerate modes matching:\n");
+	DDRAW_dump_surface_desc(pDDSD);
+    }
+
     ZeroMemory(&callback_sd, sizeof(callback_sd));
     callback_sd.dwSize = sizeof(callback_sd);
 
@@ -301,12 +307,22 @@ User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
 
     callback_sd.u2.dwRefreshRate = 60.0;
 
-    i = 0;
-    while (EnumDisplaySettingsExW(NULL, i, &DevModeW, 0))
+    for (i = 0; EnumDisplaySettingsExW(NULL, i, &DevModeW, 0); i++)
     {
+	if (pDDSD)
+	{
+	    if ((pDDSD->dwFlags & DDSD_WIDTH) && (pDDSD->dwWidth != DevModeW.dmPelsWidth))
+		continue; 
+	    if ((pDDSD->dwFlags & DDSD_HEIGHT) && (pDDSD->dwHeight != DevModeW.dmPelsHeight))
+		continue; 
+	    if ((pDDSD->dwFlags & DDSD_PIXELFORMAT) && (pDDSD->u4.ddpfPixelFormat.dwFlags & DDPF_RGB) &&
+		(pDDSD->u4.ddpfPixelFormat.u1.dwRGBBitCount != DevModeW.dmBitsPerPel))
+		    continue; 
+	}
+
 	callback_sd.dwHeight = DevModeW.dmPelsHeight;
 	callback_sd.dwWidth = DevModeW.dmPelsWidth;
-        if (DevModeW.dmFields&DM_DISPLAYFREQUENCY)
+        if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
         {
             callback_sd.u2.dwRefreshRate = DevModeW.dmDisplayFrequency;
         }
@@ -331,7 +347,6 @@ User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
             callback_sd.u4.ddpfPixelFormat.u4.dwBBitMask);
         if (callback(&callback_sd, context) == DDENUMRET_CANCEL)
             return DD_OK;
-        i++;
     }
 
     return DD_OK;
