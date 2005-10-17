@@ -259,7 +259,7 @@ BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDe
    reg_driver_list = driver;
     
    return TRUE;
- oom:
+oom:
    HeapFree(GetProcessHeap(), 0, driver);
    return FALSE;
 }
@@ -270,7 +270,8 @@ BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDe
 BOOL VFWAPI ICRemove(DWORD fccType, DWORD fccHandler, UINT wFlags) 
 {
     reg_driver** pdriver;
-    
+    reg_driver*  drv;
+
     TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wFlags);
 
     /* Check if a driver is already registered */
@@ -284,9 +285,10 @@ BOOL VFWAPI ICRemove(DWORD fccType, DWORD fccHandler, UINT wFlags)
         return FALSE;
 
     /* Remove the driver from the list */
+    drv = *pdriver;
     *pdriver = (*pdriver)->next;
-    HeapFree(GetProcessHeap(), 0, (*pdriver)->name);
-    HeapFree(GetProcessHeap(), 0, *pdriver);
+    HeapFree(GetProcessHeap(), 0, drv->name);
+    HeapFree(GetProcessHeap(), 0, drv);
     
     return TRUE;  
 }
