@@ -30,6 +30,7 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "mmsystem.h"
 #include "mmddk.h"
 #include "winreg.h"

@@ -43,6 +43,7 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "winnls.h"
 #include "winreg.h"
 #include "mmsystem.h"
