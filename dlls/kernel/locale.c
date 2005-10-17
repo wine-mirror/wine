@@ -505,9 +505,9 @@ static LCID get_env_lcid( UINT *unix_cp, const char *env_str )
     char *buf, *lang,*country,*charset,*dialect,*next;
     LCID ret = 0;
 
-    if ((lang = getenv( "LC_ALL" )) ||
-        (env_str && (lang = getenv( env_str ))) ||
-        (lang = getenv( "LANG" )))
+    if (((lang = getenv( "LC_ALL" )) && *lang) ||
+        (env_str && (lang = getenv( env_str )) && *lang) ||
+        ((lang = getenv( "LANG" )) && *lang))
     {
         if (!strcmp(lang,"POSIX") || !strcmp(lang,"C")) goto done;
 
