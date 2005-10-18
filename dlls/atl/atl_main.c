@@ -107,7 +107,7 @@ HRESULT WINAPI AtlModuleTerm(_ATL_MODULEA* pM)
     return S_OK;
 }
 
-HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULEW *pM, _ATL_TERMFUNC pFunc, DWORD dw)
+HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULEW *pM, _ATL_TERMFUNC *pFunc, DWORD_PTR dw)
 {
     _ATL_TERMFUNC_ELEM *termfunc_elem;
 
