@@ -30,6 +30,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 
 #include "wine/test.h"
 
@@ -4535,7 +4536,8 @@ static void test_accelerators(void)
 
 /************* window procedures ********************/
 
-static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message, 
+			     WPARAM wParam, LPARAM lParam)
 {
     static long defwndproc_counter = 0;
     static long beginpaint_counter = 0;
@@ -4672,10 +4674,21 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
     }
 
     defwndproc_counter++;
-    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    ret = unicode ? DefWindowProcW(hwnd, message, wParam, lParam) 
+		  : DefWindowProcA(hwnd, message, wParam, lParam);
     defwndproc_counter--;
 
     return ret;
+}
+
+static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    return MsgCheckProc (FALSE, hwnd, message, wParam, lParam);
+}
+
+static LRESULT WINAPI MsgCheckProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    return MsgCheckProc (TRUE, hwnd, message, wParam, lParam);
 }
 
 static LRESULT WINAPI PopupMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -5020,6 +5033,32 @@ static LRESULT CALLBACK MsgConversionProcW(HWND hwnd, UINT uMsg, WPARAM wParam, 
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 }
 
+static const struct message WmGetTextLengthAfromW[] = {
+    { WM_GETTEXTLENGTH, sent },
+    { WM_GETTEXT, sent },
+    { 0 }
+};
+
+static const WCHAR testWindowClassW[] = 
+{ 'T','e','s','t','W','i','n','d','o','w','C','l','a','s','s','W',0 };
+
+static const WCHAR dummy_window_text[] = {'d','u','m','m','y',' ','t','e','x','t',0};
+
+/* dummy window proc for WM_GETTEXTLENGTH test */
+static LRESULT CALLBACK get_text_len_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    switch(msg)
+    {
+    case WM_GETTEXTLENGTH:
+        return lstrlenW(dummy_window_text) + 37;  /* some random length */
+    case WM_GETTEXT:
+        lstrcpynW( (LPWSTR)lp, dummy_window_text, wp );
+        return lstrlenW( (LPWSTR)lp );
+    default:
+        return DefWindowProcW( hwnd, msg, wp, lp );
+    }
+}
+
 static void test_message_conversion(void)
 {
     static const WCHAR wszMsgConversionClass[] =
@@ -5027,7 +5066,8 @@ static void test_message_conversion(void)
     WNDCLASSW cls;
     LRESULT lRes;
     HWND hwnd;
-    WNDPROC wndproc;
+    WNDPROC wndproc, newproc;
+    BOOL ret;
 
     cls.style = 0;
     cls.lpfnWndProc = MsgConversionProcW;
@@ -5041,6 +5081,18 @@ static void test_message_conversion(void)
     cls.lpszClassName = wszMsgConversionClass;
     /* this call will fail on Win9x, but that doesn't matter as this test is
      * meaningless on those platforms */
+    if(!RegisterClassW(&cls)) return;
+
+    cls.style = 0;
+    cls.lpfnWndProc = MsgCheckProcW;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleW(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorW(0, (LPWSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = testWindowClassW;
     if(!RegisterClassW(&cls)) return;
 
     hwnd = CreateWindowExW(0, wszMsgConversionClass, NULL, WS_OVERLAPPED,
@@ -5104,6 +5156,41 @@ static void test_message_conversion(void)
     lRes = SendMessageCallbackW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode, NULL, 0);
     ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
         "SendMessageCallback on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+
+    /* Check WM_GETTEXTLENGTH A->W behaviour, whether WM_GETTEXT is also sent or not */
+
+    hwnd = CreateWindowW (testWindowClassW, wszUnicode,
+                          WS_OVERLAPPEDWINDOW,
+                          100, 100, 200, 200, 0, 0, 0, NULL);
+    assert(hwnd);
+    flush_sequence();
+    lRes = SendMessageA (hwnd, WM_GETTEXTLENGTH, 0, 0);
+    ok_sequence(WmGetTextLengthAfromW, "ANSI WM_GETTEXTLENGTH to Unicode window", FALSE);
+    ok( lRes == WideCharToMultiByte( CP_ACP, 0, wszUnicode, lstrlenW(wszUnicode), NULL, 0, NULL, NULL ),
+        "got bad length %ld\n", lRes );
+
+    flush_sequence();
+    lRes = CallWindowProcA( (WNDPROC)GetWindowLongPtrA( hwnd, GWLP_WNDPROC ),
+                            hwnd, WM_GETTEXTLENGTH, 0, 0);
+    ok_sequence(WmGetTextLengthAfromW, "ANSI WM_GETTEXTLENGTH to Unicode window", FALSE);
+    ok( lRes == WideCharToMultiByte( CP_ACP, 0, wszUnicode, lstrlenW(wszUnicode), NULL, 0, NULL, NULL ),
+        "got bad length %ld\n", lRes );
+
+    wndproc = (WNDPROC)SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)get_text_len_proc );
+    newproc = (WNDPROC)GetWindowLongPtrA( hwnd, GWLP_WNDPROC );
+    lRes = CallWindowProcA( newproc, hwnd, WM_GETTEXTLENGTH, 0, 0 );
+    ok( lRes == WideCharToMultiByte( CP_ACP, 0, dummy_window_text, lstrlenW(dummy_window_text),
+                                     NULL, 0, NULL, NULL ),
+        "got bad length %ld\n", lRes );
+
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)wndproc );  /* restore old wnd proc */
+    lRes = CallWindowProcA( newproc, hwnd, WM_GETTEXTLENGTH, 0, 0 );
+    ok( lRes == WideCharToMultiByte( CP_ACP, 0, dummy_window_text, lstrlenW(dummy_window_text),
+                                     NULL, 0, NULL, NULL ),
+        "got bad length %ld\n", lRes );
+
+    ret = DestroyWindow(hwnd);
+    ok( ret, "DestroyWindow() error %ld\n", GetLastError());
 }
 
 typedef struct _thread_info

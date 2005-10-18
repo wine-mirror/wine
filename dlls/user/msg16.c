@@ -75,7 +75,8 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
         if (WINPROC_MapMsg16To32W( hwnd, msg, wparam, &msg32, &wparam32, &lparam ) == -1)
             return 0;
         result = WINPROC_UnmapMsg16To32W( hwnd, msg32, wparam32, lparam,
-                                          SendMessageW( hwnd, msg32, wparam32, lparam ) );
+                                          SendMessageW( hwnd, msg32, wparam32, lparam ),
+                                          NULL );
     }
     return result;
 }

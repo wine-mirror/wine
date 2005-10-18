@@ -2410,7 +2410,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
                 return 0;
             ret = send_inter_thread_message( dest_tid, &info, &result );
             result = WINPROC_UnmapMsg32ATo32W( info.hwnd, info.msg, info.wparam,
-                                               info.lparam, result );
+                                               info.lparam, result, NULL );
         }
         else ret = send_inter_thread_message( dest_tid, &info, &result );
     }
