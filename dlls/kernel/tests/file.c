@@ -1410,7 +1410,7 @@ static void test_OpenFile_exists(void)
     }
 
     hFile = OpenFile(".\\foo-bar-foo.baz", &ofs, OF_EXIST);
-    ok( hFile == FALSE, "hFile != FALSE : %ld\n", GetLastError());
+    ok( hFile == HFILE_ERROR, "hFile != HFILE_ERROR : %ld\n", GetLastError());
 }
 
 
