@@ -2741,7 +2741,7 @@ static INT EDIT_EM_GetLine(EDITSTATE *es, INT line, LPWSTR dst, BOOL unicode)
 	else
 	{
 	    INT ret = WideCharToMultiByte(CP_ACP, 0, src, line_len, (LPSTR)dst, dst_len, NULL, NULL);
-	    if(!ret) /* Insufficient buffer size */
+	    if(!ret && line_len) /* Insufficient buffer size */
 		return dst_len;
 	    if(ret < dst_len) /* Append 0 if enough space */
 		((LPSTR)dst)[ret] = 0;
