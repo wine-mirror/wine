@@ -2,6 +2,7 @@ LIBRARY libwine.dll
 
 EXPORTS
     __wine_dbg_get_channel_flags
+    __wine_dbg_set_channel_flags
     __wine_dbg_set_functions
     __wine_dll_register
     __wine_main_argc

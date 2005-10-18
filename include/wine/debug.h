@@ -149,6 +149,8 @@ struct __wine_debug_functions
 };
 
 extern unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel );
+extern int __wine_dbg_set_channel_flags( struct __wine_debug_channel *channel,
+                                         unsigned char set, unsigned char clear );
 extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs,
                                       struct __wine_debug_functions *old_funcs, size_t size );
 

@@ -62,6 +62,23 @@ unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel
     return default_flags;
 }
 
+/* set the flags to use for a given channel; return 0 if the channel is not available to set */
+int __wine_dbg_set_channel_flags( struct __wine_debug_channel *channel,
+                                  unsigned char set, unsigned char clear )
+{
+    if (nb_debug_options)
+    {
+        struct __wine_debug_channel *opt = bsearch( channel->name, debug_options, nb_debug_options,
+                                                    sizeof(debug_options[0]), cmp_name );
+        if (opt)
+        {
+            opt->flags = (opt->flags & ~clear) | set;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* add a new debug option at the end of the option list */
 static void add_option( const char *name, unsigned char set, unsigned char clear )
 {
