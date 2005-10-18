@@ -121,6 +121,8 @@ static void set_advanced(HWND dialog)
     ShowWindow(GetDlgItem(dialog, IDC_EDIT_SERIAL), state);
     ShowWindow(GetDlgItem(dialog, IDC_STATIC_SERIAL), state);
     ShowWindow(GetDlgItem(dialog, IDC_LABELSERIAL_STATIC), state);
+    ShowWindow(GetDlgItem(dialog, IDC_COMBO_TYPE), state);
+    ShowWindow(GetDlgItem(dialog, IDC_STATIC_TYPE), state);
 
     /* update the button text based on the state */
     SetWindowText(GetDlgItem(dialog, IDC_BUTTON_SHOW_HIDE_ADVANCED), text);
