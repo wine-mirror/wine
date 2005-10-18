@@ -49,8 +49,9 @@ static const char* D3D_VS_Modes[] = {
 int updating_ui;
 
 static void update_gui_for_desktop_mode(HWND dialog) {
-    WINE_TRACE("\n");
+    int desktopenabled = FALSE;
 
+    WINE_TRACE("\n");
     updating_ui = TRUE;
     
     /* do we have desktop mode enabled? */
@@ -58,28 +59,32 @@ static void update_gui_for_desktop_mode(HWND dialog) {
     {
         char* buf, *bufindex;
 	CheckDlgButton(dialog, IDC_ENABLE_DESKTOP, BST_CHECKED);
-	
-	enable(IDC_DESKTOP_WIDTH);
-	enable(IDC_DESKTOP_HEIGHT);
-	enable(IDC_DESKTOP_SIZE);
-	enable(IDC_DESKTOP_BY);
 
         buf = get_reg_key(config_key, keypath("X11 Driver"), "Desktop", "640x480");
-        bufindex = strchr(buf, 'x');
-        if (bufindex) {
-            *bufindex = 0;
-            ++bufindex;
-            SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), buf);
-            SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), bufindex);
-        } else {
-            WINE_TRACE("Desktop registry entry is malformed");
-            SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), "640");
-            SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), "480");
-        }
+        /* note: this test must match the one in x11drv */
+        if( buf[0] != 'n' &&  buf[0] != 'N' &&  buf[0] != 'F' &&  buf[0] != 'f'
+                &&  buf[0] != '0') {
+            desktopenabled = TRUE;
+            enable(IDC_DESKTOP_WIDTH);
+            enable(IDC_DESKTOP_HEIGHT);
+            enable(IDC_DESKTOP_SIZE);
+            enable(IDC_DESKTOP_BY);
 
+            bufindex = strchr(buf, 'x');
+            if (bufindex) {
+                *bufindex = 0;
+                ++bufindex;
+                SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), buf);
+                SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), bufindex);
+            } else {
+                WINE_TRACE("Desktop registry entry is malformed");
+                SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), "640");
+                SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), "480");
+            }
+        }
         HeapFree(GetProcessHeap(), 0, buf);
     }
-    else
+    if (!desktopenabled)
     {
 	CheckDlgButton(dialog, IDC_ENABLE_DESKTOP, BST_UNCHECKED);
 	
