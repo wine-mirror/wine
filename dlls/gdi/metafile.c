@@ -379,12 +379,10 @@ static METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
 METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mh, LPCVOID filename, BOOL uni )
 {
     METAHEADERDISK *mhd;
-    DWORD size;
 
     mh = HeapReAlloc( GetProcessHeap(), 0, mh,
 		      sizeof(METAHEADER) + sizeof(METAHEADERDISK));
     mh->mtType = METAFILE_DISK;
-    size = HeapSize( GetProcessHeap(), 0, mh );
     mhd = (METAHEADERDISK *)((char *)mh + sizeof(METAHEADER));
 
     if( uni )
@@ -475,7 +473,6 @@ HMETAFILE WINAPI CopyMetaFileW( HMETAFILE hSrcMetaFile, LPCWSTR lpFilename )
 	}
 	WriteFile(hFile, mh2, mh2->mtSize * 2, &w, NULL);
 	CloseHandle(hFile);
-        mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilename, TRUE);
     }
 
     return MF_Create_HMETAFILE( mh2 );

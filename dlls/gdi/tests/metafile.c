@@ -357,14 +357,53 @@ static int compare_mf_bits (const HMETAFILE mf, const unsigned char *bits, UINT 
     return diff; 
 }
 
+static int compare_mf_disk_bits(LPCSTR name, const BYTE *bits, UINT bsize, const char *desc)
+{
+    unsigned char buf[MF_BUFSIZE];
+    DWORD mfsize, rd_size, i;
+    int diff;
+    HANDLE hfile;
+    BOOL ret;
+
+    hfile = CreateFileA(name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    assert(hfile != INVALID_HANDLE_VALUE);
+
+    mfsize = GetFileSize(hfile, NULL);
+    assert(mfsize <= MF_BUFSIZE);
+
+    ret = ReadFile(hfile, buf, sizeof(buf), &rd_size, NULL);
+    ok( ret && rd_size == mfsize, "ReadFile: error %ld\n", GetLastError());
+
+    CloseHandle(hfile);
+
+    ok(mfsize == bsize, "%s: mfsize=%ld, bsize=%d.\n", desc, mfsize, bsize);
+
+    if (mfsize != bsize)
+        return -1;
+
+    diff = 0;
+    for (i=0; i<bsize; i++)
+    {
+        if (buf[i] != bits[i])
+            diff++;
+    }
+    ok(diff == 0, "%s: mfsize=%ld, bsize=%d, diff=%d\n",
+        desc, mfsize, bsize, diff);
+
+    return diff; 
+}
+
 /* Test a blank metafile.  May be used as a template for new tests. */
 
 static void test_mf_Blank(void)
 {
     HDC hdcMetafile;
-    HMETAFILE hMetafile;
+    HMETAFILE hMetafile, hmf_copy;
     INT caps;
     BOOL ret;
+    char temp_path[MAX_PATH];
+    char mf_name[MAX_PATH];
+    INT type;
 
     hdcMetafile = CreateMetaFileA(NULL);
     ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %ld\n", GetLastError());
@@ -377,14 +416,32 @@ static void test_mf_Blank(void)
 
     hMetafile = CloseMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
+    type = GetObjectType(hMetafile);
+    ok(type == OBJ_METAFILE, "CloseMetaFile created object with type %d\n", type);
     ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
 
     if (compare_mf_bits (hMetafile, MF_BLANK_BITS, sizeof(MF_BLANK_BITS),
         "mf_blank") != 0)
             dump_mf_bits (hMetafile, "mf_Blank");
 
+    GetTempPathA(MAX_PATH, temp_path);
+    GetTempFileNameA(temp_path, "wmf", 0, mf_name);
+    hmf_copy = CopyMetaFileA(hMetafile, mf_name);
+
+    ok(hmf_copy != 0, "CopyMetaFile error %ld\n", GetLastError());
+    type = GetObjectType(hmf_copy);
+    ok(type == OBJ_METAFILE, "CopyMetaFile created object with type %d\n", type);
+
     ret = DeleteMetaFile(hMetafile);
     ok( ret, "DeleteMetaFile(%p) error %ld\n", hMetafile, GetLastError());
+
+    if (compare_mf_disk_bits(mf_name, MF_BLANK_BITS, sizeof(MF_BLANK_BITS), "mf_blank") != 0)
+        dump_mf_bits(hmf_copy, "mf_Blank");
+
+    ret = DeleteMetaFile(hmf_copy);
+    ok( ret, "DeleteMetaFile(%p) error %ld\n", hmf_copy, GetLastError());
+
+    DeleteFileA(mf_name);
 }
 
 /* Simple APIs from mfdrv/graphics.c
