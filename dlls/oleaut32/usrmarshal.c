@@ -967,8 +967,24 @@ HRESULT CALLBACK ITypeInfo_GetContainingTypeLib_Proxy(
     ITypeLib** ppTLib,
     UINT* pIndex)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    ITypeLib *pTL;
+    UINT index;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %p)\n", This, ppTLib, pIndex );
+    
+    hr = ITypeInfo_RemoteGetContainingTypeLib_Proxy(This, &pTL, &index);
+    if(SUCCEEDED(hr))
+    {
+        if(pIndex)
+            *pIndex = index;
+
+        if(ppTLib)
+            *ppTLib = pTL;
+        else
+            ITypeLib_Release(pTL);
+    }
+    return hr;
 }
 
 HRESULT __RPC_STUB ITypeInfo_GetContainingTypeLib_Stub(
@@ -976,8 +992,8 @@ HRESULT __RPC_STUB ITypeInfo_GetContainingTypeLib_Stub(
     ITypeLib** ppTLib,
     UINT* pIndex)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    TRACE("(%p, %p, %p)\n", This, ppTLib, pIndex );
+    return ITypeInfo_GetContainingTypeLib(This, ppTLib, pIndex);
 }
 
 void CALLBACK ITypeInfo_ReleaseTypeAttr_Proxy(
