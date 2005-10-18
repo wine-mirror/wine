@@ -833,6 +833,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
 {
     UNICODE_STRING      wstr;
+    HMODULE             res;
 
     if (!libnameW)
     {
@@ -840,7 +841,20 @@ HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
         return 0;
     }
     RtlInitUnicodeString( &wstr, libnameW );
-    return load_library( &wstr, flags );
+    if (wstr.Buffer[wstr.Length/sizeof(WCHAR) - 1] != ' ')
+        return load_library( &wstr, flags );
+
+    /* Library name has trailing spaces */
+    RtlCreateUnicodeString( &wstr, libnameW );
+    while (wstr.Length > sizeof(WCHAR) &&
+           wstr.Buffer[wstr.Length/sizeof(WCHAR) - 1] == ' ')
+    {
+        wstr.Length -= sizeof(WCHAR);
+    }
+    wstr.Buffer[wstr.Length/sizeof(WCHAR)] = '\0';
+    res = load_library( &wstr, flags );
+    RtlFreeUnicodeString( &wstr );
+    return res;
 }
 
 /***********************************************************************
