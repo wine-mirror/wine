@@ -421,6 +421,11 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
         if (!ntpath->Buffer) return FALSE;
         memcpy( ntpath->Buffer, dos_path, ntpath->MaximumLength );
         ntpath->Buffer[1] = '?';  /* change \\?\ to \??\ */
+        if (file_part)
+        {
+            if ((ptr = strrchrW( ntpath->Buffer, '\\' )) && ptr[1]) *file_part = ptr + 1;
+            else *file_part = NULL;
+        }
         return TRUE;
     }
 
