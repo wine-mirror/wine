@@ -276,10 +276,8 @@ static void test_32bit_win(void)
 #endif
     } VS_VERSION_INFO_STRUCT32;
 
-    /* If we call GetFileVersionInfoA on a system that supports Unicode (NT/W2K/XP/W2K3 by default)
-     * then the versioninfo will contain Unicode strings.
-     * Wine however always converts a VersionInfo32 to VersionInfo16 when called through GetFileVersionInfoA
-     * regardless of Windows version
+    /* If we call GetFileVersionInfoA on a system that supports Unicode, NT/W2K/XP/W2K3 (by default) and Wine,
+     * the versioninfo will contain Unicode strings.
      * Part of the test is to call both the A and W versions, which should have the same Version Information
      * for some requests, on systems that support both calls.
      */
