@@ -364,7 +364,10 @@ static int dump_advertise_info(int fd, const char *type)
         comp = &avt->bufA[20];
         feat = strchr(comp,'>');
         if (feat)
+        {
             memcpy( comp_str, comp, feat - comp );
+            comp_str[feat-comp] = 0;
+        }
         else
             strcpy( prod_str, "?" );
 
