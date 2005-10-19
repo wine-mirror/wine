@@ -26,6 +26,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "comctl32.h"
+#include "uxtheme.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(theming);
@@ -113,6 +114,8 @@ void THEMING_Initialize (void)
     static const WCHAR refDataPropName[] = 
         { 'C','C','3','2','T','h','e','m','i','n','g','D','a','t','a',0 };
 
+    if (!IsThemeActive()) return;
+
     atSubclassProp = GlobalAddAtomW (subclassPropName);
     atRefDataProp = GlobalAddAtomW (refDataPropName);
 
@@ -154,6 +157,9 @@ void THEMING_Initialize (void)
 void THEMING_Uninitialize (void)
 {
     int i;
+
+    if (!atSubclassProp) return;  /* not initialized */
+
     for (i = 0; i < NUM_SUBCLASSES; i++)
     {
         UnregisterClassW (subclasses[i].className, NULL);
