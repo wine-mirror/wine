@@ -1665,7 +1665,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             memcpy( &ascii_req[len-1], lpOptional, dwOptionalLength );
         len = (len + dwOptionalLength - 1);
         ascii_req[len] = 0;
-        TRACE("full request -> %s\n", ascii_req );
+        TRACE("full request -> %s\n", debugstr_a(ascii_req) );
 
         SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
