@@ -1565,16 +1565,19 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     }
     else
     {
-        LPWSTR buffer = HeapAlloc(GetProcessHeap(), 0, (nCount + 1) * sizeof(WCHAR));
-        DWORD buflen = ex->cb;
-        LRESULT rc;
-        DWORD flags = 0;
+      /* potentially each char may be a CR, why calculate the exact value with O(N) when
+        we can just take a bigger buffer? :) */
+      int crlfmul = (ex->flags & GT_USECRLF) ? 2 : 1;
+      LPWSTR buffer = HeapAlloc(GetProcessHeap(), 0, (crlfmul*nCount + 1) * sizeof(WCHAR));
+      DWORD buflen = ex->cb;
+      LRESULT rc;
+      DWORD flags = 0;
 
-        buflen = ME_GetTextW(editor, buffer, nStart, nCount, ex->flags & GT_USECRLF);
-        rc = WideCharToMultiByte(ex->codepage, flags, buffer, buflen, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefaultChar);
+      buflen = ME_GetTextW(editor, buffer, nStart, nCount, ex->flags & GT_USECRLF);
+      rc = WideCharToMultiByte(ex->codepage, flags, buffer, buflen, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefaultChar);
 
-        HeapFree(GetProcessHeap(),0,buffer);
-        return rc;
+      HeapFree(GetProcessHeap(),0,buffer);
+      return rc;
     }
   }
   case EM_GETSELTEXT:
@@ -1590,6 +1593,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_GETTEXTRANGE:
   {
     TEXTRANGEW *rng = (TEXTRANGEW *)lParam;
+    TRACE("EM_GETTEXTRANGE min=%ld max=%ld unicode=%d emul1.0=%d length=%d\n",
+      rng->chrg.cpMin, rng->chrg.cpMax, IsWindowUnicode(hWnd), 
+      editor->bEmulateVersion10, ME_GetTextLength(editor));
     if (IsWindowUnicode(hWnd))
       return ME_GetTextW(editor, rng->lpstrText, rng->chrg.cpMin, rng->chrg.cpMax-rng->chrg.cpMin, editor->bEmulateVersion10);
     else
@@ -2037,12 +2043,12 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
 {
   ME_DisplayItem *item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
   int nWritten = 0;
+  WCHAR *pStart = buffer;
   
   if (!item) {
     *buffer = L'\0';
     return 0;
   }
-  assert(item);    
   
   if (nStart)
   {
@@ -2086,12 +2092,14 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
       
     if (!nChars)
     {
+      TRACE("nWritten=%d, actual=%d\n", nWritten, buffer-pStart);
       *buffer = L'\0';
       return nWritten;
     }
     item = ME_FindItemFwd(item, diRun);
   }
   *buffer = L'\0';
+  TRACE("nWritten=%d, actual=%d\n", nWritten, buffer-pStart);
   return nWritten;  
 }
 
