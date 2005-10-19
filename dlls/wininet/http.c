@@ -675,7 +675,6 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
     DWORD len;
     INTERNET_ASYNC_RESULT iar;
-    INTERNET_PORT port;
 
     TRACE("--> \n");
 
@@ -757,6 +756,11 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     else
         HTTP_ProcessHeader(lpwhr, g_szHost, lpwhs->lpszServerName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
 
+    if (lpwhs->nServerPort == INTERNET_INVALID_PORT_NUMBER)
+        lpwhs->nServerPort = (dwFlags & INTERNET_FLAG_SECURE ?
+                        INTERNET_DEFAULT_HTTPS_PORT :
+                        INTERNET_DEFAULT_HTTP_PORT);
+
     if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0)
         HTTP_DealWithProxy( hIC, lpwhs, lpwhr );
 
@@ -816,14 +820,8 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
                       INTERNET_STATUS_RESOLVING_NAME,
                       lpwhs->lpszServerName,
                       strlenW(lpwhs->lpszServerName)+1);
-    port = lpwhs->nServerPort;
 
-    if (port == INTERNET_INVALID_PORT_NUMBER)
-        port = (dwFlags & INTERNET_FLAG_SECURE ?
-                        INTERNET_DEFAULT_HTTPS_PORT :
-                        INTERNET_DEFAULT_HTTP_PORT);
-
-    if (!GetAddress(lpwhs->lpszServerName, port,
+    if (!GetAddress(lpwhs->lpszServerName, lpwhs->nServerPort,
                     &lpwhs->phostent, &lpwhs->socketAddress))
     {
         INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
