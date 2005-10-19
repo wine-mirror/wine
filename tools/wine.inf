@@ -252,6 +252,7 @@ HKLM,System\CurrentControlSet\Control\Session Manager,,,""
 HKLM,System\CurrentControlSet\Control\Windows,"CSDVersion",0x10001,0x00000600
 HKLM,System\CurrentControlSet\Control\VMM32Files,,,""
 HKLM,System\CurrentControlSet\Services\VxD\MSTCP,,,""
+HKCU,Software\Wine\shdocvw,"MozillaUrl",,"http://source.winehq.org/mozactivex"
 
 [Nls]
 HKLM,System\CurrentControlSet\Control\Nls\Codepage,"37",,""
