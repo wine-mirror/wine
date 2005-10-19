@@ -914,8 +914,13 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
     client = rtext;
     dtFlags = BUTTON_CalcLabelRect(hwnd, hDC, &rtext);
     
-    rbox.top = rtext.top;
-    rbox.bottom = rtext.bottom;
+    /* Only adjust rbox when rtext is valid */
+    if (dtFlags != (UINT)-1L)
+    {
+	rbox.top = rtext.top;
+	rbox.bottom = rtext.bottom;
+    }
+
     /* Draw the check-box bitmap */
     if (action == ODA_DRAWENTIRE || action == ODA_SELECT)
     {
@@ -946,7 +951,7 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 		rbox.top = rbox.bottom - checkBoxHeight;
 	    } else {
 		rbox.bottom += -delta/2 + 1;
-		rbox.top = rbox.bottom -= checkBoxHeight;
+		rbox.top = rbox.bottom - checkBoxHeight;
 	    }
 	} else { /* Default */
 	    if (delta > 0) {
