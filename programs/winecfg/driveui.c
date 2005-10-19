@@ -837,13 +837,14 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     break;
                 case PSN_SETACTIVE:
                     break;
-            }
-
-            switch (((LPNMITEMACTIVATE)lParam)->hdr.code)
-            {
-                case NM_CLICK:
+                case LVN_ITEMCHANGED:
+                {
+                    LPNMLISTVIEW lpnm = (LPNMLISTVIEW)lParam;
+                    if (!(lpnm->uOldState & LVIS_SELECTED) &&
+                         (lpnm->uNewState & LVIS_SELECTED))
                     update_controls(dialog);
                     break;
+                }
             }
             break;
     }
