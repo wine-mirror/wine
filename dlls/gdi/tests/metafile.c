@@ -398,11 +398,9 @@ static int compare_mf_disk_bits(LPCSTR name, const BYTE *bits, UINT bsize, const
 static void test_mf_Blank(void)
 {
     HDC hdcMetafile;
-    HMETAFILE hMetafile, hmf_copy;
+    HMETAFILE hMetafile;
     INT caps;
     BOOL ret;
-    char temp_path[MAX_PATH];
-    char mf_name[MAX_PATH];
     INT type;
 
     hdcMetafile = CreateMetaFileA(NULL);
@@ -424,11 +422,38 @@ static void test_mf_Blank(void)
         "mf_blank") != 0)
             dump_mf_bits (hMetafile, "mf_Blank");
 
+    ret = DeleteMetaFile(hMetafile);
+    ok( ret, "DeleteMetaFile(%p) error %ld\n", hMetafile, GetLastError());
+}
+
+static void test_CopyMetaFile(void)
+{
+    HDC hdcMetafile;
+    HMETAFILE hMetafile, hmf_copy;
+    BOOL ret;
+    char temp_path[MAX_PATH];
+    char mf_name[MAX_PATH];
+    INT type;
+
+    hdcMetafile = CreateMetaFileA(NULL);
+    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %ld\n", GetLastError());
+    trace("hdcMetafile %p\n", hdcMetafile);
+
+    hMetafile = CloseMetaFile(hdcMetafile);
+    ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
+    type = GetObjectType(hMetafile);
+    ok(type == OBJ_METAFILE, "CloseMetaFile created object with type %d\n", type);
+
+    if (compare_mf_bits (hMetafile, MF_BLANK_BITS, sizeof(MF_BLANK_BITS),
+        "mf_blank") != 0)
+            dump_mf_bits (hMetafile, "mf_Blank");
+
     GetTempPathA(MAX_PATH, temp_path);
     GetTempFileNameA(temp_path, "wmf", 0, mf_name);
-    hmf_copy = CopyMetaFileA(hMetafile, mf_name);
 
+    hmf_copy = CopyMetaFileA(hMetafile, mf_name);
     ok(hmf_copy != 0, "CopyMetaFile error %ld\n", GetLastError());
+
     type = GetObjectType(hmf_copy);
     ok(type == OBJ_METAFILE, "CopyMetaFile created object with type %d\n", type);
 
@@ -442,6 +467,82 @@ static void test_mf_Blank(void)
     ok( ret, "DeleteMetaFile(%p) error %ld\n", hmf_copy, GetLastError());
 
     DeleteFileA(mf_name);
+}
+
+static void test_SetMetaFileBits(void)
+{
+    HMETAFILE hmf;
+    INT type;
+    BOOL ret;
+    BYTE buf[256];
+    METAHEADER *mh;
+
+    hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), MF_GRAPHICS_BITS);
+    ok(hmf != 0, "SetMetaFileBitsEx error %ld\n", GetLastError());
+    type = GetObjectType(hmf);
+    ok(type == OBJ_METAFILE, "SetMetaFileBitsEx created object with type %d\n", type);
+
+    if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
+        dump_mf_bits(hmf, "mf_Graphics");
+
+    ret = DeleteMetaFile(hmf);
+    ok(ret, "DeleteMetaFile(%p) error %ld\n", hmf, GetLastError());
+
+    /* NULL data crashes XP SP1 */
+    /*hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), NULL);*/
+
+    /* Now with not zero size */
+    SetLastError(0xdeadbeef);
+    hmf = SetMetaFileBitsEx(0, MF_GRAPHICS_BITS);
+    ok(!hmf, "SetMetaFileBitsEx should fail\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "wrong error %ld\n", GetLastError());
+
+    /* Now with not even size */
+    SetLastError(0xdeadbeef);
+    hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS) - 1, MF_GRAPHICS_BITS);
+    ok(!hmf, "SetMetaFileBitsEx should fail\n");
+    ok(GetLastError() == 0xdeadbeef /* XP SP1 */, "wrong error %ld\n", GetLastError());
+
+    /* Now with zeroed out or faked some header fields */
+    assert(sizeof(buf) >= sizeof(MF_GRAPHICS_BITS));
+    memcpy(buf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS));
+    mh = (METAHEADER *)buf;
+    /* corruption of any of the below fields leads to a failure */
+    mh->mtType = 0;
+    mh->mtVersion = 0;
+    mh->mtHeaderSize = 0;
+    SetLastError(0xdeadbeef);
+    hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
+    ok(!hmf, "SetMetaFileBitsEx should fail\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "wrong error %ld\n", GetLastError());
+
+    /* Now with corrupted mtSize field */
+    memcpy(buf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS));
+    mh = (METAHEADER *)buf;
+    /* corruption of mtSize doesn't lead to a failure */
+    mh->mtSize *= 2;
+    hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
+    ok(hmf != 0, "SetMetaFileBitsEx error %ld\n", GetLastError());
+
+    if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
+        dump_mf_bits(hmf, "mf_Graphics");
+
+    ret = DeleteMetaFile(hmf);
+    ok(ret, "DeleteMetaFile(%p) error %ld\n", hmf, GetLastError());
+
+    /* Now with zeroed out mtSize field */
+    memcpy(buf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS));
+    mh = (METAHEADER *)buf;
+    /* zeroing mtSize doesn't lead to a failure */
+    mh->mtSize = 0;
+    hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
+    ok(hmf != 0, "SetMetaFileBitsEx error %ld\n", GetLastError());
+
+    if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
+        dump_mf_bits(hmf, "mf_Graphics");
+
+    ret = DeleteMetaFile(hmf);
+    ok(ret, "DeleteMetaFile(%p) error %ld\n", hmf, GetLastError());
 }
 
 /* Simple APIs from mfdrv/graphics.c
@@ -693,6 +794,8 @@ START_TEST(metafile)
     test_mf_Blank();
     test_mf_Graphics();
     test_mf_PatternBrush();
+    test_CopyMetaFile();
+    test_SetMetaFileBits();
 
     /* For metafile conversions */
     test_mf_conversions();

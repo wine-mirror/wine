@@ -247,7 +247,9 @@ static METAHEADER *MF_ReadMetaFile(HANDLE hfile)
         HeapFree( GetProcessHeap(), 0, mh );
 	return NULL;
     }
-    if(mh->mtVersion != MFVERSION || mh->mtHeaderSize != size / 2) {
+    if (mh->mtType != METAFILE_MEMORY || mh->mtVersion != MFVERSION ||
+        mh->mtHeaderSize != size / 2)
+    {
         HeapFree( GetProcessHeap(), 0, mh );
         return NULL;
     }
@@ -1359,9 +1361,26 @@ HMETAFILE16 WINAPI SetMetaFileBitsBetter16( HMETAFILE16 hMeta )
  */
 HMETAFILE WINAPI SetMetaFileBitsEx( UINT size, const BYTE *lpData )
 {
-    METAHEADER *mh = HeapAlloc( GetProcessHeap(), 0, size );
-    if (!mh) return 0;
+    METAHEADER *mh = (METAHEADER *)lpData;
+
+    if (size & 1) return 0;
+
+    if (!size || mh->mtType != METAFILE_MEMORY || mh->mtVersion != MFVERSION ||
+        mh->mtHeaderSize != sizeof(METAHEADER) / 2)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        return 0;
+    }
+
+    mh = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!mh)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return 0;
+    }
+
     memcpy(mh, lpData, size);
+    mh->mtSize = size / 2;
     return MF_Create_HMETAFILE(mh);
 }
 
