@@ -153,18 +153,35 @@ static BOOL get_mozctl_path(PRUnichar *gre_path)
         {'S','o','f','t','w','a','r','e','\\','M','o','z','i','l','l','a',0};
     static const WCHAR wszBinDirectoryPath[] =
         {'B','i','n','D','i','r','e','c','t','o','r','y','P','a','t','h',0};
+    static const WCHAR wszMozCtlClsidKey[] =
+        {'C','L','S','I','D','\\',
+         '{','1','3','3','9','B','5','4','C','-','3','4','5','3','-','1','1','D','2',
+         '-','9','3','B','9','-','0','0','0','0','0','0','0','0','0','0','0','0','}','\\',
+         'I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
 
     res = RegOpenKeyW(HKEY_LOCAL_MACHINE, wszMozCtlKey, &hkey);
-    if(res != ERROR_SUCCESS) {
-        TRACE("Could not open key %s\n", debugstr_w(wszMozCtlKey));
-        return FALSE;
+    if(res == ERROR_SUCCESS) {
+        res = RegQueryValueExW(hkey, wszBinDirectoryPath, NULL, &type, (LPBYTE)gre_path, &size);
+        if(res == ERROR_SUCCESS)
+            return TRUE;
+        else
+            ERR("Could not get value %s\n", debugstr_w(wszBinDirectoryPath));
     }
 
-    res = RegQueryValueExW(hkey, wszBinDirectoryPath, NULL, &type, (LPBYTE)gre_path, &size);
-    if(res != ERROR_SUCCESS) {
-        ERR("Could not get value %s\n", debugstr_w(wszBinDirectoryPath));
-        return FALSE;
+    res = RegOpenKeyW(HKEY_CLASSES_ROOT, wszMozCtlClsidKey, &hkey);
+    if(res == ERROR_SUCCESS) {
+        res = RegQueryValueExW(hkey, NULL, NULL, &type, (LPBYTE)gre_path, &size);
+        if(res == ERROR_SUCCESS) {
+            WCHAR *ptr;
+            if((ptr = strrchrW(gre_path, '\\')))
+                ptr[1] = 0;
+            return TRUE;
+        }else {
+            ERR("Could not get value of %s\n", debugstr_w(wszMozCtlClsidKey));
+        }
     }
+
+    TRACE("Could not find Mozilla ActiveX Control\n");
 
     return TRUE;
 }
