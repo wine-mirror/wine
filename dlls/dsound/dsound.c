@@ -366,7 +366,7 @@ static HRESULT WINAPI DSOUND_CreateSoundBuffer(
         if (dsb) {
             hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
             if (*ppdsb) {
-                dsb->dsb = (SecondaryBufferImpl*)*ppdsb;
+                dsb->secondary = (SecondaryBufferImpl*)*ppdsb;
                 IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)*ppdsb);
             } else
                 WARN("SecondaryBufferImpl_Create failed\n");
@@ -535,7 +535,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     dsb->dsound = This;
     dsb->ds3db = NULL;
     dsb->iks = NULL; /* FIXME? */
-    dsb->dsb = NULL;
+    dsb->secondary = NULL;
 
     /* variable sized struct so calculate size based on format */
     size = sizeof(WAVEFORMATEX) + pdsb->pwfx->cbSize;
@@ -567,7 +567,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     } else {
         hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
         if (*ppdsb) {
-            dsb->dsb = (SecondaryBufferImpl*)*ppdsb;
+            dsb->secondary = (SecondaryBufferImpl*)*ppdsb;
             IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)*ppdsb);
         } else
             WARN("SecondaryBufferImpl_Create failed\n");

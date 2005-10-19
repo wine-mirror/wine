@@ -199,7 +199,7 @@ struct IDirectSoundBufferImpl
     const IDirectSoundBuffer8Vtbl *lpVtbl;
     LONG                        ref;
     /* IDirectSoundBufferImpl fields */
-    SecondaryBufferImpl*        dsb;
+    SecondaryBufferImpl*        secondary;
     IDirectSoundImpl*           dsound;
     CRITICAL_SECTION            lock;
     PIDSDRIVERBUFFER            hwbuf;
