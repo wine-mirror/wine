@@ -116,6 +116,36 @@ void delete_drive(struct drive *d)
     d->in_use = FALSE;
 }
 
+static void set_drive_type( char letter, DWORD type )
+{
+    HKEY hKey;
+    char driveValue[4];
+    const char *typeText = NULL;
+
+    sprintf(driveValue, "%c:", letter);
+
+    /* Set the drive type in the registry */
+    if (type == DRIVE_FIXED)
+        typeText = "hd";
+    else if (type == DRIVE_REMOTE)
+        typeText = "network";
+    else if (type == DRIVE_REMOVABLE)
+        typeText = "floppy";
+    else if (type == DRIVE_CDROM)
+        typeText = "cdrom";
+
+    if (RegCreateKey(HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hKey) != ERROR_SUCCESS)
+        WINE_TRACE("  Unable to open '%s'\n", "Software\\Wine\\Drives");
+    else
+    {
+        if (typeText)
+            RegSetValueEx( hKey, driveValue, 0, REG_SZ, (LPBYTE)typeText, strlen(typeText) + 1 );
+        else
+            RegDeleteValue( hKey, driveValue );
+        RegCloseKey(hKey);
+    }
+}
+
 #if 0
 
 /* currently unused, but if users have this burning desire to be able to rename drives,
@@ -356,9 +386,6 @@ void apply_drive_changes(void)
         }
         else if(foundDrive && !drives[i].in_use)
         {
-            HKEY hKey;
-            char driveValue[256];
-
             /* remove this drive */
             if(!DefineDosDevice(DDD_REMOVE_DEFINITION, devicename, drives[i].unixpath))
             {
@@ -372,17 +399,8 @@ void apply_drive_changes(void)
                            devicename, drives[i].unixpath);
             }
 
-            retval = RegOpenKey(HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hKey);
-            if (retval != ERROR_SUCCESS)
-            {
-                WINE_TRACE("Unable to open '%s'\n", "Software\\Wine\\Drives");
-            }
-            else
-            {
-                snprintf(driveValue, sizeof(driveValue), "%c:", toupper(drives[i].letter));    
-
-                retval = RegDeleteValue(hKey, driveValue);
-            }
+            set_drive_type( drives[i].letter, DRIVE_UNKNOWN );
+            continue;
         }
         else if(drives[i].in_use) /* foundDrive must be false from the above check */
         {
@@ -394,10 +412,6 @@ void apply_drive_changes(void)
         {
             char filename[256];
             HANDLE hFile;
-
-            HKEY hKey;
-            const char *typeText;
-            char driveValue[256];
 
             /* define this drive */
             /* DefineDosDevice() requires that NO trailing slash be present */
@@ -428,48 +442,6 @@ void apply_drive_changes(void)
                 }
             }
 
-            /* Set the drive type in the registry */
-            if(drives[i].type == DRIVE_FIXED)
-                typeText = "hd";
-            else if(drives[i].type == DRIVE_REMOTE)
-                typeText = "network";
-            else if(drives[i].type == DRIVE_REMOVABLE)
-                typeText = "floppy";
-            else /* must be DRIVE_CDROM */
-                typeText = "cdrom";
-
-
-            snprintf(driveValue, sizeof(driveValue), "%c:", toupper(drives[i].letter));
-
-            retval = RegOpenKey(HKEY_LOCAL_MACHINE,
-                       "Software\\Wine\\Drives",
-                       &hKey);
-
-            if(retval != ERROR_SUCCESS)
-            {
-                WINE_TRACE("  Unable to open '%s'\n", "Software\\Wine\\Drives");
-            }
-            else
-            {
-                retval = RegSetValueEx(
-                              hKey,
-                              driveValue,
-                              0,
-                              REG_SZ,
-                              (LPBYTE) typeText,
-                              strlen(typeText) + 1);
-                if(retval != ERROR_SUCCESS)
-                {
-                    WINE_TRACE("  Unable to set value of '%s' to '%s'\n",
-                               driveValue, typeText);
-                }
-                else
-                {
-                    WINE_TRACE("  Finished setting value of '%s' to '%s'\n",
-                               driveValue, typeText);
-                    RegCloseKey(hKey);
-                }
-            }
 
             /* Set the drive serial number via a .windows-serial file in */
             /* the targetpath directory */
@@ -504,5 +476,7 @@ void apply_drive_changes(void)
                 WINE_TRACE("  CreateFile() error with file '%s'\n", filename);
             }
         }
+
+        set_drive_type( drives[i].letter, drives[i].type );
     }
 }
