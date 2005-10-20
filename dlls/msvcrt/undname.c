@@ -966,9 +966,6 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
     BOOL                ret = FALSE;
     unsigned            do_after = 0;
 
-    /* MS mangled names always begin with '?' */
-    if (*sym->current != '?') return FALSE;
-    
     /* FIXME seems wrong as name, as it demangles a simple data type */
     if (sym->flags & UNDNAME_NO_ARGUMENTS)
     {

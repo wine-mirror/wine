@@ -117,6 +117,10 @@ static type_info* (*p__RTtypeid)(void*);
 static void* (*p__RTCastToVoid)(void*);
 static void* (*p__RTDynamicCast)(void*,int,void*,void*,int);
 
+/*Demangle*/
+static char* (*p__unDName)(char*,const char*,int,void*,void*,unsigned short int);
+
+
 /* _very_ early native versions have serious RTTI bugs, so we check */
 static void* bAncientVersion;
 
@@ -246,6 +250,8 @@ static void InitFunctionPtrs()
     SET(p__RTtypeid, "__RTtypeid");
     SET(p__RTCastToVoid, "__RTCastToVoid");
     SET(p__RTDynamicCast, "__RTDynamicCast");
+
+    SET(p__unDName,"__unDName");
 
     /* Extremely early versions export logic_error, and crash in RTTI */
     SETNOFAIL(bAncientVersion, "??0logic_error@@QAE@ABQBD@Z");
@@ -812,6 +818,15 @@ static void test_rtti(void)
   ok (casted == NULL, "Cast succeeded\n");
 }
 
+static void test_demangle(void)
+{
+    char * name = NULL;
+    static const char * mangled = ".ABVVec4@ref2@dice@@";
+    static const char * result = "class dice::ref2::Vec4 const &";
+    name = p__unDName(0, mangled + 1, 0,pmalloc,pfree,0x2800);
+    ok(name != NULL && !strcmp(name,result),"Got name %s \n",name);
+}
+
 START_TEST(cpp)
 {
   InitFunctionPtrs();
@@ -822,6 +837,7 @@ START_TEST(cpp)
   test___non_rtti_object();
   test_type_info();
   test_rtti();
+  test_demangle();
 
   if (hMsvcrt)
     FreeLibrary(hMsvcrt);
