@@ -743,6 +743,10 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                         break;
                     }
                     break;
+
+                case CBN_SELCHANGE:
+                    SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
+                    break;
             }
 
             switch (LOWORD(wParam))
