@@ -114,10 +114,27 @@ static void test_GetDiskFreeSpaceA(void)
                    "GetDiskFreeSpaceA(%s): ret=%d GetLastError=%ld\n",
                    drive, ret, GetLastError());
             else
+            {
                 ok(ret ||
                    (!ret && (GetLastError() == ERROR_NOT_READY || GetLastError() == ERROR_INVALID_DRIVE)),
                    "GetDiskFreeSpaceA(%s): ret=%d GetLastError=%ld\n",
                    drive, ret, GetLastError());
+                if( GetVersion() & 0x80000000)
+                    /* win3.0 thru winME */
+                    ok( total_clusters <= 65535,
+                            "total clusters is %ld > 65535\n", total_clusters);
+                else {
+                    /* NT, 2k, XP : GetDiskFreeSpace shoud be accurate */
+                    ULARGE_INTEGER totEx, tot, d;
+                    tot.QuadPart = sectors_per_cluster;
+                    tot.QuadPart = (tot.QuadPart * bytes_per_sector) * total_clusters;
+                    ret = GetDiskFreeSpaceExA( drive, &d, &totEx, NULL);
+                    ok( ret, "GetDiskFreeSpaceExA( %s ) failed. GetLastError=%ld\n", drive, GetLastError());
+                    ok( bytes_per_sector == 0 || /* empty cd rom drive */
+                        totEx.QuadPart <= tot.QuadPart,
+                        "GetDiskFreeSpaceA should report at least as much bytes on disk %s as GetDiskFreeSpaceExA\n", drive);
+                }
+            }
         }
         logical_drives >>= 1;
     }

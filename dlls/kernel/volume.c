@@ -1333,11 +1333,20 @@ BOOL WINAPI GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_sectors,
 
     units = info.SectorsPerAllocationUnit * info.BytesPerSector;
 
-    /* cap the size and available at 2GB as per specs */
-    if (info.AvailableAllocationUnits.QuadPart * units > 0x7fffffff)
-        info.AvailableAllocationUnits.QuadPart = 0x7fffffff / units;
-    if (info.TotalAllocationUnits.QuadPart * units > 0x7fffffff)
-        info.TotalAllocationUnits.QuadPart = 0x7fffffff / units;
+    if( GetVersion() & 0x80000000) {    /* win3.x, 9x, ME */
+        /* cap the size and available at 2GB as per specs */
+        if (info.TotalAllocationUnits.QuadPart * units > 0x7fffffff) {
+            info.TotalAllocationUnits.QuadPart = 0x7fffffff / units;
+            if (info.AvailableAllocationUnits.QuadPart * units > 0x7fffffff)
+                info.AvailableAllocationUnits.QuadPart = 0x7fffffff / units;
+        }
+        /* nr. of clusters is always <= 65335 */
+        while( info.TotalAllocationUnits.QuadPart > 65535 ) {
+            info.TotalAllocationUnits.QuadPart /= 2;
+            info.AvailableAllocationUnits.QuadPart /= 2;
+            info.SectorsPerAllocationUnit *= 2;
+        }
+    }
 
     if (cluster_sectors) *cluster_sectors = info.SectorsPerAllocationUnit;
     if (sector_bytes) *sector_bytes = info.BytesPerSector;
