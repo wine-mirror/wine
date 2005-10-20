@@ -315,6 +315,7 @@ static DWORD WINAPI ThreadFunc( LPVOID info )
     DWORD r, sz, type;
     HKEY hkey;
     BOOL bCancelled = FALSE;
+    BOOL bTempfile = FALSE;
 
     /* find the name of the thing to download */
     szUrl[0] = 0;
@@ -338,6 +339,7 @@ static DWORD WINAPI ThreadFunc( LPVOID info )
     strcatW( path, p+1 );
 
     /* download it */
+    bTempfile = TRUE;
     dl = create_dl(info, &bCancelled);
     r = URLDownloadToFileW( NULL, szUrl, path, 0, dl );
     if( dl )
@@ -354,6 +356,8 @@ static DWORD WINAPI ThreadFunc( LPVOID info )
     WaitForSingleObject( pi.hProcess, INFINITE );
 
 end:
+    if( bTempfile )
+        DeleteFileW( path );
     EndDialog( hDlg, 0 );
     return 0;
 }
