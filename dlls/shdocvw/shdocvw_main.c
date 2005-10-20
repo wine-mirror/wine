@@ -360,6 +360,8 @@ static DWORD WINAPI ThreadFunc( LPVOID info )
     if( !r )
         goto end;
     WaitForSingleObject( pi.hProcess, INFINITE );
+    CloseHandle( pi.hProcess );
+    CloseHandle( pi.hThread );
 
 end:
     if( bTempfile )
