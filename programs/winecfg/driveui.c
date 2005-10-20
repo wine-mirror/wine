@@ -139,13 +139,14 @@ struct drive_typemap {
 };
 
 static const struct drive_typemap type_pairs[] = {
+  { DRIVE_UNKNOWN,    "Autodetect"      },
   { DRIVE_FIXED,      "Local hard disk" },
   { DRIVE_REMOTE,     "Network share"   },
   { DRIVE_REMOVABLE,  "Floppy disk"     },
   { DRIVE_CDROM,      "CD-ROM"          }
 };
 
-#define DRIVE_TYPE_DEFAULT 1
+#define DRIVE_TYPE_DEFAULT 0
 
 static void fill_drive_droplist(long mask, char curletter, HWND dialog)
 {
@@ -447,24 +448,20 @@ static void update_controls(HWND dialog)
 
     /* drive type */
     type = current_drive->type;
-    if (type)
+    SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_RESETCONTENT, 0, 0);
+
+    for (i = 0; i < sizeof(type_pairs) / sizeof(struct drive_typemap); i++)
     {
-        SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_RESETCONTENT, 0, 0);
-        
-        for (i = 0; i < sizeof(type_pairs) / sizeof(struct drive_typemap); i++)
+        SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_ADDSTRING, 0, (LPARAM) type_pairs[i].sDesc);
+
+        if (type_pairs[i].sCode ==  type)
         {
-            SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_ADDSTRING, 0, (LPARAM) type_pairs[i].sDesc);
-
-            if (type_pairs[i].sCode ==  type)
-            {
-                selection = i;
-            }
+            selection = i;
         }
+    }
 
-        if (selection == -1) selection = DRIVE_TYPE_DEFAULT;
-        SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_SETCURSEL, selection, 0);
-    } else WINE_WARN("no Type field?\n");
-
+    if (selection == -1) selection = DRIVE_TYPE_DEFAULT;
+    SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_SETCURSEL, selection, 0);
 
     /* removeable media properties */
     label = current_drive->label;
@@ -811,7 +808,9 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
 
                     selection = SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_GETCURSEL, 0, 0);
 
-                    if (selection == 2 || selection == 3) /* cdrom or floppy */
+                    if (selection >= 0 &&
+                        (type_pairs[selection].sCode == DRIVE_CDROM ||
+                         type_pairs[selection].sCode == DRIVE_REMOVABLE))
                     {
                         if (IsDlgButtonChecked(dialog, IDC_RADIO_AUTODETECT))
                             mode = BOX_MODE_CD_AUTODETECT;

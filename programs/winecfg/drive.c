@@ -146,6 +146,34 @@ static void set_drive_type( char letter, DWORD type )
     }
 }
 
+static DWORD get_drive_type( char letter )
+{
+    HKEY hKey;
+    char driveValue[4];
+    DWORD ret = DRIVE_UNKNOWN;
+
+    sprintf(driveValue, "%c:", letter);
+
+    if (RegOpenKey(HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hKey) != ERROR_SUCCESS)
+        WINE_TRACE("  Unable to open Software\\Wine\\Drives\n" );
+    else
+    {
+        char buffer[80];
+        DWORD size = sizeof(buffer);
+
+        if (!RegQueryValueExA( hKey, driveValue, NULL, NULL, (LPBYTE)buffer, &size ))
+        {
+            WINE_TRACE("Got type '%s' for %s\n", buffer, driveValue );
+            if (!strcasecmp( buffer, "hd" )) ret = DRIVE_FIXED;
+            else if (!strcasecmp( buffer, "network" )) ret = DRIVE_REMOTE;
+            else if (!strcasecmp( buffer, "floppy" )) ret = DRIVE_REMOVABLE;
+            else if (!strcasecmp( buffer, "cdrom" )) ret = DRIVE_CDROM;
+        }
+        RegCloseKey(hKey);
+    }
+    return ret;
+}
+
 #if 0
 
 /* currently unused, but if users have this burning desire to be able to rename drives,
@@ -279,7 +307,7 @@ void load_drives()
 
         snprintf(serialstr, sizeof(serialstr), "%lX", serial);
         WINE_TRACE("serialstr: '%s'\n", serialstr);
-        add_drive(*devices, targetpath, volname, serialstr, GetDriveType(rootpath));
+        add_drive(*devices, targetpath, volname, serialstr, get_drive_type(devices[0]) );
 
         len -= strlen(devices);
         devices += strlen(devices);
