@@ -163,6 +163,8 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 
 	meth = pSSLv23_method();
 	/* FIXME: SECURITY PROBLEM! WE ARN'T VERIFYING THE HOSTS CERTIFICATES OR ANYTHING */
+        connection->peek_msg = NULL;
+        connection->peek_msg_mem = NULL;
 #else
 	FIXME("can't use SSL, not compiled in.\n");
         connection->useSSL = FALSE;
@@ -237,6 +239,9 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
 #ifdef HAVE_OPENSSL_SSL_H
 	closesocket(connection->ssl_sock);
 	connection->ssl_sock = -1;
+        HeapFree(GetProcessHeap(),0,connection->peek_msg_mem);
+        connection->peek_msg = NULL;
+        connection->peek_msg_mem = NULL;
 	/* FIXME should we call SSL_shutdown here?? Probably on whatever is the
 	 * opposite of NETCON_init.... */
         return TRUE;
@@ -341,36 +346,33 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
     else
     {
 #ifdef HAVE_OPENSSL_SSL_H
-	static char *peek_msg = NULL;
-	static char *peek_msg_mem = NULL;
-
 	if (flags & (~MSG_PEEK))
 	    FIXME("SSL_read does not support the following flag: %08x\n", flags);
 
         /* this ugly hack is all for MSG_PEEK. eww gross */
-	if (flags & MSG_PEEK && !peek_msg)
+	if (flags & MSG_PEEK && !connection->peek_msg)
 	{
-	    peek_msg = peek_msg_mem = HeapAlloc(GetProcessHeap(), 0, (sizeof(char) * len) + 1);
+	    connection->peek_msg = connection->peek_msg_mem = HeapAlloc(GetProcessHeap(), 0, (sizeof(char) * len) + 1);
 	}
-	else if (flags & MSG_PEEK && peek_msg)
+	else if (flags & MSG_PEEK && connection->peek_msg)
 	{
-	    size_t peek_msg_len = strlen(peek_msg);
+	    size_t peek_msg_len = strlen(connection->peek_msg);
 	    if (len < peek_msg_len)
 		FIXME("buffer isn't big enough. Do the expect us to wrap?\n");
-	    memcpy(buf, peek_msg, min(len,peek_msg_len+1));
+	    memcpy(buf, connection->peek_msg, min(len,peek_msg_len+1));
 	    *recvd = min(len, peek_msg_len);
             return TRUE;
 	}
-	else if (peek_msg)
+	else if (connection->peek_msg)
 	{
-	    size_t peek_msg_len = strlen(peek_msg);
-	    memcpy(buf, peek_msg, min(len,peek_msg_len+1));
-	    peek_msg += *recvd = min(len, peek_msg_len);
-	    if (*peek_msg == '\0' || *(peek_msg - 1) == '\0')
+	    size_t peek_msg_len = strlen(connection->peek_msg);
+	    memcpy(buf, connection->peek_msg, min(len,peek_msg_len+1));
+	    connection->peek_msg += *recvd = min(len, peek_msg_len);
+	    if (*connection->peek_msg == '\0' || *(connection->peek_msg - 1) == '\0')
 	    {
-		HeapFree(GetProcessHeap(), 0, peek_msg_mem);
-		peek_msg_mem = NULL;
-                peek_msg = NULL;
+		HeapFree(GetProcessHeap(), 0, connection->peek_msg_mem);
+		connection->peek_msg_mem = NULL;
+                connection->peek_msg = NULL;
 	    }
             return TRUE;
 	}
@@ -379,14 +381,14 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
 	{
 	    if (!*recvd)
 	    {
-		HeapFree(GetProcessHeap(), 0, peek_msg_mem);
-		peek_msg_mem = NULL;
-                peek_msg = NULL;
+		HeapFree(GetProcessHeap(), 0, connection->peek_msg_mem);
+		connection->peek_msg_mem = NULL;
+		connection->peek_msg = NULL;
 	    }
 	    else
 	    {
-		memcpy(peek_msg, buf, *recvd);
-		peek_msg[*recvd] = '\0';
+		memcpy(connection->peek_msg, buf, *recvd);
+		connection->peek_msg[*recvd] = '\0';
 	    }
 	}
 	if (*recvd < 1 && len)

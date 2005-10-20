@@ -62,6 +62,8 @@ typedef struct
 #ifdef HAVE_OPENSSL_SSL_H
     SSL *ssl_s;
     int ssl_sock;
+    char *peek_msg;
+    char *peek_msg_mem;
 #endif
 } WININET_NETCONNECTION;
 
