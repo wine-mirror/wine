@@ -190,7 +190,9 @@ void MSVCRT__c_exit(void)
 void MSVCRT__cexit(void)
 {
   TRACE("(void)\n");
-  /* All cleanup is done on DLL detach; Return to caller */
+  LOCK_EXIT;
+  __MSVCRT__call_atexit();
+  UNLOCK_EXIT;
 }
 
 /*********************************************************************
@@ -233,9 +235,7 @@ MSVCRT__onexit_t MSVCRT__onexit(MSVCRT__onexit_t func)
 void MSVCRT_exit(int exitcode)
 {
   TRACE("(%d)\n",exitcode);
-  LOCK_EXIT;
-  __MSVCRT__call_atexit();
-  UNLOCK_EXIT;
+  MSVCRT__cexit();
   ExitProcess(exitcode);
 }
 
