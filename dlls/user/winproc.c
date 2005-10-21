@@ -664,10 +664,12 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case LB_DIR:
     case LB_ADDFILE:
     case EM_REPLACESEL:
+        if (!*plparam) return 0;
+        else
         {
             DWORD len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*plparam, -1, NULL, 0);
             WCHAR *buf = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*plparam, -1, buf, len);
+            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*plparam, -1, buf, len);
             *plparam = (LPARAM)buf;
             return (*plparam ? 1 : -1);
         }
