@@ -34,6 +34,7 @@
 
 #include "config.h"
 
+#include <errno.h>
 #include <math.h>
 #include <stdlib.h>
 #include <stdarg.h>
