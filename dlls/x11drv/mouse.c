@@ -697,6 +697,7 @@ BOOL X11DRV_SetCursorPos( INT x, INT y )
 
     wine_tsx11_lock();
     XWarpPointer( display, root_window, root_window, 0, 0, 0, 0, x, y );
+    XFlush( display ); /* avoids bad mouse lag in games that do their own mouse warping */
     cursor_pos.x = x;
     cursor_pos.y = y;
     wine_tsx11_unlock();
