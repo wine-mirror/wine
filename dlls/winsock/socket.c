@@ -1378,34 +1378,39 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
                                  int *addrlen32)
 {
     SOCKET as;
+    BOOL is_blocking;
 
     TRACE("socket %04x\n", s );
-    if (_is_blocking(s))
-    {
-        int fd = get_sock_fd( s, GENERIC_READ, NULL );
-        if (fd == -1) return INVALID_SOCKET;
-        /* block here */
-        do_block(fd, POLLIN, -1);
-        _sync_sock_state(s); /* let wineserver notice connection */
-        release_sock_fd( s, fd );
-        /* retrieve any error codes from it */
-        SetLastError(_get_sock_error(s, FD_ACCEPT_BIT));
-        /* FIXME: care about the error? */
-    }
-    SERVER_START_REQ( accept_socket )
-    {
-        req->lhandle = SOCKET2HANDLE(s);
-        req->access  = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
-        req->inherit = TRUE;
-        set_error( wine_server_call( req ) );
-        as = HANDLE2SOCKET( reply->handle );
-    }
-    SERVER_END_REQ;
-    if (as)
-    {
-        if (addr) WS_getpeername(as, addr, addrlen32);
-        return as;
-    }
+    is_blocking = _is_blocking(s);
+
+    do {
+        if (is_blocking)
+        {
+            int fd = get_sock_fd( s, GENERIC_READ, NULL );
+            if (fd == -1) return INVALID_SOCKET;
+            /* block here */
+            do_block(fd, POLLIN, -1);
+            _sync_sock_state(s); /* let wineserver notice connection */
+            release_sock_fd( s, fd );
+            /* retrieve any error codes from it */
+            SetLastError(_get_sock_error(s, FD_ACCEPT_BIT));
+            /* FIXME: care about the error? */
+        }
+        SERVER_START_REQ( accept_socket )
+        {
+            req->lhandle = SOCKET2HANDLE(s);
+            req->access  = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
+            req->inherit = TRUE;
+            set_error( wine_server_call( req ) );
+            as = HANDLE2SOCKET( reply->handle );
+        }
+        SERVER_END_REQ;
+        if (as)
+        {
+            if (addr) WS_getpeername(as, addr, addrlen32);
+            return as;
+        }
+    } while (is_blocking);
     return INVALID_SOCKET;
 }
 
