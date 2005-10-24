@@ -81,11 +81,11 @@ typedef struct {
 typedef struct {
     struct list jobs;
     LONG ref;
-} queue_t;
+} jobqueue_t;
 
 typedef struct {
     LPWSTR name;
-    queue_t *queue;
+    jobqueue_t *queue;
     started_doc_t *doc;
 } opened_printer_t;
 
@@ -613,7 +613,7 @@ void WINSPOOL_LoadSystemPrinters(void)
 static HANDLE get_opened_printer_entry( LPCWSTR name )
 {
     UINT_PTR handle = nb_printer_handles, i;
-    queue_t *queue = NULL;
+    jobqueue_t *queue = NULL;
     opened_printer_t *printer;
 
     EnterCriticalSection(&printer_handles_cs);
