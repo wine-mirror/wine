@@ -1,30 +1,21 @@
-This is release 20050930 of Wine, a free implementation of Windows on
-Unix.  This is still a developers only release.  There are many bugs
-and unimplemented features.  Most applications still do not work
-correctly.
+This is release 0.9 of Wine, a free implementation of Windows on Unix.
+After 12 years of development, this release marks the beginning of the
+beta testing phase.  Everybody is encouraged to try it; while there
+are still bugs, most applications are expected to at least install and
+do something useful.
 
-WHAT'S NEW with Wine-20050930: (see ChangeLog for details)
-        - Joystick force feedback support.
-        - Beginnings of Win64 support.
-        - Many MSI fixes and cleanups.
-        - Font linking support.
-        - Several OLE fixes.
-        - Some fixes for MacOS/x86.
-        - Lots of bug fixes.
+Because of lags created by using mirrors, this message may reach you
+before the release is available at the ftp sites.  The sources will be
+available from the following locations:
 
-See the README file in the distribution for installation instructions.
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-0.9.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-0.9.tar.bz2
 
-Because of lags created by using mirror, this message may reach you before
-the release is available at the ftp sites.  The sources will be available
-from the following locations:
+Binary packages for various distributions will be available from:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20050930.tar.gz
-  http://prdownloads.sourceforge.net/wine/Wine-20050930.tar.gz
+  http://www.winehq.org/site/download
 
-It should also be available from any other site that mirrors ibiblio.org.
-These locations also hold pre-built documentation packages in various
-formats: wine-doc-en-html.tar.gz, wine-doc-en-txt.tar.gz,
-wine-doc-en-pdf.tar.gz and wine-doc-en-ps.tar.gz.
+You will find documentation on http://www.winehq.org/site/documentation.
 
 You can also get the current source directly from the CVS tree. Check
 http://www.winehq.org/cvs for details.
@@ -32,10 +23,6 @@ http://www.winehq.org/cvs for details.
 Patches should be submitted to "wine-patches@winehq.org".  Please
 don't forget to include a ChangeLog entry. If you submitted a patch,
 please check to make sure it has been included in the new release.
-
-If you want to receive by mail a patch against the previous release
-when a new one is released, you can subscribe to the mailing list at
-http://www.winehq.org/mailman/listinfo/wine-releases .
 
 Wine is available thanks to the work of many people. See the file
 AUTHORS in the distribution for the complete list.
