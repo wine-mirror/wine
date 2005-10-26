@@ -4850,6 +4850,344 @@ static int VARIANT_DI_tostringW(VARIANT_DI * a, WCHAR * s, unsigned int n)
     return overflow;
 }
 
+/* shift the bits of a DWORD array to the left. p[0] is assumed LSB */
+static void VARIANT_int_shiftleft(DWORD * p, unsigned int n, unsigned int shift)
+{
+    DWORD shifted;
+    unsigned int i;
+    
+    /* shift whole DWORDs to the left */
+    while (shift >= 32)
+    {
+        memmove(p + 1, p, (n - 1) * sizeof(DWORD));
+        *p = 0; shift -= 32;
+    }
+    
+    /* shift remainder (1..31 bits) */
+    shifted = 0;
+    if (shift > 0) for (i = 0; i < n; i++)
+    {
+        DWORD b;
+        b = p[i] >> (32 - shift);
+        p[i] = (p[i] << shift) | shifted;
+        shifted = b;
+    }
+}
+
+/* add the (unsigned) numbers stored in two DWORD arrays with LSB at index 0.
+   Value at v is incremented by the value at p. Any size is supported, provided
+   that v is not shorter than p. Any unapplied carry is returned as a result.
+ */
+static unsigned char VARIANT_int_add(DWORD * v, unsigned int nv, DWORD * p, 
+    unsigned int np)
+{
+    unsigned char carry = 0;
+
+    if (nv >= np) {
+        ULONGLONG sum;
+        unsigned int i;
+
+        for (i = 0; i < np; i++) {
+            sum = (ULONGLONG)v[i]
+                + (ULONGLONG)p[i]
+                + (ULONGLONG)carry;
+            v[i] = sum & 0xffffffff;
+            carry = sum >> 32;
+        }
+        for (; i < nv && carry; i++) {
+            sum = (ULONGLONG)v[i]
+                + (ULONGLONG)carry;
+            v[i] = sum & 0xffffffff;
+            carry = sum >> 32;
+        }
+    }
+    return carry;
+}
+
+/* perform integral division with operand p as dividend. Parameter n indicates 
+   number of available DWORDs in divisor p, but available space in p must be 
+   actually at least 2 * n DWORDs, because the remainder of the integral 
+   division is built in the next n DWORDs past the start of the quotient. This 
+   routine replaces the dividend in p with the quotient, and appends n 
+   additional DWORDs for the remainder.
+
+   Thanks to Lee & Mark Atkinson for their book _Using_C_ (my very first book on
+   C/C++ :-) where the "longhand binary division" algorithm was exposed for the
+   source code to the VLI (Very Large Integer) division operator. This algorithm
+   was then heavily modified by me (Alex Villacis Lasso) in order to handle
+   variably-scaled integers such as the MS DECIMAL representation.
+ */
+static void VARIANT_int_div(DWORD * p, unsigned int n, DWORD * divisor,
+    unsigned int dn)
+{
+    unsigned int i;
+    DWORD tempsub[8];
+    DWORD * negdivisor = tempsub + n;
+
+    /* build 2s-complement of divisor */
+    for (i = 0; i < n; i++) negdivisor[i] = (i < dn) ? ~divisor[i] : 0xFFFFFFFF;
+    p[n] = 1;
+    VARIANT_int_add(negdivisor, n, p + n, 1);
+    memset(p + n, 0, n * sizeof(DWORD));
+
+    /* skip all leading zero DWORDs in quotient */
+    for (i = 0; i < n && !p[n - 1]; i++) VARIANT_int_shiftleft(p, n, 32);
+    /* i is now number of DWORDs left to process */
+    for (i <<= 5; i < (n << 5); i++) {
+        VARIANT_int_shiftleft(p, n << 1, 1);    /* shl quotient+remainder */
+
+        /* trial subtraction */
+        memcpy(tempsub, p + n, n * sizeof(DWORD));
+        VARIANT_int_add(tempsub, n, negdivisor, n);
+
+        /* check whether result of subtraction was negative */
+        if ((tempsub[n - 1] & 0x80000000) == 0) {
+            memcpy(p + n, tempsub, n * sizeof(DWORD));
+            p[0] |= 1;
+        }
+    }
+}
+
+/* perform integral multiplication by a byte operand. Used for scaling by 10 */
+static unsigned char VARIANT_int_mulbychar(DWORD * p, unsigned int n, unsigned char m)
+{
+    unsigned int i;
+    ULONG iOverflowMul;
+    
+    for (iOverflowMul = 0, i = 0; i < n; i++)
+        p[i] = VARIANT_Mul(p[i], m, &iOverflowMul);
+    return (unsigned char)iOverflowMul;
+}
+
+/* increment value in A by the value indicated in B, with scale adjusting. 
+   Modifies parameters by adjusting scales. Returns 0 if addition was 
+   successful, nonzero if a parameter underflowed before it could be 
+   successfully used in the addition.
+ */
+static int VARIANT_int_addlossy(
+    DWORD * a, int * ascale, unsigned int an,
+    DWORD * b, int * bscale, unsigned int bn)
+{
+    int underflow = 0;
+
+    if (VARIANT_int_iszero(a, an)) {
+        /* if A is zero, copy B into A, after removing digits */
+        while (bn > an && !VARIANT_int_iszero(b + an, bn - an)) {
+            VARIANT_int_divbychar(b, bn, 10);
+            (*bscale)--;
+        }
+        memcpy(a, b, an * sizeof(DWORD));
+        *ascale = *bscale;
+    } else if (!VARIANT_int_iszero(b, bn)) {
+        unsigned int tn = an + 1;
+        DWORD t[5];
+
+        if (bn + 1 > tn) tn = bn + 1;
+        if (*ascale != *bscale) {
+            /* first (optimistic) try - try to scale down the one with the bigger
+               scale, while this number is divisible by 10 */
+            DWORD * digitchosen;
+            unsigned int nchosen;
+            int * scalechosen;
+            int targetscale;
+
+            if (*ascale < *bscale) {
+                targetscale = *ascale;
+                scalechosen = bscale;
+                digitchosen = b;
+                nchosen = bn;
+            } else {
+                targetscale = *bscale;
+                scalechosen = ascale;
+                digitchosen = a;
+                nchosen = an;
+            }
+            memset(t, 0, tn * sizeof(DWORD));
+            memcpy(t, digitchosen, nchosen * sizeof(DWORD));
+
+            /* divide by 10 until target scale is reached */
+            while (*scalechosen > targetscale) {
+                unsigned char remainder = VARIANT_int_divbychar(t, tn, 10);
+                if (!remainder) {
+                    (*scalechosen)--;
+                    memcpy(digitchosen, t, nchosen * sizeof(DWORD));
+                } else break;
+            }
+        }
+
+        if (*ascale != *bscale) {
+            DWORD * digitchosen;
+            unsigned int nchosen;
+            int * scalechosen;
+            int targetscale;
+
+            /* try to scale up the one with the smaller scale */
+            if (*ascale > *bscale) {
+                targetscale = *ascale;
+                scalechosen = bscale;
+                digitchosen = b;
+                nchosen = bn;
+            } else {
+                targetscale = *bscale;
+                scalechosen = ascale;
+                digitchosen = a;
+                nchosen = an;
+            }
+            memset(t, 0, tn * sizeof(DWORD));
+            memcpy(t, digitchosen, nchosen * sizeof(DWORD));
+
+            /* multiply by 10 until target scale is reached, or
+               significant bytes overflow the number
+             */
+            while (*scalechosen < targetscale && t[nchosen] == 0) {
+                VARIANT_int_mulbychar(t, tn, 10);
+                if (t[nchosen] == 0) {
+                    /* still does not overflow */
+                    (*scalechosen)++;
+                    memcpy(digitchosen, t, nchosen * sizeof(DWORD));
+                }
+            }
+        }
+
+        if (*ascale != *bscale) {
+            /* still different? try to scale down the one with the bigger scale
+               (this *will* lose significant digits) */
+            DWORD * digitchosen;
+            unsigned int nchosen;
+            int * scalechosen;
+            int targetscale;
+
+            if (*ascale < *bscale) {
+                targetscale = *ascale;
+                scalechosen = bscale;
+                digitchosen = b;
+                nchosen = bn;
+            } else {
+                targetscale = *bscale;
+                scalechosen = ascale;
+                digitchosen = a;
+                nchosen = an;
+            }
+            memset(t, 0, tn * sizeof(DWORD));
+            memcpy(t, digitchosen, nchosen * sizeof(DWORD));
+
+            /* divide by 10 until target scale is reached */
+            while (*scalechosen > targetscale) {
+                VARIANT_int_divbychar(t, tn, 10);
+                (*scalechosen)--;
+                memcpy(digitchosen, t, nchosen * sizeof(DWORD));
+            }
+        }
+
+        /* check whether any of the operands still has significant digits
+           (underflow case 1)
+         */
+        if (VARIANT_int_iszero(a, an) || VARIANT_int_iszero(b, bn)) {
+            underflow = 1;
+        } else {
+            /* at this step, both numbers have the same scale and can be added
+               as integers. However, the result might not fit in A, so further
+               scaling down might be necessary.
+             */
+            while (!underflow) {
+                memset(t, 0, tn * sizeof(DWORD));
+                memcpy(t, a, an * sizeof(DWORD));
+
+                VARIANT_int_add(t, tn, b, bn);
+                if (VARIANT_int_iszero(t + an, tn - an)) {
+                    /* addition was successful */
+                    memcpy(a, t, an * sizeof(DWORD));
+                    break;
+                } else {
+                    /* addition overflowed - remove significant digits
+                       from both operands and try again */
+                    VARIANT_int_divbychar(a, an, 10); (*ascale)--;
+                    VARIANT_int_divbychar(b, bn, 10); (*bscale)--;
+                    /* check whether any operand keeps significant digits after
+                       scaledown (underflow case 2)
+                     */
+                    underflow = (VARIANT_int_iszero(a, an) || VARIANT_int_iszero(b, bn));
+                }
+            }
+        }
+    }
+    return underflow;
+}
+
+/* perform complete DECIMAL division in the internal representation. Returns
+   0 if the division was completed (even if quotient is set to 0), or nonzero
+   in case of quotient overflow.
+ */
+static HRESULT VARIANT_DI_div(VARIANT_DI * dividend, VARIANT_DI * divisor, VARIANT_DI * quotient)
+{
+    HRESULT r_overflow = S_OK;
+
+    if (VARIANT_int_iszero(divisor->bitsnum, sizeof(divisor->bitsnum)/sizeof(DWORD))) {
+        /* division by 0 */
+        r_overflow = DISP_E_DIVBYZERO;
+    } else if (VARIANT_int_iszero(dividend->bitsnum, sizeof(dividend->bitsnum)/sizeof(DWORD))) {
+        VARIANT_DI_clear(quotient);
+    } else {
+        int quotientscale, remainderscale, tempquotientscale;
+        DWORD remainderplusquotient[8];
+        int underflow;
+
+        quotientscale = remainderscale = (int)dividend->scale - (int)divisor->scale;
+        tempquotientscale = quotientscale;
+        VARIANT_DI_clear(quotient);
+        quotient->sign = (dividend->sign ^ divisor->sign) ? 1 : 0;
+
+        /*  The following strategy is used for division
+            1) if there was a nonzero remainder from previous iteration, use it as
+               dividend for this iteration, else (for first iteration) use intended
+               dividend
+            2) perform integer division in temporary buffer, develop quotient in
+               low-order part, remainder in high-order part
+            3) add quotient from step 2 to final result, with possible loss of
+               significant digits
+            4) multiply integer part of remainder by 10, while incrementing the
+               scale of the remainder. This operation preserves the intended value
+               of the remainder.
+            5) loop to step 1 until one of the following is true:
+                a) remainder is zero (exact division achieved)
+                b) addition in step 3 fails to modify bits in quotient (remainder underflow)
+         */
+        memset(remainderplusquotient, 0, sizeof(remainderplusquotient));
+        memcpy(remainderplusquotient, dividend->bitsnum, sizeof(dividend->bitsnum));
+        do {
+            VARIANT_int_div(
+                remainderplusquotient, 4,
+                divisor->bitsnum, sizeof(divisor->bitsnum)/sizeof(DWORD));
+            underflow = VARIANT_int_addlossy(
+                quotient->bitsnum, &quotientscale, sizeof(quotient->bitsnum) / sizeof(DWORD),
+                remainderplusquotient, &tempquotientscale, 4);
+            VARIANT_int_mulbychar(remainderplusquotient + 4, 4, 10);
+            memcpy(remainderplusquotient, remainderplusquotient + 4, 4 * sizeof(DWORD));
+            tempquotientscale = ++remainderscale;
+        } while (!underflow && !VARIANT_int_iszero(remainderplusquotient + 4, 4));
+
+        /* quotient scale might now be negative (extremely big number). If, so, try
+           to multiply quotient by 10 (without overflowing), while adjusting the scale,
+           until scale is 0. If this cannot be done, it is a real overflow.
+         */
+        while (!r_overflow && quotientscale < 0) {
+            memset(remainderplusquotient, 0, sizeof(remainderplusquotient));
+            memcpy(remainderplusquotient, quotient->bitsnum, sizeof(quotient->bitsnum));
+            VARIANT_int_mulbychar(remainderplusquotient, sizeof(remainderplusquotient)/sizeof(DWORD), 10);
+            if (VARIANT_int_iszero(remainderplusquotient + sizeof(quotient->bitsnum)/sizeof(DWORD),
+                (sizeof(remainderplusquotient) - sizeof(quotient->bitsnum))/sizeof(DWORD))) {
+                quotientscale++;
+                memcpy(quotient->bitsnum, remainderplusquotient, sizeof(quotient->bitsnum));
+            } else r_overflow = DISP_E_OVERFLOW;
+        }
+        if (!r_overflow) {
+            if (quotientscale <= 255) quotient->scale = quotientscale;
+            else VARIANT_DI_clear(quotient);
+        }
+    }
+    return r_overflow;
+}
+
 /************************************************************************
  * VarDecDiv (OLEAUT32.178)
  *
@@ -4866,8 +5204,59 @@ static int VARIANT_DI_tostringW(VARIANT_DI * a, WCHAR * s, unsigned int n)
  */
 HRESULT WINAPI VarDecDiv(const DECIMAL* pDecLeft, const DECIMAL* pDecRight, DECIMAL* pDecOut)
 {
-  FIXME("(%p,%p,%p)-stub!\n",pDecLeft,pDecRight,pDecOut);
-  return DISP_E_OVERFLOW;
+  HRESULT hRet = S_OK;
+  VARIANT_DI di_left, di_right, di_result;
+  HRESULT divresult;
+
+  if (!pDecLeft || !pDecRight || !pDecOut) return E_INVALIDARG;
+
+  VARIANT_DIFromDec(pDecLeft, &di_left);
+  VARIANT_DIFromDec(pDecRight, &di_right);
+  divresult = VARIANT_DI_div(&di_left, &di_right, &di_result);
+  if (divresult)
+  {
+      /* division actually overflowed */
+      hRet = divresult;
+  }
+  else
+  {
+      hRet = S_OK;
+
+      if (di_result.scale > DEC_MAX_SCALE)
+      {
+        unsigned char remainder = 0;
+      
+        /* division underflowed. In order to comply with the MSDN
+           specifications for DECIMAL ranges, some significant digits
+           must be removed
+         */
+        WARN("result scale is %u, scaling (with loss of significant digits)...\n",
+            di_result.scale);
+        while (di_result.scale > DEC_MAX_SCALE && 
+               !VARIANT_int_iszero(di_result.bitsnum, sizeof(di_result.bitsnum) / sizeof(DWORD)))
+        {
+            remainder = VARIANT_int_divbychar(di_result.bitsnum, sizeof(di_result.bitsnum) / sizeof(DWORD), 10);
+            di_result.scale--;
+        }
+        if (di_result.scale > DEC_MAX_SCALE)
+        {
+            WARN("result underflowed, setting to 0\n");
+            di_result.scale = 0;
+            di_result.sign = 0;
+        }
+        else if (remainder >= 5)    /* round up result - native oleaut32 does this */
+        {
+            unsigned int i;
+            for (remainder = 1, i = 0; i < sizeof(di_result.bitsnum) / sizeof(DWORD) && remainder; i++) {
+                ULONGLONG digit = di_result.bitsnum[i] + 1;
+                remainder = (digit > 0xFFFFFFFF) ? 1 : 0;
+                di_result.bitsnum[i] = digit & 0xFFFFFFFF;
+            }
+        }
+      }
+      VARIANT_DecFromDI(&di_result, pDecOut);
+  }
+  return hRet;
 }
 
 /************************************************************************
