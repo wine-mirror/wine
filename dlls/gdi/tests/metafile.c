@@ -35,6 +35,27 @@ static BOOL emr_processed = FALSE;
 #define LINE_X 55.0f
 #define LINE_Y 15.0f
 
+static INT (WINAPI * pGetRelAbs)(HDC, DWORD);
+static INT (WINAPI * pSetRelAbs)(HDC, INT);
+
+#define GDI_GET_PROC(func)                                     \
+    p ## func = (void *)GetProcAddress(hGDI, #func);           \
+    if(!p ## func)                                             \
+        trace("GetProcAddress(hGDI, \"%s\") failed\n", #func); \
+
+static void init_function_pointers(void)
+{
+    HMODULE hGDI;
+
+    pGetRelAbs = NULL;
+    pSetRelAbs = NULL;
+
+    hGDI = GetModuleHandleA("gdi32.dll");
+    assert(hGDI);
+    GDI_GET_PROC(GetRelAbs);
+    GDI_GET_PROC(SetRelAbs);
+}
+
 static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     const ENHMETARECORD *emr, int n_objs, LPARAM param)
 {
@@ -65,7 +86,8 @@ static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 
         /* GetBkMode, GetRelAbs do not get reset to the default value */
         ok(GetBkMode(hdc) == OPAQUE, "bk mode %d\n", GetBkMode(hdc));
-        ok(GetRelAbs(hdc, 0) == RELATIVE, "relabs %d\n", GetRelAbs(hdc, 0));
+        if(pSetRelAbs && pGetRelAbs)
+            ok(pGetRelAbs(hdc, 0) == RELATIVE, "relabs %d\n", pGetRelAbs(hdc, 0));
 
         n_record = 0;
         break;
@@ -209,7 +231,7 @@ static void test_ExtTextOut(void)
     SetPolyFillMode(hdcDisplay, WINDING);
     SetStretchBltMode(hdcDisplay, HALFTONE);
 
-    SetRelAbs(hdcDisplay, RELATIVE);
+    if(pSetRelAbs) pSetRelAbs(hdcDisplay, RELATIVE);
     SetBkMode(hdcDisplay, OPAQUE);
 
     ret = EnumEnhMetaFile(hdcDisplay, hMetafile, emf_enum_proc, dx, &rc);
@@ -787,6 +809,8 @@ static void test_gdiis(void)
 
 START_TEST(metafile)
 {
+    init_function_pointers();
+
     /* For enhanced metafiles (enhmfdrv) */
     test_ExtTextOut();
 
