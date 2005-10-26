@@ -1915,7 +1915,7 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE hFile, PIO_STATUS_BLOCK io_status,
  *
  */
 NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
-                                       POBJECT_ATTRIBUTES oa, PIO_STATUS_BLOCK iosb,
+                                       POBJECT_ATTRIBUTES attr, PIO_STATUS_BLOCK iosb,
                                        ULONG sharing, ULONG dispo, ULONG options,
                                        ULONG pipe_type, ULONG read_mode, 
                                        ULONG completion_mode, ULONG max_inst,
@@ -1926,12 +1926,12 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
     static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
 
     TRACE("(%p %lx %s %p %lx %ld %lx %ld %ld %ld %ld %ld %ld %p)\n",
-          handle, access, debugstr_w(oa->ObjectName->Buffer), iosb, sharing, dispo,
+          handle, access, debugstr_w(attr->ObjectName->Buffer), iosb, sharing, dispo,
           options, pipe_type, read_mode, completion_mode, max_inst, inbound_quota,
           outbound_quota, timeout);
 
-    if (oa->ObjectName->Length < sizeof(leadin) ||
-        strncmpiW( oa->ObjectName->Buffer, 
+    if (attr->ObjectName->Length < sizeof(leadin) ||
+        strncmpiW( attr->ObjectName->Buffer, 
                    leadin, sizeof(leadin)/sizeof(leadin[0]) ))
         return STATUS_OBJECT_NAME_INVALID;
     /* assume we only get relative timeout, and storable in a DWORD as ms */
@@ -1950,9 +1950,9 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
         req->outsize = outbound_quota;
         req->insize  = inbound_quota;
         req->timeout = timeout->QuadPart / -10000;
-        req->inherit = (oa->Attributes & OBJ_INHERIT) != 0;
-        wine_server_add_data( req, oa->ObjectName->Buffer + 4, 
-                              oa->ObjectName->Length - 4 * sizeof(WCHAR) );
+        req->inherit = (attr->Attributes & OBJ_INHERIT) != 0;
+        wine_server_add_data( req, attr->ObjectName->Buffer + 4, 
+                              attr->ObjectName->Length - 4 * sizeof(WCHAR) );
         status = wine_server_call( req );
         if (!status) *handle = reply->handle;
     }
