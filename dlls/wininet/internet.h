@@ -455,9 +455,6 @@ VOID SendSyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
                       DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                       DWORD dwStatusInfoLength);
 
-BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
-                       LPCWSTR username, LPCWSTR password );
-
 BOOL NETCON_connected(WININET_NETCONNECTION *connection);
 void NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL);
 BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,

@@ -84,20 +84,15 @@ static const WCHAR g_szHost[] = {'H','o','s','t',0};
 
 static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr);
 static void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr);
-BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr);
-int HTTP_WriteDataToStream(LPWININETHTTPREQW lpwhr,
-	void *Buffer, int BytesToWrite);
-int HTTP_ReadDataFromStream(LPWININETHTTPREQW lpwhr,
-	void *Buffer, int BytesToRead);
-BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr);
-BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
-BOOL HTTP_ReplaceHeaderValue( LPHTTPHEADERW lphttpHdr, LPCWSTR lpsztmp );
-void HTTP_CloseConnection(LPWININETHTTPREQW lpwhr);
-LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer);
-INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField);
-BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr);
-INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField);
-BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index);
+static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr);
+static BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr);
+static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
+static BOOL HTTP_ReplaceHeaderValue( LPHTTPHEADERW lphttpHdr, LPCWSTR lpsztmp );
+static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer);
+static BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr);
+static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField);
+static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index);
+
 
 /***********************************************************************
  *           HTTP_Tokenize (internal)
@@ -565,7 +560,7 @@ static LPWSTR HTTP_EncodeBasicAuth( LPCWSTR username, LPCWSTR password)
  *
  *   Insert the basic authorization field in the request header
  */
-BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
+static BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
                        LPCWSTR username, LPCWSTR password )
 {
     HTTPHEADERW hdr;
@@ -1908,7 +1903,7 @@ lerror:
  *   TRUE  on success
  *   FALSE on failure
  */
-BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
+static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
 {
     BOOL bSuccess = FALSE;
     LPWININETHTTPSESSIONW lpwhs;
@@ -2002,7 +1997,7 @@ static void HTTP_clear_response_headers( LPWININETHTTPREQW lpwhr )
  *   TRUE  on success
  *   FALSE on error
  */
-BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
+static BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
 {
     INT cbreaks = 0;
     WCHAR buffer[MAX_REPLY_LEN];
@@ -2152,7 +2147,7 @@ static void strip_spaces(LPWSTR start)
  *   Pointer to array of field, value, NULL on success.
  *   NULL on error.
  */
-LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
+static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
 {
     LPWSTR * pTokenPair;
     LPWSTR pszColon;
@@ -2205,7 +2200,7 @@ LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
  *
  * FIXME: This should be stuffed into a hash table
  */
-INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField)
+static INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField)
 {
     INT index = -1;
     static const WCHAR szContentLength[] = {
@@ -2306,7 +2301,7 @@ INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField)
 /***********************************************************************
  *           HTTP_ReplaceHeaderValue (internal)
  */
-BOOL HTTP_ReplaceHeaderValue( LPHTTPHEADERW lphttpHdr, LPCWSTR value )
+static BOOL HTTP_ReplaceHeaderValue( LPHTTPHEADERW lphttpHdr, LPCWSTR value )
 {
     INT len = 0;
 
@@ -2333,7 +2328,7 @@ BOOL HTTP_ReplaceHeaderValue( LPHTTPHEADERW lphttpHdr, LPCWSTR value )
 
 #define COALESCEFLASG (HTTP_ADDHDR_FLAG_COALESCE|HTTP_ADDHDR_FLAG_COALESCE_WITH_COMMA|HTTP_ADDHDR_FLAG_COALESCE_WITH_SEMICOLON)
 
-BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier)
+static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier)
 {
     LPHTTPHEADERW lphttpHdr = NULL;
     BOOL bSuccess = FALSE;
@@ -2467,7 +2462,7 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, D
  * Close socket connection
  *
  */
-VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
+static VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
 {
     LPWININETHTTPSESSIONW lpwhs = NULL;
     LPWININETAPPINFOW hIC = NULL;
@@ -2533,7 +2528,7 @@ static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
  * Deallocate session handle
  *
  */
-void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr)
+static void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr)
 {
     LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) hdr;
 
@@ -2551,7 +2546,7 @@ void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr)
  * Return index of custom header from header array
  *
  */
-INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField)
+static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField)
 {
     DWORD index;
 
@@ -2578,7 +2573,7 @@ INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField)
  * Insert header into array
  *
  */
-BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr)
+static BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr)
 {
     INT count;
     LPHTTPHEADERW lph = NULL;
@@ -2616,7 +2611,7 @@ BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr)
  * Delete header from array
  *  If this function is called, the indexs may change.
  */
-BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index)
+static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index)
 {
     if( lpwhr->nCustHeaders <= 0 )
         return FALSE;
