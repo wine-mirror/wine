@@ -25,6 +25,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <errno.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -56,6 +59,7 @@ typedef struct
     HANDLE           handle;      /* handle to directory */
     CRITICAL_SECTION cs;          /* crit section protecting this structure */
     UNICODE_STRING   mask;        /* file mask */
+    UNICODE_STRING   path;        /* NT path used to open the directory */
     BOOL             is_root;     /* is directory the root of the drive? */
     UINT             data_pos;    /* current position in dir data */
     UINT             data_len;    /* length of dir data */
@@ -110,6 +114,58 @@ static HANDLE create_file_OF( LPCSTR path, INT mode )
     default:                  sharing = FILE_SHARE_READ | FILE_SHARE_WRITE; break;
     }
     return CreateFileA( path, access, sharing, NULL, creation, FILE_ATTRIBUTE_NORMAL, 0 );
+}
+
+
+/***********************************************************************
+ *              check_dir_symlink
+ *
+ * Check if a dir symlink should be returned by FindNextFile.
+ */
+static BOOL check_dir_symlink( FIND_FIRST_INFO *info, const FILE_BOTH_DIR_INFORMATION *file_info )
+{
+    UNICODE_STRING str;
+    ANSI_STRING unix_name;
+    struct stat st, parent_st;
+    BOOL ret = TRUE;
+    DWORD len;
+
+    str.MaximumLength = info->path.Length + sizeof(WCHAR) + file_info->FileNameLength;
+    if (!(str.Buffer = HeapAlloc( GetProcessHeap(), 0, str.MaximumLength ))) return TRUE;
+    memcpy( str.Buffer, info->path.Buffer, info->path.Length );
+    len = info->path.Length / sizeof(WCHAR);
+    if (!len || str.Buffer[len-1] != '\\') str.Buffer[len++] = '\\';
+    memcpy( str.Buffer + len, file_info->FileName, file_info->FileNameLength );
+    str.Length = len * sizeof(WCHAR) + file_info->FileNameLength;
+
+    unix_name.Buffer = NULL;
+    if (!wine_nt_to_unix_file_name( &str, &unix_name, OPEN_EXISTING, FALSE ) &&
+        !stat( unix_name.Buffer, &st ))
+    {
+        char *p = unix_name.Buffer + unix_name.Length - 1;
+
+        /* skip trailing slashes */
+        while (p > unix_name.Buffer && *p == '/') p--;
+
+        while (ret && p > unix_name.Buffer)
+        {
+            while (p > unix_name.Buffer && *p != '/') p--;
+            while (p > unix_name.Buffer && *p == '/') p--;
+            p[1] = 0;
+            if (!stat( unix_name.Buffer, &parent_st ) &&
+                parent_st.st_dev == st.st_dev &&
+                parent_st.st_ino == st.st_ino)
+            {
+                WARN( "suppressing dir symlink %s pointing to parent %s\n",
+                      debugstr_wn( str.Buffer, str.Length/sizeof(WCHAR) ),
+                      debugstr_a( unix_name.Buffer ));
+                ret = FALSE;
+            }
+        }
+    }
+    RtlFreeAnsiString( &unix_name );
+    RtlFreeUnicodeString( &str );
+    return ret;
 }
 
 
@@ -1510,9 +1566,9 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
         SetLastError( RtlNtStatusToDosError(status) );
         goto error;
     }
-    RtlFreeUnicodeString( &nt_name );
 
     RtlInitializeCriticalSection( &info->cs );
+    info->path     = nt_name;
     info->magic    = FIND_FIRST_MAGIC;
     info->data_pos = 0;
     info->data_len = 0;
@@ -1588,6 +1644,13 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
                 dir_info->FileName[0] == '.' && dir_info->FileName[1] == '.') continue;
         }
 
+        /* check for dir symlink */
+        if ((dir_info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+            (dir_info->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT))
+        {
+            if (!check_dir_symlink( info, dir_info )) continue;
+        }
+
         data->dwFileAttributes = dir_info->FileAttributes;
         data->ftCreationTime   = *(FILETIME *)&dir_info->CreationTime;
         data->ftLastAccessTime = *(FILETIME *)&dir_info->LastAccessTime;
@@ -1639,6 +1702,7 @@ BOOL WINAPI FindClose( HANDLE handle )
                 info->handle = 0;
                 RtlFreeUnicodeString( &info->mask );
                 info->mask.Buffer = NULL;
+                RtlFreeUnicodeString( &info->path );
                 info->data_pos = 0;
                 info->data_len = 0;
                 RtlLeaveCriticalSection( &info->cs );
