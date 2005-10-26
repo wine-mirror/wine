@@ -394,6 +394,25 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
   return S_OK;
 }
 
+/* undos the work done by DefaultHandler_Run */
+static void WINAPI DefaultHandler_Stop(DefaultHandler *This)
+{
+  if (!This->pOleDelegate)
+    return;
+
+  IOleObject_Unadvise(This->pOleDelegate, This->dwAdvConn);
+
+  /* FIXME: call IOleCache_OnStop */
+
+  if (This->pPSDelegate)
+  {
+     IPersistStorage_Release(This->pPSDelegate);
+     This->pPSDelegate = NULL;
+  }
+  IOleObject_Release(This->pOleDelegate);
+  This->pOleDelegate = NULL;
+}
+
 /************************************************************************
  * DefaultHandler_Close (IOleObject)
  *
@@ -406,8 +425,19 @@ static HRESULT WINAPI DefaultHandler_Close(
 	    IOleObject*        iface,
 	    DWORD              dwSaveOption)
 {
-  FIXME("()\n");
-  return S_OK;
+  DefaultHandler *This = impl_from_IOleObject(iface);
+  HRESULT hr;
+
+  TRACE("(%ld)\n", dwSaveOption);
+
+  if (!This->pOleDelegate)
+    return S_OK;
+
+  hr = IOleObject_Close(This->pOleDelegate, dwSaveOption);
+
+  DefaultHandler_Stop(This);
+
+  return hr;
 }
 
 /************************************************************************
@@ -1204,7 +1234,7 @@ static HRESULT WINAPI DefaultHandler_Run(
   /* FIXME: do more stuff here:
    * - IOleObject_GetMiscStatus
    * - IOleObject_GetMoniker
-   * - advise data cache that we've connected somehow?
+   * - IOleCache_OnRun
    */
 
   /* FIXME: if we failed, Close the object */
@@ -1321,7 +1351,13 @@ static void WINAPI DefaultHandler_IAdviseSink_OnSave(
 static void WINAPI DefaultHandler_IAdviseSink_OnClose(
     IAdviseSink *iface)
 {
-    FIXME(": stub\n");
+    DefaultHandler *This = impl_from_IAdviseSink(iface);
+    
+    TRACE("()\n");
+
+    IOleAdviseHolder_SendOnClose(This->oleAdviseHolder);
+
+    DefaultHandler_Stop(This);
 }
 
 /*
@@ -1472,10 +1508,8 @@ static DefaultHandler* DefaultHandler_Construct(
 static void DefaultHandler_Destroy(
   DefaultHandler* This)
 {
-  if (This->pOleDelegate)
-    IOleObject_Release(This->pOleDelegate);
-  if (This->pPSDelegate)
-    IPersistStorage_Release(This->pPSDelegate);
+  /* release delegates */
+  DefaultHandler_Stop(This);
 
   /* Free the strings idenfitying the object */
   HeapFree( GetProcessHeap(), 0, This->containerApp );
