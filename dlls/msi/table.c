@@ -1532,3 +1532,59 @@ UINT MSI_CommitTables( MSIDATABASE *db )
 
     return ERROR_SUCCESS;
 }
+
+static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
+                                      string_table *st, LPCWSTR name )
+{
+    FIXME("%p %p %p %s\n", db, stg, st, debugstr_w(name) );
+    return ERROR_SUCCESS;
+}
+
+/*
+ * msi_table_apply_transform
+ *
+ * Enumerate the table transforms in a transform storage and apply each one.
+ */
+UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
+{
+    IEnumSTATSTG *stgenum = NULL;
+    HRESULT r;
+    STATSTG stat;
+    ULONG n, count;
+    WCHAR name[0x40];
+    string_table *strings;
+    UINT ret = ERROR_FUNCTION_FAILED;
+
+    strings = load_string_table( stg );
+    if( !strings )
+        goto end;
+
+    r = IStorage_EnumElements( stg, 0, NULL, 0, &stgenum );
+    if( FAILED( r ) )
+        goto end;
+
+    n = 0;
+    ret = ERROR_SUCCESS;
+
+    while( r == ERROR_SUCCESS )
+    {
+        count = 0;
+        r = IEnumSTATSTG_Next( stgenum, 1, &stat, &count );
+        if( FAILED( r ) || !count )
+            break;
+        decode_streamname( stat.pwcsName, name );
+        if( ( name[0] == 0x4840 ) && ( name[1] != '_' ) )
+            r = msi_table_load_transform( db, stg, strings, name+1 );
+        else
+            TRACE("non-table stream %s\n", debugstr_w(name) );
+        n++;
+    }
+
+end:
+    if ( stgenum )
+        IEnumSTATSTG_Release( stgenum );
+    if ( strings )
+        msi_destroy_stringtable( strings );
+
+    return ret;
+}

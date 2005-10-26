@@ -460,8 +460,7 @@ static UINT msi_apply_substorage_transform( MSIPACKAGE *package,
     r = IStorage_OpenStorage( patch_db->storage, name, NULL, STGM_SHARE_EXCLUSIVE, NULL, 0, &stg );
     if (SUCCEEDED(r))
     {
-        FIXME("apply substorage transform %s\n", debugstr_w(name));
-        /* ret = table_apply_transform( package->db, stg ); */
+        ret = msi_table_apply_transform( package->db, stg );
         IStorage_Release( stg );
         ret = ERROR_SUCCESS;
     }

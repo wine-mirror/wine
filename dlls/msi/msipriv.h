@@ -310,6 +310,9 @@ extern BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name );
 extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
                               USHORT **pdata, UINT *psz );
 
+/* transform functions */
+extern UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg );
+
 /* action internals */
 extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern void ACTION_free_package_structures( MSIPACKAGE* );
