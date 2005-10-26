@@ -918,6 +918,35 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
     return status;
 }
 
+
+/**********************************************************************
+ *	    attach_implicitly_loaded_dlls
+ *
+ * Attach to the (builtin) dlls that have been implicitly loaded because
+ * of a dependency at the Unix level, but not imported at the Win32 level.
+ */
+static void attach_implicitly_loaded_dlls( LPVOID reserved )
+{
+    for (;;)
+    {
+        PLIST_ENTRY mark, entry;
+
+        mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
+        for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+        {
+            LDR_MODULE *mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
+
+            if (mod->Flags & (LDR_LOAD_IN_PROGRESS | LDR_PROCESS_ATTACHED)) continue;
+            TRACE( "found implicitly loaded %s, attaching to it\n",
+                   debugstr_w(mod->BaseDllName.Buffer));
+            process_attach( CONTAINING_RECORD(mod, WINE_MODREF, ldr), reserved );
+            break;  /* restart the search from the start */
+        }
+        if (entry == mark) break;  /* nothing found */
+    }
+}
+
+
 /*************************************************************************
  *		process_detach
  *
@@ -1982,6 +2011,7 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3
             ERR( "%s failed to initialize, aborting\n", debugstr_w(last_failed_modref->ldr.BaseDllName.Buffer) + 1 );
         goto error;
     }
+    attach_implicitly_loaded_dlls( (LPVOID)1 );
 
     RtlLeaveCriticalSection( &loader_section );
 
