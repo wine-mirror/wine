@@ -305,6 +305,7 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
   DWORD len,len1,drives;
   INT id;
   HANDLE hndl;
+  BOOL bRes;
 
   *curDrive = *otherDrive = NOT_A_VALID_DRIVE;
 
@@ -362,6 +363,12 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
   ok(CreateDirectoryA(tmpstr,NULL),"CreateDirectoryA failed\n");
   sprintf(tmpstr,"%s\\%s",newdir,LONGDIR);
   ok(CreateDirectoryA(tmpstr,NULL),"CreateDirectoryA failed\n");
+  bRes = CreateDirectoryA("c:",NULL);
+  ok(!bRes && GetLastError() == ERROR_ACCESS_DENIED,
+     "CreateDirectoryA(\"c:\" should have failed (%ld)\n", GetLastError());
+  bRes = CreateDirectoryA("c:\\",NULL);
+  ok(!bRes && GetLastError() == ERROR_ACCESS_DENIED,
+     "CreateDirectoryA(\"c:\\\" should have failed (%ld)\n", GetLastError());
   sprintf(tmpstr,"%s\\%s\\%s",newdir,SHORTDIR,SHORTFILE);
   hndl=CreateFileA(tmpstr,GENERIC_WRITE,0,NULL,
                    CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
