@@ -46,6 +46,8 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/stand
 #define REG_PROGRESS_VALUE 13200
 #define COMPONENT_PROGRESS_VALUE 24000
 
+#define LPCTSTR LPCWSTR
+
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 /*
@@ -404,6 +406,172 @@ static UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
     return ERROR_SUCCESS;
 }
 
+
+static LPWSTR* msi_split_string( LPCWSTR str, WCHAR sep )
+{
+    LPWSTR p, *ret = NULL;
+    UINT count = 0;
+
+    if (!str)
+        return ret;
+
+    /* count the number of substrings */
+    for ( p = (LPWSTR)str, count = 0; p; count++ )
+    {
+        p = strchrW( p, sep );
+        if (p)
+            p++;
+    }
+
+    /* allocate space for an array of substring pointers and the substrings */
+    ret = msi_alloc( (count+1) * sizeof (LPWSTR) +
+                     (lstrlenW(str)+1) * sizeof(WCHAR) );
+    if (!ret)
+        return ret;
+
+    /* copy the string and set the pointers */
+    p = (LPWSTR) &ret[count+1];
+    lstrcpyW( p, str );
+    for( count = 0; (ret[count] = p); count++ )
+    {
+        p = strchrW( p, sep );
+        if (p)
+            *p++ = 0;
+    }
+
+    return ret;
+}
+
+static UINT msi_apply_substorage_transform( MSIPACKAGE *package,
+                                 MSIDATABASE *patch_db, LPCWSTR name )
+{
+    UINT ret = ERROR_FUNCTION_FAILED;
+    IStorage *stg = NULL;
+    HRESULT r;
+
+    TRACE("%p %s\n", package, debugstr_w(name) );
+
+    if (*name++ != ':')
+    {
+        ERR("expected a colon in %s\n", debugstr_w(name));
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    r = IStorage_OpenStorage( patch_db->storage, name, NULL, STGM_SHARE_EXCLUSIVE, NULL, 0, &stg );
+    if (SUCCEEDED(r))
+    {
+        FIXME("apply substorage transform %s\n", debugstr_w(name));
+        /* ret = table_apply_transform( package->db, stg ); */
+        IStorage_Release( stg );
+        ret = ERROR_SUCCESS;
+    }
+    else
+        ERR("failed to open substorage %s\n", debugstr_w(name));
+
+    return ret;
+}
+
+static UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si )
+{
+    static const WCHAR szProdID[] = { 'P','r','o','d','u','c','t','I','D',0 };
+    LPWSTR guid_list, *guids, product_id;
+    UINT i, ret = ERROR_FUNCTION_FAILED;
+
+    product_id = msi_dup_property( package, szProdID );
+    if (!product_id)
+    {
+        /* FIXME: the property ProductID should be written into the DB somewhere */
+        ERR("no product ID to check\n");
+        return ERROR_SUCCESS;
+    }
+
+    guid_list = msi_suminfo_dup_string( si, PID_TEMPLATE );
+    guids = msi_split_string( guid_list, ';' );
+    for ( i = 0; guids[i] && ret != ERROR_SUCCESS; i++ )
+    {
+        if (!lstrcmpW( guids[i], product_id ))
+            ret = ERROR_SUCCESS;
+    }
+    msi_free( guids );
+    msi_free( guid_list );
+    msi_free( product_id );
+
+    return ret;
+}
+
+static UINT msi_parse_patch_summary( MSIPACKAGE *package, MSIDATABASE *patch_db )
+{
+    MSISUMMARYINFO *si;
+    LPWSTR str, *substorage;
+    UINT i, r = ERROR_SUCCESS;
+
+    si = MSI_GetSummaryInformationW( patch_db, 0 );
+    if (!si)
+        return ERROR_FUNCTION_FAILED;
+
+    msi_check_patch_applicable( package, si );
+
+    /* enumerate the substorage */
+    str = msi_suminfo_dup_string( si, PID_LASTAUTHOR );
+    substorage = msi_split_string( str, ';' );
+    for ( i = 0; substorage && substorage[i] && r == ERROR_SUCCESS; i++ )
+        r = msi_apply_substorage_transform( package, patch_db, substorage[i] );
+    msi_free( substorage );
+    msi_free( str );
+
+    /* FIXME: parse the sources in PID_REVNUMBER and do something with them... */
+
+    msiobj_release( &si->hdr );
+
+    return r;
+}
+
+static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
+{
+    MSIDATABASE *patch_db = NULL;
+    UINT r;
+
+    TRACE("%p %s\n", package, debugstr_w( file ) );
+
+    /* FIXME:
+     *  We probably want to make sure we only open a patch collection here.
+     *  Patch collections (.msp) and databases (.msi) have different GUIDs
+     *  but currently MSI_OpenDatabaseW will accept both.
+     */
+    r = MSI_OpenDatabaseW( file, MSIDBOPEN_READONLY, &patch_db );
+    if ( r != ERROR_SUCCESS )
+    {
+        ERR("failed to open patch collection %s\n", debugstr_w( file ) );
+        return r;
+    }
+
+    msi_parse_patch_summary( package, patch_db );
+    msiobj_release( &patch_db->hdr );
+
+    return ERROR_SUCCESS;
+}
+
+/* get the PATCH property, and apply all the patches it specifies */
+static UINT msi_apply_patches( MSIPACKAGE *package )
+{
+    static const WCHAR szPatch[] = { 'P','A','T','C','H',0 };
+    LPWSTR patch_list, *patches;
+    UINT i, r = ERROR_SUCCESS;
+
+    patch_list = msi_dup_property( package, szPatch );
+
+    TRACE("patches to be applied: %s\n", debugstr_w( patch_list ) );
+
+    patches = msi_split_string( patch_list, ';' );
+    for( i=0; patches && patches[i] && r == ERROR_SUCCESS; i++ )
+        r = msi_apply_patch_package( package, patches[i] );
+
+    msi_free( patches );
+    msi_free( patch_list );
+
+    return r;
+}
+
 /****************************************************
  * TOP level entry points 
  *****************************************************/
@@ -452,6 +620,8 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     }
 
     msi_parse_command_line( package, szCommandLine );
+
+    msi_apply_patches( package );
 
     if ( msi_get_property_int(package, szUILevel, 0) >= INSTALLUILEVEL_REDUCED )
     {
