@@ -122,6 +122,11 @@ static void test_printer_directory(void)
     trace("GetPrinterDriverDirectoryA: first call returned 0x%04x, "
 	  "buffer size 0x%08lx\n", res, cbBuf);
 
+    if (!cbBuf) {
+        trace("no valid buffer size returned, skipping tests\n");
+        return;
+    }
+
     buffer = HeapAlloc( GetProcessHeap(), 0, cbBuf*2);
 
     res = GetPrinterDriverDirectoryA(NULL, NULL, 1, buffer, cbBuf, &pcbNeeded);
