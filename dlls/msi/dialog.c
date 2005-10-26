@@ -750,6 +750,73 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+static HBITMAP msi_load_picture( MSIDATABASE *db, LPCWSTR name,
+                                 INT cx, INT cy, DWORD flags )
+{
+    HBITMAP hOleBitmap = 0, hBitmap = 0, hOldSrcBitmap, hOldDestBitmap;
+    MSIRECORD *rec = NULL;
+    IStream *stm = NULL;
+    IPicture *pic = NULL;
+    HDC srcdc, destdc;
+    BITMAP bm;
+    UINT r;
+
+    rec = msi_get_binary_record( db, name );
+    if( !rec )
+        goto end;
+
+    r = MSI_RecordGetIStream( rec, 2, &stm );
+    msiobj_release( &rec->hdr );
+    if( r != ERROR_SUCCESS )
+        goto end;
+
+    r = OleLoadPicture( stm, 0, TRUE, &IID_IPicture, (LPVOID*) &pic );
+    IStream_Release( stm );
+    if( FAILED( r ) )
+    {
+        ERR("failed to load picture\n");
+        goto end;
+    }
+
+    r = IPicture_get_Handle( pic, (OLE_HANDLE*) &hOleBitmap );
+    if( FAILED( r ) )
+    {
+        ERR("failed to get bitmap handle\n");
+        goto end;
+    }
+ 
+    /* make the bitmap the desired size */
+    r = GetObjectW( hOleBitmap, sizeof bm, &bm );
+    if (r != sizeof bm )
+    {
+        ERR("failed to get bitmap size\n");
+        goto end;
+    }
+
+    if (flags & LR_DEFAULTSIZE)
+    {
+        cx = bm.bmWidth;
+        cy = bm.bmHeight;
+    }
+
+    srcdc = CreateCompatibleDC( NULL );
+    hOldSrcBitmap = SelectObject( srcdc, hOleBitmap );
+    destdc = CreateCompatibleDC( NULL );
+    hBitmap = CreateCompatibleBitmap( srcdc, cx, cy );
+    hOldDestBitmap = SelectObject( destdc, hBitmap );
+    StretchBlt( destdc, 0, 0, cx, cy,
+                srcdc, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
+    SelectObject( srcdc, hOldSrcBitmap );
+    SelectObject( destdc, hOldDestBitmap );
+    DeleteDC( srcdc );
+    DeleteDC( destdc );
+
+end:
+    if ( pic )
+        IPicture_Release( pic );
+    return hBitmap;
+}
+
 static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     UINT cx, cy, flags, style, attributes;
@@ -773,8 +840,7 @@ static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
     cy = msi_dialog_scale_unit( dialog, cy );
 
     text = msi_get_deformatted_field( dialog->package, rec, 10 );
-    control->hBitmap = msi_load_image( dialog->package->db, text,
-                                       IMAGE_BITMAP, cx, cy, flags );
+    control->hBitmap = msi_load_picture( dialog->package->db, text, cx, cy, flags );
     if( control->hBitmap )
         SendMessageW( control->hwnd, STM_SETIMAGE,
                       IMAGE_BITMAP, (LPARAM) control->hBitmap );
