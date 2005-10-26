@@ -4615,6 +4615,25 @@ static void VARIANT_DIFromDec(const DECIMAL * from, VARIANT_DI * to)
     to->bitsnum[2] = DEC_HI32(from);
 }
 
+static void VARIANT_DecFromDI(VARIANT_DI * from, DECIMAL * to)
+{
+    if (from->sign) {
+        DEC_SIGNSCALE(to) = SIGNSCALE(DECIMAL_NEG, from->scale);
+    } else {
+        DEC_SIGNSCALE(to) = SIGNSCALE(DECIMAL_POS, from->scale);
+    }
+
+    DEC_LO32(to) = from->bitsnum[0];
+    DEC_MID32(to) = from->bitsnum[1];
+    DEC_HI32(to) = from->bitsnum[2];
+}
+
+/* clear an internal representation of a DECIMAL */
+static void VARIANT_DI_clear(VARIANT_DI * i)
+{
+    memset(i, 0, sizeof(VARIANT_DI));
+}
+
 /* divide the (unsigned) number stored in p (LSB) by a byte value (<= 0xff). Any nonzero
    size is supported. The value in p is replaced by the quotient of the division, and
    the remainder is returned as a result. This routine is most often used with a divisor
@@ -4649,6 +4668,103 @@ static int VARIANT_int_iszero(DWORD * p, unsigned int n)
 {
     for (; n > 0; n--) if (*p++ != 0) return 0;
     return 1;
+}
+
+/* multiply two DECIMALS, without changing either one, and place result in third
+   parameter. Result is normalized when scale is > 0. Attempts to remove significant
+   digits when scale > 0 in order to fit an overflowing result. Final overflow
+   flag is returned.
+ */
+static int VARIANT_DI_mul(VARIANT_DI * a, VARIANT_DI * b, VARIANT_DI * result)
+{
+    int r_overflow = 0;
+    DWORD running[6];
+    signed int mulstart;
+
+    VARIANT_DI_clear(result);
+    result->sign = (a->sign ^ b->sign) ? 1 : 0;
+
+    /* Multiply 128-bit operands into a (max) 256-bit result. The scale
+       of the result is formed by adding the scales of the operands.
+     */
+    result->scale = a->scale + b->scale;
+    memset(running, 0, sizeof(running));
+
+    /* count number of leading zero-bytes in operand A */
+    for (mulstart = sizeof(a->bitsnum)/sizeof(DWORD) - 1; mulstart >= 0 && !a->bitsnum[mulstart]; mulstart--);
+    if (mulstart < 0) {
+        /* result is 0, because operand A is 0 */
+        result->scale = 0;
+        result->sign = 0;
+    } else {
+        unsigned char remainder = 0;
+        int iA;        
+
+        /* perform actual multiplication */
+        for (iA = 0; iA <= mulstart; iA++) {
+            ULONG iOverflowMul;
+            int iB;
+            
+            for (iOverflowMul = 0, iB = 0; iB < sizeof(b->bitsnum)/sizeof(DWORD); iB++) {
+                ULONG iRV;
+                int iR;
+                
+                iRV = VARIANT_Mul(b->bitsnum[iB], a->bitsnum[iA], &iOverflowMul);
+                iR = iA + iB;
+                do {
+                    running[iR] = VARIANT_Add(running[iR], 0, &iRV);
+                    iR++;
+                } while (iRV);
+            }
+        }
+
+/* Too bad - native oleaut does not do this, so we should not either */
+#if 0
+        /* While the result is divisible by 10, and the scale > 0, divide by 10.
+           This operation should not lose significant digits, and gives an
+           opportunity to reduce the possibility of overflows in future
+           operations issued by the application.
+         */
+        while (result->scale > 0) {
+            memcpy(quotient, running, sizeof(quotient));
+            remainder = VARIANT_int_divbychar(quotient, sizeof(quotient) / sizeof(DWORD), 10);
+            if (remainder > 0) break;
+            memcpy(running, quotient, sizeof(quotient));
+            result->scale--;
+        }
+#endif
+        /* While the 256-bit result overflows, and the scale > 0, divide by 10.
+           This operation *will* lose significant digits of the result because
+           all the factors of 10 were consumed by the previous operation.
+        */
+        while (result->scale > 0 && !VARIANT_int_iszero(
+            running + sizeof(result->bitsnum) / sizeof(DWORD),
+            (sizeof(running) - sizeof(result->bitsnum)) / sizeof(DWORD))) {
+            
+            remainder = VARIANT_int_divbychar(running, sizeof(running) / sizeof(DWORD), 10);
+            if (remainder > 0) WARN("losing significant digits (remainder %u)...\n", remainder);
+            result->scale--;
+        }
+        
+        /* round up the result - native oleaut32 does this */
+        if (remainder >= 5) {
+            unsigned int i;
+            for (remainder = 1, i = 0; i < sizeof(running)/sizeof(DWORD) && remainder; i++) {
+                ULONGLONG digit = running[i] + 1;
+                remainder = (digit > 0xFFFFFFFF) ? 1 : 0;
+                running[i] = digit & 0xFFFFFFFF;
+            }
+        }
+
+        /* Signal overflow if scale == 0 and 256-bit result still overflows,
+           and copy result bits into result structure
+        */
+        r_overflow = !VARIANT_int_iszero(
+            running + sizeof(result->bitsnum)/sizeof(DWORD), 
+            (sizeof(running) - sizeof(result->bitsnum))/sizeof(DWORD));
+        memcpy(result->bitsnum, running, sizeof(result->bitsnum));
+    }
+    return r_overflow;
 }
 
 /* cast DECIMAL into string. Any scale should be handled properly. en_US locale is
@@ -4770,42 +4886,44 @@ HRESULT WINAPI VarDecDiv(const DECIMAL* pDecLeft, const DECIMAL* pDecRight, DECI
  */
 HRESULT WINAPI VarDecMul(const DECIMAL* pDecLeft, const DECIMAL* pDecRight, DECIMAL* pDecOut)
 {
-  /* FIXME: This only allows multiplying by a fixed integer <= 0xffffffff */
+  HRESULT hRet = S_OK;
+  VARIANT_DI di_left, di_right, di_result;
+  int mulresult;
 
-  if (!DEC_SCALE(pDecLeft) || !DEC_SCALE(pDecRight))
+  VARIANT_DIFromDec(pDecLeft, &di_left);
+  VARIANT_DIFromDec(pDecRight, &di_right);
+  mulresult = VARIANT_DI_mul(&di_left, &di_right, &di_result);
+  if (mulresult)
   {
-    /* At least one term is an integer */
-    const DECIMAL* pDecInteger = DEC_SCALE(pDecLeft) ? pDecRight : pDecLeft;
-    const DECIMAL* pDecOperand = DEC_SCALE(pDecLeft) ? pDecLeft  : pDecRight;
-    HRESULT hRet = S_OK;
-    unsigned int multiplier = DEC_LO32(pDecInteger);
-    ULONG overflow = 0;
-
-    if (DEC_HI32(pDecInteger) || DEC_MID32(pDecInteger))
-    {
-      FIXME("(%p,%p,%p) semi-stub!\n",pDecLeft,pDecRight,pDecOut);
-      return DISP_E_OVERFLOW;
-    }
-
-    DEC_LO32(pDecOut)  = VARIANT_Mul(DEC_LO32(pDecOperand),  multiplier, &overflow);
-    DEC_MID32(pDecOut) = VARIANT_Mul(DEC_MID32(pDecOperand), multiplier, &overflow);
-    DEC_HI32(pDecOut)  = VARIANT_Mul(DEC_HI32(pDecOperand),  multiplier, &overflow);
-
-    if (overflow)
-       hRet = DISP_E_OVERFLOW;
-    else
-    {
-      BYTE sign = DECIMAL_POS;
-
-      if (DEC_SIGN(pDecLeft) != DEC_SIGN(pDecRight))
-        sign = DECIMAL_NEG; /* pos * neg => negative */
-      DEC_SIGN(pDecOut) = sign;
-      DEC_SCALE(pDecOut) = DEC_SCALE(pDecOperand);
-    }
-    return hRet;
+    /* multiplication actually overflowed */
+    hRet = DISP_E_OVERFLOW;
   }
-  FIXME("(%p,%p,%p) semi-stub!\n",pDecLeft,pDecRight,pDecOut);
-  return DISP_E_OVERFLOW;
+  else
+  {
+    if (di_result.scale > DEC_MAX_SCALE)
+    {
+      /* multiplication underflowed. In order to comply with the MSDN
+         specifications for DECIMAL ranges, some significant digits
+         must be removed
+       */
+      WARN("result scale is %u, scaling (with loss of significant digits)...\n",
+          di_result.scale);
+      while (di_result.scale > DEC_MAX_SCALE && 
+            !VARIANT_int_iszero(di_result.bitsnum, sizeof(di_result.bitsnum)/sizeof(DWORD)))
+      {
+        VARIANT_int_divbychar(di_result.bitsnum, sizeof(di_result.bitsnum)/sizeof(DWORD), 10);
+        di_result.scale--;
+      }
+      if (di_result.scale > DEC_MAX_SCALE)
+      {
+        WARN("result underflowed, setting to 0\n");
+        di_result.scale = 0;
+        di_result.sign = 0;
+      }
+    }
+    VARIANT_DecFromDI(&di_result, pDecOut);
+  }
+  return hRet;
 }
 
 /************************************************************************
