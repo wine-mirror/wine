@@ -5947,11 +5947,7 @@ static const struct message WmDispatchPaint[] = {
 
 static LRESULT WINAPI DispatchMessageCheckProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    if (message == WM_PAINT)
-    {
-        trace( "Got WM_PAINT, ignoring\n" );
-        return 0;
-    }
+    if (message == WM_PAINT) return 0;
     return MsgCheckProcA( hwnd, message, wParam, lParam );
 }
 
