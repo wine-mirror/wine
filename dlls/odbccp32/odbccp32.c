@@ -258,17 +258,44 @@ BOOL WINAPI SQLInstallDriverEx(LPCSTR lpszDriver, LPCSTR lpszPathIn,
 BOOL WINAPI SQLInstallDriverManagerW(LPWSTR lpszPath, WORD cbPathMax,
                WORD *pcbPathOut)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    UINT len;
+    WCHAR path[MAX_PATH];
+
+    TRACE("(%p %d %d)\n", lpszPath, cbPathMax, *pcbPathOut);
+
+    len = GetSystemDirectoryW(path, MAX_PATH);
+    if (pcbPathOut) *pcbPathOut = len;
+
+    if (cbPathMax > len)
+    {
+    	lstrcpyW( lpszPath, path );
+    	return TRUE;
+    }
     return FALSE;
 }
 
 BOOL WINAPI SQLInstallDriverManager(LPSTR lpszPath, WORD cbPathMax,
                WORD *pcbPathOut)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    BOOL ret;
+    WORD len, cbOut = 0;
+    WCHAR path[MAX_PATH];
+
+    TRACE("(%p %d %d)\n", lpszPath, cbPathMax, *pcbPathOut);
+
+    ret = SQLInstallDriverManagerW(path, MAX_PATH, &cbOut);
+    if (ret)
+    {
+        len =  WideCharToMultiByte(CP_ACP, 0, path, -1, lpszPath, 0, NULL, NULL);
+        if (len)
+        {
+            if (pcbPathOut) *pcbPathOut = len - 1;
+            if (cbPathMax < len) return FALSE;
+
+            len =  WideCharToMultiByte(CP_ACP, 0, path, -1, lpszPath, cbPathMax, NULL, NULL);
+        }
+    }
+    return ret;
 }
 
 BOOL WINAPI SQLInstallODBCW(HWND hwndParent, LPCWSTR lpszInfFile,
