@@ -48,13 +48,44 @@ WINE_DEFAULT_DEBUG_CHANNEL(ver);
  *****************************************************************************/
 static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 {
-    TRACE("structversion=%u.%u, fileversion=%u.%u.%u.%u, productversion=%u.%u.%u.%u, flagmask=0x%lx, flags=%s%s%s%s%s%s\n",
-          HIWORD(vffi->dwStrucVersion),LOWORD(vffi->dwStrucVersion),
-          HIWORD(vffi->dwFileVersionMS),LOWORD(vffi->dwFileVersionMS),
-          HIWORD(vffi->dwFileVersionLS),LOWORD(vffi->dwFileVersionLS),
+    BOOL    versioned_printer = FALSE;
+
+    if((vffi->dwFileType == VFT_DLL) || (vffi->dwFileType == VFT_DRV))
+    {
+        if(vffi->dwFileSubtype == VFT2_DRV_VERSIONED_PRINTER)
+            /* this is documented for newer w2k Drivers and up */
+            versioned_printer = TRUE;
+        else if( (vffi->dwFileSubtype == VFT2_DRV_PRINTER) &&
+                 (vffi->dwFileVersionMS != vffi->dwProductVersionMS) &&
+                 (vffi->dwFileVersionMS > 0) &&
+                 (vffi->dwFileVersionMS <= 3) )
+            /* found this on NT 3.51, NT4.0 and old w2k Drivers */
+            versioned_printer = TRUE;
+    }
+
+    TRACE("structversion=%u.%u, ",
+            HIWORD(vffi->dwStrucVersion),LOWORD(vffi->dwStrucVersion));
+    if(versioned_printer)
+    {
+        WORD mode = LOWORD(vffi->dwFileVersionMS);
+        WORD ver_rev = HIWORD(vffi->dwFileVersionLS);
+        TRACE("fileversion=%lu.%u.%u.%u (%s.major.minor.release), ",
+            (vffi->dwFileVersionMS),
+            HIBYTE(ver_rev), LOBYTE(ver_rev), LOWORD(vffi->dwFileVersionLS),
+            (mode == 3) ? "Usermode" : ((mode <= 2) ? "Kernelmode" : "?") );
+    }
+    else
+    {
+        TRACE("fileversion=%u.%u.%u.%u, ",
+            HIWORD(vffi->dwFileVersionMS),LOWORD(vffi->dwFileVersionMS),
+            HIWORD(vffi->dwFileVersionLS),LOWORD(vffi->dwFileVersionLS));
+    }
+    TRACE("productversion=%u.%u.%u.%u\n",
           HIWORD(vffi->dwProductVersionMS),LOWORD(vffi->dwProductVersionMS),
-          HIWORD(vffi->dwProductVersionLS),LOWORD(vffi->dwProductVersionLS),
-          vffi->dwFileFlagsMask,
+          HIWORD(vffi->dwProductVersionLS),LOWORD(vffi->dwProductVersionLS));
+
+    TRACE("flagmask=0x%lx, flags=0x%lx %s%s%s%s%s%s\n",
+          vffi->dwFileFlagsMask, vffi->dwFileFlags,
           (vffi->dwFileFlags & VS_FF_DEBUG) ? "DEBUG," : "",
           (vffi->dwFileFlags & VS_FF_PRERELEASE) ? "PRERELEASE," : "",
           (vffi->dwFileFlags & VS_FF_PATCHED) ? "PATCHED," : "",
@@ -93,7 +124,15 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
     switch (vffi->dwFileType)
     {
     case VFT_APP:TRACE("filetype=APP");break;
-    case VFT_DLL:TRACE("filetype=DLL");break;
+    case VFT_DLL:
+        TRACE("filetype=DLL");
+        if(vffi->dwFileSubtype != 0)
+        {
+            if(versioned_printer) /* NT3.x/NT4.0 or old w2k Driver  */
+                TRACE(",PRINTER");
+            TRACE(" (subtype=0x%lx)", vffi->dwFileSubtype);
+        }
+        break;
     case VFT_DRV:
         TRACE("filetype=DRV,");
         switch(vffi->dwFileSubtype)
@@ -109,6 +148,7 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
         case VFT2_DRV_SOUND:TRACE("SOUND");break;
         case VFT2_DRV_COMM:TRACE("COMM");break;
         case VFT2_DRV_INPUTMETHOD:TRACE("INPUTMETHOD");break;
+        case VFT2_DRV_VERSIONED_PRINTER:TRACE("VERSIONED_PRINTER");break;
         case VFT2_UNKNOWN:
         default:
             TRACE("UNKNOWN(0x%lx)",vffi->dwFileSubtype);break;
