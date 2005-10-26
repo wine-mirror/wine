@@ -30,6 +30,26 @@
 #define BUFF_SIZE 2048
 #define MAX_MESSAGE 12000
 
+static HMODULE secdll;
+static PSecurityFunctionTableA (SEC_ENTRY * pInitSecurityInterfaceA)(void);
+static SECURITY_STATUS (SEC_ENTRY * pEnumerateSecurityPackagesA)(PULONG, PSecPkgInfoA*);
+static SECURITY_STATUS (SEC_ENTRY * pFreeContextBuffer)(PVOID pv);
+static SECURITY_STATUS (SEC_ENTRY * pQuerySecurityPackageInfoA)(SEC_CHAR*, PSecPkgInfoA*);
+
+void InitFunctionPtrs(void)
+{
+    secdll = LoadLibraryA("secur32.dll");
+    if(!secdll)
+        secdll = LoadLibraryA("security.dll");
+    if(secdll)
+    {
+        pInitSecurityInterfaceA = (PVOID)GetProcAddress(secdll, "InitSecurityInterfaceA");
+        pEnumerateSecurityPackagesA = (PVOID)GetProcAddress(secdll, "EnumerateSecurityPackagesA");
+        pFreeContextBuffer = (PVOID)GetProcAddress(secdll, "FreeContextBuffer");
+        pQuerySecurityPackageInfoA = (PVOID)GetProcAddress(secdll, "QuerySecurityPackageInfo");
+    }
+}
+
 /*---------------------------------------------------------*/
 /* General helper functions */
 
@@ -67,7 +87,7 @@ static SECURITY_STATUS setupPackageA(SEC_CHAR *p_package_name,
 {
     SECURITY_STATUS ret = SEC_E_SECPKG_NOT_FOUND;
     
-    ret = QuerySecurityPackageInfoA( p_package_name, p_pkg_info);
+    ret = pQuerySecurityPackageInfoA( p_package_name, p_pkg_info);
     return ret;
 }
 
@@ -197,7 +217,7 @@ static int genServerContext(PBYTE in, DWORD in_count, PBYTE out,
 
     return 0;
 
-}       
+}
 
 
 /*--------------------------------------------------------- */
@@ -207,7 +227,7 @@ static void testInitSecurityInterface(void)
 {
     PSecurityFunctionTable sec_fun_table = NULL;
 
-    sec_fun_table = InitSecurityInterface();
+    sec_fun_table = pInitSecurityInterfaceA();
     ok(sec_fun_table != NULL, "InitSecurityInterface() returned NULL.\n");
 
 }
@@ -221,7 +241,7 @@ static void testEnumerateSecurityPackages(void)
 
     trace("Running testEnumerateSecurityPackages\n");
     
-    sec_status = EnumerateSecurityPackages(&num_packages, &pkg_info);
+    sec_status = pEnumerateSecurityPackagesA(&num_packages, &pkg_info);
 
     ok(sec_status == SEC_E_OK, 
             "EnumerateSecurityPackages() should return %ld, not %08lx\n",
@@ -265,7 +285,7 @@ static void testEnumerateSecurityPackages(void)
         trace("\n");
     }
 
-    FreeContextBuffer(pkg_info);
+    pFreeContextBuffer(pkg_info);
 }
 
 
@@ -300,7 +320,7 @@ static void testQuerySecurityPackageInfo(void)
     ok(max_token == 12000, "cbMaxToken for Negotiate is %ld, not 12000.\n",
             max_token);
 
-    sec_status = FreeContextBuffer(&pkg_info);
+    sec_status = pFreeContextBuffer(&pkg_info);
     
     ok( sec_status == SEC_E_OK,
         "Return value of FreeContextBuffer() shouldn't be %s\n",
@@ -310,12 +330,12 @@ static void testQuerySecurityPackageInfo(void)
    
     lstrcpy(sec_pkg_name, "Winetest");
 
-    sec_status = QuerySecurityPackageInfo( sec_pkg_name, &pkg_info);
+    sec_status = pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info);
 
     ok( sec_status != SEC_E_OK,
         "Return value of QuerySecurityPackageInfo() should not be %s for a nonexistent package\n", getSecStatusError(SEC_E_OK));
 
-    sec_status = FreeContextBuffer(&pkg_info);
+    sec_status = pFreeContextBuffer(&pkg_info);
     
     ok( sec_status == SEC_E_OK,
         "Return value of FreeContextBuffer() shouldn't be %s\n",
@@ -339,7 +359,7 @@ void testAuthentication(void)
 
     trace("Running testAuthentication\n");
 
-    sft = InitSecurityInterface();
+    sft = pInitSecurityInterfaceA();
 
     ok(sft != NULL, "InitSecurityInterface() returned NULL!\n");
 
@@ -369,15 +389,25 @@ void testAuthentication(void)
                 &count_server, &done, "foo", &client_cred, &client_ctxt, sft);
     }
 
-    FreeContextBuffer(&client_buff);
-    FreeContextBuffer(&server_buff);
+    pFreeContextBuffer(&client_buff);
+    pFreeContextBuffer(&server_buff);
 
 }
 
 START_TEST(main)
 {
-    testInitSecurityInterface();
-    testEnumerateSecurityPackages();
-    testQuerySecurityPackageInfo();
-    testAuthentication();
+    InitFunctionPtrs();
+    if(pInitSecurityInterfaceA)
+        testInitSecurityInterface();
+    if(pFreeContextBuffer)
+    {
+        if(pEnumerateSecurityPackagesA)
+            testEnumerateSecurityPackages();
+        if(pQuerySecurityPackageInfoA)
+            testQuerySecurityPackageInfo();
+        if(pInitSecurityInterfaceA)
+            testAuthentication();
+    }
+    if(secdll)
+        FreeLibrary(secdll);
 }
