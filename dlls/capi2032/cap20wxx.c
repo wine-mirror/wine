@@ -184,7 +184,7 @@ DWORD WINAPI wrapCAPI_GET_MANUFACTURER (char *SzBuffer) {
     if (!pcapi20_get_manufacturer)
         return 0x1109;
 
-    fret = (pcapi20_get_manufacturer (0, SzBuffer) != 0) ? 0 : 0x1108;
+    fret = (pcapi20_get_manufacturer (0, (unsigned char *) SzBuffer) != 0) ? 0 : 0x1108;
     if (!strncmp (SzBuffer, "AVM", 3)) {
         strcpy (SzBuffer, "AVM-GmbH");
     }
@@ -227,7 +227,7 @@ DWORD WINAPI wrapCAPI_GET_SERIAL_NUMBER (char *SzBuffer) {
     load_functions();
     if (!pcapi20_get_serial_number)
         return 0x1109;
-    fret = (pcapi20_get_serial_number (0, SzBuffer) != 0) ? 0 : 0x1108;
+    fret = (pcapi20_get_serial_number (0, (unsigned char*) SzBuffer) != 0) ? 0 : 0x1108;
     TRACE ("(%s) -> %lx\n", SzBuffer, fret);
     return fret;
 #else
