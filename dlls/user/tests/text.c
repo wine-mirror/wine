@@ -111,7 +111,97 @@ static void test_DrawTextCalcRect(void)
     ok( ret, "DestroyWindow error %lu\n", GetLastError());
 }
 
+/* replace tabs by \t */
+static void strfmt( char *str, char *strout)
+{
+    unsigned int i,j ;
+    for(i=0,j=0;i<=strlen(str);i++,j++)
+        if((strout[j]=str[i])=='\t') {
+            strout[j++]='\\';
+            strout[j]='t';
+        }
+}
+  
+
+#define TABTEST( tabval, tabcount, string, _exp) \
+{ int i,x_act, x_exp; char strdisp[64];\
+    for(i=0;i<8;i++) tabs[i]=(i+1)*(tabval); \
+    extent = GetTabbedTextExtentA( hdc, string, strlen( string), (tabcount), tabs); \
+    strfmt( string, strdisp); \
+ /*   trace( "Extent is %08lx\n", extent); */\
+    x_act = LOWORD( extent); \
+    x_exp = (_exp); \
+    ok( x_act == x_exp, "Test case \"%s\". Text extent is %d, expected %d tab %d tabcount %d\n", \
+        strdisp, x_act, x_exp, tabval, tabcount); \
+} \
+
+
+static void test_TabbedText()
+{
+    HWND hwnd;
+    HDC hdc;
+    BOOL ret;
+    TEXTMETRICA tm;
+    DWORD extent;
+    INT tabs[8], cx, cy, tab, tabcount,t,align;
+
+    /* Initialization */
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP,
+                           0, 0, 200, 200, 0, 0, 0, NULL);
+    ok(hwnd != 0, "CreateWindowExA error %lu\n", GetLastError());
+    hdc = GetDC(hwnd);
+    ok(hdc != 0, "GetDC error %lu\n", GetLastError());
+
+    ret = GetTextMetricsA( hdc, &tm);
+    ok( ret, "GetTextMetrics error %lu\n", GetLastError());
+
+    extent = GetTabbedTextExtentA( hdc, "x", 1, 1, tabs);
+    cx = LOWORD( extent);
+    cy = HIWORD( extent);
+    trace( "cx is %d cy is %d\n", cx, cy);
+
+    align=1;
+    for( t=-1; t<=1; t++) { /* slightly adjust the 4 char tabstop, to 
+                               catch the one off errors */
+        tab =  (cx *4 + t);
+        /* test the special case tabcount =1 and the general array (80 of tabs */
+        for( tabcount = 1; tabcount <= 8; tabcount +=7) { 
+            TABTEST( align * tab, tabcount, "\t", tab)
+            TABTEST( align * tab, tabcount, "xxx\t", tab)
+            TABTEST( align * tab, tabcount, "\tx", tab+cx)
+            TABTEST( align * tab, tabcount, "\t\t", tab*2)
+            TABTEST( align * tab, tabcount, "\tx\t", tab*2)
+            TABTEST( align * tab, tabcount, "x\tx", tab+cx)
+            TABTEST( align * tab, tabcount, "xx\tx", tab+cx)
+            TABTEST( align * tab, tabcount, "xxx\tx", tab+cx)
+            TABTEST( align * tab, tabcount, "xxxx\tx", t>0 ? tab + cx : 2*tab+cx)
+            TABTEST( align * tab, tabcount, "xxxxx\tx", 2*tab+cx)
+        }
+    }
+    align=-1;
+    for( t=-1; t<=1; t++) { /* slightly adjust the 4 char tabstop, to 
+                               catch the one off errors */
+        tab =  (cx *4 + t);
+        /* test the special case tabcount =1 and the general array (8) of tabs */
+        for( tabcount = 1; tabcount <= 8; tabcount +=7) { 
+            TABTEST( align * tab, tabcount, "\t", tab)
+            TABTEST( align * tab, tabcount, "xxx\t", tab)
+            TABTEST( align * tab, tabcount, "\tx", tab)
+            TABTEST( align * tab, tabcount, "\t\t", tab*2)
+            TABTEST( align * tab, tabcount, "\tx\t", tab*2)
+            TABTEST( align * tab, tabcount, "x\tx", tab)
+            TABTEST( align * tab, tabcount, "xx\tx", tab)
+            TABTEST( align * tab, tabcount, "xxx\tx", 4 * cx >= tab ? 2*tab :tab)
+            TABTEST( align * tab, tabcount, "xxxx\tx", 2*tab)
+            TABTEST( align * tab, tabcount, "xxxxx\tx", 2*tab)
+        }
+    }
+
+
+}
+
 START_TEST(text)
 {
+    test_TabbedText();
     test_DrawTextCalcRect();
 }
