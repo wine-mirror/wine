@@ -915,6 +915,20 @@ typedef struct _OBJECT_DATA_INFORMATION {
     BOOLEAN ProtectFromClose;
 } OBJECT_DATA_INFORMATION, *POBJECT_DATA_INFORMATION;
 
+typedef struct _OBJECT_BASIC_INFORMATION {
+    ULONG  Attributes;
+    ACCESS_MASK  GrantedAccess;
+    ULONG  HandleCount;
+    ULONG  PointerCount;
+    ULONG  PagedPoolUsage;
+    ULONG  NonPagedPoolUsage;
+    ULONG  Reserved[3];
+    ULONG  NameInformationLength;
+    ULONG  TypeInformationLength;
+    ULONG  SecurityDescriptorLength;
+    LARGE_INTEGER  CreateTime;
+} OBJECT_BASIC_INFORMATION, *POBJECT_BASIC_INFORMATION;
+
 typedef struct _PROCESS_BASIC_INFORMATION {
 #ifdef __WINESRC__
     DWORD ExitStatus;
