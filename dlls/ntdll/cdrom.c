@@ -1029,17 +1029,28 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
 
 /******************************************************************
  *		CDROM_Verify
- *
+ *  Implements: IOCTL_STORAGE_CHECK_VERIFY
+ *              IOCTL_CDROM_CHECK_VERIFY
  *
  */
 static NTSTATUS CDROM_Verify(int dev, int fd)
 {
-    /* quick implementation */
-    CDROM_SUB_Q_DATA_FORMAT     fmt;
-    SUB_Q_CHANNEL_DATA          data;
+#if defined(linux)
+    int ret;
 
-    fmt.Format = IOCTL_CDROM_CURRENT_POSITION;
-    return CDROM_ReadQChannel(dev, fd, &fmt, &data) ? 1 : 0;
+    ret = ioctl(fd,  CDROM_DRIVE_STATUS, NULL);
+    if(ret == -1) {
+        TRACE("ioctl CDROM_DRIVE_STATUS failed(%s)!\n", strerror(errno));
+        return CDROM_GetStatusCode(ret);
+    }
+
+    if(ret == CDS_DISC_OK)
+        return STATUS_SUCCESS;
+    else
+        return STATUS_NO_MEDIA_IN_DEVICE;
+#endif
+    FIXME("not implemented for non-linux\n");
+    return STATUS_NOT_SUPPORTED;
 }
 
 /******************************************************************
