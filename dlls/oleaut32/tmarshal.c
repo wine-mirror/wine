@@ -1208,14 +1208,14 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
 		TRACE_(olerelay)("%s=",relaystr(names[i+1]));
 	}
 	/* No need to marshal other data than FIN and any VT_PTR. */
-	if (!(elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN) && (elem->tdesc.vt != VT_PTR)) {
+	if (!(elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN || !elem->u.paramdesc.wParamFlags) && (elem->tdesc.vt != VT_PTR)) {
 	    xargs+=_argsize(elem->tdesc.vt);
 	    if (relaydeb) TRACE_(olerelay)("[out]");
 	    continue;
 	}
 	hres = serialize_param(
 	    tinfo,
-	    elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN,
+	    elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN || !elem->u.paramdesc.wParamFlags,
 	    relaydeb,
 	    FALSE,
 	    &elem->tdesc,
@@ -1682,7 +1682,7 @@ TMStubImpl_Invoke(
 
 	hres = deserialize_param(
 	   tinfo,
-	   elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN,
+	   elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN || !elem->u.paramdesc.wParamFlags,
 	   FALSE,
 	   TRUE,
 	   &(elem->tdesc),
