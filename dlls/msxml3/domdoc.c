@@ -727,8 +727,10 @@ static HRESULT WINAPI domdoc_load(
         return S_FALSE;
 
     xmldoc = doread( filename );
-    if ( !xmldoc )
+    if ( !xmldoc ) {
+        *isSuccessful = VARIANT_FALSE;
         return S_FALSE;
+    }
 
     This->node = create_node( (xmlNodePtr) xmldoc );
     if ( !This->node )

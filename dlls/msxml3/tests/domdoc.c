@@ -61,6 +61,10 @@ static const WCHAR szComplete4[] = {
     'f','n','2','.','t','x','t','<','/','p','r','>',
     '<','/','l','c','>','\n',0
 };
+static const WCHAR szNonExistentFile[] = {
+    'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
+};
+
 static const WCHAR szOpen[] = { 'o','p','e','n',0 };
 static const WCHAR szdl[] = { 'd','l',0 };
 static const WCHAR szlc[] = { 'l','c',0 };
@@ -77,6 +81,7 @@ void test_domdoc( void )
     IXMLDOMDocument *doc = NULL;
     IXMLDOMElement *element = NULL;
     VARIANT_BOOL b;
+    VARIANT var;
     BSTR str;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
@@ -92,6 +97,18 @@ void test_domdoc( void )
     r = IXMLDOMDocument_loadXML( doc, NULL, &b );
     ok( r == S_FALSE, "loadXML failed\n");
     ok( b == VARIANT_FALSE, "failed to load XML string\n");
+
+    /* try to laod an document from an non-existent file */
+    b = VARIANT_TRUE;
+    str = SysAllocString ( szNonExistentFile );
+    VariantInit(&var);
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = str;
+
+    r = IXMLDOMDocument_load( doc, var, &b);
+    ok( r == S_FALSE, "load (from file) failed\n");
+    ok( b == VARIANT_FALSE, "failed to load XML file\n");
+    SysFreeString( str );
 
     /* try load an empty document */
     b = VARIANT_TRUE;
