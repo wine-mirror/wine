@@ -219,6 +219,16 @@ typedef struct tagMSIPREVIEW
     msi_dialog *dialog;
 } MSIPREVIEW;
 
+#define MSI_MAX_PROPS 20
+
+typedef struct tagMSISUMMARYINFO
+{
+    MSIOBJECTHDR hdr;
+    MSIDATABASE *db;
+    DWORD update_count;
+    PROPVARIANT property[MSI_MAX_PROPS];
+} MSISUMMARYINFO;
+
 #define MSIHANDLETYPE_ANY 0
 #define MSIHANDLETYPE_DATABASE 1
 #define MSIHANDLETYPE_SUMMARYINFO 2
@@ -400,6 +410,10 @@ extern void msi_dialog_handle_event( msi_dialog*, LPCWSTR, LPCWSTR, MSIRECORD * 
 /* preview */
 extern MSIPREVIEW *MSI_EnableUIPreview( MSIDATABASE * );
 extern UINT MSI_PreviewDialogW( MSIPREVIEW *, LPCWSTR );
+
+/* summary information */
+extern MSISUMMARYINFO *MSI_GetSummaryInformationW( MSIDATABASE *db, UINT uiUpdateCount );
+extern LPWSTR msi_suminfo_dup_string( MSISUMMARYINFO *si, UINT uiProperty );
 
 /* undocumented functions */
 UINT WINAPI MsiCreateAndVerifyInstallerDirectory( DWORD );
