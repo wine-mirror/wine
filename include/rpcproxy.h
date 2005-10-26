@@ -119,6 +119,14 @@ typedef struct tagCStdPSFactoryBuffer
   long Filler1;
 } CStdPSFactoryBuffer;
 
+#define STUB_FORWARDING_FUNCTION NdrStubForwardingFunction
+
+ULONG STDMETHODCALLTYPE CStdStubBuffer2_Release(IRpcStubBuffer *This);
+ULONG STDMETHODCALLTYPE NdrCStdStubBuffer2_Release(IRpcStubBuffer *This, IPSFactoryBuffer *pPSF);
+
+#define CStdStubBuffer_DELEGATING_METHODS 0, 0, CStdStubBuffer2_Release, 0, 0, 0, 0, 0, 0, 0
+
+
 HRESULT WINAPI
   CStdStubBuffer_QueryInterface( IRpcStubBuffer *This, REFIID riid, void **ppvObject );
 ULONG WINAPI
@@ -194,6 +202,14 @@ RPCRTAPI HRESULT RPC_ENTRY
 #define CSTDSTUBBUFFERRELEASE(pFactory) \
 ULONG WINAPI CStdStubBuffer_Release(IRpcStubBuffer *This) \
   { return NdrCStdStubBuffer_Release(This, (IPSFactoryBuffer *)pFactory); }
+
+#ifdef PROXY_DELEGATION
+#define CSTDSTUBBUFFER2RELEASE(pFactory) \
+ULONG WINAPI CStdStubBuffer2_Release(IRpcStubBuffer *This) \
+  { return NdrCStdStubBuffer2_Release(This, (IPSFactoryBuffer *)pFactory); }
+#else
+#define CSTDSTUBBUFFER2RELEASE(pFactory)
+#endif
 
 #define IID_GENERIC_CHECK_IID(name,pIID,index) memcmp(pIID, name##_ProxyVtblList[index]->header.piid, sizeof(IID))
 
