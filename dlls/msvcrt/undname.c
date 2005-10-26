@@ -979,6 +979,8 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         goto done;
     }
 
+    /* MS mangled names always begin with '?' */
+    if (*sym->current != '?') return FALSE;
     str_array_init(&sym->stack);
     sym->current++;
 
