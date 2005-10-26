@@ -3385,6 +3385,7 @@ BOOL        WINAPI GetCharWidthFloatW(HDC,UINT,UINT,PFLOAT);
 INT         WINAPI GetClipBox(HDC,LPRECT);
 INT         WINAPI GetClipRgn(HDC,HRGN);
 BOOL        WINAPI GetColorAdjustment(HDC, LPCOLORADJUSTMENT);
+HCOLORSPACE WINAPI GetColorSpace(HDC);
 HGDIOBJ     WINAPI GetCurrentObject(HDC,UINT);
 BOOL        WINAPI GetCurrentPositionEx(HDC,LPPOINT);
 INT         WINAPI GetDeviceCaps(HDC,INT);

@@ -1106,11 +1106,15 @@ HGDIOBJ WINAPI GetCurrentObject(HDC hdc,UINT type)
     if (dc)
     {
     switch (type) {
+	case OBJ_EXTPEN: /* fall through */
 	case OBJ_PEN:	 ret = dc->hPen; break;
 	case OBJ_BRUSH:	 ret = dc->hBrush; break;
 	case OBJ_PAL:	 ret = dc->hPalette; break;
 	case OBJ_FONT:	 ret = dc->hFont; break;
 	case OBJ_BITMAP: ret = dc->hBitmap; break;
+
+	/* tests show that OBJ_REGION is explicitly ignored */
+	case OBJ_REGION: break;
     default:
     	/* the SDK only mentions those above */
     	FIXME("(%p,%d): unknown type.\n",hdc,type);
