@@ -4594,6 +4594,146 @@ VarDecAdd_AsPositive:
   return hRet;
 }
 
+/* internal representation of the value stored in a DECIMAL. The bytes are
+   stored from LSB at index 0 to MSB at index 11
+ */
+typedef struct DECIMAL_internal
+{
+    DWORD bitsnum[3];  /* 96 significant bits, unsigned */
+    unsigned char scale;      /* number scaled * 10 ^ -(scale) */
+    unsigned int  sign : 1;   /* 0 - positive, 1 - negative */
+} VARIANT_DI;
+
+/* translate from external DECIMAL format into an internal representation */
+static void VARIANT_DIFromDec(const DECIMAL * from, VARIANT_DI * to)
+{
+    to->scale = DEC_SCALE(from);
+    to->sign = DEC_SIGN(from) ? 1 : 0;
+
+    to->bitsnum[0] = DEC_LO32(from);
+    to->bitsnum[1] = DEC_MID32(from);
+    to->bitsnum[2] = DEC_HI32(from);
+}
+
+/* divide the (unsigned) number stored in p (LSB) by a byte value (<= 0xff). Any nonzero
+   size is supported. The value in p is replaced by the quotient of the division, and
+   the remainder is returned as a result. This routine is most often used with a divisor
+   of 10 in order to scale up numbers, and in the DECIMAL->string conversion.
+ */
+static unsigned char VARIANT_int_divbychar(DWORD * p, unsigned int n, unsigned char divisor)
+{
+    if (divisor == 0) {
+        /* division by 0 */
+        return 0xFF;
+    } else if (divisor == 1) {
+        /* dividend remains unchanged */
+        return 0;
+    } else {
+        unsigned char remainder = 0;
+        ULONGLONG iTempDividend;
+        signed int i;
+        
+        for (i = n - 1; i >= 0 && !p[i]; i--);  /* skip leading zeros */
+        for (; i >= 0; i--) {
+            iTempDividend = ((ULONGLONG)remainder << 32) + p[i];
+            remainder = iTempDividend % divisor;
+            p[i] = iTempDividend / divisor;
+        }
+        
+        return remainder;
+    }
+}
+
+/* check to test if encoded number is a zero. Returns 1 if zero, 0 for nonzero */
+static int VARIANT_int_iszero(DWORD * p, unsigned int n)
+{
+    for (; n > 0; n--) if (*p++ != 0) return 0;
+    return 1;
+}
+
+/* cast DECIMAL into string. Any scale should be handled properly. en_US locale is
+   hardcoded (period for decimal separator, dash as negative sign). Returns 0 for
+   success, nonzero if insufficient space in output buffer.
+ */
+static int VARIANT_DI_tostringW(VARIANT_DI * a, WCHAR * s, unsigned int n)
+{
+    int overflow = 0;
+    DWORD quotient[3];
+    unsigned char remainder;
+    unsigned int i;
+
+    /* place negative sign */
+    if (!VARIANT_int_iszero(a->bitsnum, sizeof(a->bitsnum) / sizeof(DWORD)) && a->sign) {
+        if (n > 0) {
+            *s++ = '-';
+            n--;
+        }
+        else overflow = 1;
+    }
+
+    /* prepare initial 0 */
+    if (!overflow) {
+        if (n >= 2) {
+            s[0] = '0';
+            s[1] = '\0';
+        } else overflow = 1;
+    }
+
+    i = 0;
+    memcpy(quotient, a->bitsnum, sizeof(a->bitsnum));
+    while (!overflow && !VARIANT_int_iszero(quotient, sizeof(quotient) / sizeof(DWORD))) {
+        remainder = VARIANT_int_divbychar(quotient, sizeof(quotient) / sizeof(DWORD), 10);
+        if (i + 2 > n) {
+            overflow = 1;
+        } else {
+            s[i++] = '0' + remainder;
+            s[i] = '\0';
+        }
+    }
+
+    if (!overflow && !VARIANT_int_iszero(a->bitsnum, sizeof(a->bitsnum) / sizeof(DWORD))) {
+
+        /* reverse order of digits */
+        WCHAR * x = s; WCHAR * y = s + i - 1;
+        while (x < y) {
+            *x ^= *y;
+            *y ^= *x;
+            *x++ ^= *y--;
+        }
+
+        /* check for decimal point. "i" now has string length */
+        if (i <= a->scale) {
+            unsigned int numzeroes = a->scale + 1 - i;
+            if (i + 1 + numzeroes >= n) {
+                overflow = 1;
+            } else {
+                memmove(s + numzeroes, s, (i + 1) * sizeof(WCHAR));
+                i += numzeroes;
+                while (numzeroes > 0) {
+                    s[--numzeroes] = '0';
+                }
+            }
+        }
+
+        /* place decimal point */
+        if (a->scale > 0) {
+            unsigned int periodpos = i - a->scale;
+            if (i + 2 >= n) {
+                overflow = 1;
+            } else {
+                memmove(s + periodpos + 1, s + periodpos, (i + 1 - periodpos) * sizeof(WCHAR));
+                s[periodpos] = '.'; i++;
+                
+                /* remove extra zeros at the end, if any */
+                while (s[i - 1] == '0') s[--i] = '\0';
+                if (s[i - 1] == '.') s[--i] = '\0';
+            }
+        }
+    }
+
+    return overflow;
+}
+
 /************************************************************************
  * VarDecDiv (OLEAUT32.178)
  *
@@ -5409,6 +5549,58 @@ HRESULT WINAPI VarBstrFromI4(LONG lIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
   return VARIANT_BstrFromUInt(ul64, lcid, dwFlags, pbstrOut);
 }
 
+static BSTR VARIANT_BstrReplaceDecimal(WCHAR * buff, LCID lcid, ULONG dwFlags)
+{
+  BSTR bstrOut;
+  WCHAR lpDecimalSep[16];
+
+  /* Native oleaut32 uses the locale-specific decimal separator even in the
+     absence of the LOCALE_USE_NLS flag. For example, the Spanish/Latin 
+     American locales will see "one thousand and one tenth" as "1000,1" 
+     instead of "1000.1" (notice the comma). The following code checks for
+     the need to replace the decimal separator, and if so, will prepare an
+     appropriate NUMBERFMTW structure to do the job via GetNumberFormatW().
+   */
+  GetLocaleInfoW(lcid, LOCALE_SDECIMAL, lpDecimalSep, sizeof(lpDecimalSep) / sizeof(WCHAR));
+  if (lpDecimalSep[0] == '.' && lpDecimalSep[1] == '\0')
+  {
+    /* locale is compatible with English - return original string */
+    bstrOut = SysAllocString(buff);
+  }
+  else
+  {
+    WCHAR *p;
+    WCHAR numbuff[256];
+    WCHAR empty[1] = {'\0'};
+    NUMBERFMTW minFormat;
+
+    minFormat.NumDigits = 0;
+    minFormat.LeadingZero = 0;
+    minFormat.Grouping = 0;
+    minFormat.lpDecimalSep = lpDecimalSep;
+    minFormat.lpThousandSep = empty;
+    minFormat.NegativeOrder = 1; /* NLS_NEG_LEFT */
+
+    /* count number of decimal digits in string */
+    p = strchrW( buff, '.' );
+    if (p) minFormat.NumDigits = strlenW(p + 1);
+
+    numbuff[0] = '\0';
+    if (!GetNumberFormatW(lcid, dwFlags & LOCALE_NOUSEROVERRIDE,
+                   buff, &minFormat, numbuff, sizeof(numbuff) / sizeof(WCHAR)))
+    {
+      WARN("GetNumberFormatW() failed, returning raw number string instead\n");
+      bstrOut = SysAllocString(buff);
+    }
+    else
+    {
+      TRACE("created minimal NLS string %s\n", debugstr_w(numbuff));
+      bstrOut = SysAllocString(numbuff);
+    }
+  }
+  return bstrOut;
+}
+
 static HRESULT VARIANT_BstrFromReal(DOUBLE dblIn, LCID lcid, ULONG dwFlags,
                                     BSTR* pbstrOut, LPCWSTR lpszFormat)
 {
@@ -5445,52 +5637,7 @@ static HRESULT VARIANT_BstrFromReal(DOUBLE dblIn, LCID lcid, ULONG dwFlags,
   }
   else
   {
-    WCHAR lpDecimalSep[16];
-
-    /* Native oleaut32 uses the locale-specific decimal separator even in the
-       absence of the LOCALE_USE_NLS flag. For example, the Spanish/Latin 
-       American locales will see "one thousand and one tenth" as "1000,1" 
-       instead of "1000.1" (notice the comma). The following code checks for
-       the need to replace the decimal separator, and if so, will prepare an
-       appropriate NUMBERFMTW structure to do the job via GetNumberFormatW().
-     */
-    GetLocaleInfoW(lcid, LOCALE_SDECIMAL, lpDecimalSep, sizeof(lpDecimalSep) / sizeof(WCHAR));
-    if (lpDecimalSep[0] == '.' && lpDecimalSep[1] == '\0')
-    {
-      /* locale is compatible with English - return original string */
-      *pbstrOut = SysAllocString(buff);
-    }
-    else
-    {
-      WCHAR *p;
-      WCHAR numbuff[256];
-      WCHAR empty[1] = {'\0'};
-      NUMBERFMTW minFormat;
-
-      minFormat.NumDigits = 0;
-      minFormat.LeadingZero = 0;
-      minFormat.Grouping = 0;
-      minFormat.lpDecimalSep = lpDecimalSep;
-      minFormat.lpThousandSep = empty;
-      minFormat.NegativeOrder = 1; /* NLS_NEG_LEFT */
-
-      /* count number of decimal digits in string */
-      p = strchrW( buff, '.' );
-      if (p) minFormat.NumDigits = strlenW(p + 1);
-
-      numbuff[0] = '\0';
-      if (!GetNumberFormatW(lcid, dwFlags & LOCALE_NOUSEROVERRIDE,
-                     buff, &minFormat, numbuff, sizeof(numbuff) / sizeof(WCHAR)))
-      {
-        WARN("GetNumberFormatW() failed, returning raw number string instead\n");
-        *pbstrOut = SysAllocString(buff);
-      }
-      else
-      {
-        TRACE("created minimal NLS string %s\n", debugstr_w(numbuff));
-        *pbstrOut = SysAllocString(numbuff);
-      }
-    }
+    *pbstrOut = VARIANT_BstrReplaceDecimal(buff, lcid, dwFlags);
   }
   return *pbstrOut ? S_OK : E_OUTOFMEMORY;
 }
@@ -5812,25 +5959,33 @@ HRESULT WINAPI VarBstrFromUI4(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR* pbstrO
  */
 HRESULT WINAPI VarBstrFromDec(DECIMAL* pDecIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
+  WCHAR buff[256];
+  VARIANT_DI temp;
+
   if (!pbstrOut)
     return E_INVALIDARG;
 
-  if (!DEC_SCALE(pDecIn) && !DEC_HI32(pDecIn))
+  VARIANT_DIFromDec(pDecIn, &temp);
+  VARIANT_DI_tostringW(&temp, buff, 256);
+
+  if (dwFlags & LOCALE_USE_NLS)
   {
-    WCHAR szBuff[256], *szOut = szBuff + sizeof(szBuff)/sizeof(WCHAR) - 1;
+    WCHAR numbuff[256];
 
-    /* Create the basic number string */
-    *szOut-- = '\0';
-    szOut = VARIANT_WriteNumber(DEC_LO64(pDecIn), szOut);
-    if (DEC_SIGN(pDecIn))
-      dwFlags |= VAR_NEGATIVE;
-
-    *pbstrOut = VARIANT_MakeBstr(lcid, dwFlags, szOut);
-    TRACE("returning %s\n", debugstr_w(*pbstrOut));
-    return *pbstrOut ? S_OK : E_OUTOFMEMORY;
+    /* Format the number for the locale */
+    numbuff[0] = '\0';
+    GetNumberFormatW(lcid, dwFlags & LOCALE_NOUSEROVERRIDE,
+                     buff, NULL, numbuff, sizeof(numbuff) / sizeof(WCHAR));
+    TRACE("created NLS string %s\n", debugstr_w(numbuff));
+    *pbstrOut = SysAllocString(numbuff);
   }
-  FIXME("semi-stub\n");
-  return E_INVALIDARG;
+  else
+  {
+    *pbstrOut = VARIANT_BstrReplaceDecimal(buff, lcid, dwFlags);
+  }
+  
+  TRACE("returning %s\n", debugstr_w(*pbstrOut));
+  return *pbstrOut ? S_OK : E_OUTOFMEMORY;
 }
 
 /************************************************************************
