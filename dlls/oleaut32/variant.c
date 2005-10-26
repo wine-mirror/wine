@@ -3120,7 +3120,7 @@ HRESULT WINAPI VarDiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     lvt = V_VT(left)&VT_TYPEMASK;
     rvt = V_VT(right)&VT_TYPEMASK;
     found = FALSE;resvt = VT_VOID;
-    if (((1<<lvt) | (1<<rvt)) & (VTBIT_R4|VTBIT_R8)) {
+    if (((1<<lvt) | (1<<rvt)) & (VTBIT_R4|VTBIT_R8|VTBIT_CY)) {
 	found = TRUE;
 	resvt = VT_R8;
     }
