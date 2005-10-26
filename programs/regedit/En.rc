@@ -60,8 +60,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Find\tCtrl+F",               ID_EDIT_FIND, GRAYED
-        MENUITEM "Find Ne&xt\tF3",              ID_EDIT_FINDNEXT, GRAYED
+        MENUITEM "&Find\tCtrl+F",               ID_EDIT_FIND
+        MENUITEM "Find Ne&xt\tF3",              ID_EDIT_FINDNEXT
     END
     POPUP "&View"
     BEGIN
@@ -207,6 +207,22 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
 END
 
+IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Find"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Find:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "Find in:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "Keys", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "Value names", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Value content", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Whole string only", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "Find",IDOK,175,5,30,11,WS_GROUP
+    PUSHBUTTON      "Close",IDCANCEL,175,22,30,11, WS_GROUP
+END
+
 IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Add Favorite"
@@ -344,6 +360,7 @@ BEGIN
     IDS_DELETE_BOX_TEXT     "Are you sure you want to delete value '%s'?"
     IDS_NEWKEY              "New Key #%d"
     IDS_NEWVALUE            "New Value #%d"
+    IDS_NOTFOUND            "Search string '%s' not found"
 END
 
 /*****************************************************************/

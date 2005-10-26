@@ -58,6 +58,13 @@ enum OPTION_FLAGS {
     OPTIONS_VIEW_DATA_ONLY      	   = 0x40,
 };
 
+enum SEARCH_FLAGS {
+    SEARCH_WHOLE                           = 0x01,
+    SEARCH_KEYS                            = 0x02,
+    SEARCH_VALUES                          = 0x04,
+    SEARCH_CONTENT                         = 0x08,
+};
+
 typedef struct {
     HWND    hWnd;
     HWND    hTreeWnd;
@@ -110,11 +117,12 @@ extern BOOL IsDefaultValue(HWND hwndLV, int i);
 extern HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, int id);
 extern BOOL RefreshTreeView(HWND hWndTV);
 extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEW* pnmtv);
-extern LPCTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
+extern LPTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
 extern BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem);
 extern HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPTSTR name);
 extern HWND StartKeyRename(HWND hwndTV);
 extern HTREEITEM FindPathInTree(HWND hwndTV, LPCTSTR lpKeyName);
+extern HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCTSTR sstring, int mode, int *row);
 
 /* edit.c */
 extern BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPTSTR newKeyName);
@@ -124,6 +132,7 @@ extern BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath);
 extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName);
 extern BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR oldName, LPCTSTR newName);
 extern BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName);
+extern void error(HWND hwnd, INT resId, ...);
 
 /* hexedit.c */
 extern void HexEdit_Register(void);

@@ -75,7 +75,7 @@ static INT messagebox(HWND hwnd, INT buttons, INT titleId, INT resId, ...)
     return result;
 }
 
-static void error(HWND hwnd, INT resId, ...)
+void error(HWND hwnd, INT resId, ...)
 {
     va_list ap;
 

@@ -39,6 +39,8 @@
 static TCHAR favoritesKey[] =  _T("Software\\Microsoft\\Windows\\CurrentVersion\\Applets\\RegEdit\\Favorites");
 static BOOL bInMenuLoop = FALSE;        /* Tells us if we are in the menu loop */
 static TCHAR favoriteName[128];
+static TCHAR searchString[128];
+static int searchMask = SEARCH_KEYS | SEARCH_VALUES | SEARCH_CONTENT;
 
 /*******************************************************************************
  * Local module support methods
@@ -101,6 +103,8 @@ static void UpdateMenuItems(HMENU hMenu) {
     if (keyName && *keyName) { /* can't modify root keys */
         bIsKeySelected = TRUE;
     }
+    EnableMenuItem(hMenu, ID_EDIT_FIND, MF_ENABLED | MF_BYCOMMAND);
+    EnableMenuItem(hMenu, ID_EDIT_FINDNEXT, MF_ENABLED | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_EDIT_MODIFY, (bIsKeySelected ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_EDIT_DELETE, (bIsKeySelected ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_EDIT_RENAME, (bIsKeySelected ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
@@ -469,6 +473,49 @@ static BOOL CopyKeyName(HWND hWnd, LPCTSTR keyName)
     return result;
 }
 
+static INT_PTR CALLBACK find_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    HWND hwndValue = GetDlgItem(hwndDlg, IDC_VALUE_NAME);
+            
+    switch(uMsg) {
+        case WM_INITDIALOG:
+            EnableWindow(GetDlgItem(hwndDlg, IDOK), FALSE);
+            CheckDlgButton(hwndDlg, IDC_FIND_KEYS, searchMask&SEARCH_KEYS ? BST_CHECKED : BST_UNCHECKED);
+            CheckDlgButton(hwndDlg, IDC_FIND_VALUES, searchMask&SEARCH_VALUES ? BST_CHECKED : BST_UNCHECKED);
+            CheckDlgButton(hwndDlg, IDC_FIND_CONTENT, searchMask&SEARCH_CONTENT ? BST_CHECKED : BST_UNCHECKED);
+            CheckDlgButton(hwndDlg, IDC_FIND_WHOLE, searchMask&SEARCH_WHOLE ? BST_CHECKED : BST_UNCHECKED);
+            SendMessage(hwndValue, EM_SETLIMITTEXT, 127, 0);
+            SetWindowText(hwndValue, searchString);
+            return TRUE;
+        case WM_COMMAND:
+            switch(LOWORD(wParam)) {
+            case IDC_VALUE_NAME:
+                if (HIWORD(wParam) == EN_UPDATE) {
+                    EnableWindow(GetDlgItem(hwndDlg, IDOK),  GetWindowTextLength(hwndValue)>0);
+                    return TRUE;
+                }
+                break;
+            case IDOK:
+                if (GetWindowTextLength(hwndValue)>0) {
+                    int mask = 0;
+                    if (IsDlgButtonChecked(hwndDlg, IDC_FIND_KEYS)) mask |= SEARCH_KEYS;
+                    if (IsDlgButtonChecked(hwndDlg, IDC_FIND_VALUES)) mask |= SEARCH_VALUES;
+                    if (IsDlgButtonChecked(hwndDlg, IDC_FIND_CONTENT)) mask |= SEARCH_CONTENT;
+                    if (IsDlgButtonChecked(hwndDlg, IDC_FIND_WHOLE)) mask |= SEARCH_WHOLE;
+                    searchMask = mask;
+                    GetWindowText(hwndValue, searchString, 128);
+                    EndDialog(hwndDlg, IDOK);
+                }
+                return TRUE;
+            case IDCANCEL:
+                EndDialog(hwndDlg, IDCANCEL);
+                return TRUE;
+            }
+            break;
+    }
+    return FALSE;
+}
+                    
 static INT_PTR CALLBACK addtofavorites_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndValue = GetDlgItem(hwndDlg, IDC_VALUE_NAME);
@@ -630,6 +677,38 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (ModifyValue(hWnd, hKeyRoot, keyPath, valueName))
             RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, valueName);
         break;
+    case ID_EDIT_FIND:
+    case ID_EDIT_FINDNEXT:
+    {
+        HTREEITEM hItem;
+        if (LOWORD(wParam) == ID_EDIT_FIND &&
+            DialogBox(0, MAKEINTRESOURCE(IDD_FIND), hWnd, find_dlgproc) != IDOK)
+            break;
+        if (!*searchString)
+            break;
+        hItem = TreeView_GetSelection(g_pChildWnd->hTreeWnd);
+        if (hItem) {
+            int row = ListView_GetNextItem(g_pChildWnd->hListWnd, -1, LVNI_FOCUSED);
+            HCURSOR hcursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
+            hItem = FindNext(g_pChildWnd->hTreeWnd, hItem, searchString, searchMask, &row);
+            SetCursor(hcursorOld);
+            if (hItem) {
+                TreeView_SelectItem(g_pChildWnd->hTreeWnd, hItem);
+                InvalidateRect(g_pChildWnd->hTreeWnd, NULL, TRUE);
+                UpdateWindow(g_pChildWnd->hTreeWnd);
+                if (row != -1) {
+                    ListView_SetItemState(g_pChildWnd->hListWnd, -1, 0, LVIS_FOCUSED|LVIS_SELECTED);
+                    ListView_SetItemState(g_pChildWnd->hListWnd, row, LVIS_FOCUSED|LVIS_SELECTED, LVIS_FOCUSED|LVIS_SELECTED);
+                    SetFocus(g_pChildWnd->hListWnd);
+                } else {
+                    SetFocus(g_pChildWnd->hTreeWnd);
+                }
+            } else {
+                error(hWnd, IDS_NOTFOUND, searchString);
+            }
+        }
+        break;
+    }
     case ID_EDIT_COPYKEYNAME:
     {
         LPTSTR fullPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);

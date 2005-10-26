@@ -44,6 +44,7 @@
 #define IDI_ROOT                        134
 #define IDD_DELFAVORITE                 134
 #define IDI_STRING                      135
+#define IDD_FIND                        135
 #define IDI_BIN                         136
 #define IDR_POPUP_MENUS                 137
 #define IDC_LICENSE_EDIT                1029
@@ -113,6 +114,7 @@
 #define IDS_TOO_BIG_VALUE		32839
 #define IDS_DELETE_BOX_TITLE		32840
 #define IDS_DELETE_BOX_TEXT		32841
+#define IDS_NOTFOUND    		32842
 #define IDD_EDIT_DWORD			32850
 #define IDC_DWORD_BASE			32852
 #define IDC_DWORD_HEX			32853
@@ -128,7 +130,11 @@
 #define IDD_EDIT_STRING			2000
 #define IDC_VALUE_NAME			2001
 #define IDC_VALUE_DATA			2002
-#define IDD_EDIT_BINARY			2003
-#define IDC_NAME_LIST			2004
+#define IDD_EDIT_BINARY                 2003
+#define IDC_NAME_LIST                   2004
+#define IDC_FIND_KEYS                   2005
+#define IDC_FIND_VALUES                 2006
+#define IDC_FIND_CONTENT                2007
+#define IDC_FIND_WHOLE                  2008
 
 #define IDC_STATIC                      -1
