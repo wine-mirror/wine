@@ -2225,7 +2225,10 @@ DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
     DWORD ret = 0;
     if(!dc) return 0;
     if(dc->funcs->pSetMapperFlags)
+    {
         ret = dc->funcs->pSetMapperFlags( dc->physDev, dwFlag );
+        /* FIXME: ret is just a success flag, we should return a proper value */
+    }
     else
         FIXME("(%p, 0x%08lx): stub - harmless\n", hDC, dwFlag);
     GDI_ReleaseObj( hDC );

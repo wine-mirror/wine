@@ -505,6 +505,7 @@ INT WINAPI SaveDC( HDC hdc )
     {
         ret = dc->funcs->pSaveDC( dc->physDev );
         GDI_ReleaseObj( hdc );
+        /* FIXME: ret is just a success flag, we should return a proper value */
         return ret;
     }
 
@@ -998,20 +999,20 @@ UINT WINAPI GetTextAlign( HDC hdc )
  */
 UINT WINAPI SetTextAlign( HDC hdc, UINT align )
 {
-    UINT prevAlign;
+    UINT ret;
     DC *dc = DC_GetDCPtr( hdc );
 
     TRACE("hdc=%p align=%d\n", hdc, align);
 
     if (!dc) return 0x0;
+    ret = dc->textAlign;
     if (dc->funcs->pSetTextAlign)
-        prevAlign = dc->funcs->pSetTextAlign(dc->physDev, align);
-    else {
-	prevAlign = dc->textAlign;
+        if (!dc->funcs->pSetTextAlign(dc->physDev, align))
+            ret = GDI_ERROR;
+    if (ret != GDI_ERROR)
 	dc->textAlign = align;
-    }
     GDI_ReleaseObj( hdc );
-    return prevAlign;
+    return ret;
 }
 
 /***********************************************************************
@@ -1620,13 +1621,13 @@ INT WINAPI SetBkMode( HDC hdc, INT mode )
         return 0;
     }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+
+    ret = dc->backgroundMode;
     if (dc->funcs->pSetBkMode)
-        ret = dc->funcs->pSetBkMode( dc->physDev, mode );
-    else
-    {
-        ret = dc->backgroundMode;
+        if (!dc->funcs->pSetBkMode( dc->physDev, mode ))
+            ret = 0;
+    if (ret)
         dc->backgroundMode = mode;
-    }
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -1661,13 +1662,12 @@ INT WINAPI SetROP2( HDC hdc, INT mode )
         return 0;
     }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    ret = dc->ROPmode;
     if (dc->funcs->pSetROP2)
-        ret = dc->funcs->pSetROP2( dc->physDev, mode );
-    else
-    {
-        ret = dc->ROPmode;
+        if (!dc->funcs->pSetROP2( dc->physDev, mode ))
+            ret = 0;
+    if (ret)
         dc->ROPmode = mode;
-    }
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -1727,13 +1727,12 @@ INT WINAPI SetPolyFillMode( HDC hdc, INT mode )
         return 0;
     }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    ret = dc->polyFillMode;
     if (dc->funcs->pSetPolyFillMode)
-        ret = dc->funcs->pSetPolyFillMode( dc->physDev, mode );
-    else
-    {
-        ret = dc->polyFillMode;
+        if (!dc->funcs->pSetPolyFillMode( dc->physDev, mode ))
+            ret = 0;
+    if (ret)
         dc->polyFillMode = mode;
-    }
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -1768,13 +1767,12 @@ INT WINAPI SetStretchBltMode( HDC hdc, INT mode )
         return 0;
     }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    ret = dc->stretchBltMode;
     if (dc->funcs->pSetStretchBltMode)
-        ret = dc->funcs->pSetStretchBltMode( dc->physDev, mode );
-    else
-    {
-        ret = dc->stretchBltMode;
+        if (!dc->funcs->pSetStretchBltMode( dc->physDev, mode ))
+            ret = 0;
+    if (ret)
         dc->stretchBltMode = mode;
-    }
     GDI_ReleaseObj( hdc );
     return ret;
 }

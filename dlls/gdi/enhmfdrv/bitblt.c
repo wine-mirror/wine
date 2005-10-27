@@ -254,7 +254,7 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
 
     HeapFree(GetProcessHeap(), 0, emr);
 
-    return ret;
+    return ret ? heightSrc : GDI_ERROR;
 }
 
 INT EMFDRV_SetDIBitsToDevice( 

@@ -187,7 +187,10 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
     TRACE("%p %d,%d\n", hdc, x, y );
 
     if(dc->funcs->pOffsetClipRgn)
+    {
         ret = dc->funcs->pOffsetClipRgn( dc->physDev, x, y );
+        /* FIXME: ret is just a success flag, we should return a proper value */
+    }
     else if (dc->hClipRgn) {
         ret = OffsetRgn( dc->hClipRgn, MulDiv( x, dc->vportExtX, dc->wndExtX ),
                          MulDiv( y, dc->vportExtY, dc->wndExtY ) );
@@ -229,7 +232,10 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
     TRACE("%p %dx%d,%dx%d\n", hdc, left, top, right, bottom );
 
     if(dc->funcs->pExcludeClipRect)
+    {
         ret = dc->funcs->pExcludeClipRect( dc->physDev, left, top, right, bottom );
+        /* FIXME: ret is just a success flag, we should return a proper value */
+    }
     else
     {
         POINT pt[2];
@@ -266,7 +272,10 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom 
     TRACE("%p %d,%d - %d,%d\n", hdc, left, top, right, bottom );
 
     if(dc->funcs->pIntersectClipRect)
+    {
         ret = dc->funcs->pIntersectClipRect( dc->physDev, left, top, right, bottom );
+        /* FIXME: ret is just a success flag, we should return a proper value */
+    }
     else
     {
         POINT pt[2];
