@@ -2041,6 +2041,34 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             }
             break;
         }
+        case INTERNET_OPTION_MAX_CONNS_PER_SERVER:
+        {
+            ULONG conn = 2;
+            TRACE("INTERNET_OPTION_MAX_CONNS_PER_SERVER: %ld\n", conn);
+            if (*lpdwBufferLength < sizeof(ULONG))
+                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            else
+            {
+                memcpy(lpBuffer, &conn, sizeof(ULONG));
+                bSuccess = TRUE;
+            }
+            *lpdwBufferLength = sizeof(ULONG);
+            break;
+        }
+        case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:
+        {
+            ULONG conn = 4;
+            TRACE("INTERNET_OPTION_MAX_CONNS_1_0_SERVER: %ld\n", conn);
+            if (*lpdwBufferLength < sizeof(ULONG))
+                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            else
+            {
+                memcpy(lpBuffer, &conn, sizeof(ULONG));
+                bSuccess = TRUE;
+            }
+            *lpdwBufferLength = sizeof(ULONG);
+            break;
+        }
         case INTERNET_OPTION_SECURITY_FLAGS:
             FIXME("INTERNET_OPTION_SECURITY_FLAGS: Stub\n");
             break;
@@ -2146,6 +2174,18 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
       {
         unsigned long receivetimeout=*(unsigned long*)lpBuffer;
         FIXME("Option INTERNET_OPTION_DATA_RECEIVE_TIMEOUT (%ld): STUB\n",receivetimeout);
+      }
+      break;
+    case INTERNET_OPTION_MAX_CONNS_PER_SERVER:
+      {
+        unsigned long conns=*(unsigned long*)lpBuffer;
+        FIXME("Option INTERNET_OPTION_MAX_CONNS_PER_SERVER (%ld): STUB\n",conns);
+      }
+      break;
+    case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:
+      {
+        unsigned long conns=*(unsigned long*)lpBuffer;
+        FIXME("Option INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER (%ld): STUB\n",conns);
       }
       break;
     case INTERNET_OPTION_RESET_URLCACHE_SESSION:
