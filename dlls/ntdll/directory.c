@@ -130,8 +130,7 @@ static inline int getdents64( int fd, KERNEL_DIRENT64 *de, unsigned int size )
 
 #define MAX_DIR_ENTRY_LEN 255  /* max length of a directory entry in chars */
 
-static int show_dir_symlinks = -1;
-static int show_dot_files;
+static int show_dot_files = -1;
 
 /* at some point we may want to allow Winelib apps to set this */
 static const int is_case_sensitive = FALSE;
@@ -501,20 +500,19 @@ static char *get_default_drive_device( const char *root )
 /***********************************************************************
  *           init_options
  *
- * Initialize the show_dir_symlinks and show_dot_files options.
+ * Initialize the show_dot_files options.
  */
 static void init_options(void)
 {
     static const WCHAR WineW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e',0};
     static const WCHAR ShowDotFilesW[] = {'S','h','o','w','D','o','t','F','i','l','e','s',0};
-    static const WCHAR ShowDirSymlinksW[] = {'S','h','o','w','D','i','r','S','y','m','l','i','n','k','s',0};
     char tmp[80];
     HANDLE root, hkey;
     DWORD dummy;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
 
-    show_dot_files = show_dir_symlinks = 0;
+    show_dot_files = 0;
 
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
@@ -534,12 +532,6 @@ static void init_options(void)
             WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
             show_dot_files = IS_OPTION_TRUE( str[0] );
         }
-        RtlInitUnicodeString( &nameW, ShowDirSymlinksW );
-        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
-        {
-            WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-            show_dir_symlinks = IS_OPTION_TRUE( str[0] );
-        }
         NtClose( hkey );
     }
     NtClose( root );
@@ -555,7 +547,7 @@ BOOL DIR_is_hidden_file( const UNICODE_STRING *name )
 {
     WCHAR *p, *end;
 
-    if (show_dir_symlinks == -1) init_options();
+    if (show_dot_files == -1) init_options();
     if (show_dot_files) return FALSE;
 
     end = p = name->Buffer + name->Length/sizeof(WCHAR);
@@ -776,11 +768,7 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG_PTR *pos, 
     if (S_ISLNK( st.st_mode ))
     {
         if (stat( long_name, &st ) == -1) return NULL;
-        if (S_ISDIR( st.st_mode ))
-        {
-            if (!show_dir_symlinks) return NULL;
-            info->FileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
-        }
+        if (S_ISDIR( st.st_mode )) info->FileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
     }
 
     info->NextEntryOffset = total_len;
@@ -1104,7 +1092,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
 
     RtlEnterCriticalSection( &dir_section );
 
-    if (show_dir_symlinks == -1) init_options();
+    if (show_dot_files == -1) init_options();
 
     if ((cwd = open(".", O_RDONLY)) != -1 && fchdir( fd ) != -1)
     {
