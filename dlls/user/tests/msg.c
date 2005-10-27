@@ -4328,6 +4328,16 @@ static const struct message WmAltMouseButton[] = {
     { WM_SYSKEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
     { 0 }
 };
+static const struct message WmF1Seq[] = {
+    { WM_KEYDOWN, wparam|lparam, VK_F1, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_F1, 0x00000001 },
+    { 0x4d, wparam|lparam, 0, 0 },
+    { 0x4d, sent|wparam|lparam, 0, 0 },
+    { WM_HELP, sent|defwinproc },
+    { WM_KEYUP, wparam|lparam, VK_F1, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_F1, 0xc0000001 },
+    { 0 }
+};
 
 static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
 {
@@ -4533,6 +4543,11 @@ static void test_accelerators(void)
     keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, 0);
     ok_sequence(WmAltMouseButton, "Alt+MouseButton press/release", FALSE);
+
+    keybd_event(VK_F1, 0, 0, 0);
+    keybd_event(VK_F1, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, 0);
+    ok_sequence(WmF1Seq, "F1 press/release", TRUE);
 
     DestroyWindow(hwnd);
 }
