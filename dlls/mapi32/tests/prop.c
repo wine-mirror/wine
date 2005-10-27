@@ -29,8 +29,6 @@
 #include "mapiutil.h"
 #include "mapitags.h"
 
-HRESULT WINAPI MAPIInitialize(LPVOID);
-
 static HMODULE hMapi32 = 0;
 
 static SCODE        (WINAPI *pScInitMapiUtil)(ULONG);
@@ -53,6 +51,23 @@ static ULONG        (WINAPI *pFBadProp)(LPSPropValue);
 static ULONG        (WINAPI *pFBadColumnSet)(LPSPropTagArray);
 static SCODE        (WINAPI *pCreateIProp)(LPCIID,ALLOCATEBUFFER*,ALLOCATEMORE*,
                                            FREEBUFFER*,LPVOID,LPPROPDATA*);
+static SCODE        (WINAPI *pMAPIAllocateBuffer)(ULONG, LPVOID FAR);
+static SCODE        (WINAPI *pMAPIAllocateMore)(ULONG, LPVOID, LPVOID FAR);
+static SCODE        (WINAPI *pMAPIFreeBuffer)(LPVOID);
+
+static BOOL InitFuncPtrs(void)
+{
+    hMapi32 = LoadLibraryA("mapi32.dll");
+
+    pScInitMapiUtil = (void*)GetProcAddress(hMapi32, "ScInitMapiUtil@4");
+    pMAPIAllocateBuffer = (void*)GetProcAddress(hMapi32, "MAPIAllocateBuffer");
+    pMAPIAllocateMore = (void*)GetProcAddress(hMapi32, "MAPIAllocateMore");
+    pMAPIFreeBuffer = (void*)GetProcAddress(hMapi32, "MAPIFreeBuffer");
+    if(pScInitMapiUtil && pMAPIAllocateBuffer && pMAPIAllocateMore && pMAPIFreeBuffer)
+        return TRUE;
+    else
+        return FALSE;
+}
 
 static ULONG ptTypes[] = {
     PT_I2, PT_I4, PT_R4, PT_R8, PT_CURRENCY, PT_APPTIME, PT_SYSTIME,
@@ -79,11 +94,11 @@ static void test_PropCopyMore(void)
     if (!pPropCopyMore)
         return;
 
-    scode = MAPIAllocateBuffer(sizeof(LPSPropValue), (LPVOID *)lpDest);
+    scode = pMAPIAllocateBuffer(sizeof(LPSPropValue), (LPVOID *)lpDest);
     if (FAILED(scode))
         return;
 
-    scode = MAPIAllocateMore(sizeof(LPSPropValue), lpDest, (LPVOID *)lpSrc);
+    scode = pMAPIAllocateMore(sizeof(LPSPropValue), lpDest, (LPVOID *)lpSrc);
     if (FAILED(scode))
         return;
 
@@ -107,7 +122,7 @@ static void test_PropCopyMore(void)
 
         memset(lpDest, 0xff, sizeof(SPropValue));
 
-        scode = pPropCopyMore(lpDest, lpSrc, MAPIAllocateMore, lpDest);
+        scode = pPropCopyMore(lpDest, lpSrc, (ALLOCATEMORE*)pMAPIAllocateMore, lpDest);
         ok(!scode && lpDest->ulPropTag == lpSrc->ulPropTag,
            "PropCopyMore: Expected 0x0,%ld, got 0x%08lx,%ld\n",
            lpSrc->ulPropTag, scode, lpDest->ulPropTag);
@@ -133,7 +148,7 @@ static void test_PropCopyMore(void)
     }
 
     /* Since all allocations are linked, freeing lpDest frees everything */
-    MAPIFreeBuffer(lpDest);
+    pMAPIFreeBuffer(lpDest);
 }
 
 static void test_UlPropSize(void)
@@ -1132,6 +1147,7 @@ static void test_IProp(void)
     SCODE sc;
 
     pCreateIProp = (void*)GetProcAddress(hMapi32, "CreateIProp@24");
+
     if (!pCreateIProp)
         return;
 
@@ -1139,8 +1155,8 @@ static void test_IProp(void)
 
     /* Create the object */
     lpIProp = NULL;
-    sc = pCreateIProp(&IID_IMAPIPropData, MAPIAllocateBuffer, MAPIAllocateMore,
-                      MAPIFreeBuffer, NULL, &lpIProp);
+    sc = pCreateIProp(&IID_IMAPIPropData, (ALLOCATEBUFFER FAR *)pMAPIAllocateBuffer, (ALLOCATEMORE FAR*)pMAPIAllocateMore,
+                      (FREEBUFFER FAR *)pMAPIFreeBuffer, NULL, &lpIProp);
     ok(sc == S_OK && lpIProp,
        "CreateIProp: expected S_OK, non-null, got 0x%08lX,%p\n", sc, lpIProp);
 
@@ -1160,7 +1176,7 @@ static void test_IProp(void)
        "GetPropList(empty): Expected S_OK, non-null, 0, got 0x%08lX,%p,%ld\n",
         sc, lpTags, lpTags ? lpTags->cValues : 0);
     if (lpTags)
-        MAPIFreeBuffer(lpTags);
+        pMAPIFreeBuffer(lpTags);
 
     /* Get props - succeeds returning 0 items */
     lpProps = NULL;
@@ -1177,7 +1193,7 @@ static void test_IProp(void)
            "GetProps(empty): Expected %x, got %lx\n",
            CHANGE_PROP_TYPE(PR_IMPORTANCE,PT_ERROR), lpProps[0].ulPropTag);
 
-        MAPIFreeBuffer(lpProps);
+        pMAPIFreeBuffer(lpProps);
     }
 
     /* Add (NULL) - Can't add NULL's */
@@ -1214,7 +1230,7 @@ static void test_IProp(void)
         ok(lpTags->aulPropTag[0] == PR_IMPORTANCE,
            "GetPropList: Expected %x, got %lx\n",
            PR_IMPORTANCE, lpTags->aulPropTag[0]);
-        MAPIFreeBuffer(lpTags);
+        pMAPIFreeBuffer(lpTags);
     }
 
     /* Set access to read and write */
@@ -1291,7 +1307,7 @@ static void test_IProp(void)
             PR_IMPORTANCE, E_ACCESSDENIED,
             lpProbs->aProblem[0].ulIndex, lpProbs->aProblem[0].ulPropTag,
             lpProbs->aProblem[0].scode);
-        MAPIFreeBuffer(lpProbs);
+        pMAPIFreeBuffer(lpProbs);
     }
 
     lpProbs = NULL;
@@ -1312,7 +1328,7 @@ static void test_IProp(void)
         ok(lpTags->aulPropTag[0] == PR_IMPORTANCE,
            "GetPropList: Expected %x, got %lx\n",
            PR_IMPORTANCE, lpTags->aulPropTag[0]);
-        MAPIFreeBuffer(lpTags);
+        pMAPIFreeBuffer(lpTags);
     }
 
     /* Set item to r/w again */
@@ -1332,11 +1348,9 @@ static void test_IProp(void)
 
 START_TEST(prop)
 {
-    hMapi32 = LoadLibraryA("mapi32.dll");
-
-    pScInitMapiUtil = (void*)GetProcAddress(hMapi32, "ScInitMapiUtil@4");
-    if (!pScInitMapiUtil)
+    if(!InitFuncPtrs())
         return;
+
     pScInitMapiUtil(0);
 
     test_PropCopyMore();
@@ -1357,4 +1371,5 @@ START_TEST(prop)
     test_FBadColumnSet();
 
     test_IProp();
+    FreeLibrary(hMapi32);
 }
