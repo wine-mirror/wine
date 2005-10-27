@@ -3450,55 +3450,54 @@ static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
     return ERROR_SUCCESS;
 }
 
+static UINT msi_write_uninstall_property_vals( MSIPACKAGE *package, HKEY hkey )
+{
+    LPWSTR prop, val, key;
+    static const LPCSTR propval[] = {
+        "ARPAUTHORIZEDCDFPREFIX", "AuthorizedCDFPrefix",
+        "ARPCONTACT",             "Contact",
+        "ARPCOMMENTS",            "Comments",
+        "ProductName",            "DisplayName",
+        "ProductVersion",         "DisplayVersion",
+        "ARPHELPLINK",            "HelpLink",
+        "ARPHELPTELEPHONE",       "HelpTelephone",
+        "ARPINSTALLLOCATION",     "InstallLocation",
+        "SourceDir",              "InstallSource",
+        "Manufacturer",           "Publisher",
+        "ARPREADME",              "Readme",
+        "ARPSIZE",                "Size",
+        "ARPURLINFOABOUT",        "URLInfoAbout",
+        "ARPURLUPDATEINFO",       "URLUpdateInfo",
+        NULL,
+    };
+    const LPCSTR *p = propval;
+
+    while( *p )
+    {
+        prop = strdupAtoW( *p++ );
+        key = strdupAtoW( *p++ );
+        val = msi_dup_property( package, prop );
+        msi_reg_set_val_str( hkey, key, val );
+        msi_free(val);
+        msi_free(key);
+        msi_free(prop);
+    }
+    return ERROR_SUCCESS;
+}
+
 static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {
     HKEY hkey=0;
     LPWSTR buffer = NULL;
-    UINT rc,i;
+    UINT rc;
     DWORD size, langid;
     static const WCHAR szWindowsInstaller[] = 
-    {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
-    static const WCHAR szPropKeys[][80] = 
-    {
-{'A','R','P','A','U','T','H','O','R','I','Z','E','D','C','D','F','P','R','E','F','I','X',0},
-{'A','R','P','C','O','N','T','A','C','T',0},
-{'A','R','P','C','O','M','M','E','N','T','S',0},
-{'P','r','o','d','u','c','t','N','a','m','e',0},
-{'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0},
-{'A','R','P','H','E','L','P','L','I','N','K',0},
-{'A','R','P','H','E','L','P','T','E','L','E','P','H','O','N','E',0},
-{'A','R','P','I','N','S','T','A','L','L','L','O','C','A','T','I','O','N',0},
-{'S','o','u','r','c','e','D','i','r',0},
-{'M','a','n','u','f','a','c','t','u','r','e','r',0},
-{'A','R','P','R','E','A','D','M','E',0},
-{'A','R','P','S','I','Z','E',0},
-{'A','R','P','U','R','L','I','N','F','O','A','B','O','U','T',0},
-{'A','R','P','U','R','L','U','P','D','A','T','E','I','N','F','O',0},
-{0},
-    };
-
-    static const WCHAR szRegKeys[][80] = 
-    {
-{'A','u','t','h','o','r','i','z','e','d','C','D','F','P','r','e','f','i','x',0},
-{'C','o','n','t','a','c','t',0},
-{'C','o','m','m','e','n','t','s',0},
-{'D','i','s','p','l','a','y','N','a','m','e',0},
-{'D','i','s','p','l','a','y','V','e','r','s','i','o','n',0},
-{'H','e','l','p','L','i','n','k',0},
-{'H','e','l','p','T','e','l','e','p','h','o','n','e',0},
-{'I','n','s','t','a','l','l','L','o','c','a','t','i','o','n',0},
-{'I','n','s','t','a','l','l','S','o','u','r','c','e',0},
-{'P','u','b','l','i','s','h','e','r',0},
-{'R','e','a','d','m','e',0},
-{'S','i','z','e',0},
-{'U','R','L','I','n','f','o','A','b','o','u','t',0},
-{'U','R','L','U','p','d','a','t','e','I','n','f','o',0},
-{0},
-    };
+        {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
     static const WCHAR szUpgradeCode[] = 
         {'U','p','g','r','a','d','e','C','o','d','e',0};
     static const WCHAR modpath_fmt[] = 
-        {'M','s','i','E','x','e','c','.','e','x','e',' ','/','I','[','P','r','o','d','u','c','t','C','o','d','e',']',0};
+        {'M','s','i','E','x','e','c','.','e','x','e',' ',
+         '/','I','[','P','r','o','d','u','c','t','C','o','d','e',']',0};
     static const WCHAR szModifyPath[] = 
         {'M','o','d','i','f','y','P','a','t','h',0};
     static const WCHAR szUninstallString[] = 
@@ -3513,23 +3512,19 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     SYSTEMTIME systime;
     static const WCHAR date_fmt[] = {'%','i','%','i','%','i',0};
     LPWSTR upgrade_code;
+    WCHAR szDate[9]; 
 
     if (!package)
         return ERROR_INVALID_HANDLE;
 
     rc = MSIREG_OpenUninstallKey(package->ProductCode,&hkey,TRUE);
     if (rc != ERROR_SUCCESS)
-        goto end;
+        return rc;
 
     /* dump all the info i can grab */
     FIXME("Flesh out more information \n");
 
-    for( i=0; szPropKeys[i][0]; i++ )
-    {
-        buffer = msi_dup_property( package, szPropKeys[i] );
-        msi_reg_set_val_str( hkey, szRegKeys[i], buffer );
-        msi_free(buffer);
-    }
+    msi_write_uninstall_property_vals( package, hkey );
 
     msi_reg_set_val_dword( hkey, szWindowsInstaller, 1 );
     
@@ -3545,11 +3540,8 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     msi_reg_set_val_dword( hkey, szEstimatedSize, 0 );
    
     GetLocalTime(&systime);
-    size = 9*sizeof(WCHAR);
-    buffer= msi_alloc(size);
-    sprintfW(buffer,date_fmt,systime.wYear,systime.wMonth,systime.wDay);
-    msi_reg_set_val_str( hkey, INSTALLPROPERTY_INSTALLDATEW, buffer );
-    msi_free(buffer);
+    sprintfW(szDate,date_fmt,systime.wYear,systime.wMonth,systime.wDay);
+    msi_reg_set_val_str( hkey, INSTALLPROPERTY_INSTALLDATEW, szDate );
    
     langid = msi_get_property_int( package, szProductLanguage, 0 );
     msi_reg_set_val_dword( hkey, INSTALLPROPERTY_LANGUAGEW, langid );
@@ -3583,7 +3575,6 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         msi_free(upgrade_code);
     }
     
-end:
     RegCloseKey(hkey);
 
     return ERROR_SUCCESS;
