@@ -251,10 +251,45 @@ static void test_menu_ownerdraw(void)
     DestroyWindow(hwnd);
 }
 
+static void test_menu_add_string( void )
+{
+    MENUITEMINFO info;
+    char string[0x80];
+    HMENU hmenu;
+
+    hmenu = CreateMenu();
+
+    memset( &info, 0, sizeof info );
+    info.cbSize = sizeof info;
+    info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_STATE | MIIM_ID;
+    info.dwTypeData = "blah";
+    info.cch = 6;
+    info.dwItemData = 0;
+    info.wID = 1;
+    info.fState = 0;
+    InsertMenuItem(hmenu, 0, TRUE, &info );
+
+    memset( &info, 0, sizeof info );
+    info.cbSize = sizeof info;
+    info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_STATE | MIIM_DATA | MIIM_ID;
+    info.dwTypeData = string;
+    info.cch = sizeof string;
+    string[0] = 0;
+    GetMenuItemInfo( hmenu, 0, TRUE, &info );
+
+    todo_wine {
+    ok( !strcmp( string, "blah" ), "menu item name differed\n");
+    }
+
+    DestroyMenu( hmenu );
+}
+
+
 START_TEST(menu)
 {
     register_menu_check_class();
 
     test_menu_locked_by_window();
     test_menu_ownerdraw();
+    test_menu_add_string();
 }
