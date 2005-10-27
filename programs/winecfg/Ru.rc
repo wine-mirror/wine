@@ -147,7 +147,6 @@ BEGIN
     LTEXT           "Серийный номер:",IDC_STATIC_SERIAL,33,225,80,12
     EDITTEXT        IDC_EDIT_SERIAL,103,221,118,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    CONTROL         "Показывать символические ссылки на каталоги",IDC_SHOW_DIRSYM_LINK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,250,230,8
     CONTROL         "Показывать файлы, начинающиеся с точки",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
 END
 

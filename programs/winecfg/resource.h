@@ -114,7 +114,6 @@
 #define IDC_BUTTON_SHOW_HIDE_ADVANCED   1076
 #define IDC_STATIC_TYPE                 1077
 #define IDC_LABELSERIAL_STATIC          1078
-#define IDC_SHOW_DIRSYM_LINK            1079
 #define IDC_SHOW_DOT_FILES              1080
 
 #define IDC_DRIVE_LABEL                 1078

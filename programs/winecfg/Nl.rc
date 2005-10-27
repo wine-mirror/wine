@@ -144,7 +144,6 @@ BEGIN
     LTEXT           "S&erie nummer:",IDC_STATIC_SERIAL,33,225,60,12
     EDITTEXT        IDC_EDIT_SERIAL,94,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
                                                                                                                                               
-    CONTROL         "Toon \"directory symbolic links\" ",IDC_SHOW_DIRSYM_LINK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,250,230,8
     CONTROL         "Toon \".\" files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
 END
 

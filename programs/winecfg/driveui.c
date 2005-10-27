@@ -314,11 +314,6 @@ static int fill_drives_list(HWND dialog)
 
 static void on_options_click(HWND dialog)
 {
-    if (IsDlgButtonChecked(dialog, IDC_SHOW_DIRSYM_LINK) == BST_CHECKED)
-        set_reg_key(config_key, "", "ShowDirSymLinks", "Y");
-    else
-        set_reg_key(config_key, "", "ShowDirSymLinks", "N");
-
     if (IsDlgButtonChecked(dialog, IDC_SHOW_DOT_FILES) == BST_CHECKED)
         set_reg_key(config_key, "", "ShowDotFiles", "Y");
     else
@@ -685,9 +680,6 @@ static void init_listview_columns(HWND dialog)
 
 static void load_drive_options(HWND dialog)
 {
-    if (!strcmp(get_reg_key(config_key, "", "ShowDirSymLinks", "N"), "Y"))
-        CheckDlgButton(dialog, IDC_SHOW_DIRSYM_LINK, BST_CHECKED);
-
     if (!strcmp(get_reg_key(config_key, "", "ShowDotFiles", "N"), "Y"))
         CheckDlgButton(dialog, IDC_SHOW_DOT_FILES, BST_CHECKED);
 }
@@ -734,7 +726,6 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
 
                     switch (LOWORD(wParam))
                     {
-                        case IDC_SHOW_DIRSYM_LINK:
                         case IDC_SHOW_DOT_FILES:
                             on_options_click(dialog);
                         break;
