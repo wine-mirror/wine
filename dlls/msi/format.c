@@ -206,7 +206,7 @@ static LPWSTR deformat_index(MSIRECORD* record, LPCWSTR key, DWORD* chunk )
 
     index = atoiW(key);
     TRACE("record index %i\n",index);
-    value = load_dynamic_stringW(record,index);
+    value = msi_dup_record_field(record,index);
     if (value)
         *chunk = strlenW(value) * sizeof(WCHAR);
     else
@@ -584,7 +584,7 @@ UINT MSI_FormatRecordW( MSIPACKAGE* package, MSIRECORD* record, LPWSTR buffer,
 
     TRACE("%p %p %p %li\n",package, record ,buffer, *size);
 
-    rec = load_dynamic_stringW(record,0);
+    rec = msi_dup_record_field(record,0);
     if (!rec)
         rec = build_default_format(record);
 
@@ -631,7 +631,7 @@ UINT MSI_FormatRecordA( MSIPACKAGE* package, MSIRECORD* record, LPSTR buffer,
 
     TRACE("%p %p %p %li\n",package, record ,buffer, *size);
 
-    rec = load_dynamic_stringW(record,0);
+    rec = msi_dup_record_field(record,0);
     if (!rec)
         rec = build_default_format(record);
 

@@ -65,15 +65,15 @@ static MSIAPPID *load_appid( MSIPACKAGE* package, MSIRECORD *row )
     if (!appid)
         return NULL;
     
-    appid->AppID = load_dynamic_stringW( row, 1 );
+    appid->AppID = msi_dup_record_field( row, 1 );
     TRACE("loading appid %s\n", debugstr_w( appid->AppID ));
 
     buffer = MSI_RecordGetString(row,2);
     deformat_string( package, buffer, &appid->RemoteServerName );
 
-    appid->LocalServer = load_dynamic_stringW(row,3);
-    appid->ServiceParameters = load_dynamic_stringW(row,4);
-    appid->DllSurrogate = load_dynamic_stringW(row,5);
+    appid->LocalServer = msi_dup_record_field(row,3);
+    appid->ServiceParameters = msi_dup_record_field(row,4);
+    appid->DllSurrogate = msi_dup_record_field(row,5);
 
     appid->ActivateAtStorage = !MSI_RecordIsNull(row,6);
     appid->RunAsInteractiveUser = !MSI_RecordIsNull(row,7);
@@ -131,7 +131,7 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
 
     list_add_tail( &package->progids, &progid->entry );
 
-    progid->ProgID = load_dynamic_stringW(row,1);
+    progid->ProgID = msi_dup_record_field(row,1);
     TRACE("loading progid %s\n",debugstr_w(progid->ProgID));
 
     buffer = MSI_RecordGetString(row,2);
@@ -144,12 +144,12 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
     if (progid->Class == NULL && buffer)
         FIXME("Unknown class %s\n",debugstr_w(buffer));
 
-    progid->Description = load_dynamic_stringW(row,4);
+    progid->Description = msi_dup_record_field(row,4);
 
     if (!MSI_RecordIsNull(row,6))
     {
         INT icon_index = MSI_RecordGetInteger(row,6); 
-        LPWSTR FileName = load_dynamic_stringW(row,5);
+        LPCWSTR FileName = MSI_RecordGetString(row,5);
         LPWSTR FilePath;
         static const WCHAR fmt[] = {'%','s',',','%','i',0};
 
@@ -160,7 +160,6 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
         sprintfW(progid->IconPath,fmt,FilePath,icon_index);
 
         msi_free(FilePath);
-        msi_free(FileName);
     }
     else
     {
@@ -235,28 +234,28 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
 
     list_add_tail( &package->classes, &cls->entry );
 
-    cls->clsid = load_dynamic_stringW( row, 1 );
+    cls->clsid = msi_dup_record_field( row, 1 );
     TRACE("loading class %s\n",debugstr_w(cls->clsid));
-    cls->Context = load_dynamic_stringW( row, 2 );
+    cls->Context = msi_dup_record_field( row, 2 );
     buffer = MSI_RecordGetString(row,3);
     cls->Component = get_loaded_component(package, buffer);
 
-    cls->ProgIDText = load_dynamic_stringW(row,4);
+    cls->ProgIDText = msi_dup_record_field(row,4);
     cls->ProgID = load_given_progid(package, cls->ProgIDText);
 
-    cls->Description = load_dynamic_stringW(row,5);
+    cls->Description = msi_dup_record_field(row,5);
 
     buffer = MSI_RecordGetString(row,6);
     if (buffer)
         cls->AppID = load_given_appid(package, buffer);
 
-    cls->FileTypeMask = load_dynamic_stringW(row,7);
+    cls->FileTypeMask = msi_dup_record_field(row,7);
 
     if (!MSI_RecordIsNull(row,9))
     {
 
         INT icon_index = MSI_RecordGetInteger(row,9); 
-        LPWSTR FileName = load_dynamic_stringW(row,8);
+        LPCWSTR FileName = MSI_RecordGetString(row,8);
         LPWSTR FilePath;
         static const WCHAR fmt[] = {'%','s',',','%','i',0};
 
@@ -267,7 +266,6 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
         sprintfW(cls->IconPath,fmt,FilePath,icon_index);
 
         msi_free(FilePath);
-        msi_free(FileName);
     }
     else
     {
@@ -300,7 +298,7 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
         }
         else
         {
-            cls->DefInprocHandler32 = load_dynamic_stringW( row, 10);
+            cls->DefInprocHandler32 = msi_dup_record_field( row, 10);
             reduce_to_longfilename(cls->DefInprocHandler32);
         }
     }
@@ -366,13 +364,13 @@ static MSIMIME *load_mime( MSIPACKAGE* package, MSIRECORD *row )
     if (!mt)
         return mt;
 
-    mt->ContentType = load_dynamic_stringW( row, 1 ); 
+    mt->ContentType = msi_dup_record_field( row, 1 ); 
     TRACE("loading mime %s\n", debugstr_w(mt->ContentType));
 
     buffer = MSI_RecordGetString( row, 2 );
     mt->Extension = load_given_extension( package, buffer );
 
-    mt->clsid = load_dynamic_stringW( row, 3 );
+    mt->clsid = msi_dup_record_field( row, 3 );
     mt->Class = load_given_class( package, mt->clsid );
 
     list_add_tail( &package->mimes, &mt->entry );
@@ -428,13 +426,13 @@ static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
 
     list_add_tail( &package->extensions, &ext->entry );
 
-    ext->Extension = load_dynamic_stringW( row, 1 );
+    ext->Extension = msi_dup_record_field( row, 1 );
     TRACE("loading extension %s\n", debugstr_w(ext->Extension));
 
     buffer = MSI_RecordGetString( row, 2 );
     ext->Component = get_loaded_component( package,buffer );
 
-    ext->ProgIDText = load_dynamic_stringW( row, 3 );
+    ext->ProgIDText = msi_dup_record_field( row, 3 );
     ext->ProgID = load_given_progid( package, ext->ProgIDText );
 
     buffer = MSI_RecordGetString( row, 4 );
@@ -505,7 +503,7 @@ static UINT iterate_load_verb(MSIRECORD *row, LPVOID param)
     if (!verb)
         return ERROR_OUTOFMEMORY;
 
-    verb->Verb = load_dynamic_stringW(row,2);
+    verb->Verb = msi_dup_record_field(row,2);
     TRACE("loading verb %s\n",debugstr_w(verb->Verb));
     verb->Sequence = MSI_RecordGetInteger(row,3);
 

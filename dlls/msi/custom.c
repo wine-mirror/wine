@@ -125,8 +125,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
      ' ','W','H','E','R','E',' ','`','A','c','t','i' ,'o','n','`',' ',
      '=',' ','\'','%','s','\'',0};
     UINT type;
-    LPWSTR source;
-    LPWSTR target;
+    LPCWSTR source, target;
     WCHAR *deformated=NULL;
 
     row = MSI_QueryGetRecord( package->db, ExecSeqQuery, action );
@@ -135,8 +134,8 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
 
     type = MSI_RecordGetInteger(row,2);
 
-    source = load_dynamic_stringW(row,3);
-    target = load_dynamic_stringW(row,4);
+    source = MSI_RecordGetString(row,3);
+    target = MSI_RecordGetString(row,4);
 
     TRACE("Handling custom action %s (%x %s %s)\n",debugstr_w(action),type,
           debugstr_w(source), debugstr_w(target));
@@ -231,8 +230,6 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
     }
 
 end:
-    msi_free(source);
-    msi_free(target);
     msiobj_release(&row->hdr);
     return rc;
 }

@@ -1086,15 +1086,15 @@ static MSICOMPONENT* load_component( MSIRECORD * row )
         return comp;
 
     /* fill in the data */
-    comp->Component = load_dynamic_stringW( row, 1 );
+    comp->Component = msi_dup_record_field( row, 1 );
 
     TRACE("Loading Component %s\n", debugstr_w(comp->Component));
 
-    comp->ComponentId = load_dynamic_stringW( row, 2 );
-    comp->Directory = load_dynamic_stringW( row, 3 );
+    comp->ComponentId = msi_dup_record_field( row, 2 );
+    comp->Directory = msi_dup_record_field( row, 3 );
     comp->Attributes = MSI_RecordGetInteger(row,4);
-    comp->Condition = load_dynamic_stringW( row, 5 );
-    comp->KeyPath = load_dynamic_stringW( row, 6 );
+    comp->Condition = msi_dup_record_field( row, 5 );
+    comp->KeyPath = msi_dup_record_field( row, 6 );
 
     comp->Installed = INSTALLSTATE_ABSENT;
     comp->Action = INSTALLSTATE_UNKNOWN;
@@ -1200,19 +1200,19 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
 
     list_init( &feature->Components );
     
-    feature->Feature = load_dynamic_stringW( row, 1 );
+    feature->Feature = msi_dup_record_field( row, 1 );
 
     TRACE("Loading feature %s\n",debugstr_w(feature->Feature));
 
-    feature->Feature_Parent = load_dynamic_stringW( row, 2 );
-    feature->Title = load_dynamic_stringW( row, 3 );
-    feature->Description = load_dynamic_stringW( row, 4 );
+    feature->Feature_Parent = msi_dup_record_field( row, 2 );
+    feature->Title = msi_dup_record_field( row, 3 );
+    feature->Description = msi_dup_record_field( row, 4 );
 
     if (!MSI_RecordIsNull(row,5))
         feature->Display = MSI_RecordGetInteger(row,5);
   
     feature->Level= MSI_RecordGetInteger(row,6);
-    feature->Directory = load_dynamic_stringW( row, 7 );
+    feature->Directory = msi_dup_record_field( row, 7 );
     feature->Attributes = MSI_RecordGetInteger(row,8);
 
     feature->Installed = INSTALLSTATE_ABSENT;
@@ -1248,7 +1248,7 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
     if (!file)
         return ERROR_NOT_ENOUGH_MEMORY;
  
-    file->File = load_dynamic_stringW( row, 1 );
+    file->File = msi_dup_record_field( row, 1 );
 
     component = MSI_RecordGetString( row, 2 );
     file->Component = get_loaded_component( package, component );
@@ -1256,15 +1256,15 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
     if (!file->Component)
         ERR("Unfound Component %s\n",debugstr_w(component));
 
-    file->FileName = load_dynamic_stringW( row, 3 );
+    file->FileName = msi_dup_record_field( row, 3 );
     reduce_to_longfilename( file->FileName );
 
-    file->ShortName = load_dynamic_stringW( row, 3 );
+    file->ShortName = msi_dup_record_field( row, 3 );
     reduce_to_shortfilename( file->ShortName );
     
     file->FileSize = MSI_RecordGetInteger( row, 4 );
-    file->Version = load_dynamic_stringW( row, 5 );
-    file->Language = load_dynamic_stringW( row, 6 );
+    file->Version = msi_dup_record_field( row, 5 );
+    file->Language = msi_dup_record_field( row, 6 );
     file->Attributes = MSI_RecordGetInteger( row, 7 );
     file->Sequence = MSI_RecordGetInteger( row, 8 );
 
@@ -1408,7 +1408,7 @@ static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
     if (!row)
         return NULL;
 
-    ptargetdir = targetdir = load_dynamic_stringW(row,3);
+    ptargetdir = targetdir = msi_dup_record_field(row,3);
 
     /* split src and target dir */
     if (strchrW(targetdir,':'))
@@ -2708,19 +2708,18 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
         return ERROR_SUCCESS;
 
     module = LoadLibraryExW( file->TargetPath, NULL, LOAD_LIBRARY_AS_DATAFILE );
-    if (module != NULL)
+    if (module)
     {
-        LPWSTR guid;
-        guid = load_dynamic_stringW(row,1);
-        CLSIDFromString(guid, &tl_struct.clsid);
-        msi_free(guid);
+        LPCWSTR guid;
+        guid = MSI_RecordGetString(row,1);
+        CLSIDFromString((LPWSTR)guid, &tl_struct.clsid);
         tl_struct.source = strdupW( file->TargetPath );
         tl_struct.path = NULL;
 
         EnumResourceNamesW(module, szTYPELIB, Typelib_EnumResNameProc,
                         (LONG_PTR)&tl_struct);
 
-        if (tl_struct.path != NULL)
+        if (tl_struct.path)
         {
             LPWSTR help = NULL;
             LPCWSTR helpid;
@@ -3956,7 +3955,7 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
     if (MSI_RecordIsNull(row,2))
         name = load_ttfname_from( file->TargetPath );
     else
-        name = load_dynamic_stringW(row,2);
+        name = msi_dup_record_field(row,2);
 
     if (name)
     {
