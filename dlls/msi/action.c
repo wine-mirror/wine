@@ -762,7 +762,7 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
         rc = ERROR_SUCCESS;
 
     if (rc != ERROR_SUCCESS)
-        ERR("Execution halted due to error (%i)\n",rc);
+        ERR("Execution halted, action %s returned %i\n", debugstr_w(action), rc);
 
     return rc;
 }

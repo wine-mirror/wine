@@ -327,16 +327,16 @@ static UINT process_action_return_value(UINT type, HANDLE ThreadHandle)
 
     switch (rc)
     {
-        case ERROR_FUNCTION_NOT_CALLED:
-        case ERROR_SUCCESS:
-        case ERROR_INSTALL_USEREXIT:
-        case ERROR_INSTALL_FAILURE:
-            return rc;
-        case ERROR_NO_MORE_ITEMS:
-            return ERROR_SUCCESS;
-        default:
-            ERR("Invalid Return Code %lx\n",rc);
-            return ERROR_INSTALL_FAILURE;
+    case ERROR_FUNCTION_NOT_CALLED:
+    case ERROR_SUCCESS:
+    case ERROR_INSTALL_USEREXIT:
+    case ERROR_INSTALL_FAILURE:
+        return rc;
+    case ERROR_NO_MORE_ITEMS:
+        return ERROR_SUCCESS;
+    default:
+        ERR("Invalid Return Code %ld\n",rc);
+        return ERROR_INSTALL_FAILURE;
     }
 }
 
