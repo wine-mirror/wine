@@ -32,6 +32,14 @@ import "urlmon.idl";
 ]
 interface IOleControlTypes
 {
+    typedef [v1_enum] enum tagUASFLAGS
+    {
+        UAS_NORMAL       = 0x0,
+        UAS_BLOCKED      = 0x1,
+        UAS_NOPARENTABLE = 0x2,
+        UAS_MASK         = 0x3
+    } UASFLAGS;
+
     typedef enum tagREADYSTATE
     {
         READYSTATE_UNINITIALIZED  = 0,
@@ -106,6 +114,20 @@ interface IFont : IUnknown
 interface IFontDisp : IDispatch
 {
     typedef IFontDisp *LPFONTDISP;
+}
+
+
+/*****************************************************************************
+ * IFontEventsDisp interface
+ */
+[
+    object,
+    uuid(4ef6100a-af88-11d0-9846-00c04fc29993),
+    pointer_default(unique)
+]
+interface IFontEventsDisp : IDispatch
+{
+    typedef IFontEventsDisp *LPFONTEVENTS;
 }
 
 
@@ -542,6 +564,36 @@ interface IProvideClassInfo2 : IProvideClassInfo
     HRESULT GetGUID(
         [in]  DWORD dwGuidKind,
         [out] GUID *pGUID );
+}
+
+
+[
+    object,
+    uuid(a7aba9c1-8983-11cf-8f20-00805f2cd064),
+    pointer_default(unique)
+]
+interface IProvideMultipleClassInfo : IProvideClassInfo2
+{
+    cpp_quote("#define MULTICLASSINFO_GETTYPEINFO           0x00000001")
+    cpp_quote("#define MULTICLASSINFO_GETNUMRESERVEDDISPIDS 0x00000002")
+    cpp_quote("#define MULTICLASSINFO_GETIIDPRIMARY         0x00000004")
+    cpp_quote("#define MULTICLASSINFO_GETIIDSOURCE          0x00000008")
+
+    cpp_quote("#define TIFLAGS_EXTENDDISPATCHONLY           0x00000001")
+
+    typedef IProvideMultipleClassInfo *LPPROVIDEMULTIPLECLASSINFO;
+
+    HRESULT GetMultiTypeInfoCount( 
+        [out] ULONG *pcti);
+
+    HRESULT GetInfoOfIndex( 
+        [in] ULONG iti,
+        [in] DWORD dwFlags,
+        [out] ITypeInfo **pptiCoClass,
+        [out] DWORD *pdwTIFlags,
+        [out] ULONG *pcdispidReserved,
+        [out] IID *piidPrimary,
+        [out] IID *piidSource);
 }
 
 
