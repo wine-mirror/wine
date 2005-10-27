@@ -872,7 +872,7 @@ void test_FolderShortcut(void) {
     if (FAILED(hr)) return;
 
     hr = IPersistPropertyBag_Load(pPersistPropertyBag, &InitPropertyBag, NULL);
-    todo_wine { ok(SUCCEEDED(hr), "IPersistPropertyBag_Load failed! hr = %08lx\n", hr); }
+    ok(SUCCEEDED(hr), "IPersistPropertyBag_Load failed! hr = %08lx\n", hr);
     if (FAILED(hr)) {
         IPersistPropertyBag_Release(pPersistPropertyBag);
         return;

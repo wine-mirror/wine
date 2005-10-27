@@ -1307,8 +1307,32 @@ static HRESULT WINAPI UnixFolder_IPersistPropertyBag_InitNew(IPersistPropertyBag
 static HRESULT WINAPI UnixFolder_IPersistPropertyBag_Load(IPersistPropertyBag *iface, 
     IPropertyBag *pPropertyBag, IErrorLog *pErrorLog)
 {
-    FIXME("() stub\n");
-    return E_NOTIMPL;
+     UnixFolder *This = ADJUST_THIS(UnixFolder, IPersistPropertyBag, iface);
+     static const WCHAR wszTarget[] = { 'T','a','r','g','e','t', 0 }, wszNull[] = { 0 };
+     PERSIST_FOLDER_TARGET_INFO pftiTarget;
+     VARIANT var;
+     HRESULT hr;
+     
+     TRACE("(iface=%p, pPropertyBag=%p, pErrorLog=%p)\n", iface, pPropertyBag, pErrorLog);
+ 
+     if (!pPropertyBag)
+         return E_POINTER;
+ 
+     /* Get 'Target' property from the property bag. */
+     V_VT(&var) = VT_BSTR;
+     hr = IPropertyBag_Read(pPropertyBag, wszTarget, &var, NULL);
+     if (FAILED(hr)) 
+         return E_FAIL;
+     lstrcpyW(pftiTarget.szTargetParsingName, V_BSTR(&var));
+     SysFreeString(V_BSTR(&var));
+ 
+     pftiTarget.pidlTargetFolder = NULL;
+     lstrcpyW(pftiTarget.szNetworkProvider, wszNull);
+     pftiTarget.dwAttributes = -1;
+     pftiTarget.csidl = -1;
+ 
+     return UnixFolder_IPersistFolder3_InitializeEx(
+                 STATIC_CAST(IPersistFolder3, This), NULL, NULL, &pftiTarget);
 }
 
 static HRESULT WINAPI UnixFolder_IPersistPropertyBag_Save(IPersistPropertyBag *iface,
