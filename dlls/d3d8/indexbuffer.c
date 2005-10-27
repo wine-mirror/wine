@@ -64,12 +64,41 @@ ULONG WINAPI IDirect3DIndexBuffer8Impl_Release(LPDIRECT3DINDEXBUFFER8 iface) {
 
     TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
 
-    if (ref == 0) {
+    if (ref == 0 && 0 == This->refInt) {
+        HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
+        HeapFree(GetProcessHeap(), 0, This);
+    } else if (0 == ref) {
+      WARN("(%p) : The application failed to set indicies NULL before releasing the index buffer, leak\n", This);
+    }
+
+    return ref;
+}
+
+
+ULONG WINAPI IDirect3DIndexBuffer8Impl_AddRefInt(LPDIRECT3DINDEXBUFFER8 iface) {
+    IDirect3DIndexBuffer8Impl *This = (IDirect3DIndexBuffer8Impl *)iface;
+    ULONG refInt = InterlockedIncrement(&This->refInt);
+
+    TRACE("(%p) : AddRefInt from %ld\n", This, refInt - 1);
+
+    return refInt;
+}
+
+ULONG WINAPI IDirect3DIndexBuffer8Impl_ReleaseInt(LPDIRECT3DINDEXBUFFER8 iface) {
+    IDirect3DIndexBuffer8Impl *This = (IDirect3DIndexBuffer8Impl *)iface;
+    ULONG refInt = InterlockedDecrement(&This->refInt);
+
+    TRACE("(%p) : ReleaseRefInt to %ld\n", This, refInt);
+
+    if (0 == This->ref && 0 == refInt) {
+        WARN("(%p) : Cleaning up after the calling application failed to release the indicies properly\n", This);
         HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
         HeapFree(GetProcessHeap(), 0, This);
     }
-    return ref;
+
+    return refInt;
 }
+
 
 /* IDirect3DResource Interface follow: */
 HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_GetDevice(LPDIRECT3DINDEXBUFFER8 iface, IDirect3DDevice8** ppDevice) {

@@ -790,6 +790,7 @@ struct IDirect3DVertexBuffer8Impl
     /* IUnknown fields */
     const IDirect3DVertexBuffer8Vtbl *lpVtbl;
     LONG                   ref;
+    LONG                   refInt;
 
     /* IDirect3DResource8 fields */
     IDirect3DDevice8Impl   *Device;
@@ -804,6 +805,10 @@ struct IDirect3DVertexBuffer8Impl
 extern HRESULT WINAPI         IDirect3DVertexBuffer8Impl_QueryInterface(LPDIRECT3DVERTEXBUFFER8 iface,REFIID refiid,LPVOID *obj);
 extern ULONG WINAPI           IDirect3DVertexBuffer8Impl_AddRef(LPDIRECT3DVERTEXBUFFER8 iface);
 extern ULONG WINAPI           IDirect3DVertexBuffer8Impl_Release(LPDIRECT3DVERTEXBUFFER8 iface);
+
+/* Internal */
+extern ULONG WINAPI           IDirect3DVertexBuffer8Impl_AddRefInt(LPDIRECT3DVERTEXBUFFER8 iface);
+extern ULONG WINAPI           IDirect3DVertexBuffer8Impl_ReleaseInt(LPDIRECT3DVERTEXBUFFER8 iface);
 
 /* IDirect3DVertexBuffer8: (Inherited from IDirect3DResource8) */
 extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetDevice(LPDIRECT3DVERTEXBUFFER8 iface, IDirect3DDevice8** ppDevice);
@@ -838,6 +843,7 @@ struct IDirect3DIndexBuffer8Impl
     /* IUnknown fields */
     const IDirect3DIndexBuffer8Vtbl *lpVtbl;
     LONG                   ref;
+    LONG                   refInt;
 
     /* IDirect3DResource8 fields */
     IDirect3DDevice8Impl   *Device;
@@ -852,6 +858,10 @@ struct IDirect3DIndexBuffer8Impl
 extern HRESULT WINAPI         IDirect3DIndexBuffer8Impl_QueryInterface(LPDIRECT3DINDEXBUFFER8 iface,REFIID refiid,LPVOID *obj);
 extern ULONG WINAPI           IDirect3DIndexBuffer8Impl_AddRef(LPDIRECT3DINDEXBUFFER8 iface);
 extern ULONG WINAPI           IDirect3DIndexBuffer8Impl_Release(LPDIRECT3DINDEXBUFFER8 iface);
+
+/* Internal */
+extern ULONG WINAPI           IDirect3DIndexBuffer8Impl_AddRefInt(LPDIRECT3DINDEXBUFFER8 iface);
+extern ULONG WINAPI           IDirect3DIndexBuffer8Impl_ReleaseInt(LPDIRECT3DINDEXBUFFER8 iface);
 
 /* IDirect3DIndexBuffer8: (Inherited from IDirect3DResource8) */
 extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_GetDevice(LPDIRECT3DINDEXBUFFER8 iface, IDirect3DDevice8** ppDevice);

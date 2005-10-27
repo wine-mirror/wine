@@ -4164,8 +4164,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, IDirec
         return D3D_OK;
     }
 
-    if (oldIdxs) IDirect3DIndexBuffer8Impl_Release(oldIdxs);
-    if (pIndexData) IDirect3DIndexBuffer8Impl_AddRef(This->StateBlock->pIndexData);
+    if (pIndexData) IDirect3DIndexBuffer8Impl_AddRefInt(This->StateBlock->pIndexData);
+    if (oldIdxs) IDirect3DIndexBuffer8Impl_ReleaseInt(oldIdxs);
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8** ppIndexData,UINT* pBaseVertexIndex) {
@@ -4337,8 +4337,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetStreamSource(LPDIRECT3DDEVICE8 iface, U
         return D3D_OK;
     }
 
-    if (oldSrc != NULL) IDirect3DVertexBuffer8Impl_Release(oldSrc);
-    if (pStreamData != NULL) IDirect3DVertexBuffer8Impl_AddRef(pStreamData);
+    if (pStreamData != NULL) IDirect3DVertexBuffer8Impl_AddRefInt(pStreamData);
+    if (oldSrc != NULL) IDirect3DVertexBuffer8Impl_ReleaseInt(oldSrc);
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetStreamSource(LPDIRECT3DDEVICE8 iface, UINT StreamNumber,IDirect3DVertexBuffer8** pStream,UINT* pStride) {
