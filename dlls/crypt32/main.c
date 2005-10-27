@@ -304,3 +304,48 @@ DWORD WINAPI CertOIDToAlgId(LPCSTR pszObjId)
     }
     return 0;
 }
+
+LPVOID WINAPI CryptMemAlloc(ULONG cbSize)
+{
+    return HeapAlloc(GetProcessHeap(), 0, cbSize);
+}
+
+LPVOID WINAPI CryptMemRealloc(LPVOID pv, ULONG cbSize)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, pv, cbSize);
+}
+
+VOID WINAPI CryptMemFree(LPVOID pv)
+{
+    HeapFree(GetProcessHeap(), 0, pv);
+}
+
+DWORD WINAPI I_CryptAllocTls(void)
+{
+    return TlsAlloc();
+}
+
+LPVOID WINAPI I_CryptDetachTls(DWORD dwTlsIndex)
+{
+    LPVOID ret;
+
+    ret = TlsGetValue(dwTlsIndex);
+    TlsSetValue(dwTlsIndex, NULL);
+    return ret;
+}
+
+LPVOID WINAPI I_CryptGetTls(DWORD dwTlsIndex)
+{
+    return TlsGetValue(dwTlsIndex);
+}
+
+BOOL WINAPI I_CryptSetTls(DWORD dwTlsIndex, LPVOID lpTlsValue)
+{
+    return TlsSetValue(dwTlsIndex, lpTlsValue);
+}
+
+BOOL WINAPI I_CryptFreeTls(DWORD dwTlsIndex, DWORD unknown)
+{
+    TRACE("(%ld, %ld)\n", dwTlsIndex, unknown);
+    return TlsFree(dwTlsIndex);
+}

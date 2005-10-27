@@ -2273,6 +2273,10 @@ BOOL WINAPI CryptVerifySignatureW (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 #define CryptVerifySignature WINELIB_NAME_AW(CryptVerifySignature)
 
 /* crypt32.dll functions */
+LPVOID WINAPI CryptMemAlloc(ULONG cbSize);
+LPVOID WINAPI CryptMemRealloc(LPVOID pv, ULONG cbSize);
+VOID   WINAPI CryptMemFree(LPVOID pv);
+
 BOOL WINAPI CryptRegisterOIDFunction(DWORD,LPCSTR,LPCSTR,LPCWSTR,LPCSTR);
 BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
                                      LPCSTR pszOID, LPCWSTR szValueName, DWORD *pdwValueType,

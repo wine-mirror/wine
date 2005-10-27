@@ -274,6 +274,102 @@ static void test_verifyTimeValidity(void)
     ok(ret == -1, "Expected -1, got %ld\n", ret);
 }
 
+static void test_cryptAllocate(void)
+{
+    LPVOID buf;
+
+    buf = CryptMemAlloc(0);
+    ok(buf != NULL, "CryptMemAlloc failed: %08lx\n", GetLastError());
+    CryptMemFree(buf);
+    buf = CryptMemRealloc(NULL, 0);
+    ok(!buf, "Expected NULL\n");
+    buf = CryptMemAlloc(0);
+    buf = CryptMemRealloc(buf, 1);
+    ok(buf != NULL, "CryptMemRealloc failed: %08lx\n", GetLastError());
+    CryptMemFree(buf);
+}
+
+typedef DWORD  (WINAPI *I_CryptAllocTlsFunc)(void);
+typedef LPVOID (WINAPI *I_CryptDetachTlsFunc)(DWORD dwTlsIndex);
+typedef LPVOID (WINAPI *I_CryptGetTlsFunc)(DWORD dwTlsIndex);
+typedef BOOL   (WINAPI *I_CryptSetTlsFunc)(DWORD dwTlsIndex, LPVOID lpTlsValue);
+typedef BOOL   (WINAPI *I_CryptFreeTlsFunc)(DWORD dwTlsIndex, DWORD unknown);
+
+static I_CryptAllocTlsFunc pI_CryptAllocTls;
+static I_CryptDetachTlsFunc pI_CryptDetachTls;
+static I_CryptGetTlsFunc pI_CryptGetTls;
+static I_CryptSetTlsFunc pI_CryptSetTls;
+static I_CryptFreeTlsFunc pI_CryptFreeTls;
+
+static void test_cryptTls(void)
+{
+    HMODULE lib = LoadLibraryA("crypt32.dll");
+
+    if (lib)
+    {
+        DWORD index;
+        BOOL ret;
+
+        pI_CryptAllocTls = (I_CryptAllocTlsFunc)GetProcAddress(lib,
+         "I_CryptAllocTls");
+        pI_CryptDetachTls = (I_CryptDetachTlsFunc)GetProcAddress(lib,
+         "I_CryptDetachTls");
+        pI_CryptGetTls = (I_CryptGetTlsFunc)GetProcAddress(lib,
+         "I_CryptGetTls");
+        pI_CryptSetTls = (I_CryptSetTlsFunc)GetProcAddress(lib,
+         "I_CryptSetTls");
+        pI_CryptFreeTls = (I_CryptFreeTlsFunc)GetProcAddress(lib,
+         "I_CryptFreeTls");
+
+        /* One normal pass */
+        index = pI_CryptAllocTls();
+        ok(index, "I_CryptAllocTls failed: %08lx\n", GetLastError());
+        if (index)
+        {
+            LPVOID ptr;
+
+            ptr = pI_CryptGetTls(index);
+            ok(!ptr, "Expected NULL\n");
+            ret = pI_CryptSetTls(index, (LPVOID)0xdeadbeef);
+            ok(ret, "I_CryptSetTls failed: %08lx\n", GetLastError());
+            ptr = pI_CryptGetTls(index);
+            ok(ptr == (LPVOID)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", ptr);
+            /* This crashes
+            ret = pI_CryptFreeTls(index, 1);
+             */
+            ret = pI_CryptFreeTls(index, 0);
+            ok(ret, "I_CryptFreeTls failed: %08lx\n", GetLastError());
+            ret = pI_CryptFreeTls(index, 0);
+            /* Not sure if this fails because TlsFree should fail, so leave as
+             * todo for now.
+             */
+            todo_wine ok(!ret && GetLastError() ==
+             HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+             "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+             GetLastError());
+        }
+        /* Similar pass, check I_CryptDetachTls */
+        index = pI_CryptAllocTls();
+        ok(index, "I_CryptAllocTls failed: %08lx\n", GetLastError());
+        if (index)
+        {
+            LPVOID ptr;
+
+            ptr = pI_CryptGetTls(index);
+            ok(!ptr, "Expected NULL\n");
+            ret = pI_CryptSetTls(index, (LPVOID)0xdeadbeef);
+            ok(ret, "I_CryptSetTls failed: %08lx\n", GetLastError());
+            ptr = pI_CryptGetTls(index);
+            ok(ptr == (LPVOID)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", ptr);
+            ptr = pI_CryptDetachTls(index);
+            ok(ptr == (LPVOID)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", ptr);
+            ptr = pI_CryptGetTls(index);
+            ok(!ptr, "Expected NULL\n");
+        }
+        FreeLibrary(lib);
+    }
+}
+
 START_TEST(main)
 {
     testOIDToAlgID();
@@ -282,4 +378,6 @@ START_TEST(main)
     test_findExtension();
     test_findRDNAttr();
     test_verifyTimeValidity();
+    test_cryptAllocate();
+    test_cryptTls();
 }

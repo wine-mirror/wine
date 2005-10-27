@@ -120,9 +120,9 @@
 @ stdcall CryptInitOIDFunctionSet(str long)
 @ stub CryptInstallOIDFunctionAddress
 @ stub CryptLoadSip
-@ stub CryptMemAlloc
-@ stub CryptMemFree
-@ stub CryptMemRealloc
+@ stdcall CryptMemAlloc(long)
+@ stdcall CryptMemFree(ptr)
+@ stdcall CryptMemRealloc(ptr long)
 @ stub CryptMsgCalculateEncodedLength
 @ stub CryptMsgClose
 @ stub CryptMsgControl
@@ -164,21 +164,22 @@
 @ stub CryptVerifyMessageSignature
 @ stub CryptVerifyMessageSignatureWithKey
 @ stub CryptVerifySignatureU
-@ stub I_CryptAllocTls
+@ stdcall I_CryptAllocTls()
 @ stdcall I_CryptCreateLruCache(long long)
 @ stub I_CryptCreateLruEntry
-@ stub I_CryptDetachTls
+@ stdcall I_CryptDetachTls(long)
 @ stdcall I_CryptFindLruEntryData(long)
 @ stdcall I_CryptFlushLruCache(long)
 @ stdcall I_CryptFreeLruCache(long)
+@ stdcall I_CryptFreeTls(long long)
 @ stub I_CryptGetDefaultCryptProv
 @ stub I_CryptGetDefaultCryptProvForEncrypt
 @ stub I_CryptGetOssGlobal
-@ stub I_CryptGetTls
+@ stdcall I_CryptGetTls(long)
 @ stub I_CryptInsertLruEntry
 @ stub I_CryptInstallOssGlobal
 @ stub I_CryptReleaseLruEntry
-@ stub I_CryptSetTls
+@ stdcall I_CryptSetTls(long ptr)
 @ stub I_CryptUninstallOssGlobal
 @ stub PFXExportCertStore
 @ stub PFXImportCertStore
