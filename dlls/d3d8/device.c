@@ -314,6 +314,12 @@ ULONG WINAPI IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface) {
         IDirect3DDevice8Impl_CleanRender(iface);
         IDirect3D8_Release((LPDIRECT3D8) This->direct3d8);
         IWineD3DDevice_Release(This->WineD3DDevice);
+
+        if (glXGetCurrentContext() == This->glCtx) {
+            glXMakeCurrent(This->display, None, NULL);
+        }
+        glXDestroyContext(This->display, This->glCtx);
+
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
