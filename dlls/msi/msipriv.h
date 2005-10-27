@@ -67,6 +67,7 @@ typedef struct tagMSIDATABASE
     string_table *strings;
     LPCWSTR mode;
     struct list tables;
+    struct list transforms;
 } MSIDATABASE;
 
 typedef struct tagMSIVIEW MSIVIEW;
@@ -279,6 +280,7 @@ extern void msiobj_lock(MSIOBJECTHDR *);
 extern void msiobj_unlock(MSIOBJECTHDR *);
 
 extern void free_cached_tables( MSIDATABASE *db );
+extern void msi_free_transforms( MSIDATABASE *db );
 extern string_table *load_string_table( IStorage *stg );
 extern UINT MSI_CommitTables( MSIDATABASE *db );
 extern HRESULT init_string_table( IStorage *stg );

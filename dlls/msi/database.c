@@ -67,6 +67,7 @@ static VOID MSI_CloseDatabase( MSIOBJECTHDR *arg )
     DWORD r;
 
     free_cached_tables( db );
+    msi_free_transforms( db );
     msi_destroy_stringtable( db->strings );
     r = IStorage_Release( db->storage );
     if( r )
@@ -156,6 +157,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     db->storage = stg;
     db->mode = szMode;
     list_init( &db->tables );
+    list_init( &db->transforms );
 
     db->strings = load_string_table( stg );
     if( !db->strings )
