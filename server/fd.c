@@ -580,7 +580,7 @@ void main_loop(void)
 static struct list device_hash[DEVICE_HASH_SIZE];
 
 /* retrieve the device object for a given fd, creating it if needed */
-static struct device *get_device( dev_t dev )
+static struct device *get_device( dev_t dev, int create )
 {
     struct device *device;
     unsigned int i, hash = dev % DEVICE_HASH_SIZE;
@@ -593,6 +593,8 @@ static struct device *get_device( dev_t dev )
     else list_init( &device_hash[hash] );
 
     /* not found, create it */
+
+    if (!create) return NULL;
     if ((device = alloc_object( &device_ops )))
     {
         device->dev = dev;
@@ -695,7 +697,7 @@ static struct inode *get_inode( dev_t dev, ino_t ino )
     struct inode *inode;
     unsigned int hash = ino % INODE_HASH_SIZE;
 
-    if (!(device = get_device( dev ))) return NULL;
+    if (!(device = get_device( dev, 1 ))) return NULL;
 
     LIST_FOR_EACH_ENTRY( inode, &device->inode_hash[hash], struct inode, entry )
     {
@@ -1580,11 +1582,21 @@ void no_cancel_async( struct fd *fd )
 }
 
 /* close all Unix file descriptors on a device to allow unmounting it */
-static void unmount_device( struct device *device )
+static void unmount_device( struct fd *device_fd )
 {
     unsigned int i;
+    struct stat st;
+    struct device *device;
     struct inode *inode;
     struct fd *fd;
+
+    if (device_fd->unix_fd == -1 || fstat( device_fd->unix_fd, &st ) == -1 || !S_ISBLK( st.st_mode ))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (!(device = get_device( st.st_rdev, 0 ))) return;
 
     for (i = 0; i < INODE_HASH_SIZE; i++)
     {
@@ -1600,6 +1612,7 @@ static void unmount_device( struct device *device )
     /* remove it from the hash table */
     list_remove( &device->entry );
     list_init( &device->entry );
+    release_object( device );
 }
 
 /* same as get_handle_obj but retrieve the struct fd associated to the object */
@@ -1682,8 +1695,7 @@ DECL_HANDLER(unmount_device)
 
     if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
     {
-        if (fd->inode) unmount_device( fd->inode->device );
-        else set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        unmount_device( fd );
         release_object( fd );
     }
 }
