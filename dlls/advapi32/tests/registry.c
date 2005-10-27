@@ -558,6 +558,7 @@ static void test_reg_unload_key(void)
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
     DeleteFile("saved_key");
+    DeleteFile("saved_key.LOG");
 }
 
 static BOOL set_privileges(LPCSTR privilege, BOOL set)
