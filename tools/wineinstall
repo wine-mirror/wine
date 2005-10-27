@@ -296,7 +296,7 @@ echo
 
 # it's a wrap
 echo
-echo "Installation complete for now. Good luck (this is still alpha software)."
+echo "Installation complete for now. Good luck (this is still beta software)."
 echo "If you have problems with WINE, please read the documentation first,"
 echo "as many kinds of potential problems are explained there."
 
