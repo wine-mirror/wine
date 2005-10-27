@@ -120,6 +120,7 @@ static const IPersistStreamVtbl psvt;
 static const IShellLinkDataListVtbl dlvt;
 static const IShellExtInitVtbl eivt;
 static const IContextMenuVtbl cmvt;
+static const IObjectWithSiteVtbl owsvt;
 
 /* IShellLink Implementation */
 
@@ -132,6 +133,7 @@ typedef struct
 	const IShellLinkDataListVtbl *lpvtblShellLinkDataList;
 	const IShellExtInitVtbl *lpvtblShellExtInit;
 	const IContextMenuVtbl *lpvtblContextMenu;
+	const IObjectWithSiteVtbl *lpvtblObjectWithSite;
 
 	LONG            ref;
 
@@ -154,7 +156,8 @@ typedef struct
  	LPWSTR        sComponent;
 	volume_info   volume;
 
-	BOOL		bDirty;
+	BOOL          bDirty;
+	IUnknown      *site;
 } IShellLinkImpl;
 
 static inline IShellLinkImpl *impl_from_IShellLinkW( IShellLinkW *iface )
@@ -185,6 +188,11 @@ static inline IShellLinkImpl *impl_from_IShellExtInit( IShellExtInit *iface )
 static inline IShellLinkImpl *impl_from_IContextMenu( IContextMenu *iface )
 {
     return (IShellLinkImpl *)((char*)iface - FIELD_OFFSET(IShellLinkImpl, lpvtblContextMenu));
+}
+
+static inline IShellLinkImpl *impl_from_IObjectWithSite( IObjectWithSite *iface )
+{
+    return (IShellLinkImpl *)((char*)iface - FIELD_OFFSET(IShellLinkImpl, lpvtblObjectWithSite));
 }
 
 static HRESULT ShellLink_UpdatePath(LPWSTR sPathRel, LPCWSTR path, LPCWSTR sWorkDir, LPWSTR* psPath);
@@ -237,6 +245,10 @@ static HRESULT ShellLink_QueryInterface( IShellLinkImpl *This, REFIID riid,  LPV
     {
         *ppvObj = &(This->lpvtblContextMenu);
     }
+    else if(IsEqualIID(riid, &IID_IObjectWithSite))
+    {
+        *ppvObj = &(This->lpvtblObjectWithSite);
+    }
 
     if(*ppvObj)
     {
@@ -279,6 +291,9 @@ static ULONG ShellLink_Release( IShellLinkImpl *This )
     HeapFree(GetProcessHeap(), 0, This->sWorkDir);
     HeapFree(GetProcessHeap(), 0, This->sDescription);
     HeapFree(GetProcessHeap(),0,This->sPath);
+
+    if (This->site)
+        IUnknown_Release( This->site );
 
     if (This->pPidl)
         ILFree(This->pPidl);
@@ -1172,8 +1187,10 @@ HRESULT WINAPI IShellLink_Constructor( IUnknown *pUnkOuter,
 	sl->lpvtblShellLinkDataList = &dlvt;
 	sl->lpvtblShellExtInit = &eivt;
 	sl->lpvtblContextMenu = &cmvt;
+	sl->lpvtblObjectWithSite = &owsvt;
 	sl->iShowCmd = SW_SHOWNORMAL;
 	sl->bDirty = FALSE;
+	sl->site = NULL;
 
 	TRACE("(%p)->()\n",sl);
 
@@ -2395,4 +2412,60 @@ static const IContextMenuVtbl cmvt =
     ShellLink_QueryContextMenu,
     ShellLink_InvokeCommand,
     ShellLink_GetCommandString
+};
+
+static HRESULT WINAPI
+ShellLink_ObjectWithSite_QueryInterface( IObjectWithSite* iface, REFIID riid, void** ppvObject )
+{
+    IShellLinkImpl *This = impl_from_IObjectWithSite(iface);
+    return ShellLink_QueryInterface( This, riid, ppvObject );
+}
+
+static ULONG WINAPI
+ShellLink_ObjectWithSite_AddRef( IObjectWithSite* iface )
+{
+    IShellLinkImpl *This = impl_from_IObjectWithSite(iface);
+    return ShellLink_AddRef( This );
+}
+
+static ULONG WINAPI
+ShellLink_ObjectWithSite_Release( IObjectWithSite* iface )
+{
+    IShellLinkImpl *This = impl_from_IObjectWithSite(iface);
+    return ShellLink_Release( This );
+}
+
+static HRESULT WINAPI
+ShellLink_GetSite( IObjectWithSite *iface, REFIID iid, void ** ppvSite )
+{
+    IShellLinkImpl *This = impl_from_IObjectWithSite(iface);
+
+    TRACE("%p %s %p\n", This, debugstr_guid( iid ), ppvSite );
+
+    if ( !This->site )
+        return E_FAIL;
+    return IUnknown_QueryInterface( This->site, iid, ppvSite );
+}
+
+static HRESULT WINAPI
+ShellLink_SetSite( IObjectWithSite *iface, IUnknown *punk )
+{
+    IShellLinkImpl *This = impl_from_IObjectWithSite(iface);
+
+    TRACE("%p %p\n", iface, punk);
+
+    if ( punk )
+        IUnknown_AddRef( punk );
+    This->site = punk;
+
+    return S_OK;
+}
+
+static const IObjectWithSiteVtbl owsvt =
+{
+    ShellLink_ObjectWithSite_QueryInterface,
+    ShellLink_ObjectWithSite_AddRef,
+    ShellLink_ObjectWithSite_Release,
+    ShellLink_SetSite,
+    ShellLink_GetSite,
 };
