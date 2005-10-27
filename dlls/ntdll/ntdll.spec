@@ -88,7 +88,7 @@
 @ extern NlsMbOemCodePageTag
 @ stdcall NtAcceptConnectPort(ptr long ptr long long ptr)
 @ stdcall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
-@ stub NtAccessCheckAndAuditAlarm
+@ stdcall NtAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr)
 # @ stub NtAccessCheckByType
 # @ stub NtAccessCheckByTypeAndAuditAlarm
 # @ stub NtAccessCheckByTypeResultList
@@ -930,7 +930,7 @@
 @ stdcall -ret64 VerSetConditionMask(double long long)
 @ stdcall ZwAcceptConnectPort(ptr long ptr long long ptr) NtAcceptConnectPort
 @ stdcall ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
-@ stub ZwAccessCheckAndAuditAlarm
+@ stdcall ZwAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr) NtAccessCheckAndAuditAlarm
 # @ stub ZwAccessCheckByType
 # @ stub ZwAccessCheckByTypeAndAuditAlarm
 # @ stub ZwAccessCheckByTypeResultList

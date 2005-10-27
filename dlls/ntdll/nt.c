@@ -1068,3 +1068,19 @@ ULONGLONG WINAPI VerSetConditionMask( ULONGLONG dwlConditionMask, DWORD dwTypeBi
 	dwlConditionMask |= dwConditionMask << 0*3;
     return dwlConditionMask;
 }
+
+/******************************************************************************
+ *  NtAccessCheckAndAuditAlarm   (NTDLL.@)
+ *  ZwAccessCheckAndAuditAlarm   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAccessCheckAndAuditAlarm(PUNICODE_STRING SubsystemName, HANDLE HandleId, PUNICODE_STRING ObjectTypeName,
+                                           PUNICODE_STRING ObjectName, PSECURITY_DESCRIPTOR SecurityDescriptor,
+                                           ACCESS_MASK DesiredAccess, PGENERIC_MAPPING GenericMapping, BOOLEAN ObjectCreation,
+                                           PACCESS_MASK GrantedAccess, PBOOLEAN AccessStatus, PBOOLEAN GenerateOnClose)
+{
+    FIXME("(%s, %p, %s, %p, 0x%08lx, %p, %d, %p, %p, %p), stub\n", debugstr_us(SubsystemName), HandleId,
+          debugstr_us(ObjectTypeName), SecurityDescriptor, DesiredAccess, GenericMapping, ObjectCreation,
+          GrantedAccess, AccessStatus, GenerateOnClose);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
