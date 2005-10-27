@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 #include "windef.h"
+#include "winternl.h"
 
 #include "handle.h"
 #include "thread.h"
@@ -149,7 +150,8 @@ DECL_HANDLER(create_semaphore)
     if ((sem = create_semaphore( get_req_data(), get_req_data_size(),
                                  req->initial, req->max )))
     {
-        reply->handle = alloc_handle( current->process, sem, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, sem, req->access,
+                                      req->attributes & OBJ_INHERIT );
         release_object( sem );
     }
 }
@@ -158,7 +160,7 @@ DECL_HANDLER(create_semaphore)
 DECL_HANDLER(open_semaphore)
 {
     reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
-                                 &semaphore_ops, req->access, req->inherit );
+                                 &semaphore_ops, req->access, req->attributes );
 }
 
 /* release a semaphore */

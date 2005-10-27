@@ -43,6 +43,7 @@
 #include <sys/filio.h>
 #endif
 #include "windef.h"
+#include "winternl.h"
 
 #include "file.h"
 #include "handle.h"
@@ -356,7 +357,7 @@ DECL_HANDLER(create_mailslot)
     if (mailslot)
     {
         reply->handle = alloc_handle( current->process, mailslot,
-                                      GENERIC_READ, req->inherit );
+                                      req->access, req->attributes & OBJ_INHERIT );
         release_object( mailslot );
     }
 }
@@ -384,7 +385,7 @@ DECL_HANDLER(open_mailslot)
         if (writer)
         {
             reply->handle = alloc_handle( current->process, writer,
-                                          req->access, req->inherit );
+                                          req->access, req->attributes & OBJ_INHERIT );
             release_object( writer );
         }
         release_object( mailslot );

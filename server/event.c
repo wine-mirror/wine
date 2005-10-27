@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 #include "windef.h"
+#include "winternl.h"
 
 #include "handle.h"
 #include "thread.h"
@@ -149,7 +150,8 @@ DECL_HANDLER(create_event)
     if ((event = create_event( get_req_data(), get_req_data_size(),
                                req->manual_reset, req->initial_state )))
     {
-        reply->handle = alloc_handle( current->process, event, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, event, req->access,
+                                      req->attributes & OBJ_INHERIT );
         release_object( event );
     }
 }
@@ -158,7 +160,7 @@ DECL_HANDLER(create_event)
 DECL_HANDLER(open_event)
 {
     reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
-                                 &event_ops, req->access, req->inherit );
+                                 &event_ops, req->access, req->attributes );
 }
 
 /* do an event operation */

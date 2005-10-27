@@ -28,6 +28,7 @@
 #include <sys/types.h>
 
 #include "windef.h"
+#include "winternl.h"
 
 #include "file.h"
 #include "handle.h"
@@ -206,7 +207,8 @@ DECL_HANDLER(create_timer)
     reply->handle = 0;
     if ((timer = create_timer( get_req_data(), get_req_data_size(), req->manual )))
     {
-        reply->handle = alloc_handle( current->process, timer, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, timer, req->access,
+                                      req->attributes & OBJ_INHERIT );
         release_object( timer );
     }
 }
@@ -215,7 +217,7 @@ DECL_HANDLER(create_timer)
 DECL_HANDLER(open_timer)
 {
     reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
-                                 &timer_ops, req->access, req->inherit );
+                                 &timer_ops, req->access, req->attributes );
 }
 
 /* set a waitable timer */

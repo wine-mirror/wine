@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winternl.h"
 
 #include "object.h"
 #include "handle.h"
@@ -322,7 +323,7 @@ DECL_HANDLER(open_winstation)
 {
     if (winstation_namespace)
         reply->handle = open_object( winstation_namespace, get_req_data(), get_req_data_size(),
-                                     &winstation_ops, req->access, req->inherit );
+                                     &winstation_ops, req->access, (req->inherit) ? OBJ_INHERIT:0 );
     else
         set_error( STATUS_OBJECT_NAME_NOT_FOUND );
 }
@@ -396,7 +397,8 @@ DECL_HANDLER(open_desktop)
                                              winstation, &full_len )))
         {
             reply->handle = open_object( winstation_namespace, full_name, full_len,
-                                         &desktop_ops, req->access, req->inherit );
+                                         &desktop_ops, req->access,
+                                         (req->inherit) ? OBJ_INHERIT:0 );
             free( full_name );
         }
         release_object( winstation );

@@ -583,7 +583,7 @@ DECL_HANDLER(create_named_pipe)
     if (server)
     {
         reply->handle = alloc_handle( current->process, server,
-                                      req->access, req->inherit );
+                                      req->access, req->attributes & OBJ_INHERIT );
         server->pipe->instances++;
         release_object( server );
     }
@@ -645,7 +645,7 @@ DECL_HANDLER(open_named_pipe)
                 server->client = client;
                 client->server = server;
                 reply->handle = alloc_handle( current->process, client,
-                                              req->access, req->inherit );
+                                              req->access, req->attributes & OBJ_INHERIT );
             }
         }
         else

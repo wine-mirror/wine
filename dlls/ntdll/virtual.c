@@ -1654,12 +1654,12 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
 
     SERVER_START_REQ( create_mapping )
     {
+        req->access      = access;
+        req->attributes  = (attr) ? attr->Attributes : 0;
         req->file_handle = file;
         req->size_high   = size ? size->u.HighPart : 0;
         req->size_low    = size ? size->u.LowPart : 0;
         req->protect     = vprot;
-        req->access      = access;
-        req->inherit     = (attr && (attr->Attributes & OBJ_INHERIT) != 0);
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
         *handle = reply->handle;
@@ -1683,7 +1683,7 @@ NTSTATUS WINAPI NtOpenSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_
     SERVER_START_REQ( open_mapping )
     {
         req->access  = access;
-        req->inherit = (attr->Attributes & OBJ_INHERIT) != 0;
+        req->attributes = (attr) ? attr->Attributes : 0;
         wine_server_add_data( req, attr->ObjectName->Buffer, len );
         if (!(ret = wine_server_call( req ))) *handle = reply->handle;
     }

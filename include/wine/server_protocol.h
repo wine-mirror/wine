@@ -613,9 +613,9 @@ struct create_event_request
 {
     struct request_header __header;
     unsigned int access;
+    unsigned int attributes;
     int          manual_reset;
     int          initial_state;
-    int          inherit;
     /* VARARG(name,unicode_str); */
 };
 struct create_event_reply
@@ -643,7 +643,7 @@ struct open_event_request
 {
     struct request_header __header;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     /* VARARG(name,unicode_str); */
 };
 struct open_event_reply
@@ -658,8 +658,8 @@ struct create_mutex_request
 {
     struct request_header __header;
     unsigned int access;
+    unsigned int attributes;
     int          owned;
-    int          inherit;
     /* VARARG(name,unicode_str); */
 };
 struct create_mutex_reply
@@ -687,7 +687,7 @@ struct open_mutex_request
 {
     struct request_header __header;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     /* VARARG(name,unicode_str); */
 };
 struct open_mutex_reply
@@ -702,9 +702,9 @@ struct create_semaphore_request
 {
     struct request_header __header;
     unsigned int access;
+    unsigned int attributes;
     unsigned int initial;
     unsigned int max;
-    int          inherit;
     /* VARARG(name,unicode_str); */
 };
 struct create_semaphore_reply
@@ -733,7 +733,7 @@ struct open_semaphore_request
 {
     struct request_header __header;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     /* VARARG(name,unicode_str); */
 };
 struct open_semaphore_reply
@@ -1399,11 +1399,11 @@ struct next_change_notification_reply
 struct create_mapping_request
 {
     struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
     int          size_high;
     int          size_low;
     int          protect;
-    unsigned int access;
-    int          inherit;
     obj_handle_t file_handle;
     /* VARARG(name,unicode_str); */
 };
@@ -1428,7 +1428,7 @@ struct open_mapping_request
 {
     struct request_header __header;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     /* VARARG(name,unicode_str); */
 };
 struct open_mapping_reply
@@ -1879,7 +1879,7 @@ struct create_timer_request
 {
     struct request_header __header;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     int          manual;
     /* VARARG(name,unicode_str); */
 };
@@ -1895,7 +1895,7 @@ struct open_timer_request
 {
     struct request_header __header;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     /* VARARG(name,unicode_str); */
 };
 struct open_timer_reply
@@ -2366,13 +2366,13 @@ struct create_named_pipe_request
 {
     struct request_header __header;
     unsigned int   access;
+    unsigned int   attributes;
     unsigned int   options;
     unsigned int   flags;
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;
     unsigned int   timeout;
-    int            inherit;
     /* VARARG(name,unicode_str); */
 };
 struct create_named_pipe_reply
@@ -2392,8 +2392,8 @@ struct open_named_pipe_request
 {
     struct request_header __header;
     unsigned int   access;
+    unsigned int   attributes;
     unsigned int   flags;
-    int            inherit;
     /* VARARG(name,unicode_str); */
 };
 struct open_named_pipe_reply
@@ -3528,9 +3528,10 @@ struct get_token_user_reply
 struct create_mailslot_request
 {
     struct request_header __header;
+    unsigned int   access;
+    unsigned int   attributes;
     unsigned int   max_msgsize;
     unsigned int   read_timeout;
-    int            inherit;
     /* VARARG(name,unicode_str); */
 };
 struct create_mailslot_reply
@@ -3545,7 +3546,7 @@ struct open_mailslot_request
 {
     struct request_header __header;
     unsigned int   access;
-    int            inherit;
+    unsigned int   attributes;
     unsigned int   sharing;
     /* VARARG(name,unicode_str); */
 };
@@ -4206,6 +4207,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 194
+#define SERVER_PROTOCOL_VERSION 195
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -164,8 +164,8 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         SERVER_START_REQ( open_named_pipe )
         {
             req->access = access;
+            req->attributes = (attr) ? attr->Attributes : 0;
             req->flags = options;
-            req->inherit = (attr->Attributes & OBJ_INHERIT) != 0;
             wine_server_add_data( req, attr->ObjectName->Buffer + 4,
                                   attr->ObjectName->Length - 4*sizeof(WCHAR) );
             io->u.Status = wine_server_call( req );
@@ -183,8 +183,8 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         SERVER_START_REQ( open_mailslot )
         {
             req->access = access & GENERIC_WRITE;
+            req->attributes = (attr) ? attr->Attributes : 0;
             req->sharing = sharing;
-            req->inherit = (attr->Attributes & OBJ_INHERIT) != 0;
             wine_server_add_data( req, attr->ObjectName->Buffer + 4,
                                   attr->ObjectName->Length - 4*sizeof(WCHAR) );
             io->u.Status = wine_server_call( req );
@@ -1941,6 +1941,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
     SERVER_START_REQ( create_named_pipe )
     {
         req->access  = access;
+        req->attributes = (attr) ? attr->Attributes : 0;
         req->options = options;
         req->flags = 
             (pipe_type) ? NAMED_PIPE_MESSAGE_STREAM_WRITE : 0 |
@@ -1950,7 +1951,6 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
         req->outsize = outbound_quota;
         req->insize  = inbound_quota;
         req->timeout = timeout->QuadPart / -10000;
-        req->inherit = (attr->Attributes & OBJ_INHERIT) != 0;
         wine_server_add_data( req, attr->ObjectName->Buffer + 4, 
                               attr->ObjectName->Length - 4 * sizeof(WCHAR) );
         status = wine_server_call( req );
@@ -2045,9 +2045,10 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
 
     SERVER_START_REQ( create_mailslot )
     {
+        req->access = DesiredAccess;
+        req->attributes = (attr) ? attr->Attributes : 0;
         req->max_msgsize = MaxMessageSize;
         req->read_timeout = TimeOut->QuadPart / -10000;
-        req->inherit = (attr->Attributes & OBJ_INHERIT) != 0;
         wine_server_add_data( req, attr->ObjectName->Buffer + 4,
                               attr->ObjectName->Length - 4*sizeof(WCHAR) );
         ret = wine_server_call( req );

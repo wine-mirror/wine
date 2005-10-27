@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #include "windef.h"
+#include "winternl.h"
 
 #include "handle.h"
 #include "process.h"
@@ -521,7 +522,7 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
 
 /* open a new handle to an existing object */
 obj_handle_t open_object( const struct namespace *namespace, const WCHAR *name, size_t len,
-                          const struct object_ops *ops, unsigned int access, int inherit )
+                          const struct object_ops *ops, unsigned int access, unsigned int attr )
 {
     obj_handle_t handle = 0;
     struct object *obj = find_object( namespace, name, len );
@@ -530,7 +531,7 @@ obj_handle_t open_object( const struct namespace *namespace, const WCHAR *name, 
         if (ops && obj->ops != ops)
             set_error( STATUS_OBJECT_TYPE_MISMATCH );
         else
-            handle = alloc_handle( current->process, obj, access, inherit );
+            handle = alloc_handle( current->process, obj, access, attr & OBJ_INHERIT );
         release_object( obj );
     }
     else

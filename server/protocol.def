@@ -495,9 +495,9 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
 /* Create an event */
 @REQ(create_event)
     unsigned int access;        /* wanted access rights */
+    unsigned int attributes;    /* object attributes */
     int          manual_reset;  /* manual reset event */
     int          initial_state; /* initial state of the event */
-    int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
     obj_handle_t handle;        /* handle to the event */
@@ -514,7 +514,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Open an event */
 @REQ(open_event)
     unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
+    unsigned int attributes;    /* object attributes */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
     obj_handle_t handle;        /* handle to the event */
@@ -524,8 +524,8 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Create a mutex */
 @REQ(create_mutex)
     unsigned int access;        /* wanted access rights */
+    unsigned int attributes;    /* object attributes */
     int          owned;         /* initially owned? */
-    int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
     obj_handle_t handle;        /* handle to the mutex */
@@ -543,7 +543,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Open a mutex */
 @REQ(open_mutex)
     unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
+    unsigned int attributes;    /* object attributes */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
     obj_handle_t handle;        /* handle to the mutex */
@@ -553,9 +553,9 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Create a semaphore */
 @REQ(create_semaphore)
     unsigned int access;        /* wanted access rights */
+    unsigned int attributes;    /* object attributes */
     unsigned int initial;       /* initial count */
     unsigned int max;           /* maximum count */
-    int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
     obj_handle_t handle;        /* handle to the semaphore */
@@ -574,7 +574,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Open a semaphore */
 @REQ(open_semaphore)
     unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
+    unsigned int attributes;    /* object attributes */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
     obj_handle_t handle;        /* handle to the semaphore */
@@ -1037,11 +1037,11 @@ enum char_info_mode
 
 /* Create a file mapping */
 @REQ(create_mapping)
+    unsigned int access;        /* wanted access rights */
+    unsigned int attributes;    /* object attributes */
     int          size_high;     /* mapping size */
     int          size_low;      /* mapping size */
     int          protect;       /* protection flags (see below) */
-    unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
     obj_handle_t file_handle;   /* file handle */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
@@ -1061,7 +1061,7 @@ enum char_info_mode
 /* Open a mapping */
 @REQ(open_mapping)
     unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
+    unsigned int attributes;    /* object attributes */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
     obj_handle_t handle;        /* handle to the mapping */
@@ -1354,7 +1354,7 @@ enum char_info_mode
 /* Create a waitable timer */
 @REQ(create_timer)
     unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
+    unsigned int attributes;    /* object attributes */
     int          manual;        /* manual reset */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
@@ -1365,7 +1365,7 @@ enum char_info_mode
 /* Open a waitable timer */
 @REQ(open_timer)
     unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
+    unsigned int attributes;    /* object attributes */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
     obj_handle_t handle;        /* handle to the timer */
@@ -1680,13 +1680,13 @@ enum message_type
 /* Create a named pipe */
 @REQ(create_named_pipe)
     unsigned int   access;
+    unsigned int   attributes;   /* object attributes */
     unsigned int   options;
     unsigned int   flags;
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;
     unsigned int   timeout;
-    int            inherit;      /* inherit flag */
     VARARG(name,unicode_str);    /* pipe name */
 @REPLY
     obj_handle_t   handle;       /* handle to the pipe */
@@ -1701,8 +1701,8 @@ enum message_type
 /* Open an existing named pipe */
 @REQ(open_named_pipe)
     unsigned int   access;
+    unsigned int   attributes;   /* object attributes */
     unsigned int   flags;        /* file flags */
-    int            inherit;      /* inherit flag */
     VARARG(name,unicode_str);    /* pipe name */
 @REPLY
     obj_handle_t   handle;       /* handle to the pipe */
@@ -2471,9 +2471,10 @@ enum message_type
 
 /* Create a mailslot */
 @REQ(create_mailslot)
+    unsigned int   access;        /* wanted access rights */
+    unsigned int   attributes;    /* object attributes */
     unsigned int   max_msgsize;
     unsigned int   read_timeout;
-    int            inherit;
     VARARG(name,unicode_str);     /* mailslot name */
 @REPLY
     obj_handle_t   handle;        /* handle to the mailslot */
@@ -2483,7 +2484,7 @@ enum message_type
 /* Open an existing mailslot */
 @REQ(open_mailslot)
     unsigned int   access;
-    int            inherit;       /* inherit flag */
+    unsigned int   attributes;    /* object attributes */
     unsigned int   sharing;       /* sharing mode */
     VARARG(name,unicode_str);     /* mailslot name */
 @REPLY

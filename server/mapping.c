@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include "windef.h"
+#include "winternl.h"
 
 #include "file.h"
 #include "handle.h"
@@ -379,7 +380,8 @@ DECL_HANDLER(create_mapping)
     if ((obj = create_mapping( size, req->protect, req->file_handle,
                                get_req_data(), get_req_data_size() )))
     {
-        reply->handle = alloc_handle( current->process, obj, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, obj, req->access,
+                                      req->attributes & OBJ_INHERIT );
         release_object( obj );
     }
 }
@@ -388,7 +390,7 @@ DECL_HANDLER(create_mapping)
 DECL_HANDLER(open_mapping)
 {
     reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
-                                 &mapping_ops, req->access, req->inherit );
+                                 &mapping_ops, req->access, req->attributes );
 }
 
 /* get a mapping information */

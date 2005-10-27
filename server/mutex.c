@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 #include "windef.h"
+#include "winternl.h"
 
 #include "handle.h"
 #include "thread.h"
@@ -173,7 +174,8 @@ DECL_HANDLER(create_mutex)
     reply->handle = 0;
     if ((mutex = create_mutex( get_req_data(), get_req_data_size(), req->owned )))
     {
-        reply->handle = alloc_handle( current->process, mutex, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, mutex, req->access,
+                                      req->attributes & OBJ_INHERIT );
         release_object( mutex );
     }
 }
@@ -182,7 +184,7 @@ DECL_HANDLER(create_mutex)
 DECL_HANDLER(open_mutex)
 {
     reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
-                                 &mutex_ops, req->access, req->inherit );
+                                 &mutex_ops, req->access, req->attributes );
 }
 
 /* release a mutex */

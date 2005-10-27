@@ -82,9 +82,9 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
     SERVER_START_REQ( create_semaphore )
     {
         req->access  = access;
+        req->attributes = (attr) ? attr->Attributes : 0;
         req->initial = InitialCount;
         req->max     = MaximumCount;
-        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
         *SemaphoreHandle = reply->handle;
@@ -108,7 +108,7 @@ NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
     SERVER_START_REQ( open_semaphore )
     {
         req->access  = access;
-        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        req->attributes = (attr) ? attr->Attributes : 0;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
         *SemaphoreHandle = reply->handle;
@@ -174,9 +174,9 @@ NTSTATUS WINAPI NtCreateEvent(
     SERVER_START_REQ( create_event )
     {
         req->access = DesiredAccess;
+        req->attributes = (attr) ? attr->Attributes : 0;
         req->manual_reset = ManualReset;
         req->initial_state = InitialState;
-        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
         *EventHandle = reply->handle;
@@ -202,7 +202,7 @@ NTSTATUS WINAPI NtOpenEvent(
     SERVER_START_REQ( open_event )
     {
         req->access  = DesiredAccess;
-        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        req->attributes = (attr) ? attr->Attributes : 0;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
         *EventHandle = reply->handle;
@@ -321,8 +321,8 @@ NTSTATUS WINAPI NtCreateMutant(OUT HANDLE* MutantHandle,
     SERVER_START_REQ( create_mutex )
     {
         req->access  = access;
+        req->attributes = (attr) ? attr->Attributes : 0;
         req->owned   = InitialOwner;
-        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *MutantHandle = reply->handle;
@@ -347,7 +347,7 @@ NTSTATUS WINAPI NtOpenMutant(OUT HANDLE* MutantHandle,
     SERVER_START_REQ( open_mutex )
     {
         req->access  = access;
-        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        req->attributes = (attr) ? attr->Attributes : 0;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *MutantHandle = reply->handle;
@@ -413,8 +413,8 @@ NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
     SERVER_START_REQ( create_timer )
     {
         req->access  = access;
+        req->attributes = (attr) ? attr->Attributes : 0;
         req->manual  = (timer_type == NotificationTimer) ? TRUE : FALSE;
-        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *handle = reply->handle;
@@ -440,7 +440,7 @@ NTSTATUS WINAPI NtOpenTimer(OUT PHANDLE handle,
     SERVER_START_REQ( open_timer )
     {
         req->access  = access;
-        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        req->attributes = (attr) ? attr->Attributes : 0;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *handle = reply->handle;

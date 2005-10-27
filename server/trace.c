@@ -890,9 +890,9 @@ static void dump_select_request( const struct select_request *req )
 static void dump_create_event_request( const struct create_event_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " manual_reset=%d,", req->manual_reset );
     fprintf( stderr, " initial_state=%d,", req->initial_state );
-    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -911,7 +911,7 @@ static void dump_event_op_request( const struct event_op_request *req )
 static void dump_open_event_request( const struct open_event_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -924,8 +924,8 @@ static void dump_open_event_reply( const struct open_event_reply *req )
 static void dump_create_mutex_request( const struct create_mutex_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " owned=%d,", req->owned );
-    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -948,7 +948,7 @@ static void dump_release_mutex_reply( const struct release_mutex_reply *req )
 static void dump_open_mutex_request( const struct open_mutex_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -961,9 +961,9 @@ static void dump_open_mutex_reply( const struct open_mutex_reply *req )
 static void dump_create_semaphore_request( const struct create_semaphore_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " initial=%08x,", req->initial );
     fprintf( stderr, " max=%08x,", req->max );
-    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -987,7 +987,7 @@ static void dump_release_semaphore_reply( const struct release_semaphore_reply *
 static void dump_open_semaphore_request( const struct open_semaphore_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -1438,11 +1438,11 @@ static void dump_next_change_notification_request( const struct next_change_noti
 
 static void dump_create_mapping_request( const struct create_mapping_request *req )
 {
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " size_high=%d,", req->size_high );
     fprintf( stderr, " size_low=%d,", req->size_low );
     fprintf( stderr, " protect=%d,", req->protect );
-    fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " file_handle=%p,", req->file_handle );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
@@ -1456,7 +1456,7 @@ static void dump_create_mapping_reply( const struct create_mapping_reply *req )
 static void dump_open_mapping_request( const struct open_mapping_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -1790,7 +1790,7 @@ static void dump_set_registry_notification_request( const struct set_registry_no
 static void dump_create_timer_request( const struct create_timer_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " manual=%d,", req->manual );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
@@ -1804,7 +1804,7 @@ static void dump_create_timer_reply( const struct create_timer_reply *req )
 static void dump_open_timer_request( const struct open_timer_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -2140,13 +2140,13 @@ static void dump_cancel_async_request( const struct cancel_async_request *req )
 static void dump_create_named_pipe_request( const struct create_named_pipe_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " maxinstances=%08x,", req->maxinstances );
     fprintf( stderr, " outsize=%08x,", req->outsize );
     fprintf( stderr, " insize=%08x,", req->insize );
     fprintf( stderr, " timeout=%08x,", req->timeout );
-    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -2159,8 +2159,8 @@ static void dump_create_named_pipe_reply( const struct create_named_pipe_reply *
 static void dump_open_named_pipe_request( const struct open_named_pipe_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -3048,9 +3048,10 @@ static void dump_get_token_user_reply( const struct get_token_user_reply *req )
 
 static void dump_create_mailslot_request( const struct create_mailslot_request *req )
 {
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
     fprintf( stderr, " read_timeout=%08x,", req->read_timeout );
-    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -3063,7 +3064,7 @@ static void dump_create_mailslot_reply( const struct create_mailslot_reply *req 
 static void dump_open_mailslot_request( const struct open_mailslot_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " sharing=%08x,", req->sharing );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
