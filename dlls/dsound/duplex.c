@@ -43,7 +43,49 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-static HRESULT WINAPI IDirectSoundFullDuplexImpl_Initialize(
+static HRESULT WINAPI
+IDirectSoundFullDuplexImpl_QueryInterface(
+    LPDIRECTSOUNDFULLDUPLEX iface,
+    REFIID riid,
+    LPVOID* ppobj )
+{
+    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
+    TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
+
+    if (ppobj == NULL) {
+	WARN("invalid parameter\n");
+	return E_INVALIDARG;
+    }
+
+    *ppobj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI
+IDirectSoundFullDuplexImpl_AddRef( LPDIRECTSOUNDFULLDUPLEX iface )
+{
+    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
+}
+
+static ULONG WINAPI
+IDirectSoundFullDuplexImpl_Release( LPDIRECTSOUNDFULLDUPLEX iface )
+{
+    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+
+    if (!ref) {
+        HeapFree( GetProcessHeap(), 0, This );
+	TRACE("(%p) released\n", This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI
+IDirectSoundFullDuplexImpl_Initialize(
     LPDIRECTSOUNDFULLDUPLEX iface,
     LPCGUID pCaptureGuid,
     LPCGUID pRendererGuid,
@@ -52,9 +94,29 @@ static HRESULT WINAPI IDirectSoundFullDuplexImpl_Initialize(
     HWND hWnd,
     DWORD dwLevel,
     LPLPDIRECTSOUNDCAPTUREBUFFER8 lplpDirectSoundCaptureBuffer8,
-    LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8 );
+    LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8 )
+{
+    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
+    IDirectSoundCaptureBufferImpl** ippdscb=(IDirectSoundCaptureBufferImpl**)lplpDirectSoundCaptureBuffer8;
+    IDirectSoundBufferImpl** ippdsc=(IDirectSoundBufferImpl**)lplpDirectSoundBuffer8;
 
-static const IDirectSoundFullDuplexVtbl dsfdvt;
+    FIXME( "(%p,%s,%s,%p,%p,%p,%lx,%p,%p) stub!\n", This, debugstr_guid(pCaptureGuid),
+	debugstr_guid(pRendererGuid), lpDscBufferDesc, lpDsBufferDesc, hWnd, dwLevel,
+	ippdscb, ippdsc);
+
+    return E_FAIL;
+}
+
+static const IDirectSoundFullDuplexVtbl dsfdvt =
+{
+    /* IUnknown methods */
+    IDirectSoundFullDuplexImpl_QueryInterface,
+    IDirectSoundFullDuplexImpl_AddRef,
+    IDirectSoundFullDuplexImpl_Release,
+
+    /* IDirectSoundFullDuplex methods */
+    IDirectSoundFullDuplexImpl_Initialize
+};
 
 /***************************************************************************
  * DirectSoundFullDuplexCreate [DSOUND.10]
@@ -114,9 +176,6 @@ DirectSoundFullDuplexCreate(
         This->ref = 1;
         This->lpVtbl = &dsfdvt;
 
-        InitializeCriticalSection( &(This->lock) );
-        This->lock.DebugInfo->Spare[0] = (DWORD_PTR)"DSDUPLEX_lock";
-
         hres = IDirectSoundFullDuplexImpl_Initialize( (LPDIRECTSOUNDFULLDUPLEX)This,
                                                       pcGuidCaptureDevice, pcGuidRenderDevice,
                                                       pcDSCBufferDesc, pcDSBufferDesc,
@@ -126,83 +185,6 @@ DirectSoundFullDuplexCreate(
 	return hres;
     }
 }
-
-static HRESULT WINAPI
-IDirectSoundFullDuplexImpl_QueryInterface(
-    LPDIRECTSOUNDFULLDUPLEX iface,
-    REFIID riid,
-    LPVOID* ppobj )
-{
-    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
-    TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
-
-    if (ppobj == NULL) {
-	WARN("invalid parameter\n");
-	return E_INVALIDARG;
-    }
-
-    *ppobj = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI
-IDirectSoundFullDuplexImpl_AddRef( LPDIRECTSOUNDFULLDUPLEX iface )
-{
-    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
-    ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
-    return ref;
-}
-
-static ULONG WINAPI
-IDirectSoundFullDuplexImpl_Release( LPDIRECTSOUNDFULLDUPLEX iface )
-{
-    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
-    ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
-
-    if (!ref) {
-        This->lock.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection( &(This->lock) );
-        HeapFree( GetProcessHeap(), 0, This );
-	TRACE("(%p) released\n", This);
-    }
-    return ref;
-}
-
-static HRESULT WINAPI
-IDirectSoundFullDuplexImpl_Initialize(
-    LPDIRECTSOUNDFULLDUPLEX iface,
-    LPCGUID pCaptureGuid,
-    LPCGUID pRendererGuid,
-    LPCDSCBUFFERDESC lpDscBufferDesc,
-    LPCDSBUFFERDESC lpDsBufferDesc,
-    HWND hWnd,
-    DWORD dwLevel,
-    LPLPDIRECTSOUNDCAPTUREBUFFER8 lplpDirectSoundCaptureBuffer8,
-    LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8 )
-{
-    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
-    IDirectSoundCaptureBufferImpl** ippdscb=(IDirectSoundCaptureBufferImpl**)lplpDirectSoundCaptureBuffer8;
-    IDirectSoundBufferImpl** ippdsc=(IDirectSoundBufferImpl**)lplpDirectSoundBuffer8;
-
-    FIXME( "(%p,%s,%s,%p,%p,%p,%lx,%p,%p) stub!\n", This, debugstr_guid(pCaptureGuid),
-	debugstr_guid(pRendererGuid), lpDscBufferDesc, lpDsBufferDesc, hWnd, dwLevel,
-	ippdscb, ippdsc);
-
-    return E_FAIL;
-}
-
-static const IDirectSoundFullDuplexVtbl dsfdvt =
-{
-    /* IUnknown methods */
-    IDirectSoundFullDuplexImpl_QueryInterface,
-    IDirectSoundFullDuplexImpl_AddRef,
-    IDirectSoundFullDuplexImpl_Release,
-
-    /* IDirectSoundFullDuplex methods */
-    IDirectSoundFullDuplexImpl_Initialize
-};
 
 /*******************************************************************************
  * DirectSoundFullDuplex ClassFactory

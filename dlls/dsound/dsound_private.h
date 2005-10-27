@@ -357,7 +357,6 @@ struct IDirectSoundFullDuplexImpl
     LONG                        ref;
 
     /* IDirectSoundFullDuplexImpl fields */
-    CRITICAL_SECTION            lock;
 };
 
 /*****************************************************************************
