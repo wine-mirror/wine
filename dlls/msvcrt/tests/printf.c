@@ -183,6 +183,16 @@ static void test_sprintf( void )
     ok(!strcmp(buffer,"8.6000"), "failed\n");
     ok( r==6, "return count wrong\n");
 
+    format = "%0f";
+    r = sprintf(buffer, format,0.6);
+    ok(!strcmp(buffer,"0.600000"), "failed\n");
+    ok( r==8, "return count wrong\n");
+
+    format = "%.0f";
+    r = sprintf(buffer, format,0.6);
+    ok(!strcmp(buffer,"1"), "failed\n");
+    ok( r==1, "return count wrong\n");
+
     todo_wine {
     format = "%2.4e";
     r = sprintf(buffer, format,8.6);
