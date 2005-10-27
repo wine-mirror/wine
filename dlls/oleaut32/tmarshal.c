@@ -1696,18 +1696,13 @@ TMStubImpl_Invoke(
 	}
     }
 
-    hres = IUnknown_QueryInterface(This->pUnk,&(This->iid),(LPVOID*)&(args[0]));
-    if (hres) {
-	ERR("Does not support iface %s, returning %lx\n",debugstr_guid(&(This->iid)), hres);
-	return hres;
-    }
+    args[0] = (DWORD)This->pUnk;
     res = _invoke(
 	(*((FARPROC**)args[0]))[fdesc->oVft/4],
 	fdesc->callconv,
 	(xargs-args),
 	args
     );
-    IUnknown_Release((LPUNKNOWN)args[0]);
     buf.curoff = 0;
 
     xargs = args+1;
