@@ -623,11 +623,13 @@ static INT SHADD_create_add_mru_data(HANDLE mruhandle, LPSTR doc_name, LPSTR new
  * SHAddToRecentDocs				[SHELL32.@]
  *
  * PARAMETERS
- *   uFlags  [IN] SHARD_PATH or SHARD_PIDL
+ *   uFlags  [IN] SHARD_PATHA, SHARD_PATHW or SHARD_PIDL
  *   pv      [IN] string or pidl, NULL clears the list
  *
  * NOTES
  *     exported by name
+ *
+ * FIXME: convert to unicode
  */
 void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 {
@@ -651,6 +653,8 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
     HWND hwnd = 0;       /* FIXME:  get real window handle */
     INT ret;
     DWORD data[64], datalen, type;
+
+    TRACE("%04x %p\n", uFlags, pv);
 
     /*FIXME: Document:
      *  RecentDocs MRU data structure seems to be:
@@ -757,15 +761,28 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 
     /* Get the pure document name from the input
      */
-    if (uFlags & SHARD_PIDL) {
+    switch (uFlags)
+    {
+    case SHARD_PIDL:
 	SHGetPathFromIDListA((LPCITEMIDLIST) pv, doc_name);
+        break;
+
+    case SHARD_PATHA:
+        lstrcpynA(doc_name, (LPCSTR)pv, MAX_PATH);
+        break;
+
+    case SHARD_PATHW:
+        WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)pv, -1, doc_name, MAX_PATH, NULL, NULL);
+        break;
+
+    default:
+        FIXME("Unsupported flags: %u\n", uFlags);
+        return;
     }
-    else {
-	lstrcpyA(doc_name, (LPCSTR) pv);
-    }
-    TRACE("full document name %s\n", doc_name);
+
+    TRACE("full document name %s\n", debugstr_a(doc_name));
     PathStripPathA(doc_name);
-    TRACE("stripped document name %s\n", doc_name);
+    TRACE("stripped document name %s\n", debugstr_a(doc_name));
 
 
     /* ***  JOB 1: Update registry for ...\Explorer\RecentDocs list  *** */
@@ -902,7 +919,7 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	    }
 
 	    /* Set the document path or pidl */
-	    if (uFlags & SHARD_PIDL) {
+	    if (uFlags == SHARD_PIDL) {
 		hres = IShellLinkA_SetIDList(psl, (LPCITEMIDLIST) pv);
 	    } else {
 		hres = IShellLinkA_SetPath(psl, (LPCSTR) pv);
