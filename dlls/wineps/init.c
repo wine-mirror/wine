@@ -26,26 +26,28 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#ifdef HAVE_CUPS_CUPS_H
+# include <cups/cups.h>
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "psdrv.h"
+
 #include "wine/debug.h"
-#include "winreg.h"
-#include "winspool.h"
 #include "winerror.h"
 #include "wownt32.h"
 #include "heap.h"
+#include "winreg.h"
+#include "psdrv.h"
+#include "winspool.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
-
-#ifdef HAVE_CUPS_CUPS_H
-#include <cups/cups.h>
 
 #ifndef SONAME_LIBCUPS
 #define SONAME_LIBCUPS "libcups.so"
 #endif
 
+#ifdef HAVE_CUPS_CUPS_H
 static void *cupshandle = NULL;
 #endif
 
