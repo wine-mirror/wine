@@ -2682,6 +2682,9 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     struct user_thread_info *thread_info = get_user_thread_info();
     MSG msg;
 
+    if (HIWORD(flags))
+        FIXME("PM_QS_xxxx flags (%04x) are not handled\n", flags >> 16);
+
     USER_CheckNotLock();
 
     /* check for graphics events */

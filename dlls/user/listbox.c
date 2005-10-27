@@ -2995,6 +2995,10 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
             LISTBOX_RepaintItem( descr, descr->focus_item, ODA_FOCUS );
         return LB_OKAY;
 
+    case LB_GETLISTBOXINFO:
+        FIXME("LB_GETLISTBOXINFO: stub!\n");
+        return 0;
+
     case WM_DESTROY:
         return LISTBOX_Destroy( descr );
 

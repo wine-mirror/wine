@@ -236,6 +236,9 @@ DWORD WINAPI GetQueueStatus( UINT flags )
 {
     DWORD ret = 0;
 
+    if (flags & ~0xff)
+        FIXME("QS_xxxx flags (%04x) are not handled\n", flags & ~0xff);
+
     /* check for pending X events */
     USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
 

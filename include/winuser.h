@@ -567,6 +567,7 @@ typedef struct tagWINDOWPLACEMENT
 #define RT_ANICURSOR      MAKEINTRESOURCE(21)
 #define RT_ANIICON        MAKEINTRESOURCE(22)
 #define RT_HTML           MAKEINTRESOURCE(23)
+#define RT_MANIFEST       MAKEINTRESOURCE(24)
 
 
   /* cbWndExtra bytes for dialog class */
@@ -616,6 +617,8 @@ typedef struct tagWINDOWPLACEMENT
 #define DS_CENTER		0x0800	/* win95 */
 #define DS_CENTERMOUSE		0x1000	/* win95 */
 #define DS_CONTEXTHELP		0x2000	/* win95 */
+#define DS_USEPIXELS		0x8000
+#define DS_SHELLFONT		(DS_SETFONT | DS_FIXEDSYS)
 
 
   /* Dialog messages */
@@ -1387,6 +1390,7 @@ DECL_WINELIB_TYPE_AW(LPMDICREATESTRUCT)
 #define MDITILE_VERTICAL     0x0000
 #define MDITILE_HORIZONTAL   0x0001
 #define MDITILE_SKIPDISABLED 0x0002
+#define MDITILE_ZORDER       0x0004
 
 #define MDIS_ALLCHILDSTYLES  0x0001
 
@@ -1805,6 +1809,14 @@ DECL_WINELIB_TYPE_AW(LPHELPWININFO)
 #define HELP_TCARD_OTHER_CALLER 0x0011
 
 
+#define IDH_NO_HELP             28440
+#define IDH_MISSING_CONTEXT     28441
+#define IDH_GENERIC_HELP_BUTTON 28442
+#define IDH_OK                  28443
+#define IDH_CANCEL              28444
+#define IDH_HELP                28445
+
+
      /* ChangeDisplaySettings return codes */
 
 #define DISP_CHANGE_SUCCESSFUL 0
@@ -1814,6 +1826,7 @@ DECL_WINELIB_TYPE_AW(LPHELPWININFO)
 #define DISP_CHANGE_NOTUPDATED (-3)
 #define DISP_CHANGE_BADFLAGS   (-4)
 #define DISP_CHANGE_BADPARAM   (-5)
+#define DISP_CHANGE_BADDUALVIEW (-6)
 
 /* ChangeDisplaySettings.dwFlags */
 #define	CDS_UPDATEREGISTRY	0x00000001
@@ -1821,9 +1834,10 @@ DECL_WINELIB_TYPE_AW(LPHELPWININFO)
 #define	CDS_FULLSCREEN		0x00000004
 #define	CDS_GLOBAL		0x00000008
 #define	CDS_SET_PRIMARY		0x00000010
-#define	CDS_RESET		0x40000000
-#define	CDS_SETRECT		0x20000000
+#define	CDS_VIDEOPARAMETERS	0x00000020
 #define	CDS_NORESET		0x10000000
+#define	CDS_SETRECT		0x20000000
+#define	CDS_RESET		0x40000000
 
 typedef struct tagWNDCLASSEXA
 {
@@ -1902,14 +1916,21 @@ typedef struct tagCURSORINFO
 /* this is the 6 byte accel struct used in Win32 when presented to the user */
 typedef struct tagACCEL
 {
+#ifdef WORDS_BIGENDIAN
+    WORD   fVirt;
+    WORD   key;
+    DWORD  cmd;
+#else
     BYTE   fVirt;
     WORD   key;
     WORD   cmd;
+#endif
 } ACCEL, *LPACCEL;
 
 
 /* Flags for TrackPopupMenu */
 #define TPM_LEFTBUTTON    0x0000
+#define TPM_RECURSE       0x0001
 #define TPM_RIGHTBUTTON   0x0002
 #define TPM_LEFTALIGN     0x0000
 #define TPM_CENTERALIGN   0x0004
@@ -1921,6 +1942,12 @@ typedef struct tagACCEL
 #define TPM_VERTICAL      0x0040
 #define TPM_NONOTIFY      0x0080
 #define TPM_RETURNCMD     0x0100
+#define TPM_HORPOSANIMATION 0x0400
+#define TPM_HORNEGANIMATION 0x0800
+#define TPM_VERPOSANIMATION 0x1000
+#define TPM_VERNEGANIMATION 0x2000
+#define TPM_NOANIMATION     0x4000
+#define TPM_LAYOUTRTL       0x8000
 
 typedef struct tagTPMPARAMS
 {
@@ -2287,6 +2314,8 @@ typedef struct tagSCROLLBARINFO
 #define LB_SETCOUNT            0x01a7
 #define LB_INITSTORAGE         0x01a8
 #define LB_ITEMFROMPOINT       0x01a9
+#define LB_GETLISTBOXINFO      0x01b2
+#define LB_MSGMAX              0x01b3
 
 /* Listbox notification codes */
 #define LBN_ERRSPACE        (-2)
@@ -3013,9 +3042,13 @@ typedef struct tagMINIMIZEDMETRICS {
 #define CWP_SKIPTRANSPARENT    0x0004
 
   /* PeekMessage() options */
-#define PM_NOREMOVE	0x0000
-#define PM_REMOVE	0x0001
-#define PM_NOYIELD	0x0002
+#define PM_NOREMOVE       0x0000
+#define PM_REMOVE         0x0001
+#define PM_NOYIELD        0x0002
+#define PM_QS_INPUT       (QS_INPUT << 16)
+#define PM_QS_POSTMESSAGE ((QS_POSTMESSAGE | QS_HOTKEY | QS_TIMER) << 16)
+#define PM_QS_PAINT       (QS_PAINT << 16)
+#define PM_QS_SENDMESSAGE (QS_SENDMESSAGE << 16)
 
 /* AnimateWindow() flags */
 #define AW_SLIDE        0x00040000
@@ -3322,6 +3355,8 @@ typedef struct {
 #define	DSS_DISABLED	0x0020
 #define	DSS_DEFAULT	0x0040  /* Make it bold */
 #define	DSS_MONO	0x0080
+#define	DSS_HIDEPREFIX	0x0200
+#define	DSS_PREFIXONLY	0x0400
 #define	DSS_RIGHT	0x8000
 
 /* UserObjectInformation classes */
@@ -3565,7 +3600,9 @@ typedef struct tagTRACKMOUSEEVENT {
 #define QS_PAINT	0x0020
 #define QS_SENDMESSAGE	0x0040
 #define QS_HOTKEY	0x0080
-#define QS_INPUT	(QS_MOUSE | QS_KEY)
+#define QS_ALLPOSTMESSAGE 0x0100
+#define QS_RAWINPUT       0x0400
+#define QS_INPUT	(QS_MOUSE | QS_KEY | QS_RAWINPUT)
 #define QS_ALLEVENTS	(QS_INPUT | QS_POSTMESSAGE | QS_TIMER | QS_PAINT | QS_HOTKEY)
 #define QS_ALLINPUT     (QS_ALLEVENTS | QS_SENDMESSAGE)
 
