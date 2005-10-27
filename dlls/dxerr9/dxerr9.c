@@ -18,12 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/*
- * TODO:
- *      Add error codes for D3D9, D3DX9, D3D8, D3DX8, DDRAW, DPLAY8, DMUSIC, DINPUT and DSHOW.
- *      Sort list for faster lookup.
- */
-
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -35,6 +29,14 @@
 #include "winnls.h"
 
 #include "mmsystem.h"
+#include "dmerror.h"
+#include "ddraw.h"
+#include "dinput.h"
+#include "vfwmsgs.h"
+#include "mmstream.h"
+#include "dplay8.h"
+#include "dxfile.h"
+#include "d3d9.h"
 #include "dsound.h"
 
 #include "dxerr9.h"
@@ -55,12 +57,17 @@ typedef struct {
 
 const char * WINAPI DXGetErrorString9A(HRESULT hr)
 {
-    unsigned int i;
+    unsigned int i, j, k = 0;
     TRACE("(0x%08lx)\n", hr);
 
-    for (i = 0; i < sizeof(info)/sizeof(info[0]); i++) {
-        if (hr == info[i].hr)
-            return info[i].resultA;
+    for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
+        j = k + (i / 2);
+        if (hr == info[j].hr)
+            return info[j].resultA;
+        if ((unsigned int)hr > (unsigned int)info[j].hr) {
+            k = j + 1;
+            i--;
+        }
     }
 
     return "Unknown";
@@ -69,12 +76,16 @@ const char * WINAPI DXGetErrorString9A(HRESULT hr)
 const WCHAR * WINAPI DXGetErrorString9W(HRESULT hr)
 {
     static const WCHAR unknown[] = { 'U', 'n', 'k', 'n', 'o', 'w', 'n', 0 };
-    unsigned int i;
+    unsigned int i, j, k = 0;
     TRACE("(0x%08lx)\n", hr);
 
-    for (i = 0; i < sizeof(info)/sizeof(info[0]); i++) {
-        if (hr == info[i].hr) {
-            return info[i].resultW;
+    for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
+        j = k + (i / 2);
+        if (hr == info[j].hr)
+            return info[j].resultW;
+        if ((unsigned int)hr > (unsigned int)info[j].hr) {
+            k = j + 1;
+            i--;
         }
     }
 
@@ -83,12 +94,17 @@ const WCHAR * WINAPI DXGetErrorString9W(HRESULT hr)
 
 const char * WINAPI DXGetErrorDescription9A(HRESULT hr)
 {
-    unsigned int i;
+    unsigned int i, j, k = 0;
     TRACE("(0x%08lx)\n", hr);
 
-    for (i = 0; i < sizeof(info)/sizeof(info[0]); i++) {
-        if (hr == info[i].hr)
-            return info[i].descriptionA;
+    for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
+        j = k + (i / 2);
+        if (hr == info[j].hr)
+            return info[j].descriptionA;
+        if ((unsigned int)hr > (unsigned int)info[j].hr) {
+            k = j + 1;
+            i--;
+        }
     }
 
     return "n/a";
@@ -97,12 +113,16 @@ const char * WINAPI DXGetErrorDescription9A(HRESULT hr)
 const WCHAR * WINAPI DXGetErrorDescription9W(HRESULT hr)
 {
     static const WCHAR na[] = { 'n', '/', 'a', 0 };
-    unsigned int i;
+    unsigned int i, j, k = 0;
     TRACE("(0x%08lx)\n", hr);
 
-    for (i = 0; i < sizeof(info)/sizeof(info[0]); i++) {
-        if (hr == info[i].hr) {
-            return info[i].descriptionW;
+    for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
+        j = k + (i / 2);
+        if (hr == info[j].hr)
+            return info[j].descriptionW;
+        if ((unsigned int)hr > (unsigned int)info[j].hr) {
+            k = j + 1;
+            i--;
         }
     }
 
