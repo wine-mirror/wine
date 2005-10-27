@@ -194,7 +194,7 @@ typedef struct pf_output_t
 typedef struct pf_flags_t
 {
     char Sign, LeftAlign, Alternate, PadZero;
-    char FieldLength, Precision;
+    int FieldLength, Precision;
     char IntegerLength, IntegerDouble;
     char WideString;
     char Format;
@@ -309,8 +309,8 @@ static inline int pf_output_format_W( pf_output *out, LPCWSTR str,
     if( len < 0 )
         len = strlenW( str );
 
-    if (flags->Precision && flags->Precision < len)
-      len = flags->Precision;
+    if (flags->Precision >= 0 && flags->Precision < len)
+        len = flags->Precision;
 
     r = pf_fill( out, len, flags, 1 );
 
@@ -331,8 +331,8 @@ static inline int pf_output_format_A( pf_output *out, LPCSTR str,
     if( len < 0 )
         len = strlen( str );
 
-    if (flags->Precision && flags->Precision < len)
-      len = flags->Precision;
+    if (flags->Precision >= 0 && flags->Precision < len)
+        len = flags->Precision;
 
     r = pf_fill( out, len, flags, 1 );
 
@@ -379,7 +379,7 @@ static void pf_rebuild_format_string( char *p, pf_flags *flags )
         sprintf(p, "%d", flags->FieldLength);
         p += strlen(p);
     }
-    if( flags->Precision )
+    if( flags->Precision >= 0 )
     {
         sprintf(p, ".%d", flags->Precision);
         p += strlen(p);
@@ -467,8 +467,10 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
         }
 
         /* deal with precision */
+        flags.Precision = -1;
         if( *p == '.' )
         {
+            flags.Precision = 0;
             p++;
             if( *p == '*' )
             {
