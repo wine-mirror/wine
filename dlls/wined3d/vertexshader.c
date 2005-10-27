@@ -614,7 +614,7 @@ static CONST SHADER_OPCODE vshader_ins [] = {
     {D3DSIO_LOG,  "log",  "LG2", 2, vshader_log, 0, 0},
     {D3DSIO_LIT,  "lit",  "LIT", 2, vshader_lit, 0, 0},
     {D3DSIO_DST,  "dst",  "DST", 3, vshader_dst, 0, 0},
-    {D3DSIO_LRP,  "lrp",  "LRP", 5, vshader_lrp, 0, 0},
+    {D3DSIO_LRP,  "lrp",  "LRP", 4, vshader_lrp, 0, 0},
     {D3DSIO_FRC,  "frc",  "FRC", 2, vshader_frc, 0, 0},
     {D3DSIO_M4x4, "m4x4", "undefined", 3, vshader_m4x4, 0, 0},
     {D3DSIO_M4x3, "m4x3", "undefined", 3, vshader_m4x3, 0, 0},
