@@ -227,6 +227,21 @@ ULONG WINAPI CStdStubBuffer2_Release(IRpcStubBuffer *This) \
   for (c=0; c<sz; c++) if (!name##_CHECK_IID(c)) { (index)=c; return 1; } \
   return 0;
 
+/* macros used in dlldata.c files */
+#define EXTERN_PROXY_FILE(proxy) \
+    EXTERN_C const ProxyFileInfo proxy##_ProxyFileInfo
+
+#define PROXYFILE_LIST_START \
+    const ProxyFileInfo *aProxyFileList[] = \
+    {
+
+#define REFERENCE_PROXY_FILE(proxy) \
+        & proxy##_ProxyFileInfo
+
+#define PROXYFILE_LIST_END \
+        NULL \
+    };
+    
 #if 0
 
 /* see http://www.microsoft.com/msj/0199/com/com0199.aspx */
