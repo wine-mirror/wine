@@ -477,6 +477,8 @@ static HRESULT (WINAPI *pVarDecFromCy)(CY,DECIMAL*);
 static HRESULT (WINAPI *pVarDecAbs)(const DECIMAL*,DECIMAL*);
 static HRESULT (WINAPI *pVarDecAdd)(const DECIMAL*,const DECIMAL*,DECIMAL*);
 static HRESULT (WINAPI *pVarDecSub)(const DECIMAL*,const DECIMAL*,DECIMAL*);
+static HRESULT (WINAPI *pVarDecMul)(const DECIMAL*,const DECIMAL*,DECIMAL*);
+static HRESULT (WINAPI *pVarDecDiv)(const DECIMAL*,const DECIMAL*,DECIMAL*);
 static HRESULT (WINAPI *pVarDecCmp)(const DECIMAL*,const DECIMAL*);
 static HRESULT (WINAPI *pVarDecNeg)(const DECIMAL*,DECIMAL*);
 
@@ -497,6 +499,7 @@ static HRESULT (WINAPI *pVarBoolFromUI8)(ULONG64,VARIANT_BOOL*);
 
 static HRESULT (WINAPI *pVarBstrFromR4)(FLOAT,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrFromDate)(DATE,LCID,ULONG,BSTR*);
+static HRESULT (WINAPI *pVarBstrFromDec)(DECIMAL*,LCID,ULONG,BSTR*);
 
 static INT (WINAPI *pSystemTimeToVariantTime)(LPSYSTEMTIME,double*);
 static void (WINAPI *pClearCustData)(LPCUSTDATA);
@@ -2780,6 +2783,8 @@ static void test_VarR4FromDec(void)
 
   CONVERT_DEC(VarR4FromDec,2,0x80,0,3276800); EXPECT(-32768.0f);
   CONVERT_DEC(VarR4FromDec,2,0,0,3276700);    EXPECT(32767.0f);
+  
+  CONVERT_DEC(VarR4FromDec,0,0,1,0);        EXPECT(18446744073709551616.0f);
 }
 
 static void test_VarR4FromDate(void)
@@ -2987,6 +2992,8 @@ static void test_VarR8FromDec(void)
 
   CONVERT_DEC(VarR8FromDec,2,0x80,0,3276800); EXPECT(-32768.0);
   CONVERT_DEC(VarR8FromDec,2,0,0,3276700);    EXPECT(32767.0);
+
+  CONVERT_DEC(VarR8FromDec,0,0,1,0);        EXPECT(18446744073709551616.0);
 }
 
 static void test_VarR8FromDate(void)
@@ -4166,6 +4173,10 @@ static void test_VarDecFromStr(void)
   CONVERT_STR(VarDecFromStr,"0",   LOCALE_NOUSEROVERRIDE); EXPECTDEC(0,0,0,0);
   CONVERT_STR(VarDecFromStr,"1",   LOCALE_NOUSEROVERRIDE); EXPECTDEC(0,0,0,1);
   CONVERT_STR(VarDecFromStr,"0.5", LOCALE_NOUSEROVERRIDE); EXPECTDEC(1,0,0,5);
+  CONVERT_STR(VarDecFromStr,"4294967296", LOCALE_NOUSEROVERRIDE); EXPECTDEC64(0,0,0,1,0);
+  CONVERT_STR(VarDecFromStr,"18446744073709551616", LOCALE_NOUSEROVERRIDE); EXPECTDEC(0,0,1,0);
+  CONVERT_STR(VarDecFromStr,"4294967296.0", LOCALE_NOUSEROVERRIDE); EXPECTDEC64(0,0,0,1,0);
+  CONVERT_STR(VarDecFromStr,"18446744073709551616.0", LOCALE_NOUSEROVERRIDE); EXPECTDEC(0,0,1,0);
 }
 
 static void test_VarDecFromCy(void)
@@ -4276,6 +4287,105 @@ static void test_VarDecSub(void)
   SETDEC(l,0,0,0,0);    SETDEC(r,0,0,0,1);    MATH2(VarDecSub); EXPECTDEC(0,0x80,0,1);
   SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,1);    MATH2(VarDecSub); EXPECTDEC(0,0x80,0,0);
   SETDEC(l,0,0,0,1);    SETDEC(r,0,0x80,0,1); MATH2(VarDecSub); EXPECTDEC(0,0,0,2);
+}
+
+static void test_VarDecMul(void)
+{
+  MATHVARS2;
+  
+  CHECKPTR(VarDecMul);
+  SETDEC(l,0,0,0,0);    SETDEC(r,0,0,0,0);  MATH2(VarDecMul);   EXPECTDEC(0,0,0,0);
+  SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,0);  MATH2(VarDecMul);   EXPECTDEC(0,0,0,0);
+  SETDEC(l,0,0,0,0);    SETDEC(r,0,0,0,1);  MATH2(VarDecMul);   EXPECTDEC(0,0,0,0);
+  SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,1);  MATH2(VarDecMul);   EXPECTDEC(0,0,0,1);
+  SETDEC(l,0,0,0,45000);SETDEC(r,0,0,0,2);  MATH2(VarDecMul);   EXPECTDEC(0,0,0,90000);
+  SETDEC(l,0,0,0,2);    SETDEC(r,0,0,0,45000);  MATH2(VarDecMul);   EXPECTDEC(0,0,0,90000);
+
+  SETDEC(l,0,0x80,0,2); SETDEC(r,0,0,0,2);  MATH2(VarDecMul);   EXPECTDEC(0,0x80,0,4);
+  SETDEC(l,0,0,0,2);    SETDEC(r,0,0x80,0,2);  MATH2(VarDecMul);   EXPECTDEC(0,0x80,0,4);
+  SETDEC(l,0,0x80,0,2); SETDEC(r,0,0x80,0,2);  MATH2(VarDecMul);   EXPECTDEC(0,0,0,4);
+
+  SETDEC(l,4,0,0,2);    SETDEC(r,0,0,0,2);  MATH2(VarDecMul);   EXPECTDEC(4,0,0,4);
+  SETDEC(l,0,0,0,2);    SETDEC(r,3,0,0,2);  MATH2(VarDecMul);   EXPECTDEC(3,0,0,4);
+  SETDEC(l,4,0,0,2);    SETDEC(r,3,0,0,2);  MATH2(VarDecMul);   EXPECTDEC(7,0,0,4);
+  /* this last one shows that native oleaut32 does *not* gratuitously seize opportunities
+     to reduce the scale if possible - the canonical result for the expected value is (6,0,0,1)
+   */
+  SETDEC(l,4,0,0,5);    SETDEC(r,3,0,0,2);  MATH2(VarDecMul);   EXPECTDEC(7,0,0,10);
+  
+  SETDEC64(l,0,0,0,0xFFFFFFFF,0xFFFFFFFF);    SETDEC(r,0,0,0,2);  MATH2(VarDecMul);   EXPECTDEC64(0,0,1,0xFFFFFFFF,0xFFFFFFFE);
+  SETDEC(l,0,0,0,2);    SETDEC64(r,0,0,0,0xFFFFFFFF,0xFFFFFFFF);  MATH2(VarDecMul);   EXPECTDEC64(0,0,1,0xFFFFFFFF,0xFFFFFFFE);
+  SETDEC(l,0,0,1,1);    SETDEC(r,0,0,0,0x80000000);  MATH2(VarDecMul);   EXPECTDEC(0,0,0x80000000,0x80000000);
+  SETDEC(l,0,0,0,0x80000000);    SETDEC(r,0,0,1,1);  MATH2(VarDecMul);   EXPECTDEC(0,0,0x80000000,0x80000000);
+  
+  /* near-overflow, used as a reference */
+  SETDEC64(l,0,0,0,0xFFFFFFFF,0xFFFFFFFF);    SETDEC(r,0,0,0,2000000000);  MATH2(VarDecMul);EXPECTDEC64(0,0,1999999999,0xFFFFFFFF,0x88CA6C00);
+  /* actual overflow - right operand is 10 times the previous value */
+  SETDEC64(l,0,0,0,0xFFFFFFFF,0xFFFFFFFF);    SETDEC64(r,0,0,0,4,0xA817C800);  MATH2(VarDecMul);
+  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
+     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+  /* here, native oleaut32 has an opportunity to avert the overflow, by reducing the scale of the result  */
+  SETDEC64(l,1,0,0,0xFFFFFFFF,0xFFFFFFFF);    SETDEC64(r,0,0,0,4,0xA817C800);  MATH2(VarDecMul);EXPECTDEC64(0,0,1999999999,0xFFFFFFFF,0x88CA6C00);
+
+  /* near-overflow, used as a reference */
+  SETDEC64(l,0,0,1,0xFFFFFFFF,0xFFFFFFFE);    SETDEC(r,0,0,0,1000000000);  MATH2(VarDecMul);EXPECTDEC64(0,0,1999999999,0xFFFFFFFF,0x88CA6C00);
+  /* actual overflow - right operand is 10 times the previous value */
+  SETDEC64(l,0,0,1,0xFFFFFFFF,0xFFFFFFFE);    SETDEC64(r,0,0,0,2,0x540BE400);  MATH2(VarDecMul);
+  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
+     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+  /* here, native oleaut32 has an opportunity to avert the overflow, by reducing the scale of the result  */
+  SETDEC64(l,1,0,1,0xFFFFFFFF,0xFFFFFFFE);    SETDEC64(r,0,0,0,2,0x540BE400);  MATH2(VarDecMul);EXPECTDEC64(0,0,1999999999,0xFFFFFFFF,0x88CA6C00);
+  
+  /* this one shows that native oleaut32 is willing to lose significant digits in order to avert an overflow */
+  SETDEC64(l,2,0,0,0xFFFFFFFF,0xFFFFFFFF);    SETDEC64(r,0,0,0,9,0x502F9001);  MATH2(VarDecMul);EXPECTDEC64(1,0,0xee6b2800,0x19999998,0xab2e719a);
+}
+
+static void test_VarDecDiv(void)
+{
+  MATHVARS2;
+  
+  CHECKPTR(VarDecDiv);
+  /* identity divisions */
+  SETDEC(l,0,0,0,0);    SETDEC(r,0,0,0,1);  MATH2(VarDecDiv);   EXPECTDEC(0,0,0,0);
+  SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,1);  MATH2(VarDecDiv);   EXPECTDEC(0,0,0,1);
+  SETDEC(l,1,0,0,1);    SETDEC(r,0,0,0,1);  MATH2(VarDecDiv);   EXPECTDEC(1,0,0,1);
+
+  /* exact divisions */  
+  SETDEC(l,0,0,0,45);    SETDEC(r,0,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(0,0,0,5);
+  SETDEC(l,1,0,0,45);    SETDEC(r,0,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(1,0,0,5);
+  SETDEC(l,0,0,0,45);    SETDEC(r,1,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(0,0,0,50);
+  SETDEC(l,1,0,0,45);    SETDEC(r,2,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(0,0,0,50);
+  /* these last three results suggest that native oleaut32 scales both operands down to zero
+     before the division, but does *not* try to scale the result, even if it is possible - 
+     analogous to multiplication behavior
+   */
+  SETDEC(l,1,0,0,45);    SETDEC(r,1,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(0,0,0,5);
+  SETDEC(l,2,0,0,450);    SETDEC(r,1,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(1,0,0,50);
+  
+  /* inexact divisions */
+  SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,3);  MATH2(VarDecDiv);   EXPECTDEC64(28,0,180700362,0x14b700cb,0x05555555);
+  SETDEC(l,1,0,0,1);    SETDEC(r,0,0,0,3);  MATH2(VarDecDiv);   EXPECTDEC64(28,0,18070036,0x35458014,0x4d555555);
+  SETDEC(l,0,0,0,1);    SETDEC(r,1,0,0,3);  MATH2(VarDecDiv);   EXPECTDEC64(28,0,1807003620,0xcf2607ee,0x35555555);
+  SETDEC(l,1,0,0,1);    SETDEC(r,2,0,0,3);  MATH2(VarDecDiv);   EXPECTDEC64(28,0,1807003620,0xcf2607ee,0x35555555);
+  SETDEC(l,1,0,0,1);    SETDEC(r,1,0,0,3);  MATH2(VarDecDiv);   EXPECTDEC64(28,0,180700362,0x14b700cb,0x05555555);
+  SETDEC(l,2,0,0,10);    SETDEC(r,1,0,0,3);  MATH2(VarDecDiv);  EXPECTDEC64(28,0,180700362,0x14b700cb,0x05555555);
+
+  /* this one shows that native oleaut32 rounds up the result */
+  SETDEC(l,0,0,0,2);    SETDEC(r,0,0,0,3);  MATH2(VarDecDiv);   EXPECTDEC64(28,0,361400724,0x296e0196,0x0aaaaaab);
+  
+  /* sign tests */
+  SETDEC(l,0,0x80,0,45);    SETDEC(r,0,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(0,0x80,0,5);
+  SETDEC(l,0,0,0,45);       SETDEC(r,0,0x80,0,9);  MATH2(VarDecDiv);EXPECTDEC(0,0x80,0,5);
+  SETDEC(l,0,0x80,0,45);    SETDEC(r,0,0x80,0,9);  MATH2(VarDecDiv);EXPECTDEC(0,0,0,5);
+  
+  /* oddballs */
+  SETDEC(l,0,0,0,0);    SETDEC(r,0,0,0,0);  MATH2(VarDecDiv);/* indeterminate */
+  ok(hres == DISP_E_DIVBYZERO,"Expected division-by-zero, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
+     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+  SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,0);  MATH2(VarDecDiv);/* division by zero */
+  ok(hres == DISP_E_DIVBYZERO,"Expected division-by-zero, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
+     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+  
 }
 
 static void test_VarDecCmp(void)
@@ -4673,6 +4783,108 @@ static void test_VarBstrFromDate(void)
   BSTR_DATE(1461.0, "12/31/1903");
   BSTR_DATE(1461.5, "12/31/1903 12:00:00 PM");
 }
+
+#define BSTR_DEC(l, a, b, c, d, e) \
+  SETDEC(l, a,b,c,d);\
+  hres = VarBstrFromDec(&l, lcid, 0, &bstr);\
+  ok(hres == S_OK, "got hres 0x%08lx\n", hres);\
+  if (hres== S_OK && bstr)\
+  {\
+    ok(lstrcmpW(bstr, e) == 0, "invalid number (got %s)\n", wtoascii(bstr));\
+  }
+
+#define BSTR_DEC64(l, a, b, c, x, d, e) \
+  SETDEC64(l, a,b,c,x,d);\
+  hres = VarBstrFromDec(&l, lcid, 0, &bstr);\
+  ok(hres == S_OK, "got hres 0x%08lx\n", hres);\
+  if (hres== S_OK && bstr)\
+  {\
+    ok(lstrcmpW(bstr, e) == 0, "invalid number (got %s)\n", wtoascii(bstr));\
+  }
+
+static void test_VarBstrFromDec(void)
+{
+  LCID lcid;
+  HRESULT hres;
+  BSTR bstr = NULL;
+  DECIMAL l;
+
+  static const WCHAR szZero[] = {'0', '\0'};
+  static const WCHAR szOne[] = {'1', '\0'};
+  static const WCHAR szOnePointFive[] = {'1','.','5','\0'};
+  static const WCHAR szMinusOnePointFive[] = {'-','1','.','5','\0'};
+  static const WCHAR szBigNum1[] = {'4','2','9','4','9','6','7','2','9','5','\0'};    /* (1 << 32) - 1 */
+  static const WCHAR szBigNum2[] = {'4','2','9','4','9','6','7','2','9','6','\0'};    /* (1 << 32) */
+  static const WCHAR szBigNum3[] = {'1','8','4','4','6','7','4','4','0','7','3','7','0','9','5','5','1','6','1','5','\0'};    /* (1 << 64) - 1 */
+  static const WCHAR szBigNum4[] = {'1','8','4','4','6','7','4','4','0','7','3','7','0','9','5','5','1','6','1','6','\0'};    /* (1 << 64) */
+  static const WCHAR szBigNum5[] = {'7','9','2','2','8','1','6','2','5','1','4','2','6','4','3','3','7','5','9','3','5','4','3','9','5','0','3','3','5','\0'};    /* (1 << 96) - 1 */
+  static const WCHAR szBigScale1[] = {'0','.','0','0','0','0','0','0','0','0','0','1','\0'};    /* 1 * 10^-10 */
+  static const WCHAR szBigScale2[] = {'7','9','2','2','8','1','6','2','5','1','4','2','6','4','3','3','7','5','9','.','3','5','4','3','9','5','0','3','3','5','\0'};    /* ((1 << 96) - 1) * 10^-10 */
+  static const WCHAR szBigScale3[] = {'7','.','9','2','2','8','1','6','2','5','1','4','2','6','4','3','3','7','5','9','3','5','4','3','9','5','0','3','3','5','\0'};    /* ((1 << 96) - 1) * 10^-28 */
+
+  static const WCHAR szSmallNumber_English[] = {'0','.','0','0','0','9','\0'};
+  static const WCHAR szSmallNumber_Spanish[] = {'0',',','0','0','0','9','\0'};
+
+  CHECKPTR(VarBstrFromDec);
+  lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+
+  /* check zero */
+  BSTR_DEC(l, 0,0,0,0, szZero);
+  
+  /* check one */
+  BSTR_DEC(l, 0,0,0,1, szOne);
+  BSTR_DEC(l, 1,0,0,10,szOne);
+  BSTR_DEC(l, 2,0,0,100,szOne);
+  BSTR_DEC(l, 3,0,0,1000,szOne);
+
+  /* check one point five */
+  BSTR_DEC(l, 1,0,0,15, szOnePointFive);
+  BSTR_DEC(l, 2,0,0,150, szOnePointFive);
+  BSTR_DEC(l, 3,0,0,1500, szOnePointFive);
+
+  /* check minus one point five */
+  BSTR_DEC(l, 1,0x80,0,15, szMinusOnePointFive);
+
+  /* check bignum (1) */
+  BSTR_DEC(l, 0,0,0,0xffffffff, szBigNum1);
+
+  /* check bignum (2) */
+  BSTR_DEC64(l, 0,0,0,1,0, szBigNum2);
+
+  /* check bignum (3) */
+  BSTR_DEC64(l, 0,0,0,0xffffffff,0xffffffff, szBigNum3);
+
+  /* check bignum (4) */
+  BSTR_DEC(l, 0,0,1,0, szBigNum4);
+
+  /* check bignum (5) */
+  BSTR_DEC64(l, 0,0,0xffffffff,0xffffffff,0xffffffff, szBigNum5);
+
+  /* check bigscale (1) */
+  BSTR_DEC(l, 10,0,0,1, szBigScale1);
+
+  /* check bigscale (2) */
+  BSTR_DEC64(l, 10,0,0xffffffffUL,0xffffffff,0xffffffff, szBigScale2);
+
+  /* check bigscale (3) */
+  BSTR_DEC64(l, 28,0,0xffffffffUL,0xffffffff,0xffffffff, szBigScale3);
+
+  /* check leading zeros and decimal sep. for English locale */
+  BSTR_DEC(l, 4,0,0,9, szSmallNumber_English);
+  BSTR_DEC(l, 5,0,0,90, szSmallNumber_English);
+  BSTR_DEC(l, 6,0,0,900, szSmallNumber_English);
+  BSTR_DEC(l, 7,0,0,9000, szSmallNumber_English);
+  
+  lcid = MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT), SORT_DEFAULT);
+  
+  /* check leading zeros and decimal sep. for Spanish locale */
+  BSTR_DEC(l, 4,0,0,9, szSmallNumber_Spanish);
+  BSTR_DEC(l, 5,0,0,90, szSmallNumber_Spanish);
+  BSTR_DEC(l, 6,0,0,900, szSmallNumber_Spanish);
+  BSTR_DEC(l, 7,0,0,9000, szSmallNumber_Spanish);
+}
+#undef BSTR_DEC
+#undef BSTR_DEC64
 
 /* Get the internal representation of a BSTR */
 static inline LPINTERNAL_BSTR Get(const BSTR lpszString)
@@ -5654,6 +5866,8 @@ START_TEST(vartype)
   test_VarDecAdd();
   test_VarDecSub();
   test_VarDecCmp();
+  test_VarDecMul();
+  test_VarDecDiv();
 
   test_VarBoolFromI1();
   test_VarBoolFromUI1();
@@ -5674,6 +5888,7 @@ START_TEST(vartype)
 
   test_VarBstrFromR4();
   test_VarBstrFromDate();
+  test_VarBstrFromDec();
   test_SysStringLen();
   test_SysStringByteLen();
   test_SysAllocString();
