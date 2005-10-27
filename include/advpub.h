@@ -64,11 +64,15 @@ HRESULT WINAPI RunSetupCommand(HWND hWnd,
      LPCSTR szCmdName, LPCSTR szInfSection, LPCSTR szDir, LPCSTR lpszTitle,
      HANDLE *phEXE, DWORD dwFlags, LPVOID pvReserved);
 HRESULT WINAPI DelNode(LPCSTR pszFileOrDirName, DWORD dwFlags);
+HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved );
 DWORD WINAPI NeedRebootInit(VOID);
 BOOL WINAPI NeedReboot(DWORD dwRebootCheck);
 HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable);
 HRESULT WINAPI GetVersionFromFile(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
 HRESULT WINAPI GetVersionFromFileEx(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
+HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
+     PCSTR pszTranslateSection, PCSTR pszTranslateKey, PSTR pszBuffer,
+     DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved);
 
 #ifdef __cplusplus
 }
