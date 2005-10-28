@@ -43,6 +43,9 @@
 #ifdef HAVE_LINUX_IOCTL_H
 #include <linux/ioctl.h>
 #endif
+#ifdef HAVE_LINUX_MAJOR_H
+# include <linux/major.h>
+#endif
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
@@ -492,6 +495,70 @@ static char *get_default_drive_device( const char *root )
 #else
     static int warned;
     if (!warned++) FIXME( "auto detection of DOS devices not supported on this platform\n" );
+#endif
+    return ret;
+}
+
+
+/***********************************************************************
+ *           get_device_mount_point
+ *
+ * Return the current mount point for a device.
+ */
+static char *get_device_mount_point( dev_t dev )
+{
+    char *ret = NULL;
+
+#ifdef linux
+    FILE *f;
+
+    RtlEnterCriticalSection( &dir_section );
+
+    if ((f = fopen( "/etc/mtab", "r" )))
+    {
+        struct mntent *entry;
+        struct stat st;
+        char *p, *device;
+
+        while ((entry = getmntent( f )))
+        {
+            /* don't even bother stat'ing network mounts, there's no meaningful device anyway */
+            if (!strcmp( entry->mnt_type, "nfs" ) ||
+                !strcmp( entry->mnt_type, "smbfs" ) ||
+                !strcmp( entry->mnt_type, "ncpfs" )) continue;
+
+            if (!strcmp( entry->mnt_type, "supermount" ))
+            {
+                if ((device = strstr( entry->mnt_opts, "dev=" )))
+                {
+                    device += 4;
+                    if ((p = strchr( device, ',' ))) *p = 0;
+                }
+            }
+            else if (!stat( entry->mnt_fsname, &st ) && S_ISREG(st.st_mode))
+            {
+                /* if device is a regular file check for a loop mount */
+                if ((device = strstr( entry->mnt_opts, "loop=" )))
+                {
+                    device += 5;
+                    if ((p = strchr( device, ',' ))) *p = 0;
+                }
+            }
+            else device = entry->mnt_fsname;
+
+            if (device && !stat( device, &st ) && S_ISBLK(st.st_mode) && st.st_rdev == dev)
+            {
+                ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(entry->mnt_dir) + 1 );
+                if (ret) strcpy( ret, entry->mnt_dir );
+                break;
+            }
+        }
+        endmntent( f );
+    }
+    RtlLeaveCriticalSection( &dir_section );
+#else
+    static int warned;
+    if (!warned++) FIXME( "unmounting devices not supported on this platform\n" );
 #endif
     return ret;
 }
@@ -1573,6 +1640,58 @@ BOOLEAN WINAPI RtlDoesFileExists_U(LPCWSTR file_name)
     if (ret) RtlFreeAnsiString( &unix_name );
     RtlFreeUnicodeString( &nt_name );
     return ret;
+}
+
+
+/***********************************************************************
+ *           DIR_unmount_device
+ *
+ * Unmount the specified device.
+ */
+NTSTATUS DIR_unmount_device( HANDLE handle )
+{
+    NTSTATUS status;
+    int unix_fd;
+
+    SERVER_START_REQ( unmount_device )
+    {
+        req->handle = handle;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (status) return status;
+
+    if (!(status = wine_server_handle_to_fd( handle, 0, &unix_fd, NULL )))
+    {
+        struct stat st;
+        char *mount_point = NULL;
+
+        if (fstat( unix_fd, &st ) == -1 || !S_ISBLK(st.st_mode))
+            status = STATUS_INVALID_PARAMETER;
+        else
+        {
+            if ((mount_point = get_device_mount_point( st.st_rdev )))
+            {
+                static const char umount[] = "umount >/dev/null 2>&1 ";
+                char *cmd = RtlAllocateHeap( GetProcessHeap(), 0, strlen(mount_point)+sizeof(umount));
+                if (cmd)
+                {
+                    strcpy( cmd, umount );
+                    strcat( cmd, mount_point );
+                    system( cmd );
+                    RtlFreeHeap( GetProcessHeap(), 0, cmd );
+#ifdef linux
+                    /* umount will fail to release the loop device since we still have
+                       a handle to it, so we release it here */
+                    if (major(st.st_rdev) == LOOP_MAJOR) ioctl( unix_fd, 0x4c01 /*LOOP_CLR_FD*/, 0 );
+#endif
+                }
+                RtlFreeHeap( GetProcessHeap(), 0, mount_point );
+            }
+        }
+        wine_server_release_fd( handle, unix_fd );
+    }
+    return status;
 }
 
 

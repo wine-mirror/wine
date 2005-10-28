@@ -328,6 +328,7 @@ NTSTATUS FILE_GetNtStatus(void)
     {
     case EAGAIN:    return STATUS_SHARING_VIOLATION;
     case EBADF:     return STATUS_INVALID_HANDLE;
+    case EBUSY:     return STATUS_DEVICE_BUSY;
     case ENOSPC:    return STATUS_DISK_FULL;
     case EPERM:
     case EROFS:
@@ -911,6 +912,10 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE DeviceHandle, HANDLE Event OPTIONAL, PIO_
 
     switch(FsControlCode)
     {
+        case FSCTL_DISMOUNT_VOLUME:
+            ret = DIR_unmount_device( DeviceHandle );
+            break;
+
         case FSCTL_PIPE_LISTEN :
         {
             HANDLE internal_event;
