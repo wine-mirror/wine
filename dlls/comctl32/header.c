@@ -914,13 +914,11 @@ HEADER_HitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
+HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    HDITEMA   *phdi = (HDITEMA*)lParam;
-    INT       nItem = (INT)wParam;
     HEADER_ITEM *lpItem;
-    INT       len, iOrder;
+    INT       iOrder;
     UINT      i;
 
     if ((phdi == NULL) || (nItem < 0))
@@ -988,28 +986,12 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (phdi->mask & HDI_WIDTH)
 	lpItem->cxy = phdi->cxy;
 
-    if (phdi->mask & HDI_TEXT) {
-	if (!phdi->pszText) /* null pointer check */
-	    phdi->pszText = "";
-	if (phdi->pszText != LPSTR_TEXTCALLBACKA) {
-	    len = MultiByteToWideChar(CP_ACP, 0, phdi->pszText, -1, NULL, 0);
-	    lpItem->pszText = Alloc( len*sizeof(WCHAR) );
-	    MultiByteToWideChar(CP_ACP, 0, phdi->pszText, -1, lpItem->pszText, len);
-	}
-	else
-	    lpItem->pszText = LPSTR_TEXTCALLBACKW;
-    }
-
     if (phdi->mask & HDI_FORMAT)
 	lpItem->fmt = phdi->fmt;
 
     if (lpItem->fmt == 0)
 	lpItem->fmt = HDF_LEFT;
 
-    if (!(lpItem->fmt & HDF_STRING) && (phdi->mask & HDI_TEXT))
-      {
-	lpItem->fmt |= HDF_STRING;
-      }
     if (phdi->mask & HDI_BITMAP)
         lpItem->hbm = phdi->hbm;
 
@@ -1019,118 +1001,20 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (phdi->mask & HDI_IMAGE)
         lpItem->iImage = phdi->iImage;
 
-    lpItem->iOrder = iOrder;
-
-    HEADER_SetItemBounds (hwnd);
-
-    InvalidateRect(hwnd, NULL, FALSE);
-
-    return nItem;
-}
-
-
-static LRESULT
-HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
-{
-    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    HDITEMW   *phdi = (HDITEMW*)lParam;
-    INT       nItem = (INT)wParam;
-    HEADER_ITEM *lpItem;
-    INT       len, iOrder;
-    UINT      i;
-
-    if ((phdi == NULL) || (nItem < 0))
-	return -1;
-
-    if (nItem > infoPtr->uNumItem)
-        nItem = infoPtr->uNumItem;
-
-    iOrder = (phdi->mask & HDI_ORDER) ? phdi->iOrder : nItem;
-
-    if (infoPtr->uNumItem == 0) {
-        infoPtr->items = Alloc (sizeof (HEADER_ITEM));
-        infoPtr->order = Alloc(sizeof(INT));
-        infoPtr->uNumItem++;
-    }
-    else {
-        HEADER_ITEM *oldItems = infoPtr->items;
-        INT *oldOrder = infoPtr->order;
-
-        infoPtr->uNumItem++;
-        infoPtr->items = Alloc (sizeof (HEADER_ITEM) * infoPtr->uNumItem);
-        if (nItem == 0) {
-            memcpy (&infoPtr->items[1], &oldItems[0],
-                    (infoPtr->uNumItem-1) * sizeof(HEADER_ITEM));
-        }
-        else
-        {
-              /* pre insert copy */
-            if (nItem > 0) {
-                 memcpy (&infoPtr->items[0], &oldItems[0],
-                         nItem * sizeof(HEADER_ITEM));
-            }
-
-            /* post insert copy */
-            if (nItem < infoPtr->uNumItem - 1) {
-                memcpy (&infoPtr->items[nItem+1], &oldItems[nItem],
-                        (infoPtr->uNumItem - nItem - 1) * sizeof(HEADER_ITEM));
-            }
-        }
-
-        infoPtr->order = Alloc(infoPtr->uNumItem * sizeof(INT));
-        memcpy(infoPtr->order, oldOrder, iOrder * sizeof(INT));
-        infoPtr->order[iOrder] = nItem;
-        memcpy(&infoPtr->order[iOrder + 1], &oldOrder[iOrder],
-               (infoPtr->uNumItem - iOrder - 1) * sizeof(INT));
-
-        Free (oldItems);
-        Free(oldOrder);
-    }
-
-    for (i = 0; i < infoPtr->uNumItem; i++)
+    if (phdi->mask & HDI_TEXT)
     {
-        if (i != iOrder && infoPtr->order[i] >= nItem)
-            infoPtr->order[i]++;
-        infoPtr->items[infoPtr->order[i]].iOrder = infoPtr->order[i];
-    }
-
-    lpItem = &infoPtr->items[nItem];
-    lpItem->bDown = FALSE;
-
-    if (phdi->mask & HDI_WIDTH)
-	lpItem->cxy = phdi->cxy;
-
-    if (phdi->mask & HDI_TEXT) {
-	WCHAR wide_null_char = 0;
 	if (!phdi->pszText) /* null pointer check */
-	    phdi->pszText = &wide_null_char;
-	if (phdi->pszText != LPSTR_TEXTCALLBACKW) {
-	    len = strlenW (phdi->pszText);
-	    lpItem->pszText = Alloc ((len+1)*sizeof(WCHAR));
-	    strcpyW (lpItem->pszText, phdi->pszText);
-	}
-	else
-	    lpItem->pszText = LPSTR_TEXTCALLBACKW;
+            phdi->pszText = '\0';
+        if (phdi->pszText != LPSTR_TEXTCALLBACKW) /* covers != TEXTCALLBACKA too */
+            if (bUnicode)
+                Str_SetPtrW(&lpItem->pszText, phdi->pszText);
+            else
+                Str_SetPtrAtoW(&lpItem->pszText, (LPSTR)phdi->pszText);
+        else
+            lpItem->pszText = LPSTR_TEXTCALLBACKW;
+
+        lpItem->fmt |= HDF_STRING;
     }
-
-    if (phdi->mask & HDI_FORMAT)
-	lpItem->fmt = phdi->fmt;
-
-    if (lpItem->fmt == 0)
-	lpItem->fmt = HDF_LEFT;
-
-    if (!(lpItem->fmt &HDF_STRING) && (phdi->mask & HDI_TEXT))
-      {
-	lpItem->fmt |= HDF_STRING;
-      }
-    if (phdi->mask & HDI_BITMAP)
-        lpItem->hbm = phdi->hbm;
-
-    if (phdi->mask & HDI_LPARAM)
-        lpItem->lParam = phdi->lParam;
-
-    if (phdi->mask & HDI_IMAGE)
-        lpItem->iImage = phdi->iImage;
 
     lpItem->iOrder = iOrder;
 
@@ -1830,10 +1714,8 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return HEADER_HitTest (hwnd, wParam, lParam);
 
 	case HDM_INSERTITEMA:
-	    return HEADER_InsertItemA (hwnd, wParam, lParam);
-
 	case HDM_INSERTITEMW:
-	    return HEADER_InsertItemW (hwnd, wParam, lParam);
+	    return HEADER_InsertItemT (hwnd, (INT)wParam, (LPHDITEMW)lParam, msg == HDM_INSERTITEMW);
 
 	case HDM_LAYOUT:
 	    return HEADER_Layout (hwnd, wParam, lParam);
