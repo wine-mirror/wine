@@ -157,6 +157,7 @@ typedef struct
 	volume_info   volume;
 
 	BOOL          bDirty;
+        INT           iIdOpen;  /* id of the "Open" entry in the context menu */
 	IUnknown      *site;
 } IShellLinkImpl;
 
@@ -1190,6 +1191,7 @@ HRESULT WINAPI IShellLink_Constructor( IUnknown *pUnkOuter,
 	sl->lpvtblObjectWithSite = &owsvt;
 	sl->iShowCmd = SW_SHOWNORMAL;
 	sl->bDirty = FALSE;
+	sl->iIdOpen = -1;
 	sl->site = NULL;
 
 	TRACE("(%p)->()\n",sl);
@@ -2375,21 +2377,98 @@ ShellLink_QueryContextMenu( IContextMenu* iface, HMENU hmenu, UINT indexMenu,
                             UINT idCmdFirst, UINT idCmdLast, UINT uFlags )
 {
     IShellLinkImpl *This = impl_from_IContextMenu(iface);
+    static const WCHAR szOpen[] = { 'O','p','e','n',0 };
+    MENUITEMINFOW mii;
+    int id = 1;
 
-    FIXME("%p %p %u %u %u %u\n", This,
+    TRACE("%p %p %u %u %u %u\n", This,
           hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags );
 
-    return E_NOTIMPL;
+    if ( !hmenu )
+        return E_INVALIDARG;
+
+    memset( &mii, 0, sizeof mii );
+    mii.cbSize = sizeof mii;
+    mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
+    mii.dwTypeData = (LPWSTR)szOpen;
+    mii.cch = strlenW( mii.dwTypeData );
+    mii.wID = idCmdFirst + id++;
+    mii.fState = MFS_DEFAULT | MFS_ENABLED;
+    mii.fType = MFT_STRING;
+    if (!InsertMenuItemW( hmenu, indexMenu, TRUE, &mii ))
+        return E_FAIL;
+    This->iIdOpen = 0;
+
+    return MAKE_HRESULT( SEVERITY_SUCCESS, 0, id );
 }
 
 static HRESULT WINAPI
 ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
 {
     IShellLinkImpl *This = impl_from_IContextMenu(iface);
+    SHELLEXECUTEINFOW sei;
+    HWND hwnd = NULL; /* FIXME: get using interface set from IObjectWithSite */
+    LPWSTR args = NULL;
+    HRESULT r;
 
-    FIXME("%p %p\n", This, lpici );
+    TRACE("%p %p\n", This, lpici );
 
-    return E_NOTIMPL;
+    if ( lpici->cbSize < sizeof (CMINVOKECOMMANDINFO) )
+        return E_INVALIDARG;
+
+    if ( lpici->lpVerb != MAKEINTRESOURCEA(This->iIdOpen) )
+    {
+        ERR("Unknown id %d != %d\n", (INT)lpici->lpVerb, This->iIdOpen );
+        return E_INVALIDARG;
+    }
+
+    r = IShellLinkW_Resolve( (IShellLinkW*)&(This->lpvtblw), hwnd, 0 );
+    if ( FAILED( r ) )
+        return r;
+
+    if ( This->sProduct || This->sComponent )
+    {
+        FIXME("MSI advertised shortcut %s %s\n",
+              debugstr_w( This->sProduct ),
+              debugstr_w( This->sComponent ) );
+        return E_NOTIMPL;
+    }
+
+    if ( lpici->cbSize == sizeof (CMINVOKECOMMANDINFOEX) &&
+         ( lpici->fMask & CMIC_MASK_UNICODE ) )
+    {
+        LPCMINVOKECOMMANDINFOEX iciex = (LPCMINVOKECOMMANDINFOEX) lpici;
+        DWORD len = 0;
+
+        if ( This->sArgs )
+            len += lstrlenW( This->sArgs );
+        if ( iciex->lpParametersW )
+            len += lstrlenW( iciex->lpParametersW );
+
+        args = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        args[0] = 0;
+        if ( This->sArgs )
+            lstrcatW( args, This->sArgs );
+        if ( iciex->lpParametersW )
+            lstrcatW( args, iciex->lpParametersW );
+    }
+
+    memset( &sei, 0, sizeof sei );
+    sei.cbSize = sizeof sei;
+    sei.lpFile = This->sPath;
+    sei.nShow = This->iShowCmd;
+    sei.lpIDList = This->pPidl;
+    sei.lpDirectory = This->sWorkDir;
+    sei.lpParameters = args;
+
+    if( ShellExecuteExW( &sei ) )
+        r = S_OK;
+    else
+        r = E_FAIL;
+
+    HeapFree( GetProcessHeap(), 0, args );
+
+    return r;
 }
 
 static HRESULT WINAPI
