@@ -360,7 +360,10 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     if (attrib == INVALID_FILE_ATTRIBUTES)
     {
         if (!CreateDirectoryW(szFolderPath,NULL))
+        {
+            msi_free( path );
             return ERROR_FUNCTION_FAILED;
+        }
         RemoveDirectoryW(szFolderPath);
     }
 
