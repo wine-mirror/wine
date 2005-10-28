@@ -418,7 +418,7 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
     DWORD sz = GUID_SIZE;
     static const WCHAR szPermKey[] =
         { '0','0','0','0','0','0','0','0','0','0','0','0',
-          '0','0','0','0','0','0','0', '0','0','0','0','0',
+          '0','0','0','0','0','0','0','0','0','0','0','0',
           '0','0','0','0','0','0','0','0',0};
 
     TRACE("%s %p\n",debugstr_w(szComponent), szBuffer);
@@ -1011,6 +1011,8 @@ INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
     TRACE("%s %s %p %p\n", debugstr_w(szProduct),
            debugstr_w(szComponent), lpPathBuf, pcchBuf);
 
+    if( !szComponent )
+        return INSTALLSTATE_INVALIDARG;
     if( lpPathBuf && !pcchBuf )
         return INSTALLSTATE_INVALIDARG;
 
