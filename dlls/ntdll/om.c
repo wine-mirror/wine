@@ -393,31 +393,26 @@ NTSTATUS WINAPI NtCreateDirectoryObject(
  * Read information from a namespace directory.
  * 
  * PARAMS
- *  DirObjHandle      [I]   Object handle
- *  DirObjInformation [O]   Buffer to hold the data read
+ *  DirectoryHandle   [I]   Handle to a directory object
+ *  Buffer            [O]   Buffer to hold the read data
  *  BufferLength      [I]   Size of the buffer in bytes
- *  GetNextIndex      [I]   Set ObjectIndex to TRUE=next object, FALSE=last object
- *  IgnoreInputIndex  [I]   Start reading at index TRUE=0, FALSE=ObjectIndex
- *  ObjectIndex       [I/O] 0 based index into the directory, see IgnoreInputIndex and GetNextIndex
- *  DataWritten       [O]   Caller supplied storage for the number of bytes written (or NULL)
+ *  ReturnSingleEntry [I]   If TRUE, return a single entry, if FALSE, return as many as fit in the buffer
+ *  RestartScan       [I]   If TRUE, start scanning from the start, if FALSE, scan from Context
+ *  Context           [I/O] Indicates what point of the directory the scan is at
+ *  ReturnLength      [O]   Caller supplied storage for the number of bytes written (or NULL)
  *
  * RETURNS
  *  Success: ERROR_SUCCESS.
  *  Failure: An NTSTATUS error code.
  */
-NTSTATUS WINAPI NtQueryDirectoryObject(
-	IN HANDLE DirObjHandle,
-	OUT POBJDIR_INFORMATION DirObjInformation,
-	IN ULONG BufferLength,
-	IN BOOLEAN GetNextIndex,
-	IN BOOLEAN IgnoreInputIndex,
-	IN OUT PULONG ObjectIndex,
-	OUT PULONG DataWritten OPTIONAL)
+NTSTATUS WINAPI NtQueryDirectoryObject(IN HANDLE DirectoryHandle, OUT PDIRECTORY_BASIC_INFORMATION Buffer,
+                                       IN ULONG BufferLength, IN BOOLEAN ReturnSingleEntry, IN BOOLEAN RestartScan,
+                                       IN OUT PULONG Context, OUT PULONG ReturnLength OPTIONAL)
 {
-	FIXME("(%p,%p,0x%08lx,0x%08x,0x%08x,%p,%p) stub\n",
-		DirObjHandle, DirObjInformation, BufferLength, GetNextIndex,
-		IgnoreInputIndex, ObjectIndex, DataWritten);
-    return 0xc0000000; /* We don't have any. Whatever. (Yet.) */
+    FIXME("(%p,%p,0x%08lx,0x%08x,0x%08x,%p,%p), stub\n", DirectoryHandle, Buffer, BufferLength, ReturnSingleEntry,
+          RestartScan, Context, ReturnLength);
+
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 /*
