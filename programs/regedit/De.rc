@@ -74,8 +74,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Schlüsselname &kopieren",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Suchen\tStrg+F",               ID_EDIT_FIND, GRAYED
-        MENUITEM "&Nächstes finden\tF3",              ID_EDIT_FINDNEXT, GRAYED
+        MENUITEM "&Suchen\tStrg+F",               ID_EDIT_FIND
+        MENUITEM "&Nächstes finden\tF3",              ID_EDIT_FINDNEXT
     END
     POPUP "&Ansicht"
     BEGIN
@@ -298,8 +298,7 @@ BEGIN
     IDS_DELETE_BOX_TEXT     "Wollen Sie '%s' wirklich löschen?"
     IDS_NEWKEY              "Neuer Schlüssel #%d"
     IDS_NEWVALUE            "Neuer Wert #%d"
-
-
+    IDS_NOTFOUND            "Suchfolge '%s' wurde nicht gefunden."
 END
 
 /*****************************************************************/
