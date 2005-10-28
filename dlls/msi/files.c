@@ -119,6 +119,7 @@ static void cabinet_free(void *pv)
 
 static INT_PTR cabinet_open(char *pszFile, int oflag, int pmode)
 {
+    HANDLE handle;
     DWORD dwAccess = 0;
     DWORD dwShareMode = 0;
     DWORD dwCreateDisposition = OPEN_EXISTING;
@@ -141,35 +142,42 @@ static INT_PTR cabinet_open(char *pszFile, int oflag, int pmode)
         dwCreateDisposition = CREATE_NEW;
     else if (oflag & _O_CREAT)
         dwCreateDisposition = CREATE_ALWAYS;
-    return (INT_PTR)CreateFileA(pszFile, dwAccess, dwShareMode, NULL, 
-                                dwCreateDisposition, 0, NULL);
+    handle = CreateFileA( pszFile, dwAccess, dwShareMode, NULL, 
+                          dwCreateDisposition, 0, NULL );
+    if (handle == INVALID_HANDLE_VALUE)
+        return 0;
+    return (INT_PTR) handle;
 }
 
 static UINT cabinet_read(INT_PTR hf, void *pv, UINT cb)
 {
+    HANDLE handle = (HANDLE) hf;
     DWORD dwRead;
-    if (ReadFile((HANDLE)hf, pv, cb, &dwRead, NULL))
+    if (ReadFile(handle, pv, cb, &dwRead, NULL))
         return dwRead;
     return 0;
 }
 
 static UINT cabinet_write(INT_PTR hf, void *pv, UINT cb)
 {
+    HANDLE handle = (HANDLE) hf;
     DWORD dwWritten;
-    if (WriteFile((HANDLE)hf, pv, cb, &dwWritten, NULL))
+    if (WriteFile(handle, pv, cb, &dwWritten, NULL))
         return dwWritten;
     return 0;
 }
 
 static int cabinet_close(INT_PTR hf)
 {
-    return CloseHandle((HANDLE)hf) ? 0 : -1;
+    HANDLE handle = (HANDLE) hf;
+    return CloseHandle(handle) ? 0 : -1;
 }
 
 static long cabinet_seek(INT_PTR hf, long dist, int seektype)
 {
+    HANDLE handle = (HANDLE) hf;
     /* flags are compatible and so are passed straight through */
-    return SetFilePointer((HANDLE)hf, dist, NULL, seektype);
+    return SetFilePointer(handle, dist, NULL, seektype);
 }
 
 static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
@@ -250,15 +258,16 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
     case fdintCLOSE_FILE_INFO:
     {
         FILETIME ft;
-	    FILETIME ftLocal;
+        FILETIME ftLocal;
+        HANDLE handle = (HANDLE) pfdin->hf;
+
         if (!DosDateTimeToFileTime(pfdin->date, pfdin->time, &ft))
             return -1;
         if (!LocalFileTimeToFileTime(&ft, &ftLocal))
             return -1;
-        if (!SetFileTime((HANDLE)pfdin->hf, &ftLocal, 0, &ftLocal))
+        if (!SetFileTime(handle, &ftLocal, 0, &ftLocal))
             return -1;
-
-        cabinet_close(pfdin->hf);
+        CloseHandle(handle);
         return 1;
     }
     default:
