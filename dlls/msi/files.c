@@ -180,6 +180,26 @@ static long cabinet_seek(INT_PTR hf, long dist, int seektype)
     return SetFilePointer(handle, dist, NULL, seektype);
 }
 
+static void msi_file_update_ui( MSIPACKAGE *package, MSIFILE *f )
+{
+    MSIRECORD *uirow;
+    LPWSTR uipath, p;
+
+    /* the UI chunk */
+    uirow = MSI_CreateRecord( 9 );
+    MSI_RecordSetStringW( uirow, 1, f->FileName );
+    uipath = strdupW( f->TargetPath );
+    p = strrchrW(uipath,'\\');
+    if (p)
+        p[1]=0;
+    MSI_RecordSetStringW( uirow, 9, uipath);
+    MSI_RecordSetInteger( uirow, 6, f->FileSize );
+    ui_actiondata( package, szInstallFiles, uirow);
+    msiobj_release( &uirow->hdr );
+    msi_free( uipath );
+    ui_progress( package, 2, f->FileSize, 0, 0);
+}
+
 static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 {
     switch (fdint)
@@ -197,8 +217,6 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         static const WCHAR tmpprefix[] = {'C','A','B','T','M','P','_',0};
         LPWSTR given_file;
 
-        MSIRECORD * uirow;
-        LPWSTR uipath;
         MSIFILE *f;
 
         given_file = strdupAtoW(pfdin->psz1);
@@ -238,18 +256,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         msi_free(trackname);
         msi_free(tracknametmp);
 
-        /* the UI chunk */
-        uirow=MSI_CreateRecord(9);
-        MSI_RecordSetStringW( uirow, 1, f->FileName );
-        uipath = strdupW( f->TargetPath );
-        *(strrchrW(uipath,'\\')+1)=0;
-        MSI_RecordSetStringW(uirow,9,uipath);
-        MSI_RecordSetInteger( uirow, 6, f->FileSize );
-        ui_actiondata(data->package,szInstallFiles,uirow);
-        msiobj_release( &uirow->hdr );
-        msi_free(uipath);
-
-        ui_progress( data->package, 2, f->FileSize, 0, 0);
+        msi_file_update_ui( data->package, f );
 
         handle = cabinet_open(file, _O_WRONLY | _O_CREAT, 0);
         msi_free( file );
