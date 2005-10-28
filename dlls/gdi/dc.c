@@ -1217,7 +1217,7 @@ BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform,
 
     /* Check for illegal parameters */
     if (!dc) return FALSE;
-    if (!xform) goto done;
+    if (!xform && iMode != MWT_IDENTITY) goto done;
 
     /* Check that graphics mode is GM_ADVANCED */
     if (dc->GraphicsMode!=GM_ADVANCED) goto done;

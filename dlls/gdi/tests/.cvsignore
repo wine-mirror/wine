@@ -4,6 +4,7 @@ brush.ok
 clipping.ok
 gdiobj.ok
 generated.ok
+mapping.ok
 metafile.ok
 palette.ok
 testlist.c

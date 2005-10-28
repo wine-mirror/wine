@@ -11,6 +11,7 @@ CTESTS = \
 	clipping.c \
 	gdiobj.c \
 	generated.c \
+	mapping.c \
 	metafile.c \
 	palette.c
 
