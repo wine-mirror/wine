@@ -583,11 +583,11 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
             pf_rebuild_format_string( fmt, &flags );
 
             if( pf_is_double_format( flags.Format ) )
-                sprintf( number, fmt, va_arg(valist, double) );
+                sprintf( x, fmt, va_arg(valist, double) );
             else
-                sprintf( number, fmt, va_arg(valist, int) );
+                sprintf( x, fmt, va_arg(valist, int) );
 
-            r = pf_output_stringA( out, number, -1 );
+            r = pf_output_stringA( out, x, -1 );
             if( x != number )
                 HeapFree( GetProcessHeap(), 0, number );
         }
