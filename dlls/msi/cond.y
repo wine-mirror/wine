@@ -138,6 +138,11 @@ condition:
             COND_input* cond = (COND_input*) info;
             cond->result = $1;
         }
+  | /* empty */
+        {
+            COND_input* cond = (COND_input*) info;
+            cond->result = MSICONDITION_NONE;
+        }
     ;
 
 expression:
@@ -731,6 +736,7 @@ static LPWSTR COND_GetLiteral( struct cond_str *str )
 
 static int COND_error(const char *str)
 {
+    TRACE("%s\n", str );
     return 0;
 }
 
@@ -739,16 +745,17 @@ MSICONDITION MSI_EvaluateConditionW( MSIPACKAGE *package, LPCWSTR szCondition )
     COND_input cond;
     MSICONDITION r;
 
+    if ( szCondition == NULL )
+    	return MSICONDITION_NONE;
+
     cond.package = package;
     cond.str   = szCondition;
     cond.n     = 0;
-    cond.result = -1;
+    cond.result = MSICONDITION_ERROR;
     
     TRACE("Evaluating %s\n",debugstr_w(szCondition));    
 
-    if ( szCondition == NULL || szCondition[0] == 0)
-    	r = MSICONDITION_NONE;
-    else if ( !COND_parse( &cond ) )
+    if ( !COND_parse( &cond ) )
         r = cond.result;
     else
         r = MSICONDITION_ERROR;
@@ -764,7 +771,7 @@ MSICONDITION WINAPI MsiEvaluateConditionW( MSIHANDLE hInstall, LPCWSTR szConditi
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE);
     if( !package)
-        return ERROR_INVALID_HANDLE;
+        return MSICONDITION_ERROR;
     ret = MSI_EvaluateConditionW( package, szCondition );
     msiobj_release( &package->hdr );
     return ret;
@@ -775,16 +782,11 @@ MSICONDITION WINAPI MsiEvaluateConditionA( MSIHANDLE hInstall, LPCSTR szConditio
     LPWSTR szwCond = NULL;
     MSICONDITION r;
 
-    if( szCondition )
-    {
-        UINT len = MultiByteToWideChar( CP_ACP, 0, szCondition, -1, NULL, 0 );
-        szwCond = msi_alloc( len * sizeof (WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, szCondition, -1, szwCond, len );
-    }
+    szwCond = strdupAtoW( szCondition );
+    if( szCondition && !szwCond )
+        return MSICONDITION_ERROR;
 
     r = MsiEvaluateConditionW( hInstall, szwCond );
-
     msi_free( szwCond );
-
     return r;
 }
