@@ -178,6 +178,8 @@ static VOID test_CreateThread_basic(void)
    t1Struct tstruct[NUM_THREADS];
    int error;
    DWORD i,j;
+   DWORD GLE, ret;
+
 /* Retrieve current Thread ID for later comparisons */
   curthreadId=GetCurrentThreadId();
 /* Allocate some local storage */
@@ -228,6 +230,23 @@ static VOID test_CreateThread_basic(void)
     ok(CloseHandle(thread[i])!=0,"CloseHandle failed\n");
   }
   ok(TlsFree(tlsIndex)!=0,"TlsFree failed\n");
+
+  /* Test how passing NULL as a pointer to threadid works */
+  SetLastError(0xFACEaBAD);
+  thread[0] = CreateThread(NULL,0,threadFunc2,NULL,0,NULL);
+  GLE = GetLastError();
+  if (thread[0]) { /* NT */
+    ok(GLE==0xFACEaBAD, "CreateThread set last error to %ld, expected 4207848365", GLE);
+    ret = WaitForSingleObject(thread[0],100);
+    ok(ret==WAIT_OBJECT_0, "threadFunc2 did not exit during 100 ms\n");
+    ret = GetExitCodeThread(thread[0],&exitCode);
+    ok(ret!=0, "GetExitCodeThread returned %ld (expected nonzero)\n", ret);
+    ok(exitCode==99, "threadFunc2 exited with code: %ld (expected 99)\n", exitCode);
+    ok(CloseHandle(thread[0])!=0,"Error closing thread handle\n");
+  }
+  else { /* 9x */
+    ok(GLE==ERROR_INVALID_PARAMETER, "CreateThread set last error to %ld, expected 87", GLE);
+  }
 }
 
 /* Check that using the CREATE_SUSPENDED flag works */
