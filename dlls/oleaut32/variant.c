@@ -2537,6 +2537,13 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
     }
 
     xmask = (1<<(V_VT(left)&VT_TYPEMASK))|(1<<(V_VT(right)&VT_TYPEMASK));
+    if (xmask & VTBIT_DECIMAL) {
+	rc = VariantChangeType(&lv,left,0,VT_DECIMAL);
+	if (FAILED(rc)) return rc;
+	rc = VariantChangeType(&rv,right,0,VT_DECIMAL);
+	if (FAILED(rc)) return rc;
+        return VarDecCmp(&V_DECIMAL(&lv), &V_DECIMAL(&rv));
+    }
     if (xmask & VTBIT_R8) {
 	rc = VariantChangeType(&lv,left,0,VT_R8);
 	if (FAILED(rc)) return rc;
