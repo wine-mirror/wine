@@ -196,7 +196,7 @@ BOOL unserialize_string(BYTE * ptr, DWORD *index, DWORD size,
         return FALSE;
     }
 
-    if (!(*data = HeapAlloc( GetProcessHeap(), 0, len*width)))
+    if (!(*data = CryptMemAlloc( len*width)))
     {
         return FALSE;
     }
@@ -538,19 +538,19 @@ void free_protect_data(struct protect_data_t * pInfo)
     if (!pInfo) return;
 
     if (pInfo->info0.pbData)
-        HeapFree( GetProcessHeap(), 0, pInfo->info0.pbData);
+        CryptMemFree(pInfo->info0.pbData);
     if (pInfo->info1.pbData)
-        HeapFree( GetProcessHeap(), 0, pInfo->info1.pbData);
+        CryptMemFree(pInfo->info1.pbData);
     if (pInfo->szDataDescr)
-        HeapFree( GetProcessHeap(), 0, pInfo->szDataDescr);
+        CryptMemFree(pInfo->szDataDescr);
     if (pInfo->data0.pbData)
-        HeapFree( GetProcessHeap(), 0, pInfo->data0.pbData);
+        CryptMemFree(pInfo->data0.pbData);
     if (pInfo->salt.pbData)
-        HeapFree( GetProcessHeap(), 0, pInfo->salt.pbData);
+        CryptMemFree(pInfo->salt.pbData);
     if (pInfo->cipher.pbData)
-        HeapFree( GetProcessHeap(), 0, pInfo->cipher.pbData);
+        CryptMemFree(pInfo->cipher.pbData);
     if (pInfo->fingerprint.pbData)
-        HeapFree( GetProcessHeap(), 0, pInfo->fingerprint.pbData);
+        CryptMemFree(pInfo->fingerprint.pbData);
 }
 
 /* copies a string into a data blob */
@@ -560,7 +560,7 @@ BYTE * convert_str_to_blob(char* str, DATA_BLOB* blob)
     if (!str || !blob) return NULL;
 
     blob->cbData=strlen(str)+1;
-    if (!(blob->pbData=HeapAlloc(GetProcessHeap(),0,blob->cbData)))
+    if (!(blob->pbData=CryptMemAlloc(blob->cbData)))
     {
         blob->cbData=0;
     }
@@ -598,7 +598,7 @@ BOOL fill_protect_data(struct protect_data_t * pInfo, LPCWSTR szDataDescr,
 
     pInfo->null0=0x0000;
 
-    if ((pInfo->szDataDescr=HeapAlloc( GetProcessHeap(), 0, (dwStrLen+1)*sizeof(WCHAR))))
+    if ((pInfo->szDataDescr=CryptMemAlloc((dwStrLen+1)*sizeof(WCHAR))))
     {
         memcpy(pInfo->szDataDescr,szDataDescr,(dwStrLen+1)*sizeof(WCHAR));
     }
@@ -614,7 +614,7 @@ BOOL fill_protect_data(struct protect_data_t * pInfo, LPCWSTR szDataDescr,
 
     /* allocate memory to hold a salt */
     pInfo->salt.cbData=CRYPT32_PROTECTDATA_SALT_LEN;
-    if ((pInfo->salt.pbData=HeapAlloc( GetProcessHeap(),0,pInfo->salt.cbData)))
+    if ((pInfo->salt.pbData=CryptMemAlloc(pInfo->salt.cbData)))
     {
         /* generate random salt */
         if (!CryptGenRandom(hProv, pInfo->salt.cbData, pInfo->salt.pbData))
@@ -667,7 +667,7 @@ BOOL convert_hash_to_blob(HCRYPTHASH hHash, DATA_BLOB * blob)
         return FALSE;
     }
 
-    if (!(blob->pbData=HeapAlloc( GetProcessHeap(), 0, blob->cbData)))
+    if (!(blob->pbData=CryptMemAlloc(blob->cbData)))
     {
         ERR("failed to allocate blob memory\n");
         return FALSE;
@@ -677,7 +677,7 @@ BOOL convert_hash_to_blob(HCRYPTHASH hHash, DATA_BLOB * blob)
     if (!CryptGetHashParam(hHash, HP_HASHVAL, blob->pbData, &dwSize, 0))
     {
         ERR("failed to get hash value\n");
-        HeapFree( GetProcessHeap(), 0, blob->pbData);
+        CryptMemFree(blob->pbData);
         blob->pbData=NULL;
         blob->cbData=0;
         return FALSE;
@@ -705,7 +705,7 @@ BOOL hash_matches_blob(HCRYPTHASH hHash, DATA_BLOB * two)
         rc = TRUE;
     }
 
-    HeapFree( GetProcessHeap(), 0, one.pbData );
+    CryptMemFree(one.pbData);
     return rc;
 }
 
@@ -733,7 +733,7 @@ BOOL load_encryption_key(HCRYPTPROV hProv, DATA_BLOB * salt,
     dwUsernameLen = 0;
     if (!GetUserNameA(NULL,&dwUsernameLen) &&
         GetLastError()==ERROR_MORE_DATA && dwUsernameLen &&
-        (szUsername = HeapAlloc( GetProcessHeap(), 0, dwUsernameLen)))
+        (szUsername = CryptMemAlloc(dwUsernameLen)))
     {
         szUsername[0]='\0';
         GetUserNameA( szUsername, &dwUsernameLen );
@@ -768,7 +768,7 @@ BOOL load_encryption_key(HCRYPTPROV hProv, DATA_BLOB * salt,
 
     /* clean up */
     CryptDestroyHash(hSaltHash);
-    if (szUsername) HeapFree( GetProcessHeap(), 0, szUsername );
+    if (szUsername) CryptMemFree(szUsername);
 
     return rc;
 }
@@ -902,10 +902,10 @@ BOOL WINAPI CryptProtectData(DATA_BLOB* pDataIn,
 
     /* copy plain text into cipher area for CryptEncrypt call */
     protect_data.cipher.cbData=dwLength;
-    if (!(protect_data.cipher.pbData=HeapAlloc( GetProcessHeap(), 0,
+    if (!(protect_data.cipher.pbData=CryptMemAlloc(
                                                 protect_data.cipher.cbData)))
     {
-        ERR("HeapAlloc\n");
+        ERR("CryptMemAlloc\n");
         goto free_hash;
     }
     memcpy(protect_data.cipher.pbData,pDataIn->pbData,pDataIn->cbData);
@@ -1068,7 +1068,7 @@ BOOL WINAPI CryptUnprotectData(DATA_BLOB* pDataIn,
     pDataOut->cbData=protect_data.cipher.cbData;
     if (!(pDataOut->pbData=LocalAlloc( LPTR, pDataOut->cbData)))
     {
-        ERR("HeapAlloc\n");
+        ERR("CryptMemAlloc\n");
         goto free_hash;
     }
     memcpy(pDataOut->pbData,protect_data.cipher.pbData,protect_data.cipher.cbData);

@@ -211,7 +211,7 @@ static char *CRYPT_GetKeyName(DWORD dwEncodingType, LPCSTR pszFuncName,
      * format specifier that are removed by sprintf.
      */
     len = sizeof(szEncodingTypeFmt) + lstrlenA(pszFuncName) + lstrlenA(oid);
-    szKey = HeapAlloc(GetProcessHeap(), 0, len);
+    szKey = CryptMemAlloc(len);
     if (szKey)
         sprintf(szKey, szEncodingTypeFmt, dwEncodingType, pszFuncName, oid);
     return szKey;
@@ -255,7 +255,7 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
         return FALSE;
 
     r = RegCreateKeyA(HKEY_LOCAL_MACHINE, szKey, &hKey);
-    HeapFree(GetProcessHeap(), 0, szKey);
+    CryptMemFree(szKey);
     if(r != ERROR_SUCCESS)
         return FALSE;
 
@@ -289,7 +289,7 @@ BOOL WINAPI CryptUnregisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
 
     szKey = CRYPT_GetKeyName(dwEncodingType, pszFuncName, pszOID);
     rc = RegDeleteKeyA(HKEY_LOCAL_MACHINE, szKey);
-    HeapFree(GetProcessHeap(), 0, szKey);
+    CryptMemFree(szKey);
     if (rc)
         SetLastError(rc);
     return rc ? FALSE : TRUE;
@@ -318,7 +318,7 @@ BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
 
     szKey = CRYPT_GetKeyName(dwEncodingType, pszFuncName, pszOID);
     rc = RegOpenKeyA(HKEY_LOCAL_MACHINE, szKey, &hKey);
-    HeapFree(GetProcessHeap(), 0, szKey);
+    CryptMemFree(szKey);
     if (rc)
         SetLastError(rc);
     else
@@ -355,7 +355,7 @@ BOOL WINAPI CryptSetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
 
     szKey = CRYPT_GetKeyName(dwEncodingType, pszFuncName, pszOID);
     rc = RegOpenKeyA(HKEY_LOCAL_MACHINE, szKey, &hKey);
-    HeapFree(GetProcessHeap(), 0, szKey);
+    CryptMemFree(szKey);
     if (rc)
         SetLastError(rc);
     else
@@ -390,14 +390,14 @@ static void *CRYPT_GetFunc(DWORD dwCertEncodingType, LPCSTR lpszStructType,
 
     *lib = NULL;
     r = RegOpenKeyA(HKEY_LOCAL_MACHINE, szKey, &hKey);
-    HeapFree(GetProcessHeap(), 0, szKey);
+    CryptMemFree(szKey);
     if(r != ERROR_SUCCESS)
         return NULL;
 
     RegQueryValueExA(hKey, "FuncName", NULL, &type, NULL, &size);
     if (GetLastError() == ERROR_MORE_DATA && type == REG_SZ)
     {
-        funcName = HeapAlloc(GetProcessHeap(), 0, size);
+        funcName = CryptMemAlloc(size);
         RegQueryValueExA(hKey, "FuncName", NULL, &type, (LPBYTE)funcName,
          &size);
     }
@@ -406,7 +406,7 @@ static void *CRYPT_GetFunc(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     RegQueryValueExW(hKey, szDllName, NULL, &type, NULL, &size);
     if (GetLastError() == ERROR_MORE_DATA && type == REG_SZ)
     {
-        LPWSTR dllName = HeapAlloc(GetProcessHeap(), 0, size);
+        LPWSTR dllName = CryptMemAlloc(size);
 
         RegQueryValueExW(hKey, szDllName, NULL, &type, (LPBYTE)dllName,
          &size);
@@ -423,10 +423,10 @@ static void *CRYPT_GetFunc(DWORD dwCertEncodingType, LPCSTR lpszStructType,
                  *lib = NULL;
              }
         }
-        HeapFree(GetProcessHeap(), 0, dllName);
+        CryptMemFree(dllName);
     }
     if (funcName != szFuncName)
-        HeapFree(GetProcessHeap(), 0, (char *)funcName);
+        CryptMemFree((char *)funcName);
     TRACE("returning %p\n", ret);
     return ret;
 }
@@ -1330,10 +1330,11 @@ static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
         ret = TRUE;
         if (rdn->cRDNAttr)
         {
-            blobs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-             rdn->cRDNAttr * sizeof(CRYPT_DER_BLOB));
+            blobs = CryptMemAlloc(rdn->cRDNAttr * sizeof(CRYPT_DER_BLOB));
             if (!blobs)
                 ret = FALSE;
+            else
+                memset(blobs, 0, rdn->cRDNAttr * sizeof(CRYPT_DER_BLOB));
         }
         for (i = 0; ret && i < rdn->cRDNAttr; i++)
         {
@@ -1357,8 +1358,7 @@ static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
                 {
                     for (i = 0; ret && i < rdn->cRDNAttr; i++)
                     {
-                        blobs[i].pbData = HeapAlloc(GetProcessHeap(), 0,
-                         blobs[i].cbData);
+                        blobs[i].pbData = CryptMemAlloc(blobs[i].cbData);
                         if (!blobs[i].pbData)
                             ret = FALSE;
                         else
@@ -1387,7 +1387,7 @@ static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
         if (blobs)
         {
             for (i = 0; i < rdn->cRDNAttr; i++)
-                HeapFree(GetProcessHeap(), 0, blobs[i].pbData);
+                CryptMemFree(blobs[i].pbData);
         }
     }
     __EXCEPT(page_fault)
@@ -1396,7 +1396,7 @@ static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
         return FALSE;
     }
     __ENDTRY
-    HeapFree(GetProcessHeap(), 0, blobs);
+    CryptMemFree(blobs);
     return ret;
 }
 
@@ -1866,7 +1866,7 @@ static BOOL WINAPI CRYPT_AsnEncodeBitsSwapBytes(DWORD dwCertEncodingType,
         ret = TRUE;
         if (newBlob.cbData)
         {
-            newBlob.pbData = HeapAlloc(GetProcessHeap(), 0, newBlob.cbData);
+            newBlob.pbData = CryptMemAlloc(newBlob.cbData);
             if (newBlob.pbData)
             {
                 DWORD i;
@@ -1880,7 +1880,7 @@ static BOOL WINAPI CRYPT_AsnEncodeBitsSwapBytes(DWORD dwCertEncodingType,
         if (ret)
             ret = CRYPT_AsnEncodeBits(dwCertEncodingType, lpszStructType,
              &newBlob, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
-        HeapFree(GetProcessHeap(), 0, newBlob.pbData);
+        CryptMemFree(newBlob.pbData);
     }
     __EXCEPT(page_fault)
     {
@@ -5547,7 +5547,7 @@ static BOOL WINAPI CRYPT_ExportRsaPublicKeyInfoEx(HCRYPTPROV hCryptProv,
         ret = CryptExportKey(key, 0, PUBLICKEYBLOB, 0, NULL, &keySize);
         if (ret)
         {
-            LPBYTE pubKey = HeapAlloc(GetProcessHeap(), 0, keySize);
+            LPBYTE pubKey = CryptMemAlloc(keySize);
 
             if (pubKey)
             {
@@ -5591,7 +5591,7 @@ static BOOL WINAPI CRYPT_ExportRsaPublicKeyInfoEx(HCRYPTPROV hCryptProv,
                         }
                     }
                 }
-                HeapFree(GetProcessHeap(), 0, pubKey);
+                CryptMemFree(pubKey);
             }
             else
                 ret = FALSE;
@@ -5656,7 +5656,7 @@ static BOOL WINAPI CRYPT_ImportRsaPublicKeyInfoEx(HCRYPTPROV hCryptProv,
      pInfo->PublicKey.pbData, pInfo->PublicKey.cbData, 0, NULL, &pubKeySize);
     if (ret)
     {
-        LPBYTE pubKey = HeapAlloc(GetProcessHeap(), 0, pubKeySize);
+        LPBYTE pubKey = CryptMemAlloc(pubKeySize);
 
         if (pubKey)
         {
@@ -5666,7 +5666,7 @@ static BOOL WINAPI CRYPT_ImportRsaPublicKeyInfoEx(HCRYPTPROV hCryptProv,
             if (ret)
                 ret = CryptImportKey(hCryptProv, pubKey, pubKeySize, 0, 0,
                  phKey);
-            HeapFree(GetProcessHeap(), 0, pubKey);
+            CryptMemFree(pubKey);
         }
         else
             ret = FALSE;

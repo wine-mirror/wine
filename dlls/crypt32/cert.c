@@ -128,8 +128,8 @@ typedef struct WINE_CRYPTCERTSTORE * (*StoreOpenFunc)(HCRYPTPROV hCryptProv,
 struct _WINE_CERT_CONTEXT_REF;
 
 /* Called to enumerate the next certificate in a store.  The returned pointer
- * must be newly allocated (via HeapAlloc):  CertFreeCertificateContext frees
- * it.
+ * must be newly allocated (via CryptMemAlloc):  CertFreeCertificateContext
+ * frees it.
  */
 typedef struct _WINE_CERT_CONTEXT_REF * (*EnumCertFunc)
  (struct WINE_CRYPTCERTSTORE *store, struct _WINE_CERT_CONTEXT_REF *pPrev);
@@ -353,7 +353,7 @@ static void CRYPT_InitCertRef(PWINE_CERT_CONTEXT_REF ref,
 static PWINE_CERT_CONTEXT_REF CRYPT_CreateCertRef(PWINE_CERT_CONTEXT context,
  HCERTSTORE store)
 {
-    PWINE_CERT_CONTEXT_REF pCertRef = HeapAlloc(GetProcessHeap(), 0,
+    PWINE_CERT_CONTEXT_REF pCertRef = CryptMemAlloc(
      sizeof(WINE_CERT_CONTEXT_REF));
 
     if (pCertRef)
@@ -443,7 +443,7 @@ static BOOL WINAPI CRYPT_MemAddCert(HCERTSTORE store, PCCERT_CONTEXT pCert,
     }
     if (add)
     {
-        PWINE_CERT_LIST_ENTRY entry = HeapAlloc(GetProcessHeap(), 0,
+        PWINE_CERT_LIST_ENTRY entry = CryptMemAlloc(
          sizeof(WINE_CERT_LIST_ENTRY));
 
         if (entry)
@@ -482,7 +482,7 @@ static PWINE_CERT_CONTEXT_REF CRYPT_MemEnumCert(PWINECRYPT_CERTSTORE store,
         listNext = list_next(&ms->certs, &ms->certs);
     if (listNext)
     {
-        ret = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_CERT_LIST_ENTRY));
+        ret = CryptMemAlloc(sizeof(WINE_CERT_LIST_ENTRY));
         memcpy(ret, LIST_ENTRY(listNext, WINE_CERT_LIST_ENTRY, entry),
          sizeof(WINE_CERT_LIST_ENTRY));
         InterlockedIncrement(&ret->cert.context->ref);
@@ -553,7 +553,7 @@ static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
         CertFreeCertificateContext((PCCERT_CONTEXT)cert);
     }
     DeleteCriticalSection(&store->cs);
-    HeapFree(GetProcessHeap(), 0, store);
+    CryptMemFree(store);
 }
 
 static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
@@ -570,10 +570,10 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
     }
     else
     {
-        store = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-         sizeof(WINE_MEMSTORE));
+        store = CryptMemAlloc(sizeof(WINE_MEMSTORE));
         if (store)
         {
+            memset(store, 0, sizeof(WINE_MEMSTORE));
             CRYPT_InitStore(&store->hdr, hCryptProv, dwFlags, StoreTypeMem);
             store->hdr.closeStore    = CRYPT_MemCloseStore;
             store->hdr.addCert       = CRYPT_MemAddCert;
@@ -616,7 +616,7 @@ static BOOL WINAPI CRYPT_CollectionAddCert(HCERTSTORE store,
 static PWINE_CERT_CONTEXT_REF CRYPT_CollectionCreateCertRef(
  PWINE_CERT_CONTEXT context, HCERTSTORE store)
 {
-    PWINE_COLLECTION_CERT_CONTEXT ret = HeapAlloc(GetProcessHeap(), 0,
+    PWINE_COLLECTION_CERT_CONTEXT ret = CryptMemAlloc(
      sizeof(WINE_COLLECTION_CERT_CONTEXT));
 
     if (ret)
@@ -641,10 +641,10 @@ static void WINAPI CRYPT_CollectionCloseStore(HCERTSTORE store, DWORD dwFlags)
     {
         TRACE("closing %p\n", entry);
         CertCloseStore((HCERTSTORE)entry->store, dwFlags);
-        HeapFree(GetProcessHeap(), 0, entry);
+        CryptMemFree(entry);
     }
     DeleteCriticalSection(&cs->cs);
-    HeapFree(GetProcessHeap(), 0, cs);
+    CryptMemFree(cs);
 }
 
 /* Advances a collection enumeration by one cert, if possible, where advancing
@@ -809,10 +809,10 @@ static WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
     }
     else
     {
-        store = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-         sizeof(WINE_COLLECTIONSTORE));
+        store = CryptMemAlloc(sizeof(WINE_COLLECTIONSTORE));
         if (store)
         {
+            memset(store, 0, sizeof(WINE_COLLECTIONSTORE));
             CRYPT_InitStore(&store->hdr, hCryptProv, dwFlags,
              StoreTypeCollection);
             store->hdr.closeStore    = CRYPT_CollectionCloseStore;
@@ -870,7 +870,7 @@ static void CRYPT_RegReadSerializedFromReg(PWINE_REGSTORE store, HKEY key,
                 size = 0;
                 rc = RegQueryValueExW(subKey, BlobW, NULL, NULL, NULL, &size);
                 if (!rc)
-                    buf = HeapAlloc(GetProcessHeap(), 0, size);
+                    buf = CryptMemAlloc(size);
                 if (buf)
                 {
                     rc = RegQueryValueExW(subKey, BlobW, NULL, NULL, buf,
@@ -931,7 +931,7 @@ static void CRYPT_RegReadSerializedFromReg(PWINE_REGSTORE store, HKEY key,
                             }
                         }
                     }
-                    HeapFree(GetProcessHeap(), 0, buf);
+                    CryptMemFree(buf);
                 }
                 RegCloseKey(subKey);
             }
@@ -1012,14 +1012,14 @@ static BOOL CRYPT_SerializeContextsToReg(HKEY key,
 
                 ret = contextInterface->serialize(context, 0, NULL, &size);
                 if (size)
-                    buf = HeapAlloc(GetProcessHeap(), 0, size);
+                    buf = CryptMemAlloc(size);
                 if (buf)
                 {
                     ret = contextInterface->serialize(context, 0, buf, &size);
                     if (ret)
                         ret = CRYPT_WriteSerializedToReg(key, hash, buf, size);
                 }
-                HeapFree(GetProcessHeap(), 0, buf);
+                CryptMemFree(buf);
             }
         }
         else
@@ -1067,7 +1067,7 @@ static BOOL CRYPT_RegWriteToReg(PWINE_REGSTORE store)
                         ret = FALSE;
                     }
                     list_remove(&toDelete->entry);
-                    HeapFree(GetProcessHeap(), 0, toDelete);
+                    CryptMemFree(toDelete);
                 }
                 LeaveCriticalSection(&store->cs);
             }
@@ -1111,7 +1111,7 @@ static void WINAPI CRYPT_RegCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
     store->memStore->closeStore(store->memStore, 0);
     RegCloseKey(store->key);
     DeleteCriticalSection(&store->cs);
-    HeapFree(GetProcessHeap(), 0, store);
+    CryptMemFree(store);
 }
 
 static BOOL WINAPI CRYPT_RegAddCert(HCERTSTORE hCertStore, PCCERT_CONTEXT cert,
@@ -1139,7 +1139,7 @@ static BOOL WINAPI CRYPT_RegAddCert(HCERTSTORE hCertStore, PCCERT_CONTEXT cert,
 static PWINE_CERT_CONTEXT_REF CRYPT_RegCreateCertRef(
  PWINE_CERT_CONTEXT context, HCERTSTORE store)
 {
-    PWINE_REG_CERT_CONTEXT ret = HeapAlloc(GetProcessHeap(), 0,
+    PWINE_REG_CERT_CONTEXT ret = CryptMemAlloc(
      sizeof(WINE_REG_CERT_CONTEXT));
 
     if (ret)
@@ -1175,7 +1175,7 @@ static PWINE_CERT_CONTEXT_REF CRYPT_RegEnumCert(PWINECRYPT_CERTSTORE store,
         child = rs->memStore->enumCert(rs->memStore, NULL);
         if (child)
         {
-            ret = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_REG_CERT_CONTEXT));
+            ret = CryptMemAlloc(sizeof(WINE_REG_CERT_CONTEXT));
 
             if (ret)
             {
@@ -1206,7 +1206,7 @@ static BOOL WINAPI CRYPT_RegDeleteCert(HCERTSTORE hCertStore,
     else
     {
         PWINE_HASH_TO_DELETE toDelete =
-         HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_HASH_TO_DELETE));
+         CryptMemAlloc(sizeof(WINE_HASH_TO_DELETE));
 
         if (toDelete)
         {
@@ -1224,7 +1224,7 @@ static BOOL WINAPI CRYPT_RegDeleteCert(HCERTSTORE hCertStore,
                  dwFlags);
             }
             else
-                HeapFree(GetProcessHeap(), 0, toDelete);
+                CryptMemFree(toDelete);
         }
         else
             ret = FALSE;
@@ -1297,8 +1297,7 @@ static DWORD CRYPT_RecurseDeleteKey(HKEY hKey, LPCWSTR lpszSubKey)
             if (dwMaxSubkeyLen > sizeof(szNameBuf)/sizeof(WCHAR))
             {
                 /* Name too big: alloc a buffer for it */
-                lpszName = HeapAlloc(GetProcessHeap(), 0,
-                 dwMaxSubkeyLen*sizeof(WCHAR));
+                lpszName = CryptMemAlloc(dwMaxSubkeyLen*sizeof(WCHAR));
             }
 
             if (!lpszName)
@@ -1318,7 +1317,7 @@ static DWORD CRYPT_RecurseDeleteKey(HKEY hKey, LPCWSTR lpszSubKey)
                 if (lpszName != szNameBuf)
                 {
                     /* Free buffer if allocated */
-                    HeapFree(GetProcessHeap(), 0, lpszName);
+                    CryptMemFree(lpszName);
                 }
             }
         }
@@ -1363,10 +1362,10 @@ static WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv,
             memStore = CRYPT_MemOpenStore(hCryptProv, dwFlags, NULL);
             if (memStore)
             {
-                store = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                 sizeof(WINE_REGSTORE));
+                store = CryptMemAlloc(sizeof(WINE_REGSTORE));
                 if (store)
                 {
+                    memset(store, 0, sizeof(WINE_REGSTORE));
                     CRYPT_InitStore(&store->hdr, hCryptProv, dwFlags,
                      StoreTypeReg);
                     store->hdr.closeStore    = CRYPT_RegCloseStore;
@@ -1463,8 +1462,8 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
         return NULL;
     }
 
-    storePath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(base) +
-         lstrlenW(storeName) + 2) * sizeof(WCHAR));
+    storePath = CryptMemAlloc((lstrlenW(base) + lstrlenW(storeName) + 2) *
+     sizeof(WCHAR));
     if (storePath)
     {
         LONG rc;
@@ -1495,7 +1494,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
         }
         else
             SetLastError(rc);
-        HeapFree(GetProcessHeap(), 0, storePath);
+        CryptMemFree(storePath);
     }
     return store;
 }
@@ -1517,13 +1516,13 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreA(HCRYPTPROV hCryptProv,
     len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pvPara, -1, NULL, 0);
     if (len)
     {
-        LPWSTR storeName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        LPWSTR storeName = CryptMemAlloc(len * sizeof(WCHAR));
 
         if (storeName)
         {
             MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pvPara, -1, storeName, len);
             ret = CRYPT_SysRegOpenStoreW(hCryptProv, dwFlags, storeName);
-            HeapFree(GetProcessHeap(), 0, storeName);
+            CryptMemFree(storeName);
         }
     }
     return ret;
@@ -1600,13 +1599,13 @@ static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreA(HCRYPTPROV hCryptProv,
     len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pvPara, -1, NULL, 0);
     if (len)
     {
-        LPWSTR storeName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        LPWSTR storeName = CryptMemAlloc(len * sizeof(WCHAR));
 
         if (storeName)
         {
             MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pvPara, -1, storeName, len);
             ret = CRYPT_SysOpenStoreW(hCryptProv, dwFlags, storeName);
-            HeapFree(GetProcessHeap(), 0, storeName);
+            CryptMemFree(storeName);
         }
     }
     return ret;
@@ -1686,13 +1685,13 @@ HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV hProv,
     {
         int len = MultiByteToWideChar(CP_ACP, 0, szSubSystemProtocol, -1, NULL,
          0);
-        LPWSTR param = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        LPWSTR param = CryptMemAlloc(len * sizeof(WCHAR));
 
         if (param)
         {
             MultiByteToWideChar(CP_ACP, 0, szSubSystemProtocol, -1, param, len);
             ret = CertOpenSystemStoreW(hProv, param);
-            HeapFree(GetProcessHeap(), 0, param);
+            CryptMemFree(param);
         }
     }
     else
@@ -1757,14 +1756,14 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
     TRACE("%08lx %p %08lx\n", dwCertEncodingType, pbCrlEncoded, cbCrlEncoded);
 
     /* FIXME: semi-stub, need to use CryptDecodeObjectEx to decode the CRL. */
-    pcrl = HeapAlloc( GetProcessHeap(), 0, sizeof (CRL_CONTEXT) );
+    pcrl = CryptMemAlloc( sizeof (CRL_CONTEXT) );
     if( !pcrl )
         return NULL;
 
-    data = HeapAlloc( GetProcessHeap(), 0, cbCrlEncoded );
+    data = CryptMemAlloc( cbCrlEncoded );
     if( !data )
     {
-        HeapFree( GetProcessHeap(), 0, pcrl );
+        CryptMemFree( pcrl );
         return NULL;
     }
 
@@ -1819,13 +1818,13 @@ static PWINE_CERT_CONTEXT CRYPT_CreateCertificateContext(
     {
         BYTE *data = NULL;
 
-        cert = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_CERT_CONTEXT));
+        cert = CryptMemAlloc(sizeof(WINE_CERT_CONTEXT));
         if (!cert)
             goto end;
-        data = HeapAlloc(GetProcessHeap(), 0, cbCertEncoded);
+        data = CryptMemAlloc(cbCertEncoded);
         if (!data)
         {
-            HeapFree(GetProcessHeap(), 0, cert);
+            CryptMemFree(cert);
             cert = NULL;
             goto end;
         }
@@ -1848,17 +1847,17 @@ static void CRYPT_FreeCert(PWINE_CERT_CONTEXT context)
 {
     PWINE_CERT_PROPERTY prop, next;
 
-    HeapFree(GetProcessHeap(), 0, context->cert.pbCertEncoded);
+    CryptMemFree(context->cert.pbCertEncoded);
     LocalFree(context->cert.pCertInfo);
     DeleteCriticalSection(&context->cs);
     LIST_FOR_EACH_ENTRY_SAFE(prop, next, &context->extendedProperties,
      WINE_CERT_PROPERTY, entry)
     {
         list_remove(&prop->entry);
-        HeapFree(GetProcessHeap(), 0, prop->pbData);
-        HeapFree(GetProcessHeap(), 0, prop);
+        CryptMemFree(prop->pbData);
+        CryptMemFree(prop);
     }
-    HeapFree(GetProcessHeap(), 0, context);
+    CryptMemFree(context);
 }
 
 PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
@@ -2056,7 +2055,7 @@ static BOOL CRYPT_SaveCertificateContextProperty(PWINE_CERT_CONTEXT context,
 
     if (cbData)
     {
-        data = HeapAlloc(GetProcessHeap(), 0, cbData);
+        data = CryptMemAlloc(cbData);
         if (data)
             memcpy(data, pbData, cbData);
     }
@@ -2075,14 +2074,14 @@ static BOOL CRYPT_SaveCertificateContextProperty(PWINE_CERT_CONTEXT context,
         }
         if (prop && prop->entry.next != &context->extendedProperties)
         {
-            HeapFree(GetProcessHeap(), 0, prop->pbData);
+            CryptMemFree(prop->pbData);
             prop->hdr.cb = cbData;
             prop->pbData = cbData ? data : NULL;
             ret = TRUE;
         }
         else
         {
-            prop = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_CERT_PROPERTY));
+            prop = CryptMemAlloc(sizeof(WINE_CERT_PROPERTY));
             if (prop)
             {
                 prop->hdr.propID = dwPropId;
@@ -2094,7 +2093,7 @@ static BOOL CRYPT_SaveCertificateContextProperty(PWINE_CERT_CONTEXT context,
                 ret = TRUE;
             }
             else
-                HeapFree(GetProcessHeap(), 0, data);
+                CryptMemFree(data);
         }
         LeaveCriticalSection(&context->cs);
     }
@@ -2119,8 +2118,8 @@ static BOOL WINAPI CRYPT_SetCertificateContextProperty(
             if (prop->hdr.propID == dwPropId)
             {
                 list_remove(&prop->entry);
-                HeapFree(GetProcessHeap(), 0, prop->pbData);
-                HeapFree(GetProcessHeap(), 0, prop);
+                CryptMemFree(prop->pbData);
+                CryptMemFree(prop);
             }
         }
         LeaveCriticalSection(&context->cs);
@@ -2205,7 +2204,7 @@ PCCERT_CONTEXT WINAPI CertDuplicateCertificateContext(
     TRACE("(%p)\n", pCertContext);
     if (ref)
     {
-        ret = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_CERT_CONTEXT_REF));
+        ret = CryptMemAlloc(sizeof(WINE_CERT_CONTEXT_REF));
         if (ret)
         {
             memcpy(ret, ref, sizeof(*ret));
@@ -2904,7 +2903,7 @@ BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)
         if (store && store->dwMagic == WINE_CRYPTCERTSTORE_MAGIC &&
          store->freeCert)
             store->freeCert(ref);
-        HeapFree(GetProcessHeap(), 0, ref);
+        CryptMemFree(ref);
     }
     return TRUE;
 }
@@ -2948,7 +2947,7 @@ BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,
         return FALSE;
     }
 
-    entry = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_STORE_LIST_ENTRY));
+    entry = CryptMemAlloc(sizeof(WINE_STORE_LIST_ENTRY));
     if (entry)
     {
         InterlockedIncrement(&sibling->ref);
@@ -3018,7 +3017,7 @@ void WINAPI CertRemoveStoreFromCollection(HCERTSTORE hCollectionStore,
         {
             list_remove(&store->entry);
             CertCloseStore(store->store, 0);
-            HeapFree(GetProcessHeap(), 0, store);
+            CryptMemFree(store);
             break;
         }
     }
