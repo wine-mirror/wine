@@ -6061,6 +6061,7 @@ static void test_SendMessageTimeout(void)
     MSG msg;
     HANDLE thread;
     struct thread_info info;
+    DWORD tid;
 
     info.hwnd = CreateWindowA( "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
                                100, 100, 200, 200, 0, 0, 0, NULL);
@@ -6069,7 +6070,7 @@ static void test_SendMessageTimeout(void)
 
     info.timeout = 1000;
     info.ret = 0xdeadbeef;
-    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
     wait_for_thread( thread );
     CloseHandle( thread );
     ok( info.ret == 1, "SendMessageTimeout failed\n" );
@@ -6077,7 +6078,7 @@ static void test_SendMessageTimeout(void)
 
     info.timeout = 1;
     info.ret = 0xdeadbeef;
-    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
     Sleep(100);  /* SendMessageTimeout should timeout here */
     wait_for_thread( thread );
     CloseHandle( thread );
@@ -6087,7 +6088,7 @@ static void test_SendMessageTimeout(void)
     /* 0 means infinite timeout */
     info.timeout = 0;
     info.ret = 0xdeadbeef;
-    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
     Sleep(100);
     wait_for_thread( thread );
     CloseHandle( thread );
@@ -6097,7 +6098,7 @@ static void test_SendMessageTimeout(void)
     /* timeout is treated as signed despite the prototype */
     info.timeout = 0x7fffffff;
     info.ret = 0xdeadbeef;
-    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
     Sleep(100);
     wait_for_thread( thread );
     CloseHandle( thread );
@@ -6106,7 +6107,7 @@ static void test_SendMessageTimeout(void)
 
     info.timeout = 0x80000000;
     info.ret = 0xdeadbeef;
-    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
     Sleep(100);
     wait_for_thread( thread );
     CloseHandle( thread );
@@ -6117,7 +6118,7 @@ static void test_SendMessageTimeout(void)
     SetWindowLongPtrA( info.hwnd, GWLP_WNDPROC, (LONG_PTR)send_msg_delay_proc );
     info.timeout = 100;
     info.ret = 0xdeadbeef;
-    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, NULL );
+    thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
     wait_for_thread( thread );
     CloseHandle( thread );
     /* we should timeout but still get the message */
