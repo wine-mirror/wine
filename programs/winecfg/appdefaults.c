@@ -330,6 +330,7 @@ static void on_winver_change(HWND dialog)
         static const char szKeyNT[] = "Software\\Microsoft\\Windows NT\\CurrentVersion";
         static const char szKeyProdNT[] = "System\\CurrentControlSet\\Control\\ProductOptions";
         static const char szKeyWindNT[] = "System\\CurrentControlSet\\Control\\Windows";
+        static const char szKeyEnvNT[]  = "System\\CurrentControlSet\\Control\\Session Manager\\Environment";
         char Buffer[40];
 
         switch (win_versions[selection].dwPlatformId)
@@ -345,6 +346,7 @@ static void on_winver_change(HWND dialog)
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyWindNT, "CSDVersion", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyEnvNT, "OS", NULL);
             break;
 
         case VER_PLATFORM_WIN32_NT:
@@ -358,6 +360,7 @@ static void on_winver_change(HWND dialog)
             set_reg_key_dword(HKEY_LOCAL_MACHINE, szKeyWindNT, "CSDVersion",
                               MAKEWORD( win_versions[selection].wServicePackMinor,
                                         win_versions[selection].wServicePackMajor ));
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyEnvNT, "OS", "Windows_NT");
 
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", NULL);
@@ -369,6 +372,7 @@ static void on_winver_change(HWND dialog)
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyWindNT, "CSDVersion", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyEnvNT, "OS", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", NULL);
             break;
