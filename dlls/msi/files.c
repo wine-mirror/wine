@@ -181,6 +181,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         CabData *data = (CabData*) pfdin->pv;
         ULONG len = strlen(data->cab_path) + strlen(pfdin->psz1);
         char *file;
+        INT_PTR handle;
 
         LPWSTR trackname;
         LPWSTR trackpath;
@@ -208,7 +209,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
             return 0;
         }
 
-        file = cabinet_alloc((len+1)*sizeof(char));
+        file = msi_alloc((len+1)*sizeof(char));
         strcpy(file, data->cab_path);
         strcat(file, pfdin->psz1);
 
@@ -242,7 +243,9 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 
         ui_progress( data->package, 2, f->FileSize, 0, 0);
 
-        return cabinet_open(file, _O_WRONLY | _O_CREAT, 0);
+        handle = cabinet_open(file, _O_WRONLY | _O_CREAT, 0);
+        msi_free( file );
+        return handle;
     }
     case fdintCLOSE_FILE_INFO:
     {
