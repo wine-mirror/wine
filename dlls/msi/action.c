@@ -1052,6 +1052,27 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
+/* FIXME: probably should merge this with the above function */
+static UINT msi_create_directory( MSIPACKAGE* package, LPCWSTR dir )
+{
+    UINT rc = ERROR_SUCCESS;
+    MSIFOLDER *folder;
+    LPWSTR install_path;
+
+    install_path = resolve_folder(package, dir, FALSE, FALSE, &folder);
+    if (!install_path)
+        return ERROR_FUNCTION_FAILED; 
+
+    /* create the path */
+    if (folder->State == 0)
+    {
+        create_full_pathW(install_path);
+        folder->State = 2;
+    }
+    msi_free(install_path);
+
+    return rc;
+}
 
 /*
  * Also we cannot enable/disable components either, so for now I am just going 
@@ -1066,14 +1087,24 @@ static UINT ACTION_CreateFolders(MSIPACKAGE *package)
          '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0 };
     UINT rc;
     MSIQUERY *view;
+    MSICOMPONENT *comp;
 
+    /* create all the empty folders specified in the CreateFolder table */
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view );
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_CreateFolders, package);
     msiobj_release(&view->hdr);
-   
+
+    /* create all the folders required by the components are going to install */
+    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+    {
+        if (!ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_LOCAL))
+            continue;
+        msi_create_directory( package, comp->Directory );
+    }
+
     return rc;
 }
 

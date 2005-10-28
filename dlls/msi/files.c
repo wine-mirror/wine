@@ -56,26 +56,6 @@ extern const WCHAR szRemoveFiles[];
 
 static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 
-static UINT create_component_directory( MSIPACKAGE* package, MSICOMPONENT *comp )
-{
-    UINT rc = ERROR_SUCCESS;
-    MSIFOLDER *folder;
-    LPWSTR install_path;
-
-    install_path = resolve_folder(package, comp->Directory, FALSE, FALSE, &folder);
-    if (!install_path)
-        return ERROR_FUNCTION_FAILED; 
-
-    /* create the path */
-    if (folder->State == 0)
-    {
-        create_full_pathW(install_path);
-        folder->State = 2;
-    }
-    msi_free(install_path);
-
-    return rc;
-}
 
 /*
  * This is a helper function for handling embedded cabinet media
@@ -463,7 +443,7 @@ static void free_media_info( struct media_info *mi )
 }
 
 static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
-                                  MSIFILE *file, MSICOMPONENT* comp )
+                                  MSIFILE *file )
 {
     UINT rc = ERROR_SUCCESS;
     MSIRECORD * row = 0;
@@ -478,6 +458,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
     INT seq;
     UINT type;
     LPCWSTR prompt;
+    MSICOMPONENT *comp = file->Component;
 
     if (file->Sequence <= mi->last_sequence)
     {
@@ -681,8 +662,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     /* Pass 1 */
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        MSICOMPONENT* comp = NULL;
-
         if (!ACTION_VerifyComponentForAction(package, file->Component, 
                                        INSTALLSTATE_LOCAL))
         {
@@ -691,31 +670,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
                    debugstr_w(file->File));
 
             file->State = 5;
-            continue;
-        }
-
-        if ((file->State == 1) || (file->State == 2))
-        {
-            LPWSTR p = NULL;
-
-            TRACE("Pass 1: %s\n",debugstr_w(file->File));
-
-            create_component_directory( package, file->Component );
-
-            /* recalculate file paths because things may have changed */
-
-            comp = file->Component;
-            if (!comp)
-            {
-                ERR("No Component for file\n");
-                continue;
-            }
-
-            p = resolve_folder(package, comp->Directory, FALSE, FALSE, NULL);
-            msi_free(file->TargetPath);
-
-            file->TargetPath = build_directory_name(2, p, file->FileName);
-            msi_free(p);
         }
     }
 
@@ -728,7 +682,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         {
             TRACE("Pass 2: %s\n",debugstr_w(file->File));
 
-            rc = ready_media_for_file( package, mi, file, file->Component );
+            rc = ready_media_for_file( package, mi, file );
             if (rc != ERROR_SUCCESS)
             {
                 ERR("Unable to ready media\n");
