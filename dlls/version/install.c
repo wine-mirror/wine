@@ -182,8 +182,11 @@ DWORD WINAPI VerFindFileA(
         }
     }
 
-    if (lpszFilename && !testFileExistenceA(curDir, lpszFilename, TRUE))
-        retval |= VFF_FILEINUSE;
+    /* Check to see if the file exists and is inuse by another application */
+    if (lpszFilename && testFileExistenceA(curDir, lpszFilename, FALSE)) {
+        if (lpszFilename && !testFileExistenceA(curDir, lpszFilename, TRUE))
+           retval |= VFF_FILEINUSE;
+    }
 
     curDirSizeReq = strlen(curDir) + 1;
     destDirSizeReq = strlen(destDir) + 1;
