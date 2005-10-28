@@ -567,14 +567,35 @@ static VOID test_thread_processor(void)
    }
 }
 
+static VOID test_GetThreadExitCode(void)
+{
+    DWORD exitCode, threadid;
+    DWORD GLE, ret;
+    HANDLE thread;
+
+    ret = GetExitCodeThread((HANDLE)0x2bad2bad,&exitCode);
+    ok(ret==0, "GetExitCodeThread returned non zero value: %ld\n", ret);
+    GLE = GetLastError();
+    ok(GLE==ERROR_INVALID_HANDLE, "GetLastError returned %ld (expected 6)\n", GLE);
+
+    thread = CreateThread(NULL,0,threadFunc2,NULL,0,&threadid);
+    ret = WaitForSingleObject(thread,100);
+    ok(ret==WAIT_OBJECT_0, "threadFunc2 did not exit during 100 ms\n");
+    ret = GetExitCodeThread(thread,&exitCode);
+    ok(ret==exitCode || ret==1, 
+       "GetExitCodeThread returned %ld (expected 1 or %ld)\n", ret, exitCode);
+    ok(exitCode==99, "threadFunc2 exited with code %ld (expected 99)\n", exitCode);
+    ok(CloseHandle(thread)!=0,"Error closing thread handle\n");
+}
+
 START_TEST(thread)
 {
    HINSTANCE lib;
 /* Neither Cygwin nor mingW export OpenThread, so do a dynamic check
    so that the compile passes
 */
-   lib=LoadLibraryA("kernel32");
-   ok(lib!=NULL,"Couldn't load kernel32.dll\n");
+   lib=GetModuleHandleA("kernel32.dll");
+   ok(lib!=NULL,"Couldn't get a handle for kernel32.dll\n");
    pGetThreadPriorityBoost=(GetThreadPriorityBoost_t)GetProcAddress(lib,"GetThreadPriorityBoost");
    pOpenThread=(OpenThread_t)GetProcAddress(lib,"OpenThread");
    pSetThreadIdealProcessor=(SetThreadIdealProcessor_t)GetProcAddress(lib,"SetThreadIdealProcessor");
@@ -587,4 +608,5 @@ START_TEST(thread)
    test_thread_priority();
    test_GetThreadTimes();
    test_thread_processor();
+   test_GetThreadExitCode();
 }
