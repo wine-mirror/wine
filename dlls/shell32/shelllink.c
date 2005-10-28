@@ -51,6 +51,7 @@
 #include "shell32_main.h"
 #include "shlguid.h"
 #include "shlwapi.h"
+#include "msi.h"
 
 #include "initguid.h"
 
@@ -207,6 +208,16 @@ inline static LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str)
         return p;
     MultiByteToWideChar( CP_ACP, 0, str, -1, p, len );
     return p;
+}
+
+inline static LPWSTR strdupW( LPCWSTR src )
+{
+    LPWSTR dest;
+    if (!src) return NULL;
+    dest = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(src)+1)*sizeof(WCHAR) );
+    if (dest)
+        lstrcpyW(dest, src);
+    return dest;
 }
 
 /**************************************************************************
@@ -2402,6 +2413,55 @@ ShellLink_QueryContextMenu( IContextMenu* iface, HMENU hmenu, UINT indexMenu,
     return MAKE_HRESULT( SEVERITY_SUCCESS, 0, id );
 }
 
+static LPWSTR shelllink_get_msi_component_path( LPCWSTR component )
+{
+    UINT WINAPI (*pMsiDecomposeDescriptorW)(LPCWSTR,LPWSTR,LPWSTR,LPWSTR,DWORD*);
+    INSTALLSTATE WINAPI (*pMsiGetComponentPathW)(LPCWSTR,LPCWSTR,LPWSTR,DWORD*);
+    WCHAR szProd[MAX_FEATURE_CHARS+1], szFeat[MAX_FEATURE_CHARS+1],
+          szComp[MAX_FEATURE_CHARS+1], szCompPath[MAX_PATH];
+    INSTALLSTATE state;
+    LPWSTR path = NULL;
+    HMODULE hmsi = NULL;
+    DWORD sz = 0;
+    UINT ret;
+
+    TRACE("%s\n", debugstr_w( component ) );
+
+    hmsi = LoadLibraryA("msi");
+    if (!hmsi)
+        goto end;
+
+    pMsiDecomposeDescriptorW = (LPVOID) GetProcAddress(hmsi, "MsiDecomposeDescriptorW");
+    pMsiGetComponentPathW = (LPVOID) GetProcAddress(hmsi, "MsiGetComponentPathW");
+    if (!pMsiDecomposeDescriptorW || !pMsiGetComponentPathW)
+        goto end;
+
+    ret = pMsiDecomposeDescriptorW( component, szProd, szFeat, szComp, &sz );
+    if (ret != ERROR_SUCCESS)
+    {
+        ERR("failed to decompose descriptor %s\n", debugstr_w( component ) );
+        goto end;
+    }
+
+    sz = MAX_PATH;
+    state = pMsiGetComponentPathW( szProd, szComp, szCompPath, &sz );
+    if (state != INSTALLSTATE_LOCAL)
+    {
+        ERR("MsiGetComponentPathW failed with error %d\n", ret );
+        goto end;
+    }
+
+    path = strdupW( szCompPath );
+
+end:
+    if (hmsi)
+        FreeLibrary( hmsi );
+
+    TRACE("returning %s\n", debugstr_w( path ) );
+
+    return path;
+}
+
 static HRESULT WINAPI
 ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
 {
@@ -2409,6 +2469,7 @@ ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
     SHELLEXECUTEINFOW sei;
     HWND hwnd = NULL; /* FIXME: get using interface set from IObjectWithSite */
     LPWSTR args = NULL;
+    LPWSTR path = NULL;
     HRESULT r;
 
     TRACE("%p %p\n", This, lpici );
@@ -2426,13 +2487,14 @@ ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
     if ( FAILED( r ) )
         return r;
 
-    if ( This->sProduct || This->sComponent )
+    if ( This->sComponent )
     {
-        FIXME("MSI advertised shortcut %s %s\n",
-              debugstr_w( This->sProduct ),
-              debugstr_w( This->sComponent ) );
-        return E_NOTIMPL;
+        path = shelllink_get_msi_component_path( This->sComponent );
+        if (!path)
+            return E_FAIL;
     }
+    else
+        path = strdupW( This->sPath );
 
     if ( lpici->cbSize == sizeof (CMINVOKECOMMANDINFOEX) &&
          ( lpici->fMask & CMIC_MASK_UNICODE ) )
@@ -2455,7 +2517,7 @@ ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
 
     memset( &sei, 0, sizeof sei );
     sei.cbSize = sizeof sei;
-    sei.lpFile = This->sPath;
+    sei.lpFile = path;
     sei.nShow = This->iShowCmd;
     sei.lpIDList = This->pPidl;
     sei.lpDirectory = This->sWorkDir;
@@ -2467,6 +2529,7 @@ ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
         r = E_FAIL;
 
     HeapFree( GetProcessHeap(), 0, args );
+    HeapFree( GetProcessHeap(), 0, path );
 
     return r;
 }
