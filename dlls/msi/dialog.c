@@ -1377,7 +1377,7 @@ static UINT msi_dialog_set_control_condition( MSIRECORD *rec, LPVOID param )
     condition = MSI_RecordGetString( rec, 4 );
     r = MSI_EvaluateConditionW( dialog->package, condition );
     control = msi_dialog_find_control( dialog, name );
-    if( r && control )
+    if( r == MSICONDITION_TRUE && control )
     {
         TRACE("%s control %s\n", debugstr_w(action), debugstr_w(name));
 
@@ -1626,7 +1626,7 @@ static UINT msi_dialog_control_event( MSIRECORD *rec, LPVOID param )
 
     condition = MSI_RecordGetString( rec, 5 );
     r = MSI_EvaluateConditionW( dialog->package, condition );
-    if( r )
+    if( r == MSICONDITION_TRUE )
     {
         event = MSI_RecordGetString( rec, 3 );
         arg = MSI_RecordGetString( rec, 4 );
