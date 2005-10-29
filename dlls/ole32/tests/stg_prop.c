@@ -61,7 +61,12 @@ static void testProps(void)
      STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
     ok(SUCCEEDED(hr), "StgCreateDocfile failed: 0x%08lx\n", hr);
 
-    if(!pStgCreatePropSetStg) return;
+    if(!pStgCreatePropSetStg)
+    {
+        IStorage_Release(storage);
+        DeleteFileW(filename);
+        return;
+    }
     hr = pStgCreatePropSetStg(storage, 0, &propSetStorage);
     ok(SUCCEEDED(hr), "StgCreatePropSetStg failed: 0x%08lx\n", hr);
 
@@ -272,7 +277,12 @@ static void testCodepage(void)
      STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
     ok(SUCCEEDED(hr), "StgCreateDocfile failed: 0x%08lx\n", hr);
 
-    if(!pStgCreatePropSetStg) return;
+    if(!pStgCreatePropSetStg)
+    {
+        IStorage_Release(storage);
+        DeleteFileW(fileName);
+        return;
+    }
     hr = pStgCreatePropSetStg(storage, 0, &propSetStorage);
     ok(SUCCEEDED(hr), "StgCreatePropSetStg failed: 0x%08lx\n", hr);
 
