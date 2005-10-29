@@ -240,13 +240,6 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
             return 0;
         }
 
-        /*
-         * FIXME: 0 is a valid return from CreateFile
-         *        but an invalid handle for the cabinet API
-         */
-        if ( !handle )
-            ERR("CreateFile returned 0 - not handled\n");
-
         f->State = 4;
         return (INT_PTR) handle;
     }
