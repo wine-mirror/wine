@@ -50,6 +50,7 @@
 DEFINE_EXPECT(GetBindInfo);
 DEFINE_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
 DEFINE_EXPECT(ReportProgress_DIRECTBIND);
+DEFINE_EXPECT(ReportProgress_SENDINGREQUEST);
 DEFINE_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
 DEFINE_EXPECT(ReportData);
 DEFINE_EXPECT(ReportResult);
@@ -102,6 +103,14 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
             if(szStatusText)
                 ok(!lstrcmpW(szStatusText, file_name), "szStatusText != file_name\n");
             break;
+        case BINDSTATUS_SENDINGREQUEST:
+            CHECK_EXPECT(ReportProgress_SENDINGREQUEST);
+            ok(szStatusText != NULL, "szStatusText == NULL\n");
+            if(szStatusText)
+                ok(!*szStatusText, "wrong szStatusText\n");
+            break;
+        default:
+            ok(0, "Unexpected call %ld\n", ulStatusCode);
     };
 
     return S_OK;
@@ -204,11 +213,13 @@ static void file_protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL i
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(ReportProgress_DIRECTBIND);
     if(is_first) {
+        SET_EXPECT(ReportProgress_SENDINGREQUEST);
         SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
         SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
         SET_EXPECT(ReportResult);
     }
     SET_EXPECT(ReportData);
+ 
     expect_hrResult = S_OK;
 
     hres = IInternetProtocol_Start(protocol, url, &protocol_sink, &bind_info, 0, 0);
@@ -217,6 +228,7 @@ static void file_protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL i
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(ReportProgress_DIRECTBIND);
     if(is_first) {
+        CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
         CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(ReportResult);
@@ -367,6 +379,7 @@ static void test_file_protocol(void) {
 
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(ReportProgress_DIRECTBIND);
+    SET_EXPECT(ReportProgress_SENDINGREQUEST);
     SET_EXPECT(ReportResult);
     expect_hrResult = INET_E_RESOURCE_NOT_FOUND;
     hres = IInternetProtocol_Start(protocol, index_url, &protocol_sink, &bind_info, 0, 0);
@@ -374,6 +387,7 @@ static void test_file_protocol(void) {
             "Start failed: %08lx expected INET_E_RESOURCE_NOT_FOUND\n", hres);
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(ReportProgress_DIRECTBIND);
+    CHECK_CALLED(ReportProgress_SENDINGREQUEST);
     CHECK_CALLED(ReportResult);
 
     IInternetProtocol_Release(protocol);
@@ -386,6 +400,7 @@ static void test_file_protocol(void) {
 
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(ReportProgress_DIRECTBIND);
+    SET_EXPECT(ReportProgress_SENDINGREQUEST);
     SET_EXPECT(ReportResult);
     expect_hrResult = INET_E_RESOURCE_NOT_FOUND;
     hres = IInternetProtocol_Start(protocol, index_url2, &protocol_sink, &bind_info, 0, 0);
@@ -393,6 +408,7 @@ static void test_file_protocol(void) {
             "Start failed: %08lx, expected INET_E_RESOURCE_NOT_FOUND\n", hres);
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(ReportProgress_DIRECTBIND);
+    CHECK_CALLED(ReportProgress_SENDINGREQUEST);
     CHECK_CALLED(ReportResult);
 
     IInternetProtocol_Release(protocol);

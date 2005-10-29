@@ -104,6 +104,7 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     LARGE_INTEGER size;
     DWORD len;
     LPWSTR url, mime = NULL;
+    WCHAR null_char = 0;
     HRESULT hres;
 
     static const WCHAR wszFile[]  = {'f','i','l','e',':'};
@@ -132,6 +133,8 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_DIRECTBIND, mime);
 
     if(!This->file) {
+        IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_SENDINGREQUEST, &null_char);
+
         This->file = CreateFileW(url+sizeof(wszFile)/sizeof(WCHAR), GENERIC_READ, FILE_SHARE_READ,
                 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
