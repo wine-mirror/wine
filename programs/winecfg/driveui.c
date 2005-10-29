@@ -83,6 +83,19 @@ static void lv_set_item(HWND dialog, LVITEM *item)
     SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_SETITEM, 0, (LPARAM) item);
 }
 
+/* sets specified item's text */
+static void lv_set_item_text(HWND dialog, int item, int subItem, char *text)
+{
+    LVITEM lvItem;
+    if (item < 0 || subItem < 0) return;
+    lvItem.mask = LVIF_TEXT;
+    lvItem.iItem = item;
+    lvItem.iSubItem = subItem;
+    lvItem.pszText = text;
+    lvItem.cchTextMax = lstrlen(lvItem.pszText);
+    lv_set_item(dialog, &lvItem);
+}
+
 /* inserts an item into the listview */
 static void lv_insert_item(HWND dialog, LVITEM *item)
 {
@@ -504,11 +517,6 @@ static void on_edit_changed(HWND dialog, WORD id)
 
     WINE_TRACE("edit id %d changed\n", id);
 
-    /* using fill_drives_list here is pretty lazy, but i'm tired
-
-       fortunately there are only 26 letters in the alphabet, so
-       we don't have to worry about efficiency too much here :)  */
-
     switch (id)
     {
         case IDC_EDIT_LABEL:
@@ -521,7 +529,8 @@ static void on_edit_changed(HWND dialog, WORD id)
 
             WINE_TRACE("set label to %s\n", current_drive->label);
 
-            fill_drives_list(dialog);
+            /* enable the apply button  */
+            SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
             break;
         }
 
@@ -535,7 +544,11 @@ static void on_edit_changed(HWND dialog, WORD id)
 
             WINE_TRACE("set path to %s\n", current_drive->unixpath);
 
-            fill_drives_list(dialog);
+            lv_set_item_text(dialog, lv_get_curr_select(dialog), 1,
+                             current_drive->unixpath);
+
+            /* enable the apply button  */
+            SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
             break;
         }
 
@@ -549,6 +562,8 @@ static void on_edit_changed(HWND dialog, WORD id)
 
             WINE_TRACE("set serial to %s", current_drive->serial);
 
+            /* enable the apply button  */
+            SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
             break;
         }
 
@@ -557,7 +572,6 @@ static void on_edit_changed(HWND dialog, WORD id)
             char *device = get_text(dialog, id);
             /* TODO: handle device if/when it makes sense to do so.... */
             HeapFree(GetProcessHeap(), 0, device);
-            fill_drives_list(dialog);
             break;
         }
     }
