@@ -615,7 +615,11 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 
     if (!device || !DRIVER_GetDriverName( device, buf, 300 ))
     {
-        if (!driver) return 0;
+        if (!driver)
+        {
+            ERR( "no device found for %s\n", debugstr_w(device) );
+            return 0;
+        }
         strcpyW(buf, driver);
     }
 
