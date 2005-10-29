@@ -663,8 +663,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     /* Pass 1 */
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        if (!ACTION_VerifyComponentForAction(package, file->Component, 
-                                       INSTALLSTATE_LOCAL))
+        if (!ACTION_VerifyComponentForAction( file->Component, INSTALLSTATE_LOCAL ))
         {
             ui_progress(package,2,file->FileSize,0,0);
             TRACE("File %s is not scheduled for install\n",
@@ -762,7 +761,7 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
     component = MSI_RecordGetString(row,2);
     comp = get_loaded_component(package,component);
 
-    if (!ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_LOCAL))
+    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL ))
     {
         TRACE("Skipping copy due to disabled component %s\n",
                         debugstr_w(component));
@@ -837,7 +836,8 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
         rc = ERROR_SUCCESS;
 
     if (rc != ERROR_SUCCESS)
-        ERR("Failed to copy file %s -> %s, last error %ld\n", debugstr_w(file_source), debugstr_w(dest_path), GetLastError());
+        ERR("Failed to copy file %s -> %s, last error %ld\n",
+            debugstr_w(file_source), debugstr_w(dest_path), GetLastError());
 
     FIXME("We should track these duplicate files as well\n");   
 

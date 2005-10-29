@@ -1081,7 +1081,7 @@ UINT msi_create_component_directories( MSIPACKAGE *package )
     /* create all the folders required by the components are going to install */
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
-        if (!ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_LOCAL))
+        if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
             continue;
         msi_create_directory( package, comp->Directory );
     }
@@ -2101,7 +2101,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_LOCAL))
+    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
     {
         TRACE("Skipping write due to disabled component %s\n",
                         debugstr_w(component));
@@ -2593,8 +2593,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             * Write the keypath out if the component is to be registered
             * and delete the key if the component is to be deregistered
             */
-            if (ACTION_VerifyComponentForAction(package, comp,
-                                    INSTALLSTATE_LOCAL))
+            if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
             {
                 rc = RegCreateKeyW(hkey,squished_cc,&hkey2);
                 if (rc != ERROR_SUCCESS)
@@ -2625,8 +2624,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                     msiobj_release( &uirow->hdr );
                }
             }
-            else if (ACTION_VerifyComponentForAction(package, comp,
-                                    INSTALLSTATE_ABSENT))
+            else if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ABSENT))
             {
                 DWORD res;
 
@@ -2731,7 +2729,7 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_LOCAL))
+    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
     {
         TRACE("Skipping typelib reg due to disabled component\n");
 
@@ -2841,7 +2839,7 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_LOCAL))
+    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL ))
     {
         TRACE("Skipping shortcut creation due to disabled component\n");
 
@@ -3166,7 +3164,7 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
     component = MSI_RecordGetString(row, 8);
     comp = get_loaded_component(package,component);
 
-    if (!ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_LOCAL))
+    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
     {
         TRACE("Skipping ini file due to disabled component %s\n",
                         debugstr_w(component));
@@ -3982,8 +3980,7 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
     }
 
     /* check to make sure that component is installed */
-    if (!ACTION_VerifyComponentForAction(package, 
-                file->Component, INSTALLSTATE_LOCAL))
+    if (!ACTION_VerifyComponentForAction( file->Component, INSTALLSTATE_LOCAL))
     {
         TRACE("Skipping: Component not scheduled for install\n");
         return ERROR_SUCCESS;
@@ -4048,9 +4045,9 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
     component = MSI_RecordGetString(rec,3);
     comp = get_loaded_component(package,component);
 
-    if (!ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_LOCAL) && 
-       !ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_SOURCE) &&
-       !ACTION_VerifyComponentForAction(package, comp, INSTALLSTATE_ADVERTISED))
+    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL ) && 
+       !ACTION_VerifyComponentForAction( comp, INSTALLSTATE_SOURCE ) &&
+       !ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ADVERTISED ))
     {
         TRACE("Skipping: Component %s not scheduled for install\n",
                         debugstr_w(component));

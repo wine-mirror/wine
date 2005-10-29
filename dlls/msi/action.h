@@ -264,7 +264,7 @@ extern LPWSTR build_icon_path(MSIPACKAGE *, LPCWSTR);
 extern DWORD build_version_dword(LPCWSTR);
 extern LPWSTR build_directory_name(DWORD , ...);
 extern BOOL create_full_pathW(const WCHAR *path);
-extern BOOL ACTION_VerifyComponentForAction(MSIPACKAGE*, MSICOMPONENT*, INSTALLSTATE);
+extern BOOL ACTION_VerifyComponentForAction(MSICOMPONENT*, INSTALLSTATE);
 extern BOOL ACTION_VerifyFeatureForAction(MSIFEATURE*, INSTALLSTATE);
 extern void reduce_to_longfilename(WCHAR*);
 extern void reduce_to_shortfilename(WCHAR*);
