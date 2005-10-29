@@ -1376,24 +1376,51 @@ HRESULT WINAPI DllCanUnloadNow(void)
     return S_FALSE;
 }
 
-UINT WINAPI MsiGetFeatureUsageW(LPCWSTR szProduct, LPCWSTR szFeature,
-                                DWORD* pdwUseCount, WORD* pwDateUsed)
+/***********************************************************************
+ * MsiGetFeatureUsageW           [MSI.@]
+ */
+UINT WINAPI MsiGetFeatureUsageW( LPCWSTR szProduct, LPCWSTR szFeature,
+                                 DWORD* pdwUseCount, WORD* pwDateUsed )
 {
     FIXME("%s %s %p %p\n",debugstr_w(szProduct), debugstr_w(szFeature),
           pdwUseCount, pwDateUsed);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiGetFeatureUsageA(LPCSTR szProduct, LPCSTR szFeature,
-                                DWORD* pdwUseCount, WORD* pwDateUsed)
+/***********************************************************************
+ * MsiGetFeatureUsageA           [MSI.@]
+ */
+UINT WINAPI MsiGetFeatureUsageA( LPCSTR szProduct, LPCSTR szFeature,
+                                 DWORD* pdwUseCount, WORD* pwDateUsed )
 {
-    FIXME("%s %s %p %p\n", debugstr_a(szProduct), debugstr_a(szFeature),
+    LPWSTR prod = NULL, feat = NULL;
+    UINT ret = ERROR_OUTOFMEMORY;
+
+    TRACE("%s %s %p %p\n", debugstr_a(szProduct), debugstr_a(szFeature),
           pdwUseCount, pwDateUsed);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    prod = strdupAtoW( szProduct );
+    if (szProduct && !prod)
+        goto end;
+
+    feat = strdupAtoW( szFeature );
+    if (szFeature && !feat)
+        goto end;
+
+    ret = MsiGetFeatureUsageW( prod, feat, pdwUseCount, pwDateUsed );
+
+end:
+    msi_free( prod );
+    msi_free( feat );
+
+    return ret;
 }
 
-INSTALLSTATE WINAPI MsiUseFeatureExW(LPCWSTR szProduct, LPCWSTR szFeature,
-                             DWORD dwInstallMode, DWORD dwReserved)
+/***********************************************************************
+ * MsiUseFeatureExW           [MSI.@]
+ */
+INSTALLSTATE WINAPI MsiUseFeatureExW( LPCWSTR szProduct, LPCWSTR szFeature,
+                                      DWORD dwInstallMode, DWORD dwReserved )
 {
     FIXME("%s %s %li %li\n", debugstr_w(szProduct), debugstr_w(szFeature),
           dwInstallMode, dwReserved);
@@ -1412,27 +1439,61 @@ INSTALLSTATE WINAPI MsiUseFeatureExW(LPCWSTR szProduct, LPCWSTR szFeature,
 /***********************************************************************
  * MsiUseFeatureExA           [MSI.@]
  */
-INSTALLSTATE WINAPI MsiUseFeatureExA(LPCSTR szProduct, LPCSTR szFeature,
-                             DWORD dwInstallMode, DWORD dwReserved)
+INSTALLSTATE WINAPI MsiUseFeatureExA( LPCSTR szProduct, LPCSTR szFeature,
+                                      DWORD dwInstallMode, DWORD dwReserved )
 {
-    FIXME("%s %s %li %li\n", debugstr_a(szProduct), debugstr_a(szFeature),
+    INSTALLSTATE ret = INSTALLSTATE_UNKNOWN;
+    LPWSTR prod = NULL, feat = NULL;
+
+    TRACE("%s %s %li %li\n", debugstr_a(szProduct), debugstr_a(szFeature),
           dwInstallMode, dwReserved);
 
-    return INSTALLSTATE_LOCAL;
+    prod = strdupAtoW( szProduct );
+    if (szProduct && !prod)
+        goto end;
+
+    feat = strdupAtoW( szFeature );
+    if (szFeature && !feat)
+        goto end;
+
+    ret = MsiUseFeatureExW( prod, feat, dwInstallMode, dwReserved );
+
+end:
+    msi_free( prod );
+    msi_free( feat );
+
+    return ret;
 }
 
-INSTALLSTATE WINAPI MsiUseFeatureW(LPCWSTR szProduct, LPCWSTR szFeature)
+INSTALLSTATE WINAPI MsiUseFeatureW( LPCWSTR szProduct, LPCWSTR szFeature )
 {
     FIXME("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
 
     return INSTALLSTATE_LOCAL;
 }
 
-INSTALLSTATE WINAPI MsiUseFeatureA(LPCSTR szProduct, LPCSTR szFeature)
+INSTALLSTATE WINAPI MsiUseFeatureA( LPCSTR szProduct, LPCSTR szFeature )
 {
-    FIXME("%s %s\n", debugstr_a(szProduct), debugstr_a(szFeature));
+    INSTALLSTATE ret = INSTALLSTATE_UNKNOWN;
+    LPWSTR prod = NULL, feat = NULL;
 
-    return INSTALLSTATE_LOCAL;
+    TRACE("%s %s\n", debugstr_a(szProduct), debugstr_a(szFeature) );
+
+    prod = strdupAtoW( szProduct );
+    if (szProduct && !prod)
+        goto end;
+
+    feat = strdupAtoW( szFeature );
+    if (szFeature && !feat)
+        goto end;
+
+    ret = MsiUseFeatureW( prod, feat );
+
+end:
+    msi_free( prod );
+    msi_free( feat );
+
+    return ret;
 }
 
 UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
