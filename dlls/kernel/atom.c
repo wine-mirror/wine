@@ -18,13 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/*
- * Warning: The code assumes that LocalAlloc() returns a block aligned
- * on a 4-bytes boundary (because of the shifting done in
- * HANDLETOATOM).  If this is not the case, the allocation code will
- * have to be changed.
- */
-
 #include "config.h"
 #include "wine/port.h"
 
@@ -37,6 +30,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winreg.h"
+#include "winternl.h"
 
 #include "wine/exception.h"
 #include "excpt.h"
@@ -58,82 +53,28 @@ static WINE_EXCEPTION_FILTER(page_fault)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-static struct atom_table* get_local_table(DWORD entries)
+/******************************************************************
+ *		get_local_table
+ *
+ * Returns the local atom table for this process (and create it if doesn't
+ * exist yet)
+ */
+static RTL_ATOM_TABLE get_local_table(DWORD entries)
 {
-    static struct atom_table*   local_table;
+    static RTL_ATOM_TABLE local_table;
 
     if (!local_table)
     {
-        NTSTATUS                status;
-        struct atom_table*      table;
+        NTSTATUS        status;
+        RTL_ATOM_TABLE  table = NULL;
 
-        SERVER_START_REQ( init_atom_table )
-        {
-            req->entries = entries;
-            status = wine_server_call( req );
-            table = reply->table;
-        }
-        SERVER_END_REQ;
-
-        if (status)
+        if ((status = RtlCreateAtomTable( entries, &table )))
             SetLastError( RtlNtStatusToDosError( status ) );
         else if (InterlockedCompareExchangePointer((void*)&local_table, table, NULL) != NULL)
-            NtClose((HANDLE)table);
+            RtlDestroyAtomTable( table );
     }
+
     return local_table;
-}
-
-/***********************************************************************
- *           ATOM_IsIntAtomA
- */
-static BOOL ATOM_IsIntAtomA(LPCSTR atomstr,WORD *atomid)
-{
-    UINT atom = 0;
-    if (!HIWORD(atomstr)) atom = LOWORD(atomstr);
-    else
-    {
-        if (*atomstr++ != '#') return FALSE;
-        while (*atomstr >= '0' && *atomstr <= '9')
-        {
-            atom = atom * 10 + *atomstr - '0';
-            atomstr++;
-        }
-        if (*atomstr) return FALSE;
-    }
-    if (atom >= MAXINTATOM)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        atom = 0;
-    }
-    *atomid = atom;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           ATOM_IsIntAtomW
- */
-static BOOL ATOM_IsIntAtomW(LPCWSTR atomstr,WORD *atomid)
-{
-    UINT atom = 0;
-    if (!HIWORD(atomstr)) atom = LOWORD(atomstr);
-    else
-    {
-        if (*atomstr++ != '#') return FALSE;
-        while (*atomstr >= '0' && *atomstr <= '9')
-        {
-            atom = atom * 10 + *atomstr - '0';
-            atomstr++;
-        }
-        if (*atomstr) return FALSE;
-    }
-    if (atom >= MAXINTATOM)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        atom = 0;
-    }
-    *atomid = atom;
-    return TRUE;
 }
 
 
@@ -154,32 +95,22 @@ BOOL WINAPI InitAtomTable( DWORD entries )
     return get_local_table( entries ) ? TRUE : FALSE;
 }
 
-
-static ATOM ATOM_AddAtomA( LPCSTR str, struct atom_table* table )
+/******************************************************************
+ *		check_integral_atom
+ *
+ * Check if a string (ANSI or UNICODE) is in fact an integral atom
+ * (but doesn't check the "#1234" form)
+ */
+static inline BOOL check_integral_atom( const void* ptr, ATOM* patom)
 {
-    ATOM atom = 0;
-    if (!ATOM_IsIntAtomA( str, &atom ))
+    if (HIWORD( ptr )) return FALSE;
+    if ((*patom = LOWORD( ptr )) >= MAXINTATOM)
     {
-        WCHAR buffer[MAX_ATOM_LEN];
-
-        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), buffer, MAX_ATOM_LEN );
-        if (!len)
-        {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            return 0;
-        }
-        SERVER_START_REQ( add_atom )
-        {
-            wine_server_add_data( req, buffer, len * sizeof(WCHAR) );
-            req->table = table;
-            if (!wine_server_call_err(req)) atom = reply->atom;
-        }
-        SERVER_END_REQ;
+        SetLastError( ERROR_INVALID_PARAMETER );
+        *patom = 0;
     }
-    TRACE( "(%s) %s -> %x\n", table ? "local" : "global", debugstr_a(str), atom );
-    return atom;
+    return TRUE;
 }
-
 
 /***********************************************************************
  *           GlobalAddAtomA   (KERNEL32.@)
@@ -193,18 +124,32 @@ static ATOM ATOM_AddAtomA( LPCSTR str, struct atom_table* table )
  */
 ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] String to add */ )
 {
-    ATOM ret;
+    ATOM atom = 0;
     __TRY
     {
-        ret = ATOM_AddAtomA( str, NULL );
+        if (!check_integral_atom( str, &atom ))
+	{
+	    WCHAR buffer[MAX_ATOM_LEN];
+	    DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), buffer, MAX_ATOM_LEN );
+	    if (!len) SetLastError( ERROR_INVALID_PARAMETER );
+	    else
+	    {
+	        NTSTATUS status = NtAddAtom( buffer, len * sizeof(WCHAR), &atom );
+		if (status)
+		{
+		    SetLastError( RtlNtStatusToDosError( status ) );
+		    atom = 0;
+		}
+	    }
+	}
     }
     __EXCEPT(page_fault)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
+        atom = 0;
     }
     __ENDTRY
-    return ret;
+    return atom;
 }
 
 
@@ -220,33 +165,28 @@ ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] String to add */ )
  */
 ATOM WINAPI AddAtomA( LPCSTR str /* [in] String to add */ )
 {
-    return ATOM_AddAtomA( str, get_local_table(0) );
-}
-
-
-static ATOM ATOM_AddAtomW( LPCWSTR str, struct atom_table* table )
-{
     ATOM atom = 0;
-    if (!ATOM_IsIntAtomW( str, &atom ))
+
+    if (!check_integral_atom( str, &atom ))
     {
-        DWORD len = strlenW(str);
-        if (len > MAX_ATOM_LEN)
+        WCHAR           buffer[MAX_ATOM_LEN + 1];
+        DWORD           len;
+        RTL_ATOM_TABLE  table;
+
+        len = MultiByteToWideChar( CP_ACP, 0, str, -1, buffer, MAX_ATOM_LEN + 1 );
+        if (!len) SetLastError( ERROR_INVALID_PARAMETER );
+        else if ((table = get_local_table( 0 )))
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            return 0;
+            NTSTATUS status = RtlAddAtomToAtomTable( table, buffer, &atom );
+            if (status)
+            {
+                SetLastError( RtlNtStatusToDosError( status ) );
+                atom = 0;
+            }
         }
-        SERVER_START_REQ( add_atom )
-        {
-            req->table = table;
-            wine_server_add_data( req, str, len * sizeof(WCHAR) );
-            if (!wine_server_call_err(req)) atom = reply->atom;
-        }
-        SERVER_END_REQ;
     }
-    TRACE( "(%s) %s -> %x\n", table ? "local" : "global", debugstr_w(str), atom );
     return atom;
 }
-
 
 /***********************************************************************
  *           GlobalAddAtomW   (KERNEL32.@)
@@ -255,7 +195,16 @@ static ATOM ATOM_AddAtomW( LPCWSTR str, struct atom_table* table )
  */
 ATOM WINAPI GlobalAddAtomW( LPCWSTR str )
 {
-    return ATOM_AddAtomW( str, NULL );
+    ATOM        atom = 0;
+    NTSTATUS    status;
+
+    if (!check_integral_atom( str, &atom ) && 
+        (status = NtAddAtom( str, strlenW( str ) * sizeof(WCHAR), &atom )))
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        atom = 0;
+    }
+    return atom;
 }
 
 
@@ -266,24 +215,19 @@ ATOM WINAPI GlobalAddAtomW( LPCWSTR str )
  */
 ATOM WINAPI AddAtomW( LPCWSTR str )
 {
-    return ATOM_AddAtomW( str, get_local_table(0) );
-}
+    ATOM                atom = 0;
+    RTL_ATOM_TABLE      table;
 
-
-static ATOM ATOM_DeleteAtom( ATOM atom, struct atom_table* table )
-{
-    TRACE( "(%s) %x\n", table ? "local" : "global", atom );
-    if (atom >= MAXINTATOM)
+    if (!check_integral_atom( str, &atom ) && (table = get_local_table( 0 )))
     {
-        SERVER_START_REQ( delete_atom )
+        NTSTATUS status = RtlAddAtomToAtomTable( table, str, &atom );
+        if (status)
         {
-            req->atom = atom;
-            req->table = table;
-            wine_server_call_err( req );
+            SetLastError( RtlNtStatusToDosError( status ) );
+            atom = 0;
         }
-        SERVER_END_REQ;
     }
-    return 0;
+    return atom;
 }
 
 
@@ -299,7 +243,16 @@ static ATOM ATOM_DeleteAtom( ATOM atom, struct atom_table* table )
  */
 ATOM WINAPI GlobalDeleteAtom( ATOM atom /* [in] Atom to delete */ )
 {
-    return ATOM_DeleteAtom( atom, NULL);
+    if (atom >= MAXINTATOM)
+    {
+        NTSTATUS status = NtDeleteAtom( atom );
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError( status ) );
+            return atom;
+        }
+    }
+    return 0;
 }
 
 
@@ -315,33 +268,20 @@ ATOM WINAPI GlobalDeleteAtom( ATOM atom /* [in] Atom to delete */ )
  */
 ATOM WINAPI DeleteAtom( ATOM atom /* [in] Atom to delete */ )
 {
-    return ATOM_DeleteAtom( atom, get_local_table(0) );
-}
+    NTSTATUS            status;
+    RTL_ATOM_TABLE      table;
 
-
-static ATOM ATOM_FindAtomA( LPCSTR str, struct atom_table* table )
-{
-    ATOM atom = 0;
-    if (!ATOM_IsIntAtomA( str, &atom ))
+    if (atom >= MAXINTATOM)
     {
-        WCHAR buffer[MAX_ATOM_LEN];
-
-        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), buffer, MAX_ATOM_LEN );
-        if (!len)
+        if (!(table = get_local_table( 0 ))) return atom;
+        status = RtlDeleteAtomFromAtomTable( table, atom );
+        if (status)
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            return 0;
+            SetLastError( RtlNtStatusToDosError( status ) );
+            return atom;
         }
-        SERVER_START_REQ( find_atom )
-        {
-            req->table = table;
-            wine_server_add_data( req, buffer, len * sizeof(WCHAR) );
-            if (!wine_server_call_err(req)) atom = reply->atom;
-        }
-        SERVER_END_REQ;
     }
-    TRACE( "(%s) %s -> %x\n", table ? "local" : "global", debugstr_a(str), atom );
-    return atom;
+    return 0;
 }
 
 
@@ -356,7 +296,25 @@ static ATOM ATOM_FindAtomA( LPCSTR str, struct atom_table* table )
  */
 ATOM WINAPI GlobalFindAtomA( LPCSTR str /* [in] Pointer to string to search for */ )
 {
-    return ATOM_FindAtomA( str, NULL );
+    ATOM atom = 0;
+
+    if (!check_integral_atom( str, &atom ))
+    {
+        WCHAR buffer[MAX_ATOM_LEN];
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), buffer, MAX_ATOM_LEN );
+
+        if (!len) SetLastError( ERROR_INVALID_PARAMETER );
+        else
+        {
+            NTSTATUS status = NtFindAtom( buffer, len * sizeof(WCHAR), &atom );
+            if (status)
+            {
+                SetLastError( RtlNtStatusToDosError( status ) );
+                atom = 0;
+            }
+        }
+    }
+    return atom;
 }
 
 /***********************************************************************
@@ -370,30 +328,26 @@ ATOM WINAPI GlobalFindAtomA( LPCSTR str /* [in] Pointer to string to search for 
  */
 ATOM WINAPI FindAtomA( LPCSTR str /* [in] Pointer to string to find */ )
 {
-    return ATOM_FindAtomA( str, get_local_table(0) );
-}
-
-
-static ATOM ATOM_FindAtomW( LPCWSTR str, struct atom_table* table )
-{
     ATOM atom = 0;
-    if (!ATOM_IsIntAtomW( str, &atom ))
+
+    if (!check_integral_atom( str, &atom ))
     {
-        DWORD len = strlenW(str);
-        if (len > MAX_ATOM_LEN)
+        WCHAR           buffer[MAX_ATOM_LEN + 1];
+        DWORD           len;
+        RTL_ATOM_TABLE  table;
+
+        len = MultiByteToWideChar( CP_ACP, 0, str, -1, buffer, MAX_ATOM_LEN + 1 );
+        if (!len) SetLastError( ERROR_INVALID_PARAMETER );
+        else if ((table = get_local_table( 0 )))
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            return 0;
+            NTSTATUS status = RtlLookupAtomInAtomTable( table, buffer, &atom );
+            if (status)
+            {
+                SetLastError( RtlNtStatusToDosError( status ) );
+                atom = 0;
+            }
         }
-        SERVER_START_REQ( find_atom )
-        {
-            wine_server_add_data( req, str, len * sizeof(WCHAR) );
-            req->table = table;
-            if (!wine_server_call_err( req )) atom = reply->atom;
-        }
-        SERVER_END_REQ;
     }
-    TRACE( "(%s) %s -> %x\n", table ? "local" : "global", debugstr_w(str), atom );
     return atom;
 }
 
@@ -405,7 +359,18 @@ static ATOM ATOM_FindAtomW( LPCWSTR str, struct atom_table* table )
  */
 ATOM WINAPI GlobalFindAtomW( LPCWSTR str )
 {
-    return ATOM_FindAtomW( str, NULL );
+    ATOM atom = 0;
+
+    if (!check_integral_atom( str, &atom ))
+    {
+        NTSTATUS status = NtFindAtom( str, strlenW( str ) * sizeof(WCHAR), &atom );
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError( status ) );
+            atom = 0;
+        }
+    }
+    return atom;
 }
 
 
@@ -416,7 +381,20 @@ ATOM WINAPI GlobalFindAtomW( LPCWSTR str )
  */
 ATOM WINAPI FindAtomW( LPCWSTR str )
 {
-    return ATOM_FindAtomW( str, get_local_table(0) );
+    ATOM                atom = 0;
+    NTSTATUS            status;
+    RTL_ATOM_TABLE      table;
+
+    if ((table = get_local_table( 0 )))
+    {
+        status = RtlLookupAtomInAtomTable( table, str, &atom );
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError( status ) );
+            atom = 0;
+        }
+    }
+    return atom;
 }
 
 
