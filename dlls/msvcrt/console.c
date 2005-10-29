@@ -156,19 +156,36 @@ int _getche(void)
 char* _cgets(char* str)
 {
   char *buf = str + 2;
-  int c;
+  DWORD got;
+  DWORD conmode = 0;
+
+  TRACE("(%p)\n", str);
   str[1] = 0; /* Length */
-  /* FIXME: No editing of string supported */
   LOCK_CONSOLE;
-  do
-  {
-    if (str[1] >= str[0] || (str[1]++, c = _getche()) == MSVCRT_EOF || c == '\n')
-      break;
-    *buf++ = c & 0xff;
-  } while (1);
+  GetConsoleMode(MSVCRT_console_in, &conmode);
+  SetConsoleMode(MSVCRT_console_in, ENABLE_LINE_INPUT|ENABLE_ECHO_INPUT|ENABLE_PROCESSED_INPUT);
+
+  if(ReadConsoleA(MSVCRT_console_in, buf, str[0], &got, NULL)) {
+    if(buf[got-2] == '\r') {
+      buf[got-2] = 0;
+      str[1] = got-2;
+    }
+    else if(got == 1 && buf[got-1] == '\n') {
+      buf[0] = 0;
+      str[1] = 0;
+    }
+    else if(got == str[0] && buf[got-1] == '\r') {
+      buf[got-1] = 0;
+      str[1] = got-1;
+    }
+    else
+      str[1] = got;
+  }
+  else
+    buf = NULL;
+  SetConsoleMode(MSVCRT_console_in, conmode);
   UNLOCK_CONSOLE;
-  *buf = '\0';
-  return str + 2;
+  return buf;
 }
 
 /*********************************************************************
