@@ -549,6 +549,10 @@ typedef struct IWineD3DDeviceImpl
 
     /* A flag to check if endscene has been called before changing the render tartet */
     BOOL sceneEnded;
+
+    /* process vertex shaders using software or hardware */
+    BOOL softwareVertexProcessing;
+    
 } IWineD3DDeviceImpl;
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
@@ -911,8 +915,6 @@ struct IWineD3DStateBlockImpl
     INT                        vertexShaderConstantI[MAX_VSHADER_CONSTANTS * 4];
     float                      vertexShaderConstantF[MAX_VSHADER_CONSTANTS * 4];
     WINESHADERCNST             vertexShaderConstantT[MAX_VSHADER_CONSTANTS]; /* TODO: Think about changing this to a char to possibly save a little memory */
-
-    BOOL                       softwareVertexProcessing;
 
     /* Stream Source */
     BOOL                      streamIsUP;

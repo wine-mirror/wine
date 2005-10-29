@@ -5008,7 +5008,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetSoftwareVertexProcessing(IWineD3DDevice *
         showFixmes = FALSE;
     }
 
-    This->updateStateBlock->softwareVertexProcessing = bSoftware;
+    This->softwareVertexProcessing = bSoftware;
     return D3D_OK;
 }
 
@@ -5020,7 +5020,7 @@ BOOL     WINAPI  IWineD3DDeviceImpl_GetSoftwareVertexProcessing(IWineD3DDevice *
         FIXME("(%p) : stub\n", This);
         showFixmes = FALSE;
     }
-    return This->updateStateBlock->softwareVertexProcessing;
+    return This->softwareVertexProcessing;
 }
 
 
