@@ -979,6 +979,7 @@ typedef struct tagITypeInfoImpl
      */
     BSTR Name;
     BSTR DocString;
+    BSTR DllName;
     unsigned long  dwHelpContext;
     unsigned long  dwHelpStringContext;
 
@@ -1275,6 +1276,7 @@ static void dump_TypeInfo(ITypeInfoImpl * pty)
       pty->TypeAttr.cFuncs, pty->TypeAttr.cVars, pty->TypeAttr.cImplTypes);
     TRACE("parent tlb:%p index in TLB:%u\n",pty->pTypeLib, pty->index);
     TRACE("%s %s\n", debugstr_w(pty->Name), debugstr_w(pty->DocString));
+    if (pty->TypeAttr.typekind == TKIND_MODULE) TRACE("dllname:%s\n", debugstr_w(pty->DllName));
     dump_TLBFuncDesc(pty->funclist);
     dump_TLBVarDesc(pty->varlist);
     dump_TLBImplType(pty->impltypelist);
@@ -1437,6 +1439,11 @@ static BSTR MSFT_ReadName( TLBContext *pcx, int offset)
     WCHAR* pwstring = NULL;
     BSTR bstrName = NULL;
 
+    if (offset < 0)
+    {
+        ERR_(typelib)("bad offset %d\n", offset);
+        return NULL;
+    }
     MSFT_ReadLEDWords(&niName, sizeof(niName), pcx,
 		      pcx->pTblDir->pNametab.offset+offset);
     niName.namelen &= 0xFF; /* FIXME: correct ? */
@@ -1765,7 +1772,16 @@ MSFT_DoFuncs(TLBContext*     pcx,
 
                 (*pptfd)->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags = paraminfo.Flags;
 
-                (*pptfd)->pParamDesc[j].Name = (void *) paraminfo.oName;
+                /* name */
+                if (paraminfo.oName == -1)
+                    /* this occurs for [propput] or [propget] methods, so
+                     * we should just set the name of the parameter to the
+                     * name of the method. */
+                    (*pptfd)->pParamDesc[j].Name = SysAllocString((*pptfd)->Name);
+                else
+                    (*pptfd)->pParamDesc[j].Name =
+                        MSFT_ReadName( pcx, paraminfo.oName );
+                TRACE_(typelib)("param[%d] = %s\n", j, debugstr_w((*pptfd)->pParamDesc[j].Name));
 
                 /* SEEK value = jump to offset,
                  * from there jump to the end of record,
@@ -1844,10 +1860,6 @@ MSFT_DoFuncs(TLBContext*     pcx,
             /* second time around */
             for(j=0;j<pFuncRec->nrargs;j++)
             {
-                /* name */
-                (*pptfd)->pParamDesc[j].Name =
-                    MSFT_ReadName( pcx, (int)(*pptfd)->pParamDesc[j].Name );
-
                 /* default value */
                 if ( (PARAMFLAG_FHASDEFAULT &
                       (*pptfd)->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags) &&
@@ -2029,6 +2041,7 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
     ptiRet = (ITypeInfoImpl*) ITypeInfo_Constructor();
     MSFT_ReadLEDWords(&tiBase, sizeof(tiBase) ,pcx ,
                       pcx->pTblDir->pTypeInfoTab.offset+count*sizeof(tiBase));
+
 /* this is where we are coming from */
     ptiRet->pTypeLib = pLibInfo;
     ptiRet->index=count;
@@ -2064,6 +2077,10 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
     ptiRet->DocString=MSFT_ReadString(pcx, tiBase.docstringoffs);
     ptiRet->dwHelpStringContext=tiBase.helpstringcontext;
     ptiRet->dwHelpContext=tiBase.helpcontext;
+
+    if (ptiRet->TypeAttr.typekind == TKIND_MODULE)
+        ptiRet->DllName = MSFT_ReadString(pcx, tiBase.datatype1);
+
 /* note: InfoType's Help file and HelpStringDll come from the containing
  * library. Further HelpString and Docstring appear to be the same thing :(
  */
@@ -4160,6 +4177,12 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
           This->DocString = 0;
       }
 
+      if (This->DllName)
+      {
+          SysFreeString(This->DllName);
+          This->DllName = 0;
+      }
+
       if (This->next)
       {
         ITypeInfo_Release((ITypeInfo*)This->next);
@@ -5171,18 +5194,22 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBFuncDesc *pFDesc;
 
-    FIXME("(%p, memid %lx, %d, %p, %p, %p), partial stub!\n", This, memid, invKind, pBstrDllName, pBstrName, pwOrdinal);
+    TRACE("(%p)->(memid %lx, %d, %p, %p, %p)\n", This, memid, invKind, pBstrDllName, pBstrName, pwOrdinal);
+
+    if (pBstrDllName) *pBstrDllName = NULL;
+    if (pBstrName) *pBstrName = NULL;
+    if (pwOrdinal) *pwOrdinal = 0;
+
+    if (This->TypeAttr.typekind != TKIND_MODULE)
+        return TYPE_E_BADMODULEKIND;
 
     for(pFDesc=This->funclist; pFDesc; pFDesc=pFDesc->next)
         if(pFDesc->funcdesc.memid==memid){
 	    dump_TypeInfo(This);
 	    dump_TLBFuncDescOne(pFDesc);
 
-	    /* FIXME: This is wrong, but how do you find that out? */
-	    if (pBstrDllName) {
-		static const WCHAR oleaut32W[] = {'O','L','E','A','U','T','3','2','.','D','L','L',0};
-		*pBstrDllName = SysAllocString(oleaut32W);
-	    }
+	    if (pBstrDllName)
+		*pBstrDllName = SysAllocString(This->DllName);
 
 	    if (HIWORD(pFDesc->Entry) && (pFDesc->Entry != (void*)-1)) {
 		if (pBstrName)
@@ -5197,7 +5224,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
 		*pwOrdinal = (DWORD)pFDesc->Entry;
 	    return S_OK;
         }
-    return E_FAIL;
+    return TYPE_E_ELEMENTNOTFOUND;
 }
 
 /* ITypeInfo::GetRefTypeInfo
