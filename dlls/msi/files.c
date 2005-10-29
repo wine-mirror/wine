@@ -674,6 +674,14 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         }
     }
 
+    /*
+     * Despite MSDN specifying that the CreateFolders action
+     * should be called before InstallFiles, some installers don't
+     * do that, and they seem to work correctly.  We need to create
+     * directories here to make sure that the files can be copied.
+     */
+    msi_create_component_directories( package );
+
     mi = create_media_info();
 
     /* Pass 2 */

@@ -273,6 +273,7 @@ extern void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
 extern UINT register_unique_action(MSIPACKAGE *, LPCWSTR);
 extern BOOL check_unique_action(MSIPACKAGE *, LPCWSTR);
 extern WCHAR* generate_error_string(MSIPACKAGE *, UINT, DWORD, ... );
+extern UINT msi_create_component_directories( MSIPACKAGE *package );
 
 
 /* control event stuff */
