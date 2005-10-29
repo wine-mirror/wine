@@ -1260,80 +1260,16 @@ static UINT TABLE_get_column_info( struct tagMSIVIEW *view,
     return ERROR_SUCCESS;
 }
 
-static UINT table_find_in_column( MSITABLEVIEW *tv, UINT col, UINT val, UINT *row )
-{
-    UINT i, r, x;
-
-    for( i=0; i<tv->table->row_count; i++ )
-    {
-        r = TABLE_fetch_int( (struct tagMSIVIEW*) tv, i, col, &x );
-        if ( r != ERROR_SUCCESS )
-        {
-            ERR("TABLE_fetch_int shouldn't fail here\n");
-            break;
-        }
-        if ( x == val )
-        {
-            *row = i;
-            return ERROR_SUCCESS;
-        }
-    }
-    return ERROR_FUNCTION_FAILED;
-}
+static UINT msi_table_find_row( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *row );
 
 static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
 {
-    LPCWSTR str;
-    UINT i, val, r, row;
-    BOOL has_key = FALSE;
+    UINT r, row;
 
-    /* FIXME: set the MsiViewGetError value */
-
-    for( i = 0; i<tv->num_cols; i++ )
-    {
-        /* check for duplicate keys */
-        if( !( tv->columns[i].type & MSITYPE_KEY ) )
-            continue;
-
-        has_key = TRUE;
-
-        TRACE("column %d (%s.%s)is a key\n", i,
-             debugstr_w(tv->columns[i].tablename),
-             debugstr_w(tv->columns[i].colname) );
-
-        val = 0;
-        if( (tv->columns[i].type & MSITYPE_STRING ) &&
-            (tv->columns[i].type & 0xff ) )
-        {
-             /* keys can't be null */
-             str = MSI_RecordGetString( rec, i+1 );
-             if( !str )
-                 return ERROR_INVALID_DATA;
-
-             /* if the string doesn't exist in the string table yet, it's OK */
-             r = msi_string2idW( tv->db->strings, str, &val );
-             if( ERROR_SUCCESS != r )
-                 return ERROR_SUCCESS;
-        }
-        else
-        {
-            val = MSI_RecordGetInteger( rec, i+1 );
-            val ^= 0x8000;
-        }
-
-        /* if we find the same value in the table, it's a duplicate */
-        row = 0;
-        r = table_find_in_column( tv, i+1, val, &row );
-        if( ERROR_SUCCESS != r )
-            return ERROR_SUCCESS;
-
-        TRACE("found in row %d\n", row );
-    }
-
-    if (has_key)
-        return ERROR_INVALID_DATA;
-
-    return ERROR_SUCCESS;
+    r = msi_table_find_row( tv, rec, &row );
+    if (r != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+    return ERROR_INVALID_DATA;
 }
 
 static UINT msi_table_modify_row( MSITABLEVIEW *tv, MSIRECORD *rec,
