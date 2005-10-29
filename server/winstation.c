@@ -93,7 +93,8 @@ static struct winstation *create_winstation( const WCHAR *name, size_t len, unsi
         return NULL;
     }
 
-    if ((winstation = create_named_object( winstation_namespace, &winstation_ops, name, len )))
+    if ((winstation = create_named_object( winstation_namespace, &winstation_ops, name, len,
+                                           OBJ_CASE_INSENSITIVE )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -182,7 +183,8 @@ static struct desktop *create_desktop( const WCHAR *name, size_t len, unsigned i
 
     if (!(full_name = build_desktop_name( name, len, winstation, &full_len ))) return NULL;
 
-    if ((desktop = create_named_object( winstation_namespace, &desktop_ops, full_name, full_len )))
+    if ((desktop = create_named_object( winstation_namespace, &desktop_ops, full_name, full_len,
+                                        OBJ_CASE_INSENSITIVE )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -323,7 +325,8 @@ DECL_HANDLER(open_winstation)
 {
     if (winstation_namespace)
         reply->handle = open_object( winstation_namespace, get_req_data(), get_req_data_size(),
-                                     &winstation_ops, req->access, (req->inherit) ? OBJ_INHERIT:0 );
+                                     &winstation_ops, req->access,
+                                     OBJ_CASE_INSENSITIVE | (req->inherit ? OBJ_INHERIT:0) );
     else
         set_error( STATUS_OBJECT_NAME_NOT_FOUND );
 }
@@ -398,7 +401,7 @@ DECL_HANDLER(open_desktop)
         {
             reply->handle = open_object( winstation_namespace, full_name, full_len,
                                          &desktop_ops, req->access,
-                                         (req->inherit) ? OBJ_INHERIT:0 );
+                                         OBJ_CASE_INSENSITIVE | (req->inherit ? OBJ_INHERIT:0) );
             free( full_name );
         }
         release_object( winstation );

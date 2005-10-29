@@ -68,11 +68,12 @@ static const struct object_ops timer_ops =
 
 
 /* create a timer object */
-static struct timer *create_timer( const WCHAR *name, size_t len, int manual )
+static struct timer *create_timer( const WCHAR *name, size_t len, unsigned int attr,
+                                   int manual )
 {
     struct timer *timer;
 
-    if ((timer = create_named_object( sync_namespace, &timer_ops, name, len )))
+    if ((timer = create_named_object( sync_namespace, &timer_ops, name, len, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -205,7 +206,7 @@ DECL_HANDLER(create_timer)
     struct timer *timer;
 
     reply->handle = 0;
-    if ((timer = create_timer( get_req_data(), get_req_data_size(), req->manual )))
+    if ((timer = create_timer( get_req_data(), get_req_data_size(), req->attributes, req->manual )))
     {
         reply->handle = alloc_handle( current->process, timer, req->access,
                                       req->attributes & OBJ_INHERIT );

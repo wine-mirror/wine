@@ -397,7 +397,7 @@ static int pipe_server_flush( struct fd *fd, struct event **event )
 
         /* this kind of sux - 
            there's no unix way to be alerted when a pipe becomes empty */
-        server->event = create_event( NULL, 0, 0, 0 );
+        server->event = create_event( NULL, 0, 0, 0, 0 );
         if (!server->event)
             return 0;
         gettimeofday( &tv, NULL );
@@ -440,11 +440,11 @@ static int pipe_client_get_info( struct fd *fd )
     return flags;
 }
 
-static struct named_pipe *create_named_pipe( const WCHAR *name, size_t len )
+static struct named_pipe *create_named_pipe( const WCHAR *name, size_t len, unsigned int attr )
 {
     struct named_pipe *pipe;
 
-    pipe = create_named_object( sync_namespace, &named_pipe_ops, name, len );
+    pipe = create_named_object( sync_namespace, &named_pipe_ops, name, len, attr );
     if (pipe)
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
@@ -458,11 +458,11 @@ static struct named_pipe *create_named_pipe( const WCHAR *name, size_t len )
     return pipe;
 }
 
-static struct named_pipe *open_named_pipe( const WCHAR *name, size_t len )
+static struct named_pipe *open_named_pipe( const WCHAR *name, size_t len, unsigned int attr )
 {
     struct object *obj;
 
-    if ((obj = find_object( sync_namespace, name, len )))
+    if ((obj = find_object( sync_namespace, name, len, attr )))
     {
         if (obj->ops == &named_pipe_ops) return (struct named_pipe *)obj;
         release_object( obj );
@@ -548,7 +548,7 @@ DECL_HANDLER(create_named_pipe)
     struct pipe_server *server;
 
     reply->handle = 0;
-    pipe = create_named_pipe( get_req_data(), get_req_data_size() );
+    pipe = create_named_pipe( get_req_data(), get_req_data_size(), req->attributes );
     if (!pipe)
         return;
 
@@ -598,7 +598,7 @@ DECL_HANDLER(open_named_pipe)
     struct named_pipe *pipe;
     int fds[2];
 
-    pipe = open_named_pipe( get_req_data(), get_req_data_size() );
+    pipe = open_named_pipe( get_req_data(), get_req_data_size(), req->attributes );
     if (!pipe)
     {
         set_error( STATUS_NO_SUCH_FILE );
@@ -697,7 +697,7 @@ DECL_HANDLER(wait_named_pipe)
     struct named_pipe *pipe;
     struct pipe_server *server;
 
-    if (!(pipe = open_named_pipe( get_req_data(), get_req_data_size() )))
+    if (!(pipe = open_named_pipe( get_req_data(), get_req_data_size(), OBJ_CASE_INSENSITIVE )))
     {
         set_error( STATUS_PIPE_NOT_AVAILABLE );
         return;

@@ -59,12 +59,12 @@ static const struct object_ops event_ops =
 };
 
 
-struct event *create_event( const WCHAR *name, size_t len,
+struct event *create_event( const WCHAR *name, size_t len, unsigned int attr,
                             int manual_reset, int initial_state )
 {
     struct event *event;
 
-    if ((event = create_named_object( sync_namespace, &event_ops, name, len )))
+    if ((event = create_named_object( sync_namespace, &event_ops, name, len, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -147,7 +147,7 @@ DECL_HANDLER(create_event)
     struct event *event;
 
     reply->handle = 0;
-    if ((event = create_event( get_req_data(), get_req_data_size(),
+    if ((event = create_event( get_req_data(), get_req_data_size(), req->attributes,
                                req->manual_reset, req->initial_state )))
     {
         reply->handle = alloc_handle( current->process, event, req->access,

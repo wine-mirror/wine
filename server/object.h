@@ -94,13 +94,14 @@ extern void *alloc_object( const struct object_ops *ops );
 extern const WCHAR *get_object_name( struct object *obj, size_t *len );
 extern void dump_object_name( struct object *obj );
 extern void *create_named_object( struct namespace *namespace, const struct object_ops *ops,
-                                  const WCHAR *name, size_t len );
+                                  const WCHAR *name, size_t len, unsigned int attributes );
 extern struct namespace *create_namespace( unsigned int hash_size, int case_sensitive );
 /* grab/release_object can take any pointer, but you better make sure */
 /* that the thing pointed to starts with a struct object... */
 extern struct object *grab_object( void *obj );
 extern void release_object( void *obj );
-extern struct object *find_object( const struct namespace *namespace, const WCHAR *name, size_t len );
+extern struct object *find_object( const struct namespace *namespace, const WCHAR *name, size_t len,
+                                   unsigned int attributes );
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_signal( struct object *obj, unsigned int access );
@@ -115,7 +116,7 @@ extern void dump_objects(void);
 
 struct event;
 
-extern struct event *create_event( const WCHAR *name, size_t len,
+extern struct event *create_event( const WCHAR *name, size_t len, unsigned int attr,
                                    int manual_reset, int initial_state );
 extern struct event *get_event_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern void pulse_event( struct event *event );

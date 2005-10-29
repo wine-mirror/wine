@@ -157,14 +157,14 @@ void *alloc_object( const struct object_ops *ops )
 }
 
 void *create_named_object( struct namespace *namespace, const struct object_ops *ops,
-                           const WCHAR *name, size_t len )
+                           const WCHAR *name, size_t len, unsigned int attributes )
 {
     struct object *obj;
     struct object_name *name_ptr;
 
     if (!name || !len) return alloc_object( ops );
 
-    if ((obj = find_object( namespace, name, len )))
+    if ((obj = find_object( namespace, name, len, attributes )))
     {
         if (obj->ops != ops)
         {
@@ -225,7 +225,8 @@ void release_object( void *ptr )
 }
 
 /* find an object by its name; the refcount is incremented */
-struct object *find_object( const struct namespace *namespace, const WCHAR *name, size_t len )
+struct object *find_object( const struct namespace *namespace, const WCHAR *name, size_t len,
+                            unsigned int attributes )
 {
     const struct list *list, *p;
 

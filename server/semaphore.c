@@ -59,7 +59,7 @@ static const struct object_ops semaphore_ops =
 };
 
 
-static struct semaphore *create_semaphore( const WCHAR *name, size_t len,
+static struct semaphore *create_semaphore( const WCHAR *name, size_t len, unsigned int attr,
                                            unsigned int initial, unsigned int max )
 {
     struct semaphore *sem;
@@ -69,7 +69,7 @@ static struct semaphore *create_semaphore( const WCHAR *name, size_t len,
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
-    if ((sem = create_named_object( sync_namespace, &semaphore_ops, name, len )))
+    if ((sem = create_named_object( sync_namespace, &semaphore_ops, name, len, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -147,7 +147,7 @@ DECL_HANDLER(create_semaphore)
     struct semaphore *sem;
 
     reply->handle = 0;
-    if ((sem = create_semaphore( get_req_data(), get_req_data_size(),
+    if ((sem = create_semaphore( get_req_data(), get_req_data_size(), req->attributes,
                                  req->initial, req->max )))
     {
         reply->handle = alloc_handle( current->process, sem, req->access,

@@ -62,11 +62,12 @@ static const struct object_ops mutex_ops =
 };
 
 
-static struct mutex *create_mutex( const WCHAR *name, size_t len, int owned )
+static struct mutex *create_mutex( const WCHAR *name, size_t len, unsigned int attr,
+                                   int owned )
 {
     struct mutex *mutex;
 
-    if ((mutex = create_named_object( sync_namespace, &mutex_ops, name, len )))
+    if ((mutex = create_named_object( sync_namespace, &mutex_ops, name, len, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -172,7 +173,8 @@ DECL_HANDLER(create_mutex)
     struct mutex *mutex;
 
     reply->handle = 0;
-    if ((mutex = create_mutex( get_req_data(), get_req_data_size(), req->owned )))
+    if ((mutex = create_mutex( get_req_data(), get_req_data_size(), req->attributes,
+                               req->owned )))
     {
         reply->handle = alloc_handle( current->process, mutex, req->access,
                                       req->attributes & OBJ_INHERIT );
