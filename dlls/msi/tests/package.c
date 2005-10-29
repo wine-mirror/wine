@@ -326,6 +326,247 @@ static void test_gettargetpath_bad(void)
     MsiCloseHandle( hpkg );
 }
 
+void test_condition(void)
+{
+    MSICONDITION r;
+    MSIHANDLE hpkg;
+
+    hpkg = package_from_db(create_package_db());
+    ok( hpkg, "failed to create package\n");
+
+    r = MsiEvaluateCondition(0, NULL);
+    ok( r == MSICONDITION_ERROR, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, NULL);
+    ok( r == MSICONDITION_NONE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "");
+    ok( r == MSICONDITION_NONE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "1");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 = 0");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 <> 0");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 = 1");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 >= 1");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 >=");
+    ok( r == MSICONDITION_ERROR, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " ");
+    ok( r == MSICONDITION_NONE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "LicView <> \"1\"");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "LicView <> \"0\"");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "LicView <> LicView");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "not 0");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "not LicView");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "not \"A\"");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "~not \"A\"");
+    ok( r == MSICONDITION_ERROR, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "\"0\"");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "1 and 2");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "not 0 and 3");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "not 0 and 0");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "not 0 or 1");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "(0)");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "(((((1))))))");
+    ok( r == MSICONDITION_ERROR, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "(((((1)))))");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " \"A\" < \"B\" ");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " \"A\" > \"B\" ");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " \"1\" > \"12\" ");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " \"100\" < \"21\" ");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 < > 0");
+    ok( r == MSICONDITION_ERROR, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "(1<<1) == 2");
+    ok( r == MSICONDITION_ERROR, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " \"A\" = \"a\" ");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " \"A\" ~ = \"a\" ");
+    ok( r == MSICONDITION_ERROR, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " \"A\" ~= \"a\" ");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " \"A\" ~= 1 ");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " \"A\" = 1 ");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " 1 ~= 1 ");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " 1 ~= \"1\" ");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " 1 = \"1\" ");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " 0 = \"1\" ");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " 0 < \"100\" ");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, " 100 > \"0\" ");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "1 XOR 1");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "1 IMP 1");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "1 IMP 0");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 IMP 0");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 EQV 0");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 EQV 1");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "1 IMP 1 OR 0");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "1 IMPL 1");
+    ok( r == MSICONDITION_ERROR, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "\"ASFD\" >< \"S\" ");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "\"ASFD\" ~>< \"s\" ");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "\"ASFD\" ~>< \"\" ");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "\"ASFD\" ~>< \"sss\" ");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    MsiSetProperty(hpkg, "mm", "5" );
+
+    r = MsiEvaluateCondition(hpkg, "mm = 5");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "mm < 6");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "mm <= 5");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "mm > 4");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "mm < 12");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "mm = \"5\"");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 = \"\"");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 AND \"\"");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "1 AND \"\"");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "1 AND \"1\"");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "3 >< 1");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "3 >< 4");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "NOT 0 AND 0");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "NOT 0 AND 1");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "NOT 1 OR 0");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 AND 1 OR 1");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "0 AND 0 OR 1");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "NOT 0 AND 1 OR 0");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "_1 = _1");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "( 1 AND 1 ) = 2");
+    ok( r == MSICONDITION_ERROR, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "NOT ( 1 AND 1 )");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    MsiCloseHandle( hpkg );
+}
+
 START_TEST(package)
 {
     test_createpackage();
