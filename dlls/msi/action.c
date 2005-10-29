@@ -3803,17 +3803,10 @@ end:
 
 static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
 {
-    static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
-    static const WCHAR szTwo[] = {'2',0};
     UINT rc;
-    LPWSTR level;
-    level = msi_dup_property( package, szUILevel );
 
-    MSI_SetPropertyW(package,szUILevel,szTwo);
     package->script->InWhatSequence |= SEQUENCE_EXEC;
     rc = ACTION_ProcessExecSequence(package,FALSE);
-    MSI_SetPropertyW(package,szUILevel,level);
-    msi_free(level);
     return rc;
 }
 
