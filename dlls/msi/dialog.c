@@ -80,6 +80,8 @@ struct msi_dialog_tag
     msi_font *font_list;
     struct list controls;
     HWND hWndFocus;
+    LPWSTR control_default;
+    LPWSTR control_cancel;
     WCHAR name[1];
 };
 
@@ -1776,11 +1778,22 @@ static UINT msi_dialog_radiogroup_handler( msi_dialog *dialog,
 
 static LRESULT msi_dialog_oncommand( msi_dialog *dialog, WPARAM param, HWND hwnd )
 {
-    msi_control *control;
+    msi_control *control = NULL;
 
     TRACE("%p %p %08x\n", dialog, hwnd, param);
 
-    control = msi_dialog_find_control_by_hwnd( dialog, hwnd );
+    switch (param)
+    {
+    case 1: /* enter */
+        control = msi_dialog_find_control( dialog, dialog->control_default );
+        break;
+    case 2: /* escape */
+        control = msi_dialog_find_control( dialog, dialog->control_cancel );
+        break;
+    default: 
+        control = msi_dialog_find_control_by_hwnd( dialog, hwnd );
+    }
+
     if( control )
     {
         if( control->handler )
@@ -1790,7 +1803,7 @@ static LRESULT msi_dialog_oncommand( msi_dialog *dialog, WPARAM param, HWND hwnd
         }
     }
     else
-        ERR("button click from nowhere\n");
+        ERR("button click from nowhere %p %d %p\n", dialog, param, hwnd);
     return 0;
 }
 
@@ -1901,6 +1914,8 @@ msi_dialog *msi_dialog_create( MSIPACKAGE* package, LPCWSTR szDialogName,
         return NULL;
     }
     dialog->attributes = MSI_RecordGetInteger( rec, 6 );
+    dialog->control_default = strdupW( MSI_RecordGetString( rec, 9 ) );
+    dialog->control_cancel = strdupW( MSI_RecordGetString( rec, 10 ) );
     msiobj_release( &rec->hdr );
 
     return dialog;
@@ -2044,6 +2059,8 @@ void msi_dialog_destroy( msi_dialog *dialog )
     }
     msi_free( dialog->default_font );
 
+    msi_free( dialog->control_default );
+    msi_free( dialog->control_cancel );
     msiobj_release( &dialog->package->hdr );
     dialog->package = NULL;
     msi_free( dialog );
