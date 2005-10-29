@@ -35,6 +35,9 @@
 #include "wincrypt.h"
 #include "winver.h"
 #include "winuser.h"
+#include "shlobj.h"
+#include "shobjidl.h"
+#include "objidl.h"
 #include "wine/unicode.h"
 #include "action.h"
 
@@ -1720,6 +1723,9 @@ UINT WINAPI MsiCreateAndVerifyInstallerDirectory(DWORD dwReserved)
    return 0;
 }
 
+/***********************************************************************
+ * MsiGetShortcutTargetA           [MSI.@]
+ */
 UINT WINAPI MsiGetShortcutTargetA( LPCSTR szShortcutTarget,
                                    LPSTR szProductCode, LPSTR szFeatureId,
                                    LPSTR szComponentCode )
@@ -1746,12 +1752,61 @@ UINT WINAPI MsiGetShortcutTargetA( LPCSTR szShortcutTarget,
     return r;
 }
 
+/***********************************************************************
+ * MsiGetShortcutTargetW           [MSI.@]
+ */
 UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
                                    LPWSTR szProductCode, LPWSTR szFeatureId,
                                    LPWSTR szComponentCode )
 {
-    FIXME("%s\n", debugstr_w(szShortcutTarget));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    IShellLinkDataList *dl = NULL;
+    IPersistFile *pf = NULL;
+    LPEXP_DARWIN_LINK darwin = NULL;
+    HRESULT r;
+
+    TRACE("%s %p %p %p\n", debugstr_w(szShortcutTarget),
+          szProductCode, szFeatureId, szComponentCode );
+
+    r = CoInitialize(NULL);
+    if( FAILED( r ) )
+        return ERROR_FUNCTION_FAILED;
+
+    r = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IPersistFile, (LPVOID*) &pf );
+    if( SUCCEEDED( r ) )
+    {
+        r = IPersistFile_Load( pf, szShortcutTarget,
+                               STGM_READ | STGM_SHARE_DENY_WRITE );
+        if( SUCCEEDED( r ) )
+        {
+            r = IPersistFile_QueryInterface( pf, &IID_IShellLinkDataList,
+                                             (LPVOID*) dl );
+            if( SUCCEEDED( r ) )
+            {
+                IShellLinkDataList_CopyDataBlock( dl, EXP_DARWIN_ID_SIG,
+                                                  (LPVOID) &darwin );
+                IShellLinkDataList_Release( dl );
+            }
+        }
+        IPersistFile_Release( pf );
+    }
+
+    CoUninitialize();
+
+    TRACE("darwin = %p\n", darwin);
+
+    if (darwin)
+    {
+        DWORD sz;
+        UINT ret;
+
+        ret = MsiDecomposeDescriptorW( darwin->szwDarwinID,
+                  szProductCode, szFeatureId, szComponentCode, &sz );
+        LocalFree( darwin );
+        return ret;
+    }
+
+    return ERROR_FUNCTION_FAILED;
 }
 
 UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
