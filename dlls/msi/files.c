@@ -207,21 +207,13 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
     case fdintCOPY_FILE:
     {
         CabData *data = (CabData*) pfdin->pv;
-        ULONG len = strlen(data->cab_path) + strlen(pfdin->psz1);
-        char *file;
-        INT_PTR handle;
-
-        LPWSTR trackname;
-        LPWSTR trackpath;
-        LPWSTR tracknametmp;
-        static const WCHAR tmpprefix[] = {'C','A','B','T','M','P','_',0};
-        LPWSTR given_file;
-
+        HANDLE handle;
+        LPWSTR file;
         MSIFILE *f;
 
-        given_file = strdupAtoW(pfdin->psz1);
-        f = get_loaded_file(data->package, given_file);
-        msi_free(given_file);
+        file = strdupAtoW(pfdin->psz1);
+        f = get_loaded_file(data->package, file);
+        msi_free(file);
 
         if (!f)
         {
@@ -229,38 +221,34 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
             return 0;
         }
 
-        if (!((f->State == 1 || f->State == 2)))
+        if (f->State != 1 && f->State != 2)
         {
             TRACE("Skipping extraction of %s\n",debugstr_a(pfdin->psz1));
             return 0;
         }
 
-        file = msi_alloc((len+1)*sizeof(char));
-        strcpy(file, data->cab_path);
-        strcat(file, pfdin->psz1);
-
-        TRACE("file: %s\n", debugstr_a(file));
-
-        /* track this file so it can be deleted if not installed */
-        trackpath=strdupAtoW(file);
-        tracknametmp=strdupAtoW(strrchr(file,'\\')+1);
-        trackname = msi_alloc((strlenW(tracknametmp) + 
-                                  strlenW(tmpprefix)+1) * sizeof(WCHAR));
-
-        strcpyW(trackname,tmpprefix);
-        strcatW(trackname,tracknametmp);
-
-        track_tempfile(data->package, trackname, trackpath);
-
-        msi_free(trackpath);
-        msi_free(trackname);
-        msi_free(tracknametmp);
-
         msi_file_update_ui( data->package, f );
 
-        handle = cabinet_open(file, _O_WRONLY | _O_CREAT, 0);
-        msi_free( file );
-        return handle;
+        TRACE("extracting %s\n", debugstr_w(f->TargetPath) );
+
+        handle = CreateFileW( f->TargetPath, GENERIC_READ | GENERIC_WRITE, 0,
+                              NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
+        if ( handle == INVALID_HANDLE_VALUE )
+        {
+            ERR("failed to create %s (error %ld)\n",
+                debugstr_w( f->TargetPath ), GetLastError() );
+            return 0;
+        }
+
+        /*
+         * FIXME: 0 is a valid return from CreateFile
+         *        but an invalid handle for the cabinet API
+         */
+        if ( !handle )
+            ERR("CreateFile returned 0 - not handled\n");
+
+        f->State = 4;
+        return (INT_PTR) handle;
     }
     case fdintCLOSE_FILE_INFO:
     {
@@ -399,7 +387,8 @@ static UINT ready_volume(MSIPACKAGE* package, LPCWSTR path, LPWSTR last_volume,
     LPCWSTR want_volume = MSI_RecordGetString(row, 5);
     BOOL ok = check_volume(path, want_volume, volume, type);
 
-    TRACE("Readying Volume for %s (%s, %s)\n",debugstr_w(path), debugstr_w(want_volume), debugstr_w(last_volume));
+    TRACE("Readying Volume for %s (%s, %s)\n", debugstr_w(path),
+          debugstr_w(want_volume), debugstr_w(last_volume));
 
     if (check_for_sourcefile(path) && !ok)
     {
@@ -676,7 +665,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
                 MSICODE_PRODUCT,
                 INSTALLPROPERTY_PACKAGENAMEW, ptr);
     }
-    FIXME("Write DiskPrompt\n");
+    /* FIXME("Write DiskPrompt\n"); */
     
     /* Pass 1 */
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
@@ -697,58 +686,59 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     /* Pass 2 */
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        if ((file->State == 1) || (file->State == 2))
+        if (file->State != 1 && file->State != 2)
+            continue;
+
+        TRACE("Pass 2: %s\n",debugstr_w(file->File));
+
+        rc = ready_media_for_file( package, mi, file );
+        if (rc != ERROR_SUCCESS)
         {
-            TRACE("Pass 2: %s\n",debugstr_w(file->File));
+            ERR("Unable to ready media\n");
+            rc = ERROR_FUNCTION_FAILED;
+            break;
+        }
 
-            rc = ready_media_for_file( package, mi, file );
-            if (rc != ERROR_SUCCESS)
+        TRACE("file paths %s to %s\n",debugstr_w(file->SourcePath),
+              debugstr_w(file->TargetPath));
+
+        if (file->State != 1 && file->State != 2)
+            continue;
+
+        /* compressed files are extracted in ready_media_for_file */
+        if (~file->Attributes & msidbFileAttributesNoncompressed)
+        {
+            if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(file->TargetPath))
+                ERR("compressed file wasn't extracted (%s)\n",
+                    debugstr_w(file->TargetPath));
+            continue;
+        }
+
+        rc = CopyFileW(file->SourcePath,file->TargetPath,FALSE);
+        if (!rc)
+        {
+            rc = GetLastError();
+            ERR("Unable to copy file (%s -> %s) (error %d)\n",
+                debugstr_w(file->SourcePath), debugstr_w(file->TargetPath), rc);
+            if (rc == ERROR_ALREADY_EXISTS && file->State == 2)
             {
-                ERR("Unable to ready media\n");
-                rc = ERROR_FUNCTION_FAILED;
-                break;
+                rc = 0;
             }
-
-            TRACE("file paths %s to %s\n",debugstr_w(file->SourcePath),
-                  debugstr_w(file->TargetPath));
-
-            if (file->Attributes & msidbFileAttributesNoncompressed)
-                rc = CopyFileW(file->SourcePath,file->TargetPath,FALSE);
-            else
-                rc = MoveFileW(file->SourcePath, file->TargetPath);
-
-            if (!rc)
+            else if (rc == ERROR_FILE_NOT_FOUND)
             {
-                rc = GetLastError();
-                ERR("Unable to move/copy file (%s -> %s) (error %d)\n",
-                     debugstr_w(file->SourcePath), debugstr_w(file->TargetPath),
-                      rc);
-                if (rc == ERROR_ALREADY_EXISTS && file->State == 2)
-                {
-                    if (!CopyFileW(file->SourcePath,file->TargetPath,FALSE))
-                        ERR("Unable to copy file (%s -> %s) (error %ld)\n",
-                            debugstr_w(file->SourcePath), 
-                            debugstr_w(file->TargetPath), GetLastError());
-                    if (!(file->Attributes & msidbFileAttributesNoncompressed))
-                        DeleteFileW(file->SourcePath);
-                    rc = 0;
-                }
-                else if (rc == ERROR_FILE_NOT_FOUND)
-                {
-                    ERR("Source File Not Found!  Continuing\n");
-                    rc = 0;
-                }
-                else if (file->Attributes & msidbFileAttributesVital)
-                {
-                    ERR("Ignoring Error and continuing (nonvital file)...\n");
-                    rc = 0;
-                }
+                ERR("Source File Not Found!  Continuing\n");
+                rc = 0;
             }
-            else
+            else if (file->Attributes & msidbFileAttributesVital)
             {
-                file->State = 4;
-                rc = ERROR_SUCCESS;
+                ERR("Ignoring Error and continuing (nonvital file)...\n");
+                rc = 0;
             }
+        }
+        else
+        {
+            file->State = 4;
+            rc = ERROR_SUCCESS;
         }
     }
 
