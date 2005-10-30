@@ -1041,8 +1041,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     return rc;
 }
 
-static UINT register_progid_base(MSIPACKAGE* package, MSIPROGID* progid,
-                                 LPWSTR clsid)
+static UINT register_progid_base( MSIPROGID* progid, LPWSTR clsid )
 {
     static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
     static const WCHAR szDefaultIcon[] =
@@ -1077,7 +1076,7 @@ static UINT register_progid(MSIPACKAGE *package, MSIPROGID* progid,
     UINT rc = ERROR_SUCCESS; 
 
     if (progid->Parent == NULL)
-        rc = register_progid_base(package, progid, clsid);
+        rc = register_progid_base( progid, clsid );
     else
     {
         DWORD disp;
