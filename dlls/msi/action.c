@@ -62,119 +62,119 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
  */
 static const WCHAR c_colon[] = {'C',':','\\',0};
 
-const static WCHAR szCreateFolders[] =
+static const WCHAR szCreateFolders[] =
     {'C','r','e','a','t','e','F','o','l','d','e','r','s',0};
-const static WCHAR szCostFinalize[] =
+static const WCHAR szCostFinalize[] =
     {'C','o','s','t','F','i','n','a','l','i','z','e',0};
 const WCHAR szInstallFiles[] =
     {'I','n','s','t','a','l','l','F','i','l','e','s',0};
 const WCHAR szDuplicateFiles[] =
     {'D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
-const static WCHAR szWriteRegistryValues[] =
+static const WCHAR szWriteRegistryValues[] =
     {'W','r','i','t','e','R','e','g','i','s','t','r','y',
             'V','a','l','u','e','s',0};
-const static WCHAR szCostInitialize[] =
+static const WCHAR szCostInitialize[] =
     {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
-const static WCHAR szFileCost[] = 
+static const WCHAR szFileCost[] = 
     {'F','i','l','e','C','o','s','t',0};
-const static WCHAR szInstallInitialize[] = 
+static const WCHAR szInstallInitialize[] = 
     {'I','n','s','t','a','l','l','I','n','i','t','i','a','l','i','z','e',0};
-const static WCHAR szInstallValidate[] = 
+static const WCHAR szInstallValidate[] = 
     {'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e',0};
-const static WCHAR szLaunchConditions[] = 
+static const WCHAR szLaunchConditions[] = 
     {'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','s',0};
-const static WCHAR szProcessComponents[] = 
+static const WCHAR szProcessComponents[] = 
     {'P','r','o','c','e','s','s','C','o','m','p','o','n','e','n','t','s',0};
-const static WCHAR szRegisterTypeLibraries[] = 
+static const WCHAR szRegisterTypeLibraries[] = 
     {'R','e','g','i','s','t','e','r','T','y','p','e',
             'L','i','b','r','a','r','i','e','s',0};
 const WCHAR szRegisterClassInfo[] = 
     {'R','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
 const WCHAR szRegisterProgIdInfo[] = 
     {'R','e','g','i','s','t','e','r','P','r','o','g','I','d','I','n','f','o',0};
-const static WCHAR szCreateShortcuts[] = 
+static const WCHAR szCreateShortcuts[] = 
     {'C','r','e','a','t','e','S','h','o','r','t','c','u','t','s',0};
-const static WCHAR szPublishProduct[] = 
+static const WCHAR szPublishProduct[] = 
     {'P','u','b','l','i','s','h','P','r','o','d','u','c','t',0};
-const static WCHAR szWriteIniValues[] = 
+static const WCHAR szWriteIniValues[] = 
     {'W','r','i','t','e','I','n','i','V','a','l','u','e','s',0};
-const static WCHAR szSelfRegModules[] = 
+static const WCHAR szSelfRegModules[] = 
     {'S','e','l','f','R','e','g','M','o','d','u','l','e','s',0};
-const static WCHAR szPublishFeatures[] = 
+static const WCHAR szPublishFeatures[] = 
     {'P','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
-const static WCHAR szRegisterProduct[] = 
+static const WCHAR szRegisterProduct[] = 
     {'R','e','g','i','s','t','e','r','P','r','o','d','u','c','t',0};
-const static WCHAR szInstallExecute[] = 
+static const WCHAR szInstallExecute[] = 
     {'I','n','s','t','a','l','l','E','x','e','c','u','t','e',0};
-const static WCHAR szInstallExecuteAgain[] = 
+static const WCHAR szInstallExecuteAgain[] = 
     {'I','n','s','t','a','l','l','E','x','e','c','u','t','e',
             'A','g','a','i','n',0};
-const static WCHAR szInstallFinalize[] = 
+static const WCHAR szInstallFinalize[] = 
     {'I','n','s','t','a','l','l','F','i','n','a','l','i','z','e',0};
-const static WCHAR szForceReboot[] = 
+static const WCHAR szForceReboot[] = 
     {'F','o','r','c','e','R','e','b','o','o','t',0};
-const static WCHAR szResolveSource[] =
+static const WCHAR szResolveSource[] =
     {'R','e','s','o','l','v','e','S','o','u','r','c','e',0};
 const WCHAR szAppSearch[] = 
     {'A','p','p','S','e','a','r','c','h',0};
-const static WCHAR szAllocateRegistrySpace[] = 
+static const WCHAR szAllocateRegistrySpace[] = 
     {'A','l','l','o','c','a','t','e','R','e','g','i','s','t','r','y',
             'S','p','a','c','e',0};
-const static WCHAR szBindImage[] = 
+static const WCHAR szBindImage[] = 
     {'B','i','n','d','I','m','a','g','e',0};
-const static WCHAR szCCPSearch[] = 
+static const WCHAR szCCPSearch[] = 
     {'C','C','P','S','e','a','r','c','h',0};
-const static WCHAR szDeleteServices[] = 
+static const WCHAR szDeleteServices[] = 
     {'D','e','l','e','t','e','S','e','r','v','i','c','e','s',0};
-const static WCHAR szDisableRollback[] = 
+static const WCHAR szDisableRollback[] = 
     {'D','i','s','a','b','l','e','R','o','l','l','b','a','c','k',0};
-const static WCHAR szExecuteAction[] = 
+static const WCHAR szExecuteAction[] = 
     {'E','x','e','c','u','t','e','A','c','t','i','o','n',0};
 const WCHAR szFindRelatedProducts[] = 
     {'F','i','n','d','R','e','l','a','t','e','d',
             'P','r','o','d','u','c','t','s',0};
-const static WCHAR szInstallAdminPackage[] = 
+static const WCHAR szInstallAdminPackage[] = 
     {'I','n','s','t','a','l','l','A','d','m','i','n',
             'P','a','c','k','a','g','e',0};
-const static WCHAR szInstallSFPCatalogFile[] = 
+static const WCHAR szInstallSFPCatalogFile[] = 
     {'I','n','s','t','a','l','l','S','F','P','C','a','t','a','l','o','g',
             'F','i','l','e',0};
-const static WCHAR szIsolateComponents[] = 
+static const WCHAR szIsolateComponents[] = 
     {'I','s','o','l','a','t','e','C','o','m','p','o','n','e','n','t','s',0};
 const WCHAR szMigrateFeatureStates[] = 
     {'M','i','g','r','a','t','e','F','e','a','t','u','r','e',
             'S','t','a','t','e','s',0};
 const WCHAR szMoveFiles[] = 
     {'M','o','v','e','F','i','l','e','s',0};
-const static WCHAR szMsiPublishAssemblies[] = 
+static const WCHAR szMsiPublishAssemblies[] = 
     {'M','s','i','P','u','b','l','i','s','h',
             'A','s','s','e','m','b','l','i','e','s',0};
-const static WCHAR szMsiUnpublishAssemblies[] = 
+static const WCHAR szMsiUnpublishAssemblies[] = 
     {'M','s','i','U','n','p','u','b','l','i','s','h',
             'A','s','s','e','m','b','l','i','e','s',0};
-const static WCHAR szInstallODBC[] = 
+static const WCHAR szInstallODBC[] = 
     {'I','n','s','t','a','l','l','O','D','B','C',0};
-const static WCHAR szInstallServices[] = 
+static const WCHAR szInstallServices[] = 
     {'I','n','s','t','a','l','l','S','e','r','v','i','c','e','s',0};
 const WCHAR szPatchFiles[] = 
     {'P','a','t','c','h','F','i','l','e','s',0};
-const static WCHAR szPublishComponents[] = 
+static const WCHAR szPublishComponents[] = 
     {'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t','s',0};
-const static WCHAR szRegisterComPlus[] =
+static const WCHAR szRegisterComPlus[] =
     {'R','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
 const WCHAR szRegisterExtensionInfo[] =
     {'R','e','g','i','s','t','e','r','E','x','t','e','n','s','i','o','n',
             'I','n','f','o',0};
-const static WCHAR szRegisterFonts[] =
+static const WCHAR szRegisterFonts[] =
     {'R','e','g','i','s','t','e','r','F','o','n','t','s',0};
 const WCHAR szRegisterMIMEInfo[] =
     {'R','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
-const static WCHAR szRegisterUser[] =
+static const WCHAR szRegisterUser[] =
     {'R','e','g','i','s','t','e','r','U','s','e','r',0};
 const WCHAR szRemoveDuplicateFiles[] =
     {'R','e','m','o','v','e','D','u','p','l','i','c','a','t','e',
             'F','i','l','e','s',0};
-const static WCHAR szRemoveEnvironmentStrings[] =
+static const WCHAR szRemoveEnvironmentStrings[] =
     {'R','e','m','o','v','e','E','n','v','i','r','o','n','m','e','n','t',
             'S','t','r','i','n','g','s',0};
 const WCHAR szRemoveExistingProducts[] =
@@ -182,55 +182,55 @@ const WCHAR szRemoveExistingProducts[] =
             'P','r','o','d','u','c','t','s',0};
 const WCHAR szRemoveFiles[] =
     {'R','e','m','o','v','e','F','i','l','e','s',0};
-const static WCHAR szRemoveFolders[] =
+static const WCHAR szRemoveFolders[] =
     {'R','e','m','o','v','e','F','o','l','d','e','r','s',0};
-const static WCHAR szRemoveIniValues[] =
+static const WCHAR szRemoveIniValues[] =
     {'R','e','m','o','v','e','I','n','i','V','a','l','u','e','s',0};
-const static WCHAR szRemoveODBC[] =
+static const WCHAR szRemoveODBC[] =
     {'R','e','m','o','v','e','O','D','B','C',0};
-const static WCHAR szRemoveRegistryValues[] =
+static const WCHAR szRemoveRegistryValues[] =
     {'R','e','m','o','v','e','R','e','g','i','s','t','r','y',
             'V','a','l','u','e','s',0};
-const static WCHAR szRemoveShortcuts[] =
+static const WCHAR szRemoveShortcuts[] =
     {'R','e','m','o','v','e','S','h','o','r','t','c','u','t','s',0};
-const static WCHAR szRMCCPSearch[] =
+static const WCHAR szRMCCPSearch[] =
     {'R','M','C','C','P','S','e','a','r','c','h',0};
-const static WCHAR szScheduleReboot[] =
+static const WCHAR szScheduleReboot[] =
     {'S','c','h','e','d','u','l','e','R','e','b','o','o','t',0};
-const static WCHAR szSelfUnregModules[] =
+static const WCHAR szSelfUnregModules[] =
     {'S','e','l','f','U','n','r','e','g','M','o','d','u','l','e','s',0};
-const static WCHAR szSetODBCFolders[] =
+static const WCHAR szSetODBCFolders[] =
     {'S','e','t','O','D','B','C','F','o','l','d','e','r','s',0};
-const static WCHAR szStartServices[] =
+static const WCHAR szStartServices[] =
     {'S','t','a','r','t','S','e','r','v','i','c','e','s',0};
-const static WCHAR szStopServices[] =
+static const WCHAR szStopServices[] =
     {'S','t','o','p','S','e','r','v','i','c','e','s',0};
-const static WCHAR szUnpublishComponents[] =
+static const WCHAR szUnpublishComponents[] =
     {'U','n','p','u','b','l','i','s','h',
             'C','o','m','p','o','n','e','n','t','s',0};
-const static WCHAR szUnpublishFeatures[] =
+static const WCHAR szUnpublishFeatures[] =
     {'U','n','p','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
 const WCHAR szUnregisterClassInfo[] =
     {'U','n','r','e','g','i','s','t','e','r','C','l','a','s','s',
             'I','n','f','o',0};
-const static WCHAR szUnregisterComPlus[] =
+static const WCHAR szUnregisterComPlus[] =
     {'U','n','r','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
 const WCHAR szUnregisterExtensionInfo[] =
     {'U','n','r','e','g','i','s','t','e','r',
             'E','x','t','e','n','s','i','o','n','I','n','f','o',0};
-const static WCHAR szUnregisterFonts[] =
+static const WCHAR szUnregisterFonts[] =
     {'U','n','r','e','g','i','s','t','e','r','F','o','n','t','s',0};
 const WCHAR szUnregisterMIMEInfo[] =
     {'U','n','r','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
 const WCHAR szUnregisterProgIdInfo[] =
     {'U','n','r','e','g','i','s','t','e','r','P','r','o','g','I','d',
             'I','n','f','o',0};
-const static WCHAR szUnregisterTypeLibraries[] =
+static const WCHAR szUnregisterTypeLibraries[] =
     {'U','n','r','e','g','i','s','t','e','r','T','y','p','e',
             'L','i','b','r','a','r','i','e','s',0};
-const static WCHAR szValidateProductID[] =
+static const WCHAR szValidateProductID[] =
     {'V','a','l','i','d','a','t','e','P','r','o','d','u','c','t','I','D',0};
-const static WCHAR szWriteEnvironmentStrings[] =
+static const WCHAR szWriteEnvironmentStrings[] =
     {'W','r','i','t','e','E','n','v','i','r','o','n','m','e','n','t',
             'S','t','r','i','n','g','s',0};
 

@@ -605,8 +605,8 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     {
         LPWSTR tmp;
         WCHAR number[3];
-        const static WCHAR format[] = { '%','i',':',' ',0};
-        const static WCHAR space[] = { ' ',0};
+        static const WCHAR format[] = { '%','i',':',' ',0};
+        static const WCHAR space[] = { ' ',0};
         sz = 0;
         MSI_RecordGetStringW(record,i,NULL,&sz);
         sz+=4;

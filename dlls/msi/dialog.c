@@ -104,9 +104,9 @@ const WCHAR szMsiDialogClass[] = {
 };
 const WCHAR szMsiHiddenWindow[] = {
     'M','s','i','H','i','d','d','e','n','W','i','n','d','o','w',0 };
-const static WCHAR szStatic[] = { 'S','t','a','t','i','c',0 };
-const static WCHAR szButton[] = { 'B','U','T','T','O','N', 0 };
-const static WCHAR szButtonData[] = { 'M','S','I','D','A','T','A',0 };
+static const WCHAR szStatic[] = { 'S','t','a','t','i','c',0 };
+static const WCHAR szButton[] = { 'B','U','T','T','O','N', 0 };
+static const WCHAR szButtonData[] = { 'M','S','I','D','A','T','A',0 };
 static const WCHAR szText[] = { 'T','e','x','t',0 };
 static const WCHAR szPushButton[] = { 'P','u','s','h','B','u','t','t','o','n',0 };
 static const WCHAR szLine[] = { 'L','i','n','e',0 };
@@ -361,7 +361,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
 
 static MSIRECORD *msi_get_binary_record( MSIDATABASE *db, LPCWSTR name )
 {
-    const static WCHAR query[] = {
+    static const WCHAR query[] = {
         's','e','l','e','c','t',' ','*',' ',
         'f','r','o','m',' ','B','i','n','a','r','y',' ',
         'w','h','e','r','e',' ',
@@ -625,7 +625,7 @@ static UINT msi_dialog_button_control( msi_dialog *dialog, MSIRECORD *rec )
 
 static LPWSTR msi_get_checkbox_value( msi_dialog *dialog, LPCWSTR prop )
 {
-    const static WCHAR query[] = {
+    static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ',
         'F','R','O','M',' ','`','C','h','e','c','k','B','o','x',' ','`',
         'W','H','E','R','E',' ',
@@ -716,7 +716,7 @@ msi_richedit_stream_in( DWORD_PTR arg, LPBYTE buffer, LONG count, LONG *pcb )
 
 static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
 {
-    const static WCHAR szRichEdit20W[] = {
+    static const WCHAR szRichEdit20W[] = {
     	'R','i','c','h','E','d','i','t','2','0','W',0
     };
     struct msi_streamin_info info;
