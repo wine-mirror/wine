@@ -41,14 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-/*
- * The MSVC headers define the MSIDBOPEN_* macros cast to LPCTSTR,
- *  which is a problem because LPCTSTR isn't defined when compiling wine.
- * To work around this problem, we need to define LPCTSTR as LPCWSTR here,
- *  and make sure to only use it in W functions.
- */
-#define LPCTSTR LPCWSTR
-
 static void MSI_FreePackage( MSIOBJECTHDR *arg)
 {
     MSIPACKAGE *package= (MSIPACKAGE*) arg;

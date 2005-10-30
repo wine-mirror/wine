@@ -46,8 +46,6 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/stand
 #define REG_PROGRESS_VALUE 13200
 #define COMPONENT_PROGRESS_VALUE 24000
 
-#define LPCTSTR LPCWSTR
-
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 /*
