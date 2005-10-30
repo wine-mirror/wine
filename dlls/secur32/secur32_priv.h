@@ -21,6 +21,7 @@
 #ifndef __SECUR32_PRIV_H__
 #define __SECUR32_PRIV_H__
 
+#include <sys/types.h>
 #include "wine/list.h"
 
 /* Memory allocation functions for memory accessible by callers of secur32.
@@ -50,6 +51,27 @@ typedef struct _SecurePackage
     SecPkgInfoW     infoW;
     SecureProvider *provider;
 } SecurePackage;
+
+typedef enum _helper_mode {
+    NTLM_SERVER,
+    NTLM_CLIENT,
+    NEGO_SERVER,
+    NEGO_CLIENT,
+    NUM_HELPER_MODES
+} HelperMode;
+
+typedef struct _NegoHelper {
+    pid_t helper_pid;
+    HelperMode mode;
+    SEC_CHAR *password;
+    int pwlen;
+    int pipe_in;
+    int pipe_out;
+    int version;
+    char *com_buf;
+    int com_buf_size;
+    int com_buf_offset;
+} NegoHelper, *PNegoHelper;
 
 /* Allocates space for and initializes a new provider.  If fnTableA or fnTableW
  * is non-NULL, assumes the provider is built-in (and is thus already loaded.)
@@ -85,6 +107,17 @@ PSTR  SECUR32_AllocMultiByteFromWide(PCWSTR str);
 void SECUR32_initSchannelSP(void);
 void SECUR32_initNegotiateSP(void);
 void SECUR32_initNTLMSP(void);
+
+/* Functions from dispatcher.c used elsewhere in the code */
+SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
+        char * const argv[]);
+
+SECURITY_STATUS run_helper(PNegoHelper helper, char *buffer,
+        unsigned int max_buflen, int *buflen);
+
+void cleanup_helper(PNegoHelper helper);
+
+void check_version(PNegoHelper helper);
 
 /* Functions from base64_codec.c used elsewhere */
 SECURITY_STATUS encodeBase64(PBYTE in_buf, int in_len, char* out_buf, 

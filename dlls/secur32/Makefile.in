@@ -8,6 +8,7 @@ IMPORTS   = user32 advapi32 kernel32 ntdll
 
 C_SRCS = \
 	base64_codec.c \
+	dispatcher.c \
 	negotiate.c \
 	ntlm.c \
 	schannel.c \
