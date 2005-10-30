@@ -1362,11 +1362,8 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     static const WCHAR szCosting[] =
         {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
     static const WCHAR szZero[] = { '0', 0 };
-    WCHAR buffer[3];
-    DWORD sz = 3;
 
-    MSI_GetPropertyW(package, szCosting, buffer, &sz);
-    if (buffer[0]=='1')
+    if ( 1 == msi_get_property_int( package, szCosting, 0 ) )
         return ERROR_SUCCESS;
     
     MSI_SetPropertyW(package, szCosting, szZero);
@@ -1825,13 +1822,10 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     LPWSTR level;
-    DWORD sz = 3;
-    WCHAR buffer[3];
 
-    MSI_GetPropertyW(package, szCosting, buffer, &sz);
-    if (buffer[0]=='1')
+    if ( 1 == msi_get_property_int( package, szCosting, 0 ) )
         return ERROR_SUCCESS;
-
+    
     TRACE("Building Directory properties\n");
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
