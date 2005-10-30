@@ -260,13 +260,23 @@ inline static void *call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame
         for (j = 0; j < tryblock->catchblock_count; j++)
         {
             catchblock_info *catchblock = &tryblock->catchblock[j];
-            const cxx_type_info *type = find_caught_type( info, catchblock );
-            if (!type) continue;
+            if(info)
+            {
+                const cxx_type_info *type = find_caught_type( info, catchblock );
+                if (!type) continue;
 
-            TRACE( "matched type %p in tryblock %d catchblock %d\n", type, i, j );
+                TRACE( "matched type %p in tryblock %d catchblock %d\n", type, i, j );
 
-            /* copy the exception to its destination on the stack */
-            copy_exception( object, frame, catchblock, type );
+                /* copy the exception to its destination on the stack */
+                copy_exception( object, frame, catchblock, type );
+            }
+            else
+            {
+                /* no CXX_EXCEPTION only proceed with a catch(...) block*/
+                if(catchblock->type_info)
+                    continue;
+                TRACE("found catch(...) block\n");
+            }
 
             /* unwind the stack */
             RtlUnwind( frame, 0, rec, 0 );
@@ -274,8 +284,8 @@ inline static void *call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame
             frame->trylevel = tryblock->end_level + 1;
 
             /* call the catch block */
-            TRACE( "calling catch block %p for type %p addr %p ebp %p\n",
-                   catchblock, type, catchblock->handler, &frame->ebp );
+            TRACE( "calling catch block %p addr %p ebp %p\n",
+                   catchblock, catchblock->handler, &frame->ebp );
 
             /* setup an exception block for nested exceptions */
 
@@ -291,7 +301,7 @@ inline static void *call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame
             thread_data->exc_record = nested_frame.prev_rec;
             __wine_pop_frame( &nested_frame.frame );
 
-            if (info->destructor) call_dtor( info->destructor, object );
+            if (info && info->destructor) call_dtor( info->destructor, object );
             TRACE( "done, continuing at %p\n", addr );
             return addr;
         }
@@ -325,27 +335,34 @@ static DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* fram
     }
     if (!descr->tryblock_count) return ExceptionContinueSearch;
 
-    exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
-    if (rec->ExceptionCode == CXX_EXCEPTION &&
-        rec->ExceptionInformation[0] > CXX_FRAME_MAGIC &&
-        exc_type->custom_handler)
+    if(rec->ExceptionCode == CXX_EXCEPTION)
     {
-        return exc_type->custom_handler( rec, frame, exc_context, dispatch,
-                                         descr, nested_trylevel, nested_frame, 0 );
-    }
-
-    if (!exc_type)  /* nested exception, fetch info from original exception */
-    {
-        rec = msvcrt_get_thread_data()->exc_record;
         exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
-    }
 
-    if (TRACE_ON(seh))
+        if (rec->ExceptionInformation[0] > CXX_FRAME_MAGIC &&
+                exc_type->custom_handler)
+        {
+            return exc_type->custom_handler( rec, frame, exc_context, dispatch,
+                                         descr, nested_trylevel, nested_frame, 0 );
+        }
+        if (!exc_type)  /* nested exception, fetch info from original exception */
+        {
+            rec = msvcrt_get_thread_data()->exc_record;
+            exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
+        }
+        if (TRACE_ON(seh))
+        {
+            TRACE("handling C++ exception rec %p frame %p trylevel %d descr %p nested_frame %p\n",
+                  rec, frame, frame->trylevel, descr, nested_frame );
+            dump_exception_type( exc_type );
+            dump_function_descr( descr, exc_type );
+        }
+    }
+    else
     {
-        TRACE("handling C++ exception rec %p frame %p trylevel %d descr %p nested_frame %p\n",
-              rec, frame, frame->trylevel, descr, nested_frame );
-        dump_exception_type( exc_type );
-        dump_function_descr( descr, exc_type );
+        exc_type = NULL;
+        TRACE("handling C exception code %lx  rec %p frame %p trylevel %d descr %p nested_frame %p\n",
+              rec->ExceptionCode,  rec, frame, frame->trylevel, descr, nested_frame );
     }
 
     next_ip = call_catch_block( rec, frame, descr, frame->trylevel, exc_type );
