@@ -24,9 +24,9 @@
 #include "wine/library.h"
 #include "crt0_private.h"
 
-extern BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved );
+extern BOOL WINAPI DECLSPEC_HIDDEN DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved );
 
-BOOL WINAPI __wine_spec_dll_entry( HINSTANCE inst, DWORD reason, LPVOID reserved )
+BOOL WINAPI DECLSPEC_HIDDEN __wine_spec_dll_entry( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
     static BOOL call_fini;
     BOOL ret;

@@ -38,7 +38,7 @@ extern struct ImgDelayDescr __wine_spec_delay_imports[];
 
 extern FARPROC WINAPI DelayLoadFailureHook( LPCSTR name, LPCSTR function );
 
-FARPROC WINAPI __wine_spec_delay_load( unsigned int id )
+FARPROC WINAPI DECLSPEC_HIDDEN __wine_spec_delay_load( unsigned int id )
 {
     struct ImgDelayDescr *descr = __wine_spec_delay_imports + HIWORD(id);
     WORD func = LOWORD(id);

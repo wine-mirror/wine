@@ -27,7 +27,7 @@
 
 extern int main( int argc, char *argv[] );
 
-DWORD WINAPI __wine_spec_exe_entry( PEB *peb )
+DWORD WINAPI DECLSPEC_HIDDEN __wine_spec_exe_entry( PEB *peb )
 {
     BOOL needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
     DWORD ret;

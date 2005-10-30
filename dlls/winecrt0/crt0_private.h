@@ -25,8 +25,8 @@
 static inline void _init(int argc, char **argv, char **envp ) { /* nothing */ }
 static inline void _fini(void) { /* nothing */ }
 #else
-extern  void _init(int argc, char **argv, char **envp );
-extern void _fini(void);
+extern void _init(int argc, char **argv, char **envp ) DECLSPEC_HIDDEN;
+extern void _fini(void) DECLSPEC_HIDDEN;
 #endif
 
 enum init_state
@@ -36,6 +36,6 @@ enum init_state
     CONSTRUCTORS_DONE  /* the constructors have been run (implies dll registered too) */
 };
 
-extern enum init_state __wine_spec_init_state;
+extern enum init_state __wine_spec_init_state DECLSPEC_HIDDEN;
 
 #endif /* __WINE_CRT0_PRIVATE_H__ */

@@ -130,6 +130,24 @@
 # endif
 #endif
 
+/* a couple of useful Wine extensions */
+
+#ifdef _MSC_VER
+# define DECLSPEC_EXPORT __declspec(dllexport)
+#elif defined(__MINGW32__)
+# define DECLSPEC_EXPORT __attribute__((dllexport))
+#elif defined(__GNUC__) && (__GNUC__ > 2)
+# define DECLSPEC_EXPORT __attribute__((visibility ("default")))
+#else
+# define DECLSPEC_EXPORT
+#endif
+
+#if defined(__GNUC__) && (__GNUC__ > 2)
+# define DECLSPEC_HIDDEN __attribute__((visibility ("hidden")))
+#else
+# define DECLSPEC_HIDDEN
+#endif
+
 /* Anonymous union/struct handling */
 
 #ifndef NONAMELESSSTRUCT
