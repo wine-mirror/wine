@@ -554,8 +554,8 @@
 @ cdecl _wsplitpath(wstr wstr wstr wstr wstr)
 @ cdecl _wstat(wstr ptr) MSVCRT__wstat
 @ cdecl _wstati64(wstr ptr) MSVCRT__wstati64
-@ stub _wstrdate #(ptr)
-@ stub _wstrtime #(ptr)
+@ cdecl _wstrdate(wstr)
+@ cdecl _wstrtime(wstr)
 @ stub _wsystem #(wstr)
 @ cdecl _wtempnam(wstr wstr)
 @ stub _wtmpnam #(ptr)

@@ -221,16 +221,40 @@ char* _strdate(char* date)
   return date;
 }
 
+/**********************************************************************
+ *		_wstrdate (MSVCRT.@)
+ */
+MSVCRT_wchar_t* _wstrdate(MSVCRT_wchar_t* date)
+{
+  static const WCHAR format[] = { 'M','M','\'','/','\'','d','d','\'','/','\'','y','y',0 };
+
+  GetDateFormatW(LOCALE_NEUTRAL, 0, NULL, format, (LPWSTR)date, 9);
+
+  return date;
+}
+
 /*********************************************************************
  *		_strtime (MSVCRT.@)
  */
-char* _strtime(char* date)
+char* _strtime(char* time)
 {
   LPCSTR format = "HH':'mm':'ss";
 
-  GetTimeFormatA(LOCALE_NEUTRAL, 0, NULL, format, date, 9); 
+  GetTimeFormatA(LOCALE_NEUTRAL, 0, NULL, format, time, 9); 
 
-  return date;
+  return time;
+}
+
+/*********************************************************************
+ *		_wstrtime (MSVCRT.@)
+ */
+MSVCRT_wchar_t* _wstrtime(MSVCRT_wchar_t* time)
+{
+  static const WCHAR format[] = { 'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0 };
+
+  GetTimeFormatW(LOCALE_NEUTRAL, 0, NULL, format, (LPWSTR)time, 9);
+
+  return time;
 }
 
 /*********************************************************************
