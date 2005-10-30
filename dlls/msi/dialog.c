@@ -123,6 +123,8 @@ static const WCHAR szProgressBar[] = {
 static const WCHAR szRadioButtonGroup[] = { 
     'R','a','d','i','o','B','u','t','t','o','n','G','r','o','u','p',0 };
 static const WCHAR szIcon[] = { 'I','c','o','n',0 };
+static const WCHAR szSelectionTree[] = {
+    'S','e','l','e','c','t','i','o','n','T','r','e','e',0 };
 
 static UINT msi_dialog_checkbox_handler( msi_dialog *, msi_control *, WPARAM );
 static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
@@ -1318,6 +1320,63 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
     return r;
 }
 
+/******************** Selection Tree ***************************************/
+
+static void
+msi_dialog_tv_add_child_features( MSIPACKAGE *package, HWND hwnd,
+                                  LPCWSTR parent, HTREEITEM hParent )
+{
+    MSIFEATURE *feature;
+    TVINSERTSTRUCTW tvis;
+    HTREEITEM hitem;
+
+    LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
+    {
+        if ( lstrcmpW( parent, feature->Feature_Parent ) )
+            continue;
+
+        if ( !feature->Title )
+            continue;
+
+        memset( &tvis, 0, sizeof tvis );
+        tvis.hParent = hParent;
+        tvis.hInsertAfter = TVI_SORT;
+        if (feature->Title)
+        {
+            tvis.item.mask = TVIF_TEXT;
+            tvis.item.pszText = feature->Title;
+        }
+        tvis.item.lParam = (LPARAM) feature;
+        hitem = (HTREEITEM) SendMessageW( hwnd, TVM_INSERTITEMW, 0, (LPARAM) &tvis );
+        if (!hitem)
+            continue;
+
+        msi_dialog_tv_add_child_features( package, hwnd,
+                                          feature->Feature, hitem );
+    }
+}
+
+static UINT msi_dialog_selection_tree( msi_dialog *dialog, MSIRECORD *rec )
+{
+    msi_control *control;
+    LPCWSTR prop;
+    LPWSTR val;
+    MSIPACKAGE *package = dialog->package;
+
+    prop = MSI_RecordGetString( rec, 9 );
+    val = msi_dup_property( package, prop );
+    control = msi_dialog_add_control( dialog, rec, WC_TREEVIEWW,
+                                      TVS_HASBUTTONS | WS_GROUP | WS_VSCROLL );
+    if (!control)
+        return ERROR_FUNCTION_FAILED;
+
+    msi_dialog_tv_add_child_features( package, control->hwnd, NULL, NULL );
+
+    msi_free( val );
+
+    return ERROR_SUCCESS;
+}
+
 struct control_handler msi_dialog_handler[] =
 {
     { szText, msi_dialog_text_control },
@@ -1333,6 +1392,7 @@ struct control_handler msi_dialog_handler[] =
     { szProgressBar, msi_dialog_progress_bar },
     { szRadioButtonGroup, msi_dialog_radiogroup_control },
     { szIcon, msi_dialog_icon_control },
+    { szSelectionTree, msi_dialog_selection_tree },
 };
 
 #define NUM_CONTROL_TYPES (sizeof msi_dialog_handler/sizeof msi_dialog_handler[0])
