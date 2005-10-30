@@ -926,6 +926,20 @@ struct msi_maskedit_info
     struct msi_mask_group group[MASK_MAX_GROUPS];
 };
 
+static BOOL msi_mask_editable( WCHAR type )
+{
+    switch (type)
+    {
+    case '%':
+    case '#':
+    case '&':
+    case '`':
+    case '?':
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static void msi_mask_control_change( struct msi_maskedit_info *info )
 {
     LPWSTR val;
@@ -939,9 +953,18 @@ static void msi_mask_control_change( struct msi_maskedit_info *info )
             ERR("can't fit control %d text into template\n",i);
             break;
         }
-        r = GetWindowTextW( info->group[i].hwnd, &val[n], info->group[i].len+1 );
-        if( r != info->group[i].len )
-            break;
+        if (!msi_mask_editable(info->group[i].type))
+        {
+            for(r=0; r<info->group[i].len; r++)
+                val[n+r] = info->group[i].type;
+            val[n+r] = 0;
+        }
+        else
+        {
+            r = GetWindowTextW( info->group[i].hwnd, &val[n], info->group[i].len+1 );
+            if( r != info->group[i].len )
+                break;
+        }
         n += r;
     }
 
@@ -1059,12 +1082,6 @@ static struct msi_maskedit_info * msi_dialog_parse_groups( LPCWSTR mask )
     p++;
     for( i=0; i<MASK_MAX_GROUPS; i++ )
     {
-        while (*p=='-')
-        {
-            total++;
-            p++;
-        }
-
         /* stop at the end of the string */
         if( p[0] == 0 || p[0] == '>' )
             break;
@@ -1111,6 +1128,8 @@ msi_maskedit_create_children( struct msi_maskedit_info *info, LPCWSTR font )
 
     for( i = 0; i < info->num_groups; i++ )
     {
+        if (!msi_mask_editable( info->group[i].type ))
+            continue;
         wx = (info->group[i].ofs * width) / info->num_chars;
         ww = (info->group[i].len * width) / info->num_chars;
 
@@ -1130,7 +1149,10 @@ msi_maskedit_create_children( struct msi_maskedit_info *info, LPCWSTR font )
     }
 }
 
-/* office 2003 uses "73931<````=````=````=````=`````>@@@@@" */
+/*
+ * office 2003 uses "73931<````=````=````=````=`````>@@@@@"
+ * delphi 7 uses "<????-??????-??????-????>" and "<???-???>"
+ */
 static UINT msi_dialog_maskedit_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     LPWSTR font_mask, val = NULL, font;
