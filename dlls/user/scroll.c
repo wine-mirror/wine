@@ -785,6 +785,8 @@ static void SCROLL_HandleKbdEvent(HWND hwnd, WPARAM wParam, LPARAM lParam)
     case VK_END:   wParam = SB_BOTTOM; break;
     case VK_UP:    wParam = SB_LINEUP; break;
     case VK_DOWN:  wParam = SB_LINEDOWN; break;
+    case VK_LEFT:  wParam = SB_LINEUP; break;
+    case VK_RIGHT: wParam = SB_LINEDOWN; break;
     default: return;
     }
     SendMessageW(GetParent(hwnd),
