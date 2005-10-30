@@ -460,6 +460,24 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
 }
 
 /***********************************************************************
+ *           MsiSetMode    (MSI.@)
+ */
+BOOL WINAPI MsiSetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode, BOOL fState)
+{
+    switch (iRunMode)
+    {
+    case MSIRUNMODE_RESERVED11:
+    case MSIRUNMODE_WINDOWS9X:
+    case MSIRUNMODE_RESERVED14:
+    case MSIRUNMODE_RESERVED15:
+        return FALSE;
+    default:
+        FIXME("%ld %d %d\n", hInstall, iRunMode, fState);
+    }
+    return TRUE;
+}
+
+/***********************************************************************
  * MsiSetFeatureStateA (MSI.@)
  *
  * According to the docs, when this is called it immediately recalculates

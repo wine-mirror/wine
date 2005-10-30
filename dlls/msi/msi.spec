@@ -136,7 +136,7 @@
 140 stub MsiSetInstallLevel
 141 stdcall MsiSetInternalUI(long ptr)
 142 stub MsiVerifyDiskSpace
-143 stub MsiSetMode
+143 stdcall MsiSetMode(long long long)
 144 stdcall MsiSetPropertyA(long str str)
 145 stdcall MsiSetPropertyW(long wstr wstr)
 146 stdcall MsiSetTargetPathA(long str str)
