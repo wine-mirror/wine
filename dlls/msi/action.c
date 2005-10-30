@@ -4124,6 +4124,12 @@ static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
     return ERROR_SUCCESS;
 }
 
+static UINT ACTION_AllocateRegistrySpace( MSIPACKAGE *package )
+{
+    TRACE("%p\n", package);
+    return ERROR_SUCCESS;
+}
+
 static UINT ACTION_RemoveIniValues( MSIPACKAGE *package )
 {
     static const WCHAR table[] =
@@ -4231,7 +4237,7 @@ static UINT ACTION_UnregisterFonts( MSIPACKAGE *package )
 }
 
 static struct _actions StandardActions[] = {
-    { szAllocateRegistrySpace, NULL},
+    { szAllocateRegistrySpace, ACTION_AllocateRegistrySpace },
     { szAppSearch, ACTION_AppSearch },
     { szBindImage, ACTION_BindImage },
     { szCCPSearch, NULL},
