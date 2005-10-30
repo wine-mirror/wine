@@ -56,11 +56,6 @@ extern char **__wine_main_environ;
 extern void __wine_dll_register( const IMAGE_NT_HEADERS *header, const char *filename );
 extern void wine_init( int argc, char *argv[], char *error, int error_size );
 
-/* debugging */
-
-extern void wine_dbg_add_option( const char *name, unsigned char set, unsigned char clear );
-extern int wine_dbg_parse_options( const char *str );
-
 /* portability */
 
 extern void DECLSPEC_NORETURN wine_switch_to_stack( void (*func)(void *), void *arg, void *stack );
