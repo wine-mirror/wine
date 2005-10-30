@@ -236,7 +236,7 @@ WIN16_FILES = \
 	rasapi16.dll.so \
 	setupx.dll.so \
 	shell.dll.so \
-	sound.dll.so \
+	sound.drv.so \
 	storage.dll.so \
 	stress.dll.so \
 	system.drv.so \
@@ -991,7 +991,7 @@ wininet.dll.so: wininet/wininet.dll.so
 winmm.dll.so: winmm/winmm.dll.so
 	$(RM) $@ && $(LN_S) winmm/winmm.dll.so $@
 
-mmsystem.dll.so sound.dll.so : winmm.dll.so
+mmsystem.dll.so sound.drv.so : winmm.dll.so
 	$(RM) $@ && $(LN_S) winmm.dll.so $@
 
 winnls32.dll.so: winnls/winnls32.dll.so
