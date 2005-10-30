@@ -179,7 +179,7 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
         while (parent->Parent && parent->Parent != parent)
             parent = parent->Parent;
 
-        FIXME("need to determing if we are really the CurVer\n");
+        /* FIXME: need to determing if we are really the CurVer */
 
         progid->CurVer = parent;
         parent->VersionInd = progid;
@@ -1041,67 +1041,36 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     return rc;
 }
 
-static UINT register_progid_base( MSIPROGID* progid, LPWSTR clsid )
+static LPCWSTR get_clsid_of_progid( MSIPROGID *progid )
+{
+    while (progid)
+    {
+        if (progid->Class)
+            return progid->Class->clsid;
+        progid = progid->Parent;
+    }
+    return NULL;
+}
+
+static UINT register_progid( MSIPROGID* progid )
 {
     static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
     static const WCHAR szDefaultIcon[] =
         {'D','e','f','a','u','l','t','I','c','o','n',0};
-    HKEY hkey;
+    static const WCHAR szCurVer[] =
+        {'C','u','r','V','e','r',0};
+    HKEY hkey = 0;
+    UINT rc;
 
-    RegCreateKeyW(HKEY_CLASSES_ROOT,progid->ProgID,&hkey);
+    rc = RegCreateKeyW( HKEY_CLASSES_ROOT, progid->ProgID, &hkey );
+    if (rc == ERROR_SUCCESS)
+    {
+        LPCWSTR clsid = get_clsid_of_progid( progid );
 
-    if (progid->Description)
-        msi_reg_set_val_str( hkey, NULL, progid->Description );
-
-    if (progid->Class)
-    {   
-        msi_reg_set_subkey_val( hkey, szCLSID, NULL, progid->Class->clsid );
         if (clsid)
-            strcpyW( clsid, progid->Class->clsid );
-    }
-    else
-    {
-        FIXME("progid (%s) with null classid\n", debugstr_w(progid->ProgID));
-    }
-
-    if (progid->IconPath)
-        msi_reg_set_subkey_val( hkey, szDefaultIcon, NULL, progid->IconPath );
-
-    return ERROR_SUCCESS;
-}
-
-static UINT register_progid(MSIPACKAGE *package, MSIPROGID* progid, 
-                LPWSTR clsid)
-{
-    UINT rc = ERROR_SUCCESS; 
-
-    if (progid->Parent == NULL)
-        rc = register_progid_base( progid, clsid );
-    else
-    {
-        DWORD disp;
-        HKEY hkey;
-        static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
-        static const WCHAR szDefaultIcon[] =
-            {'D','e','f','a','u','l','t','I','c','o','n',0};
-        static const WCHAR szCurVer[] =
-            {'C','u','r','V','e','r',0};
-
-        /* check if already registered */
-        RegCreateKeyExW(HKEY_CLASSES_ROOT, progid->ProgID, 0, NULL, 0,
-                        KEY_ALL_ACCESS, NULL, &hkey, &disp );
-        if (disp == REG_OPENED_EXISTING_KEY)
-        {
-            TRACE("Key already registered\n");
-            RegCloseKey(hkey);
-            return rc;
-        }
-
-        TRACE("Registering Parent %s\n", debugstr_w(progid->Parent->ProgID) );
-        rc = register_progid( package, progid->Parent, clsid );
-
-        /* clsid is same as parent */
-        msi_reg_set_subkey_val( hkey, szCLSID, NULL, clsid );
+            msi_reg_set_subkey_val( hkey, szCLSID, NULL, clsid );
+        else
+            ERR("%s has no class\n", debugstr_w( progid->ProgID ) );
 
         if (progid->Description)
             msi_reg_set_val_str( hkey, NULL, progid->Description );
@@ -1115,6 +1084,9 @@ static UINT register_progid(MSIPACKAGE *package, MSIPROGID* progid,
 
         RegCloseKey(hkey);
     }
+    else
+        ERR("failed to create key %s\n", debugstr_w( progid->ProgID ) );
+
     return rc;
 }
 
@@ -1130,8 +1102,6 @@ UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( progid, &package->progids, MSIPROGID, entry )
     {
-        WCHAR clsid[0x1000];
-
         /* check if this progid is to be installed */
         if (progid->Class && progid->Class->Installed)
             progid->InstallMe = TRUE;
@@ -1145,9 +1115,9 @@ UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
        
         TRACE("Registering progid %s\n", debugstr_w(progid->ProgID));
 
-        register_progid( package, progid, clsid );
+        register_progid( progid );
 
-        uirow = MSI_CreateRecord(1);
+        uirow = MSI_CreateRecord( 1 );
         MSI_RecordSetStringW( uirow, 1, progid->ProgID );
         ui_actiondata( package, szRegisterProgIdInfo, uirow );
         msiobj_release( &uirow->hdr );
