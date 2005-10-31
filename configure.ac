@@ -1731,6 +1731,7 @@ programs/avitools/Makefile
 programs/clock/Makefile
 programs/cmdlgtst/Makefile
 programs/control/Makefile
+programs/eject/Makefile
 programs/expand/Makefile
 programs/hh/Makefile
 programs/msiexec/Makefile

@@ -10,6 +10,7 @@ SUBDIRS = \
 	clock \
 	cmdlgtst \
 	control \
+	eject \
 	expand \
 	hh \
 	msiexec \
@@ -43,6 +44,7 @@ INSTALLSUBDIRS = \
 	avitools \
 	clock \
 	control \
+	eject \
 	expand \
 	hh \
 	msiexec \
@@ -96,6 +98,7 @@ SYMLINKS = \
 	clock.exe$(DLLEXT) \
 	cmdlgtst.exe$(DLLEXT) \
 	control.exe$(DLLEXT) \
+	eject.exe$(DLLEXT) \
 	expand.exe$(DLLEXT) \
 	hh.exe$(DLLEXT) \
 	icinfo.exe$(DLLEXT) \
@@ -182,6 +185,9 @@ cmdlgtst.exe$(DLLEXT): cmdlgtst/cmdlgtst.exe$(DLLEXT)
 
 control.exe$(DLLEXT): control/control.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) control/control.exe$(DLLEXT) $@
+
+eject.exe$(DLLEXT): eject/eject.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) eject/eject.exe$(DLLEXT) $@
 
 expand.exe$(DLLEXT): expand/expand.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) expand/expand.exe$(DLLEXT) $@
@@ -272,6 +278,7 @@ avitools/aviplay.exe$(DLLEXT): avitools
 clock/clock.exe$(DLLEXT): clock
 cmdlgtst/cmdlgtst.exe$(DLLEXT): cmdlgtst
 control/control.exe$(DLLEXT): control
+eject/eject.exe$(DLLEXT): eject
 expand/expand.exe$(DLLEXT): expand
 hh/hh.exe$(DLLEXT): hh
 avitools/icinfo.exe$(DLLEXT): avitools

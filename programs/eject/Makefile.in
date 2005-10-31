@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = eject.exe
+APPMODE   = -mconsole
+IMPORTS   = kernel32
+
+C_SRCS = eject.c
+
+@MAKE_PROG_RULES@
+
+### Dependencies:
