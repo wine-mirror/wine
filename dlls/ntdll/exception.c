@@ -116,7 +116,10 @@ static DWORD EXC_UnwindHandler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RE
  * happening during the handler execution.
  * Please do not change the first 4 parameters order in any way - some exceptions handlers
  * rely on Base Pointer (EBP) to have a fixed position related to the exception frame
+ *
+ * For i386 this function is implemented in assembler in signal_i386.c.
  */
+#ifndef __i386__
 static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher,
                               PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler)
@@ -134,7 +137,12 @@ static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_R
     __wine_pop_frame( &newframe.frame );
     return ret;
 }
-
+#else
+/* in signal_i386.c */
+extern DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
+                              CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher,
+                              PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler);
+#endif
 
 /**********************************************************************
  *           send_debug_event

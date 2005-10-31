@@ -1384,4 +1384,36 @@ __ASM_GLOBAL_FUNC( DbgBreakPoint, "int $3; ret");
  */
 __ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret");
 
+
+/**********************************************************************
+ *		EXC_CallHandler   (internal)
+ */
+__ASM_GLOBAL_FUNC( EXC_CallHandler,
+"	pushl	%ebp\n"
+"	movl	%esp, %ebp\n"
+"	subl	$12, %esp\n"
+"	movl	28(%ebp), %eax\n"
+"	movl	12(%ebp), %edx\n"
+"	movl	%eax, -8(%ebp)\n"
+"	movl	%edx, -4(%ebp)\n"
+"	leal	-12(%ebp), %eax\n"
+"	.byte 0x64\n"
+"	movl (0),%ecx\n"
+"	movl %ecx,(%eax)\n"
+"	.byte 0x64\n"
+"	movl %eax,(0)\n"
+"	movl	20(%ebp), %eax\n"
+"	pushl	%eax\n"
+"	movl	16(%ebp), %eax\n"
+"	pushl	%eax\n"
+"	movl	8(%ebp), %eax\n"
+"	pushl	%edx\n"
+"	pushl	%eax\n"
+"	call	*24(%ebp)\n"
+"	movl	-12(%ebp), %edx\n"
+"	.byte 0x64\n"
+"	movl %edx,(0)\n"
+"	leave\n"
+"	ret\n"
+);
 #endif  /* __i386__ */
