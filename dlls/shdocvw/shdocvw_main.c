@@ -480,7 +480,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
         return r;
     }
 
-    if (IsEqualGUID(&IID_IClassFactory, riid))
+    if (IsEqualCLSID(&CLSID_WebBrowser, rclsid) &&
+        IsEqualIID(&IID_IClassFactory, riid))
     {
         /* Pass back our shdocvw class factory */
         *ppv = (LPVOID)&SHDOCVW_ClassFactory;
