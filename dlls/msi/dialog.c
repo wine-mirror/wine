@@ -2183,6 +2183,8 @@ BOOL msi_dialog_register_class( void )
 void msi_dialog_unregister_class( void )
 {
     DestroyWindow( hMsiHiddenWindow );
+    hMsiHiddenWindow = NULL;
     UnregisterClassW( szMsiDialogClass, NULL );
+    UnregisterClassW( szMsiHiddenWindow, NULL );
     uiThreadId = 0;
 }
