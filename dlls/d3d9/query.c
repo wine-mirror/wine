@@ -124,9 +124,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9 iface, D3DQUER
   HRESULT hr = D3D_OK;
 
   TRACE("(%p) Relay\n", This);
-  if (NULL == ppQuery) {
-    return D3DERR_INVALIDCALL;
-  }
+
   /* Allocate the storage for the device */
   object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DQuery9Impl));
   if (NULL == object) {
