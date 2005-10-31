@@ -42,7 +42,7 @@ static const USER_DRIVER *load_driver(void)
     HMODULE graphics_driver;
     USER_DRIVER *driver, *prev;
 
-    strcpy( buffer, "x11,tty" );  /* default value */
+    strcpy( buffer, "x11" );  /* default value */
     /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
     if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Drivers", &hkey ))
     {
@@ -61,70 +61,66 @@ static const USER_DRIVER *load_driver(void)
         if ((graphics_driver = LoadLibraryA( libname )) != 0) break;
         name = next;
     }
-    if (!graphics_driver)
-    {
-        MESSAGE( "wine: Could not load graphics driver '%s'.\n", buffer );
-        if (!strcasecmp( buffer, "x11" ))
-            MESSAGE( "Make sure that your X server is running and that $DISPLAY is set correctly.\n" );
-        ExitProcess(1);
-    }
 
     driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
     memcpy( driver, &null_driver, sizeof(*driver) );
 
+    if (graphics_driver)
+    {
 #define GET_USER_FUNC(name) \
     do { if ((ptr = GetProcAddress( graphics_driver, #name ))) driver->p##name = ptr; } while(0)
 
-    GET_USER_FUNC(ActivateKeyboardLayout);
-    GET_USER_FUNC(Beep);
-    GET_USER_FUNC(GetAsyncKeyState);
-    GET_USER_FUNC(GetKeyNameText);
-    GET_USER_FUNC(GetKeyboardLayout);
-    GET_USER_FUNC(GetKeyboardLayoutList);
-    GET_USER_FUNC(GetKeyboardLayoutName);
-    GET_USER_FUNC(LoadKeyboardLayout);
-    GET_USER_FUNC(MapVirtualKeyEx);
-    GET_USER_FUNC(SendInput);
-    GET_USER_FUNC(ToUnicodeEx);
-    GET_USER_FUNC(UnloadKeyboardLayout);
-    GET_USER_FUNC(VkKeyScanEx);
-    GET_USER_FUNC(SetCursor);
-    GET_USER_FUNC(GetCursorPos);
-    GET_USER_FUNC(SetCursorPos);
-    GET_USER_FUNC(GetScreenSaveActive);
-    GET_USER_FUNC(SetScreenSaveActive);
-    GET_USER_FUNC(AcquireClipboard);
-    GET_USER_FUNC(EmptyClipboard);
-    GET_USER_FUNC(SetClipboardData);
-    GET_USER_FUNC(GetClipboardData);
-    GET_USER_FUNC(CountClipboardFormats);
-    GET_USER_FUNC(EnumClipboardFormats);
-    GET_USER_FUNC(IsClipboardFormatAvailable);
-    GET_USER_FUNC(RegisterClipboardFormat);
-    GET_USER_FUNC(GetClipboardFormatName);
-    GET_USER_FUNC(EndClipboardUpdate);
-    GET_USER_FUNC(ResetSelectionOwner);
-    GET_USER_FUNC(ChangeDisplaySettingsEx);
-    GET_USER_FUNC(EnumDisplaySettingsEx);
-    GET_USER_FUNC(CreateDesktopWindow);
-    GET_USER_FUNC(CreateWindow);
-    GET_USER_FUNC(DestroyWindow);
-    GET_USER_FUNC(GetDCEx);
-    GET_USER_FUNC(MsgWaitForMultipleObjectsEx);
-    GET_USER_FUNC(ReleaseDC);
-    GET_USER_FUNC(ScrollDC);
-    GET_USER_FUNC(SetFocus);
-    GET_USER_FUNC(SetParent);
-    GET_USER_FUNC(SetWindowPos);
-    GET_USER_FUNC(SetWindowRgn);
-    GET_USER_FUNC(SetWindowIcon);
-    GET_USER_FUNC(SetWindowStyle);
-    GET_USER_FUNC(SetWindowText);
-    GET_USER_FUNC(ShowWindow);
-    GET_USER_FUNC(SysCommandSizeMove);
-    GET_USER_FUNC(WindowFromDC);
-    GET_USER_FUNC(WindowMessage);
+        GET_USER_FUNC(ActivateKeyboardLayout);
+        GET_USER_FUNC(Beep);
+        GET_USER_FUNC(GetAsyncKeyState);
+        GET_USER_FUNC(GetKeyNameText);
+        GET_USER_FUNC(GetKeyboardLayout);
+        GET_USER_FUNC(GetKeyboardLayoutList);
+        GET_USER_FUNC(GetKeyboardLayoutName);
+        GET_USER_FUNC(LoadKeyboardLayout);
+        GET_USER_FUNC(MapVirtualKeyEx);
+        GET_USER_FUNC(SendInput);
+        GET_USER_FUNC(ToUnicodeEx);
+        GET_USER_FUNC(UnloadKeyboardLayout);
+        GET_USER_FUNC(VkKeyScanEx);
+        GET_USER_FUNC(SetCursor);
+        GET_USER_FUNC(GetCursorPos);
+        GET_USER_FUNC(SetCursorPos);
+        GET_USER_FUNC(GetScreenSaveActive);
+        GET_USER_FUNC(SetScreenSaveActive);
+        GET_USER_FUNC(AcquireClipboard);
+        GET_USER_FUNC(EmptyClipboard);
+        GET_USER_FUNC(SetClipboardData);
+        GET_USER_FUNC(GetClipboardData);
+        GET_USER_FUNC(CountClipboardFormats);
+        GET_USER_FUNC(EnumClipboardFormats);
+        GET_USER_FUNC(IsClipboardFormatAvailable);
+        GET_USER_FUNC(RegisterClipboardFormat);
+        GET_USER_FUNC(GetClipboardFormatName);
+        GET_USER_FUNC(EndClipboardUpdate);
+        GET_USER_FUNC(ResetSelectionOwner);
+        GET_USER_FUNC(ChangeDisplaySettingsEx);
+        GET_USER_FUNC(EnumDisplaySettingsEx);
+        GET_USER_FUNC(CreateDesktopWindow);
+        GET_USER_FUNC(CreateWindow);
+        GET_USER_FUNC(DestroyWindow);
+        GET_USER_FUNC(GetDCEx);
+        GET_USER_FUNC(MsgWaitForMultipleObjectsEx);
+        GET_USER_FUNC(ReleaseDC);
+        GET_USER_FUNC(ScrollDC);
+        GET_USER_FUNC(SetFocus);
+        GET_USER_FUNC(SetParent);
+        GET_USER_FUNC(SetWindowPos);
+        GET_USER_FUNC(SetWindowRgn);
+        GET_USER_FUNC(SetWindowIcon);
+        GET_USER_FUNC(SetWindowStyle);
+        GET_USER_FUNC(SetWindowText);
+        GET_USER_FUNC(ShowWindow);
+        GET_USER_FUNC(SysCommandSizeMove);
+        GET_USER_FUNC(WindowFromDC);
+        GET_USER_FUNC(WindowMessage);
 #undef GET_USER_FUNC
+    }
 
     prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, (void *)&lazy_load_driver );
     if (prev != &lazy_load_driver)
@@ -308,7 +304,12 @@ static BOOL nulldrv_CreateDesktopWindow( HWND hwnd )
 
 static BOOL nulldrv_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 {
-    return TRUE;
+    static int warned;
+
+    if (!warned++)
+        MESSAGE( "Application tries to create a window, but no driver could be loaded.\n"
+                 "Make sure that your X server is running and that $DISPLAY is set correctly.\n" );
+    return FALSE;
 }
 
 static void nulldrv_DestroyWindow( HWND hwnd )
