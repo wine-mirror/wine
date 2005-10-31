@@ -206,7 +206,7 @@ static int get_image_params( struct mapping *mapping )
     IMAGE_SECTION_HEADER *sec = NULL;
     struct fd *fd;
     off_t pos;
-    int unix_fd, size;
+    int unix_fd, size, toread;
 
     /* load the headers */
 
@@ -225,8 +225,8 @@ static int get_image_params( struct mapping *mapping )
     pos += sizeof(nt.FileHeader);
     /* zero out Optional header in the case it's not present or partial */
     memset(&nt.OptionalHeader, 0, sizeof(nt.OptionalHeader));
-    if (pread( unix_fd, &nt.OptionalHeader, nt.FileHeader.SizeOfOptionalHeader,
-               pos ) != nt.FileHeader.SizeOfOptionalHeader) goto error;
+    toread = min( sizeof(nt.OptionalHeader), nt.FileHeader.SizeOfOptionalHeader );
+    if (pread( unix_fd, &nt.OptionalHeader, toread, pos ) != toread) goto error;
     pos += nt.FileHeader.SizeOfOptionalHeader;
 
     /* load the section headers */
