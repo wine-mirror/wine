@@ -751,7 +751,7 @@ static void test_PathIsValidCharA(void)
 static void test_PathIsValidCharW(void)
 {
     BOOL ret;
-    unsigned int c;
+    unsigned int c, err_count = 0;
 
     ret = pPathIsValidCharW( 0x7f, 0 );
     ok ( !ret, "PathIsValidCharW succeeded: 0x%08lx\n", (DWORD)ret );
@@ -773,6 +773,14 @@ static void test_PathIsValidCharW(void)
         ok ( ret == 0x00000100,
              "PathIsValidCharW failed: 0x%02x got 0x%08lx expected 0x00000100\n",
              c, (DWORD)ret );
+        if (ret != 0x00000100)
+        {
+            if(++err_count > 100 ) {
+                trace("skipping rest of PathIsValidCharW tests "
+                      "because of the current number of errors\n");
+                break;
+            }
+        }
     }
 }
 
