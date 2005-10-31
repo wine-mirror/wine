@@ -2071,7 +2071,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 {
     GdiFont ret;
     Face *face, *best;
-    Family *family;
+    Family *family, *last_resort_family;
     struct list *family_elem_ptr, *face_elem_ptr;
     INT height, width = 0;
     signed int diff = 0, newdiff;
@@ -2212,31 +2212,48 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
         }
     }
 
+    last_resort_family = NULL;
     LIST_FOR_EACH(family_elem_ptr, &font_list) {
         family = LIST_ENTRY(family_elem_ptr, Family, entry);
         LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if(csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0]))
-                if(face->scalable || can_use_bitmap)
+            if(csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) {
+                if(face->scalable)
                     goto found;
+                if(can_use_bitmap && !last_resort_family)
+                    last_resort_family = family;
+            }            
         }
     }
 
-    
+    if(last_resort_family) {
+        family = last_resort_family;
+        csi.fs.fsCsb[0] = 0;
+        goto found;
+    }
+
     LIST_FOR_EACH(family_elem_ptr, &font_list) {
         family = LIST_ENTRY(family_elem_ptr, Family, entry);
         LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if(face->scalable || can_use_bitmap) {
+            if(face->scalable) {
                 csi.fs.fsCsb[0] = 0;
                 FIXME("just using first face for now\n");
                 goto found;
             }
+            if(can_use_bitmap && !last_resort_family)
+                last_resort_family = family;
         }
     }
-    FIXME("can't find a single appropriate font - bailing\n");
-    free_font(ret);
-    return NULL;
+    if(!last_resort_family) {
+        FIXME("can't find a single appropriate font - bailing\n");
+        free_font(ret);
+        return NULL;
+    }
+
+    WARN("could only find a bitmap font - this will probably look awful!\n");
+    family = last_resort_family;
+    csi.fs.fsCsb[0] = 0;
 
 found:
     it = lf.lfItalic ? 1 : 0;
