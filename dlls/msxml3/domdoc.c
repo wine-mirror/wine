@@ -62,7 +62,7 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument *iface, REFIID riid
 {
     domdoc *This = impl_from_IXMLDOMDocument( iface );
 
-    TRACE("%p %p %p\n", This, debugstr_guid( riid ), ppvObject );
+    TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppvObject );
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMDocument ) ||
          IsEqualGUID( riid, &IID_IXMLDOMNode ) ||

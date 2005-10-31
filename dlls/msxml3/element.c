@@ -62,7 +62,7 @@ static HRESULT WINAPI domelem_QueryInterface(
     REFIID riid,
     void** ppvObject )
 {
-    TRACE("%p %p %p\n", iface, debugstr_guid(riid), ppvObject);
+    TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMElement ) ||
          IsEqualGUID( riid, &IID_IUnknown ) ||
