@@ -116,7 +116,7 @@ UINT WINAPI MsiSequenceW( MSIHANDLE hInstall, LPCWSTR szTable, INT iSequenceMode
     return ret;
 }
 
-static UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
+UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
 {
     UINT len, r = ERROR_SUCCESS;
 
@@ -134,9 +134,12 @@ static UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
     }
     else
     {
-        len = WideCharToMultiByte( CP_ACP, 0, str, -1,
-                           awbuf->str.a, *sz, NULL, NULL );
-        len--;
+        len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+        if (len)
+            len--;
+        WideCharToMultiByte( CP_ACP, 0, str, -1, awbuf->str.a, *sz, NULL, NULL );
+        if ( *sz && (len >= *sz) )
+            awbuf->str.a[*sz - 1] = 0;
     }
 
     if (len >= *sz)

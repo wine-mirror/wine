@@ -254,6 +254,7 @@ DEFINE_GUID(CLSID_IMsiServerX3, 0x000C1094,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x0
 
 DEFINE_GUID(CLSID_IMsiServerMessage, 0x000C101D,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
+/* handle unicode/ascii output in the Msi* API functions */
 typedef struct {
     BOOL unicode;
     union {
@@ -269,6 +270,8 @@ typedef struct {
        LPCWSTR w;
     } str;
 } awcstring;
+
+UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz );
 
 /* handle functions */
 extern void *msihandle2msiinfo(MSIHANDLE handle, UINT type);

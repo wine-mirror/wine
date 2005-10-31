@@ -567,6 +567,128 @@ void test_condition(void)
     MsiCloseHandle( hpkg );
 }
 
+static BOOL check_prop_empty( MSIHANDLE hpkg, char * prop)
+{
+    UINT r;
+    DWORD sz;
+    char buffer[2];
+
+    sz = sizeof buffer;
+    strcpy(buffer,"x");
+    r = MsiGetProperty( hpkg, prop, buffer, &sz );
+    return r == ERROR_SUCCESS && buffer[0] == 0 && sz == 0;
+}
+
+static void test_props(void)
+{
+    MSIHANDLE hpkg;
+    UINT r;
+    DWORD sz;
+    char buffer[0x100];
+
+    hpkg = package_from_db(create_package_db());
+    ok( hpkg, "failed to create package\n");
+
+    /* test invalid values */
+    r = MsiGetProperty( 0, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
+
+    r = MsiGetProperty( hpkg, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
+
+    r = MsiGetProperty( hpkg, "boo", NULL, NULL );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+
+    r = MsiGetProperty( hpkg, "boo", buffer, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
+
+    /* test retrieving an empty/non-existant property */
+    sz = sizeof buffer;
+    r = MsiGetProperty( hpkg, "boo", NULL, &sz );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+    ok( sz == 0, "wrong size returned\n");
+
+    check_prop_empty( hpkg, "boo");
+    sz = 0;
+    strcpy(buffer,"x");
+    r = MsiGetProperty( hpkg, "boo", buffer, &sz );
+    ok( r == ERROR_MORE_DATA, "wrong return val\n");
+    ok( !strcmp(buffer,"x"), "buffer was changed\n");
+    ok( sz == 0, "wrong size returned\n");
+
+    sz = 1;
+    strcpy(buffer,"x");
+    r = MsiGetProperty( hpkg, "boo", buffer, &sz );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+    ok( buffer[0] == 0, "buffer was not changed\n");
+    ok( sz == 0, "wrong size returned\n");
+
+    /* set the property to something */
+    r = MsiSetProperty( 0, NULL, NULL );
+    ok( r == ERROR_INVALID_HANDLE, "wrong return val\n");
+
+    r = MsiSetProperty( hpkg, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
+
+    r = MsiSetProperty( hpkg, "", NULL );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+
+    /* try set and get some illegal property identifiers */
+    r = MsiSetProperty( hpkg, "", "asdf" );
+    ok( r == ERROR_FUNCTION_FAILED, "wrong return val\n");
+
+    r = MsiSetProperty( hpkg, "=", "asdf" );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+
+    r = MsiSetProperty( hpkg, " ", "asdf" );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+
+    r = MsiSetProperty( hpkg, "'", "asdf" );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+
+    sz = sizeof buffer;
+    buffer[0]=0;
+    r = MsiGetProperty( hpkg, "'", buffer, &sz );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+    ok( !strcmp(buffer,"asdf"), "buffer was not changed\n");
+
+    /* set empty values */
+    r = MsiSetProperty( hpkg, "boo", NULL );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+    ok( check_prop_empty( hpkg, "boo"), "prop wasn't empty\n");
+
+    r = MsiSetProperty( hpkg, "boo", "" );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+    ok( check_prop_empty( hpkg, "boo"), "prop wasn't empty\n");
+
+    /* set a non-empty value */
+    r = MsiSetProperty( hpkg, "boo", "xyz" );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+
+    sz = 1;
+    strcpy(buffer,"x");
+    r = MsiGetProperty( hpkg, "boo", buffer, &sz );
+    ok( r == ERROR_MORE_DATA, "wrong return val\n");
+    ok( buffer[0] == 0, "buffer was not changed\n");
+    ok( sz == 3, "wrong size returned\n");
+
+    sz = 4;
+    strcpy(buffer,"x");
+    r = MsiGetProperty( hpkg, "boo", buffer, &sz );
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+    ok( !strcmp(buffer,"xyz"), "buffer was not changed\n");
+    ok( sz == 3, "wrong size returned\n");
+
+    sz = 3;
+    strcpy(buffer,"x");
+    r = MsiGetProperty( hpkg, "boo", buffer, &sz );
+    ok( r == ERROR_MORE_DATA, "wrong return val\n");
+    ok( !strcmp(buffer,"xy"), "buffer was not changed\n");
+    ok( sz == 3, "wrong size returned\n");
+
+    MsiCloseHandle( hpkg );
+}
+
 START_TEST(package)
 {
     test_createpackage();
@@ -574,4 +696,5 @@ START_TEST(package)
     test_getsourcepath();
     test_doaction();
     test_gettargetpath_bad();
+    test_props();
 }
