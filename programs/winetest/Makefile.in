@@ -40,6 +40,7 @@ TESTBINS = \
 	msi_test.exe$(DLLEXT) \
 	msvcrt_test.exe$(DLLEXT) \
 	msvcrtd_test.exe$(DLLEXT) \
+	msxml3_test.exe$(DLLEXT) \
 	netapi32_test.exe$(DLLEXT) \
 	ntdll_test.exe$(DLLEXT) \
 	ole32_test.exe$(DLLEXT) \
@@ -50,6 +51,7 @@ TESTBINS = \
 	rsabase_test.exe$(DLLEXT) \
 	rsaenh_test.exe$(DLLEXT) \
 	secur32_test.exe$(DLLEXT) \
+	setupapi_test.exe$(DLLEXT) \
 	shell32_test.exe$(DLLEXT) \
 	shlwapi_test.exe$(DLLEXT) \
 	urlmon_test.exe$(DLLEXT) \
@@ -131,6 +133,8 @@ msvcrt_test.exe$(DLLEXT): $(DLLDIR)/msvcrt/tests/msvcrt_test.exe$(DLLEXT)
 	cp $(DLLDIR)/msvcrt/tests/msvcrt_test.exe$(DLLEXT) $@ && $(STRIP) $@
 msvcrtd_test.exe$(DLLEXT): $(DLLDIR)/msvcrtd/tests/msvcrtd_test.exe$(DLLEXT)
 	cp $(DLLDIR)/msvcrtd/tests/msvcrtd_test.exe$(DLLEXT) $@ && $(STRIP) $@
+msxml3_test.exe$(DLLEXT): $(DLLDIR)/msxml3/tests/msxml3_test.exe$(DLLEXT)
+	cp $(DLLDIR)/msxml3/tests/msxml3_test.exe$(DLLEXT) $@ && $(STRIP) $@
 netapi32_test.exe$(DLLEXT): $(DLLDIR)/netapi32/tests/netapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/netapi32/tests/netapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 ntdll_test.exe$(DLLEXT): $(DLLDIR)/ntdll/tests/ntdll_test.exe$(DLLEXT)
@@ -151,6 +155,8 @@ rsaenh_test.exe$(DLLEXT): $(DLLDIR)/rsaenh/tests/rsaenh_test.exe$(DLLEXT)
 	cp $(DLLDIR)/rsaenh/tests/rsaenh_test.exe$(DLLEXT) $@ && $(STRIP) $@
 secur32_test.exe$(DLLEXT): $(DLLDIR)/secur32/tests/secur32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/secur32/tests/secur32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+setupapi_test.exe$(DLLEXT): $(DLLDIR)/setupapi/tests/setupapi_test.exe$(DLLEXT)
+	cp $(DLLDIR)/setupapi/tests/setupapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 shell32_test.exe$(DLLEXT): $(DLLDIR)/shell32/tests/shell32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/shell32/tests/shell32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 shlwapi_test.exe$(DLLEXT): $(DLLDIR)/shlwapi/tests/shlwapi_test.exe$(DLLEXT)
