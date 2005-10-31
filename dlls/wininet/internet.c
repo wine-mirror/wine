@@ -3422,6 +3422,142 @@ BOOL WINAPI InternetCombineUrlW(LPCWSTR lpszBaseUrl, LPCWSTR lpszRelativeUrl,
     return (hr==S_OK);
 }
 
+/* max port num is 65535 => 5 digits */
+#define MAX_WORD_DIGITS 5
+
+/* we can calculate using ansi strings because we're just
+ * calculating string length, not size
+ */
+static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
+                            LPDWORD lpdwUrlLength, LPDWORD lpdwSchemeLength)
+{
+    static const WCHAR httpW[] = {'h','t','t','p',0};
+
+    *lpdwUrlLength = 0;
+
+    switch (lpUrlComponents->nScheme)
+    {
+        case INTERNET_SCHEME_FTP:
+        case INTERNET_SCHEME_RES:
+            *lpdwSchemeLength = 3;
+            break;
+        case INTERNET_SCHEME_HTTP:
+        case INTERNET_SCHEME_FILE:
+        case INTERNET_SCHEME_NEWS:
+            *lpdwSchemeLength = 4;
+            break;
+
+        default:
+            *lpdwSchemeLength = 4;
+            break;
+    }
+
+    *lpdwUrlLength += *lpdwSchemeLength;
+    *lpdwUrlLength += strlen("://");
+
+    if (lpUrlComponents->lpszUserName)
+    {
+        *lpdwUrlLength += lpUrlComponents->dwUserNameLength;
+        *lpdwUrlLength += strlen("@");
+    }
+    else
+    {
+        if (lpUrlComponents->lpszPassword)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+        else
+            SetLastError(ERROR_ALREADY_EXISTS);
+    }
+
+    if (lpUrlComponents->lpszPassword)
+    {
+        *lpdwUrlLength += strlen(":");
+        *lpdwUrlLength += lpUrlComponents->dwPasswordLength;
+    }
+
+    *lpdwUrlLength += lpUrlComponents->dwHostNameLength;
+
+    if (lpUrlComponents->nPort != 80 ||
+        (lpUrlComponents->lpszScheme && strncmpW(lpUrlComponents->lpszScheme, httpW, lpUrlComponents->dwSchemeLength)))
+    {
+        char szPort[MAX_WORD_DIGITS];
+
+        sprintf(szPort, "%d", lpUrlComponents->nPort);
+        *lpdwUrlLength += strlen(szPort);
+        *lpdwUrlLength += strlen(":");
+    }
+
+    *lpdwUrlLength += lpUrlComponents->dwUrlPathLength;
+    return TRUE;
+}
+
+static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPONENTSW urlCompW)
+{
+    INT len;
+
+    ZeroMemory(urlCompW, sizeof(URL_COMPONENTSW));
+
+    urlCompW->dwStructSize = sizeof(URL_COMPONENTSW);
+    urlCompW->dwSchemeLength = lpUrlComponents->dwSchemeLength;
+    urlCompW->nScheme = lpUrlComponents->nScheme;
+    urlCompW->dwHostNameLength = lpUrlComponents->dwHostNameLength;
+    urlCompW->nPort = lpUrlComponents->nPort;
+    urlCompW->dwUserNameLength = lpUrlComponents->dwUserNameLength;
+    urlCompW->dwPasswordLength = lpUrlComponents->dwPasswordLength;
+    urlCompW->dwUrlPathLength = lpUrlComponents->dwUrlPathLength;
+    urlCompW->dwExtraInfoLength = lpUrlComponents->dwExtraInfoLength;
+
+    if (lpUrlComponents->lpszScheme)
+    {
+        len = lpUrlComponents->dwSchemeLength + 1;
+        urlCompW->lpszScheme = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszScheme,
+                            -1, urlCompW->lpszScheme, len);
+    }
+
+    if (lpUrlComponents->lpszHostName)
+    {
+        len = lpUrlComponents->dwHostNameLength + 1;
+        urlCompW->lpszHostName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszHostName,
+                            -1, urlCompW->lpszHostName, len);
+    }
+
+    if (lpUrlComponents->lpszUserName)
+    {
+        len = lpUrlComponents->dwUserNameLength + 1;
+        urlCompW->lpszUserName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszUserName,
+                            -1, urlCompW->lpszUserName, len);
+    }
+
+    if (lpUrlComponents->lpszPassword)
+    {
+        len = lpUrlComponents->dwPasswordLength + 1;
+        urlCompW->lpszPassword = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszPassword,
+                            -1, urlCompW->lpszPassword, len);
+    }
+
+    if (lpUrlComponents->lpszUrlPath)
+    {
+        len = lpUrlComponents->dwUrlPathLength + 1;
+        urlCompW->lpszUrlPath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszUrlPath,
+                            -1, urlCompW->lpszUrlPath, len);
+    }
+
+    if (lpUrlComponents->lpszExtraInfo)
+    {
+        len = lpUrlComponents->dwExtraInfoLength + 1;
+        urlCompW->lpszExtraInfo = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszExtraInfo,
+                            -1, urlCompW->lpszExtraInfo, len);
+    }
+}
+
 /***********************************************************************
  *
  *         InternetCreateUrlA
@@ -3434,8 +3570,130 @@ BOOL WINAPI InternetCombineUrlW(LPCWSTR lpszBaseUrl, LPCWSTR lpszRelativeUrl,
 BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
                                LPSTR lpszUrl, LPDWORD lpdwUrlLength)
 {
-    FIXME("\n");
-    return FALSE;
+    BOOL ret;
+    LPWSTR urlW = NULL;
+    URL_COMPONENTSW urlCompW;
+
+    TRACE("(%p,%ld,%s,%p)\n", lpUrlComponents, dwFlags, debugstr_a(lpszUrl), lpdwUrlLength);
+
+    if (!lpUrlComponents)
+        return FALSE;
+
+    if (lpUrlComponents->dwStructSize != sizeof(URL_COMPONENTSW) || !lpdwUrlLength)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    convert_urlcomp_atow(lpUrlComponents, &urlCompW);
+
+    if (lpszUrl)
+        urlW = HeapAlloc(GetProcessHeap(), 0, *lpdwUrlLength * sizeof(WCHAR));
+
+    ret = InternetCreateUrlW(&urlCompW, dwFlags, urlW, lpdwUrlLength);
+
+    /* on success, lpdwUrlLength points to the size of urlW in WCHARS
+    * minus one, so add one to leave room for NULL terminator
+    */
+    if (ret)
+        WideCharToMultiByte(CP_ACP, 0, urlW, -1, lpszUrl, *lpdwUrlLength + 1, NULL, NULL);
+
+    HeapFree(GetProcessHeap(), 0, urlCompW.lpszScheme);
+    HeapFree(GetProcessHeap(), 0, urlCompW.lpszHostName);
+    HeapFree(GetProcessHeap(), 0, urlCompW.lpszUserName);
+    HeapFree(GetProcessHeap(), 0, urlCompW.lpszPassword);
+    HeapFree(GetProcessHeap(), 0, urlCompW.lpszUrlPath);
+    HeapFree(GetProcessHeap(), 0, urlCompW.lpszExtraInfo);
+    HeapFree(GetProcessHeap(), 0, urlW);
+
+    return ret;
+}
+
+/***********************************************************************
+ *
+ *         InternetCreateUrlW
+ *
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ */
+BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
+                               LPWSTR lpszUrl, LPDWORD lpdwUrlLength)
+{
+    DWORD dwLen, dwSchemeLen;
+
+    static const WCHAR colonSlashW[] = {':','/','/',0};
+    static const WCHAR httpW[] = {'h','t','t','p',0};
+    static const WCHAR colonW[] = {':',0};
+    static const WCHAR atW[] = {'@',0};
+    static const WCHAR percentD[] = {'%','d',0};
+
+    TRACE("(%p,%ld,%s,%p)\n", lpUrlComponents, dwFlags, debugstr_w(lpszUrl), lpdwUrlLength);
+
+    if (!lpUrlComponents)
+        return FALSE;
+
+    if (lpUrlComponents->dwStructSize != sizeof(URL_COMPONENTSW) || !lpdwUrlLength)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!calc_url_length(lpUrlComponents, &dwLen, &dwSchemeLen))
+        return FALSE;
+
+    if (!lpszUrl || *lpdwUrlLength < dwLen)
+    {
+        *lpdwUrlLength = dwLen + 1; /* terminating null */
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    *lpdwUrlLength = dwLen;
+    lpszUrl[0] = 0x00;
+
+    if (lpUrlComponents->lpszScheme)
+        lstrcpynW(lpszUrl, lpUrlComponents->lpszScheme,
+                  min(lpUrlComponents->dwSchemeLength, dwSchemeLen) + 1);
+
+    lstrcatW(lpszUrl, colonSlashW);
+
+    if (lpUrlComponents->lpszUserName)
+    {
+        if (!*lpUrlComponents->lpszUserName)
+            return TRUE;
+
+        lstrcatW(lpszUrl, lpUrlComponents->lpszUserName);
+
+        if (lpUrlComponents->lpszPassword)
+        {
+            lstrcatW(lpszUrl, colonW);
+
+            if (!*lpUrlComponents->lpszPassword)
+                return TRUE;
+            else
+                lstrcatW(lpszUrl, lpUrlComponents->lpszPassword);
+        }
+
+        lstrcatW(lpszUrl, atW);
+    }
+
+    lstrcatW(lpszUrl, lpUrlComponents->lpszHostName);
+
+    if (lpUrlComponents->nPort != 80 || (lpUrlComponents->lpszScheme &&
+        strncmpW(lpUrlComponents->lpszScheme, httpW, lpUrlComponents->dwSchemeLength)))
+    {
+        WCHAR szPort[MAX_WORD_DIGITS];
+
+        sprintfW(szPort, percentD, lpUrlComponents->nPort);
+        lstrcatW(lpszUrl, colonW);
+        lstrcatW(lpszUrl, szPort);
+    }
+
+    lstrcatW(lpszUrl, lpUrlComponents->lpszUrlPath);
+
+    return TRUE;
 }
 
 DWORD WINAPI InternetConfirmZoneCrossingA( HWND hWnd, LPSTR szUrlPrev, LPSTR szUrlNew, BOOL bPost )
@@ -3577,22 +3835,6 @@ DWORD WINAPI InternetSetCookieExW( LPCWSTR lpszURL, LPCWSTR lpszCookieName, LPCW
 BOOL WINAPI ResumeSuspendedDownload( HINTERNET hInternet, DWORD dwError )
 {
     FIXME("(%p, 0x%08lx) stub\n", hInternet, dwError);
-    return FALSE;
-}
- 
-/***********************************************************************
- *
- *         InternetCreateUrlW
- *
- * RETURNS
- *   TRUE on success
- *   FALSE on failure
- *
- */
-BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
-                               LPWSTR lpszUrl, LPDWORD lpdwUrlLength)
-{
-    FIXME("\n");
     return FALSE;
 }
 
