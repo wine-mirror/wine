@@ -2,6 +2,7 @@
  * Implementation of the ODBC driver installer
  *
  * Copyright 2005 Mike McCormack for CodeWeavers
+ * Copyright 2005 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -77,33 +78,39 @@ static LPWSTR SQLInstall_strdup(LPCSTR str)
 BOOL WINAPI SQLConfigDataSourceW(HWND hwndParent, WORD fRequest,
                LPCWSTR lpszDriver, LPCWSTR lpszAttributes)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    LPCWSTR p;
+
+    FIXME("%p %d %s %s\n", hwndParent, fRequest, debugstr_w(lpszDriver),
+          debugstr_w(lpszAttributes));
+
+    for (p = lpszAttributes; *p; p += lstrlenW(p) + 1)
+        FIXME("%s\n", debugstr_w(p));
+
+    return TRUE;
 }
 
 BOOL WINAPI SQLConfigDataSource(HWND hwndParent, WORD fRequest,
                LPCSTR lpszDriver, LPCSTR lpszAttributes)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    FIXME("%p %d %s %s\n", hwndParent, fRequest, debugstr_a(lpszDriver),
+          debugstr_a(lpszAttributes));
+    return TRUE;
 }
 
 BOOL WINAPI SQLConfigDriverW(HWND hwndParent, WORD fRequest, LPCWSTR lpszDriver,
                LPCWSTR lpszArgs, LPWSTR lpszMsg, WORD cbMsgMax, WORD *pcbMsgOut)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    FIXME("(%p %d %s %s %p %d %p)\n", hwndParent, fRequest, debugstr_w(lpszDriver),
+          debugstr_w(lpszArgs), lpszMsg, cbMsgMax, pcbMsgOut);
+    return TRUE;
 }
 
 BOOL WINAPI SQLConfigDriver(HWND hwndParent, WORD fRequest, LPCSTR lpszDriver,
                LPCSTR lpszArgs, LPSTR lpszMsg, WORD cbMsgMax, WORD *pcbMsgOut)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    FIXME("(%p %d %s %s %p %d %p)\n", hwndParent, fRequest, debugstr_a(lpszDriver),
+          debugstr_a(lpszArgs), lpszMsg, cbMsgMax, pcbMsgOut);
+    return TRUE;
 }
 
 BOOL WINAPI SQLCreateDataSourceW(HWND hwnd, LPCWSTR lpszDS)
@@ -198,34 +205,60 @@ BOOL WINAPI SQLGetTranslator(HWND hwndParent, LPSTR lpszName, WORD cbNameMax,
 BOOL WINAPI SQLInstallDriverW(LPCWSTR lpszInfFile, LPCWSTR lpszDriver,
                LPWSTR lpszPath, WORD cbPathMax, WORD * pcbPathOut)
 {
-    FIXME("%s %s %p %d %p\n", debugstr_w(lpszInfFile),
+    DWORD usage;
+
+    TRACE("%s %s %p %d %p\n", debugstr_w(lpszInfFile),
           debugstr_w(lpszDriver), lpszPath, cbPathMax, pcbPathOut);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    if (lpszInfFile)
+        return FALSE;
+
+    return SQLInstallDriverExW(lpszDriver, NULL, lpszPath, cbPathMax,
+                               pcbPathOut, ODBC_INSTALL_COMPLETE, &usage);
 }
 
 BOOL WINAPI SQLInstallDriver(LPCSTR lpszInfFile, LPCSTR lpszDriver,
                LPSTR lpszPath, WORD cbPathMax, WORD * pcbPathOut)
 {
-    FIXME("%s %s %p %d %p\n", debugstr_a(lpszInfFile),
+    DWORD usage;
+
+    TRACE("%s %s %p %d %p\n", debugstr_a(lpszInfFile),
           debugstr_a(lpszDriver), lpszPath, cbPathMax, pcbPathOut);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    if (lpszInfFile)
+        return FALSE;
+   
+    return SQLInstallDriverEx(lpszDriver, NULL, lpszPath, cbPathMax,
+                              pcbPathOut, ODBC_INSTALL_COMPLETE, &usage);
 }
 
 BOOL WINAPI SQLInstallDriverExW(LPCWSTR lpszDriver, LPCWSTR lpszPathIn,
                LPWSTR lpszPathOut, WORD cbPathOutMax, WORD *pcbPathOut,
                WORD fRequest, LPDWORD lpdwUsageCount)
 {
+    UINT len;
     LPCWSTR p;
+    WCHAR path[MAX_PATH];
 
-    FIXME("%s %s %p %d %p %d %p\n", debugstr_w(lpszDriver), debugstr_w(lpszPathIn),
-          lpszPathOut, cbPathOutMax, pcbPathOut, fRequest, lpdwUsageCount);
+    TRACE("%s %s %p %d %p %d %p\n", debugstr_w(lpszDriver),
+          debugstr_w(lpszPathIn), lpszPathOut, cbPathOutMax, pcbPathOut,
+          fRequest, lpdwUsageCount);
 
     for (p = lpszDriver; *p; p += lstrlenW(p) + 1)
-        FIXME("%s\n", debugstr_w(p));
+        TRACE("%s\n", debugstr_w(p));
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    len = GetSystemDirectoryW(path, MAX_PATH);
+
+    if (pcbPathOut)
+        *pcbPathOut = len;
+
+    len = GetSystemDirectoryW(path, MAX_PATH);
+
+    if (lpszPathOut && cbPathOutMax > len)
+    {
+        lstrcpyW(lpszPathOut, path);
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -233,26 +266,47 @@ BOOL WINAPI SQLInstallDriverEx(LPCSTR lpszDriver, LPCSTR lpszPathIn,
                LPSTR lpszPathOut, WORD cbPathOutMax, WORD *pcbPathOut,
                WORD fRequest, LPDWORD lpdwUsageCount)
 {
+    LPCSTR p;
     LPWSTR driver, pathin;
     WCHAR pathout[MAX_PATH];
-    BOOL r;
+    BOOL ret;
     WORD cbOut = 0;
 
-    TRACE("%s %s %p %d %p %d %p\n", debugstr_a(lpszDriver), debugstr_a(lpszPathIn),
-          lpszPathOut, cbPathOutMax, pcbPathOut, fRequest, lpdwUsageCount);
+    TRACE("%s %s %p %d %p %d %p\n", debugstr_a(lpszDriver),
+          debugstr_a(lpszPathIn), lpszPathOut, cbPathOutMax, pcbPathOut,
+          fRequest, lpdwUsageCount);
+
+    for (p = lpszDriver; *p; p += lstrlenA(p) + 1)
+        TRACE("%s\n", debugstr_a(p));
 
     driver = SQLInstall_strdup_multi(lpszDriver);
     pathin = SQLInstall_strdup(lpszPathIn);
 
-    r = SQLInstallDriverExW( driver, pathin, pathout, MAX_PATH,
-                             &cbOut, fRequest, lpdwUsageCount );
-    if (r)
+    ret = SQLInstallDriverExW(driver, pathin, pathout, MAX_PATH, &cbOut,
+                              fRequest, lpdwUsageCount);
+    if (ret)
     {
-        *pcbPathOut = WideCharToMultiByte(CP_ACP, 0, pathout, -1,
-                         lpszPathOut, cbPathOutMax, NULL, NULL );
+        int len =  WideCharToMultiByte(CP_ACP, 0, pathout, -1, lpszPathOut,
+                                       0, NULL, NULL);
+        if (len)
+        {
+            if (pcbPathOut)
+                *pcbPathOut = len - 1;
+
+            if (!lpszPathOut || cbPathOutMax < len)
+            {
+                ret = FALSE;
+                goto out;
+            }
+            len =  WideCharToMultiByte(CP_ACP, 0, pathout, -1, lpszPathOut,
+                                       cbPathOutMax, NULL, NULL);
+        }
     }
 
-    return r;
+out:
+    HeapFree(GetProcessHeap(), 0, driver);
+    HeapFree(GetProcessHeap(), 0, pathin);
+    return ret;
 }
 
 BOOL WINAPI SQLInstallDriverManagerW(LPWSTR lpszPath, WORD cbPathMax,
@@ -264,11 +318,13 @@ BOOL WINAPI SQLInstallDriverManagerW(LPWSTR lpszPath, WORD cbPathMax,
     TRACE("(%p %d %d)\n", lpszPath, cbPathMax, *pcbPathOut);
 
     len = GetSystemDirectoryW(path, MAX_PATH);
-    if (pcbPathOut) *pcbPathOut = len;
 
-    if (cbPathMax > len)
+    if (pcbPathOut)
+        *pcbPathOut = len;
+
+    if (lpszPath && cbPathMax > len)
     {
-    	lstrcpyW( lpszPath, path );
+    	lstrcpyW(lpszPath, path);
     	return TRUE;
     }
     return FALSE;
@@ -286,13 +342,18 @@ BOOL WINAPI SQLInstallDriverManager(LPSTR lpszPath, WORD cbPathMax,
     ret = SQLInstallDriverManagerW(path, MAX_PATH, &cbOut);
     if (ret)
     {
-        len =  WideCharToMultiByte(CP_ACP, 0, path, -1, lpszPath, 0, NULL, NULL);
+        len =  WideCharToMultiByte(CP_ACP, 0, path, -1, lpszPath, 0,
+                                   NULL, NULL);
         if (len)
         {
-            if (pcbPathOut) *pcbPathOut = len - 1;
-            if (cbPathMax < len) return FALSE;
+            if (pcbPathOut)
+                *pcbPathOut = len - 1;
 
-            len =  WideCharToMultiByte(CP_ACP, 0, path, -1, lpszPath, cbPathMax, NULL, NULL);
+            if (!lpszPath || cbPathMax < len)
+                return FALSE;
+
+            len =  WideCharToMultiByte(CP_ACP, 0, path, -1, lpszPath,
+                                       cbPathMax, NULL, NULL);
         }
     }
     return ret;
@@ -317,25 +378,58 @@ BOOL WINAPI SQLInstallODBC(HWND hwndParent, LPCSTR lpszInfFile,
 SQLRETURN WINAPI SQLInstallerErrorW(WORD iError, DWORD *pfErrorCode,
                LPWSTR lpszErrorMsg, WORD cbErrorMsgMax, WORD *pcbErrorMsg)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("%d %p %p %d %p\n", iError, pfErrorCode, lpszErrorMsg,
+          cbErrorMsgMax, pcbErrorMsg);
+
+    if (pcbErrorMsg)
+        *pcbErrorMsg = 0;
+
+    if (lpszErrorMsg && cbErrorMsgMax > 0)
+        *lpszErrorMsg = '\0';
+
+    return SQL_NO_DATA;
 }
 
 SQLRETURN WINAPI SQLInstallerError(WORD iError, DWORD *pfErrorCode,
                LPSTR lpszErrorMsg, WORD cbErrorMsgMax, WORD *pcbErrorMsg)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("%d %p %p %d %p\n", iError, pfErrorCode, lpszErrorMsg,
+          cbErrorMsgMax, pcbErrorMsg);
+
+    if (pcbErrorMsg)
+        *pcbErrorMsg = 0;
+
+    if (lpszErrorMsg && cbErrorMsgMax > 0)
+        *lpszErrorMsg = '\0';
+
+    return SQL_NO_DATA;
 }
 
 BOOL WINAPI SQLInstallTranslatorExW(LPCWSTR lpszTranslator, LPCWSTR lpszPathIn,
                LPWSTR lpszPathOut, WORD cbPathOutMax, WORD *pcbPathOut,
                WORD fRequest, LPDWORD lpdwUsageCount)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    UINT len;
+    LPCWSTR p;
+    WCHAR path[MAX_PATH];
+
+    TRACE("%s %s %p %d %p %d %p\n", debugstr_w(lpszTranslator),
+          debugstr_w(lpszPathIn), lpszPathOut, cbPathOutMax, pcbPathOut,
+          fRequest, lpdwUsageCount);
+
+    for (p = lpszTranslator; *p; p += lstrlenW(p) + 1)
+        TRACE("%s\n", debugstr_w(p));
+
+    len = GetSystemDirectoryW(path, MAX_PATH);
+
+    if (pcbPathOut)
+        *pcbPathOut = len;
+
+    if (lpszPathOut && cbPathOutMax > len)
+    {
+        lstrcpyW(lpszPathOut, path);
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -343,27 +437,77 @@ BOOL WINAPI SQLInstallTranslatorEx(LPCSTR lpszTranslator, LPCSTR lpszPathIn,
                LPSTR lpszPathOut, WORD cbPathOutMax, WORD *pcbPathOut,
                WORD fRequest, LPDWORD lpdwUsageCount)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    LPCSTR p;
+    LPWSTR translator, pathin;
+    WCHAR pathout[MAX_PATH];
+    BOOL ret;
+    WORD cbOut = 0;
+
+    TRACE("%s %s %p %d %p %d %p\n", debugstr_a(lpszTranslator),
+          debugstr_a(lpszPathIn), lpszPathOut, cbPathOutMax, pcbPathOut,
+          fRequest, lpdwUsageCount);
+
+    for (p = lpszTranslator; *p; p += lstrlenA(p) + 1)
+        TRACE("%s\n", debugstr_a(p));
+
+    translator = SQLInstall_strdup_multi(lpszTranslator);
+    pathin = SQLInstall_strdup(lpszPathIn);
+
+    ret = SQLInstallTranslatorExW(translator, pathin, pathout, MAX_PATH,
+                                  &cbOut, fRequest, lpdwUsageCount);
+    if (ret)
+    {
+        int len =  WideCharToMultiByte(CP_ACP, 0, pathout, -1, lpszPathOut,
+                                       0, NULL, NULL);
+        if (len)
+        {
+            if (pcbPathOut)
+                *pcbPathOut = len - 1;
+
+            if (!lpszPathOut || cbPathOutMax < len)
+            {
+                ret = FALSE;
+                goto out;
+            }
+            len =  WideCharToMultiByte(CP_ACP, 0, pathout, -1, lpszPathOut,
+                                       cbPathOutMax, NULL, NULL);
+        }
+    }
+
+out:
+    HeapFree(GetProcessHeap(), 0, translator);
+    HeapFree(GetProcessHeap(), 0, pathin);
+    return ret;
 }
 
 BOOL WINAPI SQLInstallTranslator(LPCSTR lpszInfFile, LPCSTR lpszTranslator,
                LPCSTR lpszPathIn, LPSTR lpszPathOut, WORD cbPathOutMax,
                WORD *pcbPathOut, WORD fRequest, LPDWORD lpdwUsageCount)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("%s %s %s %p %d %p %d %p\n", debugstr_a(lpszInfFile),
+          debugstr_a(lpszTranslator), debugstr_a(lpszPathIn), lpszPathOut,
+          cbPathOutMax, pcbPathOut, fRequest, lpdwUsageCount);
+
+    if (lpszInfFile)
+        return FALSE;
+
+    return SQLInstallTranslatorEx(lpszTranslator, lpszPathIn, lpszPathOut,
+                       cbPathOutMax, pcbPathOut, fRequest, lpdwUsageCount);
 }
 
 BOOL WINAPI SQLInstallTranslatorW(LPCWSTR lpszInfFile, LPCWSTR lpszTranslator,
               LPCWSTR lpszPathIn, LPWSTR lpszPathOut, WORD cbPathOutMax,
               WORD *pcbPathOut, WORD fRequest, LPDWORD lpdwUsageCount)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("%s %s %s %p %d %p %d %p\n", debugstr_w(lpszInfFile),
+          debugstr_w(lpszTranslator), debugstr_w(lpszPathIn), lpszPathOut,
+          cbPathOutMax, pcbPathOut, fRequest, lpdwUsageCount);
+
+    if (lpszInfFile)
+        return FALSE;
+
+    return SQLInstallTranslatorExW(lpszTranslator, lpszPathIn, lpszPathOut,
+                        cbPathOutMax, pcbPathOut, fRequest, lpdwUsageCount);
 }
 
 BOOL WINAPI SQLManageDataSources(HWND hwnd)
