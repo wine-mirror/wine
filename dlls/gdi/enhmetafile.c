@@ -646,6 +646,7 @@ static BOOL emr_produces_output(int type)
     case EMR_POLYTEXTOUTA:
     case EMR_POLYTEXTOUTW:
     case EMR_SMALLTEXTOUT:
+    case EMR_ALPHABLEND:
     case EMR_TRANSPARENTBLT:
         return TRUE;
     default:
@@ -1795,6 +1796,46 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	break;
     }
 
+    case EMR_ALPHABLEND:
+    {
+	PEMRALPHABLEND pAlphaBlend= (PEMRALPHABLEND)mr;
+
+        TRACE("EMR_ALPHABLEND: %ld, %ld %ldx%ld -> %ld, %ld %ldx%ld. blendfn %08lx offBitsSrc %ld\n",
+	       pAlphaBlend->xSrc, pAlphaBlend->ySrc, pAlphaBlend->cxSrc, pAlphaBlend->cySrc,
+	       pAlphaBlend->xDest, pAlphaBlend->yDest, pAlphaBlend->cxDest, pAlphaBlend->cyDest,
+	       pAlphaBlend->dwRop, pAlphaBlend->offBitsSrc);
+
+        if(pAlphaBlend->offBmiSrc == 0) {
+            FIXME("EMR_ALPHABLEND: offBmiSrc == 0\n");
+        } else {
+            HDC hdcSrc = CreateCompatibleDC(hdc);
+            HBITMAP hBmp = 0, hBmpOld = 0;
+            BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pAlphaBlend->offBmiSrc);
+            BLENDFUNCTION blendfn;
+            void *bits;
+
+            SetWorldTransform(hdcSrc, &pAlphaBlend->xformSrc);
+
+            hBmp = CreateDIBSection(hdc, pbi, pAlphaBlend->iUsageSrc, &bits, NULL, 0);
+            memcpy(bits, (BYTE*)mr + pAlphaBlend->offBitsSrc, pAlphaBlend->cbBitsSrc);
+            hBmpOld = SelectObject(hdcSrc, hBmp);
+
+            blendfn.BlendOp             = (pAlphaBlend->dwRop >> 24) & 0xff;
+            blendfn.BlendFlags          = (pAlphaBlend->dwRop >> 16) & 0xff;
+            blendfn.SourceConstantAlpha = (pAlphaBlend->dwRop >>  8) & 0xff;
+            blendfn.AlphaFormat         = (pAlphaBlend->dwRop) & 0xff;
+
+            GdiAlphaBlend(hdc, pAlphaBlend->xDest, pAlphaBlend->yDest, pAlphaBlend->cxDest, pAlphaBlend->cyDest,
+                       hdcSrc, pAlphaBlend->xSrc, pAlphaBlend->ySrc, pAlphaBlend->cxSrc, pAlphaBlend->cySrc,
+                       blendfn);
+
+            SelectObject(hdcSrc, hBmpOld);
+            DeleteObject(hBmp);
+            DeleteDC(hdcSrc);
+        }
+	break;
+    }
+
     case EMR_MASKBLT:
     {
 	PEMRMASKBLT pMaskBlt= (PEMRMASKBLT)mr;
@@ -2061,7 +2102,6 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	case EMR_COLORCORRECTPALETTE:
 	case EMR_SETICMPROFILEA:
 	case EMR_SETICMPROFILEW:
-	case EMR_ALPHABLEND:
 	case EMR_TRANSPARENTBLT:
 	case EMR_GRADIENTFILL:
 	case EMR_SETLINKEDUFI:
