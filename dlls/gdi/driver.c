@@ -73,128 +73,130 @@ static struct graphics_driver *create_driver( HMODULE module )
     driver->count  = 1;
 
     /* fill the function table */
-
+    if (module)
+    {
 #define GET_FUNC(name) driver->funcs.p##name = (void*)GetProcAddress( module, #name )
-
-    GET_FUNC(AbortDoc);
-    GET_FUNC(AbortPath);
-    GET_FUNC(AlphaBlend);
-    GET_FUNC(AngleArc);
-    GET_FUNC(Arc);
-    GET_FUNC(ArcTo);
-    GET_FUNC(BeginPath);
-    GET_FUNC(BitBlt);
-    GET_FUNC(ChoosePixelFormat);
-    GET_FUNC(Chord);
-    GET_FUNC(CloseFigure);
-    GET_FUNC(CreateBitmap);
-    GET_FUNC(CreateDC);
-    GET_FUNC(CreateDIBSection);
-    GET_FUNC(DeleteBitmap);
-    GET_FUNC(DeleteDC);
-    GET_FUNC(DescribePixelFormat);
-    GET_FUNC(DeviceCapabilities);
-    GET_FUNC(Ellipse);
-    GET_FUNC(EndDoc);
-    GET_FUNC(EndPage);
-    GET_FUNC(EndPath);
-    GET_FUNC(EnumDeviceFonts);
-    GET_FUNC(ExcludeClipRect);
-    GET_FUNC(ExtDeviceMode);
-    GET_FUNC(ExtEscape);
-    GET_FUNC(ExtFloodFill);
-    GET_FUNC(ExtSelectClipRgn);
-    GET_FUNC(ExtTextOut);
-    GET_FUNC(FillPath);
-    GET_FUNC(FillRgn);
-    GET_FUNC(FlattenPath);
-    GET_FUNC(FrameRgn);
-    GET_FUNC(GdiComment);
-    GET_FUNC(GetBitmapBits);
-    GET_FUNC(GetCharWidth);
-    GET_FUNC(GetDCOrgEx);
-    GET_FUNC(GetDIBColorTable);
-    GET_FUNC(GetDIBits);
-    GET_FUNC(GetDeviceCaps);
-    GET_FUNC(GetDeviceGammaRamp);
-    GET_FUNC(GetNearestColor);
-    GET_FUNC(GetPixel);
-    GET_FUNC(GetPixelFormat);
-    GET_FUNC(GetSystemPaletteEntries);
-    GET_FUNC(GetTextExtentPoint);
-    GET_FUNC(GetTextMetrics);
-    GET_FUNC(IntersectClipRect);
-    GET_FUNC(InvertRgn);
-    GET_FUNC(LineTo);
-    GET_FUNC(MoveTo);
-    GET_FUNC(ModifyWorldTransform);
-    GET_FUNC(OffsetClipRgn);
-    GET_FUNC(OffsetViewportOrg);
-    GET_FUNC(OffsetWindowOrg);
-    GET_FUNC(PaintRgn);
-    GET_FUNC(PatBlt);
-    GET_FUNC(Pie);
-    GET_FUNC(PolyBezier);
-    GET_FUNC(PolyBezierTo);
-    GET_FUNC(PolyDraw);
-    GET_FUNC(PolyPolygon);
-    GET_FUNC(PolyPolyline);
-    GET_FUNC(Polygon);
-    GET_FUNC(Polyline);
-    GET_FUNC(PolylineTo);
-    GET_FUNC(RealizeDefaultPalette);
-    GET_FUNC(RealizePalette);
-    GET_FUNC(Rectangle);
-    GET_FUNC(ResetDC);
-    GET_FUNC(RestoreDC);
-    GET_FUNC(RoundRect);
-    GET_FUNC(SaveDC);
-    GET_FUNC(ScaleViewportExt);
-    GET_FUNC(ScaleWindowExt);
-    GET_FUNC(SelectBitmap);
-    GET_FUNC(SelectBrush);
-    GET_FUNC(SelectClipPath);
-    GET_FUNC(SelectFont);
-    GET_FUNC(SelectPalette);
-    GET_FUNC(SelectPen);
-    GET_FUNC(SetArcDirection);
-    GET_FUNC(SetBitmapBits);
-    GET_FUNC(SetBkColor);
-    GET_FUNC(SetBkMode);
-    GET_FUNC(SetDCBrushColor);
-    GET_FUNC(SetDCOrg);
-    GET_FUNC(SetDCPenColor);
-    GET_FUNC(SetDIBColorTable);
-    GET_FUNC(SetDIBits);
-    GET_FUNC(SetDIBitsToDevice);
-    GET_FUNC(SetDeviceClipping);
-    GET_FUNC(SetDeviceGammaRamp);
-    GET_FUNC(SetMapMode);
-    GET_FUNC(SetMapperFlags);
-    GET_FUNC(SetPixel);
-    GET_FUNC(SetPixelFormat);
-    GET_FUNC(SetPolyFillMode);
-    GET_FUNC(SetROP2);
-    GET_FUNC(SetRelAbs);
-    GET_FUNC(SetStretchBltMode);
-    GET_FUNC(SetTextAlign);
-    GET_FUNC(SetTextCharacterExtra);
-    GET_FUNC(SetTextColor);
-    GET_FUNC(SetTextJustification);
-    GET_FUNC(SetViewportExt);
-    GET_FUNC(SetViewportOrg);
-    GET_FUNC(SetWindowExt);
-    GET_FUNC(SetWindowOrg);
-    GET_FUNC(SetWorldTransform);
-    GET_FUNC(StartDoc);
-    GET_FUNC(StartPage);
-    GET_FUNC(StretchBlt);
-    GET_FUNC(StretchDIBits);
-    GET_FUNC(StrokeAndFillPath);
-    GET_FUNC(StrokePath);
-    GET_FUNC(SwapBuffers);
-    GET_FUNC(WidenPath);
+        GET_FUNC(AbortDoc);
+        GET_FUNC(AbortPath);
+        GET_FUNC(AlphaBlend);
+        GET_FUNC(AngleArc);
+        GET_FUNC(Arc);
+        GET_FUNC(ArcTo);
+        GET_FUNC(BeginPath);
+        GET_FUNC(BitBlt);
+        GET_FUNC(ChoosePixelFormat);
+        GET_FUNC(Chord);
+        GET_FUNC(CloseFigure);
+        GET_FUNC(CreateBitmap);
+        GET_FUNC(CreateDC);
+        GET_FUNC(CreateDIBSection);
+        GET_FUNC(DeleteBitmap);
+        GET_FUNC(DeleteDC);
+        GET_FUNC(DescribePixelFormat);
+        GET_FUNC(DeviceCapabilities);
+        GET_FUNC(Ellipse);
+        GET_FUNC(EndDoc);
+        GET_FUNC(EndPage);
+        GET_FUNC(EndPath);
+        GET_FUNC(EnumDeviceFonts);
+        GET_FUNC(ExcludeClipRect);
+        GET_FUNC(ExtDeviceMode);
+        GET_FUNC(ExtEscape);
+        GET_FUNC(ExtFloodFill);
+        GET_FUNC(ExtSelectClipRgn);
+        GET_FUNC(ExtTextOut);
+        GET_FUNC(FillPath);
+        GET_FUNC(FillRgn);
+        GET_FUNC(FlattenPath);
+        GET_FUNC(FrameRgn);
+        GET_FUNC(GdiComment);
+        GET_FUNC(GetBitmapBits);
+        GET_FUNC(GetCharWidth);
+        GET_FUNC(GetDCOrgEx);
+        GET_FUNC(GetDIBColorTable);
+        GET_FUNC(GetDIBits);
+        GET_FUNC(GetDeviceCaps);
+        GET_FUNC(GetDeviceGammaRamp);
+        GET_FUNC(GetNearestColor);
+        GET_FUNC(GetPixel);
+        GET_FUNC(GetPixelFormat);
+        GET_FUNC(GetSystemPaletteEntries);
+        GET_FUNC(GetTextExtentPoint);
+        GET_FUNC(GetTextMetrics);
+        GET_FUNC(IntersectClipRect);
+        GET_FUNC(InvertRgn);
+        GET_FUNC(LineTo);
+        GET_FUNC(MoveTo);
+        GET_FUNC(ModifyWorldTransform);
+        GET_FUNC(OffsetClipRgn);
+        GET_FUNC(OffsetViewportOrg);
+        GET_FUNC(OffsetWindowOrg);
+        GET_FUNC(PaintRgn);
+        GET_FUNC(PatBlt);
+        GET_FUNC(Pie);
+        GET_FUNC(PolyBezier);
+        GET_FUNC(PolyBezierTo);
+        GET_FUNC(PolyDraw);
+        GET_FUNC(PolyPolygon);
+        GET_FUNC(PolyPolyline);
+        GET_FUNC(Polygon);
+        GET_FUNC(Polyline);
+        GET_FUNC(PolylineTo);
+        GET_FUNC(RealizeDefaultPalette);
+        GET_FUNC(RealizePalette);
+        GET_FUNC(Rectangle);
+        GET_FUNC(ResetDC);
+        GET_FUNC(RestoreDC);
+        GET_FUNC(RoundRect);
+        GET_FUNC(SaveDC);
+        GET_FUNC(ScaleViewportExt);
+        GET_FUNC(ScaleWindowExt);
+        GET_FUNC(SelectBitmap);
+        GET_FUNC(SelectBrush);
+        GET_FUNC(SelectClipPath);
+        GET_FUNC(SelectFont);
+        GET_FUNC(SelectPalette);
+        GET_FUNC(SelectPen);
+        GET_FUNC(SetArcDirection);
+        GET_FUNC(SetBitmapBits);
+        GET_FUNC(SetBkColor);
+        GET_FUNC(SetBkMode);
+        GET_FUNC(SetDCBrushColor);
+        GET_FUNC(SetDCOrg);
+        GET_FUNC(SetDCPenColor);
+        GET_FUNC(SetDIBColorTable);
+        GET_FUNC(SetDIBits);
+        GET_FUNC(SetDIBitsToDevice);
+        GET_FUNC(SetDeviceClipping);
+        GET_FUNC(SetDeviceGammaRamp);
+        GET_FUNC(SetMapMode);
+        GET_FUNC(SetMapperFlags);
+        GET_FUNC(SetPixel);
+        GET_FUNC(SetPixelFormat);
+        GET_FUNC(SetPolyFillMode);
+        GET_FUNC(SetROP2);
+        GET_FUNC(SetRelAbs);
+        GET_FUNC(SetStretchBltMode);
+        GET_FUNC(SetTextAlign);
+        GET_FUNC(SetTextCharacterExtra);
+        GET_FUNC(SetTextColor);
+        GET_FUNC(SetTextJustification);
+        GET_FUNC(SetViewportExt);
+        GET_FUNC(SetViewportOrg);
+        GET_FUNC(SetWindowExt);
+        GET_FUNC(SetWindowOrg);
+        GET_FUNC(SetWorldTransform);
+        GET_FUNC(StartDoc);
+        GET_FUNC(StartPage);
+        GET_FUNC(StretchBlt);
+        GET_FUNC(StretchDIBits);
+        GET_FUNC(StrokeAndFillPath);
+        GET_FUNC(StrokePath);
+        GET_FUNC(SwapBuffers);
+        GET_FUNC(WidenPath);
 #undef GET_FUNC
+    }
+    else memset( &driver->funcs, 0, sizeof(driver->funcs) );
 
     /* add it to the list */
     driver->prev = NULL;
@@ -221,7 +223,7 @@ static struct graphics_driver *load_display_driver(void)
         return display_driver;
     }
 
-    strcpy( buffer, "x11,tty" );  /* default value */
+    strcpy( buffer, "x11" );  /* default value */
     /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
     if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Drivers", &hkey ))
     {
@@ -239,13 +241,6 @@ static struct graphics_driver *load_display_driver(void)
         snprintf( libname, sizeof(libname), "wine%s.drv", name );
         if ((module = LoadLibraryA( libname )) != 0) break;
         name = next;
-    }
-    if (!module)
-    {
-        MESSAGE( "wine: Could not load graphics driver '%s'.\n", buffer );
-        if (!strcasecmp( buffer, "x11" ))
-            MESSAGE( "Make sure that your X server is running and that $DISPLAY is set correctly.\n" );
-        ExitProcess(1);
     }
 
     if (!(display_driver = create_driver( module )))

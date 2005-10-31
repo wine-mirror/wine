@@ -889,6 +889,20 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
     if ((dc = DC_GetDCPtr( hdc )))
     {
         if (dc->funcs->pGetDeviceCaps) ret = dc->funcs->pGetDeviceCaps( dc->physDev, cap );
+        else switch(cap)  /* return meaningful values for some entries */
+        {
+        case HORZRES:     ret = 640; break;
+        case VERTRES:     ret = 480; break;
+        case BITSPIXEL:   ret = 1; break;
+        case PLANES:      ret = 1; break;
+        case NUMCOLORS:   ret = 2; break;
+        case ASPECTX:     ret = 36; break;
+        case ASPECTY:     ret = 36; break;
+        case ASPECTXY:    ret = 51; break;
+        case LOGPIXELSX:  ret = 72; break;
+        case LOGPIXELSY:  ret = 72; break;
+        case SIZEPALETTE: ret = 2; break;
+        }
         GDI_ReleaseObj( hdc );
     }
     return ret;
