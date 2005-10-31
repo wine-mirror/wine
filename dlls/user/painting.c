@@ -593,16 +593,33 @@ BOOL WINAPI UpdateWindow( HWND hwnd )
  */
 BOOL WINAPI InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
+    if (!hwnd)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+
     return RedrawWindow(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
 
 
 /***********************************************************************
  *		InvalidateRect (USER32.@)
+ *
+ * MSDN: if hwnd parameter is NULL, InvalidateRect invalidates and redraws
+ * all windows and sends WM_ERASEBKGND and WM_NCPAINT.
  */
 BOOL WINAPI InvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
 {
-    return RedrawWindow( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+    UINT flags = RDW_INVALIDATE | (erase ? RDW_ERASE : 0);
+
+    if (!hwnd)
+    {
+        flags = RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW;
+        rect = NULL;
+    }
+
+    return RedrawWindow( hwnd, rect, 0, flags );
 }
 
 
@@ -611,16 +628,33 @@ BOOL WINAPI InvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
  */
 BOOL WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
 {
+    if (!hwnd)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+
     return RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE );
 }
 
 
 /***********************************************************************
  *		ValidateRect (USER32.@)
+ *
+ * MSDN: if hwnd parameter is NULL, ValidateRect invalidates and redraws
+ * all windows and sends WM_ERASEBKGND and WM_NCPAINT.
  */
 BOOL WINAPI ValidateRect( HWND hwnd, const RECT *rect )
 {
-    return RedrawWindow( hwnd, rect, 0, RDW_VALIDATE );
+    UINT flags = RDW_VALIDATE;
+
+    if (!hwnd)
+    {
+        flags = RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW;
+        rect = NULL;
+    }
+
+    return RedrawWindow( hwnd, rect, 0, flags );
 }
 
 

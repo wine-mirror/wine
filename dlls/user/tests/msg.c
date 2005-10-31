@@ -3697,6 +3697,55 @@ static void test_paint_messages(void)
     /* validate everything */
     RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
     check_update_rgn( hwnd, 0 );
+
+    /* flush pending messages */
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+
+    GetClientRect( hwnd, &rect );
+    SetRectRgn( hrgn, 0, 0, rect.right - rect.left, rect.bottom - rect.top );
+    /* MSDN: if hwnd parameter is NULL, InvalidateRect invalidates and redraws
+     * all windows and sends WM_ERASEBKGND and WM_NCPAINT.
+     */
+    trace("testing InvalidateRect(0, NULL, FALSE)\n");
+    SetRectEmpty( &rect );
+    ok(InvalidateRect(0, &rect, FALSE), "InvalidateRect(0, &rc, FALSE) should fail\n");
+    check_update_rgn( hwnd, hrgn );
+    ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmPaint, "Paint", FALSE );
+    RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
+    check_update_rgn( hwnd, 0 );
+
+    /* MSDN: if hwnd parameter is NULL, ValidateRect invalidates and redraws
+     * all windows and sends WM_ERASEBKGND and WM_NCPAINT.
+     */
+    trace("testing ValidateRect(0, NULL)\n");
+    SetRectEmpty( &rect );
+    ok(ValidateRect(0, &rect), "ValidateRect(0, &rc) should not fail");
+    check_update_rgn( hwnd, hrgn );
+    ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmPaint, "Paint", FALSE );
+    RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
+    check_update_rgn( hwnd, 0 );
+
+    trace("testing InvalidateRgn(0, NULL, FALSE)\n");
+    SetLastError(0xdeadbeef);
+    ok(!InvalidateRgn(0, NULL, FALSE), "InvalidateRgn(0, NULL, FALSE) should fail\n");
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error code %ld\n", GetLastError());
+    check_update_rgn( hwnd, 0 );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
+
+    trace("testing ValidateRgn(0, NULL)\n");
+    SetLastError(0xdeadbeef);
+    ok(!ValidateRgn(0, NULL), "ValidateRgn(0, NULL) should fail");
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error code %ld\n", GetLastError());
+    check_update_rgn( hwnd, 0 );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
+
     /* now with frame */
     SetRectRgn( hrgn, -5, -5, 20, 20 );
 
