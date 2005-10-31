@@ -58,7 +58,7 @@ static DLLVERSIONINFO dllver;
  * ShellExecute wrappers
  *
  ***/
-static void dump_child();
+static void dump_child(void);
 
 static HANDLE hEvent;
 static void init_event(const char* child_file)
@@ -369,7 +369,7 @@ static char* getChildString(const char* sect, const char* key)
     return ret;
 }
 
-static void dump_child()
+static void dump_child(void)
 {
     if (winetest_debug > 1)
     {
@@ -520,7 +520,7 @@ static filename_tests_t noquotes_tests[]=
     {NULL, NULL, 0, 0}
 };
 
-static void test_filename()
+static void test_filename(void)
 {
     char filename[MAX_PATH];
     const filename_tests_t* test;
@@ -690,7 +690,7 @@ static filename_tests_t lnk_tests[]=
     {NULL, NULL, 0, 0}
 };
 
-static void test_lnks()
+static void test_lnks(void)
 {
     char filename[MAX_PATH];
     char params[MAX_PATH];
@@ -788,7 +788,7 @@ static void test_lnks()
 }
 
 
-static void test_exes()
+static void test_exes(void)
 {
     char filename[MAX_PATH];
     char params[1024];
@@ -814,7 +814,7 @@ static void test_exes()
 }
 
 
-static void init_test()
+static void init_test(void)
 {
     HMODULE hdll;
     HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO*);
@@ -916,7 +916,7 @@ static void init_test()
     create_test_verb(".shlexec", "QuotedUpperL", "QuotedUpperL \"%L\"");
 }
 
-static void cleanup_test()
+static void cleanup_test(void)
 {
     char filename[MAX_PATH];
     const char* const * testfile;
