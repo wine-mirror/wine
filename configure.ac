@@ -1666,7 +1666,6 @@ dlls/stdole32.tlb/Makefile
 dlls/sti/Makefile
 dlls/strmiids/Makefile
 dlls/tapi32/Makefile
-dlls/ttydrv/Makefile
 dlls/twain/Makefile
 dlls/unicows/Makefile
 dlls/url/Makefile

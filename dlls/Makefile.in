@@ -135,7 +135,6 @@ BASEDIRS = \
 	stdole32.tlb \
 	sti \
 	tapi32 \
-	ttydrv \
 	twain \
 	unicows \
 	url \
@@ -413,7 +412,6 @@ SYMLINKS_SO = \
 	winenas.drv.so \
 	wineoss.drv.so \
 	wineps.drv.so \
-	winetty.drv.so \
 	wininet.dll.so \
 	winmm.dll.so \
 	winnls32.dll.so \
@@ -978,9 +976,6 @@ wineps.drv.so: wineps/wineps.drv.so
 
 wineps16.drv.so : wineps.drv.so
 	$(RM) $@ && $(LN_S) wineps.drv.so $@
-
-winetty.drv.so: ttydrv/winetty.drv.so
-	$(RM) $@ && $(LN_S) ttydrv/winetty.drv.so $@
 
 winex11.drv.so: x11drv/winex11.drv.so
 	$(RM) $@ && $(LN_S) x11drv/winex11.drv.so $@
@@ -1736,7 +1731,6 @@ msacm/winemp3/winemp3.acm.so: msacm/winemp3
 winmm/winenas/winenas.drv.so: winmm/winenas
 winmm/wineoss/wineoss.drv.so: winmm/wineoss
 wineps/wineps.drv.so: wineps
-ttydrv/winetty.drv.so: ttydrv
 x11drv/winex11.drv.so: x11drv
 wininet/wininet.dll.so: wininet
 winmm/winmm.dll.so: winmm

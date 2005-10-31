@@ -137,7 +137,6 @@ DLLs (under dlls/):
 	stdole32.tlb/		- Standard OLE typelib
 	sti/			- Still Image service
 	tapi32/			- Telephone interface
-	ttydrv/			- TTY display driver (Wine specific)
 	twain/			- TWAIN Imaging device communications
 	unicows/		- Unicows replacement (Unicode layer for Win9x)
 	url/			- Internet shortcut shell extension
