@@ -9,6 +9,7 @@ CTESTS = \
 	bitmap.c \
 	brush.c \
 	clipping.c \
+	dc.c \
 	gdiobj.c \
 	generated.c \
 	mapping.c \

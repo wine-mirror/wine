@@ -56,7 +56,7 @@ static void init_function_pointers(void)
     GDI_GET_PROC(SetRelAbs);
 }
 
-static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
+static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     const ENHMETARECORD *emr, int n_objs, LPARAM param)
 {
     static int n_record;
@@ -234,7 +234,7 @@ static void test_ExtTextOut(void)
     if(pSetRelAbs) pSetRelAbs(hdcDisplay, RELATIVE);
     SetBkMode(hdcDisplay, OPAQUE);
 
-    ret = EnumEnhMetaFile(hdcDisplay, hMetafile, emf_enum_proc, dx, &rc);
+    ret = EnumEnhMetaFile(hdcDisplay, hMetafile, eto_emf_enum_proc, dx, &rc);
     ok( ret, "EnumEnhMetaFile error %ld\n", GetLastError());
 
     ok( GetTextAlign(hdcDisplay) == (TA_UPDATECP | TA_CENTER | TA_BASELINE | TA_RTLREADING),
@@ -248,16 +248,122 @@ static void test_ExtTextOut(void)
 
     ok(emr_processed, "EnumEnhMetaFile couldn't find EMR_EXTTEXTOUTA or EMR_EXTTEXTOUTW record\n");
 
-    ok(!EnumEnhMetaFile(hdcDisplay, hMetafile, emf_enum_proc, dx, NULL),
+    ok(!EnumEnhMetaFile(hdcDisplay, hMetafile, eto_emf_enum_proc, dx, NULL),
        "A valid hdc has to require a valid rc\n");
 
-    ok(EnumEnhMetaFile(NULL, hMetafile, emf_enum_proc, dx, NULL),
+    ok(EnumEnhMetaFile(NULL, hMetafile, eto_emf_enum_proc, dx, NULL),
        "A null hdc does not require a valid rc\n");
 
     ret = DeleteEnhMetaFile(hMetafile);
     ok( ret, "DeleteEnhMetaFile error %ld\n", GetLastError());
     ret = ReleaseDC(hwnd, hdcDisplay);
     ok( ret, "ReleaseDC error %ld\n", GetLastError());
+    DestroyWindow(hwnd);
+}
+
+static int CALLBACK savedc_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
+                                         const ENHMETARECORD *emr, int n_objs, LPARAM param)
+{
+    static int save_state;
+    static int restore_no;
+
+    switch (emr->iType)
+    {
+    case EMR_HEADER:
+        save_state = 0;
+        restore_no = 0;
+        break;
+
+    case EMR_SAVEDC:
+        save_state++;
+        break;
+
+    case EMR_RESTOREDC:
+        {
+            EMRRESTOREDC *restoredc = (EMRRESTOREDC *)emr;
+            switch(++restore_no)
+            {
+            case 1:
+                ok(restoredc->iRelative == -1, "first restore %ld\n", restoredc->iRelative);
+                break;
+
+            case 2:
+                ok(restoredc->iRelative == -3, "second restore %ld\n", restoredc->iRelative);
+                break;
+            case 3:
+                ok(restoredc->iRelative == -2, "third restore %ld\n", restoredc->iRelative);
+                break;
+            }
+            ok(restore_no <= 3, "restore_no %d\n", restore_no);
+            save_state += restoredc->iRelative;
+            break;
+        }
+    case EMR_EOF:
+        ok(save_state == 0, "EOF save_state %d\n", save_state);
+        break;
+    }
+
+
+    return 1;        
+}
+
+void test_SaveDC(void)
+{
+    HDC hdcMetafile, hdcDisplay;
+    HENHMETAFILE hMetafile;
+    HWND hwnd;
+    int ret;
+    static const RECT rc = { 0, 0, 100, 100 };
+
+    /* Win9x doesn't play EMFs on invisible windows */
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP | WS_VISIBLE,
+                           0, 0, 200, 200, 0, 0, 0, NULL);
+    ok(hwnd != 0, "CreateWindowExA error %ld\n", GetLastError());
+
+    hdcDisplay = GetDC(hwnd);
+    ok(hdcDisplay != 0, "GetDC error %ld\n", GetLastError());
+
+    hdcMetafile = CreateEnhMetaFileA(hdcDisplay, NULL, NULL, NULL);
+    ok(hdcMetafile != 0, "CreateEnhMetaFileA error %ld\n", GetLastError());
+
+    /* Need to write something to the emf, otherwise Windows won't play it back */
+    LineTo(hdcMetafile, 100, 100);
+
+    ret = SaveDC(hdcMetafile);
+    ok(ret == 1, "ret = %d\n", ret);
+
+    ret = SaveDC(hdcMetafile);
+    ok(ret == 2, "ret = %d\n", ret);
+
+    ret = SaveDC(hdcMetafile);
+    ok(ret == 3, "ret = %d\n", ret);
+
+    ret = RestoreDC(hdcMetafile, -1);
+    ok(ret, "ret = %d\n", ret);
+
+    ret = SaveDC(hdcMetafile);
+    ok(ret == 3, "ret = %d\n", ret);
+
+    ret = RestoreDC(hdcMetafile, 1);
+    ok(ret, "ret = %d\n", ret);
+
+    ret = SaveDC(hdcMetafile);
+    ok(ret == 1, "ret = %d\n", ret);
+
+    ret = SaveDC(hdcMetafile);
+    ok(ret == 2, "ret = %d\n", ret);
+
+    hMetafile = CloseEnhMetaFile(hdcMetafile);
+    ok(hMetafile != 0, "CloseEnhMetaFile error %ld\n", GetLastError());
+
+    ret = EnumEnhMetaFile(hdcDisplay, hMetafile, savedc_emf_enum_proc, 0, &rc);
+    ok( ret == 1, "EnumEnhMetaFile rets %d\n", ret);
+
+    ret = DeleteEnhMetaFile(hMetafile);
+    ok( ret, "DeleteEnhMetaFile error %ld\n", GetLastError());
+    ret = ReleaseDC(hwnd, hdcDisplay);
+    ok( ret, "ReleaseDC error %ld\n", GetLastError());
+    DestroyWindow(hwnd);
 }
 
 /* Win-format metafile (mfdrv) tests */
@@ -813,6 +919,7 @@ START_TEST(metafile)
 
     /* For enhanced metafiles (enhmfdrv) */
     test_ExtTextOut();
+    test_SaveDC();
 
     /* For win-format metafiles (mfdrv) */
     test_mf_Blank();

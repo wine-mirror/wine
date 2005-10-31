@@ -422,6 +422,9 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, ENHMETAFILE_DC_MAGIC ))) return 0;
     physDev = (EMFDRV_PDEVICE *)dc->physDev;
 
+    if(dc->saveLevel)
+        RestoreDC(hdc, 1);
+
     emr.emr.iType = EMR_EOF;
     emr.emr.nSize = sizeof(emr);
     emr.nPalEntries = 0;

@@ -2,6 +2,7 @@ Makefile
 bitmap.ok
 brush.ok
 clipping.ok
+dc.ok
 gdiobj.ok
 generated.ok
 mapping.ok

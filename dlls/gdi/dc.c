@@ -504,8 +504,9 @@ INT WINAPI SaveDC( HDC hdc )
     if(dc->funcs->pSaveDC)
     {
         ret = dc->funcs->pSaveDC( dc->physDev );
+        if(ret)
+            ret = ++dc->saveLevel;
         GDI_ReleaseObj( hdc );
-        /* FIXME: ret is just a success flag, we should return a proper value */
         return ret;
     }
 
@@ -551,26 +552,24 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     TRACE("%p %d\n", hdc, level );
     dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
-    if(dc->funcs->pRestoreDC)
-    {
-        success = dc->funcs->pRestoreDC( dc->physDev, level );
-        GDI_ReleaseObj( hdc );
-        return success;
-    }
 
-    if (level == -1) level = dc->saveLevel;
-    if ((level < 1)
-            /* This pair of checks disagrees with MSDN "Platform SDK:
-               Windows GDI" July 2000 which says all negative values
-               for level will be interpreted as an instance relative
-               to the current state.  Restricting it to just -1 does
-               not satisfy this */
-	|| (level > dc->saveLevel))
+    if(abs(level) > dc->saveLevel || level == 0)
     {
         GDI_ReleaseObj( hdc );
         return FALSE;
     }
+        
+    if(dc->funcs->pRestoreDC)
+    {
+        success = dc->funcs->pRestoreDC( dc->physDev, level );
+        if(level < 0) level = dc->saveLevel + level + 1;
+        if(success)
+            dc->saveLevel = level - 1;
+        GDI_ReleaseObj( hdc );
+        return success;
+    }
 
+    if (level < 0) level = dc->saveLevel + level + 1;
     success=TRUE;
     while (dc->saveLevel >= level)
     {
