@@ -156,54 +156,63 @@ Main_IDirect3DLightImpl_1_GetLight(LPDIRECT3DLIGHT iface,
  *				Light static functions
  */
 
-static void update(IDirect3DLightImpl* This) {
+static void update(IDirect3DLightImpl* This)
+{
     IDirect3DDeviceImpl* device;
-    if (!This->active_viewport||!This->active_viewport->active_device)
+
+    TRACE("(%p)\n", This);
+
+    if (!This->active_viewport || !This->active_viewport->active_device)
         return;
     device =  This->active_viewport->active_device;
-    IDirect3DDevice7_SetLight(ICOM_INTERFACE(device,IDirect3DDevice7),This->dwLightIndex,&(This->light7));
+
+    IDirect3DDevice7_SetLight(ICOM_INTERFACE(device,IDirect3DDevice7), This->dwLightIndex, &(This->light7));
 }
 
-static void activate(IDirect3DLightImpl* This) {
-    IDirect3DLightGLImpl *glThis = (IDirect3DLightGLImpl *) This;
+static void activate(IDirect3DLightImpl* This)
+{
+    IDirect3DDeviceImpl* device;
 
     TRACE("(%p)\n", This);
+
+    if (!This->active_viewport || !This->active_viewport->active_device)
+        return;
+    device =  This->active_viewport->active_device;
     
-    ENTER_GL();
     update(This);
     /* If was not active, activate it */
-    if ((glThis->parent.light.dwFlags & D3DLIGHT_ACTIVE) == 0) {
-        glEnable(glThis->light_num);
-	glThis->parent.light.dwFlags |= D3DLIGHT_ACTIVE;
+    if ((This->light.dwFlags & D3DLIGHT_ACTIVE) == 0) {
+        IDirect3DDevice7_LightEnable(ICOM_INTERFACE(device,IDirect3DDevice7), This->dwLightIndex, TRUE);
+	This->light.dwFlags |= D3DLIGHT_ACTIVE;
     }
-    LEAVE_GL();
 }
 
-static void desactivate(IDirect3DLightImpl* This) {
-    IDirect3DLightGLImpl *glThis = (IDirect3DLightGLImpl *) This;
-    
+static void desactivate(IDirect3DLightImpl* This)
+{
+    IDirect3DDeviceImpl* device;
+
     TRACE("(%p)\n", This);
+
+    if (!This->active_viewport || !This->active_viewport->active_device)
+        return;
+    device =  This->active_viewport->active_device;
     
-    ENTER_GL();
     /* If was not active, activate it */
-    if ((glThis->parent.light.dwFlags & D3DLIGHT_ACTIVE) != 0) {
-        glDisable(glThis->light_num);
-	glThis->parent.light.dwFlags &= ~D3DLIGHT_ACTIVE;
+    if ((This->light.dwFlags & D3DLIGHT_ACTIVE) != 0) {
+        IDirect3DDevice7_LightEnable(ICOM_INTERFACE(device,IDirect3DDevice7), This->dwLightIndex, FALSE);
+	This->light.dwFlags &= ~D3DLIGHT_ACTIVE;
     }
-    LEAVE_GL();
 }
 
 ULONG WINAPI
 GL_IDirect3DLightImpl_1_Release(LPDIRECT3DLIGHT iface)
 {
     ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
-    IDirect3DLightGLImpl *glThis = (IDirect3DLightGLImpl *) This;
     ULONG ref = InterlockedDecrement(&This->ref);
     
     TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, ref + 1);
 
     if (!ref) {
-        ((IDirect3DGLImpl *) This->d3d->d3d_private)->light_released(This->d3d, glThis->light_num);
         HeapFree(GetProcessHeap(), 0, This);
 	return 0;
     }
@@ -233,14 +242,12 @@ static const IDirect3DLightVtbl VTABLE_IDirect3DLight =
 
 
 
-HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirectDrawImpl *d3d, GLenum light_num)
+HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirectDrawImpl *d3d)
 {
     IDirect3DLightImpl *object;
-    IDirect3DLightGLImpl *gl_object;
     
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DLightGLImpl));
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DLightImpl));
     if (object == NULL) return DDERR_OUTOFMEMORY;
-    gl_object = (IDirect3DLightGLImpl *) object;
     
     object->ref = 1;
     object->d3d = d3d;
@@ -249,7 +256,6 @@ HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirectDrawImpl *d3d, GLenum l
     object->desactivate = desactivate;
     object->update = update;
     object->active_viewport = NULL;
-    gl_object->light_num = light_num;
     
     ICOM_INIT_INTERFACE(object, IDirect3DLight, VTABLE_IDirect3DLight);
 

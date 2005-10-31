@@ -48,15 +48,8 @@ typedef enum {
 /* This structure is used for the 'd3d_private' field of the IDirectDraw structure */
 typedef struct IDirect3DGLImpl
 {
-    DWORD free_lights;
-    void (*light_released)(IDirectDrawImpl *, GLenum light_num);
+    int dummy; /* Empty for the moment */
 } IDirect3DGLImpl;
-
-typedef struct IDirect3DLightGLImpl
-{
-    struct IDirect3DLightImpl parent;
-    GLenum light_num;
-} IDirect3DLightGLImpl;
 
 /* This structure is used for the 'private' field of the IDirectDrawSurfaceImpl structure */
 typedef struct IDirect3DTextureGLImpl
@@ -185,7 +178,7 @@ extern GL_EXTENSIONS_LIST GL_extensions;
 /* All non-static functions 'exported' by various sub-objects */
 extern HRESULT direct3d_create(IDirectDrawImpl *This);
 extern HRESULT d3dtexture_create(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main_surf);
-extern HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirectDrawImpl *d3d, GLenum light_num);
+extern HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirectDrawImpl *d3d);
 extern HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirectDrawImpl *d3d, IDirect3DDeviceImpl *d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc);
 extern HRESULT d3dmaterial_create(IDirect3DMaterialImpl **obj, IDirectDrawImpl *d3d);
 extern HRESULT d3dviewport_create(IDirect3DViewportImpl **obj, IDirectDrawImpl *d3d);

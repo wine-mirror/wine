@@ -97,22 +97,12 @@ GL_IDirect3DImpl_3_2T_1T_CreateLight(LPDIRECT3D3 iface,
 				     IUnknown* pUnkOuter)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
-    IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This->d3d_private;
-    int fl;
     IDirect3DLightImpl *d3dlimpl;
     HRESULT ret_value;
     
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, lplpDirect3DLight, pUnkOuter);
-    for (fl = 0; fl < MAX_LIGHTS; fl++) {
-        if ((glThis->free_lights & (0x01 << fl)) != 0) {
-	    glThis->free_lights &= ~(0x01 << fl);
-	    break;
-	}
-    }
-    if (fl == MAX_LIGHTS) {
-        return DDERR_INVALIDPARAMS; /* No way to say 'max lights reached' ... */
-    }
-    ret_value = d3dlight_create(&d3dlimpl, This, GL_LIGHT0 + fl);
+
+    ret_value = d3dlight_create(&d3dlimpl, This);
     *lplpDirect3DLight = ICOM_INTERFACE(d3dlimpl, IDirect3DLight);
 
     return ret_value;
@@ -306,12 +296,6 @@ GL_IDirect3DImpl_7_3T_CreateVertexBuffer(LPDIRECT3D7 iface,
     return res;
 }
 
-static void light_released(IDirectDrawImpl *This, GLenum light_num)
-{
-    IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This->d3d_private;
-    glThis->free_lights |= (light_num - GL_LIGHT0);
-}
-
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)     (typeof(VTABLE_IDirect3D7.fun))
 #else
@@ -452,9 +436,6 @@ HRESULT direct3d_create(IDirectDrawImpl *This)
     ICOM_INIT_INTERFACE(This, IDirect3D2, VTABLE_IDirect3D2);
     ICOM_INIT_INTERFACE(This, IDirect3D3, VTABLE_IDirect3D3);
     ICOM_INIT_INTERFACE(This, IDirect3D7, VTABLE_IDirect3D7);
-
-    globject->free_lights = (0x01 << MAX_LIGHTS) - 1; /* There are, in total, 8 lights in OpenGL */
-    globject->light_released = light_released;
 
     This->d3d_private = globject;
 
