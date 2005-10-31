@@ -8,6 +8,7 @@ IMPORTS   = msi kernel32
 CTESTS = \
 	db.c \
 	format.c \
+	msi.c \
 	package.c \
 	record.c \
 	suminfo.c

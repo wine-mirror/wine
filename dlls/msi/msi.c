@@ -1076,29 +1076,20 @@ end:
  */
 INSTALLSTATE WINAPI MsiQueryFeatureStateA(LPCSTR szProduct, LPCSTR szFeature)
 {
-    INSTALLSTATE rc;
-    LPWSTR szwProduct= NULL;
-    LPWSTR szwFeature= NULL;
+    LPWSTR szwProduct = NULL, szwFeature= NULL;
+    INSTALLSTATE rc = INSTALLSTATE_UNKNOWN;
 
-    if( szProduct )
-    {
-        szwProduct = strdupAtoW( szProduct );
-        if( !szwProduct)
-            return ERROR_OUTOFMEMORY;
-    }
+    szwProduct = strdupAtoW( szProduct );
+    if ( szProduct && !szwProduct )
+        goto end;
 
-    if( szFeature )
-    {
-        szwFeature = strdupAtoW( szFeature );
-        if( !szwFeature)
-        {
-            msi_free( szwProduct);
-            return ERROR_OUTOFMEMORY;
-        }
-    }
+    szwFeature = strdupAtoW( szFeature );
+    if ( szFeature && !szwFeature )
+        goto end;
 
     rc = MsiQueryFeatureStateW(szwProduct, szwFeature);
 
+end:
     msi_free( szwProduct);
     msi_free( szwFeature);
 
@@ -1114,11 +1105,18 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateA(LPCSTR szProduct, LPCSTR szFeature)
  */
 INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 {
+    WCHAR squishProduct[GUID_SIZE];
     UINT rc;
     DWORD sz = 0;
     HKEY hkey;
 
     TRACE("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
+
+    if (!szProduct || !szFeature)
+        return INSTALLSTATE_INVALIDARG;
+
+    if (!squash_guid( szProduct, squishProduct ))
+        return INSTALLSTATE_INVALIDARG;
 
     rc = MSIREG_OpenFeaturesKey(szProduct, &hkey, FALSE);
     if (rc != ERROR_SUCCESS)
@@ -1129,8 +1127,8 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 
     if (rc == ERROR_SUCCESS)
         return INSTALLSTATE_LOCAL;
-    else
-        return INSTALLSTATE_ABSENT;
+
+    return INSTALLSTATE_UNKNOWN;
 }
 
 /******************************************************************
@@ -1414,18 +1412,23 @@ end:
 INSTALLSTATE WINAPI MsiUseFeatureExW( LPCWSTR szProduct, LPCWSTR szFeature,
                                       DWORD dwInstallMode, DWORD dwReserved )
 {
-    FIXME("%s %s %li %li\n", debugstr_w(szProduct), debugstr_w(szFeature),
+    INSTALLSTATE state;
+
+    TRACE("%s %s %li %li\n", debugstr_w(szProduct), debugstr_w(szFeature),
           dwInstallMode, dwReserved);
 
-    /*
-     * Polls all the components of the feature to find install state and then
-     *  writes:
-     *    Software\\Microsoft\\Windows\\CurrentVersion\\
-     *    Installer\\Products\\<squishguid>\\<feature>
-     *      "Usage"=dword:........
-     */
+    state = MsiQueryFeatureStateW( szProduct, szFeature );
 
-    return INSTALLSTATE_LOCAL;
+    if (dwReserved)
+        return INSTALLSTATE_INVALIDARG;
+
+    if (state == INSTALLSTATE_LOCAL && dwInstallMode != INSTALLMODE_NODETECTION)
+    {
+        FIXME("mark product %s feature %s as used\n",
+              debugstr_w(szProduct), debugstr_w(szFeature) );
+    }
+
+    return state;
 }
 
 /***********************************************************************
