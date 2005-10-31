@@ -1349,6 +1349,214 @@ static void testAddSerialized(void)
     CertCloseStore(store, 0);
 }
 
+static const char cspName[] = "WineCryptTemp";
+
+static void verifySig(HCRYPTPROV csp, const BYTE *toSign, size_t toSignLen,
+ const BYTE *sig, size_t sigLen)
+{
+    HCRYPTHASH hash;
+    BOOL ret = CryptCreateHash(csp, CALG_SHA1, 0, 0, &hash);
+
+    ok(ret, "CryptCreateHash failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        BYTE mySig[64];
+        DWORD mySigSize = sizeof(mySig);
+
+        ret = CryptHashData(hash, toSign, toSignLen, 0);
+        ok(ret, "CryptHashData failed: %08lx\n", GetLastError());
+        /* use the A variant so the test can run on Win9x */
+        ret = CryptSignHashA(hash, AT_SIGNATURE, NULL, 0, mySig, &mySigSize);
+        ok(ret, "CryptSignHash failed: %08lx\n", GetLastError());
+        if (ret)
+        {
+            ok(mySigSize == sigLen, "Expected sig length %d, got %ld\n",
+             sigLen, mySigSize);
+            ok(!memcmp(mySig, sig, sigLen), "Unexpected signature\n");
+        }
+        CryptDestroyHash(hash);
+    }
+}
+
+/* Tests signing the certificate described by toBeSigned with the CSP passed in,
+ * using the algorithm with OID sigOID.  The CSP is assumed to be empty, and a
+ * keyset named AT_SIGNATURE will be added to it.  The signing key will be
+ * stored in *key, and the signature will be stored in sig.  sigLen should be
+ * at least 64 bytes.
+ */
+static void testSignCert(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
+ LPCSTR sigOID, HCRYPTKEY *key, BYTE *sig, DWORD *sigLen)
+{
+    BOOL ret;
+    DWORD size = 0;
+    CRYPT_ALGORITHM_IDENTIFIER algoID = { NULL, { 0, NULL } };
+
+    /* These all crash
+    ret = CryptSignCertificate(0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL);
+    ret = CryptSignCertificate(0, 0, 0, NULL, 0, NULL, NULL, NULL, &size);
+    ret = CryptSignCertificate(0, 0, 0, toBeSigned->pbData, toBeSigned->cbData,
+     NULL, NULL, NULL, &size);
+     */
+    ret = CryptSignCertificate(0, 0, 0, toBeSigned->pbData, toBeSigned->cbData,
+     &algoID, NULL, NULL, &size);
+    ok(!ret && GetLastError() == NTE_BAD_ALGID, 
+     "Expected NTE_BAD_ALGID, got %08lx\n", GetLastError());
+    algoID.pszObjId = (LPSTR)sigOID;
+    ret = CryptSignCertificate(0, 0, 0, toBeSigned->pbData, toBeSigned->cbData,
+     &algoID, NULL, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+    ret = CryptSignCertificate(0, AT_SIGNATURE, 0, toBeSigned->pbData,
+     toBeSigned->cbData, &algoID, NULL, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+
+    /* No keys exist in the new CSP yet.. */
+    ret = CryptSignCertificate(csp, AT_SIGNATURE, 0, toBeSigned->pbData,
+     toBeSigned->cbData, &algoID, NULL, NULL, &size);
+    ok(!ret && (GetLastError() == NTE_BAD_KEYSET || GetLastError() ==
+     NTE_NO_KEY), "Expected NTE_BAD_KEYSET or NTE_NO_KEY, got %08lx\n",
+     GetLastError());
+    ret = CryptGenKey(csp, AT_SIGNATURE, 0, key);
+    ok(ret, "CryptGenKey failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        ret = CryptSignCertificate(csp, AT_SIGNATURE, 0, toBeSigned->pbData,
+         toBeSigned->cbData, &algoID, NULL, NULL, &size);
+        ok(ret, "CryptSignCertificate failed: %08lx\n", GetLastError());
+        ok(size <= *sigLen, "Expected size <= %ld, got %ld\n", *sigLen, size);
+        if (ret)
+        {
+            ret = CryptSignCertificate(csp, AT_SIGNATURE, 0, toBeSigned->pbData,
+             toBeSigned->cbData, &algoID, NULL, sig, &size);
+            ok(ret, "CryptSignCertificate failed: %08lx\n", GetLastError());
+            if (ret)
+            {
+                *sigLen = size;
+                verifySig(csp, toBeSigned->pbData, toBeSigned->cbData, sig,
+                 size);
+            }
+        }
+    }
+}
+
+static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
+ LPCSTR sigOID, const BYTE *sig, DWORD sigLen)
+{
+    CERT_SIGNED_CONTENT_INFO info;
+    LPBYTE cert = NULL;
+    DWORD size = 0;
+    BOOL ret;
+
+    ret = CryptVerifyCertificateSignatureEx(0, 0, 0, NULL, 0, NULL, 0, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    ret = CryptVerifyCertificateSignatureEx(csp, 0, 0, NULL, 0, NULL, 0, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING, 0, NULL, 0,
+     NULL, 0, NULL);
+    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+     GetLastError());
+    /* This crashes
+    ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+     CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, NULL, 0, NULL, 0, NULL);
+     */
+    info.ToBeSigned.cbData = toBeSigned->cbData;
+    info.ToBeSigned.pbData = toBeSigned->pbData;
+    info.SignatureAlgorithm.pszObjId = (LPSTR)sigOID;
+    info.SignatureAlgorithm.Parameters.cbData = 0;
+    info.Signature.cbData = sigLen;
+    info.Signature.pbData = (BYTE *)sig;
+    info.Signature.cUnusedBits = 0;
+    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_CERT, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&cert, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (cert)
+    {
+        CRYPT_DATA_BLOB certBlob = { 0, NULL };
+        PCERT_PUBLIC_KEY_INFO pubKeyInfo = NULL;
+
+        ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+         CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
+        ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+         "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
+        certBlob.cbData = 1;
+        certBlob.pbData = (void *)0xdeadbeef;
+        ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+         CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+        certBlob.cbData = size;
+        certBlob.pbData = cert;
+        ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+         CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
+        ok(!ret && GetLastError() ==
+         HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+         "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+         GetLastError());
+        ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+         CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
+         CRYPT_VERIFY_CERT_SIGN_ISSUER_NULL, NULL, 0, NULL);
+        ok(!ret && GetLastError() ==
+         HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+         "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+         GetLastError());
+        /* This crashes
+        ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+         CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
+         CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY, NULL, 0, NULL);
+         */
+        CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE, X509_ASN_ENCODING,
+         (LPSTR)sigOID, 0, NULL, NULL, &size);
+        pubKeyInfo = HeapAlloc(GetProcessHeap(), 0, size);
+        if (pubKeyInfo)
+        {
+            ret = CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE,
+             X509_ASN_ENCODING, (LPSTR)sigOID, 0, NULL, pubKeyInfo, &size);
+            ok(ret, "CryptExportKey failed: %08lx\n", GetLastError());
+            if (ret)
+            {
+                ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+                 CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
+                 CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY, pubKeyInfo, 0, NULL);
+                ok(ret, "CryptVerifyCertificateSignatureEx failed: %08lx\n",
+                 GetLastError());
+            }
+            HeapFree(GetProcessHeap(), 0, pubKeyInfo);
+        }
+        LocalFree(cert);
+    }
+}
+
+static void testCertSigs(void)
+{
+    HCRYPTPROV csp;
+    CRYPT_DATA_BLOB toBeSigned = { sizeof(emptyCert), (LPBYTE)emptyCert };
+    BOOL ret;
+    HCRYPTKEY key;
+    BYTE sig[64];
+    DWORD sigSize = sizeof(sig);
+
+    /* Just in case a previous run failed, delete this thing */
+    CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+    ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+     CRYPT_NEWKEYSET);
+    ok(ret, "CryptAcquireContext failed: %08lx\n", GetLastError());
+
+    testSignCert(csp, &toBeSigned, szOID_RSA_SHA1RSA, &key, sig, &sigSize);
+    testVerifyCertSig(csp, &toBeSigned, szOID_RSA_SHA1RSA, sig, sigSize);
+
+    CryptDestroyKey(key);
+    CryptReleaseContext(csp, 0);
+    ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+}
+
 START_TEST(cert)
 {
     testCryptHashCert();
@@ -1364,4 +1572,6 @@ START_TEST(cert)
 
     testCertProperties();
     testAddSerialized();
+
+    testCertSigs();
 }

@@ -149,7 +149,7 @@
 @ stub CryptSetProviderU
 @ stub CryptSignAndEncodeCertificate
 @ stub CryptSignAndEncryptMessage
-@ stub CryptSignCertificate
+@ stdcall CryptSignCertificate(long long long ptr long ptr ptr ptr ptr)
 @ stub CryptSignHashU
 @ stub CryptSignMessage
 @ stub CryptSignMessageWithKey
@@ -157,7 +157,8 @@
 @ stdcall CryptUnregisterDefaultOIDFunction(long str wstr)
 @ stdcall CryptUnregisterOIDFunction(long str str)
 @ stub CryptUnregisterOIDInfo
-@ stub CryptVerifyCertificateSignature
+@ stdcall CryptVerifyCertificateSignature(long long ptr long ptr)
+@ stdcall CryptVerifyCertificateSignatureEx(long long long ptr long ptr long ptr)
 @ stub CryptVerifyDetachedMessageHash
 @ stub CryptVerifyDetachedMessageSignature
 @ stub CryptVerifyMessageHash

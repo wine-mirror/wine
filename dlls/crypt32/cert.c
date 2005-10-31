@@ -3142,6 +3142,175 @@ BOOL WINAPI CryptHashCertificate(HCRYPTPROV hCryptProv, ALG_ID Algid,
     return ret;
 }
 
+BOOL WINAPI CryptSignCertificate(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
+ DWORD dwCertEncodingType, const BYTE *pbEncodedToBeSigned,
+ DWORD cbEncodedToBeSigned, PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm,
+ const void *pvHashAuxInfo, BYTE *pbSignature, DWORD *pcbSignature)
+{
+    BOOL ret;
+    ALG_ID algID;
+    HCRYPTHASH hHash;
+
+    TRACE("(%08lx, %ld, %ld, %p, %ld, %p, %p, %p, %p)\n", hCryptProv,
+     dwKeySpec, dwCertEncodingType, pbEncodedToBeSigned, cbEncodedToBeSigned,
+     pSignatureAlgorithm, pvHashAuxInfo, pbSignature, pcbSignature);
+
+    algID = CertOIDToAlgId(pSignatureAlgorithm->pszObjId);
+    if (!algID)
+    {
+        SetLastError(NTE_BAD_ALGID);
+        return FALSE;
+    }
+    if (!hCryptProv)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    ret = CryptCreateHash(hCryptProv, algID, 0, 0, &hHash);
+    if (ret)
+    {
+        ret = CryptHashData(hHash, pbEncodedToBeSigned, cbEncodedToBeSigned, 0);
+        if (ret)
+            ret = CryptSignHashW(hHash, dwKeySpec, NULL, 0, pbSignature,
+             pcbSignature);
+        CryptDestroyHash(hHash);
+    }
+    return ret;
+}
+
+BOOL WINAPI CryptVerifyCertificateSignature(HCRYPTPROV hCryptProv,
+ DWORD dwCertEncodingType, const BYTE *pbEncoded, DWORD cbEncoded,
+ PCERT_PUBLIC_KEY_INFO pPublicKey)
+{
+    return CryptVerifyCertificateSignatureEx(hCryptProv, dwCertEncodingType,
+     CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, (void *)pbEncoded,
+     CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY, pPublicKey, 0, NULL);
+}
+
+BOOL WINAPI CryptVerifyCertificateSignatureEx(HCRYPTPROV hCryptProv,
+ DWORD dwCertEncodingType, DWORD dwSubjectType, void *pvSubject,
+ DWORD dwIssuerType, void *pvIssuer, DWORD dwFlags, void *pvReserved)
+{
+    BOOL ret = TRUE;
+    CRYPT_DATA_BLOB subjectBlob;
+
+    TRACE("(%08lx, %ld, %ld, %p, %ld, %p, %08lx, %p)\n", hCryptProv,
+     dwCertEncodingType, dwSubjectType, pvSubject, dwIssuerType, pvIssuer,
+     dwFlags, pvReserved);
+
+    switch (dwSubjectType)
+    {
+    case CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB:
+    {
+        PCRYPT_DATA_BLOB blob = (PCRYPT_DATA_BLOB)pvSubject;
+
+        subjectBlob.pbData = blob->pbData;
+        subjectBlob.cbData = blob->cbData;
+        break;
+    }
+    case CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT:
+    {
+        PCERT_CONTEXT context = (PCERT_CONTEXT)pvSubject;
+
+        subjectBlob.pbData = context->pbCertEncoded;
+        subjectBlob.cbData = context->cbCertEncoded;
+        break;
+    }
+    case CRYPT_VERIFY_CERT_SIGN_SUBJECT_CRL:
+    {
+        PCRL_CONTEXT context = (PCRL_CONTEXT)pvSubject;
+
+        subjectBlob.pbData = context->pbCrlEncoded;
+        subjectBlob.cbData = context->cbCrlEncoded;
+        break;
+    }
+    default:
+        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        ret = FALSE;
+    }
+
+    if (ret)
+    {
+        PCERT_SIGNED_CONTENT_INFO signedCert = NULL;
+        DWORD size = 0;
+
+        ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT,
+         subjectBlob.pbData, subjectBlob.cbData,
+         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+         (BYTE *)&signedCert, &size);
+        if (ret)
+        {
+            switch (dwIssuerType)
+            {
+            case CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY:
+            {
+                PCERT_PUBLIC_KEY_INFO pubKeyInfo =
+                 (PCERT_PUBLIC_KEY_INFO)pvIssuer;
+                ALG_ID algID = CertOIDToAlgId(pubKeyInfo->Algorithm.pszObjId);
+
+                if (algID)
+                {
+                    HCRYPTKEY key;
+
+                    ret = CryptImportPublicKeyInfoEx(hCryptProv,
+                     dwCertEncodingType, pubKeyInfo, algID, 0, NULL, &key);
+                    if (ret)
+                    {
+                        HCRYPTHASH hash;
+
+                        ret = CryptCreateHash(hCryptProv, algID, 0, 0, &hash);
+                        if (ret)
+                        {
+                            ret = CryptHashData(hash,
+                             signedCert->ToBeSigned.pbData,
+                             signedCert->ToBeSigned.cbData, 0);
+                            if (ret)
+                            {
+                                ret = CryptVerifySignatureW(hash,
+                                 signedCert->Signature.pbData,
+                                 signedCert->Signature.cbData, key, NULL, 0);
+                            }
+                            CryptDestroyHash(hash);
+                        }
+                        CryptDestroyKey(key);
+                    }
+                }
+                else
+                {
+                    SetLastError(NTE_BAD_ALGID);
+                    ret = FALSE;
+                }
+                break;
+            }
+            case CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT:
+            case CRYPT_VERIFY_CERT_SIGN_ISSUER_CHAIN:
+                FIXME("issuer type %ld: stub\n", dwIssuerType);
+                ret = FALSE;
+                break;
+            case CRYPT_VERIFY_CERT_SIGN_ISSUER_NULL:
+                if (pvIssuer)
+                {
+                    SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+                    ret = FALSE;
+                }
+                else
+                {
+                    FIXME("unimplemented for NULL signer\n");
+                    SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+                    ret = FALSE;
+                }
+                break;
+            default:
+                SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+                ret = FALSE;
+            }
+            LocalFree(signedCert);
+        }
+    }
+    return ret;
+}
+
 HCRYPTOIDFUNCSET WINAPI CryptInitOIDFunctionSet(LPCSTR pszFuncName, DWORD dwFlags)
 {
     FIXME("stub: %s %lx\n", debugstr_a(pszFuncName), dwFlags);
