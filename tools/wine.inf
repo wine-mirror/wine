@@ -249,7 +249,6 @@ HKLM,%MciExtStr%,"wvx",,"MPEGVideo"
 HKLM,Software\Borland\Database Engine\Settings\SYSTEM\INIT,SHAREDMEMLOCATION,,9000
 HKLM,Software\Microsoft\Advanced INF Setup,,,""
 HKLM,System\CurrentControlSet\Control\Session Manager,,,""
-HKLM,System\CurrentControlSet\Control\Windows,"CSDVersion",0x10001,0x00000600
 HKLM,System\CurrentControlSet\Control\VMM32Files,,,""
 HKLM,System\CurrentControlSet\Services\VxD\MSTCP,,,""
 HKCU,Software\Wine\shdocvw,"MozillaUrl",,"http://source.winehq.org/mozactivex"
