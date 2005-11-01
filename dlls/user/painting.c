@@ -346,30 +346,75 @@ static void update_now( HWND hwnd, UINT rdw_flags )
 /*************************************************************************
  *             fix_caret
  *
- * Helper for ScrollWindowEx.
+ * Helper for ScrollWindowEx:
+ * If the return value is 0, no special caret handling is necessary.
+ * Otherwise the return value is the handle of the window that owns the
+ * caret. Its caret needs to be hidden during the scroll operation and
+ * moved to new_caret_pos if move_caret is TRUE.
  */
-static HWND fix_caret(HWND hWnd, LPRECT lprc, UINT flags)
+static HWND fix_caret(HWND hWnd, const LPRECT scroll_rect, INT dx, INT dy,
+                     UINT flags, LPBOOL move_caret, LPPOINT new_caret_pos)
 {
     GUITHREADINFO info;
+    RECT rect, mapped_rcCaret;
+    BOOL hide_caret = FALSE;
 
     if (!GetGUIThreadInfo( GetCurrentThreadId(), &info )) return 0;
     if (!info.hwndCaret) return 0;
-    if (info.hwndCaret == hWnd ||
-        ((flags & SW_SCROLLCHILDREN) && IsChild(hWnd, info.hwndCaret)))
+    
+    if (info.hwndCaret == hWnd)
     {
-        POINT pt;
-        pt.x = info.rcCaret.left;
-        pt.y = info.rcCaret.top;
-        MapWindowPoints( info.hwndCaret, hWnd, (LPPOINT)&info.rcCaret, 2 );
-        if( IntersectRect(lprc, lprc, &info.rcCaret) )
+        /* Move the caret if it's (partially) in the source rectangle */
+        if (IntersectRect(&rect, scroll_rect, &info.rcCaret))
         {
-            HideCaret(0);
-            lprc->left = pt.x;
-            lprc->top = pt.y;
-            return info.hwndCaret;
+            *move_caret = TRUE;
+            hide_caret = TRUE;
+            new_caret_pos->x = info.rcCaret.left + dx;
+            new_caret_pos->y = info.rcCaret.top + dy;
+        }
+        else
+        {
+            *move_caret = FALSE;
+            
+            /* Hide the caret if it's in the destination rectangle */
+            rect = *scroll_rect;
+            OffsetRect(&rect, dx, dy);
+            hide_caret = IntersectRect(&rect, &rect, &info.rcCaret);
         }
     }
-    return 0;
+    else
+    {
+        if ((flags & SW_SCROLLCHILDREN) && IsChild(hWnd, info.hwndCaret))
+        {
+            *move_caret = FALSE;
+            
+            /* Hide the caret if it's in the source or in the destination
+               rectangle */
+            mapped_rcCaret = info.rcCaret;
+            MapWindowPoints(info.hwndCaret, hWnd, (LPPOINT)&mapped_rcCaret, 2);
+            
+            if (IntersectRect(&rect, scroll_rect, &mapped_rcCaret))
+            {
+                hide_caret = TRUE;
+            }
+            else
+            {
+                rect = *scroll_rect;
+                OffsetRect(&rect, dx, dy);
+                hide_caret = IntersectRect(&rect, &rect, &mapped_rcCaret);
+            }
+        }
+        else
+            return 0;
+    }
+
+    if (hide_caret)
+    {    
+        HideCaret(info.hwndCaret);
+        return info.hwndCaret;
+    }
+    else
+        return 0;
 }
 
 
@@ -756,8 +801,9 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     HRGN  hrgnWinupd = 0;
     HDC   hDC;
     RECT  rc, cliprc;
-    RECT caretrc;
     HWND hwndCaret = NULL;
+    BOOL moveCaret = FALSE;
+    POINT newCaretPos;
 
     TRACE( "%p, %d,%d hrgnUpdate=%p rcUpdate = %p %s %04x\n",
            hwnd, dx, dy, hrgnUpdate, rcUpdate, wine_dbgstr_rect(rect), flags );
@@ -780,11 +826,13 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     if( hrgnUpdate ) bOwnRgn = FALSE;
     else if( bUpdate ) hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 );
 
+    newCaretPos.x = newCaretPos.y = 0;
+
     if( !IsRectEmpty(&cliprc) && (dx || dy)) {
         DWORD dcxflags = DCX_CACHE;
         DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
-        caretrc = rc;
-        hwndCaret = fix_caret(hwnd, &caretrc, flags);
+
+        hwndCaret = fix_caret(hwnd, &rc, dx, dy, flags, &moveCaret, &newCaretPos);
 
         if( style & WS_CLIPSIBLINGS) dcxflags |= DCX_CLIPSIBLINGS;
         if( GetClassLongW( hwnd, GCL_STYLE ) & CS_PARENTDC)
@@ -859,7 +907,7 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     }
 
     if( hwndCaret ) {
-        SetCaretPos( caretrc.left + dx, caretrc.top + dy );
+        if ( moveCaret ) SetCaretPos( newCaretPos.x, newCaretPos.y );
         ShowCaret(hwndCaret);
     }
 
