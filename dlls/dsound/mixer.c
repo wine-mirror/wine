@@ -536,8 +536,8 @@ static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWOR
 
 		for (i = 0; i < todo; i++) {
 			/* 8-bit WAV is unsigned */
-			field = (*ibuf++ - 128);
-			field -= (*obuf - 128);
+			field = (*obuf - 128);
+			field -= (*ibuf++ - 128);
 			if (field > 127) field = 127;
 			else if (field < -128) field = -128;
 			*obuf++ = field + 128;
@@ -549,8 +549,8 @@ static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWOR
 
 			for (i = 0; i < todo; i++) {
 				/* 8-bit WAV is unsigned */
-				field = (*ibuf++ - 128);
-				field -= (*obuf - 128);
+				field = (*obuf - 128);
+				field -= (*ibuf++ - 128);
 				if (field > 127) field = 127;
 				else if (field < -128) field = -128;
 				*obuf++ = field + 128;
@@ -569,8 +569,8 @@ static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWOR
 
 		for (i = 0; i < todo; i++) {
 			/* 16-bit WAV is signed */
-			field = *ibufs++;
-			field -= *obufs;
+			field = *obufs;
+			field -= *ibufs++;
 			if (field > 32767) field = 32767;
 			else if (field < -32768) field = -32768;
 			*obufs++ = field;
@@ -582,8 +582,8 @@ static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWOR
 
 			for (i = 0; i < todo; i++) {
 				/* 16-bit WAV is signed */
-				field = *ibufs++;
-				field -= *obufs;
+				field = *obufs;
+				field -= *ibufs++;
 				if (field > 32767) field = 32767;
 				else if (field < -32768) field = -32768;
 				*obufs++ = field;
