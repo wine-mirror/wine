@@ -1387,33 +1387,48 @@ __ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret");
 
 /**********************************************************************
  *		EXC_CallHandler   (internal)
+ *
+ * Some exception handlers depend on EBP to have a fixed position relative to
+ * the exception frame.
+ * Shrinker depends on (*1) doing what it does,
+ * (*2) being the exact instruction it is and (*3) beginning with 0x64
+ * (i.e. the %fs prefix to the movl instruction). It also depends on the
+ * function calling the handler having only 5 parameters (*4).
  */
 __ASM_GLOBAL_FUNC( EXC_CallHandler,
 "	pushl	%ebp\n"
 "	movl	%esp, %ebp\n"
-"	subl	$12, %esp\n"
-"	movl	28(%ebp), %eax\n"
-"	movl	12(%ebp), %edx\n"
-"	movl	%eax, -8(%ebp)\n"
-"	movl	%edx, -4(%ebp)\n"
-"	leal	-12(%ebp), %eax\n"
-"	.byte 0x64\n"
-"	movl (0),%ecx\n"
-"	movl %ecx,(%eax)\n"
-"	.byte 0x64\n"
-"	movl %eax,(0)\n"
-"	movl	20(%ebp), %eax\n"
-"	pushl	%eax\n"
-"	movl	16(%ebp), %eax\n"
-"	pushl	%eax\n"
-"	movl	8(%ebp), %eax\n"
-"	pushl	%edx\n"
-"	pushl	%eax\n"
-"	call	*24(%ebp)\n"
-"	movl	-12(%ebp), %edx\n"
-"	.byte 0x64\n"
-"	movl %edx,(0)\n"
+"	movl	28(%ebp), %edx\n" /* ugly hack to pass the 6th param needed because of Shrinker */
+"	pushl	24(%ebp)\n"
+"	pushl	20(%ebp)\n"
+"	pushl	16(%ebp)\n"
+"	pushl	12(%ebp)\n"
+"	pushl	8(%ebp)\n"
+"	call	call_exception_handler\n"
 "	leave\n"
 "	ret\n"
+);
+__ASM_GLOBAL_FUNC(call_exception_handler,
+"	pushl	%ebp\n"
+"	movl	%esp, %ebp\n"
+"	pushl	12(%ebp)\n"       /* make any exceptions in this... */
+"	pushl	%edx\n"           /* handler be handled by... */
+"	.byte	0x64\n"
+"	pushl	(0)\n"            /* nested_handler (passed in edx). */
+"	.byte	0x64\n"
+"	movl	%esp,(0)\n"       /* push the new exception frame onto the exception stack. */
+"	pushl	20(%ebp)\n"
+"	pushl	16(%ebp)\n"
+"	pushl	12(%ebp)\n"
+"	pushl	8(%ebp)\n"
+"	movl	24(%ebp), %ecx\n" /* (*1) */
+"	call	*%ecx\n"          /* call handler. (*2) */
+"	.byte	0x64\n"
+"	movl	(0), %esp\n"      /* restore previous... (*3) */
+"	.byte	0x64\n"
+"	popl	(0)\n"            /* exception frame. */
+"	movl	%ebp, %esp\n"     /* restore saved stack, in case it was corrupted */
+"	popl	%ebp\n"
+"	ret	$20\n"            /* (*4) */
 );
 #endif  /* __i386__ */

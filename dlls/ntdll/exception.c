@@ -114,8 +114,6 @@ static DWORD EXC_UnwindHandler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RE
  *
  * Call an exception handler, setting up an exception frame to catch exceptions
  * happening during the handler execution.
- * Please do not change the first 4 parameters order in any way - some exceptions handlers
- * rely on Base Pointer (EBP) to have a fixed position related to the exception frame
  *
  * For i386 this function is implemented in assembler in signal_i386.c.
  */
