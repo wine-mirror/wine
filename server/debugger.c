@@ -661,19 +661,19 @@ DECL_HANDLER(get_exception_status)
 {
     struct debug_event *event;
 
-    reply->status = 0;
     if ((event = (struct debug_event *)get_handle_obj( current->process, req->handle,
                                                        0, &debug_event_ops )))
     {
+        close_handle( current->process, req->handle, NULL );
         if (event->state == EVENT_CONTINUED)
         {
-            reply->status = event->status;
             if (current->context == &event->context)
             {
                 size_t size = min( sizeof(CONTEXT), get_reply_max_size() );
                 set_reply_data( &event->context, size );
                 current->context = NULL;
             }
+            set_error( event->status );
         }
         else set_error( STATUS_PENDING );
         release_object( event );

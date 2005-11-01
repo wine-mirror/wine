@@ -1162,7 +1162,6 @@ enum char_info_mode
 @REQ(get_exception_status)
     obj_handle_t     handle;   /* handle to the queued event */
 @REPLY
-    int              status;   /* event continuation status */
     VARARG(context,context);   /* modified thread context */
 @END
 

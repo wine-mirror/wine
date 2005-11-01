@@ -315,6 +315,7 @@ static void set_thread_info( struct thread *thread,
 /* stop a thread (at the Unix level) */
 void stop_thread( struct thread *thread )
 {
+    if (thread->context) return;  /* already inside a debug event, no need for a signal */
     /* can't stop a thread while initialisation is in progress */
     if (is_process_init_done(thread->process)) send_thread_signal( thread, SIGUSR1 );
 }

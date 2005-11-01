@@ -4207,6 +4207,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 195
+#define SERVER_PROTOCOL_VERSION 196
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

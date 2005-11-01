@@ -164,19 +164,15 @@ static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *c
     SERVER_END_REQ;
     if (!handle) return 0;
 
-    /* No need to wait on the handle since the process gets suspended
-     * once the event is passed to the debugger, so when we get back
-     * here the event has been continued already.
-     */
+    NTDLL_wait_for_multiple_objects( 1, &handle, 0, NULL, 0 );
+
     SERVER_START_REQ( get_exception_status )
     {
         req->handle = handle;
         wine_server_set_reply( req, context, sizeof(*context) );
-        wine_server_call( req );
-        ret = reply->status;
+        ret = wine_server_call( req );
     }
     SERVER_END_REQ;
-    NtClose( handle );
     return ret;
 }
 
