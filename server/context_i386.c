@@ -587,9 +587,7 @@ DECL_HANDLER(get_thread_context)
 
     if ((data = set_reply_data_size( sizeof(CONTEXT) )))
     {
-        /* copy incoming context into reply */
         memset( data, 0, sizeof(CONTEXT) );
-        memcpy( data, get_req_data(), min( get_req_data_size(), sizeof(CONTEXT) ));
 
         if (thread->context)  /* thread is inside an exception event */
         {

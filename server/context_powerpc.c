@@ -306,6 +306,8 @@ DECL_HANDLER(get_thread_context)
 
     if ((data = set_reply_data_size( sizeof(CONTEXT) )))
     {
+        memset( data, 0, sizeof(CONTEXT) );
+
         if (thread->context)  /* thread is inside an exception event */
         {
             copy_context( data, thread->context, flags );
