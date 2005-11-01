@@ -109,7 +109,7 @@ void test_namespace_pipe(void)
 
     status = pNtCreateNamedPipeFile(&pipe, GENERIC_READ|GENERIC_WRITE, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                     FILE_CREATE, FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout);
-    todo_wine ok(status == STATUS_INSTANCE_NOT_AVAILABLE,
+    ok(status == STATUS_INSTANCE_NOT_AVAILABLE,
         "NtCreateNamedPipeFile should have failed with STATUS_INSTANCE_NOT_AVAILABLE got(%08lx)\n", status);
 
     pRtlInitUnicodeString(&str, buffer2);

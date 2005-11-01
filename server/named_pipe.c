@@ -562,10 +562,9 @@ DECL_HANDLER(create_named_pipe)
     }
     else
     {
-        set_error( 0 );  /* clear the name collision */
         if (pipe->maxinstances <= pipe->instances)
         {
-            set_error( STATUS_PIPE_BUSY );
+            set_error( STATUS_INSTANCE_NOT_AVAILABLE );
             release_object( pipe );
             return;
         }
@@ -577,6 +576,7 @@ DECL_HANDLER(create_named_pipe)
             release_object( pipe );
             return;
         }
+        set_error( 0 );  /* clear the name collision */
     }
 
     server = create_pipe_server( pipe, req->options );
