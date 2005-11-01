@@ -55,15 +55,16 @@ HANDLE dos_handles[DOS_TABLE_SIZE];
 /* info structure for FindFirstFile handle */
 typedef struct
 {
-    DWORD            magic;       /* magic number */
-    HANDLE           handle;      /* handle to directory */
-    CRITICAL_SECTION cs;          /* crit section protecting this structure */
-    UNICODE_STRING   mask;        /* file mask */
-    UNICODE_STRING   path;        /* NT path used to open the directory */
-    BOOL             is_root;     /* is directory the root of the drive? */
-    UINT             data_pos;    /* current position in dir data */
-    UINT             data_len;    /* length of dir data */
-    BYTE             data[8192];  /* directory data */
+    DWORD             magic;       /* magic number */
+    HANDLE            handle;      /* handle to directory */
+    CRITICAL_SECTION  cs;          /* crit section protecting this structure */
+    FINDEX_SEARCH_OPS search_op;   /* Flags passed to FindFirst.  */
+    UNICODE_STRING    mask;        /* file mask */
+    UNICODE_STRING    path;        /* NT path used to open the directory */
+    BOOL              is_root;     /* is directory the root of the drive? */
+    UINT              data_pos;    /* current position in dir data */
+    UINT              data_len;    /* length of dir data */
+    BYTE              data[8192];  /* directory data */
 } FIND_FIRST_INFO;
 
 #define FIND_FIRST_MAGIC  0xc0ffee11
@@ -1500,7 +1501,8 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
 
     TRACE("%s %d %p %d %p %lx\n", debugstr_w(filename), level, data, search_op, filter, flags);
 
-    if ((search_op != FindExSearchNameMatch) || (flags != 0))
+    if ((search_op != FindExSearchNameMatch && search_op != FindExSearchLimitToDirectories)
+	|| flags != 0)
     {
         FIXME("options not implemented 0x%08x 0x%08lx\n", search_op, flags );
         return INVALID_HANDLE_VALUE;
@@ -1572,6 +1574,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     info->magic    = FIND_FIRST_MAGIC;
     info->data_pos = 0;
     info->data_len = 0;
+    info->search_op = search_op;
 
     if (!FindNextFileW( (HANDLE)info, data ))
     {
@@ -1650,6 +1653,9 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
         {
             if (!check_dir_symlink( info, dir_info )) continue;
         }
+	if (info->search_op == FindExSearchLimitToDirectories &&
+	    (dir_info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+	    continue;
 
         data->dwFileAttributes = dir_info->FileAttributes;
         data->ftCreationTime   = *(FILETIME *)&dir_info->CreationTime;
