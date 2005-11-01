@@ -2192,110 +2192,156 @@ static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
     return pTokenPair;
 }
 
+typedef enum {REQUEST_HDR = 1, RESPONSE_HDR = 2, REQ_RESP_HDR = 3} std_hdr_type;
+
+typedef struct std_hdr_data
+{
+	const WCHAR* hdrStr;
+	INT hdrIndex;
+	std_hdr_type hdrType;
+} std_hdr_data;
+
+static const WCHAR szAccept[] = { 'A','c','c','e','p','t',0 };
+static const WCHAR szAccept_Charset[] = { 'A','c','c','e','p','t','-','C','h','a','r','s','e','t', 0 };
+static const WCHAR szAccept_Encoding[] = { 'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',0 };
+static const WCHAR szAccept_Language[] = { 'A','c','c','e','p','t','-','L','a','n','g','u','a','g','e',0 };
+static const WCHAR szAccept_Ranges[] = { 'A','c','c','e','p','t','-','R','a','n','g','e','s',0 };
+static const WCHAR szAge[] = { 'A','g','e',0 };
+static const WCHAR szAllow[] = { 'A','l','l','o','w',0 };
+static const WCHAR szAuthorization[] = { 'A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
+static const WCHAR szCache_Control[] = { 'C','a','c','h','e','-','C','o','n','t','r','o','l',0 };
+static const WCHAR szConnection[] = { 'C','o','n','n','e','c','t','i','o','n',0 };
+static const WCHAR szContent_Base[] = { 'C','o','n','t','e','n','t','-','B','a','s','e',0 };
+static const WCHAR szContent_Encoding[] = { 'C','o','n','t','e','n','t','-','E','n','c','o','d','i','n','g',0 };
+static const WCHAR szContent_Language[] = { 'C','o','n','t','e','n','t','-','L','a','n','g','u','a','g','e',0 };
+static const WCHAR szContent_Length[] = { 'C','o','n','t','e','n','t','-','L','e','n','g','t','h',0 };
+static const WCHAR szContent_Location[] = { 'C','o','n','t','e','n','t','-','L','o','c','a','t','i','o','n',0 };
+static const WCHAR szContent_MD5[] = { 'C','o','n','t','e','n','t','-','M','D','5',0 };
+static const WCHAR szContent_Range[] = { 'C','o','n','t','e','n','t','-','R','a','n','g','e',0 };
+static const WCHAR szContent_Transfer_Encoding[] = { 'C','o','n','t','e','n','t','-','T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0 };
+static const WCHAR szContent_Type[] = { 'C','o','n','t','e','n','t','-','T','y','p','e',0 };
+static const WCHAR szCookie[] = { 'C','o','o','k','i','e',0 };
+static const WCHAR szDate[] = { 'D','a','t','e',0 };
+static const WCHAR szFrom[] = { 'F','r','o','m',0 };
+static const WCHAR szETag[] = { 'E','T','a','g',0 };
+static const WCHAR szExpect[] = { 'E','x','p','e','c','t',0 };
+static const WCHAR szExpires[] = { 'E','x','p','i','r','e','s',0 };
+static const WCHAR szHost[] = { 'H','o','s','t',0 };
+static const WCHAR szIf_Match[] = { 'I','f','-','M','a','t','c','h',0 };
+static const WCHAR szIf_Modified_Since[] = { 'I','f','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',0 };
+static const WCHAR szIf_None_Match[] = { 'I','f','-','N','o','n','e','-','M','a','t','c','h',0 };
+static const WCHAR szIf_Range[] = { 'I','f','-','R','a','n','g','e',0 };
+static const WCHAR szIf_Unmodified_Since[] = { 'I','f','-','U','n','m','o','d','i','f','i','e','d','-','S','i','n','c','e',0 };
+static const WCHAR szLast_Modified[] = { 'L','a','s','t','-','M','o','d','i','f','i','e','d',0 };
+static const WCHAR szLocation[] = { 'L','o','c','a','t','i','o','n',0 };
+static const WCHAR szMax_Forwards[] = { 'M','a','x','-','F','o','r','w','a','r','d','s',0 };
+static const WCHAR szMime_Version[] = { 'M','i','m','e','-','V','e','r','s','i','o','n',0 };
+static const WCHAR szPragma[] = { 'P','r','a','g','m','a',0 };
+static const WCHAR szProxy_Authenticate[] = { 'P','r','o','x','y','-','A','u','t','h','e','n','t','i','c','a','t','e',0 };
+static const WCHAR szProxy_Authorization[] = { 'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
+static const WCHAR szPublic[] = { 'P','u','b','l','i','c',0 };
+static const WCHAR szRange[] = { 'R','a','n','g','e',0 };
+static const WCHAR szReferer[] = { 'R','e','f','e','r','e','r',0 };
+static const WCHAR szRetry_After[] = { 'R','e','t','r','y','-','A','f','t','e','r',0 };
+static const WCHAR szServer[] = { 'S','e','r','v','e','r',0 };
+static const WCHAR szSet_Cookie[] = { 'S','e','t','-','C','o','o','k','i','e',0 };
+static const WCHAR szStatus[] = { 'S','t','a','t','u','s',0 };
+static const WCHAR szTransfer_Encoding[] = { 'T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0 };
+static const WCHAR szUnless_Modified_Since[] = { 'U','n','l','e','s','s','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',0 };
+static const WCHAR szUpgrade[] = { 'U','p','g','r','a','d','e',0 };
+static const WCHAR szURI[] = { 'U','R','I',0 };
+static const WCHAR szUser_Agent[] = { 'U','s','e','r','-','A','g','e','n','t',0 };
+static const WCHAR szVary[] = { 'V','a','r','y',0 };
+static const WCHAR szVia[] = { 'V','i','a',0 };
+static const WCHAR szWarning[] = { 'W','a','r','n','i','n','g',0 };
+static const WCHAR szWWW_Authenticate[] = { 'W','W','W','-','A','u','t','h','e','n','t','i','c','a','t','e',0 };
+
+/* Note: Must be kept sorted! */
+const std_hdr_data SORTED_STANDARD_HEADERS[] = {
+    {szAccept_Charset,		HTTP_QUERY_ACCEPT_CHARSET,		REQUEST_HDR,},
+    {szAccept_Encoding,		HTTP_QUERY_ACCEPT_ENCODING,		REQUEST_HDR,},
+    {szAccept,			HTTP_QUERY_ACCEPT,			REQUEST_HDR,},
+    {szAccept_Language,		HTTP_QUERY_ACCEPT_LANGUAGE,		REQUEST_HDR,},
+    {szAccept_Ranges,		HTTP_QUERY_ACCEPT_RANGES,		RESPONSE_HDR,},
+    {szAge,			HTTP_QUERY_AGE,				RESPONSE_HDR,},
+    {szAllow,			HTTP_QUERY_ALLOW,			REQ_RESP_HDR,},
+    {szAuthorization,		HTTP_QUERY_AUTHORIZATION,		REQUEST_HDR,},
+    {szCache_Control,		HTTP_QUERY_CACHE_CONTROL,		REQ_RESP_HDR,},
+    {szConnection,		HTTP_QUERY_CONNECTION,			REQ_RESP_HDR,},
+    {szContent_Base,		HTTP_QUERY_CONTENT_BASE,		REQ_RESP_HDR,},
+    {szContent_Encoding,	HTTP_QUERY_CONTENT_ENCODING,		REQ_RESP_HDR,},
+    {szContent_Language,	HTTP_QUERY_CONTENT_LANGUAGE,		REQ_RESP_HDR,},
+    {szContent_Length,		HTTP_QUERY_CONTENT_LENGTH,		REQ_RESP_HDR,},
+    {szContent_Location,	HTTP_QUERY_CONTENT_LOCATION,		REQ_RESP_HDR,},
+    {szContent_MD5,		HTTP_QUERY_CONTENT_MD5,			REQ_RESP_HDR,},
+    {szContent_Range,		HTTP_QUERY_CONTENT_RANGE,		REQ_RESP_HDR,},
+    {szContent_Transfer_Encoding,HTTP_QUERY_CONTENT_TRANSFER_ENCODING,	REQ_RESP_HDR,},
+    {szContent_Type,		HTTP_QUERY_CONTENT_TYPE,		REQ_RESP_HDR,},
+    {szCookie,			HTTP_QUERY_COOKIE,			REQUEST_HDR,},
+    {szDate,			HTTP_QUERY_DATE,			REQ_RESP_HDR,},
+    {szETag,			HTTP_QUERY_ETAG,			REQ_RESP_HDR,},
+    {szExpect,			HTTP_QUERY_EXPECT,			REQUEST_HDR,},
+    {szExpires,			HTTP_QUERY_EXPIRES,			REQ_RESP_HDR,},
+    {szFrom,			HTTP_QUERY_DERIVED_FROM,		REQUEST_HDR,},
+    {szHost,			HTTP_QUERY_HOST,			REQUEST_HDR,},
+    {szIf_Match,		HTTP_QUERY_IF_MATCH,			REQUEST_HDR,},
+    {szIf_Modified_Since,	HTTP_QUERY_IF_MODIFIED_SINCE,		REQUEST_HDR,},
+    {szIf_None_Match,		HTTP_QUERY_IF_NONE_MATCH,		REQUEST_HDR,},
+    {szIf_Range,		HTTP_QUERY_IF_RANGE,			REQUEST_HDR,},
+    {szIf_Unmodified_Since,	HTTP_QUERY_IF_UNMODIFIED_SINCE,		REQUEST_HDR,},
+    {szLast_Modified,		HTTP_QUERY_LAST_MODIFIED,		REQ_RESP_HDR,},
+    {szLocation,		HTTP_QUERY_CONTENT_LOCATION,		REQ_RESP_HDR,},
+    {szMax_Forwards,		HTTP_QUERY_MAX_FORWARDS,		REQUEST_HDR,},
+    {szMime_Version,		HTTP_QUERY_MIME_VERSION,		REQ_RESP_HDR,},
+    {szPragma,			HTTP_QUERY_PRAGMA,			REQ_RESP_HDR,},
+    {szProxy_Authenticate,	HTTP_QUERY_PROXY_AUTHENTICATE,		RESPONSE_HDR,},
+    {szProxy_Authorization,	HTTP_QUERY_PROXY_AUTHORIZATION,		REQUEST_HDR,},
+    {szPublic,			HTTP_QUERY_PUBLIC,			RESPONSE_HDR,},
+    {szRange,			HTTP_QUERY_RANGE,			REQUEST_HDR,},
+    {szReferer,			HTTP_QUERY_REFERER,			REQUEST_HDR,},
+    {szRetry_After,		HTTP_QUERY_RETRY_AFTER,			RESPONSE_HDR,},
+    {szServer,			HTTP_QUERY_SERVER,			RESPONSE_HDR,},
+    {szSet_Cookie,		HTTP_QUERY_SET_COOKIE,			RESPONSE_HDR,},
+    {szStatus,			HTTP_QUERY_STATUS_CODE,			RESPONSE_HDR,},
+    {szTransfer_Encoding,	HTTP_QUERY_TRANSFER_ENCODING,		REQ_RESP_HDR,},
+    {szUnless_Modified_Since,	HTTP_QUERY_UNLESS_MODIFIED_SINCE,	REQUEST_HDR,},
+    {szUpgrade,			HTTP_QUERY_UPGRADE,			REQ_RESP_HDR,},
+    {szURI,			HTTP_QUERY_URI,				REQ_RESP_HDR,},
+    {szUser_Agent,		HTTP_QUERY_USER_AGENT,			REQUEST_HDR,},
+    {szVary,			HTTP_QUERY_VARY,			RESPONSE_HDR,},
+    {szVia,			HTTP_QUERY_VIA,				REQ_RESP_HDR,},
+    {szWarning,			HTTP_QUERY_WARNING,			RESPONSE_HDR,},
+    {szWWW_Authenticate,	HTTP_QUERY_WWW_AUTHENTICATE,		RESPONSE_HDR},
+};
 
 /***********************************************************************
  *           HTTP_GetStdHeaderIndex (internal)
  *
  * Lookup field index in standard http header array
  *
- * FIXME: This should be stuffed into a hash table
+ * FIXME: Add support for HeaderType to avoid inadvertant assignments of
+ *        response headers to requests and looking for request headers
+ *        in responses
+ *
  */
-static INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField)
+static INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField)  
 {
-    INT index = -1;
-    static const WCHAR szContentLength[] = {
-       'C','o','n','t','e','n','t','-','L','e','n','g','t','h',0};
-    static const WCHAR szQueryRange[] = {
-       'R','a','n','g','e',0};
-    static const WCHAR szContentRange[] = {
-       'C','o','n','t','e','n','t','-','R','a','n','g','e',0};
-    static const WCHAR szContentType[] = {
-       'C','o','n','t','e','n','t','-','T','y','p','e',0};
-    static const WCHAR szLastModified[] = {
-       'L','a','s','t','-','M','o','d','i','f','i','e','d',0};
-    static const WCHAR szLocation[] = {'L','o','c','a','t','i','o','n',0};
-    static const WCHAR szAccept[] = {'A','c','c','e','p','t',0};
-    static const WCHAR szReferer[] = { 'R','e','f','e','r','e','r',0};
-    static const WCHAR szContentTrans[] = { 'C','o','n','t','e','n','t','-',
-       'T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0};
-    static const WCHAR szDate[] = { 'D','a','t','e',0};
-    static const WCHAR szServer[] = { 'S','e','r','v','e','r',0};
-    static const WCHAR szConnection[] = { 'C','o','n','n','e','c','t','i','o','n',0};
-    static const WCHAR szETag[] = { 'E','T','a','g',0};
-    static const WCHAR szAcceptRanges[] = {
-       'A','c','c','e','p','t','-','R','a','n','g','e','s',0 };
-    static const WCHAR szExpires[] = { 'E','x','p','i','r','e','s',0 };
-    static const WCHAR szMimeVersion[] = {
-       'M','i','m','e','-','V','e','r','s','i','o','n', 0};
-    static const WCHAR szPragma[] = { 'P','r','a','g','m','a', 0};
-    static const WCHAR szCacheControl[] = {
-       'C','a','c','h','e','-','C','o','n','t','r','o','l',0};
-    static const WCHAR szUserAgent[] = { 'U','s','e','r','-','A','g','e','n','t',0};
-    static const WCHAR szProxyAuth[] = {
-       'P','r','o','x','y','-',
-       'A','u','t','h','e','n','t','i','c','a','t','e', 0};
-    static const WCHAR szContentEncoding[] = {
-       'C','o','n','t','e','n','t','-','E','n','c','o','d','i','n','g',0};
-    static const WCHAR szCookie[] = {'C','o','o','k','i','e',0};
-    static const WCHAR szVary[] = {'V','a','r','y',0};
-    static const WCHAR szVia[] = {'V','i','a',0};
+    INT lo = 0;
+    INT hi = sizeof(SORTED_STANDARD_HEADERS) / sizeof(std_hdr_data) -1;
+    INT mid, inx;
 
-    if (!strcmpiW(lpszField, szContentLength))
-        index = HTTP_QUERY_CONTENT_LENGTH;
-    else if (!strcmpiW(lpszField,szQueryRange))
-        index = HTTP_QUERY_RANGE;
-    else if (!strcmpiW(lpszField,szContentRange))
-        index = HTTP_QUERY_CONTENT_RANGE;
-    else if (!strcmpiW(lpszField,szContentType))
-        index = HTTP_QUERY_CONTENT_TYPE;
-    else if (!strcmpiW(lpszField,szLastModified))
-        index = HTTP_QUERY_LAST_MODIFIED;
-    else if (!strcmpiW(lpszField,szLocation))
-        index = HTTP_QUERY_LOCATION;
-    else if (!strcmpiW(lpszField,szAccept))
-        index = HTTP_QUERY_ACCEPT;
-    else if (!strcmpiW(lpszField,szReferer))
-        index = HTTP_QUERY_REFERER;
-    else if (!strcmpiW(lpszField,szContentTrans))
-        index = HTTP_QUERY_CONTENT_TRANSFER_ENCODING;
-    else if (!strcmpiW(lpszField,szDate))
-        index = HTTP_QUERY_DATE;
-    else if (!strcmpiW(lpszField,szServer))
-        index = HTTP_QUERY_SERVER;
-    else if (!strcmpiW(lpszField,szConnection))
-        index = HTTP_QUERY_CONNECTION;
-    else if (!strcmpiW(lpszField,szETag))
-        index = HTTP_QUERY_ETAG;
-    else if (!strcmpiW(lpszField,szAcceptRanges))
-        index = HTTP_QUERY_ACCEPT_RANGES;
-    else if (!strcmpiW(lpszField,szExpires))
-        index = HTTP_QUERY_EXPIRES;
-    else if (!strcmpiW(lpszField,szMimeVersion))
-        index = HTTP_QUERY_MIME_VERSION;
-    else if (!strcmpiW(lpszField,szPragma))
-        index = HTTP_QUERY_PRAGMA;
-    else if (!strcmpiW(lpszField,szCacheControl))
-        index = HTTP_QUERY_CACHE_CONTROL;
-    else if (!strcmpiW(lpszField,szUserAgent))
-        index = HTTP_QUERY_USER_AGENT;
-    else if (!strcmpiW(lpszField,szProxyAuth))
-        index = HTTP_QUERY_PROXY_AUTHENTICATE;
-    else if (!strcmpiW(lpszField,szContentEncoding))
-        index = HTTP_QUERY_CONTENT_ENCODING;
-    else if (!strcmpiW(lpszField,szCookie))
-        index = HTTP_QUERY_COOKIE;
-    else if (!strcmpiW(lpszField,szVary))
-        index = HTTP_QUERY_VARY;
-    else if (!strcmpiW(lpszField,szVia))
-        index = HTTP_QUERY_VIA;
-    else if (!strcmpiW(lpszField,g_szHost))
-        index = HTTP_QUERY_HOST;
-    else
-    {
-        TRACE("Couldn't find %s in standard header table\n", debugstr_w(lpszField));
+    while (lo <= hi) {
+	mid = (int)  (lo + hi) / 2;
+	inx = lstrcmpiW(lpszField, SORTED_STANDARD_HEADERS[mid].hdrStr);
+	if (!inx)
+	    return SORTED_STANDARD_HEADERS[mid].hdrIndex;
+	if (inx < 0)
+	    hi = mid - 1;
+	else
+	    lo = mid+1;
     }
-
-    return index;
+    FIXME("Couldn't find %s in standard header table\n", debugstr_w(lpszField));
+    return -1;
 }
 
 /***********************************************************************
