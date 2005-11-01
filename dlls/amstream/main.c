@@ -124,7 +124,6 @@ static HRESULT WINAPI AMCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
     
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
-
     *ppobj = NULL;
     hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
     if (SUCCEEDED(hres)) {
