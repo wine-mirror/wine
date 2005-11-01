@@ -583,6 +583,11 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_EnumObjects(IShellFolder2* iface,
     TRACE("(iface=%p, hwndOwner=%p, grfFlags=%08lx, ppEnumIDList=%p)\n", 
             iface, hwndOwner, grfFlags, ppEnumIDList);
 
+    if (!This->m_pszPath) {
+	WARN("EnumObjects called on uninitialized UnixFolder-object!\n");
+	return E_UNEXPECTED;
+    }
+
     newIterator = UnixSubFolderIterator_Constructor(This, grfFlags);
     hr = IUnknown_QueryInterface(newIterator, &IID_IEnumIDList, (void**)ppEnumIDList);
     IUnknown_Release(newIterator);
