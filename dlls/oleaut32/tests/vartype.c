@@ -5105,6 +5105,9 @@ static void test_SysReAllocStringLen(void)
     ok (bstr->dwLen == 12, "Expected 12, got %ld\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szLarger), "String different\n");
 
+    changed = SysReAllocStringLen(&str, str, 6);
+    ok (changed == 1, "Expected 1, got %d\n", changed);
+
     SysFreeString(str);
   }
 }
