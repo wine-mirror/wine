@@ -63,7 +63,7 @@ void test_case_sensitive (void)
     pRtlInitUnicodeString(&str, buffer3);
     InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
     status = pNtOpenMutant(&h, GENERIC_ALL, &attr);
-    todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH,
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH,
         "NtOpenMutant should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08lx)\n", status);
 
     pNtClose(Mutant);
@@ -71,7 +71,7 @@ void test_case_sensitive (void)
     pRtlInitUnicodeString(&str, buffer4);
     InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
     status = pNtCreateMutant(&Mutant, GENERIC_ALL, &attr, FALSE);
-    todo_wine ok(status == STATUS_OBJECT_NAME_COLLISION,
+    ok(status == STATUS_OBJECT_NAME_COLLISION,
         "NtCreateMutant should have failed with STATUS_OBJECT_NAME_COLLISION got(%08lx)\n", status);
 
     status = pNtCreateEvent(&h, GENERIC_ALL, &attr, FALSE, FALSE);

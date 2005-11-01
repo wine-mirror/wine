@@ -28,6 +28,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "winternl.h"
+
 #include "file.h"
 #include "thread.h"
 #include "unicode.h"
@@ -44,7 +46,6 @@ struct object_name
 struct namespace
 {
     unsigned int        hash_size;       /* size of hash table */
-    int                 case_sensitive;  /* are names case sensitive? */
     struct list         names[1];        /* array of hash entry lists */
 };
 
@@ -92,8 +93,7 @@ static int get_name_hash( const struct namespace *namespace, const WCHAR *name, 
 {
     WCHAR hash = 0;
     len /= sizeof(WCHAR);
-    if (namespace->case_sensitive) while (len--) hash ^= *name++;
-    else while (len--) hash ^= tolowerW(*name++);
+    while (len--) hash ^= tolowerW(*name++);
     return hash % namespace->hash_size;
 }
 
@@ -233,29 +233,24 @@ struct object *find_object( const struct namespace *namespace, const WCHAR *name
     if (!name || !len) return NULL;
 
     list = &namespace->names[ get_name_hash( namespace, name, len ) ];
-    if (namespace->case_sensitive)
+    LIST_FOR_EACH( p, list )
     {
-        LIST_FOR_EACH( p, list )
+        const struct object_name *ptr = LIST_ENTRY( p, const struct object_name, entry );
+        if (ptr->len != len) continue;
+        if (attributes & OBJ_CASE_INSENSITIVE)
         {
-            const struct object_name *ptr = LIST_ENTRY( p, const struct object_name, entry );
-            if (ptr->len != len) continue;
-            if (!memcmp( ptr->name, name, len )) return grab_object( ptr->obj );
-        }
-    }
-    else
-    {
-        LIST_FOR_EACH( p, list )
-        {
-            const struct object_name *ptr = LIST_ENTRY( p, const struct object_name, entry );
-            if (ptr->len != len) continue;
             if (!strncmpiW( ptr->name, name, len/sizeof(WCHAR) )) return grab_object( ptr->obj );
+        }
+        else
+        {
+            if (!memcmp( ptr->name, name, len )) return grab_object( ptr->obj );
         }
     }
     return NULL;
 }
 
 /* allocate a namespace */
-struct namespace *create_namespace( unsigned int hash_size, int case_sensitive )
+struct namespace *create_namespace( unsigned int hash_size )
 {
     struct namespace *namespace;
     unsigned int i;
@@ -264,7 +259,6 @@ struct namespace *create_namespace( unsigned int hash_size, int case_sensitive )
     if (namespace)
     {
         namespace->hash_size      = hash_size;
-        namespace->case_sensitive = case_sensitive;
         for (i = 0; i < hash_size; i++) list_init( &namespace->names[i] );
     }
     return namespace;

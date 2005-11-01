@@ -84,7 +84,7 @@ static struct winstation *create_winstation( const WCHAR *name, size_t len, unsi
 {
     struct winstation *winstation;
 
-    if (!winstation_namespace && !(winstation_namespace = create_namespace( 7, FALSE )))
+    if (!winstation_namespace && !(winstation_namespace = create_namespace( 7 )))
         return NULL;
 
     if (memchrW( name, '\\', len / sizeof(WCHAR) ))  /* no backslash allowed in name */
