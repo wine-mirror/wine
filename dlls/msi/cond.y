@@ -361,6 +361,10 @@ static WCHAR *strstriW( const WCHAR *str, const WCHAR *sub )
 
 static INT compare_string( LPCWSTR a, INT operator, LPCWSTR b )
 {
+    /* null and empty string are equivalent */
+    if (!a) a = szEmpty;
+    if (!b) b = szEmpty;
+
     /* a or b may be NULL */
     switch (operator)
     {
@@ -377,7 +381,7 @@ static INT compare_string( LPCWSTR a, INT operator, LPCWSTR b )
     case COND_LE:
         return  1 != lstrcmpW( a, b );
     case COND_SS: /* substring */
-        return ( a && b && strstrW( a, b ) ) ? 1 : 0;
+        return strstrW( a, b ) ? 1 : 0;
     case COND_ILT:
         return -1 == lstrcmpiW( a, b );
     case COND_IGT:
@@ -391,7 +395,7 @@ static INT compare_string( LPCWSTR a, INT operator, LPCWSTR b )
     case COND_ILE:
         return  1 != lstrcmpiW( a, b );
     case COND_ISS:
-        return ( a && b && strstriW( a, b ) ) ? 1 : 0;
+        return strstriW( a, b ) ? 1 : 0;
     case COND_LHS:
     case COND_RHS:
     case COND_ILHS:

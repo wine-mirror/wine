@@ -587,6 +587,12 @@ void test_condition(void)
     r = MsiEvaluateCondition(hpkg, "NOT ( 1 AND 1 )");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
+    r = MsiEvaluateCondition(hpkg, "NOT A AND (BBBBBBBBBB=2 OR CCC=1) AND Ddddddddd");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "Installed<>\"\"");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
     MsiCloseHandle( hpkg );
 }
 
