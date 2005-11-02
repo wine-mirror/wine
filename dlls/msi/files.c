@@ -868,3 +868,29 @@ UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
 
     return rc;
 }
+
+UINT ACTION_RemoveFiles( MSIPACKAGE *package )
+{
+    MSIFILE *file;
+
+    LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
+    {
+        if ( !file->Component )
+            continue;
+        if ( file->Component->Installed == INSTALLSTATE_LOCAL )
+            continue;
+
+        if ( file->state == msifs_installed )
+            ERR("removing installed file %s\n", debugstr_w(file->TargetPath));
+
+        if ( file->state != msifs_present )
+            continue;
+
+        TRACE("removing %s\n", debugstr_w(file->File) );
+        if ( !DeleteFileW( file->TargetPath ) )
+            ERR("failed to delete %s\n",  debugstr_w(file->TargetPath) );
+        file->state = msifs_missing;
+    }
+
+    return ERROR_SUCCESS;
+}

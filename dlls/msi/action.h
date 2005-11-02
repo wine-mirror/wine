@@ -243,6 +243,7 @@ extern UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, BOOL ex
 extern UINT ACTION_AppSearch(MSIPACKAGE *package);
 extern UINT ACTION_FindRelatedProducts(MSIPACKAGE *package);
 extern UINT ACTION_InstallFiles(MSIPACKAGE *package);
+extern UINT ACTION_RemoveFiles(MSIPACKAGE *package);
 extern UINT ACTION_DuplicateFiles(MSIPACKAGE *package);
 extern UINT ACTION_RegisterClassInfo(MSIPACKAGE *package);
 extern UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package);

@@ -4285,7 +4285,7 @@ static struct _actions StandardActions[] = {
     { szRemoveDuplicateFiles, NULL},
     { szRemoveEnvironmentStrings, ACTION_RemoveEnvironmentStrings },
     { szRemoveExistingProducts, NULL},
-    { szRemoveFiles, NULL},
+    { szRemoveFiles, ACTION_RemoveFiles},
     { szRemoveFolders, NULL},
     { szRemoveIniValues, ACTION_RemoveIniValues },
     { szRemoveODBC, NULL},
