@@ -1155,15 +1155,16 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
     UINT		nrofnames;
     DWORD		remoteresult = 0;
     ITypeInfo 		*tinfo;
+    IRpcChannelBuffer *chanbuf;
 
     EnterCriticalSection(&tpinfo->crit);
 
     hres = _get_funcdesc(tpinfo->tinfo,method,&tinfo,&fdesc,&iname,&fname);
     if (hres) {
-	ERR("Did not find typeinfo/funcdesc entry for method %d!\n",method);
+        ERR("Did not find typeinfo/funcdesc entry for method %d!\n",method);
         ITypeInfo_Release(tinfo);
         LeaveCriticalSection(&tpinfo->crit);
-	return E_FAIL;
+        return E_FAIL;
     }
 
     if (!tpinfo->chanbuf)
@@ -1173,6 +1174,10 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
         LeaveCriticalSection(&tpinfo->crit);
         return RPC_E_DISCONNECTED;
     }
+    chanbuf = tpinfo->chanbuf;
+    IRpcChannelBuffer_AddRef(chanbuf);
+
+    LeaveCriticalSection(&tpinfo->crit);
 
     if (relaydeb) {
        TRACE_(olerelay)("->");
@@ -1234,19 +1239,17 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
     memset(&msg,0,sizeof(msg));
     msg.cbBuffer = buf.curoff;
     msg.iMethod  = method;
-    hres = IRpcChannelBuffer_GetBuffer(tpinfo->chanbuf,&msg,&(tpinfo->iid));
+    hres = IRpcChannelBuffer_GetBuffer(chanbuf,&msg,&(tpinfo->iid));
     if (hres) {
 	ERR("RpcChannelBuffer GetBuffer failed, %lx\n",hres);
-        LeaveCriticalSection(&tpinfo->crit);
-	return hres;
+	goto exit;
     }
     memcpy(msg.Buffer,buf.base,buf.curoff);
     if (relaydeb) TRACE_(olerelay)("\n");
-    hres = IRpcChannelBuffer_SendReceive(tpinfo->chanbuf,&msg,&status);
+    hres = IRpcChannelBuffer_SendReceive(chanbuf,&msg,&status);
     if (hres) {
 	ERR("RpcChannelBuffer SendReceive failed, %lx\n",hres);
-        LeaveCriticalSection(&tpinfo->crit);
-	return hres;
+	goto exit;
     }
 
     if (relaydeb) TRACE_(olerelay)(" status = %08lx (",status);
@@ -1293,16 +1296,17 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
 
     hres = xbuf_get(&buf, (LPBYTE)&remoteresult, sizeof(DWORD));
     if (hres != S_OK)
-	return hres;
+        goto exit;
     if (relaydeb) TRACE_(olerelay)(") = %08lx\n", remoteresult);
 
-    if (status != S_OK) /* OLE/COM internal error */
-	return status;
+    hres = remoteresult;
 
+exit:
     HeapFree(GetProcessHeap(),0,buf.base);
+    IRpcChannelBuffer_Release(chanbuf);
     ITypeInfo_Release(tinfo);
-    LeaveCriticalSection(&tpinfo->crit);
-    return remoteresult;
+    TRACE("-- 0x%08lx\n", hres);
+    return hres;
 }
 
 HRESULT WINAPI ProxyIUnknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
