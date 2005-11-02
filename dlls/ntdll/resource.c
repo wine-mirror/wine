@@ -318,11 +318,14 @@ NTSTATUS WINAPI LdrFindResource_U( HMODULE hmod, const LDR_RESOURCE_INFO *info,
 }
 
 
-/**********************************************************************
- *	LdrAccessResource  (NTDLL.@)
- */
-NTSTATUS WINAPI LdrAccessResource( HMODULE hmod, const IMAGE_RESOURCE_DATA_ENTRY *entry,
-                                   void **ptr, ULONG *size )
+/* don't penalize other platforms stuff needed on i386 for compatibility */
+#ifdef __i386__
+NTSTATUS WINAPI access_resource( HMODULE hmod, const IMAGE_RESOURCE_DATA_ENTRY *entry,
+                                 void **ptr, ULONG *size )
+#else
+static inline NTSTATUS access_resource( HMODULE hmod, const IMAGE_RESOURCE_DATA_ENTRY *entry,
+                                        void **ptr, ULONG *size )
+#endif
 {
     NTSTATUS status;
 
@@ -355,6 +358,30 @@ NTSTATUS WINAPI LdrAccessResource( HMODULE hmod, const IMAGE_RESOURCE_DATA_ENTRY
     return status;
 }
 
+/**********************************************************************
+ *	LdrAccessResource  (NTDLL.@)
+ */
+#ifdef __i386__
+/* Shrinker depends on the "call access_resource" instruction being there */
+__ASM_GLOBAL_FUNC( LdrAccessResource,
+    "pushl %ebp\n"
+    "movl %esp, %ebp\n"
+    "pushl 24(%ebp)\n"
+    "pushl 20(%ebp)\n"
+    "pushl 16(%ebp)\n"
+    "pushl 12(%ebp)\n"
+    "pushl 8(%ebp)\n"
+    "call access_resource\n"
+    "leave\n"
+    "ret\n"
+);
+#else
+NTSTATUS WINAPI LdrAccessResource( HMODULE hmod, const IMAGE_RESOURCE_DATA_ENTRY *entry,
+                                   void **ptr, ULONG *size )
+{
+    return access_resource( hmod, entry, ptr, size );
+}
+#endif
 
 /**********************************************************************
  *	RtlFindMessage  (NTDLL.@)
