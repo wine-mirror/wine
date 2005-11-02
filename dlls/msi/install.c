@@ -296,31 +296,23 @@ UINT WINAPI MsiGetSourcePathW( MSIHANDLE hInstall, LPCWSTR szFolder,
 /***********************************************************************
  * MsiSetTargetPathA  (MSI.@)
  */
-UINT WINAPI MsiSetTargetPathA(MSIHANDLE hInstall, LPCSTR szFolder, 
-                             LPCSTR szFolderPath)
+UINT WINAPI MsiSetTargetPathA( MSIHANDLE hInstall, LPCSTR szFolder,
+                               LPCSTR szFolderPath )
 {
-    LPWSTR szwFolder;
-    LPWSTR szwFolderPath;
-    UINT rc;
+    LPWSTR szwFolder = NULL, szwFolderPath = NULL;
+    UINT rc = ERROR_OUTOFMEMORY;
 
-    if (!szFolder)
-        return ERROR_FUNCTION_FAILED;
-    if (hInstall == 0)
-        return ERROR_FUNCTION_FAILED;
+    if ( !szFolder || !szFolderPath )
+        return ERROR_INVALID_PARAMETER;
 
     szwFolder = strdupAtoW(szFolder);
-    if (!szwFolder)
-        return ERROR_FUNCTION_FAILED; 
-
     szwFolderPath = strdupAtoW(szFolderPath);
-    if (!szwFolderPath)
-    {
-        msi_free(szwFolder);
-        return ERROR_FUNCTION_FAILED; 
-    }
+    if (!szwFolder || !szwFolderPath)
+        goto end;
 
-    rc = MsiSetTargetPathW(hInstall, szwFolder, szwFolderPath);
+    rc = MsiSetTargetPathW( hInstall, szwFolder, szwFolderPath );
 
+end:
     msi_free(szwFolder);
     msi_free(szwFolderPath);
 
@@ -342,12 +334,6 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
 
     TRACE("(%p %s %s)\n",package, debugstr_w(szFolder),debugstr_w(szFolderPath));
 
-    if (package==NULL)
-        return ERROR_INVALID_HANDLE;
-
-    if (szFolderPath[0]==0)
-        return ERROR_FUNCTION_FAILED;
-
     attrib = GetFileAttributesW(szFolderPath);
     if ( attrib != INVALID_FILE_ATTRIBUTES &&
           (!(attrib & FILE_ATTRIBUTE_DIRECTORY) ||
@@ -356,9 +342,8 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
         return ERROR_FUNCTION_FAILED;
 
     path = resolve_folder(package,szFolder,FALSE,FALSE,&folder);
-
     if (!path)
-        return ERROR_INVALID_PARAMETER;
+        return ERROR_DIRECTORY;
 
     if (attrib == INVALID_FILE_ATTRIBUTES)
     {
@@ -416,7 +401,13 @@ UINT WINAPI MsiSetTargetPathW(MSIHANDLE hInstall, LPCWSTR szFolder,
 
     TRACE("(%s %s)\n",debugstr_w(szFolder),debugstr_w(szFolderPath));
 
+    if ( !szFolder || !szFolderPath )
+        return ERROR_INVALID_PARAMETER;
+
     package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
     ret = MSI_SetTargetPathW( package, szFolder, szFolderPath );
     msiobj_release( &package->hdr );
     return ret;

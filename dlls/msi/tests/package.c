@@ -326,6 +326,29 @@ static void test_gettargetpath_bad(void)
     MsiCloseHandle( hpkg );
 }
 
+void test_settargetpath_bad(void)
+{
+    MSIHANDLE hpkg;
+    UINT r;
+
+    hpkg = package_from_db(create_package_db());
+    ok( hpkg, "failed to create package\n");
+
+    r = MsiSetTargetPath( 0, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
+
+    r = MsiSetTargetPath( 0, "boo", "C:\\bogusx" );
+    ok( r == ERROR_INVALID_HANDLE, "wrong return val\n");
+
+    r = MsiSetTargetPath( hpkg, "boo", NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
+
+    r = MsiSetTargetPath( hpkg, "boo", "c:\\bogusx" );
+    ok( r == ERROR_DIRECTORY, "wrong return val\n");
+
+    MsiCloseHandle( hpkg );
+}
+
 void test_condition(void)
 {
     MSICONDITION r;
@@ -696,5 +719,6 @@ START_TEST(package)
     test_getsourcepath();
     test_doaction();
     test_gettargetpath_bad();
+    test_settargetpath_bad();
     test_props();
 }
