@@ -1305,7 +1305,7 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
     file->Attributes = MSI_RecordGetInteger( row, 7 );
     file->Sequence = MSI_RecordGetInteger( row, 8 );
 
-    file->State = 0;
+    file->state = msifs_invalid;
 
     TRACE("File Loaded (%s)\n",debugstr_w(file->File));  
 
@@ -1861,7 +1861,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
         if (GetFileAttributesW(file->TargetPath) == INVALID_FILE_ATTRIBUTES)
         {
-            file->State = 1;
+            file->state = msifs_missing;
             comp->Cost += file->FileSize;
             continue;
         }
@@ -1896,16 +1896,16 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
                   debugstr_w(filever));
             if (strcmpiW(filever,file->Version)<0)
             {
-                file->State = 2;
-                FIXME("cost should be diff in size\n");
+                file->state = msifs_overwrite;
+                /* FIXME: cost should be diff in size */
                 comp->Cost += file->FileSize;
             }
             else
-                file->State = 3;
+                file->state = msifs_present;
             msi_free(version);
         }
         else
-            file->State = 3;
+            file->state = msifs_present;
     }
 
     TRACE("Evaluating Condition Table\n");

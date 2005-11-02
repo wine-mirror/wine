@@ -93,6 +93,15 @@ typedef struct tagMSIFOLDER
     INT   Space;
 } MSIFOLDER;
 
+typedef enum _msi_file_state {
+    msifs_invalid,
+    msifs_missing,
+    msifs_overwrite,
+    msifs_present,
+    msifs_installed,
+    msifs_skipped,
+} msi_file_state;
+
 typedef struct tagMSIFILE
 {
     struct list entry;
@@ -105,14 +114,7 @@ typedef struct tagMSIFILE
     LPWSTR Language;
     INT Attributes;
     INT Sequence;   
-
-    INT State;
-       /* 0 = uninitialize */
-       /* 1 = not present */
-       /* 2 = present but replace */
-       /* 3 = present do not replace */
-       /* 4 = Installed */
-       /* 5 = Skipped */
+    msi_file_state state;
     LPWSTR  SourcePath;
     LPWSTR  TargetPath;
 } MSIFILE;

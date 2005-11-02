@@ -221,7 +221,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
             return 0;
         }
 
-        if (f->State != 1 && f->State != 2)
+        if (f->state != msifs_missing && f->state != msifs_overwrite)
         {
             TRACE("Skipping extraction of %s\n",debugstr_a(pfdin->psz1));
             return 0;
@@ -240,7 +240,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
             return 0;
         }
 
-        f->State = 4;
+        f->state = msifs_installed;
         return (INT_PTR) handle;
     }
     case fdintCLOSE_FILE_INFO:
@@ -615,7 +615,7 @@ static UINT get_file_target(MSIPACKAGE *package, LPCWSTR file_key,
     {
         if (lstrcmpW( file_key, file->File )==0)
         {
-            if (file->State >= 2)
+            if (file->state >= msifs_overwrite)
             {
                 *file_source = strdupW( file->TargetPath );
                 return ERROR_SUCCESS;
@@ -629,11 +629,11 @@ static UINT get_file_target(MSIPACKAGE *package, LPCWSTR file_key,
 }
 
 /*
- * In order to make this work more effeciencly I am going to do this in 2
- * passes.
- * Pass 1) Correct all the TargetPaths and determin what files are to be
- * installed.
- * Pass 2) Extract Cabinents and copy files.
+ * ACTION_InstallFiles()
+ * 
+ * For efficiency, this is done in two passes:
+ * 1) Correct all the TargetPaths and determine what files are to be installed.
+ * 2) Extract Cabinets and copy files.
  */
 UINT ACTION_InstallFiles(MSIPACKAGE *package)
 {
@@ -648,7 +648,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     /* increment progress bar each time action data is sent */
     ui_progress(package,1,1,0,0);
 
-    /* handle the keys for the SouceList */
+    /* handle the keys for the SourceList */
     ptr = strrchrW(package->PackagePath,'\\');
     if (ptr)
     {
@@ -669,7 +669,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             TRACE("File %s is not scheduled for install\n",
                    debugstr_w(file->File));
 
-            file->State = 5;
+            file->state = msifs_skipped;
         }
     }
 
@@ -686,7 +686,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     /* Pass 2 */
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        if (file->State != 1 && file->State != 2)
+        if (file->state != msifs_missing && file->state != msifs_overwrite)
             continue;
 
         TRACE("Pass 2: %s\n",debugstr_w(file->File));
@@ -702,7 +702,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         TRACE("file paths %s to %s\n",debugstr_w(file->SourcePath),
               debugstr_w(file->TargetPath));
 
-        if (file->State != 1 && file->State != 2)
+        if (file->state != msifs_missing && file->state != msifs_overwrite)
             continue;
 
         /* compressed files are extracted in ready_media_for_file */
@@ -720,7 +720,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             rc = GetLastError();
             ERR("Unable to copy file (%s -> %s) (error %d)\n",
                 debugstr_w(file->SourcePath), debugstr_w(file->TargetPath), rc);
-            if (rc == ERROR_ALREADY_EXISTS && file->State == 2)
+            if (rc == ERROR_ALREADY_EXISTS && file->state == msifs_overwrite)
             {
                 rc = 0;
             }
@@ -737,7 +737,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         }
         else
         {
-            file->State = 4;
+            file->state = msifs_installed;
             rc = ERROR_SUCCESS;
         }
     }
