@@ -598,12 +598,8 @@ DECL_HANDLER(open_named_pipe)
     struct named_pipe *pipe;
     int fds[2];
 
-    pipe = open_named_pipe( get_req_data(), get_req_data_size(), req->attributes );
-    if (!pipe)
-    {
-        set_error( STATUS_NO_SUCH_FILE );
+    if (!(pipe = open_named_pipe( get_req_data(), get_req_data_size(), req->attributes )))
         return;
-    }
 
     server = find_server2( pipe, ps_idle_server, ps_wait_open );
     release_object( pipe );
