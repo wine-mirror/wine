@@ -173,8 +173,29 @@ static HRESULT WINAPI xmlnode_get_nodeName(
     IXMLDOMNode *iface,
     BSTR* name)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    const xmlChar *str;
+
+    TRACE("%p\n", This );
+
+    if ( !This->node )
+        return E_FAIL;
+
+    switch( This->node->type )
+    {
+    case XML_TEXT_NODE:
+        str = (const xmlChar*) "#text";
+        break;
+    default:
+        str = This->node->name;
+        break;
+    }
+
+    *name = bstr_from_xmlChar( str );
+    if (!*name)
+        return S_FALSE;
+
+    return S_OK;
 }
 
 BSTR bstr_from_xmlChar( const xmlChar *buf )
