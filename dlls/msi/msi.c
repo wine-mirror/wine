@@ -2008,3 +2008,25 @@ UINT WINAPI MsiGetFileHashA( LPCSTR szFilePath, DWORD dwOptions,
     FIXME("%s %08lx %p\n", debugstr_a(szFilePath), dwOptions, pHash );
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ * MsiAdvertiseScriptW        [MSI.@]
+ */
+UINT WINAPI MsiAdvertiseScriptW( LPCWSTR szScriptFile, DWORD dwFlags,
+                                 PHKEY phRegData, BOOL fRemoveItems )
+{
+    FIXME("%s %08lx %p %d\n",
+          debugstr_w( szScriptFile ), dwFlags, phRegData, fRemoveItems );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ * MsiAdvertiseScriptA        [MSI.@]
+ */
+UINT WINAPI MsiAdvertiseScriptA( LPCSTR szScriptFile, DWORD dwFlags,
+                                 PHKEY phRegData, BOOL fRemoveItems )
+{
+    FIXME("%s %08lx %p %d\n",
+          debugstr_a( szScriptFile ), dwFlags, phRegData, fRemoveItems );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
