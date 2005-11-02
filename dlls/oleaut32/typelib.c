@@ -5064,7 +5064,10 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                          * variants here too */
                         if ((V_VT(&varresult) == (VT_UNKNOWN | VT_BYREF)) ||
                             (V_VT(&varresult) == (VT_DISPATCH | VT_BYREF)))
-                            IUnknown_Release(*V_UNKNOWNREF(&varresult));
+                        {
+                            if(*V_UNKNOWNREF(&varresult))
+                                IUnknown_Release(*V_UNKNOWNREF(&varresult));
+                        }
                         break;
 		    }
 		}
