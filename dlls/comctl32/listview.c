@@ -3272,6 +3272,9 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
 {
     TRACKMOUSEEVENT trackinfo;
 
+    if (!(fwKeys & MK_LBUTTON))
+        infoPtr->bLButtonDown = FALSE;
+
     if (infoPtr->bLButtonDown && DragDetect(infoPtr->hwndSelf, infoPtr->ptClickPos))
     {
         LVHITTESTINFO lvHitTestInfo;
