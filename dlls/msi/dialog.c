@@ -19,6 +19,8 @@
  */
 
 #define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include <stdarg.h>
 
@@ -1343,10 +1345,10 @@ msi_dialog_tv_add_child_features( MSIPACKAGE *package, HWND hwnd,
         tvis.hInsertAfter = TVI_SORT;
         if (feature->Title)
         {
-            tvis.item.mask = TVIF_TEXT;
-            tvis.item.pszText = feature->Title;
+            tvis.u.item.mask = TVIF_TEXT;
+            tvis.u.item.pszText = feature->Title;
         }
-        tvis.item.lParam = (LPARAM) feature;
+        tvis.u.item.lParam = (LPARAM) feature;
         hitem = (HTREEITEM) SendMessageW( hwnd, TVM_INSERTITEMW, 0, (LPARAM) &tvis );
         if (!hitem)
             continue;
