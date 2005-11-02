@@ -5,6 +5,7 @@
  *		      1999  Rein Klazes
  *		      2000  Francois Jacques
  *		      2001  Huw D M Davies for CodeWeavers
+ *		      2005  Robert Shearman, for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1073,10 +1074,19 @@ static void dump_TypeDesc(TYPEDESC *pTD,char *szVarType) {
 
 static void dump_ELEMDESC(ELEMDESC *edesc) {
   char buf[200];
+  USHORT flags = edesc->u.paramdesc.wParamFlags;
   dump_TypeDesc(&edesc->tdesc,buf);
   MESSAGE("\t\ttdesc.vartype %d (%s)\n",edesc->tdesc.vt,buf);
-  MESSAGE("\t\tu.parmadesc.flags %x\n",edesc->u.paramdesc.wParamFlags);
-  MESSAGE("\t\tu.parmadesc.lpex %p\n",edesc->u.paramdesc.pparamdescex);
+  MESSAGE("\t\tu.paramdesc.wParamFlags");
+  if (!flags) MESSAGE(" PARAMFLAGS_NONE");
+  if (flags & PARAMFLAG_FIN) MESSAGE(" PARAMFLAG_FIN");
+  if (flags & PARAMFLAG_FOUT) MESSAGE(" PARAMFLAG_FOUT");
+  if (flags & PARAMFLAG_FLCID) MESSAGE(" PARAMFLAG_FLCID");
+  if (flags & PARAMFLAG_FRETVAL) MESSAGE(" PARAMFLAG_FRETVAL");
+  if (flags & PARAMFLAG_FOPT) MESSAGE(" PARAMFLAG_FOPT");
+  if (flags & PARAMFLAG_FHASDEFAULT) MESSAGE(" PARAMFLAG_FHASDEFAULT");
+  if (flags & PARAMFLAG_FHASCUSTDATA) MESSAGE(" PARAMFLAG_FHASCUSTDATA");
+  MESSAGE("\n\t\tu.paramdesc.lpex %p\n",edesc->u.paramdesc.pparamdescex);
 }
 static void dump_FUNCDESC(FUNCDESC *funcdesc) {
   int i;
@@ -4754,7 +4764,7 @@ static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, TYPEDESC *tdesc, VARTY
     switch (tattr->typekind)
     {
     case TKIND_ENUM:
-        *vt |= VT_INT;
+        *vt |= VT_I4;
         break;
 
     case TKIND_ALIAS:
@@ -5095,6 +5105,7 @@ func_fail:
         }
 
         ITypeInfo2_ReleaseFuncDesc(iface, func_desc);
+        TRACE("-- 0x%08lx\n", hres);
         return hres;
 
     } else if(SUCCEEDED(hres = ITypeInfo2_GetVarIndexOfMemId(iface, memid, &var_index))) {
