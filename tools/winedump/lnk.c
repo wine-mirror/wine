@@ -363,18 +363,22 @@ static int dump_advertise_info(int fd, const char *type)
 
         comp = &avt->bufA[20];
         feat = strchr(comp,'>');
+        if (!feat)
+            feat = strchr(comp,'<');
         if (feat)
         {
             memcpy( comp_str, comp, feat - comp );
             comp_str[feat-comp] = 0;
         }
         else
-            strcpy( prod_str, "?" );
+        {
+            strcpy( comp_str, "?" );
+        }
 
-        if (feat && base85_to_guid( &feat[1], &guid ))
+        if (feat && feat[0] == '>' && base85_to_guid( &feat[1], &guid ))
             guid_to_string( &guid, feat_str );
         else
-            strcpy( prod_str, "?" );
+            feat_str[0] = 0;
 
         printf("  product:   %s\n", prod_str);
         printf("  component: %s\n", comp_str );
