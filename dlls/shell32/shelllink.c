@@ -2415,8 +2415,8 @@ ShellLink_QueryContextMenu( IContextMenu* iface, HMENU hmenu, UINT indexMenu,
 
 static LPWSTR shelllink_get_msi_component_path( LPCWSTR component )
 {
-    UINT WINAPI (*pMsiDecomposeDescriptorW)(LPCWSTR,LPWSTR,LPWSTR,LPWSTR,DWORD*);
-    INSTALLSTATE WINAPI (*pMsiGetComponentPathW)(LPCWSTR,LPCWSTR,LPWSTR,DWORD*);
+    UINT (WINAPI *pMsiDecomposeDescriptorW)(LPCWSTR,LPWSTR,LPWSTR,LPWSTR,DWORD*);
+    INSTALLSTATE (WINAPI *pMsiGetComponentPathW)(LPCWSTR,LPCWSTR,LPWSTR,DWORD*);
     WCHAR szProd[MAX_FEATURE_CHARS+1], szFeat[MAX_FEATURE_CHARS+1],
           szComp[MAX_FEATURE_CHARS+1], szCompPath[MAX_PATH];
     INSTALLSTATE state;
