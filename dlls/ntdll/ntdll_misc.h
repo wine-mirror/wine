@@ -30,6 +30,8 @@
 
 #define MAX_NT_PATH_LENGTH 277
 
+/* exceptions */
+extern void wait_suspend( CONTEXT *context );
 extern void WINAPI __regs_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 
 /* debug helper */

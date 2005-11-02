@@ -1572,7 +1572,6 @@ struct get_exception_status_request
 struct get_exception_status_reply
 {
     struct reply_header __header;
-    int              status;
     /* VARARG(context,context); */
 };
 
@@ -1952,6 +1951,7 @@ struct get_thread_context_request
     struct request_header __header;
     obj_handle_t handle;
     unsigned int flags;
+    int          suspend;
 };
 struct get_thread_context_reply
 {
@@ -1966,6 +1966,7 @@ struct set_thread_context_request
     struct request_header __header;
     obj_handle_t handle;
     unsigned int flags;
+    int          suspend;
     /* VARARG(context,context); */
 };
 struct set_thread_context_reply
@@ -4207,6 +4208,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 196
+#define SERVER_PROTOCOL_VERSION 197
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -85,7 +85,7 @@ typedef struct
     unsigned long i387;
     unsigned long oldmask;
     unsigned long cr2;
-} SIGCONTEXT;
+} volatile SIGCONTEXT;
 
 #define HANDLER_DEF(name) void name( int __signal, SIGCONTEXT __context )
 #define HANDLER_CONTEXT (&__context)
@@ -641,11 +641,23 @@ typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
  *
  * Handler initialization when the full context is not needed.
  */
-static void *init_handler( const SIGCONTEXT *sigcontext )
+inline static void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *gs )
 {
     void *stack = (void *)ESP_sig(sigcontext);
     TEB *teb = get_current_teb();
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+
+    /* get %fs and %gs at time of the fault */
+#ifdef FS_sig
+    *fs = LOWORD(FS_sig(sigcontext));
+#else
+    *fs = wine_get_fs();
+#endif
+#ifdef GS_sig
+    *gs = LOWORD(GS_sig(sigcontext));
+#else
+    *gs = wine_get_gs();
+#endif
 
     wine_set_fs( thread_data->teb_sel );
 
@@ -718,6 +730,67 @@ inline static void restore_fpu( CONTEXT *context )
 
 
 /***********************************************************************
+ *           save_context
+ *
+ * Build a context structure from the signal info.
+ */
+inline static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext, WORD fs, WORD gs )
+{
+    context->ContextFlags = CONTEXT_FULL;
+    context->Eax          = EAX_sig(sigcontext);
+    context->Ebx          = EBX_sig(sigcontext);
+    context->Ecx          = ECX_sig(sigcontext);
+    context->Edx          = EDX_sig(sigcontext);
+    context->Esi          = ESI_sig(sigcontext);
+    context->Edi          = EDI_sig(sigcontext);
+    context->Ebp          = EBP_sig(sigcontext);
+    context->EFlags       = EFL_sig(sigcontext);
+    context->Eip          = EIP_sig(sigcontext);
+    context->Esp          = ESP_sig(sigcontext);
+    context->SegCs        = LOWORD(CS_sig(sigcontext));
+    context->SegDs        = LOWORD(DS_sig(sigcontext));
+    context->SegEs        = LOWORD(ES_sig(sigcontext));
+    context->SegFs        = fs;
+    context->SegGs        = gs;
+    context->SegSs        = LOWORD(SS_sig(sigcontext));
+}
+
+
+/***********************************************************************
+ *           restore_context
+ *
+ * Restore the signal info from the context.
+ */
+inline static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
+{
+    EAX_sig(sigcontext) = context->Eax;
+    EBX_sig(sigcontext) = context->Ebx;
+    ECX_sig(sigcontext) = context->Ecx;
+    EDX_sig(sigcontext) = context->Edx;
+    ESI_sig(sigcontext) = context->Esi;
+    EDI_sig(sigcontext) = context->Edi;
+    EBP_sig(sigcontext) = context->Ebp;
+    EFL_sig(sigcontext) = context->EFlags;
+    EIP_sig(sigcontext) = context->Eip;
+    ESP_sig(sigcontext) = context->Esp;
+    CS_sig(sigcontext)  = context->SegCs;
+    DS_sig(sigcontext)  = context->SegDs;
+    ES_sig(sigcontext)  = context->SegEs;
+    SS_sig(sigcontext)  = context->SegSs;
+#ifdef GS_sig
+    GS_sig(sigcontext)  = context->SegGs;
+#else
+    wine_set_gs( context->SegGs );
+#endif
+#ifdef FS_sig
+    FS_sig(sigcontext)  = context->SegFs;
+#else
+    wine_set_fs( context->SegFs );
+#endif
+}
+
+
+/***********************************************************************
  *           setup_exception
  *
  * Setup a proper stack frame for the raise function, and modify the
@@ -740,19 +813,7 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
 
     WORD fs, gs;
 
-    /* get %fs and %gs at time of the fault */
-#ifdef FS_sig
-    fs = LOWORD(FS_sig(sigcontext));
-#else
-    fs = wine_get_fs();
-#endif
-#ifdef GS_sig
-    gs = LOWORD(GS_sig(sigcontext));
-#else
-    gs = wine_get_gs();
-#endif
-
-    stack = init_handler( sigcontext );
+    stack = init_handler( sigcontext, &fs, &gs );
 
     /* stack sanity checks */
 
@@ -792,23 +853,7 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     stack->rec.ExceptionAddress = (LPVOID)EIP_sig(sigcontext);
     stack->rec.NumberParameters = 0;
 
-    stack->context.ContextFlags = CONTEXT_FULL;
-    stack->context.Eax          = EAX_sig(sigcontext);
-    stack->context.Ebx          = EBX_sig(sigcontext);
-    stack->context.Ecx          = ECX_sig(sigcontext);
-    stack->context.Edx          = EDX_sig(sigcontext);
-    stack->context.Esi          = ESI_sig(sigcontext);
-    stack->context.Edi          = EDI_sig(sigcontext);
-    stack->context.Ebp          = EBP_sig(sigcontext);
-    stack->context.EFlags       = EFL_sig(sigcontext);
-    stack->context.Eip          = EIP_sig(sigcontext);
-    stack->context.Esp          = ESP_sig(sigcontext);
-    stack->context.SegCs        = LOWORD(CS_sig(sigcontext));
-    stack->context.SegDs        = LOWORD(DS_sig(sigcontext));
-    stack->context.SegEs        = LOWORD(ES_sig(sigcontext));
-    stack->context.SegFs        = fs;
-    stack->context.SegGs        = gs;
-    stack->context.SegSs        = LOWORD(SS_sig(sigcontext));
+    save_context( &stack->context, sigcontext, fs, gs );
 
     /* now modify the sigcontext to return to the raise function */
     ESP_sig(sigcontext) = (DWORD)stack;
@@ -1108,10 +1153,13 @@ static HANDLER_DEF(fpe_handler)
  *		int_handler
  *
  * Handler for SIGINT.
+ *
+ * FIXME: should not be calling external functions on the signal stack.
  */
 static HANDLER_DEF(int_handler)
 {
-    init_handler( HANDLER_CONTEXT );
+    WORD fs, gs;
+    init_handler( HANDLER_CONTEXT, &fs, &gs );
     if (!dispatch_signal(SIGINT))
     {
         EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, __regs_RtlRaiseException );
@@ -1139,7 +1187,8 @@ static HANDLER_DEF(abrt_handler)
  */
 static HANDLER_DEF(term_handler)
 {
-    init_handler( HANDLER_CONTEXT );
+    WORD fs, gs;
+    init_handler( HANDLER_CONTEXT, &fs, &gs );
     server_abort_thread(0);
 }
 
@@ -1151,12 +1200,13 @@ static HANDLER_DEF(term_handler)
  */
 static HANDLER_DEF(usr1_handler)
 {
-    LARGE_INTEGER timeout;
+    WORD fs, gs;
+    CONTEXT context;
 
-    init_handler( HANDLER_CONTEXT );
-    /* wait with 0 timeout, will only return once the thread is no longer suspended */
-    timeout.QuadPart = 0;
-    NTDLL_wait_for_multiple_objects( 0, NULL, 0, &timeout, 0 );
+    init_handler( HANDLER_CONTEXT, &fs, &gs );
+    save_context( &context, HANDLER_CONTEXT, fs, gs );
+    wait_suspend( &context );
+    restore_context( &context, HANDLER_CONTEXT );
 }
 
 
@@ -1198,6 +1248,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
         sig_act.ksa_handler = func;
         sig_act.ksa_flags   = SA_RESTART;
         sig_act.ksa_mask    = (1 << (SIGINT-1)) |
+                              (1 << (SIGUSR1-1)) |
                               (1 << (SIGUSR2-1));
         /* point to the top of the signal stack */
         sig_act.ksa_restorer = (char *)get_signal_stack() + signal_stack_size;
@@ -1207,6 +1258,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
     sig_act.sa_handler = func;
     sigemptyset( &sig_act.sa_mask );
     sigaddset( &sig_act.sa_mask, SIGINT );
+    sigaddset( &sig_act.sa_mask, SIGUSR1 );
     sigaddset( &sig_act.sa_mask, SIGUSR2 );
 
 #if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)

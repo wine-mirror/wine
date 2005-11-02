@@ -118,6 +118,7 @@ inline static void init_thread_structure( struct thread *thread )
     thread->unix_pid        = -1;  /* not known yet */
     thread->unix_tid        = -1;  /* not known yet */
     thread->context         = NULL;
+    thread->suspend_context = NULL;
     thread->teb             = NULL;
     thread->debug_ctx       = NULL;
     thread->debug_event     = NULL;
@@ -212,6 +213,7 @@ static void cleanup_thread( struct thread *thread )
     if (thread->request_fd) release_object( thread->request_fd );
     if (thread->reply_fd) release_object( thread->reply_fd );
     if (thread->wait_fd) release_object( thread->wait_fd );
+    if (thread->suspend_context) free( thread->suspend_context );
     free_msg_queue( thread );
     cleanup_clipboard_thread(thread);
     destroy_thread_windows( thread );
@@ -229,19 +231,19 @@ static void cleanup_thread( struct thread *thread )
     thread->request_fd = NULL;
     thread->reply_fd = NULL;
     thread->wait_fd = NULL;
+    thread->context = NULL;
+    thread->suspend_context = NULL;
     thread->desktop = 0;
 }
 
 /* destroy a thread when its refcount is 0 */
 static void destroy_thread( struct object *obj )
 {
-    struct thread_apc *apc;
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
     assert( !thread->debug_ctx );  /* cannot still be debugging something */
     list_remove( &thread->entry );
-    while ((apc = thread_dequeue_apc( thread, 0 ))) free( apc );
     cleanup_thread( thread );
     release_object( thread->process );
     if (thread->id) free_ptid( thread->id );
@@ -1053,7 +1055,27 @@ DECL_HANDLER(get_thread_context)
     }
     if (!(thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT ))) return;
 
-    if ((data = set_reply_data_size( sizeof(CONTEXT) )))
+    if (req->suspend)
+    {
+        if (thread != current || !thread->suspend_context)
+        {
+            /* not suspended, shouldn't happen */
+            set_error( STATUS_INVALID_PARAMETER );
+        }
+        else
+        {
+            if (thread->context == thread->suspend_context) thread->context = NULL;
+            set_reply_data_ptr( thread->suspend_context, sizeof(CONTEXT) );
+            thread->suspend_context = NULL;
+        }
+    }
+    else if (thread != current && !thread->context)
+    {
+        /* thread is not suspended, retry (if it's still running) */
+        if (thread->state != RUNNING) set_error( STATUS_ACCESS_DENIED );
+        else set_error( STATUS_PENDING );
+    }
+    else if ((data = set_reply_data_size( sizeof(CONTEXT) )))
     {
         memset( data, 0, sizeof(CONTEXT) );
         get_thread_context( thread, data, req->flags );
@@ -1071,11 +1093,32 @@ DECL_HANDLER(set_thread_context)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
+    if (!(thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT ))) return;
+
+    if (req->suspend)
+    {
+        if (thread != current || thread->context)
+        {
+            /* nested suspend or exception, shouldn't happen */
+            set_error( STATUS_INVALID_PARAMETER );
+        }
+        else if ((thread->suspend_context = mem_alloc( sizeof(CONTEXT) )))
+        {
+            memcpy( thread->suspend_context, get_req_data(), sizeof(CONTEXT) );
+            thread->context = thread->suspend_context;
+        }
+    }
+    else if (thread != current && !thread->context)
+    {
+        /* thread is not suspended, retry (if it's still running) */
+        if (thread->state != RUNNING) set_error( STATUS_ACCESS_DENIED );
+        else set_error( STATUS_PENDING );
+    }
+    else
     {
         set_thread_context( thread, get_req_data(), req->flags );
-        release_object( thread );
     }
+    release_object( thread );
 }
 
 /* fetch a selector entry for a thread */

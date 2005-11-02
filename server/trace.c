@@ -1577,7 +1577,6 @@ static void dump_get_exception_status_request( const struct get_exception_status
 
 static void dump_get_exception_status_reply( const struct get_exception_status_reply *req )
 {
-    fprintf( stderr, " status=%d,", req->status );
     fprintf( stderr, " context=" );
     dump_varargs_context( cur_size );
 }
@@ -1856,7 +1855,8 @@ static void dump_get_timer_info_reply( const struct get_timer_info_reply *req )
 static void dump_get_thread_context_request( const struct get_thread_context_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " flags=%08x", req->flags );
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " suspend=%d", req->suspend );
 }
 
 static void dump_get_thread_context_reply( const struct get_thread_context_reply *req )
@@ -1869,6 +1869,7 @@ static void dump_set_thread_context_request( const struct set_thread_context_req
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " suspend=%d,", req->suspend );
     fprintf( stderr, " context=" );
     dump_varargs_context( cur_size );
 }
@@ -3740,6 +3741,7 @@ static const struct
     { "FILE_IS_A_DIRECTORY",         STATUS_FILE_IS_A_DIRECTORY },
     { "FILE_LOCK_CONFLICT",          STATUS_FILE_LOCK_CONFLICT },
     { "HANDLE_NOT_CLOSABLE",         STATUS_HANDLE_NOT_CLOSABLE },
+    { "INSTANCE_NOT_AVAILABLE",      STATUS_INSTANCE_NOT_AVAILABLE },
     { "INVALID_CID",                 STATUS_INVALID_CID },
     { "INVALID_FILE_FOR_SECTION",    STATUS_INVALID_FILE_FOR_SECTION },
     { "INVALID_HANDLE",              STATUS_INVALID_HANDLE },

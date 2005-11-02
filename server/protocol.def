@@ -1401,6 +1401,7 @@ enum char_info_mode
 @REQ(get_thread_context)
     obj_handle_t handle;       /* thread handle */
     unsigned int flags;        /* context flags */
+    int          suspend;      /* if getting context during suspend */
 @REPLY
     VARARG(context,context);   /* thread context */
 @END
@@ -1410,6 +1411,7 @@ enum char_info_mode
 @REQ(set_thread_context)
     obj_handle_t handle;       /* thread handle */
     unsigned int flags;        /* context flags */
+    int          suspend;      /* if setting context during suspend */
     VARARG(context,context);   /* thread context */
 @END
 

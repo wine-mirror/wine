@@ -607,6 +607,44 @@ static VOID test_GetThreadExitCode(void)
     ok(CloseHandle(thread)!=0,"Error closing thread handle\n");
 }
 
+#ifdef __i386__
+
+static int test_value = 0;
+
+static void set_test_val( int val )
+{
+    test_value += val;
+}
+
+static DWORD WINAPI threadFunc6(LPVOID p)
+{
+    test_value *= (int)p;
+    return 0;
+}
+
+static void test_SetThreadContext(void)
+{
+    CONTEXT ctx;
+    int *stack;
+    HANDLE thread = CreateThread( NULL, 0, threadFunc6, (void *)2, CREATE_SUSPENDED, NULL );
+
+    ctx.ContextFlags = CONTEXT_FULL;
+    ok( GetThreadContext( thread, &ctx ), "GetThreadContext failed\n" );
+    /* simulate a call to set_test_val(10) */
+    stack = (int *)ctx.Esp;
+    stack[-1] = 10;
+    stack[-2] = ctx.Eip;
+    ctx.Esp -= 2 * sizeof(int *);
+    ctx.Eip = (DWORD)set_test_val;
+    ok( SetThreadContext( thread, &ctx ), "SetThreadContext failed\n" );
+    ResumeThread( thread );
+    WaitForSingleObject( thread, INFINITE );
+    ok( test_value == 20, "test_value %d instead of 20\n", test_value );
+}
+
+#endif  /* __i386__ */
+
+
 START_TEST(thread)
 {
    HINSTANCE lib;
@@ -628,4 +666,7 @@ START_TEST(thread)
    test_GetThreadTimes();
    test_thread_processor();
    test_GetThreadExitCode();
+#ifdef __i386__
+   test_SetThreadContext();
+#endif
 }

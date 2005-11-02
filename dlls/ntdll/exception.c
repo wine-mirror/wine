@@ -143,6 +143,43 @@ extern DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_R
 #endif
 
 /**********************************************************************
+ *           wait_suspend
+ *
+ * Wait until the thread is no longer suspended.
+ */
+void wait_suspend( CONTEXT *context )
+{
+    LARGE_INTEGER timeout;
+
+    /* store the context we got at suspend time */
+    SERVER_START_REQ( set_thread_context )
+    {
+        req->handle  = GetCurrentThread();
+        req->flags   = CONTEXT_FULL;
+        req->suspend = 1;
+        wine_server_add_data( req, context, sizeof(*context) );
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    /* wait with 0 timeout, will only return once the thread is no longer suspended */
+    timeout.QuadPart = 0;
+    NTDLL_wait_for_multiple_objects( 0, NULL, 0, &timeout, 0 );
+
+    /* retrieve the new context */
+    SERVER_START_REQ( get_thread_context )
+    {
+        req->handle  = GetCurrentThread();
+        req->flags   = CONTEXT_FULL;
+        req->suspend = 1;
+        wine_server_set_reply( req, context, sizeof(*context) );
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+}
+
+
+/**********************************************************************
  *           send_debug_event
  *
  * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
