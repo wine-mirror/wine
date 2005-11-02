@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "windef.h"
+#include "winnt.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -128,7 +129,11 @@ void WINAPI RtlInitString(
  */
 void WINAPI RtlFreeAnsiString( PSTRING str )
 {
-    if (str->Buffer) RtlFreeHeap( GetProcessHeap(), 0, str->Buffer );
+    if (str->Buffer)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, str->Buffer );
+        RtlZeroMemory( str, sizeof(*str) );
+    }
 }
 
 
@@ -267,7 +272,11 @@ BOOLEAN WINAPI RtlCreateUnicodeStringFromAsciiz( PUNICODE_STRING target, LPCSTR 
  */
 void WINAPI RtlFreeUnicodeString( PUNICODE_STRING str )
 {
-    if (str->Buffer) RtlFreeHeap( GetProcessHeap(), 0, str->Buffer );
+    if (str->Buffer)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, str->Buffer );
+        RtlZeroMemory( str, sizeof(*str) );
+    }
 }
 
 
