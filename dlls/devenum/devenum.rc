@@ -77,3 +77,12 @@ LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
 	9  "Dispositivo WaveOut por defecto"
 	10 "Dispositivo MidiOut por defecto"
 }
+
+STRINGTABLE DISCARDABLE
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+{
+	7  "Dafaultní DirectSound"
+	8  "DirectSound: %s"
+	9  "Standardní zaøízení WaveOut"
+	10 "Standardní zaøízení MidiOut"
+}
