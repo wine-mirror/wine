@@ -1079,7 +1079,6 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
   HFONT       hFont, hOldFont;
   HDC         hdc;
   RECT        clientRect;
-  SIZE        size;
   INT         iTemp;
   RECT*       rcItem;
   INT         iIndex;
@@ -1192,6 +1191,7 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
     else
     {
       int tabwidth;
+      SIZE size;
       /* Calculate how wide the tab is depending on the text it contains */
       GetTextExtentPoint32W(hdc, curr->pszText,
                             lstrlenW(curr->pszText), &size);
@@ -1231,7 +1231,6 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
     curr->rect.bottom = 0;
     curr->rect.top = curItemRowCount - 1;
 
-    TRACE("TextSize: %li\n", size.cx);
     TRACE("Rect: T %li, L %li, B %li, R %li\n", curr->rect.top,
 	  curr->rect.left, curr->rect.bottom, curr->rect.right);
 
