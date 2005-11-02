@@ -64,6 +64,9 @@ static const WCHAR szComplete4[] = {
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
+static const WCHAR szDocument[] = {
+    '#', 'd', 'o', 'c', 'u', 'm', 'e', 'n', 't', 0
+};
 
 static const WCHAR szOpen[] = { 'o','p','e','n',0 };
 static const WCHAR szdl[] = { 'd','l',0 };
@@ -98,9 +101,9 @@ void test_domdoc( void )
     ok( r == S_FALSE, "loadXML failed\n");
     ok( b == VARIANT_FALSE, "failed to load XML string\n");
 
-    /* try to laod an document from an non-existent file */
+    /* try to load an document from an non-existent file */
     b = VARIANT_TRUE;
-    str = SysAllocString ( szNonExistentFile );
+    str = SysAllocString( szNonExistentFile );
     VariantInit(&var);
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = str;
@@ -150,6 +153,19 @@ void test_domdoc( void )
         r = IXMLDOMDocument_get_documentElement( doc, NULL );
         ok( r == S_OK, "should be no document element\n");
     }
+
+    /* check if nodename is correct */
+    r = IXMLDOMDocument_get_nodeName( doc, NULL );
+    ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code");
+
+    /* content doesn't matter here */
+    str = SysAllocString( szNonExistentFile );
+    r = IXMLDOMDocument_get_nodeName( doc, &str );
+    ok ( r == S_OK, "get_nodeName wrong code\n");
+    ok ( str != NULL, "str is null\n");
+    ok( !lstrcmpW( str, szDocument ), "incorrect nodeName\n");
+    SysFreeString( str );
+
 
     /* check that there's no document element */
     element = NULL;
@@ -278,6 +294,18 @@ void test_domnode( void )
         r = IXMLDOMNode_get_baseName( element, &str );
         ok( r == S_OK, "get_baseName returned wrong code\n");
         ok( lstrcmpW(str,szlc) == 0, "basename was wrong\n");
+
+        /* check if nodename is correct */
+        r = IXMLDOMElement_get_nodeName( element, NULL );
+        ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code");
+    
+        /* content doesn't matter here */
+        str = SysAllocString( szNonExistentFile );
+        r = IXMLDOMElement_get_nodeName( element, &str );
+        ok ( r == S_OK, "get_nodeName wrong code\n");
+        ok ( str != NULL, "str is null\n");
+        ok( !lstrcmpW( str, szlc ), "incorrect nodeName\n");
+        SysFreeString( str );
 
         r = IXMLDOMElement_get_attributes( element, &map );
         ok( r == S_OK, "get_attributes returned wrong code\n");

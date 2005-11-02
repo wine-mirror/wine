@@ -178,6 +178,9 @@ static HRESULT WINAPI xmlnode_get_nodeName(
 
     TRACE("%p\n", This );
 
+    if (!name)
+        return E_INVALIDARG;
+
     if ( !This->node )
         return E_FAIL;
 
@@ -186,6 +189,9 @@ static HRESULT WINAPI xmlnode_get_nodeName(
     case XML_TEXT_NODE:
         str = (const xmlChar*) "#text";
         break;
+    case XML_DOCUMENT_NODE:
+        str = (const xmlChar*) "#document";
+	break;
     default:
         str = This->node->name;
         break;
