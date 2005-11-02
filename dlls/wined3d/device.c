@@ -710,7 +710,9 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
      *  it is based around 4x4 pixel blocks it requires padding, so allocate enough
      *  space!
       *********************************/
-    if (Format == WINED3DFMT_DXT1) {
+    if (WINED3DFMT_UNKNOWN == Format) {
+        Size = 0;
+    } else if (Format == WINED3DFMT_DXT1) {
         /* DXT1 is half byte per pixel */
        Size = ((max(pow2Width,4) * D3DFmtGetBpp(This, Format)) * max(pow2Height,4)) >> 1;
 
@@ -730,10 +732,17 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     object->currentDesc.MultiSampleType    = MultiSample;
     object->currentDesc.MultiSampleQuality = MultisampleQuality;
 
-/* Setup some glformat defaults */
-    object->glDescription.glFormat         = D3DFmt2GLFmt(This, object->resource.format);
-    object->glDescription.glFormatInternal = D3DFmt2GLIntFmt(This, object->resource.format);
-    object->glDescription.glType           = D3DFmt2GLType(This, object->resource.format);
+    /* Setup some glformat defaults */
+    if (WINED3DFMT_UNKNOWN != Format) {
+        object->glDescription.glFormat         = D3DFmt2GLFmt(This, object->resource.format);
+        object->glDescription.glFormatInternal = D3DFmt2GLIntFmt(This, object->resource.format);
+        object->glDescription.glType           = D3DFmt2GLType(This, object->resource.format);
+    } else {
+        object->glDescription.glFormat         = 0;
+        object->glDescription.glFormatInternal = 0;
+        object->glDescription.glType           = 0;
+    }
+
     object->glDescription.textureName      = 0;
     object->glDescription.level            = Level;
     object->glDescription.target           = GL_TEXTURE_2D;
@@ -744,8 +753,14 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     object->nonpow2    = (pow2Width != Width || pow2Height != Height) ? TRUE : FALSE;
     object->discard    = Discard;
     object->activeLock = FALSE;
-    object->bytesPerPixel = D3DFmtGetBpp(This, Format);
-    object->pow2Size      = (pow2Width * object->bytesPerPixel) * pow2Height;
+
+    if (WINED3DFMT_UNKNOWN != Format) {
+        object->bytesPerPixel = D3DFmtGetBpp(This, Format);
+        object->pow2Size      = (pow2Width * object->bytesPerPixel) * pow2Height;
+    } else {
+        object->bytesPerPixel = 0;
+        object->pow2Size      = 0;
+    }
 
     /** TODO: change this into a texture transform matrix so that it's processed in hardware **/
 

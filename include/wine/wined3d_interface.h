@@ -999,7 +999,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD_(void,SetGlTextureDesc)(THIS_ UINT textureName, int target) PURE;
     STDMETHOD_(void,GetGlDesc)(THIS_ glDescriptor **glDescription) PURE;
     STDMETHOD_(CONST void *, GetData)(THIS) PURE;
-
+    STDMETHOD(SetFormat)(THIS_ WINED3DFORMAT format) PURE;
 };
 #undef INTERFACE
 
@@ -1035,6 +1035,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_SetGlTextureDesc(p,a,b)      (p)->lpVtbl->SetGlTextureDesc(p,a,b)
 #define IWineD3DSurface_GetGlDesc(p,a)               (p)->lpVtbl->GetGlDesc(p,a)
 #define IWineD3DSurface_GetData(p)                   (p)->lpVtbl->GetData(p)
+#define IWineD3DSurface_SetFormat(p,a)               (p)->lpVtbl->SetFormat(p,a)
 #endif
 
 /*****************************************************************************
