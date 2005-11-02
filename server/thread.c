@@ -1040,6 +1040,44 @@ DECL_HANDLER(get_apc)
     free( apc );
 }
 
+/* retrieve the current context of a thread */
+DECL_HANDLER(get_thread_context)
+{
+    struct thread *thread;
+    void *data;
+
+    if (get_reply_max_size() < sizeof(CONTEXT))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    if (!(thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT ))) return;
+
+    if ((data = set_reply_data_size( sizeof(CONTEXT) )))
+    {
+        memset( data, 0, sizeof(CONTEXT) );
+        get_thread_context( thread, data, req->flags );
+    }
+    release_object( thread );
+}
+
+/* set the current context of a thread */
+DECL_HANDLER(set_thread_context)
+{
+    struct thread *thread;
+
+    if (get_req_data_size() < sizeof(CONTEXT))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
+    {
+        set_thread_context( thread, get_req_data(), req->flags );
+        release_object( thread );
+    }
+}
+
 /* fetch a selector entry for a thread */
 DECL_HANDLER(get_selector_entry)
 {

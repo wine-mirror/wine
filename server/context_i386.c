@@ -115,7 +115,7 @@ static inline int get_debug_reg( int pid, int num, DWORD *data )
 }
 
 /* retrieve a thread context */
-static void get_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
+static void get_thread_context_ptrace( struct thread *thread, unsigned int flags, CONTEXT *context )
 {
     int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
@@ -171,7 +171,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
 
 
 /* set a thread context */
-static void set_thread_context( struct thread *thread, unsigned int flags, const CONTEXT *context )
+static void set_thread_context_ptrace( struct thread *thread, unsigned int flags, const CONTEXT *context )
 {
     int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
@@ -231,7 +231,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
 #elif defined(__sun) || defined(__sun__)
 
 /* retrieve a thread context */
-static void get_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
+static void get_thread_context_ptrace( struct thread *thread, unsigned int flags, CONTEXT *context )
 {
     int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
@@ -282,7 +282,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
 
 
 /* set a thread context */
-static void set_thread_context( struct thread *thread, unsigned int flags, const CONTEXT *context )
+static void set_thread_context_ptrace( struct thread *thread, unsigned int flags, const CONTEXT *context )
 {
     int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
@@ -339,7 +339,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
 #include <machine/reg.h>
 
 /* retrieve a thread context */
-static void get_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
+static void get_thread_context_ptrace( struct thread *thread, unsigned int flags, CONTEXT *context )
 {
     int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
@@ -411,7 +411,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
 
 
 /* set a thread context */
-static void set_thread_context( struct thread *thread, unsigned int flags, const CONTEXT *context )
+static void set_thread_context_ptrace( struct thread *thread, unsigned int flags, const CONTEXT *context )
 {
     int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
@@ -489,7 +489,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
 }
 
 #else  /* linux || __sun__ || __FreeBSD__ */
-#error You must implement get/set_thread_context for your platform
+#error You must implement get/set_thread_context_ptrace for your platform
 #endif  /* linux || __sun__ || __FreeBSD__ */
 
 
@@ -536,7 +536,7 @@ void *get_thread_ip( struct thread *thread )
     context.Eip = 0;
     if (suspend_for_ptrace( thread ))
     {
-        get_thread_context( thread, CONTEXT_CONTROL, &context );
+        get_thread_context_ptrace( thread, CONTEXT_CONTROL, &context );
         resume_after_ptrace( thread );
     }
     return (void *)context.Eip;
@@ -547,7 +547,7 @@ int get_thread_single_step( struct thread *thread )
 {
     CONTEXT context;
     if (thread->context) return 0;  /* don't single-step inside exception event */
-    get_thread_context( thread, CONTEXT_CONTROL, &context );
+    get_thread_context_ptrace( thread, CONTEXT_CONTROL, &context );
     return (context.EFlags & 0x100) != 0;
 }
 
@@ -571,63 +571,39 @@ int tkill( int pid, int sig )
 #endif
 }
 
-/* retrieve the current context of a thread */
-DECL_HANDLER(get_thread_context)
+/* retrieve the thread context */
+void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
-    struct thread *thread;
-    void *data;
-    int flags = req->flags & ~CONTEXT_i386;  /* get rid of CPU id */
+    flags &= ~CONTEXT_i386;  /* get rid of CPU id */
 
-    if (get_reply_max_size() < sizeof(CONTEXT))
+    if (thread->context)  /* thread is inside an exception event or suspended */
     {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
+        copy_context( context, thread->context, flags );
+        flags &= CONTEXT_DEBUG_REGISTERS;
     }
-    if (!(thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT ))) return;
 
-    if ((data = set_reply_data_size( sizeof(CONTEXT) )))
+    if (flags && suspend_for_ptrace( thread ))
     {
-        memset( data, 0, sizeof(CONTEXT) );
-
-        if (thread->context)  /* thread is inside an exception event */
-        {
-            copy_context( data, thread->context, flags );
-            flags &= CONTEXT_DEBUG_REGISTERS;
-        }
-        if (flags && suspend_for_ptrace( thread ))
-        {
-            get_thread_context( thread, flags, data );
-            resume_after_ptrace( thread );
-        }
+        get_thread_context_ptrace( thread, flags, context );
+        resume_after_ptrace( thread );
     }
-    release_object( thread );
 }
 
-
-/* set the current context of a thread */
-DECL_HANDLER(set_thread_context)
+/* set the thread context */
+void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
 {
-    struct thread *thread;
-    int flags = req->flags & ~CONTEXT_i386;  /* get rid of CPU id */
+    flags &= ~CONTEXT_i386;  /* get rid of CPU id */
 
-    if (get_req_data_size() < sizeof(CONTEXT))
+    if (thread->context)  /* thread is inside an exception event or suspended */
     {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
+        copy_context( thread->context, context, flags );
+        flags &= CONTEXT_DEBUG_REGISTERS;
     }
-    if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
+
+    if (flags && suspend_for_ptrace( thread ))
     {
-        if (thread->context)  /* thread is inside an exception event */
-        {
-            copy_context( thread->context, get_req_data(), flags );
-            flags &= CONTEXT_DEBUG_REGISTERS;
-        }
-        if (flags && suspend_for_ptrace( thread ))
-        {
-            set_thread_context( thread, flags, get_req_data() );
-            resume_after_ptrace( thread );
-        }
-        release_object( thread );
+        set_thread_context_ptrace( thread, flags, context );
+        resume_after_ptrace( thread );
     }
 }
 
