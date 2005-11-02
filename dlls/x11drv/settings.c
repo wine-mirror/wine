@@ -170,12 +170,12 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
     devmode->dmDisplayFlags = 0;
     devmode->dmDisplayFrequency = 0;
     devmode->dmSize = sizeof(DEVMODEW);
-    if (n == (DWORD)-1)
+    if (n == ENUM_CURRENT_SETTINGS)
     {
         TRACE("mode %ld (current) -- getting current mode (%s)\n", n, handler_name);
         n = pGetCurrentMode();
     }
-    if (n == (DWORD)-2)
+    if (n == ENUM_REGISTRY_SETTINGS)
     {
         TRACE("mode %ld (registry) -- getting default mode (%s)\n", n, handler_name);
         n = dd_mode_default;

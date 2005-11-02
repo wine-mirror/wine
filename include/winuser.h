@@ -1304,6 +1304,10 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define IDTRYAGAIN         10
 #define IDCONTINUE         11
 
+/* Used for EnumDisplaySettingsEx */
+#define ENUM_CURRENT_SETTINGS  ((DWORD) -1)
+#define ENUM_REGISTRY_SETTINGS ((DWORD) -2)
+
 /****** Window classes ******/
 
 typedef struct tagCREATESTRUCTA
