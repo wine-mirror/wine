@@ -18,6 +18,110 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*
+ * As you know, windows and unix do have a different philosophy with regard to
+ * the question of how a filesystem should be laid out. While we unix geeks
+ * learned to love the 'one-tree-rooted-at-/' approach, windows has in fact
+ * a whole forest of filesystem trees, each of which is typically identified by
+ * a drive letter.
+ *
+ * We would like wine to integrate as smoothly as possible (that is without
+ * sacrificing win32 compatibility) into the unix environment. For the
+ * filesystem question, this means we really would like those windows
+ * applications to work with unix path- and file-names. Unfortunately, this
+ * seems to be impossible in general. Therefore we have those symbolic links
+ * in wine's 'dosdevices' directory, which are used to simulate drives
+ * to keep windows applications happy. And as a consequence, we have those
+ * drive letters show up now and then in GUI applications running under wine,
+ * which gets the unix hardcore fans all angry, shouting at us @#!&$%* wine
+ * hackers that we are seducing the big companies not to port their applications
+ * to unix.
+ *
+ * DOS paths do appear at various places in GUI applications. Sometimes, they
+ * show up in the title bar of an application's window. They tend to accumulate
+ * in the most-recently-used section of the file-menu. And I've even seen some
+ * in a configuration dialog's edit control. In those examples, wine can't do a
+ * lot about this, since path-names can't be told appart from ordinary strings
+ * here. That's different in the file dialogs, though.
+ *
+ * With the introduction of the 'shell' in win32, Microsoft established an 
+ * abstraction layer on top of the filesystem, called the shell namespace (I was
+ * told that Gnome's virtual filesystem is conceptually similar). In the shell
+ * namespace, one doesn't use ascii- or unicode-strings to uniquely identify
+ * objects. Instead Microsoft introduced item-identifier-lists (The c type is 
+ * called ITEMIDLIST) as an abstraction of path-names. As you probably would
+ * have guessed, an item-identifier-list is a list of item-identifiers (whose
+ * c type's funny name is SHITEMID), which are opaque binary objects. This means
+ * that no application (apart from Microsoft Office) should make any assumptions
+ * on the internal structure of these SHITEMIDs. 
+ *
+ * Since the user prefers to be presented the good-old DOS file-names instead of 
+ * binary ITEMIDLISTs, a translation method between string-based file-names and
+ * ITEMIDLISTs was established. At the core of this are the COM-Interface
+ * IShellFolder and especially it's methods ParseDisplayName and 
+ * GetDisplayNameOf. Basically, you give a DOS-path (let's say C:\windows) to
+ * ParseDisplayName and get a SHITEMID similar to <Desktop|My Computer|C:|windows|>.
+ * Since it's opaque, you can't see the 'C', the 'windows' and the other stuff.
+ * You can only figure out that the ITEMIDLIST is composed of four SHITEMIDS.
+ * The file dialog applies IShellFolder's BindToObject method to bind to each of
+ * those four objects (Desktop, My Computer, C: and windows. All of them have to 
+ * implement the IShellFolder interface.) and asks them how they would like to be 
+ * displayed (basically their icon and the string displayed). If the file dialog 
+ * asks <Desktop|My Computer|C:|windows> which sub-objects it contains (via 
+ * EnumObjects) it gets a list of opaque SHITEMIDs, which can be concatenated to 
+ * <Desktop|...|windows> to build a new ITEMIDLIST and browse, for instance, 
+ * into <system32>. This means the file dialog browses the shell namespace by 
+ * identifying objects via ITEMIDLISTs. Once the user has selected a location to 
+ * save his valuable file, the file dialog calls IShellFolder's GetDisplayNameOf
+ * method to translate the ITEMIDLIST back to a DOS filename.
+ * 
+ * It seems that one intention of the shell namespace concept was to make it 
+ * possible to have objects in the namespace, which don't have any counterpart 
+ * in the filesystem. The 'My Computer' shell folder object is one instance
+ * which comes to mind (Go try to save a file into 'My Computer' on windows.)
+ * So, to make matters a little more complex, before the file dialog asks a
+ * shell namespace object for it's DOS path, it asks if it actually has one.
+ * This is done via the IShellFolder::GetAttributesOf method, which sets the
+ * SFGAO_FILESYSTEM if - and only if - it has.
+ *
+ * The two things, described in the previous two paragraphs, are what unixfs is
+ * based on. So basically, if UnixDosFolder's ParseDisplayName method is called 
+ * with a 'c:\windows' path-name, it doesn't return an 
+ * <Desktop|My Computer|C:|windows|> ITEMIDLIST. Instead, it uses 
+ * shell32's wine_get_unix_path_name and the _posix_ (which means not the win32) 
+ * fileio api's to figure out that c: is mapped to - let's say - 
+ * /home/mjung/.wine/drive_c and then constructs a 
+ * <Desktop|/|home|mjung|.wine|drive_c> ITEMIDLIST. Which is what the file 
+ * dialog uses to display the folder and file objects, which is why you see a 
+ * unix path. When the user has found a nice place for his file and hits the
+ * save button, the ITEMIDLIST of the selected folder object is passed to 
+ * GetDisplayNameOf, which returns a _DOS_ path name 
+ * (like H:\home_of_my_new_file out of <|Desktop|/|home|mjung|home_of_my_new_file|>).
+ * Unixfs basically mounts your dos devices together in order to construct
+ * a copy of your unix filesystem structure.
+ *
+ * But what if none of the symbolic links in 'dosdevices' points to '/', you 
+ * might ask ("And I don't want wine have access to my complete hard drive, you 
+ * *%&1#!"). No problem, as I stated above, unixfs uses the _posix_ apis to 
+ * construct the ITEMIDLISTs. Folders, which aren't accessible via a drive letter,
+ * don't have the SFGAO_FILESYSTEM flag set. So the file dialogs should'nt allow
+ * the user to select such a folder for file storage (And if it does anyhow, it 
+ * will not be able to return a valid path, since there is none). Think of those 
+ * folders as a hierarchy of 'My Computer'-like folders, which happen to be a 
+ * shadow of your unix filesystem tree. And since all of this stuff doesn't 
+ * change anything at all in wine's fileio api's, windows applications will have 
+ * no more access rights as they had before. 
+ *
+ * To sum it all up, you can still savely run wine with you root account (Just
+ * kidding, don't do it.)
+ *
+ * If you are now standing in front of your computer, shouting hotly 
+ * "I am not convinced, Mr. Rumsfeld^H^H^H^H^H^H^H^H^H^H^H^H", fire up regedit
+ * and delete HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\
+ * Explorer\Desktop\Namespace\{9D20AAE8-0625-44B0-9CA7-71889C2254D9} and you 
+ * will be back in the pre-unixfs days.
+ */
+
 #include "config.h"
 #include "wine/port.h"
 
