@@ -1988,3 +1988,23 @@ UINT WINAPI MsiEnumPatchesW( LPCWSTR szProduct, DWORD iPatchIndex,
           iPatchIndex, lpPatchBuf, lpTransformsBuf, pcchTransformsBuf);
     return ERROR_NO_MORE_ITEMS;
 }
+
+/***********************************************************************
+ * MsiGetFileHashW            [MSI.@]
+ */
+UINT WINAPI MsiGetFileHashW( LPCWSTR szFilePath, DWORD dwOptions,
+                             PMSIFILEHASHINFO pHash )
+{
+    FIXME("%s %08lx %p\n", debugstr_w(szFilePath), dwOptions, pHash );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ * MsiGetFileHashA            [MSI.@]
+ */
+UINT WINAPI MsiGetFileHashA( LPCSTR szFilePath, DWORD dwOptions,
+                             PMSIFILEHASHINFO pHash )
+{
+    FIXME("%s %08lx %p\n", debugstr_a(szFilePath), dwOptions, pHash );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

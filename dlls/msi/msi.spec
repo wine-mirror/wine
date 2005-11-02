@@ -211,8 +211,8 @@
 215 stub MsiIsProductElevatedW
 216 stdcall MsiGetShortcutTargetA(str ptr ptr ptr)
 217 stdcall MsiGetShortcutTargetW(wstr ptr ptr ptr)
-218 stub MsiGetFileHashA
-219 stub MsiGetFileHashW
+218 stdcall MsiGetFileHashA(str long ptr)
+219 stdcall MsiGetFileHashW(wstr long ptr)
 220 stub MsiEnumComponentCostsA
 221 stub MsiEnumComponentCostsW
 222 stdcall MsiCreateAndVerifyInstallerDirectory(long)
