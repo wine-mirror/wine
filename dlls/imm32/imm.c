@@ -980,9 +980,9 @@ HKL WINAPI ImmInstallIMEW(
  */
 BOOL WINAPI ImmIsIME(HKL hKL)
 {
-  FIXME("(%p): semi-stub\n", hKL);
+  TRACE("(%p): semi-stub\n", hKL);
   /*
-   * Dead key locales will return TRUE here when they should not
+   * FIXME: Dead key locales will return TRUE here when they should not
    * There is probably a more proper way to check this.
    */
   return (root_context != NULL);
