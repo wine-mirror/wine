@@ -1607,6 +1607,8 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
         {'A','D','D','L','O','C','A','L',0};
     static const WCHAR szRemove[] =
         {'R','E','M','O','V','E',0};
+    static const WCHAR szReinstall[] =
+        {'R','E','I','N','S','T','A','L','L',0};
     BOOL override = FALSE;
     MSICOMPONENT* component;
     MSIFEATURE *feature;
@@ -1642,6 +1644,7 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
      */
     override |= process_state_property(package,szAddLocal,INSTALLSTATE_LOCAL);
     override |= process_state_property(package,szRemove,INSTALLSTATE_ABSENT);
+    override |= process_state_property(package,szReinstall,INSTALLSTATE_LOCAL);
 
     if (!override)
     {
