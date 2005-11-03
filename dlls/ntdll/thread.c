@@ -528,6 +528,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 static inline void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
 {
 #ifdef __i386__
+    flags &= ~CONTEXT_i386;  /* get rid of CPU id */
     if (flags & CONTEXT_INTEGER)
     {
         to->Eax = from->Eax;
@@ -567,6 +568,7 @@ static inline void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
         to->FloatSave = from->FloatSave;
     }
 #elif defined(__x86_64__)
+    flags &= ~CONTEXT_AMD64;  /* get rid of CPU id */
     if (flags & CONTEXT_CONTROL)
     {
         to->Rbp    = from->Rbp;
@@ -615,6 +617,7 @@ static inline void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
         to->Dr7 = from->Dr7;
     }
 #elif defined(__sparc__)
+    flags &= ~CONTEXT_SPARC;  /* get rid of CPU id */
     if (flags & CONTEXT_CONTROL)
     {
         to->psr = from->psr;
@@ -664,6 +667,7 @@ static inline void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
         /* FIXME */
     }
 #elif defined(__powerpc__)
+    /* Has no CPU id */
     if (flags & CONTEXT_CONTROL)
     {
         to->Msr = from->Msr;
