@@ -163,14 +163,15 @@ static void test_EnumObjects(IShellFolder *iFolder)
 	{ 1, 1, 1, 1, 0}
     };
 
-    /* Just test SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR for now */
+#define SFGAO_testfor SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR | SFGAO_CAPABILITYMASK
+    /* Don't test for SFGAO_HASSUBFOLDER since we return real state and native cached */
     static const ULONG attrs[5] =
     {
-        SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
-        SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
-        SFGAO_FILESYSTEM,
-        SFGAO_FILESYSTEM,
-        SFGAO_FILESYSTEM,
+        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
+        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
+        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM,
+        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM,
+        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM,
     };
 
     hr = IShellFolder_EnumObjects(iFolder, NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &iEnumList);
@@ -206,11 +207,18 @@ static void test_EnumObjects(IShellFolder *iFolder)
     for (i = 0; i < 5; i++)
     {
         SFGAOF flags;
-        flags = SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR;
+        /* Native returns all flags no matter what we ask for */
+        flags = SFGAO_CANCOPY;
         hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
-        flags &= SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR;
+        flags &= SFGAO_testfor;
         ok(hr == S_OK, "GetAttributesOf returns %08lx\n", hr);
-        ok(flags == attrs[i], "GetAttributesOf gets attrs %08lx, expects %08lx\n", flags, attrs[i]);
+        ok(flags == (attrs[i]), "GetAttributesOf[%i] got %08lx, expected %08lx\n", i, flags, attrs[i]);
+
+        flags = SFGAO_testfor;
+        hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
+        flags &= SFGAO_testfor;
+        ok(hr == S_OK, "GetAttributesOf returns %08lx\n", hr);
+        ok(flags == attrs[i], "GetAttributesOf[%i] got %08lx, expected %08lx\n", i, flags, attrs[i]);
     }
 
     for (i=0;i<5;i++)

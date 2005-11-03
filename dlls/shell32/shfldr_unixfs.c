@@ -828,12 +828,12 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetAttributesOf(IShellFolder2* if
         char szAbsolutePath[FILENAME_MAX], *pszRelativePath;
         UINT i;
 
-        *rgfInOut &= SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR|SFGAO_CANRENAME|
-                     SFGAO_FILESYSTEM;
+        *rgfInOut = SFGAO_CANCOPY|SFGAO_CANMOVE|SFGAO_CANLINK|SFGAO_CANRENAME|SFGAO_CANDELETE|
+                    SFGAO_HASPROPSHEET|SFGAO_DROPTARGET|SFGAO_FILESYSTEM;
         lstrcpyA(szAbsolutePath, This->m_pszPath);
         pszRelativePath = szAbsolutePath + lstrlenA(szAbsolutePath);
         for (i=0; i<cidl; i++) {
-            if ((*rgfInOut & SFGAO_FILESYSTEM) && !(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
+            if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
                 struct stat fileStat;
                 char *pszName = _ILGetTextPointer(apidl[i]);
                 if (!pszName) return E_INVALIDARG;
@@ -841,8 +841,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetAttributesOf(IShellFolder2* if
                 if (stat(szAbsolutePath, &fileStat) || !UNIXFS_is_dos_device(&fileStat))
                     *rgfInOut &= ~SFGAO_FILESYSTEM;
             }
-            if (!_ILIsFolder(apidl[i])) 
-                *rgfInOut &= ~(SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR);
+            if (_ILIsFolder(apidl[i])) 
+                *rgfInOut |= SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR;
         }
     }
     

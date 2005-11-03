@@ -419,16 +419,23 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
     } else if (_ILGetDataPointer (pidl)) {
 	dwAttributes = _ILGetFileAttributes (pidl, NULL, 0);
 
-        if ((SFGAO_FILESYSANCESTOR & *pdwAttributes) && !(dwAttributes & FILE_ATTRIBUTE_DIRECTORY))
-            *pdwAttributes &= ~SFGAO_FILESYSANCESTOR;
+        /* Set common attributes */
+        *pdwAttributes |= SFGAO_FILESYSTEM | SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANDELETE | 
+                          SFGAO_CANRENAME | SFGAO_CANLINK | SFGAO_CANMOVE | SFGAO_CANCOPY;
 
-	if ((SFGAO_FOLDER & *pdwAttributes) && !(dwAttributes & FILE_ATTRIBUTE_DIRECTORY))
-	    *pdwAttributes &= ~(SFGAO_FOLDER | SFGAO_HASSUBFOLDER);
+	if (dwAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	    *pdwAttributes |=  (SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR);
+	else
+	    *pdwAttributes &= ~(SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR);
 
-	if ((SFGAO_HIDDEN & *pdwAttributes) && !(dwAttributes & FILE_ATTRIBUTE_HIDDEN))
+	if (dwAttributes & FILE_ATTRIBUTE_HIDDEN)
+	    *pdwAttributes |=  SFGAO_HIDDEN;
+	else
 	    *pdwAttributes &= ~SFGAO_HIDDEN;
 
-	if ((SFGAO_READONLY & *pdwAttributes) && !(dwAttributes & FILE_ATTRIBUTE_READONLY))
+	if (dwAttributes & FILE_ATTRIBUTE_READONLY)
+	    *pdwAttributes |=  SFGAO_READONLY;
+	else
 	    *pdwAttributes &= ~SFGAO_READONLY;
 
 	if (SFGAO_LINK & *pdwAttributes) {
