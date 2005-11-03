@@ -2512,11 +2512,14 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
 {
     BOOL	lOk        = TRUE;
     BOOL	rOk        = TRUE;
+    BOOL	l_isR      = FALSE;
+    BOOL	r_isR      = FALSE;
     LONGLONG	lVal = -1;
     LONGLONG	rVal = -1;
     VARIANT	rv,lv;
     DWORD	xmask;
     HRESULT	rc;
+    double	lDouble =0.0,rDouble=0.0;
 
     TRACE("(%p->(%s%s),%p->(%s%s),0x%08lx,0x%08lx)\n", left, debugstr_VT(left),
           debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), lcid, flags);
@@ -2581,6 +2584,8 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
     case VT_UINT : lVal = V_UI4(left); break;
     case VT_BOOL : lVal = V_BOOL(left); break;
     case VT_EMPTY : lVal = 0; break;
+    case VT_R4 : lDouble = V_R4(left); lOk = FALSE; l_isR= TRUE; break;
+    case VT_R8 : lDouble = V_R8(left); lOk = FALSE; l_isR= TRUE; break;
     default: lOk = FALSE;
     }
 
@@ -2596,6 +2601,8 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
     case VT_UINT : rVal = V_UI4(right); break;
     case VT_BOOL : rVal = V_BOOL(right); break;
     case VT_EMPTY : rVal = 0; break;
+    case VT_R4 : rDouble = V_R4(right); rOk = FALSE;r_isR= TRUE; break;
+    case VT_R8 : rDouble = V_R8(right); rOk = FALSE;r_isR= TRUE; break;
     default: rOk = FALSE;
     }
 
@@ -2608,7 +2615,47 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
             return VARCMP_EQ;
         }
     }
-
+    else if (l_isR && r_isR) {
+        if (lDouble < rDouble) {
+            return VARCMP_LT;
+        } else if (lDouble > rDouble) {
+            return VARCMP_GT;
+        } else {
+            return VARCMP_EQ;
+        }
+    }
+    else if (lOk && r_isR) {
+        if (lVal < rDouble) {
+            return VARCMP_LT;
+        } else if (lVal > rDouble) {
+            return VARCMP_GT;
+        } else {
+            return VARCMP_EQ;
+        }
+    }
+    else if (l_isR && rOk) {
+        if (lDouble < rVal) {
+            return VARCMP_LT;
+        } else if (lDouble > rVal) {
+            return VARCMP_GT;
+        } else {
+            return VARCMP_EQ;
+        }
+    }
+    if ((V_VT(left)&VT_TYPEMASK) == VT_BSTR ) {
+	if(((V_VT(right)&VT_TYPEMASK) == VT_EMPTY ) && !(V_BSTR(left))) {
+	    return VARCMP_EQ;
+	} else {
+	    return VARCMP_GT;
+	}
+    }
+    if ((V_VT(right)&VT_TYPEMASK) == VT_BSTR ) {
+	if(((V_VT(left)&VT_TYPEMASK) == VT_EMPTY ) && !(V_BSTR(right))) {
+	    return VARCMP_EQ;
+	} else {
+	    return VARCMP_LT;
+	}
+    }
     /* Dates */
     if ((V_VT(left)&VT_TYPEMASK) == VT_DATE &&
         (V_VT(right)&VT_TYPEMASK) == VT_DATE) {
@@ -2642,7 +2689,9 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
             return VARCMP_GT;
         }
     }
-    FIXME("VarCmp partial implementation, doesn't support vt 0x%x / 0x%x\n",V_VT(left), V_VT(right));
+    else if((V_VT(right)&VT_TYPEMASK) == VT_EMPTY)
+        return VARCMP_GT;
+    FIXME("VarCmp partial implementation, doesn't support %s / %s\n",wine_vtypes[V_VT(left)], wine_vtypes[V_VT(right)]);
     return E_FAIL;
 }
 
