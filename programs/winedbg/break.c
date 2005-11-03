@@ -255,6 +255,25 @@ void	break_add_break_from_id(const char *name, int lineno)
     dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].u.symbol.lineno = lineno;
 }
 
+struct cb_break_lineno
+{
+    int         lineno;
+    ADDRESS     addr;
+};
+
+static BOOL CALLBACK line_cb(SRCCODEINFO* sci, void* user)
+{
+    struct cb_break_lineno*      bkln = user;
+
+    if (bkln->lineno == sci->LineNumber)
+    {
+        bkln->addr.Mode = AddrModeFlat;
+        bkln->addr.Offset = sci->Address;
+        return FALSE;
+    }
+    return TRUE;
+}
+
 /***********************************************************************
  *           break_add_break_from_lineno
  *
@@ -262,48 +281,29 @@ void	break_add_break_from_id(const char *name, int lineno)
  */
 void	break_add_break_from_lineno(int lineno)
 {
-    ADDRESS             addr;
+    struct cb_break_lineno      bkln;
 
-    memory_get_current_pc(&addr);
+    memory_get_current_pc(&bkln.addr);
 
     if (lineno != -1)
     {
         IMAGEHLP_LINE   il;
-        IMAGEHLP_LINE   iil;
-        BOOL            found = FALSE;
+
+
         DWORD           disp;
+        DWORD           linear = (DWORD)memory_to_linear_addr(&bkln.addr);
 
         il.SizeOfStruct = sizeof(il);
-        if (!SymGetLineFromAddr(dbg_curr_process->handle, 
-                                (DWORD)memory_to_linear_addr(&addr), &disp, &il))
+        if (!SymGetLineFromAddr(dbg_curr_process->handle, linear, &disp, &il))
+
         {
-            dbg_printf("Unable to add breakpoint (unknown address)\n");
+            dbg_printf("Unable to add breakpoint (unknown address %lx)\n", linear);
             return;
         }
-
-        iil = il;
-        while (SymGetLinePrev(dbg_curr_process->handle, &iil))
-        {
-            if (lineno == iil.LineNumber && !strcmp(il.FileName, iil.FileName))
-            {
-                addr.Mode = AddrModeFlat;
-                addr.Offset = iil.Address;
-                found = TRUE;
-                break;
-            }
-        }
-        iil = il;
-        if (!found) while (SymGetLineNext(dbg_curr_process->handle, &iil))
-        {
-            if (lineno == iil.LineNumber && !strcmp(il.FileName, iil.FileName))
-            {
-                addr.Mode = AddrModeFlat;
-                addr.Offset = iil.Address;
-                found = TRUE;
-                break;
-            }
-        }
-        if (!found)
+        bkln.addr.Offset = 0;
+        bkln.lineno = lineno;
+        SymEnumLines(dbg_curr_process->handle, linear, NULL, il.FileName, line_cb, &bkln);
+        if (!bkln.addr.Offset)
         {
             dbg_printf("Unknown line number\n"
                        "(either out of file, or no code at given line number)\n");
@@ -311,7 +311,7 @@ void	break_add_break_from_lineno(int lineno)
         }
     }
 
-    break_add_break(&addr, TRUE);
+    break_add_break(&bkln.addr, TRUE);
 }
 
 /***********************************************************************
