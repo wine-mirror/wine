@@ -196,16 +196,65 @@ static HRESULT WINAPI xmlnodemap_get_item(
     long index,
     IXMLDOMNode** listItem)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlNodePtr node;
+    xmlAttrPtr curr;
+    long attrIndex;
+
+    TRACE("%p %ld\n", This, index);
+
+    *listItem = NULL;
+
+    if (index < 0)
+        return S_FALSE;
+
+    node = xmlNodePtr_from_domnode( This->node, 0 );
+    curr = node->properties;
+
+    for (attrIndex = 0; attrIndex < index; attrIndex++) {
+        if (curr->next == NULL)
+            return S_FALSE;
+        else
+            curr = curr->next;
+    }
+    
+    *listItem = create_node( (xmlNodePtr) curr );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnodemap_get_length(
     IXMLDOMNamedNodeMap *iface,
     long* listLength)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlNodePtr node;
+    xmlAttrPtr first;
+    xmlAttrPtr curr;
+    long attrCount;
+
+    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+
+    TRACE("%p\n", This);
+
+    node = xmlNodePtr_from_domnode( This->node, 0 );
+    if ( !node )
+        return E_FAIL;
+
+    first = node->properties;
+    if (first == NULL) {
+	*listLength = 0;
+	return S_OK;
+    }
+
+    curr = first;
+    attrCount = 1;
+    while (curr->next != NULL) {
+        attrCount++;
+        curr = curr->next;
+    }
+    *listLength = attrCount;
+ 
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnodemap_getQualifiedItem(

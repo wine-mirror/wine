@@ -251,16 +251,56 @@ static HRESULT WINAPI xmlnodelist_get_item(
         long index,
         IXMLDOMNode** listItem)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+    xmlNodePtr curr;
+    long nodeIndex = 0;
+
+    TRACE("%p %ld\n", This, index);
+ 
+    *listItem = NULL;
+
+    if (index < 0)
+        return S_FALSE;
+
+    curr = This->node;
+    
+    for (nodeIndex = 0; nodeIndex < index; nodeIndex++) {
+        if (curr->next == NULL)
+            return S_FALSE;
+        else
+            curr = curr->next;
+    }
+    
+    *listItem = create_node( curr );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnodelist_get_length(
         IXMLDOMNodeList* iface,
         long* listLength)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+
+    xmlNodePtr curr;
+    long nodeCount = 0;
+
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+
+    TRACE("%p\n", This);
+
+    if (This->node == NULL) {
+        *listLength = 0;
+	return S_OK;
+    }
+        
+    curr = This->node;
+    nodeCount = 1;
+    while (curr->next != NULL) {
+        nodeCount++;
+        curr = curr->next;
+    }
+   *listLength = nodeCount;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnodelist_nextNode(

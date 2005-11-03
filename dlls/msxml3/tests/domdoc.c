@@ -242,6 +242,7 @@ void test_domnode( void )
     VARIANT_BOOL b;
     BSTR str;
     VARIANT var;
+    long count;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
@@ -325,6 +326,38 @@ void test_domnode( void )
         r = IXMLDOMNamedNodeMap_getNamedItem( map, str, &node );
         ok( r == S_OK, "getNamedItem returned wrong code\n");
         ok( node != NULL, "should be attributes\n");
+        SysFreeString( str );
+
+	/* test indexed access of attributes */
+        r = IXMLDOMNamedNodeMap_get_length( map, &count );
+        ok ( r == S_OK, "get_length wrong code\n");
+        ok ( count == 1, "get_length != 1\n");
+
+        node = NULL;
+        r = IXMLDOMNamedNodeMap_get_item( map, -1, &node);
+        ok ( r == S_FALSE, "get_item (-1) wrong code\n");
+        ok ( node == NULL, "there is no node\n");
+
+        node = NULL;
+        r = IXMLDOMNamedNodeMap_get_item( map, 1, &node);
+        ok ( r == S_FALSE, "get_item (1) wrong code\n");
+        ok ( node == NULL, "there is no attribute\n");
+
+        node = NULL;
+        r = IXMLDOMNamedNodeMap_get_item( map, 0, &node);
+        ok ( r == S_OK, "get_item (0) wrong code\n");
+        ok ( node != NULL, "should be attribute\n");
+
+        r = IXMLDOMNode_get_nodeName( node, NULL );
+        ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code");
+
+        /* content doesn't matter here */
+        str = SysAllocString( szNonExistentFile );
+        r = IXMLDOMNode_get_nodeName( node, &str );
+        ok ( r == S_OK, "get_nodeName wrong code\n");
+        ok ( str != NULL, "str is null\n");
+        ok( !lstrcmpW( str, szdl ), "incorrect node name\n");
+        SysFreeString( str );
     }
     else
         ok( FALSE, "no map\n");
