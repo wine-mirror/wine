@@ -26,6 +26,9 @@
 
 #include "dbghelp_private.h"
 #include "wine/debug.h"
+#ifdef HAVE_REGEX_H
+# include <regex.h>
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
@@ -134,5 +137,68 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, LPSTR Mask,
         if (!cbSrcFiles(&sf, UserContext)) break;
     }
 
+    return TRUE;
+}
+
+/******************************************************************
+ *		SymEnumLines (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
+                         PCSTR srcfile, PSYM_ENUMLINES_CALLBACK cb, PVOID user)
+{
+    struct process*             pcs;
+    struct module*              module;
+    struct hash_table_iter      hti;
+    struct symt_ht*             sym;
+    regex_t                     re;
+    struct line_info*           dli;
+    void*                       ptr;
+    SRCCODEINFO                 sci;
+    char*                       file;
+
+    if (!cb) return FALSE;
+    pcs = process_find_by_handle(hProcess);
+    if (!pcs) return FALSE;
+    if (!(dbghelp_options & SYMOPT_LOAD_LINES)) return TRUE;
+    if (regcomp(&re, srcfile, REG_NOSUB))
+    {
+        FIXME("Couldn't compile %s\n", srcfile);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (compiland) FIXME("Unsupported yet (filtering on compiland %s)\n", compiland);
+    module = module_find_by_addr(pcs, base, DMT_UNKNOWN);
+    if (!(module = module_get_debug(pcs, module))) return FALSE;
+
+    sci.SizeOfStruct = sizeof(sci);
+    sci.ModBase      = base;
+
+    hash_table_iter_init(&module->ht_symbols, &hti, NULL);
+    while ((ptr = hash_table_iter_up(&hti)))
+    {
+        sym = GET_ENTRY(ptr, struct symt_ht, hash_elt);
+        if (sym->symt.tag != SymTagFunction) continue;
+
+        dli = NULL;
+        sci.FileName[0] = '\0';
+        while ((dli = vector_iter_up(&((struct symt_function*)sym)->vlines, dli)))
+        {
+            if (dli->is_source_file)
+            {
+                file = (char*)source_get(module, dli->u.source_file);
+                if (regexec(&re, file, 0, NULL, 0) != 0) file = "";
+                strcpy(sci.FileName, file);
+            }
+            else if (sci.FileName[0])
+            {
+                sci.Key = dli;
+                sci.Obj[0] = '\0'; /* FIXME */
+                sci.LineNumber = dli->line_number;
+                sci.Address = dli->u.pc_offset;
+                if (!cb(&sci, user)) break;
+            }
+        }
+    }
     return TRUE;
 }

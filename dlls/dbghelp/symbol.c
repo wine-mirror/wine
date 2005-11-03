@@ -40,19 +40,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 WINE_DECLARE_DEBUG_CHANNEL(dbghelp_symt);
 
-struct line_info
-{
-    unsigned long               is_first : 1,
-                                is_last : 1,
-                                is_source_file : 1,
-                                line_number;
-    union
-    {
-        unsigned long               pc_offset;   /* if is_source_file isn't set */
-        unsigned                    source_file; /* if is_source_file is set */
-    } u;
-};
-
 inline static int cmp_addr(ULONG64 a1, ULONG64 a2)
 {
     if (a1 > a2) return 1;

@@ -26,6 +26,7 @@
 @ stub StackWalk64
 @ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall SymCleanup(long)
+@ stdcall SymEnumLines(ptr double str str ptr ptr)
 @ stdcall SymEnumSourceFiles(ptr double str ptr ptr)
 @ stub SymEnumSym
 @ stdcall SymEnumSymbols(ptr double str ptr ptr)

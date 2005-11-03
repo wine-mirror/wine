@@ -289,6 +289,19 @@ struct process
     IMAGEHLP_STACK_FRAME        ctx_frame;
 };
 
+struct line_info
+{
+    unsigned long               is_first : 1,
+                                is_last : 1,
+                                is_source_file : 1,
+                                line_number;
+    union
+    {
+        unsigned long               pc_offset;   /* if is_source_file isn't set */
+        unsigned                    source_file; /* if is_source_file is set */
+    } u;
+};
+
 /* dbghelp.c */
 extern struct process* process_find_by_handle(HANDLE hProcess);
 extern HANDLE hMsvcrt;

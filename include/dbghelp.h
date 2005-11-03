@@ -749,6 +749,19 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE, ULONG64, LPSTR, PSYM_ENUMSOURCFILES_CALLB
 BOOL WINAPI SymGetLineFromAddr(HANDLE, DWORD, PDWORD, PIMAGEHLP_LINE);
 BOOL WINAPI SymGetLinePrev(HANDLE, PIMAGEHLP_LINE);
 BOOL WINAPI SymGetLineNext(HANDLE, PIMAGEHLP_LINE);
+typedef struct _SRCCODEINFO
+{
+    DWORD       SizeOfStruct;
+    PVOID       Key;
+    DWORD64     ModBase;
+    char        Obj[MAX_PATH+1];
+    char        FileName[MAX_PATH+1];
+    DWORD       LineNumber;
+    DWORD64     Address;
+} SRCCODEINFO, *PSRCCODEINFO;
+
+typedef BOOL (CALLBACK* PSYM_ENUMLINES_CALLBACK)(PSRCCODEINFO, PVOID);
+BOOL WINAPI SymEnumLines(HANDLE, ULONG64, PCSTR, PCSTR, PSYM_ENUMLINES_CALLBACK, PVOID);
 
 /*************************
  * File & image handling *
