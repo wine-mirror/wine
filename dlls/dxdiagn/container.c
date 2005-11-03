@@ -108,9 +108,28 @@ HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAINER ifa
   return E_INVALIDARG;
 }
 
-HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) {
+HRESULT WINAPI IDxDiagContainerImpl_GetChildContainerInternal(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   IDxDiagContainerImpl_SubContainer* p = NULL;
+
+  p = This->subContainers;
+  while (NULL != p) {
+    if (0 == lstrcmpW(p->contName, pwszContainer)) {      
+      *ppInstance = (PDXDIAGCONTAINER)p->pCont;
+      return S_OK;
+    }
+    p = p->next;
+  }
+  return E_INVALIDARG;
+}
+
+HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) {
+  IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
+  IDxDiagContainer* pContainer = NULL;
+  LPWSTR tmp, orig_tmp;
+  INT tmp_len;
+  WCHAR* cur;
+  HRESULT hr = E_INVALIDARG;
 
   FIXME("(%p, %s, %p)\n", iface, debugstr_w(pwszContainer), ppInstance);
 
@@ -118,17 +137,32 @@ HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER iface, LP
     return E_INVALIDARG;
   }
 
-  p = This->subContainers;
-  while (NULL != p) {
-    if (0 == lstrcmpW(p->contName, pwszContainer)) {      
-      IDxDiagContainerImpl_QueryInterface((PDXDIAGCONTAINER)p->pCont, &IID_IDxDiagContainer, (void**) ppInstance);
-      /*TRACE"(%p) returns %p\n", iface, *ppInstance);*/
-      return S_OK;
-    }
-    p = p->next;
+  pContainer = (PDXDIAGCONTAINER) This;
+
+  tmp_len = strlenW(pwszContainer) + 1;
+  orig_tmp = tmp = HeapAlloc(GetProcessHeap(), 0, tmp_len * sizeof(WCHAR));
+  if (NULL == tmp) return E_FAIL;
+  lstrcpynW(tmp, pwszContainer, tmp_len);
+
+  cur = strchrW(tmp, '.');
+  while (NULL != cur) {
+    *cur = '\0'; /* cut tmp string to '.' */
+    hr = IDxDiagContainerImpl_GetChildContainerInternal(pContainer, tmp, &pContainer);
+    if (!SUCCEEDED(hr) || NULL == pContainer)
+      goto on_error;
+    *cur++; /* go after '.' (just replaced by \0) */
+    tmp = cur;
+    cur = strchrW(tmp, '.');
   }
 
-  return E_INVALIDARG;
+  hr = IDxDiagContainerImpl_GetChildContainerInternal(pContainer, tmp, ppInstance);
+  if (SUCCEEDED(hr)) {
+    IDxDiagContainerImpl_AddRef((PDXDIAGCONTAINER)*ppInstance);
+  }
+
+on_error:
+  HeapFree(GetProcessHeap(), 0, orig_tmp);
+  return hr;
 }
 
 HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfProps(PDXDIAGCONTAINER iface, DWORD* pdwCount) {
