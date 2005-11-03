@@ -804,10 +804,15 @@ static HRESULT WINAPI InitPropertyBag_IPropertyBag_Read(IPropertyBag *iface, LPC
         'A','t','t','r','i','b','u','t','e','s',0 };
     static const WCHAR wszResolveLinkFlags[] = {
         'R','e','s','o','l','v','e','L','i','n','k','F','l','a','g','s',0 };
-        
-    if (!lstrcmpW(pszPropName, wszTargetSpecialFolder) || 
-        !lstrcmpW(pszPropName, wszResolveLinkFlags)) 
+       
+    if (!lstrcmpW(pszPropName, wszTargetSpecialFolder)) {
+        ok(V_VT(pVar) == VT_I4, "Wrong variant type for 'TargetSpecialFolder' property!\n");
+        return E_INVALIDARG;
+    }
+    
+    if (!lstrcmpW(pszPropName, wszResolveLinkFlags)) 
     {
+        ok(V_VT(pVar) == VT_UI4, "Wrong variant type for 'ResolveLinkFlags' property!\n");
         return E_INVALIDARG;
     }
 
@@ -859,14 +864,18 @@ struct IPropertyBag InitPropertyBag = {
 
 void test_FolderShortcut(void) {
     IPersistPropertyBag *pPersistPropertyBag;
-    IShellFolder *pShellFolder;
+    IShellFolder *pShellFolder, *pDesktopFolder;
     IPersistFolder3 *pPersistFolder3;
     HRESULT hr;
     STRRET strret;
-    WCHAR wszPath[MAX_PATH], wszBuffer[MAX_PATH];
+    WCHAR wszDesktopPath[MAX_PATH], wszBuffer[MAX_PATH];
     BOOL result;
     CLSID clsid;
-    LPITEMIDLIST pidlCurrentFolder;
+    LPITEMIDLIST pidlCurrentFolder, pidlWineTestFolder, pidlSubFolder;
+    WCHAR wszWineTestFolder[] = {
+        ':',':','{','9','B','3','5','2','E','B','F','-','2','7','6','5','-','4','5','C','1','-',
+        'B','4','C','6','-','8','5','C','C','7','F','7','A','B','C','6','4','}',0 };
+    WCHAR wszSomeSubFolder[] = { 'S','u','b','F','o','l','d','e','r', 0};
        
     if (!pSHGetSpecialFolderPathW || !pStrRetToBufW) return;
    
@@ -899,12 +908,12 @@ void test_FolderShortcut(void) {
         return;
     }
 
-    result = pSHGetSpecialFolderPathW(NULL, wszPath, CSIDL_DESKTOPDIRECTORY, FALSE);
-    ok(result, "SHGetSpecialFolderPathW(CSIDL_MYDOCUMENTS) failed! 0x%08lx\n", GetLastError());
+    result = pSHGetSpecialFolderPathW(NULL, wszDesktopPath, CSIDL_DESKTOPDIRECTORY, FALSE);
+    ok(result, "SHGetSpecialFolderPathW(CSIDL_DESKTOPDIRECTORY) failed! 0x%08lx\n", GetLastError());
     if (!result) return;
 
     pStrRetToBufW(&strret, NULL, wszBuffer, MAX_PATH);
-    ok(!lstrcmpiW(wszPath, wszBuffer), "FolderShortcut returned incorrect folder!\n");
+    ok(!lstrcmpiW(wszDesktopPath, wszBuffer), "FolderShortcut returned incorrect folder!\n");
 
     hr = IShellFolder_QueryInterface(pShellFolder, &IID_IPersistFolder3, (LPVOID*)&pPersistFolder3);
     IShellFolder_Release(pShellFolder);
@@ -919,6 +928,82 @@ void test_FolderShortcut(void) {
     ok(SUCCEEDED(hr), "IPersistFolder3_GetCurFolder failed! hr=0x%08lx\n", hr);
     ok(!pidlCurrentFolder, "IPersistFolder3_GetCurFolder should return a NULL pidl!\n");
                     
+    /* For FolderShortcut objects, the Initialize method initialized the folder's position in the
+     * shell namespace. The target folder, read from the property bag above, remains untouched. 
+     * The following tests show this: The itemidlist for some imaginary shellfolder object
+     * is created and the FolderShortcut is initialized with it. GetCurFolder now returns this
+     * itemidlist, but GetDisplayNameOf still returns the path from above.
+     */
+    hr = SHGetDesktopFolder(&pDesktopFolder);
+    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IShellFolder_ParseDisplayName(pDesktopFolder, NULL, NULL, wszWineTestFolder, NULL,
+                                       &pidlWineTestFolder, NULL);
+    IShellFolder_Release(pDesktopFolder);
+    ok (SUCCEEDED(hr), "IShellFolder::ParseDisplayName failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IPersistFolder3_Initialize(pPersistFolder3, pidlWineTestFolder);
+    todo_wine { ok (SUCCEEDED(hr), "IPersistFolder3::Initialize failed! hr = %08lx\n", hr); }
+    if (FAILED(hr)) {
+        IPersistFolder3_Release(pPersistFolder3);
+        ILFree(pidlWineTestFolder);
+        return;
+    }
+    
+    hr = IPersistFolder3_GetCurFolder(pPersistFolder3, &pidlCurrentFolder);
+    ok(SUCCEEDED(hr), "IPersistFolder3_GetCurFolder failed! hr=0x%08lx\n", hr);
+    ok(ILIsEqual(pidlCurrentFolder, pidlWineTestFolder), 
+        "IPersistFolder3_GetCurFolder should return pidlWineTestFolder!\n");
+    ILFree(pidlCurrentFolder);
+    ILFree(pidlWineTestFolder);
+ 
+    hr = IPersistFolder3_QueryInterface(pPersistFolder3, &IID_IShellFolder, (LPVOID*)&pShellFolder);
+    IPersistFolder3_Release(pPersistFolder3);
+    ok(SUCCEEDED(hr), "IPersistFolder3_QueryInterface(IShellFolder) failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IShellFolder_GetDisplayNameOf(pShellFolder, NULL, SHGDN_FORPARSING, &strret);
+    ok(SUCCEEDED(hr), "IShellFolder_GetDisplayNameOf(NULL) failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(pShellFolder);
+        return;
+    }
+
+    pStrRetToBufW(&strret, NULL, wszBuffer, MAX_PATH);
+    ok(!lstrcmpiW(wszDesktopPath, wszBuffer), "FolderShortcut returned incorrect folder!\n");
+
+    /* Next few lines are meant to show that children of FolderShortcuts are not FolderShortcuts,
+     * but ShellFSFolders. */
+    PathAddBackslashW(wszDesktopPath);
+    lstrcatW(wszDesktopPath, wszSomeSubFolder);
+    if (!CreateDirectoryW(wszDesktopPath, NULL)) {
+        IShellFolder_Release(pShellFolder);
+        return;
+    }
+    
+    hr = IShellFolder_ParseDisplayName(pShellFolder, NULL, NULL, wszSomeSubFolder, NULL, 
+                                       &pidlSubFolder, NULL);
+    RemoveDirectoryW(wszSomeSubFolder);
+    ok (SUCCEEDED(hr), "IShellFolder::ParseDisplayName failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(pShellFolder);
+        return;
+    }
+
+    hr = IShellFolder_BindToObject(pShellFolder, pidlSubFolder, NULL, &IID_IPersistFolder3, 
+                                   (LPVOID*)&pPersistFolder3);
+    IShellFolder_Release(pShellFolder);
+    ILFree(pidlSubFolder);
+    ok (SUCCEEDED(hr), "IShellFolder::BindToObject failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) 
+        return;
+
+    hr = IPersistFolder3_GetClassID(pPersistFolder3, &clsid);
+    ok(SUCCEEDED(hr), "IPersistFolder3_GetClassID failed! hr=0x%08lx\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_ShellFSFolder), "Unexpected CLSID!\n");
+
     IPersistFolder3_Release(pPersistFolder3);
 }
 
