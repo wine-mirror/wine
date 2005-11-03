@@ -30,13 +30,39 @@ typedef unsigned short wchar_t;
 #endif
 #endif
 
+#ifndef _INTPTR_T_DEFINED
+#ifdef  _WIN64
+typedef __int64 intptr_t;
+#else
+typedef int intptr_t;
+#endif
+#define _INTPTR_T_DEFINED
+#endif
+
+#ifndef _UINTPTR_T_DEFINED
+#ifdef  _WIN64
+typedef unsigned __int64 uintptr_t;
+#else
+typedef unsigned int uintptr_t;
+#endif
+#define _UINTPTR_T_DEFINED
+#endif
+
 #ifndef _PTRDIFF_T_DEFINED
+#ifdef _WIN64
+typedef __int64 ptrdiff_t;
+#else
 typedef int ptrdiff_t;
+#endif
 #define _PTRDIFF_T_DEFINED
 #endif
 
 #ifndef _SIZE_T_DEFINED
+#ifdef _WIN64
+typedef unsigned __int64 size_t;
+#else
 typedef unsigned int size_t;
+#endif
 #define _SIZE_T_DEFINED
 #endif
 
@@ -48,7 +74,11 @@ typedef unsigned int size_t;
 #endif
 #endif
 
+#ifdef _WIN64
+#define offsetof(s,m)       (size_t)((ptrdiff_t)&(((s*)NULL)->m))
+#else
 #define offsetof(s,m)       (size_t)&(((s*)NULL)->m)
+#endif
 
 
 #ifdef __cplusplus

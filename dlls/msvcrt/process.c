@@ -35,13 +35,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* INTERNAL: Spawn a child process */
-static int msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
+static MSVCRT_intptr_t msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
 {
   STARTUPINFOA si;
   PROCESS_INFORMATION pi;
-
-  if (sizeof(HANDLE) != sizeof(int))
-    WARN("This call is unsuitable for your architecture\n");
 
   if ((unsigned)flags > MSVCRT__P_DETACH)
   {
@@ -69,7 +66,7 @@ static int msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
     GetExitCodeProcess(pi.hProcess,&pi.dwProcessId);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
-    return (int)pi.dwProcessId;
+    return pi.dwProcessId;
   case MSVCRT__P_DETACH:
     CloseHandle(pi.hProcess);
     pi.hProcess = 0;
@@ -77,7 +74,7 @@ static int msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
   case MSVCRT__P_NOWAIT:
   case MSVCRT__P_NOWAITO:
     CloseHandle(pi.hThread);
-    return (int)pi.hProcess;
+    return (MSVCRT_intptr_t)pi.hProcess;
   case  MSVCRT__P_OVERLAY:
     MSVCRT__exit(0);
   }
@@ -186,7 +183,7 @@ static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
 /*********************************************************************
  *		_cwait (MSVCRT.@)
  */
-int _cwait(int *status, int pid, int action)
+MSVCRT_intptr_t _cwait(int *status, MSVCRT_intptr_t pid, int action)
 {
   HANDLE hPid = (HANDLE)pid;
   int doserrno;
@@ -201,7 +198,7 @@ int _cwait(int *status, int pid, int action)
       GetExitCodeProcess(hPid, &stat);
       *status = (int)stat;
     }
-    return (int)pid;
+    return pid;
   }
   doserrno = GetLastError();
 
@@ -222,11 +219,11 @@ int _cwait(int *status, int pid, int action)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _execl(const char* name, const char* arg0, ...)
+MSVCRT_intptr_t _execl(const char* name, const char* arg0, ...)
 {
   va_list ap;
   char * args;
-  int ret;
+  MSVCRT_intptr_t ret;
 
   va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -241,7 +238,7 @@ int _execl(const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_execle (MSVCRT.@)
  */
-int _execle(const char* name, const char* arg0, ...)
+MSVCRT_intptr_t _execle(const char* name, const char* arg0, ...)
 {
     FIXME("stub\n");
     return -1;
@@ -253,11 +250,11 @@ int _execle(const char* name, const char* arg0, ...)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _execlp(const char* name, const char* arg0, ...)
+MSVCRT_intptr_t _execlp(const char* name, const char* arg0, ...)
 {
   va_list ap;
   char * args;
-  int ret;
+  MSVCRT_intptr_t ret;
   char fullname[MAX_PATH];
 
   _searchenv(name, "PATH", fullname);
@@ -275,7 +272,7 @@ int _execlp(const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_execlpe (MSVCRT.@)
  */
-int _execlpe(const char* name, const char* arg0, ...)
+MSVCRT_intptr_t _execlpe(const char* name, const char* arg0, ...)
 {
     FIXME("stub\n");
     return -1;
@@ -287,7 +284,7 @@ int _execlpe(const char* name, const char* arg0, ...)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _execv(const char* name, char* const* argv)
+MSVCRT_intptr_t _execv(const char* name, char* const* argv)
 {
   return _spawnve(MSVCRT__P_OVERLAY, name, (const char* const*) argv, NULL);
 }
@@ -298,7 +295,7 @@ int _execv(const char* name, char* const* argv)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _execve(const char* name, char* const* argv, const char* const* envv)
+MSVCRT_intptr_t _execve(const char* name, char* const* argv, const char* const* envv)
 {
   return _spawnve(MSVCRT__P_OVERLAY, name, (const char* const*) argv, envv);
 }
@@ -309,7 +306,7 @@ int _execve(const char* name, char* const* argv, const char* const* envv)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _execvpe(const char* name, char* const* argv, const char* const* envv)
+MSVCRT_intptr_t _execvpe(const char* name, char* const* argv, const char* const* envv)
 {
   char fullname[MAX_PATH];
 
@@ -324,7 +321,7 @@ int _execvpe(const char* name, char* const* argv, const char* const* envv)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _execvp(const char* name, char* const* argv)
+MSVCRT_intptr_t _execvp(const char* name, char* const* argv)
 {
   return _execvpe(name, argv, NULL);
 }
@@ -335,11 +332,11 @@ int _execvp(const char* name, char* const* argv)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _spawnl(int flags, const char* name, const char* arg0, ...)
+MSVCRT_intptr_t _spawnl(int flags, const char* name, const char* arg0, ...)
 {
   va_list ap;
   char * args;
-  int ret;
+  MSVCRT_intptr_t ret;
 
   va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -354,12 +351,12 @@ int _spawnl(int flags, const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_spawnle (MSVCRT.@)
  */
-int _spawnle(int flags, const char* name, const char* arg0, ...)
+MSVCRT_intptr_t _spawnle(int flags, const char* name, const char* arg0, ...)
 {
     va_list ap;
     char *args, *envs = NULL;
     const char * const *envp;
-    int ret;
+    MSVCRT_intptr_t ret;
 
     va_start(ap, arg0);
     args = msvcrt_valisttos(arg0, ap, ' ');
@@ -385,11 +382,11 @@ int _spawnle(int flags, const char* name, const char* arg0, ...)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _spawnlp(int flags, const char* name, const char* arg0, ...)
+MSVCRT_intptr_t _spawnlp(int flags, const char* name, const char* arg0, ...)
 {
   va_list ap;
   char * args;
-  int ret;
+  MSVCRT_intptr_t ret;
   char fullname[MAX_PATH];
 
   _searchenv(name, "PATH", fullname);
@@ -407,12 +404,12 @@ int _spawnlp(int flags, const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_spawnlpe (MSVCRT.@)
  */
-int _spawnlpe(int flags, const char* name, const char* arg0, ...)
+MSVCRT_intptr_t _spawnlpe(int flags, const char* name, const char* arg0, ...)
 {
     va_list ap;
     char *args, *envs = NULL;
     const char * const *envp;
-    int ret;
+    MSVCRT_intptr_t ret;
     char fullname[MAX_PATH];
 
     _searchenv(name, "PATH", fullname);
@@ -440,13 +437,13 @@ int _spawnlpe(int flags, const char* name, const char* arg0, ...)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _spawnve(int flags, const char* name, const char* const* argv,
+MSVCRT_intptr_t _spawnve(int flags, const char* name, const char* const* argv,
                             const char* const* envv)
 {
   char * args = msvcrt_argvtos(argv,' ');
   char * envs = msvcrt_argvtos(envv,0);
   const char *fullname = name;
-  int ret = -1;
+  MSVCRT_intptr_t ret = -1;
 
   FIXME(":not translating name %s to locate program\n",fullname);
   TRACE(":call (%s), params (%s), env (%s)\n",debugstr_a(name),debugstr_a(args),
@@ -469,7 +466,7 @@ int _spawnve(int flags, const char* name, const char* const* argv,
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _spawnv(int flags, const char* name, const char* const* argv)
+MSVCRT_intptr_t _spawnv(int flags, const char* name, const char* const* argv)
 {
   return _spawnve(flags, name, argv, NULL);
 }
@@ -480,7 +477,7 @@ int _spawnv(int flags, const char* name, const char* const* argv)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _spawnvpe(int flags, const char* name, const char* const* argv,
+MSVCRT_intptr_t _spawnvpe(int flags, const char* name, const char* const* argv,
                             const char* const* envv)
 {
   char fullname[MAX_PATH];
@@ -494,7 +491,7 @@ int _spawnvpe(int flags, const char* name, const char* const* argv,
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-int _spawnvp(int flags, const char* name, const char* const* argv)
+MSVCRT_intptr_t _spawnvp(int flags, const char* name, const char* const* argv)
 {
   return _spawnvpe(flags, name, argv, NULL);
 }
@@ -635,15 +632,15 @@ int MSVCRT_system(const char* cmd)
 /*********************************************************************
  *		_loaddll (MSVCRT.@)
  */
-int _loaddll(const char* dllname)
+MSVCRT_intptr_t _loaddll(const char* dllname)
 {
-  return (int)LoadLibraryA(dllname);
+  return (MSVCRT_intptr_t)LoadLibraryA(dllname);
 }
 
 /*********************************************************************
  *		_unloaddll (MSVCRT.@)
  */
-int _unloaddll(int dll)
+int _unloaddll(MSVCRT_intptr_t dll)
 {
   if (FreeLibrary((HMODULE)dll))
     return 0;
@@ -658,7 +655,7 @@ int _unloaddll(int dll)
 /*********************************************************************
  *		_getdllprocaddr (MSVCRT.@)
  */
-void *_getdllprocaddr(int dll, const char *name, int ordinal)
+void *_getdllprocaddr(MSVCRT_intptr_t dll, const char *name, int ordinal)
 {
     if (name)
     {

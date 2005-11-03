@@ -70,7 +70,7 @@ static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
 /*********************************************************************
  *		_beginthread (MSVCRT.@)
  */
-unsigned long _beginthread(
+MSVCRT_uintptr_t _beginthread(
   MSVCRT__beginthread_start_routine_t start_address, /* [in] Start address of routine that begins execution of new thread */
   unsigned int stack_size, /* [in] Stack size for new thread or 0 */
   void *arglist)           /* [in] Argument list to be passed to new thread or NULL */
@@ -88,14 +88,14 @@ unsigned long _beginthread(
   trampoline->arglist = arglist;
 
   /* FIXME */
-  return (unsigned long)CreateThread(NULL, stack_size, _beginthread_trampoline,
+  return (MSVCRT_uintptr_t)CreateThread(NULL, stack_size, _beginthread_trampoline,
 				     trampoline, 0, NULL);
 }
 
 /*********************************************************************
  *		_beginthreadex (MSVCRT.@)
  */
-unsigned long _beginthreadex(
+MSVCRT_uintptr_t _beginthreadex(
   void *security,          /* [in] Security descriptor for new thread; must be NULL for Windows 9x applications */
   unsigned int stack_size, /* [in] Stack size for new thread or 0 */
   MSVCRT__beginthreadex_start_routine_t start_address, /* [in] Start address of routine that begins execution of new thread */
@@ -106,7 +106,7 @@ unsigned long _beginthreadex(
   TRACE("(%p, %d, %p, %p, %d, %p)\n", security, stack_size, start_address, arglist, initflag, thrdaddr);
 
   /* FIXME */
-  return (unsigned long)CreateThread(security, stack_size,
+  return (MSVCRT_uintptr_t)CreateThread(security, stack_size,
 				     (LPTHREAD_START_ROUTINE) start_address,
 				     arglist, initflag, (LPDWORD) thrdaddr);
 }

@@ -81,6 +81,8 @@ static void test_types(void)
     CHECK_TYPE(_ino_t);
     CHECK_TYPE(_fsize_t);
     CHECK_TYPE(size_t);
+    CHECK_TYPE(intptr_t);
+    CHECK_TYPE(uintptr_t);
     CHECK_TYPE(_dev_t);
     CHECK_TYPE(_off_t);
     CHECK_TYPE(clock_t);

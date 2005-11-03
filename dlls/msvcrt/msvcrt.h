@@ -50,7 +50,15 @@ typedef unsigned short MSVCRT_wint_t;
 typedef unsigned short MSVCRT_wctype_t;
 typedef unsigned short MSVCRT__ino_t;
 typedef unsigned long  MSVCRT__fsize_t;
-typedef unsigned int   MSVCRT_size_t;
+#ifdef _WIN64
+typedef unsigned __int64 MSVCRT_size_t;
+typedef __int64 MSVCRT_intptr_t;
+typedef unsigned __int64 MSVCRT_uintptr_t;
+#else
+typedef unsigned int MSVCRT_size_t;
+typedef int MSVCRT_intptr_t;
+typedef unsigned int MSVCRT_uintptr_t;
+#endif
 typedef unsigned int   MSVCRT__dev_t;
 typedef int  MSVCRT__off_t;
 typedef long MSVCRT_clock_t;
@@ -584,7 +592,7 @@ int            _write(int,const void*,unsigned int);
 int            _getch(void);
 int            _vsnwprintf(MSVCRT_wchar_t*,MSVCRT_size_t,const MSVCRT_wchar_t*,va_list);
 int            _ismbstrail(const unsigned char* start, const unsigned char* str);
-int            _spawnve(int,const char*,const char* const *,const char* const *);
+MSVCRT_intptr_t _spawnve(int,const char*,const char* const *,const char* const *);
 void           _searchenv(const char*,const char*,char*);
 int            _getdrive(void);
 char*          _strdup(const char*);
