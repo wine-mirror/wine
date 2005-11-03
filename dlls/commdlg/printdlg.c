@@ -1156,6 +1156,31 @@ static BOOL PRINTDLG_ChangePrinterW(HWND hDlg, WCHAR *name,
     return TRUE;
 }
 
+ /***********************************************************************
+ *           check_printer_setup			[internal]
+ */
+static LRESULT check_printer_setup(HWND hDlg)
+{
+    DWORD needed,num;
+    WCHAR resourcestr[256],resultstr[256];
+    int res;
+
+    EnumPrintersW(PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &needed, &num);
+    if(needed == 0)
+    {
+          EnumPrintersW(PRINTER_ENUM_CONNECTIONS, NULL, 2, NULL, 0, &needed, &num);
+    }
+    if(needed > 0)
+          return TRUE;
+    else
+    {
+          LoadStringW(COMDLG32_hInstance, PD32_NO_DEVICES,resultstr, 255);
+          LoadStringW(COMDLG32_hInstance, PD32_PRINT_TITLE,resourcestr, 255);
+          res = MessageBoxW(hDlg, resultstr, resourcestr,MB_OK | MB_ICONWARNING);
+          return FALSE;
+    }
+}
+
 /***********************************************************************
  *           PRINTDLG_WMInitDialog                      [internal]
  */
@@ -1740,6 +1765,11 @@ static INT_PTR CALLBACK PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
     } else {
         PrintStructures = (PRINT_PTRA*) lParam;
 	SetPropA(hDlg,"__WINE_PRINTDLGDATA",PrintStructures);
+        if(!check_printer_setup(hDlg))
+        {
+            EndDialog(hDlg,FALSE);
+            return FALSE;
+        }
 	res = PRINTDLG_WMInitDialog(hDlg, wParam, PrintStructures);
 
 	if(PrintStructures->lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
@@ -1785,6 +1815,11 @@ static INT_PTR CALLBACK PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
     } else {
         PrintStructures = (PRINT_PTRW*) lParam;
 	SetPropW(hDlg, propW, PrintStructures);
+        if(!check_printer_setup(hDlg))
+        {
+            EndDialog(hDlg,FALSE);
+            return FALSE;
+        }
 	res = PRINTDLG_WMInitDialogW(hDlg, wParam, PrintStructures);
 
 	if(PrintStructures->lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
