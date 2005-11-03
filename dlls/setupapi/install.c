@@ -906,14 +906,23 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
  */
 void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, INT show )
 {
-    WCHAR *p, *path, section[MAX_PATH];
+#ifdef __i386__
+    static const WCHAR nt_platformW[] = {'.','n','t','x','8','6',0};
+#elif defined(__x86_64)
+    static const WCHAR nt_platformW[] = {'.','n','t','i','a','6','4',0};
+#else  /* FIXME: other platforms */
+    static const WCHAR nt_platformW[] = {'.','n','t',0};
+#endif
+    static const WCHAR nt_genericW[] = {'.','n','t',0};
+
+    WCHAR *p, *path, section[MAX_PATH + sizeof(nt_platformW)/sizeof(WCHAR)];
     void *callback_context;
     UINT mode;
     HINF hinf;
 
     TRACE("hwnd %p, handle %p, cmdline %s\n", hwnd, handle, debugstr_w(cmdline));
 
-    lstrcpynW( section, cmdline, sizeof(section)/sizeof(WCHAR) );
+    lstrcpynW( section, cmdline, MAX_PATH );
 
     if (!(p = strchrW( section, ' ' ))) return;
     *p++ = 0;
@@ -926,6 +935,22 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
 
     hinf = SetupOpenInfFileW( path, NULL, INF_STYLE_WIN4, NULL );
     if (hinf == INVALID_HANDLE_VALUE) return;
+
+    if (!(GetVersion() & 0x80000000))
+    {
+        INFCONTEXT context;
+
+        /* check for <section>.ntx86 (or corresponding name for the current platform)
+         * and then <section>.nt */
+        p = section + strlenW(section);
+        memcpy( p, nt_platformW, sizeof(nt_platformW) );
+        if (!(SetupFindFirstLineW( hinf, section, NULL, &context )))
+        {
+            memcpy( p, nt_genericW, sizeof(nt_genericW) );
+            if (!(SetupFindFirstLineW( hinf, section, NULL, &context ))) *p = 0;
+        }
+        if (*p) TRACE( "using section %s instead\n", debugstr_w(section) );
+    }
 
     callback_context = SetupInitDefaultQueueCallback( hwnd );
     SetupInstallFromInfSectionW( hwnd, hinf, section, SPINST_ALL, NULL, NULL, SP_COPY_NEWER,
