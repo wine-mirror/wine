@@ -432,7 +432,7 @@ static BOOL  select_font(struct dialog_info* di)
 
     WCUSER_FillLogFont(&lf, di->font[size_idx].faceName,
                        di->font[size_idx].height, di->font[size_idx].weight);
-    hFont = WCUSER_CopyFont(&config, PRIVATE(di->data)->hWnd, &lf);
+    hFont = WCUSER_CopyFont(&config, PRIVATE(di->data)->hWnd, &lf, NULL);
     if (!hFont) return FALSE;
 
     if (config.cell_height != di->font[size_idx].height)
@@ -571,7 +571,7 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
                 WCUSER_FillLogFont(&lf, di->font[val].faceName,
                                    di->font[val].height, di->font[val].weight);
                 DeleteObject(WCUSER_CopyFont(&di->config,
-                                             PRIVATE(di->data)->hWnd, &lf));
+                                             PRIVATE(di->data)->hWnd, &lf, NULL));
             }
 
             val = (GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0) << 4) |

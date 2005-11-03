@@ -50,6 +50,8 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
     HFONT		hOldFont;
     WORD		attr;
     WCHAR*		line;
+    RECT                r;
+    HBRUSH              hbr;
 
     /* no font has been set up yet, don't worry about filling the bitmap,
      * we'll do it once a font is chosen
@@ -77,6 +79,16 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
 	    }
 	    TextOut(PRIVATE(data)->hMemDC, i * data->curcfg.cell_width, j * data->curcfg.cell_height,
 		    line, k - i);
+            if (PRIVATE(data)->ext_leading && 
+                (hbr = CreateSolidBrush(WCUSER_ColorMap[(attr>>4)&0x0F])))
+            {
+                r.left   = i * data->curcfg.cell_width;
+                r.top    = (j + 1) * data->curcfg.cell_height - PRIVATE(data)->ext_leading;
+                r.right  = k * data->curcfg.cell_width;
+                r.bottom = (j + 1) * data->curcfg.cell_height;
+                FillRect(PRIVATE(data)->hMemDC, &r, hbr);
+                DeleteObject(hbr);
+            }
 	    i = k - 1;
 	}
     }
@@ -410,7 +422,7 @@ static int CALLBACK get_first_font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
  * get the relevant information from the font described in lf and store them
  * in config
  */
-HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf)
+HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf, LONG* el)
 {
     TEXTMETRIC  tm;
     HDC         hDC;
@@ -461,6 +473,7 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf)
     config->cell_height = tm.tmHeight + tm.tmExternalLeading;
     config->font_weight = tm.tmWeight;
     lstrcpy(config->face_name, lf->lfFaceName);
+    if (el) *el = tm.tmExternalLeading;
 
     return hFont;
  err:
@@ -503,15 +516,17 @@ void    WCUSER_FillLogFont(LOGFONT* lf, const WCHAR* name, UINT height, UINT wei
 BOOL	WCUSER_SetFont(struct inner_data* data, const LOGFONT* logfont)
 {
     HFONT       hFont;
+    LONG        el;
 
     if (PRIVATE(data)->hFont != 0 && WCUSER_AreFontsEqual(&data->curcfg, logfont))
         return TRUE;
 
-    hFont = WCUSER_CopyFont(&data->curcfg, PRIVATE(data)->hWnd, logfont);
+    hFont = WCUSER_CopyFont(&data->curcfg, PRIVATE(data)->hWnd, logfont, &el);
     if (!hFont) {WINE_ERR("wrong font\n"); return FALSE;}
 
     if (PRIVATE(data)->hFont) DeleteObject(PRIVATE(data)->hFont);
     PRIVATE(data)->hFont = hFont;
+    PRIVATE(data)->ext_leading = el;
 
     WCUSER_ComputePositions(data);
     WCUSER_NewBitmap(data);

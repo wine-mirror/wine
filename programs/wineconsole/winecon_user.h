@@ -30,6 +30,7 @@ struct inner_data_user {
     /* the following fields are only user by the USER backend (should be hidden in user) */
     HWND		hWnd;		/* handle to windows for rendering */
     HFONT		hFont;		/* font used for rendering, usually fixed */
+    LONG                ext_leading;    /* external leading for hFont */
     HDC			hMemDC;		/* memory DC holding the bitmap below */
     HBITMAP		hBitmap;	/* bitmap of display window content */
     HMENU               hPopMenu;       /* popup menu triggered by right mouse click */
@@ -50,7 +51,8 @@ extern BOOL WCUSER_ValidateFontMetric(const struct inner_data* data,
                                       const TEXTMETRIC* tm, DWORD fontType);
 extern BOOL WCUSER_AreFontsEqual(const struct config_data* config,
                                  const LOGFONT* lf);
-extern HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf);
+extern HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf,
+                             LONG* el);
 extern void WCUSER_FillLogFont(LOGFONT* lf, const WCHAR* name,
                                UINT height, UINT weight);
 
