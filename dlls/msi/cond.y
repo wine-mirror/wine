@@ -207,24 +207,24 @@ boolean_factor:
 
 operator:
     /* common functions */
-    COND_EQ { $$ = COND_EQ }
-  | COND_NE { $$ = COND_NE }
-  | COND_LT { $$ = COND_LT }
-  | COND_GT { $$ = COND_GT }
-  | COND_LE { $$ = COND_LE }
-  | COND_GE { $$ = COND_GE }
-  | COND_SS { $$ = COND_SS }
-  | COND_IEQ { $$ = COND_IEQ }
-  | COND_INE { $$ = COND_INE }
-  | COND_ILT { $$ = COND_ILT }
-  | COND_IGT { $$ = COND_IGT }
-  | COND_ILE { $$ = COND_ILE }
-  | COND_IGE { $$ = COND_IGE }
-  | COND_ISS { $$ = COND_ISS }
-  | COND_LHS { $$ = COND_LHS }
-  | COND_RHS { $$ = COND_RHS }
-  | COND_ILHS { $$ = COND_ILHS }
-  | COND_IRHS { $$ = COND_IRHS }
+    COND_EQ { $$ = COND_EQ; }
+  | COND_NE { $$ = COND_NE; }
+  | COND_LT { $$ = COND_LT; }
+  | COND_GT { $$ = COND_GT; }
+  | COND_LE { $$ = COND_LE; }
+  | COND_GE { $$ = COND_GE; }
+  | COND_SS { $$ = COND_SS; }
+  | COND_IEQ { $$ = COND_IEQ; }
+  | COND_INE { $$ = COND_INE; }
+  | COND_ILT { $$ = COND_ILT; }
+  | COND_IGT { $$ = COND_IGT; }
+  | COND_ILE { $$ = COND_ILE; }
+  | COND_IGE { $$ = COND_IGE; }
+  | COND_ISS { $$ = COND_ISS; }
+  | COND_LHS { $$ = COND_LHS; }
+  | COND_RHS { $$ = COND_RHS; }
+  | COND_ILHS { $$ = COND_ILHS; }
+  | COND_IRHS { $$ = COND_IRHS; }
     ;
 
 value_s:
