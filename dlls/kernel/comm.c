@@ -2095,7 +2095,6 @@ static BOOL COMM_WaitCommEvent(
     {
 	TRACE("Event already met\n");
 	*lpdwEvents = result_mask;
-	release_comm_fd( commio->handle, fd );
 	HeapFree(GetProcessHeap(), 0, commio );
 	res = TRUE;
     }
@@ -2105,10 +2104,12 @@ static BOOL COMM_WaitCommEvent(
 	SetLastError(ERROR_IO_PENDING);
 	res = FALSE;
     }
+    release_comm_fd( hFile, fd );
     return res;
 #if !defined(TIOCINQ) || (!(defined(TIOCSERGETLSR) && defined(TIOCSER_TEMT)) || !defined(TIOCINQ)) || !defined(TIOCMGET) || !defined(TIOCM_CTS) ||!defined(TIOCM_DSR) || !defined(TIOCM_RNG) || !defined(TIOCM_CAR)
  error:
     FIXME("Returning error because of missing capabilities\n");
+    release_comm_fd( hFile, fd );
     HeapFree(GetProcessHeap(), 0, commio );
     SetLastError(ERROR_INVALID_PARAMETER);
     return FALSE;
