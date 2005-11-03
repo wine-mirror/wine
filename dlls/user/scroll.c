@@ -1085,19 +1085,18 @@ void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
     {
         if (!GetMessageW( &msg, 0, 0, 0 )) break;
         if (CallMsgFilterW( &msg, MSGF_SCROLLBAR )) continue;
-        switch(msg.message)
+        if (msg.message == WM_LBUTTONUP ||
+            msg.message == WM_MOUSEMOVE ||
+            (msg.message == WM_SYSTIMER && msg.wParam == SCROLL_TIMER))
         {
-        case WM_LBUTTONUP:
-        case WM_MOUSEMOVE:
-        case WM_SYSTIMER:
             pt.x = (short)LOWORD(msg.lParam) + xoffset;
             pt.y = (short)HIWORD(msg.lParam) + yoffset;
             SCROLL_HandleScrollEvent( hwnd, scrollbar, msg.message, pt );
-            break;
-        default:
+        }
+        else
+        {
             TranslateMessage( &msg );
             DispatchMessageW( &msg );
-            break;
         }
         if (!IsWindow( hwnd ))
         {
