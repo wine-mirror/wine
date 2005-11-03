@@ -393,6 +393,21 @@ HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved )
 }
 
 /***********************************************************************
+ *             ExtractFiles    (ADVPACK.@)
+ *
+ * BUGS
+ *   Unimplemented
+ */
+
+HRESULT WINAPI ExtractFiles ( LPCSTR CabName, LPCSTR ExpandDir, DWORD Flags,
+                              LPCSTR FileList, LPVOID LReserved, DWORD Reserved)
+{
+    FIXME("(%p %p 0x%08lx %p %p 0x%08lx): stub\n", CabName, ExpandDir, Flags, 
+          FileList, LReserved, Reserved);
+    return E_FAIL;
+}
+
+/***********************************************************************
  *             TranslateInfString    (ADVPACK.@)
  *
  * BUGS

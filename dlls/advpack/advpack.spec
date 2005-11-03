@@ -6,7 +6,7 @@
 @ stdcall -private DllMain(long long ptr)
 @ stdcall DoInfInstall(ptr)
 @ stdcall ExecuteCab(ptr ptr ptr)
-@ stub ExtractFiles
+@ stdcall ExtractFiles(str str long ptr ptr long)
 @ stub FileSaveMarkNotExist
 @ stub FileSaveRestore
 @ stub FileSaveRestoreOnINF
