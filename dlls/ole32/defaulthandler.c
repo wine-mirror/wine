@@ -1339,13 +1339,23 @@ static void WINAPI DefaultHandler_IAdviseSink_OnRename(
     IAdviseSink *iface,
     IMoniker *pmk)
 {
-    FIXME(": stub\n");
+    DefaultHandler *This = impl_from_IAdviseSink(iface);
+
+    TRACE("(%p)\n", pmk);
+
+    if (This->oleAdviseHolder)
+        IOleAdviseHolder_SendOnRename(This->oleAdviseHolder, pmk);
 }
 
 static void WINAPI DefaultHandler_IAdviseSink_OnSave(
     IAdviseSink *iface)
 {
-    FIXME(": stub\n");
+    DefaultHandler *This = impl_from_IAdviseSink(iface);
+
+    TRACE("()\n");
+
+    if (This->oleAdviseHolder)
+        IOleAdviseHolder_SendOnSave(This->oleAdviseHolder);
 }
 
 static void WINAPI DefaultHandler_IAdviseSink_OnClose(
@@ -1355,7 +1365,8 @@ static void WINAPI DefaultHandler_IAdviseSink_OnClose(
     
     TRACE("()\n");
 
-    IOleAdviseHolder_SendOnClose(This->oleAdviseHolder);
+    if (This->oleAdviseHolder)
+        IOleAdviseHolder_SendOnClose(This->oleAdviseHolder);
 
     DefaultHandler_Stop(This);
 }
