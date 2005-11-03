@@ -36,6 +36,9 @@ C_SRCS = \
 	undname.c \
 	wcs.c
 
+RC_SRCS = \
+	rsrc.rc
+
 SUBDIRS = tests
 
 @MAKE_DLL_RULES@
