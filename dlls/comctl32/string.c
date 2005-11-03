@@ -40,6 +40,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(commctrl);
 
+INT WINAPI StrCmpNA(LPCSTR, LPCSTR, INT);
+INT WINAPI StrCmpNW(LPCWSTR, LPCWSTR, INT);
+INT WINAPI StrCmpNIA(LPCSTR, LPCSTR, INT);
+INT WINAPI StrCmpNIW(LPCWSTR, LPCWSTR, INT);
+
 /*************************************************************************
  * COMCTL32_ChrCmpHelperA
  *
@@ -180,7 +185,7 @@ LPSTR WINAPI StrChrA(LPCSTR lpszStr, WORD ch)
  * Internal implementation of StrStrA/StrStrIA
  */
 static LPSTR COMCTL32_StrStrHelperA(LPCSTR lpszStr, LPCSTR lpszSearch,
-                                    int (*pStrCmpFn)(LPCSTR,LPCSTR,size_t))
+                                    INT (WINAPI *pStrCmpFn)(LPCSTR,LPCSTR,INT))
 {
   size_t iLen;
 
@@ -204,7 +209,7 @@ static LPSTR COMCTL32_StrStrHelperA(LPCSTR lpszStr, LPCSTR lpszSearch,
  * Internal implementation of StrStrW/StrStrIW
  */
 static LPWSTR COMCTL32_StrStrHelperW(LPCWSTR lpszStr, LPCWSTR lpszSearch,
-                                     int (*pStrCmpFn)(LPCWSTR,LPCWSTR,int))
+                                     INT (WINAPI *pStrCmpFn)(LPCWSTR,LPCWSTR,INT))
 {
   int iLen;
 
@@ -238,7 +243,7 @@ LPSTR WINAPI StrStrIA(LPCSTR lpszStr, LPCSTR lpszSearch)
 {
   TRACE("(%s,%s)\n", debugstr_a(lpszStr), debugstr_a(lpszSearch));
 
-  return COMCTL32_StrStrHelperA(lpszStr, lpszSearch, strncasecmp);
+  return COMCTL32_StrStrHelperA(lpszStr, lpszSearch, StrCmpNIA);
 }
 
 /**************************************************************************
@@ -267,7 +272,7 @@ LPWSTR WINAPI StrStrIW(LPCWSTR lpszStr, LPCWSTR lpszSearch)
 {
   TRACE("(%s,%s)\n", debugstr_w(lpszStr), debugstr_w(lpszSearch));
 
-  return COMCTL32_StrStrHelperW(lpszStr, lpszSearch, strncmpiW);
+  return COMCTL32_StrStrHelperW(lpszStr, lpszSearch, StrCmpNIW);
 }
 
 /**************************************************************************
@@ -381,7 +386,7 @@ INT WINAPI StrCmpNA(LPCSTR lpszStr, LPCSTR lpszComp, INT iLen)
  *  An integer less than, equal to or greater than 0, indicating that
  *  lpszStr is less than, the same, or greater than lpszComp.
  */
-int WINAPI StrCmpNIA(LPCSTR lpszStr, LPCSTR lpszComp, int iLen)
+INT WINAPI StrCmpNIA(LPCSTR lpszStr, LPCSTR lpszComp, INT iLen)
 {
   INT iRet;
 
@@ -396,7 +401,7 @@ int WINAPI StrCmpNIA(LPCSTR lpszStr, LPCSTR lpszComp, int iLen)
  *
  * See StrCmpNIA.
  */
-INT WINAPI StrCmpNIW(LPCWSTR lpszStr, LPCWSTR lpszComp, int iLen)
+INT WINAPI StrCmpNIW(LPCWSTR lpszStr, LPCWSTR lpszComp, INT iLen)
 {
   INT iRet;
 
@@ -504,7 +509,7 @@ LPSTR WINAPI StrStrA(LPCSTR lpszStr, LPCSTR lpszSearch)
 {
   TRACE("(%s,%s)\n", debugstr_a(lpszStr), debugstr_a(lpszSearch));
 
-  return COMCTL32_StrStrHelperA(lpszStr, lpszSearch, strncmp);
+  return COMCTL32_StrStrHelperA(lpszStr, lpszSearch, StrCmpNA);
 }
 
 /**************************************************************************
@@ -516,7 +521,7 @@ LPWSTR WINAPI StrStrW(LPCWSTR lpszStr, LPCWSTR lpszSearch)
 {
   TRACE("(%s,%s)\n", debugstr_w(lpszStr), debugstr_w(lpszSearch));
 
-  return COMCTL32_StrStrHelperW(lpszStr, lpszSearch, strncmpW);
+  return COMCTL32_StrStrHelperW(lpszStr, lpszSearch, StrCmpNW);
 }
 
 /*************************************************************************
