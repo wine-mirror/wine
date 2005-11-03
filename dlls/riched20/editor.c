@@ -821,6 +821,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nUDArrowX = -1;
   ed->nSequence = 0;
   ed->rgbBackColor = -1;
+  ed->hbrBackground = GetSysColorBrush(COLOR_WINDOW);
   ed->bCaretAtEnd = FALSE;
   ed->nEventMask = 0;
   ed->nModifyStep = 0;
@@ -926,7 +927,8 @@ void ME_DestroyEditor(ME_TextEditor *editor)
     if (editor->pFontCache[i].hFont)
       DeleteObject(editor->pFontCache[i].hFont);
   }
-    
+  DeleteObject(editor->hbrBackground);
+
   FREE_OBJ(editor);
 }
 
@@ -1265,10 +1267,18 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_SETBKGNDCOLOR:
   {
     LRESULT lColor = ME_GetBackColor(editor);
+    if (editor->rgbBackColor != -1)
+      DeleteObject(editor->hbrBackground);
     if (wParam)
+    {
       editor->rgbBackColor = -1;
+      editor->hbrBackground = GetSysColorBrush(COLOR_WINDOW);
+    }
     else
+    {
       editor->rgbBackColor = lParam;
+      editor->hbrBackground = CreateSolidBrush(editor->rgbBackColor);
+    }
     if (editor->bRedraw)
     {
       InvalidateRect(hWnd, NULL, TRUE);
@@ -1792,12 +1802,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     {
       HDC hDC = (HDC)wParam;
       RECT rc;
-      COLORREF rgbBG = ME_GetBackColor(editor);
       if (GetUpdateRect(hWnd,&rc,TRUE))
       {
-        HBRUSH hbr = CreateSolidBrush(rgbBG);
-        FillRect(hDC, &rc, hbr);
-        DeleteObject(hbr);
+        FillRect(hDC, &rc, editor->hbrBackground);
       }
     }
     return 1;

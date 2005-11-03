@@ -78,14 +78,11 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, RECT *rcUpda
     }
 
     if (ye>ys) {
-      HBRUSH hbr;
-      hbr = CreateSolidBrush(ME_GetBackColor(c.editor));
       rc.left = xs;
       rc.top = ys;
       rc.right = xe;
       rc.bottom = ye;
-      FillRect(hDC, &rc, hbr);
-      DeleteObject(hbr);
+      FillRect(hDC, &rc, c.editor->hbrBackground);
     }
     if (ys == c.pt.y) /* don't overwrite the top bar */
       ys++;
