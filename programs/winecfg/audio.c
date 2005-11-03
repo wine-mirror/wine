@@ -168,7 +168,7 @@ static const char *audioAutoDetect(void)
 
   const char *driversFound[10];
   const char *name[10];
-  int numFound = 0;
+  int numFound = 0,i;
 
   argv_new[0] = "/bin/sh";
   argv_new[1] = "-c";
@@ -234,7 +234,13 @@ static const char *audioAutoDetect(void)
   {
     /* TODO: possibly smarter handling of multiple drivers? */
     char text[128];
-    snprintf(text, sizeof(text), "Found %s", name[0]);
+    sprintf(text, "Found ");
+    for(i=0;i<numFound;i++)
+    {
+      strcat(text, name[i]);
+      if(i != numFound-1)
+        strcat(text,", ");
+    }
     MessageBox(NULL, (LPCTSTR)text, "Successful", MB_OK);
     return driversFound[0];
   }
