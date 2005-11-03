@@ -2466,6 +2466,7 @@ static HRESULT WINAPI
 ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
 {
     IShellLinkImpl *This = impl_from_IContextMenu(iface);
+    static const WCHAR szOpen[] = { 'O','p','e','n',0 };
     SHELLEXECUTEINFOW sei;
     HWND hwnd = NULL; /* FIXME: get using interface set from IObjectWithSite */
     LPWSTR args = NULL;
@@ -2500,7 +2501,7 @@ ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
          ( lpici->fMask & CMIC_MASK_UNICODE ) )
     {
         LPCMINVOKECOMMANDINFOEX iciex = (LPCMINVOKECOMMANDINFOEX) lpici;
-        DWORD len = 0;
+        DWORD len = 2;
 
         if ( This->sArgs )
             len += lstrlenW( This->sArgs );
@@ -2512,19 +2513,32 @@ ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
         if ( This->sArgs )
             lstrcatW( args, This->sArgs );
         if ( iciex->lpParametersW )
+        {
+            static const WCHAR space[] = { ' ', 0 };
+            lstrcatW( args, space );
             lstrcatW( args, iciex->lpParametersW );
+        }
     }
 
     memset( &sei, 0, sizeof sei );
     sei.cbSize = sizeof sei;
+    sei.fMask = SEE_MASK_UNICODE | SEE_MASK_NOCLOSEPROCESS;
     sei.lpFile = path;
     sei.nShow = This->iShowCmd;
     sei.lpIDList = This->pPidl;
     sei.lpDirectory = This->sWorkDir;
     sei.lpParameters = args;
+    sei.lpVerb = szOpen;
 
     if( ShellExecuteExW( &sei ) )
+    {
+        if ( sei.hProcess )
+        {
+            WaitForSingleObject( sei.hProcess, 10000 );
+            CloseHandle( sei.hProcess );
+        }
         r = S_OK;
+    }
     else
         r = E_FAIL;
 
