@@ -85,7 +85,7 @@ extern BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len);
 extern void WINECON_FetchCells(struct inner_data* data, int upd_tp, int upd_bm);
 extern int  WINECON_GrabChanges(struct inner_data* data);
 extern VOID WINECON_SetConfig(struct inner_data* data,
-                              const struct config_data* cfg, BOOL force);
+                              const struct config_data* cfg);
 /* from registry.c */
 extern void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg);
 extern void WINECON_RegSave(const struct config_data* cfg);

@@ -372,10 +372,9 @@ int	WINECON_GrabChanges(struct inner_data* data)
  * of server side equivalent and visual parts.
  * If force is FALSE, only the changed items are modified.
  */
-void     WINECON_SetConfig(struct inner_data* data,
-                           const struct config_data* cfg, BOOL force)
+void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cfg)
 {
-    if (force || data->curcfg.cursor_size != cfg->cursor_size ||
+    if (data->curcfg.cursor_size != cfg->cursor_size ||
         data->curcfg.cursor_visible != cfg->cursor_visible)
     {
         CONSOLE_CURSOR_INFO cinfo;
@@ -390,23 +389,23 @@ void     WINECON_SetConfig(struct inner_data* data,
         /* this shall update (through notif) curcfg */
         SetConsoleCursorInfo(data->hConOut, &cinfo);
     }
-    if (force || data->curcfg.history_size != cfg->history_size)
+    if (data->curcfg.history_size != cfg->history_size)
     {
         data->curcfg.history_size = cfg->history_size;
         WINECON_SetHistorySize(data->hConIn, cfg->history_size);
     }
-    if (force || data->curcfg.history_nodup != cfg->history_nodup)
+    if (data->curcfg.history_nodup != cfg->history_nodup)
     {
         data->curcfg.history_nodup = cfg->history_nodup;
         WINECON_SetHistoryMode(data->hConIn, cfg->history_nodup);
     }
     data->curcfg.menu_mask = cfg->menu_mask;
     data->curcfg.quick_edit = cfg->quick_edit;
-    if (force || 1 /* FIXME: font info has changed */)
+    if (1 /* FIXME: font info has changed */)
     {
         data->fnSetFont(data, cfg->face_name, cfg->cell_height, cfg->font_weight);
     }
-    if (force || data->curcfg.def_attr != cfg->def_attr)
+    if (data->curcfg.def_attr != cfg->def_attr)
     {
         data->curcfg.def_attr = cfg->def_attr;
         SetConsoleTextAttribute(data->hConOut, cfg->def_attr);
@@ -420,8 +419,8 @@ void     WINECON_SetConfig(struct inner_data* data,
      * for <B> (window / ScreenBuffer) 
      * The Change<A><B> actually modify the <B> dimension of <A>.
      */
-#define TstSBfWidth()   (force || data->curcfg.sb_width != cfg->sb_width)
-#define TstWinWidth()   (force || data->curcfg.win_width != cfg->win_width)
+#define TstSBfWidth()   (data->curcfg.sb_width != cfg->sb_width)
+#define TstWinWidth()   (data->curcfg.win_width != cfg->win_width)
 
 #define ChgSBfWidth()   do {c.X = cfg->sb_width; \
                             c.Y = data->curcfg.sb_height;\
@@ -432,8 +431,8 @@ void     WINECON_SetConfig(struct inner_data* data,
                             pos.Bottom = 0; \
                             SetConsoleWindowInfo(data->hConOut, FALSE, &pos);\
                         } while (0)
-#define TstSBfHeight()  (force || data->curcfg.sb_height != cfg->sb_height)
-#define TstWinHeight()  (force || data->curcfg.win_height != cfg->win_height)
+#define TstSBfHeight()  (data->curcfg.sb_height != cfg->sb_height)
+#define TstWinHeight()  (data->curcfg.win_height != cfg->win_height)
 
 /* since we're going to apply height after width is done, we use width as defined 
  * in cfg, and not in data->curcfg because if won't be updated yet */
@@ -495,7 +494,7 @@ void     WINECON_SetConfig(struct inner_data* data,
 #undef ChgWinHeight
 
     data->curcfg.exit_on_die = cfg->exit_on_die;
-    if (force || data->curcfg.edition_mode != cfg->edition_mode)
+    if (data->curcfg.edition_mode != cfg->edition_mode)
     {
         data->curcfg.edition_mode = cfg->edition_mode;
         WINECON_SetEditionMode(data->hConIn, cfg->edition_mode);
@@ -521,6 +520,48 @@ static void WINECON_Delete(struct inner_data* data)
     if (data->hSynchro)		CloseHandle(data->hSynchro);
     HeapFree(GetProcessHeap(), 0, data->cells);
     HeapFree(GetProcessHeap(), 0, data);
+}
+
+/******************************************************************
+ *		WINECON_GetServerConfig
+ *
+ * Fills data->curcfg with the actual configuration running in the server
+ * (getting real information on the server, and not relying on cached 
+ * information in data)
+ */
+static BOOL WINECON_GetServerConfig(struct inner_data* data)
+{
+    BOOL        ret;
+
+    SERVER_START_REQ(get_console_input_info)
+    {
+        req->handle = data->hConIn;
+        ret = !wine_server_call_err( req );
+        data->curcfg.history_size = reply->history_size;
+        data->curcfg.history_nodup = reply->history_mode;
+        data->curcfg.edition_mode = reply->edition_mode;
+    }
+    SERVER_END_REQ;
+    if (!ret) return FALSE;
+    SERVER_START_REQ(get_console_output_info)
+    {
+        req->handle = data->hConOut;
+        ret = !wine_server_call_err( req );
+        data->curcfg.cursor_size = reply->cursor_size;
+        data->curcfg.cursor_visible = reply->cursor_visible;
+        data->curcfg.def_attr = reply->attr;
+        data->curcfg.sb_width = reply->width;
+        data->curcfg.sb_height = reply->height;
+        data->curcfg.win_width = reply->win_right - reply->win_left + 1;
+        data->curcfg.win_height = reply->win_bottom - reply->win_top + 1;
+    }
+    SERVER_END_REQ;
+    WINECON_DumpConfig("first cfg: ", &data->curcfg);
+    data->cells = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                            data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
+    if (!data->cells) WINECON_Fatal("OOM\n");
+
+    return ret;
 }
 
 /******************************************************************
@@ -613,7 +654,8 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     switch ((*backend)(data))
     {
     case init_success:
-        WINECON_SetConfig(data, &cfg, TRUE);
+        WINECON_GetServerConfig(data);
+        WINECON_SetConfig(data, &cfg);
         data->curcfg.registry = cfg.registry;
         WINECON_DumpConfig("fint", &data->curcfg);
         return data;

@@ -844,7 +844,7 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
         }
     }
 
-    if (modify_session) WINECON_SetConfig(data, &di.config, FALSE);
+    if (modify_session) WINECON_SetConfig(data, &di.config);
     if (save)           WINECON_RegSave(&di.config);
 
     return TRUE;
