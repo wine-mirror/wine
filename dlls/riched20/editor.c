@@ -83,7 +83,7 @@
   - EM_PASTESPECIAL
   + EM_POSFROMCHAR
   + EM_REDO 2.0
-  - EM_REQUESTRESIZE
+  + EM_REQUESTRESIZE
   + EM_REPLACESEL (proper style?) ANSI&Unicode
   - EM_SCROLL
   - EM_SCROLLCARET
@@ -153,7 +153,7 @@
   - EN_MSGFILTER
   - EN_OLEOPFAILED
   - EN_PROTECTED
-  - EN_REQUESTRESIZE
+  + EN_REQUESTRESIZE
   - EN_SAVECLIPBOARD
   + EN_SELCHANGE 
   + EN_SETFOCUS
@@ -633,6 +633,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   }
   ME_MoveCaret(editor);
   ME_SendSelChange(editor);
+  ME_SendRequestResize(editor, FALSE);
 
   return 0;
 }
@@ -1134,7 +1135,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_HIDESELECTION)
   UNSUPPORTED_MSG(EM_LIMITTEXT) /* also known as EM_SETLIMITTEXT */
   UNSUPPORTED_MSG(EM_PASTESPECIAL)
-  UNSUPPORTED_MSG(EM_REQUESTRESIZE)
   UNSUPPORTED_MSG(EM_SCROLL)
   UNSUPPORTED_MSG(EM_SCROLLCARET)
   UNSUPPORTED_MSG(EM_SELECTIONTYPE)
@@ -1974,6 +1974,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       ME_RewrapRepaint(editor);
     return 0;
   }
+  case EM_REQUESTRESIZE:
+    ME_SendRequestResize(editor, TRUE);
+    return 0;
   case WM_SETREDRAW:
     editor->bRedraw = wParam;
     return 0;

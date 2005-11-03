@@ -90,6 +90,8 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, RECT *rcUpda
     if (ys == c.pt.y) /* don't overwrite the top bar */
       ys++;
   }
+  if (editor->nTotalLength != editor->nLastTotalLength)
+    ME_SendRequestResize(editor, FALSE);
   editor->nLastTotalLength = editor->nTotalLength;
   ME_DestroyContext(&c);
 }
