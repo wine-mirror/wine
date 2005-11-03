@@ -1159,30 +1159,30 @@ static void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *
 
         /* Diffuse -------------------------------- */
         if (sd->u.s.diffuse.lpData != NULL) {
-            glColor4ub((diffuseColor >> 16) & 0xFF,
-                       (diffuseColor >>  8) & 0xFF,
-                       (diffuseColor >>  0) & 0xFF,
-                       (diffuseColor >> 24) & 0xFF);
-            VTRACE(("glColor4f: r,g,b,a=%f,%f,%f,%f\n", 
-                    ((diffuseColor >> 16) & 0xFF) / 255.0f, 
-                    ((diffuseColor >>  8) & 0xFF) / 255.0f,
-                    ((diffuseColor >>  0) & 0xFF) / 255.0f, 
-                    ((diffuseColor >> 24) & 0xFF) / 255.0f));
+	  glColor4ub(D3DCOLOR_B_R(diffuseColor),
+		     D3DCOLOR_B_G(diffuseColor),
+		     D3DCOLOR_B_B(diffuseColor),
+		     D3DCOLOR_B_A(diffuseColor));
+            VTRACE(("glColor4ub: r,g,b,a=%u,%u,%u,%u\n", 
+                    D3DCOLOR_B_R(diffuseColor),
+		    D3DCOLOR_B_G(diffuseColor),
+		    D3DCOLOR_B_B(diffuseColor),
+		    D3DCOLOR_B_A(diffuseColor)));
         } else {
             if (vx_index == 0) glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         }
 
         /* Specular ------------------------------- */
-        if (sd->u.s.diffuse.lpData != NULL) {
-            VTRACE(("glSecondaryColor4ub: r,g,b=%f,%f,%f\n", 
-                    ((specularColor >> 16) & 0xFF) / 255.0f, 
-                    ((specularColor >>  8) & 0xFF) / 255.0f,
-                    ((specularColor >>  0) & 0xFF) / 255.0f));
+        if (sd->u.s.specular.lpData != NULL) {
+            VTRACE(("glSecondaryColor4ub: r,g,b=%u,%u,%u\n", 
+                    D3DCOLOR_B_R(specularColor), 
+                    D3DCOLOR_B_G(specularColor), 
+                    D3DCOLOR_B_B(specularColor)));
             if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
                 GL_EXTCALL(glSecondaryColor3ubEXT)(
-                           (specularColor >> 16) & 0xFF,
-                           (specularColor >>  8) & 0xFF,
-                           (specularColor >>  0) & 0xFF);
+                           D3DCOLOR_B_R(specularColor),
+                           D3DCOLOR_B_G(specularColor),
+                           D3DCOLOR_B_B(specularColor));
             } else {
 	      /* Do not worry if specular colour missing and disable request */
 	      VTRACE(("Specular color extensions not supplied\n"));

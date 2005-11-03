@@ -299,6 +299,10 @@ struct PLIGHTINFOEL {
 #define GL_EXTCALL(FuncName)          (This->direct3d8->gl_info.FuncName)
 #define GL_EXTCALL_DEV(FuncName, dev) ((dev)->direct3d8->gl_info.FuncName)
 
+#define D3DCOLOR_B_R(dw) (((dw) >> 16) & 0xFF)
+#define D3DCOLOR_B_G(dw) (((dw) >>  8) & 0xFF)
+#define D3DCOLOR_B_B(dw) (((dw) >>  0) & 0xFF)
+#define D3DCOLOR_B_A(dw) (((dw) >> 24) & 0xFF)
 
 #define D3DCOLOR_R(dw) (((float) (((dw) >> 16) & 0xFF)) / 255.0f)
 #define D3DCOLOR_G(dw) (((float) (((dw) >>  8) & 0xFF)) / 255.0f)

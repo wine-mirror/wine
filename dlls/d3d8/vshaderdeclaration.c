@@ -511,10 +511,10 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
 	dw = *(const DWORD*) curPos;
 	curPos = curPos + sizeof(DWORD);
 	/**/
-	vshader->input.V[reg].x = (float) (((dw >> 16) & 0xFF) / 255.0f);
-	vshader->input.V[reg].y = (float) (((dw >>  8) & 0xFF) / 255.0f);
-	vshader->input.V[reg].z = (float) (((dw >>  0) & 0xFF) / 255.0f);
-	vshader->input.V[reg].w = (float) (((dw >> 24) & 0xFF) / 255.0f);
+	vshader->input.V[reg].x = D3DCOLOR_R(dw);
+	vshader->input.V[reg].y = D3DCOLOR_G(dw);
+	vshader->input.V[reg].z = D3DCOLOR_B(dw);
+        vshader->input.V[reg].w = D3DCOLOR_A(dw);
 	break;
 
       case D3DVSDT_SHORT2: 
@@ -549,11 +549,10 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl*
 	dw = *(const DWORD*) curPos;
 	curPos = curPos + sizeof(DWORD);
 	/**/
-	vshader->input.V[reg].x = (float) ((dw & 0x000F) >>  0);
-	vshader->input.V[reg].y = (float) ((dw & 0x00F0) >>  8);
-	vshader->input.V[reg].z = (float) ((dw & 0x0F00) >> 16);
-	vshader->input.V[reg].w = (float) ((dw & 0xF000) >> 24);
-	
+	vshader->input.V[reg].x = (float) ((dw & 0x000000FF) >>  0);
+	vshader->input.V[reg].y = (float) ((dw & 0x0000FF00) >>  8);
+	vshader->input.V[reg].z = (float) ((dw & 0x00FF0000) >> 16);
+	vshader->input.V[reg].w = (float) ((dw & 0xFF000000) >> 24);
 	break;
 
       default: /** errooooorr what to do ? */
