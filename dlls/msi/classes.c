@@ -835,9 +835,6 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     BOOL install_on_demand = FALSE;
     MSICLASS *cls;
 
-    if (!package)
-        return ERROR_INVALID_HANDLE;
-
     load_classes_and_such(package);
     rc = RegCreateKeyW(HKEY_CLASSES_ROOT,szCLSID,&hkey);
     if (rc != ERROR_SUCCESS)
@@ -1095,9 +1092,6 @@ UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
     MSIPROGID *progid;
     MSIRECORD *uirow;
 
-    if (!package)
-        return ERROR_INVALID_HANDLE;
-
     load_classes_and_such(package);
 
     LIST_FOR_EACH_ENTRY( progid, &package->progids, MSIPROGID, entry )
@@ -1214,9 +1208,6 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
     MSIRECORD *uirow;
     BOOL install_on_demand = TRUE;
 
-    if (!package)
-        return ERROR_INVALID_HANDLE;
-
     load_classes_and_such(package);
 
     /* We need to set install_on_demand based on if the shell handles advertised
@@ -1321,9 +1312,6 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
         {'E','x','t','e','n','s','i','o','n',0 };
     MSIRECORD *uirow;
     MSIMIME *mt;
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
 
     load_classes_and_such(package);
 

@@ -894,6 +894,12 @@ static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action,
     BOOL run = force;
     int i;
 
+    if (!package)
+    {
+        ERR("package was null!\n");
+        return FALSE;
+    }
+
     if (!run && !package->script->CurrentlyScripting)
         run = TRUE;
    
@@ -2552,9 +2558,6 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     MSICOMPONENT *comp;
     HKEY hkey=0,hkey2=0;
 
-    if (!package)
-        return ERROR_INVALID_HANDLE;
-
     /* writes the Component and Features values to the registry */
 
     rc = MSIREG_OpenComponents(&hkey);
@@ -2804,9 +2807,6 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','T','y','p','e','L','i','b','`',0};
 
-    if (!package)
-        return ERROR_INVALID_HANDLE;
-
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
@@ -2955,9 +2955,6 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','S','h','o','r','t','c','u','t','`',0};
 
-    if (!package)
-        return ERROR_INVALID_HANDLE;
-
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
@@ -3055,9 +3052,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     LPWSTR buffer;
     DWORD size;
     MSIHANDLE hDb, hSumInfo;
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
 
     /* write out icon files */
 
@@ -3333,9 +3327,6 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     HKEY hkey=0;
     HKEY hukey=0;
     
-    if (!package)
-        return ERROR_INVALID_HANDLE;
-
     rc = MSIREG_OpenFeaturesKey(package->ProductCode,&hkey,TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
@@ -3545,9 +3536,6 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     LPWSTR upgrade_code;
     WCHAR szDate[9]; 
 
-    if (!package)
-        return ERROR_INVALID_HANDLE;
-
     rc = MSIREG_OpenUninstallKey(package->ProductCode,&hkey,TRUE);
     if (rc != ERROR_SUCCESS)
         return rc;
@@ -3613,22 +3601,12 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 
 static UINT ACTION_InstallExecute(MSIPACKAGE *package)
 {
-    UINT rc;
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
-
-    rc = execute_script(package,INSTALL_SCRIPT);
-
-    return rc;
+    return execute_script(package,INSTALL_SCRIPT);
 }
 
 static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
 {
     UINT rc;
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
 
     /* turn off scheduleing */
     package->script->CurrentlyScripting= FALSE;
@@ -3671,9 +3649,6 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     WCHAR buffer[256], sysdir[MAX_PATH];
     HKEY hkey;
     WCHAR squished_pc[100];
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
 
     squash_guid(package->ProductCode,squished_pc);
 
@@ -3769,9 +3744,6 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
         {'R','e','g','C','o','m','p','a','n','y',0},
         {0},
     };
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
 
     productid = msi_dup_property( package, INSTALLPROPERTY_PRODUCTIDW );
     if (!productid)

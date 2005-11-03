@@ -608,9 +608,6 @@ static UINT get_file_target(MSIPACKAGE *package, LPCWSTR file_key,
 {
     MSIFILE *file;
 
-    if (!package)
-        return ERROR_INVALID_HANDLE;
-
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
         if (lstrcmpW( file_key, file->File )==0)
@@ -641,9 +638,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     UINT rc = ERROR_SUCCESS;
     LPWSTR ptr;
     MSIFILE *file;
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
 
     /* increment progress bar each time action data is sent */
     ui_progress(package,1,1,0,0);
@@ -855,9 +849,6 @@ UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','D','u','p','l','i','c','a','t','e','F','i','l','e','`',0};
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)

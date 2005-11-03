@@ -173,9 +173,6 @@ int track_tempfile( MSIPACKAGE *package, LPCWSTR name, LPCWSTR path )
 {
     MSITEMPFILE *temp;
 
-    if (!package)
-        return -1;
-
     LIST_FOR_EACH_ENTRY( temp, &package->tempfiles, MSITEMPFILE, entry )
     {
         if (lstrcmpW( name, temp->File )==0)
@@ -907,7 +904,7 @@ UINT register_unique_action(MSIPACKAGE *package, LPCWSTR action)
     UINT count;
     LPWSTR *newbuf = NULL;
 
-    if (!package || !package->script)
+    if (!package->script)
         return FALSE;
 
     TRACE("Registering Action %s as having fun\n",debugstr_w(action));
@@ -930,7 +927,7 @@ BOOL check_unique_action(MSIPACKAGE *package, LPCWSTR action)
 {
     INT i;
 
-    if (!package || !package->script)
+    if (!package->script)
         return FALSE;
 
     for (i = 0; i < package->script->UniqueActionsCount; i++)
