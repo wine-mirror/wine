@@ -53,8 +53,8 @@ DWORD WINAPI GetFileVersionInfo16( LPCSTR lpszFileName, DWORD handle,
 /*************************************************************************
  * VerFindFile                             [VER.8]
  */
-DWORD WINAPI VerFindFile16( UINT16 flags, LPCSTR lpszFilename,
-                            LPCSTR lpszWinDir, LPCSTR lpszAppDir,
+DWORD WINAPI VerFindFile16( UINT16 flags, LPSTR lpszFilename,
+                            LPSTR lpszWinDir, LPSTR lpszAppDir,
                             LPSTR lpszCurDir, UINT16 *lpuCurDirLen,
                             LPSTR lpszDestDir, UINT16 *lpuDestDirLen )
 {
@@ -71,8 +71,8 @@ DWORD WINAPI VerFindFile16( UINT16 flags, LPCSTR lpszFilename,
  * VerInstallFile                          [VER.9]
  */
 DWORD WINAPI VerInstallFile16( UINT16 flags,
-                               LPCSTR lpszSrcFilename, LPCSTR lpszDestFilename,
-                               LPCSTR lpszSrcDir, LPCSTR lpszDestDir, LPCSTR lpszCurDir,
+                               LPSTR lpszSrcFilename, LPSTR lpszDestFilename,
+                               LPSTR lpszSrcDir, LPSTR lpszDestDir, LPSTR lpszCurDir,
                                LPSTR lpszTmpFile, UINT16 *lpwTmpFileLen )
 {
     UINT filelen;
@@ -95,7 +95,7 @@ DWORD WINAPI VerLanguageName16( UINT16 uLang, LPSTR lpszLang, UINT16 cbLang )
 /*************************************************************************
  * VerQueryValue                          [VER.11]
  */
-DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock,
+DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPSTR lpszSubBlock,
                               SEGPTR *lpspBuffer, UINT16 *lpcb )
 {
     LPVOID lpvBlock = MapSL( spvBlock );
@@ -121,4 +121,3 @@ DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock,
 
     return retv;
 }
-

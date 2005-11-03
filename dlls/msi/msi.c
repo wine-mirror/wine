@@ -1185,7 +1185,7 @@ end:
 UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
                 DWORD* pcchVersionBuf, LPWSTR lpLangBuf, DWORD* pcchLangBuf)
 {
-    static const WCHAR szVersionResource[] = {'\\',0};
+    static WCHAR szVersionResource[] = {'\\',0};
     static const WCHAR szVersionFormat[] = {
         '%','d','.','%','d','.','%','d','.','%','d',0};
     static const WCHAR szLangFormat[] = {'%','d',0};

@@ -549,7 +549,7 @@ static UINT ACTION_FileVersionMatches(MSISIGNATURE *sig, LPCWSTR filePath,
 
             if (buf)
             {
-                static const WCHAR rootW[] = { '\\',0 };
+                static WCHAR rootW[] = { '\\',0 };
                 UINT versionLen;
                 LPVOID subBlock = NULL;
 

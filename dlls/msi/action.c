@@ -1881,8 +1881,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             DWORD versize;
             UINT sz;
             LPVOID version;
-            static const WCHAR name[] = 
-                {'\\',0};
+            static WCHAR name[] = {'\\',0};
             static const WCHAR name_fmt[] = 
                 {'%','u','.','%','u','.','%','u','.','%','u',0};
             WCHAR filever[0x100];
