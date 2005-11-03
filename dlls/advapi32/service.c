@@ -2229,3 +2229,17 @@ BOOL WINAPI SetServiceBits( SERVICE_STATUS_HANDLE hServiceStatus,
           bSetBitsOn, bUpdateImmediately);
     return TRUE;
 }
+
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExA( LPCSTR lpServiceName,
+        LPHANDLER_FUNCTION_EX lpHandlerProc, LPVOID lpContext )
+{
+    FIXME("%s %p %p\n", debugstr_a(lpServiceName), lpHandlerProc, lpContext);
+    return 0;
+}
+
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW( LPCWSTR lpServiceName,
+        LPHANDLER_FUNCTION_EX lpHandlerProc, LPVOID lpContext )
+{
+    FIXME("%s %p %p\n", debugstr_w(lpServiceName), lpHandlerProc, lpContext);
+    return 0;
+}
