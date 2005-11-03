@@ -761,7 +761,7 @@ static void test_lnks(void)
             {
                 okChildInt("argcA", 5);
             }
-            else todo_wine
+            else 
             {
                 okChildInt("argcA", 5);
             }
@@ -778,7 +778,7 @@ static void test_lnks(void)
             {
                 okChildPath("argvA4", params);
             }
-            else todo_wine
+            else
             {
                 okChildPath("argvA4", params);
             }
