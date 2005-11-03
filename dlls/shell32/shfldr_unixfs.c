@@ -688,8 +688,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_EnumObjects(IShellFolder2* iface,
             iface, hwndOwner, grfFlags, ppEnumIDList);
 
     if (!This->m_pszPath) {
-	WARN("EnumObjects called on uninitialized UnixFolder-object!\n");
-	return E_UNEXPECTED;
+        WARN("EnumObjects called on uninitialized UnixFolder-object!\n");
+        return E_UNEXPECTED;
     }
 
     newIterator = UnixSubFolderIterator_Constructor(This, grfFlags);
