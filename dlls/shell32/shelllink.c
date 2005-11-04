@@ -1014,20 +1014,29 @@ static HRESULT Stream_WriteLocationInfo( IStream* stm, LPCWSTR path,
     return IStream_Write( stm, loc, total_size, &count );
 }
 
+static EXP_DARWIN_LINK* shelllink_build_darwinid( LPCWSTR string, DWORD magic )
+{
+    EXP_DARWIN_LINK *buffer;
+    
+    buffer = LocalAlloc( LMEM_ZEROINIT, sizeof *buffer );
+    buffer->dbh.cbSize = sizeof buffer;
+    buffer->dbh.dwSignature = magic;
+    lstrcpynW( buffer->szwDarwinID, string, MAX_PATH );
+    WideCharToMultiByte(CP_ACP, 0, string, -1, buffer->szDarwinID, MAX_PATH, NULL, NULL );
+
+    return buffer;
+}
+
 static HRESULT Stream_WriteAdvertiseInfo( IStream* stm, LPCWSTR string, DWORD magic )
 {
+    EXP_DARWIN_LINK *buffer;
     ULONG count;
-    EXP_DARWIN_LINK buffer;
     
     TRACE("%p\n",stm);
 
-    memset( &buffer, 0, sizeof buffer );
-    buffer.dbh.cbSize = sizeof buffer;
-    buffer.dbh.dwSignature = magic;
-    lstrcpynW( buffer.szwDarwinID, string, MAX_PATH );
-    WideCharToMultiByte(CP_ACP, 0, string, -1, buffer.szDarwinID, MAX_PATH, NULL, NULL );
+    buffer = shelllink_build_darwinid( string, magic );
 
-    return IStream_Write( stm, &buffer, buffer.dbh.cbSize, &count );
+    return IStream_Write( stm, &buffer, buffer->dbh.cbSize, &count );
 }
 
 /************************************************************************
@@ -2246,8 +2255,32 @@ ShellLink_AddDataBlock( IShellLinkDataList* iface, void* pDataBlock )
 static HRESULT WINAPI
 ShellLink_CopyDataBlock( IShellLinkDataList* iface, DWORD dwSig, void** ppDataBlock )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    IShellLinkImpl *This = impl_from_IShellLinkDataList(iface);
+    LPVOID block = NULL;
+    HRESULT r = E_FAIL;
+
+    TRACE("%p %08lx %p\n", iface, dwSig, ppDataBlock );
+
+    switch (dwSig)
+    {
+    case EXP_DARWIN_ID_SIG:
+        if (!This->sComponent)
+            break;
+        block = shelllink_build_darwinid( This->sComponent, dwSig );
+        r = S_OK;
+        break;
+    case EXP_SZ_LINK_SIG:
+    case NT_CONSOLE_PROPS_SIG:
+    case NT_FE_CONSOLE_PROPS_SIG:
+    case EXP_SPECIAL_FOLDER_SIG:
+    case EXP_SZ_ICON_SIG:
+        FIXME("valid but unhandled datablock %08lx\n", dwSig);
+        break;
+    default:
+        ERR("unknown datablock %08lx\n", dwSig);
+    }
+    *ppDataBlock = block;
+    return r;
 }
 
 static HRESULT WINAPI
@@ -2260,8 +2293,26 @@ ShellLink_RemoveDataBlock( IShellLinkDataList* iface, DWORD dwSig )
 static HRESULT WINAPI
 ShellLink_GetFlags( IShellLinkDataList* iface, DWORD* pdwFlags )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    IShellLinkImpl *This = impl_from_IShellLinkDataList(iface);
+    DWORD flags = 0;
+
+    FIXME("%p %p\n", This, pdwFlags );
+
+    /* FIXME: add more */
+    if (This->sArgs)
+        flags |= SLDF_HAS_ARGS;
+    if (This->sComponent)
+        flags |= SLDF_HAS_DARWINID;
+    if (This->sIcoPath)
+        flags |= SLDF_HAS_ICONLOCATION;
+    if (This->sProduct)
+        flags |= SLDF_HAS_LOGO3ID;
+    if (This->pPidl)
+        flags |= SLDF_HAS_ID_LIST;
+
+    *pdwFlags = flags;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI

@@ -511,6 +511,78 @@ static void test_load_save(void)
     ok(r, "failed to delete link (%ld)\n", GetLastError());
 }
 
+static void test_datalink(void)
+{
+    static const WCHAR lnk[] = {
+      ':',':','{','9','d','b','1','1','8','6','f','-','4','0','d','f','-','1',
+      '1','d','1','-','a','a','8','c','-','0','0','c','0','4','f','b','6','7',
+      '8','6','3','}',':','{','0','0','0','1','0','4','0','9','-','7','8','E',
+      '1','-','1','1','D','2','-','B','6','0','F','-','0','0','6','0','9','7',
+      'C','9','9','8','E','7','}',':',':','{','9','d','b','1','1','8','6','e',
+      '-','4','0','d','f','-','1','1','d','1','-','a','a','8','c','-','0','0',
+      'c','0','4','f','b','6','7','8','6','3','}',':','2','6',',','!','!','g',
+      'x','s','f','(','N','g',']','q','F','`','H','{','L','s','A','C','C','E',
+      'S','S','F','i','l','e','s','>','p','l','T',']','j','I','{','j','f','(',
+      '=','1','&','L','[','-','8','1','-',']',':',':',0 };
+    static const WCHAR comp[] = {
+      '2','6',',','!','!','g','x','s','f','(','N','g',']','q','F','`','H','{',
+      'L','s','A','C','C','E','S','S','F','i','l','e','s','>','p','l','T',']',
+      'j','I','{','j','f','(','=','1','&','L','[','-','8','1','-',']',0 };
+    IShellLinkDataList *dl = NULL;
+    IShellLinkW *sl = NULL;
+    HRESULT r;
+    DWORD flags = 0;
+    EXP_DARWIN_LINK *dar;
+
+    r = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                            &IID_IShellLinkW, (LPVOID*)&sl );
+    ok( r == S_OK, "no shelllink\n");
+    if (!sl)
+        return;
+
+    r = IShellLinkW_QueryInterface( sl, &IID_IShellLinkDataList, (LPVOID*) &dl );
+    ok(r == S_OK, "no datalink interface\n");
+
+    if (!dl)
+        return;
+
+    flags = 0;
+    r = dl->lpVtbl->GetFlags( dl, &flags );
+    ok( r == S_OK, "GetFlags failed\n");
+    ok( flags == 0, "GetFlags returned wrong flags\n");
+
+    dar = (void*)-1;
+    r = dl->lpVtbl->CopyDataBlock( dl, EXP_DARWIN_ID_SIG, (LPVOID*) &dar );
+    ok( r == E_FAIL, "CopyDataBlock failed\n");
+    ok( dar == NULL, "should be null\n");
+
+    r = IShellLinkW_SetPath(sl, lnk);
+    ok(r == S_OK, "set path failed\n");
+
+    /*
+     * The following crashes:
+     * r = dl->lpVtbl->GetFlags( dl, NULL );
+     */
+
+    flags = 0;
+    r = dl->lpVtbl->GetFlags( dl, &flags );
+    ok( r == S_OK, "GetFlags failed\n");
+    ok( flags == (SLDF_HAS_DARWINID|SLDF_HAS_LOGO3ID),
+        "GetFlags returned wrong flags\n");
+
+    dar = NULL;
+    r = dl->lpVtbl->CopyDataBlock( dl, EXP_DARWIN_ID_SIG, (LPVOID*) &dar );
+    ok( r == S_OK, "CopyDataBlock failed\n");
+
+    ok( dar && dar->dbh.dwSignature == EXP_DARWIN_ID_SIG, "signature wrong\n");
+    ok( dar && 0==lstrcmpW(dar->szwDarwinID, comp ), "signature wrong\n");
+
+    LocalFree( dar );
+
+    IUnknown_Release( dl );
+    IShellLinkW_Release( sl );
+}
+
 START_TEST(shelllink)
 {
     HRESULT r;
@@ -522,6 +594,7 @@ START_TEST(shelllink)
 
     test_get_set();
     test_load_save();
+    test_datalink();
 
     CoUninitialize();
 }
