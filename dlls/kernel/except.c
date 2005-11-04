@@ -161,14 +161,12 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
         return -1;
 #ifdef __i386__
     if (ptr->ContextRecord->SegCs != wine_get_cs())
-        len2 = snprintf(buffer+len, size-len,
-                        " at address 0x%04lx:0x%08lx.\nDo you wish to debug it ?",
+        len2 = snprintf(buffer+len, size-len, " at address 0x%04lx:0x%08lx",
                         ptr->ContextRecord->SegCs,
                         (DWORD)ptr->ExceptionRecord->ExceptionAddress);
     else
 #endif
-        len2 = snprintf(buffer+len, size-len,
-                        " at address %p.\nDo you wish to debug it ?",
+        len2 = snprintf(buffer+len, size-len, " at address %p",
                         ptr->ExceptionRecord->ExceptionAddress);
     if ((len2<0) || (len>=size-len))
         return -1;
@@ -224,6 +222,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     STARTUPINFOA	startup;
     char*		format = NULL;
     BOOL		ret = FALSE;
+    char buffer[256];
 
     static const WCHAR AeDebugW[] = {'M','a','c','h','i','n','e','\\',
                                      'S','o','f','t','w','a','r','e','\\',
@@ -234,7 +233,8 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     static const WCHAR DebuggerW[] = {'D','e','b','u','g','g','e','r',0};
     static const WCHAR AutoW[] = {'A','u','t','o',0};
 
-    MESSAGE("wine: Unhandled exception (thread %04lx), starting debugger...\n", GetCurrentThreadId());
+    format_exception_msg( epointers, buffer, sizeof(buffer) );
+    MESSAGE("wine: %s (thread %04lx), starting debugger...\n", buffer, GetCurrentThreadId());
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -317,8 +317,11 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 	if (mod) pMessageBoxA = (MessageBoxA_funcptr)GetProcAddress( mod, "MessageBoxA" );
 	if (pMessageBoxA)
 	{
+            static const char msg[] = ".\nDo you wish to debug it?";
 	    char buffer[256];
-	    format_exception_msg( epointers, buffer, sizeof(buffer) );
+
+            format_exception_msg( epointers, buffer, sizeof(buffer)-sizeof(msg) );
+            strcat( buffer, msg );
 	    if (pMessageBoxA( 0, buffer, "Exception raised", MB_YESNO | MB_ICONHAND ) == IDNO)
 	    {
 		TRACE("Killing process\n");
