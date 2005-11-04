@@ -142,6 +142,8 @@ void test_type_info(void)
 	UINT n;
         LCID en_us = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),
                 SORT_DEFAULT);
+        DISPPARAMS dispparams;
+        VARIANT varresult;
 
         pOleCreateFontIndirect(NULL, &IID_IFontDisp, &pvObj);
         fontdisp = pvObj;
@@ -156,6 +158,18 @@ void test_type_info(void)
 	ok(!lstrcmpiW(names[0],name_Name), "DISPID_FONT_NAME doesn't get 'Names'.\n");
 
 	ITypeInfo_Release(pTInfo);
+
+        dispparams.cNamedArgs = 0;
+        dispparams.rgdispidNamedArgs = NULL;
+        dispparams.cArgs = 0;
+        dispparams.rgvarg = NULL;
+        VariantInit(&varresult);
+        hres = IFontDisp_Invoke(fontdisp, DISPID_FONT_NAME, &IID_NULL,
+            LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dispparams, &varresult,
+            NULL, NULL);
+        ok(hres == S_OK, "IFontDisp_Invoke return 0x%08lx instead of S_OK.\n", hres);
+        VariantClear(&varresult);
+
 	IFontDisp_Release(fontdisp);
 }
 
