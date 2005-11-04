@@ -5079,7 +5079,6 @@ float    WINAPI  IWineD3DDeviceImpl_GetNPatchMode(IWineD3DDevice *iface) {
     return 0.0f;
 }
 
-
 HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3DSurface *pSourceSurface, CONST RECT* pSourceRect, IWineD3DSurface *pDestinationSurface, CONST POINT* pDestPoint) {
     IWineD3DDeviceImpl  *This         = (IWineD3DDeviceImpl *) iface;
     /** TODO: remove casts to IWineD3DSurfaceImpl
@@ -5087,11 +5086,11 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
       ****************************************/
     IWineD3DSurfaceImpl *pSrcSurface  = (IWineD3DSurfaceImpl *)pSourceSurface;
     int srcWidth, srcHeight;
-    unsigned int srcSurfaceWidth, srcSurfaceHeight, destSurfaceWidth, destSurfaceHeight;
+    unsigned int  srcSurfaceWidth, srcSurfaceHeight, destSurfaceWidth, destSurfaceHeight;
     WINED3DFORMAT destFormat, srcFormat;
-    UINT destSize;
+    UINT          destSize;
     int destLeft, destTop;
-    D3DPOOL     srcPool, destPool;
+    D3DPOOL       srcPool, destPool;
     int offset    = 0;
     int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
     glDescriptor *glDescription = NULL;
@@ -5100,6 +5099,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
 
     WINED3DSURFACE_DESC  winedesc;
 
+    TRACE("(%p) : Source (%p)  Rect (%p) Destination (%p) Point(%p)\n", This, pSourceSurface, pSourceRect, pDestinationSurface, pDestPoint);
     memset(&winedesc, 0, sizeof(winedesc));
     winedesc.Width  = &srcSurfaceWidth;
     winedesc.Height = &srcSurfaceHeight;
@@ -5117,10 +5117,18 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
     IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
 
     if(srcPool != D3DPOOL_SYSTEMMEM  || destPool != D3DPOOL_DEFAULT){
-        FIXME("source %p must be SYSTEMMEM and dest %p must be DEFAULT\n", pSourceSurface, pDestinationSurface);
+        WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning D3DERR_INVALIDCALL\n", pSourceSurface, pDestinationSurface);
         return D3DERR_INVALIDCALL;
     }
-    /* TODO:  change this to use bindTexture */
+
+    if (destFormat == WINED3DFMT_UNKNOWN) {
+        TRACE("(%p) : Converting destination surface from WINED3DFMT_UNKNOWN to the source format\n", This);
+        IWineD3DSurface_SetFormat(pDestinationSurface, srcFormat);
+
+        /* Get the update surface description */
+        IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
+    }
+
     /* Make sure the surface is loaded and upto date */
     IWineD3DSurface_PreLoad(pDestinationSurface);
 
@@ -5137,7 +5145,6 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
 
     /* This function doesn't support compressed textures
     the pitch is just bytesPerPixel * width */
-
     if(srcWidth != srcSurfaceWidth  || (pSourceRect != NULL && pSourceRect->left != 0) ){
         rowoffset = (srcSurfaceWidth - srcWidth) * pSrcSurface->bytesPerPixel;
         offset   += pSourceRect->left * pSrcSurface->bytesPerPixel;
@@ -5162,13 +5169,16 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
 
     /* Sanity check */
     if (IWineD3DSurface_GetData(pSourceSurface) == NULL) {
-    /* need to lock the surface to get the data */
-       FIXME("Surfaces has no allocated memory, but should be an in memory only surface\n");
+
+        /* need to lock the surface to get the data */
+        FIXME("Surfaces has no allocated memory, but should be an in memory only surface\n");
     }
+
     /* TODO: Cube and volume support */
     if(rowoffset != 0){
         /* not a whole row so we have to do it a line at a time */
         int j;
+
         /* hopefully using pointer addtion will be quicker than using a point + j * rowoffset */
         unsigned char* data =((unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
 
@@ -5182,7 +5192,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
                     ,1
                     ,glDescription->glFormat
                     ,glDescription->glType
-                    ,data/* could be quicker using */
+                    ,data /* could be quicker using */
                 );
             data += rowoffset;
         }
@@ -5217,6 +5227,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
 
         } else {
             if (NP2_REPACK == wined3d_settings.nonpower2_mode) {
+
                 /* some applications cannot handle odd pitches returned by soft non-power2, so we have
                 to repack the data from pow2Width/Height to expected Width,Height, this makes the
                 data returned by GetData non-power2 width/height with hardware non-power2
@@ -5233,6 +5244,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
                         ,IWineD3DSurface_GetData(pSourceSurface)
                     );
             } else {
+
                 /* not repacked, the data returned by IWineD3DSurface_GetData is pow2Width x pow2Height */
                 glTexSubImage2D(glDescription->target
                     ,glDescription->level
@@ -5249,6 +5261,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
         }
      }
     checkGLcall("glTexSubImage2D");
+
     /* I only need to look up baseTexture here, so it may be a good idea to hava a GL_TARGET ->
      * GL_DIMENSIONS lookup, or maybe store the dimensions on the surface (but that's making the
      * surface bigger than it needs to be hmm.. */
