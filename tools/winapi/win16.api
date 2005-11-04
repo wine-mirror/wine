@@ -1009,7 +1009,7 @@ UINT16
 WORD
 WPARAM16
 
-%%sound.dll
+%%sound.drv
 
 %long
 
