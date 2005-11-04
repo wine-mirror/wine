@@ -40,11 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(commctrl);
 
-INT WINAPI StrCmpNA(LPCSTR, LPCSTR, INT);
-INT WINAPI StrCmpNW(LPCWSTR, LPCWSTR, INT);
-INT WINAPI StrCmpNIA(LPCSTR, LPCSTR, INT);
-INT WINAPI StrCmpNIW(LPCWSTR, LPCWSTR, INT);
-
 /*************************************************************************
  * COMCTL32_ChrCmpHelperA
  *
@@ -177,6 +172,45 @@ LPSTR WINAPI StrChrA(LPCSTR lpszStr, WORD ch)
     }
   }
   return NULL;
+}
+
+/**************************************************************************
+ * StrCmpNIA [COMCTL32.353]
+ *
+ * Compare two strings, up to a maximum length, ignoring case.
+ *
+ * PARAMS
+ *  lpszStr  [I] First string to compare
+ *  lpszComp [I] Second string to compare
+ *  iLen     [I] Maximum number of chars to compare.
+ *
+ * RETURNS
+ *  An integer less than, equal to or greater than 0, indicating that
+ *  lpszStr is less than, the same, or greater than lpszComp.
+ */
+INT WINAPI StrCmpNIA(LPCSTR lpszStr, LPCSTR lpszComp, INT iLen)
+{
+  INT iRet;
+
+  TRACE("(%s,%s,%i)\n", debugstr_a(lpszStr), debugstr_a(lpszComp), iLen);
+
+  iRet = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, lpszStr, iLen, lpszComp, iLen);
+  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
+}
+
+/*************************************************************************
+ * StrCmpNIW	[COMCTL32.361]
+ *
+ * See StrCmpNIA.
+ */
+INT WINAPI StrCmpNIW(LPCWSTR lpszStr, LPCWSTR lpszComp, INT iLen)
+{
+  INT iRet;
+
+  TRACE("(%s,%s,%i)\n", debugstr_w(lpszStr), debugstr_w(lpszComp), iLen);
+
+  iRet = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, lpszStr, iLen, lpszComp, iLen);
+  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
 }
 
 /*************************************************************************
@@ -369,45 +403,6 @@ INT WINAPI StrCmpNA(LPCSTR lpszStr, LPCSTR lpszComp, INT iLen)
   TRACE("(%s,%s,%i)\n", debugstr_a(lpszStr), debugstr_a(lpszComp), iLen);
 
   iRet = CompareStringA(GetThreadLocale(), 0, lpszStr, iLen, lpszComp, iLen);
-  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
-}
-
-/**************************************************************************
- * StrCmpNIA [COMCTL32.353]
- *
- * Compare two strings, up to a maximum length, ignoring case.
- *
- * PARAMS
- *  lpszStr  [I] First string to compare
- *  lpszComp [I] Second string to compare
- *  iLen     [I] Maximum number of chars to compare.
- *
- * RETURNS
- *  An integer less than, equal to or greater than 0, indicating that
- *  lpszStr is less than, the same, or greater than lpszComp.
- */
-INT WINAPI StrCmpNIA(LPCSTR lpszStr, LPCSTR lpszComp, INT iLen)
-{
-  INT iRet;
-
-  TRACE("(%s,%s,%i)\n", debugstr_a(lpszStr), debugstr_a(lpszComp), iLen);
-
-  iRet = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, lpszStr, iLen, lpszComp, iLen);
-  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
-}
-
-/*************************************************************************
- * StrCmpNIW	[COMCTL32.361]
- *
- * See StrCmpNIA.
- */
-INT WINAPI StrCmpNIW(LPCWSTR lpszStr, LPCWSTR lpszComp, INT iLen)
-{
-  INT iRet;
-
-  TRACE("(%s,%s,%i)\n", debugstr_w(lpszStr), debugstr_w(lpszComp), iLen);
-
-  iRet = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, lpszStr, iLen, lpszComp, iLen);
   return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
 }
 
