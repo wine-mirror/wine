@@ -62,7 +62,7 @@
 @ stdcall CloseEventLog (long)
 @ stdcall CloseServiceHandle(long)
 # @ stub CloseTrace
-@ stdcall CommandLineFromMsiDescriptor(wstr wstr ptr)
+@ stdcall CommandLineFromMsiDescriptor(wstr ptr ptr)
 # @ stub ComputeAccessTokenFromCodeAuthzLevel
 @ stdcall ControlService(long long ptr)
 # @ stub ControlTraceA

@@ -266,9 +266,24 @@ BOOL WINAPI LogonUserW( LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPa
     return TRUE;
 }
 
-DWORD WINAPI CommandLineFromMsiDescriptor(WCHAR *Descriptor, WCHAR *CommandLine,
- DWORD *CommandLineLength)
+typedef UINT (WINAPI *fnMsiProvideComponentFromDescriptor)(LPCWSTR,LPWSTR,DWORD*,DWORD*);
+
+DWORD WINAPI CommandLineFromMsiDescriptor( WCHAR *szDescriptor,
+                    WCHAR *szCommandLine, DWORD *pcchCommandLine )
 {
-    FIXME("stub (%s)\n", debugstr_w(Descriptor));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    static const WCHAR szMsi[] = { 'm','s','i',0 };
+    fnMsiProvideComponentFromDescriptor mpcfd;
+    HMODULE hmsi;
+    UINT r = ERROR_CALL_NOT_IMPLEMENTED;
+
+    TRACE("%s %p %p\n", debugstr_w(szDescriptor), szCommandLine, pcchCommandLine);
+
+    hmsi = LoadLibraryW( szMsi );
+    if (!hmsi)
+        return r;
+    mpcfd = (void*) GetProcAddress( hmsi, "MsiProvideComponentFromDescriptorW" );
+    if (mpcfd)
+        r = mpcfd( szDescriptor, szCommandLine, pcchCommandLine, NULL );
+    FreeLibrary( hmsi );
+    return r;
 }
