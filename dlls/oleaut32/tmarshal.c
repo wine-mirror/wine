@@ -445,6 +445,8 @@ static const IRpcProxyBufferVtbl tmproxyvtable = {
 int
 _argsize(DWORD vt) {
     switch (vt) {
+    case VT_UI8:
+	return 8/sizeof(DWORD);
     case VT_R8:
         return sizeof(double)/sizeof(DWORD);
     case VT_CY:
@@ -473,6 +475,9 @@ _xsize(TYPEDESC *td) {
 	    arrsize *= adesc->rgbounds[i].cElements;
 	return arrsize*_xsize(&adesc->tdescElem);
     }
+    case VT_UI8:
+    case VT_I8:
+	return 8;
     case VT_UI2:
     case VT_I2:
 	return 2;
@@ -501,6 +506,13 @@ serialize_param(
     switch (tdesc->vt) {
     case VT_EMPTY: /* nothing. empty variant for instance */
 	return S_OK;
+    case VT_I8:
+    case VT_UI8:
+	hres = S_OK;
+	if (debugout) TRACE_(olerelay)("%lx%lx",arg[0],arg[1]);
+	if (writeit)
+	    hres = xbuf_add(buf,(LPBYTE)arg,8);
+	return hres;
     case VT_BOOL:
     case VT_ERROR:
     case VT_UINT:
@@ -811,6 +823,14 @@ deserialize_param(
 		return S_OK;
 	    }
 	}
+        case VT_I8:
+        case VT_UI8:
+	    if (readit) {
+		hres = xbuf_get(buf,(LPBYTE)arg,8);
+		if (hres) ERR("Failed to read integer 8 byte\n");
+	    }
+	    if (debugout) TRACE_(olerelay)("%lx%lx",arg[0],arg[1]);
+	    return hres;
         case VT_ERROR:
 	case VT_BOOL:
         case VT_I4:
