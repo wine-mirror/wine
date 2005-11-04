@@ -601,22 +601,39 @@ static BOOL set_privileges(LPCSTR privilege, BOOL set)
 static void test_regconnectregistry( void)
 {
     CHAR compName[MAX_COMPUTERNAME_LENGTH + 1];
+    CHAR netwName[MAX_COMPUTERNAME_LENGTH + 3]; /* 2 chars for double backslash */
     DWORD len = sizeof(compName) ;
     BOOL ret;
     LONG retl;
     HKEY hkey;
     SC_HANDLE schnd;
+    DWORD GLE;
 
     ret = GetComputerNameA(compName, &len);
     ok( ret, "GetComputerName failed err = %ld\n", GetLastError());
     if( !ret) return;
 
+    lstrcpyA(netwName, "\\\\");
+    lstrcpynA(netwName+2, compName, MAX_COMPUTERNAME_LENGTH + 1);
+
     retl = RegConnectRegistryA( compName, HKEY_LOCAL_MACHINE, &hkey);
-    ok( !retl, "RegConnectRegistryA failed err = %ld\n", retl);
+    ok( !retl || retl == ERROR_DLL_INIT_FAILED, "RegConnectRegistryA failed err = %ld\n", retl);
+    if( !retl) RegCloseKey( hkey);
+
+    retl = RegConnectRegistryA( netwName, HKEY_LOCAL_MACHINE, &hkey);
+    ok( !retl || retl == ERROR_DLL_INIT_FAILED, "RegConnectRegistryA failed err = %ld\n", retl);
     if( !retl) RegCloseKey( hkey);
 
     schnd = OpenSCManagerA( compName, NULL, GENERIC_READ); 
-    ok( schnd != NULL, "OpenSCManagerA failed err = %ld\n", GetLastError());
+    GLE = GetLastError();
+    ok( schnd != NULL || GLE==ERROR_CALL_NOT_IMPLEMENTED, 
+        "OpenSCManagerA failed err = %ld\n", GLE);
+    CloseServiceHandle( schnd);
+
+    schnd = OpenSCManagerA( netwName, NULL, GENERIC_READ); 
+    GLE = GetLastError();
+    ok( schnd != NULL || GLE==ERROR_CALL_NOT_IMPLEMENTED, 
+        "OpenSCManagerA failed err = %ld\n", GLE);
     CloseServiceHandle( schnd);
 
 }
