@@ -1179,6 +1179,7 @@ static void test_WSAStringToAddressA(void)
 {
     INT ret, len;
     SOCKADDR_IN sockaddr;
+    int GLE;
 
     CHAR address1[] = "0.0.0.0";
     CHAR address2[] = "127.127.127.127";
@@ -1214,8 +1215,10 @@ static void test_WSAStringToAddressA(void)
     sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAStringToAddressA( address3, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
-    ok( !ret && sockaddr.sin_addr.s_addr == 0xffffffff,
-        "WSAStringToAddressA() failed unexpectedly: %d\n", WSAGetLastError() );
+    GLE = WSAGetLastError();
+    ok( (ret == 0 && sockaddr.sin_addr.s_addr == 0xffffffff) || 
+        (ret == SOCKET_ERROR && GLE == ERROR_INVALID_PARAMETER),
+        "WSAStringToAddressA() failed unexpectedly: %d\n", GLE );
 
     len = sizeof(sockaddr);
     sockaddr.sin_port = 0;
@@ -1230,14 +1233,17 @@ static void test_WSAStringToAddressA(void)
     sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAStringToAddressA( address5, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
-    ok( !ret && sockaddr.sin_addr.s_addr == 0xffffffff && sockaddr.sin_port == 0xffff,
-        "WSAStringToAddressA() failed unexpectedly: %d\n", WSAGetLastError() );
+    GLE = WSAGetLastError();
+    ok( (ret == 0 && sockaddr.sin_addr.s_addr == 0xffffffff && sockaddr.sin_port == 0xffff) || 
+        (ret == SOCKET_ERROR && GLE == ERROR_INVALID_PARAMETER),
+        "WSAStringToAddressA() failed unexpectedly: %d\n", GLE );
 }
 
 static void test_WSAStringToAddressW(void)
 {
     INT ret, len;
     SOCKADDR_IN sockaddr;
+    int GLE;
 
     WCHAR address1[] = { '0','.','0','.','0','.','0', 0 };
     WCHAR address2[] = { '1','2','7','.','1','2','7','.','1','2','7','.','1','2','7', 0 };
@@ -1275,8 +1281,10 @@ static void test_WSAStringToAddressW(void)
     sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAStringToAddressW( address3, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
-    ok( !ret && sockaddr.sin_addr.s_addr == 0xffffffff,
-        "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
+    GLE = WSAGetLastError();
+    ok( (ret == 0 && sockaddr.sin_addr.s_addr == 0xffffffff) || 
+        (ret == SOCKET_ERROR && GLE == ERROR_INVALID_PARAMETER),
+        "WSAStringToAddressW() failed unexpectedly: %d\n", GLE );
 
     len = sizeof(sockaddr);
     sockaddr.sin_port = 0;
@@ -1291,8 +1299,9 @@ static void test_WSAStringToAddressW(void)
     sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAStringToAddressW( address5, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
-    ok( !ret && sockaddr.sin_addr.s_addr == 0xffffffff && sockaddr.sin_port == 0xffff,
-        "WSAStringToAddressW() failed unexpectedly: %d\n", WSAGetLastError() );
+    ok( (ret == 0 && sockaddr.sin_addr.s_addr == 0xffffffff && sockaddr.sin_port == 0xffff) || 
+        (ret == SOCKET_ERROR && (GLE == ERROR_INVALID_PARAMETER || GLE == WSAEINVAL)),
+        "WSAStringToAddressW() failed unexpectedly: %d\n", GLE );
 }
 
 /**************** Main program  ***************/
