@@ -4803,50 +4803,129 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
  /* Yet another way to update a texture, some apps use this to load default textures instead of using surface/texture lock/unlock */
 HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3DBaseTexture *pSourceTexture,  IWineD3DBaseTexture *pDestinationTexture){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    HRESULT hr = D3D_OK;
     D3DRESOURCETYPE sourceType;
     D3DRESOURCETYPE destinationType;
-    IWineD3DTextureImpl *pDestTexture = (IWineD3DTextureImpl *)pDestinationTexture;
-    IWineD3DTextureImpl *pSrcTexture  = (IWineD3DTextureImpl *)pSourceTexture;
-    int i;
+    int i ,levels;
 
-    sourceType = IWineD3DBaseTexture_GetType(pSourceTexture);
-    destinationType = IWineD3DBaseTexture_GetType(pDestinationTexture);
-    if(sourceType != D3DRTYPE_TEXTURE && destinationType != D3DRTYPE_TEXTURE){
-        FIXME("(%p) Only D3DRTYPE_TEXTURE to D3DRTYPE_TEXTURE supported\n", This);
-        return D3DERR_INVALIDCALL;
-    }
+    /* TODO: think about moving the code into IWineD3DBaseTexture  */
+
     TRACE("(%p) Source %p Destination %p\n", This, pSourceTexture, pDestinationTexture);
 
-    /** TODO: Get rid of the casts to IWineD3DBaseTextureImpl
-        repalce surfaces[x] with GetSurfaceLevel, or GetCubeMapSurface etc..
-        think about moving the code into texture, and adding a member to base texture to occomplish this **/
-
-    /* Make sure that the destination texture is loaded */
-    IWineD3DBaseTexture_PreLoad(pDestinationTexture);
-    TRACE("Loading source texture\n");
-
-    if(pSrcTexture->surfaces[0] == NULL || pDestTexture->surfaces[0] == NULL){
-        FIXME("(%p) Texture src %p or dest %p has not surface %p %p\n", This, pSrcTexture, pDestTexture,
-               pSrcTexture->surfaces[0], pDestTexture->surfaces[0]);
+    /* verify that the source and destination textures arebn't NULL */
+    if (NULL == pSourceTexture || NULL == pDestinationTexture) {
+        WARN("(%p) : source (%p) and destination (%p) textures must not be NULL, returning D3DERR_INVALIDCALL\n",
+             This, pSourceTexture, pDestinationTexture);
+        hr = D3DERR_INVALIDCALL;
     }
 
-    if(((IWineD3DSurfaceImpl *)pSrcTexture->surfaces[0])->resource.pool != D3DPOOL_SYSTEMMEM ||
-        ((IWineD3DSurfaceImpl *)pDestTexture->surfaces[0])->resource.pool != D3DPOOL_DEFAULT){
-
-        FIXME("(%p) source %p must be SYSTEMMEM and dest %p must be DEFAULT\n",This, pSrcTexture, pDestTexture);
-        return D3DERR_INVALIDCALL;
+    if (pSourceTexture == pDestinationTexture) {
+        WARN("(%p) : source (%p) and destination (%p) textures must be different, returning D3DERR_INVALIDCALL\n",
+             This, pSourceTexture, pDestinationTexture);
+        hr = D3DERR_INVALIDCALL;
     }
-    /** TODO: check that both textures have the same number of levels  **/
-#if 0
-    if(IWineD3DBaseTexture_GetLevelCount(pDestinationTexture)  !=IWineD3DBaseTexture_GetLevelCount(pSourceTexture))
-            return D3DERR_INVALIDCALL;
+    /* Verify that the source and destination textures are the same type */
+    sourceType      = IWineD3DBaseTexture_GetType(pSourceTexture);
+    destinationType = IWineD3DBaseTexture_GetType(pDestinationTexture);
+
+    if (sourceType != destinationType) {
+        WARN("(%p) Sorce and destination types must match, returning D3DERR_INVALIDCALL\n",
+             This);
+        hr = D3DERR_INVALIDCALL;
+    }
+
+    /* check that both textures have the identical numbers of levels  */
+    if (IWineD3DBaseTexture_GetLevelCount(pDestinationTexture)  != IWineD3DBaseTexture_GetLevelCount(pSourceTexture)) {
+        WARN("(%p) : source (%p) and destination (%p) textures must have identicle numbers of levels, returning D3DERR_INVALIDCALL\n", This, pSourceTexture, pDestinationTexture);
+        hr = D3DERR_INVALIDCALL;
+    }
+
+    if (D3D_OK == hr) {
+
+        /* Make sure that the destination texture is loaded */
+        IWineD3DBaseTexture_PreLoad(pDestinationTexture);
+
+        /* Update every surface level of the texture */
+        levels = IWineD3DBaseTexture_GetLevelCount(pDestinationTexture);
+
+        switch (sourceType) {
+        case D3DRTYPE_TEXTURE:
+            {
+                IWineD3DSurface *srcSurface;
+                IWineD3DSurface *destSurface;
+
+                for (i = 0 ; i < levels ; ++i) {
+                    IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)pSourceTexture,      i, &srcSurface);
+                    IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)pDestinationTexture, i, &destSurface);
+                    hr = IWineD3DDevice_UpdateSurface(iface, srcSurface, NULL, destSurface, NULL);
+                    IWineD3DSurface_Release(srcSurface);
+                    IWineD3DSurface_Release(destSurface);
+                    if (D3D_OK != hr) {
+                        WARN("(%p) : Call to update surface failed\n", This);
+                        return hr;
+                    }
+                }
+            }
+            break;
+        case D3DRTYPE_CUBETEXTURE:
+            {
+                IWineD3DSurface *srcSurface;
+                IWineD3DSurface *destSurface;
+                D3DCUBEMAP_FACES faceType;
+
+                for (i = 0 ; i < levels ; ++i) {
+                    /* Update each cube face */
+                    for (faceType = D3DCUBEMAP_FACE_POSITIVE_X; faceType <= D3DCUBEMAP_FACE_NEGATIVE_Z; ++faceType){
+                        hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)pSourceTexture,      faceType, i, &srcSurface);
+                        if (D3D_OK != hr) {
+                            FIXME("(%p) : Failed to get src cube surface facetype %d, level %d\n", This, faceType, i);
+                        } else {
+                            TRACE("Got srcSurface %p\n", srcSurface);
+                        }
+                        hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)pDestinationTexture, faceType, i, &destSurface);
+                        if (D3D_OK != hr) {
+                            FIXME("(%p) : Failed to get src cube surface facetype %d, level %d\n", This, faceType, i);
+                        } else {
+                            TRACE("Got desrSurface %p\n", destSurface);
+                        }
+                        hr = IWineD3DDevice_UpdateSurface(iface, srcSurface, NULL, destSurface, NULL);
+                        IWineD3DSurface_Release(srcSurface);
+                        IWineD3DSurface_Release(destSurface);
+                        if (D3D_OK != hr) {
+                            WARN("(%p) : Call to update surface failed\n", This);
+                            return hr;
+                        }
+                    }
+                }
+            }
+            break;
+#if 0 /* TODO: Add support for volume textures */
+        case D3DRTYPE_VOLUMETEXTURE:
+            {
+                IWineD3DVolume  srcVolume  = NULL;
+                IWineD3DSurface destVolume = NULL;
+
+                for (i = 0 ; i < levels ; ++i) {
+                    IWineD3DVolumeTexture_GetVolume((IWineD3DVolumeTexture *)pSourceTexture,      i, &srcVolume);
+                    IWineD3DVolumeTexture_GetVolume((IWineD3DVolumeTexture *)pDestinationTexture, i, &destVolume);
+                    hr =  IWineD3DFoo_UpdateVolume(iface, srcVolume, NULL, destVolume, NULL);
+                    IWineD3DVolume_Release(srcSurface);
+                    IWineD3DVolume_Release(destSurface);
+                    if (D3D_OK != hr) {
+                        WARN("(%p) : Call to update volume failed\n", This);
+                        return hr;
+                    }
+                }
+            }
+            break;
 #endif
-    /** TODO: move this code into baseTexture? device should never touch impl*'s **/
-    for(i = 0 ; i < IWineD3DBaseTexture_GetLevelCount(pDestinationTexture) ; i++){
-        IWineD3DDevice_UpdateSurface(iface, pSrcTexture->surfaces[i], NULL, pDestTexture->surfaces[i], NULL);
+        default:
+            FIXME("(%p) : Unsupported source and destination type\n", This);
+            hr = D3DERR_INVALIDCALL;
+        }
     }
 
-    return D3D_OK;
+    return hr;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_StretchRect(IWineD3DDevice *iface, IWineD3DSurface *pSourceSurface,
