@@ -30,6 +30,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 
+int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine);
+
 static const char *command_to_string(UINT command)
 {
 #define X(x) case x: return #x
@@ -72,9 +74,19 @@ static const char *command_to_string(UINT command)
 
 HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
 {
-    FIXME("(%p, %s, command=%s, data=%ld): stub\n",
+    CHAR *file = NULL;
+
+    TRACE("(%p, %s, command=%s, data=%ld)\n",
           caller, debugstr_w( filename ),
           command_to_string( command ), data);
+
+    if (filename)
+    {
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
+
+        file = HeapAlloc( GetProcessHeap(), 0, len );
+        WideCharToMultiByte( CP_ACP, 0, filename, -1, file, len, NULL, NULL );
+    }
 
     switch (command)
     {
@@ -82,9 +94,8 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
         case HH_DISPLAY_TOC:
         case HH_DISPLAY_SEARCH:
         case HH_HELP_CONTEXT:
-            MessageBoxA( NULL, "HTML Help functionality is currently unimplemented.\n\n"
-                         "Try installing Internet Explorer, or using a native hhctrl.ocx with the Mozilla ActiveX control.",
-                         "Wine", MB_OK | MB_ICONEXCLAMATION );
+            FIXME("Not all HH cases handled correctly\n");
+            doWinMain(GetModuleHandleW(NULL), file);
         default:
             return 0;
     }
