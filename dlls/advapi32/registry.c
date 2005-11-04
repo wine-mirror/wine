@@ -257,7 +257,7 @@ DWORD WINAPI RegCreateKeyW( HKEY hkey, LPCWSTR lpSubKey, PHKEY phkResult )
 /******************************************************************************
  * RegCreateKeyA   [ADVAPI32.@]
  *
- * see RegCreateKeyW
+ * See RegCreateKeyW.
  */
 DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR lpSubKey, PHKEY phkResult )
 {
@@ -473,7 +473,7 @@ DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_le
 /******************************************************************************
  * RegEnumKeyExA   [ADVAPI32.@]
  *
- * see RegEnumKeyExW
+ * See RegEnumKeyExW.
  */
 DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len,
                             LPDWORD reserved, LPSTR class, LPDWORD class_len, FILETIME *ft )
@@ -563,7 +563,7 @@ DWORD WINAPI RegEnumKeyW( HKEY hkey, DWORD index, LPWSTR name, DWORD name_len )
 /******************************************************************************
  * RegEnumKeyA   [ADVAPI32.@]
  *
- * see RegEnumKeyW
+ * See RegEnumKeyW.
  */
 DWORD WINAPI RegEnumKeyA( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 {
@@ -573,6 +573,8 @@ DWORD WINAPI RegEnumKeyA( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 
 /******************************************************************************
  * RegQueryInfoKeyW   [ADVAPI32.@]
+ *
+ * Retrieves information about the specified registry key.
  *
  * PARAMS
  *    hkey       [I] Handle to key to query
@@ -588,10 +590,15 @@ DWORD WINAPI RegEnumKeyA( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
  *    security   [O] Buffer for security descriptor length
  *    modif      [O] Modification time
  *
- * - win95 allows class to be valid and class_len to be NULL
- * - winnt returns ERROR_INVALID_PARAMETER if class is valid and class_len is NULL
- * - both allow class to be NULL and class_len to be NULL
- * (it's hard to test validity, so test !NULL instead)
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: system error code.
+ *
+ * NOTES
+ *  - win95 allows class to be valid and class_len to be NULL
+ *  - winnt returns ERROR_INVALID_PARAMETER if class is valid and class_len is NULL
+ *  - both allow class to be NULL and class_len to be NULL
+ *    (it's hard to test validity, so test !NULL instead)
  */
 DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWORD reserved,
                                LPDWORD subkeys, LPDWORD max_subkey, LPDWORD max_class,
@@ -714,7 +721,7 @@ DWORD WINAPI RegQueryMultipleValuesA(HKEY hkey, PVALENTA val_list, DWORD num_val
 /******************************************************************************
  * RegQueryMultipleValuesW   [ADVAPI32.@]
  *
- * see RegQueryMultipleValuesA
+ * See RegQueryMultipleValuesA.
  */
 DWORD WINAPI RegQueryMultipleValuesW(HKEY hkey, PVALENTW val_list, DWORD num_vals,
                                      LPWSTR lpValueBuf, LPDWORD ldwTotsize)
@@ -973,7 +980,7 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
 /******************************************************************************
  * RegSetValueExA   [ADVAPI32.@]
  *
- * see RegSetValueExW
+ * See RegSetValueExW.
  *
  * NOTES
  *  win95 does not care about count for REG_SZ and finds out the len by itself (js)
@@ -1063,7 +1070,7 @@ DWORD WINAPI RegSetValueW( HKEY hkey, LPCWSTR name, DWORD type, LPCWSTR data, DW
 /******************************************************************************
  * RegSetValueA   [ADVAPI32.@]
  *
- * see RegSetValueW
+ * See RegSetValueW.
  */
 DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWORD count )
 {
@@ -1301,7 +1308,7 @@ DWORD WINAPI RegQueryValueW( HKEY hkey, LPCWSTR name, LPWSTR data, LPLONG count 
 /******************************************************************************
  * RegQueryValueA   [ADVAPI32.@]
  *
- * see RegQueryValueW
+ * See RegQueryValueW.
  */
 DWORD WINAPI RegQueryValueA( HKEY hkey, LPCSTR name, LPSTR data, LPLONG count )
 {
@@ -1580,6 +1587,8 @@ LONG WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
 /******************************************************************************
  * RegEnumValueW   [ADVAPI32.@]
  *
+ * Enumerates the values for the specified open registry key.
+ *
  * PARAMS
  *  hkey       [I] Handle to key to query
  *  index      [I] Index of value to query
@@ -1678,7 +1687,7 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
 /******************************************************************************
  * RegEnumValueA   [ADVAPI32.@]
  *
- * see RegEnumValueW
+ * See RegEnumValueW.
  */
 DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_count,
                             LPDWORD reserved, LPDWORD type, LPBYTE data, LPDWORD count )
@@ -1867,7 +1876,7 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
 /******************************************************************************
  * RegLoadKeyA   [ADVAPI32.@]
  *
- * see RegLoadKeyW
+ * See RegLoadKeyW.
  */
 LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
 {
@@ -1954,7 +1963,7 @@ done:
 /******************************************************************************
  * RegSaveKeyA  [ADVAPI32.@]
  *
- * see RegSaveKeyW
+ * See RegSaveKeyW.
  */
 LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
 {
@@ -2000,7 +2009,7 @@ LONG WINAPI RegRestoreKeyW( HKEY hkey, LPCWSTR lpFile, DWORD dwFlags )
 /******************************************************************************
  * RegRestoreKeyA [ADVAPI32.@]
  *
- * see RegRestoreKeyW
+ * See RegRestoreKeyW.
  */
 LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
 {
@@ -2047,7 +2056,7 @@ LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
 /******************************************************************************
  * RegUnLoadKeyA [ADVAPI32.@]
  *
- * see RegUnLoadKeyW
+ * See RegUnLoadKeyW.
  */
 LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
 {
@@ -2086,7 +2095,7 @@ LONG WINAPI RegReplaceKeyW( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewFile,
 /******************************************************************************
  * RegReplaceKeyA [ADVAPI32.@]
  *
- * see RegReplaceKeyW
+ * See RegReplaceKeyW.
  */
 LONG WINAPI RegReplaceKeyA( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
                               LPCSTR lpOldFile )
@@ -2250,7 +2259,7 @@ LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
 /******************************************************************************
  * RegConnectRegistryA [ADVAPI32.@]
  *
- * see RegConnectRegistryW
+ * See RegConnectRegistryW.
  */
 LONG WINAPI RegConnectRegistryA( LPCSTR machine, HKEY hkey, PHKEY reskey )
 {

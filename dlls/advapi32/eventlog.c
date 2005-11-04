@@ -58,7 +58,7 @@ BOOL WINAPI BackupEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 /******************************************************************************
  * BackupEventLogW [ADVAPI32.@]
  *
- * see BackupEventLogA
+ * See BackupEventLogA.
  */
 BOOL WINAPI BackupEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 {
@@ -90,7 +90,7 @@ BOOL WINAPI ClearEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 /******************************************************************************
  * ClearEventLogW [ADVAPI32.@]
  *
- * see ClearEventLogA
+ * See ClearEventLogA.
  */
 BOOL WINAPI ClearEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 {
@@ -225,7 +225,7 @@ HANDLE WINAPI OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
 /******************************************************************************
  * OpenBackupEventLogW [ADVAPI32.@]
  *
- * see OpenBackupEventLogA
+ * See OpenBackupEventLogA.
  */
 HANDLE WINAPI OpenBackupEventLogW( LPCWSTR lpUNCServerName, LPCWSTR lpFileName )
 {
@@ -256,7 +256,7 @@ HANDLE WINAPI OpenEventLogA( LPCSTR uncname, LPCSTR source )
 /******************************************************************************
  * OpenEventLogW [ADVAPI32.@]
  *
- * see OpenEventLogA
+ * See OpenEventLogA.
  */
 HANDLE WINAPI OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
 {
@@ -294,7 +294,7 @@ BOOL WINAPI ReadEventLogA( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOf
 /******************************************************************************
  * ReadEventLogW [ADVAPI32.@]
  *
- * see ReadEventLogA
+ * See ReadEventLogA.
  */
 BOOL WINAPI ReadEventLogW( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
     LPVOID lpBuffer, DWORD nNumberOfBytesToRead, DWORD *pnBytesRead, DWORD *pnMinNumberOfBytesNeeded )
@@ -337,7 +337,7 @@ HANDLE WINAPI RegisterEventSourceA( LPCSTR lpUNCServerName, LPCSTR lpSourceName 
 /******************************************************************************
  * RegisterEventSourceW [ADVAPI32.@]
  *
- * see RegisterEventSourceA
+ * See RegisterEventSourceA.
  */
 HANDLE WINAPI RegisterEventSourceW( LPCWSTR lpUNCServerName, LPCWSTR lpSourceName )
 {
@@ -403,7 +403,7 @@ BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD d
 /******************************************************************************
  * ReportEventW [ADVAPI32.@]
  *
- * see ReportEventA
+ * See ReportEventA.
  */
 BOOL WINAPI ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dwEventID,
     PSID lpUserSid, WORD wNumStrings, DWORD dwDataSize, LPCWSTR *lpStrings, LPVOID lpRawData )

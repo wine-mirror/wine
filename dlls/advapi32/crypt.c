@@ -269,16 +269,18 @@ error:
 
 /******************************************************************************
  * CryptAcquireContextW (ADVAPI32.@)
+ *
  * Acquire a crypto provider context handle.
  *
  * PARAMS
- * phProv: Pointer to HCRYPTPROV for the output.
- * pszContainer: Key Container Name
- * pszProvider: Cryptographic Service Provider Name
- * dwProvType: Crypto provider type to get a handle.
- * dwFlags: flags for the operation
+ *  phProv       [O] Pointer to HCRYPTPROV for the output.
+ *  pszContainer [I] Key Container Name
+ *  pszProvider  [I] Cryptographic Service Provider Name
+ *  dwProvType   [I] Crypto provider type to get a handle.
+ *  dwFlags      [I] flags for the operation
  *
- * RETURNS TRUE on success, FALSE on failure.
+ * RETURNS 
+ *  TRUE on success, FALSE on failure.
  */
 BOOL WINAPI CryptAcquireContextW (HCRYPTPROV *phProv, LPCWSTR pszContainer,
 		LPCWSTR pszProvider, DWORD dwProvType, DWORD dwFlags)
@@ -493,7 +495,7 @@ error:
 /******************************************************************************
  * CryptAcquireContextA (ADVAPI32.@)
  *
- * see CryptAcquireContextW
+ * See CryptAcquireContextW.
  */
 BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		LPCSTR pszProvider, DWORD dwProvType, DWORD dwFlags)
@@ -1052,7 +1054,7 @@ BOOL WINAPI CryptEnumProvidersW (DWORD dwIndex, DWORD *pdwReserved,
 /******************************************************************************
  * CryptEnumProvidersA (ADVAPI32.@)
  *
- * see CryptEnumProvidersW
+ * See CryptEnumProvidersW.
  */
 BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
 		DWORD dwFlags, DWORD *pdwProvType, LPSTR pszProvName, DWORD *pcbProvName)
@@ -1081,7 +1083,7 @@ BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
 }
 
 /******************************************************************************
- * CryptEnumProviderTypesW (ADVAPI32i.@)
+ * CryptEnumProviderTypesW (ADVAPI32.@)
  *
  * Retrieves the next type of CSP supported.
  *
@@ -1158,7 +1160,7 @@ BOOL WINAPI CryptEnumProviderTypesW (DWORD dwIndex, DWORD *pdwReserved,
 /******************************************************************************
  * CryptEnumProviderTypesA (ADVAPI32.@)
  *
- * see CryptEnumProviderTypesW
+ * See CryptEnumProviderTypesW.
  */
 BOOL WINAPI CryptEnumProviderTypesA (DWORD dwIndex, DWORD *pdwReserved,
 		DWORD dwFlags, DWORD *pdwProvType, LPSTR pszTypeName, DWORD *pcbTypeName)
@@ -1326,7 +1328,7 @@ BOOL WINAPI CryptGetDefaultProviderW (DWORD dwProvType, DWORD *pdwReserved,
 /******************************************************************************
  * CryptGetDefaultProviderA (ADVAPI32.@)
  *
- * see CryptGetDefaultProviderW
+ * See CryptGetDefaultProviderW.
  */
 BOOL WINAPI CryptGetDefaultProviderA (DWORD dwProvType, DWORD *pdwReserved,
 		DWORD dwFlags, LPSTR pszProvName, DWORD *pcbProvName)
@@ -1643,7 +1645,7 @@ BOOL WINAPI CryptSignHashW (HCRYPTHASH hHash, DWORD dwKeySpec, LPCWSTR sDescript
 /******************************************************************************
  * CryptSignHashA (ADVAPI32.@)
  *
- * ASCII version of CryptSignHashW
+ * See CryptSignHashW.
  */
 BOOL WINAPI CryptSignHashA (HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR sDescription,
 		DWORD dwFlags, BYTE *pbSignature, DWORD *pdwSigLen)
@@ -1743,7 +1745,7 @@ BOOL WINAPI CryptSetProviderA (LPCSTR pszProvName, DWORD dwProvType)
 /******************************************************************************
  * CryptSetProviderW (ADVAPI32.@)
  *
- * See CryptSetProviderA
+ * See CryptSetProviderA.
  */
 BOOL WINAPI CryptSetProviderW (LPCWSTR pszProvName, DWORD dwProvType)
 {
@@ -1829,7 +1831,7 @@ BOOL WINAPI CryptSetProviderExW (LPCWSTR pszProvName, DWORD dwProvType, DWORD *p
 /******************************************************************************
  * CryptSetProviderExA (ADVAPI32.@)
  *
- * See CryptSetProviderExW
+ * See CryptSetProviderExW.
  */
 BOOL WINAPI CryptSetProviderExA (LPCSTR pszProvName, DWORD dwProvType, DWORD *pdwReserved, DWORD dwFlags)
 {
@@ -1941,7 +1943,7 @@ BOOL WINAPI CryptVerifySignatureW (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 /******************************************************************************
  * CryptVerifySignatureA (ADVAPI32.@)
  *
- * ASCII version of CryptVerifySignatureW
+ * See CryptVerifySignatureW.
  */
 BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
 		HCRYPTKEY hPubKey, LPCSTR sDescription, DWORD dwFlags)
@@ -1967,6 +1969,10 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
  * PARAMS
  *  pbBufer [O] Pointer to memory to receive random bytes.
  *  dwLen   [I] Number of random bytes to fetch.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 
 BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen)
@@ -2010,6 +2016,10 @@ BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen)
  *    RTL_ENCRYPT_OPTION_CROSS_PROCESS 
  *    RTL_ENCRYPT_OPTION_SAME_LOGON
  *    
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: NTSTATUS error code
+ *
  * NOTES
  *  length must be a multiple of RTL_ENCRYPT_MEMORY_SIZE.
  *  If flags are specified when encrypting, the same flag value must be given
@@ -2033,6 +2043,10 @@ NTSTATUS WINAPI SystemFunction040(PVOID memory, ULONG length, ULONG flags)
  *    RTL_ENCRYPT_OPTION_SAME_PROCESS
  *    RTL_ENCRYPT_OPTION_CROSS_PROCESS
  *    RTL_ENCRYPT_OPTION_SAME_LOGON
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: NTSTATUS error code
  *
  * NOTES
  *  length must be a multiple of RTL_ENCRYPT_MEMORY_SIZE.

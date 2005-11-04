@@ -1222,7 +1222,7 @@ BOOL WINAPI LookupPrivilegeDisplayNameW( LPCWSTR lpSystemName, LPCWSTR lpName, L
 /******************************************************************************
  * LookupPrivilegeNameA			[ADVAPI32.@]
  *
- * See LookupPrivilegeNameW
+ * See LookupPrivilegeNameW.
  */
 BOOL WINAPI
 LookupPrivilegeNameA( LPCSTR lpSystemName, PLUID lpLuid, LPSTR lpName,
@@ -1526,7 +1526,8 @@ LookupAccountSidW(
 
 /******************************************************************************
  * SetFileSecurityA [ADVAPI32.@]
- * Sets the security of a file or directory
+ *
+ * See SetFileSecurityW.
  */
 BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
                                 SECURITY_INFORMATION RequestedInformation,
@@ -1551,12 +1552,17 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
 
 /******************************************************************************
  * SetFileSecurityW [ADVAPI32.@]
- * Sets the security of a file or directory
+ *
+ * Sets the security of a file or directory.
  *
  * PARAMS
  *   lpFileName           []
  *   RequestedInformation []
  *   pSecurityDescriptor  []
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
  */
 BOOL WINAPI
 SetFileSecurityW( LPCWSTR lpFileName,

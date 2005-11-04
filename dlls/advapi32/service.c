@@ -731,11 +731,7 @@ static BOOL service_run_threads(void)
 /******************************************************************************
  * StartServiceCtrlDispatcherA [ADVAPI32.@]
  *
- *  Connects a process containing one or more services to the service control
- * manager.
- *
- * PARAMS
- *   servent [I]  A list of the service names and service procedures
+ * See StartServiceCtrlDispatcherW.
  */
 BOOL WINAPI StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 {
@@ -778,6 +774,10 @@ BOOL WINAPI StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
  *
  * PARAMS
  *   servent [I]  A list of the service names and service procedures
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
  */
 BOOL WINAPI StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 {

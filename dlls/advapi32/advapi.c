@@ -144,6 +144,9 @@ BOOL WINAPI GetCurrentHwProfileW(LPHW_PROFILE_INFOW pInfo)
  *  buf   [I] Text buffer to test
  *  len   [I] Length of buf
  *  flags [O] Destination for test results
+ *
+ * RETURNS
+ *  TRUE if the buffer is likely Unicode, FALSE otherwise.
  */
 BOOL WINAPI IsTextUnicode( LPCVOID buf, INT len, LPINT flags )
 {
@@ -220,7 +223,7 @@ BOOL WINAPI InitiateSystemShutdownExA( LPSTR lpMachineName, LPSTR lpMessage,
 /******************************************************************************
  * InitiateSystemShutdownExW [ADVAPI32.@]
  *
- * see InitiateSystemShutdownExA
+ * See InitiateSystemShutdownExA.
  */
 BOOL WINAPI InitiateSystemShutdownExW( LPWSTR lpMachineName, LPWSTR lpMessage,
          DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown,
