@@ -456,6 +456,7 @@ extern int interlocked_xchg_add( int *dest, int incr );
 #define interlocked_xchg_add    __WINE_NOT_PORTABLE(interlocked_xchg_add)
 #define lstat                   __WINE_NOT_PORTABLE(lstat)
 #define memcpy_unaligned        __WINE_NOT_PORTABLE(memcpy_unaligned)
+#undef memmove
 #define memmove                 __WINE_NOT_PORTABLE(memmove)
 #define pread                   __WINE_NOT_PORTABLE(pread)
 #define pwrite                  __WINE_NOT_PORTABLE(pwrite)
