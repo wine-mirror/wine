@@ -359,8 +359,9 @@ sub parse_c_file($$) {
 		    $statements = undef;
 		} elsif($in_type) {
 		    if(/^\s*((?:(?:FAR\s*)?\*\s*(?:RESTRICTED_POINTER\s+)?)?
+			    (?:volatile\s+)?
 			    (?:\w+|WS\(\w+\))\s*
-			    (?:\s*,\s*(?:(?:FAR\s*)?\*+\s*(?:RESTRICTED_POINTER\s+)?)?(?:\w+|WS\(\w+\)))*\s*);/sx) {
+			    (?:\s*,\s*(?:(?:FAR\s*)?\*+\s*(?:RESTRICTED_POINTER\s+)?)?(?:volatile\s+)?(?:\w+|WS\(\w+\)))*\s*);/sx) {
 			my @parts = split(/\s*,\s*/, $1);
 			&$type_end([@parts]);
 		    } elsif(/;/s) {
