@@ -52,6 +52,7 @@
 #include "shlguid.h"
 #include "shlwapi.h"
 #include "msi.h"
+#include "appmgmt.h"
 
 #include "initguid.h"
 
@@ -2413,49 +2414,24 @@ ShellLink_QueryContextMenu( IContextMenu* iface, HMENU hmenu, UINT indexMenu,
     return MAKE_HRESULT( SEVERITY_SUCCESS, 0, id );
 }
 
-static LPWSTR shelllink_get_msi_component_path( LPCWSTR component )
+static LPWSTR
+shelllink_get_msi_component_path( LPWSTR component )
 {
-    UINT (WINAPI *pMsiDecomposeDescriptorW)(LPCWSTR,LPWSTR,LPWSTR,LPWSTR,DWORD*);
-    INSTALLSTATE (WINAPI *pMsiGetComponentPathW)(LPCWSTR,LPCWSTR,LPWSTR,DWORD*);
-    WCHAR szProd[MAX_FEATURE_CHARS+1], szFeat[MAX_FEATURE_CHARS+1],
-          szComp[MAX_FEATURE_CHARS+1], szCompPath[MAX_PATH];
-    INSTALLSTATE state;
     LPWSTR path = NULL;
-    HMODULE hmsi = NULL;
-    DWORD sz = 0;
-    UINT ret;
+    DWORD r, sz = 0;
 
-    TRACE("%s\n", debugstr_w( component ) );
+    r = CommandLineFromMsiDescriptor( component, NULL, &sz );
+    if (r != ERROR_SUCCESS)
+         return path;
 
-    hmsi = LoadLibraryA("msi");
-    if (!hmsi)
-        goto end;
-
-    pMsiDecomposeDescriptorW = (LPVOID) GetProcAddress(hmsi, "MsiDecomposeDescriptorW");
-    pMsiGetComponentPathW = (LPVOID) GetProcAddress(hmsi, "MsiGetComponentPathW");
-    if (!pMsiDecomposeDescriptorW || !pMsiGetComponentPathW)
-        goto end;
-
-    ret = pMsiDecomposeDescriptorW( component, szProd, szFeat, szComp, &sz );
-    if (ret != ERROR_SUCCESS)
+    sz++;
+    path = HeapAlloc( GetProcessHeap(), 0, sz*sizeof(WCHAR) );
+    r = CommandLineFromMsiDescriptor( component, path, &sz );
+    if (r != ERROR_SUCCESS)
     {
-        ERR("failed to decompose descriptor %s\n", debugstr_w( component ) );
-        goto end;
+        HeapFree( GetProcessHeap(), 0, path );
+        path = NULL;
     }
-
-    sz = MAX_PATH;
-    state = pMsiGetComponentPathW( szProd, szComp, szCompPath, &sz );
-    if (state != INSTALLSTATE_LOCAL)
-    {
-        ERR("MsiGetComponentPathW failed with error %d\n", ret );
-        goto end;
-    }
-
-    path = strdupW( szCompPath );
-
-end:
-    if (hmsi)
-        FreeLibrary( hmsi );
 
     TRACE("returning %s\n", debugstr_w( path ) );
 
