@@ -254,6 +254,7 @@ static HRESULT WINAPI xmlnodelist_get_item(
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
     xmlNodePtr curr;
     long nodeIndex = 0;
+    HRESULT r;
 
     TRACE("%p %ld\n", This, index);
  
@@ -263,14 +264,16 @@ static HRESULT WINAPI xmlnodelist_get_item(
         return S_FALSE;
 
     curr = This->node;
-    
-    for (nodeIndex = 0; nodeIndex < index; nodeIndex++) {
-        if (curr->next == NULL)
-            return S_FALSE;
-        else
-            curr = curr->next;
+
+    while(curr)
+    {
+        r = xslt_next_match( &This->xinfo, &curr );
+        if(FAILED(r) || !curr) return S_FALSE;
+        if(nodeIndex++ == index) break;
+        curr = curr->next;
     }
-    
+    if(!curr) return S_FALSE;
+
     *listItem = create_node( curr );
 
     return S_OK;
@@ -283,6 +286,7 @@ static HRESULT WINAPI xmlnodelist_get_length(
 
     xmlNodePtr curr;
     long nodeCount = 0;
+    HRESULT r;
 
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
 
@@ -293,13 +297,14 @@ static HRESULT WINAPI xmlnodelist_get_length(
 	return S_OK;
     }
         
-    curr = This->node;
-    nodeCount = 1;
-    while (curr->next != NULL) {
+    for(curr = This->node; curr; curr = curr->next)
+    {
+        r = xslt_next_match( &This->xinfo, &curr );
+        if(FAILED(r) || !curr) break;
         nodeCount++;
-        curr = curr->next;
     }
-   *listLength = nodeCount;
+
+    *listLength = nodeCount;
     return S_OK;
 }
 

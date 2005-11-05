@@ -319,7 +319,22 @@ static HRESULT WINAPI xmlnode_get_childNodes(
 
     if ( !childList )
         return E_INVALIDARG;
-    *childList = create_nodelist( This->node->children );
+
+    switch(This->node->type)
+    {
+    case XML_ELEMENT_NODE:
+        *childList = create_filtered_nodelist( This->node->children, (const xmlChar *)"*" );
+        break;
+
+    case XML_ATTRIBUTE_NODE:
+        *childList = create_filtered_nodelist( This->node->children, (const xmlChar *)"node()" );
+        break;
+
+    default:
+        FIXME("unhandled node type %d\n", This->node->type);
+        break;
+    }
+
     if (!*childList)
         return S_FALSE;
     return S_OK;
