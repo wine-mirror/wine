@@ -5613,6 +5613,7 @@ static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
 {
     POINT Position;
     LVITEMW lvItem;
+    INT nColumn = lprc->top;
     
     if (!lprc) return FALSE;
 
@@ -5625,9 +5626,11 @@ static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
 
     if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &Position)) return FALSE;
 
+    if (nColumn < 0 || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return FALSE;
+
     lvItem.mask = 0;
     lvItem.iItem = nItem;
-    lvItem.iSubItem = lprc->top;
+    lvItem.iSubItem = nColumn;
     
     if (lvItem.mask && !LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
     switch(lprc->left)
