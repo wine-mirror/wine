@@ -190,8 +190,8 @@ typedef struct _UnixFolder {
     const IPersistPropertyBagVtbl *lpIPersistPropertyBagVtbl;
     const ISFHelperVtbl *lpISFHelperVtbl;
     LONG m_cRef;
-    CHAR *m_pszPath;
-    LPITEMIDLIST m_pidlLocation;
+    CHAR *m_pszPath;             /* Target path of the shell folder */
+    LPITEMIDLIST m_pidlLocation; /* Location in the shell namespace */
     DWORD m_dwPathMode;
     DWORD m_dwAttributes;
     const CLSID *m_pCLSID;
@@ -582,6 +582,71 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
 }
 
 /******************************************************************************
+ * UNIXFS_initialize_target_folder [Internal]
+ *
+ *  Initialize the m_pszPath member of an UnixFolder, given an absolute unix
+ *  base path and a relative ITEMIDLIST. Leave the m_pidlLocation member, which
+ *  specifies the location in the shell namespace alone. 
+ * 
+ * PARAMS
+ *  This          [IO] The UnixFolder, whose target path is to be initialized
+ *  szBasePath    [I]  The absolute base path
+ *  pidlSubFolder [I]  Relative part of the path, given as an ITEMIDLIST
+ *  dwAttributes  [I]  Attributes to add to the Folders m_dwAttributes member 
+ *                     (Used to pass the SFGAO_FILESYSTEM flag down the path)
+ * RETURNS
+ *  Success: S_OK,
+ *  Failure: E_FAIL
+ */
+static HRESULT UNIXFS_initialize_target_folder(UnixFolder *This, const char *szBasePath,
+    LPCITEMIDLIST pidlSubFolder, DWORD dwAttributes)
+{
+    LPCITEMIDLIST current = pidlSubFolder;
+    DWORD dwPathLen = strlen(szBasePath)+1;
+    struct stat statPrefix;
+    char *pNextDir;
+        
+    /* Determine the path's length bytes */
+    while (current && current->mkid.cb) {
+        dwPathLen += NAME_LEN_FROM_LPSHITEMID(current) + 1; /* For the '/' */
+        current = ILGetNext(current);
+    };
+
+    /* Build the path and compute the attributes*/
+    This->m_dwAttributes = 
+            dwAttributes|SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR|SFGAO_CANRENAME;
+    This->m_pszPath = pNextDir = SHAlloc(dwPathLen);
+    if (!This->m_pszPath) {
+        WARN("SHAlloc failed!\n");
+        return E_FAIL;
+    }
+    current = pidlSubFolder;
+    strcpy(pNextDir, szBasePath);
+    pNextDir += strlen(szBasePath);
+    if (This->m_dwPathMode == PATHMODE_UNIX || IsEqualCLSID(&CLSID_MyDocuments, This->m_pCLSID))
+        This->m_dwAttributes |= SFGAO_FILESYSTEM;
+    if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
+        *pNextDir = '\0';
+        if (!stat(This->m_pszPath, &statPrefix) && UNIXFS_is_dos_device(&statPrefix))
+            This->m_dwAttributes |= SFGAO_FILESYSTEM;
+    }
+    while (current && current->mkid.cb) {
+        memcpy(pNextDir, _ILGetTextPointer(current), NAME_LEN_FROM_LPSHITEMID(current));
+        pNextDir += NAME_LEN_FROM_LPSHITEMID(current);
+        if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
+            *pNextDir = '\0';
+            if (!stat(This->m_pszPath, &statPrefix) && UNIXFS_is_dos_device(&statPrefix))
+                This->m_dwAttributes |= SFGAO_FILESYSTEM;
+        }
+        *pNextDir++ = '/';
+        current = ILGetNext(current);
+    }
+    *pNextDir='\0';
+ 
+    return S_OK;
+}
+
+/******************************************************************************
  * UnixFolder
  *
  * Class whose heap based instances represent unix filesystem directories.
@@ -707,23 +772,33 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
     IPersistFolder3 *persistFolder;
     HRESULT hr;
+    const CLSID *clsidChild;
         
     TRACE("(iface=%p, pidl=%p, pbcReserver=%p, riid=%p, ppvOut=%p)\n", 
             iface, pidl, pbcReserved, riid, ppvOut);
 
     if (!pidl || !pidl->mkid.cb)
         return E_INVALIDARG;
-       
-    hr = CreateUnixFolder(NULL, &IID_IPersistFolder3, (void**)&persistFolder, This->m_pCLSID);
+   
+    if (IsEqualCLSID(This->m_pCLSID, &CLSID_FolderShortcut)) {
+        /* Children of FolderShortcuts are ShellFSFolders on Windows. 
+         * Unixfs' counterpart is UnixDosFolder. */
+        clsidChild = &CLSID_UnixDosFolder;    
+    } else {
+        clsidChild = This->m_pCLSID;
+    }
+    
+    hr = CreateUnixFolder(NULL, &IID_IPersistFolder3, (void**)&persistFolder, clsidChild);
     if (!SUCCEEDED(hr)) return hr;
     hr = IPersistFolder_QueryInterface(persistFolder, riid, (void**)ppvOut);
    
     if (SUCCEEDED(hr)) {
-        LPITEMIDLIST pidlSubFolder = ILCombine(This->m_pidlLocation, pidl);
-        hr = IPersistFolder3_Initialize(persistFolder, pidlSubFolder);
-        ILFree(pidlSubFolder);
-    }
-    
+        UnixFolder *subfolder = ADJUST_THIS(UnixFolder, IPersistFolder3, persistFolder);
+        subfolder->m_pidlLocation = ILCombine(This->m_pidlLocation, pidl);
+        hr = UNIXFS_initialize_target_folder(subfolder, This->m_pszPath, pidl,
+                                             This->m_dwAttributes & SFGAO_FILESYSTEM);
+    } 
+
     IPersistFolder3_Release(persistFolder);
     
     return hr;
@@ -1221,10 +1296,8 @@ static HRESULT WINAPI UnixFolder_IPersistFolder3_GetClassID(IPersistFolder3* ifa
 static HRESULT WINAPI UnixFolder_IPersistFolder3_Initialize(IPersistFolder3* iface, LPCITEMIDLIST pidl)
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IPersistFolder3, iface);
-    struct stat statPrefix;
-    LPCITEMIDLIST current = pidl, root;
-    DWORD dwPathLen;
-    char *pNextDir, szBasePath[FILENAME_MAX] = "/";
+    LPCITEMIDLIST current = pidl;
+    char szBasePath[FILENAME_MAX] = "/";
     
     TRACE("(iface=%p, pidl=%p)\n", iface, pidl);
 
@@ -1243,11 +1316,8 @@ static HRESULT WINAPI UnixFolder_IPersistFolder3_Initialize(IPersistFolder3* ifa
             PathAddBackslashW(wszMyDocumentsPath);
             if (!UNIXFS_get_unix_path(wszMyDocumentsPath, szBasePath))
                 return E_FAIL;
-            dwPathLen = strlen(szBasePath) + 1;
-        } else {
-            dwPathLen = 2; /* For the '/' prefix and the terminating '\0' */
-        }
-        root = current = ILGetNext(current);
+        } 
+        current = ILGetNext(current);
     } else if (_ILIsDesktop(pidl) || _ILIsValue(pidl) || _ILIsFolder(pidl)) {
         /* Path rooted at Desktop */
         WCHAR wszDesktopPath[MAX_PATH];
@@ -1256,52 +1326,21 @@ static HRESULT WINAPI UnixFolder_IPersistFolder3_Initialize(IPersistFolder3* ifa
         PathAddBackslashW(wszDesktopPath);
         if (!UNIXFS_get_unix_path(wszDesktopPath, szBasePath))
             return E_FAIL;
-        dwPathLen = strlen(szBasePath) + 1;
-        root = current = pidl;
+        current = pidl;
+    } else if (IsEqualCLSID(This->m_pCLSID, &CLSID_FolderShortcut)) {
+        /* FolderShortcuts' Initialize method only sets the ITEMIDLIST, which
+         * specifies the location in the shell namespace, but leaves the
+         * target folder (m_pszPath) alone. See unit tests in tests/shlfolder.c */
+        This->m_pidlLocation = ILClone(pidl);
+        return S_OK;
     } else {
         ERR("Unknown pidl type!\n");
         pdump(pidl);
         return E_INVALIDARG;
     }
-    
-    /* Determine the path's length bytes */
-    while (current && current->mkid.cb) {
-        dwPathLen += NAME_LEN_FROM_LPSHITEMID(current) + 1; /* For the '/' */
-        current = ILGetNext(current);
-    };
-
-    /* Build the path */
-    This->m_dwAttributes = SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR|SFGAO_CANRENAME;
+  
     This->m_pidlLocation = ILClone(pidl);
-    This->m_pszPath = pNextDir = SHAlloc(dwPathLen);
-    if (!This->m_pszPath || !This->m_pidlLocation) {
-        WARN("SHAlloc failed!\n");
-        return E_FAIL;
-    }
-    current = root;
-    strcpy(pNextDir, szBasePath);
-    pNextDir += strlen(szBasePath);
-    if (This->m_dwPathMode == PATHMODE_UNIX || IsEqualCLSID(&CLSID_MyDocuments, This->m_pCLSID))
-        This->m_dwAttributes |= SFGAO_FILESYSTEM;
-    if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
-        *pNextDir = '\0';
-        if (!stat(This->m_pszPath, &statPrefix) && UNIXFS_is_dos_device(&statPrefix))
-            This->m_dwAttributes |= SFGAO_FILESYSTEM;
-    }
-    while (current && current->mkid.cb) {
-        memcpy(pNextDir, _ILGetTextPointer(current), NAME_LEN_FROM_LPSHITEMID(current));
-        pNextDir += NAME_LEN_FROM_LPSHITEMID(current);
-        if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
-            *pNextDir = '\0';
-            if (!stat(This->m_pszPath, &statPrefix) && UNIXFS_is_dos_device(&statPrefix))
-                This->m_dwAttributes |= SFGAO_FILESYSTEM;
-        }
-        *pNextDir++ = '/';
-        current = ILGetNext(current);
-    }
-    *pNextDir='\0';
- 
-    return S_OK;
+    return UNIXFS_initialize_target_folder(This, szBasePath, current, 0); 
 }
 
 static HRESULT WINAPI UnixFolder_IPersistFolder3_GetCurFolder(IPersistFolder3* iface, LPITEMIDLIST* ppidl)
@@ -1336,7 +1375,9 @@ static HRESULT WINAPI UnixFolder_IPersistFolder3_InitializeEx(IPersistFolder3 *i
             return E_FAIL;
         }
     } else if (*ppfti->szTargetParsingName) {
-        if (!UNIXFS_get_unix_path(ppfti->szTargetParsingName, szTargetPath)) {
+        lstrcpyW(wszTargetDosPath, ppfti->szTargetParsingName);
+        PathAddBackslashW(wszTargetDosPath);
+        if (!UNIXFS_get_unix_path(wszTargetDosPath, szTargetPath)) {
             return E_FAIL;
         }
     } else if (ppfti->pidlTargetFolder) {

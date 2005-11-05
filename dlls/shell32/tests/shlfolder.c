@@ -876,7 +876,9 @@ void test_FolderShortcut(void) {
         ':',':','{','9','B','3','5','2','E','B','F','-','2','7','6','5','-','4','5','C','1','-',
         'B','4','C','6','-','8','5','C','C','7','F','7','A','B','C','6','4','}',0 };
     WCHAR wszSomeSubFolder[] = { 'S','u','b','F','o','l','d','e','r', 0};
-       
+    static const GUID CLSID_UnixDosFolder = 
+        {0x9d20aae8, 0x0625, 0x44b0, {0x9c, 0xa7, 0x71, 0x88, 0x9c, 0x22, 0x54, 0xd9}};
+
     if (!pSHGetSpecialFolderPathW || !pStrRetToBufW) return;
    
     /* These tests basically show, that CLSID_FolderShortcuts are initialized
@@ -945,7 +947,7 @@ void test_FolderShortcut(void) {
     if (FAILED(hr)) return;
 
     hr = IPersistFolder3_Initialize(pPersistFolder3, pidlWineTestFolder);
-    todo_wine { ok (SUCCEEDED(hr), "IPersistFolder3::Initialize failed! hr = %08lx\n", hr); }
+    ok (SUCCEEDED(hr), "IPersistFolder3::Initialize failed! hr = %08lx\n", hr);
     if (FAILED(hr)) {
         IPersistFolder3_Release(pPersistFolder3);
         ILFree(pidlWineTestFolder);
@@ -985,7 +987,7 @@ void test_FolderShortcut(void) {
     
     hr = IShellFolder_ParseDisplayName(pShellFolder, NULL, NULL, wszSomeSubFolder, NULL, 
                                        &pidlSubFolder, NULL);
-    RemoveDirectoryW(wszSomeSubFolder);
+    RemoveDirectoryW(wszDesktopPath);
     ok (SUCCEEDED(hr), "IShellFolder::ParseDisplayName failed! hr = %08lx\n", hr);
     if (FAILED(hr)) {
         IShellFolder_Release(pShellFolder);
@@ -1000,9 +1002,12 @@ void test_FolderShortcut(void) {
     if (FAILED(hr)) 
         return;
 
+    /* On windows, we expect CLSID_ShellFSFolder. On wine we relax this constraint
+     * a little bit and also allow CLSID_UnixDosFolder. */
     hr = IPersistFolder3_GetClassID(pPersistFolder3, &clsid);
     ok(SUCCEEDED(hr), "IPersistFolder3_GetClassID failed! hr=0x%08lx\n", hr);
-    ok(IsEqualCLSID(&clsid, &CLSID_ShellFSFolder), "Unexpected CLSID!\n");
+    ok(IsEqualCLSID(&clsid, &CLSID_ShellFSFolder) || IsEqualCLSID(&clsid, &CLSID_UnixDosFolder),
+        "IPersistFolder3::GetClassID returned unexpected CLSID!\n");
 
     IPersistFolder3_Release(pPersistFolder3);
 }
