@@ -3011,6 +3011,10 @@ struct IDsDriverBufferImpl
     snd_pcm_uframes_t         mmap_buflen_frames;
     snd_pcm_channel_area_t *  mmap_areas;
     snd_async_handler_t *     mmap_async_handler;
+    snd_pcm_uframes_t	      mmap_ppos; /* play position */
+    
+    /* Do we have a direct hardware buffer - SND_PCM_TYPE_HW? */
+    int                       mmap_mode;
 };
 
 static void DSDB_CheckXRUN(IDsDriverBufferImpl* pdbi)
@@ -3037,86 +3041,77 @@ static void DSDB_CheckXRUN(IDsDriverBufferImpl* pdbi)
     }
 }
 
-static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi)
+static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi, int mul)
 {
     WINE_WAVEDEV *     wwo = &(WOutDev[pdbi->drv->wDevID]);
-    unsigned int       channels;
-    snd_pcm_format_t   format;
     snd_pcm_uframes_t  period_size;
     snd_pcm_sframes_t  avail;
     int err;
     int dir=0;
 
+    const snd_pcm_channel_area_t *areas;
+    snd_pcm_uframes_t     ofs;
+    snd_pcm_uframes_t     frames;
+    snd_pcm_uframes_t     wanted;
+
     if ( !pdbi->mmap_buffer || !wwo->hw_params || !wwo->pcm)
     	return;
 
-    err = snd_pcm_hw_params_get_channels(wwo->hw_params, &channels);
-    err = snd_pcm_hw_params_get_format(wwo->hw_params, &format);
-    dir=0;
     err = snd_pcm_hw_params_get_period_size(wwo->hw_params, &period_size, &dir);
     avail = snd_pcm_avail_update(wwo->pcm);
 
     DSDB_CheckXRUN(pdbi);
 
-    TRACE("avail=%d format=%s channels=%d\n", (int)avail, snd_pcm_format_name(format), channels );
+    TRACE("avail=%d, mul=%d\n", (int)avail, mul);
 
-    while (avail >= period_size)
-    {
-	const snd_pcm_channel_area_t *areas;
-	snd_pcm_uframes_t     ofs;
-	snd_pcm_uframes_t     frames;
-	int                   err;
+    frames = pdbi->mmap_buflen_frames;
+	
+    EnterCriticalSection(&pdbi->mmap_crst);
 
-	frames = avail / period_size * period_size; /* round down to a multiple of period_size */
+    /* we want to commit the given number of periods, or the whole lot */
+    wanted = mul == 0 ? frames : period_size * 2;
 
-	EnterCriticalSection(&pdbi->mmap_crst);
+    snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &frames);
+    if (areas != pdbi->mmap_areas || areas->addr != pdbi->mmap_areas->addr)
+        FIXME("Can't access sound driver's buffer directly.\n");	
 
-	snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &frames);
-	if (areas != pdbi->mmap_areas || areas->addr != pdbi->mmap_areas->addr)
-	    FIXME("Can't access sound driver's buffer directly.\n");
-	err = snd_pcm_mmap_commit(wwo->pcm, ofs, frames);
-
-	LeaveCriticalSection(&pdbi->mmap_crst);
-
-	if ( err != (snd_pcm_sframes_t) frames)
-	    ERR("mmap partially failed.\n");
-
-	avail = snd_pcm_avail_update(wwo->pcm);
+    /* mark our current play position */
+    pdbi->mmap_ppos = ofs;
+        
+    if (frames > wanted)
+        frames = wanted;
+        
+    err = snd_pcm_mmap_commit(wwo->pcm, ofs, frames);
+	
+    /* Check to make sure we committed all we want to commit. ALSA
+     * only gives a contiguous linear region, so we need to check this
+     * in case we've reached the end of the buffer, in which case we
+     * can wrap around back to the beginning. */
+    if (frames < wanted) {
+        frames = wanted -= frames;
+        snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &frames);
+        snd_pcm_mmap_commit(wwo->pcm, ofs, frames);
     }
 
-    if (avail > 0)
-    {
-	const snd_pcm_channel_area_t *areas;
-	snd_pcm_uframes_t     ofs;
-	snd_pcm_uframes_t     frames;
-	int                   err;
-
-	frames = avail;
-
-	EnterCriticalSection(&pdbi->mmap_crst);
-
-	snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &frames);
-	if (areas != pdbi->mmap_areas || areas->addr != pdbi->mmap_areas->addr)
-	    FIXME("Can't access sound driver's buffer directly.\n");
-	err = snd_pcm_mmap_commit(wwo->pcm, ofs, frames);
-
-	LeaveCriticalSection(&pdbi->mmap_crst);
-
-	if ( err != (snd_pcm_sframes_t) frames)
-	    ERR("mmap partially failed.\n");
-
-	avail = snd_pcm_avail_update(wwo->pcm);
-    }
+    LeaveCriticalSection(&pdbi->mmap_crst);
 }
 
 static void DSDB_PCMCallback(snd_async_handler_t *ahandler)
 {
+    int periods;
     /* snd_pcm_t *               handle = snd_async_handler_get_pcm(ahandler); */
     IDsDriverBufferImpl*      pdbi = snd_async_handler_get_callback_private(ahandler);
     TRACE("callback called\n");
-    DSDB_MMAPCopy(pdbi);
+    
+    /* Commit another block (the entire buffer if it's a direct hw buffer) */
+    periods = pdbi->mmap_mode == SND_PCM_TYPE_HW ? 0 : 1;
+    DSDB_MMAPCopy(pdbi, periods);
 }
 
+/**
+ * Allocate the memory-mapped buffer for direct sound, and set up the
+ * callback.
+ */
 static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
 {
     WINE_WAVEDEV *            wwo = &(WOutDev[pdbi->drv->wDevID]);
@@ -3134,7 +3129,14 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
     err = snd_pcm_hw_params_get_channels(wwo->hw_params, &channels);
     bits_per_sample = snd_pcm_format_physical_width(format);
     bits_per_frame = bits_per_sample * channels;
-
+    pdbi->mmap_mode = snd_pcm_type(wwo->pcm);
+    
+    if (pdbi->mmap_mode == SND_PCM_TYPE_HW) {
+        TRACE("mmap'd buffer is a hardware buffer.\n");
+    }
+    else {
+        TRACE("mmap'd buffer is an ALSA emulation of hardware buffer.\n");
+    }
 
     if (TRACE_ON(wave))
 	ALSA_TraceParameters(wwo->hw_params, NULL, FALSE);
@@ -3286,6 +3288,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     WINE_WAVEDEV *      wwo = &(WOutDev[This->drv->wDevID]);
     snd_pcm_uframes_t   hw_ptr;
     snd_pcm_uframes_t   period_size;
+    snd_pcm_state_t     state;
     int dir;
     int err;
 
@@ -3296,17 +3299,19 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 
     if (wwo->pcm == NULL) return DSERR_GENERIC;
     /** we need to track down buffer underruns */
-    DSDB_CheckXRUN(This);
+    DSDB_CheckXRUN(This);    
 
     EnterCriticalSection(&This->mmap_crst);
-    /* FIXME: snd_pcm_mmap_hw_ptr() should not be accessed by a user app. */
-    /*        It will NOT return what why want anyway. */
-    hw_ptr = _snd_pcm_mmap_hw_ptr(wwo->pcm);
-    if (hw_ptr >= period_size) hw_ptr -= period_size; else hw_ptr = 0;
+    hw_ptr = This->mmap_ppos;
+    
+    state = snd_pcm_state(wwo->pcm);
+    if (state != SND_PCM_STATE_RUNNING)
+      hw_ptr = 0;
+    
     if (lpdwPlay)
-	*lpdwPlay = snd_pcm_frames_to_bytes(wwo->pcm, hw_ptr/ period_size  * period_size) % This->mmap_buflen_bytes;
+	*lpdwPlay = snd_pcm_frames_to_bytes(wwo->pcm, hw_ptr) % This->mmap_buflen_bytes;
     if (lpdwWrite)
-	*lpdwWrite = snd_pcm_frames_to_bytes(wwo->pcm, (hw_ptr / period_size + 1) * period_size ) % This->mmap_buflen_bytes;
+	*lpdwWrite = snd_pcm_frames_to_bytes(wwo->pcm, hw_ptr + period_size * 2) % This->mmap_buflen_bytes;
     LeaveCriticalSection(&This->mmap_crst);
 
     TRACE("hw_ptr=0x%08x, playpos=%ld, writepos=%ld\n", (unsigned int)hw_ptr, lpdwPlay?*lpdwPlay:-1, lpdwWrite?*lpdwWrite:-1);
@@ -3331,10 +3336,29 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
         state = snd_pcm_state(wwo->pcm);
     }
     if ( state == SND_PCM_STATE_PREPARED )
-     {
-	DSDB_MMAPCopy(This);
+    {
+	/* If we have a direct hardware buffer, we can commit the whole lot
+	 * immediately (periods = 0), otherwise we prime the queue with only
+	 * 2 periods.
+	 *
+	 * Why 2? We want a small number so that we don't get ahead of the
+	 * DirectSound mixer. But we don't want to ever let the buffer get
+	 * completely empty - having 2 periods gives us time to commit another
+	 * period when the first expires.
+	 *
+	 * The potential for buffer underrun is high, but that's the reality
+	 * of using a translated buffer (the whole point of DirectSound is
+	 * to provide direct access to the hardware).
+         * 
+         * A better implementation would use the buffer Lock() and Unlock()
+         * methods to determine how far ahead we can commit, and to rewind if
+         * necessary.
+	 */
+	int periods = This->mmap_mode == SND_PCM_TYPE_HW ? 0 : 2;
+	
+	DSDB_MMAPCopy(This, periods);
 	err = snd_pcm_start(wwo->pcm);
-     }
+    }
     return DS_OK;
 }
 
