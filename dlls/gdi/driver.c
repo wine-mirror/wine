@@ -661,6 +661,8 @@ INT WINAPI Escape( HDC hdc, INT escape, INT in_count, LPCSTR in_data, LPVOID out
 /******************************************************************************
  *		ExtEscape	[GDI32.@]
  *
+ * Access capabilities of a particular device that are not available through GDI.
+ *
  * PARAMS
  *    hdc         [I] Handle to device context
  *    nEscape     [I] Escape function

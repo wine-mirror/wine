@@ -483,6 +483,8 @@ HMETAFILE WINAPI CopyMetaFileW( HMETAFILE hSrcMetaFile, LPCWSTR lpFilename )
 
 /******************************************************************
  *         CopyMetaFileA   (GDI32.@)
+ *
+ * See CopyMetaFileW.
  */
 HMETAFILE WINAPI CopyMetaFileA( HMETAFILE hSrcMetaFile, LPCSTR lpFilename )
 {
@@ -618,6 +620,10 @@ BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
  * PARAMS
  *  hdc [I] handle of DC to render in
  *  hmf [I] handle of metafile to render
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI PlayMetaFile( HDC hdc, HMETAFILE hmf )
 {
@@ -1323,6 +1329,9 @@ HGLOBAL16 WINAPI GetMetaFileBits16( HMETAFILE16 hmf )
  *
  * PARAMS
  *  hMem [I] handle to a memory region holding a metafile
+ *
+ * RETURNS
+ *  Handle to a metafile on success, NULL on failure..
  */
 HMETAFILE16 WINAPI SetMetaFileBits16( HGLOBAL16 hMem )
 {
@@ -1358,6 +1367,10 @@ HMETAFILE16 WINAPI SetMetaFileBitsBetter16( HMETAFILE16 hMeta )
  * PARAMS
  *  size   [I] size of metafile, in bytes
  *  lpData [I] pointer to metafile data
+ *
+ * RETURNS
+ *  Success: Handle to metafile.
+ *  Failure: NULL.
  */
 HMETAFILE WINAPI SetMetaFileBitsEx( UINT size, const BYTE *lpData )
 {
@@ -1390,13 +1403,15 @@ HMETAFILE WINAPI SetMetaFileBitsEx( UINT size, const BYTE *lpData )
  * Get raw metafile data.
  *
  *  Copies the data from metafile _hmf_ into the buffer _buf_.
- *  If _buf_ is zero, returns size of buffer required. Otherwise,
- *  returns number of bytes copied.
  *
  * PARAMS
  *  hmf   [I] metafile
  *  nSize [I] size of buf
  *  buf   [O] buffer to receive raw metafile data
+ *
+ * RETURNS
+ *  If _buf_ is zero, returns size of buffer required. Otherwise,
+ *  returns number of bytes copied.
  */
 UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT nSize, LPVOID buf )
 {

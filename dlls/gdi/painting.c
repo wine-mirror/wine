@@ -340,7 +340,9 @@ INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd )
  *    iPixelFormat [I] Pixel format index
  *    ppfd         [I] Pixel format for which a match is sought
  *
- * RETURNS STD
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
                             const PIXELFORMATDESCRIPTOR *ppfd)
@@ -433,7 +435,9 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
  * PARAMS
  *    hdc [I] Device context whose buffers get swapped
  *
- * RETURNS STD
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI SwapBuffers( HDC hdc )
 {
@@ -689,7 +693,9 @@ BOOL WINAPI FloodFill( HDC hdc, INT x, INT y, COLORREF color )
  *    lppt    [I] Pointer to endpoints and control points
  *    cPoints [I] Count of endpoints and control points
  *
- * RETURNS STD
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
 {
@@ -732,7 +738,9 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
  *    lppt    [I] Pointer to endpoints and control points
  *    cPoints [I] Count of endpoints and control points
  *
- * RETURNS STD
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
 {
@@ -1134,7 +1142,7 @@ POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut )
 }
 
 /******************************************************************************
- *           GradientFill   (GDI32.@)
+ *           GdiGradientFill   (GDI32.@)
  *
  *  FIXME: we don't support the Alpha channel properly
  */

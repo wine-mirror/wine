@@ -379,6 +379,10 @@ HENHMETAFILE WINAPI GetEnhMetaFileW(
 /*****************************************************************************
  *        GetEnhMetaFileHeader  (GDI32.@)
  *
+ * Retrieves the record containing the header for the specified
+ * enhanced-format metafile.
+ *
+ * RETURNS
  *  If buf is NULL, returns the size of buffer required.
  *  Otherwise, copy up to bufsize bytes of enhanced metafile header into
  *  buf.
@@ -404,6 +408,8 @@ UINT WINAPI GetEnhMetaFileHeader(
 
 /*****************************************************************************
  *          GetEnhMetaFileDescriptionA  (GDI32.@)
+ *
+ * See GetEnhMetaFileDescriptionW.
  */
 UINT WINAPI GetEnhMetaFileDescriptionA(
        HENHMETAFILE hmf, /* [in] enhanced metafile */
@@ -433,6 +439,7 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
  *  Copies the description string of an enhanced metafile into a buffer
  *  _buf_.
  *
+ * RETURNS
  *  If _buf_ is NULL, returns size of _buf_ required. Otherwise, returns
  *  number of characters copied.
  */
@@ -2369,6 +2376,9 @@ static INT CALLBACK EMF_PlayEnhMetaFileCallback(HDC hdc, HANDLETABLE *ht,
  *    Renders an enhanced metafile into a specified rectangle *lpRect
  *    in device context hdc.
  *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI PlayEnhMetaFile(
        HDC hdc,           /* [in] DC to render into */

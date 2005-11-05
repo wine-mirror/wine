@@ -1060,6 +1060,8 @@ INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
 
 /***********************************************************************
  *           GetTextExtentPoint32A    (GDI32.@)
+ *
+ * See GetTextExtentPoint32W.
  */
 BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
                                      LPSIZE size )
@@ -2183,7 +2185,7 @@ BOOL WINAPI TextOutW(HDC hdc, INT x, INT y, LPCWSTR str, INT count)
 /***********************************************************************
  *		PolyTextOutA (GDI32.@)
  *
- * Draw several Strings
+ * See PolyTextOutW.
  */
 BOOL WINAPI PolyTextOutA ( HDC hdc,               /* [in] Handle to device context */
                            PPOLYTEXTA pptxt,      /* [in] Array of strings */
@@ -2201,6 +2203,10 @@ BOOL WINAPI PolyTextOutA ( HDC hdc,               /* [in] Handle to device conte
  *		PolyTextOutW (GDI32.@)
  *
  * Draw several Strings
+ *
+ * RETURNS
+ *  TRUE:  Success.
+ *  FALSE: Failure.
  */
 BOOL WINAPI PolyTextOutW ( HDC hdc,               /* [in] Handle to device context */
                            PPOLYTEXTW pptxt,      /* [in] Array of strings */
@@ -2256,6 +2262,8 @@ BOOL WINAPI GetAspectRatioFilterEx( HDC hdc, LPSIZE pAspectRatio )
 
 /***********************************************************************
  *           GetCharABCWidthsA   (GDI32.@)
+ *
+ * See GetCharABCWidthsW.
  */
 BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
                                   LPABC abc )
@@ -2623,6 +2631,8 @@ DWORD WINAPI GetGlyphIndicesW(HDC hdc, LPCWSTR lpstr, INT count,
 
 /*************************************************************************
  * GetCharacterPlacementA [GDI32.@]
+ *
+ * See GetCharacterPlacementW.
  *
  * NOTES:
  *  the web browser control of ie4 calls this with dwFlags=0

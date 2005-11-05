@@ -491,6 +491,8 @@ BOOL WINAPI AnimatePalette(
 /***********************************************************************
  * SetSystemPaletteUse [GDI32.@]
  *
+ * Specify whether the system palette contains 2 or 20 static colors.
+ *
  * RETURNS
  *    Success: Previous system palette
  *    Failure: SYSPAL_ERROR

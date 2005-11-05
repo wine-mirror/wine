@@ -201,7 +201,9 @@ BOOL WINAPI EndPath(HDC hdc)
  * PARAMS
  *    hdc [I] Handle to device context
  *
- * RETURNS STD
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI AbortPath( HDC hdc )
 {

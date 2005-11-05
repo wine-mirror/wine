@@ -275,6 +275,8 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
 
 /**********************************************************************
  *          CreateMetaFileA   (GDI32.@)
+ *
+ * See CreateMetaFileW.
  */
 HDC WINAPI CreateMetaFileA(LPCSTR filename)
 {
