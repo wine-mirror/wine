@@ -1044,6 +1044,7 @@ static void test_WSAAddressToStringA(void)
 {
     INT ret;
     DWORD len;
+    int GLE;
     SOCKADDR_IN sockaddr;
     CHAR address[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
 
@@ -1059,8 +1060,10 @@ static void test_WSAAddressToStringA(void)
     sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( ret == SOCKET_ERROR, "WSAAddressToStringA() succeeded! WSAGetLastError()=%x, ret=%d\n",
-        WSAGetLastError(), ret );
+    GLE = WSAGetLastError();
+    ok( (ret == SOCKET_ERROR && GLE == WSAEFAULT) || (ret == 0), 
+        "WSAAddressToStringA() failed unexpectedly: WSAGetLastError()=%d, ret=%d\n",
+        GLE, ret );
 
     len = sizeof(address);
 
@@ -1111,6 +1114,7 @@ static void test_WSAAddressToStringW(void)
 {
     INT ret;
     DWORD len;
+    int GLE;
     SOCKADDR_IN sockaddr;
     WCHAR address[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
 
@@ -1127,8 +1131,10 @@ static void test_WSAAddressToStringW(void)
     sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( ret == SOCKET_ERROR, "WSAAddressToStringW() succeeded! WSAGetLastError()=%x, ret=%d\n",
-        WSAGetLastError(), ret );
+    GLE = WSAGetLastError();
+    ok( (ret == SOCKET_ERROR && GLE == WSAEFAULT) || (ret == 0), 
+        "WSAAddressToStringW() failed unexpectedly: WSAGetLastError()=%d, ret=%d\n",
+        GLE, ret );
 
     len = sizeof(address);
 

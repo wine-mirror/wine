@@ -3966,7 +3966,7 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
     CHAR buffer[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
     CHAR *p;
 
-    TRACE( "(%p, %lx, %p, %p, %p)\n", sockaddr, len, info, string, lenstr );
+    TRACE( "(%p, %ld, %p, %p, %p)\n", sockaddr, len, info, string, lenstr );
 
     if (!sockaddr || len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
     if (!string || !lenstr) return SOCKET_ERROR;
@@ -3989,6 +3989,7 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
     if (*lenstr <  size)
     {
         *lenstr = size;
+        WSASetLastError(WSAEFAULT);
         return SOCKET_ERROR;
     }
 
