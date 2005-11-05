@@ -400,7 +400,8 @@ static void test_viewmodify(void)
 
     /* see what happens with a good hview and bad args */
     r = MsiViewGetError( hview, NULL, NULL );
-    ok(r == MSIDBERROR_INVALIDARG, "MsiViewGetError return\n");
+    ok(r == MSIDBERROR_INVALIDARG || r == MSIDBERROR_NOERROR,
+       "MsiViewGetError returns %u (expected -3)\n", r);
     r = MsiViewGetError( hview, buffer, NULL );
     ok(r == MSIDBERROR_INVALIDARG, "MsiViewGetError return\n");
 
