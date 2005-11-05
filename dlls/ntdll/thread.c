@@ -29,6 +29,7 @@
 #include <sys/times.h>
 #endif
 
+#define NONAMELESSUNION
 #include "ntstatus.h"
 #include "thread.h"
 #include "winternl.h"
