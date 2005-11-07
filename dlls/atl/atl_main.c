@@ -165,6 +165,22 @@ HRESULT WINAPI AtlModuleUnregisterServerEx(_ATL_MODULEA* pM, BOOL bUnRegTypeLib,
     return S_OK;
 }
 
+/***********************************************************************
+ *           AtlAxWinInit          [ATL.@]
+ * Initializes the control-hosting code: registering the AtlAxWin7 and AtlAxWinLic7 window
+ * classes and some messages.
+ *  
+ * RETURNS
+ *  TRUE or FALSE
+ */
+
+HRESULT WINAPI AtlAxWinInit(void)
+{
+    FIXME("Try use native atl.dll if possible\n");
+    return E_FAIL;
+}
+
+
 HRESULT WINAPI AtlInternalQueryInterface(LPVOID this, const _ATL_INTMAP_ENTRY* pEntries,  REFIID iid, LPVOID* ppvObject)
 {
     int i = 0;

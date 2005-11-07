@@ -33,7 +33,7 @@
 39 stub AtlAxCreateControl
 40 stub AtlAxCreateControlEx
 41 stub AtlAxAttachControl
-42 stub AtlAxWinInit
+42 stdcall AtlAxWinInit()
 43 stub AtlModuleAddCreateWndData
 44 stub AtlModuleExtractCreateWndData
 45 stub AtlModuleRegisterWndClassInfoW
