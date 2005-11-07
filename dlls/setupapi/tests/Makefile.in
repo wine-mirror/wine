@@ -6,6 +6,7 @@ TESTDLL   = setupapi.dll
 IMPORTS   = setupapi kernel32
 
 CTESTS = \
+	parser.c \
 	stringtable.c
 
 @MAKE_TEST_RULES@

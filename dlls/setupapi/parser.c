@@ -524,7 +524,7 @@ static struct field *add_field_from_token( struct parser *parser, int is_key )
     {
         if (parser->cur_section == -1)  /* got a line before the first section */
         {
-            parser->error = ERROR_WRONG_INF_STYLE;
+            parser->error = ERROR_EXPECTED_SECTION_NAME;
             return NULL;
         }
         if (!(parser->line = add_line( parser->file, parser->cur_section ))) goto error;
@@ -972,6 +972,7 @@ static struct inf_file *parse_file( HANDLE handle, const WCHAR *class, UINT *err
                 if (!strcmpiW( field->text, Windows95 )) goto done;
             }
         }
+        if (error_line) *error_line = 0;
         err = ERROR_WRONG_INF_STYLE;
     }
 
