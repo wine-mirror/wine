@@ -1650,6 +1650,7 @@ UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *iface) {
  *****/
 HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD fvf) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    HRESULT hr = D3D_OK;
 
     /* Update the current state block */
     This->updateStateBlock->fvf              = fvf;
@@ -1657,13 +1658,16 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD fvf) {
     This->updateStateBlock->set.fvf          = TRUE;
 
     TRACE("(%p) : FVF Shader FVF set to %lx\n", This, fvf);
-    /* clear down the vertex declaration
-     NOTE: Axis and Allies doesn't work properly otherwise
-     (may be a stateblock problem though!)
-    */
-    /* No difference if recording or not */
-    return IWineD3DDevice_SetVertexDeclaration(iface, NULL);
 
+    if (0 != fvf) {
+        /* clear down the vertex declaration
+         NOTE: Axis and Allies doesn't work properly otherwise
+         (may be a stateblock problem though!)
+        */
+      hr = IWineD3DDevice_SetVertexDeclaration(iface, NULL);
+    }
+
+    return hr;
 }
 
 
