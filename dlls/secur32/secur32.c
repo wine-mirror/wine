@@ -573,16 +573,21 @@ static void SECUR32_initializeProviders(void)
 SecurePackage *SECUR32_findPackageW(PWSTR packageName)
 {
     SecurePackage *ret = NULL;
+    BOOL matched = FALSE;
 
     if (packageTable && packageName)
     {
         LIST_FOR_EACH_ENTRY(ret, &packageTable->table, SecurePackage, entry)
         {
-            if (!lstrcmpiW(ret->infoW.Name, packageName))
-                break;
+            matched = !lstrcmpiW(ret->infoW.Name, packageName);
+	    if (matched)
+		break;
         }
         
-        if (ret && ret->provider && !ret->provider->loaded)
+	if (!matched)
+		return NULL;
+
+	if (ret->provider && !ret->provider->loaded)
         {
             ret->provider->lib = LoadLibraryW(ret->provider->moduleName);
             if (ret->provider->lib)
