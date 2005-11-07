@@ -22,18 +22,6 @@
 #ifndef __WINE_D3DCORE_GL_H
 #define __WINE_D3DCORE_GL_H
 
-#ifndef __WINE_CONFIG_H
-# error You must include config.h to use this header
-#endif
-
-#define XMD_H /* This is to prevent the Xmd.h inclusion bug :-/ */
-#include <GL/gl.h>
-#include <GL/glx.h>
-#ifdef HAVE_GL_GLEXT_H
-# include <GL/glext.h>
-#endif
-#undef  XMD_H
-
 #undef  APIENTRY
 #define APIENTRY
 
