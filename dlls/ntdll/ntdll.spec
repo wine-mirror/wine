@@ -650,6 +650,7 @@
 @ stdcall RtlImageRvaToVa(ptr long long ptr)
 @ stdcall RtlImpersonateSelf(long)
 @ stdcall RtlInitAnsiString(ptr str)
+@ stdcall RtlInitAnsiStringEx(ptr str)
 @ stub RtlInitCodePageTable
 # @ stub RtlInitMemoryStream
 @ stub RtlInitNlsTables

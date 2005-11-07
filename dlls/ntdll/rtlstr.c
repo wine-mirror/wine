@@ -102,6 +102,39 @@ void WINAPI RtlInitAnsiString(
     else target->Length = target->MaximumLength = 0;
 }
 
+/**************************************************************************
+ *      RtlInitAnsiStringEx   (NTDLL.@)
+ *
+ * Initializes a buffered ansi string.
+ *
+ * RETURNS
+ *  An appropriate NTSTATUS value.
+ *
+ * NOTES
+ *  Assigns source to target->Buffer. The length of source is assigned to
+ *  target->Length and target->MaximumLength. If source is NULL the length
+ *  of source is assumed to be 0.
+ */
+NTSTATUS WINAPI RtlInitAnsiStringEx(PANSI_STRING target, PCSZ source)
+{
+    if (source)
+    {
+        unsigned int len = strlen(source);
+        if (len+1 > 0xffff)
+            return STATUS_NAME_TOO_LONG;
+
+        target->Buffer = (PCHAR) source;
+        target->Length = len;
+        target->MaximumLength = len + 1;
+    }
+    else
+    {
+        target->Buffer = NULL;
+        target->Length = 0;
+        target->MaximumLength = 0;
+    }
+    return STATUS_SUCCESS;
+}
 
 /**************************************************************************
  *      RtlInitString   (NTDLL.@)
