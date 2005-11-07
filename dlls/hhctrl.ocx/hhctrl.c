@@ -96,9 +96,10 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
         case HH_HELP_CONTEXT:
             FIXME("Not all HH cases handled correctly\n");
             doWinMain(GetModuleHandleW(NULL), file);
-        default:
-            return 0;
+            break;
     }
+    HeapFree(GetProcessHeap(), 0, file);
+    return 0;
 }
 
 HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
