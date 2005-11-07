@@ -1807,10 +1807,10 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
     HICON16 hObj;
     int	sizeXor,sizeAnd;
 
-    GetObjectA( iconinfo->hbmColor, sizeof(bmpXor), &bmpXor );
+    if (iconinfo->hbmColor) GetObjectA( iconinfo->hbmColor, sizeof(bmpXor), &bmpXor );
     GetObjectA( iconinfo->hbmMask, sizeof(bmpAnd), &bmpAnd );
 
-    sizeXor = bmpXor.bmHeight * bmpXor.bmWidthBytes;
+    sizeXor = iconinfo->hbmColor ? (bmpXor.bmHeight * bmpXor.bmWidthBytes) : 0;
     sizeAnd = bmpAnd.bmHeight * bmpAnd.bmWidthBytes;
 
     hObj = GlobalAlloc16( GMEM_MOVEABLE,
@@ -1833,16 +1833,16 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
           info->ptHotSpot.y   = iconinfo->yHotspot;
         }
 
-        info->nWidth        = bmpXor.bmWidth;
-        info->nHeight       = bmpXor.bmHeight;
-        info->nWidthBytes   = bmpXor.bmWidthBytes;
-        info->bPlanes       = bmpXor.bmPlanes;
-        info->bBitsPerPixel = bmpXor.bmBitsPixel;
+        info->nWidth        = bmpAnd.bmWidth;
+        info->nHeight       = iconinfo->hbmColor ? bmpAnd.bmHeight : (bmpAnd.bmHeight / 2);
+        info->nWidthBytes   = bmpAnd.bmWidthBytes;
+        info->bPlanes       = bmpAnd.bmPlanes;
+        info->bBitsPerPixel = bmpAnd.bmBitsPixel;
 
         /* Transfer the bitmap bits to the CURSORICONINFO structure */
 
-        GetBitmapBits( iconinfo->hbmMask ,sizeAnd,(char*)(info + 1) );
-        GetBitmapBits( iconinfo->hbmColor,sizeXor,(char*)(info + 1) +sizeAnd);
+        GetBitmapBits( iconinfo->hbmMask, sizeAnd, (char*)(info + 1) );
+        if (iconinfo->hbmColor) GetBitmapBits( iconinfo->hbmColor, sizeXor, (char*)(info + 1) + sizeAnd );
         GlobalUnlock16( hObj );
     }
     return HICON_32(hObj);
