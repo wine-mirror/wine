@@ -9,6 +9,7 @@ EXTRALIBS = -lstrmiids -luuid
 C_SRCS = \
 	amstream.c \
 	main.c \
+	mediastream.c \
 	regsvr.c
 
 RC_SRCS = version.rc

@@ -37,6 +37,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 typedef struct {
     IAMMultiMediaStream lpVtbl;
     LONG ref;
+    IGraphBuilder* pFilterGraph;
+    ULONG nbStreams;
+    IMediaStream** pStreams;
+    STREAM_TYPE StreamType;
 } IAMMultiMediaStreamImpl;
 
 static const struct IAMMultiMediaStreamVtbl AM_Vtbl;
@@ -45,7 +49,7 @@ HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     IAMMultiMediaStreamImpl* object; 
 
-    FIXME("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
     if( pUnkOuter )
         return CLASS_E_NOAGGREGATION;
@@ -115,10 +119,23 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetInformation(IAMMultiMediaStream
 static HRESULT WINAPI IAMMultiMediaStreamImpl_GetMediaStream(IAMMultiMediaStream* iface, REFMSPID idPurpose, IMediaStream** ppMediaStream)
 {
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
+    MSPID PurposeId;
+    int i;
 
-    FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, idPurpose, ppMediaStream); 
+    TRACE("(%p/%p)->(%p,%p)\n", This, iface, idPurpose, ppMediaStream);
 
-    return E_NOTIMPL;
+    for (i = 0; i < This->nbStreams; i++)
+    {
+        IMediaStream_GetInformation(This->pStreams[i], &PurposeId, NULL);
+        if (IsEqualIID(&PurposeId, idPurpose))
+        {
+            *ppMediaStream = This->pStreams[i];
+            IMediaStream_AddRef(*ppMediaStream);
+            return S_OK;
+        }
+    }
+
+    return MS_E_NOSTREAM;
 }
 
 static HRESULT WINAPI IAMMultiMediaStreamImpl_EnumMediaStreams(IAMMultiMediaStream* iface, long Index, IMediaStream** ppMediaStream)
@@ -188,10 +205,26 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetEndOfStream(IAMMultiMediaStream
 static HRESULT WINAPI IAMMultiMediaStreamImpl_Initialize(IAMMultiMediaStream* iface, STREAM_TYPE StreamType, DWORD dwFlags, IGraphBuilder* pFilterGraph)
 {
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
+    HRESULT hr = S_OK;
 
-    FIXME("(%p/%p)->(%lx,%lx,%p) stub!\n", This, iface, (DWORD)StreamType, dwFlags, pFilterGraph); 
+    FIXME("(%p/%p)->(%lx,%lx,%p) partial stub!\n", This, iface, (DWORD)StreamType, dwFlags, pFilterGraph); 
 
-    return E_NOTIMPL;
+    if (pFilterGraph)
+    {
+        This->pFilterGraph = pFilterGraph;
+        IGraphBuilder_AddRef(This->pFilterGraph);
+    }
+    else
+    {
+        hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (LPVOID*)&This->pFilterGraph);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        This->StreamType = StreamType;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IAMMultiMediaStreamImpl_GetFilterGraph(IAMMultiMediaStream* iface, IGraphBuilder** ppGraphBuilder)
@@ -216,17 +249,40 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
                                           DWORD dwFlags, IMediaStream** ppNewStream)
 {
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
+    HRESULT hr;
+    IMediaStream* pStream;
+    IMediaStream** pNewStreams;
 
-    FIXME("(%p/%p)->(%p,%p,%lx,%p) stub!\n", This, iface, pStreamObject, PurposeId, dwFlags, ppNewStream); 
+    FIXME("(%p/%p)->(%p,%p,%lx,%p) partial stub!\n", This, iface, pStreamObject, PurposeId, dwFlags, ppNewStream); 
 
-    return E_NOTIMPL;
+    hr = MediaStream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);
+    if (SUCCEEDED(hr))
+    {
+        pNewStreams = (IMediaStream**)CoTaskMemAlloc((This->nbStreams+1)*sizeof(IMediaStream*));
+        if (!pNewStreams)
+        {
+            IMediaStream_Release(pStream);
+            return E_OUTOFMEMORY;
+        }
+        if (This->nbStreams)
+            CopyMemory(pNewStreams, This->pStreams, This->nbStreams*sizeof(IMediaStream*));
+        CoTaskMemFree(This->pStreams);
+        This->pStreams = pNewStreams;
+        This->pStreams[This->nbStreams] = pStream;
+        This->nbStreams++;
+
+        if (ppNewStream)
+            *ppNewStream = pStream;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* iface, LPCWSTR pszFileName, DWORD dwFlags)
 {
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
 
-    FIXME("(%p/%p)->(%p,%lx) stub!\n", This, iface, pszFileName, dwFlags); 
+    FIXME("(%p/%p)->(%s,%lx) stub!\n", This, iface, debugstr_w(pszFileName), dwFlags);
 
     return E_NOTIMPL;
 }
