@@ -388,7 +388,7 @@ static void BrsFolder_CheckValidSelection( browse_info *info, LPTV_ITEMDATA lptv
         dwAttributes = SFGAO_FILESYSANCESTOR | SFGAO_FILESYSTEM;
         r = IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1,
                                 (LPCITEMIDLIST*)&lptvid->lpi, &dwAttributes);
-        if (FAILED(r) || !dwAttributes)
+        if (FAILED(r) || !(dwAttributes & (SFGAO_FILESYSANCESTOR|SFGAO_FILESYSTEM)))
             bEnabled = FALSE;
     }
     if (lpBrowseInfo->ulFlags & BIF_RETURNONLYFSDIRS)
@@ -396,8 +396,11 @@ static void BrsFolder_CheckValidSelection( browse_info *info, LPTV_ITEMDATA lptv
         dwAttributes = SFGAO_FOLDER | SFGAO_FILESYSTEM;
         r = IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1,
                                 (LPCITEMIDLIST*)&lptvid->lpi, &dwAttributes);
-        if (FAILED(r) || (dwAttributes != (SFGAO_FOLDER | SFGAO_FILESYSTEM)))
+        if (FAILED(r) || 
+            ((dwAttributes & (SFGAO_FOLDER|SFGAO_FILESYSTEM)) != (SFGAO_FOLDER|SFGAO_FILESYSTEM)))
+        {
             bEnabled = FALSE;
+        }
     }
     SendMessageW(info->hWnd, BFFM_ENABLEOK, 0, (LPARAM)bEnabled);
 }
