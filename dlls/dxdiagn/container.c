@@ -241,7 +241,7 @@ HRESULT WINAPI IDxDiagContainerImpl_AddProp(PDXDIAGCONTAINER iface, LPCWSTR pwsz
   }
   VariantInit(&pNew->v);
   VariantCopy(&pNew->v, pVarProp);
-  pNew->vName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lstrlenW(pwszPropName) * sizeof(WCHAR));
+  pNew->vName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (lstrlenW(pwszPropName) + 1) * sizeof(WCHAR));
   lstrcpyW(pNew->vName, pwszPropName);
   pNew->next = NULL;
 
@@ -274,7 +274,7 @@ HRESULT WINAPI IDxDiagContainerImpl_AddChildContainer(PDXDIAGCONTAINER iface, LP
     return E_OUTOFMEMORY;
   }
   pNew->pCont = pSubCont;
-  pNew->contName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lstrlenW(pszContName) * sizeof(WCHAR));
+  pNew->contName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (lstrlenW(pszContName) + 1) * sizeof(WCHAR));
   lstrcpyW(pNew->contName, pszContName);
   pNew->next = NULL;
 
