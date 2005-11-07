@@ -613,6 +613,41 @@ interface IXMLDOMDocumentType : IXMLDOMNode
     HRESULT notations( [out,retval] IXMLDOMNamedNodeMap **notationMap );
 };
 
+[
+local,
+object,
+odl,
+dual,
+oleautomation,
+/*nonextensible,*/
+helpstring("structure for reporting parse errors"),
+pointer_default(unique),
+uuid (3efaa426-272f-11d2-836f-0000f87a7782)
+]
+interface IXMLDOMParseError : IDispatch
+{
+    [propget, id(DISPID_VALUE)]
+    HRESULT errorCode([retval, out] long *errCode);
+
+    [propget, id(DISPID_DOM_ERROR_URL)]
+    HRESULT url([retval, out] BSTR *p);
+
+    [propget, id(DISPID_DOM_ERROR_REASON)]
+    HRESULT reason([retval, out] BSTR *p);
+
+    [propget, id(DISPID_DOM_ERROR_SRCTEXT)]
+    HRESULT srcText([retval, out] BSTR *p);
+
+    [propget, id(DISPID_DOM_ERROR_LINE)]
+    HRESULT line([retval, out] long *lineNo);
+
+    [propget, id(DISPID_DOM_ERROR_LINEPOS)]
+    HRESULT linepos([retval, out] long * linePos);
+
+    [propget, id(DISPID_DOM_ERROR_FILEPOS)]
+    HRESULT filepos([retval, out] long * filePos);
+};
+
 
 [
 uuid(2933bf90-7b36-11d2-b20e-00c04f983e60)
