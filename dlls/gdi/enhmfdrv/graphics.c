@@ -722,7 +722,8 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
     nSize = sizeof(*pemr) + ((count+1) & ~1) * sizeof(WCHAR) + count * sizeof(INT);
 
-    TRACE("%s count %d nSize = %ld\n", debugstr_wn(str, count), count, nSize);
+    TRACE("%s %s count %d nSize = %ld\n", debugstr_wn(str, count),
+           wine_dbgstr_rect(lprect), count, nSize);
     pemr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nSize);
 
     pemr->emr.iType = EMR_EXTTEXTOUTW;

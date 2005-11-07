@@ -1759,14 +1759,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     if (flags & (ETO_NUMERICSLOCAL | ETO_NUMERICSLATIN | ETO_PDY))
         FIXME("flags ETO_NUMERICSLOCAL | ETO_NUMERICSLATIN | ETO_PDY unimplemented\n");
 
-    if(PATH_IsPathOpen(dc->path))
-    {
-        FIXME("called on an open path\n");
-        GDI_ReleaseObj( hdc );
-        return ret;
-    }
-
-    if(!dc->funcs->pExtTextOut)
+    if (!dc->funcs->pExtTextOut && !PATH_IsPathOpen(dc->path))
     {
         GDI_ReleaseObj( hdc );
         return ret;
@@ -1854,7 +1847,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         if(rc.top > rc.bottom) {INT tmp = rc.top; rc.top = rc.bottom; rc.bottom = tmp;}
     }
 
-    if(flags & ETO_OPAQUE)
+    if ((flags & ETO_OPAQUE) && !PATH_IsPathOpen(dc->path))
         dc->funcs->pExtTextOut(dc->physDev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL);
 
     if(count == 0)
@@ -1961,7 +1954,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         break;
     }
 
-    if(GetBkMode(hdc) != TRANSPARENT)
+    if (GetBkMode(hdc) != TRANSPARENT && !PATH_IsPathOpen(dc->path))
     {
         if(!((flags & ETO_CLIPPED) && (flags & ETO_OPAQUE)))
         {
@@ -2012,7 +2005,12 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                 }
                 if(span)
                 {
-                    dc->funcs->pExtTextOut(dc->physDev, x + offsets[i - span] * cosEsc, y - offsets[i - span] * sinEsc,
+                    if (PATH_IsPathOpen(dc->path))
+                        ret = PATH_ExtTextOut(dc, x + offsets[i - span] * cosEsc, y - offsets[i - span] * sinEsc,
+                                              (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc,
+                                              glyphs, span, deltas ? deltas + i - span : NULL);
+                    else
+                        dc->funcs->pExtTextOut(dc->physDev, x + offsets[i - span] * cosEsc, y - offsets[i - span] * sinEsc,
                                            (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc,
                                            glyphs, span, deltas ? deltas + i - span : NULL);
                     span = 0;
@@ -2023,7 +2021,13 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
             if(i == count - 1)
             {
-                ret = dc->funcs->pExtTextOut(dc->physDev, x + (offsets ? offsets[count - span] * cosEsc : 0),
+                if (PATH_IsPathOpen(dc->path))
+                    ret = PATH_ExtTextOut(dc, x + (offsets ? offsets[count - span] * cosEsc : 0),
+                                          y - (offsets ? offsets[count - span] * sinEsc : 0),
+                                          (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc,
+                                          glyphs, span, deltas ? deltas + count - span : NULL);
+                else
+                    ret = dc->funcs->pExtTextOut(dc->physDev, x + (offsets ? offsets[count - span] * cosEsc : 0),
                                              y - (offsets ? offsets[count - span] * sinEsc : 0),
                                              (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc,
                                              glyphs, span, deltas ? deltas + count - span : NULL);
@@ -2040,7 +2044,12 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             GetGlyphIndicesW(hdc, reordered_str, count, glyphs, 0);
             flags |= ETO_GLYPH_INDEX;
         }
-        ret = dc->funcs->pExtTextOut(dc->physDev, x, y, (flags & ~ETO_OPAQUE), &rc,
+
+        if (PATH_IsPathOpen(dc->path))
+            ret = PATH_ExtTextOut(dc, x, y, (flags & ~ETO_OPAQUE), &rc,
+                                  glyphs ? glyphs : reordered_str, count, deltas);
+        else
+            ret = dc->funcs->pExtTextOut(dc->physDev, x, y, (flags & ~ETO_OPAQUE), &rc,
                                      glyphs ? glyphs : reordered_str, count, deltas);
     }
 

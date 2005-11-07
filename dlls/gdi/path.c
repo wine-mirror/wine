@@ -3,6 +3,7 @@
  *
  * Copyright 1997, 1998 Martin Boehme
  *                 1999 Huw D M Davies
+ * Copyright 2005 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,6 +27,7 @@
 #include <math.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 #if defined(HAVE_FLOAT_H)
 #include <float.h>
 #endif
@@ -1210,6 +1212,208 @@ static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
    /* Success! */
    *pHrgn=hrgn;
    return TRUE;
+}
+
+static inline INT int_from_fixed(FIXED f)
+{
+    return (f.fract >= 0x8000) ? (f.value + 1) : f.value;
+}
+
+/**********************************************************************
+ *      PATH_BezierTo
+ *
+ * internally used by PATH_add_outline
+ */
+static void PATH_BezierTo(GdiPath *pPath, POINT *lppt, INT n)
+{
+    if (n < 2) return;
+
+    if (n == 2)
+    {
+        PATH_AddEntry(pPath, &lppt[1], PT_LINETO);
+    }
+    else if (n == 3)
+    {
+        PATH_AddEntry(pPath, &lppt[0], PT_BEZIERTO);
+        PATH_AddEntry(pPath, &lppt[1], PT_BEZIERTO);
+        PATH_AddEntry(pPath, &lppt[2], PT_BEZIERTO);
+    }
+    else
+    {
+        POINT pt[3];
+        INT i = 0;
+
+        pt[2] = lppt[0];
+        n--;
+
+        while (n > 2)
+        {
+            pt[0] = pt[2];
+            pt[1] = lppt[i+1];
+            pt[2].x = (lppt[i+2].x + lppt[i+1].x) / 2;
+            pt[2].y = (lppt[i+2].y + lppt[i+1].y) / 2;
+            PATH_BezierTo(pPath, pt, 3);
+            n--;
+            i++;
+        }
+
+        pt[0] = pt[2];
+        pt[1] = lppt[i+1];
+        pt[2] = lppt[i+2];
+        PATH_BezierTo(pPath, pt, 3);
+    }
+}
+
+static BOOL PATH_add_outline(DC *dc, INT x, INT y, TTPOLYGONHEADER *header, DWORD size)
+{
+    GdiPath *pPath = &dc->path;
+    TTPOLYGONHEADER *start;
+    POINT pt;
+
+    start = header;
+
+    while ((char *)header < (char *)start + size)
+    {
+        TTPOLYCURVE *curve;
+
+        if (header->dwType != TT_POLYGON_TYPE)
+        {
+            FIXME("Unknown header type %ld\n", header->dwType);
+            return FALSE;
+        }
+
+        pt.x = x + int_from_fixed(header->pfxStart.x);
+        pt.y = y - int_from_fixed(header->pfxStart.y);
+        LPtoDP(dc->hSelf, &pt, 1);
+        PATH_AddEntry(pPath, &pt, PT_MOVETO);
+
+        curve = (TTPOLYCURVE *)(header + 1);
+
+        while ((char *)curve < (char *)header + header->cb)
+        {
+            /*TRACE("curve->wType %d\n", curve->wType);*/
+
+            switch(curve->wType)
+            {
+            case TT_PRIM_LINE:
+            {
+                WORD i;
+
+                for (i = 0; i < curve->cpfx; i++)
+                {
+                    pt.x = x + int_from_fixed(curve->apfx[i].x);
+                    pt.y = y - int_from_fixed(curve->apfx[i].y);
+                    LPtoDP(dc->hSelf, &pt, 1);
+                    PATH_AddEntry(pPath, &pt, PT_LINETO);
+                }
+                break;
+            }
+
+            case TT_PRIM_QSPLINE:
+            case TT_PRIM_CSPLINE:
+            {
+                WORD i;
+                POINTFX ptfx;
+                POINT *pts = HeapAlloc(GetProcessHeap(), 0, (curve->cpfx + 1) * sizeof(POINT));
+
+                if (!pts) return FALSE;
+
+                ptfx = *(POINTFX *)((char *)curve - sizeof(POINTFX));
+
+                pts[0].x = x + int_from_fixed(ptfx.x);
+                pts[0].y = y - int_from_fixed(ptfx.y);
+                LPtoDP(dc->hSelf, &pts[0], 1);
+
+                for(i = 0; i < curve->cpfx; i++)
+                {
+                    pts[i + 1].x = x + int_from_fixed(curve->apfx[i].x);
+                    pts[i + 1].y = y - int_from_fixed(curve->apfx[i].y);
+                    LPtoDP(dc->hSelf, &pts[i + 1], 1);
+                }
+
+                PATH_BezierTo(pPath, pts, curve->cpfx + 1);
+
+                HeapFree(GetProcessHeap(), 0, pts);
+                break;
+            }
+
+            default:
+                FIXME("Unknown curve type %04x\n", curve->wType);
+                return FALSE;
+            }
+
+            curve = (TTPOLYCURVE *)&curve->apfx[curve->cpfx];
+        }
+
+        header = (TTPOLYGONHEADER *)((char *)header + header->cb);
+    }
+
+    return CloseFigure(dc->hSelf);
+}
+
+/**********************************************************************
+ *      PATH_ExtTextOut
+ */
+BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
+                     LPCWSTR str, UINT count, const INT *dx)
+{
+    unsigned int idx;
+    double cosEsc, sinEsc;
+    LOGFONTW lf;
+    POINT org;
+    HDC hdc = dc->hSelf;
+
+    TRACE("%p, %d, %d, %08x, %s, %s, %d, %p)\n", hdc, x, y, flags,
+	  wine_dbgstr_rect(lprc), debugstr_wn(str, count), count, dx);
+
+    if (!count) return TRUE;
+
+    GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
+
+    if (lf.lfEscapement != 0)
+    {
+        cosEsc = cos(lf.lfEscapement * M_PI / 1800);
+        sinEsc = sin(lf.lfEscapement * M_PI / 1800);
+    } else
+    {
+        cosEsc = 1;
+        sinEsc = 0;
+    }
+
+    GetDCOrgEx(hdc, &org);
+
+    for (idx = 0; idx < count; idx++)
+    {
+        INT offset = 0, xoff = 0, yoff = 0;
+        GLYPHMETRICS gm;
+        DWORD dwSize;
+        void *outline;
+
+        dwSize = GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, 0, NULL, NULL);
+        if (!dwSize) return FALSE;
+
+        outline = HeapAlloc(GetProcessHeap(), 0, dwSize);
+        if (!outline) return FALSE;
+
+        GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, dwSize, outline, NULL);
+
+        PATH_add_outline(dc, org.x + x + xoff, org.x + y + yoff, outline, dwSize);
+
+        HeapFree(GetProcessHeap(), 0, outline);
+
+        if (dx)
+        {
+            offset += dx[idx];
+            xoff = offset * cosEsc;
+            yoff = offset * -sinEsc;
+        }
+        else
+        {
+            xoff += gm.gmCellIncX;
+            yoff += gm.gmCellIncY;
+        }
+    }
+    return TRUE;
 }
 
 /* PATH_EmptyPath

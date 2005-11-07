@@ -405,6 +405,8 @@ extern BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc);
 extern BOOL PATH_MoveTo(DC *dc);
 extern BOOL PATH_LineTo(DC *dc, INT x, INT y);
 extern BOOL PATH_Rectangle(DC *dc, INT x1, INT y1, INT x2, INT y2);
+extern BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
+                            LPCWSTR str, UINT count, const INT *dx);
 extern BOOL PATH_Ellipse(DC *dc, INT x1, INT y1, INT x2, INT y2);
 extern BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
                      INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines);

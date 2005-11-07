@@ -422,6 +422,63 @@ static const unsigned char MF_PATTERN_BRUSH_BITS[] = {
     0x00, 0x00
 };
 
+static const unsigned char MF_TEXTOUT_ON_PATH_BITS[] =
+{
+    0x01, 0x00, 0x09, 0x00, 0x00, 0x03, 0x19, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x32, 0x0a,
+    0x16, 0x00, 0x0b, 0x00, 0x04, 0x00, 0x00, 0x00,
+    0x54, 0x65, 0x73, 0x74, 0x03, 0x00, 0x05, 0x00,
+    0x08, 0x00, 0x0c, 0x00, 0x03, 0x00, 0x00, 0x00,
+    0x00, 0x00
+};
+
+static const unsigned char EMF_TEXTOUT_ON_PATH_BITS[] =
+{
+    0x01, 0x00, 0x00, 0x00, 0x6c, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xe7, 0xff, 0xff, 0xff, 0xe9, 0xff, 0xff, 0xff,
+    0x20, 0x45, 0x4d, 0x46, 0x00, 0x00, 0x01, 0x00,
+    0xf4, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x05, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00,
+    0x40, 0x01, 0x00, 0x00, 0xf0, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0xe2, 0x04, 0x00,
+    0x80, 0xa9, 0x03, 0x00, 0x3b, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00,
+    0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0x01, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0xc8, 0x41, 0x00, 0x80, 0xbb, 0x41,
+    0x0b, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00,
+    0x04, 0x00, 0x00, 0x00, 0x4c, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0x54, 0x00, 0x00, 0x00,
+    0x54, 0x00, 0x65, 0x00, 0x73, 0x00, 0x74, 0x00,
+    0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00,
+    0x3c, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+    0x0e, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
+    0x14, 0x00, 0x00, 0x00
+};
+
+/* For debugging or dumping the raw metafiles produced by
+ * new test functions.
+ */
+static INT CALLBACK mf_enum_proc(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
+                                 INT nobj, LPARAM param)
+{
+    trace("hdc %p, mr->rdFunction %d, mr->rdSize %lu, param %p\n",
+           hdc, mr->rdFunction, mr->rdSize, (void *)param);
+    return TRUE;
+}
+
 /* For debugging or dumping the raw metafiles produced by
  * new test functions.
  */
@@ -521,6 +578,101 @@ static int compare_mf_disk_bits(LPCSTR name, const BYTE *bits, UINT bsize, const
     return diff; 
 }
 
+/* For debugging or dumping the raw EMFs produced by
+ * new test functions.
+ */
+static void dump_emf_bits(const HENHMETAFILE mf, const char *desc)
+{
+    BYTE buf[MF_BUFSIZE];
+    UINT mfsize, i;
+
+    mfsize = GetEnhMetaFileBits(mf, MF_BUFSIZE, buf);
+    ok (mfsize > 0, "%s: GetEnhMetaFileBits failed\n", desc);
+
+    printf("EMF %s has bits:\n{\n    ", desc);
+    for (i = 0; i < mfsize; i++)
+    {
+        printf ("0x%02x", buf[i]);
+        if (i == mfsize-1)
+            printf ("\n");
+        else if (i % 8 == 7)
+            printf (",\n    ");
+        else
+            printf (", ");
+    }
+    printf ("};\n");
+}
+
+static void dump_emf_records(const HENHMETAFILE mf, const char *desc)
+{
+    BYTE *emf;
+    BYTE buf[MF_BUFSIZE];
+    UINT mfsize, offset;
+
+    mfsize = GetEnhMetaFileBits(mf, MF_BUFSIZE, buf);
+    ok (mfsize > 0, "%s: GetEnhMetaFileBits failed\n", desc);
+
+    printf("EMF %s has records:\n", desc);
+
+    emf = buf;
+    offset = 0;
+    while(offset < mfsize)
+    {
+        EMR *emr = (EMR *)(emf + offset);
+        trace("emr->iType %ld, emr->nSize %lu\n", emr->iType, emr->nSize);
+        /*trace("emr->iType 0x%04lx, emr->nSize 0x%04lx\n", emr->iType, emr->nSize);*/
+        offset += emr->nSize;
+    }
+}
+
+/* Compare the EMF produced by a test function with the
+ * expected raw EMF data in "bits".
+ * Return value is 0 for a perfect match,
+ * -1 if lengths aren't equal,
+ * otherwise returns the number of non-matching bytes.
+ */
+static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
+                            UINT bsize, const char *desc, BOOL todo)
+{
+    unsigned char buf[MF_BUFSIZE];
+    UINT mfsize, i;
+    int diff;
+
+    mfsize = GetEnhMetaFileBits(mf, MF_BUFSIZE, buf);
+    ok (mfsize > 0, "%s: GetEnhMetaFileBits failed\n", desc);
+
+    if (mfsize < MF_BUFSIZE)
+        ok(mfsize == bsize, "%s: mfsize=%d, bsize=%d\n", desc, mfsize, bsize);
+    else
+        ok(bsize >= MF_BUFSIZE, "%s: mfsize > bufsize (%d bytes), bsize=%d\n",
+           desc, mfsize, bsize);
+    if (mfsize != bsize)
+        return -1;
+
+    diff = 0;
+    for (i = 0; i < bsize; i++)
+    {
+       if (buf[i] != bits[i])
+           diff++;
+    }
+    if (diff != 0 && todo)
+    {
+        todo_wine
+        {
+            ok(diff == 0, "%s: mfsize=%d, bsize=%d, diff=%d\n",
+               desc, mfsize, bsize, diff);
+        }
+        return 0;
+    }
+    else
+    {
+        ok(diff == 0, "%s: mfsize=%d, bsize=%d, diff=%d\n",
+           desc, mfsize, bsize, diff);
+
+        return diff;
+    }
+}
+
 /* Test a blank metafile.  May be used as a template for new tests. */
 
 static void test_mf_Blank(void)
@@ -548,7 +700,10 @@ static void test_mf_Blank(void)
 
     if (compare_mf_bits (hMetafile, MF_BLANK_BITS, sizeof(MF_BLANK_BITS),
         "mf_blank") != 0)
-            dump_mf_bits (hMetafile, "mf_Blank");
+    {
+        dump_mf_bits(hMetafile, "mf_Blank");
+        EnumMetaFile(0, hMetafile, mf_enum_proc, 0);
+    }
 
     ret = DeleteMetaFile(hMetafile);
     ok( ret, "DeleteMetaFile(%p) error %ld\n", hMetafile, GetLastError());
@@ -574,7 +729,10 @@ static void test_CopyMetaFile(void)
 
     if (compare_mf_bits (hMetafile, MF_BLANK_BITS, sizeof(MF_BLANK_BITS),
         "mf_blank") != 0)
-            dump_mf_bits (hMetafile, "mf_Blank");
+    {
+        dump_mf_bits(hMetafile, "mf_Blank");
+        EnumMetaFile(0, hMetafile, mf_enum_proc, 0);
+    }
 
     GetTempPathA(MAX_PATH, temp_path);
     GetTempFileNameA(temp_path, "wmf", 0, mf_name);
@@ -589,7 +747,10 @@ static void test_CopyMetaFile(void)
     ok( ret, "DeleteMetaFile(%p) error %ld\n", hMetafile, GetLastError());
 
     if (compare_mf_disk_bits(mf_name, MF_BLANK_BITS, sizeof(MF_BLANK_BITS), "mf_blank") != 0)
-        dump_mf_bits(hmf_copy, "mf_Blank");
+    {
+        dump_mf_bits(hMetafile, "mf_Blank");
+        EnumMetaFile(0, hMetafile, mf_enum_proc, 0);
+    }
 
     ret = DeleteMetaFile(hmf_copy);
     ok( ret, "DeleteMetaFile(%p) error %ld\n", hmf_copy, GetLastError());
@@ -611,7 +772,10 @@ static void test_SetMetaFileBits(void)
     ok(type == OBJ_METAFILE, "SetMetaFileBitsEx created object with type %d\n", type);
 
     if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
+    {
         dump_mf_bits(hmf, "mf_Graphics");
+        EnumMetaFile(0, hmf, mf_enum_proc, 0);
+    }
 
     ret = DeleteMetaFile(hmf);
     ok(ret, "DeleteMetaFile(%p) error %ld\n", hmf, GetLastError());
@@ -653,7 +817,10 @@ static void test_SetMetaFileBits(void)
     ok(hmf != 0, "SetMetaFileBitsEx error %ld\n", GetLastError());
 
     if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
+    {
         dump_mf_bits(hmf, "mf_Graphics");
+        EnumMetaFile(0, hmf, mf_enum_proc, 0);
+    }
 
     ret = DeleteMetaFile(hmf);
     ok(ret, "DeleteMetaFile(%p) error %ld\n", hmf, GetLastError());
@@ -667,7 +834,10 @@ static void test_SetMetaFileBits(void)
     ok(hmf != 0, "SetMetaFileBitsEx error %ld\n", GetLastError());
 
     if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
+    {
         dump_mf_bits(hmf, "mf_Graphics");
+        EnumMetaFile(0, hmf, mf_enum_proc, 0);
+    }
 
     ret = DeleteMetaFile(hmf);
     ok(ret, "DeleteMetaFile(%p) error %ld\n", hmf, GetLastError());
@@ -711,7 +881,10 @@ static void test_mf_Graphics(void)
 
     if (compare_mf_bits (hMetafile, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS),
         "mf_Graphics") != 0)
-            dump_mf_bits (hMetafile, "mf_Graphics");
+    {
+        dump_mf_bits(hMetafile, "mf_Graphics");
+        EnumMetaFile(0, hMetafile, mf_enum_proc, 0);
+    }
 
     ret = DeleteMetaFile(hMetafile);
     ok( ret, "DeleteMetaFile(%p) error %ld\n",
@@ -749,7 +922,10 @@ static void test_mf_PatternBrush(void)
 
     if (compare_mf_bits (hMetafile, MF_PATTERN_BRUSH_BITS, sizeof(MF_PATTERN_BRUSH_BITS),
         "mf_Pattern_Brush") != 0)
-            dump_mf_bits (hMetafile, "mf_Pattern_Brush");
+    {
+        dump_mf_bits(hMetafile, "mf_Pattern_Brush");
+        EnumMetaFile(0, hMetafile, mf_enum_proc, 0);
+    }
 
     ret = DeleteMetaFile(hMetafile);
     ok( ret, "DeleteMetaFile error %ld\n", GetLastError());
@@ -759,6 +935,88 @@ static void test_mf_PatternBrush(void)
     ok( ret, "DeleteObject(HBITMAP) error %ld\n",
         GetLastError());
     HeapFree (GetProcessHeap(), 0, orig_lb);
+}
+
+static void test_mf_ExtTextOut_on_path(void)
+{
+    HDC hdcMetafile;
+    HMETAFILE hMetafile;
+    BOOL ret;
+    static const INT dx[4] = { 3, 5, 8, 12 };
+
+    hdcMetafile = CreateMetaFileA(NULL);
+    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %ld\n", GetLastError());
+    trace("hdcMetafile %p\n", hdcMetafile);
+
+    ret = BeginPath(hdcMetafile);
+    ok(!ret, "BeginPath on metafile DC should fail\n");
+
+    ret = ExtTextOutA(hdcMetafile, 11, 22, 0, NULL, "Test", 4, dx);
+    ok(ret, "ExtTextOut error %ld\n", GetLastError());
+
+    ret = EndPath(hdcMetafile);
+    ok(!ret, "EndPath on metafile DC should fail\n");
+
+    hMetafile = CloseMetaFile(hdcMetafile);
+    ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
+
+    if (compare_mf_bits(hMetafile, MF_TEXTOUT_ON_PATH_BITS, sizeof(MF_TEXTOUT_ON_PATH_BITS),
+        "mf_TextOut_on_path") != 0)
+    {
+        dump_mf_bits(hMetafile, "mf_TextOut_on_path");
+        EnumMetaFile(0, hMetafile, mf_enum_proc, 0);
+    }
+
+    ret = DeleteMetaFile(hMetafile);
+    ok(ret, "DeleteMetaFile(%p) error %ld\n", hMetafile, GetLastError());
+}
+
+static void test_emf_ExtTextOut_on_path(void)
+{
+    HWND hwnd;
+    HDC hdcDisplay, hdcMetafile;
+    HENHMETAFILE hMetafile;
+    BOOL ret;
+    static const INT dx[4] = { 3, 5, 8, 12 };
+
+    /* Win9x doesn't play EMFs on invisible windows */
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP | WS_VISIBLE,
+                           0, 0, 200, 200, 0, 0, 0, NULL);
+    ok(hwnd != 0, "CreateWindowExA error %ld\n", GetLastError());
+
+    hdcDisplay = GetDC(hwnd);
+    ok(hdcDisplay != 0, "GetDC error %ld\n", GetLastError());
+
+    hdcMetafile = CreateEnhMetaFileA(hdcDisplay, NULL, NULL, NULL);
+    ok(hdcMetafile != 0, "CreateEnhMetaFileA error %ld\n", GetLastError());
+
+    ret = BeginPath(hdcMetafile);
+    ok(ret, "BeginPath error %ld\n", GetLastError());
+
+    ret = ExtTextOutA(hdcMetafile, 11, 22, 0, NULL, "Test", 4, dx);
+    ok(ret, "ExtTextOut error %ld\n", GetLastError());
+
+    ret = EndPath(hdcMetafile);
+    ok(ret, "EndPath error %ld\n", GetLastError());
+
+    hMetafile = CloseEnhMetaFile(hdcMetafile);
+    ok(hMetafile != 0, "CloseEnhMetaFile error %ld\n", GetLastError());
+
+    /* this doesn't succeed yet: EMF has correct size, all EMF records
+     * are there, but their contents don't match for different reasons.
+     */
+    if (compare_emf_bits(hMetafile, EMF_TEXTOUT_ON_PATH_BITS, sizeof(EMF_TEXTOUT_ON_PATH_BITS),
+        "emf_TextOut_on_path", TRUE) != 0)
+    {
+        dump_emf_bits(hMetafile, "emf_TextOut_on_path");
+        dump_emf_records(hMetafile, "emf_TextOut_on_path");
+    }
+
+    ret = DeleteEnhMetaFile(hMetafile);
+    ok(ret, "DeleteEnhMetaFile error %ld\n", GetLastError());
+    ret = ReleaseDC(hwnd, hdcDisplay);
+    ok(ret, "ReleaseDC error %ld\n", GetLastError());
+    DestroyWindow(hwnd);
 }
 
 static INT CALLBACK EmfEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR, INT nObj, LPARAM lpData)
@@ -927,6 +1185,8 @@ START_TEST(metafile)
     test_mf_PatternBrush();
     test_CopyMetaFile();
     test_SetMetaFileBits();
+    test_mf_ExtTextOut_on_path();
+    test_emf_ExtTextOut_on_path();
 
     /* For metafile conversions */
     test_mf_conversions();
