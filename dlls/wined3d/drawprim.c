@@ -1317,13 +1317,19 @@ static void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd
             if (This->stateBlock->textures[textureNo] != NULL) {
 
                 int    coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
-                float *ptrToCoords = (float *)(sd->u.s.texCoords[coordIdx].lpData + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
+                float *ptrToCoords = NULL;
                 float  s = 0.0, t = 0.0, r = 0.0, q = 0.0;
 
                 if (coordIdx > 7) {
                     VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
                     continue;
-                } else if (sd->u.s.texCoords[coordIdx].lpData == NULL) {
+                } else if (coordIdx < 0) {
+                    FIXME("tex: %d - Coord index %d is less than zero, expect a crash.\n", textureNo, coordIdx);
+                    continue;
+                }
+
+                ptrToCoords = (float *)(sd->u.s.texCoords[coordIdx].lpData + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
+                if (sd->u.s.texCoords[coordIdx].lpData == NULL) {
                     TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
                     continue;
                 } else {
