@@ -373,7 +373,7 @@ __ASM_GLOBAL_FUNC( LdrAccessResource,
     "pushl 8(%ebp)\n"
     "call access_resource\n"
     "leave\n"
-    "ret\n"
+    "ret $16\n"
 );
 #else
 NTSTATUS WINAPI LdrAccessResource( HMODULE hmod, const IMAGE_RESOURCE_DATA_ENTRY *entry,
