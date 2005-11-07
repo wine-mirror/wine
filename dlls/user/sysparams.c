@@ -403,6 +403,25 @@ static void SYSPARAMS_LogFont32WTo32A( const LOGFONTW* font32W, LPLOGFONTA font3
     font32A->lfFaceName[LF_FACESIZE-1] = 0;
 }
 
+static void SYSPARAMS_LogFont32ATo32W( const LOGFONTA* font32A, LPLOGFONTW font32W )
+{
+    font32W->lfHeight = font32A->lfHeight;
+    font32W->lfWidth = font32A->lfWidth;
+    font32W->lfEscapement = font32A->lfEscapement;
+    font32W->lfOrientation = font32A->lfOrientation;
+    font32W->lfWeight = font32A->lfWeight;
+    font32W->lfItalic = font32A->lfItalic;
+    font32W->lfUnderline = font32A->lfUnderline;
+    font32W->lfStrikeOut = font32A->lfStrikeOut;
+    font32W->lfCharSet = font32A->lfCharSet;
+    font32W->lfOutPrecision = font32A->lfOutPrecision;
+    font32W->lfClipPrecision = font32A->lfClipPrecision;
+    font32W->lfQuality = font32A->lfQuality;
+    font32W->lfPitchAndFamily = font32A->lfPitchAndFamily;
+    MultiByteToWideChar( CP_ACP, 0, font32A->lfFaceName, -1, font32W->lfFaceName, LF_FACESIZE );
+    font32W->lfFaceName[LF_FACESIZE-1] = 0;
+}
+
 static void SYSPARAMS_NonClientMetrics32ATo16( const NONCLIENTMETRICSA* lpnm32, LPNONCLIENTMETRICS16 lpnm16 )
 {
     lpnm16->iBorderWidth	= lpnm32->iBorderWidth;
@@ -437,6 +456,24 @@ static void SYSPARAMS_NonClientMetrics32WTo32A( const NONCLIENTMETRICSW* lpnm32W
     SYSPARAMS_LogFont32WTo32A( &lpnm32W->lfMenuFont,		&lpnm32A->lfMenuFont );
     SYSPARAMS_LogFont32WTo32A( &lpnm32W->lfStatusFont,		&lpnm32A->lfStatusFont );
     SYSPARAMS_LogFont32WTo32A( &lpnm32W->lfMessageFont,		&lpnm32A->lfMessageFont );
+}
+
+static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A, LPNONCLIENTMETRICSW lpnm32W )
+{
+    lpnm32W->iBorderWidth	= lpnm32A->iBorderWidth;
+    lpnm32W->iScrollWidth	= lpnm32A->iScrollWidth;
+    lpnm32W->iScrollHeight	= lpnm32A->iScrollHeight;
+    lpnm32W->iCaptionWidth	= lpnm32A->iCaptionWidth;
+    lpnm32W->iCaptionHeight	= lpnm32A->iCaptionHeight;
+    SYSPARAMS_LogFont32ATo32W(  &lpnm32A->lfCaptionFont,	&lpnm32W->lfCaptionFont );
+    lpnm32W->iSmCaptionWidth	= lpnm32A->iSmCaptionWidth;
+    lpnm32W->iSmCaptionHeight	= lpnm32A->iSmCaptionHeight;
+    SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfSmCaptionFont,	&lpnm32W->lfSmCaptionFont );
+    lpnm32W->iMenuWidth		= lpnm32A->iMenuWidth;
+    lpnm32W->iMenuHeight	= lpnm32A->iMenuHeight;
+    SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfMenuFont,		&lpnm32W->lfMenuFont );
+    SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfStatusFont,		&lpnm32W->lfStatusFont );
+    SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfMessageFont,		&lpnm32W->lfMessageFont );
 }
 
 
@@ -2141,6 +2178,21 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	else
 	    ret = FALSE;
 	break;
+    }
+
+    case SPI_SETNONCLIENTMETRICS: 		/*     42  WINVER >= 0x400 */
+    {
+        NONCLIENTMETRICSW tmp;
+        LPNONCLIENTMETRICSA lpnmA = (LPNONCLIENTMETRICSA)pvParam;
+        if (lpnmA && lpnmA->cbSize == sizeof(NONCLIENTMETRICSA))
+        {
+            tmp.cbSize = sizeof(NONCLIENTMETRICSW);
+            SYSPARAMS_NonClientMetrics32ATo32W( lpnmA, &tmp );
+            ret = SystemParametersInfoW( uiAction, uiParam, &tmp, fuWinIni );
+        }
+        else
+            ret = FALSE;
+        break;
     }
 
     case SPI_GETICONMETRICS:			/*     45  WINVER >= 0x400 */
