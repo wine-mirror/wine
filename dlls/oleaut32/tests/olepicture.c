@@ -102,35 +102,30 @@ static const unsigned char gif4pixel[42] = {
 0x02,0x00,0x00,0x02,0x03,0x14,0x16,0x05,0x00,0x3b
 };
 
-static void
-test_pic(const unsigned char *imgdata, unsigned int imgsize)
+struct NoStatStreamImpl
 {
-	LPBYTE		data;
-	LPSTREAM	stream;
+	const IStreamVtbl	*lpVtbl;   
+	LONG			ref;
+
+	HGLOBAL			supportHandle;
+	ULARGE_INTEGER		streamSize;
+	ULARGE_INTEGER		currentPosition;
+};
+typedef struct NoStatStreamImpl NoStatStreamImpl;
+static NoStatStreamImpl* NoStatStreamImpl_Construct(HGLOBAL hGlobal);
+
+static void
+test_pic_with_stream(LPSTREAM stream, unsigned int imgsize)
+{
 	IPicture*	pic = NULL;
 	HRESULT		hres;
 	LPVOID		pvObj = NULL;
-	HGLOBAL		hglob;
-	ULARGE_INTEGER	newpos1;
-	LARGE_INTEGER	seekto;
 	OLE_HANDLE	handle, hPal;
 	OLE_XSIZE_HIMETRIC	width;
 	OLE_YSIZE_HIMETRIC	height;
 	short		type;
 	DWORD		attr;
 	ULONG		res;
-
-	/* let the fun begin */
-	hglob = GlobalAlloc (0, imgsize);
-	data = GlobalLock (hglob);
-	memcpy(data, imgdata, imgsize);
-
-	hres = CreateStreamOnHGlobal (hglob, TRUE, &stream);
-	ok (hres == S_OK, "createstreamonhglobal failed? doubt it... hres 0x%08lx\n", hres);
-
-	memset(&seekto,0,sizeof(seekto));
-	hres = IStream_Seek(stream,seekto,SEEK_CUR,&newpos1);
-	ok (hres == S_OK, "istream seek failed? doubt it... hres 0x%08lx\n", hres);
 
 	pvObj = NULL;
 	hres = pOleLoadPicture(stream, imgsize, TRUE, &IID_IPicture, &pvObj);
@@ -140,20 +135,6 @@ test_pic(const unsigned char *imgdata, unsigned int imgsize)
 	ok(pic != NULL,"OLP (NULL,..) returns NULL, instead of !NULL\n");
 	if (pic == NULL)
 		return;
-
-#if 0
-	hres = IStream_Seek(stream,seekto,SEEK_CUR,&newpos2);
-	ok (hres == S_OK, "istream seek failed? doubt it... hres 0x%08lx\n", hres);
-
-	/* The stream position here is some bytes after the image, in both wine and
-	 * native. But not at the correct end. -Marcus
-	 */
-	fprintf(stderr,"newpos1 %ld, newpos2 %ld\n", newpos1.LowPart, newpos2.LowPart);
-	ok (	newpos2.LowPart == imgsize,
-		"seeked after end of gifimage (offset %d instead of expected %d)\n",
-		newpos2.LowPart, imgsize
-	);
-#endif
 
 	pvObj = NULL;
 	hres = IPicture_QueryInterface (pic, &IID_IPicture, &pvObj);
@@ -195,7 +176,35 @@ test_pic(const unsigned char *imgdata, unsigned int imgsize)
 	ok(hPal == 0, "IPicture_get_hPal returns %ld, but it should be 0.\n", (long)hPal);
 
 	res = IPicture_Release (pic);
-	ok (res == 0, "refcount after release is %ld, but should be 1?\n", res);
+	ok (res == 0, "refcount after release is %ld, but should be 0?\n", res);
+}
+
+static void
+test_pic(const unsigned char *imgdata, unsigned int imgsize)
+{
+	LPSTREAM 	stream;
+	HGLOBAL		hglob;
+	LPBYTE		data;
+	HRESULT		hres;
+	LARGE_INTEGER	seekto;
+	ULARGE_INTEGER	newpos1;
+
+	/* Let the fun begin */
+	hglob = GlobalAlloc (0, imgsize);
+	data = GlobalLock (hglob);
+	memcpy(data, imgdata, imgsize);
+
+	hres = CreateStreamOnHGlobal (hglob, FALSE, &stream);
+	ok (hres == S_OK, "createstreamonhglobal failed? doubt it... hres 0x%08lx\n", hres);
+
+	memset(&seekto,0,sizeof(seekto));
+	hres = IStream_Seek(stream,seekto,SEEK_CUR,&newpos1);
+	ok (hres == S_OK, "istream seek failed? doubt it... hres 0x%08lx\n", hres);
+	test_pic_with_stream(stream, imgsize);
+
+	/* again with Non Statable and Non Seekable stream */
+	stream = (LPSTREAM)NoStatStreamImpl_Construct(hglob);
+	test_pic_with_stream(stream, 0);
 }
 
 static void test_empty_image(void) {
@@ -288,9 +297,294 @@ START_TEST(olepicture)
 	test_pic(jpgimage, sizeof(jpgimage));
 	test_pic(bmpimage, sizeof(bmpimage));
         test_pic(gif4pixel, sizeof(gif4pixel));
-	/* no PNG support yet here or in older Windows...
+	/* No PNG support yet here or in older Windows...
 	test_pic(pngimage, sizeof(pngimage));
 	 */
 	test_empty_image();
 	test_empty_image_2();
 }
+
+
+/* Helper functions only ... */
+
+
+static void NoStatStreamImpl_Destroy(NoStatStreamImpl* This)
+{
+  GlobalFree(This->supportHandle);
+  This->supportHandle=0;
+  HeapFree(GetProcessHeap(), 0, This);
+}
+
+static ULONG WINAPI NoStatStreamImpl_AddRef(
+		IStream* iface)
+{
+  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  return InterlockedIncrement(&This->ref);
+}
+
+static HRESULT WINAPI NoStatStreamImpl_QueryInterface(
+		  IStream*     iface,
+		  REFIID         riid,	      /* [in] */
+		  void**         ppvObject)   /* [iid_is][out] */
+{
+  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  if (ppvObject==0) return E_INVALIDARG;
+  *ppvObject = 0;
+  if (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) == 0)
+  {
+    *ppvObject = (IStream*)This;
+  }
+  else if (memcmp(&IID_IStream, riid, sizeof(IID_IStream)) == 0)
+  {
+    *ppvObject = (IStream*)This;
+  }
+
+  if ((*ppvObject)==0)
+    return E_NOINTERFACE;
+  NoStatStreamImpl_AddRef(iface);
+  return S_OK;
+}
+
+static ULONG WINAPI NoStatStreamImpl_Release(
+		IStream* iface)
+{
+  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  ULONG newRef = InterlockedDecrement(&This->ref);
+  if (newRef==0)
+    NoStatStreamImpl_Destroy(This);
+  return newRef;
+}
+
+static HRESULT WINAPI NoStatStreamImpl_Read(
+		  IStream*     iface,
+		  void*          pv,        /* [length_is][size_is][out] */
+		  ULONG          cb,        /* [in] */
+		  ULONG*         pcbRead)   /* [out] */
+{
+  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  void* supportBuffer;
+  ULONG bytesReadBuffer;
+  ULONG bytesToReadFromBuffer;
+
+  if (pcbRead==0)
+    pcbRead = &bytesReadBuffer;
+  bytesToReadFromBuffer = min( This->streamSize.u.LowPart - This->currentPosition.u.LowPart, cb);
+  supportBuffer = GlobalLock(This->supportHandle);
+  memcpy(pv, (char *) supportBuffer+This->currentPosition.u.LowPart, bytesToReadFromBuffer);
+  This->currentPosition.u.LowPart+=bytesToReadFromBuffer;
+  *pcbRead = bytesToReadFromBuffer;
+  GlobalUnlock(This->supportHandle);
+  if(*pcbRead == cb)
+    return S_OK;
+  return S_FALSE;
+}
+
+static HRESULT WINAPI NoStatStreamImpl_Write(
+	          IStream*     iface,
+		  const void*    pv,          /* [size_is][in] */
+		  ULONG          cb,          /* [in] */
+		  ULONG*         pcbWritten)  /* [out] */
+{
+  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  void*          supportBuffer;
+  ULARGE_INTEGER newSize;
+  ULONG          bytesWritten = 0;
+
+  if (pcbWritten == 0)
+    pcbWritten = &bytesWritten;
+  if (cb == 0)
+    return S_OK;
+  newSize.u.HighPart = 0;
+  newSize.u.LowPart = This->currentPosition.u.LowPart + cb;
+  if (newSize.u.LowPart > This->streamSize.u.LowPart)
+   IStream_SetSize(iface, newSize);
+
+  supportBuffer = GlobalLock(This->supportHandle);
+  memcpy((char *) supportBuffer+This->currentPosition.u.LowPart, pv, cb);
+  This->currentPosition.u.LowPart+=cb;
+  *pcbWritten = cb;
+  GlobalUnlock(This->supportHandle);
+  return S_OK;
+}
+
+static HRESULT WINAPI NoStatStreamImpl_Seek(
+		  IStream*      iface,
+		  LARGE_INTEGER   dlibMove,         /* [in] */
+		  DWORD           dwOrigin,         /* [in] */
+		  ULARGE_INTEGER* plibNewPosition) /* [out] */
+{
+  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  ULARGE_INTEGER newPosition;
+  switch (dwOrigin)
+  {
+    case STREAM_SEEK_SET:
+      newPosition.u.HighPart = 0;
+      newPosition.u.LowPart = 0;
+      break;
+    case STREAM_SEEK_CUR:
+      newPosition = This->currentPosition;
+      break;
+    case STREAM_SEEK_END:
+      newPosition = This->streamSize;
+      break;
+    default:
+      return STG_E_INVALIDFUNCTION;
+  }
+  if (dlibMove.QuadPart < 0 && newPosition.QuadPart < -dlibMove.QuadPart)
+      return STG_E_INVALIDFUNCTION;
+  newPosition.QuadPart += dlibMove.QuadPart;
+  if (plibNewPosition) *plibNewPosition = newPosition;
+  This->currentPosition = newPosition;
+  return S_OK;
+}
+
+static HRESULT WINAPI NoStatStreamImpl_SetSize(
+				     IStream*      iface,
+				     ULARGE_INTEGER  libNewSize)   /* [in] */
+{
+  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  HGLOBAL supportHandle;
+  if (libNewSize.u.HighPart != 0)
+    return STG_E_INVALIDFUNCTION;
+  if (This->streamSize.u.LowPart == libNewSize.u.LowPart)
+    return S_OK;
+  supportHandle = GlobalReAlloc(This->supportHandle, libNewSize.u.LowPart, 0);
+  if (supportHandle == 0)
+    return STG_E_MEDIUMFULL;
+  This->supportHandle = supportHandle;
+  This->streamSize.u.LowPart = libNewSize.u.LowPart;
+  return S_OK;
+}
+
+static HRESULT WINAPI NoStatStreamImpl_CopyTo(
+				    IStream*      iface,
+				    IStream*      pstm,         /* [unique][in] */
+				    ULARGE_INTEGER  cb,           /* [in] */
+				    ULARGE_INTEGER* pcbRead,      /* [out] */
+				    ULARGE_INTEGER* pcbWritten)   /* [out] */
+{
+  HRESULT        hr = S_OK;
+  BYTE           tmpBuffer[128];
+  ULONG          bytesRead, bytesWritten, copySize;
+  ULARGE_INTEGER totalBytesRead;
+  ULARGE_INTEGER totalBytesWritten;
+
+  if ( pstm == 0 )
+    return STG_E_INVALIDPOINTER;
+  totalBytesRead.u.LowPart = totalBytesRead.u.HighPart = 0;
+  totalBytesWritten.u.LowPart = totalBytesWritten.u.HighPart = 0;
+
+  while ( cb.u.LowPart > 0 )
+  {
+    if ( cb.u.LowPart >= 128 )
+      copySize = 128;
+    else
+      copySize = cb.u.LowPart;
+    IStream_Read(iface, tmpBuffer, copySize, &bytesRead);
+    totalBytesRead.u.LowPart += bytesRead;
+    IStream_Write(pstm, tmpBuffer, bytesRead, &bytesWritten);
+    totalBytesWritten.u.LowPart += bytesWritten;
+    if (bytesRead != bytesWritten)
+    {
+      hr = STG_E_MEDIUMFULL;
+      break;
+    }
+    if (bytesRead!=copySize)
+      cb.u.LowPart = 0;
+    else
+      cb.u.LowPart -= bytesRead;
+  }
+  if (pcbRead)
+  {
+    pcbRead->u.LowPart = totalBytesRead.u.LowPart;
+    pcbRead->u.HighPart = totalBytesRead.u.HighPart;
+  }
+
+  if (pcbWritten)
+  {
+    pcbWritten->u.LowPart = totalBytesWritten.u.LowPart;
+    pcbWritten->u.HighPart = totalBytesWritten.u.HighPart;
+  }
+  return hr;
+}
+
+static HRESULT WINAPI NoStatStreamImpl_Commit(IStream* iface,DWORD grfCommitFlags)
+{
+  return S_OK;
+}
+static HRESULT WINAPI NoStatStreamImpl_Revert(IStream* iface) { return S_OK; }
+
+static HRESULT WINAPI NoStatStreamImpl_LockRegion(
+		  IStream*       iface,
+		  ULARGE_INTEGER libOffset,   /* [in] */
+		  ULARGE_INTEGER cb,          /* [in] */
+		  DWORD          dwLockType)  /* [in] */
+{
+  return S_OK;
+}
+
+static HRESULT WINAPI NoStatStreamImpl_UnlockRegion(
+		  IStream*       iface,
+		  ULARGE_INTEGER libOffset,   /* [in] */
+		  ULARGE_INTEGER cb,          /* [in] */
+		  DWORD          dwLockType)  /* [in] */
+{
+  return S_OK;
+}
+
+static HRESULT WINAPI NoStatStreamImpl_Stat(
+		  IStream*     iface,
+		  STATSTG*     pstatstg,     /* [out] */
+		  DWORD        grfStatFlag)  /* [in] */
+{
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NoStatStreamImpl_Clone(
+		  IStream*     iface,
+		  IStream**    ppstm) /* [out] */
+{
+  return E_NOTIMPL;
+}
+static const IStreamVtbl NoStatStreamImpl_Vtbl;
+
+static NoStatStreamImpl* NoStatStreamImpl_Construct(HGLOBAL hGlobal)
+{
+  NoStatStreamImpl* newStream;
+
+  newStream = HeapAlloc(GetProcessHeap(), 0, sizeof(NoStatStreamImpl));
+  if (newStream!=0)
+  {
+    newStream->lpVtbl = &NoStatStreamImpl_Vtbl;
+    newStream->ref    = 0;
+    newStream->supportHandle = hGlobal;
+
+    if (!newStream->supportHandle)
+      newStream->supportHandle = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD |
+					     GMEM_SHARE, 0);
+    newStream->currentPosition.u.HighPart = 0;
+    newStream->currentPosition.u.LowPart = 0;
+    newStream->streamSize.u.HighPart = 0;
+    newStream->streamSize.u.LowPart  = GlobalSize(newStream->supportHandle);
+  }
+  return newStream;
+}
+
+
+static const IStreamVtbl NoStatStreamImpl_Vtbl =
+{
+    NoStatStreamImpl_QueryInterface,
+    NoStatStreamImpl_AddRef,
+    NoStatStreamImpl_Release,
+    NoStatStreamImpl_Read,
+    NoStatStreamImpl_Write,
+    NoStatStreamImpl_Seek,
+    NoStatStreamImpl_SetSize,
+    NoStatStreamImpl_CopyTo,
+    NoStatStreamImpl_Commit,
+    NoStatStreamImpl_Revert,
+    NoStatStreamImpl_LockRegion,
+    NoStatStreamImpl_UnlockRegion,
+    NoStatStreamImpl_Stat,
+    NoStatStreamImpl_Clone
+};
