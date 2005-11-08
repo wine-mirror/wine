@@ -19,13 +19,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
 #include <windows.h>
 #include <advpub.h>
 #include <assert.h>
 #include "wine/test.h"
 
+#define TEST_STRING1 "C:\\Program Files\\Application Name"
+#define TEST_STRING2 "%49001%\\Application Name"
+
 static HRESULT (WINAPI *pGetVersionFromFile)(LPSTR,LPDWORD,LPDWORD,BOOL);
 static HRESULT (WINAPI *pDelNode)(LPCSTR,DWORD);
+static HRESULT (WINAPI *pTranslateInfString)(LPSTR,LPSTR,LPSTR,LPSTR,LPSTR,DWORD,LPDWORD,LPVOID);
 
 static void version_test(void)
 {
@@ -114,6 +119,96 @@ static void delnode_test(void)
     currDir[currDirLen] = '\0';
 }
 
+static void append_str(char **str, const char *data)
+{
+    sprintf(*str, data);
+    *str += strlen(*str);
+}
+
+static void create_inf_file()
+{
+    char data[1024];
+    char *ptr = data;
+    HANDLE hf = CreateFile("c:\\test.inf", GENERIC_WRITE, 0, NULL,
+                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    append_str(&ptr, "[Version]\n");
+    append_str(&ptr, "Signature=\"$Chicago$\"\n");
+    append_str(&ptr, "[CustInstDestSection]\n");
+    append_str(&ptr, "49001=ProgramFilesDir\n");
+    append_str(&ptr, "[ProgramFilesDir]\n");
+    append_str(&ptr, "HKLM,\"Software\\Microsoft\\Windows\\CurrentVersion\",");
+    append_str(&ptr, "\"ProgramFilesDir\",,\"%%24%%\\%%LProgramF%%\"\n");
+    append_str(&ptr, "[section]\n");
+    append_str(&ptr, "NotACustomDestination=Version\n");
+    append_str(&ptr, "CustomDestination=CustInstDestSection\n");
+    append_str(&ptr, "[Options.NTx86]\n");
+    append_str(&ptr, "49001=ProgramFilesDir\n");
+    append_str(&ptr, "InstallDir=%%49001%%\\%%DefaultAppPath%%\n");
+    append_str(&ptr, "CustomHDestination=CustInstDestSection\n");
+    append_str(&ptr, "[Strings]\n");
+    append_str(&ptr, "DefaultAppPath=\"Application Name\"\n");
+    append_str(&ptr, "LProgramF=\"Program Files\"\n");
+
+    WriteFile(hf, data, ptr - data, NULL, NULL);
+    CloseHandle(hf);
+}
+
+static void translateinfstring_test()
+{
+    HRESULT hr;
+    char buffer[MAX_PATH];
+    DWORD dwSize;
+
+    create_inf_file();
+
+    /* pass in a couple invalid parameters */
+    hr = pTranslateInfString(NULL, NULL, NULL, NULL, buffer, MAX_PATH, &dwSize, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08x\n", (UINT)hr);
+
+    /* try to open an inf file that doesn't exist */
+    hr = pTranslateInfString("c:\\a.inf", "Options.NTx86", "Options.NTx86",
+                             "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
+    ok(hr == 0x80070002, "Expected 0x80070002, got 0x%08x\n", (UINT)hr);
+
+    /* try a nonexistent section */
+    hr = pTranslateInfString("c:\\test.inf", "idontexist", "Options.NTx86",
+                             "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
+    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", (UINT)hr);
+    ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
+    ok(dwSize == 25, "Expected size 25, got %ld\n", dwSize);
+
+    /* try other nonexistent section */
+    hr = pTranslateInfString("c:\\test.inf", "Options.NTx86", "idontexist",
+                             "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
+    ok(hr == SPAPI_E_LINE_NOT_FOUND, "Expected SPAPI_E_LINE_NOT_FOUND, got 0x%08x\n", (UINT)hr);
+
+    /* try nonexistent key */
+    hr = pTranslateInfString("c:\\test.inf", "Options.NTx86", "Options.NTx86",
+                             "notvalid", buffer, MAX_PATH, &dwSize, NULL);
+    ok(hr == SPAPI_E_LINE_NOT_FOUND, "Expected SPAPI_E_LINE_NOT_FOUND, got 0x%08x\n", (UINT)hr);
+
+    /* test the behavior of pszInstallSection */
+    hr = pTranslateInfString("c:\\test.inf", "section", "Options.NTx86",
+                             "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
+    ok(hr == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", (UINT)hr);
+
+    todo_wine
+    {
+        ok(!strcmp(buffer, TEST_STRING1), "Expected %s, got %s\n", TEST_STRING1, buffer);
+        ok(dwSize == 34, "Expected size 34, got %ld\n", dwSize);
+    }
+
+    /* try without a pszInstallSection */
+    hr = pTranslateInfString("c:\\test.inf", NULL, "Options.NTx86",
+                             "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
+    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", (UINT)hr);
+    ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
+    ok(dwSize == 25, "Expected size 25, got %ld\n", dwSize);
+
+    DeleteFile("c:\\test.inf");
+}
+
 START_TEST(advpack)
 {
     HMODULE hdll;
@@ -124,11 +219,13 @@ START_TEST(advpack)
 
     pGetVersionFromFile = (void*)GetProcAddress(hdll, "GetVersionFromFile");
     pDelNode = (void*)GetProcAddress(hdll, "DelNode");
-    if (!pGetVersionFromFile || !pDelNode)
+    pTranslateInfString = (void*)GetProcAddress(hdll, "TranslateInfString");
+    if (!pGetVersionFromFile || !pDelNode || !pTranslateInfString)
         return;
 
     version_test();
     delnode_test();
+    translateinfstring_test();
 
     FreeLibrary(hdll);
 }

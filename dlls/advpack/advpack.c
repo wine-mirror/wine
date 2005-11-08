@@ -410,16 +410,50 @@ HRESULT WINAPI ExtractFiles ( LPCSTR CabName, LPCSTR ExpandDir, DWORD Flags,
 /***********************************************************************
  *             TranslateInfString    (ADVPACK.@)
  *
- * BUGS
- *   Unimplemented
+ * Translates the value of a specified key in an inf file into the
+ * current locale by expanding string macros.
+ *
+ * PARAMS
+ *   pszInfFilename      [I] Filename of the inf file.
+ *   pszInstallSection   [I]
+ *   pszTranslateSection [I] Inf section where the key exists.
+ *   pszTranslateKey     [I] Key to translate.
+ *   pszBuffer           [O] Contains the translated string on exit.
+ *   dwBufferSize        [I] Size on input of pszBuffer.
+ *   pdwRequiredSize     [O] Length of the translated key.
+ *   pvReserved          [I] Reserved, must be NULL.
+ *
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: An hresult error code.
  */
 HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
                 PCSTR pszTranslateSection, PCSTR pszTranslateKey, PSTR pszBuffer,
                 DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved)
 {
-    FIXME("(%s %s %s %s %p %ld %p %p): stub\n",
-        debugstr_a(pszInfFilename), debugstr_a(pszInstallSection),
-        debugstr_a(pszTranslateSection), debugstr_a(pszTranslateKey),
-        pszBuffer, dwBufferSize,pdwRequiredSize, pvReserved);
-    return E_FAIL;
+    HINF hInf;
+
+    TRACE("(%s %s %s %s %p %ld %p %p)\n",
+          debugstr_a(pszInfFilename), debugstr_a(pszInstallSection),
+          debugstr_a(pszTranslateSection), debugstr_a(pszTranslateKey),
+          pszBuffer, dwBufferSize,pdwRequiredSize, pvReserved);
+
+    if (!pszInfFilename || !pszTranslateSection ||
+        !pszTranslateKey || !pdwRequiredSize)
+        return E_INVALIDARG;
+
+    hInf = SetupOpenInfFileA(pszInfFilename, NULL, INF_STYLE_WIN4, NULL);
+    if (hInf == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    if (!SetupGetLineTextA(NULL, hInf, pszTranslateSection, pszTranslateKey,
+                           pszBuffer, dwBufferSize, pdwRequiredSize))
+    {
+        if (dwBufferSize < *pdwRequiredSize)
+            return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+
+        return SPAPI_E_LINE_NOT_FOUND;
+    }
+
+    return S_OK;
 }
