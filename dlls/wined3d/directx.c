@@ -277,6 +277,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 if (*gl_string_cursor != '.') WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
                 ++gl_string_cursor;
 
+                cursor = 0;
                 while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
                     tmp[cursor++] = *gl_string_cursor;
                     ++gl_string_cursor;
