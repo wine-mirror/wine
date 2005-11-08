@@ -332,6 +332,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface
 
     TRACE("(%p) : iface(%p) pDestSurface(%p) \n", This, iface, pDestSurface);
     ENTER_GL();
+    memset(&desc, 0, sizeof(desc));
     desc.Width =  &width;
     desc.Height = &height;
     desc.Format = &d3dformat;
