@@ -53,8 +53,6 @@ typedef struct SystrayItem {
 static SystrayItem *systray=NULL;
 static int firstSystray=TRUE; /* defer creation of window class until first systray item is created */
 
-static BOOL SYSTRAY_Delete(PNOTIFYICONDATAA pnid);
-
 
 #define ICON_SIZE GetSystemMetrics(SM_CXSMICON)
 /* space around icon (forces icon to center of KDE systray area) */
@@ -67,6 +65,40 @@ static BOOL SYSTRAY_ItemIsEqual(PNOTIFYICONDATAA pnid1, PNOTIFYICONDATAA pnid2)
   if (pnid1->hWnd != pnid2->hWnd) return FALSE;
   if (pnid1->uID  != pnid2->uID)  return FALSE;
   return TRUE;
+}
+
+
+static void SYSTRAY_ItemTerm(SystrayItem *ptrayItem)
+{
+  if(ptrayItem->notifyIcon.hIcon)
+     DestroyIcon(ptrayItem->notifyIcon.hIcon);
+  if(ptrayItem->hWndToolTip)
+      DestroyWindow(ptrayItem->hWndToolTip);
+  if(ptrayItem->hWnd)
+    DestroyWindow(ptrayItem->hWnd);
+  return;
+}
+
+
+static BOOL SYSTRAY_Delete(PNOTIFYICONDATAA pnid)
+{
+  SystrayItem **ptrayItem = &systray;
+
+  while (*ptrayItem) {
+    if (SYSTRAY_ItemIsEqual(pnid, &(*ptrayItem)->notifyIcon)) {
+      SystrayItem *next = (*ptrayItem)->nextTrayItem;
+      TRACE("%p: %p %s\n", *ptrayItem, (*ptrayItem)->notifyIcon.hWnd, (*ptrayItem)->notifyIcon.szTip);
+      SYSTRAY_ItemTerm(*ptrayItem);
+
+      HeapFree(GetProcessHeap(),0,*ptrayItem);
+      *ptrayItem = next;
+
+      return TRUE;
+    }
+    ptrayItem = &((*ptrayItem)->nextTrayItem);
+  }
+
+  return FALSE; /* not found */
 }
 
 static LRESULT CALLBACK SYSTRAY_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -225,18 +257,6 @@ static BOOL SYSTRAY_ItemInit(SystrayItem *ptrayItem)
 }
 
 
-static void SYSTRAY_ItemTerm(SystrayItem *ptrayItem)
-{
-  if(ptrayItem->notifyIcon.hIcon)
-     DestroyIcon(ptrayItem->notifyIcon.hIcon);
-  if(ptrayItem->hWndToolTip)
-      DestroyWindow(ptrayItem->hWndToolTip);
-  if(ptrayItem->hWnd)
-    DestroyWindow(ptrayItem->hWnd);
-  return;
-}
-
-
 static void SYSTRAY_ItemSetMessage(SystrayItem *ptrayItem, UINT uCallbackMessage)
 {
   ptrayItem->notifyIcon.uCallbackMessage = uCallbackMessage;
@@ -324,27 +344,6 @@ static BOOL SYSTRAY_Modify(PNOTIFYICONDATAA pnid)
   return FALSE; /* not found */
 }
 
-
-static BOOL SYSTRAY_Delete(PNOTIFYICONDATAA pnid)
-{
-  SystrayItem **ptrayItem = &systray;
-
-  while (*ptrayItem) {
-    if (SYSTRAY_ItemIsEqual(pnid, &(*ptrayItem)->notifyIcon)) {
-      SystrayItem *next = (*ptrayItem)->nextTrayItem;
-      TRACE("%p: %p %s\n", *ptrayItem, (*ptrayItem)->notifyIcon.hWnd, (*ptrayItem)->notifyIcon.szTip);
-      SYSTRAY_ItemTerm(*ptrayItem);
-
-      HeapFree(GetProcessHeap(),0,*ptrayItem);
-      *ptrayItem = next;
-
-      return TRUE;
-    }
-    ptrayItem = &((*ptrayItem)->nextTrayItem);
-  }
-
-  return FALSE; /* not found */
-}
 
 /*************************************************************************
  *
