@@ -25,6 +25,12 @@
 #include "winbase.h"
 #include "wine/test.h"
 
+static SIZE_T resize_9x(SIZE_T size)
+{
+    DWORD dwSizeAligned = (size + 3) & ~3;
+    return max(dwSizeAligned, 12); /* at least 12 bytes */
+}
+
 START_TEST(heap)
 {
     void *mem;
@@ -43,7 +49,8 @@ START_TEST(heap)
         SIZE_T heap_size;
         mem = HeapAlloc(GetProcessHeap(), 0, size);
         heap_size = HeapSize(GetProcessHeap(), 0, mem);
-        ok(size == heap_size, "HeapSize returned %lu instead of %lu\n", heap_size, size);
+        ok(heap_size == size || heap_size == resize_9x(size), 
+            "HeapSize returned %lu instead of %lu or %lu\n", heap_size, size, resize_9x(size));
         HeapFree(GetProcessHeap(), 0, mem);
     }
 
