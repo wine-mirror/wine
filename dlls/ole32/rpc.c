@@ -623,10 +623,9 @@ static HRESULT create_server(REFCLSID rclsid)
     static const WCHAR  embedding[] = { ' ', '-','E','m','b','e','d','d','i','n','g',0 };
     HKEY                hkeyclsid;
     HKEY                key;
-    HRESULT             hres = E_UNEXPECTED;
-    WCHAR               exe[MAX_PATH+1];
-    DWORD               exelen = sizeof(exe);
+    HRESULT             hres;
     WCHAR               command[MAX_PATH+sizeof(embedding)/sizeof(WCHAR)];
+    DWORD               size = MAX_PATH+1 * sizeof(WCHAR);
     STARTUPINFOW        sinfo;
     PROCESS_INFORMATION pinfo;
 
@@ -637,14 +636,14 @@ static HRESULT create_server(REFCLSID rclsid)
     }
 
     hres = RegOpenKeyExW(hkeyclsid, wszLocalServer32, 0, KEY_READ, &key);
+    RegCloseKey(hkeyclsid);
 
     if (hres != ERROR_SUCCESS) {
         WARN("class %s not registered as LocalServer32\n", debugstr_guid(rclsid));
         return REGDB_E_READREGDB; /* Probably */
     }
 
-    memset(exe,0,sizeof(exe));
-    hres= RegQueryValueExW(key, NULL, NULL, NULL, (LPBYTE)exe, &exelen);
+    hres = RegQueryValueExW(key, NULL, NULL, NULL, (LPBYTE)command, &size);
     RegCloseKey(key);
     if (hres) {
         WARN("No default value for LocalServer32 key\n");
@@ -654,17 +653,16 @@ static HRESULT create_server(REFCLSID rclsid)
     memset(&sinfo,0,sizeof(sinfo));
     sinfo.cb = sizeof(sinfo);
 
-    /* EXE servers are started with the -Embedding switch. MSDN also claims /Embedding is used,
-     * 9x does -Embedding, perhaps an 9x/NT difference?
-     */
+    /* EXE servers are started with the -Embedding switch. */
 
-    strcpyW(command, exe);
     strcatW(command, embedding);
 
     TRACE("activating local server %s for %s\n", debugstr_w(command), debugstr_guid(rclsid));
 
-    if (!CreateProcessW(exe, command, NULL, NULL, FALSE, 0, NULL, NULL, &sinfo, &pinfo)) {
-        WARN("failed to run local server %s\n", debugstr_w(exe));
+    /* FIXME: Win2003 supports a ServerExecutable value that is passed into
+     * CreateProcess */
+    if (!CreateProcessW(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &sinfo, &pinfo)) {
+        WARN("failed to run local server %s\n", debugstr_w(command));
         return HRESULT_FROM_WIN32(GetLastError());
     }
     CloseHandle(pinfo.hProcess);
