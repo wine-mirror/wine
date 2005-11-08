@@ -51,8 +51,8 @@ static ULONG        (WINAPI *pFBadProp)(LPSPropValue);
 static ULONG        (WINAPI *pFBadColumnSet)(LPSPropTagArray);
 static SCODE        (WINAPI *pCreateIProp)(LPCIID,ALLOCATEBUFFER*,ALLOCATEMORE*,
                                            FREEBUFFER*,LPVOID,LPPROPDATA*);
-static SCODE        (WINAPI *pMAPIAllocateBuffer)(ULONG, LPVOID FAR);
-static SCODE        (WINAPI *pMAPIAllocateMore)(ULONG, LPVOID, LPVOID FAR);
+static SCODE        (WINAPI *pMAPIAllocateBuffer)(ULONG, LPVOID);
+static SCODE        (WINAPI *pMAPIAllocateMore)(ULONG, LPVOID, LPVOID);
 static SCODE        (WINAPI *pMAPIFreeBuffer)(LPVOID);
 
 static BOOL InitFuncPtrs(void)
@@ -1155,8 +1155,8 @@ static void test_IProp(void)
 
     /* Create the object */
     lpIProp = NULL;
-    sc = pCreateIProp(&IID_IMAPIPropData, (ALLOCATEBUFFER FAR *)pMAPIAllocateBuffer, (ALLOCATEMORE FAR*)pMAPIAllocateMore,
-                      (FREEBUFFER FAR *)pMAPIFreeBuffer, NULL, &lpIProp);
+    sc = pCreateIProp(&IID_IMAPIPropData, (ALLOCATEBUFFER *)pMAPIAllocateBuffer, (ALLOCATEMORE*)pMAPIAllocateMore,
+                      (FREEBUFFER *)pMAPIFreeBuffer, NULL, &lpIProp);
     ok(sc == S_OK && lpIProp,
        "CreateIProp: expected S_OK, non-null, got 0x%08lX,%p\n", sc, lpIProp);
 
