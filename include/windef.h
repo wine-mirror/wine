@@ -103,30 +103,30 @@ extern "C" {
 #endif
 
 #ifndef near
-#define near        __ONLY_IN_WINELIB()
+#define near        __ONLY_IN_WINELIB(/* nothing */)
 #endif
 #ifndef far
-#define far         __ONLY_IN_WINELIB()
+#define far         __ONLY_IN_WINELIB(/* nothing */)
 #endif
 #ifndef _near
-#define _near       __ONLY_IN_WINELIB()
+#define _near       __ONLY_IN_WINELIB(/* nothing */)
 #endif
 #ifndef _far
-#define _far        __ONLY_IN_WINELIB()
+#define _far        __ONLY_IN_WINELIB(/* nothing */)
 #endif
 #ifndef NEAR
-#define NEAR        __ONLY_IN_WINELIB()
+#define NEAR        __ONLY_IN_WINELIB(/* nothing */)
 #endif
 #ifndef FAR
-#define FAR         __ONLY_IN_WINELIB()
+#define FAR         __ONLY_IN_WINELIB(/* nothing */)
 #endif
 
 #ifndef _MSC_VER
 # ifndef _declspec
-#  define _declspec(x)    __ONLY_IN_WINELIB()
+#  define _declspec(x)    __ONLY_IN_WINELIB(/* nothing */)
 # endif
 # ifndef __declspec
-#  define __declspec(x)   __ONLY_IN_WINELIB()
+#  define __declspec(x)   __ONLY_IN_WINELIB(/* nothing */)
 # endif
 #endif
 
