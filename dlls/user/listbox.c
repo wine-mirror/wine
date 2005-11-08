@@ -3013,6 +3013,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
     case WM_GETDLGCODE:
         return DLGC_WANTARROWS | DLGC_WANTCHARS;
 
+    case WM_PRINTCLIENT:
     case WM_PAINT:
         {
             PAINTSTRUCT ps;

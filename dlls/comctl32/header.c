@@ -1717,6 +1717,7 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_THEMECHANGED:
             return HEADER_ThemeChanged (hwnd);
 
+        case WM_PRINTCLIENT:
         case WM_PAINT:
             return HEADER_Paint (hwnd, wParam);
 

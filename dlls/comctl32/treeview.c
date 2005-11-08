@@ -5629,10 +5629,9 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_NOTIFYFORMAT:
 	return TREEVIEW_NotifyFormat(infoPtr, (HWND)wParam, (UINT)lParam);
 
+    case WM_PRINTCLIENT:
     case WM_PAINT:
 	return TREEVIEW_Paint(infoPtr, wParam);
-
-	/* WM_PRINTCLIENT */
 
     case WM_RBUTTONDOWN:
 	return TREEVIEW_RButtonDown(infoPtr, lParam);

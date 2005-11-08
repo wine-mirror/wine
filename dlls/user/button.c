@@ -279,6 +279,7 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
         }
         return 1;
 
+    case WM_PRINTCLIENT:
     case WM_PAINT:
         if (btnPaintFunc[btn_type])
         {
@@ -777,7 +778,6 @@ static void PB_Paint( HWND hwnd, HDC hDC, UINT action )
 {
     RECT     rc, focus_rect, r;
     UINT     dtFlags, uState;
-    HRGN     hRgn;
     HPEN     hOldPen;
     HBRUSH   hOldBrush;
     INT      oldBkMode;
@@ -834,16 +834,13 @@ static void PB_Paint( HWND hwnd, HDC hDC, UINT action )
     if (pushedState)
        OffsetRect(&r, 1, 1);
 
-    hRgn = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
-    SelectClipRgn(hDC, hRgn);
+    IntersectClipRect(hDC, rc.left, rc.top, rc.right, rc.bottom);
 
     oldTxtColor = SetTextColor( hDC, GetSysColor(COLOR_BTNTEXT) );
 
     BUTTON_DrawLabel(hwnd, hDC, dtFlags, &r);
 
     SetTextColor( hDC, oldTxtColor );
-    SelectClipRgn(hDC, 0);
-    DeleteObject(hRgn);
 
     if (state & BUTTON_HASFOCUS)
     {
@@ -868,7 +865,6 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
     HBRUSH hBrush;
     int delta;
     UINT dtFlags;
-    HRGN hRgn;
     HFONT hFont;
     LONG state = get_button_state( hwnd );
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
@@ -970,9 +966,8 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 
     if (dtFlags == (UINT)-1L) /* Noting to draw */
 	return;
-    hRgn = CreateRectRgn(client.left, client.top, client.right, client.bottom);
-    SelectClipRgn(hDC, hRgn);
-    DeleteObject(hRgn);
+
+    IntersectClipRect(hDC, client.left, client.top, client.right, client.bottom);
 
     if (action == ODA_DRAWENTIRE)
 	BUTTON_DrawLabel(hwnd, hDC, dtFlags, &rtext);
@@ -986,7 +981,6 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 	IntersectRect(&rtext, &rtext, &client);
 	DrawFocusRect( hDC, &rtext );
     }
-    SelectClipRgn(hDC, 0);
 }
 
 

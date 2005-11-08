@@ -282,6 +282,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         else return unicode ? DefWindowProcW(hwnd, uMsg, wParam, lParam) :
                               DefWindowProcA(hwnd, uMsg, wParam, lParam);
 
+    case WM_PRINTCLIENT:
     case WM_PAINT:
         {
             PAINTSTRUCT ps;

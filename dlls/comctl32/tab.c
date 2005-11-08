@@ -3283,6 +3283,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_MOUSEMOVE:
       return TAB_MouseMove (infoPtr, wParam, lParam);
 
+    case WM_PRINTCLIENT:
     case WM_PAINT:
       return TAB_Paint (infoPtr, (HDC)wParam);
 

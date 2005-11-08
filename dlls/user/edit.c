@@ -920,6 +920,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		result = EDIT_WM_MouseMove(es, (short)LOWORD(lParam), (short)HIWORD(lParam));
 		break;
 
+	case WM_PRINTCLIENT:
 	case WM_PAINT:
 	        EDIT_WM_Paint(es, (HDC)wParam);
 		break;
