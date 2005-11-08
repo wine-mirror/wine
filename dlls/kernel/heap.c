@@ -40,6 +40,16 @@
 # include <unistd.h>
 #endif
 
+#ifdef sun
+/* FIXME:  Unfortunately swapctl can't be used with largefile.... */
+# undef _FILE_OFFSET_BITS
+# define _FILE_OFFSET_BITS 32
+# include <sys/resource.h>
+# include <sys/stat.h>
+# include <sys/swap.h>
+#endif
+
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -1132,6 +1142,12 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     int size_sys;
     int mib[2] = { CTL_HW };
 #endif
+#ifdef sun
+    long pagesize,maxpages,freepages,swapspace,swapfree;
+    struct anoninfo swapinf;
+    int rval;
+#endif
+
     if (time(NULL)==cache_lastchecked) {
 	memcpy(lpmemex,&cached_memstatus,sizeof(*lpmemex));
 	return TRUE;
@@ -1200,9 +1216,9 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     if (tmp && *tmp)
     {
         lpmemex->ullTotalPhys = *tmp;
-	free(tmp);
-	mib[1] = HW_USERMEM;
-	sysctl(mib, 2, NULL, &size_sys, NULL, 0);
+        free(tmp);
+        mib[1] = HW_USERMEM;
+        sysctl(mib, 2, NULL, &size_sys, NULL, 0);
 	tmp = malloc(size_sys * sizeof(int));
 	sysctl(mib, 2, tmp, &size_sys, NULL, 0);
 	if (tmp && *tmp)
@@ -1221,6 +1237,27 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 	free(tmp);
 
     }
+#elif defined ( sun )
+    pagesize=sysconf(_SC_PAGESIZE);
+    maxpages=sysconf(_SC_PHYS_PAGES);
+    freepages=sysconf(_SC_AVPHYS_PAGES);
+    rval=swapctl(SC_AINFO, &swapinf);
+    if(rval >-1)
+    {
+        swapspace=swapinf.ani_max*pagesize;
+        swapfree=swapinf.ani_free*pagesize;
+    }else
+    {
+
+        WARN("Swap size cannot be determined , assuming equal to physical memory\n");
+        swapspace=maxpages*pagesize;
+        swapfree=maxpages*pagesize;
+    }
+    lpmemex->ullTotalPhys=pagesize*maxpages;
+    lpmemex->ullAvailPhys = pagesize*freepages;
+    lpmemex->ullTotalPageFile = swapspace;
+    lpmemex->ullAvailPageFile = swapfree;
+    lpmemex->dwMemoryLoad =  lpmemex->ullTotalPhys - lpmemex->ullAvailPhys;
 #endif
 
     /* Project2k refuses to start if it sees less than 1Mb of free swap */
