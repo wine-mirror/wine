@@ -2460,16 +2460,16 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
 }
 
 /***********************************************************************
- *	InternetCheckConnectionA (WININET.@)
+ *	InternetCheckConnectionW (WININET.@)
  *
  * Pings a requested host to check internet connection
  *
  * RETURNS
  *   TRUE on success and FALSE on failure. If a failure then
- *   ERROR_NOT_CONNECTED is placesd into GetLastError
+ *   ERROR_NOT_CONNECTED is placed into GetLastError
  *
  */
-BOOL WINAPI InternetCheckConnectionA( LPCSTR lpszUrl, DWORD dwFlags, DWORD dwReserved )
+BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwReserved )
 {
 /*
  * this is a kludge which runs the resident ping program and reads the output.
@@ -2478,8 +2478,11 @@ BOOL WINAPI InternetCheckConnectionA( LPCSTR lpszUrl, DWORD dwFlags, DWORD dwRes
  */
 
   BOOL   rc = FALSE;
-  char command[1024];
-  char host[1024];
+  static const CHAR ping[] = "ping -w 1 ";
+  static const CHAR redirect[] = " >/dev/null 2>/dev/null";
+  CHAR *command = NULL;
+  WCHAR hostW[1024];
+  DWORD len;
   int status = -1;
 
   FIXME("\n");
@@ -2501,30 +2504,32 @@ BOOL WINAPI InternetCheckConnectionA( LPCSTR lpszUrl, DWORD dwFlags, DWORD dwRes
   }
   else
   {
-     URL_COMPONENTSA components;
+     URL_COMPONENTSW components;
 
-     ZeroMemory(&components,sizeof(URL_COMPONENTSA));
-     components.lpszHostName = (LPSTR)&host;
+     ZeroMemory(&components,sizeof(URL_COMPONENTSW));
+     components.lpszHostName = (LPWSTR)&hostW;
      components.dwHostNameLength = 1024;
 
-     if (!InternetCrackUrlA(lpszUrl,0,0,&components))
+     if (!InternetCrackUrlW(lpszUrl,0,0,&components))
        goto End;
 
-     TRACE("host name : %s\n",components.lpszHostName);
+     TRACE("host name : %s\n",debugstr_w(components.lpszHostName));
   }
 
   /*
    * Build our ping command
    */
-  strcpy(command,"ping -w 1 ");
-  strcat(command,host);
-  strcat(command," >/dev/null 2>/dev/null");
+  len = WideCharToMultiByte(CP_UNIXCP, 0, hostW, -1, NULL, 0, NULL, NULL);
+  command = HeapAlloc( GetProcessHeap(), 0, strlen(ping)+len+strlen(redirect) );
+  strcpy(command,ping);
+  WideCharToMultiByte(CP_UNIXCP, 0, hostW, -1, command+strlen(ping), len, NULL, NULL);
+  strcat(command,redirect);
 
   TRACE("Ping command is : %s\n",command);
 
   status = system(command);
 
-  TRACE("Ping returned a code of %i \n",status);
+  TRACE("Ping returned a code of %i\n",status);
 
   /* Ping return code of 0 indicates success */
   if (status == 0)
@@ -2532,6 +2537,7 @@ BOOL WINAPI InternetCheckConnectionA( LPCSTR lpszUrl, DWORD dwFlags, DWORD dwRes
 
 End:
 
+  HeapFree( GetProcessHeap(), 0, command );
   if (rc == FALSE)
     SetLastError(ERROR_NOT_CONNECTED);
 
@@ -2540,7 +2546,7 @@ End:
 
 
 /***********************************************************************
- *	InternetCheckConnectionW (WININET.@)
+ *	InternetCheckConnectionA (WININET.@)
  *
  * Pings a requested host to check internet connection
  *
@@ -2549,17 +2555,17 @@ End:
  *   ERROR_NOT_CONNECTED is placed into GetLastError
  *
  */
-BOOL WINAPI InternetCheckConnectionW(LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwReserved)
+BOOL WINAPI InternetCheckConnectionA(LPCSTR lpszUrl, DWORD dwFlags, DWORD dwReserved)
 {
-    CHAR *szUrl;
+    WCHAR *szUrl;
     INT len;
     BOOL rc;
 
-    len = WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, NULL, 0, NULL, NULL);
-    if (!(szUrl = HeapAlloc(GetProcessHeap(), 0, len*sizeof(CHAR))))
+    len = MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, NULL, 0);
+    if (!(szUrl = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR))))
         return FALSE;
-    WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, szUrl, len, NULL, NULL);
-    rc = InternetCheckConnectionA((LPCSTR)szUrl, dwFlags, dwReserved);
+    MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, szUrl, len);
+    rc = InternetCheckConnectionW(szUrl, dwFlags, dwReserved);
     HeapFree(GetProcessHeap(), 0, szUrl);
     
     return rc;
