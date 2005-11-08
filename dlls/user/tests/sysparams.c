@@ -123,7 +123,13 @@ static LRESULT CALLBACK SysParamsTestWndProc( HWND hWnd, UINT msg, WPARAM wParam
     switch (msg) {
 
     case WM_SETTINGCHANGE:
-        if (change_counter>0) {
+        if (change_counter>0) { 
+            /* ignore these messages caused by resizing of toolbars */
+            if( wParam == SPI_SETWORKAREA) break;
+            if( change_last_param == SPI_SETWORKAREA) {
+                change_last_param = wParam;
+                break;
+            }
             ok(0,"too many changes counter=%d last change=%d\n",
                change_counter,change_last_param);
         }
@@ -497,26 +503,63 @@ static void test_SPI_SETMOUSE( void )                  /*      4 */
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
 
-#if 0
-static void test_setborder(UINT curr_val)
+/* get a metric from the registry. If the value is negative
+ * it is assumed to be in twips and converted to pixels */
+static UINT metricfromreg( char *keyname, char *valname, int dpi)
+{
+    HKEY hkey;
+    char buf[64];
+    DWORD ret;
+    DWORD size, type;
+    int value;
+
+    RegOpenKeyA( HKEY_CURRENT_USER, keyname, &hkey );
+    size = sizeof(buf);
+    ret=RegQueryValueExA( hkey, valname, NULL, &type, (LPBYTE)buf, &size );
+    RegCloseKey( hkey );
+    if( ret != ERROR_SUCCESS) return -1;
+    value = atoi( buf);
+    if( value < 0)
+        value = ( -value * dpi + 720) / 1440;
+    return value;
+}
+
+static void test_setborder(UINT curr_val, int usesetborder, int dpi)
 {
     BOOL rc;
-    UINT border;
+    UINT border, regval;
     INT frame;
-    char buf[10];
+    NONCLIENTMETRICSA ncm;
 
-    rc=SystemParametersInfoA( SPI_SETBORDER, curr_val, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
+    ncm.cbSize = sizeof( ncm);
+    rc=SystemParametersInfo( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0);
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-    test_change_message( SPI_SETBORDER, 1 );
-    sprintf( buf, "%d", curr_val );
-    test_reg_key( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, buf );
-
-    if (curr_val == 0)
-        curr_val = 1;
+    if( usesetborder) {
+            rc=SystemParametersInfoA( SPI_SETBORDER, curr_val, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
+        ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+        test_change_message( SPI_SETBORDER, 1 );
+    } else { /* set non client metrics */
+        ncm.iBorderWidth = curr_val;
+        rc=SystemParametersInfoA( SPI_SETNONCLIENTMETRICS, 0, &ncm, SPIF_UPDATEINIFILE|
+                SPIF_SENDCHANGE);
+        ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+        test_change_message( SPI_SETNONCLIENTMETRICS, 1 );
+    }
+    if( curr_val) { /* skip if 0, some windows versions return 0 others 1 */
+        regval = metricfromreg( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, dpi);
+        ok( regval==curr_val, "wrong value in registry %d, epected %d\n", regval, curr_val);
+    }
+    /* minimum border width is 1 */
+    if (curr_val == 0) curr_val = 1;
+    /* should be the same as the non client metrics */
+    rc=SystemParametersInfo( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0);
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    eq( (UINT)ncm.iBorderWidth, curr_val, "NonClientMetric.iBorderWidth", "%d");
+    /* and from SPI_GETBORDER */ 
     rc=SystemParametersInfoA( SPI_GETBORDER, 0, &border, 0 );
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
     eq( border, curr_val, "SPI_{GET,SET}BORDER", "%d");
-
+    /* test some SystemMetrics */
     frame = curr_val + GetSystemMetrics( SM_CXDLGFRAME );
     eq( frame, GetSystemMetrics( SM_CXFRAME ), "SM_CXFRAME", "%d" );
     eq( frame, GetSystemMetrics( SM_CYFRAME ), "SM_CYFRAME", "%d" );
@@ -528,6 +571,14 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
 {
     BOOL rc;
     UINT old_border;
+    HDC hdc;
+    int dpi;
+    int iswin9x;
+
+    /* The SPI_SETBORDER seems to be buggy on Win9x/ME (looks like you need to
+     * do it twice to make the intended change). So skip parts of the tests on
+     * those platforms */
+    iswin9x = GetVersion() & 0x80000000;
 
     /* These tests hang when XFree86 4.0 for Windows is running (tested on
      *  WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is
@@ -537,24 +588,31 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
         return;
 
     trace("testing SPI_{GET,SET}BORDER\n");
+    hdc = GetDC(0);
+    dpi = GetDeviceCaps( hdc, LOGPIXELSY);
+    ReleaseDC( 0, hdc);
+
     SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETBORDER, 0, &old_border, 0 );
     if (!test_error_msg(rc,"SPI_{GET,SET}BORDER"))
         return;
-
-    test_setborder(1);
-    test_setborder(0);
-    test_setborder(7);
-    test_setborder(20);
-
     /* This will restore sane values if the test hang previous run. */
     if ( old_border == 7 || old_border == 20 )
-        old_border = -15;
+        old_border = 1;
 
-    rc=SystemParametersInfoA( SPI_SETBORDER, old_border, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
+    if( !iswin9x) {
+        test_setborder(1,  1, dpi);
+        test_setborder(0,  1, dpi);
+        test_setborder(7,  1, dpi);
+        test_setborder(20, 1, dpi);
+    }
+    test_setborder(1, 0, dpi);
+    test_setborder(0, 0, dpi);
+    test_setborder(7, 0, dpi);
+    test_setborder(20, 0, dpi);
+    /* this test should reset the old value on all platforms */
+    test_setborder(old_border, 0, dpi);
 }
-#endif
 
 static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
 {
@@ -1022,7 +1080,7 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
         rc=SwapMouseButton((BOOL)vals[i^1]);
         eq( GetSystemMetrics( SM_SWAPBUTTON ), (int)vals[i^1],
             "SwapMouseButton", "%d" );
-        ok( rc==vals[i], "SwapMouseButton does not return previous state (really %d)\n", rc );
+        ok( rc==(BOOL)vals[i], "SwapMouseButton does not return previous state (really %d)\n", rc );
     }
 
     rc=SystemParametersInfoA( SPI_SETMOUSEBUTTONSWAP, old_b, 0,
@@ -1318,7 +1376,7 @@ static void test_SPI_SETKEYBOARDPREF( void )           /*     69 */
 
         rc=SystemParametersInfoA( SPI_GETKEYBOARDPREF, 0, &v, 0 );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
-        eq( v, vals[i], "SPI_GETKEYBOARDPREF", "%d" );
+        eq( v, (BOOL)vals[i], "SPI_GETKEYBOARDPREF", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETKEYBOARDPREF, old_b, 0, SPIF_UPDATEINIFILE );
@@ -1352,7 +1410,7 @@ static void test_SPI_SETSCREENREADER( void )           /*     71 */
 
         rc=SystemParametersInfoA( SPI_GETSCREENREADER, 0, &v, 0 );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
-        eq( v, vals[i], "SPI_GETSCREENREADER", "%d" );
+        eq( v, (BOOL)vals[i], "SPI_GETSCREENREADER", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETSCREENREADER, old_b, 0, SPIF_UPDATEINIFILE );
@@ -1659,8 +1717,7 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
 {
     test_SPI_SETBEEP();                         /*      1 */
     test_SPI_SETMOUSE();                        /*      4 */
-    /* Messes up systems settings on Win9x */
-    /*test_SPI_SETBORDER();*/                   /*      6 */
+    test_SPI_SETBORDER();                       /*      6 */
     test_SPI_SETKEYBOARDSPEED();                /*     10 */
     test_SPI_ICONHORIZONTALSPACING();           /*     13 */
     test_SPI_SETSCREENSAVETIMEOUT();            /*     14 */

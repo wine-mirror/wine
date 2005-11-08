@@ -922,7 +922,8 @@ static void load_nonclient_metrics(void)
                        0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
 
     /* initialize geometry entries */
-    nonclient_metrics.iBorderWidth = 1;
+    nonclient_metrics.iBorderWidth =  get_reg_metric(hkey, METRICS_BORDERWIDTH_VALNAME, 1);
+    if( nonclient_metrics.iBorderWidth < 1) nonclient_metrics.iBorderWidth = 1;
     nonclient_metrics.iScrollWidth = get_reg_metric(hkey, METRICS_SCROLLWIDTH_VALNAME, 16);
     nonclient_metrics.iScrollHeight = nonclient_metrics.iScrollWidth;
 
@@ -1124,9 +1125,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                SPI_SETBORDER_REGKEY,
                                SPI_SETBORDER_VALNAME,
                                &border, pvParam );
+        if( *(INT*)pvParam < 1) *(INT*)pvParam = 1; 
         break;
 
     case SPI_SETBORDER:
+        nonclient_metrics.iBorderWidth = uiParam > 0 ? uiParam : 1;
+        /* raw value goes to registry */
         ret = set_uint_param( SPI_SETBORDER_IDX,
                               SPI_SETBORDER_REGKEY,
                               SPI_SETBORDER_VALNAME,
@@ -1413,6 +1417,13 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
         if (lpnm && lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
         {
+            /* FIXME: there are likely a few more parameters to save here */
+            set_uint_param( SPI_SETBORDER_IDX,
+                              SPI_SETBORDER_REGKEY,
+                              SPI_SETBORDER_VALNAME,
+                              &border,
+                              lpnm->iBorderWidth, fWinIni );
+            if( lpnm->iBorderWidth < 1) lpnm->iBorderWidth = 1;
             memcpy( &nonclient_metrics, lpnm, sizeof(nonclient_metrics) );
             spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
         }
@@ -2345,11 +2356,11 @@ INT WINAPI GetSystemMetrics( INT index )
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
         return nonclient_metrics.iCaptionHeight;
     case SM_CXFRAME:
-        SystemParametersInfoW( SPI_GETBORDER, 0, &ret, 0 );
-        return GetSystemMetrics(SM_CXDLGFRAME) + ret;
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return GetSystemMetrics(SM_CXDLGFRAME) + nonclient_metrics.iBorderWidth;
     case SM_CYFRAME:
-        SystemParametersInfoW( SPI_GETBORDER, 0, &ret, 0 );
-        return GetSystemMetrics(SM_CYDLGFRAME) + ret;
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return GetSystemMetrics(SM_CXDLGFRAME) + nonclient_metrics.iBorderWidth;
     case SM_CXMINTRACK:
         return GetSystemMetrics(SM_CXMIN);
     case SM_CYMINTRACK:
