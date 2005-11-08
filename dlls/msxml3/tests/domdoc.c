@@ -447,6 +447,13 @@ void test_domnode( void )
     else
         ok( FALSE, "no element\n");
 
+    r = IXMLDOMNode_selectSingleNode( element, (BSTR)szdl, &node );
+    ok( r == S_FALSE, "ret %08lx\n", r );
+    r = IXMLDOMNode_selectSingleNode( element, (BSTR)szbs, &node );
+    ok( r == S_OK, "ret %08lx\n", r );
+    r = IXMLDOMNode_Release( node );
+    ok( r == 0, "ret %08lx\n", r );
+
     if (list)
     {
         r = IXMLDOMNodeList_get_length( list, &count );

@@ -586,8 +586,19 @@ static HRESULT WINAPI xmlnode_selectSingleNode(
     BSTR queryString,
     IXMLDOMNode** resultNode)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    IXMLDOMNodeList *list;
+    HRESULT r;
+
+    TRACE("%p %s %p\n", This, debugstr_w(queryString), resultNode );
+
+    r = IXMLDOMNode_selectNodes(iface, queryString, &list);
+    if(SUCCEEDED(r))
+    {
+        r = IXMLDOMNodeList_nextNode(list, resultNode);
+        IXMLDOMNodeList_Release(list);
+    }
+    return r;
 }
 
 static HRESULT WINAPI xmlnode_get_parsed(
