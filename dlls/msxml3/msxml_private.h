@@ -47,6 +47,8 @@ extern BSTR bstr_from_xmlChar( const xmlChar *buf );
 
 #endif
 
+extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
+                                             LONG line, LONG linepos, LONG filepos );
 extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 
 #endif /* __MSXML_PRIVATE__ */

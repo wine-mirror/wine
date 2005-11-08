@@ -82,10 +82,12 @@ void test_domdoc( void )
 {
     HRESULT r;
     IXMLDOMDocument *doc = NULL;
+    IXMLDOMParseError *error;
     IXMLDOMElement *element = NULL;
     VARIANT_BOOL b;
     VARIANT var;
     BSTR str;
+    long code;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
@@ -224,6 +226,14 @@ void test_domdoc( void )
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
+
+    r = IXMLDOMDocument_get_parseError( doc, &error );
+    ok( r == S_OK, "returns %08lx\n", r );
+
+    r = IXMLDOMParseError_get_errorCode( error, &code );
+    ok( r == S_FALSE, "returns %08lx\n", r );
+    ok( code == 0, "code %ld\n", code );
+    IXMLDOMParseError_Release( error );
 
     r = IXMLDocument_Release( doc );
     ok( r == 0, "document ref count incorrect\n");

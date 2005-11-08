@@ -757,8 +757,10 @@ static HRESULT WINAPI domdoc_get_parseError(
     IXMLDOMDocument *iface,
     IXMLDOMParseError** errorObj )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    FIXME("(%p)->(%p): creating a dummy parseError\n", iface, errorObj);
+    *errorObj = create_parseError(0, NULL, NULL, NULL, 0, 0, 0);
+    if(!*errorObj) return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 
