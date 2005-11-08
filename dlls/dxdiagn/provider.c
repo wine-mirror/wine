@@ -1,7 +1,7 @@
 /* 
  * IDxDiagProvider Implementation
  * 
- * Copyright 2004 Raphael Junqueira
+ * Copyright 2004-2005 Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,10 +20,17 @@
  */
 
 #include "config.h"
-#include "dxdiag_private.h"
 #include "wine/debug.h"
-#include "winver.h"
+
+#define COBJMACROS
+#include "dxdiag_private.h"
 #include "wine/unicode.h"
+#include "winver.h"
+#include "objidl.h"
+#include "dshow.h"
+#include "strmif.h"
+#include "vfw.h"
+#include "mmddk.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
@@ -176,10 +183,13 @@ HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCHAR* szF
 
   V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szFile);
   hr = IDxDiagContainerImpl_AddProp(pSubCont, szPath, &v);
+  VariantClear(&v);
   V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szFileName);
   hr = IDxDiagContainerImpl_AddProp(pSubCont, szName, &v);
+  VariantClear(&v);
   V_VT(&v) = VT_BOOL; V_BOOL(&v) = boolret;
   hr = IDxDiagContainerImpl_AddProp(pSubCont, bExists, &v);  
+  VariantClear(&v);
 
   if (boolret) {
     snprintfW(szVersion_v, sizeof(szVersion_v), 
@@ -193,18 +203,25 @@ HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCHAR* szF
 
     V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szVersion_v);
     hr = IDxDiagContainerImpl_AddProp(pSubCont, szVersion, &v);
+    VariantClear(&v);
     V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szFinal_Retail_v);
     hr = IDxDiagContainerImpl_AddProp(pSubCont, szAttributes, &v);
+    VariantClear(&v);
     V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szEnglish_v);
     hr = IDxDiagContainerImpl_AddProp(pSubCont, szLanguageEnglish, &v);
+    VariantClear(&v);
     V_VT(&v) = VT_UI4; V_UI4(&v) = pFileInfo->dwFileDateMS;
     hr = IDxDiagContainerImpl_AddProp(pSubCont, dwFileTimeHigh, &v);
+    VariantClear(&v);
     V_VT(&v) = VT_UI4; V_UI4(&v) = pFileInfo->dwFileDateLS;
     hr = IDxDiagContainerImpl_AddProp(pSubCont, dwFileTimeLow, &v);
+    VariantClear(&v);
     V_VT(&v) = VT_BOOL; V_BOOL(&v) = (0 != ((pFileInfo->dwFileFlags & pFileInfo->dwFileFlagsMask) & VS_FF_PRERELEASE));
     hr = IDxDiagContainerImpl_AddProp(pSubCont, bBeta, &v);  
+    VariantClear(&v);
     V_VT(&v) = VT_BOOL; V_BOOL(&v) = (0 != ((pFileInfo->dwFileFlags & pFileInfo->dwFileFlagsMask) & VS_FF_DEBUG));
     hr = IDxDiagContainerImpl_AddProp(pSubCont, bDebug, &v);  
+    VariantClear(&v);
   }
 
   HeapFree(GetProcessHeap(), 0, pVersionInfo);
@@ -234,16 +251,22 @@ HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) {
 
   V_VT(&v) = VT_UI4; V_UI4(&v) = 9;
   hr = IDxDiagContainerImpl_AddProp(pSubCont, dwDirectXVersionMajor, &v);
+  VariantClear(&v);
   V_VT(&v) = VT_UI4; V_UI4(&v) = 0;
   hr = IDxDiagContainerImpl_AddProp(pSubCont, dwDirectXVersionMinor, &v);
+  VariantClear(&v);
   V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szDirectXVersionLetter_v);
   hr = IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionLetter, &v);
+  VariantClear(&v);
   V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szDirectXVersionEnglish_v);
   hr = IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionEnglish, &v);
+  VariantClear(&v);
   V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szDirectXVersionLongEnglish_v);
   hr = IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionLongEnglish, &v);
+  VariantClear(&v);
   V_VT(&v) = VT_BOOL; V_BOOL(&v) = FALSE;
   hr = IDxDiagContainerImpl_AddProp(pSubCont, bDebug, &v);
+  VariantClear(&v);
 
   return hr;
 }
@@ -262,12 +285,12 @@ HRESULT DXDiag_InitDXDiagSystemDevicesContainer(IDxDiagContainer* pSubCont) {
 
   hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pDeviceSubCont);
   if (FAILED(hr)) { return hr; }
-  V_VT(pvarProp) = VT_BSTR;
-  V_BSTR(pvarProp) = SysAllocString(property->psz);
+  V_VT(pvarProp) = VT_BSTR; V_BSTR(pvarProp) = SysAllocString(property->psz);
   hr = IDxDiagContainerImpl_AddProp(pDeviceSubCont, szDescription, &v);
-  V_VT(pvarProp) = VT_BSTR;
-  V_BSTR(pvarProp) = SysAllocString(property->psz);
+  VariantClear(&v);
+  V_VT(pvarProp) = VT_BSTR; V_BSTR(pvarProp) = SysAllocString(property->psz);
   hr = IDxDiagContainerImpl_AddProp(pDeviceSubCont, szDeviceID, &v);
+  VariantClear(&v);
 
   hr = IDxDiagContainerImpl_AddChildContainer(pSubCont, "", pDeviceSubCont);
   */
@@ -336,6 +359,8 @@ HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont) {
   static const WCHAR dmstyle_dll[] = {'d','m','s','t','y','l','e','.','d','l','l',0};
   static const WCHAR dmsynth_dll[] = {'d','m','s','y','n','t','h','.','d','l','l',0};
   static const WCHAR dmusic_dll[] = {'d','m','u','s','i','c','.','d','l','l',0};
+  static const WCHAR devenum_dll[] = {'d','e','v','e','n','u','m','.','d','l','l',0};
+  static const WCHAR quartz_dll[] = {'q','u','a','r','t','z','.','d','l','l',0};
   WCHAR szFilePath[512];
 
   hr = GetSystemDirectoryW(szFilePath, MAX_PATH);
@@ -359,6 +384,8 @@ HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont) {
   hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dmstyle_dll);
   hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dmsynth_dll);
   hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dmusic_dll);
+  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, devenum_dll);
+  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, quartz_dll);
   return hr;
 }
 
@@ -408,8 +435,187 @@ HRESULT DXDiag_InitDXDiagDirectPlayContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   return hr;
 }
+
+struct REG_RF {
+  DWORD dwVersion;
+  DWORD dwMerit;
+  DWORD dwPins;
+  DWORD dwUnused;
+};
+struct REG_RFP {
+  BYTE signature[4]; /* e.g. "0pi3" */
+  DWORD dwFlags;
+  DWORD dwInstances;
+  DWORD dwMediaTypes;
+  DWORD dwMediums;
+  DWORD bCategory; /* is there a category clsid? */
+  /* optional: dwOffsetCategoryClsid */
+};
+struct REG_TYPE {
+  BYTE signature[4]; /* e.g. "0ty3" */
+  DWORD dwUnused;
+  DWORD dwOffsetMajor;
+  DWORD dwOffsetMinor;
+};
+
 HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
+  static const WCHAR szName[] = {'s','z','N','a','m','e',0};
+  static const WCHAR szCatName[] = {'s','z','C','a','t','N','a','m','e',0};
+  static const WCHAR szClsidCat[] = {'s','z','C','l','s','i','d','C','a','t',0};
+  static const WCHAR szClsidFilter[] = {'s','z','C','l','s','i','d','F','i','l','t','e','r',0};
+  static const WCHAR dwInputs[] = {'d','w','I','n','p','u','t','s',0};
+  static const WCHAR dwOutputs[] = {'d','w','O','u','t','p','u','t','s',0};
+  static const WCHAR dwMerit[] = {'d','w','M','e','r','i','t',0};
+  /*
+  static const WCHAR szFileName[] = {'s','z','F','i','l','e','N','a','m','e',0};
+  static const WCHAR szFileVersion[] = {'s','z','F','i','l','e','V','e','r','s','i','o','n',0};
+  */
+  VARIANT v;
+
+  static const WCHAR wszClsidName[] = {'C','L','S','I','D',0};
+  static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};  
+  static const WCHAR wszFilterDataName[] = {'F','i','l','t','e','r','D','a','t','a',0};
+  /*static const WCHAR wszMeritName[] = {'M','e','r','i','t',0};*/
+
+  ICreateDevEnum* pCreateDevEnum = NULL;
+  IEnumMoniker* pEmCat = NULL;
+  IMoniker* pMCat = NULL;
+  /** */
+  hr = CoCreateInstance(&CLSID_SystemDeviceEnum, 
+			NULL, 
+			CLSCTX_INPROC_SERVER,
+			&IID_ICreateDevEnum, 
+			(void**) &pCreateDevEnum);
+  if (FAILED(hr)) return hr; 
+  
+  hr = ICreateDevEnum_CreateClassEnumerator(pCreateDevEnum, &CLSID_ActiveMovieCategories, &pEmCat, 0);
+  if (FAILED(hr)) goto out_show_filters; 
+
+  VariantInit(&v);
+
+  while (S_OK == IEnumMoniker_Next(pEmCat, 1, &pMCat, NULL)) {
+    IPropertyBag* pPropBag = NULL;
+    CLSID clsidCat; 
+    hr = IMoniker_BindToStorage(pMCat, NULL, NULL, &IID_IPropertyBag, (void**) &pPropBag);
+    if (SUCCEEDED(hr)) {
+      WCHAR* wszCatName = NULL;
+      WCHAR* wszCatClsid = NULL;
+
+      hr = IPropertyBag_Read(pPropBag, wszFriendlyName, &v, 0);
+      wszCatName = SysAllocString(V_BSTR(&v));
+      VariantClear(&v);
+
+      hr = IPropertyBag_Read(pPropBag, wszClsidName, &v, 0);
+      wszCatClsid = SysAllocString(V_BSTR(&v));
+      hr = CLSIDFromString(V_UNION(&v, bstrVal), &clsidCat);
+      VariantClear(&v);
+
+      /*
+      hr = IPropertyBag_Read(pPropBag, wszMeritName, &v, 0);
+      hr = IDxDiagContainerImpl_AddProp(pSubCont, dwMerit, &v);
+      VariantClear(&v);
+      */
+
+      if (SUCCEEDED(hr)) {
+	IEnumMoniker* pEnum = NULL;
+	IMoniker* pMoniker = NULL;
+        hr = ICreateDevEnum_CreateClassEnumerator(pCreateDevEnum, &clsidCat, &pEnum, 0);        
+        FIXME("\tClassEnumerator for clsid(%s) pEnum(%p) \n", debugstr_guid(&clsidCat), pEnum);
+        if (FAILED(hr) || pEnum == NULL) {
+          goto class_enum_failed;
+        }
+        while (NULL != pEnum && S_OK == IEnumMoniker_Next(pEnum, 1, &pMoniker, NULL)) {          
+	  IPropertyBag* pPropFilterBag = NULL;
+          FIXME("\tIEnumMoniker_Next(%p, 1, %p)\n", pEnum, pMoniker);
+	  hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (void**) &pPropFilterBag);
+	  if (SUCCEEDED(hr)) {
+	    LPBYTE pData = NULL;
+	    LPBYTE pCurrent = NULL;
+	    struct REG_RF* prrf = NULL;
+	    VARIANT v_data;
+	    DWORD it;
+	    DWORD dwNOutputs = 0;
+	    DWORD dwNInputs = 0;
+	    	    
+	    V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(wszCatName);
+	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szCatName, &v);
+	    VariantClear(&v);
+
+	    V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(wszCatClsid);
+	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szClsidCat, &v);
+	    VariantClear(&v);
+
+	    hr = IPropertyBag_Read(pPropFilterBag, wszFriendlyName, &v, 0);
+	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szName, &v);
+	    FIXME("\tName:%s\n", debugstr_w(V_BSTR(&v)));
+	    VariantClear(&v);
+
+	    hr = IPropertyBag_Read(pPropFilterBag, wszClsidName, &v, 0);
+	    FIXME("\tClsid:%s\n", debugstr_w(V_BSTR(&v)));
+	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szClsidFilter, &v);
+	    VariantClear(&v);
+
+	    hr = IPropertyBag_Read(pPropFilterBag, wszFilterDataName, &v, NULL);
+	    hr = SafeArrayAccessData(V_UNION(&v, parray), (LPVOID*) &pData);	    
+	    prrf = (struct REG_RF*) pData;
+	    pCurrent = pData;
+ 
+	    VariantInit(&v_data);
+	    V_VT(&v_data) = VT_UI4; V_UI4(&v_data) = prrf->dwVersion;
+	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szName, &v_data);
+	    VariantClear(&v_data);
+	    V_VT(&v_data) = VT_UI4; V_UI4(&v_data) = prrf->dwMerit;
+	    hr = IDxDiagContainerImpl_AddProp(pSubCont, dwMerit, &v_data);
+	    VariantClear(&v_data);
+
+	    pCurrent += sizeof(struct REG_RF);
+	    for (it = 0; it < prrf->dwPins; ++it) {
+	      struct REG_RFP* prrfp = (struct REG_RFP*) pCurrent;
+	      UINT j;
+
+	      if (prrfp->dwFlags & REG_PINFLAG_B_OUTPUT) ++dwNOutputs;
+	      else ++dwNInputs;
+
+	      pCurrent += sizeof(struct REG_RFP);
+	      if (prrfp->bCategory) {
+		pCurrent += sizeof(DWORD);
+	      }
+	      for (j = 0; j < prrfp->dwMediaTypes; ++j) {
+                struct REG_TYPE* prt = (struct REG_TYPE *)pCurrent;
+                pCurrent += sizeof(*prt);
+	      }
+	      for (j = 0; j < prrfp->dwMediums; ++j) {
+		DWORD dwOffset = *(DWORD*) pCurrent;
+		pCurrent += sizeof(dwOffset);
+	      }
+	    }
+
+	    V_VT(&v_data) = VT_UI4; V_UI4(&v_data) = dwNInputs;
+	    hr = IDxDiagContainerImpl_AddProp(pSubCont, dwInputs, &v_data);
+	    VariantClear(&v_data);
+	    V_VT(&v_data) = VT_UI4; V_UI4(&v_data) = dwNOutputs;
+	    hr = IDxDiagContainerImpl_AddProp(pSubCont, dwOutputs, &v_data);
+	    VariantClear(&v_data);
+
+	    SafeArrayUnaccessData(V_UNION(&v, parray));
+	    VariantClear(&v);
+	  }
+	  IPropertyBag_Release(pPropFilterBag); pPropFilterBag = NULL;
+	}
+	IEnumMoniker_Release(pEnum); pEnum = NULL;
+      }
+class_enum_failed:      
+      SysFreeString(wszCatName);
+      SysFreeString(wszCatClsid);
+      IPropertyBag_Release(pPropBag); pPropBag = NULL;
+    }
+    IEnumMoniker_Release(pMCat); pMCat = NULL;
+  }
+
+out_show_filters:
+  if (NULL != pEmCat) { IEnumMoniker_Release(pEmCat); pEmCat = NULL; }
+  if (NULL != pCreateDevEnum) { ICreateDevEnum_Release(pCreateDevEnum); pCreateDevEnum = NULL; }
   return hr;
 }
 
