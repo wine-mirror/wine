@@ -257,6 +257,9 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, unsigned cha
 /***********************************************************************
  *           GlobalAlloc     (KERNEL.15)
  *           GlobalAlloc16   (KERNEL32.24)
+ *
+ * Allocate a global memory object.
+ *
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
@@ -275,6 +278,9 @@ HGLOBAL16 WINAPI GlobalAlloc16(
 
 /***********************************************************************
  *           GlobalReAlloc     (KERNEL.16)
+ *
+ * Change the size or attributes of a global memory object.
+ *
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
@@ -568,6 +574,9 @@ void WINAPI GlobalChangeLockCount16( HGLOBAL16 handle, INT16 delta,
 /***********************************************************************
  *           GlobalSize     (KERNEL.20)
  *           GlobalSize16   (KERNEL32.32)
+ * 
+ * Get the current size of a global memory object.
+ *
  * RETURNS
  *	Size in bytes of object
  *	0: Failure
@@ -585,6 +594,9 @@ DWORD WINAPI GlobalSize16(
 
 /***********************************************************************
  *           GlobalHandle   (KERNEL.21)
+ *
+ * Get the handle associated with a pointer to the global memory block.
+ *
  * NOTES
  *	Why is GlobalHandleToSel used here with the sel as input?
  *
@@ -619,6 +631,8 @@ DWORD WINAPI GlobalHandleNoRIP16( WORD sel )
 
 /***********************************************************************
  *           GlobalFlags     (KERNEL.22)
+ *
+ * Get information about a global memory object.
  *
  * NOTES
  *	Should this return GMEM_INVALID_HANDLE instead of 0 on invalid
@@ -767,6 +781,9 @@ DWORD WINAPI GetFreeSpace16( UINT16 wFlags )
 
 /***********************************************************************
  *           GlobalDOSAlloc   (KERNEL.184)
+ *
+ * Allocate memory in the first MB.
+ *
  * RETURNS
  *	Address (HW=Paragraph segment; LW=Selector)
  */
@@ -793,6 +810,9 @@ DWORD WINAPI GlobalDOSAlloc16(
 
 /***********************************************************************
  *           GlobalDOSFree      (KERNEL.185)
+ *
+ * Free memory allocated with GlobalDOSAlloc
+ *
  * RETURNS
  *	NULL: Success
  *	sel: Failure

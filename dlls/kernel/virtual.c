@@ -78,6 +78,10 @@ LPVOID WINAPI VirtualAlloc(
  *             VirtualAllocEx   (KERNEL32.@)
  *
  * Seems to be just as VirtualAlloc, but with process handle.
+ *
+ * RETURNS
+ *	Base address of allocated region of pages
+ *	NULL: Failure
  */
 LPVOID WINAPI VirtualAllocEx(
               HANDLE hProcess, /* [in] Handle of process to do mem operation */
@@ -286,7 +290,7 @@ HANDLE WINAPI CreateFileMappingA(
 
 /***********************************************************************
  *             CreateFileMappingW   (KERNEL32.@)
- * See CreateFileMappingA
+ * See CreateFileMappingA.
  */
 HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
                                   DWORD protect, DWORD size_high,
@@ -383,7 +387,7 @@ HANDLE WINAPI OpenFileMappingA(
 
 /***********************************************************************
  *             OpenFileMappingW   (KERNEL32.@)
- * See OpenFileMappingA
+ * See OpenFileMappingA.
  */
 HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
 {
@@ -517,6 +521,8 @@ BOOL WINAPI FlushViewOfFile( LPCVOID base,  /* [in] Start address of byte range 
 /***********************************************************************
  *             IsBadReadPtr   (KERNEL32.@)
  *
+ * Check for read access on a memory block.
+ *
  * RETURNS
  *	FALSE: Process has read access to entire block
  *      TRUE: Otherwise
@@ -557,6 +563,8 @@ BOOL WINAPI IsBadReadPtr(
 /***********************************************************************
  *             IsBadWritePtr   (KERNEL32.@)
  *
+ * Check for write access on a memory block.
+ *
  * RETURNS
  *	FALSE: Process has write access to entire block
  *      TRUE: Otherwise
@@ -595,6 +603,9 @@ BOOL WINAPI IsBadWritePtr(
 
 /***********************************************************************
  *             IsBadHugeReadPtr   (KERNEL32.@)
+ *
+ * Check for read access on a memory block.
+ *
  * RETURNS
  *	FALSE: Process has read access to entire block
  *      TRUE: Otherwise
@@ -609,6 +620,9 @@ BOOL WINAPI IsBadHugeReadPtr(
 
 /***********************************************************************
  *             IsBadHugeWritePtr   (KERNEL32.@)
+ *
+ * Check for write access on a memory block.
+ *
  * RETURNS
  *	FALSE: Process has write access to entire block
  *      TRUE: Otherwise
@@ -624,6 +638,8 @@ BOOL WINAPI IsBadHugeWritePtr(
 /***********************************************************************
  *             IsBadCodePtr   (KERNEL32.@)
  *
+ * Check for read access on a memory address.
+ *
  * RETURNS
  *	FALSE: Process has read access to specified memory
  *	TRUE: Otherwise
@@ -636,6 +652,8 @@ BOOL WINAPI IsBadCodePtr( FARPROC ptr ) /* [in] Address of function */
 
 /***********************************************************************
  *             IsBadStringPtrA   (KERNEL32.@)
+ *
+ * Check for read access on a range of memory pointed to by a string pointer.
  *
  * RETURNS
  *	FALSE: Read access to all bytes in string
@@ -664,7 +682,7 @@ BOOL WINAPI IsBadStringPtrA(
 
 /***********************************************************************
  *             IsBadStringPtrW   (KERNEL32.@)
- * See IsBadStringPtrA
+ * See IsBadStringPtrA.
  */
 BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
 {

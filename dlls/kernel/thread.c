@@ -649,6 +649,9 @@ __ASM_GLOBAL_FUNC( GetCurrentThreadId, ".byte 0x64\n\tmovl 0x24,%eax\n\tret" )
  *		SetLastError (KERNEL32.@)
  *
  * Sets the last-error code.
+ *
+ * RETURNS
+ * Nothing.
  */
 void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
 {
@@ -659,7 +662,10 @@ void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
  *		GetLastError (KERNEL.148)
  *              GetLastError (KERNEL32.@)
  *
- * Returns last-error code.
+ * Get the last-error code.
+ *
+ * RETURNS
+ *  last-error code.
  */
 DWORD WINAPI GetLastError(void)
 {
@@ -670,7 +676,10 @@ DWORD WINAPI GetLastError(void)
  *		GetCurrentProcessId (KERNEL.471)
  *		GetCurrentProcessId (KERNEL32.@)
  *
- * Returns process identifier.
+ * Get the current process identifier.
+ *
+ * RETURNS
+ *  current process identifier
  */
 DWORD WINAPI GetCurrentProcessId(void)
 {
@@ -681,7 +690,10 @@ DWORD WINAPI GetCurrentProcessId(void)
  *		GetCurrentThreadId (KERNEL.462)
  *		GetCurrentThreadId (KERNEL32.@)
  *
- * Returns thread identifier.
+ * Get the current thread identifier.
+ *
+ * RETURNS
+ *  current thread identifier
  */
 DWORD WINAPI GetCurrentThreadId(void)
 {

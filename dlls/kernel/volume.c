@@ -1240,6 +1240,8 @@ UINT WINAPI GetDriveTypeW(LPCWSTR root) /* [in] String describing drive */
 
 /***********************************************************************
  *           GetDriveTypeA   (KERNEL32.@)
+ *
+ * See GetDriveTypeW.
  */
 UINT WINAPI GetDriveTypeA( LPCSTR root )
 {
@@ -1294,6 +1296,8 @@ BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
 
 /***********************************************************************
  *           GetDiskFreeSpaceExA   (KERNEL32.@)
+ *
+ * See GetDiskFreeSpaceExW.
  */
 BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root, PULARGE_INTEGER avail,
                                  PULARGE_INTEGER total, PULARGE_INTEGER totalfree )

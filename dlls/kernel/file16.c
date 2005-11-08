@@ -449,11 +449,16 @@ UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
 
 /***********************************************************************
  *           GetDriveType   (KERNEL.136)
- * This function returns the type of a drive in Win16.
- * Note that it returns DRIVE_REMOTE for CD-ROMs, since MSCDEX uses the
- * remote drive API. The return value DRIVE_REMOTE for CD-ROMs has been
- * verified on Win 3.11 and Windows 95. Some programs rely on it, so don't
- * do any pseudo-clever changes.
+ * Get the type of a drive in Win16.
+ *
+ * RETURNS
+ *  The type of the Drive. For a list see GetDriveTypeW from kernel32.
+ *
+ * NOTES
+ *  Note that it returns DRIVE_REMOTE for CD-ROMs, since MSCDEX uses the
+ *  remote drive API. The return value DRIVE_REMOTE for CD-ROMs has been
+ *  verified on Win 3.11 and Windows 95. Some programs rely on it, so don't
+ *  do any pseudo-clever changes.
  */
 UINT16 WINAPI GetDriveType16( UINT16 drive ) /* [in] number (NOT letter) of drive */
 {

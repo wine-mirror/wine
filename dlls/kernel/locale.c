@@ -1766,7 +1766,7 @@ LCID WINAPI ConvertDefaultLocale( LCID lcid )
  *  lcid  [I] LCID of the locale to check
  *  flags [I] LCID_SUPPORTED = Valid, LCID_INSTALLED = Valid and installed on the system
  *
- * RETURN
+ * RETURNS
  *  TRUE,  if lcid is valid,
  *  FALSE, otherwise.
  *

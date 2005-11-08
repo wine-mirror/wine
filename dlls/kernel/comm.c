@@ -2122,7 +2122,7 @@ static BOOL COMM_WaitCommEvent(
  * Interesting things (events) are set by calling SetCommMask before
  * this function is called.
  *
- * RETURNS:
+ * RETURNS
  *   TRUE if successful
  *   FALSE if failure
  *
@@ -2286,7 +2286,7 @@ BOOL WINAPI CommConfigDialogA(
 /***********************************************************************
  *           CommConfigDialogW   (KERNEL32.@)
  *
- * see CommConfigDialogA for more info
+ * See CommConfigDialogA.
  */
 BOOL WINAPI CommConfigDialogW(
     LPCWSTR lpszDevice,        /* [in] name of communications device */

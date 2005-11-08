@@ -94,8 +94,8 @@ LPWSTR WINAPI GetCommandLineW(void)
 
 
 /***********************************************************************
- *           GetEnvironmentStrings    (KERNEL32.@)
  *           GetEnvironmentStringsA   (KERNEL32.@)
+ *           GetEnvironmentStrings    (KERNEL32.@)
  */
 LPSTR WINAPI GetEnvironmentStringsA(void)
 {

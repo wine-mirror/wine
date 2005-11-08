@@ -1596,6 +1596,8 @@ BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
 
 /******************************************************************************
  * CreateMailslotA [KERNEL32.@]
+ *
+ * See CreatMailslotW.
  */
 HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
                                DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa )

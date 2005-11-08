@@ -564,10 +564,14 @@ static WCHAR netbios_char ( WCHAR wc )
 /******************************************************************************
  * SetComputerNameW [KERNEL32.@]
  *
+ * Set a new NetBIOS name for the local computer.
+ *
  * PARAMS
  *    lpComputerName [I] Address of new computer name
  *
- * RETURNS STD
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI SetComputerNameW( LPCWSTR lpComputerName )
 {
@@ -634,6 +638,8 @@ out:
 
 /******************************************************************************
  * SetComputerNameA [KERNEL32.@]
+ *
+ * See SetComputerNameW.
  */
 BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
 {

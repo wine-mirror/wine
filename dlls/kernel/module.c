@@ -456,6 +456,8 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 /***********************************************************************
  *             GetBinaryTypeA                     [KERNEL32.@]
  *             GetBinaryType                      [KERNEL32.@]
+ *
+ * See GetBinaryTypeW.
  */
 BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 {

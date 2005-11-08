@@ -170,8 +170,8 @@ SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
 
 
 /***********************************************************************
- *           lstrcat    (KERNEL32.@)
  *           lstrcatA   (KERNEL32.@)
+ *           lstrcat    (KERNEL32.@)
  */
 LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
 {
@@ -234,8 +234,8 @@ SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 
 
 /***********************************************************************
- *           lstrcpy    (KERNEL32.@)
  *           lstrcpyA   (KERNEL32.@)
+ *           lstrcpy    (KERNEL32.@)
  */
 LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
 {
@@ -284,8 +284,8 @@ SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 
 
 /***********************************************************************
- *           lstrcpyn    (KERNEL32.@)
  *           lstrcpynA   (KERNEL32.@)
+ *           lstrcpyn    (KERNEL32.@)
  *
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0.
@@ -362,8 +362,8 @@ INT16 WINAPI lstrlen16( LPCSTR str )
 
 
 /***********************************************************************
- *           lstrlen    (KERNEL32.@)
  *           lstrlenA   (KERNEL32.@)
+ *           lstrlen    (KERNEL32.@)
  */
 INT WINAPI lstrlenA( LPCSTR str )
 {

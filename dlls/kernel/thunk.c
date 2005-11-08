@@ -996,6 +996,9 @@ DEFINE_REGS_ENTRYPOINT( QT_ThunkPrime, 0, 0 );
  * 	00: DWORD	length
  *	04: SEGPTR	address for thunkbuffer pointer
  * [ok probably]
+ *
+ * RETURNS
+ *  Nothing.
  */
 VOID WINAPI ThunkInitSL(
 	LPBYTE thunk,		/* [in] start of thunkbuffer */
@@ -1055,6 +1058,9 @@ void WINAPI SSConfirmSmallStack( CONTEXT86 *context )
  *
  * And YES, I've seen nr=48 (somewhere in the Win95 32<->16 OLE coupling)
  * [ok]
+ *
+ * RETURNS
+ *  Thunked function result.
  */
 DWORD WINAPIV SSCall(
 	DWORD nr,	/* [in] number of argument bytes */
@@ -1129,6 +1135,8 @@ DEFINE_REGS_ENTRYPOINT( W32S_BackTo32, 0, 0 );
 /**********************************************************************
  *			AllocSLCallback		(KERNEL32.@)
  *
+ * Allocate a 16->32 callback.
+ *
  * NOTES
  * Win95 uses some structchains for callbacks. It allocates them
  * in blocks of 100 entries, size 32 bytes each, layout:
@@ -1182,6 +1190,9 @@ AllocSLCallback(
 /**********************************************************************
  * 		FreeSLCallback		(KERNEL32.@)
  * Frees the specified 16->32 callback
+ *
+ * RETURNS
+ *  Nothing.
  */
 void WINAPI
 FreeSLCallback(

@@ -117,6 +117,9 @@ inline static HANDLE HEAP_CreateSystemHeap(void)
 
 /***********************************************************************
  *           HeapCreate   (KERNEL32.@)
+ *
+ * Create a heap object.
+ *
  * RETURNS
  *	Handle of heap: Success
  *	NULL: Failure
@@ -145,6 +148,9 @@ HANDLE WINAPI HeapCreate(
 
 /***********************************************************************
  *           HeapDestroy   (KERNEL32.@)
+ *
+ * Destroy a heap object.
+ *
  * RETURNS
  *	TRUE: Success
  *	FALSE: Failure
@@ -323,6 +329,9 @@ typedef struct __GLOBAL32_INTERN
 
 /***********************************************************************
  *           GlobalAlloc   (KERNEL32.@)
+ *
+ * Allocate a global memory object.
+ *
  * RETURNS
  *      Handle: Success
  *      NULL: Failure
@@ -384,6 +393,9 @@ HGLOBAL WINAPI GlobalAlloc(
 
 /***********************************************************************
  *           GlobalLock   (KERNEL32.@)
+ *
+ * Lock a global memory object.
+ *
  * RETURNS
  *      Pointer to first byte of block
  *      NULL: Failure
@@ -429,6 +441,9 @@ LPVOID WINAPI GlobalLock(
 
 /***********************************************************************
  *           GlobalUnlock   (KERNEL32.@)
+ *
+ * Unlock a global memory object.
+ *
  * RETURNS
  *      TRUE: Object is still locked
  *      FALSE: Object is unlocked
@@ -474,7 +489,8 @@ BOOL WINAPI GlobalUnlock(
 
 /***********************************************************************
  *           GlobalHandle   (KERNEL32.@)
- * Returns the handle associated with the specified pointer.
+ *
+ * Get the handle associated with the pointer to a global memory block.
  *
  * RETURNS
  *      Handle: Success
@@ -535,6 +551,9 @@ HGLOBAL WINAPI GlobalHandle(
 
 /***********************************************************************
  *           GlobalReAlloc   (KERNEL32.@)
+ *
+ * Change the size or attributes of a global memory object.
+ *
  * RETURNS
  *      Handle: Success
  *      NULL: Failure
@@ -648,6 +667,9 @@ HGLOBAL WINAPI GlobalReAlloc(
 
 /***********************************************************************
  *           GlobalFree   (KERNEL32.@)
+ *
+ * Free a global memory object.
+ *
  * RETURNS
  *      NULL: Success
  *      Handle: Failure
@@ -700,6 +722,9 @@ HGLOBAL WINAPI GlobalFree(
 
 /***********************************************************************
  *           GlobalSize   (KERNEL32.@)
+ *
+ * Get the size of a global memory object.
+ *
  * RETURNS
  *      Size in bytes of the global memory object
  *      0: Failure
@@ -783,7 +808,8 @@ VOID WINAPI GlobalUnfix(HGLOBAL hmem)
 
 /***********************************************************************
  *           GlobalFlags   (KERNEL32.@)
- * Returns information about the specified global memory object
+ *
+ * Get information about a global memory object.
  *
  * NOTES
  *      Should this return GMEM_INVALID_HANDLE on invalid handle?
@@ -834,9 +860,16 @@ SIZE_T WINAPI GlobalCompact( DWORD minfree )
 
 /***********************************************************************
  *           LocalAlloc   (KERNEL32.@)
+ *
+ * Allocate a local memory object.
+ *
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
+ *
+ * NOTES
+ *  Windows memory management does not provide a separate local heap
+ *  and global heap.
  */
 HLOCAL WINAPI LocalAlloc(
                 UINT flags, /* [in] Allocation attributes */
@@ -857,9 +890,16 @@ SIZE_T WINAPI LocalCompact( UINT minfree )
 
 /***********************************************************************
  *           LocalFlags   (KERNEL32.@)
+ *
+ * Get information about a local memory object.
+ *
  * RETURNS
  *	Value specifying allocation flags and lock count.
  *	LMEM_INVALID_HANDLE: Failure
+ *
+ * NOTES
+ *  Windows memory management does not provide a separate local heap
+ *  and global heap.
  */
 UINT WINAPI LocalFlags(
               HLOCAL handle /* [in] Handle of memory object */
@@ -870,9 +910,16 @@ UINT WINAPI LocalFlags(
 
 /***********************************************************************
  *           LocalFree   (KERNEL32.@)
+ *
+ * Free a local memory object.
+ *
  * RETURNS
  *	NULL: Success
  *	Handle: Failure
+ *
+ * NOTES
+ *  Windows memory management does not provide a separate local heap
+ *  and global heap.
  */
 HLOCAL WINAPI LocalFree(
                 HLOCAL handle /* [in] Handle of memory object */
@@ -883,12 +930,19 @@ HLOCAL WINAPI LocalFree(
 
 /***********************************************************************
  *           LocalHandle   (KERNEL32.@)
+ *
+ * Get the handle associated with the pointer to a local memory block.
+ *
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
+ *
+ * NOTES
+ *  Windows memory management does not provide a separate local heap
+ *  and global heap.
  */
 HLOCAL WINAPI LocalHandle(
-                LPCVOID ptr /* [in] Address of local memory object */
+                LPCVOID ptr /* [in] Address of local memory block */
 ) {
     return (HLOCAL)GlobalHandle( ptr );
 }
@@ -902,6 +956,10 @@ HLOCAL WINAPI LocalHandle(
  * RETURNS
  *	Pointer: Success
  *	NULL: Failure
+ *
+ * NOTES
+ *  Windows memory management does not provide a separate local heap
+ *  and global heap.
  */
 LPVOID WINAPI LocalLock(
               HLOCAL handle /* [in] Address of local memory object */
@@ -912,9 +970,16 @@ LPVOID WINAPI LocalLock(
 
 /***********************************************************************
  *           LocalReAlloc   (KERNEL32.@)
+ *
+ * Change the size or attributes of a local memory object.
+ *
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
+ *
+ * NOTES
+ *  Windows memory management does not provide a separate local heap
+ *  and global heap.
  */
 HLOCAL WINAPI LocalReAlloc(
                 HLOCAL handle, /* [in] Handle of memory object */
@@ -936,9 +1001,16 @@ SIZE_T WINAPI LocalShrink( HGLOBAL handle, UINT newsize )
 
 /***********************************************************************
  *           LocalSize   (KERNEL32.@)
+ *
+ * Get the size of a local memory object.
+ *
  * RETURNS
  *	Size: Success
  *	0: Failure
+ *
+ * NOTES
+ *  Windows memory management does not provide a separate local heap
+ *  and global heap.
  */
 SIZE_T WINAPI LocalSize(
               HLOCAL handle /* [in] Handle of memory object */
@@ -949,9 +1021,16 @@ SIZE_T WINAPI LocalSize(
 
 /***********************************************************************
  *           LocalUnlock   (KERNEL32.@)
+ *
+ * Unlock a local memory object.
+ *
  * RETURNS
  *	TRUE: Object is still locked
  *	FALSE: Object is unlocked
+ *
+ * NOTES
+ *  Windows memory management does not provide a separate local heap
+ *  and global heap.
  */
 BOOL WINAPI LocalUnlock(
               HLOCAL handle /* [in] Handle of memory object */
@@ -966,10 +1045,11 @@ BOOL WINAPI LocalUnlock(
  * This is an undocumented KERNEL32 function that
  * SMapLS's a GlobalAlloc'ed buffer.
  *
- * Input:   EDI register: size of buffer to allocate
- * Output:  EDI register: pointer to buffer
+ * RETURNS
+ *       EDI register: pointer to buffer
  *
- * Note: The buffer is preceded by 8 bytes:
+ * NOTES
+ *       The buffer is preceded by 8 bytes:
  *        ...
  *       edi+0   buffer
  *       edi-4   SEGPTR to buffer
@@ -978,8 +1058,9 @@ BOOL WINAPI LocalUnlock(
  *
  *       The SEGPTR is used by the caller!
  */
-void WINAPI __regs_AllocMappedBuffer( CONTEXT86 *context )
-{
+void WINAPI __regs_AllocMappedBuffer(
+              CONTEXT86 *context /* [in] EDI register: size of buffer to allocate */
+) {
     HGLOBAL handle = GlobalAlloc(0, context->Edi + 8);
     DWORD *buffer = (DWORD *)GlobalLock(handle);
     DWORD ptr = 0;
@@ -1011,10 +1092,12 @@ DEFINE_REGS_ENTRYPOINT( AllocMappedBuffer, 0, 0 );
  *
  * Free a buffer allocated by AllocMappedBuffer
  *
- * Input: EDI register: pointer to buffer
+ * RETURNS
+ *  Nothing.
  */
-void WINAPI __regs_FreeMappedBuffer( CONTEXT86 *context )
-{
+void WINAPI __regs_FreeMappedBuffer(
+              CONTEXT86 *context /* [in] EDI register: pointer to buffer */
+) {
     if (context->Edi)
     {
         DWORD *buffer = (DWORD *)context->Edi - 2;

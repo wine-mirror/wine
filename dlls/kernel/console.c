@@ -456,15 +456,9 @@ BOOL WINAPI WriteConsoleOutputW( HANDLE hConsoleOutput, const CHAR_INFO *lpBuffe
 
 
 /******************************************************************************
- * WriteConsoleOutputCharacterA [KERNEL32.@]  Copies character to consecutive
- * 					      cells in the console screen buffer
+ * WriteConsoleOutputCharacterA [KERNEL32.@]
  *
- * PARAMS
- *    hConsoleOutput    [I] Handle to screen buffer
- *    str               [I] Pointer to buffer with chars to write
- *    length            [I] Number of cells to write to
- *    coord             [I] Coords of first cell
- *    lpNumCharsWritten [O] Pointer to number of cells written
+ * See WriteConsoleOutputCharacterW.
  */
 BOOL WINAPI WriteConsoleOutputCharacterA( HANDLE hConsoleOutput, LPCSTR str, DWORD length,
                                           COORD coord, LPDWORD lpNumCharsWritten )
@@ -533,16 +527,7 @@ BOOL WINAPI WriteConsoleOutputAttribute( HANDLE hConsoleOutput, CONST WORD *attr
 /******************************************************************************
  * FillConsoleOutputCharacterA [KERNEL32.@]
  *
- * PARAMS
- *    hConsoleOutput    [I] Handle to screen buffer
- *    ch                [I] Character to write
- *    length            [I] Number of cells to write to
- *    coord             [I] Coords of first cell
- *    lpNumCharsWritten [O] Pointer to number of cells written
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
+ * See FillConsoleOutputCharacterW.
  */
 BOOL WINAPI FillConsoleOutputCharacterA( HANDLE hConsoleOutput, CHAR ch, DWORD length,
                                          COORD coord, LPDWORD lpNumCharsWritten )
@@ -928,6 +913,8 @@ BOOL WINAPI SetConsoleTitleA( LPCSTR title )
 
 /***********************************************************************
  *            GetConsoleTitleA   (KERNEL32.@)
+ *
+ * See GetConsoleTitleW.
  */
 DWORD WINAPI GetConsoleTitleA(LPSTR title, DWORD size)
 {
@@ -1308,8 +1295,9 @@ BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer,
 
 
 /******************************************************************************
- * WriteConsoleOutputCharacterW [KERNEL32.@]  Copies character to consecutive
- * 					      cells in the console screen buffer
+ * WriteConsoleOutputCharacterW [KERNEL32.@]
+ * 
+ * Copy character to consecutive cells in the console screen buffer.
  *
  * PARAMS
  *    hConsoleOutput    [I] Handle to screen buffer
@@ -2040,7 +2028,9 @@ BOOL WINAPI WriteConsoleA(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
  *    hConsoleOutput   [I] Handle of console screen buffer
  *    dwCursorPosition [I] New cursor position coordinates
  *
- * RETURNS STD
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI SetConsoleCursorPosition(HANDLE hcon, COORD pos)
 {

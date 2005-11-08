@@ -810,6 +810,8 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
 
 /***********************************************************************
  *           SearchPathA   (KERNEL32.@)
+ *
+ * See SearchPathW.
  */
 DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
                           DWORD buflen, LPSTR buffer, LPSTR *lastpart )

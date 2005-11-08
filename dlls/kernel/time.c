@@ -592,7 +592,6 @@ int WINAPI GetCalendarInfoA(LCID lcid, CALID Calendar, CALTYPE CalType,
 /*********************************************************************
  *	GetCalendarInfoW				(KERNEL32.@)
  *
- * See GetCalendarInfoA.
  */
 int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 			    LPWSTR lpCalData, int cchData, LPDWORD lpValue)
@@ -736,7 +735,7 @@ int WINAPI	SetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType, LPCSTR
 /*********************************************************************
  *	SetCalendarInfoW				(KERNEL32.@)
  *
- * See SetCalendarInfoA.
+ *
  */
 int WINAPI	SetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType, LPCWSTR lpCalData)
 {

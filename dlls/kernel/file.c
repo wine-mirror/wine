@@ -1397,6 +1397,8 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
 
 /*************************************************************************
  *              CreateFileA              (KERNEL32.@)
+ *
+ * See CreateFileW.
  */
 HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
                            LPSECURITY_ATTRIBUTES sa, DWORD creation,
@@ -1976,6 +1978,8 @@ BOOL WINAPI GetFileAttributesExA( LPCSTR name, GET_FILEEX_INFO_LEVELS level, LPV
 /******************************************************************************
  *           GetCompressedFileSizeW   (KERNEL32.@)
  *
+ * Get the actual number of bytes used on disk.
+ *
  * RETURNS
  *    Success: Low-order doubleword of number of bytes
  *    Failure: INVALID_FILE_SIZE
@@ -2023,6 +2027,8 @@ DWORD WINAPI GetCompressedFileSizeW(
 
 /******************************************************************************
  *           GetCompressedFileSizeA   (KERNEL32.@)
+ *
+ * See GetCompressedFileSizeW.
  */
 DWORD WINAPI GetCompressedFileSizeA( LPCSTR name, LPDWORD size_high )
 {
