@@ -28,10 +28,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "ole2.h"
-#include "ocidl.h"
-#include "msxml.h"
-#include "xmldom.h"
-#include "msxml.h"
+#include "msxml2.h"
 
 #include "msxml_private.h"
 

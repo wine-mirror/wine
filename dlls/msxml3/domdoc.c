@@ -28,9 +28,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "ole2.h"
-#include "ocidl.h"
-#include "msxml.h"
-#include "xmldom.h"
+#include "msxml2.h"
 
 #include "wine/debug.h"
 
@@ -487,7 +485,7 @@ static HRESULT WINAPI domdoc_transformNodeToObject(
 
 static HRESULT WINAPI domdoc_get_doctype(
     IXMLDOMDocument *iface,
-    IXMLDOMDocument** documentType )
+    IXMLDOMDocumentType** documentType )
 {
     FIXME("\n");
     return E_NOTIMPL;

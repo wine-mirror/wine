@@ -23,8 +23,7 @@
 
 #include "windows.h"
 #include "ole2.h"
-#include "msxml.h"
-#include "xmldom.h"
+#include "msxml2.h"
 #include <stdio.h>
 
 #include "wine/test.h"
@@ -235,7 +234,7 @@ void test_domdoc( void )
     ok( code == 0, "code %ld\n", code );
     IXMLDOMParseError_Release( error );
 
-    r = IXMLDocument_Release( doc );
+    r = IXMLDOMDocument_Release( doc );
     ok( r == 0, "document ref count incorrect\n");
 
 }
@@ -503,7 +502,7 @@ void test_domnode( void )
     if (element)
         IXMLDOMElement_Release( element );
     if (doc)
-        IXMLDocument_Release( doc );
+        IXMLDOMDocument_Release( doc );
 }
 
 START_TEST(domdoc)

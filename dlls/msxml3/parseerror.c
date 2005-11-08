@@ -28,8 +28,7 @@
 #include "winerror.h"
 #include "winuser.h"
 #include "ole2.h"
-#include "msxml.h"
-#include "xmldom.h"
+#include "msxml2.h"
 
 #include "msxml_private.h"
 

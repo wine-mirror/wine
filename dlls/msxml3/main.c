@@ -27,6 +27,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "ole2.h"
+#include "msxml2.h"
 
 #include "wine/debug.h"
 
