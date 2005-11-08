@@ -1751,6 +1751,9 @@ HRESULT WINAPI CoCreateInstance(
   HRESULT hres;
   LPCLASSFACTORY lpclf = 0;
 
+  TRACE("(rclsid=%s, pUnkOuter=%p, dwClsContext=%08lx, riid=%s, ppv=%p)\n", debugstr_guid(rclsid),
+        pUnkOuter, dwClsContext, debugstr_guid(iid), ppv);
+
   if (!COM_CurrentApt()) return CO_E_NOTINITIALIZED;
 
   /*
