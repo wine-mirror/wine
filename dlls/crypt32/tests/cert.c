@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <windef.h>
@@ -39,6 +40,26 @@ struct CertPropIDHeader
     DWORD unknown1;
     DWORD cb;
 };
+
+static BOOL (WINAPI * pCryptVerifyCertificateSignatureEx)
+                        (HCRYPTPROV, DWORD, DWORD, void *, DWORD, void *, DWORD, void *);
+
+#define CRYPT_GET_PROC(func)                                       \
+    p ## func = (void *)GetProcAddress(hCrypt32, #func);           \
+    if(!p ## func)                                                 \
+        trace("GetProcAddress(hCrypt32, \"%s\") failed\n", #func); \
+
+static void init_function_pointers(void)
+{
+    HMODULE hCrypt32;
+
+    pCryptVerifyCertificateSignatureEx = NULL;
+
+    hCrypt32 = GetModuleHandleA("crypt32.dll");
+    assert(hCrypt32);
+
+    CRYPT_GET_PROC(CryptVerifyCertificateSignatureEx);
+}
 
 static void testCryptHashCert(void)
 {
@@ -1448,21 +1469,21 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
     DWORD size = 0;
     BOOL ret;
 
-    ret = CryptVerifyCertificateSignatureEx(0, 0, 0, NULL, 0, NULL, 0, NULL);
+    ret = pCryptVerifyCertificateSignatureEx(0, 0, 0, NULL, 0, NULL, 0, NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
      GetLastError());
-    ret = CryptVerifyCertificateSignatureEx(csp, 0, 0, NULL, 0, NULL, 0, NULL);
+    ret = pCryptVerifyCertificateSignatureEx(csp, 0, 0, NULL, 0, NULL, 0, NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
      GetLastError());
-    ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING, 0, NULL, 0,
+    ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING, 0, NULL, 0,
      NULL, 0, NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
      GetLastError());
     /* This crashes
-    ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+    ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
      CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, NULL, 0, NULL, 0, NULL);
      */
     info.ToBeSigned.cbData = toBeSigned->cbData;
@@ -1480,25 +1501,25 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
         CRYPT_DATA_BLOB certBlob = { 0, NULL };
         PCERT_PUBLIC_KEY_INFO pubKeyInfo = NULL;
 
-        ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
          CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
         ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
          "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
         certBlob.cbData = 1;
         certBlob.pbData = (void *)0xdeadbeef;
-        ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
          CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
         ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
          "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
         certBlob.cbData = size;
         certBlob.pbData = cert;
-        ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
          CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
         ok(!ret && GetLastError() ==
          HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
          "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
          GetLastError());
-        ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
          CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
          CRYPT_VERIFY_CERT_SIGN_ISSUER_NULL, NULL, 0, NULL);
         ok(!ret && GetLastError() ==
@@ -1506,7 +1527,7 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
          "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
          GetLastError());
         /* This crashes
-        ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
          CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
          CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY, NULL, 0, NULL);
          */
@@ -1520,7 +1541,7 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
             ok(ret, "CryptExportKey failed: %08lx\n", GetLastError());
             if (ret)
             {
-                ret = CryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+                ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
                  CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
                  CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY, pubKeyInfo, 0, NULL);
                 ok(ret, "CryptVerifyCertificateSignatureEx failed: %08lx\n",
@@ -1559,6 +1580,8 @@ static void testCertSigs(void)
 
 START_TEST(cert)
 {
+    init_function_pointers();
+
     testCryptHashCert();
 
     /* various combinations of CertOpenStore */
