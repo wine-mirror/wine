@@ -52,6 +52,7 @@
 #include <shlobj.h>
 #include <objidl.h>
 #include <shlguid.h>
+#include <appmgmt.h>
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -726,6 +727,33 @@ static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc )
     return FALSE;
 }
 
+/* gets the target path directly or through MSI */
+static HRESULT get_path( IShellLinkW *sl, LPWSTR szPath, DWORD sz )
+{
+    IShellLinkDataList *dl = NULL;
+    EXP_DARWIN_LINK *dar = NULL;
+    HRESULT hr;
+
+    szPath[0] = 0;
+    hr = IShellLinkW_GetPath( sl, szPath, MAX_PATH, NULL, SLGP_RAWPATH );
+    if (hr == S_OK && szPath[0])
+        return hr;
+
+    hr = IShellLinkW_QueryInterface( sl, &IID_IShellLinkDataList, (LPVOID*) &dl );
+    if (FAILED(hr))
+        return hr;
+
+    hr = IShellLinkDataList_CopyDataBlock( dl, EXP_DARWIN_ID_SIG, (LPVOID*) &dar );
+    if (SUCCEEDED(hr))
+    {
+        CommandLineFromMsiDescriptor( dar->szwDarwinID, szPath, &sz );
+        LocalFree( dar );
+    }
+
+    IShellLinkDataList_Release( dl );
+    return hr;
+}
+
 static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
 {
     char *link_name = NULL, *icon_name = NULL, *work_dir = NULL;
@@ -760,8 +788,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
     IShellLinkW_GetDescription( sl, szDescription, INFOTIPSIZE );
     WINE_TRACE("description: %s\n", wine_dbgstr_w(szDescription));
 
-    szPath[0] = 0;
-    IShellLinkW_GetPath( sl, szPath, MAX_PATH, NULL, SLGP_RAWPATH );
+    get_path( sl, szPath, MAX_PATH );
     WINE_TRACE("path       : %s\n", wine_dbgstr_w(szPath));
 
     szArgs[0] = 0;
