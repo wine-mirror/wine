@@ -154,6 +154,7 @@ static void test_acquire_context(void)
 {
 	BOOL result;
 	HCRYPTPROV hProv;
+	DWORD GLE;
 
 	/* Provoke all kinds of error conditions (which are easy to provoke). 
 	 * The order of the error tests seems to match Windows XP's rsaenh.dll CSP,
@@ -185,7 +186,12 @@ static void test_acquire_context(void)
 	hProv = 0;
 	SetLastError(0xdeadbeef);
 	result = pCryptAcquireContextA(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
-	ok(result && (GetLastError() == ERROR_ENVVAR_NOT_FOUND || GetLastError() == ERROR_SUCCESS || GetLastError() == ERROR_RING2_STACK_IN_USE || GetLastError() == NTE_FAIL), "%d/%ld\n", result, GetLastError());
+	GLE = GetLastError();
+	ok(result && (GLE == ERROR_ENVVAR_NOT_FOUND   || 
+		      GLE == ERROR_SUCCESS            || 
+		      GLE == ERROR_RING2_STACK_IN_USE || 
+		      GLE == NTE_FAIL                 ||
+		      GLE == ERROR_NOT_LOGGED_ON), "%d/%ld\n", result, GLE);
 
 	if (hProv) 
 		pCryptReleaseContext(hProv, 0);
@@ -194,7 +200,12 @@ static void test_acquire_context(void)
 	hProv = 0;
 	SetLastError(0xdeadbeef);
 	result = pCryptAcquireContextA(&hProv, szKeySet, "", PROV_RSA_FULL, 0);
-	ok(result && (GetLastError() == ERROR_ENVVAR_NOT_FOUND || GetLastError() == ERROR_SUCCESS  || GetLastError() == ERROR_RING2_STACK_IN_USE || GetLastError() == NTE_FAIL), "%d/%ld\n", result, GetLastError());
+	GLE = GetLastError();
+	ok(result && (GLE == ERROR_ENVVAR_NOT_FOUND   || 
+		      GLE == ERROR_SUCCESS            || 
+		      GLE == ERROR_RING2_STACK_IN_USE || 
+		      GLE == NTE_FAIL                 ||
+		      GLE == ERROR_NOT_LOGGED_ON), "%d/%ld\n", result, GetLastError());
 
 	if (hProv) 
 		pCryptReleaseContext(hProv, 0);
