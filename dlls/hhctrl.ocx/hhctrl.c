@@ -111,7 +111,7 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
     {
         DWORD len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
 
-        wfile = HeapAlloc( GetProcessHeap(), 0, (len+1) * sizeof(WCHAR));
+        wfile = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR));
         MultiByteToWideChar( CP_ACP, 0, filename, -1, wfile, len );
     }
 

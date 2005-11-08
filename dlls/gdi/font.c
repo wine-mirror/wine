@@ -344,15 +344,14 @@ static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRIC
 /***********************************************************************
  *           FONT_mbtowc
  *
- * Returns a '\0' terminated Unicode translation of str using the
- * charset of the currently selected font in hdc.  If count is -1 then
- * str is assumed to be '\0' terminated, otherwise it contains the
- * number of bytes to convert.  If plenW is non-NULL, on return it
- * will point to the number of WCHARs (excluding the '\0') that have
- * been written.  If pCP is non-NULL, on return it will point to the
- * codepage used in the conversion.
- * The caller should free the returned LPWSTR from the process
- * heap itself.
+ * Returns a Unicode translation of str using the charset of the
+ * currently selected font in hdc.  If count is -1 then str is assumed
+ * to be '\0' terminated, otherwise it contains the number of bytes to
+ * convert.  If plenW is non-NULL, on return it will point to the
+ * number of WCHARs that have been written.  If pCP is non-NULL, on
+ * return it will point to the codepage used in the conversion.  The
+ * caller should free the returned LPWSTR from the process heap
+ * itself.
  */
 static LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
 {
@@ -401,9 +400,8 @@ static LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
 
     if(count == -1) count = strlen(str);
     lenW = MultiByteToWideChar(cp, 0, str, count, NULL, 0);
-    strW = HeapAlloc(GetProcessHeap(), 0, (lenW + 1) * sizeof(WCHAR));
+    strW = HeapAlloc(GetProcessHeap(), 0, lenW*sizeof(WCHAR));
     MultiByteToWideChar(cp, 0, str, count, strW, lenW);
-    strW[lenW] = '\0';
     TRACE("mapped %s -> %s\n", debugstr_an(str, count), debugstr_wn(strW, lenW));
     if(plenW) *plenW = lenW;
     if(pCP) *pCP = cp;
