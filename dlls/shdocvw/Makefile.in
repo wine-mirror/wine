@@ -5,7 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shdocvw.dll
 IMPORTLIB = libshdocvw.$(IMPLIBEXT)
-IMPORTS   = urlmon ole32 user32 advapi32 kernel32
+IMPORTS   = user32 advapi32 kernel32
+DELAYIMPORTS = urlmon ole32 oleaut32
 EXTRALIBS = -luuid
 
 C_SRCS = \
@@ -17,6 +18,7 @@ C_SRCS = \
 	persist.c \
 	regsvr.c \
 	shdocvw_main.c \
+	shlinstobj.c \
 	webbrowser.c
 
 RC_SRCS = shdocvw.rc
