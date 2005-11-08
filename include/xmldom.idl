@@ -202,7 +202,7 @@ pointer_default(unique)
 interface IXMLDOMDocument : IXMLDOMNode
 {
     [propget, id(DISPID_DOM_DOCUMENT_DOCTYPE)]
-    HRESULT doctype( [out,retval] IXMLDOMDocument **documentType );
+    HRESULT doctype( [out,retval] IXMLDOMDocumentType **documentType );
 
     [propget, id(DISPID_DOM_DOCUMENT_IMPLEMENTATION)]
     HRESULT implementation( [out,retval] IXMLDOMImplementation **impl );
