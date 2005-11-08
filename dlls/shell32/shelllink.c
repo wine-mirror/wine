@@ -1019,7 +1019,7 @@ static EXP_DARWIN_LINK* shelllink_build_darwinid( LPCWSTR string, DWORD magic )
     EXP_DARWIN_LINK *buffer;
     
     buffer = LocalAlloc( LMEM_ZEROINIT, sizeof *buffer );
-    buffer->dbh.cbSize = sizeof buffer;
+    buffer->dbh.cbSize = sizeof *buffer;
     buffer->dbh.dwSignature = magic;
     lstrcpynW( buffer->szwDarwinID, string, MAX_PATH );
     WideCharToMultiByte(CP_ACP, 0, string, -1, buffer->szDarwinID, MAX_PATH, NULL, NULL );
@@ -1036,7 +1036,7 @@ static HRESULT Stream_WriteAdvertiseInfo( IStream* stm, LPCWSTR string, DWORD ma
 
     buffer = shelllink_build_darwinid( string, magic );
 
-    return IStream_Write( stm, &buffer, buffer->dbh.cbSize, &count );
+    return IStream_Write( stm, buffer, buffer->dbh.cbSize, &count );
 }
 
 /************************************************************************
