@@ -6140,7 +6140,16 @@ HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid)
 /***********************************************************************
  *    ReadClassStg (OLE32.@)
  *
- * This method reads the CLSID previously written to a storage object with the WriteClassStg.
+ * This method reads the CLSID previously written to a storage object with
+ * the WriteClassStg.
+ *
+ * PARAMS
+ *  pstg    [I] IStorage pointer
+ *  pclsid  [O] Pointer to where the CLSID is written
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
  */
 HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid){
 

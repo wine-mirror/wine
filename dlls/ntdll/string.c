@@ -382,6 +382,9 @@ LONGLONG __cdecl _atoi64( char *str )
  *  dir    [O] Destination for directory component. Should be at least MAX_PATH characters.
  *  fname  [O] Destination for File name component. Should be at least MAX_PATH characters.
  *  ext    [O] Destination for file extension component. Should be at least MAX_PATH characters.
+ *
+ * RETURNS
+ *  Nothing.
  */
 void __cdecl _splitpath(const char* inpath, char * drv, char * dir,
                         char* fname, char * ext )

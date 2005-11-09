@@ -837,9 +837,9 @@ NTSTATUS WINAPI RtlFormatCurrentUserKeyPath( IN OUT PUNICODE_STRING KeyPath)
 /******************************************************************************
  *  RtlOpenCurrentUser		[NTDLL.@]
  *
- * if we return just HKEY_CURRENT_USER the advapi tries to find a remote
- * registry (odd handle) and fails
- *
+ * NOTES
+ *  If we return just HKEY_CURRENT_USER the advapi tries to find a remote
+ *  registry (odd handle) and fails.
  */
 DWORD WINAPI RtlOpenCurrentUser(
 	IN ACCESS_MASK DesiredAccess, /* [in] */

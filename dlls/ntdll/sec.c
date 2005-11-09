@@ -414,7 +414,7 @@ BOOLEAN WINAPI RtlValidSid( PSID pSid )
  *  lpsd [O] Descriptor to initialise.
  *  rev  [I] Revision, must be set to SECURITY_DESCRIPTOR_REVISION.
  *
- * RETURNS:
+ * RETURNS
  *  Success: STATUS_SUCCESS.
  *  Failure: STATUS_UNKNOWN_REVISION if rev is incorrect.
  */
@@ -438,7 +438,7 @@ NTSTATUS WINAPI RtlCreateSecurityDescriptor(
  *  pSourceSD      [O] SD to copy from.
  *  pDestinationSD [I] Destination SD.
  *
- * RETURNS:
+ * RETURNS
  *  Success: STATUS_SUCCESS.
  *  Failure: STATUS_UNKNOWN_REVISION if rev is incorrect.
  */

@@ -132,6 +132,9 @@ DWORD WINAPI RtlGetLastWin32Error(void)
  *
  * PARAMS
  *  err [I] The new error value to set
+ *
+ * RETURNS
+ *  Nothing.
  */
 void WINAPI RtlSetLastWin32Error( DWORD err )
 {
@@ -145,6 +148,9 @@ void WINAPI RtlSetLastWin32Error( DWORD err )
  *
  * PARAMS
  *  err [I] The new status value to set
+ *
+ * RETURNS
+ *  Nothing.
  */
 void WINAPI RtlSetLastWin32ErrorAndNtStatusFromNtStatus( NTSTATUS status )
 {

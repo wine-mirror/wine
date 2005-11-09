@@ -204,6 +204,9 @@ IMalloc16_Constructor()
 
 /***********************************************************************
  *           CoGetMalloc    [COMPOBJ.4]
+ *
+ * Retrieve the current win16 IMalloc interface.
+ *
  * RETURNS
  *	The current win16 IMalloc
  */
@@ -344,9 +347,12 @@ HRESULT WINAPI StringFromCLSID16(
 
 /******************************************************************************
  * ProgIDFromCLSID [COMPOBJ.62]
+ *
  * Converts a class id into the respective Program ID. (By using a registry lookup)
- * RETURNS S_OK on success
- * riid associated with the progid
+ *
+ * RETURNS
+ *  S_OK on success
+ *  riid associated with the progid
  */
 HRESULT WINAPI ProgIDFromCLSID16(
   REFCLSID clsid, /* [in] class id as found in registry */

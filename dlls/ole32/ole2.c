@@ -1553,21 +1553,23 @@ HRESULT WINAPI OleDestroyMenuDescriptor(
 
 /***********************************************************************
  * OleSetMenuDescriptor [OLE32.@]
- * Installs or removes OLE dispatching code for the containers frame window
- * FIXME: The lpFrame and lpActiveObject parameters are currently ignored
- * OLE should install context sensitive help F1 filtering for the app when
- * these are non null.
+ * Installs or removes OLE dispatching code for the containers frame window.
  *
- * PARAMS:
+ * PARAMS
  *     hOleMenu         Handle to composite menu descriptor
  *     hwndFrame        Handle to containers frame window
  *     hwndActiveObject Handle to objects in-place activation window
  *     lpFrame          Pointer to IOleInPlaceFrame on containers window
  *     lpActiveObject   Pointer to IOleInPlaceActiveObject on active in-place object
  *
- * RETURNS:
+ * RETURNS
  *      S_OK                               - menu installed correctly
  *      E_FAIL, E_INVALIDARG, E_UNEXPECTED - failure
+ *
+ * FIXME
+ *      The lpFrame and lpActiveObject parameters are currently ignored
+ *      OLE should install context sensitive help F1 filtering for the app when
+ *      these are non null.
  */
 HRESULT WINAPI OleSetMenuDescriptor(
   HOLEMENU               hOleMenu,
