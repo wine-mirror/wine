@@ -1818,14 +1818,12 @@ UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
     IShellLinkDataList *dl = NULL;
     IPersistFile *pf = NULL;
     LPEXP_DARWIN_LINK darwin = NULL;
-    HRESULT r;
+    HRESULT r, init;
 
     TRACE("%s %p %p %p\n", debugstr_w(szShortcutTarget),
           szProductCode, szFeatureId, szComponentCode );
 
-    r = CoInitialize(NULL);
-    if( FAILED( r ) )
-        return ERROR_FUNCTION_FAILED;
+    init = CoInitialize(NULL);
 
     r = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IPersistFile, (LPVOID*) &pf );
@@ -1836,7 +1834,7 @@ UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
         if( SUCCEEDED( r ) )
         {
             r = IPersistFile_QueryInterface( pf, &IID_IShellLinkDataList,
-                                             (LPVOID*) dl );
+                                             (LPVOID*) &dl );
             if( SUCCEEDED( r ) )
             {
                 IShellLinkDataList_CopyDataBlock( dl, EXP_DARWIN_ID_SIG,
@@ -1847,7 +1845,8 @@ UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
         IPersistFile_Release( pf );
     }
 
-    CoUninitialize();
+    if (SUCCEEDED(init))
+        CoUninitialize();
 
     TRACE("darwin = %p\n", darwin);
 
