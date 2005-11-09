@@ -1003,12 +1003,22 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
         if (!IsWindow( hwnd )) return wasVisible;
     }
 
-    /* ShowWindow won't activate a not being maximized child window */
-    if ((style & WS_CHILD) && cmd != SW_MAXIMIZE)
-        swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+    if (!IsWindowVisible( GetAncestor( hwnd, GA_PARENT )))
+    {
+        /* if parent is not visible simply toggle WS_VISIBLE and return */
+        if (showFlag) WIN_SetStyle( hwnd, WS_VISIBLE, 0 );
+        else WIN_SetStyle( hwnd, 0, WS_VISIBLE );
+    }
+    else
+    {
+        /* ShowWindow won't activate a not being maximized child window */
+        if ((style & WS_CHILD) && cmd != SW_MAXIMIZE)
+            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 
-    SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
-                  newPos.right, newPos.bottom, LOWORD(swp) );
+        SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
+                      newPos.right, newPos.bottom, LOWORD(swp) );
+    }
+
     if (cmd == SW_HIDE)
     {
         HWND hFocus;
