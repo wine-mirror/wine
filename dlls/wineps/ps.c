@@ -250,11 +250,65 @@ INT PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
     return 1;
 }
 
+/********************************************************
+ *         escape_title
+ *
+ * Helper for PSDRV_WriteHeader.  Escape any non-printable characters
+ * as octal.  If we've had to use an escape then surround the entire string
+ * in brackets.  Truncate string to represent at most 0x80 characters.
+ *
+ */
+static char *escape_title(LPCSTR str)
+{
+    char *ret, *cp;
+    int i, extra = 0;
 
+    if(!str)
+    {
+        ret = HeapAlloc(GetProcessHeap(), 0, 1);
+        *ret = '\0';
+        return ret;
+    }
+
+    for(i = 0; i < 0x80 && str[i]; i++)
+    {
+        if(!isprint(str[i]))
+           extra += 3;
+    }
+
+    if(!extra)
+    {
+        ret = HeapAlloc(GetProcessHeap(), 0, i + 1);
+        memcpy(ret, str, i);
+        ret[i] = '\0';
+        return ret;
+    }
+
+    extra += 2; /* two for the brackets */
+    cp = ret = HeapAlloc(GetProcessHeap(), 0, i + extra + 1);
+    *cp++ = '(';
+    for(i = 0; i < 0x80 && str[i]; i++)
+    {
+        if(!isprint(str[i]))
+        {
+            BYTE b = (BYTE)str[i];
+            *cp++ = '\\';
+            *cp++ = ((b >> 6) & 0x7) + '0';
+            *cp++ = ((b >> 3) & 0x7) + '0';
+            *cp++ = ((b)      & 0x7) + '0';
+        }
+        else
+            *cp++ = str[i];
+    }
+    *cp++ = ')';
+    *cp = '\0';
+    return ret;
+}
+       
 
 INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
 {
-    char *buf;
+    char *buf, *escaped_title;
     INPUTSLOT *slot;
     PAGESIZE *page;
     DUPLEX *duplex;
@@ -263,8 +317,9 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
 
     TRACE("'%s'\n", debugstr_a(title));
 
+    escaped_title = escape_title(title);
     buf = HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) +
-                     (title ? strlen(title) : 0) + 30 );
+                     strlen(escaped_title) + 30 );
     if(!buf) {
         WARN("HeapAlloc failed\n");
         return 0;
@@ -278,8 +333,9 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
     ury = physDev->ImageableArea.top * 72.0 / physDev->logPixelsY;
     /* FIXME should do something better with BBox */
 
-    sprintf(buf, psheader, title ? title : "", llx, lly, urx, ury);
+    sprintf(buf, psheader, escaped_title, llx, lly, urx, ury);
 
+    HeapFree(GetProcessHeap(), 0, escaped_title);
     if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) !=
 	                                             strlen(buf) ) {
         WARN("WriteSpool error\n");
