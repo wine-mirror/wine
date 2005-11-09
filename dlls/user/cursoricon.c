@@ -1831,20 +1831,31 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         /* If we are creating an icon, the hotspot is unused */
         if (iconinfo->fIcon)
         {
-          info->ptHotSpot.x   = ICON_HOTSPOT;
-          info->ptHotSpot.y   = ICON_HOTSPOT;
+            info->ptHotSpot.x   = ICON_HOTSPOT;
+            info->ptHotSpot.y   = ICON_HOTSPOT;
         }
         else
         {
-          info->ptHotSpot.x   = iconinfo->xHotspot;
-          info->ptHotSpot.y   = iconinfo->yHotspot;
+            info->ptHotSpot.x   = iconinfo->xHotspot;
+            info->ptHotSpot.y   = iconinfo->yHotspot;
         }
 
-        info->nWidth        = bmpAnd.bmWidth;
-        info->nHeight       = iconinfo->hbmColor ? bmpAnd.bmHeight : (bmpAnd.bmHeight / 2);
-        info->nWidthBytes   = bmpAnd.bmWidthBytes;
-        info->bPlanes       = bmpAnd.bmPlanes;
-        info->bBitsPerPixel = bmpAnd.bmBitsPixel;
+        if (iconinfo->hbmColor)
+        {
+            info->nWidth        = bmpXor.bmWidth;
+            info->nHeight       = bmpXor.bmHeight;
+            info->nWidthBytes   = bmpXor.bmWidthBytes;
+            info->bPlanes       = bmpXor.bmPlanes;
+            info->bBitsPerPixel = bmpXor.bmBitsPixel;
+        }
+        else
+        {
+            info->nWidth        = bmpAnd.bmWidth;
+            info->nHeight       = bmpAnd.bmHeight / 2;
+            info->nWidthBytes   = bmpAnd.bmWidthBytes;
+            info->bPlanes       = bmpAnd.bmPlanes;
+            info->bBitsPerPixel = bmpAnd.bmBitsPixel;
+        }
 
         /* Transfer the bitmap bits to the CURSORICONINFO structure */
 
