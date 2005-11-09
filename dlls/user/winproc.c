@@ -3293,6 +3293,8 @@ LRESULT WINAPI CallWindowProcA(
 
 /**********************************************************************
  *		CallWindowProcW (USER32.@)
+ *
+ * See CallWindowProcA.
  */
 LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
                                   WPARAM wParam, LPARAM lParam )

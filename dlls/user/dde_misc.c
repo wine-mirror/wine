@@ -582,6 +582,8 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
 /******************************************************************************
  *            DdeInitializeA   (USER32.@)
+ *
+ * See DdeInitializeW.
  */
 UINT WINAPI DdeInitializeA(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 			   DWORD afCmd, DWORD ulRes)
@@ -1089,9 +1091,7 @@ static	HSZ	WDML_CreateString(WDML_INSTANCE* pInstance, LPCVOID ptr, int codepage
 /*****************************************************************
  * DdeCreateStringHandleA [USER32.@]
  *
- * RETURNS
- *    Success: String handle
- *    Failure: 0
+ * See DdeCreateStringHandleW.
  */
 HSZ WINAPI DdeCreateStringHandleA(DWORD idInst, LPCSTR psz, INT codepage)
 {
@@ -1147,8 +1147,9 @@ HSZ WINAPI DdeCreateStringHandleW(DWORD idInst, LPCWSTR psz, INT codepage)
 
 /*****************************************************************
  *            DdeFreeStringHandle   (USER32.@)
- * RETURNS: success: nonzero
- *          fail:    zero
+ * RETURNS
+ *  success: nonzero
+ *  fail:    zero
  */
 BOOL WINAPI DdeFreeStringHandle(DWORD idInst, HSZ hsz)
 {
@@ -1173,8 +1174,9 @@ BOOL WINAPI DdeFreeStringHandle(DWORD idInst, HSZ hsz)
 /*****************************************************************
  *            DdeKeepStringHandle  (USER32.@)
  *
- * RETURNS: success: nonzero
- *          fail:    zero
+ * RETURNS
+ *  success: nonzero
+ *  fail:    zero
  */
 BOOL WINAPI DdeKeepStringHandle(DWORD idInst, HSZ hsz)
 {
@@ -1201,10 +1203,14 @@ BOOL WINAPI DdeKeepStringHandle(DWORD idInst, HSZ hsz)
  * Compares the value of two string handles.  This comparison is
  * not case sensitive.
  *
- * Returns:
- * -1 The value of hsz1 is zero or less than hsz2
- * 0  The values of hsz 1 and 2 are the same or both zero.
- * 1  The value of hsz2 is zero of less than hsz1
+ * PARAMS
+ *  hsz1    [I] Handle to the first string
+ *  hsz2    [I] Handle to the second string
+ *
+ * RETURNS
+ *  -1 The value of hsz1 is zero or less than hsz2
+ *  0  The values of hsz 1 and 2 are the same or both zero.
+ *  1  The value of hsz2 is zero of less than hsz1
  */
 INT WINAPI DdeCmpStringHandles(HSZ hsz1, HSZ hsz2)
 {

@@ -2127,6 +2127,8 @@ LONG WINAPI SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
 
 /**********************************************************************
  *		SetWindowLongA (USER32.@)
+ *
+ * See SetWindowLongW.
  */
 LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
 {
@@ -2274,8 +2276,8 @@ INT WINAPI GetWindowTextW( HWND hwnd, LPWSTR lpString, INT nMaxCount )
 
 
 /*******************************************************************
- *		SetWindowText  (USER32.@)
  *		SetWindowTextA (USER32.@)
+ *		SetWindowText  (USER32.@)
  */
 BOOL WINAPI SetWindowTextA( HWND hwnd, LPCSTR lpString )
 {

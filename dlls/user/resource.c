@@ -296,7 +296,9 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
  * PARAMS
  *    handle [I] Handle to accelerator table
  *
- * RETURNS STD
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
 {

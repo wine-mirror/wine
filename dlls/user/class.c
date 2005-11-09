@@ -510,6 +510,9 @@ void CLASS_AddWindow( CLASS *class, WND *win, WINDOWPROCTYPE type )
 
 /***********************************************************************
  *		RegisterClassA (USER32.@)
+ *
+ * Register a window class.
+ *
  * RETURNS
  *	>0: Unique identifier
  *	0: Failure
@@ -536,6 +539,8 @@ ATOM WINAPI RegisterClassA( const WNDCLASSA* wc ) /* [in] Address of structure w
 
 /***********************************************************************
  *		RegisterClassW (USER32.@)
+ *
+ * See RegisterClassA.
  */
 ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
 {

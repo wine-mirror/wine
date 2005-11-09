@@ -1233,6 +1233,10 @@ HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
  *  (*) Windows does not support 15bpp but it supports the 555 RGB 16bpp
  *      format!
  *
+ * RETURNS
+ *  Success: handle to an icon
+ *  Failure: NULL
+ *
  * BUGS
  *
  *  - The provided bitmaps are not resized!
@@ -1492,7 +1496,10 @@ DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,
 
 /***********************************************************************
  *		SetCursor (USER32.@)
- * RETURNS:
+ *
+ * Set the cursor shape.
+ *
+ * RETURNS
  *	A handle to the previous cursor shape.
  */
 HCURSOR WINAPI SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
@@ -2183,7 +2190,7 @@ end:
 /**********************************************************************
  *		LoadImageA (USER32.@)
  *
- * FIXME: implementation lacks some features, see LR_ defines in winuser.h
+ * See LoadImageW.
  */
 
 /* filter for page-fault exceptions */
@@ -2290,8 +2297,8 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
  *    Success: Handle to newly created image
  *    Failure: NULL
  *
- * FIXME: implementation still lacks nearly all features, see LR_*
- * defines in winuser.h
+ * FIXME
+ *    implementation still lacks nearly all features, see LR_* defines in winuser.h.
  */
 HICON WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                              INT desiredy, UINT flags )
@@ -2342,6 +2349,8 @@ HBITMAP WINAPI LoadBitmapW(
 
 /**********************************************************************
  *		LoadBitmapA (USER32.@)
+ *
+ * See LoadBitmapW.
  */
 HBITMAP WINAPI LoadBitmapA( HINSTANCE instance, LPCSTR name )
 {

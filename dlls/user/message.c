@@ -2810,8 +2810,8 @@ BOOL WINAPI GetMessageA( MSG *msg, HWND hwnd, UINT first, UINT last )
 
 
 /***********************************************************************
- *		IsDialogMessage  (USER32.@)
  *		IsDialogMessageA (USER32.@)
+ *		IsDialogMessage  (USER32.@)
  */
 BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG pmsg )
 {
@@ -2873,6 +2873,8 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
 
 /***********************************************************************
  *		DispatchMessageA (USER32.@)
+ *
+ * See DispatchMessageW.
  */
 LONG WINAPI DispatchMessageA( const MSG* msg )
 {
@@ -3203,8 +3205,8 @@ void WINAPI UserYield16(void)
 
 
 /***********************************************************************
- *		RegisterWindowMessage (USER.118)
  *		RegisterWindowMessageA (USER32.@)
+ *		RegisterWindowMessage (USER.118)
  */
 UINT WINAPI RegisterWindowMessageA( LPCSTR str )
 {
@@ -3226,8 +3228,8 @@ UINT WINAPI RegisterWindowMessageW( LPCWSTR str )
 
 
 /***********************************************************************
- *		BroadcastSystemMessage  (USER32.@)
  *		BroadcastSystemMessageA (USER32.@)
+ *		BroadcastSystemMessage  (USER32.@)
  */
 LONG WINAPI BroadcastSystemMessageA( DWORD flags, LPDWORD recipients, UINT msg, WPARAM wp, LPARAM lp )
 {

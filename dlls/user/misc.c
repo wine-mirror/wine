@@ -190,6 +190,9 @@ BOOL WINAPI GetAltTabInfoW(HWND hwnd, int iItem, PALTTABINFO pati, LPWSTR pszIte
  *
  * PARAMS
  *    dwLevel [I] Debugging error level
+ *
+ * RETURNS
+ *    Nothing.
  */
 VOID WINAPI SetDebugErrorLevel( DWORD dwLevel )
 {

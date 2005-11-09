@@ -716,6 +716,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 /***********************************************************************
  *              DefWindowProcA (USER32.@)
  *
+ * See DefWindowProcW.
  */
 LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {

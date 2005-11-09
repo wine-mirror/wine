@@ -1324,7 +1324,9 @@ static INT SCROLL_GetScrollPos(HWND hwnd, INT nBar)
  *    lpMin [O]  Where to store minimum value
  *    lpMax [O]  Where to store maximum value
  *
- * RETURNS STD
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 static BOOL SCROLL_GetScrollRange(HWND hwnd, INT nBar, LPINT lpMin, LPINT lpMax)
 {
@@ -1859,7 +1861,9 @@ INT WINAPI GetScrollPos(HWND hwnd, INT nBar)
  *    maxVal  [I]  New Maximum value
  *    bRedraw [I]  Should scrollbar be redrawn afterwards?
  *
- * RETURNS STD
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI SetScrollRange(HWND hwnd, INT nBar, INT minVal, INT maxVal, BOOL bRedraw)
 {
@@ -1984,7 +1988,9 @@ static BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar, BOOL fShowH, BOOL fShowV 
  *    nBar    [I]  One of SB_HORZ, SB_VERT, or SB_CTL
  *    fShow   [I]  TRUE = show, FALSE = hide
  *
- * RETURNS STD
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI ShowScrollBar(HWND hwnd, INT nBar, BOOL fShow)
 {
