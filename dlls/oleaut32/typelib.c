@@ -4862,46 +4862,47 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, TYPEDESC *tdesc, VARTYP
 HRESULT WINAPI
 DispCallFunc(
     void* pvInstance, ULONG oVft, CALLCONV cc, VARTYPE vtReturn, UINT cActuals,
-    VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult
-) {
+    VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult)
+{
     int i, argsize, argspos;
     DWORD *args;
     HRESULT hres;
 
     TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
-	pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult, V_VT(pvargResult)
-    );
-    /* DispCallFunc is only used to invoke methods belonging to an IDispatch-derived COM interface.
-    So we need to add a first parameter to the list of arguments, to supply the interface pointer */
+        pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg,
+        pvargResult, V_VT(pvargResult));
+
+    /* DispCallFunc is only used to invoke methods belonging to an
+     * IDispatch-derived COM interface. So we need to add a first parameter
+     * to the list of arguments, to supply the interface pointer */
     argsize = 1;
-    for (i=0;i<cActuals;i++) {
-	TRACE("arg %d: type %d, size %d\n",i,prgvt[i],_argsize(prgvt[i]));
-	dump_Variant(prgpvarg[i]);
-	argsize += _argsize(prgvt[i]);
+    for (i=0;i<cActuals;i++)
+    {
+        TRACE("arg %d: type %d, size %d\n",i,prgvt[i],_argsize(prgvt[i]));
+        dump_Variant(prgpvarg[i]);
+        argsize += _argsize(prgvt[i]);
     }
     args = HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*argsize);
     args[0] = (DWORD)pvInstance;      /* this is the fake IDispatch interface pointer */
     argspos = 1;
-    for (i=0;i<cActuals;i++) {
-	VARIANT *arg = prgpvarg[i];
-	TRACE("Storing arg %d (%d as %d)\n",i,V_VT(arg),prgvt[i]);
-	_copy_arg(NULL, NULL, &args[argspos], arg, prgvt[i]);
-	argspos += _argsize(prgvt[i]);
+    for (i=0;i<cActuals;i++)
+    {
+        VARIANT *arg = prgpvarg[i];
+        TRACE("Storing arg %d (%d as %d)\n",i,V_VT(arg),prgvt[i]);
+        memcpy(&args[argspos], &V_NONE(arg), _argsize(prgvt[i]) * sizeof(DWORD));
+        argspos += _argsize(prgvt[i]);
     }
 
-    if(pvargResult!=NULL && V_VT(pvargResult)==VT_EMPTY)
+    hres = _invoke((*(FARPROC**)pvInstance)[oVft/sizeof(void *)],cc,argsize,args);
+    if (pvargResult && (vtReturn != VT_EMPTY))
     {
-        _invoke((*(FARPROC**)pvInstance)[oVft/4],cc,argsize,args);
-        hres=S_OK;
+        TRACE("Method returned 0x%08lx\n",hres);
+        V_VT(pvargResult) = vtReturn;
+        V_UI4(pvargResult) = hres;
     }
-    else
-    {
-        FIXME("Do not know how to handle pvargResult %p. Expect crash ...\n",pvargResult);
-        hres = _invoke((*(FARPROC**)pvInstance)[oVft/4],cc,argsize,args);
-        FIXME("Method returned %lx\n",hres);
-    }
+
     HeapFree(GetProcessHeap(),0,args);
-    return hres;
+    return S_OK;
 }
 
 static HRESULT WINAPI ITypeInfo_fnInvoke(
