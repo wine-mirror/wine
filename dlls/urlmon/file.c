@@ -33,15 +33,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 typedef struct {
     const IInternetProtocolVtbl  *lpInternetProtocolVtbl;
+    const IInternetPriorityVtbl  *lpInternetPriorityVtbl;
 
     HANDLE file;
+    LONG priority;
 
     LONG ref;
 } FileProtocol;
 
-#define PROTOCOL_THIS(iface) DEFINE_THIS(FileProtocol, InternetProtocol, iface)
-
 #define PROTOCOL(x)  ((IInternetProtocol*)  &(x)->lpInternetProtocolVtbl)
+#define PRIORITY(x)  ((IInternetPriority*)  &(x)->lpInternetPriorityVtbl)
+
+#define PROTOCOL_THIS(iface) DEFINE_THIS(FileProtocol, InternetProtocol, iface)
 
 static HRESULT WINAPI FileProtocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
@@ -57,6 +60,9 @@ static HRESULT WINAPI FileProtocol_QueryInterface(IInternetProtocol *iface, REFI
     }else if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
         TRACE("(%p)->(IID_IInternetProtocol %p)\n", This, ppv);
         *ppv = PROTOCOL(This);
+    }else if(IsEqualGUID(&IID_IInternetPriority, riid)) {
+        TRACE("(%p)->(IID_IInternetPriority %p)\n", This, ppv);
+        *ppv = PRIORITY(This);
     }
 
     if(*ppv) {
@@ -266,6 +272,57 @@ static const IInternetProtocolVtbl FileProtocolVtbl = {
     FileProtocol_UnlockRequest
 };
 
+#define PRIORITY_THIS(iface) DEFINE_THIS(FileProtocol, InternetPriority, iface)
+
+static HRESULT WINAPI FilePriority_QueryInterface(IInternetPriority *iface,
+                                                  REFIID riid, void **ppv)
+{
+    FileProtocol *This = PRIORITY_THIS(iface);
+    return IInternetProtocol_QueryInterface(PROTOCOL(This), riid, ppv);
+}
+
+static ULONG WINAPI FilePriority_AddRef(IInternetPriority *iface)
+{
+    FileProtocol *This = PRIORITY_THIS(iface);
+    return IInternetProtocol_AddRef(PROTOCOL(This));
+}
+
+static ULONG WINAPI FilePriority_Release(IInternetPriority *iface)
+{
+    FileProtocol *This = PRIORITY_THIS(iface);
+    return IInternetProtocol_Release(PROTOCOL(This));
+}
+
+static HRESULT WINAPI FilePriority_SetPriority(IInternetPriority *iface, LONG nPriority)
+{
+    FileProtocol *This = PRIORITY_THIS(iface);
+
+    TRACE("(%p)->(%ld)\n", This, nPriority);
+
+    This->priority = nPriority;
+    return S_OK;
+}
+
+static HRESULT WINAPI FilePriority_GetPriority(IInternetPriority *iface, LONG *pnPriority)
+{
+    FileProtocol *This = PRIORITY_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, pnPriority);
+
+    *pnPriority = This->priority;
+    return S_OK;
+}
+
+#undef PRIORITY_THIS
+
+static const IInternetPriorityVtbl FilePriorityVtbl = {
+    FilePriority_QueryInterface,
+    FilePriority_AddRef,
+    FilePriority_Release,
+    FilePriority_SetPriority,
+    FilePriority_GetPriority
+};
+
 HRESULT FileProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 {
     FileProtocol *ret;
@@ -277,7 +334,9 @@ HRESULT FileProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(FileProtocol));
 
     ret->lpInternetProtocolVtbl = &FileProtocolVtbl;
+    ret->lpInternetPriorityVtbl = &FilePriorityVtbl;
     ret->file = NULL;
+    ret->priority = 0;
     ret->ref = 1;
 
     *ppobj = PROTOCOL(ret);
