@@ -128,7 +128,7 @@ static void test_msiinsert(void)
 }
 
 typedef UINT (WINAPI *fnMsiDecomposeDescriptorA)(LPCSTR, LPCSTR, LPSTR, LPSTR, DWORD *);
-fnMsiDecomposeDescriptorA MsiDecomposeDescriptorA;
+static fnMsiDecomposeDescriptorA pMsiDecomposeDescriptorA;
 
 static void test_msidecomposedesc(void)
 {
@@ -141,15 +141,15 @@ static void test_msidecomposedesc(void)
     hmod = GetModuleHandle("msi.dll");
     if (!hmod)
         return;
-    MsiDecomposeDescriptorA = (fnMsiDecomposeDescriptorA) 
+    pMsiDecomposeDescriptorA = (fnMsiDecomposeDescriptorA) 
         GetProcAddress(hmod, "MsiDecomposeDescriptorA");
-    if (!MsiDecomposeDescriptorA)
+    if (!pMsiDecomposeDescriptorA)
         return;
 
     /* test a valid feature descriptor */
     desc = "']gAVn-}f(ZXfeAR6.jiFollowTheWhiteRabbit>3w2x^IGfe?CxI5heAvk.";
     len = 0;
-    r = MsiDecomposeDescriptorA(desc, prod, feature, comp, &len);
+    r = pMsiDecomposeDescriptorA(desc, prod, feature, comp, &len);
     ok(r == ERROR_SUCCESS, "returned an error\n");
     ok(len == strlen(desc), "length was wrong\n");
     ok(strcmp(prod,"{90110409-6000-11D3-8CFE-0150048383C9}")==0, "product wrong\n");
@@ -161,7 +161,7 @@ static void test_msidecomposedesc(void)
            "ThisWillFailIfTheresMoreThanAGuidsChars>"
            "3w2x^IGfe?CxI5heAvk.";
     len = 0;
-    r = MsiDecomposeDescriptorA(desc, prod, feature, comp, &len);
+    r = pMsiDecomposeDescriptorA(desc, prod, feature, comp, &len);
     ok(r == ERROR_INVALID_PARAMETER, "returned wrong error\n");
 
     /*
@@ -173,9 +173,29 @@ static void test_msidecomposedesc(void)
            "3w2x^IGfe?CxI5heAvk."
            "extra";
     len = 0;
-    r = MsiDecomposeDescriptorA(desc, prod, feature, comp, &len);
+    r = pMsiDecomposeDescriptorA(desc, prod, feature, comp, &len);
     ok(r == ERROR_SUCCESS, "returned wrong error\n");
     ok(len == (strlen(desc) - strlen("extra")), "length wrong\n");
+
+    len = 0;
+    r = pMsiDecomposeDescriptorA(desc, prod, feature, NULL, &len);
+    ok(r == ERROR_SUCCESS, "returned wrong error\n");
+    ok(len == (strlen(desc) - strlen("extra")), "length wrong\n");
+
+    len = 0;
+    r = pMsiDecomposeDescriptorA(desc, prod, NULL, NULL, &len);
+    ok(r == ERROR_SUCCESS, "returned wrong error\n");
+    ok(len == (strlen(desc) - strlen("extra")), "length wrong\n");
+
+    len = 0;
+    r = pMsiDecomposeDescriptorA(desc, NULL, NULL, NULL, &len);
+    ok(r == ERROR_SUCCESS, "returned wrong error\n");
+    ok(len == (strlen(desc) - strlen("extra")), "length wrong\n");
+
+    len = 0;
+    r = pMsiDecomposeDescriptorA(NULL, NULL, NULL, NULL, &len);
+    ok(r == ERROR_INVALID_PARAMETER, "returned wrong error\n");
+    ok(len == 0, "length wrong\n");
 }
 
 static UINT try_query_param( MSIHANDLE hdb, LPCSTR szQuery, MSIHANDLE hrec )
