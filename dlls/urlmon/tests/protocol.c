@@ -206,6 +206,31 @@ static IInternetBindInfoVtbl bind_info_vtbl = {
 
 static IInternetBindInfo bind_info = { &bind_info_vtbl };
 
+static void test_priority(IInternetProtocol *protocol)
+{
+    IInternetPriority *priority;
+    LONG pr;
+    HRESULT hres;
+
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
+    ok(hres == S_OK, "QueryInterface(IID_IInternetPriority) failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IInternetPriority_GetPriority(priority, &pr);
+    ok(hres == S_OK, "GetPriority failed: %08lx\n", hres);
+    ok(pr == 0, "pr=%ld, expected 0\n", pr);
+
+    hres = IInternetPriority_SetPriority(priority, 1);
+    ok(hres == S_OK, "SetPriority failed: %08lx\n", hres);
+
+    hres = IInternetPriority_GetPriority(priority, &pr);
+    ok(hres == S_OK, "GetPriority failed: %08lx\n", hres);
+    ok(pr == 1, "pr=%ld, expected 1\n", pr);
+
+    IInternetPriority_Release(priority);
+}
+
 static void file_protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL is_first)
 {
     HRESULT hres;
@@ -414,11 +439,45 @@ static void test_file_protocol(void) {
     IInternetProtocol_Release(protocol);
 }
 
+static void test_http_protocol(void)
+{
+    IInternetProtocol *protocol;
+    IInternetProtocolInfo *protocol_info;
+    IClassFactory *factory;
+    IUnknown *unk;
+    HRESULT hres;
+
+    hres = CoGetClassObject(&CLSID_HttpProtocol, CLSCTX_INPROC_SERVER, NULL,
+            &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "CoGetClassObject failed: %08lx\n", hres);
+    if(!SUCCEEDED(hres))
+        return;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&protocol_info);
+    ok(hres == E_NOINTERFACE,
+        "Could not get IInternetProtocolInfo interface: %08lx, expected E_NOINTERFACE\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&factory);
+    ok(hres == S_OK, "Could not get IClassFactory interface\n");
+    IUnknown_Release(unk);
+    if(FAILED(hres))
+        return;
+
+    hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol,
+        (void**)&protocol);
+    ok(hres == S_OK, "Could not get IInternetProtocol: %08lx\n", hres);
+
+    test_priority(protocol);
+
+    IInternetProtocol_Release(protocol);
+}
+
 START_TEST(protocol)
 {
     OleInitialize(NULL);
 
     test_file_protocol();
+    test_http_protocol();
 
     OleUninitialize();
 }
