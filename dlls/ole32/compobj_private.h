@@ -171,7 +171,7 @@ extern void* StdGlobalInterfaceTableInstance;
 extern HRESULT WINE_StringFromCLSID(const CLSID *id,LPSTR idstr);
 HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id);
 
-DWORD COM_OpenKeyForCLSID(REFCLSID clsid, REGSAM access, HKEY *key);
+HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY *key);
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
 
 /* Stub Manager */

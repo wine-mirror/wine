@@ -353,34 +353,33 @@ HRESULT WINAPI ProgIDFromCLSID16(
   LPOLESTR16 *lplpszProgID/* [out] associated Prog ID */
 ) {
   static const WCHAR wszProgID[] = {'P','r','o','g','I','D',0};
-  HKEY     xhkey;
   HKEY     hkey;
-  HRESULT  ret = S_OK;
+  HRESULT  ret;
+  LONG     len;
+  char    *buffer;
 
-  if (COM_OpenKeyForCLSID(clsid, KEY_READ, &hkey))
-    ret = REGDB_E_CLASSNOTREG;
+  ret = COM_OpenKeyForCLSID(clsid, wszProgID, KEY_READ, &hkey);
+  if (FAILED(ret))
+    return ret;
   
-  if ((ret == S_OK) &&
-      RegOpenKeyW(hkey, wszProgID, &xhkey))
-    ret = REGDB_E_CLASSNOTREG;
+  if (RegQueryValueA(hkey, NULL, NULL, &len))
+    ret = REGDB_E_READREGDB;
 
   if (ret == S_OK)
   {
-    LONG buf2len;
-    char *buf2 = HeapAlloc(GetProcessHeap(), 0, 255);
-    buf2len = 255;
-    if (RegQueryValueA(xhkey, NULL, buf2, &buf2len))
-      ret = REGDB_E_CLASSNOTREG;
+    buffer = HeapAlloc(GetProcessHeap(), 0, len);
+    if (RegQueryValueA(hkey, NULL, buffer, &len))
+      ret = REGDB_E_READREGDB;
 
     if (ret == S_OK)
     {
-      ret = _xmalloc16(buf2len+1, (SEGPTR*)lplpszProgID);
+      ret = _xmalloc16(len, (SEGPTR*)lplpszProgID);
       if (ret == S_OK)
-        strcpy(MapSL((SEGPTR)*lplpszProgID),buf2);
+        strcpy(MapSL((SEGPTR)*lplpszProgID),buffer);
     }
-    HeapFree(GetProcessHeap(), 0, buf2);
+    HeapFree(GetProcessHeap(), 0, buffer);
   }
-  RegCloseKey(xhkey);
+  RegCloseKey(hkey);
   return ret;
 }
 
