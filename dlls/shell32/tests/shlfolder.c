@@ -267,8 +267,11 @@ static void test_BindToObject(void)
     hr = IShellFolder_BindToObject(psfMyComputer, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, "MyComputers's BindToObject should fail, when called with empty pidl! hr = %08lx\n", hr);
 
+#if 0
+    /* this call segfaults on 98SE */
     hr = IShellFolder_BindToObject(psfMyComputer, NULL, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, "MyComputers's BindToObject should fail, when called with NULL pidl! hr = %08lx\n", hr);
+#endif
 
     cChars = GetSystemDirectoryA(szSystemDir, MAX_PATH);
     ok (cChars > 0 && cChars < MAX_PATH, "GetSystemDirectoryA failed! LastError: %08lx\n", GetLastError());
@@ -295,9 +298,12 @@ static void test_BindToObject(void)
     ok (hr == E_INVALIDARG, 
         "FileSystem ShellFolder's BindToObject should fail, when called with empty pidl! hr = %08lx\n", hr);
     
+#if 0
+    /* this call segfaults on 98SE */
     hr = IShellFolder_BindToObject(psfSystemDir, NULL, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, 
         "FileSystem ShellFolder's BindToObject should fail, when called with NULL pidl! hr = %08lx\n", hr);
+#endif
 
     IShellFolder_Release(psfSystemDir);
 }
