@@ -129,6 +129,7 @@ static void create_inf_file()
 {
     char data[1024];
     char *ptr = data;
+    DWORD dwNumberOfBytesWritten;
     HANDLE hf = CreateFile("c:\\test.inf", GENERIC_WRITE, 0, NULL,
                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -150,7 +151,7 @@ static void create_inf_file()
     append_str(&ptr, "DefaultAppPath=\"Application Name\"\n");
     append_str(&ptr, "LProgramF=\"Program Files\"\n");
 
-    WriteFile(hf, data, ptr - data, NULL, NULL);
+    WriteFile(hf, data, ptr - data, &dwNumberOfBytesWritten, NULL);
     CloseHandle(hf);
 }
 
@@ -169,36 +170,46 @@ static void translateinfstring_test()
     /* try to open an inf file that doesn't exist */
     hr = pTranslateInfString("c:\\a.inf", "Options.NTx86", "Options.NTx86",
                              "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
-    ok(hr == 0x80070002, "Expected 0x80070002, got 0x%08x\n", (UINT)hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || hr == E_INVALIDARG, 
+       "Expected 0x80070002 or E_INVALIDARG, got 0x%08x\n", (UINT)hr);
 
     /* try a nonexistent section */
+    buffer[0] = 0;
     hr = pTranslateInfString("c:\\test.inf", "idontexist", "Options.NTx86",
                              "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", (UINT)hr);
     ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
     ok(dwSize == 25, "Expected size 25, got %ld\n", dwSize);
 
+    buffer[0] = 0;
     /* try other nonexistent section */
     hr = pTranslateInfString("c:\\test.inf", "Options.NTx86", "idontexist",
                              "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
-    ok(hr == SPAPI_E_LINE_NOT_FOUND, "Expected SPAPI_E_LINE_NOT_FOUND, got 0x%08x\n", (UINT)hr);
+    ok(hr == SPAPI_E_LINE_NOT_FOUND || hr == E_INVALIDARG, 
+       "Expected SPAPI_E_LINE_NOT_FOUND or E_INVALIDARG, got 0x%08x\n", (UINT)hr);
 
+    buffer[0] = 0;
     /* try nonexistent key */
     hr = pTranslateInfString("c:\\test.inf", "Options.NTx86", "Options.NTx86",
                              "notvalid", buffer, MAX_PATH, &dwSize, NULL);
-    ok(hr == SPAPI_E_LINE_NOT_FOUND, "Expected SPAPI_E_LINE_NOT_FOUND, got 0x%08x\n", (UINT)hr);
+    ok(hr == SPAPI_E_LINE_NOT_FOUND || hr == E_INVALIDARG, 
+       "Expected SPAPI_E_LINE_NOT_FOUND or E_INVALIDARG, got 0x%08x\n", (UINT)hr);
 
+    buffer[0] = 0;
     /* test the behavior of pszInstallSection */
     hr = pTranslateInfString("c:\\test.inf", "section", "Options.NTx86",
                              "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
-    ok(hr == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", (UINT)hr);
+    ok(hr == ERROR_SUCCESS || hr == E_FAIL, 
+       "Expected ERROR_SUCCESS or E_FAIL, got 0x%08x\n", (UINT)hr);
 
+    if(hr == ERROR_SUCCESS)
     todo_wine
     {
         ok(!strcmp(buffer, TEST_STRING1), "Expected %s, got %s\n", TEST_STRING1, buffer);
         ok(dwSize == 34, "Expected size 34, got %ld\n", dwSize);
     }
 
+    buffer[0] = 0;
     /* try without a pszInstallSection */
     hr = pTranslateInfString("c:\\test.inf", NULL, "Options.NTx86",
                              "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
@@ -206,6 +217,7 @@ static void translateinfstring_test()
     ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
     ok(dwSize == 25, "Expected size 25, got %ld\n", dwSize);
 
+    DeleteFile("c:\\a.inf");
     DeleteFile("c:\\test.inf");
 }
 
