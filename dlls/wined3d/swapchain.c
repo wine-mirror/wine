@@ -65,7 +65,7 @@ ULONG WINAPI IWineD3DSwapChainImpl_AddRef(IWineD3DSwapChain *iface) {
 HRESULT WINAPI IWineD3DSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
-    TRACE("(%p)->(%s,%p) \n",This,debugstr_guid(riid),ppobj);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IWineD3DSwapChain)){
         IWineD3DSwapChainImpl_AddRef(iface);
@@ -163,7 +163,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
                 This->win_handle             = hDestWindowOverride;
                 This->win                    = (Window)GetPropA( hDestWindowOverride, "__wine_x11_whole_window" );
 
-                TRACE("Creating a new context for the window %p \n", hDestWindowOverride);
+                TRACE("Creating a new context for the window %p\n", hDestWindowOverride);
                 ENTER_GL();
                 TRACE("Desctroying context %p %p\n", This->display, This->render_ctx);
 
@@ -330,7 +330,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface
     WINED3DSURFACE_DESC desc;
     glDescriptor *glDescription;
 
-    TRACE("(%p) : iface(%p) pDestSurface(%p) \n", This, iface, pDestSurface);
+    TRACE("(%p) : iface(%p) pDestSurface(%p)\n", This, iface, pDestSurface);
     ENTER_GL();
     memset(&desc, 0, sizeof(desc));
     desc.Width =  &width;
@@ -437,7 +437,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface, DWOR
 
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     HDC hDC;
-    TRACE("(%p) : pRamp@%p flags(%ld) \n", This, pRamp, Flags);
+    TRACE("(%p) : pRamp@%p flags(%ld)\n", This, pRamp, Flags);
     hDC = GetDC(This->win_handle);
     SetDeviceGammaRamp(hDC, (LPVOID)pRamp);
     ReleaseDC(This->win_handle, hDC);

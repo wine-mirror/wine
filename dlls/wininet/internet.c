@@ -2075,7 +2075,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             break;
 
         default:
-            FIXME("Stub! %ld \n",dwOption);
+            FIXME("Stub! %ld\n", dwOption);
             break;
     }
     if (lpwhh)

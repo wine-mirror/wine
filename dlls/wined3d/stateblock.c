@@ -129,7 +129,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
     IWineD3DStateBlockImpl *This             = (IWineD3DStateBlockImpl *)iface;
     IWineD3DStateBlockImpl *targetStateBlock = This->wineD3DDevice->stateBlock;
 
-    TRACE("(%p) : Updating state block %p ------------------v \n", targetStateBlock, This);
+    TRACE("(%p) : Updating state block %p ------------------v\n", targetStateBlock, This);
 
     /* If not recorded, then update can just recapture */
     if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED  */ 0) {
@@ -570,7 +570,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
     /* Note this may have a large overhead but it should only be executed
        once, in order to initialize the complete state of the device and
        all opengl equivalents                                            */
-    TRACE("(%p) -----------------------> Setting up device defaults... %p \n", This, This->wineD3DDevice);
+    TRACE("(%p) -----------------------> Setting up device defaults... %p\n", This, This->wineD3DDevice);
     /* TODO: make a special stateblock type for the primary stateblock (it never gets applied so it doesn't need a real type) */
     This->blockType = WINED3DSBT_INIT;
 

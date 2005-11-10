@@ -317,7 +317,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     if (mmioDescend(hmmio, &ckMainRIFF, NULL, 0))
 	goto errCleanUp;
 
-    TRACE("ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
+    TRACE("ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX\n",
 	  (LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType, ckMainRIFF.cksize);
 
     if ((ckMainRIFF.ckid != FOURCC_RIFF) ||
@@ -328,7 +328,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK))
 	goto errCleanUp;
 
-    TRACE("Chunk Found ckid=%.4s fccType=%08lx cksize=%08lX \n",
+    TRACE("Chunk Found ckid=%.4s fccType=%08lx cksize=%08lX\n",
 	  (LPSTR)&mmckInfo.ckid, mmckInfo.fccType, mmckInfo.cksize);
 
     lpWaveFormat = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
@@ -336,10 +336,10 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 	goto errCleanUp;
 
     TRACE("wFormatTag=%04X !\n", 	lpWaveFormat->wFormatTag);
-    TRACE("nChannels=%d \n", 		lpWaveFormat->nChannels);
+    TRACE("nChannels=%d\n", 		lpWaveFormat->nChannels);
     TRACE("nSamplesPerSec=%ld\n", 	lpWaveFormat->nSamplesPerSec);
     TRACE("nAvgBytesPerSec=%ld\n", 	lpWaveFormat->nAvgBytesPerSec);
-    TRACE("nBlockAlign=%d \n", 		lpWaveFormat->nBlockAlign);
+    TRACE("nBlockAlign=%d\n", 		lpWaveFormat->nBlockAlign);
     TRACE("wBitsPerSample=%u !\n", 	lpWaveFormat->wBitsPerSample);
 
     /* move to end of 'fmt ' chunk */

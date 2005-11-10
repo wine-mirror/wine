@@ -606,7 +606,7 @@ DWORD WINAPI WsControl(DWORD protocol,
          char type= *(unsigned char*)(inbuf+15); /* 0x2: don't fragment*/
 #endif
 
-      FIXME("(ICMP_ECHO) to 0x%08x stub \n", addr);
+      FIXME("(ICMP_ECHO) to 0x%08x stub\n", addr);
       break;
    }
 
@@ -635,7 +635,7 @@ DWORD WINAPI WsControl(DWORD protocol,
  */
 INT WINAPI WSARecvEx(SOCKET s, char *buf, INT len, INT *flags)
 {
-    FIXME("(WSARecvEx) partial packet return value not set \n");
+    FIXME("(WSARecvEx) partial packet return value not set\n");
     return recv(s, buf, len, *flags);
 }
 

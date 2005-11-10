@@ -569,7 +569,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     char *msg;
     int len;
 
-    TRACE("%x \n",eMessageType);
+    TRACE("%x\n", eMessageType);
     rc = 0;
 
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ERROR)

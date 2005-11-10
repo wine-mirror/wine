@@ -70,7 +70,7 @@ ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
                 IUnknown_Release(surfaceParent);
             }
         }
-        TRACE("(%p) : cleaning up base texture \n", This);
+        TRACE("(%p) : cleaning up base texture\n", This);
         IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *)iface);
         /* free the object */
         HeapFree(GetProcessHeap(), 0, This);
@@ -183,19 +183,19 @@ BOOL WINAPI IWineD3DTextureImpl_GetDirty(IWineD3DTexture *iface) {
 
 HRESULT WINAPI IWineD3DTextureImpl_BindTexture(IWineD3DTexture *iface) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    TRACE("(%p) : relay to BaseTexture \n", This);
+    TRACE("(%p) : relay to BaseTexture\n", This);
     return IWineD3DBaseTextureImpl_BindTexture((IWineD3DBaseTexture *)iface);
 }
 
 HRESULT WINAPI IWineD3DTextureImpl_UnBindTexture(IWineD3DTexture *iface) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    TRACE("(%p) : relay to BaseTexture \n", This);
+    TRACE("(%p) : relay to BaseTexture\n", This);
     return IWineD3DBaseTextureImpl_UnBindTexture((IWineD3DBaseTexture *)iface);
 }
 
 UINT WINAPI IWineD3DTextureImpl_GetTextureDimensions(IWineD3DTexture *iface) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    TRACE("(%p) \n", This);
+    TRACE("(%p)\n", This);
 
     return GL_TEXTURE_2D;
 }

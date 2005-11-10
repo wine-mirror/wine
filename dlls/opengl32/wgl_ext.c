@@ -191,7 +191,7 @@ BOOL WINAPI wglSwapIntervalEXT(int interval) {
   if (NULL != p_glXSwapIntervalSGI) {
     return 0 == p_glXSwapIntervalSGI(interval);
   }
-  WARN("(): GLX_SGI_swap_control extension seems not supported \n");
+  WARN("(): GLX_SGI_swap_control extension seems not supported\n");
   return TRUE;
 }
 

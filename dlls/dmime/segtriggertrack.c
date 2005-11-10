@@ -286,7 +286,7 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
     case DMUS_FOURCC_SEGMENTITEMNAME_CHUNK: {
       TRACE_(dmfile)(": segment item name chunk\n");
       IStream_Read (pStm, pNewItem->wszName, Chunk.dwSize, NULL);
-      TRACE_(dmfile)(" - name: %s \n", debugstr_w(pNewItem->wszName));
+      TRACE_(dmfile)(" - name: %s\n", debugstr_w(pNewItem->wszName));
       break;
     }
     case FOURCC_LIST: {

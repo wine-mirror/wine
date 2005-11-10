@@ -569,7 +569,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
     LPDIRECT3DDEVICE8 iface = (LPDIRECT3DDEVICE8) This;
     PLIGHTINFOEL     *tmp;
 
-    TRACE("(%p) : Updating state block %p ------------------v \n", This, updateBlock);
+    TRACE("(%p) : Updating state block %p ------------------v\n", This, updateBlock);
 
     /* If not recorded, then update can just recapture */
     if (updateBlock->blockType != D3DSBT_RECORDED) {

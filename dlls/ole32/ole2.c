@@ -2533,7 +2533,7 @@ HRESULT WINAPI OleCreate(
 
     *ppvObj = pUnk;
 
-    TRACE("-- %p \n", pUnk);
+    TRACE("-- %p\n", pUnk);
     return hres;
 }
 

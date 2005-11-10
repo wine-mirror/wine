@@ -87,7 +87,7 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
 	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
     HeapFree(GetProcessHeap(), 0, sca);
     ExitThread(ret);
-    WARN("Should not happen ? what's wrong \n");
+    WARN("Should not happen ? what's wrong\n");
     /* should not go after this point */
     return ret;
 }
@@ -252,7 +252,7 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
     mmckInfo.ckid = mmioFOURCC('f', 'm', 't', ' ');
     if (mmioDescend(wmw->hFile, &mmckInfo, pckMainRIFF, MMIO_FINDCHUNK) != 0)
 	return MCIERR_INVALID_FILE;
-    TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
+    TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX\n",
 	  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
 
     wmw->lpWaveFormat = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
@@ -262,10 +262,10 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
 	return MCIERR_INVALID_FILE;
 
     TRACE("wFormatTag=%04X !\n",   wmw->lpWaveFormat->wFormatTag);
-    TRACE("nChannels=%d \n",       wmw->lpWaveFormat->nChannels);
+    TRACE("nChannels=%d\n",       wmw->lpWaveFormat->nChannels);
     TRACE("nSamplesPerSec=%ld\n",  wmw->lpWaveFormat->nSamplesPerSec);
     TRACE("nAvgBytesPerSec=%ld\n", wmw->lpWaveFormat->nAvgBytesPerSec);
-    TRACE("nBlockAlign=%d \n",     wmw->lpWaveFormat->nBlockAlign);
+    TRACE("nBlockAlign=%d\n",     wmw->lpWaveFormat->nBlockAlign);
     TRACE("wBitsPerSample=%u !\n", wmw->lpWaveFormat->wBitsPerSample);
     if (r >= (long)sizeof(WAVEFORMATEX))
 	TRACE("cbSize=%u !\n", wmw->lpWaveFormat->cbSize);
@@ -276,7 +276,7 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
 	TRACE("can't find data chunk\n");
 	return MCIERR_INVALID_FILE;
     }
-    TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
+    TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX\n",
 	  (LPSTR)&wmw->ckWaveData.ckid, (LPSTR)&wmw->ckWaveData.fccType, wmw->ckWaveData.cksize);
     TRACE("nChannels=%d nSamplesPerSec=%ld\n",
 	  wmw->lpWaveFormat->nChannels, wmw->lpWaveFormat->nSamplesPerSec);
@@ -406,7 +406,7 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSW lpO
 			if (mmioDescend(wmw->hFile, lpckMainRIFF, NULL, 0) != 0) {
 			    dwRet = MCIERR_INVALID_FILE;
 			} else {
-			    TRACE("ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
+			    TRACE("ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX\n",
 				(LPSTR)&(lpckMainRIFF->ckid),
 				(LPSTR) &(lpckMainRIFF->fccType),
 				(lpckMainRIFF->cksize));

@@ -739,7 +739,7 @@ static DWORD MCICDA_Play(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	start = MCICDA_CalcFrame(wmcda, lpParms->dwFrom);
 	if ( (ret=MCICDA_SkipDataTracks(wmcda, &start)) )
 	  return ret;
-	TRACE("MCI_FROM=%08lX -> %lu \n", lpParms->dwFrom, start);
+	TRACE("MCI_FROM=%08lX -> %lu\n", lpParms->dwFrom, start);
     } else {
         fmt.Format = IOCTL_CDROM_CURRENT_POSITION;
         if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_Q_CHANNEL, &fmt, sizeof(fmt),
@@ -752,7 +752,7 @@ static DWORD MCICDA_Play(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     }
     if (dwFlags & MCI_TO) {
 	end = MCICDA_CalcFrame(wmcda, lpParms->dwTo);
-	TRACE("MCI_TO=%08lX -> %lu \n", lpParms->dwTo, end);
+	TRACE("MCI_TO=%08lX -> %lu\n", lpParms->dwTo, end);
     } else {
         if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_TOC, NULL, 0,
                              &toc, sizeof(toc), &br, NULL)) {

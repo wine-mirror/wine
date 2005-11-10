@@ -65,7 +65,7 @@ short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, WORD cbBuf)
 {
 	int i, len;
         static const WCHAR brkpoint[] = {'*','[',']',0};
-	TRACE("(%p %p %d); \n", lpFile, lpTitle, cbBuf);
+	TRACE("(%p %p %d);\n", lpFile, lpTitle, cbBuf);
 
 	if(lpFile == NULL || lpTitle == NULL)
 		return -1;
@@ -95,7 +95,7 @@ short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, WORD cbBuf)
 	if(i == -1)
 		i++;
 
-	TRACE("---> '%s' \n", debugstr_w(&lpFile[i]));
+	TRACE("---> '%s'\n", debugstr_w(&lpFile[i]));
 
 	len = strlenW(lpFile+i)+1;
 	if(cbBuf < len)

@@ -121,7 +121,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                 if ((p = strrchr( appname, '/' ))) appname = p + 1;
                 if ((p = strrchr( appname, '\\' ))) appname = p + 1;
                 strcat( appname, "\\Direct3D" );
-                TRACE("appname = [%s] \n", appname);
+                TRACE("appname = [%s]\n", appname);
                 if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
                 RegCloseKey( tmpkey );
             }

@@ -236,7 +236,7 @@ HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetCubeMapSurface(LPDIRECT3DCUB
     if (Level < This->levels) {
         *ppCubeMapSurface = (LPDIRECT3DSURFACE8) This->surfaces[FaceType][Level];
         IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppCubeMapSurface);
-	TRACE("(%p) -> faceType(%d) level(%d) returning surface@%p \n", This, FaceType, Level, This->surfaces[FaceType][Level]);
+	TRACE("(%p) -> faceType(%d) level(%d) returning surface@%p\n", This, FaceType, Level, This->surfaces[FaceType][Level]);
     } else {
         FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
         return D3DERR_INVALIDCALL;

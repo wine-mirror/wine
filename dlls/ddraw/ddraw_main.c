@@ -978,14 +978,14 @@ Main_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
     if (pDriverCaps != NULL) {
 	DD_STRUCT_COPY_BYSIZE(pDriverCaps,&This->caps);
 	if (TRACE_ON(ddraw)) {
-	  TRACE("Driver Caps : \n");
+	  TRACE("Driver Caps :\n");
 	  DDRAW_dump_DDCAPS(pDriverCaps);
 	}
     }
     if (pHELCaps != NULL) {
 	DD_STRUCT_COPY_BYSIZE(pHELCaps,&This->caps);
 	if (TRACE_ON(ddraw)) {
-	  TRACE("HEL Caps : \n");
+	  TRACE("HEL Caps :\n");
 	  DDRAW_dump_DDCAPS(pHELCaps);
 	}
     }

@@ -745,7 +745,7 @@ Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
     for (surf = This->attached; surf != NULL; surf = surf->next_attached)
     {
         if (TRACE_ON(ddraw)) {
-	    TRACE("Surface: (%p) caps: %lx,%lx,%lx,%lx \n",surf ,
+	    TRACE("Surface: (%p) caps: %lx,%lx,%lx,%lx\n", surf,
 		  surf->surface_desc.ddsCaps.dwCaps,
 		  surf->surface_desc.ddsCaps.dwCaps2,
 		  surf->surface_desc.ddsCaps.dwCaps3,
@@ -777,7 +777,7 @@ Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
     *ppSurface = ICOM_INTERFACE(found, IDirectDrawSurface7);
 
     if (TRACE_ON(ddraw)) {
-        TRACE("Returning surface %p with description : \n", *ppSurface);
+        TRACE("Returning surface %p with description :\n", *ppSurface);
 	DDRAW_dump_surface_desc(&(found->surface_desc));
     }
     
@@ -1167,7 +1167,7 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
 
     This->locked = TRUE;
 
-    TRACE("locked surface returning description : \n");
+    TRACE("locked surface returning description :\n");
     if (TRACE_ON(ddraw)) DDRAW_dump_surface_desc(pDDSD);
     
     return DD_OK;

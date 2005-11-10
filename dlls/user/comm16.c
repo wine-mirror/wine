@@ -904,7 +904,7 @@ INT16 WINAPI TransmitCommChar16(INT16 cid,CHAR chTransmit)
 {
 	struct DosDeviceStruct *ptr;
 
-    	TRACE("cid %d, data %d \n", cid, chTransmit);
+    	TRACE("cid %d, data %d\n", cid, chTransmit);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);
 		return -1;

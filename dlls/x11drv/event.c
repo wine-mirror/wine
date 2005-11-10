@@ -570,7 +570,7 @@ static void EVENT_PropertyNotify( HWND hwnd, XEvent *xev )
 {
   XPropertyEvent *event = &xev->xproperty;
   /* Check if we have any resources to free */
-  TRACE("Received PropertyNotify event: \n");
+  TRACE("Received PropertyNotify event:\n");
 
   switch(event->state)
   {
@@ -849,7 +849,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 	      TRACE("drop file %s as %s\n", p+5, p_drop);
 	      p_drop += len+1;
 	    } else {
-	      WARN("can't convert file %s to dos name \n", p+5);
+	      WARN("can't convert file %s to dos name\n", p+5);
 	    }
 	  } else {
 	    WARN("unknown mime type %s\n", p);

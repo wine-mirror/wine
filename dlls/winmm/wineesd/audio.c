@@ -1544,7 +1544,7 @@ DWORD WINAPI ESD_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
  */
 static	DWORD	widGetNumDevs(void)
 {
-    TRACE("%d \n",MAX_WAVEINDRV);
+    TRACE("%d\n", MAX_WAVEINDRV);
     return MAX_WAVEINDRV;
 }
 

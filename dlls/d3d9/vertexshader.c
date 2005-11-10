@@ -134,10 +134,10 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShader(LPDIRECT3DDEVICE9 iface, IDi
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hrc = D3D_OK;
 
-    TRACE("(%p) : Relay  \n", This);
+    TRACE("(%p) : Relay\n", This);
     hrc =  IWineD3DDevice_SetVertexShader(This->WineD3DDevice, pShader==NULL?NULL:((IDirect3DVertexShader9Impl *)pShader)->wineD3DVertexShader);
 
-    TRACE("(%p) : returning hr(%lu) \n", This, hrc);
+    TRACE("(%p) : returning hr(%lu)\n", This, hrc);
     return hrc;
 }
 
@@ -146,7 +146,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShader(LPDIRECT3DDEVICE9 iface, IDi
     IWineD3DVertexShader *pShader;
     HRESULT hrc = D3D_OK;
 
-    TRACE("(%p) : Relay  device@%p \n", This, This->WineD3DDevice);
+    TRACE("(%p) : Relay  device@%p\n", This, This->WineD3DDevice);
     hrc = IWineD3DDevice_GetVertexShader(This->WineD3DDevice, &pShader);
     if(hrc == D3D_OK){
        hrc = IWineD3DVertexShader_GetParent(pShader, (IUnknown **)ppShader);

@@ -161,7 +161,7 @@ static BOOL read_pif_file( HANDLE hFile, char *progname, char *title,
                     pif386rec.memmin, pif386rec.memmax,
                     pif386rec.emsmin, pif386rec.emsmax,
                     pif386rec.xmsmin, pif386rec.xmsmax);
-            WINE_TRACE("386rec: option 0x%x memory 0x%x video 0x%x \n",
+            WINE_TRACE("386rec: option 0x%x memory 0x%x video 0x%x\n",
                     pif386rec.optflags, pif386rec.memflags,
                     pif386rec.videoflags);
             WINE_TRACE("386rec: optional parameters %s\n",

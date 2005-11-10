@@ -413,7 +413,7 @@ static DWORD WINAPI ACTION_CallDllFunction(thread_struct *stuff)
     CustomEntry *fn;
     DWORD rc = ERROR_SUCCESS;
 
-    TRACE("calling function (%s, %s) \n", debugstr_w(stuff->source),
+    TRACE("calling function (%s, %s)\n", debugstr_w(stuff->source),
           debugstr_w(stuff->target));
 
     hModule = LoadLibraryW(stuff->source);
@@ -543,7 +543,7 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
         msi_free(deformated);
     }
 
-    TRACE("executing exe %s \n",debugstr_w(cmd));
+    TRACE("executing exe %s\n", debugstr_w(cmd));
 
     rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL,
                   c_collen, &si, &info);
@@ -604,7 +604,7 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
         msi_free(deformated);
     }
 
-    TRACE("executing exe %s \n",debugstr_w(cmd));
+    TRACE("executing exe %s\n", debugstr_w(cmd));
 
     rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL,
                   c_collen, &si, &info);
@@ -689,7 +689,7 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
     }
     msi_free(prop);
 
-    TRACE("executing exe %s \n",debugstr_w(cmd));
+    TRACE("executing exe %s\n", debugstr_w(cmd));
 
     rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL,
                   c_collen, &si, &info);
@@ -729,7 +729,7 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
     if (!deformated)
         return ERROR_FUNCTION_FAILED;
 
-    TRACE("executing exe %s \n",debugstr_w(deformated));
+    TRACE("executing exe %s\n", debugstr_w(deformated));
 
     rc = CreateProcessW(NULL, deformated, NULL, NULL, FALSE, 0, NULL,
                   c_collen, &si, &info);

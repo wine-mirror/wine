@@ -2047,7 +2047,7 @@ UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 
 			if (!e.keycode)
 			{
-			  WARN("Unknown virtual key %X !!! \n", wCode);
+			  WARN("Unknown virtual key %X !!!\n", wCode);
                           wine_tsx11_unlock();
 			  return 0; /* whatever */
 			}
@@ -2359,7 +2359,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 
     if (!e.keycode && virtKey != VK_NONAME)
       {
-	WARN("Unknown virtual key %X !!! \n",virtKey);
+	WARN("Unknown virtual key %X !!!\n", virtKey);
         wine_tsx11_unlock();
 	return virtKey; /* whatever */
       }

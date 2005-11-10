@@ -588,7 +588,7 @@ Main_IDirect3DDeviceImpl_7_GetViewport(LPDIRECT3DDEVICE7 iface,
     *lpData = This->active_viewport;
 
     if (TRACE_ON(ddraw)) {
-        TRACE(" returning viewport : \n");
+        TRACE(" returning viewport :\n");
 	TRACE("    - dwX = %ld   dwY = %ld\n",
 	      lpData->dwX, lpData->dwY);
 	TRACE("    - dwWidth = %ld   dwHeight = %ld\n",
@@ -619,7 +619,7 @@ Main_IDirect3DDeviceImpl_7_GetMaterial(LPDIRECT3DDEVICE7 iface,
     *lpMat = This->current_material;
 
     if (TRACE_ON(ddraw)) {
-        TRACE(" returning material : \n");
+        TRACE(" returning material :\n");
 	dump_D3DMATERIAL7(lpMat);
     }
 
@@ -656,7 +656,7 @@ Main_IDirect3DDeviceImpl_7_GetLight(LPDIRECT3DDEVICE7 iface,
         return DDERR_INVALIDPARAMS;
 
     if (TRACE_ON(ddraw)) {
-        TRACE(" returning light : \n");
+        TRACE(" returning light :\n");
 	dump_D3DLIGHT7(lpLight);
     }
 

@@ -3549,7 +3549,7 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfo(
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
     ITypeInfoImpl *pTypeInfo = This->pTypeInfo;
 
-    TRACE("(%p)->(index=%d) \n", This, index);
+    TRACE("(%p)->(index=%d)\n", This, index);
 
     if (!ppTInfo) return E_INVALIDARG;
 
@@ -3585,7 +3585,7 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoType(
     int i;
     ITypeInfoImpl *pTInfo = This->pTypeInfo;
 
-    TRACE("(%p) index %d \n",This, index);
+    TRACE("(%p) index %d\n", This, index);
 
     if(!pTKind) return E_INVALIDARG;
 
@@ -4019,7 +4019,7 @@ static HRESULT WINAPI ITypeLib2_fnGetAllCustData(
             VariantCopy(& pCustData->prgCustData[i].varValue, & pCData->data);
         }
     }else{
-        ERR(" OUT OF MEMORY! \n");
+        ERR(" OUT OF MEMORY!\n");
         return E_OUTOFMEMORY;
     }
     return S_OK;
@@ -5770,7 +5770,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllCustData(
             VariantCopy(& pCustData->prgCustData[i].varValue, & pCData->data);
         }
     }else{
-        ERR(" OUT OF MEMORY! \n");
+        ERR(" OUT OF MEMORY!\n");
         return E_OUTOFMEMORY;
     }
     return S_OK;
@@ -5806,7 +5806,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllFuncCustData(
                         & pCData->data);
             }
         }else{
-            ERR(" OUT OF MEMORY! \n");
+            ERR(" OUT OF MEMORY!\n");
             return E_OUTOFMEMORY;
         }
         return S_OK;
@@ -5843,7 +5843,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllParamCustData( ITypeInfo2 * iface,
                         & pCData->data);
             }
         }else{
-            ERR(" OUT OF MEMORY! \n");
+            ERR(" OUT OF MEMORY!\n");
             return E_OUTOFMEMORY;
         }
         return S_OK;
@@ -5879,7 +5879,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllVarCustData( ITypeInfo2 * iface,
                         & pCData->data);
             }
         }else{
-            ERR(" OUT OF MEMORY! \n");
+            ERR(" OUT OF MEMORY!\n");
             return E_OUTOFMEMORY;
         }
         return S_OK;
@@ -5917,7 +5917,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllImplTypeCustData(
                         & pCData->data);
             }
         }else{
-            ERR(" OUT OF MEMORY! \n");
+            ERR(" OUT OF MEMORY!\n");
             return E_OUTOFMEMORY;
         }
         return S_OK;

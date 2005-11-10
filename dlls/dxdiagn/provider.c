@@ -521,7 +521,7 @@ HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSubCont) 
 	IEnumMoniker* pEnum = NULL;
 	IMoniker* pMoniker = NULL;
         hr = ICreateDevEnum_CreateClassEnumerator(pCreateDevEnum, &clsidCat, &pEnum, 0);        
-        FIXME("\tClassEnumerator for clsid(%s) pEnum(%p) \n", debugstr_guid(&clsidCat), pEnum);
+        FIXME("\tClassEnumerator for clsid(%s) pEnum(%p)\n", debugstr_guid(&clsidCat), pEnum);
         if (FAILED(hr) || pEnum == NULL) {
           goto class_enum_failed;
         }

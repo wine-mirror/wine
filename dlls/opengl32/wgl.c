@@ -624,7 +624,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
 	    TRACE("  - origin : (%ld , %ld)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
 	    TRACE("  - increment : %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
 	    if (needed_size != 0) {
-		TRACE("  - bitmap : \n");
+		TRACE("  - bitmap :\n");
 		for (height = 0; height < gm.gmBlackBoxY; height++) {
 		    TRACE("      ");
 		    for (width = 0, bitmask = 0x80; width < gm.gmBlackBoxX; width++, bitmask >>= 1) {

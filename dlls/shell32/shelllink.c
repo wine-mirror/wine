@@ -1112,7 +1112,7 @@ static HRESULT WINAPI IPersistStream_fnSave(
         return r;
     }
 
-    TRACE("Writing pidl \n");
+    TRACE("Writing pidl\n");
 
     /* write the PIDL to the shortcut */
     if( This->pPidl )

@@ -819,7 +819,7 @@ static void test_set_getsockopt(void)
         ok( !lingval.l_onoff == !linger_testvals[i].l_onoff &&
                 (lingval.l_linger == linger_testvals[i].l_linger ||
                  (!lingval.l_linger && !linger_testvals[i].l_onoff))
-                , "getsockopt(SO_LINGER #%d) returned wrong value %d,%d not %d,%d \n", i, 
+                , "getsockopt(SO_LINGER #%d) returned wrong value %d,%d not %d,%d\n", i, 
                  lingval.l_onoff, lingval.l_linger,
                  linger_testvals[i].l_onoff, linger_testvals[i].l_linger);
     }
@@ -1322,9 +1322,9 @@ START_TEST( sock )
 
     for (i = 0; i < NUM_TESTS; i++)
     {
-        trace ( " **** STARTING TEST %d **** \n", i );
+        trace ( " **** STARTING TEST %d ****\n", i );
         do_test (  &tests[i] );
-        trace ( " **** TEST %d COMPLETE **** \n", i );
+        trace ( " **** TEST %d COMPLETE ****\n", i );
     }
 
     test_UDP();

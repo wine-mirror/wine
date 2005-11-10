@@ -114,7 +114,7 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 int WINAPI MMSYSTEM_WEP(HINSTANCE16 hInstance, WORD wDataSeg,
                         WORD cbHeapSize, LPSTR lpCmdLine)
 {
-    TRACE("STUB: Unloading MMSystem DLL ... hInst=%04X \n", hInstance);
+    TRACE("STUB: Unloading MMSystem DLL ... hInst=%04X\n", hInstance);
     return TRUE;
 }
 

@@ -434,7 +434,7 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
         {
             LPBYTE nd2;
 
-            TRACE("after value %s \n",debugstr_wn((LPWSTR)newdata,
+            TRACE("after value %s\n", debugstr_wn((LPWSTR)newdata,
                                     size/sizeof(WCHAR)));
             chunk = (len - (progress - ptr)) * sizeof(WCHAR);
             TRACE("after chunk is %li + %li\n",size,chunk);

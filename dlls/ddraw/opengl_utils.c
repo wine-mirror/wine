@@ -905,7 +905,7 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
     } 
 
     if (error) {
-	ERR("Unsupported pixel format for textures : \n");
+	ERR("Unsupported pixel format for textures :\n");
 	if (ERR_ON(ddraw)) {
 	    DDRAW_dump_pixelformat(src_pf);
 	}

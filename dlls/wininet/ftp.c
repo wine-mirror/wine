@@ -1948,7 +1948,7 @@ INT FTP_ReceiveResponse(LPWININETFTPSESSIONW lpwfs, DWORD dwContext)
     BOOL multiline = FALSE;
     LPWININETAPPINFOW hIC = NULL;
 
-    TRACE("socket(%d) \n", lpwfs->sndSocket);
+    TRACE("socket(%d)\n", lpwfs->sndSocket);
 
     hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
     SendAsyncCallback(&lpwfs->hdr, dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);

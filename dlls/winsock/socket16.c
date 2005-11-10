@@ -599,6 +599,6 @@ INT16 WINAPI __WSAFDIsSet16(SOCKET16 s, ws_fd_set16 *set)
  */
 INT16 WINAPI WSARecvEx16(SOCKET16 s, char *buf, INT16 len, INT16 *flags)
 {
-    FIXME("(WSARecvEx16) partial packet return value not set \n");
+    FIXME("(WSARecvEx16) partial packet return value not set\n");
     return recv16(s, buf, len, *flags);
 }

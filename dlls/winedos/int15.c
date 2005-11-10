@@ -76,7 +76,7 @@ void WINAPI DOSVM_Int15Handler( CONTEXT86 *context )
         break;
     case 0x86: /* wait*/
         FIXME("INT15: Wait not correctly handled yet\n");
-        if ( AL_reg( context ) != 0x00 ) ERR("Invalid Input to Int15 function 0x86h AL != 0x00 \n");
+        if ( AL_reg( context ) != 0x00 ) ERR("Invalid Input to Int15 function 0x86h AL != 0x00\n");
         break;
     case 0x87: /* move memory regions*/
         FIXME("INT15: Move memory regions not implemented\n");

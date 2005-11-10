@@ -542,7 +542,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
             mi->last_path = msi_alloc(MAX_PATH*sizeof(WCHAR));
             if (MSI_GetPropertyW(package, cszSourceDir, mi->source, &sz))
             {
-                ERR("No Source dir defined \n");
+                ERR("No Source dir defined\n");
                 rc = ERROR_FUNCTION_FAILED;
             }
             else

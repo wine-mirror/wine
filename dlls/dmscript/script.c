@@ -472,14 +472,14 @@ HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_Load (LPPERSISTSTREAM iface
 							        TRACE_(dmfile)(": script version chunk\n");
 								This->pVersion = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
 								IStream_Read (pStm, This->pVersion, Chunk.dwSize, NULL); 
-								TRACE_(dmfile)("version: 0x%08lx.0x%08lx \n", This->pVersion->dwVersionMS, This->pVersion->dwVersionLS);
+								TRACE_(dmfile)("version: 0x%08lx.0x%08lx\n", This->pVersion->dwVersionMS, This->pVersion->dwVersionLS);
 								break;
 						        }
 						        case DMUS_FOURCC_SCRIPTLANGUAGE_CHUNK: {
 							        TRACE_(dmfile)(": script language chunk\n");
 								This->pwzLanguage = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
 								IStream_Read (pStm, This->pwzLanguage, Chunk.dwSize, NULL); 
-								TRACE_(dmfile)("using language: %s \n", debugstr_w(This->pwzLanguage));
+								TRACE_(dmfile)("using language: %s\n", debugstr_w(This->pwzLanguage));
 								break;
 						        }
 						        case DMUS_FOURCC_SCRIPTSOURCE_CHUNK: {

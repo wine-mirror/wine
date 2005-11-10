@@ -739,7 +739,7 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	 *    DeleteFileA(old_lnk_name);
 	 * }
 	 */
-	FIXME("should delete all files in %s\\ \n", link_dir);
+	FIXME("should delete all files in %s\\\n", link_dir);
 
 	/* clear MRU list
 	 */
@@ -1151,7 +1151,7 @@ BOOL WINAPI ReadCabinetState(CABINETSTATE *cs, int length)
 	HKEY hkey = 0;
 	DWORD type, r;
 
-	TRACE("%p %d \n",cs,length);
+	TRACE("%p %d\n", cs, length);
 
 	if( (cs == NULL) || (length < (int)sizeof(*cs))  )
 		return FALSE;

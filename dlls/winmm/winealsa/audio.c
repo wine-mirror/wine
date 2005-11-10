@@ -744,7 +744,7 @@ static void ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_par
 #define X(x) ((x)? "true" : "false")
     if (full)
 	TRACE("FLAGS: sampleres=%s overrng=%s pause=%s resume=%s syncstart=%s batch=%s block=%s double=%s "
-    	      "halfd=%s joint=%s \n",
+    	      "halfd=%s joint=%s\n",
 	      X(snd_pcm_hw_params_can_mmap_sample_resolution(hw_params)),
 	      X(snd_pcm_hw_params_can_overrange(hw_params)),
 	      X(snd_pcm_hw_params_can_pause(hw_params)),

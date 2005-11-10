@@ -309,7 +309,7 @@ static void test_copy(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0");
     ok(!file_exists(".\\testdir2\\test1.txt"), "The file is not copied yet\n");
     ok(!file_exists(".\\testdir2\\test2.txt"), "The file is not copied yet\n");
-    ok(!SHFileOperationA(&shfo), "Files are copied to other directory \n");
+    ok(!SHFileOperationA(&shfo), "Files are copied to other directory\n");
     ok(file_exists(".\\testdir2\\test1.txt"), "The file is copied\n");
     ok(file_exists(".\\testdir2\\test2.txt"), "The file is copied\n");
     clean_after_shfo_tests();

@@ -2431,7 +2431,7 @@ GL_IDirect3DDeviceImpl_7_SetMaterial(LPDIRECT3DDEVICE7 iface,
     TRACE("(%p/%p)->(%p)\n", This, iface, lpMat);
     
     if (TRACE_ON(ddraw)) {
-        TRACE(" material is : \n");
+        TRACE(" material is :\n");
 	dump_D3DMATERIAL7(lpMat);
     }
     
@@ -2495,7 +2495,7 @@ GL_IDirect3DDeviceImpl_7_SetLight(LPDIRECT3DDEVICE7 iface,
     TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwLightIndex, lpLight);
     
     if (TRACE_ON(ddraw)) {
-        TRACE(" setting light : \n");
+        TRACE(" setting light :\n");
 	dump_D3DLIGHT7(lpLight);
     }
     
@@ -2646,7 +2646,7 @@ GL_IDirect3DDeviceImpl_7_SetViewport(LPDIRECT3DDEVICE7 iface,
     TRACE("(%p/%p)->(%p)\n", This, iface, lpData);
 
     if (TRACE_ON(ddraw)) {
-        TRACE(" viewport is : \n");
+        TRACE(" viewport is :\n");
 	TRACE("    - dwX = %ld   dwY = %ld\n",
 	      lpData->dwX, lpData->dwY);
 	TRACE("    - dwWidth = %ld   dwHeight = %ld\n",
@@ -2900,7 +2900,7 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
     if (TRACE_ON(ddraw)) {
 	if (dwCount > 0) {
 	    unsigned int i;
-	    TRACE(" rectangles : \n");
+	    TRACE(" rectangles :\n");
 	    for (i = 0; i < dwCount; i++) {
 	        TRACE("  - %ld x %ld     %ld x %ld\n", lpRects[i].u1.x1, lpRects[i].u2.y1, lpRects[i].u3.x2, lpRects[i].u4.y2);
 	    }

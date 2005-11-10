@@ -3916,7 +3916,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE8 ifa
     pIB = This->StateBlock->pIndexData;
     This->StateBlock->streamIsUP = FALSE;
 
-    TRACE("(%p) : Type=(%d,%s), min=%d, CountV=%d, startIdx=%d, countP=%d \n", This, 
+    TRACE("(%p) : Type=(%d,%s), min=%d, CountV=%d, startIdx=%d, countP=%d\n", This, 
           PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
           minIndex, NumVertices, startIndex, primCount);
 

@@ -1584,7 +1584,7 @@ BOOL WINAPI GetCommState(
 			break;
 #endif
 	        default:
-		        ERR("unknown speed %x \n",speed);
+		        ERR("unknown speed %x\n", speed);
 	}
 #endif
 	switch (port.c_cflag & CSIZE) {
@@ -1601,7 +1601,7 @@ BOOL WINAPI GetCommState(
 			lpdcb->ByteSize = 8;
 			break;
 	        default:
-		        ERR("unknown size %x \n",port.c_cflag & CSIZE);
+		        ERR("unknown size %x\n", port.c_cflag & CSIZE);
 	}
 
         if(port.c_iflag & INPCK)
@@ -1920,13 +1920,13 @@ static DWORD WINAPI Comm_CheckEvents(int fd, DWORD mask, serial_irq_info *new, s
     DWORD ret = 0, queue;
 
     TRACE("mask 0x%08lx\n", mask);
-    TRACE("old->rx          0x%08x vs. new->rx          0x%08x \n", old->rx, new->rx);
-    TRACE("old->tx          0x%08x vs. new->tx          0x%08x \n", old->tx, new->tx);
-    TRACE("old->frame       0x%08x vs. new->frame       0x%08x \n", old->frame, new->frame);
-    TRACE("old->overrun     0x%08x vs. new->overrun     0x%08x \n", old->overrun, new->overrun);
-    TRACE("old->parity      0x%08x vs. new->parity      0x%08x \n", old->parity, new->parity);
-    TRACE("old->brk         0x%08x vs. new->brk         0x%08x \n", old->brk, new->brk);
-    TRACE("old->buf_overrun 0x%08x vs. new->buf_overrun 0x%08x \n", old->buf_overrun, new->buf_overrun);
+    TRACE("old->rx          0x%08x vs. new->rx          0x%08x\n", old->rx, new->rx);
+    TRACE("old->tx          0x%08x vs. new->tx          0x%08x\n", old->tx, new->tx);
+    TRACE("old->frame       0x%08x vs. new->frame       0x%08x\n", old->frame, new->frame);
+    TRACE("old->overrun     0x%08x vs. new->overrun     0x%08x\n", old->overrun, new->overrun);
+    TRACE("old->parity      0x%08x vs. new->parity      0x%08x\n", old->parity, new->parity);
+    TRACE("old->brk         0x%08x vs. new->brk         0x%08x\n", old->brk, new->brk);
+    TRACE("old->buf_overrun 0x%08x vs. new->buf_overrun 0x%08x\n", old->buf_overrun, new->buf_overrun);
 
     ret |= ((mask & EV_BREAK) && ( old->brk != new->brk))?EV_BREAK:0;
     ret |= ((mask & EV_CTS  ) && ((old_mstat&MS_CTS_ON )!=(new_mstat&MS_CTS_ON )))?EV_CTS  :0;

@@ -875,7 +875,7 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
     
     if (rc == ERROR_SUCCESS)
     {
-        TRACE("Running the actions \n"); 
+        TRACE("Running the actions\n"); 
 
         rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, &iap);
         msiobj_release(&view->hdr);
@@ -1028,7 +1028,7 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
     dir = MSI_RecordGetString(row,1);
     if (!dir)
     {
-        ERR("Unable to get folder id \n");
+        ERR("Unable to get folder id\n");
         return ERROR_SUCCESS;
     }
 
@@ -1887,7 +1887,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             WCHAR filever[0x100];
             VS_FIXEDFILEINFO *lpVer;
 
-            TRACE("Version comparison.. \n");
+            TRACE("Version comparison..\n");
             versize = GetFileVersionInfoSizeW(file->TargetPath,&handle);
             version = msi_alloc(versize);
             GetFileVersionInfoW(file->TargetPath, 0, versize, version);
@@ -3118,7 +3118,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         }
         else
         {
-            ERR("Unable to query Revision_Number... \n");
+            ERR("Unable to query Revision_Number...\n");
             rc = ERROR_SUCCESS;
         }
         MsiCloseHandle(hSumInfo);
@@ -3540,7 +3540,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         return rc;
 
     /* dump all the info i can grab */
-    FIXME("Flesh out more information \n");
+    FIXME("Flesh out more information\n");
 
     msi_write_uninstall_property_vals( package, hkey );
 

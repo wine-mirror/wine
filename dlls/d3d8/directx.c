@@ -195,7 +195,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
     HRESULT hrc = D3D_OK;
     WINED3DCAPS *pWineCaps;
 
-    TRACE("(%p) Relay %d %u %p \n", This, Adapter, DeviceType, pCaps);
+    TRACE("(%p) Relay %d %u %p\n", This, Adapter, DeviceType, pCaps);
 
     if(NULL == pCaps){
         return D3DERR_INVALIDCALL;

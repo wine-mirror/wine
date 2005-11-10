@@ -103,7 +103,7 @@ Main_IDirect3DLightImpl_1_SetLight(LPDIRECT3DLIGHT iface,
     LPD3DLIGHT7 light7 = &(This->light7);
     TRACE("(%p/%p)->(%p)\n", This, iface, lpLight);
     if (TRACE_ON(ddraw)) {
-        TRACE("  Light definition : \n");
+        TRACE("  Light definition :\n");
 	dump_light((LPD3DLIGHT2) lpLight);
     }
 
@@ -145,7 +145,7 @@ Main_IDirect3DLightImpl_1_GetLight(LPDIRECT3DLIGHT iface,
     ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
     TRACE("(%p/%p)->(%p)\n", This, iface, lpLight);
     if (TRACE_ON(ddraw)) {
-        TRACE("  Returning light definition : \n");
+        TRACE("  Returning light definition :\n");
 	dump_light(&This->light);
     }
     memcpy(lpLight, &This->light, lpLight->dwSize);

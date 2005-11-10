@@ -431,7 +431,7 @@ static void mixer_test_deviceA(int device)
                       d,mixerlineA.szShortName, mixerlineA.szName,
                       mixerlineA.dwDestination,mixerlineA.dwSource);
                 trace("        LineID=%08lx Channels=%ld "
-                      "Connections=%ld Controls=%ld \n",
+                      "Connections=%ld Controls=%ld\n",
                       mixerlineA.dwLineID,mixerlineA.cChannels,
                       mixerlineA.cConnections,mixerlineA.cControls);
                 trace("        State=0x%08lx(%s)\n",
@@ -468,7 +468,7 @@ static void mixer_test_deviceA(int device)
                               s,mixerlineA.szShortName, mixerlineA.szName,
                               mixerlineA.dwDestination,mixerlineA.dwSource);
                         trace("          LineID=%08lx Channels=%ld "
-                              "Connections=%ld Controls=%ld \n",
+                              "Connections=%ld Controls=%ld\n",
                               mixerlineA.dwLineID,mixerlineA.cChannels,
                               mixerlineA.cConnections,mixerlineA.cControls);
                         trace("          State=0x%08lx(%s)\n",
@@ -821,7 +821,7 @@ static void mixer_test_deviceW(int device)
                       d,szShortName,szName,
                       mixerlineW.dwDestination,mixerlineW.dwSource);
                 trace("        LineID=%08lx Channels=%ld "
-                      "Connections=%ld Controls=%ld \n",
+                      "Connections=%ld Controls=%ld\n",
                       mixerlineW.dwLineID,mixerlineW.cChannels,
                       mixerlineW.cConnections,mixerlineW.cControls);
                 trace("        State=0x%08lx(%s)\n",
@@ -866,7 +866,7 @@ static void mixer_test_deviceW(int device)
                               s,szShortName,szName,
                               mixerlineW.dwDestination,mixerlineW.dwSource);
                         trace("          LineID=%08lx Channels=%ld "
-                              "Connections=%ld Controls=%ld \n",
+                              "Connections=%ld Controls=%ld\n",
                               mixerlineW.dwLineID,mixerlineW.cChannels,
                               mixerlineW.cConnections,mixerlineW.cControls);
                         trace("          State=0x%08lx(%s)\n",

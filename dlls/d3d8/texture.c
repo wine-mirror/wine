@@ -158,7 +158,7 @@ void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
 }
 D3DRESOURCETYPE WINAPI IDirect3DTexture8Impl_GetType(LPDIRECT3DTEXTURE8 iface) {
     IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
-    TRACE("(%p) : is %d \n", This, This->ResourceType);
+    TRACE("(%p) : is %d\n", This, This->ResourceType);
     return This->ResourceType;
 }
 

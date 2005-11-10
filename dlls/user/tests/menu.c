@@ -80,7 +80,7 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
                 SIZE sz;
                 pdis = (DRAWITEMSTRUCT *) lparam;
                 if( winetest_debug) {
-                    trace("WM_DRAWITEM received itemdata %ld item %d rc %ld,%ld-%ld,%ld \n",
+                    trace("WM_DRAWITEM received itemdata %ld item %d rc %ld,%ld-%ld,%ld\n",
                             pdis->itemData,
                             pdis->itemID, pdis->rcItem.left, pdis->rcItem.top,
                             pdis->rcItem.right,pdis->rcItem.bottom );

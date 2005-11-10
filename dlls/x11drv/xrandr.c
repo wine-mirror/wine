@@ -296,7 +296,7 @@ void X11DRV_XRandR_Init(void)
                 nmodes++;
 		TRACE(" <default>");
             }
-	    TRACE(" Hz \n");
+	    TRACE(" Hz\n");
         }
     }
     wine_tsx11_unlock();

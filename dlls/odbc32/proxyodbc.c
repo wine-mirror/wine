@@ -158,7 +158,7 @@ static PROXYHANDLE gProxyHandle;
 
 SQLRETURN SQLDummyFunc()
 {
-    TRACE("SQLDummyFunc: \n");
+    TRACE("SQLDummyFunc:\n");
     return SQL_SUCCESS;
 }
 

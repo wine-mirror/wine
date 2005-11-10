@@ -80,7 +80,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
     lpViewport->active_device = lpDevice;
     lpViewport->activate(lpViewport);
 
-    TRACE("ExecuteData : \n");
+    TRACE("ExecuteData :\n");
     if (TRACE_ON(ddraw))
       _dump_executedata(&(This->data));
 
@@ -570,7 +570,7 @@ Main_IDirect3DExecuteBufferImpl_1_Lock(LPDIRECT3DEXECUTEBUFFER iface,
     memcpy(lpDesc, &This->desc, dwSize);
     
     if (TRACE_ON(ddraw)) {
-        TRACE("  Returning description : \n");
+        TRACE("  Returning description :\n");
 	_dump_D3DEXECUTEBUFFERDESC(lpDesc);
     }
     return DD_OK;
@@ -621,7 +621,7 @@ Main_IDirect3DExecuteBufferImpl_1_GetExecuteData(LPDIRECT3DEXECUTEBUFFER iface,
     memcpy(lpData, &This->data, dwSize);
 
     if (TRACE_ON(ddraw)) {
-        TRACE("Returning data : \n");
+        TRACE("Returning data :\n");
 	_dump_executedata(lpData);
     }
 

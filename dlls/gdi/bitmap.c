@@ -132,7 +132,7 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
     HBITMAP hbmpRet = 0;
     DC *dc;
 
-    TRACE("(%p,%d,%d) = \n", hdc, width, height);
+    TRACE("(%p,%d,%d) =\n", hdc, width, height);
 
     if ((width >= 0x10000) || (height >= 0x10000))
     {

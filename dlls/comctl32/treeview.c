@@ -1805,7 +1805,7 @@ TREEVIEW_SetItemHeight(TREEVIEW_INFO *infoPtr, INT newHeight)
 {
     INT prevHeight = infoPtr->uItemHeight;
 
-    TRACE("%d \n", newHeight);
+    TRACE("%d\n", newHeight);
     if (newHeight == -1)
     {
 	infoPtr->uItemHeight = TREEVIEW_NaturalHeight(infoPtr);

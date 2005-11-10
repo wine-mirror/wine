@@ -671,7 +671,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     DWORD len;
     INTERNET_ASYNC_RESULT iar;
 
-    TRACE("--> \n");
+    TRACE("-->\n");
 
     assert( lpwhs->hdr.htype == WH_HHTTPSESSION );
     hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;

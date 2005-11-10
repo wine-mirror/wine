@@ -442,7 +442,7 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         IWineD3D_Release(This->wineD3D);
         This->wineD3D = NULL;
         HeapFree(GetProcessHeap(), 0, This);
-        TRACE("Freed device  %p \n",This);
+        TRACE("Freed device  %p\n", This);
         This = NULL;
     }
     return refCount;
@@ -663,12 +663,12 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     ***************************/
 
     if(MultisampleQuality < 0) {
-        FIXME("Invalid multisample level %ld \n", MultisampleQuality);
+        FIXME("Invalid multisample level %ld\n", MultisampleQuality);
         return D3DERR_INVALIDCALL; /* TODO: Check that this is the case! */
     }
 
     if(MultisampleQuality > 0) {
-        FIXME("MultisampleQuality set to %ld, substituting 0  \n" , MultisampleQuality);
+        FIXME("MultisampleQuality set to %ld, substituting 0\n", MultisampleQuality);
         MultisampleQuality=0;
     }
 
@@ -687,7 +687,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
          /** TODO: add support for non power two compressed textures (OpenGL 2 provices support for * non-power-two textures gratis) **/
         if (Format == WINED3DFMT_DXT1 || Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3
                || Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
-            FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d) \n",
+            FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d)\n",
                     This, Width, Height);
             return D3DERR_NOTAVAILABLE;
         }
@@ -827,7 +827,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
     unsigned int pow2Height = Height;
 
 
-    TRACE("(%p), Width(%d) Height(%d) Levels(%d) Usage(%ld) .... \n", This, Width, Height, Levels, Usage);
+    TRACE("(%p), Width(%d) Height(%d) Levels(%d) Usage(%ld) ....\n", This, Width, Height, Levels, Usage);
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, Texture, D3DRTYPE_TEXTURE, 0);
     D3DINITILIZEBASETEXTURE(object->baseTexture);    
@@ -844,7 +844,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
     /* Precalculated scaling for 'faked' non power of two texture coords */
     object->pow2scalingFactorX  =  (((float)Width)  / ((float)pow2Width));
     object->pow2scalingFactorY  =  (((float)Height) / ((float)pow2Height));
-    TRACE(" xf(%f) yf(%f) \n",     object->pow2scalingFactorX,     object->pow2scalingFactorY);
+    TRACE(" xf(%f) yf(%f)\n", object->pow2scalingFactorX, object->pow2scalingFactorY);
 
     /* Calculate levels for mip mapping */
     if (Levels == 0) {
@@ -869,7 +869,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
         hr = D3DCB_CreateSurface(This->parent, tmpW, tmpH, Format, Usage, Pool, i, &object->surfaces[i],NULL);
         if (hr!= D3D_OK) {
             int j;
-            FIXME("Failed to create surface  %p \n",object);
+            FIXME("Failed to create surface  %p\n", object);
             /* clean up */
             for (j = 0 ; j < i ; j++) {
                 IWineD3DSurface_Release(object->surfaces[j]);
@@ -1003,7 +1003,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
     D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, D3DRTYPE_CUBETEXTURE, 0);
     D3DINITILIZEBASETEXTURE(object->baseTexture);
 
-    TRACE("(%p) Create Cube Texture \n", This);
+    TRACE("(%p) Create Cube Texture\n", This);
 
     /** Non-power2 support **/
 
@@ -1056,7 +1056,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
                 return hr;
             }
             IWineD3DSurface_SetContainer(object->surfaces[j][i], (IUnknown *)object);
-            TRACE("Created surface level %d @ %p, \n", i, object->surfaces[j][i]);
+            TRACE("Created surface level %d @ %p,\n", i, object->surfaces[j][i]);
         }
         tmpW = max(1, tmpW >> 1);
     }
@@ -1173,7 +1173,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
     hDc                = GetDC(object->win_handle);
     object->display    = get_display(hDc);
     ReleaseDC(object->win_handle, hDc);
-    TRACE("Using a display of %p %p  \n", object->display, hDc);
+    TRACE("Using a display of %p %p\n", object->display, hDc);
 
     if (NULL == object->display || NULL == hDc) {
         WARN("Failed to get a display and HDc for Window %p\n", object->win_handle);
@@ -1542,7 +1542,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, UINT iSw
     SwapChainList *swapchain;
     HRESULT hr = D3DERR_INVALIDCALL;
     swapchain = This->swapchains;
-    TRACE("(%p) : swapchain %d \n", This, iSwapChain);
+    TRACE("(%p) : swapchain %d\n", This, iSwapChain);
 
 
     TRACE("(%p) Finding swapchain %d\n", This, iSwapChain);
@@ -2628,7 +2628,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWineD3DInde
     }else{
         TRACE("(%p) No index data set\n", This);
     }
-    TRACE("Returning %p %d \n",*ppIndexData, *pBaseVertexIndex);
+    TRACE("Returning %p %d\n", *ppIndexData, *pBaseVertexIndex);
 
     return D3D_OK;
 }
@@ -3628,7 +3628,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD S
          FIXME("out of range %d %d sampler %ld type %u\n", GL_LIMITS(samplers), WINED3D_HIGHEST_SAMPLER_STATE, Sampler, Type);
         return D3DERR_INVALIDCALL;
     }
-    TRACE("Setting sampler %ld %d to %ld \n", Sampler, Type, Value);
+    TRACE("Setting sampler %ld %d to %ld\n", Sampler, Type, Value);
     This->updateStateBlock->samplerState[Sampler][Type]         = Value;
     This->updateStateBlock->set.samplerState[Sampler][Type]     = Value;
     This->updateStateBlock->changed.samplerState[Sampler][Type] = Value;
@@ -4385,7 +4385,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD Stage, IWineD3DBaseTexture** ppTexture) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : (%ld /* Stage */,%p /* ppTexture */) \n", This, Stage, ppTexture);
+    TRACE("(%p) : (%ld /* Stage */,%p /* ppTexture */)\n", This, Stage, ppTexture);
 
     /* Reject invalid texture units */
     if (Stage >= GL_LIMITS(textures)) {
@@ -4702,7 +4702,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface,
     pIB = This->stateBlock->pIndexData;
     This->stateBlock->streamIsUP = FALSE;
 
-    TRACE("(%p) : Type=(%d,%s), min=%d, CountV=%d, startIdx=%d, baseVidx=%d, countP=%d \n", This,
+    TRACE("(%p) : Type=(%d,%s), min=%d, CountV=%d, startIdx=%d, baseVidx=%d, countP=%d\n", This,
           PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
           minIndex, NumVertices, startIndex, baseVIndex, primCount);
 
@@ -5134,7 +5134,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetRasterStatus(IWineD3DDevice *iface, UINT 
         hr = IWineD3DSwapChain_GetRasterStatus(swapChain, pRasterStatus);
         IWineD3DSwapChain_Release(swapChain);
     }else{
-        FIXME("(%p) IWineD3DSwapChain_GetRasterStatus returned in error \n", This);
+        FIXME("(%p) IWineD3DSwapChain_GetRasterStatus returned in error\n", This);
     }
     return hr;
 }
@@ -5369,7 +5369,7 @@ OpenGL evaluators or  tessellate surfaces within your application.
 /* http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/DrawRectPatch.asp */
 HRESULT WINAPI IWineD3DDeviceImpl_DrawRectPatch(IWineD3DDevice *iface, UINT Handle, CONST float* pNumSegs, CONST D3DRECTPATCH_INFO* pRectPatchInfo) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) Handle(%d) noSegs(%p) rectpatch(%p) \n", This, Handle, pNumSegs, pRectPatchInfo);
+    TRACE("(%p) Handle(%d) noSegs(%p) rectpatch(%p)\n", This, Handle, pNumSegs, pRectPatchInfo);
     FIXME("(%p) : Stub\n", This);
     return D3D_OK;
 
@@ -5378,7 +5378,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawRectPatch(IWineD3DDevice *iface, UINT Hand
 /* http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/DrawTriPatch.asp */
 HRESULT WINAPI IWineD3DDeviceImpl_DrawTriPatch(IWineD3DDevice *iface, UINT Handle, CONST float* pNumSegs, CONST D3DTRIPATCH_INFO* pTriPatchInfo) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) Handle(%d) noSegs(%p) tripatch(%p) \n", This, Handle, pNumSegs, pTriPatchInfo);
+    TRACE("(%p) Handle(%d) noSegs(%p) tripatch(%p)\n", This, Handle, pNumSegs, pTriPatchInfo);
     FIXME("(%p) : Stub\n", This);
     return D3D_OK;
 }
@@ -5426,7 +5426,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurfa
             }
         } else {
             if (D3DUSAGE_DEPTHSTENCIL & surface->resource.usage) {
-                FIXME("colouring of depth_stencil? %p buffers is not yet supported? %ld \n", surface, surface->resource.usage);
+                FIXME("colouring of depth_stencil? %p buffers is not yet supported? %ld\n", surface, surface->resource.usage);
             } else {
                 FIXME("(%p) : Regression %ld %p %p\n", This, surface->resource.usage, pSurface, This->renderTarget);
             }
@@ -6299,7 +6299,7 @@ void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IWineD3DR
 
         break;
         default:
-        FIXME("(%p) unknown resource type %p %u \n", This, resource, IWineD3DResource_GetType(resource));
+        FIXME("(%p) unknown resource type %p %u\n", This, resource, IWineD3DResource_GetType(resource));
         break;
     }
 

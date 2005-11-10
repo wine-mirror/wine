@@ -886,7 +886,7 @@ static	DWORD	MCI_LoadMciDriver(LPCWSTR _strDevTyp, LPWINE_MCIDRIVER* lpwmd)
 
     LeaveCriticalSection(&WINMM_IData.cs);
 
-    TRACE("wDevID=%04X \n", modp.wDeviceID);
+    TRACE("wDevID=%04X\n", modp.wDeviceID);
 
     modp.lpstrParams = NULL;
 
@@ -1866,7 +1866,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	ret = MCI_INTEGER_RETURNED;
 	break;
     case MCI_SYSINFO_INSTALLNAME:
-	TRACE("MCI_SYSINFO_INSTALLNAME \n");
+	TRACE("MCI_SYSINFO_INSTALLNAME\n");
 	if ((wmd = MCI_GetDriver(uDevID))) {
 	    ret = MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize,
 				  wmd->lpstrDeviceType);

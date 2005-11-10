@@ -852,7 +852,7 @@ int WINAPI WTDataPeek(HCTX hCtx, UINT wBegin, UINT wEnd,
 
     if (bgn == context->PacketsQueued ||  end == context->PacketsQueued)
     {
-        TRACE("%i %i %i \n", bgn, end, context->PacketsQueued);
+        TRACE("%i %i %i\n", bgn, end, context->PacketsQueued);
         LeaveCriticalSection(&csTablet);
         return 0;
     }

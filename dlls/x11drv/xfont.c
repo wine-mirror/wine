@@ -789,7 +789,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
                }
                else
                {
-                  FIXME("font '%s' has unknown registry '%s' and character encoding '%s' \n",
+                  FIXME("font '%s' has unknown registry '%s' and character encoding '%s'\n",
                        fullname, lfd->charset_registry, lfd->charset_encoding);
                   j = 255;
                }
@@ -3062,7 +3062,7 @@ static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
 
 	    if(abs(plf->lfHeight) > MAX_FONT_SIZE) {
 		ERR(
-  "plf->lfHeight = %d, Creating a 100 pixel font and rescaling metrics \n",
+  "plf->lfHeight = %d, Creating a 100 pixel font and rescaling metrics\n",
 		    plf->lfHeight);
 		pfo->rescale = fabs(plf->lfHeight / 100.0);
 		if(plf->lfHeight > 0) plf->lfHeight = 100;

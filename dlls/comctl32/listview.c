@@ -4190,7 +4190,7 @@ static HIMAGELIST LISTVIEW_CreateDragImage(LISTVIEW_INFO *infoPtr, INT iItem, LP
     HDC hdc, hdcOrig;
     HBITMAP hbmp, hOldbmp;
     HIMAGELIST dragList = 0;
-    TRACE("iItem=%d Count=%d \n", iItem, infoPtr->nItemCount);
+    TRACE("iItem=%d Count=%d\n", iItem, infoPtr->nItemCount);
 
     if (iItem < 0 || iItem >= infoPtr->nItemCount)
         return 0;

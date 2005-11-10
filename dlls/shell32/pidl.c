@@ -254,7 +254,7 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
     DWORD len;
     LPITEMIDLIST pidlNew = NULL;
 
-    TRACE("pidl=%p \n",pidl);
+    TRACE("pidl=%p\n", pidl);
     pdump(pidl);
 
     if (pidl)

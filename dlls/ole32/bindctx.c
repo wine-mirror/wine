@@ -170,7 +170,7 @@ BindCtxImpl_RegisterObjectBound(IBindCtx* iface,IUnknown* punk)
     if (lastIndex == This->bindCtxTableSize){ /* the table is full so it must be resized */
 
         if (This->bindCtxTableSize > (MAX_TAB_SIZE-BLOCK_TAB_SIZE)){
-            FIXME("This->bindCtxTableSize: %ld is out of data limite \n",This->bindCtxTableSize);
+            FIXME("This->bindCtxTableSize: %ld is out of data limite\n", This->bindCtxTableSize);
             return E_FAIL;
         }
 
@@ -351,7 +351,7 @@ BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR pszkey, IUnknown* punk)
         This->bindCtxTableSize+=BLOCK_TAB_SIZE; /* new table size */
         if (This->bindCtxTableSize > (MAX_TAB_SIZE-BLOCK_TAB_SIZE))
         {
-            FIXME("This->bindCtxTableSize: %ld is out of data limite \n",This->bindCtxTableSize);
+            FIXME("This->bindCtxTableSize: %ld is out of data limite\n", This->bindCtxTableSize);
             return E_FAIL;
         }
         This->bindCtxTable = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,This->bindCtxTable,

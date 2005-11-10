@@ -115,7 +115,7 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     *(mr->rdParm +12) = BM.bmWidthBytes;
     *(mr->rdParm +13) = BM.bmPlanes;
     *(mr->rdParm +14) = BM.bmBitsPixel;
-    TRACE("len = %ld  rop=%lx  \n",len,rop);
+    TRACE("len = %ld  rop=%lx\n", len, rop);
     if (GetBitmapBits( hBitmap, BM.bmWidthBytes * BM.bmHeight, mr->rdParm + 15))
 #endif
     {

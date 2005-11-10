@@ -824,7 +824,7 @@ static void test_demangle(void)
     static const char * mangled = ".ABVVec4@ref2@dice@@";
     static const char * result = "class dice::ref2::Vec4 const &";
     name = p__unDName(0, mangled + 1, 0,pmalloc,pfree,0x2800);
-    ok(name != NULL && !strcmp(name,result),"Got name %s \n",name);
+    ok(name != NULL && !strcmp(name,result),"Got name %s\n", name);
 }
 
 START_TEST(cpp)

@@ -35,7 +35,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_QueryInterface(IWineD3DSurface *iface, REFIID
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     /* Warn ,but be nice about things */
-    TRACE("(%p)->(%s,%p) \n", This,debugstr_guid(riid),ppobj);
+    TRACE("(%p)->(%s,%p)\n", This,debugstr_guid(riid),ppobj);
     if (riid == NULL) {
         ERR("Probably FIXME: Calling query interface with NULL riid\n");
     }
@@ -338,7 +338,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
                 /* Make sure that the texture is loaded */
                 IWineD3DSurface_PreLoad(iface); /* Make sure there is a texture to bind! */
     
-                TRACE("(%p) glGetTexImage level(%d), fmt(%d), typ(%d), mem(%p) \n" , This, This->glDescription.level,  This->glDescription.glFormat, This->glDescription.glType, This->resource.allocatedMemory);
+                TRACE("(%p) glGetTexImage level(%d), fmt(%d), typ(%d), mem(%p)\n" , This, This->glDescription.level,  This->glDescription.glFormat, This->glDescription.glType, This->resource.allocatedMemory);
     
                 if (This->resource.format == WINED3DFMT_DXT1 ||
                     This->resource.format == WINED3DFMT_DXT2 ||

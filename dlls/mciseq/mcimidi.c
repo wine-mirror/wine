@@ -114,7 +114,7 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
 	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
     HeapFree(GetProcessHeap(), 0, sca);
     ExitThread(ret);
-    WARN("Should not happen ? what's wrong \n");
+    WARN("Should not happen ? what's wrong\n");
     /* should not go after this point */
     return ret;
 }
@@ -281,7 +281,7 @@ static WORD MIDI_mciReadVaryLen(WINE_MCIMIDI* wmm, LPDWORD lpdw)
 	} while (byte & 0x80);
 	*lpdw = value;
 	/*
-	  TRACE("val=%08lX \n", value);
+	  TRACE("val=%08lX\n", value);
 	*/
     }
     return ret;
@@ -299,7 +299,7 @@ static DWORD	MIDI_mciReadNextEvent(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
     DWORD	tmp;
 
     if (mmioSeek(wmm->hFile, mmt->dwIndex, SEEK_SET) != mmt->dwIndex) {
-	WARN("Can't seek at %08lX \n", mmt->dwIndex);
+	WARN("Can't seek at %08lX\n", mmt->dwIndex);
 	return MCIERR_INVALID_FILE;
     }
     evtLength = MIDI_mciReadVaryLen(wmm, &evtPulse) + 1;	/* > 0 */
@@ -460,7 +460,7 @@ static DWORD MIDI_mciReadMThd(WINE_MCIMIDI* wmm, DWORD dwOffset)
     TRACE("(%p, %08lX);\n", wmm, dwOffset);
 
     if (mmioSeek(wmm->hFile, dwOffset, SEEK_SET) != dwOffset) {
-	WARN("Can't seek at %08lX begin of 'MThd' \n", dwOffset);
+	WARN("Can't seek at %08lX begin of 'MThd'\n", dwOffset);
 	return MCIERR_INVALID_FILE;
     }
     if (mmioRead(wmm->hFile, (HPSTR)&fourcc,
@@ -558,7 +558,7 @@ static DWORD MIDI_mciReadMThd(WINE_MCIMIDI* wmm, DWORD dwOffset)
     for (nt = 0; nt < wmm->nTracks; nt++) {
 	wmm->tracks[nt].wTrackNr = nt;
 	if (MIDI_mciReadMTrk(wmm, &wmm->tracks[nt]) != 0) {
-	    WARN("Can't read 'MTrk' header \n");
+	    WARN("Can't read 'MTrk' header\n");
 	    return MCIERR_INVALID_FILE;
 	}
     }
@@ -768,21 +768,21 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpParms)
 	if (mmioDescend(wmm->hFile, &ckMainRIFF, NULL, 0) != 0) {
 	    dwRet = MCIERR_INVALID_FILE;
 	} else {
-	    TRACE("ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
+	    TRACE("ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX\n",
 		  (LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType, ckMainRIFF.cksize);
 
 	    if (ckMainRIFF.ckid == FOURCC_RIFF && ckMainRIFF.fccType == mmioFOURCC('R', 'M', 'I', 'D')) {
 		mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
 		mmioSeek(wmm->hFile, ckMainRIFF.dwDataOffset + ((ckMainRIFF.cksize + 1) & ~1), SEEK_SET);
 		if (mmioDescend(wmm->hFile, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) == 0) {
-		    TRACE("... is a 'RMID' file \n");
+		    TRACE("... is a 'RMID' file\n");
 		    dwOffset = mmckInfo.dwDataOffset;
 		} else {
 		    dwRet = MCIERR_INVALID_FILE;
 		}
 	    }
 	    if (dwRet == 0 && MIDI_mciReadMThd(wmm, dwOffset) != 0) {
-		WARN("Can't read 'MThd' header \n");
+		WARN("Can't read 'MThd' header\n");
 		dwRet = MCIERR_INVALID_FILE;
 	    }
 	}
@@ -1204,11 +1204,11 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     start = 1; 		end = 99999;
     if (lpParms && (dwFlags & MCI_FROM)) {
 	start = lpParms->dwFrom;
-	TRACE("MCI_FROM=%d \n", start);
+	TRACE("MCI_FROM=%d\n", start);
     }
     if (lpParms && (dwFlags & MCI_TO)) {
 	end = lpParms->dwTo;
-	TRACE("MCI_TO=%d \n", end);
+	TRACE("MCI_TO=%d\n", end);
     }
     midiHdr.lpData = HeapAlloc(GetProcessHeap(), 0, 1200);
     if (!midiHdr.lpData)
@@ -1217,7 +1217,7 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     midiHdr.dwUser = 0L;
     midiHdr.dwFlags = 0L;
     dwRet = midiInPrepareHeader((HMIDIIN)wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
-    TRACE("After MIDM_PREPARE \n");
+    TRACE("After MIDM_PREPARE\n");
     wmm->dwStatus = MCI_MODE_RECORD;
     /* FIXME: there is no buffer added */
     while (wmm->dwStatus != MCI_MODE_STOP) {
@@ -1228,9 +1228,9 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 	TRACE("midiInStart => dwBytesRecorded=%lu\n", midiHdr.dwBytesRecorded);
 	if (midiHdr.dwBytesRecorded == 0) break;
     }
-    TRACE("Before MIDM_UNPREPARE \n");
+    TRACE("Before MIDM_UNPREPARE\n");
     dwRet = midiInUnprepareHeader((HMIDIIN)wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
-    TRACE("After MIDM_UNPREPARE \n");
+    TRACE("After MIDM_UNPREPARE\n");
     if (midiHdr.lpData != NULL) {
 	HeapFree(GetProcessHeap(), 0, midiHdr.lpData);
 	midiHdr.lpData = NULL;

@@ -292,7 +292,7 @@ BOOL WINAPI
 GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 		     LPVOID tokeninfo, DWORD tokeninfolength, LPDWORD retlen )
 {
-    TRACE("(%p, %s, %p, %ld, %p): \n",
+    TRACE("(%p, %s, %p, %ld, %p):\n",
           token,
           (tokeninfoclass == TokenUser) ? "TokenUser" :
           (tokeninfoclass == TokenGroups) ? "TokenGroups" :

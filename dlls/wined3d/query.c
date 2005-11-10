@@ -239,7 +239,7 @@ HRESULT WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWOR
     /*dwGetDataFlags = 0 || D3DGETDATA_FLUSH
     D3DGETDATA_FLUSH may return D3DERR_DEVICELOST if the device is lost
     */
-    FIXME("(%p) : stub \n", This);
+    FIXME("(%p) : stub\n", This);
     return S_OK; /* S_OK if the query data is available*/
 }
 
@@ -247,7 +247,7 @@ HRESULT WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWOR
 DWORD WINAPI IWineD3DQueryImpl_GetDataSize(IWineD3DQuery* iface){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     int dataSize = 0;
-    FIXME("(%p) : stub \n", This);
+    FIXME("(%p) : stub\n", This);
     switch(This->type){
     case WINED3DQUERYTYPE_VCACHE:
         dataSize = sizeof(WINED3DDEVINFO_VCACHE);
@@ -312,7 +312,7 @@ WINED3DQUERYTYPE WINAPI IWineD3DQueryImpl_GetType(IWineD3DQuery* iface){
 
 HRESULT WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIssueFlags){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
-    FIXME("(%p) : stub \n", This);
+    FIXME("(%p) : stub\n", This);
     return D3D_OK; /* can be D3DERR_INVALIDCALL.    */
 }
 

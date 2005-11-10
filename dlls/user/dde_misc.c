@@ -397,7 +397,7 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 	    (pInstance->CBFflags & CBF_FAIL_ALLSVRXACTIONS) == CBF_FAIL_ALLSVRXACTIONS;
     }
 
-    TRACE("instance created - checking validity \n");
+    TRACE("instance created - checking validity\n");
 
     if (*pidInst == 0)
     {
@@ -1074,11 +1074,11 @@ static	HSZ	WDML_CreateString(WDML_INSTANCE* pInstance, LPCVOID ptr, int codepage
     {
     case CP_WINANSI:
 	hsz = ATOM2HSZ(AddAtomA(ptr));
-	TRACE("added atom %s with HSZ %p, \n", debugstr_a(ptr), hsz);
+	TRACE("added atom %s with HSZ %p,\n", debugstr_a(ptr), hsz);
 	break;
     case CP_WINUNICODE:
 	hsz = ATOM2HSZ(AddAtomW(ptr));
-	TRACE("added atom %s with HSZ %p, \n", debugstr_w(ptr), hsz);
+	TRACE("added atom %s with HSZ %p,\n", debugstr_w(ptr), hsz);
 	break;
     default:
 	ERR("Unknown code page %d\n", codepage);
@@ -1156,7 +1156,7 @@ BOOL WINAPI DdeFreeStringHandle(DWORD idInst, HSZ hsz)
     WDML_INSTANCE*	pInstance;
     BOOL		ret = FALSE;
 
-    TRACE("(%ld,%p): \n", idInst, hsz);
+    TRACE("(%ld,%p):\n", idInst, hsz);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1183,7 +1183,7 @@ BOOL WINAPI DdeKeepStringHandle(DWORD idInst, HSZ hsz)
     WDML_INSTANCE*	pInstance;
     BOOL		ret = FALSE;
 
-    TRACE("(%ld,%p): \n", idInst, hsz);
+    TRACE("(%ld,%p):\n", idInst, hsz);
 
     EnterCriticalSection(&WDML_CritSect);
 

@@ -177,14 +177,14 @@ HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(PDIRECTPLAY8ADDRESS iface, C
   switch (dwDataType) {
   case DPNA_DATATYPE_DWORD:
     if (sizeof(DWORD) != dwDataSize) return DPNERR_INVALIDPARAM;
-    TRACE("(%p, %lu): DWORD Type -> %lu \n", lpvData, dwDataSize, *(const DWORD*) lpvData);
+    TRACE("(%p, %lu): DWORD Type -> %lu\n", lpvData, dwDataSize, *(const DWORD*) lpvData);
     break;
   case DPNA_DATATYPE_GUID:
     if (sizeof(GUID) != dwDataSize) return DPNERR_INVALIDPARAM;
-    TRACE("(%p, %lu): GUID Type -> %s \n", lpvData, dwDataSize, debugstr_guid((const GUID*) lpvData));
+    TRACE("(%p, %lu): GUID Type -> %s\n", lpvData, dwDataSize, debugstr_guid((const GUID*) lpvData));
     break;
   case DPNA_DATATYPE_STRING:
-    TRACE("(%p, %lu): STRING Type -> %s \n", lpvData, dwDataSize, (const CHAR*) lpvData);
+    TRACE("(%p, %lu): STRING Type -> %s\n", lpvData, dwDataSize, (const CHAR*) lpvData);
     break;
   case DPNA_DATATYPE_BINARY:
     TRACE("(%p, %lu): BINARY Type\n", lpvData, dwDataSize);

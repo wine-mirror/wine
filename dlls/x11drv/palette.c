@@ -464,7 +464,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
      {
 	int c_min = 0, c_max = palette_size, c_val;
 
-	TRACE("Dynamic colormap... \n");
+	TRACE("Dynamic colormap...\n");
 
 	/* let's become the first client that actually follows
 	 * X guidelines and does binary search...

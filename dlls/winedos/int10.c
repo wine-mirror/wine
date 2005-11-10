@@ -1258,11 +1258,11 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 	        SET_BH( context, VGA_GetColor16((int)BL_reg(context)) );
             break;
         case 0x08: /* READ OVERSCAN (BORDER COLOR) REGISTER  - A.C. */
-            TRACE("Read Overscan (Border Color) Register \n");
+            TRACE("Read Overscan (Border Color) Register\n");
 	        SET_BH( context, VGA_GetColor16(16) );
             break;
         case 0x09: /* READ ALL PALETTE REGISTERS AND OVERSCAN REGISTER - A.C.*/
-            TRACE("Read All Palette Registers and Overscan Register \n");
+            TRACE("Read All Palette Registers and Overscan Register\n");
 		/* ES:DX points to a 17 byte table where the results */
 		/*  of this call should be stored.                   */
                VGA_Get16Palette(CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edx));

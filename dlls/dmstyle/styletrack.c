@@ -275,7 +275,7 @@ static HRESULT IDirectMusicStyleTrack_IPersistStream_ParseStyleRef (LPPERSISTSTR
     TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_TIME_STAMP_CHUNK: {
-      TRACE_(dmfile)(": Time Stamp chunck \n");
+      TRACE_(dmfile)(": Time Stamp chunck\n");
       pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_STYLE_ITEM));
       if (NULL == pNewItem) {
 	ERR(": no more memory\n");

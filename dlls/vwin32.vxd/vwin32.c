@@ -112,7 +112,7 @@ BOOL WINAPI VWIN32_DeviceIoControl(DWORD dwIoControlCode,
 
             TRACE( "Control '%s': "
                    "eax=0x%08lx, ebx=0x%08lx, ecx=0x%08lx, "
-                   "edx=0x%08lx, esi=0x%08lx, edi=0x%08lx \n",
+                   "edx=0x%08lx, esi=0x%08lx, edi=0x%08lx\n",
                    (dwIoControlCode == VWIN32_DIOC_DOS_IOCTL)? "VWIN32_DIOC_DOS_IOCTL" :
                    (dwIoControlCode == VWIN32_DIOC_DOS_INT25)? "VWIN32_DIOC_DOS_INT25" :
                    (dwIoControlCode == VWIN32_DIOC_DOS_INT26)? "VWIN32_DIOC_DOS_INT26" :

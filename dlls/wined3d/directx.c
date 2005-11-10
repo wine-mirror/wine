@@ -1702,7 +1702,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     /* Create a WineD3DDevice object */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DDeviceImpl));
     *ppReturnedDeviceInterface = (IWineD3DDevice *)object;
-    TRACE("Created WineD3DDevice object @ %p \n", object);
+    TRACE("Created WineD3DDevice object @ %p\n", object);
     if (NULL == object) {
       return D3DERR_OUTOFVIDEOMEMORY;
     }
@@ -1745,7 +1745,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
             WARN("Failed to create stateblock\n");
             goto create_device_error;
         }
-        TRACE("(%p) : Created stateblock (%p) \n", This, object->stateBlock);
+        TRACE("(%p) : Created stateblock (%p)\n", This, object->stateBlock);
         object->updateStateBlock = object->stateBlock;
         IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)object->updateStateBlock);
         /* Setup surfaces for the backbuffer, frontbuffer and depthstencil buffer */

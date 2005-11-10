@@ -567,7 +567,7 @@ static void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexS
         if(thisFVF & D3DFVF_LASTBETA_UBYTE4) numBlends--;
 
         if ((thisFVF & D3DFVF_XYZB5 ) > D3DFVF_XYZRHW) {
-            TRACE("Setting blend Weights to %p \n", data);
+            TRACE("Setting blend Weights to %p\n", data);
             strided->u.s.blendWeights.lpData    = data;
             strided->u.s.blendWeights.dwType    = D3DDECLTYPE_FLOAT1 + numBlends - 1;
             strided->u.s.blendWeights.dwStride  = stride;
@@ -935,7 +935,7 @@ static void loadVertexData(IWineD3DDevice *iface, Direct3DVertexStridedData *sd)
 #if 0    /* TODO: Vertex blending */
             glDisable(GL_VERTEX_BLEND_ARB);
 #endif
-            TRACE("ARB_VERTEX_BLEND \n");
+            TRACE("ARB_VERTEX_BLEND\n");
         } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
             TRACE(" EXT_VERTEX_WEIGHTING\n");
             glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
@@ -955,7 +955,7 @@ static void loadVertexData(IWineD3DDevice *iface, Direct3DVertexStridedData *sd)
         } else {
             /* don't bother falling back to 'slow' as we don't support software FOG yet. */
             /* FIXME: fixme once */
-            TRACE("Hardware support for FOG is not avaiable, FOG disabled. \n");
+            TRACE("Hardware support for FOG is not avaiable, FOG disabled.\n");
         }
     } else {
         if (GL_SUPPRT(EXT_FOR_COORD) {
@@ -989,7 +989,7 @@ static void loadVertexData(IWineD3DDevice *iface, Direct3DVertexStridedData *sd)
         } else {
             /* don't bother falling back to 'slow' as we don't support software tangents and binormals yet . */
             /* FIXME: fixme once */
-            TRACE("Hardware support for tangents and binormals is not avaiable, tangents and binormals disabled. \n");
+            TRACE("Hardware support for tangents and binormals is not avaiable, tangents and binormals disabled.\n");
         }
     } else {
         if (GL_SUPPORT(EXT_COORDINATE_FRAME) {
@@ -1968,7 +1968,7 @@ void drawPrimitive(IWineD3DDevice *iface,
         rc = initializeFVF(iface, &fvf);
         if (rc) return;
     } else {
-        TRACE("(%p) : using vertex declaration %p \n", iface, This->stateBlock->vertexDecl);
+        TRACE("(%p) : using vertex declaration %p\n", iface, This->stateBlock->vertexDecl);
     }
 
     /* Ok, we will be updating the screen from here onwards so grab the lock */

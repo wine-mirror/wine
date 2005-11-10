@@ -921,7 +921,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
     if(hkCardLocations) RegCloseKey(hkCardLocations);
     HeapFree(GetProcessHeap(), 0, loc_key_name);
     HeapFree(GetProcessHeap(), 0, card_key_name);
-    TRACE(" returning success tot %ld needed %ld used %ld \n",
+    TRACE(" returning success tot %ld needed %ld used %ld\n",
             lpTranslateCaps->dwTotalSize,
             lpTranslateCaps->dwNeededSize,
             lpTranslateCaps->dwUsedSize );

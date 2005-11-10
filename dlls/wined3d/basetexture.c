@@ -161,7 +161,7 @@ DWORD WINAPI IWineD3DBaseTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LO
         LODNew = This->baseTexture.levels - 1;
      This->baseTexture.LOD = LODNew;
 
-    TRACE("(%p) : set bogus LOD to %d \n", This, This->baseTexture.LOD);
+    TRACE("(%p) : set bogus LOD to %d\n", This, This->baseTexture.LOD);
 
     return This->baseTexture.LOD;
 }
@@ -173,7 +173,7 @@ DWORD WINAPI IWineD3DBaseTextureImpl_GetLOD(IWineD3DBaseTexture *iface) {
         return  D3DERR_INVALIDCALL;
     }
 
-    TRACE("(%p) : returning %d \n", This, This->baseTexture.LOD);
+    TRACE("(%p) : returning %d\n", This, This->baseTexture.LOD);
 
     return This->baseTexture.LOD;
 }
@@ -192,7 +192,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_SetAutoGenFilterType(IWineD3DBaseTexture 
       return D3DERR_INVALIDCALL;
   }
   This->baseTexture.filterType = FilterType;
-  TRACE("(%p) : \n", This);
+  TRACE("(%p) :\n", This);
   return D3D_OK;
 }
 
@@ -361,7 +361,7 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
     for (i = 0 ;textureObjectSamplerStates[i].state != -1; i++) {
         if (*state != samplerStates[textureObjectSamplerStates[i].state]) {
             /* apply the state */
-            TRACE("(%p) : Changing state %u from %ld to %ld \n",This, i, *state , samplerStates[textureObjectSamplerStates[i].state]);
+            TRACE("(%p) : Changing state %u from %ld to %ld\n", This, i, *state , samplerStates[textureObjectSamplerStates[i].state]);
             switch (textureObjectSamplerStates[i].function) {
             case WINED3DSAMP_ADDRESSU:
             case WINED3DSAMP_ADDRESSV: /* fall through */
