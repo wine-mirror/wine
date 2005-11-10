@@ -1721,7 +1721,7 @@ sub output_api_comment($)
         # Format parameter names where they appear in the comment
         for my $parameter_name (@parameter_names)
         {
-          s/(^|[ \.\,\(\-\*])($parameter_name)($|[ \.\)\,\-\=\/])/$1$fmt[8]$2$fmt[9]$3/g;
+          s/(^|[ \.\,\(\-\*])($parameter_name)($|[ \.\)\,\-\/]|(\=[^"]))/$1$fmt[8]$2$fmt[9]$3/g;
         }
         # Structure dereferences include the dereferenced member
         s/(\-\>[A-Za-z_]+)/$fmt[8]$1$fmt[9]/g;
