@@ -1609,6 +1609,51 @@ HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller,
 }
 
 /***********************************************************************
+ *           URLDownloadToCacheFileA (URLMON.@)
+ */
+HRESULT WINAPI URLDownloadToCacheFileA(LPUNKNOWN lpUnkCaller, LPCSTR szURL, LPSTR szFileName,
+        DWORD dwBufLength, DWORD dwReserved, LPBINDSTATUSCALLBACK pBSC)
+{
+    LPWSTR url = NULL, file_name = NULL;
+    int len;
+    HRESULT hres;
+
+    TRACE("(%p %s %p %ld %ld %p)\n", lpUnkCaller, debugstr_a(szURL), szFileName,
+            dwBufLength, dwReserved, pBSC);
+
+    if(szURL) {
+        len = MultiByteToWideChar(CP_ACP, 0, szURL, -1, NULL, 0);
+        url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, szURL, -1, url, -1);
+    }
+
+    if(szFileName)
+        file_name = HeapAlloc(GetProcessHeap(), 0, dwBufLength*sizeof(WCHAR));
+
+    hres = URLDownloadToCacheFileW(lpUnkCaller, url, file_name, dwBufLength*sizeof(WCHAR),
+            dwReserved, pBSC);
+
+    if(SUCCEEDED(hres) && file_name)
+        WideCharToMultiByte(CP_ACP, 0, file_name, -1, szFileName, dwBufLength, NULL, NULL);
+
+    HeapFree(GetProcessHeap(), 0, url);
+    HeapFree(GetProcessHeap(), 0, file_name);
+
+    return hres;
+}
+
+/***********************************************************************
+ *           URLDownloadToCacheFileW (URLMON.@)
+ */
+HRESULT WINAPI URLDownloadToCacheFileW(LPUNKNOWN lpUnkCaller, LPCWSTR szURL, LPWSTR szFileName,
+                DWORD dwBufLength, DWORD dwReserved, LPBINDSTATUSCALLBACK pBSC)
+{
+    FIXME("(%p %s %p %ld %ld %p)\n", lpUnkCaller, debugstr_w(szURL), szFileName,
+            dwBufLength, dwReserved, pBSC);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *           HlinkSimpleNavigateToString (URLMON.@)
  */
 HRESULT WINAPI HlinkSimpleNavigateToString( LPCWSTR szTarget,
