@@ -364,10 +364,12 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
   sprintf(tmpstr,"%s\\%s",newdir,LONGDIR);
   ok(CreateDirectoryA(tmpstr,NULL),"CreateDirectoryA failed\n");
   bRes = CreateDirectoryA("c:",NULL);
-  ok(!bRes && GetLastError() == ERROR_ACCESS_DENIED,
+  ok(!bRes && (GetLastError() == ERROR_ACCESS_DENIED  || 
+               GetLastError() == ERROR_ALREADY_EXISTS),
      "CreateDirectoryA(\"c:\" should have failed (%ld)\n", GetLastError());
   bRes = CreateDirectoryA("c:\\",NULL);
-  ok(!bRes && GetLastError() == ERROR_ACCESS_DENIED,
+  ok(!bRes && (GetLastError() == ERROR_ACCESS_DENIED  ||
+               GetLastError() == ERROR_ALREADY_EXISTS),
      "CreateDirectoryA(\"c:\\\" should have failed (%ld)\n", GetLastError());
   sprintf(tmpstr,"%s\\%s\\%s",newdir,SHORTDIR,SHORTFILE);
   hndl=CreateFileA(tmpstr,GENERIC_WRITE,0,NULL,
