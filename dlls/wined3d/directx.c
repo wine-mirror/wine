@@ -244,6 +244,8 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             gl_info->gl_vendor = VENDOR_NVIDIA;
         } else if (strstr(gl_string, "ATI")) {
             gl_info->gl_vendor = VENDOR_ATI;
+        } else if (strstr(gl_string, "Mesa")) {
+            gl_info->gl_vendor = VENDOR_MESA;
         } else {
             gl_info->gl_vendor = VENDOR_WINE;
         }
@@ -314,6 +316,34 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             else {
                 major = *gl_string_cursor - '0';
                 minor = (*(gl_string_cursor+2) - '0') * 256 + (*(gl_string_cursor+4) - '0');
+            }
+            break;
+
+        case VENDOR_MESA:
+            gl_string_cursor = strstr(gl_string, "Mesa");
+            gl_string_cursor = strstr(gl_string_cursor, " ");
+            while (*gl_string_cursor && ' ' == *gl_string_cursor) ++gl_string_cursor;
+            if (*gl_string_cursor) {
+                char tmp[16];
+                int cursor = 0;
+
+                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
+                    tmp[cursor++] = *gl_string_cursor;
+                    ++gl_string_cursor;
+                }
+                tmp[cursor] = 0;
+                major = atoi(tmp);
+
+                if (*gl_string_cursor != '.') WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
+                ++gl_string_cursor;
+
+                cursor = 0;
+                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
+                    tmp[cursor++] = *gl_string_cursor;
+                    ++gl_string_cursor;
+                }
+                tmp[cursor] = 0;
+                minor = atoi(tmp);
             }
             break;
 
@@ -456,8 +486,11 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             } else if (strcmp(ThisExtn, "GLX_ARB_multisample") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB multisample support\n");
                 gl_info->supported[ARB_MULTISAMPLE] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_ARB_pixel_buffer_object") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ARB Pixel Buffer support\n");
+                gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] = TRUE;
             } else if (strcmp(ThisExtn, "GL_ARB_point_sprite") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB point sprint support\n");
+                TRACE_(d3d_caps)(" FOUND: ARB point sprite support\n");
                 gl_info->supported[ARB_POINT_SPRITE] = TRUE;
             } else if (strstr(ThisExtn, "GL_ARB_vertex_program")) {
                 gl_info->vs_arb_version = VS_VERSION_11;
@@ -480,6 +513,9 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             } else if (strcmp(ThisExtn, "GL_EXT_fog_coord") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT Fog coord support\n");
                 gl_info->supported[EXT_FOG_COORD] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_EXT_framebuffer_object") == 0) {
+                TRACE_(d3d_caps)(" FOUND: EXT Frame Buffer Object support\n");
+                gl_info->supported[EXT_FRAMEBUFFER_OBJECT] = TRUE;
             } else if (strcmp(ThisExtn, "GL_EXT_paletted_texture") == 0) { /* handle paletted texture extensions */
                 TRACE_(d3d_caps)(" FOUND: EXT Paletted texture support\n");
                 gl_info->supported[EXT_PALETTED_TEXTURE] = TRUE;

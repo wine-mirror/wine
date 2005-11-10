@@ -98,6 +98,86 @@
 #define GL_MODELVIEW31_ARB                0x873F
 #endif
 typedef void (APIENTRY * PGLFNGLWEIGHTPOINTERARB) (GLint size, GLenum type, GLsizei stride, GLvoid* pointer);
+/* GL_ARB_pixel_buffer_object */
+#ifndef GL_ARB_pixel_buffer_object
+#define GL_ARB_pixel_buffer_object 1
+#endif
+#define GL_PIXEL_PACK_BUFFER_ARB               0x88EB
+#define GL_PIXEL_UNPACK_BUFFER_ARB             0x88EC
+#define GL_PIXEL_PACK_BUFFER_BINDING_ARB       0x88ED
+#define GL_PIXEL_UNPACK_BUFFER_BINDING_ARB     0x88EF
+/* GL_EXT_framebuffer_object */
+#ifndef GL_EXT_framebuffer_object
+#define GL_EXT_framebuffer_object 1
+#define GL_FRAMEBUFFER_EXT                     0x8D40
+#define GL_RENDERBUFFER_EXT                    0x8D41
+#define GL_STENCIL_INDEX1_EXT                  0x8D46
+#define GL_STENCIL_INDEX4_EXT                  0x8D47
+#define GL_STENCIL_INDEX8_EXT                  0x8D48
+#define GL_STENCIL_INDEX16_EXT                 0x8D49
+#define GL_RENDERBUFFER_WIDTH_EXT              0x8D42
+#define GL_RENDERBUFFER_HEIGHT_EXT             0x8D43
+#define GL_RENDERBUFFER_INTERNAL_FORMAT_EXT    0x8D44
+#define GL_RENDERBUFFER_RED_SIZE_EXT           0x8D50
+#define GL_RENDERBUFFER_GREEN_SIZE_EXT         0x8D51
+#define GL_RENDERBUFFER_BLUE_SIZE_EXT          0x8D52
+#define GL_RENDERBUFFER_ALPHA_SIZE_EXT         0x8D53
+#define GL_RENDERBUFFER_DEPTH_SIZE_EXT         0x8D54
+#define GL_RENDERBUFFER_STENCIL_SIZE_EXT       0x8D55
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT            0x8CD0
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT            0x8CD1
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL_EXT          0x8CD2
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE_EXT  0x8CD3
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET_EXT     0x8CD4
+#define GL_COLOR_ATTACHMENT0_EXT                0x8CE0
+#define GL_COLOR_ATTACHMENT1_EXT                0x8CE1
+#define GL_COLOR_ATTACHMENT2_EXT                0x8CE2
+#define GL_COLOR_ATTACHMENT3_EXT                0x8CE3
+#define GL_COLOR_ATTACHMENT4_EXT                0x8CE4
+#define GL_COLOR_ATTACHMENT5_EXT                0x8CE5
+#define GL_COLOR_ATTACHMENT6_EXT                0x8CE6
+#define GL_COLOR_ATTACHMENT7_EXT                0x8CE7
+#define GL_COLOR_ATTACHMENT8_EXT                0x8CE8
+#define GL_COLOR_ATTACHMENT9_EXT                0x8CE9
+#define GL_COLOR_ATTACHMENT10_EXT               0x8CEA
+#define GL_COLOR_ATTACHMENT11_EXT               0x8CEB
+#define GL_COLOR_ATTACHMENT12_EXT               0x8CEC
+#define GL_COLOR_ATTACHMENT13_EXT               0x8CED
+#define GL_COLOR_ATTACHMENT14_EXT               0x8CEE
+#define GL_COLOR_ATTACHMENT15_EXT               0x8CEF
+#define GL_DEPTH_ATTACHMENT_EXT                 0x8D00
+#define GL_STENCIL_ATTACHMENT_EXT               0x8D20
+#define GL_FRAMEBUFFER_COMPLETE_EXT                          0x8CD5
+#define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT             0x8CD6
+#define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT     0x8CD7
+#define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT             0x8CD9
+#define GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT                0x8CDA
+#define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT            0x8CDB
+#define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT            0x8CDC
+#define GL_FRAMEBUFFER_UNSUPPORTED_EXT                       0x8CDD
+#define GL_FRAMEBUFFER_BINDING_EXT             0x8CA6
+#define GL_RENDERBUFFER_BINDING_EXT            0x8CA7
+#define GL_MAX_COLOR_ATTACHMENTS_EXT           0x8CDF
+#define GL_MAX_RENDERBUFFER_SIZE_EXT           0x84E8
+#define GL_INVALID_FRAMEBUFFER_OPERATION_EXT   0x0506
+#endif
+typedef GLboolean (APIENTRY * PGLFNGLISRENDERBUFFEREXTPROC)(GLuint renderbuffer);
+typedef void (APIENTRY * PGLFNGLBINDRENDERBUFFEREXTPROC)(GLenum target, GLuint renderbuffer);
+typedef void (APIENTRY * PGLFNGLDELETERENDERBUFFERSEXTPROC)(GLsizei n, const GLuint *renderbuffers);
+typedef void (APIENTRY * PGLFNGLGENRENDERBUFFERSEXTPROC)(GLsizei n, GLuint *renderbuffers);
+typedef void (APIENTRY * PGLFNGLRENDERBUFFERSTORAGEEXTPROC)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+typedef void (APIENTRY * PGLFNGLGETRENDERBUFFERPARAMETERIVEXTPROC)(GLenum target, GLenum pname, GLint *params);
+typedef GLboolean (APIENTRY * PGLFNGLISFRAMEBUFFEREXTPROC)(GLuint framebuffer);
+typedef void (APIENTRY * PGLFNGLBINDFRAMEBUFFEREXTPROC)(GLenum target, GLuint framebuffer);
+typedef void (APIENTRY * PGLFNGLDELETEFRAMEBUFFERSEXTPROC)(GLsizei n, const GLuint *framebuffers);
+typedef void (APIENTRY * PGLFNGLGENFRAMEBUFFERSEXTPROC)(GLsizei n, GLuint *framebuffers);
+typedef GLenum (APIENTRY * PGLFNGLCHECKFRAMEBUFFERSTATUSEXTPROC)(GLenum target);
+typedef void (APIENTRY * PGLFNGLFRAMEBUFFERTEXTURE1DEXTPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+typedef void (APIENTRY * PGLFNGLFRAMEBUFFERTEXTURE2DEXTPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+typedef void (APIENTRY * PGLFNGLFRAMEBUFFERTEXTURE3DEXTPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
+typedef void (APIENTRY * PGLFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+typedef void (APIENTRY * PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC)(GLenum target, GLenum attachment, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGLGENERATEMIPMAPEXTPROC)(GLenum target);
 /* GL_EXT_secondary_color */
 #ifndef GL_EXT_secondary_color
 #define GL_EXT_secondary_color 1
@@ -659,17 +739,31 @@ typedef void (APIENTRY * PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC) (GLenum stage, 
 /* #define ZERO */
 #endif
 
-/* Point sprites */
+/**
+ * Point sprites 
+ */
+/* GL_ARB_point_sprite */
 #ifndef GL_ARB_point_sprite
 #define GL_ARB_point_sprite 1
 #define GL_POINT_SPRITE_ARB               0x8861
 #define GL_COORD_REPLACE_ARB              0x8862
 #endif
+/**
+ * @TODO: GL_NV_point_sprite 
+ */
 
-/* TODO: GL_NV_point_sprite */
-
-/* Occlusion Queries */
-
+/**
+ * Occlusion Queries 
+ */
+/* GL_ARB_occlusion_query */
+#ifndef GL_ARB_occlusion_query
+#define GL_ARB_occlusion_query 1
+#define GL_SAMPLES_PASSED_ARB                             0x8914
+#define GL_QUERY_COUNTER_BITS_ARB                         0x8864
+#define GL_CURRENT_QUERY_ARB                              0x8865
+#define GL_QUERY_RESULT_ARB                               0x8866
+#define GL_QUERY_RESULT_AVAILABLE_ARB                     0x8867
+#endif
 typedef void (APIENTRY * PGLFNGENQUERIESARBPROC) (GLsizei n, GLuint *queries);
 typedef void (APIENTRY * PGLFNDELETEQUERIESARBPROC) (GLsizei n, const GLuint *queries);
 typedef GLboolean (APIENTRY * PGLFNISQUERYARBPROC) (GLuint query);
@@ -678,33 +772,13 @@ typedef void (APIENTRY * PGLFNENDQUERYARBPROC) (GLenum target);
 typedef void (APIENTRY * PGLFNGETQUERYIVARBPROC) (GLenum target, GLenum pname, GLint *params);
 typedef void (APIENTRY * PGLFNGETQUERYOBJECTIVARBPROC) (GLuint query, GLenum pname, GLint *params);
 typedef void (APIENTRY * PGLFNGETQUERYOBJECTUIVARBPROC) (GLuint query, GLenum pname, GLuint *params);
-
-#ifndef GL_ARB_occlusion_query
-#define GL_ARB_occlusion_query 1
-
-#define GL_SAMPLES_PASSED_ARB                             0x8914
-#define GL_QUERY_COUNTER_BITS_ARB                         0x8864
-#define GL_CURRENT_QUERY_ARB                              0x8865
-#define GL_QUERY_RESULT_ARB                               0x8866
-#define GL_QUERY_RESULT_AVAILABLE_ARB                     0x8867
-#endif
-
-typedef void (APIENTRY * PGLFNGENOCCLUSIONQUERIESNVPROC) (GLsizei n, GLuint *ids);
-typedef void (APIENTRY * PGLFNDELETEOCCLUSIONQUERIESNVPROC) (GLsizei n, const GLuint *ids);
-typedef GLboolean (APIENTRY * PGLFNISOCCLUSIONQUERYNVPROC) (GLuint id);
-typedef void (APIENTRY * PGLFNBEGINOCCLUSIONQUERYNVPROC) (GLuint id);
-typedef void (APIENTRY * PGLFNENDOCCLUSIONQUERYNVPROC) (void);
-typedef void (APIENTRY * PGLFNGETOCCLUSIONQUERYIVNVPROC) (GLuint id, GLenum pname, GLint *params);
-typedef void (APIENTRY * PGLFNGETOCCLUSIONQUERYUIVNVPROC) (GLuint id, GLenum pname, GLuint *params);
-
 /* GL_HP_occlusion_test isn't complete, but it's constants are used by GL_NV_occlusion_query */
 #ifndef GL_HP_occlusion_test
 #define GL_HP_occlusion_test 1
 #define GL_OCCLUSION_TEST_HP                 0x8165
 #define GL_OCCLUSION_TEST_RESULT_HP          0x8165
 #endif
-
-
+/*  GL_NV_occlusion_query */
 #ifndef GL_NV_occlusion_query
 #define GL_NV_occlusion_query 1
 #define GL_PIXEL_COUNTER_BITS_NV          0x8864
@@ -712,7 +786,13 @@ typedef void (APIENTRY * PGLFNGETOCCLUSIONQUERYUIVNVPROC) (GLuint id, GLenum pna
 #define GL_PIXEL_COUNT_NV                 0x8866
 #define GL_PIXEL_COUNT_AVAILABLE_NV       0x8867
 #endif
-
+typedef void (APIENTRY * PGLFNGENOCCLUSIONQUERIESNVPROC) (GLsizei n, GLuint *ids);
+typedef void (APIENTRY * PGLFNDELETEOCCLUSIONQUERIESNVPROC) (GLsizei n, const GLuint *ids);
+typedef GLboolean (APIENTRY * PGLFNISOCCLUSIONQUERYNVPROC) (GLuint id);
+typedef void (APIENTRY * PGLFNBEGINOCCLUSIONQUERYNVPROC) (GLuint id);
+typedef void (APIENTRY * PGLFNENDOCCLUSIONQUERYNVPROC) (void);
+typedef void (APIENTRY * PGLFNGETOCCLUSIONQUERYIVNVPROC) (GLuint id, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETOCCLUSIONQUERYUIVNVPROC) (GLuint id, GLenum pname, GLuint *params);
 
 
 /****************************************************
@@ -732,7 +812,6 @@ typedef void (APIENTRY * PGLFNGETOCCLUSIONQUERYUIVNVPROC) (GLuint id, GLenum pna
  * OpenGL GLX Extensions
  *  defines and functions pointer
  ****************************************************/
-
 
 
 /****************************************************
@@ -812,6 +891,7 @@ typedef enum _GL_SupportedExt {
   ARB_MULTITEXTURE,
   ARB_OCCLUSION_QUERY,
   ARB_POINT_PARAMETERS,
+  ARB_PIXEL_BUFFER_OBJECT,
   ARB_POINT_SPRITE,
   ARB_TEXTURE_COMPRESSION,
   ARB_TEXTURE_CUBE_MAP,
@@ -825,6 +905,7 @@ typedef enum _GL_SupportedExt {
   ARB_VERTEX_BUFFER_OBJECT,
   /* EXT */
   EXT_FOG_COORD,
+  EXT_FRAMEBUFFER_OBJECT,
   EXT_PALETTED_TEXTURE,
   EXT_PIXEL_BUFFER_OBJECT,
   EXT_POINT_PARAMETERS,
@@ -886,6 +967,24 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNGETBUFFERPOINTERVARBPROC,       glGetBufferPointervARB); \
     /** EXT Extensions **/ \
     /* GL_EXT_fog_coord */ \
+    /* GL_EXT_framebuffer_object */ \
+    USE_GL_FUNC(PGLFNGLISRENDERBUFFEREXTPROC,          glIsRenderbufferEXT); \
+    USE_GL_FUNC(PGLFNGLBINDRENDERBUFFEREXTPROC,        glBindRenderbufferEXT); \
+    USE_GL_FUNC(PGLFNGLDELETERENDERBUFFERSEXTPROC,     glDeleteRenderbuffersEXT); \
+    USE_GL_FUNC(PGLFNGLGENRENDERBUFFERSEXTPROC,        glGenRenderbuffersEXT); \
+    USE_GL_FUNC(PGLFNGLRENDERBUFFERSTORAGEEXTPROC,     glRenderbufferStorageEXT); \
+    USE_GL_FUNC(PGLFNGLISFRAMEBUFFEREXTPROC,           glIsFramebufferEXT); \
+    USE_GL_FUNC(PGLFNGLBINDFRAMEBUFFEREXTPROC,         glBindFramebufferEXT); \
+    USE_GL_FUNC(PGLFNGLDELETEFRAMEBUFFERSEXTPROC,      glDeleteFramebuffersEXT); \
+    USE_GL_FUNC(PGLFNGLGENFRAMEBUFFERSEXTPROC,         glGenFramebuffersEXT); \
+    USE_GL_FUNC(PGLFNGLCHECKFRAMEBUFFERSTATUSEXTPROC,  glCheckFramebufferStatusEXT); \
+    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE1DEXTPROC,    glFramebufferTexture1DEXT); \
+    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE2DEXTPROC,    glFramebufferTexture2DEXT); \
+    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE3DEXTPROC,    glFramebufferTexture3DEXT); \
+    USE_GL_FUNC(PGLFNGLFRAMEBUFFERRENDERBUFFEREXTPROC, glFramebufferRenderbufferEXT); \
+    USE_GL_FUNC(PGLFNGLGENERATEMIPMAPEXTPROC,          glGenerateMipmapEXT); \
+    USE_GL_FUNC(PGLFNGLGETRENDERBUFFERPARAMETERIVEXTPROC, glGetRenderbufferParameterivEXT); \
+    USE_GL_FUNC(PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC, glGetFramebufferAttachmentParameterivEXT); \
     /* GL_EXT_paletted_texture */ \
     USE_GL_FUNC(PGLFNGLCOLORTABLEEXTPROC,             glColorTableEXT); \
     /* GL_EXT_point_parameters */ \
