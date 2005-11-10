@@ -1491,6 +1491,9 @@ end:
     return ret;
 }
 
+/***********************************************************************
+ * MsiProvideQualifiedComponentExW [MSI.@]
+ */
 UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
                 LPCWSTR szQualifier, DWORD dwInstallMode, LPWSTR szProduct,
                 DWORD Unused1, DWORD Unused2, LPWSTR lpPathBuf,
@@ -1500,10 +1503,9 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
     UINT rc;
     LPWSTR info;
     DWORD sz;
-    LPWSTR product = NULL;
-    LPWSTR component = NULL;
-    LPWSTR ptr;
-    GUID clsid;
+    WCHAR product[MAX_FEATURE_CHARS+1];
+    WCHAR component[MAX_FEATURE_CHARS+1];
+    WCHAR feature[MAX_FEATURE_CHARS+1];
 
     TRACE("%s %s %li %s %li %li %p %p\n", debugstr_w(szComponent),
           debugstr_w(szQualifier), dwInstallMode, debugstr_w(szProduct),
@@ -1530,25 +1532,8 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
         return ERROR_INDEX_ABSENT;
     }
 
-    /* find the component */
-    ptr = strchrW(&info[20],'>');
-    if (ptr)
-        ptr++;
-    else
-    {
-        RegCloseKey(hkey);
-        msi_free(info);
-        return ERROR_INDEX_ABSENT;
-    }
-
-    if (!szProduct)
-    {
-        decode_base85_guid(info,&clsid);
-        StringFromCLSID(&clsid, &product);
-    }
-    decode_base85_guid(ptr,&clsid);
-    StringFromCLSID(&clsid, &component);
-
+    MsiDecomposeDescriptorW(info, product, feature, component, &sz);
+    
     if (!szProduct)
         rc = MsiGetComponentPathW(product, component, lpPathBuf, pcchPathBuf);
     else
@@ -1556,8 +1541,6 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
    
     RegCloseKey(hkey);
     msi_free(info);
-    msi_free(product);
-    msi_free(component);
 
     if (rc == INSTALLSTATE_LOCAL)
         return ERROR_SUCCESS;
