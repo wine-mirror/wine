@@ -728,16 +728,22 @@ static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc )
 }
 
 /* gets the target path directly or through MSI */
-static HRESULT get_path( IShellLinkW *sl, LPWSTR szPath, DWORD sz )
+static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
+                            LPWSTR szArgs, DWORD argsSize)
 {
     IShellLinkDataList *dl = NULL;
     EXP_DARWIN_LINK *dar = NULL;
     HRESULT hr;
 
     szPath[0] = 0;
-    hr = IShellLinkW_GetPath( sl, szPath, MAX_PATH, NULL, SLGP_RAWPATH );
+    szArgs[0] = 0;
+
+    hr = IShellLinkW_GetPath( sl, szPath, pathSize, NULL, SLGP_RAWPATH );
     if (hr == S_OK && szPath[0])
+    {
+        IShellLinkW_GetArguments( sl, szArgs, argsSize );
         return hr;
+    }
 
     hr = IShellLinkW_QueryInterface( sl, &IID_IShellLinkDataList, (LPVOID*) &dl );
     if (FAILED(hr))
@@ -746,7 +752,88 @@ static HRESULT get_path( IShellLinkW *sl, LPWSTR szPath, DWORD sz )
     hr = IShellLinkDataList_CopyDataBlock( dl, EXP_DARWIN_ID_SIG, (LPVOID*) &dar );
     if (SUCCEEDED(hr))
     {
-        CommandLineFromMsiDescriptor( dar->szwDarwinID, szPath, &sz );
+        WCHAR* szCmdline;
+        DWORD cmdSize;
+
+        cmdSize=0;
+        hr = CommandLineFromMsiDescriptor( dar->szwDarwinID, NULL, &cmdSize );
+        if (hr == ERROR_SUCCESS)
+        {
+            cmdSize++;
+            szCmdline = HeapAlloc( GetProcessHeap(), 0, cmdSize*sizeof(WCHAR) );
+            hr = CommandLineFromMsiDescriptor( dar->szwDarwinID, szCmdline, &cmdSize );
+            WINE_TRACE("      command    : %s\n", wine_dbgstr_w(szCmdline));
+            if (hr == ERROR_SUCCESS)
+            {
+                WCHAR *s, *d;
+                int bcount, in_quotes;
+
+                /* Extract the application path */
+                bcount=0;
+                in_quotes=0;
+                s=szCmdline;
+                d=szPath;
+                while (*s)
+                {
+                    if ((*s==0x0009 || *s==0x0020) && !in_quotes)
+                    {
+                        /* skip the remaining spaces */
+                        do {
+                            s++;
+                        } while (*s==0x0009 || *s==0x0020);
+                        break;
+                    }
+                    else if (*s==0x005c)
+                    {
+                        /* '\\' */
+                        *d++=*s++;
+                        bcount++;
+                    }
+                    else if (*s==0x0022)
+                    {
+                        /* '"' */
+                        if ((bcount & 1)==0)
+                        {
+                            /* Preceded by an even number of '\', this is
+                             * half that number of '\', plus a quote which
+                             * we erase.
+                             */
+                            d-=bcount/2;
+                            in_quotes=!in_quotes;
+                            s++;
+                        }
+                        else
+                        {
+                            /* Preceded by an odd number of '\', this is
+                             * half that number of '\' followed by a '"'
+                             */
+                            d=d-bcount/2-1;
+                            *d++='"';
+                            s++;
+                        }
+                        bcount=0;
+                    }
+                    else
+                    {
+                        /* a regular character */
+                        *d++=*s++;
+                        bcount=0;
+                    }
+                    if ((d-szPath) == pathSize)
+                    {
+                        /* Keep processing the path till we get to the
+                         * arguments, but 'stand still'
+                         */
+                        d--;
+                    }
+                }
+                /* Close the application path */
+                *d=0;
+
+                lstrcpynW(szArgs, s, argsSize);
+            }
+            HeapFree( GetProcessHeap(), 0, szCmdline );
+        }
         LocalFree( dar );
     }
 
@@ -788,11 +875,8 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
     IShellLinkW_GetDescription( sl, szDescription, INFOTIPSIZE );
     WINE_TRACE("description: %s\n", wine_dbgstr_w(szDescription));
 
-    get_path( sl, szPath, MAX_PATH );
+    get_cmdline( sl, szPath, MAX_PATH, szArgs, INFOTIPSIZE);
     WINE_TRACE("path       : %s\n", wine_dbgstr_w(szPath));
-
-    szArgs[0] = 0;
-    IShellLinkW_GetArguments( sl, szArgs, INFOTIPSIZE );
     WINE_TRACE("args       : %s\n", wine_dbgstr_w(szArgs));
 
     szIconPath[0] = 0;
