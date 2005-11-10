@@ -1635,6 +1635,8 @@ typedef struct tagEXTLOGPEN
 #define DESKTOPVERTRES    117
 #define DESKTOPHORZRES    118
 #define BTLALIGNMENT      119
+#define SHADEBLENDCAPS    120
+#define COLORMGMTCAPS     121
 
 /* TECHNOLOGY */
 #define DT_PLOTTER        0
@@ -1725,7 +1727,6 @@ typedef struct tagEXTLOGPEN
 #define RC_DEVBITS        0x8000
 
 /* CAPS1 */
-
 #define C1_TRANSPARENT    0x0001
 #define TC_TT_ABLE        0x0002
 #define C1_TT_CR_ANY      0x0004
@@ -1739,6 +1740,14 @@ typedef struct tagEXTLOGPEN
 #define C1_COLORCURSOR    0x0800
 #define C1_CMYK_ABLE      0x1000
 #define C1_SLOW_CARD      0x2000
+
+/* SHADEBLENDCAPS */
+#define SB_NONE           0x0000
+#define SB_CONST_ALPHA    0x0001
+#define SB_PIXEL_ALPHA    0x0002
+#define SB_PREMULT_ALPHA  0x0004
+#define SB_GRAD_RECT      0x0010
+#define SB_GRAD_TRI       0x0020
 
   /* Device-independent bitmaps */
 

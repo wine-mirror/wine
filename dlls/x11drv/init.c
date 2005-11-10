@@ -227,6 +227,8 @@ INT X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
         return (RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 | RC_DI_BITMAP |
                 RC_DIBTODEV | RC_BIGFONT | RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS |
                 (palette_size ? RC_PALETTE : 0));
+    case SHADEBLENDCAPS:
+        return (SB_GRAD_RECT | SB_GRAD_TRI | SB_CONST_ALPHA | SB_PIXEL_ALPHA);
     case ASPECTX:
     case ASPECTY:
         return 36;
