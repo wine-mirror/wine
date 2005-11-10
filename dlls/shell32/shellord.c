@@ -622,6 +622,8 @@ static INT SHADD_create_add_mru_data(HANDLE mruhandle, LPSTR doc_name, LPSTR new
 /*************************************************************************
  * SHAddToRecentDocs				[SHELL32.@]
  *
+ * Modify (add/clear) Shell's list of recently used documents.
+ *
  * PARAMETERS
  *   uFlags  [IN] SHARD_PATHA, SHARD_PATHW or SHARD_PIDL
  *   pv      [IN] string or pidl, NULL clears the list
@@ -629,7 +631,8 @@ static INT SHADD_create_add_mru_data(HANDLE mruhandle, LPSTR doc_name, LPSTR new
  * NOTES
  *     exported by name
  *
- * FIXME: convert to unicode
+ * FIXME
+ *  convert to unicode
  */
 void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 {
@@ -971,6 +974,12 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 
 /*************************************************************************
  * SHCreateShellFolderViewEx			[SHELL32.174]
+ *
+ * Create a new instance of the default Shell folder view object.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: error value
  *
  * NOTES
  *  see IShellFolder::CreateViewObject
@@ -1336,10 +1345,11 @@ BOOL WINAPI SHWaitForFileToOpen(
 /************************************************************************
  *	@				[SHELL32.654]
  *
- * NOTES: first parameter seems to be a pointer (same as passed to WriteCabinetState)
- * second one could be a size (0x0c). The size is the same as the structure saved to
- * HCU\Software\Microsoft\Windows\CurrentVersion\Explorer\CabinetState
- * I'm (js) guessing: this one is just ReadCabinetState ;-)
+ * NOTES
+ *  first parameter seems to be a pointer (same as passed to WriteCabinetState)
+ *  second one could be a size (0x0c). The size is the same as the structure saved to
+ *  HCU\Software\Microsoft\Windows\CurrentVersion\Explorer\CabinetState
+ *  I'm (js) guessing: this one is just ReadCabinetState ;-)
  */
 HRESULT WINAPI shell32_654 (CABINETSTATE *cs, int length)
 {
@@ -1374,11 +1384,12 @@ HRESULT WINAPI SHValidateUNC (DWORD x, DWORD y, DWORD z)
  * from environment. If it is not found the %KEYWORD% is left
  * intact. If the buffer is too small, str is not modified.
  *
- * pszString   [I] '\0' terminated string with %keyword%.
+ * PARAMS
+ *  pszString  [I] '\0' terminated string with %keyword%.
  *             [O] '\0' terminated string with %keyword% substituted.
- * cchString   [I] size of str.
+ *  cchString  [I] size of str.
  *
- * Return
+ * RETURNS
  *     cchString length in the HIWORD;
  *     TRUE in LOWORD if subst was successful and FALSE in other case
  */
@@ -1405,6 +1416,7 @@ DWORD WINAPI DoEnvironmentSubstA(LPSTR pszString, UINT cchString)
 /************************************************************************
  *	DoEnvironmentSubstW			[SHELL32.@]
  *
+ * See DoEnvironmentSubstA.  
  */
 DWORD WINAPI DoEnvironmentSubstW(LPWSTR pszString, UINT cchString)
 {
@@ -1415,6 +1427,7 @@ DWORD WINAPI DoEnvironmentSubstW(LPWSTR pszString, UINT cchString)
 /************************************************************************
  *	DoEnvironmentSubst			[SHELL32.53]
  *
+ * See DoEnvironmentSubstA.  
  */
 DWORD WINAPI DoEnvironmentSubstAW(LPVOID x, UINT y)
 {
@@ -1580,6 +1593,9 @@ BOOL WINAPI SHFindFiles( LPCITEMIDLIST pidlFolder, LPCITEMIDLIST pidlSaveFile )
  *  uFlags      [I] Flags determining the icon attributes. See notes.
  *  iImageIndex [I] Index of the icon in the system image list.
  *
+ * RETURNS
+ *  Nothing
+ *
  * NOTES
  *  uFlags can be one or more of the following flags:
  *  GIL_NOTFILENAME - pszHashItem is not a file name.
@@ -1590,6 +1606,11 @@ void WINAPI SHUpdateImageW(LPCWSTR pszHashItem, int iIndex, UINT uFlags, int iIm
     FIXME("%s, %d, 0x%x, %d - stub\n", debugstr_w(pszHashItem), iIndex, uFlags, iImageIndex);
 }
 
+/*************************************************************************
+ *		SHUpdateImageA (SHELL32.191)
+ *
+ * See SHUpdateImageW.
+ */
 VOID WINAPI SHUpdateImageA(LPCSTR pszHashItem, INT iIndex, UINT uFlags, INT iImageIndex)
 {
     FIXME("%s, %d, 0x%x, %d - stub\n", debugstr_a(pszHashItem), iIndex, uFlags, iImageIndex);

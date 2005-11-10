@@ -665,7 +665,7 @@ LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
 /*************************************************************************
  * SHBrowseForFolderW [SHELL32.@]
  *
- * NOTES:
+ * NOTES
  *  crashes when passed a null pointer
  */
 LPITEMIDLIST WINAPI SHBrowseForFolderW (LPBROWSEINFOW lpbi)
