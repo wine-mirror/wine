@@ -102,7 +102,7 @@ void test_domdoc( void )
     ok( r == S_FALSE, "loadXML failed\n");
     ok( b == VARIANT_FALSE, "failed to load XML string\n");
 
-    /* try to load an document from an non-existent file */
+    /* try to load a document from a nonexistent file */
     b = VARIANT_TRUE;
     str = SysAllocString( szNonExistentFile );
     VariantInit(&var);

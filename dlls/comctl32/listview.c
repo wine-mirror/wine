@@ -5138,7 +5138,7 @@ static HIMAGELIST LISTVIEW_GetImageList(LISTVIEW_INFO *infoPtr, INT nImageList)
  *
  * NOTE:
  *   This is the internal 'GetItem' interface -- it tries to
- *   be smart, and avoids text copies, if possible, by modifing
+ *   be smart and avoid text copies, if possible, by modifying
  *   lpLVItem->pszText to point to the text string. Please note
  *   that this is not always possible (e.g. OWNERDATA), so on
  *   entry you *must* supply valid values for pszText, and cchTextMax.

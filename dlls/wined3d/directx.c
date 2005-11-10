@@ -1062,7 +1062,7 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(WineD3D_Context* c
     break;
   }
   return FALSE;
-#else /* Most of the time performance is less of an issue than compatability, this code allows for most common opengl/d3d formats */
+#else /* Most of the time performance is less of an issue than compatibility, this code allows for most common opengl/d3d formats */
 switch (Format) {
   case WINED3DFMT_X8R8G8B8:
   case WINED3DFMT_R8G8B8:
@@ -1122,7 +1122,7 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(WineD3D_Context* ct
     break;
   }
   return FALSE;
-#else /* Most of the time performance is less of an issue than compatability, this code allows for most common opengl/d3d formats */
+#else /* Most of the time performance is less of an issue than compatibility, this code allows for most common opengl/d3d formats */
   switch (Format) {
   case WINED3DFMT_D16:
   case WINED3DFMT_D16_LOCKABLE:

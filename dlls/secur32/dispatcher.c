@@ -219,7 +219,7 @@ SECURITY_STATUS run_helper(PNegoHelper helper, char *buffer,
         return sec_status;
     }
     
-    TRACE("In helper: recieved %s\n", debugstr_a(helper->com_buf));
+    TRACE("In helper: received %s\n", debugstr_a(helper->com_buf));
     *buflen = lstrlenA(helper->com_buf);
 
     if( *buflen > max_buflen)

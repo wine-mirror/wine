@@ -672,7 +672,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         /****************************
         * TODO: Render targets are 'special' and
         * ?some? locking needs to be passed onto the context manager
-        * so that it becomes possible to use auxilary buffers, pbuffers
+        * so that it becomes possible to use auxiliary buffers, pbuffers
         * render-to-texture, shared, cached contexts etc...
         * ****************************/
         IWineD3DSwapChainImpl *implSwapChain;
@@ -1146,7 +1146,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
     DWORD color;
     /*FIXME:
     Textures my not be stored in ->allocatedgMemory and a GlTexture
-    so we should lock the surface before saving a snapshot, or atleast check that
+    so we should lock the surface before saving a snapshot, or at least check that
     */
     /* TODO: Compressed texture images can be obtained from the GL in uncompressed form
     by calling GetTexImage and in compressed form by calling
@@ -1163,7 +1163,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
     IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapChain);
 
     if (swapChain || This->inPBuffer) { /* if were not a real texture then read the back buffer into a real texture*/
-/* we don't want to interfere with the back buffer so read the data into a tempory texture and then save the data out of the tempory texture */
+/* we don't want to interfere with the back buffer so read the data into a temporary texture and then save the data out of the temporary texture */
         GLint prevRead;
         ENTER_GL();
         FIXME("(%p) This surface needs to be locked before a snapshot can be taken\n", This);

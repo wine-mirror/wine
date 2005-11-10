@@ -382,7 +382,7 @@ int main(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    fprintf( stderr, "%s needs to be built with Freetype support\n", argv[0] );
+    fprintf( stderr, "%s needs to be built with FreeType support\n", argv[0] );
     exit(1);
 }
 

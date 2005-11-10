@@ -1115,7 +1115,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       }
   }
 
-  if (statfailed) { /* we dont know the size ... read all we get */
+  if (statfailed) { /* we don't know the size ... read all we get */
       int sizeinc = 4096;
       int origsize = sizeinc;
       ULONG nread = 42;

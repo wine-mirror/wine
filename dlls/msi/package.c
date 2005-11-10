@@ -727,7 +727,7 @@ UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
     if (!szName)
         return ERROR_INVALID_PARAMETER;
 
-    /* this one is wierd... */
+    /* this one is weird... */
     if (!szName[0])
         return szValue ? ERROR_FUNCTION_FAILED : ERROR_SUCCESS;
 

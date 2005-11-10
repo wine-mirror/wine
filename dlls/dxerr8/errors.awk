@@ -9,7 +9,7 @@ BEGIN {
 	if (NF > 0 && length(array[1]) > 0) {
 		lines++
 
-		# save the first word (or '&' seperated list of words) in the names array
+		# save the first word (or '&' separated list of words) in the names array
 		if (array[2] == "&") {
 			if (array[4] == "&") {
 				names[lines] = array[1] " " array[2] " " array[3] " " array[4] " " array[5]

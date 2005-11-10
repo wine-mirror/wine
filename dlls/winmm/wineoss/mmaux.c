@@ -1,5 +1,5 @@
 /*
- * Sample AUXILARY Wine Driver
+ * Sample AUXILIARY Wine Driver
  *
  * Copyright 1994 Martin Ayotte
  *

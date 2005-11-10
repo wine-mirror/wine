@@ -631,7 +631,7 @@ static void test_props(void)
     r = MsiGetProperty( hpkg, "boo", buffer, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
-    /* test retrieving an empty/non-existant property */
+    /* test retrieving an empty/nonexistent property */
     sz = sizeof buffer;
     r = MsiGetProperty( hpkg, "boo", NULL, &sz );
     ok( r == ERROR_SUCCESS, "wrong return val\n");

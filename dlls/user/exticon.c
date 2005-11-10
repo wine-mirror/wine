@@ -272,7 +272,7 @@ static BOOL CALLBACK extract_icons_callback(HMODULE hModule, LPCWSTR pwszType, L
     /* If we didn't already start extracting icons (cIter == 0), we look if the current
      * icon is the one we should start with. That's the case if nBaseIndex is negative and
      * it's absolute value matches the current icon's identifier. Or if nBaseIndex is positive
-     * and we already ommited the first nBaseIndex icons. */
+     * and we already omitted the first nBaseIndex icons. */
     if (pState->cIter == 0) {
         if (pState->nBaseIndex < 0) {
             if (!IS_INTRESOURCE(pwszName) || idCurrent != -pState->nBaseIndex) {

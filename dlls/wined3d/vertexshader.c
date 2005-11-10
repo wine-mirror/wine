@@ -638,7 +638,7 @@ static CONST SHADER_OPCODE vshader_ins [] = {
         RCP tmp, vec
         MUL out, tmp, vec*/
     {D3DSIO_SGN,      "sng",      NULL,   2, vshader_sng,     0, 0},
-    /* TODO: xyz normalise can be performed is VS_ARB using one tempory register,
+    /* TODO: xyz normalise can be performed is VS_ARB using one temporary register,
         DP3 tmp , vec, vec;
         RSQ tmp, tmp.x;
         MUL vec.xyz, vec, tmp;
