@@ -21,7 +21,7 @@ VFW_S_MEDIA_TYPE_IGNORED                 A connection could not be made with the
 VFW_S_VIDEO_NOT_RENDERED                 Cannot play back the video stream: no suitable decompressor could be found.
 VFW_S_AUDIO_NOT_RENDERED                 Cannot play back the audio stream: no audio hardware is available.
 VFW_S_RPZA                               Cannot play back the video stream: format 'RPZA' is not supported.
-VFW_S_ESTIMATED                          The value returned had to be estimated.  It's accuracy can not be guaranteed.
+VFW_S_ESTIMATED                          The value returned had to be estimated.  Its accuracy cannot be guaranteed.
 VFW_S_RESERVED                           This success code is reserved for internal purposes within ActiveMovie.
 VFW_S_STREAM_OFF                         The stream has been turned off.
 VFW_S_CANT_CUE                           The graph can't be cued because of lack of or corrupt data.
@@ -209,10 +209,10 @@ DPNERR_ALREADYDISCONNECTING              Already disconnecting
 DPNERR_ALREADYINITIALIZED                Already initialized
 DPNERR_ALREADYREGISTERED                 Already registered
 DPNERR_BUFFERTOOSMALL                    Buffer too small
-DPNERR_CANNOTCANCEL                      Can not cancel
-DPNERR_CANTCREATEGROUP                   Cant create group
-DPNERR_CANTCREATEPLAYER                  Cant create player
-DPNERR_CANTLAUNCHAPPLICATION             Cant launch application
+DPNERR_CANNOTCANCEL                      Cannot cancel
+DPNERR_CANTCREATEGROUP                   Cannot create group
+DPNERR_CANTCREATEPLAYER                  Cannot create player
+DPNERR_CANTLAUNCHAPPLICATION             Cannot launch application
 DPNERR_CONNECTING                        Connecting
 DPNERR_CONNECTIONLOST                    Connection lost
 DPNERR_CONVERSION                        Conversion
@@ -267,8 +267,8 @@ DPNERR_TIMEDOUT                          Timed out
 DPNERR_UNINITIALIZED                     Uninitialized
 DPNERR_USERCANCEL                        User cancel
 DDERR_ALREADYINITIALIZED                 This object is already initialized
-DDERR_CANNOTATTACHSURFACE                This surface can not be attached to the requested surface.
-DDERR_CANNOTDETACHSURFACE                This surface can not be detached from the requested surface.
+DDERR_CANNOTATTACHSURFACE                This surface cannot be attached to the requested surface.
+DDERR_CANNOTDETACHSURFACE                This surface cannot be detached from the requested surface.
 DDERR_CURRENTLYNOTAVAIL                  Support is currently not available.
 DDERR_EXCEPTION                          An exception was encountered while performing the requested operation
 DDERR_HEIGHTALIGN                        Height of rectangle provided is not a multiple of reqd alignment
@@ -340,7 +340,7 @@ DDERR_CLIPPERISUSINGHWND                 an attempt was made to set a clip list 
 DDERR_NOCLIPPERATTACHED                  No clipper object attached to surface object
 DDERR_NOHWND                             Clipper notification requires an HWND or no HWND has previously been set as the CooperativeLevel HWND.
 DDERR_HWNDSUBCLASSED                     HWND used by DirectDraw CooperativeLevel has been subclassed, this prevents DirectDraw from restoring state.
-DDERR_HWNDALREADYSET                     The CooperativeLevel HWND has already been set. It can not be reset while the process has surfaces or palettes created.
+DDERR_HWNDALREADYSET                     The CooperativeLevel HWND has already been set. It cannot be reset while the process has surfaces or palettes created.
 DDERR_NOPALETTEATTACHED                  No palette object attached to this surface.
 DDERR_NOPALETTEHW                        No hardware support for 16 or 256 color palettes.
 DDERR_BLTFASTCANTCLIP                    If a clipper object is attached to the source surface passed into a BltFast call.
@@ -354,10 +354,10 @@ DDERR_EXCLUSIVEMODEALREADYSET            An attempt was made to set the cooperat
 DDERR_NOTFLIPPABLE                       An attempt has been made to flip a surface that is not flippable.
 DDERR_CANTDUPLICATE                      Can't duplicate primary & 3D surfaces, or surfaces that are implicitly created.
 DDERR_NOTLOCKED                          Surface was not locked.  An attempt to unlock a surface that was not locked at all, or by this process, has been attempted.
-DDERR_CANTCREATEDC                       Windows can not create any more DCs, or a DC was requested for a paltte-indexed surface when the surface had no palette AND the display mode was not palette-indexed (in this case DirectDraw cannot select a proper palette into the DC)
+DDERR_CANTCREATEDC                       Windows cannot create any more DCs, or a DC was requested for a paltte-indexed surface when the surface had no palette AND the display mode was not palette-indexed (in this case DirectDraw cannot select a proper palette into the DC)
 DDERR_NODC                               No DC was ever created for this surface.
-DDERR_WRONGMODE                          This surface can not be restored because it was created in a different mode.
-DDERR_IMPLICITLYCREATED                  This surface can not be restored because it is an implicitly created surface.
+DDERR_WRONGMODE                          This surface cannot be restored because it was created in a different mode.
+DDERR_IMPLICITLYCREATED                  This surface cannot be restored because it is an implicitly created surface.
 DDERR_NOTPALETTIZED                      The surface being used is not a palette-based surface
 DDERR_UNSUPPORTEDMODE                    The display is currently in an unsupported mode
 DDERR_NOMIPMAPHW                         Operation could not be carried out because there is no mip-map texture mapping hardware present or available.
@@ -491,17 +491,17 @@ DMUS_E_INVALID_EVENT                     The given event is invalid (either it i
 DMUS_E_UNSUPPORTED_STREAM                The IStream* object does not contain data supported by the loading object.
 DMUS_E_ALREADY_INITED                    The object has already been initialized.
 DMUS_E_INVALID_BAND                      The file does not contain a valid band.
-DMUS_E_TRACK_HDR_NOT_FIRST_CK            The IStream* object's data does not have a track header as the first chunk, and therefore can not be read by the segment object.
-DMUS_E_TOOL_HDR_NOT_FIRST_CK             The IStream* object's data does not have a tool header as the first chunk, and therefore can not be read by the graph object.
-DMUS_E_INVALID_TRACK_HDR                 The IStream* object's data contains an invalid track header (ckid is 0 and fccType is NULL,) and therefore can not be read by the segment object.
-DMUS_E_INVALID_TOOL_HDR                  The IStream* object's data contains an invalid tool header (ckid is 0 and fccType is NULL,) and therefore can not be read by the graph object.
+DMUS_E_TRACK_HDR_NOT_FIRST_CK            The IStream* object's data does not have a track header as the first chunk, and therefore cannot be read by the segment object.
+DMUS_E_TOOL_HDR_NOT_FIRST_CK             The IStream* object's data does not have a tool header as the first chunk, and therefore cannot be read by the graph object.
+DMUS_E_INVALID_TRACK_HDR                 The IStream* object's data contains an invalid track header (ckid is 0 and fccType is NULL,) and therefore cannot be read by the segment object.
+DMUS_E_INVALID_TOOL_HDR                  The IStream* object's data contains an invalid tool header (ckid is 0 and fccType is NULL,) and therefore cannot be read by the graph object.
 DMUS_E_ALL_TOOLS_FAILED                  The graph object was unable to load all tools from the IStream* object data. This may be due to errors in the stream, or the tools being incorrectly registered on the client.
 DMUS_E_ALL_TRACKS_FAILED                 The segment object was unable to load all tracks from the IStream* object data. This may be due to errors in the stream, or the tracks being incorrectly registered on the client.
 DSERR_OBJECTNOTFOUND                     The object requested was not found (numerically equal to DMUS_E_NOT_FOUND)
 DMUS_E_NOT_INIT                          A required object is not initialized or failed to initialize.
 DMUS_E_TYPE_DISABLED                     The requested parameter type is currently disabled. Parameter types may be enabled and disabled by certain calls to SetParam().
 DMUS_E_TYPE_UNSUPPORTED                  The requested parameter type is not supported on the object.
-DMUS_E_TIME_PAST                         The time is in the past, and the operation can not succeed.
+DMUS_E_TIME_PAST                         The time is in the past, and the operation cannot succeed.
 DMUS_E_TRACK_NOT_FOUND                   The requested track is not contained by the segment.
 DMUS_E_TRACK_NO_CLOCKTIME_SUPPORT        The track does not support clock time playback or getparam.
 DMUS_E_NO_MASTER_CLOCK                   There is no master clock in the performance. Be sure to call IDirectMusicPerformance::Init().
@@ -526,7 +526,7 @@ DMUS_E_SCRIPT_LANGUAGE_INCOMPATIBLE      The activeX scripting engine for the sc
 DMUS_E_SCRIPT_UNSUPPORTED_VARTYPE        A varient was used that had a type that is not supported by DirectMusic.
 DMUS_E_SCRIPT_ERROR_IN_SCRIPT            An error was encountered while parsing or executing the script. The pErrorInfo parameter (if supplied) was filled with information about the error.
 DMUS_E_SCRIPT_CANTLOAD_OLEAUT32          Loading of oleaut32.dll failed.  VBScript and other activeX scripting languages require use of oleaut32.dll.  On platforms where oleaut32.dll is not present, only the DirectMusicScript language, which doesn't require oleaut32.dll can be used.
-DMUS_E_SCRIPT_LOADSCRIPT_ERROR           An error occured while parsing a script loaded using LoadScript.  The script that was loaded contains an error.
+DMUS_E_SCRIPT_LOADSCRIPT_ERROR           An error occurred while parsing a script loaded using LoadScript.  The script that was loaded contains an error.
 DMUS_E_SCRIPT_INVALID_FILE               The script file is invalid.
 DMUS_E_INVALID_SCRIPTTRACK               The file contains an invalid script track.
 DMUS_E_SCRIPT_VARIABLE_NOT_FOUND         The script does not contain a variable with the specified name.
