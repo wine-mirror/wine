@@ -59,7 +59,7 @@ static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
             0, NULL, (UINT)0,
             buttons, sizeof(buttons)/sizeof(buttons[0]),
             0, 0, 20, 16, sizeof(TBBUTTON));
-        ok(hToolbar != NULL, "Toolbar creation");
+        ok(hToolbar != NULL, "Toolbar creation\n");
 
         SendMessage(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"test\000");
 

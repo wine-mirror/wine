@@ -157,7 +157,7 @@ void test_domdoc( void )
 
     /* check if nodename is correct */
     r = IXMLDOMDocument_get_nodeName( doc, NULL );
-    ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code");
+    ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code\n");
 
     /* content doesn't matter here */
     str = SysAllocString( szNonExistentFile );
@@ -307,7 +307,7 @@ void test_domnode( void )
 
         /* check if nodename is correct */
         r = IXMLDOMElement_get_nodeName( element, NULL );
-        ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code");
+        ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code\n");
     
         /* content doesn't matter here */
         str = SysAllocString( szNonExistentFile );
@@ -358,7 +358,7 @@ void test_domnode( void )
         ok ( node != NULL, "should be attribute\n");
 
         r = IXMLDOMNode_get_nodeName( node, NULL );
-        ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code");
+        ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code\n");
 
         /* content doesn't matter here */
         str = SysAllocString( szNonExistentFile );

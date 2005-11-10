@@ -218,13 +218,13 @@ static void test_section_names(void)
         trace( "hinf=%p ret=%ld err=%lx\n", hinf, ret, err );
         if (ret != -1)
         {
-            ok( !section_names[i].error, "line %u: section name %s found",
+            ok( !section_names[i].error, "line %u: section name %s found\n",
                 i, section_names[i].section );
-            ok( !err, "line %u: bad error code %lx", i, err );
+            ok( !err, "line %u: bad error code %lx\n", i, err );
         }
         else
         {
-            ok( section_names[i].error, "line %u: section name %s not found",
+            ok( section_names[i].error, "line %u: section name %s not found\n",
                 i, section_names[i].section );
             ok( err == section_names[i].error, "line %u: bad error %lx/%lx\n",
                 i, err, section_names[i].error );

@@ -3735,7 +3735,7 @@ static void test_paint_messages(void)
      */
     trace("testing ValidateRect(0, NULL)\n");
     SetRectEmpty( &rect );
-    ok(ValidateRect(0, &rect), "ValidateRect(0, &rc) should not fail");
+    ok(ValidateRect(0, &rect), "ValidateRect(0, &rc) should not fail\n");
     check_update_rgn( hwnd, hrgn );
     ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
@@ -3753,7 +3753,7 @@ static void test_paint_messages(void)
 
     trace("testing ValidateRgn(0, NULL)\n");
     SetLastError(0xdeadbeef);
-    ok(!ValidateRgn(0, NULL), "ValidateRgn(0, NULL) should fail");
+    ok(!ValidateRgn(0, NULL), "ValidateRgn(0, NULL) should fail\n");
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error code %ld\n", GetLastError());
     check_update_rgn( hwnd, 0 );
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
