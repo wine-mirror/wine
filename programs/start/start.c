@@ -101,12 +101,25 @@ static void license(void)
 	fatal_string(STRING_LICENSE);
 }
 
+static char *build_args( int argc, char **argv )
+{
+	int i, len = 1;
+	char *ret, *p;
+
+	for (i = 0; i < argc; i++ )
+		len += strlen(argv[i]) + 1;
+	ret = HeapAlloc( GetProcessHeap(), 0, len );
+
+	for (i = 0, p = ret; i < argc; i++ )
+		p += sprintf(p, " %s", argv[i]);
+	return ret;
+}
+
 int main(int argc, char *argv[])
 {
-	char arguments[MAX_PATH];
-	char *p;
 	SHELLEXECUTEINFO sei;
-	int argi;
+	char *args;
+	int i;
 
 	memset(&sei, 0, sizeof(sei));
 	sei.cbSize = sizeof(sei);
@@ -119,24 +132,24 @@ int main(int argc, char *argv[])
 	 * flags start with /, are case insensitive,
 	 * and may be run together in same word.
 	 */
-	for (argi=1; argi<argc; argi++) {
+	for (i=1; i<argc; i++) {
 		int ci;
 
-		if (argv[argi][0] != '/')
+		if (argv[i][0] != '/')
 			break;
 
 		/* Handle all options in this word */
-		for (ci=0; argv[argi][ci]; ) {
+		for (ci=0; argv[i][ci]; ) {
 			/* Skip slash */
 			ci++;
-			switch(argv[argi][ci]) {
+			switch(argv[i][ci]) {
 			case 'l':
 			case 'L':
 				license();
 				break;	/* notreached */
 			case 'm':
 			case 'M':
-				if (argv[argi][ci+1] == 'a' || argv[argi][ci+1] == 'A')
+				if (argv[i][ci+1] == 'a' || argv[i][ci+1] == 'A')
 					sei.nShow = SW_SHOWMAXIMIZED;
 				else
 					sei.nShow = SW_SHOWMINIMIZED;
@@ -150,29 +163,27 @@ int main(int argc, char *argv[])
 				sei.fMask |= SEE_MASK_NOCLOSEPROCESS;
 				break;
 			default:
-				printf("Option '%s' not recognized\n", argv[argi]+ci-1);
+				printf("Option '%s' not recognized\n", argv[i]+ci-1);
 				usage();
 			}
 			/* Skip to next slash */
-			while (argv[argi][ci] && (argv[argi][ci] != '/'))
+			while (argv[i][ci] && (argv[i][ci] != '/'))
 				ci++;
 		}
 	}
 
-	if (argi == argc)
+	if (i == argc)
 		usage();
 
-	sei.lpFile = argv[argi++];
+	sei.lpFile = argv[i++];
 
-	/* FIXME - prone to overflow */
-	arguments[0] = 0;
-	for (p = arguments; argi < argc; argi++)
-		p += sprintf(p, " %s", argv[argi]);
-
-	sei.lpParameters = arguments;
+	args = build_args( argc - i, &argv[i] );
+	sei.lpParameters = args;
 
 	if (!ShellExecuteEx(&sei))
 	    	fatal_string_error(STRING_EXECFAIL, GetLastError());
+
+	HeapFree( GetProcessHeap(), 0, args );
 
 	if (sei.fMask & SEE_MASK_NOCLOSEPROCESS) {
 		DWORD exitcode;
