@@ -708,8 +708,7 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
 static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
                             const WCHAR* lpFile, WCHAR *env,
 			    LPCWSTR szCommandline, LPITEMIDLIST pidl, SHELL_ExecuteW32 execfunc,
-                            LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out,
-                            BOOL unicode)
+                            LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
     static const WCHAR wApplication[] = {'\\','a','p','p','l','i','c','a','t','i','o','n',0};
     static const WCHAR wTopic[] = {'\\','t','o','p','i','c',0};
@@ -723,6 +722,7 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
     HCONV       hConv;
     HDDEDATA    hDdeData;
     unsigned    ret = 31;
+    BOOL unicode = !(GetVersion() & 0x80000000);
 
     strcpyW(endkey, wApplication);
     applen = sizeof(app);
@@ -819,8 +819,7 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
  */
 static UINT_PTR execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR szCommandline,
 			     SHELL_ExecuteW32 execfunc,
-                             LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out,
-                             BOOL unicode)
+                             LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
     WCHAR cmd[1024];
     LONG cmdlen = sizeof(cmd);
@@ -848,7 +847,7 @@ static UINT_PTR execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR
         if (RegQueryValueW(HKEY_CLASSES_ROOT, key, param, &paramlen) == ERROR_SUCCESS)
         {
             TRACE("Got ddeexec %s => %s\n", debugstr_w(key), debugstr_w(param));
-            retval = dde_connect(key, cmd, param, lpFile, env, szCommandline, psei->lpIDList, execfunc, psei, psei_out, unicode);
+            retval = dde_connect(key, cmd, param, lpFile, env, szCommandline, psei->lpIDList, execfunc, psei, psei_out);
         }
         else
         {
@@ -1178,7 +1177,7 @@ static LONG ShellExecute_FromContextMenu( LPSHELLEXECUTEINFOW sei )
 /*************************************************************************
  *	SHELL_execute [Internal]
  */
-BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc, BOOL unicode )
+BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 {
     static const WCHAR wQuote[] = {'"',0};
     static const WCHAR wSpace[] = {' ',0};
@@ -1438,7 +1437,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc, BOOL uni
         }
         TRACE("%s/%s => %s/%s\n", debugstr_w(wszApplicationName), debugstr_w(sei_tmp.lpVerb), debugstr_w(wszQuotedCmd), debugstr_w(lpstrProtocol));
         if (*lpstrProtocol)
-            retval = execute_from_key(lpstrProtocol, wszApplicationName, env, sei_tmp.lpParameters, execfunc, &sei_tmp, sei, unicode);
+            retval = execute_from_key(lpstrProtocol, wszApplicationName, env, sei_tmp.lpParameters, execfunc, &sei_tmp, sei);
         else
             retval = execfunc(wszQuotedCmd, env, FALSE, &sei_tmp, sei);
         HeapFree( GetProcessHeap(), 0, env );
@@ -1471,7 +1470,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc, BOOL uni
             lpFile += iSize;
             while (*lpFile == ':') lpFile++;
         }
-        retval = execute_from_key(lpstrProtocol, lpFile, NULL, sei_tmp.lpParameters, execfunc, &sei_tmp, sei, unicode);
+        retval = execute_from_key(lpstrProtocol, lpFile, NULL, sei_tmp.lpParameters, execfunc, &sei_tmp, sei);
     }
     /* Check if file specified is in the form www.??????.*** */
     else if (!strncmpiW(lpFile, wWww, 3))
@@ -1556,7 +1555,7 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
     else
         seiW.lpClass = NULL;
 
-    ret = SHELL_execute( &seiW, SHELL_ExecuteW, FALSE );
+    ret = SHELL_execute( &seiW, SHELL_ExecuteW );
 
     sei->hInstApp = seiW.hInstApp;
 
@@ -1578,7 +1577,7 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
  */
 BOOL WINAPI ShellExecuteExW (LPSHELLEXECUTEINFOW sei)
 {
-    return  SHELL_execute( sei, SHELL_ExecuteW, TRUE );
+    return SHELL_execute( sei, SHELL_ExecuteW );
 }
 
 /*************************************************************************
@@ -1607,6 +1606,6 @@ HINSTANCE WINAPI ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
     sei.dwHotKey = 0;
     sei.hProcess = 0;
 
-    SHELL_execute( &sei, SHELL_ExecuteW, TRUE );
+    SHELL_execute( &sei, SHELL_ExecuteW );
     return sei.hInstApp;
 }
