@@ -198,7 +198,7 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
     pConv = WDML_GetConvFromWnd(hwndClient);
     if (pConv == NULL || pConv->hwndServer == 0)
     {
-	ERR("Done with INITIATE, but no Server window available\n");
+	WARN("Done with INITIATE, but no Server window available\n");
 	pConv = NULL;
 	goto theEnd;
     }
@@ -1118,7 +1118,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 
     if (hConv == 0)
     {
-	ERR("Invalid conversation handle\n");
+	WARN("Invalid conversation handle NULL\n");
 	return 0;
     }
 
@@ -1376,7 +1376,7 @@ BOOL WINAPI DdeDisconnect(HCONV hConv)
 
     if (hConv == 0)
     {
-	ERR("DdeDisconnect(): hConv = 0\n");
+	WARN("DdeDisconnect(): hConv = 0\n");
 	return FALSE;
     }
 
