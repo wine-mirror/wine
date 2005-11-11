@@ -1329,7 +1329,7 @@ void WINAPI wine_glGetHistogramParameteriv( GLenum target, GLenum pname, GLint* 
 void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params ) {
   TRACE("(%d, %p)\n", pname, params );
   ENTER_GL();
-  glGetIntegerv( pname, params );
+  internal_glGetIntegerv( pname, params );
   LEAVE_GL();
 }
 

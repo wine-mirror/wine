@@ -64,8 +64,9 @@ static char* internal_gl_extensions = NULL;
 typedef struct wine_glcontext {
   HDC hdc;
   Display *display;
-  GLXContext ctx;
   XVisualInfo *vis;
+  GLXFBConfig fb_conf;
+  GLXContext ctx;
   struct wine_glcontext *next;
   struct wine_glcontext *prev;
 } Wine_GLContext;
@@ -185,6 +186,28 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
   ret->hdc = hdc;
   ret->display = display;
   ret->vis = vis;
+
+  {
+    int hdcPF = GetPixelFormat(hdc);
+    int nCfgs_fmt = 0;
+    GLXFBConfig* cfgs_fmt = NULL;
+    GLXFBConfig cur_cfg;
+    int value;
+    int gl_test = 0;
+    cfgs_fmt = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs_fmt);
+    if (NULL == cfgs_fmt || 0 == nCfgs_fmt) {
+      ERR("Cannot get FB Configs, expect problems.\n");
+      return NULL;
+    }
+    cur_cfg = cfgs_fmt[hdcPF - 1];
+    gl_test = glXGetFBConfigAttrib(display, cur_cfg, GLX_FBCONFIG_ID, &value);
+    if (gl_test) {
+      ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
+      return NULL;
+    }
+    ret->fb_conf = cur_cfg;
+    XFree(cfgs_fmt);
+  }
 
   TRACE(" creating context %p (GL context creation delayed)\n", ret);
   return (HGLRC) ret;
@@ -442,7 +465,6 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
   } else {
       Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
       Drawable drawable = get_drawable( hdc );
-
       if (ctx->ctx == NULL) {
 	ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, True);
 	TRACE(" created a delayed OpenGL context (%p) for %p\n", ctx->ctx, ctx->vis);
@@ -797,6 +819,18 @@ const GLubyte * internal_glGetString(GLenum name) {
     }
   }
   return (const GLubyte *) internal_gl_extensions;
+}
+
+void internal_glGetIntegerv(GLenum pname, GLint* params) {
+  glGetIntegerv(pname, params); 
+  if (pname == GL_ALPHA_BITS) {
+    GLint tmp;
+    GLXContext gl_ctx = glXGetCurrentContext();
+    Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
+    glXGetFBConfigAttrib(ret->display, ret->fb_conf, GLX_ALPHA_SIZE, &tmp);
+    TRACE("returns GL_ALPHA_BITS as '%d'\n", tmp);
+    *params = tmp;
+  }
 }
 
 

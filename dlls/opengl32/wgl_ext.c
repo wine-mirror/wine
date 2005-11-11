@@ -357,23 +357,23 @@ static unsigned ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_G
       break;
     case WGL_RED_BITS_ARB:
       pop = iWGLAttr[++cur];
-      TRACE("pAttr[%d] = GLX_RED_SIZE: %d\n", cur, pop);
       PUSH2(oGLXAttr, GLX_RED_SIZE, pop);
+      TRACE("pAttr[%d] = GLX_RED_SIZE: %d\n", cur, pop);
       break;
     case WGL_GREEN_BITS_ARB:
       pop = iWGLAttr[++cur];
-      TRACE("pAttr[%d] = GLX_GREEN_SIZE: %d\n", cur, pop);
       PUSH2(oGLXAttr, GLX_GREEN_SIZE, pop);
+      TRACE("pAttr[%d] = GLX_GREEN_SIZE: %d\n", cur, pop);
       break;
     case WGL_ALPHA_BITS_ARB:
       pop = iWGLAttr[++cur];
-      TRACE("pAttr[%d] = GLX_ALPHA_SIZE: %d\n", cur, pop);
       PUSH2(oGLXAttr, GLX_ALPHA_SIZE, pop);
+      TRACE("pAttr[%d] = GLX_ALPHA_SIZE: %d\n", cur, pop);
       break;
     case WGL_DEPTH_BITS_ARB:
       pop = iWGLAttr[++cur];
-      TRACE("pAttr[%d] = GLX_DEPTH_SIZE: %d\n", cur, pop);
       PUSH2(oGLXAttr, GLX_DEPTH_SIZE, pop);
+      TRACE("pAttr[%d] = GLX_DEPTH_SIZE: %d\n", cur, pop);
       break;
     case WGL_STENCIL_BITS_ARB:
       pop = iWGLAttr[++cur];
@@ -689,8 +689,11 @@ GLboolean WINAPI wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, cons
 	continue ;
       }
       if (fmt_id == tmp_fmt_id) {
+	int tmp;
 	piFormats[pfmt_it] = it_fmt + 1;
 	++pfmt_it;
+	glXGetFBConfigAttrib(display, cfgs_fmt[it_fmt], GLX_ALPHA_SIZE, &tmp);
+	TRACE("for FBCONFIG_ID(%d/%d) found '%d'\n", it_fmt + 1, nCfgs_fmt, tmp);
 	break ;
       }
     }

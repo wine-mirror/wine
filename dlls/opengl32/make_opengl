@@ -261,6 +261,9 @@ sub GenerateThunk($$$$)
     if ( $func_ref->[0] eq "glGetString" ) {
 	$wine_func_ref_name = "internal_glGetString";
     }
+    if ( $func_ref->[0] eq "glGetIntegerv" ) {
+	$wine_func_ref_name = "internal_glGetIntegerv";
+    }
     $ret = "$ret$prefix$wine_func_ref_name( $call_arg);\n";
     if ($thread_safe) {
 	$ret = "$ret  LEAVE_GL();\n";

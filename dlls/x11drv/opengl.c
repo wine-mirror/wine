@@ -212,7 +212,6 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   }  
   if (ppfd->iPixelType == PFD_TYPE_RGBA) {
     ADD2(GLX_RENDER_TYPE, GLX_RGBA_BIT);
-    ADD2(GLX_BUFFER_SIZE, ppfd->cColorBits);
     if (32 == ppfd->cDepthBits) {
       /**
        * for 32 bpp depth buffers force to use 24.
@@ -222,7 +221,15 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     } else {
       TEST_AND_ADD2(ppfd->cDepthBits, GLX_DEPTH_SIZE, ppfd->cDepthBits);
     }
-    TEST_AND_ADD2(ppfd->cAlphaBits, GLX_ALPHA_SIZE, ppfd->cAlphaBits);
+    if (32 == ppfd->cColorBits) {
+      ADD2(GLX_RED_SIZE,   8);
+      ADD2(GLX_GREEN_SIZE, 8);
+      ADD2(GLX_BLUE_SIZE,  8);
+      ADD2(GLX_ALPHA_SIZE, 8);
+    } else {
+      ADD2(GLX_BUFFER_SIZE, ppfd->cColorBits);
+      TEST_AND_ADD2(ppfd->cAlphaBits, GLX_ALPHA_SIZE, ppfd->cAlphaBits);
+    }
   }
   TEST_AND_ADD2(ppfd->cStencilBits, GLX_STENCIL_SIZE, ppfd->cStencilBits);
   TEST_AND_ADD2(ppfd->cAuxBuffers,  GLX_AUX_BUFFERS,  ppfd->cAuxBuffers);
@@ -444,7 +451,24 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
   TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
 
   physDev->current_pf = iPixelFormat;
-
+  
+  if (TRACE_ON(opengl)) {
+    int nCfgs_fmt = 0;
+    GLXFBConfig* cfgs_fmt = NULL;
+    GLXFBConfig cur_cfg;
+    int value;
+    int gl_test = 0;
+    
+    cfgs_fmt = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &nCfgs_fmt);
+    cur_cfg = cfgs_fmt[iPixelFormat - 1];
+    gl_test = pglXGetFBConfigAttrib(gdi_display, cur_cfg, GLX_FBCONFIG_ID, &value);
+    if (gl_test) {
+      ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
+    } else {
+      FIXME("have FBCONFIG_ID %x\n", value);
+    }
+    XFree(cfgs_fmt);
+  }
   return TRUE;
 }
 
