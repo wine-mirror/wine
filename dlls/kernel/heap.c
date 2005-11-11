@@ -45,7 +45,9 @@
 # undef _FILE_OFFSET_BITS
 # define _FILE_OFFSET_BITS 32
 # include <sys/resource.h>
-# include <sys/stat.h>
+# ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+# endif
 # include <sys/swap.h>
 #endif
 
