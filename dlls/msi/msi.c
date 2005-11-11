@@ -832,7 +832,7 @@ UINT WINAPI MsiMessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uTyp
 {
     FIXME("%p %s %s %u %08x %08lx\n",hWnd,debugstr_a(lpText),debugstr_a(lpCaption),
           uType,wLanguageId,f);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return MessageBoxExA(hWnd,lpText,lpCaption,uType,wLanguageId); 
 }
 
 UINT WINAPI MsiMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType,
@@ -840,7 +840,7 @@ UINT WINAPI MsiMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uT
 {
     FIXME("%p %s %s %u %08x %08lx\n",hWnd,debugstr_w(lpText),debugstr_w(lpCaption),
           uType,wLanguageId,f);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return MessageBoxExW(hWnd,lpText,lpCaption,uType,wLanguageId); 
 }
 
 UINT WINAPI MsiProvideAssemblyA( LPCSTR szAssemblyName, LPCSTR szAppContext,
