@@ -1,8 +1,8 @@
 /*
- * HTML Help resources
+ * Korean resources for oleaut32
  *
- * Copyright 2005 James Hawkins
- *
+ * 
+ *Copyright 2005 YunSong Hwang(hys545@dreamwiz.com)
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -18,20 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winnls.h"
-#include "htmlhelp.h"
-#include "resource.h"
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#include "version.rc"
-
-#include "Cs.rc"
-#include "De.rc"
-#include "En.rc"
-#include "Fi.rc"
-#include "Ko.rc"
-#include "No.rc"
+STRINGTABLE DISCARDABLE
+{
+  IDS_TRUE  "진실"
+  IDS_FALSE "거짓"
+  IDS_YES   "예"
+  IDS_NO    "아니오"
+  IDS_ON    "작동"
+  IDS_OFF   "비작동"
+}

@@ -1,7 +1,7 @@
 /*
- * HTML Help resources
+ * Korean resource file for MS-RLE
  *
- * Copyright 2005 James Hawkins
+ * Copyright 2005 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,20 +18,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winnls.h"
-#include "htmlhelp.h"
-#include "resource.h"
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#include "version.rc"
-
-#include "Cs.rc"
-#include "De.rc"
-#include "En.rc"
-#include "Fi.rc"
-#include "Ko.rc"
-#include "No.rc"
+STRINGTABLE DISCARDABLE
+{
+	IDS_NAME	"WINE-MS-RLE"
+	IDS_DESCRIPTION	"Wine MS-RLE ºñµð¿À ÄÚµ¦"
+	IDS_ABOUT       "Wine MS-RLE video codec\nCopyright 2002 by Michael Gunnewig"
+}
