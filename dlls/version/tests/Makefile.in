@@ -6,7 +6,8 @@ TESTDLL   = version.dll
 IMPORTS   = version kernel32
 
 CTESTS = \
-	info.c
+	info.c \
+	install.c
 
 RC_SRCS = version.rc
 

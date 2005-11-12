@@ -1,0 +1,120 @@
+/*
+ * Copyright (C) 2005 Stefan Leichter
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include <stdarg.h>
+#include <stdio.h>
+
+#include "wine/test.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winerror.h"
+#include "winver.h"
+
+static void test_find_file(void)
+{
+    DWORD ret;
+    UINT dwCur, dwOut ;
+    char appdir[MAX_PATH];
+    char curdir[MAX_PATH];
+    char filename[MAX_PATH];
+    char outBuf[MAX_PATH];
+    char windir[MAX_PATH];
+
+    memset(appdir, 0, MAX_PATH);
+    memset(windir, 0, MAX_PATH);
+
+    dwCur=MAX_PATH;
+    dwOut=MAX_PATH;
+    memset(curdir, 0, MAX_PATH);
+    memset(outBuf, 0, MAX_PATH);
+    ret = VerFindFileA(0, "regedit", "", "", curdir, &dwCur, outBuf, &dwOut);
+    ok(!ret, "VerFindFileA should fail for a known program without extension\n");
+    ok(dwCur == 1, "expected length 1 got %d\n", dwCur);
+    ok(dwOut == 1, "expected length 1 got %d\n", dwOut);
+
+    if(!GetWindowsDirectoryA(windir, MAX_PATH))
+        trace("GetWindowsDirectoryA failed\n");
+    else {
+        sprintf(appdir, "%s\\regedit.exe", windir);
+        if(INVALID_FILE_ATTRIBUTES == GetFileAttributesA(appdir))
+            trace("GetFileAttributesA(%s) failed\n", appdir);
+        else {
+            dwCur=MAX_PATH;
+            dwOut=MAX_PATH;
+            memset(curdir, 0, MAX_PATH);
+            memset(outBuf, 0, MAX_PATH);
+            ret = VerFindFileA(0, "regedit.exe", "", "", curdir, &dwCur, outBuf, &dwOut);
+            todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
+            todo_wine ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
+               "got %d(%s) expected %d\n", dwCur, curdir, strlen(windir)+1);
+            ok(dwOut == 1, "Wrong length of buffer for the recommended installation location"
+               "got %d(%s) expected 1\n", dwOut, outBuf);
+
+            dwCur=MAX_PATH;
+            dwOut=MAX_PATH;
+            memset(curdir, 0, MAX_PATH);
+            memset(outBuf, 0, MAX_PATH);
+            ret = VerFindFileA(0, "regedit.exe", NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
+            todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
+            todo_wine ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
+               "got %d(%s) expected %d\n", dwCur, curdir, strlen(windir)+1);
+            ok(dwOut == 1, "Wrong length of buffer for the recommended installation location"
+               "got %d(%s) expected 1\n", dwOut, outBuf);
+        }
+    }
+    if(!GetModuleFileNameA(NULL, filename, MAX_PATH) ||
+       !GetSystemDirectoryA(windir, MAX_PATH) ||
+       !GetTempPathA(MAX_PATH, appdir))
+        trace("GetModuleFileNameA, GetSystemDirectoryA or GetTempPathA failed\n");
+    else {
+        char *p = strrchr(filename, '\\');
+        if(p++) memmove(filename, p, 1 + strlen(p));
+
+        dwCur=MAX_PATH;
+        dwOut=MAX_PATH;
+        memset(outBuf, 0, MAX_PATH);
+        memset(curdir, 0, MAX_PATH);
+        ret = VerFindFileA(0, filename, NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
+        todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
+        ok(dwOut == 1, "Wrong length of buffer for the recommended installation location"
+           "got %d(%s) expected 1\n", dwOut, outBuf);
+
+        dwCur=MAX_PATH;
+        dwOut=MAX_PATH;
+        memset(outBuf, 0, MAX_PATH);
+        memset(curdir, 0, MAX_PATH);
+        ret = VerFindFileA(VFFF_ISSHAREDFILE, filename, NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
+        todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
+        ok(dwOut == 1 + strlen(windir), "Wrong length of buffer for current location: "
+           "got %d(%s) expected %d\n", dwOut, outBuf, strlen(windir)+1);
+
+        dwCur=MAX_PATH;
+        dwOut=MAX_PATH;
+        memset(outBuf, 0, MAX_PATH);
+        memset(curdir, 0, MAX_PATH);
+        ret = VerFindFileA(0, filename, NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
+        todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
+        ok(dwOut == 1 + strlen(appdir), "Wrong length of buffer for current location: "
+           "got %d(%s) expected %d\n", dwOut, outBuf, strlen(appdir)+1);
+    }
+}
+
+START_TEST(install)
+{
+    test_find_file();
+}
