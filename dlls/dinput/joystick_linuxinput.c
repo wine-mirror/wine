@@ -419,8 +419,6 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 
   TRACE("(this=%p,%p)\n",This,df);
 
-  _dump_DIDATAFORMAT(df);
-  
   if (df == NULL) {
     WARN("invalid pointer\n");
     return E_POINTER;
@@ -430,6 +428,8 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
     WARN("invalid argument\n");
     return DIERR_INVALIDPARAM;
   }
+
+  _dump_DIDATAFORMAT(df);
 
   if (This->joyfd!=-1) {
     WARN("acquired\n");
@@ -906,8 +906,13 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 {
   JoystickImpl *This = (JoystickImpl *)iface;
 
-  FIXME("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
-  FIXME("ph.dwSize = %ld, ph.dwHeaderSize =%ld, ph.dwObj = %ld, ph.dwHow= %ld\n",ph->dwSize, ph->dwHeaderSize,ph->dwObj,ph->dwHow);
+  if (!ph) {
+    WARN("invalid argument\n");
+    return DIERR_INVALIDPARAM;
+  }
+
+  TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
+  TRACE("ph.dwSize = %ld, ph.dwHeaderSize =%ld, ph.dwObj = %ld, ph.dwHow= %ld\n",ph->dwSize, ph->dwHeaderSize,ph->dwObj,ph->dwHow);
 
   if (!HIWORD(rguid)) {
     switch (LOWORD(rguid)) {
@@ -993,6 +998,17 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
     int		i,axes,buttons;
 
     TRACE("%p->(%p)\n",iface,lpDIDevCaps);
+
+    if (!lpDIDevCaps) {
+	WARN("invalid pointer\n");
+	return E_POINTER;
+    }
+
+    if (lpDIDevCaps->dwSize != sizeof(DIDEVCAPS)) {
+        WARN("invalid argument\n");
+        return DIERR_INVALIDPARAM;
+    }
+
     if (xfd==-1) {
 	/* yes, games assume we return something, even if unacquired */
 	JoystickAImpl_Acquire(iface);
