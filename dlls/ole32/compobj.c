@@ -1554,7 +1554,7 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
     if ((hLibrary = LoadLibraryExW(dllpath, 0, LOAD_WITH_ALTERED_SEARCH_PATH)) == 0)
     {
         /* failure: DLL could not be loaded */
-        ERR("couldn't load InprocServer32 dll %s\n", debugstr_w(dllpath));
+        ERR("couldn't load in-process dll %s\n", debugstr_w(dllpath));
         return E_ACCESSDENIED; /* FIXME: or should this be CO_E_DLLNOTFOUND? */
     }
 
@@ -1612,8 +1612,8 @@ HRESULT WINAPI CoGetClassObject(
       return hres;
     }
 
-    /* first try: in-process */
-    if ((CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER) & dwClsContext)
+    /* First try in-process server */
+    if (CLSCTX_INPROC_SERVER & dwClsContext)
     {
         static const WCHAR wszInprocServer32[] = {'I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
         HKEY hkey;
@@ -1624,7 +1624,34 @@ HRESULT WINAPI CoGetClassObject(
             if (hres == REGDB_E_CLASSNOTREG)
                 ERR("class %s not registered\n", debugstr_guid(rclsid));
             else
-                WARN("class %s not registered inproc\n", debugstr_guid(rclsid));
+                WARN("class %s not registered as in-proc server\n", debugstr_guid(rclsid));
+        }
+
+        if (SUCCEEDED(hres))
+        {
+            hres = get_inproc_class_object(hkey, rclsid, iid, ppv);
+            RegCloseKey(hkey);
+        }
+
+        /* return if we got a class, otherwise fall through to one of the
+         * other types */
+        if (SUCCEEDED(hres))
+            return hres;
+    }
+
+    /* Next try in-process handler */
+    if (CLSCTX_INPROC_HANDLER & dwClsContext)
+    {
+        static const WCHAR wszInprocHandler32[] = {'I','n','p','r','o','c','H','a','n','d','l','e','r','3','2',0};
+        HKEY hkey;
+
+        hres = COM_OpenKeyForCLSID(rclsid, wszInprocHandler32, KEY_READ, &hkey);
+        if (FAILED(hres))
+        {
+            if (hres == REGDB_E_CLASSNOTREG)
+                ERR("class %s not registered\n", debugstr_guid(rclsid));
+            else
+                WARN("class %s not registered in-proc handler\n", debugstr_guid(rclsid));
         }
 
         if (SUCCEEDED(hres))
@@ -1652,6 +1679,9 @@ HRESULT WINAPI CoGetClassObject(
         hres = E_NOINTERFACE;
     }
 
+    if (FAILED(hres))
+        ERR("no class object %s could be created for for context 0x%lx\n",
+            debugstr_guid(rclsid), dwClsContext);
     return hres;
 }
 
