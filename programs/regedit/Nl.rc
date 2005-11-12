@@ -92,13 +92,43 @@ BEGIN
     END
 END
 
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+        MENUITEM "&Wijzigen",                  ID_EDIT_MODIFY
+        MENUITEM "&Binaire data wijzigen",     ID_EDIT_MODIFY_BIN
+        MENUITEM SEPARATOR
+        MENUITEM "&Verwijderen\tDel",          ID_EDIT_DELETE
+        MENUITEM "&Naam wijzigen",             ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "&Nieuw"
+        BEGIN
+            MENUITEM "&Sleutel",               ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Tekenreekswaarde",      ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binaire waarde",        ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD waarde",          ID_EDIT_NEW_DWORDVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Verwijderen\tDel",          ID_EDIT_DELETE
+        MENUITEM "&Naam wijzigen\tF2",         ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Sleutelnaam kopiëren",      ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Zoeken\tCtrl+F",            ID_EDIT_FIND, GRAYED
+  END
+END
+
 
 /*
  * Dialog
  */
 
 IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Info"
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -107,6 +137,86 @@ BEGIN
                     SS_NOPREFIX
     LTEXT           "Copyright (C) 2002 ReactOS Team",IDC_STATIC,49,20,119,8
     DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
+END
+
+IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Zoeken"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Zoek:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "In:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "Sleutels", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "Waarden", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Gegevens", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Hele tekenreeks", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "Zoeken",IDOK,175,5,30,11,WS_GROUP
+    PUSHBUTTON      "Sluiten",IDCANCEL,175,22,30,11, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Toevoegen aan favorieten"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Naam:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,120,40,40,11,WS_GROUP
+    PUSHBUTTON      "Annuleren",IDCANCEL,165,40,40,11, WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Favorieten verwijderen"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Favorieten:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,120,73,40,11,WS_GROUP
+    PUSHBUTTON      "Annuleren",IDCANCEL,165,73,40,11, WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Tekenreeks bewerken"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Waardenaam:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Waardegegevens:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,120,60,40,11,WS_GROUP
+    PUSHBUTTON   "Annuleren",IDCANCEL,165,60,40,11,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "DWORD waarde bewerken"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Waardenaam:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Waardegegevens:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Grondtal", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "Hexadecimaal", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Decimaal", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,120,80,40,11,WS_GROUP
+    PUSHBUTTON   "Annuleren",IDCANCEL,165,80,40,11,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Binaire waarde bewerken"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Waardenaam:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Waardegegevens:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,4,40,160,40
+    DEFPUSHBUTTON   "OK",IDOK,120,80,40,11,WS_GROUP
+    PUSHBUTTON   "Annuleren",IDCANCEL,165,80,40,11,WS_GROUP
 END
 
 /*
@@ -152,7 +262,7 @@ BEGIN
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
                             "De verbinding met het register van een externe computer verbreken"
     ID_REGISTRY_PRINT       "Het register of een gedeelte ervan afdrukken"
-/*    ID_HELP_HELPTOPICS      "Help voor de Register-editor openen" */
+    ID_HELP_HELPTOPICS      "Help voor de Register-editor openen"
     ID_HELP_ABOUT           "Programmagegevens, versienummer en copyrightgegevens weergeven"
 END
 
@@ -169,6 +279,20 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "De naam van de geselecteerde sleutel naar het Klembord kopiëren"
     ID_EDIT_FIND            "Een tekenreeks zoeken in een sleutel, een waarde of gegevens"
     ID_EDIT_FINDNEXT        "De opgegeven tekst nogmaals zoeken"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR               "Fout"
+    IDS_BAD_KEY             "Kan sleutel '%s' niet opvragen"
+    IDS_BAD_VALUE           "Kan waarde '%s' niet opvragen"
+    IDS_UNSUPPORTED_TYPE    "Kan dit type sleutel (%ld) niet bewerken"
+    IDS_TOO_BIG_VALUE       "Waarde te groot (%ld)"
+    IDS_DELETE_BOX_TITLE    "Waarde verwijderen bevestigen"
+    IDS_DELETE_BOX_TEXT     "Weet u zeker dat u de waarde '%s' wilt verwijderen?"
+    IDS_NEWKEY              "Nieuwe sleutel #%d"
+    IDS_NEWVALUE            "Nieuwe waarde #%d"
+    IDS_NOTFOUND            "Tekenreeks '%s' niet gevonden"
 END
 
 /*****************************************************************/
