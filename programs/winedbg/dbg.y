@@ -79,7 +79,7 @@ int yyerror(const char*);
 %left '+' '-'
 %left '*' '/' '%'
 %left OP_SIGN '!' '~' OP_DEREF /* OP_INC OP_DEC OP_ADDR */
-%left '.' '[' OP_DRF
+%left '.' '[' OP_DRF OP_SCOPE
 %nonassoc ':'
 
 %type <expression> expr lvalue
@@ -164,8 +164,8 @@ identifier:
       tIDENTIFIER               { $$ = $1; }
     | tPATH '!' tIDENTIFIER     { $$ = lexeme_alloc_size(strlen($1) + 1 + strlen($3) + 1);
                                   sprintf($$, "%s!%s", $1, $3); }
-    | identifier ':' ':' tIDENTIFIER { $$ = lexeme_alloc_size(strlen($1) + 2 + strlen($4) + 1);
-                                       sprintf($$, "%s::%s", $1, $4); }
+    | identifier OP_SCOPE tIDENTIFIER { $$ = lexeme_alloc_size(strlen($1) + 2 + strlen($3) + 1);
+                                       sprintf($$, "%s::%s", $1, $3); }
     ;
 
 list_arg:
@@ -374,7 +374,8 @@ lvalue_addr:
       lvalue                     { $$ = expr_eval($1); }
     ;
 
-lvalue: tNUM                     { $$ = expr_alloc_sconstant($1); }
+lvalue: 
+      tNUM                       { $$ = expr_alloc_sconstant($1); }
     | tINTVAR                    { $$ = expr_alloc_internal_var($1); }
     | identifier		 { $$ = expr_alloc_symbol($1); }
     | lvalue OP_DRF tIDENTIFIER	 { $$ = expr_alloc_pstruct($1, $3); }

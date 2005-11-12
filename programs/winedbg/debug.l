@@ -112,6 +112,7 @@ STRING     \"[^\n"]+\"
 "<<"					{ return OP_SHL; }
 ">>"					{ return OP_SHR; }
 "->"					{ return OP_DRF; }
+"::"					{ return OP_SCOPE; }
 [-+<=>|&^()*/%:!~,\.]			{ return *yytext; }
 "["					{ return *yytext; }
 "]"					{ return *yytext; }
