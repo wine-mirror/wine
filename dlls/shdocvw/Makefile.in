@@ -19,6 +19,7 @@ C_SRCS = \
 	regsvr.c \
 	shdocvw_main.c \
 	shlinstobj.c \
+	view.c \
 	webbrowser.c
 
 RC_SRCS = shdocvw.rc

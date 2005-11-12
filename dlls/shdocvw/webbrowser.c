@@ -41,7 +41,7 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = WEBBROWSER(This);
-    }else if(IsEqualGUID (&IID_IDispatch, riid)) {
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = WEBBROWSER(This);
     }else if(IsEqualGUID(&IID_IWebBrowser, riid)) {
@@ -74,18 +74,24 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID (&IID_IPersistStreamInit, riid)) {
         TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
         *ppv = PERSTRINIT(This);
-    }else if(IsEqualGUID (&IID_IProvideClassInfo, riid)) {
+    }else if(IsEqualGUID(&IID_IProvideClassInfo, riid)) {
         TRACE("(%p)->(IID_IProvideClassInfo %p)\n", This, ppv);
         *ppv = CLASSINFO(This);
-    }else if(IsEqualGUID (&IID_IProvideClassInfo2, riid)) {
+    }else if(IsEqualGUID(&IID_IProvideClassInfo2, riid)) {
         TRACE("(%p)->(IID_IProvideClassInfo2 %p)\n", This, ppv);
         *ppv = CLASSINFO(This);
-    }else if(IsEqualGUID (&IID_IQuickActivate, riid)) {
+    }else if(IsEqualGUID(&IID_IQuickActivate, riid)) {
         TRACE("(%p)->(IID_IQuickActivate %p)\n", This, ppv);
         *ppv = QUICKACT(This);
-    }else if(IsEqualGUID (&IID_IConnectionPointContainer, riid)) {
+    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = CONPTCONT(This);
+    }else if(IsEqualGUID(&IID_IViewObject, riid)) {
+        TRACE("(%p)->(IID_IViewObject %p)\n", This, ppv);
+        *ppv = VIEWOBJ(This);
+    }else if(IsEqualGUID(&IID_IViewObject2, riid)) {
+        TRACE("(%p)->(IID_IViewObject2 %p)\n", This, ppv);
+        *ppv = VIEWOBJ2(This);
     }
 
     if(*ppv) {
@@ -706,6 +712,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->ref = 0;
 
     WebBrowser_OleObject_Init(ret);
+    WebBrowser_ViewObject_Init(ret);
     WebBrowser_Persist_Init(ret);
     WebBrowser_ClassInfo_Init(ret);
     WebBrowser_Misc_Init(ret);
