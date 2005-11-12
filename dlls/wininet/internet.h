@@ -256,6 +256,7 @@ typedef enum
     HTTPOPENREQUESTW,
     SENDCALLBACK,
     INTERNETOPENURLW,
+    INTERNETREADFILEEXA,
 } ASYNC_FUNC;
 
 struct WORKREQ_FTPPUTFILEW
@@ -366,6 +367,11 @@ struct WORKREQ_INTERNETOPENURLW
     DWORD     dwContext;
 };
 
+struct WORKREQ_INTERNETREADFILEEXA
+{
+    LPINTERNET_BUFFERSA lpBuffersOut;
+};
+
 typedef struct WORKREQ
 {
     ASYNC_FUNC asyncall;
@@ -387,6 +393,7 @@ typedef struct WORKREQ
         struct WORKREQ_HTTPSENDREQUESTW         HttpSendRequestW;
         struct WORKREQ_SENDCALLBACK             SendCallback;
 	struct WORKREQ_INTERNETOPENURLW         InternetOpenUrlW;
+        struct WORKREQ_INTERNETREADFILEEXA      InternetReadFileExA;
     } u;
 
     struct WORKREQ *next;

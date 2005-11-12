@@ -1702,37 +1702,21 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
 }
 
 
-/***********************************************************************
- *           InternetReadFile (WININET.@)
- *
- * Read data from an open internet file
- *
- * RETURNS
- *    TRUE  on success
- *    FALSE on failure
- *
- */
-BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
-	DWORD dwNumOfBytesToRead, LPDWORD dwNumOfBytesRead)
+static BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
+                              DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead,
+                              BOOL bWait, BOOL bSendCompletionStatus)
 {
     BOOL retval = FALSE;
     int nSocket = -1;
-    LPWININETHANDLEHEADER lpwh;
-
-    TRACE("%p %p %ld %p\n", hFile, lpBuffer, dwNumOfBytesToRead, dwNumOfBytesRead);
-
-    lpwh = (LPWININETHANDLEHEADER) WININET_GetObject( hFile );
-    if (NULL == lpwh)
-        return FALSE;
 
     /* FIXME: this should use NETCON functions! */
     switch (lpwh->htype)
     {
         case WH_HHTTPREQ:
             if (!NETCON_recv(&((LPWININETHTTPREQW)lpwh)->netConnection, lpBuffer,
-                             dwNumOfBytesToRead, MSG_WAITALL, (int *)dwNumOfBytesRead))
+                             dwNumOfBytesToRead, bWait ? MSG_WAITALL : 0, (int *)pdwNumOfBytesRead))
             {
-                *dwNumOfBytesRead = 0;
+                *pdwNumOfBytesRead = 0;
                 retval = TRUE; /* Under windows, it seems to return 0 even if nothing was read... */
             }
             else
@@ -1744,18 +1728,60 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
             nSocket = ((LPWININETFILE)lpwh)->nDataSocket;
             if (nSocket != -1)
             {
-                int res = recv(nSocket, lpBuffer, dwNumOfBytesToRead, MSG_WAITALL);
+                int res = recv(nSocket, lpBuffer, dwNumOfBytesToRead, bWait ? MSG_WAITALL : 0);
                 retval = (res >= 0);
-                *dwNumOfBytesRead = retval ? res : 0;
+                *pdwNumOfBytesRead = retval ? res : 0;
             }
             break;
 
         default:
             break;
     }
+
+    if (bSendCompletionStatus)
+    {
+        INTERNET_ASYNC_RESULT iar;
+
+        iar.dwResult = retval;
+        iar.dwError = iar.dwError = retval ? ERROR_SUCCESS :
+                                             INTERNET_GetLastError();
+
+        SendAsyncCallback(lpwh, lpwh->dwContext,
+                          INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                          sizeof(INTERNET_ASYNC_RESULT));
+    }
+    return retval;
+}
+
+/***********************************************************************
+ *           InternetReadFile (WININET.@)
+ *
+ * Read data from an open internet file
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
+	DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead)
+{
+    LPWININETHANDLEHEADER lpwh;
+    BOOL retval;
+
+    TRACE("%p %p %ld %p\n", hFile, lpBuffer, dwNumOfBytesToRead, pdwNumOfBytesRead);
+
+    lpwh = WININET_GetObject( hFile );
+    if (!lpwh)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    retval = INTERNET_ReadFile(lpwh, lpBuffer, dwNumOfBytesToRead, pdwNumOfBytesRead, TRUE, FALSE);
     WININET_Release( lpwh );
 
-    TRACE("-- %s (bytes read: %ld)\n", retval ? "TRUE": "FALSE", dwNumOfBytesRead ? *dwNumOfBytesRead : -1);
+    TRACE("-- %s (bytes read: %ld)\n", retval ? "TRUE": "FALSE", pdwNumOfBytesRead ? *pdwNumOfBytesRead : -1);
     return retval;
 }
 
@@ -1764,32 +1790,106 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
  *
  * Read data from an open internet file
  *
+ * PARAMS
+ *  hFile         [I] Handle returned by InternetOpenUrl or HttpOpenRequest.
+ *  lpBuffersOut  [I/O] Buffer.
+ *  dwFlags       [I] Flags. See notes.
+ *  dwContext     [I] Context for callbacks.
+ *
  * RETURNS
  *    TRUE  on success
  *    FALSE on failure
  *
+ * NOTES
+ *  The parameter dwFlags include zero or more of the following flags:
+ *|IRF_ASYNC - Makes the call asynchronous.
+ *|IRF_SYNC - Makes the call synchronous.
+ *|IRF_USE_CONTEXT - Forces dwContext to be used.
+ *|IRF_NO_WAIT - Don't block if the data is not available, just return what is available.
+ *
+ * However, in testing IRF_USE_CONTEXT seems to have no effect - dwContext isn't used.
+ *
+ * SEE
+ *  InternetOpenUrlA(), HttpOpenRequestA()
  */
-BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffer,
+BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOut,
 	DWORD dwFlags, DWORD dwContext)
 {
-  FIXME("stub\n");
-  return FALSE;
+    BOOL retval = FALSE;
+    LPWININETHANDLEHEADER lpwh;
+
+    TRACE("(%p %p 0x%lx 0x%lx)\n", hFile, lpBuffersOut, dwFlags, dwContext);
+
+    if (dwFlags & ~(IRF_ASYNC|IRF_NO_WAIT))
+        FIXME("these dwFlags aren't implemented: 0x%lx\n", dwFlags & ~(IRF_ASYNC|IRF_NO_WAIT));
+
+    if (lpBuffersOut->dwStructSize != sizeof(*lpBuffersOut))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    lpwh = (LPWININETHANDLEHEADER) WININET_GetObject( hFile );
+    if (!lpwh)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    /* FIXME: native only does it asynchronously if the amount of data
+     * requested isn't available. See NtReadFile. */
+    /* FIXME: IRF_ASYNC may not be the right thing to test here;
+     * hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC is probably better, but
+     * we should implement the above first */
+    if (dwFlags & IRF_ASYNC)
+    {
+        WORKREQUEST workRequest;
+        struct WORKREQ_INTERNETREADFILEEXA *req;
+
+        workRequest.asyncall = INTERNETREADFILEEXA;
+        workRequest.hdr = WININET_AddRef( lpwh );
+        req = &workRequest.u.InternetReadFileExA;
+        req->lpBuffersOut = lpBuffersOut;
+
+        retval = INTERNET_AsyncCall(&workRequest);
+        if (!retval) return FALSE;
+
+        SetLastError(ERROR_IO_PENDING);
+        return FALSE;
+    }
+
+    retval = INTERNET_ReadFile(lpwh, lpBuffersOut->lpvBuffer,
+        lpBuffersOut->dwBufferLength, &lpBuffersOut->dwBufferLength,
+        !(dwFlags & IRF_NO_WAIT), FALSE);
+
+    WININET_Release( lpwh );
+
+    TRACE("-- %s (bytes read: %ld)\n", retval ? "TRUE": "FALSE", lpBuffersOut->dwBufferLength);
+    return retval;
 }
 
 /***********************************************************************
  *           InternetReadFileExW (WININET.@)
  *
- * Read data from an open internet file
+ * Read data from an open internet file.
+ *
+ * PARAMS
+ *  hFile         [I] Handle returned by InternetOpenUrl() or HttpOpenRequest().
+ *  lpBuffersOut  [I/O] Buffer.
+ *  dwFlags       [I] Flags.
+ *  dwContext     [I] Context for callbacks.
  *
  * RETURNS
- *    TRUE  on success
- *    FALSE on failure
+ *    FALSE, last error is set to ERROR_CALL_NOT_IMPLEMENTED
+ *
+ * NOTES
+ *  Not implemented in Wine or native either (as of IE6 SP2).
  *
  */
 BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
 	DWORD dwFlags, DWORD dwContext)
 {
-  FIXME("stub\n");
+  ERR("(%p, %p, 0x%lx, 0x%lx): not implemented in native\n", hFile, lpBuffer, dwFlags, dwContext);
 
   INTERNET_SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
@@ -3183,6 +3283,17 @@ static VOID INTERNET_ExecuteWork(void)
 	HeapFree(GetProcessHeap(), 0, req->lpszHeaders);
 	}
 	break;
+    case INTERNETREADFILEEXA:
+        {
+        struct WORKREQ_INTERNETREADFILEEXA *req = &workRequest.u.InternetReadFileExA;
+
+        TRACE("INTERNETREADFILEEXA %p\n", workRequest.hdr);
+
+        INTERNET_ReadFile(workRequest.hdr, req->lpBuffersOut->lpvBuffer,
+            req->lpBuffersOut->dwBufferLength,
+            &req->lpBuffersOut->dwBufferLength, TRUE, TRUE);
+        }
+        break;
     }
     WININET_Release( workRequest.hdr );
 }
