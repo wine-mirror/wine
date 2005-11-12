@@ -2140,6 +2140,8 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
 
 /***********************************************************************
  *           PrintDlgW   (COMDLG32.@)
+ *
+ * See PrintDlgA.
  */
 BOOL WINAPI PrintDlgW(
 		      LPPRINTDLGW lppd /* [in/out] ptr to PRINTDLG32 struct */
@@ -3414,6 +3416,8 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
 }
 /***********************************************************************
  *            PageSetupDlgW  (COMDLG32.@)
+ *
+ * See PageSetupDlgA.
  */
 BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
     HGLOBAL		hDlgTmpl;
@@ -3483,6 +3487,11 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
 
 /***********************************************************************
  *	PrintDlgExA (COMDLG32.@)
+ *
+ * See PrintDlgExW.
+ *
+ * FIXME
+ *   Stub
  */
 HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lpPrintDlgExA)
 {
@@ -3492,6 +3501,25 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lpPrintDlgExA)
 
 /***********************************************************************
  *	PrintDlgExW (COMDLG32.@)
+ *
+ * Display the the PRINT dialog box, which enables the user to specify
+ * specific properties of the print job.  The property sheet can also have
+ * additional application-specific and driver-specific property pages.
+ *  
+ * PARAMS
+ *  lppd  [IO] ptr to PRINTDLGEX struct
+ * 
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: One of the following COM error codes:
+ *    E_OUTOFMEMORY Insufficient memory.
+ *    E_INVALIDARG  One or more arguments are invalid.
+ *    E_POINTER     Invalid pointer.
+ *    E_HANDLE      Invalid handle.
+ *    E_FAIL        Unspecified error.
+ *  
+ * FIXME
+ *   Stub
  */
 HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lpPrintDlgExW)
 {

@@ -40,6 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 /***********************************************************************
  *	GetFileTitleA		(COMDLG32.@)
  *
+ * See GetFileTitleW.
  */
 short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, WORD cbBuf)
 {
@@ -60,6 +61,16 @@ short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, WORD cbBuf)
 /***********************************************************************
  *	GetFileTitleW		(COMDLG32.@)
  *
+ * Get the name of a file.
+ *
+ * PARAMS
+ *  lpFile  [I] name and location of file
+ *  lpTitle [O] returned file name
+ *  cbBuf   [I] buffer size of lpTitle
+ *
+ * RETURNS
+ *  Success: zero
+ *  Failure: negative number.
  */
 short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, WORD cbBuf)
 {
