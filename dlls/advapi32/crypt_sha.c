@@ -101,6 +101,12 @@ void SHA1Transform(ULONG State[5], UCHAR Buffer[64])
  * A_SHAInit [ADVAPI32.@]
  *
  * Initialize a SHA context structure.
+ *
+ * PARAMS
+ *  Context [O] SHA context
+ *
+ * RETURNS
+ *  Nothing
  */
 VOID WINAPI
 A_SHAInit(PSHA_CTX Context)
@@ -119,6 +125,14 @@ A_SHAInit(PSHA_CTX Context)
  * A_SHAUpdate [ADVAPI32.@]
  *
  * Update a SHA context with a hashed data from supplied buffer.
+ *
+ * PARAMS
+ *  Context    [O] SHA context
+ *  Buffer     [I] hashed data
+ *  BufferSize [I] hashed data size
+ *
+ * RETURNS
+ *  Nothing
  */
 VOID WINAPI
 A_SHAUpdate(PSHA_CTX Context, PCHAR Buffer, UINT BufferSize)
@@ -155,6 +169,13 @@ A_SHAUpdate(PSHA_CTX Context, PCHAR Buffer, UINT BufferSize)
  * A_SHAFinal [ADVAPI32.@]
  *
  * Finalize SHA context and return the resulting hash.
+ *
+ * PARAMS
+ *  Context [I/O] SHA context
+ *  Result  [O] resulting hash
+ *
+ * RETURNS
+ *  Nothing
  */
 VOID WINAPI
 A_SHAFinal(PSHA_CTX Context, PULONG Result)

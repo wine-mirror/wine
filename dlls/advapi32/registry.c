@@ -380,11 +380,23 @@ DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
 
 /******************************************************************************
  * RegOpenCurrentUser   [ADVAPI32.@]
- * 
- * FIXME: This function is supposed to retrieve a handle to the
- * HKEY_CURRENT_USER for the user the current thread is impersonating.
- * Since Wine does not currently allow threads to impersonate other users,
- * this stub should work fine.
+ *
+ * Get a handle to the HKEY_CURRENT_USER key for the user 
+ * the current thread is impersonating.
+ *
+ * PARAMS
+ *  access [I] Desired access rights to the key
+ *  retkey [O] Handle to the opened key
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
+ *
+ * FIXME
+ *  This function is supposed to retrieve a handle to the
+ *  HKEY_CURRENT_USER for the user the current thread is impersonating.
+ *  Since Wine does not currently allow threads to impersonate other users,
+ *  this stub should work fine.
  */
 DWORD WINAPI RegOpenCurrentUser( REGSAM access, PHKEY retkey )
 {
@@ -395,6 +407,8 @@ DWORD WINAPI RegOpenCurrentUser( REGSAM access, PHKEY retkey )
 
 /******************************************************************************
  * RegEnumKeyExW   [ADVAPI32.@]
+ *
+ * Enumerate subkeys of the specified open registry key.
  *
  * PARAMS
  *  hkey         [I] Handle to key to enumerate
@@ -1837,6 +1851,9 @@ DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
 /******************************************************************************
  * RegLoadKeyW   [ADVAPI32.@]
  *
+ * Create a subkey under HKEY_USERS or HKEY_LOCAL_MACHINE and store
+ * registration information from a specified file into that subkey.
+ *
  * PARAMS
  *  hkey      [I] Handle of open key
  *  subkey    [I] Address of name of subkey
@@ -1899,6 +1916,8 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
 
 /******************************************************************************
  * RegSaveKeyW   [ADVAPI32.@]
+ *
+ * Save a key and all of its subkeys and values to a new file in the standard format.
  *
  * PARAMS
  *  hkey   [I] Handle of key where save begins
@@ -1981,6 +2000,8 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
 /******************************************************************************
  * RegRestoreKeyW [ADVAPI32.@]
  *
+ * Read the registry information from a file and copy it over a key.
+ *
  * PARAMS
  *  hkey    [I] Handle of key where restore begins
  *  lpFile  [I] Address of filename containing saved tree
@@ -2025,6 +2046,8 @@ LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
 
 /******************************************************************************
  * RegUnLoadKeyW [ADVAPI32.@]
+ *
+ * Unload a registry key and its subkeys from the registry.
  *
  * PARAMS
  *  hkey     [I] Handle of open key
@@ -2073,6 +2096,8 @@ LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
 /******************************************************************************
  * RegReplaceKeyW [ADVAPI32.@]
  *
+ * Replace the file backing a registry key and all its subkeys with another file.
+ *
  * PARAMS
  *  hkey      [I] Handle of open key
  *  lpSubKey  [I] Address of name of subkey
@@ -2118,6 +2143,8 @@ LONG WINAPI RegReplaceKeyA( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
 
 /******************************************************************************
  * RegSetKeySecurity [ADVAPI32.@]
+ *
+ * Set the security of an open registry key.
  *
  * PARAMS
  *  hkey          [I] Open handle of key to set
@@ -2212,6 +2239,8 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
 /******************************************************************************
  * RegConnectRegistryW [ADVAPI32.@]
  *
+ * Establishe a connection to a predefined registry key on another computer.
+ *
  * PARAMS
  *  lpMachineName [I] Address of name of remote computer
  *  hHey          [I] Predefined registry handle
@@ -2275,6 +2304,8 @@ LONG WINAPI RegConnectRegistryA( LPCSTR machine, HKEY hkey, PHKEY reskey )
 
 /******************************************************************************
  * RegNotifyChangeKeyValue [ADVAPI32.@]
+ *
+ * Notify the caller about changes to the attributes or contents of a registry key.
  *
  * PARAMS
  *  hkey            [I] Handle of key to watch

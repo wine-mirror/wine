@@ -1533,6 +1533,8 @@ BOOL WINAPI CryptHashData (HCRYPTHASH hHash, const BYTE *pbData, DWORD dwDataLen
 /******************************************************************************
  * CryptHashSessionKey (ADVAPI32.@)
  *
+ * Compute the cryptographic hash of a session key object.
+ *
  * PARAMS 
  *  hHash   [I] Handle to the hash object.
  *  hKey    [I] Handle to the key to be hashed.
@@ -1562,6 +1564,8 @@ BOOL WINAPI CryptHashSessionKey (HCRYPTHASH hHash, HCRYPTKEY hKey, DWORD dwFlags
 
 /******************************************************************************
  * CryptImportKey (ADVAPI32.@)
+ *
+ * Transfer a cryptographic key from a key BLOB into a cryptographic service provider (CSP).
  *
  * PARAMS
  *  hProv     [I] Handle of a CSP.

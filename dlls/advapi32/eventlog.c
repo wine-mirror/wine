@@ -442,6 +442,25 @@ BOOL WINAPI ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dw
 /******************************************************************************
  * RegisterTraceGuidsW [ADVAPI32.@]
  *
+ * Register an event trace provider and the event trace classes that it uses
+ * to generate events.
+ *
+ * PARAMS
+ *  RequestAddress     [I]   ControlCallback function
+ *  RequestContext     [I]   Optional provider-defined context
+ *  ControlGuid        [I]   GUID of the registering provider
+ *  GuidCount          [I]   Number of elements in the TraceGuidReg array
+ *  TraceGuidReg       [I/O] Array of TRACE_GUID_REGISTRATION structures
+ *  MofImagePath       [I]   not supported, set to NULL
+ *  MofResourceNmae    [I]   not supported, set to NULL
+ *  RegistrationHandle [O]   Provider's registration handle
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: System error code
+ *
+ * FIXME
+ *  Stub.
  */
 ULONG WINAPI RegisterTraceGuidsW( WMIDPREQUEST RequestAddress,
                 PVOID RequestContext, LPCGUID ControlGuid, ULONG GuidCount,
@@ -457,6 +476,10 @@ ULONG WINAPI RegisterTraceGuidsW( WMIDPREQUEST RequestAddress,
 /******************************************************************************
  * RegisterTraceGuidsA [ADVAPI32.@]
  *
+ * See RegisterTraceGuidsW.
+ *
+ * FIXME
+ *  Stub.
  */
 ULONG WINAPI RegisterTraceGuidsA( WMIDPREQUEST RequestAddress,
                 PVOID RequestContext, LPCGUID ControlGuid, ULONG GuidCount,

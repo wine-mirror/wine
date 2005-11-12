@@ -274,6 +274,8 @@ CheckTokenMembership( HANDLE TokenHandle, PSID SidToCheck,
 /******************************************************************************
  * GetTokenInformation [ADVAPI32.@]
  *
+ * Get a type of information about an access token.
+ *
  * PARAMS
  *   token           [I] Handle from OpenProcessToken() or OpenThreadToken()
  *   tokeninfoclass  [I] A TOKEN_INFORMATION_CLASS from "winnt.h"
@@ -629,6 +631,10 @@ GetLengthSid (PSID pSid)
  *  pOldSD                [I]
  *  lpdwBufferLength      [I/O]
  *  pNewSD                [O]
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
  */
 DWORD WINAPI BuildSecurityDescriptorA(
     IN PTRUSTEE_A pOwner,
