@@ -629,14 +629,14 @@ static void test_SetThreadContext(void)
     HANDLE thread = CreateThread( NULL, 0, threadFunc6, (void *)2, CREATE_SUSPENDED, NULL );
 
     ctx.ContextFlags = CONTEXT_FULL;
-    ok( GetThreadContext( thread, &ctx ), "GetThreadContext failed\n" );
+    ok( GetThreadContext( thread, &ctx ), "GetThreadContext failed : (%ld)\n", GetLastError() );
     /* simulate a call to set_test_val(10) */
     stack = (int *)ctx.Esp;
     stack[-1] = 10;
     stack[-2] = ctx.Eip;
     ctx.Esp -= 2 * sizeof(int *);
     ctx.Eip = (DWORD)set_test_val;
-    ok( SetThreadContext( thread, &ctx ), "SetThreadContext failed\n" );
+    ok( SetThreadContext( thread, &ctx ), "SetThreadContext failed : (%ld)\n", GetLastError() );
     ResumeThread( thread );
     WaitForSingleObject( thread, INFINITE );
     ok( test_value == 20, "test_value %d instead of 20\n", test_value );
