@@ -335,8 +335,17 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
   sprintf(tmpstr1,"pat%x.tmp",id & 0xffff);
   ok(lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr)==0 ||
      lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr1)==0,
-     "GetTempPath returned '%s' which doesn't match '%s' or '%s'. id=%x\n",
+     "GetTempFileNameA returned '%s' which doesn't match '%s' or '%s'. id=%x\n",
      newdir,tmpstr,tmpstr1,id);
+
+  ok((id=GetTempFileNameA(tmppath,NULL,0,newdir)),"GetTempFileNameA failed\n");
+  sprintf(tmpstr,"%.4x.tmp",id & 0xffff);
+  sprintf(tmpstr1,"%x.tmp",id & 0xffff);
+  ok(lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr)==0 ||
+     lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr1)==0,
+     "GetTempFileNameA returned '%s' which doesn't match '%s' or '%s'. id=%x\n",
+     newdir,tmpstr,tmpstr1,id);
+
 
 /* Find first valid drive letter that is neither newdir[0] nor curDrive */
   drives = GetLogicalDrives() & ~(1<<(newdir[0]-'A'));
