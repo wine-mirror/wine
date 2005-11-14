@@ -8,6 +8,7 @@ IMPORTS   = cabinet ole32 shlwapi wininet user32 advapi32 kernel32 ntdll
 EXTRALIBS = -luuid
 
 C_SRCS = \
+	binding.c \
 	file.c \
 	format.c \
 	ftp.c \

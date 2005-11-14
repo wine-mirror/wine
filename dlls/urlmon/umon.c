@@ -198,7 +198,7 @@ static HRESULT Binding_MoreCacheData(Binding *This, char *buf, DWORD dwBytes)
 					    (This->total_read == written) ?
 					        BINDSTATUS_BEGINDOWNLOADDATA :
 					        BINDSTATUS_DOWNLOADINGDATA,
-					    NULL);
+					    This->URLName);
 	if (!hr)
 	{
 	    STGMEDIUM stg;
@@ -244,7 +244,8 @@ static void Binding_FinishedDownload(Binding *This, HRESULT hr)
     stg.u.pstm = (IStream *)This->pstrCache;
     stg.pUnkForRelease = NULL;
 
-    IBindStatusCallback_OnProgress(This->pbscb, This->total_read, This->expected_size, BINDSTATUS_ENDDOWNLOADDATA, NULL);
+    IBindStatusCallback_OnProgress(This->pbscb, This->total_read, This->expected_size,
+                                   BINDSTATUS_ENDDOWNLOADDATA, This->URLName);
     IBindStatusCallback_OnDataAvailable(This->pbscb, BSCF_LASTDATANOTIFICATION, This->total_read, &fmt, &stg);
     if (hr)
     {
@@ -883,9 +884,9 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
        || url.nScheme == INTERNET_SCHEME_FILE)
         return URLMonikerImpl_BindToStorage_hack(This->URLName, pbc, pmkToLeft, riid, ppvObject);
 
-    FIXME("(%p)->(%p %p %s %p)\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppvObject);
+    TRACE("(%p)->(%p %p %s %p)\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppvObject);
 
-    return E_NOTIMPL;
+    return start_binding(This->URLName, pbc, riid, ppvObject);
 }
 
 /******************************************************************************

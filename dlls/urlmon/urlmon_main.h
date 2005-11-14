@@ -56,4 +56,6 @@ void	UMCloseCacheFileStream(IUMCacheStream *pstr);
 
 HRESULT get_protocol_iface(LPCWSTR url, IUnknown **ret);
 
+HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv);
+
 #endif /* __WINE_URLMON_MAIN_H */
