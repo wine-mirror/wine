@@ -68,6 +68,8 @@
 #include "mmddk.h"
 #include "wine/debug.h"
 
+#include "wine/unicode.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(joystick);
 
 #ifdef HAVE_LINUX_JOYSTICK_H
