@@ -784,8 +784,8 @@ static void InternetCreateUrlA_test()
 	len = 42;
 	ret = InternetCreateUrlA(&urlComp, 0, szUrl, &len);
 	ok(ret, "Expected success\n");
-	ok(GetLastError() == ERROR_ALREADY_EXISTS,
-		"Expected ERROR_ALREADYEXISTS, got %ld\n", GetLastError());
+	ok(GetLastError() == 0xdeadbeef,
+		"Expected 0xdeadbeef, got %ld\n", GetLastError());
 	ok(len == 32, "Expected len 32, got %ld\n", len);
 	ok(!strcmp(szUrl, CREATE_URL4), "Expected %s, got %s\n", CREATE_URL3, szUrl);
 

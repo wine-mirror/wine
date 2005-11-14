@@ -3584,8 +3584,6 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-        else
-            SetLastError(ERROR_ALREADY_EXISTS);
     }
 
     if (lpUrlComponents->lpszPassword)
