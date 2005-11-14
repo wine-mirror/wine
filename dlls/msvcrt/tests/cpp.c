@@ -818,13 +818,37 @@ static void test_rtti(void)
   ok (casted == NULL, "Cast succeeded\n");
 }
 
+struct _demangle {
+    LPCSTR mangled;
+    LPCSTR result;
+    BOOL test_in_wine;
+};
+
 static void test_demangle(void)
 {
-    char * name = NULL;
-    static const char * mangled = ".ABVVec4@ref2@dice@@";
-    static const char * result = "class dice::ref2::Vec4 const &";
-    name = p__unDName(0, mangled + 1, 0,pmalloc,pfree,0x2800);
-    ok(name != NULL && !strcmp(name,result),"Got name %s\n", name);
+    char * name;
+    struct _demangle demangle[]={
+/*	{ "BlaBla"," ?? ::Bla", FALSE}, */
+	{ "ABVVec4@ref2@dice@@","class dice::ref2::Vec4 const &",TRUE},
+	{ "?AV?$CDB_GEN_BIG_ENUM_FLAG@W4CDB_WYSIWYG_BITS_ENUM@@$0H@@@", "class CDB_GEN_BIG_ENUM_FLAG<enum CDB_WYSIWYG_BITS_ENUM,7>", TRUE},
+	{ "?AV?$CDB_GEN_BIG_ENUM_FLAG@W4CDB_WYSIWYG_BITS_ENUM@@$0HO@@@", "class CDB_GEN_BIG_ENUM_FLAG<enum CDB_WYSIWYG_BITS_ENUM,126>",TRUE},
+	{ "?AV?$CDB_GEN_BIG_ENUM_FLAG@W4CDB_WYSIWYG_BITS_ENUM@@$0HOA@@@", "class CDB_GEN_BIG_ENUM_FLAG<enum CDB_WYSIWYG_BITS_ENUM,2016>",TRUE},
+	{ "?AV?$CDB_GEN_BIG_ENUM_FLAG@W4CDB_WYSIWYG_BITS_ENUM@@$0HOAA@@@", "class CDB_GEN_BIG_ENUM_FLAG<enum CDB_WYSIWYG_BITS_ENUM,32256>",TRUE},
+	{ "?AV?$CDB_GEN_BIG_ENUM_FLAG@W4CDB_WYSIWYG_BITS_ENUM@@$01@@@", "?AV?$CDB_GEN_BIG_ENUM_FLAG@W4CDB_WYSIWYG_BITS_ENUM@@$01@@@", FALSE},
+/*	{ "?AV?$CDB_GEN_BIG_ENUM_FLAG@W4CDB_WYSIWYG_BITS_ENUM@@$011@@@", "?AV?$CDB_GEN_BIG_ENUM_FLAG@W4CDB_WYSIWYG_BITS_ENUM@@$011@@@",FALSE}, */
+    };
+    int i, num_test = (sizeof(demangle)/sizeof(struct _demangle));
+    
+    for (i=0; i < num_test; i++) {
+   
+	name = NULL;
+	name = p__unDName(0, demangle[i].mangled, 0,pmalloc,pfree,0x2800);
+	if ( demangle[i].test_in_wine)
+	    ok(name != NULL && !strcmp(name,demangle[i].result), "Got name \"%s\"\n", name);
+	else
+	    todo_wine ok(name != NULL && !strcmp(name,demangle[i].result), "Got name %s\n", name);
+	      
+    }
 }
 
 START_TEST(cpp)

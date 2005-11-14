@@ -23,6 +23,7 @@
 #include "wine/port.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include "msvcrt.h"
 
 #include "wine/debug.h"
@@ -598,6 +599,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
 {
     char                dt;
     BOOL                add_pmt = TRUE;
+    int                 num_args=0;
 
     assert(ct);
     ct->left = ct->right = NULL;
@@ -713,24 +715,22 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
             ct->left = ptr;
             sym->current += 2;
         }
-        else if ((sym->current[1] >= 'A' && sym->current[1] <= 'P') &&
-                 sym->current[2] == '@')
+        else if (sym->current[1] >= 'A' && sym->current[1] <= 'P')
         {
-            char* ptr;
-            ptr = und_alloc(sym, 3);
-            if (sym->current[1] <= 'J')
+            while (sym->current[1] >= 'A' && sym->current[1] <= 'P')
             {
-                ptr[0] = '0' + sym->current[1] - 'A';
-                ptr[1] = 0;
+                num_args *= 16;
+		num_args += sym->current[1] - 'A';
+		sym->current += 1;
             }
-            else
+            if(sym->current[1] == '@')
             {
-                ptr[0] = '1';
-                ptr[1] = sym->current[1] - 'K' + '0';
-                ptr[2] = 0;
+                char *ptr;
+                ptr = und_alloc(sym, 17);
+                sprintf(ptr,"%d",num_args);
+                ct->left = ptr;
+                sym->current += 1;
             }
-            ct->left = ptr;
-            sym->current += 3;
         }
         else goto done;
         break;
