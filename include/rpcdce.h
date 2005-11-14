@@ -19,6 +19,10 @@
 #ifndef __WINE_RPCDCE_H
 #define __WINE_RPCDCE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef IN
 #define IN
 #endif
@@ -311,6 +315,10 @@ RPCRTAPI unsigned short RPC_ENTRY
   UuidHash(UUID* Uuid, RPC_STATUS* Status_ );
 RPCRTAPI int RPC_ENTRY
   UuidIsNil( UUID* Uuid, RPC_STATUS* Status_ );
+
+#ifdef __cplusplus
+}
+#endif
 
 #include <rpcdcep.h>
 
