@@ -122,6 +122,7 @@ void thread_init(void)
     peb.LdrData            = &ldr;
     params.CurrentDirectory.DosPath.Buffer = current_dir;
     params.CurrentDirectory.DosPath.MaximumLength = sizeof(current_dir);
+    params.wShowWindow = 1; /* SW_SHOWNORMAL */
     RtlInitializeBitMap( &tls_bitmap, peb.TlsBitmapBits, sizeof(peb.TlsBitmapBits) * 8 );
     RtlInitializeBitMap( &tls_expansion_bitmap, peb.TlsExpansionBitmapBits,
                          sizeof(peb.TlsExpansionBitmapBits) * 8 );
