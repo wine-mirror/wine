@@ -109,14 +109,14 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
 
     TRACE("(%p) : Relay\n", iface);
     if (NULL == ppDecl) {
-      return D3DERR_INVALIDCALL;
+        WARN("(%p) : Caller passed NULL As ppDecl, returning D3DERR_INVALIDCALL",This);
+        return D3DERR_INVALIDCALL;
     }
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexDeclaration9Impl));
     if (NULL == object) {
-      FIXME("Allocation of memory failed\n");
-      *ppDecl = NULL;
-      return D3DERR_OUTOFVIDEOMEMORY;
+        FIXME("Allocation of memory failed, returning D3DERR_OUTOFVIDEOMEMORY\n");
+        return D3DERR_OUTOFVIDEOMEMORY;
     }
 
     object->lpVtbl = &Direct3DVertexDeclaration9_Vtbl;
@@ -124,12 +124,13 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
     hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, pVertexElements, &object->wineD3DVertexDeclaration, (IUnknown *)object);
 
     if (FAILED(hr)) {
-      /* free up object */ 
-      FIXME("(%p) call to IWineD3DDevice_CreateVertexDeclaration failed\n", This);
-      HeapFree(GetProcessHeap(), 0, object);
-      *ppDecl = NULL;
+
+        /* free up object */
+        FIXME("(%p) call to IWineD3DDevice_CreateVertexDeclaration failed\n", This);
+        HeapFree(GetProcessHeap(), 0, object);
     } else {
-      *ppDecl = (LPDIRECT3DVERTEXDECLARATION9) object;
+        *ppDecl = (LPDIRECT3DVERTEXDECLARATION9) object;
+         TRACE("(%p) : Created vertex declatanio %p\n", This, object);
     }
     return hr;
 }

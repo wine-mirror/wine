@@ -166,8 +166,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateIndexBuffer(LPDIRECT3DDEVICE9 iface,
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *ppIndexBuffer = NULL;
+        FIXME("Allocation of memory failed, returning D3DERR_OUTOFVIDEOMEMORY\n");
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -176,12 +175,13 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateIndexBuffer(LPDIRECT3DDEVICE9 iface,
     TRACE("Calling wined3d create index buffer\n");
     hrc = IWineD3DDevice_CreateIndexBuffer(This->WineD3DDevice, Length, Usage, Format, Pool, &object->wineD3DIndexBuffer, pSharedHandle, (IUnknown *)object);
     if (hrc != D3D_OK) {
-        /* free up object */ 
+
+        /* free up object */
         FIXME("(%p) call to IWineD3DDevice_CreateIndexBuffer failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppIndexBuffer = NULL;
     } else {
         *ppIndexBuffer = (LPDIRECT3DINDEXBUFFER9) object;
+        TRACE("(%p) : Created index buffer %p\n", This, object);
     }
     return hrc;
 }

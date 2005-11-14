@@ -101,29 +101,30 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreatePixelShader(LPDIRECT3DDEVICE9 iface, C
     HRESULT hrc = D3D_OK;
 
     FIXME("(%p) Relay (disabled)\n", This);
-    *ppShader = NULL;
-    return D3D_OK;
+
     if (ppShader == NULL) {
         TRACE("(%p) Invalid call\n", This);
         return D3DERR_INVALIDCALL;
     }
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
 
     if (NULL == object) {
+        FIXME("Allocation of memory failed, returning D3DERR_OUTOFVIDEOMEMORY\n");
         return E_OUTOFMEMORY;
+    }
+
+    object->ref    = 1;
+    object->lpVtbl = &Direct3DPixelShader9_Vtbl;
+    hrc = IWineD3DDevice_CreatePixelShader(This->WineD3DDevice, pFunction, &object->wineD3DPixelShader , (IUnknown *)object);
+    if (hrc != D3D_OK) {
+
+        /* free up object */
+        FIXME("(%p) call to IWineD3DDevice_CreatePixelShader failed\n", This);
+        HeapFree(GetProcessHeap(), 0 , object);
     } else {
-
-        object->ref    = 1;
-        object->lpVtbl = &Direct3DPixelShader9_Vtbl;
-        hrc = IWineD3DDevice_CreatePixelShader(This->WineD3DDevice, pFunction, &object->wineD3DPixelShader , (IUnknown *)object);
-        if (hrc != D3D_OK) {
-            FIXME("(%p) call to IWineD3DDevice_CreatePixelShader failed\n", This);
-            HeapFree(GetProcessHeap(), 0 , object);
-            *ppShader = NULL;
-        } else {
-            *ppShader = (IDirect3DPixelShader9*) object;
-        }
-
+        *ppShader = (IDirect3DPixelShader9*) object;
+        TRACE("(%p) : Created pixel shader %p\n", This, object);
     }
 
     TRACE("(%p) : returning %p\n", This, *ppShader);

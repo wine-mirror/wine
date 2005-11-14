@@ -256,7 +256,6 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateCubeTexture(LPDIRECT3DDEVICE9 iface,
 
     if (NULL == object) {
         FIXME("(%p) allocation of CubeTexture failed\n", This);
-        *ppCubeTexture = NULL;
         return D3DERR_OUTOFVIDEOMEMORY;
     }
     object->lpVtbl = &Direct3DCubeTexture9_Vtbl;
@@ -266,12 +265,13 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateCubeTexture(LPDIRECT3DDEVICE9 iface,
                                  D3D9CB_CreateSurface);
 
     if (hr != D3D_OK){
+
         /* free up object */
         FIXME("(%p) call to IWineD3DDevice_CreateCubeTexture failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppCubeTexture = NULL;
     } else {
         *ppCubeTexture = (LPDIRECT3DCUBETEXTURE9) object;
+        TRACE("(%p) : Created cube texture %p\n", This, object);
     }
 
     TRACE("(%p) returning %p\n",This, *ppCubeTexture);

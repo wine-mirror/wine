@@ -151,8 +151,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE
 
     object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(*object));
     if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *pSwapChain = NULL;
+        FIXME("Allocation of memory failed, returning D3DERR_OUTOFVIDEOMEMORY\n");
         return D3DERR_OUTOFVIDEOMEMORY;
     }
     object->ref = 1;
@@ -179,9 +178,9 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE
     if (hrc != D3D_OK) {
         FIXME("(%p) call to IWineD3DDevice_CreateAdditionalSwapChain failed\n", This);
         HeapFree(GetProcessHeap(), 0 , object);
-        *pSwapChain = NULL;
     }else{
         *pSwapChain = (IDirect3DSwapChain9 *)object;
+        TRACE("(%p) : Created swapchain %p\n", This, *pSwapChain);
     }
     TRACE("(%p) returning %p\n", This, *pSwapChain);
     return hrc;

@@ -250,8 +250,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVolumeTexture(LPDIRECT3DDEVICE9 ifac
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVolumeTexture9Impl));
     if (NULL == object) {
-        FIXME("(%p) allocation of memory failed\n", This);
-        *ppVolumeTexture = NULL;
+        FIXME("(%p) allocation of memory failed, returning D3DERR_OUTOFVIDEOMEMORY\n", This);
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -263,12 +262,13 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVolumeTexture(LPDIRECT3DDEVICE9 ifac
 
 
     if (hrc != D3D_OK) {
-        /* free up object */ 
+
+        /* free up object */
         FIXME("(%p) call to IWineD3DDevice_CreateVolumeTexture failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppVolumeTexture = NULL;
     } else {
         *ppVolumeTexture = (LPDIRECT3DVOLUMETEXTURE9) object;
+        TRACE("(%p) : Created volume texture %p\n", This, object);
     }
     TRACE("(%p)  returning %p\n", This , *ppVolumeTexture);
     return hrc;

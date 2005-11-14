@@ -106,7 +106,6 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateStateBlock(LPDIRECT3DDEVICE9 iface, D3
    object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DStateBlock9Impl));
    if (NULL == object) {
       FIXME("(%p)  Failed to allocate %d bytes\n", This, sizeof(IDirect3DStateBlock9Impl));
-      *ppStateBlock = NULL;
       return E_OUTOFMEMORY;
    }
    object->lpVtbl = &Direct3DStateBlock9_Vtbl;
@@ -116,11 +115,11 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateStateBlock(LPDIRECT3DDEVICE9 iface, D3
    if(hrc != D3D_OK){
        FIXME("(%p) Call to IWineD3DDevice_CreateStateBlock failed.\n", This);
        HeapFree(GetProcessHeap(), 0, object);
-       *ppStateBlock = NULL;
    } else {
        *ppStateBlock = (IDirect3DStateBlock9*)object;
+       TRACE("(%p) : Created stateblock %p\n", This, object);
    }
-   TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, object);    
+   TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, object);
    return hrc;
 }
 

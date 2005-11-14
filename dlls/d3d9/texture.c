@@ -248,8 +248,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateTexture(LPDIRECT3DDEVICE9 iface, UIN
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTexture9Impl));
 
     if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *ppTexture = NULL;
+        FIXME("Allocation of memory failed, returning D3DERR_OUTOFVIDEOMEMORY\n");
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -259,14 +258,15 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateTexture(LPDIRECT3DDEVICE9 iface, UIN
                                  (WINED3DFORMAT)Format, Pool, &object->wineD3DTexture, pSharedHandle, (IUnknown *)object, D3D9CB_CreateSurface);
 
     if (FAILED(hrc)) {
-        /* free up object */ 
+
+        /* free up object */
         FIXME("(%p) call to IWineD3DDevice_CreateTexture failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppTexture = NULL;
    } else {
+
         *ppTexture= (LPDIRECT3DTEXTURE9) object;
+        TRACE("(%p) Created Texture %p, %p\n", This, object, object->wineD3DTexture);
    }
 
-   TRACE("(%p) Created Texture %p, %p\n",This,object,object->wineD3DTexture);
    return hrc;
 }

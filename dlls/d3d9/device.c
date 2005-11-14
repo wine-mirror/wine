@@ -260,7 +260,6 @@ HRESULT  WINAPI IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9 iface, UINT
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface9Impl));
     if (NULL == object) {
         FIXME("Allocation of memory failed\n");
-        *ppSurface = NULL;
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -272,13 +271,14 @@ HRESULT  WINAPI IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9 iface, UINT
     hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, Format, Lockable, Discard, Level,  &object->wineD3DSurface, Type, Usage, Pool,MultiSample,MultisampleQuality,pSharedHandle,(IUnknown *)object);
     
     if (hrc != D3D_OK || NULL == object->wineD3DSurface) {
+
        /* free up object */
         FIXME("(%p) call to IWineD3DDevice_CreateSurface failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppSurface = NULL;
     } else {
+        TRACE("(%p) : Created surface %p\n", This, object);
         *ppSurface = (LPDIRECT3DSURFACE9) object;
-    }  
+    }
     return hrc;
 }
 

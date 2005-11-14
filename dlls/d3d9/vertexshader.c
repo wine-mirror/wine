@@ -108,8 +108,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexShader(LPDIRECT3DDEVICE9 iface, 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     TRACE("(%p) : pFunction(%p), ppShader(%p)\n", This, pFunction, ppShader);
     if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *ppShader = NULL;
+        FIXME("Allocation of memory failed, returning D3DERR_OUTOFVIDEOMEMORY\n");
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -118,12 +117,13 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexShader(LPDIRECT3DDEVICE9 iface, 
     hrc= IWineD3DDevice_CreateVertexShader(This->WineD3DDevice, pFunction, &object->wineD3DVertexShader, (IUnknown *)object);
 
     if (FAILED(hrc)) {
+
         /* free up object */
         FIXME("Call to IWineD3DDevice_CreateVertexShader failed\n");
         HeapFree(GetProcessHeap(), 0, object);
-        *ppShader = NULL;
     }else{
         *ppShader = (IDirect3DVertexShader9 *)object;
+        TRACE("(%p) : Created vertex shader %p\n", This, object);
     }
 
     TRACE("(%p) : returning %p\n", This, *ppShader);

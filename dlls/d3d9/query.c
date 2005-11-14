@@ -131,8 +131,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9 iface, D3DQUER
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DQuery9Impl));
     if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *ppQuery = NULL;
+        FIXME("Allocation of memory failed, returning D3DERR_OUTOFVIDEOMEMORY\n");
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -141,12 +140,13 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9 iface, D3DQUER
     hr = IWineD3DDevice_CreateQuery(This->WineD3DDevice, Type, &object->wineD3DQuery, (IUnknown *)object);
 
     if (FAILED(hr)) {
+
         /* free up object */
         FIXME("(%p) call to IWineD3DDevice_CreateQuery failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppQuery = NULL;
     } else {
         *ppQuery = (LPDIRECT3DQUERY9) object;
+        TRACE("(%p) : Created query %p\n", This , object);
     }
     TRACE("(%p) : returning %lx\n", This, hr);
     return hr;
