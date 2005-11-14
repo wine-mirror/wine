@@ -471,7 +471,7 @@ static void remove_queue_message( struct msg_queue *queue, struct message *msg,
         if (list_empty( &queue->msg_list[kind] )) clear_queue_bits( queue, QS_SENDMESSAGE );
         break;
     case POST_MESSAGE:
-        if (list_empty( &queue->msg_list[kind] )) clear_queue_bits( queue, QS_POSTMESSAGE );
+        if (list_empty( &queue->msg_list[kind] )) clear_queue_bits( queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
         break;
     }
     free_message( msg );
@@ -1420,7 +1420,7 @@ void post_message( user_handle_t win, unsigned int message,
         msg->data_size = 0;
 
         list_add_tail( &thread->queue->msg_list[POST_MESSAGE], &msg->entry );
-        set_queue_bits( thread->queue, QS_POSTMESSAGE );
+        set_queue_bits( thread->queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
     }
     release_object( thread );
 }
@@ -1592,7 +1592,7 @@ DECL_HANDLER(send_message)
                 break;
             }
             list_add_tail( &recv_queue->msg_list[POST_MESSAGE], &msg->entry );
-            set_queue_bits( recv_queue, QS_POSTMESSAGE );
+            set_queue_bits( recv_queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
             break;
         case MSG_HARDWARE:
             queue_hardware_message( recv_queue, msg );
@@ -1631,7 +1631,8 @@ DECL_HANDLER(get_message)
     if (req->flags & GET_MSG_SENT_ONLY) goto done;  /* nothing else to check */
 
     /* clear changed bits so we can wait on them if we don't find a message */
-    queue->changed_bits = 0;
+    if (req->get_first == 0 && req->get_last == ~0U) queue->changed_bits = 0;
+    else queue->changed_bits &= QS_ALLPOSTMESSAGE;
 
     /* then check for posted messages */
     if (get_posted_message( queue, get_win, req->get_first, req->get_last, req->flags, reply ))
