@@ -900,6 +900,31 @@ Main_DirectDrawSurface_GetDC(LPDIRECTDRAWSURFACE7 iface, HDC *phDC)
     }
 
     hr = This->get_dc(This, &This->hDC);
+
+    if ((This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) &&
+	(This->palette == NULL)) {
+	IDirectDrawImpl *ddraw = This->ddraw_owner;
+	IDirectDrawSurfaceImpl *surf;
+	
+	for (surf = ddraw->surfaces; surf != NULL; surf = surf->next_ddraw) {
+	    if (((surf->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER)) == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER)) &&
+		(surf->palette != NULL)) {
+		RGBQUAD col[256];
+		IDirectDrawPaletteImpl *pal = surf->palette;
+		unsigned int n;
+		for (n=0; n<256; n++) {
+		    col[n].rgbRed   = pal->palents[n].peRed;
+		    col[n].rgbGreen = pal->palents[n].peGreen;
+		    col[n].rgbBlue  = pal->palents[n].peBlue;
+		    col[n].rgbReserved = 0;
+		}
+		SetDIBColorTable(This->hDC, 0, 256, col);
+		break;
+	    }
+	}
+
+    }
+    
     if (SUCCEEDED(hr))
     {
 	TRACE("returning %p\n",This->hDC);
