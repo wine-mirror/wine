@@ -547,19 +547,21 @@ static void CALLBACK URLMON_InternetCallback(HINTERNET hinet, /*DWORD_PTR*/ DWOR
 /******************************************************************************
  *        URLMoniker_BindToStorage
  ******************************************************************************/
-static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
+static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
 						   IBindCtx* pbc,
 						   IMoniker* pmkToLeft,
 						   REFIID riid,
 						   VOID** ppvObject)
 {
-    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     HRESULT hres;
     BINDINFO bi;
     DWORD bindf;
     WCHAR szFileName[MAX_PATH + 1];
     Binding *bind;
     int len;
+
+    WARN("(%s %p %p %s %p)\n", debugstr_w(URLName), pbc, pmkToLeft, debugstr_guid(riid),
+            ppvObject);
 
     if(pmkToLeft) {
 	FIXME("pmkToLeft != NULL\n");
@@ -575,9 +577,9 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
     bind->ref = 1;
     URLMON_LockModule();
 
-    len = lstrlenW(This->URLName)+1;
+    len = lstrlenW(URLName)+1;
     bind->URLName = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-    memcpy(bind->URLName, This->URLName, len*sizeof(WCHAR));
+    memcpy(bind->URLName, URLName, len*sizeof(WCHAR));
 
     hres = UMCreateStreamOnCacheFile(bind->URLName, 0, szFileName, &bind->hCacheFile, &bind->pstrCache);
 
@@ -853,6 +855,37 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
     IBinding_Release((IBinding*)bind);
 
     return hres;
+}
+
+static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
+                                                   IBindCtx* pbc,
+						   IMoniker* pmkToLeft,
+						   REFIID riid,
+						   VOID** ppvObject)
+{
+    URLMonikerImpl *This = (URLMonikerImpl*)iface;
+    WCHAR schema[64];
+    BOOL bret;
+
+    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW), schema,
+        sizeof(schema)/sizeof(WCHAR), 0, NULL, 0, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0};
+
+    bret = InternetCrackUrlW(This->URLName, 0, ICU_ESCAPE, &url);
+    if(!bret) {
+        ERR("InternetCrackUrl failed: %ld\n", GetLastError());
+        return E_FAIL;
+    }
+
+    if(url.nScheme == INTERNET_SCHEME_HTTP
+       || url.nScheme== INTERNET_SCHEME_HTTPS
+       || url.nScheme== INTERNET_SCHEME_FTP
+       || url.nScheme == INTERNET_SCHEME_GOPHER
+       || url.nScheme == INTERNET_SCHEME_FILE)
+        return URLMonikerImpl_BindToStorage_hack(This->URLName, pbc, pmkToLeft, riid, ppvObject);
+
+    FIXME("(%p)->(%p %p %s %p)\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppvObject);
+
+    return E_NOTIMPL;
 }
 
 /******************************************************************************
