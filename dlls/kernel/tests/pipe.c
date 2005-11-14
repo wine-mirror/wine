@@ -757,7 +757,7 @@ static void test_CreatePipe(void)
     ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL), "Read from broken pipe withe with pending data failed\n");
     ok(read == sizeof(PIPENAME), "Read from  anonymous pipe got %ld bytes instead of %d\n", read, sizeof(PIPENAME));
     /* But now we need to get informed that the pipe is closed */
-    todo_wine ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL) == 0, "Broken pipe not detected\n");
+    ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL) == 0, "Broken pipe not detected\n");
 }
 
 START_TEST(pipe)

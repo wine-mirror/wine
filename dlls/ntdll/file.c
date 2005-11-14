@@ -589,8 +589,16 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         else io_status->u.Status = FILE_GetNtStatus();
 	break;
     }
+    if (io_status->u.Status == STATUS_SUCCESS && io_status->Information == 0)
+    {
+        struct stat st;
+        if (fstat( unix_handle, &st ) != -1 && S_ISSOCK( st.st_mode ))
+            io_status->u.Status = STATUS_PIPE_BROKEN;
+        else
+            io_status->u.Status = STATUS_END_OF_FILE;
+    }
     wine_server_release_fd( hFile, unix_handle );
-    TRACE("= 0x%08lx\n", io_status->u.Status);
+    TRACE("= 0x%08lx (%lu)\n", io_status->u.Status, io_status->Information);
     return io_status->u.Status;
 }
 
