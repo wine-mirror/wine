@@ -44,13 +44,35 @@ AddReg=\
     OLE,\
     Tapi
 
+[DefaultInstall.NT]
+RegisterDlls=RegisterDllsSection
+UpdateInis=SystemIni
+AddReg=\
+    Classes,\
+    ControlClass,\
+    CurrentVersion,\
+    Debugger,\
+    Desktop,\
+    Metrics,\
+    DirectX,\
+    Environment,\
+    Fonts,\
+    MCI,\
+    Misc,\
+    Nls,\
+    OLE,\
+    Tapi,\
+    VersionInfo
+
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
 Mci32Str="Software\Microsoft\Windows NT\CurrentVersion\MCI32"
 Desktop="Control Panel\Desktop"
 Metrics="Control Panel\Desktop\WindowMetrics"
 CurrentVersion="Software\Microsoft\Windows\CurrentVersion"
+CurrentVersionNT="Software\Microsoft\Windows NT\CurrentVersion"
 FontSubStr="Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes"
+Control="System\CurrentControlSet\Control"
 
 [Classes]
 HKCR,.avi,"Content Type",,"video/avi"
@@ -2084,3 +2106,11 @@ system.ini, drivers32,,"VIDC.CVID=iccvid.dll"
 system.ini, drivers32,,"; VIDC.IV50=ir50_32.dll" 
 system.ini, drivers32,,"; VIDC.IV31=ir32_32.dll" 
 system.ini, drivers32,,"; VIDC.IV32=ir32_32.dll" 
+
+[VersionInfo]
+HKLM,%CurrentVersionNT%,"CurrentVersion",2,"5.0"
+HKLM,%CurrentVersionNT%,"CSDVersion",2,"Service Pack 4"
+HKLM,%CurrentVersionNT%,"CurrentBuildNumber",2,"2195"
+HKLM,%Control%\ProductOptions,"ProductType",2,"WinNT"
+HKLM,%Control%\Windows,"CSDVersion",0x10003,0x400
+HKLM,%Control%\Session Manager\Environment,"OS",2,"Windows_NT"
