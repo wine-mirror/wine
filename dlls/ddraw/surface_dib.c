@@ -538,6 +538,8 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
         IDirectDrawSurface7_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
     }
 
+    if (!lpbltfx || !(lpbltfx->dwDDFX)) dwFlags &= ~DDBLT_DDFX;
+
     if ((sdesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) &&
 	(ddesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)) {
 	if (sdesc.u4.ddpfPixelFormat.dwFourCC != sdesc.u4.ddpfPixelFormat.dwFourCC) {
@@ -831,7 +833,7 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	    }
 	} else {
            LONG dstyinc = ddesc.u1.lPitch, dstxinc = bpp;
-           DWORD keylow = 0, keyhigh = 0, keymask = 0xFFFFFFFF;
+           DWORD keylow = 0xFFFFFFFF, keyhigh = 0, keymask = 0xFFFFFFFF;
            if (dwFlags & (DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE)) {
 
 	      if (dwFlags & DDBLT_KEYSRC) {
