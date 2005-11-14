@@ -1,0 +1,77 @@
+/*
+ * View
+ * Korean Language Support
+ *
+ * Copyright 1998 Douglas Ridgway
+ * Copyright 2003 Marcelo Duarte
+ * Copyright 2005 YunSong Hwang
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+
+/*
+ *
+ * Menu
+ *
+ */
+
+VIEW MENU
+BEGIN
+    POPUP "파일(&F)"
+    BEGIN
+	MENUITEM "열기(&O)",			IDM_OPEN
+        MENUITEM "나가기(&x)",                       IDM_EXIT
+    END
+    POPUP "&Pan"
+    BEGIN
+      MENUITEM "&Scale to Window",              IDM_SET_EXT_TO_WIN
+      MENUITEM SEPARATOR
+      MENUITEM "왼쪽(&L)",				IDM_LEFT
+      MENUITEM "오른쪽(&R)",			IDM_RIGHT
+      MENUITEM "위(&U)",				IDM_UP
+      MENUITEM "아래(&D)",				IDM_DOWN
+    END
+    POPUP "정보(&I)"
+    BEGIN
+	MENUITEM "&Hello",			IDM_HELLO
+    END
+END
+
+
+/*
+ *
+ * Accelerator
+ *
+ */
+
+VIEW ACCELERATORS
+BEGIN
+    "Q", IDM_EXIT, VIRTKEY, CONTROL
+END
+
+
+/*
+ *
+ * String Table
+ *
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APPNAME             "보기"
+    IDS_DESCRIPTION         "Regular 메타파일 보기"
+END

@@ -78,7 +78,7 @@ BEGIN
     BEGIN
         MENUITEM "상태 표기줄(&B)",               ID_VIEW_STATUSBAR
         MENUITEM SEPARATOR
-        MENUITEM "분기(&L)",                     ID_VIEW_SPLIT
+        MENUITEM "나누기(&L)",                     ID_VIEW_SPLIT
         MENUITEM SEPARATOR
         MENUITEM "새로 고침(&R)\tF5",             ID_VIEW_REFRESH
     END
@@ -87,9 +87,9 @@ BEGIN
         MENUITEM "즐겨 찾기 추가(&A)",            ID_FAVORITES_ADDTOFAVORITES
         MENUITEM "즐겨 찾기 제거(&R)",            ID_FAVORITES_REMOVEFAVORITE
     END
-    POPUP "도움(&H)"
+    POPUP "도움말(&H)"
     BEGIN
-        MENUITEM "도움 항목(&H)\tF1",            ID_HELP_HELPTOPICS
+        MENUITEM "도움말 항목(&H)\tF1",            ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
         MENUITEM "레지스트리 편집기 정보(&A)",      ID_HELP_ABOUT
     END
@@ -206,6 +206,24 @@ BEGIN
     PUSHBUTTON      "취소",IDCANCEL,175,80,30,11,WS_GROUP
 END
 
+IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "찾기"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "찾기:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "찾기 옵션:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "키", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "값 이름", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "값 내용", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "완전한 단어만 찾기", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "찾기",IDOK,175,5,30,11,WS_GROUP
+    PUSHBUTTON      "닫기",IDCANCEL,175,22,30,11, WS_GROUP
+END
+
+
+
 /*
  * String Table
  */
@@ -270,15 +288,15 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ERROR		    "Error"
+    IDS_ERROR		    "에러"
     IDS_BAD_KEY		    "Can't query key '%s'"
     IDS_BAD_VALUE           "Can't query value '%s'"
     IDS_UNSUPPORTED_TYPE    "Can't edit keys of this type (%ld)"
     IDS_TOO_BIG_VALUE       "Value is too big (%ld)"
     IDS_DELETE_BOX_TITLE    "Confirm Value Delete"
     IDS_DELETE_BOX_TEXT     "Are you sure you want to delete value '%s'?"
-    IDS_NEWKEY              "New Key #%d"
-    IDS_NEWVALUE            "New Value #%d"
+    IDS_NEWKEY              "새 키 #%d"
+    IDS_NEWVALUE            "새 값 #%d"
 END
 
 /*****************************************************************/
@@ -297,7 +315,7 @@ END
 
 IDD_DIALOG2 DIALOG DISCARDABLE  0, 0, 187, 95
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Dialog"
+CAPTION "대화상자"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "확인",IDOK,130,7,50,14
@@ -323,7 +341,7 @@ END
 /*
  *STRINGTABLE DISCARDABLE
  *BEGIN
- *    ID_HELP_HELPTOPICS      "Opens Registry Editor Help."
+ *    ID_HELP_HELPTOPICS      "레지스트리 편집기 도움말 열기."
  *    ID_HELP_ABOUT           "Displays program information, version number, and copyright."
  *END
  */
