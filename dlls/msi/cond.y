@@ -75,6 +75,30 @@ static INT compare_and_free_strings( LPWSTR a, INT op, LPWSTR b )
     return r;
 }
 
+static BOOL num_from_prop( LPCWSTR p, INT *val )
+{
+    INT ret = 0, sign = 1;
+
+    if (!p)
+        return FALSE;
+    if (*p == '-')
+    {
+        sign = -1;
+        p++;
+    }
+    if (!*p)
+        return FALSE;
+    while (*p)
+    {
+        if( *p < '0' || *p > '9' )
+            return FALSE;
+        ret = ret*10 + (*p - '0');
+        p++;
+    }
+    *val = ret*sign;
+    return TRUE;
+}
+
 %}
 
 %pure-parser
@@ -169,11 +193,13 @@ boolean_factor:
         }
   | symbol_s operator value_i
         {
-            $$ = compare_int( $1 ? atoiW($1) : 0, $2, $3 );
+            int num;
+            $$ = num_from_prop( $1, &num ) && compare_int( num, $2, $3 );
         }
   | value_i operator symbol_s
         {
-            $$ = compare_int( $1, $2, $3 ? atoiW($3) : 0 );
+            int num;
+            $$ = num_from_prop( $3, &num ) && compare_int( $1, $2, num );
         }
   | symbol_s operator symbol_s
         {
