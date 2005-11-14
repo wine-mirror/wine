@@ -405,7 +405,8 @@ void DDRAW_dump_DDBLT(DWORD flagmask)
 	    FE(DDBLT_ZBUFFERSRCCONSTOVERRIDE),
 	    FE(DDBLT_ZBUFFERSRCOVERRIDE),
 	    FE(DDBLT_WAIT),
-	    FE(DDBLT_DEPTHFILL)
+	    FE(DDBLT_DEPTHFILL),
+	    FE(DDBLT_DONOTWAIT)
     };
 
     DDRAW_dump_flags(flagmask, flags, sizeof(flags)/sizeof(flags[0]));

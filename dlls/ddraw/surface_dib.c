@@ -669,15 +669,27 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 
     dbuf = (BYTE*)ddesc.lpSurface+(xdst.top*ddesc.u1.lPitch)+(xdst.left*bpp);
 
-    if (dwFlags & (DDBLT_WAIT|DDBLT_ASYNC))
-    {
+    if (dwFlags & DDBLT_WAIT) {
 	static BOOL displayed = FALSE;
 	if (!displayed)
-	{
-	    FIXME("dwFlags DDBLT_WAIT and/or DDBLT_ASYNC: can't handle right now.\n");
-	    displayed = TRUE;
-	}
-        dwFlags &= ~(DDBLT_WAIT|DDBLT_ASYNC);
+	    FIXME("Can't handle DDBLT_WAIT flag right now.\n");
+	displayed = TRUE;
+	dwFlags &= ~DDBLT_WAIT;
+    }
+    if (dwFlags & DDBLT_ASYNC) {
+	static BOOL displayed = FALSE;
+	if (!displayed)
+	    FIXME("Can't handle DDBLT_ASYNC flag right now.\n");
+	displayed = TRUE;
+	dwFlags &= ~DDBLT_ASYNC;
+    }
+    if (dwFlags & DDBLT_DONOTWAIT) {
+	/* DDBLT_DONOTWAIT appeared in DX7 */
+	static BOOL displayed = FALSE;
+	if (!displayed)
+	    FIXME("Can't handle DDBLT_DONOTWAIT flag right now.\n");
+	displayed = TRUE;
+	dwFlags &= ~DDBLT_DONOTWAIT;
     }
 
     /* First, all the 'source-less' blits */
