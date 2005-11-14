@@ -105,6 +105,8 @@ void write_name(FILE *h, var_t *v)
     fprintf(h, "get_" );
   else if (is_attr( v->attrs, ATTR_PROPPUT ))
     fprintf(h, "put_" );
+  else if (is_attr( v->attrs, ATTR_PROPPUTREF ))
+    fprintf(h, "putref_" );
   fprintf(h, "%s", v->name);
 }
 
