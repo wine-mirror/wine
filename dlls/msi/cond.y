@@ -194,12 +194,18 @@ boolean_factor:
   | symbol_s operator value_i
         {
             int num;
-            $$ = num_from_prop( $1, &num ) && compare_int( num, $2, $3 );
+            if (num_from_prop( $1, &num ))
+                $$ = compare_int( num, $2, $3 );
+            else 
+                $$ = ($2 == COND_NE || $2 == COND_INE );
         }
   | value_i operator symbol_s
         {
             int num;
-            $$ = num_from_prop( $3, &num ) && compare_int( $1, $2, num );
+            if (num_from_prop( $3, &num ))
+                $$ = compare_int( $1, $2, num );
+            else 
+                $$ = ($2 == COND_NE || $2 == COND_INE );
         }
   | symbol_s operator symbol_s
         {

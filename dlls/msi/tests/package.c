@@ -599,6 +599,24 @@ void test_condition(void)
     r = MsiEvaluateCondition(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
+    r = MsiEvaluateCondition(hpkg, "bandalmael<>0");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "bandalmael<0");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "bandalmael>0");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "bandalmael>=0");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "bandalmael<=0");
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "bandalmael~<>0");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
     MsiSetProperty(hpkg, "bandalmael", "0" );
     r = MsiEvaluateCondition(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
@@ -646,6 +664,8 @@ void test_condition(void)
     MsiSetProperty(hpkg, "bandalmael", "0.0" );
     r = MsiEvaluateCondition(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
+    r = MsiEvaluateCondition(hpkg, "bandalmael<>0");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
     MsiCloseHandle( hpkg );
 }
