@@ -194,6 +194,7 @@ static void test_dibsections(void)
     WORD *index;
     DWORD *bits32;
     HPALETTE hpal, oldpal;
+    DIBSECTION dibsec;
     COLORREF c0, c1;
     int i;
     int screen_depth;
@@ -216,6 +217,9 @@ static void test_dibsections(void)
 
     hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
+    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIBSection\n");
+    ok(dibsec.dsBmih.biClrUsed == 2,
+        "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 2);
 
     /* Test if the old BITMAPCOREINFO structure is supported */    
         
@@ -280,6 +284,19 @@ static void test_dibsections(void)
     SelectObject(hdcmem, oldbm);
     DeleteObject(hdib);
 
+    pbmi->bmiHeader.biBitCount = 4;
+    for (i = 0; i < 16; i++) {
+        pbmi->bmiColors[i].rgbRed = i;
+        pbmi->bmiColors[i].rgbGreen = 16-i;
+        pbmi->bmiColors[i].rgbBlue = 0;
+    }
+    hdib = CreateDIBSection(hdcmem, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection failed\n");
+    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(dibsec.dsBmih.biClrUsed == 16,
+       "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 16);
+    DeleteObject(hdib);
+
     pbmi->bmiHeader.biBitCount = 8;
 
     for (i = 0; i < 128; i++) {
@@ -292,6 +309,10 @@ static void test_dibsections(void)
     }
     hdib = CreateDIBSection(hdcmem, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
+    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(dibsec.dsBmih.biClrUsed == 256,
+        "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
+
     oldbm = SelectObject(hdcmem, hdib);
 
     for (i = 0; i < 256; i++) {
@@ -322,6 +343,9 @@ static void test_dibsections(void)
     oldpal = SelectPalette(hdc, hpal, TRUE);
     hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
+    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(dibsec.dsBmih.biClrUsed == 2,
+        "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 2);
 
     /* The colour table has already been grabbed from the dc, so we select back the
        old palette */
@@ -409,6 +433,9 @@ static void test_dibsections(void)
     oldpal = SelectPalette(hdc, hpal, TRUE);
     hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
+    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(dibsec.dsBmih.biClrUsed == 256,
+        "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
 
     SelectPalette(hdc, oldpal, TRUE);
     oldbm = SelectObject(hdcmem, hdib);

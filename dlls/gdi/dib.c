@@ -1180,6 +1180,10 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
         dib->dsBmih.biSize = sizeof(BITMAPINFOHEADER);
     }
 
+    /* set number of entries in bmi.bmiColors table */
+    if( bpp <= 8 )
+        dib->dsBmih.biClrUsed = 1 << bpp;
+
     /* only use sizeImage if it's valid and we're dealing with a compressed bitmap */
     if (sizeImage && (compression == BI_RLE4 || compression == BI_RLE8))
         dib->dsBmih.biSizeImage = sizeImage;
