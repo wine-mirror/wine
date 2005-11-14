@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0500 /* For SPI_GETMOUSEHOVERWIDTH and more */
 
 #include "wine/test.h"
@@ -36,6 +37,7 @@
 #endif
 
 static int strict;
+static int dpi;
 
 #define eq(received, expected, label, type) \
         ok((received) == (expected), "%s: got " type " instead of " type "\n", (label),(received),(expected))
@@ -51,6 +53,12 @@ static int strict;
 #define SPI_SETBORDER_VALNAME                   "BorderWidth"
 #define SPI_SETKEYBOARDSPEED_REGKEY             "Control Panel\\Keyboard"
 #define SPI_SETKEYBOARDSPEED_VALNAME            "KeyboardSpeed"
+#define SPI_ICONHORIZONTALSPACING_REGKEY        "Control Panel\\Desktop\\WindowMetrics"
+#define SPI_ICONHORIZONTALSPACING_REGKEY2       "Control Panel\\Desktop"
+#define SPI_ICONHORIZONTALSPACING_VALNAME       "IconSpacing"
+#define SPI_ICONVERTICALSPACING_REGKEY          "Control Panel\\Desktop\\WindowMetrics"
+#define SPI_ICONVERTICALSPACING_REGKEY2         "Control Panel\\Desktop"
+#define SPI_ICONVERTICALSPACING_VALNAME         "IconVerticalSpacing"
 #define SPI_SETSCREENSAVETIMEOUT_REGKEY         "Control Panel\\Desktop"
 #define SPI_SETSCREENSAVETIMEOUT_VALNAME        "ScreenSaveTimeOut"
 #define SPI_SETSCREENSAVEACTIVE_REGKEY          "Control Panel\\Desktop"
@@ -547,7 +555,7 @@ static void test_setborder(UINT curr_val, int usesetborder, int dpi)
     }
     if( curr_val) { /* skip if 0, some windows versions return 0 others 1 */
         regval = metricfromreg( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, dpi);
-        ok( regval==curr_val, "wrong value in registry %d, epected %d\n", regval, curr_val);
+        ok( regval==curr_val, "wrong value in registry %d, expected %d\n", regval, curr_val);
     }
     /* minimum border width is 1 */
     if (curr_val == 0) curr_val = 1;
@@ -648,12 +656,43 @@ static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
 
+/* test_SPI_ICONHORIZONTALSPACING helper */
+static void dotest_spi_iconhorizontalspacing( INT curr_val)
+{
+    BOOL rc;
+    INT spacing, regval;
+    ICONMETRICSA im;
+
+    rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, curr_val, 0,
+                              SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    test_change_message( SPI_ICONHORIZONTALSPACING, 0 );
+    if( curr_val < 32) curr_val = 32;
+    /* The registry keys depend on the Windows version and the values too
+     * let's test (works on win95,ME,NT4,2k,XP)
+     */
+    regval = metricfromreg( SPI_ICONHORIZONTALSPACING_REGKEY2, SPI_ICONHORIZONTALSPACING_VALNAME, dpi);
+    if( regval != curr_val)
+        regval = metricfromreg( SPI_ICONHORIZONTALSPACING_REGKEY, SPI_ICONHORIZONTALSPACING_VALNAME, dpi);
+    ok( curr_val == regval,
+        "wrong value in registry %d, expected %d\n", regval, curr_val);
+    /* compare with what SPI_ICONHORIZONTALSPACING returns */
+    rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &spacing, 0 );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    eq( spacing, curr_val, "ICONHORIZONTALSPACING", "%d");
+    /* and with a system metrics */
+    eq( GetSystemMetrics( SM_CXICONSPACING ), curr_val, "SM_CXICONSPACING", "%d" );
+    /* and with what SPI_GETICONMETRICS returns */
+    im.cbSize = sizeof(ICONMETRICSA);
+    rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    eq( im.iHorzSpacing, curr_val, "SPI_GETICONMETRICS", "%d" );
+}
+
 static void test_SPI_ICONHORIZONTALSPACING( void )     /*     13 */
 {
     BOOL rc;
     INT old_spacing;
-    INT spacing;
-    INT curr_val;
 
     trace("testing SPI_ICONHORIZONTALSPACING\n");
     SetLastError(0xdeadbeef);
@@ -661,34 +700,10 @@ static void test_SPI_ICONHORIZONTALSPACING( void )     /*     13 */
     rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &old_spacing, 0 );
     if (!test_error_msg(rc,"SPI_ICONHORIZONTALSPACING"))
         return;
-
     /* do not increase the value as it would upset the user's icon layout */
-    curr_val = (old_spacing > 32 ? old_spacing-1 : 32);
-    rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, curr_val, 0,
-                              SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-    test_change_message( SPI_ICONHORIZONTALSPACING, 0 );
-    /* The registry keys depend on the Windows version and the values too
-     * => don't test them
-     */
-
-    rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &spacing, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-    eq( spacing, curr_val, "ICONHORIZONTALSPACING", "%d");
-    eq( GetSystemMetrics( SM_CXICONSPACING ), curr_val, "SM_CXICONSPACING", "%d" );
-
-    curr_val = 10;
-    rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, curr_val, 0,
-                              SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-    curr_val = 32;      /*min value*/
-    test_change_message( SPI_ICONHORIZONTALSPACING, 0 );
-
-    rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &spacing, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-    eq( spacing, curr_val, "ICONHORIZONTALSPACING", "%d" );
-    eq( GetSystemMetrics( SM_CXICONSPACING ), curr_val, "SM_CXICONSPACING", "%d" );
-
+    dotest_spi_iconhorizontalspacing( old_spacing - 1);
+    dotest_spi_iconhorizontalspacing( 10); /* minimum is 32 */
+    /* restore */
     rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, old_spacing, 0, SPIF_UPDATEINIFILE );
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
@@ -803,12 +818,44 @@ static void test_SPI_SETKEYBOARDDELAY( void )          /*     23 */
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
 
+
+/* test_SPI_ICONVERTICALSPACING helper */
+static void dotest_spi_iconverticalspacing( INT curr_val)
+{
+    BOOL rc;
+    INT spacing, regval;
+    ICONMETRICSA im;
+
+    rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, curr_val, 0,
+                              SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    test_change_message( SPI_ICONVERTICALSPACING, 0 );
+    if( curr_val < 32) curr_val = 32;
+    /* The registry keys depend on the Windows version and the values too
+     * let's test (works on win95,ME,NT4,2k,XP)
+     */
+    regval = metricfromreg( SPI_ICONVERTICALSPACING_REGKEY2, SPI_ICONVERTICALSPACING_VALNAME, dpi);
+    if( regval != curr_val)
+        regval = metricfromreg( SPI_ICONVERTICALSPACING_REGKEY, SPI_ICONVERTICALSPACING_VALNAME, dpi);
+    ok( curr_val == regval,
+        "wrong value in registry %d, expected %d\n", regval, curr_val);
+    /* compare with what SPI_ICONVERTICALSPACING returns */
+    rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &spacing, 0 );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    eq( spacing, curr_val, "ICONVERTICALSPACING", "%d" );
+    /* and with a system metrics */
+    eq( GetSystemMetrics( SM_CYICONSPACING ), curr_val, "SM_CYICONSPACING", "%d" );
+    /* and with what SPI_GETICONMETRICS returns */
+    im.cbSize = sizeof(ICONMETRICSA);
+    rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    eq( im.iVertSpacing, curr_val, "SPI_GETICONMETRICS", "%d" );
+}
+
 static void test_SPI_ICONVERTICALSPACING( void )       /*     24 */
 {
     BOOL rc;
     INT old_spacing;
-    INT spacing;
-    INT curr_val;
 
     trace("testing SPI_ICONVERTICALSPACING\n");
     SetLastError(0xdeadbeef);
@@ -816,37 +863,15 @@ static void test_SPI_ICONVERTICALSPACING( void )       /*     24 */
     rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &old_spacing, 0 );
     if (!test_error_msg(rc,"SPI_ICONVERTICALSPACING"))
         return;
-
     /* do not increase the value as it would upset the user's icon layout */
-    curr_val = old_spacing-1;
-    rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, curr_val, 0,
-                              SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-    test_change_message( SPI_ICONVERTICALSPACING, 0 );
-    /* The registry keys depend on the Windows version and the values too
-     * => don't test them
-     */
-
-    rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &spacing, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-    eq( spacing, curr_val, "ICONVERTICALSPACING", "%d" );
-    eq( GetSystemMetrics( SM_CYICONSPACING ), curr_val, "SM_CYICONSPACING", "%d" );
-
-    curr_val = 10;
-    rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, curr_val, 0,
-                              SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-    curr_val = 32;      /*min value*/
-    test_change_message( SPI_ICONVERTICALSPACING, 0 );
-
-    rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &spacing, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-    eq( spacing, curr_val, "ICONVERTICALSPACING", "%d" );
-    eq( GetSystemMetrics( SM_CYICONSPACING ), curr_val, "SM_CYICONSPACING", "%d" );
-
+    dotest_spi_iconverticalspacing( old_spacing - 1);
+    /* same tests with a value less then the minimum 32 */
+    dotest_spi_iconverticalspacing( 10);
+    /* restore */
     rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, old_spacing, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",
+        rc,GetLastError());
 }
 
 static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
@@ -855,6 +880,7 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
     BOOL old_b;
     const UINT vals[]={TRUE,FALSE};
     unsigned int i;
+    ICONMETRICSA im;
 
     /* These tests hang when XFree86 4.0 for Windows is running (tested on
      * WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is
@@ -885,6 +911,11 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
         rc=SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &v, 0 );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}ICONTITLEWRAP", "%d" );
+        /* and test with what SPI_GETICONMETRICS returns */
+        im.cbSize = sizeof(ICONMETRICSA);
+        rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im, FALSE );
+        ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+        eq( im.iTitleWrap, (BOOL)vals[i], "SPI_GETICONMETRICS", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETICONTITLEWRAP, old_b, 0, SPIF_UPDATEINIFILE );
@@ -1196,10 +1227,12 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
 
 static void test_SPI_SETICONMETRICS( void )               /*     46 */
 {
-    BOOL rc;
+    BOOL rc, wrap;
+    INT spacing;
     ICONMETRICSA im_orig;
     ICONMETRICSA im_new;
     ICONMETRICSA im_cur;
+    INT regval;
         
     im_orig.cbSize = sizeof(ICONMETRICSA);
     im_new.cbSize = sizeof(ICONMETRICSA);
@@ -1211,32 +1244,40 @@ static void test_SPI_SETICONMETRICS( void )               /*     46 */
     if (!test_error_msg(rc,"SPI_{GET,SET}ICONMETRICS"))
         return;
 
-    im_cur.iHorzSpacing = 65;
-    im_cur.iVertSpacing = 65;
-    im_cur.iTitleWrap = 0;
-    im_cur.lfFont.lfHeight = 1;
-    im_cur.lfFont.lfWidth = 1;
+    /* change everything without creating something invalid ( Win9x would ignore
+     * an invalid font for instance) */
+    im_cur = im_orig;
+    im_cur.iHorzSpacing += 10;
+    im_cur.iVertSpacing += 6;
+    im_cur.iTitleWrap = !im_cur.iTitleWrap;
+    im_cur.lfFont.lfHeight += 1;
+    im_cur.lfFont.lfWidth += 2;
     im_cur.lfFont.lfEscapement = 1;
-    im_cur.lfFont.lfWeight = 1;
-    im_cur.lfFont.lfItalic = 1;
-    im_cur.lfFont.lfStrikeOut = 1;
-    im_cur.lfFont.lfUnderline = 1;
-    im_cur.lfFont.lfCharSet = 1;
-    im_cur.lfFont.lfOutPrecision = 1;
-    im_cur.lfFont.lfClipPrecision = 1;
-    im_cur.lfFont.lfPitchAndFamily = 1;
-    im_cur.lfFont.lfQuality = 1;
+    im_cur.lfFont.lfWeight = im_cur.lfFont.lfWeight > 100 ? 1 : 314;
+    im_cur.lfFont.lfItalic = !im_cur.lfFont.lfItalic;
+    im_cur.lfFont.lfStrikeOut = !im_cur.lfFont.lfStrikeOut;
+    im_cur.lfFont.lfUnderline = !im_cur.lfFont.lfUnderline;
+    im_cur.lfFont.lfCharSet = im_cur.lfFont.lfCharSet ? 0 : 1;
+    im_cur.lfFont.lfOutPrecision = im_cur.lfFont.lfOutPrecision == OUT_DEFAULT_PRECIS ?
+                                OUT_TT_PRECIS : OUT_DEFAULT_PRECIS;
+    im_cur.lfFont.lfClipPrecision ^= CLIP_LH_ANGLES;
+    im_cur.lfFont.lfPitchAndFamily = im_cur.lfFont.lfPitchAndFamily ? 0 : 1;
+    im_cur.lfFont.lfQuality = im_cur.lfFont.lfQuality == DEFAULT_QUALITY ? 
+                                DRAFT_QUALITY : DEFAULT_QUALITY;
+    if( strcmp( im_cur.lfFont.lfFaceName, "MS Serif"))
+        strcpy( im_cur.lfFont.lfFaceName, "MS Serif");
+    else
+        strcpy( im_cur.lfFont.lfFaceName, "MS Sans Serif");
 
-    rc=SystemParametersInfoA( SPI_SETICONMETRICS, sizeof(ICONMETRICSA), &im_cur, FALSE );
+    rc=SystemParametersInfoA( SPI_SETICONMETRICS, sizeof(ICONMETRICSA), &im_cur, SPIF_UPDATEINIFILE );
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im_new, FALSE );
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-
+    /* test GET <-> SETICONMETRICS */ 
     eq( im_new.iHorzSpacing, im_cur.iHorzSpacing, "iHorzSpacing", "%d" );
     eq( im_new.iVertSpacing, im_cur.iVertSpacing, "iVertSpacing", "%d" );
     eq( im_new.iTitleWrap,   im_cur.iTitleWrap,   "iTitleWrap",   "%d" );
-
     eq( im_new.lfFont.lfHeight,         im_cur.lfFont.lfHeight,         "lfHeight",         "%ld" );
     eq( im_new.lfFont.lfWidth,          im_cur.lfFont.lfWidth,          "lfWidth",          "%ld" );
     eq( im_new.lfFont.lfEscapement,     im_cur.lfFont.lfEscapement,     "lfEscapement",     "%ld" );
@@ -1249,13 +1290,36 @@ static void test_SPI_SETICONMETRICS( void )               /*     46 */
     eq( im_new.lfFont.lfClipPrecision,  im_cur.lfFont.lfClipPrecision,  "lfClipPrecision",  "%d" );
     eq( im_new.lfFont.lfPitchAndFamily, im_cur.lfFont.lfPitchAndFamily, "lfPitchAndFamily", "%d" );
     eq( im_new.lfFont.lfQuality,        im_cur.lfFont.lfQuality,        "lfQuality",        "%d" );
-
+    ok( !strcmp( im_new.lfFont.lfFaceName, im_cur.lfFont.lfFaceName),
+        "wrong facename \"%s\", should be \"%s\"\n", im_new.lfFont.lfFaceName,
+        im_cur.lfFont.lfFaceName);
+    /* test some system metrics */
     eq( GetSystemMetrics( SM_CXICONSPACING ),
         im_new.iHorzSpacing, "iHorzSpacing", "%d" );
     eq( GetSystemMetrics( SM_CYICONSPACING ),
         im_new.iVertSpacing, "iVertSpacing", "%d" );
-
-    rc=SystemParametersInfoA( SPI_SETICONMETRICS, sizeof(ICONMETRICSA), &im_orig, FALSE );
+   /* check some registry values */ 
+    regval = metricfromreg( SPI_ICONHORIZONTALSPACING_REGKEY, SPI_ICONHORIZONTALSPACING_VALNAME, dpi);
+    ok( regval==im_cur.iHorzSpacing, "wrong value in registry %d, expected %d\n", regval, im_cur.iHorzSpacing);
+    regval = metricfromreg( SPI_ICONVERTICALSPACING_REGKEY, SPI_ICONVERTICALSPACING_VALNAME, dpi);
+    ok( regval==im_cur.iVertSpacing, "wrong value in registry %d, expected %d\n", regval, im_cur.iVertSpacing);
+    regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY1, SPI_SETICONTITLEWRAP_VALNAME, dpi);
+    ok( regval==im_cur.iTitleWrap, "wrong value in registry %d, expected %d\n", regval, im_cur.iTitleWrap);
+    /* test some values from other SPI_GETxxx calls */
+    rc = SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &spacing, 0 );
+    ok( rc && spacing == im_cur.iHorzSpacing,
+        "SystemParametersInfoA( SPI_ICONHORIZONTALSPACING...) failed or returns wrong value %d instead of %d\n",
+        spacing, im_cur.iHorzSpacing);
+    rc = SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &spacing, 0 );
+    ok( rc && spacing == im_cur.iVertSpacing,
+        "SystemParametersInfoA( SPI_ICONVERTICALSPACING...) failed or returns wrong value %d instead of %d\n",
+        spacing, im_cur.iVertSpacing);
+    rc = SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &wrap, 0 );
+    ok( rc && wrap == im_cur.iTitleWrap,
+        "SystemParametersInfoA( SPI_GETICONTITLEWRAP...) failed or returns wrong value %d instead of %d\n",
+        wrap, im_cur.iTitleWrap);
+    /* restore old values */
+    rc=SystemParametersInfoA( SPI_SETICONMETRICS, sizeof(ICONMETRICSA), &im_orig,SPIF_UPDATEINIFILE );
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
     
     rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im_new, FALSE );
@@ -1760,6 +1824,11 @@ START_TEST(sysparams)
     HANDLE hThread;
     DWORD dwThreadId;
     HANDLE hInstance = GetModuleHandleA( NULL );
+
+    HDC hdc = GetDC(0);
+    dpi = GetDeviceCaps( hdc, LOGPIXELSY);
+    ReleaseDC( 0, hdc);
+
 
     /* This test requires interactivity, if we don't have it, give up */
     if (!SystemParametersInfoA( SPI_SETBEEP, TRUE, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE ) &&

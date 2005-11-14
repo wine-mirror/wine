@@ -610,6 +610,14 @@ static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue
         (strlenW(lpValue) + 1)*sizeof(WCHAR), REG_SZ, fWinIni );
 }
 
+/* Convenience function to save logical fonts */
+static BOOL SYSPARAMS_SaveLogFont( LPCWSTR lpRegKey, LPCWSTR lpValName,
+                                    LPLOGFONTW plf, UINT fWinIni )
+{
+    return SYSPARAMS_SaveRaw( lpRegKey, lpValName, (const BYTE*)plf, 
+        sizeof( LOGFONTW), REG_BINARY, fWinIni );
+}
+
 
 static inline HDC get_display_dc(void)
 {
@@ -1259,6 +1267,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                    SPI_ICONVERTICALSPACING_REGKEY,
                                    SPI_ICONVERTICALSPACING_VALNAME,
                                    (UINT*)&icon_metrics.iVertSpacing, pvParam );
+            if( icon_metrics.iVertSpacing < 32) 
+                icon_metrics.iVertSpacing = 32;
         }
         else
         {
@@ -1372,7 +1382,17 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                               &swap_buttons, uiParam, fWinIni );
         break;
 
-    WINE_SPI_FIXME(SPI_SETICONTITLELOGFONT);	/*     34 */
+    case SPI_SETICONTITLELOGFONT:       	/*     34 */
+        if( uiParam == sizeof( ICONMETRICSW)) {
+            ret = SYSPARAMS_SaveLogFont( SPI_SETICONTITLELOGFONT_REGKEY,
+                    SPI_SETICONTITLELOGFONT_VALNAME, (LOGFONTW *)pvParam, fWinIni);
+            if( ret) {
+                icon_metrics.lfFont = *(LOGFONTW *)pvParam;
+                spi_loaded[SPI_SETICONTITLELOGFONT_IDX] = TRUE;
+            }
+        } else
+            ret = FALSE;
+        break;
 
     case SPI_GETFASTTASKSWITCH:			/*     35 */
         if (!pvParam) return FALSE;
@@ -1474,9 +1494,28 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_SETICONMETRICS:
     {
         LPICONMETRICSW lpIcon = pvParam;
-        if (lpIcon && lpIcon->cbSize == sizeof(*lpIcon))
-            memcpy( &icon_metrics, lpIcon, sizeof(icon_metrics) );
-        else
+        if (lpIcon && lpIcon->cbSize == sizeof(*lpIcon)) {
+            ret = set_uint_param( SPI_ICONVERTICALSPACING_IDX,
+                    SPI_ICONVERTICALSPACING_REGKEY,
+                    SPI_ICONVERTICALSPACING_VALNAME,
+                    (UINT*)&icon_metrics.iVertSpacing,
+                    lpIcon->iVertSpacing, fWinIni);
+            if( ret) ret = set_uint_param( SPI_ICONHORIZONTALSPACING_IDX,
+                    SPI_ICONHORIZONTALSPACING_REGKEY,
+                    SPI_ICONHORIZONTALSPACING_VALNAME,
+                    (UINT*)&icon_metrics.iHorzSpacing,
+                    lpIcon->iHorzSpacing, fWinIni );
+            if( ret) ret = set_bool_param_mirrored( SPI_SETICONTITLEWRAP_IDX,
+                    SPI_SETICONTITLEWRAP_REGKEY1, SPI_SETICONTITLEWRAP_REGKEY2,
+                    SPI_SETICONTITLEWRAP_VALNAME, &icon_metrics.iTitleWrap,
+                    lpIcon->iTitleWrap, fWinIni );
+            if( ret) ret = SYSPARAMS_SaveLogFont( SPI_SETICONTITLELOGFONT_REGKEY,
+                    SPI_SETICONTITLELOGFONT_VALNAME, &lpIcon->lfFont, fWinIni);
+            if( ret) {
+                icon_metrics.lfFont = lpIcon->lfFont;
+                spi_loaded[SPI_SETICONTITLELOGFONT_IDX] = TRUE;
+            }
+        } else
             ret = FALSE;
         break;
     }
@@ -2229,23 +2268,20 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
     case SPI_SETICONMETRICS:			/*     46  WINVER >= 0x400 */
     {
-	ICONMETRICSW tmp;
-	LPICONMETRICSA lpimA = (LPICONMETRICSA)pvParam;
-	if (lpimA && lpimA->cbSize == sizeof(ICONMETRICSA))
-	{
-	    tmp.cbSize = sizeof(ICONMETRICSW);
-	    ret = SystemParametersInfoW( uiAction, uiParam, &tmp, fuWinIni );
-	    if (ret)
-	    {
-		lpimA->iHorzSpacing = tmp.iHorzSpacing;
-		lpimA->iVertSpacing = tmp.iVertSpacing;
-		lpimA->iTitleWrap   = tmp.iTitleWrap;
-		SYSPARAMS_LogFont32WTo32A( &tmp.lfFont, &lpimA->lfFont );
-	    }
-	}
-	else
-	    ret = FALSE;
-	break;
+        ICONMETRICSW tmp;
+        LPICONMETRICSA lpimA = (LPICONMETRICSA)pvParam;
+        if (lpimA && lpimA->cbSize == sizeof(ICONMETRICSA))
+        {
+            tmp.cbSize = sizeof(ICONMETRICSW);
+            tmp.iHorzSpacing = lpimA->iHorzSpacing;
+            tmp.iVertSpacing = lpimA->iVertSpacing;
+            tmp.iTitleWrap = lpimA->iTitleWrap;
+            SYSPARAMS_LogFont32ATo32W(  &lpimA->lfFont, &tmp.lfFont);
+            ret = SystemParametersInfoW( uiAction, uiParam, &tmp, fuWinIni );
+        }
+        else
+            ret = FALSE;
+        break;
     }
 
     case SPI_GETHIGHCONTRAST:			/*     66  WINVER >= 0x400 */
