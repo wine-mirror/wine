@@ -54,4 +54,6 @@ typedef struct
 HRESULT	UMCreateStreamOnCacheFile(LPCWSTR pszURL, DWORD dwSize, LPWSTR pszFileName, HANDLE *phfile, IUMCacheStream **ppstr);
 void	UMCloseCacheFileStream(IUMCacheStream *pstr);
 
+HRESULT get_protocol_iface(LPCWSTR url, IUnknown **ret);
+
 #endif /* __WINE_URLMON_MAIN_H */
