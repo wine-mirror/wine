@@ -41,7 +41,6 @@ static void version_test(void)
     hr = pGetVersionFromFile("kernel32.dll", &major, &minor, FALSE);
     ok (hr == S_OK, "GetVersionFromFileEx(kernel32.dll) failed, returned "
         "0x%08lx\n", hr);
-
     trace("kernel32.dll Language ID: 0x%08lx, Codepage ID: 0x%08lx\n",
            major, minor);
 
@@ -49,8 +48,22 @@ static void version_test(void)
     hr = pGetVersionFromFile("kernel32.dll", &major, &minor, TRUE);
     ok (hr == S_OK, "GetVersionFromFileEx(kernel32.dll) failed, returned "
         "0x%08lx\n", hr);
-
     trace("kernel32.dll version: %d.%d.%d.%d\n", HIWORD(major), LOWORD(major),
+          HIWORD(minor), LOWORD(minor));
+
+    major = minor = 0;
+    hr = pGetVersionFromFile("advpack.dll", &major, &minor, FALSE);
+    ok (hr == S_OK, "GetVersionFromFileEx(advpack.dll) failed, returned "
+        "0x%08lx\n", hr);
+    trace("advpack.dll Language ID: 0x%08lx, Codepage ID: 0x%08lx\n",
+           major, minor);
+
+    major = minor = 0;
+    hr = pGetVersionFromFile("advpack.dll", &major, &minor, TRUE);
+    todo_wine
+    ok (hr == S_OK, "GetVersionFromFileEx(advpack.dll) failed, returned "
+        "0x%08lx\n", hr);
+    trace("advpack.dll version: %d.%d.%d.%d\n", HIWORD(major), LOWORD(major),
           HIWORD(minor), LOWORD(minor));
 }
 
