@@ -1446,13 +1446,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
 
         TRACE("Setting up the screen\n");
         /* Clear the screen */
-        glClearColor(0.0, 0.0, 0.0, 0.0);
+        glClearColor(1.0, 0.0, 0.0, 0.0);
         checkGLcall("glClearColor");
         glClearIndex(0);
         glClearDepth(1);
         glClearStencil(0xffff);
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         checkGLcall("glClear");
 
         glColor3f(1.0, 1.0, 1.0);
