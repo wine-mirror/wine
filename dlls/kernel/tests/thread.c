@@ -611,7 +611,7 @@ static VOID test_GetThreadExitCode(void)
 
 static int test_value = 0;
 
-static void set_test_val( int val )
+static void WINAPI set_test_val( int val )
 {
     test_value += val;
 }
