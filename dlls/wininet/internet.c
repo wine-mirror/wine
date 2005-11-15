@@ -1017,7 +1017,7 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 
     SendAsyncCallback(lpwh, lpwh->dwContext,
                       INTERNET_STATUS_HANDLE_CLOSING, &hInternet,
-                      sizeof(HINTERNET*));
+                      sizeof(HINTERNET));
 
     if( lpwh->lpwhparent )
         WININET_Release( lpwh->lpwhparent );
@@ -2912,7 +2912,7 @@ DWORD INTERNET_GetLastError(void)
  * RETURNS
  *
  */
-static DWORD INTERNET_WorkerThreadFunc(LPVOID *lpvParam)
+static DWORD CALLBACK INTERNET_WorkerThreadFunc(LPVOID lpvParam)
 {
     DWORD dwWaitRes;
 
@@ -3040,7 +3040,7 @@ BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
 
 	if (InterlockedIncrement(&dwNumThreads) > MAX_WORKER_THREADS ||
 	    !(hThread = CreateThread(NULL, 0,
-            (LPTHREAD_START_ROUTINE)INTERNET_WorkerThreadFunc, NULL, 0, &dwTID)))
+            INTERNET_WorkerThreadFunc, NULL, 0, &dwTID)))
 	{
             InterlockedDecrement(&dwNumThreads);
             INTERNET_SetLastError(ERROR_INTERNET_ASYNC_THREAD_FAILED);
