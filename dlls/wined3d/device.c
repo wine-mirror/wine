@@ -4601,10 +4601,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONS
     if (Flags & D3DCLEAR_TARGET) {
         TRACE("Clearing screen with glClear to color %lx\n", Color);
         glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
-        glClearColor(((Color >> 16) & 0xFF) / 255.0f,
-                     ((Color >>  8) & 0xFF) / 255.0f,
-                     ((Color >>  0) & 0xFF) / 255.0f,
-                     ((Color >> 24) & 0xFF) / 255.0f);
+        glClearColor(D3DCOLOR_R(Color),
+                     D3DCOLOR_G(Color),
+                     D3DCOLOR_B(Color),
+                     D3DCOLOR_A(Color));
         checkGLcall("glClearColor");
 
         /* Clear ALL colors! */

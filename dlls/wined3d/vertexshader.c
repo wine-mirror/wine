@@ -887,10 +887,70 @@ inline static BOOL vshader_is_comment_token(DWORD token) {
   return D3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
 }
 
-inline static void vshader_program_add_param(const DWORD param, int input, char *hwLine, BOOL namedArrays, CHAR constantsUsedBitmap[]) {
+inline static void vshader_program_add_output_param_swizzle(const DWORD param, int is_color, char *hwLine) {
+    /** operand output */
+    if ((param & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
+      strcat(hwLine, ".");
+      if (param & D3DSP_WRITEMASK_0) { strcat(hwLine, "x"); }
+      if (param & D3DSP_WRITEMASK_1) { strcat(hwLine, "y"); }
+      if (param & D3DSP_WRITEMASK_2) { strcat(hwLine, "z"); }
+      if (param & D3DSP_WRITEMASK_3) { strcat(hwLine, "w"); }
+    }  
+}
+
+inline static void vshader_program_add_input_param_swizzle(const DWORD param, int is_color, char *hwLine) {
+    static const char swizzle_reg_chars_color_fix[] = "zyxw";
+    static const char swizzle_reg_chars[] = "xyzw";
+    const char* swizzle_regs = NULL;
+    char  tmpReg[255];
+
+    /** operand input */
+    DWORD swizzle = (param & D3DVS_SWIZZLE_MASK) >> D3DVS_SWIZZLE_SHIFT;
+    DWORD swizzle_x = swizzle & 0x03;
+    DWORD swizzle_y = (swizzle >> 2) & 0x03;
+    DWORD swizzle_z = (swizzle >> 4) & 0x03;
+    DWORD swizzle_w = (swizzle >> 6) & 0x03;
+
+    if (is_color) {
+      swizzle_regs = swizzle_reg_chars_color_fix;
+    } else {
+      swizzle_regs = swizzle_reg_chars;
+    }
+
+    /**
+     * swizzle bits fields:
+     *  WWZZYYXX
+     */
+    if ((D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) == swizzle) { /* D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
+      if (is_color) {
+	sprintf(tmpReg, ".%c%c%c%c",
+		swizzle_regs[swizzle_x],
+		swizzle_regs[swizzle_y],
+		swizzle_regs[swizzle_z],
+		swizzle_regs[swizzle_w]);
+	strcat(hwLine, tmpReg);
+      }
+      return ;
+    }
+    if (swizzle_x == swizzle_y &&
+	swizzle_x == swizzle_z &&
+	swizzle_x == swizzle_w)
+    {
+      sprintf(tmpReg, ".%c", swizzle_regs[swizzle_x]);
+      strcat(hwLine, tmpReg);
+    } else {
+      sprintf(tmpReg, ".%c%c%c%c",
+	      swizzle_regs[swizzle_x],
+	      swizzle_regs[swizzle_y],
+	      swizzle_regs[swizzle_z],
+	      swizzle_regs[swizzle_w]);
+      strcat(hwLine, tmpReg);
+    }
+}
+
+inline static void vshader_program_add_param(const DWORD param, int input, int is_color, char *hwLine, BOOL namedArrays, CHAR constantsUsedBitmap[]) {
   /*static const char* rastout_reg_names[] = { "oPos", "oFog", "oPts" }; */
   static const char* hwrastout_reg_names[] = { "result.position", "result.fogcoord", "result.pointsize" };
-  static const char swizzle_reg_chars[] = "xyzw";
 
   DWORD reg = param & 0x00001FFF;
   DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
@@ -954,49 +1014,9 @@ inline static void vshader_program_add_param(const DWORD param, int input, char 
   }
 
   if (!input) {
-    /** operand output */
-    if ((param & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
-      strcat(hwLine, ".");
-      if (param & D3DSP_WRITEMASK_0) {
-          strcat(hwLine, "x");
-      }
-      if (param & D3DSP_WRITEMASK_1) {
-          strcat(hwLine, "y");
-      }
-      if (param & D3DSP_WRITEMASK_2) {
-          strcat(hwLine, "z");
-      }
-      if (param & D3DSP_WRITEMASK_3) {
-          strcat(hwLine, "w");
-      }
-    }
+    vshader_program_add_output_param_swizzle(param, is_color, hwLine);
   } else {
-    /** operand input */
-    DWORD swizzle = (param & D3DVS_SWIZZLE_MASK) >> D3DVS_SWIZZLE_SHIFT;
-    DWORD swizzle_x = swizzle & 0x03;
-    DWORD swizzle_y = (swizzle >> 2) & 0x03;
-    DWORD swizzle_z = (swizzle >> 4) & 0x03;
-    DWORD swizzle_w = (swizzle >> 6) & 0x03;
-    /**
-     * swizzle bits fields:
-     *  WWZZYYXX
-     */
-    if ((D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) != swizzle) { /* ! D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
-      if (swizzle_x == swizzle_y &&
-        swizzle_x == swizzle_z &&
-        swizzle_x == swizzle_w)
-      {
-        sprintf(tmpReg, ".%c", swizzle_reg_chars[swizzle_x]);
-        strcat(hwLine, tmpReg);
-      } else {
-        sprintf(tmpReg, ".%c%c%c%c",
-        swizzle_reg_chars[swizzle_x],
-        swizzle_reg_chars[swizzle_y],
-        swizzle_reg_chars[swizzle_z],
-        swizzle_reg_chars[swizzle_w]);
-        strcat(hwLine, tmpReg);
-      }
-    }
+    vshader_program_add_input_param_swizzle(param, is_color, hwLine);
   }
 }
 
@@ -1540,7 +1560,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                     char tmpChar[80];
                     ++pToken;
                     sprintf(tmpLine, "ATTRIB ");
-                    vshader_program_add_param(*pToken, 0, tmpLine, This->namedArrays, This->constantsUsedBitmap);
+                    vshader_program_add_param(*pToken, 0, 0, tmpLine, This->namedArrays, This->constantsUsedBitmap);
                     sprintf(tmpChar," = %s", attribName);
                     strcat(tmpLine, tmpChar);
                     strcat(tmpLine,";\n");
@@ -1592,12 +1612,12 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             }
         }
         if (curOpcode->num_params > 0) {
-            vshader_program_add_param(*pToken, 0, tmpLine, This->namedArrays, This->constantsUsedBitmap);
+            vshader_program_add_param(*pToken, 0, 0, tmpLine, This->namedArrays, This->constantsUsedBitmap);
 
             ++pToken;
             for (i = 1; i < curOpcode->num_params; ++i) {
                 strcat(tmpLine, ",");
-                vshader_program_add_param(*pToken, 1, tmpLine, This->namedArrays, This->constantsUsedBitmap);
+                vshader_program_add_param(*pToken, 1, 0, tmpLine, This->namedArrays, This->constantsUsedBitmap);
                 ++pToken;
             }
         }
