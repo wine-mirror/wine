@@ -626,18 +626,37 @@ static void test_SetThreadContext(void)
 {
     CONTEXT ctx;
     int *stack;
-    HANDLE thread = CreateThread( NULL, 0, threadFunc6, (void *)2, CREATE_SUSPENDED, NULL );
+    HANDLE thread;
+    DWORD threadid;
+    DWORD prevcount;
+
+    SetLastError(0xdeadbeef);
+    thread = CreateThread( NULL, 0, threadFunc6, (void *)2, CREATE_SUSPENDED, &threadid );
+    ok( thread != NULL, "CreateThread failed : (%ld)\n", GetLastError() );
+    if (!thread)
+    {
+        trace("Thread creation failed, skipping rest of test\n");
+        return;
+    }
 
     ctx.ContextFlags = CONTEXT_FULL;
+    SetLastError(0xdeadbeef);
     ok( GetThreadContext( thread, &ctx ), "GetThreadContext failed : (%ld)\n", GetLastError() );
+
     /* simulate a call to set_test_val(10) */
     stack = (int *)ctx.Esp;
     stack[-1] = 10;
     stack[-2] = ctx.Eip;
     ctx.Esp -= 2 * sizeof(int *);
     ctx.Eip = (DWORD)set_test_val;
+    SetLastError(0xdeadbeef);
     ok( SetThreadContext( thread, &ctx ), "SetThreadContext failed : (%ld)\n", GetLastError() );
-    ResumeThread( thread );
+
+    SetLastError(0xdeadbeef);
+    prevcount = ResumeThread( thread );
+    ok ( prevcount == 1, "Previous suspend count (%ld) instead of 1, last error : (%ld)\n",
+                         prevcount, GetLastError() );
+
     WaitForSingleObject( thread, INFINITE );
     ok( test_value == 20, "test_value %d instead of 20\n", test_value );
 }
