@@ -476,8 +476,8 @@ UINT WINAPI MsiProvideAssemblyA(LPCSTR, LPCSTR, DWORD, DWORD, LPSTR, DWORD*);
 UINT WINAPI MsiProvideAssemblyW(LPCWSTR, LPCWSTR, DWORD, DWORD, LPWSTR, DWORD*);
 #define MsiProvideAssembly WINELIB_NAME_AW(MsiProvideAssembly)
 
-UINT WINAPI MsiEnumComponentQualifiersA(LPSTR, DWORD, LPSTR, DWORD*, LPSTR, DWORD*);
-UINT WINAPI MsiEnumComponentQualifiersW(LPWSTR, DWORD, LPWSTR, DWORD*, LPWSTR, DWORD*);
+UINT WINAPI MsiEnumComponentQualifiersA(LPCSTR, DWORD, LPSTR, DWORD*, LPSTR, DWORD*);
+UINT WINAPI MsiEnumComponentQualifiersW(LPCWSTR, DWORD, LPWSTR, DWORD*, LPWSTR, DWORD*);
 #define MsiEnumComponentQualifiers WINELIB_NAME_AW(MsiEnumComponentQualifiers)
 
 UINT WINAPI MsiGetFileVersionA(LPCSTR, LPSTR, DWORD*, LPSTR, DWORD*);

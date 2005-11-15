@@ -773,7 +773,7 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
  *  MsiEnumComponentQualifiersA [MSI.@]
  *
  */
-UINT WINAPI MsiEnumComponentQualifiersA( LPSTR szComponent, DWORD iIndex,
+UINT WINAPI MsiEnumComponentQualifiersA( LPCSTR szComponent, DWORD iIndex,
                 LPSTR lpQualifierBuf, DWORD* pcchQualifierBuf,
                 LPSTR lpApplicationDataBuf, DWORD* pcchApplicationDataBuf)
 {
@@ -852,7 +852,7 @@ UINT WINAPI MsiEnumComponentQualifiersA( LPSTR szComponent, DWORD iIndex,
  *  MsiEnumComponentQualifiersW [MSI.@]
  *
  */
-UINT WINAPI MsiEnumComponentQualifiersW( LPWSTR szComponent, DWORD iIndex,
+UINT WINAPI MsiEnumComponentQualifiersW( LPCWSTR szComponent, DWORD iIndex,
                 LPWSTR lpQualifierBuf, DWORD* pcchQualifierBuf,
                 LPWSTR lpApplicationDataBuf, DWORD* pcchApplicationDataBuf )
 {
