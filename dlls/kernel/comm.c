@@ -1101,9 +1101,9 @@ BOOL WINAPI SetCommState(
 	port.c_cc[VTIME] = 1;
 
 #ifdef IMAXBEL
-	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|IMAXBEL);
+	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|PARMRK|IMAXBEL);
 #else
-	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR);
+	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|PARMRK);
 #endif
 	port.c_iflag |= (IGNBRK);
 
