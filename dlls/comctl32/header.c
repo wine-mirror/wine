@@ -598,7 +598,96 @@ HEADER_SendHeaderNotify (HWND hwnd, UINT code, INT iItem, INT mask)
     nmitem.iImage = infoPtr->items[iItem].iImage;
 
     return (BOOL)SendMessageW (infoPtr->hwndNotify, WM_NOTIFY,
-			       (WPARAM)nmhdr.hdr.idFrom, (LPARAM)&nmhdr);
+                               (WPARAM)nmhdr.hdr.idFrom, (LPARAM)&nmhdr);
+}
+
+/**
+ * Send Disp Info notification. 
+ *   depends on NMHDDISPINFOW having same structure as NMHDDISPINFOA 
+ *   (so we handle the two cases only doing a specific cast for pszText).
+ *
+ * @param hwnd : hwnd header container handler
+ * @param mask : notification mask (usually HDI_TEXT or HDI_IMAGE)
+ * @param pDispInfo : NMHDDISPINFO structure (can be unicode or ansi)
+ * @param isW : TRUE if dispinfo is Unicode
+ */
+static BOOL
+HEADER_SendHeaderDispInfoNotify(HWND hwnd, INT iItem, INT mask, LPHDITEMW phdi, HEADER_ITEM* lpItem, BOOL isW)
+{
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
+    BOOL ret;
+    BOOL convertToAnsi = FALSE;
+    BOOL convertToUnicode = FALSE;
+    BOOL isUnicodeNotify = FALSE;
+    NMHDDISPINFOW dispInfo;
+
+    if (mask & HDI_TEXT)
+    {
+        convertToAnsi = (isW && infoPtr->nNotifyFormat == NFR_ANSI);
+        convertToUnicode = (!isW && infoPtr->nNotifyFormat == NFR_UNICODE);
+    }
+    isUnicodeNotify = (isW && !convertToAnsi);
+    
+    memset(&dispInfo, 0, sizeof(NMHDDISPINFOW));
+    dispInfo.hdr.hwndFrom = hwnd;
+    dispInfo.hdr.idFrom   = GetWindowLongPtrW (hwnd, GWLP_ID);
+    if (isUnicodeNotify || convertToUnicode) 
+    {
+        dispInfo.hdr.code = HDN_GETDISPINFOW;
+    }
+    else
+    {
+        dispInfo.hdr.code = HDN_GETDISPINFOA;
+    }
+    dispInfo.iItem        = iItem;
+    dispInfo.mask         = mask;
+    /*
+    dispInfo.pszText      = Alloc(sizeof(WCHAR) * 260);
+    dispInfo.cchTextMax   = 260;
+    */
+    ret = (BOOL) SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, 
+                              (WPARAM) dispInfo.hdr.idFrom, 
+                              (LPARAM) &dispInfo);
+
+    TRACE("SendMessage returns(mask:0x%x,str:%s,lParam:%p)\n", 
+          dispInfo.mask,
+          (isUnicodeNotify ? debugstr_w(dispInfo.pszText) : (LPSTR) dispInfo.pszText),
+          (void*) dispInfo.lParam);
+	  
+    if (dispInfo.mask & HDI_DI_SETITEM) 
+    {
+        if (dispInfo.mask & HDI_IMAGE) 
+        {
+            lpItem->iImage = dispInfo.iImage;
+        }
+        if (dispInfo.mask & HDI_TEXT) 
+        {
+            if (isUnicodeNotify || convertToUnicode)
+                Str_SetPtrW(&lpItem->pszText, (LPCWSTR)dispInfo.pszText);
+            else /*if (convertToAnsi || !isW)*/
+                Str_SetPtrAtoW(&lpItem->pszText, (LPCSTR)dispInfo.pszText);
+        }
+        
+        FIXME("NMHDDISPINFO returns with flags HDI_DI_SETITEM\n");
+    }
+    
+    if (NULL != phdi)
+    {
+        if ((phdi->mask & mask) & HDI_IMAGE) 
+        {
+            phdi->iImage = dispInfo.iImage;
+        }
+        if ((phdi->mask & mask) & HDI_TEXT) 
+        {
+            if (isUnicodeNotify)
+                Str_GetPtrW ((LPCWSTR)dispInfo.pszText, phdi->pszText, phdi->cchTextMax);
+            else if (convertToUnicode)
+                Str_GetPtrWtoA ((LPCWSTR)dispInfo.pszText, (LPSTR)phdi->pszText, phdi->cchTextMax);
+            else /*if (!isW) */
+                Str_GetPtrA ((LPCSTR)dispInfo.pszText, (LPSTR)phdi->pszText, phdi->cchTextMax);
+        }
+    }
+    return ret;
 }
 
 
@@ -742,18 +831,25 @@ HEADER_GetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     if (phdi->mask & HDI_LPARAM)
 	phdi->lParam = (lpItem != NULL) ? lpItem->lParam : 0;
 
-    if (phdi->mask & HDI_IMAGE)
-	phdi->iImage = (lpItem != NULL) ? lpItem->iImage : 0;
+    if (phdi->mask & HDI_IMAGE) 
+    {
+        phdi->iImage = (lpItem != NULL) ? lpItem->iImage : 0;
+        if (lpItem->iImage == I_IMAGECALLBACK) 
+        {
+            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_IMAGE, phdi, lpItem, bUnicode);
+        }
+    }
 
     if (phdi->mask & HDI_ORDER)
 	phdi->iOrder = (lpItem != NULL) ? lpItem->iOrder : 0;
 
     if (phdi->mask & HDI_TEXT)
     {
-        if (lpItem == NULL)
-            *phdi->pszText = 0;
+        if (lpItem == NULL) *phdi->pszText = 0;  /* null pointer check */
         else if (lpItem->pszText == LPSTR_TEXTCALLBACKW) /* covers == TEXTCALLBACKA too */
-            phdi->pszText = LPSTR_TEXTCALLBACKW;
+        {
+            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_TEXT, phdi, lpItem, bUnicode);
+        }
         else
         {
             if (bUnicode)
@@ -935,21 +1031,34 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     if (phdi->mask & HDI_LPARAM)
         lpItem->lParam = phdi->lParam;
 
-    if (phdi->mask & HDI_IMAGE)
-        lpItem->iImage = phdi->iImage;
+    if (phdi->mask & HDI_IMAGE) 
+    {
+        if (phdi->iImage != I_IMAGECALLBACK) 
+        {
+            lpItem->iImage = phdi->iImage;
+        } 
+        else 
+        {
+            lpItem->iImage = phdi->iImage;
+            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_IMAGE, NULL, lpItem, bUnicode);
+        }
+    }
 
     if (phdi->mask & HDI_TEXT)
     {
-	if (!phdi->pszText) /* null pointer check */
-            phdi->pszText = '\0';
+	if (!phdi->pszText) phdi->pszText = '\0'; /* null pointer check */
         if (phdi->pszText != LPSTR_TEXTCALLBACKW) /* covers != TEXTCALLBACKA too */
+        {
             if (bUnicode)
                 Str_SetPtrW(&lpItem->pszText, phdi->pszText);
             else
                 Str_SetPtrAtoW(&lpItem->pszText, (LPSTR)phdi->pszText);
-        else
-            lpItem->pszText = LPSTR_TEXTCALLBACKW;
-
+        }
+        else 
+        {
+            lpItem->pszText = phdi->pszText;
+            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_TEXT, NULL, lpItem, bUnicode);
+        }
         lpItem->fmt |= HDF_STRING;
     }
 
@@ -1057,8 +1166,18 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     if (phdi->mask & HDI_WIDTH)
 	lpItem->cxy = phdi->cxy;
 
-    if (phdi->mask & HDI_IMAGE)
-	lpItem->iImage = phdi->iImage;
+    if (phdi->mask & HDI_IMAGE) 
+    {
+        if (phdi->iImage != I_IMAGECALLBACK) 
+        {
+            lpItem->iImage = phdi->iImage;
+        } 
+        else 
+        {
+            lpItem->iImage = phdi->iImage;
+            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_IMAGE, NULL, lpItem, bUnicode);
+        }
+    }
 
     if (phdi->mask & HDI_TEXT)
     {
@@ -1077,8 +1196,11 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
                     Str_SetPtrAtoW(&lpItem->pszText, (LPSTR)phdi->pszText);
             }
 	}
-	else
-	    lpItem->pszText = LPSTR_TEXTCALLBACKW;
+	else 
+	{
+            lpItem->pszText = phdi->pszText;
+            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_TEXT, NULL, lpItem, bUnicode);
+        }  
     }
 
     if (phdi->mask & HDI_ORDER)
