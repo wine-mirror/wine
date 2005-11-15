@@ -161,9 +161,15 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
     /* now change focus if necessary */
     if (focus)
     {
-        HWND curfocus = GetFocus();
-        if (!curfocus || !hwnd || GetAncestor( curfocus, GA_ROOT ) != hwnd)
-            set_focus_window( hwnd );
+        GUITHREADINFO info;
+
+        GetGUIThreadInfo( GetCurrentThreadId(), &info );
+        /* Do not change focus if the window is no more active */
+        if (hwnd == info.hwndActive)
+        {
+            if (!info.hwndFocus || !hwnd || GetAncestor( info.hwndFocus, GA_ROOT ) != hwnd)
+                set_focus_window( hwnd );
+        }
     }
 
     return TRUE;
