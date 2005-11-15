@@ -1949,12 +1949,12 @@ BOOL WINAPI CreateUrlCacheEntryW(
 
     CacheDir = (BYTE)(rand() % pHeader->DirectoryCount);
 
-    lBufferSize = MAX_PATH * sizeof(CHAR);
+    lBufferSize = MAX_PATH * sizeof(WCHAR);
     URLCache_LocalFileNameToPathW(pContainer, pHeader, szFile, CacheDir, lpszFileName, &lBufferSize);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
-    for (lpszFileNameNoPath = lpszFileName + lBufferSize / sizeof(CHAR) - 2; 
+    for (lpszFileNameNoPath = lpszFileName + lBufferSize / sizeof(WCHAR) - 2;
         lpszFileNameNoPath >= lpszFileName; 
         --lpszFileNameNoPath)
     {
