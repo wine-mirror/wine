@@ -633,6 +633,8 @@ static void test_BindToStorage(void)
 
     hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
     ok(SUCCEEDED(hres), "IMoniker_BindToStorage failed: %08lx\n", hres);
+    if (!SUCCEEDED(hres)) return;
+
     if(test_protocol == HTTP_TEST) {
         todo_wine {
             ok(unk == NULL, "istr should be NULL\n");
