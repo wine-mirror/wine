@@ -11,6 +11,7 @@ EXTRALIBS = -luuid
 
 C_SRCS = \
 	classinfo.c \
+	client.c \
 	events.c \
 	factory.c \
 	misc.c \

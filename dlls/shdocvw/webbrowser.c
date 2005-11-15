@@ -21,6 +21,8 @@
 
 #include "wine/debug.h"
 #include "shdocvw.h"
+#include "mshtml.h"
+
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -119,6 +121,12 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
+        if(This->client)
+            IOleClientSite_Release(This->client);
+
+        if(This->document)
+            IUnknown_Release(This->document);
+
         HeapFree(GetProcessHeap(), 0, This);
         SHDOCVW_UnlockModule();
     }
@@ -486,8 +494,63 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
         VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p %p %p %p %p)\n", This, URL, Flags, TargetFrameName, PostData, Headers);
-    return E_NOTIMPL;
+    IPersistMoniker *persist;
+    IOleObject *oleobj;
+    IMoniker *mon;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %p %p %p %p)\n", This, URL, Flags, TargetFrameName, PostData, Headers);
+
+    if(!This->client)
+        return E_FAIL;
+
+    if(V_VT(Flags) != VT_EMPTY || V_VT(TargetFrameName) != VT_EMPTY
+       || V_VT(PostData) != VT_EMPTY || V_VT(Headers) != VT_EMPTY)
+        FIXME("Unsupported arguments\n");
+
+    if(V_VT(URL) != VT_BSTR)
+        FIXME("V_VT(URL) != VT_BSTR\n");
+
+    /*
+     * FIXME:
+     * We should use URLMoniker's BindToObject instead creating HTMLDocument here.
+     * This should be fixed when mshtml.dll and urlmon.dll will be good enough.
+     */
+
+    if(!This->document) {
+        hres = CoCreateInstance(&CLSID_HTMLDocument, NULL,
+                                CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+                                &IID_IUnknown, (void**)&This->document);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IPersistMoniker, (void**)&persist);
+    if(FAILED(hres))
+        return hres;
+
+    hres = CreateURLMoniker(NULL, V_BSTR(URL), &mon);
+    if(FAILED(hres)) {
+        IPersistMoniker_Release(persist);
+        return hres;
+    }
+
+    hres = IPersistMoniker_Load(persist, FALSE, mon, NULL /* FIXME */, 0);
+    IMoniker_Release(mon);
+    IPersistMoniker_Release(persist);
+    if(FAILED(hres)) {
+        WARN("Load failed: %08lx\n", hres);
+        return hres;
+    }
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IOleObject, (void**)&oleobj);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(This));
+    IOleObject_Release(oleobj);
+
+    return hres;
 }
 
 static HRESULT WINAPI WebBrowser_QueryStatusWB(IWebBrowser2 *iface, OLECMDID cmdID, OLECMDF *pcmdf)
@@ -711,12 +774,15 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->lpWebBrowser2Vtbl = &WebBrowser2Vtbl;
     ret->ref = 0;
 
+    ret->document = NULL;
+
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
     WebBrowser_Persist_Init(ret);
     WebBrowser_ClassInfo_Init(ret);
     WebBrowser_Misc_Init(ret);
     WebBrowser_Events_Init(ret);
+    WebBrowser_ClientSite_Init(ret);
 
     hres = IWebBrowser_QueryInterface(WEBBROWSER(ret), riid, ppv);
     if(SUCCEEDED(hres)) {
