@@ -25,6 +25,11 @@
 #include "wingdi.h"
 #include "winspool.h"
 
+
+static char env_x86[] = "Windows NT x86";
+static char env_win9x_case[] = "windowS 4.0";
+
+
 static void test_default_printer(void)
 {
 #define DEFAULT_PRINTER_SIZE 1000
@@ -118,9 +123,19 @@ static void test_printer_directory(void)
     DWORD  cbBuf = 0, pcbNeeded = 0;
     BOOL   res;
 
+    SetLastError(0x00dead00);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, 0, &cbBuf);
     trace("GetPrinterDriverDirectoryA: first call returned 0x%04x, "
 	  "buffer size 0x%08lx\n", res, cbBuf);
+
+    if((res == 0) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE))
+    {
+        trace("The Service 'Spooler' is required for this test\n");
+        return;
+    }
+    ok((res == 0) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+        "returned %d with lasterror=%ld (expected '0' with " \
+        "ERROR_INSUFFICIENT_BUFFER)\n", res, GetLastError());
 
     if (!cbBuf) {
         trace("no valid buffer size returned, skipping tests\n");
@@ -128,6 +143,7 @@ static void test_printer_directory(void)
     }
 
     buffer = HeapAlloc( GetProcessHeap(), 0, cbBuf*2);
+    if (buffer == NULL)  return ;
 
     res = GetPrinterDriverDirectoryA(NULL, NULL, 1, buffer, cbBuf, &pcbNeeded);
     ok( res, "expected result != 0, got %d\n", res);
@@ -139,14 +155,18 @@ static void test_printer_directory(void)
     ok( cbBuf == pcbNeeded, "pcbNeeded set to %ld instead of %ld\n",
                             pcbNeeded, cbBuf);
  
+    SetLastError(0x00dead00);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, buffer, cbBuf-1, &pcbNeeded);
     ok( !res , "expected result == 0, got %d\n", res);
     ok( cbBuf == pcbNeeded, "pcbNeeded set to %ld instead of %ld\n",
                             pcbNeeded, cbBuf);
+    todo_wine {
     ok( ERROR_INSUFFICIENT_BUFFER == GetLastError(),
         "last error set to %ld instead of ERROR_INSUFFICIENT_BUFFER\n",
         GetLastError());
+    }
  
+    SetLastError(0x00dead00);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, &pcbNeeded);
     ok( (!res && ERROR_INVALID_USER_BUFFER == GetLastError()) || 
         ( res && ERROR_INVALID_PARAMETER == GetLastError()) ,
@@ -155,12 +175,14 @@ static void test_printer_directory(void)
          "or result != 0 and last error == ERROR_INVALID_PARAMETER "
          "got result %d and last error == %ld\n", res, GetLastError());
 
+    SetLastError(0x00dead00);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, buffer, cbBuf, NULL);
     ok( (!res && RPC_X_NULL_REF_POINTER == GetLastError()) || res,
          "expected either result == 0 and "
          "last error == RPC_X_NULL_REF_POINTER or result != 0 "
          "got result %d and last error == %ld\n", res, GetLastError());
 
+    SetLastError(0x00dead00);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, NULL);
     ok( (!res && RPC_X_NULL_REF_POINTER == GetLastError()) || 
         ( res && ERROR_INVALID_PARAMETER == GetLastError()) ,
@@ -168,6 +190,70 @@ static void test_printer_directory(void)
          "last error == RPC_X_NULL_REF_POINTER "
          "or result != 0 and last error == ERROR_INVALID_PARAMETER "
          "got result %d and last error == %ld\n", res, GetLastError());
+
+    /* with a valid buffer, but level is to large */
+    buffer[0] = '\0';
+    SetLastError(0x00dead00);
+    res = GetPrinterDriverDirectoryA(NULL, NULL, 2, buffer, cbBuf, &pcbNeeded);
+
+    /* Level not checked in win9x and wine:*/
+    if((res != FALSE) && buffer[0])
+    {
+        trace("invalid Level '2' not checked (valid Level is '1') => '%s'\n", 
+                buffer);
+    }
+    else
+    {
+        ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
+        "returned %d with lasterror=%ld (expected '0' with " \
+        "ERROR_INVALID_LEVEL)\n", res, GetLastError());
+    }
+
+    /* printing environments are case insensitive */
+    /* "Windows 4.0" is valid for win9x and NT */
+    buffer[0] = '\0';
+    SetLastError(0x00dead00);
+    res = GetPrinterDriverDirectoryA(NULL, env_win9x_case, 1, 
+                                        buffer, cbBuf*2, &pcbNeeded);
+
+    if(!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+        cbBuf = pcbNeeded;
+        buffer = HeapReAlloc(GetProcessHeap(), 0, buffer, cbBuf*2);
+        if (buffer == NULL)  return ;
+
+        SetLastError(0x00dead00);
+        res = GetPrinterDriverDirectoryA(NULL, env_win9x_case, 1, 
+                                        buffer, cbBuf*2, &pcbNeeded);
+    }
+    
+    todo_wine{
+    ok(res && buffer[0], "returned %d with " \
+        "lasterror=%ld and len=%d (expected '0' with 'len > 0')\n", 
+        res, GetLastError(), lstrlenA((char *)buffer));
+    }
+
+    buffer[0] = '\0';
+    SetLastError(0x00dead00);
+    res = GetPrinterDriverDirectoryA(NULL, env_x86, 1, 
+                                        buffer, cbBuf*2, &pcbNeeded);
+
+    if(!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+        cbBuf = pcbNeeded;
+        buffer = HeapReAlloc(GetProcessHeap(), 0, buffer, cbBuf*2);
+        if (buffer == NULL)  return ;
+
+        buffer[0] = '\0';
+        SetLastError(0x00dead00);
+        res = GetPrinterDriverDirectoryA(NULL, env_x86, 1, 
+                                        buffer, cbBuf*2, &pcbNeeded);
+    }
+
+    /* "Windows NT x86" is invalid for win9x */
+    ok( (res && buffer[0]) ||
+        (!res && (GetLastError() == ERROR_INVALID_ENVIRONMENT)), 
+        "returned %d with lasterror=%ld and len=%d (expected '!= 0' with " \
+        "'len > 0' or '0' with ERROR_INVALID_ENVIRONMENT)\n",
+        res, GetLastError(), lstrlenA((char *)buffer));
 
     HeapFree( GetProcessHeap(), 0, buffer);
 }
