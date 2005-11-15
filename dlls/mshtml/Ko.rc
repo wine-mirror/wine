@@ -1,4 +1,5 @@
 /*
+ * Copyright 2005 Jacek Caban
  * Copyright 2005 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
@@ -206,7 +207,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Dump DisplayTree",   IDM_DUMPDISPLAYTREE
         MENUITEM "Dump FormatCaches",  IDM_DUMPFORMATCACHES
         MENUITEM "Dump LayoutRects",   IDM_DUMPLAYOUTRECTS
-        MENUITEM "Memory Monitor",     IDM_MEMORYMONITOR
+        MENUITEM "메모리 모니터",     IDM_MEMORYMONITOR
         MENUITEM "Performance Meters", IDM_PERFORMANCEMETERS
         MENUITEM "Save HTML",          IDM_SAVEHTML
         MENUITEM SEPARATOR

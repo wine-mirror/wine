@@ -34,46 +34,46 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "복사(&C)...\tF8",                ID_FILE_COPY
         MENUITEM "클립보드로(&I)...\tF9",        118
         MENUITEM "지우기(&D)\tDel",                ID_FILE_DELETE
-        MENUITEM "Re&name...",                  109
-        MENUITEM "Propert&ies...\tAlt+Enter",   ID_EDIT_PROPERTIES
+        MENUITEM "이름바꾸기(&n)...",                  109
+        MENUITEM "속성(&i)...\tAlt+Enter",   ID_EDIT_PROPERTIES
         MENUITEM SEPARATOR
         MENUITEM "압축(&o)...",                119
         MENUITEM "압축 풀기(&o)...",              120
         MENUITEM SEPARATOR
-        MENUITEM "&Run...",                     ID_EXECUTE
-        MENUITEM "&Print...",                   102
-        MENUITEM "Associate...",                103
+        MENUITEM "실행(&R)...",                     ID_EXECUTE
+        MENUITEM "인쇄(&P)...",                   102
+        MENUITEM "연결...",                103
         MENUITEM SEPARATOR
-        MENUITEM "Cr&eate Directory...",        111
-        MENUITEM "Searc&h...",                  104
-        MENUITEM "&Select Files...",            116
+        MENUITEM "디렉토리 만들기(&e)...",        111
+        MENUITEM "찾기(&h)...",                  104
+        MENUITEM "파일 선택(&S)...",            116
         MENUITEM SEPARATOR
 #ifndef _NO_EXTENSIONS
-        MENUITEM "E&xit\tAlt+X",                ID_FILE_EXIT
+        MENUITEM "나가기(Ex)\tAlt+X",                ID_FILE_EXIT
 #else
-        MENUITEM "E&xit",                       ID_FILE_EXIT
+        MENUITEM "나가기(&x)",                       ID_FILE_EXIT
 #endif
     }
 
     POPUP "디스크(&D)"  {
-        MENUITEM "&Copy Disk...",               201
-        MENUITEM "&Label Disk...",              202
+        MENUITEM "디스크 복사(&C)...",               201
+        MENUITEM "디스크 라벨(&L)...",              202
         MENUITEM SEPARATOR
-        MENUITEM "&Format Disk...",             ID_FORMAT_DISK
+        MENUITEM "디스크 포맷(&F)...",             ID_FORMAT_DISK
 #ifdef _WIN95
-        MENUITEM "&Make System Disk...", -1 /*TODO*/
+        MENUITEM "시스템 디스크 만들기(&M)...", -1 /*TODO*/
 #endif
         MENUITEM SEPARATOR
-        MENUITEM "Connect &Network Drive",      ID_CONNECT_NETWORK_DRIVE
-        MENUITEM "&Disconnect Network Drive",   ID_DISCONNECT_NETWORK_DRIVE
+        MENUITEM "네트워크 드라이브 연결(&N)",      ID_CONNECT_NETWORK_DRIVE
+        MENUITEM "네트워크 드라이브 연결 끊기(&D)",   ID_DISCONNECT_NETWORK_DRIVE
         MENUITEM SEPARATOR
-        MENUITEM "Share as...",                 254
-        MENUITEM "&Remove Share...",            255
+        MENUITEM "공유...",                 254
+        MENUITEM "공유 제거(&R)...",            255
         MENUITEM SEPARATOR
-        MENUITEM "&Select Drive...",            251
+        MENUITEM "드라이브 선택(&S)...",            251
     }
 
-    POPUP "Di&rectories"  {
+    POPUP "디렉토리(&r)"  {
         MENUITEM "&Next Level\t+",              301
         MENUITEM "Expand &Tree\t*",             302
         MENUITEM "Expand &all\tStrg+*",         303
@@ -82,14 +82,14 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "&Mark Children",              505
     }
 
-    POPUP "&View"  {
+    POPUP "보기(&V)"  {
         MENUITEM "T&ree and Directory",         413
-        MENUITEM "Tr&ee Only",                  411
+        MENUITEM "오직 트리만(&e)",                  411
         MENUITEM "Directory &Only",             412
         MENUITEM SEPARATOR
         MENUITEM "Sp&lit",                      ID_VIEW_SPLIT
         MENUITEM SEPARATOR
-        MENUITEM "&Name",                       ID_VIEW_NAME
+        MENUITEM "이름(&N)",                       ID_VIEW_NAME
         MENUITEM "&All File Details",           ID_VIEW_ALL_ATTRIBUTES, CHECKED
         MENUITEM "&Partial Details...",         ID_VIEW_SELECTED_ATTRIBUTES
         MENUITEM SEPARATOR
@@ -101,14 +101,14 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "Filter by &...",              ID_VIEW_FILTER
     }
 
-    POPUP "&Options"  {
+    POPUP "옵션(&O)"  {
         MENUITEM "&Confirmation...",            501
-        MENUITEM "&Font...",                    ID_SELECT_FONT
+        MENUITEM "글꼴(&F)...",                    ID_SELECT_FONT
         MENUITEM "Customize Tool&bar...",       512
         MENUITEM SEPARATOR
-        MENUITEM "&Toolbar",                    ID_VIEW_TOOL_BAR, CHECKED
+        MENUITEM "도구바(&T)",                    ID_VIEW_TOOL_BAR, CHECKED
         MENUITEM "&Drivebar",                   ID_VIEW_DRIVE_BAR, CHECKED
-        MENUITEM "&Status Bar",                 ID_VIEW_STATUSBAR, CHECKED
+        MENUITEM "상태바(&S)",                 ID_VIEW_STATUSBAR, CHECKED
 #ifndef _NO_EXTENSIONS
         MENUITEM "F&ull Screen\tCtrl+Shift+S",  ID_VIEW_FULLSCREEN
 #endif
@@ -251,8 +251,8 @@ STRINGTABLE
 
 STRINGTABLE
 {
-    IDS_COL_NAME            "Name"
-    IDS_COL_SIZE            "Size"
+    IDS_COL_NAME            "이름"
+    IDS_COL_SIZE            "크기"
     IDS_COL_CDATE           "CDate"
     IDS_COL_ADATE           "ADate"
     IDS_COL_MDATE           "MDate"

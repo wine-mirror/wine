@@ -36,9 +36,9 @@ BEGIN
 	MENUITEM "열기(&O)",			IDM_OPEN
         MENUITEM "나가기(&x)",                       IDM_EXIT
     END
-    POPUP "&Pan"
+    POPUP "회전(&P)"
     BEGIN
-      MENUITEM "&Scale to Window",              IDM_SET_EXT_TO_WIN
+      MENUITEM "화면 가득 채우기(&S)",          IDM_SET_EXT_TO_WIN
       MENUITEM SEPARATOR
       MENUITEM "왼쪽(&L)",				IDM_LEFT
       MENUITEM "오른쪽(&R)",			IDM_RIGHT
@@ -73,5 +73,5 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APPNAME             "보기"
-    IDS_DESCRIPTION         "Regular 메타파일 보기"
+    IDS_DESCRIPTION         "정규 메타파일 보기"
 END

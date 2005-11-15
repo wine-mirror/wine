@@ -92,7 +92,7 @@ BEGIN
     MENUITEM "Tile &Horizontally",          ID_WINDOWS_TILEHORIZONTALLY
     MENUITEM "Tile &Vertically",            ID_WINDOWS_TILEVERTICALLY
     MENUITEM "최소화(&M)",                   ID_WINDOWS_MINIMIZE
-/*    MENUITEM "최대화("&x)",                   ID_WINDOWS_MAXIMIZE */
+    MENUITEM "최대화(&x)",                   ID_WINDOWS_MAXIMIZE
     MENUITEM "정렬(&C)",                    ID_WINDOWS_CASCADE
     MENUITEM "&Bring To Front",             ID_WINDOWS_BRINGTOFRONT
 END

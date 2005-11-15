@@ -26,7 +26,7 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Wine 풀그림 제거하기"
 FONT 10, "MS Sans Serif"
 BEGIN
-    LTEXT           "Please select the application you wish to uninstall:",IDC_PLEASESELECT,10,10,250,14
+    LTEXT           "당신이 언인스톨하고 싶은 풀그림을 선택하시오:",IDC_PLEASESELECT,10,10,250,14
     EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
     LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT | 
                     LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
@@ -40,6 +40,6 @@ STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Wine Application 제거하기"
      IDS_ABOUT, "Wine Application Uninstaller (C) 2005 by Andreas Mohr, Hannu Valtonen and Jonathan Ernst."
      IDS_ABOUTTITLE, " Uninstaller 정보"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Uninstall registry key not available (yet), nothing to do !"
-     IDS_UNINSTALLFAILED, "Execution of uninstall command '%s' failed, perhaps due to missing executable.\r\nDo you want to remove the uninstall entry from the registry ?"
+     IDS_REGISTRYKEYNOTAVAILABLE, "레지스트리 키 언인스톨은 아직 가능하지 않습니다, 아무일도 안할 겁니다!"
+     IDS_UNINSTALLFAILED, "언인스톨 명령 '%s' 실행 실패,  실행가능한게 빠진게 원인 같습니다.\r\n당신은 레지스트리에서 언인스톨 등록키를 제거하겠습니까 ?"
 }
