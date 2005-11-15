@@ -64,6 +64,8 @@ static BOOLEAN   (WINAPI * pRtlIsValidIndexHandle)(const RTL_HANDLE_TABLE *, ULO
 static NTSTATUS  (WINAPI * pRtlDestroyHandleTable)(RTL_HANDLE_TABLE *);
 static RTL_HANDLE * (WINAPI * pRtlAllocateHandle)(RTL_HANDLE_TABLE *, ULONG *);
 static BOOLEAN   (WINAPI * pRtlFreeHandle)(RTL_HANDLE_TABLE *, RTL_HANDLE *);
+static NTSTATUS  (WINAPI *pRtlAllocateAndInitializeSid)(PSID_IDENTIFIER_AUTHORITY,BYTE,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,PSID*);
+static NTSTATUS  (WINAPI *pRtlFreeSid)(PSID);
 #define LEN 16
 static const char* src_src = "This is a test!"; /* 16 bytes long, incl NUL */
 static ULONG src_aligned_block[4];
@@ -93,6 +95,8 @@ static void InitFunctionPtrs(void)
 	pRtlDestroyHandleTable = (void *)GetProcAddress(hntdll, "RtlDestroyHandleTable");
 	pRtlAllocateHandle = (void *)GetProcAddress(hntdll, "RtlAllocateHandle");
 	pRtlFreeHandle = (void *)GetProcAddress(hntdll, "RtlFreeHandle");
+        pRtlAllocateAndInitializeSid = (void *)GetProcAddress(hntdll, "RtlAllocateAndInitializeSid");
+        pRtlFreeSid = (void *)GetProcAddress(hntdll, "RtlFreeSid");
     }
     strcpy((char*)src_aligned_block, src_src);
     ok(strlen(src) == 15, "Source must be 16 bytes long!\n");
@@ -878,6 +882,25 @@ static void test_HandleTables(void)
     ok(status == STATUS_SUCCESS, "RtlDestroyHandleTable failed with error 0x%08lx\n", status);
 }
 
+static void test_RtlAllocateAndInitializeSid(void)
+{
+    NTSTATUS ret;
+    SID_IDENTIFIER_AUTHORITY sia = {{ 1, 2, 3, 4, 5, 6 }};
+    PSID psid;
+
+    ret = pRtlAllocateAndInitializeSid(&sia, 0, 1, 2, 3, 4, 5, 6, 7, 8, &psid);
+    ok(!ret, "RtlAllocateAndInitializeSid error %08lx\n", ret);
+    ret = pRtlFreeSid(psid);
+    ok(!ret, "RtlFreeSid error %08lx\n", ret);
+
+    /* these tests crash on XP
+    ret = pRtlAllocateAndInitializeSid(NULL, 0, 1, 2, 3, 4, 5, 6, 7, 8, &psid);
+    ret = pRtlAllocateAndInitializeSid(&sia, 0, 1, 2, 3, 4, 5, 6, 7, 8, NULL);*/
+
+    ret = pRtlAllocateAndInitializeSid(&sia, 9, 1, 2, 3, 4, 5, 6, 7, 8, &psid);
+    ok(ret == STATUS_INVALID_SID, "wrong error %08lx\n", ret);
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -908,4 +931,6 @@ START_TEST(rtl)
         test_RtlComputeCrc32();
     if (pRtlInitializeHandleTable)
         test_HandleTables();
+    if (pRtlAllocateAndInitializeSid)
+        test_RtlAllocateAndInitializeSid();
 }

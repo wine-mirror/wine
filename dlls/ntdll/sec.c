@@ -135,41 +135,41 @@ NTSTATUS WINAPI RtlAllocateAndInitializeSid (
 	DWORD nSubAuthority6, DWORD nSubAuthority7,
 	PSID *pSid )
 {
+    SID *tmp_sid;
 
-	TRACE("(%p, 0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p)\n",
+    TRACE("(%p, 0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p)\n",
 		pIdentifierAuthority,nSubAuthorityCount,
 		nSubAuthority0, nSubAuthority1,	nSubAuthority2, nSubAuthority3,
 		nSubAuthority4, nSubAuthority5,	nSubAuthority6, nSubAuthority7, pSid);
 
-	if (!(*pSid = RtlAllocateHeap( GetProcessHeap(), 0,
-                                       RtlLengthRequiredSid(nSubAuthorityCount))))
-	    return STATUS_NO_MEMORY;
+    if (nSubAuthorityCount > 8) return STATUS_INVALID_SID;
 
-	((SID*)*pSid)->Revision = SID_REVISION;
+    if (!(tmp_sid= RtlAllocateHeap( GetProcessHeap(), 0,
+                                    RtlLengthRequiredSid(nSubAuthorityCount))))
+        return STATUS_NO_MEMORY;
 
-	if (pIdentifierAuthority)
-	  memcpy(&((SID*)*pSid)->IdentifierAuthority, pIdentifierAuthority, sizeof (SID_IDENTIFIER_AUTHORITY));
-	*RtlSubAuthorityCountSid(*pSid) = nSubAuthorityCount;
+    tmp_sid->Revision = SID_REVISION;
 
-	if (nSubAuthorityCount > 0)
-          *RtlSubAuthoritySid(*pSid, 0) = nSubAuthority0;
-	if (nSubAuthorityCount > 1)
-          *RtlSubAuthoritySid(*pSid, 1) = nSubAuthority1;
-	if (nSubAuthorityCount > 2)
-          *RtlSubAuthoritySid(*pSid, 2) = nSubAuthority2;
-	if (nSubAuthorityCount > 3)
-          *RtlSubAuthoritySid(*pSid, 3) = nSubAuthority3;
-	if (nSubAuthorityCount > 4)
-          *RtlSubAuthoritySid(*pSid, 4) = nSubAuthority4;
-	if (nSubAuthorityCount > 5)
-          *RtlSubAuthoritySid(*pSid, 5) = nSubAuthority5;
-        if (nSubAuthorityCount > 6)
-	  *RtlSubAuthoritySid(*pSid, 6) = nSubAuthority6;
-	if (nSubAuthorityCount > 7)
-          *RtlSubAuthoritySid(*pSid, 7) = nSubAuthority7;
+    if (pIdentifierAuthority)
+        memcpy(&tmp_sid->IdentifierAuthority, pIdentifierAuthority, sizeof(SID_IDENTIFIER_AUTHORITY));
+    tmp_sid->SubAuthorityCount = nSubAuthorityCount;
 
-	return STATUS_SUCCESS;
+    switch( nSubAuthorityCount )
+    {
+        case 8: tmp_sid->SubAuthority[7]= nSubAuthority7;
+        case 7: tmp_sid->SubAuthority[6]= nSubAuthority6;
+        case 6: tmp_sid->SubAuthority[5]= nSubAuthority5;
+        case 5: tmp_sid->SubAuthority[4]= nSubAuthority4;
+        case 4: tmp_sid->SubAuthority[3]= nSubAuthority3;
+        case 3: tmp_sid->SubAuthority[2]= nSubAuthority2;
+        case 2: tmp_sid->SubAuthority[1]= nSubAuthority1;
+        case 1: tmp_sid->SubAuthority[0]= nSubAuthority0;
+        break;
+    }
+    *pSid = tmp_sid;
+    return STATUS_SUCCESS;
 }
+
 /******************************************************************************
  *  RtlEqualSid		[NTDLL.@]
  *
