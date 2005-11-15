@@ -31,6 +31,11 @@
 
 #include "wine/debug.h"
 
+/**
+ * some documentation here:
+ *   http://www.microsoft.com/typography/developers/uniscribe/uniscribe.htm
+ */
+
 WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
@@ -86,4 +91,41 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     FIXME("%s,%d,%d,%p,%p,%p,%p\n", debugstr_w(pwcInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
     return E_INVALIDARG;
+}
+
+HRESULT WINAPI ScriptStringAnalyse(HDC hdc, 
+				   const void *pString, 
+				   int cString, 
+				   int cGlyphs,
+				   int iCharset,
+				   DWORD dwFlags,
+				   int iReqWidth,
+				   SCRIPT_CONTROL *psControl,
+				   SCRIPT_STATE *psState,
+				   const int *piDx,
+				   SCRIPT_TABDEF *pTabdef,
+				   const BYTE *pbInClass,
+				   SCRIPT_STRING_ANALYSIS *pssa)
+{
+  FIXME("(%p,%p,%d,%d,%d,0x%lx,%d,%p,%p,%p,%p,%p,%p): stub\n",
+	hdc, pString, cString, cGlyphs, iCharset, dwFlags,
+	iReqWidth, psControl, psState, piDx, pTabdef, pbInClass, pssa);
+  if (1 > cString || NULL == pString) {
+    return E_INVALIDARG;
+  }
+  if ((dwFlags & SSA_GLYPHS) && NULL == hdc) {
+    return E_INVALIDARG;
+  }
+
+  return E_NOTIMPL;
+}
+
+HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa) {
+  FIXME("(%p): stub\n",pssa);
+  return S_OK;
+}
+
+HRESULT WINAPI ScriptIsComplex(const WCHAR* pwcInChars, int cInChars, DWORD dwFlags) {
+  FIXME("(%s,%d,0x%lx): stub\n",  debugstr_w(pwcInChars), cInChars, dwFlags);
+   return E_NOTIMPL;
 }

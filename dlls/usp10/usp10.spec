@@ -10,16 +10,16 @@
 @ stub ScriptGetGlyphABCWidth
 @ stub ScriptGetLogicalWidths
 @ stdcall ScriptGetProperties(ptr long)
-@ stub ScriptIsComplex
+@ stdcall ScriptIsComplex(wstr long long)
 @ stdcall ScriptItemize(wstr long long ptr ptr ptr ptr)
 @ stub ScriptJustify
 @ stub ScriptLayout
 @ stub ScriptPlace
 @ stdcall ScriptRecordDigitSubstitution(ptr ptr)
 @ stub ScriptShape
-@ stub ScriptStringAnalyse
+@ stdcall ScriptStringAnalyse(ptr ptr long long long long long ptr ptr ptr ptr ptr ptr)
 @ stub ScriptStringCPtoX
-@ stub ScriptStringFree
+@ stdcall ScriptStringFree(ptr)
 @ stub ScriptStringGetLogicalWidths
 @ stub ScriptStringGetOrder
 @ stub ScriptStringOut
