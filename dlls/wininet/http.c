@@ -669,7 +669,6 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     HINTERNET handle = NULL;
     static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
     DWORD len;
-    INTERNET_ASYNC_RESULT iar;
 
     TRACE("-->\n");
 
@@ -797,12 +796,9 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     HeapFree(GetProcessHeap(), 0, lpszUrl);
 
 
-    iar.dwResult = (DWORD_PTR)handle;
-    iar.dwError = ERROR_SUCCESS;
-
     SendAsyncCallback(&lpwhs->hdr, dwContext,
-                    INTERNET_STATUS_HANDLE_CREATED, &iar,
-                    sizeof(INTERNET_ASYNC_RESULT));
+                    INTERNET_STATUS_HANDLE_CREATED, &handle,
+                    sizeof(handle));
 
     /*
      * A STATUS_REQUEST_COMPLETE is NOT sent here as per my tests on windows
@@ -1867,14 +1863,9 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     /* Don't send a handle created callback if this handle was created with InternetOpenUrl */
     if (!(lpwhs->hdr.dwInternalFlags & INET_OPENURL))
     {
-        INTERNET_ASYNC_RESULT iar;
-
-        iar.dwResult = (DWORD_PTR)handle;
-        iar.dwError = ERROR_SUCCESS;
-
-        SendAsyncCallback(&lpwhs->hdr, dwContext,
-                      INTERNET_STATUS_HANDLE_CREATED, &iar,
-                      sizeof(INTERNET_ASYNC_RESULT));
+        SendAsyncCallback(&hIC->hdr, dwContext,
+                      INTERNET_STATUS_HANDLE_CREATED, &handle,
+                      sizeof(handle));
     }
 
     bSuccess = TRUE;
