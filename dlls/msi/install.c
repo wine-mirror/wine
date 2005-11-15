@@ -142,7 +142,7 @@ UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
             awbuf->str.a[*sz - 1] = 0;
     }
 
-    if (len >= *sz)
+    if (awbuf->str.w && len >= *sz)
         r = ERROR_MORE_DATA;
     *sz = len;
     return r;
