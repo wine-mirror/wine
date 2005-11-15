@@ -102,7 +102,6 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     {
 #ifdef HAVE_OPENSSL_SSL_H
         TRACE("using SSL connection\n");
-	connection->ssl_sock = -1;
 	if (OpenSSL_ssl_handle) /* already initilzed everything */
             return;
 	OpenSSL_ssl_handle = wine_dlopen(SONAME_LIBSSL, RTLD_NOW, NULL, 0);
@@ -174,22 +173,10 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 
 BOOL NETCON_connected(WININET_NETCONNECTION *connection)
 {
-    if (!connection->useSSL)
-    {
-	if (connection->socketFD == -1)
-	    return FALSE;
-	return TRUE;
-    }
+    if (connection->socketFD == -1)
+        return FALSE;
     else
-    {
-#ifdef HAVE_OPENSSL_SSL_H
-	if (connection->ssl_sock == -1)
-	    return FALSE;
         return TRUE;
-#else
-	return FALSE;
-#endif
-    }
 }
 
 /******************************************************************************
@@ -200,22 +187,15 @@ BOOL NETCON_connected(WININET_NETCONNECTION *connection)
 BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,
 	      int type, int protocol)
 {
-    if (!connection->useSSL)
-    {
-	connection->socketFD = socket(domain, type, protocol);
-	if (connection->socketFD == -1)
-	    return FALSE;
-	return TRUE;
-    }
-    else
-    {
-#ifdef HAVE_OPENSSL_SSL_H
-        connection->ssl_sock = socket(domain, type, protocol);
-        return TRUE;
-#else
-	return FALSE;
+#ifndef HAVE_OPENSSL_SSL_H
+    if (connection->useSSL)
+        return FALSE;
 #endif
-    }
+
+    connection->socketFD = socket(domain, type, protocol);
+    if (connection->socketFD == -1)
+        return FALSE;
+    return TRUE;
 }
 
 /******************************************************************************
@@ -224,31 +204,27 @@ BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,
  */
 BOOL NETCON_close(WININET_NETCONNECTION *connection)
 {
+    int result;
+
     if (!NETCON_connected(connection)) return FALSE;
-    if (!connection->useSSL)
-    {
-        int result;
-	result = closesocket(connection->socketFD);
-        connection->socketFD = -1;
-	if (result == -1)
-	    return FALSE;
-        return TRUE;
-    }
-    else
-    {
+
+    result = closesocket(connection->socketFD);
+    connection->socketFD = -1;
+
 #ifdef HAVE_OPENSSL_SSL_H
-	closesocket(connection->ssl_sock);
-	connection->ssl_sock = -1;
+    if (connection->useSSL)
+    {
         HeapFree(GetProcessHeap(),0,connection->peek_msg_mem);
         connection->peek_msg = NULL;
         connection->peek_msg_mem = NULL;
-	/* FIXME should we call SSL_shutdown here?? Probably on whatever is the
-	 * opposite of NETCON_init.... */
-        return TRUE;
-#else
-	return FALSE;
-#endif
+        /* FIXME should we call SSL_shutdown here?? Probably on whatever is the
+         * opposite of NETCON_init.... */
     }
+#endif
+
+    if (result == -1)
+        return FALSE;
+    return TRUE;
 }
 
 /******************************************************************************
@@ -258,42 +234,37 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
 BOOL NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
 		    unsigned int addrlen)
 {
+    int result;
+
     if (!NETCON_connected(connection)) return FALSE;
-    if (!connection->useSSL)
+
+    result = connect(connection->socketFD, serv_addr, addrlen);
+    if (result == -1)
     {
-	int result;
-	result = connect(connection->socketFD, serv_addr, addrlen);
-	if (result == -1)
-        {
-            closesocket(connection->socketFD);
-            connection->socketFD = -1;
-	    return FALSE;
-        }
-        return TRUE;
+        closesocket(connection->socketFD);
+        connection->socketFD = -1;
+        return FALSE;
     }
-    else
-    {
+
 #ifdef HAVE_OPENSSL_SSL_H
+    if (connection->useSSL)
+    {
         BIO *sbio;
 
         ctx = pSSL_CTX_new(meth);
 	connection->ssl_s = pSSL_new(ctx);
 
-	if (connect(connection->ssl_sock, serv_addr, addrlen) == -1)
-	    return FALSE;
-
-	sbio = pBIO_new_socket(connection->ssl_sock, BIO_NOCLOSE);
+	sbio = pBIO_new_socket(connection->socketFD, BIO_NOCLOSE);
         pSSL_set_bio(connection->ssl_s, sbio, sbio);
 	if (pSSL_connect(connection->ssl_s) <= 0)
 	{
             ERR("ssl couldn't connect\n");
 	    return FALSE;
 	}
-	return TRUE;
-#else
-	return FALSE;
-#endif
     }
+#endif
+
+    return TRUE;
 }
 
 /******************************************************************************
