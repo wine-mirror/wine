@@ -127,11 +127,12 @@ time_t ConvertTimeString(LPCWSTR asctime)
 
 
 BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
-	struct hostent **phe, struct sockaddr_in *psa)
+	struct sockaddr_in *psa)
 {
     WCHAR *found;
     char *name;
     int len, sz;
+    struct hostent *phe;
 
     TRACE("%s\n", debugstr_w(lpszServerName));
 
@@ -150,18 +151,18 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
     name = HeapAlloc(GetProcessHeap(), 0, sz+1);
     WideCharToMultiByte( CP_UNIXCP, 0, lpszServerName, len, name, sz, NULL, NULL );
     name[sz] = 0;
-    *phe = gethostbyname(name);
+    phe = gethostbyname(name);
     HeapFree( GetProcessHeap(), 0, name );
 
-    if (NULL == *phe)
+    if (NULL == phe)
     {
         TRACE("Failed to get hostname: (%s)\n", debugstr_w(lpszServerName) );
         return FALSE;
     }
 
     memset(psa,0,sizeof(struct sockaddr_in));
-    memcpy((char *)&psa->sin_addr, (*phe)->h_addr, (*phe)->h_length);
-    psa->sin_family = (*phe)->h_addrtype;
+    memcpy((char *)&psa->sin_addr, phe->h_addr, phe->h_length);
+    psa->sin_family = phe->h_addrtype;
     psa->sin_port = htons((u_short)nServerPort);
 
     return TRUE;

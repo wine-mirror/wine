@@ -1656,7 +1656,6 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     static const WCHAR szDefaultUsername[] = {'a','n','o','n','y','m','o','u','s','\0'};
     static const WCHAR szDefaultPassword[] = {'u','s','e','r','@','s','e','r','v','e','r','\0'};
     struct sockaddr_in socketAddr;
-    struct hostent *phe = NULL;
     INT nsocket = -1;
     UINT sock_namelen;
     BOOL bSuccess = FALSE;
@@ -1734,7 +1733,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_RESOLVING_NAME,
         (LPWSTR) lpszServerName, strlenW(lpszServerName));
 
-    if (!GetAddress(lpszServerName, nServerPort, &phe, &socketAddr))
+    if (!GetAddress(lpszServerName, nServerPort, &socketAddr))
     {
 	INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
         goto lerror;
@@ -1767,7 +1766,6 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 
 	sock_namelen = sizeof(lpwfs->socketAddress);
 	getsockname(nsocket, (struct sockaddr *) &lpwfs->socketAddress, &sock_namelen);
-        lpwfs->phostent = phe;
 
         if (FTP_ConnectToHost(lpwfs))
         {

@@ -168,7 +168,6 @@ typedef struct
     LPWSTR  lpszUserName;
     INTERNET_PORT nServerPort;
     struct sockaddr_in socketAddress;
-    struct hostent *phostent;
 } WININETHTTPSESSIONW, *LPWININETHTTPSESSIONW;
 
 #define HDR_ISREQUEST		0x0001
@@ -214,7 +213,6 @@ typedef struct
     LPWININETFILE download_in_progress;
     struct sockaddr_in socketAddress;
     struct sockaddr_in lstnSocketAddress;
-    struct hostent *phostent;
     LPWSTR  lpszPassword;
     LPWSTR  lpszUserName;
 } WININETFTPSESSIONW, *LPWININETFTPSESSIONW;
@@ -420,7 +418,7 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	DWORD dwInternalFlags);
 
 BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
-	struct hostent **phe, struct sockaddr_in *psa);
+	struct sockaddr_in *psa);
 
 void INTERNET_SetLastError(DWORD dwError);
 DWORD INTERNET_GetLastError(void);

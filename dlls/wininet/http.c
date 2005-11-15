@@ -813,7 +813,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
                       strlenW(lpwhs->lpszServerName)+1);
 
     if (!GetAddress(lpwhs->lpszServerName, lpwhs->nServerPort,
-                    &lpwhs->phostent, &lpwhs->socketAddress))
+                    &lpwhs->socketAddress))
     {
         INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
         InternetCloseHandle( handle );
@@ -1397,7 +1397,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
                       strlenW(lpwhs->lpszServerName)+1);
 
         if (!GetAddress(lpwhs->lpszServerName, lpwhs->nServerPort,
-                    &lpwhs->phostent, &lpwhs->socketAddress))
+                    &lpwhs->socketAddress))
         {
             INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
             return FALSE;
@@ -1917,7 +1917,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
                       &(lpwhs->socketAddress),
                        sizeof(struct sockaddr_in));
 
-    if (!NETCON_create(&lpwhr->netConnection, lpwhs->phostent->h_addrtype,
+    if (!NETCON_create(&lpwhr->netConnection, lpwhs->socketAddress.sin_family,
                          SOCK_STREAM, 0))
     {
 	WARN("Socket creation failed\n");
