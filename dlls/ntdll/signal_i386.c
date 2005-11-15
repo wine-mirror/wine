@@ -1456,7 +1456,7 @@ __ASM_GLOBAL_FUNC( EXC_CallHandler,
 "	pushl	16(%ebp)\n"
 "	pushl	12(%ebp)\n"
 "	pushl	8(%ebp)\n"
-"	call	call_exception_handler\n"
+"	call	" __ASM_NAME("call_exception_handler") "\n"
 "	leave\n"
 "	ret\n"
 );

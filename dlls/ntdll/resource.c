@@ -371,7 +371,7 @@ __ASM_GLOBAL_FUNC( LdrAccessResource,
     "pushl 16(%ebp)\n"
     "pushl 12(%ebp)\n"
     "pushl 8(%ebp)\n"
-    "call access_resource\n"
+    "call " __ASM_NAME("access_resource") "\n"
     "leave\n"
     "ret $16\n"
 );
