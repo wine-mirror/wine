@@ -31,13 +31,15 @@
 #include "wine/debug.h"
 #include "msi.h"
 #include "msiquery.h"
-#include "msipriv.h"
 #include "objidl.h"
 #include "wincrypt.h"
 #include "winuser.h"
 #include "shlobj.h"
 #include "wine/unicode.h"
 #include "objbase.h"
+
+#include "msipriv.h"
+#include "action.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -118,6 +120,30 @@ static UINT clone_properties(MSIDATABASE *db)
     msiobj_release(&view->hdr);
     
     return rc;
+}
+
+/*
+ * set_installed_prop
+ *
+ * Sets the "Installed" property to indicate that
+ *  the product is installed for the current user.
+ */
+static UINT set_installed_prop( MSIPACKAGE *package )
+{
+    static const WCHAR szInstalled[] = {
+        'I','n','s','t','a','l','l','e','d',0 };
+    WCHAR val[2] = { '1', 0 };
+    HKEY hkey = 0;
+    UINT r;
+
+    r = MSIREG_OpenUninstallKey( package->ProductCode, &hkey, FALSE );
+    if (r == ERROR_SUCCESS)
+    {
+        RegCloseKey( hkey );
+        MSI_SetPropertyW( package, szInstalled, val );
+    }
+
+    return r;
 }
 
 /*
@@ -203,29 +229,14 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szColorBits[] = {'C','o','l','o','r','B','i','t','s',0};
     static const WCHAR szScreenFormat[] = {'%','d',0};
 
-/*
- * Other things I notice set
- *
-SystemLanguageID
-ComputerName
-UserLanguageID
-LogonUser
-VirtualMemory
-Intel
-ShellAdvSupport
-DefaultUIFont
-VersionDatabase
-PackagecodeChanging
-ProductState
-CaptionHeight
-BorderTop
-BorderSide
-TextHeight
-RedirectedDllSupport
-Time
-Date
-Privileged
-*/
+    /*
+     * Other things that probably should be set:
+     *
+     * SystemLanguageID ComputerName UserLanguageID LogonUser VirtualMemory
+     * Intel ShellAdvSupport DefaultUIFont VersionDatabase PackagecodeChanging
+     * ProductState CaptionHeight BorderTop BorderSide TextHeight
+     * RedirectedDllSupport Time Date Privileged
+     */
 
     SHGetFolderPathW(NULL,CSIDL_PROGRAM_FILES_COMMON,NULL,0,pth);
     strcatW(pth,cszbs);
@@ -357,6 +368,8 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
 {
     static const WCHAR szLevel[] = { 'U','I','L','e','v','e','l',0 };
     static const WCHAR szpi[] = {'%','i',0};
+    static const WCHAR szProductCode[] = {
+        'P','r','o','d','u','c','t','C','o','d','e',0};
     MSIPACKAGE *package = NULL;
     WCHAR uilevel[10];
 
@@ -393,6 +406,9 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
         set_installer_properties(package);
         sprintfW(uilevel,szpi,gUILevel);
         MSI_SetPropertyW(package, szLevel, uilevel);
+
+        package->ProductCode = msi_dup_property( package, szProductCode );
+        set_installed_prop( package );
     }
 
     return package;
@@ -431,8 +447,6 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     MSIDATABASE *db = NULL;
     MSIPACKAGE *package;
     MSIHANDLE handle;
-    DWORD size;
-    static const WCHAR szProductCode[]= {'P','r','o','d','u','c','t','C','o','d','e',0};
     UINT r;
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
@@ -478,13 +492,6 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         MSI_SetPropertyW( package, Database, szPackage );
     }
 
-    /* this property must exist */
-    size  = 0;
-    MSI_GetPropertyW(package,szProductCode,NULL,&size);
-    size ++;
-    package->ProductCode = msi_alloc(size * sizeof(WCHAR));
-    MSI_GetPropertyW(package,szProductCode,package->ProductCode, &size);
-    
     *pPackage = package;
 
     return ERROR_SUCCESS;
