@@ -25,6 +25,8 @@
 #include "winbase.h"
 #include "winerror.h"
 
+static DWORD (WINAPI *pGetDiskFreeSpaceExA)(LPCSTR, PULARGE_INTEGER, PULARGE_INTEGER, PULARGE_INTEGER);
+
 static void test_GetDriveTypeA(void)
 {
     char drive[] = "?:\\";
@@ -123,12 +125,13 @@ static void test_GetDiskFreeSpaceA(void)
                     /* win3.0 thru winME */
                     ok( total_clusters <= 65535,
                             "total clusters is %ld > 65535\n", total_clusters);
-                else {
+                else if (pGetDiskFreeSpaceExA) {
                     /* NT, 2k, XP : GetDiskFreeSpace shoud be accurate */
                     ULARGE_INTEGER totEx, tot, d;
+
                     tot.QuadPart = sectors_per_cluster;
                     tot.QuadPart = (tot.QuadPart * bytes_per_sector) * total_clusters;
-                    ret = GetDiskFreeSpaceExA( drive, &d, &totEx, NULL);
+                    ret = pGetDiskFreeSpaceExA( drive, &d, &totEx, NULL);
                     ok( ret, "GetDiskFreeSpaceExA( %s ) failed. GetLastError=%ld\n", drive, GetLastError());
                     ok( bytes_per_sector == 0 || /* empty cd rom drive */
                         totEx.QuadPart <= tot.QuadPart,
@@ -194,6 +197,9 @@ static void test_GetDiskFreeSpaceW(void)
 
 START_TEST(drive)
 {
+    HANDLE hkernel32 = GetModuleHandleA("kernel32");
+    pGetDiskFreeSpaceExA = (void *) GetProcAddress(hkernel32, "GetDiskFreeSpaceExA");
+
     test_GetDriveTypeA();
     test_GetDriveTypeW();
 
