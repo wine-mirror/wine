@@ -1011,7 +1011,7 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
     lpwh = WININET_GetObject( hInternet );
     if (NULL == lpwh)
     {
-	INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 

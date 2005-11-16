@@ -47,7 +47,7 @@
 #define CREATE_URL6 "nhtt://username:password@www.winehq.org:80/site/about"
 #define CREATE_URL7 "http://username:password@www.winehq.org:42/site/about"
 
-int goon = 0;
+static HANDLE hCompleteEvent;
 
 static VOID WINAPI callback(
      HINTERNET hInternet,
@@ -57,69 +57,105 @@ static VOID WINAPI callback(
      DWORD dwStatusInformationLength
 )
 {
-    char name[124];
-
     switch (dwInternetStatus)
     {
         case INTERNET_STATUS_RESOLVING_NAME:
-            strcpy(name,"INTERNET_STATUS_RESOLVING_NAME");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_RESOLVING_NAME \"%s\" %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_NAME_RESOLVED:
-            strcpy(name,"INTERNET_STATUS_NAME_RESOLVED");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_NAME_RESOLVED \"%s\" %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_CONNECTING_TO_SERVER:
-            strcpy(name,"INTERNET_STATUS_CONNECTING_TO_SERVER");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_CONNECTING_TO_SERVER \"%s\" %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_CONNECTED_TO_SERVER:
-            strcpy(name,"INTERNET_STATUS_CONNECTED_TO_SERVER");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_CONNECTED_TO_SERVER \"%s\" %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_SENDING_REQUEST:
-            strcpy(name,"INTERNET_STATUS_SENDING_REQUEST");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_SENDING_REQUEST %p %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_REQUEST_SENT:
-            strcpy(name,"INTERNET_STATUS_REQUEST_SENT");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_REQUEST_SENT 0x%lx %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                *(DWORD *)lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_RECEIVING_RESPONSE:
-            strcpy(name,"INTERNET_STATUS_RECEIVING_RESPONSE");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_RECEIVING_RESPONSE %p %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_RESPONSE_RECEIVED:
-            strcpy(name,"INTERNET_STATUS_RESPONSE_RECEIVED");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_RESPONSE_RECEIVED 0x%lx %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                *(DWORD *)lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_CTL_RESPONSE_RECEIVED:
-            strcpy(name,"INTERNET_STATUS_CTL_RESPONSE_RECEIVED");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_CTL_RESPONSE_RECEIVED %p %ld\n",
+                GetCurrentThreadId(), hInternet,dwContext,
+                lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_PREFETCH:
-            strcpy(name,"INTERNET_STATUS_PREFETCH");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_PREFETCH %p %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_CLOSING_CONNECTION:
-            strcpy(name,"INTERNET_STATUS_CLOSING_CONNECTION");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_CLOSING_CONNECTION %p %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_CONNECTION_CLOSED:
-            strcpy(name,"INTERNET_STATUS_CONNECTION_CLOSED");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_CONNECTION_CLOSED %p %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_HANDLE_CREATED:
-            strcpy(name,"INTERNET_STATUS_HANDLE_CREATED");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_HANDLE_CREATED %p %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                *(HINTERNET *)lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_HANDLE_CLOSING:
-            strcpy(name,"INTERNET_STATUS_HANDLE_CLOSING");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_HANDLE_CLOSING %p %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                *(HINTERNET *)lpvStatusInformation, dwStatusInformationLength);
             break;
         case INTERNET_STATUS_REQUEST_COMPLETE:
-            strcpy(name,"INTERNET_STATUS_REQUEST_COMPLETE");
-            goon = 1;
+        {
+            INTERNET_ASYNC_RESULT *iar = (INTERNET_ASYNC_RESULT *)lpvStatusInformation;
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_REQUEST_COMPLETE {%ld,%ld} %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                iar->dwResult,iar->dwError,dwStatusInformationLength);
+            SetEvent(hCompleteEvent);
             break;
+        }
         case INTERNET_STATUS_REDIRECT:
-            strcpy(name,"INTERNET_STATUS_REDIRECT");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_REDIRECT \"%s\" %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                (LPCSTR)lpvStatusInformation, dwStatusInformationLength);
             break;
         case INTERNET_STATUS_INTERMEDIATE_RESPONSE:
-            strcpy(name,"INTERNET_STATUS_INTERMEDIATE_RESPONSE");
+            trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_INTERMEDIATE_RESPONSE %p %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext,
+                lpvStatusInformation, dwStatusInformationLength);
             break;
+        default:
+            trace("%04lx:Callback %p 0x%lx %ld %p %ld\n",
+                GetCurrentThreadId(), hInternet, dwContext, dwInternetStatus,
+                lpvStatusInformation, dwStatusInformationLength);
     }
-
-    trace("Callback %p 0x%lx %s(%li) %p %ld\n",hInternet,dwContext,name,
-          dwInternetStatus,lpvStatusInformation,dwStatusInformationLength);
 }
 
-static void winapi_test(int flags)
+static void InternetReadFile_test(int flags)
 {
     DWORD rc;
     CHAR buffer[4000];
@@ -128,11 +164,13 @@ static void winapi_test(int flags)
     const char *types[2] = { "*", NULL };
     HINTERNET hi, hic = 0, hor = 0;
 
-    trace("Starting with flags 0x%x\n",flags);
+    hCompleteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    trace("Starting InternetReadFile test with flags 0x%x\n",flags);
 
     trace("InternetOpenA <--\n");
-    hi = InternetOpenA("",0x0,0x0,0x0,flags);
-    ok((hi != 0x0),"InternetOpen Failed\n");
+    hi = InternetOpenA("", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, flags);
+    ok((hi != 0x0),"InternetOpen failed with error %ld\n", GetLastError());
     trace("InternetOpenA -->\n");
 
     if (hi == 0x0) goto abort;
@@ -140,17 +178,18 @@ static void winapi_test(int flags)
     InternetSetStatusCallback(hi,&callback);
 
     trace("InternetConnectA <--\n");
-    hic=InternetConnectA(hi,"www.winehq.org",0x0,0x0,0x0,0x3,0x0,0xdeadbeef);
-    ok((hic != 0x0),"InternetConnect Failed\n");
+    hic=InternetConnectA(hi, "www.winehq.org", INTERNET_INVALID_PORT_NUMBER,
+                         NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
+    ok((hic != 0x0),"InternetConnect failed with error %ld\n", GetLastError());
     trace("InternetConnectA -->\n");
 
     if (hic == 0x0) goto abort;
 
     trace("HttpOpenRequestA <--\n");
-    hor = HttpOpenRequestA(hic, "GET",
-                          "/about/",
-                          0x0,0x0,types,0x00400800,0xdeadbead);
-    if (hor == 0x0 && GetLastError() == 12007 /* ERROR_INTERNET_NAME_NOT_RESOLVED */) {
+    hor = HttpOpenRequestA(hic, "GET", "/about/", NULL, NULL, types,
+                           INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE,
+                           0xdeadbead);
+    if (hor == 0x0 && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED) {
         /*
          * If the internet name can't be resolved we are probably behind
          * a firewall or in some other way not directly connected to the
@@ -158,59 +197,65 @@ static void winapi_test(int flags)
          * abort.
          */
     } else  {
-        ok((hor != 0x0),"HttpOpenRequest Failed\n");
+        ok((hor != 0x0),"HttpOpenRequest failed with error %ld\n", GetLastError());
     }
     trace("HttpOpenRequestA -->\n");
 
     if (hor == 0x0) goto abort;
 
     trace("HttpSendRequestA -->\n");
-    SetLastError(0);
-    rc = HttpSendRequestA(hor, "", 0xffffffff,0x0,0x0);
-    if (flags)
-        ok(((rc == 0)&&(GetLastError()==997)),
-            "Asynchronous HttpSendRequest NOT returning 0 with error 997\n");
+    SetLastError(0xdeadbeef);
+    rc = HttpSendRequestA(hor, "", -1, NULL, 0);
+    if (flags & INTERNET_FLAG_ASYNC)
+        ok(((rc == 0)&&(GetLastError() == ERROR_IO_PENDING)),
+            "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
     else
-        ok((rc != 0) || GetLastError() == 12007, /* 12007 == XP */
+        ok((rc != 0) || GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED,
            "Synchronous HttpSendRequest returning 0, error %ld\n", GetLastError());
     trace("HttpSendRequestA <--\n");
 
-    while ((flags)&&(!goon))
-        Sleep(100);
+    if (flags & INTERNET_FLAG_ASYNC)
+        WaitForSingleObject(hCompleteEvent, INFINITE);
 
     length = 4;
-    rc = InternetQueryOptionA(hor,0x17,&out,&length);
+    rc = InternetQueryOptionA(hor,INTERNET_OPTION_REQUEST_FLAGS,&out,&length);
     trace("Option 0x17 -> %li  %li\n",rc,out);
 
     length = 100;
-    rc = InternetQueryOptionA(hor,0x22,buffer,&length);
+    rc = InternetQueryOptionA(hor,INTERNET_OPTION_URL,buffer,&length);
     trace("Option 0x22 -> %li  %s\n",rc,buffer);
 
     length = 4000;
-    rc = HttpQueryInfoA(hor,0x16,buffer,&length,0x0);
+    rc = HttpQueryInfoA(hor,HTTP_QUERY_RAW_HEADERS,buffer,&length,0x0);
     buffer[length]=0;
     trace("Option 0x16 -> %li  %s\n",rc,buffer);
 
     length = 4000;
-    rc = InternetQueryOptionA(hor,0x22,buffer,&length);
+    rc = InternetQueryOptionA(hor,INTERNET_OPTION_URL,buffer,&length);
     buffer[length]=0;
     trace("Option 0x22 -> %li  %s\n",rc,buffer);
 
     length = 16;
-    rc = HttpQueryInfoA(hor,0x5,&buffer,&length,0x0);
+    rc = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_LENGTH,&buffer,&length,0x0);
     trace("Option 0x5 -> %li  %s  (%li)\n",rc,buffer,GetLastError());
 
     length = 100;
-    rc = HttpQueryInfoA(hor,0x1,buffer,&length,0x0);
+    rc = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_TYPE,buffer,&length,0x0);
     buffer[length]=0;
     trace("Option 0x1 -> %li  %s\n",rc,buffer);
+
+    SetLastError(0xdeadbeef);
+    rc = InternetReadFile(NULL, buffer, 100, &length);
+    ok(!rc, "InternetReadFile should have failed\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+        "InternetReadFile should have set last error to ERROR_INVALID_HANDLE instead of %ld\n",
+        GetLastError());
 
     length = 100;
     trace("Entering Query loop\n");
 
     while (length)
     {
-
         rc = InternetQueryDataAvailable(hor,&length,0x0,0x0);
         ok(!(rc == 0 && length != 0),"InternetQueryDataAvailable failed\n");
 
@@ -230,10 +275,15 @@ static void winapi_test(int flags)
     }
 abort:
     if (hor != 0x0) {
+        SetLastError(0xdeadbeef);
         rc = InternetCloseHandle(hor);
         ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
+        SetLastError(0xdeadbeef);
         rc = InternetCloseHandle(hor);
         ok ((rc == 0), "Double close of handle opened by HttpOpenRequestA succeeded\n");
+        ok (GetLastError() == ERROR_INVALID_HANDLE,
+            "Double close of handle should have set ERROR_INVALID_HANDLE instead of %ld\n",
+            GetLastError());
     }
     if (hic != 0x0) {
         rc = InternetCloseHandle(hic);
@@ -242,9 +292,165 @@ abort:
     if (hi != 0x0) {
       rc = InternetCloseHandle(hi);
       ok ((rc != 0), "InternetCloseHandle of handle opened by InternetOpenA failed\n");
-      if (flags)
+      if (flags & INTERNET_FLAG_ASYNC)
           Sleep(100);
     }
+    CloseHandle(hCompleteEvent);
+}
+
+static void InternetReadFileExA_test(int flags)
+{
+    DWORD rc;
+    DWORD length;
+    const char *types[2] = { "*", NULL };
+    HINTERNET hi, hic = 0, hor = 0;
+    INTERNET_BUFFERS inetbuffers;
+
+    hCompleteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    trace("Starting InternetReadFileExA test with flags 0x%x\n",flags);
+
+    trace("InternetOpenA <--\n");
+    hi = InternetOpenA("", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, flags);
+    ok((hi != 0x0),"InternetOpen failed with error %ld\n", GetLastError());
+    trace("InternetOpenA -->\n");
+
+    if (hi == 0x0) goto abort;
+
+    InternetSetStatusCallback(hi,&callback);
+
+    trace("InternetConnectA <--\n");
+    hic=InternetConnectA(hi, "www.winehq.org", INTERNET_INVALID_PORT_NUMBER,
+                         NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
+    ok((hic != 0x0),"InternetConnect failed with error %ld\n", GetLastError());
+    trace("InternetConnectA -->\n");
+
+    if (hic == 0x0) goto abort;
+
+    trace("HttpOpenRequestA <--\n");
+    hor = HttpOpenRequestA(hic, "GET", "/about/", NULL, NULL, types,
+                           INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE,
+                           0xdeadbead);
+    if (hor == 0x0 && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED) {
+        /*
+         * If the internet name can't be resolved we are probably behind
+         * a firewall or in some other way not directly connected to the
+         * Internet. Not enough reason to fail the test. Just ignore and
+         * abort.
+         */
+    } else  {
+        ok((hor != 0x0),"HttpOpenRequest failed with error %ld\n", GetLastError());
+    }
+    trace("HttpOpenRequestA -->\n");
+
+    if (hor == 0x0) goto abort;
+
+    trace("HttpSendRequestA -->\n");
+    SetLastError(0xdeadbeef);
+    rc = HttpSendRequestA(hor, "", -1, NULL, 0);
+    if (flags & INTERNET_FLAG_ASYNC)
+        ok(((rc == 0)&&(GetLastError() == ERROR_IO_PENDING)),
+            "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
+    else
+        ok((rc != 0) || GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED,
+           "Synchronous HttpSendRequest returning 0, error %ld\n", GetLastError());
+    trace("HttpSendRequestA <--\n");
+
+    if (!rc && (GetLastError() == ERROR_IO_PENDING))
+        WaitForSingleObject(hCompleteEvent, INFINITE);
+
+    /* tests invalid dwStructSize */
+    inetbuffers.dwStructSize = sizeof(INTERNET_BUFFERS)+1;
+    inetbuffers.lpcszHeader = NULL;
+    inetbuffers.dwHeadersLength = 0;
+    inetbuffers.dwBufferLength = 10;
+    inetbuffers.lpvBuffer = HeapAlloc(GetProcessHeap(), 0, 10);
+    inetbuffers.dwOffsetHigh = 1234;
+    inetbuffers.dwOffsetLow = 5678;
+    rc = InternetReadFileEx(hor, &inetbuffers, 0, 0xdeadcafe);
+    ok(!rc && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "InternetReadFileEx should have failed with ERROR_INVALID_PARAMETER instead of %s, %ld\n",
+        rc ? "TRUE" : "FALSE", GetLastError());
+    HeapFree(GetProcessHeap(), 0, inetbuffers.lpvBuffer);
+
+    /* tests to see whether lpcszHeader is used - it isn't */
+    inetbuffers.dwStructSize = sizeof(INTERNET_BUFFERS);
+    inetbuffers.lpcszHeader = (LPCTSTR)0xdeadbeef;
+    inetbuffers.dwHeadersLength = 255;
+    inetbuffers.dwBufferLength = 0;
+    inetbuffers.lpvBuffer = NULL;
+    inetbuffers.dwOffsetHigh = 1234;
+    inetbuffers.dwOffsetLow = 5678;
+    rc = InternetReadFileEx(hor, &inetbuffers, 0, 0xdeadcafe);
+    ok(rc, "InternetReadFileEx failed with error %ld\n", GetLastError());
+
+    rc = InternetReadFileEx(NULL, &inetbuffers, 0, 0xdeadcafe);
+    ok(!rc && (GetLastError() == ERROR_INVALID_HANDLE),
+        "InternetReadFileEx should have failed with ERROR_INVALID_HANDLE instead of %s, %ld\n",
+        rc ? "TRUE" : "FALSE", GetLastError());
+
+    length = 0;
+    trace("Entering Query loop\n");
+
+    while (TRUE)
+    {
+        inetbuffers.dwStructSize = sizeof(INTERNET_BUFFERS);
+        inetbuffers.dwBufferLength = 1024;
+        inetbuffers.lpvBuffer = HeapAlloc(GetProcessHeap(), 0, inetbuffers.dwBufferLength+1);
+        inetbuffers.dwOffsetHigh = 1234;
+        inetbuffers.dwOffsetLow = 5678;
+
+        rc = InternetReadFileExA(hor, &inetbuffers, IRF_ASYNC | IRF_USE_CONTEXT, 0xcafebabe);
+        if (!rc)
+        {
+            if (GetLastError() == ERROR_IO_PENDING)
+            {
+                trace("InternetReadFileEx -> PENDING\n");
+                WaitForSingleObject(hCompleteEvent, INFINITE);
+            }
+            else
+            {
+                trace("InternetReadFileEx -> FAILED %ld\n", GetLastError());
+                break;
+            }
+        }
+        else
+            trace("InternetReadFileEx -> SUCCEEDED\n");
+
+        trace("read %li bytes\n", inetbuffers.dwBufferLength);
+        ((char *)inetbuffers.lpvBuffer)[inetbuffers.dwBufferLength] = '\0';
+
+        ok(inetbuffers.dwOffsetHigh == 1234 && inetbuffers.dwOffsetLow == 5678,
+            "InternetReadFileEx sets offsets to 0x%lx%08lx\n",
+            inetbuffers.dwOffsetHigh, inetbuffers.dwOffsetLow);
+
+        HeapFree(GetProcessHeap(), 0, inetbuffers.lpvBuffer);
+
+        if (!inetbuffers.dwBufferLength)
+            break;
+
+        length += inetbuffers.dwBufferLength;
+    }
+    trace("Finished. Read %ld bytes\n", length);
+
+abort:
+    if (hor) {
+        rc = InternetCloseHandle(hor);
+        ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
+        rc = InternetCloseHandle(hor);
+        ok ((rc == 0), "Double close of handle opened by HttpOpenRequestA succeeded\n");
+    }
+    if (hic) {
+        rc = InternetCloseHandle(hic);
+        ok ((rc != 0), "InternetCloseHandle of handle opened by InternetConnectA failed\n");
+    }
+    if (hi) {
+      rc = InternetCloseHandle(hi);
+      ok ((rc != 0), "InternetCloseHandle of handle opened by InternetOpenA failed\n");
+      if (flags & INTERNET_FLAG_ASYNC)
+          Sleep(100);
+    }
+    CloseHandle(hCompleteEvent);
 }
 
 static void InternetOpenUrlA_test(void)
@@ -836,8 +1042,9 @@ static void InternetCreateUrlA_test()
 
 START_TEST(http)
 {
-    winapi_test(0x10000000);
-    winapi_test(0x00000000);
+    InternetReadFile_test(INTERNET_FLAG_ASYNC);
+    InternetReadFile_test(0);
+    InternetReadFileExA_test(INTERNET_FLAG_ASYNC);
     InternetCrackUrl_test();
     InternetOpenUrlA_test();
     InternetCrackUrlW_test();
