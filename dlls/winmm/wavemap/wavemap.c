@@ -194,7 +194,7 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	}
     }
 
-    if ((dwFlags & WAVE_FORMAT_DIRECT) == 0 && lpDesc->lpFormat->wFormatTag == WAVE_FORMAT_PCM) {
+    if ((dwFlags & WAVE_FORMAT_DIRECT) == 0) {
         WAVEFORMATEX	wfx;
 
         wfx.wFormatTag = WAVE_FORMAT_PCM;
@@ -208,51 +208,63 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
                             default: goto error; \
                         }
 
-        /* Our resampling algorithm is quite primitive so first try
-         * to just change the bit depth and number of channels
-         */
-        for (i = ndlo; i < ndhi; i++) {
-            wfx.nSamplesPerSec=lpDesc->lpFormat->nSamplesPerSec;
-            wfx.nChannels = lpDesc->lpFormat->nChannels;
-            TRY(wfx.nSamplesPerSec, 16);
-            TRY(wfx.nSamplesPerSec, 8);
-            wfx.nChannels ^= 3;
-            TRY(wfx.nSamplesPerSec, 16);
-            TRY(wfx.nSamplesPerSec, 8);
-        }
+        if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
+            /* Format changed so keep sample rate and number of channels 
+             * the same and just change the bit depth
+             */
+            for (i = ndlo; i < ndhi; i++) {
+                wfx.nSamplesPerSec=lpDesc->lpFormat->nSamplesPerSec;
+                wfx.nChannels = lpDesc->lpFormat->nChannels;
+                TRY(wfx.nSamplesPerSec, 16);
+                TRY(wfx.nSamplesPerSec, 8);
+            }
+        } else {
+            /* Our resampling algorithm is quite primitive so first try
+             * to just change the bit depth and number of channels
+             */
+            for (i = ndlo; i < ndhi; i++) {
+                wfx.nSamplesPerSec=lpDesc->lpFormat->nSamplesPerSec;
+                wfx.nChannels = lpDesc->lpFormat->nChannels;
+                TRY(wfx.nSamplesPerSec, 16);
+                TRY(wfx.nSamplesPerSec, 8);
+                wfx.nChannels ^= 3;
+                TRY(wfx.nSamplesPerSec, 16);
+                TRY(wfx.nSamplesPerSec, 8);
+            }
 
-        for (i = ndlo; i < ndhi; i++) {
-            /* first try with same stereo/mono option as source */
-            wfx.nChannels = lpDesc->lpFormat->nChannels;
-            TRY(96000, 16);
-            TRY(48000, 16);
-            TRY(44100, 16);
-            TRY(22050, 16);
-            TRY(11025, 16);
+            for (i = ndlo; i < ndhi; i++) {
+                /* first try with same stereo/mono option as source */
+                wfx.nChannels = lpDesc->lpFormat->nChannels;
+                TRY(96000, 16);
+                TRY(48000, 16);
+                TRY(44100, 16);
+                TRY(22050, 16);
+                TRY(11025, 16);
 
-            /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
-            wfx.nChannels ^= 3;
-            TRY(96000, 16);
-            TRY(48000, 16);
-            TRY(44100, 16);
-            TRY(22050, 16);
-            TRY(11025, 16);
+                /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
+                wfx.nChannels ^= 3;
+                TRY(96000, 16);
+                TRY(48000, 16);
+                TRY(44100, 16);
+                TRY(22050, 16);
+                TRY(11025, 16);
 
-            /* first try with same stereo/mono option as source */
-            wfx.nChannels = lpDesc->lpFormat->nChannels;
-            TRY(96000, 8);
-            TRY(48000, 8);
-            TRY(44100, 8);
-            TRY(22050, 8);
-            TRY(11025, 8);
+                /* first try with same stereo/mono option as source */
+                wfx.nChannels = lpDesc->lpFormat->nChannels;
+                TRY(96000, 8);
+                TRY(48000, 8);
+                TRY(44100, 8);
+                TRY(22050, 8);
+                TRY(11025, 8);
 
-            /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
-            wfx.nChannels ^= 3;
-            TRY(96000, 8);
-            TRY(48000, 8);
-            TRY(44100, 8);
-            TRY(22050, 8);
-            TRY(11025, 8);
+                /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
+                wfx.nChannels ^= 3;
+                TRY(96000, 8);
+                TRY(48000, 8);
+                TRY(44100, 8);
+                TRY(22050, 8);
+                TRY(11025, 8);
+            }
         }
 #undef TRY
     }
