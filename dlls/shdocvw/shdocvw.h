@@ -74,6 +74,7 @@ typedef struct {
     /* Interfaces available for embeded document */
 
     const IOleClientSiteVtbl            *lpOleClientSiteVtbl;
+    const IOleInPlaceSiteVtbl           *lpOleInPlaceSiteVtbl;
 
     LONG ref;
 
@@ -96,6 +97,7 @@ typedef struct {
 #define VIEWOBJ2(x)     ((IViewObject2*)                &(x)->lpViewObjectVtbl);
 
 #define CLIENTSITE(x)   ((IOleClientSite*)              &(x)->lpOleClientSiteVtbl)
+#define INPLACESITE(x)  ((IOleInPlaceSite*)             &(x)->lpOleInPlaceSiteVtbl)
 
 void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_ViewObject_Init(WebBrowser*);

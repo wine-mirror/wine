@@ -35,6 +35,12 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
     }else if(IsEqualGUID(&IID_IOleClientSite, riid)) {
         TRACE("(%p)->(IID_IOleClientSite %p)\n", This, ppv);
         *ppv = CLIENTSITE(This);
+    }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
+        TRACE("(%p)->(IID_IOleWindow %p)\n", This, ppv);
+        *ppv = INPLACESITE(This);
+    }else if(IsEqualGUID(&IID_IOleInPlaceSite, riid)) {
+        TRACE("(%p)->(IID_IOleInPlaceSite %p)\n", This, ppv);
+        *ppv = INPLACESITE(This);
     }
 
     if(*ppv) {
@@ -116,7 +122,136 @@ static const IOleClientSiteVtbl OleClientSiteVtbl = {
     ClientSite_RequestNewObjectLayout
 };
 
+#define INPLACESITE_THIS(iface) DEFINE_THIS(WebBrowser, OleInPlaceSite, iface)
+
+static HRESULT WINAPI InPlaceSite_QueryInterface(IOleInPlaceSite *iface, REFIID riid, void **ppv)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+}
+
+static ULONG WINAPI InPlaceSite_AddRef(IOleInPlaceSite *iface)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    return IOleClientSite_AddRef(CLIENTSITE(This));
+}
+
+static ULONG WINAPI InPlaceSite_Release(IOleInPlaceSite *iface)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    return IOleClientSite_Release(CLIENTSITE(This));
+}
+
+static HRESULT WINAPI InPlaceSite_GetWindow(IOleInPlaceSite *iface, HWND *phwnd)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, phwnd);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_ContextSensitiveHelp(IOleInPlaceSite *iface, BOOL fEnterMode)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, fEnterMode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_CanInPlaceActivate(IOleInPlaceSite *iface)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_OnInPlaceActivate(IOleInPlaceSite *iface)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_OnUIActivate(IOleInPlaceSite *iface)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSite *iface,
+        IOleInPlaceFrame **ppFrame, IOleInPlaceUIWindow **ppDoc, LPRECT lprcPosRect,
+        LPRECT lprcClipRect, LPOLEINPLACEFRAMEINFO lpFrameInfo)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)->(%p %p %p %p %p)\n", This, ppFrame, ppDoc, lprcPosRect,
+          lprcClipRect, lpFrameInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_Scroll(IOleInPlaceSite *iface, SIZE scrollExtent)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)->({%ld %ld})\n", This, scrollExtent.cx, scrollExtent.cy);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_OnUIDeactivate(IOleInPlaceSite *iface, BOOL fUndoable)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, fUndoable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_OnInPlaceDeactivate(IOleInPlaceSite *iface)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_DiscardUndoState(IOleInPlaceSite *iface)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_DeactivateAndUndo(IOleInPlaceSite *iface)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_OnPosRectChange(IOleInPlaceSite *iface,
+                                                  LPCRECT lprcPosRect)
+{
+    WebBrowser *This = INPLACESITE_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, lprcPosRect);
+    return E_NOTIMPL;
+}
+
+#undef INPLACESITE_THIS
+
+static const IOleInPlaceSiteVtbl OleInPlaceSiteVtbl = {
+    InPlaceSite_QueryInterface,
+    InPlaceSite_AddRef,
+    InPlaceSite_Release,
+    InPlaceSite_GetWindow,
+    InPlaceSite_ContextSensitiveHelp,
+    InPlaceSite_CanInPlaceActivate,
+    InPlaceSite_OnInPlaceActivate,
+    InPlaceSite_OnUIActivate,
+    InPlaceSite_GetWindowContext,
+    InPlaceSite_Scroll,
+    InPlaceSite_OnUIDeactivate,
+    InPlaceSite_OnInPlaceDeactivate,
+    InPlaceSite_DiscardUndoState,
+    InPlaceSite_DeactivateAndUndo,
+    InPlaceSite_OnPosRectChange
+};
+
 void WebBrowser_ClientSite_Init(WebBrowser *This)
 {
-    This->lpOleClientSiteVtbl = &OleClientSiteVtbl;
+    This->lpOleClientSiteVtbl   = &OleClientSiteVtbl;
+    This->lpOleInPlaceSiteVtbl  = &OleInPlaceSiteVtbl;
 }
