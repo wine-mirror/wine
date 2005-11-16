@@ -529,7 +529,7 @@ int _wchmod(const MSVCRT_wchar_t *path, int flags)
  */
 int _unlink(const char *path)
 {
-  TRACE("(%s)\n",path);
+  TRACE("%s\n",debugstr_a(path));
   if(DeleteFileA(path))
     return 0;
   TRACE("failed (%ld)\n",GetLastError());
@@ -762,7 +762,7 @@ int MSVCRT__fcloseall(void)
   LOCK_FILES();
   for (i = 3; i < MSVCRT_stream_idx; i++)
     if (MSVCRT_fstreams[i] && MSVCRT_fstreams[i]->_flag &&
-        MSVCRT_fclose(MSVCRT_fstreams[i]))
+        !MSVCRT_fclose(MSVCRT_fstreams[i]))
       num_closed++;
   UNLOCK_FILES();
 
@@ -2083,7 +2083,7 @@ int MSVCRT_fclose(MSVCRT_FILE* file)
 
   file->_flag = 0;
 
-  return ((r==MSVCRT_EOF) || (flag & MSVCRT__IOERR) ? MSVCRT_EOF : 0);
+  return ((r == -1) || (flag & MSVCRT__IOERR) ? MSVCRT_EOF : 0);
 }
 
 /*********************************************************************

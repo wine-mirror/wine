@@ -265,7 +265,7 @@ static void test_file_write_read( void )
   _close(tempfd);
 
   ret = unlink(tempf);
-  ok( ret !=-1 ,"Can't unlink '%s': %d\n", tempf, errno);
+  ok( ret == 0 ,"Can't unlink '%s': %d\n", tempf, errno);
 
   tempf=_tempnam(".","wne");
   tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_BINARY|_O_RDWR,0);
@@ -292,7 +292,7 @@ static void test_file_write_read( void )
   ok( ret == 0,
      "Can't chmod '%s' to read-write: %d\n", tempf, errno);
   ret = unlink(tempf);
-  ok( ret !=-1 ,"Can't unlink '%s': %d\n", tempf, errno);
+  ok( ret == 0 ,"Can't unlink '%s': %d\n", tempf, errno);
 }
 
 static void test_file_inherit_child(const char* fd_s)
@@ -335,7 +335,7 @@ static void test_file_inherit( const char* selfname )
     lseek(fd, 0, SEEK_SET);
     ok(read(fd, buffer, sizeof (buffer)) == 8 && memcmp(buffer, "Success", 8) == 0, "Couldn't read back the data\n");
     close (fd);
-    ok(unlink("fdopen.tst") != 1, "Couldn't unlink\n");
+    ok(unlink("fdopen.tst") == 0, "Couldn't unlink\n");
     
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY | O_NOINHERIT, _S_IREAD |_S_IWRITE);
     ok(fd != -1, "Couldn't create test file\n");
@@ -348,7 +348,7 @@ static void test_file_inherit( const char* selfname )
     ok(tell(fd) == 0, "bad position %lu expecting 0\n", tell(fd));
     ok(read(fd, buffer, sizeof (buffer)) == 0, "Found unexpected data (%s)\n", buffer);
     close (fd);
-    ok(unlink("fdopen.tst") != 1, "Couldn't unlink\n");
+    ok(unlink("fdopen.tst") == 0, "Couldn't unlink\n");
 }
 
 static void test_tmpnam( void )
@@ -406,6 +406,47 @@ static void test_chsize( void )
     _unlink( tempfile );
 }
 
+static void test_fopen_fclose_fcloseall( void )
+{
+    char fname1[] = "empty1";
+    char fname2[] = "empty2";
+    char fname3[] = "empty3";
+    FILE *stream1, *stream2, *stream3;
+    int ret, numclosed;
+
+    /* testing fopen() */
+    stream1 = fopen(fname1, "w+");
+    ok(stream1 != NULL, "The file '%s' was not opened\n", fname1);
+    stream2 = fopen(fname2, "w ");
+    ok(stream2 != NULL, "The file '%s' was not opened\n", fname2 );
+    _unlink(fname3);
+    stream3 = fopen(fname3, "r");
+    ok(stream3 == NULL, "The file '%s' shouldn't exist before\n", fname3 );
+    stream3 = fopen(fname3, "w+");
+    ok(stream3 != NULL, "The file '%s' should be opened now\n", fname3 );
+
+    /* testing fclose() */
+    ret = fclose(stream2);
+    ok(ret == 0, "The file '%s' was not closed\n", fname2);
+    ret = fclose(stream3);
+    ok(ret == 0, "The file '%s' was not closed\n", fname3);
+    ret = fclose(stream2);
+    ok(ret == EOF, "Closing file '%s' returned %d\n", fname2, ret);
+    ret = fclose(stream3);
+    ok(ret == EOF, "Closing file '%s' returned %d\n", fname3, ret);
+
+    /* testing fcloseall() */
+    numclosed = _fcloseall();
+    /* fname1 should be closed here */
+    ok(numclosed == 1, "Number of files closed by fcloseall(): %u\n", numclosed);
+    numclosed = _fcloseall();
+    ok(numclosed == 0, "Number of files closed by fcloseall(): %u\n", numclosed);
+
+    ok(_unlink(fname1) == 0, "Couldn't unlink file named '%s'\n", fname1);
+    ok(_unlink(fname2) == 0, "Couldn't unlink file named '%s'\n", fname2);
+    ok(_unlink(fname3) == 0, "Couldn't unlink file named '%s'\n", fname3);
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -420,6 +461,7 @@ START_TEST(file)
     }
 
     test_fdopen();
+    test_fopen_fclose_fcloseall();
     test_fileops();
     test_fgetwc();
     test_file_put_get();
