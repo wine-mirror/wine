@@ -5066,6 +5066,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	    !lstrcmpiA(buf, "MDI_client_class") ||
 	    !lstrcmpiA(buf, "MDI_child_class") ||
 	    !lstrcmpiA(buf, "my_button_class") ||
+	    !lstrcmpiA(buf, "my_edit_class") ||
 	    !lstrcmpiA(buf, "static") ||
 	    !lstrcmpiA(buf, "#32770"))
 	{
@@ -5111,6 +5112,7 @@ static void CALLBACK win_event_proc(HWINEVENTHOOK hevent,
 	    !lstrcmpiA(buf, "MDI_client_class") ||
 	    !lstrcmpiA(buf, "MDI_child_class") ||
 	    !lstrcmpiA(buf, "my_button_class") ||
+	    !lstrcmpiA(buf, "my_edit_class") ||
 	    !lstrcmpiA(buf, "static") ||
 	    !lstrcmpiA(buf, "#32770"))
 	{
@@ -6221,6 +6223,233 @@ static void test_SendMessageTimeout(void)
 }
 
 
+/****************** edit message test *************************/
+#define ID_EDIT 0x1234
+static const struct message sl_edit_setfocus[] =
+{
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_SETFOCUS, sent|wparam, 0 },
+    { WM_CTLCOLOREDIT, sent|parent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_SETFOCUS) },
+    { 0 }
+};
+static const struct message ml_edit_setfocus[] =
+{
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_SETFOCUS, sent|wparam, 0 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_SETFOCUS) },
+    { 0 }
+};
+static const struct message sl_edit_killfocus[] =
+{
+    { HCBT_SETFOCUS, hook },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_KILLFOCUS, sent|wparam, 0 },
+    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_KILLFOCUS) },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { 0 }
+};
+static const struct message sl_edit_lbutton_dblclk[] =
+{
+    { WM_LBUTTONDBLCLK, sent },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+    { 0 }
+};
+static const struct message sl_edit_lbutton_down[] =
+{
+    { WM_LBUTTONDOWN, sent|wparam|lparam, 0, 0 },
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_CTLCOLOREDIT, sent|parent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_SETFOCUS) },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { 0 }
+};
+static const struct message ml_edit_lbutton_down[] =
+{
+    { WM_LBUTTONDOWN, sent|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_SETFOCUS) },
+    { 0 }
+};
+static const struct message sl_edit_lbutton_up[] =
+{
+    { WM_LBUTTONUP, sent|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_CAPTURECHANGED, sent|defwinproc },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { 0 }
+};
+static const struct message ml_edit_lbutton_up[] =
+{
+    { WM_LBUTTONUP, sent|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_CAPTURECHANGED, sent|defwinproc },
+    { 0 }
+};
+
+static WNDPROC old_edit_proc;
+
+static LRESULT CALLBACK edit_hook_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    trace("edit: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    /* explicitly ignore WM_GETICON message */
+    if (message == WM_GETICON) return 0;
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(&msg);
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(old_edit_proc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static void subclass_edit(void)
+{
+    WNDCLASSA cls;
+
+    if (!GetClassInfoA(0, "edit", &cls)) assert(0);
+
+    old_edit_proc = cls.lpfnWndProc;
+
+    cls.hInstance = GetModuleHandle(0);
+    cls.lpfnWndProc = edit_hook_proc;
+    cls.lpszClassName = "my_edit_class";
+    if (!RegisterClassA(&cls)) assert(0);
+}
+
+static void test_edit_messages(void)
+{
+    HWND hwnd, parent;
+    DWORD dlg_code;
+
+    subclass_edit();
+    log_all_parent_messages++;
+
+    parent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                             100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (parent != 0, "Failed to create parent window\n");
+
+    /* test single line edit */
+    hwnd = CreateWindowExA(0, "my_edit_class", "test", WS_CHILD,
+			   0, 0, 80, 20, parent, (HMENU)ID_EDIT, 0, NULL);
+    ok(hwnd != 0, "Failed to create edit window\n");
+
+    dlg_code = SendMessageA(hwnd, WM_GETDLGCODE, 0, 0);
+    ok(dlg_code == (DLGC_WANTCHARS|DLGC_HASSETSEL|DLGC_WANTARROWS), "wrong dlg_code %08lx\n", dlg_code);
+
+    ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
+    SetFocus(0);
+    flush_sequence();
+
+    SetFocus(hwnd);
+    ok_sequence(sl_edit_setfocus, "SetFocus(hwnd) on an edit", FALSE);
+
+    SetFocus(0);
+    ok_sequence(sl_edit_killfocus, "SetFocus(0) on an edit", FALSE);
+
+    SetFocus(0);
+    ReleaseCapture();
+    flush_sequence();
+
+    SendMessageA(hwnd, WM_LBUTTONDBLCLK, 0, 0);
+    ok_sequence(sl_edit_lbutton_dblclk, "WM_LBUTTONDBLCLK on an edit", FALSE);
+
+    SetFocus(0);
+    ReleaseCapture();
+    flush_sequence();
+
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 0, 0);
+    ok_sequence(sl_edit_lbutton_down, "WM_LBUTTONDOWN on an edit", FALSE);
+
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, 0);
+    ok_sequence(sl_edit_lbutton_up, "WM_LBUTTONUP on an edit", FALSE);
+
+    DestroyWindow(hwnd);
+
+    /* test multiline edit */
+    hwnd = CreateWindowExA(0, "my_edit_class", "test", WS_CHILD | ES_MULTILINE,
+			   0, 0, 80, 20, parent, (HMENU)ID_EDIT, 0, NULL);
+    ok(hwnd != 0, "Failed to create edit window\n");
+
+    dlg_code = SendMessageA(hwnd, WM_GETDLGCODE, 0, 0);
+    ok(dlg_code == (DLGC_WANTCHARS|DLGC_HASSETSEL|DLGC_WANTARROWS|DLGC_WANTALLKEYS),
+       "wrong dlg_code %08lx\n", dlg_code);
+
+    ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
+    SetFocus(0);
+    flush_sequence();
+
+    SetFocus(hwnd);
+    ok_sequence(ml_edit_setfocus, "SetFocus(hwnd) on multiline edit", FALSE);
+
+    SetFocus(0);
+    ok_sequence(sl_edit_killfocus, "SetFocus(0) on multiline edit", FALSE);
+
+    SetFocus(0);
+    ReleaseCapture();
+    flush_sequence();
+
+    SendMessageA(hwnd, WM_LBUTTONDBLCLK, 0, 0);
+    ok_sequence(sl_edit_lbutton_dblclk, "WM_LBUTTONDBLCLK on multiline edit", FALSE);
+
+    SetFocus(0);
+    ReleaseCapture();
+    flush_sequence();
+
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 0, 0);
+    ok_sequence(ml_edit_lbutton_down, "WM_LBUTTONDOWN on multiline edit", FALSE);
+
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, 0);
+    ok_sequence(ml_edit_lbutton_up, "WM_LBUTTONUP on multiline edit", FALSE);
+
+    DestroyWindow(hwnd);
+    DestroyWindow(parent);
+
+    log_all_parent_messages--;
+}
+
+/**************************** End of Edit test ******************************/
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -6277,6 +6506,7 @@ START_TEST(msg)
     test_DestroyWindow();
     test_DispatchMessage();
     test_SendMessageTimeout();
+    test_edit_messages();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)

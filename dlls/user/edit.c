@@ -389,6 +389,7 @@ static DWORD get_app_version(void)
 
 static HBRUSH EDIT_NotifyCtlColor(EDITSTATE *es, HDC hdc)
 {
+        HBRUSH hbrush;
 	UINT msg;
 
         if ( get_app_version() >= 0x40000 && (!es->bEnableState || (es->style & ES_READONLY)))
@@ -397,7 +398,10 @@ static HBRUSH EDIT_NotifyCtlColor(EDITSTATE *es, HDC hdc)
 		msg = WM_CTLCOLOREDIT;
 
 	/* why do we notify to es->hwndParent, and we send this one to GetParent()? */
-	return (HBRUSH)SendMessageW(GetParent(es->hwndSelf), msg, (WPARAM)hdc, (LPARAM)es->hwndSelf);
+        hbrush = (HBRUSH)SendMessageW(GetParent(es->hwndSelf), msg, (WPARAM)hdc, (LPARAM)es->hwndSelf);
+        if (!hbrush)
+            hbrush = (HBRUSH)DefWindowProcW(GetParent(es->hwndSelf), msg, (WPARAM)hdc, (LPARAM)es->hwndSelf);
+        return hbrush;
 }
 
 static inline LRESULT DefWindowProcT(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode)
@@ -4132,7 +4136,7 @@ static LRESULT EDIT_WM_Destroy(EDITSTATE *es)
 static LRESULT EDIT_WM_EraseBkGnd(EDITSTATE *es, HDC dc)
 {
     /* we do the proper erase in EDIT_WM_Paint */
-    return -1;
+    return 1;
 }
 
 
@@ -4500,8 +4504,8 @@ static LRESULT EDIT_WM_LButtonDblClk(EDITSTATE *es)
 	INT li;
 	INT ll;
 
-	if (!(es->flags & EF_FOCUSED))
-		return 0;
+	es->bCaptureState = TRUE;
+	SetCapture(es->hwndSelf);
 
 	l = EDIT_EM_LineFromChar(es, e);
 	li = EDIT_EM_LineIndex(es, l);
@@ -4510,6 +4514,8 @@ static LRESULT EDIT_WM_LButtonDblClk(EDITSTATE *es)
 	e = li + EDIT_CallWordBreakProc(es, li, e - li, ll, WB_RIGHT);
 	EDIT_EM_SetSel(es, s, e, FALSE);
 	EDIT_EM_ScrollCaret(es);
+	es->region_posx = es->region_posy = 0;
+	SetTimer(es->hwndSelf, 0, 100, NULL);
 	return 0;
 }
 
@@ -4524,10 +4530,6 @@ static LRESULT EDIT_WM_LButtonDown(EDITSTATE *es, DWORD keys, INT x, INT y)
 	INT e;
 	BOOL after_wrap;
 
-        SetFocus(es->hwndSelf);
-	if (!(es->flags & EF_FOCUSED))
-		return 0;
-
 	es->bCaptureState = TRUE;
 	SetCapture(es->hwndSelf);
 	EDIT_ConfinePoint(es, &x, &y);
@@ -4536,6 +4538,10 @@ static LRESULT EDIT_WM_LButtonDown(EDITSTATE *es, DWORD keys, INT x, INT y)
 	EDIT_EM_ScrollCaret(es);
 	es->region_posx = es->region_posy = 0;
 	SetTimer(es->hwndSelf, 0, 100, NULL);
+
+	if (!(es->flags & EF_FOCUSED))
+            SetFocus(es->hwndSelf);
+
 	return 0;
 }
 
@@ -4728,8 +4734,7 @@ static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
 	GetClientRect(es->hwndSelf, &rcClient);
 
 	/* get the background brush */
-	if (!(brush = EDIT_NotifyCtlColor(es, dc)))
-		brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	brush = EDIT_NotifyCtlColor(es, dc);
 
 	/* paint the border and the background */
 	IntersectClipRect(dc, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
@@ -4769,7 +4774,6 @@ static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
 	}
 	if (es->font)
 		old_font = SelectObject(dc, es->font);
-	EDIT_NotifyCtlColor(es, dc);
 
 	if (!es->bEnableState)
 		SetTextColor(dc, GetSysColor(COLOR_GRAYTEXT));
@@ -4826,11 +4830,21 @@ static void EDIT_WM_Paste(EDITSTATE *es)
 static void EDIT_WM_SetFocus(EDITSTATE *es)
 {
 	es->flags |= EF_FOCUSED;
+
+        if (!(es->style & ES_NOHIDESEL))
+            EDIT_InvalidateText(es, es->selection_start, es->selection_end);
+
+        /* single line edit updates itself */
+        if (!(es->style & ES_MULTILINE))
+        {
+            HDC hdc = GetDC(es->hwndSelf);
+            EDIT_WM_Paint(es, hdc);
+            ReleaseDC(es->hwndSelf, hdc);
+        }
+
 	CreateCaret(es->hwndSelf, 0, 2, es->line_height);
 	EDIT_SetCaretPos(es, es->selection_end,
 			 es->flags & EF_AFTER_WRAP);
-	if(!(es->style & ES_NOHIDESEL))
-		EDIT_InvalidateText(es, es->selection_start, es->selection_end);
 	ShowCaret(es->hwndSelf);
 	EDIT_NOTIFY_PARENT(es, EN_SETFOCUS);
 }
