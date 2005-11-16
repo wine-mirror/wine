@@ -3,6 +3,7 @@
  * (ftp.microsoft.com:/Advsys/winsock/spec11/WINSOCK.TXT)
  *
  * Copyright (C) 1993,1994,1996,1997 John Brezak, Erik Bos, Alex Korobka.
+ * Copyright (C) 2005 Marcus Meissner
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -282,6 +283,34 @@ static const int ws_ip_map[][2] =
 #endif
     MAP_OPTION( IP_TOS ),
     MAP_OPTION( IP_TTL ),
+    { 0, 0 }
+};
+
+static const int ws_af_map[][2] =
+{
+    MAP_OPTION( AF_INET ),
+    MAP_OPTION( AF_INET6 ),
+#ifdef HAVE_IPX
+    MAP_OPTION( AF_IPX ),
+#endif
+    { 0, 0 }
+};
+
+static const int ws_socktype_map[][2] =
+{
+    MAP_OPTION( SOCK_DGRAM ),
+    MAP_OPTION( SOCK_STREAM ),
+    MAP_OPTION( SOCK_RAW ),
+    { 0, 0 }
+};
+
+static const int ws_proto_map[][2] =
+{
+    MAP_OPTION( IPPROTO_TCP ),
+    MAP_OPTION( IPPROTO_UDP ),
+    MAP_OPTION( IPPROTO_ICMP ),
+    MAP_OPTION( IPPROTO_IGMP ),
+    MAP_OPTION( IPPROTO_RAW ),
     { 0, 0 }
 };
 
@@ -658,6 +687,73 @@ static inline int do_block( int fd, int events, int timeout )
   return pfd.revents;
 }
 
+static int
+convert_af_w2u(int windowsaf) {
+    int i;
+
+    for (i=0;ws_af_map[i][0];i++)
+    	if (ws_af_map[i][0] == windowsaf)
+	    return ws_af_map[i][1];
+    FIXME("unhandled Windows address family %d\n", windowsaf);
+    return -1;
+}
+
+static int
+convert_af_u2w(int unixaf) {
+    int i;
+
+    for (i=0;ws_af_map[i][0];i++)
+    	if (ws_af_map[i][1] == unixaf)
+	    return ws_af_map[i][0];
+    FIXME("unhandled UNIX address family %d\n", unixaf);
+    return -1;
+}
+
+static int
+convert_proto_w2u(int windowsproto) {
+    int i;
+
+    for (i=0;ws_proto_map[i][0];i++)
+    	if (ws_proto_map[i][0] == windowsproto)
+	    return ws_proto_map[i][1];
+    FIXME("unhandled Windows socket protocol %d\n", windowsproto);
+    return -1;
+}
+
+static int
+convert_proto_u2w(int unixproto) {
+    int i;
+
+    for (i=0;ws_proto_map[i][0];i++)
+    	if (ws_proto_map[i][1] == unixproto)
+	    return ws_proto_map[i][0];
+    if (unixproto == 0) /* 0 is ok too as wild card */
+   	 return 0;
+    FIXME("unhandled UNIX socket protocol %d\n", unixproto);
+    return -1;
+}
+
+static int
+convert_socktype_w2u(int windowssocktype) {
+    int i;
+
+    for (i=0;ws_socktype_map[i][0];i++)
+    	if (ws_socktype_map[i][0] == windowssocktype)
+	    return ws_socktype_map[i][1];
+    FIXME("unhandled Windows socket type %d\n", windowssocktype);
+    return -1;
+}
+
+static int
+convert_socktype_u2w(int unixsocktype) {
+    int i;
+
+    for (i=0;ws_socktype_map[i][0];i++)
+    	if (ws_socktype_map[i][1] == unixsocktype)
+	    return ws_socktype_map[i][0];
+    FIXME("unhandled UNIX socket type %d\n", unixsocktype);
+    return -1;
+}
 
 /* ----------------------------------- API -----
  *
@@ -803,14 +899,53 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
             return (const struct sockaddr*)uipx;
         }
 #endif
+    case WS_AF_INET6: {
+        struct sockaddr_in6* uin6;
+        const struct WS_sockaddr_in6* win6 = (struct WS_sockaddr_in6*)wsaddr;
+        const struct WS_sockaddr_in6_old* win6old = (struct WS_sockaddr_in6_old*)wsaddr;
 
-    default:
-        if (wsaddrlen<sizeof(struct WS_sockaddr))
+        /* Note: Windows has 2 versions of the sockaddr_in6 struct, one with
+         * scope_id, one without. Check:
+         * http://msdn.microsoft.com/library/en-us/winsock/winsock/sockaddr_2.asp
+         */
+        if (wsaddrlen==sizeof(struct WS_sockaddr_in6_old)) {
+            *uaddrlen=sizeof(struct sockaddr_in6);
+            uin6=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *uaddrlen);
+            uin6->sin6_family   = AF_INET6;
+            uin6->sin6_port     = win6old->sin6_port;
+            uin6->sin6_flowinfo = win6old->sin6_flowinfo;
+            memcpy(&uin6->sin6_addr,&win6old->sin6_addr,16); /* 16 bytes = 128 address bits */
+            return (const struct sockaddr*)uin6;
+        }
+        if (wsaddrlen>=sizeof(struct WS_sockaddr_in6)) {
+            *uaddrlen=sizeof(struct sockaddr_in6);
+            uin6=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *uaddrlen);
+            uin6->sin6_family   = AF_INET6;
+            uin6->sin6_port     = win6->sin6_port;
+            uin6->sin6_flowinfo = win6->sin6_flowinfo;
+            uin6->sin6_scope_id = win6->sin6_scope_id;
+            memcpy(&uin6->sin6_addr,&win6->sin6_addr,16); /* 16 bytes = 128 address bits */
+            return (const struct sockaddr*)uin6;
+        }
+        FIXME("bad size %d for WS_sockaddr_in6\n",wsaddrlen);
+        return NULL;
+    }
+    case WS_AF_INET: {
+        struct sockaddr_in* uin;
+        const struct WS_sockaddr_in* win = (struct WS_sockaddr_in*)wsaddr;
+
+        if (wsaddrlen<sizeof(struct WS_sockaddr_in))
             return NULL;
-
-        /* No conversion needed, just return the original address */
-        *uaddrlen=wsaddrlen;
-        return (const struct sockaddr*)wsaddr;
+        *uaddrlen=sizeof(struct sockaddr_in);
+        uin = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *uaddrlen);
+        uin->sin_family = AF_INET;
+        uin->sin_port   = win->sin_port;
+        memcpy(&uin->sin_addr,&win->sin_addr,4); /* 4 bytes = 32 address bits */
+        return (const struct sockaddr*)uin;
+    }
+    default:
+        FIXME("Unknown address family %d, return NULL.\n", wsaddr->sa_family);
+        return NULL;
     }
 }
 
@@ -882,16 +1017,47 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
         }
         break;
 #endif
+    case AF_INET6: {
+        const struct sockaddr_in6* uin6 = (struct sockaddr_in6*)uaddr;
+        struct WS_sockaddr_in6* win6 = (struct WS_sockaddr_in6*)wsaddr;
+        struct WS_sockaddr_in6_old* win6old = (struct WS_sockaddr_in6_old*)wsaddr;
 
-    default:
-        /* No conversion needed */
-        memcpy(wsaddr,uaddr,*wsaddrlen);
-        if (*wsaddrlen<uaddrlen) {
-            res=-1;
-        } else {
-            *wsaddrlen=uaddrlen;
-            res=0;
+        if (*wsaddrlen < sizeof(struct WS_sockaddr_in6_old))
+            return -1;
+        if (*wsaddrlen == sizeof(struct WS_sockaddr_in6_old)) {
+            win6old->sin6_family   = WS_AF_INET6;
+            win6old->sin6_port     = uin6->sin6_port;
+            win6old->sin6_flowinfo = uin6->sin6_flowinfo;
+            memcpy(&win6old->sin6_addr,&uin6->sin6_addr,16); /* 16 bytes = 128 address bits */
+            *wsaddrlen = sizeof(struct WS_sockaddr_in6_old);
+            return 0;
         }
+        if (*wsaddrlen >= sizeof(struct WS_sockaddr_in6)) {
+            win6->sin6_family   = WS_AF_INET6;
+            win6->sin6_port     = uin6->sin6_port;
+            win6->sin6_flowinfo = uin6->sin6_flowinfo;
+            memcpy(&win6->sin6_addr,&uin6->sin6_addr,16); /* 16 bytes = 128 address bits */
+            win6->sin6_scope_id = uin6->sin6_scope_id;
+            *wsaddrlen = sizeof(struct WS_sockaddr_in6);
+            return 0;
+        }
+        return 0;
+    }
+    case AF_INET: {
+        struct sockaddr_in* uin = (struct sockaddr_in*)uaddr;
+        struct WS_sockaddr_in* win = (struct WS_sockaddr_in*)wsaddr;
+
+        if (*wsaddrlen < sizeof(struct WS_sockaddr_in))
+            return -1;
+        win->sin_family = WS_AF_INET;
+        win->sin_port   = uin->sin_port;
+        memcpy(&win->sin_addr,&uin->sin_addr,4); /* 4 bytes = 32 address bits */
+        *wsaddrlen = sizeof(struct WS_sockaddr_in6);
+        return 0;
+    }
+    default:
+        FIXME("Unknown address family %d\n", uaddr->sa_family);
+        return -1;
     }
     return res;
 }
@@ -3123,35 +3289,21 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
       return ret;
     }
 
-    /* check the socket family */
-    switch(af)
+    /* check and convert the socket family */
+    af = convert_af_w2u(af);
+    if (af == -1)
     {
-#ifdef HAVE_IPX
-        case WS_AF_IPX: af = AF_IPX;
-#endif
-        case AF_INET:
-        case AF_UNSPEC:
-            break;
-        default:
-            SetLastError(WSAEAFNOSUPPORT);
-            return INVALID_SOCKET;
+      FIXME("Unsupported socket family %d!\n", af);
+      SetLastError(WSAEAFNOSUPPORT);
+      return INVALID_SOCKET;
     }
 
     /* check the socket type */
-    switch(type)
+    type = convert_socktype_w2u(type);
+    if (type == -1)
     {
-        case WS_SOCK_STREAM:
-            type=SOCK_STREAM;
-            break;
-        case WS_SOCK_DGRAM:
-            type=SOCK_DGRAM;
-            break;
-        case WS_SOCK_RAW:
-            type=SOCK_RAW;
-            break;
-        default:
-            SetLastError(WSAESOCKTNOSUPPORT);
-            return INVALID_SOCKET;
+      SetLastError(WSAESOCKTNOSUPPORT);
+      return INVALID_SOCKET;
     }
 
     /* check the protocol type */
