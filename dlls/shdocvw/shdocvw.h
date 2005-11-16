@@ -81,6 +81,17 @@ typedef struct {
     IUnknown *document;
 
     IOleClientSite *client;
+    IOleContainer *container;
+
+    /* window context */
+
+    HWND iphwnd;
+    HWND frame_hwnd;
+    IOleInPlaceFrame *frame;
+    IOleInPlaceUIWindow *uiwindow;
+    RECT pos_rect;
+    RECT clip_rect;
+    OLEINPLACEFRAMEINFO frameinfo;
 } WebBrowser;
 
 #define WEBBROWSER(x)   ((IWebBrowser*)                 &(x)->lpWebBrowser2Vtbl)
@@ -107,6 +118,8 @@ void WebBrowser_Misc_Init(WebBrowser*);
 void WebBrowser_Events_Init(WebBrowser*);
 
 void WebBrowser_ClientSite_Init(WebBrowser*);
+
+void WebBrowser_OleObject_Destroy(WebBrowser*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 

@@ -121,11 +121,10 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        if(This->client)
-            IOleClientSite_Release(This->client);
-
         if(This->document)
             IUnknown_Release(This->document);
+
+        WebBrowser_OleObject_Destroy(This);
 
         HeapFree(GetProcessHeap(), 0, This);
         SHDOCVW_UnlockModule();
