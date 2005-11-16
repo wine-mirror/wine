@@ -1733,6 +1733,7 @@ programs/cmdlgtst/Makefile
 programs/control/Makefile
 programs/eject/Makefile
 programs/expand/Makefile
+programs/explorer/Makefile
 programs/hh/Makefile
 programs/msiexec/Makefile
 programs/notepad/Makefile

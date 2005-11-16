@@ -12,6 +12,7 @@ SUBDIRS = \
 	control \
 	eject \
 	expand \
+	explorer \
 	hh \
 	msiexec \
 	notepad \
@@ -46,6 +47,7 @@ INSTALLSUBDIRS = \
 	control \
 	eject \
 	expand \
+	explorer \
 	hh \
 	msiexec \
 	notepad \
@@ -100,6 +102,7 @@ SYMLINKS = \
 	control.exe$(DLLEXT) \
 	eject.exe$(DLLEXT) \
 	expand.exe$(DLLEXT) \
+	explorer.exe$(DLLEXT) \
 	hh.exe$(DLLEXT) \
 	icinfo.exe$(DLLEXT) \
 	msiexec.exe$(DLLEXT) \
@@ -192,6 +195,9 @@ eject.exe$(DLLEXT): eject/eject.exe$(DLLEXT)
 expand.exe$(DLLEXT): expand/expand.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) expand/expand.exe$(DLLEXT) $@
 
+explorer.exe$(DLLEXT): explorer/explorer.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) explorer/explorer.exe$(DLLEXT) $@
+
 hh.exe$(DLLEXT): hh/hh.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) hh/hh.exe$(DLLEXT) $@
 
@@ -280,6 +286,7 @@ cmdlgtst/cmdlgtst.exe$(DLLEXT): cmdlgtst
 control/control.exe$(DLLEXT): control
 eject/eject.exe$(DLLEXT): eject
 expand/expand.exe$(DLLEXT): expand
+explorer/explorer.exe$(DLLEXT): explorer
 hh/hh.exe$(DLLEXT): hh
 avitools/icinfo.exe$(DLLEXT): avitools
 msiexec/msiexec.exe$(DLLEXT): msiexec
