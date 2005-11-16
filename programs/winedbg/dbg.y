@@ -452,24 +452,12 @@ static void stripwhite(char *string)
 static HANDLE dbg_parser_input;
 static HANDLE dbg_parser_output;
 
-/* command passed in the command line arguments */
-char *arg_command = NULL;
-
 int      input_fetch_entire_line(const char* pfx, char** line, size_t* alloc, BOOL check_nl)
 {
     char 	buf_line[256];
     DWORD	nread, nwritten;
     size_t      len;
     
-    if (arg_command) {
-         /* we only run one command before exiting */
-        const char q[] = "quit\n";
-        *line = arg_command;
-        arg_command = HeapAlloc(GetProcessHeap(), 0, sizeof q);
-        lstrcpyA(arg_command, q);
-        return 1;
-    }
-
     /* as of today, console handles can be file handles... so better use file APIs rather than
      * console's
      */
@@ -529,11 +517,11 @@ int input_read_line(const char* pfx, char* buf, int size)
 }
 
 /***********************************************************************
- *           parser
+ *           parser_handle
  *
  * Debugger command line parser
  */
-void	parser(const char* filename)
+void	parser_handle(HANDLE input)
 {
     BOOL 	        ret_ok;
     HANDLE              in_copy  = dbg_parser_input;
@@ -545,12 +533,10 @@ void	parser(const char* filename)
 
     ret_ok = FALSE;
 
-    if (filename)
+    if (input != INVALID_HANDLE_VALUE)
     {
-        HANDLE  h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0L, 0);
-        if (h == INVALID_HANDLE_VALUE) return;
-        dbg_parser_output = 0;
-        dbg_parser_input  = h;
+        dbg_parser_output = INVALID_HANDLE_VALUE;
+        dbg_parser_input  = input;
     }
     else
     {
@@ -573,9 +559,18 @@ void	parser(const char* filename)
        lexeme_flush();
     } while (!ret_ok);
 
-    if (filename) CloseHandle(dbg_parser_input);
     dbg_parser_input  = in_copy;
     dbg_parser_output = out_copy;
+}
+
+void parser(const char* filename)
+{
+    HANDLE h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0L, 0);
+    if (h != INVALID_HANDLE_VALUE)
+    {
+        parser_handle(h);
+        CloseHandle(h);
+    }
 }
 
 int yyerror(const char* s)

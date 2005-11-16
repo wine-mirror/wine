@@ -69,6 +69,18 @@
  *        we have a multi-thread debuggee). complete fix must include storing all
  *        thread's step-over bp in process-wide bp array, and not to handle bp
  *        when we have the wrong thread running into that bp
+ *      + code in CREATE_PROCESS debug event doesn't work on Windows, as we cannot
+ *        get the name of the main module this way. We should rewrite all this code
+ *        and store in struct dbg_process as early as possible (before process
+ *        creation or attachment), the name of the main module
+ * - global:
+ *      + define a better way to enable the wine extensions (either DBG SDK function
+ *        in dbghelp, or TLS variable, or environment variable or ...)
+ *      + audit all files to ensure that we check all potential return values from
+ *        every function call to catch the errors
+ *      + BTW check also whether the exception mechanism is the best way to return
+ *        errors (or find a proper fix for MinGW port)
+ *      + use Wine standard list mechanism for all list handling
  */
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
@@ -1038,7 +1050,7 @@ void dbg_wait_next_exception(DWORD cont, int count, int mode)
                dbg_curr_thread->exec_count);
 }
 
-static	unsigned        dbg_main_loop(void)
+static	unsigned        dbg_main_loop(HANDLE hFile)
 {
     DEBUG_EVENT		de;
 
@@ -1061,7 +1073,7 @@ static	unsigned        dbg_main_loop(void)
         break;
     default:
         dbg_interactiveP = TRUE;
-        parser(NULL);
+        parser_handle(hFile);
     }
     dbg_printf("WineDbg terminated on pid 0x%lx\n", dbg_curr_pid);
 
@@ -1170,7 +1182,7 @@ static void dbg_init_console(void)
 
 static int dbg_winedbg_usage(void)
 {
-    dbg_printf("Usage: winedbg [--command cmd|--auto] [--gdb [--no-start] [--with-xterm]] cmdline\n");
+    dbg_printf("Usage: winedbg [--command cmd|--file file|--auto] [--gdb [--no-start] [--with-xterm]] cmdline\n");
     return 1;
 }
 
@@ -1189,6 +1201,7 @@ int main(int argc, char** argv)
 {
     DWORD	retv = 0;
     unsigned    gdb_flags = 0;
+    HANDLE      hFile = INVALID_HANDLE_VALUE;
 
 #ifdef __i386__
     be_cpu = &be_i386;
@@ -1210,10 +1223,36 @@ int main(int argc, char** argv)
     {
         if (!strcmp(argv[1], "--command"))
         {
+            char        path[MAX_PATH], file[MAX_PATH];
+            DWORD       w;
+
+            GetTempPath(sizeof(path), path);
+            GetTempFileName(path, "WD", 0, file);
             argc--; argv++;
-            arg_command = HeapAlloc(GetProcessHeap(), 0, strlen(argv[1])+2);
-            strcpy(arg_command, argv[1]);
-            strcat(arg_command, "\n");
+            hFile = CreateFileA(file, GENERIC_READ|GENERIC_WRITE|DELETE, FILE_SHARE_DELETE, 
+                                NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, 0);
+            if (hFile == INVALID_HANDLE_VALUE)
+            {
+                dbg_printf("Couldn't open temp file %s (%lu)\n", file, GetLastError());
+                return 1;
+            }
+            WriteFile(hFile, argv[1], strlen(argv[1]), &w, 0);
+            WriteFile(hFile, "\nquit\n", 6, &w, 0);
+            SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+
+            argc--; argv++;
+            continue;
+        }
+        if (!strcmp(argv[1], "--file"))
+        {
+            argc--; argv++;
+            hFile = CreateFileA(argv[1], GENERIC_READ|DELETE, 0, 
+                                NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+            if (hFile == INVALID_HANDLE_VALUE)
+            {
+                dbg_printf("Couldn't open file %s (%lu)\n", argv[1], GetLastError());
+                return 1;
+            }
             argc--; argv++;
             continue;
         }
@@ -1258,7 +1297,7 @@ int main(int argc, char** argv)
 
         dbg_curr_pid = strtol(argv[1], &ptr, 10);
         if (dbg_curr_pid == 0 || ptr != argv[1] + strlen(argv[1]) ||
-            !dbg_attach_debuggee(dbg_curr_pid, dbg_action_mode != gdb_mode, FALSE))
+            !dbg_attach_debuggee(dbg_curr_pid, FALSE, FALSE))
             dbg_curr_pid = 0;
     }
 
@@ -1322,7 +1361,7 @@ int main(int argc, char** argv)
     SymSetOptions((SymGetOptions() & ~(SYMOPT_UNDNAME)) |
                   SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS);
 
-    retv = dbg_main_loop();
+    retv = dbg_main_loop(hFile);
     /* don't save modified variables in auto mode */
     if (dbg_action_mode != automatic_mode) dbg_save_internal_vars();
 

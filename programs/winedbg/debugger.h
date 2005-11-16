@@ -122,8 +122,6 @@ enum dbg_exec_mode
 #endif
 };
 
-extern char *arg_command;
-
 struct dbg_breakpoint
 {
     ADDRESS             addr;
@@ -268,6 +266,7 @@ extern int              break_add_condition(int bpnum, struct expr* exp);
 
   /* dbg.y */
 extern void             parser(const char*);
+extern void             parser_handle(HANDLE);
 extern int              input_read_line(const char* pfx, char* buffer, int size);
 extern int              input_fetch_entire_line(const char* pfx, char** line, size_t* alloc, BOOL check_nl);
 
