@@ -125,8 +125,8 @@ $DEF_CHAR = ord '?';
     "Nl" => $ctype{"punct"},    # Number, Letter
     "No" => $ctype{"punct"},    # Number, Other
     "Zs" => $ctype{"space"},    # Separator, Space
-    "Zl" => 0,                  # Separator, Line
-    "Zp" => 0,                  # Separator, Paragraph
+    "Zl" => $ctype{"space"},    # Separator, Line
+    "Zp" => $ctype{"space"},    # Separator, Paragraph
     "Cc" => $ctype{"cntrl"},    # Other, Control
     "Cf" => 0,                  # Other, Format
     "Cs" => 0,                  # Other, Surrogate
@@ -152,8 +152,12 @@ $DEF_CHAR = ord '?';
 (
     "xdigit" => [ ord('0')..ord('9'),ord('A')..ord('F'),ord('a')..ord('f'),
                   0xff10..0xff19, 0xff21..0xff26, 0xff41..0xff46 ],
-    "space"  => [ 0x09..0x0d, 0xfeff ],
-    "blank"  => [ 0x09, 0x20, 0xa0, 0xfeff ]
+    "space"  => [ 0x09..0x0d, 0x85 ],
+    "blank"  => [ 0x09, 0x20, 0xa0, 0x3000, 0xfeff ],
+    "cntrl"  => [ 0x070f, 0x180b, 0x180c, 0x180d, 0x180e, 0x200c, 0x200d,
+                  0x200e, 0x200f, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e,
+                  0x206a, 0x206b, 0x206c, 0x206d, 0x206e, 0x206f, 0xfeff,
+                  0xfff9, 0xfffa, 0xfffb ]
 );
 
 %directions =
