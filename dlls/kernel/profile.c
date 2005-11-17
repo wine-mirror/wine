@@ -132,7 +132,7 @@ static inline void PROFILE_ByteSwapShortBuffer(WCHAR * buffer, int len)
 static inline void PROFILE_WriteMarker(HANDLE hFile, ENCODING encoding)
 {
     DWORD dwBytesWritten;
-    DWORD bom;
+    WCHAR bom;
     switch (encoding)
     {
     case ENCODING_ANSI:
@@ -373,12 +373,12 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
         break;
     case ENCODING_UTF16LE:
         TRACE("UTF16 Little Endian encoding\n");
-        szFile = (WCHAR *)pBuffer + 1;
+        szFile = (WCHAR *)pBuffer;
         szEnd = (WCHAR *)((char *)pBuffer + dwFileSize);
         break;
     case ENCODING_UTF16BE:
         TRACE("UTF16 Big Endian encoding\n");
-        szFile = (WCHAR *)pBuffer + 1;
+        szFile = (WCHAR *)pBuffer;
         szEnd = (WCHAR *)((char *)pBuffer + dwFileSize);
         PROFILE_ByteSwapShortBuffer(szFile, dwFileSize / sizeof(WCHAR));
         break;
