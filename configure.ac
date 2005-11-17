@@ -1158,6 +1158,7 @@ AC_CHECK_FUNCS(\
 	ftruncate \
 	futimes \
 	futimesat \
+	getaddrinfo \
 	getnetbyname \
 	getopt_long \
 	getpagesize \

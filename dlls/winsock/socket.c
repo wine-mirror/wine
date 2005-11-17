@@ -314,6 +314,30 @@ static const int ws_proto_map[][2] =
     { 0, 0 }
 };
 
+static const int ws_aiflag_map[][2] =
+{
+    MAP_OPTION( AI_PASSIVE ),
+    MAP_OPTION( AI_CANONNAME ),
+    MAP_OPTION( AI_NUMERICHOST ),
+    /* Linux/UNIX knows a lot more. But Windows only
+     * has 3 as far as I could see. -Marcus
+     */
+    { 0, 0 }
+};
+
+static const int ws_eai_map[][2] =
+{
+    MAP_OPTION( EAI_AGAIN ),
+    MAP_OPTION( EAI_BADFLAGS ),
+    MAP_OPTION( EAI_FAIL ),
+    MAP_OPTION( EAI_FAMILY ),
+    MAP_OPTION( EAI_MEMORY ),
+    MAP_OPTION( EAI_NODATA ),
+    MAP_OPTION( EAI_SERVICE ),
+    MAP_OPTION( EAI_SOCKTYPE ),
+    { 0, 0 }
+};
+
 inline static DWORD NtStatusToWSAError( const DWORD status )
 {
     /* We only need to cover the status codes set by server async request handling */
@@ -860,9 +884,9 @@ static struct WS_protoent *check_buffer_pe(int size)
 /* ----------------------------------- i/o APIs */
 
 #ifdef HAVE_IPX
-#define SUPPORTED_PF(pf) ((pf)==WS_AF_INET || (pf)== WS_AF_IPX)
+#define SUPPORTED_PF(pf) ((pf)==WS_AF_INET || (pf)== WS_AF_IPX || (pf) == WS_AF_INET6)
 #else
-#define SUPPORTED_PF(pf) ((pf)==WS_AF_INET)
+#define SUPPORTED_PF(pf) ((pf)==WS_AF_INET || (pf) == WS_AF_INET6)
 #endif
 
 
@@ -3031,6 +3055,168 @@ struct WS_servent* WINAPI WS_getservbyname(const char *name, const char *proto)
     return retval;
 }
 
+/***********************************************************************
+ *		freeaddrinfo		(WS2_32.@)
+ */
+void WINAPI WS_freeaddrinfo(struct WS_addrinfo *res)
+{
+    while (res) {
+        struct WS_addrinfo *next;
+
+        HeapFree(GetProcessHeap(),0,res->ai_canonname);
+        HeapFree(GetProcessHeap(),0,res->ai_addr);
+        next = res->ai_next;
+        HeapFree(GetProcessHeap(),0,res);
+        res = next;
+    }
+}
+
+/* helper functions for getaddrinfo() */
+static int convert_aiflag_w2u(int winflags) {
+    int i, unixflags = 0;
+
+    for (i=0;ws_aiflag_map[i][0];i++) {
+        if (ws_aiflag_map[i][0] & winflags) {
+            unixflags |= ws_aiflag_map[i][1];
+            winflags &= ~ws_aiflag_map[i][0];
+        }
+    }
+    if (winflags)
+        FIXME("Unhandled windows AI_xxx flags %x\n", winflags);
+    return unixflags;
+}
+
+static int convert_aiflag_u2w(int unixflags) {
+    int i, winflags = 0;
+
+    for (i=0;ws_aiflag_map[i][0];i++) {
+        if (ws_aiflag_map[i][1] & unixflags) {
+            winflags |= ws_aiflag_map[i][0];
+            unixflags &= ~ws_aiflag_map[i][1];
+        }
+    }
+    if (unixflags) /* will warn usually */
+        WARN("Unhandled UNIX AI_xxx flags %x\n", unixflags);
+    return winflags;
+}
+
+static int convert_eai_u2w(int unixret) {
+    int i;
+
+    for (i=0;ws_eai_map[i][0];i++)
+        if (ws_eai_map[i][0] == unixret)
+            return ws_eai_map[i][1];
+    return unixret;
+}
+
+/***********************************************************************
+ *		getaddrinfo		(WS2_32.@)
+ */
+int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const ADDRINFOA *hints, ADDRINFOA **res)
+{
+#if HAVE_GETADDRINFO
+    struct addrinfo *unixaires = NULL;
+    int   result;
+    struct addrinfo unixhints, *punixhints = NULL;
+    CHAR *node = NULL, *serv = NULL;
+
+    if (nodename)
+        if (!(node = strdup_lower(nodename))) return WSA_NOT_ENOUGH_MEMORY;
+
+    if (servname) {
+        if (!(serv = strdup_lower(servname))) {
+            HeapFree(GetProcessHeap(), 0, node);
+            return WSA_NOT_ENOUGH_MEMORY;
+        }
+    }
+
+    if (hints) {
+        punixhints = &unixhints;
+
+        memset(&unixhints, 0, sizeof(unixhints));
+        punixhints->ai_flags    = convert_aiflag_w2u(hints->ai_flags);
+        punixhints->ai_family   = convert_af_w2u(hints->ai_family);
+        punixhints->ai_socktype = convert_socktype_w2u(hints->ai_socktype);
+        punixhints->ai_protocol = convert_proto_w2u(hints->ai_protocol);
+    }
+
+    /* getaddrinfo(3) is thread safe, no need to wrap in CS */
+    result = getaddrinfo(nodename, servname, punixhints, &unixaires);
+
+    TRACE("%s, %s %p -> %p %d\n", nodename, servname, hints, res, result);
+
+    HeapFree(GetProcessHeap(), 0, node);
+    HeapFree(GetProcessHeap(), 0, serv);
+
+    if (!result) {
+        struct addrinfo *xuai = unixaires;
+        struct WS_addrinfo **xai = res;
+
+        *xai = NULL;
+        while (xuai) {
+            struct WS_addrinfo *ai = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(struct WS_addrinfo));
+            int len;
+
+            if (!ai)
+                goto outofmem;
+
+            *xai = ai;xai = &ai->ai_next;
+            ai->ai_flags    = convert_aiflag_u2w(xuai->ai_flags);
+            ai->ai_family   = convert_af_u2w(xuai->ai_family);
+            ai->ai_socktype = convert_socktype_u2w(xuai->ai_socktype);
+            ai->ai_protocol = convert_proto_u2w(xuai->ai_protocol);
+            if (xuai->ai_canonname) {
+                TRACE("canon name - %s\n",debugstr_a(xuai->ai_canonname));
+                ai->ai_canonname = HeapAlloc(GetProcessHeap(),0,strlen(xuai->ai_canonname)+1);
+                if (!ai->ai_canonname)
+                    goto outofmem;
+                strcpy(ai->ai_canonname,xuai->ai_canonname);
+            }
+            len = xuai->ai_addrlen;
+            ai->ai_addr = HeapAlloc(GetProcessHeap(),0,len);
+            if (!ai->ai_addr)
+                goto outofmem;
+            ai->ai_addrlen = len;
+            do {
+                int winlen = ai->ai_addrlen;
+
+                if (!ws_sockaddr_u2ws(xuai->ai_addr, xuai->ai_addrlen, ai->ai_addr, &winlen)) {
+                    ai->ai_addrlen = winlen;
+                    break;
+                }
+                len = 2*len;
+                ai->ai_addr = HeapReAlloc(GetProcessHeap(),0,ai->ai_addr,len);
+                if (!ai->ai_addr)
+                    goto outofmem;
+                ai->ai_addrlen = len;
+            } while (1);
+            xuai = xuai->ai_next;
+        }
+        freeaddrinfo(unixaires);
+    } else {
+        result = convert_eai_u2w(result);
+    }
+    return result;
+
+outofmem:
+    if (*res) WS_freeaddrinfo(*res);
+    if (unixaires) freeaddrinfo(unixaires);
+    *res = NULL;
+    return WSA_NOT_ENOUGH_MEMORY;
+#else
+    FIXME("getaddrinfo() failed, not found during buildtime.\n");
+    return EAI_FAIL;
+#endif
+}
+
+/***********************************************************************
+ *		GetAddrInfoW		(WS2_32.@)
+ */
+int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hints, ADDRINFOW **res)
+{
+    FIXME("empty stub!\n");
+    return EAI_FAIL;
+}
 
 /***********************************************************************
  *		getservbyport		(WS2_32.56)

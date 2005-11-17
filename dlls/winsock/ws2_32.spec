@@ -50,6 +50,7 @@
 
 500 stub     WEP
 
+@ stdcall GetAddrInfoW(wstr wstr ptr ptr)
 @ stdcall WSApSetPostRoutine(ptr)
 @ stdcall WPUCompleteOverlappedRequest(long ptr long long ptr)
 @ stdcall WSAAccept(long ptr ptr ptr long)
@@ -113,6 +114,6 @@
 @ stub    WSCUpdateProvider
 @ stub    WSCWriteNameSpaceOrder
 @ stdcall WSCWriteProviderOrder(ptr long)
-@ stub    freeaddrinfo
-@ stub    getaddrinfo
+@ stdcall freeaddrinfo(ptr) WS_freeaddrinfo
+@ stdcall getaddrinfo(str str ptr ptr) WS_getaddrinfo
 @ stub    getnameinfo
