@@ -268,7 +268,7 @@ extern int              break_add_condition(int bpnum, struct expr* exp);
 extern void             parser(const char*);
 extern void             parser_handle(HANDLE);
 extern int              input_read_line(const char* pfx, char* buffer, int size);
-extern int              input_fetch_entire_line(const char* pfx, char** line, size_t* alloc, BOOL check_nl);
+extern int              input_fetch_entire_line(const char* pfx, char** line);
 
   /* debug.l */
 extern void             lexeme_flush(void);

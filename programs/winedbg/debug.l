@@ -33,24 +33,27 @@ static int read_input(const char* pfx, char* buf, int size)
 {
     size_t      len;
 static char*  last_line = NULL;
-static size_t last_line_size = 0;
 static size_t last_line_idx = 0;
-
-    /* first alloc of our current buffer */
-    if (!last_line)
-    {
-        last_line = HeapAlloc(GetProcessHeap(), 0, last_line_size = 2);
-        assert(last_line);
-        last_line[0] = '\n';
-        last_line[1] = '\0';
-    }
 
     /* try first to fetch the remaining of an existing line */
     if (last_line_idx == 0)
     {
+        char* tmp = NULL;
         /* no remaining chars to be read from last line, grab a brand new line up to '\n' */
         lexeme_flush();
-        input_fetch_entire_line(pfx, &last_line, &last_line_size, TRUE);
+        len = input_fetch_entire_line(pfx, &tmp);
+        /* FIXME: should have a pair of buffers, and switch between the two, instead of
+         * reallocating a new one for each line
+         */
+        if (len == 0 || (len == 1 && tmp[0] == '\n') || (len == 2 && tmp[0] == '\r' && tmp[1] == '\n'))
+        {
+            HeapFree(GetProcessHeap(), 0, tmp);
+        }
+        else
+        {
+            HeapFree(GetProcessHeap(), 0, last_line);
+            last_line = tmp;
+        }
     }
 
     len = min(strlen(last_line + last_line_idx), size - 1);

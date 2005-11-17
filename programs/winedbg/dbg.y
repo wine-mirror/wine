@@ -428,70 +428,47 @@ static WINE_EXCEPTION_FILTER(wine_dbg_cmd)
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-#ifndef whitespace
-#define whitespace(c) (((c) == ' ') || ((c) == '\t'))
-#endif
-
-/* Strip whitespace from the start and end of STRING. */
-static void stripwhite(char *string)
-{
-    int         i, last;
-
-    for (i = 0; whitespace(string[i]); i++);
-    if (i) strcpy(string, string + i);
-
-    last = i = strlen(string) - 1;
-    if (string[last] == '\n') i--;
-
-    while (i > 0 && whitespace(string[i])) i--;
-    if (string[last] == '\n')
-        string[++i] = '\n';
-    string[++i] = '\0';
-}
-
 static HANDLE dbg_parser_input;
 static HANDLE dbg_parser_output;
 
-int      input_fetch_entire_line(const char* pfx, char** line, size_t* alloc, BOOL check_nl)
+int      input_fetch_entire_line(const char* pfx, char** line)
 {
-    char 	buf_line[256];
-    DWORD	nread, nwritten;
-    size_t      len;
+    char        ch;
+    DWORD	nread;
+    size_t      len, alloc;
     
     /* as of today, console handles can be file handles... so better use file APIs rather than
      * console's
      */
-    WriteFile(dbg_parser_output, pfx, strlen(pfx), &nwritten, NULL);
+    WriteFile(dbg_parser_output, pfx, strlen(pfx), &nread, NULL);
+
+    if (*line)
+    {
+        alloc = HeapSize(GetProcessHeap(), 0, *line);
+        assert(alloc);
+    }
+    else
+    {
+        *line = HeapAlloc(GetProcessHeap(), 0, alloc = 16);
+        assert(*line);
+    }
 
     len = 0;
     do
     {
-	if (!ReadFile(dbg_parser_input, buf_line, sizeof(buf_line) - 1, &nread, NULL) || nread == 0)
+        if (!ReadFile(dbg_parser_input, &ch, 1, &nread, NULL) || nread == 0)
             break;
-	buf_line[nread] = '\0';
-
-        if (check_nl && len == 0 && nread == 1 && buf_line[0] == '\n')
-            return 0;
-
-        /* store stuff at the end of last_line */
-        if (len + nread + 1 > *alloc)
+        if (len + 2 > alloc)
         {
-            while (len + nread + 1 > *alloc) *alloc *= 2;
-            *line = dbg_heap_realloc(*line, *alloc);
+            while (len + 2 > alloc) alloc *= 2;
+            *line = dbg_heap_realloc(*line, alloc);
         }
-        strcpy(*line + len, buf_line);
-        len += nread;
-    } while (nread == 0 || buf_line[nread - 1] != '\n');
-
-    if (!len)
-    {
-        *line = HeapReAlloc(GetProcessHeap(), 0, *line, *alloc = 1);
-        **line = '\0';
+        (*line)[len++] = ch;
     }
+    while (ch != '\n');
+    (*line)[len] = '\0';
 
-    /* Remove leading and trailing whitespace from the line */
-    stripwhite(*line);
-    return 1;
+    return len;
 }
 
 int input_read_line(const char* pfx, char* buf, int size)
@@ -499,14 +476,7 @@ int input_read_line(const char* pfx, char* buf, int size)
     char*       line = NULL;
     size_t      len = 0;
 
-    /* first alloc of our current buffer */
-    line = HeapAlloc(GetProcessHeap(), 0, len = 2);
-    assert(line);
-    line[0] = '\n';
-    line[1] = '\0';		      
-
-    input_fetch_entire_line(pfx, &line, &len, FALSE);
-    len = strlen(line);
+    len = input_fetch_entire_line(pfx, &line);
     /* remove trailing \n */
     if (len > 0 && line[len - 1] == '\n') len--;
     len = min(size - 1, len);
