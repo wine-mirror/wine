@@ -24,6 +24,7 @@
 #include "winuser.h"
 
 static HMODULE hdll;
+static BOOL (WINAPI *pEnumDisplayDevicesA)(LPCSTR,DWORD,LPDISPLAY_DEVICEA,DWORD);
 static BOOL (WINAPI *pEnumDisplayMonitors)(HDC,LPRECT,MONITORENUMPROC,LPARAM);
 static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
 
@@ -33,6 +34,7 @@ static void init_function_pointers(void)
 
     if(hdll)
     {
+       pEnumDisplayDevicesA = (void*)GetProcAddress(hdll, "EnumDisplayDevicesA");
        pEnumDisplayMonitors = (void*)GetProcAddress(hdll, "EnumDisplayMonitors");
        pGetMonitorInfoA = (void*)GetProcAddress(hdll, "GetMonitorInfoA");
     }
@@ -61,10 +63,11 @@ static void test_enumdisplaydevices(void)
     DWORD primary_num = -1, num = 0;
 
     dd.cb = sizeof(dd);
+    if(pEnumDisplayDevicesA == NULL) return;
     while(1)
     {
         BOOL ret;
-        ret = EnumDisplayDevicesA(NULL, num, &dd, 0), "EnumDisplayDevices fails\n";
+        ret = pEnumDisplayDevicesA(NULL, num, &dd, 0);
         ok(ret || num != 0, "EnumDisplayDevices fails with num == 0\n");
         if(!ret) break;
         if(dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
