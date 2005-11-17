@@ -829,6 +829,13 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
 
     TRACE("(%p), Width(%d) Height(%d) Levels(%d) Usage(%ld) ....\n", This, Width, Height, Levels, Usage);
 
+    /* TODO: It should only be possible to create textures for formats 
+             that are reported as supported */
+    if (WINED3DFMT_UNKNOWN >= Format) {
+        WARN("(%p) : Texture cannot be created with a format of D3DFMT_UNKNOWN\n", This);
+        return D3DERR_INVALIDCALL;
+    }
+
     D3DCREATERESOURCEOBJECTINSTANCE(object, Texture, D3DRTYPE_TEXTURE, 0);
     D3DINITILIZEBASETEXTURE(object->baseTexture);    
     object->width  = Width;
@@ -906,6 +913,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
     UINT                       tmpW;
     UINT                       tmpH;
     UINT                       tmpD;
+
+    /* TODO: It should only be possible to create textures for formats 
+             that are reported as supported */
+    if (WINED3DFMT_UNKNOWN >= Format) {
+        WARN("(%p) : Texture cannot be created with a format of D3DFMT_UNKNOWN\n", This);
+        return D3DERR_INVALIDCALL;
+    }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, VolumeTexture, D3DRTYPE_VOLUMETEXTURE, 0);
     D3DINITILIZEBASETEXTURE(object->baseTexture);
@@ -999,6 +1013,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
     UINT                     tmpW;
     HRESULT                  hr;
     unsigned int pow2EdgeLength  = EdgeLength;
+
+    /* TODO: It should only be possible to create textures for formats 
+             that are reported as supported */
+    if (WINED3DFMT_UNKNOWN >= Format) {
+        WARN("(%p) : Texture cannot be created with a format of D3DFMT_UNKNOWN\n", This);
+        return D3DERR_INVALIDCALL;
+    }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, D3DRTYPE_CUBETEXTURE, 0);
     D3DINITILIZEBASETEXTURE(object->baseTexture);
