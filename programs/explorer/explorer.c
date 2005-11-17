@@ -33,8 +33,7 @@ static int CopyPathString(LPWSTR target, LPSTR source)
     CHAR temp_buf[MAX_PATH];
     INT i = 0;
 
-    while isspace(*source)
-        source++;
+    while (isspace(*source)) source++;
 
     if (*source == '\"')
     {
