@@ -94,6 +94,12 @@ typedef struct {
     RECT pos_rect;
     RECT clip_rect;
     OLEINPLACEFRAMEINFO frameinfo;
+
+    /* Connection points */
+
+    IConnectionPoint *cp_wbe2;
+    IConnectionPoint *cp_wbe;
+    IConnectionPoint *cp_pns;
 } WebBrowser;
 
 #define WEBBROWSER(x)   ((IWebBrowser*)                 &(x)->lpWebBrowser2Vtbl)
@@ -127,16 +133,6 @@ void WebBrowser_DocHost_Init(WebBrowser*);
 void WebBrowser_OleObject_Destroy(WebBrowser*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
-
-/**********************************************************************
- * IConnectionPoint declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IConnectionPointVtbl *lpVtbl;
-    LONG ref;
-} IConnectionPointImpl;
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
