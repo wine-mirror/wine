@@ -232,9 +232,16 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     sgv.bp_disp    = bp_disp ? TRUE : FALSE;
     sgv.do_thunks  = DBG_IVAR(AlwaysShowThunks);
 
-    buffer[0] = '*';
-    buffer[1] = '!';
-    strcpy(&buffer[2], name);
+    if (strchr(name, '!'))
+    {
+        strcpy(buffer, name);
+    }
+    else
+    {
+        buffer[0] = '*';
+        buffer[1] = '!';
+        strcpy(&buffer[2], name);
+    }
 
     /* this is a wine specific options to return also ELF modules in the
      * enumeration
@@ -248,8 +255,20 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
 
     if (!sgv.num && (name[0] != '_'))
     {
-        buffer[2] = '_';
-        strcpy(&buffer[3], name);
+        char*   ptr = strchr(name, '!');
+
+        if (ptr++)
+        {
+            memmove(ptr + 1, ptr, strlen(ptr));
+            *ptr = '_';
+        }
+        else
+        {
+            buffer[0] = '*';
+            buffer[1] = '!';
+            buffer[2] = '_';
+            strcpy(&buffer[3], name);
+        }
         if (!SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv))
         {
             SymSetOptions(opt);
