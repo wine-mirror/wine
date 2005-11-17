@@ -179,7 +179,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
 {
     struct symt_data*   sym;
     struct symt**       p;
-    DWORD               tsz;
+    DWORD64             tsz;
 
     TRACE_(dbghelp_symt)("Adding global symbol %s:%s @%lx %p\n", 
                          module->module.ModuleName, name, addr, type);
@@ -196,8 +196,9 @@ struct symt_data* symt_new_global_variable(struct module* module,
         if (type && size && symt_get_info(type, TI_GET_LENGTH, &tsz))
         {
             if (tsz != size)
-                FIXME("Size mismatch for %s.%s between type (%lu) and src (%lu)\n",
-                      module->module.ModuleName, name, tsz, size);
+                FIXME("Size mismatch for %s.%s between type (%s) and src (%lu)\n",
+                      module->module.ModuleName, name, 
+                      wine_dbgstr_longlong(tsz), size);
         }
         if (compiland)
         {
@@ -440,10 +441,12 @@ static void symt_fill_sym_info(const struct module* module,
                                const struct symt* sym, SYMBOL_INFO* sym_info)
 {
     const char* name;
+    DWORD64 size;
 
     sym_info->TypeIndex = (DWORD)sym;
     sym_info->info = 0; /* TBD */
-    symt_get_info(sym, TI_GET_LENGTH, &sym_info->Size);
+    symt_get_info(sym, TI_GET_LENGTH, &size);
+    sym_info->Size = (DWORD)size;
     sym_info->ModBase = module->module.BaseOfImage;
     sym_info->Flags = 0;
     switch (sym->tag)
@@ -601,8 +604,7 @@ static BOOL resort_symbols(struct module* module)
 int symt_find_nearest(struct module* module, DWORD addr)
 {
     int         mid, high, low;
-    ULONG64     ref_addr;
-    DWORD       ref_size;
+    ULONG64     ref_addr, ref_size;
 
     if (!module->sortlist_valid || !module->addr_sorttab)
     {

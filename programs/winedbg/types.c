@@ -39,6 +39,7 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
 {
     long int            rtn = 0;
     DWORD               tag, size, bt;
+    DWORD64             size64;
 
     if (lvalue->type.id == dbg_itype_none ||
         !types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
@@ -47,17 +48,18 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
     switch (tag)
     {
     case SymTagBaseType:
-        if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size) ||
+        if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size64) ||
             !types_get_info(&lvalue->type, TI_GET_BASETYPE, &bt))
         {
             WINE_ERR("Couldn't get information\n");
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         }
-        if (size > sizeof(rtn))
+        if (size64 > sizeof(rtn))
         {
-            WINE_ERR("Size too large (%lu)\n", size);
+            WINE_ERR("Size too large (%s)\n", wine_dbgstr_longlong(size64));
             return 0;
         }
+        size = (DWORD)size64;
         /* FIXME: we have an ugly & non portable thing here !!! */
         if (!memory_read_value(lvalue, size, &rtn)) return 0;
 
@@ -144,8 +146,10 @@ BOOL types_deref(const struct dbg_lvalue* lvalue, struct dbg_lvalue* result)
 static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue, 
                                          const struct dbg_type* type, long int* tmpbuf)
 {
-    DWORD       offset, length, bitoffset;
+    DWORD       offset, bitoffset;
     DWORD       bt;
+    DWORD64     length;
+
     unsigned    mask;
 
     types_get_info(type, TI_GET_TYPE, &lvalue->type.id);
@@ -166,7 +170,7 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue,
          * it in a temporary buffer so that we get it all right.
          */
         if (!memory_read_value(lvalue, sizeof(*tmpbuf), tmpbuf)) return FALSE;
-        mask = 0xffffffff << length;
+        mask = 0xffffffff << (DWORD)length;
         *tmpbuf >>= bitoffset & 7;
         *tmpbuf &= ~mask;
 
@@ -179,7 +183,7 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue,
          * we need to sign extend the number.
          */
         if (types_get_info(&lvalue->type, TI_GET_BASETYPE, &bt) && 
-            bt == btInt && (*tmpbuf & (1 << (length - 1))))
+            bt == btInt && (*tmpbuf & (1 << ((DWORD)length - 1))))
         {
             *tmpbuf |= mask;
         }
@@ -247,7 +251,8 @@ BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, long in
 BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, 
                        struct dbg_lvalue* result)
 {
-    DWORD       tag, length, count;
+    DWORD       tag, count;
+    DWORD64     length;
 
     if (!types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
         return FALSE;
@@ -266,7 +271,7 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index,
         types_get_info(&lvalue->type, TI_GET_TYPE, &result->type.id);
         types_get_info(&result->type, TI_GET_LENGTH, &length);
         memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset);
-        result->addr.Offset += index * length;
+        result->addr.Offset += index * (DWORD)length;
         break;
     default:
         assert(FALSE);
@@ -370,7 +375,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
     int		        i;
     DWORD               tag;
     DWORD               count;
-    DWORD               size;
+    DWORD64             size;
 
     if (lvalue->type.id == dbg_itype_none)
     {
@@ -655,72 +660,72 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
     case dbg_itype_unsigned_int:
         switch (ti)
         {
-        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD) = 4; break;
-        case TI_GET_BASETYPE:   X(DWORD) = btUInt; break;
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
         default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
         }
         break;
     case dbg_itype_signed_int:
         switch (ti)
         {
-        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD) = 4; break;
-        case TI_GET_BASETYPE:   X(DWORD) = btInt; break;
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
         default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
         }
         break;
     case dbg_itype_unsigned_short_int:
         switch (ti)
         {
-        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD) = 2; break;
-        case TI_GET_BASETYPE:   X(DWORD) = btUInt; break;
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 2; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
         default: WINE_FIXME("unsupported %u for u-short int\n", ti); return FALSE;
         }
         break;
     case dbg_itype_signed_short_int:
         switch (ti)
         {
-        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD) = 2; break;
-        case TI_GET_BASETYPE:   X(DWORD) = btInt; break;
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 2; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
         default: WINE_FIXME("unsupported %u for s-short int\n", ti); return FALSE;
         }
         break;
     case dbg_itype_unsigned_char_int:
         switch (ti)
         {
-        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD) = 1; break;
-        case TI_GET_BASETYPE:   X(DWORD) = btUInt; break;
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 1; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
         default: WINE_FIXME("unsupported %u for u-char int\n", ti); return FALSE;
         }
         break;
     case dbg_itype_signed_char_int:
         switch (ti)
         {
-        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD) = 1; break;
-        case TI_GET_BASETYPE:   X(DWORD) = btInt; break;
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 1; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
         default: WINE_FIXME("unsupported %u for s-char int\n", ti); return FALSE;
         }
         break;
     case dbg_itype_char:
         switch (ti)
         {
-        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD) = 1; break;
-        case TI_GET_BASETYPE:   X(DWORD) = btChar; break;
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 1; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btChar; break;
         default: WINE_FIXME("unsupported %u for char int\n", ti); return FALSE;
         }
         break;
     case dbg_itype_astring:
         switch (ti)
         {
-        case TI_GET_SYMTAG:     X(DWORD) = SymTagPointerType; break;
-        case TI_GET_LENGTH:     X(DWORD) = 4; break;
-        case TI_GET_TYPE:       X(DWORD) = dbg_itype_char; break;
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagPointerType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
+        case TI_GET_TYPE:       X(DWORD)   = dbg_itype_char; break;
         default: WINE_FIXME("unsupported %u for a string\n", ti); return FALSE;
         }
         break;

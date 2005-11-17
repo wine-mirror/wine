@@ -357,7 +357,7 @@ void break_check_delayed_bp(void)
 static void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
 {
     int         num;
-    DWORD       l = 4;
+    DWORD64     l = 4;
 
     num = init_xpoint((is_write) ? be_xpoint_watch_write : be_xpoint_watch_read,
                       &lvalue->addr);
@@ -371,13 +371,14 @@ static void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
             {
             case 4: case 2: case 1: break;
             default:
-                dbg_printf("Unsupported length (%lu) for watch-points, defaulting to 4\n", l);
+                dbg_printf("Unsupported length (%s) for watch-points, defaulting to 4\n",
+                           wine_dbgstr_longlong(l));
                 break;
             }
         }
         else dbg_printf("Cannot get watch size, defaulting to 4\n");
     }
-    dbg_curr_process->bp[num].w.len = l - 1;
+    dbg_curr_process->bp[num].w.len = (DWORD)l - 1;
 
     if (!get_watched_value(num, &dbg_curr_process->bp[num].w.oldval))
     {

@@ -570,8 +570,8 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
             }
             else if (strcmp(ste->ht_elt.name, module->addr_sorttab[idx]->hash_elt.name))
             {
-                ULONG64 xaddr = 0;
-                DWORD   xsize = 0, kind = -1;
+                ULONG64 xaddr = 0, xsize = 0;
+                DWORD   kind = -1;
 
                 symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_ADDRESS,  &xaddr);
                 symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_LENGTH,   &xsize);
@@ -584,11 +584,11 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                  */
                 if ((xsize || ste->symp->st_size) && 
                     (kind == (ELF32_ST_BIND(ste->symp->st_info) == STB_LOCAL) ? DataIsFileStatic : DataIsGlobal))
-                    FIXME("Duplicate in %s: %s<%08lx-%08x> %s<%s-%08lx>\n", 
+                    FIXME("Duplicate in %s: %s<%08lx-%08x> %s<%s-%s>\n", 
                           module->module.ModuleName,
                           ste->ht_elt.name, addr, ste->symp->st_size,
                           module->addr_sorttab[idx]->hash_elt.name,
-                          wine_dbgstr_longlong(xaddr), xsize);
+                          wine_dbgstr_longlong(xaddr), wine_dbgstr_longlong(xsize));
             }
         }
     }

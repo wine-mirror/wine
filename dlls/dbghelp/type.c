@@ -370,7 +370,8 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
     const char*         tmp;
     struct symt*        type;
     void*               pos = NULL;
-    
+    DWORD64             size;
+
     TRACE("(%p %s %p %p)\n",
           hProcess, wine_dbgstr_longlong(BaseOfDll), EnumSymbolsCallback,
           UserContext);
@@ -387,7 +388,8 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
         type = *(struct symt**)pos;
         sym_info->TypeIndex = (DWORD)type;
         sym_info->info = 0; /* FIXME */
-        symt_get_info(type, TI_GET_LENGTH, &sym_info->Size);
+        symt_get_info(type, TI_GET_LENGTH, &size);
+        sym_info->Size = size;
         sym_info->ModBase = module->module.BaseOfImage;
         sym_info->Flags = 0; /* FIXME */
         sym_info->Value = 0; /* FIXME */
@@ -559,40 +561,40 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         switch (type->tag)
         {
         case SymTagBaseType:
-            X(DWORD) = ((const struct symt_basic*)type)->size;
+            X(DWORD64) = ((const struct symt_basic*)type)->size;
             break;
         case SymTagFunction:
-            X(DWORD) = ((const struct symt_function*)type)->size;
+            X(DWORD64) = ((const struct symt_function*)type)->size;
             break;
         case SymTagPointerType:
-            X(DWORD) = sizeof(void*);
+            X(DWORD64) = sizeof(void*);
             break;
         case SymTagUDT:
-            X(DWORD) = ((const struct symt_udt*)type)->size;
+            X(DWORD64) = ((const struct symt_udt*)type)->size;
             break;
         case SymTagEnum:
-            X(DWORD) = sizeof(int); /* FIXME: should be size of base-type of enum !!! */
+            X(DWORD64) = sizeof(int); /* FIXME: should be size of base-type of enum !!! */
             break;
         case SymTagData:
             if (((const struct symt_data*)type)->kind != DataIsMember ||
                 !((const struct symt_data*)type)->u.s.length)
                 return FALSE;
-            X(DWORD) = ((const struct symt_data*)type)->u.s.length;
+            X(DWORD64) = ((const struct symt_data*)type)->u.s.length;
             break;
         case SymTagArrayType:   
             if (!symt_get_info(((const struct symt_array*)type)->basetype, 
                                TI_GET_LENGTH, pInfo))
                 return FALSE;
-            X(DWORD) *= ((const struct symt_array*)type)->end - 
+            X(DWORD64) *= ((const struct symt_array*)type)->end - 
                 ((const struct symt_array*)type)->start + 1;
             break;
         case SymTagPublicSymbol:
-            X(DWORD) = ((const struct symt_public*)type)->size;
+            X(DWORD64) = ((const struct symt_public*)type)->size;
             break;
         case SymTagTypedef:
             return symt_get_info(((const struct symt_typedef*)type)->type, TI_GET_LENGTH, pInfo);
         case SymTagThunk:
-            X(DWORD) = ((const struct symt_thunk*)type)->size;
+            X(DWORD64) = ((const struct symt_thunk*)type)->size;
             break;
         default:
             FIXME("Unsupported sym-tag %s for get-length\n", 

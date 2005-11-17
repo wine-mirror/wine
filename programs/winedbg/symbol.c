@@ -444,8 +444,8 @@ void symbol_read_symtable(const char* filename, unsigned long offset)
 enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr)
 {
     IMAGEHLP_LINE       il;
-    DWORD               disp, size;
-    ULONG64             disp64, start;
+    DWORD               disp;
+    ULONG64             disp64, start, size;
     DWORD               lin = (DWORD)memory_to_linear_addr(addr);
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        sym = (SYMBOL_INFO*)buffer;

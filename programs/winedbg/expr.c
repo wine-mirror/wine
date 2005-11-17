@@ -279,7 +279,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
     struct dbg_lvalue                   exp1;
     struct dbg_lvalue                   exp2;
     unsigned int	                cexp[5];
-    DWORD	                        scale1, scale2, scale3;
+    DWORD64	                        scale1, scale2, scale3;
     struct dbg_type                     type1, type2;
     DWORD                               tag;
     const struct dbg_internal_var*      div;
@@ -509,8 +509,8 @@ struct dbg_lvalue expr_eval(struct expr* exp)
                 types_get_info(&type2, TI_GET_LENGTH, &scale1);
                 rtn.type = exp2.type;
 	    }
-            exp->un.binop.result = (types_extract_as_integer(&exp1) * scale1 +
-                                    scale2 * types_extract_as_integer(&exp2));
+            exp->un.binop.result = types_extract_as_integer(&exp1) * (DWORD)scale1 +
+                (DWORD)scale2 * types_extract_as_integer(&exp2);
             break;
 	case EXP_OP_SUB:
             if (!types_get_info(&exp1.type, TI_GET_SYMTAG, &tag) ||
@@ -541,8 +541,8 @@ struct dbg_lvalue expr_eval(struct expr* exp)
                 types_get_info(&type2, TI_GET_LENGTH, &scale1);
                 rtn.type = exp2.type;
 	    }
-            exp->un.binop.result = (types_extract_as_integer(&exp1) * scale1 - 
-                                    types_extract_as_integer(&exp2) * scale2) / scale3;
+            exp->un.binop.result = (types_extract_as_integer(&exp1) * (DWORD)scale1 - 
+                                    types_extract_as_integer(&exp2) * (DWORD)scale2) / (DWORD)scale3;
             break;
 	case EXP_OP_SEG:
             rtn.type.id = dbg_itype_none;

@@ -403,9 +403,9 @@ static int codeview_add_type_array(struct module* module,
 
     if (elem)
     {
-        DWORD elem_size;
+        DWORD64 elem_size;
         symt_get_info(elem, TI_GET_LENGTH, &elem_size);
-        if (elem_size) arr_max = arr_len / elem_size;
+        if (elem_size) arr_max = arr_len / (DWORD)elem_size;
     }
     symt = &symt_new_array(module, 0, arr_max, elem)->symt;
     return codeview_add_type(typeno, symt);
@@ -567,11 +567,11 @@ static int codeview_add_type_struct_field_list(struct module* module,
 
             if (!subtype || subtype->tag != SymTagCVBitField)
             {
-                DWORD elem_size = 0;
+                DWORD64 elem_size = 0;
                 if (subtype) symt_get_info(subtype, TI_GET_LENGTH, &elem_size);
                 symt_add_udt_element(module, symt, terminate_string(p_name),
                                      codeview_get_type(type->member_v1.type, TRUE),
-                                     value << 3, elem_size << 3);
+                                     value << 3, (DWORD)elem_size << 3);
             }
             else
             {
@@ -591,10 +591,10 @@ static int codeview_add_type_struct_field_list(struct module* module,
 
             if (!subtype || subtype->tag != SymTagCVBitField)
             {
-                DWORD elem_size = 0;
+                DWORD64 elem_size = 0;
                 if (subtype) symt_get_info(subtype, TI_GET_LENGTH, &elem_size);
                 symt_add_udt_element(module, symt, terminate_string(p_name),
-                                     subtype, value << 3, elem_size << 3);
+                                     subtype, value << 3, (DWORD)elem_size << 3);
             }
             else
             {
@@ -614,10 +614,10 @@ static int codeview_add_type_struct_field_list(struct module* module,
 
             if (!subtype || subtype->tag != SymTagCVBitField)
             {
-                DWORD elem_size = 0;
+                DWORD64 elem_size = 0;
                 if (subtype) symt_get_info(subtype, TI_GET_LENGTH, &elem_size);
                 symt_add_udt_element(module, symt, c_name,
-                                     subtype, value << 3, elem_size << 3);
+                                     subtype, value << 3, (DWORD)elem_size << 3);
             }
             else
             {

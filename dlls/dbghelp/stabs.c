@@ -627,7 +627,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
             {
                 char    tmp[256];
                 WCHAR*  name;
-                DWORD   size;
+                DWORD64 size;
 
                 symt_get_info(adt, TI_GET_SYMNAME, &name);
                 strcpy(tmp, "__inherited_class_");
@@ -642,7 +642,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
                  * be much of a problem
                  */
                 symt_get_info(adt, TI_GET_LENGTH, &size);
-                symt_add_udt_element(ptd->module, sdt, tmp, adt, ofs, size * 8);
+                symt_add_udt_element(ptd->module, sdt, tmp, adt, ofs, (DWORD)size * 8);
             }
             PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
         }

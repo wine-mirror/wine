@@ -119,9 +119,9 @@ BOOL memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result
 BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value)
 {
     BOOL        ret = TRUE;
-    DWORD       os;
+    DWORD64     os;
 
-    os = ~size;
+    os = ~(DWORD64)size;
     types_get_info(&lvalue->type, TI_GET_LENGTH, &os);
     assert(size == os);
 
@@ -287,6 +287,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
     long long int       val_int;
     void*               val_ptr;
     long double         val_real;
+    DWORD64             size64;
     DWORD               tag, size, count, bt;
     struct dbg_type     rtype;
 
@@ -297,13 +298,13 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
     switch (tag)
     {
     case SymTagBaseType:
-        if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size) ||
+        if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size64) ||
             !types_get_info(&lvalue->type, TI_GET_BASETYPE, &bt))
         {
             WINE_ERR("Couldn't get information\n");
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         }
-
+        size = (DWORD)size64;
         switch (bt)
         {
         case btInt:
@@ -343,14 +344,14 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         rtype.module = lvalue->type.module;
         if (types_get_info(&rtype, TI_GET_SYMTAG, &tag) && tag == SymTagBaseType &&
             types_get_info(&rtype, TI_GET_BASETYPE, &bt) && bt == btChar &&
-            types_get_info(&rtype, TI_GET_LENGTH, &size))
+            types_get_info(&rtype, TI_GET_LENGTH, &size64))
         {
             char    buffer[1024];
 
             if (!val_ptr) dbg_printf("0x0");
             else if (memory_get_string(dbg_curr_process, val_ptr, 
                                        lvalue->cookie == DLV_TARGET,
-                                       size == 2, buffer, sizeof(buffer)))
+                                       size64 == 2, buffer, sizeof(buffer)))
                 dbg_printf("\"%s\"", buffer);
             else
                 dbg_printf("*** invalid address %p ***", val_ptr);
