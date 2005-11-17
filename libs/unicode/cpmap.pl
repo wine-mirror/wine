@@ -577,7 +577,7 @@ sub DUMP_SORTKEYS
 
     # output the range offsets
 
-    open OUTPUT,">collation.c" or die "Cannot create collation.c";
+    open OUTPUT,">collation.c.new" or die "Cannot create collation.c";
     printf "Building collation.c\n";
     printf OUTPUT "/* Unicode collation element table */\n";
     printf OUTPUT "/* generated from %s */\n", $SORTKEYS;
@@ -602,6 +602,7 @@ sub DUMP_SORTKEYS
     }
     printf OUTPUT "\n};\n";
     close OUTPUT;
+    save_file("collation.c");
 }
 
 
@@ -870,7 +871,7 @@ sub DUMP_LB_RANGES
 # dump the case mapping tables
 sub DUMP_CASE_MAPPINGS
 {
-    open OUTPUT,">casemap.c" or die "Cannot create casemap.c";
+    open OUTPUT,">casemap.c.new" or die "Cannot create casemap.c";
     printf "Building casemap.c\n";
     printf OUTPUT "/* Unicode case mappings */\n";
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
@@ -881,6 +882,7 @@ sub DUMP_CASE_MAPPINGS
     DUMP_CASE_TABLE( "wine_digitmap",  @digitmap_table );
     DUMP_CASE_TABLE( "wine_compatmap", @compatmap_table );
     close OUTPUT;
+    save_file("casemap.c");
 }
 
 
@@ -957,7 +959,7 @@ sub DUMP_CASE_TABLE
 # dump the ctype tables
 sub DUMP_CTYPE_TABLES
 {
-    open OUTPUT,">wctype.c" or die "Cannot create wctype.c";
+    open OUTPUT,">wctype.c.new" or die "Cannot create wctype.c";
     printf "Building wctype.c\n";
     printf OUTPUT "/* Unicode ctype tables */\n";
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
@@ -994,6 +996,7 @@ sub DUMP_CTYPE_TABLES
     printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%04x", 0, @array[256..$#array] );
 
     close OUTPUT;
+    save_file("wctype.c");
 }
 
 
@@ -1001,7 +1004,7 @@ sub DUMP_CTYPE_TABLES
 # dump the char composition tables
 sub DUMP_COMPOSE_TABLES
 {
-    open OUTPUT,">compose.c" or die "Cannot create compose.c";
+    open OUTPUT,">compose.c.new" or die "Cannot create compose.c";
     printf "Building compose.c\n";
     printf OUTPUT "/* Unicode char composition */\n";
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
@@ -1131,6 +1134,7 @@ sub DUMP_COMPOSE_TABLES
 
     printf OUTPUT "\n};\n";
     close OUTPUT;
+    save_file("compose.c");
 }
 
 
@@ -1150,7 +1154,7 @@ sub HANDLE_FILE
     ADD_DEFAULT_MAPPINGS();
 
     my $output = sprintf "c_%03d.c", $codepage;
-    open OUTPUT,">$output" or die "Cannot create $output";
+    open OUTPUT,">$output.new" or die "Cannot create $output";
 
     printf "Building %s from %s (%s)\n", $output, $filename, $comment;
 
@@ -1164,6 +1168,23 @@ sub HANDLE_FILE
     if ($#lead_bytes == -1) { DUMP_SBCS_TABLE( $codepage, $comment ); }
     else { DUMP_DBCS_TABLE( $codepage, $comment ); }
     close OUTPUT;
+    save_file($output);
+}
+
+
+################################################################
+# save a file if modified
+sub save_file($)
+{
+    my $file = shift;
+    if (!system "cmp $file $file.new >/dev/null")
+    {
+        unlink "$file.new";
+    }
+    else
+    {
+        rename "$file.new", "$file";
+    }
 }
 
 
@@ -1209,7 +1230,8 @@ sub REPLACE_IN_FILE
 	if (/\#\#\# cpmap end \#\#\#/) { push @lines, "\n", $_; last; }
     }
     push @lines, <FILE>;
-    open(FILE,">$name") or die "Can't modify $name";
+    open(FILE,">$name.new") or die "Can't modify $name";
     print FILE @lines;
     close(FILE);
+    save_file($name);
 }
