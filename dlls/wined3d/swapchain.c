@@ -315,10 +315,15 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
 
         TRACE("Clearing\n");
 
-       IWineD3DDevice_Clear((IWineD3DDevice*)This->wineD3DDevice, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
+        IWineD3DDevice_Clear((IWineD3DDevice*)This->wineD3DDevice, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
 
+    } else {
+        TRACE("Clearing z/stencil buffer\n");
+
+        IWineD3DDevice_Clear((IWineD3DDevice*)This->wineD3DDevice, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER, 0x00, 1.0, 0);
     }
-        TRACE("returning\n");
+
+    TRACE("returning\n");
     return D3D_OK;
 }
 
