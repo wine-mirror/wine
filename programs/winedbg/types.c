@@ -627,6 +627,7 @@ int types_print_type(const struct dbg_type* type, BOOL details)
                     for (i = 0; i < min(fcp->Count, count); i++)
                     {
                         subtype.id = fcp->ChildId[i];
+                        types_get_info(&subtype, TI_GET_TYPE, &subtype.id);
                         types_print_type(&subtype, FALSE);
                         if (i < min(fcp->Count, count) - 1 || count > 256) dbg_printf(", ");
                     }

@@ -222,6 +222,13 @@ struct symt_function_signature
     struct vector               vchildren;
 };
 
+struct symt_function_arg_type
+{
+    struct symt                 symt;
+    struct symt*                arg_type;
+    struct symt*                container;
+};
+
 struct symt_pointer
 {
     struct symt                 symt;

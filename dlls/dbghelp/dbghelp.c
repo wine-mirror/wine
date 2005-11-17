@@ -30,8 +30,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 /* TODO
  *  - support for symbols' types is still partly missing
  *      + C++ support
- *      + funcargtype:s are (partly) wrong: they should be a specific struct (like
- *        typedef) pointing to the actual type (and not a direct access)
  *      + we should store the underlying type for an enum in the symt_enum struct
  *      + for enums, we store the names & values (associated to the enum type), 
  *        but those values are not directly usable from a debugger (that's why, I

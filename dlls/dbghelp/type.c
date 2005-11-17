@@ -316,12 +316,18 @@ BOOL symt_add_function_signature_parameter(struct module* module,
                                            struct symt_function_signature* sig_type,
                                            struct symt* param)
 {
-    struct symt**       p;
+    struct symt**                       p;
+    struct symt_function_arg_type*      arg;
 
     assert(sig_type->symt.tag == SymTagFunctionType);
+    arg = pool_alloc(&module->pool, sizeof(*arg));
+    if (!arg) return FALSE;
+    arg->symt.tag = SymTagFunctionArgType;
+    arg->arg_type = param;
+    arg->container = &sig_type->symt;
     p = vector_add(&sig_type->vchildren, &module->pool);
-    if (!p) return FALSE; /* FIXME we leak e */
-    *p = param;
+    if (!p) return FALSE; /* FIXME we leak arg */
+    *p = &arg->symt;
 
     return TRUE;
 }
@@ -620,6 +626,9 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         case SymTagThunk:
             X(DWORD) = (DWORD)((const struct symt_thunk*)type)->container;
             break;
+        case SymTagFunctionArgType:
+            X(DWORD) = (DWORD)((const struct symt_function_arg_type*)type)->container;
+            break;
         default:
             FIXME("Unsupported sym-tag %s for get-lexical-parent\n", 
                   symt_get_tag_str(type->tag));
@@ -702,7 +711,10 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         case SymTagFunction:
             X(DWORD) = (DWORD)((const struct symt_function*)type)->type;
             break;
-            /* FIXME: should also work for enums and FunctionArgType */
+            /* FIXME: should also work for enums */
+        case SymTagFunctionArgType:
+            X(DWORD) = (DWORD)((const struct symt_function_arg_type*)type)->arg_type;
+            break;
         default:
             FIXME("Unsupported sym-tag %s for get-type\n", 
                   symt_get_tag_str(type->tag));
