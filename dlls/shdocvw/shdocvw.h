@@ -35,6 +35,7 @@
 #include "olectl.h"
 #include "shlobj.h"
 #include "exdisp.h"
+#include "mshtmhst.h"
 
 /**********************************************************************
  * IClassFactory declaration for SHDOCVW.DLL
@@ -75,6 +76,7 @@ typedef struct {
 
     const IOleClientSiteVtbl            *lpOleClientSiteVtbl;
     const IOleInPlaceSiteVtbl           *lpOleInPlaceSiteVtbl;
+    const IDocHostUIHandler2Vtbl        *lpDocHostUIHandlerVtbl;
 
     LONG ref;
 
@@ -109,6 +111,8 @@ typedef struct {
 
 #define CLIENTSITE(x)   ((IOleClientSite*)              &(x)->lpOleClientSiteVtbl)
 #define INPLACESITE(x)  ((IOleInPlaceSite*)             &(x)->lpOleInPlaceSiteVtbl)
+#define DOCHOSTUI(x)    ((IDocHostUIHandler*)           &(x)->lpDocHostUIHandlerVtbl)
+#define DOCHOSTUI2(x)   ((IDocHostUIHandler2*)          &(x)->lpDocHostUIHandlerVtbl)
 
 void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_ViewObject_Init(WebBrowser*);
@@ -118,6 +122,7 @@ void WebBrowser_Misc_Init(WebBrowser*);
 void WebBrowser_Events_Init(WebBrowser*);
 
 void WebBrowser_ClientSite_Init(WebBrowser*);
+void WebBrowser_DocHost_Init(WebBrowser*);
 
 void WebBrowser_OleObject_Destroy(WebBrowser*);
 
