@@ -233,3 +233,10 @@ void WebBrowser_Events_Init(WebBrowser *This)
     ConnectionPoint_Create(This, &DIID_DWebBrowserEvents, &This->cp_wbe);
     ConnectionPoint_Create(This, &IID_IPropertyNotifySink, &This->cp_pns);
 }
+
+void WebBrowser_Events_Destroy(WebBrowser *This)
+{
+    HeapFree(GetProcessHeap(), 0, This->cp_wbe2);
+    HeapFree(GetProcessHeap(), 0, This->cp_wbe);
+    HeapFree(GetProcessHeap(), 0, This->cp_pns);
+}

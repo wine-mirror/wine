@@ -131,6 +131,7 @@ void WebBrowser_ClientSite_Init(WebBrowser*);
 void WebBrowser_DocHost_Init(WebBrowser*);
 
 void WebBrowser_OleObject_Destroy(WebBrowser*);
+void WebBrowser_Events_Destroy(WebBrowser*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 

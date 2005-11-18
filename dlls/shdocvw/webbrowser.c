@@ -125,6 +125,7 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
             IUnknown_Release(This->document);
 
         WebBrowser_OleObject_Destroy(This);
+        WebBrowser_Events_Destroy(This);
 
         HeapFree(GetProcessHeap(), 0, This);
         SHDOCVW_UnlockModule();
