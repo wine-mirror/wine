@@ -610,6 +610,7 @@ static VOID test_GetThreadExitCode(void)
 #ifdef __i386__
 
 static int test_value = 0;
+static HANDLE event;
 
 static void WINAPI set_test_val( int val )
 {
@@ -618,6 +619,8 @@ static void WINAPI set_test_val( int val )
 
 static DWORD WINAPI threadFunc6(LPVOID p)
 {
+    SetEvent( event );
+    Sleep( 1000 );
     test_value *= (int)p;
     return 0;
 }
@@ -631,13 +634,17 @@ static void test_SetThreadContext(void)
     DWORD prevcount;
 
     SetLastError(0xdeadbeef);
-    thread = CreateThread( NULL, 0, threadFunc6, (void *)2, CREATE_SUSPENDED, &threadid );
+    event = CreateEvent( NULL, TRUE, FALSE, NULL );
+    thread = CreateThread( NULL, 0, threadFunc6, (void *)2, 0, &threadid );
     ok( thread != NULL, "CreateThread failed : (%ld)\n", GetLastError() );
     if (!thread)
     {
         trace("Thread creation failed, skipping rest of test\n");
         return;
     }
+    WaitForSingleObject( event, INFINITE );
+    SuspendThread( thread );
+    CloseHandle( event );
 
     ctx.ContextFlags = CONTEXT_FULL;
     SetLastError(0xdeadbeef);
