@@ -118,7 +118,7 @@ PWCHAR *ldap_explode_dnW( PWCHAR dn, ULONG notypes )
     ret = strarrayUtoW( retU );
 
     strfreeU( dnU );
-    ldap_value_free( retU );
+    ldap_memvfree( (void **)retU );
 
 #endif
     return ret;

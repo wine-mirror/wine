@@ -217,13 +217,13 @@ ULONG ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
             infoW->ldapai_vendor_name = strUtoW( infoU.ldapai_vendor_name );
             if (!infoW->ldapai_vendor_name)
             {
-                ldap_value_free( infoU.ldapai_extensions );
+                ldap_memvfree( (void **)infoU.ldapai_extensions );
                 return WLDAP32_LDAP_NO_MEMORY;
             }
         }
         infoW->ldapai_vendor_version = infoU.ldapai_vendor_version;
 
-        ldap_value_free( infoU.ldapai_extensions );
+        ldap_memvfree( (void **)infoU.ldapai_extensions );
         ldap_memfree( infoU.ldapai_vendor_name );
         return ret;
     }

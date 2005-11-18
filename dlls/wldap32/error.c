@@ -84,11 +84,18 @@ ULONG WLDAP32_ldap_result2error( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res, ULO
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
+    int error;
 
     TRACE( "(%p, %p, 0x%08lx)\n", ld, res, free );
 
-    if (!ld) return ~0UL;
-    ret = ldap_result2error( ld, res, free );
+    if (!ld || !res) return ~0UL;
+
+    ret = ldap_parse_result( ld, res, &error, NULL, NULL, NULL, NULL, free );
+
+    if (ret == LDAP_SUCCESS)
+        ret = error;
+    else
+        ret = ~0UL;
 
 #endif
     return ret;

@@ -75,6 +75,7 @@ ULONG ldap_modrdnW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *newdnU = NULL;
+    int msg;
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -90,7 +91,12 @@ ULONG ldap_modrdnW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn )
     newdnU = strWtoU( newdn );
     if (!newdnU) goto exit;
 
-    ret = ldap_modrdn( ld, dn ? dnU : "", newdnU );
+    ret = ldap_rename( ld, dn ? dnU : "", newdnU, NULL, 1, NULL, NULL, &msg );
+
+    if (ret == LDAP_SUCCESS)
+        ret = msg;
+    else
+        ret = ~0UL;
 
 exit:
     strfreeU( dnU );
@@ -135,6 +141,7 @@ ULONG ldap_modrdn2W( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn, INT delete )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *newdnU = NULL;
+    int msg;
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -150,7 +157,12 @@ ULONG ldap_modrdn2W( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn, INT delete )
     newdnU = strWtoU( newdn );
     if (!newdnU) goto exit;
 
-    ret = ldap_modrdn2( ld, dn ? dnU : "", newdnU, delete );
+    ret = ldap_rename( ld, dn ? dnU : "", newdnU, NULL, delete, NULL, NULL, &msg );
+
+    if (ret == LDAP_SUCCESS)
+        ret = msg;
+    else
+        ret = ~0UL;
 
 exit:
     strfreeU( dnU );
@@ -210,7 +222,7 @@ ULONG ldap_modrdn2_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn, INT delete )
     newdnU = strWtoU( newdn );
     if (!newdnU) goto exit;
 
-    ret = ldap_modrdn2_s( ld, dn ? dnU : "", newdnU, delete );
+    ret = ldap_rename_s( ld, dn ? dnU : "", newdnU, NULL, delete, NULL, NULL );
 
 exit:
     strfreeU( dnU );
@@ -270,7 +282,7 @@ ULONG ldap_modrdn_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn )
     newdnU = strWtoU( newdn );
     if (!newdnU) goto exit;
 
-    ret = ldap_modrdn_s( ld, dn ? dnU : "", newdnU );
+    ret = ldap_rename_s( ld, dn ? dnU : "", newdnU, NULL, 1, NULL, NULL );
 
 exit:
     strfreeU( dnU );

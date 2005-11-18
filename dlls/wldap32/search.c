@@ -85,6 +85,7 @@ ULONG ldap_searchW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *baseU = NULL, *filterU = NULL, **attrsU = NULL;
+    int msg;
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -106,7 +107,13 @@ ULONG ldap_searchW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
         if (!attrsU) goto exit;
     }
 
-    ret = ldap_search( ld, baseU, scope, filterU, attrsU, attrsonly );
+    ret = ldap_search_ext( ld, baseU, scope, filterU, attrsU, attrsonly,
+                           NULL, NULL, NULL, 0, &msg );
+
+    if (ret == LDAP_SUCCESS)
+        ret = msg;
+    else
+        ret = ~0UL;
 
 exit:
     strfreeU( baseU );
@@ -395,7 +402,8 @@ ULONG ldap_search_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
         if (!attrsU) goto exit;
     }
 
-    ret = ldap_search_s( ld, baseU, scope, filterU, attrsU, attrsonly, res );
+    ret = ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
+                             NULL, NULL, NULL, 0, res );
 
 exit:
     strfreeU( baseU );
@@ -476,8 +484,8 @@ ULONG ldap_search_stW( WLDAP32_LDAP *ld, const PWCHAR base, ULONG scope,
         if (!attrsU) goto exit;
     }
 
-    ret = ldap_search_st( ld, baseU, scope, filterU, attrsU, attrsonly,
-                          (struct timeval *)timeout, res );
+    ret = ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
+                             NULL, NULL, (struct timeval *)timeout, 0, res );
 
 exit:
     strfreeU( baseU );

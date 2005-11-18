@@ -50,7 +50,7 @@ ULONG WLDAP32_ldap_abandon( WLDAP32_LDAP *ld, ULONG msgid )
     TRACE( "(%p, 0x%08lx)\n", ld, msgid );
 
     if (!ld) return ~0UL;
-    ret = ldap_abandon( ld, msgid );
+    ret = ldap_abandon_ext( ld, msgid, NULL, NULL );
 
 #endif
     return ret;
@@ -81,7 +81,7 @@ ULONG ldap_check_filterW( WLDAP32_LDAP *ld, PWCHAR filter )
     TRACE( "(%p, %s)\n", ld, debugstr_w(filter) );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
-    return LDAP_SUCCESS;
+    return LDAP_SUCCESS; /* FIXME: do some checks */
 }
 
 ULONG ldap_cleanup( HANDLE instance )
@@ -357,7 +357,7 @@ ULONG WLDAP32_ldap_result( WLDAP32_LDAP *ld, ULONG msgid, ULONG all,
 
     TRACE( "(%p, 0x%08lx, 0x%08lx, %p, %p)\n", ld, msgid, all, timeout, res );
 
-    if (!ld || !res) return ~0UL;
+    if (!ld || !res || msgid == ~0UL) return ~0UL;
     ret = ldap_result( ld, msgid, all, (struct timeval *)timeout, res );
 
 #endif

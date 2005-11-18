@@ -79,6 +79,7 @@ ULONG ldap_modifyW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[] )
 #ifdef HAVE_LDAP
     char *dnU = NULL;
     LDAPMod **modsU = NULL;
+    int msg;
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -95,7 +96,13 @@ ULONG ldap_modifyW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[] )
         if (!modsU) goto exit;
     }
 
-    ret = ldap_modify( ld, dn ? dnU : "", mods ? modsU : nullmods );
+    ret = ldap_modify_ext( ld, dn ? dnU : "", mods ? modsU : nullmods,
+                           NULL, NULL, &msg );
+
+    if (ret == LDAP_SUCCESS)
+        ret = msg;
+    else
+        ret = ~0UL;
 
 exit:
     strfreeU( dnU );
@@ -342,7 +349,7 @@ ULONG ldap_modify_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[] )
         if (!modsU) goto exit;
     }
 
-    ret = ldap_modify_s( ld, dn ? dnU : "", mods ? modsU : nullmods );
+    ret = ldap_modify_ext_s( ld, dn ? dnU : "", mods ? modsU : nullmods, NULL, NULL );
 
 exit:
     strfreeU( dnU );

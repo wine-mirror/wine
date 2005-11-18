@@ -67,6 +67,7 @@ ULONG ldap_deleteW( WLDAP32_LDAP *ld, PWCHAR dn )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL;
+    int msg;
 
     TRACE( "(%p, %s)\n", ld, debugstr_w(dn) );
 
@@ -77,7 +78,13 @@ ULONG ldap_deleteW( WLDAP32_LDAP *ld, PWCHAR dn )
         if (!dnU) return WLDAP32_LDAP_NO_MEMORY;
     }
 
-    ret = ldap_delete( ld, dn ? dnU : "" );
+    ret = ldap_delete_ext( ld, dn ? dnU : "", NULL, NULL, &msg );
+
+    if (ret == LDAP_SUCCESS)
+        ret = msg;
+    else
+        ret = ~0UL;
+
     strfreeU( dnU );
 
 #endif
@@ -275,7 +282,7 @@ ULONG ldap_delete_sW( WLDAP32_LDAP *ld, PWCHAR dn )
         if (!dnU) return WLDAP32_LDAP_NO_MEMORY;
     }
 
-    ret = ldap_delete_s( ld, dn ? dnU : "" );
+    ret = ldap_delete_ext_s( ld, dn ? dnU : "", NULL, NULL );
     strfreeU( dnU );
 
 #endif
