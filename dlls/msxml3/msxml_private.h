@@ -43,6 +43,8 @@ xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );
 extern xmlChar *xmlChar_from_wchar( LPWSTR str );
 extern BSTR bstr_from_xmlChar( const xmlChar *buf );
 
+extern LONG xmldoc_add_ref( xmlDocPtr doc );
+extern LONG xmldoc_release( xmlDocPtr doc );
 #endif
 
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,

@@ -505,6 +505,82 @@ void test_domnode( void )
         IXMLDOMDocument_Release( doc );
 }
 
+static void test_refs(void)
+{
+    HRESULT r;
+    BSTR str;
+    VARIANT_BOOL b;
+    IXMLDOMDocument *doc = NULL;
+    IXMLDOMElement *element = NULL;
+    IXMLDOMNode *node = NULL, *node2;
+    IXMLDOMNodeList *node_list = NULL;
+    LONG ref;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
+    if( r != S_OK )
+        return;
+
+    str = SysAllocString( szComplete4 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    ref = IXMLDOMDocument_AddRef( doc );
+    ok( ref == 2, "ref %ld\n", ref );
+    ref = IXMLDOMDocument_AddRef( doc );
+    ok( ref == 3, "ref %ld\n", ref );
+    IXMLDOMDocument_Release( doc );
+    IXMLDOMDocument_Release( doc );
+
+    r = IXMLDOMDocument_get_documentElement( doc, &element );
+    ok( r == S_OK, "should be a document element\n");
+    ok( element != NULL, "should be an element\n");
+
+    ref = IXMLDOMDocument_AddRef( doc );
+    ok( ref == 2, "ref %ld\n", ref );
+    IXMLDOMDocument_Release( doc );
+
+    r = IXMLDOMElement_get_childNodes( element, &node_list );
+    ok( r == S_OK, "rets %08lx\n", r);
+    ref = IXMLDOMNodeList_AddRef( node_list );
+    ok( ref == 2, "ref %ld\n", ref );
+    IXMLDOMNodeList_Release( node_list );
+
+    IXMLDOMNodeList_get_item( node_list, 0, &node );
+    ok( r == S_OK, "rets %08lx\n", r);
+
+    IXMLDOMNodeList_get_item( node_list, 0, &node2 );
+    ok( r == S_OK, "rets %08lx\n", r);
+
+    ref = IXMLDOMNode_AddRef( node );
+    ok( ref == 2, "ref %ld\n", ref );
+    IXMLDOMNode_Release( node );
+
+    ref = IXMLDOMNode_Release( node );
+    ok( ref == 0, "ref %ld\n", ref );
+    ref = IXMLDOMNode_Release( node2 );
+    ok( ref == 0, "ref %ld\n", ref );
+
+    ref = IXMLDOMNodeList_Release( node_list );
+    ok( ref == 0, "ref %ld\n", ref );
+
+    ok( node != node2, "node %p node2 %p\n", node, node2 );
+
+    ref = IXMLDOMDocument_Release( doc );
+    ok( ref == 0, "ref %ld\n", ref );
+
+    ref = IXMLDOMElement_AddRef( element );
+    todo_wine {
+    ok( ref == 3, "ref %ld\n", ref );
+    }
+
+    IXMLDOMElement_Release( element );
+    IXMLDOMElement_Release( element );
+
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -514,6 +590,7 @@ START_TEST(domdoc)
 
     test_domdoc();
     test_domnode();
+    test_refs();
 
     CoUninitialize();
 }

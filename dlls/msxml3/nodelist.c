@@ -191,6 +191,7 @@ static ULONG WINAPI xmlnodelist_Release(
     if ( ref == 0 )
     {
         free_xslt_info( &This->xinfo );
+        xmldoc_release( This->node->doc );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -373,6 +374,8 @@ static xmlnodelist *new_nodelist( xmlNodePtr node )
     nodelist->node = node;
     nodelist->current = node;
     xlst_info_init( &nodelist->xinfo );
+
+    xmldoc_add_ref( node->doc );
 
     return nodelist;
 }

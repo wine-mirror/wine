@@ -102,19 +102,8 @@ static ULONG WINAPI xmlnode_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        if( This->node->type == XML_DOCUMENT_NODE )
-        {
-            xmlFreeDoc( (xmlDocPtr) This->node );
-        }
-        else
-        {
-            IXMLDOMNode *root;
-            assert( This->node->doc );
-            root = This->node->doc->_private;
-            assert( root );
-            IXMLDOMNode_Release( root );
-            This->node->_private = NULL;
-        }
+        assert( This->node->doc );
+        xmldoc_release( This->node->doc );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -720,39 +709,21 @@ IXMLDOMNode *create_node( xmlNodePtr node )
 
     assert( node->doc );
 
-    /* if an interface already exists for this node, return it */
-    if ( node->_private )
-    {
-        IXMLDOMNode *n = node->_private;
-        IXMLDOMNode_AddRef( n );
-        return n;
-    }
-
-    /*
-     * Try adding a reference to the IXMLDOMNode implementation
-     * containing the document's root element.
-     */
-    if ( node->type != XML_DOCUMENT_NODE )
-    {
-        IXMLDOMNode *root = NULL;
-
-        root = node->doc->_private;
-        assert( root );
-        IXMLDOMNode_AddRef( root );
-    }
-    else
-        assert( node->doc == (xmlDocPtr) node );
-
     This = HeapAlloc( GetProcessHeap(), 0, sizeof *This );
     if ( !This )
         return NULL;
 
+    if ( node->type == XML_DOCUMENT_NODE )
+    {
+        assert( node->doc == (xmlDocPtr) node );
+        node->doc->_private = 0;
+    }
+
+    xmldoc_add_ref( node->doc );
+
     This->lpVtbl = &xmlnode_vtbl;
     This->ref = 1;
     This->node = node;
-
-    /* remember which interface we associated with this node */
-    node->_private = This;
 
     return (IXMLDOMNode*) &This->lpVtbl;
 }

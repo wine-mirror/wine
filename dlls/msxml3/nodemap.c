@@ -331,6 +331,7 @@ IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node )
     nodemap->ref = 1;
 
     IXMLDOMNode_AddRef( node );
+    /* Since we AddRef a node here, we don't need to call xmldoc_add_ref() */
 
     return (IXMLDOMNamedNodeMap*) &nodemap->lpVtbl;
 }
