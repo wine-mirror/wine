@@ -646,15 +646,58 @@ int types_print_type(const struct dbg_type* type, BOOL details)
     return TRUE;
 }
 
+/* helper to typecast pInfo to its expected type (_t) */
+#define X(_t) (*((_t*)pInfo))
+
 BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, void* pInfo)
 {
     if (type->id == dbg_itype_none) return FALSE;
     if (type->module != 0)
-        return SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, ti, pInfo);
+    {
+        DWORD ret, tag, bt;
+        ret = SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, ti, pInfo);
+        if (!ret &&
+            SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_SYMTAG, &tag) &&
+            tag == SymTagBaseType &&
+            SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_BASETYPE, &bt))
+        {
+            static const WCHAR voidW[] = {'v','o','i','d','\0'};
+            static const WCHAR charW[] = {'c','h','a','r','\0'};
+            static const WCHAR wcharW[] = {'W','C','H','A','R','\0'};
+            static const WCHAR intW[] = {'i','n','t','\0'};
+            static const WCHAR uintW[] = {'u','n','s','i','g','n','e','d',' ','i','n','t','\0'};
+            static const WCHAR floatW[] = {'f','l','o','a','t','\0'};
+            static const WCHAR boolW[] = {'b','o','o','l','\0'};
+            static const WCHAR longW[] = {'l','o','n','g',' ','i','n','t','\0'};
+            static const WCHAR ulongW[] = {'u','n','s','i','g','n','e','d',' ','l','o','n','g',' ','i','n','t','\0'};
+            static const WCHAR complexW[] = {'c','o','m','p','l','e','x','\0'};
+            const WCHAR* name = NULL;
+
+            switch (bt)
+            {
+            case btVoid:        name = voidW; break;
+            case btChar:        name = charW; break;
+            case btWChar:       name = wcharW; break;
+            case btInt:         name = intW; break;
+            case btUInt:        name = uintW; break;
+            case btFloat:       name = floatW; break;
+            case btBool:        name = boolW; break;
+            case btLong:        name = longW; break;
+            case btULong:       name = ulongW; break;
+            case btComplex:     name = complexW; break;
+            default:            WINE_FIXME("Unsupported basic type %ld\n", bt); return FALSE;
+            }
+            X(WCHAR*) = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name) + 1) * sizeof(WCHAR));
+            if (X(WCHAR*))
+            {
+                lstrcpyW(X(WCHAR*), name);
+                ret = TRUE;
+            }
+        }
+        return ret;
+    }
 
     assert(type->id >= dbg_itype_first);
-/* helper to typecast pInfo to its expected type (_t) */
-#define X(_t) (*((_t*)pInfo))
 
     switch (type->id)
     {
