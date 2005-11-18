@@ -77,6 +77,13 @@ inline static size_t get_req_data_size(void)
     return current->req.request_header.request_size;
 }
 
+/* get the request vararg as unicode string */
+inline static void get_req_unicode_str( struct unicode_str *str )
+{
+    str->str = get_req_data();
+    str->len = (get_req_data_size() / sizeof(WCHAR)) * sizeof(WCHAR);
+}
+
 /* get the reply maximum vararg size */
 inline static size_t get_reply_max_size(void)
 {

@@ -80,20 +80,20 @@ static const struct object_ops desktop_ops =
 #define DESKTOP_ALL_ACCESS 0x01ff
 
 /* create a winstation object */
-static struct winstation *create_winstation( const WCHAR *name, size_t len, unsigned int flags )
+static struct winstation *create_winstation( const struct unicode_str *name, unsigned int flags )
 {
     struct winstation *winstation;
 
     if (!winstation_namespace && !(winstation_namespace = create_namespace( 7 )))
         return NULL;
 
-    if (memchrW( name, '\\', len / sizeof(WCHAR) ))  /* no backslash allowed in name */
+    if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))  /* no backslash allowed in name */
     {
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
 
-    if ((winstation = create_named_object( winstation_namespace, &winstation_ops, name, len,
+    if ((winstation = create_named_object( winstation_namespace, &winstation_ops, name,
                                            OBJ_CASE_INSENSITIVE )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
@@ -142,14 +142,14 @@ struct winstation *get_process_winstation( struct process *process, unsigned int
 }
 
 /* build the full name of a desktop object */
-static WCHAR *build_desktop_name( const WCHAR *name, size_t len,
-                                  struct winstation *winstation, size_t *res_len )
+static WCHAR *build_desktop_name( const struct unicode_str *name,
+                                  struct winstation *winstation, struct unicode_str *res )
 {
     const WCHAR *winstation_name;
     WCHAR *full_name;
     size_t winstation_len;
 
-    if (memchrW( name, '\\', len / sizeof(WCHAR) ))
+    if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
@@ -158,11 +158,12 @@ static WCHAR *build_desktop_name( const WCHAR *name, size_t len,
     if (!(winstation_name = get_object_name( &winstation->obj, &winstation_len )))
         winstation_len = 0;
 
-    *res_len = winstation_len + len + sizeof(WCHAR);
-    if (!(full_name = mem_alloc( *res_len ))) return NULL;
+    res->len = winstation_len + name->len + sizeof(WCHAR);
+    if (!(full_name = mem_alloc( res->len ))) return NULL;
     memcpy( full_name, winstation_name, winstation_len );
     full_name[winstation_len / sizeof(WCHAR)] = '\\';
-    memcpy( full_name + winstation_len / sizeof(WCHAR) + 1, name, len );
+    memcpy( full_name + winstation_len / sizeof(WCHAR) + 1, name->str, name->len );
+    res->str = full_name;
     return full_name;
 }
 
@@ -174,16 +175,16 @@ inline static struct desktop *get_desktop_obj( struct process *process, obj_hand
 }
 
 /* create a desktop object */
-static struct desktop *create_desktop( const WCHAR *name, size_t len, unsigned int flags,
+static struct desktop *create_desktop( const struct unicode_str *name, unsigned int flags,
                                        struct winstation *winstation )
 {
     struct desktop *desktop;
+    struct unicode_str full_str;
     WCHAR *full_name;
-    size_t full_len;
 
-    if (!(full_name = build_desktop_name( name, len, winstation, &full_len ))) return NULL;
+    if (!(full_name = build_desktop_name( name, winstation, &full_str ))) return NULL;
 
-    if ((desktop = create_named_object( winstation_namespace, &desktop_ops, full_name, full_len,
+    if ((desktop = create_named_object( winstation_namespace, &desktop_ops, &full_str,
                                         OBJ_CASE_INSENSITIVE )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
@@ -238,7 +239,7 @@ struct desktop *get_thread_desktop( struct thread *thread, unsigned int access )
 }
 
 /* connect a process to its window station */
-void connect_process_winstation( struct process *process, const WCHAR *name, size_t len )
+void connect_process_winstation( struct process *process, const struct unicode_str *name )
 {
     struct winstation *winstation;
 
@@ -249,14 +250,15 @@ void connect_process_winstation( struct process *process, const WCHAR *name, siz
 
     if (name)
     {
-        winstation = create_winstation( name, len, 0 );
+        winstation = create_winstation( name, 0 );
     }
     else
     {
         if (!interactive_winstation)
         {
             static const WCHAR winsta0W[] = {'W','i','n','S','t','a','0'};
-            interactive_winstation = create_winstation( winsta0W, sizeof(winsta0W), 0 );
+            static const struct unicode_str winsta0 = { winsta0W, sizeof(winsta0W) };
+            interactive_winstation = create_winstation( &winsta0, 0 );
             winstation = interactive_winstation;
         }
         else winstation = (struct winstation *)grab_object( interactive_winstation );
@@ -270,7 +272,7 @@ void connect_process_winstation( struct process *process, const WCHAR *name, siz
 }
 
 /* connect a process to its main desktop */
-void connect_process_desktop( struct process *process, const WCHAR *name, size_t len )
+void connect_process_desktop( struct process *process, const struct unicode_str *name )
 {
     struct desktop *desktop;
     struct winstation *winstation;
@@ -280,13 +282,10 @@ void connect_process_desktop( struct process *process, const WCHAR *name, size_t
     if ((winstation = get_process_winstation( process, WINSTA_CREATEDESKTOP )))
     {
         static const WCHAR defaultW[] = {'D','e','f','a','u','l','t'};
+        static const struct unicode_str default_str = { defaultW, sizeof(defaultW) };
 
-        if (!name)
-        {
-            name = defaultW;
-            len = sizeof(defaultW);
-        }
-        if ((desktop = create_desktop( name, len, 0, winstation )))
+        if (!name) name = &default_str;
+        if ((desktop = create_desktop( name, 0, winstation )))
         {
             process->desktop = alloc_handle( process, desktop, DESKTOP_ALL_ACCESS, FALSE );
             release_object( desktop );
@@ -311,9 +310,11 @@ void close_thread_desktop( struct thread *thread )
 DECL_HANDLER(create_winstation)
 {
     struct winstation *winstation;
+    struct unicode_str name;
 
     reply->handle = 0;
-    if ((winstation = create_winstation( get_req_data(), get_req_data_size(), req->flags )))
+    get_req_unicode_str( &name );
+    if ((winstation = create_winstation( &name, req->flags )))
     {
         reply->handle = alloc_handle( current->process, winstation, req->access, req->inherit );
         release_object( winstation );
@@ -323,9 +324,11 @@ DECL_HANDLER(create_winstation)
 /* open a handle to a window station */
 DECL_HANDLER(open_winstation)
 {
+    struct unicode_str name;
+
+    get_req_unicode_str( &name );
     if (winstation_namespace)
-        reply->handle = open_object( winstation_namespace, get_req_data(), get_req_data_size(),
-                                     &winstation_ops, req->access,
+        reply->handle = open_object( winstation_namespace, &name, &winstation_ops, req->access,
                                      OBJ_CASE_INSENSITIVE | (req->inherit ? OBJ_INHERIT:0) );
     else
         set_error( STATUS_OBJECT_NAME_NOT_FOUND );
@@ -372,12 +375,13 @@ DECL_HANDLER(create_desktop)
 {
     struct desktop *desktop;
     struct winstation *winstation;
+    struct unicode_str name;
 
     reply->handle = 0;
+    get_req_unicode_str( &name );
     if ((winstation = get_process_winstation( current->process, WINSTA_CREATEDESKTOP )))
     {
-        if ((desktop = create_desktop( get_req_data(), get_req_data_size(),
-                                       req->flags, winstation )))
+        if ((desktop = create_desktop( &name, req->flags, winstation )))
         {
             reply->handle = alloc_handle( current->process, desktop, req->access, req->inherit );
             release_object( desktop );
@@ -390,17 +394,17 @@ DECL_HANDLER(create_desktop)
 DECL_HANDLER(open_desktop)
 {
     struct winstation *winstation;
+    struct unicode_str name;
 
+    get_req_unicode_str( &name );
     if ((winstation = get_process_winstation( current->process, 0 /* FIXME: access rights? */ )))
     {
-        size_t full_len;
+        struct unicode_str full_str;
         WCHAR *full_name;
 
-        if ((full_name = build_desktop_name( get_req_data(), get_req_data_size(),
-                                             winstation, &full_len )))
+        if ((full_name = build_desktop_name( &name, winstation, &full_str )))
         {
-            reply->handle = open_object( winstation_namespace, full_name, full_len,
-                                         &desktop_ops, req->access,
+            reply->handle = open_object( winstation_namespace, &full_str, &desktop_ops, req->access,
                                          OBJ_CASE_INSENSITIVE | (req->inherit ? OBJ_INHERIT:0) );
             free( full_name );
         }

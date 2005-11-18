@@ -521,11 +521,11 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
 }
 
 /* open a new handle to an existing object */
-obj_handle_t open_object( const struct namespace *namespace, const WCHAR *name, size_t len,
+obj_handle_t open_object( const struct namespace *namespace, const struct unicode_str *name,
                           const struct object_ops *ops, unsigned int access, unsigned int attr )
 {
     obj_handle_t handle = 0;
-    struct object *obj = find_object( namespace, name, len, attr );
+    struct object *obj = find_object( namespace, name, attr );
     if (obj)
     {
         if (ops && obj->ops != ops)

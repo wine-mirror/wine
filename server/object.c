@@ -98,14 +98,14 @@ static int get_name_hash( const struct namespace *namespace, const WCHAR *name, 
 }
 
 /* allocate a name for an object */
-static struct object_name *alloc_name( const WCHAR *name, size_t len )
+static struct object_name *alloc_name( const struct unicode_str *name )
 {
     struct object_name *ptr;
 
-    if ((ptr = mem_alloc( sizeof(*ptr) + len - sizeof(ptr->name) )))
+    if ((ptr = mem_alloc( sizeof(*ptr) + name->len - sizeof(ptr->name) )))
     {
-        ptr->len = len;
-        memcpy( ptr->name, name, len );
+        ptr->len = name->len;
+        memcpy( ptr->name, name->str, name->len );
     }
     return ptr;
 }
@@ -157,14 +157,14 @@ void *alloc_object( const struct object_ops *ops )
 }
 
 void *create_named_object( struct namespace *namespace, const struct object_ops *ops,
-                           const WCHAR *name, size_t len, unsigned int attributes )
+                           const struct unicode_str *name, unsigned int attributes )
 {
     struct object *obj;
     struct object_name *name_ptr;
 
-    if (!name || !len) return alloc_object( ops );
+    if (!name || !name->len) return alloc_object( ops );
 
-    if ((obj = find_object( namespace, name, len, attributes )))
+    if ((obj = find_object( namespace, name, attributes )))
     {
         if (obj->ops != ops)
         {
@@ -174,7 +174,7 @@ void *create_named_object( struct namespace *namespace, const struct object_ops 
         set_error( STATUS_OBJECT_NAME_COLLISION );
         return obj;
     }
-    if (!(name_ptr = alloc_name( name, len ))) return NULL;
+    if (!(name_ptr = alloc_name( name ))) return NULL;
     if ((obj = alloc_object( ops )))
     {
         set_object_name( namespace, obj, name_ptr );
@@ -225,25 +225,27 @@ void release_object( void *ptr )
 }
 
 /* find an object by its name; the refcount is incremented */
-struct object *find_object( const struct namespace *namespace, const WCHAR *name, size_t len,
+struct object *find_object( const struct namespace *namespace, const struct unicode_str *name,
                             unsigned int attributes )
 {
     const struct list *list, *p;
 
-    if (!name || !len) return NULL;
+    if (!name || !name->len) return NULL;
 
-    list = &namespace->names[ get_name_hash( namespace, name, len ) ];
+    list = &namespace->names[ get_name_hash( namespace, name->str, name->len ) ];
     LIST_FOR_EACH( p, list )
     {
         const struct object_name *ptr = LIST_ENTRY( p, const struct object_name, entry );
-        if (ptr->len != len) continue;
+        if (ptr->len != name->len) continue;
         if (attributes & OBJ_CASE_INSENSITIVE)
         {
-            if (!strncmpiW( ptr->name, name, len/sizeof(WCHAR) )) return grab_object( ptr->obj );
+            if (!strncmpiW( ptr->name, name->str, name->len/sizeof(WCHAR) ))
+                return grab_object( ptr->obj );
         }
         else
         {
-            if (!memcmp( ptr->name, name, len )) return grab_object( ptr->obj );
+            if (!memcmp( ptr->name, name->str, name->len ))
+                return grab_object( ptr->obj );
         }
     }
     return NULL;

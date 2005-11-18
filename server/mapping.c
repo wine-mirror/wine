@@ -270,7 +270,7 @@ inline static int get_file_size( struct file *file, file_pos_t *size )
     return 1;
 }
 
-static struct object *create_mapping( const WCHAR *name, size_t len, unsigned int attr,
+static struct object *create_mapping( const struct unicode_str *name, unsigned int attr,
                                       file_pos_t size, int protect, obj_handle_t handle )
 {
     struct mapping *mapping;
@@ -278,7 +278,7 @@ static struct object *create_mapping( const WCHAR *name, size_t len, unsigned in
 
     if (!page_mask) init_page_size();
 
-    if (!(mapping = create_named_object( sync_namespace, &mapping_ops, name, len, attr )))
+    if (!(mapping = create_named_object( sync_namespace, &mapping_ops, name, attr )))
         return NULL;
     if (get_error() == STATUS_OBJECT_NAME_COLLISION)
         return &mapping->obj;  /* Nothing else to do */
@@ -374,11 +374,12 @@ int get_page_size(void)
 DECL_HANDLER(create_mapping)
 {
     struct object *obj;
+    struct unicode_str name;
     file_pos_t size = ((file_pos_t)req->size_high << 32) | req->size_low;
 
     reply->handle = 0;
-    if ((obj = create_mapping( get_req_data(), get_req_data_size(), req->attributes,
-                               size, req->protect, req->file_handle )))
+    get_req_unicode_str( &name );
+    if ((obj = create_mapping( &name, req->attributes, size, req->protect, req->file_handle )))
     {
         reply->handle = alloc_handle( current->process, obj, req->access,
                                       req->attributes & OBJ_INHERIT );
@@ -389,8 +390,10 @@ DECL_HANDLER(create_mapping)
 /* open a handle to a mapping */
 DECL_HANDLER(open_mapping)
 {
-    reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
-                                 &mapping_ops, req->access, req->attributes );
+    struct unicode_str name;
+
+    get_req_unicode_str( &name );
+    reply->handle = open_object( sync_namespace, &name, &mapping_ops, req->access, req->attributes );
 }
 
 /* get a mapping information */

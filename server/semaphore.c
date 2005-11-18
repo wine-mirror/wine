@@ -59,7 +59,7 @@ static const struct object_ops semaphore_ops =
 };
 
 
-static struct semaphore *create_semaphore( const WCHAR *name, size_t len, unsigned int attr,
+static struct semaphore *create_semaphore( const struct unicode_str *name, unsigned int attr,
                                            unsigned int initial, unsigned int max )
 {
     struct semaphore *sem;
@@ -69,7 +69,7 @@ static struct semaphore *create_semaphore( const WCHAR *name, size_t len, unsign
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
-    if ((sem = create_named_object( sync_namespace, &semaphore_ops, name, len, attr )))
+    if ((sem = create_named_object( sync_namespace, &semaphore_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -145,10 +145,11 @@ static int semaphore_signal( struct object *obj, unsigned int access )
 DECL_HANDLER(create_semaphore)
 {
     struct semaphore *sem;
+    struct unicode_str name;
 
     reply->handle = 0;
-    if ((sem = create_semaphore( get_req_data(), get_req_data_size(), req->attributes,
-                                 req->initial, req->max )))
+    get_req_unicode_str( &name );
+    if ((sem = create_semaphore( &name, req->attributes, req->initial, req->max )))
     {
         reply->handle = alloc_handle( current->process, sem, req->access,
                                       req->attributes & OBJ_INHERIT );
@@ -159,8 +160,10 @@ DECL_HANDLER(create_semaphore)
 /* open a handle to a semaphore */
 DECL_HANDLER(open_semaphore)
 {
-    reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
-                                 &semaphore_ops, req->access, req->attributes );
+    struct unicode_str name;
+
+    get_req_unicode_str( &name );
+    reply->handle = open_object( sync_namespace, &name, &semaphore_ops, req->access, req->attributes );
 }
 
 /* release a semaphore */

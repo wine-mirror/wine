@@ -338,8 +338,8 @@ size_t init_process( struct thread *thread )
     }
 
     /* connect to the window station and desktop */
-    connect_process_winstation( process, NULL, 0 );
-    connect_process_desktop( process, NULL, 0 );
+    connect_process_winstation( process, NULL );
+    connect_process_desktop( process, NULL );
     thread->desktop = process->desktop;
 
     if (!info) return 0;
@@ -993,7 +993,7 @@ DECL_HANDLER(init_process_done)
     generate_startup_debug_events( process, req->entry );
     set_process_startup_state( process, STARTUP_DONE );
 
-    if (req->gui) process->idle_event = create_event( NULL, 0, 0, 1, 0 );
+    if (req->gui) process->idle_event = create_event( NULL, 0, 1, 0 );
     if (current->suspend + process->suspend > 0) stop_thread( current );
     if (process->debugger) set_process_debug_flag( process, 1 );
 }

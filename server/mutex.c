@@ -62,12 +62,11 @@ static const struct object_ops mutex_ops =
 };
 
 
-static struct mutex *create_mutex( const WCHAR *name, size_t len, unsigned int attr,
-                                   int owned )
+static struct mutex *create_mutex( const struct unicode_str *name, unsigned int attr, int owned )
 {
     struct mutex *mutex;
 
-    if ((mutex = create_named_object( sync_namespace, &mutex_ops, name, len, attr )))
+    if ((mutex = create_named_object( sync_namespace, &mutex_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -171,10 +170,11 @@ static void mutex_destroy( struct object *obj )
 DECL_HANDLER(create_mutex)
 {
     struct mutex *mutex;
+    struct unicode_str name;
 
     reply->handle = 0;
-    if ((mutex = create_mutex( get_req_data(), get_req_data_size(), req->attributes,
-                               req->owned )))
+    get_req_unicode_str( &name );
+    if ((mutex = create_mutex( &name, req->attributes, req->owned )))
     {
         reply->handle = alloc_handle( current->process, mutex, req->access,
                                       req->attributes & OBJ_INHERIT );
@@ -185,8 +185,10 @@ DECL_HANDLER(create_mutex)
 /* open a handle to a mutex */
 DECL_HANDLER(open_mutex)
 {
-    reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
-                                 &mutex_ops, req->access, req->attributes );
+    struct unicode_str name;
+
+    get_req_unicode_str( &name );
+    reply->handle = open_object( sync_namespace, &name, &mutex_ops, req->access, req->attributes );
 }
 
 /* release a mutex */

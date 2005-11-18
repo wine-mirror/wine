@@ -213,20 +213,20 @@ static void mailslot_queue_async( struct fd *fd, void *apc, void *user,
     fd_queue_async_timeout( fd, apc, user, iosb, type, count, timeout );
 }
 
-static struct mailslot *create_mailslot( const WCHAR *name, size_t len, unsigned int attr,
+static struct mailslot *create_mailslot( const struct unicode_str *name, unsigned int attr,
                                          int max_msgsize, int read_timeout )
 {
     struct mailslot *mailslot;
     int fds[2];
-    static const WCHAR slot[] = {'m','a','i','l','s','l','o','t','\\',0};
+    static const WCHAR slot[] = {'m','a','i','l','s','l','o','t','\\'};
 
-    if (( len <= strlenW( slot )) || strncmpiW( slot, name, strlenW( slot ) ))
+    if ((name->len <= sizeof(slot)) || strncmpiW( slot, name->str, sizeof(slot)/sizeof(WCHAR) ))
     {
         set_error( STATUS_OBJECT_NAME_INVALID );
         return NULL;
     }
 
-    mailslot = create_named_object( sync_namespace, &mailslot_ops, name, len, attr );
+    mailslot = create_named_object( sync_namespace, &mailslot_ops, name, attr );
     if (!mailslot)
         return NULL;
 
@@ -259,11 +259,11 @@ static struct mailslot *create_mailslot( const WCHAR *name, size_t len, unsigned
     return NULL;
 }
 
-static struct mailslot *open_mailslot( const WCHAR *name, size_t len, unsigned int attr )
+static struct mailslot *open_mailslot( const struct unicode_str *name, unsigned int attr )
 {
     struct object *obj;
 
-    obj = find_object( sync_namespace, name, len, attr );
+    obj = find_object( sync_namespace, name, attr );
     if (obj)
     {
         if (obj->ops == &mailslot_ops)
@@ -350,10 +350,11 @@ static struct mailslot *get_mailslot_obj( struct process *process, obj_handle_t 
 DECL_HANDLER(create_mailslot)
 {
     struct mailslot *mailslot;
+    struct unicode_str name;
 
     reply->handle = 0;
-    mailslot = create_mailslot( get_req_data(), get_req_data_size(), req->attributes,
-                                req->max_msgsize, req->read_timeout );
+    get_req_unicode_str( &name );
+    mailslot = create_mailslot( &name, req->attributes, req->max_msgsize, req->read_timeout );
     if (mailslot)
     {
         reply->handle = alloc_handle( current->process, mailslot,
@@ -367,8 +368,10 @@ DECL_HANDLER(create_mailslot)
 DECL_HANDLER(open_mailslot)
 {
     struct mailslot *mailslot;
+    struct unicode_str name;
 
     reply->handle = 0;
+    get_req_unicode_str( &name );
 
     if (!(req->sharing & FILE_SHARE_READ))
     {
@@ -376,7 +379,7 @@ DECL_HANDLER(open_mailslot)
         return;
     }
 
-    mailslot = open_mailslot( get_req_data(), get_req_data_size(), req->attributes );
+    mailslot = open_mailslot( &name, req->attributes );
     if (mailslot)
     {
         struct mail_writer *writer;

@@ -68,12 +68,12 @@ static const struct object_ops timer_ops =
 
 
 /* create a timer object */
-static struct timer *create_timer( const WCHAR *name, size_t len, unsigned int attr,
+static struct timer *create_timer( const struct unicode_str *name, unsigned int attr,
                                    int manual )
 {
     struct timer *timer;
 
-    if ((timer = create_named_object( sync_namespace, &timer_ops, name, len, attr )))
+    if ((timer = create_named_object( sync_namespace, &timer_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -204,9 +204,11 @@ static void timer_destroy( struct object *obj )
 DECL_HANDLER(create_timer)
 {
     struct timer *timer;
+    struct unicode_str name;
 
     reply->handle = 0;
-    if ((timer = create_timer( get_req_data(), get_req_data_size(), req->attributes, req->manual )))
+    get_req_unicode_str( &name );
+    if ((timer = create_timer( &name, req->attributes, req->manual )))
     {
         reply->handle = alloc_handle( current->process, timer, req->access,
                                       req->attributes & OBJ_INHERIT );
@@ -217,8 +219,10 @@ DECL_HANDLER(create_timer)
 /* open a handle to a timer */
 DECL_HANDLER(open_timer)
 {
-    reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
-                                 &timer_ops, req->access, req->attributes );
+    struct unicode_str name;
+
+    get_req_unicode_str( &name );
+    reply->handle = open_object( sync_namespace, &name, &timer_ops, req->access, req->attributes );
 }
 
 /* set a waitable timer */

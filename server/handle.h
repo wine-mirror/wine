@@ -28,6 +28,7 @@
 struct process;
 struct object_ops;
 struct namespace;
+struct unicode_str;
 
 /* handle functions */
 
@@ -43,7 +44,7 @@ extern int get_handle_unix_fd( struct process *process, obj_handle_t handle, uns
 extern int set_handle_unix_fd( struct process *process, obj_handle_t handle, int fd );
 extern obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, struct process *dst,
                                   unsigned int access, int inherit, int options );
-extern obj_handle_t open_object( const struct namespace *namespace, const WCHAR *name, size_t len,
+extern obj_handle_t open_object( const struct namespace *namespace, const struct unicode_str *name,
                                  const struct object_ops *ops, unsigned int access, unsigned int attr );
 extern obj_handle_t find_inherited_handle( struct process *process, const struct object_ops *ops );
 extern struct handle_table *alloc_handle_table( struct process *process, int count );

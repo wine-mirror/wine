@@ -147,8 +147,8 @@ extern void *get_class_client_ptr( struct window_class *class );
 
 extern struct winstation *get_process_winstation( struct process *process, unsigned int access );
 extern struct desktop *get_thread_desktop( struct thread *thread, unsigned int access );
-extern void connect_process_winstation( struct process *process, const WCHAR *name, size_t len );
-extern void connect_process_desktop( struct process *process, const WCHAR *name, size_t len );
+extern void connect_process_winstation( struct process *process, const struct unicode_str *name );
+extern void connect_process_desktop( struct process *process, const struct unicode_str *name );
 extern void close_thread_desktop( struct thread *thread );
 
 #endif  /* __WINE_SERVER_USER_H */

@@ -59,12 +59,12 @@ static const struct object_ops event_ops =
 };
 
 
-struct event *create_event( const WCHAR *name, size_t len, unsigned int attr,
+struct event *create_event( const struct unicode_str *name, unsigned int attr,
                             int manual_reset, int initial_state )
 {
     struct event *event;
 
-    if ((event = create_named_object( sync_namespace, &event_ops, name, len, attr )))
+    if ((event = create_named_object( sync_namespace, &event_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -145,10 +145,11 @@ static int event_signal( struct object *obj, unsigned int access )
 DECL_HANDLER(create_event)
 {
     struct event *event;
+    struct unicode_str name;
 
     reply->handle = 0;
-    if ((event = create_event( get_req_data(), get_req_data_size(), req->attributes,
-                               req->manual_reset, req->initial_state )))
+    get_req_unicode_str( &name );
+    if ((event = create_event( &name, req->attributes, req->manual_reset, req->initial_state )))
     {
         reply->handle = alloc_handle( current->process, event, req->access,
                                       req->attributes & OBJ_INHERIT );
@@ -159,8 +160,10 @@ DECL_HANDLER(create_event)
 /* open a handle to an event */
 DECL_HANDLER(open_event)
 {
-    reply->handle = open_object( sync_namespace, get_req_data(), get_req_data_size(),
-                                 &event_ops, req->access, req->attributes );
+    struct unicode_str name;
+
+    get_req_unicode_str( &name );
+    reply->handle = open_object( sync_namespace, &name, &event_ops, req->access, req->attributes );
 }
 
 /* do an event operation */
