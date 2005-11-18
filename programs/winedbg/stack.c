@@ -82,15 +82,20 @@ static BOOL stack_set_frame_internal(int newframe)
     return TRUE;
 }
 
+static BOOL stack_get_frame_internal(int nf, IMAGEHLP_STACK_FRAME* ihsf)
+{
+    ihsf->InstructionOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_pc);
+    ihsf->FrameOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_frame);
+    return TRUE;
+}
+
 BOOL stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf)
 {
     /*
      * If we don't have a valid backtrace, then just return.
      */
     if (dbg_curr_thread->frames == NULL) return FALSE;
-    ihsf->InstructionOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_pc);
-    ihsf->FrameOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_frame);
-    return TRUE;
+    return stack_get_frame_internal(dbg_curr_thread->curr_frame, ihsf);
 }
 
 BOOL stack_set_frame(int newframe)
@@ -166,6 +171,86 @@ unsigned stack_fetch_frames(void)
     return dbg_curr_thread->num_frames = nf;
 }
 
+struct sym_enum
+{
+    char*       tmp;
+    DWORD       frame;
+};
+
+static BOOL WINAPI sym_enum_cb(SYMBOL_INFO* sym_info, ULONG size, void* user)
+{
+    struct sym_enum*    se = (struct sym_enum*)user;
+    DWORD               addr;
+    unsigned            val;
+    long                offset;
+
+    if ((sym_info->Flags & (SYMFLAG_PARAMETER|SYMFLAG_FRAMEREL)) == (SYMFLAG_PARAMETER|SYMFLAG_FRAMEREL))
+    {
+        struct dbg_type     type;
+
+        if (se->tmp[0]) strcat(se->tmp, ", ");
+        addr = se->frame;
+        type.module = sym_info->ModBase;
+        type.id = sym_info->TypeIndex;
+        types_get_info(&type, TI_GET_OFFSET, &offset);
+        addr += offset;
+        if (dbg_read_memory((char*)addr, &val, sizeof(val)))
+            sprintf(se->tmp + strlen(se->tmp), "%s=0x%x", sym_info->Name, val);
+        else
+            sprintf(se->tmp + strlen(se->tmp), "%s=<\?\?\?>", sym_info->Name);
+    }
+    return TRUE;
+}
+
+static void stack_print_addr_and_args(int nf)
+{
+    char                        buffer[sizeof(SYMBOL_INFO) + 256];
+    SYMBOL_INFO*                si = (SYMBOL_INFO*)buffer;
+    IMAGEHLP_STACK_FRAME        ihsf;
+    IMAGEHLP_LINE               il;
+    IMAGEHLP_MODULE             im;
+    DWORD64                     disp64;
+
+    print_bare_address(&dbg_curr_thread->frames[nf].addr_pc);
+
+    stack_get_frame_internal(nf, &ihsf);
+
+    ihsf.InstructionOffset = (DWORD_PTR)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_pc);
+    ihsf.FrameOffset       = (DWORD_PTR)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_frame);
+
+    /* grab module where symbol is. If we don't have a module, we cannot print more */
+    im.SizeOfStruct = sizeof(im);
+    if (!SymGetModuleInfo(dbg_curr_process->handle, ihsf.InstructionOffset, &im))
+        return;
+
+    si->SizeOfStruct = sizeof(*si);
+    si->MaxNameLen   = 256;
+    if (SymFromAddr(dbg_curr_process->handle, ihsf.InstructionOffset, &disp64, si))
+    {
+        struct sym_enum se;
+        char            tmp[1024];
+        DWORD           disp;
+
+        dbg_printf(" %s", si->Name);
+        if (disp) dbg_printf("+0x%lx", (DWORD_PTR)disp64);
+
+        SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
+        se.tmp = tmp;
+        se.frame = ihsf.FrameOffset;
+        tmp[0] = '\0';
+        SymEnumSymbols(dbg_curr_process->handle, 0, NULL, sym_enum_cb, &se);
+        if (tmp[0]) dbg_printf("(%s)", tmp);
+
+        il.SizeOfStruct = sizeof(il);
+        if (SymGetLineFromAddr(dbg_curr_process->handle, ihsf.InstructionOffset,
+                               &disp, &il))
+            dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
+        dbg_printf(" in %s", im.ModuleName);
+    }
+    else dbg_printf(" in %s (+0x%lx)", 
+                    im.ModuleName, (DWORD_PTR)(ihsf.InstructionOffset - im.BaseOfImage));
+}
+
 /******************************************************************
  *		backtrace
  *
@@ -180,8 +265,7 @@ static unsigned backtrace(void)
     {
         dbg_printf("%s%d ", 
                    (nf == dbg_curr_thread->curr_frame ? "=>" : "  "), nf + 1);
-        print_addr_and_args(&dbg_curr_thread->frames[nf].addr_pc, 
-                            &dbg_curr_thread->frames[nf].addr_frame);
+        stack_print_addr_and_args(nf);
         dbg_printf(" (");
         print_bare_address(&dbg_curr_thread->frames[nf].addr_pc);
         dbg_printf(")\n");

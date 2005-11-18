@@ -333,7 +333,6 @@ extern void             memory_disassemble(const struct dbg_lvalue*, const struc
 extern BOOL             memory_disasm_one_insn(ADDRESS* addr);
 extern void             print_bare_address(const ADDRESS* addr);
 extern void             print_address(const ADDRESS* addr, BOOLEAN with_line);
-extern void             print_addr_and_args(const ADDRESS* pc, const ADDRESS* frame);
 extern void             print_basic(const struct dbg_lvalue* value, int count, char format);
 
   /* source.c */
