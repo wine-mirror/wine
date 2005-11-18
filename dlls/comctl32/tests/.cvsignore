@@ -1,6 +1,7 @@
 Makefile
 comboex.ok
 dpa.ok
+header.ok
 imagelist.ok
 mru.ok
 progress.ok

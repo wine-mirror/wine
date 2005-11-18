@@ -8,6 +8,7 @@ IMPORTS   = comctl32 ole32 shlwapi user32 gdi32 advapi32 kernel32
 CTESTS = \
 	comboex.c \
 	dpa.c \
+	header.c \
 	imagelist.c \
 	mru.c \
 	progress.c \
