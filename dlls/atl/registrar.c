@@ -125,7 +125,7 @@ static HRESULT get_word(LPCOLESTR *str, strbuf *buf)
         return S_OK;
     }
 
-    if(*iter == '{' || *iter == '}' || *iter == '=') {
+    if(*iter == '}' || *iter == '=') {
         strbuf_write(iter++, buf, 1);
     }else if(*iter == '\'') {
         iter2 = ++iter;
@@ -321,7 +321,7 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
             break;
         }
 
-        if(key_type != IS_VAL && key_type != DO_DELETE && *iter == '{') {
+        if(key_type != IS_VAL && key_type != DO_DELETE && *iter == '{' && isspaceW(iter[1])) {
             hres = get_word(&iter, buf);
             if(FAILED(hres))
                 break;
