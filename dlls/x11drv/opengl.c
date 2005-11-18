@@ -358,10 +358,14 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   ppfd->nVersion = 1;
 
   /* These flags are always the same... */
-  ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_GENERIC_ACCELERATED;
-  /* Now the flags extraced from the Visual */
+  ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
+  /* Now the flags extracted from the Visual */
 
   wine_tsx11_lock();
+
+  pglXGetFBConfigAttrib(gdi_display, cur, GLX_CONFIG_CAVEAT, &value);
+  if(value == GLX_SLOW_CONFIG)
+      ppfd->dwFlags |= PFD_GENERIC_ACCELERATED;
 
   pglXGetFBConfigAttrib(gdi_display, cur, GLX_DOUBLEBUFFER, &value); if (value) ppfd->dwFlags |= PFD_DOUBLEBUFFER;
   pglXGetFBConfigAttrib(gdi_display, cur, GLX_STEREO, &value); if (value) ppfd->dwFlags |= PFD_STEREO;
