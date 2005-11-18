@@ -500,11 +500,11 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
 	break;
 
     case SS_SIMPLE:
-	wFormat = DT_LEFT | DT_SINGLELINE | DT_VCENTER;
+        wFormat = DT_LEFT | DT_SINGLELINE;
 	break;
 
     case SS_LEFTNOWORDWRAP:
-	wFormat = DT_LEFT | DT_EXPANDTABS | DT_VCENTER;
+        wFormat = DT_LEFT | DT_EXPANDTABS;
 	break;
 
     default:
@@ -513,8 +513,8 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
 
     if (style & SS_NOPREFIX)
 	wFormat |= DT_NOPREFIX;
-    if (style & SS_CENTERIMAGE)
-	wFormat |= DT_VCENTER;
+    if ((style & SS_CENTERIMAGE) && (style & SS_TYPEMASK) != SS_SIMPLE)
+        wFormat |= DT_SINGLELINE | DT_VCENTER;
 
     if ((hFont = (HFONT)GetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET ))) SelectObject( hdc, hFont );
 
