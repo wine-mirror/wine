@@ -46,21 +46,21 @@ ULONG ldap_compareA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value )
 #ifdef HAVE_LDAP
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
 
-    ret = WLDAP32_LDAP_NO_MEMORY;
+    ret = ~0UL;
 
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_a(dn), debugstr_a(attr),
            debugstr_a(value) );
 
-    if (!ld) return ~0UL;
+    if (!ld || !attr) return ~0UL;
 
     if (dn) {
         dnW = strAtoW( dn );
         if (!dnW) goto exit;
     }
-    if (attr) {
-        attrW = strAtoW( attr );
-        if (!attrW) goto exit;
-    }
+
+    attrW = strAtoW( attr );
+    if (!attrW) goto exit;
+
     if (value) {
         valueW = strAtoW( value );
         if (!valueW) goto exit;
@@ -82,14 +82,15 @@ ULONG ldap_compareW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
+    struct berval val = { 0, NULL };
+    int msg;
 
-    ret = WLDAP32_LDAP_NO_MEMORY;
+    ret = ~0UL;
 
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_w(dn), debugstr_w(attr),
            debugstr_w(value) );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
-    if (!attr) return ~0UL;
+    if (!ld || !attr) return ~0UL;
 
     if (dn) {
         dnU = strWtoU( dn );
@@ -102,9 +103,17 @@ ULONG ldap_compareW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value )
     if (value) {
         valueU = strWtoU( value );
         if (!valueU) goto exit;
+
+        val.bv_len = strlen( valueU );
+        val.bv_val = valueU;
     }
 
-    ret = ldap_compare( ld, dn ? dnU : "", attrU, value ? valueU : "" );
+    ret = ldap_compare_ext( ld, dn ? dnU : "", attrU, &val, NULL, NULL, &msg );
+
+    if (ret == LDAP_SUCCESS)
+        ret = msg;
+    else
+        ret = ~0UL;
 
 exit:
     strfreeU( dnU );
@@ -175,7 +184,7 @@ ULONG ldap_compare_extW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value,
 #ifdef HAVE_LDAP
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
-    struct berval berval;
+    struct berval val = { 0, NULL };
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -198,9 +207,10 @@ ULONG ldap_compare_extW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value,
         if (value) {
             valueU = strWtoU( value );
             if (!valueU) goto exit;
+
+            val.bv_len = strlen( valueU );
+            val.bv_val = valueU;
         }
-        berval.bv_len = valueU ? strlen( valueU ) : 0;
-        berval.bv_val = valueU;
     }
     if (serverctrls) {
         serverctrlsU = controlarrayWtoU( serverctrls );
@@ -211,7 +221,7 @@ ULONG ldap_compare_extW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value,
         if (!clientctrlsU) goto exit;
     }
 
-    ret = ldap_compare_ext( ld, dn ? dnU : "", attrU, data ? (struct berval *)data : &berval,
+    ret = ldap_compare_ext( ld, dn ? dnU : "", attrU, data ? (struct berval *)data : &val,
                             serverctrlsU, clientctrlsU, (int *)message );
 
 exit:
@@ -281,9 +291,9 @@ ULONG ldap_compare_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR valu
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
-    struct berval berval;
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
+    struct berval val = { 0, NULL };
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -305,9 +315,10 @@ ULONG ldap_compare_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR valu
         if (value) {
             valueU = strWtoU( value );
             if (!valueU) goto exit;
+
+            val.bv_len = strlen( valueU );
+            val.bv_val = valueU;
         }
-        berval.bv_len = valueU ? strlen( valueU ) : 0;
-        berval.bv_val = valueU;
     }
     if (serverctrls) {
         serverctrlsU = controlarrayWtoU( serverctrls );
@@ -318,7 +329,7 @@ ULONG ldap_compare_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR valu
         if (!clientctrlsU) goto exit;
     }
 
-    ret = ldap_compare_ext_s( ld, dn ? dnU : "", attr ? attrU : "", data ? (struct berval *)data : &berval,
+    ret = ldap_compare_ext_s( ld, dn ? dnU : "", attr ? attrU : "", data ? (struct berval *)data : &val,
                               serverctrlsU, clientctrlsU );
 
 exit:
@@ -374,6 +385,7 @@ ULONG ldap_compare_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
+    struct berval val = { 0, NULL };
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -393,9 +405,12 @@ ULONG ldap_compare_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value )
     if (value) {
         valueU = strWtoU( value );
         if (!valueU) goto exit;
+
+        val.bv_len = strlen( valueU );
+        val.bv_val = valueU;
     }
 
-    ret = ldap_compare_s( ld, dn ? dnU : "", attr ? attrU : "", value ? valueU : "" );
+    ret = ldap_compare_ext_s( ld, dn ? dnU : "", attr ? attrU : "", &val, NULL, NULL );
 
 exit:
     strfreeU( dnU );

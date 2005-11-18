@@ -77,12 +77,15 @@ ULONG ldap_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *credU = NULL;
+    struct berval pwd = { 0, NULL };
+    int msg;
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %p, 0x%08lx)\n", ld, debugstr_w(dn), cred, method );
 
     if (!ld) return ~0UL;
+    if (method != LDAP_AUTH_SIMPLE) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn) {
         dnU = strWtoU( dn );
@@ -91,9 +94,17 @@ ULONG ldap_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
     if (cred) {
         credU = strWtoU( cred );
         if (!credU) goto exit;
+
+        pwd.bv_len = strlen( credU );
+        pwd.bv_val = credU;
     }
 
-    ret = ldap_bind( ld, dnU, credU, method );
+    ret = ldap_sasl_bind( ld, dnU, LDAP_SASL_SIMPLE, &pwd, NULL, NULL, &msg );
+
+    if (ret == LDAP_SUCCESS)
+        ret = msg;
+    else
+        ret = ~0UL;
 
 exit:
     strfreeU( dnU );
@@ -139,12 +150,14 @@ ULONG ldap_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *credU = NULL;
+    struct berval pwd = { 0, NULL };
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
     TRACE( "(%p, %s, %p, 0x%08lx)\n", ld, debugstr_w(dn), cred, method );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (method != LDAP_AUTH_SIMPLE) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn) {
         dnU = strWtoU( dn );
@@ -153,9 +166,12 @@ ULONG ldap_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
     if (cred) {
         credU = strWtoU( cred );
         if (!credU) goto exit;
+
+        pwd.bv_len = strlen( credU );
+        pwd.bv_val = credU;
     }
 
-    ret = ldap_bind_s( ld, dnU, credU, method );
+    ret = ldap_sasl_bind_s( ld, dnU, LDAP_SASL_SIMPLE, &pwd, NULL, NULL, NULL );
 
 exit:
     strfreeU( dnU );
@@ -379,6 +395,8 @@ ULONG ldap_simple_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *passwdU = NULL;
+    struct berval pwd = { 0, NULL };
+    int msg;
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -393,9 +411,17 @@ ULONG ldap_simple_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
     if (passwd) {
         passwdU = strWtoU( passwd );
         if (!passwdU) goto exit;
+
+        pwd.bv_len = strlen( passwdU );
+        pwd.bv_val = passwdU;
     }
 
-    ret = ldap_simple_bind( ld, dnU, passwdU );
+    ret = ldap_sasl_bind( ld, dnU, LDAP_SASL_SIMPLE, &pwd, NULL, NULL, &msg );
+
+    if (ret == LDAP_SUCCESS)
+        ret = msg;
+    else
+        ret = ~0UL;
 
 exit:
     strfreeU( dnU );
@@ -441,6 +467,7 @@ ULONG ldap_simple_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *dnU = NULL, *passwdU = NULL;
+    struct berval pwd = { 0, NULL };
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -455,9 +482,12 @@ ULONG ldap_simple_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
     if (passwd) {
         passwdU = strWtoU( passwd );
         if (!passwdU) goto exit;
+
+        pwd.bv_len = strlen( passwdU );
+        pwd.bv_val = passwdU;
     }
 
-    ret = ldap_simple_bind_s( ld, dnU, passwdU );
+    ret = ldap_sasl_bind_s( ld, dnU, LDAP_SASL_SIMPLE, &pwd, NULL, NULL, NULL );
 
 exit:
     strfreeU( dnU );
@@ -475,7 +505,7 @@ ULONG WLDAP32_ldap_unbind( WLDAP32_LDAP *ld )
     TRACE( "(%p)\n", ld );
 
     if (ld)
-        ret = ldap_unbind( ld );
+        ret = ldap_unbind_ext( ld, NULL, NULL );
     else
         ret = WLDAP32_LDAP_PARAM_ERROR;
 
@@ -491,7 +521,7 @@ ULONG WLDAP32_ldap_unbind_s( WLDAP32_LDAP *ld )
     TRACE( "(%p)\n", ld );
 
     if (ld)
-        ret = ldap_unbind_s( ld );
+        ret = ldap_unbind_ext_s( ld, NULL, NULL );
     else
         ret = WLDAP32_LDAP_PARAM_ERROR;
 

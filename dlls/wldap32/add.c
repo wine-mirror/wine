@@ -79,6 +79,7 @@ ULONG ldap_addW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
 #ifdef HAVE_LDAP
     char *dnU = NULL;
     LDAPMod **attrsU = NULL;
+    int msg;
  
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -95,7 +96,12 @@ ULONG ldap_addW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
         if (!attrsU) goto exit;
     }
 
-    ret = ldap_add( ld, dn ? dnU : "", attrs ? attrsU : nullattrs );
+    ret = ldap_add_ext( ld, dn ? dnU : "", attrs ? attrsU : nullattrs, NULL, NULL, &msg );
+
+    if (ret == LDAP_SUCCESS)
+        ret = msg;
+    else
+        ret = ~0UL;
 
 exit:
     strfreeU( dnU );
@@ -119,7 +125,7 @@ ULONG ldap_add_extA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[],
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn), attrs,
            serverctrls, clientctrls, message );
 
-    if (!ld) return ~0UL;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn) {
         dnW = strAtoW( dn );
@@ -165,8 +171,7 @@ ULONG ldap_add_extW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[],
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn), attrs,
            serverctrls, clientctrls, message );
 
-    if (!ld) return ~0UL;
-    if (!attrs) return LDAP_PROTOCOL_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn) {
         dnU = strWtoU( dn );
@@ -185,7 +190,7 @@ ULONG ldap_add_extW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[],
         if (!clientctrlsU) goto exit;
     }
 
-    ret = ldap_add_ext( ld, dn ? dnU : "", attrs? attrsU : nullattrs, serverctrlsU,
+    ret = ldap_add_ext( ld, dn ? dnU : "", attrs ? attrsU : nullattrs, serverctrlsU,
                         clientctrlsU, message ? (int *)message : &dummy );
 
 exit:
@@ -344,7 +349,7 @@ ULONG ldap_add_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
         if (!attrsU) goto exit;
     }
 
-    ret = ldap_add_s( ld, dn ? dnU : "", attrs ? attrsU : nullattrs );
+    ret = ldap_add_ext_s( ld, dn ? dnU : "", attrs ? attrsU : nullattrs, NULL, NULL );
 
 exit:
     strfreeU( dnU );
