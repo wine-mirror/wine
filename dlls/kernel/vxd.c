@@ -201,7 +201,7 @@ HANDLE VXD_Open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa )
     strlwrW( name );
     p = strchrW( name, '.' );
     if (!p) strcatW( name, dotVxDW );
-    else if (strcmpW( p, dotVxDW ))  /* existing extension has to be .vxd */
+    else if (strcmpiW( p, dotVxDW ))  /* existing extension has to be .vxd */
     {
         SetLastError( ERROR_FILE_NOT_FOUND );
         return 0;
