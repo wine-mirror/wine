@@ -168,6 +168,13 @@ struct dbg_thread
     struct dbg_thread*   	prev;
     BOOL                        in_exception;   /* TRUE if thread stopped with an exception */
     EXCEPTION_RECORD            excpt_record;   /* only valid when in_exception is TRUE */
+    struct
+    {
+        ADDRESS                 addr_pc;
+        ADDRESS                 addr_frame;
+    }*                          frames;
+    int                         num_frames;
+    int                         curr_frame;
 };
 
 struct dbg_delayed_bp
@@ -214,7 +221,6 @@ extern	struct dbg_thread*	dbg_curr_thread;
 extern	DWORD		        dbg_curr_tid;
 extern  CONTEXT 	        dbg_context;
 extern  BOOL                    dbg_interactiveP;
-extern  int                     dbg_curr_frame;
 
 struct dbg_internal_var
 {
@@ -339,9 +345,11 @@ extern void             source_nuke_path(void);
 
   /* stack.c */
 extern void             stack_info(void);
-extern void             stack_backtrace(DWORD threadID, BOOL noisy);
-extern int              stack_set_frame(int newframe);
+extern void             stack_backtrace(DWORD threadID);
+extern BOOL             stack_set_frame(int newframe);
 extern BOOL             stack_get_frame(SYMBOL_INFO* sym, IMAGEHLP_STACK_FRAME* ihsf);
+extern BOOL             stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf);
+extern unsigned         stack_fetch_frames(void);
 
   /* symbol.c */
 extern enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno, struct dbg_lvalue* addr, BOOL bp_disp);

@@ -120,13 +120,13 @@ command:
     | tNEXTI tNUM               { dbg_wait_next_exception(DBG_CONTINUE, $2, dbg_exec_step_over_insn); }
     | tFINISH     	       	{ dbg_wait_next_exception(DBG_CONTINUE, 0,  dbg_exec_finish); }
     | tABORT                   	{ abort(); }
-    | tBACKTRACE     	       	{ stack_backtrace(dbg_curr_tid, TRUE); }
-    | tBACKTRACE tNUM          	{ stack_backtrace($2, TRUE); }
-    | tBACKTRACE tALL           { stack_backtrace(-1, TRUE); }
-    | tUP     		       	{ stack_set_frame(dbg_curr_frame + 1);  }
-    | tUP tNUM     	       	{ stack_set_frame(dbg_curr_frame + $2); }
-    | tDOWN     	       	{ stack_set_frame(dbg_curr_frame - 1);  }
-    | tDOWN tNUM     	       	{ stack_set_frame(dbg_curr_frame - $2); }
+    | tBACKTRACE     	       	{ stack_backtrace(dbg_curr_tid); }
+    | tBACKTRACE tNUM          	{ stack_backtrace($2); }
+    | tBACKTRACE tALL           { stack_backtrace(-1); }
+    | tUP     		       	{ stack_set_frame(dbg_curr_thread->curr_frame + 1);  }
+    | tUP tNUM     	       	{ stack_set_frame(dbg_curr_thread->curr_frame + $2); }
+    | tDOWN     	       	{ stack_set_frame(dbg_curr_thread->curr_frame - 1);  }
+    | tDOWN tNUM     	       	{ stack_set_frame(dbg_curr_thread->curr_frame - $2); }
     | tFRAME tNUM              	{ stack_set_frame($2); }
     | tSHOW tDIR     	       	{ source_show_path(); }
     | tDIR pathname            	{ source_add_path($2); }
@@ -276,7 +276,7 @@ maintenance_command:
 
 noprocess_state:
       tNOPROCESS                 {} /* <CR> shall not barf anything */
-    | tNOPROCESS tBACKTRACE tALL { stack_backtrace(-1, TRUE); } /* can backtrace all threads with no attached process */
+    | tNOPROCESS tBACKTRACE tALL { stack_backtrace(-1); } /* can backtrace all threads with no attached process */
     | tNOPROCESS tSTRING         { dbg_printf("No process loaded, cannot execute '%s'\n", $2); }
     ;
 

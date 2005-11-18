@@ -94,7 +94,7 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     {
         const struct dbg_internal_var*  div;
 
-        if (dbg_curr_frame != 0)
+        if (dbg_curr_thread->curr_frame != 0)
         {
             dbg_printf(" %s (register): << cannot display, not in correct frame\n",
                        sym->Name);
@@ -570,7 +570,7 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     {
         const struct dbg_internal_var*  div;
 
-        if (dbg_curr_frame != 0)
+        if (dbg_curr_thread->curr_frame != 0)
         {
             dbg_printf(" %s (register): << cannot display, not in correct frame\n",
                        sym->Name);

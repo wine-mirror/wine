@@ -33,9 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
-static int                      nframe;
-static IMAGEHLP_STACK_FRAME*    frames = NULL;
-
 /***********************************************************************
  *           stack_info
  *
@@ -67,16 +64,41 @@ void stack_info(void)
     }
 }
 
-int stack_set_frame(int newframe)
+static BOOL stack_set_frame_internal(int newframe)
+{
+    if (newframe >= dbg_curr_thread->num_frames)
+        newframe = dbg_curr_thread->num_frames - 1;
+    if (newframe < 0)
+        newframe = 0;
+
+    if (dbg_curr_thread->curr_frame != newframe)
+    {
+        IMAGEHLP_STACK_FRAME    ihsf;
+
+        dbg_curr_thread->curr_frame = newframe;
+        stack_get_current_frame(&ihsf);
+        SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
+    }
+    return TRUE;
+}
+
+BOOL stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf)
+{
+    /*
+     * If we don't have a valid backtrace, then just return.
+     */
+    if (dbg_curr_thread->frames == NULL) return FALSE;
+    ihsf->InstructionOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_pc);
+    ihsf->FrameOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_frame);
+    return TRUE;
+}
+
+BOOL stack_set_frame(int newframe)
 {
     ADDRESS     addr;
-
-    dbg_curr_frame = newframe;
-    if (dbg_curr_frame >= nframe) dbg_curr_frame = nframe - 1;
-    if (dbg_curr_frame < 0)       dbg_curr_frame = 0;
-
+    if (!stack_set_frame_internal(newframe)) return FALSE;
     addr.Mode = AddrModeFlat;
-    addr.Offset = frames[dbg_curr_frame].InstructionOffset;
+    addr.Offset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_pc);
     source_list_from_addr(&addr, 0);
     return TRUE;
 }
@@ -87,29 +109,35 @@ BOOL stack_get_frame(SYMBOL_INFO* symbol, IMAGEHLP_STACK_FRAME* ihsf)
     /*
      * If we don't have a valid backtrace, then just return.
      */
-    if (frames == NULL) return FALSE;
+    if (dbg_curr_thread->frames == NULL) return FALSE;
 
     /*
      * If we don't know what the current function is, then we also have
      * nothing to report here.
      */
-    if (!SymFromAddr(dbg_curr_process->handle, frames[dbg_curr_frame].InstructionOffset,
+    if (!SymFromAddr(dbg_curr_process->handle,
+                     (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_pc),
                      &disp, symbol))
         return FALSE;
-    if (ihsf) *ihsf = frames[dbg_curr_frame];
+    if (ihsf && !stack_get_current_frame(ihsf)) return FALSE;
 
     return TRUE;
 }
 
 /******************************************************************
- *		backtrace
+ *		stack_fetch_frames
  *
  * Do a backtrace on the the current thread
  */
-static unsigned backtrace(BOOL with_frames, BOOL noisy)
+unsigned stack_fetch_frames(void)
 {
     STACKFRAME  sf;
     unsigned    nf = 0;
+
+    HeapFree(GetProcessHeap(), 0, dbg_curr_thread->frames);
+    dbg_curr_thread->frames = NULL;
+    dbg_curr_thread->num_frames = 0;
+    dbg_curr_thread->curr_frame = 0;
 
     memset(&sf, 0, sizeof(sf));
     memory_get_current_frame(&sf.AddrFrame);
@@ -122,33 +150,41 @@ static unsigned backtrace(BOOL with_frames, BOOL noisy)
         sf.AddrFrame.Mode = AddrModeFlat;
     }
 
-    if (noisy) dbg_printf("Backtrace:\n");
     while (StackWalk(IMAGE_FILE_MACHINE_I386, dbg_curr_process->handle, 
                      dbg_curr_thread->handle, &sf, &dbg_context, NULL,
                      SymFunctionTableAccess, SymGetModuleBase, NULL))
     {
-        if (with_frames)
-        {
-            frames = dbg_heap_realloc(frames, 
-                                      (nf + 1) * sizeof(IMAGEHLP_STACK_FRAME));
+        dbg_curr_thread->frames = dbg_heap_realloc(dbg_curr_thread->frames, 
+                                                   (nf + 1) * sizeof(dbg_curr_thread->frames[0]));
 
-            frames[nf].InstructionOffset = (unsigned long)memory_to_linear_addr(&sf.AddrPC);
-            frames[nf].FrameOffset = (unsigned long)memory_to_linear_addr(&sf.AddrFrame);
-        }
-        if (noisy)
-        {
-            dbg_printf("%s%d ", 
-                       (with_frames && nf == dbg_curr_frame ? "=>" : "  "),
-                       nf + 1);
-            print_addr_and_args(&sf.AddrPC, &sf.AddrFrame);
-            dbg_printf(" (");
-            print_bare_address(&sf.AddrFrame);
-            dbg_printf(")\n");
-        }
+        dbg_curr_thread->frames[nf].addr_pc = sf.AddrPC;
+        dbg_curr_thread->frames[nf].addr_frame = sf.AddrFrame;
         nf++;
         /* we've probably gotten ourselves into an infinite loop so bail */
-        if (nf > 200)
-            break;
+        if (nf > 200) break;
+    }
+    return dbg_curr_thread->num_frames = nf;
+}
+
+/******************************************************************
+ *		backtrace
+ *
+ * Do a backtrace on the the current thread
+ */
+static unsigned backtrace(void)
+{
+    unsigned    nf = 0;
+
+    dbg_printf("Backtrace:\n");
+    for (nf = 0; nf < dbg_curr_thread->num_frames; nf++)
+    {
+        dbg_printf("%s%d ", 
+                   (nf == dbg_curr_thread->curr_frame ? "=>" : "  "), nf + 1);
+        print_addr_and_args(&dbg_curr_thread->frames[nf].addr_pc, 
+                            &dbg_curr_thread->frames[nf].addr_frame);
+        dbg_printf(" (");
+        print_bare_address(&dbg_curr_thread->frames[nf].addr_pc);
+        dbg_printf(")\n");
     }
     return nf;
 }
@@ -159,7 +195,7 @@ static unsigned backtrace(BOOL with_frames, BOOL noisy)
  * Do a backtrace on a thread from its process and its identifier
  * (preserves current thread and context information)
  */
-static void backtrace_tid(struct dbg_process* pcs, DWORD tid, BOOL noisy)
+static void backtrace_tid(struct dbg_process* pcs, DWORD tid)
 {
     struct dbg_thread*  thread = dbg_curr_thread;
 
@@ -179,7 +215,7 @@ static void backtrace_tid(struct dbg_process* pcs, DWORD tid, BOOL noisy)
                 dbg_printf("Can't get context for thread 0x%lx in current process\n",
                            tid);
             }
-            else backtrace(FALSE, noisy);
+            else backtrace();
             ResumeThread(dbg_curr_thread->handle);
         }
         else dbg_printf("Can't suspend thread 0x%lx in current process\n", tid);
@@ -228,7 +264,7 @@ static void backtrace_all(void)
 
             dbg_printf("\nBacktracing for thread 0x%lx in process 0x%lx (%s):\n",
                        entry.th32ThreadID, dbg_curr_pid, dbg_curr_process->imageName);
-            backtrace_tid(dbg_curr_process, entry.th32ThreadID, TRUE);
+            backtrace_tid(dbg_curr_process, entry.th32ThreadID);
         }
         while (Thread32Next(snapshot, &entry));
 
@@ -238,7 +274,7 @@ static void backtrace_all(void)
     CloseHandle(snapshot);
 }
 
-void stack_backtrace(DWORD tid, BOOL noisy)
+void stack_backtrace(DWORD tid)
 {
     /* backtrace every thread in every process except the debugger itself,
      * invoking via "bt all"
@@ -253,12 +289,10 @@ void stack_backtrace(DWORD tid, BOOL noisy)
     
     if (tid == dbg_curr_tid)
     {
-        HeapFree(GetProcessHeap(), 0, frames);
-        frames = NULL;
-        nframe = backtrace(TRUE, noisy);
+        backtrace();
     }
     else
     {
-        backtrace_tid(dbg_curr_process, tid, noisy);
+        backtrace_tid(dbg_curr_process, tid);
     }
 }

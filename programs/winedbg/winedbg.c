@@ -94,7 +94,6 @@ struct dbg_thread*	dbg_curr_thread = NULL;
 DWORD		        dbg_curr_tid;
 DWORD		        dbg_curr_pid;
 CONTEXT                 dbg_context;
-int 		        dbg_curr_frame = 0;
 BOOL    	        dbg_interactiveP = FALSE;
 static char*	        dbg_last_cmd_line = NULL;
 
@@ -396,6 +395,9 @@ struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
     t->step_over_bp.enabled = FALSE;
     t->step_over_bp.refcount = 0;
     t->in_exception = FALSE;
+    t->frames = NULL;
+    t->num_frames = 0;
+    t->curr_frame = -1;
 
     snprintf(t->name, sizeof(t->name), "0x%08lx", tid);
 
@@ -428,6 +430,7 @@ static void dbg_init_current_thread(void* start)
 
 void dbg_del_thread(struct dbg_thread* t)
 {
+    HeapFree(GetProcessHeap(), 0, t->frames);
     if (t->prev) t->prev->next = t->next;
     if (t->next) t->next->prev = t->prev;
     if (t == t->process->threads) t->process->threads = t->next;
@@ -538,7 +541,7 @@ static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
      * Do a quiet backtrace so that we have an idea of what the situation
      * is WRT the source files.
      */
-    stack_backtrace(dbg_curr_tid, FALSE);
+    stack_fetch_frames();
     if (is_debug &&
 	break_should_continue(&addr, rec->ExceptionCode, &dbg_curr_thread->exec_count, &is_break))
 	return FALSE;
@@ -566,7 +569,7 @@ static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
 	be_cpu->print_context(dbg_curr_thread->handle, &dbg_context);
 	stack_info();
         be_cpu->print_segment_info(dbg_curr_thread->handle, &dbg_context);
-	stack_backtrace(dbg_curr_tid, TRUE);
+	stack_backtrace(dbg_curr_tid);
     }
     else
     {
@@ -603,7 +606,7 @@ static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
     {
         ADDRESS tmp = addr;
         /* Show where we crashed */
-        dbg_curr_frame = 0;
+        stack_set_frame(0);
         memory_disasm_one_insn(&tmp);
     }
     source_list_from_addr(&addr, 0);
