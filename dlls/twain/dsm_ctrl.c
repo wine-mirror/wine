@@ -146,16 +146,24 @@ TW_UINT16 TWAIN_IdentityGetFirst (pTW_IDENTITY pOrigin, TW_MEMREF pData)
     {
         if (device_list[0])
         {
+            TRACE("got: %s, %s, %s\n", device_list[0]->name, device_list[0]->vendor, device_list[0]->model);
             pSourceIdentity->Id = DSM_sourceId ++;
             strcpy (pSourceIdentity->ProductName, device_list[0]->name);
             strcpy (pSourceIdentity->Manufacturer, device_list[0]->vendor);
             strcpy (pSourceIdentity->ProductFamily, device_list[0]->model);
             pSourceIdentity->ProtocolMajor = TWON_PROTOCOLMAJOR;
             pSourceIdentity->ProtocolMinor = TWON_PROTOCOLMINOR;
+
+            DSM_currentDevice = 1;
+            twRC = TWRC_SUCCESS;
+            DSM_twCC = TWCC_SUCCESS;
         }
-        DSM_currentDevice = 1;
-        twRC = TWRC_SUCCESS;
-        DSM_twCC = TWCC_SUCCESS;
+        else
+        {
+            TRACE("got empty device list\n");
+            twRC = TWRC_FAILURE;
+            DSM_twCC = TWCC_NODS;
+        }
     }
     else if (status == SANE_STATUS_NO_MEM)
     {
