@@ -971,9 +971,11 @@ static void test_UninstallColorProfileW(void)
     if (testprofileW)
     {
         WCHAR dest[MAX_PATH], base[MAX_PATH];
+        char destA[MAX_PATH];
         DWORD size = sizeof(dest);
         WCHAR slash[] = { '\\', 0 };
         HANDLE handle;
+        int bytes_copied;
 
         ret = pInstallColorProfileW( NULL, testprofileW );
         ok( ret, "InstallColorProfileW() failed (%ld)\n", GetLastError() );
@@ -989,8 +991,10 @@ static void test_UninstallColorProfileW(void)
         ret = pUninstallColorProfileW( NULL, dest, TRUE );
         ok( ret, "UninstallColorProfileW() failed (%ld)\n", GetLastError() );
 
+        bytes_copied = WideCharToMultiByte(CP_ACP, 0, dest, -1, destA, MAX_PATH, NULL, NULL);
+        ok( bytes_copied > 0 , "WideCharToMultiByte() returns %d\n", bytes_copied);
         /* Check if the profile is really gone */
-        handle = CreateFileW( dest, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
+        handle = CreateFileA( destA, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
         ok( handle == INVALID_HANDLE_VALUE, "Found the profile (%ld)\n", GetLastError() );
         CloseHandle( handle );
     }
@@ -1004,6 +1008,7 @@ START_TEST(profile)
     char profilefile1[MAX_PATH], profilefile2[MAX_PATH];
     WCHAR profilefile1W[MAX_PATH], profilefile2W[MAX_PATH];
     WCHAR fileW[MAX_PATH];
+    UINT ret;
 
     hmscms = LoadLibraryA( "mscms.dll" );
     if (!hmscms) return;
@@ -1015,8 +1020,16 @@ START_TEST(profile)
     }
 
     /* See if we can find the standard color profile */
-    GetSystemDirectoryA( profilefile1, sizeof(profilefile1) );
-    GetSystemDirectoryW( profilefile1W, sizeof(profilefile1W) / sizeof(WCHAR) );
+    ret = GetSystemDirectoryA( profilefile1, sizeof(profilefile1) );
+    ok( ret > 0, "GetSystemDirectoryA() returns %d, LastError = %ld\n", ret, GetLastError());
+    ok( lstrlenA(profilefile1) > 0 && lstrlenA(profilefile1) < MAX_PATH, 
+        "GetSystemDirectoryA() returns %d, LastError = %ld\n", ret, GetLastError());
+    MultiByteToWideChar(CP_ACP, 0, profilefile1, -1, profilefile1W, MAX_PATH);
+    ok( lstrlenW(profilefile1W) > 0 && lstrlenW(profilefile1W) < MAX_PATH, 
+        "GetSystemDirectoryA() returns %d, LastError = %ld\n", ret, GetLastError());
+    lstrcpyA(profilefile2, profilefile1);
+    lstrcpyW(profilefile2W, profilefile1W);
+
     lstrcatA( profilefile1, profile1 );
     lstrcatW( profilefile1W, profile1W );
     handle = CreateFileA( profilefile1, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
@@ -1028,8 +1041,6 @@ START_TEST(profile)
         CloseHandle( handle );
     }
 
-    GetSystemDirectoryA( profilefile2, sizeof(profilefile2) );
-    GetSystemDirectoryW( profilefile2W, sizeof(profilefile2W) / sizeof(WCHAR) );
     lstrcatA( profilefile2, profile2 );
     lstrcatW( profilefile2W, profile2W );
     handle = CreateFileA( profilefile2, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
