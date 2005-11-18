@@ -67,7 +67,8 @@ static BOOL symbol_get_debug_start(DWORD mod_base, DWORD typeid, ULONG64* start)
 struct sgv_data
 {
 #define NUMDBGV                 100
-    struct {
+    struct
+    {
         /* FIXME: NUMDBGV should be made variable */
         struct dbg_lvalue               lvalue;
         DWORD                           flags;
@@ -79,7 +80,7 @@ struct sgv_data
     int                         lineno;         /* in (opt): line number in filename where to look up symbol */
     unsigned                    bp_disp : 1,    /* in      : whether if we take into account func address or func first displayable insn */
                                 do_thunks : 1;  /* in      : whether we return thunks tags */
-    IMAGEHLP_STACK_FRAME        ihsf;           /* in      : frame for local & parameter variables look up */
+    ULONG64                     frame_offset;   /* in      : frame for local & parameter variables look up */
 };
 
 static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
@@ -109,15 +110,9 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
         addr = (ULONG64)(DWORD_PTR)div->pval;
         cookie = DLV_HOST;
     }
-    else if (sym->Flags & SYMFLAG_FRAMEREL)
+    else if (sym->Flags & SYMFLAG_LOCAL) /* covers both local & parameters */
     {
-        ULONG   offset;
-        struct dbg_type type;
-
-        type.module = sym->ModBase;
-        type.id = sym->TypeIndex;
-        types_get_info(&type, TI_GET_OFFSET, &offset);
-        addr = sgv->ihsf.FrameOffset + offset;
+        addr = sgv->frame_offset + sym->Address;
     }
     else if (sym->Flags & SYMFLAG_THUNK)
     {
@@ -168,13 +163,14 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
                    sgv->name, NUMDBGV);
         return FALSE;
     }
-    WINE_TRACE("==> %s %s%s%s%s%s%s\n", 
+    WINE_TRACE("==> %s %s%s%s%s%s%s%s\n", 
                sym->Name, 
                (sym->Flags & SYMFLAG_FUNCTION) ? "func " : "",
                (sym->Flags & SYMFLAG_FRAMEREL) ? "framerel " : "",
                (sym->Flags & SYMFLAG_REGISTER) ? "register " : "",
                (sym->Flags & SYMFLAG_REGREL) ? "regrel " : "",
                (sym->Flags & SYMFLAG_PARAMETER) ? "param " : "",
+               (sym->Flags & SYMFLAG_LOCAL) ? "local " : "",
                (sym->Flags & SYMFLAG_THUNK) ? "thunk " : "");
 
     /* always keep the thunks at end of the array */
@@ -217,6 +213,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     SYMBOL_INFO*                si = (SYMBOL_INFO*)tmp;
     char                        buffer[512];
     DWORD                       opt;
+    IMAGEHLP_STACK_FRAME        ihsf;
 
     if (strlen(name) + 4 > sizeof(buffer))
     {
@@ -280,9 +277,10 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     /* now grab local symbols */
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen = 256;
-    if (stack_get_frame(si, &sgv.ihsf) && sgv.num < NUMDBGV)
+    if (stack_get_frame(si, &ihsf) && sgv.num < NUMDBGV)
     {
-        if (SymSetContext(dbg_curr_process->handle, &sgv.ihsf, NULL))
+        sgv.frame_offset = ihsf.FrameOffset;
+        if (SymSetContext(dbg_curr_process->handle, &ihsf, NULL))
             SymEnumSymbols(dbg_curr_process->handle, 0, name, sgv_cb, (void*)&sgv);
     }
 
@@ -307,14 +305,9 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
                 dbg_printf("[%d]: ", i + 1);
                 if (sgv.syms[i].flags & SYMFLAG_LOCAL)
                 {
-                    dbg_printf("local variable %sof %s\n", 
-                               sgv.syms[i].flags & SYMFLAG_REGISTER ? "(in a register) " : "",
-                               si->Name);
-                }
-                else if (sgv.syms[i].flags & SYMFLAG_PARAMETER)
-                {
-                    dbg_printf("parameter %sof %s\n", 
-                               sgv.syms[i].flags & SYMFLAG_REGISTER ? "(in a register) " : "",
+                    dbg_printf("%s %sof %s\n",
+                               sgv.syms[i].flags & SYMFLAG_PARAMETER ? "Parameter" : "Local variable",
+                               sgv.syms[i].flags & (SYMFLAG_REGISTER|SYMFLAG_REGREL) ? "(in a register) " : "",
                                si->Name);
                 }
                 else if (sgv.syms[i].flags & SYMFLAG_THUNK) 
@@ -362,6 +355,7 @@ BOOL symbol_is_local(const char* name)
     struct sgv_data             sgv;
     char                        tmp[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*                si = (SYMBOL_INFO*)tmp;
+    IMAGEHLP_STACK_FRAME        ihsf;
 
     sgv.num        = 0;
     sgv.num_thunks = 0;
@@ -373,9 +367,12 @@ BOOL symbol_is_local(const char* name)
 
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen = 256;
-    if (stack_get_frame(si, &sgv.ihsf) &&
-        SymSetContext(dbg_curr_process->handle, &sgv.ihsf, NULL))
+    if (stack_get_frame(si, &ihsf) &&
+        SymSetContext(dbg_curr_process->handle, &ihsf, NULL))
+    {
+        sgv.frame_offset = ihsf.FrameOffset;
         SymEnumSymbols(dbg_curr_process->handle, 0, name, sgv_cb, (void*)&sgv);
+    }
     return sgv.num > 0;
 }
 
@@ -565,8 +562,8 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     types_get_info(&type, TI_GET_TYPE, &type.id);
     types_print_type(&type, FALSE);
 
-    if (sym->Flags & SYMFLAG_LOCAL) explain = "local";
-    else if (sym->Flags & SYMFLAG_PARAMETER) explain = "parameter";
+    if (sym->Flags & SYMFLAG_PARAMETER) explain = "parameter";
+    else if (sym->Flags & SYMFLAG_LOCAL) explain = "local";
     else if (sym->Flags & SYMFLAG_REGISTER) explain = buf;
 
     if (sym->Flags & SYMFLAG_REGISTER)
@@ -589,11 +586,10 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
             }
         }
     }
-    else if (sym->Flags & SYMFLAG_FRAMEREL)
+    else if (sym->Flags & SYMFLAG_LOCAL)
     {
         type.id = sym->TypeIndex;
-        types_get_info(&type, TI_GET_OFFSET, &v);
-        v += ((IMAGEHLP_STACK_FRAME*)ctx)->FrameOffset;
+        v = ((IMAGEHLP_STACK_FRAME*)ctx)->FrameOffset + sym->Address;
 
         if (!dbg_read_memory((void*)v, &val, sizeof(val)))
         {

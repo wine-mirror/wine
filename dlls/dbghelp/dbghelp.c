@@ -35,6 +35,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
  *        but those values are not directly usable from a debugger (that's why, I
  *        assume, that we have also to define constants for enum values, as 
  *        Codeview does BTW.
+ *      + SymEnumTypes should only return *user* defined types (UDT, typedefs...) not
+ *        all the types stored/used in the modules (like char*)
  *  - SymGetLine{Next|Prev} don't work as expected (they don't seem to work across
  *    functions, and even across function blocks...). Basically, for *Next* to work
  *    it requires an address after the prolog of the func (the base address of the 
