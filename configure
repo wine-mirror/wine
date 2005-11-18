@@ -9615,9 +9615,9 @@ LDAPLIBS=""
 
 if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
 then
-    echo "$as_me:$LINENO: checking for ldap_init in -lldap" >&5
-echo $ECHO_N "checking for ldap_init in -lldap... $ECHO_C" >&6
-if test "${ac_cv_lib_ldap_ldap_init+set}" = set; then
+    echo "$as_me:$LINENO: checking for ldap_initialize in -lldap" >&5
+echo $ECHO_N "checking for ldap_initialize in -lldap... $ECHO_C" >&6
+if test "${ac_cv_lib_ldap_ldap_initialize+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -9635,11 +9635,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char ldap_init ();
+char ldap_initialize ();
 int
 main ()
 {
-ldap_init ();
+ldap_initialize ();
   ;
   return 0;
 }
@@ -9665,20 +9665,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_ldap_ldap_init=yes
+  ac_cv_lib_ldap_ldap_initialize=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_ldap_ldap_init=no
+ac_cv_lib_ldap_ldap_initialize=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_ldap_ldap_init" >&5
-echo "${ECHO_T}$ac_cv_lib_ldap_ldap_init" >&6
-if test $ac_cv_lib_ldap_ldap_init = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_ldap_ldap_initialize" >&5
+echo "${ECHO_T}$ac_cv_lib_ldap_ldap_initialize" >&6
+if test $ac_cv_lib_ldap_ldap_initialize = yes; then
   echo "$as_me:$LINENO: checking for ber_init in -llber" >&5
 echo $ECHO_N "checking for ber_init in -llber... $ECHO_C" >&6
 if test "${ac_cv_lib_lber_ber_init+set}" = set; then

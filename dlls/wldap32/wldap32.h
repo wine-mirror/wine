@@ -22,6 +22,17 @@
  * to and from ansi (A), wide character (W) and utf8 (U) encodings.
  */
 
+static inline char *strdupU( const char *src )
+{
+    char *dst;
+
+    if (!src) return NULL;
+    dst = HeapAlloc( GetProcessHeap(), 0, (strlen( src ) + 1) * sizeof(char) );
+    if (dst)
+        strcpy( dst, src );
+    return dst;
+}
+
 static inline LPWSTR strAtoW( LPCSTR str )
 {
     LPWSTR ret = NULL;

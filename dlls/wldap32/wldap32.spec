@@ -188,7 +188,7 @@
 198 stub ldap_set_dbg_flags
 199 stub ldap_set_dbg_routine
 200 cdecl ldap_memfree(ptr) ldap_memfreeA
-201 stub ldap_startup
+201 cdecl ldap_startup(ptr ptr)
 202 cdecl ldap_cleanup(long)
 203 cdecl ldap_search_ext_sW(ptr wstr long wstr ptr long ptr ptr ptr long ptr)
 204 stub ldap_search_init_page
@@ -204,9 +204,9 @@
 214 cdecl ldap_simple_bindW(ptr wstr wstr)
 215 cdecl ldap_simple_bind_sA(ptr str str)
 216 cdecl ldap_simple_bind_sW(ptr wstr wstr)
-217 stub ldap_sslinit
-218 stub ldap_sslinitA
-219 stub ldap_sslinitW
+217 cdecl ldap_sslinit(str long long) ldap_sslinitA
+218 cdecl ldap_sslinitA(str long long)
+219 cdecl ldap_sslinitW(str long long)
 220 cdecl ldap_ufn2dn(str ptr) ldap_ufn2dnA
 221 cdecl ldap_ufn2dnA(str ptr)
 222 cdecl ldap_ufn2dnW(wstr ptr)
@@ -240,6 +240,6 @@
 322 stub ldap_parse_vlv_controlA
 329 cdecl ldap_start_tls_sW(ptr ptr ptr ptr ptr)
 330 cdecl ldap_start_tls_sA(ptr ptr ptr ptr ptr)
-331 stub ldap_stop_tls_s
+331 cdecl ldap_stop_tls_s(ptr)
 332 cdecl ldap_extended_operation_sW(ptr wstr ptr ptr ptr ptr ptr)
 333 cdecl ldap_extended_operation_sA(ptr str ptr ptr ptr ptr ptr)
