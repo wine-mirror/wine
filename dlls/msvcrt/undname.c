@@ -1152,6 +1152,7 @@ char* __unDNameEx(char* buffer, const char* mangled, int buflen,
                   void* unknown, unsigned short int flags)
 {
     struct parsed_symbol        sym;
+    const char*                 result;
 
     TRACE("(%p,%s,%d,%p,%p,%p,%x) stub!\n",
           buffer, mangled, buflen, memget, memfree, unknown, flags);
@@ -1171,20 +1172,17 @@ char* __unDNameEx(char* buffer, const char* mangled, int buflen,
     sym.mem_free_ptr  = memfree;
     sym.current       = mangled;
 
-    if (symbol_demangle(&sym))
+    result = symbol_demangle(&sym) ? sym.result : mangled;
+    if (buffer && buflen)
     {
-        if (buffer && buflen)
-        {
-            memcpy(buffer, sym.result, buflen - 1);
-            buffer[buflen - 1] = '\0';
-        }
-        else
-        {
-            buffer = memget(strlen(sym.result) + 1);
-            if (buffer) strcpy(buffer, sym.result);
-        }
+        memcpy(buffer, result, buflen - 1);
+        buffer[buflen - 1] = '\0';
     }
-    else buffer = NULL;
+    else
+    {
+        buffer = memget(strlen(result) + 1);
+        if (buffer) strcpy(buffer, result);
+    }
 
     und_free_all(&sym);
 
