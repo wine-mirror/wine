@@ -141,8 +141,6 @@ unsigned stack_fetch_frames(void)
 
     HeapFree(GetProcessHeap(), 0, dbg_curr_thread->frames);
     dbg_curr_thread->frames = NULL;
-    dbg_curr_thread->num_frames = 0;
-    dbg_curr_thread->curr_frame = 0;
 
     memset(&sf, 0, sizeof(sf));
     memory_get_current_frame(&sf.AddrFrame);
@@ -168,7 +166,10 @@ unsigned stack_fetch_frames(void)
         /* we've probably gotten ourselves into an infinite loop so bail */
         if (nf > 200) break;
     }
-    return dbg_curr_thread->num_frames = nf;
+    dbg_curr_thread->curr_frame = -1;
+    dbg_curr_thread->num_frames = nf;
+    stack_set_frame_internal(0);
+    return nf;
 }
 
 struct sym_enum
@@ -215,9 +216,6 @@ static void stack_print_addr_and_args(int nf)
 
     stack_get_frame_internal(nf, &ihsf);
 
-    ihsf.InstructionOffset = (DWORD_PTR)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_pc);
-    ihsf.FrameOffset       = (DWORD_PTR)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_frame);
-
     /* grab module where symbol is. If we don't have a module, we cannot print more */
     im.SizeOfStruct = sizeof(im);
     if (!SymGetModuleInfo(dbg_curr_process->handle, ihsf.InstructionOffset, &im))
@@ -258,7 +256,8 @@ static void stack_print_addr_and_args(int nf)
  */
 static unsigned backtrace(void)
 {
-    unsigned    nf = 0;
+    unsigned                    nf = 0;
+    IMAGEHLP_STACK_FRAME        ihsf;
 
     dbg_printf("Backtrace:\n");
     for (nf = 0; nf < dbg_curr_thread->num_frames; nf++)
@@ -270,6 +269,9 @@ static unsigned backtrace(void)
         print_bare_address(&dbg_curr_thread->frames[nf].addr_pc);
         dbg_printf(")\n");
     }
+    /* reset context to current stack frame */
+    stack_get_frame_internal(dbg_curr_thread->curr_frame, &ihsf);
+    SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
     return nf;
 }
 

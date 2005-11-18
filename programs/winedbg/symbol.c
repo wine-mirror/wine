@@ -209,8 +209,6 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
 {
     struct sgv_data             sgv;
     int		                i = 0;
-    char                        tmp[sizeof(SYMBOL_INFO) + 256];
-    SYMBOL_INFO*                si = (SYMBOL_INFO*)tmp;
     char                        buffer[512];
     DWORD                       opt;
     IMAGEHLP_STACK_FRAME        ihsf;
@@ -275,13 +273,10 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     SymSetOptions(opt);
 
     /* now grab local symbols */
-    si->SizeOfStruct = sizeof(*si);
-    si->MaxNameLen = 256;
-    if (stack_get_frame(si, &ihsf) && sgv.num < NUMDBGV)
+    if (stack_get_current_frame(&ihsf) && sgv.num < NUMDBGV)
     {
         sgv.frame_offset = ihsf.FrameOffset;
-        if (SymSetContext(dbg_curr_process->handle, &ihsf, NULL))
-            SymEnumSymbols(dbg_curr_process->handle, 0, name, sgv_cb, (void*)&sgv);
+        SymEnumSymbols(dbg_curr_process->handle, 0, name, sgv_cb, (void*)&sgv);
     }
 
     if (!sgv.num)
@@ -308,7 +303,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
                     dbg_printf("%s %sof %s\n",
                                sgv.syms[i].flags & SYMFLAG_PARAMETER ? "Parameter" : "Local variable",
                                sgv.syms[i].flags & (SYMFLAG_REGISTER|SYMFLAG_REGREL) ? "(in a register) " : "",
-                               si->Name);
+                               name);
                 }
                 else if (sgv.syms[i].flags & SYMFLAG_THUNK) 
                 {
@@ -353,8 +348,6 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
 BOOL symbol_is_local(const char* name)
 {
     struct sgv_data             sgv;
-    char                        tmp[sizeof(SYMBOL_INFO) + 256];
-    SYMBOL_INFO*                si = (SYMBOL_INFO*)tmp;
     IMAGEHLP_STACK_FRAME        ihsf;
 
     sgv.num        = 0;
@@ -365,10 +358,7 @@ BOOL symbol_is_local(const char* name)
     sgv.bp_disp    = FALSE;
     sgv.do_thunks  = FALSE;
 
-    si->SizeOfStruct = sizeof(*si);
-    si->MaxNameLen = 256;
-    if (stack_get_frame(si, &ihsf) &&
-        SymSetContext(dbg_curr_process->handle, &ihsf, NULL))
+    if (stack_get_current_frame(&ihsf))
     {
         sgv.frame_offset = ihsf.FrameOffset;
         SymEnumSymbols(dbg_curr_process->handle, 0, name, sgv_cb, (void*)&sgv);
@@ -613,8 +603,7 @@ int symbol_info_locals(void)
     if (stack_get_frame(si, &ihsf))
     {
         dbg_printf("%s:\n", si->Name);
-        if (SymSetContext(dbg_curr_process->handle, &ihsf, NULL))
-            SymEnumSymbols(dbg_curr_process->handle, 0, NULL, info_locals_cb, &ihsf);
+        SymEnumSymbols(dbg_curr_process->handle, 0, NULL, info_locals_cb, &ihsf);
     }
     return TRUE;
 }

@@ -606,7 +606,6 @@ static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
     {
         ADDRESS tmp = addr;
         /* Show where we crashed */
-        stack_set_frame(0);
         memory_disasm_one_insn(&tmp);
     }
     source_list_from_addr(&addr, 0);
