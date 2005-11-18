@@ -38,7 +38,7 @@
 static HRESULT (WINAPI *pDirectSoundCaptureCreate)(LPCGUID,LPDIRECTSOUNDCAPTURE*,LPUNKNOWN)=NULL;
 static HRESULT (WINAPI *pDirectSoundCaptureEnumerateA)(LPDSENUMCALLBACKA,LPVOID)=NULL;
 
-static const char * get_format_str(WORD format)
+const char * get_format_str(WORD format)
 {
     static char msg[32];
 #define WAVE_FORMAT(f) case f: return #f
@@ -91,7 +91,7 @@ static const char * get_format_str(WORD format)
     return msg;
 }
 
-static char * format_string(WAVEFORMATEX* wfx)
+const char * format_string(const WAVEFORMATEX* wfx)
 {
     static char str[64];
 
@@ -129,8 +129,9 @@ static void IDirectSoundCapture_test(LPDIRECTSOUNDCAPTURE dsco,
     if (initialized == FALSE) {
         /* try unitialized object */
         rc=IDirectSoundCapture_GetCaps(dsco,0);
-        ok(rc==DSERR_UNINITIALIZED, "IDirectSoundCapture_GetCaps(NULL) "
-           "should have returned DSERR_UNINITIALIZED, returned: %s\n",
+        ok(rc==DSERR_UNINITIALIZED||rc==E_INVALIDARG,
+           "IDirectSoundCapture_GetCaps(NULL) should have returned "
+           "DSERR_UNINITIALIZED or E_INVALIDARG, returned: %s\n",
            DXGetErrorString8(rc));
 
         rc=IDirectSoundCapture_GetCaps(dsco, &dsccaps);
@@ -139,10 +140,11 @@ static void IDirectSoundCapture_test(LPDIRECTSOUNDCAPTURE dsco,
            DXGetErrorString8(rc));
 
         rc=IDirectSoundCapture_Initialize(dsco, lpGuid);
-        ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
+        ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||
+           rc==E_FAIL||rc==E_INVALIDARG,
            "IDirectSoundCapture_Initialize() failed: %s\n",
            DXGetErrorString8(rc));
-        if (rc==DSERR_NODRIVER) {
+        if (rc==DSERR_NODRIVER||rc==E_INVALIDARG) {
             trace("  No Driver\n");
             goto EXIT;
         } else if (rc==E_FAIL) {
