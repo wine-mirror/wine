@@ -1860,8 +1860,18 @@ static void test_window_tree(HWND parent, const DWORD *style, const int *order, 
 
     for (i = 0; i < total; i++)
     {
-        child[i] = CreateWindowExA(0, "static", "", style[i], 0,0,10,10,
-                                   parent, 0, 0, NULL);
+        if (style[i] & DS_CONTROL)
+        {
+            child[i] = CreateWindowExA(0, MAKEINTATOMA(32770), "", style[i] & ~WS_VISIBLE,
+                                       0,0,0,0, parent, (HMENU)i, 0, NULL);
+            if (style[i] & WS_VISIBLE)
+                ShowWindow(child[i], SW_SHOW);
+
+            SetWindowPos(child[i], HWND_BOTTOM, 0,0,10,10, SWP_NOACTIVATE);
+        }
+        else
+            child[i] = CreateWindowExA(0, "static", "", style[i], 0,0,10,10,
+                                       parent, (HMENU)i, 0, NULL);
         trace("child[%d] = %p\n", i, child[i]);
         ok(child[i] != 0, "CreateWindowEx failed to create child window\n");
     }
@@ -1897,6 +1907,10 @@ static void test_children_zorder(HWND parent)
     const int complex_order_3[3] = { 1, 0, 2 };
     const int complex_order_4[4] = { 1, 0, 2, 3 };
     const int complex_order_5[5] = { 4, 1, 0, 2, 3 };
+    const DWORD complex_style_6[3] = { WS_CHILD | WS_VISIBLE,
+                                       WS_CHILD | WS_CLIPSIBLINGS | DS_CONTROL | WS_VISIBLE,
+                                       WS_CHILD | WS_VISIBLE };
+    const int complex_order_6[3] = { 0, 1, 2 };
 
     /* simple WS_CHILD */
     test_window_tree(parent, simple_style, simple_order, 5);
@@ -1907,6 +1921,9 @@ static void test_children_zorder(HWND parent)
     test_window_tree(parent, complex_style, complex_order_3, 3);
     test_window_tree(parent, complex_style, complex_order_4, 4);
     test_window_tree(parent, complex_style, complex_order_5, 5);
+
+    /* another set of complex children styles */
+    test_window_tree(parent, complex_style_6, complex_order_6, 3);
 }
 
 static void test_vis_rgn( HWND hwnd )
@@ -3457,6 +3474,7 @@ START_TEST(win)
     assert( hwndMain );
     assert( hwndMain2 );
 
+    /* Add the tests below this line */
     test_params();
 
     test_capture_1();
@@ -3484,10 +3502,11 @@ START_TEST(win)
     test_IsWindowUnicode();
     test_vis_rgn(hwndMain);
 
-    UnhookWindowsHookEx(hhook);
-
     test_AdjustWindowRect();
     test_window_styles();
     test_redrawnow();
     test_csparentdc();
+
+    /* add the tests above this line */
+    UnhookWindowsHookEx(hhook);
 }
