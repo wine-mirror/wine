@@ -80,7 +80,8 @@ static const struct object_ops desktop_ops =
 #define DESKTOP_ALL_ACCESS 0x01ff
 
 /* create a winstation object */
-static struct winstation *create_winstation( const struct unicode_str *name, unsigned int flags )
+static struct winstation *create_winstation( const struct unicode_str *name, unsigned int attr,
+                                             unsigned int flags )
 {
     struct winstation *winstation;
 
@@ -93,8 +94,7 @@ static struct winstation *create_winstation( const struct unicode_str *name, uns
         return NULL;
     }
 
-    if ((winstation = create_named_object( winstation_namespace, &winstation_ops, name,
-                                           OBJ_CASE_INSENSITIVE )))
+    if ((winstation = create_named_object( winstation_namespace, &winstation_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -175,8 +175,8 @@ inline static struct desktop *get_desktop_obj( struct process *process, obj_hand
 }
 
 /* create a desktop object */
-static struct desktop *create_desktop( const struct unicode_str *name, unsigned int flags,
-                                       struct winstation *winstation )
+static struct desktop *create_desktop( const struct unicode_str *name, unsigned int attr,
+                                       unsigned int flags, struct winstation *winstation )
 {
     struct desktop *desktop;
     struct unicode_str full_str;
@@ -184,8 +184,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
 
     if (!(full_name = build_desktop_name( name, winstation, &full_str ))) return NULL;
 
-    if ((desktop = create_named_object( winstation_namespace, &desktop_ops, &full_str,
-                                        OBJ_CASE_INSENSITIVE )))
+    if ((desktop = create_named_object( winstation_namespace, &desktop_ops, &full_str, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
@@ -250,7 +249,7 @@ void connect_process_winstation( struct process *process, const struct unicode_s
 
     if (name)
     {
-        winstation = create_winstation( name, 0 );
+        winstation = create_winstation( name, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, 0 );
     }
     else
     {
@@ -258,7 +257,7 @@ void connect_process_winstation( struct process *process, const struct unicode_s
         {
             static const WCHAR winsta0W[] = {'W','i','n','S','t','a','0'};
             static const struct unicode_str winsta0 = { winsta0W, sizeof(winsta0W) };
-            interactive_winstation = create_winstation( &winsta0, 0 );
+            interactive_winstation = create_winstation( &winsta0, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, 0 );
             winstation = interactive_winstation;
         }
         else winstation = (struct winstation *)grab_object( interactive_winstation );
@@ -285,7 +284,7 @@ void connect_process_desktop( struct process *process, const struct unicode_str 
         static const struct unicode_str default_str = { defaultW, sizeof(defaultW) };
 
         if (!name) name = &default_str;
-        if ((desktop = create_desktop( name, 0, winstation )))
+        if ((desktop = create_desktop( name, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, 0, winstation )))
         {
             process->desktop = alloc_handle( process, desktop, DESKTOP_ALL_ACCESS, FALSE );
             release_object( desktop );
@@ -314,9 +313,10 @@ DECL_HANDLER(create_winstation)
 
     reply->handle = 0;
     get_req_unicode_str( &name );
-    if ((winstation = create_winstation( &name, req->flags )))
+    if ((winstation = create_winstation( &name, req->attributes, req->flags )))
     {
-        reply->handle = alloc_handle( current->process, winstation, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, winstation, req->access,
+                                      req->attributes & OBJ_INHERIT );
         release_object( winstation );
     }
 }
@@ -329,7 +329,7 @@ DECL_HANDLER(open_winstation)
     get_req_unicode_str( &name );
     if (winstation_namespace)
         reply->handle = open_object( winstation_namespace, &name, &winstation_ops, req->access,
-                                     OBJ_CASE_INSENSITIVE | (req->inherit ? OBJ_INHERIT:0) );
+                                     req->attributes );
     else
         set_error( STATUS_OBJECT_NAME_NOT_FOUND );
 }
@@ -381,9 +381,10 @@ DECL_HANDLER(create_desktop)
     get_req_unicode_str( &name );
     if ((winstation = get_process_winstation( current->process, WINSTA_CREATEDESKTOP )))
     {
-        if ((desktop = create_desktop( &name, req->flags, winstation )))
+        if ((desktop = create_desktop( &name, req->attributes, req->flags, winstation )))
         {
-            reply->handle = alloc_handle( current->process, desktop, req->access, req->inherit );
+            reply->handle = alloc_handle( current->process, desktop, req->access,
+                                          req->attributes & OBJ_INHERIT );
             release_object( desktop );
         }
         release_object( winstation );
@@ -405,7 +406,7 @@ DECL_HANDLER(open_desktop)
         if ((full_name = build_desktop_name( &name, winstation, &full_str )))
         {
             reply->handle = open_object( winstation_namespace, &full_str, &desktop_ops, req->access,
-                                         OBJ_CASE_INSENSITIVE | (req->inherit ? OBJ_INHERIT:0) );
+                                         req->attributes );
             free( full_name );
         }
         release_object( winstation );

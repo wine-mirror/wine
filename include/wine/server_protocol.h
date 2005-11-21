@@ -2889,7 +2889,7 @@ struct create_winstation_request
     struct request_header __header;
     unsigned int flags;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     /* VARARG(name,unicode_str); */
 };
 struct create_winstation_reply
@@ -2904,7 +2904,7 @@ struct open_winstation_request
 {
     struct request_header __header;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     /* VARARG(name,unicode_str); */
 };
 struct open_winstation_reply
@@ -2956,7 +2956,7 @@ struct create_desktop_request
     struct request_header __header;
     unsigned int flags;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     /* VARARG(name,unicode_str); */
 };
 struct create_desktop_reply
@@ -2972,7 +2972,7 @@ struct open_desktop_request
     struct request_header __header;
     unsigned int flags;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     /* VARARG(name,unicode_str); */
 };
 struct open_desktop_reply
@@ -4208,6 +4208,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 197
+#define SERVER_PROTOCOL_VERSION 198
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

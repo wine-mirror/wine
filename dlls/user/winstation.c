@@ -86,9 +86,10 @@ HWINSTA WINAPI CreateWindowStationW( LPCWSTR name, DWORD reserved, ACCESS_MASK a
     }
     SERVER_START_REQ( create_winstation )
     {
-        req->flags   = 0;
-        req->access  = access;
-        req->inherit = (sa && sa->bInheritHandle);
+        req->flags      = 0;
+        req->access     = access;
+        req->attributes = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
+                          ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
         /* it doesn't seem to set last error */
         wine_server_call( req );
@@ -131,8 +132,8 @@ HWINSTA WINAPI OpenWindowStationW( LPCWSTR name, BOOL inherit, ACCESS_MASK acces
     }
     SERVER_START_REQ( open_winstation )
     {
-        req->access  = access;
-        req->inherit = inherit;
+        req->access     = access;
+        req->attributes = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
         if (!wine_server_call_err( req )) ret = reply->handle;
     }
@@ -258,9 +259,10 @@ HDESK WINAPI CreateDesktopW( LPCWSTR name, LPCWSTR device, LPDEVMODEW devmode,
     }
     SERVER_START_REQ( create_desktop )
     {
-        req->flags   = flags;
-        req->access  = access;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        req->flags      = flags;
+        req->access     = access;
+        req->attributes = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
+                          ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
         /* it doesn't seem to set last error */
         wine_server_call( req );
@@ -303,9 +305,9 @@ HDESK WINAPI OpenDesktopW( LPCWSTR name, DWORD flags, BOOL inherit, ACCESS_MASK 
     }
     SERVER_START_REQ( open_desktop )
     {
-        req->flags   = flags;
-        req->access  = access;
-        req->inherit = inherit;
+        req->flags      = flags;
+        req->access     = access;
+        req->attributes = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
         if (!wine_server_call( req )) ret = reply->handle;
     }
