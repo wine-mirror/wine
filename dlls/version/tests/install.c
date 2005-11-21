@@ -43,9 +43,11 @@ static void test_find_file(void)
     memset(curdir, 0, MAX_PATH);
     memset(outBuf, 0, MAX_PATH);
     ret = VerFindFileA(0, "regedit", "", "", curdir, &dwCur, outBuf, &dwOut);
-    ok(!ret, "VerFindFileA should fail for a known program without extension\n");
-    ok(dwCur == 1, "expected length 1 got %d\n", dwCur);
-    ok(dwOut == 1, "expected length 1 got %d\n", dwOut);
+    ok(!ret, "Wrong return value got %lx expected 0\n", ret);
+    ok(dwCur == 1, "Wrong length of buffer for current location: "
+       "got %d(%s) expected 1\n", dwCur, curdir);
+    ok(dwOut == 1, "Wrong length of buffer for the recommended installation location: "
+       "got %d(%s) expected 1\n", dwOut, outBuf);
 
     if(!GetWindowsDirectoryA(windir, MAX_PATH))
         trace("GetWindowsDirectoryA failed\n");
@@ -62,7 +64,7 @@ static void test_find_file(void)
             todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
             todo_wine ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
                "got %d(%s) expected %d\n", dwCur, curdir, strlen(windir)+1);
-            ok(dwOut == 1, "Wrong length of buffer for the recommended installation location"
+            ok(dwOut == 1, "Wrong length of buffer for the recommended installation location: "
                "got %d(%s) expected 1\n", dwOut, outBuf);
 
             dwCur=MAX_PATH;
@@ -73,7 +75,7 @@ static void test_find_file(void)
             todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
             todo_wine ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
                "got %d(%s) expected %d\n", dwCur, curdir, strlen(windir)+1);
-            ok(dwOut == 1, "Wrong length of buffer for the recommended installation location"
+            ok(dwOut == 1, "Wrong length of buffer for the recommended installation location: "
                "got %d(%s) expected 1\n", dwOut, outBuf);
         }
     }
@@ -83,7 +85,11 @@ static void test_find_file(void)
         trace("GetModuleFileNameA, GetSystemDirectoryA or GetTempPathA failed\n");
     else {
         char *p = strrchr(filename, '\\');
-        if(p++) memmove(filename, p, 1 + strlen(p));
+        if(p) {
+            *(p++) ='\0';
+            SetCurrentDirectoryA(filename);
+            memmove(filename, p, 1 + strlen(p));
+        }
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
