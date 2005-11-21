@@ -358,7 +358,7 @@ static void on_add_click(HWND dialog)
     WINE_TRACE("allocating drive letter %c\n", new);
 
     if (new == 'C') add_drive(new, "../drive_c", "System Drive", "", DRIVE_FIXED);
-    else add_drive(new, "/", "", "", DRIVE_FIXED);
+    else add_drive(new, "/", "", "", DRIVE_UNKNOWN);
 
     fill_drives_list(dialog);
 
