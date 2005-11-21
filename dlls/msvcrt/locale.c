@@ -519,10 +519,11 @@ const char* _Strftime(char *out, unsigned int len, const char *fmt,
 int _setmbcp(int cp)
 {
   LOCK_LOCALE;
-  if ((msvcrt_current_lc_all_cp != cp) && (cp > _MB_CP_SBCS))
+  if ( cp > _MB_CP_SBCS)
   {
-    /* FIXME: set ctype behaviour for this cp */
-    msvcrt_current_lc_all_cp = cp;
+    if( msvcrt_current_lc_all_cp != cp)
+      /* FIXME: set ctype behaviour for this cp */
+      msvcrt_current_lc_all_cp = cp;
   }
   else if(cp == _MB_CP_ANSI)
   {
@@ -539,13 +540,14 @@ int _setmbcp(int cp)
   }
   else if(cp == _MB_CP_SBCS)
   {
-    FIXME ("SBCS codepages (e.g. %d) not implemented\n", cp);
+    FIXME ("SBCS codepages not implemented\n");
   }
   else
   {
     FIXME ("Unreal codepages (e.g. %d) not implemented\n", cp);
   }
   UNLOCK_LOCALE;
+  TRACE("(%d) -> %d\n", cp, msvcrt_current_lc_all_cp);
   return 0;
 }
 
