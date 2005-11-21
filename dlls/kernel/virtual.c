@@ -308,7 +308,7 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE |
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
                                     ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
@@ -354,7 +354,10 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
     size.u.HighPart = size_high;
 
     status = NtCreateSection( &ret, access, &attr, &size, protect, sec_type, hFile );
-    SetLastError( RtlNtStatusToDosError(status) );
+    if (status == STATUS_OBJECT_NAME_EXISTS)
+        SetLastError( ERROR_ALREADY_EXISTS );
+    else
+        SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
 

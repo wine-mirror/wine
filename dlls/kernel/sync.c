@@ -445,7 +445,7 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE |
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
                                     ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
@@ -456,7 +456,10 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
     }
 
     status = NtCreateEvent( &ret, EVENT_ALL_ACCESS, &attr, manual_reset, initial_state );
-    SetLastError( RtlNtStatusToDosError(status) );
+    if (status == STATUS_OBJECT_NAME_EXISTS)
+        SetLastError( ERROR_ALREADY_EXISTS );
+    else
+        SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
 
@@ -640,7 +643,7 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE |
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
                                     ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
@@ -651,7 +654,10 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
     }
 
     status = NtCreateMutant( &ret, MUTEX_ALL_ACCESS, &attr, owner );
-    SetLastError( RtlNtStatusToDosError(status) );
+    if (status == STATUS_OBJECT_NAME_EXISTS)
+        SetLastError( ERROR_ALREADY_EXISTS );
+    else
+        SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
 
@@ -762,7 +768,7 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE | 
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
                                     ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
@@ -773,7 +779,10 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
     }
 
     status = NtCreateSemaphore( &ret, SEMAPHORE_ALL_ACCESS, &attr, initial, max );
-    SetLastError( RtlNtStatusToDosError(status) );
+    if (status == STATUS_OBJECT_NAME_EXISTS)
+        SetLastError( ERROR_ALREADY_EXISTS );
+    else
+        SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
 
@@ -877,7 +886,7 @@ HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWST
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE |
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
                                     ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
@@ -889,7 +898,10 @@ HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWST
 
     status = NtCreateTimer(&handle, TIMER_ALL_ACCESS, &attr,
                            manual ? NotificationTimer : SynchronizationTimer);
-    SetLastError( RtlNtStatusToDosError(status) );
+    if (status == STATUS_OBJECT_NAME_EXISTS)
+        SetLastError( ERROR_ALREADY_EXISTS );
+    else
+        SetLastError( RtlNtStatusToDosError(status) );
     return handle;
 }
 
