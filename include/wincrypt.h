@@ -2277,6 +2277,7 @@ LPVOID WINAPI CryptMemAlloc(ULONG cbSize);
 LPVOID WINAPI CryptMemRealloc(LPVOID pv, ULONG cbSize);
 VOID   WINAPI CryptMemFree(LPVOID pv);
 
+BOOL WINAPI CryptRegisterDefaultOIDFunction(DWORD,LPCSTR,DWORD,LPCWSTR);
 BOOL WINAPI CryptRegisterOIDFunction(DWORD,LPCSTR,LPCSTR,LPCWSTR,LPCSTR);
 BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
                                      LPCSTR pszOID, LPCWSTR szValueName, DWORD *pdwValueType,
@@ -2284,7 +2285,9 @@ BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
 BOOL WINAPI CryptSetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
                                      LPCSTR pszOID, LPCWSTR pwszValueName, DWORD dwValueType,
                                      const BYTE *pbValueData, DWORD cbValueData);
+BOOL WINAPI CryptUnregisterDefaultOIDFunction(DWORD,LPCSTR,LPCWSTR);
 BOOL WINAPI CryptUnregisterOIDFunction(DWORD,LPCSTR,LPCSTR);
+HCRYPTOIDFUNCSET WINAPI CryptInitOIDFunctionSet(LPCSTR,DWORD);
 
 LPCSTR WINAPI CertAlgIdToOID(DWORD dwAlgId);
 DWORD WINAPI CertOIDToAlgId(LPCSTR pszObjId);
