@@ -60,16 +60,21 @@ typedef CSTRTABLE *LPCSTRTABLE;
 #define ADN_DONT_DEL_SUBDIRS        0x00000002
 #define ADN_DONT_DEL_DIR            0x00000004
 
-HRESULT WINAPI RunSetupCommand(HWND hWnd,
-     LPCSTR szCmdName, LPCSTR szInfSection, LPCSTR szDir, LPCSTR lpszTitle,
-     HANDLE *phEXE, DWORD dwFlags, LPVOID pvReserved);
 HRESULT WINAPI DelNode(LPCSTR pszFileOrDirName, DWORD dwFlags);
+HRESULT WINAPI DelNodeRunDLL32(HWND,HINSTANCE,LPSTR,INT);
 HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved );
+HRESULT WINAPI ExtractFiles(LPCSTR,LPCSTR,DWORD,LPCSTR,LPVOID,DWORD);
+HRESULT WINAPI GetVersionFromFile(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
+HRESULT WINAPI GetVersionFromFileEx(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
+BOOL WINAPI IsNTAdmin(DWORD,LPDWORD);
+INT WINAPI LaunchINFSection(HWND,HINSTANCE,LPSTR,INT);
+HRESULT WINAPI LaunchINFSectionEx(HWND,HINSTANCE,LPSTR,INT);
 DWORD WINAPI NeedRebootInit(VOID);
 BOOL WINAPI NeedReboot(DWORD dwRebootCheck);
 HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable);
-HRESULT WINAPI GetVersionFromFile(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
-HRESULT WINAPI GetVersionFromFileEx(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
+HRESULT WINAPI RunSetupCommand(HWND hWnd,
+     LPCSTR szCmdName, LPCSTR szInfSection, LPCSTR szDir, LPCSTR lpszTitle,
+     HANDLE *phEXE, DWORD dwFlags, LPVOID pvReserved);
 HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
      PCSTR pszTranslateSection, PCSTR pszTranslateKey, PSTR pszBuffer,
      DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved);

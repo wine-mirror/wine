@@ -93,17 +93,19 @@ HRESULT WINAPI RunSetupCommand( HWND hWnd, LPCSTR szCmdName,
 /***********************************************************************
  *		LaunchINFSection  (ADVPACK.@)
  */
-void WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
+INT WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
 {
     FIXME("(%p %p %s %d): stub\n", hWnd, hInst, debugstr_a(cmdline), show );
+    return 0;
 }
 
 /***********************************************************************
  *		LaunchINFSectionEx  (ADVPACK.@)
  */
-void WINAPI LaunchINFSectionEx( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
+HRESULT WINAPI LaunchINFSectionEx( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
 {
     FIXME("(%p %p %s %d): stub\n", hWnd, hInst, debugstr_a(cmdline), show );
+    return E_FAIL;
 }
 
 /* this structure very closely resembles parameters of RunSetupCommand() */
@@ -146,7 +148,7 @@ BOOL WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
 /***********************************************************************
  *              IsNTAdmin	(ADVPACK.@)
  */
-BOOL WINAPI IsNTAdmin( DWORD reserved, PDWORD pReserved )
+BOOL WINAPI IsNTAdmin( DWORD reserved, LPDWORD pReserved )
 {
     FIXME("(0x%08lx, %p): stub\n", reserved, pReserved);
     return TRUE;
@@ -375,9 +377,10 @@ HRESULT WINAPI DelNode( LPCSTR pszFileOrDirName, DWORD dwFlags )
  * BUGS
  *   Unimplemented
  */
-void WINAPI DelNodeRunDLL32( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
+HRESULT WINAPI DelNodeRunDLL32( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
 {
     FIXME("(%s): stub\n", debugstr_a(cmdline));
+    return E_FAIL;
 }
 
 /***********************************************************************
