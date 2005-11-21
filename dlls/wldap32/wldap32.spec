@@ -85,9 +85,9 @@
  95 cdecl ldap_count_references(ptr ptr) WLDAP32_ldap_count_references
  96 cdecl ldap_count_valuesA(ptr)
  97 cdecl ldap_count_valuesW(ptr)
- 98 stub ldap_create_page_control
- 99 stub ldap_create_page_controlA
-100 stub ldap_create_page_controlW
+ 98 cdecl ldap_create_page_control(ptr long ptr long ptr) ldap_create_page_controlA
+ 99 cdecl ldap_create_page_controlA(ptr long ptr long ptr)
+100 cdecl ldap_create_page_controlW(ptr long ptr long ptr)
 101 cdecl ldap_create_sort_control(ptr ptr long ptr) ldap_create_sort_controlA
 102 cdecl ldap_create_sort_controlA(ptr ptr long ptr)
 103 cdecl ldap_create_sort_controlW(ptr ptr long ptr)
@@ -102,8 +102,8 @@
 112 cdecl ldap_delete_sA(ptr str)
 113 cdecl ldap_delete_sW(ptr wstr)
 114 cdecl ldap_dn2ufnW(wstr)
-115 stub ldap_encode_sort_controlA
-116 stub ldap_encode_sort_controlW
+115 cdecl ldap_encode_sort_controlA(ptr ptr ptr long)
+116 cdecl ldap_encode_sort_controlW(ptr ptr ptr long)
 117 cdecl ldap_err2stringA(long)
 118 cdecl ldap_err2stringW(long)
 119 cdecl ldap_escape_filter_elementA(str long ptr long)
@@ -234,8 +234,8 @@
 316 cdecl ldap_sasl_bind_sA(ptr str str ptr ptr ptr ptr)
 317 stub ldap_parse_extended_resultW
 318 stub ldap_parse_extended_resultA
-319 stub ldap_create_vlv_controlW
-320 stub ldap_create_vlv_controlA
+319 cdecl ldap_create_vlv_controlW(ptr ptr long ptr)
+320 cdecl ldap_create_vlv_controlA(ptr ptr long ptr)
 321 stub ldap_parse_vlv_controlW
 322 stub ldap_parse_vlv_controlA
 329 cdecl ldap_start_tls_sW(ptr ptr ptr ptr ptr)

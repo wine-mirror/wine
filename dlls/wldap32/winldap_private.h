@@ -187,6 +187,18 @@ typedef struct ldapcontrolW
     BOOLEAN ldctl_iscritical;
 } LDAPControlW, *PLDAPControlW;
 
+typedef struct WLDAP32_ldapvlvinfo
+{
+    int ldvlv_version;
+    ULONG ldvlv_before_count;
+    ULONG ldvlv_after_count;
+    ULONG ldvlv_offset;
+    ULONG ldvlv_count;
+    PBERVAL ldvlv_attrvalue;
+    PBERVAL ldvlv_context;
+    VOID *ldvlv_extradata;
+} WLDAP32_LDAPVLVInfo, *WLDAP32_PLDAPVLVInfo;
+
 typedef struct ldapsearch LDAPSearch, *PLDAPSearch;
 
 typedef struct ldapsortkeyA
@@ -275,8 +287,12 @@ ULONG WLDAP32_ldap_count_references(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
 ULONG ldap_count_valuesA(PCHAR*);
 ULONG ldap_count_valuesW(PWCHAR*);
 ULONG WLDAP32_ldap_count_values_len(PBERVAL*);
+ULONG ldap_create_page_controlA(WLDAP32_PLDAP,ULONG,struct WLDAP32_berval*,UCHAR,PLDAPControlA*);
+ULONG ldap_create_page_controlW(WLDAP32_PLDAP,ULONG,struct WLDAP32_berval*,UCHAR,PLDAPControlW*);
 ULONG ldap_create_sort_controlA(WLDAP32_PLDAP,PLDAPSortKeyA*,UCHAR,PLDAPControlA*);
 ULONG ldap_create_sort_controlW(WLDAP32_PLDAP,PLDAPSortKeyW*,UCHAR,PLDAPControlW*);
+INT ldap_create_vlv_controlA(WLDAP32_LDAP*,WLDAP32_LDAPVLVInfo*,char,LDAPControlA**);
+INT ldap_create_vlv_controlW(WLDAP32_LDAP*,WLDAP32_LDAPVLVInfo*,char,LDAPControlW**);
 ULONG ldap_deleteA(WLDAP32_LDAP*,PCHAR);
 ULONG ldap_deleteW(WLDAP32_LDAP*,PWCHAR);
 ULONG ldap_delete_extA(WLDAP32_LDAP*,PCHAR,PLDAPControlA*,PLDAPControlA*,ULONG*);

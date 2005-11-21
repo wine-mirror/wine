@@ -89,6 +89,22 @@ ULONG ldap_controls_freeW( LDAPControlW **controls )
     return ret;
 }
 
+ULONG ldap_create_page_controlA( WLDAP32_LDAP *ld, ULONG pagesize,
+    struct WLDAP32_berval *cookie, UCHAR critical, PLDAPControlA *control )
+{
+    FIXME( "(%p, 0x%08lx, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
+           critical, control );
+    return LDAP_NOT_SUPPORTED;
+}
+
+ULONG ldap_create_page_controlW( WLDAP32_LDAP *ld, ULONG pagesize,
+    struct WLDAP32_berval *cookie, UCHAR critical, PLDAPControlW *control )
+{
+    FIXME( "(%p, 0x%08lx, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
+           critical, control );
+    return LDAP_NOT_SUPPORTED;
+}
+
 ULONG ldap_create_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkey,
     UCHAR critical, PLDAPControlA *control )
 {
@@ -143,6 +159,58 @@ ULONG ldap_create_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkey,
 
 #endif
     return ret;
+}
+
+INT ldap_create_vlv_controlA( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
+    char critical, LDAPControlA **control )
+{
+    INT ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    LDAPControlW **controlW = NULL;
+
+    TRACE( "(%p, %p, 0x%02x, %p)\n", ld, info, critical, control );
+
+    if (!ld) return ~0UL;
+
+    ret = ldap_create_vlv_controlW( ld, info, critical, controlW );
+
+    *control = controlWtoA( *controlW );
+    ldap_control_freeW( *controlW );
+
+#endif
+    return ret;
+}
+
+INT ldap_create_vlv_controlW( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
+    char critical, LDAPControlW **control )
+{
+    INT ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    LDAPControl **controlU = NULL;
+
+    TRACE( "(%p, %p, 0x%02x, %p)\n", ld, info, critical, control );
+
+    if (!ld) return ~0UL;
+
+    ret = ldap_create_vlv_control( ld, (LDAPVLVInfo *)info, controlU );
+
+    *control = controlUtoW( *controlU );
+    ldap_control_free( *controlU );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_encode_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkeys,
+    PLDAPControlA control, BOOLEAN critical )
+{
+    return ldap_create_sort_controlA( ld, sortkeys, critical, &control );
+}
+
+ULONG ldap_encode_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkeys,
+    PLDAPControlW control, BOOLEAN critical )
+{
+    return ldap_create_sort_controlW( ld, sortkeys, critical, &control );
 }
 
 ULONG ldap_free_controlsA( LDAPControlA **controls )
