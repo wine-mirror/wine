@@ -117,6 +117,7 @@ PCHAR *ldap_get_valuesA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, PCHAR att
     return ret;
 }
 
+#ifdef HAVE_LDAP
 static char *bv2str( struct berval *bv )
 {
     char *str = NULL;
@@ -163,6 +164,7 @@ static char **bv2str_array( struct berval **bv )
     str[i] = NULL;
     return str;
 }
+#endif
 
 PWCHAR *ldap_get_valuesW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, PWCHAR attr )
 {
