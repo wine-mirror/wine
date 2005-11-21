@@ -35,6 +35,12 @@ DWORD WINAPI GetExplicitEntriesFromAclW( PACL, PULONG, PEXPLICIT_ACCESS_W* );
 DWORD WINAPI GetSecurityInfo( HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMATION,
         PSID*, PSID*, PACL*, PACL*, PSECURITY_DESCRIPTOR*);
 
+DWORD WINAPI GetSecurityInfoExA(HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMATION,
+        LPCSTR, LPCSTR, PACTRL_ACCESSA*, PACTRL_AUDITA*, LPSTR*, LPSTR*);
+DWORD WINAPI GetSecurityInfoExW(HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMATION,
+        LPCWSTR, LPCWSTR, PACTRL_ACCESSW*, PACTRL_AUDITW*, LPWSTR*, LPWSTR*);
+#define     GetSecurityInfoEx WINELIB_NAME_AW(GetSecurityInfoEx)
+
 DWORD WINAPI GetNamedSecurityInfoA(LPSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
         PSID*, PSID*, PACL*, PACL*, PSECURITY_DESCRIPTOR*);
 DWORD WINAPI GetNamedSecurityInfoW(LPWSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
@@ -65,6 +71,16 @@ LPWSTR WINAPI GetTrusteeNameW( PTRUSTEEW );
 TRUSTEE_TYPE WINAPI GetTrusteeTypeA( PTRUSTEEA );
 TRUSTEE_TYPE WINAPI GetTrusteeTypeW( PTRUSTEEW );
 #define     GetTrusteeType WINELIB_NAME_AW(GetTrusteeType)
+
+DWORD WINAPI BuildSecurityDescriptorA( PTRUSTEEA, PTRUSTEEA, ULONG, PEXPLICIT_ACCESS_A,
+                                       ULONG, PEXPLICIT_ACCESS_A,
+                                       PSECURITY_DESCRIPTOR, PULONG,
+                                       PSECURITY_DESCRIPTOR* );
+DWORD WINAPI BuildSecurityDescriptorW( PTRUSTEEW, PTRUSTEEW, ULONG, PEXPLICIT_ACCESS_W,
+                                       ULONG, PEXPLICIT_ACCESS_W,
+                                       PSECURITY_DESCRIPTOR, PULONG,
+                                       PSECURITY_DESCRIPTOR* );
+#define     BuildSecurityDescriptor WINELIB_NAME_AW(BuildSecurityDescriptor)
 
 void WINAPI BuildTrusteeWithNameA( PTRUSTEEA, LPSTR );
 void WINAPI BuildTrusteeWithNameW( PTRUSTEEW, LPWSTR );

@@ -637,15 +637,15 @@ GetLengthSid (PSID pSid)
  *  Failure: nonzero error code from Winerror.h
  */
 DWORD WINAPI BuildSecurityDescriptorA(
-    IN PTRUSTEE_A pOwner,
-    IN PTRUSTEE_A pGroup,
-    IN DWORD cCountOfAccessEntries,
-    IN PEXPLICIT_ACCESS_A pListOfAccessEntries,
-    IN DWORD cCountOfAuditEntries,
-    IN PEXPLICIT_ACCESS_A pListofAuditEntries,
+    IN PTRUSTEEA pOwner,
+    IN PTRUSTEEA pGroup,
+    IN ULONG cCountOfAccessEntries,
+    IN PEXPLICIT_ACCESSA pListOfAccessEntries,
+    IN ULONG cCountOfAuditEntries,
+    IN PEXPLICIT_ACCESSA pListofAuditEntries,
     IN PSECURITY_DESCRIPTOR pOldSD,
-    IN OUT PDWORD lpdwBufferLength,
-    OUT PSECURITY_DESCRIPTOR pNewSD)
+    IN OUT PULONG lpdwBufferLength,
+    OUT PSECURITY_DESCRIPTOR* pNewSD)
 { 
     FIXME("(%p,%p,%ld,%p,%ld,%p,%p,%p,%p) stub!\n",pOwner,pGroup,
           cCountOfAccessEntries,pListOfAccessEntries,cCountOfAuditEntries,
@@ -660,15 +660,15 @@ DWORD WINAPI BuildSecurityDescriptorA(
  * See BuildSecurityDescriptorA.
  */
 DWORD WINAPI BuildSecurityDescriptorW(
-    IN PTRUSTEE_W pOwner,
-    IN PTRUSTEE_W pGroup,
-    IN DWORD cCountOfAccessEntries,
-    IN PEXPLICIT_ACCESS_W pListOfAccessEntries,
-    IN DWORD cCountOfAuditEntries,
-    IN PEXPLICIT_ACCESS_W pListofAuditEntries,
+    IN PTRUSTEEW pOwner,
+    IN PTRUSTEEW pGroup,
+    IN ULONG cCountOfAccessEntries,
+    IN PEXPLICIT_ACCESSW pListOfAccessEntries,
+    IN ULONG cCountOfAuditEntries,
+    IN PEXPLICIT_ACCESSW pListofAuditEntries,
     IN PSECURITY_DESCRIPTOR pOldSD,
-    IN OUT PDWORD lpdwBufferLength,
-    OUT PSECURITY_DESCRIPTOR pNewSD)
+    IN OUT PULONG lpdwBufferLength,
+    OUT PSECURITY_DESCRIPTOR* pNewSD)
 { 
     FIXME("(%p,%p,%ld,%p,%ld,%p,%p,%p,%p) stub!\n",pOwner,pGroup,
           cCountOfAccessEntries,pListOfAccessEntries,cCountOfAuditEntries,
@@ -1616,9 +1616,9 @@ SynchronizeWindows31FilesAndWindowsNTRegistry( DWORD x1, DWORD x2, DWORD x3,
  *   x1 []
  */
 BOOL WINAPI
-NotifyBootConfigStatus( DWORD x1 )
+NotifyBootConfigStatus( BOOL x1 )
 {
-	FIXME("(0x%08lx):stub\n",x1);
+	FIXME("(0x%08d):stub\n",x1);
 	return 1;
 }
 

@@ -295,6 +295,7 @@ BOOL        WINAPI GetServiceKeyNameA(SC_HANDLE,LPCSTR,LPSTR,LPDWORD);
 BOOL        WINAPI GetServiceKeyNameW(SC_HANDLE,LPCWSTR,LPWSTR,LPDWORD);
 #define     GetServiceKeyName WINELIB_NAME_AW(GetServiceKeyName)
 SC_LOCK     WINAPI LockServiceDatabase(SC_HANDLE);
+BOOL        WINAPI NotifyBootConfigStatus(BOOL);
 SC_HANDLE   WINAPI OpenSCManagerA(LPCSTR,LPCSTR,DWORD);
 SC_HANDLE   WINAPI OpenSCManagerW(LPCWSTR,LPCWSTR,DWORD);
 #define     OpenSCManager WINELIB_NAME_AW(OpenSCManager)

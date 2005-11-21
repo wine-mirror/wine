@@ -273,7 +273,7 @@
 @ stdcall GetSecurityDescriptorSacl (ptr ptr ptr ptr)
 @ stdcall GetSecurityInfo (long long long ptr ptr ptr ptr ptr)
 # @ stub GetSecurityInfoExA
-@ stdcall GetSecurityInfoExW (long long long wstr wstr ptr ptr wstr wstr)
+@ stdcall GetSecurityInfoExW (long long long wstr wstr ptr ptr ptr ptr)
 @ stdcall GetServiceDisplayNameA(ptr str ptr ptr)
 @ stdcall GetServiceDisplayNameW(ptr wstr ptr ptr)
 @ stdcall GetServiceKeyNameA(long str ptr ptr)
