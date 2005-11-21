@@ -281,11 +281,9 @@ MSVCRT_size_t _mbstrlen(const char* str)
  */
 void _mbccpy(unsigned char* dest, const unsigned char* src)
 {
-  *dest++ = *src;
+  *dest = *src;
   if(MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(*src))
-    *dest = *++src; /* MB char */
-  else
-    ERR("failure.. is this ok?\n");
+    *++dest = *++src; /* MB char */
 }
 
 /*********************************************************************

@@ -335,7 +335,7 @@
 @ cdecl _mbbtombc(long)
 @ stub _mbbtype #(long long)
 # extern _mbcasemap
-@ cdecl _mbccpy (str str) strcpy
+@ cdecl _mbccpy (str str)
 @ stub _mbcjistojms #(long)
 @ stub _mbcjmstojis #(long)
 @ cdecl _mbclen(ptr)
