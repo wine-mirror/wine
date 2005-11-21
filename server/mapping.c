@@ -280,7 +280,7 @@ static struct object *create_mapping( const struct unicode_str *name, unsigned i
 
     if (!(mapping = create_named_object( sync_namespace, &mapping_ops, name, attr )))
         return NULL;
-    if (get_error() == STATUS_OBJECT_NAME_COLLISION)
+    if (get_error() == STATUS_OBJECT_NAME_EXISTS)
         return &mapping->obj;  /* Nothing else to do */
 
     mapping->header_size = 0;

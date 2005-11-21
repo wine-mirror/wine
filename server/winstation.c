@@ -96,7 +96,7 @@ static struct winstation *create_winstation( const struct unicode_str *name, uns
 
     if ((winstation = create_named_object( winstation_namespace, &winstation_ops, name, attr )))
     {
-        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
+        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
             winstation->flags = flags;
@@ -186,7 +186,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
 
     if ((desktop = create_named_object( winstation_namespace, &desktop_ops, &full_str, attr )))
     {
-        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
+        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
             desktop->flags = flags;

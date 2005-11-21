@@ -444,10 +444,10 @@ static struct named_pipe *create_named_pipe( const struct unicode_str *name, uns
 {
     struct named_pipe *pipe;
 
-    pipe = create_named_object( sync_namespace, &named_pipe_ops, name, attr );
+    pipe = create_named_object( sync_namespace, &named_pipe_ops, name, attr | OBJ_OPENIF );
     if (pipe)
     {
-        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
+        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
             pipe->instances = 0;
@@ -552,7 +552,7 @@ DECL_HANDLER(create_named_pipe)
     get_req_unicode_str( &name );
     if (!(pipe = create_named_pipe( &name, req->attributes ))) return;
 
-    if (get_error() != STATUS_OBJECT_NAME_COLLISION)
+    if (get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         pipe->insize = req->insize;
         pipe->outsize = req->outsize;

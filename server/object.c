@@ -166,12 +166,17 @@ void *create_named_object( struct namespace *namespace, const struct object_ops 
 
     if ((obj = find_object( namespace, name, attributes )))
     {
-        if (obj->ops != ops)
+        if (attributes & OBJ_OPENIF && obj->ops == ops)
+            set_error( STATUS_OBJECT_NAME_EXISTS );
+        else
         {
             release_object( obj );
             obj = NULL;
+            if (attributes & OBJ_OPENIF)
+                set_error( STATUS_OBJECT_TYPE_MISMATCH );
+            else
+                set_error( STATUS_OBJECT_NAME_COLLISION );
         }
-        set_error( STATUS_OBJECT_NAME_COLLISION );
         return obj;
     }
     if (!(name_ptr = alloc_name( name ))) return NULL;

@@ -68,7 +68,7 @@ static struct mutex *create_mutex( const struct unicode_str *name, unsigned int 
 
     if ((mutex = create_named_object( sync_namespace, &mutex_ops, name, attr )))
     {
-        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
+        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
             mutex->count = 0;

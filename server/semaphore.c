@@ -71,7 +71,7 @@ static struct semaphore *create_semaphore( const struct unicode_str *name, unsig
     }
     if ((sem = create_named_object( sync_namespace, &semaphore_ops, name, attr )))
     {
-        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
+        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
             sem->count = initial;

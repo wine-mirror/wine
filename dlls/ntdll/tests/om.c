@@ -179,7 +179,7 @@ static void test_name_collisions(void)
     NTSTATUS status;
     UNICODE_STRING str;
     OBJECT_ATTRIBUTES attr;
-    HANDLE h, h1, h2;
+    HANDLE dir, h, h1, h2;
     DWORD winerr;
     LARGE_INTEGER size;
 
@@ -204,12 +204,15 @@ static void test_name_collisions(void)
     pRtlFreeUnicodeString(&str);
 
 
-    pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\om.c-test");
-
+    pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects");
+    DIR_TEST_OPEN_SUCCESS(&dir)
+    pRtlCreateUnicodeStringFromAsciiz(&str, "om.c-test");
+    InitializeObjectAttributes(&attr, &str, OBJ_OPENIF, dir, NULL);
+    
     h = CreateMutexA(NULL, FALSE, "om.c-test");
     ok(h != 0, "CreateMutexA failed got ret=%p (%ld)\n", h, GetLastError());
     status = pNtCreateMutant(&h1, GENERIC_ALL, &attr, FALSE);
-    todo_wine ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
+    ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
         "NtCreateMutant should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08lx)\n", status);
     h2 = CreateMutexA(NULL, FALSE, "om.c-test");
     winerr = GetLastError();
@@ -222,7 +225,7 @@ static void test_name_collisions(void)
     h = CreateEventA(NULL, FALSE, FALSE, "om.c-test");
     ok(h != 0, "CreateEventA failed got ret=%p (%ld)\n", h, GetLastError());
     status = pNtCreateEvent(&h1, GENERIC_ALL, &attr, FALSE, FALSE);
-    todo_wine ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
+    ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
         "NtCreateEvent should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08lx)\n", status);
     h2 = CreateEventA(NULL, FALSE, FALSE, "om.c-test");
     winerr = GetLastError();
@@ -235,7 +238,7 @@ static void test_name_collisions(void)
     h = CreateSemaphoreA(NULL, 1, 2, "om.c-test");
     ok(h != 0, "CreateSemaphoreA failed got ret=%p (%ld)\n", h, GetLastError());
     status = pNtCreateSemaphore(&h1, GENERIC_ALL, &attr, 1, 2);
-    todo_wine ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
+    ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
         "NtCreateSemaphore should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08lx)\n", status);
     h2 = CreateSemaphoreA(NULL, 1, 2, "om.c-test");
     winerr = GetLastError();
@@ -248,7 +251,7 @@ static void test_name_collisions(void)
     h = CreateWaitableTimerA(NULL, TRUE, "om.c-test");
     ok(h != 0, "CreateWaitableTimerA failed got ret=%p (%ld)\n", h, GetLastError());
     status = pNtCreateTimer(&h1, GENERIC_ALL, &attr, NotificationTimer);
-    todo_wine ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
+    ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
         "NtCreateTimer should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08lx)\n", status);
     h2 = CreateWaitableTimerA(NULL, TRUE, "om.c-test");
     winerr = GetLastError();
@@ -263,7 +266,7 @@ static void test_name_collisions(void)
     size.u.LowPart = 256;
     size.u.HighPart = 0;
     status = pNtCreateSection(&h1, SECTION_MAP_WRITE, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0);
-    todo_wine ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
+    ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
         "NtCreateSection should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08lx)\n", status);
     h2 = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 256, "om.c-test");
     winerr = GetLastError();
@@ -274,6 +277,7 @@ static void test_name_collisions(void)
     pNtClose(h2);
 
     pRtlFreeUnicodeString(&str);
+    pNtClose(dir);
 }
 
 void test_directory(void)

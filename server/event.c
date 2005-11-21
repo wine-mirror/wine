@@ -66,7 +66,7 @@ struct event *create_event( const struct unicode_str *name, unsigned int attr,
 
     if ((event = create_named_object( sync_namespace, &event_ops, name, attr )))
     {
-        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
+        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
             event->manual_reset = manual_reset;

@@ -230,7 +230,7 @@ static struct mailslot *create_mailslot( const struct unicode_str *name, unsigne
         return NULL;
 
     /* it already exists - there can only be one mailslot to read from */
-    if (get_error() == STATUS_OBJECT_NAME_COLLISION)
+    if (get_error() == STATUS_OBJECT_NAME_EXISTS)
     {
         release_object( mailslot );
         return NULL;

@@ -75,7 +75,7 @@ static struct timer *create_timer( const struct unicode_str *name, unsigned int 
 
     if ((timer = create_named_object( sync_namespace, &timer_ops, name, attr )))
     {
-        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
+        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
             timer->manual       = manual;
