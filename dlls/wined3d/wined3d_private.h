@@ -1192,9 +1192,11 @@ typedef struct IWineD3DPixelShaderImpl {
     CONST DWORD                *function;
     UINT                        functionLength;
     DWORD                       version;
+    CHAR                        constants[WINED3D_PSHADER_MAX_CONSTANTS];
 
     /* run time data */
     PSHADERDATA                *data;
+    GLuint                      prgId;
 
 #if 0 /* needs reworking */
     PSHADERINPUTDATA input;

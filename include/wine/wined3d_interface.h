@@ -1285,7 +1285,7 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IUnknown)
 #endif
 
 /*****************************************************************************
- * IWineD3DPixelShader interface 
+ * IWineD3DPixelShader interface
  */
 #define INTERFACE IWineD3DPixelShader
 DECLARE_INTERFACE_(IWineD3DPixelShader,IUnknown)
@@ -1298,10 +1298,8 @@ DECLARE_INTERFACE_(IWineD3DPixelShader,IUnknown)
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;
     STDMETHOD(GetFunction)(THIS_ VOID* pData, UINT* pSizeOfData) PURE;
-    STDMETHOD(SetConstantF)(THIS_ UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount) PURE;
-    STDMETHOD(GetConstantF)(THIS_ UINT StartRegister, FLOAT* pConstantData, UINT Vector4fCount) PURE;
     /* Internal Interfaces */
-    STDMETHOD_(DWORD, GetVersion)(THIS) PURE;
+    STDMETHOD(SetFunction)(THIS_ CONST DWORD *pFunction) PURE;
 };
 #undef INTERFACE
 
@@ -1314,9 +1312,7 @@ DECLARE_INTERFACE_(IWineD3DPixelShader,IUnknown)
 #define IWineD3DPixelShader_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
 #define IWineD3DPixelShader_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DPixelShader_GetFunction(p,a,b)         (p)->lpVtbl->GetFunction(p,a,b)
-#define IWineD3DPixelShader_SetConstantF(p,a,b,c)      (p)->lpVtbl->SetConstantF(p,a,b,c)
-#define IWineD3DPixelShader_GetConstantF(p,a,b,c)      (p)->lpVtbl->GetConstantF(p,a,b,c)
-#define IWineD3DPixelShader_GetVersion(p)              (p)->lpVtbl->GetVersion(p)
+#define IWineD3DPixelShader_SetFunction(p,a)          (p)->lpVtbl->SetFunction(p,a)
 #endif
 
 #if 0 /* FIXME: During porting in from d3d8 - the following will be used */
