@@ -68,8 +68,9 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
     HRGN DstRgn, clipRgn, visrgn;
     INT code = X11DRV_START_EXPOSURES;
 
-    TRACE("dx,dy %d,%d lprcScroll %p lprcClip %p hrgnUpdate %p lprcUpdate %p\n",
-            dx, dy, lprcScroll, lprcClip, hrgnUpdate, lprcUpdate);
+    TRACE("dx,dy %d,%d rcScroll %s rcClip %s hrgnUpdate %p lprcUpdate %p\n",
+            dx, dy, wine_dbgstr_rect(lprcScroll), wine_dbgstr_rect(lprcClip),
+            hrgnUpdate, lprcUpdate);
     /* enable X-exposure events */
     if (hrgnUpdate || lprcUpdate)
         ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
