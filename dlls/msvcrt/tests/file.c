@@ -411,7 +411,7 @@ static void test_fopen_fclose_fcloseall( void )
     char fname1[] = "empty1";
     char fname2[] = "empty2";
     char fname3[] = "empty3";
-    FILE *stream1, *stream2, *stream3;
+    FILE *stream1, *stream2, *stream3, *stream4;
     int ret, numclosed;
 
     /* testing fopen() */
@@ -424,6 +424,14 @@ static void test_fopen_fclose_fcloseall( void )
     ok(stream3 == NULL, "The file '%s' shouldn't exist before\n", fname3 );
     stream3 = fopen(fname3, "w+");
     ok(stream3 != NULL, "The file '%s' should be opened now\n", fname3 );
+    errno = 0xfaceabad;
+    stream4 = fopen("", "w+");
+    ok(stream4 == NULL && errno == ENOENT, 
+       "filename is empty, errno = %d (expected 2)\n", errno);
+    errno = 0xfaceabad;
+    stream4 = fopen(NULL, "w+");
+    ok(stream4 == NULL && (errno == EINVAL || errno == ENOENT), 
+       "filename is NULL, errno = %d (expected 2 or 22)\n", errno);
 
     /* testing fclose() */
     ret = fclose(stream2);
@@ -454,19 +462,22 @@ START_TEST(file)
 
     arg_c = winetest_get_mainargs( &arg_v );
 
+    /* testing low-level I/O */
     if (arg_c >= 3)
     {
-	if (arg_c == 3) test_file_inherit_child(arg_v[2]); else test_file_inherit_child_no(arg_v[2]);
+        if (arg_c == 3) test_file_inherit_child(arg_v[2]); 
+        else test_file_inherit_child_no(arg_v[2]);
         return;
     }
+    test_file_inherit(arg_v[0]);
+    test_file_write_read();
+    test_chsize();
 
+    /* testing stream I/O */
     test_fdopen();
     test_fopen_fclose_fcloseall();
     test_fileops();
     test_fgetwc();
     test_file_put_get();
-    test_file_write_read();
-    test_file_inherit(arg_v[0]);
     test_tmpnam();
-    test_chsize();
 }
