@@ -54,8 +54,25 @@ static HRESULT WINAPI DocHostUIHandler_GetHostInfo(IDocHostUIHandler2 *iface,
         DOCHOSTUIINFO *pInfo)
 {
     WebBrowser *This = DOCHOSTUI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pInfo);
-    return E_NOTIMPL;
+    IDocHostUIHandler *handler;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, pInfo);
+
+    if(This->client) {
+        hres = IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler, (void**)&handler);
+        if(SUCCEEDED(hres)) {
+            hres = IDocHostUIHandler_GetHostInfo(handler, pInfo);
+            IDocHostUIHandler_Release(handler);
+            if(SUCCEEDED(hres))
+                return hres;
+        }
+    }
+
+    pInfo->dwFlags = DOCHOSTUIFLAG_DISABLE_HELP_MENU | DOCHOSTUIFLAG_OPENNEWWIN
+        | DOCHOSTUIFLAG_URL_ENCODING_ENABLE_UTF8 | DOCHOSTUIFLAG_ENABLE_INPLACE_NAVIGATION
+        | DOCHOSTUIFLAG_IME_ENABLE_RECONVERSION;
+    return S_OK;
 }
 
 static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD dwID,
