@@ -21,6 +21,7 @@
 #include "wine/test.h"
 #include "winbase.h"
 #include <string.h>
+#include <mbstring.h>
 #include <stdlib.h>
 #include <mbctype.h>
 
@@ -83,6 +84,21 @@ void test_ismbblead()
     _setmbcp(1252);
 }
 
+static void test_mbsspn( void)
+{
+    unsigned char str1[]="cabernet";
+    unsigned char str2[]="shiraz";
+    unsigned char set[]="abc";
+    unsigned char empty[]="";
+    int ret;
+    ret=_mbsspn( str1, set);
+    ok( ret==3, "_mbsspn returns %d should be 3\n", ret);
+    ret=_mbsspn( str2, set);
+    ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
+    ret=_mbsspn( str1, empty);
+    ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
+}
+
 START_TEST(string)
 {
     void *mem;
@@ -107,4 +123,6 @@ START_TEST(string)
 
     /* Test ismbblead*/
     test_ismbblead();
+   /* test _mbsspn */
+    test_mbsspn();
 }

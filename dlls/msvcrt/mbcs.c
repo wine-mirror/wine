@@ -1154,29 +1154,31 @@ unsigned char* _mbsupr(unsigned char* s)
  */
 MSVCRT_size_t _mbsspn(const unsigned char* string, const unsigned char* set)
 {
-  const unsigned char *p, *q;
+    const unsigned char *p, *q;
 
-  for (p = string; *p; p++)
+    for (p = string; *p; p++)
     {
-      if (MSVCRT_isleadbyte(*p))
-	{
-	  for (q = set; *q; q++)
-	    {
-	      if (!q[1])
-		break;
-	      if ((*p == *q) &&  (p[1] == q[1]))
-		break;
-	      q++;
-	    }
-	  if (*++p == '\0')
-	    break;
-	}
-      else
-	for (q = set; *q; q++)
-	  if (*p == *q)
-	    break;
+        if (MSVCRT_isleadbyte(*p))
+        {
+            for (q = set; *q; q++)
+            {
+                if (!q[1])
+                    break;
+                if ((*p == *q) &&  (p[1] == q[1]))
+                    break;
+                q++;
+            }
+            if (!q[0] || !q[1]) break;
+        }
+        else
+        {
+            for (q = set; *q; q++)
+                if (*p == *q)
+                    break;
+            if (!*q) break;
+        }
     }
-  return p - string;
+    return p - string;
 }
 
 /*********************************************************************
