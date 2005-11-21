@@ -174,6 +174,44 @@ static DWORD get_drive_type( char letter )
     return ret;
 }
 
+
+static void set_drive_label( char letter, const char *label )
+{
+    char device[] = "a:\\";  /* SetVolumeLabel() requires a trailing slash */
+    device[0] = letter;
+
+    if(!SetVolumeLabel(device, label))
+    {
+        WINE_WARN("unable to set volume label for devicename of '%s', label of '%s'\n",
+                  device, label);
+        PRINTERROR();
+    }
+    else
+    {
+        WINE_TRACE("  set volume label for devicename of '%s', label of '%s'\n",
+                   device, label);
+    }
+}
+
+/* set the drive serial number via a .windows-serial file */
+static void set_drive_serial( char letter, const char *serial )
+{
+    char filename[] = "a:\\.windows-serial";
+    HANDLE hFile;
+
+    filename[0] = letter;
+    WINE_TRACE("Putting serial number of '%s' into file '%s'\n", serial, filename);
+    hFile = CreateFile(filename, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+                       CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile != INVALID_HANDLE_VALUE)
+    {
+        DWORD w;
+        WriteFile(hFile, serial, strlen(serial), &w, NULL);
+        WriteFile(hFile, "\n", 1, &w, NULL);
+        CloseHandle(hFile);
+    }
+}
+
 #if 0
 
 /* currently unused, but if users have this burning desire to be able to rename drives,
@@ -340,6 +378,7 @@ void apply_drive_changes(void)
     DWORD maxComponentLength;
     DWORD fileSystemFlags;
     CHAR fileSystemName[128];
+    char newSerialNumberText[32];
     int retval;
     BOOL defineDevice;
 
@@ -350,6 +389,8 @@ void apply_drive_changes(void)
     {
         defineDevice = FALSE;
         foundDrive = FALSE;
+        volumeNameBuffer[0] = 0;
+        serialNumber = 0;
         snprintf(devicename, sizeof(devicename), "%c:", 'A' + i);
 
         /* get a drive */
@@ -366,10 +407,6 @@ void apply_drive_changes(void)
         /* if we found a drive and have a drive then compare things */
         if(foundDrive && drives[i].in_use)
         {
-            char newSerialNumberText[256];
-
-            volumeNameBuffer[0] = 0;
-
             WINE_TRACE("drives[i].letter: '%c'\n", drives[i].letter);
 
             snprintf(devicename, sizeof(devicename), "%c:\\", 'A' + i);
@@ -389,20 +426,12 @@ void apply_drive_changes(void)
                 continue; /* skip this drive */
             }
 
-            snprintf(newSerialNumberText, sizeof(newSerialNumberText), "%lX", serialNumber);
-
             WINE_TRACE("  current path:   '%s', new path:   '%s'\n",
                        targetpath, drives[i].unixpath);
-            WINE_TRACE("  current label:  '%s', new label:  '%s'\n",
-                       volumeNameBuffer, drives[i].label);
-            WINE_TRACE("  current serial: '%s', new serial: '%s'\n",
-                       newSerialNumberText, drives[i].serial);
 
             /* compare to what we have */
             /* do we have the same targetpath? */
-            if(strcmp(drives[i].unixpath, targetpath) ||
-               strcmp(drives[i].label, volumeNameBuffer) ||
-               strcmp(drives[i].serial, newSerialNumberText))
+            if(strcmp(drives[i].unixpath, targetpath))
             {
                 defineDevice = TRUE;
                 WINE_TRACE("  making changes to drive '%s'\n", devicename);
@@ -438,9 +467,6 @@ void apply_drive_changes(void)
         /* adding and modifying are the same steps */
         if(defineDevice)
         {
-            char filename[256];
-            HANDLE hFile;
-
             /* define this drive */
             /* DefineDosDevice() requires that NO trailing slash be present */
             snprintf(devicename, sizeof(devicename), "%c:", 'A' + i);
@@ -454,56 +480,15 @@ void apply_drive_changes(void)
             {
                 WINE_TRACE("  added devicename of '%s', targetpath of '%s'\n",
                            devicename, drives[i].unixpath);
-
-                /* SetVolumeLabel() requires a trailing slash */
-                snprintf(devicename, sizeof(devicename), "%c:\\", 'A' + i);
-                if(!SetVolumeLabel(devicename, drives[i].label))
-                {
-                    WINE_WARN("unable to set volume label for devicename of '%s', label of '%s'\n",
-                        devicename, drives[i].label);
-                    PRINTERROR();
-                }
-                else
-                {
-                    WINE_TRACE("  set volume label for devicename of '%s', label of '%s'\n",
-                        devicename, drives[i].label);
-                }
-            }
-
-
-            /* Set the drive serial number via a .windows-serial file in */
-            /* the targetpath directory */
-            snprintf(filename, sizeof(filename), "%c:\\.windows-serial", drives[i].letter);
-            WINE_TRACE("  Putting serial number of '%ld' into file '%s'\n",
-                       serialNumber, filename);
-            hFile = CreateFile(filename,
-                       GENERIC_WRITE,
-                       FILE_SHARE_READ,
-                       NULL,
-                       CREATE_ALWAYS,
-                       FILE_ATTRIBUTE_NORMAL,
-                       NULL);
-            if (hFile != INVALID_HANDLE_VALUE)
-            {
-                DWORD w;
-                WINE_TRACE("  writing serial number of '%s'\n", drives[i].serial);
-                WriteFile(hFile,
-                          drives[i].serial,
-                          strlen(drives[i].serial),
-                          &w,
-                          NULL);
-                WriteFile(hFile,
-                          "\n",
-                          strlen("\n"),
-                          &w,
-                          NULL);
-                CloseHandle(hFile);
-            }
-            else
-            {
-                WINE_TRACE("  CreateFile() error with file '%s'\n", filename);
             }
         }
+
+        if (drives[i].label && strcmp(drives[i].label, volumeNameBuffer))
+            set_drive_label( drives[i].letter, drives[i].label );
+
+        snprintf(newSerialNumberText, sizeof(newSerialNumberText), "%lX", serialNumber);
+        if (drives[i].serial && drives[i].serial[0] && strcmp(drives[i].serial, newSerialNumberText))
+            set_drive_serial( drives[i].letter, drives[i].serial );
 
         set_drive_type( drives[i].letter, drives[i].type );
     }
