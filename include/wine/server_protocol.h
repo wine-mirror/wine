@@ -3532,7 +3532,7 @@ struct create_mailslot_request
     unsigned int   access;
     unsigned int   attributes;
     unsigned int   max_msgsize;
-    unsigned int   read_timeout;
+    int            read_timeout;
     /* VARARG(name,unicode_str); */
 };
 struct create_mailslot_reply
@@ -3564,13 +3564,13 @@ struct set_mailslot_info_request
     struct request_header __header;
     obj_handle_t   handle;
     unsigned int   flags;
-    unsigned int   read_timeout;
+    int            read_timeout;
 };
 struct set_mailslot_info_reply
 {
     struct reply_header __header;
     unsigned int   max_msgsize;
-    unsigned int   read_timeout;
+    int            read_timeout;
     unsigned int   msg_count;
     unsigned int   next_msgsize;
 };
@@ -4208,6 +4208,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 198
+#define SERVER_PROTOCOL_VERSION 199
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

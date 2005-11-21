@@ -3052,7 +3052,7 @@ static void dump_create_mailslot_request( const struct create_mailslot_request *
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
-    fprintf( stderr, " read_timeout=%08x,", req->read_timeout );
+    fprintf( stderr, " read_timeout=%d,", req->read_timeout );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -3080,13 +3080,13 @@ static void dump_set_mailslot_info_request( const struct set_mailslot_info_reque
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " read_timeout=%08x", req->read_timeout );
+    fprintf( stderr, " read_timeout=%d", req->read_timeout );
 }
 
 static void dump_set_mailslot_info_reply( const struct set_mailslot_info_reply *req )
 {
     fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
-    fprintf( stderr, " read_timeout=%08x,", req->read_timeout );
+    fprintf( stderr, " read_timeout=%d,", req->read_timeout );
     fprintf( stderr, " msg_count=%08x,", req->msg_count );
     fprintf( stderr, " next_msgsize=%08x", req->next_msgsize );
 }

@@ -1672,7 +1672,10 @@ HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
     attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
 
-    timeout.QuadPart = (ULONGLONG) lReadTimeout * -10000;
+    if (lReadTimeout != MAILSLOT_WAIT_FOREVER)
+        timeout.QuadPart = (ULONGLONG) lReadTimeout * -10000;
+    else
+        timeout.QuadPart = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
 
     status = NtCreateMailslotFile( &handle, GENERIC_READ | GENERIC_WRITE, &attr,
                                    &iosb, 0, 0, nMaxMessageSize, &timeout );

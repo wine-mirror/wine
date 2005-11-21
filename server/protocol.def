@@ -2475,7 +2475,7 @@ enum message_type
     unsigned int   access;        /* wanted access rights */
     unsigned int   attributes;    /* object attributes */
     unsigned int   max_msgsize;
-    unsigned int   read_timeout;
+    int            read_timeout;
     VARARG(name,unicode_str);     /* mailslot name */
 @REPLY
     obj_handle_t   handle;        /* handle to the mailslot */
@@ -2497,10 +2497,10 @@ enum message_type
 @REQ(set_mailslot_info)
     obj_handle_t   handle;        /* handle to the mailslot */
     unsigned int   flags;
-    unsigned int   read_timeout;
+    int            read_timeout;
 @REPLY
     unsigned int   max_msgsize;
-    unsigned int   read_timeout;
+    int            read_timeout;
     unsigned int   msg_count;
     unsigned int   next_msgsize;
 @END

@@ -2061,7 +2061,7 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
         req->access = DesiredAccess;
         req->attributes = (attr) ? attr->Attributes : 0;
         req->max_msgsize = MaxMessageSize;
-        req->read_timeout = TimeOut->QuadPart / -10000;
+        req->read_timeout = (TimeOut->QuadPart <= 0) ? TimeOut->QuadPart / -10000 : -1;
         wine_server_add_data( req, attr->ObjectName->Buffer + 4,
                               attr->ObjectName->Length - 4*sizeof(WCHAR) );
         ret = wine_server_call( req );

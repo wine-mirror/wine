@@ -56,7 +56,7 @@ struct mailslot
     struct fd          *fd;
     struct fd          *write_fd;
     unsigned int        max_msgsize;
-    unsigned int        read_timeout;
+    int                 read_timeout;
     struct list         writers;
 };
 
@@ -207,8 +207,7 @@ static void mailslot_queue_async( struct fd *fd, void *apc, void *user,
         return;
     }
 
-    if (mailslot->read_timeout != MAILSLOT_WAIT_FOREVER)
-        timeout = &mailslot->read_timeout;
+    if (mailslot->read_timeout != -1) timeout = &mailslot->read_timeout;
 
     fd_queue_async_timeout( fd, apc, user, iosb, type, count, timeout );
 }
