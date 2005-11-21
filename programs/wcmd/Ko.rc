@@ -36,7 +36,7 @@ STRINGTABLE
   WCMD_CD,     " CD 도움말\n"
   WCMD_CHDIR,  " CHDIR 도움말\n"
 
-  WCMD_CLS,    "CLS clears the console screen\n"
+  WCMD_CLS,    "CLS 콘솔 화면 깨끗히\n"
 
   WCMD_COPY,   "COPY 도움말\n"
   WCMD_CTTY,   "CTTY 도움말\n"
@@ -150,7 +150,7 @@ action, and can therefore be used as a comment in a batch file.\n"
   WCMD_RMDIR,  "RMDIR 도움말\n"
 
   WCMD_SET,
-"SET displays or changes the wcmd environment variables.\n\
+"SET  wcmd 환경 변수 보여주거나 바꾸기.\n\
 \n\
 SET without parameters shows all of the current environment.\n\
 \n\
