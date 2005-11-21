@@ -76,7 +76,7 @@ BEGIN
         MENUITEM "&Übereinander",          ID_WINDOWS_TILEHORIZONTALLY
         MENUITEM "&Nebeneinander",            ID_WINDOWS_TILEVERTICALLY
         MENUITEM "&Minimieren",                   ID_WINDOWS_MINIMIZE
-        MENUITEM "Ma&xmimieren",                   ID_WINDOWS_MAXIMIZE
+        MENUITEM "Ma&ximieren",                   ID_WINDOWS_MAXIMIZE
         MENUITEM "Hinter&einander",                    ID_WINDOWS_CASCADE
         MENUITEM "&In der Vordergrund holen",             ID_WINDOWS_BRINGTOFRONT
     END
@@ -93,7 +93,7 @@ BEGIN
     MENUITEM "&Übereinander",          ID_WINDOWS_TILEHORIZONTALLY
     MENUITEM "&Nebeneinander",            ID_WINDOWS_TILEVERTICALLY
     MENUITEM "&Minimieren",                   ID_WINDOWS_MINIMIZE
-    MENUITEM "Ma&xmimieren",                   ID_WINDOWS_MAXIMIZE
+    MENUITEM "Ma&ximieren",                   ID_WINDOWS_MAXIMIZE
     MENUITEM "Hinter&einander",                    ID_WINDOWS_CASCADE
     MENUITEM "&In den Vordergrund holen",             ID_WINDOWS_BRINGTOFRONT
 END
@@ -442,7 +442,7 @@ BEGIN
     ID_VIEW_DETAILS               "Zeige detailierte Informationen über jeden einzelnen Task an"
     ID_VIEW_UPDATESPEED_HIGH      "Aktualisiert die Anzeige zweimal pro Sekunde"
     ID_VIEW_UPDATESPEED_NORMAL    "Aktualisiert die Anzeige aller 2 Sekunden"
-    ID_VIEW_UPDATESPEED_LOW       "Aktualisiert die Anzeige aller 4 Sekdunden"
+    ID_VIEW_UPDATESPEED_LOW       "Aktualisiert die Anzeige aller 4 Sekunden"
 END
 
 STRINGTABLE DISCARDABLE

@@ -28,4 +28,5 @@
 #include "En.rc"
 #include "Fi.rc"
 #include "Ko.rc"
+#include "Nl.rc"
 #include "Ru.rc"

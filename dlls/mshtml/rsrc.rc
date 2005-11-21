@@ -27,6 +27,7 @@
 #include "Fi.rc"
 #include "Fr.rc"
 #include "Ko.rc"
+#include "Nl.rc"
 #include "No.rc"
 
 REGINST REGINST mshtml.inf
