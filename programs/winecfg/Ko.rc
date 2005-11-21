@@ -47,8 +47,8 @@ BEGIN
                     15,50,230,150
     PUSHBUTTON	    "풀그림 더하기(&A)...",IDC_APP_ADDAPP, 90,204,75,14
     PUSHBUTTON	    "풀그림 제거하기(&R)",IDC_APP_REMOVEAPP, 170,204,75,14
-    //LTEXT           "윈도우즈 버젼(&W):",IDC_STATIC,16,227,58,8
-    LTEXT           "윈도우즈 버젼(&W):",IDC_STATIC,16,227,58,8
+    /*LTEXT           "윈도우즈 버젼(&W):",IDC_STATIC,16,227,58,8 */
+    LTEXT           "윈도우즈 버젼(&W):",IDC_STATIC,16,227,75,14
     COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
 END
 
@@ -87,7 +87,7 @@ IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " DLL Overrides ",IDC_STATIC,8,4,244,240
+    GROUPBOX        " DLL 오버라이드 ",IDC_STATIC,8,4,244,240
     LTEXT           "Dynamic Link Libraries can be specified individually to be either builtin (provided by Wine) or native (taken from Windows or provided by the application)."
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "New override for library:",IDC_STATIC,16,58,100,8
@@ -101,15 +101,15 @@ END
 
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Edit Override"
+CAPTION "오버라이브 편집"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Load Order ",IDC_STATIC,8,4,94,66
+    GROUPBOX        "로드 순서 ",IDC_STATIC,8,4,94,66
     CONTROL         "내장(&B)(Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
     CONTROL         "네이티브(&N) (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
-    CONTROL         "Bui&ltin then Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
-    CONTROL         "Nati&ve then Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
-    CONTROL         "&Disable",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    CONTROL         "내장이 네이티브보다 우선(&l)",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "네이티브가 내장보다 우선(&v)",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "안사용(&D)",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
     DEFPUSHBUTTON   "확인",IDOK,8,74,45,14,WS_GROUP
     PUSHBUTTON      "취소",IDCANCEL,57,74,45,14,WS_GROUP
 END
@@ -118,7 +118,7 @@ IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Drive mappings ",IDC_STATIC,8,4,244,240
+    GROUPBOX        "드라이브 할당 ",IDC_STATIC,8,4,244,240
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "더하기(&A)...",IDC_BUTTON_ADD,15,98,37,14

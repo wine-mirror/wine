@@ -24,7 +24,7 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 {
-STRING_USAGE,                                   "Start a program, or open a document in the program normally used for files with that suffix. \n\
+STRING_USAGE,                                   "풀그림을 실행시키거나 보통 파일에 첨가해서 사용되는  풀그림으로 문서 열기 \n\
 Usage: \n\
 start [옵션] 풀그림이나 파일 이름 [...] \n\
 start [옵션] 문서 파일 이름 \n\
@@ -32,9 +32,9 @@ start [옵션] 문서 파일 이름 \n\
 Options: \n\
 /M[inimized] 풀그림 최소화 상태로 실행. \n\
 /MAX[imized] 풀그림 최대화 상태로 실행. \n\
-/R[estored]  Start the program normally (neither minimized nor maximized). \n\
-/W[ait]      Wait for started program to finish, then exit with its exit code. \n\
-/L           Show end-user license. \n\
+/R[estored]  풀그림을 보통상태로 시작시키기 (최소화도 아니고 최대화도 아님). \n\
+/W[ait]     시작된 풀그림이 끝날 때까지 기다림, 끝날 때 종료코드를 남김. \n\
+/L           사용자 라이센스 보여줌 \n\
  \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
 Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option. \n\
@@ -60,5 +60,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. \n\
 See the COPYING.LIB file for license information. \n\
 "
 
-STRING_EXECFAIL "Application could not be started, or no application associated with the specified file.\nShellExecuteEx failed"
+STRING_EXECFAIL "풀그림을 실행되지 않았거나, 지정된 파일에는 어떤 풀그림도 연결되어있지 않습니다.\nShellExecuteEx 실패"
 }
