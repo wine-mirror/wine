@@ -739,10 +739,16 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
     if(style & WS_HSCROLL) TRACE(" WS_HSCROLL");
     if(style & WS_SYSMENU) TRACE(" WS_SYSMENU");
     if(style & WS_THICKFRAME) TRACE(" WS_THICKFRAME");
-    if(style & WS_GROUP) TRACE(" WS_GROUP");
-    if(style & WS_TABSTOP) TRACE(" WS_TABSTOP");
-    if(style & WS_MINIMIZEBOX) TRACE(" WS_MINIMIZEBOX");
-    if(style & WS_MAXIMIZEBOX) TRACE(" WS_MAXIMIZEBOX");
+    if (style & WS_CHILD)
+    {
+        if(style & WS_GROUP) TRACE(" WS_GROUP");
+        if(style & WS_TABSTOP) TRACE(" WS_TABSTOP");
+    }
+    else
+    {
+        if(style & WS_MINIMIZEBOX) TRACE(" WS_MINIMIZEBOX");
+        if(style & WS_MAXIMIZEBOX) TRACE(" WS_MAXIMIZEBOX");
+    }
 
     /* FIXME: Add dumping of BS_/ES_/SBS_/LBS_/CBS_/DS_/etc. styles */
 #define DUMPED_STYLES \
