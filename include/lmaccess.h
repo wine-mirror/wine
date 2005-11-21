@@ -407,7 +407,7 @@ NET_API_STATUS WINAPI NetUserGetInfo(LPCWSTR servername, LPCWSTR username,
     DWORD level, LPBYTE* bufptr);
 
 NET_API_STATUS WINAPI NetQueryDisplayInformation(
-  LPWSTR ServerName, DWORD Level, DWORD Index, DWORD EntriesRequested,
+  LPCWSTR ServerName, DWORD Level, DWORD Index, DWORD EntriesRequested,
   DWORD PreferredMaximumLength, LPDWORD ReturnedEntryCount, 
   PVOID *SortedBuffer);
 

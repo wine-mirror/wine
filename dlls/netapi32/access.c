@@ -95,8 +95,8 @@ static BOOL NETAPI_IsKnownUser(LPCWSTR UserName)
 /************************************************************
  *                NetUserAdd (NETAPI32.@)
  */
-NET_API_STATUS WINAPI NetUserAdd(LMSTR servername,
-                  DWORD level, LPBYTE* bufptr, LPDWORD parm_err)
+NET_API_STATUS WINAPI NetUserAdd(LPCWSTR servername,
+                  DWORD level, LPBYTE bufptr, LPDWORD parm_err)
 {
     NET_API_STATUS status;
     FIXME("(%s, %ld, %p, %p) stub!\n", debugstr_w(servername), level, bufptr, parm_err);
@@ -433,7 +433,7 @@ static void ACCESS_CopyDisplayUser(PNET_DISPLAY_USER dest, LPWSTR *dest_buf,
  */
 NET_API_STATUS WINAPI
 NetQueryDisplayInformation(
-    LPWSTR ServerName, DWORD Level, DWORD Index, DWORD EntriesRequested,
+    LPCWSTR ServerName, DWORD Level, DWORD Index, DWORD EntriesRequested,
     DWORD PreferredMaximumLength, LPDWORD ReturnedEntryCount,
     PVOID *SortedBuffer)
 {
@@ -540,7 +540,7 @@ NetQueryDisplayInformation(
  */
 
 NET_API_STATUS WINAPI
-NetGetDCName(LPWSTR servername, LPWSTR domainname, LPBYTE *bufptr)
+NetGetDCName(LPCWSTR servername, LPCWSTR domainname, LPBYTE *bufptr)
 {
   FIXME("(%s, %s, %p) stub!\n", debugstr_w(servername),
                  debugstr_w(domainname), bufptr);
