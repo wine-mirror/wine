@@ -1040,6 +1040,65 @@ static void InternetCreateUrlA_test()
 	HeapFree(GetProcessHeap(), 0, szUrl);
 }
 
+static void HttpSendRequestEx_test(void)
+{
+    HINTERNET hSession;
+    HINTERNET hConnect;
+    HINTERNET hRequest;
+
+    INTERNET_BUFFERS BufferIn;
+    DWORD dwBytesWritten;
+    DWORD dwBytesRead;
+    CHAR szBuffer[256];
+    int i;
+
+    static const char szPostData[] = "mode=Test";
+    static const char szContentType[] = "Content-Type: application/x-www-form-urlencoded";
+    
+    hSession = InternetOpen("Wine Regression Test",
+            INTERNET_OPEN_TYPE_PRECONFIG,NULL,NULL,0);
+    ok( hSession != NULL ,"Unable to open Internet session\n");
+    hConnect = InternetConnect(hSession, "crossover.codeweavers.com",
+            INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0,
+            0);
+    ok( hConnect != NULL, "Unable to connect to http://crossover.codeweavers.com\n");
+    hRequest = HttpOpenRequest(hConnect, "POST", "/posttest.php",
+            NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    ok( hRequest != NULL, "Failed to open request handle\n");
+
+
+    BufferIn.dwStructSize = sizeof( INTERNET_BUFFERS);
+    BufferIn.Next = NULL;
+    BufferIn.lpcszHeader = szContentType;
+    BufferIn.dwHeadersLength = sizeof(szContentType);
+    BufferIn.dwHeadersTotal = sizeof(szContentType);
+    BufferIn.lpvBuffer = NULL;
+    BufferIn.dwBufferLength = 0;
+    BufferIn.dwBufferTotal = sizeof(szPostData)-1;
+    BufferIn.dwOffsetLow = 0;
+    BufferIn.dwOffsetHigh = 0;
+
+    ok(HttpSendRequestEx(hRequest, &BufferIn, NULL, 0 ,0), 
+            "SendRequestEx Failed\n");
+
+    for (i = 0; szPostData[i]; i++)
+        ok(InternetWriteFile(hRequest, &szPostData[i], 1, &dwBytesWritten),
+                "InternetWriteFile failed\n");
+
+    ok(HttpEndRequest(hRequest, NULL, 0, 0), "HttpEndRequest Failed\n");
+
+    ok(InternetReadFile(hRequest, szBuffer, 255, &dwBytesRead),
+            "Unable to read responce\n");
+    szBuffer[dwBytesRead] = 0;
+
+    ok(dwBytesRead == 13,"Read %lu bytes instead of 13\n",dwBytesRead);
+    ok(strncmp(szBuffer,"mode => Test\n",dwBytesRead)==0,"Got string %s\n",szBuffer);
+
+    ok(InternetCloseHandle(hRequest), "Close request handle failed\n");
+    ok(InternetCloseHandle(hConnect), "Close connect handle failed\n");
+    ok(InternetCloseHandle(hSession), "Close session handle failed\n");
+}
+    
 START_TEST(http)
 {
     InternetReadFile_test(INTERNET_FLAG_ASYNC);
@@ -1053,4 +1112,5 @@ START_TEST(http)
     InternetTimeToSystemTimeA_test();
     InternetTimeToSystemTimeW_test();
     InternetCreateUrlA_test();
+    HttpSendRequestEx_test();
 }

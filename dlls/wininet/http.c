@@ -5,9 +5,9 @@
  * Copyright 2002 CodeWeavers Inc.
  * Copyright 2002 TransGaming Technologies Inc.
  * Copyright 2004 Mike McCormack for CodeWeavers
+ * Copyright 2005 Aric Stewart for CodeWeavers
  *
  * Ulrich Czekalla
- * Aric Stewart
  * David Hammerton
  *
  * This library is free software; you can redistribute it and/or
@@ -92,6 +92,9 @@ static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer);
 static BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr);
 static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField);
 static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index);
+static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
+static BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
+                       LPCWSTR username, LPCWSTR password );
 
 
 /***********************************************************************
@@ -152,6 +155,235 @@ static void HTTP_FreeTokens(LPWSTR * token_array)
     for (i = 0; token_array[i]; i++)
         HeapFree(GetProcessHeap(), 0, token_array[i]);
     HeapFree(GetProcessHeap(), 0, token_array);
+}
+
+/* **********************************************************************
+ * 
+ * Helper functions for the HttpSendRequest(Ex) functions
+ * 
+ */
+static void HTTP_FixVerb( LPWININETHTTPREQW lpwhr )
+{
+    /* if the verb is NULL default to GET */
+    if (NULL == lpwhr->lpszVerb)
+    {
+	    static const WCHAR szGET[] = { 'G','E','T', 0 };
+	    lpwhr->lpszVerb = WININET_strdupW(szGET);
+    }
+}
+
+static void HTTP_FixURL( LPWININETHTTPREQW lpwhr)
+{
+    static const WCHAR szSlash[] = { '/',0 };
+    static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/', 0 };
+
+    /* If we don't have a path we set it to root */
+    if (NULL == lpwhr->lpszPath)
+        lpwhr->lpszPath = WININET_strdupW(szSlash);
+    else /* remove \r and \n*/
+    {
+        int nLen = strlenW(lpwhr->lpszPath);
+        while ((nLen >0 ) && ((lpwhr->lpszPath[nLen-1] == '\r')||(lpwhr->lpszPath[nLen-1] == '\n')))
+        {
+            nLen--;
+            lpwhr->lpszPath[nLen]='\0';
+        }
+        /* Replace '\' with '/' */
+        while (nLen>0) {
+            nLen--;
+            if (lpwhr->lpszPath[nLen] == '\\') lpwhr->lpszPath[nLen]='/';
+        }
+    }
+
+    if(CSTR_EQUAL != CompareStringW( LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+                       lpwhr->lpszPath, strlenW(szHttp), szHttp, strlenW(szHttp) )
+       && lpwhr->lpszPath[0] != '/') /* not an absolute path ?? --> fix it !! */
+    {
+        WCHAR *fixurl = HeapAlloc(GetProcessHeap(), 0, 
+                             (strlenW(lpwhr->lpszPath) + 2)*sizeof(WCHAR));
+        *fixurl = '/';
+        strcpyW(fixurl + 1, lpwhr->lpszPath);
+        HeapFree( GetProcessHeap(), 0, lpwhr->lpszPath );
+        lpwhr->lpszPath = fixurl;
+    }
+}
+
+static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr )
+{
+    LPWSTR requestString;
+    DWORD len, n;
+    LPCWSTR *req;
+    INT i;
+    LPWSTR p;
+
+    static const WCHAR szSpace[] = { ' ',0 };
+    static const WCHAR szcrlf[] = {'\r','\n', 0};
+    static const WCHAR szColon[] = { ':',' ',0 };
+    static const WCHAR sztwocrlf[] = {'\r','\n','\r','\n', 0};
+
+    /* allocate space for an array of all the string pointers to be added */
+    len = (HTTP_QUERY_MAX + lpwhr->nCustHeaders)*4 + 9;
+    req = HeapAlloc( GetProcessHeap(), 0, len*sizeof(LPCWSTR) );
+
+    /* add the verb, path and HTTP/1.0 */
+    n = 0;
+    req[n++] = lpwhr->lpszVerb;
+    req[n++] = szSpace;
+    req[n++] = lpwhr->lpszPath;
+    req[n++] = HTTPHEADER;
+
+    /* Append standard request headers */
+    for (i = 0; i <= HTTP_QUERY_MAX; i++)
+    {
+        if (lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST)
+        {
+            req[n++] = szcrlf;
+            req[n++] = lpwhr->StdHeaders[i].lpszField;
+            req[n++] = szColon;
+            req[n++] = lpwhr->StdHeaders[i].lpszValue;
+
+            TRACE("Adding header %s (%s)\n",
+                   debugstr_w(lpwhr->StdHeaders[i].lpszField),
+                   debugstr_w(lpwhr->StdHeaders[i].lpszValue));
+        }
+    }
+
+    /* Append custom request heades */
+    for (i = 0; i < lpwhr->nCustHeaders; i++)
+    {
+        if (lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST)
+        {
+            req[n++] = szcrlf;
+            req[n++] = lpwhr->pCustHeaders[i].lpszField;
+            req[n++] = szColon;
+            req[n++] = lpwhr->pCustHeaders[i].lpszValue;
+
+            TRACE("Adding custom header %s (%s)\n",
+                   debugstr_w(lpwhr->pCustHeaders[i].lpszField),
+                   debugstr_w(lpwhr->pCustHeaders[i].lpszValue));
+        }
+    }
+
+    if( n >= len )
+        ERR("oops. buffer overrun\n");
+
+    req[n] = NULL;
+    requestString = HTTP_build_req( req, 4 );
+    HeapFree( GetProcessHeap(), 0, req );
+
+    /*
+     * Set (header) termination string for request
+     * Make sure there's exactly two new lines at the end of the request
+     */
+    p = &requestString[strlenW(requestString)-1];
+    while ( (*p == '\n') || (*p == '\r') )
+       p--;
+    strcpyW( p+1, sztwocrlf );
+    
+    return requestString;
+}
+
+static void HTTP_ProcessHeaders( LPWININETHTTPREQW lpwhr )
+{
+    int CustHeaderIndex;
+    static const WCHAR szSetCookie[] = {'S','e','t','-','C','o','o','k','i','e',0 };
+
+    CustHeaderIndex = HTTP_GetCustomHeaderIndex(lpwhr, szSetCookie);
+    if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES) && (CustHeaderIndex >= 0))
+    {
+        LPHTTPHEADERW setCookieHeader;
+        int nPosStart = 0, nPosEnd = 0, len;
+        static const WCHAR szFmt[] = { 'h','t','t','p',':','/','/','%','s','/',0};
+
+        setCookieHeader = &lpwhr->pCustHeaders[CustHeaderIndex];
+
+        while (setCookieHeader->lpszValue[nPosEnd] != '\0')
+        {
+            LPWSTR buf_cookie, cookie_name, cookie_data;
+            LPWSTR buf_url;
+            LPWSTR domain = NULL;
+            int nEqualPos = 0;
+            while (setCookieHeader->lpszValue[nPosEnd] != ';' && setCookieHeader->lpszValue[nPosEnd] != ',' &&
+                   setCookieHeader->lpszValue[nPosEnd] != '\0')
+            {
+                nPosEnd++;
+            }
+            if (setCookieHeader->lpszValue[nPosEnd] == ';')
+            {
+                /* fixme: not case sensitive, strcasestr is gnu only */
+                int nDomainPosEnd = 0;
+                int nDomainPosStart = 0, nDomainLength = 0;
+                static const WCHAR szDomain[] = {'d','o','m','a','i','n','=',0};
+                LPWSTR lpszDomain = strstrW(&setCookieHeader->lpszValue[nPosEnd], szDomain);
+                if (lpszDomain)
+                { /* they have specified their own domain, lets use it */
+                    while (lpszDomain[nDomainPosEnd] != ';' && lpszDomain[nDomainPosEnd] != ',' &&
+                           lpszDomain[nDomainPosEnd] != '\0')
+                    {
+                        nDomainPosEnd++;
+                    }
+                    nDomainPosStart = strlenW(szDomain);
+                    nDomainLength = (nDomainPosEnd - nDomainPosStart) + 1;
+                    domain = HeapAlloc(GetProcessHeap(), 0, (nDomainLength + 1)*sizeof(WCHAR));
+                    lstrcpynW(domain, &lpszDomain[nDomainPosStart], nDomainLength + 1);
+                }
+            }
+            if (setCookieHeader->lpszValue[nPosEnd] == '\0') break;
+            buf_cookie = HeapAlloc(GetProcessHeap(), 0, ((nPosEnd - nPosStart) + 1)*sizeof(WCHAR));
+            lstrcpynW(buf_cookie, &setCookieHeader->lpszValue[nPosStart], (nPosEnd - nPosStart) + 1);
+            TRACE("%s\n", debugstr_w(buf_cookie));
+            while (buf_cookie[nEqualPos] != '=' && buf_cookie[nEqualPos] != '\0')
+            {
+                nEqualPos++;
+            }
+            if (buf_cookie[nEqualPos] == '\0' || buf_cookie[nEqualPos + 1] == '\0')
+            {
+                HeapFree(GetProcessHeap(), 0, buf_cookie);
+                break;
+            }
+
+            cookie_name = HeapAlloc(GetProcessHeap(), 0, (nEqualPos + 1)*sizeof(WCHAR));
+            lstrcpynW(cookie_name, buf_cookie, nEqualPos + 1);
+            cookie_data = &buf_cookie[nEqualPos + 1];
+
+
+            len = strlenW((domain ? domain : lpwhr->StdHeaders[HTTP_QUERY_HOST].lpszValue)) + 
+                strlenW(lpwhr->lpszPath) + 9;
+            buf_url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+            sprintfW(buf_url, szFmt, (domain ? domain : lpwhr->StdHeaders[HTTP_QUERY_HOST].lpszValue)); /* FIXME PATH!!! */
+            InternetSetCookieW(buf_url, cookie_name, cookie_data);
+
+            HeapFree(GetProcessHeap(), 0, buf_url);
+            HeapFree(GetProcessHeap(), 0, buf_cookie);
+            HeapFree(GetProcessHeap(), 0, cookie_name);
+            HeapFree(GetProcessHeap(), 0, domain);
+            nPosStart = nPosEnd;
+        }
+    }
+}
+
+static void HTTP_AddProxyInfo( LPWININETHTTPREQW lpwhr )
+{
+    LPWININETHTTPSESSIONW lpwhs = NULL;
+    LPWININETAPPINFOW hIC = NULL;
+
+    lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
+    if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
+    {
+        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+	    return;
+    }
+
+    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
+    if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT)
+    {
+        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+	    return;
+    }
+
+    if (hIC && (hIC->lpszProxyUsername || hIC->lpszProxyPassword ))
+        HTTP_InsertProxyAuthorization(lpwhr, hIC->lpszProxyUsername,
+                hIC->lpszProxyPassword);
 }
 
 /***********************************************************************
@@ -294,11 +526,58 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
  *    FALSE	on failure
  *
  */
-BOOL WINAPI HttpEndRequestA(HINTERNET hRequest, LPINTERNET_BUFFERSA lpBuffersOut, 
-          DWORD dwFlags, DWORD dwContext)
+BOOL WINAPI HttpEndRequestA(HINTERNET hRequest, 
+        LPINTERNET_BUFFERSA lpBuffersOut, DWORD dwFlags, DWORD dwContext)
 {
-  FIXME("stub\n");
-  return FALSE;
+    LPINTERNET_BUFFERSA ptr;
+    LPINTERNET_BUFFERSW lpBuffersOutW,ptrW;
+    BOOL rc = FALSE;
+
+    TRACE("(%p, %p, %08lx, %08lx): stub\n", hRequest, lpBuffersOut, dwFlags,
+            dwContext);
+
+    ptr = lpBuffersOut;
+    if (ptr)
+        lpBuffersOutW = (LPINTERNET_BUFFERSW)HeapAlloc(GetProcessHeap(),
+                HEAP_ZERO_MEMORY, sizeof(INTERNET_BUFFERSW));
+    else
+        lpBuffersOutW = NULL;
+
+    ptrW = lpBuffersOutW;
+    while (ptr)
+    {
+        if (ptr->lpvBuffer && ptr->dwBufferLength)
+            ptrW->lpvBuffer = HeapAlloc(GetProcessHeap(),0,ptr->dwBufferLength);
+        ptrW->dwBufferLength = ptr->dwBufferLength;
+        ptrW->dwBufferTotal= ptr->dwBufferTotal;
+
+        if (ptr->Next)
+            ptrW->Next = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+                    sizeof(INTERNET_BUFFERSW));
+
+        ptr = ptr->Next;
+        ptrW = ptrW->Next;
+    }
+
+    rc = HttpEndRequestW(hRequest, lpBuffersOutW, dwFlags, dwContext);
+
+    if (lpBuffersOutW)
+    {
+        ptrW = lpBuffersOutW;
+        while (ptrW)
+        {
+            LPINTERNET_BUFFERSW ptrW2;
+
+            FIXME("Do we need to translate info out of these buffer?\n");
+
+            HeapFree(GetProcessHeap(),0,(LPVOID)ptrW->lpvBuffer);
+            ptrW2 = ptrW->Next;
+            HeapFree(GetProcessHeap(),0,ptrW);
+            ptrW = ptrW2;
+        }
+    }
+
+    return rc;
 }
 
 /***********************************************************************
@@ -311,11 +590,47 @@ BOOL WINAPI HttpEndRequestA(HINTERNET hRequest, LPINTERNET_BUFFERSA lpBuffersOut
  *    FALSE	on failure
  *
  */
-BOOL WINAPI HttpEndRequestW(HINTERNET hRequest, LPINTERNET_BUFFERSW lpBuffersOut, 
-          DWORD dwFlags, DWORD dwContext)
+BOOL WINAPI HttpEndRequestW(HINTERNET hRequest, 
+        LPINTERNET_BUFFERSW lpBuffersOut, DWORD dwFlags, DWORD dwContext)
 {
-  FIXME("stub\n");
-  return FALSE;
+    BOOL rc = FALSE;
+    LPWININETHTTPREQW lpwhr;
+    INT responseLen;
+    INT cnt;
+    static const char nullbuff[] = "\0";
+
+    TRACE("-->\n");
+    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hRequest );
+
+    if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
+    {
+        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+    	return FALSE;
+    }
+
+    lpwhr->hdr.dwFlags |= dwFlags;
+    lpwhr->hdr.dwContext = dwContext;
+
+    /* End the request by sending a NULL byte */
+    rc = NETCON_send(&lpwhr->netConnection, nullbuff, 1, 0, &cnt);
+
+    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+            INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
+
+    responseLen = HTTP_GetResponseHeaders(lpwhr);
+    if (responseLen)
+	    rc = TRUE;
+
+    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+            INTERNET_STATUS_RESPONSE_RECEIVED, &responseLen, sizeof(DWORD));
+
+    /* process headers here. Is this right? */
+    HTTP_ProcessHeaders(lpwhr);
+
+    /* We appear to do nothing with the buffer.. is that correct? */
+
+    TRACE("%i <--\n",rc);
+    return rc;
 }
 
 /***********************************************************************
@@ -1195,9 +1510,63 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
 			       LPINTERNET_BUFFERSA lpBuffersOut,
 			       DWORD dwFlags, DWORD dwContext)
 {
-  FIXME("(%p, %p, %p, %08lx, %08lx): stub\n", hRequest, lpBuffersIn,
-	lpBuffersOut, dwFlags, dwContext);
-  return FALSE;
+    LPINTERNET_BUFFERSA ptr;
+    LPINTERNET_BUFFERSW lpBuffersInW,ptrW;
+    BOOL rc = FALSE;
+
+    TRACE("(%p, %p, %p, %08lx, %08lx): stub\n", hRequest, lpBuffersIn,
+	    lpBuffersOut, dwFlags, dwContext);
+
+    ptr = lpBuffersIn;
+    if (ptr)
+        lpBuffersInW = (LPINTERNET_BUFFERSW)HeapAlloc(GetProcessHeap(),
+                HEAP_ZERO_MEMORY, sizeof(INTERNET_BUFFERSW));
+    else
+        lpBuffersInW = NULL;
+
+    ptrW = lpBuffersInW;
+    while (ptr)
+    {
+        DWORD headerlen;
+        ptrW->dwStructSize = sizeof(LPINTERNET_BUFFERSW);
+        if (ptr->lpcszHeader)
+        {
+            headerlen = MultiByteToWideChar(CP_ACP,0,ptr->lpcszHeader,
+                    ptr->dwHeadersLength,0,0);
+            headerlen++;
+            ptrW->lpcszHeader = HeapAlloc(GetProcessHeap(),0,headerlen*
+                    sizeof(WCHAR));
+            ptrW->dwHeadersLength = MultiByteToWideChar(CP_ACP, 0,
+                    ptr->lpcszHeader, ptr->dwHeadersLength,
+                    (LPWSTR)ptrW->lpcszHeader, headerlen);
+        }
+        ptrW->dwHeadersTotal = ptr->dwHeadersTotal;
+        ptrW->lpvBuffer = ptr->lpvBuffer;
+        ptrW->dwBufferLength = ptr->dwBufferLength;
+        ptrW->dwBufferTotal= ptr->dwBufferTotal;
+
+        if (ptr->Next)
+            ptrW->Next = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+                    sizeof(INTERNET_BUFFERSW));
+
+        ptr = ptr->Next;
+        ptrW = ptrW->Next;
+    }
+
+    rc = HttpSendRequestExW(hRequest, lpBuffersInW, NULL, dwFlags, dwContext);
+    if (lpBuffersInW)
+    {
+        ptrW = lpBuffersInW;
+        while (ptrW)
+        {
+            LPINTERNET_BUFFERSW ptrW2;
+            HeapFree(GetProcessHeap(),0,(LPVOID)ptrW->lpcszHeader);
+            ptrW2 = ptrW->Next;
+            HeapFree(GetProcessHeap(),0,ptrW);
+            ptrW = ptrW2;
+        }
+    }
+    return rc;
 }
 
 /***********************************************************************
@@ -1211,9 +1580,105 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
                    LPINTERNET_BUFFERSW lpBuffersOut,
                    DWORD dwFlags, DWORD dwContext)
 {
-  FIXME("(%p, %p, %p, %08lx, %08lx): stub\n", hRequest, lpBuffersIn,
-    lpBuffersOut, dwFlags, dwContext);
-  return FALSE;
+    LPINTERNET_BUFFERSW buf_ptr;
+    DWORD bufferlen = 0;
+    BOOL rc;
+    LPWININETHTTPREQW lpwhr;
+    LPWSTR requestString = NULL;
+    DWORD len;
+    char *ascii_req;
+    INT cnt;
+
+    TRACE("(%p, %p, %p, %08lx, %08lx): stub\n", hRequest, lpBuffersIn,
+            lpBuffersOut, dwFlags, dwContext);
+
+    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hRequest );
+
+    if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
+    {
+        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+    	return FALSE;
+    }
+
+    HTTP_FixVerb(lpwhr);
+    
+    /* add headers */
+    buf_ptr = lpBuffersIn;
+    while(buf_ptr)
+    {
+        if (buf_ptr->lpcszHeader)
+        {
+            HTTP_HttpAddRequestHeadersW(lpwhr, buf_ptr->lpcszHeader,
+                    buf_ptr->dwHeadersLength, HTTP_ADDREQ_FLAG_ADD |
+                    HTTP_ADDHDR_FLAG_REPLACE);
+         }
+         bufferlen += buf_ptr->dwBufferTotal;
+         buf_ptr = buf_ptr->Next;
+    }
+
+    lpwhr->hdr.dwFlags |= dwFlags;
+    lpwhr->hdr.dwContext = dwContext;
+
+    if (bufferlen > 0)
+    {
+        static const WCHAR szContentLength[] = {
+            'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ',
+            '%','l','i','\r','\n',0};
+        WCHAR contentLengthStr[sizeof szContentLength/2 /* includes \n\r */ + 
+            20 /* int */ ];
+        sprintfW(contentLengthStr, szContentLength, bufferlen);
+        HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L, 
+                HTTP_ADDREQ_FLAG_ADD);
+    }
+
+    HTTP_FixURL(lpwhr);
+
+    /* Do Send Request logic */
+
+    TRACE("Going to url %s %s\n",
+            debugstr_w(lpwhr->StdHeaders[HTTP_QUERY_HOST].lpszValue),
+            debugstr_w(lpwhr->lpszPath));
+
+    HTTP_AddProxyInfo(lpwhr);
+
+    requestString = HTTP_BuildHeaderRequestString(lpwhr);
+ 
+    TRACE("Request header -> %s\n", debugstr_w(requestString) );
+
+    if (!(rc = HTTP_OpenConnection(lpwhr)))
+        goto end;
+
+    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+            INTERNET_STATUS_CONNECTED_TO_SERVER, NULL, 0);
+
+    /* send the request as ASCII */
+    len = WideCharToMultiByte( CP_ACP, 0, requestString, -1, NULL, 0, NULL, 
+            NULL);
+
+    /* we do not want the null because optional data will be sent with following
+     * InternetWriteFile calls
+     */
+    len --;
+    ascii_req = HeapAlloc( GetProcessHeap(), 0, len);
+    WideCharToMultiByte( CP_ACP, 0, requestString, -1, ascii_req, len, NULL,
+            NULL );
+    TRACE("full request -> %s\n", debugstr_an(ascii_req,len) );
+
+    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+            INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
+
+    rc = NETCON_send(&lpwhr->netConnection, ascii_req, len, 0, &cnt);
+    HeapFree( GetProcessHeap(), 0, ascii_req );
+
+    /* This may not be sent here.  It may come laster */
+    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+            INTERNET_STATUS_REQUEST_SENT, &len,sizeof(DWORD));
+
+end:
+    HeapFree(GetProcessHeap(), 0, requestString);
+    WININET_Release(&lpwhr->hdr);
+    TRACE("<---\n");
+    return rc;
 }
 
 /***********************************************************************
@@ -1470,45 +1935,21 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength)
 {
     INT cnt;
-    DWORD i;
     BOOL bSuccess = FALSE;
     LPWSTR requestString = NULL;
     INT responseLen;
-    LPWININETHTTPSESSIONW lpwhs = NULL;
-    LPWININETAPPINFOW hIC = NULL;
     BOOL loop_next = FALSE;
-    int CustHeaderIndex;
     INTERNET_ASYNC_RESULT iar;
 
     TRACE("--> %p\n", lpwhr);
 
     assert(lpwhr->hdr.htype == WH_HHTTPREQ);
 
-    lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
-    if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
-    }
-
-    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
-    if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
-    }
-
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
-
-    /* if the verb is NULL default to GET */
-    if (NULL == lpwhr->lpszVerb)
-    {
-	static const WCHAR szGET[] = { 'G','E','T', 0 };
-	lpwhr->lpszVerb = WININET_strdupW(szGET);
-    }
-
+    HTTP_FixVerb(lpwhr);
+    
     /* if we are using optional stuff, we must add the fixed header of that option length */
     if (lpOptional && dwOptionalLength)
     {
@@ -1521,50 +1962,13 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
     do
     {
-        static const WCHAR szSlash[] = { '/',0 };
-        static const WCHAR szSpace[] = { ' ',0 };
-        static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/', 0 };
-        static const WCHAR szcrlf[] = {'\r','\n', 0};
-        static const WCHAR sztwocrlf[] = {'\r','\n','\r','\n', 0};
-        static const WCHAR szSetCookie[] = {'S','e','t','-','C','o','o','k','i','e',0 };
-        static const WCHAR szColon[] = { ':',' ',0 };
-        LPCWSTR *req;
-        LPWSTR p;
-        DWORD len, n;
+        DWORD len;
         char *ascii_req;
 
         TRACE("Going to url %s %s\n", debugstr_w(lpwhr->StdHeaders[HTTP_QUERY_HOST].lpszValue), debugstr_w(lpwhr->lpszPath));
         loop_next = FALSE;
 
-        /* If we don't have a path we set it to root */
-        if (NULL == lpwhr->lpszPath)
-            lpwhr->lpszPath = WININET_strdupW(szSlash);
-        else /* remove \r and \n*/
-        {
-            int nLen = strlenW(lpwhr->lpszPath);
-            while ((nLen >0 ) && ((lpwhr->lpszPath[nLen-1] == '\r')||(lpwhr->lpszPath[nLen-1] == '\n')))
-            {
-                nLen--;
-                lpwhr->lpszPath[nLen]='\0';
-            }
-            /* Replace '\' with '/' */
-            while (nLen>0) {
-                nLen--;
-                if (lpwhr->lpszPath[nLen] == '\\') lpwhr->lpszPath[nLen]='/';
-            }
-        }
-
-        if(CSTR_EQUAL != CompareStringW( LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                           lpwhr->lpszPath, strlenW(szHttp), szHttp, strlenW(szHttp) )
-           && lpwhr->lpszPath[0] != '/') /* not an absolute path ?? --> fix it !! */
-        {
-            WCHAR *fixurl = HeapAlloc(GetProcessHeap(), 0, 
-                                 (strlenW(lpwhr->lpszPath) + 2)*sizeof(WCHAR));
-            *fixurl = '/';
-            strcpyW(fixurl + 1, lpwhr->lpszPath);
-            HeapFree( GetProcessHeap(), 0, lpwhr->lpszPath );
-            lpwhr->lpszPath = fixurl;
-        }
+        HTTP_FixURL(lpwhr);
 
         /* add the headers the caller supplied */
         if( lpszHeaders && dwHeaderLength )
@@ -1573,68 +1977,10 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                         HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
         }
 
-        /* if there's a proxy username and password, add it to the headers */	 
-        if (hIC && (hIC->lpszProxyUsername || hIC->lpszProxyPassword ))
-            HTTP_InsertProxyAuthorization(lpwhr, hIC->lpszProxyUsername, hIC->lpszProxyPassword);
+        /* if there's a proxy username and password, add it to the headers */
+        HTTP_AddProxyInfo(lpwhr);
 
-        /* allocate space for an array of all the string pointers to be added */
-        len = (HTTP_QUERY_MAX + lpwhr->nCustHeaders)*4 + 9;
-        req = HeapAlloc( GetProcessHeap(), 0, len*sizeof(LPCWSTR) );
-
-        /* add the verb, path and HTTP/1.0 */
-        n = 0;
-        req[n++] = lpwhr->lpszVerb;
-        req[n++] = szSpace;
-        req[n++] = lpwhr->lpszPath;
-        req[n++] = HTTPHEADER;
-
-        /* Append standard request headers */
-        for (i = 0; i <= HTTP_QUERY_MAX; i++)
-        {
-            if (lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST)
-            {
-                req[n++] = szcrlf;
-                req[n++] = lpwhr->StdHeaders[i].lpszField;
-                req[n++] = szColon;
-                req[n++] = lpwhr->StdHeaders[i].lpszValue;
-
-                TRACE("Adding header %s (%s)\n",
-                       debugstr_w(lpwhr->StdHeaders[i].lpszField),
-                       debugstr_w(lpwhr->StdHeaders[i].lpszValue));
-            }
-        }
-
-        /* Append custom request heades */
-        for (i = 0; i < lpwhr->nCustHeaders; i++)
-        {
-            if (lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST)
-            {
-                req[n++] = szcrlf;
-                req[n++] = lpwhr->pCustHeaders[i].lpszField;
-                req[n++] = szColon;
-                req[n++] = lpwhr->pCustHeaders[i].lpszValue;
-
-                TRACE("Adding custom header %s (%s)\n",
-                       debugstr_w(lpwhr->pCustHeaders[i].lpszField),
-                       debugstr_w(lpwhr->pCustHeaders[i].lpszValue));
-            }
-        }
-
-        if( n >= len )
-            ERR("oops. buffer overrun\n");
-
-        req[n] = NULL;
-        requestString = HTTP_build_req( req, 4 );
-        HeapFree( GetProcessHeap(), 0, req );
- 
-        /*
-         * Set (header) termination string for request
-         * Make sure there's exactly two new lines at the end of the request
-         */
-        p = &requestString[strlenW(requestString)-1];
-        while ( (*p == '\n') || (*p == '\r') )
-           p--;
-        strcpyW( p+1, sztwocrlf );
+        requestString = HTTP_BuildHeaderRequestString(lpwhr);
  
         TRACE("Request header -> %s\n", debugstr_w(requestString) );
 
@@ -1681,78 +2027,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                           sizeof(DWORD));
 
         /* process headers here. Is this right? */
-        CustHeaderIndex = HTTP_GetCustomHeaderIndex(lpwhr, szSetCookie);
-        if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES) && (CustHeaderIndex >= 0))
-        {
-            LPHTTPHEADERW setCookieHeader;
-            int nPosStart = 0, nPosEnd = 0, len;
-            static const WCHAR szFmt[] = { 'h','t','t','p',':','/','/','%','s','/',0};
-
-            setCookieHeader = &lpwhr->pCustHeaders[CustHeaderIndex];
-
-            while (setCookieHeader->lpszValue[nPosEnd] != '\0')
-            {
-                LPWSTR buf_cookie, cookie_name, cookie_data;
-                LPWSTR buf_url;
-                LPWSTR domain = NULL;
-                int nEqualPos = 0;
-                while (setCookieHeader->lpszValue[nPosEnd] != ';' && setCookieHeader->lpszValue[nPosEnd] != ',' &&
-                       setCookieHeader->lpszValue[nPosEnd] != '\0')
-                {
-                    nPosEnd++;
-                }
-                if (setCookieHeader->lpszValue[nPosEnd] == ';')
-                {
-                    /* fixme: not case sensitive, strcasestr is gnu only */
-                    int nDomainPosEnd = 0;
-                    int nDomainPosStart = 0, nDomainLength = 0;
-                    static const WCHAR szDomain[] = {'d','o','m','a','i','n','=',0};
-                    LPWSTR lpszDomain = strstrW(&setCookieHeader->lpszValue[nPosEnd], szDomain);
-                    if (lpszDomain)
-                    { /* they have specified their own domain, lets use it */
-                        while (lpszDomain[nDomainPosEnd] != ';' && lpszDomain[nDomainPosEnd] != ',' &&
-                               lpszDomain[nDomainPosEnd] != '\0')
-                        {
-                            nDomainPosEnd++;
-                        }
-                        nDomainPosStart = strlenW(szDomain);
-                        nDomainLength = (nDomainPosEnd - nDomainPosStart) + 1;
-                        domain = HeapAlloc(GetProcessHeap(), 0, (nDomainLength + 1)*sizeof(WCHAR));
-                        lstrcpynW(domain, &lpszDomain[nDomainPosStart], nDomainLength + 1);
-                    }
-                }
-                if (setCookieHeader->lpszValue[nPosEnd] == '\0') break;
-                buf_cookie = HeapAlloc(GetProcessHeap(), 0, ((nPosEnd - nPosStart) + 1)*sizeof(WCHAR));
-                lstrcpynW(buf_cookie, &setCookieHeader->lpszValue[nPosStart], (nPosEnd - nPosStart) + 1);
-                TRACE("%s\n", debugstr_w(buf_cookie));
-                while (buf_cookie[nEqualPos] != '=' && buf_cookie[nEqualPos] != '\0')
-                {
-                    nEqualPos++;
-                }
-                if (buf_cookie[nEqualPos] == '\0' || buf_cookie[nEqualPos + 1] == '\0')
-                {
-                    HeapFree(GetProcessHeap(), 0, buf_cookie);
-                    break;
-                }
-
-                cookie_name = HeapAlloc(GetProcessHeap(), 0, (nEqualPos + 1)*sizeof(WCHAR));
-                lstrcpynW(cookie_name, buf_cookie, nEqualPos + 1);
-                cookie_data = &buf_cookie[nEqualPos + 1];
-
-
-                len = strlenW((domain ? domain : lpwhr->StdHeaders[HTTP_QUERY_HOST].lpszValue)) + 
-                    strlenW(lpwhr->lpszPath) + 9;
-                buf_url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-                sprintfW(buf_url, szFmt, (domain ? domain : lpwhr->StdHeaders[HTTP_QUERY_HOST].lpszValue)); /* FIXME PATH!!! */
-                InternetSetCookieW(buf_url, cookie_name, cookie_data);
-
-                HeapFree(GetProcessHeap(), 0, buf_url);
-                HeapFree(GetProcessHeap(), 0, buf_cookie);
-                HeapFree(GetProcessHeap(), 0, cookie_name);
-                HeapFree(GetProcessHeap(), 0, domain);
-                nPosStart = nPosEnd;
-            }
-        }
+        HTTP_ProcessHeaders(lpwhr);
     }
     while (loop_next);
 
