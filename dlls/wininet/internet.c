@@ -1676,10 +1676,17 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
     switch (lpwh->htype)
     {
         case WH_HHTTPREQ:
-            FIXME("This shouldn't be here! We don't support this kind"
-                  " of connection anymore. Must use NETCON functions,"
-                  " especially if using SSL\n");
-            nSocket = ((LPWININETHTTPREQW)lpwh)->netConnection.socketFD;
+            {
+                LPWININETHTTPREQW lpwhr;
+                lpwhr = (LPWININETHTTPREQW)lpwh;
+
+                TRACE("HTTPREQ %li\n",dwNumOfBytesToWrite);
+                retval = NETCON_send(&lpwhr->netConnection, lpBuffer, 
+                        dwNumOfBytesToWrite, 0, (LPINT)lpdwNumOfBytesWritten);
+
+                WININET_Release( lpwh );
+                return retval;
+            }
             break;
 
         case WH_HFILE:
