@@ -301,7 +301,7 @@ static int SCSI_getprocentry( FILE * procfile, struct LinuxProcScsiDevice * dev 
     }
     if( result != 4 )
     {
-        ERR("bus id line scan count error\n");
+        ERR("bus id line scan count error (fscanf returns %d, expected 4)\n", result);
         return 0;
     }
     result = fscanf( procfile,
@@ -311,17 +311,17 @@ static int SCSI_getprocentry( FILE * procfile, struct LinuxProcScsiDevice * dev 
         dev->rev );
     if( result != 3 )
     {
-        ERR("model line scan count error\n");
+        ERR("model line scan count error (fscanf returns %d, expected 3)\n", result);
         return 0;
     }
 
     result = fscanf( procfile,
-        "  Type:%*3[ ]%32c%*1[ ]ANSI%*1[ ]SCSI%*1[ ]revision:%*1[ ]%d\n",
+        "  Type:%*3[ ]%32c%*1[ ]ANSI%*1[ ]SCSI%*1[ ]revision:%*1[ ]%x\n",
         dev->type,
         &dev->ansirev );
     if( result != 2 )
     {
-        ERR("SCSI type line scan count error\n");
+        ERR("SCSI type line scan count error (fscanf returns %d, expected 2)\n", result);
         return 0;
     }
     /* Since we fscanf with %XXc instead of %s.. put a NULL at end */
