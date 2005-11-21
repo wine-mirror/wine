@@ -788,6 +788,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
         for (c = 1; c <= MAX_CHANNELS; c++) {
             arg=c;
             rc=ioctl(ossdev->fd, SNDCTL_DSP_CHANNELS, &arg);
+            if( rc == -1) break;
             if (rc!=0 || arg!=c) {
                 TRACE("DSP_CHANNELS: rc=%d returned %d for %d\n",rc,arg,c);
                 continue;
@@ -927,6 +928,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
         for (c = 1; c <= MAX_CHANNELS; c++) {
             arg=c;
             rc=ioctl(ossdev->fd, SNDCTL_DSP_CHANNELS, &arg);
+            if( rc == -1) break;
             if (rc!=0 || arg!=c) {
                 TRACE("DSP_CHANNELS: rc=%d returned %d for %d\n",rc,arg,c);
                 continue;
@@ -1019,6 +1021,7 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
         for (c = 1; c <= MAX_CHANNELS; c++) {
             arg=c;
             rc=ioctl(ossdev->fd, SNDCTL_DSP_CHANNELS, &arg);
+            if( rc == -1) break;
             if (rc!=0 || arg!=c) {
                 TRACE("DSP_CHANNELS: rc=%d returned %d for %d\n",rc,arg,c);
                 continue;
