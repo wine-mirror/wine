@@ -1535,7 +1535,8 @@ BOOL WINAPI StartServiceW(SC_HANDLE hService, DWORD dwNumServiceArgs,
 
     TRACE("returning %d\n", r);
 
-    service_wait_for_startup(hService);
+    if (r)
+        service_wait_for_startup(hService);
 
     return r;
 }
