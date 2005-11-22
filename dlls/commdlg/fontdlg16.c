@@ -58,7 +58,7 @@ static void FONT_LogFont16To32W( const LPLOGFONT16 font16, LPLOGFONTW font32 )
     font32->lfPitchAndFamily = font16->lfPitchAndFamily;
     MultiByteToWideChar(CP_ACP, 0, font16->lfFaceName,
                         LF_FACESIZE, font32->lfFaceName, LF_FACESIZE);
-};
+}
 
 static void FONT_Metrics16To32W( const TEXTMETRIC16 *pm16,
                                  NEWTEXTMETRICEXW *pnm32w)
@@ -67,24 +67,23 @@ static void FONT_Metrics16To32W( const TEXTMETRIC16 *pm16,
     /* NOTE: only the fields used by AddFontStyle() are filled in */
     pnm32w->ntmTm.tmHeight = pm16->tmHeight;
     pnm32w->ntmTm.tmExternalLeading = pm16->tmExternalLeading;
-};
+}
 
 static void CFn_CHOOSEFONT16to32W(LPCHOOSEFONT16 chf16, LPCHOOSEFONTW chf32w)
 {
   int len;
-  if(chf16->lpTemplateName)
+  if (chf16->Flags & CF_ENABLETEMPLATE)
   {
-    len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)chf16->lpTemplateName, -1, NULL, 0);
-    chf32w->lpTemplateName = HeapAlloc(GetProcessHeap(), 0,len*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, (LPSTR)MapSL(chf16->lpTemplateName),
-                        -1, (LPWSTR)chf32w->lpTemplateName, len);
+      len = MultiByteToWideChar( CP_ACP, 0, MapSL(chf16->lpTemplateName), -1, NULL, 0);
+      chf32w->lpTemplateName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+      MultiByteToWideChar( CP_ACP, 0, MapSL(chf16->lpTemplateName),
+                           -1, (LPWSTR)chf32w->lpTemplateName, len);
   }
-  if(chf16->lpszStyle)
+  if (chf16->Flags & CF_USESTYLE)
   {
-    len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)chf16->lpszStyle, -1, NULL, 0);
-    chf32w->lpszStyle = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, (LPSTR)MapSL(chf16->lpTemplateName),
-                        -1, chf32w->lpszStyle, len);
+      len = MultiByteToWideChar( CP_ACP, 0, MapSL(chf16->lpszStyle), -1, NULL, 0);
+      chf32w->lpszStyle = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+      MultiByteToWideChar( CP_ACP, 0, MapSL(chf16->lpszStyle), -1, chf32w->lpszStyle, len);
   }
   chf32w->lStructSize=sizeof(CHOOSEFONTW);
   chf32w->hwndOwner=HWND_32(chf16->hwndOwner);
@@ -95,12 +94,11 @@ static void CFn_CHOOSEFONT16to32W(LPCHOOSEFONT16 chf16, LPCHOOSEFONTW chf32w)
   chf32w->lCustData=chf16->lCustData;
   chf32w->lpfnHook=NULL;
   chf32w->hInstance=HINSTANCE_32(chf16->hInstance);
-  chf32w->lpszStyle=MapSL(chf16->lpszStyle);
   chf32w->nFontType=chf16->nFontType;
   chf32w->nSizeMax=chf16->nSizeMax;
   chf32w->nSizeMin=chf16->nSizeMin;
   FONT_LogFont16To32W(MapSL(chf16->lpLogFont), chf32w->lpLogFont);
-};
+}
 
 /***********************************************************************
  *                          CFn_HookCallChk                 [internal]
