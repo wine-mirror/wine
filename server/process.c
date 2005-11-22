@@ -70,6 +70,7 @@ static const struct object_ops process_ops =
     no_satisfied,                /* satisfied */
     no_signal,                   /* signal */
     no_get_fd,                   /* get_fd */
+    no_lookup_name,              /* lookup_name */
     no_close_handle,             /* close_handle */
     process_destroy              /* destroy */
 };
@@ -118,6 +119,7 @@ static const struct object_ops startup_info_ops =
     no_satisfied,                  /* satisfied */
     no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
+    no_lookup_name,                /* lookup_name */
     no_close_handle,               /* close_handle */
     startup_info_destroy           /* destroy */
 };

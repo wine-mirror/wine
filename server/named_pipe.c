@@ -110,6 +110,7 @@ static const struct object_ops named_pipe_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
+    no_lookup_name,               /* lookup_name */
     no_close_handle,              /* close_handle */
     named_pipe_destroy            /* destroy */
 };
@@ -131,6 +132,7 @@ static const struct object_ops pipe_server_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_server_get_fd,           /* get_fd */
+    no_lookup_name,               /* lookup_name */
     no_close_handle,              /* close_handle */
     pipe_server_destroy           /* destroy */
 };
@@ -162,6 +164,7 @@ static const struct object_ops pipe_client_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_client_get_fd,           /* get_fd */
+    no_lookup_name,               /* lookup_name */
     no_close_handle,              /* close_handle */
     pipe_client_destroy           /* destroy */
 };

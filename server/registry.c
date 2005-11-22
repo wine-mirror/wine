@@ -145,6 +145,7 @@ static const struct object_ops key_ops =
     NULL,                    /* satisfied */
     no_signal,               /* signal */
     no_get_fd,               /* get_fd */
+    no_lookup_name,          /* lookup_name */
     key_close_handle,        /* close_handle */
     key_destroy              /* destroy */
 };

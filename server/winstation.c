@@ -58,6 +58,7 @@ static const struct object_ops winstation_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
+    no_lookup_name,               /* lookup_name */
     winstation_close_handle,      /* close_handle */
     winstation_destroy            /* destroy */
 };
@@ -73,6 +74,7 @@ static const struct object_ops desktop_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
+    no_lookup_name,               /* lookup_name */
     desktop_close_handle,         /* close_handle */
     desktop_destroy               /* destroy */
 };

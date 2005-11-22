@@ -162,6 +162,7 @@ static const struct object_ops fd_ops =
     NULL,                     /* satisfied */
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
+    no_lookup_name,           /* lookup_name */
     no_close_handle,          /* close_handle */
     fd_destroy                /* destroy */
 };
@@ -193,6 +194,7 @@ static const struct object_ops device_ops =
     NULL,                     /* satisfied */
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
+    no_lookup_name,           /* lookup_name */
     no_close_handle,          /* close_handle */
     device_destroy            /* destroy */
 };
@@ -223,6 +225,7 @@ static const struct object_ops inode_ops =
     NULL,                     /* satisfied */
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
+    no_lookup_name,           /* lookup_name */
     no_close_handle,          /* close_handle */
     inode_destroy             /* destroy */
 };
@@ -255,6 +258,7 @@ static const struct object_ops file_lock_ops =
     no_satisfied,               /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
+    no_lookup_name,             /* lookup_name */
     no_close_handle,            /* close_handle */
     no_destroy                  /* destroy */
 };

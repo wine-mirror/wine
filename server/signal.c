@@ -64,6 +64,7 @@ static const struct object_ops handler_ops =
     NULL,                     /* satisfied */
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
+    no_lookup_name,           /* lookup_name */
     no_close_handle,          /* close_handle */
     handler_destroy           /* destroy */
 };

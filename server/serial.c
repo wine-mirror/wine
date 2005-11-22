@@ -100,6 +100,7 @@ static const struct object_ops serial_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     serial_get_fd,                /* get_fd */
+    no_lookup_name,               /* lookup_name */
     no_close_handle,              /* close_handle */
     serial_destroy                /* destroy */
 };

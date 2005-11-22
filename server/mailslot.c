@@ -75,6 +75,7 @@ static const struct object_ops mailslot_ops =
     no_satisfied,              /* satisfied */
     no_signal,                 /* signal */
     mailslot_get_fd,           /* get_fd */
+    no_lookup_name,            /* lookup_name */
     no_close_handle,           /* close_handle */
     mailslot_destroy           /* destroy */
 };
@@ -115,6 +116,7 @@ static const struct object_ops mail_writer_ops =
     NULL,                       /* satisfied */
     no_signal,                  /* signal */
     mail_writer_get_fd,         /* get_fd */
+    no_lookup_name,             /* lookup_name */
     no_close_handle,            /* close_handle */
     mail_writer_destroy         /* destroy */
 };

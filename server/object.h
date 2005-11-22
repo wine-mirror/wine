@@ -45,6 +45,13 @@ struct async;
 struct async_queue;
 struct winstation;
 
+
+struct unicode_str
+{
+    const WCHAR *str;
+    size_t       len;
+};
+
 /* operations valid on all objects */
 struct object_ops
 {
@@ -64,6 +71,8 @@ struct object_ops
     int  (*signal)(struct object *, unsigned int);
     /* return an fd object that can be used to read/write from the object */
     struct fd *(*get_fd)(struct object *);
+    /* lookup a name if an object has a namespace */
+    struct object *(*lookup_name)(struct object *, struct unicode_str *,unsigned int);
     /* close a handle to this object */
     int (*close_handle)(struct object *,struct process *,obj_handle_t);
     /* destroy on refcount == 0 */
@@ -88,12 +97,6 @@ struct wait_queue_entry
     struct thread  *thread;
 };
 
-struct unicode_str
-{
-    const WCHAR *str;
-    size_t       len;
-};
-
 extern void *mem_alloc( size_t size );  /* malloc wrapper */
 extern void *memdup( const void *data, size_t len );
 extern void *alloc_object( const struct object_ops *ops );
@@ -112,6 +115,7 @@ extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_signal( struct object *obj, unsigned int access );
 extern struct fd *no_get_fd( struct object *obj );
+extern struct object *no_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attributes );
 extern int no_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 extern void no_destroy( struct object *obj );
 #ifdef DEBUG_OBJECTS
