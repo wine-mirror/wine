@@ -95,6 +95,9 @@ typedef struct {
     RECT clip_rect;
     OLEINPLACEFRAMEINFO frameinfo;
 
+    HWND doc_view_hwnd;
+    HWND shell_embedding_hwnd;
+
     /* Connection points */
 
     IConnectionPoint *cp_wbe2;
@@ -143,5 +146,7 @@ HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 extern LONG SHDOCVW_refCount;
 static inline void SHDOCVW_LockModule(void) { InterlockedIncrement( &SHDOCVW_refCount ); }
 static inline void SHDOCVW_UnlockModule(void) { InterlockedDecrement( &SHDOCVW_refCount ); }
+
+extern HINSTANCE shdocvw_hinstance;
 
 #endif /* __WINE_SHDOCVW_H */

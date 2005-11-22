@@ -151,8 +151,11 @@ static ULONG WINAPI InPlaceSite_Release(IOleInPlaceSite *iface)
 static HRESULT WINAPI InPlaceSite_GetWindow(IOleInPlaceSite *iface, HWND *phwnd)
 {
     WebBrowser *This = INPLACESITE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, phwnd);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, phwnd);
+
+    *phwnd = This->doc_view_hwnd;
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceSite_ContextSensitiveHelp(IOleInPlaceSite *iface, BOOL fEnterMode)
