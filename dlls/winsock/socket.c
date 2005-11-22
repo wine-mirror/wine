@@ -332,7 +332,18 @@ static const int ws_eai_map[][2] =
     MAP_OPTION( EAI_FAIL ),
     MAP_OPTION( EAI_FAMILY ),
     MAP_OPTION( EAI_MEMORY ),
+/* Note: EAI_NODATA is deprecated, but still 
+ * used by Windows and Linux... We map the newer
+ * EAI_NONAME to EAI_NODATA for now until Windows
+ * changes too.
+ */
+#ifdef EAI_NODATA
     MAP_OPTION( EAI_NODATA ),
+#endif
+#ifdef EAI_NONAME
+    { WS_EAI_NODATA, EAI_NONAME },
+#endif
+
     MAP_OPTION( EAI_SERVICE ),
     MAP_OPTION( EAI_SOCKTYPE ),
     { 0, 0 }
