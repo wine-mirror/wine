@@ -183,8 +183,15 @@ static void translateinfstring_test()
     /* try to open an inf file that doesn't exist */
     hr = pTranslateInfString("c:\\a.inf", "Options.NTx86", "Options.NTx86",
                              "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || hr == E_INVALIDARG, 
-       "Expected 0x80070002 or E_INVALIDARG, got 0x%08x\n", (UINT)hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || hr == E_INVALIDARG || 
+       hr == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND), 
+       "Expected E_INVALIDARG, 0x80070002 or 0x8007007e, got 0x%08x\n", (UINT)hr);
+
+    if(hr == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND))
+    {
+        trace("WinNT 3.51 detected. Skipping tests for TranslateInfString()");
+        return;
+    }
 
     /* try a nonexistent section */
     buffer[0] = 0;
