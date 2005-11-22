@@ -596,8 +596,6 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
     BOOL rc = FALSE;
     LPWININETHTTPREQW lpwhr;
     INT responseLen;
-    INT cnt;
-    static const char nullbuff[] = "\0";
 
     TRACE("-->\n");
     lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hRequest );
@@ -610,9 +608,6 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
 
     lpwhr->hdr.dwFlags |= dwFlags;
     lpwhr->hdr.dwContext = dwContext;
-
-    /* End the request by sending a NULL byte */
-    rc = NETCON_send(&lpwhr->netConnection, nullbuff, 1, 0, &cnt);
 
     SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
             INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
