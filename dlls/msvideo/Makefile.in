@@ -17,6 +17,8 @@ C_SRCS16 = \
 
 SPEC_SRCS16 = msvideo.spec
 
+RC_SRCS = rsrc.rc
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

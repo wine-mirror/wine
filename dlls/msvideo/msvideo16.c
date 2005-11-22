@@ -20,14 +20,18 @@
  */
 
 #define COM_NO_WINDOWS_H
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "msvideo_private.h"
+#include "windef.h"
+#include "winbase.h"
 #include "winver.h"
 #include "winnls.h"
 #include "winreg.h"
+#include "winuser.h"
 #include "vfw16.h"
+#include "msvideo_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvideo);

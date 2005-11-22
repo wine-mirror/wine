@@ -2,6 +2,7 @@
  * Copyright 1998 Marcus Meissner
  * Copyright 2000 Bradley Baetz
  * Copyright 2003 Michael Günnewig
+ * Copyright 2005 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,17 +26,20 @@
  *      - no thread safety
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "msvideo_private.h"
+#define COM_NO_WINDOWS_H
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winreg.h"
-
-#include "windowsx.h"
-
+#include "commdlg.h"
+#include "vfw.h"
+#include "msvideo_private.h"
 #include "wine/debug.h"
 
 /* Drivers32 settings */
@@ -705,35 +709,175 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	return ret;
 }
 
+
+struct choose_compressor
+{
+    UINT flags;
+    LPCSTR title;
+    COMPVARS cv;
+};
+
+static BOOL enum_compressors(HWND list)
+{
+    UINT id;
+    ICINFO icinfo;
+
+    id = 0;
+
+    while (ICInfo(ICTYPE_VIDEO, id, &icinfo))
+    {
+        ICINFO *ic;
+        DWORD idx;
+        HIC hic;
+
+        hic = ICOpen(icinfo.fccType, icinfo.fccHandler, ICMODE_COMPRESS);
+
+        if (hic)
+        {
+            /* for unknown reason fccHandler reported by the driver
+             * doesn't always work, use the one returned by ICInfo instead.
+             */
+            DWORD fccHandler = icinfo.fccHandler;
+
+            ICGetInfo(hic, &icinfo, sizeof(icinfo));
+            icinfo.fccHandler = fccHandler;
+            ICClose(hic);
+
+            idx = SendMessageW(list, CB_ADDSTRING, 0, (LPARAM)icinfo.szDescription);
+
+            ic = HeapAlloc(GetProcessHeap(), 0, sizeof(ICINFO));
+            *ic = icinfo;
+            SendMessageW(list, CB_SETITEMDATA, idx, (LPARAM)ic);
+        }
+        id++;
+    }
+
+    return id != 0;
+}
+
+static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        WCHAR buf[128];
+        struct choose_compressor *choose_comp = (struct choose_compressor *)lparam;
+
+        if (choose_comp->title)
+            SetWindowTextA(hdlg, choose_comp->title);
+
+        LoadStringW((HINSTANCE)GetWindowLongPtrW(hdlg, GWLP_HINSTANCE),
+                    IDS_FULLFRAMES, buf, 128);
+        SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_ADDSTRING, 0, (LPARAM)buf);
+
+        enum_compressors(GetDlgItem(hdlg, IDC_COMP_LIST));
+
+        SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_SETCURSEL, 0, 0);
+        SetFocus(GetDlgItem(hdlg, IDC_COMP_LIST));
+
+        SetWindowLongPtrW(hdlg, DWLP_USER, (ULONG_PTR)choose_comp);
+        break;
+    }
+
+    case WM_COMMAND:
+        switch (LOWORD(wparam))
+        {
+        case IDOK:
+        {
+            HWND list = GetDlgItem(hdlg, IDC_COMP_LIST);
+            INT cur_sel;
+            ICINFO *ic;
+
+            cur_sel = SendMessageW(list, CB_GETCURSEL, 0, 0);
+            ic = (ICINFO *)SendMessageW(list, CB_GETITEMDATA, cur_sel, 0);
+            if (ic)
+            {
+                struct choose_compressor *choose_comp = (struct choose_compressor *)GetWindowLongPtrW(hdlg, DWLP_USER);
+
+                choose_comp->cv.hic = ICOpen(ic->fccType, ic->fccHandler, ICMODE_COMPRESS);
+                if (choose_comp->cv.hic)
+                {
+                    choose_comp->cv.fccType = ic->fccType;
+                    choose_comp->cv.fccHandler = ic->fccHandler;
+                    /* FIXME: fill everything else */
+                }
+            }
+        }
+        /* fall through */
+        case IDCANCEL:
+        {
+            HWND list = GetDlgItem(hdlg, IDC_COMP_LIST);
+            INT idx = 0;
+
+            while (1)
+            {
+                LRESULT ret = SendMessageW(list, CB_GETITEMDATA, idx++, 0);
+
+                if (!ret || ret == CB_ERR) break;
+
+                HeapFree(GetProcessHeap(), 0, (void *)ret);
+            }
+
+            EndDialog(hdlg, LOWORD(wparam) == IDOK);
+            break;
+        }
+
+        default:
+            break;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return FALSE;
+}
+
 /***********************************************************************
  *		ICCompressorChoose   [MSVFW32.@]
  */
 BOOL VFWAPI ICCompressorChoose(HWND hwnd, UINT uiFlags, LPVOID pvIn,
                                LPVOID lpData, PCOMPVARS pc, LPSTR lpszTitle)
 {
-  FIXME("(%p,0x%X,%p,%p,%p,%s),stub!\n",hwnd,uiFlags,pvIn,lpData,pc,lpszTitle);
+    struct choose_compressor choose_comp;
+    BOOL ret;
 
-  if (pc == NULL || pc->cbSize != sizeof(COMPVARS))
-    return FALSE;
+    TRACE("(%p,%08x,%p,%p,%p,%s)\n", hwnd, uiFlags, pvIn, lpData, pc, lpszTitle);
 
-  if ((pc->dwFlags & ICMF_COMPVARS_VALID) == 0) {
-    pc->dwFlags   = 0;
-    pc->fccType   = pc->fccHandler = 0;
-    pc->hic       = NULL;
-    pc->lpbiOut   = NULL;
-    pc->lpBitsOut = pc->lpBitsPrev = pc->lpState = NULL;
-    pc->lQ        = ICQUALITY_DEFAULT;
-    pc->lKey      = -1;
-    pc->lDataRate = 300; /* kB */
-    pc->lpState   = NULL;
-    pc->cbState   = 0;
-  }
-  if (pc->fccType == 0)
-    pc->fccType = ICTYPE_VIDEO;
+    if (!pc || pc->cbSize != sizeof(COMPVARS))
+        return FALSE;
 
-  /* FIXME */
-  
-  return FALSE;
+    if (!(pc->dwFlags & ICMF_COMPVARS_VALID))
+    {
+        pc->dwFlags   = 0;
+        pc->fccType   = pc->fccHandler = 0;
+        pc->hic       = NULL;
+        pc->lpbiOut   = NULL;
+        pc->lpBitsOut = pc->lpBitsPrev = pc->lpState = NULL;
+        pc->lQ        = ICQUALITY_DEFAULT;
+        pc->lKey      = -1;
+        pc->lDataRate = 300; /* kB */
+        pc->lpState   = NULL;
+        pc->cbState   = 0;
+    }
+    if (pc->fccType == 0)
+        pc->fccType = ICTYPE_VIDEO;
+
+    choose_comp.flags = uiFlags;
+    choose_comp.title = lpszTitle;
+
+    ret = DialogBoxParamW(MSVFW32_hModule, MAKEINTRESOURCEW(ICM_CHOOSE_COMPRESSOR), hwnd,
+                          icm_choose_compressor_dlgproc, (LPARAM)&choose_comp);
+
+    if (ret)
+    {
+        *pc = choose_comp.cv;
+        pc->dwFlags |= ICMF_COMPVARS_VALID;
+    }
+
+    return ret;
 }
 
 
