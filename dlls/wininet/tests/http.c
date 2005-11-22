@@ -1113,7 +1113,36 @@ static void HttpSendRequestEx_test(void)
     ok(InternetCloseHandle(hConnect), "Close connect handle failed\n");
     ok(InternetCloseHandle(hSession), "Close session handle failed\n");
 }
-    
+
+static void HttpHeaders_test(void)
+{
+    HINTERNET hSession;
+    HINTERNET hConnect;
+    HINTERNET hRequest;
+
+    hSession = InternetOpen("Wine Regression Test",
+            INTERNET_OPEN_TYPE_PRECONFIG,NULL,NULL,0);
+    ok( hSession != NULL ,"Unable to open Internet session\n");
+    hConnect = InternetConnect(hSession, "crossover.codeweavers.com",
+            INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0,
+            0);
+    ok( hConnect != NULL, "Unable to connect to http://crossover.codeweavers.com\n");
+    hRequest = HttpOpenRequest(hConnect, "POST", "/posttest.php",
+            NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    ok( hRequest != NULL, "Failed to open request handle\n");
+
+    ok(HttpAddRequestHeaders(hRequest,"Warning:test1",-1,HTTP_ADDREQ_FLAG_ADD), "Failed to add new header\n");
+    ok(HttpAddRequestHeaders(hRequest,"Warning:test2",-1,HTTP_ADDREQ_FLAG_ADD), "Failed to replace header using HTTP_ADDREQ_FLAG_ADD\n");
+    ok(HttpAddRequestHeaders(hRequest,"Warning:test3",-1,HTTP_ADDREQ_FLAG_REPLACE), "Failed to replace header using HTTP_ADDREQ_FLAG_REPLACE\n");
+    ok(HttpAddRequestHeaders(hRequest,"Warning:test4",-1,HTTP_ADDREQ_FLAG_ADD_IF_NEW)==0, "HTTP_ADDREQ_FLAG_ADD_IF_NEW replaced existing header\n");
+
+    ok(InternetCloseHandle(hRequest), "Close request handle failed\n");
+    ok(InternetCloseHandle(hConnect), "Close connect handle failed\n");
+    ok(InternetCloseHandle(hSession), "Close session handle failed\n");
+}
+
+
+
 START_TEST(http)
 {
     InternetReadFile_test(INTERNET_FLAG_ASYNC);
@@ -1128,4 +1157,5 @@ START_TEST(http)
     InternetTimeToSystemTimeW_test();
     InternetCreateUrlA_test();
     HttpSendRequestEx_test();
+    HttpHeaders_test();
 }

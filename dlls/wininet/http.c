@@ -2692,7 +2692,8 @@ static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR v
     else
         lphttpHdr->wFlags &= ~HDR_ISREQUEST;
 
-    if (!lphttpHdr->lpszValue && (dwModifier & (HTTP_ADDHDR_FLAG_ADD|HTTP_ADDHDR_FLAG_ADD_IF_NEW)))
+    if (!lphttpHdr->lpszValue && (dwModifier & HTTP_ADDHDR_FLAG_ADD || 
+                dwModifier & HTTP_ADDHDR_FLAG_ADD_IF_NEW))
     {
         INT slen;
 
@@ -2718,7 +2719,8 @@ static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR v
     }
     else if (lphttpHdr->lpszValue)
     {
-        if (dwModifier & HTTP_ADDHDR_FLAG_REPLACE)
+        if (dwModifier & HTTP_ADDHDR_FLAG_REPLACE || 
+                dwModifier & HTTP_ADDHDR_FLAG_ADD)
             bSuccess = HTTP_ReplaceHeaderValue( lphttpHdr, value );
         else if (dwModifier & COALESCEFLASG)
         {
