@@ -382,36 +382,6 @@ static void VOLUME_GetSuperblockLabel( enum fs_type type, const BYTE *superblock
 
 
 /**************************************************************************
- *                              VOLUME_SetSuperblockLabel
- */
-static BOOL VOLUME_SetSuperblockLabel( enum fs_type type, HANDLE handle, const WCHAR *label )
-{
-    CHAR label_data[11];
-    DWORD offset, len;
-
-    switch(type)
-    {
-    case FS_FAT1216:
-        offset = 0x2b;
-        break;
-    case FS_FAT32:
-        offset = 0x47;
-        break;
-    default:
-        SetLastError( ERROR_ACCESS_DENIED );
-        return FALSE;
-    }
-    RtlUnicodeToMultiByteN( label_data, sizeof(label_data), &len,
-                            label, strlenW(label) * sizeof(WCHAR) );
-    if (len < sizeof(label_data))
-        memset( label_data + len, ' ', sizeof(label_data) - len );
-
-    return (SetFilePointer( handle, offset, NULL, FILE_BEGIN ) == offset &&
-            WriteFile( handle, label_data, sizeof(label_data), &len, NULL ));
-}
-
-
-/**************************************************************************
  *                              VOLUME_GetSuperblockSerial
  */
 static DWORD VOLUME_GetSuperblockSerial( enum fs_type type, const BYTE *superblock )
@@ -699,31 +669,22 @@ BOOL WINAPI SetVolumeLabelW( LPCWSTR root, LPCWSTR label )
 
     /* try to open the device */
 
-    handle = CreateFileW( device, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+    handle = CreateFileW( device, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
                           NULL, OPEN_EXISTING, 0, 0 );
-    if (handle == INVALID_HANDLE_VALUE)
-    {
-        /* try read-only */
-        handle = CreateFileW( device, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
-                              NULL, OPEN_EXISTING, 0, 0 );
-        if (handle != INVALID_HANDLE_VALUE)
-        {
-            /* device can be read but not written, return error */
-            CloseHandle( handle );
-            SetLastError( ERROR_ACCESS_DENIED );
-            return FALSE;
-        }
-    }
-
     if (handle != INVALID_HANDLE_VALUE)
     {
         BYTE superblock[SUPERBLOCK_SIZE];
-        BOOL ret;
 
         type = VOLUME_ReadFATSuperblock( handle, superblock );
-        ret = VOLUME_SetSuperblockLabel( type, handle, label );
+        if (type == FS_UNKNOWN) type = VOLUME_ReadCDSuperblock( handle, superblock );
         CloseHandle( handle );
-        return ret;
+        if (type != FS_UNKNOWN)
+        {
+            /* we can't set the label on FAT or CDROM file systems */
+            TRACE( "cannot set label on device %s type %d\n", debugstr_w(device), type );
+            SetLastError( ERROR_ACCESS_DENIED );
+            return FALSE;
+        }
     }
     else
     {
