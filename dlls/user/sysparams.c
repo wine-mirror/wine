@@ -330,8 +330,11 @@ static NONCLIENTMETRICSW nonclient_metrics =
     { 0 }  /* lfMessageFont */
 };
 
+/* some additional non client metric info */
+static TEXTMETRICW tmMenuFont;
+static UINT CaptionFontAvCharWidth;
+
 static SIZE icon_size = { 32, 32 };
-static SIZE scroll_height = { 16, 16 };
 
 #define NUM_SYS_COLORS     (COLOR_MENUBAR+1)
 
@@ -476,6 +479,27 @@ static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A
     SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfMessageFont,		&lpnm32W->lfMessageFont );
 }
 
+/* get text metrics and/or "average" char width of the specified logfont 
+ * for the specified dc */
+static void get_text_metr_size( HDC hdc, LOGFONTW *plf, TEXTMETRICW * ptm, UINT *psz)
+{
+    HFONT hfont, hfontsav;
+    TEXTMETRICW tm;
+    if( !ptm) ptm = &tm;
+    hfont = CreateFontIndirectW( plf);
+    if( !hfont || ( hfontsav = SelectObject( hdc, hfont)) == NULL ) {
+        ptm->tmHeight = -1;
+        if( psz) *psz = 10;
+        if( hfont) DeleteObject( hfont);
+        return;
+    }
+    GetTextMetricsW( hdc, ptm);
+    if( psz)
+        if( !(*psz = GdiGetCharDimensions( hdc, ptm, NULL)))
+            *psz = 10;
+    SelectObject( hdc, hfontsav);
+    DeleteObject( hfont);
+}
 
 /***********************************************************************
  *           get_volatile_regkey
@@ -933,7 +957,7 @@ static void load_nonclient_metrics(void)
     nonclient_metrics.iBorderWidth =  get_reg_metric(hkey, METRICS_BORDERWIDTH_VALNAME, 1);
     if( nonclient_metrics.iBorderWidth < 1) nonclient_metrics.iBorderWidth = 1;
     nonclient_metrics.iScrollWidth = get_reg_metric(hkey, METRICS_SCROLLWIDTH_VALNAME, 16);
-    nonclient_metrics.iScrollHeight = nonclient_metrics.iScrollWidth;
+    nonclient_metrics.iScrollHeight = get_reg_metric(hkey, METRICS_SCROLLHEIGHT_VALNAME, 16);
 
     /* size of the normal caption buttons */
     nonclient_metrics.iCaptionHeight = get_reg_metric(hkey, METRICS_CAPTIONHEIGHT_VALNAME, 18);
@@ -993,8 +1017,10 @@ static void load_nonclient_metrics(void)
     /* some extra fields not in the nonclient structure */
     icon_size.cx = icon_size.cy = get_reg_metric( hkey, METRICS_ICONSIZE_VALNAME, 32 );
 
-    scroll_height.cx = get_reg_metric (hkey, METRICS_SCROLLHEIGHT_VALNAME, nonclient_metrics.iScrollHeight );
-    scroll_height.cy = get_reg_metric (hkey, METRICS_SCROLLHEIGHT_VALNAME, nonclient_metrics.iScrollWidth );
+    get_text_metr_size( get_display_dc(), &nonclient_metrics.lfMenuFont,
+            &tmMenuFont, NULL);
+    get_text_metr_size( get_display_dc(), &nonclient_metrics.lfCaptionFont,
+            NULL, &CaptionFontAvCharWidth);
 
     if (hkey) RegCloseKey( hkey );
     spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
@@ -2329,11 +2355,10 @@ INT WINAPI GetSystemMetrics( INT index )
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
         return nonclient_metrics.iScrollWidth;
     case SM_CYHSCROLL:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iScrollHeight;
+        return GetSystemMetrics(SM_CXVSCROLL);
     case SM_CYCAPTION:
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iCaptionHeight + 1; /* for the separator? */
+        return nonclient_metrics.iCaptionHeight + 1;
     case SM_CXBORDER:
     case SM_CYBORDER:
         /* SM_C{X,Y}BORDER always returns 1 regardless of 'BorderWidth' value in registry */
@@ -2342,9 +2367,10 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CYDLGFRAME:
         return 3;
     case SM_CYVTHUMB:
-        return GetSystemMetrics(SM_CXVSCROLL);
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return nonclient_metrics.iScrollHeight;
     case SM_CXHTHUMB:
-        return GetSystemMetrics(SM_CYHSCROLL);
+        return GetSystemMetrics(SM_CYVTHUMB);
     case SM_CXICON:
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
         return icon_size.cx;
@@ -2357,19 +2383,23 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CYMENU:
         return GetSystemMetrics(SM_CYMENUSIZE) + 1;
     case SM_CXFULLSCREEN:
-        return GetSystemMetrics(SM_CXSCREEN);
+        /* see the remark for SM_CXMAXIMIZED, at least this formulation is
+         * correct */
+        return GetSystemMetrics( SM_CXMAXIMIZED) - 2 * GetSystemMetrics( SM_CXFRAME);
     case SM_CYFULLSCREEN:
-        return GetSystemMetrics(SM_CYSCREEN) - GetSystemMetrics(SM_CYCAPTION);
+        /* see the remark for SM_CYMAXIMIZED, at least this formulation is
+         * correct */
+        return GetSystemMetrics( SM_CYMAXIMIZED) - GetSystemMetrics( SM_CYMIN);
     case SM_CYKANJIWINDOW:
         return 0;
     case SM_MOUSEPRESENT:
         return 1;
     case SM_CYVSCROLL:
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return scroll_height.cy;
+        return nonclient_metrics.iScrollHeight;
     case SM_CXHSCROLL:
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return scroll_height.cx;
+        return nonclient_metrics.iScrollHeight;
     case SM_DEBUG:
         return 0;
     case SM_SWAPBUTTON:
@@ -2382,9 +2412,11 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_RESERVED4:
         return 0;
     case SM_CXMIN:
-        return 112;  /* FIXME */
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return 3 * nonclient_metrics.iCaptionWidth + GetSystemMetrics( SM_CYSIZE) +
+            4 * CaptionFontAvCharWidth + 2 * GetSystemMetrics( SM_CXFRAME) + 4;
     case SM_CYMIN:
-        return 27;  /* FIXME */
+        return GetSystemMetrics( SM_CYCAPTION) + 2 * GetSystemMetrics( SM_CYFRAME);
     case SM_CXSIZE:
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
         return nonclient_metrics.iCaptionWidth;
@@ -2396,7 +2428,7 @@ INT WINAPI GetSystemMetrics( INT index )
         return GetSystemMetrics(SM_CXDLGFRAME) + nonclient_metrics.iBorderWidth;
     case SM_CYFRAME:
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return GetSystemMetrics(SM_CXDLGFRAME) + nonclient_metrics.iBorderWidth;
+        return GetSystemMetrics(SM_CYDLGFRAME) + nonclient_metrics.iBorderWidth;
     case SM_CXMINTRACK:
         return GetSystemMetrics(SM_CXMIN);
     case SM_CYMINTRACK:
@@ -2460,15 +2492,18 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CXMINIMIZED:
         return minimized_metrics.iWidth + 6;
     case SM_CYMINIMIZED:
-        return 24;  /* FIXME */
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return nonclient_metrics.iCaptionHeight + 6;
     case SM_CXMAXTRACK:
         return GetSystemMetrics(SM_CXSCREEN) + 4 + 2 * GetSystemMetrics(SM_CXFRAME);
     case SM_CYMAXTRACK:
         return GetSystemMetrics(SM_CYSCREEN) + 4 + 2 * GetSystemMetrics(SM_CYFRAME);
     case SM_CXMAXIMIZED:
+        /* FIXME: subtract the width of any vertical application toolbars*/
         return GetSystemMetrics(SM_CXSCREEN) + 2 * GetSystemMetrics(SM_CXFRAME);
     case SM_CYMAXIMIZED:
-        return GetSystemMetrics(SM_CYSCREEN) + 2 * GetSystemMetrics(SM_CYFRAME);
+        /* FIXME: subtract the width of any horizontal application toolbars*/
+        return GetSystemMetrics(SM_CYSCREEN) + 2 * GetSystemMetrics(SM_CYCAPTION);
     case SM_NETWORK:
         return 3;  /* FIXME */
     case SM_CLEANBOOT:
@@ -2481,7 +2516,9 @@ INT WINAPI GetSystemMetrics( INT index )
         return ret;
     case SM_CXMENUCHECK:
     case SM_CYMENUCHECK:
-        return 13;
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return tmMenuFont.tmHeight <= 0 ? 13 :
+        ((tmMenuFont.tmHeight + tmMenuFont.tmExternalLeading + 1) / 2) * 2 - 1;
     case SM_SLOWMACHINE:
         return 0;  /* FIXME: Should check the type of processor */
     case SM_MIDEASTENABLED:

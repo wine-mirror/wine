@@ -1815,6 +1815,227 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
     return 0;
 }
 
+/* test calculation of GetSystemMetrics values (mostly) from non client metrics,
+ * icon metrics and minimized metrics. 
+ */
+
+/* copied from wine's GdiGetCharDimensions, which is not available on most
+ * windows versions */
+static LONG _GdiGetCharDimensions(HDC hdc, LPTEXTMETRICA lptm, LONG *height)
+{
+    SIZE sz;
+    static const CHAR alphabet[] = {
+        'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q',
+        'r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H',
+        'I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',0};
+
+    if(lptm && !GetTextMetricsA(hdc, lptm)) return 0;
+
+    if(!GetTextExtentPointA(hdc, alphabet, 52, &sz)) return 0;
+
+    if (height) *height = sz.cy;
+    return (sz.cx / 26 + 1) / 2;
+}
+
+/* get text metrics and/or "average" char width of the specified logfont
+ * for the specified dc */
+void get_text_metr_size( HDC hdc, LOGFONTA *plf, TEXTMETRICA * ptm, UINT *psz)
+{
+    HFONT hfont, hfontsav;
+    TEXTMETRICA tm;
+    if( !ptm) ptm = &tm;
+    hfont = CreateFontIndirectA( plf);
+    if( !hfont || ( hfontsav = SelectObject( hdc, hfont)) == NULL ) {
+        ptm->tmHeight = -1;
+        if( psz) *psz = 10;
+        if( hfont) DeleteObject( hfont);
+        return;
+    }
+    GetTextMetricsA( hdc, ptm);
+    if( psz)
+        if( !(*psz = _GdiGetCharDimensions( hdc, ptm, NULL)))
+            *psz = 10;
+    SelectObject( hdc, hfontsav);
+    DeleteObject( hfont);
+}
+
+static int gsm_error_ctr;
+static UINT smcxsmsize = 999999999;
+
+#define ok_gsm( i, e)\
+{\
+    int exp = (e);\
+    int act = GetSystemMetrics( (i));\
+    if( exp != act) gsm_error_ctr++;\
+    ok( !( exp != act),"GetSystemMetrics(%s): expected %d actual %d\n", #i, exp,act);\
+}
+#define ok_gsm_2( i, e1, e2)\
+{\
+    int exp1 = (e1);\
+    int exp2 = (e2);\
+    int act = GetSystemMetrics( (i));\
+    if( exp1 != act && exp2 != act) gsm_error_ctr++;\
+    ok( !( exp1 != act && exp2 != act), "GetSystemMetrics(%s): expected %d or %d actual %d\n", #i, exp1, exp2, act);\
+}
+#define ok_gsm_3( i, e1, e2, e3)\
+{\
+    int exp1 = (e1);\
+    int exp2 = (e2);\
+    int exp3 = (e3);\
+    int act = GetSystemMetrics( (i));\
+    if( exp1 != act && exp2 != act && exp3 != act) gsm_error_ctr++;\
+    ok( !( exp1 != act && exp2 != act && exp3 != act),"GetSystemMetrics(%s): expected %d or %d or %d actual %d\n", #i, exp1, exp2, exp3, act);\
+}
+
+void test_GetSystemMetrics( void)
+{
+    TEXTMETRICA tmMenuFont;
+    UINT IconSpacing, IconVerticalSpacing;
+
+    HDC hdc = CreateIC( "Display", 0, 0, 0);
+    UINT avcwCaption;
+    INT CaptionWidth;
+    MINIMIZEDMETRICS minim;
+    NONCLIENTMETRICS ncm;
+    minim.cbSize = sizeof( minim);
+    ncm.cbSize = sizeof( ncm);
+    SystemParametersInfo( SPI_GETMINIMIZEDMETRICS, 0, &minim, 0);
+    SystemParametersInfo( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0);
+
+    /* CaptionWidth from the registry may have different value of iCaptionWidth
+     * from the non client metrics (observed on WinXP) */
+    CaptionWidth = metricfromreg(
+            "Control Panel\\Desktop\\WindowMetrics","CaptionWidth", dpi);
+    get_text_metr_size( hdc, &ncm.lfMenuFont, &tmMenuFont, NULL);
+    get_text_metr_size( hdc, &ncm.lfCaptionFont, NULL, &avcwCaption);
+    /* FIXME: use icon metric */
+    if( !SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &IconVerticalSpacing, 0))
+        IconVerticalSpacing = 0;
+    if( !SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &IconSpacing, 0 ))
+        IconSpacing = 0;
+    /* reset error counters */
+    gsm_error_ctr = 0;
+
+    /* the tests: */
+
+    /* SM_CXSCREEN, can not test these two */
+    /* SM_CYSCREEN */
+    ok_gsm( SM_CXVSCROLL,  ncm.iScrollWidth);
+    ok_gsm( SM_CYHSCROLL,  ncm.iScrollWidth);
+    ok_gsm( SM_CYCAPTION, ncm.iCaptionHeight+1);
+    ok_gsm( SM_CXBORDER, 1);
+    ok_gsm( SM_CYBORDER, 1);
+    ok_gsm( SM_CXDLGFRAME, 3);
+    ok_gsm( SM_CYDLGFRAME, 3);
+    ok_gsm( SM_CYVTHUMB,  ncm.iScrollHeight);
+    ok_gsm( SM_CXHTHUMB,  ncm.iScrollHeight);
+    /* SM_CXICON */
+    /* SM_CYICON */
+    /* SM_CXCURSOR */
+    /* SM_CYCURSOR */
+    ok_gsm( SM_CYMENU, ncm.iMenuHeight + 1);
+    ok_gsm( SM_CXFULLSCREEN,
+            GetSystemMetrics( SM_CXMAXIMIZED) - 2 * GetSystemMetrics( SM_CXFRAME));
+    ok_gsm( SM_CYFULLSCREEN,
+            GetSystemMetrics( SM_CYMAXIMIZED) - GetSystemMetrics( SM_CYMIN));
+    /* SM_CYKANJIWINDOW */
+    /* SM_MOUSEPRESENT */
+    ok_gsm( SM_CYVSCROLL, ncm.iScrollHeight);
+    ok_gsm( SM_CXHSCROLL, ncm.iScrollHeight);
+    /* SM_DEBUG */
+    /* SM_SWAPBUTTON */
+    /* SM_RESERVED1 */
+    /* SM_RESERVED2 */
+    /* SM_RESERVED3 */
+    /* SM_RESERVED4 */
+    ok_gsm( SM_CXMIN, 3 * max( CaptionWidth, 8) + GetSystemMetrics( SM_CYSIZE) +
+            4 + 4 * avcwCaption + 2 * GetSystemMetrics( SM_CXFRAME));
+    ok_gsm( SM_CYMIN, GetSystemMetrics( SM_CYCAPTION) +
+            2 * GetSystemMetrics( SM_CYFRAME));
+    ok_gsm_2( SM_CXSIZE,
+        ncm.iCaptionWidth,  /* classic/standard windows style */
+        GetSystemMetrics( SM_CYCAPTION) - 1 /* WinXP style */
+        );
+    ok_gsm( SM_CYSIZE,  ncm.iCaptionHeight);
+    ok_gsm( SM_CXFRAME, ncm.iBorderWidth + 3);
+    ok_gsm( SM_CYFRAME, ncm.iBorderWidth + 3);
+    ok_gsm( SM_CXMINTRACK,  GetSystemMetrics( SM_CXMIN));
+    ok_gsm( SM_CYMINTRACK,  GetSystemMetrics( SM_CYMIN));
+    /* SM_CXDOUBLECLK */
+    /* SM_CYDOUBLECLK */
+    if( IconSpacing) ok_gsm( SM_CXICONSPACING, IconSpacing);
+    if( IconVerticalSpacing) ok_gsm( SM_CYICONSPACING, IconVerticalSpacing);
+    /* SM_MENUDROPALIGNMENT */
+    /* SM_PENWINDOWS */
+    /* SM_DBCSENABLED */
+    /* SM_CMOUSEBUTTONS */
+    /* SM_SECURE */
+    ok_gsm( SM_CXEDGE, 2);
+    ok_gsm( SM_CYEDGE, 2);
+    ok_gsm( SM_CXMINSPACING, GetSystemMetrics( SM_CXMINIMIZED) + minim.iHorzGap );
+    ok_gsm( SM_CYMINSPACING, GetSystemMetrics( SM_CYMINIMIZED) + minim.iVertGap );
+    /* SM_CXSMICON */
+    /* SM_CYSMICON */
+    ok_gsm( SM_CYSMCAPTION, ncm.iSmCaptionHeight + 1);
+    ok_gsm_3( SM_CXSMSIZE,
+        ncm.iSmCaptionWidth, /* classic/standard windows style */
+        GetSystemMetrics( SM_CYSMCAPTION) - 1, /* WinXP style */
+        smcxsmsize /* winXP seems to cache this value: setnonclientmetric
+                      does not change it */
+        );
+    ok_gsm( SM_CYSMSIZE, GetSystemMetrics( SM_CYSMCAPTION) - 1);
+    ok_gsm( SM_CXMENUSIZE, ncm.iMenuWidth);
+    ok_gsm( SM_CYMENUSIZE, ncm.iMenuHeight);
+    /* SM_ARRANGE */
+    ok_gsm( SM_CXMINIMIZED, minim.iWidth + 6);
+    ok_gsm( SM_CYMINIMIZED, GetSystemMetrics( SM_CYCAPTION) + 5);
+    ok_gsm( SM_CXMAXTRACK, GetSystemMetrics( SM_CXSCREEN) +
+            4 + 2 * GetSystemMetrics( SM_CXFRAME));
+    ok_gsm( SM_CYMAXTRACK, GetSystemMetrics( SM_CYSCREEN) +
+            4 + 2 * GetSystemMetrics( SM_CYFRAME));
+    /* the next two cannot really be tested as they depend on (application)
+     * toolbars */
+    /* SM_CXMAXIMIZED */
+    /* SM_CYMAXIMIZED */
+    /* SM_NETWORK */
+    /* */
+    /* */
+    /* */
+    /* SM_CLEANBOOT */
+    /* SM_CXDRAG */
+    /* SM_CYDRAG */
+    /* SM_SHOWSOUNDS */
+    ok_gsm( SM_CXMENUCHECK,
+            ((tmMenuFont.tmHeight + tmMenuFont.tmExternalLeading+1)/2)*2-1);
+    ok_gsm( SM_CYMENUCHECK,
+            ((tmMenuFont.tmHeight + tmMenuFont.tmExternalLeading+1)/2)*2-1);
+    /* SM_SLOWMACHINE */
+    /* SM_MIDEASTENABLED */
+    /* SM_MOUSEWHEELPRESENT */
+    /* SM_XVIRTUALSCREEN */
+    /* SM_YVIRTUALSCREEN */
+    /* SM_CXVIRTUALSCREEN */
+    /* SM_CYVIRTUALSCREEN */
+    /* SM_CMONITORS */
+    /* SM_SAMEDISPLAYFORMAT */
+    /* SM_IMMENABLED */
+    /* SM_CXFOCUSBORDER */
+    /* SM_CYFOCUSBORDER */
+    /* SM_TABLETPC */
+    /* SM_MEDIACENTER */
+    /* SM_CMETRICS */
+    /* end of tests */
+    if( gsm_error_ctr ) { /* if any errors where found */
+        trace( "BorderWidth %d CaptionWidth %d CaptionHeight %d IconSpacing %d IconVerticalSpacing %d\n",
+                ncm.iBorderWidth, ncm.iCaptionWidth, ncm.iCaptionHeight, IconSpacing, IconVerticalSpacing);
+        trace( "MenuHeight %d MenuWidth %d ScrollHeight %d ScrollWidth %d SmCaptionHeight %d SmCaptionWidth %d\n",
+                ncm.iMenuHeight, ncm.iMenuWidth, ncm.iScrollHeight, ncm.iScrollWidth, ncm.iSmCaptionHeight, ncm.iSmCaptionWidth);
+        trace( "Captionfontchar width %d  MenuFont %ld,%ld CaptionWidth from registry: %d\n",
+                avcwCaption, tmMenuFont.tmHeight, tmMenuFont.tmExternalLeading, CaptionWidth);
+    }
+    ReleaseDC( 0, hdc);
+}
+
 START_TEST(sysparams)
 {
     int argc;
@@ -1829,7 +2050,6 @@ START_TEST(sysparams)
     dpi = GetDeviceCaps( hdc, LOGPIXELSY);
     ReleaseDC( 0, hdc);
 
-
     /* This test requires interactivity, if we don't have it, give up */
     if (!SystemParametersInfoA( SPI_SETBEEP, TRUE, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE ) &&
         GetLastError()==ERROR_REQUIRES_INTERACTIVE_WINDOWSTATION) return;
@@ -1837,6 +2057,9 @@ START_TEST(sysparams)
     argc = winetest_get_mainargs(&argv);
     strict=(argc >= 3 && strcmp(argv[2],"strict")==0);
     trace("strict=%d\n",strict);
+
+    trace("testing GetSystemMetrics with your current desktop settings\n");
+    test_GetSystemMetrics( );
 
     change_counter = 0;
     change_last_param = 0;
