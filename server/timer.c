@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <stdarg.h>
 
 #include "windef.h"
 #include "winternl.h"
