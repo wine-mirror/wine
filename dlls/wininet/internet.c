@@ -3268,7 +3268,7 @@ static VOID INTERNET_ExecuteWork(void)
 
         TRACE("SENDCALLBACK %p\n", workRequest.hdr);
 
-        SendSyncCallback(workRequest.hdr,
+        INTERNET_SendCallback(workRequest.hdr,
 			 req->dwContext, req->dwInternetStatus, req->lpvStatusInfo,
 			 req->dwStatusInfoLength);
 

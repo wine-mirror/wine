@@ -455,9 +455,9 @@ VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
                        DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                        DWORD dwStatusInfoLength);
 
-VOID SendSyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
-                      DWORD dwInternetStatus, LPVOID lpvStatusInfo,
-                      DWORD dwStatusInfoLength);
+VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
+                           DWORD dwInternetStatus, LPVOID lpvStatusInfo,
+                           DWORD dwStatusInfoLength);
 
 BOOL NETCON_connected(WININET_NETCONNECTION *connection);
 void NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL);

@@ -210,9 +210,9 @@ static const char *get_callback_name(DWORD dwInternetStatus) {
     return "Unknown";
 }
 
-VOID SendSyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
-                      DWORD dwInternetStatus, LPVOID lpvStatusInfo,
-                      DWORD dwStatusInfoLength)
+VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
+                           DWORD dwInternetStatus, LPVOID lpvStatusInfo,
+                           DWORD dwStatusInfoLength)
 {
     HINTERNET hHttpSession;
     LPVOID lpvNewInfo = NULL;
@@ -294,6 +294,6 @@ VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
 	INTERNET_AsyncCall(&workRequest);
     }
     else
-	SendSyncCallback(hdr, dwContext, dwInternetStatus,
-			 lpvStatusInfo, dwStatusInfoLength);
+	INTERNET_SendCallback(hdr, dwContext, dwInternetStatus,
+			      lpvStatusInfo, dwStatusInfoLength);
 }
