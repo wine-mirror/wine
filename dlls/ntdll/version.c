@@ -54,7 +54,7 @@ typedef enum
 
 /* FIXME: compare values below with original and fix.
  * An *excellent* win9x version page (ALL versions !)
- * can be found at members.aol.com/axcel216/ver.htm */
+ * can be found at www.mdgx.com/ver.htm */
 static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
 {
     /* WIN20 FIXME: verify values */
