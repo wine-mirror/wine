@@ -41,6 +41,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 #include "cdlg.h"
 #include "cdlg16.h"
 
+static const WCHAR strWineFontData16[] =
+                               {'_','_','W','I','N','E','_','F','O','N','T','D','L','G','D','A','T','A','1','6',0};
+
 static void FONT_LogFont16To32W( const LPLOGFONT16 font16, LPLOGFONTW font32 )
 {
     font32->lfHeight = font16->lfHeight;
@@ -120,11 +123,13 @@ INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics,
 {
   HWND hwnd=HWND_32(LOWORD(lParam));
   HWND hDlg=GetParent(hwnd);
-  LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongPtrW(hDlg, DWLP_USER);
+  LPCHOOSEFONT16 lpcf;
   LOGFONT16 *lplf = MapSL( logfont );
   TEXTMETRIC16 *lpmtrx16 = MapSL(metrics);
   ENUMLOGFONTEXW elf32w;
   NEWTEXTMETRICEXW nmtrx32w;
+
+  lpcf = (LPCHOOSEFONT16)GetPropW(hDlg, strWineFontData16);
   FONT_LogFont16To32W(lplf, &(elf32w.elfLogFont));
   FONT_Metrics16To32W(lpmtrx16, &nmtrx32w);
   return AddFontFamily(&elf32w, &nmtrx32w, nFontType,
@@ -140,11 +145,13 @@ INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
   HWND hcmb2=HWND_32(LOWORD(lParam));
   HWND hcmb3=HWND_32(HIWORD(lParam));
   HWND hDlg=GetParent(hcmb3);
-  LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongPtrW(hDlg, DWLP_USER);
+  LPCHOOSEFONT16 lpcf;
   LOGFONT16 *lplf = MapSL(logfont);
   TEXTMETRIC16 *lpmtrx16 = MapSL(metrics);
   ENUMLOGFONTEXW elf32w;
   NEWTEXTMETRICEXW nmtrx32w;
+
+  lpcf = (LPCHOOSEFONT16)GetPropW(hDlg, strWineFontData16);
   FONT_LogFont16To32W(lplf, &(elf32w.elfLogFont));
   FONT_Metrics16To32W(lpmtrx16, &nmtrx32w);
   return AddFontStyle(&elf32w, &nmtrx32w, nFontType,
@@ -298,13 +305,13 @@ BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
   BOOL16 res=0;
   if (message!=WM_INITDIALOG)
   {
-   lpcf=(LPCHOOSEFONT16)GetWindowLongPtrW(hDlg, DWLP_USER);
-   if (!lpcf && message != WM_MEASUREITEM)
-      return FALSE;
-   if (CFn_HookCallChk(lpcf))
-     res=CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg16,message,wParam,lParam);
-   if (res)
-    return res;
+      lpcf = (LPCHOOSEFONT16)GetPropW(hDlg, strWineFontData16);
+      if (!lpcf)
+          return FALSE;
+      if (CFn_HookCallChk(lpcf))
+          res=CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg16,message,wParam,lParam);
+      if (res)
+          return res;
   }
   else
   {
@@ -314,6 +321,7 @@ BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
       TRACE("CFn_WMInitDialog returned FALSE\n");
       return FALSE;
     }
+    SetPropW(hDlg, strWineFontData16, (HANDLE)lParam);
     if (CFn_HookCallChk(lpcf))
       return CallWindowProc16((WNDPROC16)lpcf->lpfnHook,hDlg16,WM_INITDIALOG,wParam,lParam);
   }
