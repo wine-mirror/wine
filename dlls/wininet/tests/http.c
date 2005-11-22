@@ -85,6 +85,9 @@ static VOID WINAPI callback(
                 lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_REQUEST_SENT:
+            ok(dwStatusInformationLength == sizeof(DWORD),
+                "info length should be sizeof(DWORD) instead of %ld\n",
+                dwStatusInformationLength);
             trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_REQUEST_SENT 0x%lx %ld\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 *(DWORD *)lpvStatusInformation,dwStatusInformationLength);
@@ -95,6 +98,9 @@ static VOID WINAPI callback(
                 lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_RESPONSE_RECEIVED:
+            ok(dwStatusInformationLength == sizeof(DWORD),
+                "info length should be sizeof(DWORD) instead of %ld\n",
+                dwStatusInformationLength);
             trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_RESPONSE_RECEIVED 0x%lx %ld\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 *(DWORD *)lpvStatusInformation,dwStatusInformationLength);
@@ -120,11 +126,17 @@ static VOID WINAPI callback(
                 lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_HANDLE_CREATED:
+            ok(dwStatusInformationLength == sizeof(HINTERNET),
+                "info length should be sizeof(HINTERNET) instead of %ld\n",
+                dwStatusInformationLength);
             trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_HANDLE_CREATED %p %ld\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 *(HINTERNET *)lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_HANDLE_CLOSING:
+            ok(dwStatusInformationLength == sizeof(HINTERNET),
+                "info length should be sizeof(HINTERNET) instead of %ld\n",
+                dwStatusInformationLength);
             trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_HANDLE_CLOSING %p %ld\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 *(HINTERNET *)lpvStatusInformation, dwStatusInformationLength);
@@ -132,6 +144,9 @@ static VOID WINAPI callback(
         case INTERNET_STATUS_REQUEST_COMPLETE:
         {
             INTERNET_ASYNC_RESULT *iar = (INTERNET_ASYNC_RESULT *)lpvStatusInformation;
+            ok(dwStatusInformationLength == sizeof(INTERNET_ASYNC_RESULT),
+                "info length should be sizeof(INTERNET_ASYNC_RESULT) instead of %ld\n",
+                dwStatusInformationLength);
             trace("%04lx:Callback %p 0x%lx INTERNET_STATUS_REQUEST_COMPLETE {%ld,%ld} %ld\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 iar->dwResult,iar->dwError,dwStatusInformationLength);
