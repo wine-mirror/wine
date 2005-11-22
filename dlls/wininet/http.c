@@ -2556,7 +2556,7 @@ const std_hdr_data SORTED_STANDARD_HEADERS[] = {
     {szIf_Range,		HTTP_QUERY_IF_RANGE,			REQUEST_HDR,},
     {szIf_Unmodified_Since,	HTTP_QUERY_IF_UNMODIFIED_SINCE,		REQUEST_HDR,},
     {szLast_Modified,		HTTP_QUERY_LAST_MODIFIED,		REQ_RESP_HDR,},
-    {szLocation,		HTTP_QUERY_CONTENT_LOCATION,		REQ_RESP_HDR,},
+    {szLocation,		HTTP_QUERY_LOCATION,			REQ_RESP_HDR,},
     {szMax_Forwards,		HTTP_QUERY_MAX_FORWARDS,		REQUEST_HDR,},
     {szMime_Version,		HTTP_QUERY_MIME_VERSION,		REQ_RESP_HDR,},
     {szPragma,			HTTP_QUERY_PRAGMA,			REQ_RESP_HDR,},
