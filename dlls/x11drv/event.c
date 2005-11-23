@@ -637,15 +637,8 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     unsigned long	data_length;
     unsigned long	aux_long;
     unsigned char*	p_data = NULL;
-    union {
-    	Atom	atom_aux;
-    	struct {
-      	    int x;
-      	    int y;
-    	} 	pt_aux;
-    	int	i;
-    } 			u;
-    int			x, y;
+    Atom atom_aux;
+    int			x, y, dummy;
     BOOL	        bAccept;
     Window		win, w_aux_root, w_aux_child;
     WND*                pWnd;
@@ -654,8 +647,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     win = X11DRV_get_whole_window(hWnd);
     wine_tsx11_lock();
     XQueryPointer( event->display, win, &w_aux_root, &w_aux_child,
-                   &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
-                   (unsigned int*)&aux_long);
+                   &x, &y, &dummy, &dummy, (unsigned int*)&aux_long);
     wine_tsx11_unlock();
 
     pWnd = WIN_GetPtr(hWnd);
@@ -692,25 +684,20 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     wine_tsx11_lock();
     XGetWindowProperty( event->display, DefaultRootWindow(event->display),
                         x11drv_atom(DndSelection), 0, 65535, FALSE,
-                        AnyPropertyType, &u.atom_aux, (int *) &u.pt_aux.y,
+                        AnyPropertyType, &atom_aux, &dummy,
                         &data_length, &aux_long, &p_data);
     wine_tsx11_unlock();
 
     if( !aux_long && p_data)  /* don't bother if > 64K */
     {
-        signed char *p = (signed char*) p_data;
+        char *p = (char *)p_data;
         char *p_drop;
 
         aux_long = 0;
         while( *p )  /* calculate buffer size */
         {
-            p_drop = p;
-            if((u.i = *p) != -1 )
-            {
-                INT len = GetShortPathNameA( p, NULL, 0 );
-                if (len) aux_long += len + 1;
-                else *p = -1;
-            }
+            INT len = GetShortPathNameA( p, NULL, 0 );
+            if (len) aux_long += len + 1;
             p += strlen(p) + 1;
         }
         if( aux_long && aux_long < 65535 )
@@ -736,14 +723,11 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
                 lpDrop->fWide = FALSE;
                 WIN_ReleasePtr(pDropWnd);
                 p_drop = (char *)(lpDrop + 1);
-                p = p_data;
+                p = (char *)p_data;
                 while(*p)
                 {
-                    if( *p != -1 ) /* use only "good" entries */
-                    {
-                        GetShortPathNameA( p, p_drop, 65535 );
+                    if (GetShortPathNameA( p, p_drop, aux_long - (p_drop - (char *)lpDrop) ))
                         p_drop += strlen( p_drop ) + 1;
-                    }
                     p += strlen(p) + 1;
                 }
                 *p_drop = '\0';
