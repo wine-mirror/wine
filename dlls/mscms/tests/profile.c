@@ -442,27 +442,43 @@ static void test_GetCountColorProfileElements(void)
 static void test_GetStandardColorSpaceProfileA(void)
 {
     BOOL ret;
-    DWORD size;
+    DWORD size, GLE;
     CHAR oldprofile[MAX_PATH];
     CHAR newprofile[MAX_PATH];
 
     /* Parameter checks */
 
+    SetLastError(0);
     ret = pGetStandardColorSpaceProfileA( NULL, 0, newprofile, NULL );
-    ok( !ret, "GetStandardColorSpaceProfileA() succeeded (%ld)\n", GetLastError() );
+    GLE = GetLastError();
+    todo_wine
+    ok( !ret && GLE == ERROR_INVALID_PARAMETER, 
+        "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );
 
+    SetLastError(0);
     ret = pGetStandardColorSpaceProfileA( machine, 0, newprofile, &size );
-    ok( !ret, "GetStandardColorSpaceProfileA() succeeded (%ld)\n", GetLastError() );
+    GLE = GetLastError();
+    todo_wine
+    ok( !ret && GLE == ERROR_INVALID_PARAMETER, 
+        "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );
 
     size = 0;
 
+    SetLastError(0);
     ret = pGetStandardColorSpaceProfileA( NULL, 0, NULL, &size );
-    ok( !ret, "GetStandardColorSpaceProfileA() succeeded (%ld)\n", GetLastError() );
+    GLE = GetLastError();
+    todo_wine
+    ok( !ret && (GLE == ERROR_INSUFFICIENT_BUFFER || GLE == ERROR_FILE_NOT_FOUND), 
+        "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );
 
     size = sizeof(newprofile);
 
+    SetLastError(0);
     ret = pGetStandardColorSpaceProfileA( NULL, 0, newprofile, &size );
-    ok( !ret, "GetStandardColorSpaceProfileA() succeeded (%ld)\n", GetLastError() );
+    GLE = GetLastError();
+    todo_wine
+    ok( !ret && GLE == ERROR_FILE_NOT_FOUND, 
+        "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );
 
     /* Functional checks */
 
@@ -491,27 +507,43 @@ static void test_GetStandardColorSpaceProfileA(void)
 static void test_GetStandardColorSpaceProfileW(void)
 {
     BOOL ret;
-    DWORD size;
+    DWORD size, GLE;
     WCHAR oldprofile[MAX_PATH];
     WCHAR newprofile[MAX_PATH];
 
     /* Parameter checks */
 
+    SetLastError(0);
     ret = pGetStandardColorSpaceProfileW( NULL, 0, newprofile, NULL );
-    ok( !ret, "GetStandardColorSpaceProfileW() succeeded (%ld)\n", GetLastError() );
+    GLE = GetLastError();
+    todo_wine
+    ok( !ret && GLE == ERROR_INVALID_PARAMETER, 
+        "GetStandardColorSpaceProfileW() returns %d (GLE=%ld)\n", ret, GLE );
 
+    SetLastError(0);
     ret = pGetStandardColorSpaceProfileW( machineW, 0, newprofile, &size );
-    ok( !ret, "GetStandardColorSpaceProfileW() succeeded (%ld)\n", GetLastError() );
+    GLE = GetLastError();
+    todo_wine
+    ok( !ret && GLE == ERROR_INVALID_PARAMETER, 
+        "GetStandardColorSpaceProfileW() returns %d (GLE=%ld)\n", ret, GLE );
 
     size = 0;
 
+    SetLastError(0);
     ret = pGetStandardColorSpaceProfileW( NULL, 0, NULL, &size );
-    ok( !ret, "GetStandardColorSpaceProfileW() succeeded (%ld)\n", GetLastError() );
+    GLE = GetLastError();
+    todo_wine
+    ok( !ret && (GLE == ERROR_INSUFFICIENT_BUFFER || GLE == ERROR_FILE_NOT_FOUND), 
+        "GetStandardColorSpaceProfileW() returns %d (GLE=%ld)\n", ret, GLE );
 
     size = sizeof(newprofile);
 
+    SetLastError(0);
     ret = pGetStandardColorSpaceProfileW( NULL, 0, newprofile, &size );
-    ok( !ret, "GetStandardColorSpaceProfileW() succeeded (%ld)\n", GetLastError() );
+    GLE = GetLastError();
+    todo_wine
+    ok( !ret && GLE == ERROR_FILE_NOT_FOUND, 
+        "GetStandardColorSpaceProfileW() returns %d (GLE=%ld)\n", ret, GLE );
 
     /* Functional checks */
 
