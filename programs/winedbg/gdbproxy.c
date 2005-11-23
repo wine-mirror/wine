@@ -955,7 +955,7 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
     int defaultAction = -1; /* magic non action */
     unsigned char sig;
     int actions =0;
-    int actionIndex[20]; /* allow for upto 20 actions */
+    int actionIndex[20]; /* allow for up to 20 actions */
     int threadIndex[20];
     int threadCount = 0;
     unsigned int threadIDs[100]; /* TODO: Should make this dynamic */
@@ -986,7 +986,7 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
           `vCont[;action]...'
           The vCont packet is supported. Each action is a supported command in the vCont packet.
           `'
-          The vCont packet is not supported.  (this didn't seem to be obayed!)
+          The vCont packet is not supported.  (this didn't seem to be obeyed!)
         */
         packet_reply_open(gdbctx);
         packet_reply_add(gdbctx, "vCont", 5);
@@ -1036,12 +1036,12 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
 
     /* Now, I have this default action thing that needs to be applied to all non counted threads */
 
-    /* go through all the threads and stick there id's in the to be done list. */
+    /* go through all the threads and stick their ids in the to be done list. */
     for (thd = gdbctx->process->threads; thd; thd = thd->next)
     {
         threadIDs[threadCount++] = thd->tid;
         /* check to see if we have more threads than I counted on, and tell the user what to do
-         * (their running winedbg, so I'm sure they can fix the problem from the error message!) */
+         * (they're running winedbg, so I'm sure they can fix the problem from the error message!) */
         if (threadCount == 100)
         {
             fprintf(stderr, "Wow, that's a lot of threads, change threadIDs in wine/programms/winedgb/gdbproxy.c to be higher\n");

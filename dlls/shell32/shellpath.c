@@ -1699,7 +1699,7 @@ end:
  */
 HRESULT WINAPI SHGetFolderPathW(
 	HWND hwndOwner,    /* [I] owner window */
-	int nFolder,       /* [I] CSIDL identifing the folder */
+	int nFolder,       /* [I] CSIDL identifying the folder */
 	HANDLE hToken,     /* [I] access token */
 	DWORD dwFlags,     /* [I] which path to return */
 	LPWSTR pszPath)    /* [O] converted path */

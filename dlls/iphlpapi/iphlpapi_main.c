@@ -345,7 +345,7 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable,
  *  Failure: error code from winerror.h
  *
  * FIXME
- *  Stub, returns allways NO_ERROR.
+ *  Stub, always returns NO_ERROR.
  */
 DWORD WINAPI CreateIpForwardEntry(PMIB_IPFORWARDROW pRoute)
 {
@@ -368,7 +368,7 @@ DWORD WINAPI CreateIpForwardEntry(PMIB_IPFORWARDROW pRoute)
  *  Failure: error code from winerror.h
  *
  * FIXME
- *  Stub, returns allways NO_ERROR.
+ *  Stub, always returns NO_ERROR.
  */
 DWORD WINAPI CreateIpNetEntry(PMIB_IPNETROW pArpEntry)
 {
@@ -1333,7 +1333,7 @@ DWORD WINAPI GetIpStatistics(PMIB_IPSTATS pStats)
  *
  * PARAMS
  *  pFixedInfo [Out]    buffer for network parameters
- *  pOutBufLen [In/Out] lenght of output buffer
+ *  pOutBufLen [In/Out] length of output buffer
  *
  * RETURNS
  *  Success: NO_ERROR

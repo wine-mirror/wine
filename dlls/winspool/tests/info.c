@@ -191,7 +191,7 @@ static void test_printer_directory(void)
          "or result != 0 and last error == ERROR_INVALID_PARAMETER "
          "got result %d and last error == %ld\n", res, GetLastError());
 
-    /* with a valid buffer, but level is to large */
+    /* with a valid buffer, but level is too large */
     buffer[0] = '\0';
     SetLastError(0x00dead00);
     res = GetPrinterDriverDirectoryA(NULL, NULL, 2, buffer, cbBuf, &pcbNeeded);

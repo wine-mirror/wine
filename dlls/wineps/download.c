@@ -85,7 +85,7 @@ static BOOL is_room_for_font(PSDRV_PDEVICE *physDev)
     int count = 0;
 
     /* FIXME: should consider vm usage of each font and available printer memory.
-       For now we allow upto two fonts to be downloaded at a time */
+       For now we allow up to two fonts to be downloaded at a time */
     for(pdl = physDev->downloaded_fonts; pdl; pdl = pdl->next)
         count++;
 

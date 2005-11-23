@@ -254,7 +254,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
             glPrioritizeTextures(1, &This->baseTexture.textureName, &tmp);
 
         }
-        /* Initilise the state of the texture object
+        /* Initialise the state of the texture object
         to the openGL defaults, not the directx defaults */
         This->baseTexture.states[WINED3DTEXSTA_ADDRESSU]      = D3DTADDRESS_WRAP;
         This->baseTexture.states[WINED3DTEXSTA_ADDRESSV]      = D3DTADDRESS_WRAP;

@@ -1029,7 +1029,7 @@ typedef struct IWineD3DSwapChainImpl
     BOOL                      wantsDepthStencilBuffer;
     D3DPRESENT_PARAMETERS     presentParms;
 
-    /* TODO: move everything upto drawable off into a context manager
+    /* TODO: move everything up to drawable off into a context manager
       and store the 'data' in the contextManagerData interface.
     IUnknown                  *contextManagerData;
     */

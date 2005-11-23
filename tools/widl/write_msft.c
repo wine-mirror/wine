@@ -342,7 +342,7 @@ static int ctl2_encode_string(
     converted_string[0] = length & 0xff;
     converted_string[1] = (length >> 8) & 0xff;
 
-    if(length < 3) { /* strings of this length are padded with upto 8 bytes incl the 2 byte length */
+    if(length < 3) { /* strings of this length are padded with up to 8 bytes incl the 2 byte length */
         for(offset = 0; offset < 4; offset++)
             converted_string[length + offset + 2] = 0x57;
         length += 4;

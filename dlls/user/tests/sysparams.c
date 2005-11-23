@@ -877,7 +877,7 @@ static void test_SPI_ICONVERTICALSPACING( void )       /*     24 */
         return;
     /* do not increase the value as it would upset the user's icon layout */
     dotest_spi_iconverticalspacing( old_spacing - 1);
-    /* same tests with a value less then the minimum 32 */
+    /* same tests with a value less than the minimum 32 */
     dotest_spi_iconverticalspacing( 10);
     /* restore */
     rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, old_spacing, 0,
@@ -1932,7 +1932,7 @@ void test_GetSystemMetrics( void)
 
     /* the tests: */
 
-    /* SM_CXSCREEN, can not test these two */
+    /* SM_CXSCREEN, cannot test these two */
     /* SM_CYSCREEN */
     ok_gsm( SM_CXVSCROLL,  ncm.iScrollWidth);
     ok_gsm( SM_CYHSCROLL,  ncm.iScrollWidth);

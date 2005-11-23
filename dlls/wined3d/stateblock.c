@@ -310,7 +310,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
             }
         }
 
-        /* FIXME: textures are upto MAX_SAMPLERS for d3d9? */
+        /* FIXME: textures are up to MAX_SAMPLERS for d3d9? */
         /* Texture */
         for (j = 0; j < GL_LIMITS(textures); j++) {
             /* TODO: move over to using memcpy */

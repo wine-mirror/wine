@@ -222,7 +222,7 @@ typedef struct  {
     mp_digit *dp;
 } mp_int;
 
-/* callback for mp_prime_random, should fill dst with random bytes and return how many read [upto len] */
+/* callback for mp_prime_random, should fill dst with random bytes and return how many read [up to len] */
 typedef int ltm_prime_callback(unsigned char *dst, int len, void *dat);
 
 #define DIGIT(m,k) ((m)->dp[(k)])

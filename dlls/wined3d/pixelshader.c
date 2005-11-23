@@ -670,7 +670,7 @@ static CONST SHADER_OPCODE pshader_ins [] = {
 
     /** FIXME: use direct access so add the others opcodes as stubs */
     /* NOTE: gl function is currently NULL for calls and loops because they are not yet supported
-        They can be easly managed in software by introducing a call/loop stack and should be possible to implement in glsl ol NV_shader's */
+        They can be easily managed in software by introducing a call/loop stack and should be possible to implement in glsl ol NV_shader's */
     {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL,   1, pshader_call,    0, 0},
     {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL,   2, pshader_callnz,  0, 0},
     {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL,   2, pshader_loop,    0, 0},
@@ -685,7 +685,7 @@ static CONST SHADER_OPCODE pshader_ins [] = {
         RCP tmp, vec
         MUL out, tmp, vec*/
     {D3DSIO_SGN,      "sng",      NULL,   2, pshader_sng,     0, 0},
-    /* TODO: xyz normalise can be performed is VS_ARB using one tempory register,
+    /* TODO: xyz normalise can be performed as VS_ARB using one temporary register,
         DP3 tmp , vec, vec;
         RSQ tmp, tmp.x;
         MUL vec.xyz, vec, tmp;
@@ -727,7 +727,7 @@ static CONST SHADER_OPCODE pshader_ins [] = {
     {D3DSIO_EXPP,     "expp",     "EXP", 2, pshader_expp, 0, 0},
     {D3DSIO_LOGP,     "logp",     "LOG", 2, pshader_logp, 0, 0},
     {D3DSIO_CND,      "cnd",      GLNAME_REQUIRE_GLSL,   4, pshader_cnd,         D3DPS_VERSION(1,1), D3DPS_VERSION(1,4)},
-    /* def is a special opperation */
+    /* def is a special operation */
     {D3DSIO_DEF,      "def",      "undefined",   5, pshader_def,         0, 0},
     {D3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL,   2, pshader_texreg2rgb,  D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL,   2, pshader_texdp3tex,   D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
@@ -983,7 +983,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
     unsigned int pgmLength = 0;
 
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
-        it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occure... */
+        it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
     if (This->device->fixupVertexBufferSize < PGMSIZE) {
         HeapFree(GetProcessHeap(), 0, This->fixupVertexBuffer);
         This->fixupVertexBuffer = HeapAlloc(GetProcessHeap() , 0, PGMSIZE);
@@ -1090,7 +1090,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 continue;
             }
 /* here */
-#if 0 /* Not sure what thease are here for, the're not required for vshaders */
+#if 0 /* Not sure what these are here for, they're not required for vshaders */
             code = *pToken;
 #endif
             pInstr = pToken;
@@ -1098,13 +1098,13 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
             TRACE("Found opcode %s %s\n", curOpcode->name,curOpcode->glname);
             ++pToken;
             if (NULL == curOpcode) {
-                /* unkown current opcode ... (shouldn't be any!) */
+                /* unknown current opcode ... (shouldn't be any!) */
                 while (*pToken & 0x80000000) { /* TODO: Think of a sensible name for 0x80000000 */
                     FIXME("unrecognized opcode: %08lx\n", *pToken);
                     ++pToken;
                 }
             } else if (GLNAME_REQUIRE_GLSL == curOpcode->glname) {
-                /* if the token isn't supported by this cross compiler then skip it and it's parameters */
+                /* if the token isn't supported by this cross compiler then skip it and its parameters */
                 FIXME("Token %s requires greater functionality than Fragment_Progarm_ARB supports\n", curOpcode->name);
                 pToken += curOpcode->num_params;
             } else {
@@ -1148,7 +1148,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 case D3DSIO_LOG:
                 case D3DSIO_LRP:
                 case D3DSIO_TEXKILL:
-                    TRACE("Appending glname %s to tmpLine \n", curOpcode->glname);
+                    TRACE("Appending glname %s to tmpLine\n", curOpcode->glname);
                     strcpy(tmpLine, curOpcode->glname);
                     break;
                 case D3DSIO_DEF:
@@ -1689,7 +1689,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
                 /* TODO: Think of a good name for 0x80000000 and replace it with a constant */
                 while (*pToken & 0x80000000) {
 
-                    /* unkown current opcode ... */
+                    /* unknown current opcode ... */
                     TRACE("unrecognized opcode: %08lx", *pToken);
                     ++pToken;
                     ++len;

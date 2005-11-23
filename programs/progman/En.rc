@@ -209,7 +209,7 @@ The group file `%s' cannot be opened.\n\
 Should it be tried further on?"
 IDS_OUT_OF_MEMORY,		"Out of memory."
 IDS_WINHELP_ERROR,		"Help not available."
-IDS_UNKNOWN_FEATURE_s,		"Unkown feature in %s"
+IDS_UNKNOWN_FEATURE_s,		"Unknown feature in %s"
 IDS_FILE_NOT_OVERWRITTEN_s,	"File `%s' exists. Not overwritten."
 IDS_SAVE_GROUP_AS_s,		"Save group as `%s to prevent overwriting original files."
 IDS_NO_HOT_KEY,			"None"

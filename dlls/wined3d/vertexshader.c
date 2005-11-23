@@ -623,7 +623,7 @@ static CONST SHADER_OPCODE vshader_ins [] = {
     {D3DSIO_M3x2, "m3x2", "undefined", 3, vshader_m3x2, 0, 0},
     /** FIXME: use direct access so add the others opcodes as stubs */
     /* NOTE: gl function is currently NULL for calls and loops because they are not yet supported
-        They can be easly managed in software by introducing a call/loop stack and should be possible to implement in glsl ol NV_shader's */
+        They can be easily managed in software by introducing a call/loop stack and should be possible to implement in glsl ol NV_shader's */
     {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL,   1, vshader_call,    0, 0},
     {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL,   2, vshader_callnz,  0, 0},
     {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL,   2, vshader_loop,    0, 0},
@@ -638,7 +638,7 @@ static CONST SHADER_OPCODE vshader_ins [] = {
         RCP tmp, vec
         MUL out, tmp, vec*/
     {D3DSIO_SGN,      "sng",      NULL,   2, vshader_sng,     0, 0},
-    /* TODO: xyz normalise can be performed is VS_ARB using one temporary register,
+    /* TODO: xyz normalise can be performed as VS_ARB using one temporary register,
         DP3 tmp , vec, vec;
         RSQ tmp, tmp.x;
         MUL vec.xyz, vec, tmp;
@@ -680,7 +680,7 @@ static CONST SHADER_OPCODE vshader_ins [] = {
     {D3DSIO_EXPP,     "expp",     "EXP", 2, vshader_expp, 0, 0},
     {D3DSIO_LOGP,     "logp",     "LOG", 2, vshader_logp, 0, 0},
     {D3DSIO_CND,      "cnd",      GLNAME_REQUIRE_GLSL,   4, vshader_cnd,         D3DPS_VERSION(1,1), D3DPS_VERSION(1,4)},
-    /* def is a special opperation */
+    /* def is a special operation */
     {D3DSIO_DEF,      "def",      NULL,   5, vshader_def,         D3DPS_VERSION(1,0), D3DPS_VERSION(3,0)},
     {D3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL,   2, vshader_texreg2rgb,  D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL,   2, vshader_texdp3tex,   D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
@@ -1087,7 +1087,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     int pgmLength = 0;
 
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
-        it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occure... */
+        it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
     if (This->device->fixupVertexBufferSize < PGMSIZE) {
         HeapFree(GetProcessHeap(), 0, This->fixupVertexBuffer);
         This->fixupVertexBuffer = HeapAlloc(GetProcessHeap() , 0, PGMSIZE);
@@ -1107,7 +1107,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
         }
 
     pgmStr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 65535); /* 64kb should be enough */
-    /* Initilise the shader */
+    /* Initialise the shader */
     This->namedArrays = FALSE;
     This->declaredArrays = FALSE;
     for (i = 0; i < WINED3DSHADERDECLUSAGE_MAX_USAGE; i++) {
@@ -1160,9 +1160,9 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                             This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION]     = arrayNo;
                             This->namedArrays = TRUE;
                         } else {
-                            /* TODO: position indexes go fro 0-8!!*/
+                            /* TODO: position indexes go from 0-8!!*/
                             TRACE("Setting position 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
-                            /* robots uses positions upto 8, the position arrays are just packed.*/
+                            /* robots uses positions up to 8, the position arrays are just packed.*/
                             if ((usage & 0xF0000) >> 16 > 1) {
                                 TRACE("Loaded for position %d (greater than 2)\n", (usage & 0xF0000) >> 16);
                             }
@@ -1437,13 +1437,13 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
       curOpcode = vshader_program_get_opcode(*pToken);
       ++pToken;
       if (NULL == curOpcode) {
-        /* unkown current opcode ... (shouldn't be any!) */
+        /* unknown current opcode ... (shouldn't be any!) */
         while (*pToken & 0x80000000) {
             FIXME("unrecognized opcode: %08lx\n", *pToken);
             ++pToken;
         }
       } else if (GLNAME_REQUIRE_GLSL == curOpcode->glname) {
-            /* if the token isn't supported by this cross compiler then skip it and it's parameters */
+            /* if the token isn't supported by this cross compiler then skip it and its parameters */
           
             FIXME("Token %s requires greater functionality than Vertex_Progarm_ARB supports\n", curOpcode->name);
             pToken += curOpcode->num_params;
@@ -1733,8 +1733,8 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
         ++pToken;
         if (NULL == curOpcode) {
             i = 0;
-            /* unkown current opcode ... */
-            /* TODO: Think of a name for 0x80000000 and repalce it's use with a constant */
+            /* unknown current opcode ... */
+            /* TODO: Think of a name for 0x80000000 and replace its use with a constant */
             while (*pToken & 0x80000000) {
                 if (i == 0) {
                     FIXME("unrecognized opcode: pos=%d token=%08lX\n", (pToken - 1) - This->function, *(pToken - 1));
@@ -2081,7 +2081,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
             if (NULL == curOpcode) {
                 /* TODO: Think of a good name for 0x80000000 and replace it with a constant */
                 while (*pToken & 0x80000000) {
-                    /* unkown current opcode ... */
+                    /* unknown current opcode ... */
                     FIXME("unrecognized opcode: %08lx", *pToken);
                     ++pToken;
                     ++len;

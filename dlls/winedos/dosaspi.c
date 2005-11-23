@@ -167,7 +167,7 @@ DWORD ASPI_SendASPIDOSCommand(DWORD ptrSRB)
 		TRACE("SC_RESET_DEV\n");
 		break;
 	default:
-		TRACE("Unkown command code\n");
+		TRACE("Unknown command code\n");
 		break;
 	}
 

@@ -770,7 +770,7 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
       curOpcode = vshader_program_get_opcode(*pToken);
       ++pToken;
       if (NULL == curOpcode) {
-	/* unkown current opcode ... */
+	/* unknown current opcode ... */
 	while (*pToken & 0x80000000) {
 	  TRACE_(d3d_hw_shader)("unrecognized opcode: %08lx\n", *pToken);
 	  ++pToken;
@@ -904,7 +904,7 @@ inline static VOID IDirect3DVertexShaderImpl_ParseProgram(IDirect3DVertexShaderI
       ++pToken;
       ++len;
       if (NULL == curOpcode) {
-	/* unkown current opcode ... */
+	/* unknown current opcode ... */
 	while (*pToken & 0x80000000) {
 	  TRACE("unrecognized opcode: %08lx\n", *pToken);
 	  ++pToken;
@@ -1041,7 +1041,7 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
     ++pToken;
     if (NULL == curOpcode) {
       i = 0;
-      /* unkown current opcode ... */
+      /* unknown current opcode ... */
       while (*pToken & 0x80000000) {
 	if (i == 0) {
 	  TRACE("unrecognized opcode: pos=%d token=%08lX\n", (pToken - 1) - vshader->function, *(pToken - 1));
@@ -1875,7 +1875,7 @@ inline static VOID IDirect3DPixelShaderImpl_GenerateProgramArbHW(IDirect3DPixelS
       curOpcode = pshader_program_get_opcode(code, version);
       ++pToken;
       if (NULL == curOpcode) {
-        /* unkown current opcode ... */
+        /* unknown current opcode ... */
         while (*pToken & 0x80000000) {
           TRACE("unrecognized opcode: %08lx\n", *pToken);
           ++pToken;
@@ -2249,7 +2249,7 @@ inline static VOID IDirect3DPixelShaderImpl_ParseProgram(IDirect3DPixelShaderImp
       ++pToken;
       ++len;
       if (NULL == curOpcode) {
-	/* unkown current opcode ... */
+	/* unknown current opcode ... */
 	while (*pToken & 0x80000000) {
 	  TRACE("unrecognized opcode: %08lx\n", *pToken);
 	  ++pToken;

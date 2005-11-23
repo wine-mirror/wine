@@ -895,7 +895,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     /* Resources are placed in system RAM and do not need to be recreated when a device is lost. These resources are not bound by device size or format restrictions. Because of this, these resources cannot be accessed by the Direct3D device nor set as textures or render targets. However, these resources can always be created, locked, and copied. */
     if (This->resource.pool == D3DPOOL_SCRATCH || This->resource.pool == D3DPOOL_SYSTEMMEM) /*never store scratch or system mem textures in the video ram*/
     {
-        FIXME("(%p) Opperation not supported for scratch or SYSTEMMEM textures\n",This);
+        FIXME("(%p) Operation not supported for scratch or SYSTEMMEM textures\n",This);
         return D3DERR_INVALIDCALL;
     }
 

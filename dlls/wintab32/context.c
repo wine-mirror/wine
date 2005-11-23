@@ -122,7 +122,7 @@ static LPOPENCONTEXT TABLET_FindOpenContext(HCTX hCtx)
 
 static void LoadTablet(void)
 {
-    TRACE("Initilizing the tablet to hwnd %p\n",hwndDefault);
+    TRACE("Initializing the tablet to hwnd %p\n",hwndDefault);
     gLoaded= TRUE;
     pLoadTabletInfo(hwndDefault);
 }

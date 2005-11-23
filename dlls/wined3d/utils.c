@@ -1834,7 +1834,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
 #define PUSH1(att)        attribs[(*nAttribs)++] = (att);
 #define PUSH2(att,value)  attribs[(*nAttribs)++] = (att); attribs[(*nAttribs)++] = (value);
     /*We need to do some Card specific stuff in here at some point,
-    D3D now support floating point format buffers, and their are a number of different OpelGl ways on managing thease e.g.
+    D3D now supports floating point format buffers, and there are a number of different OpelGl ways of managing these e.g.
     GLX_ATI_pixel_format_float
     */
     switch (BackBufferFormat) {

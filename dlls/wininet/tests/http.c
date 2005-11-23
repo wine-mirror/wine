@@ -1103,7 +1103,7 @@ static void HttpSendRequestEx_test(void)
     ok(HttpEndRequest(hRequest, NULL, 0, 0), "HttpEndRequest Failed\n");
 
     ok(InternetReadFile(hRequest, szBuffer, 255, &dwBytesRead),
-            "Unable to read responce\n");
+            "Unable to read response\n");
     szBuffer[dwBytesRead] = 0;
 
     ok(dwBytesRead == 13,"Read %lu bytes instead of 13\n",dwBytesRead);

@@ -2628,7 +2628,7 @@ mp_mod_d (mp_int * a, mp_digit b, mp_digit * c)
 /*
  * shifts with subtractions when the result is greater than b.
  *
- * The method is slightly modified to shift B unconditionally upto just under
+ * The method is slightly modified to shift B unconditionally up to just under
  * the leading bit of b.  This saves a lot of multiple precision shifting.
  */
 int mp_montgomery_calc_normalization (mp_int * a, mp_int * b)
@@ -4151,7 +4151,7 @@ __M:
   return err;
 }
 
-/* multiplies |a| * |b| and only computes upto digs digits of result
+/* multiplies |a| * |b| and only computes up to digs digits of result
  * HAC pp. 595, Algorithm 14.12  Modified so you can control how 
  * many digits of output are created.
  */

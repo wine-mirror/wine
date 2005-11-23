@@ -1780,7 +1780,7 @@ static void EDIT_ML_InvalidateText(EDITSTATE *es, INT start, INT end)
  *
  *	EDIT_InvalidateText
  *
- *	Invalidate the text from offset start upto, but not including,
+ *	Invalidate the text from offset start up to, but not including,
  *	offset end.  Useful for (re)painting the selection.
  *	Regions outside the linewidth are not invalidated.
  *	end == -1 means end == TextLength.
@@ -2484,7 +2484,7 @@ static void EDIT_UpdateScrollInfo(EDITSTATE *es)
  *
  *	Find the beginning of words.
  *	Note:	unlike the specs for a WordBreakProc, this function only
- *		allows to be called without linebreaks between s[0] upto
+ *		allows to be called without linebreaks between s[0] up to
  *		s[count - 1].  Remember it is only called
  *		internally, so we can decide this for ourselves.
  *

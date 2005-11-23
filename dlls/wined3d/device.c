@@ -108,7 +108,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
     TRACE("(%p) : Created resource %p\n", This, object); \
 }
 
-#define D3DINITILIZEBASETEXTURE(_basetexture) { \
+#define D3DINITIALIZEBASETEXTURE(_basetexture) { \
     _basetexture.levels     = Levels; \
     _basetexture.filterType = (Usage & D3DUSAGE_AUTOGENMIPMAP) ? D3DTEXF_LINEAR : D3DTEXF_NONE; \
     _basetexture.LOD        = 0; \
@@ -723,7 +723,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
        Size = (pow2Width * D3DFmtGetBpp(This, Format)) * pow2Height;
     }
 
-    /** Create the and initilise surface resource **/
+    /** Create and initialise the surface resource **/
     D3DCREATERESOURCEOBJECTINSTANCE(object,Surface,D3DRTYPE_SURFACE, Size)
     object->container = (IUnknown*) This;
 
@@ -837,7 +837,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
     }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, Texture, D3DRTYPE_TEXTURE, 0);
-    D3DINITILIZEBASETEXTURE(object->baseTexture);    
+    D3DINITIALIZEBASETEXTURE(object->baseTexture);    
     object->width  = Width;
     object->height = Height;
 
@@ -922,7 +922,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
     }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, VolumeTexture, D3DRTYPE_VOLUMETEXTURE, 0);
-    D3DINITILIZEBASETEXTURE(object->baseTexture);
+    D3DINITIALIZEBASETEXTURE(object->baseTexture);
 
     TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
           Depth, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
@@ -1022,7 +1022,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
     }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, D3DRTYPE_CUBETEXTURE, 0);
-    D3DINITILIZEBASETEXTURE(object->baseTexture);
+    D3DINITIALIZEBASETEXTURE(object->baseTexture);
 
     TRACE("(%p) Create Cube Texture\n", This);
 
@@ -1172,7 +1172,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
 
    /** FIXME: Test under windows to find out what the life cycle of a swap chain is,
    * does a device hold a reference to a swap chain giving them a lifetime of the device
-   * or does the swap chain notify the device of it'd destruction.
+   * or does the swap chain notify the device of its destruction.
     *******************************/
 
     D3DCREATEOBJECTINSTANCE(object, SwapChain)
@@ -1310,7 +1310,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
 
    /**
    * TODO: MSDN says that we are only allowed one fullscreen swapchain per device,
-   * so we should really check to see if their is a fullscreen swapchain already
+   * so we should really check to see if there is a fullscreen swapchain already
    * I think Windows and X have different ideas about fullscreen, does a single head count as full screen?
     **************************************/
 
@@ -2097,7 +2097,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD Index, C
         }
     }
 
-    /* Initialze the object */
+    /* Initialize the object */
     TRACE("Light %ld setting to type %d, Diffuse(%f,%f,%f,%f), Specular(%f,%f,%f,%f), Ambient(%f,%f,%f,%f)\n", Index, pLight->Type,
           pLight->Diffuse.r, pLight->Diffuse.g, pLight->Diffuse.b, pLight->Diffuse.a,
           pLight->Specular.r, pLight->Specular.g, pLight->Specular.b, pLight->Specular.a,
@@ -4095,7 +4095,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT Sr
  * TODO: Verify against dx9 definitions
  *****/
 
-/* NOTE: It's expected that this function is going to be called lots of times with the same stage active, so make it the callers responsibility to GLACTIVETEXTURE(Stage) for better state management. Set the correct Texture unit active before callnig ApplyTextureStageState */
+/* NOTE: It's expected that this function is going to be called lots of times with the same stage active, so make it the callers responsibility to GLACTIVETEXTURE(Stage) for better state management. Set the correct Texture unit active before calling ApplyTextureStageState */
 static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     DWORD Value = This->updateStateBlock->textureState[Stage][Type];
@@ -4380,7 +4380,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
 
     /** NOTE: MSDN says that setTexture increases the reference count,
     * and the the application nust set the texture back to null (or have a leaky application),
-    * This means we should pass the refcount upto the parent
+    * This means we should pass the refcount up to the parent
      *******************************/
     if (NULL != This->updateStateBlock->textures[Stage]) {
         IUnknown *textureParent;
@@ -4832,7 +4832,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3D
 
     TRACE("(%p) Source %p Destination %p\n", This, pSourceTexture, pDestinationTexture);
 
-    /* verify that the source and destination textures arebn't NULL */
+    /* verify that the source and destination textures aren't NULL */
     if (NULL == pSourceTexture || NULL == pDestinationTexture) {
         WARN("(%p) : source (%p) and destination (%p) textures must not be NULL, returning D3DERR_INVALIDCALL\n",
              This, pSourceTexture, pDestinationTexture);
@@ -4975,9 +4975,9 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTargetData(IWineD3DDevice *iface, I
     surfaceDesc.Width  = &surfaceWidth;
     surfaceDesc.Height = &surfaceHeight;
     IWineD3DSurface_GetDesc(pSurface, &surfaceDesc);
-   /* check to see if it's the backbuffer or the frontbuffer being requested (to make sureteh data is upto date)*/
+   /* check to see if it's the backbuffer or the frontbuffer being requested (to make sure the data is up to date)*/
 
-    /* Ok, I may need to setup some kind of active  swapchain reference on the device */
+    /* Ok, I may need to setup some kind of active swapchain reference on the device */
     IWineD3DSurface_GetContainer(pRenderTarget, &IID_IWineD3DSwapChain, (void **)&container);
     ENTER_GL();
     /* TODO: opengl Context switching for swapchains etc... */
@@ -5048,7 +5048,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface, DWORD*
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     /* return a sensible default */
     *pNumPasses = 1;
-    /* TODO: If the window is minimized then validate device shold return something other than d3d_ok */
+    /* TODO: If the window is minimized then validate device should return something other than d3d_ok */
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
@@ -5228,7 +5228,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
         IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
     }
 
-    /* Make sure the surface is loaded and upto date */
+    /* Make sure the surface is loaded and up to date */
     IWineD3DSurface_PreLoad(pDestinationSurface);
 
     IWineD3DSurface_GetGlDesc(pDestinationSurface, &glDescription);
@@ -6285,7 +6285,7 @@ void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IWineD3DR
                         /* Set changed flag? */
                     }
                 }
-                if (This->stateBlock != NULL ) { /* only happens if their is an error in the application, or on reset/release (because we don't manage internal tracknig properly) */
+                if (This->stateBlock != NULL ) { /* only happens if there is an error in the application, or on reset/release (because we don't manage internal tracking properly) */
                     if ((IWineD3DResource *)This->stateBlock->streamSource[streamNumber] == resource) {
                         TRACE("Vertex buffer released whlst bound to a state block  stream %d\n", streamNumber);
                         This->stateBlock->streamSource[streamNumber] = 0;

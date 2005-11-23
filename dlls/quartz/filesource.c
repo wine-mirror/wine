@@ -324,7 +324,7 @@ HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
     return S_OK;
 }
 
-/** IUnkown methods **/
+/** IUnknown methods **/
 
 static HRESULT WINAPI AsyncReader_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
