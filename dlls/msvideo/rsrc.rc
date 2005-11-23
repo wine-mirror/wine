@@ -18,5 +18,7 @@
 
 #include "windef.h"
 #include "winuser.h"
+#include "msvideo_private.h"
 
 #include "msvfw32_En.rc"
+#include "msvfw32_Ko.rc"
