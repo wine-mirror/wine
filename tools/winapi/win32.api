@@ -2431,13 +2431,16 @@ SOCKET
 %ptr
 
 LPDWORD
+LPINT
 LPOVERLAPPED
 LPTRANSMIT_FILE_BUFFERS
 PVOID
+struct sockaddr **
 
 %void
 
 void
+VOID
 
 %%msxml3.dll
 
@@ -5185,6 +5188,7 @@ u_short
 
 %ptr
 
+ADDRINFOW *
 FARPROC
 INT *
 LPCONDITIONPROC
@@ -5209,8 +5213,11 @@ LPWSASERVICECLASSINFOA
 LPWSASERVICECLASSINFOW
 LPWSAQUERYSETA
 LPWSAQUERYSETW
+PADDRINFOW *
 WS_fd_set *
 int *
+struct WS_addrinfo *
+struct WS_addrinfo **
 struct WS_hostent *
 struct WS_protoent *
 struct WS_servent *

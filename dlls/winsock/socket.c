@@ -3123,7 +3123,7 @@ static int convert_eai_u2w(int unixret) {
 /***********************************************************************
  *		getaddrinfo		(WS2_32.@)
  */
-int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const ADDRINFOA *hints, ADDRINFOA **res)
+int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addrinfo *hints, struct WS_addrinfo **res)
 {
 #if HAVE_GETADDRINFO
     struct addrinfo *unixaires = NULL;
@@ -3223,7 +3223,7 @@ outofmem:
 /***********************************************************************
  *		GetAddrInfoW		(WS2_32.@)
  */
-int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hints, ADDRINFOW **res)
+int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hints, PADDRINFOW *res)
 {
     FIXME("empty stub!\n");
     return EAI_FAIL;

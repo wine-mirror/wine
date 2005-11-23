@@ -53,7 +53,7 @@ typedef struct WS(addrinfoW)
     struct WS(addrinfoW)*   ai_next;
 } ADDRINFOW, *PADDRINFOW;
 
-typedef ADDRINFOA ADDRINFO;
+typedef ADDRINFOA ADDRINFO, *LPADDRINFO;
 
 /*
  * Multicast group information
@@ -136,27 +136,39 @@ typedef struct _INTERFACE_INFO
 #endif /* USE_WS_PREFIX */
 
 #ifndef USE_WS_PREFIX
-#define IP_OPTIONS             1
-#define IP_HDRINCL             2
-#define IP_TOS                 3
-#define IP_TTL                 4
-#define IP_MULTICAST_IF        9
-#define IP_MULTICAST_TTL       10
-#define IP_MULTICAST_LOOP      11
-#define IP_ADD_MEMBERSHIP      12
-#define IP_DROP_MEMBERSHIP     13
-#define IP_DONTFRAGMENT        14
+#define IP_OPTIONS                      1
+#define IP_HDRINCL                      2
+#define IP_TOS                          3
+#define IP_TTL                          4
+#define IP_MULTICAST_IF                 9
+#define IP_MULTICAST_TTL                10
+#define IP_MULTICAST_LOOP               11
+#define IP_ADD_MEMBERSHIP               12
+#define IP_DROP_MEMBERSHIP              13
+#define IP_DONTFRAGMENT                 14
+#define IP_ADD_SOURCE_MEMBERSHIP        15
+#define IP_DROP_SOURCE_MEMBERSHIP       16
+#define IP_BLOCK_SOURCE                 17
+#define IP_UNBLOCK_SOURCE               18
+#define IP_PKTINFO                      19
+#define IP_RECEIVE_BROADCAST            22
 #else
-#define WS_IP_OPTIONS          1
-#define WS_IP_HDRINCL          2
-#define WS_IP_TOS              3
-#define WS_IP_TTL              4
-#define WS_IP_MULTICAST_IF     9
-#define WS_IP_MULTICAST_TTL    10
-#define WS_IP_MULTICAST_LOOP   11
-#define WS_IP_ADD_MEMBERSHIP   12
-#define WS_IP_DROP_MEMBERSHIP  13
-#define WS_IP_DONTFRAGMENT     14
+#define WS_IP_OPTIONS                   1
+#define WS_IP_HDRINCL                   2
+#define WS_IP_TOS                       3
+#define WS_IP_TTL                       4
+#define WS_IP_MULTICAST_IF              9
+#define WS_IP_MULTICAST_TTL             10
+#define WS_IP_MULTICAST_LOOP            11
+#define WS_IP_ADD_MEMBERSHIP            12
+#define WS_IP_DROP_MEMBERSHIP           13
+#define WS_IP_DONTFRAGMENT              14
+#define WS_IP_ADD_SOURCE_MEMBERSHIP     15
+#define WS_IP_DROP_SOURCE_MEMBERSHIP    16
+#define WS_IP_BLOCK_SOURCE              17
+#define WS_IP_UNBLOCK_SOURCE            18
+#define WS_IP_PKTINFO                   19
+#define WS_IP_RECEIVE_BROADCAST         22
 #endif /* USE_WS_PREFIX */
 
 /* Possible Windows flags for getaddrinfo() */
@@ -190,7 +202,49 @@ typedef struct _INTERFACE_INFO
 # define WS_EAI_SOCKTYPE	WSAESOCKTNOSUPPORT
 #endif
 
-int WINAPI WS(getaddrinfo)(LPCSTR,LPCSTR,const ADDRINFOA *,ADDRINFOA **);
-int WINAPI GetAddrInfoW(LPCWSTR,LPCWSTR,const ADDRINFOW *,ADDRINFOW **);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void WINAPI WS(freeaddrinfo)(LPADDRINFO);
+#define     FreeAddrInfoA WS(freeaddrinfo)
+void WINAPI FreeAddrInfoW(PADDRINFOW);
+#define     FreeAddrInfo WINELIB_NAME_AW(FreeAddrInfo)
+int WINAPI  WS(getaddrinfo)(const char*,const char*,const struct WS(addrinfo)*,struct WS(addrinfo)**);
+#define     GetAddrInfoA WS(getaddrinfo)
+int WINAPI  GetAddrInfoW(PCWSTR,PCWSTR,const ADDRINFOW*,PADDRINFOW*);
+#define     GetAddrInfo WINELIB_NAME_AW(GetAddrInfo)
+int WINAPI  WS(getnameinfo)(const struct sockaddr*,socklen_t,char*,DWORD,char*,DWORD,int);
+#define     GetNameInfoA WS(getnameinfo)
+INT WINAPI  GetNameInfoW(const SOCKADDR*,socklen_t,PWCHAR,DWORD,PWCHAR,DWORD,INT);
+#define     GetNameInfo WINELIB_NAME_AW(GetNameInfo)
+
+/*
+ * Ws2tcpip Function Typedefs
+ *
+ * Remember to keep this section in sync with the
+ * prototypes above.
+ */
+#if INCL_WINSOCK_API_TYPEDEFS
+
+typedef void (WINAPI *LPFN_FREEADDRINFO)(LPADDRINFO);
+#define LPFN_FREEADDRINFOA LPFN_FREEADDRINFO
+typedef void (WINAPI *LPFN_FREEADDRINFOW)(PADDRINFOW);
+#define LPFN_FREEADDRINFOT WINELIB_NAME_AW(LPFN_FREEADDRINFO)
+typedef int (WINAPI *LPFN_GETADDRINFO)(const char*,const char*,const struct WS(addrinfo)*,struct WS(addrinfo)**);
+#define LPFN_GETADDRINFOA LPFN_GETADDRINFO
+typedef int (WINAPI *LPFN_GETADDRINFOW)(PCWSTR,PCWSTR,const ADDRINFOW*,PADDRINFOW*);
+#define LPFN_GETADDRINFOT WINELIB_NAME_AW(LPFN_GETADDRINFO)
+typedef int (WINAPI *LPFN_GETNAMEINFO)(const struct sockaddr*,socklen_t,char*,DWORD,char*,DWORD,int);
+#define LPFN_GETNAMEINFOA LPFN_GETNAMEINFO
+typedef int (WINAPI *LPFN_GETNAMEINFOW)(const SOCKADDR*,socklen_t,PWCHAR,DWORD,PWCHAR,DWORD,INT);
+#define LPFN_GETNAMEINFOT WINELIB_NAME_AW(LPFN_GETNAMEINFO)
+
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WS2TCPIP__ */
