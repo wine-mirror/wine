@@ -50,12 +50,20 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return TRUE;
 }
 
+/***********************************************************************
+ *      ScriptGetProperties (USP10.@)
+ *
+ */
 HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***ppSp, int *piNumScripts)
 {
     FIXME("%p,%p\n",ppSp,piNumScripts);
     return E_NOTIMPL;
 }
 
+/***********************************************************************
+ *      ScriptGetFontProperties (USP10.@)
+ *
+ */
 HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPROPERTIES *sfp)
 {
     FIXME("%p,%p,%p\n", hdc, psc, sfp);
@@ -71,12 +79,20 @@ HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPR
     return 0;
 }
 
+/***********************************************************************
+ *      ScriptRecordDigitSubstitution (USP10.@)
+ *
+ */
 HRESULT WINAPI ScriptRecordDigitSubstitution(LCID Locale,SCRIPT_DIGITSUBSTITUTE *psds)
 {
     FIXME("%ld,%p\n",Locale,psds);
     return E_NOTIMPL;
 }
 
+/***********************************************************************
+ *      ScriptApplyDigitSubstitution (USP10.@)
+ *
+ */
 HRESULT WINAPI ScriptApplyDigitSubstitution(const SCRIPT_DIGITSUBSTITUTE* psds, 
                                             SCRIPT_CONTROL* psc, SCRIPT_STATE* pss)
 {
@@ -84,6 +100,10 @@ HRESULT WINAPI ScriptApplyDigitSubstitution(const SCRIPT_DIGITSUBSTITUTE* psds,
     return E_NOTIMPL;
 }
 
+/***********************************************************************
+ *      ScriptItemize (USP10.@)
+ *
+ */
 HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItems, 
                              const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState, 
                              SCRIPT_ITEM *pItems, int *pcItems)
@@ -93,6 +113,10 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     return E_INVALIDARG;
 }
 
+/***********************************************************************
+ *      ScriptStringAnalyse (USP10.@)
+ *
+ */
 HRESULT WINAPI ScriptStringAnalyse(HDC hdc, 
 				   const void *pString, 
 				   int cString, 
@@ -120,11 +144,19 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
   return E_NOTIMPL;
 }
 
+/***********************************************************************
+ *      ScriptStringFree (USP10.@)
+ *
+ */
 HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa) {
   FIXME("(%p): stub\n",pssa);
   return S_OK;
 }
 
+/***********************************************************************
+ *      ScriptIsComplex (USP10.@)
+ *
+ */
 HRESULT WINAPI ScriptIsComplex(const WCHAR* pwcInChars, int cInChars, DWORD dwFlags) {
   FIXME("(%s,%d,0x%lx): stub\n",  debugstr_w(pwcInChars), cInChars, dwFlags);
    return E_NOTIMPL;

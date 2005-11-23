@@ -3307,7 +3307,7 @@ static VOID INTERNET_ExecuteWork(void)
 
 
 /***********************************************************************
- *          INTERNET_GetResponseBuffer
+ *          INTERNET_GetResponseBuffer  (internal)
  *
  * RETURNS
  *
@@ -3436,7 +3436,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
 
 
 /***********************************************************************
- *
+ *      InternetLockRequestFile (WININET.@)
  */
 BOOL WINAPI InternetLockRequestFile( HINTERNET hInternet, HANDLE
 *lphLockReqHandle)
@@ -3453,7 +3453,7 @@ BOOL WINAPI InternetUnlockRequestFile( HANDLE hLockHandle)
 
 
 /***********************************************************************
- *           InternetAutodial
+ *      InternetAutodial (WININET.@)
  *
  * On windows this function is supposed to dial the default internet
  * connection. We don't want to have Wine dial out to the internet so
@@ -3473,7 +3473,7 @@ BOOL WINAPI InternetAutodial(DWORD dwFlags, HWND hwndParent)
 }
 
 /***********************************************************************
- *           InternetAutodialHangup
+ *      InternetAutodialHangup (WININET.@)
  *
  * Hangs up a connection made with InternetAutodial
  *
@@ -3493,8 +3493,7 @@ BOOL WINAPI InternetAutodialHangup(DWORD dwReserved)
 }
 
 /***********************************************************************
- *
- *         InternetCombineUrlA
+ *      InternetCombineUrlA (WININET.@)
  *
  * Combine a base URL with a relative URL
  *
@@ -3520,8 +3519,7 @@ BOOL WINAPI InternetCombineUrlA(LPCSTR lpszBaseUrl, LPCSTR lpszRelativeUrl,
 }
 
 /***********************************************************************
- *
- *         InternetCombineUrlW
+ *      InternetCombineUrlW (WININET.@)
  *
  * Combine a base URL with a relative URL
  *
@@ -3681,8 +3679,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
 }
 
 /***********************************************************************
- *
- *         InternetCreateUrlA
+ *      InternetCreateUrlA (WININET.@)
  *
  * RETURNS
  *   TRUE on success
@@ -3732,8 +3729,7 @@ BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
 }
 
 /***********************************************************************
- *
- *         InternetCreateUrlW
+ *      InternetCreateUrlW (WININET.@)
  *
  * RETURNS
  *   TRUE on success
@@ -3818,12 +3814,20 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
     return TRUE;
 }
 
+/***********************************************************************
+ *      InternetConfirmZoneCrossingA (WININET.@)
+ *
+ */
 DWORD WINAPI InternetConfirmZoneCrossingA( HWND hWnd, LPSTR szUrlPrev, LPSTR szUrlNew, BOOL bPost )
 {
     FIXME("(%p, %s, %s, %x) stub\n", hWnd, debugstr_a(szUrlPrev), debugstr_a(szUrlNew), bPost);
     return ERROR_SUCCESS;
 }
 
+/***********************************************************************
+ *      InternetConfirmZoneCrossingW (WININET.@)
+ *
+ */
 DWORD WINAPI InternetConfirmZoneCrossingW( HWND hWnd, LPWSTR szUrlPrev, LPWSTR szUrlNew, BOOL bPost )
 {
     FIXME("(%p, %s, %s, %x) stub\n", hWnd, debugstr_w(szUrlPrev), debugstr_w(szUrlNew), bPost);

@@ -360,9 +360,12 @@ static inline NTSTATUS access_resource( HMODULE hmod, const IMAGE_RESOURCE_DATA_
 
 /**********************************************************************
  *	LdrAccessResource  (NTDLL.@)
+ *
+ * NOTE
+ * On x86, Shrinker, an executable compressor, depends on the
+ * "call access_resource" instruction being there.
  */
 #ifdef __i386__
-/* Shrinker depends on the "call access_resource" instruction being there */
 __ASM_GLOBAL_FUNC( LdrAccessResource,
     "pushl %ebp\n\t"
     "movl %esp, %ebp\n\t"
