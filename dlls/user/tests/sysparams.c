@@ -50,6 +50,7 @@ static int dpi;
 #define SPI_SETMOUSE_VALNAME2                   "MouseThreshold2"
 #define SPI_SETMOUSE_VALNAME3                   "MouseSpeed"
 #define SPI_SETBORDER_REGKEY                    "Control Panel\\Desktop\\WindowMetrics"
+#define SPI_SETBORDER_REGKEY2                   "Control Panel\\Desktop"
 #define SPI_SETBORDER_VALNAME                   "BorderWidth"
 #define SPI_SETKEYBOARDSPEED_REGKEY             "Control Panel\\Keyboard"
 #define SPI_SETKEYBOARDSPEED_VALNAME            "KeyboardSpeed"
@@ -554,7 +555,9 @@ static void test_setborder(UINT curr_val, int usesetborder, int dpi)
         test_change_message( SPI_SETNONCLIENTMETRICS, 1 );
     }
     if( curr_val) { /* skip if 0, some windows versions return 0 others 1 */
-        regval = metricfromreg( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, dpi);
+        regval = metricfromreg( SPI_SETBORDER_REGKEY2, SPI_SETBORDER_VALNAME, dpi);
+        if( regval != curr_val)
+            regval = metricfromreg( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, dpi);
         ok( regval==curr_val, "wrong value in registry %d, expected %d\n", regval, curr_val);
     }
     /* minimum border width is 1 */
@@ -579,9 +582,19 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
 {
     BOOL rc;
     UINT old_border;
-    HDC hdc;
-    int dpi;
     int iswin9x;
+    NONCLIENTMETRICSA ncmsave;
+    INT CaptionWidth;
+
+    ncmsave.cbSize = sizeof( ncmsave);
+    rc=SystemParametersInfo( SPI_GETNONCLIENTMETRICS, 0, &ncmsave, 0);
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    /* CaptionWidth from the registry may have different value of iCaptionWidth
+     * from the non client metrics (observed on WinXP).
+     * Fix this so we can safely restore settings with the nonclientmetrics */
+    CaptionWidth = metricfromreg(
+            "Control Panel\\Desktop\\WindowMetrics","CaptionWidth", dpi);
+    ncmsave.iCaptionWidth = CaptionWidth;
 
     /* The SPI_SETBORDER seems to be buggy on Win9x/ME (looks like you need to
      * do it twice to make the intended change). So skip parts of the tests on
@@ -596,9 +609,6 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
         return;
 
     trace("testing SPI_{GET,SET}BORDER\n");
-    hdc = GetDC(0);
-    dpi = GetDeviceCaps( hdc, LOGPIXELSY);
-    ReleaseDC( 0, hdc);
 
     SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETBORDER, 0, &old_border, 0 );
@@ -611,15 +621,17 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
     if( !iswin9x) {
         test_setborder(1,  1, dpi);
         test_setborder(0,  1, dpi);
-        test_setborder(7,  1, dpi);
-        test_setborder(20, 1, dpi);
+        test_setborder(2,  1, dpi);
     }
     test_setborder(1, 0, dpi);
     test_setborder(0, 0, dpi);
-    test_setborder(7, 0, dpi);
-    test_setborder(20, 0, dpi);
-    /* this test should reset the old value on all platforms */
-    test_setborder(old_border, 0, dpi);
+    test_setborder(3, 0, dpi);
+
+    rc=SystemParametersInfoA( SPI_SETNONCLIENTMETRICS, 0, &ncmsave,
+            SPIF_UPDATEINIFILE| SPIF_SENDCHANGE);
+    test_change_message( SPI_SETNONCLIENTMETRICS, 1 );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",
+        rc,GetLastError());
 }
 
 static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
@@ -1303,7 +1315,9 @@ static void test_SPI_SETICONMETRICS( void )               /*     46 */
     ok( regval==im_cur.iHorzSpacing, "wrong value in registry %d, expected %d\n", regval, im_cur.iHorzSpacing);
     regval = metricfromreg( SPI_ICONVERTICALSPACING_REGKEY, SPI_ICONVERTICALSPACING_VALNAME, dpi);
     ok( regval==im_cur.iVertSpacing, "wrong value in registry %d, expected %d\n", regval, im_cur.iVertSpacing);
-    regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY1, SPI_SETICONTITLEWRAP_VALNAME, dpi);
+    regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY2, SPI_SETICONTITLEWRAP_VALNAME, dpi);
+    if( regval != im_cur.iTitleWrap)
+        regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY1, SPI_SETICONTITLEWRAP_VALNAME, dpi);
     ok( regval==im_cur.iTitleWrap, "wrong value in registry %d, expected %d\n", regval, im_cur.iTitleWrap);
     /* test some values from other SPI_GETxxx calls */
     rc = SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &spacing, 0 );
