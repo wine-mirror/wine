@@ -61,11 +61,11 @@ BEGIN
 
     GROUPBOX        " 창 설정 ",IDC_STATIC,8,25,244,110
 
-    CONTROL	    "Allow DirectX apps to stop the mouse leaving their window",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL	    "Enable desktop double buffering",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    CONTROL	    "DirectX 풀그림이 그들의 창에서 마우스가 벗어나면 정지하도록 허용",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL	    "데스크탑 더블 버퍼링 가능",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     
     /* FIXME: the wording of this explanation could be a lot better */
-    LTEXT           "You can choose to emulate a windows desktop, where all the windows are confined to one 'virtual screen', or you can have the windows placed on your standard desktop.",
+    LTEXT           " 당신은 윈도우즈 데스크탑 에뮬을 , 모든 창을 가상 화면으로 제한할 것인지.,아니면 당신의 표준 데스크탑의 창들이 위치하게 할  것인지를 선택할수 있다.",
                     IDC_STATIC,15,73,228,28
     LTEXT           "데스크탑 크기:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
     LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
@@ -77,10 +77,10 @@ BEGIN
 
     GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
 
-    LTEXT	    "Vertex Shader Support: ",IDC_STATIC,15,150,80,30
+    LTEXT	    "버텍스 쉐이더 지원: ",IDC_STATIC,15,150,80,30
     COMBOBOX	    IDC_D3D_VSHADER_MODE,100,148,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL         "Allow Pixel Shader (if supported by hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
+    CONTROL         "픽셀 쉐이더 허용 (하드웨어에서 지원한다면)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -88,12 +88,12 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " DLL 오버라이드 ",IDC_STATIC,8,4,244,240
-    LTEXT           "Dynamic Link Libraries can be specified individually to be either builtin (provided by Wine) or native (taken from Windows or provided by the application)."
+    LTEXT           "동적 링크 라이브러리는 개별적으로 내장 (Wine에 의해 제공)이나 네이티브 (윈도우즈나 풀그림에 의해 제공)으로 지정될수 있습니다."
                     ,IDC_STATIC,16,16,220,32
-    LTEXT           "New override for library:",IDC_STATIC,16,58,100,8
+    LTEXT           "라이브러리의 새 오버라이드:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON      "더하기(&A)",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
-    LTEXT           "Existing overrides:",IDC_STATIC,16,86,100,8
+    LTEXT           "존재하는 오버라이드:",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "고치기(&E)",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "지우기(&R)",IDC_DLLS_REMOVEDLL,164,114,82,14 
@@ -109,7 +109,7 @@ BEGIN
     CONTROL         "네이티브(&N) (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
     CONTROL         "내장이 네이티브보다 우선(&l)",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
     CONTROL         "네이티브가 내장보다 우선(&v)",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
-    CONTROL         "안사용(&D)",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    CONTROL         "안 사용(&D)",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
     DEFPUSHBUTTON   "확인",IDOK,8,74,45,14,WS_GROUP
     PUSHBUTTON      "취소",IDCANCEL,57,74,45,14,WS_GROUP
 END
@@ -133,19 +133,19 @@ BEGIN
     LTEXT           "타입(&T):",IDC_STATIC_TYPE,15,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     
-    LTEXT           "Label and serial number",IDC_LABELSERIAL_STATIC,15,155,95,10
+    LTEXT           "라벨과 시리얼 번호",IDC_LABELSERIAL_STATIC,15,155,95,10
     
-    PUSHBUTTON      "&Show Advanced",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
-    CONTROL         "Autodetect &from Device:",IDC_RADIO_AUTODETECT,"Button",
+    PUSHBUTTON      "추가 옵션 보기(&S)",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
+    CONTROL         "장치로부터 자동 검색(&f):",IDC_RADIO_AUTODETECT,"Button",
                     BS_AUTORADIOBUTTON,15,166,93,10
     EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Bro&wse...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
-    CONTROL         "&Manually Assign:",IDC_RADIO_ASSIGN,"Button",
+    PUSHBUTTON      "찾기(&w)...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
+    CONTROL         "수동 할당(&M):",IDC_RADIO_ASSIGN,"Button",
                     BS_AUTORADIOBUTTON,15,195,69,10
 
-    LTEXT           "&Label:",IDC_STATIC_LABEL,33,208,29,12
+    LTEXT           "라벨(&L):",IDC_STATIC_LABEL,33,208,29,12
     EDITTEXT        IDC_EDIT_LABEL,63,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "S&erial:",IDC_STATIC_SERIAL,33,225,29,12
+    LTEXT           "시리얼(&e):",IDC_STATIC_SERIAL,33,225,29,12
     EDITTEXT        IDC_EDIT_SERIAL,63,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
     CONTROL         "숨은 파일(.파일) 보여주기",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
@@ -189,14 +189,14 @@ BEGIN
     IDS_TAB_DLLS            "라이브러리"
     IDS_TAB_DRIVES          "드라이브"
     IDS_CHOOSE_PATH         "Select the unix directory to be mapped, please."
-    IDS_HIDE_ADVANCED       "Hide Advanced"
-    IDS_SHOW_ADVANCED       "Show Advanced"
+    IDS_HIDE_ADVANCED       "추가 옵션 숨기기"
+    IDS_SHOW_ADVANCED       "추가 옵션 보여주기"
     IDS_NOTHEME             "(테마 없음)"
     IDS_TAB_GRAPHICS        "그래픽"
     IDS_TAB_APPEARANCE      "외양"
     IDS_TAB_AUDIO           "오디오"
     IDS_TAB_ABOUT           "정보"
     IDS_WINECFG_TITLE       "Wine 설정"
-    IDS_THEMEFILE           "Theme files"
-    IDS_THEMEFILE_SELECT    "Select a theme file"
+    IDS_THEMEFILE           "테마 파일"
+    IDS_THEMEFILE_SELECT    "테마 파일 선택"
 END

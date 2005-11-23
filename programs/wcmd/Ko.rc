@@ -57,7 +57,7 @@ ECHO OFF 명령은  신호가 진행되는 걸 보여주는걸 막습니다.\n"
   WCMD_FOR,
 "FOR 명령은  파일 한 셋트에서 각각의 명령을 실행시킬 때 사용.\n\
 \n\
-문법: FOR %variable IN (set) DO command\n\
+문법: FOR 변수 IN (set) DO 명령\n\
 \n\
 The requirement to double the % sign when using FOR in a batch file does\n\
 not exist in wcmd.\n"
@@ -103,7 +103,7 @@ below the item are moved as well.\n\
 MOVE fails if the old and new locations are on different DOS drive letters.\n"
 
   WCMD_PATH,
-"PATH displays or changes the wcmd search path.\n\
+"PATH 는 wcmd 탐색 경로를 보여주거나 바꿈.\n\
 \n\
 Entering PATH will display the current PATH setting (initially this is\n\
 the value given in your wine.conf file). To change the setting follow the\n\
@@ -177,8 +177,8 @@ if called from the command line.\n"
   WCMD_TITLE,  "Sets the window title for the wcmd window, syntax TITLE [string]\n"
 
   WCMD_TYPE,
-"TYPE <filename> copies <filename> to the console device (or elsewhere\n\
-if redirected). No check is made that the file is readable text.\n"
+"TYPE <filename>  <filename>를 콘솔 장치로 복사 (만약 방향이 재정의 된다면 \n\
+어디나). No check is made that the file is readable text.\n"
 
   WCMD_VERIFY,
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n\
