@@ -168,7 +168,7 @@ void test_domdoc( void )
     SysFreeString( str );
 
 
-    /* check that there's no document element */
+    /* check that there's a document element */
     element = NULL;
     r = IXMLDOMDocument_get_documentElement( doc, &element );
     ok( r == S_OK, "should be a document element\n");
@@ -335,6 +335,7 @@ void test_domnode( void )
         r = IXMLDOMNamedNodeMap_getNamedItem( map, str, &node );
         ok( r == S_OK, "getNamedItem returned wrong code\n");
         ok( node != NULL, "should be attributes\n");
+        IXMLDOMNode_Release(node);
         SysFreeString( str );
 
 	/* test indexed access of attributes */
