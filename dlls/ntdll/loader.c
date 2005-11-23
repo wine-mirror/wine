@@ -144,6 +144,7 @@ __ASM_GLOBAL_FUNC(call_dll_entry_point,
                   "pushl %ebp\n\t"
                   "movl %esp,%ebp\n\t"
                   "pushl %ebx\n\t"
+                  "subl $8,%esp\n\t"
                   "pushl 20(%ebp)\n\t"
                   "pushl 16(%ebp)\n\t"
                   "pushl 12(%ebp)\n\t"

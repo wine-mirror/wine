@@ -364,16 +364,17 @@ static inline NTSTATUS access_resource( HMODULE hmod, const IMAGE_RESOURCE_DATA_
 #ifdef __i386__
 /* Shrinker depends on the "call access_resource" instruction being there */
 __ASM_GLOBAL_FUNC( LdrAccessResource,
-    "pushl %ebp\n"
-    "movl %esp, %ebp\n"
-    "pushl 24(%ebp)\n"
-    "pushl 20(%ebp)\n"
-    "pushl 16(%ebp)\n"
-    "pushl 12(%ebp)\n"
-    "pushl 8(%ebp)\n"
-    "call " __ASM_NAME("access_resource") "\n"
-    "leave\n"
-    "ret $16\n"
+    "pushl %ebp\n\t"
+    "movl %esp, %ebp\n\t"
+    "subl $4,%esp\n\t"
+    "pushl 24(%ebp)\n\t"
+    "pushl 20(%ebp)\n\t"
+    "pushl 16(%ebp)\n\t"
+    "pushl 12(%ebp)\n\t"
+    "pushl 8(%ebp)\n\t"
+    "call " __ASM_NAME("access_resource") "\n\t"
+    "leave\n\t"
+    "ret $16"
 );
 #else
 NTSTATUS WINAPI LdrAccessResource( HMODULE hmod, const IMAGE_RESOURCE_DATA_ENTRY *entry,

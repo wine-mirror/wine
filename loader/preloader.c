@@ -166,7 +166,7 @@ void _start();
 extern char _end[];
 __ASM_GLOBAL_FUNC(_start,
                   "\tmovl %esp,%eax\n"
-                  "\tleal -128(%esp),%esp\n"  /* allocate some space for extra aux values */
+                  "\tleal -136(%esp),%esp\n"  /* allocate some space for extra aux values */
                   "\tpushl %eax\n"            /* orig stack pointer */
                   "\tpushl %esp\n"            /* ptr to orig stack pointer */
                   "\tcall wld_start\n"

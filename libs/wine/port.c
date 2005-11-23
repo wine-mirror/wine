@@ -59,6 +59,8 @@ __ASM_GLOBAL_FUNC( wine_switch_to_stack,
                    "movl 4(%esp),%ecx\n\t"  /* func */
                    "movl 8(%esp),%edx\n\t"  /* arg */
                    "movl 12(%esp),%esp\n\t"  /* stack */
+                   "andl $~15,%esp\n\t"
+                   "subl $12,%esp\n\t"
                    "pushl %edx\n\t"
                    "xorl %ebp,%ebp\n\t"
                    "call *%ecx\n\t"

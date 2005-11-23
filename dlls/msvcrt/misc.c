@@ -125,6 +125,7 @@ __ASM_GLOBAL_FUNC(_chkesp,
                   "ret\n"
                   "1:\tpushl %ebp\n\t"
                   "movl %esp,%ebp\n\t"
+                  "subl $12,%esp\n\t"
                   "pushl %eax\n\t"
                   "pushl %ecx\n\t"
                   "pushl %edx\n\t"
@@ -132,7 +133,7 @@ __ASM_GLOBAL_FUNC(_chkesp,
                   "popl %edx\n\t"
                   "popl %ecx\n\t"
                   "popl %eax\n\t"
-                  "popl %ebp\n\t"
+                  "leave\n\t"
                   "ret");
 
 void MSVCRT_chkesp_fail(void)

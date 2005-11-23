@@ -270,6 +270,7 @@ __ASM_GLOBAL_FUNC( WINPROC_wrapper,
                    "pushl %edi\n\t"
                    "pushl %esi\n\t"
                    "pushl %ebx\n\t"
+                   "subl $12,%esp\n\t"
                    "pushl 24(%ebp)\n\t"
                    "pushl 20(%ebp)\n\t"
                    "pushl 16(%ebp)\n\t"
