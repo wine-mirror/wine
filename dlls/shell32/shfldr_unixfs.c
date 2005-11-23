@@ -1003,7 +1003,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
                 if (!pwszDosPath)
                     return HRESULT_FROM_WIN32(GetLastError());
                 PathRemoveBackslashW(pwszDosPath);
-                WideCharToMultiByte(CP_UNIXCP, 0, pwszDosPath, -1, lpName->u.cStr, MAX_PATH, NULL, NULL);
+                WideCharToMultiByte(CP_ACP, 0, pwszDosPath, -1, lpName->u.cStr, MAX_PATH, NULL, NULL);
                 HeapFree(GetProcessHeap(), 0, pwszDosPath);        
             }
         } else {
