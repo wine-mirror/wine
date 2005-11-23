@@ -4769,6 +4769,8 @@ DECL_WINELIB_TYPE_AW(LPNMDATETIMEFORMATQUERY)
 #define DateTime_SetFormat WINELIB_NAME_AW(DateTime_SetFormat)
 #define DateTime_GetMonthCalColor(hdp, iColor) \
   SNDMSGA (hdp, DTM_GETMCCOLOR, iColor, 0)
+#define DateTime_SetMonthCalColor(hdp, iColor, clr) \
+  SNDMSGA (hdp, DTM_SETMCCOLOR, iColor, clr)
 #define DateTime_GetMonthCal(hdp)  \
   (HWND) SNDMSGA (hdp, DTM_GETMONTHCAL, 0, 0)
 #define DateTime_SetMonthCalFont(hdp, hfont, fRedraw) \
