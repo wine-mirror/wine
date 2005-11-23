@@ -283,7 +283,7 @@ static BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
     }
 
     /* Some shell namespace extensions depend on COM being initialized. */
-    hr = CoInitialize(NULL);
+    hr = OleInitialize(NULL);
 
     lRes = DialogBoxIndirectParamA(COMDLG32_hInstance,
                                   (LPDLGTEMPLATEA) template,
@@ -291,7 +291,7 @@ static BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
                                   FileOpenDlgProc95,
                                   (LPARAM) fodInfos);
     if (SUCCEEDED(hr)) 
-        CoUninitialize();
+        OleUninitialize();
 
     /* Unable to create the dialog */
     if( lRes == -1)
