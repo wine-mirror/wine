@@ -19,6 +19,14 @@
 #ifndef __WINE_WINLDAP_H
 #define __WINE_WINLDAP_H
 
+#include <windef.h>
+#include <schnlsp.h>
+
+#ifndef LDAPAPI
+#define LDAPAPI __cdecl
+#endif
+
+
 typedef enum {
     LDAP_SUCCESS                    =   0x00,
     LDAP_OPERATIONS_ERROR           =   0x01,
@@ -361,6 +369,11 @@ typedef struct ldap_apifeature_infoW
 
 DECL_WINELIB_TYPE_AW(LDAPAPIFeatureInfo)
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 LDAP *cldap_openA(PCHAR,ULONG);
 LDAP *cldap_openW(PWCHAR,ULONG);
 #define    cldap_open WINELIB_NAME_AW(cldap_open)
@@ -401,7 +414,7 @@ ULONG ldap_compare_ext_sW(LDAP*,PWCHAR,PWCHAR,PWCHAR,struct berval*,PLDAPControl
 ULONG ldap_compare_sA(LDAP*,PCHAR,PCHAR,PCHAR);
 ULONG ldap_compare_sW(LDAP*,PWCHAR,PWCHAR,PWCHAR);
 #define    ldap_compare_s WINELIB_NAME_AW(ldap_compare_s)
-ULONG ldap_connect(LDAP*,LDAP_TIMEVAL*);
+ULONG ldap_connect(LDAP*,struct l_timeval*);
 ULONG ldap_control_freeA(LDAPControlA*);
 ULONG ldap_control_freeW(LDAPControlW*);
 #define    ldap_control_free WINELIB_NAME_AW(ldap_control_free)
@@ -420,8 +433,8 @@ ULONG ldap_create_page_controlW(PLDAP,ULONG,struct berval*,UCHAR,PLDAPControlW*)
 ULONG ldap_create_sort_controlA(PLDAP,PLDAPSortKeyA*,UCHAR,PLDAPControlA*);
 ULONG ldap_create_sort_controlW(PLDAP,PLDAPSortKeyW*,UCHAR,PLDAPControlW*);
 #define    ldap_create_sort_control WINELIB_NAME_AW(ldap_create_sort_control)
-INT ldap_create_vlv_controlA(LDAP*,LDAPVLVInfo*,char,LDAPControlA**);
-INT ldap_create_vlv_controlW(LDAP*,LDAPVLVInfo*,char,LDAPControlW**);
+INT ldap_create_vlv_controlA(PLDAP,PLDAPVLVInfo,UCHAR,PLDAPControlA*);
+INT ldap_create_vlv_controlW(PLDAP,PLDAPVLVInfo,UCHAR,PLDAPControlW*);
 #define    ldap_create_vlv_control WINELIB_NAME_AW(ldap_create_vlv_control)
 ULONG ldap_deleteA(LDAP*,PCHAR);
 ULONG ldap_deleteW(LDAP*,PWCHAR);
@@ -533,8 +546,8 @@ ULONG ldap_parse_resultW(LDAP*,LDAPMessage*,ULONG*,PWCHAR*,PWCHAR*,PWCHAR**,PLDA
 ULONG ldap_parse_sort_controlA(LDAP*,PLDAPControlA*,ULONG*,PCHAR*);
 ULONG ldap_parse_sort_controlW(LDAP*,PLDAPControlW*,ULONG*,PWCHAR*);
 #define    ldap_parse_sort_control WINELIB_NAME_AW(ldap_parse_sort_control)
-int ldap_parse_vlv_controlA(LDAP*,LDAPControlA**,unsigned long*,unsigned long*,struct berval**,int*);
-int ldap_parse_vlv_controlW(LDAP*,LDAPControlW**,unsigned long*,unsigned long*,struct berval**,int*);
+int ldap_parse_vlv_controlA(LDAP*,PLDAPControlA*,unsigned long*,unsigned long*,struct berval**,int*);
+int ldap_parse_vlv_controlW(LDAP*,PLDAPControlW*,unsigned long*,unsigned long*,struct berval**,int*);
 #define    ldap_parse_vlv_control WINELIB_NAME_AW(ldap_parse_vlv_control)
 void ldap_perror(LDAP*,const PCHAR);
 ULONG ldap_rename_extA(LDAP*,PCHAR,PCHAR,PCHAR,INT,PLDAPControlA*,PLDAPControlA*,ULONG*);
@@ -593,7 +606,7 @@ LDAP *ldap_sslinitW(PWCHAR,ULONG,int);
 ULONG ldap_start_tls_sA(LDAP*,PULONG,LDAPMessage**,PLDAPControlA*,PLDAPControlA*);
 ULONG ldap_start_tls_sW(LDAP*,PULONG,LDAPMessage**,PLDAPControlW*,PLDAPControlW*);
 #define    ldap_start_tls_s WINELIB_NAME_AW(ldap_start_tls_s)
-ULONG ldap_startup(LDAP_VERSION_INFO*,HANDLE*);
+ULONG ldap_startup(PLDAP_VERSION_INFO,HANDLE*);
 BOOLEAN ldap_stop_tls_s(LDAP*);
 ULONG ldap_ufn2dnA(PCHAR,PCHAR*);
 ULONG ldap_ufn2dnW(PWCHAR,PWCHAR*);
@@ -623,5 +636,9 @@ ULONG LdapGetLastError(void);
 ULONG LdapMapErrorToWin32(ULONG);
 int LdapUnicodeToUTF8(LPCWSTR,int,LPSTR,int);
 int LdapUTF8ToUnicode(LPCSTR,int,LPWSTR,int);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __WINE_WINLDAP_H */

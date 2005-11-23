@@ -162,7 +162,7 @@ ULONG ldap_create_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkey,
 }
 
 INT ldap_create_vlv_controlA( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
-    char critical, LDAPControlA **control )
+    UCHAR critical, LDAPControlA **control )
 {
     INT ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -182,7 +182,7 @@ INT ldap_create_vlv_controlA( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
 }
 
 INT ldap_create_vlv_controlW( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
-    char critical, LDAPControlW **control )
+    UCHAR critical, LDAPControlW **control )
 {
     INT ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP

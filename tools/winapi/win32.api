@@ -5074,6 +5074,7 @@ void
 
 %long
 
+BOOLEAN
 INT
 HANDLE
 UCHAR
@@ -5085,17 +5086,20 @@ int
 BerElement *
 BERVAL *
 CHAR **
+HANDLE *
 LDAPControlA *
 LDAPControlA **
 LDAPControlW *
 LDAPControlW **
 LDAPModA *[]
 LDAPModW *[]
-LDAP_TIMEVAL *
 PBERVAL *
 PCHAR *
 PCHAR[]
+PLDAP_VERSION_INFO
+PLDAPControlA
 PLDAPControlA *
+PLDAPControlW
 PLDAPControlW *
 PLDAPSortKeyA *
 PLDAPSortKeyW *
@@ -5108,6 +5112,7 @@ WLDAP32_BerElement **
 WLDAP32_LDAP *
 WLDAP32_LDAPMessage *
 WLDAP32_LDAPMessage **
+WLDAP32_LDAPVLVInfo *
 int *
 struct WLDAP32_berval *
 struct WLDAP32_berval **

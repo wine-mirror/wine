@@ -264,7 +264,7 @@ exit:
     return NULL;
 }
 
-ULONG ldap_connect( WLDAP32_LDAP *ld, LDAP_TIMEVAL *timeout )
+ULONG ldap_connect( WLDAP32_LDAP *ld, struct l_timeval *timeout )
 {
     TRACE( "(%p, %p)\n", ld, timeout );
 

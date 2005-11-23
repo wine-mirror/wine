@@ -291,8 +291,8 @@ ULONG ldap_create_page_controlA(WLDAP32_PLDAP,ULONG,struct WLDAP32_berval*,UCHAR
 ULONG ldap_create_page_controlW(WLDAP32_PLDAP,ULONG,struct WLDAP32_berval*,UCHAR,PLDAPControlW*);
 ULONG ldap_create_sort_controlA(WLDAP32_PLDAP,PLDAPSortKeyA*,UCHAR,PLDAPControlA*);
 ULONG ldap_create_sort_controlW(WLDAP32_PLDAP,PLDAPSortKeyW*,UCHAR,PLDAPControlW*);
-INT ldap_create_vlv_controlA(WLDAP32_LDAP*,WLDAP32_LDAPVLVInfo*,char,LDAPControlA**);
-INT ldap_create_vlv_controlW(WLDAP32_LDAP*,WLDAP32_LDAPVLVInfo*,char,LDAPControlW**);
+INT ldap_create_vlv_controlA(WLDAP32_LDAP*,WLDAP32_LDAPVLVInfo*,UCHAR,LDAPControlA**);
+INT ldap_create_vlv_controlW(WLDAP32_LDAP*,WLDAP32_LDAPVLVInfo*,UCHAR,LDAPControlW**);
 ULONG ldap_deleteA(WLDAP32_LDAP*,PCHAR);
 ULONG ldap_deleteW(WLDAP32_LDAP*,PWCHAR);
 ULONG ldap_delete_extA(WLDAP32_LDAP*,PCHAR,PLDAPControlA*,PLDAPControlA*,ULONG*);
