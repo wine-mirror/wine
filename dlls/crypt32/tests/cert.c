@@ -1365,6 +1365,7 @@ static void testAddSerialized(void)
         ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
          GetLastError());
         ok(!memcmp(hashVal, realHash, size), "Unexpected hash\n");
+        CertFreeCertificateContext(context);
     }
 
     CertCloseStore(store, 0);
