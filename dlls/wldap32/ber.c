@@ -22,7 +22,9 @@
 
 #ifndef HAVE_LDAP
 
+#include <stdarg.h>
 #include "windef.h"
+#include "winbase.h"
 #include "winldap.h"
 
 #define LBER_ERROR (~0U)
