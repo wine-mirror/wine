@@ -843,6 +843,59 @@ typedef struct _CERT_CREATE_CONTEXT_PARA {
     void          *pvFree;
 } CERT_CREATE_CONTEXT_PARA, *PCERT_CREATE_CONTEXT_PARA;
 
+typedef struct _CRYPT_OID_FUNC_ENTRY {
+    LPCSTR pszOID;
+    void  *pvFuncAddr;
+} CRYPT_OID_FUNC_ENTRY, *PCRYPT_OID_FUNC_ENTRY;
+
+typedef BOOL (WINAPI *PFN_CRYPT_ENUM_OID_FUNC)(DWORD dwEncodingType,
+ LPCSTR pszFuncName, LPCSTR pszOID, DWORD cValue, const DWORD rgdwValueType[],
+ LPCWSTR const rgpwszValueName[], const BYTE * const rgpbValueData[],
+ const DWORD rgcbValueData[], void *pvArg);
+
+#define CRYPT_MATCH_ANY_ENCODING_TYPE 0xffffffff
+
+typedef struct _CRYPT_OID_INFO {
+    DWORD   cbSize;
+    LPCSTR  pszOID;
+    LPCWSTR pwszName;
+    DWORD   dwGroupId;
+    union {
+        DWORD  dwValue;
+        ALG_ID Algid;
+        DWORD  dwLength;
+    } DUMMYUNIONNAME;
+    CRYPT_DATA_BLOB ExtraInfo;
+} CRYPT_OID_INFO, *PCRYPT_OID_INFO;
+typedef const CRYPT_OID_INFO CCRYPT_OID_INFO, *PCCRYPT_OID_INFO;
+
+typedef BOOL (WINAPI *PFN_CRYPT_ENUM_OID_INFO)(PCCRYPT_OID_INFO pInfo,
+ void *pvArg);
+
+/* OID group IDs */
+#define CRYPT_HASH_ALG_OID_GROUP_ID     1
+#define CRYPT_ENCRYPT_ALG_OID_GROUP_ID  2
+#define CRYPT_PUBKEY_ALG_OID_GROUP_ID   3
+#define CRYPT_SIGN_ALG_OID_GROUP_ID     4
+#define CRYPT_RDN_ATTR_OID_GROUP_ID     5
+#define CRYPT_EXT_OR_ATTR_OID_GROUP_ID  6
+#define CRYPT_ENHKEY_USAGE_OID_GROUP_ID 7
+#define CRYPT_POLICY_OID_GROUP_ID       8
+#define CRYPT_TEMPLATE_OID_GROUP_ID     9
+#define CRYPT_LAST_OID_GROUP_ID         9
+
+#define CRYPT_FIRST_ALG_OID_GROUP_ID CRYPT_HASH_ALG_OID_GROUP_ID
+#define CRYPT_LAST_ALG_OID_GROUP_ID  CRYPT_SIGN_ALG_OID_GROUP_ID
+
+#define CRYPT_OID_INHIBIT_SIGNATURE_FORMAT_FLAG  0x1
+#define CRYPT_OID_USE_PUBKEY_PARA_FOR_PKCS7_FLAG 0x2
+#define CRYPT_OID_NO_NULL_ALGORITHM_PARA_FLAG    0x4
+
+#define CRYPT_OID_INFO_OID_KEY   1
+#define CRYPT_OID_INFO_NAME_KEY  2
+#define CRYPT_OID_INFO_ALGID_KEY 3
+#define CRYPT_OID_INFO_SIGN_KEY  4
+
 /* Algorithm IDs */
 
 #define GET_ALG_CLASS(x)                (x & (7 << 13))
@@ -2287,7 +2340,30 @@ BOOL WINAPI CryptSetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
                                      const BYTE *pbValueData, DWORD cbValueData);
 BOOL WINAPI CryptUnregisterDefaultOIDFunction(DWORD,LPCSTR,LPCWSTR);
 BOOL WINAPI CryptUnregisterOIDFunction(DWORD,LPCSTR,LPCSTR);
+BOOL WINAPI CryptEnumOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
+ LPCSTR pszOID, DWORD dwFlags, void *pvArg,
+ PFN_CRYPT_ENUM_OID_FUNC pfnEnumOIDFunc);
 HCRYPTOIDFUNCSET WINAPI CryptInitOIDFunctionSet(LPCSTR,DWORD);
+BOOL WINAPI CryptGetDefaultOIDDllList(HCRYPTOIDFUNCSET hFuncSet,
+ DWORD dwEncodingType, LPWSTR pwszDllList, DWORD *pcchDllList);
+BOOL WINAPI CryptGetDefaultOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
+ DWORD dwEncodingType, LPCWSTR pwszDll, DWORD dwFlags, void *ppvFuncAddr,
+ HCRYPTOIDFUNCADDR *phFuncAddr);
+BOOL WINAPI CryptGetOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
+ DWORD dwEncodingType, LPCSTR pszOID, DWORD dwFlags, void **ppvFuncAddr,
+ HCRYPTOIDFUNCADDR *phFuncAddr);
+BOOL WINAPI CryptFreeOIDFunctionAddress(HCRYPTOIDFUNCADDR hFuncAddr,
+ DWORD dwFlags);
+BOOL WINAPI CryptInstallOIDFunctionAddress(HMODULE hModule,
+ DWORD dwEncodingType, LPCSTR pszFuncName, DWORD cFuncEntry,
+ const CRYPT_OID_FUNC_ENTRY rgFuncEntry[], DWORD dwFlags);
+
+BOOL WINAPI CryptEnumOIDInfo(DWORD dwGroupId, DWORD dwFlags, void *pvArg,
+ PFN_CRYPT_ENUM_OID_INFO pfnEnumOIDInfo);
+PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
+ DWORD dwGroupId);
+BOOL WINAPI CryptRegisterOIDInfo(PCCRYPT_OID_INFO pInfo, DWORD dwFlags);
+BOOL WINAPI CryptUnregisterOIDInfo(PCCRYPT_OID_INFO pInfo);
 
 LPCSTR WINAPI CertAlgIdToOID(DWORD dwAlgId);
 DWORD WINAPI CertOIDToAlgId(LPCSTR pszObjId);
