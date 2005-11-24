@@ -206,7 +206,7 @@ NTSTATUS WINAPI LsaLookupSids(
     FIXME("(%p,%lu,%p,%p,%p) stub\n", PolicyHandle, Count, Sids,
           ReferencedDomains, Names);
 
-    return FALSE;
+    return STATUS_NONE_MAPPED;
 }
 
 /******************************************************************************
