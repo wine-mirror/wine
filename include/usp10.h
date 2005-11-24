@@ -19,6 +19,10 @@
 #ifndef __USP10_H
 #define __USP10_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** ScriptStringAnalyse */
 #define  SSA_PASSWORD         0x00000001
 #define  SSA_TAB              0x00000002
@@ -159,5 +163,9 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
 				   SCRIPT_STRING_ANALYSIS *pssa);
 HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa);
 HRESULT WINAPI ScriptIsComplex(const WCHAR* pwcInChars, int cInChars, DWORD dwFlags);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* __USP10_H */
