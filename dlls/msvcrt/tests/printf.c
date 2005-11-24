@@ -352,10 +352,59 @@ static void test_snprintf (void)
     };
 }
 
+static void test_fcvt(void)
+{
+    char *str;
+    int dec=100, sign=100;
+    
+    str = _fcvt(0.0001, 1, &dec, &sign );
+    todo_wine {
+    ok( 0 == strcmp(str,""), "bad return\n");
+    ok( -3 == dec, "dec wrong\n");
+    }
+    ok( 0 == sign, "dec wrong\n");
+
+    str = _fcvt(0.0001, -10, &dec, &sign );
+    todo_wine {
+    ok( 0 == strcmp(str,""), "bad return\n");
+    ok( -3 == dec, "dec wrong\n");
+    }
+    ok( 0 == sign, "dec wrong\n");
+
+    str = _fcvt(0.0001, 10, &dec, &sign );
+    todo_wine {
+    ok( 0 == strcmp(str,"1000000"), "bad return\n");
+    ok( -3 == dec, "dec wrong\n");
+    }
+    ok( 0 == sign, "dec wrong\n");
+
+    str = _fcvt(-111.0001, 5, &dec, &sign );
+    todo_wine {
+    ok( 0 == strcmp(str,"11100010"), "bad return\n");
+    ok( 3 == dec, "dec wrong\n");
+    }
+    ok( 1 == sign, "dec wrong\n");
+
+    str = _fcvt(111.0001, 5, &dec, &sign );
+    todo_wine {
+    ok( 0 == strcmp(str,"11100010"), "bad return\n");
+    ok( 3 == dec, "dec wrong\n");
+    }
+    ok( 0 == sign, "dec wrong\n");
+
+    str = _fcvt(0.0, 5, &dec, &sign );
+    todo_wine {
+    ok( 0 == strcmp(str,"00000"), "bad return\n");
+    ok( 0 == dec, "dec wrong\n");
+    }
+    ok( 0 == sign, "dec wrong\n");
+}
+
 START_TEST(printf)
 {
     test_sprintf();
     test_swprintf();
     test_fwprintf();
     test_snprintf();
+    test_fcvt();
 }
