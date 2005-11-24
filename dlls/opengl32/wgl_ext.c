@@ -340,6 +340,9 @@ static unsigned ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_G
   unsigned nAttribs = 0;
   unsigned cur = 0; 
   int pop;
+  int isColor = 0;
+  int wantColorBits = 0;
+  int sz_alpha = 0;
 
   while (0 != iWGLAttr[cur]) {
     TRACE("pAttr[%d] = %x\n", cur, iWGLAttr[cur]);
@@ -347,8 +350,7 @@ static unsigned ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_G
     switch (iWGLAttr[cur]) {
     case WGL_COLOR_BITS_ARB:
       pop = iWGLAttr[++cur];
-      PUSH2(oGLXAttr, GLX_BUFFER_SIZE, pop);
-      TRACE("pAttr[%d] = WGL_COLOR_BITS_ARB: %d\n", cur, pop);
+      wantColorBits = pop; /** see end */
       break;
     case WGL_BLUE_BITS_ARB:
       pop = iWGLAttr[++cur];
@@ -367,6 +369,7 @@ static unsigned ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_G
       break;
     case WGL_ALPHA_BITS_ARB:
       pop = iWGLAttr[++cur];
+      sz_alpha = pop;
       PUSH2(oGLXAttr, GLX_ALPHA_SIZE, pop);
       TRACE("pAttr[%d] = GLX_ALPHA_SIZE: %d\n", cur, pop);
       break;
@@ -390,7 +393,7 @@ static unsigned ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_G
       pop = iWGLAttr[++cur];
       switch (pop) {
       case WGL_TYPE_RGBA_ARB:  pop = GLX_RGBA_BIT; break ; 
-      case WGL_TYPE_COLORINDEX_ARB: pop = GLX_COLOR_INDEX_BIT; break ;
+      case WGL_TYPE_COLORINDEX_ARB: pop = GLX_COLOR_INDEX_BIT; isColor = 1; break ;
       default:
 	ERR("unexpected PixelType(%x)\n", pop);	
 	pop = 0;
@@ -452,6 +455,37 @@ static unsigned ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_G
     }
     ++cur;
   }
+
+  /**
+   * Trick as WGL_COLOR_BITS_ARB != GLX_BUFFER_SIZE
+   *    WGL_COLOR_BITS_ARB + WGL_ALPHA_BITS_ARB == GLX_BUFFER_SIZE
+   *
+   *  WGL_COLOR_BITS_ARB
+   *     The number of color bitplanes in each color buffer. For RGBA
+   *     pixel types, it is the size of the color buffer, excluding the
+   *     alpha bitplanes. For color-index pixels, it is the size of the
+   *     color index buffer.
+   *
+   *  GLX_BUFFER_SIZE   
+   *     This attribute defines the number of bits per color buffer. 
+   *     For GLX FBConfigs that correspond to a PseudoColor or StaticColor visual, 
+   *     this is equal to the depth value reported in the X11 visual. 
+   *     For GLX FBConfigs that correspond to TrueColor or DirectColor visual, 
+   *     this is the sum of GLX_RED_SIZE, GLX_GREEN_SIZE, GLX_BLUE_SIZE, and GLX_ALPHA_SIZE.
+   * 
+   */
+  if (0 < wantColorBits) {
+    if (!isColor) { 
+      wantColorBits += sz_alpha; 
+    }
+    if (32 < wantColorBits) {
+      ERR("buggy %d GLX_BUFFER_SIZE default to 32\n", wantColorBits);
+      wantColorBits = 32;
+    }
+    PUSH2(oGLXAttr, GLX_BUFFER_SIZE, wantColorBits);
+    TRACE("pAttr[%d] = WGL_COLOR_BITS_ARB: %d\n", cur, wantColorBits);
+  }
+
   return nAttribs;
 }
 
@@ -534,8 +568,16 @@ GLboolean WINAPI wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLa
       continue ;
       
     case WGL_COLOR_BITS_ARB:
-      curGLXAttr = GLX_BUFFER_SIZE;
+      /** see ConvertAttribWGLtoGLX for explain */
+      if (nCfgs < iPixelFormat || 0 >= iPixelFormat) goto pix_error;
+      curCfg = cfgs[iPixelFormat - 1];
+      hTest = glXGetFBConfigAttrib(display, curCfg, GLX_BUFFER_SIZE, piValues + i);
+      if (hTest) goto get_error;
+      hTest = glXGetFBConfigAttrib(display, curCfg, GLX_ALPHA_SIZE, &tmp);
+      if (hTest) goto get_error;
+      piValues[i] = piValues[i] - tmp;
       break;
+
     case WGL_BLUE_BITS_ARB:
       curGLXAttr = GLX_BLUE_SIZE;
       break;
