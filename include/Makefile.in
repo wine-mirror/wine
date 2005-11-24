@@ -245,6 +245,7 @@ WINDOWS_INCLUDES = \
 	textserv.h \
 	tlhelp32.h \
 	tmschema.h \
+	usp10.h \
 	uuids.h \
 	uxtheme.h \
 	ver.h \
