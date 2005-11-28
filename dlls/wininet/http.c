@@ -2480,6 +2480,7 @@ static const WCHAR szCache_Control[] = { 'C','a','c','h','e','-','C','o','n','t'
 static const WCHAR szConnection[] = { 'C','o','n','n','e','c','t','i','o','n',0 };
 static const WCHAR szContent_Base[] = { 'C','o','n','t','e','n','t','-','B','a','s','e',0 };
 static const WCHAR szContent_Encoding[] = { 'C','o','n','t','e','n','t','-','E','n','c','o','d','i','n','g',0 };
+static const WCHAR szContent_ID[] = { 'C','o','n','t','e','n','t','-','I','D',0 };
 static const WCHAR szContent_Language[] = { 'C','o','n','t','e','n','t','-','L','a','n','g','u','a','g','e',0 };
 static const WCHAR szContent_Length[] = { 'C','o','n','t','e','n','t','-','L','e','n','g','t','h',0 };
 static const WCHAR szContent_Location[] = { 'C','o','n','t','e','n','t','-','L','o','c','a','t','i','o','n',0 };
@@ -2506,6 +2507,7 @@ static const WCHAR szMime_Version[] = { 'M','i','m','e','-','V','e','r','s','i',
 static const WCHAR szPragma[] = { 'P','r','a','g','m','a',0 };
 static const WCHAR szProxy_Authenticate[] = { 'P','r','o','x','y','-','A','u','t','h','e','n','t','i','c','a','t','e',0 };
 static const WCHAR szProxy_Authorization[] = { 'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
+static const WCHAR szProxy_Connection[] = { 'P','r','o','x','y','-','C','o','n','n','e','c','t','i','o','n',0 };
 static const WCHAR szPublic[] = { 'P','u','b','l','i','c',0 };
 static const WCHAR szRange[] = { 'R','a','n','g','e',0 };
 static const WCHAR szReferer[] = { 'R','e','f','e','r','e','r',0 };
@@ -2525,9 +2527,9 @@ static const WCHAR szWWW_Authenticate[] = { 'W','W','W','-','A','u','t','h','e',
 
 /* Note: Must be kept sorted! */
 const std_hdr_data SORTED_STANDARD_HEADERS[] = {
+    {szAccept,			HTTP_QUERY_ACCEPT,			REQUEST_HDR,},
     {szAccept_Charset,		HTTP_QUERY_ACCEPT_CHARSET,		REQUEST_HDR,},
     {szAccept_Encoding,		HTTP_QUERY_ACCEPT_ENCODING,		REQUEST_HDR,},
-    {szAccept,			HTTP_QUERY_ACCEPT,			REQUEST_HDR,},
     {szAccept_Language,		HTTP_QUERY_ACCEPT_LANGUAGE,		REQUEST_HDR,},
     {szAccept_Ranges,		HTTP_QUERY_ACCEPT_RANGES,		RESPONSE_HDR,},
     {szAge,			HTTP_QUERY_AGE,				RESPONSE_HDR,},
@@ -2537,6 +2539,7 @@ const std_hdr_data SORTED_STANDARD_HEADERS[] = {
     {szConnection,		HTTP_QUERY_CONNECTION,			REQ_RESP_HDR,},
     {szContent_Base,		HTTP_QUERY_CONTENT_BASE,		REQ_RESP_HDR,},
     {szContent_Encoding,	HTTP_QUERY_CONTENT_ENCODING,		REQ_RESP_HDR,},
+    {szContent_ID,		HTTP_QUERY_CONTENT_ID,			REQ_RESP_HDR,},
     {szContent_Language,	HTTP_QUERY_CONTENT_LANGUAGE,		REQ_RESP_HDR,},
     {szContent_Length,		HTTP_QUERY_CONTENT_LENGTH,		REQ_RESP_HDR,},
     {szContent_Location,	HTTP_QUERY_CONTENT_LOCATION,		REQ_RESP_HDR,},
@@ -2563,6 +2566,7 @@ const std_hdr_data SORTED_STANDARD_HEADERS[] = {
     {szPragma,			HTTP_QUERY_PRAGMA,			REQ_RESP_HDR,},
     {szProxy_Authenticate,	HTTP_QUERY_PROXY_AUTHENTICATE,		RESPONSE_HDR,},
     {szProxy_Authorization,	HTTP_QUERY_PROXY_AUTHORIZATION,		REQUEST_HDR,},
+    {szProxy_Connection,	HTTP_QUERY_PROXY_CONNECTION,		REQ_RESP_HDR,},
     {szPublic,			HTTP_QUERY_PUBLIC,			RESPONSE_HDR,},
     {szRange,			HTTP_QUERY_RANGE,			REQUEST_HDR,},
     {szReferer,			HTTP_QUERY_REFERER,			REQUEST_HDR,},
@@ -2597,6 +2601,13 @@ static INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField)
     INT hi = sizeof(SORTED_STANDARD_HEADERS) / sizeof(std_hdr_data) -1;
     INT mid, inx;
 
+#if 0
+    INT i;
+    for (i = 0; i < sizeof(SORTED_STANDARD_HEADERS) / sizeof(std_hdr_data) -1; i++)
+        if (lstrcmpiW(SORTED_STANDARD_HEADERS[i].hdrStr, SORTED_STANDARD_HEADERS[i+1].hdrStr) > 0)
+            ERR("%s should be after %s\n", debugstr_w(SORTED_STANDARD_HEADERS[i].hdrStr), debugstr_w(SORTED_STANDARD_HEADERS[i+1].hdrStr));
+#endif
+
     while (lo <= hi) {
 	mid = (int)  (lo + hi) / 2;
 	inx = lstrcmpiW(lpszField, SORTED_STANDARD_HEADERS[mid].hdrStr);
@@ -2607,7 +2618,7 @@ static INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField)
 	else
 	    lo = mid+1;
     }
-    FIXME("Couldn't find %s in standard header table\n", debugstr_w(lpszField));
+    WARN("Couldn't find %s in standard header table\n", debugstr_w(lpszField));
     return -1;
 }
 
