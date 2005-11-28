@@ -285,17 +285,12 @@ static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr )
 
 static void HTTP_ProcessHeaders( LPWININETHTTPREQW lpwhr )
 {
-    int CustHeaderIndex;
-    static const WCHAR szSetCookie[] = {'S','e','t','-','C','o','o','k','i','e',0 };
+    LPHTTPHEADERW setCookieHeader = &lpwhr->StdHeaders[HTTP_QUERY_SET_COOKIE];
 
-    CustHeaderIndex = HTTP_GetCustomHeaderIndex(lpwhr, szSetCookie);
-    if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES) && (CustHeaderIndex >= 0))
+    if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES) && setCookieHeader->lpszValue)
     {
-        LPHTTPHEADERW setCookieHeader;
         int nPosStart = 0, nPosEnd = 0, len;
         static const WCHAR szFmt[] = { 'h','t','t','p',':','/','/','%','s','/',0};
-
-        setCookieHeader = &lpwhr->pCustHeaders[CustHeaderIndex];
 
         while (setCookieHeader->lpszValue[nPosEnd] != '\0')
         {
