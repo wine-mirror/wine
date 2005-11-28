@@ -77,6 +77,7 @@ typedef struct {
     const IOleClientSiteVtbl            *lpOleClientSiteVtbl;
     const IOleInPlaceSiteVtbl           *lpOleInPlaceSiteVtbl;
     const IDocHostUIHandler2Vtbl        *lpDocHostUIHandlerVtbl;
+    const IOleDocumentSiteVtbl          *lpOleDocumentSiteVtbl;
 
     /* Interfaces of InPlaceFrame object */
 
@@ -88,6 +89,7 @@ typedef struct {
 
     IOleClientSite *client;
     IOleContainer *container;
+    IOleDocumentView *view;
 
     /* window context */
 
@@ -126,6 +128,7 @@ typedef struct {
 #define INPLACESITE(x)  ((IOleInPlaceSite*)             &(x)->lpOleInPlaceSiteVtbl)
 #define DOCHOSTUI(x)    ((IDocHostUIHandler*)           &(x)->lpDocHostUIHandlerVtbl)
 #define DOCHOSTUI2(x)   ((IDocHostUIHandler2*)          &(x)->lpDocHostUIHandlerVtbl)
+#define DOCSITE(x)      ((IOleDocumentSite*)            &(x)->lpOleDocumentSiteVtbl)
 
 #define INPLACEFRAME(x) ((IOleInPlaceFrame*)            &(x)->lpOleInPlaceFrameVtbl)
 
@@ -143,6 +146,7 @@ void WebBrowser_Frame_Init(WebBrowser*);
 
 void WebBrowser_OleObject_Destroy(WebBrowser*);
 void WebBrowser_Events_Destroy(WebBrowser*);
+void WebBrowser_ClientSite_Destroy(WebBrowser*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 

@@ -272,8 +272,72 @@ static const IOleInPlaceSiteVtbl OleInPlaceSiteVtbl = {
     InPlaceSite_OnPosRectChange
 };
 
+#define DOCSITE_THIS(iface) DEFINE_THIS(WebBrowser, OleDocumentSite, iface)
+
+static HRESULT WINAPI OleDocumentSite_QueryInterface(IOleDocumentSite *iface,
+                                                     REFIID riid, void **ppv)
+{
+    WebBrowser *This = DOCSITE_THIS(iface);
+    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+}
+
+static ULONG WINAPI OleDocumentSite_AddRef(IOleDocumentSite *iface)
+{
+    WebBrowser *This = DOCSITE_THIS(iface);
+    return IOleClientSite_AddRef(CLIENTSITE(This));
+}
+
+static ULONG WINAPI OleDocumentSite_Release(IOleDocumentSite *iface)
+{
+    WebBrowser *This = DOCSITE_THIS(iface);
+    return IOleClientSite_Release(CLIENTSITE(This));
+}
+
+static HRESULT WINAPI OleDocumentSite_ActivateMe(IOleDocumentSite *iface,
+                                                 IOleDocumentView *pViewToActivate)
+{
+    WebBrowser *This = DOCSITE_THIS(iface);
+    IOleDocument *oledoc;
+    RECT rect;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, pViewToActivate);
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IOleDocument, (void**)&oledoc);
+    if(FAILED(hres))
+        return hres;
+
+    IOleDocument_CreateView(oledoc, INPLACESITE(This), NULL, 0, &This->view);
+    IOleDocument_Release(oledoc);
+
+    GetClientRect(This->doc_view_hwnd, &rect);
+    IOleDocumentView_SetRect(This->view, &rect);
+
+    hres = IOleDocumentView_Show(This->view, TRUE);
+
+    return hres;
+}
+
+#undef DOCSITE_THIS
+
+static const IOleDocumentSiteVtbl OleDocumentSiteVtbl = {
+    OleDocumentSite_QueryInterface,
+    OleDocumentSite_AddRef,
+    OleDocumentSite_Release,
+    OleDocumentSite_ActivateMe
+};
+
 void WebBrowser_ClientSite_Init(WebBrowser *This)
 {
     This->lpOleClientSiteVtbl   = &OleClientSiteVtbl;
     This->lpOleInPlaceSiteVtbl  = &OleInPlaceSiteVtbl;
+    This->lpOleDocumentSiteVtbl = &OleDocumentSiteVtbl;
+
+    This->view = NULL;
+}
+
+void WebBrowser_ClientSite_Destroy(WebBrowser *This)
+{
+    if(This->view)
+        IOleDocumentView_Release(This->view);
 }
