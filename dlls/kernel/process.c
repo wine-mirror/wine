@@ -161,6 +161,7 @@ static void *open_builtin_exe_file( const WCHAR *name, char *error, int error_si
     WCHAR *p;
     UINT i, len;
 
+    *file_exists = 0;
     if ((p = strrchrW( name, '/' ))) name = p + 1;
     if ((p = strrchrW( name, '\\' ))) name = p + 1;
 
