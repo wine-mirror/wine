@@ -1,0 +1,200 @@
+1. 시작하며
+Wine은 유닉스에서 윈도우즈(도스, 윈도우즈 3.1 그리고 win32 실행파일을
+포함하는) 풀그림을 실행시키는 풀그림입니다. 이것은 마이크로 소프트
+윈도우즈 바이너리을 불러오고 실행하는 풀그림 로더(Loader)와 유닉스나
+X11에서 사용하는 것과도 같은 윈도우즈 API를 호출하는 라이브러리
+(Winelib라고 불리우는)로 이루어져 있다.  이 라이브러리는 또한 Win32
+코드를 네이티브 유닉스 풀그림으로 포팅할때도 사용합니다.
+
+Wine은 GNU LGPL의 적용을 받는 자유 소프트웨어입니다.;
+LICENSE파일에 자세한 내용이 있습니다.
+
+2. 빠른 시작
+
+당신이 언제든지 소스를 컴파일할 때마다, Wine을 빌드하고 설치 할때 Wine
+Installer를 사용하는것을 추천합니다.  Wine 소스의 최상위 디렉토리(이
+파일을 포함하고 있는)에서 실행:
+
+./tools/wineinstall
+
+풀그림 실행은 "wine [옵션] 풀그림".  더 많은 정보와 문제 해결을 위해선
+이 파일의 나머지나 Wine 맨 페이지 그리고 , 정보의 대부분은
+http://www.winehq.org서 찾을 수 있습니다.
+
+3. 요구사항
+
+Wine을 컴파일하고 실행시키기 위해선, 당신은 반드시 아래와 같은 것을
+가지고 있어야 합니다.
+
+  Linux 버젼 2.0.36 이나 그 이상
+  FreeBSD 5.3 이나 더 최신
+  Solaris x86 2.5 이나 더 최신
+  NetBSD-현재
+
+Wine을 실행시키기 위해선 커널 레벨의 쓰레드가 필요합니다, 그래서 오직
+위에서 지원한다고 언급된 운영체제만 지원합니다.
+커널 쓰레드릉 지원하는 다른 운영체제는 아마 미래에 지원될 것입니다.
+
+Linux 정보
+  Linux 2.2.x에서는 작동하고  Linux 2.0.x 에서는 아마도 작동할 것입니다.
+  (2.0.x 버젼보다 오래된 것은 쓰레드와 관련된 충동을 일으킵니다),
+  2.4.x와 같이 현재 커널을 사용하는것이 가장 좋습니다.
+
+FreeBSD 정보:
+  Wine  FreeBSD 4.x 하고 FreeBSD 5.x에서 빌드 할 수 있습니다,  그러나 
+  FreeBSD 5.3 이전 버젼은 일반적으로는 잘 작동하지 않습니다.
+ 
+   FreeBSD 포트 트리의 
+  <ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/>
+  서 더 많은 정보를 얻을 수 있습니다.
+
+Solaris 정보:
+  당신은 Wine을 빌드하기 위해서는 GNU 톨체인(toolchain)을 필요로 할 것입니다.
+  (gcc, gas, etc.). 경고 : gcc를 사용할 것이라면 gas 설치는 안전하지
+  *않습니다*. gcc를 재컴파일한다음에   gas를 설치하거나, gnu 도구(tool)로부터
+  cc, as 그리고 ld 를 십볼릭 링크시키는 것이 필수입니다.
+
+NetBSD 정보:
+  당신은 USER_LDT, SYSVSHM, SYSVSEM, 그리고  SYSVMSG 옵션이 커널에서
+  사용가능하게 되어있는지 확인하십시오
+
+
+
+지원하는 파일 시스템:
+  Wine 은 대부분의 파일 시스템에서 실행됩니다. 하지만, Wine은 만약 /tmp
+  디렉토리를  umsdod로 사용한다면  시작시 실패할 것입니다. 삼바를 통해 파일을
+  접근할 때 몇가지 적합성 문제가 보고되었습니다. 또한, NTFS는 현재 읽기
+  전용으로만 접근하는 것이 안전합니다,우리는 윈도우즈 풀그림이 어디서나 쓸수
+  있는것이 필요하다면 NTFS를 사용하는 것 대신에  쓸 수 있는 위치에 복사하는
+  것을 추천합니다.
+
+기본 요구사항:
+  당신은  X11 개발 헤더 파일의 설치를 필요로 합니다    
+  (데비안에서는  xlib6g-dev이라고 불리고 레드햇에서는 XFree86-devel인).
+
+빌드 도구 요구사항:
+  x86 시스템 gcc >= 2.7.2 필요.
+  2.7.2.3보다 이전 버젼은 최적화로 컴파일 할때 어떤 파일에서 문제가
+  발생합니다, 종종 헤더 파일 처리에 문제가 발생합니다. pgcc는 현재
+  Wine을 컴파일 할수 없습니다. 이 문제의 원인은 알 수 없습니다.
+
+  당신은 "make"를 필요로 할것입니다. (GNU make와 같은).
+
+  당신은 또한 flex 버젼 2.5 이상과 bison을 필요로 합니다. 만약 당신이
+  레드햇이나 데비안을 사용한다면  flex와 bison 패키지를 설치하십시오.
+
+선택적인 지원 라이브러리:
+  만약 CUPS 인쇄를 지원하기를 원한다면, cups와 cups-devel 패키지를
+  설치하십시오.
+
+4. 컴파일
+
+당신이 wineinstall을 사용하기를 원하지 않는다면, wine을 빌드하기 위해
+다음의 명령을 실행시키십시오:
+
+./configure
+make depend
+make
+
+이것은 "wine" 풀그림과 수많은 지원 라이브러리/바이너리를 빌드할 것입니다.
+이  "wine" 풀그림은 윈도우즈 실행파일을 불러오고 실행할 것입니다.
+이 "libwine" 라이브러리 ("Winelib")는 유닉스에서 윈도우즈 소스를
+컴파일하고 링크시키는데 사용됩니다.
+
+컴파일 설정 옵션을 보려면, ./configure --help를 하십시오.
+
+패치 파일을 사용해서 새 버젼으로 업그레이드하려면 , 먼저 이 버젼 파일
+(README파일을 포함하고 있는)최상위 디렉토리로 가십시오. "make clean"
+그리고 patch :
+
+    gunzip -c patch-file | patch -p1
+
+"patch-file" 은 패치 파일의 이름입니다. (Wine-yymmdd.diff.gz와 같이).
+당신은 "./configure"을 재실행하고 ,  "make depend && make를 실행하십시오".
+
+5. 셋업
+
+한번 Wine이 올바르게 컴파일되면, 당신은  "make install"을 할 수 있습니다;
+이것은 wine실행파일과 wine 맨 페이지 그리고 기타 필요로 하는 파일을
+설치할 것입니다.
+
+먼저 이전의 Wine 설치하고 충돌을 막기 위해서언인스톨 언인스톨을 하는
+것을 잊지 마십시오.  설치하기 전에 "dpkg -r wine" 나 "rpm -e wine" 나
+"make uninstall"를 실행하십시오.
+
+설정 힌트는 Support area at http://www.winehq.org/의 Support 부분을 보십시오.
+
+library 로딩 에러같은 경우는
+(e.g. "Error while loading shared libraries: libntdll.so"), 
+/etc/ld.so.conf에 라이브러리 경로를 더하고, root로 ldconfig을 실행하십시오.
+
+6. 풀그림 실행
+
+Wine을 사용할 때, 당신은 실행파일의 완전한 경로나 파일이름만 지정해야 합니다.
+
+예: 카드게임 실행:
+
+	wine sol		   (using the search Path as specified in
+	wine sol.exe		    the config file to locate the file)
+
+	wine c:\\windows\\sol.exe  (도스 파일이름 문법)
+
+	wine /usr/windows/sol.exe  (유닉스 파일이름 문법)
+
+        wine sol.exe /parameter1 -parameter2 parameter3
+				   (풀그림의 매개변수 호출)
+
+주목: 이 파일의 경로는 명령라인의 완전한 이름이 주어질때
+      경로도 추가될 것입니다.
+
+Wine은 아직 완성되지 않았습니다, 그래서 몇몇의 풀그림은 문제를 일으킬
+것입니다 당신은 documentation/debugger.sgml에 있는데로 winedbg를 올바르게
+셋업하면, 당신은 문제를 조사하고 고칠수 있도록 debugger로 들어갈것입니다.
+어떻게 하는가에 대해 더 많은 정보가 필요하면 documentation/debugging.sgml를
+읽으십시오.
+
+당신은 파일 문제를 보고하기 위한 목적으로 특별한 Wine 복사본을 사용하거나
+접근하기 위해서는 모든 중요한 파일을 백업하여야 할 것입니다. 예를 들어
+Explorer을 실행시키지 마십시오. 만약 당신이 완전한 백업을 가지고 있지 않다면
+때때로 여러 디렉토리를 이름을 바꾸거나 망가트릴것입니다. 예를 들어 메신저
+같은 다른 MS 풀그림조차 그것들이 Explorer를 사용하기 때문에 안전하지
+않습니다. 특별한 손상파일 (!$!$!$!$.pfr)은 적어도
+http://home.nexgo.de/andi.mohr/download/decorrupt_explorer를
+사용해서 고칠 수 잇습니다
+
+7. 더 많은 정보 얻기
+
+WWW:	Wine에 관한 많은 정보는 WineHQ at http://www.winehq.org/의
+        WineHQ로부터 가능 : 다양한 Wine  안내, 풀그림 데이터베이스,
+        버그 추적. 이것은 가장 좋은 출발점이 될 것입니다.
+
+FAQ:	Wine FAQ는 http://www.winehq.org/FAQ에 위치해 있습니다.
+
+유즈넷: comp.emulators.ms-windows.wine에서 도움을 얻고 Wine 관련된
+        이슈에 대해 논의할 수 잇습니다.
+
+버그:	버그 보고를 하기 전에 이미 당신의 문제가 보고되었는지 확인하도록
+        bugzilla 데이터베이스에서 찾아 보고  http://bugs.winehq.org의
+        Wine Bugzilla에 보고하십시오.  당신은 또한
+        comp.emulators.ms-windows.wine에 버그를 보고할 수 잇습니다.
+	documentation/bugs.sgml에서 필요로 하는 정보를 보십시오 .
+
+IRC:	irc.freenode.net의  #WineHQ 채널에서 온라인 도움말 가능.
+
+CVS:	현재 Wine 개발자 트리는 CVS로 가능합니다
+         http://www.winehq.org/cvs에서 다 많은 정보를 보십시오.
+
+메일링 목록:
+	Wine 개발자를 위한 많은 메이링 목록이 잇습니다;
+	http://www.winehq.org/forums 에서 많은 정보를 보십시오.
+
+wine-patches@winehq.org 목록에 다음 버젼에 포함되도록 
+더할게 있거나,버그를 고쳤다면, 패치를 보내십시오( 'diff -u' 형식으로)
+
+--
+Alexandre Julliard
+julliard@winehq.org
+
+Translated by:
+YunSong Hwang
+hys545@dreamwiz.com
