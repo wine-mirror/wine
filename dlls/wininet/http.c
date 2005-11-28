@@ -918,7 +918,7 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
     if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
         UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
 
-    sprintfW(url, szFormat2, lpwhs->lpszHostName, lpwhs->nServerPort);
+    sprintfW(url, szFormat2, lpwhs->lpszHostName, lpwhs->nHostPort);
 
     if( lpwhr->lpszPath[0] != '/' )
         strcatW( url, szSlash );
@@ -1042,6 +1042,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         lpwhs->nServerPort = (dwFlags & INTERNET_FLAG_SECURE ?
                         INTERNET_DEFAULT_HTTPS_PORT :
                         INTERNET_DEFAULT_HTTP_PORT);
+    lpwhs->nHostPort = lpwhs->nServerPort;
 
     if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0)
         HTTP_DealWithProxy( hIC, lpwhs, lpwhr );
@@ -2112,6 +2113,7 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     if (NULL != lpszUserName)
         lpwhs->lpszUserName = WININET_strdupW(lpszUserName);
     lpwhs->nServerPort = nServerPort;
+    lpwhs->nHostPort = nServerPort;
 
     /* Don't send a handle created callback if this handle was created with InternetOpenUrl */
     if (!(lpwhs->hdr.dwInternalFlags & INET_OPENURL))

@@ -167,7 +167,8 @@ typedef struct
     LPWSTR  lpszHostName; /* the final destination of the request */
     LPWSTR  lpszServerName; /* the name of the server we directly connect to */
     LPWSTR  lpszUserName;
-    INTERNET_PORT nServerPort;
+    INTERNET_PORT nHostPort; /* the final destination port of the request */
+    INTERNET_PORT nServerPort; /* the port of the server we directly connect to */
     struct sockaddr_in socketAddress;
 } WININETHTTPSESSIONW, *LPWININETHTTPSESSIONW;
 
