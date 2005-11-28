@@ -325,9 +325,9 @@ void pshader_frc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
 
 typedef FLOAT D3DMATRIX44[4][4];
 typedef FLOAT D3DMATRIX43[4][3];
-typedef FLOAT D3DMATRIX34[4][4];
-typedef FLOAT D3DMATRIX33[4][3];
-typedef FLOAT D3DMATRIX32[4][2];
+typedef FLOAT D3DMATRIX34[3][4];
+typedef FLOAT D3DMATRIX33[3][3];
+typedef FLOAT D3DMATRIX23[2][3];
 
 void pshader_m4x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, /*WINED3DSHADERVECTOR* mat1*/ D3DMATRIX44 mat) {
     /*
@@ -350,7 +350,7 @@ void pshader_m4x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, /*WINED3DSHAD
     PSTRACE(("executing m4x4(4): mat=(%f, %f, %f, %f)       (%f)       (%f) \n", mat[3][0], mat[3][1], mat[3][2], mat[3][3], s0->w, d->w));
 }
 
-void pshader_m4x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX43 mat) {
+void pshader_m4x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX34 mat) {
     d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z + mat[0][3] * s0->w;
     d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z + mat[1][3] * s0->w;
     d->z = mat[2][0] * s0->x + mat[2][1] * s0->y + mat[2][2] * s0->z + mat[2][3] * s0->w;
@@ -361,7 +361,7 @@ void pshader_m4x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX43 m
     PSTRACE(("executing m4x3(4):                            (%f)       (%f) \n", s0->w, d->w));
 }
 
-void pshader_m3x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX34 mat) {
+void pshader_m3x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX43 mat) {
     d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z;
     d->y = mat[2][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z;
     d->z = mat[2][0] * s0->x + mat[2][1] * s0->y + mat[2][2] * s0->z;
@@ -383,7 +383,7 @@ void pshader_m3x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX33 m
     PSTRACE(("executing m3x3(4):                                       (%f) \n", d->w));
 }
 
-void pshader_m3x2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX32 mat) {
+void pshader_m3x2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX23 mat) {
     FIXME("check\n");
     d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z;
     d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z;
@@ -394,11 +394,11 @@ void pshader_m3x2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX32 m
 /**
  * Version 2.0 specific
  */
-void pshader_lrp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
+void pshader_lrp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
     d->x = s0->x * (s1->x - s2->x) + s2->x;
     d->y = s0->y * (s1->y - s2->y) + s2->y;
     d->z = s0->z * (s1->z - s2->z) + s2->z;
-    d->w = s0->w * (s1->w - s2->w) + s2->x;
+    d->w = s0->w * (s1->w - s2->w) + s2->w;
 }
 
 void pshader_crs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
