@@ -2223,9 +2223,9 @@ static HRESULT drag_notify_subitem(IShellViewImpl *This, DWORD grfKeyState, POIN
         lvItem.iItem = lResult;
         ListView_GetItemA(This->hWndList, &lvItem);
 
-        /* ... and bind pCurDropTarget to this folder's IDropTarget interface */
-        hr = IShellFolder_BindToObject(This->pSFParent, (LPITEMIDLIST)lvItem.lParam, NULL, 
-                                       &IID_IDropTarget, (LPVOID*)&This->pCurDropTarget);
+        /* ... and bind pCurDropTarget to the IDropTarget interface of an UIObject of this object */
+        hr = IShellFolder_GetUIObjectOf(This->pSFParent, This->hWndList, 1,
+            (LPCITEMIDLIST*)&lvItem.lParam, &IID_IDropTarget, NULL, (LPVOID*)&This->pCurDropTarget);
     }
 
     /* If anything failed, pCurDropTarget should be NULL now, which ought to be a save state. */
