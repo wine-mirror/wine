@@ -575,8 +575,17 @@ static HRESULT WINAPI DefaultHandler_DoVerb(
 	    HWND               hwndParent,
 	    LPCRECT            lprcPosRect)
 {
-  FIXME(": Stub\n");
-  return E_NOTIMPL;
+  DefaultHandler *This = impl_from_IOleObject(iface);
+  IRunnableObject *pRunnableObj = (IRunnableObject *)&This->lpvtblIRunnableObject;
+  HRESULT hr;
+
+  TRACE("(%ld, %p, %p, %ld, %p, %s)\n", iVerb, lpmsg, pActiveSite, lindex, hwndParent, wine_dbgstr_rect(lprcPosRect));
+
+  hr = IRunnableObject_Run(pRunnableObj, NULL);
+  if (FAILED(hr)) return hr;
+
+  return IOleObject_DoVerb(This->pOleDelegate, iVerb, lpmsg, pActiveSite,
+                           lindex, hwndParent, lprcPosRect);
 }
 
 /************************************************************************
