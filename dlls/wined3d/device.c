@@ -1560,21 +1560,22 @@ UINT     WINAPI  IWineD3DDeviceImpl_GetNumberOfSwapChains(IWineD3DDevice *iface)
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, UINT iSwapChain, IWineD3DSwapChain **pSwapChain) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     SwapChainList *swapchain;
+    int i = iSwapChain;
     HRESULT hr = D3DERR_INVALIDCALL;
     swapchain = This->swapchains;
     TRACE("(%p) : swapchain %d\n", This, iSwapChain);
 
 
     TRACE("(%p) Finding swapchain %d\n", This, iSwapChain);
-    while (iSwapChain > 0 && swapchain != NULL) {
+    while (i > 0 && swapchain != NULL) {
         swapchain = swapchain->next;
-        iSwapChain--;
+        --i;
     }
 
-    if (iSwapChain > 0 || swapchain == NULL) {
+    if (i > 0) {
         FIXME("(%p) Unable to find swapchain %d\n", This, iSwapChain);
         *pSwapChain = NULL;
-    } else {
+    } else if (swapchain != NULL) {
         /** TODO: move off to a linkesList implementation **/
         *pSwapChain = swapchain->swapchain;
         IWineD3DSwapChain_AddRef(*pSwapChain);
