@@ -3288,7 +3288,7 @@ BOOL WINAPI CryptVerifyCertificateSignatureEx(HCRYPTPROV hCryptProv,
 HCRYPTOIDFUNCSET WINAPI CryptInitOIDFunctionSet(LPCSTR pszFuncName, DWORD dwFlags)
 {
     FIXME("stub: %s %lx\n", debugstr_a(pszFuncName), dwFlags);
-    return NULL;
+    return (HCRYPTOIDFUNCSET)0xbaadf00d;
 }
 
 BOOL WINAPI CryptUnregisterDefaultOIDFunction(DWORD dwEncodingType,
