@@ -1272,6 +1272,11 @@ static void X11DRV_InternalFloodFill(XImage *image, X11DRV_PDEVICE *physDev,
 }
 
 
+static int ExtFloodFillXGetImageErrorHandler( Display *dpy, XErrorEvent *event, void *arg )
+{
+    return (event->request_code == X_GetImage && event->error_code == BadMatch);
+}
+
 /**********************************************************************
  *          X11DRV_ExtFloodFill
  */
@@ -1292,10 +1297,12 @@ X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color,
     GetRgnBox( physDev->region, &rect );
 
     wine_tsx11_lock();
+    X11DRV_expect_error( gdi_display, ExtFloodFillXGetImageErrorHandler, NULL );
     image = XGetImage( gdi_display, physDev->drawable,
                        physDev->org.x + rect.left, physDev->org.y + rect.top,
                        rect.right - rect.left, rect.bottom - rect.top,
                        AllPlanes, ZPixmap );
+    if(X11DRV_check_error()) image = NULL;
     wine_tsx11_unlock();
     if (!image) return FALSE;
 
