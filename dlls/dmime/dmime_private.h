@@ -41,6 +41,7 @@
 #include "dmusici.h"
 #include "dmusicf.h"
 #include "dmusics.h"
+#include "dmusicc.h"
 
 /*****************************************************************************
  * Interfaces
@@ -147,7 +148,7 @@ struct IDirectMusicPerformance8Impl {
   long  lMasterVolume;
 	
   /* performance channels */
-  DMUSIC_PRIVATE_PCHANNEL PChannel[1];
+  DMUSIC_PRIVATE_PCHANNEL PChannel[32];
 
    /* IDirectMusicPerformance8Impl fields */
   IDirectMusicAudioPath* pDefaultPath;

@@ -222,7 +222,10 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANC
 	  This->pDirectSound = (IDirectSound*) pDirectSound;
 	  IDirectSound_AddRef((LPDIRECTSOUND) This->pDirectSound);
 	} else {
-	  DirectSoundCreate8(NULL, (LPDIRECTSOUND8*) &This->pDirectSound, NULL);
+	  HRESULT hr;
+	  hr = DirectSoundCreate8(NULL, (LPDIRECTSOUND8*) &This->pDirectSound, NULL);
+	  if (!This->pDirectSound) return DSERR_NODRIVER;
+	  
 	  /** 
 	   * as seen in msdn
 	   * 
@@ -234,8 +237,6 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANC
 	    /* how to get the ForeGround window handle ? */
             /*IDirectSound8_SetCooperativeLevel(This->pDirectSound, hWnd, DSSCL_PRIORITY);*/
 	  }
-	  if (!This->pDirectSound)
-	    return DSERR_NODRIVER;
 	}
 
 	if (NULL != ppDirectMusic && NULL != *ppDirectMusic) {
@@ -510,8 +511,41 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_RemoveNotificationType (LPDIR
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_AddPort (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicPort* pPort) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
+	HRESULT hr = E_FAIL;
 	FIXME("(%p, %p): stub\n", This, pPort);
-	IDirectMusicPort_AddRef (pPort);
+	if (!This->pDirectMusic || !This->pDirectSound) return DMUS_E_NOT_INIT;
+	if (NULL == pPort) {
+	  GUID port_guid;
+	  IDirectMusicPort* pDefaultPort = NULL;
+	  DMUS_PORTPARAMS params;
+	  int i, j;
+	  hr = IDirectMusic8_GetDefaultPort(This->pDirectMusic, &port_guid);
+	  if (FAILED(hr)) return hr;
+	  ZeroMemory(&params, sizeof(params)); 
+	  params.dwSize = sizeof(params);
+	  params.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS | DMUS_PORTPARAMS_SHARE;
+	  params.dwChannelGroups = 1;
+	  params.fShare = TRUE;
+	  hr = IDirectMusic8_CreatePort(This->pDirectMusic, &port_guid, &params, &pDefaultPort, NULL);
+	  if (FAILED(hr)) return hr;
+	  hr = IDirectMusicPort_Activate(pDefaultPort, TRUE);
+	  if (FAILED(hr)) { IDirectMusicPort_Release(pDefaultPort); return hr; }
+	  j = 0;
+	  for (i = 0; i < 16; ++i) {
+	    if (NULL == This->PChannel[i].port) {
+	      This->PChannel[i].port = pPort; 
+	      This->PChannel[i].group = 0; 
+	      This->PChannel[i].channel = j; /* FIXME: should this be assigned? */
+	      j++;
+	    }
+	  }
+	} else {
+	  IDirectMusicPort_AddRef(pPort);	  
+	}
+	/**
+	 * We should remember added Ports (for example using a list)
+	 * and control if Port is registered for each api who use ports
+	 */
 	return S_OK;
 }
 
@@ -527,9 +561,10 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannelBlock (LPDIRECT
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
 
 	FIXME("(%p, %ld, %p, %ld): semi-stub\n", This, dwBlockNum, pPort, dwGroup-1);
+	if (NULL == pPort) return E_POINTER;
+
 	range = 16 * dwBlockNum;
 	j = 0;
-                
 	for (i = range; i < range+16; i++) {
 		/*TRACE("Setting PChannel[%i] to port %p, group %ld, MIDI port %i\n", i, pPort, dwGroup-1, j); */
 		This->PChannel[i].port = pPort; 
@@ -537,6 +572,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannelBlock (LPDIRECT
 		This->PChannel[i].channel = j; /* FIXME: should this be assigned? */
 		j++;
 	}
+	/*if (dwGroup > 2) return S_FALSE;*/
 
 	return S_OK;
 }
@@ -545,6 +581,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannel (LPDIRECTMUSIC
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
 
 	TRACE("(%p, %ld, %p, %ld, %ld)\n", This, dwPChannel, pPort, dwGroup, dwMChannel);
+	if (NULL == pPort) return E_POINTER;
 	This->PChannel[dwPChannel].port = pPort; 
 	This->PChannel[dwPChannel].group = dwGroup; 
 	This->PChannel[dwPChannel].channel = dwMChannel;
@@ -554,7 +591,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannel (LPDIRECTMUSIC
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_PChannelInfo (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwPChannel, IDirectMusicPort** ppPort, DWORD* pdwGroup, DWORD* pdwMChannel) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %ld, %p, %p, %p): stub\n", This, dwPChannel, ppPort, pdwGroup, pdwMChannel);
+	FIXME("(%p, %ld, %p, %p, %p): stub\n", This, dwPChannel, ppPort, pdwGroup, pdwMChannel);	
 	return S_OK;
 }
 
