@@ -277,7 +277,7 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
             if (devmode->dmPelsHeight != dd_modes[i].dwHeight)
                 continue;
         }
-        if (devmode->dmFields & DM_DISPLAYFREQUENCY)
+        if ((devmode->dmFields & DM_DISPLAYFREQUENCY) && (dd_modes[i].wRefreshRate != 0))
         {
             if (devmode->dmDisplayFrequency != dd_modes[i].wRefreshRate)
                 continue;
