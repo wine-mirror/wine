@@ -504,12 +504,16 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
     if(!This->client)
         return E_FAIL;
 
-    if(V_VT(Flags) != VT_EMPTY || V_VT(TargetFrameName) != VT_EMPTY
-       || V_VT(PostData) != VT_EMPTY || V_VT(Headers) != VT_EMPTY)
+    if((Flags && V_VT(Flags) != VT_EMPTY) 
+       || (TargetFrameName && V_VT(TargetFrameName) != VT_EMPTY)
+       || (PostData && V_VT(PostData) != VT_EMPTY) 
+       || (Headers && V_VT(Headers) != VT_EMPTY))
         FIXME("Unsupported arguments\n");
 
+    if(!URL)
+        return S_OK;
     if(V_VT(URL) != VT_BSTR)
-        FIXME("V_VT(URL) != VT_BSTR\n");
+        return E_INVALIDARG;
 
     /*
      * FIXME:
