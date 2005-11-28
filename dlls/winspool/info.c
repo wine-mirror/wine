@@ -3228,6 +3228,35 @@ BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
 
 /*****************************************************************************
  *       GetPrinterDriverDirectoryW  [WINSPOOL.@]
+ *
+ * Return the PATH for the Printer-Drivers (UNICODE)
+ *
+ * PARAMS
+ *   pName            [I] Servername (NT only) or NULL (local Computer)
+ *   pEnvironment     [I] Printing-Environment (see below) or NULL (Default)
+ *   Level            [I] Structure-Level (must be 1)
+ *   pDriverDirectory [O] PTR to Buffer that receives the Result
+ *   cbBuf            [I] Size of Buffer at pDriverDirectory
+ *   pcbNeeded        [O] PTR to DWORD that receives the size in Bytes used / 
+ *                        required for pDriverDirectory
+ *
+ * RETURNS
+ *   Success: TRUE  and in pcbNeeded the Bytes used in pDriverDirectory
+ *   Failure: FALSE and in pcbNeeded the Bytes required for pDriverDirectory,
+ *   if cbBuf is to small
+ * 
+ *   Native Values returned in pDriverDirectory on Success:
+ *|  NT(Windows NT x86):  "%winsysdir%\\spool\\DRIVERS\\w32x86" 
+ *|  NT(Windows 4.0):     "%winsysdir%\\spool\\DRIVERS\\win40" 
+ *|  win9x(Windows 4.0):  "%winsysdir%" 
+ *
+ *   "%winsysdir%" is the Value from GetSystemDirectoryW()
+ *
+ * FIXME
+ *-  pName != NULL not supported
+ *-  pEnvironment != NULL not supported
+ *-  Current Implementation returns always "%winsysdir%"
+ *
  */
 BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
 				       DWORD Level, LPBYTE pDriverDirectory,
@@ -3271,6 +3300,14 @@ BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
 
 /*****************************************************************************
  *       GetPrinterDriverDirectoryA  [WINSPOOL.@]
+ *
+ * Return the PATH for the Printer-Drivers (ANSI)
+ *
+ * See GetPrinterDriverDirectoryW.
+ *
+ * NOTES
+ * On NT, pDriverDirectory need the same Size as the Unicode-Version
+ *
  */
 BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
 				       DWORD Level, LPBYTE pDriverDirectory,
