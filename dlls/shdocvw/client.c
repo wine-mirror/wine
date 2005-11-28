@@ -191,9 +191,22 @@ static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSite *iface,
         LPRECT lprcClipRect, LPOLEINPLACEFRAMEINFO lpFrameInfo)
 {
     WebBrowser *This = INPLACESITE_THIS(iface);
-    FIXME("(%p)->(%p %p %p %p %p)\n", This, ppFrame, ppDoc, lprcPosRect,
+
+    TRACE("(%p)->(%p %p %p %p %p)\n", This, ppFrame, ppDoc, lprcPosRect,
           lprcClipRect, lpFrameInfo);
-    return E_NOTIMPL;
+
+    *ppFrame = INPLACEFRAME(This);
+    *ppDoc = NULL;
+    GetClientRect(This->doc_view_hwnd, lprcPosRect);
+    memcpy(lprcClipRect, lprcPosRect, sizeof(RECT));
+
+    lpFrameInfo->cb = sizeof(*lpFrameInfo);
+    lpFrameInfo->fMDIApp = FALSE;
+    lpFrameInfo->hwndFrame = This->shell_embedding_hwnd;
+    lpFrameInfo->haccel = NULL;
+    lpFrameInfo->cAccelEntries = 0; /* FIXME: should be 5 */
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceSite_Scroll(IOleInPlaceSite *iface, SIZE scrollExtent)

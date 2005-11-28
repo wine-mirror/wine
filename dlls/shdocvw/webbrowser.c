@@ -788,6 +788,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     WebBrowser_Events_Init(ret);
     WebBrowser_ClientSite_Init(ret);
     WebBrowser_DocHost_Init(ret);
+    WebBrowser_Frame_Init(ret);
 
     hres = IWebBrowser_QueryInterface(WEBBROWSER(ret), riid, ppv);
     if(SUCCEEDED(hres)) {

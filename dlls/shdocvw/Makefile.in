@@ -15,6 +15,7 @@ C_SRCS = \
 	dochost.c \
 	events.c \
 	factory.c \
+	frame.c \
 	misc.c \
 	oleobject.c \
 	persist.c \

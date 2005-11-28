@@ -78,6 +78,10 @@ typedef struct {
     const IOleInPlaceSiteVtbl           *lpOleInPlaceSiteVtbl;
     const IDocHostUIHandler2Vtbl        *lpDocHostUIHandlerVtbl;
 
+    /* Interfaces of InPlaceFrame object */
+
+    const IOleInPlaceFrameVtbl          *lpOleInPlaceFrameVtbl;
+
     LONG ref;
 
     IUnknown *document;
@@ -123,6 +127,8 @@ typedef struct {
 #define DOCHOSTUI(x)    ((IDocHostUIHandler*)           &(x)->lpDocHostUIHandlerVtbl)
 #define DOCHOSTUI2(x)   ((IDocHostUIHandler2*)          &(x)->lpDocHostUIHandlerVtbl)
 
+#define INPLACEFRAME(x) ((IOleInPlaceFrame*)            &(x)->lpOleInPlaceFrameVtbl)
+
 void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_ViewObject_Init(WebBrowser*);
 void WebBrowser_Persist_Init(WebBrowser*);
@@ -132,6 +138,8 @@ void WebBrowser_Events_Init(WebBrowser*);
 
 void WebBrowser_ClientSite_Init(WebBrowser*);
 void WebBrowser_DocHost_Init(WebBrowser*);
+
+void WebBrowser_Frame_Init(WebBrowser*);
 
 void WebBrowser_OleObject_Destroy(WebBrowser*);
 void WebBrowser_Events_Destroy(WebBrowser*);
