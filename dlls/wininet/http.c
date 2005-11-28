@@ -363,18 +363,10 @@ static void HTTP_AddProxyInfo( LPWININETHTTPREQW lpwhr )
     LPWININETAPPINFOW hIC = NULL;
 
     lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
-    if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	    return;
-    }
+    assert(lpwhs->hdr.htype == WH_HHTTPSESSION);
 
     hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
-    if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	    return;
-    }
+    assert(hIC->hdr.htype == WH_HINIT);
 
     if (hIC && (hIC->lpszProxyUsername || hIC->lpszProxyPassword ))
         HTTP_InsertProxyAuthorization(lpwhr, hIC->lpszProxyUsername,
