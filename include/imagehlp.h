@@ -236,6 +236,12 @@ typedef struct _ADDRESS {
     ADDRESS_MODE Mode;
 } ADDRESS, *PADDRESS;
 
+typedef struct _ADDRESS64 {
+    DWORD64        Offset;
+    WORD           Segment;
+    ADDRESS_MODE   Mode;
+} ADDRESS64, *LPADDRESS64;
+
 typedef struct _KDHELP {
   DWORD Thread;
   DWORD ThCallbackStack;
@@ -245,6 +251,18 @@ typedef struct _KDHELP {
   DWORD KeUserCallbackDispatcher;
   DWORD SystemRangeStart;
 } KDHELP, *PKDHELP;
+
+typedef struct _KDHELP64 {
+    DWORD64 Thread;
+    DWORD   ThCallbackStack;
+    DWORD   ThCallbackBStore;
+    DWORD   NextCallback;
+    DWORD   FramePointer;
+    DWORD64 KiCallUserMode;
+    DWORD64 KeUserCallbackDispatcher;
+    DWORD64 SystemRangeStart;
+    DWORD64 Reserved[8];
+} KDHELP64, *PKDHELP64;
 
 typedef struct _STACKFRAME {
   ADDRESS AddrPC;
@@ -258,6 +276,20 @@ typedef struct _STACKFRAME {
   DWORD     Reserved[3];
   KDHELP  KdHelp;
 } STACKFRAME, *LPSTACKFRAME;
+
+typedef struct _STACKFRAME64 {
+    ADDRESS64 AddrPC;
+    ADDRESS64 AddrReturn;
+    ADDRESS64 AddrFrame;
+    ADDRESS64 AddrStack;
+    ADDRESS64 AddrBStore;
+    PVOID     FuncTableEntry;
+    DWORD64   Params[4];
+    BOOL      Far;
+    BOOL      Virtual;
+    DWORD64   Reserved[3];
+    KDHELP64  KdHelp;
+} STACKFRAME64, *LPSTACKFRAME64;
 
 typedef struct _SOURCEFILE {
     DWORD64                     ModBase;
@@ -398,15 +430,31 @@ typedef BOOL (CALLBACK *PREAD_PROCESS_MEMORY_ROUTINE)(
   DWORD nSize, PDWORD lpNumberOfBytesRead
 );
 
+typedef BOOL (CALLBACK *PREAD_PROCESS_MEMORY_ROUTINE64)(
+  HANDLE  hProcess, DWORD64 lpBaseAddress, PVOID lpBuffer,
+  DWORD nSize, LPDWORD lpNumberOfBytesRead
+);
+
 typedef PVOID (CALLBACK *PFUNCTION_TABLE_ACCESS_ROUTINE)(
   HANDLE hProcess, DWORD AddrBase
+);
+
+typedef PVOID (CALLBACK *PFUNCTION_TABLE_ACCESS_ROUTINE64)(
+  HANDLE hProcess, DWORD64 AddrBase
 );
 
 typedef DWORD (CALLBACK *PGET_MODULE_BASE_ROUTINE)(
   HANDLE hProcess, DWORD ReturnAddress);
 
+typedef DWORD (CALLBACK *PGET_MODULE_BASE_ROUTINE64)(
+  HANDLE hProcess, DWORD64 ReturnAddress);
+
 typedef DWORD (CALLBACK *PTRANSLATE_ADDRESS_ROUTINE)(
   HANDLE hProcess, HANDLE hThread, PADDRESS lpaddr
+);
+
+typedef DWORD (CALLBACK *PTRANSLATE_ADDRESS_ROUTINE64)(
+  HANDLE hProcess, HANDLE hThread, LPADDRESS64 lpaddr
 );
 
 /***********************************************************************
@@ -540,6 +588,14 @@ BOOL WINAPI StackWalk(
   PFUNCTION_TABLE_ACCESS_ROUTINE FunctionTableAccessRoutine,
   PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,
   PTRANSLATE_ADDRESS_ROUTINE TranslateAddress
+);
+BOOL WINAPI StackWalk64(
+  DWORD MachineType, HANDLE hProcess, HANDLE hThread,
+  LPSTACKFRAME64 StackFrame, PVOID ContextRecord,
+  PREAD_PROCESS_MEMORY_ROUTINE64 ReadMemoryRoutine,
+  PFUNCTION_TABLE_ACCESS_ROUTINE64 FunctionTableAccessRoutine,
+  PGET_MODULE_BASE_ROUTINE64 GetModuleBaseRoutine,
+  PTRANSLATE_ADDRESS_ROUTINE64 TranslateAddress
 );
 BOOL WINAPI SymCleanup(
   HANDLE hProcess
