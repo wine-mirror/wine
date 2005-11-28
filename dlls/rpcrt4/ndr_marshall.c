@@ -286,17 +286,27 @@ PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pForm
   return pFormat+4;
 }
 
-PFORMAT_STRING ComputeConformance(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pMemory,
-                                  PFORMAT_STRING pFormat, ULONG_PTR def)
+static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
+{
+  pStubMsg->ActualCount = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
+  pStubMsg->Buffer += 4;
+  TRACE("unmarshalled variance is %ld\n", pStubMsg->ActualCount);
+  return pFormat+4;
+}
+
+PFORMAT_STRING ComputeConformanceOrVariance(
+    MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pMemory,
+    PFORMAT_STRING pFormat, ULONG_PTR def, ULONG *pCount)
 {
   BYTE dtype = pFormat[0] & 0xf;
   short ofs = *(short *)&pFormat[2];
   LPVOID ptr = NULL;
   DWORD data = 0;
 
+  /* FIXME: is this correct? */
   if (pFormat[0] == 0xff) {
     /* null descriptor */
-    pStubMsg->MaxCount = def;
+    *pCount = def;
     goto finish_conf;
   }
 
@@ -315,14 +325,14 @@ PFORMAT_STRING ComputeConformance(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pM
       ptr = pStubMsg->StackTop + ofs;
     }
     else {
-      /* -Os mode, MaxCount is already set */
+      /* -Os mode, *pCount is already set */
       goto finish_conf;
     }
     break;
   case RPC_FC_CONSTANT_CONFORMANCE:
     data = ofs | ((DWORD)pFormat[1] << 16);
     TRACE("constant conformance, val=%ld\n", data);
-    pStubMsg->MaxCount = data;
+    *pCount = data;
     goto finish_conf;
   case RPC_FC_TOP_LEVEL_MULTID_CONFORMANCE:
     FIXME("toplevel multidimensional conformance, ofs=%d\n", ofs);
@@ -376,7 +386,7 @@ PFORMAT_STRING ComputeConformance(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pM
 done_conf_grab:
   switch (pFormat[1]) {
   case 0: /* no op */
-    pStubMsg->MaxCount = data;
+    *pCount = data;
     break;
   case RPC_FC_DEREFERENCE:
     /* already handled */
@@ -387,7 +397,7 @@ done_conf_grab:
   }
 
 finish_conf:
-  TRACE("resulting conformance is %ld\n", pStubMsg->MaxCount);
+  TRACE("resulting conformance is %ld\n", *pCount);
   return pFormat+4;
 }
 
