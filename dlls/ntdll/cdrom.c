@@ -1031,6 +1031,7 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
  *		CDROM_Verify
  *  Implements: IOCTL_STORAGE_CHECK_VERIFY
  *              IOCTL_CDROM_CHECK_VERIFY
+ *              IOCTL_DISK_CHECK_VERIFY
  *
  */
 static NTSTATUS CDROM_Verify(int dev, int fd)
@@ -2032,6 +2033,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
     {
     case IOCTL_STORAGE_CHECK_VERIFY:
     case IOCTL_CDROM_CHECK_VERIFY:
+    case IOCTL_DISK_CHECK_VERIFY:
         sz = 0;
 	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
