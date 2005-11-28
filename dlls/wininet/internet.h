@@ -164,7 +164,8 @@ typedef struct
 typedef struct
 {
     WININETHANDLEHEADER hdr;
-    LPWSTR  lpszServerName;
+    LPWSTR  lpszHostName; /* the final destination of the request */
+    LPWSTR  lpszServerName; /* the name of the server we directly connect to */
     LPWSTR  lpszUserName;
     INTERNET_PORT nServerPort;
     struct sockaddr_in socketAddress;

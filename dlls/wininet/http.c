@@ -933,15 +933,15 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
     if( !lpwhr->lpszPath )
         lpwhr->lpszPath = (LPWSTR)szNul;
     TRACE("server='%s' path='%s'\n",
-          debugstr_w(lpwhs->lpszServerName), debugstr_w(lpwhr->lpszPath));
+          debugstr_w(lpwhs->lpszHostName), debugstr_w(lpwhr->lpszPath));
     /* for constant 15 see above */
-    len = strlenW(lpwhs->lpszServerName) + strlenW(lpwhr->lpszPath) + 15;
+    len = strlenW(lpwhs->lpszHostName) + strlenW(lpwhr->lpszPath) + 15;
     url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
 
     if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
         UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
 
-    sprintfW(url, szFormat2, lpwhs->lpszServerName, lpwhs->nServerPort);
+    sprintfW(url, szFormat2, lpwhs->lpszHostName, lpwhs->nServerPort);
 
     if( lpwhr->lpszPath[0] != '/' )
         strcatW( url, szSlash );
@@ -949,7 +949,8 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
     if(lpwhr->lpszPath != szNul)
         HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
     lpwhr->lpszPath = url;
-    /* FIXME: Do I have to free lpwhs->lpszServerName here ? */
+
+    HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
     lpwhs->lpszServerName = WININET_strdupW(UrlComponents.lpszHostName);
     lpwhs->nServerPort = UrlComponents.nPort;
 
@@ -1058,7 +1059,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
             HTTP_ProcessHeader(lpwhr, g_szHost, UrlComponents.lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
     }
     else
-        HTTP_ProcessHeader(lpwhr, g_szHost, lpwhs->lpszServerName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
+        HTTP_ProcessHeader(lpwhr, g_szHost, lpwhs->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
 
     if (lpwhs->nServerPort == INTERNET_INVALID_PORT_NUMBER)
         lpwhs->nServerPort = (dwFlags & INTERNET_FLAG_SECURE ?
@@ -1843,6 +1844,8 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
                            HTTP_ADDHDR_FLAG_ADD_IF_NEW);
 #endif
         
+        HeapFree(GetProcessHeap(), 0, lpwhs->lpszHostName);
+        lpwhs->lpszHostName = WININET_strdupW(hostName);
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
         lpwhs->lpszServerName = WININET_strdupW(hostName);
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
@@ -2125,7 +2128,10 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
             FIXME("Proxy bypass is ignored.\n");
     }
     if (NULL != lpszServerName)
+    {
         lpwhs->lpszServerName = WININET_strdupW(lpszServerName);
+        lpwhs->lpszHostName = WININET_strdupW(lpszServerName);
+    }
     if (NULL != lpszUserName)
         lpwhs->lpszUserName = WININET_strdupW(lpszUserName);
     lpwhs->nServerPort = nServerPort;
@@ -2843,6 +2849,7 @@ static void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr)
 
     TRACE("%p\n", lpwhs);
 
+    HeapFree(GetProcessHeap(), 0, lpwhs->lpszHostName);
     HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
     HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
     HeapFree(GetProcessHeap(), 0, lpwhs);
