@@ -282,6 +282,11 @@ unsigned char *WINAPI NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char 
     /* FIXME: raise exception? */
   }
 
+  stubmsg->BufferLength = stubmsg->RpcMsg->BufferLength;
+  stubmsg->BufferStart = stubmsg->RpcMsg->Buffer;
+  stubmsg->BufferEnd = stubmsg->BufferStart + stubmsg->BufferLength;
+  stubmsg->Buffer = stubmsg->BufferStart;
+
   /* FIXME: is this the right return value? */
   return NULL;
 }
