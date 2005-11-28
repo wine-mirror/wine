@@ -898,10 +898,10 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
     UrlComponents.dwHostNameLength = MAXHOSTNAME;
 
     if( CSTR_EQUAL != CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                                 buf,strlenW(szHttp),szHttp,strlenW(szHttp)) )
+                                 hIC->lpszProxy,strlenW(szHttp),szHttp,strlenW(szHttp)) )
         sprintfW(proxy, szFormat1, hIC->lpszProxy);
     else
-	strcpyW(proxy,buf);
+	strcpyW(proxy, hIC->lpszProxy);
     if( !InternetCrackUrlW(proxy, 0, 0, &UrlComponents) )
         return FALSE;
     if( UrlComponents.dwHostNameLength == 0 )
