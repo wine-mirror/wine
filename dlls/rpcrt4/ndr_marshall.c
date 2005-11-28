@@ -1442,6 +1442,9 @@ unsigned char * WINAPI ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_ALIGNM8:
       ALIGN_POINTER(pMemory, 7);
       break;
+    case RPC_FC_STRUCTPAD2:
+      pMemory += 2;
+      break;
     case RPC_FC_EMBEDDED_COMPLEX:
       pMemory += pFormat[1];
       pFormat += 2;
@@ -1505,6 +1508,9 @@ unsigned char * WINAPI ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_ALIGNM8:
       ALIGN_POINTER(pMemory, 7);
       break;
+    case RPC_FC_STRUCTPAD2:
+      pMemory += 2;
+      break;
     case RPC_FC_EMBEDDED_COMPLEX:
       pMemory += pFormat[1];
       pFormat += 2;
@@ -1562,6 +1568,9 @@ unsigned char * WINAPI ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_ALIGNM8:
       ALIGN_POINTER(pMemory, 7);
       break;
+    case RPC_FC_STRUCTPAD2:
+      pMemory += 2;
+      break;
     case RPC_FC_EMBEDDED_COMPLEX:
       pMemory += pFormat[1];
       pFormat += 2;
@@ -1615,6 +1624,9 @@ unsigned char * WINAPI ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_ALIGNM8:
       ALIGN_POINTER(pMemory, 7);
       break;
+    case RPC_FC_STRUCTPAD2:
+      pMemory += 2;
+      break;
     case RPC_FC_EMBEDDED_COMPLEX:
       pMemory += pFormat[1];
       pFormat += 2;
@@ -1661,6 +1673,9 @@ unsigned long WINAPI ComplexStructSize(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     case RPC_FC_ALIGNM8:
       ALIGN_LENGTH(size, 7);
+      break;
+    case RPC_FC_STRUCTPAD2:
+      size += 2;
       break;
     case RPC_FC_EMBEDDED_COMPLEX:
       size += pFormat[1];
