@@ -602,8 +602,8 @@ static void test_GetAttributesOf(void)
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 1, (LPCITEMIDLIST*)&pidlMyComputer, &dwFlags);
     ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(MyComputer) failed! hr = %08lx\n", hr);
-    todo_wine { ok ((dwFlags & ~(DWORD)SFGAO_CANLINK) == dwMyComputerFlags, 
-                    "Wrong MyComputer attributes: %08lx, expected: %08lx\n", dwFlags, dwMyComputerFlags); }
+    ok ((dwFlags & ~(DWORD)SFGAO_CANLINK) == dwMyComputerFlags, 
+                    "Wrong MyComputer attributes: %08lx, expected: %08lx\n", dwFlags, dwMyComputerFlags);
 
     hr = IShellFolder_BindToObject(psfDesktop, pidlMyComputer, NULL, &IID_IShellFolder, (LPVOID*)&psfMyComputer);
     ok (SUCCEEDED(hr), "Desktop failed to bind to MyComputer object! hr = %08lx\n", hr);
@@ -641,6 +641,9 @@ static void test_SHGetPathFromIDList(void)
     STRRET strret;
     static WCHAR wszTestFile[] = {
         'w','i','n','e','t','e','s','t','.','f','o','o',0 };
+	HRESULT (WINAPI *pSHGetSpecialFolderLocation)(HWND, int, LPITEMIDLIST *);
+	HMODULE hShell32;
+	LPITEMIDLIST pidlPrograms;
 
     if(!pSHGetSpecialFolderPathW) return;
 
@@ -725,6 +728,19 @@ static void test_SHGetPathFromIDList(void)
     IMalloc_Free(ppM, pidlTestFile);
     if (!result) return;
     ok(0 == lstrcmpW(wszFileName, wszPath), "SHGetPathFromIDListW returned incorrect path for file placed on desktop\n");
+
+
+	/* Test if we can get the path from the start menu "program files" PIDL. */
+    hShell32 = GetModuleHandleA("shell32");
+    pSHGetSpecialFolderLocation = (HRESULT(WINAPI*)(HWND,int,LPITEMIDLIST*))GetProcAddress(hShell32, "SHGetSpecialFolderLocation");
+
+    hr = pSHGetSpecialFolderLocation(NULL, CSIDL_PROGRAM_FILES, &pidlPrograms);
+    ok(SUCCEEDED(hr), "SHGetFolderLocation failed: 0x%08lx\n", hr);
+
+    SetLastError(0xdeadbeef);
+    result = SHGetPathFromIDListW(pidlPrograms, wszPath);
+	IMalloc_Free(ppM, pidlPrograms);
+    ok(result, "SHGetPathFromIDList failed\n");
 }
 
 static void test_EnumObjects_and_CompareIDs(void)
