@@ -18,10 +18,82 @@
 
 #include "wine/debug.h"
 #include "shdocvw.h"
+#include "hlink.h"
+#include "exdispid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static ATOM doc_view_atom = 0;
+
+static void navigate_complete(WebBrowser *This)
+{
+    IDispatch *disp, *docdisp = NULL;
+    DISPPARAMS dispparams;
+    VARIANTARG params[2];
+    VARIANT url;
+    HRESULT hres;
+
+    hres = IOleClientSite_QueryInterface(This->client, &IID_IDispatch, (void**)&disp);
+    if(FAILED(hres))
+        return;
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IDispatch, (void**)&docdisp);
+    if(FAILED(hres))
+        FIXME("Could not get IDispatch interface\n");
+
+    dispparams.cArgs = 2;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = params;
+
+    V_VT(params) = (VT_BYREF|VT_VARIANT);
+    V_BYREF(params) = &url;
+
+    V_VT(params+1) = VT_DISPATCH;
+    V_DISPATCH(params+1) = docdisp;
+
+    V_VT(&url) = VT_BSTR;
+    V_BSTR(&url) = This->url;
+
+    IDispatch_Invoke(disp, DISPID_NAVIGATECOMPLETE2, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                     DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    IDispatch_Invoke(disp, DISPID_DOCUMENTCOMPLETE, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                     DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+
+    IDispatch_Release(disp);
+    if(docdisp)
+        IDispatch_Release(docdisp);
+}
+
+static LRESULT navigate2(WebBrowser *This)
+{
+    IHlinkTarget *hlink;
+    HRESULT hres;
+
+    TRACE("(%p)\n", This);
+
+    if(!This->document) {
+        WARN("document == NULL\n");
+        return 0;
+    }
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IHlinkTarget, (void**)&hlink);
+    if(FAILED(hres)) {
+        FIXME("Could not get IHlinkTarget interface\n");
+        return 0;
+    }
+
+    hres = IHlinkTarget_Navigate(hlink, 0, NULL);
+    IHlinkTarget_Release(hlink);
+    if(FAILED(hres)) {
+        FIXME("Navigate failed\n");
+        return 0;
+    }
+
+    navigate_complete(This);
+
+    return 0;
+}
 
 static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -35,6 +107,11 @@ static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         SetPropW(hwnd, wszTHIS, This);
     }else {
         This = GetPropW(hwnd, wszTHIS);
+    }
+
+    switch(msg) {
+    case WB_WM_NAVIGATE2:
+        return navigate2(This);
     }
 
     return DefWindowProcA(hwnd, msg, wParam, lParam);

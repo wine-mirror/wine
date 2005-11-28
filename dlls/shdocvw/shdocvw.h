@@ -91,6 +91,8 @@ typedef struct {
     IOleContainer *container;
     IOleDocumentView *view;
 
+    LPOLESTR url;
+
     /* window context */
 
     HWND iphwnd;
@@ -151,6 +153,8 @@ void WebBrowser_ClientSite_Destroy(WebBrowser*);
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 
 void create_doc_view_hwnd(WebBrowser *This);
+
+#define WB_WM_NAVIGATE2 (WM_USER+100)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 

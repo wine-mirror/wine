@@ -128,6 +128,7 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
         WebBrowser_Events_Destroy(This);
         WebBrowser_ClientSite_Destroy(This);
 
+        SysFreeString(This->url);
         HeapFree(GetProcessHeap(), 0, This);
         SHDOCVW_UnlockModule();
     }
@@ -551,12 +552,16 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
         return hres;
     }
 
+    This->url = SysAllocString(V_BSTR(URL));
+
     hres = IUnknown_QueryInterface(This->document, &IID_IOleObject, (void**)&oleobj);
     if(FAILED(hres))
         return hres;
 
     hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(This));
     IOleObject_Release(oleobj);
+
+    PostMessageW(This->doc_view_hwnd, WB_WM_NAVIGATE2, 0, 0);
 
     return hres;
 }
@@ -783,6 +788,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->ref = 0;
 
     ret->document = NULL;
+    ret->url = NULL;
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
