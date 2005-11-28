@@ -91,8 +91,6 @@ int WINAPI PathCleanupSpec(LPCWSTR,LPWSTR);
 /* DATAOBJECT_InitShellIDList*/
 #define CFSTR_SHELLIDLIST       "Shell IDList Array"      /* CF_IDLIST */
 
-extern UINT cfShellIDList;
-
 typedef struct
 {	UINT cidl;
 	UINT aoffset[1];
@@ -103,13 +101,11 @@ typedef struct
 
 /* DATAOBJECT_InitFileGroupDesc */
 #define CFSTR_FILEDESCRIPTORA   "FileGroupDescriptor"     /* CF_FILEGROUPDESCRIPTORA */
-extern UINT cfFileGroupDesc;
 
 #define CFSTR_FILEDESCRIPTORW   "FileGroupDescriptorW"    /* CF_FILEGROUPDESCRIPTORW */
 
 /* DATAOBJECT_InitFileContents*/
 #define CFSTR_FILECONTENTS      "FileContents"            /* CF_FILECONTENTS */
-extern UINT cfFileContents;
 
 #define CFSTR_FILENAMEA         "FileName"                /* CF_FILENAMEA */
 #define CFSTR_FILENAMEW         "FileNameW"               /* CF_FILENAMEW */
