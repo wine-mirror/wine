@@ -41,6 +41,11 @@ static LDAPMod *nullattrs[] = { NULL };
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+/***********************************************************************
+ *      ldap_addA     (WLDAP32.@)
+ *
+ * See ldap_addW.
+ */
 ULONG ldap_addA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -73,6 +78,25 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_addW     (WLDAP32.@)
+ *
+ * Add entries to a directory tree (asynchronous operation).
+ *
+ * Parameters
+ *  ld      [I] Pointer to an LDAP context.
+ *  dn      [I] DN of the entry to add.
+ *  attrs   [I] Pointer to an array of LDAPModW structures, each
+ *              specifying an attribute and its values to add.
+ *
+ * RETURNS
+ *  Message ID of the add operation.
+ *
+ * NOTES
+ *  Call ldap_result with the message ID to get the result of
+ *  the operation. Cancel the operation by calling ldap_abandon
+ *  with the message ID.
+ */
 ULONG ldap_addW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -111,6 +135,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_add_extA     (WLDAP32.@)
+ *
+ * See ldap_add_extW.
+ */
 ULONG ldap_add_extA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[],
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls, ULONG *message )
 {
@@ -156,6 +185,29 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_add_extW     (WLDAP32.@)
+ *
+ * Add entries to a directory tree (asynchronous operation).
+ *
+ * Parameters
+ *  ld          [I] Pointer to an LDAP context.
+ *  dn          [I] DN of the entry to add.
+ *  attrs       [I] Pointer to an array of LDAPModW structures, each
+ *                  specifying an attribute and its values to add.
+ *  serverctrls [I] Array of LDAP server controls.
+ *  clientctrls [I] Array of LDAP client controls.
+ *  message     [O] Message ID of the add operation.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_result with the message ID to get the result of
+ *  the operation. The serverctrls and clientctrls parameters are
+ *  optional and should be set to NULL if not used.
+ */
 ULONG ldap_add_extW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[],
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls, ULONG *message )
 {
@@ -203,6 +255,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_add_ext_sA     (WLDAP32.@)
+ *
+ * See ldap_add_ext_sW.
+ */
 ULONG ldap_add_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[],
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls )
 {
@@ -248,6 +305,27 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_add_ext_sW     (WLDAP32.@)
+ *
+ * Add entries to a directory tree (synchronous operation).
+ *
+ * Parameters
+ *  ld          [I] Pointer to an LDAP context.
+ *  dn          [I] DN of the entry to add.
+ *  attrs       [I] Pointer to an array of LDAPModW structures, each
+ *                  specifying an attribute and its values to add.
+ *  serverctrls [I] Array of LDAP server controls.
+ *  clientctrls [I] Array of LDAP client controls.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  The serverctrls and clientctrls parameters are optional and
+ *  should be set to NULL if not used.
+ */
 ULONG ldap_add_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[],
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls )
 {
@@ -295,6 +373,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_add_sA     (WLDAP32.@)
+ *
+ * See ldap_add_sW.
+ */
 ULONG ldap_add_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -327,6 +410,21 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_add_sW     (WLDAP32.@)
+ *
+ * Add entries to a directory tree (synchronous operation).
+ *
+ * Parameters
+ *  ld      [I] Pointer to an LDAP context.
+ *  dn      [I] DN of the entry to add.
+ *  attrs   [I] Pointer to an array of LDAPModW structures, each
+ *              specifying an attribute and its values to add.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ */
 ULONG ldap_add_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
