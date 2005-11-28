@@ -116,7 +116,7 @@ BOOL WINMM_CheckForMMSystem(void)
         if (h)
         {
             pGetModuleHandle16 = (void*)GetProcAddress(h, "GetModuleHandle16");
-            pLoadLibrary16 = (void*)GetProcAddress(h, "LoadLibrary16");
+            pLoadLibrary16 = (void*)GetProcAddress(h, (LPCSTR)35); /* ordinal for LoadLibrary16 */
             if (pGetModuleHandle16 && pLoadLibrary16 &&
                 (pGetModuleHandle16("MMSYSTEM.DLL") || pLoadLibrary16("MMSYSTEM.DLL")))
                 loaded = 1;
