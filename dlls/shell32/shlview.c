@@ -100,6 +100,9 @@ typedef struct
 	DWORD		dwAspects;
 	DWORD		dwAdvf;
 	IAdviseSink    *pAdvSink;
+        IDropTarget*    pCurDropTarget; /* The sub-item, which is currently dragged over */
+        IDataObject*    pCurDataObject; /* The dragged data-object */
+        LONG            iDragOverItem;  /* Dragged over item's index, iff pCurDropTarget != NULL */
 } IShellViewImpl;
 
 static const IShellViewVtbl svvt;
@@ -189,6 +192,10 @@ IShellView * IShellView_Constructor( IShellFolder * pFolder)
 	sv->pSFParent = pFolder;
 	if(pFolder) IShellFolder_AddRef(pFolder);
 	IShellFolder_QueryInterface(sv->pSFParent, &IID_IShellFolder2, (LPVOID*)&sv->pSF2Parent);
+
+        sv->pCurDropTarget = NULL;
+        sv->pCurDataObject = NULL;
+        sv->iDragOverItem = 0;
 
 	TRACE("(%p)->(%p)\n",sv, pFolder);
 	return (IShellView *) sv;
@@ -671,7 +678,7 @@ static LRESULT ShellView_OnCreate(IShellViewImpl * This)
 	  }
 	}
 
-	if (SUCCEEDED(IShellFolder_CreateViewObject(This->pSFParent, This->hWnd, &IID_IDropTarget, (LPVOID*)&pdt)))
+        if (SUCCEEDED(IUnknown_QueryInterface((IUnknown*)&This->lpVtbl, &IID_IDropTarget, (LPVOID*)&pdt)))
 	{
 	    RegisterDragDrop(This->hWnd, pdt);
 	    IDropTarget_Release(pdt);
@@ -2169,56 +2176,113 @@ static ULONG WINAPI ISVDropTarget_Release( IDropTarget *iface)
 	return IShellFolder_Release((IShellFolder*)This);
 }
 
-static HRESULT WINAPI ISVDropTarget_DragEnter(
-	IDropTarget 	*iface,
-	IDataObject	*pDataObject,
-	DWORD		grfKeyState,
-	POINTL		pt,
-	DWORD		*pdwEffect)
+/******************************************************************************
+ * drag_notify_subitem [Internal]
+ *
+ * Figure out the shellfolder object, which is currently under the mouse cursor
+ * and notify it via the IDropTarget interface.
+ */
+static HRESULT drag_notify_subitem(IShellViewImpl *This, DWORD grfKeyState, POINTL pt,
+    DWORD *pdwEffect)
 {
+    LVHITTESTINFO htinfo;
+    LVITEMA lvItem;
+    LONG lResult;
+    HRESULT hr;
 
-	IShellViewImpl *This = impl_from_IDropTarget(iface);
+    /* Map from global to client coordinates and query the index of the listview-item, which is 
+     * currently under the mouse cursor. */
+    htinfo.pt.x = pt.x;
+    htinfo.pt.y = pt.y;
+    htinfo.flags = LVHT_ONITEM;
+    MapWindowPoints(NULL, This->hWndList, &htinfo.pt, 1);
+    lResult = SendMessageW(This->hWndList, LVM_HITTEST, 0, (LPARAM)&htinfo);
 
-	FIXME("Stub: This=%p, DataObject=%p\n",This,pDataObject);
+    /* If we are still over the previous sub-item, notify it via DragOver and return. */
+    if (This->pCurDropTarget && lResult == This->iDragOverItem)
+    return IDropTarget_DragOver(This->pCurDropTarget, grfKeyState, pt, pdwEffect);
+  
+    /* We've left the previous sub-item, notify it via DragLeave and Release it. */
+    if (This->pCurDropTarget) {
+        IDropTarget_DragLeave(This->pCurDropTarget);
+        IDropTarget_Release(This->pCurDropTarget);
+        This->pCurDropTarget = NULL;
+    }
 
-	return E_NOTIMPL;
+    This->iDragOverItem = lResult;
+    if (lResult == -1) {
+        /* We are not above one of the listview's subitems. Bind to the parent folder's
+         * DropTarget interface. */
+        hr = IShellFolder_QueryInterface(This->pSFParent, &IID_IDropTarget, 
+                                         (LPVOID*)&This->pCurDropTarget);
+    } else {
+        /* Query the relative PIDL of the shellfolder object represented by the currently
+         * dragged over listview-item ... */
+        ZeroMemory(&lvItem, sizeof(lvItem));
+        lvItem.mask = LVIF_PARAM;
+        lvItem.iItem = lResult;
+        ListView_GetItemA(This->hWndList, &lvItem);
+
+        /* ... and bind pCurDropTarget to this folder's IDropTarget interface */
+        hr = IShellFolder_BindToObject(This->pSFParent, (LPITEMIDLIST)lvItem.lParam, NULL, 
+                                       &IID_IDropTarget, (LPVOID*)&This->pCurDropTarget);
+    }
+
+    /* If anything failed, pCurDropTarget should be NULL now, which ought to be a save state. */
+    if (FAILED(hr)) 
+        return hr;
+
+    /* Notify the item just entered via DragEnter. */
+    return IDropTarget_DragEnter(This->pCurDropTarget, This->pCurDataObject, grfKeyState, pt, pdwEffect);
 }
 
-static HRESULT WINAPI ISVDropTarget_DragOver(
-	IDropTarget	*iface,
-	DWORD		grfKeyState,
-	POINTL		pt,
-	DWORD		*pdwEffect)
+static HRESULT WINAPI ISVDropTarget_DragEnter(IDropTarget *iface, IDataObject *pDataObject,
+    DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
 {
-	IShellViewImpl *This = impl_from_IDropTarget(iface);
+    IShellViewImpl *This = impl_from_IDropTarget(iface);
 
-	FIXME("Stub: This=%p\n",This);
+    /* Get a hold on the data object for later calls to DragEnter on the sub-folders */
+    This->pCurDataObject = pDataObject;
+    IDataObject_AddRef(pDataObject);
 
-	return E_NOTIMPL;
+    return drag_notify_subitem(This, grfKeyState, pt, pdwEffect);
 }
 
-static HRESULT WINAPI ISVDropTarget_DragLeave(
-	IDropTarget	*iface)
+static HRESULT WINAPI ISVDropTarget_DragOver(IDropTarget *iface, DWORD grfKeyState, POINTL pt,
+    DWORD *pdwEffect)
 {
-	IShellViewImpl *This = impl_from_IDropTarget(iface);
-
-	FIXME("Stub: This=%p\n",This);
-
-	return E_NOTIMPL;
+    IShellViewImpl *This = impl_from_IDropTarget(iface);
+    return drag_notify_subitem(This, grfKeyState, pt, pdwEffect);
 }
 
-static HRESULT WINAPI ISVDropTarget_Drop(
-	IDropTarget	*iface,
-	IDataObject*	pDataObject,
-	DWORD		grfKeyState,
-	POINTL		pt,
-	DWORD		*pdwEffect)
+static HRESULT WINAPI ISVDropTarget_DragLeave(IDropTarget *iface) {
+    IShellViewImpl *This = impl_from_IDropTarget(iface);
+
+    IDropTarget_DragLeave(This->pCurDropTarget);
+
+    IDropTarget_Release(This->pCurDropTarget);
+    IDataObject_Release(This->pCurDataObject);
+    This->pCurDataObject = NULL;
+    This->pCurDropTarget = NULL;
+    This->iDragOverItem = 0;
+        
+    return S_OK;
+}
+
+static HRESULT WINAPI ISVDropTarget_Drop(IDropTarget *iface, IDataObject* pDataObject, 
+    DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
 {
-	IShellViewImpl *This = impl_from_IDropTarget(iface);
+    IShellViewImpl *This = impl_from_IDropTarget(iface);
 
-	FIXME("Stub: This=%p\n",This);
+    IDropTarget_Drop(This->pCurDropTarget, pDataObject, grfKeyState, pt, pdwEffect);
 
-	return E_NOTIMPL;
+    IDropTarget_Release(This->pCurDropTarget);
+    IDataObject_Release(This->pCurDataObject);
+    This->pCurDataObject = NULL;
+    This->pCurDropTarget = NULL;
+    This->iDragOverItem = 0;
+
+    return S_OK;
 }
 
 static const IDropTargetVtbl dtvt =
