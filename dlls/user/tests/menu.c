@@ -277,9 +277,7 @@ static void test_menu_add_string( void )
     string[0] = 0;
     GetMenuItemInfo( hmenu, 0, TRUE, &info );
 
-    todo_wine {
     ok( !strcmp( string, "blah" ), "menu item name differed\n");
-    }
 
     DestroyMenu( hmenu );
 }

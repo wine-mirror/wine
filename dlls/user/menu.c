@@ -4230,10 +4230,10 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 	menu->fType &= ~MENU_ITEM_TYPE(menu->fType);
 	menu->fType |= MENU_ITEM_TYPE(lpmii->fType);
 
-	menu->text = lpmii->dwTypeData;
-
-       if (IS_STRING_ITEM(menu->fType))
-           set_menu_item_text( menu, lpmii->dwTypeData, unicode );
+        if (IS_STRING_ITEM(menu->fType))
+            set_menu_item_text( menu, lpmii->dwTypeData, unicode );
+        else
+            menu->text = lpmii->dwTypeData;
     }
 
     if (lpmii->fMask & MIIM_FTYPE ) {
@@ -4244,8 +4244,11 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 	}
 	menu->fType &= ~MENU_ITEM_TYPE(menu->fType);
 	menu->fType |= MENU_ITEM_TYPE(lpmii->fType);
-        if ( IS_STRING_ITEM(menu->fType) && !menu->text )
-            menu->fType |= MF_SEPARATOR;
+
+        if (IS_STRING_ITEM(menu->fType))
+            set_menu_item_text( menu, lpmii->dwTypeData, unicode );
+        else
+            menu->text = lpmii->dwTypeData;
     }
 
     if (lpmii->fMask & MIIM_STRING ) {
