@@ -19,4 +19,5 @@
 #include "windef.h"
 #include "msvidc32_private.h"
 
+#include "msvidc32_De.rc"
 #include "msvidc32_En.rc"
