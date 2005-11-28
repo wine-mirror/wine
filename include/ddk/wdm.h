@@ -831,4 +831,15 @@ typedef struct _KUSER_SHARED_DATA {
 #define KernelMode 0
 #define UserMode   1
 
+/* directory object access rights */
+#define DIRECTORY_QUERY                 0x0001
+#define DIRECTORY_TRAVERSE              0x0002
+#define DIRECTORY_CREATE_OBJECT         0x0004
+#define DIRECTORY_CREATE_SUBDIRECTORY   0x0008
+#define DIRECTORY_ALL_ACCESS            (STANDARD_RIGHTS_REQUIRED | 0xF)
+
+/* symbolic link access rights */
+#define SYMBOLIC_LINK_QUERY             0x0001
+#define SYMBOLIC_LINK_ALL_ACCESS        (STANDARD_RIGHTS_REQUIRED | 0x1)
+
 #endif
