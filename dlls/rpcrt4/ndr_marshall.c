@@ -1956,7 +1956,35 @@ unsigned char* WINAPI NdrConformantVaryingArrayMarshall( PMIDL_STUB_MESSAGE pStu
                                                          unsigned char* pMemory,
                                                          PFORMAT_STRING pFormat )
 {
-    FIXME( "stub\n" );
+    DWORD esize = *(const WORD*)(pFormat+2);
+
+    TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
+
+    if (pFormat[0] != RPC_FC_CVARRAY)
+    {
+        ERR("invalid format type %x\n", pFormat[0]);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return NULL;
+    }
+
+    pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
+    pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
+
+    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->MaxCount);
+    pStubMsg->Buffer += 4;
+    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->Offset);
+    pStubMsg->Buffer += 4;
+    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->ActualCount);
+    pStubMsg->Buffer += 4;
+
+    memcpy(pStubMsg->Buffer, pMemory + pStubMsg->Offset, pStubMsg->ActualCount*esize);
+    pStubMsg->BufferMark = pStubMsg->Buffer;
+    pStubMsg->Buffer += pStubMsg->ActualCount*esize;
+
+    EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
+
+    STD_OVERFLOW_CHECK(pStubMsg);
+
     return NULL;
 }
 
@@ -1969,7 +1997,29 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
                                                            PFORMAT_STRING pFormat,
                                                            unsigned char fMustAlloc )
 {
-    FIXME( "stub\n" );
+    DWORD offset;
+    DWORD esize = *(const WORD*)(pFormat+2);
+
+    TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
+
+    if (pFormat[0] != RPC_FC_CVARRAY)
+    {
+        ERR("invalid format type %x\n", pFormat[0]);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return NULL;
+    }
+    pFormat = ReadConformance(pStubMsg, pFormat);
+    offset = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
+    pStubMsg->Buffer += 4;
+    pFormat = ReadVariance(pStubMsg, pFormat);
+
+    if (!*ppMemory || fMustAlloc)
+        *ppMemory = NdrAllocate(pStubMsg, pStubMsg->MaxCount * esize);
+    memcpy(*ppMemory + offset, pStubMsg->Buffer, pStubMsg->ActualCount * esize);
+    pStubMsg->Buffer += pStubMsg->ActualCount * esize;
+
+    EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
+
     return NULL;
 }
 
@@ -1991,7 +2041,26 @@ void WINAPI NdrConformantVaryingArrayFree( PMIDL_STUB_MESSAGE pStubMsg,
 void WINAPI NdrConformantVaryingArrayBufferSize( PMIDL_STUB_MESSAGE pStubMsg,
                                                  unsigned char* pMemory, PFORMAT_STRING pFormat )
 {
-    FIXME( "stub\n" );
+    DWORD esize = *(const WORD*)(pFormat+2);
+
+    TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
+
+    if (pFormat[0] != RPC_FC_CVARRAY)
+    {
+        ERR("invalid format type %x\n", pFormat[0]);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return;
+    }
+
+    /* compute size */
+    pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
+    /* compute length */
+    pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
+
+    /* conformance + offset + variance + array */
+    pStubMsg->BufferLength += 3*sizeof(DWORD) + pStubMsg->ActualCount*esize;
+
+    EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
 
 
