@@ -104,11 +104,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define NDR_TABLE_SIZE 128
 #define NDR_TABLE_MASK 127
 
+static unsigned char *WINAPI NdrBaseTypeMarshall(PMIDL_STUB_MESSAGE, unsigned char *, PFORMAT_STRING);
+static unsigned char *WINAPI NdrBaseTypeUnmarshall(PMIDL_STUB_MESSAGE, unsigned char **, PFORMAT_STRING, unsigned char);
+static void WINAPI NdrBaseTypeBufferSize(PMIDL_STUB_MESSAGE, unsigned char *, PFORMAT_STRING);
+static void WINAPI NdrBaseTypeFree(PMIDL_STUB_MESSAGE, unsigned char *, PFORMAT_STRING);
+static unsigned long WINAPI NdrBaseTypeMemorySize(PMIDL_STUB_MESSAGE, PFORMAT_STRING);
+
 NDR_MARSHALL NdrMarshaller[NDR_TABLE_SIZE] = {
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  /* 0x10 */
   0,
+  NdrBaseTypeMarshall, NdrBaseTypeMarshall, NdrBaseTypeMarshall,
+  NdrBaseTypeMarshall, NdrBaseTypeMarshall, NdrBaseTypeMarshall, NdrBaseTypeMarshall,
+  NdrBaseTypeMarshall, NdrBaseTypeMarshall, NdrBaseTypeMarshall, NdrBaseTypeMarshall,
+  NdrBaseTypeMarshall, NdrBaseTypeMarshall, NdrBaseTypeMarshall, NdrBaseTypeMarshall,
+  /* 0x10 */
+  NdrBaseTypeMarshall,
   /* 0x11 */
   NdrPointerMarshall, NdrPointerMarshall,
   NdrPointerMarshall, NdrPointerMarshall,
@@ -139,10 +148,13 @@ NDR_MARSHALL NdrMarshaller[NDR_TABLE_SIZE] = {
   NdrUserMarshalMarshall
 };
 NDR_UNMARSHALL NdrUnmarshaller[NDR_TABLE_SIZE] = {
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  /* 0x10 */
   0,
+  NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall,
+  NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall,
+  NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall,
+  NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall,
+  /* 0x10 */
+  NdrBaseTypeUnmarshall,
   /* 0x11 */
   NdrPointerUnmarshall, NdrPointerUnmarshall,
   NdrPointerUnmarshall, NdrPointerUnmarshall,
@@ -173,10 +185,13 @@ NDR_UNMARSHALL NdrUnmarshaller[NDR_TABLE_SIZE] = {
   NdrUserMarshalUnmarshall
 };
 NDR_BUFFERSIZE NdrBufferSizer[NDR_TABLE_SIZE] = {
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  /* 0x10 */
   0,
+  NdrBaseTypeBufferSize, NdrBaseTypeBufferSize, NdrBaseTypeBufferSize,
+  NdrBaseTypeBufferSize, NdrBaseTypeBufferSize, NdrBaseTypeBufferSize, NdrBaseTypeBufferSize,
+  NdrBaseTypeBufferSize, NdrBaseTypeBufferSize, NdrBaseTypeBufferSize, NdrBaseTypeBufferSize,
+  NdrBaseTypeBufferSize, NdrBaseTypeBufferSize, NdrBaseTypeBufferSize, NdrBaseTypeBufferSize,
+  /* 0x10 */
+  NdrBaseTypeBufferSize,
   /* 0x11 */
   NdrPointerBufferSize, NdrPointerBufferSize,
   NdrPointerBufferSize, NdrPointerBufferSize,
@@ -207,10 +222,13 @@ NDR_BUFFERSIZE NdrBufferSizer[NDR_TABLE_SIZE] = {
   NdrUserMarshalBufferSize
 };
 NDR_MEMORYSIZE NdrMemorySizer[NDR_TABLE_SIZE] = {
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  /* 0x10 */
   0,
+  NdrBaseTypeMemorySize, NdrBaseTypeMemorySize, NdrBaseTypeMemorySize,
+  NdrBaseTypeMemorySize, NdrBaseTypeMemorySize, NdrBaseTypeMemorySize, NdrBaseTypeMemorySize,
+  NdrBaseTypeMemorySize, NdrBaseTypeMemorySize, NdrBaseTypeMemorySize, NdrBaseTypeMemorySize,
+  NdrBaseTypeMemorySize, NdrBaseTypeMemorySize, NdrBaseTypeMemorySize, NdrBaseTypeMemorySize,
+  /* 0x10 */
+  NdrBaseTypeMemorySize,
   /* 0x11 */
   NdrPointerMemorySize, NdrPointerMemorySize,
   NdrPointerMemorySize, NdrPointerMemorySize,
@@ -234,10 +252,13 @@ NDR_MEMORYSIZE NdrMemorySizer[NDR_TABLE_SIZE] = {
   NdrUserMarshalMemorySize
 };
 NDR_FREE NdrFreer[NDR_TABLE_SIZE] = {
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  /* 0x10 */
   0,
+  NdrBaseTypeFree, NdrBaseTypeFree, NdrBaseTypeFree,
+  NdrBaseTypeFree, NdrBaseTypeFree, NdrBaseTypeFree, NdrBaseTypeFree,
+  NdrBaseTypeFree, NdrBaseTypeFree, NdrBaseTypeFree, NdrBaseTypeFree,
+  NdrBaseTypeFree, NdrBaseTypeFree, NdrBaseTypeFree, NdrBaseTypeFree,
+  /* 0x10 */
+  NdrBaseTypeFree,
   /* 0x11 */
   NdrPointerFree, NdrPointerFree,
   NdrPointerFree, NdrPointerFree,
@@ -2666,6 +2687,242 @@ void WINAPI NdrXmitOrRepAsFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     FIXME("stub\n");
+}
+
+/***********************************************************************
+ *           NdrBaseTypeMarshall [internal]
+ */
+static unsigned char *WINAPI NdrBaseTypeMarshall(
+    PMIDL_STUB_MESSAGE pStubMsg,
+    unsigned char *pMemory,
+    PFORMAT_STRING pFormat)
+{
+    TRACE("pStubMsg %p, pMemory %p, type 0x%02x\n", pStubMsg, pMemory, *pFormat);
+
+    switch(*pFormat)
+    {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+        *(UCHAR *)pStubMsg->Buffer = *(UCHAR *)pMemory;
+        pStubMsg->Buffer += sizeof(UCHAR);
+        TRACE("value: 0x%02x\n", *(UCHAR *)pMemory);
+        break;
+    case RPC_FC_WCHAR:
+    case RPC_FC_SHORT:
+    case RPC_FC_USHORT:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT) - 1);
+        *(USHORT *)pStubMsg->Buffer = *(USHORT *)pMemory;
+        pStubMsg->Buffer += sizeof(USHORT);
+        TRACE("value: 0x%04x\n", *(USHORT *)pMemory);
+        break;
+    case RPC_FC_LONG:
+    case RPC_FC_ULONG:
+    case RPC_FC_ERROR_STATUS_T:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG) - 1);
+        *(ULONG *)pStubMsg->Buffer = *(ULONG *)pMemory;
+        pStubMsg->Buffer += sizeof(ULONG);
+        TRACE("value: 0x%08lx\n", *(ULONG *)pMemory);
+        break;
+    case RPC_FC_FLOAT:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(float) - 1);
+        *(float *)pStubMsg->Buffer = *(float *)pMemory;
+        pStubMsg->Buffer += sizeof(float);
+        break;
+    case RPC_FC_DOUBLE:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(double) - 1);
+        *(double *)pStubMsg->Buffer = *(double *)pMemory;
+        pStubMsg->Buffer += sizeof(double);
+        break;
+    case RPC_FC_HYPER:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONGLONG) - 1);
+        *(ULONGLONG *)pStubMsg->Buffer = *(ULONGLONG *)pMemory;
+        pStubMsg->Buffer += sizeof(ULONGLONG);
+        TRACE("value: %s\n", wine_dbgstr_longlong(*(ULONGLONG*)pMemory));
+        break;
+    case RPC_FC_ENUM16:
+    case RPC_FC_ENUM32:
+    default:
+        FIXME("Unhandled base type: 0x%02x\n", *pFormat);
+    }
+
+    STD_OVERFLOW_CHECK(pStubMsg);
+
+    /* FIXME: what is the correct return value? */
+    return NULL;
+}
+
+/***********************************************************************
+ *           NdrBaseTypeUnmarshall [internal]
+ */
+static unsigned char *WINAPI NdrBaseTypeUnmarshall(
+    PMIDL_STUB_MESSAGE pStubMsg,
+    unsigned char **ppMemory,
+    PFORMAT_STRING pFormat,
+    unsigned char fMustAlloc)
+{
+    TRACE("pStubMsg: %p, ppMemory: %p, type: 0x%02x, fMustAlloc: %s\n", pStubMsg, ppMemory, *pFormat, fMustAlloc ? "true" : "false");
+
+    if (fMustAlloc || !*ppMemory)
+        *ppMemory = NdrAllocate(pStubMsg, NdrBaseTypeMemorySize(pStubMsg, pFormat));
+
+    TRACE("*ppMemory: %p\n", *ppMemory);
+
+    switch(*pFormat)
+    {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+        **(UCHAR **)ppMemory = *(UCHAR *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(UCHAR);
+        TRACE("value: 0x%02x\n", **(UCHAR **)ppMemory);
+        break;
+    case RPC_FC_WCHAR:
+    case RPC_FC_SHORT:
+    case RPC_FC_USHORT:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT) - 1);
+        **(USHORT **)ppMemory = *(USHORT *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(USHORT);
+        TRACE("value: 0x%04x\n", **(USHORT **)ppMemory);
+        break;
+    case RPC_FC_LONG:
+    case RPC_FC_ULONG:
+    case RPC_FC_ERROR_STATUS_T:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG) - 1);
+        **(ULONG **)ppMemory = *(ULONG *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(ULONG);
+        TRACE("value: 0x%08lx\n", **(ULONG **)ppMemory);
+        break;
+   case RPC_FC_FLOAT:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(float) - 1);
+        **(float **)ppMemory = *(float *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(float);
+        TRACE("value: %f\n", **(float **)ppMemory);
+        break;
+    case RPC_FC_DOUBLE:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(double) - 1);
+        **(double **)ppMemory = *(double*)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(double);
+        TRACE("value: %f\n", **(double **)ppMemory);
+        break;
+    case RPC_FC_HYPER:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONGLONG) - 1);
+        **(ULONGLONG **)ppMemory = *(ULONGLONG *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(ULONGLONG);
+        TRACE("value: %s\n", wine_dbgstr_longlong(**(ULONGLONG **)ppMemory));
+        break;
+    case RPC_FC_ENUM16:
+    case RPC_FC_ENUM32:
+    default:
+        FIXME("Unhandled base type: 0x%02x\n", *pFormat);
+    }
+
+    /* FIXME: what is the correct return value? */
+
+    return NULL;
+}
+
+/***********************************************************************
+ *           NdrBaseTypeBufferSize [internal]
+ */
+static void WINAPI NdrBaseTypeBufferSize(
+    PMIDL_STUB_MESSAGE pStubMsg,
+    unsigned char *pMemory,
+    PFORMAT_STRING pFormat)
+{
+    TRACE("pStubMsg %p, pMemory %p, type 0x%02x\n", pStubMsg, pMemory, *pFormat);
+
+    switch(*pFormat)
+    {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+        pStubMsg->BufferLength += sizeof(UCHAR);
+        break;
+    case RPC_FC_WCHAR:
+    case RPC_FC_SHORT:
+    case RPC_FC_USHORT:
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(USHORT) - 1);
+        pStubMsg->BufferLength += sizeof(USHORT);
+        break;
+    case RPC_FC_LONG:
+    case RPC_FC_ULONG:
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(ULONG) - 1);
+        pStubMsg->BufferLength += sizeof(ULONG);
+        break;
+    case RPC_FC_FLOAT:
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(float) - 1);
+        pStubMsg->BufferLength += sizeof(float);
+        break;
+    case RPC_FC_DOUBLE:
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(double) - 1);
+        pStubMsg->BufferLength += sizeof(double);
+        break;
+    case RPC_FC_HYPER:
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(ULONGLONG) - 1);
+        pStubMsg->BufferLength += sizeof(ULONGLONG);
+        break;
+    case RPC_FC_ERROR_STATUS_T:
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(error_status_t) - 1);
+        pStubMsg->BufferLength += sizeof(error_status_t);
+        break;
+    case RPC_FC_ENUM16:
+    case RPC_FC_ENUM32:
+    default:
+        FIXME("Unhandled base type: 0x%02x\n", *pFormat);
+    }
+}
+
+/***********************************************************************
+ *           NdrBaseTypeMemorySize [internal]
+ */
+static unsigned long WINAPI NdrBaseTypeMemorySize(
+    PMIDL_STUB_MESSAGE pStubMsg,
+    PFORMAT_STRING pFormat)
+{
+    switch(*pFormat)
+    {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+        return sizeof(UCHAR);
+    case RPC_FC_WCHAR:
+    case RPC_FC_SHORT:
+    case RPC_FC_USHORT:
+        return sizeof(USHORT);
+    case RPC_FC_LONG:
+    case RPC_FC_ULONG:
+        return sizeof(ULONG);
+    case RPC_FC_FLOAT:
+        return sizeof(float);
+    case RPC_FC_DOUBLE:
+        return sizeof(double);
+    case RPC_FC_HYPER:
+        return sizeof(ULONGLONG);
+    case RPC_FC_ERROR_STATUS_T:
+        return sizeof(error_status_t);
+    case RPC_FC_ENUM16:
+    case RPC_FC_ENUM32:
+    default:
+        FIXME("Unhandled base type: 0x%02x\n", *pFormat);
+       return 0;
+    }
+}
+
+/***********************************************************************
+ *           NdrBaseTypeFree [internal]
+ */
+static void WINAPI NdrBaseTypeFree(PMIDL_STUB_MESSAGE pStubMsg,
+                                unsigned char *pMemory,
+                                PFORMAT_STRING pFormat)
+{
+   TRACE("pStubMsg %p pMemory %p type 0x%02x\n", pStubMsg, pMemory, *pFormat);
+
+   /* nothing to do */
 }
 
 /***********************************************************************
