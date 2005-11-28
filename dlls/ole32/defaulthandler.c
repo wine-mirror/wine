@@ -307,8 +307,12 @@ static HRESULT WINAPI DefaultHandler_SetClientSite(
 	    IOleClientSite*    pClientSite)
 {
   DefaultHandler *This = impl_from_IOleObject(iface);
+  HRESULT hr = S_OK;
 
   TRACE("(%p, %p)\n", iface, pClientSite);
+
+  if (This->pOleDelegate)
+    hr = IOleObject_SetClientSite(This->pOleDelegate, pClientSite);
 
   /*
    * Make sure we release the previous client site if there
@@ -370,6 +374,9 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
 	iface,
 	debugstr_w(szContainerApp),
 	debugstr_w(szContainerObj));
+
+  if (This->pOleDelegate)
+    IOleObject_SetHostNames(This->pOleDelegate, szContainerApp, szContainerObj);
 
   /* Be sure to cleanup before re-assinging the strings. */
   HeapFree( GetProcessHeap(), 0, This->containerApp );
@@ -452,10 +459,15 @@ static HRESULT WINAPI DefaultHandler_SetMoniker(
 	    DWORD              dwWhichMoniker,
 	    IMoniker*          pmk)
 {
+  DefaultHandler *This = impl_from_IOleObject(iface);
+
   TRACE("(%p, %ld, %p)\n",
 	iface,
 	dwWhichMoniker,
 	pmk);
+
+  if (This->pOleDelegate)
+    return IOleObject_SetMoniker(This->pOleDelegate, dwWhichMoniker, pmk);
 
   return S_OK;
 }
@@ -478,6 +490,11 @@ static HRESULT WINAPI DefaultHandler_GetMoniker(
   TRACE("(%p, %ld, %ld, %p)\n",
 	iface, dwAssign, dwWhichMoniker, ppmk);
 
+  if (This->pOleDelegate)
+    return IOleObject_GetMoniker(This->pOleDelegate, dwAssign, dwWhichMoniker,
+                                 ppmk);
+
+  /* FIXME: dwWhichMoniker == OLEWHICHMK_CONTAINER only? */
   if (This->clientSite)
   {
     return IOleClientSite_GetMoniker(This->clientSite,
@@ -503,9 +520,14 @@ static HRESULT WINAPI DefaultHandler_InitFromData(
 	    BOOL               fCreation,
 	    DWORD              dwReserved)
 {
+  DefaultHandler *This = impl_from_IOleObject(iface);
+
   TRACE("(%p, %p, %d, %ld)\n",
 	iface, pDataObject, fCreation, dwReserved);
 
+  if (This->pOleDelegate)
+    return IOleObject_InitFromData(This->pOleDelegate, pDataObject, fCreation,
+		                   dwReserved);
   return OLE_E_NOTRUNNING;
 }
 
@@ -521,8 +543,14 @@ static HRESULT WINAPI DefaultHandler_GetClipboardData(
 	    DWORD              dwReserved,
 	    IDataObject**      ppDataObject)
 {
+  DefaultHandler *This = impl_from_IOleObject(iface);
+
   TRACE("(%p, %ld, %p)\n",
 	iface, dwReserved, ppDataObject);
+
+  if (This->pOleDelegate)
+    return IOleObject_GetClipboardData(This->pOleDelegate, dwReserved,
+                                       ppDataObject);
 
   return OLE_E_NOTRUNNING;
 }
@@ -650,8 +678,14 @@ static HRESULT WINAPI DefaultHandler_SetExtent(
 	    DWORD              dwDrawAspect,
 	    SIZEL*             psizel)
 {
+  DefaultHandler *This = impl_from_IOleObject(iface);
+
   TRACE("(%p, %lx, (%ld x %ld))\n", iface,
         dwDrawAspect, psizel->cx, psizel->cy);
+
+  if (This->pOleDelegate)
+    IOleObject_SetExtent(This->pOleDelegate, dwDrawAspect, psizel);
+
   return OLE_E_NOTRUNNING;
 }
 
@@ -676,8 +710,10 @@ static HRESULT WINAPI DefaultHandler_GetExtent(
 
   TRACE("(%p, %lx, %p)\n", iface, dwDrawAspect, psizel);
 
-  hres = IUnknown_QueryInterface(This->dataCache, &IID_IViewObject2, (void**)&cacheView);
+  if (This->pOleDelegate)
+    return IOleObject_GetExtent(This->pOleDelegate, dwDrawAspect, psizel);
 
+  hres = IUnknown_QueryInterface(This->dataCache, &IID_IViewObject2, (void**)&cacheView);
   if (FAILED(hres))
     return E_UNEXPECTED;
 
@@ -824,7 +860,7 @@ static HRESULT WINAPI DefaultHandler_GetMiscStatus(
 }
 
 /************************************************************************
- * DefaultHandler_SetExtent (IOleObject)
+ * DefaultHandler_SetColorScheme (IOleObject)
  *
  * This method is meaningless if the server is not running
  *
@@ -834,7 +870,13 @@ static HRESULT WINAPI DefaultHandler_SetColorScheme(
 	    IOleObject*           iface,
 	    struct tagLOGPALETTE* pLogpal)
 {
+  DefaultHandler *This = impl_from_IOleObject(iface);
+
   TRACE("(%p, %p))\n", iface, pLogpal);
+
+  if (This->pOleDelegate)
+    return IOleObject_SetColorScheme(This->pOleDelegate, pLogpal);
+
   return OLE_E_NOTRUNNING;
 }
 
