@@ -443,7 +443,7 @@
 @ stdcall SetICMProfileW(long wstr)
 @ stdcall SetLayout(long long)
 # @ stub SetLayoutWidth
-@ stub SetMagicColors
+@ stdcall SetMagicColors(ptr long long)
 @ stdcall SetMapMode(long long)
 @ stdcall SetMapperFlags(long long)
 @ stdcall SetMetaFileBitsEx(long ptr)

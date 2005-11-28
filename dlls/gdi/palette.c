@@ -908,6 +908,15 @@ VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
 
 }
 
+/*********************************************************************
+ *           SetMagicColors   (GDI.@)
+ */
+BOOL WINAPI SetMagicColors(HDC hdc, ULONG u1, ULONG u2)
+{
+    FIXME("(%p 0x%08lx 0x%08lx): stub\n", hdc, u1, u2);
+    return TRUE;
+}
+
 /**********************************************************************
  * GetICMProfileA [GDI32.@]
  *
