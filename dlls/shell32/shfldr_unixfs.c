@@ -190,13 +190,17 @@ typedef struct _UnixFolder {
     const IPersistPropertyBagVtbl *lpIPersistPropertyBagVtbl;
     const IDropTargetVtbl         *lpIDropTargetVtbl;
     const ISFHelperVtbl           *lpISFHelperVtbl;
-    LONG m_cRef;
-    CHAR *m_pszPath;             /* Target path of the shell folder */
+    LONG         m_cRef;
+    CHAR         *m_pszPath;     /* Target path of the shell folder */
     LPITEMIDLIST m_pidlLocation; /* Location in the shell namespace */
-    DWORD m_dwPathMode;
-    DWORD m_dwAttributes;
-    const CLSID *m_pCLSID;
+    DWORD        m_dwPathMode;
+    DWORD        m_dwAttributes;
+    const CLSID  *m_pCLSID;
+    DWORD        m_dwDropEffectsMask;
 } UnixFolder;
+
+/* Will hold the registered clipboard format identifier for ITEMIDLISTS. */
+static UINT cfShellIDList = 0;
 
 /******************************************************************************
  * UNIXFS_is_rooted_at_desktop [Internal]
@@ -684,6 +688,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_QueryInterface(IShellFolder2 *ifa
         *ppv = STATIC_CAST(ISFHelper, This);
     } else if (IsEqualIID(&IID_IDropTarget, riid)) {
         *ppv = STATIC_CAST(IDropTarget, This);
+        if (!cfShellIDList) 
+            cfShellIDList = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
     } else {
         *ppv = NULL;
         return E_NOINTERFACE;
@@ -1274,23 +1280,23 @@ static const IShellFolder2Vtbl UnixFolder_IShellFolder2_Vtbl = {
     UnixFolder_IShellFolder2_MapColumnToSCID
 };
 
-static HRESULT WINAPI UnixFolder_IPersistFolder3_QueryInterface(IPersistFolder3* This, REFIID riid, 
+static HRESULT WINAPI UnixFolder_IPersistFolder3_QueryInterface(IPersistFolder3* iface, REFIID riid, 
     void** ppvObject)
 {
     return UnixFolder_IShellFolder2_QueryInterface(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder3, This), riid, ppvObject);
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, IPersistFolder3, iface)), riid, ppvObject);
 }
 
-static ULONG WINAPI UnixFolder_IPersistFolder3_AddRef(IPersistFolder3* This)
+static ULONG WINAPI UnixFolder_IPersistFolder3_AddRef(IPersistFolder3* iface)
 {
     return UnixFolder_IShellFolder2_AddRef(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder3, This));
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, IPersistFolder3, iface)));
 }
 
-static ULONG WINAPI UnixFolder_IPersistFolder3_Release(IPersistFolder3* This)
+static ULONG WINAPI UnixFolder_IPersistFolder3_Release(IPersistFolder3* iface)
 {
     return UnixFolder_IShellFolder2_Release(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder3, This));
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, IPersistFolder3, iface)));
 }
 
 static HRESULT WINAPI UnixFolder_IPersistFolder3_GetClassID(IPersistFolder3* iface, CLSID* pClassID)
@@ -1434,31 +1440,30 @@ static const IPersistFolder3Vtbl UnixFolder_IPersistFolder3_Vtbl = {
     UnixFolder_IPersistFolder3_GetFolderTargetInfo
 };
 
-static HRESULT WINAPI UnixFolder_IPersistPropertyBag_QueryInterface(IPersistPropertyBag* This,
-    REFIID riid, void** ppvObject)
+static HRESULT WINAPI UnixFolder_IPersistPropertyBag_QueryInterface(IPersistPropertyBag* iface,
+    REFIID riid, void** ppv)
 {
     return UnixFolder_IShellFolder2_QueryInterface(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistPropertyBag, This), riid, ppvObject);
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, IPersistPropertyBag, iface)), riid, ppv);
 }
 
-static ULONG WINAPI UnixFolder_IPersistPropertyBag_AddRef(IPersistPropertyBag* This)
+static ULONG WINAPI UnixFolder_IPersistPropertyBag_AddRef(IPersistPropertyBag* iface)
 {
     return UnixFolder_IShellFolder2_AddRef(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistPropertyBag, This));
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, IPersistPropertyBag, iface)));
 }
 
-static ULONG WINAPI UnixFolder_IPersistPropertyBag_Release(IPersistPropertyBag* This)
+static ULONG WINAPI UnixFolder_IPersistPropertyBag_Release(IPersistPropertyBag* iface)
 {
     return UnixFolder_IShellFolder2_Release(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistPropertyBag, This));
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, IPersistPropertyBag, iface)));
 }
 
 static HRESULT WINAPI UnixFolder_IPersistPropertyBag_GetClassID(IPersistPropertyBag* iface, 
     CLSID* pClassID)
 {
     return UnixFolder_IPersistFolder3_GetClassID(
-        (IPersistFolder3*)&ADJUST_THIS(UnixFolder, IPersistPropertyBag, iface)->lpIPersistFolder3Vtbl,
-        pClassID);
+        STATIC_CAST(IPersistFolder3, ADJUST_THIS(UnixFolder, IPersistPropertyBag, iface)), pClassID);
 }
 
 static HRESULT WINAPI UnixFolder_IPersistPropertyBag_InitNew(IPersistPropertyBag* iface)
@@ -1521,19 +1526,19 @@ static HRESULT WINAPI UnixFolder_ISFHelper_QueryInterface(ISFHelper* iface, REFI
     void** ppvObject)
 {
     return UnixFolder_IShellFolder2_QueryInterface(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, ISFHelper, iface), riid, ppvObject);
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, ISFHelper, iface)), riid, ppvObject);
 }
 
 static ULONG WINAPI UnixFolder_ISFHelper_AddRef(ISFHelper* iface)
 {
     return UnixFolder_IShellFolder2_AddRef(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, ISFHelper, iface));
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, ISFHelper, iface)));
 }
 
 static ULONG WINAPI UnixFolder_ISFHelper_Release(ISFHelper* iface)
 {
     return UnixFolder_IShellFolder2_Release(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, ISFHelper, iface));
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, ISFHelper, iface)));
 }
 
 static HRESULT WINAPI UnixFolder_ISFHelper_GetUniqueName(ISFHelper* iface, LPSTR lpName, UINT uLen)
@@ -1711,50 +1716,157 @@ static HRESULT WINAPI UnixFolder_IDropTarget_QueryInterface(IDropTarget* iface, 
     void** ppvObject)
 {
     return UnixFolder_IShellFolder2_QueryInterface(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IDropTarget, iface), riid, ppvObject);
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, IDropTarget, iface)), riid, ppvObject);
 }
 
 static ULONG WINAPI UnixFolder_IDropTarget_AddRef(IDropTarget* iface)
 {
     return UnixFolder_IShellFolder2_AddRef(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IDropTarget, iface));
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, IDropTarget, iface)));
 }
 
 static ULONG WINAPI UnixFolder_IDropTarget_Release(IDropTarget* iface)
 {
     return UnixFolder_IShellFolder2_Release(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IDropTarget, iface));
+        STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, IDropTarget, iface)));
 }
+
+#define HIDA_GetPIDLFolder(pida) (LPCITEMIDLIST)(((LPBYTE)pida)+(pida)->aoffset[0])
+#define HIDA_GetPIDLItem(pida, i) (LPCITEMIDLIST)(((LPBYTE)pida)+(pida)->aoffset[i+1])
 
 static HRESULT WINAPI UnixFolder_IDropTarget_DragEnter(IDropTarget *iface, IDataObject *pDataObject,
     DWORD dwKeyState, POINTL pt, DWORD *pdwEffect)
 {
-    FIXME("(iface=%p, pDataObject=%p, dwKeyState=%08lx, pt={.x=%ld, .y=%ld}, pdwEffect=%p) stub\n",
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IDropTarget, iface);
+    FORMATETC format;
+    STGMEDIUM medium; 
+        
+    TRACE("(iface=%p, pDataObject=%p, dwKeyState=%08lx, pt={.x=%ld, .y=%ld}, pdwEffect=%p)\n",
         iface, pDataObject, dwKeyState, pt.x, pt.y, pdwEffect);
 
-    return E_NOTIMPL;
+    if (!pdwEffect || !pDataObject)
+        return E_INVALIDARG;
+  
+    /* Compute a mask of supported drop-effects for this shellfolder object and the given data 
+     * object. Dropping is only supported on folders, which represent filesystem locations. One
+     * can't drop on file objects. And the 'move' drop effect is only supported, if the source
+     * folder is not identical to the target folder. */
+    This->m_dwDropEffectsMask = DROPEFFECT_NONE;
+    InitFormatEtc(format, cfShellIDList, TYMED_HGLOBAL);
+    if ((This->m_dwAttributes & SFGAO_FILESYSTEM) && /* Only drop to filesystem folders */
+        _ILIsFolder(ILFindLastID(This->m_pidlLocation)) && /* Only drop to folders, not to files */
+        SUCCEEDED(IDataObject_GetData(pDataObject, &format, &medium))) /* Only ShellIDList format */
+    {
+        LPIDA pidaShellIDList = GlobalLock(medium.u.hGlobal);
+        This->m_dwDropEffectsMask |= DROPEFFECT_COPY|DROPEFFECT_LINK;
+
+        if (pidaShellIDList) { /* Files can only be moved between two different folders */
+            if (!ILIsEqual(HIDA_GetPIDLFolder(pidaShellIDList), This->m_pidlLocation))
+                This->m_dwDropEffectsMask |= DROPEFFECT_MOVE;
+            GlobalUnlock(medium.u.hGlobal);
+        }
+    }
+
+    *pdwEffect = KeyStateToDropEffect(dwKeyState) & This->m_dwDropEffectsMask;
+    
+    return S_OK;
 }
 
 static HRESULT WINAPI UnixFolder_IDropTarget_DragOver(IDropTarget *iface, DWORD dwKeyState, 
     POINTL pt, DWORD *pdwEffect)
 {
-    FIXME("(iface=%p, dwKeyState=%08lx, pt={.x=%ld, .y=%ld}, pdwEffect=%p) stub\n", iface, 
-        dwKeyState, pt.x, pt.y, pdwEffect);
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IDropTarget, iface);
+    
+    TRACE("(iface=%p, dwKeyState=%08lx, pt={.x=%ld, .y=%ld}, pdwEffect=%p)\n", iface, dwKeyState, 
+        pt.x, pt.y, pdwEffect);
 
-    return E_NOTIMPL;
+    if (!pdwEffect)
+        return E_INVALIDARG;
+
+    *pdwEffect = KeyStateToDropEffect(dwKeyState) & This->m_dwDropEffectsMask;
+    
+    return S_OK;
 }
 
 static HRESULT WINAPI UnixFolder_IDropTarget_DragLeave(IDropTarget *iface) {
-    FIXME("(iface=%p) stub\n", iface);
-    return E_NOTIMPL;
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IDropTarget, iface);
+    
+    TRACE("(iface=%p)\n", iface);
+ 
+    This->m_dwDropEffectsMask = DROPEFFECT_NONE;
+    
+    return S_OK;
 }
 
 static HRESULT WINAPI UnixFolder_IDropTarget_Drop(IDropTarget *iface, IDataObject *pDataObject,
     DWORD dwKeyState, POINTL pt, DWORD *pdwEffect)
 {
-    FIXME("(iface=%p, pDataObject=%p, dwKeyState=%ld, pt={.x=%ld, .y=%ld}, pdwEffect=%p) stub\n",
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IDropTarget, iface);
+    FORMATETC format;
+    STGMEDIUM medium; 
+    HRESULT hr;
+
+    TRACE("(iface=%p, pDataObject=%p, dwKeyState=%ld, pt={.x=%ld, .y=%ld}, pdwEffect=%p) semi-stub\n",
         iface, pDataObject, dwKeyState, pt.x, pt.y, pdwEffect);
+
+    InitFormatEtc(format, cfShellIDList, TYMED_HGLOBAL);
+    hr = IDataObject_GetData(pDataObject, &format, &medium);
+    if (!SUCCEEDED(hr)) 
+        return hr;
+
+    if (medium.tymed == TYMED_HGLOBAL) {
+        IShellFolder *psfSourceFolder, *psfDesktopFolder;
+        LPIDA pidaShellIDList = GlobalLock(medium.u.hGlobal);
+        STRRET strret;
+        UINT i;
+    
+        if (!pidaShellIDList) 
+            return HRESULT_FROM_WIN32(GetLastError());
         
+        hr = SHGetDesktopFolder(&psfDesktopFolder);
+        if (FAILED(hr)) {
+            GlobalUnlock(medium.u.hGlobal);
+            return hr;
+        }
+
+        hr = IShellFolder_BindToObject(psfDesktopFolder, HIDA_GetPIDLFolder(pidaShellIDList), NULL, 
+                                       &IID_IShellFolder, (LPVOID*)&psfSourceFolder);
+        IShellFolder_Release(psfDesktopFolder);
+        if (FAILED(hr)) {
+            GlobalUnlock(medium.u.hGlobal);
+            return hr;
+        }
+
+        for (i = 0; i < pidaShellIDList->cidl; i++) {
+            WCHAR wszSourcePath[MAX_PATH];
+
+            hr = IShellFolder_GetDisplayNameOf(psfSourceFolder, HIDA_GetPIDLItem(pidaShellIDList, i),
+                                               SHGDN_FORPARSING, &strret);
+            if (FAILED(hr)) 
+                break;
+
+            hr = StrRetToBufW(&strret, NULL, wszSourcePath, MAX_PATH);
+            if (FAILED(hr)) 
+                break;
+
+            switch (*pdwEffect) {
+                case DROPEFFECT_MOVE:
+                    FIXME("Move %s to %s!\n", debugstr_w(wszSourcePath), This->m_pszPath);
+                    break;
+                case DROPEFFECT_COPY:
+                    FIXME("Copy %s to %s!\n", debugstr_w(wszSourcePath), This->m_pszPath);
+                    break;
+                case DROPEFFECT_LINK:
+                    FIXME("Link %s from %s!\n", debugstr_w(wszSourcePath), This->m_pszPath);
+                    break;
+            }
+        }
+    
+        IShellFolder_Release(psfSourceFolder);
+        GlobalUnlock(medium.u.hGlobal);
+        return hr;
+    }
+ 
     return E_NOTIMPL;
 }
 
@@ -1808,6 +1920,7 @@ static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, c
         pUnixFolder->m_dwPathMode = IsEqualCLSID(&CLSID_UnixFolder, pCLSID) ? PATHMODE_UNIX : PATHMODE_DOS;
         pUnixFolder->m_dwAttributes = 0;
         pUnixFolder->m_pCLSID = pCLSID;
+        pUnixFolder->m_dwDropEffectsMask = DROPEFFECT_NONE;
 
         UnixFolder_IShellFolder2_AddRef(STATIC_CAST(IShellFolder2, pUnixFolder));
         hr = UnixFolder_IShellFolder2_QueryInterface(STATIC_CAST(IShellFolder2, pUnixFolder), riid, ppv);
