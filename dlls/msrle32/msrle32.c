@@ -58,7 +58,6 @@ inline WORD Intensity(RGBQUAD clr)
 /* utility functions */
 static BOOL    isSupportedDIB(LPCBITMAPINFOHEADER lpbi);
 static BOOL    isSupportedMRLE(LPCBITMAPINFOHEADER lpbi);
-static void    LoadWideString(UINT id, LPWSTR str, INT len);
 static BYTE    MSRLE32_GetNearestPaletteIndex(UINT count, const RGBQUAD *clrs, RGBQUAD clr);
 
 /* compression functions */
@@ -97,14 +96,6 @@ static LRESULT DecompressGetPalette(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 				    LPBITMAPINFOHEADER lpbiOut);
 
 /*****************************************************************************/
-
-static void LoadWideString(UINT id, LPWSTR str, INT len)
-{
-  char szTemp[80];
-
-  LoadStringA(MSRLE32_hModule, id, szTemp, sizeof(szTemp));
-  MultiByteToWideChar(CP_ACP, 0, szTemp, -1, str, len);
-}
 
 static BOOL isSupportedMRLE(LPCBITMAPINFOHEADER lpbi)
 {
@@ -1113,9 +1104,6 @@ static CodecInfo* Open(LPICOPEN icinfo)
 	icinfo->fccHandler, (char*)&icinfo->fccHandler,
 	icinfo->dwVersion,icinfo->dwFlags);
 
-  if (icinfo->fccType != ICTYPE_VIDEO)
-    return NULL;
-
   switch (icinfo->fccHandler) {
   case FOURCC_RLE:
   case FOURCC_RLE4:
@@ -1176,14 +1164,14 @@ static LRESULT GetInfo(CodecInfo *pi, ICINFO *icinfo, DWORD dwSize)
     return 0;
 
   icinfo->dwSize       = sizeof(ICINFO);
-  icinfo->fccType      = streamtypeVIDEO;
+  icinfo->fccType      = ICTYPE_VIDEO;
   icinfo->fccHandler   = (pi != NULL ? pi->fccHandler : FOURCC_MRLE);
   icinfo->dwFlags      = VIDCF_QUALITY | VIDCF_TEMPORAL | VIDCF_CRUNCH | VIDCF_FASTTEMPORALC;
   icinfo->dwVersion    = MSRLE32_VERSION;
   icinfo->dwVersionICM = 0x01040000; /* Version 1.4 build 0 */
 
-  LoadWideString(IDS_NAME, icinfo->szName, sizeof(icinfo->szName));
-  LoadWideString(IDS_DESCRIPTION, icinfo->szDescription, sizeof(icinfo->szDescription));
+  LoadStringW(MSRLE32_hModule, IDS_NAME, icinfo->szName, sizeof(icinfo->szName)/sizeof(WCHAR));
+  LoadStringW(MSRLE32_hModule, IDS_DESCRIPTION, icinfo->szDescription, sizeof(icinfo->szDescription)/sizeof(WCHAR));
 
   return sizeof(ICINFO);
 }
@@ -1796,9 +1784,6 @@ LRESULT CALLBACK MSRLE32_DriverProc(DWORD dwDrvID, HDRVR hDrv, UINT uMsg,
   case DRV_LOAD:
     return DRVCNF_OK;
   case DRV_OPEN:
-    if (lParam2 == 0)
-      return (LRESULT)0xFFFF0000;
-    else
       return (LRESULT)Open((ICOPEN*)lParam2);
   case DRV_CLOSE:
     if (dwDrvID != 0xFFFF0000 && (LPVOID)dwDrvID != NULL)
@@ -1910,7 +1895,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
 
   case DLL_PROCESS_DETACH:
     break;
-  };
+  }
 
   return TRUE;
 }

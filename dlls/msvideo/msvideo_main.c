@@ -139,6 +139,7 @@ static BOOL enum_drivers(DWORD fccType, enum_handler_t handler, void* param)
     {
 	for (s = buf; *s; s += strlen(s) + 1)
 	{
+            TRACE("got %s\n", s);
 	    if (strncasecmp(s, fccTypeStr, 5) || s[9] != '=') continue;
 	    if ((result = handler(s, cnt++, param))) break;
 	}
@@ -349,20 +350,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
 
         hdrv = OpenDriver(codecname, drv32W, (LPARAM)&icopen);
         if (!hdrv) 
-        {
-            if (fccType == streamtypeVIDEO) 
-            {
-		codecname[0] = 'v';
-		codecname[1] = 'i';
-		codecname[2] = 'd';
-		codecname[3] = 'c';
-
-		fccType = ICTYPE_VIDEO;
-                hdrv = OpenDriver(codecname, drv32W, (LPARAM)&icopen);
-	    }
-            if (!hdrv)
-                return 0;
-	}
+            return 0;
     } else {
         /* The driver has been registered at runtime with its name */
         hdrv = OpenDriver(driver->name, NULL, (LPARAM)&icopen);
@@ -767,8 +755,7 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
         if (choose_comp->title)
             SetWindowTextA(hdlg, choose_comp->title);
 
-        LoadStringW((HINSTANCE)GetWindowLongPtrW(hdlg, GWLP_HINSTANCE),
-                    IDS_FULLFRAMES, buf, 128);
+        LoadStringW(MSVFW32_hModule, IDS_FULLFRAMES, buf, 128);
         SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_ADDSTRING, 0, (LPARAM)buf);
 
         enum_compressors(GetDlgItem(hdlg, IDC_COMP_LIST));
