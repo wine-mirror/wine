@@ -270,25 +270,26 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     DWORD tokenlen;
     DWORD tokentype;
     DWORD nTokens = 0;
+    DWORD offset = 0;
     D3DVERTEXELEMENT9 convTo9[128];
 /* TODO: find out where rhw (or positionT) is for declaration8 */
     Decl8to9Lookup decl8to9Lookup[MAX_D3DVSDE];
     MAKE_LOOKUP(D3DVSDE_POSITION,     D3DDECLUSAGE_POSITION, 0);
     MAKE_LOOKUP(D3DVSDE_POSITION2,    D3DDECLUSAGE_POSITION, 1);
     MAKE_LOOKUP(D3DVSDE_BLENDWEIGHT,  D3DDECLUSAGE_BLENDWEIGHT, 0);
-    MAKE_LOOKUP(D3DVSDE_BLENDINDICES, D3DDECLUSAGE_BLENDWEIGHT, 0);
+    MAKE_LOOKUP(D3DVSDE_BLENDINDICES, D3DDECLUSAGE_BLENDINDICES, 0);
     MAKE_LOOKUP(D3DVSDE_NORMAL,       D3DDECLUSAGE_NORMAL, 0);
     MAKE_LOOKUP(D3DVSDE_NORMAL2,      D3DDECLUSAGE_NORMAL, 1);
     MAKE_LOOKUP(D3DVSDE_DIFFUSE,      D3DDECLUSAGE_COLOR, 0);
     MAKE_LOOKUP(D3DVSDE_SPECULAR,     D3DDECLUSAGE_COLOR, 1);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD0,    D3DDECLUSAGE_BLENDWEIGHT, 0);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD1,    D3DDECLUSAGE_BLENDWEIGHT, 1);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD2,    D3DDECLUSAGE_BLENDWEIGHT, 2);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD3,    D3DDECLUSAGE_BLENDWEIGHT, 3);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD4,    D3DDECLUSAGE_BLENDWEIGHT, 4);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD5,    D3DDECLUSAGE_BLENDWEIGHT, 5);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD6,    D3DDECLUSAGE_BLENDWEIGHT, 6);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD7,    D3DDECLUSAGE_BLENDWEIGHT, 7);
+    MAKE_LOOKUP(D3DVSDE_TEXCOORD0,    D3DDECLUSAGE_TEXCOORD, 0);
+    MAKE_LOOKUP(D3DVSDE_TEXCOORD1,    D3DDECLUSAGE_TEXCOORD, 1);
+    MAKE_LOOKUP(D3DVSDE_TEXCOORD2,    D3DDECLUSAGE_TEXCOORD, 2);
+    MAKE_LOOKUP(D3DVSDE_TEXCOORD3,    D3DDECLUSAGE_TEXCOORD, 3);
+    MAKE_LOOKUP(D3DVSDE_TEXCOORD4,    D3DDECLUSAGE_TEXCOORD, 4);
+    MAKE_LOOKUP(D3DVSDE_TEXCOORD5,    D3DDECLUSAGE_TEXCOORD, 5);
+    MAKE_LOOKUP(D3DVSDE_TEXCOORD6,    D3DDECLUSAGE_TEXCOORD, 6);
+    MAKE_LOOKUP(D3DVSDE_TEXCOORD7,    D3DDECLUSAGE_TEXCOORD, 7);
 
     #undef MAKE_LOOKUP
     TRACE("(%p) :  pDecl(%p)\n", This, pDecl);
@@ -299,11 +300,12 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
         tokentype = ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);
 
         if (D3DVSD_TOKEN_STREAM == tokentype && 0 == (D3DVSD_STREAMTESSMASK & token)) {
-        /**
-        * how really works streams,
-        *  in DolphinVS dx8 dsk sample they seems to decal reg numbers !!!
-        */
-        stream = ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT);
+            /**
+            * how really works streams,
+            *  in DolphinVS dx8 dsk sample they seems to decal reg numbers !!!
+            */
+            stream = ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT);
+            offset = 0;
 
         } else if (D3DVSD_TOKEN_STREAMDATA == tokentype && 0 == (0x10000000 & tokentype)) {
             DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
@@ -314,6 +316,8 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
             convTo9[nTokens].Usage      = decl8to9Lookup[reg].usage;
             convTo9[nTokens].UsageIndex = decl8to9Lookup[reg].usageIndex;
             convTo9[nTokens].Type       = type;
+            convTo9[nTokens].Offset     = offset;
+            offset += glTypeLookup[type][1] * glTypeLookup[type][4];
             ++nTokens;
         }/* TODO: Constants. */
         len += tokenlen;
@@ -325,6 +329,7 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
 
   convTo9[nTokens].Stream = 0xFF;
   convTo9[nTokens].Type = D3DDECLTYPE_UNUSED;
+  ++nTokens;
 
   /* compute size */
   This->declaration8Length = len * sizeof(DWORD);
