@@ -30,7 +30,7 @@
 36 stub AtlAxDialogBoxA
 37 stub AtlAxCreateDialogW
 38 stub AtlAxCreateDialogA
-39 stub AtlAxCreateControl
+39 stdcall AtlAxCreateControl(ptr ptr ptr ptr)
 40 stub AtlAxCreateControlEx
 41 stub AtlAxAttachControl
 42 stdcall AtlAxWinInit()

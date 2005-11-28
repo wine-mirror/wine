@@ -314,3 +314,13 @@ HRESULT WINAPI AtlModuleUnregisterServer(_ATL_MODULEW *pm, const CLSID *clsid)
     FIXME("%p %s\n", pm, debugstr_guid(clsid));
     return E_FAIL;
 }
+
+/***********************************************************************
+ *           AtlAxCreateControl           [ATL.@]
+ */
+HRESULT WINAPI AtlAxCreateControl(LPCOLESTR lpszName, HWND hWnd,
+        IStream *pStream, IUnknown **ppUnkContainer)
+{
+    FIXME("%s %p %p %p)\n", debugstr_w(lpszName), hWnd, pStream, ppUnkContainer);
+    return E_NOTIMPL;
+}
