@@ -193,8 +193,23 @@ static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *ifac
         LPOLESTR *pchKey, DWORD dw)
 {
     WebBrowser *This = DOCHOSTUI_THIS(iface);
-    FIXME("(%p)->(%p %ld)\n", This, pchKey, dw);
-    return E_NOTIMPL;
+    IDocHostUIHandler *handler;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %ld)\n", This, pchKey, dw);
+
+    if(!This->client)
+        return S_OK;
+
+    hres = IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler,
+                                         (void**)&handler);
+    if(SUCCEEDED(hres)) {
+        hres = IDocHostUIHandler_GetOptionKeyPath(handler, pchKey, dw);
+        IDocHostUIHandler_Release(handler);
+        return hres;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DocHostUIHandler_GetDropTarget(IDocHostUIHandler2 *iface,
@@ -233,8 +248,23 @@ static HRESULT WINAPI DocHostUIHandler_GetOverrideKeyPath(IDocHostUIHandler2 *if
         LPOLESTR *pchKey, DWORD dw)
 {
     WebBrowser *This = DOCHOSTUI_THIS(iface);
-    FIXME("(%p)->(%p %ld)\n", This, pchKey, dw);
-    return E_NOTIMPL;
+    IDocHostUIHandler2 *handler;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %ld)\n", This, pchKey, dw);
+
+    if(!This->client)
+        return S_OK;
+
+    hres = IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler2,
+                                         (void**)&handler);
+    if(SUCCEEDED(hres)) {
+        hres = IDocHostUIHandler2_GetOverrideKeyPath(handler, pchKey, dw);
+        IDocHostUIHandler2_Release(handler);
+        return hres;
+    }
+
+    return S_OK;
 }
 
 #undef DOCHOSTUI_THIS
