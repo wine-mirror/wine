@@ -32,7 +32,7 @@ BEGIN
     LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    LTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
+    LTEXT           "이 라이브러리는 자유 소프트웨어입니다; 당신은 Free Software Foundation 에서 만든 GNU Lesser General Public License 아래에서 수정하거나 재배포할 수 있습니다; 라이센스 버젼 2.1이거나,  (당신의 선택에 따른)  다른 최신 버젼에 따라 적용됩니다..",
                     IDC_STATIC,119,44,124,72
 END
 
@@ -41,13 +41,12 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "풀그림 설정 ",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine can mimic different Windows versions for each application.  This tab is linked to the Libraries and Graphics tabs to allow you to change systemwide or per-application settings in those tabs as well.",
+    LTEXT           "Wine은  각각의 풀그림에 대하여 다른 윈도우즈 버젼을 모방할 수 있습니다. 라이브러리와 그래픽 탭하고 연결되어 있는 이 탭은 그들 탭과 마찬가지로 시스템 전역이나 각각의 풀그림 설정을 바꿀 것입니다. .",
                     IDC_STATIC,15,20,227,30
     CONTROL         "풀그림",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,150
     PUSHBUTTON	    "풀그림 더하기(&A)...",IDC_APP_ADDAPP, 90,204,75,14
     PUSHBUTTON	    "풀그림 제거하기(&R)",IDC_APP_REMOVEAPP, 170,204,75,14
-    /*LTEXT           "윈도우즈 버젼(&W):",IDC_STATIC,16,227,58,8 */
     LTEXT           "윈도우즈 버젼(&W):",IDC_STATIC,16,227,75,14
     COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
 END
@@ -188,7 +187,7 @@ BEGIN
     IDS_TAB_APPLICATIONS    "풀그림"
     IDS_TAB_DLLS            "라이브러리"
     IDS_TAB_DRIVES          "드라이브"
-    IDS_CHOOSE_PATH         "Select the unix directory to be mapped, please."
+    IDS_CHOOSE_PATH         "맵핑할 유닉스 디렉토리를 선택하시오."
     IDS_HIDE_ADVANCED       "추가 옵션 숨기기"
     IDS_SHOW_ADVANCED       "추가 옵션 보여주기"
     IDS_NOTHEME             "(테마 없음)"
