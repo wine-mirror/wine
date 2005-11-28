@@ -31,19 +31,21 @@
  * if it's present, then the data is PAL8; RGB555 otherwise.
  */
 
-#include <stdarg.h> 
+#include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h" 
 #include "commdlg.h"
 #include "vfw.h"
- 
 #include "mmsystem.h"
+#include "msvidc32_private.h"
  
 #include "wine/debug.h"
  
 WINE_DEFAULT_DEBUG_CHANNEL(msvidc32); 
+
+static HINSTANCE MSVIDC32_hModule;
 
 #define CRAM_MAGIC mmioFOURCC('C', 'R', 'A', 'M')
 #define MSVC_MAGIC mmioFOURCC('M', 'S', 'V', 'C')
@@ -454,16 +456,35 @@ static LRESULT CRAM_DecompressEx( Msvideo1Context *info, ICDECOMPRESSEX *icd, DW
     return ICERR_OK;
 }
 
+static LRESULT CRAM_GetInfo( Msvideo1Context *info, ICINFO *icinfo, DWORD dwSize )
+{
+    if (!icinfo) return sizeof(ICINFO);
+    if (dwSize < sizeof(ICINFO)) return 0;
+
+    icinfo->dwSize = sizeof(ICINFO);
+    icinfo->fccType = ICTYPE_VIDEO;
+    icinfo->fccHandler = info ? info->dwMagic : CRAM_MAGIC;
+    icinfo->dwFlags = 0;
+    icinfo->dwVersion = 0x00010000; /* Version 1.0 build 0 */
+    icinfo->dwVersionICM = 0x01040000; /* Version 1.4 build 0 */
+
+    LoadStringW(MSVIDC32_hModule, IDS_NAME, icinfo->szName, sizeof(icinfo->szName)/sizeof(WCHAR));
+    LoadStringW(MSVIDC32_hModule, IDS_DESCRIPTION, icinfo->szDescription, sizeof(icinfo->szDescription)/sizeof(WCHAR));
+    /* msvfw32 will fill icinfo->szDriver for us */
+
+    return sizeof(ICINFO);
+}
+
 /***********************************************************************
  *		DriverProc (MSVIDC32.@)
  */
 LRESULT WINAPI CRAM_DriverProc( DWORD dwDriverId, HDRVR hdrvr, UINT msg,
-                                  LONG lParam1, LONG lParam2)
+                                LPARAM lParam1, LPARAM lParam2 )
 {
     Msvideo1Context *info = (Msvideo1Context *) dwDriverId;
     LRESULT r = 0;
 
-    TRACE("%ld %p %d %ld %ld\n", dwDriverId, hdrvr, msg, lParam1, lParam2);
+    TRACE("%ld %p %04x %08lx %08lx\n", dwDriverId, hdrvr, msg, lParam1, lParam2);
 
     switch( msg )
     {
@@ -484,6 +505,10 @@ LRESULT WINAPI CRAM_DriverProc( DWORD dwDriverId, HDRVR hdrvr, UINT msg,
             info->dwMagic = CRAM_MAGIC;
         }
         r = (LRESULT) info;
+        break;
+
+    case ICM_GETINFO:
+        r = CRAM_GetInfo( info, (ICINFO *)lParam1, (DWORD)lParam2 );
         break;
 
     case ICM_DECOMPRESS_QUERY:
@@ -534,4 +559,21 @@ LRESULT WINAPI CRAM_DriverProc( DWORD dwDriverId, HDRVR hdrvr, UINT msg,
     }
 
     return r;
+}
+
+BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
+{
+    TRACE("(%p,%ld,%p)\n", hModule, dwReason, lpReserved);
+
+    switch (dwReason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hModule);
+        MSVIDC32_hModule = hModule;
+        break;
+
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
 }
