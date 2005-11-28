@@ -27,6 +27,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+
 #include "wine/list.h"
 
 #include "request.h"
@@ -34,6 +37,7 @@
 #include "process.h"
 #include "user.h"
 #include "winuser.h"
+#include "winternl.h"
 
 struct window_class
 {

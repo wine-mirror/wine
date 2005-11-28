@@ -28,8 +28,9 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "windef.h"
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
 
 #include "wine/server.h"
 #include "wine/unicode.h"

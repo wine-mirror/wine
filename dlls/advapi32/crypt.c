@@ -39,13 +39,14 @@
 # include <unistd.h>
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "crypt.h"
 #include "winnls.h"
 #include "winreg.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "winternl.h"
-#include "ntstatus.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 

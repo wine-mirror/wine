@@ -31,6 +31,7 @@
 
 #define NONAMELESSUNION
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "thread.h"
 #include "winternl.h"
 #include "wine/library.h"

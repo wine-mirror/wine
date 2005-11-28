@@ -29,11 +29,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
-#include "ntstatus.h"
 #include "winioctl.h"
 #include "ntddstor.h"
 #include "ntddcdrm.h"

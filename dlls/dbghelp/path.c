@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "dbghelp_private.h"
-#include "ntstatus.h"
 #include "winnls.h"
 #include "winreg.h"
 #include "winternl.h"

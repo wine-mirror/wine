@@ -21,6 +21,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -28,7 +30,6 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "winioctl.h"
-#include "ntstatus.h"
 #include "ntsecapi.h"
 #include "accctrl.h"
 #include "sddl.h"

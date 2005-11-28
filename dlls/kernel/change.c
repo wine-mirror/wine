@@ -24,10 +24,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "ntstatus.h"
 #include "winternl.h"
 #include "kernel_private.h"
 #include "wine/windef16.h"

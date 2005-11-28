@@ -34,7 +34,6 @@
 #include "wine/exception.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
-#include "ntstatus.h"
 #include "winnt.h"
 #include "winternl.h"
 #include "excpt.h"

@@ -26,10 +26,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "request.h"
 #include "object.h"
 #include "user.h"
 #include "winuser.h"
+#include "winternl.h"
 
 struct clipboard
 {

@@ -22,6 +22,8 @@
 
 #include "config.h"
 #include "wine/port.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/unicode.h"
 
 #include <assert.h>

@@ -27,6 +27,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+
 #include "unicode.h"
 #include "request.h"
 #include "object.h"
@@ -34,6 +37,7 @@
 #include "handle.h"
 #include "user.h"
 #include "winuser.h"
+#include "winternl.h"
 
 #define HASH_SIZE     37
 #define MIN_HASH_SIZE 4

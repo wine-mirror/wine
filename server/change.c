@@ -28,12 +28,15 @@
 #include <signal.h>
 #include <sys/stat.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 
 #include "file.h"
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
+#include "winternl.h"
 
 #ifdef linux
 #ifndef F_NOTIFY

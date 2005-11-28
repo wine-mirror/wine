@@ -33,9 +33,10 @@
 #endif
 #include <sys/types.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "ntstatus.h"
 #include "winioctl.h"
 #include "winternl.h"
 #include "module.h"

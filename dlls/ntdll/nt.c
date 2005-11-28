@@ -26,9 +26,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/debug.h"
 #include "wine/unicode.h"
-
 #include "windef.h"
 #include "winternl.h"
 #include "ntdll_misc.h"

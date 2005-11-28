@@ -33,7 +33,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "ntstatus.h"
 #include "wownt32.h"
 #include "wine/wingdi16.h"
 

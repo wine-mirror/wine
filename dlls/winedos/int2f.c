@@ -27,9 +27,11 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/winbase16.h"
 #include "wine/debug.h"
-#include "ntstatus.h"
+#include "winternl.h"
 #include "winioctl.h"
 #include "ntddstor.h"
 #include "ntddcdrm.h"

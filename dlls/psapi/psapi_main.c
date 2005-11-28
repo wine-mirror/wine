@@ -21,6 +21,8 @@
 
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -28,7 +30,6 @@
 #include "wine/debug.h"
 #include "winnls.h"
 #include "winternl.h"
-#include "ntstatus.h"
 #include "psapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psapi);

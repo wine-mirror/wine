@@ -26,10 +26,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winternl.h"
 
 #include "handle.h"
 #include "file.h"

@@ -24,12 +24,13 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
-#include "ntstatus.h"
 #include "wine/winuser16.h"
 #include "wine/server.h"
 #include "controls.h"

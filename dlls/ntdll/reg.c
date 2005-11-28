@@ -33,6 +33,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/library.h"
 #include "ntdll_misc.h"
 #include "wine/debug.h"

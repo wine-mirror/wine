@@ -29,8 +29,10 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include "wine/debug.h"
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "wine/debug.h"
 #include "windef.h"
 #include "winternl.h"
 #include "ntdll_misc.h"

@@ -19,12 +19,13 @@
 
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "ntstatus.h"
 #include "powrprof.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"

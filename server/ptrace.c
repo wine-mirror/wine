@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_PTRACE_H
 # include <sys/ptrace.h>
@@ -32,6 +33,10 @@
 # include <sys/wait.h>
 #endif
 #include <unistd.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "winternl.h"
 
 #include "file.h"
 #include "process.h"

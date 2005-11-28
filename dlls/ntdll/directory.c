@@ -59,9 +59,10 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winnt.h"
-#include "ntstatus.h"
 #include "thread.h"
 #include "winternl.h"
 #include "ntdll_misc.h"

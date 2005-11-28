@@ -24,7 +24,6 @@
  * - Lots of functionality missing from builtins
  */
 
-#include "ntstatus.h"
 #include "wcmd.h"
 
 const char * const inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", "CTTY",

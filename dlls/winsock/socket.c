@@ -119,6 +119,8 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -135,7 +137,6 @@
 #include "thread.h"
 #include "wine/server.h"
 #include "wine/debug.h"
-#include "ntstatus.h"
 #include "wine/unicode.h"
 
 #ifdef HAVE_IPX

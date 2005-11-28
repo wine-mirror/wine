@@ -390,22 +390,22 @@ static void test_RtlLargeIntegerToChar(void)
     value = largeint2str[0].value;
     result = pRtlLargeIntegerToChar(&value, 20, largeint2str[0].MaximumLength, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
-       "(test a): RtlLargeIntegerToChar(%llu, %d, %d, NULL) has result %lx, expected: %x\n",
+       "(test a): RtlLargeIntegerToChar(%llu, %d, %d, NULL) has result %lx, expected: %lx\n",
        largeint2str[0].value, 20, largeint2str[0].MaximumLength, result, STATUS_INVALID_PARAMETER);
 
     result = pRtlLargeIntegerToChar(&value, 20, 0, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
-       "(test b): RtlLargeIntegerToChar(%llu, %d, %d, NULL) has result %lx, expected: %x\n",
+       "(test b): RtlLargeIntegerToChar(%llu, %d, %d, NULL) has result %lx, expected: %lx\n",
        largeint2str[0].value, 20, largeint2str[0].MaximumLength, result, STATUS_INVALID_PARAMETER);
 
     result = pRtlLargeIntegerToChar(&value, largeint2str[0].base, 0, NULL);
     ok(result == STATUS_BUFFER_OVERFLOW,
-       "(test c): RtlLargeIntegerToChar(%llu, %d, %d, NULL) has result %lx, expected: %x\n",
+       "(test c): RtlLargeIntegerToChar(%llu, %d, %d, NULL) has result %lx, expected: %lx\n",
        largeint2str[0].value, largeint2str[0].base, 0, result, STATUS_BUFFER_OVERFLOW);
 
     result = pRtlLargeIntegerToChar(&value, largeint2str[0].base, largeint2str[0].MaximumLength, NULL);
     ok(result == STATUS_ACCESS_VIOLATION,
-       "(test d): RtlLargeIntegerToChar(%llu, %d, %d, NULL) has result %lx, expected: %x\n",
+       "(test d): RtlLargeIntegerToChar(%llu, %d, %d, NULL) has result %lx, expected: %lx\n",
        largeint2str[0].value, largeint2str[0].base, largeint2str[0].MaximumLength, result, STATUS_ACCESS_VIOLATION);
 }
 

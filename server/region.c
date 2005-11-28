@@ -75,6 +75,9 @@ SOFTWARE.
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "winternl.h"
 #include "request.h"
 #include "user.h"
 

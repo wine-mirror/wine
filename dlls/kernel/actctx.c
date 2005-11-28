@@ -22,7 +22,6 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
-#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"

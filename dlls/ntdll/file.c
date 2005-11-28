@@ -65,6 +65,8 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "thread.h"

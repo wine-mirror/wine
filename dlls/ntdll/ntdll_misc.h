@@ -23,7 +23,6 @@
 
 #include "windef.h"
 #include "winnt.h"
-#include "ntstatus.h"
 #include "winternl.h"
 #include "winioctl.h"
 #include "wine/server.h"

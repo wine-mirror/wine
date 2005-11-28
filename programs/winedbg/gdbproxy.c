@@ -45,6 +45,8 @@
 # include <unistd.h>
 #endif
 
+#include "debugger.h"
+
 #include "windef.h"
 #include "winbase.h"
 #include "tlhelp32.h"
@@ -52,8 +54,6 @@
 /* those two are needed only for the SHOWNORMAL flag */
 #include "wingdi.h"
 #include "winuser.h"
-
-#include "debugger.h"
 
 #define GDBPXY_TRC_LOWLEVEL             0x01
 #define GDBPXY_TRC_PACKET               0x02

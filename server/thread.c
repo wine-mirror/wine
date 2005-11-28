@@ -36,7 +36,10 @@
 #include <poll.h>
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
+#include "winternl.h"
 
 #include "file.h"
 #include "handle.h"
@@ -514,7 +517,7 @@ static void thread_timeout( void *ptr )
     if (thread->suspend + thread->process->suspend > 0) return;  /* suspended, ignore it */
 
     if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=%d cookie=%p\n",
-                              thread->id, STATUS_TIMEOUT, cookie );
+                              thread->id, (int)STATUS_TIMEOUT, cookie );
     end_wait( thread );
     if (send_thread_wakeup( thread, cookie, STATUS_TIMEOUT ) == -1) return;
     /* check if other objects have become signaled in the meantime */

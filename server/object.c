@@ -29,6 +29,8 @@
 #include <unistd.h>
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
 
 #include "file.h"

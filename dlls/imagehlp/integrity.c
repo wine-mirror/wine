@@ -27,7 +27,6 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "winnt.h"
-#include "ntstatus.h"
 #include "imagehlp.h"
 #include "wine/debug.h"
 

@@ -32,13 +32,14 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "ntstatus.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "dosexe.h"

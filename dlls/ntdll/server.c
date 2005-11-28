@@ -54,6 +54,7 @@
 #endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/library.h"
 #include "wine/pthread.h"
 #include "wine/server.h"

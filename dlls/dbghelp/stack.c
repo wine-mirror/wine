@@ -27,9 +27,10 @@
 #include <string.h>
 #include <assert.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "dbghelp_private.h"
 #include "winreg.h"
-#include "ntstatus.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "wine/debug.h"
@@ -426,4 +427,3 @@ BOOL WINAPI SymRegisterFunctionEntryCallback64(HANDLE hProc,
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
-

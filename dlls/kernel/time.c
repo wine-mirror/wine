@@ -41,10 +41,11 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
-#include "ntstatus.h"
 #include "kernel_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

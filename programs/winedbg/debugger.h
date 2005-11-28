@@ -26,11 +26,13 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #define WIN32_LEAN_AND_MEAN
 #include "windef.h"
 #include "winbase.h"
-#include "ntstatus.h"
 #include "winver.h"
+#include "winternl.h"
 #include "dbghelp.h"
 #include "cvconst.h"
 #include "objbase.h"

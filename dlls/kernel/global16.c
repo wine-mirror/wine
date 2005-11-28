@@ -38,7 +38,6 @@
 #endif
 
 #include "wine/winbase16.h"
-#include "ntstatus.h"
 #include "toolhelp.h"
 #include "winternl.h"
 #include "kernel_private.h"

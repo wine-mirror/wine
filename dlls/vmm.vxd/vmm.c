@@ -29,7 +29,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winnls.h"
-#include "ntstatus.h"
 #include "winternl.h"
 #include "wine/debug.h"
 

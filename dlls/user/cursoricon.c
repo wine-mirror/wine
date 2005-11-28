@@ -55,7 +55,6 @@
 #include "wingdi.h"
 #include "wownt32.h"
 #include "winerror.h"
-#include "ntstatus.h"
 #include "excpt.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"

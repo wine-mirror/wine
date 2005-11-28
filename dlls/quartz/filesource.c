@@ -30,7 +30,6 @@
 #include "vfwmsgs.h"
 #include "winbase.h"
 #include "winreg.h"
-#include "ntstatus.h"
 #include <assert.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);

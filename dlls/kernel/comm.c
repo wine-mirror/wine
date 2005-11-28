@@ -58,7 +58,6 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"

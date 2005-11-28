@@ -35,7 +35,6 @@
 #include "winbase.h"
 #include "mmsystem.h"
 #include "winreg.h"
-#include "ntstatus.h"
 #include "winternl.h"
 #include "wownt32.h"
 #include "winnls.h"

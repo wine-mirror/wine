@@ -30,8 +30,8 @@
 # include <unistd.h>
 #endif
 
-#include "wine/exception.h"
 #include "debugger.h"
+#include "wine/exception.h"
 #include "expr.h"
 
 int yylex(void);

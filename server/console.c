@@ -29,11 +29,14 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "handle.h"
 #include "process.h"
 #include "request.h"
 #include "unicode.h"
 #include "console.h"
+#include "winternl.h"
 
 static void console_input_dump( struct object *obj, int verbose );
 static void console_input_destroy( struct object *obj );

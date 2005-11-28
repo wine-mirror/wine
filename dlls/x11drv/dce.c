@@ -22,11 +22,12 @@
 #include "config.h"
 
 #include <assert.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "win.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "wownt32.h"
-#include "ntstatus.h"
 #include "x11drv.h"
 #include "wine/winbase16.h"
 #include "wine/wingdi16.h"

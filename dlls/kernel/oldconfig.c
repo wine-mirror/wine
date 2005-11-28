@@ -46,7 +46,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
-#include "ntstatus.h"
 #include "winioctl.h"
 #include "ntddscsi.h"
 #include "wine/library.h"
