@@ -2186,6 +2186,15 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
        goto lend;
     }
 
+    if (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE)
+    {
+        if (!NETCON_secure_connect(&lpwhr->netConnection, lpwhs->lpszHostName))
+        {
+            WARN("Couldn't connect securely to host\n");
+            goto lend;
+        }
+    }
+
     SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_CONNECTED_TO_SERVER,
                       &(lpwhs->socketAddress),

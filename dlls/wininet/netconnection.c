@@ -96,9 +96,9 @@ MAKE_FUNCPTR(BIO_new_fp);
 
 void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 {
-    connection->useSSL = useSSL;
+    connection->useSSL = FALSE;
     connection->socketFD = -1;
-    if (connection->useSSL)
+    if (useSSL)
     {
 #ifdef HAVE_OPENSSL_SSL_H
         TRACE("using SSL connection\n");
@@ -161,7 +161,6 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	pBIO_new_fp(stderr, BIO_NOCLOSE); /* FIXME: should use winedebug stuff */
 
 	meth = pSSLv23_method();
-	/* FIXME: SECURITY PROBLEM! WE ARN'T VERIFYING THE HOSTS CERTIFICATES OR ANYTHING */
         connection->peek_msg = NULL;
         connection->peek_msg_mem = NULL;
 #else
@@ -181,8 +180,7 @@ BOOL NETCON_connected(WININET_NETCONNECTION *connection)
 
 /******************************************************************************
  * NETCON_create
- * Basically calls 'socket()' unless useSSL is supplised,
- *  in which case we do other things.
+ * Basically calls 'socket()'
  */
 BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,
 	      int type, int protocol)
@@ -218,7 +216,8 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
         connection->peek_msg = NULL;
         connection->peek_msg_mem = NULL;
         /* FIXME should we call SSL_shutdown here?? Probably on whatever is the
-         * opposite of NETCON_init.... */
+         * opposite of NETCON_secure_connect.... */
+        connection->useSSL = FALSE;
     }
 #endif
 
@@ -228,8 +227,40 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
 }
 
 /******************************************************************************
+ * NETCON_secure_connect
+ * Initiates a secure connection over an existing plaintext connection.
+ */
+BOOL NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
+{
+#ifdef HAVE_OPENSSL_SSL_H
+    BIO *sbio;
+
+    /* nothing to do if we are already connected */
+    if (connection->useSSL)
+        return FALSE;
+
+    ctx = pSSL_CTX_new(meth);
+    connection->ssl_s = pSSL_new(ctx);
+
+    sbio = pBIO_new_socket(connection->socketFD, BIO_NOCLOSE);
+    pSSL_set_bio(connection->ssl_s, sbio, sbio);
+    if (pSSL_connect(connection->ssl_s) <= 0)
+    {
+        ERR("ssl couldn't connect\n");
+        return FALSE;
+    }
+    /* FIXME: verify the security of the connection and that the
+     * hostname of the certificate matches */
+    connection->useSSL = TRUE;
+    return TRUE;
+#else
+    return FALSE;
+#endif
+}
+
+/******************************************************************************
  * NETCON_connect
- * Basically calls 'connect()' unless we should use SSL
+ * Connects to the specified address.
  */
 BOOL NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
 		    unsigned int addrlen)
@@ -245,24 +276,6 @@ BOOL NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *se
         connection->socketFD = -1;
         return FALSE;
     }
-
-#ifdef HAVE_OPENSSL_SSL_H
-    if (connection->useSSL)
-    {
-        BIO *sbio;
-
-        ctx = pSSL_CTX_new(meth);
-	connection->ssl_s = pSSL_new(ctx);
-
-	sbio = pBIO_new_socket(connection->socketFD, BIO_NOCLOSE);
-        pSSL_set_bio(connection->ssl_s, sbio, sbio);
-	if (pSSL_connect(connection->ssl_s) <= 0)
-	{
-            ERR("ssl couldn't connect\n");
-	    return FALSE;
-	}
-    }
-#endif
 
     return TRUE;
 }
