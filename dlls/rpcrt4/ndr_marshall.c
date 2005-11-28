@@ -290,7 +290,7 @@ PFORMAT_STRING ComputeConformance(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pM
                                   PFORMAT_STRING pFormat, ULONG_PTR def)
 {
   BYTE dtype = pFormat[0] & 0xf;
-  DWORD ofs = (DWORD)pFormat[2] | ((DWORD)pFormat[3] << 8);
+  short ofs = *(short *)&pFormat[2];
   LPVOID ptr = NULL;
   DWORD data = 0;
 
@@ -302,15 +302,15 @@ PFORMAT_STRING ComputeConformance(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pM
 
   switch (pFormat[0] & 0xf0) {
   case RPC_FC_NORMAL_CONFORMANCE:
-    TRACE("normal conformance, ofs=%ld\n", ofs);
+    TRACE("normal conformance, ofs=%d\n", ofs);
     ptr = pMemory + ofs;
     break;
   case RPC_FC_POINTER_CONFORMANCE:
-    TRACE("pointer conformance, ofs=%ld\n", ofs);
+    TRACE("pointer conformance, ofs=%d\n", ofs);
     ptr = pStubMsg->Memory + ofs;
     break;
   case RPC_FC_TOP_LEVEL_CONFORMANCE:
-    TRACE("toplevel conformance, ofs=%ld\n", ofs);
+    TRACE("toplevel conformance, ofs=%d\n", ofs);
     if (pStubMsg->StackTop) {
       ptr = pStubMsg->StackTop + ofs;
     }
@@ -325,7 +325,7 @@ PFORMAT_STRING ComputeConformance(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pM
     pStubMsg->MaxCount = data;
     goto finish_conf;
   case RPC_FC_TOP_LEVEL_MULTID_CONFORMANCE:
-    FIXME("toplevel multidimensional conformance, ofs=%ld\n", ofs);
+    FIXME("toplevel multidimensional conformance, ofs=%d\n", ofs);
     if (pStubMsg->StackTop) {
       ptr = pStubMsg->StackTop + ofs;
     }
@@ -1863,7 +1863,8 @@ void WINAPI NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
   size = pStubMsg->MaxCount;
 
-  pStubMsg->BufferLength += size*esize;
+  /* conformance value plus array */
+  pStubMsg->BufferLength += sizeof(DWORD) + size*esize;
 
   EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
@@ -1874,16 +1875,18 @@ void WINAPI NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrConformantArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                   PFORMAT_STRING pFormat)
 {
-  DWORD size = 0;
-  FIXME("(%p,%p): stub\n", pStubMsg, pFormat);
+  DWORD size = 0, esize = *(const WORD*)(pFormat+2);
+  unsigned char *buffer;
+
+  TRACE("(%p,%p)\n", pStubMsg, pFormat);
   if (pFormat[0] != RPC_FC_CARRAY) FIXME("format=%d\n", pFormat[0]);
 
+  buffer = pStubMsg->Buffer;
   pFormat = ReadConformance(pStubMsg, pFormat+4);
+  pStubMsg->Buffer = buffer;
   size = pStubMsg->MaxCount;
 
-  EmbeddedPointerMemorySize(pStubMsg, pFormat);
-
-  return 0;
+  return size*esize;
 }
 
 /***********************************************************************
