@@ -1266,9 +1266,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 		return TRUE;
 	}
 
-        wszApplicationName[0] = '"';
-        SHGetPathFromIDListW(sei_tmp.lpIDList, wszApplicationName+1);
-        strcatW(wszApplicationName, wQuote);
+        SHGetPathFromIDListW(sei_tmp.lpIDList, wszApplicationName);
         TRACE("-- idlist=%p (%s)\n", sei_tmp.lpIDList, debugstr_w(wszApplicationName));
     }
 
