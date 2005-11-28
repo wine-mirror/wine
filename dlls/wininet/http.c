@@ -95,7 +95,12 @@ static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index);
 static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
 static BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
                        LPCWSTR username, LPCWSTR password );
-
+static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD
+        dwInfoLevel, LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD
+        lpdwIndex);
+static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl,
+        LPCWSTR lpszHeaders, DWORD dwHeaderLength, LPVOID lpOptional, DWORD
+        dwOptionalLength);
 
 /***********************************************************************
  *           HTTP_Tokenize (internal)
@@ -607,6 +612,26 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
     HTTP_ProcessHeaders(lpwhr);
 
     /* We appear to do nothing with the buffer.. is that correct? */
+
+    if(!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT))
+    {
+        DWORD dwCode,dwCodeLength=sizeof(DWORD),dwIndex=0;
+        if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,&dwIndex) &&
+            (dwCode==302 || dwCode==301))
+        {
+            WCHAR szNewLocation[2048];
+            DWORD dwBufferSize=2048;
+            dwIndex=0;
+            if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,&dwIndex))
+            {
+	            static const WCHAR szGET[] = { 'G','E','T', 0 };
+                /* redirects are always GETs */
+                HeapFree(GetProcessHeap(),0,lpwhr->lpszVerb);
+	            lpwhr->lpszVerb = WININET_strdupW(szGET);
+                return HTTP_HandleRedirect(lpwhr, szNewLocation, NULL, 0, NULL, 0);
+            }
+        }
+    }
 
     TRACE("%i <--\n",rc);
     return rc;
@@ -1783,6 +1808,12 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
         URL_COMPONENTSW urlComponents;
         WCHAR protocol[32], hostName[MAXHOSTNAME], userName[1024];
         WCHAR password[1024], extra[1024];
+        extra[0] = 0;
+        password[0] = 0;
+        userName[0] = 0;
+        hostName[0] = 0;
+        protocol[0] = 0;
+
         urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
         urlComponents.lpszScheme = protocol;
         urlComponents.dwSchemeLength = 32;
@@ -1800,7 +1831,12 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
             return FALSE;
         
         if (urlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
-            urlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
+        {
+            if (lstrlenW(protocol)>4) /*https*/
+                urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
+            else /*http*/
+                urlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
+        }
 
 #if 0
         /*
@@ -1822,12 +1858,25 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszHostName);
         lpwhs->lpszHostName = WININET_strdupW(hostName);
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
-        lpwhs->lpszServerName = WININET_strdupW(hostName);
+        if (urlComponents.nPort != INTERNET_DEFAULT_HTTP_PORT &&
+                urlComponents.nPort != INTERNET_DEFAULT_HTTPS_PORT)
+        {
+            int len;
+            static WCHAR fmt[] = {'%','s',':','%','i',0};
+            len = lstrlenW(hostName);
+            len+=6;
+            lpwhs->lpszServerName = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+            sprintfW(lpwhs->lpszServerName,fmt,hostName,urlComponents.nPort);
+        }
+        else
+            lpwhs->lpszServerName = WININET_strdupW(hostName);
+
+        HTTP_ProcessHeader(lpwhr, g_szHost, lpwhs->lpszServerName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
+
+        
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
         lpwhs->lpszUserName = WININET_strdupW(userName);
         lpwhs->nServerPort = urlComponents.nPort;
-
-        HTTP_ProcessHeader(lpwhr, g_szHost, hostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
 
         SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_RESOLVING_NAME,
@@ -1840,6 +1889,8 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
             INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
             return FALSE;
         }
+
+        StrCatW(path,extra);
 
         SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_NAME_RESOLVED,
