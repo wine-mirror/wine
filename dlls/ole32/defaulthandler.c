@@ -1254,24 +1254,29 @@ static HRESULT WINAPI DefaultHandler_Run(
   if (This->pOleDelegate)
     return S_OK;
 
-  hr = CoCreateInstance(&This->clsid, NULL, CLSCTX_LOCAL_SERVER, &IID_IOleObject, (void **)&This->pOleDelegate);
+  hr = CoCreateInstance(&This->clsid, NULL, CLSCTX_LOCAL_SERVER,
+                        &IID_IOleObject, (void **)&This->pOleDelegate);
   if (FAILED(hr))
     return hr;
 
-  hr = IOleObject_Advise(This->pOleDelegate, (IAdviseSink *)&This->lpvtblIAdviseSink, &This->dwAdvConn);
+  hr = IOleObject_Advise(This->pOleDelegate,
+                         (IAdviseSink *)&This->lpvtblIAdviseSink,
+                         &This->dwAdvConn);
 
   if (SUCCEEDED(hr) && This->clientSite)
     hr = IOleObject_SetClientSite(This->pOleDelegate, This->clientSite);
 
   if (SUCCEEDED(hr))
   {
-    IOleObject_QueryInterface(This->pOleDelegate, &IID_IPersistStorage, (void **)&This->pPSDelegate);
+    IOleObject_QueryInterface(This->pOleDelegate, &IID_IPersistStorage,
+                              (void **)&This->pPSDelegate);
     if (This->pPSDelegate)
       hr = IPersistStorage_InitNew(This->pPSDelegate, NULL);
   }
 
   if (SUCCEEDED(hr) && This->containerApp)
-    hr = IOleObject_SetHostNames(This->pOleDelegate, This->containerApp, This->containerObj);
+    hr = IOleObject_SetHostNames(This->pOleDelegate, This->containerApp,
+                                 This->containerObj);
 
   /* FIXME: do more stuff here:
    * - IOleObject_GetMiscStatus
@@ -1279,7 +1284,8 @@ static HRESULT WINAPI DefaultHandler_Run(
    * - IOleCache_OnRun
    */
 
-  /* FIXME: if we failed, Close the object */
+  if (FAILED(hr))
+    DefaultHandler_Stop(This);
 
   return hr;
 }
