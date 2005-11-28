@@ -515,6 +515,9 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
     if(V_VT(URL) != VT_BSTR)
         return E_INVALIDARG;
 
+    if(!This->doc_view_hwnd)
+        create_doc_view_hwnd(This);
+
     /*
      * FIXME:
      * We should use URLMoniker's BindToObject instead creating HTMLDocument here.

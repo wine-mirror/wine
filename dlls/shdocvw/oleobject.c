@@ -29,44 +29,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
-static ATOM doc_view_atom = 0;
 static ATOM shell_embedding_atom = 0;
-
-static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    return DefWindowProcA(hwnd, msg, wParam, lParam);
-}
 
 static LRESULT WINAPI shell_embedding_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     return DefWindowProcA(hwnd, msg, wParam, lParam);
-}
-
-static void create_doc_view_hwnd(WebBrowser *This)
-{
-    static const WCHAR wszShell_DocObject_View[] =
-        {'S','h','e','l','l',' ','D','o','c','O','b','j','e','c','t',' ','V','i','e','w',0};
-
-    if(!doc_view_atom) {
-        static WNDCLASSEXW wndclass = {
-            sizeof(wndclass),
-            CS_PARENTDC,
-            doc_view_proc,
-            0, 0 /* native uses 4*/, NULL, NULL, NULL,
-            (HBRUSH)COLOR_WINDOWFRAME, NULL,
-            wszShell_DocObject_View,
-            NULL
-        };
-
-        wndclass.hInstance = shdocvw_hinstance;
-
-        doc_view_atom = RegisterClassExW(&wndclass);
-    }
-
-    This->doc_view_hwnd = CreateWindowExW(0, wszShell_DocObject_View, NULL,
-         WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP | WS_MAXIMIZEBOX,
-         0, 0, 0, 0, This->shell_embedding_hwnd,
-         NULL, shdocvw_hinstance, This);
 }
 
 static void create_shell_embedding_hwnd(WebBrowser *This)
@@ -99,12 +66,10 @@ static void create_shell_embedding_hwnd(WebBrowser *This)
         IOleInPlaceSite_Release(inplace);
     }
 
-    This->shell_embedding_hwnd = CreateWindowExW(0, wszShellEmbedding, NULL,
+    This->shell_embedding_hwnd = CreateWindowExW(0, wszShellEmbedding, wszShellEmbedding,
          WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP | WS_MAXIMIZEBOX,
          0, 0, 0, 0, parent,
          NULL, shdocvw_hinstance, This);
-
-    create_doc_view_hwnd(This);
 }
 
 /**********************************************************************
@@ -265,6 +230,13 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
 
 
         IOleInPlaceSite_Release(inplace);
+
+        SetWindowPos(This->shell_embedding_hwnd, NULL,
+                     This->pos_rect.left, This->pos_rect.top,
+                     This->pos_rect.right-This->pos_rect.left,
+                     This->pos_rect.bottom-This->pos_rect.top,
+                     SWP_NOZORDER | SWP_SHOWWINDOW);
+
 
         if(This->client) {
             IOleClientSite_ShowObject(This->client);
@@ -586,6 +558,7 @@ void WebBrowser_OleObject_Init(WebBrowser *This)
     This->frame_hwnd = NULL;
     This->frame = NULL;
     This->uiwindow = NULL;
+    This->shell_embedding_hwnd = NULL;
 
     memset(&This->pos_rect, 0, sizeof(RECT));
     memset(&This->clip_rect, 0, sizeof(RECT));

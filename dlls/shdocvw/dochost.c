@@ -21,6 +21,56 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
+static ATOM doc_view_atom = 0;
+
+static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    WebBrowser *This;
+
+    static const WCHAR wszTHIS[] = {'T','H','I','S',0};
+
+    if(msg == WM_CREATE) {
+        This = *(WebBrowser**)lParam;
+        ERR("create %p\n", This);
+        SetPropW(hwnd, wszTHIS, This);
+    }else {
+        This = GetPropW(hwnd, wszTHIS);
+    }
+
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
+}
+
+void create_doc_view_hwnd(WebBrowser *This)
+{
+    RECT rect;
+
+    static const WCHAR wszShell_DocObject_View[] =
+        {'S','h','e','l','l',' ','D','o','c','O','b','j','e','c','t',' ','V','i','e','w',0};
+
+    if(!doc_view_atom) {
+        static WNDCLASSEXW wndclass = {
+            sizeof(wndclass),
+            CS_PARENTDC,
+            doc_view_proc,
+            0, 0 /* native uses 4*/, NULL, NULL, NULL,
+            (HBRUSH)COLOR_WINDOWFRAME, NULL,
+            wszShell_DocObject_View,
+            NULL
+        };
+
+        wndclass.hInstance = shdocvw_hinstance;
+
+        doc_view_atom = RegisterClassExW(&wndclass);
+    }
+
+    GetWindowRect(This->shell_embedding_hwnd, &rect);
+    This->doc_view_hwnd = CreateWindowExW(0, wszShell_DocObject_View,
+         wszShell_DocObject_View,
+         WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP | WS_MAXIMIZEBOX,
+         rect.left, rect.top, rect.right, rect.bottom, This->shell_embedding_hwnd,
+         NULL, shdocvw_hinstance, This);
+}
+
 #define DOCHOSTUI_THIS(iface) DEFINE_THIS(WebBrowser, DocHostUIHandler, iface)
 
 static HRESULT WINAPI DocHostUIHandler_QueryInterface(IDocHostUIHandler2 *iface,
@@ -214,4 +264,6 @@ static const IDocHostUIHandler2Vtbl DocHostUIHandler2Vtbl = {
 void WebBrowser_DocHost_Init(WebBrowser *This)
 {
     This->lpDocHostUIHandlerVtbl = &DocHostUIHandler2Vtbl;
+
+    This->doc_view_hwnd = NULL;
 }

@@ -146,6 +146,8 @@ void WebBrowser_Events_Destroy(WebBrowser*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 
+void create_doc_view_hwnd(WebBrowser *This);
+
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
 /**********************************************************************
