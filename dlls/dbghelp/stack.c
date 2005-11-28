@@ -399,3 +399,31 @@ done_err:
     curr_mode = stm_done;
     return FALSE;
 }
+
+/******************************************************************
+ *		SymRegisterFunctionEntryCallback (DBGHELP.@)
+ *
+ *
+ */
+BOOL WINAPI SymRegisterFunctionEntryCallback(HANDLE hProc,
+                                             PSYMBOL_FUNCENTRY_CALLBACK cb, PVOID user)
+{
+    FIXME("(%p %p %p): stub!\n", hProc, cb, user);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************
+ *		SymRegisterFunctionEntryCallback64 (DBGHELP.@)
+ *
+ *
+ */
+BOOL WINAPI SymRegisterFunctionEntryCallback64(HANDLE hProc,
+                                               PSYMBOL_FUNCENTRY_CALLBACK64 cb,
+                                               ULONG64 user)
+{
+    FIXME("(%p %p %s): stub!\n", hProc, cb, wine_dbgstr_longlong(user));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+

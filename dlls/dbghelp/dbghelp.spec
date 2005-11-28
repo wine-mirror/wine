@@ -77,8 +77,8 @@
 @ stub SymMatchString
 @ stub SymRegisterCallback64
 @ stdcall SymRegisterCallback(long ptr ptr)
-@ stub SymRegisterFunctionEntryCallback64
-@ stub SymRegisterFunctionEntryCallback
+@ stdcall SymRegisterFunctionEntryCallback64(ptr ptr double)
+@ stdcall SymRegisterFunctionEntryCallback(ptr ptr ptr)
 @ stdcall SymSetContext(long ptr ptr)
 @ stdcall SymSetOptions(long)
 @ stdcall SymSetParentWindow(long)
