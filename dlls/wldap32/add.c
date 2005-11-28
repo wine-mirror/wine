@@ -90,7 +90,8 @@ exit:
  *              specifying an attribute and its values to add.
  *
  * RETURNS
- *  Message ID of the add operation.
+ *  Success: Message ID of the add operation.
+ *  Failure: An LDAP error code.
  *
  * NOTES
  *  Call ldap_result with the message ID to get the result of
