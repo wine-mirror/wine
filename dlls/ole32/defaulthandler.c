@@ -55,8 +55,11 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wine/unicode.h"
 #include "ole2.h"
+
+#include "compobj_private.h"
+
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -108,6 +111,8 @@ struct DefaultHandler
   IOleObject *pOleDelegate;
   /* IPersistStorage delegate */
   IPersistStorage *pPSDelegate;
+  /* IDataObject delegate */
+  IDataObject *pDataDelegate;
 
   /* connection cookie for the advise on the delegate OLE object */
   DWORD dwAdvConn;
@@ -411,6 +416,12 @@ static void WINAPI DefaultHandler_Stop(DefaultHandler *This)
 
   /* FIXME: call IOleCache_OnStop */
 
+  DataAdviseHolder_OnDisconnect(This->dataAdviseHolder);
+  if (This->pDataDelegate)
+  {
+     IDataObject_Release(This->pDataDelegate);
+     This->pDataDelegate = NULL;
+  }
   if (This->pPSDelegate)
   {
      IPersistStorage_Release(This->pPSDelegate);
@@ -1284,6 +1295,13 @@ static HRESULT WINAPI DefaultHandler_Run(
    * - IOleCache_OnRun
    */
 
+  if (SUCCEEDED(hr))
+    hr = IOleObject_QueryInterface(This->pOleDelegate, &IID_IDataObject,
+                                   (void **)&This->pDataDelegate);
+
+  if (SUCCEEDED(hr) && This->dataAdviseHolder)
+    hr = DataAdviseHolder_OnConnect(This->dataAdviseHolder, This->pDataDelegate);
+
   if (FAILED(hr))
     DefaultHandler_Stop(This);
 
@@ -1558,6 +1576,7 @@ static DefaultHandler* DefaultHandler_Construct(
   This->containerObj = NULL;
   This->pOleDelegate = NULL;
   This->pPSDelegate = NULL;
+  This->pDataDelegate = NULL;
 
   This->dwAdvConn = 0;
 
