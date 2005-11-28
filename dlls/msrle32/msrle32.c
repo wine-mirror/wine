@@ -1167,8 +1167,8 @@ static LRESULT GetInfo(CodecInfo *pi, ICINFO *icinfo, DWORD dwSize)
   icinfo->fccType      = ICTYPE_VIDEO;
   icinfo->fccHandler   = (pi != NULL ? pi->fccHandler : FOURCC_MRLE);
   icinfo->dwFlags      = VIDCF_QUALITY | VIDCF_TEMPORAL | VIDCF_CRUNCH | VIDCF_FASTTEMPORALC;
-  icinfo->dwVersion    = MSRLE32_VERSION;
-  icinfo->dwVersionICM = 0x01040000; /* Version 1.4 build 0 */
+  icinfo->dwVersion    = ICVERSION;
+  icinfo->dwVersionICM = ICVERSION;
 
   LoadStringW(MSRLE32_hModule, IDS_NAME, icinfo->szName, sizeof(icinfo->szName)/sizeof(WCHAR));
   LoadStringW(MSRLE32_hModule, IDS_DESCRIPTION, icinfo->szDescription, sizeof(icinfo->szDescription)/sizeof(WCHAR));

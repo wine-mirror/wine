@@ -185,7 +185,7 @@ static BOOL ICInfo_enum_handler(const char *drv, int nr, void *param)
     lpicinfo->fccHandler = fccHandler;
     lpicinfo->dwFlags = 0;
     lpicinfo->dwVersion = 0;
-    lpicinfo->dwVersionICM = 0x104;
+    lpicinfo->dwVersionICM = ICVERSION;
     lpicinfo->szName[0] = 0;
     lpicinfo->szDescription[0] = 0;
     MultiByteToWideChar(CP_ACP, 0, drv + 10, -1, lpicinfo->szDriver, 

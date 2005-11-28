@@ -35,7 +35,6 @@
 #define IDS_DESCRIPTION 101
 #define IDS_ABOUT       102
 
-#define MSRLE32_VERSION  0x00010000 /* Version 1.0 build 0 */
 #define MSRLE32_DEFAULTQUALITY (75 * ICQUALITY_HIGH) / 100
 
 #define FOURCC_RLE   mmioFOURCC('R','L','E',' ')

@@ -42,6 +42,8 @@ typedef struct IAVIEditStream *PAVIEDITSTREAM;
 
 /* Installable Compressor Manager */
 
+#define ICVERSION 0x0104
+
 DECLARE_HANDLE(HIC);
 
 /* error return codes */

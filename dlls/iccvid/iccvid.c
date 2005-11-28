@@ -921,8 +921,8 @@ static LRESULT ICCVID_GetInfo( ICCVID_Info *info, ICINFO *icinfo, DWORD dwSize )
     icinfo->fccType = ICTYPE_VIDEO;
     icinfo->fccHandler = info ? info->dwMagic : ICCVID_MAGIC;
     icinfo->dwFlags = 0;
-    icinfo->dwVersion = 0x00010000; /* Version 1.0 build 0 */
-    icinfo->dwVersionICM = 0x01040000; /* Version 1.4 build 0 */
+    icinfo->dwVersion = ICVERSION;
+    icinfo->dwVersionICM = ICVERSION;
 
     LoadStringW(ICCVID_hModule, IDS_NAME, icinfo->szName, sizeof(icinfo->szName)/sizeof(WCHAR));
     LoadStringW(ICCVID_hModule, IDS_DESCRIPTION, icinfo->szDescription, sizeof(icinfo->szDescription)/sizeof(WCHAR));
