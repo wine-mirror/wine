@@ -526,7 +526,6 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
   unsigned char** ppMemory, PFORMAT_STRING pFormat, unsigned char fMustAlloc )
 {
   unsigned long len, esize, ofs;
-  unsigned char *pMem;
 
   TRACE("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u)\n",
     pStubMsg, *ppMemory, pFormat, fMustAlloc);
@@ -551,28 +550,18 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
     FIXME("sized string format=%d\n", pFormat[1]);
   }
 
-  if (fMustAlloc) {
+  if (fMustAlloc || !*ppMemory)
     *ppMemory = NdrAllocate(pStubMsg, len*esize + BUFFER_PARANOIA);
-  } else {
-    if (pStubMsg->ReuseBuffer && !*ppMemory)
-      /* for servers, we may just point straight into the RPC buffer, I think
-       * (I guess that's what MS does since MIDL code doesn't try to free) */
-      *ppMemory = pStubMsg->Buffer - ofs*esize;
-    /* for clients, memory should be provided by caller */
-  }
 
-  pMem = *ppMemory + ofs*esize;
-
-  if (pMem != pStubMsg->Buffer)
-    memcpy(pMem, pStubMsg->Buffer, len*esize);
+  memcpy(*ppMemory, pStubMsg->Buffer, len*esize);
 
   pStubMsg->Buffer += len*esize;
 
   if (*pFormat == RPC_FC_C_CSTRING) {
-    TRACE("string=%s\n", debugstr_a((char*)pMem));
+    TRACE("string=%s\n", debugstr_a((char*)*ppMemory));
   }
   else if (*pFormat == RPC_FC_C_WSTRING) {
-    TRACE("string=%s\n", debugstr_w((LPWSTR)pMem));
+    TRACE("string=%s\n", debugstr_w((LPWSTR)*ppMemory));
   }
 
   return NULL; /* FIXME: is this always right? */
