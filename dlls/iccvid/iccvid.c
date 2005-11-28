@@ -47,12 +47,14 @@
 #include "winuser.h"
 #include "commdlg.h"
 #include "vfw.h"
-
 #include "mmsystem.h"
+#include "iccvid_private.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iccvid);
+
+static HINSTANCE ICCVID_hModule;
 
 #define ICCVID_MAGIC mmioFOURCC('c', 'v', 'i', 'd')
 
@@ -910,8 +912,27 @@ static LRESULT ICCVID_Close( ICCVID_Info *info )
     return 1;
 }
 
+static LRESULT ICCVID_GetInfo( ICCVID_Info *info, ICINFO *icinfo, DWORD dwSize )
+{
+    if (!icinfo) return sizeof(ICINFO);
+    if (dwSize < sizeof(ICINFO)) return 0;
+
+    icinfo->dwSize = sizeof(ICINFO);
+    icinfo->fccType = ICTYPE_VIDEO;
+    icinfo->fccHandler = info ? info->dwMagic : ICCVID_MAGIC;
+    icinfo->dwFlags = 0;
+    icinfo->dwVersion = 0x00010000; /* Version 1.0 build 0 */
+    icinfo->dwVersionICM = 0x01040000; /* Version 1.4 build 0 */
+
+    LoadStringW(ICCVID_hModule, IDS_NAME, icinfo->szName, sizeof(icinfo->szName)/sizeof(WCHAR));
+    LoadStringW(ICCVID_hModule, IDS_DESCRIPTION, icinfo->szDescription, sizeof(icinfo->szDescription)/sizeof(WCHAR));
+    /* msvfw32 will fill icinfo->szDriver for us */
+
+    return sizeof(ICINFO);
+}
+
 LRESULT WINAPI ICCVID_DriverProc( DWORD dwDriverId, HDRVR hdrvr, UINT msg,
-                                  LONG lParam1, LONG lParam2)
+                                  LPARAM lParam1, LPARAM lParam2)
 {
     ICCVID_Info *info = (ICCVID_Info *) dwDriverId;
 
@@ -939,6 +960,9 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD dwDriverId, HDRVR hdrvr, UINT msg,
         }
         return (LRESULT) info;
 
+    case ICM_GETINFO:
+        return ICCVID_GetInfo( info, (ICINFO *)lParam1, (DWORD)lParam2 );
+
     case ICM_DECOMPRESS_QUERY:
         return ICCVID_DecompressQuery( info, (LPBITMAPINFO) lParam1,
                                        (LPBITMAPINFO) lParam2 );
@@ -962,4 +986,21 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD dwDriverId, HDRVR hdrvr, UINT msg,
         FIXME("Unknown message: %04x %ld %ld\n", msg, lParam1, lParam2);
     }
     return 0;
+}
+
+BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
+{
+    TRACE("(%p,%ld,%p)\n", hModule, dwReason, lpReserved);
+
+    switch (dwReason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hModule);
+        ICCVID_hModule = hModule;
+        break;
+
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
 }

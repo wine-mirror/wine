@@ -3,10 +3,12 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = iccvid.dll
-IMPORTS   = kernel32
+IMPORTS   = user32 kernel32
 
 C_SRCS = \
 	iccvid.c
+
+RC_SRCS = rsrc.rc
 
 @MAKE_DLL_RULES@
 
