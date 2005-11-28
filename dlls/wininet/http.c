@@ -873,30 +873,20 @@ static LPWSTR HTTP_EncodeBasicAuth( LPCWSTR username, LPCWSTR password)
 static BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
                        LPCWSTR username, LPCWSTR password )
 {
-    HTTPHEADERW hdr;
-    INT index;
-    static const WCHAR szProxyAuthorization[] = {
-        'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
+    WCHAR *authorization = HTTP_EncodeBasicAuth( username, password );
+    BOOL ret;
 
-    hdr.lpszValue = HTTP_EncodeBasicAuth( username, password );
-    hdr.lpszField = (WCHAR *)szProxyAuthorization;
-    hdr.wFlags = HDR_ISREQUEST;
-    hdr.wCount = 0;
-    if( !hdr.lpszValue )
+    if (!authorization)
         return FALSE;
 
-    TRACE("Inserting %s = %s\n",
-          debugstr_w( hdr.lpszField ), debugstr_w( hdr.lpszValue ) );
+    TRACE( "Inserting authorization: %s\n", debugstr_w( authorization ) );
 
-    /* remove the old proxy authorization header */
-    index = HTTP_GetCustomHeaderIndex( lpwhr, hdr.lpszField );
-    if( index >=0 )
-        HTTP_DeleteCustomHeader( lpwhr, index );
+    ret = HTTP_ReplaceHeaderValue( &lpwhr->StdHeaders[HTTP_QUERY_PROXY_AUTHORIZATION],
+                                   authorization );
+
+    HeapFree( GetProcessHeap(), 0, authorization );
     
-    HTTP_InsertCustomHeader(lpwhr, &hdr);
-    HeapFree( GetProcessHeap(), 0, hdr.lpszValue );
-    
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
