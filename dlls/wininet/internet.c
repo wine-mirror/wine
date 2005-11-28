@@ -951,7 +951,7 @@ BOOL WINAPI INTERNET_FindNextFileW(LPWININETFINDNEXTW lpwh, LPVOID lpvFindData)
 
 lend:
 
-    if (lpwh->hdr.dwFlags & INTERNET_FLAG_ASYNC && lpwh->hdr.lpfnStatusCB)
+    if (lpwh->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         INTERNET_ASYNC_RESULT iar;
 
@@ -959,9 +959,9 @@ lend:
         iar.dwError = iar.dwError = bSuccess ? ERROR_SUCCESS :
                                                INTERNET_GetLastError();
 
-        SendAsyncCallback(&lpwh->hdr, lpwh->hdr.dwContext,
-                      INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                       sizeof(INTERNET_ASYNC_RESULT));
+        INTERNET_SendCallback(&lpwh->hdr, lpwh->hdr.dwContext,
+                              INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                              sizeof(INTERNET_ASYNC_RESULT));
     }
 
     return bSuccess;
@@ -1015,9 +1015,11 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
         return FALSE;
     }
 
-    SendAsyncCallback(lpwh, lpwh->dwContext,
-                      INTERNET_STATUS_HANDLE_CLOSING, &hInternet,
-                      sizeof(HINTERNET));
+    /* FIXME: native appears to send this from the equivalent of
+     * WININET_Release */
+    INTERNET_SendCallback(lpwh, lpwh->dwContext,
+                          INTERNET_STATUS_HANDLE_CLOSING, &hInternet,
+                          sizeof(HINTERNET));
 
     if( lpwh->lpwhparent )
         WININET_Release( lpwh->lpwhparent );
@@ -1753,9 +1755,9 @@ static BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
         iar.dwError = iar.dwError = retval ? ERROR_SUCCESS :
                                              INTERNET_GetLastError();
 
-        SendAsyncCallback(lpwh, lpwh->dwContext,
-                          INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                          sizeof(INTERNET_ASYNC_RESULT));
+        INTERNET_SendCallback(lpwh, lpwh->dwContext,
+                              INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                              sizeof(INTERNET_ASYNC_RESULT));
     }
     return retval;
 }
