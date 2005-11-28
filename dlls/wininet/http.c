@@ -57,14 +57,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
-static const WCHAR g_szHttp[] = {' ','H','T','T','P','/','1','.','0',0 };
+static const WCHAR g_szHttp1_0[] = {' ','H','T','T','P','/','1','.','0',0 };
+static const WCHAR g_szHttp1_1[] = {' ','H','T','T','P','/','1','.','1',0 };
 static const WCHAR g_szReferer[] = {'R','e','f','e','r','e','r',0};
 static const WCHAR g_szAccept[] = {'A','c','c','e','p','t',0};
 static const WCHAR g_szUserAgent[] = {'U','s','e','r','-','A','g','e','n','t',0};
 static const WCHAR g_szHost[] = {'H','o','s','t',0};
 
 
-#define HTTPHEADER g_szHttp
 #define MAXHOSTNAME 100
 #define MAX_FIELD_VALUE_LEN 256
 #define MAX_FIELD_LEN 256
@@ -208,7 +208,7 @@ static void HTTP_FixURL( LPWININETHTTPREQW lpwhr)
     }
 }
 
-static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr )
+static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr, LPCWSTR verb, LPCWSTR path, BOOL http1_1 )
 {
     LPWSTR requestString;
     DWORD len, n;
@@ -225,12 +225,12 @@ static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr )
     len = (HTTP_QUERY_MAX + lpwhr->nCustHeaders)*4 + 9;
     req = HeapAlloc( GetProcessHeap(), 0, len*sizeof(LPCWSTR) );
 
-    /* add the verb, path and HTTP/1.0 */
+    /* add the verb, path and HTTP version string */
     n = 0;
-    req[n++] = lpwhr->lpszVerb;
+    req[n++] = verb;
     req[n++] = szSpace;
-    req[n++] = lpwhr->lpszPath;
-    req[n++] = HTTPHEADER;
+    req[n++] = path;
+    req[n++] = http1_1 ? g_szHttp1_1 : g_szHttp1_0;
 
     /* Append standard request headers */
     for (i = 0; i <= HTTP_QUERY_MAX; i++)
@@ -359,13 +359,10 @@ static void HTTP_ProcessHeaders( LPWININETHTTPREQW lpwhr )
 
 static void HTTP_AddProxyInfo( LPWININETHTTPREQW lpwhr )
 {
-    LPWININETHTTPSESSIONW lpwhs = NULL;
-    LPWININETAPPINFOW hIC = NULL;
+    LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW)lpwhr->hdr.lpwhparent;
+    LPWININETAPPINFOW hIC = (LPWININETAPPINFOW)lpwhs->hdr.lpwhparent;
 
-    lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
     assert(lpwhs->hdr.htype == WH_HHTTPSESSION);
-
-    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
     assert(hIC->hdr.htype == WH_HINIT);
 
     if (hIC && (hIC->lpszProxyUsername || hIC->lpszProxyPassword ))
@@ -1615,7 +1612,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
 
     HTTP_AddProxyInfo(lpwhr);
 
-    requestString = HTTP_BuildHeaderRequestString(lpwhr);
+    requestString = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, FALSE);
  
     TRACE("Request header -> %s\n", debugstr_w(requestString) );
 
@@ -1897,6 +1894,48 @@ static LPWSTR HTTP_build_req( LPCWSTR *list, int len )
     return str;
 }
 
+static BOOL HTTP_SecureProxyConnect(LPWININETHTTPREQW lpwhr)
+{
+    LPWSTR lpszPath;
+    LPWSTR requestString;
+    INT len;
+    INT cnt;
+    INT responseLen;
+    char *ascii_req;
+    BOOL ret;
+    static const WCHAR szConnect[] = {'C','O','N','N','E','C','T',0};
+    static const WCHAR szFormat[] = {'%','s',':','%','d',0};
+    LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW)lpwhr->hdr.lpwhparent;
+
+    TRACE("\n");
+
+    lpszPath = HeapAlloc( GetProcessHeap(), 0, (lstrlenW( lpwhs->lpszHostName ) + 13)*sizeof(WCHAR) );
+    sprintfW( lpszPath, szFormat, lpwhs->lpszHostName, lpwhs->nHostPort );
+    requestString = HTTP_BuildHeaderRequestString( lpwhr, szConnect, lpszPath, FALSE );
+    HeapFree( GetProcessHeap(), 0, lpszPath );
+
+    len = WideCharToMultiByte( CP_ACP, 0, requestString, -1,
+                                NULL, 0, NULL, NULL );
+    len--; /* the nul terminator isn't needed */
+    ascii_req = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, requestString, -1,
+                            ascii_req, len, NULL, NULL );
+    HeapFree( GetProcessHeap(), 0, requestString );
+
+    TRACE("full request -> %s\n", debugstr_an( ascii_req, len ) );
+
+    ret = NETCON_send( &lpwhr->netConnection, ascii_req, len, 0, &cnt );
+    HeapFree( GetProcessHeap(), 0, ascii_req );
+    if (!ret || cnt < 0)
+        return FALSE;
+
+    responseLen = HTTP_GetResponseHeaders( lpwhr );
+    if (!responseLen)
+        return FALSE;
+
+    return TRUE;
+}
+
 /***********************************************************************
  *           HTTP_HttpSendRequestW (internal)
  *
@@ -1956,7 +1995,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         /* if there's a proxy username and password, add it to the headers */
         HTTP_AddProxyInfo(lpwhr);
 
-        requestString = HTTP_BuildHeaderRequestString(lpwhr);
+        requestString = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, FALSE);
  
         TRACE("Request header -> %s\n", debugstr_w(requestString) );
 
@@ -2188,6 +2227,15 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
 
     if (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE)
     {
+        /* Note: we differ from Microsoft's WinINet here. they seem to have
+         * a bug that causes no status callbacks to be sent when starting
+         * a tunnel to a proxy server using the CONNECT verb. i believe our
+         * behaviour to be more correct and to not cause any incompatibilities
+         * because using a secure connection through a proxy server is a rare
+         * case that would be hard for anyone to depend on */
+        if (hIC->lpszProxy && !HTTP_SecureProxyConnect(lpwhr))
+            goto lend;
+
         if (!NETCON_secure_connect(&lpwhr->netConnection, lpwhs->lpszHostName))
         {
             WARN("Couldn't connect securely to host\n");
@@ -2252,7 +2300,7 @@ static void HTTP_clear_response_headers( LPWININETHTTPREQW lpwhr )
  *   TRUE  on success
  *   FALSE on error
  */
-static BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
+static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
 {
     INT cbreaks = 0;
     WCHAR buffer[MAX_REPLY_LEN];
@@ -2368,7 +2416,7 @@ lend:
     if (bSuccess)
         return rc;
     else
-        return FALSE;
+        return 0;
 }
 
 
