@@ -1197,10 +1197,10 @@ static	DWORD	MCIAVI_mciRestore(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RESTORE_PAR
 /**************************************************************************
  * 				DriverProc (MCIAVI.@)
  */
-LONG CALLBACK	MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
-				  DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK MCIAVI_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                   LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lX, %p, %08lX, %08lX, %08lX)\n",
+    TRACE("(%08lX, %p, %08X, %08lX, %08lX)\n",
 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -1262,14 +1262,14 @@ LONG CALLBACK	MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 
     case MCI_SPIN:
     case MCI_ESCAPE:
-	WARN("Unsupported command [%lu]\n", wMsg);
+	WARN("Unsupported command [%u]\n", wMsg);
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
 	FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:
-	TRACE("Sending msg [%lu] to default driver proc\n", wMsg);
+	TRACE("Sending msg [%u] to default driver proc\n", wMsg);
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

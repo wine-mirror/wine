@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mpeg3);
 /***********************************************************************
  *           MPEG3_drvOpen
  */
-static	DWORD	MPEG3_drvOpen(LPCSTR str)
+static LRESULT MPEG3_drvOpen(LPCSTR str)
 {
     return 1;
 }
@@ -49,7 +49,7 @@ static	DWORD	MPEG3_drvOpen(LPCSTR str)
 /***********************************************************************
  *           MPEG3_drvClose
  */
-static	DWORD	MPEG3_drvClose(DWORD dwDevID)
+static LRESULT MPEG3_drvClose(DWORD_PTR dwDevID)
 {
     return 1;
 }
@@ -542,11 +542,11 @@ static LRESULT MPEG3_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEAD
 /**************************************************************************
  * 			MPEG3_DriverProc			[exported]
  */
-LRESULT CALLBACK	MPEG3_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
+LRESULT CALLBACK MPEG3_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 					 LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lx %08lx %04x %08lx %08lx);\n",
-	  dwDevID, (DWORD)hDriv, wMsg, dwParam1, dwParam2);
+    TRACE("(%08lx %p %04x %08lx %08lx);\n",
+	  dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch (wMsg)
     {

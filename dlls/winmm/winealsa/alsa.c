@@ -37,7 +37,7 @@ static	struct WINE_ALSA* alsa = NULL;
 /**************************************************************************
  * 				ALSA_drvOpen			[internal]
  */
-static	DWORD	ALSA_drvOpen(LPSTR str)
+static LRESULT ALSA_drvOpen(LPSTR str)
 {
     if (alsa)
 	return 0;
@@ -50,7 +50,7 @@ static	DWORD	ALSA_drvOpen(LPSTR str)
 /**************************************************************************
  * 				ALSA_drvClose			[internal]
  */
-static	DWORD	ALSA_drvClose(DWORD dwDevID)
+static LRESULT ALSA_drvClose(DWORD_PTR dwDevID)
 {
     if (alsa) {
 	alsa = NULL;
@@ -65,8 +65,8 @@ static	DWORD	ALSA_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc (WINEALSA.@)
  */
-LONG CALLBACK	ALSA_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
-			       DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK ALSA_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                 LPARAM dwParam1, LPARAM dwParam2)
 {
 /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */

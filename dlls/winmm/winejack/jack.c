@@ -51,7 +51,7 @@ void *jackhandle = NULL;
 /**************************************************************************
  * 				JACK_drvLoad			[internal]	
  */
-static DWORD JACK_drvLoad(void)
+static LRESULT JACK_drvLoad(void)
 {
   TRACE("JACK_drvLoad()\n");
 
@@ -76,7 +76,7 @@ static DWORD JACK_drvLoad(void)
  * 				JACK_drvFree			[internal]	
  */
 /* unload the jack library on driver free */
-static DWORD JACK_drvFree(void)
+static LRESULT JACK_drvFree(void)
 {
   TRACE("JACK_drvFree()\n");
 
@@ -93,7 +93,7 @@ static DWORD JACK_drvFree(void)
 /**************************************************************************
  * 				JACK_drvOpen			[internal]	
  */
-static	DWORD	JACK_drvOpen(LPSTR str)
+static LRESULT JACK_drvOpen(LPSTR str)
 {
   /* if we were unable to load the jack library then fail the */
   /* driver open */
@@ -118,7 +118,7 @@ static	DWORD	JACK_drvOpen(LPSTR str)
 /**************************************************************************
  * 				JACK_drvClose			[internal]	
  */
-static	DWORD	JACK_drvClose(DWORD dwDevID)
+static LRESULT JACK_drvClose(DWORD_PTR dwDevID)
 {
   if (jack)
   {
@@ -136,8 +136,8 @@ static	DWORD	JACK_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc (WINEJACK.1)
  */
-LONG CALLBACK	JACK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-			       DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK JACK_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg, 
+                                 LPARAM dwParam1, LPARAM dwParam2)
 {
 /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */

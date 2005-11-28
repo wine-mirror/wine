@@ -37,7 +37,7 @@ static	struct WINE_OSS* oss = NULL;
 /**************************************************************************
  * 				OSS_drvOpen			[internal]
  */
-static	DWORD	OSS_drvOpen(LPSTR str)
+static LRESULT OSS_drvOpen(LPSTR str)
 {
     if (oss)
 	return 0;
@@ -50,7 +50,7 @@ static	DWORD	OSS_drvOpen(LPSTR str)
 /**************************************************************************
  * 				OSS_drvClose			[internal]
  */
-static	DWORD	OSS_drvClose(DWORD dwDevID)
+static LRESULT OSS_drvClose(DWORD_PTR dwDevID)
 {
     if (oss) {
 	oss = NULL;
@@ -65,8 +65,8 @@ static	DWORD	OSS_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc (WINEOSS.1)
  */
-LONG CALLBACK	OSS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
-			       DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK OSS_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                LPARAM dwParam1, LPARAM dwParam2)
 {
 /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */

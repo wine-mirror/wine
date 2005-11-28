@@ -478,7 +478,7 @@ static LRESULT CRAM_GetInfo( Msvideo1Context *info, ICINFO *icinfo, DWORD dwSize
 /***********************************************************************
  *		DriverProc (MSVIDC32.@)
  */
-LRESULT WINAPI CRAM_DriverProc( DWORD dwDriverId, HDRVR hdrvr, UINT msg,
+LRESULT WINAPI CRAM_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
                                 LPARAM lParam1, LPARAM lParam2 )
 {
     Msvideo1Context *info = (Msvideo1Context *) dwDriverId;

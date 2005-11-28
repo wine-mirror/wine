@@ -136,7 +136,7 @@ static DWORD WAVE_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 /**************************************************************************
  * 				MCIWAVE_drvOpen			[internal]
  */
-static	DWORD	WAVE_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
+static LRESULT WAVE_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 {
     WINE_MCIWAVE*	wmw;
 
@@ -166,7 +166,7 @@ static	DWORD	WAVE_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 /**************************************************************************
  * 				MCIWAVE_drvClose		[internal]
  */
-static	DWORD	WAVE_drvClose(DWORD dwDevID)
+static LRESULT WAVE_drvClose(MCIDEVICEID dwDevID)
 {
     WINE_MCIWAVE*  wmw = (WINE_MCIWAVE*)mciGetDriverData(dwDevID);
 
@@ -181,7 +181,7 @@ static	DWORD	WAVE_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				WAVE_mciGetOpenDev		[internal]
  */
-static WINE_MCIWAVE*  WAVE_mciGetOpenDev(UINT wDevID)
+static WINE_MCIWAVE *WAVE_mciGetOpenDev(MCIDEVICEID wDevID)
 {
     WINE_MCIWAVE*	wmw = (WINE_MCIWAVE*)mciGetDriverData(wDevID);
 
@@ -346,7 +346,7 @@ err:
 /**************************************************************************
  * 			WAVE_mciOpen	                        [internal]
  */
-static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSW lpOpenParms)
+static LRESULT WAVE_mciOpen(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSW lpOpenParms)
 {
     DWORD		dwRet = 0;
     WINE_MCIWAVE*	wmw = (WINE_MCIWAVE*)mciGetDriverData(wDevID);
@@ -510,7 +510,7 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSW lpO
 /**************************************************************************
  *                               WAVE_mciCue             [internal]
  */
-static DWORD WAVE_mciCue(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
+static DWORD WAVE_mciCue(MCIDEVICEID wDevID, LPARAM dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
     /*
       FIXME
@@ -554,7 +554,7 @@ static DWORD WAVE_mciCue(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
 /**************************************************************************
  * 				WAVE_mciStop			[internal]
  */
-static DWORD WAVE_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD WAVE_mciStop(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     DWORD 		dwRet = 0;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
@@ -595,7 +595,7 @@ static DWORD WAVE_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
 /**************************************************************************
  *				WAVE_mciClose		[internal]
  */
-static DWORD WAVE_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD WAVE_mciClose(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     DWORD		dwRet = 0;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
@@ -643,8 +643,8 @@ static DWORD WAVE_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
  * 				WAVE_mciPlayCallback		[internal]
  */
 static	void	CALLBACK WAVE_mciPlayCallback(HWAVEOUT hwo, UINT uMsg,
-					      DWORD dwInstance,
-					      DWORD dwParam1, DWORD dwParam2)
+					      DWORD_PTR dwInstance,
+					      LPARAM dwParam1, LPARAM dwParam2)
 {
     WINE_MCIWAVE*	wmw = (WINE_MCIWAVE*)dwInstance;
 
@@ -683,7 +683,7 @@ static void WAVE_mciPlayWaitDone(WINE_MCIWAVE* wmw)
 /**************************************************************************
  * 				WAVE_mciPlay		[internal]
  */
-static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
+static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
     DWORD		end;
     LONG		bufsize, count, left;
@@ -877,8 +877,8 @@ cleanUp:
  * 				WAVE_mciPlayCallback		[internal]
  */
 static	void	CALLBACK WAVE_mciRecordCallback(HWAVEOUT hwo, UINT uMsg,
-                                                DWORD dwInstance,
-                                                DWORD dwParam1, DWORD dwParam2)
+                                                DWORD_PTR dwInstance,
+                                                LPARAM dwParam1, LPARAM dwParam2)
 {
     WINE_MCIWAVE*	wmw = (WINE_MCIWAVE*)dwInstance;
     LPWAVEHDR           lpWaveHdr;
@@ -936,7 +936,7 @@ static void WAVE_mciRecordWaitDone(WINE_MCIWAVE* wmw)
 /**************************************************************************
  * 				WAVE_mciRecord			[internal]
  */
-static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
+static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
 {
     DWORD		end;
     DWORD		dwRet = MMSYSERR_NOERROR;
@@ -1104,7 +1104,7 @@ cleanUp:
 /**************************************************************************
  * 				WAVE_mciPause			[internal]
  */
-static DWORD WAVE_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD WAVE_mciPause(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     DWORD 		dwRet;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
@@ -1127,7 +1127,7 @@ static DWORD WAVE_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 /**************************************************************************
  * 				WAVE_mciResume			[internal]
  */
-static DWORD WAVE_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD WAVE_mciResume(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
     DWORD		dwRet = 0;
@@ -1148,7 +1148,7 @@ static DWORD WAVE_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 /**************************************************************************
  * 				WAVE_mciSeek			[internal]
  */
-static DWORD WAVE_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
+static DWORD WAVE_mciSeek(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
     DWORD		ret = 0;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
@@ -1186,7 +1186,7 @@ static DWORD WAVE_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 /**************************************************************************
  * 				WAVE_mciSet			[internal]
  */
-static DWORD WAVE_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
+static DWORD WAVE_mciSet(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
 
@@ -1282,7 +1282,7 @@ static DWORD WAVE_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 /**************************************************************************
  *				WAVE_mciSave		[internal]
  */
-static DWORD WAVE_mciSave(UINT wDevID, DWORD dwFlags, LPMCI_SAVE_PARMSW lpParms)
+static DWORD WAVE_mciSave(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SAVE_PARMSW lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
     DWORD		ret = MCIERR_FILE_NOT_SAVED, tmpRet;
@@ -1333,7 +1333,7 @@ static DWORD WAVE_mciSave(UINT wDevID, DWORD dwFlags, LPMCI_SAVE_PARMSW lpParms)
 /**************************************************************************
  * 				WAVE_mciStatus		[internal]
  */
-static DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
+static DWORD WAVE_mciStatus(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
     DWORD		ret = 0;
@@ -1479,7 +1479,7 @@ static DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 /**************************************************************************
  * 				WAVE_mciGetDevCaps		[internal]
  */
-static DWORD WAVE_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
+static DWORD WAVE_mciGetDevCaps(MCIDEVICEID wDevID, DWORD dwFlags,
 				LPMCI_GETDEVCAPS_PARMS lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
@@ -1548,7 +1548,7 @@ static DWORD WAVE_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 /**************************************************************************
  * 				WAVE_mciInfo			[internal]
  */
-static DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
+static DWORD WAVE_mciInfo(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
 {
     DWORD		ret = 0;
     LPCWSTR		str = 0;
@@ -1593,10 +1593,10 @@ static DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
 /**************************************************************************
  * 				DriverProc (MCIWAVE.@)
  */
-LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
-				   DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK MCIWAVE_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                    LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lX, %p, %08lX, %08lX, %08lX)\n",
+    TRACE("(%08lX, %p, %08X, %08lX, %08lX)\n",
 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -1644,10 +1644,10 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_CUT:
     case MCI_DELETE:
     case MCI_PASTE:
-	FIXME("Unsupported yet command [%lu]\n", wMsg);
+	FIXME("Unsupported yet command [%u]\n", wMsg);
 	break;
     case MCI_WINDOW:
-	TRACE("Unsupported command [%lu]\n", wMsg);
+	TRACE("Unsupported command [%u]\n", wMsg);
 	break;
 	/* option which can be silenced */
     case MCI_CONFIGURE:
@@ -1657,7 +1657,7 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 	ERR("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:
-	FIXME("is probably wrong msg [%lu]\n", wMsg);
+	FIXME("is probably wrong msg [%u]\n", wMsg);
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

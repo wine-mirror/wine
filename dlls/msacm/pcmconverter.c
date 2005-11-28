@@ -1022,7 +1022,7 @@ static LRESULT PCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
 /**************************************************************************
  * 			DriverProc (MSACM32.@)
  */
-LRESULT CALLBACK	PCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
+LRESULT CALLBACK PCM_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 				       LPARAM dwParam1, LPARAM dwParam2)
 {
     TRACE("(%08lx %p %u %08lx %08lx);\n",

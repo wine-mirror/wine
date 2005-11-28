@@ -32,9 +32,6 @@
 #define WINE_DEFAULT_WINMM_MAPPER     "msacm.drv"
 #define WINE_DEFAULT_WINMM_MIDI       "midimap.dll"
 
-typedef DWORD (WINAPI *MessageProc16)(UINT16 wDevID, UINT16 wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
-typedef DWORD (WINAPI *MessageProc32)(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
-
 typedef enum {
     WINMM_MAP_NOMEM, 	/* ko, memory problem */
     WINMM_MAP_MSGERROR, /* ko, unknown message */
@@ -54,7 +51,7 @@ typedef struct tagWINE_DRIVER
 	struct {
 	    HMODULE			hModule;
 	    DRIVERPROC			lpDrvProc;
-	    DWORD		  	dwDriverID;
+	    DWORD_PTR		  	dwDriverID;
 	} d32;
 	struct {
 	    UINT16			hDriver16;

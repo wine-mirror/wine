@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(adpcm);
 /***********************************************************************
  *           ADPCM_drvOpen
  */
-static	DWORD	ADPCM_drvOpen(LPCSTR str)
+static LRESULT ADPCM_drvOpen(LPCSTR str)
 {
     return 1;
 }
@@ -48,7 +48,7 @@ static	DWORD	ADPCM_drvOpen(LPCSTR str)
 /***********************************************************************
  *           ADPCM_drvClose
  */
-static	DWORD	ADPCM_drvClose(DWORD dwDevID)
+static LRESULT ADPCM_drvClose(DWORD_PTR dwDevID)
 {
     return 1;
 }
@@ -870,11 +870,11 @@ static LRESULT ADPCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEAD
 /**************************************************************************
  * 			ADPCM_DriverProc			[exported]
  */
-LRESULT CALLBACK	ADPCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
+LRESULT CALLBACK ADPCM_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 					 LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lx %08lx %04x %08lx %08lx);\n",
-	  dwDevID, (DWORD)hDriv, wMsg, dwParam1, dwParam2);
+    TRACE("(%08lx %p %04x %08lx %08lx);\n",
+	  dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch (wMsg)
     {

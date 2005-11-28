@@ -76,8 +76,8 @@ static	BOOL	WAVEMAP_IsData(WAVEMAPDATA* wm)
  *                  WAVE OUT part                                       *
  *======================================================================*/
 
-static void	CALLBACK wodCallback(HWAVEOUT hWave, UINT uMsg, DWORD dwInstance,
-				     DWORD dwParam1, DWORD dwParam2)
+static void CALLBACK wodCallback(HWAVEOUT hWave, UINT uMsg, DWORD_PTR dwInstance,
+				     LPARAM dwParam1, LPARAM dwParam2)
 {
     WAVEMAPDATA*	wom = (WAVEMAPDATA*)dwInstance;
 
@@ -1186,7 +1186,7 @@ static	struct WINE_WAVEMAP* oss = NULL;
 /**************************************************************************
  * 				WAVEMAP_drvOpen			[internal]
  */
-static	DWORD	WAVEMAP_drvOpen(LPSTR str)
+static LRESULT WAVEMAP_drvOpen(LPSTR str)
 {
     TRACE("(%p)\n", str);
 
@@ -1201,7 +1201,7 @@ static	DWORD	WAVEMAP_drvOpen(LPSTR str)
 /**************************************************************************
  * 				WAVEMAP_drvClose		[internal]
  */
-static	DWORD	WAVEMAP_drvClose(DWORD dwDevID)
+static LRESULT WAVEMAP_drvClose(DWORD_PTR dwDevID)
 {
     TRACE("(%08lx)\n", dwDevID);
 
@@ -1215,10 +1215,10 @@ static	DWORD	WAVEMAP_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc (MSACM.@)
  */
-LONG CALLBACK	WAVEMAP_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
-				   DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK WAVEMAP_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                    LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lX, %p, %08lX, %08lX, %08lX)\n",
+    TRACE("(%08lX, %p, %08X, %08lX, %08lX)\n",
 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch(wMsg) {

@@ -1772,7 +1772,7 @@ static LRESULT DecompressGetPalette(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 }
 
 /* DriverProc - entry point for an installable driver */
-LRESULT CALLBACK MSRLE32_DriverProc(DWORD dwDrvID, HDRVR hDrv, UINT uMsg,
+LRESULT CALLBACK MSRLE32_DriverProc(DWORD_PTR dwDrvID, HDRVR hDrv, UINT uMsg,
 				    LPARAM lParam1, LPARAM lParam2)
 {
   CodecInfo *pi = (CodecInfo*)dwDrvID;

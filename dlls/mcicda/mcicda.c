@@ -988,8 +988,8 @@ static DWORD MCICDA_Set(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 /**************************************************************************
  * 			DriverProc (MCICDA.@)
  */
-LONG CALLBACK	MCICDA_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
-				      DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK MCICDA_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                   LPARAM dwParam1, LPARAM dwParam2)
 {
     switch(wMsg) {
     case DRV_LOAD:		return 1;
@@ -1038,14 +1038,14 @@ LONG CALLBACK	MCICDA_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_DELETE:
     case MCI_PASTE:
     case MCI_WINDOW:
-	TRACE("Unsupported command [0x%lx]\n", wMsg);
+	TRACE("Unsupported command [0x%x]\n", wMsg);
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
 	ERR("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:
-	TRACE("Sending msg [0x%lx] to default driver proc\n", wMsg);
+	TRACE("Sending msg [0x%x] to default driver proc\n", wMsg);
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

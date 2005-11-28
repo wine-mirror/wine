@@ -39,7 +39,7 @@ static		int esd = 0;
 /**************************************************************************
  * 				ESD_drvOpen			[internal]
  */
-static	DWORD	ESD_drvOpen(LPSTR str)
+static LRESULT ESD_drvOpen(LPSTR str)
 {
     if (esd)
 	return 0;
@@ -52,7 +52,7 @@ static	DWORD	ESD_drvOpen(LPSTR str)
 /**************************************************************************
  * 				ESD_drvClose			[internal]
  */
-static	DWORD	ESD_drvClose(DWORD dwDevID)
+static LRESULT ESD_drvClose(DWORD_PTR dwDevID)
 {
     if (esd) {
 	esd = 0;
@@ -66,8 +66,8 @@ static	DWORD	ESD_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc (WINEESD.@)
  */
-LONG CALLBACK	ESD_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
-			       DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK ESD_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                LPARAM dwParam1, LPARAM dwParam2)
 {
 /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */

@@ -931,7 +931,7 @@ static LRESULT ICCVID_GetInfo( ICCVID_Info *info, ICINFO *icinfo, DWORD dwSize )
     return sizeof(ICINFO);
 }
 
-LRESULT WINAPI ICCVID_DriverProc( DWORD dwDriverId, HDRVR hdrvr, UINT msg,
+LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
                                   LPARAM lParam1, LPARAM lParam2)
 {
     ICCVID_Info *info = (ICCVID_Info *) dwDriverId;

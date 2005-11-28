@@ -39,7 +39,7 @@ extern LONG LIBAUDIOIO_WaveInit(void);
 /**************************************************************************
  * 				LIBAUDIOIO_drvOpen			[internal]
  */
-static	DWORD	LIBAUDIOIO_drvOpen(LPSTR str)
+static LRESULT LIBAUDIOIO_drvOpen(LPSTR str)
 {
     if (audioio)
 	return 0;
@@ -52,7 +52,7 @@ static	DWORD	LIBAUDIOIO_drvOpen(LPSTR str)
 /**************************************************************************
  * 				LIBAUDIOIO_drvClose			[internal]
  */
-static	DWORD	LIBAUDIOIO_drvClose(DWORD dwDevID)
+static LRESULT LIBAUDIOIO_drvClose(DWORD_PTR dwDevID)
 {
     if (audioio) {
 	audioio = NULL;
@@ -67,8 +67,8 @@ static	DWORD	LIBAUDIOIO_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc
  */
-LONG CALLBACK	LIBAUDIOIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
-			       DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK LIBAUDIOIO_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                       LPARAM dwParam1, LPARAM dwParam2)
 {
 /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */

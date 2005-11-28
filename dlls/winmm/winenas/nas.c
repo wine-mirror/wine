@@ -41,7 +41,7 @@ static		int nas = 0;
 /**************************************************************************
  * 				NAS_drvOpen			[internal]
  */
-static	DWORD	NAS_drvOpen(LPSTR str)
+static LRESULT NAS_drvOpen(LPSTR str)
 {
     if (nas)
 	return 0;
@@ -54,7 +54,7 @@ static	DWORD	NAS_drvOpen(LPSTR str)
 /**************************************************************************
  * 				NAS_drvClose			[internal]
  */
-static	DWORD	NAS_drvClose(DWORD dwDevID)
+static LRESULT NAS_drvClose(DWORD_PTR dwDevID)
 {
     if (nas) {
 	nas = 0;
@@ -68,8 +68,8 @@ static	DWORD	NAS_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc (WINENAS.@)
  */
-LONG CALLBACK	NAS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
-			       DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK NAS_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                LPARAM dwParam1, LPARAM dwParam2)
 {
 /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */

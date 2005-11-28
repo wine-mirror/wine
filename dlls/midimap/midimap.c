@@ -490,7 +490,7 @@ DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 /**************************************************************************
  * 				MIDIMAP_drvOpen			[internal]
  */
-static	DWORD	MIDIMAP_drvOpen(LPSTR str)
+static LRESULT MIDIMAP_drvOpen(LPSTR str)
 {
     MIDIOUTCAPSW	moc;
     unsigned		dev, i;
@@ -525,7 +525,7 @@ static	DWORD	MIDIMAP_drvOpen(LPSTR str)
 /**************************************************************************
  * 				MIDIMAP_drvClose		[internal]
  */
-static	DWORD	MIDIMAP_drvClose(DWORD dwDevID)
+static LRESULT MIDIMAP_drvClose(DWORD_PTR dwDevID)
 {
     if (midiOutPorts)
     {
@@ -539,8 +539,8 @@ static	DWORD	MIDIMAP_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc (MIDIMAP.@)
  */
-LONG CALLBACK	MIDIMAP_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
-				   DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK MIDIMAP_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                    LPARAM dwParam1, LPARAM dwParam2)
 {
 /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */

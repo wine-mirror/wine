@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(g711);
 /***********************************************************************
  *           G711_drvOpen
  */
-static	DWORD	G711_drvOpen(LPCSTR str)
+static LRESULT G711_drvOpen(LPCSTR str)
 {
     return 1;
 }
@@ -46,7 +46,7 @@ static	DWORD	G711_drvOpen(LPCSTR str)
 /***********************************************************************
  *           G711_drvClose
  */
-static	DWORD	G711_drvClose(DWORD dwDevID)
+static LRESULT G711_drvClose(DWORD_PTR dwDevID)
 {
     return 1;
 }
@@ -1097,7 +1097,7 @@ static LRESULT G711_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADE
 /**************************************************************************
  * 			G711_DriverProc			[exported]
  */
-LRESULT CALLBACK	G711_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
+LRESULT CALLBACK G711_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 					 LPARAM dwParam1, LPARAM dwParam2)
 {
     TRACE("(%08lx %p %04x %08lx %08lx);\n",

@@ -38,7 +38,7 @@ static		int arts = 0;
 /**************************************************************************
  * 				ARTS_drvOpen			[internal]
  */
-static	DWORD	ARTS_drvOpen(LPSTR str)
+static LRESULT ARTS_drvOpen(LPSTR str)
 {
     if (arts)
 	return 0;
@@ -51,7 +51,7 @@ static	DWORD	ARTS_drvOpen(LPSTR str)
 /**************************************************************************
  * 				ARTS_drvClose			[internal]
  */
-static	DWORD	ARTS_drvClose(DWORD dwDevID)
+static LRESULT ARTS_drvClose(DWORD_PTR dwDevID)
 {
     if (arts) {
 	arts = 0;
@@ -65,8 +65,8 @@ static	DWORD	ARTS_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc (WINEARTS.@)
  */
-LONG CALLBACK	ARTS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
-			       DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK ARTS_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                 LPARAM dwParam1, LPARAM dwParam2)
 {
 /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
