@@ -401,6 +401,24 @@ done_err:
     return FALSE;
 }
 
+/***********************************************************************
+ *		StackWalk64 (DBGHELP.@)
+ */
+BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
+                        LPSTACKFRAME64 frame, LPVOID ctx,
+                        PREAD_PROCESS_MEMORY_ROUTINE64 f_read_mem,
+                        PFUNCTION_TABLE_ACCESS_ROUTINE64 FunctionTableAccessRoutine,
+                        PGET_MODULE_BASE_ROUTINE64 GetModuleBaseRoutine,
+                        PTRANSLATE_ADDRESS_ROUTINE64 f_xlat_adr)
+{
+    FIXME("(%ld, %p, %p, %p, %p, %p, %p, %p, %p) - stub!\n",
+          MachineType, hProcess, hThread, frame, ctx,
+          f_read_mem, FunctionTableAccessRoutine,
+          GetModuleBaseRoutine, f_xlat_adr);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
 /******************************************************************
  *		SymRegisterFunctionEntryCallback (DBGHELP.@)
  *

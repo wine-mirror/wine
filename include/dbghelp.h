@@ -60,6 +60,13 @@ typedef struct _tagADDRESS
     ADDRESS_MODE                Mode;
 } ADDRESS, *LPADDRESS;
 
+typedef struct _tagADDRESS64
+{
+    DWORD64                     Offset;
+    WORD                        Segment;
+    ADDRESS_MODE                Mode;
+} ADDRESS64, *LPADDRESS64;
+
 #define SYMF_OMAP_GENERATED   0x00000001
 #define SYMF_OMAP_MODIFIED    0x00000002
 #define SYMF_USER_GENERATED   0x00000004
@@ -864,6 +871,19 @@ typedef struct _KDHELP
     DWORD       SystemRangeStart;
 } KDHELP, *PKDHELP;
 
+typedef struct _KDHELP64
+{
+    DWORD64     Thread;
+    DWORD       ThCallbackStack;
+    DWORD       ThCallbackBStore;
+    DWORD       NextCallback;
+    DWORD       FramePointer;
+    DWORD64     KiCallUserMode;
+    DWORD64     KeUserCallbackDispatcher;
+    DWORD64     SystemRangeStart;
+    DWORD64     Reserved[8];
+} KDHELP64, *PKDHELP64;
+
 typedef struct _STACKFRAME
 {
     ADDRESS     AddrPC;
@@ -879,6 +899,21 @@ typedef struct _STACKFRAME
     ADDRESS     AddrBStore;
 } STACKFRAME, *LPSTACKFRAME;
 
+typedef struct _STACKFRAME64
+{
+    ADDRESS64   AddrPC;
+    ADDRESS64   AddrReturn;
+    ADDRESS64   AddrFrame;
+    ADDRESS64   AddrStack;
+    ADDRESS64   AddrBStore;
+    PVOID       FuncTableEntry;
+    DWORD64     Params[4];
+    BOOL        Far;
+    BOOL        Virtual;
+    DWORD64     Reserved[3];
+    KDHELP64    KdHelp;
+} STACKFRAME64, *LPSTACKFRAME64;
+
 typedef BOOL (CALLBACK *PREAD_PROCESS_MEMORY_ROUTINE)
     (HANDLE, DWORD, PVOID, DWORD, PDWORD);
 typedef PVOID (CALLBACK *PFUNCTION_TABLE_ACCESS_ROUTINE)(HANDLE, DWORD);
@@ -889,6 +924,17 @@ BOOL WINAPI StackWalk(DWORD, HANDLE, HANDLE, LPSTACKFRAME, PVOID,
                       PFUNCTION_TABLE_ACCESS_ROUTINE,
                       PGET_MODULE_BASE_ROUTINE,
                       PTRANSLATE_ADDRESS_ROUTINE);
+
+typedef BOOL (CALLBACK *PREAD_PROCESS_MEMORY_ROUTINE64)
+    (HANDLE, DWORD64, PVOID, DWORD, PDWORD);
+typedef PVOID (CALLBACK *PFUNCTION_TABLE_ACCESS_ROUTINE64)(HANDLE, DWORD64);
+typedef DWORD (CALLBACK *PGET_MODULE_BASE_ROUTINE64)(HANDLE, DWORD64);
+typedef DWORD (CALLBACK *PTRANSLATE_ADDRESS_ROUTINE64)(HANDLE, HANDLE, LPADDRESS64);
+BOOL WINAPI StackWalk64(DWORD, HANDLE, HANDLE, LPSTACKFRAME64, PVOID,
+                        PREAD_PROCESS_MEMORY_ROUTINE64,
+                        PFUNCTION_TABLE_ACCESS_ROUTINE64,
+                        PGET_MODULE_BASE_ROUTINE64,
+                        PTRANSLATE_ADDRESS_ROUTINE64);
 
 PVOID WINAPI SymFunctionTableAccess(HANDLE, DWORD);
 

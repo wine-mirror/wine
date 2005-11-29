@@ -23,7 +23,7 @@
 @ stdcall MiniDumpReadDumpStream(ptr long ptr ptr ptr)
 @ stdcall MiniDumpWriteDump(ptr long ptr long long long long)
 @ stdcall SearchTreeForFile(str str str)
-@ stub StackWalk64
+@ stdcall StackWalk64(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall SymCleanup(long)
 @ stdcall SymEnumLines(ptr double str str ptr ptr)
