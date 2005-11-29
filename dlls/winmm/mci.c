@@ -555,7 +555,7 @@ static DWORD MCI_UnmapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR dwParam2,
 /**************************************************************************
  * 				MCI_GetDevTypeFromFileName	[internal]
  */
-static	DWORD	MCI_GetDevTypeFromFileName(LPCWSTR fileName, LPCWSTR buf, UINT len)
+static	DWORD	MCI_GetDevTypeFromFileName(LPCWSTR fileName, LPWSTR buf, UINT len)
 {
     LPCWSTR	tmp;
     HKEY	hKey;
@@ -1031,7 +1031,6 @@ static	DWORD	MCI_GetString(LPWSTR* str, LPWSTR* args)
 	if (ptr[-1] == '\\') TRACE("Ooops: un-escaped \"\n");
 	*ptr++ = '\0'; /* remove trailing " */
 	if (*ptr != ' ' && *ptr != '\0') return MCIERR_EXTRA_CHARACTERS;
-	*ptr++ = '\0';
     } else {
 	ptr = strchrW(ptr, ' ');
 
@@ -1093,7 +1092,7 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCWSTR lpCmd,
 	    }
 
 	    if (strncmpiW(args, str, len) == 0 &&
-		(args[len] == 0 || args[len] == ' ')) {
+                ((eid == MCI_STRING && len == 0) || args[len] == 0 || args[len] == ' ')) {
 		/* store good values into data[] */
 		args += len;
 		while (*args == ' ') args++;
