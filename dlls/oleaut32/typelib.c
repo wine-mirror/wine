@@ -86,6 +86,7 @@ WINE_DECLARE_DEBUG_CHANNEL(typelib);
 const GUID CLSID_PSOAInterface = { 0x00020424, 0, 0, { 0xC0, 0, 0, 0, 0, 0, 0, 0x46 } };
 
 static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, TYPEDESC *tdesc, VARTYPE *vt);
+static HRESULT TLB_AllocAndInitVarDesc(const VARDESC *src, VARDESC **dest_ptr);
 
 /****************************************************************************
  *              FromLExxx
@@ -1334,49 +1335,55 @@ static void TLB_Free(void * ptr)
     HeapFree(GetProcessHeap(), 0, ptr);
 }
 
-/* deep copy a typedesc */
-static void copy_typedesc(TYPEDESC *out, const TYPEDESC *in)
+/* returns the size required for a deep copy of a typedesc into a
+ * flat buffer */
+static SIZE_T TLB_SizeTypeDesc( const TYPEDESC *tdesc, BOOL alloc_initial_space )
 {
-    out->vt = in->vt;
-    switch(in->vt) {
+    SIZE_T size = 0;
+
+    if (alloc_initial_space)
+        size += sizeof(TYPEDESC);
+
+    switch (tdesc->vt)
+    {
     case VT_PTR:
-	out->u.lptdesc = HeapAlloc(GetProcessHeap(), 0, sizeof(TYPEDESC));
-	copy_typedesc(out->u.lptdesc, in->u.lptdesc);
-	break;
-    case VT_USERDEFINED:
-	out->u.hreftype = in->u.hreftype;
-	break;
+    case VT_SAFEARRAY:
+        size += TLB_SizeTypeDesc(tdesc->u.lptdesc, TRUE);
+        break;
     case VT_CARRAY:
-	out->u.lpadesc = HeapAlloc(GetProcessHeap(), 0, sizeof(ARRAYDESC) +
-				   (in->u.lpadesc->cDims - 1) * sizeof(SAFEARRAYBOUND));
-	copy_typedesc(&out->u.lpadesc->tdescElem, &in->u.lpadesc->tdescElem);
-	out->u.lpadesc->cDims = in->u.lpadesc->cDims;
-	memcpy(out->u.lpadesc->rgbounds, in->u.lpadesc->rgbounds, in->u.lpadesc->cDims * sizeof(SAFEARRAYBOUND));
-	break;
-    default:
-	break;
+        size += FIELD_OFFSET(ARRAYDESC, rgbounds[tdesc->u.lpadesc->cDims]);
+        size += TLB_SizeTypeDesc(&tdesc->u.lpadesc->tdescElem, FALSE);
+        break;
     }
+    return size;
 }
 
-/* free()s any allocated memory pointed to by the tdesc.  NB does not
-   free the tdesc itself - this is because the tdesc is typically part
-   of a larger structure */
-static void free_deep_typedesc(TYPEDESC *tdesc)
+/* deep copy a typedesc into a flat buffer */
+static void *TLB_CopyTypeDesc( TYPEDESC *dest, const TYPEDESC *src, void *buffer )
 {
-    switch(tdesc->vt) {
-    case VT_PTR:
-	free_deep_typedesc(tdesc->u.lptdesc);
-	HeapFree(GetProcessHeap(), 0, tdesc->u.lptdesc);
-	tdesc->u.lptdesc = NULL;
-	break;
-    case VT_CARRAY:
-	free_deep_typedesc(&tdesc->u.lpadesc->tdescElem);
-	HeapFree(GetProcessHeap(), 0, tdesc->u.lpadesc);
-	tdesc->u.lpadesc = NULL;
-	break;
-    default:
-	break;
+    if (!dest)
+    {
+        dest = buffer;
+        buffer = (char *)buffer + sizeof(TYPEDESC);
     }
+
+    *dest = *src;
+
+    switch (src->vt)
+    {
+    case VT_PTR:
+    case VT_SAFEARRAY:
+        dest->u.lptdesc = buffer;
+        buffer = TLB_CopyTypeDesc(NULL, src->u.lptdesc, buffer);
+        break;
+    case VT_CARRAY:
+        dest->u.lpadesc = buffer;
+        memcpy(dest->u.lpadesc, src->u.lpadesc, FIELD_OFFSET(ARRAYDESC, rgbounds[src->u.lpadesc->cDims]));
+        buffer = (char *)buffer + FIELD_OFFSET(ARRAYDESC, rgbounds[src->u.lpadesc->cDims]);
+        buffer = TLB_CopyTypeDesc(&dest->u.lpadesc->tdescElem, &src->u.lpadesc->tdescElem, buffer);
+        break;
+    }
+    return buffer;
 }
 
 /**********************************************************************
@@ -4214,12 +4221,23 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeAttr( ITypeInfo2 *iface,
         LPTYPEATTR  *ppTypeAttr)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
+    SIZE_T size;
+
     TRACE("(%p)\n",This);
-    *ppTypeAttr = HeapAlloc(GetProcessHeap(), 0, sizeof(**ppTypeAttr));
+
+    size = sizeof(**ppTypeAttr);
+    if (This->TypeAttr.typekind == TKIND_ALIAS)
+        size += TLB_SizeTypeDesc(&This->TypeAttr.tdescAlias, FALSE);
+
+    *ppTypeAttr = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!*ppTypeAttr)
+        return E_OUTOFMEMORY;
+
     memcpy(*ppTypeAttr, &This->TypeAttr, sizeof(**ppTypeAttr));
 
-    if(This->TypeAttr.typekind == TKIND_ALIAS) /* need to deep copy typedesc */
-	copy_typedesc(&(*ppTypeAttr)->tdescAlias, &This->TypeAttr.tdescAlias);
+    if (This->TypeAttr.typekind == TKIND_ALIAS)
+        TLB_CopyTypeDesc(&(*ppTypeAttr)->tdescAlias,
+            &This->TypeAttr.tdescAlias, (void *)(*ppTypeAttr + 1));
 
     if((*ppTypeAttr)->typekind == TKIND_DISPATCH) {
         (*ppTypeAttr)->cFuncs = (*ppTypeAttr)->cbSizeVft / 4; /* This should include all the inherited
@@ -4271,6 +4289,68 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
     return E_INVALIDARG;
 }
 
+static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
+{
+    VARDESC *dest;
+    char *buffer;
+    SIZE_T size = sizeof(*src);
+
+    if (src->lpstrSchema) size += (strlenW(src->lpstrSchema) + 1) * sizeof(WCHAR);
+    if (src->varkind == VAR_CONST)
+        size += sizeof(VARIANT);
+    size += TLB_SizeTypeDesc(&src->elemdescVar.tdesc, FALSE);
+    if (src->elemdescVar.u.paramdesc.pparamdescex)
+        size += sizeof(*src->elemdescVar.u.paramdesc.pparamdescex);
+
+    dest = (VARDESC *)SysAllocStringByteLen(NULL, size);
+    if (!dest) return E_OUTOFMEMORY;
+
+    *dest = *src;
+    buffer = (char *)(dest + 1);
+    if (src->lpstrSchema)
+    {
+        int len;
+        dest->lpstrSchema = (LPOLESTR)buffer;
+        len = strlenW(src->lpstrSchema);
+        memcpy(dest->lpstrSchema, src->lpstrSchema, (len + 1) * sizeof(WCHAR));
+        buffer += (len + 1) * sizeof(WCHAR);
+    }
+
+    if (src->varkind == VAR_CONST)
+    {
+        HRESULT hr;
+
+        dest->u.lpvarValue = (VARIANT *)buffer;
+        *dest->u.lpvarValue = *src->u.lpvarValue;
+        buffer += sizeof(VARIANT);
+        hr = VariantCopy(dest->u.lpvarValue, src->u.lpvarValue);
+        if (FAILED(hr))
+        {
+            SysFreeString((BSTR)dest_ptr);
+            return hr;
+        }
+    }
+    buffer = TLB_CopyTypeDesc(&dest->elemdescVar.tdesc, &src->elemdescVar.tdesc, buffer);
+    if (src->elemdescVar.u.paramdesc.pparamdescex)
+    {
+        PARAMDESCEX *pparamdescex_src = src->elemdescVar.u.paramdesc.pparamdescex;
+        PARAMDESCEX *pparamdescex_dest = dest->elemdescVar.u.paramdesc.pparamdescex = (PARAMDESCEX *)buffer;
+        HRESULT hr;
+        buffer += sizeof(PARAMDESCEX);
+        *pparamdescex_dest = *pparamdescex_src;
+        hr = VariantCopy(&pparamdescex_dest->varDefaultValue, &pparamdescex_src->varDefaultValue);
+        if (FAILED(hr))
+        {
+            if (src->varkind == VAR_CONST)
+                VariantClear(dest->u.lpvarValue);
+            SysFreeString((BSTR)dest);
+            return hr;
+        }
+    }
+    *dest_ptr = dest;
+    return S_OK;
+}
+
 /* ITypeInfo::GetVarDesc
  *
  * Retrieves a VARDESC structure that describes the specified variable.
@@ -4285,11 +4365,10 @@ static HRESULT WINAPI ITypeInfo_fnGetVarDesc( ITypeInfo2 *iface, UINT index,
     TRACE("(%p) index %d\n", This, index);
     for(i=0, pVDesc=This->varlist; i!=index && pVDesc; i++, pVDesc=pVDesc->next)
         ;
-    if(pVDesc){
-        /* FIXME: must do a copy here */
-        *ppVarDesc=&pVDesc->vardesc;
-        return S_OK;
-    }
+
+    if (pVDesc)
+        return TLB_AllocAndInitVarDesc(&pVDesc->vardesc, ppVarDesc);
+
     return E_INVALIDARG;
 }
 
@@ -5411,8 +5490,6 @@ static void WINAPI ITypeInfo_fnReleaseTypeAttr( ITypeInfo2 *iface,
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TRACE("(%p)->(%p)\n", This, pTypeAttr);
-    if(This->TypeAttr.typekind == TKIND_ALIAS)
-	free_deep_typedesc(&pTypeAttr->tdescAlias);
     HeapFree(GetProcessHeap(), 0, pTypeAttr);
 }
 
@@ -5437,6 +5514,12 @@ static void WINAPI ITypeInfo_fnReleaseVarDesc( ITypeInfo2 *iface,
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TRACE("(%p)->(%p)\n", This, pVarDesc);
+
+    if (pVarDesc->elemdescVar.u.paramdesc.pparamdescex)
+        VariantClear(&pVarDesc->elemdescVar.u.paramdesc.pparamdescex->varDefaultValue);
+    if (pVarDesc->varkind == VAR_CONST)
+        VariantClear(pVarDesc->u.lpvarValue);
+    SysFreeString((BSTR)pVarDesc);
 }
 
 /* ITypeInfo2::GetTypeKind
@@ -6091,8 +6174,10 @@ static HRESULT WINAPI ITypeComp_fnBind(
         {
             for(pVDesc = This->varlist; pVDesc; pVDesc = pVDesc->next) {
                 if (!strcmpW(pVDesc->Name, szName)) {
+                    HRESULT hr = TLB_AllocAndInitVarDesc(&pVDesc->vardesc, &pBindPtr->lpvardesc);
+                    if (FAILED(hr))
+                        return hr;
                     *pDescKind = DESCKIND_VARDESC;
-                    pBindPtr->lpvardesc = &pVDesc->vardesc;
                     *ppTInfo = (ITypeInfo *)&This->lpVtbl;
                     return S_OK;
                 }
