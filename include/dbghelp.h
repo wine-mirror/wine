@@ -163,6 +163,15 @@ typedef struct _IMAGEHLP_LINE
     DWORD                       Address;
 } IMAGEHLP_LINE, *PIMAGEHLP_LINE;
 
+typedef struct _IMAGEHLP_LINE64
+{
+    DWORD                       SizeOfStruct;
+    PVOID                       Key;
+    DWORD                       LineNumber;
+    PCHAR                       FileName;
+    DWORD64                     Address;
+} IMAGEHLP_LINE64, *PIMAGEHLP_LINE64;
+
 typedef struct _SOURCEFILE
 {
     DWORD64                     ModBase;
@@ -779,8 +788,12 @@ typedef BOOL (CALLBACK *PSYM_ENUMSOURCEFILES_CALLBACK)(PSOURCEFILE, PVOID);
 BOOL WINAPI SymEnumSourceFiles(HANDLE, ULONG64, LPSTR, PSYM_ENUMSOURCEFILES_CALLBACK,
                                PVOID);
 BOOL WINAPI SymGetLineFromAddr(HANDLE, DWORD, PDWORD, PIMAGEHLP_LINE);
+BOOL WINAPI SymGetLineFromAddr64(HANDLE, DWORD64, PDWORD, PIMAGEHLP_LINE64);
 BOOL WINAPI SymGetLinePrev(HANDLE, PIMAGEHLP_LINE);
+BOOL WINAPI SymGetLinePrev64(HANDLE, PIMAGEHLP_LINE64);
 BOOL WINAPI SymGetLineNext(HANDLE, PIMAGEHLP_LINE);
+BOOL WINAPI SymGetLineNext64(HANDLE, PIMAGEHLP_LINE64);
+
 typedef struct _SRCCODEINFO
 {
     DWORD       SizeOfStruct;

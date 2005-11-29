@@ -43,13 +43,13 @@
 @ stub SymFunctionTableAccess64
 @ stdcall SymFunctionTableAccess(long long)
 @ stub SymGetFileLineOffsets64
-@ stub SymGetLineFromAddr64
+@ stdcall SymGetLineFromAddr64(long double ptr ptr)
 @ stdcall SymGetLineFromAddr(long long ptr ptr)
 @ stub SymGetLineFromName64
 @ stub SymGetLineFromName
-@ stub SymGetLineNext64
+@ stdcall SymGetLineNext64(long ptr)
 @ stdcall SymGetLineNext(long ptr)
-@ stub SymGetLinePrev64
+@ stdcall SymGetLinePrev64(long ptr)
 @ stdcall SymGetLinePrev(long ptr)
 @ stub SymGetModuleBase64
 @ stdcall SymGetModuleBase(long long)
