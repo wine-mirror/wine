@@ -4084,8 +4084,121 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
     DESCKIND * pDescKind,
     BINDPTR * pBindPtr)
 {
-    FIXME("(%s, %lx, 0x%x, %p, %p, %p): stub\n", debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
-    return E_NOTIMPL;
+    ITypeLibImpl *This = impl_from_ITypeComp(iface);
+    ITypeInfoImpl *pTypeInfo;
+
+    TRACE("(%s, 0x%lx, 0x%x, %p, %p, %p)\n", debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
+
+    *pDescKind = DESCKIND_NONE;
+    pBindPtr->lptcomp = NULL;
+    *ppTInfo = NULL;
+
+    for (pTypeInfo = This->pTypeInfo; pTypeInfo; pTypeInfo = pTypeInfo->next)
+    {
+        TRACE("testing %s\n", debugstr_w(pTypeInfo->Name));
+
+        /* FIXME: check wFlags here? */
+        /* FIXME: we should use a hash table to look this info up using lHash
+         * instead of an O(n) search */
+        if ((pTypeInfo->TypeAttr.typekind == TKIND_ENUM) ||
+            (pTypeInfo->TypeAttr.typekind == TKIND_MODULE))
+        {
+            if (pTypeInfo->Name && !strcmpW(pTypeInfo->Name, szName))
+            {
+                *pDescKind = DESCKIND_TYPECOMP;
+                pBindPtr->lptcomp = (ITypeComp *)&pTypeInfo->lpVtblTypeComp;
+                ITypeComp_AddRef(pBindPtr->lptcomp);
+                TRACE("module or enum: %s\n", debugstr_w(szName));
+                return S_OK;
+            }
+        }
+
+        if ((pTypeInfo->TypeAttr.typekind == TKIND_MODULE) ||
+            (pTypeInfo->TypeAttr.typekind == TKIND_ENUM))
+        {
+            ITypeComp *pSubTypeComp = (ITypeComp *)&pTypeInfo->lpVtblTypeComp;
+            HRESULT hr;
+
+            hr = ITypeComp_Bind(pSubTypeComp, szName, lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
+            if (SUCCEEDED(hr) && (*pDescKind != DESCKIND_NONE))
+            {
+                TRACE("found in module or in enum: %s\n", debugstr_w(szName));
+                return S_OK;
+            }
+        }
+
+        if ((pTypeInfo->TypeAttr.typekind == TKIND_COCLASS) &&
+            (pTypeInfo->TypeAttr.wTypeFlags & TYPEFLAG_FAPPOBJECT))
+        {
+            ITypeComp *pSubTypeComp = (ITypeComp *)&pTypeInfo->lpVtblTypeComp;
+            HRESULT hr;
+            ITypeInfo *subtypeinfo;
+            BINDPTR subbindptr;
+            DESCKIND subdesckind;
+
+            hr = ITypeComp_Bind(pSubTypeComp, szName, lHash, wFlags,
+                &subtypeinfo, &subdesckind, &subbindptr);
+            if (SUCCEEDED(hr) && (subdesckind != DESCKIND_NONE))
+            {
+                TYPEDESC tdesc_appobject =
+                {
+                    {
+                        0 /* FIXME */
+                    },
+                    VT_USERDEFINED
+                };
+                const VARDESC vardesc_appobject =
+                {
+                    -2,         /* memid */
+                    NULL,       /* lpstrSchema */
+                    {
+                        0       /* oInst */
+                    },
+                    {
+                                /* ELEMDESC */
+                        {
+                                /* TYPEDESC */
+                                {
+                                    &tdesc_appobject
+                                },
+                                VT_PTR
+                        },
+                    },
+                    0,          /* wVarFlags */
+                    VAR_STATIC  /* varkind */
+                };
+
+                TRACE("found in implicit app object: %s\n", debugstr_w(szName));
+
+                /* cleanup things filled in by Bind call so we can put our
+                 * application object data in there instead */
+                switch (subdesckind)
+                {
+                case DESCKIND_FUNCDESC:
+                    ITypeInfo_ReleaseFuncDesc(subtypeinfo, subbindptr.lpfuncdesc);
+                    break;
+                case DESCKIND_VARDESC:
+                    ITypeInfo_ReleaseVarDesc(subtypeinfo, subbindptr.lpvardesc);
+                    break;
+                default:
+                    break;
+                }
+                if (subtypeinfo) ITypeInfo_Release(subtypeinfo);
+
+                hr = TLB_AllocAndInitVarDesc(&vardesc_appobject, &pBindPtr->lpvardesc);
+                if (FAILED(hr))
+                    return hr;
+
+                *pDescKind = DESCKIND_IMPLICITAPPOBJ;
+                *ppTInfo = (ITypeInfo *)pTypeInfo;
+                ITypeInfo_AddRef(*ppTInfo);
+                return S_OK;
+            }
+        }
+    }
+
+    TRACE("name not found %s\n", debugstr_w(szName));
+    return S_OK;
 }
 
 static HRESULT WINAPI ITypeLibComp_fnBindType(
@@ -6157,8 +6270,12 @@ static HRESULT WINAPI ITypeComp_fnBind(
 
     TRACE("(%s, %lx, 0x%x, %p, %p, %p)\n", debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
 
+    *pDescKind = DESCKIND_NONE;
+    pBindPtr->lpfuncdesc = NULL;
+    *ppTInfo = NULL;
+
     for(pFDesc = This->funclist; pFDesc; pFDesc = pFDesc->next)
-        if (pFDesc->funcdesc.invkind & wFlags)
+        if (!wFlags || (pFDesc->funcdesc.invkind & wFlags))
             if (!strcmpW(pFDesc->Name, szName)) {
                 break;
             }
@@ -6166,8 +6283,10 @@ static HRESULT WINAPI ITypeComp_fnBind(
     if (pFDesc)
     {
         *pDescKind = DESCKIND_FUNCDESC;
+        /* FIXME: allocate memory and copy funcdesc */
         pBindPtr->lpfuncdesc = &pFDesc->funcdesc;
         *ppTInfo = (ITypeInfo *)&This->lpVtbl;
+        ITypeInfo_AddRef(*ppTInfo);
         return S_OK;
     } else {
         if (!(wFlags & ~(INVOKE_PROPERTYGET)))
@@ -6179,14 +6298,14 @@ static HRESULT WINAPI ITypeComp_fnBind(
                         return hr;
                     *pDescKind = DESCKIND_VARDESC;
                     *ppTInfo = (ITypeInfo *)&This->lpVtbl;
+                    ITypeInfo_AddRef(*ppTInfo);
                     return S_OK;
                 }
             }
         }
     }
-    /* not found, look for it in inherited interfaces */
-    if (This->TypeAttr.cImplTypes &&
-	(This->TypeAttr.typekind == TKIND_INTERFACE || This->TypeAttr.typekind == TKIND_DISPATCH)) {
+    /* FIXME: search each inherited interface, not just the first */
+    if (This->TypeAttr.cImplTypes) {
         /* recursive search */
         ITypeInfo *pTInfo;
         ITypeComp *pTComp;
@@ -6205,10 +6324,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
         }
         WARN("Could not search inherited interface!\n");
     }
-    ERR("did not find member with name %s, flags 0x%x!\n", debugstr_w(szName), wFlags);
-    *pDescKind = DESCKIND_NONE;
-    pBindPtr->lpfuncdesc = NULL;
-    *ppTInfo = NULL;
+    WARN("did not find member with name %s, flags 0x%x!\n", debugstr_w(szName), wFlags);
     return DISP_E_MEMBERNOTFOUND;
 }
 
