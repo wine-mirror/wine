@@ -34,7 +34,6 @@
 #define PI M_PI
 #endif
 #include <string.h>
-#include <X11/Intrinsic.h>
 
 #include "x11drv.h"
 #include "x11font.h"
@@ -908,7 +907,7 @@ X11DRV_RoundRect( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
 COLORREF
 X11DRV_SetPixel( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
 {
-    Pixel pixel;
+    unsigned long pixel;
     POINT pt;
 
     pt.x = x;
@@ -1213,7 +1212,7 @@ X11DRV_PolyPolyline( X11DRV_PDEVICE *physDev, const POINT* pt, const DWORD* coun
 static void X11DRV_InternalFloodFill(XImage *image, X11DRV_PDEVICE *physDev,
                                      int x, int y,
                                      int xOrg, int yOrg,
-                                     Pixel pixel, WORD fillType )
+                                     unsigned long pixel, WORD fillType )
 {
     int left, right;
 

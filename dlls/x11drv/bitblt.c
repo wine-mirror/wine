@@ -24,7 +24,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <X11/Intrinsic.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -1331,8 +1330,8 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
             /* Xor is much better when we do not have full colormap.   */
             /* Using white^black ensures that we invert at least black */
             /* and white. */
-            Pixel xor_pix = (WhitePixel( gdi_display, DefaultScreen(gdi_display) ) ^
-                             BlackPixel( gdi_display, DefaultScreen(gdi_display) ));
+            unsigned long xor_pix = (WhitePixel( gdi_display, DefaultScreen(gdi_display) ) ^
+                                     BlackPixel( gdi_display, DefaultScreen(gdi_display) ));
             XSetFunction( gdi_display, physDevDst->gc, GXxor );
             XSetForeground( gdi_display, physDevDst->gc, xor_pix);
             XSetFillStyle( gdi_display, physDevDst->gc, FillSolid );
