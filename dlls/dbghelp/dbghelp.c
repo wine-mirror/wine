@@ -318,6 +318,19 @@ BOOL WINAPI SymRegisterCallback(HANDLE hProcess,
     return FALSE;
 }
 
+/***********************************************************************
+ *		SymRegisterCallback64 (DBGHELP.@)
+ */
+BOOL WINAPI SymRegisterCallback64(HANDLE hProcess, 
+                                  PSYMBOL_REGISTERED_CALLBACK64 CallbackFunction,
+                                  ULONG64 UserContext)
+{
+    FIXME("(%p, %p, %s): stub\n", 
+          hProcess, CallbackFunction, wine_dbgstr_longlong(UserContext));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
 /* This is imagehlp version not dbghelp !! */
 static API_VERSION api_version = { 4, 0, 2, 0 };
 
