@@ -545,10 +545,12 @@ dnl **** Check for OpenLDAP ***
 AC_SUBST(LDAPLIBS,"")
 if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
 then
-    AC_CHECK_LIB(ldap, ldap_initialize,
+    AC_CHECK_LIB(ldap_r, ldap_initialize,
         [AC_CHECK_LIB(lber, ber_init,
             [AC_DEFINE(HAVE_LDAP, 1, [Define if you have the OpenLDAP development environment])
-             LDAPLIBS="-lldap -llber"])])
+             LDAPLIBS="-lldap_r -llber"],,
+             [$LIBPTHREAD])],,
+             [$LIBPTHREAD])
 fi
 
 dnl **** Check for FreeType 2 ****
