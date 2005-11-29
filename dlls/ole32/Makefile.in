@@ -39,7 +39,8 @@ C_SRCS = \
 	stg_prop.c \
 	stg_stream.c \
 	storage32.c \
-	stubmanager.c
+	stubmanager.c \
+	usrmarshal.c
 
 C_SRCS16 = \
 	memlockbytes16.c \
