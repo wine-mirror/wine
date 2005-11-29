@@ -16,9 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "iccvid_private.h"
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
-#include "iccvid_De.rc"
-#include "iccvid_En.rc"
-#include "iccvid_Ko.rc"
+STRINGTABLE DISCARDABLE
+{
+    IDS_NAME "WINE-MS-CRAM"
+    IDS_DESCRIPTION "Wine 비디오 1 비디오 코덱"
+}
