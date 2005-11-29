@@ -182,48 +182,92 @@ HRESULT WINAPI GetVersionFromFile( LPSTR Filename, LPDWORD MajorVer,
     return GetVersionFromFileEx(Filename, MajorVer, MinorVer, Version);
 }
 
+/* data for GetVersionFromFileEx */
+typedef struct tagLANGANDCODEPAGE
+{
+    WORD wLanguage;
+    WORD wCodePage;
+} LANGANDCODEPAGE;
+
 /***********************************************************************
  *             GetVersionFromFileEx    (ADVPACK.@)
  */
 HRESULT WINAPI GetVersionFromFileEx( LPSTR lpszFilename, LPDWORD pdwMSVer,
                                      LPDWORD pdwLSVer, BOOL bVersion )
 {
-    DWORD hdl, retval;
-    LPVOID pVersionInfo;
-    BOOL boolret;
     VS_FIXEDFILEINFO *pFixedVersionInfo;
-    UINT uiLength;
+    LANGANDCODEPAGE *pLangAndCodePage;
+    DWORD dwHandle, dwInfoSize;
+    CHAR szWinDir[MAX_PATH];
+    CHAR szFile[MAX_PATH];
+    LPVOID pVersionInfo = NULL;
+    BOOL bFileCopied = FALSE;
+    UINT uValueLen;
+
     TRACE("(%s, %p, %p, %d)\n", lpszFilename, pdwMSVer, pdwLSVer, bVersion);
+
+    *pdwLSVer = 0;
+    *pdwMSVer = 0;
+
+    lstrcpynA(szFile, lpszFilename, MAX_PATH);
+
+    dwInfoSize = GetFileVersionInfoSizeA(szFile, &dwHandle);
+    if (!dwInfoSize)
+    {
+        /* check that the file exists */
+        if (GetFileAttributesA(szFile) == INVALID_FILE_ATTRIBUTES)
+            return S_OK;
+
+        /* file exists, but won't be found by GetFileVersionInfoSize,
+        * so copy it to the temp dir where it will be found.
+        */
+        GetWindowsDirectoryA(szWinDir, MAX_PATH);
+        GetTempFileNameA(szWinDir, NULL, 0, szFile);
+        CopyFileA(lpszFilename, szFile, FALSE);
+        bFileCopied = TRUE;
+
+        dwInfoSize = GetFileVersionInfoSizeA(szFile, &dwHandle);
+        if (!dwInfoSize)
+            goto done;
+    }
+
+    pVersionInfo = HeapAlloc(GetProcessHeap(), 0, dwInfoSize);
+    if (!pVersionInfo)
+        goto done;
+
+    if (!GetFileVersionInfoA(szFile, dwHandle, dwInfoSize, pVersionInfo))
+        goto done;
 
     if (bVersion)
     {
-        retval = GetFileVersionInfoSizeA(lpszFilename, &hdl);
-        if (retval == 0 || hdl != 0)
-            return E_FAIL;
+        if (!VerQueryValueA(pVersionInfo, "\\",
+            (LPVOID *)&pFixedVersionInfo, &uValueLen))
+            goto done;
 
-        pVersionInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, retval);
-        if (pVersionInfo == NULL)
-             return E_FAIL;
-        GetFileVersionInfoA( lpszFilename, 0, retval, pVersionInfo);
+        if (!uValueLen)
+            goto done;
 
-        boolret = VerQueryValueA(pVersionInfo, "\\",
-                                 (LPVOID) &pFixedVersionInfo, &uiLength);
-
-        HeapFree(GetProcessHeap(), 0, pVersionInfo);
-
-        if (boolret)
-        {
-            *pdwMSVer = pFixedVersionInfo->dwFileVersionMS;
-            *pdwLSVer = pFixedVersionInfo->dwFileVersionLS;
-        }
-        else
-            return E_FAIL;
+        *pdwMSVer = pFixedVersionInfo->dwFileVersionMS;
+        *pdwLSVer = pFixedVersionInfo->dwFileVersionLS;
     }
     else
     {
-        *pdwMSVer = GetUserDefaultUILanguage();
-        *pdwLSVer = GetACP();
+        if (!VerQueryValueA(pVersionInfo, "\\VarFileInfo\\Translation",
+             (LPVOID *)&pLangAndCodePage, &uValueLen))
+            goto done;
+
+        if (!uValueLen)
+            goto done;
+
+        *pdwMSVer = pLangAndCodePage->wLanguage;
+        *pdwLSVer = pLangAndCodePage->wCodePage;
     }
+
+done:
+    HeapFree(GetProcessHeap(), 0, pVersionInfo);
+
+    if (bFileCopied)
+        DeleteFileA(szFile);
 
     return S_OK;
 }

@@ -60,7 +60,6 @@ static void version_test(void)
 
     major = minor = 0;
     hr = pGetVersionFromFile("advpack.dll", &major, &minor, TRUE);
-    todo_wine
     ok (hr == S_OK, "GetVersionFromFileEx(advpack.dll) failed, returned "
         "0x%08lx\n", hr);
     trace("advpack.dll version: %d.%d.%d.%d\n", HIWORD(major), LOWORD(major),
