@@ -186,11 +186,11 @@ static void test_name_collisions(void)
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\");
     h = 0;
-    todo_wine{ DIR_TEST_CREATE_FAILURE(&h, STATUS_OBJECT_NAME_COLLISION) }
+    DIR_TEST_CREATE_FAILURE(&h, STATUS_OBJECT_NAME_COLLISION)
     ok(h == 0, "Failed create returned valid handle! (%p)\n", h);
     InitializeObjectAttributes(&attr, &str, OBJ_OPENIF, 0, NULL);
 
-    todo_wine{ DIR_TEST_CREATE_FAILURE(&h, STATUS_OBJECT_NAME_EXISTS) }
+    DIR_TEST_CREATE_FAILURE(&h, STATUS_OBJECT_NAME_EXISTS)
     pNtClose(h);
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
     todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH,
@@ -199,7 +199,7 @@ static void test_name_collisions(void)
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\??\\PIPE\\om.c-mutant");
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
-    todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH,
+    todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_OBJECT_PATH_NOT_FOUND,
         "NtCreateMutant should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08lx)\n", status);
     pRtlFreeUnicodeString(&str);
 
@@ -289,22 +289,22 @@ void test_directory(void)
 
     /* No name and/or no attributes */
     status = pNtCreateDirectoryObject(NULL, DIRECTORY_QUERY, &attr);
-    todo_wine ok(status == STATUS_ACCESS_VIOLATION,
+    ok(status == STATUS_ACCESS_VIOLATION,
         "NtCreateDirectoryObject should have failed with STATUS_ACCESS_VIOLATION got(%08lx)\n", status);
     status = pNtOpenDirectoryObject(NULL, DIRECTORY_QUERY, &attr);
-    todo_wine ok(status == STATUS_ACCESS_VIOLATION,
+    ok(status == STATUS_ACCESS_VIOLATION,
         "NtOpenDirectoryObject should have failed with STATUS_ACCESS_VIOLATION got(%08lx)\n", status);
 
     status = pNtCreateDirectoryObject(&h, DIRECTORY_QUERY, NULL);
     ok(status == STATUS_SUCCESS, "Failed to create Directory without attributes(%08lx)\n", status);
     pNtClose(h);
     status = pNtOpenDirectoryObject(&h, DIRECTORY_QUERY, NULL);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER,
+    ok(status == STATUS_INVALID_PARAMETER,
         "NtOpenDirectoryObject should have failed with STATUS_INVALID_PARAMETER got(%08lx)\n", status);
 
     InitializeObjectAttributes(&attr, NULL, 0, 0, NULL);
     DIR_TEST_CREATE_SUCCESS(&dir)
-    todo_wine{ DIR_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD) }
+    DIR_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD)
 
     /* Bad name */
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
@@ -312,15 +312,15 @@ void test_directory(void)
     pRtlCreateUnicodeStringFromAsciiz(&str, "");
     DIR_TEST_CREATE_SUCCESS(&h)
     pNtClose(h);
-    todo_wine{ DIR_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD) }
+    DIR_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD)
     pRtlFreeUnicodeString(&str);
     pNtClose(dir);
 
-    todo_wine{ DIR_TEST_CREATE_OPEN_FAILURE(&h, "BaseNamedObjects", STATUS_OBJECT_PATH_SYNTAX_BAD) }
-    todo_wine{ DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\", STATUS_OBJECT_NAME_INVALID) }
-    todo_wine{ DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\\\BaseNamedObjects", STATUS_OBJECT_NAME_INVALID) }
-    todo_wine{ DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\\\om.c-test", STATUS_OBJECT_NAME_INVALID) }
-    todo_wine{ DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\om.c-test\\", STATUS_OBJECT_PATH_NOT_FOUND) }
+    DIR_TEST_CREATE_OPEN_FAILURE(&h, "BaseNamedObjects", STATUS_OBJECT_PATH_SYNTAX_BAD)
+    DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\", STATUS_OBJECT_NAME_INVALID)
+    DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\\\BaseNamedObjects", STATUS_OBJECT_NAME_INVALID)
+    DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\\\om.c-test", STATUS_OBJECT_NAME_INVALID)
+    DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\om.c-test\\", STATUS_OBJECT_PATH_NOT_FOUND)
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\om.c-test");
     DIR_TEST_CREATE_SUCCESS(&h)
@@ -351,14 +351,14 @@ void test_directory(void)
     pRtlFreeUnicodeString(&str);
 
     InitializeObjectAttributes(&attr, NULL, 0, dir, NULL);
-    todo_wine{ DIR_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_NAME_INVALID) }
+    DIR_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_NAME_INVALID)
 
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
     DIR_TEST_CREATE_OPEN_SUCCESS(&h, "")
-    todo_wine{ DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\", STATUS_OBJECT_PATH_SYNTAX_BAD) }
-    todo_wine{ DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\om.c-test", STATUS_OBJECT_PATH_SYNTAX_BAD) }
-    todo_wine{ DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\om.c-test\\", STATUS_OBJECT_PATH_SYNTAX_BAD) }
-    todo_wine{ DIR_TEST_CREATE_OPEN_FAILURE(&h, "om.c-test\\", STATUS_OBJECT_PATH_NOT_FOUND) }
+    DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\", STATUS_OBJECT_PATH_SYNTAX_BAD)
+    DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\om.c-test", STATUS_OBJECT_PATH_SYNTAX_BAD)
+    DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\om.c-test\\", STATUS_OBJECT_PATH_SYNTAX_BAD)
+    DIR_TEST_CREATE_OPEN_FAILURE(&h, "om.c-test\\", STATUS_OBJECT_PATH_NOT_FOUND)
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "om.c-test");
     DIR_TEST_CREATE_SUCCESS(&dir1)
@@ -374,7 +374,7 @@ void test_directory(void)
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     DIR_TEST_OPEN_SUCCESS(&dir)
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
-    todo_wine{ DIR_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD) }
+    DIR_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD)
     pRtlFreeUnicodeString(&str);
     pNtClose(dir);
 
@@ -396,15 +396,15 @@ void test_directory(void)
 
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\Global\\om.c-test");
-    DIR_TEST_CREATE_SUCCESS(&dir)
+    todo_wine{ DIR_TEST_CREATE_SUCCESS(&dir) }
     pRtlFreeUnicodeString(&str);
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\Local\\om.c-test\\one more level");
-    DIR_TEST_CREATE_SUCCESS(&h)
+    todo_wine{ DIR_TEST_CREATE_SUCCESS(&h) }
     pRtlFreeUnicodeString(&str);
     pNtClose(h);
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
     pRtlCreateUnicodeStringFromAsciiz(&str, "one more level");
-    DIR_TEST_CREATE_SUCCESS(&dir)
+    todo_wine{ DIR_TEST_CREATE_SUCCESS(&dir) }
     pRtlFreeUnicodeString(&str);
     pNtClose(h);
 

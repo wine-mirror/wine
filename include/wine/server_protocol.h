@@ -3577,6 +3577,38 @@ struct set_mailslot_info_reply
 #define MAILSLOT_SET_READ_TIMEOUT  1
 
 
+
+struct create_directory_request
+{
+    struct request_header __header;
+    unsigned int   access;
+    unsigned int   attributes;
+    obj_handle_t   rootdir;
+    /* VARARG(directory_name,unicode_str); */
+};
+struct create_directory_reply
+{
+    struct reply_header __header;
+    obj_handle_t   handle;
+};
+
+
+
+struct open_directory_request
+{
+    struct request_header __header;
+    unsigned int   access;
+    unsigned int   attributes;
+    obj_handle_t   rootdir;
+    /* VARARG(directory_name,unicode_str); */
+};
+struct open_directory_reply
+{
+    struct reply_header __header;
+    obj_handle_t   handle;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -3784,6 +3816,8 @@ enum request
     REQ_create_mailslot,
     REQ_open_mailslot,
     REQ_set_mailslot_info,
+    REQ_create_directory,
+    REQ_open_directory,
     REQ_NB_REQUESTS
 };
 
@@ -3996,6 +4030,8 @@ union generic_request
     struct create_mailslot_request create_mailslot_request;
     struct open_mailslot_request open_mailslot_request;
     struct set_mailslot_info_request set_mailslot_info_request;
+    struct create_directory_request create_directory_request;
+    struct open_directory_request open_directory_request;
 };
 union generic_reply
 {
@@ -4206,8 +4242,10 @@ union generic_reply
     struct create_mailslot_reply create_mailslot_reply;
     struct open_mailslot_reply open_mailslot_reply;
     struct set_mailslot_info_reply set_mailslot_info_reply;
+    struct create_directory_reply create_directory_reply;
+    struct open_directory_reply open_directory_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 199
+#define SERVER_PROTOCOL_VERSION 200
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

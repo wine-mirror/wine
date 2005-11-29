@@ -2505,3 +2505,25 @@ enum message_type
     unsigned int   next_msgsize;
 @END
 #define MAILSLOT_SET_READ_TIMEOUT  1
+
+
+/* Create a directory object */
+@REQ(create_directory)
+    unsigned int   access;        /* access flags */
+    unsigned int   attributes;    /* object attributes */
+    obj_handle_t   rootdir;       /* root directory */
+    VARARG(directory_name,unicode_str); /* Directory name */
+@REPLY
+    obj_handle_t   handle;        /* handle to the directory */
+@END
+
+
+/* Open a directory object */
+@REQ(open_directory)
+    unsigned int   access;        /* access flags */
+    unsigned int   attributes;    /* object attributes */
+    obj_handle_t   rootdir;       /* root directory */
+    VARARG(directory_name,unicode_str); /* Directory name */
+@REPLY
+    obj_handle_t   handle;        /* handle to the directory */
+@END

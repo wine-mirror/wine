@@ -3093,6 +3093,34 @@ static void dump_set_mailslot_info_reply( const struct set_mailslot_info_reply *
     fprintf( stderr, " next_msgsize=%08x", req->next_msgsize );
 }
 
+static void dump_create_directory_request( const struct create_directory_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
+    fprintf( stderr, " directory_name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_create_directory_reply( const struct create_directory_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_open_directory_request( const struct open_directory_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
+    fprintf( stderr, " directory_name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_open_directory_reply( const struct open_directory_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -3299,6 +3327,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_mailslot_request,
     (dump_func)dump_open_mailslot_request,
     (dump_func)dump_set_mailslot_info_request,
+    (dump_func)dump_create_directory_request,
+    (dump_func)dump_open_directory_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -3507,6 +3537,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_mailslot_reply,
     (dump_func)dump_open_mailslot_reply,
     (dump_func)dump_set_mailslot_info_reply,
+    (dump_func)dump_create_directory_reply,
+    (dump_func)dump_open_directory_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -3715,6 +3747,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_mailslot",
     "open_mailslot",
     "set_mailslot_info",
+    "create_directory",
+    "open_directory",
 };
 
 static const struct
@@ -3752,6 +3786,7 @@ static const struct
     { "KEY_DELETED",                 STATUS_KEY_DELETED },
     { "MEDIA_WRITE_PROTECTED",       STATUS_MEDIA_WRITE_PROTECTED },
     { "MUTANT_NOT_OWNED",            STATUS_MUTANT_NOT_OWNED },
+    { "NAME_TOO_LONG",               STATUS_NAME_TOO_LONG },
     { "NOT_ALL_ASSIGNED",            STATUS_NOT_ALL_ASSIGNED },
     { "NOT_A_DIRECTORY",             STATUS_NOT_A_DIRECTORY },
     { "NOT_IMPLEMENTED",             STATUS_NOT_IMPLEMENTED },
@@ -3769,6 +3804,8 @@ static const struct
     { "OBJECT_NAME_INVALID",         STATUS_OBJECT_NAME_INVALID },
     { "OBJECT_NAME_NOT_FOUND",       STATUS_OBJECT_NAME_NOT_FOUND },
     { "OBJECT_PATH_INVALID",         STATUS_OBJECT_PATH_INVALID },
+    { "OBJECT_PATH_NOT_FOUND",       STATUS_OBJECT_PATH_NOT_FOUND },
+    { "OBJECT_PATH_SYNTAX_BAD",      STATUS_OBJECT_PATH_SYNTAX_BAD },
     { "OBJECT_TYPE_MISMATCH",        STATUS_OBJECT_TYPE_MISMATCH },
     { "PENDING",                     STATUS_PENDING },
     { "PIPE_BUSY",                   STATUS_PIPE_BUSY },

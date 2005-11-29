@@ -135,6 +135,7 @@ int main( int argc, char *argv[] )
 
     if (debug_level) fprintf( stderr, "wineserver: starting (pid=%ld)\n", (long) getpid() );
     init_signals();
+    init_directories();
     init_registry();
     main_loop();
     return 0;

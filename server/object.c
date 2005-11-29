@@ -40,9 +40,10 @@
 
 struct object_name
 {
-    struct list         entry;    /* entry in the hash list */
-    struct object      *obj;
-    size_t              len;
+    struct list         entry;           /* entry in the hash list */
+    struct object      *obj;             /* object owning this name */
+    struct object      *parent;          /* parent object */
+    size_t              len;             /* name length in bytes */
     WCHAR               name[1];
 };
 
@@ -108,6 +109,7 @@ static struct object_name *alloc_name( const struct unicode_str *name )
     if ((ptr = mem_alloc( sizeof(*ptr) + name->len - sizeof(ptr->name) )))
     {
         ptr->len = name->len;
+        ptr->parent = NULL;
         memcpy( ptr->name, name->str, name->len );
     }
     return ptr;
@@ -118,6 +120,7 @@ static void free_name( struct object *obj )
 {
     struct object_name *ptr = obj->name;
     list_remove( &ptr->entry );
+    if (ptr->parent) release_object( ptr->parent );
     free( ptr );
 }
 
@@ -159,11 +162,27 @@ void *alloc_object( const struct object_ops *ops )
     return NULL;
 }
 
+void *create_object( struct namespace *namespace, const struct object_ops *ops,
+                     const struct unicode_str *name, struct object *parent )
+{
+    struct object *obj;
+    struct object_name *name_ptr;
+
+    if (!(name_ptr = alloc_name( name ))) return NULL;
+    if ((obj = alloc_object( ops )))
+    {
+        set_object_name( namespace, obj, name_ptr );
+        if (parent) name_ptr->parent = grab_object( parent );
+    }
+    else
+        free( name_ptr );
+    return obj;
+}
+
 void *create_named_object( struct namespace *namespace, const struct object_ops *ops,
                            const struct unicode_str *name, unsigned int attributes )
 {
     struct object *obj;
-    struct object_name *name_ptr;
 
     if (!name || !name->len) return alloc_object( ops );
 
@@ -182,13 +201,7 @@ void *create_named_object( struct namespace *namespace, const struct object_ops 
         }
         return obj;
     }
-    if (!(name_ptr = alloc_name( name ))) return NULL;
-    if ((obj = alloc_object( ops )))
-    {
-        set_object_name( namespace, obj, name_ptr );
-        clear_error();
-    }
-    else free( name_ptr );
+    if ((obj = create_object( namespace, ops, name, NULL ))) clear_error();
     return obj;
 }
 

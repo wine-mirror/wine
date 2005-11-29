@@ -315,6 +315,8 @@ DECL_HANDLER(get_token_user);
 DECL_HANDLER(create_mailslot);
 DECL_HANDLER(open_mailslot);
 DECL_HANDLER(set_mailslot_info);
+DECL_HANDLER(create_directory);
+DECL_HANDLER(open_directory);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -526,6 +528,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_mailslot,
     (req_handler)req_open_mailslot,
     (req_handler)req_set_mailslot_info,
+    (req_handler)req_create_directory,
+    (req_handler)req_open_directory,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

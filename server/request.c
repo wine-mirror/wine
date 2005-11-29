@@ -801,6 +801,7 @@ static void close_socket_timeout( void *arg )
     close_signals();
     close_global_handles();
     close_registry();
+    close_directories();
     dump_objects();  /* dump any remaining objects */
 #else
     exit(0);

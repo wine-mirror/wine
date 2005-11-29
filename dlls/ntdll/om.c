@@ -362,30 +362,77 @@ NTSTATUS WINAPI NtClose( HANDLE Handle )
  *  Success: ERROR_SUCCESS.
  *  Failure: An NTSTATUS error code.
  */
-NTSTATUS WINAPI NtOpenDirectoryObject(
-	PHANDLE DirectoryHandle,
-	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes)
+NTSTATUS WINAPI NtOpenDirectoryObject(PHANDLE DirectoryHandle, ACCESS_MASK DesiredAccess,
+                                      POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME("(%p,0x%08lx,%p): stub\n",
-	DirectoryHandle, DesiredAccess, ObjectAttributes);
-	dump_ObjectAttributes(ObjectAttributes);
-	return 0;
+    NTSTATUS ret;
+    TRACE("(%p,0x%08lx)\n", DirectoryHandle, DesiredAccess);
+    dump_ObjectAttributes(ObjectAttributes);
+
+    if (!DirectoryHandle) return STATUS_ACCESS_VIOLATION;
+    if (!ObjectAttributes) return STATUS_INVALID_PARAMETER;
+    /* Have to test it here because server won't know difference between
+     * ObjectName == NULL and ObjectName == "" */
+    if (!ObjectAttributes->ObjectName)
+    {
+        if (ObjectAttributes->RootDirectory)
+            return STATUS_OBJECT_NAME_INVALID;
+        else
+            return STATUS_OBJECT_PATH_SYNTAX_BAD;
+    }
+
+    SERVER_START_REQ(open_directory)
+    {
+        req->access = DesiredAccess;
+        req->attributes = ObjectAttributes->Attributes;
+        req->rootdir = ObjectAttributes->RootDirectory;
+        if (ObjectAttributes->ObjectName)
+            wine_server_add_data(req, ObjectAttributes->ObjectName->Buffer,
+                                 ObjectAttributes->ObjectName->Length);
+        ret = wine_server_call( req );
+        *DirectoryHandle = reply->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /******************************************************************************
  *  NtCreateDirectoryObject	[NTDLL.@]
  *  ZwCreateDirectoryObject	[NTDLL.@]
+ *
+ * Create a namespace directory object.
+ * 
+ * PARAMS
+ *  DirectoryHandle  [O] Destination for the new directory handle
+ *  DesiredAccess    [I] Desired access to the directory
+ *  ObjectAttributes [I] Structure describing the directory
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS.
+ *  Failure: An NTSTATUS error code.
  */
-NTSTATUS WINAPI NtCreateDirectoryObject(
-	PHANDLE DirectoryHandle,
-	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes)
+NTSTATUS WINAPI NtCreateDirectoryObject(PHANDLE DirectoryHandle, ACCESS_MASK DesiredAccess,
+                                        POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME("(%p,0x%08lx,%p),stub!\n",
-	DirectoryHandle,DesiredAccess,ObjectAttributes);
-	dump_ObjectAttributes(ObjectAttributes);
-	return 0;
+    NTSTATUS ret;
+    TRACE("(%p,0x%08lx)\n", DirectoryHandle, DesiredAccess);
+    dump_ObjectAttributes(ObjectAttributes);
+
+    if (!DirectoryHandle) return STATUS_ACCESS_VIOLATION;
+
+    SERVER_START_REQ(create_directory)
+    {
+        req->access = DesiredAccess;
+        req->attributes = ObjectAttributes ? ObjectAttributes->Attributes : 0;
+        req->rootdir = ObjectAttributes ? ObjectAttributes->RootDirectory : 0;
+        if (ObjectAttributes && ObjectAttributes->ObjectName)
+            wine_server_add_data(req, ObjectAttributes->ObjectName->Buffer,
+                                 ObjectAttributes->ObjectName->Length);
+        ret = wine_server_call( req );
+        *DirectoryHandle = reply->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /******************************************************************************
