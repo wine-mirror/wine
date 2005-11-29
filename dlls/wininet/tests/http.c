@@ -1083,7 +1083,7 @@ static void HttpSendRequestEx_test(void)
 
 
     BufferIn.dwStructSize = sizeof( INTERNET_BUFFERS);
-    BufferIn.Next = NULL;
+    BufferIn.Next = (LPINTERNET_BUFFERS)0xdeadcab;
     BufferIn.lpcszHeader = szContentType;
     BufferIn.dwHeadersLength = sizeof(szContentType);
     BufferIn.dwHeadersTotal = sizeof(szContentType);

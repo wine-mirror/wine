@@ -1506,62 +1506,43 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
 			       LPINTERNET_BUFFERSA lpBuffersOut,
 			       DWORD dwFlags, DWORD dwContext)
 {
-    LPINTERNET_BUFFERSA ptr;
-    LPINTERNET_BUFFERSW lpBuffersInW,ptrW;
+    INTERNET_BUFFERSW BuffersInW;
     BOOL rc = FALSE;
+    DWORD headerlen;
 
     TRACE("(%p, %p, %p, %08lx, %08lx): stub\n", hRequest, lpBuffersIn,
 	    lpBuffersOut, dwFlags, dwContext);
 
-    ptr = lpBuffersIn;
-    if (ptr)
-        lpBuffersInW = (LPINTERNET_BUFFERSW)HeapAlloc(GetProcessHeap(),
-                HEAP_ZERO_MEMORY, sizeof(INTERNET_BUFFERSW));
-    else
-        lpBuffersInW = NULL;
-
-    ptrW = lpBuffersInW;
-    while (ptr)
+    if (lpBuffersIn)
     {
-        DWORD headerlen;
-        ptrW->dwStructSize = sizeof(LPINTERNET_BUFFERSW);
-        if (ptr->lpcszHeader)
+        BuffersInW.dwStructSize = sizeof(LPINTERNET_BUFFERSW);
+        if (lpBuffersIn->lpcszHeader)
         {
-            headerlen = MultiByteToWideChar(CP_ACP,0,ptr->lpcszHeader,
-                    ptr->dwHeadersLength,0,0);
-            headerlen++;
-            ptrW->lpcszHeader = HeapAlloc(GetProcessHeap(),0,headerlen*
+            headerlen = MultiByteToWideChar(CP_ACP,0,lpBuffersIn->lpcszHeader,
+                    lpBuffersIn->dwHeadersLength,0,0);
+            BuffersInW.lpcszHeader = HeapAlloc(GetProcessHeap(),0,headerlen*
                     sizeof(WCHAR));
-            ptrW->dwHeadersLength = MultiByteToWideChar(CP_ACP, 0,
-                    ptr->lpcszHeader, ptr->dwHeadersLength,
-                    (LPWSTR)ptrW->lpcszHeader, headerlen);
+            if (!BuffersInW.lpcszHeader)
+            {
+                SetLastError(ERROR_OUTOFMEMORY);
+                return FALSE;
+            }
+            BuffersInW.dwHeadersLength = MultiByteToWideChar(CP_ACP, 0,
+                    lpBuffersIn->lpcszHeader, lpBuffersIn->dwHeadersLength,
+                    (LPWSTR)BuffersInW.lpcszHeader, headerlen);
         }
-        ptrW->dwHeadersTotal = ptr->dwHeadersTotal;
-        ptrW->lpvBuffer = ptr->lpvBuffer;
-        ptrW->dwBufferLength = ptr->dwBufferLength;
-        ptrW->dwBufferTotal= ptr->dwBufferTotal;
-
-        if (ptr->Next)
-            ptrW->Next = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-                    sizeof(INTERNET_BUFFERSW));
-
-        ptr = ptr->Next;
-        ptrW = ptrW->Next;
+        BuffersInW.dwHeadersTotal = lpBuffersIn->dwHeadersTotal;
+        BuffersInW.lpvBuffer = lpBuffersIn->lpvBuffer;
+        BuffersInW.dwBufferLength = lpBuffersIn->dwBufferLength;
+        BuffersInW.dwBufferTotal = lpBuffersIn->dwBufferTotal;
+        BuffersInW.Next = NULL;
     }
 
-    rc = HttpSendRequestExW(hRequest, lpBuffersInW, NULL, dwFlags, dwContext);
-    if (lpBuffersInW)
-    {
-        ptrW = lpBuffersInW;
-        while (ptrW)
-        {
-            LPINTERNET_BUFFERSW ptrW2;
-            HeapFree(GetProcessHeap(),0,(LPVOID)ptrW->lpcszHeader);
-            ptrW2 = ptrW->Next;
-            HeapFree(GetProcessHeap(),0,ptrW);
-            ptrW = ptrW2;
-        }
-    }
+    rc = HttpSendRequestExW(hRequest, lpBuffersIn ? &BuffersInW : NULL, NULL, dwFlags, dwContext);
+
+    if (lpBuffersIn)
+        HeapFree(GetProcessHeap(),0,(LPVOID)BuffersInW.lpcszHeader);
+
     return rc;
 }
 
@@ -1576,8 +1557,6 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
                    LPINTERNET_BUFFERSW lpBuffersOut,
                    DWORD dwFlags, DWORD dwContext)
 {
-    LPINTERNET_BUFFERSW buf_ptr;
-    DWORD bufferlen = 0;
     BOOL rc;
     LPWININETHTTPREQW lpwhr;
     LPWSTR requestString = NULL;
@@ -1599,30 +1578,21 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
     HTTP_FixVerb(lpwhr);
     
     /* add headers */
-    buf_ptr = lpBuffersIn;
-    while(buf_ptr)
+    if (lpBuffersIn->lpcszHeader)
     {
-        if (buf_ptr->lpcszHeader)
-        {
-            HTTP_HttpAddRequestHeadersW(lpwhr, buf_ptr->lpcszHeader,
-                    buf_ptr->dwHeadersLength, HTTP_ADDREQ_FLAG_ADD |
-                    HTTP_ADDHDR_FLAG_REPLACE);
-         }
-         bufferlen += buf_ptr->dwBufferTotal;
-         buf_ptr = buf_ptr->Next;
+        HTTP_HttpAddRequestHeadersW(lpwhr, lpBuffersIn->lpcszHeader,
+            lpBuffersIn->dwHeadersLength, HTTP_ADDREQ_FLAG_ADD |
+            HTTP_ADDHDR_FLAG_REPLACE);
     }
 
-    lpwhr->hdr.dwFlags |= dwFlags;
-    lpwhr->hdr.dwContext = dwContext;
-
-    if (bufferlen > 0)
+    if (lpBuffersIn->dwBufferTotal > 0)
     {
         static const WCHAR szContentLength[] = {
             'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ',
             '%','l','i','\r','\n',0};
         WCHAR contentLengthStr[sizeof szContentLength/2 /* includes \n\r */ + 
             20 /* int */ ];
-        sprintfW(contentLengthStr, szContentLength, bufferlen);
+        sprintfW(contentLengthStr, szContentLength, lpBuffersIn->dwBufferTotal);
         HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L, 
                 HTTP_ADDREQ_FLAG_ADD);
     }
