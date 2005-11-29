@@ -595,17 +595,17 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 int symbol_info_locals(void)
 {
     IMAGEHLP_STACK_FRAME        ihsf;
-    char                        buffer[sizeof(SYMBOL_INFO) + 256];
-    SYMBOL_INFO*                si = (SYMBOL_INFO*)buffer;
+    ADDRESS                     addr;
 
-    si->SizeOfStruct = sizeof(*si);
-    si->MaxNameLen = 256;
-    if (stack_get_frame(si, &ihsf))
-    {
-        dbg_printf("%s:\n", si->Name);
-        SymEnumSymbols(dbg_curr_process->handle, 0, NULL, info_locals_cb, &ihsf);
-    }
+    stack_get_current_frame(&ihsf);
+    addr.Mode = AddrModeFlat;
+    addr.Offset = ihsf.InstructionOffset;
+    print_address(&addr, FALSE);
+    dbg_printf(": (%08lx)\n", (DWORD_PTR)ihsf.FrameOffset);
+    SymEnumSymbols(dbg_curr_process->handle, 0, NULL, info_locals_cb, (void*)(DWORD_PTR)ihsf.FrameOffset);
+
     return TRUE;
+
 }
 
 static BOOL CALLBACK symbols_info_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)

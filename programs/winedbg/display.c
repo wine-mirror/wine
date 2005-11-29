@@ -87,7 +87,7 @@ int display_add(struct expr *exp, int count, char format)
         displaypoints[i].func->SizeOfStruct = sizeof(SYMBOL_INFO);
         displaypoints[i].func->MaxNameLen = sizeof(displaypoints[i].func_buffer) -
             sizeof(*displaypoints[i].func);
-        if (!stack_get_frame(displaypoints[i].func, NULL))
+        if (!stack_get_current_symbol(displaypoints[i].func))
         {
             expr_free(displaypoints[i].exp);
             displaypoints[i].exp = NULL;
@@ -110,7 +110,7 @@ int display_info(void)
     memset(func, 0, sizeof(SYMBOL_INFO));
     func->SizeOfStruct = sizeof(SYMBOL_INFO);
     func->MaxNameLen = sizeof(buffer) - sizeof(*func);
-    if (!stack_get_frame(func, NULL)) return FALSE;
+    if (!stack_get_current_symbol(func)) return FALSE;
 
     for (i = 0; i < ndisplays; i++)
     {
@@ -174,7 +174,7 @@ int display_print(void)
     memset(func, 0, sizeof(SYMBOL_INFO));
     func->SizeOfStruct = sizeof(SYMBOL_INFO);
     func->MaxNameLen = sizeof(buffer) - sizeof(*func);
-    if (!stack_get_frame(func, NULL)) return FALSE;
+    if (!stack_get_current_symbol(func)) return FALSE;
 
     for (i = 0; i < ndisplays; i++)
     {
@@ -243,7 +243,7 @@ int display_enable(int displaynum, int enable)
     memset(func, 0, sizeof(SYMBOL_INFO));
     func->SizeOfStruct = sizeof(SYMBOL_INFO);
     func->MaxNameLen = sizeof(buffer) - sizeof(*func);
-    if (!stack_get_frame(func, NULL)) return FALSE;
+    if (!stack_get_current_symbol(func)) return FALSE;
 
     --displaynum;
     if (displaynum >= ndisplays || displaynum < 0 || 

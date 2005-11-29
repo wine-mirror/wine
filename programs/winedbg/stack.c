@@ -82,7 +82,7 @@ static BOOL stack_set_frame_internal(int newframe)
     return TRUE;
 }
 
-static BOOL stack_get_frame_internal(int nf, IMAGEHLP_STACK_FRAME* ihsf)
+static BOOL stack_get_frame(int nf, IMAGEHLP_STACK_FRAME* ihsf)
 {
     ihsf->InstructionOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_pc);
     ihsf->FrameOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_frame);
@@ -95,7 +95,7 @@ BOOL stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf)
      * If we don't have a valid backtrace, then just return.
      */
     if (dbg_curr_thread->frames == NULL) return FALSE;
-    return stack_get_frame_internal(dbg_curr_thread->curr_frame, ihsf);
+    return stack_get_frame(dbg_curr_thread->curr_frame, ihsf);
 }
 
 BOOL stack_set_frame(int newframe)
@@ -108,27 +108,20 @@ BOOL stack_set_frame(int newframe)
     return TRUE;
 }
 
-BOOL stack_get_frame(SYMBOL_INFO* symbol, IMAGEHLP_STACK_FRAME* ihsf)
+/******************************************************************
+ *		stack_get_current_symbol
+ *
+ * Retrieves the symbol information for the current frame element
+ */
+BOOL stack_get_current_symbol(SYMBOL_INFO* symbol)
 {
-    DWORD64     disp;
-    /*
-     * If we don't have a valid backtrace, then just return.
-     */
-    if (dbg_curr_thread->frames == NULL) return FALSE;
+    IMAGEHLP_STACK_FRAME        ihsf;
+    DWORD64                     disp;
 
-    /*
-     * If we don't know what the current function is, then we also have
-     * nothing to report here.
-     */
-    if (!SymFromAddr(dbg_curr_process->handle,
-                     (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_pc),
-                     &disp, symbol))
-        return FALSE;
-    if (ihsf && !stack_get_current_frame(ihsf)) return FALSE;
-
-    return TRUE;
+    if (!stack_get_current_frame(&ihsf)) return FALSE;
+    return SymFromAddr(dbg_curr_process->handle, ihsf.InstructionOffset,
+                       &disp, symbol);
 }
-
 /******************************************************************
  *		stack_fetch_frames
  *
@@ -214,7 +207,7 @@ static void stack_print_addr_and_args(int nf)
 
     print_bare_address(&dbg_curr_thread->frames[nf].addr_pc);
 
-    stack_get_frame_internal(nf, &ihsf);
+    stack_get_frame(nf, &ihsf);
 
     /* grab module where symbol is. If we don't have a module, we cannot print more */
     im.SizeOfStruct = sizeof(im);
@@ -270,7 +263,7 @@ static unsigned backtrace(void)
         dbg_printf(")\n");
     }
     /* reset context to current stack frame */
-    stack_get_frame_internal(dbg_curr_thread->curr_frame, &ihsf);
+    stack_get_frame(dbg_curr_thread->curr_frame, &ihsf);
     SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
     return nf;
 }

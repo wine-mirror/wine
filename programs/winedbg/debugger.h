@@ -348,9 +348,9 @@ extern void             source_nuke_path(void);
 extern void             stack_info(void);
 extern void             stack_backtrace(DWORD threadID);
 extern BOOL             stack_set_frame(int newframe);
-extern BOOL             stack_get_frame(SYMBOL_INFO* sym, IMAGEHLP_STACK_FRAME* ihsf);
 extern BOOL             stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf);
 extern unsigned         stack_fetch_frames(void);
+extern BOOL             stack_get_current_symbol(SYMBOL_INFO* sym);
 
   /* symbol.c */
 extern enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno, struct dbg_lvalue* addr, BOOL bp_disp);
