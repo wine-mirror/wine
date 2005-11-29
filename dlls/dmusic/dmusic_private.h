@@ -99,7 +99,7 @@ struct IDirectMusic8Impl {
 
   /* IDirectMusicImpl fields */
   IReferenceClockImpl* pMasterClock;
-  IDirectMusicPortImpl** ppPorts;
+  IDirectMusicPort** ppPorts;
   int nrofports;
 };
 
@@ -176,14 +176,18 @@ struct IDirectMusicPortImpl {
   IDirectSound* pDirectSound;
   IReferenceClock* pLatencyClock;
   BOOL fActive;
-  LPDMUS_PORTCAPS pCaps;
-  LPDMUS_PORTPARAMS pParams;
+  DMUS_PORTCAPS caps;
+  DMUS_PORTPARAMS params;
   int nrofgroups;
   DMUSIC_PRIVATE_CHANNEL_GROUP group[1];
 };
 
 /* IUnknown: */
 extern ULONG WINAPI   IDirectMusicPortImpl_AddRef (LPDIRECTMUSICPORT iface);
+extern HRESULT WINAPI IDirectMusicPortImpl_Activate (LPDIRECTMUSICPORT iface, BOOL fActive);
+
+/** Internal factory */
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps);
 
 /*****************************************************************************
  * IDirectMusicThruImpl implementation structure

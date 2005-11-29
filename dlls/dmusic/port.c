@@ -115,7 +115,7 @@ HRESULT WINAPI IDirectMusicPortImpl_Compact (LPDIRECTMUSICPORT iface) {
 HRESULT WINAPI IDirectMusicPortImpl_GetCaps (LPDIRECTMUSICPORT iface, LPDMUS_PORTCAPS pPortCaps) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
 	TRACE("(%p, %p)\n", This, pPortCaps);
-	pPortCaps = This->pCaps;	
+	memcpy(pPortCaps, &This->caps, sizeof(DMUS_PORTCAPS));	
 	return S_OK;
 }
 
@@ -197,3 +197,52 @@ const IDirectMusicPortVtbl DirectMusicPort_Vtbl = {
 	IDirectMusicPortImpl_SetDirectSound,
 	IDirectMusicPortImpl_GetFormat
 };
+
+HRESULT WINAPI DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps) {
+	IDirectMusicPortImpl *obj;
+	HRESULT hr = E_FAIL;
+
+	TRACE("(%p,%p,%p)\n", lpcGUID, ppobj, pUnkOuter);
+
+	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPortImpl));
+	if (NULL == obj) 	{
+		*ppobj = (LPDIRECTMUSICPORT) NULL;
+		return E_OUTOFMEMORY;
+	}
+	obj->lpVtbl = &DirectMusicPort_Vtbl;
+	obj->ref = 0;  /* will be inited by QueryInterface */
+	obj->fActive = FALSE;
+	memcpy(&obj->params, pPortParams, sizeof(DMUS_PORTPARAMS));
+	memcpy(&obj->caps, pPortCaps, sizeof(DMUS_PORTCAPS));
+	obj->pDirectSound = NULL;
+	obj->pLatencyClock = NULL;
+	hr = DMUSIC_CreateReferenceClockImpl(&IID_IReferenceClock, (LPVOID*)&obj->pLatencyClock, NULL);
+
+#if 0
+	if (pPortParams->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS) {
+	  obj->nrofgroups = pPortParams->dwChannelGroups;
+	  /* setting default priorities */			
+	  for (j = 0; j < obj->nrofgroups; j++) {
+	    TRACE ("Setting default channel priorities on channel group %i\n", j + 1);
+	    obj->group[j].channel[0].priority = DAUD_CHAN1_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[1].priority = DAUD_CHAN2_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[2].priority = DAUD_CHAN3_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[3].priority = DAUD_CHAN4_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[4].priority = DAUD_CHAN5_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[5].priority = DAUD_CHAN6_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[6].priority = DAUD_CHAN7_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[7].priority = DAUD_CHAN8_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[8].priority = DAUD_CHAN9_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[9].priority = DAUD_CHAN10_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[10].priority = DAUD_CHAN11_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[11].priority = DAUD_CHAN12_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[12].priority = DAUD_CHAN13_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[13].priority = DAUD_CHAN14_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[14].priority = DAUD_CHAN15_DEF_VOICE_PRIORITY;
+	    obj->group[j].channel[15].priority = DAUD_CHAN16_DEF_VOICE_PRIORITY;
+	  }
+	}
+#endif
+
+	return IDirectMusicPortImpl_QueryInterface ((LPDIRECTMUSICPORT)obj, lpcGUID, ppobj);
+}
