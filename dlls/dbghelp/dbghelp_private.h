@@ -257,6 +257,7 @@ enum module_type
     DMT_ELF,            /* a real ELF shared module */
     DMT_PE,             /* a native or builtin PE module */
     DMT_PDB,            /* PDB file */
+    DMT_VIRTUAL,        /* a virtual module (ie defined by caller) */
 };
 
 struct module

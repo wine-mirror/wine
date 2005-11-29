@@ -68,6 +68,17 @@ static void module_fill_module(const char* in, char* out, unsigned size)
     while ((*out = tolower(*out))) out++;
 }
 
+static const char*      get_module_type(enum module_type type)
+{
+    switch (type)
+    {
+    case DMT_ELF: return "ELF";
+    case DMT_PE: return "PE";
+    case DMT_VIRTUAL: return "Virtual";
+    default: return "---";
+    }
+}
+
 /***********************************************************************
  * Creates and links a new module to a process 
  */
@@ -78,7 +89,7 @@ struct module* module_new(struct process* pcs, const char* name,
 {
     struct module*      module;
 
-    assert(type == DMT_ELF || type == DMT_PE);
+    assert(type == DMT_ELF || type == DMT_PE || type == DMT_VIRTUAL);
     if (!(module = HeapAlloc(GetProcessHeap(), 0, sizeof(*module))))
 	return NULL;
 
@@ -88,8 +99,7 @@ struct module* module_new(struct process* pcs, const char* name,
     pcs->lmodules = module;
 
     TRACE("=> %s %08lx-%08lx %s\n", 
-          type == DMT_ELF ? "ELF" : (type == DMT_PE ? "PE" : "---"),
-          mod_addr, mod_addr + size, name);
+          get_module_type(type), mod_addr, mod_addr + size, name);
 
     pool_init(&module->pool, 65536);
     
@@ -134,7 +144,8 @@ struct module* module_find_by_name(const struct process* pcs,
     if (type == DMT_UNKNOWN)
     {
         if ((module = module_find_by_name(pcs, name, DMT_PE)) ||
-            (module = module_find_by_name(pcs, name, DMT_ELF)))
+            (module = module_find_by_name(pcs, name, DMT_ELF)) ||
+            (module = module_find_by_name(pcs, name, DMT_VIRTUAL)))
             return module;
     }
     else
@@ -226,6 +237,7 @@ struct module* module_get_debug(const struct process* pcs, struct module* module
         {
         case DMT_ELF: ret = elf_load_debug_info(module, NULL);  break;
         case DMT_PE:  ret = pe_load_debug_info(pcs, module);    break;
+        case DMT_VIRTUAL: /* fall through */
         default:      ret = FALSE;                              break;
         }
         if (!ret) module->module.SymType = SymNone;
@@ -248,7 +260,8 @@ struct module* module_find_by_addr(const struct process* pcs, unsigned long addr
     if (type == DMT_UNKNOWN)
     {
         if ((module = module_find_by_addr(pcs, addr, DMT_PE)) ||
-            (module = module_find_by_addr(pcs, addr, DMT_ELF)))
+            (module = module_find_by_addr(pcs, addr, DMT_ELF)) ||
+            (module = module_find_by_addr(pcs, addr, DMT_VIRTUAL)))
             return module;
     }
     else
@@ -381,12 +394,25 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
                                 PCSTR ModuleName, DWORD64 BaseOfDll, DWORD DllSize,
                                 PMODLOAD_DATA Data, DWORD Flags)
 {
-    if (Data || Flags)
-    {
-        FIXME("Unsupported parameters (%p, %lx) for %s\n", Data, Flags, ImageName);
-        if (Flags & 1) return TRUE;
-    }
+    if (Data)
+        FIXME("Unsupported load data parameter %p for %s\n", Data, ImageName);
     if (!validate_addr64(BaseOfDll)) return FALSE;
+    if (Flags & SLMFLAG_VIRTUAL)
+    {
+        struct process* pcs = process_find_by_handle(hProcess);
+        struct module* module;
+        if (!pcs) return FALSE;
+
+        module = module_new(pcs, ImageName, DMT_VIRTUAL, (DWORD)BaseOfDll, DllSize, 0, 0);
+        if (!module) return FALSE;
+        if (ModuleName)
+            lstrcpynA(module->module.ModuleName, ModuleName, sizeof(module->module.ModuleName));
+
+        return TRUE;
+    }
+    if (Flags & ~(SLMFLAG_VIRTUAL))
+        FIXME("Unsupported Flags %08lx for %s\n", Flags, ImageName);
+
     return SymLoadModule(hProcess, hFile, (char*)ImageName, (char*)ModuleName,
                          (DWORD)BaseOfDll, DllSize);
 }
@@ -477,7 +503,7 @@ BOOL  WINAPI SymEnumerateModules(HANDLE hProcess,
     
     for (module = pcs->lmodules; module; module = module->next)
     {
-        if (!(dbghelp_options & SYMOPT_WINE_WITH_ELF_MODULES) && module->type != DMT_PE)
+        if (!(dbghelp_options & SYMOPT_WINE_WITH_ELF_MODULES) && module->type == DMT_ELF)
             continue;
         if (!EnumModulesCallback(module->module.ModuleName, 
                                  module->module.BaseOfImage, UserContext))

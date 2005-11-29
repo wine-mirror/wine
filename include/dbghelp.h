@@ -643,6 +643,11 @@ BOOL WINAPI MiniDumpReadDumpStream(PVOID, ULONG, PMINIDUMP_DIRECTORY*, PVOID*,
 /*************************
  *    MODULE handling    *
  *************************/
+
+/* flags for SymLoadModuleEx */
+#define SLMFLAG_VIRTUAL         0x1
+#define SLMFLAG_NO_SYMBOLS      0x4
+
 typedef BOOL (CALLBACK *PENUMLOADED_MODULES_CALLBACK)(PSTR, DWORD, ULONG, PVOID);
 BOOL   WINAPI EnumerateLoadedModules(HANDLE, PENUMLOADED_MODULES_CALLBACK, PVOID);
 typedef BOOL (CALLBACK *PSYM_ENUMMODULES_CALLBACK)(PSTR, DWORD, PVOID);
