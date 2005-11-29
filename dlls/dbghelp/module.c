@@ -397,8 +397,7 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
 DWORD WINAPI SymLoadModule64(HANDLE hProcess, HANDLE hFile, char* ImageName,
                              char* ModuleName, DWORD64 BaseOfDll, DWORD SizeOfDll)
 {
-    FIXME("SymLoadModule should probably reference SymLoadModule64 instead of this way\n");
-
+    if (!validate_addr64(BaseOfDll)) return FALSE;
     return SymLoadModule(hProcess, hFile, ImageName, ModuleName, (DWORD)BaseOfDll, SizeOfDll);
 }
 
