@@ -831,8 +831,10 @@ int WINAPI WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
  */
 INT WINAPI WSACleanup(void)
 {
-    if (num_startup)
+    if (num_startup) {
+        num_startup--;
         return 0;
+    }
     SetLastError(WSANOTINITIALISED);
     return SOCKET_ERROR;
 }
