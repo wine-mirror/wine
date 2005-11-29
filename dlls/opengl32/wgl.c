@@ -560,7 +560,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
 
   TRACE("(%p, %p)\n", org, dest);
 
-  if (dest->ctx != NULL) {
+  if (NULL != dest && dest->ctx != NULL) {
     ERR("Could not share display lists, context already created !\n");
     return FALSE;
   } else {
@@ -570,15 +570,16 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
       LEAVE_GL();
       TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
     }
-
-    ENTER_GL();
-    /* Create the destination context with display lists shared */
-    dest->ctx = glXCreateContext(org->display, dest->vis, org->ctx, True);
-    LEAVE_GL();
-    TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
+    if (NULL != dest) {
+      ENTER_GL();
+      /* Create the destination context with display lists shared */
+      dest->ctx = glXCreateContext(org->display, dest->vis, org->ctx, True);
+      LEAVE_GL();
+      TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
+      return TRUE;
+    }
   }
-
-  return TRUE;
+  return FALSE;
 }
 
 /***********************************************************************
