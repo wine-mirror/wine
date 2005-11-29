@@ -86,7 +86,7 @@
 @ stub SymSetSymWithAddr64
 @ stub SymUnDName64
 @ stdcall SymUnDName(ptr str long)
-@ stub SymUnloadModule64
+@ stdcall SymUnloadModule64(long double)
 @ stdcall SymUnloadModule(long long)
 @ stdcall UnDecorateSymbolName(str str long long)
 @ stdcall UnmapDebugInformation(ptr)

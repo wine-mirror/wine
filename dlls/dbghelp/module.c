@@ -447,6 +447,23 @@ BOOL WINAPI SymUnloadModule(HANDLE hProcess, DWORD BaseOfDll)
 }
 
 /******************************************************************
+ *		SymUnloadModule64 (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll)
+{
+    struct process*     pcs;
+    struct module*      module;
+
+    pcs = process_find_by_handle(hProcess);
+    if (!pcs) return FALSE;
+    if (!validate_addr64(BaseOfDll)) return FALSE;
+    module = module_find_by_addr(pcs, (DWORD)BaseOfDll, DMT_UNKNOWN);
+    if (!module) return FALSE;
+    return module_remove(pcs, module);
+}
+
+/******************************************************************
  *		SymEnumerateModules (DBGHELP.@)
  *
  */

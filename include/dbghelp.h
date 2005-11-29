@@ -617,6 +617,7 @@ DWORD   WINAPI SymLoadModule(HANDLE, HANDLE, PSTR, PSTR, DWORD, DWORD);
 DWORD64 WINAPI SymLoadModuleEx(HANDLE, HANDLE, PCSTR, PCSTR, DWORD64, DWORD,
                                PMODLOAD_DATA, DWORD);
 BOOL    WINAPI SymUnloadModule(HANDLE, DWORD);
+BOOL    WINAPI SymUnloadModule64(HANDLE, DWORD64);
 
 /*************************
  *    Symbol Handling    *
