@@ -381,6 +381,31 @@ LONG WINAPI SetBitmapBits(
 	count = -count;
     }
 
+    if (bmp->dib)  /* simply copy the bits into the DIB */
+    {
+        DIBSECTION *dib = bmp->dib;
+        char *dest = dib->dsBm.bmBits;
+        DWORD max = dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
+        if (count > max) count = max;
+        ret = count;
+
+        if (bmp->dib->dsBmih.biHeight >= 0)  /* not top-down, need to flip contents vertically */
+        {
+            dest += dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
+            while (count > 0)
+            {
+                dest -= dib->dsBm.bmWidthBytes;
+                memcpy( dest, bits, min( count, dib->dsBm.bmWidthBytes ) );
+                bits = (char *)bits + dib->dsBm.bmWidthBytes;
+                count -= dib->dsBm.bmWidthBytes;
+            }
+        }
+        else memcpy( dest, bits, count );
+
+        GDI_ReleaseObj( hbitmap );
+        return ret;
+    }
+
     /* Only get entire lines */
     height = count / bmp->bitmap.bmWidthBytes;
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
