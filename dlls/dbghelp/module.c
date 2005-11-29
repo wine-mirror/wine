@@ -375,6 +375,23 @@ done:
 }
 
 /***********************************************************************
+ *			SymLoadModuleEx (DBGHELP.@)
+ */
+DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
+                                PCSTR ModuleName, DWORD64 BaseOfDll, DWORD DllSize,
+                                PMODLOAD_DATA Data, DWORD Flags)
+{
+    if (Data || Flags)
+    {
+        FIXME("Unsupported parameters (%p, %lx) for %s\n", Data, Flags, ImageName);
+        if (Flags & 1) return TRUE;
+    }
+    if (!validate_addr64(BaseOfDll)) return FALSE;
+    return SymLoadModule(hProcess, hFile, (char*)ImageName, (char*)ModuleName,
+                         (DWORD)BaseOfDll, DllSize);
+}
+
+/***********************************************************************
  *                     SymLoadModule64 (DBGHELP.@)
  */
 DWORD WINAPI SymLoadModule64(HANDLE hProcess, HANDLE hFile, char* ImageName,

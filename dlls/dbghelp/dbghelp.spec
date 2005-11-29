@@ -72,7 +72,7 @@
 @ stdcall SymInitialize(long str long)
 @ stdcall SymLoadModule64(long long str str double long)
 @ stdcall SymLoadModule(long long str str long long)
-@ stub SymLoadModuleEx
+@ stdcall SymLoadModuleEx(long long str str double long ptr long)
 @ stdcall SymMatchFileName(str str ptr ptr)
 @ stub SymMatchString
 @ stdcall SymRegisterCallback64(long ptr double)

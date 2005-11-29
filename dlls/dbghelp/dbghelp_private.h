@@ -312,7 +312,8 @@ struct line_info
 /* dbghelp.c */
 extern struct process* process_find_by_handle(HANDLE hProcess);
 extern HANDLE hMsvcrt;
-
+extern BOOL validate_addr64(DWORD64 addr);
+	
 /* elf_module.c */
 typedef BOOL (*elf_enum_modules_cb)(const char*, unsigned long addr, void* user);
 extern BOOL         elf_enum_modules(HANDLE hProc, elf_enum_modules_cb, void*);
