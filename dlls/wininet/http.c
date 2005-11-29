@@ -1808,6 +1808,8 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
         URL_COMPONENTSW urlComponents;
         WCHAR protocol[32], hostName[MAXHOSTNAME], userName[1024];
         WCHAR password[1024], extra[1024];
+        static const WCHAR szHttp[] = {'h','t','t','p',0};
+        static const WCHAR szHttps[] = {'h','t','t','p','s',0};
         extra[0] = 0;
         password[0] = 0;
         userName[0] = 0;
@@ -1829,7 +1831,24 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
         urlComponents.dwExtraInfoLength = 1024;
         if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))
             return FALSE;
-        
+
+        if (urlComponents.lpszScheme &&
+            !strncmpW(szHttp, urlComponents.lpszScheme, strlenW(szHttp)) &&
+            (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE))
+        {
+            TRACE("redirect from secure page to non-secure page\n");
+            /* FIXME: warn about from secure redirect to non-secure page */
+            lpwhr->hdr.dwFlags &= ~INTERNET_FLAG_SECURE;
+        }
+        if (urlComponents.lpszScheme &&
+            !strncmpW(szHttps, urlComponents.lpszScheme, strlenW(szHttps)) &&
+            !(lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE))
+        {
+            TRACE("redirect from non-secure page to secure page\n");
+            /* FIXME: notify about redirect to secure page */
+            lpwhr->hdr.dwFlags |= INTERNET_FLAG_SECURE;
+        }
+
         if (urlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
         {
             if (lstrlenW(protocol)>4) /*https*/
@@ -1897,6 +1916,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
                               &(lpwhs->socketAddress),
                               sizeof(struct sockaddr_in));
 
+        NETCON_close(&lpwhr->netConnection);
     }
 
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
