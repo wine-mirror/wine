@@ -2836,13 +2836,14 @@ static BOOL WIN_EnumChildWindows( HWND *list, WNDENUMPROC func, LPARAM lParam )
 BOOL WINAPI EnumChildWindows( HWND parent, WNDENUMPROC func, LPARAM lParam )
 {
     HWND *list;
+    BOOL ret;
 
     USER_CheckNotLock();
 
     if (!(list = WIN_ListChildren( parent ))) return FALSE;
-    WIN_EnumChildWindows( list, func, lParam );
+    ret = WIN_EnumChildWindows( list, func, lParam );
     HeapFree( GetProcessHeap(), 0, list );
-    return TRUE;
+    return ret;
 }
 
 

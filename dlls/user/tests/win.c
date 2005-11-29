@@ -86,6 +86,13 @@ static void check_parents( HWND hwnd, HWND ga_parent, HWND gwl_parent, HWND get_
     }
 }
 
+BOOL CALLBACK EnumChildProc( HWND hwndChild, LPARAM lParam) 
+{
+    (*(LPINT)lParam)++;
+    trace("EnumChildProc on %p\n", hwndChild);
+    if (*(LPINT)lParam > 1) return FALSE;
+    return TRUE;
+}
 
 static HWND create_tool_window( LONG style, HWND parent )
 {
@@ -102,6 +109,7 @@ static void test_parent_owner(void)
     HWND test, owner, ret;
     HWND desktop = GetDesktopWindow();
     HWND child = create_tool_window( WS_CHILD, hwndMain );
+    INT  numChildren;
 
     trace( "main window %p main2 %p desktop %p child %p\n", hwndMain, hwndMain2, desktop, child );
 
@@ -440,6 +448,33 @@ static void test_parent_owner(void)
 
     /* final cleanup */
     DestroyWindow(child);
+
+
+    owner = create_tool_window( WS_OVERLAPPED, 0 );
+    test = create_tool_window( WS_POPUP, NULL );
+    numChildren = 0;
+    ok( !EnumChildWindows( owner, EnumChildProc, (LPARAM)&numChildren ),
+        "EnumChildWindows should have returned FALSE\n" );
+    ok( numChildren == 0, "numChildren should be 0 got %d\n", numChildren );
+
+    SetWindowLongA( test, GWL_STYLE, (GetWindowLongA( test, GWL_STYLE ) & ~WS_POPUP) | WS_CHILD );
+    ret = SetParent( test, owner );
+    ok( ret == desktop, "SetParent return value %p expected %p\n", ret, desktop );
+
+    numChildren = 0;
+    ok( EnumChildWindows( owner, EnumChildProc, (LPARAM)&numChildren ),
+        "EnumChildWindows should have returned TRUE\n" );
+    ok( numChildren == 1, "numChildren should be 1 got %d\n", numChildren );
+
+    child = create_tool_window( WS_CHILD, owner );
+    numChildren = 0;
+    ok( !EnumChildWindows( owner, EnumChildProc, (LPARAM)&numChildren ),
+        "EnumChildWindows should have returned FALSE\n" );
+    ok( numChildren == 2, "numChildren should be 2 got %d\n", numChildren );
+
+    DestroyWindow( child );
+    DestroyWindow( test );
+    DestroyWindow( owner );
 }
 
 
