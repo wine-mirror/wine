@@ -1874,23 +1874,23 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
                            HTTP_ADDHDR_FLAG_ADD_IF_NEW);
 #endif
         
-        HeapFree(GetProcessHeap(), 0, lpwhs->lpszHostName);
-        lpwhs->lpszHostName = WININET_strdupW(hostName);
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
+        lpwhs->lpszServerName = WININET_strdupW(hostName);
+        HeapFree(GetProcessHeap(), 0, lpwhs->lpszHostName);
         if (urlComponents.nPort != INTERNET_DEFAULT_HTTP_PORT &&
                 urlComponents.nPort != INTERNET_DEFAULT_HTTPS_PORT)
         {
             int len;
             static WCHAR fmt[] = {'%','s',':','%','i',0};
             len = lstrlenW(hostName);
-            len+=6;
-            lpwhs->lpszServerName = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-            sprintfW(lpwhs->lpszServerName,fmt,hostName,urlComponents.nPort);
+            len += 7; /* 5 for strlen("65535") + 1 for ":" + 1 for '\0' */
+            lpwhs->lpszHostName = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+            sprintfW(lpwhs->lpszHostName, fmt, hostName, urlComponents.nPort);
         }
         else
-            lpwhs->lpszServerName = WININET_strdupW(hostName);
+            lpwhs->lpszHostName = WININET_strdupW(hostName);
 
-        HTTP_ProcessHeader(lpwhr, g_szHost, lpwhs->lpszServerName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
+        HTTP_ProcessHeader(lpwhr, g_szHost, lpwhs->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
 
         
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
