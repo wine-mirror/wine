@@ -1181,8 +1181,10 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
 
     RtlEnterCriticalSection( &loader_section );
 
-    if ((exports = RtlImageDirectoryEntryToData( module, TRUE,
-                                                 IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
+    /* check if the module itself is invalid to return the proper error */
+    if (!get_modref( module )) ret = STATUS_DLL_NOT_FOUND;
+    else if ((exports = RtlImageDirectoryEntryToData( module, TRUE,
+                                                      IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
     {
         void *proc = name ? find_named_export( module, exports, exp_size, name->Buffer, -1 )
                           : find_ordinal_export( module, exports, exp_size, ord - exports->Base );
@@ -1191,11 +1193,6 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
             *address = proc;
             ret = STATUS_SUCCESS;
         }
-    }
-    else
-    {
-        /* check if the module itself is invalid to return the proper error */
-        if (!get_modref( module )) ret = STATUS_DLL_NOT_FOUND;
     }
 
     RtlLeaveCriticalSection( &loader_section );
