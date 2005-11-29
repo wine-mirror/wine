@@ -97,8 +97,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define ALIGN_POINTER(_Ptr, _Align) _Ptr = ALIGNED_POINTER(_Ptr, _Align)
 
 #define STD_OVERFLOW_CHECK(_Msg) do { \
-    TRACE("buffer=%d/%ld\n", _Msg->Buffer - _Msg->BufferStart, _Msg->BufferLength); \
-    if (_Msg->Buffer > _Msg->BufferEnd) ERR("buffer overflow %d bytes\n", _Msg->Buffer - _Msg->BufferEnd); \
+    TRACE("buffer=%d/%ld\n", _Msg->Buffer - (unsigned char *)_Msg->RpcMsg->Buffer, _Msg->BufferLength); \
+    if (_Msg->Buffer > (unsigned char *)_Msg->RpcMsg->Buffer + _Msg->BufferLength) \
+        ERR("buffer overflow %d bytes\n", _Msg->Buffer - ((unsigned char *)_Msg->RpcMsg->Buffer + _Msg->BufferLength)); \
   } while (0)
 
 #define NDR_TABLE_SIZE 128
@@ -751,8 +752,6 @@ void WINAPI PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     FIXME("unhandled ptr type=%02x\n", type);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
   }
-
-  *pPointer = NULL;
 
   if (pointer_id) {
     m = NdrUnmarshaller[*desc & NDR_TABLE_MASK];
