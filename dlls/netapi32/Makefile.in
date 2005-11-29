@@ -11,6 +11,7 @@ C_SRCS = \
 	access.c \
 	apibuf.c \
 	browsr.c \
+	ds.c \
 	nbcmdqueue.c \
 	nbnamecache.c \
 	nbt.c \

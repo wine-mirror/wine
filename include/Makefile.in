@@ -121,6 +121,7 @@ WINDOWS_INCLUDES = \
 	dsdriver.h \
 	dshow.h \
 	dsound.h \
+	dsrole.h \
 	dxdiag.h \
 	dxerr8.h \
 	dxerr9.h \
