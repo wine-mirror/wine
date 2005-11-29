@@ -3899,9 +3899,21 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantF(IWineD3DDevice *iface
     return D3D_OK;
 }
 
+HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantN(IWineD3DDevice *iface, UINT StartRegister, UINT VectorNCount){
+   IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+   int i;
+       /* populate the bitmap that says which constant type we should load */
+   for (i = StartRegister; i < StartRegister + VectorNCount; ++i) {
+       This->updateStateBlock->changed.vertexShaderConstants[i] = TRUE;
+       This->updateStateBlock->set.vertexShaderConstants[i]     = TRUE;
+       This->updateStateBlock->vertexShaderConstantT[i]         = WINESHADERCNST_NONE;
+       TRACE("(%p) : Setting vsf %d\n", This, i);
+   }
+   return D3D_OK;
+}
+
 #undef SET_SHADER_CONSTANT
 #undef GET_SHADER_CONSTANT
-
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader *pShader) {
     IUnknown *parent;
@@ -4080,6 +4092,21 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(IWineD3DDevice *iface,
     GET_SHADER_CONSTANT(pixelShaderConstantF, Vector4fCount, 4);
 
     return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantN(IWineD3DDevice *iface, UINT StartRegister, UINT VectorNCount){
+   IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+   int i;
+
+   /* populate the bitmap that says which constant type we should load */
+   for (i = StartRegister; i < StartRegister + VectorNCount; ++i) {
+        This->updateStateBlock->changed.pixelShaderConstants[i] = TRUE;
+        This->updateStateBlock->set.pixelShaderConstants[i]     = TRUE;
+        This->updateStateBlock->pixelShaderConstantT[i]         = WINESHADERCNST_NONE;
+        TRACE("(%p) : Setting vsf %d\n", This, i);
+   }
+
+   return D3D_OK;
 }
 
 #undef SET_SHADER_CONSTANT
@@ -6443,6 +6470,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetPixelShaderConstantI,
     IWineD3DDeviceImpl_SetPixelShaderConstantF,
     IWineD3DDeviceImpl_GetPixelShaderConstantF,
+    IWineD3DDeviceImpl_SetPixelShaderConstantN,
     IWineD3DDeviceImpl_SetRenderState,
     IWineD3DDeviceImpl_GetRenderState,
     IWineD3DDeviceImpl_SetRenderTarget,
@@ -6473,6 +6501,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetVertexShaderConstantI,
     IWineD3DDeviceImpl_SetVertexShaderConstantF,
     IWineD3DDeviceImpl_GetVertexShaderConstantF,
+    IWineD3DDeviceImpl_SetVertexShaderConstantN,
     IWineD3DDeviceImpl_SetViewport,
     IWineD3DDeviceImpl_GetViewport,
     IWineD3DDeviceImpl_MultiplyTransform,

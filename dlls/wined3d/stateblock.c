@@ -393,6 +393,9 @@ should really perform a delta so that only the changes get updated*/
                 case WINESHADERCNST_INTEGER:
                     IWineD3DDevice_SetVertexShaderConstantI(pDevice, i, This->vertexShaderConstantI + i * 4, 1);
                 break;
+                case WINESHADERCNST_NONE:
+                    IWineD3DDevice_SetVertexShaderConstantN(pDevice, i, 1);
+                break;
                 }
             }
         }
@@ -418,6 +421,9 @@ should really perform a delta so that only the changes get updated*/
                 break;
                 case WINESHADERCNST_INTEGER:
                     IWineD3DDevice_SetPixelShaderConstantI(pDevice, i, This->pixelShaderConstantI + i * 4, 1);
+                break;
+                case WINESHADERCNST_NONE:
+                    IWineD3DDevice_SetPixelShaderConstantN(pDevice, i, 1);
                 break;
                 }
             }

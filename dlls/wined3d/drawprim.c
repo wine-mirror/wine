@@ -1743,9 +1743,11 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
             /* Update the constants */
             for (i = 0; i < WINED3D_VSHADER_MAX_CONSTANTS; i++) {
                 /* TODO: add support for Integer and Boolean constants */
-                GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, i, &This->stateBlock->vertexShaderConstantF[i * 4]));
-                TRACE_(d3d_shader)("Loading constants %u = %f %f %f %f\n",i, This->stateBlock->vertexShaderConstantF[i *4 ], This->stateBlock->vertexShaderConstantF[i * 4 + 1], This->stateBlock->vertexShaderConstantF[i *4 + 2], This->stateBlock->vertexShaderConstantF[i * 4 + 3]);
-                checkGLcall("glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB");
+                if (WINESHADERCNST_FLOAT == This->stateBlock->vertexShaderConstantT[i]) {
+                    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, i, &This->stateBlock->vertexShaderConstantF[i * 4]));
+                    TRACE_(d3d_shader)("Loading constants %u = %f %f %f %f\n",i, This->stateBlock->vertexShaderConstantF[i *4 ], This->stateBlock->vertexShaderConstantF[i * 4 + 1], This->stateBlock->vertexShaderConstantF[i *4 + 2], This->stateBlock->vertexShaderConstantF[i * 4 + 3]);
+                    checkGLcall("glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB");
+                }
             }
             /* TODO: Vertex Shader 8 constants*/
 

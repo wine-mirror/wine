@@ -332,6 +332,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(GetPixelShaderConstantI)(THIS_ UINT StartRegister, int* pConstantData, UINT Vector4iCount) PURE;
     STDMETHOD(SetPixelShaderConstantF)(THIS_ UINT StartRegister, CONST float* pConstantData, UINT Vector4fCount) PURE;
     STDMETHOD(GetPixelShaderConstantF)(THIS_ UINT StartRegister, float* pConstantData, UINT Vector4fCount) PURE;
+    STDMETHOD(SetPixelShaderConstantN)(THIS_ UINT StartRegister, UINT VectorNCount) PURE;
     STDMETHOD(SetRenderState)(THIS_ D3DRENDERSTATETYPE  State,DWORD  Value) PURE;
     STDMETHOD(GetRenderState)(THIS_ D3DRENDERSTATETYPE  State,DWORD * pValue) PURE;
     STDMETHOD(SetRenderTarget)(THIS_ DWORD RenderTargetIndex, struct IWineD3DSurface* pRenderTarget) PURE;
@@ -362,6 +363,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(GetVertexShaderConstantI)(THIS_ UINT StartRegister, int*         pConstantData, UINT Vector4iCount) PURE;
     STDMETHOD(SetVertexShaderConstantF)(THIS_ UINT StartRegister, CONST float* pConstantData, UINT Vector4fCount) PURE;
     STDMETHOD(GetVertexShaderConstantF)(THIS_ UINT StartRegister, float*       pConstantData, UINT Vector4fCount) PURE;
+    STDMETHOD(SetVertexShaderConstantN)(THIS_ UINT StartRegister, UINT VectorNCount) PURE;
     STDMETHOD(SetViewport)(THIS_ CONST WINED3DVIEWPORT * pViewport) PURE;
     STDMETHOD(GetViewport)(THIS_ WINED3DVIEWPORT * pViewport) PURE;
     STDMETHOD(MultiplyTransform)(THIS_ D3DTRANSFORMSTATETYPE  State, CONST D3DMATRIX * pMatrix) PURE;
@@ -460,6 +462,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_GetPixelShaderConstantI(p,a,b,c)         (p)->lpVtbl->GetPixelShaderConstantI(p,a,b,c)
 #define IWineD3DDevice_SetPixelShaderConstantF(p,a,b,c)         (p)->lpVtbl->SetPixelShaderConstantF(p,a,b,c)
 #define IWineD3DDevice_GetPixelShaderConstantF(p,a,b,c)         (p)->lpVtbl->GetPixelShaderConstantF(p,a,b,c)
+#define IWineD3DDevice_SetPixelShaderConstantN(p,a,b)           (p)->lpVtbl->SetPixelShaderConstantN(p,a,b)
 #define IWineD3DDevice_GetRasterStatus(p,a,b)                   (p)->lpVtbl->GetRasterStatus(p,a,b)
 #define IWineD3DDevice_SetRenderState(p,a,b)                    (p)->lpVtbl->SetRenderState(p,a,b)
 #define IWineD3DDevice_GetRenderState(p,a,b)                    (p)->lpVtbl->GetRenderState(p,a,b)
@@ -492,6 +495,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_GetVertexShaderConstantI(p,a,b,c)        (p)->lpVtbl->GetVertexShaderConstantI(p,a,b,c)
 #define IWineD3DDevice_SetVertexShaderConstantF(p,a,b,c)        (p)->lpVtbl->SetVertexShaderConstantF(p,a,b,c)
 #define IWineD3DDevice_GetVertexShaderConstantF(p,a,b,c)        (p)->lpVtbl->GetVertexShaderConstantF(p,a,b,c)
+#define IWineD3DDevice_SetVertexShaderConstantN(p,a,b)          (p)->lpVtbl->SetVertexShaderConstantN(p,a,b)
 #define IWineD3DDevice_SetViewport(p,a)                         (p)->lpVtbl->SetViewport(p,a)
 #define IWineD3DDevice_GetViewport(p,a)                         (p)->lpVtbl->GetViewport(p,a)
 #define IWineD3DDevice_MultiplyTransform(p,a,b)                 (p)->lpVtbl->MultiplyTransform(p,a,b)
