@@ -1454,9 +1454,8 @@ interface IAdviseSink : IUnknown
     [in, unique] FORMATETC *pFormatetc,
     [in, unique] STGMEDIUM *pStgmed);
 
-  [call_as(OnDataChange), async]
+  [call_as(OnDataChange)]
   HRESULT  RemoteOnDataChange(
-    [in] IAsyncManager **ppIAM,
     [in, unique] FORMATETC *pFormatetc,
     [in, unique] ASYNC_STGMEDIUM *pStgmed);
 
@@ -1465,9 +1464,8 @@ interface IAdviseSink : IUnknown
     [in] DWORD dwAspect,
     [in] LONG lindex);
 
-  [call_as(OnViewChange), async]
+  [call_as(OnViewChange)]
   HRESULT RemoteOnViewChange(
-    [in] IAsyncManager **ppIAM,
     [in] DWORD dwAspect,
     [in] LONG lindex);
 
@@ -1475,17 +1473,15 @@ interface IAdviseSink : IUnknown
   void OnRename(
     [in] IMoniker *pmk);
 
-  [call_as(OnRename), async]
+  [call_as(OnRename)]
   HRESULT RemoteOnRename(
-    [in] IAsyncManager **ppIAM,
     [in] IMoniker *pmk);
 
   [local]
   void OnSave();
 
-  [call_as(OnSave), async]
-  HRESULT RemoteOnSave(
-    [in] IAsyncManager **ppIAM);
+  [call_as(OnSave)]
+  HRESULT RemoteOnSave();
 
   [local]
   void OnClose();
@@ -1507,9 +1503,8 @@ interface IAdviseSink2 : IAdviseSink
   void OnLinkSrcChange(
     [in, unique] IMoniker *pmk);
 
-  [call_as(OnLinkSrcChange), async]
+  [call_as(OnLinkSrcChange)]
   HRESULT RemoteOnLinkSrcChange(
-    [in] IAsyncManager **ppIAM,
     [in, unique] IMoniker *pmk);
 }
 
