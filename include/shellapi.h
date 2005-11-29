@@ -60,6 +60,9 @@ BOOL	WINAPI DragQueryPoint(HDROP hDrop, POINT *p);
 #define NIF_MESSAGE             0x00000001
 #define NIF_ICON                0x00000002
 #define NIF_TIP                 0x00000004
+#define NIF_STATE               0x00000008
+#define NIF_INFO                0x00000010
+#define NIF_GUID                0x00000020
 
 #define NIM_ADD                 0x00000000
 #define NIM_MODIFY              0x00000001
