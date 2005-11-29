@@ -551,6 +551,61 @@ BOOL  WINAPI SymGetModuleInfo(HANDLE hProcess, DWORD dwAddr,
     return TRUE;
 }
 
+/******************************************************************
+ *		SymGetModuleInfo64 (DBGHELP.@)
+ *
+ */
+BOOL  WINAPI SymGetModuleInfo64(HANDLE hProcess, DWORD64 dwAddr, 
+                                PIMAGEHLP_MODULE64 ModuleInfo)
+{
+    struct process*     pcs = process_find_by_handle(hProcess);
+    struct module*      module;
+    DWORD               sz;
+    IMAGEHLP_MODULE64   mod;
+
+    TRACE("%p %s %p\n", hProcess, wine_dbgstr_longlong(dwAddr), ModuleInfo);
+
+    if (!pcs) return FALSE;
+    if (ModuleInfo->SizeOfStruct > sizeof(*ModuleInfo)) return FALSE;
+    module = module_find_by_addr(pcs, dwAddr, DMT_UNKNOWN);
+    if (!module) return FALSE;
+
+    mod.BaseOfImage = module->module.BaseOfImage;
+    mod.ImageSize = module->module.ImageSize;
+    mod.TimeDateStamp = module->module.TimeDateStamp;
+    mod.CheckSum = module->module.CheckSum;
+    mod.NumSyms = module->module.NumSyms;
+    mod.SymType = module->module.SymType;
+    strcpy(mod.ModuleName, module->module.ModuleName);
+    strcpy(mod.ImageName, module->module.ImageName);
+    strcpy(mod.LoadedImageName, module->module.LoadedImageName);
+    /* FIXME: all following attributes need to be set */
+    mod.LoadedPdbName[0] = '\0';
+    mod.CVSig = 0;
+    memset(mod.CVData, 0, sizeof(mod.CVData));
+    mod.PdbSig = 0;
+    memset(&mod.PdbSig70, 0, sizeof(mod.PdbSig70));
+    mod.PdbAge = 0;
+    mod.PdbUnmatched = 0;
+    mod.DbgUnmatched = 0;
+    mod.LineNumbers = 0;
+    mod.GlobalSymbols = 0;
+    mod.TypeInfo = 0;
+    mod.SourceIndexed = 0;
+    mod.Publics = 0;
+
+    if (module->module.SymType == SymNone)
+    {
+        module = module_get_container(pcs, module);
+        if (module && module->module.SymType != SymNone)
+            mod.SymType = module->module.SymType;
+    }
+    sz = ModuleInfo->SizeOfStruct;
+    memcpy(ModuleInfo, &mod, sz);
+    ModuleInfo->SizeOfStruct = sz;
+    return TRUE;
+}
+
 /***********************************************************************
  *		SymGetModuleBase (IMAGEHLP.@)
  */

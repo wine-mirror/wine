@@ -53,7 +53,7 @@
 @ stdcall SymGetLinePrev(long ptr)
 @ stub SymGetModuleBase64
 @ stdcall SymGetModuleBase(long long)
-@ stub SymGetModuleInfo64
+@ stdcall SymGetModuleInfo64(long double ptr)
 @ stdcall SymGetModuleInfo(long long ptr)
 @ stub SymGetModuleInfoW64
 @ stub SymGetModuleInfoW

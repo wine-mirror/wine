@@ -113,7 +113,8 @@ typedef struct _IMAGEHLP_MODULE
     CHAR                        LoadedImageName[256];
 } IMAGEHLP_MODULE, *PIMAGEHLP_MODULE;
 
-typedef struct _IMAGEHLP_MODULEW {
+typedef struct _IMAGEHLP_MODULEW
+{
     DWORD                       SizeOfStruct;
     DWORD                       BaseOfImage;
     DWORD                       ImageSize;
@@ -125,6 +126,33 @@ typedef struct _IMAGEHLP_MODULEW {
     WCHAR                       ImageName[256];
     WCHAR                       LoadedImageName[256];
 } IMAGEHLP_MODULEW, *PIMAGEHLP_MODULEW;
+
+typedef struct _IMAGEHLP_MODULE64
+{
+    DWORD                       SizeOfStruct;
+    DWORD64                     BaseOfImage;
+    DWORD                       ImageSize;
+    DWORD                       TimeDateStamp;
+    DWORD                       CheckSum;
+    DWORD                       NumSyms;
+    SYM_TYPE                    SymType;
+    CHAR                        ModuleName[32];
+    CHAR                        ImageName[256];
+    CHAR                        LoadedImageName[256];
+    CHAR                        LoadedPdbName[256];
+    DWORD                       CVSig;
+    CHAR                        CVData[MAX_PATH*3];
+    DWORD                       PdbSig;
+    GUID                        PdbSig70;
+    DWORD                       PdbAge;
+    BOOL                        PdbUnmatched;
+    BOOL                        DbgUnmatched;
+    BOOL                        LineNumbers;
+    BOOL                        GlobalSymbols;
+    BOOL                        TypeInfo;
+    BOOL                        SourceIndexed;
+    BOOL                        Publics;
+} IMAGEHLP_MODULE64, *PIMAGEHLP_MODULE64;
 
 typedef struct _IMAGEHLP_LINE
 {
@@ -612,6 +640,7 @@ typedef BOOL (CALLBACK *PSYM_ENUMMODULES_CALLBACK)(PSTR, DWORD, PVOID);
 BOOL    WINAPI SymEnumerateModules(HANDLE, PSYM_ENUMMODULES_CALLBACK, PVOID);
 BOOL    WINAPI SymGetModuleInfo(HANDLE, DWORD, PIMAGEHLP_MODULE);
 BOOL    WINAPI SymGetModuleInfoW(HANDLE, DWORD, PIMAGEHLP_MODULEW);
+BOOL    WINAPI SymGetModuleInfo64(HANDLE, DWORD64, PIMAGEHLP_MODULE64);
 DWORD   WINAPI SymGetModuleBase(HANDLE, DWORD);
 DWORD   WINAPI SymLoadModule(HANDLE, HANDLE, PSTR, PSTR, DWORD, DWORD);
 DWORD64 WINAPI SymLoadModuleEx(HANDLE, HANDLE, PCSTR, PCSTR, DWORD64, DWORD,
