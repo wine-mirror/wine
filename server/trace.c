@@ -3121,6 +3121,49 @@ static void dump_open_directory_reply( const struct open_directory_reply *req )
     fprintf( stderr, " handle=%p", req->handle );
 }
 
+static void dump_create_symlink_request( const struct create_symlink_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
+    fprintf( stderr, " name_len=%d,", req->name_len );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( min(cur_size,req->name_len) );
+    fputc( ',', stderr );
+    fprintf( stderr, " target_name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_create_symlink_reply( const struct create_symlink_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_open_symlink_request( const struct open_symlink_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_open_symlink_reply( const struct open_symlink_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_query_symlink_request( const struct query_symlink_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_query_symlink_reply( const struct query_symlink_reply *req )
+{
+    fprintf( stderr, " target_name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -3329,6 +3372,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_mailslot_info_request,
     (dump_func)dump_create_directory_request,
     (dump_func)dump_open_directory_request,
+    (dump_func)dump_create_symlink_request,
+    (dump_func)dump_open_symlink_request,
+    (dump_func)dump_query_symlink_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -3539,6 +3585,9 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_mailslot_info_reply,
     (dump_func)dump_create_directory_reply,
     (dump_func)dump_open_directory_reply,
+    (dump_func)dump_create_symlink_reply,
+    (dump_func)dump_open_symlink_reply,
+    (dump_func)dump_query_symlink_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -3749,6 +3798,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_mailslot_info",
     "create_directory",
     "open_directory",
+    "create_symlink",
+    "open_symlink",
+    "query_symlink",
 };
 
 static const struct

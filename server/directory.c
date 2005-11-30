@@ -285,34 +285,59 @@ obj_handle_t open_object_dir( struct directory *root, const struct unicode_str *
 
 /* Global initialization */
 
-static struct directory *dir_global, *dir_driver, *dir_device, *dir_basenamed;
+static struct directory *dir_driver, *dir_device;
+static struct symlink *link_dosdev, *link_global1, *link_global2, *link_local;
 
 void init_directories(void)
 {
     /* Directories */
-    static const WCHAR dir_globalW[] = {'?','?'};
+    static const WCHAR dir_globalW[] = {'\\','?','?'};
     static const WCHAR dir_driverW[] = {'D','r','i','v','e','r'};
     static const WCHAR dir_deviceW[] = {'D','e','v','i','c','e'};
-    static const WCHAR dir_basenamedW[] = {'B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s'};
+    static const WCHAR dir_basenamedW[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s'};
     static const struct unicode_str dir_global_str = {dir_globalW, sizeof(dir_globalW)};
     static const struct unicode_str dir_driver_str = {dir_driverW, sizeof(dir_driverW)};
     static const struct unicode_str dir_device_str = {dir_deviceW, sizeof(dir_deviceW)};
     static const struct unicode_str dir_basenamed_str = {dir_basenamedW, sizeof(dir_basenamedW)};
 
+    /* symlinks */
+    static const WCHAR link_dosdevW[] = {'D','o','s','D','e','v','i','c','e','s'};
+    static const WCHAR link_globalW[] = {'G','l','o','b','a','l'};
+    static const WCHAR link_localW[]  = {'L','o','c','a','l'};
+    static const struct unicode_str link_dosdev_str = {link_dosdevW, sizeof(link_dosdevW)};
+    static const struct unicode_str link_global_str = {link_globalW, sizeof(link_globalW)};
+    static const struct unicode_str link_local_str  = {link_localW, sizeof(link_localW)};
+
+    struct directory *dir_global, *dir_basenamed;
+
     root_directory = create_directory( NULL, NULL, 0, HASH_SIZE );
-    dir_global     = create_directory( root_directory, &dir_global_str, 0, HASH_SIZE );
     dir_driver     = create_directory( root_directory, &dir_driver_str, 0, HASH_SIZE );
     dir_device     = create_directory( root_directory, &dir_device_str, 0, HASH_SIZE );
+
+    dir_global     = create_directory( NULL, &dir_global_str, 0, HASH_SIZE );
     /* use a larger hash table for this one since it can contain a lot of objects */
-    dir_basenamed  = create_directory( root_directory, &dir_basenamed_str, 0, 37 );
+    dir_basenamed  = create_directory( NULL, &dir_basenamed_str, 0, 37 );
+
+    /* symlinks */
+    link_dosdev    = create_symlink( root_directory, &link_dosdev_str, 0, &dir_global_str );
+    link_global1   = create_symlink( dir_global, &link_global_str, 0, &dir_global_str );
+    link_global2   = create_symlink( dir_basenamed, &link_global_str, 0, &dir_basenamed_str );
+    link_local     = create_symlink( dir_basenamed, &link_local_str, 0, &dir_basenamed_str );
+
+    /* the symlinks hold references so we can release these */
+    release_object( dir_global );
+    release_object( dir_basenamed );
 }
 
 void close_directories(void)
 {
-    release_object( dir_global );
+    release_object( link_dosdev );
+    release_object( link_global1 );
+    release_object( link_global2 );
+    release_object( link_local );
+
     release_object( dir_driver );
     release_object( dir_device );
-    release_object( dir_basenamed );
     release_object( root_directory );
 }
 

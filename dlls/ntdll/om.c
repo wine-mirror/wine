@@ -2,6 +2,7 @@
  *	Object management functions
  *
  * Copyright 1999, 2000 Juergen Schmied
+ * Copyright 2005 Vitaliy Margolen
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -470,45 +471,137 @@ NTSTATUS WINAPI NtQueryDirectoryObject(IN HANDLE DirectoryHandle, OUT PDIRECTORY
 
 /******************************************************************************
  *  NtOpenSymbolicLinkObject	[NTDLL.@]
+ *  ZwOpenSymbolicLinkObject	[NTDLL.@]
+ *
+ * Open a namespace symbolic link object.
+ * 
+ * PARAMS
+ *  LinkHandle       [O] Destination for the new symbolic link handle
+ *  DesiredAccess    [I] Desired access to the symbolic link
+ *  ObjectAttributes [I] Structure describing the symbolic link
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS.
+ *  Failure: An NTSTATUS error code.
  */
-NTSTATUS WINAPI NtOpenSymbolicLinkObject(
-	OUT PHANDLE LinkHandle,
-	IN ACCESS_MASK DesiredAccess,
-	IN POBJECT_ATTRIBUTES ObjectAttributes)
+NTSTATUS WINAPI NtOpenSymbolicLinkObject(OUT PHANDLE LinkHandle, IN ACCESS_MASK DesiredAccess,
+                                         IN POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME("(%p,0x%08lx,%p) stub\n",
-	LinkHandle, DesiredAccess, ObjectAttributes);
-	dump_ObjectAttributes(ObjectAttributes);
-        return STATUS_OBJECT_NAME_NOT_FOUND;
+    NTSTATUS ret;
+    TRACE("(%p,0x%08lx,%p)\n",LinkHandle, DesiredAccess, ObjectAttributes);
+    dump_ObjectAttributes(ObjectAttributes);
+
+    if (!LinkHandle) return STATUS_ACCESS_VIOLATION;
+    if (!ObjectAttributes) return STATUS_INVALID_PARAMETER;
+    /* Have to test it here because server won't know difference between
+     * ObjectName == NULL and ObjectName == "" */
+    if (!ObjectAttributes->ObjectName)
+    {
+        if (ObjectAttributes->RootDirectory)
+            return STATUS_OBJECT_NAME_INVALID;
+        else
+            return STATUS_OBJECT_PATH_SYNTAX_BAD;
+    }
+
+    SERVER_START_REQ(open_symlink)
+    {
+        req->access = DesiredAccess;
+        req->attributes = ObjectAttributes ? ObjectAttributes->Attributes : 0;
+        req->rootdir = ObjectAttributes ? ObjectAttributes->RootDirectory : 0;
+        if (ObjectAttributes->ObjectName)
+            wine_server_add_data(req, ObjectAttributes->ObjectName->Buffer,
+                                 ObjectAttributes->ObjectName->Length);
+        ret = wine_server_call( req );
+        *LinkHandle = reply->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /******************************************************************************
  *  NtCreateSymbolicLinkObject	[NTDLL.@]
+ *  ZwCreateSymbolicLinkObject	[NTDLL.@]
+ *
+ * Open a namespace symbolic link object.
+ * 
+ * PARAMS
+ *  SymbolicLinkHandle [O] Destination for the new symbolic link handle
+ *  DesiredAccess      [I] Desired access to the symbolic link
+ *  ObjectAttributes   [I] Structure describing the symbolic link
+ *  TargetName         [I] Name of the target symbolic link points to
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS.
+ *  Failure: An NTSTATUS error code.
  */
-NTSTATUS WINAPI NtCreateSymbolicLinkObject(
-	OUT PHANDLE SymbolicLinkHandle,
-	IN ACCESS_MASK DesiredAccess,
-	IN POBJECT_ATTRIBUTES ObjectAttributes,
-	IN PUNICODE_STRING Name)
+NTSTATUS WINAPI NtCreateSymbolicLinkObject(OUT PHANDLE SymbolicLinkHandle,IN ACCESS_MASK DesiredAccess,
+	                                   IN POBJECT_ATTRIBUTES ObjectAttributes,
+                                           IN PUNICODE_STRING TargetName)
 {
-	FIXME("(%p,0x%08lx,%p, %p) stub\n",
-	SymbolicLinkHandle, DesiredAccess, ObjectAttributes, debugstr_us(Name));
-	dump_ObjectAttributes(ObjectAttributes);
-	return 0;
+    NTSTATUS ret;
+    TRACE("(%p,0x%08lx,%p, -> %s)\n", SymbolicLinkHandle, DesiredAccess, ObjectAttributes,
+                                      debugstr_us(TargetName));
+    dump_ObjectAttributes(ObjectAttributes);
+
+    if (!SymbolicLinkHandle || !TargetName) return STATUS_ACCESS_VIOLATION;
+    if (!TargetName->Buffer) return STATUS_INVALID_PARAMETER;
+
+    SERVER_START_REQ(create_symlink)
+    {
+        req->access = DesiredAccess;
+        req->attributes = ObjectAttributes ? ObjectAttributes->Attributes : 0;
+        req->rootdir = ObjectAttributes ? ObjectAttributes->RootDirectory : 0;
+        if (ObjectAttributes->ObjectName)
+        {
+            req->name_len = ObjectAttributes->ObjectName->Length;
+            wine_server_add_data(req, ObjectAttributes->ObjectName->Buffer,
+                                 ObjectAttributes->ObjectName->Length);
+        }
+        else
+            req->name_len = 0;
+        wine_server_add_data(req, TargetName->Buffer, TargetName->Length);
+        ret = wine_server_call( req );
+        *SymbolicLinkHandle = reply->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /******************************************************************************
  *  NtQuerySymbolicLinkObject	[NTDLL.@]
+ *  ZwQuerySymbolicLinkObject	[NTDLL.@]
+ *
+ * Query a namespace symbolic link object target name.
+ * 
+ * PARAMS
+ *  LinkHandle     [I] Handle to a symbolic link object
+ *  LinkTarget     [O] Destination for the symbolic link target
+ *  ReturnedLength [O] Size of returned data
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS.
+ *  Failure: An NTSTATUS error code.
  */
-NTSTATUS WINAPI NtQuerySymbolicLinkObject(
-	IN HANDLE LinkHandle,
-	IN OUT PUNICODE_STRING LinkTarget,
-	OUT PULONG ReturnedLength OPTIONAL)
+NTSTATUS WINAPI NtQuerySymbolicLinkObject(IN HANDLE LinkHandle, IN OUT PUNICODE_STRING LinkTarget,
+                                          OUT PULONG ReturnedLength OPTIONAL)
 {
-	FIXME("(%p,%p,%p) stub\n",
-	LinkHandle, debugstr_us(LinkTarget), ReturnedLength);
+    NTSTATUS ret;
+    TRACE("(%p,%p,%p)\n", LinkHandle, LinkTarget, ReturnedLength);
 
-	return 0;
+    if (!LinkTarget) return STATUS_ACCESS_VIOLATION;
+
+    SERVER_START_REQ(query_symlink)
+    {
+        req->handle = LinkHandle;
+        wine_server_set_reply( req, LinkTarget->Buffer, LinkTarget->MaximumLength );
+        if (!(ret = wine_server_call( req )))
+        {
+            LinkTarget->Length = wine_server_reply_size(reply);
+            if (ReturnedLength) *ReturnedLength = LinkTarget->Length;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /******************************************************************************

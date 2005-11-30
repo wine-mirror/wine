@@ -193,6 +193,12 @@ extern obj_handle_t open_object_dir( struct directory *root, const struct unicod
 extern void init_directories(void);
 extern void close_directories(void);
 
+/* symbolic link functions */
+
+extern struct symlink *create_symlink( struct directory *root, const struct unicode_str *name,
+                                       unsigned int attr, const struct unicode_str *target );
+
+
 /* global variables */
 
   /* command-line options */

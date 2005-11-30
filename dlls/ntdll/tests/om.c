@@ -185,9 +185,7 @@ static void test_name_collisions(void)
 
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\");
-    h = 0;
     DIR_TEST_CREATE_FAILURE(&h, STATUS_OBJECT_NAME_COLLISION)
-    ok(h == 0, "Failed create returned valid handle! (%p)\n", h);
     InitializeObjectAttributes(&attr, &str, OBJ_OPENIF, 0, NULL);
 
     DIR_TEST_CREATE_FAILURE(&h, STATUS_OBJECT_NAME_EXISTS)
@@ -336,11 +334,11 @@ void test_directory(void)
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\Local");
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     status = pNtOpenSymbolicLinkObject(&dir, SYMBOLIC_LINK_QUERY, &attr);\
-    todo_wine ok(status == STATUS_SUCCESS, "Failed to open SymbolicLink(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to open SymbolicLink(%08lx)\n", status);
     pRtlFreeUnicodeString(&str);
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
     pRtlCreateUnicodeStringFromAsciiz(&str, "one more level");
-    todo_wine{ DIR_TEST_CREATE_FAILURE(&h, STATUS_OBJECT_TYPE_MISMATCH) }
+    DIR_TEST_CREATE_FAILURE(&h, STATUS_OBJECT_TYPE_MISMATCH)
     pRtlFreeUnicodeString(&str);
     pNtClose(h);
     pNtClose(dir);
@@ -396,15 +394,15 @@ void test_directory(void)
 
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\Global\\om.c-test");
-    todo_wine{ DIR_TEST_CREATE_SUCCESS(&dir) }
+    DIR_TEST_CREATE_SUCCESS(&dir)
     pRtlFreeUnicodeString(&str);
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\Local\\om.c-test\\one more level");
-    todo_wine{ DIR_TEST_CREATE_SUCCESS(&h) }
+    DIR_TEST_CREATE_SUCCESS(&h)
     pRtlFreeUnicodeString(&str);
     pNtClose(h);
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
     pRtlCreateUnicodeStringFromAsciiz(&str, "one more level");
-    todo_wine{ DIR_TEST_CREATE_SUCCESS(&dir) }
+    DIR_TEST_CREATE_SUCCESS(&dir)
     pRtlFreeUnicodeString(&str);
     pNtClose(h);
 
@@ -476,18 +474,18 @@ void test_symboliclink(void)
     IO_STATUS_BLOCK iosb;
 
     /* No name and/or no attributes */
-    todo_wine{ SYMLNK_TEST_CREATE_OPEN_FAILURE(NULL, "", "", STATUS_ACCESS_VIOLATION) }
+    SYMLNK_TEST_CREATE_OPEN_FAILURE(NULL, "", "", STATUS_ACCESS_VIOLATION)
 
     status = pNtCreateSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, NULL, NULL);
-    todo_wine ok(status == STATUS_ACCESS_VIOLATION,
+    ok(status == STATUS_ACCESS_VIOLATION,
         "NtCreateSymbolicLinkObject should have failed with STATUS_ACCESS_VIOLATION got(%08lx)\n", status);
     status = pNtOpenSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, NULL);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER,
+    ok(status == STATUS_INVALID_PARAMETER,
         "NtOpenSymbolicLinkObject should have failed with STATUS_INVALID_PARAMETER got(%08lx)\n", status);
 
     InitializeObjectAttributes(&attr, NULL, 0, 0, NULL);
-    todo_wine{ SYMLNK_TEST_CREATE_FAILURE(&link, STATUS_INVALID_PARAMETER) }
-    todo_wine{ SYMLNK_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD) }
+    SYMLNK_TEST_CREATE_FAILURE(&link, STATUS_INVALID_PARAMETER)
+    SYMLNK_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD)
 
     /* Bad name */
     pRtlCreateUnicodeStringFromAsciiz(&target, "anywhere");
@@ -495,7 +493,7 @@ void test_symboliclink(void)
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "");
     SYMLNK_TEST_CREATE_SUCCESS(&link)
-    todo_wine{ SYMLNK_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD) }
+    SYMLNK_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD)
     pNtClose(link);
     pRtlFreeUnicodeString(&str);
 
@@ -504,11 +502,11 @@ void test_symboliclink(void)
     pRtlFreeUnicodeString(&str);
     pRtlFreeUnicodeString(&target);
 
-    todo_wine{ SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "BaseNamedObjects", "->Somewhere", STATUS_OBJECT_PATH_SYNTAX_BAD) }
-    todo_wine{ SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\", "->Somewhere", STATUS_OBJECT_NAME_INVALID) }
-    todo_wine{ SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\\\BaseNamedObjects", "->Somewhere", STATUS_OBJECT_NAME_INVALID) }
-    todo_wine{ SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\\\om.c-test", "->Somewhere", STATUS_OBJECT_NAME_INVALID) }
-    todo_wine{ SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\om.c-test\\", "->Somewhere", STATUS_OBJECT_NAME_INVALID) }
+    SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "BaseNamedObjects", "->Somewhere", STATUS_OBJECT_PATH_SYNTAX_BAD)
+    SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\", "->Somewhere", STATUS_OBJECT_NAME_INVALID)
+    SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\\\BaseNamedObjects", "->Somewhere", STATUS_OBJECT_NAME_INVALID)
+    SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\\\om.c-test", "->Somewhere", STATUS_OBJECT_NAME_INVALID)
+    SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\om.c-test\\", "->Somewhere", STATUS_OBJECT_NAME_INVALID)
 
 
     /* Compaund test */

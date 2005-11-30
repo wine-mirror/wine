@@ -2527,3 +2527,35 @@ enum message_type
 @REPLY
     obj_handle_t   handle;        /* handle to the directory */
 @END
+
+
+/* Create a symbolic link object */
+@REQ(create_symlink)
+    unsigned int   access;        /* access flags */
+    unsigned int   attributes;    /* object attributes */
+    obj_handle_t   rootdir;       /* root directory */
+    size_t         name_len;      /* length of the symlink name in bytes */
+    VARARG(name,unicode_str,name_len); /* symlink name */
+    VARARG(target_name,unicode_str);   /* target name */
+@REPLY
+    obj_handle_t   handle;        /* handle to the symlink */
+@END
+
+
+/* Open a symbolic link object */
+@REQ(open_symlink)
+    unsigned int   access;        /* access flags */
+    unsigned int   attributes;    /* object attributes */
+    obj_handle_t   rootdir;       /* root directory */
+    VARARG(name,unicode_str);     /* symlink name */
+@REPLY
+    obj_handle_t   handle;        /* handle to the symlink */
+@END
+
+
+/* Query a symbolic link object */
+@REQ(query_symlink)
+    obj_handle_t   handle;        /* handle to the symlink */
+@REPLY
+    VARARG(target_name,unicode_str); /* target name */
+@END

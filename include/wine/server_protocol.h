@@ -3609,6 +3609,53 @@ struct open_directory_reply
 };
 
 
+
+struct create_symlink_request
+{
+    struct request_header __header;
+    unsigned int   access;
+    unsigned int   attributes;
+    obj_handle_t   rootdir;
+    size_t         name_len;
+    /* VARARG(name,unicode_str,name_len); */
+    /* VARARG(target_name,unicode_str); */
+};
+struct create_symlink_reply
+{
+    struct reply_header __header;
+    obj_handle_t   handle;
+};
+
+
+
+struct open_symlink_request
+{
+    struct request_header __header;
+    unsigned int   access;
+    unsigned int   attributes;
+    obj_handle_t   rootdir;
+    /* VARARG(name,unicode_str); */
+};
+struct open_symlink_reply
+{
+    struct reply_header __header;
+    obj_handle_t   handle;
+};
+
+
+
+struct query_symlink_request
+{
+    struct request_header __header;
+    obj_handle_t   handle;
+};
+struct query_symlink_reply
+{
+    struct reply_header __header;
+    /* VARARG(target_name,unicode_str); */
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -3818,6 +3865,9 @@ enum request
     REQ_set_mailslot_info,
     REQ_create_directory,
     REQ_open_directory,
+    REQ_create_symlink,
+    REQ_open_symlink,
+    REQ_query_symlink,
     REQ_NB_REQUESTS
 };
 
@@ -4032,6 +4082,9 @@ union generic_request
     struct set_mailslot_info_request set_mailslot_info_request;
     struct create_directory_request create_directory_request;
     struct open_directory_request open_directory_request;
+    struct create_symlink_request create_symlink_request;
+    struct open_symlink_request open_symlink_request;
+    struct query_symlink_request query_symlink_request;
 };
 union generic_reply
 {
@@ -4244,8 +4297,11 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
     struct create_directory_reply create_directory_reply;
     struct open_directory_reply open_directory_reply;
+    struct create_symlink_reply create_symlink_reply;
+    struct open_symlink_reply open_symlink_reply;
+    struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 200
+#define SERVER_PROTOCOL_VERSION 201
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
