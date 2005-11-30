@@ -162,7 +162,7 @@
 @ stub CryptVerifyDetachedMessageHash
 @ stub CryptVerifyDetachedMessageSignature
 @ stub CryptVerifyMessageHash
-@ stub CryptVerifyMessageSignature
+@ stdcall CryptVerifyMessageSignature(ptr long ptr long ptr ptr ptr)
 @ stub CryptVerifyMessageSignatureWithKey
 @ stub CryptVerifySignatureU
 @ stdcall I_CryptAllocTls()

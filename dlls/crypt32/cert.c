@@ -3297,3 +3297,13 @@ BOOL WINAPI CryptUnregisterDefaultOIDFunction(DWORD dwEncodingType,
     FIXME("stub: %lx %s %s\n", dwEncodingType, debugstr_a(pszFuncName), debugstr_w(pwszDll));
     return FALSE;
 }
+
+BOOL WINAPI CryptVerifyMessageSignature(/*PCRYPT_VERIFY_MESSAGE_PARA*/ void* pVerifyPara,
+          DWORD dwSignerIndex, const BYTE* pbSignedBlob, DWORD cbSignedBlob,
+          BYTE* pbDecoded, DWORD* pcbDecoded, PCCERT_CONTEXT* ppSignerCert)
+{
+    FIXME("stub: %p, %ld, %p, %ld, %p, %p, %p\n",
+        pVerifyPara, dwSignerIndex, pbSignedBlob, cbSignedBlob,
+        pbDecoded, pcbDecoded, ppSignerCert);
+    return FALSE;
+}
