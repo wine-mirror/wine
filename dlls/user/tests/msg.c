@@ -3081,11 +3081,11 @@ static void test_showwindow(void)
 
     trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for invisible popup window\n");
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
-    ok_sequence(WmShowMaxPopupResizedSeq, "ShowWindow(SW_SHOWMAXIMIZED):popup", TRUE);
+    ok_sequence(WmShowMaxPopupResizedSeq, "ShowWindow(SW_SHOWMAXIMIZED):popup", FALSE);
     trace("done\n");
 
     GetWindowRect(hwnd, &rc);
-    todo_wine ok( rc.right-rc.left == GetSystemMetrics(SM_CXSCREEN) &&
+    ok( rc.right-rc.left == GetSystemMetrics(SM_CXSCREEN) &&
         rc.bottom-rc.top == GetSystemMetrics(SM_CYSCREEN),
         "Invalid maximized size after ShowWindow (%ld,%ld)-(%ld,%ld)\n",
         rc.left, rc.top, rc.right, rc.bottom);
@@ -3105,7 +3105,7 @@ static void test_showwindow(void)
 
     trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for invisible popup window\n");
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
-    ok_sequence(WmShowMaxPopupSeq, "ShowWindow(SW_SHOWMAXIMIZED):popup", TRUE);
+    ok_sequence(WmShowMaxPopupSeq, "ShowWindow(SW_SHOWMAXIMIZED):popup", FALSE);
     trace("done\n");
     DestroyWindow(hwnd);
     flush_sequence();

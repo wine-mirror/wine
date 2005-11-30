@@ -966,9 +966,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 
 	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE */
             swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
-            if( !(style & WS_MAXIMIZE) )
-		 swp |= WINPOS_MinMaximize( hwnd, SW_MAXIMIZE, &newPos );
-            else swp |= SWP_NOSIZE | SWP_NOMOVE;
+            swp |= WINPOS_MinMaximize( hwnd, SW_MAXIMIZE, &newPos );
             break;
 
 	case SW_SHOWNA:
