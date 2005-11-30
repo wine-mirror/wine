@@ -1195,7 +1195,6 @@ LPARAM
 LRESULT
 POINT16
 UINT
-int
 
 %ptr
 

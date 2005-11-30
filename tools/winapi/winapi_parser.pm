@@ -373,7 +373,7 @@ sub parse_c_file($$) {
 	    }
 	    next;
 	} elsif(/(extern\s+|static\s+)?((struct\s+|union\s+|enum\s+|signed\s+|unsigned\s+)?\w+((\s*\*)+\s*|\s+))
-            ((__cdecl|__stdcall|__RPC_STUB|CDECL|NET_API_FUNCTION|RPC_ENTRY|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?
+            ((__cdecl|__stdcall|__RPC_STUB|__RPC_USER|CDECL|NET_API_FUNCTION|RPC_ENTRY|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?
 	    (\w+(\(\w+\))?)\s*\((.*?)\)\s*(\{|\;)/sx)
         {
 	    my @lines = split(/\n/, $&);
@@ -449,8 +449,8 @@ sub parse_c_file($$) {
 			((?:struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
 			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
 			((?:const|volatile)?\s*(?:\*\s*(?:const|volatile)?\s*?)*)\s*
-			(?:__cdecl\s+|__stdcall\s+|__RPC_STUB\s+|CALLBACK\s+|CDECL\s+|NET_API_FUNCTION\s+|RPC_ENTRY\s+|STDMETHODCALLTYPE\s+|VFWAPIV\s+|VFWAPI\s+|WINAPIV\s+|WINAPI\s+)?
-			\(\s*(?:__cdecl|__stdcall|__RPC_STUB|CALLBACK|CDECL|NET_API_FUNCTION|RPC_ENTRY|STDMETHODCALLTYPE|VFWAPIV|VFWAPI|WINAPIV|WINAPI)?\s*\*\s*((?:\w+)?)\s*\)\s*
+			(?:__cdecl\s+|__stdcall\s+|__RPC_STUB\s+|__RPC_USER\s+|CALLBACK\s+|CDECL\s+|NET_API_FUNCTION\s+|RPC_ENTRY\s+|STDMETHODCALLTYPE\s+|VFWAPIV\s+|VFWAPI\s+|WINAPIV\s+|WINAPI\s+)?
+			\(\s*(?:__cdecl|__stdcall|__RPC_STUB|__RPC_USER\s+|CALLBACK|CDECL|NET_API_FUNCTION|RPC_ENTRY|STDMETHODCALLTYPE|VFWAPIV|VFWAPI|WINAPIV|WINAPI)?\s*\*\s*((?:\w+)?)\s*\)\s*
 			\(\s*(.*?)\s*\)$/x) 
 		{
 		    my $return_type = $1;
