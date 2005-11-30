@@ -846,16 +846,27 @@ typedef enum _GL_Vendors {
   VENDOR_WINE   = 0x0,
   VENDOR_MESA   = 0x1,
   VENDOR_ATI    = 0x1002,
-  VENDOR_NVIDIA = 0x10de
+  VENDOR_NVIDIA = 0x10de,
+  VENDOR_INTEL  = 0x8086
 } GL_Vendors;
 
 typedef enum _GL_Cards {
-  CARD_WINE  = 0x0,
-  CARD_ATI_RADEON_8500 = 0x514c,
-  CARD_ATI_RADEON_9700PRO = 0x4e44,
-  CARD_ATI_RADEON_9800PRO = 0x4e48,
-  CARD_NVIDIA_GEFORCE4_TI4600 = 0x0250,
-  CARD_NVIDIA_GEFORCEFX_5900ULTRA = 0x0330
+  CARD_WINE                       =    0x0,
+
+  CARD_ATI_RADEON_8500            = 0x514c,
+  CARD_ATI_RADEON_9700PRO         = 0x4e44,
+  CARD_ATI_RADEON_9800PRO         = 0x4e48,
+
+  CARD_NVIDIA_GEFORCE4_TI4600     = 0x0250,
+  CARD_NVIDIA_GEFORCE4_TI4200     = 0x0281,
+  CARD_NVIDIA_GEFORCEFX_5900ULTRA = 0x0330,
+
+  CARD_INTEL_845G                 = 0x2562,
+  CARD_INTEL_I830G                = 0x3577,
+  CARD_INTEL_I855G                = 0x3582,
+  CARD_INTEL_I865G                = 0x2572,
+  CARD_INTEL_I915G                = 0x2582,
+  CARD_INTEL_I915GM               = 0x2592
 } GL_Cards;
 
 typedef enum _GL_VSVersion {

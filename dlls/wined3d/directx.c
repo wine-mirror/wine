@@ -225,8 +225,10 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
         gotContext = TRUE;
     }
 
-
     TRACE_(d3d_caps)("(%p, %p)\n", gl_info, display);
+
+    gl_string = (const char *) glGetString(GL_RENDERER);
+    strcpy(gl_info->gl_renderer, gl_string);
 
     /* Fill in the GL info retrievable depending on the display */
     if (NULL != display) {
@@ -244,6 +246,9 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             gl_info->gl_vendor = VENDOR_NVIDIA;
         } else if (strstr(gl_string, "ATI")) {
             gl_info->gl_vendor = VENDOR_ATI;
+        } else if (strstr(gl_string, "Intel(R)") || 
+		   strstr(gl_info->gl_renderer, "Intel(R)")) {
+            gl_info->gl_vendor = VENDOR_INTEL;
         } else if (strstr(gl_string, "Mesa")) {
             gl_info->gl_vendor = VENDOR_MESA;
         } else {
@@ -319,6 +324,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             }
             break;
 
+	case VENDOR_INTEL:
         case VENDOR_MESA:
             gl_string_cursor = strstr(gl_string, "Mesa");
             gl_string_cursor = strstr(gl_string_cursor, " ");
@@ -355,8 +361,6 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
         TRACE_(d3d_caps)("found GL_VERSION  (%s)->(0x%08lx)\n", debugstr_a(gl_string), gl_info->gl_driver_version);
 
         /* Fill in the renderer information */
-        gl_string = (const char *) glGetString(GL_RENDERER);
-        strcpy(gl_info->gl_renderer, gl_string);
 
         switch (gl_info->gl_vendor) {
         case VENDOR_NVIDIA:
@@ -376,6 +380,22 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 gl_info->gl_card = CARD_ATI_RADEON_9700PRO;
             } else {
                 gl_info->gl_card = CARD_ATI_RADEON_8500;
+            }
+            break;
+
+        case VENDOR_INTEL:
+            if (strstr(gl_info->gl_renderer, "915GM")) {
+                gl_info->gl_card = CARD_INTEL_I915GM;
+            } else if (strstr(gl_info->gl_renderer, "915G")) {
+                gl_info->gl_card = CARD_INTEL_I915G;
+            } else if (strstr(gl_info->gl_renderer, "865G")) {
+                gl_info->gl_card = CARD_INTEL_I865G;
+            } else if (strstr(gl_info->gl_renderer, "855G")) {
+                gl_info->gl_card = CARD_INTEL_I855G;
+            } else if (strstr(gl_info->gl_renderer, "830G")) {
+                gl_info->gl_card = CARD_INTEL_I830G;
+            } else {
+	      gl_info->gl_card = CARD_INTEL_I915G;
             }
             break;
 
@@ -995,7 +1015,7 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, 
           strcpy(pIdentifier->Description, "Direct3D HAL");
           if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY"); /* FIXME: May depend on desktop? */
           pIdentifier->DriverVersion->u.HighPart = 0xa;
-          pIdentifier->DriverVersion->u.LowPart = MAKEDWORD_VERSION(53, 96); /* last Linux Nvidia drivers */
+          pIdentifier->DriverVersion->u.LowPart = MAKEDWORD_VERSION(76, 76); /* last Linux Nvidia drivers */
           *(pIdentifier->VendorId) = VENDOR_NVIDIA;
           *(pIdentifier->DeviceId) = CARD_NVIDIA_GEFORCE4_TI4600;
           *(pIdentifier->SubSysId) = 0;
