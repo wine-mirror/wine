@@ -49,6 +49,9 @@
 #include "winreg.h"
 #include "winerror.h"
 #define NO_SHLWAPI_STREAM
+#define NO_SHLWAPI_REG
+#define NO_SHLWAPI_STRFCNS
+#define NO_SHLWAPI_GDI
 #include "shlwapi.h"
 
 #include "internet.h"
@@ -1766,22 +1769,19 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
     if(lpszUrl[0]=='/')
     {
         /* if it's an absolute path, keep the same session info */
-        strcpyW(path,lpszUrl);
+        lstrcpynW(path, lpszUrl, 2048);
     }
     else if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0)
     {
         TRACE("Redirect through proxy\n");
-        strcpyW(path,lpszUrl);
+        lstrcpynW(path, lpszUrl, 2048);
     }
     else
     {
         URL_COMPONENTSW urlComponents;
         WCHAR protocol[32], hostName[MAXHOSTNAME], userName[1024];
-        WCHAR password[1024], extra[1024];
         static const WCHAR szHttp[] = {'h','t','t','p',0};
         static const WCHAR szHttps[] = {'h','t','t','p','s',0};
-        extra[0] = 0;
-        password[0] = 0;
         userName[0] = 0;
         hostName[0] = 0;
         protocol[0] = 0;
@@ -1793,25 +1793,23 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
         urlComponents.dwHostNameLength = MAXHOSTNAME;
         urlComponents.lpszUserName = userName;
         urlComponents.dwUserNameLength = 1024;
-        urlComponents.lpszPassword = password;
-        urlComponents.dwPasswordLength = 1024;
+        urlComponents.lpszPassword = NULL;
+        urlComponents.dwPasswordLength = 0;
         urlComponents.lpszUrlPath = path;
         urlComponents.dwUrlPathLength = 2048;
-        urlComponents.lpszExtraInfo = extra;
-        urlComponents.dwExtraInfoLength = 1024;
+        urlComponents.lpszExtraInfo = NULL;
+        urlComponents.dwExtraInfoLength = 0;
         if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))
             return FALSE;
 
-        if (urlComponents.lpszScheme &&
-            !strncmpW(szHttp, urlComponents.lpszScheme, strlenW(szHttp)) &&
+        if (!strncmpW(szHttp, urlComponents.lpszScheme, strlenW(szHttp)) &&
             (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE))
         {
             TRACE("redirect from secure page to non-secure page\n");
             /* FIXME: warn about from secure redirect to non-secure page */
             lpwhr->hdr.dwFlags &= ~INTERNET_FLAG_SECURE;
         }
-        if (urlComponents.lpszScheme &&
-            !strncmpW(szHttps, urlComponents.lpszScheme, strlenW(szHttps)) &&
+        if (!strncmpW(szHttps, urlComponents.lpszScheme, strlenW(szHttps)) &&
             !(lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE))
         {
             TRACE("redirect from non-secure page to secure page\n");
@@ -1878,8 +1876,6 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
             INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
             return FALSE;
         }
-
-        StrCatW(path,extra);
 
         INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                               INTERNET_STATUS_NAME_RESOLVED,
