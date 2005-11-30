@@ -165,6 +165,8 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
   int num;
   XVisualInfo template;
   Display *display = get_display( hdc );
+  int hdcPF = GetPixelFormat(hdc);
+  GLXFBConfig cur_cfg;
 
   TRACE("(%p)\n", hdc);
 
@@ -178,6 +180,36 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
     /* Need to set errors here */
     return NULL;
   }
+  if (0 >= hdcPF) {
+    SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+    return NULL;
+  }
+
+  {
+    int nCfgs_fmt = 0;
+    GLXFBConfig* cfgs_fmt = NULL;
+    int value;
+    int gl_test = 0;
+    cfgs_fmt = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs_fmt);
+    if (NULL == cfgs_fmt || 0 == nCfgs_fmt) {
+      ERR("Cannot get FB Configs, expect problems.\n");
+      SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+      return NULL;
+    }
+    if (nCfgs_fmt < hdcPF) {
+      ERR("(%p): unexpected pixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, hdcPF, nCfgs_fmt);
+      SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+      return NULL;
+    }
+    cur_cfg = cfgs_fmt[hdcPF - 1];
+    gl_test = glXGetFBConfigAttrib(display, cur_cfg, GLX_FBCONFIG_ID, &value);
+    if (gl_test) {
+      ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
+      SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+      return NULL;
+    }
+    XFree(cfgs_fmt);
+  }
 
   /* The context will be allocated in the wglMakeCurrent call */
   ENTER_GL();
@@ -186,28 +218,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
   ret->hdc = hdc;
   ret->display = display;
   ret->vis = vis;
-
-  {
-    int hdcPF = GetPixelFormat(hdc);
-    int nCfgs_fmt = 0;
-    GLXFBConfig* cfgs_fmt = NULL;
-    GLXFBConfig cur_cfg;
-    int value;
-    int gl_test = 0;
-    cfgs_fmt = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs_fmt);
-    if (NULL == cfgs_fmt || 0 == nCfgs_fmt) {
-      ERR("Cannot get FB Configs, expect problems.\n");
-      return NULL;
-    }
-    cur_cfg = cfgs_fmt[hdcPF - 1];
-    gl_test = glXGetFBConfigAttrib(display, cur_cfg, GLX_FBCONFIG_ID, &value);
-    if (gl_test) {
-      ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
-      return NULL;
-    }
-    ret->fb_conf = cur_cfg;
-    XFree(cfgs_fmt);
-  }
+  ret->fb_conf = cur_cfg;
 
   TRACE(" creating context %p (GL context creation delayed)\n", ret);
   return (HGLRC) ret;
