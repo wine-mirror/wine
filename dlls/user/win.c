@@ -1068,7 +1068,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     if (cs->style & WS_VISIBLE)
     {
         if (cs->style & WS_MAXIMIZE)
-            sw = SW_SHOWMAXIMIZED;
+            sw = SW_SHOW;
         else if (cs->style & WS_MINIMIZE)
             sw = SW_SHOWMINIMIZED;
 

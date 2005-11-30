@@ -3117,7 +3117,7 @@ static void test_showwindow(void)
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test popup", WS_POPUP | WS_MAXIMIZE | WS_VISIBLE,
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create popup window\n");
-    ok_sequence(WmCreateMaxPopupSeq, "CreateWindow(WS_MAXIMIZED):popup", TRUE);
+    ok_sequence(WmCreateMaxPopupSeq, "CreateWindow(WS_MAXIMIZED):popup", FALSE);
     trace("done\n");
     DestroyWindow(hwnd);
     flush_sequence();
