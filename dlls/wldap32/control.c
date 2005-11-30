@@ -41,6 +41,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+/***********************************************************************
+ *      ldap_control_freeA     (WLDAP32.@)
+ *
+ * See ldap_control_freeW.
+ */
 ULONG ldap_control_freeA( LDAPControlA *control )
 {
     ULONG ret = LDAP_SUCCESS;
@@ -53,6 +58,17 @@ ULONG ldap_control_freeA( LDAPControlA *control )
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_control_freeW     (WLDAP32.@)
+ *
+ * Free an LDAPControl structure.
+ *
+ * Parameters
+ *  control  [I] LDAPControl structure to free.
+ *
+ * RETURNS
+ *  LDAP_SUCCESS
+ */
 ULONG ldap_control_freeW( LDAPControlW *control )
 {
     ULONG ret = LDAP_SUCCESS;
@@ -65,6 +81,11 @@ ULONG ldap_control_freeW( LDAPControlW *control )
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_controls_freeA     (WLDAP32.@)
+ *
+ * See ldap_controls_freeW.
+ */
 ULONG ldap_controls_freeA( LDAPControlA **controls )
 {
     ULONG ret = LDAP_SUCCESS;
@@ -77,6 +98,17 @@ ULONG ldap_controls_freeA( LDAPControlA **controls )
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_controls_freeW     (WLDAP32.@)
+ *
+ * Free an array of LDAPControl structures.
+ *
+ * Parameters
+ *  controls  [I] Array of LDAPControl structures to free.
+ *
+ * RETURNS
+ *  LDAP_SUCCESS
+ */
 ULONG ldap_controls_freeW( LDAPControlW **controls )
 {
     ULONG ret = LDAP_SUCCESS;
@@ -89,6 +121,11 @@ ULONG ldap_controls_freeW( LDAPControlW **controls )
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_create_page_controlA     (WLDAP32.@)
+ *
+ * See ldap_create_page_controlW.
+ */
 ULONG ldap_create_page_controlA( WLDAP32_LDAP *ld, ULONG pagesize,
     struct WLDAP32_berval *cookie, UCHAR critical, PLDAPControlA *control )
 {
@@ -97,6 +134,28 @@ ULONG ldap_create_page_controlA( WLDAP32_LDAP *ld, ULONG pagesize,
     return LDAP_NOT_SUPPORTED;
 }
 
+/***********************************************************************
+ *      ldap_create_page_controlW     (WLDAP32.@)
+ *
+ * Create a control for paged search results.
+ *
+ * Parameters
+ *  ld       [I] Pointer to an LDAP context.
+ *  pagesize [I] Number of entries to return per page.
+ *  cookie   [I] Used by the server to track its location in the
+ *               search results.
+ *  critical [I] Tells the server this control is critical to the
+ *               search operation.
+ *  control  [O] LDAPControl created.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Not implemented. It may be possible to implement this function
+ *  on top of ldap_create_vlv_control.
+ */
 ULONG ldap_create_page_controlW( WLDAP32_LDAP *ld, ULONG pagesize,
     struct WLDAP32_berval *cookie, UCHAR critical, PLDAPControlW *control )
 {
@@ -105,6 +164,11 @@ ULONG ldap_create_page_controlW( WLDAP32_LDAP *ld, ULONG pagesize,
     return LDAP_NOT_SUPPORTED;
 }
 
+/***********************************************************************
+ *      ldap_create_sort_controlA     (WLDAP32.@)
+ *
+ * See ldap_create_sort_controlW.
+ */
 ULONG ldap_create_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkey,
     UCHAR critical, PLDAPControlA *control )
 {
@@ -133,6 +197,28 @@ ULONG ldap_create_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkey,
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_create_sort_controlW     (WLDAP32.@)
+ *
+ * Create a control for server sorted search results.
+ *
+ * Parameters
+ *  ld       [I] Pointer to an LDAP context.
+ *  sortkey  [I] Array of LDAPSortKey structures, each specifying an
+ *               attribute to use as a sort key, a matching rule and
+ *               the sort order (ascending or descending).
+ *  critical [I] Tells the server this control is critical to the
+ *               search operation.
+ *  control  [O] LDAPControl created.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Pass the created control as a server control in subsequent calls
+ *  to ldap_search_ext(_s) to obtain sorted search results.
+ */
 ULONG ldap_create_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkey,
     UCHAR critical, PLDAPControlW *control )
 {
@@ -161,6 +247,11 @@ ULONG ldap_create_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkey,
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_create_vlv_controlA     (WLDAP32.@)
+ *
+ * See ldap_create_vlv_controlW.
+ */
 INT ldap_create_vlv_controlA( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
     UCHAR critical, LDAPControlA **control )
 {
@@ -181,6 +272,28 @@ INT ldap_create_vlv_controlA( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_create_vlv_controlW     (WLDAP32.@)
+ *
+ * Create a virtual list view control.
+ *
+ * Parameters
+ *  ld       [I] Pointer to an LDAP context.
+ *  info     [I] LDAPVLVInfo structure specifying a list view window.
+ *  critical [I] Tells the server this control is critical to the
+ *               search operation.
+ *  control  [O] LDAPControl created.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Pass the created control in conjuction with a sort control as
+ *  server controls in subsequent calls to ldap_search_ext(_s). The
+ *  server will then return a sorted, contiguous subset of results
+ *  that meets the criteria specified in the LDAPVLVInfo structure.
+ */
 INT ldap_create_vlv_controlW( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
     UCHAR critical, LDAPControlW **control )
 {
@@ -201,23 +314,69 @@ INT ldap_create_vlv_controlW( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_encode_sort_controlA     (WLDAP32.@)
+ *
+ * See ldap_encode_sort_controlW.
+ */
 ULONG ldap_encode_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkeys,
     PLDAPControlA control, BOOLEAN critical )
 {
     return ldap_create_sort_controlA( ld, sortkeys, critical, &control );
 }
 
+/***********************************************************************
+ *      ldap_encode_sort_controlW     (WLDAP32.@)
+ *
+ * Create a control for server sorted search results.
+ *
+ * Parameters
+ *  ld       [I] Pointer to an LDAP context.
+ *  sortkey  [I] Array of LDAPSortKey structures, each specifying an
+ *               attribute to use as a sort key, a matching rule and
+ *               the sort order (ascending or descending).
+ *  critical [I] Tells the server this control is critical to the
+ *               search operation.
+ *  control  [O] LDAPControl created.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  This function is obsolete. Use its equivalent
+ *  ldap_create_sort_control instead.
+ */
 ULONG ldap_encode_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkeys,
     PLDAPControlW control, BOOLEAN critical )
 {
     return ldap_create_sort_controlW( ld, sortkeys, critical, &control );
 }
 
+/***********************************************************************
+ *      ldap_free_controlsA     (WLDAP32.@)
+ *
+ * See ldap_free_controlsW.
+ */
 ULONG ldap_free_controlsA( LDAPControlA **controls )
 {
     return ldap_controls_freeA( controls );
 }
 
+/***********************************************************************
+ *      ldap_free_controlsW     (WLDAP32.@)
+ *
+ * Free an array of LDAPControl structures.
+ *
+ * Parameters
+ *  controls  [I] Array of LDAPControl structures to free.
+ *
+ * RETURNS
+ *  LDAP_SUCCESS
+ *  
+ * NOTES
+ *  Obsolete, use ldap_controls_freeW.
+ */
 ULONG ldap_free_controlsW( LDAPControlW **controls )
 {
     return ldap_controls_freeW( controls );
