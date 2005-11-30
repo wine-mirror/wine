@@ -4379,6 +4379,93 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeComp( ITypeInfo2 *iface,
     return S_OK;
 }
 
+static SIZE_T TLB_SizeElemDesc( const ELEMDESC *elemdesc )
+{
+    SIZE_T size = TLB_SizeTypeDesc(&elemdesc->tdesc, FALSE);
+    if (elemdesc->u.paramdesc.pparamdescex)
+        size += sizeof(*elemdesc->u.paramdesc.pparamdescex);
+    return size;
+}
+
+static HRESULT TLB_CopyElemDesc( const ELEMDESC *src, ELEMDESC *dest, char **buffer )
+{
+    memcpy(dest, src, sizeof(ELEMDESC));
+    *buffer = TLB_CopyTypeDesc(&dest->tdesc, &src->tdesc, *buffer);
+    if (src->u.paramdesc.pparamdescex)
+    {
+        const PARAMDESCEX *pparamdescex_src = src->u.paramdesc.pparamdescex;
+        PARAMDESCEX *pparamdescex_dest = dest->u.paramdesc.pparamdescex = (PARAMDESCEX *)*buffer;
+        *buffer += sizeof(PARAMDESCEX);
+        memcpy(pparamdescex_dest, pparamdescex_src, sizeof(PARAMDESCEX));
+        VariantInit(&pparamdescex_dest->varDefaultValue);
+        if (src->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+            return VariantCopy(&pparamdescex_dest->varDefaultValue, 
+                               (VARIANTARG *)&pparamdescex_src->varDefaultValue);
+    }
+    return S_OK;
+}
+
+static void TLB_FreeElemDesc( ELEMDESC *elemdesc )
+{
+    if (elemdesc->u.paramdesc.pparamdescex)
+        VariantClear(&elemdesc->u.paramdesc.pparamdescex->varDefaultValue);
+}
+
+static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_ptr )
+{
+    FUNCDESC *dest;
+    char *buffer;
+    SIZE_T size = sizeof(*src);
+    SHORT i;
+    HRESULT hr;
+
+    size += sizeof(*src->lprgscode) * src->cScodes;
+    size += TLB_SizeElemDesc(&src->elemdescFunc);
+    for (i = 0; i < src->cParams; i++)
+    {
+        size += sizeof(ELEMDESC);
+        size += TLB_SizeElemDesc(&src->lprgelemdescParam[i]);
+    }
+
+    dest = (FUNCDESC *)SysAllocStringByteLen(NULL, size);
+    if (!dest) return E_OUTOFMEMORY;
+
+    memcpy(dest, src, sizeof(FUNCDESC));
+    buffer = (char *)(dest + 1);
+
+    dest->lprgscode = (SCODE *)buffer;
+    memcpy(dest->lprgscode, src->lprgscode, sizeof(*src->lprgscode) * src->cScodes);
+    buffer += sizeof(*src->lprgscode) * src->cScodes;
+
+    hr = TLB_CopyElemDesc(&src->elemdescFunc, &dest->elemdescFunc, &buffer);
+    if (FAILED(hr))
+    {
+        SysFreeString((BSTR)dest);
+        return hr;
+    }
+
+    dest->lprgelemdescParam = (ELEMDESC *)buffer;
+    buffer += sizeof(ELEMDESC) * src->cParams;
+    for (i = 0; i < src->cParams; i++)
+    {
+        hr = TLB_CopyElemDesc(&src->lprgelemdescParam[i], &dest->lprgelemdescParam[i], &buffer);
+        if (FAILED(hr))
+            break;
+    }
+    if (FAILED(hr))
+    {
+        /* undo the above actions */
+        for (i = i - 1; i >= 0; i--)
+            TLB_FreeElemDesc(&dest->lprgelemdescParam[i]);
+        TLB_FreeElemDesc(&dest->elemdescFunc);
+        SysFreeString((BSTR)dest);
+        return hr;
+    }
+
+    *dest_ptr = dest;
+    return S_OK;
+}
+
 /* ITypeInfo::GetFuncDesc
  *
  * Retrieves the FUNCDESC structure that contains information about a
@@ -4390,15 +4477,16 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     int i;
-    TLBFuncDesc * pFDesc;
+    const TLBFuncDesc *pFDesc;
+
     TRACE("(%p) index %d\n", This, index);
+
     for(i=0, pFDesc=This->funclist; i!=index && pFDesc; i++, pFDesc=pFDesc->next)
         ;
-    if(pFDesc){
-        /* FIXME: must do a copy here */
-        *ppFuncDesc=&pFDesc->funcdesc;
-        return S_OK;
-    }
+
+    if(pFDesc)
+        return TLB_AllocAndInitFuncDesc(&pFDesc->funcdesc, ppFuncDesc);
+
     return E_INVALIDARG;
 }
 
@@ -4407,13 +4495,12 @@ static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
     VARDESC *dest;
     char *buffer;
     SIZE_T size = sizeof(*src);
+    HRESULT hr;
 
     if (src->lpstrSchema) size += (strlenW(src->lpstrSchema) + 1) * sizeof(WCHAR);
     if (src->varkind == VAR_CONST)
         size += sizeof(VARIANT);
-    size += TLB_SizeTypeDesc(&src->elemdescVar.tdesc, FALSE);
-    if (src->elemdescVar.u.paramdesc.pparamdescex)
-        size += sizeof(*src->elemdescVar.u.paramdesc.pparamdescex);
+    size += TLB_SizeElemDesc(&src->elemdescVar);
 
     dest = (VARDESC *)SysAllocStringByteLen(NULL, size);
     if (!dest) return E_OUTOFMEMORY;
@@ -4436,6 +4523,7 @@ static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
         dest->u.lpvarValue = (VARIANT *)buffer;
         *dest->u.lpvarValue = *src->u.lpvarValue;
         buffer += sizeof(VARIANT);
+        VariantInit(dest->u.lpvarValue);
         hr = VariantCopy(dest->u.lpvarValue, src->u.lpvarValue);
         if (FAILED(hr))
         {
@@ -4443,22 +4531,13 @@ static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
             return hr;
         }
     }
-    buffer = TLB_CopyTypeDesc(&dest->elemdescVar.tdesc, &src->elemdescVar.tdesc, buffer);
-    if (src->elemdescVar.u.paramdesc.pparamdescex)
+    hr = TLB_CopyElemDesc(&src->elemdescVar, &dest->elemdescVar, &buffer);
+    if (FAILED(hr))
     {
-        PARAMDESCEX *pparamdescex_src = src->elemdescVar.u.paramdesc.pparamdescex;
-        PARAMDESCEX *pparamdescex_dest = dest->elemdescVar.u.paramdesc.pparamdescex = (PARAMDESCEX *)buffer;
-        HRESULT hr;
-        buffer += sizeof(PARAMDESCEX);
-        *pparamdescex_dest = *pparamdescex_src;
-        hr = VariantCopy(&pparamdescex_dest->varDefaultValue, &pparamdescex_src->varDefaultValue);
-        if (FAILED(hr))
-        {
-            if (src->varkind == VAR_CONST)
-                VariantClear(dest->u.lpvarValue);
-            SysFreeString((BSTR)dest);
-            return hr;
-        }
+        if (src->varkind == VAR_CONST)
+            VariantClear(dest->u.lpvarValue);
+        SysFreeString((BSTR)dest);
+        return hr;
     }
     *dest_ptr = dest;
     return S_OK;
@@ -4474,8 +4553,10 @@ static HRESULT WINAPI ITypeInfo_fnGetVarDesc( ITypeInfo2 *iface, UINT index,
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     int i;
-    TLBVarDesc * pVDesc;
+    const TLBVarDesc *pVDesc;
+
     TRACE("(%p) index %d\n", This, index);
+
     for(i=0, pVDesc=This->varlist; i!=index && pVDesc; i++, pVDesc=pVDesc->next)
         ;
 
@@ -5615,7 +5696,15 @@ static void WINAPI ITypeInfo_fnReleaseFuncDesc(
         FUNCDESC *pFuncDesc)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
+    SHORT i;
+
     TRACE("(%p)->(%p)\n", This, pFuncDesc);
+
+    for (i = 0; i < pFuncDesc->cParams; i++)
+        TLB_FreeElemDesc(&pFuncDesc->lprgelemdescParam[i]);
+    TLB_FreeElemDesc(&pFuncDesc->elemdescFunc);
+
+    SysFreeString((BSTR)pFuncDesc);
 }
 
 /* ITypeInfo::ReleaseVarDesc
@@ -6282,9 +6371,10 @@ static HRESULT WINAPI ITypeComp_fnBind(
 
     if (pFDesc)
     {
+        HRESULT hr = TLB_AllocAndInitFuncDesc(&pFDesc->funcdesc, &pBindPtr->lpfuncdesc);
+        if (FAILED(hr))
+            return hr;
         *pDescKind = DESCKIND_FUNCDESC;
-        /* FIXME: allocate memory and copy funcdesc */
-        pBindPtr->lpfuncdesc = &pFDesc->funcdesc;
         *ppTInfo = (ITypeInfo *)&This->lpVtbl;
         ITypeInfo_AddRef(*ppTInfo);
         return S_OK;
