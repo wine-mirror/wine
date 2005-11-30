@@ -521,6 +521,18 @@ INT X11DRV_DIB_MaskToShift(DWORD mask)
 }
 
 /***********************************************************************
+ *           X11DRV_DIB_CheckMask
+ *
+ * Check RGB mask if it is either 0 or matches visual's mask.
+ */
+static inline int X11DRV_DIB_CheckMask(int red_mask, int green_mask, int blue_mask)
+{
+    return ( red_mask == 0 && green_mask == 0 && blue_mask == 0 ) ||
+           ( red_mask == visual->red_mask && green_mask == visual->green_mask &&
+             blue_mask == visual->blue_mask );
+}
+
+/***********************************************************************
  *           X11DRV_DIB_SetImageBits_1
  *
  * SetDIBits for a 1-bit deep DIB.
@@ -602,7 +614,8 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
     {
     case 1:
     case 4:
-        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+        if (X11DRV_DIB_CheckMask(bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask)
+            && srccolors) {
             /* ==== pal 1 or 4 bmp -> pal 1 dib ==== */
             BYTE* dstbyte;
 
@@ -634,7 +647,8 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
         break;
 
     case 8:
-        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+        if (X11DRV_DIB_CheckMask(bmpImage->red_mask, bmpImage->green_mask, bmpImage->blue_mask)
+            && srccolors) {
             /* ==== pal 8 bmp -> pal 1 dib ==== */
             const void* srcbits;
             const BYTE* srcpixel;
@@ -978,7 +992,8 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
     switch (bmpImage->depth) {
     case 1:
     case 4:
-        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+        if (X11DRV_DIB_CheckMask(bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask)
+            && srccolors) {
             /* ==== pal 1 or 4 bmp -> pal 4 dib ==== */
             BYTE* dstbyte;
 
@@ -1010,7 +1025,8 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
         break;
 
     case 8:
-        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+        if (X11DRV_DIB_CheckMask(bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask)
+            && srccolors) {
             /* ==== pal 8 bmp -> pal 4 dib ==== */
             const void* srcbits;
             const BYTE *srcpixel;
@@ -1568,7 +1584,8 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
     switch (bmpImage->depth) {
     case 1:
     case 4:
-        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+        if (X11DRV_DIB_CheckMask(bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask)
+            && srccolors) {
 
             /* ==== pal 1 bmp -> pal 8 dib ==== */
             /* ==== pal 4 bmp -> pal 8 dib ==== */
@@ -1590,7 +1607,8 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
         break;
 
     case 8:
-       if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+       if (X11DRV_DIB_CheckMask(bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask)
+           && srccolors) {
             /* ==== pal 8 bmp -> pal 8 dib ==== */
            const void* srcbits;
            const BYTE* srcpixel;
@@ -2374,7 +2392,8 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
 
     case 1:
     case 4:
-        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+        if (X11DRV_DIB_CheckMask(bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask)
+            && srccolors) {
             /* ==== pal 1 or 4 bmp -> rgb or bgr 555 or 565 dib ==== */
             int rShift,gShift,bShift;
             WORD* dstpixel;
@@ -2412,7 +2431,8 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
         break;
 
     case 8:
-        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+        if (X11DRV_DIB_CheckMask(bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask)
+            && srccolors) {
             /* ==== pal 8 bmp -> rgb or bgr 555 or 565 dib ==== */
             int rShift,gShift,bShift;
             const BYTE* srcbits;
@@ -2799,7 +2819,8 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
 
     case 1:
     case 4:
-        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+        if (X11DRV_DIB_CheckMask(bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask)
+            && srccolors) {
             /* ==== pal 1 or 4 bmp -> rgb 888 dib ==== */
             BYTE* dstbyte;
 
@@ -2822,7 +2843,8 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
         break;
 
     case 8:
-        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask == 0 && srccolors) {
+        if (X11DRV_DIB_CheckMask(bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask)
+            && srccolors) {
             /* ==== pal 8 bmp -> rgb 888 dib ==== */
             const void* srcbits;
             const BYTE* srcpixel;
@@ -3377,7 +3399,8 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
 
     case 1:
     case 4:
-        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+        if (X11DRV_DIB_CheckMask(bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask)
+            && srccolors) {
             /* ==== pal 1 or 4 bmp -> any 0888 dib ==== */
             int rShift,gShift,bShift;
             DWORD* dstpixel;
@@ -3402,7 +3425,8 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
         break;
 
     case 8:
-        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+        if (X11DRV_DIB_CheckMask(bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask)
+            && srccolors) {
             /* ==== pal 8 bmp -> any 0888 dib ==== */
             int rShift,gShift,bShift;
             const void* srcbits;
