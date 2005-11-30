@@ -43,11 +43,22 @@ static void test_find_file(void)
     memset(curdir, 0, MAX_PATH);
     memset(outBuf, 0, MAX_PATH);
     ret = VerFindFileA(0, "regedit", "", "", curdir, &dwCur, outBuf, &dwOut);
-    ok(!ret, "Wrong return value got %lx expected 0\n", ret);
+    switch(ret) {
+    case 0L:
     ok(dwCur == 1, "Wrong length of buffer for current location: "
        "got %d(%s) expected 1\n", dwCur, curdir);
     ok(dwOut == 1, "Wrong length of buffer for the recommended installation location: "
        "got %d(%s) expected 1\n", dwOut, outBuf);
+        break;
+    case VFF_BUFFTOOSMALL:
+        ok(dwCur == MAX_PATH, "Wrong length of buffer for current location: "
+           "got %d(%s) expected MAX_PATH\n", dwCur, curdir);
+        ok(dwOut == MAX_PATH, "Wrong length of buffer for the recommended installation location: "
+           "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
+        break;
+    default:
+        ok(0, "Got unexpected return value %lx\n", ret);
+    }
 
     if(!GetWindowsDirectoryA(windir, MAX_PATH))
         trace("GetWindowsDirectoryA failed\n");
@@ -61,22 +72,44 @@ static void test_find_file(void)
             memset(curdir, 0, MAX_PATH);
             memset(outBuf, 0, MAX_PATH);
             ret = VerFindFileA(0, "regedit.exe", "", "", curdir, &dwCur, outBuf, &dwOut);
-            todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
-            todo_wine ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
+            switch(ret) {
+            case VFF_CURNEDEST:
+                ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
                "got %d(%s) expected %d\n", dwCur, curdir, strlen(windir)+1);
             ok(dwOut == 1, "Wrong length of buffer for the recommended installation location: "
                "got %d(%s) expected 1\n", dwOut, outBuf);
+                break;
+            case VFF_BUFFTOOSMALL:
+                ok(dwCur == MAX_PATH, "Wrong length of buffer for current location: "
+                   "got %d(%s) expected MAX_PATH\n", dwCur, curdir);
+                ok(dwOut == MAX_PATH, "Wrong length of buffer for the recommended installation location: "
+                   "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
+                break;
+            default:
+                todo_wine ok(0, "Got unexpected return value %lx\n", ret);
+            }
 
             dwCur=MAX_PATH;
             dwOut=MAX_PATH;
             memset(curdir, 0, MAX_PATH);
             memset(outBuf, 0, MAX_PATH);
             ret = VerFindFileA(0, "regedit.exe", NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
-            todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
-            todo_wine ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
+            switch(ret) {
+            case VFF_CURNEDEST:
+                ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
                "got %d(%s) expected %d\n", dwCur, curdir, strlen(windir)+1);
             ok(dwOut == 1, "Wrong length of buffer for the recommended installation location: "
                "got %d(%s) expected 1\n", dwOut, outBuf);
+                break;
+            case VFF_BUFFTOOSMALL:
+                ok(dwCur == MAX_PATH, "Wrong length of buffer for current location: "
+                   "got %d(%s) expected MAX_PATH\n", dwCur, curdir);
+                ok(dwOut == MAX_PATH, "Wrong length of buffer for the recommended installation location: "
+                   "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
+                break;
+            default:
+                todo_wine ok(0, "Got unexpected return value %lx\n", ret);
+            }
         }
     }
     if(!GetModuleFileNameA(NULL, filename, MAX_PATH) ||
@@ -96,9 +129,18 @@ static void test_find_file(void)
         memset(outBuf, 0, MAX_PATH);
         memset(curdir, 0, MAX_PATH);
         ret = VerFindFileA(0, filename, NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
-        todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
+        switch(ret) {
+        case VFF_CURNEDEST:
         ok(dwOut == 1, "Wrong length of buffer for the recommended installation location"
            "got %d(%s) expected 1\n", dwOut, outBuf);
+            break;
+        case VFF_BUFFTOOSMALL:
+            ok(dwOut == MAX_PATH, "Wrong length of buffer for the recommended installation location"
+               "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
+            break;
+        default:
+            todo_wine ok(0, "Got unexpected return value %lx\n", ret);
+        }
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
