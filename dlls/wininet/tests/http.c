@@ -1066,6 +1066,7 @@ static void HttpSendRequestEx_test(void)
     DWORD dwBytesRead;
     CHAR szBuffer[256];
     int i;
+    BOOL ret;
 
     static const char szPostData[] = "mode=Test";
     static const char szContentType[] = "Content-Type: application/x-www-form-urlencoded";
@@ -1087,16 +1088,16 @@ static void HttpSendRequestEx_test(void)
     BufferIn.lpcszHeader = szContentType;
     BufferIn.dwHeadersLength = sizeof(szContentType);
     BufferIn.dwHeadersTotal = sizeof(szContentType);
-    BufferIn.lpvBuffer = NULL;
-    BufferIn.dwBufferLength = 0;
+    BufferIn.lpvBuffer = (LPVOID)szPostData;
+    BufferIn.dwBufferLength = 3;
     BufferIn.dwBufferTotal = sizeof(szPostData)-1;
     BufferIn.dwOffsetLow = 0;
     BufferIn.dwOffsetHigh = 0;
 
-    ok(HttpSendRequestEx(hRequest, &BufferIn, NULL, 0 ,0), 
-            "SendRequestEx Failed\n");
+    ret = HttpSendRequestEx(hRequest, &BufferIn, NULL, 0 ,0);
+    ok(ret, "HttpSendRequestEx Failed with error %ld\n", GetLastError());
 
-    for (i = 0; szPostData[i]; i++)
+    for (i = 3; szPostData[i]; i++)
         ok(InternetWriteFile(hRequest, &szPostData[i], 1, &dwBytesWritten),
                 "InternetWriteFile failed\n");
 
