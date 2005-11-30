@@ -62,12 +62,25 @@ fi
 
 topdir=`cd "$topdir" && pwd`
 
-if [ -n "$LD_LIBRARY_PATH" ]
+if [ "`uname -s`" = "Darwin" ]
 then
-  LD_LIBRARY_PATH="$topdir/libs:$LD_LIBRARY_PATH"
+  if [ -n "$DYLD_LIBRARY_PATH" ]
+  then
+    DYLD_LIBRARY_PATH="$topdir/libs:$DYLD_LIBRARY_PATH"
+  else
+    DYLD_LIBRARY_PATH="$topdir/libs"
+  fi
+  export DYLD_LIBRARY_PATH
 else
-  LD_LIBRARY_PATH="$topdir/libs"
+  if [ -n "$LD_LIBRARY_PATH" ]
+  then
+    LD_LIBRARY_PATH="$topdir/libs:$LD_LIBRARY_PATH"
+  else
+    LD_LIBRARY_PATH="$topdir/libs"
+  fi
+  export LD_LIBRARY_PATH
 fi
+
 if [ -n "$WINEDLLPATH" ]
 then
   WINEDLLPATH="$topdir/dlls:$topdir/programs:$WINEDLLPATH"
@@ -76,7 +89,7 @@ else
 fi
 WINESERVER="$topdir/server/wineserver"
 WINELOADER="$topdir/loader/wine"
-export LD_LIBRARY_PATH WINEDLLPATH WINESERVER WINELOADER
+export WINEDLLPATH WINESERVER WINELOADER
 
 # any local settings ?
 if [ -f "$topdir/.winewrapper" ]
