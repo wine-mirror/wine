@@ -239,6 +239,10 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
                 ERR("mono_format == NULL?\n");
                 X11DRV_XRender_Installed = FALSE;
             }
+            if (!visual->red_mask || !visual->green_mask || !visual->blue_mask) {
+                WARN("one or more of the colour masks are 0, disabling XRENDER. Try running in 16-bit mode or higher.\n");
+                X11DRV_XRender_Installed = FALSE;
+            }
         }
         wine_tsx11_unlock();
     }
