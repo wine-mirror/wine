@@ -29,5 +29,6 @@
 #include <lmapibuf.h>
 #include <lmstats.h>
 #include <lmjoin.h>
+#include <lmserver.h>
 
 #endif

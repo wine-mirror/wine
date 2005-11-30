@@ -18,6 +18,8 @@
 #ifndef _LMSERVER_
 #define _LMSERVER_
 
+#include <winsvc.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,9 +38,8 @@ typedef struct _SERVER_INFO_101 {
     LMSTR sv101_comment;
 } SERVER_INFO_101, *PSERVER_INFO_101, *LPSERVER_INFO_101;
 
-NET_API_STATUS WINAPI NetServerEnum(LMCSTR servername, DWORD level,
- LPBYTE *bufptr, DWORD prefmaxlen, LPDWORD entriesread, LPDWORD totalentries,
- DWORD servertype, LMCSTR domain, LPDWORD resume_handle);
+NET_API_STATUS WINAPI NetServerEnum(LPCWSTR,DWORD,LPBYTE*,DWORD,LPDWORD,LPDWORD,DWORD,LPCWSTR,LPDWORD);
+NET_API_STATUS WINAPI NetServerGetInfo(LMSTR,DWORD,LPBYTE*);
 BOOL WINAPI SetServiceBits(SERVICE_STATUS_HANDLE,DWORD,BOOL,BOOL);
 
 #define SV_TYPE_WORKSTATION       0x00000001
