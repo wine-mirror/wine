@@ -368,6 +368,14 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 gl_info->gl_card = CARD_NVIDIA_GEFORCE4_TI4600;
             } else if (strstr(gl_info->gl_renderer, "GeForceFX")) {
                 gl_info->gl_card = CARD_NVIDIA_GEFORCEFX_5900ULTRA;
+            } else if (strstr(gl_info->gl_renderer, "Quadro FX 3000")) {
+                gl_info->gl_card = CARD_NVIDIA_QUADROFX_3000;
+            } else if (strstr(gl_info->gl_renderer, "GeForce 6800")) {
+                gl_info->gl_card = CARD_NVIDIA_GEFORCE_6800ULTRA;
+            } else if (strstr(gl_info->gl_renderer, "Quadro FX 4000")) {
+                gl_info->gl_card = CARD_NVIDIA_QUADROFX_4000;
+            } else if (strstr(gl_info->gl_renderer, "GeForce 7800")) {
+                gl_info->gl_card = CARD_NVIDIA_GEFORCE_7800ULTRA;
             } else {
                 gl_info->gl_card = CARD_NVIDIA_GEFORCE4_TI4600;
             }
