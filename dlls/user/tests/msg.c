@@ -3925,6 +3925,7 @@ static const struct message WmSetParentStyle[] = {
 
 static void test_paint_messages(void)
 {
+    BOOL ret;
     RECT rect;
     POINT pt;
     MSG msg;
@@ -3944,14 +3945,28 @@ static void test_paint_messages(void)
 
     check_update_rgn( hwnd, 0 );
     SetRectRgn( hrgn, 10, 10, 20, 20 );
-    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE );
+    ret = RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
     check_update_rgn( hwnd, hrgn );
     SetRectRgn( hrgn2, 20, 20, 30, 30 );
-    RedrawWindow( hwnd, NULL, hrgn2, RDW_INVALIDATE );
+    ret = RedrawWindow( hwnd, NULL, hrgn2, RDW_INVALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
     CombineRgn( hrgn, hrgn, hrgn2, RGN_OR );
     check_update_rgn( hwnd, hrgn );
     /* validate everything */
-    RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
+    ret = RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
+    check_update_rgn( hwnd, 0 );
+
+    /* test empty region */
+    SetRectRgn( hrgn, 10, 10, 10, 15 );
+    ret = RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
+    check_update_rgn( hwnd, 0 );
+    /* test empty rect */
+    SetRect( &rect, 10, 10, 10, 15 );
+    ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
     check_update_rgn( hwnd, 0 );
 
     /* flush pending messages */

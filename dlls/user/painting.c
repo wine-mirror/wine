@@ -571,6 +571,7 @@ BOOL WINAPI LockWindowUpdate( HWND hwnd )
  */
 BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
 {
+    static const RECT empty;
     BOOL ret;
 
     if (!hwnd) hwnd = GetDesktopWindow();
@@ -596,6 +597,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
 
     if (rect && !hrgn)
     {
+        if (IsRectEmpty( rect )) rect = &empty;
         ret = redraw_window_rects( hwnd, flags, rect, 1 );
     }
     else if (!hrgn)
@@ -606,7 +608,6 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
     {
         DWORD size;
         RGNDATA *data = NULL;
-        static const RECT empty;
 
         if (!(size = GetRegionData( hrgn, 0, NULL ))) return FALSE;
         if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
