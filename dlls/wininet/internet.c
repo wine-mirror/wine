@@ -3239,7 +3239,8 @@ static VOID INTERNET_ExecuteWork(void)
         TRACE("HTTPSENDREQUESTW %p\n", lpwhr);
 
         HTTP_HttpSendRequestW(lpwhr, req->lpszHeader,
-                req->dwHeaderLength, req->lpOptional, req->dwOptionalLength);
+                req->dwHeaderLength, req->lpOptional, req->dwOptionalLength,
+                req->dwContentLength, req->bEndRequest);
 
         HeapFree(GetProcessHeap(), 0, req->lpszHeader);
         }

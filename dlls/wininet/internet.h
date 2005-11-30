@@ -346,6 +346,8 @@ struct WORKREQ_HTTPSENDREQUESTW
     DWORD  dwHeaderLength;
     LPVOID lpOptional;
     DWORD  dwOptionalLength;
+    DWORD  dwContentLength;
+    BOOL   bEndRequest;
 };
 
 struct WORKREQ_SENDCALLBACK
@@ -447,7 +449,8 @@ BOOLAPI FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, LPCW
 	DWORD dwContext);
 
 BOOLAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
-	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength);
+	DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
+	DWORD dwContentLength, BOOL bEndRequest);
 INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
