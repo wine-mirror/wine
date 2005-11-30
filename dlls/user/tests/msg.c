@@ -352,6 +352,137 @@ static const struct message WmDestroyOverlappedSeq[] = {
     { WM_NCDESTROY, sent },
     { 0 }
 };
+/* CreateWindow(WS_MAXIMIZE|WS_VISIBLE) for popup window */
+static const struct message WmCreateMaxPopupSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
+    { WM_GETMINMAXINFO, sent },
+    { WM_WINDOWPOSCHANGING, sent /*|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|0x8000*/ },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { WM_WINDOWPOSCHANGED, sent /*|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOREDRAW|SWP_NOZORDER|0x8000*/ },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE },
+    { HCBT_ACTIVATE, hook },
+    { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_SYNCPAINT, sent|wparam|optional, 4 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTMOVE|SWP_NOCLIENTSIZE|SWP_SHOWWINDOW|SWP_NOMOVE|SWP_NOZORDER|SWP_NOSIZE },
+    { 0 }
+};
+/* CreateWindow(WS_MAXIMIZE) for popup window, not initially visible */
+static const struct message WmCreateInvisibleMaxPopupSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
+    { WM_GETMINMAXINFO, sent },
+    { WM_WINDOWPOSCHANGING, sent /*|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|0x8000*/ },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { WM_WINDOWPOSCHANGED, sent /*|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOREDRAW|SWP_NOZORDER|0x8000*/ },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { 0 }
+};
+/* ShowWindow(SW_SHOWMAXIMIZED) for a resized not visible popup window */
+static const struct message WmShowMaxPopupResizedSeq[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
+    { WM_GETMINMAXINFO, sent },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { HCBT_ACTIVATE, hook },
+    { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTMOVE|SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOZORDER },
+    /* WinNT4.0 sends WM_MOVE */
+    { WM_MOVE, sent|defwinproc|optional },
+    { WM_SIZE, sent|defwinproc },
+    { 0 }
+};
+/* ShowWindow(SW_SHOWMAXIMIZED) for a not visible popup window */
+static const struct message WmShowMaxPopupSeq[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
+    { WM_GETMINMAXINFO, sent },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { HCBT_ACTIVATE, hook },
+    { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_SYNCPAINT, sent|wparam|optional, 4 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER },
+    { 0 }
+};
+/* CreateWindow(WS_VISIBLE) for popup window */
+static const struct message WmCreatePopupSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE },
+    { HCBT_ACTIVATE, hook },
+    { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_SYNCPAINT, sent|wparam|optional, 4 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTMOVE|SWP_NOCLIENTSIZE|SWP_SHOWWINDOW|SWP_NOMOVE|SWP_NOZORDER|SWP_NOSIZE },
+    { 0 }
+};
+/* ShowWindow(SW_SHOWMAXIMIZED) for a visible popup window */
+static const struct message WmShowVisMaxPopupSeq[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
+    { WM_GETMINMAXINFO, sent },
+    { WM_GETTEXT, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|0x8000 },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOZORDER|0x8000 },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { 0 }
+};
 /* CreateWindow (for a child popup window, not initially visible) */
 static const struct message WmCreateChildPopupSeq[] = {
     { HCBT_CREATEWND, hook },
@@ -2865,6 +2996,7 @@ static void test_scroll_messages(HWND hwnd)
 static void test_showwindow(void)
 {
     HWND hwnd, hchild;
+    RECT rc;
 
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, 0, 0, NULL);
@@ -2922,6 +3054,89 @@ static void test_showwindow(void)
     DestroyWindow(hchild);
     ok(!GetCapture(), "wrong capture window %p\n", GetCapture());
 
+    DestroyWindow(hwnd);
+    flush_sequence();
+
+    /* Popup windows */
+    /* Test 1:
+     * 1. Create invisible maximized popup window.
+     * 2. Move and resize it.
+     * 3. Show it maximized.
+     */
+    trace("calling CreateWindowExA( WS_MAXIMIZE ) for invisible maximized popup window\n");
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test popup", WS_POPUP | WS_MAXIMIZE,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create popup window\n");
+    ok_sequence(WmCreateInvisibleMaxPopupSeq, "CreateWindow(WS_MAXIMIZED):popup", FALSE);
+    trace("done\n");
+
+    GetWindowRect(hwnd, &rc);
+    ok( rc.right-rc.left == GetSystemMetrics(SM_CXSCREEN) &&
+        rc.bottom-rc.top == GetSystemMetrics(SM_CYSCREEN),
+        "Invalid maximized size before ShowWindow (%ld,%ld)-(%ld,%ld)\n",
+        rc.left, rc.top, rc.right, rc.bottom);
+    /* Reset window's size & position */
+    SetWindowPos(hwnd, 0, 10, 10, 200, 200, SWP_NOZORDER | SWP_NOACTIVATE);
+    flush_sequence();
+
+    trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for invisible popup window\n");
+    ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+    ok_sequence(WmShowMaxPopupResizedSeq, "ShowWindow(SW_SHOWMAXIMIZED):popup", TRUE);
+    trace("done\n");
+
+    GetWindowRect(hwnd, &rc);
+    todo_wine ok( rc.right-rc.left == GetSystemMetrics(SM_CXSCREEN) &&
+        rc.bottom-rc.top == GetSystemMetrics(SM_CYSCREEN),
+        "Invalid maximized size after ShowWindow (%ld,%ld)-(%ld,%ld)\n",
+        rc.left, rc.top, rc.right, rc.bottom);
+    DestroyWindow(hwnd);
+    flush_sequence();
+
+    /* Test 2:
+     * 1. Create invisible maximized popup window.
+     * 2. Show it maximized.
+     */
+    trace("calling CreateWindowExA( WS_MAXIMIZE ) for invisible maximized popup window\n");
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test popup", WS_POPUP | WS_MAXIMIZE,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create popup window\n");
+    ok_sequence(WmCreateInvisibleMaxPopupSeq, "CreateWindow(WS_MAXIMIZED):popup", FALSE);
+    trace("done\n");
+
+    trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for invisible popup window\n");
+    ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+    ok_sequence(WmShowMaxPopupSeq, "ShowWindow(SW_SHOWMAXIMIZED):popup", TRUE);
+    trace("done\n");
+    DestroyWindow(hwnd);
+    flush_sequence();
+
+    /* Test 3:
+     * 1. Create visible maximized popup window.
+     */
+    trace("calling CreateWindowExA( WS_MAXIMIZE ) for maximized popup window\n");
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test popup", WS_POPUP | WS_MAXIMIZE | WS_VISIBLE,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create popup window\n");
+    ok_sequence(WmCreateMaxPopupSeq, "CreateWindow(WS_MAXIMIZED):popup", TRUE);
+    trace("done\n");
+    DestroyWindow(hwnd);
+    flush_sequence();
+
+    /* Test 4:
+     * 1. Create visible popup window.
+     * 2. Maximize it.
+     */
+    trace("calling CreateWindowExA( WS_VISIBLE ) for popup window\n");
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test popup", WS_POPUP | WS_VISIBLE,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create popup window\n");
+    ok_sequence(WmCreatePopupSeq, "CreateWindow(WS_VISIBLE):popup", TRUE);
+    trace("done\n");
+
+    trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for visible popup window\n");
+    ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+    ok_sequence(WmShowVisMaxPopupSeq, "ShowWindow(SW_SHOWMAXIMIZED):popup", TRUE);
+    trace("done\n");
     DestroyWindow(hwnd);
     flush_sequence();
 }

@@ -1020,9 +1020,10 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         UINT swFlag = (style & WS_MINIMIZE) ? SW_MINIMIZE : SW_MAXIMIZE;
         WIN_SetStyle( hwnd, 0, WS_MAXIMIZE | WS_MINIMIZE );
         WINPOS_MinMaximize( hwnd, swFlag, &newPos );
-        swFlag = ((style & WS_CHILD) || GetActiveWindow())
-            ? SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED
-            : SWP_NOZORDER | SWP_FRAMECHANGED;
+
+        swFlag = SWP_FRAMECHANGED | SWP_NOZORDER; /* Frame always gets changed */
+        if (!(style & WS_VISIBLE) || (style & WS_CHILD) || GetActiveWindow()) swFlag |= SWP_NOACTIVATE;
+
         SetWindowPos( hwnd, 0, newPos.left, newPos.top,
                       newPos.right, newPos.bottom, swFlag );
     }
