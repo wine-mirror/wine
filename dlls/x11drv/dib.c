@@ -896,19 +896,26 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
     notsupported:
         {
             BYTE* dstbyte;
+            BYTE neg = 0;
             unsigned long white = (1 << bmpImage->bits_per_pixel) - 1;
 
             /* ==== any bmp format -> pal 1 dib ==== */
-            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 1 bit DIB\n",
+            if ((unsigned)colors[0].rgbRed+colors[0].rgbGreen+colors[0].rgbBlue >=
+                (unsigned)colors[1].rgbRed+colors[1].rgbGreen+colors[1].rgbBlue )
+                neg = 1;
+
+            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 1 bit DIB, "
+                 "%s color mapping\n",
                   bmpImage->bits_per_pixel, bmpImage->red_mask,
-                  bmpImage->green_mask, bmpImage->blue_mask );
+                  bmpImage->green_mask, bmpImage->blue_mask,
+                  neg?"negative":"direct" );
 
             for (h=lines-1; h>=0; h--) {
                 BYTE dstval;
                 dstbyte=dstbits;
                 dstval=0;
                 for (x=0; x<width; x++) {
-                    dstval|=(XGetPixel( bmpImage, x, h) >= white) << (7 - (x&7));
+                    dstval|=((XGetPixel( bmpImage, x, h) >= white) ^ neg) << (7 - (x&7));
                     if ((x&7)==7) {
                         *dstbyte++=dstval;
                         dstval=0;
