@@ -36,6 +36,40 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
 typedef HRESULT (WINAPI *DLLREGISTER) (void);
 
+/***********************************************************************
+ *      AdvInstallFile (ADVPACK.@)
+ *
+ * Copies a file from the source to a destination.
+ *
+ * PARAMS
+ *   hwnd           [I] Handle to the window used for messages.
+ *   lpszSourceDir  [I] Source directory.
+ *   lpszSourceFile [I] Source filename.
+ *   lpszDestDir    [I] Destination directory.
+ *   lpszDestFile   [I] Optional destination filename.
+ *   dwFlags        [I] See advpub.h.
+ *   dwReserved     [I] Reserved.  Must be 0.
+ *
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
+ *
+ * NOTES
+ *   If lpszDestFile is NULL, the destination filename is the same as
+ *   lpszSourceFIle.
+ *
+ * BUGS
+ *   Unimplemented.
+ */
+HRESULT WINAPI AdvInstallFile(HWND hwnd, LPCSTR lpszSourceDir, LPCSTR lpszSourceFile,
+                              LPCSTR lpszDestDir, LPCSTR lpszDestFile,
+                              DWORD dwFlags, DWORD dwReserved)
+{
+    FIXME("(%p,%p,%p,%p,%p,%ld,%ld) stub\n", hwnd, debugstr_a(lpszSourceDir),
+          debugstr_a(lpszSourceFile), debugstr_a(lpszDestDir),
+          debugstr_a(lpszDestFile), dwFlags, dwReserved);
+    return E_FAIL;
+}
 
 /***********************************************************************
  *           DllMain (ADVPACK.@)

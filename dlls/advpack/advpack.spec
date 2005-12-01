@@ -1,5 +1,5 @@
 @ stub AddDelBackupEntry
-@ stub AdvInstallFile
+@ stdcall AdvInstallFile(long str str str str long long)
 @ stub CloseINFEngine
 @ stdcall DelNode(str long)
 @ stdcall DelNodeRunDLL32(ptr ptr str long)

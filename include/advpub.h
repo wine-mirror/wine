@@ -46,6 +46,17 @@ typedef struct _StrTable {
 typedef const STRTABLE CSTRTABLE;
 typedef CSTRTABLE *LPCSTRTABLE;
 
+/* Flags for AdvInstallFile */
+#define AIF_WARNIFSKIP              0x00000001
+#define AIF_NOSKIP                  0x00000002
+#define AIF_NOVERSIONCHECK          0x00000004
+#define AIF_FORCE_FILE_IN_USE       0x00000008
+#define AIF_NOOVERWRITE             0x00000010
+#define AIF_NO_VERSION_DIALOG       0x00000020
+#define AIF_REPLACEONLY             0x00000400
+#define AIF_NOLANGUAGECHECK         0x10000000
+#define AIF_QUIET                   0x20000000
+
 /* Flags for RunSetupCommand */
 #define RSC_FLAG_INF                0x00000001
 #define RSC_FLAG_SKIPDISKSPACECHECK 0x00000002
@@ -61,6 +72,9 @@ typedef CSTRTABLE *LPCSTRTABLE;
 #define ADN_DONT_DEL_DIR            0x00000004
 #define ADN_DEL_UNC_PATHS           0x00000008
 
+HRESULT WINAPI AdvInstallFile(HWND hwnd, LPCSTR lpszSourceDir,
+     LPCSTR lpszSourceFile, LPCSTR lpszDestDir, LPCSTR lpszDestFile,
+     DWORD dwFlags, DWORD dwReserved);
 HRESULT WINAPI DelNode(LPCSTR pszFileOrDirName, DWORD dwFlags);
 HRESULT WINAPI DelNodeRunDLL32(HWND,HINSTANCE,LPSTR,INT);
 HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved );
