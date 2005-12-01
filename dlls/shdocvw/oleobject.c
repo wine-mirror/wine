@@ -454,8 +454,18 @@ static HRESULT WINAPI OleInPlaceObject_SetObjectRects(IOleInPlaceObject *iface,
         LPCRECT lprcPosRect, LPCRECT lprcClipRect)
 {
     WebBrowser *This = INPLACEOBJ_THIS(iface);
-    FIXME("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
+
+    if(This->shell_embedding_hwnd) {
+        SetWindowPos(This->shell_embedding_hwnd, NULL,
+                     lprcPosRect->left, lprcPosRect->top,
+                     lprcPosRect->bottom-lprcPosRect->top,
+                     lprcPosRect->right-lprcPosRect->left,
+                     SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleInPlaceObject_ReactivateAndUndo(IOleInPlaceObject *iface)
