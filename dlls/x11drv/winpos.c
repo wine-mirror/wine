@@ -23,7 +23,6 @@
 
 #include <X11/Xlib.h>
 #ifdef HAVE_LIBXSHAPE
-#include <X11/IntrinsicP.h>
 #include <X11/extensions/shape.h>
 #endif /* HAVE_LIBXSHAPE */
 #include <stdarg.h>
