@@ -49,6 +49,36 @@ VOID SetFileName(LPCWSTR szFileName)
 
 /***********************************************************************
  *
+ *           NOTEPAD_InitFont
+ *
+ *  Initialize font for the edit window
+ */
+static VOID NOTEPAD_InitFont()
+{
+    LOGFONT *lf = &Globals.lfFont;
+    static const WCHAR systemW[] = { 'S','y','s','t','e','m',0 };
+
+    lf->lfHeight        = -10;
+    lf->lfWidth         = 0;
+    lf->lfEscapement    = 0;
+    lf->lfOrientation   = 0;
+    lf->lfWeight        = FW_BOLD;
+    lf->lfItalic        = FALSE;
+    lf->lfUnderline     = FALSE;
+    lf->lfStrikeOut     = FALSE;
+    lf->lfCharSet       = DEFAULT_CHARSET;
+    lf->lfOutPrecision  = OUT_DEFAULT_PRECIS;
+    lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lf->lfQuality       = DEFAULT_QUALITY;
+    lf->lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
+    lstrcpy(lf->lfFaceName, systemW);
+    
+    Globals.hFont = CreateFontIndirect(lf);
+    SendMessage(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, (LPARAM)FALSE);
+}
+
+/***********************************************************************
+ *
  *           NOTEPAD_MenuCommand
  *
  *  All handling of main menu events
@@ -153,6 +183,7 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
                              ES_AUTOVSCROLL | ES_MULTILINE,
                              0, 0, rc.right, rc.bottom, hWnd,
                              NULL, Globals.hInstance, NULL);
+        NOTEPAD_InitFont();
         break;
     }
 
