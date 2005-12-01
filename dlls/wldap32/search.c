@@ -41,6 +41,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+ULONG ldap_search_abandon_page( WLDAP32_LDAP *ld, PLDAPSearch search )
+{
+    FIXME( "(%p, %p)\n", ld, search );
+
+    if (!ld) return ~0UL;
+    return LDAP_SUCCESS;
+}
+
 ULONG ldap_searchA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope, PCHAR filter,
     PCHAR attrs[], ULONG attrsonly )
 {
@@ -337,6 +345,24 @@ exit:
     return ret;
 }
 
+PLDAPSearch ldap_search_init_pageA( WLDAP32_LDAP *ld, PCHAR dn, ULONG scope,
+    PCHAR filter, PCHAR attrs[], ULONG attrsonly, PLDAPControlA *serverctrls,
+    PLDAPControlA *clientctrls, ULONG timelimit, ULONG sizelimit, PLDAPSortKeyA *sortkeys )
+{
+    FIXME( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx)\n", ld, debugstr_a(dn),
+           scope, debugstr_a(filter), attrs, attrsonly );
+    return NULL;
+}
+
+PLDAPSearch ldap_search_init_pageW( WLDAP32_LDAP *ld, PWCHAR dn, ULONG scope,
+    PWCHAR filter, PWCHAR attrs[], ULONG attrsonly, PLDAPControlW *serverctrls,
+    PLDAPControlW *clientctrls, ULONG timelimit, ULONG sizelimit, PLDAPSortKeyW *sortkeys )
+{
+    FIXME( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx)\n", ld, debugstr_w(dn),
+           scope, debugstr_w(filter), attrs, attrsonly );
+    return NULL;
+}
+
 ULONG ldap_search_sA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope, PCHAR filter,
     PCHAR attrs[], ULONG attrsonly, WLDAP32_LDAPMessage **res )
 {
@@ -494,28 +520,4 @@ exit:
 
 #endif
     return ret;
-}
-
-PLDAPSearch ldap_search_init_pageA( WLDAP32_LDAP *ld, const PCHAR name,
-                                    ULONG scope, const PCHAR filter, PCHAR attrs[],
-                                    ULONG attrsonly, PLDAPControlA* srvcontrols,
-                                    PLDAPControlA* clntcontrols, ULONG timelimit,
-                                    ULONG sizelimit, PLDAPSortKeyA* keys)
-{
-    FIXME( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, 0x%08lx, 0x%08lx, %p)\n",
-           ld, debugstr_a(name), scope, debugstr_a(filter), attrs,
-           attrsonly, srvcontrols, clntcontrols, timelimit, sizelimit, keys);
-    return NULL;
-}
-
-PLDAPSearch ldap_search_init_pageW( WLDAP32_LDAP *ld, const PWCHAR name,
-                                    ULONG scope, const PWCHAR filter, PWCHAR attrs[],
-                                    ULONG attrsonly, PLDAPControlW* srvcontrols,
-                                    PLDAPControlW* clntcontrols, ULONG timelimit,
-                                    ULONG sizelimit, PLDAPSortKeyW* keys)
-{
-    FIXME( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, 0x%08lx, 0x%08lx, %p)\n",
-           ld, debugstr_w(name), scope, debugstr_w(filter), attrs,
-           attrsonly, srvcontrols, clntcontrols, timelimit, sizelimit, keys);
-    return NULL;
 }

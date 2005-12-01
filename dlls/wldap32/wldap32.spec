@@ -121,11 +121,11 @@
 131 cdecl ldap_free_controlsW(ptr)
 132 cdecl ldap_get_dnA(ptr ptr)
 133 cdecl ldap_get_dnW(ptr ptr)
-134 stub ldap_get_next_page
-135 stub ldap_get_next_page_s
+134 cdecl ldap_get_next_page(ptr ptr long ptr)
+135 cdecl ldap_get_next_page_s(ptr ptr ptr long ptr ptr)
 136 cdecl ldap_get_option(ptr long ptr) ldap_get_optionA
 137 cdecl ldap_get_optionA(ptr long ptr)
-138 stub ldap_get_paged_count
+138 cdecl ldap_get_paged_count(ptr ptr ptr ptr)
 139 cdecl ldap_get_valuesA(ptr ptr str)
 140 cdecl ldap_get_valuesW(ptr ptr wstr)
 141 cdecl ldap_get_values_lenA(ptr ptr str)
@@ -178,7 +178,7 @@
 188 cdecl ldap_rename_ext_sW(ptr wstr wstr wstr long ptr ptr)
 189 cdecl ldap_searchA(ptr str long str ptr long)
 190 cdecl ldap_searchW(ptr wstr long wstr ptr long)
-191 stub ldap_search_abandon_page
+191 cdecl ldap_search_abandon_page(ptr ptr)
 192 cdecl ldap_search_ext(ptr str long str ptr long ptr ptr long long ptr) ldap_search_extA
 193 cdecl ldap_search_extA(ptr str long str ptr long ptr ptr long long ptr)
 194 cdecl ldap_search_extW(ptr wstr long wstr ptr long ptr ptr long long ptr)
@@ -191,9 +191,9 @@
 201 cdecl ldap_startup(ptr ptr)
 202 cdecl ldap_cleanup(long)
 203 cdecl ldap_search_ext_sW(ptr wstr long wstr ptr long ptr ptr ptr long ptr)
-204 cdecl ldap_search_init_page(ptr str long str ptr long ptr ptr ptr long ptr) ldap_search_init_pageA
-205 cdecl ldap_search_init_pageA(ptr str long str ptr long ptr ptr ptr long ptr)
-206 cdecl ldap_search_init_pageW(ptr wstr long wstr ptr long ptr ptr ptr long ptr)
+204 cdecl ldap_search_init_page(ptr str long str ptr long ptr ptr long long ptr) ldap_search_init_pageA
+205 cdecl ldap_search_init_pageA(ptr str long str ptr long ptr ptr long long ptr)
+206 cdecl ldap_search_init_pageW(ptr wstr long wstr ptr long ptr ptr long long ptr)
 207 cdecl ldap_search_sA(ptr str long str ptr long ptr)
 208 cdecl ldap_search_sW(ptr wstr long wstr ptr long ptr)
 209 cdecl ldap_search_stA(ptr str long str ptr long ptr ptr)

@@ -303,6 +303,8 @@ ULONG ldap_delete_sA(WLDAP32_LDAP*,PCHAR);
 ULONG ldap_delete_sW(WLDAP32_LDAP*,PWCHAR);
 PCHAR ldap_dn2ufnA(PCHAR);
 PWCHAR ldap_dn2ufnW(PWCHAR);
+ULONG ldap_encode_sort_controlA(WLDAP32_PLDAP,PLDAPSortKeyA*,PLDAPControlA,BOOLEAN);
+ULONG ldap_encode_sort_controlW(WLDAP32_PLDAP,PLDAPSortKeyW*,PLDAPControlW,BOOLEAN);
 PCHAR ldap_err2stringA(ULONG);
 PWCHAR ldap_err2stringW(ULONG);
 ULONG ldap_escape_filter_elementA(PCHAR,ULONG,PCHAR,ULONG);
@@ -323,8 +325,11 @@ ULONG ldap_free_controlsA(LDAPControlA**);
 ULONG ldap_free_controlsW(LDAPControlW**);
 PCHAR ldap_get_dnA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
 PWCHAR ldap_get_dnW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
+ULONG ldap_get_next_page(WLDAP32_LDAP*,PLDAPSearch,ULONG,ULONG*);
+ULONG ldap_get_next_page_s(WLDAP32_LDAP*,PLDAPSearch,struct l_timeval*,ULONG,ULONG*,WLDAP32_LDAPMessage**);
 ULONG ldap_get_optionA(WLDAP32_LDAP*,int,void*);
 ULONG ldap_get_optionW(WLDAP32_LDAP*,int,void*);
+ULONG ldap_get_paged_count(WLDAP32_LDAP*,PLDAPSearch,ULONG*,WLDAP32_LDAPMessage*);
 PCHAR *ldap_get_valuesA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,PCHAR);
 PWCHAR *ldap_get_valuesW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,PWCHAR);
 PBERVAL *ldap_get_values_lenA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,PCHAR);
@@ -356,6 +361,18 @@ WLDAP32_LDAPMessage *WLDAP32_ldap_next_entry(WLDAP32_LDAP*,WLDAP32_LDAPMessage*)
 WLDAP32_LDAPMessage *WLDAP32_ldap_next_reference(WLDAP32_LDAP*,WLDAP32_LDAPMessage*);
 WLDAP32_LDAP *ldap_openA(PCHAR,ULONG);
 WLDAP32_LDAP *ldap_openW(PWCHAR,ULONG);
+ULONG ldap_parse_extended_resultA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,PCHAR*,struct WLDAP32_berval**,BOOLEAN);
+ULONG ldap_parse_extended_resultW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,PWCHAR*,struct WLDAP32_berval**,BOOLEAN);
+ULONG ldap_parse_page_controlA(WLDAP32_LDAP*,PLDAPControlA*,ULONG*,struct WLDAP32_berval**);
+ULONG ldap_parse_page_controlW(WLDAP32_LDAP*,PLDAPControlW*,ULONG*,struct WLDAP32_berval**);
+ULONG ldap_parse_referenceA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,PCHAR**);
+ULONG ldap_parse_referenceW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,PWCHAR**);
+ULONG ldap_parse_resultA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,ULONG*,PCHAR*,PCHAR*,PCHAR**,PLDAPControlA**,BOOLEAN);
+ULONG ldap_parse_resultW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,ULONG*,PWCHAR*,PWCHAR*,PWCHAR**,PLDAPControlW**,BOOLEAN);
+ULONG ldap_parse_sort_controlA(WLDAP32_LDAP*,PLDAPControlA*,ULONG*,PCHAR*);
+ULONG ldap_parse_sort_controlW(WLDAP32_LDAP*,PLDAPControlW*,ULONG*,PWCHAR*);
+int ldap_parse_vlv_controlA(WLDAP32_LDAP*,LDAPControlA**,unsigned long*,unsigned long*,struct WLDAP32_berval**,int*);
+int ldap_parse_vlv_controlW(WLDAP32_LDAP*,LDAPControlW**,unsigned long*,unsigned long*,struct WLDAP32_berval**,int*);
 void WLDAP32_ldap_perror(WLDAP32_LDAP*,const PCHAR);
 ULONG ldap_rename_extA(WLDAP32_LDAP*,PCHAR,PCHAR,PCHAR,INT,PLDAPControlA*,PLDAPControlA*,ULONG*);
 ULONG ldap_rename_extW(WLDAP32_LDAP*,PWCHAR,PWCHAR,PWCHAR,INT,PLDAPControlW*,PLDAPControlW*,ULONG*);
@@ -367,6 +384,7 @@ ULONG ldap_sasl_bindA(WLDAP32_LDAP*,const PCHAR,const PCHAR,const BERVAL*,PLDAPC
 ULONG ldap_sasl_bindW(WLDAP32_LDAP*,const PWCHAR,const PWCHAR,const BERVAL*,PLDAPControlW*,PLDAPControlW*,int*);
 ULONG ldap_sasl_bind_sA(WLDAP32_LDAP*,const PCHAR,const PCHAR,const BERVAL*,PLDAPControlA*,PLDAPControlA*,PBERVAL*);
 ULONG ldap_sasl_bind_sW(WLDAP32_LDAP*,const PWCHAR,const PWCHAR,const BERVAL*,PLDAPControlW*,PLDAPControlW*,PBERVAL*);
+ULONG ldap_search_abandon_page(WLDAP32_PLDAP,PLDAPSearch);
 ULONG ldap_searchA(WLDAP32_LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG);
 ULONG ldap_searchW(WLDAP32_LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG);
 ULONG ldap_search_extA(WLDAP32_LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,PLDAPControlA*,
@@ -377,6 +395,10 @@ ULONG ldap_search_ext_sA(WLDAP32_LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,PLDAPCont
     PLDAPControlA*,struct l_timeval*,ULONG,WLDAP32_LDAPMessage**);
 ULONG ldap_search_ext_sW(WLDAP32_LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,PLDAPControlW*,
     PLDAPControlW*,struct l_timeval*,ULONG,WLDAP32_LDAPMessage**);
+PLDAPSearch ldap_search_init_pageA(WLDAP32_PLDAP,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,PLDAPControlA*,
+    PLDAPControlA*,ULONG,ULONG,PLDAPSortKeyA*);
+PLDAPSearch ldap_search_init_pageW(WLDAP32_PLDAP,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,PLDAPControlW*,
+    PLDAPControlW*,ULONG,ULONG, PLDAPSortKeyW*);
 ULONG ldap_search_sA(WLDAP32_LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,WLDAP32_LDAPMessage**);
 ULONG ldap_search_sW(WLDAP32_LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,WLDAP32_LDAPMessage**);
 ULONG ldap_search_stA(WLDAP32_LDAP*,const PCHAR,ULONG,const PCHAR,PCHAR[],ULONG,
