@@ -4333,7 +4333,7 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
 static HRESULT WINAPI ITypeInfo_fnGetTypeAttr( ITypeInfo2 *iface,
         LPTYPEATTR  *ppTypeAttr)
 {
-    ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
+    const ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     SIZE_T size;
 
     TRACE("(%p)\n",This);
@@ -4382,7 +4382,7 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeComp( ITypeInfo2 *iface,
 static SIZE_T TLB_SizeElemDesc( const ELEMDESC *elemdesc )
 {
     SIZE_T size = TLB_SizeTypeDesc(&elemdesc->tdesc, FALSE);
-    if (elemdesc->u.paramdesc.pparamdescex)
+    if (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
         size += sizeof(*elemdesc->u.paramdesc.pparamdescex);
     return size;
 }
@@ -4391,23 +4391,24 @@ static HRESULT TLB_CopyElemDesc( const ELEMDESC *src, ELEMDESC *dest, char **buf
 {
     memcpy(dest, src, sizeof(ELEMDESC));
     *buffer = TLB_CopyTypeDesc(&dest->tdesc, &src->tdesc, *buffer);
-    if (src->u.paramdesc.pparamdescex)
+    if (src->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
     {
         const PARAMDESCEX *pparamdescex_src = src->u.paramdesc.pparamdescex;
         PARAMDESCEX *pparamdescex_dest = dest->u.paramdesc.pparamdescex = (PARAMDESCEX *)*buffer;
         *buffer += sizeof(PARAMDESCEX);
         memcpy(pparamdescex_dest, pparamdescex_src, sizeof(PARAMDESCEX));
         VariantInit(&pparamdescex_dest->varDefaultValue);
-        if (src->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
-            return VariantCopy(&pparamdescex_dest->varDefaultValue, 
-                               (VARIANTARG *)&pparamdescex_src->varDefaultValue);
+        return VariantCopy(&pparamdescex_dest->varDefaultValue, 
+                           (VARIANTARG *)&pparamdescex_src->varDefaultValue);
     }
+    else
+        dest->u.paramdesc.pparamdescex = NULL;
     return S_OK;
 }
 
 static void TLB_FreeElemDesc( ELEMDESC *elemdesc )
 {
-    if (elemdesc->u.paramdesc.pparamdescex)
+    if (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
         VariantClear(&elemdesc->u.paramdesc.pparamdescex->varDefaultValue);
 }
 
@@ -5717,8 +5718,7 @@ static void WINAPI ITypeInfo_fnReleaseVarDesc( ITypeInfo2 *iface,
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TRACE("(%p)->(%p)\n", This, pVarDesc);
 
-    if (pVarDesc->elemdescVar.u.paramdesc.pparamdescex)
-        VariantClear(&pVarDesc->elemdescVar.u.paramdesc.pparamdescex->varDefaultValue);
+    TLB_FreeElemDesc(&pVarDesc->elemdescVar);
     if (pVarDesc->varkind == VAR_CONST)
         VariantClear(pVarDesc->u.lpvarValue);
     SysFreeString((BSTR)pVarDesc);
