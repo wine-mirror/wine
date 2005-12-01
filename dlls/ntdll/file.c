@@ -1574,17 +1574,17 @@ NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
         }
 #elif defined (__APPLE__)
         struct statfs stfs;
+        kern_return_t kernResult = KERN_FAILURE;
+        mach_port_t masterPort;
+        char bsdName[6]; /* disk#\0 */
+        const char *name;
 
         info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
 
         if (fstatfs( fd, &stfs ) < 0) return FILE_GetNtStatus();
 
         /* stfs.f_type is reserved (always set to 0) so use IOKit */
-        kern_return_t kernResult = KERN_FAILURE;
-        mach_port_t masterPort;
-
-        char bsdName[6]; /* disk#\0 */
-        const char *name = stfs.f_mntfromname + strlen(_PATH_DEV);
+        name = stfs.f_mntfromname + strlen(_PATH_DEV);
         memcpy( bsdName, name, min(strlen(name)+1,sizeof(bsdName)) );
         bsdName[sizeof(bsdName)-1] = 0;
 
@@ -1596,6 +1596,7 @@ NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
 
             if (matching)
             {
+                CFStringRef type;
                 CFMutableDictionaryRef properties;
                 io_service_t devService = IOServiceGetMatchingService(masterPort, matching);
 
@@ -1616,7 +1617,6 @@ NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
                 /*
                   NB : mounted disk image (.img/.dmg) don't provide specific type
                 */
-                CFStringRef type;
                 if ( (type = CFDictionaryGetValue(properties, CFSTR("Type"))) )
                 {
                     if ( CFStringCompare(type, CFSTR("CD-ROM"), 0) == kCFCompareEqualTo

@@ -431,27 +431,20 @@ static int CDROM_MediaChanged(int dev)
  * case the cache will be cleared, causing it to be resynced.
  * The cache section must be held by caller.
  */
-static int CDROM_SyncCache(int dev, int fd)
+static NTSTATUS CDROM_SyncCache(int dev, int fd)
 {
-   int i, io = 0, tsz;
 #ifdef linux
+   int i, tsz;
    struct cdrom_tochdr		hdr;
    struct cdrom_tocentry	entry;
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
-   struct ioc_toc_header	hdr;
-   struct ioc_read_toc_entry	entry;
-   struct cd_toc_entry         toc_buffer;
-#endif
+
    CDROM_TOC *toc = &cdrom_cache[dev].toc;
    cdrom_cache[dev].toc_good = 0;
 
-#ifdef linux
-
-   io = ioctl(fd, CDROMREADTOCHDR, &hdr);
-   if (io == -1)
+   if (ioctl(fd, CDROMREADTOCHDR, &hdr) == -1)
    {
       WARN("(%d) -- Error occurred (%s)!\n", dev, strerror(errno));
-      goto end;
+      return FILE_GetNtStatus();
    }
 
    toc->FirstTrack = hdr.cdth_trk0;
@@ -470,10 +463,10 @@ static int CDROM_SyncCache(int dev, int fd)
      else 
        entry.cdte_track = i;
      entry.cdte_format = CDROM_MSF;
-     io = ioctl(fd, CDROMREADTOCENTRY, &entry);
-     if (io == -1) {
+     if (ioctl(fd, CDROMREADTOCENTRY, &entry) == -1)
+     {
        WARN("error read entry (%s)\n", strerror(errno));
-       goto end;
+       return FILE_GetNtStatus();
      }
      toc->TrackData[i - toc->FirstTrack].Control = entry.cdte_ctrl;
      toc->TrackData[i - toc->FirstTrack].Adr = entry.cdte_adr;
@@ -483,16 +476,24 @@ static int CDROM_SyncCache(int dev, int fd)
      toc->TrackData[i - toc->FirstTrack].Address[1] = entry.cdte_addr.msf.minute;
      toc->TrackData[i - toc->FirstTrack].Address[2] = entry.cdte_addr.msf.second;
      toc->TrackData[i - toc->FirstTrack].Address[3] = entry.cdte_addr.msf.frame;
-    }
-    cdrom_cache[dev].toc_good = 1;
-    io = 0;
+   }
+   cdrom_cache[dev].toc_good = 1;
+   return STATUS_SUCCESS;
+
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
 
-    io = ioctl(fd, CDIOREADTOCHEADER, &hdr);
-    if (io == -1)
+   int i, tsz;
+   struct ioc_toc_header hdr;
+   struct ioc_read_toc_entry entry;
+   struct cd_toc_entry toc_buffer;
+
+   CDROM_TOC *toc = &cdrom_cache[dev].toc;
+   cdrom_cache[dev].toc_good = 0;
+
+    if (ioctl(fd, CDIOREADTOCHEADER, &hdr) == -1)
     {
         WARN("(%d) -- Error occurred (%s)!\n", dev, strerror(errno));
-        goto end;
+        return FILE_GetNtStatus();
     }
     toc->FirstTrack = hdr.starting_track;
     toc->LastTrack  = hdr.ending_track;
@@ -516,10 +517,10 @@ static int CDROM_SyncCache(int dev, int fd)
 	entry.address_format = CD_MSF_FORMAT;
 	entry.data_len = sizeof(toc_buffer);
 	entry.data = &toc_buffer;
-	io = ioctl(fd, CDIOREADTOCENTRYS, &entry);
-	if (io == -1) {
+        if (ioctl(fd, CDIOREADTOCENTRYS, &entry) == -1)
+        {
 	    WARN("error read entry (%s)\n", strerror(errno));
-	    goto end;
+            return FILE_GetNtStatus();
 	}
         toc->TrackData[i - toc->FirstTrack].Control = toc_buffer.control;
         toc->TrackData[i - toc->FirstTrack].Adr = toc_buffer.addr_type;
@@ -531,12 +532,10 @@ static int CDROM_SyncCache(int dev, int fd)
         toc->TrackData[i - toc->FirstTrack].Address[3] = toc_buffer.addr.msf.frame;
     }
     cdrom_cache[dev].toc_good = 1;
-    io = 0;
+    return STATUS_SUCCESS;
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
-end:
-    return CDROM_GetStatusCode(io);
 }
 
 static void CDROM_ClearCacheEntry(int dev)
@@ -1914,7 +1913,6 @@ static NTSTATUS DVD_ReadKey(int fd, PDVD_COPY_PROTECT_KEY key)
     TRACE("outside\n");
     return STATUS_NOT_SUPPORTED;
 #endif
-    TRACE("not reached\n");
 }
 
 /******************************************************************

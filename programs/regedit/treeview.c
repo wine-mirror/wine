@@ -175,7 +175,6 @@ BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem)
 /* Add an entry to the tree. Only give hKey for root nodes (HKEY_ constants) */
 static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPTSTR label, HKEY hKey, DWORD dwChildren)
 {
-    TVITEM tvi;
     TVINSERTSTRUCT tvins;
 
     if (hKey) {
@@ -184,14 +183,13 @@ static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPTSTR label, HK
         }
     }
 
-    tvi.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
-    tvi.pszText = label;
-    tvi.cchTextMax = lstrlen(tvi.pszText);
-    tvi.iImage = Image_Closed;
-    tvi.iSelectedImage = Image_Open;
-    tvi.cChildren = dwChildren;
-    tvi.lParam = (LPARAM)hKey;
-    tvins.u.item = tvi;
+    tvins.u.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
+    tvins.u.item.pszText = label;
+    tvins.u.item.cchTextMax = lstrlen(label);
+    tvins.u.item.iImage = Image_Closed;
+    tvins.u.item.iSelectedImage = Image_Open;
+    tvins.u.item.cChildren = dwChildren;
+    tvins.u.item.lParam = (LPARAM)hKey;
     tvins.hInsertAfter = (HTREEITEM)(hKey ? TVI_LAST : TVI_SORT);
     tvins.hParent = hParent;
     return TreeView_InsertItem(hwndTV, &tvins);
@@ -504,21 +502,19 @@ HWND StartKeyRename(HWND hwndTV)
 
 static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
 {
-    TVITEM tvi;
     TVINSERTSTRUCT tvins;
     HTREEITEM hRoot;
 
-    tvi.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
+    tvins.u.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
     /* Set the text of the item.  */
-    tvi.pszText = pHostName;
-    tvi.cchTextMax = lstrlen(tvi.pszText);
+    tvins.u.item.pszText = pHostName;
+    tvins.u.item.cchTextMax = lstrlen(pHostName);
     /* Assume the item is not a parent item, so give it an image.  */
-    tvi.iImage = Image_Root;
-    tvi.iSelectedImage = Image_Root;
-    tvi.cChildren = 5;
+    tvins.u.item.iImage = Image_Root;
+    tvins.u.item.iSelectedImage = Image_Root;
+    tvins.u.item.cChildren = 5;
     /* Save the heading level in the item's application-defined data area.  */
-    tvi.lParam = (LPARAM)NULL;
-    tvins.u.item = tvi;
+    tvins.u.item.lParam = (LPARAM)NULL;
     tvins.hInsertAfter = (HTREEITEM)TVI_FIRST;
     tvins.hParent = TVI_ROOT;
     /* Add the item to the tree view control.  */

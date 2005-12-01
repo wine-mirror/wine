@@ -889,7 +889,7 @@ static void set_value( struct key *key, const struct unicode_str *name,
 }
 
 /* get a key value */
-static void get_value( struct key *key, const struct unicode_str *name, int *type, unsigned int *len )
+static void get_value( struct key *key, const struct unicode_str *name, int *type, size_t *len )
 {
     struct key_value *value;
     int index;

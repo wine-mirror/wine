@@ -110,6 +110,7 @@ extern "C" {
 #define SD_BOTH                    0x02
 
 /* Constants for WSAIoctl() */
+#undef IOC_VOID  /* for Darwin */
 #define IOC_UNIX                   0x00000000
 #define IOC_WS2                    0x08000000
 #define IOC_PROTOCOL               0x10000000
