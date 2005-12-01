@@ -1026,7 +1026,7 @@ static void MSFT_DoRefType(TLBContext *pcx, ITypeInfoImpl *pTI, int offset);
 /*
  debug
 */
-static void dump_TypeDesc(TYPEDESC *pTD,char *szVarType) {
+static void dump_TypeDesc(const TYPEDESC *pTD,char *szVarType) {
     if (pTD->vt & VT_RESERVED)
 	szVarType += strlen(strcpy(szVarType, "reserved | "));
     if (pTD->vt & VT_BYREF)
@@ -1073,7 +1073,7 @@ static void dump_TypeDesc(TYPEDESC *pTD,char *szVarType) {
     }
 }
 
-static void dump_ELEMDESC(ELEMDESC *edesc) {
+static void dump_ELEMDESC(const ELEMDESC *edesc) {
   char buf[200];
   USHORT flags = edesc->u.paramdesc.wParamFlags;
   dump_TypeDesc(&edesc->tdesc,buf);
@@ -1089,7 +1089,7 @@ static void dump_ELEMDESC(ELEMDESC *edesc) {
   if (flags & PARAMFLAG_FHASCUSTDATA) MESSAGE(" PARAMFLAG_FHASCUSTDATA");
   MESSAGE("\n\t\tu.paramdesc.lpex %p\n",edesc->u.paramdesc.pparamdescex);
 }
-static void dump_FUNCDESC(FUNCDESC *funcdesc) {
+static void dump_FUNCDESC(const FUNCDESC *funcdesc) {
   int i;
   MESSAGE("memid is %08lx\n",funcdesc->memid);
   for (i=0;i<funcdesc->cParams;i++) {
@@ -1141,7 +1141,7 @@ static const char * typekind_desc[] =
 	"TKIND_MAX"
 };
 
-static void dump_TLBFuncDescOne(TLBFuncDesc * pfd)
+static void dump_TLBFuncDescOne(const TLBFuncDesc * pfd)
 {
   int i;
   if (!TRACE_ON(typelib))
@@ -1156,7 +1156,7 @@ static void dump_TLBFuncDescOne(TLBFuncDesc * pfd)
   MESSAGE("\thelpstring: %s\n", debugstr_w(pfd->HelpString));
   MESSAGE("\tentry: %s\n", debugstr_w(pfd->Entry));
 }
-static void dump_TLBFuncDesc(TLBFuncDesc * pfd)
+static void dump_TLBFuncDesc(const TLBFuncDesc * pfd)
 {
 	while (pfd)
 	{
@@ -1164,7 +1164,7 @@ static void dump_TLBFuncDesc(TLBFuncDesc * pfd)
 	  pfd = pfd->next;
 	};
 }
-static void dump_TLBVarDesc(TLBVarDesc * pvd)
+static void dump_TLBVarDesc(const TLBVarDesc * pvd)
 {
 	while (pvd)
 	{
@@ -1173,7 +1173,7 @@ static void dump_TLBVarDesc(TLBVarDesc * pvd)
 	};
 }
 
-static void dump_TLBImpLib(TLBImpLib *import)
+static void dump_TLBImpLib(const TLBImpLib *import)
 {
     TRACE_(typelib)("%s %s\n", debugstr_guid(&(import->guid)),
 		    debugstr_w(import->name));
@@ -1181,7 +1181,7 @@ static void dump_TLBImpLib(TLBImpLib *import)
 		    import->wVersionMinor, import->lcid, import->offset);
 }
 
-static void dump_TLBRefType(TLBRefType * prt)
+static void dump_TLBRefType(const TLBRefType * prt)
 {
 	while (prt)
 	{
@@ -1200,7 +1200,7 @@ static void dump_TLBRefType(TLBRefType * prt)
 	};
 }
 
-static void dump_TLBImplType(TLBImplType * impl)
+static void dump_TLBImplType(const TLBImplType * impl)
 {
     while (impl) {
         TRACE_(typelib)(
@@ -1210,7 +1210,7 @@ static void dump_TLBImplType(TLBImplType * impl)
     }
 }
 
-void dump_Variant(VARIANT * pvar)
+void dump_Variant(const VARIANT * pvar)
 {
     SYSTEMTIME st;
 
@@ -1265,7 +1265,7 @@ void dump_Variant(VARIANT * pvar)
     TRACE("}\n");
 }
 
-static void dump_DispParms(DISPPARAMS * pdp)
+static void dump_DispParms(const DISPPARAMS * pdp)
 {
     int index = 0;
 
@@ -1278,7 +1278,7 @@ static void dump_DispParms(DISPPARAMS * pdp)
     }
 }
 
-static void dump_TypeInfo(ITypeInfoImpl * pty)
+static void dump_TypeInfo(const ITypeInfoImpl * pty)
 {
     TRACE("%p ref=%lu\n", pty, pty->ref);
     TRACE("attr:%s\n", debugstr_guid(&(pty->TypeAttr.guid)));
@@ -1293,7 +1293,7 @@ static void dump_TypeInfo(ITypeInfoImpl * pty)
     dump_TLBImplType(pty->impltypelist);
 }
 
-static void dump_VARDESC(VARDESC *v)
+static void dump_VARDESC(const VARDESC *v)
 {
     MESSAGE("memid %ld\n",v->memid);
     MESSAGE("lpstrSchema %s\n",debugstr_w(v->lpstrSchema));

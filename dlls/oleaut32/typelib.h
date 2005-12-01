@@ -601,7 +601,7 @@ WORD typeofarray
 #include "poppack.h"
 
 extern DWORD _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args);
-extern void dump_Variant(VARIANT * pvar);
+extern void dump_Variant(const VARIANT * pvar);
 
 HRESULT TMARSHAL_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv);
 
