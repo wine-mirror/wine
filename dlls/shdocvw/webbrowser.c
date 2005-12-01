@@ -94,6 +94,9 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID(&IID_IViewObject2, riid)) {
         TRACE("(%p)->(IID_IViewObject2 %p)\n", This, ppv);
         *ppv = VIEWOBJ2(This);
+    }else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid)) {
+        TRACE("(%p)->(IID_IOleInPlaceActiveObject %p)\n", This, ppv);
+        *ppv = ACTIVEOBJ(This);
     }
 
     if(*ppv) {

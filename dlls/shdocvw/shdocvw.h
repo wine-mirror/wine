@@ -71,6 +71,7 @@ typedef struct {
     const IQuickActivateVtbl            *lpQuickActivateVtbl;
     const IConnectionPointContainerVtbl *lpConnectionPointContainerVtbl;
     const IViewObject2Vtbl              *lpViewObjectVtbl;
+    const IOleInPlaceActiveObjectVtbl   *lpOleInPlaceActiveObjectVtbl;
 
     /* Interfaces available for embeded document */
 
@@ -125,6 +126,7 @@ typedef struct {
 #define CONPTCONT(x)    ((IConnectionPointContainer*)   &(x)->lpConnectionPointContainerVtbl)
 #define VIEWOBJ(x)      ((IViewObject*)                 &(x)->lpViewObjectVtbl);
 #define VIEWOBJ2(x)     ((IViewObject2*)                &(x)->lpViewObjectVtbl);
+#define ACTIVEOBJ(x)    ((IOleInPlaceActiveObject*)     &(x)->lpOleInPlaceActiveObjectVtbl)
 
 #define CLIENTSITE(x)   ((IOleClientSite*)              &(x)->lpOleClientSiteVtbl)
 #define INPLACESITE(x)  ((IOleInPlaceSite*)             &(x)->lpOleInPlaceSiteVtbl)

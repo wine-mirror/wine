@@ -116,7 +116,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
     This->client = pClientSite;
     if(!pClientSite)
         return S_OK;
-    
+
     IOleClientSite_AddRef(pClientSite);
 
     create_shell_embedding_hwnd(This);
@@ -236,7 +236,6 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
                      This->pos_rect.right-This->pos_rect.left,
                      This->pos_rect.bottom-This->pos_rect.top,
                      SWP_NOZORDER | SWP_SHOWWINDOW);
-
 
         if(This->client) {
             IOleClientSite_ShowObject(This->client);
@@ -556,11 +555,102 @@ static const IOleControlVtbl OleControlVtbl =
     OleControl_FreezeEvents
 };
 
+#define ACTIVEOBJ_THIS(iface) DEFINE_THIS(WebBrowser, OleInPlaceActiveObject, iface)
+
+static HRESULT WINAPI InPlaceActiveObject_QueryInterface(IOleInPlaceActiveObject *iface,
+                                                            REFIID riid, void **ppv)
+{
+    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    return IWebBrowser2_QueryInterface(WEBBROWSER2(This), riid, ppv);
+}
+
+static ULONG WINAPI InPlaceActiveObject_AddRef(IOleInPlaceActiveObject *iface)
+{
+    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    return IWebBrowser2_AddRef(WEBBROWSER2(This));
+}
+
+static ULONG WINAPI InPlaceActiveObject_Release(IOleInPlaceActiveObject *iface)
+{
+    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    return IWebBrowser2_Release(WEBBROWSER2(This));
+}
+
+static HRESULT WINAPI InPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *iface,
+                                                    HWND *phwnd)
+{
+    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    return IOleInPlaceObject_GetWindow(INPLACEOBJ(This), phwnd);
+}
+
+static HRESULT WINAPI InPlaceActiveObject_ContextSensitiveHelp(IOleInPlaceActiveObject *iface,
+                                                               BOOL fEnterMode)
+{
+    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    return IOleInPlaceObject_ContextSensitiveHelp(INPLACEOBJ(This), fEnterMode);
+}
+
+static HRESULT WINAPI InPlaceActiveObject_TranslateAccelerator(IOleInPlaceActiveObject *iface,
+                                                               LPMSG lpmsg)
+{
+    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, lpmsg);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceActiveObject *iface,
+                                                                BOOL fActivate)
+{
+    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, fActivate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceActiveObject_OnDocWindowActivate(IOleInPlaceActiveObject *iface,
+                                                              BOOL fActivate)
+{
+    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, fActivate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceActiveObject_ResizeBorder(IOleInPlaceActiveObject *iface,
+        LPCRECT lprcBorder, IOleInPlaceUIWindow *pUIWindow, BOOL fFrameWindow)
+{
+    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    FIXME("(%p)->(%p %p %x)\n", This, lprcBorder, pUIWindow, fFrameWindow);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceActiveObject_EnableModeless(IOleInPlaceActiveObject *iface,
+                                                         BOOL fEnable)
+{
+    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, fEnable);
+    return E_NOTIMPL;
+}
+
+#undef ACTIVEOBJ_THIS
+
+static const IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
+    InPlaceActiveObject_QueryInterface,
+    InPlaceActiveObject_AddRef,
+    InPlaceActiveObject_Release,
+    InPlaceActiveObject_GetWindow,
+    InPlaceActiveObject_ContextSensitiveHelp,
+    InPlaceActiveObject_TranslateAccelerator,
+    InPlaceActiveObject_OnFrameWindowActivate,
+    InPlaceActiveObject_OnDocWindowActivate,
+    InPlaceActiveObject_ResizeBorder,
+    InPlaceActiveObject_EnableModeless
+};
+
 void WebBrowser_OleObject_Init(WebBrowser *This)
 {
-    This->lpOleObjectVtbl        = &OleObjectVtbl;
-    This->lpOleInPlaceObjectVtbl = &OleInPlaceObjectVtbl;
-    This->lpOleControlVtbl       = &OleControlVtbl;
+    This->lpOleObjectVtbl              = &OleObjectVtbl;
+    This->lpOleInPlaceObjectVtbl       = &OleInPlaceObjectVtbl;
+    This->lpOleControlVtbl             = &OleControlVtbl;
+    This->lpOleInPlaceActiveObjectVtbl = &OleInPlaceActiveObjectVtbl;
 
     This->client = NULL;
     This->container = NULL;
