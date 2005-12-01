@@ -1226,6 +1226,9 @@ BOOL VIRTUAL_HasMapping( LPCVOID addr )
 void VIRTUAL_UseLargeAddressSpace(void)
 {
     if (user_space_limit >= ADDRESS_SPACE_LIMIT) return;
+    /* no large address space on win9x */
+    if (NtCurrentTeb()->Peb->OSPlatformId != VER_PLATFORM_WIN32_NT) return;
+
     RtlEnterCriticalSection( &csVirtual );
     remove_reserved_area( user_space_limit, (char *)ADDRESS_SPACE_LIMIT - (char *)user_space_limit );
     user_space_limit = ADDRESS_SPACE_LIMIT;
