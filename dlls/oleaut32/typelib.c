@@ -1532,7 +1532,7 @@ static void MSFT_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
 
     if(offset <0) { /* data are packed in here */
         V_VT(pVar) = (offset & 0x7c000000 )>> 26;
-        V_I2(pVar) = offset & 0x3ffffff;
+        V_I4(pVar) = offset & 0x3ffffff;
         return;
     }
     MSFT_ReadLEWords(&(V_VT(pVar)), sizeof(VARTYPE), pcx,
