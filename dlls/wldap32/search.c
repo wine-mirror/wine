@@ -495,3 +495,27 @@ exit:
 #endif
     return ret;
 }
+
+PLDAPSearch ldap_search_init_pageA( WLDAP32_LDAP *ld, const PCHAR name,
+                                    ULONG scope, const PCHAR filter, PCHAR attrs[],
+                                    ULONG attrsonly, PLDAPControlA* srvcontrols,
+                                    PLDAPControlA* clntcontrols, ULONG timelimit,
+                                    ULONG sizelimit, PLDAPSortKeyA* keys)
+{
+    FIXME( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, 0x%08lx, 0x%08lx, %p)\n",
+           ld, debugstr_a(name), scope, debugstr_a(filter), attrs,
+           attrsonly, srvcontrols, clntcontrols, timelimit, sizelimit, keys);
+    return NULL;
+}
+
+PLDAPSearch ldap_search_init_pageW( WLDAP32_LDAP *ld, const PWCHAR name,
+                                    ULONG scope, const PWCHAR filter, PWCHAR attrs[],
+                                    ULONG attrsonly, PLDAPControlW* srvcontrols,
+                                    PLDAPControlW* clntcontrols, ULONG timelimit,
+                                    ULONG sizelimit, PLDAPSortKeyW* keys)
+{
+    FIXME( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, 0x%08lx, 0x%08lx, %p)\n",
+           ld, debugstr_w(name), scope, debugstr_w(filter), attrs,
+           attrsonly, srvcontrols, clntcontrols, timelimit, sizelimit, keys);
+    return NULL;
+}

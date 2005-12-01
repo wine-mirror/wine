@@ -191,9 +191,9 @@
 201 cdecl ldap_startup(ptr ptr)
 202 cdecl ldap_cleanup(long)
 203 cdecl ldap_search_ext_sW(ptr wstr long wstr ptr long ptr ptr ptr long ptr)
-204 stub ldap_search_init_page
-205 stub ldap_search_init_pageA
-206 stub ldap_search_init_pageW
+204 cdecl ldap_search_init_page(ptr str long str ptr long ptr ptr ptr long ptr) ldap_search_init_pageA
+205 cdecl ldap_search_init_pageA(ptr str long str ptr long ptr ptr ptr long ptr)
+206 cdecl ldap_search_init_pageW(ptr wstr long wstr ptr long ptr ptr ptr long ptr)
 207 cdecl ldap_search_sA(ptr str long str ptr long ptr)
 208 cdecl ldap_search_sW(ptr wstr long wstr ptr long ptr)
 209 cdecl ldap_search_stA(ptr str long str ptr long ptr ptr)
