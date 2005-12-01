@@ -1780,14 +1780,15 @@ MSFT_DoFuncs(TLBContext*     pcx,
 
             for ( j = 0 ; j < pFuncRec->nrargs ; j++ )
             {
-                TYPEDESC* lpArgTypeDesc = 0;
+                TYPEDESC *lpArgTypeDesc;
+                ELEMDESC *elemdesc = &(*pptfd)->funcdesc.lprgelemdescParam[j];
 
                 MSFT_GetTdesc(pcx,
 			      paraminfo.DataType,
-			      &(*pptfd)->funcdesc.lprgelemdescParam[j].tdesc,
+			      &elemdesc->tdesc,
 			      pTI);
 
-                (*pptfd)->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags = paraminfo.Flags;
+                elemdesc->u.paramdesc.wParamFlags = paraminfo.Flags;
 
                 /* name */
                 if (paraminfo.oName == -1)
@@ -1800,17 +1801,9 @@ MSFT_DoFuncs(TLBContext*     pcx,
                         MSFT_ReadName( pcx, paraminfo.oName );
                 TRACE_(typelib)("param[%d] = %s\n", j, debugstr_w((*pptfd)->pParamDesc[j].Name));
 
-                /* SEEK value = jump to offset,
-                 * from there jump to the end of record,
-                 * go back by (j-1) arguments
-                 */
-                MSFT_ReadLEDWords( &paraminfo ,
-			   sizeof(MSFT_ParameterInfo), pcx,
-			   recoffset + reclength - ((pFuncRec->nrargs - j - 1)
-					       * sizeof(MSFT_ParameterInfo)));
-                lpArgTypeDesc =
-                    & ((*pptfd)->funcdesc.lprgelemdescParam[j].tdesc);
+                lpArgTypeDesc = &elemdesc->tdesc;
 
+                /* resolve referenced type if any */
                 while ( lpArgTypeDesc != NULL )
                 {
                     switch ( lpArgTypeDesc->vt )
@@ -1834,8 +1827,40 @@ MSFT_DoFuncs(TLBContext*     pcx,
                         lpArgTypeDesc = NULL;
                     }
                 }
-            }
 
+                /* default value */
+                if ( (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) &&
+                     (pFuncRec->FKCCIC & 0x1000) )
+                {
+                    INT* pInt = (INT *)((char *)pFuncRec +
+                                   reclength -
+                                   (pFuncRec->nrargs * 4 + 1) * sizeof(INT) );
+
+                    PARAMDESC* pParamDesc = &elemdesc->u.paramdesc;
+
+                    pParamDesc->pparamdescex = TLB_Alloc(sizeof(PARAMDESCEX));
+                    pParamDesc->pparamdescex->cBytes = sizeof(PARAMDESCEX);
+
+		    MSFT_ReadValue(&(pParamDesc->pparamdescex->varDefaultValue),
+                        pInt[j], pcx);
+                }
+                /* custom info */
+                if ( nrattributes > 7 + j && pFuncRec->FKCCIC & 0x80 )
+                {
+                    MSFT_CustData(pcx,
+				  pFuncRec->OptAttr[7+j],
+				  &(*pptfd)->pParamDesc[j].pCustData);
+                }
+
+                /* SEEK value = jump to offset,
+                 * from there jump to the end of record,
+                 * go back by (j-1) arguments
+                 */
+                MSFT_ReadLEDWords( &paraminfo ,
+			   sizeof(MSFT_ParameterInfo), pcx,
+			   recoffset + reclength - ((pFuncRec->nrargs - j - 1)
+					       * sizeof(MSFT_ParameterInfo)));
+            }
 
             /* parameter is the return value! */
             if ( paraminfo.Flags & PARAMFLAG_FRETVAL )
@@ -1873,35 +1898,6 @@ MSFT_DoFuncs(TLBContext*     pcx,
                     }
                 }
             }
-
-            /* second time around */
-            for(j=0;j<pFuncRec->nrargs;j++)
-            {
-                /* default value */
-                if ( (PARAMFLAG_FHASDEFAULT &
-                      (*pptfd)->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags) &&
-                     ((pFuncRec->FKCCIC) & 0x1000) )
-                {
-                    INT* pInt = (INT *)((char *)pFuncRec +
-                                   reclength -
-                                   (pFuncRec->nrargs * 4 + 1) * sizeof(INT) );
-
-                    PARAMDESC* pParamDesc = & (*pptfd)->funcdesc.lprgelemdescParam[j].u.paramdesc;
-
-                    pParamDesc->pparamdescex = TLB_Alloc(sizeof(PARAMDESCEX));
-                    pParamDesc->pparamdescex->cBytes = sizeof(PARAMDESCEX);
-
-		    MSFT_ReadValue(&(pParamDesc->pparamdescex->varDefaultValue),
-                        pInt[j], pcx);
-                }
-                /* custom info */
-                if ( nrattributes > 7 + j && pFuncRec->FKCCIC & 0x80 )
-                {
-                    MSFT_CustData(pcx,
-				  pFuncRec->OptAttr[7+j],
-				  &(*pptfd)->pParamDesc[j].pCustData);
-                }
-           }
         }
 
         /* scode is not used: archaic win16 stuff FIXME: right? */
