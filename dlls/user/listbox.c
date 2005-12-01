@@ -1380,11 +1380,13 @@ static LRESULT LISTBOX_SelectItemRange( LB_DESCR *descr, INT first,
     /* A few sanity checks */
 
     if (descr->style & LBS_NOSEL) return LB_ERR;
-    if ((last == -1) && (descr->nb_items == 0)) return LB_OKAY;
     if (!(descr->style & LBS_MULTIPLESEL)) return LB_ERR;
-    if (last == -1) last = descr->nb_items - 1;
-    if ((first < 0) || (first >= descr->nb_items)) return LB_ERR;
-    if ((last < 0) || (last >= descr->nb_items)) return LB_ERR;
+
+    if (!descr->nb_items) return LB_OKAY;
+
+    if (last >= descr->nb_items) last = descr->nb_items - 1;
+    if (first < 0) first = 0;
+    if (last < first) return LB_OKAY;
 
     if (on)  /* Turn selection on */
     {
@@ -1424,7 +1426,7 @@ static LRESULT LISTBOX_SetSelection( LB_DESCR *descr, INT index,
     if (descr->style & LBS_MULTIPLESEL)
     {
         if (index == -1)  /* Select all items */
-            return LISTBOX_SelectItemRange( descr, 0, -1, on );
+            return LISTBOX_SelectItemRange( descr, 0, descr->nb_items, on );
         else  /* Only one item */
             return LISTBOX_SelectItemRange( descr, index, index, on );
     }

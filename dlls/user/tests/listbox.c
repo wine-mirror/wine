@@ -304,6 +304,92 @@ static void test_ownerdraw(void)
     DestroyWindow(parent);
 }
 
+#define listbox_test_query(exp, got) \
+  ok(exp.selected == got.selected, "expected selected %d, got %d\n", exp.selected, got.selected); \
+  ok(exp.anchor == got.anchor, "expected anchor %d, got %d\n", exp.anchor, got.anchor); \
+  ok(exp.caret == got.caret, "expected caret %d, got %d\n", exp.caret, got.caret); \
+  ok(exp.selcount == got.selcount, "expected selcount %d, got %d\n", exp.selcount, got.selcount);
+
+static void test_selection(void)
+{
+    static const struct listbox_stat test_nosel = { 0, LB_ERR, 0, 0 };
+    static const struct listbox_stat test_1 = { 0, LB_ERR, 0, 2 };
+    static const struct listbox_stat test_2 = { 0, LB_ERR, 0, 3 };
+    static const struct listbox_stat test_3 = { 0, LB_ERR, 0, 4 };
+    HWND hLB;
+    struct listbox_stat answer;
+    INT ret;
+
+    trace("testing LB_SELITEMRANGE\n");
+
+    hLB = create_listbox(LBS_EXTENDEDSEL, 0);
+    assert(hLB);
+
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_nosel, answer);
+
+    ret = SendMessage(hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(1, 2));
+    ok(ret == LB_OKAY, "LB_SELITEMRANGE returned %d instead of LB_OKAY\n", ret);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_1, answer);
+
+    SendMessage(hLB, LB_SETSEL, FALSE, (LPARAM)-1);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_nosel, answer);
+
+    ret = SendMessage(hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(0, 4));
+    ok(ret == LB_OKAY, "LB_SELITEMRANGE returned %d instead of LB_OKAY\n", ret);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_3, answer);
+
+    SendMessage(hLB, LB_SETSEL, FALSE, (LPARAM)-1);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_nosel, answer);
+
+    ret = SendMessage(hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(-5, 5));
+    ok(ret == LB_OKAY, "LB_SELITEMRANGE returned %d instead of LB_OKAY\n", ret);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_nosel, answer);
+
+    SendMessage(hLB, LB_SETSEL, FALSE, (LPARAM)-1);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_nosel, answer);
+
+    ret = SendMessage(hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(2, 10));
+    ok(ret == LB_OKAY, "LB_SELITEMRANGE returned %d instead of LB_OKAY\n", ret);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_1, answer);
+
+    SendMessage(hLB, LB_SETSEL, FALSE, (LPARAM)-1);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_nosel, answer);
+
+    ret = SendMessage(hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(4, 10));
+    ok(ret == LB_OKAY, "LB_SELITEMRANGE returned %d instead of LB_OKAY\n", ret);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_nosel, answer);
+
+    SendMessage(hLB, LB_SETSEL, FALSE, (LPARAM)-1);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_nosel, answer);
+
+    ret = SendMessage(hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(10, 1));
+    ok(ret == LB_OKAY, "LB_SELITEMRANGE returned %d instead of LB_OKAY\n", ret);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_2, answer);
+
+    SendMessage(hLB, LB_SETSEL, FALSE, (LPARAM)-1);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_nosel, answer);
+
+    ret = SendMessage(hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(1, -1));
+    ok(ret == LB_OKAY, "LB_SELITEMRANGE returned %d instead of LB_OKAY\n", ret);
+    listbox_query(hLB, &answer);
+    listbox_test_query(test_2, answer);
+
+    DestroyWindow(hLB);
+}
+
 START_TEST(listbox)
 {
   const struct listbox_test SS =
@@ -376,4 +462,5 @@ START_TEST(listbox)
 
   check_item_height();
   test_ownerdraw();
+  test_selection();
 }
