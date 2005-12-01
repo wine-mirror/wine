@@ -158,18 +158,18 @@
 168 cdecl ldap_next_reference(ptr ptr) WLDAP32_ldap_next_reference
 169 cdecl ldap_openA(str long)
 170 cdecl ldap_openW(wstr long)
-171 stub ldap_parse_page_control
-172 stub ldap_parse_page_controlA
-173 stub ldap_parse_page_controlW
-174 stub ldap_parse_reference
-175 stub ldap_parse_referenceA
-176 stub ldap_parse_referenceW
-177 stub ldap_parse_result
-178 stub ldap_parse_resultA
-179 stub ldap_parse_resultW
-180 stub ldap_parse_sort_control
-181 stub ldap_parse_sort_controlA
-182 stub ldap_parse_sort_controlW
+171 cdecl ldap_parse_page_control(ptr ptr ptr ptr) ldap_parse_page_controlA
+172 cdecl ldap_parse_page_controlA(ptr ptr ptr ptr)
+173 cdecl ldap_parse_page_controlW(ptr ptr ptr ptr)
+174 cdecl ldap_parse_reference(ptr ptr ptr) ldap_parse_referenceA
+175 cdecl ldap_parse_referenceA(ptr ptr ptr)
+176 cdecl ldap_parse_referenceW(ptr ptr ptr)
+177 cdecl ldap_parse_result(ptr ptr ptr ptr ptr ptr ptr long) ldap_parse_resultA
+178 cdecl ldap_parse_resultA(ptr ptr ptr ptr ptr ptr ptr long)
+179 cdecl ldap_parse_resultW(ptr ptr ptr ptr ptr ptr ptr long)
+180 cdecl ldap_parse_sort_control(ptr ptr ptr ptr) ldap_parse_sort_controlA
+181 cdecl ldap_parse_sort_controlA(ptr ptr ptr ptr)
+182 cdecl ldap_parse_sort_controlW(ptr ptr ptr ptr)
 183 cdecl ldap_rename_ext(ptr str str str long ptr ptr ptr) ldap_rename_extA
 184 cdecl ldap_rename_extA(ptr str str str long ptr ptr ptr)
 185 cdecl ldap_rename_extW(ptr wstr wstr wstr long ptr ptr ptr)
@@ -232,12 +232,12 @@
 314 cdecl ldap_sasl_bind_sW(ptr wstr wstr ptr ptr ptr ptr)
 315 cdecl ldap_sasl_bindA(ptr str str ptr ptr ptr ptr)
 316 cdecl ldap_sasl_bind_sA(ptr str str ptr ptr ptr ptr)
-317 stub ldap_parse_extended_resultW
-318 stub ldap_parse_extended_resultA
+317 cdecl ldap_parse_extended_resultW(ptr ptr ptr ptr long)
+318 cdecl ldap_parse_extended_resultA(ptr ptr ptr ptr long)
 319 cdecl ldap_create_vlv_controlW(ptr ptr long ptr)
 320 cdecl ldap_create_vlv_controlA(ptr ptr long ptr)
-321 stub ldap_parse_vlv_controlW
-322 stub ldap_parse_vlv_controlA
+321 cdecl ldap_parse_vlv_controlW(ptr ptr ptr ptr ptr ptr)
+322 cdecl ldap_parse_vlv_controlA(ptr ptr ptr ptr ptr ptr)
 329 cdecl ldap_start_tls_sW(ptr ptr ptr ptr ptr)
 330 cdecl ldap_start_tls_sA(ptr ptr ptr ptr ptr)
 331 cdecl ldap_stop_tls_s(ptr)
