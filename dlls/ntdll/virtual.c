@@ -336,6 +336,8 @@ static inline void unmap_area( void *addr, size_t size )
 {
     if (wine_mmap_is_in_reserved_area( addr, size ))
         wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE | MAP_FIXED );
+    else if (is_beyond_limit( addr, size, user_space_limit ))
+        add_reserved_area( addr, size );
     else
         munmap( addr, size );
 }
