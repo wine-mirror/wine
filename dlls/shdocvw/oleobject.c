@@ -192,11 +192,14 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
     WebBrowser *This = OLEOBJ_THIS(iface);
     HRESULT hres;
 
+    static const WCHAR wszitem[] = {'i','t','e','m',0};
+
     TRACE("(%p)->(%ld %p %p %ld %p %p)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent,
             lprcPosRect);
 
     switch (iVerb)
     {
+    case OLEIVERB_SHOW:
     case OLEIVERB_INPLACEACTIVATE: {
         IOleInPlaceSite *inplace;
 
@@ -229,7 +232,8 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
                                          &This->frameinfo);
 
 
-        IOleInPlaceSite_Release(inplace);
+        if(iVerb == OLEIVERB_INPLACEACTIVATE)
+            IOleInPlaceSite_Release(inplace);
 
         SetWindowPos(This->shell_embedding_hwnd, NULL,
                      This->pos_rect.left, This->pos_rect.top,
@@ -244,6 +248,20 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
 
         if(This->frame)
             IOleInPlaceFrame_GetWindow(This->frame, &This->frame_hwnd);
+
+        if(iVerb == OLEIVERB_INPLACEACTIVATE)
+            return S_OK;
+
+        TRACE("OLEIVERB_SHOW\n");
+
+        IOleInPlaceSite_OnUIActivate(inplace);
+        IOleInPlaceSite_Release(inplace);
+
+        IOleInPlaceFrame_SetActiveObject(This->frame, ACTIVEOBJ(This), wszitem);
+
+        /* TODO:
+         * IOleInPlaceFrmae_SetMenu
+         */
 
         return S_OK;
     }
