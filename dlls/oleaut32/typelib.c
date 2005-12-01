@@ -1861,43 +1861,38 @@ MSFT_DoFuncs(TLBContext*     pcx,
 			   recoffset + reclength - ((pFuncRec->nrargs - j - 1)
 					       * sizeof(MSFT_ParameterInfo)));
             }
+        }
 
-            /* parameter is the return value! */
-            if ( paraminfo.Flags & PARAMFLAG_FRETVAL )
+        /* special treatment for dispinterfaces: this makes functions appear
+         * to return their [retval] value when it is really returning an
+         * HRESULT */
+        if ((pTI->TypeAttr.typekind == TKIND_DISPATCH) &&
+            (*pptfd)->funcdesc.elemdescFunc.tdesc.vt == VT_HRESULT)
+        {
+            if (pFuncRec->nrargs &&
+                ((*pptfd)->funcdesc.lprgelemdescParam[pFuncRec->nrargs - 1].u.paramdesc.wParamFlags & PARAMFLAG_FRETVAL))
             {
-                TYPEDESC* lpArgTypeDesc;
-
-                (*pptfd)->funcdesc.elemdescFunc =
-                (*pptfd)->funcdesc.lprgelemdescParam[j];
-
-                lpArgTypeDesc = & ((*pptfd)->funcdesc.elemdescFunc.tdesc) ;
-
-                while ( lpArgTypeDesc != NULL )
+                ELEMDESC *elemdesc = &(*pptfd)->funcdesc.lprgelemdescParam[pFuncRec->nrargs - 1];
+                if (elemdesc->tdesc.vt != VT_PTR)
                 {
-                    switch ( lpArgTypeDesc->vt )
-                    {
-                    case VT_PTR:
-                        lpArgTypeDesc = lpArgTypeDesc->u.lptdesc;
-                        break;
-                    case VT_CARRAY:
-                        lpArgTypeDesc =
-                        & (lpArgTypeDesc->u.lpadesc->tdescElem);
-
-                        break;
-
-                    case VT_USERDEFINED:
-                        MSFT_DoRefType(pcx,
-				       pTI,
-				       lpArgTypeDesc->u.hreftype);
-
-                        lpArgTypeDesc = NULL;
-                        break;
-
-                    default:
-                        lpArgTypeDesc = NULL;
-                    }
+                    ERR_(typelib)("elemdesc should have started with VT_PTR instead of:\n");
+                    if (ERR_ON(typelib))
+                        dump_ELEMDESC(elemdesc);
+                    /* FIXME: return error */
+                    break;
                 }
+ 
+                (*pptfd)->funcdesc.elemdescFunc = *elemdesc;
+ 
+                /* dereference parameter */
+                (*pptfd)->funcdesc.elemdescFunc.tdesc = *elemdesc->tdesc.u.lptdesc;
+ 
+                pFuncRec->nrargs--;
+                (*pptfd)->funcdesc.cParams = pFuncRec->nrargs;
             }
+            else
+                (*pptfd)->funcdesc.elemdescFunc.tdesc.vt = VT_VOID;
+
         }
 
         /* scode is not used: archaic win16 stuff FIXME: right? */
