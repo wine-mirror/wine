@@ -555,6 +555,22 @@ struct MSVCRT__stati64 {
 
 #define MSVCRT_CLOCKS_PER_SEC 1000
 
+/* signals */
+#define MSVCRT_SIGINT   2
+#define MSVCRT_SIGILL   4
+#define MSVCRT_SIGFPE   8
+#define MSVCRT_SIGSEGV  11
+#define MSVCRT_SIGTERM  15
+#define MSVCRT_SIGBREAK 21
+#define MSVCRT_SIGABRT  22
+#define MSVCRT_NSIG     (MSVCRT_SIGABRT + 1)
+
+typedef void (*MSVCRT___sighandler_t)(int);
+
+#define MSVCRT_SIG_DFL ((MSVCRT___sighandler_t)0)
+#define MSVCRT_SIG_IGN ((MSVCRT___sighandler_t)1)
+#define MSVCRT_SIG_ERR ((MSVCRT___sighandler_t)-1)
+
 void           MSVCRT_free(void*);
 void*          MSVCRT_malloc(MSVCRT_size_t);
 void*          MSVCRT_calloc(MSVCRT_size_t,MSVCRT_size_t);

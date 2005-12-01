@@ -48,6 +48,7 @@
 #include "conio.h"
 #include "process.h"
 #include "string.h"
+#include "signal.h"
 #include "time.h"
 #include "locale.h"
 #include "setjmp.h"
@@ -96,6 +97,7 @@ static void test_types(void)
     CHECK_TYPE(_se_translator_function);
     CHECK_TYPE(_beginthread_start_routine_t);
     CHECK_TYPE(_onexit_t);
+    CHECK_TYPE(__sighandler_t);
 }
 
 /************* Checking structs ***************/
@@ -437,6 +439,14 @@ static void test_defines(void)
     CHECK_DEF("_FPCLASS_PD", _FPCLASS_PD, MSVCRT__FPCLASS_PD);
     CHECK_DEF("_FPCLASS_PN", _FPCLASS_PN, MSVCRT__FPCLASS_PN);
     CHECK_DEF("_FPCLASS_PINF", _FPCLASS_PINF, MSVCRT__FPCLASS_PINF);
+    CHECK_DEF("SIGINT", SIGINT, MSVCRT_SIGINT);
+    CHECK_DEF("SIGILL", SIGILL, MSVCRT_SIGILL);
+    CHECK_DEF("SIGFPE", SIGFPE, MSVCRT_SIGFPE);
+    CHECK_DEF("SIGSEGV", SIGSEGV, MSVCRT_SIGSEGV);
+    CHECK_DEF("SIGTERM", SIGTERM, MSVCRT_SIGTERM);
+    CHECK_DEF("SIGBREAK", SIGBREAK, MSVCRT_SIGBREAK);
+    CHECK_DEF("SIGABRT", SIGABRT, MSVCRT_SIGABRT);
+    CHECK_DEF("NSIG", NSIG, MSVCRT_NSIG);
 #ifdef __i386__
     CHECK_DEF("_EM_INVALID", _EM_INVALID, MSVCRT__EM_INVALID);
     CHECK_DEF("_EM_DENORMAL", _EM_DENORMAL, MSVCRT__EM_DENORMAL);
