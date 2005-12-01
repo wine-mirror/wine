@@ -47,6 +47,9 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
     }else if(IsEqualGUID(&IID_IDocHostUIHandler2, riid)) {
         TRACE("(%p)->(IID_IDocHostUIHandler2 %p)\n", This, ppv);
         *ppv = DOCHOSTUI2(This);
+    }else if(IsEqualGUID(&IID_IOleDocumentSite, riid)) {
+        TRACE("(%p)->(IID_IOleDocumentSite %p)\n", This, ppv);
+        *ppv = DOCSITE(This);
     }
 
     if(*ppv) {
@@ -168,15 +171,21 @@ static HRESULT WINAPI InPlaceSite_ContextSensitiveHelp(IOleInPlaceSite *iface, B
 static HRESULT WINAPI InPlaceSite_CanInPlaceActivate(IOleInPlaceSite *iface)
 {
     WebBrowser *This = INPLACESITE_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    /* Nothing to do here */
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceSite_OnInPlaceActivate(IOleInPlaceSite *iface)
 {
     WebBrowser *This = INPLACESITE_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    /* Nothing to do here */
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceSite_OnUIActivate(IOleInPlaceSite *iface)
@@ -197,6 +206,7 @@ static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSite *iface,
 
     *ppFrame = INPLACEFRAME(This);
     *ppDoc = NULL;
+
     GetClientRect(This->doc_view_hwnd, lprcPosRect);
     memcpy(lprcClipRect, lprcPosRect, sizeof(RECT));
 
