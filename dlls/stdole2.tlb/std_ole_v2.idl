@@ -397,21 +397,19 @@ library stdole
      helpcontext(0x2775)
     ]
     module StdFunctions{
-        /* FIXME: widl can't cope with a defaultvalue of an enum parameter yet. */
-        /* 
         [
-         entry(0x60000000),
+         entry("OleLoadPictureFileEx"),
          helpstring("Loads a picture from a file"),
          helpcontext(0x2775)
         ]
         HRESULT LoadPicture([in, optional] VARIANT filename,
                             [in, optional, defaultvalue(0)] int widthDesired,
                             [in, optional, defaultvalue(0)] int heightDesired,
-                            [in, optional, defaultvalue(0)] enum LoadPictureConstants flags,
+                            /* FIXME: widl can't cope with a defaultvalue of an enum parameter yet. */
+                            [in, optional/*, defaultvalue(0)*/] enum LoadPictureConstants flags,
                             [out, retval] IPictureDisp **retval);
-        */
         [
-         entry(0x60000001),
+         entry("OleSavePictureFile"),
          helpstring("Saves a picture to a file"),
          helpcontext(0x2775)
         ]
