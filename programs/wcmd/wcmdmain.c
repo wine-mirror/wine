@@ -789,10 +789,15 @@ void WCMD_output (const char *format, ...) {
 
 va_list ap;
 char string[1024];
+int ret;
 
   va_start(ap,format);
-  vsprintf (string, format, ap);
+  ret = vsnprintf (string, sizeof( string), format, ap);
   va_end(ap);
+  if( ret >= sizeof( string)) {
+       WCMD_output_asis("ERR: output truncated in WCMD_output\n" );
+       string[sizeof( string) -1] = '\0';
+  }
   WCMD_output_asis(string);
 }
 

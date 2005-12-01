@@ -792,8 +792,10 @@ static void WCMD_setshow_sortenv(const char *s)
   qsort( str, count, sizeof (char*), WCMD_compare );
 
   /* print it */
-  for( i=0; i<count; i++ )
-    WCMD_output("%s\n", str[i] );
+  for( i=0; i<count; i++ ) {
+      WCMD_output_asis(str[i]);
+      WCMD_output_asis("\n");
+  }
 
   LocalFree( str );
 }
