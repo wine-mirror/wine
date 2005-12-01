@@ -219,6 +219,7 @@ AC_CHECK_HEADERS(\
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
+	openssl/err.h \
 	openssl/ssl.h \
 	poll.h \
 	process.h \

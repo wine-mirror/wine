@@ -57,7 +57,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
  *    SSL stuff should use crypt32.dll
  */
 
-#ifdef HAVE_OPENSSL_SSL_H
+#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+
+#include <openssl/err.h>
 
 #ifndef SONAME_LIBSSL
 #define SONAME_LIBSSL "libssl.so"
@@ -80,16 +82,22 @@ MAKE_FUNCPTR(SSL_load_error_strings);
 MAKE_FUNCPTR(SSLv23_method);
 MAKE_FUNCPTR(SSL_CTX_new);
 MAKE_FUNCPTR(SSL_new);
-MAKE_FUNCPTR(SSL_set_bio);
+MAKE_FUNCPTR(SSL_free);
+MAKE_FUNCPTR(SSL_set_fd);
 MAKE_FUNCPTR(SSL_connect);
+MAKE_FUNCPTR(SSL_shutdown);
 MAKE_FUNCPTR(SSL_write);
 MAKE_FUNCPTR(SSL_read);
+MAKE_FUNCPTR(SSL_get_verify_result);
+MAKE_FUNCPTR(SSL_get_peer_certificate);
 MAKE_FUNCPTR(SSL_CTX_get_timeout);
 MAKE_FUNCPTR(SSL_CTX_set_timeout);
+MAKE_FUNCPTR(SSL_CTX_set_default_verify_paths);
 
 /* OpenSSL's libcrypto functions that we use */
-MAKE_FUNCPTR(BIO_new_socket);
 MAKE_FUNCPTR(BIO_new_fp);
+MAKE_FUNCPTR(ERR_get_error);
+MAKE_FUNCPTR(ERR_error_string);
 #undef MAKE_FUNCPTR
 
 #endif
@@ -100,7 +108,7 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     connection->socketFD = -1;
     if (useSSL)
     {
-#ifdef HAVE_OPENSSL_SSL_H
+#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
         TRACE("using SSL connection\n");
 	if (OpenSSL_ssl_handle) /* already initilzed everything */
             return;
@@ -136,12 +144,17 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNSSL(SSLv23_method);
 	DYNSSL(SSL_CTX_new);
 	DYNSSL(SSL_new);
-	DYNSSL(SSL_set_bio);
+	DYNSSL(SSL_free);
+	DYNSSL(SSL_set_fd);
 	DYNSSL(SSL_connect);
+	DYNSSL(SSL_shutdown);
 	DYNSSL(SSL_write);
 	DYNSSL(SSL_read);
+	DYNSSL(SSL_get_verify_result);
+	DYNSSL(SSL_get_peer_certificate);
 	DYNSSL(SSL_CTX_get_timeout);
-        DYNSSL(SSL_CTX_set_timeout);
+	DYNSSL(SSL_CTX_set_timeout);
+	DYNSSL(SSL_CTX_set_default_verify_paths);
 #undef DYNSSL
 
 #define DYNCRYPTO(x) \
@@ -153,7 +166,8 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
         return; \
     }
 	DYNCRYPTO(BIO_new_fp);
-	DYNCRYPTO(BIO_new_socket);
+	DYNCRYPTO(ERR_get_error);
+	DYNCRYPTO(ERR_error_string);
 #undef DYNCRYPTO
 
 	pSSL_library_init();
@@ -185,7 +199,7 @@ BOOL NETCON_connected(WININET_NETCONNECTION *connection)
 BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,
 	      int type, int protocol)
 {
-#ifndef HAVE_OPENSSL_SSL_H
+#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
     if (connection->useSSL)
         return FALSE;
 #endif
@@ -206,23 +220,32 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
 
     if (!NETCON_connected(connection)) return FALSE;
 
-    result = closesocket(connection->socketFD);
-    connection->socketFD = -1;
-
-#ifdef HAVE_OPENSSL_SSL_H
+#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
     if (connection->useSSL)
     {
         HeapFree(GetProcessHeap(),0,connection->peek_msg_mem);
         connection->peek_msg = NULL;
         connection->peek_msg_mem = NULL;
-        /* FIXME should we call SSL_shutdown here?? Probably on whatever is the
-         * opposite of NETCON_secure_connect.... */
+
+        pSSL_shutdown(connection->ssl_s);
+        pSSL_free(connection->ssl_s);
+        connection->ssl_s = NULL;
+
         connection->useSSL = FALSE;
     }
 #endif
 
+    result = closesocket(connection->socketFD);
+    connection->socketFD = -1;
+
     if (result == -1)
         return FALSE;
+    return TRUE;
+}
+
+static BOOL check_hostname(X509 *cert, char *hostname)
+{
+    /* FIXME: implement */
     return TRUE;
 }
 
@@ -232,30 +255,93 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
  */
 BOOL NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
 {
-#ifdef HAVE_OPENSSL_SSL_H
-    BIO *sbio;
+#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+    long verify_res;
+    X509 *cert;
+    int len;
+    char *hostname_unix;
 
-    /* nothing to do if we are already connected */
+    /* can't connect if we are already connected */
     if (connection->useSSL)
-        return FALSE;
-
-    ctx = pSSL_CTX_new(meth);
-    connection->ssl_s = pSSL_new(ctx);
-
-    sbio = pBIO_new_socket(connection->socketFD, BIO_NOCLOSE);
-    pSSL_set_bio(connection->ssl_s, sbio, sbio);
-    if (pSSL_connect(connection->ssl_s) <= 0)
     {
-        ERR("ssl couldn't connect\n");
+        ERR("already connected\n");
         return FALSE;
     }
-    /* FIXME: verify the security of the connection and that the
-     * hostname of the certificate matches */
+
+    ctx = pSSL_CTX_new(meth);
+    if (!pSSL_CTX_set_default_verify_paths(ctx))
+    {
+        ERR("SSL_CTX_set_default_verify_paths failed: %s\n",
+            pERR_error_string(pERR_get_error(), 0));
+        return FALSE;
+    }
+    connection->ssl_s = pSSL_new(ctx);
+    if (!connection->ssl_s)
+    {
+        ERR("SSL_new failed: %s\n",
+            pERR_error_string(pERR_get_error(), 0));
+        goto fail;
+    }
+
+    if (!pSSL_set_fd(connection->ssl_s, connection->socketFD))
+    {
+        ERR("SSL_set_fd failed: %s\n",
+            pERR_error_string(pERR_get_error(), 0));
+        goto fail;
+    }
+
+    if (pSSL_connect(connection->ssl_s) <= 0)
+    {
+        ERR("SSL_connect failed: %s\n",
+            pERR_error_string(pERR_get_error(), 0));
+        INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
+        goto fail;
+    }
+    cert = pSSL_get_peer_certificate(connection->ssl_s);
+    if (!cert)
+    {
+        ERR("no certificate for server %s\n", debugstr_w(hostname));
+        /* FIXME: is this the best error? */
+        INTERNET_SetLastError(ERROR_INTERNET_INVALID_CA);
+        goto fail;
+    }
+    verify_res = pSSL_get_verify_result(connection->ssl_s);
+    if (verify_res != X509_V_OK)
+    {
+        ERR("couldn't verify the security of the connection, %ld\n", verify_res);
+        /* FIXME: we should set an error and return, but we only warn at
+         * the moment */
+    }
+
+    len = WideCharToMultiByte(CP_UNIXCP, 0, hostname, -1, NULL, 0, NULL, NULL);
+    hostname_unix = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!hostname_unix)
+    {
+        INTERNET_SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        goto fail;
+    }
+    WideCharToMultiByte(CP_UNIXCP, 0, hostname, -1, hostname_unix, len, NULL, NULL);
+
+    if (!check_hostname(cert, hostname_unix))
+    {
+        HeapFree(GetProcessHeap(), 0, hostname_unix);
+        INTERNET_SetLastError(ERROR_INTERNET_SEC_CERT_CN_INVALID);
+        goto fail;
+    }
+
+    HeapFree(GetProcessHeap(), 0, hostname_unix);
     connection->useSSL = TRUE;
     return TRUE;
-#else
-    return FALSE;
+
+fail:
+    if (connection->ssl_s)
+    {
+        pSSL_shutdown(connection->ssl_s);
+        pSSL_free(connection->ssl_s);
+        connection->ssl_s = NULL;
+    }
 #endif
+    return FALSE;
 }
 
 /******************************************************************************
@@ -298,7 +384,7 @@ BOOL NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len,
     }
     else
     {
-#ifdef HAVE_OPENSSL_SSL_H
+#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
 	if (flags)
             FIXME("SSL_write doesn't support any flags (%08x)\n", flags);
 	*sent = pSSL_write(connection->ssl_s, msg, len);
@@ -329,7 +415,7 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
     }
     else
     {
-#ifdef HAVE_OPENSSL_SSL_H
+#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
 	if (flags & (~MSG_PEEK))
 	    FIXME("SSL_read does not support the following flag: %08x\n", flags);
 
@@ -446,7 +532,7 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
     }
     else
     {
-#ifdef HAVE_OPENSSL_SSL_H
+#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
 	long prev_timeout;
 	DWORD nRecv = 0;
         BOOL success = TRUE;

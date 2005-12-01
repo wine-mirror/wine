@@ -431,6 +431,9 @@
 /* Define if OpenGL is present on the system */
 #undef HAVE_OPENGL
 
+/* Define to 1 if you have the <openssl/err.h> header file. */
+#undef HAVE_OPENSSL_ERR_H
+
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
 #undef HAVE_OPENSSL_SSL_H
 
