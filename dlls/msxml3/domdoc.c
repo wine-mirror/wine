@@ -23,6 +23,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <assert.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -43,6 +44,7 @@ typedef struct _domdoc
     const struct IXMLDOMDocumentVtbl *lpVtbl;
     LONG ref;
     VARIANT_BOOL async;
+    IUnknown *node_unk;
     IXMLDOMNode *node;
 } domdoc;
 
@@ -83,11 +85,14 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument *iface, REFIID riid
     TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppvObject );
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMDocument ) ||
-         IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
-         IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppvObject = iface;
+    }
+    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
+              IsEqualGUID( riid, &IID_IDispatch ) )
+    {
+        return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
     }
     else
         return E_NOINTERFACE;
@@ -118,8 +123,7 @@ static ULONG WINAPI domdoc_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        if ( This->node )
-            IXMLDOMElement_Release( This->node );
+        IUnknown_Release( This->node_unk );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -527,6 +531,8 @@ static HRESULT WINAPI domdoc_get_documentElement(
     domdoc *This = impl_from_IXMLDOMDocument( iface );
     xmlDocPtr xmldoc = NULL;
     xmlNodePtr root = NULL;
+    IXMLDOMNode *element_node;
+    HRESULT hr;
 
     TRACE("%p\n", This);
 
@@ -543,9 +549,13 @@ static HRESULT WINAPI domdoc_get_documentElement(
     if ( !root )
         return S_FALSE;
 
-    *DOMElement = create_element( root );
- 
-    return S_OK;
+    element_node = create_node( root );
+    if(!element_node) return S_FALSE;
+
+    hr = IXMLDOMNode_QueryInterface(element_node, &IID_IXMLDOMElement, (LPVOID*)DOMElement);
+    IXMLDOMNode_Release(element_node);
+
+    return hr;
 }
 
 
@@ -729,11 +739,11 @@ static HRESULT WINAPI domdoc_load(
 
     TRACE("type %d\n", V_VT(&xmlSource) );
 
-    if ( This->node )
-    {
-        IXMLDOMNode_Release( This->node );
-        This->node = NULL;
-    }
+    *isSuccessful = VARIANT_FALSE;
+
+    assert( This->node );
+
+    attach_xmlnode(This->node, NULL);
 
     switch( V_VT(&xmlSource) )
     {
@@ -745,17 +755,10 @@ static HRESULT WINAPI domdoc_load(
         return S_FALSE;
 
     xmldoc = doread( filename );
-    if ( !xmldoc ) {
-        *isSuccessful = VARIANT_FALSE;
-        return S_FALSE;
-    }
+    if ( !xmldoc ) return S_FALSE;
 
-    This->node = create_node( (xmlNodePtr) xmldoc );
-    if ( !This->node )
-    {
-        *isSuccessful = VARIANT_FALSE;
-        return S_FALSE;
-    }
+    xmldoc->_private = 0;
+    attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
 
     *isSuccessful = VARIANT_TRUE;
     return S_OK;
@@ -850,11 +853,9 @@ static HRESULT WINAPI domdoc_loadXML(
 
     TRACE("%p %s %p\n", This, debugstr_w( bstrXML ), isSuccessful );
 
-    if ( This->node )
-    {
-        IXMLDOMNode_Release( This->node );
-        This->node = NULL;
-    }
+    assert ( This->node );
+
+    attach_xmlnode( This->node, NULL );
 
     if ( !isSuccessful )
         return S_FALSE;
@@ -869,10 +870,11 @@ static HRESULT WINAPI domdoc_loadXML(
 
     xmldoc = doparse( str, len );
     HeapFree( GetProcessHeap(), 0, str );
-
-    This->node = create_node( (xmlNodePtr) xmldoc );
-    if( !This->node )
+    if ( !xmldoc )
         return S_FALSE;
+
+    xmldoc->_private = 0;
+    attach_xmlnode( This->node, (xmlNodePtr) xmldoc );
 
     *isSuccessful = VARIANT_TRUE;
     return S_OK;
@@ -1049,6 +1051,9 @@ const struct IXMLDOMDocumentVtbl domdoc_vtbl =
 HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     domdoc *doc;
+    HRESULT hr;
+
+    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
     doc = HeapAlloc( GetProcessHeap(), 0, sizeof (*doc) );
     if( !doc )
@@ -1057,10 +1062,27 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->lpVtbl = &domdoc_vtbl;
     doc->ref = 1;
     doc->async = 0;
-    doc->node = NULL;
+
+    doc->node_unk = create_basic_node( NULL, (IUnknown*)&doc->lpVtbl );
+    if(!doc->node_unk)
+    {
+        HeapFree(GetProcessHeap(), 0, doc);
+        return E_FAIL;
+    }
+
+    hr = IUnknown_QueryInterface(doc->node_unk, &IID_IXMLDOMNode, (LPVOID*)&doc->node);
+    if(FAILED(hr))
+    {
+        IUnknown_Release(doc->node_unk);
+        HeapFree( GetProcessHeap(), 0, doc );
+        return E_FAIL;
+    }
+    /* The ref on doc->node is actually looped back into this object, so release it */
+    IXMLDOMNode_Release(doc->node);
 
     *ppObj = &doc->lpVtbl;
 
+    TRACE("returning iface %p\n", *ppObj);
     return S_OK;
 }
 

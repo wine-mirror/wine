@@ -72,11 +72,6 @@ static const WCHAR szdl[] = { 'd','l',0 };
 static const WCHAR szlc[] = { 'l','c',0 };
 static const WCHAR szbs[] = { 'b','s',0 };
 
-const GUID CLSID_DOMDocument = 
-    { 0x2933BF90, 0x7B36, 0x11d2, {0xB2,0x0E,0x00,0xC0,0x4F,0x98,0x3E,0x60}};
-const GUID IID_IXMLDOMDocument = 
-    { 0x2933BF81, 0x7B36, 0x11d2, {0xB2,0x0E,0x00,0xC0,0x4F,0x98,0x3E,0x60}};
-
 void test_domdoc( void )
 {
     HRESULT r;
@@ -516,6 +511,7 @@ static void test_refs(void)
     IXMLDOMNode *node = NULL, *node2;
     IXMLDOMNodeList *node_list = NULL;
     LONG ref;
+    IUnknown *unk, *unk2;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
@@ -576,8 +572,21 @@ static void test_refs(void)
     todo_wine {
     ok( ref == 3, "ref %ld\n", ref );
     }
-
     IXMLDOMElement_Release( element );
+
+    /* IUnknown must be unique however we obtain it */
+    r = IXMLDOMElement_QueryInterface( element, &IID_IUnknown, (LPVOID*)&unk );
+    ok( r == S_OK, "rets %08lx\n", r );
+    r = IXMLDOMElement_QueryInterface( element, &IID_IXMLDOMNode, (LPVOID*)&node );
+    ok( r == S_OK, "rets %08lx\n", r );
+    r = IXMLDOMNode_QueryInterface( node, &IID_IUnknown, (LPVOID*)&unk2 );
+    ok( r == S_OK, "rets %08lx\n", r );
+    ok( unk == unk2, "unk %p unk2 %p\n", unk, unk2 );
+
+    IUnknown_Release( unk2 );
+    IUnknown_Release( unk );
+    IXMLDOMNode_Release( node );
+
     IXMLDOMElement_Release( element );
 
 }

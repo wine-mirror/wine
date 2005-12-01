@@ -31,10 +31,13 @@
 extern IUnknown         *create_domdoc( void );
 extern IUnknown         *create_xmldoc( void );
 extern IXMLDOMNode      *create_node( xmlNodePtr node );
-extern IXMLDOMElement   *create_element( xmlNodePtr element );
+extern IUnknown         *create_basic_node( xmlNodePtr node, IUnknown *pUnkOuter );
+extern IUnknown         *create_element( xmlNodePtr element );
 extern IXMLDOMNodeList  *create_nodelist( xmlNodePtr node );
 extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );
 extern IXMLDOMNodeList  *create_filtered_nodelist( xmlNodePtr, const xmlChar * );
+
+extern void attach_xmlnode( IXMLDOMNode *node, xmlNodePtr xmlnode );
 
 /* data accessors */
 xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );

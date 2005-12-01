@@ -41,6 +41,7 @@ typedef struct _domelem
 {
     const struct IXMLDOMElementVtbl *lpVtbl;
     LONG ref;
+    IUnknown *node_unk;
     IXMLDOMNode *node;
 } domelem;
 
@@ -59,14 +60,18 @@ static HRESULT WINAPI domelem_QueryInterface(
     REFIID riid,
     void** ppvObject )
 {
-    TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMElement ) ||
-         IsEqualGUID( riid, &IID_IUnknown ) ||
-         IsEqualGUID( riid, &IID_IDispatch ) ||
-         IsEqualGUID( riid, &IID_IXMLDOMNode ) )
+         IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppvObject = iface;
+    }
+    else if ( IsEqualGUID( riid, &IID_IDispatch ) ||
+              IsEqualGUID( riid, &IID_IXMLDOMNode ) )
+    {
+        return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
     }
     else
         return E_NOINTERFACE;
@@ -92,7 +97,7 @@ static ULONG WINAPI domelem_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        IXMLDOMNode_Release( This->node );
+        IUnknown_Release( This->node_unk );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -568,25 +573,36 @@ static const struct IXMLDOMElementVtbl domelem_vtbl =
     domelem_normalize,
 };
 
-IXMLDOMElement* create_element( xmlNodePtr element )
+IUnknown* create_element( xmlNodePtr element )
 {
     domelem *This;
+    HRESULT hr;
 
     This = HeapAlloc( GetProcessHeap(), 0, sizeof *This );
     if ( !This )
         return NULL;
 
     This->lpVtbl = &domelem_vtbl;
-    This->node = create_node( element );
     This->ref = 1;
 
-    if ( !This->node )
+    This->node_unk = create_basic_node( element, (IUnknown*)&This->lpVtbl );
+    if(!This->node_unk)
     {
-        HeapFree( GetProcessHeap(), 0, This );
+        HeapFree(GetProcessHeap(), 0, This);
         return NULL;
     }
 
-    return (IXMLDOMElement*) &This->lpVtbl;
+    hr = IUnknown_QueryInterface(This->node_unk, &IID_IXMLDOMNode, (LPVOID*)&This->node);
+    if(FAILED(hr))
+    {
+        IUnknown_Release(This->node_unk);
+        HeapFree( GetProcessHeap(), 0, This );
+        return NULL;
+    }
+    /* The ref on This->node is actually looped back into this object, so release it */
+    IXMLDOMNode_Release(This->node);
+
+    return (IUnknown*) &This->lpVtbl;
 }
 
 #endif
