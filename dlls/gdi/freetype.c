@@ -3692,9 +3692,15 @@ DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
     }
 
     /* If the FT_Load_Sfnt_Table function is there we'll use it */
-    if(pFT_Load_Sfnt_Table)
+    if(pFT_Load_Sfnt_Table) {
+        /* make sure value of len is the value freetype says it needs */ 
+        if( buf && len) {
+            DWORD needed = 0;
+            err = pFT_Load_Sfnt_Table(ft_face, table, offset, NULL, &needed);
+            if( !err && needed < len) len = needed;
+        }
         err = pFT_Load_Sfnt_Table(ft_face, table, offset, buf, &len);
-    else { /* Do it the hard way */
+    } else { /* Do it the hard way */
         TT_Face tt_face = (TT_Face) ft_face;
         SFNT_Interface *sfnt;
         if (FT_Version.major==2 && FT_Version.minor==0)
@@ -3706,6 +3712,12 @@ DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
         {
             /* A field was added in the middle of the structure in 2.1.x */
             sfnt = *(SFNT_Interface**)((char*)tt_face + 532);
+        }
+        /* make sure value of len is the value freetype says it needs */ 
+        if( buf && len) {
+            DWORD needed = 0;
+            err = sfnt->load_any(tt_face, table, offset, NULL, &needed);
+            if( !err && needed < len) len = needed;
         }
         err = sfnt->load_any(tt_face, table, offset, buf, &len);
     }
