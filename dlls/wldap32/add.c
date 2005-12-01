@@ -81,7 +81,7 @@ exit:
 /***********************************************************************
  *      ldap_addW     (WLDAP32.@)
  *
- * Add entries to a directory tree (asynchronous operation).
+ * Add an entry to a directory tree (asynchronous operation).
  *
  * Parameters
  *  ld      [I] Pointer to an LDAP context.
@@ -189,7 +189,7 @@ exit:
 /***********************************************************************
  *      ldap_add_extW     (WLDAP32.@)
  *
- * Add entries to a directory tree (asynchronous operation).
+ * Add an entry to a directory tree (asynchronous operation).
  *
  * Parameters
  *  ld          [I] Pointer to an LDAP context.
@@ -309,7 +309,7 @@ exit:
 /***********************************************************************
  *      ldap_add_ext_sW     (WLDAP32.@)
  *
- * Add entries to a directory tree (synchronous operation).
+ * Add an entry to a directory tree (synchronous operation).
  *
  * Parameters
  *  ld          [I] Pointer to an LDAP context.
@@ -414,7 +414,7 @@ exit:
 /***********************************************************************
  *      ldap_add_sW     (WLDAP32.@)
  *
- * Add entries to a directory tree (synchronous operation).
+ * Add an entry to a directory tree (synchronous operation).
  *
  * Parameters
  *  ld      [I] Pointer to an LDAP context.

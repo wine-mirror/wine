@@ -40,6 +40,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+/***********************************************************************
+ *      ldap_deleteA     (WLDAP32.@)
+ *
+ * See ldap_deleteW.
+ */
 ULONG ldap_deleteA( WLDAP32_LDAP *ld, PCHAR dn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -62,6 +67,24 @@ ULONG ldap_deleteA( WLDAP32_LDAP *ld, PCHAR dn )
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_deleteW     (WLDAP32.@)
+ *
+ * Delete an entry from a directory tree (asynchronous operation).
+ *
+ * Parameters
+ *  ld      [I] Pointer to an LDAP context.
+ *  dn      [I] DN of the entry to delete.
+ *
+ * RETURNS
+ *  Success: Message ID of the add operation.
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_result with the message ID to get the result of
+ *  the operation. Cancel the operation by calling ldap_abandon
+ *  with the message ID.
+ */
 ULONG ldap_deleteW( WLDAP32_LDAP *ld, PWCHAR dn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -91,6 +114,11 @@ ULONG ldap_deleteW( WLDAP32_LDAP *ld, PWCHAR dn )
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_delete_extA     (WLDAP32.@)
+ *
+ * See ldap_delete_extW.
+ */
 ULONG ldap_delete_extA( WLDAP32_LDAP *ld, PCHAR dn, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, ULONG *message )
 {
@@ -130,6 +158,27 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_delete_extW     (WLDAP32.@)
+ *
+ * Delete an entry from a directory tree (asynchronous operation).
+ *
+ * Parameters
+ *  ld          [I] Pointer to an LDAP context.
+ *  dn          [I] DN of the entry to delete.
+ *  serverctrls [I] Array of LDAP server controls.
+ *  clientctrls [I] Array of LDAP client controls.
+ *  message     [O] Message ID of the delete operation.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_result with the message ID to get the result of
+ *  the operation. The serverctrls and clientctrls parameters are
+ *  optional and should be set to NULL if not used.
+ */
 ULONG ldap_delete_extW( WLDAP32_LDAP *ld, PWCHAR dn, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, ULONG *message )
 {
@@ -171,6 +220,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_delete_ext_sA     (WLDAP32.@)
+ *
+ * See ldap_delete_ext_sW.
+ */
 ULONG ldap_delete_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls )
 {
@@ -208,6 +262,25 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_delete_ext_sW     (WLDAP32.@)
+ *
+ * Delete an entry from a directory tree (synchronous operation).
+ *
+ * Parameters
+ *  ld          [I] Pointer to an LDAP context.
+ *  dn          [I] DN of the entry to delete.
+ *  serverctrls [I] Array of LDAP server controls.
+ *  clientctrls [I] Array of LDAP client controls.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  The serverctrls and clientctrls parameters are optional and
+ *  should be set to NULL if not used.
+ */
 ULONG ldap_delete_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls )
 {
@@ -245,6 +318,11 @@ exit:
     return ret;
 }
  
+/***********************************************************************
+ *      ldap_delete_sA     (WLDAP32.@)
+ *
+ * See ldap_delete_sW.
+ */
 ULONG ldap_delete_sA( WLDAP32_LDAP *ld, PCHAR dn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -267,6 +345,19 @@ ULONG ldap_delete_sA( WLDAP32_LDAP *ld, PCHAR dn )
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_delete_sW     (WLDAP32.@)
+ *
+ * Delete an entry from a directory tree (synchronous operation).
+ *
+ * Parameters
+ *  ld      [I] Pointer to an LDAP context.
+ *  dn      [I] DN of the entry to delete.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ */
 ULONG ldap_delete_sW( WLDAP32_LDAP *ld, PWCHAR dn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
