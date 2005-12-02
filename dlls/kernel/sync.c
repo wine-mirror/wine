@@ -807,6 +807,7 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
     {
         RtlInitUnicodeString( &nameW, name );
         attr.ObjectName = &nameW;
+        attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
     status = NtCreateSemaphore( &ret, SEMAPHORE_ALL_ACCESS, &attr, initial, max );
@@ -858,6 +859,7 @@ HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
     {
         RtlInitUnicodeString( &nameW, name );
         attr.ObjectName = &nameW;
+        attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
     status = NtOpenSemaphore( &ret, access, &attr );

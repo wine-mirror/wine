@@ -85,6 +85,7 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
     {
         req->access  = access;
         req->attributes = (attr) ? attr->Attributes : 0;
+        req->rootdir = attr ? attr->RootDirectory : 0;
         req->initial = InitialCount;
         req->max     = MaximumCount;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
@@ -111,6 +112,7 @@ NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
     {
         req->access  = access;
         req->attributes = (attr) ? attr->Attributes : 0;
+        req->rootdir = attr ? attr->RootDirectory : 0;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
         *SemaphoreHandle = reply->handle;

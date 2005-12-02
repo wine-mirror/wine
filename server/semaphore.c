@@ -63,8 +63,8 @@ static const struct object_ops semaphore_ops =
 };
 
 
-static struct semaphore *create_semaphore( const struct unicode_str *name, unsigned int attr,
-                                           unsigned int initial, unsigned int max )
+static struct semaphore *create_semaphore( struct directory *root, const struct unicode_str *name,
+                                           unsigned int attr, unsigned int initial, unsigned int max )
 {
     struct semaphore *sem;
 
@@ -73,7 +73,7 @@ static struct semaphore *create_semaphore( const struct unicode_str *name, unsig
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
-    if ((sem = create_named_object( sync_namespace, &semaphore_ops, name, attr )))
+    if ((sem = create_named_object_dir( root, name, attr, &semaphore_ops )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -150,24 +150,36 @@ DECL_HANDLER(create_semaphore)
 {
     struct semaphore *sem;
     struct unicode_str name;
+    struct directory *root = NULL;
 
     reply->handle = 0;
     get_req_unicode_str( &name );
-    if ((sem = create_semaphore( &name, req->attributes, req->initial, req->max )))
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    if ((sem = create_semaphore( root, &name, req->attributes, req->initial, req->max )))
     {
         reply->handle = alloc_handle( current->process, sem, req->access,
                                       req->attributes & OBJ_INHERIT );
         release_object( sem );
     }
+
+    if (root) release_object( root );
 }
 
 /* open a handle to a semaphore */
 DECL_HANDLER(open_semaphore)
 {
     struct unicode_str name;
+    struct directory *root = NULL;
 
     get_req_unicode_str( &name );
-    reply->handle = open_object( sync_namespace, &name, &semaphore_ops, req->access, req->attributes );
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    reply->handle = open_object_dir( root, &name, req->attributes, &semaphore_ops, req->access );
+
+    if (root) release_object( root );
 }
 
 /* release a semaphore */
