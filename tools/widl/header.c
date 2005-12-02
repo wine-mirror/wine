@@ -827,17 +827,16 @@ static void write_com_interface(type_t *iface)
   }
   fprintf(header, "#else\n");
   /* C interface */
-  fprintf(header, "typedef struct %sVtbl %sVtbl;\n", iface->name, iface->name);
-  fprintf(header, "interface %s {\n", iface->name);
-  fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
-  fprintf(header, "};\n");
-  fprintf(header, "struct %sVtbl {\n", iface->name);
+  fprintf(header, "typedef struct %sVtbl {\n", iface->name);
   indentation++;
   fprintf(header, "    BEGIN_INTERFACE\n");
   fprintf(header, "\n");
   write_c_method_def(iface);
   indentation--;
   fprintf(header, "    END_INTERFACE\n");
+  fprintf(header, "} %sVtbl;\n", iface->name);
+  fprintf(header, "interface %s {\n", iface->name);
+  fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
   fprintf(header, "};\n");
   fprintf(header, "\n");
   fprintf(header, "#ifdef COBJMACROS\n");
@@ -894,17 +893,16 @@ void write_dispinterface(type_t *iface)
   fprintf(header, "};\n");
   fprintf(header, "#else\n");
   /* C interface */
-  fprintf(header, "typedef struct %sVtbl %sVtbl;\n", iface->name, iface->name);
-  fprintf(header, "interface %s {\n", iface->name);
-  fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
-  fprintf(header, "};\n");
-  fprintf(header, "struct %sVtbl {\n", iface->name);
+  fprintf(header, "typedef struct %sVtbl {\n", iface->name);
   indentation++;
   fprintf(header, "    BEGIN_INTERFACE\n");
   fprintf(header, "\n");
   write_c_disp_method_def(iface);
   indentation--;
   fprintf(header, "    END_INTERFACE\n");
+  fprintf(header, "} %sVtbl;\n", iface->name);
+  fprintf(header, "interface %s {\n", iface->name);
+  fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
   fprintf(header, "};\n");
   fprintf(header, "\n");
   fprintf(header, "#ifdef COBJMACROS\n");
