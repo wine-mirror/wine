@@ -58,6 +58,9 @@ extern HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid,
 /**********************************************************************
  * WebBrowser declaration for SHDOCVW.DLL
  */
+
+typedef struct ConnectionPoint ConnectionPoint;
+
 typedef struct {
     /* Interfaces available via WebBrowser object */
 
@@ -109,9 +112,9 @@ typedef struct {
 
     /* Connection points */
 
-    IConnectionPoint *cp_wbe2;
-    IConnectionPoint *cp_wbe;
-    IConnectionPoint *cp_pns;
+    ConnectionPoint *cp_wbe2;
+    ConnectionPoint *cp_wbe;
+    ConnectionPoint *cp_pns;
 } WebBrowser;
 
 #define WEBBROWSER(x)   ((IWebBrowser*)                 &(x)->lpWebBrowser2Vtbl)
@@ -155,6 +158,7 @@ void WebBrowser_ClientSite_Destroy(WebBrowser*);
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 
 void create_doc_view_hwnd(WebBrowser *This);
+void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
 
 #define WB_WM_NAVIGATE2 (WM_USER+100)
 
