@@ -27,17 +27,13 @@ static ATOM doc_view_atom = 0;
 
 static void navigate_complete(WebBrowser *This)
 {
-    IDispatch *disp, *docdisp = NULL;
+    IDispatch *disp = NULL;
     DISPPARAMS dispparams;
     VARIANTARG params[2];
     VARIANT url;
     HRESULT hres;
 
-    hres = IOleClientSite_QueryInterface(This->client, &IID_IDispatch, (void**)&disp);
-    if(FAILED(hres))
-        return;
-
-    hres = IUnknown_QueryInterface(This->document, &IID_IDispatch, (void**)&docdisp);
+    hres = IUnknown_QueryInterface(This->document, &IID_IDispatch, (void**)&disp);
     if(FAILED(hres))
         FIXME("Could not get IDispatch interface\n");
 
@@ -50,19 +46,16 @@ static void navigate_complete(WebBrowser *This)
     V_BYREF(params) = &url;
 
     V_VT(params+1) = VT_DISPATCH;
-    V_DISPATCH(params+1) = docdisp;
+    V_DISPATCH(params+1) = disp;
 
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = This->url;
 
-    IDispatch_Invoke(disp, DISPID_NAVIGATECOMPLETE2, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                     DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    IDispatch_Invoke(disp, DISPID_DOCUMENTCOMPLETE, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                     DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    call_sink(This->cp_wbe2, DISPID_NAVIGATECOMPLETE2, &dispparams);
+    call_sink(This->cp_wbe2, DISPID_DOCUMENTCOMPLETE, &dispparams);
 
-    IDispatch_Release(disp);
-    if(docdisp)
-        IDispatch_Release(docdisp);
+    if(disp)
+        IDispatch_Release(disp);
 }
 
 static LRESULT navigate2(WebBrowser *This)
