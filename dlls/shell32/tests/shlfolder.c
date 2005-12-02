@@ -368,6 +368,17 @@ static void test_GetDisplayName(void)
         return;
     }
 
+    /* WinXP stores the filenames as both ANSI and UNICODE in the pidls */
+    pidlLast = ILFindLastID(pidlTestFile);
+    todo_wine { 
+        ok( pidlLast->mkid.cb >= 76, "Expected pidl length of at least 76, got %d.\n", 
+            pidlLast->mkid.cb);
+    }
+    if (pidlLast->mkid.cb >= 76) {
+        ok(!lstrcmpW((WCHAR*)&pidlLast->mkid.abID[46], wszFileName),
+            "WinXP stores the filename as a wchar-string at this position!\n");
+    }
+    
     /* It seems as if we cannot bind to regular files on windows, but only directories. 
      */
     hr = IShellFolder_BindToObject(psfDesktop, pidlTestFile, NULL, &IID_IUnknown, (VOID**)&psfFile);
