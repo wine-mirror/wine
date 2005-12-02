@@ -1662,6 +1662,7 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
     {
         req->access      = access;
         req->attributes  = (attr) ? attr->Attributes : 0;
+        req->rootdir     = attr ? attr->RootDirectory : 0;
         req->file_handle = file;
         req->size_high   = size ? size->u.HighPart : 0;
         req->size_low    = size ? size->u.LowPart : 0;
@@ -1690,6 +1691,7 @@ NTSTATUS WINAPI NtOpenSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_
     {
         req->access  = access;
         req->attributes = (attr) ? attr->Attributes : 0;
+        req->rootdir = attr ? attr->RootDirectory : 0;
         wine_server_add_data( req, attr->ObjectName->Buffer, len );
         if (!(ret = wine_server_call( req ))) *handle = reply->handle;
     }

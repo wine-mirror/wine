@@ -1045,6 +1045,7 @@ enum char_info_mode
 @REQ(create_mapping)
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
+    obj_handle_t rootdir;       /* root directory */
     int          size_high;     /* mapping size */
     int          size_low;      /* mapping size */
     int          protect;       /* protection flags (see below) */
@@ -1068,6 +1069,7 @@ enum char_info_mode
 @REQ(open_mapping)
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
+    obj_handle_t rootdir;       /* root directory */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
     obj_handle_t handle;        /* handle to the mapping */

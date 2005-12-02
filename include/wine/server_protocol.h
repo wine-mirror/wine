@@ -1407,6 +1407,7 @@ struct create_mapping_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
+    obj_handle_t rootdir;
     int          size_high;
     int          size_low;
     int          protect;
@@ -1435,6 +1436,7 @@ struct open_mapping_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
+    obj_handle_t rootdir;
     /* VARARG(name,unicode_str); */
 };
 struct open_mapping_reply
@@ -4310,6 +4312,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 204
+#define SERVER_PROTOCOL_VERSION 205
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

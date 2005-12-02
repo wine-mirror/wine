@@ -43,6 +43,8 @@
 #include "excpt.h"
 #include "wine/debug.h"
 
+#include "kernel_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(virtual);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
 
@@ -318,6 +320,7 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
     {
         RtlInitUnicodeString( &nameW, name );
         attr.ObjectName = &nameW;
+        attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
     sec_type = protect & sec_flags;
@@ -406,7 +409,7 @@ HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
         return 0;
     }
     attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
+    attr.RootDirectory = get_BaseNamedObjects_handle();
     attr.ObjectName = &nameW;
     attr.Attributes = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor = NULL;

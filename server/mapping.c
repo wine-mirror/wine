@@ -273,15 +273,16 @@ inline static int get_file_size( struct file *file, file_pos_t *size )
     return 1;
 }
 
-static struct object *create_mapping( const struct unicode_str *name, unsigned int attr,
-                                      file_pos_t size, int protect, obj_handle_t handle )
+static struct object *create_mapping( struct directory *root, const struct unicode_str *name,
+                                      unsigned int attr, file_pos_t size, int protect,
+                                      obj_handle_t handle )
 {
     struct mapping *mapping;
     int access = 0;
 
     if (!page_mask) init_page_size();
 
-    if (!(mapping = create_named_object( sync_namespace, &mapping_ops, name, attr )))
+    if (!(mapping = create_named_object_dir( root, name, attr, &mapping_ops )))
         return NULL;
     if (get_error() == STATUS_OBJECT_NAME_EXISTS)
         return &mapping->obj;  /* Nothing else to do */
@@ -378,25 +379,37 @@ DECL_HANDLER(create_mapping)
 {
     struct object *obj;
     struct unicode_str name;
+    struct directory *root = NULL;
     file_pos_t size = ((file_pos_t)req->size_high << 32) | req->size_low;
 
     reply->handle = 0;
     get_req_unicode_str( &name );
-    if ((obj = create_mapping( &name, req->attributes, size, req->protect, req->file_handle )))
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    if ((obj = create_mapping( root, &name, req->attributes, size, req->protect, req->file_handle )))
     {
         reply->handle = alloc_handle( current->process, obj, req->access,
                                       req->attributes & OBJ_INHERIT );
         release_object( obj );
     }
+
+    if (root) release_object( root );
 }
 
 /* open a handle to a mapping */
 DECL_HANDLER(open_mapping)
 {
     struct unicode_str name;
+    struct directory *root = NULL;
 
     get_req_unicode_str( &name );
-    reply->handle = open_object( sync_namespace, &name, &mapping_ops, req->access, req->attributes );
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    reply->handle = open_object_dir( root, &name, req->attributes, &mapping_ops, req->access );
+
+    if (root) release_object( root );
 }
 
 /* get a mapping information */

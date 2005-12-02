@@ -1448,6 +1448,7 @@ static void dump_create_mapping_request( const struct create_mapping_request *re
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " size_high=%d,", req->size_high );
     fprintf( stderr, " size_low=%d,", req->size_low );
     fprintf( stderr, " protect=%d,", req->protect );
@@ -1465,6 +1466,7 @@ static void dump_open_mapping_request( const struct open_mapping_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
