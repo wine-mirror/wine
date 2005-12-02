@@ -88,6 +88,18 @@ static LRESULT navigate2(WebBrowser *This)
     return 0;
 }
 
+static LRESULT resize_document(WebBrowser *This, LONG width, LONG height)
+{
+    RECT rect = {0, 0, width, height};
+
+    TRACE("(%p)->(%ld %ld)\n", This, width, height);
+
+    if(This->view)
+        IOleDocumentView_SetRect(This->view, &rect);
+
+    return 0;
+}
+
 static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     WebBrowser *This;
@@ -96,13 +108,14 @@ static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
     if(msg == WM_CREATE) {
         This = *(WebBrowser**)lParam;
-        ERR("create %p\n", This);
         SetPropW(hwnd, wszTHIS, This);
     }else {
         This = GetPropW(hwnd, wszTHIS);
     }
 
     switch(msg) {
+    case WM_SIZE:
+        return resize_document(This, LOWORD(lParam), HIWORD(lParam));
     case WB_WM_NAVIGATE2:
         return navigate2(This);
     }
