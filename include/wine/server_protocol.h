@@ -614,6 +614,7 @@ struct create_event_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
+    obj_handle_t rootdir;
     int          manual_reset;
     int          initial_state;
     /* VARARG(name,unicode_str); */
@@ -644,6 +645,7 @@ struct open_event_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
+    obj_handle_t rootdir;
     /* VARARG(name,unicode_str); */
 };
 struct open_event_reply
@@ -659,6 +661,7 @@ struct create_mutex_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
+    obj_handle_t rootdir;
     int          owned;
     /* VARARG(name,unicode_str); */
 };
@@ -688,6 +691,7 @@ struct open_mutex_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
+    obj_handle_t rootdir;
     /* VARARG(name,unicode_str); */
 };
 struct open_mutex_reply
@@ -4302,6 +4306,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 201
+#define SERVER_PROTOCOL_VERSION 202
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

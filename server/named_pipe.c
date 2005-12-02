@@ -402,7 +402,7 @@ static int pipe_server_flush( struct fd *fd, struct event **event )
 
         /* this kind of sux - 
            there's no unix way to be alerted when a pipe becomes empty */
-        server->event = create_event( NULL, 0, 0, 0 );
+        server->event = create_event( NULL, NULL, 0, 0, 0 );
         if (!server->event)
             return 0;
         gettimeofday( &tv, NULL );

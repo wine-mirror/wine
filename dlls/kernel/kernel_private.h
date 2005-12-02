@@ -146,4 +146,7 @@ extern struct winedos_exports
     void (* BiosTick)(WORD timer);
 } winedos;
 
+/* returns directory handle for named objects */
+extern HANDLE get_BaseNamedObjects_handle(void);
+
 #endif

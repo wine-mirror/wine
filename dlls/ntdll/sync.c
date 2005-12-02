@@ -177,6 +177,7 @@ NTSTATUS WINAPI NtCreateEvent(
     {
         req->access = DesiredAccess;
         req->attributes = (attr) ? attr->Attributes : 0;
+        req->rootdir = attr ? attr->RootDirectory : 0;
         req->manual_reset = ManualReset;
         req->initial_state = InitialState;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
@@ -205,6 +206,7 @@ NTSTATUS WINAPI NtOpenEvent(
     {
         req->access  = DesiredAccess;
         req->attributes = (attr) ? attr->Attributes : 0;
+        req->rootdir = attr ? attr->RootDirectory : 0;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
         *EventHandle = reply->handle;
@@ -324,6 +326,7 @@ NTSTATUS WINAPI NtCreateMutant(OUT HANDLE* MutantHandle,
     {
         req->access  = access;
         req->attributes = (attr) ? attr->Attributes : 0;
+        req->rootdir = attr ? attr->RootDirectory : 0;
         req->owned   = InitialOwner;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
@@ -350,6 +353,7 @@ NTSTATUS WINAPI NtOpenMutant(OUT HANDLE* MutantHandle,
     {
         req->access  = access;
         req->attributes = (attr) ? attr->Attributes : 0;
+        req->rootdir = attr ? attr->RootDirectory : 0;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *MutantHandle = reply->handle;

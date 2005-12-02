@@ -66,11 +66,12 @@ static const struct object_ops mutex_ops =
 };
 
 
-static struct mutex *create_mutex( const struct unicode_str *name, unsigned int attr, int owned )
+static struct mutex *create_mutex( struct directory *root, const struct unicode_str *name,
+                                   unsigned int attr, int owned )
 {
     struct mutex *mutex;
 
-    if ((mutex = create_named_object( sync_namespace, &mutex_ops, name, attr )))
+    if ((mutex = create_named_object_dir( root, name, attr, &mutex_ops )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -175,24 +176,36 @@ DECL_HANDLER(create_mutex)
 {
     struct mutex *mutex;
     struct unicode_str name;
+    struct directory *root = NULL;
 
     reply->handle = 0;
     get_req_unicode_str( &name );
-    if ((mutex = create_mutex( &name, req->attributes, req->owned )))
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    if ((mutex = create_mutex( root, &name, req->attributes, req->owned )))
     {
         reply->handle = alloc_handle( current->process, mutex, req->access,
                                       req->attributes & OBJ_INHERIT );
         release_object( mutex );
     }
+
+    if (root) release_object( root );
 }
 
 /* open a handle to a mutex */
 DECL_HANDLER(open_mutex)
 {
     struct unicode_str name;
+    struct directory *root = NULL;
 
     get_req_unicode_str( &name );
-    reply->handle = open_object( sync_namespace, &name, &mutex_ops, req->access, req->attributes );
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    reply->handle = open_object_dir( root, &name, req->attributes, &mutex_ops, req->access );
+
+    if (root) release_object( root );
 }
 
 /* release a mutex */

@@ -233,7 +233,7 @@ static struct object *create_console_input( struct thread* renderer )
     console_input->history_index = 0;
     console_input->history_mode  = 0;
     console_input->edition_mode  = 0;
-    console_input->event         = create_event( NULL, 0, 1, 0 );
+    console_input->event         = create_event( NULL, NULL, 0, 1, 0 );
 
     if (!console_input->history || !console_input->evt)
     {

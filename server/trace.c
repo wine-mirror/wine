@@ -893,6 +893,7 @@ static void dump_create_event_request( const struct create_event_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " manual_reset=%d,", req->manual_reset );
     fprintf( stderr, " initial_state=%d,", req->initial_state );
     fprintf( stderr, " name=" );
@@ -914,6 +915,7 @@ static void dump_open_event_request( const struct open_event_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -927,6 +929,7 @@ static void dump_create_mutex_request( const struct create_mutex_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " owned=%d,", req->owned );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
@@ -951,6 +954,7 @@ static void dump_open_mutex_request( const struct open_mutex_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }

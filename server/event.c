@@ -63,12 +63,12 @@ static const struct object_ops event_ops =
 };
 
 
-struct event *create_event( const struct unicode_str *name, unsigned int attr,
-                            int manual_reset, int initial_state )
+struct event *create_event( struct directory *root, const struct unicode_str *name,
+                            unsigned int attr, int manual_reset, int initial_state )
 {
     struct event *event;
 
-    if ((event = create_named_object( sync_namespace, &event_ops, name, attr )))
+    if ((event = create_named_object_dir( root, name, attr, &event_ops )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -150,24 +150,36 @@ DECL_HANDLER(create_event)
 {
     struct event *event;
     struct unicode_str name;
+    struct directory *root = NULL;
 
     reply->handle = 0;
     get_req_unicode_str( &name );
-    if ((event = create_event( &name, req->attributes, req->manual_reset, req->initial_state )))
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    if ((event = create_event( root, &name, req->attributes, req->manual_reset, req->initial_state )))
     {
         reply->handle = alloc_handle( current->process, event, req->access,
                                       req->attributes & OBJ_INHERIT );
         release_object( event );
     }
+
+    if (root) release_object( root );
 }
 
 /* open a handle to an event */
 DECL_HANDLER(open_event)
 {
     struct unicode_str name;
+    struct directory *root = NULL;
 
     get_req_unicode_str( &name );
-    reply->handle = open_object( sync_namespace, &name, &event_ops, req->access, req->attributes );
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    reply->handle = open_object_dir( root, &name, req->attributes, &event_ops, req->access );
+
+    if (root) release_object( root );
 }
 
 /* do an event operation */

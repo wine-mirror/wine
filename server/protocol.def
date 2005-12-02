@@ -496,6 +496,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
 @REQ(create_event)
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
+    obj_handle_t rootdir;       /* root directory */
     int          manual_reset;  /* manual reset event */
     int          initial_state; /* initial state of the event */
     VARARG(name,unicode_str);   /* object name */
@@ -515,6 +516,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @REQ(open_event)
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
+    obj_handle_t rootdir;       /* root directory */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
     obj_handle_t handle;        /* handle to the event */
@@ -525,6 +527,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @REQ(create_mutex)
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
+    obj_handle_t rootdir;       /* root directory */
     int          owned;         /* initially owned? */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
@@ -544,6 +547,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @REQ(open_mutex)
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
+    obj_handle_t rootdir;       /* root directory */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
     obj_handle_t handle;        /* handle to the mutex */

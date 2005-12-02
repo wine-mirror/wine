@@ -52,6 +52,7 @@
 #include "winnls.h"
 #include "winternl.h"
 #include "winioctl.h"
+#include "ddk/wdm.h"
 
 #include "wine/server.h"
 #include "wine/unicode.h"
@@ -68,6 +69,31 @@ inline static int is_version_nt(void)
     return !(GetVersion() & 0x80000000);
 }
 
+/* returns directory handle to \\BaseNamedObjects */
+HANDLE get_BaseNamedObjects_handle(void)
+{
+    static HANDLE handle = NULL;
+    static const WCHAR basenameW[] =
+        {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',0};
+    UNICODE_STRING str;
+    OBJECT_ATTRIBUTES attr;
+
+    if (!handle)
+    {
+        HANDLE dir;
+
+        RtlInitUnicodeString(&str, basenameW);
+        InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
+        NtOpenDirectoryObject(&dir, DIRECTORY_CREATE_OBJECT|DIRECTORY_TRAVERSE,
+                              &attr);
+        if (InterlockedCompareExchangePointer( (PVOID)&handle, dir, 0 ) != 0)
+        {
+            /* someone beat us here... */
+            CloseHandle( dir );
+        }
+    }
+    return handle;
+}
 
 /***********************************************************************
  *              Sleep  (KERNEL32.@)
@@ -454,6 +480,7 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
     {
         RtlInitUnicodeString( &nameW, name );
         attr.ObjectName = &nameW;
+        attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
     status = NtCreateEvent( &ret, EVENT_ALL_ACCESS, &attr, manual_reset, initial_state );
@@ -514,6 +541,7 @@ HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
     {
         RtlInitUnicodeString( &nameW, name );
         attr.ObjectName = &nameW;
+        attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
     status = NtOpenEvent( &ret, access, &attr );
@@ -652,6 +680,7 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
     {
         RtlInitUnicodeString( &nameW, name );
         attr.ObjectName = &nameW;
+        attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
     status = NtCreateMutant( &ret, MUTEX_ALL_ACCESS, &attr, owner );
@@ -703,6 +732,7 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
     {
         RtlInitUnicodeString( &nameW, name );
         attr.ObjectName = &nameW;
+        attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
     status = NtOpenMutant( &ret, access, &attr );

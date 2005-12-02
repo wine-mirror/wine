@@ -90,7 +90,7 @@ void test_case_sensitive (void)
 
     attr.Attributes = 0;
     status = pNtCreateMutant(&Mutant, GENERIC_ALL, &attr, FALSE);
-    todo_wine ok(status == STATUS_OBJECT_PATH_NOT_FOUND,
+    ok(status == STATUS_OBJECT_PATH_NOT_FOUND,
         "NtCreateMutant should have failed with STATUS_OBJECT_PATH_NOT_FOUND got(%08lx)\n", status);
 
     pNtClose(Event);
@@ -191,13 +191,13 @@ static void test_name_collisions(void)
     DIR_TEST_CREATE_FAILURE(&h, STATUS_OBJECT_NAME_EXISTS)
     pNtClose(h);
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
-    todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH,
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH,
         "NtCreateMutant should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08lx)\n", status);
     pRtlFreeUnicodeString(&str);
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\??\\PIPE\\om.c-mutant");
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
-    todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_OBJECT_PATH_NOT_FOUND,
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_OBJECT_PATH_NOT_FOUND,
         "NtCreateMutant should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08lx)\n", status);
     pRtlFreeUnicodeString(&str);
 
@@ -420,18 +420,18 @@ void test_directory(void)
     /* Test inavalid paths */
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\om.c-mutant");
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
-    todo_wine ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD,
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD,
         "NtCreateMutant should have failed with STATUS_OBJECT_PATH_SYNTAX_BAD got(%08lx)\n", status);
     pRtlFreeUnicodeString(&str);
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\om.c-mutant\\");
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
-    todo_wine ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD,
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD,
         "NtCreateMutant should have failed with STATUS_OBJECT_PATH_SYNTAX_BAD got(%08lx)\n", status);
     pRtlFreeUnicodeString(&str);
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "om.c\\-mutant");
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
-    todo_wine ok(status == STATUS_OBJECT_PATH_NOT_FOUND,
+    ok(status == STATUS_OBJECT_PATH_NOT_FOUND,
         "NtCreateMutant should have failed with STATUS_OBJECT_PATH_NOT_FOUND got(%08lx)\n", status);
     pRtlFreeUnicodeString(&str);
 
