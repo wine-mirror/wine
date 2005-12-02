@@ -183,6 +183,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 			     const PIXELFORMATDESCRIPTOR *ppfd) {
   int att_list[64];
   int att_pos = 0;
+  int att_pos_fac = 0;
   GLXFBConfig* cfgs = NULL;
   int ret = 0;
 
@@ -204,22 +205,24 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   }
 
   /* Now, build the request to GLX */
-  TEST_AND_ADD2(ppfd->dwFlags & PFD_DOUBLEBUFFER, GLX_DOUBLEBUFFER, TRUE);
-  TEST_AND_ADD1(ppfd->dwFlags & PFD_STEREO, GLX_STEREO);
   
   if (ppfd->iPixelType == PFD_TYPE_COLORINDEX) {
     ADD2(GLX_BUFFER_SIZE, ppfd->cColorBits);
   }  
   if (ppfd->iPixelType == PFD_TYPE_RGBA) {
     ADD2(GLX_RENDER_TYPE, GLX_RGBA_BIT);
-    if (32 == ppfd->cDepthBits) {
-      /**
-       * for 32 bpp depth buffers force to use 24.
-       * needed as some drivers don't support 32bpp
-       */
-      TEST_AND_ADD2(ppfd->cDepthBits, GLX_DEPTH_SIZE, 24);
+    if (ppfd->dwFlags & PFD_DEPTH_DONTCARE) {
+      ADD2(GLX_DEPTH_SIZE, GLX_DONT_CARE);
     } else {
-      TEST_AND_ADD2(ppfd->cDepthBits, GLX_DEPTH_SIZE, ppfd->cDepthBits);
+      if (32 == ppfd->cDepthBits) {
+	/**
+	 * for 32 bpp depth buffers force to use 24.
+	 * needed as some drivers don't support 32bpp
+	 */
+	TEST_AND_ADD2(ppfd->cDepthBits, GLX_DEPTH_SIZE, 24);
+      } else {
+	TEST_AND_ADD2(ppfd->cDepthBits, GLX_DEPTH_SIZE, ppfd->cDepthBits);
+      }
     }
     if (32 == ppfd->cColorBits) {
       ADD2(GLX_RED_SIZE,   8);
@@ -237,6 +240,21 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   /* These flags are not supported yet...
   ADD2(GLX_ACCUM_SIZE, ppfd->cAccumBits);
   */
+
+  /** facultative flags now */
+  att_pos_fac = att_pos;
+  if (ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) {
+    ADD2(GLX_DOUBLEBUFFER, GLX_DONT_CARE);
+  } else {
+    ADD2(GLX_DOUBLEBUFFER, (ppfd->dwFlags & PFD_DOUBLEBUFFER) ? TRUE : FALSE);
+  }
+  if (ppfd->dwFlags & PFD_STEREO_DONTCARE) {
+    ADD2(GLX_STEREO, GLX_DONT_CARE);
+  } else {
+    ADD2(GLX_STEREO, (ppfd->dwFlags & PFD_STEREO) ? TRUE : FALSE);
+  }
+  
+  /** Attributes List End */
   att_list[att_pos] = None;
 
   wine_tsx11_lock(); 
@@ -251,6 +269,17 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     UINT it_fmt;
 
     cfgs = pglXChooseFBConfig(gdi_display, DefaultScreen(gdi_display), att_list, &nCfgs); 
+    /** 
+     * if we have facultative flags and we failed, try without 
+     *  as MSDN said
+     *
+     * see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/opengl/ntopnglr_2qb8.asp
+     */
+    if ((NULL == cfgs || 0 == nCfgs) && att_pos > att_pos_fac) {
+      att_list[att_pos_fac] = None;
+      cfgs = pglXChooseFBConfig(gdi_display, DefaultScreen(gdi_display), att_list, &nCfgs); 
+    }
+
     if (NULL == cfgs || 0 == nCfgs) {
       ERR("glXChooseFBConfig returns NULL (glError: %d)\n", pglGetError());
       ret = 0;
