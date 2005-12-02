@@ -480,8 +480,8 @@ ULONG ldap_free_controlsW(LDAPControlW**);
 PCHAR ldap_get_dnA(LDAP*,LDAPMessage*);
 PWCHAR ldap_get_dnW(LDAP*,LDAPMessage*);
 #define    ldap_get_dn WINELIB_NAME_AW(ldap_get_dn)
-ULONG ldap_get_next_page(LDAP*,PLDAPSearch,ULONG,ULONG*);
-ULONG ldap_get_next_page_s(LDAP*,PLDAPSearch,struct l_timeval*,ULONG,ULONG*,LDAPMessage**);
+ULONG ldap_get_next_page(PLDAP,PLDAPSearch,ULONG,ULONG*);
+ULONG ldap_get_next_page_s(PLDAP,PLDAPSearch,struct l_timeval*,ULONG,ULONG*,LDAPMessage**);
 ULONG ldap_get_optionA(LDAP*,int,void*);
 ULONG ldap_get_optionW(LDAP*,int,void*);
 #define    ldap_get_option WINELIB_NAME_AW(ldap_get_option)
@@ -546,8 +546,8 @@ ULONG ldap_parse_resultW(LDAP*,LDAPMessage*,ULONG*,PWCHAR*,PWCHAR*,PWCHAR**,PLDA
 ULONG ldap_parse_sort_controlA(LDAP*,PLDAPControlA*,ULONG*,PCHAR*);
 ULONG ldap_parse_sort_controlW(LDAP*,PLDAPControlW*,ULONG*,PWCHAR*);
 #define    ldap_parse_sort_control WINELIB_NAME_AW(ldap_parse_sort_control)
-int ldap_parse_vlv_controlA(LDAP*,PLDAPControlA*,unsigned long*,unsigned long*,struct berval**,int*);
-int ldap_parse_vlv_controlW(LDAP*,PLDAPControlW*,unsigned long*,unsigned long*,struct berval**,int*);
+INT ldap_parse_vlv_controlA(PLDAP,PLDAPControlA*,PULONG,PULONG,PBERVAL*,PINT);
+INT ldap_parse_vlv_controlW(PLDAP,PLDAPControlW*,PULONG,PULONG,PBERVAL*,PINT);
 #define    ldap_parse_vlv_control WINELIB_NAME_AW(ldap_parse_vlv_control)
 void ldap_perror(LDAP*,const PCHAR);
 ULONG ldap_rename_extA(LDAP*,PCHAR,PCHAR,PCHAR,INT,PLDAPControlA*,PLDAPControlA*,ULONG*);

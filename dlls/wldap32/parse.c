@@ -262,9 +262,9 @@ ULONG ldap_parse_sort_controlW( WLDAP32_LDAP *ld, PLDAPControlW *control,
     return ret;
 }
 
-int ldap_parse_vlv_controlA( WLDAP32_LDAP *ld, LDAPControlA **control,
-    unsigned long *targetpos, unsigned long *listcount,
-    struct WLDAP32_berval **context, int *errcode )
+INT ldap_parse_vlv_controlA( WLDAP32_LDAP *ld, PLDAPControlA *control,
+    PULONG targetpos, PULONG listcount,
+    struct WLDAP32_berval **context, PINT errcode )
 {
     int ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -289,9 +289,9 @@ int ldap_parse_vlv_controlA( WLDAP32_LDAP *ld, LDAPControlA **control,
     return ret;
 }
 
-int ldap_parse_vlv_controlW( WLDAP32_LDAP *ld, LDAPControlW **control,
-    unsigned long *targetpos, unsigned long *listcount,
-    struct WLDAP32_berval **context, int *errcode )
+INT ldap_parse_vlv_controlW( WLDAP32_LDAP *ld, PLDAPControlW *control,
+    PULONG targetpos, PULONG listcount,
+    struct WLDAP32_berval **context, PINT errcode )
 {
     int ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
