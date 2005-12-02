@@ -31,8 +31,33 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static ATOM shell_embedding_atom = 0;
 
+static LRESULT resize_window(WebBrowser *This, LONG width, LONG height)
+{
+    if(This->doc_view_hwnd)
+        SetWindowPos(This->doc_view_hwnd, NULL, 0, 0, width, height,
+                     SWP_NOZORDER | SWP_NOACTIVATE);
+
+    return 0;
+}
+
 static LRESULT WINAPI shell_embedding_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    WebBrowser *This;
+
+    static const WCHAR wszTHIS[] = {'T','H','I','S',0};
+
+    if(msg == WM_CREATE) {
+        This = *(WebBrowser**)lParam;
+        SetPropW(hwnd, wszTHIS, This);
+    }else {
+        This = GetPropW(hwnd, wszTHIS);
+    }
+
+    switch(msg) {
+    case WM_SIZE:
+        return resize_window(This, LOWORD(lParam), HIWORD(lParam));
+    }
+
     return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
@@ -477,8 +502,8 @@ static HRESULT WINAPI OleInPlaceObject_SetObjectRects(IOleInPlaceObject *iface,
     if(This->shell_embedding_hwnd) {
         SetWindowPos(This->shell_embedding_hwnd, NULL,
                      lprcPosRect->left, lprcPosRect->top,
-                     lprcPosRect->bottom-lprcPosRect->top,
                      lprcPosRect->right-lprcPosRect->left,
+                     lprcPosRect->bottom-lprcPosRect->top,
                      SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
