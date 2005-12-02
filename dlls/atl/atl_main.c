@@ -174,10 +174,10 @@ HRESULT WINAPI AtlModuleUnregisterServerEx(_ATL_MODULEA* pM, BOOL bUnRegTypeLib,
  *  TRUE or FALSE
  */
 
-HRESULT WINAPI AtlAxWinInit(void)
+BOOL WINAPI AtlAxWinInit(void)
 {
     FIXME("Try use native atl.dll if possible\n");
-    return E_FAIL;
+    return FALSE;
 }
 
 
