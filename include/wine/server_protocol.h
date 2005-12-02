@@ -1885,6 +1885,7 @@ struct create_timer_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
+    obj_handle_t rootdir;
     int          manual;
     /* VARARG(name,unicode_str); */
 };
@@ -1901,6 +1902,7 @@ struct open_timer_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
+    obj_handle_t rootdir;
     /* VARARG(name,unicode_str); */
 };
 struct open_timer_reply
@@ -4308,6 +4310,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 203
+#define SERVER_PROTOCOL_VERSION 204
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

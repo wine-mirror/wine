@@ -422,6 +422,7 @@ NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
     {
         req->access  = access;
         req->attributes = (attr) ? attr->Attributes : 0;
+        req->rootdir = attr ? attr->RootDirectory : 0;
         req->manual  = (timer_type == NotificationTimer) ? TRUE : FALSE;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
@@ -449,6 +450,7 @@ NTSTATUS WINAPI NtOpenTimer(OUT PHANDLE handle,
     {
         req->access  = access;
         req->attributes = (attr) ? attr->Attributes : 0;
+        req->rootdir = attr ? attr->RootDirectory : 0;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *handle = reply->handle;

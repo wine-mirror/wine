@@ -1798,6 +1798,7 @@ static void dump_create_timer_request( const struct create_timer_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " manual=%d,", req->manual );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
@@ -1812,6 +1813,7 @@ static void dump_open_timer_request( const struct open_timer_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }

@@ -927,6 +927,7 @@ HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWST
     {
         RtlInitUnicodeString( &nameW, name );
         attr.ObjectName = &nameW;
+        attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
     status = NtCreateTimer(&handle, TIMER_ALL_ACCESS, &attr,
@@ -979,6 +980,7 @@ HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
     {
         RtlInitUnicodeString( &nameW, name );
         attr.ObjectName = &nameW;
+        attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
     status = NtOpenTimer(&handle, access, &attr);
