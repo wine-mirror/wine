@@ -105,9 +105,7 @@ MD5_CTX *
 PACCESS_MASK
 PACL
 PACL *
-PACTRL_ACCESSA *
 PACTRL_ACCESSW *
-PACTRL_AUDITA *
 PACTRL_AUDITW *
 PBOOL
 PDWORD
@@ -2263,8 +2261,8 @@ REFCLSID
 %long
 
 HDRVR
-LRESULT
 LPARAM
+LRESULT
 UINT
 
 %long --pointer
@@ -2320,6 +2318,7 @@ unsigned __int64
 
 EXCEPTION_REGISTRATION_RECORD *
 EXCEPTION_REGISTRATION_RECORD **
+MSVCRT___sighandler_t
 MSVCRT__beginthread_start_routine_t
 MSVCRT__beginthreadex_start_routine_t
 MSVCRT__onexit_t
@@ -2372,7 +2371,6 @@ unsigned long *
 va_list
 void (*)(void)
 void *
-__sighandler_t
 
 %str
 
