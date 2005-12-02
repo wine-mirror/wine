@@ -320,19 +320,19 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
 
     if (0 == This->resource.usage || This->resource.usage & D3DUSAGE_DYNAMIC) {
         /* classic surface  TODO: non 2d surfaces?
-        Thease resources may be POOL_SYSTEMMEM, so they must not access the device */
+        These resources may be POOL_SYSTEMMEM, so they must not access the device */
         TRACE("locking an ordinarary surface\n");
-        /* Check to see if memory has already been allocated fro the sufrace*/
+        /* Check to see if memory has already been allocated from the surface*/
         if (NULL == This->resource.allocatedMemory) { /* TODO: check to see if an update has been performed on the surface (an update could just clobber allocatedMemory */
-            /* Non-systemmemory surfaces */
+            /* Non-system memory surfaces */
 
-            /*Surface has no memory currently allocate to it!*/
+            /*Surface has no memory currently allocated to it!*/
             TRACE("(%p) Locking rect\n" , This);
             This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->pow2Size);
             if (0 != This->glDescription.textureName) {
                 /* Now I have to copy thing bits back */
-                This->activeLock = TRUE; /* When this flag is set to true, laoding the surface again won't free THis->resource.allocatedMemory */
-                /* TODO: make activeLock a bit more intelegent, maybe implement a method to purge the texture memory. */
+                This->activeLock = TRUE; /* When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory */
+                /* TODO: make activeLock a bit more intelligent, maybe implement a method to purge the texture memory. */
                 ENTER_GL();
     
                 /* Make sure that the texture is loaded */

@@ -333,7 +333,7 @@ unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(unsigned long *pFlags, unsigned
 
             size = *(ULONG *)pBuffer;
             pBuffer += sizeof(ULONG);
-            /* redunancy is bad - it means you have to check consistancy like
+            /* redundancy is bad - it means you have to check consistency like
              * this: */
             if (*(ULONG *)pBuffer != handle)
             {
@@ -341,7 +341,7 @@ unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(unsigned long *pFlags, unsigned
                 return pBuffer;
             }
             pBuffer += sizeof(ULONG);
-            /* redunancy is bad - it means you have to check consistancy like
+            /* redundancy is bad - it means you have to check consistency like
              * this: */
             if (*(ULONG *)pBuffer != size)
             {

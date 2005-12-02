@@ -75,7 +75,7 @@ my %options_long = (
     "calling-convention-win16" => { default => 0, parent => "calling-convention", description => "calling convention checking (Win16)" },
     "calling-convention-win32" => { default => 1, parent => "calling-convention", description => "calling convention checking (Win32)" },
     "misplaced" => { default => 1, parent => "local", description => "check for misplaced functions" },
-    "statements"  => { default => 0, parent => "local", description => "check for statements inconsistances" },
+    "statements"  => { default => 0, parent => "local", description => "check for statements inconsistencies" },
     "cross-call" => { default => 0, parent => ["statements", "win16", "win32"],  description => "check for cross calling functions" },
     "cross-call-win32-win16" => {
 	default => 0, parent => "cross-call", description => "check for cross calls between win32 and win16"
@@ -83,7 +83,7 @@ my %options_long = (
     "cross-call-unicode-ascii" => {
 	default => 0, parent => "cross-call", description => "check for cross calls between Unicode and ASCII"
     },
-    "debug-messages" => { default => 0, parent => "statements", description => "check for debug messages inconsistances" },
+    "debug-messages" => { default => 0, parent => "statements", description => "check for debug messages inconsistencies" },
 
     "comments" => {
 	default => 1,
@@ -99,36 +99,36 @@ my %options_long = (
     "documentation" => {
 	default => 1,
 	parent => "local",
-	description => "check for documentation inconsistances"
+	description => "check for documentation inconsistencies"
 	},
     "documentation-pedantic" => {
 	default => 0,
 	parent => "documentation",
-	description => "be pendantic when checking for documentation inconsistances"
+	description => "be pendantic when checking for documentation inconsistencies"
 	},
 
     "documentation-arguments" => {
 	default => 1,
 	parent => "documentation",
-	description => "check for arguments documentation inconsistances\n"
+	description => "check for arguments documentation inconsistencies\n"
 	},
     "documentation-comment-indent" => {
 	default => 0,
-	parent => "documentation", description => "check for documentation comment indent inconsistances"
+	parent => "documentation", description => "check for documentation comment indent inconsistencies"
 	},
     "documentation-comment-width" => {
 	default => 0,
-	parent => "documentation", description => "check for documentation comment width inconsistances"
+	parent => "documentation", description => "check for documentation comment width inconsistencies"
 	},
     "documentation-name" => {
 	default => 1,
 	parent => "documentation",
-	description => "check for documentation name inconsistances\n"
+	description => "check for documentation name inconsistencies\n"
 	},
     "documentation-ordinal" => {
 	default => 1,
 	parent => "documentation",
-	description => "check for documentation ordinal inconsistances\n"
+	description => "check for documentation ordinal inconsistencies\n"
 	},
     "documentation-wrong" => {
 	default => 1,

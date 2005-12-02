@@ -70,7 +70,7 @@ if($options->spec_files || $options->winetest) {
 	while($lookahead || defined($_ = <IN>)) {
 	    $lookahead = 0;
 
-	    s/^\s*?(.*?)\s*$/$1/; # remove whitespace at begining and end of line
+	    s/^\s*?(.*?)\s*$/$1/; # remove whitespace at beginning and end of line
 	    s/^(.*?)\s*#.*$/$1/;  # remove comments
 	    /^$/ && next;         # skip empty lines
 

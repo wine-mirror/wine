@@ -3243,7 +3243,7 @@ BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
  * RETURNS
  *   Success: TRUE  and in pcbNeeded the Bytes used in pDriverDirectory
  *   Failure: FALSE and in pcbNeeded the Bytes required for pDriverDirectory,
- *   if cbBuf is to small
+ *   if cbBuf is too small
  * 
  *   Native Values returned in pDriverDirectory on Success:
  *|  NT(Windows NT x86):  "%winsysdir%\\spool\\DRIVERS\\w32x86" 
