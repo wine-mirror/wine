@@ -827,7 +827,10 @@ char buffer[1048];
        */
       status = GetEnvironmentVariable(s, buffer, sizeof(buffer));
       if (status) {
-        WCMD_output("%s=%s\n", s, buffer);
+        WCMD_output_asis( s);
+        WCMD_output_asis( "=");
+        WCMD_output_asis( buffer);
+        WCMD_output_asis( "\n");
       } else {
         WCMD_output ("Environment variable %s not defined\n", s);
       }
@@ -856,7 +859,9 @@ DWORD status;
   if (strlen(param1) == 0) {
     status = GetEnvironmentVariable ("PATH", string, sizeof(string));
     if (status != 0) {
-      WCMD_output ("PATH=%s\n", string);
+      WCMD_output_asis ( "PATH=");
+      WCMD_output_asis ( string);
+      WCMD_output_asis ( "\n");
     }
     else {
       WCMD_output ("PATH not found\n");

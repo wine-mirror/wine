@@ -698,7 +698,7 @@ char *p, *q;
       *q = '\0';
     }
   }
-  WCMD_output (out_string);
+  WCMD_output_asis (out_string);
 }
 
 /****************************************************************************
@@ -720,9 +720,9 @@ int status;
 			error_code, GetLastError());
     return;
   }
-  WCMD_output (lpMsgBuf);
+  WCMD_output_asis (lpMsgBuf);
   LocalFree ((HLOCAL)lpMsgBuf);
-  WCMD_output (newline);
+  WCMD_output_asis (newline);
   return;
 }
 

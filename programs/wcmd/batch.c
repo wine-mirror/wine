@@ -94,7 +94,9 @@ BATCH_CONTEXT *prev_context;
 
   while (WCMD_fgets (string, sizeof(string), h)) {
     if (strlen(string) == MAXSTRING -1)
-      WCMD_output("Line in Batch processing possible truncated. Using:\n%s\n",string);
+      WCMD_output_asis( "Line in Batch processing possible truncated. Using:\n");
+      WCMD_output_asis( string);
+      WCMD_output_asis( "\n");
     if (string[0] != ':') {                      /* Skip over labels */
       WCMD_batch_command (string);
     }
@@ -179,7 +181,8 @@ int i;
   /* Show prompt before batch line IF echo is on */
   if (echo_mode && (line[0] != '@')) {
     WCMD_show_prompt();
-    WCMD_output ("%s\n", cmd2);
+    WCMD_output_asis ( cmd2);
+    WCMD_output_asis ( "\n");
   }
 
   WCMD_process_command (cmd2);
