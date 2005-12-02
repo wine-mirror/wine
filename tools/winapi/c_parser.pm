@@ -1110,7 +1110,7 @@ sub parse_c_file($$$$) {
 	    $declaration .= $&;
 
 	    if($declaration =~ /^typedef/s ||
-	       $declaration =~ /^(?:const\s+|extern\s+|static\s+|volatile\s+)*(?:struct|union)(?:\s+\w+)?\s*\{/s)
+	       $declaration =~ /^(?:const\s+|extern\s+|static\s+|volatile\s+)*(?:interface|struct|union)(?:\s+\w+)?\s*\{/s)
 	    {
 		# Nothing
 	    } elsif($plevel == 1 && $blevel == 1) {
@@ -1128,7 +1128,7 @@ sub parse_c_file($$$$) {
 	    $declaration .= $&;
 	    if(0 && $blevel == 1 &&
 	       $declaration !~ /^typedef/ &&
-	       $declaration !~ /^(?:const\s+|extern\s+|static\s+|volatile\s+)?(?:struct|union)(?:\s+\w+)?\s*\{/s &&
+	       $declaration !~ /^(?:const\s+|extern\s+|static\s+|volatile\s+)?(?:interface|struct|union)(?:\s+\w+)?\s*\{/s &&
 	       $declaration =~ /^(?:\w+(?:\s*\*)*\s+)*(\w+)\s*\(\s*(?:(?:\w+\s*,\s*)*(\w+))?\s*\)\s*(.*?);$/s &&
 	       $1 ne "ICOM_VTABLE" && defined($2) && $2 ne "void" && $3) # K&R
 	    {
@@ -1617,7 +1617,7 @@ sub parse_c_struct_union($$$$$$$$$) {
 
     $self->_parse_c_until_one_of("\\S", \$_, \$line, \$column);
 
-    if (!s/^(struct\s+|union\s+)((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
+    if (!s/^(interface\s+|struct\s+|union\s+)((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
 	return 0;
     }
     $kind = $1;
@@ -1787,7 +1787,7 @@ sub parse_c_type($$$$$) {
 	# Nothing
     } elsif($self->_parse_c('ICOM_VTABLE\(.*?\)', \$_, \$line, \$column, \$type)) {
 	# Nothing
-    } elsif($self->_parse_c('(?:enum\s+|struct\s+|union\s+)?(?:(?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)\s*(\*\s*)*',
+    } elsif($self->_parse_c('(?:enum\s+|interface\s+|struct\s+|union\s+)?(?:(?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)\s*(\*\s*)*',
 			    \$_, \$line, \$column, \$type))
     {
 	# Nothing
@@ -1986,7 +1986,7 @@ sub parse_c_variable($$$$$$$) {
 	# Nothing
     } elsif(/^$/) {
 	return 0;
-    } elsif (s/^(enum\s+|struct\s+|union\s+)((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
+    } elsif (s/^(enum\s+|interface\s+|struct\s+|union\s+)((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
 	my $kind = $1;
 	my $_name = $2;
 	$self->_update_c_position($&, \$line, \$column);
@@ -1998,7 +1998,7 @@ sub parse_c_variable($$$$$$$) {
 	}
 
 	$finished = 1;
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\b(?:\s+DECLSPEC_ALIGN\(.*?\)|\s*(?:const\s*|volatile\s*)?\*)*)\s*(\w+)\s*(\[.*?\]$|:\s*(\d+)$|\{)?//s) {
+    } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+\b(?:\s+DECLSPEC_ALIGN\(.*?\)|\s*(?:const\s*|volatile\s*)?\*)*)\s*(\w+)\s*(\[.*?\]$|:\s*(\d+)$|\{)?//s) {
 	$type = "$sign$1";
 	$name = $2;
 
@@ -2017,13 +2017,13 @@ sub parse_c_variable($$$$$$$) {
 	$type = $self->_format_c_type($type);
 
 	$finished = 1;
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*)\s*:\s*(\d+)$//s) {
+    } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*)\s*:\s*(\d+)$//s) {
 	$type = "$sign$1:$2";
 	$name = "";
 	$type = $self->_format_c_type($type);
 
 	$finished = 1;
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*\s*\(\s*(?:$CALL_CONVENTION)?(?:\s*\*)*)\s*(\w+)\s*(\)\s*\(.*?\))$//s) {
+    } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*\s*\(\s*(?:$CALL_CONVENTION)?(?:\s*\*)*)\s*(\w+)\s*(\)\s*\(.*?\))$//s) {
 	$type = $self->_format_c_type("$sign$1$3");
 	$name = $2;
 
@@ -2049,7 +2049,7 @@ sub parse_c_variable($$$$$$$) {
     } elsif($self->_parse_c('(?:struct\s+)?ICOM_VTABLE\s*\(\w+\)', \$_, \$line, \$column, \$match)) {
 	$type = $match;
 	$finished = 1;
-    } elsif(s/^(enum|struct|union)(?:\s+(\w+))?\s*\{.*?\}\s*//s) {
+    } elsif(s/^(enum|interface|struct|union)(?:\s+(\w+))?\s*\{.*?\}\s*//s) {
 	my $kind = $1;
 	my $_name = $2;
 	$self->_update_c_position($&, \$line, \$column);
@@ -2059,7 +2059,7 @@ sub parse_c_variable($$$$$$$) {
 	} else {
 	    $type = "struct { }";
 	}
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+)\s*(?:\*\s*)*//s) {
+    } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+)\s*(?:\*\s*)*//s) {
 	$type = $&;
 	$type =~ s/\s//g;
     } else {
@@ -2109,7 +2109,7 @@ sub parse_c_variable($$$$$$$) {
     } elsif($self->_parse_c('(?:struct\s+)?ICOM_VTABLE\s*\(.*?\)', \$_, \$line, \$column, \$match)) {
 	$type = "<type>";
 	$name = "<name>";
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+)\s*
+    } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+)\s*
 		(?:\*\s*)*(\w+|\s*\*?\s*\w+\s*\))\s*(?:\[[^\]]*\]|\([^\)]*\))?
 		(?:,\s*(?:\*\s*)*(\w+)\s*(?:\[[^\]]*\])?)*
 	    \s*(?:=|$)//sx)
@@ -2121,7 +2121,7 @@ sub parse_c_variable($$$$$$$) {
 
 	$type =~ s/\s//g;
 	$type =~ s/^struct/struct /;
-    } elsif(/^(enum|struct|union)(?:\s+(\w+))?\s*\{.*?\}\s*((?:\*\s*)*)(\w+)\s*(?:=|$)/s) {
+    } elsif(/^(enum|interface|struct|union)(?:\s+(\w+))?\s*\{.*?\}\s*((?:\*\s*)*)(\w+)\s*(?:=|$)/s) {
 	$self->_update_c_position($&, \$line, \$column);
 
 	my $kind = $1;
