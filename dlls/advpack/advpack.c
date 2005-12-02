@@ -126,6 +126,8 @@ HRESULT WINAPI RunSetupCommand( HWND hWnd, LPCSTR szCmdName,
 
 /***********************************************************************
  *		LaunchINFSection  (ADVPACK.@)
+ *
+ * See LaunchINFSectionEx.
  */
 INT WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
 {
@@ -135,6 +137,21 @@ INT WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show
 
 /***********************************************************************
  *		LaunchINFSectionEx  (ADVPACK.@)
+ *
+ * Installs an INF section.
+ *
+ * PARAMS
+ *   hWnd    [I] Handle to the window used for the display.
+ *   hInst   [I] Instance of the process.
+ *   cmdline [I] Contains parameters in the order INF,section,CAB,flags.
+ *   show    [I] How the window should be shown.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: E_FAIL.
+ *
+ * BUGS
+ *  Unimplemented.
  */
 HRESULT WINAPI LaunchINFSectionEx( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
 {
@@ -181,6 +198,18 @@ BOOL WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
 
 /***********************************************************************
  *              IsNTAdmin	(ADVPACK.@)
+ *
+ * Checks if the user has admin privileges.
+ *
+ * PARAMS
+ *   reserved  [I] Reserved.  Must be 0.
+ *   pReserved [I] Reserved.  Must be NULL.
+ *
+ * RETURNS
+ *   TRUE if user has admin rights, FALSE otherwise.
+ *
+ * BUGS
+ *   Unimplemented.
  */
 BOOL WINAPI IsNTAdmin( DWORD reserved, LPDWORD pReserved )
 {
@@ -190,6 +219,11 @@ BOOL WINAPI IsNTAdmin( DWORD reserved, LPDWORD pReserved )
 
 /***********************************************************************
  *             NeedRebootInit  (ADVPACK.@)
+ *
+ * Sets up conditions for reboot checking.
+ *
+ * RETURNS
+ *   Value required by NeedReboot.
  */
 DWORD WINAPI NeedRebootInit(VOID)
 {
@@ -199,6 +233,17 @@ DWORD WINAPI NeedRebootInit(VOID)
 
 /***********************************************************************
  *             NeedReboot      (ADVPACK.@)
+ *
+ * Determines whether a reboot is required.
+ *
+ * PARAMS
+ *   dwRebootCheck [I] Value from NeedRebootInit.
+ *
+ * RETURNS
+ *   TRUE if a reboot is needed, FALSE otherwise.
+ *
+ * BUGS
+ *   Unimplemented.
  */
 BOOL WINAPI NeedReboot(DWORD dwRebootCheck)
 {
@@ -208,6 +253,8 @@ BOOL WINAPI NeedReboot(DWORD dwRebootCheck)
 
 /***********************************************************************
  *             GetVersionFromFile      (ADVPACK.@)
+ *
+ * See GetVersionFromFileEx.
  */
 HRESULT WINAPI GetVersionFromFile( LPSTR Filename, LPDWORD MajorVer,
                                    LPDWORD MinorVer, BOOL Version )
@@ -225,6 +272,21 @@ typedef struct tagLANGANDCODEPAGE
 
 /***********************************************************************
  *             GetVersionFromFileEx    (ADVPACK.@)
+ *
+ * Gets the files version or language information.
+ *
+ * PARAMS
+ *   lpszFilename [I] The file to get the info from.
+ *   pdwMSVer     [O] Major version.
+ *   pdwLSVer     [O] Minor version.
+ *   bVersion     [I] Whether to retrieve version or language info.
+ *
+ * RETURNS
+ *   Always returns S_OK.
+ *
+ * NOTES
+ *   If bVersion is TRUE, version information is retrieved, else
+ *   pdwMSVer gets the language ID and pdwLSVer gets the codepage ID.
  */
 HRESULT WINAPI GetVersionFromFileEx( LPSTR lpszFilename, LPDWORD pdwMSVer,
                                      LPDWORD pdwLSVer, BOOL bVersion )
@@ -451,6 +513,18 @@ HRESULT WINAPI DelNode( LPCSTR pszFileOrDirName, DWORD dwFlags )
 
 /***********************************************************************
  *             DelNodeRunDLL32    (ADVPACK.@)
+ *
+ * Deletes a file or directory, WinMain style.
+ *
+ * PARAMS
+ *   hWnd    [I] Handle to the window used for the display.
+ *   hInst   [I] Instance of the process.
+ *   cmdline [I] Contains parameters in the order FileOrDirName,Flags.
+ *   show    [I] How the window should be shown.
+ *
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
  *
  * BUGS
  *   Unimplemented
