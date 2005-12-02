@@ -83,7 +83,7 @@ exit:
  *
  * Add an entry to a directory tree (asynchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld      [I] Pointer to an LDAP context.
  *  dn      [I] DN of the entry to add.
  *  attrs   [I] Pointer to an array of LDAPModW structures, each
@@ -191,7 +191,7 @@ exit:
  *
  * Add an entry to a directory tree (asynchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld          [I] Pointer to an LDAP context.
  *  dn          [I] DN of the entry to add.
  *  attrs       [I] Pointer to an array of LDAPModW structures, each
@@ -311,7 +311,7 @@ exit:
  *
  * Add an entry to a directory tree (synchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld          [I] Pointer to an LDAP context.
  *  dn          [I] DN of the entry to add.
  *  attrs       [I] Pointer to an array of LDAPModW structures, each
@@ -416,7 +416,7 @@ exit:
  *
  * Add an entry to a directory tree (synchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld      [I] Pointer to an LDAP context.
  *  dn      [I] DN of the entry to add.
  *  attrs   [I] Pointer to an array of LDAPModW structures, each

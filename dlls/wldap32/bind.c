@@ -82,7 +82,7 @@ exit:
  *
  * Authenticate with an LDAP server (asynchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld      [I] Pointer to an LDAP context.
  *  dn      [I] DN of entry to bind as.
  *  cred    [I] Credentials (e.g. password string).
@@ -93,7 +93,7 @@ exit:
  *  Failure: An LDAP error code.
  *
  * NOTES
- *  Only LDAP_AUTH_SIMPLE is supported.
+ *  Only LDAP_AUTH_SIMPLE is supported (just like native).
  */
 ULONG ldap_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
 {
@@ -178,7 +178,7 @@ exit:
  *
  * Authenticate with an LDAP server (synchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld      [I] Pointer to an LDAP context.
  *  dn      [I] DN of entry to bind as.
  *  cred    [I] Credentials (e.g. password string).
@@ -278,7 +278,7 @@ exit:
  *
  * Authenticate with an LDAP server using SASL (asynchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld          [I] Pointer to an LDAP context.
  *  dn          [I] DN of entry to bind as.
  *  mechanism   [I] Authentication method.
@@ -394,7 +394,7 @@ exit:
  *
  * Authenticate with an LDAP server using SASL (synchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld          [I] Pointer to an LDAP context.
  *  dn          [I] DN of entry to bind as.
  *  mechanism   [I] Authentication method.
@@ -497,7 +497,7 @@ exit:
  *
  * Authenticate with an LDAP server (asynchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld      [I] Pointer to an LDAP context.
  *  dn      [I] DN of entry to bind as.
  *  passwd  [I] Password string.
@@ -591,7 +591,7 @@ exit:
  *
  * Authenticate with an LDAP server (synchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld      [I] Pointer to an LDAP context.
  *  dn      [I] DN of entry to bind as.
  *  passwd  [I] Password string.
@@ -643,7 +643,7 @@ exit:
  *
  * Close LDAP connection and free resources (asynchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld  [I] Pointer to an LDAP context.
  *
  * RETURNS
@@ -671,7 +671,7 @@ ULONG WLDAP32_ldap_unbind( WLDAP32_LDAP *ld )
  *
  * Close LDAP connection and free resources (synchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld  [I] Pointer to an LDAP context.
  *
  * RETURNS

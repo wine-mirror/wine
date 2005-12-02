@@ -63,7 +63,7 @@ ULONG ldap_control_freeA( LDAPControlA *control )
  *
  * Free an LDAPControl structure.
  *
- * Parameters
+ * PARAMS
  *  control  [I] LDAPControl structure to free.
  *
  * RETURNS
@@ -103,7 +103,7 @@ ULONG ldap_controls_freeA( LDAPControlA **controls )
  *
  * Free an array of LDAPControl structures.
  *
- * Parameters
+ * PARAMS
  *  controls  [I] Array of LDAPControl structures to free.
  *
  * RETURNS
@@ -139,7 +139,7 @@ ULONG ldap_create_page_controlA( WLDAP32_LDAP *ld, ULONG pagesize,
  *
  * Create a control for paged search results.
  *
- * Parameters
+ * PARAMS
  *  ld       [I] Pointer to an LDAP context.
  *  pagesize [I] Number of entries to return per page.
  *  cookie   [I] Used by the server to track its location in the
@@ -202,7 +202,7 @@ ULONG ldap_create_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkey,
  *
  * Create a control for server sorted search results.
  *
- * Parameters
+ * PARAMS
  *  ld       [I] Pointer to an LDAP context.
  *  sortkey  [I] Array of LDAPSortKey structures, each specifying an
  *               attribute to use as a sort key, a matching rule and
@@ -277,7 +277,7 @@ INT ldap_create_vlv_controlA( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
  *
  * Create a virtual list view control.
  *
- * Parameters
+ * PARAMS
  *  ld       [I] Pointer to an LDAP context.
  *  info     [I] LDAPVLVInfo structure specifying a list view window.
  *  critical [I] Tells the server this control is critical to the
@@ -330,7 +330,7 @@ ULONG ldap_encode_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkeys,
  *
  * Create a control for server sorted search results.
  *
- * Parameters
+ * PARAMS
  *  ld       [I] Pointer to an LDAP context.
  *  sortkey  [I] Array of LDAPSortKey structures, each specifying an
  *               attribute to use as a sort key, a matching rule and
@@ -368,7 +368,7 @@ ULONG ldap_free_controlsA( LDAPControlA **controls )
  *
  * Free an array of LDAPControl structures.
  *
- * Parameters
+ * PARAMS
  *  controls  [I] Array of LDAPControl structures to free.
  *
  * RETURNS

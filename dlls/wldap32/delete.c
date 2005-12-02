@@ -72,7 +72,7 @@ ULONG ldap_deleteA( WLDAP32_LDAP *ld, PCHAR dn )
  *
  * Delete an entry from a directory tree (asynchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld      [I] Pointer to an LDAP context.
  *  dn      [I] DN of the entry to delete.
  *
@@ -163,7 +163,7 @@ exit:
  *
  * Delete an entry from a directory tree (asynchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld          [I] Pointer to an LDAP context.
  *  dn          [I] DN of the entry to delete.
  *  serverctrls [I] Array of LDAP server controls.
@@ -267,7 +267,7 @@ exit:
  *
  * Delete an entry from a directory tree (synchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld          [I] Pointer to an LDAP context.
  *  dn          [I] DN of the entry to delete.
  *  serverctrls [I] Array of LDAP server controls.
@@ -350,7 +350,7 @@ ULONG ldap_delete_sA( WLDAP32_LDAP *ld, PCHAR dn )
  *
  * Delete an entry from a directory tree (synchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld      [I] Pointer to an LDAP context.
  *  dn      [I] DN of the entry to delete.
  *

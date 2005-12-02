@@ -44,6 +44,11 @@ extern HINSTANCE hwldap32;
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+/***********************************************************************
+ *      ldap_err2stringA     (WLDAP32.@)
+ *
+ * See ldap_err2stringW.
+ */
 PCHAR ldap_err2stringA( ULONG err )
 {
     static char buf[256] = "";
@@ -58,6 +63,22 @@ PCHAR ldap_err2stringA( ULONG err )
     return buf;
 }
 
+/***********************************************************************
+ *      ldap_err2stringW     (WLDAP32.@)
+ *
+ * Convert an error code into a string describing the error.
+ *
+ * PARAMS
+ *  err  [I] Error code to convert.
+ *
+ * RETURNS
+ *  Success: Pointer to a string containing the error description.
+ *  Failure: NULL
+ *
+ * NOTES
+ *  The returned string is statically allocated, you must not
+ *  free this string.
+ */
 PWCHAR ldap_err2stringW( ULONG err )
 {
     static WCHAR buf[256] = { 0 };
@@ -72,14 +93,43 @@ PWCHAR ldap_err2stringW( ULONG err )
     return buf;
 }
 
-/*
- * NOTES: does nothing
+/***********************************************************************
+ *      ldap_perror     (WLDAP32.@)
+ *
+ * Print a given error string.
+ *
+ * PARAMS
+ *  ld   [I] Pointer to an LDAP context.
+ *  msg  [I] Error string.
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  Like native, this function does nothing.
  */
 void WLDAP32_ldap_perror( WLDAP32_LDAP *ld, const PCHAR msg )
 {
     TRACE( "(%p, %s)\n", ld, debugstr_a(msg) );
 }
 
+/***********************************************************************
+ *      ldap_result2error     (WLDAP32.@)
+ *
+ * Parse an LDAP message and return the error obtained from it.
+ *
+ * PARAMS
+ *  ld    [I] Pointer to an LDAP context.
+ *  res   [I] Pointer to an LDAPMessage structure.
+ *  free  [I] Ask for the LDAPMessage structure to be freed.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  If not asked for, use ldap_msgfree to free the LDAPMessage.
+ */
 ULONG WLDAP32_ldap_result2error( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res, ULONG free )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -101,6 +151,17 @@ ULONG WLDAP32_ldap_result2error( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res, ULO
     return ret;
 }
 
+/***********************************************************************
+ *      LdapGetLastError     (WLDAP32.@)
+ *
+ * Return the last error set by an LDAP function call.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  An LDAP error code.
+ */
 ULONG LdapGetLastError( void )
 {
     TRACE( "\n" );
@@ -208,6 +269,17 @@ static const ULONG WLDAP32_errormap[] = {
     /* LDAP_REFERRAL_LIMIT_EXCEEDED */      ERROR_DS_GENERIC_ERROR
 };
 
+/***********************************************************************
+ *      LdapMapErrorToWin32     (WLDAP32.@)
+ *
+ * Map an LDAP error code to a Win32 error code.
+ *
+ * PARAMS
+ *  err  [I] An LDAP error code.
+ *
+ * RETURNS
+ *  A Win32 error code.
+ */
 ULONG LdapMapErrorToWin32( ULONG err )
 {
     TRACE( "(0x%08lx)\n", err );

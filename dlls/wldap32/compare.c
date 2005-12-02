@@ -87,7 +87,7 @@ exit:
  *
  * Check if an attribute has a certain value (asynchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld      [I] Pointer to an LDAP context.
  *  dn      [I] DN of entry to compare value for.
  *  attr    [I] Attribute to compare value for.
@@ -206,7 +206,7 @@ exit:
  *
  * Check if an attribute has a certain value (asynchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld          [I] Pointer to an LDAP context.
  *  dn          [I] DN of entry to compare value for.
  *  attr        [I] Attribute to compare value for.
@@ -345,7 +345,7 @@ exit:
  *
  * Check if an attribute has a certain value (synchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld          [I] Pointer to an LDAP context.
  *  dn          [I] DN of entry to compare value for.
  *  attr        [I] Attribute to compare value for.
@@ -468,7 +468,7 @@ exit:
  *
  * Check if an attribute has a certain value (synchronous operation).
  *
- * Parameters
+ * PARAMS
  *  ld      [I] Pointer to an LDAP context.
  *  dn      [I] DN of entry to compare value for.
  *  attr    [I] Attribute to compare value for.
