@@ -450,7 +450,7 @@ sub parse_c_file($$) {
 			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
 			((?:const|volatile)?\s*(?:\*\s*(?:const|volatile)?\s*?)*)\s*
 			(?:__cdecl\s+|__stdcall\s+|__RPC_STUB\s+|__RPC_USER\s+|CALLBACK\s+|CDECL\s+|NET_API_FUNCTION\s+|RPC_ENTRY\s+|STDMETHODCALLTYPE\s+|VFWAPIV\s+|VFWAPI\s+|WINAPIV\s+|WINAPI\s+)?
-			\(\s*(?:__cdecl|__stdcall|__RPC_STUB|__RPC_USER\s+|CALLBACK|CDECL|NET_API_FUNCTION|RPC_ENTRY|STDMETHODCALLTYPE|VFWAPIV|VFWAPI|WINAPIV|WINAPI)?\s*\*\s*((?:\w+)?)\s*\)\s*
+			\(\s*(?:__cdecl|__stdcall|__RPC_STUB|__RPC_USER|CALLBACK|CDECL|NET_API_FUNCTION|RPC_ENTRY|STDMETHODCALLTYPE|VFWAPIV|VFWAPI|WINAPIV|WINAPI)?\s*\*\s*((?:\w+)?)\s*\)\s*
 			\(\s*(.*?)\s*\)$/x) 
 		{
 		    my $return_type = $1;
