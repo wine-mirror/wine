@@ -161,6 +161,33 @@ typedef struct _IMAGEHLP_MODULE64
     BOOL                        Publics;
 } IMAGEHLP_MODULE64, *PIMAGEHLP_MODULE64;
 
+typedef struct _IMAGEHLP_MODULE64W
+{
+    DWORD                       SizeOfStruct;
+    DWORD64                     BaseOfImage;
+    DWORD                       ImageSize;
+    DWORD                       TimeDateStamp;
+    DWORD                       CheckSum;
+    DWORD                       NumSyms;
+    SYM_TYPE                    SymType;
+    WCHAR                       ModuleName[32];
+    WCHAR                       ImageName[256];
+    WCHAR                       LoadedImageName[256];
+    WCHAR                       LoadedPdbName[256];
+    DWORD                       CVSig;
+    WCHAR                       CVData[MAX_PATH*3];
+    DWORD                       PdbSig;
+    GUID                        PdbSig70;
+    DWORD                       PdbAge;
+    BOOL                        PdbUnmatched;
+    BOOL                        DbgUnmatched;
+    BOOL                        LineNumbers;
+    BOOL                        GlobalSymbols;
+    BOOL                        TypeInfo;
+    BOOL                        SourceIndexed;
+    BOOL                        Publics;
+} IMAGEHLP_MODULEW64, *PIMAGEHLP_MODULEW64;
+
 typedef struct _IMAGEHLP_LINE
 {
     DWORD                       SizeOfStruct;
@@ -662,8 +689,10 @@ BOOL    WINAPI SymEnumerateModules(HANDLE, PSYM_ENUMMODULES_CALLBACK, PVOID);
 BOOL    WINAPI SymGetModuleInfo(HANDLE, DWORD, PIMAGEHLP_MODULE);
 BOOL    WINAPI SymGetModuleInfoW(HANDLE, DWORD, PIMAGEHLP_MODULEW);
 BOOL    WINAPI SymGetModuleInfo64(HANDLE, DWORD64, PIMAGEHLP_MODULE64);
+BOOL    WINAPI SymGetModuleInfoW64(HANDLE, DWORD64, PIMAGEHLP_MODULEW64);
 DWORD   WINAPI SymGetModuleBase(HANDLE, DWORD);
 DWORD   WINAPI SymLoadModule(HANDLE, HANDLE, PSTR, PSTR, DWORD, DWORD);
+DWORD64 WINAPI SymLoadModule64(HANDLE, HANDLE, PSTR, PSTR, DWORD64, DWORD);
 DWORD64 WINAPI SymLoadModuleEx(HANDLE, HANDLE, PCSTR, PCSTR, DWORD64, DWORD,
                                PMODLOAD_DATA, DWORD);
 BOOL    WINAPI SymUnloadModule(HANDLE, DWORD);

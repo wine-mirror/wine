@@ -420,8 +420,8 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
 /***********************************************************************
  *                     SymLoadModule64 (DBGHELP.@)
  */
-DWORD WINAPI SymLoadModule64(HANDLE hProcess, HANDLE hFile, char* ImageName,
-                             char* ModuleName, DWORD64 BaseOfDll, DWORD SizeOfDll)
+DWORD64 WINAPI SymLoadModule64(HANDLE hProcess, HANDLE hFile, PSTR ImageName,
+                               PSTR ModuleName, DWORD64 BaseOfDll, DWORD SizeOfDll)
 {
     if (!validate_addr64(BaseOfDll)) return FALSE;
     return SymLoadModule(hProcess, hFile, ImageName, ModuleName, (DWORD)BaseOfDll, SizeOfDll);
