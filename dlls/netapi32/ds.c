@@ -37,10 +37,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(ds);
  * RETURNS
  *  Nothing
  */
-void WINAPI DsRoleFreeMemory(PVOID Buffer)
+VOID WINAPI DsRoleFreeMemory(PVOID Buffer)
 {
     FIXME("(%p) stub\n", Buffer);
 }
+
 /************************************************************
  *  DsRoleGetPrimaryDomainInformation  (NETAPI32.@)
  *

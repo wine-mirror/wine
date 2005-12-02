@@ -2553,15 +2553,15 @@ PNETSETUP_JOIN_STATUS
 PVOID
 PVOID *
 
-%void
-
-void
-
 %wstr
 
 LMSTR
 LPCWSTR
 LPWSTR
+
+%void
+
+VOID
 
 %%newdev.dll
 
