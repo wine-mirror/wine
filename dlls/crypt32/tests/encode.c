@@ -2448,60 +2448,6 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
     }
 }
 
-static void test_registerOIDFunction(void)
-{
-    static const WCHAR bogusDll[] = { 'b','o','g','u','s','.','d','l','l',0 };
-    BOOL ret;
-
-    /* oddly, this succeeds under WinXP; the function name key is merely
-     * omitted.  This may be a side effect of the registry code, I don't know.
-     * I don't check it because I doubt anyone would depend on it.
-    ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, NULL,
-     "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
-     */
-    /* On windows XP, GetLastError is incorrectly being set with an HRESULT,
-     * HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER)
-     */
-    ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "foo", NULL, bogusDll,
-     NULL);
-    ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() ==
-     HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER)),
-     "Expected ERROR_INVALID_PARAMETER: %ld\n", GetLastError());
-    /* This has no effect, but "succeeds" on XP */
-    ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "foo",
-     "1.2.3.4.5.6.7.8.9.10", NULL, NULL);
-    ok(ret, "Expected pseudo-success, got %ld\n", GetLastError());
-    ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "CryptDllEncodeObject",
-     "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
-    ok(ret, "CryptRegisterOIDFunction failed: %ld\n", GetLastError());
-    ret = CryptUnregisterOIDFunction(X509_ASN_ENCODING, "CryptDllEncodeObject",
-     "1.2.3.4.5.6.7.8.9.10");
-    ok(ret, "CryptUnregisterOIDFunction failed: %ld\n", GetLastError());
-    ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "bogus",
-     "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
-    ok(ret, "CryptRegisterOIDFunction failed: %ld\n", GetLastError());
-    ret = CryptUnregisterOIDFunction(X509_ASN_ENCODING, "bogus",
-     "1.2.3.4.5.6.7.8.9.10");
-    ok(ret, "CryptUnregisterOIDFunction failed: %ld\n", GetLastError());
-    /* This has no effect */
-    ret = CryptRegisterOIDFunction(PKCS_7_ASN_ENCODING, "CryptDllEncodeObject",
-     "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
-    ok(ret, "CryptRegisterOIDFunction failed: %ld\n", GetLastError());
-    /* Check with bogus encoding type: */
-    ret = CryptRegisterOIDFunction(0, "CryptDllEncodeObject",
-     "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
-    ok(ret, "CryptRegisterOIDFunction failed: %ld\n", GetLastError());
-    /* This is written with value 3 verbatim.  Thus, the encoding type isn't
-     * (for now) treated as a mask.
-     */
-    ret = CryptRegisterOIDFunction(3, "CryptDllEncodeObject",
-     "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
-    ok(ret, "CryptRegisterOIDFunction failed: %ld\n", GetLastError());
-    ret = CryptUnregisterOIDFunction(3, "CryptDllEncodeObject",
-     "1.2.3.4.5.6.7.8.9.10");
-    ok(ret, "CryptUnregisterOIDFunction failed: %ld\n", GetLastError());
-}
-
 /* Free *pInfo with HeapFree */
 static void testExportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO *pInfo)
 {
@@ -2649,6 +2595,5 @@ START_TEST(encode)
         test_encodeCRLToBeSigned(encodings[i]);
         test_decodeCRLToBeSigned(encodings[i]);
     }
-    test_registerOIDFunction();
     testPortPublicKeyInfo();
 }

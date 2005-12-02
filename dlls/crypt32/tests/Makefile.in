@@ -9,6 +9,7 @@ CTESTS = \
 	cert.c \
 	encode.c \
 	main.c \
+	oid.c \
 	protectdata.c
 
 @MAKE_TEST_RULES@

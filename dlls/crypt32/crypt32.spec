@@ -102,10 +102,10 @@
 @ stdcall CryptExportPublicKeyInfoEx(long long long str long ptr ptr ptr)
 @ stub CryptFindOIDInfo
 @ stub CryptFormatObject
-@ stub CryptFreeOIDFunctionAddress
+@ stdcall CryptFreeOIDFunctionAddress(long long)
 @ stub CryptGetAsyncParam
 @ stdcall CryptGetDefaultOIDDllList(long long ptr ptr)
-@ stub CryptGetDefaultOIDFunctionAddress
+@ stdcall CryptGetDefaultOIDFunctionAddress(long long wstr long ptr ptr)
 @ stub CryptGetMessageCertificates
 @ stub CryptGetMessageSignerCount
 @ stdcall CryptGetOIDFunctionAddress(long long str long ptr ptr)

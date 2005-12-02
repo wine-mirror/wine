@@ -2,5 +2,6 @@ Makefile
 cert.ok
 encode.ok
 main.ok
+oid.ok
 protectdata.ok
 testlist.c

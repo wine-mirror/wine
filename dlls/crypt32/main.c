@@ -38,7 +38,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
 {
     switch (fdwReason)
     {
+        case DLL_PROCESS_ATTACH:
+            CRYPT_InitFunctionSets();
+            break;
         case DLL_PROCESS_DETACH:
+            CRYPT_FreeFunctionSets();
             if (hDefProv) CryptReleaseContext(hDefProv, 0);
             break;
     }
@@ -211,46 +215,6 @@ BOOL WINAPI CryptSIPLoad
 {
     FIXME("stub!\n");
     return FALSE;
-}
-
-BOOL WINAPI CryptRegisterDefaultOIDFunction(DWORD dwEncodingType,
-                                     LPCSTR pszFuncName, DWORD dwIndex,
-				     LPCWSTR pwszDll)
-{
-    FIXME("(%lx,%s,%lx,%s) stub!\n", dwEncodingType, pszFuncName, dwIndex,
-          debugstr_w(pwszDll));
-    return FALSE;
-}
-
-BOOL WINAPI CryptInstallOIDFunctionAddress(HMODULE hModule,
- DWORD dwEncodingType, LPCSTR pszFuncName, DWORD cFuncEntry,
- const CRYPT_OID_FUNC_ENTRY rgFuncEntry[], DWORD dwFlags)
-{
-    FIXME("(%p, %ld, %s, %ld, %p, %08lx): stub\n", hModule, dwEncodingType,
-     debugstr_a(pszFuncName), cFuncEntry, rgFuncEntry, dwFlags);
-    return TRUE;
-}
-
-BOOL WINAPI CryptGetOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
- DWORD dwEncodingType, LPCSTR pszOID, DWORD dwFlags, void **ppvFuncAddr,
- HCRYPTOIDFUNCADDR *phFuncAddr)
-{
-    FIXME("(%p, %ld, %s, %08lx, %p, %p): stub\n", hFuncSet, dwEncodingType,
-     debugstr_a(pszOID), dwFlags, ppvFuncAddr, phFuncAddr);
-    return FALSE;
-}
-
-BOOL WINAPI CryptGetDefaultOIDDllList(HCRYPTOIDFUNCSET hFuncSet,
- DWORD dwEncodingType, LPWSTR pwszDllList, DWORD *pcchDllList)
-{
-    FIXME("(%p, %ld, %p, %p): stub\n", hFuncSet, dwEncodingType, pwszDllList,
-     pcchDllList);
-
-    if (*pcchDllList)
-        *pwszDllList = '\0';
-    *pcchDllList = 1;
-
-    return TRUE;
 }
 
 struct OIDToAlgID
