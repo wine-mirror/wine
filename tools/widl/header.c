@@ -690,8 +690,8 @@ static void write_method_proto(type_t *iface)
       fprintf(header, "void __RPC_STUB %s_", iface->name);
       write_name(header,def);
       fprintf(header, "_Stub(\n");
-      fprintf(header, "    struct IRpcStubBuffer* This,\n");
-      fprintf(header, "    struct IRpcChannelBuffer* pRpcChannelBuffer,\n");
+      fprintf(header, "    interface IRpcStubBuffer* This,\n");
+      fprintf(header, "    interface IRpcChannelBuffer* pRpcChannelBuffer,\n");
       fprintf(header, "    PRPC_MESSAGE pRpcMessage,\n");
       fprintf(header, "    DWORD* pdwStubPhase);\n");
 
@@ -762,9 +762,9 @@ void write_forward(type_t *iface)
    * interface, since non-object interfaces shouldn't need forwards */
   if ((!iface->defined || is_object(iface->attrs) || is_attr(iface->attrs, ATTR_DISPINTERFACE))
         && !iface->written) {
-    fprintf(header,"#ifndef __%s_FWD_DEFINED__\n", iface->name);
-    fprintf(header,"#define __%s_FWD_DEFINED__\n", iface->name);
-    fprintf(header, "typedef struct %s %s;\n", iface->name, iface->name);
+    fprintf(header, "#ifndef __%s_FWD_DEFINED__\n", iface->name);
+    fprintf(header, "#define __%s_FWD_DEFINED__\n", iface->name);
+    fprintf(header, "typedef interface %s %s;\n", iface->name, iface->name);
     fprintf(header, "#endif\n\n" );
     iface->written = TRUE;
   }
@@ -806,7 +806,7 @@ static void write_com_interface(type_t *iface)
   fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
   if (iface->ref)
   {
-      fprintf(header, "struct %s : public %s\n", iface->name, iface->ref->name);
+      fprintf(header, "%s : public %s\n", iface->name, iface->ref->name);
       fprintf(header, "{\n");
       indentation++;
       write_cpp_method_def(iface);
@@ -815,7 +815,7 @@ static void write_com_interface(type_t *iface)
   }
   else
   {
-      fprintf(header, "struct %s\n", iface->name);
+      fprintf(header, "%s\n", iface->name);
       fprintf(header, "{\n");
       fprintf(header, "    BEGIN_INTERFACE\n");
       fprintf(header, "\n");
@@ -828,7 +828,7 @@ static void write_com_interface(type_t *iface)
   fprintf(header, "#else\n");
   /* C interface */
   fprintf(header, "typedef struct %sVtbl %sVtbl;\n", iface->name, iface->name);
-  fprintf(header, "struct %s {\n", iface->name);
+  fprintf(header, "interface %s {\n", iface->name);
   fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
   fprintf(header, "};\n");
   fprintf(header, "struct %sVtbl {\n", iface->name);
@@ -889,13 +889,13 @@ void write_dispinterface(type_t *iface)
   write_forward(iface);
   /* C++ interface */
   fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
-  fprintf(header, "struct %s : public %s\n", iface->name, iface->ref->name);
+  fprintf(header, "%s : public %s\n", iface->name, iface->ref->name);
   fprintf(header, "{\n");
   fprintf(header, "};\n");
   fprintf(header, "#else\n");
   /* C interface */
   fprintf(header, "typedef struct %sVtbl %sVtbl;\n", iface->name, iface->name);
-  fprintf(header, "struct %s {\n", iface->name);
+  fprintf(header, "interface %s {\n", iface->name);
   fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
   fprintf(header, "};\n");
   fprintf(header, "struct %sVtbl {\n", iface->name);
