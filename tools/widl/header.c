@@ -690,8 +690,8 @@ static void write_method_proto(type_t *iface)
       fprintf(header, "void __RPC_STUB %s_", iface->name);
       write_name(header,def);
       fprintf(header, "_Stub(\n");
-      fprintf(header, "    interface IRpcStubBuffer* This,\n");
-      fprintf(header, "    interface IRpcChannelBuffer* pRpcChannelBuffer,\n");
+      fprintf(header, "    IRpcStubBuffer* This,\n");
+      fprintf(header, "    IRpcChannelBuffer* pRpcChannelBuffer,\n");
       fprintf(header, "    PRPC_MESSAGE pRpcMessage,\n");
       fprintf(header, "    DWORD* pdwStubPhase);\n");
 

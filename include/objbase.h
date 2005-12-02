@@ -272,6 +272,15 @@
 
 #endif  /* __cplusplus && !CINTERFACE */
 
+#ifndef __IRpcStubBuffer_FWD_DEFINED__
+#define __IRpcStubBuffer_FWD_DEFINED__
+typedef interface IRpcStubBuffer IRpcStubBuffer;
+#endif
+#ifndef __IRpcChannelBuffer_FWD_DEFINED__
+#define __IRpcChannelBuffer_FWD_DEFINED__
+typedef interface IRpcChannelBuffer IRpcChannelBuffer;
+#endif
+
 #include <objidl.h>
 
 #ifndef RC_INVOKED
