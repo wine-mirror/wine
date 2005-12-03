@@ -5185,25 +5185,29 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     int i;
-    unsigned int func_index, var_index;
+    unsigned int var_index;
     TYPEKIND type_kind;
     HRESULT hres;
+    const TLBFuncDesc *pFuncInfo;
 
     TRACE("(%p)(%p,id=%ld,flags=0x%08x,%p,%p,%p,%p) partial stub!\n",
       This,pIUnk,memid,dwFlags,pDispParams,pVarResult,pExcepInfo,pArgErr
     );
     dump_DispParms(pDispParams);
 
-    hres = ITypeInfo2_GetFuncIndexOfMemId(iface, memid, dwFlags, &func_index);
-    if (SUCCEEDED(hres)) {
-        FUNCDESC *func_desc;
+    /* we do this instead of using GetFuncDesc since it will return a fake
+     * FUNCDESC for dispinterfaces and we want the real function description */
+    for (pFuncInfo = This->funclist; pFuncInfo; pFuncInfo=pFuncInfo->next)
+        if (memid == pFuncInfo->funcdesc.memid && (dwFlags & pFuncInfo->funcdesc.invkind))
+            break;
 
-        hres = ITypeInfo2_GetFuncDesc(iface, func_index, &func_desc);
-        if(FAILED(hres)) return hres;
+    if (pFuncInfo) {
+        const FUNCDESC *func_desc = &pFuncInfo->funcdesc;
+
         if (TRACE_ON(ole))
         {
             TRACE("invoking:\n");
-            dump_FUNCDESC(func_desc);
+            dump_TLBFuncDesc(pFuncInfo);
         }
         
 	switch (func_desc->funckind) {
@@ -5376,7 +5380,6 @@ func_fail:
             break;
         }
 
-        ITypeInfo2_ReleaseFuncDesc(iface, func_desc);
         TRACE("-- 0x%08lx\n", hres);
         return hres;
 
