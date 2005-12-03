@@ -4493,6 +4493,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
     TRACE("(%p)", This);
+    
+    if (This->isRecordingState) {
+        return D3DERR_INVALIDCALL;
+    }
+    
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DStateBlockImpl));
     if (NULL == object ) {
         FIXME("(%p)Error allocating memory for stateblock\n", This);
