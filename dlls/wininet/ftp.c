@@ -119,30 +119,30 @@ static const WCHAR szNoAccount[] = {'n','o','a','c','c','o','u','n','t','\0'};
 static void FTP_CloseFileTransferHandle(LPWININETHANDLEHEADER hdr);
 static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr);
 static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr);
-BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
+static BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
 	INTERNET_STATUS_CALLBACK lpfnStatusCB, LPWININETHANDLEHEADER hdr, DWORD dwContext);
-BOOL FTP_SendStore(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType);
-BOOL FTP_GetDataSocket(LPWININETFTPSESSIONW lpwfs, LPINT nDataSocket);
-BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile);
-INT FTP_ReceiveResponse(LPWININETFTPSESSIONW lpwfs, DWORD dwContext);
-DWORD FTP_SendRetrieve(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType);
-BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, DWORD nBytes, HANDLE hFile);
-BOOL FTP_InitListenSocket(LPWININETFTPSESSIONW lpwfs);
-BOOL FTP_ConnectToHost(LPWININETFTPSESSIONW lpwfs);
-BOOL FTP_SendPassword(LPWININETFTPSESSIONW lpwfs);
-BOOL FTP_SendAccount(LPWININETFTPSESSIONW lpwfs);
-BOOL FTP_SendType(LPWININETFTPSESSIONW lpwfs, DWORD dwType);
-BOOL FTP_GetFileSize(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD *dwSize);
-BOOL FTP_SendPort(LPWININETFTPSESSIONW lpwfs);
-BOOL FTP_DoPassive(LPWININETFTPSESSIONW lpwfs);
-BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONW lpwfs);
-BOOL FTP_ParsePermission(LPCSTR lpszPermission, LPFILEPROPERTIESW lpfp);
-BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERTIESW fileprop);
-BOOL FTP_ParseDirectory(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
+static BOOL FTP_SendStore(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType);
+static BOOL FTP_GetDataSocket(LPWININETFTPSESSIONW lpwfs, LPINT nDataSocket);
+static BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile);
+static INT FTP_ReceiveResponse(LPWININETFTPSESSIONW lpwfs, DWORD dwContext);
+static DWORD FTP_SendRetrieve(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType);
+static BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, DWORD nBytes, HANDLE hFile);
+static BOOL FTP_InitListenSocket(LPWININETFTPSESSIONW lpwfs);
+static BOOL FTP_ConnectToHost(LPWININETFTPSESSIONW lpwfs);
+static BOOL FTP_SendPassword(LPWININETFTPSESSIONW lpwfs);
+static BOOL FTP_SendAccount(LPWININETFTPSESSIONW lpwfs);
+static BOOL FTP_SendType(LPWININETFTPSESSIONW lpwfs, DWORD dwType);
+static BOOL FTP_GetFileSize(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD *dwSize);
+static BOOL FTP_SendPort(LPWININETFTPSESSIONW lpwfs);
+static BOOL FTP_DoPassive(LPWININETFTPSESSIONW lpwfs);
+static BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONW lpwfs);
+static BOOL FTP_ParsePermission(LPCSTR lpszPermission, LPFILEPROPERTIESW lpfp);
+static BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERTIESW fileprop);
+static BOOL FTP_ParseDirectory(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
 	LPFILEPROPERTIESW *lpafp, LPDWORD dwfp);
-HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
+static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
 	LPWIN32_FIND_DATAW lpFindFileData, DWORD dwContext);
-DWORD FTP_SetResponseError(DWORD dwResponse);
+static DWORD FTP_SetResponseError(DWORD dwResponse);
 
 /***********************************************************************
  *           FtpPutFileA (WININET.@)
@@ -1809,7 +1809,7 @@ lerror:
  *   NULL on failure
  *
  */
-BOOL FTP_ConnectToHost(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_ConnectToHost(LPWININETFTPSESSIONW lpwfs)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -1917,7 +1917,7 @@ static BOOL FTP_SendCommandA(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
  *   NULL on failure
  *
  */
-BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
+static BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
 	INTERNET_STATUS_CALLBACK lpfnStatusCB, LPWININETHANDLEHEADER hdr, DWORD dwContext)
 {
     BOOL ret;
@@ -2002,7 +2002,7 @@ lerror:
  *   NULL on failure
  *
  */
-BOOL FTP_SendPassword(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_SendPassword(LPWININETFTPSESSIONW lpwfs)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -2042,7 +2042,7 @@ lend:
  *   FALSE on failure
  *
  */
-BOOL FTP_SendAccount(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_SendAccount(LPWININETFTPSESSIONW lpwfs)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -2072,7 +2072,7 @@ lend:
  *   FALSE on failure
  *
  */
-BOOL FTP_SendStore(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType)
+static BOOL FTP_SendStore(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -2119,7 +2119,7 @@ lend:
  *   FALSE on failure
  *
  */
-BOOL FTP_InitListenSocket(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_InitListenSocket(LPWININETFTPSESSIONW lpwfs)
 {
     BOOL bSuccess = FALSE;
     size_t namelen = sizeof(struct sockaddr_in);
@@ -2178,7 +2178,7 @@ lend:
  * (i.e. it sends it always),
  * so we probably don't want to do that either.
  */
-BOOL FTP_SendType(LPWININETFTPSESSIONW lpwfs, DWORD dwType)
+static BOOL FTP_SendType(LPWININETFTPSESSIONW lpwfs, DWORD dwType)
 {
     INT nResCode;
     WCHAR type[] = { 'I','\0' };
@@ -2214,7 +2214,7 @@ lend:
  *   FALSE on failure
  *
  */
-BOOL FTP_GetFileSize(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD *dwSize)
+static BOOL FTP_GetFileSize(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD *dwSize)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -2257,7 +2257,7 @@ lend:
  *   FALSE on failure
  *
  */
-BOOL FTP_SendPort(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_SendPort(LPWININETFTPSESSIONW lpwfs)
 {
     static const WCHAR szIPFormat[] = {'%','d',',','%','d',',','%','d',',','%','d',',','%','d',',','%','d','\0'};
     INT nResCode;
@@ -2301,7 +2301,7 @@ lend:
  *   FALSE on failure
  *
  */
-BOOL FTP_DoPassive(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_DoPassive(LPWININETFTPSESSIONW lpwfs)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -2379,7 +2379,7 @@ lend:
 }
 
 
-BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONW lpwfs)
 {
     if (lpwfs->hdr.dwFlags & INTERNET_FLAG_PASSIVE)
     {
@@ -2408,7 +2408,7 @@ BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONW lpwfs)
  *   FALSE on failure
  *
  */
-BOOL FTP_GetDataSocket(LPWININETFTPSESSIONW lpwfs, LPINT nDataSocket)
+static BOOL FTP_GetDataSocket(LPWININETFTPSESSIONW lpwfs, LPINT nDataSocket)
 {
     struct sockaddr_in saddr;
     size_t addrlen = sizeof(struct sockaddr);
@@ -2438,7 +2438,7 @@ BOOL FTP_GetDataSocket(LPWININETFTPSESSIONW lpwfs, LPINT nDataSocket)
  *   FALSE on failure
  *
  */
-BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile)
+static BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile)
 {
     BY_HANDLE_FILE_INFORMATION fi;
     DWORD nBytesRead = 0;
@@ -2520,7 +2520,7 @@ BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile)
  *   0 on failure
  *
  */
-DWORD FTP_SendRetrieve(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType)
+static DWORD FTP_SendRetrieve(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType)
 {
     INT nResCode;
     DWORD nResult = 0;
@@ -2570,7 +2570,7 @@ lend:
  *   FALSE on failure
  *
  */
-BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, DWORD nBytes, HANDLE hFile)
+static BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, DWORD nBytes, HANDLE hFile)
 {
     DWORD nBytesWritten;
     DWORD nBytesReceived = 0;
@@ -2711,7 +2711,7 @@ static void FTP_CloseFileTransferHandle(LPWININETHANDLEHEADER hdr)
  *   NULL on failure
  *
  */
-HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
+static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
 	LPWIN32_FIND_DATAW lpFindFileData, DWORD dwContext)
 {
     DWORD dwSize = 0;
@@ -2800,7 +2800,7 @@ BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFindFileD
  *   TRUE on success
  *   FALSE on failure
  */
-BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERTIESW lpfp)
+static BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERTIESW lpfp)
 {
     static const char szSpace[] = " \t";
     DWORD nBufLen;
@@ -2965,7 +2965,7 @@ BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERTIESW lp
  *   TRUE on success
  *   FALSE on failure
  */
-BOOL FTP_ParseDirectory(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
+static BOOL FTP_ParseDirectory(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
     LPFILEPROPERTIESW *lpafp, LPDWORD dwfp)
 {
     BOOL bSuccess = TRUE;
@@ -3032,7 +3032,7 @@ BOOL FTP_ParseDirectory(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSea
  *   FALSE on failure
  *
  */
-BOOL FTP_ParsePermission(LPCSTR lpszPermission, LPFILEPROPERTIESW lpfp)
+static BOOL FTP_ParsePermission(LPCSTR lpszPermission, LPFILEPROPERTIESW lpfp)
 {
     BOOL bSuccess = TRUE;
     unsigned short nPermission = 0;
@@ -3095,7 +3095,7 @@ BOOL FTP_ParsePermission(LPCSTR lpszPermission, LPFILEPROPERTIESW lpfp)
  * RETURNS
  *
  */
-DWORD FTP_SetResponseError(DWORD dwResponse)
+static DWORD FTP_SetResponseError(DWORD dwResponse)
 {
     DWORD dwCode = 0;
 

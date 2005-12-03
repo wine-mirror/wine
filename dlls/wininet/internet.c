@@ -423,6 +423,63 @@ static BOOL INTERNET_ConfigureProxyFromReg( LPWININETAPPINFOW lpwai )
 }
 
 /***********************************************************************
+ *           dump_INTERNET_FLAGS
+ *
+ * Helper function to TRACE the internet flags.
+ *
+ * RETURNS
+ *    None
+ *
+ */
+static void dump_INTERNET_FLAGS(DWORD dwFlags) 
+{
+#define FE(x) { x, #x }
+    static const wininet_flag_info flag[] = {
+        FE(INTERNET_FLAG_RELOAD),
+        FE(INTERNET_FLAG_RAW_DATA),
+        FE(INTERNET_FLAG_EXISTING_CONNECT),
+        FE(INTERNET_FLAG_ASYNC),
+        FE(INTERNET_FLAG_PASSIVE),
+        FE(INTERNET_FLAG_NO_CACHE_WRITE),
+        FE(INTERNET_FLAG_MAKE_PERSISTENT),
+        FE(INTERNET_FLAG_FROM_CACHE),
+        FE(INTERNET_FLAG_SECURE),
+        FE(INTERNET_FLAG_KEEP_CONNECTION),
+        FE(INTERNET_FLAG_NO_AUTO_REDIRECT),
+        FE(INTERNET_FLAG_READ_PREFETCH),
+        FE(INTERNET_FLAG_NO_COOKIES),
+        FE(INTERNET_FLAG_NO_AUTH),
+        FE(INTERNET_FLAG_CACHE_IF_NET_FAIL),
+        FE(INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP),
+        FE(INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTPS),
+        FE(INTERNET_FLAG_IGNORE_CERT_DATE_INVALID),
+        FE(INTERNET_FLAG_IGNORE_CERT_CN_INVALID),
+        FE(INTERNET_FLAG_RESYNCHRONIZE),
+        FE(INTERNET_FLAG_HYPERLINK),
+        FE(INTERNET_FLAG_NO_UI),
+        FE(INTERNET_FLAG_PRAGMA_NOCACHE),
+        FE(INTERNET_FLAG_CACHE_ASYNC),
+        FE(INTERNET_FLAG_FORMS_SUBMIT),
+        FE(INTERNET_FLAG_NEED_FILE),
+        FE(INTERNET_FLAG_TRANSFER_ASCII),
+        FE(INTERNET_FLAG_TRANSFER_BINARY)
+    };
+#undef FE
+    int i;
+    
+    for (i = 0; i < (sizeof(flag) / sizeof(flag[0])); i++) {
+	if (flag[i].val & dwFlags) {
+	    TRACE(" %s", flag[i].name);
+	    dwFlags &= ~flag[i].val;
+	}
+    }	
+    if (dwFlags)
+        TRACE(" Unknown flags (%08lx)\n", dwFlags);
+    else
+        TRACE("\n");
+}
+
+/***********************************************************************
  *           InternetOpenW   (WININET.@)
  *
  * Per-application initialization of wininet
@@ -3964,61 +4021,4 @@ BOOL WINAPI ResumeSuspendedDownload( HINTERNET hInternet, DWORD dwError )
 {
     FIXME("(%p, 0x%08lx) stub\n", hInternet, dwError);
     return FALSE;
-}
-
-/***********************************************************************
- *           dump_INTERNET_FLAGS
- *
- * Helper function to TRACE the internet flags.
- *
- * RETURNS
- *    None
- *
- */
-void dump_INTERNET_FLAGS(DWORD dwFlags) 
-{
-#define FE(x) { x, #x }
-    static const wininet_flag_info flag[] = {
-        FE(INTERNET_FLAG_RELOAD),
-        FE(INTERNET_FLAG_RAW_DATA),
-        FE(INTERNET_FLAG_EXISTING_CONNECT),
-        FE(INTERNET_FLAG_ASYNC),
-        FE(INTERNET_FLAG_PASSIVE),
-        FE(INTERNET_FLAG_NO_CACHE_WRITE),
-        FE(INTERNET_FLAG_MAKE_PERSISTENT),
-        FE(INTERNET_FLAG_FROM_CACHE),
-        FE(INTERNET_FLAG_SECURE),
-        FE(INTERNET_FLAG_KEEP_CONNECTION),
-        FE(INTERNET_FLAG_NO_AUTO_REDIRECT),
-        FE(INTERNET_FLAG_READ_PREFETCH),
-        FE(INTERNET_FLAG_NO_COOKIES),
-        FE(INTERNET_FLAG_NO_AUTH),
-        FE(INTERNET_FLAG_CACHE_IF_NET_FAIL),
-        FE(INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP),
-        FE(INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTPS),
-        FE(INTERNET_FLAG_IGNORE_CERT_DATE_INVALID),
-        FE(INTERNET_FLAG_IGNORE_CERT_CN_INVALID),
-        FE(INTERNET_FLAG_RESYNCHRONIZE),
-        FE(INTERNET_FLAG_HYPERLINK),
-        FE(INTERNET_FLAG_NO_UI),
-        FE(INTERNET_FLAG_PRAGMA_NOCACHE),
-        FE(INTERNET_FLAG_CACHE_ASYNC),
-        FE(INTERNET_FLAG_FORMS_SUBMIT),
-        FE(INTERNET_FLAG_NEED_FILE),
-        FE(INTERNET_FLAG_TRANSFER_ASCII),
-        FE(INTERNET_FLAG_TRANSFER_BINARY)
-    };
-#undef FE
-    int i;
-    
-    for (i = 0; i < (sizeof(flag) / sizeof(flag[0])); i++) {
-	if (flag[i].val & dwFlags) {
-	    TRACE(" %s", flag[i].name);
-	    dwFlags &= ~flag[i].val;
-	}
-    }	
-    if (dwFlags)
-        TRACE(" Unknown flags (%08lx)\n", dwFlags);
-    else
-        TRACE("\n");
 }

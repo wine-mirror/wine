@@ -2579,7 +2579,7 @@ static const WCHAR szWarning[] = { 'W','a','r','n','i','n','g',0 };
 static const WCHAR szWWW_Authenticate[] = { 'W','W','W','-','A','u','t','h','e','n','t','i','c','a','t','e',0 };
 
 /* Note: Must be kept sorted! */
-const std_hdr_data SORTED_STANDARD_HEADERS[] = {
+static const std_hdr_data SORTED_STANDARD_HEADERS[] = {
     {szAccept,			HTTP_QUERY_ACCEPT,			REQUEST_HDR,},
     {szAccept_Charset,		HTTP_QUERY_ACCEPT_CHARSET,		REQUEST_HDR,},
     {szAccept_Encoding,		HTTP_QUERY_ACCEPT_ENCODING,		REQUEST_HDR,},

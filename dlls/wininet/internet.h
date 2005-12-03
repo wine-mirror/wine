@@ -490,6 +490,4 @@ typedef struct
     const char* name;
 } wininet_flag_info;
 
-extern void dump_INTERNET_FLAGS(DWORD dwFlags) ;
-
 #endif /* _WINE_INTERNET_H_ */
