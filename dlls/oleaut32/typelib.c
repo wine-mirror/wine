@@ -1685,6 +1685,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
 
     char recbuf[512];
     MSFT_FuncRecord * pFuncRec=(MSFT_FuncRecord *) recbuf;
+    TLBFuncDesc *ptfd_prev = NULL;
 
     TRACE_(typelib)("\n");
 
@@ -1698,7 +1699,12 @@ MSFT_DoFuncs(TLBContext*     pcx,
         MSFT_ReadLEDWords(&nameoffset, sizeof(INT), pcx,
                           offset + infolen + (cFuncs + cVars + i + 1) * sizeof(INT));
 
-        (*pptfd)->Name = MSFT_ReadName(pcx, nameoffset);
+        /* nameoffset is sometimes -1 on the second half of a propget/propput
+         * pair of functions */
+        if ((nameoffset == -1) && (i > 0))
+            (*pptfd)->Name = SysAllocString(ptfd_prev->Name);
+        else
+            (*pptfd)->Name = MSFT_ReadName(pcx, nameoffset);
 
         /* read the function information record */
         MSFT_ReadLEDWords(&reclength, sizeof(INT), pcx, recoffset);
@@ -1844,6 +1850,8 @@ MSFT_DoFuncs(TLBContext*     pcx,
 		    MSFT_ReadValue(&(pParamDesc->pparamdescex->varDefaultValue),
                         pInt[j], pcx);
                 }
+                else
+                    elemdesc->u.paramdesc.pparamdescex = NULL;
                 /* custom info */
                 if ( nrattributes > 7 + j && pFuncRec->FKCCIC & 0x80 )
                 {
@@ -1867,6 +1875,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
         (*pptfd)->funcdesc.cScodes   = 0 ;
         (*pptfd)->funcdesc.lprgscode = NULL ;
 
+        ptfd_prev = *pptfd;
         pptfd      = & ((*pptfd)->next);
         recoffset += reclength;
     }
