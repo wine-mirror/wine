@@ -290,17 +290,13 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	    break;
 	case CONSOLE_RENDERER_SB_RESIZE_EVENT:
 	    if (data->curcfg.sb_width != evts[i].u.resize.width ||
-		data->curcfg.sb_height != evts[i].u.resize.height || !data->cells)
+		data->curcfg.sb_height != evts[i].u.resize.height)
 	    {
 		WINE_TRACE(" resize(%d,%d)", evts[i].u.resize.width, evts[i].u.resize.height);
 		data->curcfg.sb_width  = evts[i].u.resize.width;
 		data->curcfg.sb_height = evts[i].u.resize.height;
 
-		if (data->cells) 
-		    data->cells = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, data->cells,
-					  data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
-		else 
-		    data->cells = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                data->cells = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, data->cells,
 					  data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
 
 		if (!data->cells) WINECON_Fatal("OOM\n");
@@ -557,9 +553,6 @@ static BOOL WINECON_GetServerConfig(struct inner_data* data)
     }
     SERVER_END_REQ;
     WINECON_DumpConfig("first cfg: ", &data->curcfg);
-    data->cells = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                            data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
-    if (!data->cells) WINECON_Fatal("OOM\n");
 
     return ret;
 }
@@ -655,6 +648,11 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     {
     case init_success:
         WINECON_GetServerConfig(data);
+        data->cells = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
+        if (!data->cells) WINECON_Fatal("OOM\n");
+        data->fnResizeScreenBuffer(data);
+        data->fnComputePositions(data);
         WINECON_SetConfig(data, &cfg);
         data->curcfg.registry = cfg.registry;
         WINECON_DumpConfig("fint", &data->curcfg);
