@@ -498,6 +498,18 @@ foreach my $file (@c_files) {
 	my $type = shift;
     };
 
+    sub recursive_include {
+	my $include = shift;
+	my $includes = shift;
+
+	if(!defined($includes->{$include})) {
+	    $includes->{$include}++;
+	    foreach my $include (keys(%{$include2info{$include}{includes}})) {
+		recursive_include($include, \%$includes);
+	    }
+	}
+    };
+
     my $preprocessor = 'preprocessor'->new($found_include, $found_conditional);
     my $found_preprocessor = sub {
 	my $directive = shift;
@@ -545,10 +557,7 @@ foreach my $file (@c_files) {
 		    }
 
 		    if(defined($include)) {
-			$includes{$include}++;
-			foreach my $include (keys(%{$include2info{$include}{includes}})) {
-			    $includes{$include}++;
-			}
+			recursive_include($include, \%includes);
 		    }
 		}
 
