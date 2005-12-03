@@ -976,6 +976,7 @@ typedef struct tagITypeInfoImpl
     TYPEATTR TypeAttr ;         /* _lots_ of type information. */
     ITypeLibImpl * pTypeLib;        /* back pointer to typelib */
     int index;                  /* index in this typelib; */
+    HREFTYPE hreftype;          /* hreftype for app object binding */
     /* type libs seem to store the doc strings in ascii
      * so why should we do it in unicode?
      */
@@ -1446,6 +1447,22 @@ static void MSFT_ReadGuid( GUID *pGuid, int offset, TLBContext *pcx)
     pGuid->Data2 = FromLEWord(pGuid->Data2);
     pGuid->Data3 = FromLEWord(pGuid->Data3);
     TRACE_(typelib)("%s\n", debugstr_guid(pGuid));
+}
+
+static HREFTYPE MSFT_ReadHreftype( TLBContext *pcx, int offset )
+{
+    MSFT_NameIntro niName;
+
+    if (offset < 0)
+    {
+        ERR_(typelib)("bad offset %d\n", offset);
+        return -1;
+    }
+
+    MSFT_ReadLEDWords(&niName, sizeof(niName), pcx,
+		      pcx->pTblDir->pNametab.offset+offset);
+
+    return niName.hreftype;
 }
 
 static BSTR MSFT_ReadName( TLBContext *pcx, int offset)
@@ -2057,6 +2074,7 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
 
 /* name, eventually add to a hash table */
     ptiRet->Name=MSFT_ReadName(pcx, tiBase.NameOffset);
+    ptiRet->hreftype = MSFT_ReadHreftype(pcx, tiBase.NameOffset);
     TRACE_(typelib)("reading %s\n", debugstr_w(ptiRet->Name));
     /* help info */
     ptiRet->DocString=MSFT_ReadString(pcx, tiBase.docstringoffs);
@@ -4111,7 +4129,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
                 TYPEDESC tdesc_appobject =
                 {
                     {
-                        0 /* FIXME */
+                        (TYPEDESC *)pTypeInfo->hreftype
                     },
                     VT_USERDEFINED
                 };
@@ -4152,6 +4170,9 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
                     break;
                 }
                 if (subtypeinfo) ITypeInfo_Release(subtypeinfo);
+
+                if (pTypeInfo->hreftype == -1)
+                    FIXME("no hreftype for interface %p\n", pTypeInfo);
 
                 hr = TLB_AllocAndInitVarDesc(&vardesc_appobject, &pBindPtr->lpvardesc);
                 if (FAILED(hr))
@@ -4202,6 +4223,7 @@ static ITypeInfo2 * WINAPI ITypeInfo_Constructor(void)
       pTypeInfoImpl->lpVtbl = &tinfvt;
       pTypeInfoImpl->lpVtblTypeComp = &tcompvt;
       pTypeInfoImpl->ref=1;
+      pTypeInfoImpl->hreftype = -1;
     }
     TRACE("(%p)\n", pTypeInfoImpl);
     return (ITypeInfo2*) pTypeInfoImpl;
@@ -5535,7 +5557,13 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     HRESULT result = E_FAIL;
 
-    if (hRefType == -1 &&
+    if ((This->hreftype != -1) && (This->hreftype == hRefType))
+    {
+        *ppTInfo = (ITypeInfo *)&This->lpVtbl;
+        ITypeInfo_AddRef(*ppTInfo);
+        result = S_OK;
+    }
+    else if (hRefType == -1 &&
 	(((ITypeInfoImpl*) This)->TypeAttr.typekind   == TKIND_DISPATCH) &&
 	(((ITypeInfoImpl*) This)->TypeAttr.wTypeFlags &  TYPEFLAG_FDUAL))
     {
