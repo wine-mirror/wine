@@ -6370,18 +6370,15 @@ static HRESULT WINAPI ITypeComp_fnBind(
         ITypeInfo_AddRef(*ppTInfo);
         return S_OK;
     } else {
-        if (!(wFlags & ~(INVOKE_PROPERTYGET)))
-        {
-            for(pVDesc = This->varlist; pVDesc; pVDesc = pVDesc->next) {
-                if (!strcmpW(pVDesc->Name, szName)) {
-                    HRESULT hr = TLB_AllocAndInitVarDesc(&pVDesc->vardesc, &pBindPtr->lpvardesc);
-                    if (FAILED(hr))
-                        return hr;
-                    *pDescKind = DESCKIND_VARDESC;
-                    *ppTInfo = (ITypeInfo *)&This->lpVtbl;
-                    ITypeInfo_AddRef(*ppTInfo);
-                    return S_OK;
-                }
+        for(pVDesc = This->varlist; pVDesc; pVDesc = pVDesc->next) {
+            if (!strcmpW(pVDesc->Name, szName)) {
+                HRESULT hr = TLB_AllocAndInitVarDesc(&pVDesc->vardesc, &pBindPtr->lpvardesc);
+                if (FAILED(hr))
+                    return hr;
+                *pDescKind = DESCKIND_VARDESC;
+                *ppTInfo = (ITypeInfo *)&This->lpVtbl;
+                ITypeInfo_AddRef(*ppTInfo);
+                return S_OK;
             }
         }
     }
