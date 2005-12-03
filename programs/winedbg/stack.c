@@ -176,18 +176,11 @@ static BOOL WINAPI sym_enum_cb(SYMBOL_INFO* sym_info, ULONG size, void* user)
     struct sym_enum*    se = (struct sym_enum*)user;
     DWORD               addr;
     unsigned            val;
-    long                offset;
 
     if ((sym_info->Flags & (SYMFLAG_PARAMETER|SYMFLAG_FRAMEREL)) == (SYMFLAG_PARAMETER|SYMFLAG_FRAMEREL))
     {
-        struct dbg_type     type;
-
         if (se->tmp[0]) strcat(se->tmp, ", ");
-        addr = se->frame;
-        type.module = sym_info->ModBase;
-        type.id = sym_info->TypeIndex;
-        types_get_info(&type, TI_GET_OFFSET, &offset);
-        addr += offset;
+        addr = se->frame + sym_info->Address;
         if (dbg_read_memory((char*)addr, &val, sizeof(val)))
             sprintf(se->tmp + strlen(se->tmp), "%s=0x%x", sym_info->Name, val);
         else
