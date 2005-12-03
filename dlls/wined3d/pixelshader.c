@@ -1664,7 +1664,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
     if (NULL != pToken) {
         while (D3DPS_END() != *pToken) {
             if (pshader_is_version_token(*pToken)) { /** version */
-                version = *pToken & 0xFF;
+                version = (((*pToken >> 8) & 0x0F) * 10) + (*pToken & 0x0F);
                 TRACE("ps_%lu_%lu\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
                 ++pToken;
                 ++len;
