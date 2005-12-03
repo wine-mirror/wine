@@ -579,7 +579,7 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     else if (sym->Flags & SYMFLAG_LOCAL)
     {
         type.id = sym->TypeIndex;
-        v = ((IMAGEHLP_STACK_FRAME*)ctx)->FrameOffset + sym->Address;
+        v = (ULONG)ctx + sym->Address;
 
         if (!dbg_read_memory((void*)v, &val, sizeof(val)))
         {
