@@ -1863,38 +1863,6 @@ MSFT_DoFuncs(TLBContext*     pcx,
             }
         }
 
-        /* special treatment for dispinterfaces: this makes functions appear
-         * to return their [retval] value when it is really returning an
-         * HRESULT */
-        if ((pTI->TypeAttr.typekind == TKIND_DISPATCH) &&
-            (*pptfd)->funcdesc.elemdescFunc.tdesc.vt == VT_HRESULT)
-        {
-            if (pFuncRec->nrargs &&
-                ((*pptfd)->funcdesc.lprgelemdescParam[pFuncRec->nrargs - 1].u.paramdesc.wParamFlags & PARAMFLAG_FRETVAL))
-            {
-                ELEMDESC *elemdesc = &(*pptfd)->funcdesc.lprgelemdescParam[pFuncRec->nrargs - 1];
-                if (elemdesc->tdesc.vt != VT_PTR)
-                {
-                    ERR_(typelib)("elemdesc should have started with VT_PTR instead of:\n");
-                    if (ERR_ON(typelib))
-                        dump_ELEMDESC(elemdesc);
-                    /* FIXME: return error */
-                    break;
-                }
- 
-                (*pptfd)->funcdesc.elemdescFunc = *elemdesc;
- 
-                /* dereference parameter */
-                (*pptfd)->funcdesc.elemdescFunc.tdesc = *elemdesc->tdesc.u.lptdesc;
- 
-                pFuncRec->nrargs--;
-                (*pptfd)->funcdesc.cParams = pFuncRec->nrargs;
-            }
-            else
-                (*pptfd)->funcdesc.elemdescFunc.tdesc.vt = VT_VOID;
-
-        }
-
         /* scode is not used: archaic win16 stuff FIXME: right? */
         (*pptfd)->funcdesc.cScodes   = 0 ;
         (*pptfd)->funcdesc.lprgscode = NULL ;
@@ -4403,7 +4371,7 @@ static void TLB_FreeElemDesc( ELEMDESC *elemdesc )
         VariantClear(&elemdesc->u.paramdesc.pparamdescex->varDefaultValue);
 }
 
-static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_ptr )
+static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_ptr, BOOL dispinterface )
 {
     FUNCDESC *dest;
     char *buffer;
@@ -4454,6 +4422,38 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
         return hr;
     }
 
+    /* special treatment for dispinterfaces: this makes functions appear
+     * to return their [retval] value when it is really returning an
+     * HRESULT */
+    if (dispinterface && dest->elemdescFunc.tdesc.vt == VT_HRESULT)
+    {
+        if (dest->cParams &&
+            (dest->lprgelemdescParam[dest->cParams - 1].u.paramdesc.wParamFlags & PARAMFLAG_FRETVAL))
+        {
+            ELEMDESC *elemdesc = &dest->lprgelemdescParam[dest->cParams - 1];
+            if (elemdesc->tdesc.vt != VT_PTR)
+            {
+                ERR("elemdesc should have started with VT_PTR instead of:\n");
+                if (ERR_ON(ole))
+                    dump_ELEMDESC(elemdesc);
+                return E_UNEXPECTED;
+            }
+
+            /* copy last parameter to the return value. we are using a flat
+             * buffer so there is no danger of leaking memory in
+             * elemdescFunc */
+            dest->elemdescFunc.tdesc = *elemdesc->tdesc.u.lptdesc;
+
+            /* remove the last parameter */
+            dest->cParams--;
+        }
+        else
+            /* otherwise this function is made to appear to have no return
+             * value */
+            dest->elemdescFunc.tdesc.vt = VT_VOID;
+
+    }
+
     *dest_ptr = dest;
     return S_OK;
 }
@@ -4477,7 +4477,10 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
         ;
 
     if(pFDesc)
-        return TLB_AllocAndInitFuncDesc(&pFDesc->funcdesc, ppFuncDesc);
+        return TLB_AllocAndInitFuncDesc(
+            &pFDesc->funcdesc,
+            ppFuncDesc,
+            This->TypeAttr.typekind == TKIND_DISPATCH);
 
     return E_INVALIDARG;
 }
@@ -6362,7 +6365,10 @@ static HRESULT WINAPI ITypeComp_fnBind(
 
     if (pFDesc)
     {
-        HRESULT hr = TLB_AllocAndInitFuncDesc(&pFDesc->funcdesc, &pBindPtr->lpfuncdesc);
+        HRESULT hr = TLB_AllocAndInitFuncDesc(
+            &pFDesc->funcdesc,
+            &pBindPtr->lpfuncdesc,
+            This->TypeAttr.typekind == TKIND_DISPATCH);
         if (FAILED(hr))
             return hr;
         *pDescKind = DESCKIND_FUNCDESC;
