@@ -2965,6 +2965,8 @@ void INTERNET_SetLastError(DWORD dwError)
 DWORD INTERNET_GetLastError(void)
 {
     LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
+    /* TlsGetValue clears last error, so set it again here */
+    SetLastError(lpwite->dwError);
     return lpwite->dwError;
 }
 

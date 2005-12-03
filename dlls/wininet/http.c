@@ -38,8 +38,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <errno.h>
-#include <string.h>
 #include <time.h>
 #include <assert.h>
 
@@ -2237,10 +2235,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
 
     if (!NETCON_connect(&lpwhr->netConnection, (struct sockaddr *)&lpwhs->socketAddress,
                       sizeof(lpwhs->socketAddress)))
-    {
-       WARN("Unable to connect to host (%s)\n", strerror(errno));
        goto lend;
-    }
 
     if (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE)
     {

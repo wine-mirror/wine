@@ -43,6 +43,11 @@
 #include "wininet.h"
 #include "winerror.h"
 
+/* To avoid conflicts with the Unix socket headers. we only need it for
+ * the error codes anyway. */
+#define USE_WS_PREFIX
+#include "winsock2.h"
+
 #include "wine/debug.h"
 #include "internet.h"
 
@@ -192,6 +197,70 @@ BOOL NETCON_connected(WININET_NETCONNECTION *connection)
         return TRUE;
 }
 
+/* translate a unix error code into a winsock one */
+static int sock_get_error( int err )
+{
+    switch (err)
+    {
+        case EINTR:             return WSAEINTR;
+        case EBADF:             return WSAEBADF;
+        case EPERM:
+        case EACCES:            return WSAEACCES;
+        case EFAULT:            return WSAEFAULT;
+        case EINVAL:            return WSAEINVAL;
+        case EMFILE:            return WSAEMFILE;
+        case EWOULDBLOCK:       return WSAEWOULDBLOCK;
+        case EINPROGRESS:       return WSAEINPROGRESS;
+        case EALREADY:          return WSAEALREADY;
+        case ENOTSOCK:          return WSAENOTSOCK;
+        case EDESTADDRREQ:      return WSAEDESTADDRREQ;
+        case EMSGSIZE:          return WSAEMSGSIZE;
+        case EPROTOTYPE:        return WSAEPROTOTYPE;
+        case ENOPROTOOPT:       return WSAENOPROTOOPT;
+        case EPROTONOSUPPORT:   return WSAEPROTONOSUPPORT;
+        case ESOCKTNOSUPPORT:   return WSAESOCKTNOSUPPORT;
+        case EOPNOTSUPP:        return WSAEOPNOTSUPP;
+        case EPFNOSUPPORT:      return WSAEPFNOSUPPORT;
+        case EAFNOSUPPORT:      return WSAEAFNOSUPPORT;
+        case EADDRINUSE:        return WSAEADDRINUSE;
+        case EADDRNOTAVAIL:     return WSAEADDRNOTAVAIL;
+        case ENETDOWN:          return WSAENETDOWN;
+        case ENETUNREACH:       return WSAENETUNREACH;
+        case ENETRESET:         return WSAENETRESET;
+        case ECONNABORTED:      return WSAECONNABORTED;
+        case EPIPE:
+        case ECONNRESET:        return WSAECONNRESET;
+        case ENOBUFS:           return WSAENOBUFS;
+        case EISCONN:           return WSAEISCONN;
+        case ENOTCONN:          return WSAENOTCONN;
+        case ESHUTDOWN:         return WSAESHUTDOWN;
+        case ETOOMANYREFS:      return WSAETOOMANYREFS;
+        case ETIMEDOUT:         return WSAETIMEDOUT;
+        case ECONNREFUSED:      return WSAECONNREFUSED;
+        case ELOOP:             return WSAELOOP;
+        case ENAMETOOLONG:      return WSAENAMETOOLONG;
+        case EHOSTDOWN:         return WSAEHOSTDOWN;
+        case EHOSTUNREACH:      return WSAEHOSTUNREACH;
+        case ENOTEMPTY:         return WSAENOTEMPTY;
+#ifdef EPROCLIM
+        case EPROCLIM:          return WSAEPROCLIM;
+#endif
+#ifdef EUSERS
+        case EUSERS:            return WSAEUSERS;
+#endif
+#ifdef EDQUOT
+        case EDQUOT:            return WSAEDQUOT;
+#endif
+#ifdef ESTALE
+        case ESTALE:            return WSAESTALE;
+#endif
+#ifdef EREMOTE
+        case EREMOTE:           return WSAEREMOTE;
+#endif
+    default: errno=err; perror("sock_set_error"); return WSAEFAULT;
+    }
+}
+
 /******************************************************************************
  * NETCON_create
  * Basically calls 'socket()'
@@ -206,7 +275,10 @@ BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,
 
     connection->socketFD = socket(domain, type, protocol);
     if (connection->socketFD == -1)
+    {
+        INTERNET_SetLastError(sock_get_error(errno));
         return FALSE;
+    }
     return TRUE;
 }
 
@@ -239,7 +311,10 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
     connection->socketFD = -1;
 
     if (result == -1)
+    {
+        INTERNET_SetLastError(sock_get_error(errno));
         return FALSE;
+    }
     return TRUE;
 }
 
@@ -358,6 +433,9 @@ BOOL NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *se
     result = connect(connection->socketFD, serv_addr, addrlen);
     if (result == -1)
     {
+        WARN("Unable to connect to host (%s)\n", strerror(errno));
+        INTERNET_SetLastError(sock_get_error(errno));
+
         closesocket(connection->socketFD);
         connection->socketFD = -1;
         return FALSE;
@@ -379,7 +457,10 @@ BOOL NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len,
     {
 	*sent = send(connection->socketFD, msg, len, flags);
 	if (*sent == -1)
+	{
+	    INTERNET_SetLastError(sock_get_error(errno));
 	    return FALSE;
+	}
         return TRUE;
     }
     else
@@ -410,7 +491,10 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
     {
 	*recvd = recv(connection->socketFD, buf, len, flags);
 	if (*recvd == -1)
+	{
+	    INTERNET_SetLastError(sock_get_error(errno));
 	    return FALSE;
+	}
         return TRUE;
     }
     else
@@ -498,7 +582,7 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 	    {
 		if (recv(connection->socketFD, &lpszBuffer[nRecv], 1, 0) <= 0)
 		{
-		    INTERNET_SetLastError(ERROR_CONNECTION_ABORTED); /* fixme: right error? */
+		    INTERNET_SetLastError(sock_get_error(errno));
 		    goto lend;
 		}
 
