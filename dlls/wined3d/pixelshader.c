@@ -100,7 +100,7 @@ ULONG WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface) {
 HRESULT WINAPI IWineD3DPixelShaderImpl_GetParent(IWineD3DPixelShader *iface, IUnknown** parent){
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
 
-    *parent= (IUnknown*) parent;
+    *parent = This->parent;
     IUnknown_AddRef(*parent);
     TRACE("(%p) : returning %p\n", This, *parent);
     return D3D_OK;
