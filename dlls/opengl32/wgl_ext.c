@@ -32,7 +32,6 @@
 #include "winerror.h"
 
 #include "gdi.h"
-#include "wgl.h"
 #include "wgl_ext.h"
 #include "opengl_ext.h"
 #include "wine/library.h"
@@ -1119,6 +1118,12 @@ void wgl_ext_finalize_extensions(void)
 	HeapFree(GetProcessHeap(), 0, WGL_extensions);
     }
 }
+
+
+/* these are located in wgl.c for convenience of implementation */
+BOOL    WINAPI wglMakeContextCurrentARB(HDC,HDC,HGLRC);
+HDC     WINAPI wglGetCurrentReadDCARB(void);
+
 
 /*
  * Putting this at the end to prevent having to write the prototypes :-) 

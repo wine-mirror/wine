@@ -3678,6 +3678,24 @@ BOOL      WINAPI PolyTextOutW(HDC,PPOLYTEXTW,INT);
 #define WGL_SWAP_UNDERLAY14 (1 << 29)
 #define WGL_SWAP_UNDERLAY15 (1 << 30)
 
+/* WGL prototypes */
+HGLRC   WINAPI wglCreateContext(HDC);
+HGLRC   WINAPI wglCreateLayerContext(HDC,INT);
+BOOL    WINAPI wglCopyContext(HGLRC,HGLRC,UINT);
+BOOL    WINAPI wglDeleteContext(HGLRC);
+BOOL    WINAPI wglDescribeLayerPlane(HDC,INT,INT,UINT,LPLAYERPLANEDESCRIPTOR);
+HGLRC   WINAPI wglGetCurrentContext(void);
+HDC     WINAPI wglGetCurrentDC(void);
+INT     WINAPI wglGetLayerPaletteEntries(HDC,INT,INT,INT,const COLORREF *);
+PROC    WINAPI wglGetProcAddress(LPCSTR);
+BOOL    WINAPI wglMakeCurrent(HDC,HGLRC);
+BOOL    WINAPI wglRealizeLayerPalette(HDC,INT,BOOL);
+INT     WINAPI wglSetLayerPaletteEntries(HDC,INT,INT,INT,const COLORREF *);
+BOOL    WINAPI wglShareLists(HGLRC,HGLRC);
+BOOL    WINAPI wglSwapLayerBuffers(HDC,UINT);
+BOOL    WINAPI wglUseFontBitmaps(HDC,DWORD,DWORD,DWORD);
+BOOL    WINAPI wglUseFontOutlines(HDC,DWORD,DWORD,DWORD,FLOAT,FLOAT,INT,LPGLYPHMETRICSFLOAT);
+
 #ifdef __cplusplus
 }
 #endif

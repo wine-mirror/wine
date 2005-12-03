@@ -30,8 +30,8 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "wingdi.h"
 
-#include "wgl.h"
 #include "wgl_ext.h"
 #include "opengl_ext.h"
 #include "wine/library.h"
@@ -360,7 +360,7 @@ static int wgl_compar(const void *elt_a, const void *elt_b) {
 		((const WGL_extension *) elt_b)->func_name);
 }
 
-void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
+PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   void *local_func;
   OpenGL_extension  ext;
   OpenGL_extension *ext_ret;
