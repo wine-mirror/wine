@@ -432,11 +432,10 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr)
 {
     IMAGEHLP_LINE       il;
     DWORD               disp;
-    ULONG64             disp64, start, size;
+    ULONG64             disp64, start;
     DWORD               lin = (DWORD)memory_to_linear_addr(addr);
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        sym = (SYMBOL_INFO*)buffer;
-    struct dbg_type     type;
 
     il.SizeOfStruct = sizeof(il);
     sym->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -466,11 +465,8 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr)
 
     if (symbol_get_debug_start(sym->ModBase, sym->TypeIndex, &start) && lin < start)
         return dbg_not_on_a_line_number;
-    type.module = sym->ModBase;
-    type.id = sym->TypeIndex;
-    if (!types_get_info(&type, TI_GET_LENGTH, &size) || size == 0)
-        size = 0x100000;
-    if (il.FileName && il.FileName[0] && disp < size)
+    if (!sym->Size) sym->Size = 0x100000;
+    if (il.FileName && il.FileName[0] && disp < sym->Size)
         return (disp == 0) ? dbg_on_a_line_number : dbg_not_on_a_line_number;
 
     return dbg_no_line_info;
