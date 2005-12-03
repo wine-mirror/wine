@@ -150,11 +150,58 @@ char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile;
  * WCMD_create_dir
  *
  * Create a directory.
+ *
+ * this works recursivly. so mkdir dir1\dir2\dir3 will create dir1 and dir2 if
+ * they do not already exist.
  */
+
+BOOL create_full_path(CHAR* path)
+{
+    int len;
+    CHAR *new_path;
+    BOOL ret = TRUE;
+
+    new_path = HeapAlloc(GetProcessHeap(),0,strlen(path)+1);
+    strcpy(new_path,path);
+
+    while ((len = strlen(new_path)) && new_path[len - 1] == '\\')
+        new_path[len - 1] = 0;
+
+    while (!CreateDirectory(new_path,NULL))
+    {
+        CHAR *slash;
+        DWORD last_error = GetLastError();
+        if (last_error == ERROR_ALREADY_EXISTS)
+            break;
+
+        if (last_error != ERROR_PATH_NOT_FOUND)
+        {
+            ret = FALSE;
+            break;
+        }
+
+        if (!(slash = strrchr(new_path,'\\')) && ! (slash = strrchr(new_path,'/')))
+        {
+            ret = FALSE;
+            break;
+        }
+
+        len = slash - new_path;
+        new_path[len] = 0;
+        if (!create_full_path(new_path))
+        {
+            ret = FALSE;
+            break;
+        }
+        new_path[len] = '\\';
+    }
+    HeapFree(GetProcessHeap(),0,new_path);
+    return ret;
+}
 
 void WCMD_create_dir (void) {
 
-  if (!CreateDirectory (param1, NULL)) WCMD_print_error ();
+    if (!create_full_path(param1)) WCMD_print_error ();
 }
 
 /****************************************************************************
