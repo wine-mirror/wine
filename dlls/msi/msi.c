@@ -53,7 +53,23 @@ LPVOID gUIContext = NULL;
 WCHAR gszLogFile[MAX_PATH];
 HINSTANCE msi_hInstance;
 
+static LONG dll_count;
+
 static const WCHAR installerW[] = {'\\','I','n','s','t','a','l','l','e','r',0};
+
+/**********************************************************************
+ * Dll lifetime tracking declaration
+ */
+static void LockModule(void)
+{
+    InterlockedIncrement(&dll_count);
+}
+
+static void UnlockModule(void)
+{
+    InterlockedDecrement(&dll_count);
+}
+
 
 UINT WINAPI MsiOpenProductA(LPCSTR szProduct, MSIHANDLE *phProduct)
 {
@@ -1285,11 +1301,13 @@ static HRESULT WINAPI MsiCF_QueryInterface(LPCLASSFACTORY iface,
 
 static ULONG WINAPI MsiCF_AddRef(LPCLASSFACTORY iface)
 {
+    LockModule();
     return 2;
 }
 
 static ULONG WINAPI MsiCF_Release(LPCLASSFACTORY iface)
 {
+    UnlockModule();
     return 1;
 }
 
@@ -1304,9 +1322,13 @@ static HRESULT WINAPI MsiCF_CreateInstance(LPCLASSFACTORY iface,
 
 static HRESULT WINAPI MsiCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    TRACE("(%p)->(%d)\n", iface, dolock);
 
-    FIXME("%p %d\n", This, dolock);
+    if(dolock)
+        LockModule();
+    else
+        UnlockModule();
+
     return S_OK;
 }
 
@@ -1363,7 +1385,7 @@ HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *pdvi)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    return S_FALSE;
+    return dll_count == 0 ? S_OK : S_FALSE;
 }
 
 /***********************************************************************
