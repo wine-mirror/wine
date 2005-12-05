@@ -561,6 +561,9 @@ LRESULT WINAPI CRAM_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
     return r;
 }
 
+/***********************************************************************
+ *		DllMain
+ */
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
 {
     TRACE("(%p,%ld,%p)\n", hModule, dwReason, lpReserved);
