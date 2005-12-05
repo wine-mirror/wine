@@ -202,8 +202,10 @@ static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory)
         res = E_INVALIDARG;
 
     if (SUCCEEDED(res))
-        res = HRESULT_FROM_WIN32(
-            RegCreateKeyW(HKEY_CURRENT_USER, wszRegKey, &hkeyDummy));
+    {
+        LONG lRes = RegCreateKeyW(HKEY_CURRENT_USER, wszRegKey, &hkeyDummy);
+        res = HRESULT_FROM_WIN32(lRes);
+    }
 
     if (hkeyDummy)
         RegCloseKey(hkeyDummy);
