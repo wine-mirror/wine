@@ -40,6 +40,7 @@ static BOOL symbol_get_debug_start(DWORD mod_base, DWORD typeid, ULONG64* start)
     int                         i;
     struct dbg_type             type;
 
+    if (!typeid) return FALSE; /* native dbghelp not always fills the info field */
     type.module = mod_base;
     type.id = typeid;
 
@@ -134,7 +135,7 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
         if (sgv->lineno == -1)
         {
             if (!sgv->bp_disp || 
-                !symbol_get_debug_start(sym->ModBase, sym->TypeIndex, &addr))
+                !symbol_get_debug_start(sym->ModBase, sym->info, &addr))
                 addr = sym->Address;
         }
         else
@@ -185,9 +186,7 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     sgv->syms[insp].lvalue.addr.Mode   = AddrModeFlat;
     sgv->syms[insp].lvalue.addr.Offset = addr;
     sgv->syms[insp].lvalue.type.module = sym->ModBase;
-    sgv->syms[insp].lvalue.type.id = sym->TypeIndex;
-    types_get_info(&sgv->syms[insp].lvalue.type, TI_GET_TYPE, 
-                   &sgv->syms[insp].lvalue.type.id);
+    sgv->syms[insp].lvalue.type.id     = sym->TypeIndex;
     sgv->syms[insp].flags              = sym->Flags;
     sgv->num++;
   
@@ -463,7 +462,7 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr)
     if (!SymGetLineFromAddr(dbg_curr_process->handle, lin, &disp, &il))
         return dbg_no_line_info;
 
-    if (symbol_get_debug_start(sym->ModBase, sym->TypeIndex, &start) && lin < start)
+    if (symbol_get_debug_start(sym->ModBase, sym->info, &start) && lin < start)
         return dbg_not_on_a_line_number;
     if (!sym->Size) sym->Size = 0x100000;
     if (il.FileName && il.FileName[0] && disp < sym->Size)
@@ -545,7 +544,6 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     dbg_printf("\t");
     type.module = sym->ModBase;
     type.id = sym->TypeIndex;
-    types_get_info(&type, TI_GET_TYPE, &type.id);
     types_print_type(&type, FALSE);
 
     if (sym->Flags & SYMFLAG_PARAMETER) explain = "parameter";
@@ -624,8 +622,7 @@ static BOOL CALLBACK symbols_info_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     type.id = sym->TypeIndex;
     type.module = sym->ModBase;
 
-    if (sym->TypeIndex != dbg_itype_none && sym->TypeIndex != 0 &&
-        types_get_info(&type, TI_GET_TYPE, &type.id))
+    if (sym->TypeIndex != dbg_itype_none && sym->TypeIndex != 0)
     {
         dbg_printf(" ");
         types_print_type(&type, FALSE);

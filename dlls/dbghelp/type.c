@@ -718,6 +718,7 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         default:
             FIXME("Unsupported sym-tag %s for get-type\n", 
                   symt_get_tag_str(type->tag));
+        case SymTagPublicSymbol:
         case SymTagThunk:
             return FALSE;
         }

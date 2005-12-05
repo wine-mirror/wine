@@ -461,10 +461,8 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         exp->un.call.result = 0;
 #endif
         rtn.cookie = DLV_HOST;
-        /* get function signature type */
-        types_get_info(&rtn.type, TI_GET_TYPE, &rtn.type);
-        /* and now, return type */
-        types_get_info(&rtn.type, TI_GET_TYPE, &rtn.type);
+        /* get return type from function signature tupe */
+        types_get_info(&rtn.type, TI_GET_TYPE, &rtn.type.id);
         rtn.addr.Offset = (unsigned int)&exp->un.call.result;
         break;
     case EXPR_TYPE_INTVAR:
