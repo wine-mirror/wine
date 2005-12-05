@@ -29,7 +29,7 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 IDM_WINEFILE MENU FIXED IMPURE
 {
     POPUP "파일(&F)"  {
-        MENUITEM "열기(&O)\OCtEnter",                ID_ACTIVATE
+        MENUITEM "열기(&O)\tEnter",                ID_ACTIVATE
         MENUITEM "이동(&M)...\tF7",                ID_FILE_MOVE
         MENUITEM "복사(&C)...\tF8",                ID_FILE_COPY
         MENUITEM "클립보드로(&I)...\tF9",        118
