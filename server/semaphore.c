@@ -172,12 +172,18 @@ DECL_HANDLER(open_semaphore)
 {
     struct unicode_str name;
     struct directory *root = NULL;
+    struct semaphore *sem;
 
     get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
         return;
 
-    reply->handle = open_object_dir( root, &name, req->attributes, &semaphore_ops, req->access );
+    if ((sem = open_object_dir( root, &name, req->attributes, &semaphore_ops )))
+    {
+        reply->handle = alloc_handle( current->process, &sem->obj, req->access,
+                                      req->attributes & OBJ_INHERIT );
+        release_object( sem );
+    }
 
     if (root) release_object( root );
 }

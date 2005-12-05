@@ -187,9 +187,8 @@ extern struct object *find_object_dir( struct directory *root, const struct unic
                                        unsigned int attr, struct unicode_str *name_left );
 extern void *create_named_object_dir( struct directory *root, const struct unicode_str *name,
                                       unsigned int attr, const struct object_ops *ops );
-extern obj_handle_t open_object_dir( struct directory *root, const struct unicode_str *name,
-                                     unsigned int attr, const struct object_ops *ops,
-                                     unsigned int access );
+extern void *open_object_dir( struct directory *root, const struct unicode_str *name,
+                              unsigned int attr, const struct object_ops *ops );
 extern void init_directories(void);
 extern void close_directories(void);
 

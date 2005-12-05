@@ -198,12 +198,18 @@ DECL_HANDLER(open_mutex)
 {
     struct unicode_str name;
     struct directory *root = NULL;
+    struct mutex *mutex;
 
     get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
         return;
 
-    reply->handle = open_object_dir( root, &name, req->attributes, &mutex_ops, req->access );
+    if ((mutex = open_object_dir( root, &name, req->attributes, &mutex_ops )))
+    {
+        reply->handle = alloc_handle( current->process, &mutex->obj, req->access,
+                                      req->attributes & OBJ_INHERIT );
+        release_object( mutex );
+    }
 
     if (root) release_object( root );
 }

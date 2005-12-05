@@ -260,11 +260,9 @@ void *create_named_object_dir( struct directory *root, const struct unicode_str 
 }
 
 /* open a new handle to an existing object */
-obj_handle_t open_object_dir( struct directory *root, const struct unicode_str *name,
-                              unsigned int attr, const struct object_ops *ops,
-                              unsigned int access )
+void *open_object_dir( struct directory *root, const struct unicode_str *name,
+                       unsigned int attr, const struct object_ops *ops )
 {
-    obj_handle_t handle = 0;
     struct unicode_str name_left;
     struct object *obj;
 
@@ -275,11 +273,11 @@ obj_handle_t open_object_dir( struct directory *root, const struct unicode_str *
         else if (ops && obj->ops != ops)
             set_error( STATUS_OBJECT_TYPE_MISMATCH );
         else
-            handle = alloc_handle( current->process, obj, access, attr & OBJ_INHERIT );
+            return obj;
 
         release_object( obj );
     }
-    return handle;
+    return NULL;
 }
 
 
@@ -367,13 +365,18 @@ DECL_HANDLER(create_directory)
 DECL_HANDLER(open_directory)
 {
     struct unicode_str name;
-    struct directory *root = NULL;
+    struct directory *dir, *root = NULL;
 
     get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
         return;
 
-    reply->handle = open_object_dir( root, &name, req->attributes, &directory_ops, req->access );
+    if ((dir = open_object_dir( root, &name, req->attributes, &directory_ops )))
+    {
+        reply->handle = alloc_handle( current->process, &dir->obj, req->access,
+                                      req->attributes & OBJ_INHERIT );
+        release_object( dir );
+    }
 
     if (root) release_object( root );
 }

@@ -172,12 +172,18 @@ DECL_HANDLER(open_event)
 {
     struct unicode_str name;
     struct directory *root = NULL;
+    struct event *event;
 
     get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
         return;
 
-    reply->handle = open_object_dir( root, &name, req->attributes, &event_ops, req->access );
+    if ((event = open_object_dir( root, &name, req->attributes, &event_ops )))
+    {
+        reply->handle = alloc_handle( current->process, &event->obj, req->access,
+                                      req->attributes & OBJ_INHERIT );
+        release_object( event );
+    }
 
     if (root) release_object( root );
 }
