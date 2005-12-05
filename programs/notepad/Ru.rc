@@ -44,6 +44,7 @@ POPUP "&Правка" {
   MENUITEM "Врем&я и дата\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "&Перенос по словам",  CMD_WRAP
+  MENUITEM "&Шрифт...",           CMD_FONT
  }
 POPUP "П&оиск" {
   MENUITEM "&Найти",           CMD_SEARCH
