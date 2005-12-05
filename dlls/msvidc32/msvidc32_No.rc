@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Dmitry Timoshkov
+ * Copyright 2005 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,11 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winuser.h"
-#include "msvideo_private.h"
+LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-#include "msvfw32_De.rc"
-#include "msvfw32_En.rc"
-#include "msvfw32_Ko.rc"
-#include "msvfw32_No.rc"
+STRINGTABLE DISCARDABLE
+{
+    IDS_NAME "WINE-MS-CRAM"
+    IDS_DESCRIPTION "Wine Video 1-videokodek"
+}

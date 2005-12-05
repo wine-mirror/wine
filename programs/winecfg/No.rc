@@ -62,6 +62,8 @@ BEGIN
     
     LTEXT           "Du kan velge å emulere et Windows-skrivebord, sånn at alle Windows-programmer samles i ett vindu, eller at Windows-programmer oppfrer seg som vanlige programmer.",
                     IDC_STATIC,15,73,228,28
+    LTEXT           "Du kan velge å emulere et Windows-skrivebord, der alle vinduene er bundet i en virtuell skjerm, eller du kan få vinduene til å oppføre seg som andre programmer på skrivebordet.",
+                    IDC_STATIC,15,73,228,28
     LTEXT           "Skrivebordsstrrelse:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
     LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
     CONTROL         "Virtuelt skrivebord",IDC_ENABLE_DESKTOP,"Button",
@@ -192,4 +194,6 @@ BEGIN
     IDS_TAB_AUDIO           "Lyd"
     IDS_TAB_ABOUT           "Om"
     IDS_WINECFG_TITLE       "Wine-konfigurasjon"
+    IDS_THEMEFILE           "Temafiler"
+    IDS_THEMEFILE_SELECT    "Velg en temafil"
 END

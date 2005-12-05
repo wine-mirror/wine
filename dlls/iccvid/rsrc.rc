@@ -22,3 +22,4 @@
 #include "iccvid_De.rc"
 #include "iccvid_En.rc"
 #include "iccvid_Ko.rc"
+#include "iccvid_No.rc"

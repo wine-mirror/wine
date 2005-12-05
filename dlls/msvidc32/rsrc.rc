@@ -22,3 +22,4 @@
 #include "msvidc32_De.rc"
 #include "msvidc32_En.rc"
 #include "msvidc32_Ko.rc"
+#include "msvidc32_No.rc"
