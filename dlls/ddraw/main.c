@@ -39,6 +39,8 @@
 #include "winnls.h"
 #include "winerror.h"
 #include "wingdi.h"
+#include "wine/exception.h"
+#include "excpt.h"
 
 #include "ddraw.h"
 #include "d3d.h"
@@ -61,6 +63,14 @@ void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
+
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 /**********************************************************************/
 
@@ -180,6 +190,7 @@ HRESULT WINAPI DirectDrawEnumerateExA(
     LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags)
 {
     int i;
+    BOOL stop = FALSE;
     TRACE("(%p,%p, %08lx)\n", lpCallback, lpContext, dwFlags);
 
     if (TRACE_ON(ddraw)) {
@@ -201,12 +212,21 @@ HRESULT WINAPI DirectDrawEnumerateExA(
 
 	/* We have to pass NULL from the primary display device.
 	 * RoadRage chapter 6's enumeration routine expects it. */
-	if (!lpCallback((DDRAW_default_driver == i) ? NULL
-			:(LPGUID)&DDRAW_drivers[i]->info->guidDeviceIdentifier,
-			(LPSTR)DDRAW_drivers[i]->info->szDescription,
-			(LPSTR)DDRAW_drivers[i]->info->szDriver,
-			lpContext, 0))
-	    return DD_OK;
+        __TRY
+        {
+            if (!lpCallback((DDRAW_default_driver == i) ? NULL
+                            :(LPGUID)&DDRAW_drivers[i]->info->guidDeviceIdentifier,
+                            (LPSTR)DDRAW_drivers[i]->info->szDescription,
+                            (LPSTR)DDRAW_drivers[i]->info->szDriver,
+                            lpContext, 0))
+                stop = TRUE;
+        }
+        __EXCEPT(page_fault)
+        {
+            return E_INVALIDARG;
+        }
+        __ENDTRY
+        if (stop) return DD_OK;
     }
 
     /* Unsupported flags */
