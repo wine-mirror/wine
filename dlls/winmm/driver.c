@@ -291,6 +291,7 @@ LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCWSTR fn, LPARAM lParam2)
             cause = "load1 failed";
             goto exit;
         }
+        lpDrv->dwFlags |= WINE_GDF_SESSION;
         return ret;
     }
 
@@ -416,8 +417,11 @@ LRESULT WINAPI CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
             {
                 LPWINE_DRIVER       lpDrv0;
 
+                if (lpDrv->dwFlags & WINE_GDF_SESSION)
+                    FIXME("Shouldn't happen (%p)\n", lpDrv);
                 /* if driver has an opened session instance, we have to close it too */
-                if (DRIVER_GetNumberOfModuleRefs(lpDrv->d.d32.hModule, &lpDrv0) == 1)
+                if (DRIVER_GetNumberOfModuleRefs(lpDrv->d.d32.hModule, &lpDrv0) == 1 &&
+                    (lpDrv0->dwFlags & WINE_GDF_SESSION))
                 {
                     DRIVER_SendMessage(lpDrv0, DRV_CLOSE, 0L, 0L);
                     lpDrv0->d.d32.dwDriverID = 0;
@@ -456,7 +460,7 @@ DWORD	WINAPI GetDriverFlags(HDRVR hDrvr)
     TRACE("(%p)\n", hDrvr);
 
     if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL) {
-	ret = WINE_GDF_EXIST | lpDrv->dwFlags;
+	ret = WINE_GDF_EXIST | (lpDrv->dwFlags & WINE_GDF_EXTERNAL_MASK);
     }
     return ret;
 }

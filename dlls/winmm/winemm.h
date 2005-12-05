@@ -306,8 +306,11 @@ extern  unsigned        (*pFnLoadMMDrvFunc16)(LPCSTR,LPWINE_DRIVER, LPWINE_MM_DR
 extern  LRESULT         (*pFnMmioCallback16)(DWORD,LPMMIOINFO,UINT,LPARAM,LPARAM);
 extern  void            (WINAPI *pFnReleaseThunkLock)(DWORD*);
 extern  void            (WINAPI *pFnRestoreThunkLock)(DWORD);
+
 /* GetDriverFlags() returned bits is not documented (nor the call itself)
  * Here are Wine only definitions of the bits
  */
-#define WINE_GDF_EXIST	0x80000000
-#define WINE_GDF_16BIT	0x10000000
+#define WINE_GDF_EXIST	        0x80000000
+#define WINE_GDF_16BIT	        0x10000000
+#define WINE_GDF_EXTERNAL_MASK  0xF0000000
+#define WINE_GDF_SESSION        0x00000001
