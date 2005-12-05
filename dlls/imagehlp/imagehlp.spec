@@ -95,7 +95,7 @@
 @ stub SymRegisterFunctionEntryCallback64
 @ stub SymRegisterFunctionEntryCallback
 @ stdcall SymSetContext(long ptr ptr) dbghelp.SymSetContext
-@ stdcall SymSetOptions(long) dbghelp.SymGetOptions
+@ stdcall SymSetOptions(long) dbghelp.SymSetOptions
 @ stdcall SymSetSearchPath(long str) dbghelp.SymSetSearchPath
 @ stub SymUnDName64
 @ stdcall SymUnDName(ptr str long) dbghelp.SymUnDName
