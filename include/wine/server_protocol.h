@@ -2378,6 +2378,7 @@ struct create_named_pipe_request
     struct request_header __header;
     unsigned int   access;
     unsigned int   attributes;
+    obj_handle_t   rootdir;
     unsigned int   options;
     unsigned int   flags;
     unsigned int   maxinstances;
@@ -2404,6 +2405,7 @@ struct open_named_pipe_request
     struct request_header __header;
     unsigned int   access;
     unsigned int   attributes;
+    obj_handle_t   rootdir;
     unsigned int   flags;
     /* VARARG(name,unicode_str); */
 };
@@ -4312,6 +4314,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 205
+#define SERVER_PROTOCOL_VERSION 206
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

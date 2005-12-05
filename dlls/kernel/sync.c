@@ -1340,7 +1340,8 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
         req->timeout = nTimeOut;
         req->overlapped = &ov;
         req->func = PIPE_CompletionWait;
-        wine_server_add_data( req, nt_name.Buffer + 4, nt_name.Length - 4*sizeof(WCHAR) );
+        wine_server_add_data( req, nt_name.Buffer + sizeof(leadin)/sizeof(WCHAR),
+                              nt_name.Length - sizeof(leadin) );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;

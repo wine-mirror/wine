@@ -1692,6 +1692,7 @@ enum message_type
 @REQ(create_named_pipe)
     unsigned int   access;
     unsigned int   attributes;   /* object attributes */
+    obj_handle_t   rootdir;      /* root directory */
     unsigned int   options;
     unsigned int   flags;
     unsigned int   maxinstances;
@@ -1713,6 +1714,7 @@ enum message_type
 @REQ(open_named_pipe)
     unsigned int   access;
     unsigned int   attributes;   /* object attributes */
+    obj_handle_t   rootdir;      /* root directory */
     unsigned int   flags;        /* file flags */
     VARARG(name,unicode_str);    /* pipe name */
 @REPLY

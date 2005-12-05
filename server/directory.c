@@ -283,8 +283,9 @@ void *open_object_dir( struct directory *root, const struct unicode_str *name,
 
 /* Global initialization */
 
-static struct directory *dir_driver, *dir_device;
+static struct directory *dir_driver;
 static struct symlink *link_dosdev, *link_global1, *link_global2, *link_local;
+static struct named_pipe_device *dev_named_pipe;
 
 void init_directories(void)
 {
@@ -306,7 +307,7 @@ void init_directories(void)
     static const struct unicode_str link_global_str = {link_globalW, sizeof(link_globalW)};
     static const struct unicode_str link_local_str  = {link_localW, sizeof(link_localW)};
 
-    struct directory *dir_global, *dir_basenamed;
+    struct directory *dir_global, *dir_basenamed, *dir_device;
 
     root_directory = create_directory( NULL, NULL, 0, HASH_SIZE );
     dir_driver     = create_directory( root_directory, &dir_driver_str, 0, HASH_SIZE );
@@ -322,20 +323,25 @@ void init_directories(void)
     link_global2   = create_symlink( dir_basenamed, &link_global_str, 0, &dir_basenamed_str );
     link_local     = create_symlink( dir_basenamed, &link_local_str, 0, &dir_basenamed_str );
 
-    /* the symlinks hold references so we can release these */
+    /* devices */
+    dev_named_pipe = create_named_pipe_device();
+
+    /* the symlinks or devices hold references so we can release these */
+    release_object( dir_device );
     release_object( dir_global );
     release_object( dir_basenamed );
 }
 
 void close_directories(void)
 {
+    release_object( dev_named_pipe );
+
     release_object( link_dosdev );
     release_object( link_global1 );
     release_object( link_global2 );
     release_object( link_local );
 
     release_object( dir_driver );
-    release_object( dir_device );
     release_object( root_directory );
 }
 

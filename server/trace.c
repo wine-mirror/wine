@@ -2154,6 +2154,7 @@ static void dump_create_named_pipe_request( const struct create_named_pipe_reque
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " maxinstances=%08x,", req->maxinstances );
@@ -2173,6 +2174,7 @@ static void dump_open_named_pipe_request( const struct open_named_pipe_request *
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );

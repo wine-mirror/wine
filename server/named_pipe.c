@@ -99,6 +99,12 @@ struct named_pipe
     struct list         waiters;     /* list of clients waiting to connect */
 };
 
+struct named_pipe_device
+{
+    struct object       obj;         /* object header */
+    struct namespace   *pipes;       /* named pipe namespace */
+};
+
 static void named_pipe_dump( struct object *obj, int verbose );
 static void named_pipe_destroy( struct object *obj );
 
@@ -179,6 +185,26 @@ static const struct fd_ops pipe_client_fd_ops =
     pipe_client_get_info,         /* get_file_info */
     default_fd_queue_async,       /* queue_async */
     default_fd_cancel_async       /* cancel_async */
+};
+
+static void named_pipe_device_dump( struct object *obj, int verbose );
+static struct object *named_pipe_device_lookup_name( struct object *obj,
+    struct unicode_str *name, unsigned int attr );
+static void named_pipe_device_destroy( struct object *obj );
+
+static const struct object_ops named_pipe_device_ops =
+{
+    sizeof(struct named_pipe_device), /* size */
+    named_pipe_device_dump,           /* dump */
+    no_add_queue,                     /* add_queue */
+    NULL,                             /* remove_queue */
+    NULL,                             /* signaled */
+    no_satisfied,                     /* satisfied */
+    no_signal,                        /* signal */
+    no_get_fd,                        /* get_fd */
+    named_pipe_device_lookup_name,    /* lookup_name */
+    no_close_handle,                  /* close_handle */
+    named_pipe_device_destroy         /* destroy */
 };
 
 static void named_pipe_dump( struct object *obj, int verbose )
@@ -338,6 +364,58 @@ static void pipe_client_destroy( struct object *obj)
     assert( !client->fd );
 }
 
+static void named_pipe_device_dump( struct object *obj, int verbose )
+{
+    assert( obj->ops == &named_pipe_device_ops );
+    fprintf( stderr, "Named pipe device\n" );
+}
+
+static struct object *named_pipe_device_lookup_name( struct object *obj, struct unicode_str *name,
+                                                     unsigned int attr )
+{
+    struct named_pipe_device *device = (struct named_pipe_device*)obj;
+    struct object *found;
+
+    assert( obj->ops == &named_pipe_device_ops );
+    assert( device->pipes );
+
+    if (!name->len) return NULL;
+
+    if ((found = find_object( device->pipes, name, attr | OBJ_CASE_INSENSITIVE )))
+        name->len = 0;
+
+    return found;
+}
+
+static void named_pipe_device_destroy( struct object *obj )
+{
+    struct named_pipe_device *device = (struct named_pipe_device*)obj;
+    assert( obj->ops == &named_pipe_device_ops );
+    free( device->pipes );
+}
+
+/* this will be deleted as soon an we fix wait_named_pipe */
+static struct named_pipe_device *named_pipe_device;
+
+struct named_pipe_device *create_named_pipe_device( void )
+{
+    static const WCHAR pipeW[] = {'\\','?','?','\\','P','I','P','E'};
+    static struct unicode_str pipe = {pipeW, sizeof(pipeW)};
+    struct named_pipe_device *dev;
+
+    if ((dev = create_named_object_dir( NULL, &pipe, 0, &named_pipe_device_ops )) &&
+        get_error() != STATUS_OBJECT_NAME_EXISTS)
+    {
+        if (!(dev->pipes = create_namespace( 7 )))
+        {
+            release_object( dev );
+            dev = NULL;
+        }
+    }
+    named_pipe_device = dev;
+    return dev;
+}
+
 static int pipe_data_remaining( struct pipe_server *server )
 {
     struct pollfd pfd;
@@ -445,37 +523,43 @@ static int pipe_client_get_info( struct fd *fd )
     return flags;
 }
 
-static struct named_pipe *create_named_pipe( const struct unicode_str *name, unsigned int attr )
-{
-    struct named_pipe *pipe;
-
-    pipe = create_named_object( sync_namespace, &named_pipe_ops, name, attr | OBJ_OPENIF );
-    if (pipe)
-    {
-        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
-        {
-            /* initialize it if it didn't already exist */
-            pipe->instances = 0;
-            list_init( &pipe->servers );
-            list_init( &pipe->waiters );
-        }
-    }
-    return pipe;
-}
-
-static struct named_pipe *open_named_pipe( const struct unicode_str *name, unsigned int attr )
+static struct named_pipe *create_named_pipe( struct directory *root, const struct unicode_str *name,
+                                             unsigned int attr )
 {
     struct object *obj;
+    struct named_pipe *pipe = NULL;
+    struct unicode_str new_name;
 
-    if ((obj = find_object( sync_namespace, name, attr )))
+    if (!name || !name->len) return alloc_object( &named_pipe_ops );
+
+    if (!(obj = find_object_dir( root, name, attr, &new_name ))) return NULL;
+    if (!new_name.len)
     {
-        if (obj->ops == &named_pipe_ops) return (struct named_pipe *)obj;
-        release_object( obj );
-        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        if (attr & OBJ_OPENIF && obj->ops == &named_pipe_ops)
+            set_error( STATUS_OBJECT_NAME_EXISTS );
+        else
+        {
+            release_object( obj );
+            obj = NULL;
+            if (attr & OBJ_OPENIF)
+                set_error( STATUS_OBJECT_TYPE_MISMATCH );
+            else
+                set_error( STATUS_OBJECT_NAME_COLLISION );
+        }
+        return (struct named_pipe *)obj;
     }
-    else set_error( STATUS_OBJECT_NAME_NOT_FOUND );
 
-    return NULL;
+    if (obj->ops != &named_pipe_device_ops)
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    else
+    {
+        struct named_pipe_device *dev = (struct named_pipe_device *)obj;
+        if ((pipe = create_object( dev->pipes, &named_pipe_ops, &new_name, NULL )))
+            clear_error();
+    }
+
+    release_object( obj );
+    return pipe;
 }
 
 static struct pipe_server *get_pipe_server_obj( struct process *process,
@@ -552,13 +636,24 @@ DECL_HANDLER(create_named_pipe)
     struct named_pipe *pipe;
     struct pipe_server *server;
     struct unicode_str name;
+    struct directory *root = NULL;
 
     reply->handle = 0;
     get_req_unicode_str( &name );
-    if (!(pipe = create_named_pipe( &name, req->attributes ))) return;
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    pipe = create_named_pipe( root, &name, req->attributes | OBJ_OPENIF );
+
+    if (root) release_object( root );
+    if (!pipe) return;
 
     if (get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
+        /* initialize it if it didn't already exist */
+        pipe->instances = 0;
+        list_init( &pipe->servers );
+        list_init( &pipe->waiters );
         pipe->insize = req->insize;
         pipe->outsize = req->outsize;
         pipe->maxinstances = req->maxinstances;
@@ -601,11 +696,18 @@ DECL_HANDLER(open_named_pipe)
     struct pipe_server *server;
     struct pipe_client *client;
     struct unicode_str name;
+    struct directory *root = NULL;
     struct named_pipe *pipe;
     int fds[2];
 
     get_req_unicode_str( &name );
-    if (!(pipe = open_named_pipe( &name, req->attributes ))) return;
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    pipe = open_object_dir( root, &name, req->attributes, &named_pipe_ops );
+
+    if (root) release_object( root );
+    if (!pipe) return;
 
     server = find_server2( pipe, ps_idle_server, ps_wait_open );
     release_object( pipe );
@@ -701,7 +803,8 @@ DECL_HANDLER(wait_named_pipe)
     struct unicode_str name;
 
     get_req_unicode_str( &name );
-    if (!(pipe = open_named_pipe( &name, OBJ_CASE_INSENSITIVE )))
+    pipe = (struct named_pipe *)find_object( named_pipe_device->pipes, &name, OBJ_CASE_INSENSITIVE );
+    if (!pipe)
     {
         set_error( STATUS_PIPE_NOT_AVAILABLE );
         return;

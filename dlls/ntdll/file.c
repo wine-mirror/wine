@@ -151,11 +151,6 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
 
     if (!attr || !attr->ObjectName) return STATUS_INVALID_PARAMETER;
 
-    if (attr->RootDirectory)
-    {
-        FIXME( "RootDirectory %p not supported\n", attr->RootDirectory );
-        return STATUS_OBJECT_NAME_NOT_FOUND;
-    }
     if (alloc_size) FIXME( "alloc_size not supported\n" );
 
     /* check for named pipe */
@@ -167,14 +162,21 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         {
             req->access = access;
             req->attributes = (attr) ? attr->Attributes : 0;
+            req->rootdir = attr ? attr->RootDirectory : 0;
             req->flags = options;
-            wine_server_add_data( req, attr->ObjectName->Buffer + 4,
-                                  attr->ObjectName->Length - 4*sizeof(WCHAR) );
+            wine_server_add_data( req, attr->ObjectName->Buffer,
+                                  attr->ObjectName->Length );
             io->u.Status = wine_server_call( req );
             *handle = reply->handle;
         }
         SERVER_END_REQ;
         return io->u.Status;
+    }
+
+    if (attr->RootDirectory)
+    {
+        FIXME( "RootDirectory %p not supported\n", attr->RootDirectory );
+        return STATUS_OBJECT_NAME_NOT_FOUND;
     }
 
     /* check for mailslot */
@@ -1957,6 +1959,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
     {
         req->access  = access;
         req->attributes = (attr) ? attr->Attributes : 0;
+        req->rootdir = attr ? attr->RootDirectory : 0;
         req->options = options;
         req->flags = 
             (pipe_type) ? NAMED_PIPE_MESSAGE_STREAM_WRITE : 0 |
@@ -1966,8 +1969,8 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
         req->outsize = outbound_quota;
         req->insize  = inbound_quota;
         req->timeout = timeout->QuadPart / -10000;
-        wine_server_add_data( req, attr->ObjectName->Buffer + 4, 
-                              attr->ObjectName->Length - 4 * sizeof(WCHAR) );
+        wine_server_add_data( req, attr->ObjectName->Buffer,
+                              attr->ObjectName->Length );
         status = wine_server_call( req );
         if (!status) *handle = reply->handle;
     }
