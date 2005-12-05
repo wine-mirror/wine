@@ -540,7 +540,7 @@ static BOOL CURSORICON_GetResIconEntry( LPVOID dir, int n,
         return FALSE;
     icon = &resdir->idEntries[n].ResInfo.icon;
     *width = icon->bWidth;
-    *height = icon->bWidth;
+    *height = icon->bHeight;
     *bits = resdir->idEntries[n].wBitCount;
     return TRUE;
 }
