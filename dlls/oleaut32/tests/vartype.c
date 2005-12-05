@@ -516,6 +516,7 @@ static HRESULT (WINAPI *pVarBoolFromUI8)(ULONG64,VARIANT_BOOL*);
 static HRESULT (WINAPI *pVarBstrFromR4)(FLOAT,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrFromDate)(DATE,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrFromDec)(DECIMAL*,LCID,ULONG,BSTR*);
+static HRESULT (WINAPI *pVarBstrCmp)(BSTR,BSTR,LCID,ULONG);
 
 static HRESULT (WINAPI *pVarCmp)(LPVARIANT,LPVARIANT,LCID,ULONG);
 
@@ -4960,6 +4961,36 @@ static void test_VarBstrFromDec(void)
 #undef BSTR_DEC
 #undef BSTR_DEC64
 
+#define _VARBSTRCMP(left,right,lcid,flags,result) \
+        hres = pVarBstrCmp(left,right,lcid,flags); \
+        ok(hres == result, "VarBstrCmp: expected " #result ", got hres=0x%lx\n", hres)
+#define VARBSTRCMP(left,right,result) \
+        _VARBSTRCMP(left,right,lcid,0,result)
+
+static void test_VarBstrCmp(void)
+{
+    LCID lcid;
+    HRESULT hres;
+    static const WCHAR sz[] = {'W','u','r','s','c','h','t','\0'};
+    static const WCHAR szempty[] = {'\0'};
+    BSTR bstr, bstrempty;
+
+    CHECKPTR(VarBstrCmp);
+    
+    lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+    bstr = SysAllocString(sz);
+    bstrempty = SysAllocString(szempty);
+    
+    /* NULL handling. Yepp, MSDN is totaly wrong here */
+    VARBSTRCMP(NULL,NULL,VARCMP_EQ);
+    VARBSTRCMP(bstr,NULL,VARCMP_GT);
+    VARBSTRCMP(NULL,bstr,VARCMP_LT);
+
+    /* NULL and empty string comparisions */
+    VARBSTRCMP(bstrempty,NULL,VARCMP_EQ);
+    VARBSTRCMP(NULL,bstrempty,VARCMP_EQ);
+}
+
 /* Get the internal representation of a BSTR */
 static inline LPINTERNAL_BSTR Get(const BSTR lpszString)
 {
@@ -5968,6 +5999,7 @@ START_TEST(vartype)
   test_VarBstrFromR4();
   test_VarBstrFromDate();
   test_VarBstrFromDec();
+  test_VarBstrCmp();
   test_SysStringLen();
   test_SysStringByteLen();
   test_SysAllocString();
