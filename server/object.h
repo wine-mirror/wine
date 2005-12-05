@@ -214,7 +214,4 @@ extern const char *server_argv0;
   /* server start time used for GetTickCount() */
 extern time_t server_start_time;
 
-/* name space for synchronization objects */
-extern struct namespace *sync_namespace;
-
 #endif  /* __WINE_SERVER_OBJECT_H */

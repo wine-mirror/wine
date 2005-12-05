@@ -40,9 +40,6 @@ int master_socket_timeout = 3;  /* master socket timeout in seconds, default is 
 int foreground = 0;
 const char *server_argv0;
 
-/* name space for synchronization objects */
-struct namespace *sync_namespace;
-
 /* parse-line args */
 /* FIXME: should probably use getopt, and add a (more complete?) help option */
 
@@ -130,7 +127,6 @@ int main( int argc, char *argv[] )
 
     sock_init();
     open_master_socket();
-    sync_namespace = create_namespace( 37 );
     setvbuf( stderr, NULL, _IOLBF, 0 );
 
     if (debug_level) fprintf( stderr, "wineserver: starting (pid=%ld)\n", (long) getpid() );
