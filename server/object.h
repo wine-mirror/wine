@@ -198,8 +198,10 @@ extern struct symlink *create_symlink( struct directory *root, const struct unic
                                        unsigned int attr, const struct unicode_str *target );
 
 /* devices */
-extern struct named_pipe_device *create_named_pipe_device( void );
-extern struct mailslot_device *create_mailslot_device( void );
+extern struct named_pipe_device *create_named_pipe_device( struct directory *root,
+                                                           const struct unicode_str *name );
+extern struct mailslot_device *create_mailslot_device( struct directory *root,
+                                                       const struct unicode_str *name );
 
 /* global variables */
 

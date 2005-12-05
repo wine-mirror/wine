@@ -283,7 +283,7 @@ void *open_object_dir( struct directory *root, const struct unicode_str *name,
 
 /* Global initialization */
 
-static struct directory *dir_driver;
+static struct directory *dir_driver, *dir_device;
 static struct symlink *link_dosdev, *link_global1, *link_global2, *link_local;
 static struct named_pipe_device *dev_named_pipe;
 static struct mailslot_device *dev_mailslot;
@@ -308,7 +308,13 @@ void init_directories(void)
     static const struct unicode_str link_global_str = {link_globalW, sizeof(link_globalW)};
     static const struct unicode_str link_local_str  = {link_localW, sizeof(link_localW)};
 
-    struct directory *dir_global, *dir_basenamed, *dir_device;
+    /* devices */
+    static const WCHAR pipeW[] = {'P','I','P','E'};
+    static const WCHAR mailslotW[] = {'M','A','I','L','S','L','O','T'};
+    static const struct unicode_str pipe_str = {pipeW, sizeof(pipeW)};
+    static const struct unicode_str mailslot_str = {mailslotW, sizeof(mailslotW)};
+
+    struct directory *dir_global, *dir_basenamed;
 
     root_directory = create_directory( NULL, NULL, 0, HASH_SIZE );
     dir_driver     = create_directory( root_directory, &dir_driver_str, 0, HASH_SIZE );
@@ -325,11 +331,10 @@ void init_directories(void)
     link_local     = create_symlink( dir_basenamed, &link_local_str, 0, &dir_basenamed_str );
 
     /* devices */
-    dev_named_pipe = create_named_pipe_device();
-    dev_mailslot   = create_mailslot_device();
+    dev_named_pipe = create_named_pipe_device( dir_global, &pipe_str );
+    dev_mailslot   = create_mailslot_device( dir_global, &mailslot_str );
 
     /* the symlinks or devices hold references so we can release these */
-    release_object( dir_device );
     release_object( dir_global );
     release_object( dir_basenamed );
 }
@@ -344,6 +349,7 @@ void close_directories(void)
     release_object( link_global2 );
     release_object( link_local );
 
+    release_object( dir_device );
     release_object( dir_driver );
     release_object( root_directory );
 }

@@ -269,13 +269,11 @@ static void mailslot_device_destroy( struct object *obj )
     free( device->mailslots );
 }
 
-struct mailslot_device *create_mailslot_device( void )
+struct mailslot_device *create_mailslot_device( struct directory *root, const struct unicode_str *name )
 {
-    static const WCHAR mailslotW[] = {'\\','?','?','\\','M','A','I','L','S','L','O','T'};
-    static struct unicode_str mailslot = {mailslotW, sizeof(mailslotW)};
     struct mailslot_device *dev;
 
-    if ((dev = create_named_object_dir( NULL, &mailslot, 0, &mailslot_device_ops )) &&
+    if ((dev = create_named_object_dir( root, name, 0, &mailslot_device_ops )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         if (!(dev->mailslots = create_namespace( 7 )))

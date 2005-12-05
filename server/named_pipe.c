@@ -379,8 +379,6 @@ static struct object *named_pipe_device_lookup_name( struct object *obj, struct 
     assert( obj->ops == &named_pipe_device_ops );
     assert( device->pipes );
 
-    if (!name->len) return NULL;
-
     if ((found = find_object( device->pipes, name, attr | OBJ_CASE_INSENSITIVE )))
         name->len = 0;
 
@@ -397,13 +395,12 @@ static void named_pipe_device_destroy( struct object *obj )
 /* this will be deleted as soon an we fix wait_named_pipe */
 static struct named_pipe_device *named_pipe_device;
 
-struct named_pipe_device *create_named_pipe_device( void )
+struct named_pipe_device *create_named_pipe_device( struct directory *root,
+                                                    const struct unicode_str *name )
 {
-    static const WCHAR pipeW[] = {'\\','?','?','\\','P','I','P','E'};
-    static struct unicode_str pipe = {pipeW, sizeof(pipeW)};
     struct named_pipe_device *dev;
 
-    if ((dev = create_named_object_dir( NULL, &pipe, 0, &named_pipe_device_ops )) &&
+    if ((dev = create_named_object_dir( root, name, 0, &named_pipe_device_ops )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         if (!(dev->pipes = create_namespace( 7 )))
