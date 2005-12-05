@@ -260,7 +260,6 @@ static const int ws_sock_map[][2] =
 #ifdef SO_SNDTIMEO
     MAP_OPTION( SO_SNDTIMEO ),
 #endif
-    { 0, 0 }
 };
 
 static const int ws_tcp_map[][2] =
@@ -268,7 +267,6 @@ static const int ws_tcp_map[][2] =
 #ifdef TCP_NODELAY
     MAP_OPTION( TCP_NODELAY ),
 #endif
-    { 0, 0 }
 };
 
 static const int ws_ip_map[][2] =
@@ -284,17 +282,16 @@ static const int ws_ip_map[][2] =
 #endif
     MAP_OPTION( IP_TOS ),
     MAP_OPTION( IP_TTL ),
-    { 0, 0 }
 };
 
 static const int ws_af_map[][2] =
 {
+    MAP_OPTION( AF_UNSPEC ),
     MAP_OPTION( AF_INET ),
     MAP_OPTION( AF_INET6 ),
 #ifdef HAVE_IPX
     MAP_OPTION( AF_IPX ),
 #endif
-    { 0, 0 }
 };
 
 static const int ws_socktype_map[][2] =
@@ -302,17 +299,16 @@ static const int ws_socktype_map[][2] =
     MAP_OPTION( SOCK_DGRAM ),
     MAP_OPTION( SOCK_STREAM ),
     MAP_OPTION( SOCK_RAW ),
-    { 0, 0 }
 };
 
 static const int ws_proto_map[][2] =
 {
+    MAP_OPTION( IPPROTO_IP ),
     MAP_OPTION( IPPROTO_TCP ),
     MAP_OPTION( IPPROTO_UDP ),
     MAP_OPTION( IPPROTO_ICMP ),
     MAP_OPTION( IPPROTO_IGMP ),
     MAP_OPTION( IPPROTO_RAW ),
-    { 0, 0 }
 };
 
 static const int ws_aiflag_map[][2] =
@@ -323,7 +319,6 @@ static const int ws_aiflag_map[][2] =
     /* Linux/UNIX knows a lot more. But Windows only
      * has 3 as far as I could see. -Marcus
      */
-    { 0, 0 }
 };
 
 static const int ws_eai_map[][2] =
@@ -531,8 +526,7 @@ static int convert_sockopt(INT *level, INT *optname)
   {
      case WS_SOL_SOCKET:
         *level = SOL_SOCKET;
-        for(i=0; ws_sock_map[i][0]; i++)
-        {
+        for(i=0; i<sizeof(ws_sock_map)/sizeof(ws_sock_map[0]); i++) {
             if( ws_sock_map[i][0] == *optname )
             {
                 *optname = ws_sock_map[i][1];
@@ -543,8 +537,7 @@ static int convert_sockopt(INT *level, INT *optname)
         break;
      case WS_IPPROTO_TCP:
         *level = IPPROTO_TCP;
-        for(i=0; ws_tcp_map[i][0]; i++)
-        {
+        for(i=0; i<sizeof(ws_tcp_map)/sizeof(ws_tcp_map[0]); i++) {
             if ( ws_tcp_map[i][0] == *optname )
             {
                 *optname = ws_tcp_map[i][1];
@@ -555,8 +548,7 @@ static int convert_sockopt(INT *level, INT *optname)
 	break;
      case WS_IPPROTO_IP:
         *level = IPPROTO_IP;
-        for(i=0; ws_ip_map[i][0]; i++)
-        {
+        for(i=0; i<sizeof(ws_ip_map)/sizeof(ws_ip_map[0]); i++) {
             if (ws_ip_map[i][0] == *optname )
             {
                 *optname = ws_ip_map[i][1];
@@ -727,7 +719,7 @@ static int
 convert_af_w2u(int windowsaf) {
     int i;
 
-    for (i=0;ws_af_map[i][0];i++)
+    for (i=0;i<sizeof(ws_af_map)/sizeof(ws_af_map[0]);i++)
     	if (ws_af_map[i][0] == windowsaf)
 	    return ws_af_map[i][1];
     FIXME("unhandled Windows address family %d\n", windowsaf);
@@ -738,7 +730,7 @@ static int
 convert_af_u2w(int unixaf) {
     int i;
 
-    for (i=0;ws_af_map[i][0];i++)
+    for (i=0;i<sizeof(ws_af_map)/sizeof(ws_af_map[0]);i++)
     	if (ws_af_map[i][1] == unixaf)
 	    return ws_af_map[i][0];
     FIXME("unhandled UNIX address family %d\n", unixaf);
@@ -749,7 +741,7 @@ static int
 convert_proto_w2u(int windowsproto) {
     int i;
 
-    for (i=0;ws_proto_map[i][0];i++)
+    for (i=0;i<sizeof(ws_proto_map)/sizeof(ws_proto_map[0]);i++)
     	if (ws_proto_map[i][0] == windowsproto)
 	    return ws_proto_map[i][1];
     FIXME("unhandled Windows socket protocol %d\n", windowsproto);
@@ -760,11 +752,9 @@ static int
 convert_proto_u2w(int unixproto) {
     int i;
 
-    for (i=0;ws_proto_map[i][0];i++)
+    for (i=0;i<sizeof(ws_proto_map)/sizeof(ws_proto_map[0]);i++)
     	if (ws_proto_map[i][1] == unixproto)
 	    return ws_proto_map[i][0];
-    if (unixproto == 0) /* 0 is ok too as wild card */
-   	 return 0;
     FIXME("unhandled UNIX socket protocol %d\n", unixproto);
     return -1;
 }
@@ -773,7 +763,7 @@ static int
 convert_socktype_w2u(int windowssocktype) {
     int i;
 
-    for (i=0;ws_socktype_map[i][0];i++)
+    for (i=0;i<sizeof(ws_socktype_map)/sizeof(ws_socktype_map[0]);i++)
     	if (ws_socktype_map[i][0] == windowssocktype)
 	    return ws_socktype_map[i][1];
     FIXME("unhandled Windows socket type %d\n", windowssocktype);
@@ -784,7 +774,7 @@ static int
 convert_socktype_u2w(int unixsocktype) {
     int i;
 
-    for (i=0;ws_socktype_map[i][0];i++)
+    for (i=0;i<sizeof(ws_socktype_map)/sizeof(ws_socktype_map[0]);i++)
     	if (ws_socktype_map[i][1] == unixsocktype)
 	    return ws_socktype_map[i][0];
     FIXME("unhandled UNIX socket type %d\n", unixsocktype);
@@ -3089,12 +3079,11 @@ void WINAPI WS_freeaddrinfo(struct WS_addrinfo *res)
 static int convert_aiflag_w2u(int winflags) {
     int i, unixflags = 0;
 
-    for (i=0;ws_aiflag_map[i][0];i++) {
+    for (i=0;i<sizeof(ws_aiflag_map)/sizeof(ws_aiflag_map[0]);i++)
         if (ws_aiflag_map[i][0] & winflags) {
             unixflags |= ws_aiflag_map[i][1];
             winflags &= ~ws_aiflag_map[i][0];
         }
-    }
     if (winflags)
         FIXME("Unhandled windows AI_xxx flags %x\n", winflags);
     return unixflags;
@@ -3103,12 +3092,11 @@ static int convert_aiflag_w2u(int winflags) {
 static int convert_aiflag_u2w(int unixflags) {
     int i, winflags = 0;
 
-    for (i=0;ws_aiflag_map[i][0];i++) {
+    for (i=0;i<sizeof(ws_aiflag_map)/sizeof(ws_aiflag_map[0]);i++)
         if (ws_aiflag_map[i][1] & unixflags) {
             winflags |= ws_aiflag_map[i][0];
             unixflags &= ~ws_aiflag_map[i][1];
         }
-    }
     if (unixflags) /* will warn usually */
         WARN("Unhandled UNIX AI_xxx flags %x\n", unixflags);
     return winflags;
