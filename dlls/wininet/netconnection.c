@@ -36,6 +36,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <errno.h>
 
 #include "wine/library.h"
 #include "windef.h"
@@ -317,13 +319,13 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
     }
     return TRUE;
 }
-
+#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
 static BOOL check_hostname(X509 *cert, char *hostname)
 {
     /* FIXME: implement */
     return TRUE;
 }
-
+#endif
 /******************************************************************************
  * NETCON_secure_connect
  * Initiates a secure connection over an existing plaintext connection.
