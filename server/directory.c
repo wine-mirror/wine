@@ -286,6 +286,7 @@ void *open_object_dir( struct directory *root, const struct unicode_str *name,
 static struct directory *dir_driver;
 static struct symlink *link_dosdev, *link_global1, *link_global2, *link_local;
 static struct named_pipe_device *dev_named_pipe;
+static struct mailslot_device *dev_mailslot;
 
 void init_directories(void)
 {
@@ -325,6 +326,7 @@ void init_directories(void)
 
     /* devices */
     dev_named_pipe = create_named_pipe_device();
+    dev_mailslot   = create_mailslot_device();
 
     /* the symlinks or devices hold references so we can release these */
     release_object( dir_device );
@@ -335,6 +337,7 @@ void init_directories(void)
 void close_directories(void)
 {
     release_object( dev_named_pipe );
+    release_object( dev_mailslot );
 
     release_object( link_dosdev );
     release_object( link_global1 );

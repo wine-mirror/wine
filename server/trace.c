@@ -3065,6 +3065,7 @@ static void dump_create_mailslot_request( const struct create_mailslot_request *
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
     fprintf( stderr, " read_timeout=%d,", req->read_timeout );
     fprintf( stderr, " name=" );
@@ -3080,6 +3081,7 @@ static void dump_open_mailslot_request( const struct open_mailslot_request *req 
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " sharing=%08x,", req->sharing );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );

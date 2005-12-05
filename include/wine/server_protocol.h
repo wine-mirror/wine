@@ -3543,6 +3543,7 @@ struct create_mailslot_request
     struct request_header __header;
     unsigned int   access;
     unsigned int   attributes;
+    obj_handle_t   rootdir;
     unsigned int   max_msgsize;
     int            read_timeout;
     /* VARARG(name,unicode_str); */
@@ -3560,6 +3561,7 @@ struct open_mailslot_request
     struct request_header __header;
     unsigned int   access;
     unsigned int   attributes;
+    obj_handle_t   rootdir;
     unsigned int   sharing;
     /* VARARG(name,unicode_str); */
 };
@@ -4314,6 +4316,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 206
+#define SERVER_PROTOCOL_VERSION 207
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

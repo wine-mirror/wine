@@ -2486,6 +2486,7 @@ enum message_type
 @REQ(create_mailslot)
     unsigned int   access;        /* wanted access rights */
     unsigned int   attributes;    /* object attributes */
+    obj_handle_t   rootdir;       /* root directory */
     unsigned int   max_msgsize;
     int            read_timeout;
     VARARG(name,unicode_str);     /* mailslot name */
@@ -2498,6 +2499,7 @@ enum message_type
 @REQ(open_mailslot)
     unsigned int   access;
     unsigned int   attributes;    /* object attributes */
+    obj_handle_t   rootdir;       /* root directory */
     unsigned int   sharing;       /* sharing mode */
     VARARG(name,unicode_str);     /* mailslot name */
 @REPLY

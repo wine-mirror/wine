@@ -199,6 +199,7 @@ extern struct symlink *create_symlink( struct directory *root, const struct unic
 
 /* devices */
 extern struct named_pipe_device *create_named_pipe_device( void );
+extern struct mailslot_device *create_mailslot_device( void );
 
 /* global variables */
 
