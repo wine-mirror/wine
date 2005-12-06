@@ -1119,6 +1119,8 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
 /******************************************************************
  *              AddMonitorA        [WINSPOOL.@]
  *
+ * See AddMonitorW.
+ *
  */
 BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors)
 {
@@ -1129,6 +1131,24 @@ BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors)
 
 /******************************************************************************
  *              AddMonitorW        [WINSPOOL.@]
+ *
+ * Install a Printmonitor
+ *
+ * PARAMS
+ *  pName       [I] Servername or NULL (local Computer)
+ *  Level       [I] Structure-Level (Must be 2)
+ *  pMonitors   [I] PTR to MONITOR_INFO_2
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  All Files for the Monitor must already be copied to %winsysdir% ("%SystemRoot%\system32")
+ *
+ * BUGS
+ *  only a Stub
+ *
  */
 BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
 {
@@ -1166,6 +1186,8 @@ DeletePrinterDriverW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pDriverName)
 /******************************************************************
  *              DeleteMonitorA        [WINSPOOL.@]
  *
+ * See DeleteMonitorW.
+ *
  */
 BOOL WINAPI
 DeleteMonitorA (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
@@ -1178,6 +1200,20 @@ DeleteMonitorA (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
 
 /******************************************************************
  *              DeleteMonitorW        [WINSPOOL.@]
+ *
+ * Delete a specific Printmonitor from a Printing-Environment
+ *
+ * PARAMS
+ *  pName        [I] Servername or NULL (local Computer)
+ *  pEnvironment [I] Printing-Environment of the Monitor or NULL (Default)
+ *  pMonitorName [I] Name of the Monitor, that should be deleted
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * BUGS
+ *  only a Stub
  *
  */
 BOOL WINAPI
@@ -4837,6 +4873,8 @@ BOOL WINAPI EnumFormsW( HANDLE hPrinter, DWORD Level, LPBYTE pForm,
 /*****************************************************************************
  *          EnumMonitorsA [WINSPOOL.@]
  *
+ * See EnumMonitorsW.
+ *
  */
 BOOL WINAPI EnumMonitorsA(LPSTR pName, DWORD Level, LPBYTE pMonitors,
                           DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned)
@@ -4849,6 +4887,23 @@ BOOL WINAPI EnumMonitorsA(LPSTR pName, DWORD Level, LPBYTE pMonitors,
 
 /*****************************************************************************
  *          EnumMonitorsW [WINSPOOL.@]
+ *
+ * Enumerate available Monitors
+ *
+ * PARAMS
+ *  pName       [I] Servername or NULL (local Computer)
+ *  Level       [I] Structure-Level (1:Win9x+NT or 2:NT only)
+ *  pMonitors   [O] PTR to Buffer that receives the Result
+ *  cbBuf       [I] Size of Buffer at pMonitors
+ *  pcbNeeded   [O] PTR to DWORD that receives the size in Bytes used / required for pMonitors
+ *  pcReturned  [O] PTR to DWORD that receives the number of Monitors in pMonitors
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE and in bufneeded the Bytes required for buffer, if bufsize is too small
+ *
+ * BUGS
+ *  only a Stub
  *
  */
 BOOL WINAPI EnumMonitorsW(LPWSTR pName, DWORD Level, LPBYTE pMonitors,
