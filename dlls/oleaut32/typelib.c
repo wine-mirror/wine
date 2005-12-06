@@ -5173,6 +5173,45 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, TYPEDESC *tdesc, VARTYP
 
 /***********************************************************************
  *		DispCallFunc (OLEAUT32.@)
+ *
+ * Invokes a function of the specifed calling convention, passing the
+ * specified arguments and returns the result.
+ *
+ * PARAMS
+ *  pvInstance  [I] Optional pointer to the instance whose function to invoke.
+ *  oVft        [I] The offset in the vtable. See notes.
+ *  cc          [I] Calling convention of the function to call.
+ *  vtReturn    [I] The return type of the function.
+ *  cActuals    [I] Number of parameters.
+ *  prgvt       [I] The types of the parameters to pass. This is used for sizing only.
+ *  prgpvarg    [I] The arguments to pass.
+ *  pvargResult [O] The return value of the function. Can be NULL.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ *
+ * NOTES
+ *  The HRESULT return value of this function is not affected by the return
+ *  value of the user supplied function, which is returned in pvargResult.
+ *
+ *  If pvInstance is NULL then a non-object function is to be called and oVft
+ *  is the address of the function to call.
+ *
+ * The cc parameter can be one of the following values:
+ *|CC_FASTCALL
+ *|CC_CDECL
+ *|CC_PASCAL
+ *|CC_STDCALL
+ *|CC_FPFASTCALL
+ *|CC_SYSCALL
+ *|CC_MPWCDECL
+ *|CC_MPWPASCAL
+ *
+ * BUGS
+ *  Native accepts arguments in the reverse order. I.e. the first item in the
+ *  prgpvarg array is the last argument in the C/C++ declaration of the
+ *  function to be called.
  */
 HRESULT WINAPI
 DispCallFunc(
@@ -5187,10 +5226,10 @@ DispCallFunc(
         pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg,
         pvargResult, V_VT(pvargResult));
 
-    /* DispCallFunc is only used to invoke methods belonging to an
-     * IDispatch-derived COM interface. So we need to add a first parameter
-     * to the list of arguments, to supply the interface pointer */
-    argsize = 1;
+    argsize = 0;
+    if (pvInstance)
+        argsize++; /* for This pointer */
+
     for (i=0;i<cActuals;i++)
     {
         TRACE("arg %d: type %d, size %d\n",i,prgvt[i],_argsize(prgvt[i]));
@@ -5198,8 +5237,14 @@ DispCallFunc(
         argsize += _argsize(prgvt[i]);
     }
     args = HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*argsize);
-    args[0] = (DWORD)pvInstance;      /* this is the fake IDispatch interface pointer */
-    argspos = 1;
+
+    argspos = 0;
+    if (pvInstance)
+    {
+        args[0] = (DWORD)pvInstance; /* the This pointer is always the first parameter */
+        argspos++;
+    }
+
     for (i=0;i<cActuals;i++)
     {
         VARIANT *arg = prgpvarg[i];
@@ -5208,7 +5253,16 @@ DispCallFunc(
         argspos += _argsize(prgvt[i]);
     }
 
-    hres = _invoke((*(FARPROC**)pvInstance)[oVft/sizeof(void *)],cc,argsize,args);
+    if (pvInstance)
+    {
+        FARPROC *vtable = *(FARPROC**)pvInstance;
+        hres = _invoke(vtable[oVft/sizeof(void *)], cc, argsize, args);
+    }
+    else
+        /* if we aren't invoking an object then the function pointer is stored
+         * in oVft */
+        hres = _invoke((FARPROC)oVft, cc, argsize, args);
+
     if (pvargResult && (vtReturn != VT_EMPTY))
     {
         TRACE("Method returned 0x%08lx\n",hres);
