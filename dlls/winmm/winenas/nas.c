@@ -36,18 +36,12 @@
 #include "nas.h"
 
 #ifdef HAVE_NAS
-static		int nas = 0;
 
 /**************************************************************************
  * 				NAS_drvOpen			[internal]
  */
 static LRESULT NAS_drvOpen(LPSTR str)
 {
-    if (nas)
-	return 0;
-
-    /* I know, this is ugly, but who cares... */
-    nas = 1;
     return 1;
 }
 
@@ -56,11 +50,7 @@ static LRESULT NAS_drvOpen(LPSTR str)
  */
 static LRESULT NAS_drvClose(DWORD_PTR dwDevID)
 {
-    if (nas) {
-	nas = 0;
-	return 1;
-    }
-    return 0;
+    return 1;
 }
 #endif /* #ifdef HAVE_NAS */
 

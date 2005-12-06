@@ -32,8 +32,6 @@
 
 #ifdef HAVE_LIBAUDIOIO
 
-static	struct WINE_LIBAUDIOIO* audioio = NULL;
-
 extern LONG LIBAUDIOIO_WaveInit(void);
 
 /**************************************************************************
@@ -41,11 +39,6 @@ extern LONG LIBAUDIOIO_WaveInit(void);
  */
 static LRESULT LIBAUDIOIO_drvOpen(LPSTR str)
 {
-    if (audioio)
-	return 0;
-
-    /* I know, this is ugly, but who cares... */
-    audioio = (struct WINE_LIBAUDIOIO*)1;
     return 1;
 }
 
@@ -54,11 +47,7 @@ static LRESULT LIBAUDIOIO_drvOpen(LPSTR str)
  */
 static LRESULT LIBAUDIOIO_drvClose(DWORD_PTR dwDevID)
 {
-    if (audioio) {
-	audioio = NULL;
-	return 1;
-    }
-    return 0;
+    return 1;
 }
 
 #endif

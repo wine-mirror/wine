@@ -34,18 +34,12 @@
 #include "esound.h"
 
 #ifdef HAVE_ESD
-static		int esd = 0;
 
 /**************************************************************************
  * 				ESD_drvOpen			[internal]
  */
 static LRESULT ESD_drvOpen(LPSTR str)
 {
-    if (esd)
-	return 0;
-
-    /* I know, this is ugly, but who cares... */
-    esd = 1;
     return 1;
 }
 
@@ -54,11 +48,7 @@ static LRESULT ESD_drvOpen(LPSTR str)
  */
 static LRESULT ESD_drvClose(DWORD_PTR dwDevID)
 {
-    if (esd) {
-	esd = 0;
-	return 1;
-    }
-    return 0;
+    return 1;
 }
 #endif /* #ifdef HAVE_ESD */
 

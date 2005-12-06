@@ -33,18 +33,12 @@
 #include "arts.h"
 
 #ifdef HAVE_ARTS
-static		int arts = 0;
 
 /**************************************************************************
  * 				ARTS_drvOpen			[internal]
  */
 static LRESULT ARTS_drvOpen(LPSTR str)
 {
-    if (arts)
-	return 0;
-
-    /* I know, this is ugly, but who cares... */
-    arts = 1;
     return 1;
 }
 
@@ -53,11 +47,7 @@ static LRESULT ARTS_drvOpen(LPSTR str)
  */
 static LRESULT ARTS_drvClose(DWORD_PTR dwDevID)
 {
-    if (arts) {
-	arts = 0;
-	return 1;
-    }
-    return 0;
+    return 1;
 }
 #endif /* #ifdef HAVE_ARTS */
 

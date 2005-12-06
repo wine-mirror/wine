@@ -32,18 +32,11 @@
 
 #ifdef HAVE_OSS
 
-static	struct WINE_OSS* oss = NULL;
-
 /**************************************************************************
  * 				OSS_drvOpen			[internal]
  */
 static LRESULT OSS_drvOpen(LPSTR str)
 {
-    if (oss)
-	return 0;
-
-    /* I know, this is ugly, but who cares... */
-    oss = (struct WINE_OSS*)1;
     return 1;
 }
 
@@ -52,11 +45,7 @@ static LRESULT OSS_drvOpen(LPSTR str)
  */
 static LRESULT OSS_drvClose(DWORD_PTR dwDevID)
 {
-    if (oss) {
-	oss = NULL;
-	return 1;
-    }
-    return 0;
+    return 1;
 }
 
 #endif

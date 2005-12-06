@@ -32,18 +32,11 @@
 
 #ifdef HAVE_ALSA
 
-static	struct WINE_ALSA* alsa = NULL;
-
 /**************************************************************************
  * 				ALSA_drvOpen			[internal]
  */
 static LRESULT ALSA_drvOpen(LPSTR str)
 {
-    if (alsa)
-	return 0;
-
-    /* I know, this is ugly, but who cares... */
-    alsa = (struct WINE_ALSA*)1;
     return 1;
 }
 
@@ -52,11 +45,7 @@ static LRESULT ALSA_drvOpen(LPSTR str)
  */
 static LRESULT ALSA_drvClose(DWORD_PTR dwDevID)
 {
-    if (alsa) {
-	alsa = NULL;
-	return 1;
-    }
-    return 0;
+    return 1;
 }
 
 #endif
