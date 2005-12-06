@@ -3460,10 +3460,6 @@ IUnknown *
 IUnknown **
 void *
 
-%void
-
-void
-
 %%riched32.dll
 
 %long
