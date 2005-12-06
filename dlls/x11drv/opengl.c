@@ -124,6 +124,7 @@ MAKE_FUNCPTR(glXChooseFBConfig)
 MAKE_FUNCPTR(glXGetFBConfigAttrib)
 MAKE_FUNCPTR(glXCreateGLXPixmap)
 MAKE_FUNCPTR(glXDestroyGLXPixmap)
+/* MAKE_FUNCPTR(glXQueryDrawable) */
 #undef MAKE_FUNCPTR
 
 static BOOL has_opengl(void)
@@ -491,14 +492,35 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
     GLXFBConfig cur_cfg;
     int value;
     int gl_test = 0;
-    
+
+    /*
+     * How to test if hdc current drawable is compatible (visual/FBConfig) ?
+     *
+     * in case of root window created HDCs we crash here :(
+     *
+    Drawable drawable =  get_drawable( physDev->hdc );
+    TRACE(" drawable (%p,%p) have :\n", drawable, root_window);
+    pglXQueryDrawable(gdi_display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &value);
+    TRACE(" - FBCONFIG_ID as 0x%x\n", tmp);
+    pglXQueryDrawable(gdi_display, drawable, GLX_VISUAL_ID, (unsigned int*) &value);
+    TRACE(" - VISUAL_ID as 0x%x\n", tmp);
+    pglXQueryDrawable(gdi_display, drawable, GLX_WIDTH, (unsigned int*) &value);
+    TRACE(" - WIDTH as %d\n", tmp);
+    pglXQueryDrawable(gdi_display, drawable, GLX_HEIGHT, (unsigned int*) &value);
+    TRACE(" - HEIGHT as %d\n", tmp);
+    */
     cfgs_fmt = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &nCfgs_fmt);
     cur_cfg = cfgs_fmt[iPixelFormat - 1];
     gl_test = pglXGetFBConfigAttrib(gdi_display, cur_cfg, GLX_FBCONFIG_ID, &value);
     if (gl_test) {
       ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
     } else {
-      FIXME("have FBCONFIG_ID %x\n", value);
+      TRACE(" FBConfig have :\n");
+      TRACE(" - FBCONFIG_ID   0x%x\n", value);
+      pglXGetFBConfigAttrib(gdi_display, cur_cfg, GLX_VISUAL_ID, &value);
+      TRACE(" - VISUAL_ID     0x%x\n", value);
+      pglXGetFBConfigAttrib(gdi_display, cur_cfg, GLX_DRAWABLE_TYPE, &value);
+      TRACE(" - DRAWABLE_TYPE 0x%x\n", value);
     }
     XFree(cfgs_fmt);
   }
