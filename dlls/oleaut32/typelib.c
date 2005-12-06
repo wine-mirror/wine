@@ -5671,7 +5671,53 @@ static HRESULT WINAPI ITypeInfo_fnAddressOfMember( ITypeInfo2 *iface,
         MEMBERID memid, INVOKEKIND invKind, PVOID *ppv)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    FIXME("(%p) stub!\n", This);
+    HRESULT hr;
+    BSTR dll, entry;
+    WORD ordinal;
+    HMODULE module;
+
+    TRACE("(%p)->(0x%lx, 0x%x, %p)\n", This, memid, invKind, ppv);
+
+    hr = ITypeInfo_GetDllEntry(iface, memid, invKind, &dll, &entry, &ordinal);
+    if (FAILED(hr))
+        return hr;
+
+    module = LoadLibraryW(dll);
+    if (!module)
+    {
+        ERR("couldn't load %s\n", debugstr_w(dll));
+        SysFreeString(dll);
+        if (entry) SysFreeString(entry);
+        return STG_E_FILENOTFOUND;
+    }
+    /* FIXME: store library somewhere where we can free it */
+
+    if (entry)
+    {
+        LPSTR entryA;
+        INT len = WideCharToMultiByte(CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL);
+        entryA = HeapAlloc(GetProcessHeap(), 0, len);
+        WideCharToMultiByte(CP_ACP, 0, entry, -1, entryA, len, NULL, NULL);
+
+        *ppv = GetProcAddress(module, entryA);
+        if (!*ppv)
+            ERR("function not found %s\n", debugstr_a(entryA));
+
+        HeapFree(GetProcessHeap(), 0, entryA);
+    }
+    else
+    {
+        *ppv = GetProcAddress(module, MAKEINTRESOURCEA(ordinal));
+        if (!*ppv)
+            ERR("function not found %d\n", ordinal);
+    }
+
+    SysFreeString(dll);
+    if (entry) SysFreeString(entry);
+
+    if (!*ppv)
+        return TYPE_E_DLLFUNCTIONNOTFOUND;
+
     return S_OK;
 }
 
