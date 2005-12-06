@@ -715,7 +715,7 @@ HRESULT WINAPI DispInvoke(void*,ITypeInfo*,DISPID,WORD,DISPPARAMS*,VARIANT*,
                           EXCEPINFO*,UINT*);
 HRESULT WINAPI CreateDispTypeInfo(INTERFACEDATA*,LCID,ITypeInfo**);
 HRESULT WINAPI CreateStdDispatch(IUnknown*,void*,ITypeInfo*,IUnknown**);
-HRESULT WINAPI DispCallFunc(void*,ULONG,CALLCONV,VARTYPE,UINT,VARTYPE*,
+HRESULT WINAPI DispCallFunc(void*,ULONG_PTR,CALLCONV,VARTYPE,UINT,VARTYPE*,
                             VARIANTARG**,VARIANT*);
 
 
