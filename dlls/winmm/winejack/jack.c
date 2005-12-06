@@ -38,9 +38,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(jack);
 
 #ifdef HAVE_JACK_JACK_H
-static int jack = 0;
-
-/* set this to zero or one to enable or disable tracing in here */
 
 #ifndef SONAME_LIBJACK
 #define SONAME_LIBJACK "libjack.so"
@@ -53,17 +50,17 @@ void *jackhandle = NULL;
  */
 static LRESULT JACK_drvLoad(void)
 {
-  TRACE("JACK_drvLoad()\n");
+  TRACE("()\n");
 
   /* dynamically load the jack library if not already loaded */
   if(!jackhandle)
   {
     jackhandle = wine_dlopen(SONAME_LIBJACK, RTLD_NOW, NULL, 0);
-    TRACE("JACK_drvLoad: SONAME_LIBJACK == %s\n", SONAME_LIBJACK);
-    TRACE("JACK_drvLoad: jackhandle == %p\n", jackhandle);
+    TRACE("SONAME_LIBJACK == %s\n", SONAME_LIBJACK);
+    TRACE("jackhandle == %p\n", jackhandle);
     if(!jackhandle)
     {
-      FIXME("JACK_drvLoad: error loading the jack library %s, please install this library to use jack\n", SONAME_LIBJACK);
+      FIXME("error loading the jack library %s, please install this library to use jack\n", SONAME_LIBJACK);
       jackhandle = (void*)-1;
       return 0;
     }
@@ -78,11 +75,11 @@ static LRESULT JACK_drvLoad(void)
 /* unload the jack library on driver free */
 static LRESULT JACK_drvFree(void)
 {
-  TRACE("JACK_drvFree()\n");
+  TRACE("()\n");
 
   if(jackhandle && (jackhandle != (void*)-1))
   {
-    TRACE("JACK_drvFree: calling wine_dlclose() on jackhandle\n");
+    TRACE("calling wine_dlclose() on jackhandle\n");
     wine_dlclose(jackhandle, NULL, 0);
     jackhandle = NULL;
   }
@@ -95,23 +92,15 @@ static LRESULT JACK_drvFree(void)
  */
 static LRESULT JACK_drvOpen(LPSTR str)
 {
+  TRACE("(%s)\n", str);
   /* if we were unable to load the jack library then fail the */
   /* driver open */
   if(!jackhandle)
   {
-    FIXME("JACK_drvOpen: unable to open the jack library, returning 0\n");
+    FIXME("unable to open the jack library, returning 0\n");
     return 0;
   }
 
-  if (jack)
-  {
-    FIXME("JACK_drvOpen: jack != 0 (already open), returning 0\n");
-    return 0;
-  }
-    
-  /* I know, this is ugly, but who cares... */
-  TRACE("JACK_drvOpen: opened jack(set jack = 1), returning 1\n");
-  jack = 1;
   return 1;
 }
 
@@ -120,15 +109,8 @@ static LRESULT JACK_drvOpen(LPSTR str)
  */
 static LRESULT JACK_drvClose(DWORD_PTR dwDevID)
 {
-  if (jack)
-  {
-    TRACE("JACK_drvClose: jack is nonzero, setting jack to 0 and returning 1\n");
-    jack = 0;
-    return 1;
-  }
-
-  TRACE("JACK_drvClose: jack is zero(closed), returning 0\n");
-  return 0;
+  TRACE("(%08lx)\n", dwDevID);
+  return 1;
 }
 #endif /* #ifdef HAVE_JACK_JACK_H */
 
@@ -139,37 +121,31 @@ static LRESULT JACK_drvClose(DWORD_PTR dwDevID)
 LRESULT CALLBACK JACK_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg, 
                                  LPARAM dwParam1, LPARAM dwParam2)
 {
-/* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
-/* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
+     TRACE("(%08lX, %p, %s (%08X), %08lX, %08lX)\n",
+           dwDevID, hDriv, wMsg == DRV_LOAD ? "DRV_LOAD" :
+           wMsg == DRV_FREE ? "DRV_FREE" :
+           wMsg == DRV_OPEN ? "DRV_OPEN" :
+           wMsg == DRV_CLOSE ? "DRV_CLOSE" :
+           wMsg == DRV_ENABLE ? "DRV_ENABLE" :
+           wMsg == DRV_DISABLE ? "DRV_DISABLE" :
+           wMsg == DRV_QUERYCONFIGURE ? "DRV_QUERYCONFIGURE" :
+           wMsg == DRV_CONFIGURE ? "DRV_CONFIGURE" :
+           wMsg == DRV_INSTALL ? "DRV_INSTALL" :
+           wMsg == DRV_REMOVE ? "DRV_REMOVE" : "UNKNOWN", 
+           wMsg, dwParam1, dwParam2);
     
     switch(wMsg) {
 #ifdef HAVE_JACK_JACK_H
-    case DRV_LOAD:
-        TRACE("JACK_DriverProc: DRV_LOAD\n");
-	return JACK_drvLoad();
-    case DRV_FREE:
-        TRACE("JACK_DriverProc: DRV_FREE\n");
-	return JACK_drvFree();
-    case DRV_OPEN:
-        TRACE("JACK_DriverProc: DRV_OPEN\n");
-	return JACK_drvOpen((LPSTR)dwParam1);
-    case DRV_CLOSE:
-        TRACE("JACK_DriverProc: DRV_CLOSE\n");
-	return JACK_drvClose(dwDevID);
-    case DRV_ENABLE:
-        TRACE("JACK_DriverProc: DRV_ENABLE\n");
-	return 1;
-    case DRV_DISABLE:
-        TRACE("JACK_DriverProc: DRV_DISABLE\n");
-	return 1;
+    case DRV_LOAD:		return JACK_drvLoad();
+    case DRV_FREE:		return JACK_drvFree();
+    case DRV_OPEN:		return JACK_drvOpen((LPSTR)dwParam1);
+    case DRV_CLOSE:		return JACK_drvClose(dwDevID);
+    case DRV_ENABLE:		return 1;
+    case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
     case DRV_CONFIGURE:		MessageBoxA(0, "jack audio driver!", "jack driver", MB_OK);	return 1;
-    case DRV_INSTALL:		
-      TRACE("JACK_DriverProc: DRV_INSTALL\n");
-      return DRVCNF_RESTART;
-    case DRV_REMOVE:
-      TRACE("JACK_DriverProc: DRV_REMOVE\n");
-      return DRVCNF_RESTART;
+    case DRV_INSTALL:		return DRVCNF_RESTART;
+    case DRV_REMOVE:		return DRVCNF_RESTART;
 #endif
     default:
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
