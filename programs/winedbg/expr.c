@@ -482,16 +482,18 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         rtn.type.id = dbg_itype_signed_int;
         rtn.type.module = 0;
         rtn.addr.Offset = (unsigned int)&exp->un.binop.result;
+        type1 = exp1.type;
+        type2 = exp2.type;
         switch (exp->un.binop.binop_type)
 	{
 	case EXP_OP_ADD:
             if (!types_get_info(&exp1.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(&exp1.type, TI_GET_TYPE, &type1))
+                !types_get_info(&exp1.type, TI_GET_TYPE, &type1.id))
                 type1.id = dbg_itype_none;
             if (!types_get_info(&exp2.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(&exp2.type, TI_GET_TYPE, &type2))
+                !types_get_info(&exp2.type, TI_GET_TYPE, &type2.id))
                 type2.id = dbg_itype_none;
             scale1 = 1;
             scale2 = 1;
@@ -513,11 +515,11 @@ struct dbg_lvalue expr_eval(struct expr* exp)
 	case EXP_OP_SUB:
             if (!types_get_info(&exp1.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(&exp1.type, TI_GET_TYPE, &type1))
+                !types_get_info(&exp1.type, TI_GET_TYPE, &type1.id))
                 type1.id = dbg_itype_none;
             if (!types_get_info(&exp2.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(&exp2.type, TI_GET_TYPE, &type2))
+                !types_get_info(&exp2.type, TI_GET_TYPE, &type2.id))
                 type2.id = dbg_itype_none;
             scale1 = 1;
             scale2 = 1;
