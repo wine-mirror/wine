@@ -1388,7 +1388,7 @@ sub output_api_section_start($$)
 
   if ($opt_output_format eq "h")
   {
-    print OUTPUT "\n<p><h2 class=\"section\">",$section_name,"</h2></p>\n";
+    print OUTPUT "\n<h2 class=\"section\">",$section_name,"</h2>\n";
   }
   elsif ($opt_output_format eq "s")
   {
@@ -1447,7 +1447,7 @@ sub output_api_synopsis($)
 
   if ($opt_output_format eq "h")
   {
-    print OUTPUT "<p><pre class=\"proto\">\n ", $comment->{RETURNS}," ",$comment->{COMMENT_NAME},"\n (\n";
+    print OUTPUT "<pre class=\"proto\">\n ", $comment->{RETURNS}," ",$comment->{COMMENT_NAME},"\n (\n";
     @fmt = ("", "\n", "<tt class=\"param\">", "</tt>");
   }
   elsif ($opt_output_format eq "s")
@@ -1502,7 +1502,7 @@ sub output_api_synopsis($)
 
   if ($opt_output_format eq "h")
   {
-    print OUTPUT " )\n\n</pre></p>\n";
+    print OUTPUT " )\n</pre>\n";
   }
   elsif ($opt_output_format eq "s")
   {
