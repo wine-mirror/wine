@@ -4489,6 +4489,24 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
     return S_OK;
 }
 
+HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const FUNCDESC **ppFuncDesc )
+{
+    ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
+    const TLBFuncDesc *pFDesc;
+    int i;
+
+    for(i=0, pFDesc=This->funclist; i!=index && pFDesc; i++, pFDesc=pFDesc->next)
+        ;
+
+    if (pFDesc)
+    {
+        *ppFuncDesc = &pFDesc->funcdesc;
+        return S_OK;
+    }
+
+    return E_INVALIDARG;
+}
+
 /* ITypeInfo::GetFuncDesc
  *
  * Retrieves the FUNCDESC structure that contains information about a
@@ -4499,21 +4517,19 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
         LPFUNCDESC  *ppFuncDesc)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    int i;
-    const TLBFuncDesc *pFDesc;
+    const FUNCDESC *internal_funcdesc;
+    HRESULT hr;
 
     TRACE("(%p) index %d\n", This, index);
 
-    for(i=0, pFDesc=This->funclist; i!=index && pFDesc; i++, pFDesc=pFDesc->next)
-        ;
+    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index, &internal_funcdesc);
+    if (FAILED(hr))
+        return hr;
 
-    if(pFDesc)
-        return TLB_AllocAndInitFuncDesc(
-            &pFDesc->funcdesc,
-            ppFuncDesc,
-            This->TypeAttr.typekind == TKIND_DISPATCH);
-
-    return E_INVALIDARG;
+    return TLB_AllocAndInitFuncDesc(
+        internal_funcdesc,
+        ppFuncDesc,
+        This->TypeAttr.typekind == TKIND_DISPATCH);
 }
 
 static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
