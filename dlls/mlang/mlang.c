@@ -3,7 +3,7 @@
  *
  * Copyright 2002 Lionel Ulmer
  * Copyright 2003,2004 Mike McCormack
- * Copyright 2004 Dmitry Timoshkov
+ * Copyright 2004,2005 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -49,6 +49,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mlang);
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
 static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj);
+
+static DWORD MLANG_tls_index; /* to store various per thead data */
 
 /* FIXME:
  * Under what circumstances HKEY_CLASSES_ROOT\MIME\Database\Codepage and
@@ -455,9 +457,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason) {
         case DLL_PROCESS_ATTACH:
+            MLANG_tls_index = TlsAlloc();
             DisableThreadLibraryCalls(hInstDLL);
 	    break;
 	case DLL_PROCESS_DETACH:
+            TlsFree(MLANG_tls_index);
 	    break;
     }
     return TRUE;
@@ -981,7 +985,7 @@ static  HRESULT WINAPI fnIEnumCodePage_Skip(
 
     if (celt >= This->total) return S_FALSE;
 
-    This->pos = celt;  /* FIXME: should be += ?? */
+    This->pos += celt;
     return S_OK;
 }
 
@@ -1150,7 +1154,7 @@ static  HRESULT WINAPI fnIEnumScript_Skip(
 
     if (celt >= This->total) return S_FALSE;
 
-    This->pos = celt;  /* FIXME: should be += ?? */
+    This->pos += celt;
     return S_OK;
 }
 
@@ -1530,13 +1534,229 @@ static HRESULT WINAPI fnIMultiLanguage_GetLcidFromRfc1766(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI fnIMultiLanguage_EnumRfc1766(
-    IMultiLanguage* iface,
-    IEnumRfc1766** ppEnumRfc1766)
+/******************************************************************************/
+
+typedef struct tagEnumRfc1766_impl
 {
-    FIXME("\n");
+    const IEnumRfc1766Vtbl *vtbl_IEnumRfc1766;
+    LONG ref;
+    RFC1766INFO *info;
+    DWORD total, pos;
+} EnumRfc1766_impl;
+
+static HRESULT WINAPI fnIEnumRfc1766_QueryInterface(
+        IEnumRfc1766 *iface,
+        REFIID riid,
+        void** ppvObject)
+{
+    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+
+    TRACE("%p -> %s\n", This, debugstr_guid(riid) );
+
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IEnumRfc1766))
+    {
+        IEnumRfc1766_AddRef(iface);
+        TRACE("Returning IID_IEnumRfc1766 %p ref = %ld\n", This, This->ref);
+        *ppvObject = &(This->vtbl_IEnumRfc1766);
+        return S_OK;
+    }
+
+    WARN("(%p) -> (%s,%p), not found\n",This,debugstr_guid(riid),ppvObject);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI fnIEnumRfc1766_AddRef(
+        IEnumRfc1766 *iface)
+{
+    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI fnIEnumRfc1766_Release(
+        IEnumRfc1766 *iface)
+{
+    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("%p ref = %ld\n", This, ref);
+    if (ref == 0)
+    {
+        TRACE("Destroying %p\n", This);
+        HeapFree(GetProcessHeap(), 0, This->info);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI fnIEnumRfc1766_Clone(
+        IEnumRfc1766 *iface,
+        IEnumRfc1766 **ppEnum)
+{
+    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    FIXME("%p %p\n", This, ppEnum);
     return E_NOTIMPL;
 }
+
+static  HRESULT WINAPI fnIEnumRfc1766_Next(
+        IEnumRfc1766 *iface,
+        ULONG celt,
+        PRFC1766INFO rgelt,
+        ULONG *pceltFetched)
+{
+    ULONG i;
+
+    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    TRACE("%p %lu %p %p\n", This, celt, rgelt, pceltFetched);
+
+    if (!pceltFetched) return S_FALSE;
+    *pceltFetched = 0;
+
+    if (!rgelt) return S_FALSE;
+
+    if (This->pos + celt > This->total)
+        celt = This->total - This->pos;
+
+    if (!celt) return S_FALSE;
+
+    memcpy(rgelt, This->info + This->pos, celt * sizeof(RFC1766INFO));
+    *pceltFetched = celt;
+    This->pos += celt;
+
+    for (i = 0; i < celt; i++)
+    {
+        TRACE("#%lu: %08lx %s %s\n",
+              i, rgelt[i].lcid,
+              wine_dbgstr_w(rgelt[i].wszRfc1766),
+              wine_dbgstr_w(rgelt[i].wszLocaleName));
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI fnIEnumRfc1766_Reset(
+        IEnumRfc1766 *iface)
+{
+    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    TRACE("%p\n", This);
+
+    This->pos = 0;
+    return S_OK;
+}
+
+static  HRESULT WINAPI fnIEnumRfc1766_Skip(
+        IEnumRfc1766 *iface,
+        ULONG celt)
+{
+    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    TRACE("%p %lu\n", This, celt);
+
+    if (celt >= This->total) return S_FALSE;
+
+    This->pos += celt;
+    return S_OK;
+}
+
+static const IEnumRfc1766Vtbl IEnumRfc1766_vtbl =
+{
+    fnIEnumRfc1766_QueryInterface,
+    fnIEnumRfc1766_AddRef,
+    fnIEnumRfc1766_Release,
+    fnIEnumRfc1766_Clone,
+    fnIEnumRfc1766_Next,
+    fnIEnumRfc1766_Reset,
+    fnIEnumRfc1766_Skip
+};
+
+struct enum_locales_data
+{
+    RFC1766INFO *info;
+    DWORD total, allocated;
+};
+
+static BOOL CALLBACK enum_locales_proc(LPWSTR locale)
+{
+    DWORD n;
+    WCHAR *end;
+    struct enum_locales_data *data = TlsGetValue(MLANG_tls_index);
+    RFC1766INFO *info;
+
+    TRACE("%s\n", debugstr_w(locale));
+
+    if (data->total >= data->allocated)
+    {
+        data->allocated += 32;
+        data->info = HeapReAlloc(GetProcessHeap(), 0, data->info, data->allocated * sizeof(RFC1766INFO));
+        if (!data->info) return FALSE;
+    }
+
+    info = &data->info[data->total];
+
+    info->lcid = strtolW(locale, &end, 16);
+    if (*end) /* invalid number */
+        return FALSE;
+
+    info->wszRfc1766[0] = 0;
+    n = GetLocaleInfoW(info->lcid, LOCALE_SISO639LANGNAME, info->wszRfc1766, MAX_RFC1766_NAME);
+    if (n && n < MAX_RFC1766_NAME)
+    {
+        info->wszRfc1766[n - 1] = '-';
+        GetLocaleInfoW(info->lcid, LOCALE_SISO3166CTRYNAME, info->wszRfc1766 + n, MAX_RFC1766_NAME - n);
+        LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, info->wszRfc1766 + n, -1, info->wszRfc1766 + n, MAX_RFC1766_NAME - n);
+    }
+    info->wszLocaleName[0] = 0;
+    GetLocaleInfoW(info->lcid, LOCALE_SLANGUAGE, info->wszLocaleName, MAX_LOCALE_NAME);
+    TRACE("ISO639: %s SLANGUAGE: %s\n", wine_dbgstr_w(info->wszRfc1766), wine_dbgstr_w(info->wszLocaleName));
+    
+    data->total++;
+
+    return TRUE;
+}
+
+static HRESULT EnumRfc1766_create(MLang_impl* mlang, LANGID LangId,
+                                  IEnumRfc1766 **ppEnum)
+{
+    EnumRfc1766_impl *rfc;
+    struct enum_locales_data data;
+
+    TRACE("%p, %04x, %p\n", mlang, LangId, ppEnum);
+
+    rfc = HeapAlloc( GetProcessHeap(), 0, sizeof(EnumRfc1766_impl) );
+    rfc->vtbl_IEnumRfc1766 = &IEnumRfc1766_vtbl;
+    rfc->ref = 1;
+    rfc->pos = 0;
+    rfc->total = 0;
+
+    data.total = 0;
+    data.allocated = 32;
+    data.info = HeapAlloc(GetProcessHeap(), 0, data.allocated * sizeof(RFC1766INFO));
+    if (!data.info) return S_FALSE;
+
+    TlsSetValue(MLANG_tls_index, &data);
+    EnumSystemLocalesW(enum_locales_proc, 0/*LOCALE_SUPPORTED*/);
+    TlsSetValue(MLANG_tls_index, NULL);
+
+    TRACE("enumerated %ld rfc1766 structures\n", data.total);
+
+    if (!data.total) return FALSE;
+
+    rfc->info = data.info;
+    rfc->total = data.total;
+
+    *ppEnum = (IEnumRfc1766 *)rfc;
+    return S_OK;
+}
+
+static HRESULT WINAPI fnIMultiLanguage_EnumRfc1766(
+    IMultiLanguage *iface,
+    IEnumRfc1766 **ppEnumRfc1766)
+{
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage, iface);
+    TRACE("%p %p\n", This, ppEnumRfc1766);
+
+    return EnumRfc1766_create(This, 0, ppEnumRfc1766);
+}
+
+/******************************************************************************/
 
 static HRESULT WINAPI fnIMultiLanguage_GetRfc1766Info(
     IMultiLanguage* iface,
@@ -1833,8 +2053,10 @@ static HRESULT WINAPI fnIMultiLanguage2_EnumRfc1766(
     LANGID LangId,
     IEnumRfc1766** ppEnumRfc1766)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage, iface);
+    TRACE("%p %p\n", This, ppEnumRfc1766);
+
+    return EnumRfc1766_create(This, LangId, ppEnumRfc1766);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_GetRfc1766Info(
@@ -1932,7 +2154,7 @@ static HRESULT WINAPI fnIMultiLanguage2_ValidateCodePage(
     UINT uiCodePage,
     HWND hwnd)
 {
-    FIXME("\n");
+    FIXME("%u, %p\n", uiCodePage, hwnd);
     return E_NOTIMPL;
 }
 
@@ -1943,7 +2165,7 @@ static HRESULT WINAPI fnIMultiLanguage2_GetCodePageDescription(
     LPWSTR lpWideCharStr,
     int cchWideChar)
 {
-    FIXME("\n");
+    FIXME("%u, %04lx, %p, %d\n", uiCodePage, lcid, lpWideCharStr, cchWideChar);
     return E_NOTIMPL;
 }
 
@@ -1951,7 +2173,7 @@ static HRESULT WINAPI fnIMultiLanguage2_IsCodePageInstallable(
     IMultiLanguage2* iface,
     UINT uiCodePage)
 {
-    FIXME("\n");
+    FIXME("%u\n", uiCodePage);
     return E_NOTIMPL;
 }
 

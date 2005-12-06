@@ -606,7 +606,7 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
     IEnumScript_Release(iEnumScript);
 }
 
-void IMLangFontLink_Test(IMLangFontLink* iMLFL)
+static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
 {
     DWORD   dwCodePages = 0;
     DWORD   dwManyCodePages = 0;
@@ -641,6 +641,31 @@ void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ok(CodePage == 1252, "Incorrect CodePage Returned (%i)\n",CodePage);
 }
 
+static void test_rfc1766(IMultiLanguage2 *iML2)
+{
+    IEnumRfc1766 *pEnumRfc1766;
+    RFC1766INFO info;
+    ULONG n;
+    HRESULT ret;
+
+    ret = IMultiLanguage2_EnumRfc1766(iML2, LANG_NEUTRAL, &pEnumRfc1766);
+    ok(ret == S_OK, "IMultiLanguage2_EnumRfc1766 error %08lx\n", ret);
+
+    while (1)
+    {
+        ret = IEnumRfc1766_Next(pEnumRfc1766, 1, &info, &n);
+        if (ret != S_OK) break;
+
+#ifdef DUMP_CP_INFO
+        trace("lcid %04lx rfc_name %s locale_name %s\n",
+              info.lcid, wine_dbgstr_w(info.wszRfc1766), wine_dbgstr_w(info.wszLocaleName));
+#endif
+
+        ok(n == 1, "couldn't fetch 1 RFC1766INFO structure\n");
+        ok(IsValidLocale(info.lcid, LCID_SUPPORTED), "invalid lcid %04lx\n", info.lcid);
+    }
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage2 *iML2 = NULL;
@@ -656,6 +681,8 @@ START_TEST(mlang)
 
     trace("ret = %08lx, MultiLanguage2 iML2 = %p\n", ret, iML2);
     if (ret != S_OK || !iML2) return;
+
+    test_rfc1766(iML2);
 
     test_EnumCodePages(iML2, 0);
     test_EnumCodePages(iML2, MIMECONTF_MIME_LATEST);
