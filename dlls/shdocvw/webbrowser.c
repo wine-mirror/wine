@@ -260,8 +260,14 @@ static HRESULT WINAPI WebBrowser_get_Container(IWebBrowser2 *iface, IDispatch **
 static HRESULT WINAPI WebBrowser_get_Document(IWebBrowser2 *iface, IDispatch **ppDisp)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, ppDisp);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppDisp);
+
+    *ppDisp = NULL;
+    if(This->document)
+        IUnknown_QueryInterface(This->document, &IID_IDispatch, (void**)ppDisp);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_TopLevelContainer(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
