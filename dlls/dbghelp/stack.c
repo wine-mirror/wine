@@ -492,6 +492,7 @@ BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
 
     addr_64to32(&frame64->AddrPC,     &frame32.AddrPC);
     addr_64to32(&frame64->AddrReturn, &frame32.AddrReturn);
+    addr_64to32(&frame64->AddrFrame,  &frame32.AddrFrame);
     addr_64to32(&frame64->AddrStack,  &frame32.AddrStack);
     addr_64to32(&frame64->AddrBStore, &frame32.AddrBStore);
     frame32.FuncTableEntry = frame64->FuncTableEntry; /* FIXME */
@@ -513,6 +514,7 @@ BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
 
     addr_32to64(&frame32.AddrPC,     &frame64->AddrPC);
     addr_32to64(&frame32.AddrReturn, &frame64->AddrReturn);
+    addr_32to64(&frame32.AddrFrame,  &frame64->AddrFrame);
     addr_32to64(&frame32.AddrStack,  &frame64->AddrStack);
     addr_32to64(&frame32.AddrBStore, &frame64->AddrBStore);
     frame64->FuncTableEntry = frame32.FuncTableEntry; /* FIXME */
@@ -523,7 +525,7 @@ BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     frame64->Reserved[2] = (ULONG)frame32.Reserved[2];
     /* we don't handle KdHelp */
 
-    return FALSE;
+    return ret;
 }
 
 /******************************************************************
