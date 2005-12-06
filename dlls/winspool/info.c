@@ -1192,6 +1192,8 @@ DeleteMonitorW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorName)
 /******************************************************************
  *              DeletePortA        [WINSPOOL.@]
  *
+ * See DeletePortW.
+ *
  */
 BOOL WINAPI
 DeletePortA (LPSTR pName, HWND hWnd, LPSTR pPortName)
@@ -1204,6 +1206,20 @@ DeletePortA (LPSTR pName, HWND hWnd, LPSTR pPortName)
 
 /******************************************************************
  *              DeletePortW        [WINSPOOL.@]
+ *
+ * Delete a specific Port
+ *
+ * PARAMS
+ *  pName     [I] Servername or NULL (local Computer)
+ *  hWnd      [I] Handle to parent Window for the Dialog-Box
+ *  pPortName [I] Name of the Port, that should be deleted
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * BUGS
+ *  only a Stub
  *
  */
 BOOL WINAPI
@@ -3733,6 +3749,12 @@ static DWORD WINSPOOL_CountSerialPorts(void)
 
 /******************************************************************************
  *		EnumPortsA   (WINSPOOL.@)
+ *
+ * See EnumPortsW.
+ *
+ * BUGS
+ *  ANSI-Version did not call the UNICODE-Version
+ *
  */
 BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
                        LPDWORD bufneeded,LPDWORD bufreturned)
@@ -3850,6 +3872,24 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
 
 /******************************************************************************
  *      EnumPortsW   (WINSPOOL.@)
+ *
+ * Enumerate available Ports
+ *
+ * PARAMS
+ *  name        [I] Servername or NULL (local Computer)
+ *  level       [I] Structure-Level (1 or 2)
+ *  buffer      [O] PTR to Buffer that receives the Result
+ *  bufsize     [I] Size of Buffer at buffer
+ *  bufneeded   [O] PTR to DWORD that receives the size in Bytes used / required for buffer
+ *  bufreturned [O] PTR to DWORD that receives the number of Ports in buffer
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE and in bufneeded the Bytes required for buffer, if bufsize is too small
+ *
+ * BUGS
+ *  UNICODE-Version is a stub
+ *
  */
 BOOL WINAPI EnumPortsW(LPWSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
                        LPDWORD bufneeded,LPDWORD bufreturned)
@@ -4511,6 +4551,9 @@ BOOL WINAPI AbortPrinter( HANDLE hPrinter )
 
 /******************************************************************************
  *		AddPortA (WINSPOOL.@)
+ *
+ * See AddPortW.
+ *
  */
 BOOL WINAPI AddPortA(LPSTR pName, HWND hWnd, LPSTR pMonitorName)
 {
@@ -4520,6 +4563,21 @@ BOOL WINAPI AddPortA(LPSTR pName, HWND hWnd, LPSTR pMonitorName)
 
 /******************************************************************************
  *      AddPortW (WINSPOOL.@)
+ *
+ * Add a Port for a specific Monitor
+ *
+ * PARAMS
+ *  pName        [I] Servername or NULL (local Computer)
+ *  hWnd         [I] Handle to parent Window for the Dialog-Box
+ *  pMonitorName [I] Name of the Monitor that manage the Port
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * BUGS
+ *  only a Stub
+ *
  */
 BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
 {
@@ -4530,7 +4588,8 @@ BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
 /******************************************************************************
  *             AddPortExA (WINSPOOL.@)
  *
- * Adds a print spooler port without presenting a user interface.
+ * See AddPortExW.
+ *
  */
 BOOL WINAPI AddPortExA(HANDLE hMonitor, LPSTR pName, DWORD Level, LPBYTE lpBuffer, LPSTR lpMonitorName)
 {
@@ -4542,7 +4601,22 @@ BOOL WINAPI AddPortExA(HANDLE hMonitor, LPSTR pName, DWORD Level, LPBYTE lpBuffe
 /******************************************************************************
  *             AddPortExW (WINSPOOL.@)
  *
- * See AddPortExW.
+ * Add a Port for a specific Monitor, without presenting a user interface
+ *
+ * PARAMS
+ *  hMonitor      [I] Handle from InitializePrintMonitor2()
+ *  pName         [I] Servername or NULL (local Computer)
+ *  Level         [I] Structure-Level (1 or 2) for lpBuffer
+ *  lpBuffer      [I] PTR to: PORT_INFO_1 or PORT_INFO_2
+ *  lpMonitorName [I] Name of the Monitor that manage the Port or NULL
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * BUGS
+ *  only a Stub
+ *
  */
 BOOL WINAPI AddPortExW(HANDLE hMonitor, LPWSTR pName, DWORD Level, LPBYTE lpBuffer, LPWSTR lpMonitorName)
 {
@@ -4595,6 +4669,9 @@ BOOL WINAPI AddPrinterDriverExA( LPSTR pName, DWORD Level,
 
 /******************************************************************************
  *      ConfigurePortA (WINSPOOL.@)
+ *
+ * See ConfigurePortW.
+ *
  */
 BOOL WINAPI ConfigurePortA(LPSTR pName, HWND hWnd, LPSTR pPortName)
 {
@@ -4604,6 +4681,21 @@ BOOL WINAPI ConfigurePortA(LPSTR pName, HWND hWnd, LPSTR pPortName)
 
 /******************************************************************************
  *      ConfigurePortW (WINSPOOL.@)
+ *
+ * Display the Configuration-Dialog for a specific Port
+ *
+ * PARAMS
+ *  pName     [I] Servername or NULL (local Computer)
+ *  hWnd      [I] Handle to parent Window for the Dialog-Box
+ *  pPortName [I] Name of the Port, that should be configured
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * BUGS
+ *  only a Stub
+ *
  */
 BOOL WINAPI ConfigurePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
 {
