@@ -7,7 +7,7 @@
 
 @ stdcall AbortDoc(long)
 @ stdcall AbortPath(long)
-# @ stub AddFontMemResourceEx
+@ stdcall AddFontMemResourceEx(ptr long ptr ptr)
 @ stdcall AddFontResourceA(str)
 @ stdcall AddFontResourceExA(str long ptr)
 @ stdcall AddFontResourceExW(wstr long ptr)

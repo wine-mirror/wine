@@ -2883,6 +2883,15 @@ BOOL WINAPI RemoveFontResourceW( LPCWSTR str )
 }
 
 /***********************************************************************
+ *           AddFontMemResourceEx    (GDI32.@)
+ */
+HANDLE WINAPI AddFontMemResourceEx( PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD *pcFonts)
+{
+    FIXME("(%p,%08lx,%p,%p): stub\n", pbFont, cbFont, pdv, pcFonts);
+    return NULL;
+}
+
+/***********************************************************************
  *           RemoveFontResourceExA    (GDI32.@)
  */
 BOOL WINAPI RemoveFontResourceExA( LPCSTR str, DWORD fl, PVOID pdv )
