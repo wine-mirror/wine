@@ -362,6 +362,74 @@ INT16
 UINT16
 WORD
 
+%%keyboard.dll
+
+%long
+
+DWORD
+LONG
+
+%ptr
+
+LPBYTE
+LPKBINFO
+LPVOID
+
+%segptr
+
+FARPROC16
+
+%str
+
+LPCSTR
+LPSTR
+
+%void
+
+VOID
+void
+
+%word
+
+CHAR
+INT16
+UINT16
+WORD
+
+%%keyboard.drv
+
+%long
+
+DWORD
+LONG
+
+%ptr
+
+LPBYTE
+LPKBINFO
+LPVOID
+
+%segptr
+
+FARPROC16
+
+%str
+
+LPCSTR
+LPSTR
+
+%void
+
+VOID
+void
+
+%word
+
+CHAR
+INT16
+UINT16
+WORD
+
 %%krnl386.exe
 
 %long
@@ -440,74 +508,6 @@ WORD
 
 LPCWSTR
 
-%%keyboard.dll
-
-%long
-
-DWORD
-LONG
-
-%ptr
-
-LPBYTE
-LPKBINFO
-LPVOID
-
-%segptr
-
-FARPROC16
-
-%str
-
-LPCSTR
-LPSTR
-
-%void
-
-VOID
-void
-
-%word
-
-CHAR
-INT16
-UINT16
-WORD
-
-%%keyboard.drv
-
-%long
-
-DWORD
-LONG
-
-%ptr
-
-LPBYTE
-LPKBINFO
-LPVOID
-
-%segptr
-
-FARPROC16
-
-%str
-
-LPCSTR
-LPSTR
-
-%void
-
-VOID
-void
-
-%word
-
-CHAR
-INT16
-UINT16
-WORD
-
 %%lzexpand.dll
 
 %long
@@ -532,24 +532,6 @@ void
 HFILE16
 INT16
 UINT16
-
-%%mouse.drv
-
-%ptr
-
-LPMOUSEINFO
-
-%segptr
-
-FARPROC16
-
-%void
-
-VOID
-
-%word
-
-WORD
 
 %%mmsystem.dll
 
@@ -647,6 +629,24 @@ UINT16
 WORD
 
 %%mouse.dll
+
+%ptr
+
+LPMOUSEINFO
+
+%segptr
+
+FARPROC16
+
+%void
+
+VOID
+
+%word
+
+WORD
+
+%%mouse.drv
 
 %ptr
 
@@ -773,8 +773,8 @@ LPRUNNINGOBJECTTABLE *
 LPSTORAGE
 LPVOID
 LPVOID *
-REFIID
 REFCLSID
+REFIID
 STATSTG16 *
 ULONG *
 void *
@@ -913,8 +913,8 @@ LPCSTR
 %word
 
 HINSTANCE16
-OLESTATUS
 OLE_SERVER_USE
+OLESTATUS
 
 %%setupx.dll
 
@@ -1086,13 +1086,13 @@ UINT16
 
 DWORD
 
-%str
-
-char *
-
 %segptr
 
 FARPROC16
+
+%str
+
+char *
 
 %void
 
@@ -1477,42 +1477,6 @@ BOOL
 
 HWND16
 
-
-%%wintab.dll
-
-%long
-
-DWORD
-LPARAM
-LRESULT
-
-%ptr
-
-LPBYTE
-LPINT16
-LPLOGCONTEXT16
-LPVOID
-LPWTHOOKPROC16
-UINT16 *
-WTCONFIGPROC16
-WTENUMPROC16
-WTHOOKPROC16
-
-%str
-
-LPSTR
-
-%word
-
-BOOL16
-HCTX16
-HMGR16
-HWND16
-HWTHOOK16
-INT16
-UINT16
-WPARAM16
-
 %%winsock.dll
 
 %long
@@ -1554,6 +1518,41 @@ INT16
 SOCKET16
 UINT16
 u_short
+
+%%wintab.dll
+
+%long
+
+DWORD
+LPARAM
+LRESULT
+
+%ptr
+
+LPBYTE
+LPINT16
+LPLOGCONTEXT16
+LPVOID
+LPWTHOOKPROC16
+UINT16 *
+WTCONFIGPROC16
+WTENUMPROC16
+WTHOOKPROC16
+
+%str
+
+LPSTR
+
+%word
+
+BOOL16
+HCTX16
+HMGR16
+HWND16
+HWTHOOK16
+INT16
+UINT16
+WPARAM16
 
 %%wprocs.dll
 
