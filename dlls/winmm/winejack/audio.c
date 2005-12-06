@@ -890,9 +890,7 @@ LONG	JACK_WaveRelease(void)
 LONG JACK_WaveInit(void)
 {
     int i;
-
-    static const WCHAR ini_out[] = {'J','A','C','K',' ','W','a','v','e','O','u','t',' ','D','r','i','v','e','r',0};
-    static const WCHAR ini_in [] = {'J','A','C','K',' ','W','a','v','e','I','n',' ',' ','D','r','i','v','e','r',0};
+    CHAR szPname[MAXPNAMELEN];
 
     TRACE("called\n");
 
@@ -930,8 +928,8 @@ LONG JACK_WaveInit(void)
 
       WOutDev[i].caps.wMid = 0x00FF; 	/* Manufac ID */
       WOutDev[i].caps.wPid = 0x0001; 	/* Product ID */
-      strcpyW(WOutDev[i].caps.szPname, ini_out);
-
+      snprintf(szPname, sizeof(szPname), "JACK WaveOut %d", i);
+      MultiByteToWideChar(CP_ACP, 0, szPname, -1, WOutDev[i].caps.szPname, sizeof(WOutDev[i].caps.szPname)/sizeof(WCHAR));
       snprintf(WOutDev[i].interface_name, sizeof(WOutDev[i].interface_name), "winejack: %d", i);
 
       WOutDev[i].caps.vDriverVersion = 0x0100;
@@ -959,12 +957,13 @@ LONG JACK_WaveInit(void)
     /* then do input device */
     for (i = 0; i < MAX_WAVEINDRV; ++i)
     {
-      /* TODO: we should initialize read stuff here */
-      memset(&WInDev[0].caps, 0, sizeof(WInDev[0].caps));
+        /* TODO: we should initialize read stuff here */
+        memset(&WInDev[i].caps, 0, sizeof(WInDev[i].caps));
 
 	WInDev[i].caps.wMid = 0x00FF;
 	WInDev[i].caps.wPid = 0x0001;
-        strcpyW(WInDev[i].caps.szPname, ini_in);
+        snprintf(szPname, sizeof(szPname), "JACK WaveIn %d", i);
+        MultiByteToWideChar(CP_ACP, 0, szPname, -1, WInDev[i].caps.szPname, sizeof(WInDev[i].caps.szPname)/sizeof(WCHAR));
         snprintf(WInDev[i].interface_name, sizeof(WInDev[i].interface_name), "winejack: %d", i);
 
 	WInDev[i].caps.vDriverVersion = 0x0100;
@@ -1666,18 +1665,10 @@ DWORD WINAPI JACK_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     
   switch (wMsg) {
   case DRVM_INIT:
-    TRACE("DRVM_INIT\n");
-    return JACK_WaveInit();
   case DRVM_EXIT:
-    TRACE("DRVM_EXIT\n");
-    return JACK_WaveRelease();
   case DRVM_ENABLE:
-  /* FIXME: Pretend this is supported */
-    TRACE("DRVM_ENABLE\n");
-    return 0;
   case DRVM_DISABLE:
-  /* FIXME: Pretend this is supported */
-    TRACE("DRVM_DISABLE\n");
+    /* FIXME: Pretend this is supported */
     return 0;
   case WODM_OPEN:             return wodOpen(wDevID, (LPWAVEOPENDESC)dwParam1,	dwParam2);
   case WODM_CLOSE:            return wodClose(wDevID);

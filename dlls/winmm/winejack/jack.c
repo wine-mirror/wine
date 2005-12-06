@@ -66,7 +66,7 @@ static LRESULT JACK_drvLoad(void)
     }
   }
 
-  return 1;
+  return JACK_WaveInit();
 }
 
 /**************************************************************************
@@ -79,6 +79,8 @@ static LRESULT JACK_drvFree(void)
 
   if(jackhandle && (jackhandle != (void*)-1))
   {
+    JACK_WaveRelease();
+
     TRACE("calling wine_dlclose() on jackhandle\n");
     wine_dlclose(jackhandle, NULL, 0);
     jackhandle = NULL;
