@@ -164,8 +164,6 @@ BOOL X11DRV_DeleteDC( X11DRV_PDEVICE *physDev )
     DeleteObject( physDev->region );
     wine_tsx11_lock();
     XFreeGC( gdi_display, physDev->gc );
-    while (physDev->used_visuals-- > 0)
-        XFree(physDev->visuals[physDev->used_visuals]);
     wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, physDev );
     return TRUE;

@@ -140,8 +140,6 @@ typedef struct
     int           depth;       /* bit depth of the DC */
     int           exposures;   /* count of graphics exposures operations */
     struct dce   *dce;         /* opaque pointer to DCE */
-    XVisualInfo  *visuals[MAX_PIXELFORMATS];
-    int           used_visuals;
     int           current_pf;
     XRENDERINFO   xrender;
 } X11DRV_PDEVICE;
