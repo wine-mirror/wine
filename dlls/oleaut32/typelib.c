@@ -5208,7 +5208,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
     ITypeInfo2 *iface,
     VOID  *pIUnk,
     MEMBERID memid,
-    UINT16 dwFlags,
+    UINT16 wFlags,
     DISPPARAMS  *pDispParams,
     VARIANT  *pVarResult,
     EXCEPINFO  *pExcepInfo,
@@ -5221,15 +5221,15 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
     HRESULT hres;
     const TLBFuncDesc *pFuncInfo;
 
-    TRACE("(%p)(%p,id=%ld,flags=0x%08x,%p,%p,%p,%p) partial stub!\n",
-      This,pIUnk,memid,dwFlags,pDispParams,pVarResult,pExcepInfo,pArgErr
+    TRACE("(%p)(%p,id=%ld,flags=0x%08x,%p,%p,%p,%p)\n",
+      This,pIUnk,memid,wFlags,pDispParams,pVarResult,pExcepInfo,pArgErr
     );
     dump_DispParms(pDispParams);
 
     /* we do this instead of using GetFuncDesc since it will return a fake
      * FUNCDESC for dispinterfaces and we want the real function description */
     for (pFuncInfo = This->funclist; pFuncInfo; pFuncInfo=pFuncInfo->next)
-        if (memid == pFuncInfo->funcdesc.memid && (dwFlags & pFuncInfo->funcdesc.invkind))
+        if (memid == pFuncInfo->funcdesc.memid && (wFlags & pFuncInfo->funcdesc.invkind))
             break;
 
     if (pFuncInfo) {
@@ -5395,7 +5395,7 @@ func_fail:
 	   if (SUCCEEDED(hres)) {
                FIXME("Calling Invoke in IDispatch iface. untested!\n");
                hres = IDispatch_Invoke(
-                                     disp,memid,&IID_NULL,LOCALE_USER_DEFAULT,dwFlags,pDispParams,
+                                     disp,memid,&IID_NULL,LOCALE_USER_DEFAULT,wFlags,pDispParams,
                                      pVarResult,pExcepInfo,pArgErr
                                      );
                if (FAILED(hres))
@@ -5435,14 +5435,14 @@ func_fail:
             ITypeInfo *pTInfo;
             hres = ITypeInfo_GetRefTypeInfo(iface, ref_type, &pTInfo);
             if(SUCCEEDED(hres)){
-                hres = ITypeInfo_Invoke(pTInfo,pIUnk,memid,dwFlags,pDispParams,pVarResult,pExcepInfo,pArgErr);
+                hres = ITypeInfo_Invoke(pTInfo,pIUnk,memid,wFlags,pDispParams,pVarResult,pExcepInfo,pArgErr);
                 ITypeInfo_Release(pTInfo);
                 return hres;
             }
             WARN("Could not search inherited interface!\n");
         }
     }
-    ERR("did not find member id %08lx, flags %d!\n", memid, dwFlags);
+    ERR("did not find member id %ld, flags 0x%x!\n", memid, wFlags);
     return DISP_E_MEMBERNOTFOUND;
 }
 
