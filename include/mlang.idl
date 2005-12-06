@@ -27,6 +27,7 @@ cpp_quote("#endif")
 
 [
   object,
+  uuid(359f3443-bd4a-11d0-b188-00aa0038c969),
   pointer_default(unique)
 ]
 interface IMLangCodePages : IUnknown
@@ -51,6 +52,7 @@ interface IMLangCodePages : IUnknown
 
 [
   object,
+  uuid(359f3441-bd4a-11d0-b188-00aa0038c969),
   pointer_default(unique)
 ]
 interface IMLangFontLink : IMLangCodePages
@@ -74,6 +76,7 @@ interface IMLangFontLink : IMLangCodePages
 
 [
   object,
+  uuid(ae5f1430-388b-11d2-8380-00c04f8f5da1),
   pointer_default(unique)
 ]
 interface IEnumScript : IUnknown
@@ -171,6 +174,7 @@ interface IEnumScript : IUnknown
 
 [
   object,
+  uuid(275c23e3-3747-11d0-9fea-00aa003f8646),
   pointer_default(unique)
 ]
 interface IEnumCodePage : IUnknown
@@ -270,6 +274,7 @@ interface IMLangConvertCharset : IUnknown
 
 [
   object,
+  uuid(3dc39d1d-c030-11d0-b81b-00c04fc9b31f),
   pointer_default(unique)
 ]
 interface IEnumRfc1766 : IUnknown
@@ -300,6 +305,7 @@ interface IEnumRfc1766 : IUnknown
 
 [
   object,
+  uuid(275c23e1-3747-11d0-9fea-00aa003f8646),
   pointer_default(unique)
 ]
 interface IMultiLanguage : IUnknown
@@ -379,6 +385,7 @@ interface IMultiLanguage : IUnknown
 
 [
   object,
+  uuid(dccfc164-2b38-11d2-b7ec-00c04f8f5d9a),
   pointer_default(unique)
 ]
 interface IMultiLanguage2 : IUnknown
@@ -564,11 +571,3 @@ cpp_quote("STDAPI IsConvertINetStringAvailable(DWORD, DWORD);")
 cpp_quote("STDAPI ConvertINetString(LPDWORD, DWORD, DWORD, LPCSTR, LPINT, LPSTR, LPINT);")
 cpp_quote("STDAPI ConvertINetMultiByteToUnicode(LPDWORD, DWORD, LPCSTR, LPINT, LPWSTR, LPINT);")
 cpp_quote("STDAPI ConvertINetUnicodeToMultiByte(LPDWORD, DWORD, LPCWSTR, LPINT, LPSTR, LPINT);")
-
-cpp_quote("DEFINE_GUID(IID_IMLangCodePages, 0x359F3443,0xBD4A,0x11D0,0xB1,0x88,0x00,0xAA,0x00,0x38,0xC9,0x69);")
-cpp_quote("DEFINE_GUID(IID_IMLangFontLink, 0x359F3441,0xBD4A,0x11D0,0xB1,0x88,0x00,0xAA,0x00,0x38,0xC9,0x69);")
-cpp_quote("DEFINE_GUID(IID_IMultiLanguage2, 0xDCCFC164,0x2B38,0x11d2,0xB7,0xEC,0x00,0xC0,0x4F,0x8F,0x5D,0x9A);")
-cpp_quote("DEFINE_GUID(IID_IMultiLanguage, 0x275c23e1,0x3747,0x11d0,0x9f,0xea,0x00,0xaa,0x00,0x3f,0x86,0x46);")
-cpp_quote("DEFINE_GUID(IID_IEnumCodePage, 0x275c23e3,0x3747,0x11d0,0x9f,0xea,0x00,0xaa,0x00,0x3f,0x86,0x46);")
-cpp_quote("DEFINE_GUID(IID_IEnumScript, 0xae5f1430,0x388b,0x11d2,0x83,0x80,0x00,0xc0,0x4f,0x8f,0x5d,0xa1);")
-cpp_quote("DEFINE_GUID(IID_IEnumRfc1766, 0x3dc39d1d,0xc030,0x11d0,0xb8,0x1b,0x00,0xc0,0x4f,0xc9,0xb3,0x1f);")
