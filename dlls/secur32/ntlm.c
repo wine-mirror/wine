@@ -16,17 +16,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * This file implements the NTLM security provider.
- * FIXME: So far, this beast doesn't do anything.
  */
+
 #include <assert.h>
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
+#include "rpc.h"
 #include "sspi.h"
+#include "lm.h"
 #include "secur32_priv.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
+
+#define NTLM_MAX_BUF 2010
 
 static char ntlm_name_A[] = "NTLM";
 static WCHAR ntlm_name_W[] = {'N', 'T', 'L', 'M', 0};
@@ -74,27 +79,201 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributesW(
     return ret;
 }
 
-static SECURITY_STATUS ntlm_AcquireCredentialsHandle(ULONG fCredentialsUse,
-        PCredHandle phCredential, PTimeStamp ptsExpiry)
+/***********************************************************************
+ *              AcquireCredentialsHandleW
+ */
+static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
+ SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, ULONG fCredentialUse,
+ PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+ PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
+    PNegoHelper helper = NULL;
+    
+    SEC_CHAR *client_user_arg = NULL;
+    SEC_CHAR *client_domain_arg = NULL;
+    SEC_WCHAR *username = NULL, *domain = NULL;
+    
+    SEC_CHAR *client_argv[5];
+    SEC_CHAR *server_argv[] = { "ntlm_auth",
+        "--helper-protocol=squid-2.5-ntlmssp",
+        NULL };
 
-    if(fCredentialsUse == SECPKG_CRED_BOTH)
+    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
+     debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
+     pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
+
+
+    switch(fCredentialUse)
     {
-        ret = SEC_E_NO_CREDENTIALS;
+        case SECPKG_CRED_INBOUND:
+            if( (ret = fork_helper(&helper, "ntlm_auth", server_argv)) !=
+                    SEC_E_OK)
+            {
+                phCredential = NULL;
+                break;
+            }
+            else
+            {
+                helper->mode = NTLM_SERVER;
+                phCredential->dwUpper = fCredentialUse;
+                phCredential->dwLower = (DWORD)helper;
+            }
+            ret = SEC_E_OK;
+            break;
+        case SECPKG_CRED_OUTBOUND:
+            {
+                static const char username_arg[] = "--username=";
+                static const char domain_arg[] = "--domain=";
+                int unixcp_size;
+
+                if(pAuthData == NULL)
+                {
+                    LPWKSTA_USER_INFO_1 ui = NULL;
+                    NET_API_STATUS status;
+
+                    if((status = NetWkstaUserGetInfo(NULL, 1, (LPBYTE *)&ui)) !=
+                            NERR_Success)
+                    {
+                        ret = SEC_E_NO_CREDENTIALS;
+                        phCredential = NULL;
+                        break;
+                    }
+                    
+                    if(ui != NULL)
+                    {
+                        username = HeapAlloc(GetProcessHeap(), 0, 
+                                (lstrlenW(ui->wkui1_username)+1) * 
+                                sizeof(SEC_WCHAR));
+                        lstrcpyW(username, ui->wkui1_username);
+                        
+                        /* same for the domain */
+                        domain = HeapAlloc(GetProcessHeap(), 0, 
+                                (lstrlenW(ui->wkui1_logon_domain)+1) * 
+                                sizeof(SEC_WCHAR));
+                        lstrcpyW(domain, ui->wkui1_logon_domain);
+                        NetApiBufferFree(ui);
+                    }
+                    else
+                    {
+                        ret = SEC_E_NO_CREDENTIALS;
+                        phCredential = NULL;
+                        break;
+                    }
+                    
+                                    
+                }
+                else
+                {
+                    PSEC_WINNT_AUTH_IDENTITY_W auth_data = 
+                        (PSEC_WINNT_AUTH_IDENTITY_W)pAuthData;
+
+                    if(auth_data->UserLength != 0)
+                    {
+                        /* Get username and domain from pAuthData */
+                        username = HeapAlloc(GetProcessHeap(), 0, 
+                                (auth_data->UserLength + 1) * sizeof(SEC_WCHAR));
+                        lstrcpyW(username, auth_data->User);
+                    }
+                    else
+                    {
+                        ret = SEC_E_NO_CREDENTIALS;
+                        phCredential = NULL;
+                        break;
+                    }
+                    if(auth_data->DomainLength != 0)
+                    {
+                        domain = HeapAlloc(GetProcessHeap(), 0,
+                                (auth_data->DomainLength + 1) * sizeof(SEC_WCHAR));
+                        lstrcpyW(domain, auth_data->Domain);
+
+                    }
+                    else
+                    {
+                        ret = SEC_E_NO_CREDENTIALS;
+                        phCredential = NULL;
+                        break;
+                    }
+
+                }
+                TRACE("Username is %s\n", debugstr_w(username));
+                unixcp_size =  WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
+                        username, -1, NULL, 0, NULL, NULL) + sizeof(username_arg);
+                client_user_arg = HeapAlloc(GetProcessHeap(), 0, unixcp_size);
+                lstrcpyA(client_user_arg, username_arg);
+                WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, username, -1,
+                        client_user_arg + sizeof(username_arg) - 1, 
+                        unixcp_size - sizeof(username_arg) + 1, NULL, NULL);
+
+                TRACE("Domain name is %s\n", debugstr_w(domain));
+                unixcp_size = WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
+                        domain, -1, NULL, 0,  NULL, NULL) + sizeof(domain_arg);
+                client_domain_arg = HeapAlloc(GetProcessHeap(), 0, unixcp_size);
+                lstrcpyA(client_domain_arg, domain_arg);
+                WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, domain,
+                        -1, client_domain_arg + sizeof(domain_arg) - 1, 
+                        unixcp_size - sizeof(domain) + 1, NULL, NULL);
+
+                client_argv[0] = "ntlm_auth";
+                client_argv[1] = "--helper-protocol=ntlmssp-client-1";
+                client_argv[2] = client_user_arg;
+                client_argv[3] = client_domain_arg;
+                client_argv[4] = NULL;
+
+                if((ret = fork_helper(&helper, "ntlm_auth", client_argv)) != 
+                        SEC_E_OK)
+                {
+                    phCredential = NULL;
+                    break;
+                }
+                else
+                {
+                    helper->mode = NTLM_CLIENT;
+
+                    if(pAuthData != NULL)
+                    {
+                        PSEC_WINNT_AUTH_IDENTITY_W auth_data = 
+                           (PSEC_WINNT_AUTH_IDENTITY_W)pAuthData;
+
+                        if(auth_data->PasswordLength != 0)
+                        {
+                            helper->pwlen = WideCharToMultiByte(CP_UNIXCP, 
+                                WC_NO_BEST_FIT_CHARS, auth_data->Password, 
+                                auth_data->PasswordLength+1, NULL, 0, NULL, NULL);
+                        
+                            helper->password = HeapAlloc(GetProcessHeap(), 0, 
+                                    helper->pwlen);
+
+                            WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
+                                auth_data->Password, auth_data->PasswordLength+1,
+                                helper->password, helper->pwlen, NULL, NULL);
+                        }
+                    }
+           
+                    phCredential->dwUpper = fCredentialUse;
+                    phCredential->dwLower = (DWORD)helper;
+                    TRACE("ACH phCredential->dwUpper: 0x%08lx, dwLower: 0x%08lx\n",
+                            phCredential->dwUpper, phCredential->dwLower);
+                }
+                ret = SEC_E_OK;
+                break;
+            }
+        case SECPKG_CRED_BOTH:
+            FIXME("AcquireCredentialsHandle: SECPKG_CRED_BOTH stub\n");
+            ret = SEC_E_UNSUPPORTED_FUNCTION;
+            phCredential = NULL;
+            break;
+        default:
+            phCredential = NULL;
+            ret = SEC_E_UNKNOWN_CREDENTIALS;
     }
-    else
-    {
-        /* Ok, just store the direction like schannel does for now.
-         * FIXME: This should probably do something useful later on
-         */
-        phCredential->dwUpper = fCredentialsUse;
-        phCredential->dwLower = 0;
-        /* Same here, shamelessly stolen from schannel.c */
-        if (ptsExpiry)
-            ptsExpiry->QuadPart = 0;
-        ret = SEC_E_OK;
-    }
+    
+
+    HeapFree(GetProcessHeap(), 0, client_user_arg);
+    HeapFree(GetProcessHeap(), 0, client_domain_arg);
+    HeapFree(GetProcessHeap(), 0, username);
+    HeapFree(GetProcessHeap(), 0, domain);
+
     return ret;
 }
 
@@ -106,26 +285,107 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(
  PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
+    SECURITY_STATUS ret;
+    int user_sizeW, domain_sizeW, passwd_sizeW;
+    
+    SEC_WCHAR *user = NULL, *domain = NULL, *passwd = NULL, *package = NULL;
+    
+    PSEC_WINNT_AUTH_IDENTITY_W pAuthDataW = NULL;
+    PSEC_WINNT_AUTH_IDENTITY_A identity  = NULL;
+
     TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
      debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
-    return ntlm_AcquireCredentialsHandle(fCredentialUse, phCredential,
-            ptsExpiry);
-}
+    
+    if(pszPackage != NULL)
+    {
+        int package_sizeW = MultiByteToWideChar(CP_ACP, 0, pszPackage, -1,
+                NULL, 0);
 
-/***********************************************************************
- *              AcquireCredentialsHandleW
- */
-static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
- SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, ULONG fCredentialUse,
- PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
- PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
-{
-    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
-     debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
-     pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
-    return ntlm_AcquireCredentialsHandle(fCredentialUse, phCredential,
+        package = HeapAlloc(GetProcessHeap(), 0, package_sizeW * 
+                sizeof(SEC_WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pszPackage, -1, package, package_sizeW);
+    }
+
+    
+    if(pAuthData != NULL)
+    {
+        identity = (PSEC_WINNT_AUTH_IDENTITY_A)pAuthData;
+        
+        if(identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
+        {
+            pAuthDataW = HeapAlloc(GetProcessHeap(), 0, 
+                    sizeof(SEC_WINNT_AUTH_IDENTITY_W));
+
+            if(identity->UserLength != 0)
+            {
+                user_sizeW = MultiByteToWideChar(CP_ACP, 0, 
+                    (LPCSTR)identity->User, identity->UserLength+1, NULL, 0);
+                user = HeapAlloc(GetProcessHeap(), 0, user_sizeW * 
+                        sizeof(SEC_WCHAR));
+                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)identity->User, 
+                    identity->UserLength+1, user, user_sizeW);
+            }
+            else
+            {
+                user_sizeW = 0;
+            }
+             
+            if(identity->DomainLength != 0)
+            {
+                domain_sizeW = MultiByteToWideChar(CP_ACP, 0, 
+                    (LPCSTR)identity->Domain, identity->DomainLength+1, NULL, 0);
+                domain = HeapAlloc(GetProcessHeap(), 0, domain_sizeW 
+                    * sizeof(SEC_WCHAR));
+                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)identity->Domain, 
+                    identity->DomainLength+1, domain, domain_sizeW);
+            }
+            else
+            {
+                domain_sizeW = 0;
+            }
+
+            if(identity->PasswordLength != 0)
+            {
+                passwd_sizeW = MultiByteToWideChar(CP_ACP, 0, 
+                    (LPCSTR)identity->Password, identity->PasswordLength+1, 
+                    NULL, 0);
+                passwd = HeapAlloc(GetProcessHeap(), 0, passwd_sizeW
+                    * sizeof(SEC_WCHAR));
+                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)identity->Password,
+                    identity->PasswordLength, passwd, passwd_sizeW);
+            }
+            else
+            {
+                passwd_sizeW = 0;
+            }
+            
+            pAuthDataW->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+            pAuthDataW->User = user;
+            pAuthDataW->UserLength = user_sizeW;
+            pAuthDataW->Domain = domain;
+            pAuthDataW->DomainLength = domain_sizeW;
+            pAuthDataW->Password = passwd;
+            pAuthDataW->PasswordLength = passwd_sizeW;
+        }
+        else
+        {
+            pAuthDataW = (PSEC_WINNT_AUTH_IDENTITY_W)identity;
+        }
+    }       
+    
+    ret = ntlm_AcquireCredentialsHandleW(NULL, package, fCredentialUse, 
+            pLogonID, pAuthDataW, pGetKeyFn, pGetKeyArgument, phCredential,
             ptsExpiry);
+    
+    HeapFree(GetProcessHeap(), 0, package);
+    HeapFree(GetProcessHeap(), 0, user);
+    HeapFree(GetProcessHeap(), 0, domain);
+    HeapFree(GetProcessHeap(), 0, passwd);
+    if(pAuthDataW != (PSEC_WINNT_AUTH_IDENTITY_W)identity)
+        HeapFree(GetProcessHeap(), 0, pAuthDataW);
+    
+    return ret;
 }
 
 /***********************************************************************
@@ -229,26 +489,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContex
     SECURITY_STATUS ret;
 
     TRACE("%p\n", phContext);
-    if (phContext)
-    {
-        ret = SEC_E_UNSUPPORTED_FUNCTION;
-    }
-    else
-    {
-        ret = SEC_E_INVALID_HANDLE;
-    }
-    return ret;
-}
-
-/***********************************************************************
- *              ApplyControlToken
- */
-static SECURITY_STATUS SEC_ENTRY ntlm_ApplyControlToken(PCtxtHandle phContext,
- PSecBufferDesc pInput)
-{
-    SECURITY_STATUS ret;
-
-    TRACE("%p %p\n", phContext, pInput);
     if (phContext)
     {
         ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -371,20 +611,39 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
     return ret;
 }
 
+/***********************************************************************
+ *             FreeCredentialsHandle
+ */
+static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(
+        PCredHandle phCredential)
+{
+    SECURITY_STATUS ret;
 
+    if(phCredential){
+        PNegoHelper helper = (PNegoHelper) phCredential->dwLower;
+        phCredential->dwUpper = 0;
+        phCredential->dwLower = 0;
+        cleanup_helper(helper);
+        ret = SEC_E_OK;
+    }
+    else
+        ret = SEC_E_OK;
+    
+    return ret;
+}
 
-static SecurityFunctionTableA negoTableA = {
+static SecurityFunctionTableA ntlmTableA = {
     1,
     NULL,   /* EnumerateSecurityPackagesA */
     ntlm_QueryCredentialsAttributesA,   /* QueryCredentialsAttributesA */
     ntlm_AcquireCredentialsHandleA,     /* AcquireCredentialsHandleA */
-    FreeCredentialsHandle,              /* FreeCredentialsHandle */
+    ntlm_FreeCredentialsHandle,         /* FreeCredentialsHandle */
     NULL,   /* Reserved2 */
     ntlm_InitializeSecurityContextA,    /* InitializeSecurityContextA */
     ntlm_AcceptSecurityContext,         /* AcceptSecurityContext */
     ntlm_CompleteAuthToken,             /* CompleteAuthToken */
     ntlm_DeleteSecurityContext,         /* DeleteSecurityContext */
-    ntlm_ApplyControlToken,             /* ApplyControlToken */
+    NULL,  /* ApplyControlToken */
     ntlm_QueryContextAttributesA,       /* QueryContextAttributesA */
     ntlm_ImpersonateSecurityContext,    /* ImpersonateSecurityContext */
     ntlm_RevertSecurityContext,         /* RevertSecurityContext */
@@ -404,18 +663,18 @@ static SecurityFunctionTableA negoTableA = {
     NULL,   /* SetContextAttributesA */
 };
 
-static SecurityFunctionTableW negoTableW = {
+static SecurityFunctionTableW ntlmTableW = {
     1,
     NULL,   /* EnumerateSecurityPackagesW */
     ntlm_QueryCredentialsAttributesW,   /* QueryCredentialsAttributesW */
     ntlm_AcquireCredentialsHandleW,     /* AcquireCredentialsHandleW */
-    FreeCredentialsHandle,              /* FreeCredentialsHandle */
+    ntlm_FreeCredentialsHandle,         /* FreeCredentialsHandle */
     NULL,   /* Reserved2 */
     ntlm_InitializeSecurityContextW,    /* InitializeSecurityContextW */
     ntlm_AcceptSecurityContext,         /* AcceptSecurityContext */
     ntlm_CompleteAuthToken,             /* CompleteAuthToken */
     ntlm_DeleteSecurityContext,         /* DeleteSecurityContext */
-    ntlm_ApplyControlToken,             /* ApplyControlToken */
+    NULL,  /* ApplyControlToken */
     ntlm_QueryContextAttributesW,       /* QueryContextAttributesW */
     ntlm_ImpersonateSecurityContext,    /* ImpersonateSecurityContext */
     ntlm_RevertSecurityContext,         /* RevertSecurityContext */
@@ -441,30 +700,56 @@ static WCHAR ntlm_comment_W[] = { 'N', 'T', 'L', 'M', ' ', 'S', 'e',
 static CHAR ntlm_comment_A[] = "NTLM Security Package";
 
 void SECUR32_initNTLMSP(void)
-{
-    SecureProvider *provider = SECUR32_addProvider(&negoTableA, &negoTableW,
+{   
+    SECURITY_STATUS ret;
+    PNegoHelper helper;
+
+    SEC_CHAR *args[] = {
+        "ntlm_auth",
+        "--version",
+        NULL };
+
+    if((ret = fork_helper(&helper, "ntlm_auth", args)) != SEC_E_OK)
+    {
+        /* Cheat and allocate a helper anyway, so cleanup later will work. */
+        helper = HeapAlloc(GetProcessHeap,0, sizeof(PNegoHelper));
+        helper->version = -1;
+    }
+    else
+    {
+        check_version(helper);
+    }
+
+    if(helper->version > 2)
+    {
+
+        SecureProvider *provider = SECUR32_addProvider(&ntlmTableA, &ntlmTableW,
             NULL);
-    /* According to Windows, NTLM has the following capabilities. 
-     */
+        /* According to Windows, NTLM has the following capabilities. 
+         */
     
-    static const LONG caps =
-        SECPKG_FLAG_INTEGRITY |
-        SECPKG_FLAG_PRIVACY |
-        SECPKG_FLAG_TOKEN_ONLY |
-        SECPKG_FLAG_CONNECTION |
-        SECPKG_FLAG_MULTI_REQUIRED |
-        SECPKG_FLAG_IMPERSONATION |
-        SECPKG_FLAG_ACCEPT_WIN32_NAME |
-        SECPKG_FLAG_READONLY_WITH_CHECKSUM;
+        static const LONG caps =
+            SECPKG_FLAG_INTEGRITY |
+            SECPKG_FLAG_PRIVACY |
+            SECPKG_FLAG_TOKEN_ONLY |
+            SECPKG_FLAG_CONNECTION |
+            SECPKG_FLAG_MULTI_REQUIRED |
+            SECPKG_FLAG_IMPERSONATION |
+            SECPKG_FLAG_ACCEPT_WIN32_NAME |
+            SECPKG_FLAG_READONLY_WITH_CHECKSUM;
 
-    static const USHORT version = 1;
-    static const USHORT rpcid = 10;
-    static const ULONG  max_token = 12000;
-    const SecPkgInfoW infoW = { caps, version, rpcid, max_token, ntlm_name_W, 
-        ntlm_comment_W};
-    const SecPkgInfoA infoA = { caps, version, rpcid, max_token, ntlm_name_A,
-        ntlm_comment_A};
+        static const USHORT version = 1;
+        static const USHORT rpcid = 10;
+        /* In Windows, this is 12000, but ntlm_auth won't take more than 2010 
+         * characters, so there is no use reporting a bigger size */
+        static const ULONG  max_token = NTLM_MAX_BUF;
+        const SecPkgInfoW infoW = { caps, version, rpcid, max_token, ntlm_name_W,
+            ntlm_comment_W};
+        const SecPkgInfoA infoA = { caps, version, rpcid, max_token, ntlm_name_A,
+            ntlm_comment_A};
 
-    SECUR32_addPackages(provider, 1L, &infoA, &infoW);        
+        SECUR32_addPackages(provider, 1L, &infoA, &infoW);
+    }
+    cleanup_helper(helper);
     
 }
