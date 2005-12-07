@@ -426,68 +426,32 @@ static void initAudioDlg (HWND hDlg)
 
 static const char *audioAutoDetect(void)
 {
-  struct stat buf;
-  const char *argv_new[4];
-  int fd;
+    const char *driversFound[10];
+    const char *name[10];
+    int numFound = 0;
+    const AUDIO_DRIVER *pAudioDrv = NULL;
+    int i;
 
-  const char *driversFound[10];
-  const char *name[10];
-  int numFound = 0,i;
+    pAudioDrv = getAudioDrivers();
 
-  argv_new[0] = "/bin/sh";
-  argv_new[1] = "-c";
-  argv_new[3] = NULL;
+    for (i = 0; *pAudioDrv->szName; i++, pAudioDrv++)
+    {
+        if (strlen(pAudioDrv->szDriver))
+        {
+            HDRVR hdrv;
+            char driver[MAX_PATH];
 
-  /* try to detect oss */
-  fd = open("/dev/dsp", O_WRONLY | O_NONBLOCK);
-  if(fd)
-  {
-    close(fd);
-    driversFound[numFound] = "oss";
-    name[numFound] = "OSS";
-    numFound++;
-  }
-  
-    /* try to detect alsa */
-  if(!stat("/proc/asound", &buf))
-  {
-    driversFound[numFound] = "alsa";
-    name[numFound] = "ALSA";
-    numFound++;
-  }
+            sprintf(driver, "wine%s.drv", pAudioDrv->szDriver);
 
-  /* try to detect arts */
-  argv_new[2] = "ps awx|grep artsd|grep -v grep|grep artsd > /dev/null";
-  if(!spawnvp(_P_WAIT, "/bin/sh", argv_new))
-  {
-    driversFound[numFound] = "arts";
-    name[numFound] = "aRts";
-    numFound++;
-  }
-
-  /* try to detect jack */
-  argv_new[2] = "ps awx|grep jackd|grep -v grep|grep jackd > /dev/null";
-  if(!spawnvp(_P_WAIT, "/bin/sh", argv_new))
-  {
-    driversFound[numFound] = "jack";
-    name[numFound] = "JACK";
-    numFound++;
-  }
-
-  /* try to detect EsounD */
-  argv_new[2] = "ps awx|grep esd|grep -v grep|grep esd > /dev/null";
-  if(!spawnvp(_P_WAIT, "/bin/sh", argv_new))
-  {
-    driversFound[numFound] = "esd";
-    name[numFound] = "EsounD";
-    numFound++;
-  }
-
-  /* try to detect nas */
-  /* TODO */
-
-  /* try to detect audioIO (solaris) */
-  /* TODO */
+            if ((hdrv = OpenDriverA(driver, 0, 0)))
+            {
+                CloseDriver(hdrv, 0, 0);
+                driversFound[numFound] = pAudioDrv->szDriver;
+                name[numFound] = pAudioDrv->szName;
+                numFound++;
+            }
+        }
+    }
 
   if(numFound == 0)
   {
