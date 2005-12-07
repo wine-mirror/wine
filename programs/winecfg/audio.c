@@ -38,11 +38,16 @@
 #include <shlwapi.h>
 #include <shlobj.h>
 #include <mmsystem.h>
+#include <mmreg.h>
+#include <mmsystem.h>
+#include <mmddk.h>
 
 #include "winecfg.h"
 #include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
+
+typedef DWORD (WINAPI * MessagePtr)(UINT, UINT, DWORD, DWORD, DWORD);
 
 static const char* DSound_HW_Accels[] = {
   "Full",
@@ -116,6 +121,264 @@ static void configureAudioDriver(HWND hDlg, const char *drivername)
   }
 }
 
+static void initAudioDeviceTree(HWND hDlg)
+{
+    const AUDIO_DRIVER *pAudioDrv = NULL;
+    int i, j;
+    TVINSERTSTRUCT insert;
+    HTREEITEM root, driver[10];
+    HWND tree = NULL;
+
+    tree = GetDlgItem(hDlg, IDC_AUDIO_TREE);
+
+    if (!tree)
+        return;
+
+    SetWindowLong(tree, GWL_STYLE, GetWindowLong(tree, GWL_STYLE) | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT);
+
+    insert.hParent = TVI_ROOT;
+    insert.hInsertAfter = TVI_LAST;
+    insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+    insert.item.pszText = "Sound Drivers";
+    insert.item.cChildren = 1;
+
+    root = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+
+    pAudioDrv = getAudioDrivers();
+
+    for (i = 0; *pAudioDrv->szName; i++, pAudioDrv++) {
+        HDRVR hdrv;
+        char name[MAX_PATH];
+        char text[MAX_PATH];
+
+        if (strlen(pAudioDrv->szDriver) == 0)
+            continue;
+
+        sprintf(name, "wine%s.drv", pAudioDrv->szDriver);
+        sprintf(text, "%s Driver", pAudioDrv->szName);
+
+        hdrv = OpenDriverA(name, 0, 0);
+        if (hdrv == 0) /* no driver loaded */
+        {
+            insert.hParent = root;
+            insert.item.mask = TVIF_TEXT;
+            insert.item.pszText = text;
+
+            driver[i] = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+        }
+        else
+        {
+            HINSTANCE lib;
+
+            lib = LoadLibrary(name);
+            if (lib)
+            {
+                int num_wod = 0, num_wid = 0, num_mod = 0, num_mid = 0, num_aux = 0, num_mxd = 0;
+                MessagePtr wodMessagePtr = (MessagePtr)GetProcAddress(lib, "wodMessage");
+                MessagePtr widMessagePtr = (MessagePtr)GetProcAddress(lib, "widMessage");
+                MessagePtr modMessagePtr = (MessagePtr)GetProcAddress(lib, "modMessage");
+                MessagePtr midMessagePtr = (MessagePtr)GetProcAddress(lib, "midMessage");
+                MessagePtr auxMessagePtr = (MessagePtr)GetProcAddress(lib, "auxMessage");
+                MessagePtr mxdMessagePtr = (MessagePtr)GetProcAddress(lib, "mxdMessage");
+
+                if (wodMessagePtr)
+                    num_wod = wodMessagePtr(0, WODM_GETNUMDEVS, 0, 0, 0);
+
+                if (widMessagePtr)
+                    num_wid = widMessagePtr(0, WIDM_GETNUMDEVS, 0, 0, 0);
+
+                if (modMessagePtr)
+                    num_mod = modMessagePtr(0, MODM_GETNUMDEVS, 0, 0, 0);
+
+                if (midMessagePtr)
+                    num_mid = midMessagePtr(0, MIDM_GETNUMDEVS, 0, 0, 0);
+
+                if (auxMessagePtr)
+                    num_aux = auxMessagePtr(0, AUXDM_GETNUMDEVS, 0, 0, 0);
+
+                if (mxdMessagePtr)
+                    num_mxd = mxdMessagePtr(0, MXDM_GETNUMDEVS, 0, 0, 0);
+
+                if (num_wod == 0 && num_wid == 0 && num_mod == 0 && num_mid == 0 && num_aux == 0 && num_mxd == 0)
+                {
+                    insert.hParent = root;
+                    insert.item.mask = TVIF_TEXT;
+                    insert.item.pszText = text;
+
+                    driver[i] = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                }
+                else
+                {
+                    HTREEITEM type;
+
+                    insert.hParent = root;
+                    insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                    insert.item.pszText = text;
+                    insert.item.cChildren = 1;
+
+                    driver[i] = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+
+                    if (num_wod)
+                    {
+                        insert.hParent = driver[i];
+                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.item.pszText = "Wave Out Devices";
+                        insert.item.cChildren = 1;
+
+                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+
+                        for (j = 0; j < num_wod; j++)
+                        {
+                            WAVEOUTCAPSW caps;
+                            char szPname[MAXPNAMELEN];
+
+                            wodMessagePtr(j, WODM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps)); 
+                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
+
+                            insert.hParent = type;
+                            insert.item.mask = TVIF_TEXT;
+                            insert.item.pszText = szPname;
+
+                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        }
+                    }
+
+                    if (num_wid)
+                    {
+                        insert.hParent = driver[i];
+                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.item.pszText = "Wave In Devices";
+                        insert.item.cChildren = 1;
+
+                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+
+                        for (j = 0; j < num_wid; j++)
+                        {
+                            WAVEINCAPSW caps;
+                            char szPname[MAXPNAMELEN];
+
+                            widMessagePtr(j, WIDM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps)); 
+                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
+
+                            insert.hParent = type;
+                            insert.item.mask = TVIF_TEXT;
+                            insert.item.pszText = szPname;
+
+                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        }
+                    }
+
+                    if (num_mod)
+                    {
+                        insert.hParent = driver[i];
+                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.item.pszText = "MIDI Out Devices";
+                        insert.item.cChildren = 1;
+
+                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+
+                        for (j = 0; j < num_mod; j++)
+                        {
+                            MIDIOUTCAPSW caps;
+                            char szPname[MAXPNAMELEN];
+
+                            modMessagePtr(j, MODM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps)); 
+                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
+
+                            insert.hParent = type;
+                            insert.item.mask = TVIF_TEXT;
+                            insert.item.pszText = szPname;
+
+                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        }
+                    }
+
+                    if (num_mid)
+                    {
+                        insert.hParent = driver[i];
+                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.item.pszText = "MIDI In Devices";
+                        insert.item.cChildren = 1;
+
+                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+
+                        for (j = 0; j < num_mid; j++)
+                        {
+                            MIDIINCAPSW caps;
+                            char szPname[MAXPNAMELEN];
+
+                            midMessagePtr(j, MIDM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps)); 
+                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
+
+                            insert.hParent = type;
+                            insert.item.mask = TVIF_TEXT;
+                            insert.item.pszText = szPname;
+
+                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        }
+                    }
+
+                    if (num_aux)
+                    {
+                        insert.hParent = driver[i];
+                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.item.pszText = "Aux Devices";
+                        insert.item.cChildren = 1;
+
+                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+
+                        for (j = 0; j < num_aux; j++)
+                        {
+                            AUXCAPSW caps;
+                            char szPname[MAXPNAMELEN];
+
+                            auxMessagePtr(j, AUXDM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps)); 
+                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
+
+                            insert.hParent = type;
+                            insert.item.mask = TVIF_TEXT;
+                            insert.item.pszText = szPname;
+
+                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        }
+                    }
+
+                    if (num_mxd)
+                    {
+                        insert.hParent = driver[i];
+                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.item.pszText = "Mixer Devices";
+                        insert.item.cChildren = 1;
+
+                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+
+                        for (j = 0; j < num_mxd; j++)
+                        {
+                            MIXERCAPSW caps;
+                            char szPname[MAXPNAMELEN];
+
+                            mxdMessagePtr(j, MXDM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps)); 
+                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
+
+                            insert.hParent = type;
+                            insert.item.mask = TVIF_TEXT;
+                            insert.item.pszText = szPname;
+
+                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        }
+                    }
+                }
+                FreeLibrary(lib);
+            }
+        }
+    }
+
+    SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_SELECTITEM, 0, 0);
+    SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_EXPAND, TVE_EXPAND, (LPARAM)root);
+    for (j = 0; j < i; j++)
+        SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_EXPAND, TVE_EXPAND, (LPARAM)driver[j]);
+}
+
 static void initAudioDlg (HWND hDlg)
 {
     char *curAudioDriver = get_reg_key(config_key, "Drivers", "Audio", "alsa");
@@ -134,6 +397,7 @@ static void initAudioDlg (HWND hDlg)
         }
     }
 
+    initAudioDeviceTree(hDlg);
 
     SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_RESETCONTENT, 0, 0);
     for (i = 0; NULL != DSound_HW_Accels[i]; ++i) {

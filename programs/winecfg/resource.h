@@ -139,6 +139,7 @@
 #define IDC_AUDIO_CONTROL_PANEL         1303
 #define IDC_DSOUND_HW_ACCEL             1304
 #define IDC_DSOUND_DRV_EMUL             1305
+#define IDC_AUDIO_TREE			1306
 
 /* appearance tab */
 #define IDC_THEME_COLORCOMBO            1401
