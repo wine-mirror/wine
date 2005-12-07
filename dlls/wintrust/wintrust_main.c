@@ -26,6 +26,7 @@
 #include "guiddef.h"
 #include "wintrust.h"
 #include "mscat.h"
+#include "objbase.h"
 
 #include "wine/debug.h"
 

@@ -31,6 +31,7 @@
 #include "winternl.h"
 #include "objbase.h"
 #include "shlwapi.h"
+#include "mapiutil.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mapi);

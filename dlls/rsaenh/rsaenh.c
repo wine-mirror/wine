@@ -36,6 +36,7 @@
 #include "lmcons.h"
 #include "handle.h"
 #include "implglue.h"
+#include "objbase.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
@@ -3632,7 +3633,7 @@ static const WCHAR szDefaultKeys[2][65] = {
  *       Microsoft Strong Cryptographpic Provider
  *   - HKLM\Software\Microsoft\Cryptography\Defaults\Provider Types\Type 001
  */
-HRESULT WINAPI DllRegisterServer()
+HRESULT WINAPI DllRegisterServer(void)
 {
     HKEY key;
     DWORD dp;
@@ -3709,7 +3710,7 @@ HRESULT WINAPI DllRegisterServer()
  * NOTES
  *  For the relevant keys see DllRegisterServer.
  */
-HRESULT WINAPI DllUnregisterServer()
+HRESULT WINAPI DllUnregisterServer(void)
 {
     RegDeleteKeyW(HKEY_LOCAL_MACHINE, szProviderKeys[0]);
     RegDeleteKeyW(HKEY_LOCAL_MACHINE, szProviderKeys[1]);
