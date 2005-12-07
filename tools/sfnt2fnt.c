@@ -61,6 +61,23 @@ static void usage(char **argv)
     return;
 }
 
+#ifndef __GNUC__
+#define __attribute__(X)
+#endif
+
+static void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
+
+static void error(const char *s, ...)
+{
+    va_list ap;
+    va_start(ap, s);
+    fprintf(stderr, "Error: ");
+    vfprintf(stderr, s, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
+    exit(1);
+}
+
 static int lookup_charset(int enc)
 {
     /* FIXME: make winelib app and use TranslateCharsetInfo */
@@ -130,33 +147,25 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     FT_SfntName sfntname;
     TT_OS2 *os2;
     cptable = wine_cp_get_table(enc);
-    if(!cptable) {
-        fprintf(stderr, "Can't find codepage %d\n", enc);
-        exit(1);
-    }
+    if(!cptable)
+        error("Can't find codepage %d\n", enc);
 
     if(cptable->info.char_size != 1) {
         /* for double byte charsets we actually want to use cp1252 */
         cptable = wine_cp_get_table(1252);
-        if(!cptable) {
-            fprintf(stderr, "Can't find codepage 1252\n");
-            exit(1);
-        }
+        if(!cptable)
+            error("Can't find codepage 1252\n");
     }
 
     ppem = face->size->metrics.y_ppem;
     start = sizeof(FNT_HEADER) + sizeof(FONTINFO16);
 
-    if(FT_Load_Char(face, 0xc5, FT_LOAD_DEFAULT)) {
-        fprintf(stderr, "Can't find Aring\n");
-        exit(1);
-    }
+    if(FT_Load_Char(face, 0xc5, FT_LOAD_DEFAULT))
+        error("Can't find Aring\n");
     ascent = face->glyph->metrics.height >> 6;
     descent = ppem - ascent;
-    if(FT_Load_Char(face, 'M', FT_LOAD_DEFAULT)) {
-        fprintf(stderr, "Can't find M\n");
-        exit(1);
-    }
+    if(FT_Load_Char(face, 'M', FT_LOAD_DEFAULT))
+        error("Can't find M\n");
     il = ascent - (face->glyph->metrics.height >> 6);
 
     /* Hack: Courier has no internal leading, nor do any Chinese fonts */
@@ -344,10 +353,8 @@ int main(int argc, char **argv)
     def_char = atoi(argv[5]);
     avg_width = atoi(argv[6]);
 
-    if(FT_Init_FreeType(&lib)) {
-        fprintf(stderr, "ft init failure\n");
-        exit(1);
-    }
+    if(FT_Init_FreeType(&lib))
+        error("ft init failure\n");
 
     if(FT_New_Face(lib, argv[1], 0, &face)) {
         fprintf(stderr, "Can't open face\n");

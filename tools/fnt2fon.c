@@ -61,6 +61,23 @@ static void usage(char **argv)
     return;
 }
 
+#ifndef __GNUC__
+#define __attribute__(X)
+#endif
+
+static void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
+
+static void error(const char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	fprintf(stderr, "Error: ");
+	vfprintf(stderr, s, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+	exit(1);
+}
+
 int main(int argc, char **argv)
 {
     int i, j;
@@ -99,8 +116,7 @@ int main(int argc, char **argv)
         }
         fread(&ver, sizeof(short), 1, fp);
         if(ver != 0x200 && ver != 0x300) {
-            fprintf(stderr, "invalid fnt file %s ver %d\n", argv[i+1], ver);
-            exit(1);
+            error("invalid fnt file %s ver %d", argv[i+1], ver);
         }
         fread(file_lens + i, sizeof(int), 1, fp);
         fseek(fp, 0x44, SEEK_SET);
