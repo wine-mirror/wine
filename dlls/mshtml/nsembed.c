@@ -186,6 +186,29 @@ static BOOL get_mozctl_path(PRUnichar *gre_path)
     return TRUE;
 }
 
+static BOOL get_wine_gecko_path(PRUnichar *gre_path)
+{
+    HKEY hkey;
+    DWORD res, type, size = MAX_PATH;
+
+    static const WCHAR wszMshtmlKey[] = {
+        'S','o','f','t','w','a','r','e','\\','W','i','n','e',
+        '\\','M','S','H','T','M','L',0};
+    static const WCHAR wszGeckoPath[] =
+        {'G','e','c','k','o','P','a','t','h',0};
+
+    /* @@ Wine registry key: HKCU\Software\Wine\MSHTML */
+    res = RegOpenKeyW(HKEY_CURRENT_USER, wszMshtmlKey, &hkey);
+    if(res != ERROR_SUCCESS)
+        return FALSE;
+
+    res = RegQueryValueExW(hkey, wszGeckoPath, NULL, &type, (LPBYTE)gre_path, &size);
+    if(res != ERROR_SUCCESS || type != REG_SZ)
+        return FALSE;
+
+    return TRUE;
+}
+
 static BOOL load_gecko()
 {
     nsresult nsres;
@@ -206,7 +229,8 @@ static BOOL load_gecko()
         return pCompMgr != NULL;
     tried_load = TRUE;
 
-    if(!get_mozctl_path(gre_path) && !get_mozilla_path(gre_path)) {
+    if(!get_wine_gecko_path(gre_path) && !get_mozctl_path(gre_path)
+       && !get_mozilla_path(gre_path)) {
         MESSAGE("Could not load Mozilla. HTML rendering will be disabled.\n");
         return FALSE;
     }
