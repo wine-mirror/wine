@@ -598,7 +598,8 @@ coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
 
 coclasshdr: attributes coclass			{ $$ = $2;
 						  $$->attrs = $1;
-                                                  if (!parse_only && do_header) write_coclass($$);
+						  if (!parse_only && do_header)
+						    write_coclass($$);
 						}
 	;
 
@@ -750,14 +751,15 @@ type:	  tVOID					{ $$ = make_tref(NULL, make_type(0, NULL)); }
 	| tUNION aIDENTIFIER			{ $$ = make_tref(NULL, find_type2($2, tsUNION)); }
 	;
 
-typedef: tTYPEDEF m_attributes type pident_list	{ typeref_t *tref = uniq_tref($3); 
+typedef: tTYPEDEF m_attributes type pident_list	{ typeref_t *tref = uniq_tref($3);
 						  $4->tname = tref->name;
 						  tref->name = NULL;
 						  $$ = type_ref(tref);
 						  $$->attrs = $2;
-						  if (!parse_only && do_header) write_typedef($$, $4);
-                                                  if (in_typelib && $$->attrs)
-                                                      add_typedef($$, $4);
+						  if (!parse_only && do_header)
+						    write_typedef($$, $4);
+						  if (in_typelib && $$->attrs)
+						    add_typedef($$, $4);
 						  reg_types($$, $4, 0);
 						}
 	;
