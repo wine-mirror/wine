@@ -1091,7 +1091,6 @@ static int ALSA_AddDeviceToArray(WINE_WAVEDEV *ww, WINE_WAVEDEV **array,
 static int ALSA_AddPlaybackDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pcmname, int isdefault)
 {
     WINE_WAVEDEV    wwo;
-    WCHAR nameW[MAXPNAMELEN * 2];
     int rc;
 
     memset(&wwo, '\0', sizeof(wwo));
@@ -1100,8 +1099,9 @@ static int ALSA_AddPlaybackDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pc
     if (rc)
         return(rc);
 
-    MultiByteToWideChar(CP_ACP, 0, wwo.ds_desc.szDesc, -1, nameW, sizeof(nameW)/sizeof(WCHAR));
-    strcpyW(wwo.outcaps.szPname, nameW);
+    MultiByteToWideChar(CP_ACP, 0, wwo.ds_desc.szDesc, -1, 
+                        wwo.outcaps.szPname, sizeof(wwo.outcaps.szPname)/sizeof(WCHAR));
+    wwo.outcaps.szPname[sizeof(wwo.outcaps.szPname)/sizeof(WCHAR) - 1] = '\0';
 
     wwo.outcaps.wMid = MM_CREATIVE;
     wwo.outcaps.wPid = MM_CREATIVE_SBP16_WAVEOUT;
@@ -1131,7 +1131,6 @@ static int ALSA_AddPlaybackDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pc
 static int ALSA_AddCaptureDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pcmname, int isdefault)
 {
     WINE_WAVEDEV    wwi;
-    WCHAR nameW[MAXPNAMELEN * 2];
     int rc;
 
     memset(&wwi, '\0', sizeof(wwi));
@@ -1140,8 +1139,9 @@ static int ALSA_AddCaptureDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pcm
     if (rc)
         return(rc);
 
-    MultiByteToWideChar(CP_ACP, 0, wwi.ds_desc.szDesc, -1, nameW, sizeof(nameW)/sizeof(WCHAR));
-    strcpyW(wwi.incaps.szPname, nameW);
+    MultiByteToWideChar(CP_ACP, 0, wwi.ds_desc.szDesc, -1,
+                        wwi.incaps.szPname, sizeof(wwi.incaps.szPname) / sizeof(WCHAR));
+    wwi.incaps.szPname[sizeof(wwi.incaps.szPname)/sizeof(WCHAR) - 1] = '\0';
 
     wwi.incaps.wMid = MM_CREATIVE;
     wwi.incaps.wPid = MM_CREATIVE_SBP16_WAVEOUT;
