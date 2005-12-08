@@ -126,6 +126,7 @@ static void write_function_stubs(type_t *iface)
 {
     func_t *func = iface->funcs;
     char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    var_t *var;
     int method_count = 0;
     unsigned int proc_offset = 0;
 
@@ -178,11 +179,16 @@ static void write_function_stubs(type_t *iface)
         fprintf(client, "\n");
 
         if (implicit_handle)
+        {
             print_client("_Handle = %s;\n", implicit_handle);
+            fprintf(client, "\n");
+        }
 
-        /* FIXME: marshal arguments */
-        print_client("_StubMsg.BufferLength = 0UL;\n");
-        /* print_client("NdrNsGetBuffer(\n"); */
+        /* emit the message buffer size */
+        print_client("_StubMsg.BufferLength =");
+        print_client("0"); /* FIXME */
+        fprintf(client, ";\n");
+
         print_client("NdrGetBuffer(\n");
         indent++;
         print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
@@ -206,11 +212,7 @@ static void write_function_stubs(type_t *iface)
         indent--;
 
         /* unmarshal return value */
-        if (is_void(def->type, NULL))
-        {
-            proc_offset += 2;
-        }
-        else
+        if (!is_void(def->type, NULL))
         {
             fprintf(client, "\n");
 
@@ -219,17 +221,27 @@ static void write_function_stubs(type_t *iface)
             print_client("NdrConvert(\n");
             indent++;
             print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
-            print_client("(PFORMAT_STRING)&__MIDL_ProcFormatString[%u]);\n", proc_offset);
+            print_client("(PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n", proc_offset);
             indent -= 2;
             fprintf(client, "\n");
 
             print_client("_RetVal = *((");
             write_type(client, def->type, def, def->tname);
             fprintf(client, " __RPC_FAR *)_StubMsg.Buffer)++;\n");
-
-            /* FIXME: update proc_offset */
-            proc_offset += 2;
         }
+
+        /* update proc_offset */
+        if (func->args)
+        {
+            var = func->args;
+            while (NEXT_LINK(var)) var = NEXT_LINK(var);
+            while (var)
+            {
+                proc_offset += 2; /* FIXME */
+                var = PREV_LINK(var);
+            }
+        }
+        proc_offset += 2;  /* FIXME */
 
         indent--;
         print_client("}\n");
@@ -358,6 +370,7 @@ static void write_formatdesc( const char *str )
 static void write_formatstringsdecl(type_t *iface)
 {
     func_t *func;
+    var_t *var;
     int byte_count = 1;
 
     print_client("#define TYPE_FORMAT_STRING_SIZE %d\n", 3); /* FIXME */
@@ -367,6 +380,19 @@ static void write_formatstringsdecl(type_t *iface)
     while (NEXT_LINK(func)) func = NEXT_LINK(func);
     while (func)
     {
+        /* argument list size */
+        if (func->args)
+        {
+            var = func->args;
+            while (NEXT_LINK(var)) var = NEXT_LINK(var);
+            while (var)
+            {
+                byte_count += 2; /* FIXME: determine real size */
+                var = PREV_LINK(var);
+            }
+        }
+
+        /* return value size */
         byte_count += 2; /* FIXME: determine real size */
         func = PREV_LINK(func);
     }
@@ -384,11 +410,11 @@ static void write_formatstringsdecl(type_t *iface)
 
 static void write_implicithandledecl(type_t *iface)
 {
-    char *var = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
 
-    if (var)
+    if (implicit_handle)
     {
-        fprintf(client, "handle_t %s;\n", var);
+        fprintf(client, "handle_t %s;\n", implicit_handle);
         fprintf(client, "\n");
     }
 }

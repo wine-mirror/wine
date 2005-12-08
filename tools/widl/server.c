@@ -150,6 +150,9 @@ static unsigned int get_required_stack_size(type_t *type)
 static void write_function_stubs(type_t *iface)
 {
     func_t *func = iface->funcs;
+    var_t *var;
+    unsigned int proc_offset = 0;
+
     while (NEXT_LINK(func)) func = NEXT_LINK(func);
     while (func)
     {
@@ -176,9 +179,28 @@ static void write_function_stubs(type_t *iface)
             fprintf(server, " _RetVal;\n");
         }
 
+        /* declare arguments */
+        if (func->args)
+        {
+            var = func->args;
+            while (NEXT_LINK(var)) var = NEXT_LINK(var);
+            while (var)
+            {
+                print_server("");
+                write_type(server, var->type, var, var->tname);
+                fprintf(server, " ");
+                write_name(server, var);
+                fprintf(server, ";\n");
+
+                var = PREV_LINK(var);
+            }
+        }
+
         print_server("MIDL_STUB_MESSAGE _StubMsg;\n");
         print_server("RPC_STATUS _Status;\n");
         fprintf(server, "\n");
+
+
         print_server("((void)(_Status));\n");
         print_server("NdrServerInitializeNew(\n");
         indent++;
@@ -194,6 +216,21 @@ static void write_function_stubs(type_t *iface)
         print_server("RpcTryExcept\n");
         print_server("{\n");
         indent++;
+
+        if (func->args)
+        {
+            print_server("if ((_pRpcMessage->DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)\n");
+            indent++;
+            print_server("NdrConvert(\n");
+            indent++;
+            print_server("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
+            print_server("(PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n", proc_offset);
+            indent -= 2;
+            fprintf(server, "\n");
+
+            /* FIXME: unmarshall arguments */
+        }
+
         print_server("if (_StubMsg.Buffer > _StubMsg.BufferEnd)\n");
         print_server("{\n");
         indent++;
@@ -219,10 +256,33 @@ static void write_function_stubs(type_t *iface)
             print_server("");
         write_name(server, def);
 
-        /* FIXME: handle argument list */
-        fprintf(server, "();\n");
+        if (func->args)
+        {
+            int first_arg = 1;
 
-        /* FIXME: Marshall the return value */
+            fprintf(server, "(\n");
+            indent++;
+            var = func->args;
+            while (NEXT_LINK(var)) var = NEXT_LINK(var);
+            while (var)
+            {
+                if (first_arg)
+                    first_arg = 0;
+                else
+                    fprintf(server, ",\n");
+                print_server("");
+                write_name(server, var);
+                var = PREV_LINK(var);
+            }
+            fprintf(server, ");\n");
+            indent--;
+        }
+        else
+        {
+            fprintf(server, "();\n");
+        }
+
+        /* marshall the return value */
         if (!is_void(def->type, NULL))
         {
             fprintf(server, "\n");
@@ -259,6 +319,19 @@ static void write_function_stubs(type_t *iface)
         indent--;
         fprintf(server, "}\n");
         fprintf(server, "\n");
+
+        /* update proc_offset */
+        if (func->args)
+        {
+            var = func->args;
+            while (NEXT_LINK(var)) var = NEXT_LINK(var);
+            while (var)
+            {
+                proc_offset += 2; /* FIXME */
+                var = PREV_LINK(var);
+            }
+        }
+        proc_offset += 2;  /* FIXME */
 
         func = PREV_LINK(func);
     }
@@ -383,6 +456,7 @@ static void write_formatdesc( const char *str )
 static void write_formatstringsdecl(type_t *iface)
 {
     func_t *func;
+    var_t *var;
     int byte_count = 1;
 
     print_server("#define TYPE_FORMAT_STRING_SIZE %d\n", 3); /* FIXME */
@@ -392,6 +466,19 @@ static void write_formatstringsdecl(type_t *iface)
     while (NEXT_LINK(func)) func = NEXT_LINK(func);
     while (func)
     {
+        /* argument list size */
+        if (func->args)
+        {
+            var = func->args;
+            while (NEXT_LINK(var)) var = NEXT_LINK(var);
+            while (var)
+            {
+                byte_count += 2; /* FIXME: determine real size */
+                var = PREV_LINK(var);
+            }
+        }
+
+        /* return value size */
         byte_count += 2; /* FIXME: determine real size */
         func = PREV_LINK(func);
     }
