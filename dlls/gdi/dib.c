@@ -897,7 +897,9 @@ INT WINAPI GetDIBits(
                             width = min(srcwidth, dstwidth);
                             for( y = 0; y < lines; y++) {
                                 for( x = 0; x < width; x++, srcbits+=3 )
-                                    *dstbits++ = ((DWORD)*srcbits) & 0x00ffffff;
+                                    *dstbits++ =  srcbits[0] |
+                                                 (srcbits[1] <<  8) |
+                                                 (srcbits[2] << 16);
                                 dstbits=(LPDWORD)(dbits+=dstwidthb);
                                 srcbits=(sbits+=srcwidthb);
                             }
