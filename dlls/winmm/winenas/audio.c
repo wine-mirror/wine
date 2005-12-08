@@ -407,7 +407,7 @@ LONG		NAS_WaveClose(void)
 LONG NAS_WaveInit(void)
 {
     int 	i;
-    nas_init();
+    if (!nas_init()) return MMSYSERR_ERROR;
 
     /* initialize all device handles to -1 */
     for (i = 0; i < MAX_WAVEOUTDRV; ++i)
@@ -1475,8 +1475,11 @@ static int nas_close(WINE_WAVEOUT* wwo)
 
 static int nas_end(void)
 {
-  AuCloseServer(AuServ);
-  AuServ = 0;
+  if (AuServ)
+  {
+    AuCloseServer(AuServ);
+    AuServ = 0;
+  }
   return 1;
 }
 
