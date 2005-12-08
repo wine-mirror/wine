@@ -843,7 +843,7 @@ NTSTATUS WINAPI RtlFormatCurrentUserKeyPath( IN OUT PUNICODE_STRING KeyPath)
  *  If we return just HKEY_CURRENT_USER the advapi tries to find a remote
  *  registry (odd handle) and fails.
  */
-DWORD WINAPI RtlOpenCurrentUser(
+NTSTATUS WINAPI RtlOpenCurrentUser(
 	IN ACCESS_MASK DesiredAccess, /* [in] */
 	OUT PHANDLE KeyHandle)	      /* [out] handle of HKEY_CURRENT_USER */
 {
@@ -853,7 +853,7 @@ DWORD WINAPI RtlOpenCurrentUser(
 
 	TRACE("(0x%08lx, %p)\n",DesiredAccess, KeyHandle);
 
-	RtlFormatCurrentUserKeyPath(&ObjectName);
+        if ((ret = RtlFormatCurrentUserKeyPath(&ObjectName))) return ret;
 	InitializeObjectAttributes(&ObjectAttributes,&ObjectName,OBJ_CASE_INSENSITIVE,0, NULL);
 	ret = NtCreateKey(KeyHandle, DesiredAccess, &ObjectAttributes, 0, NULL, 0, NULL);
 	RtlFreeUnicodeString(&ObjectName);
