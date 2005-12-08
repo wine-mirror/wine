@@ -53,6 +53,33 @@ static int print_file(FILE *file, int indent, const char *format, ...)
     return r;
 }
 
+static void write_procformatstring_var(FILE *file, int indent, var_t *var)
+{
+    switch(var->type->type)
+    {
+#define CASE_BASETYPE(fctype) \
+    case RPC_##fctype: \
+        print_file(file, indent, "0x%02x,    /* " #fctype " */\n", var->type->type); \
+        break
+
+    CASE_BASETYPE(FC_BYTE);
+    CASE_BASETYPE(FC_CHAR);
+    CASE_BASETYPE(FC_WCHAR);
+    CASE_BASETYPE(FC_USHORT);
+    CASE_BASETYPE(FC_SHORT);
+    CASE_BASETYPE(FC_ULONG);
+    CASE_BASETYPE(FC_LONG);
+    CASE_BASETYPE(FC_HYPER);
+    CASE_BASETYPE(FC_IGNORE);
+    CASE_BASETYPE(FC_SMALL);
+    CASE_BASETYPE(FC_FLOAT);
+    CASE_BASETYPE(FC_DOUBLE);
+#undef CASE_BASETYPE
+    default:
+        error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
+    }
+}
+
 void write_procformatstring(FILE *file, type_t *iface)
 {
     int indent = 0;
@@ -76,12 +103,8 @@ void write_procformatstring(FILE *file, type_t *iface)
             while (NEXT_LINK(var)) var = NEXT_LINK(var);
             while (var)
             {
-                switch(var->type->type)
-                {
-                default:
-                    error("Unknown/unsupported type\n");
-                }
-
+                print_file(file, indent, "0x4e,    /* FC_IN_PARAM_BASETYPE */\n");
+                write_procformatstring_var(file, indent, var);
                 var = PREV_LINK(var);
             }
         }
@@ -95,11 +118,8 @@ void write_procformatstring(FILE *file, type_t *iface)
         }
         else
         {
-            switch(var->type->type)
-            {
-            default:
-                error("Unknown/unsupported type\n");
-            }
+            print_file(file, indent, "0x53,    /* FC_RETURN_PARAM_BASETYPE */\n");
+            write_procformatstring_var(file, indent, var);
         }
 
         func = PREV_LINK(func);
@@ -144,13 +164,17 @@ unsigned int get_required_buffer_size(type_t *type)
         case RPC_FC_SHORT:
         case RPC_FC_ULONG:
         case RPC_FC_LONG:
+        case RPC_FC_FLOAT:
+        case RPC_FC_IGNORE:
+        case RPC_FC_ERROR_STATUS_T:
             return 4;
 
-      case RPC_FC_HYPER:
+        case RPC_FC_HYPER:
+        case RPC_FC_DOUBLE:
             return 8;
 
         default:
-            error("Unknown/unsupported type: %s\n", type->name);
+            error("Unknown/unsupported type: %s (0x%02x)\n", type->name, type->type);
             return 0;
     }
 }
@@ -172,9 +196,39 @@ void marshall_arguments(FILE *file, int indent, func_t *func)
         alignment = 0;
         switch (var->type->type)
         {
+        case RPC_FC_BYTE:
+        case RPC_FC_CHAR:
+            size = 1;
+            alignment = 0;
+            break;
+
+        case RPC_FC_WCHAR:
+        case RPC_FC_USHORT:
+        case RPC_FC_SHORT:
+            size = 2;
+            if (last_size != 0 && last_size < 2)
+                alignment = (2 - last_size);
+            break;
+
+        case RPC_FC_ULONG:
+        case RPC_FC_LONG:
+        case RPC_FC_FLOAT:
+        case RPC_FC_ERROR_STATUS_T:
+            size = 4;
+            if (last_size != 0 && last_size < 4)
+                alignment = (4 - last_size);
+            break;
+
+        case RPC_FC_HYPER:
+        case RPC_FC_DOUBLE:
+            size = 8;
+            if (last_size != 0 && last_size < 4)
+                alignment = (4 - last_size);
+            break;
+
         default:
             size = 0;
-            error("Unknown/unsupported type!");
+            error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
         }
 
         if (alignment != 0)
@@ -210,9 +264,39 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func)
         alignment = 0;
         switch (var->type->type)
         {
+        case RPC_FC_BYTE:
+        case RPC_FC_CHAR:
+            size = 1;
+            alignment = 0;
+            break;
+
+        case RPC_FC_WCHAR:
+        case RPC_FC_USHORT:
+        case RPC_FC_SHORT:
+            size = 2;
+            if (last_size != 0 && last_size < 2)
+                alignment = (2 - last_size);
+            break;
+
+        case RPC_FC_ULONG:
+        case RPC_FC_LONG:
+        case RPC_FC_FLOAT:
+        case RPC_FC_ERROR_STATUS_T:
+            size = 4;
+            if (last_size != 0 && last_size < 4)
+                alignment = (4 - last_size);
+            break;
+
+        case RPC_FC_HYPER:
+        case RPC_FC_DOUBLE:
+            size = 8;
+            if (last_size != 0 && last_size < 4)
+                alignment = (4 - last_size);
+            break;
+
         default:
             size = 0;
-            error("Unknown/unsupported type!");
+            error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
         }
 
         if (alignment != 0)
