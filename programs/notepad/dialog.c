@@ -407,6 +407,8 @@ VOID DIALOG_FilePrint(VOID)
     ZeroMemory(&printer, sizeof(printer));
     printer.lStructSize           = sizeof(printer);
     printer.hwndOwner             = Globals.hMainWnd;
+    printer.hDevMode              = Globals.hDevMode;
+    printer.hDevNames             = Globals.hDevNames;
     printer.hInstance             = Globals.hInstance;
     
     /* Set some default flags */
@@ -421,6 +423,9 @@ VOID DIALOG_FilePrint(VOID)
     printer.nCopies               = (WORD)PD_USEDEVMODECOPIES;
 
     if (!PrintDlg(&printer)) return;
+
+    Globals.hDevMode = printer.hDevMode;
+    Globals.hDevNames = printer.hDevNames;
 
     assert(printer.hDC != 0);
 
@@ -519,11 +524,16 @@ VOID DIALOG_FilePrinterSetup(VOID)
     ZeroMemory(&printer, sizeof(printer));
     printer.lStructSize         = sizeof(printer);
     printer.hwndOwner           = Globals.hMainWnd;
+    printer.hDevMode            = Globals.hDevMode;
+    printer.hDevNames           = Globals.hDevNames;
     printer.hInstance           = Globals.hInstance;
     printer.Flags               = PD_PRINTSETUP;
     printer.nCopies             = 1;
 
     PrintDlg(&printer);
+
+    Globals.hDevMode = printer.hDevMode;
+    Globals.hDevNames = printer.hDevNames;
 }
 
 VOID DIALOG_FileExit(VOID)

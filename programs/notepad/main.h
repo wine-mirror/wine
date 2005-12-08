@@ -46,6 +46,8 @@ typedef struct
   WCHAR   szFooter[MAX_PATH];
 
   FINDREPLACE find;
+  HGLOBAL hDevMode; /* printer mode */
+  HGLOBAL hDevNames; /* printer names */
 } NOTEPAD_GLOBALS;
 
 extern NOTEPAD_GLOBALS Globals;
