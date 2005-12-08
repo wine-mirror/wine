@@ -67,7 +67,7 @@ static int print_client( const char *format, ... )
 
 static void write_procformatstring(type_t *iface)
 {
-    func_t *cur = iface->funcs;
+    func_t *func = iface->funcs;
 
     print_client("static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString =\n");
     print_client("{\n");
@@ -76,10 +76,10 @@ static void write_procformatstring(type_t *iface)
     print_client("{\n");
     indent++;
 
-    while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-    while (cur)
+    while (NEXT_LINK(func)) func = NEXT_LINK(func);
+    while (func)
     {
-        var_t *def = cur->def;
+        var_t *def = func->def;
 
         if (is_void(def->type, NULL))
         {
@@ -92,7 +92,7 @@ static void write_procformatstring(type_t *iface)
             print_client("0x%02x,    /* <type> */\n", def->type->type);
         }
 
-        cur = PREV_LINK(cur);
+        func = PREV_LINK(func);
     }
 
     print_client("0x0\n");
@@ -124,23 +124,23 @@ static void write_typeformatstring(void)
 
 static void write_function_stubs(type_t *iface)
 {
-    func_t *cur = iface->funcs;
-    char *handle_name = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    func_t *func = iface->funcs;
+    char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
     int method_count = 0;
     unsigned int proc_offset = 0;
 
-    while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-    while (cur)
+    while (NEXT_LINK(func)) func = NEXT_LINK(func);
+    while (func)
     {
-        var_t *def = cur->def;
+        var_t *def = func->def;
 
         write_type(client, def->type, def, def->tname);
         fprintf(client, " ");
         write_name(client, def);
         fprintf(client, "(\n");
         indent++;
-        if (cur->args)
-            write_args(client, cur->args, iface->name, 0, TRUE);
+        if (func->args)
+            write_args(client, func->args, iface->name, 0, TRUE);
         else
             print_client("void");
         fprintf(client, ")\n");
@@ -158,7 +158,7 @@ static void write_function_stubs(type_t *iface)
             fprintf(client, " _RetVal;\n");
         }
 
-        if (handle_name)
+        if (implicit_handle)
             print_client("RPC_BINDING_HANDLE _Handle = 0;\n");
 
         print_client("RPC_MESSAGE _RpcMessage;\n");
@@ -177,8 +177,8 @@ static void write_function_stubs(type_t *iface)
         indent--;
         fprintf(client, "\n");
 
-        if (handle_name)
-            print_client("_Handle = %s;\n", handle_name);
+        if (implicit_handle)
+            print_client("_Handle = %s;\n", implicit_handle);
 
         /* FIXME: marshal arguments */
         print_client("_StubMsg.BufferLength = 0UL;\n");
@@ -187,7 +187,7 @@ static void write_function_stubs(type_t *iface)
         indent++;
         print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
         print_client("_StubMsg.BufferLength,\n");
-        if (handle_name)
+        if (implicit_handle)
             print_client("%_Handle);\n");
         else
             print_client("%s__MIDL_AutoBindHandle);\n", iface->name);
@@ -259,7 +259,7 @@ static void write_function_stubs(type_t *iface)
         fprintf(client, "\n");
 
         method_count++;
-        cur = PREV_LINK(cur);
+        func = PREV_LINK(func);
     }
 }
 
@@ -280,7 +280,7 @@ static void write_stubdescdecl(type_t *iface)
 
 static void write_stubdescriptor(type_t *iface)
 {
-    char *handle_name = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
 
     print_client("static const MIDL_STUB_DESC %s_StubDesc =\n", iface->name);
     print_client("{\n");
@@ -288,8 +288,8 @@ static void write_stubdescriptor(type_t *iface)
     print_client("(void __RPC_FAR *)& %s___RpcClientInterface,\n", iface->name);
     print_client("MIDL_user_allocate,\n");
     print_client("MIDL_user_free,\n");
-    if (handle_name)
-        print_client("&%s,\n", handle_name);
+    if (implicit_handle)
+        print_client("&%s,\n", implicit_handle);
     else
         print_client("&%s__MIDL_AutoBindHandle,\n", iface->name);
     print_client("0,\n");
@@ -357,18 +357,18 @@ static void write_formatdesc( const char *str )
 
 static void write_formatstringsdecl(type_t *iface)
 {
-    func_t *cur;
+    func_t *func;
     int byte_count = 1;
 
     print_client("#define TYPE_FORMAT_STRING_SIZE %d\n", 3); /* FIXME */
 
     /* determine the proc format string size */
-    cur = iface->funcs;
-    while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-    while (cur)
+    func = iface->funcs;
+    while (NEXT_LINK(func)) func = NEXT_LINK(func);
+    while (func)
     {
         byte_count += 2; /* FIXME: determine real size */
-        cur = PREV_LINK(cur);
+        func = PREV_LINK(func);
     }
     print_client("#define PROC_FORMAT_STRING_SIZE %d\n", byte_count);
 

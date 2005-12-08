@@ -69,7 +69,7 @@ static int print_server(const char *format, ...)
 
 static void write_procformatstring(type_t *iface)
 {
-    func_t *cur = iface->funcs;
+    func_t *func = iface->funcs;
 
     print_server("static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString =\n");
     print_server("{\n");
@@ -78,10 +78,10 @@ static void write_procformatstring(type_t *iface)
     print_server("{\n");
     indent++;
 
-    while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-    while (cur)
+    while (NEXT_LINK(func)) func = NEXT_LINK(func);
+    while (func)
     {
-        var_t *def = cur->def;
+        var_t *def = func->def;
 
         if (is_void(def->type, NULL))
         {
@@ -94,7 +94,7 @@ static void write_procformatstring(type_t *iface)
             print_server("0x%02x,    /* <type> */\n", def->type->type);
         }
 
-        cur = PREV_LINK(cur);
+        func = PREV_LINK(func);
     }
 
     print_server("0x0\n");
@@ -149,11 +149,11 @@ static unsigned int get_required_stack_size(type_t *type)
 
 static void write_function_stubs(type_t *iface)
 {
-    func_t *cur = iface->funcs;
-    while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-    while (cur)
+    func_t *func = iface->funcs;
+    while (NEXT_LINK(func)) func = NEXT_LINK(func);
+    while (func)
     {
-        var_t *def = cur->def;
+        var_t *def = func->def;
 
         write_type(server, def->type, def, def->tname);
         fprintf(server, " __RPC_STUB\n");
@@ -260,7 +260,7 @@ static void write_function_stubs(type_t *iface)
         fprintf(server, "}\n");
         fprintf(server, "\n");
 
-        cur = PREV_LINK(cur);
+        func = PREV_LINK(func);
     }
 }
 
@@ -269,22 +269,22 @@ static void write_dispatchtable(type_t *iface)
 {
     unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
     unsigned long method_count = 0;
-    func_t *cur = iface->funcs;
+    func_t *func = iface->funcs;
 
     print_server("static RPC_DISPATCH_FUNCTION %s_table[] =\n", iface->name);
     print_server("{\n");
     indent++;
-    while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-    while (cur)
+    while (NEXT_LINK(func)) func = NEXT_LINK(func);
+    while (func)
     {
-        var_t *def = cur->def;
+        var_t *def = func->def;
 
         print_server("%s_", iface->name);
         write_name(server, def);
         fprintf(server, ",\n");
 
         method_count++;
-        cur = PREV_LINK(cur);
+        func = PREV_LINK(func);
     }
     print_server("0\n");
     indent--;
@@ -382,18 +382,18 @@ static void write_formatdesc( const char *str )
 
 static void write_formatstringsdecl(type_t *iface)
 {
-    func_t *cur;
+    func_t *func;
     int byte_count = 1;
 
     print_server("#define TYPE_FORMAT_STRING_SIZE %d\n", 3); /* FIXME */
 
     /* determine the proc format string size */
-    cur = iface->funcs;
-    while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-    while (cur)
+    func = iface->funcs;
+    while (NEXT_LINK(func)) func = NEXT_LINK(func);
+    while (func)
     {
         byte_count += 2; /* FIXME: determine real size */
-        cur = PREV_LINK(cur);
+        func = PREV_LINK(func);
     }
     print_server("#define PROC_FORMAT_STRING_SIZE %d\n", byte_count);
 
