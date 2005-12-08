@@ -102,6 +102,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD
 static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl,
         LPCWSTR lpszHeaders, DWORD dwHeaderLength, LPVOID lpOptional, DWORD
         dwOptionalLength, DWORD dwContentLength);
+static INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField);
 
 /***********************************************************************
  *           HTTP_Tokenize (internal)
@@ -1161,9 +1162,14 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
         INT index = HTTP_GetCustomHeaderIndex(lpwhr, (LPWSTR)lpBuffer);
 
         if (index < 0)
-            return bSuccess;
+            index = HTTP_GetStdHeaderIndex(lpBuffer);
+        else
+            lphttpHdr = &lpwhr->pCustHeaders[index];
 
-        lphttpHdr = &lpwhr->pCustHeaders[index];
+        if (index < 0)
+            return bSuccess;
+        else
+            lphttpHdr = &lpwhr->StdHeaders[index];
     }
     else
     {
@@ -1285,7 +1291,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
             (*lpdwIndex)++;
 	    }
     }
-    else
+    else if (lphttpHdr->lpszValue)
     {
         DWORD len = (strlenW(lphttpHdr->lpszValue) + 1) * sizeof(WCHAR);
 
@@ -1475,6 +1481,9 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 
     len = (*lpdwBufferLength)*sizeof(WCHAR);
     bufferW = HeapAlloc( GetProcessHeap(), 0, len );
+    /* buffer is in/out because of HTTP_QUERY_CUSTOM */
+    if ((dwInfoLevel & HTTP_QUERY_HEADER_MASK) == HTTP_QUERY_CUSTOM)
+        MultiByteToWideChar(CP_ACP,0,lpBuffer,-1,bufferW,len);
     result = HttpQueryInfoW( hHttpRequest, dwInfoLevel, bufferW,
                            &len, lpdwIndex );
     if( result )
