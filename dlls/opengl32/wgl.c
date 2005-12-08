@@ -46,6 +46,7 @@ enum x11drv_escape_codes
     X11DRV_GET_DISPLAY,   /* get X11 display for a DC */
     X11DRV_GET_DRAWABLE,  /* get current drawable for a DC */
     X11DRV_GET_FONT,      /* get current X font for a DC */
+    X11DRV_SET_DRAWABLE,     /* set current drawable for a DC */
 };
 
 void (*wine_tsx11_lock_ptr)(void) = NULL;
@@ -160,15 +161,15 @@ inline static Font get_font( HDC hdc )
  */
 HGLRC WINAPI wglCreateContext(HDC hdc)
 {
-  XVisualInfo *vis;
   Wine_GLContext *ret;
   int num;
   XVisualInfo template;
+  XVisualInfo *vis = NULL;
   Display *display = get_display( hdc );
   int hdcPF = GetPixelFormat(hdc);
   GLXFBConfig cur_cfg;
 
-  TRACE("(%p)\n", hdc);
+  TRACE("(%p)->(PF:%d)\n", hdc, hdcPF);
 
   /* First, get the visual in use by the X11DRV */
   if (!display) return 0;
@@ -217,8 +218,9 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
   LEAVE_GL();
   ret->hdc = hdc;
   ret->display = display;
-  ret->vis = vis;
   ret->fb_conf = cur_cfg;
+  /*ret->vis = vis;*/
+  ret->vis = glXGetVisualFromFBConfig(display, cur_cfg);
 
   TRACE(" creating context %p (GL context creation delayed)\n", ret);
   return (HGLRC) ret;
@@ -477,8 +479,47 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
       Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
       Drawable drawable = get_drawable( hdc );
       if (ctx->ctx == NULL) {
-	ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, True);
-	TRACE(" created a delayed OpenGL context (%p) for %p\n", ctx->ctx, ctx->vis);
+	int tmp;
+	int draw_vis_id, ctx_vis_id;
+        VisualID visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
+
+	TRACE(" desktop VISUAL_ID is 0x%x\n", (unsigned int) visualid);
+
+	TRACE(" drawable %p have :\n", (void*) drawable);
+	glXQueryDrawable(ctx->display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &tmp);
+	TRACE(" - FBCONFIG_ID as 0x%x\n", tmp);
+	glXQueryDrawable(ctx->display, drawable, GLX_VISUAL_ID, (unsigned int*) &tmp);
+	TRACE(" - VISUAL_ID as 0x%x\n", tmp);
+	draw_vis_id = tmp;
+	glXQueryDrawable(ctx->display, drawable, GLX_WIDTH, (unsigned int*) &tmp);
+	TRACE(" - WIDTH as %d\n", tmp);
+	glXQueryDrawable(ctx->display, drawable, GLX_HEIGHT, (unsigned int*) &tmp);
+	TRACE(" - HEIGHT as %d\n", tmp);
+
+	TRACE(" Context %p have (vis:%p):\n", ctx, ctx->vis);
+	glXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_FBCONFIG_ID, &tmp);
+	TRACE(" - FBCONFIG_ID 0x%x\n", tmp);
+	glXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_VISUAL_ID, &tmp);
+	TRACE(" - VISUAL_ID 0x%x\n", tmp);
+	ctx_vis_id = tmp;
+
+	if (draw_vis_id == visualid && draw_vis_id != ctx_vis_id) {
+	  /**
+	   * Inherits from root window so reuse desktop visual
+	   */
+	  XVisualInfo template;
+	  XVisualInfo *vis;
+	  int num;
+	  template.visualid = visualid;
+	  vis = XGetVisualInfo(ctx->display, VisualIDMask, &template, &num);
+
+	  TRACE(" Creating GLX Context\n");
+	  ctx->ctx = glXCreateContext(ctx->display, vis, NULL, True);
+	} else {
+	  TRACE(" Creating GLX Context\n");
+	  ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, True);
+	}
+	TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
       }
       TRACE(" make current for dis %p, drawable %p, ctx %p\n", ctx->display, (void*) drawable, ctx->ctx);
       ret = glXMakeCurrent(ctx->display, drawable, ctx->ctx);
