@@ -15,6 +15,7 @@ C_SRCS = \
 	header.c \
 	proxy.c \
 	server.c \
+	typegen.c \
 	typelib.c \
 	utils.c \
 	widl.c \

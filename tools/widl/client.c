@@ -39,6 +39,7 @@
 #include "widltypes.h"
 #include "typelib.h"
 #include "typelib_struct.h"
+#include "typegen.h"
 
 #define END_OF_LIST(list)       \
   do {                          \
@@ -62,63 +63,6 @@ static int print_client( const char *format, ... )
     r = vfprintf(client, format, va);
     va_end(va);
     return r;
-}
-
-
-static void write_procformatstring(type_t *iface)
-{
-    func_t *func = iface->funcs;
-
-    print_client("static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString =\n");
-    print_client("{\n");
-    indent++;
-    print_client("0,\n");
-    print_client("{\n");
-    indent++;
-
-    while (NEXT_LINK(func)) func = NEXT_LINK(func);
-    while (func)
-    {
-        var_t *def = func->def;
-
-        if (is_void(def->type, NULL))
-        {
-            print_client("0x5b,    /* FC_END */\n");
-            print_client("0x5c,    /* FC_PAD */\n");
-        }
-        else
-        {
-            print_client("0x53,    /* FC_RETURN_PARAM_BASETYPE */\n");
-            print_client("0x%02x,    /* <type> */\n", def->type->type);
-        }
-
-        func = PREV_LINK(func);
-    }
-
-    print_client("0x0\n");
-    indent--;
-    print_client("}\n");
-    indent--;
-    print_client("};\n");
-    print_client("\n");
-}
-
-
-static void write_typeformatstring(void)
-{
-    print_client("static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString =\n");
-    print_client("{\n");
-    indent++;
-    print_client("0,\n");
-    print_client("{\n");
-    indent++;
-    print_client("NdrFcShort(0x0),\n");
-    print_client("0x0\n");
-    indent--;
-    print_client("}\n");
-    indent--;
-    print_client("};\n");
-    print_client("\n");
 }
 
 
@@ -200,6 +144,9 @@ static void write_function_stubs(type_t *iface)
         indent--;
         fprintf(client, "\n");
 
+
+        /* marshal arguments */
+        marshall_arguments(client, indent, func);
 
         /* send/receive message */
         /* print_client("NdrNsSendReceive(\n"); */
@@ -466,8 +413,8 @@ void write_client(ifref_t *ifaces)
     print_client("#endif\n");
     fprintf(client, "\n");
 
-    write_procformatstring(lcur->iface);
-    write_typeformatstring();
+    write_procformatstring(client, lcur->iface);
+    write_typeformatstring(client);
 
     fprintf(client, "\n");
 

@@ -40,6 +40,7 @@
 #include "widl.h"
 #include "typelib.h"
 #include "typelib_struct.h"
+#include "typegen.h"
 
 #define END_OF_LIST(list)       \
   do {                          \
@@ -64,86 +65,6 @@ static int print_server(const char *format, ...)
     r = vfprintf(server, format, va);
     va_end(va);
     return r;
-}
-
-
-static void write_procformatstring(type_t *iface)
-{
-    func_t *func = iface->funcs;
-
-    print_server("static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString =\n");
-    print_server("{\n");
-    indent++;
-    print_server("0,\n");
-    print_server("{\n");
-    indent++;
-
-    while (NEXT_LINK(func)) func = NEXT_LINK(func);
-    while (func)
-    {
-        var_t *def = func->def;
-
-        if (is_void(def->type, NULL))
-        {
-            print_server("0x5b,    /* FC_END */\n");
-            print_server("0x5c,    /* FC_PAD */\n");
-        }
-        else
-        {
-            print_server("0x53,    /* FC_RETURN_PARAM_BASETYPE */\n");
-            print_server("0x%02x,    /* <type> */\n", def->type->type);
-        }
-
-        func = PREV_LINK(func);
-    }
-
-    print_server("0x0\n");
-    indent--;
-    print_server("}\n");
-    indent--;
-    print_server("};\n");
-    print_server("\n");
-}
-
-
-static void write_typeformatstring(void)
-{
-    print_server("static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString =\n");
-    print_server("{\n");
-    indent++;
-    print_server("0,\n");
-    print_server("{\n");
-    indent++;
-    print_server("NdrFcShort(0x0),\n");
-    print_server("0x0\n");
-    indent--;
-    print_server("}\n");
-    indent--;
-    print_server("};\n");
-    print_server("\n");
-}
-
-
-static unsigned int get_required_stack_size(type_t *type)
-{
-    switch(type->type)
-    {
-        case RPC_FC_BYTE:
-        case RPC_FC_CHAR:
-        case RPC_FC_WCHAR:
-        case RPC_FC_USHORT:
-        case RPC_FC_SHORT:
-        case RPC_FC_ULONG:
-        case RPC_FC_LONG:
-            return 4;
-
-      case RPC_FC_HYPER:
-            return 8;
-
-        default:
-            error("Unknown/unsupported type: %s\n", type->name);
-            return 0;
-    }
 }
 
 
@@ -228,7 +149,7 @@ static void write_function_stubs(type_t *iface)
             indent -= 2;
             fprintf(server, "\n");
 
-            /* FIXME: unmarshall arguments */
+            unmarshall_arguments(server, indent, func);
         }
 
         print_server("if (_StubMsg.Buffer > _StubMsg.BufferEnd)\n");
@@ -286,7 +207,7 @@ static void write_function_stubs(type_t *iface)
         if (!is_void(def->type, NULL))
         {
             fprintf(server, "\n");
-            print_server("_StubMsg.BufferLength = %uU;\n", get_required_stack_size(def->type));
+            print_server("_StubMsg.BufferLength = %uU;\n", get_required_buffer_size(def->type));
             print_server("_pRpcMessage->BufferLength = _StubMsg.BufferLength;\n");
             fprintf(server, "\n");
             print_server("_Status = I_RpcGetBuffer(_pRpcMessage);\n");
@@ -537,8 +458,8 @@ void write_server(ifref_t *ifaces)
     print_server("#endif\n");
     fprintf(server, "\n");
 
-    write_procformatstring(lcur->iface);
-    write_typeformatstring();
+    write_procformatstring(server, lcur->iface);
+    write_typeformatstring(server);
 
     fprintf(server, "\n");
 
