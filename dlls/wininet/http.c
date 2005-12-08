@@ -1532,6 +1532,8 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
                     lpBuffersIn->lpcszHeader, lpBuffersIn->dwHeadersLength,
                     (LPWSTR)BuffersInW.lpcszHeader, headerlen);
         }
+        else
+            BuffersInW.lpcszHeader = NULL;
         BuffersInW.dwHeadersTotal = lpBuffersIn->dwHeadersTotal;
         BuffersInW.lpvBuffer = lpBuffersIn->lpvBuffer;
         BuffersInW.dwBufferLength = lpBuffersIn->dwBufferLength;
