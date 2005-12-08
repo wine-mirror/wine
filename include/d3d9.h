@@ -50,6 +50,7 @@
 /*****************************************************************************
  * #defines and error codes
  */
+#define D3D_SDK_VERSION                         32
 #define D3DADAPTER_DEFAULT                      0
 #define D3DENUM_NO_WHQL_LEVEL                   0x00000002L
 #define D3DPRESENT_BACK_BUFFERS_MAX             3L

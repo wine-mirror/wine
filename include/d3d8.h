@@ -41,6 +41,7 @@
 /*****************************************************************************
  * #defines and error codes
  */
+#define D3D_SDK_VERSION              220
 #define D3DADAPTER_DEFAULT           0
 #define D3DENUM_NO_WHQL_LEVEL        2
 
