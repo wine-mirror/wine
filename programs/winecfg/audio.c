@@ -19,6 +19,9 @@
  *
  */
 
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -138,9 +141,9 @@ static void initAudioDeviceTree(HWND hDlg)
 
     insert.hParent = TVI_ROOT;
     insert.hInsertAfter = TVI_LAST;
-    insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-    insert.item.pszText = "Sound Drivers";
-    insert.item.cChildren = 1;
+    insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+    insert.u.item.pszText = "Sound Drivers";
+    insert.u.item.cChildren = 1;
 
     root = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
 
@@ -161,8 +164,8 @@ static void initAudioDeviceTree(HWND hDlg)
         if (hdrv == 0) /* no driver loaded */
         {
             insert.hParent = root;
-            insert.item.mask = TVIF_TEXT;
-            insert.item.pszText = text;
+            insert.u.item.mask = TVIF_TEXT;
+            insert.u.item.pszText = text;
 
             driver[i] = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
         }
@@ -202,8 +205,8 @@ static void initAudioDeviceTree(HWND hDlg)
                 if (num_wod == 0 && num_wid == 0 && num_mod == 0 && num_mid == 0 && num_aux == 0 && num_mxd == 0)
                 {
                     insert.hParent = root;
-                    insert.item.mask = TVIF_TEXT;
-                    insert.item.pszText = text;
+                    insert.u.item.mask = TVIF_TEXT;
+                    insert.u.item.pszText = text;
 
                     driver[i] = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
                 }
@@ -212,18 +215,18 @@ static void initAudioDeviceTree(HWND hDlg)
                     HTREEITEM type;
 
                     insert.hParent = root;
-                    insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                    insert.item.pszText = text;
-                    insert.item.cChildren = 1;
+                    insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                    insert.u.item.pszText = text;
+                    insert.u.item.cChildren = 1;
 
                     driver[i] = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
 
                     if (num_wod)
                     {
                         insert.hParent = driver[i];
-                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.item.pszText = "Wave Out Devices";
-                        insert.item.cChildren = 1;
+                        insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.u.item.pszText = "Wave Out Devices";
+                        insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
 
@@ -236,8 +239,8 @@ static void initAudioDeviceTree(HWND hDlg)
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
-                            insert.item.mask = TVIF_TEXT;
-                            insert.item.pszText = szPname;
+                            insert.u.item.mask = TVIF_TEXT;
+                            insert.u.item.pszText = szPname;
 
                             SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
                         }
@@ -246,9 +249,9 @@ static void initAudioDeviceTree(HWND hDlg)
                     if (num_wid)
                     {
                         insert.hParent = driver[i];
-                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.item.pszText = "Wave In Devices";
-                        insert.item.cChildren = 1;
+                        insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.u.item.pszText = "Wave In Devices";
+                        insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
 
@@ -261,8 +264,8 @@ static void initAudioDeviceTree(HWND hDlg)
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
-                            insert.item.mask = TVIF_TEXT;
-                            insert.item.pszText = szPname;
+                            insert.u.item.mask = TVIF_TEXT;
+                            insert.u.item.pszText = szPname;
 
                             SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
                         }
@@ -271,9 +274,9 @@ static void initAudioDeviceTree(HWND hDlg)
                     if (num_mod)
                     {
                         insert.hParent = driver[i];
-                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.item.pszText = "MIDI Out Devices";
-                        insert.item.cChildren = 1;
+                        insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.u.item.pszText = "MIDI Out Devices";
+                        insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
 
@@ -286,8 +289,8 @@ static void initAudioDeviceTree(HWND hDlg)
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
-                            insert.item.mask = TVIF_TEXT;
-                            insert.item.pszText = szPname;
+                            insert.u.item.mask = TVIF_TEXT;
+                            insert.u.item.pszText = szPname;
 
                             SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
                         }
@@ -296,9 +299,9 @@ static void initAudioDeviceTree(HWND hDlg)
                     if (num_mid)
                     {
                         insert.hParent = driver[i];
-                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.item.pszText = "MIDI In Devices";
-                        insert.item.cChildren = 1;
+                        insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.u.item.pszText = "MIDI In Devices";
+                        insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
 
@@ -311,8 +314,8 @@ static void initAudioDeviceTree(HWND hDlg)
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
-                            insert.item.mask = TVIF_TEXT;
-                            insert.item.pszText = szPname;
+                            insert.u.item.mask = TVIF_TEXT;
+                            insert.u.item.pszText = szPname;
 
                             SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
                         }
@@ -321,9 +324,9 @@ static void initAudioDeviceTree(HWND hDlg)
                     if (num_aux)
                     {
                         insert.hParent = driver[i];
-                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.item.pszText = "Aux Devices";
-                        insert.item.cChildren = 1;
+                        insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.u.item.pszText = "Aux Devices";
+                        insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
 
@@ -336,8 +339,8 @@ static void initAudioDeviceTree(HWND hDlg)
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
-                            insert.item.mask = TVIF_TEXT;
-                            insert.item.pszText = szPname;
+                            insert.u.item.mask = TVIF_TEXT;
+                            insert.u.item.pszText = szPname;
 
                             SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
                         }
@@ -346,9 +349,9 @@ static void initAudioDeviceTree(HWND hDlg)
                     if (num_mxd)
                     {
                         insert.hParent = driver[i];
-                        insert.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.item.pszText = "Mixer Devices";
-                        insert.item.cChildren = 1;
+                        insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
+                        insert.u.item.pszText = "Mixer Devices";
+                        insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
 
@@ -361,8 +364,8 @@ static void initAudioDeviceTree(HWND hDlg)
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
-                            insert.item.mask = TVIF_TEXT;
-                            insert.item.pszText = szPname;
+                            insert.u.item.mask = TVIF_TEXT;
+                            insert.u.item.pszText = szPname;
 
                             SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
                         }
