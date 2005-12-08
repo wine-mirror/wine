@@ -1437,7 +1437,7 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 /**************************************************************************
  * 				MIX_Init			[internal]
  */
-static	DWORD	MIX_Init(void)
+LRESULT OSS_MixerInit(void)
 {
     int	i, mixer;
 
@@ -1489,7 +1489,7 @@ static	DWORD	MIX_Init(void)
 /**************************************************************************
  * 				MIX_Exit			[internal]
  */
-static	DWORD	MIX_Exit(void)
+LRESULT OSS_MixerExit(void)
 {
     int	i;
 
@@ -1528,9 +1528,7 @@ DWORD WINAPI OSS_mxdMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     switch (wMsg)
     {
     case DRVM_INIT:
-	return MIX_Init();
     case DRVM_EXIT:
-        return MIX_Exit();
     case DRVM_ENABLE:
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */

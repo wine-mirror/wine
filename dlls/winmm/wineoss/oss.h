@@ -38,5 +38,14 @@
 # define HAVE_OSS
 #endif
 
-extern LONG OSS_WaveInit(void);
-extern BOOL OSS_MidiInit(void);
+LRESULT OSS_WaveInit(void);
+LRESULT OSS_WaveExit(void);
+
+LRESULT OSS_MidiInit(void);
+LRESULT OSS_MidiExit(void);
+
+LRESULT OSS_MixerInit(void);
+LRESULT OSS_MixerExit(void);
+
+LRESULT OSS_AuxInit(void);
+LRESULT OSS_AuxExit(void);

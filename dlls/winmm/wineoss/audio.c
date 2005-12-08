@@ -1078,7 +1078,7 @@ static char* StrDup(const char* str, const char* def)
  *
  * Initialize internal structures from OSS information
  */
-LONG OSS_WaveInit(void)
+LRESULT OSS_WaveInit(void)
 {
     char* str;
     int i;
@@ -1154,6 +1154,33 @@ LONG OSS_WaveInit(void)
         TRACE("%d: %s, %s, %s\n", i, WInDev[i].ossdev->dev_name,
               WInDev[i].ossdev->mixer_name, WInDev[i].ossdev->interface_name);
     }
+
+    return 0;
+}
+
+/******************************************************************
+ *		OSS_WaveExit
+ *
+ * Delete/clear internal structures of OSS information
+ */
+LRESULT OSS_WaveExit(void)
+{
+    int i;
+    TRACE("()\n");
+
+    for (i = 0; i < MAX_WAVEDRV; ++i)
+    {
+        HeapFree(GetProcessHeap(), 0, OSS_Devices[i].dev_name);
+        HeapFree(GetProcessHeap(), 0, OSS_Devices[i].mixer_name);
+        HeapFree(GetProcessHeap(), 0, OSS_Devices[i].interface_name);
+    }
+
+    ZeroMemory(OSS_Devices, sizeof(OSS_Devices));
+    ZeroMemory(WOutDev, sizeof(WOutDev));
+    ZeroMemory(WInDev, sizeof(WInDev));
+
+    numOutDev = 0;
+    numInDev = 0;
 
     return 0;
 }

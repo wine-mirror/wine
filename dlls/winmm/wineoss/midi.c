@@ -176,7 +176,7 @@ static	int 	MIDI_UnixToWindowsDeviceType(int type)
  *
  * Initializes the MIDI devices information variables
  */
-BOOL OSS_MidiInit(void)
+LRESULT OSS_MidiInit(void)
 {
     int 		i, status, numsynthdevs = 255, nummididevs = 255;
     struct synth_info 	sinfo;
@@ -184,14 +184,14 @@ BOOL OSS_MidiInit(void)
     static	BOOL	bInitDone = FALSE;
 
     if (bInitDone)
-	return TRUE;
+	return 0;
 
     TRACE("Initializing the MIDI variables.\n");
-    bInitDone = TRUE;
+    bInitDone = 0;
 
     /* try to open device */
     if (midiOpenSeq() == -1) {
-	return TRUE;
+	return -1;
     }
 
     /* find how many Synth devices are there in the system */
@@ -200,7 +200,7 @@ BOOL OSS_MidiInit(void)
     if (status == -1) {
 	ERR("ioctl for nr synth failed.\n");
 	midiCloseSeq();
-	return TRUE;
+	return -1;
     }
 
     if (numsynthdevs > MAX_MIDIOUTDRV) {
@@ -374,7 +374,26 @@ BOOL OSS_MidiInit(void)
     /* close file and exit */
     midiCloseSeq();
 
-    return TRUE;
+    return 0;
+}
+
+/**************************************************************************
+ * 			OSS_MidiExit				[internal]
+ *
+ * Release the MIDI devices information variables
+ */
+LRESULT OSS_MidiExit(void)
+{
+    TRACE("()\n");
+
+    ZeroMemory(MidiInDev, sizeof(MidiInDev));
+    ZeroMemory(MidiOutDev, sizeof(MidiOutDev));
+
+    MODM_NumDevs = 0;
+    MODM_NumFMSynthDevs = 0;
+    MIDM_NumDevs = 0;
+
+    return 0;
 }
 
 /**************************************************************************
@@ -1657,7 +1676,7 @@ static DWORD modReset(WORD wDevID)
 
 #else /* HAVE_OSS_MIDI */
 
-BOOL OSS_MidiInit(void)
+LRESULT OSS_MidiInit(void)
 {
     return FALSE;
 }

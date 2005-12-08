@@ -29,14 +29,44 @@
 #include "winuser.h"
 #include "mmddk.h"
 #include "oss.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
 #ifdef HAVE_OSS
+
+/**************************************************************************
+ * 				OSS_drvLoad			[internal]
+ */
+static LRESULT OSS_drvLoad(void)
+{
+    TRACE("()\n");
+    OSS_WaveInit();
+    OSS_MidiInit();
+    OSS_MixerInit();
+    OSS_AuxInit();
+    return 1;
+}
+
+/**************************************************************************
+ * 				OSS_drvFree			[internal]
+ */
+static LRESULT OSS_drvFree(void)
+{
+    TRACE("()\n");
+    OSS_WaveExit();
+    OSS_MidiExit();
+    OSS_MixerExit();
+    OSS_AuxExit();
+    return 1;
+}
 
 /**************************************************************************
  * 				OSS_drvOpen			[internal]
  */
 static LRESULT OSS_drvOpen(LPSTR str)
 {
+    TRACE("(%s)\n", str);
     return 1;
 }
 
@@ -45,6 +75,7 @@ static LRESULT OSS_drvOpen(LPSTR str)
  */
 static LRESULT OSS_drvClose(DWORD_PTR dwDevID)
 {
+    TRACE("(%08lx)\n", dwDevID);
     return 1;
 }
 
@@ -57,15 +88,13 @@ static LRESULT OSS_drvClose(DWORD_PTR dwDevID)
 LRESULT CALLBACK OSS_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
                                 LPARAM dwParam1, LPARAM dwParam2)
 {
-/* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
-/* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
+     TRACE("(%08lX, %p, %08X, %08lX, %08lX)\n",
+           dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch(wMsg) {
 #ifdef HAVE_OSS
-    case DRV_LOAD:		OSS_WaveInit();
-				OSS_MidiInit();
-				return 1;
-    case DRV_FREE:		return 1;
+    case DRV_LOAD:		return OSS_drvLoad();
+    case DRV_FREE:		return OSS_drvFree();
     case DRV_OPEN:		return OSS_drvOpen((LPSTR)dwParam1);
     case DRV_CLOSE:		return OSS_drvClose(dwDevID);
     case DRV_ENABLE:		return 1;

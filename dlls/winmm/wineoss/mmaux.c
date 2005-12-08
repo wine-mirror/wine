@@ -49,9 +49,10 @@ static int	NumDev = 6;
 
 /*-----------------------------------------------------------------------*/
 
-static	int	AUXDRV_Init(void)
+LRESULT OSS_AuxInit(void)
 {
     int	mixer;
+    TRACE("()\n");
 
     if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 	WARN("mixer device not available !\n");
@@ -60,7 +61,15 @@ static	int	AUXDRV_Init(void)
 	close(mixer);
 	NumDev = 6;
     }
-    return NumDev;
+    return 0;
+}
+
+/*-----------------------------------------------------------------------*/
+
+LRESULT OSS_AuxExit(void)
+{
+    TRACE("()\n");
+    return 0;
 }
 
 /**************************************************************************
@@ -219,8 +228,6 @@ DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 #ifdef HAVE_OSS
     switch (wMsg) {
     case DRVM_INIT:
-	AUXDRV_Init();
-	/* fall through */
     case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:
