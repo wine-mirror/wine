@@ -117,6 +117,7 @@ WINDOWS_INCLUDES = \
 	dplay.h \
 	dplay8.h \
 	dplobby.h \
+	dplobby8.h \
 	dsconf.h \
 	dsdriver.h \
 	dshow.h \

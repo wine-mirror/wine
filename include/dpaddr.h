@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Raphael Junqueira
+ * Copyright (C) 2003-2005 Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,7 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-
+typedef REFIID	        DPNAREFIID;
 typedef struct sockaddr SOCKADDR;
 
 /*****************************************************************************
@@ -55,12 +55,17 @@ typedef struct sockaddr SOCKADDR;
 #define DPNA_KEY_DEVICE_A                   "device"
 #define DPNA_KEY_FLOWCONTROL_A              "flowcontrol"
 #define DPNA_KEY_HOSTNAME_A                 "hostname"
+#define DPNA_KEY_NAMEINFO_A                 "nameinfo"
 #define DPNA_KEY_PARITY_A                   "parity"
 #define DPNA_KEY_PHONENUMBER_A              "phonenumber"
 #define DPNA_KEY_PORT_A                     "port"
+#define DPNA_KEY_PROCESSOR_A                "processor"
 #define DPNA_KEY_PROGRAM_A                  "program"
 #define DPNA_KEY_PROVIDER_A                 "provider"
+#define DPNA_KEY_SCOPE_A                     "scope"
 #define DPNA_KEY_STOPBITS_A                 "stopbits"
+#define DPNA_KEY_TRAVERSALMODE_A             "traversalmode"
+
 #define DPNA_STOP_BITS_ONE_A                "1"
 #define DPNA_STOP_BITS_ONE_FIVE_A           "1.5"
 #define DPNA_STOP_BITS_TWO_A                "2"
@@ -88,12 +93,16 @@ typedef struct sockaddr SOCKADDR;
 # define DPNA_KEY_DEVICE               (const WCHAR []){ 'd','e','v','i','c','e',0 }
 # define DPNA_KEY_FLOWCONTROL          (const WCHAR []){ 'f','l','o','w','c','o','n','t','r','o','l',0 }
 # define DPNA_KEY_HOSTNAME             (const WCHAR []){ 'h','o','s','t','n','a','m','e',0 }
+# define DPNA_KEY_NAMEINFO             (const WCHAR []){ 'n','a','m','e','i','n','f','o',0 }
 # define DPNA_KEY_PARITY               (const WCHAR []){ 'p','a','r','i','t','y',0 }
 # define DPNA_KEY_PHONENUMBER          (const WCHAR []){ 'p','h','o','n','e','n','u','m','b','e','r',0 }
 # define DPNA_KEY_PORT                 (const WCHAR []){ 'p','o','r','t',0 }
+# define DPNA_KEY_PROCESSOR            (const WCHAR []){ 'p','r','o','c','e','s','s','o','r',0 }
 # define DPNA_KEY_PROGRAM              (const WCHAR []){ 'p','r','o','g','r','a','m',0 }
 # define DPNA_KEY_PROVIDER             (const WCHAR []){ 'p','r','o','v','i','d','e','r',0 }
+# define DPNA_KEY_SCOPE                (const WCHAR []){ 's','c','o','p','e',0 }
 # define DPNA_KEY_STOPBITS             (const WCHAR []){ 's','t','o','p','b','i','t','s',0 }
+# define DPNA_KEY_TRAVERSALMODE        (const WCHAR []){ 't','r','a','v','e','r','s','a','l','m','o','d','e',0 }
 # define DPNA_STOP_BITS_ONE            (const WCHAR []){ '1',0 }
 # define DPNA_STOP_BITS_ONE_FIVE       (const WCHAR []){ '1','.','5',0 }
 # define DPNA_STOP_BITS_TWO            (const WCHAR []){ '2',0 }
@@ -120,12 +129,16 @@ typedef struct sockaddr SOCKADDR;
 # define DPNA_KEY_DEVICE               L"device"
 # define DPNA_KEY_FLOWCONTROL          L"flowcontrol"
 # define DPNA_KEY_HOSTNAME             L"hostname"
+# define DPNA_KEY_NAMEINFO_A           L"nameinfo"
 # define DPNA_KEY_PARITY               L"parity"
 # define DPNA_KEY_PHONENUMBER          L"phonenumber"
 # define DPNA_KEY_PORT                 L"port"
+# define DPNA_KEY_PROCESSOR_A          L"processor"
 # define DPNA_KEY_PROGRAM              L"program"
 # define DPNA_KEY_PROVIDER             L"provider"
+# define DPNA_KEY_SCOPE_A              L"scope"
 # define DPNA_KEY_STOPBITS             L"stopbits"
+# define DPNA_KEY_TRAVERSALMODE_A      L"traversalmode"
 # define DPNA_STOP_BITS_ONE            L"1"
 # define DPNA_STOP_BITS_ONE_FIVE       L"1.5"
 # define DPNA_STOP_BITS_TWO            L"2"
@@ -152,12 +165,16 @@ static const WCHAR DPNA_KEY_BAUD[] = { 'b','a','u','d',0 };
 static const WCHAR DPNA_KEY_DEVICE[] = { 'd','e','v','i','c','e',0 };
 static const WCHAR DPNA_KEY_FLOWCONTROL[] = { 'f','l','o','w','c','o','n','t','r','o','l',0 };
 static const WCHAR DPNA_KEY_HOSTNAME[] = { 'h','o','s','t','n','a','m','e',0 };
+static const WCHAR DPNA_KEY_NAMEINFO[] = { 'n','a','m','e','i','n','f','o',0 };
 static const WCHAR DPNA_KEY_PARITY[] = { 'p','a','r','i','t','y',0 };
 static const WCHAR DPNA_KEY_PHONENUMBER[] = { 'p','h','o','n','e','n','u','m','b','e','r',0 };
 static const WCHAR DPNA_KEY_PORT[] =   { 'p','o','r','t',0 };
+static const WCHAR DPNA_KEY_PROCESSOR[] = { 'p','r','o','c','e','s','s','o','r',0 };
 static const WCHAR DPNA_KEY_PROGRAM[] = { 'p','r','o','g','r','a','m',0 };
 static const WCHAR DPNA_KEY_PROVIDER[] = { 'p','r','o','v','i','d','e','r',0 };
+static const WCHAR DPNA_KEY_SCOPE[] = { 's','c','o','p','e',0 };
 static const WCHAR DPNA_KEY_STOPBITS[] = { 's','t','o','p','b','i','t','s',0 };
+static const WCHAR DPNA_KEY_TRAVERSALMODE[] = { 't','r','a','v','e','r','s','a','l','m','o','d','e',0 };
 static const WCHAR DPNA_STOP_BITS_ONE[] = { '1',0 };
 static const WCHAR DPNA_STOP_BITS_ONE_FIVE[] = { '1','.','5',0 };
 static const WCHAR DPNA_STOP_BITS_TWO[] = { '2',0 };
@@ -329,6 +346,10 @@ DECLARE_INTERFACE_(IDirectPlay8AddressIP,IUnknown)
 #define IDirectPlay8AddressIP_GetLocalAddress(p,a,b)        (p)->GetLocalAddress(a,b)
 #define IDirectPlay8AddressIP_GetAddress(p,a,b,c)           (p)->GetAddress(a,b,c)
 #endif
+
+/* Export functions */
+
+HRESULT WINAPI DirectPlay8AddressCreate(CONST GUID* pcIID, LPVOID* ppvInterface, IUnknown* pUnknown);
 
 #ifdef __cplusplus
 }

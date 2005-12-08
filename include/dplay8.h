@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Raphael Junqueira
+ * Copyright (C) 2003-2005 Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -57,6 +57,9 @@ typedef	DWORD	DPNHANDLE, *PDPNHANDLE;
 #define DPN_MSGID_SEND_COMPLETE                 (DPN_MSGID_OFFSET | 0x0014)
 #define DPN_MSGID_SERVER_INFO                   (DPN_MSGID_OFFSET | 0x0015)
 #define	DPN_MSGID_TERMINATE_SESSION             (DPN_MSGID_OFFSET | 0x0016)
+#define DPN_MSGID_CREATE_THREAD                 (DPN_MSGID_OFFSET | 0x0017)
+#define DPN_MSGID_DESTROY_THREAD                (DPN_MSGID_OFFSET | 0x0018)
+#define DPN_MSGID_NAT_RESOLVER_QUERY            (DPN_MSGID_OFFSET | 0x0101)
 
 /*****************************************************************************
  * DirectPlay8 Errors
@@ -146,55 +149,84 @@ typedef	DWORD	DPNHANDLE, *PDPNHANDLE;
 /*****************************************************************************
  * DirectPlay8 defines
  */
-#define DPNOP_SYNC                            0x80000000
-#define DPNADDPLAYERTOGROUP_SYNC              DPNOP_SYNC
-#define DPNCANCEL_CONNECT                     0x0001
-#define DPNCANCEL_ENUM                        0x0002
-#define DPNCANCEL_SEND                        0x0004
-#define DPNCANCEL_ALL_OPERATIONS              0x8000
-#define DPNCONNECT_SYNC                       DPNOP_SYNC
-#define DPNCONNECT_OKTOQUERYFORADDRESSING     0x0001
-#define DPNCREATEGROUP_SYNC                   DPNOP_SYNC
-#define DPNDESTROYGROUP_SYNC                  DPNOP_SYNC
-#define DPNENUM_PLAYERS                       0x0001
-#define DPNENUM_GROUPS                        0x0010
-#define DPNENUMHOSTS_SYNC                     DPNOP_SYNC
-#define DPNENUMHOSTS_OKTOQUERYFORADDRESSING   0x0001
-#define DPNENUMHOSTS_NOBROADCASTFALLBACK      0x0002
-#define DPNENUMSERVICEPROVIDERS_ALL           0x0001
-#define DPNGETSENDQUEUEINFO_PRIORITY_NORMAL   0x0001
-#define DPNGETSENDQUEUEINFO_PRIORITY_HIGH     0x0002
-#define DPNGETSENDQUEUEINFO_PRIORITY_LOW      0x0004
-#define DPNGROUP_AUTODESTRUCT                 0x0001
-#define DPNHOST_OKTOQUERYFORADDRESSING        0x0001
-#define DPNINFO_NAME                          0x0001
-#define DPNINFO_DATA                          0x0002
-#define DPNINITIALIZE_DISABLEPARAMVAL         0x0001
-#define DPNLOBBY_REGISTER                     0x0001
-#define DPNLOBBY_UNREGISTER                   0x0002
-#define DPNPLAYER_LOCAL                       0x0002
-#define DPNPLAYER_HOST                        0x0004
-#define DPNREMOVEPLAYERFROMGROUP_SYNC         DPNOP_SYNC
-#define DPNSEND_SYNC                          DPNOP_SYNC
-#define DPNSEND_NOCOPY                        0x0001
-#define DPNSEND_NOCOMPLETE                    0x0002
-#define DPNSEND_COMPLETEONPROCESS             0x0004
-#define DPNSEND_GUARANTEED                    0x0008
-#define DPNSEND_NONSEQUENTIAL                 0x0010
-#define DPNSEND_NOLOOPBACK                    0x0020
-#define DPNSEND_PRIORITY_LOW                  0x0040
-#define DPNSEND_PRIORITY_HIGH                 0x0080
-#define DPNSESSION_CLIENT_SERVER              0x0001
-#define DPNSESSION_MIGRATE_HOST               0x0004
-#define DPNSESSION_NODPNSVR                   0x0040
-#define DPNSESSION_REQUIREPASSWORD            0x0080
-#define DPNSETCLIENTINFO_SYNC                 DPNOP_SYNC
-#define DPNSETGROUPINFO_SYNC                  DPNOP_SYNC
-#define DPNSETPEERINFO_SYNC                   DPNOP_SYNC
-#define DPNSETSERVERINFO_SYNC                 DPNOP_SYNC
-#define DPNSPCAPS_SUPPORTSDPNSRV              0x0001
-#define DPNSPCAPS_SUPPORTSBROADCAST           0x0002
-#define DPNSPCAPS_SUPPORTSALLADAPTERS         0x0004
+#define DPNID_ALL_PLAYERS_GROUP                              0
+#define DPNDESTROYGROUPREASON_NORMAL                    0x0001
+#define DPNDESTROYGROUPREASON_AUTODESTRUCTED            0x0002
+#define DPNDESTROYGROUPREASON_SESSIONTERMINATED         0x0003
+#define DPNDESTROYPLAYERREASON_NORMAL                   0x0001
+#define DPNDESTROYPLAYERREASON_CONNECTIONLOST           0x0002
+#define DPNDESTROYPLAYERREASON_SESSIONTERMINATED        0x0003
+#define DPNDESTROYPLAYERREASON_HOSTDESTROYEDPLAYER      0x0004
+#define DPN_MAX_APPDESC_RESERVEDDATA_SIZE                   64
+
+#define DPNOP_SYNC                                  0x80000000
+#define DPNADDPLAYERTOGROUP_SYNC                    DPNOP_SYNC
+#define DPNCANCEL_CONNECT                               0x0001
+#define DPNCANCEL_ENUM                                  0x0002
+#define DPNCANCEL_SEND                                  0x0004
+#define DPNCANCEL_ALL_OPERATIONS                        0x8000
+#define DPNCANCEL_PLAYER_SENDS                      0x80000000
+#define DPNCANCEL_PLAYER_SENDS_PRIORITY_HIGH        (DPNCANCEL_PLAYER_SENDS | 0x00010000)
+#define DPNCANCEL_PLAYER_SENDS_PRIORITY_NORMAL      (DPNCANCEL_PLAYER_SENDS | 0x00020000)
+#define DPNCANCEL_PLAYER_SENDS_PRIORITY_LOW         (DPNCANCEL_PLAYER_SENDS | 0x00040000)
+#define DPNCLOSE_IMMEDIATE                          0x00000001
+#define DPNCONNECT_SYNC                             DPNOP_SYNC
+#define DPNCONNECT_OKTOQUERYFORADDRESSING               0x0001
+#define DPNCREATEGROUP_SYNC                         DPNOP_SYNC
+#define DPNDESTROYGROUP_SYNC                        DPNOP_SYNC
+#define DPNENUM_PLAYERS                                 0x0001
+#define DPNENUM_GROUPS                                  0x0010
+#define DPNENUMHOSTS_SYNC                           DPNOP_SYNC
+#define DPNENUMHOSTS_OKTOQUERYFORADDRESSING             0x0001
+#define DPNENUMHOSTS_NOBROADCASTFALLBACK                0x0002
+#define DPNENUMSERVICEPROVIDERS_ALL                     0x0001
+#define DPNGETLOCALHOSTADDRESSES_COMBINED               0x0001
+#define DPNGETSENDQUEUEINFO_PRIORITY_NORMAL             0x0001
+#define DPNGETSENDQUEUEINFO_PRIORITY_HIGH               0x0002
+#define DPNGETSENDQUEUEINFO_PRIORITY_LOW                0x0004
+#define DPNGROUP_AUTODESTRUCT                           0x0001
+#define DPNHOST_OKTOQUERYFORADDRESSING                  0x0001
+#define DPNINFO_NAME                                    0x0001
+#define DPNINFO_DATA                                    0x0002
+#define DPNINITIALIZE_DISABLEPARAMVAL                   0x0001
+#define DPNINITIALIZE_HINT_LANSESSION                   0x0002
+#define DPNINITIALIZE_DISABLELINKTUNING                 0x0004
+#define DPNLOBBY_REGISTER                               0x0001
+#define DPNLOBBY_UNREGISTER                             0x0002
+#define DPNPLAYER_LOCAL                                 0x0002
+#define DPNPLAYER_HOST                                  0x0004
+#define DPNRECEIVE_GUARANTEED                           0x0001
+#define DPNRECEIVE_COALESCED                            0x0002
+#define DPNREMOVEPLAYERFROMGROUP_SYNC               DPNOP_SYNC
+#define DPNSEND_SYNC                                DPNOP_SYNC
+#define DPNSEND_NOCOPY                                  0x0001
+#define DPNSEND_NOCOMPLETE                              0x0002
+#define DPNSEND_COMPLETEONPROCESS                       0x0004
+#define DPNSEND_GUARANTEED                              0x0008
+#define DPNSEND_NONSEQUENTIAL                           0x0010
+#define DPNSEND_NOLOOPBACK                              0x0020
+#define DPNSEND_PRIORITY_LOW                            0x0040
+#define DPNSEND_PRIORITY_HIGH                           0x0080
+#define DPNSEND_COALESCE                                0x0100
+#define DPNSENDCOMPLETE_GUARANTEED                      0x0001
+#define DPNSENDCOMPLETE_COALESCED                       0x0002
+#define DPNSESSION_CLIENT_SERVER                        0x0001
+#define DPNSESSION_MIGRATE_HOST                         0x0004
+#define DPNSESSION_NODPNSVR                             0x0040
+#define DPNSESSION_REQUIREPASSWORD                      0x0080
+#define DPNSESSION_NOENUMS                              0x0100
+#define DPNSESSION_FAST_SIGNED                          0x0200
+#define DPNSESSION_FULL_SIGNED                          0x0400
+#define DPNSETCLIENTINFO_SYNC                       DPNOP_SYNC
+#define DPNSETGROUPINFO_SYNC                        DPNOP_SYNC
+#define DPNSETPEERINFO_SYNC                         DPNOP_SYNC
+#define DPNSETSERVERINFO_SYNC                       DPNOP_SYNC
+#define DPNSPCAPS_SUPPORTSDPNSRV                        0x0001
+#define DPNSPCAPS_SUPPORTSBROADCAST                     0x0002
+#define DPNSPCAPS_SUPPORTSALLADAPTERS                   0x0004
+#define DPNSPCAPS_SUPPORTSTHREADPOOL			0x0008
+#define DPNSPCAPS_NETWORKSIMULATOR                      0x0010
+#define DPNSPINFO_NETWORKSIMULATORDEVICE                0x0001
 
 
 /*****************************************************************************
@@ -227,6 +259,21 @@ typedef struct _DPN_CAPS {
   DWORD   dwConnectRetries;
   DWORD   dwTimeoutUntilKeepAlive;
 } DPN_CAPS, *PDPN_CAPS;
+
+typedef struct	_DPN_CAPS_EX {
+  DWORD   dwSize;
+  DWORD   dwFlags;
+  DWORD   dwConnectTimeout;
+  DWORD   dwConnectRetries;
+  DWORD   dwTimeoutUntilKeepAlive;
+  DWORD   dwMaxRecvMsgSize;
+  DWORD   dwNumSendRetries;
+  DWORD   dwMaxSendRetryInterval;
+  DWORD   dwDropThresholdRate;
+  DWORD   dwThrottleRate;
+  DWORD   dwNumHardDisconnectSends;
+  DWORD   dwMaxHardDisconnectPeriod;
+} DPN_CAPS_EX, *PDPN_CAPS_EX;
 
 typedef struct _DPN_CONNECTION_INFO {
   DWORD   dwSize;
@@ -323,6 +370,8 @@ typedef struct _DPNMSG_CONNECT_COMPLETE {
   HRESULT    hResultCode;
   PVOID      pvApplicationReplyData;
   DWORD      dwApplicationReplyDataSize;
+  /** DirectX 9 */
+  DPNID      dpnidLocal;
 } DPNMSG_CONNECT_COMPLETE, *PDPNMSG_CONNECT_COMPLETE;
 
 typedef struct _DPNMSG_CREATE_GROUP {
@@ -330,6 +379,8 @@ typedef struct _DPNMSG_CREATE_GROUP {
   DPNID   dpnidGroup;
   DPNID   dpnidOwner;
   PVOID   pvGroupContext;
+  /** DirectX 9 */
+  PVOID   pvOwnerContext;	
 } DPNMSG_CREATE_GROUP, *PDPNMSG_CREATE_GROUP;
 
 typedef struct _DPNMSG_CREATE_PLAYER {
@@ -417,6 +468,8 @@ typedef struct _DPNMSG_RECEIVE {
   PBYTE      pReceiveData;
   DWORD      dwReceiveDataSize;
   DPNHANDLE  hBufferHandle;
+  /** DirectX 9 */
+  DWORD      dwReceiveFlags;	
 } DPNMSG_RECEIVE, *PDPNMSG_RECEIVE;
 
 typedef struct _DPNMSG_REMOVE_PLAYER_FROM_GROUP {
@@ -440,6 +493,12 @@ typedef struct _DPNMSG_SEND_COMPLETE {
   PVOID       pvUserContext;
   HRESULT     hResultCode;
   DWORD       dwSendTime;
+  /** DirectX 9 */
+  DWORD            dwFirstFrameRTT;
+  DWORD            dwFirstFrameRetryCount;
+  DWORD            dwSendCompleteFlags;
+  DPN_BUFFER_DESC* pBuffers;
+  DWORD            dwNumBuffers;
 } DPNMSG_SEND_COMPLETE, *PDPNMSG_SEND_COMPLETE;
 
 typedef struct _DPNMSG_SERVER_INFO {
@@ -455,25 +514,54 @@ typedef struct _DPNMSG_TERMINATE_SESSION {
   DWORD    dwTerminateDataSize;
 } DPNMSG_TERMINATE_SESSION, *PDPNMSG_TERMINATE_SESSION;
 
+typedef struct _DPNMSG_CREATE_THREAD {
+  DWORD    dwSize;
+  DWORD    dwFlags;
+  DWORD    dwProcessorNum;
+  PVOID    pvUserContext;
+} DPNMSG_CREATE_THREAD, *PDPNMSG_CREATE_THREAD;
+
+typedef struct _DPNMSG_DESTROY_THREAD {
+  DWORD    dwSize;
+  DWORD    dwProcessorNum;
+  PVOID    pvUserContext;
+} DPNMSG_DESTROY_THREAD, *PDPNMSG_DESTROY_THREAD;
+
+typedef	struct _DPNMSG_NAT_RESOLVER_QUERY {
+  DWORD    dwSize;
+  IDirectPlay8Address* pAddressSender;
+  IDirectPlay8Address* pAddressDevice;
+  WCHAR*   pwszUserString;
+} DPNMSG_NAT_RESOLVER_QUERY, *PDPNMSG_NAT_RESOLVER_QUERY;
 
 /*****************************************************************************
  * Predeclare the interfaces
  */
-DEFINE_GUID(CLSID_DirectPlay8Peer,     0x286f484d,0x375e,0x4458,0xa2,0x72,0xb1,0x38,0xe2,0xf8,0xa,0x6a);
-DEFINE_GUID(CLSID_DirectPlay8Client,   0x743f1dc6,0x5aba,0x429f,0x8b,0xdf,0xc5,0x4d,0x3,0x25,0x3d,0xc2);
-DEFINE_GUID(CLSID_DirectPlay8Server,   0xda825e1b,0x6830,0x43d7,0x83,0x5d,0xb,0x5a,0xd8,0x29,0x56,0xa2);
+DEFINE_GUID(CLSID_DirectPlay8Peer,        0x286f484d,0x375e,0x4458,0xa2,0x72,0xb1,0x38,0xe2,0xf8,0x0a,0x6a);
+DEFINE_GUID(CLSID_DirectPlay8Client,      0x743f1dc6,0x5aba,0x429f,0x8b,0xdf,0xc5,0x4d,0x03,0x25,0x3d,0xc2);
+DEFINE_GUID(CLSID_DirectPlay8Server,      0xda825e1b,0x6830,0x43d7,0x83,0x5d,0x0b,0x5a,0xd8,0x29,0x56,0xa2);
+/** DirectX 9 */
+DEFINE_GUID(CLSID_DirectPlay8ThreadPool,  0xfc47060e,0x6153,0x4b34,0xb9,0x75,0x8e,0x41,0x21,0xeb,0x7f,0x3c);
+DEFINE_GUID(CLSID_DirectPlay8NATResolver, 0xe4c1d9a2,0xcbf7,0x48bd,0x9a,0x69,0x34,0xa5,0x5e,0x0d,0x89,0x41);
 
-DEFINE_GUID(IID_IDirectPlay8Peer,      0x5102dacf,0x241b,0x11d3,0xae,0xa7,0x0,0x60,0x97,0xb0,0x14,0x11);
+DEFINE_GUID(IID_IDirectPlay8Peer,         0x5102dacf,0x241b,0x11d3,0xae,0xa7,0x0,0x60,0x97,0xb0,0x14,0x11);
 typedef struct IDirectPlay8Peer *PDIRECTPLAY8PEER;
-DEFINE_GUID(IID_IDirectPlay8Client,    0x5102dacd,0x241b,0x11d3,0xae,0xa7,0x0,0x60,0x97,0xb0,0x14,0x11);
+DEFINE_GUID(IID_IDirectPlay8Client,       0x5102dacd,0x241b,0x11d3,0xae,0xa7,0x0,0x60,0x97,0xb0,0x14,0x11);
 typedef struct IDirectPlay8Client *PDIRECTPLAY8CLIENT;
-DEFINE_GUID(IID_IDirectPlay8Server,    0x5102dace,0x241b,0x11d3,0xae,0xa7,0x0,0x60,0x97,0xb0,0x14,0x11);
+DEFINE_GUID(IID_IDirectPlay8Server,       0x5102dace,0x241b,0x11d3,0xae,0xa7,0x0,0x60,0x97,0xb0,0x14,0x11);
 typedef struct IDirectPlay8Server *PDIRECTPLAY8SERVER;
+/** DirectX 9 */
+DEFINE_GUID(IID_IDirectPlay8ThreadPool,   0x0d22ee73,0x4a46,0x4a0d,0x89,0xb2,0x04,0x5b,0x4d,0x66,0x64,0x25);
+typedef	struct IDirectPlay8ThreadPool *PDIRECTPLAY8THREADPOOL;
+DEFINE_GUID(IID_IDirectPlay8NATResolver,  0xa9e213f2,0x9a60,0x486f,0xbf,0x3b,0x53,0x40,0x8b,0x6d,0x1c,0xbb);
+typedef	struct IDirectPlay8NATResolver *PDIRECTPLAY8NATRESOLVER;
 
-DEFINE_GUID(CLSID_DP8SP_IPX,           0x53934290,0x628d,0x11d2,0xae,0xf,0x0,0x60,0x97,0xb0,0x14,0x11);
-DEFINE_GUID(CLSID_DP8SP_TCPIP,         0xebfe7ba0,0x628d,0x11d2,0xae,0xf,0x0,0x60,0x97,0xb0,0x14,0x11);
-DEFINE_GUID(CLSID_DP8SP_SERIAL,        0x743b5d60,0x628d,0x11d2,0xae,0xf,0x0,0x60,0x97,0xb0,0x14,0x11);
-DEFINE_GUID(CLSID_DP8SP_MODEM,         0x6d4a3650,0x628d,0x11d2,0xae,0xf,0x0,0x60,0x97,0xb0,0x14,0x11);
+DEFINE_GUID(CLSID_DP8SP_IPX,               0x53934290,0x628d,0x11d2,0xae,0x0f,0x0,0x60,0x97,0xb0,0x14,0x11);
+DEFINE_GUID(CLSID_DP8SP_TCPIP,             0xebfe7ba0,0x628d,0x11d2,0xae,0x0f,0x0,0x60,0x97,0xb0,0x14,0x11);
+DEFINE_GUID(CLSID_DP8SP_SERIAL,            0x743b5d60,0x628d,0x11d2,0xae,0x0f,0x0,0x60,0x97,0xb0,0x14,0x11);
+DEFINE_GUID(CLSID_DP8SP_MODEM,             0x6d4a3650,0x628d,0x11d2,0xae,0x0f,0x0,0x60,0x97,0xb0,0x14,0x11);
+/** DirectX 9 */
+DEFINE_GUID(CLSID_DP8SP_BLUETOOTH,         0x995513af,0x3027,0x4b9a,0x95,0x6e,0xc7,0x72,0xb3,0xf7,0x80,0x06);
 
 typedef struct IDirectPlay8LobbiedApplication	*PIDirectPlay8LobbiedApplication, DNLOBBIEDAPPLICATION;
 
@@ -815,6 +903,96 @@ DECLARE_INTERFACE_(IDirectPlay8Peer,IUnknown)
 #define	IDirectPlay8Peer_RegisterLobby(p,a,b,c)                 (p)->RegisterLobby(a,b,c)
 #define	IDirectPlay8Peer_TerminateSession(p,a,b,c)              (p)->TerminateSession(a,b,c)
 #endif
+
+/*****************************************************************************
+ * IDirectPlay8ThreadPool interface
+ */
+#define INTERFACE IDirectPlay8ThreadPool
+DECLARE_INTERFACE_(IDirectPlay8ThreadPool,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlay8ThreadPool methods ***/	
+    STDMETHOD(Initialize)(THIS_ PVOID CONST pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, CONST DWORD dwFlags) PURE;
+    STDMETHOD(Close)(THIS_ CONST DWORD dwFlags) PURE;
+    STDMETHOD(GetThreadCount)(THIS_ CONST DWORD dwProcessorNum, DWORD* CONST pdwNumThreads, CONST DWORD dwFlags) PURE;
+    STDMETHOD(SetThreadCount)(THIS_ CONST DWORD dwProcessorNum, CONST DWORD dwNumThreads, CONST DWORD dwFlags) PURE;
+    STDMETHOD(DoWork)(THIS_ CONST DWORD dwAllowedTimeSlice, CONST DWORD dwFlags) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define	IDirectPlay8ThreadPool_QueryInterface(p,a,b)                  (p)->lpVtbl->QueryInterface(p,a,b)
+#define	IDirectPlay8ThreadPool_AddRef(p)                              (p)->lpVtbl->AddRef(p)
+#define	IDirectPlay8ThreadPool_Release(p)                             (p)->lpVtbl->Release(p)
+/*** IDirectPlay8ThreadPool methods ***/
+#define IDirectPlay8ThreadPool_Initialize(p,a,b,c)                    (p)->lpVtbl->Initialize(p,a,b,c)
+#define IDirectPlay8ThreadPool_Close(p,a)                             (p)->lpVtbl->Close(p,a)
+#define IDirectPlay8ThreadPool_GetThreadCount(p,a,b,c)                (p)->lpVtbl->GetThreadCount(p,a,b,c)
+#define IDirectPlay8ThreadPool_SetThreadCount(p,a,b,c)                (p)->lpVtbl->SetThreadCount(p,a,b,c)
+#define IDirectPlay8ThreadPool_DoWork(p,a,b)                          (p)->lpVtbl->DoWork(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define	IDirectPlay8ThreadPool_QueryInterface(p,a,b)                  (p)->QueryInterface(a,b)
+#define	IDirectPlay8ThreadPool_AddRef(p)                              (p)->AddRef()
+#define	IDirectPlay8ThreadPool_Release(p)                             (p)->Release()
+/*** IDirectPlay8ThreadPool methods ***/
+#define IDirectPlay8ThreadPool_Initialize(p,a,b,c)                    (p)->Initialize(a,b,c)
+#define IDirectPlay8ThreadPool_Close(p,a)                             (p)->Close(a)
+#define IDirectPlay8ThreadPool_GetThreadCount(p,a,b,c)                (p)->GetThreadCount(a,b,c)
+#define IDirectPlay8ThreadPool_SetThreadCount(p,a,b,c)                (p)->SetThreadCount(a,b,c)
+#define IDirectPlay8ThreadPool_DoWork(p,a,b)                          (p)->DoWork(a,b)
+#endif
+
+/*****************************************************************************
+ * IDirectPlay8NATResolver interface
+ */
+#define INTERFACE IDirectPlay8NATResolver
+DECLARE_INTERFACE_(IDirectPlay8NATResolver,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlay8NATResolver methods ***/	
+    STDMETHOD(Initialize)(THIS_ PVOID CONST pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, CONST DWORD dwFlags) PURE;
+    STDMETHOD(Start)(THIS_ IDirectPlay8Address** CONST ppDevices, CONST DWORD dwNumDevices, CONST DWORD dwFlags) PURE;
+    STDMETHOD(Close)(THIS_ CONST DWORD dwFlags) PURE;
+    STDMETHOD(EnumDevices)(THIS_ DPN_SERVICE_PROVIDER_INFO* CONST pSPInfoBuffer, PDWORD CONST pdwBufferSize, PDWORD CONST pdwNumDevices, CONST DWORD dwFlags) PURE;
+    STDMETHOD(GetAddresses)(THIS_ IDirectPlay8Address** CONST ppAddresses, DWORD* CONST pdwNumAddresses, CONST DWORD dwFlags) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define	IDirectPlay8NATResolver_QueryInterface(p,a,b)                  (p)->lpVtbl->QueryInterface(p,a,b)
+#define	IDirectPlay8NATResolver_AddRef(p)                              (p)->lpVtbl->AddRef(p)
+#define	IDirectPlay8NATResolver_Release(p)                             (p)->lpVtbl->Release(p)
+/*** IDirectPlay8NATResolver methods ***/
+#define IDirectPlay8NATResolver_Initialize(p,a,b,c)                    (p)->lpVtbl->Initialize(p,a,b,c)
+#define IDirectPlay8NATResolver_Start(p,a,b,c)                         (p)->lpVtbl->Start(p,a,b,c)
+#define IDirectPlay8NATResolver_Close(p,a)                             (p)->lpVtbl->Close(p,a)
+#define IDirectPlay8NATResolver_EnumDevices(p,a,b,c,d)                 (p)->lpVtbl->EnumDevices(p,a,b,c,d)
+#define IDirectPlay8NATResolver_GetAddresses(p,a,b,c)                  (p)->lpVtbl->GetAddresses(p,a,b,c)
+#else
+/*** IUnknown methods ***/
+#define	IDirectPlay8NATResolver_QueryInterface(p,a,b)                  (p)->QueryInterface(a,b)
+#define	IDirectPlay8NATResolver_AddRef(p)                              (p)->AddRef()
+#define	IDirectPlay8NATResolver_Release(p)                             (p)->Release()
+/*** IDirectPlay8NATResolver methods ***/
+#define IDirectPlay8NATResolver_Initialize(p,a,b,c)                    (p)->Initialize(a,b,c)
+#define IDirectPlay8NATResolver_Start(p,a,b,c)                         (p)->Start(a,b,c)
+#define IDirectPlay8NATResolver_Close(p,a)                             (p)->Close(a)
+#define IDirectPlay8NATResolver_EnumDevices(p,a,b,c,d)                 (p)->EnumDevices(a,b,c,d)
+#define IDirectPlay8NATResolver_GetAddresses(p,a,b,c)                  (p)->GetAddresses(a,b,c)
+#endif
+
+/* Export functions */
+
+HRESULT WINAPI DirectPlay8Create(CONST CLSID* pcIID, LPVOID* ppvInterface, IUnknown* pUnknown);
 
 #ifdef __cplusplus
 }
