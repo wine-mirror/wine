@@ -476,6 +476,12 @@ static void test_reg_open_key(void)
     /* send in NULL hkResult */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
+
+    /*  beginning backslash character */
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, "\\Software\\Wine\\Test", &hkResult);
+       ok(ret == ERROR_BAD_PATHNAME || /* NT/2k/XP */
+           ret == ERROR_FILE_NOT_FOUND /* Win9x,ME */
+           , "expected ERROR_BAD_PATHNAME or ERROR_FILE_NOT_FOUND, got %ld\n", ret);
 }
 
 static void test_reg_create_key(void)
@@ -492,6 +498,15 @@ static void test_reg_create_key(void)
     /* clean up */
     RegDeleteKey(hkey2, NULL);
     RegDeleteKey(hkey1, NULL);
+
+    /*  beginning backslash character */
+    ret = RegCreateKeyExA(hkey_main, "\\Subkey3", 0, NULL, 0, KEY_NOTIFY, NULL, &hkey1, NULL);
+    if (!(GetVersion() & 0x80000000))
+        ok(ret == ERROR_BAD_PATHNAME, "expected ERROR_BAD_PATHNAME, got %ld\n", ret);
+    else {
+        ok(!ret, "RegCreateKeyExA failed with error %ld\n", ret);
+        RegDeleteKey(hkey1, NULL);
+    }
 }
 
 static void test_reg_close_key(void)

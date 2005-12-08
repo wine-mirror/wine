@@ -206,7 +206,11 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR clas
     NTSTATUS status;
 
     if (reserved) return ERROR_INVALID_PARAMETER;
-    if (!is_version_nt()) access = KEY_ALL_ACCESS;  /* Win95 ignores the access mask */
+    if (!is_version_nt())
+    {
+        access = KEY_ALL_ACCESS;  /* Win95 ignores the access mask */
+        if (name && *name == '\\') name++; /* win9x,ME ignores one (and only one) beginning backslash */
+    }
     else if (!(access & KEY_ACCESS_MASK) || (access & ~KEY_ACCESS_MASK)) return ERROR_ACCESS_DENIED;
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
