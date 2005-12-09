@@ -885,7 +885,7 @@ struct create_socket_request
 {
     struct request_header __header;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     int          family;
     int          type;
     int          protocol;
@@ -904,7 +904,7 @@ struct accept_socket_request
     struct request_header __header;
     obj_handle_t lhandle;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
 };
 struct accept_socket_reply
 {
@@ -4316,6 +4316,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 207
+#define SERVER_PROTOCOL_VERSION 208
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

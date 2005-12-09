@@ -679,7 +679,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Create a socket */
 @REQ(create_socket)
     unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
+    unsigned int attributes;    /* object attributes */
     int          family;        /* family, see socket manpage */
     int          type;          /* type, see socket manpage */
     int          protocol;      /* protocol, see socket manpage */
@@ -693,7 +693,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @REQ(accept_socket)
     obj_handle_t lhandle;       /* handle to the listening socket */
     unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
+    unsigned int attributes;    /* object attributes */
 @REPLY
     obj_handle_t handle;        /* handle to the new socket */
 @END

@@ -1103,7 +1103,7 @@ static void dump_unmount_device_request( const struct unmount_device_request *re
 static void dump_create_socket_request( const struct create_socket_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " family=%d,", req->family );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " protocol=%d,", req->protocol );
@@ -1119,7 +1119,7 @@ static void dump_accept_socket_request( const struct accept_socket_request *req 
 {
     fprintf( stderr, " lhandle=%p,", req->lhandle );
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d", req->inherit );
+    fprintf( stderr, " attributes=%08x", req->attributes );
 }
 
 static void dump_accept_socket_reply( const struct accept_socket_reply *req )

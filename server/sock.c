@@ -773,7 +773,8 @@ DECL_HANDLER(create_socket)
     reply->handle = 0;
     if ((obj = create_socket( req->family, req->type, req->protocol, req->flags )) != NULL)
     {
-        reply->handle = alloc_handle( current->process, obj, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, obj, req->access,
+                                      req->attributes & OBJ_INHERIT );
         release_object( obj );
     }
 }
@@ -786,7 +787,8 @@ DECL_HANDLER(accept_socket)
     reply->handle = 0;
     if ((sock = accept_socket( req->lhandle )) != NULL)
     {
-        reply->handle = alloc_handle( current->process, &sock->obj, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, &sock->obj, req->access,
+                                      req->attributes & OBJ_INHERIT );
         sock->wparam = reply->handle;  /* wparam for message is the socket handle */
         sock_reselect( sock );
         release_object( &sock->obj );

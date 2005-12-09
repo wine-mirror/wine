@@ -1592,9 +1592,9 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
         }
         SERVER_START_REQ( accept_socket )
         {
-            req->lhandle = SOCKET2HANDLE(s);
-            req->access  = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
-            req->inherit = TRUE;
+            req->lhandle    = SOCKET2HANDLE(s);
+            req->access     = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
+            req->attributes = OBJ_INHERIT;
             set_error( wine_server_call( req ) );
             as = HANDLE2SOCKET( reply->handle );
         }
@@ -3513,12 +3513,12 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
 
     SERVER_START_REQ( create_socket )
     {
-        req->family   = af;
-        req->type     = type;
-        req->protocol = protocol;
-        req->access   = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
-        req->flags    = dwFlags;
-        req->inherit  = TRUE;
+        req->family     = af;
+        req->type       = type;
+        req->protocol   = protocol;
+        req->access     = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
+        req->attributes = OBJ_INHERIT;
+        req->flags      = dwFlags;
         set_error( wine_server_call( req ) );
         ret = HANDLE2SOCKET( reply->handle );
     }
