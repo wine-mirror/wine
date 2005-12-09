@@ -1168,7 +1168,7 @@ GCP_RESULTSA *
 GCP_RESULTSW *
 GOBJENUMPROC
 HANDLETABLE *
-ICMENUMPROCA     
+ICMENUMPROCA
 ICMENUMPROCW
 INT *
 LINEDDAPROC
@@ -3061,6 +3061,10 @@ short
 signed char
 unsigned int
 unsigned long
+
+%long --pointer
+
+ULONG_PTR
 
 %longlong
 
