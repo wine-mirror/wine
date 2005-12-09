@@ -806,7 +806,7 @@ static void write_com_interface(type_t *iface)
   fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
   if (iface->ref)
   {
-      fprintf(header, "%s : public %s\n", iface->name, iface->ref->name);
+      fprintf(header, "interface %s : public %s\n", iface->name, iface->ref->name);
       fprintf(header, "{\n");
       indentation++;
       write_cpp_method_def(iface);
@@ -815,7 +815,7 @@ static void write_com_interface(type_t *iface)
   }
   else
   {
-      fprintf(header, "%s\n", iface->name);
+      fprintf(header, "interface %s\n", iface->name);
       fprintf(header, "{\n");
       fprintf(header, "    BEGIN_INTERFACE\n");
       fprintf(header, "\n");
@@ -888,7 +888,7 @@ void write_dispinterface(type_t *iface)
   write_forward(iface);
   /* C++ interface */
   fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
-  fprintf(header, "%s : public %s\n", iface->name, iface->ref->name);
+  fprintf(header, "interface %s : public %s\n", iface->name, iface->ref->name);
   fprintf(header, "{\n");
   fprintf(header, "};\n");
   fprintf(header, "#else\n");
