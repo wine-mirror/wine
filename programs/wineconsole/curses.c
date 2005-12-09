@@ -919,7 +919,7 @@ enum init_return WCCURSES_InitBackend(struct inner_data* data)
     data->fnSetFont            = WCCURSES_SetFont;
     data->fnDeleteBackend      = WCCURSES_DeleteBackend;
 
-    if (wine_server_fd_to_handle(0, GENERIC_READ|SYNCHRONIZE, FALSE, 
+    if (wine_server_fd_to_handle(0, GENERIC_READ|SYNCHRONIZE, 0,
                                  (obj_handle_t*)&PRIVATE(data)->hInput))
     {
         WINE_FIXME("Cannot open 0\n");

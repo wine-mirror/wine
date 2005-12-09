@@ -250,8 +250,8 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creat
         ret = INVALID_HANDLE_VALUE;
         if (fd != -1)
         {
-            DWORD attr = (output ? GENERIC_WRITE : GENERIC_READ) | SYNCHRONIZE;
-            wine_server_fd_to_handle(fd, attr, inherit, &ret);
+            DWORD access = (output ? GENERIC_WRITE : GENERIC_READ) | SYNCHRONIZE;
+            wine_server_fd_to_handle(fd, access, inherit ? OBJ_INHERIT : 0, &ret);
             close(fd);
         }
     }

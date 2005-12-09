@@ -440,13 +440,13 @@ static int receive_fd( obj_handle_t *handle )
  * PARAMS
  *     fd      [I] Unix file descriptor.
  *     access  [I] Win32 access flags.
- *     inherit [I] Indicates whether this handle is inherited by child processes.
+ *     attributes [I] Object attributes.
  *     handle  [O] Address where Wine file handle will be stored.
  *
  * RETURNS
  *     NTSTATUS code
  */
-int wine_server_fd_to_handle( int fd, unsigned int access, int inherit, obj_handle_t *handle )
+int wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, obj_handle_t *handle )
 {
     int ret;
 
@@ -456,7 +456,7 @@ int wine_server_fd_to_handle( int fd, unsigned int access, int inherit, obj_hand
     SERVER_START_REQ( alloc_file_handle )
     {
         req->access     = access;
-        req->attributes = inherit ? OBJ_INHERIT : 0;
+        req->attributes = attributes;
         req->fd         = fd;
         if (!(ret = wine_server_call( req ))) *handle = reply->handle;
     }

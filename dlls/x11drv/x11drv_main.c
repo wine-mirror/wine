@@ -533,7 +533,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
         WARN("Input Method is not available\n");
 
     if (wine_server_fd_to_handle( ConnectionNumber(data->display), GENERIC_READ | SYNCHRONIZE,
-                                  FALSE, &data->display_fd ))
+                                  0, &data->display_fd ))
     {
         MESSAGE( "x11drv: Can't allocate handle for display fd\n" );
         ExitProcess(1);

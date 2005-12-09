@@ -181,9 +181,9 @@ void thread_init(void)
         /* This is wine specific: we have no parent (we're started from unix)
          * so, create a simple console with bare handles to unix stdio
          */
-        wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  TRUE, &params.hStdInput );
-        wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE, &params.hStdOutput );
-        wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, TRUE, &params.hStdError );
+        wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, &params.hStdInput );
+        wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdOutput );
+        wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdError );
     }
 }
 
