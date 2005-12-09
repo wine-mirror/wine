@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 
 #include "pshpack1.h"
 typedef struct _MOUSEINFO
