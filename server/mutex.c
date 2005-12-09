@@ -185,8 +185,7 @@ DECL_HANDLER(create_mutex)
 
     if ((mutex = create_mutex( root, &name, req->attributes, req->owned )))
     {
-        reply->handle = alloc_handle( current->process, mutex, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, mutex, req->access, req->attributes );
         release_object( mutex );
     }
 
@@ -206,8 +205,7 @@ DECL_HANDLER(open_mutex)
 
     if ((mutex = open_object_dir( root, &name, req->attributes, &mutex_ops )))
     {
-        reply->handle = alloc_handle( current->process, &mutex->obj, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, &mutex->obj, req->access, req->attributes );
         release_object( mutex );
     }
 

@@ -368,8 +368,7 @@ DECL_HANDLER(create_directory)
 
     if ((dir = create_directory( root, &name, req->attributes, HASH_SIZE )))
     {
-        reply->handle = alloc_handle( current->process, dir, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, dir, req->access, req->attributes );
         release_object( dir );
     }
 
@@ -388,8 +387,7 @@ DECL_HANDLER(open_directory)
 
     if ((dir = open_object_dir( root, &name, req->attributes, &directory_ops )))
     {
-        reply->handle = alloc_handle( current->process, &dir->obj, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, &dir->obj, req->access, req->attributes );
         release_object( dir );
     }
 

@@ -389,8 +389,7 @@ DECL_HANDLER(create_mapping)
 
     if ((obj = create_mapping( root, &name, req->attributes, size, req->protect, req->file_handle )))
     {
-        reply->handle = alloc_handle( current->process, obj, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
         release_object( obj );
     }
 
@@ -410,8 +409,7 @@ DECL_HANDLER(open_mapping)
 
     if ((mapping = open_object_dir( root, &name, req->attributes, &mapping_ops )))
     {
-        reply->handle = alloc_handle( current->process, &mapping->obj, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, &mapping->obj, req->access, req->attributes );
         release_object( mapping );
     }
 

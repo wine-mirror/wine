@@ -828,8 +828,7 @@ DECL_HANDLER(new_thread)
     {
         if (req->suspend) thread->suspend++;
         reply->tid = get_thread_id( thread );
-        if ((reply->handle = alloc_handle( current->process, thread,
-                                           req->access, req->attributes & OBJ_INHERIT )))
+        if ((reply->handle = alloc_handle( current->process, thread, req->access, req->attributes )))
         {
             /* thread object will be released when the thread gets killed */
             return;
@@ -931,8 +930,7 @@ DECL_HANDLER(open_thread)
     reply->handle = 0;
     if (thread)
     {
-        reply->handle = alloc_handle( current->process, thread, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, thread, req->access, req->attributes );
         release_object( thread );
     }
 }

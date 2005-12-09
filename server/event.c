@@ -159,8 +159,7 @@ DECL_HANDLER(create_event)
 
     if ((event = create_event( root, &name, req->attributes, req->manual_reset, req->initial_state )))
     {
-        reply->handle = alloc_handle( current->process, event, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, event, req->access, req->attributes );
         release_object( event );
     }
 
@@ -180,8 +179,7 @@ DECL_HANDLER(open_event)
 
     if ((event = open_object_dir( root, &name, req->attributes, &event_ops )))
     {
-        reply->handle = alloc_handle( current->process, &event->obj, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, &event->obj, req->access, req->attributes );
         release_object( event );
     }
 

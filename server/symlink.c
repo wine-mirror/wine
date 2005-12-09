@@ -155,8 +155,7 @@ DECL_HANDLER(create_symlink)
 
     if ((symlink = create_symlink( root, &name, req->attributes, &target )))
     {
-        reply->handle = alloc_handle( current->process, symlink, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, symlink, req->access, req->attributes );
         release_object( symlink );
     }
 
@@ -176,8 +175,7 @@ DECL_HANDLER(open_symlink)
 
     if ((symlink = open_object_dir( root, &name, req->attributes | OBJ_OPENLINK, &symlink_ops )))
     {
-        reply->handle = alloc_handle( current->process, &symlink->obj, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, &symlink->obj, req->access, req->attributes );
         release_object( symlink );
     }
 

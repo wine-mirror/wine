@@ -429,8 +429,7 @@ DECL_HANDLER(create_mailslot)
     if ((mailslot = create_mailslot( root, &name, req->attributes, req->max_msgsize,
                                      req->read_timeout )))
     {
-        reply->handle = alloc_handle( current->process, mailslot,
-                                      req->access, req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, mailslot, req->access, req->attributes );
         release_object( mailslot );
     }
 
@@ -466,8 +465,7 @@ DECL_HANDLER(open_mailslot)
         writer = create_mail_writer( mailslot, req->access, req->sharing );
         if (writer)
         {
-            reply->handle = alloc_handle( current->process, writer,
-                                          req->access, req->attributes & OBJ_INHERIT );
+            reply->handle = alloc_handle( current->process, writer, req->access, req->attributes );
             release_object( writer );
         }
         release_object( mailslot );

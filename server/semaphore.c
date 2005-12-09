@@ -159,8 +159,7 @@ DECL_HANDLER(create_semaphore)
 
     if ((sem = create_semaphore( root, &name, req->attributes, req->initial, req->max )))
     {
-        reply->handle = alloc_handle( current->process, sem, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, sem, req->access, req->attributes );
         release_object( sem );
     }
 
@@ -180,8 +179,7 @@ DECL_HANDLER(open_semaphore)
 
     if ((sem = open_object_dir( root, &name, req->attributes, &semaphore_ops )))
     {
-        reply->handle = alloc_handle( current->process, &sem->obj, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, &sem->obj, req->access, req->attributes );
         release_object( sem );
     }
 

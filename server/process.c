@@ -892,7 +892,7 @@ DECL_HANDLER(new_process)
         goto done;
 
     if (!(info->data = memdup( get_req_data(), info->data_size ))) goto done;
-    reply->info = alloc_handle( current->process, info, SYNCHRONIZE, FALSE );
+    reply->info = alloc_handle( current->process, info, SYNCHRONIZE, 0 );
 
  done:
     release_object( info );
@@ -909,9 +909,9 @@ DECL_HANDLER(get_new_process_info)
         reply->pid = get_process_id( info->process );
         reply->tid = get_thread_id( info->thread );
         reply->phandle = alloc_handle( current->process, info->process,
-                                       req->process_access, req->process_attr & OBJ_INHERIT );
+                                       req->process_access, req->process_attr );
         reply->thandle = alloc_handle( current->process, info->thread,
-                                       req->thread_access, req->thread_attr & OBJ_INHERIT );
+                                       req->thread_access, req->thread_attr );
         reply->success = is_process_init_done( info->process );
         release_object( info );
     }
@@ -943,11 +943,11 @@ DECL_HANDLER(get_startup_info)
     {
         struct process *parent_process = info->owner->process;
         reply->hstdin  = duplicate_handle( parent_process, info->hstdin, process,
-                                           0, TRUE, DUPLICATE_SAME_ACCESS );
+                                           0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
         reply->hstdout = duplicate_handle( parent_process, info->hstdout, process,
-                                           0, TRUE, DUPLICATE_SAME_ACCESS );
+                                           0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
         reply->hstderr = duplicate_handle( parent_process, info->hstderr, process,
-                                           0, TRUE, DUPLICATE_SAME_ACCESS );
+                                           0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
         /* some handles above may have been invalid; this is not an error */
         if (get_error() == STATUS_INVALID_HANDLE ||
             get_error() == STATUS_OBJECT_TYPE_MISMATCH) clear_error();
@@ -1009,8 +1009,7 @@ DECL_HANDLER(open_process)
     reply->handle = 0;
     if (process)
     {
-        reply->handle = alloc_handle( current->process, process, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, process, req->access, req->attributes );
         release_object( process );
     }
 }

@@ -218,8 +218,7 @@ DECL_HANDLER(create_timer)
 
     if ((timer = create_timer( root, &name, req->attributes, req->manual )))
     {
-        reply->handle = alloc_handle( current->process, timer, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, timer, req->access, req->attributes );
         release_object( timer );
     }
 
@@ -239,8 +238,7 @@ DECL_HANDLER(open_timer)
 
     if ((timer = open_object_dir( root, &name, req->attributes, &timer_ops )))
     {
-        reply->handle = alloc_handle( current->process, &timer->obj, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, &timer->obj, req->access, req->attributes );
         release_object( timer );
     }
 

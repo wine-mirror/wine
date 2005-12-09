@@ -356,8 +356,7 @@ DECL_HANDLER(create_file)
     if ((file = create_file( get_req_data(), get_req_data_size(), req->access,
                              req->sharing, req->create, req->options, req->attrs )))
     {
-        reply->handle = alloc_handle( current->process, file, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, file, req->access, req->attributes );
         release_object( file );
     }
 }
@@ -376,8 +375,7 @@ DECL_HANDLER(alloc_file_handle)
     }
     if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE )))
     {
-        reply->handle = alloc_handle( current->process, file, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, file, req->access, req->attributes );
         release_object( file );
     }
 }

@@ -223,10 +223,10 @@ static obj_handle_t alloc_entry( struct handle_table *table, void *obj, unsigned
 
 /* allocate a handle for an object, incrementing its refcount */
 /* return the handle, or 0 on error */
-obj_handle_t alloc_handle( struct process *process, void *obj, unsigned int access, int inherit )
+obj_handle_t alloc_handle( struct process *process, void *obj, unsigned int access, unsigned int attr )
 {
     access &= ~RESERVED_ALL;
-    if (inherit) access |= RESERVED_INHERIT;
+    if (attr & OBJ_INHERIT) access |= RESERVED_INHERIT;
     if (!process->handles)
     {
         set_error( STATUS_NO_MEMORY );
@@ -497,7 +497,7 @@ static int set_handle_flags( struct process *process, obj_handle_t handle, int m
 
 /* duplicate a handle */
 obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, struct process *dst,
-                           unsigned int access, int inherit, int options )
+                               unsigned int access, unsigned int attr, unsigned int options )
 {
     obj_handle_t res;
     struct object *obj = get_handle_obj( src, src_handle, 0, NULL );
@@ -518,7 +518,7 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
     if (options & DUP_HANDLE_MAKE_GLOBAL)
         res = alloc_global_handle( obj, access );
     else
-        res = alloc_handle( dst, obj, access, inherit );
+        res = alloc_handle( dst, obj, access, attr );
     release_object( obj );
     return res;
 }
@@ -534,7 +534,7 @@ obj_handle_t open_object( const struct namespace *namespace, const struct unicod
         if (ops && obj->ops != ops)
             set_error( STATUS_OBJECT_TYPE_MISMATCH );
         else
-            handle = alloc_handle( current->process, obj, access, attr & OBJ_INHERIT );
+            handle = alloc_handle( current->process, obj, access, attr );
         release_object( obj );
     }
     else
@@ -573,12 +573,12 @@ DECL_HANDLER(dup_handle)
         if (req->options & DUP_HANDLE_MAKE_GLOBAL)
         {
             reply->handle = duplicate_handle( src, req->src_handle, NULL,
-                                              req->access, req->attributes & OBJ_INHERIT, req->options );
+                                              req->access, req->attributes, req->options );
         }
         else if ((dst = get_process_from_handle( req->dst_process, PROCESS_DUP_HANDLE )))
         {
             reply->handle = duplicate_handle( src, req->src_handle, dst,
-                                              req->access, req->attributes & OBJ_INHERIT, req->options );
+                                              req->access, req->attributes, req->options );
             release_object( dst );
         }
         /* close the handle no matter what happened */

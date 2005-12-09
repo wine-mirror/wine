@@ -884,7 +884,7 @@ DECL_HANDLER(open_token)
         {
             if (thread->token)
                 reply->token = alloc_handle( current->process, thread->token, req->access,
-                                             req->attributes & OBJ_INHERIT );
+                                             req->attributes );
             else
                 set_error(STATUS_NO_TOKEN);
             release_object( thread );
@@ -897,7 +897,7 @@ DECL_HANDLER(open_token)
         {
             if (process->token)
                 reply->token = alloc_handle( current->process, process->token, req->access,
-                                             req->attributes & OBJ_INHERIT );
+                                             req->attributes );
             else
                 set_error(STATUS_NO_TOKEN);
             release_object( process );
@@ -1017,8 +1017,7 @@ DECL_HANDLER(duplicate_token)
 
             access = req->access;
             if (access & MAXIMUM_ALLOWED) access = TOKEN_ALL_ACCESS; /* FIXME: needs general solution */
-            reply->new_handle = alloc_handle( current->process, token, access,
-                                              req->attributes & OBJ_INHERIT);
+            reply->new_handle = alloc_handle( current->process, token, access, req->attributes);
             release_object( token );
         }
         release_object( src_token );

@@ -236,7 +236,7 @@ DECL_HANDLER(create_snapshot)
     reply->handle = 0;
     if ((snapshot = create_snapshot( req->pid, req->flags )))
     {
-        reply->handle = alloc_handle( current->process, snapshot, 0, req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, snapshot, 0, req->attributes );
         release_object( snapshot );
     }
 }

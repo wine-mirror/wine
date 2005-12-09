@@ -268,7 +268,7 @@ void connect_process_winstation( struct process *process, const struct unicode_s
     }
     if (winstation)
     {
-        process->winstation = alloc_handle( process, winstation, WINSTA_ALL_ACCESS, FALSE );
+        process->winstation = alloc_handle( process, winstation, WINSTA_ALL_ACCESS, 0 );
         release_object( winstation );
     }
     clear_error();  /* ignore errors */
@@ -290,7 +290,7 @@ void connect_process_desktop( struct process *process, const struct unicode_str 
         if (!name) name = &default_str;
         if ((desktop = create_desktop( name, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, 0, winstation )))
         {
-            process->desktop = alloc_handle( process, desktop, DESKTOP_ALL_ACCESS, FALSE );
+            process->desktop = alloc_handle( process, desktop, DESKTOP_ALL_ACCESS, 0 );
             release_object( desktop );
         }
         release_object( winstation );
@@ -319,8 +319,7 @@ DECL_HANDLER(create_winstation)
     get_req_unicode_str( &name );
     if ((winstation = create_winstation( &name, req->attributes, req->flags )))
     {
-        reply->handle = alloc_handle( current->process, winstation, req->access,
-                                      req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, winstation, req->access, req->attributes );
         release_object( winstation );
     }
 }
@@ -387,8 +386,7 @@ DECL_HANDLER(create_desktop)
     {
         if ((desktop = create_desktop( &name, req->attributes, req->flags, winstation )))
         {
-            reply->handle = alloc_handle( current->process, desktop, req->access,
-                                          req->attributes & OBJ_INHERIT );
+            reply->handle = alloc_handle( current->process, desktop, req->access, req->attributes );
             release_object( desktop );
         }
         release_object( winstation );

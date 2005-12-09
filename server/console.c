@@ -1240,10 +1240,9 @@ DECL_HANDLER(alloc_console)
     }
     if ((console = (struct console_input*)create_console_input( current )))
     {
-        if ((in = alloc_handle( renderer, console, req->access, req->attributes & OBJ_INHERIT )))
+        if ((in = alloc_handle( renderer, console, req->access, req->attributes )))
         {
-            if ((evt = alloc_handle( renderer, console->evt,
-                                     SYNCHRONIZE|GENERIC_READ|GENERIC_WRITE, FALSE )))
+            if ((evt = alloc_handle( renderer, console->evt, SYNCHRONIZE|GENERIC_READ|GENERIC_WRITE, 0 )))
             {
                 if (process != renderer)
                 {
@@ -1312,7 +1311,7 @@ DECL_HANDLER(open_console)
     /* FIXME: req->share is not used (as in screen buffer creation)  */
     if (obj)
     {
-        reply->handle = alloc_handle( current->process, obj, req->access, req->attributes & OBJ_INHERIT );
+        reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
         release_object( obj );
     }
     else if (!get_error()) set_error( STATUS_ACCESS_DENIED );
@@ -1410,8 +1409,7 @@ DECL_HANDLER(create_console_output)
     {
         /* FIXME: should store sharing and test it when opening the CONOUT$ device
          * see file.c on how this could be done */
-        reply->handle_out = alloc_handle( current->process, screen_buffer,
-                                          req->access, req->attributes & OBJ_INHERIT );
+        reply->handle_out = alloc_handle( current->process, screen_buffer, req->access, req->attributes );
         release_object( screen_buffer );
     }
     release_object( console );
@@ -1541,8 +1539,7 @@ DECL_HANDLER(get_console_wait_event)
 
     if (console)
     {
-        reply->handle = alloc_handle( current->process, console->event, 
-                                      EVENT_ALL_ACCESS, FALSE);
+        reply->handle = alloc_handle( current->process, console->event, EVENT_ALL_ACCESS, 0 );
         release_object( console );
     }
     else set_error( STATUS_INVALID_PARAMETER );

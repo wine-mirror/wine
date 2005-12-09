@@ -445,7 +445,7 @@ DECL_HANDLER(init_atom_table)
 
     if (table)
     {
-        reply->table = alloc_handle( current->process, table, 0, FALSE);
+        reply->table = alloc_handle( current->process, table, 0, 0 );
         release_object( table );
     }
 }

@@ -116,7 +116,7 @@ static int fill_create_thread_event( struct debug_event *event, void *arg )
     obj_handle_t handle;
 
     /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
-    if (!(handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, FALSE ))) return 0;
+    if (!(handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, 0 ))) return 0;
     event->data.info.create_thread.handle = handle;
     event->data.info.create_thread.teb    = thread->teb;
     event->data.info.create_thread.start  = arg;
@@ -131,11 +131,11 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     obj_handle_t handle;
 
     /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
-    if (!(handle = alloc_handle( debugger, process, PROCESS_ALL_ACCESS, FALSE ))) return 0;
+    if (!(handle = alloc_handle( debugger, process, PROCESS_ALL_ACCESS, 0 ))) return 0;
     event->data.info.create_process.process = handle;
 
     /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
-    if (!(handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, FALSE )))
+    if (!(handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, 0 )))
     {
         close_handle( debugger, event->data.info.create_process.process, NULL );
         return 0;
@@ -145,7 +145,7 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     handle = 0;
     if (process->exe.file &&
         /* the doc says write access too, but this doesn't seem a good idea */
-        !(handle = alloc_handle( debugger, process->exe.file, GENERIC_READ, FALSE )))
+        !(handle = alloc_handle( debugger, process->exe.file, GENERIC_READ, 0 )))
     {
         close_handle( debugger, event->data.info.create_process.process, NULL );
         close_handle( debugger, event->data.info.create_process.thread, NULL );
@@ -182,7 +182,7 @@ static int fill_load_dll_event( struct debug_event *event, void *arg )
     struct process_dll *dll = arg;
     obj_handle_t handle = 0;
 
-    if (dll->file && !(handle = alloc_handle( debugger, dll->file, GENERIC_READ, FALSE )))
+    if (dll->file && !(handle = alloc_handle( debugger, dll->file, GENERIC_READ, 0 )))
         return 0;
     event->data.info.load_dll.handle     = handle;
     event->data.info.load_dll.base       = dll->base;
@@ -582,7 +582,7 @@ DECL_HANDLER(wait_debug_event)
         reply->pid  = 0;
         reply->tid  = 0;
         if (req->get_handle)
-            reply->wait = alloc_handle( current->process, debug_ctx, SYNCHRONIZE, FALSE );
+            reply->wait = alloc_handle( current->process, debug_ctx, SYNCHRONIZE, 0 );
     }
 }
 
@@ -651,7 +651,7 @@ DECL_HANDLER(queue_exception_event)
         data.first  = req->first;
         if ((event = alloc_debug_event( current, EXCEPTION_DEBUG_EVENT, &data, context )))
         {
-            if ((reply->handle = alloc_handle( current->process, event, SYNCHRONIZE, FALSE )))
+            if ((reply->handle = alloc_handle( current->process, event, SYNCHRONIZE, 0 )))
             {
                 link_event( event );
                 suspend_process( current->process );
