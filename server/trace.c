@@ -1432,6 +1432,8 @@ static void dump_send_console_signal_request( const struct send_console_signal_r
 
 static void dump_create_change_notification_request( const struct create_change_notification_request *req )
 {
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " subtree=%d,", req->subtree );
     fprintf( stderr, " filter=%08x", req->filter );
@@ -1655,6 +1657,7 @@ static void dump_create_key_request( const struct create_key_request *req )
 {
     fprintf( stderr, " parent=%p,", req->parent );
     fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " modif=%ld,", (long)req->modif );
     fprintf( stderr, " namelen=%d,", req->namelen );
@@ -1675,6 +1678,7 @@ static void dump_open_key_request( const struct open_key_request *req )
 {
     fprintf( stderr, " parent=%p,", req->parent );
     fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }

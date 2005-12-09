@@ -232,8 +232,7 @@ DECL_HANDLER(create_change_notification)
 
     if ((change = create_change_notification( fd, req->subtree, req->filter )))
     {
-        reply->handle = alloc_handle( current->process, change,
-                                      STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE, 0 );
+        reply->handle = alloc_handle( current->process, change, req->access, req->attributes );
         release_object( change );
     }
     release_object( fd );

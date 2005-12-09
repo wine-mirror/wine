@@ -88,9 +88,11 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
 
     SERVER_START_REQ( create_change_notification )
     {
-        req->handle  = file;
-        req->subtree = bWatchSubtree;
-        req->filter  = dwNotifyFilter;
+        req->access     = STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE;
+        req->attributes = 0;
+        req->handle     = file;
+        req->subtree    = bWatchSubtree;
+        req->filter     = dwNotifyFilter;
         if (!wine_server_call_err( req )) ret = reply->handle;
     }
     SERVER_END_REQ;

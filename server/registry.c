@@ -1731,7 +1731,7 @@ DECL_HANDLER(create_key)
 
         if ((key = create_key( parent, &name, &class, flags, req->modif, &reply->created )))
         {
-            reply->hkey = alloc_handle( current->process, key, access, 0 );
+            reply->hkey = alloc_handle( current->process, key, access, req->attributes );
             release_object( key );
         }
         release_object( parent );
@@ -1753,7 +1753,7 @@ DECL_HANDLER(open_key)
         get_req_path( &name, !req->parent );
         if ((key = open_key( parent, &name )))
         {
-            reply->hkey = alloc_handle( current->process, key, access, 0 );
+            reply->hkey = alloc_handle( current->process, key, access, req->attributes );
             release_object( key );
         }
         release_object( parent );

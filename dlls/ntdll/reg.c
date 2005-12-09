@@ -63,11 +63,12 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
 
     SERVER_START_REQ( create_key )
     {
-        req->parent  = attr->RootDirectory;
-        req->access  = access;
-        req->options = options;
-        req->modif   = 0;
-        req->namelen = attr->ObjectName->Length;
+        req->parent     = attr->RootDirectory;
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->options    = options;
+        req->modif      = 0;
+        req->namelen    = attr->ObjectName->Length;
         wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         if (class) wine_server_add_data( req, class->Buffer, class->Length );
         if (!(ret = wine_server_call( req )))
@@ -123,8 +124,9 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
 
     SERVER_START_REQ( open_key )
     {
-        req->parent = attr->RootDirectory;
-        req->access = access;
+        req->parent     = attr->RootDirectory;
+        req->access     = access;
+        req->attributes = attr->Attributes;
         wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
         *retkey = reply->hkey;

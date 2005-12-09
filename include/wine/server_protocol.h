@@ -1382,6 +1382,8 @@ struct send_console_signal_reply
 struct create_change_notification_request
 {
     struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
     obj_handle_t handle;
     int          subtree;
     unsigned int filter;
@@ -1689,6 +1691,7 @@ struct create_key_request
     struct request_header __header;
     obj_handle_t parent;
     unsigned int access;
+    unsigned int attributes;
     unsigned int options;
     time_t       modif;
     size_t       namelen;
@@ -1708,6 +1711,7 @@ struct open_key_request
     struct request_header __header;
     obj_handle_t parent;
     unsigned int access;
+    unsigned int attributes;
     /* VARARG(name,unicode_str); */
 };
 struct open_key_reply
@@ -4321,6 +4325,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 214
+#define SERVER_PROTOCOL_VERSION 215
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

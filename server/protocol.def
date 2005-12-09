@@ -1031,6 +1031,8 @@ enum char_info_mode
 
 /* Create a change notification */
 @REQ(create_change_notification)
+    unsigned int access;        /* wanted access rights */
+    unsigned int attributes;    /* object attributes */
     obj_handle_t handle;        /* handle to the directory */
     int          subtree;       /* watch all the subtree */
     unsigned int filter;        /* notification filter */
@@ -1237,6 +1239,7 @@ enum char_info_mode
 @REQ(create_key)
     obj_handle_t parent;       /* handle to the parent key */
     unsigned int access;       /* desired access rights */
+    unsigned int attributes;   /* object attributes */
     unsigned int options;      /* creation options */
     time_t       modif;        /* last modification time */
     size_t       namelen;      /* length of key name in bytes */
@@ -1251,6 +1254,7 @@ enum char_info_mode
 @REQ(open_key)
     obj_handle_t parent;       /* handle to the parent key */
     unsigned int access;       /* desired access rights */
+    unsigned int attributes;   /* object attributes */
     VARARG(name,unicode_str);  /* key name */
 @REPLY
     obj_handle_t hkey;         /* handle to the open key */
