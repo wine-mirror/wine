@@ -395,6 +395,9 @@ static nsresult NSAPI nsWebBrowserChrome_QueryInterface(nsIWebBrowserChrome *ifa
     }else if(IsEqualGUID(&IID_nsIContextMenuListener, riid)) {
         TRACE("(%p)->(IID_nsIContextMenuListener, %p)\n", This, result);
         *result = NSCML(This);
+    }else if(IsEqualGUID(&IID_nsIEmbeddingSiteWindow, riid)) {
+        TRACE("(%p)->(IIS_nsIEmbeddingSiteWindow %p)\n", This, result);
+        *result = NSEMBWNDS(This);
     }
 
     if(*result)
@@ -749,6 +752,111 @@ static const nsIURIContentListenerVtbl nsURIContentListenerVtbl = {
     nsURIContentListener_SetParentContentListener
 };
 
+/**********************************************************
+ *      nsIEmbeddinSiteWindow interface
+ */
+
+#define NSEMBWNDS_THIS(iface) DEFINE_THIS(NSContainer, EmbeddingSiteWindow, iface)
+
+static nsresult NSAPI nsEmbeddingSiteWindow_QueryInterface(nsIEmbeddingSiteWindow *iface,
+        nsIIDRef riid, nsQIResult result)
+{
+    NSContainer *This = NSEMBWNDS_THIS(iface);
+    return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
+}
+
+static nsrefcnt NSAPI nsEmbeddingSiteWindow_AddRef(nsIEmbeddingSiteWindow *iface)
+{
+    NSContainer *This = NSEMBWNDS_THIS(iface);
+    return nsIWebBrowserChrome_AddRef(NSWBCHROME(This));
+}
+
+static nsrefcnt NSAPI nsEmbeddingSiteWindow_Release(nsIEmbeddingSiteWindow *iface)
+{
+    NSContainer *This = NSEMBWNDS_THIS(iface);
+    return nsIWebBrowserChrome_Release(NSWBCHROME(This));
+}
+
+static nsresult NSAPI nsEmbeddingSiteWindow_SetDimensions(nsIEmbeddingSiteWindow *iface,
+        PRUint32 flags, PRInt32 x, PRInt32 y, PRInt32 cx, PRInt32 cy)
+{
+    NSContainer *This = NSEMBWNDS_THIS(iface);
+    WARN("(%p)->(%08lx %ld %ld %ld %ld)\n", This, flags, x, y, cx, cy);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsEmbeddingSiteWindow_GetDimensions(nsIEmbeddingSiteWindow *iface,
+        PRUint32 flags, PRInt32 *x, PRInt32 *y, PRInt32 *cx, PRInt32 *cy)
+{
+    NSContainer *This = NSEMBWNDS_THIS(iface);
+    WARN("(%p)->(%08lx %p %p %p %p)\n", This, flags, x, y, cx, cy);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsEmbeddingSiteWindow_SetFocus(nsIEmbeddingSiteWindow *iface)
+{
+    NSContainer *This = NSEMBWNDS_THIS(iface);
+    WARN("(%p)\n", This);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsEmbeddingSiteWindow_GetVisibility(nsIEmbeddingSiteWindow *iface,
+        PRBool *aVisibility)
+{
+    NSContainer *This = NSEMBWNDS_THIS(iface);
+    WARN("(%p)->(%p)\n", This, aVisibility);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsEmbeddingSiteWindow_SetVisibility(nsIEmbeddingSiteWindow *iface,
+        PRBool aVisibility)
+{
+    NSContainer *This = NSEMBWNDS_THIS(iface);
+    WARN("(%p)->(%x)\n", This, aVisibility);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsEmbeddingSiteWindow_GetTitle(nsIEmbeddingSiteWindow *iface,
+        PRUnichar **aTitle)
+{
+    NSContainer *This = NSEMBWNDS_THIS(iface);
+    WARN("(%p)->(%p)\n", This, aTitle);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsEmbeddingSiteWindow_SetTitle(nsIEmbeddingSiteWindow *iface,
+        const PRUnichar *aTitle)
+{
+    NSContainer *This = NSEMBWNDS_THIS(iface);
+    WARN("(%p)->(%s)\n", This, debugstr_w(aTitle));
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsEmbeddingSiteWindow_GetSiteWindow(nsIEmbeddingSiteWindow *iface,
+        void **aSiteWindow)
+{
+    NSContainer *This = NSEMBWNDS_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aSiteWindow);
+
+    *aSiteWindow = This->hwnd;
+    return NS_OK;
+}
+
+static const nsIEmbeddingSiteWindowVtbl nsEmbeddingSiteWindowVtbl = {
+    nsEmbeddingSiteWindow_QueryInterface,
+    nsEmbeddingSiteWindow_AddRef,
+    nsEmbeddingSiteWindow_Release,
+    nsEmbeddingSiteWindow_SetDimensions,
+    nsEmbeddingSiteWindow_GetDimensions,
+    nsEmbeddingSiteWindow_SetFocus,
+    nsEmbeddingSiteWindow_GetVisibility,
+    nsEmbeddingSiteWindow_SetVisibility,
+    nsEmbeddingSiteWindow_GetTitle,
+    nsEmbeddingSiteWindow_SetTitle,
+    nsEmbeddingSiteWindow_GetSiteWindow
+};
+
 void HTMLDocument_NSContainer_Init(HTMLDocument *This)
 {
     nsIWebBrowserSetup *wbsetup;
@@ -764,6 +872,7 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
     This->nscontainer->lpWebBrowserChromeVtbl    = &nsWebBrowserChromeVtbl;
     This->nscontainer->lpContextMenuListenerVtbl = &nsContextMenuListenerVtbl;
     This->nscontainer->lpURIContentListenerVtbl  = &nsURIContentListenerVtbl;
+    This->nscontainer->lpEmbeddingSiteWindowVtbl = &nsEmbeddingSiteWindowVtbl;
 
     This->nscontainer->doc = This;
 

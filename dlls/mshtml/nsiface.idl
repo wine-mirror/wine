@@ -433,3 +433,19 @@ interface nsIDOMMouseEvent : nsIDOMUIEvent
             PRBool shiftKeyArg, PRBool metaKeyArg, PRUint16 buttonArg,
             nsIDOMEventTarget *relatedTargetArg);
 }
+
+[
+     object,
+     uuid(3e5432cd-9568-4bd1-8cbe-d50aba110743)
+]
+interface nsIEmbeddingSiteWindow : nsISupports
+{
+    nsresult SetDimensions(PRUint32 flags, PRInt32 x, PRInt32 y, PRInt32 cx, PRInt32 cy);
+    nsresult GetDimensions(PRUint32 flags, PRInt32 *x, PRInt32 *y, PRInt32 *cx, PRInt32 *cy);
+    nsresult SetFocus();
+    nsresult GetVisibility(PRBool *aVisibility);
+    nsresult SetVisibility(PRBool aVisibility);
+    nsresult GetTitle(PRUnichar **aTitle);
+    nsresult SetTitle(const PRUnichar *aTitle);
+    nsresult GetSiteWindow(void **aSiteWindow);
+}

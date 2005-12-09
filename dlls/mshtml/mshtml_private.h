@@ -80,6 +80,7 @@ struct NSContainer {
     const nsIWebBrowserChromeVtbl     *lpWebBrowserChromeVtbl;
     const nsIContextMenuListenerVtbl  *lpContextMenuListenerVtbl;
     const nsIURIContentListenerVtbl   *lpURIContentListenerVtbl;
+    const nsIEmbeddingSiteWindowVtbl  *lpEmbeddingSiteWindowVtbl;
 
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
@@ -117,6 +118,7 @@ struct NSContainer {
 #define NSWBCHROME(x)    ((nsIWebBrowserChrome*)          &(x)->lpWebBrowserChromeVtbl)
 #define NSCML(x)         ((nsIContextMenuListener*)       &(x)->lpContextMenuListenerVtbl)
 #define NSURICL(x)       ((nsIURIContentListener*)        &(x)->lpURIContentListenerVtbl)
+#define NSEMBWNDS(x)     ((nsIEmbeddingSiteWindow*)       &(x)->lpEmbeddingSiteWindowVtbl)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
