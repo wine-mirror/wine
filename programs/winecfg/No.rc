@@ -60,8 +60,6 @@ BEGIN
     CONTROL	    "Tillat DirectX-programmer å hindre musen fra å forlate vinduet",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
     CONTROL	    "Aktiver dobbelt hurtigminne for skrivebordet",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     
-    LTEXT           "Du kan velge å emulere et Windows-skrivebord, sånn at alle Windows-programmer samles i ett vindu, eller at Windows-programmer oppfrer seg som vanlige programmer.",
-                    IDC_STATIC,15,73,228,28
     LTEXT           "Du kan velge å emulere et Windows-skrivebord, der alle vinduene er bundet i en virtuell skjerm, eller du kan få vinduene til å oppføre seg som andre programmer på skrivebordet.",
                     IDC_STATIC,15,73,228,28
     LTEXT           "Skrivebordsstrrelse:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
@@ -154,29 +152,27 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT	"Lyddriver: ",IDC_STATIC,10,20,60,8
     COMBOBOX	IDC_AUDIO_DRIVER,70,18,85,85,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON	"Automatisk",IDC_AUDIO_AUTODETECT,170,20,49,14
-    PUSHBUTTON	"Konfigurer",IDC_AUDIO_CONFIGURE,170,40,49,14
-    PUSHBUTTON	"Kontrollpanel",IDC_AUDIO_CONTROL_PANEL,170,60,49,14
-
-    GROUPBOX    " DirectSound ",IDC_STATIC,8,75,244,120
-
-    LTEXT	"Maskinvareakselerasjon: ",IDC_STATIC,15,85,90,10
-    COMBOBOX	IDC_DSOUND_HW_ACCEL,100,83,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL     "Driveremulering",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
-
+    PUSHBUTTON	"Automatisk",IDC_AUDIO_AUTODETECT,170,20,59,14
+    PUSHBUTTON	"Oppsett",IDC_AUDIO_CONFIGURE,170,40,59,14
+    PUSHBUTTON	"Kontrollpanel",IDC_AUDIO_CONTROL_PANEL,170,60,59,14
+    CONTROL     "Enheter",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,10,40,150,160 
+    GROUPBOX    " DirectSound ",IDC_STATIC,8,205,244,60
+    LTEXT	"Maskinvareakselerasjon: ",IDC_STATIC,15,215,90,10
+    COMBOBOX	IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "Driveremulering",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,230,230,10
 END
 
 IDD_APPEARANCE DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Temaer ",IDC_STATIC,8,10,244,94
-    LTEXT           "Tema:",IDC_STATIC,15,22,228,8
-    COMBOBOX        IDC_THEME_THEMECOMBO,15,30,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Farge:",IDC_THEME_COLORTEXT,15,48,228,8
-    COMBOBOX        IDC_THEME_COLORCOMBO,15,56,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Størrelse:",IDC_THEME_SIZETEXT,15,74,228,8
-    COMBOBOX        IDC_THEME_SIZECOMBO,15,82,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+LTEXT           "Tema:",IDC_STATIC,8,10,244,8
+COMBOBOX        IDC_THEME_THEMECOMBO,8,18,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Installer tema . . .",IDC_THEME_INSTALL,152,32,100,14
+    LTEXT           "Farge:",IDC_THEME_COLORTEXT,8,48,244,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,8,56,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Størrelse:",IDC_THEME_SIZETEXT,8,74,244,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,8,82,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 STRINGTABLE DISCARDABLE
@@ -193,7 +189,7 @@ BEGIN
     IDS_TAB_APPEARANCE      "Utseende"
     IDS_TAB_AUDIO           "Lyd"
     IDS_TAB_ABOUT           "Om"
-    IDS_WINECFG_TITLE       "Wine-konfigurasjon"
+    IDS_WINECFG_TITLE       "Oppsett av Wine"
     IDS_THEMEFILE           "Temafiler"
     IDS_THEMEFILE_SELECT    "Velg en temafil"
 END
