@@ -854,8 +854,14 @@ typedef struct IWineD3DVertexDeclarationImpl {
   DWORD   declaration8Length;
 
   /** dx9+ */
-  D3DVERTEXELEMENT9* pDeclaration9;
+  D3DVERTEXELEMENT9 *pDeclaration9;
   UINT               declaration9NumElements;
+
+  WINED3DVERTEXELEMENT  *pDeclarationWine;
+  UINT                   declarationWNumElements;
+  
+  float                 *constants;
+  
 } IWineD3DVertexDeclarationImpl;
 
 extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
@@ -1168,8 +1174,9 @@ typedef struct IWineD3DVertexShaderImpl {
     CHAR                        constantsUsedBitmap[256];
     /* FIXME: This needs to be populated with some flags of VS_CONSTANT_NOT_USED, VS_CONSTANT_CONSTANT, VS_CONSTANT_INTEGER, VS_CONSTANT_BOOLEAN, VS_CONSTANT_FLOAT, a half byte bitmap will be the best option, but I'll keep it as chards for siplicity */
     /* run time datas...  */
-    VSHADERDATA* data;
+    VSHADERDATA                *data;
     GLuint                      prgId;
+    IWineD3DVertexDeclaration  *vertexDeclaration;
 #if 0 /* needs reworking */
     /* run time datas */
     VSHADERINPUTDATA input;

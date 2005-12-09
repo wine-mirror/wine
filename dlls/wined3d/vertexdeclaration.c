@@ -208,29 +208,7 @@ static DWORD IWineD3DVertexDeclarationImpl_ParseToken8(const DWORD* pToken) {
     break;
   case D3DVSD_TOKEN_CONSTMEM:
     {
-      DWORD i;
       DWORD count        = ((token & D3DVSD_CONSTCOUNTMASK)   >> D3DVSD_CONSTCOUNTSHIFT);
-      DWORD constaddress = ((token & D3DVSD_CONSTADDRESSMASK) >> D3DVSD_CONSTADDRESSSHIFT);
-      TRACE(" 0x%08lx CONST(%lu, %lu)\n", token, constaddress, count);
-      ++pToken;
-      for (i = 0; i < count; ++i) {
-#if 0
-        TRACE("        c[%lu] = (0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx)\n",
-            constaddress,
-            *pToken,
-            *(pToken + 1),
-            *(pToken + 2),
-            *(pToken + 3));
-#endif
-        TRACE("        c[%lu] = (%8f, %8f, %8f, %8f)\n",
-            constaddress,
-            *(const float*) pToken,
-            *(const float*) (pToken + 1),
-            *(const float*) (pToken + 2),
-            *(const float*) (pToken + 3));
-        pToken += 4;
-        ++constaddress;
-      }
       tokenlen = (4 * count) + 1;
     }
     break;
@@ -270,8 +248,9 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     DWORD tokenlen;
     DWORD tokentype;
     DWORD nTokens = 0;
-    DWORD offset = 0;
-    D3DVERTEXELEMENT9 convTo9[128];
+    int offset    = 0;
+
+    WINED3DVERTEXELEMENT convToW[128];
 /* TODO: find out where rhw (or positionT) is for declaration8 */
     Decl8to9Lookup decl8to9Lookup[MAX_D3DVSDE];
     MAKE_LOOKUP(D3DVSDE_POSITION,     D3DDECLUSAGE_POSITION, 0);
@@ -311,15 +290,48 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
             DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
             DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
 
-            convTo9[nTokens].Stream     = stream;
-            convTo9[nTokens].Method     = D3DDECLMETHOD_DEFAULT;
-            convTo9[nTokens].Usage      = decl8to9Lookup[reg].usage;
-            convTo9[nTokens].UsageIndex = decl8to9Lookup[reg].usageIndex;
-            convTo9[nTokens].Type       = type;
-            convTo9[nTokens].Offset     = offset;
+            convToW[nTokens].Stream     = stream;
+            convToW[nTokens].Method     = D3DDECLMETHOD_DEFAULT;
+            convToW[nTokens].Usage      = decl8to9Lookup[reg].usage;
+            convToW[nTokens].UsageIndex = decl8to9Lookup[reg].usageIndex;
+            convToW[nTokens].Type       = type;
+            convToW[nTokens].Offset     = offset;
+            convToW[nTokens].Reg        = reg;
             offset += glTypeLookup[type][1] * glTypeLookup[type][4];
             ++nTokens;
-        }/* TODO: Constants. */
+        } else if (D3DVSD_TOKEN_STREAMDATA == tokentype &&  0x10000000 & tokentype ) {
+             TRACE(" 0x%08lx SKIP(%lu)\n", tokentype, ((tokentype & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
+             offset += sizeof(DWORD) * ((tokentype & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
+        } else if (D3DVSD_TOKEN_CONSTMEM  == tokentype) {
+            DWORD i;
+            DWORD count        = ((token & D3DVSD_CONSTCOUNTMASK)   >> D3DVSD_CONSTCOUNTSHIFT);
+            DWORD constaddress = ((token & D3DVSD_CONSTADDRESSMASK) >> D3DVSD_CONSTADDRESSSHIFT);
+            if (This->constants == NULL ) {
+                This->constants = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MAX_VSHADER_CONSTANTS * 4 * sizeof(float));
+            }
+            TRACE(" 0x%08lx CONST(%lu, %lu)\n", token, constaddress, count);
+            for (i = 0; i < count; ++i) {
+                TRACE("        c[%lu] = (0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx)\n",
+                    constaddress,
+                    *pToken,
+                    *(pToken + 1),
+                    *(pToken + 2),
+                    *(pToken + 3));
+
+                This->constants[constaddress * 4] = *(const float*) (pToken+ i * 4 + 1);
+                This->constants[constaddress * 4 + 1] = *(const float *)(pToken + i * 4 + 2);
+                This->constants[constaddress * 4 + 2] = *(const float *)(pToken + i * 4 + 3);
+                This->constants[constaddress * 4 + 3] = *(const float *)(pToken + i * 4 + 4);
+                FIXME("        c[%lu] = (%8f, %8f, %8f, %8f)\n",
+                    constaddress,
+                    *(const float*) (pToken+ i * 4 + 1),
+                    *(const float*) (pToken + i * 4 + 2),
+                    *(const float*) (pToken + i * 4 +3),
+                    *(const float*) (pToken + i * 4 + 4));
+                ++constaddress;
+            }
+        }
+
         len += tokenlen;
         pToken += tokenlen;
     }
@@ -327,8 +339,8 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
   /* here D3DVSD_END() */
   len +=  IWineD3DVertexDeclarationImpl_ParseToken8(pToken);
 
-  convTo9[nTokens].Stream = 0xFF;
-  convTo9[nTokens].Type = D3DDECLTYPE_UNUSED;
+  convToW[nTokens].Stream = 0xFF;
+  convToW[nTokens].Type = D3DDECLTYPE_UNUSED;
   ++nTokens;
 
   /* compute size */
@@ -337,22 +349,12 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
   This->pDeclaration8 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->declaration8Length);
   memcpy(This->pDeclaration8, pDecl, This->declaration8Length);
 
-  /* compute convTo9 size */
-  This->declaration9NumElements = nTokens;
+  /* compute convToW size */
+  This->declarationWNumElements = nTokens;
   /* copy the convTo9 declaration */
-  This->pDeclaration9 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nTokens * sizeof(D3DVERTEXELEMENT9));
-  memcpy(This->pDeclaration9, convTo9, nTokens * sizeof(D3DVERTEXELEMENT9));
-#if 0 /* TODO: This looks like overkill so I've removed it. */
-  {
-    D3DVERTEXELEMENT9* pIt = This->pDeclaration9;
-    TRACE("dumping of D3D9 Conversion:\n");
-    while (0xFF != pIt->Stream) {
-      IWineD3DVertexDeclarationImpl_ParseToken9(pIt);
-      ++pIt;
-    }
-    IWineD3DVertexDeclarationImpl_ParseToken9(pIt);
-  }
-#endif
+  This->pDeclarationWine = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nTokens * sizeof(WINED3DVERTEXELEMENT));
+  memcpy(This->pDeclarationWine, convToW, nTokens * sizeof(WINED3DVERTEXELEMENT));
+
   /* returns */
   return D3D_OK;
 }
@@ -360,6 +362,7 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
 static HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DVertexDeclaration* iface, const D3DVERTEXELEMENT9* pDecl) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     const D3DVERTEXELEMENT9* pToken = pDecl;
+    int i;
 
     TRACE("(%p) :  pDecl(%p)\n", This, pDecl);
 
@@ -376,6 +379,13 @@ static HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DVertexDec
     This->pDeclaration9 = HeapAlloc(GetProcessHeap(), 0, This->declaration9NumElements * sizeof(D3DVERTEXELEMENT9));
     memcpy(This->pDeclaration9, pDecl, This->declaration9NumElements * sizeof(D3DVERTEXELEMENT9));
 
+    /* copy to wine style declaration */
+    This->pDeclarationWine = HeapAlloc(GetProcessHeap(), 0, This->declaration9NumElements * sizeof(WINED3DVERTEXELEMENT));
+    for(i = 0; i < This->declaration9NumElements; ++i) {
+        memcpy(This->pDeclarationWine + i, This->pDeclaration9 + i, sizeof(D3DVERTEXELEMENT9));
+    }
+
+    This->declarationWNumElements = This->declaration9NumElements;
 
   return D3D_OK;
 }

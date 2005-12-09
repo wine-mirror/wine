@@ -1611,13 +1611,44 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice* iface,
 }
 
 /* http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/programmable/vertexshaders/vscreate.asp */
-HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface,  CONST DWORD *pFunction, IWineD3DVertexShader** ppVertexShader, IUnknown *parent) {
+HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface, CONST DWORD *pDeclaration, CONST DWORD *pFunction, IWineD3DVertexShader **ppVertexShader, IUnknown *parent) {
     IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexShaderImpl *object;  /* NOTE: impl usage is ok, this is a create */
+    HRESULT hr = D3D_OK;
     D3DCREATEOBJECTINSTANCE(object, VertexShader)
 
     TRACE("(%p) : Created Vertex shader %p\n", This, *ppVertexShader);
-    IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction);
+    hr = IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction);
+
+    if (D3D_OK != hr) {
+        FIXME("(%p) : Failed to set the function, returning D3DERR_INVALIDCALL\n", iface);
+        IWineD3DVertexShader_Release(*ppVertexShader);
+        return D3DERR_INVALIDCALL;
+    }
+
+#if 0 /* TODO: In D3D* SVP is atatched to the shader, in D3D9 it's attached to the device and isn't stored in the stateblock. */
+    if(Usage == WINED3DUSAGE_SOFTWAREVERTEXPROCESSING) {
+        /* Foo */
+    } else {
+        /* Bar */
+    }
+
+#endif
+
+
+    /* If a vertex declaration has been passed, save it to the vertex shader, this affects d3d8 only. */
+    if (pDeclaration != NULL) {
+        IWineD3DVertexDeclaration *vertexDeclaration;
+        hr = IWineD3DDevice_CreateVertexDeclaration(iface, pDeclaration, &vertexDeclaration ,NULL);
+        if (D3D_OK == hr) {
+            TRACE("(%p) : Setting vertex declaration to %p\n", This, vertexDeclaration);
+            object->vertexDeclaration = vertexDeclaration;
+        } else {
+            FIXME("(%p) : Failed to set the declaration, returning D3DERR_INVALIDCALL\n", iface);
+            IWineD3DVertexShader_Release(*ppVertexShader);
+            return D3DERR_INVALIDCALL;
+        }
+    }
 
     return D3D_OK;
 }

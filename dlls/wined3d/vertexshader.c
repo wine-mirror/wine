@@ -2000,6 +2000,7 @@ ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
+        if (This->vertexDeclaration) IWineD3DVertexDeclaration_Release(This->vertexDeclaration);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;

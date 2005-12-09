@@ -114,7 +114,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexShader(LPDIRECT3DDEVICE9 iface, 
 
     object->ref = 1;
     object->lpVtbl = &Direct3DVertexShader9_Vtbl;
-    hrc= IWineD3DDevice_CreateVertexShader(This->WineD3DDevice, pFunction, &object->wineD3DVertexShader, (IUnknown *)object);
+    hrc= IWineD3DDevice_CreateVertexShader(This->WineD3DDevice, NULL /* declaration */, pFunction, &object->wineD3DVertexShader, (IUnknown *)object);
 
     if (FAILED(hrc)) {
 
