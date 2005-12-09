@@ -395,6 +395,9 @@ static nsresult NSAPI nsWebBrowserChrome_QueryInterface(nsIWebBrowserChrome *ifa
     }else if(IsEqualGUID(&IID_nsIContextMenuListener, riid)) {
         TRACE("(%p)->(IID_nsIContextMenuListener, %p)\n", This, result);
         *result = NSCML(This);
+    }else if(IsEqualGUID(&IID_nsIURIContentListener, riid)) {
+        TRACE("(%p)->(IID_nsIURIContentListener %p)\n", This, result);
+        *result = NSURICL(This);
     }else if(IsEqualGUID(&IID_nsIEmbeddingSiteWindow, riid)) {
         TRACE("(%p)->(IIS_nsIEmbeddingSiteWindow %p)\n", This, result);
         *result = NSEMBWNDS(This);
@@ -895,9 +898,9 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
             &IID_nsIWebBrowserSetup, (void**)&wbsetup);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIWebBrowserSetup_SetProperty(wbsetup, SETUP_IS_CHROME_WRAPPER, TRUE);
-        if(NS_FAILED(nsres))
-            ERR("SetProperty failed: %08lx\n", nsres);
         nsIWebBrowserSetup_Release(wbsetup);
+        if(NS_FAILED(nsres))
+            ERR("SetProperty(SETUP_IS_CHROME_WRAPPER) failed: %08lx\n", nsres);
     }else {
         ERR("Could not get nsIWebBrowserSetup interface\n");
     }
