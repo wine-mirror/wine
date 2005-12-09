@@ -657,9 +657,9 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 
             SERVER_START_REQ( create_snapshot )
             {
-                req->flags   = SNAP_PROCESS | SNAP_THREAD;
-                req->inherit = FALSE;
-                req->pid     = 0;
+                req->flags      = SNAP_PROCESS | SNAP_THREAD;
+                req->attributes = 0;
+                req->pid        = 0;
                 if (!(ret = wine_server_call( req ))) hSnap = reply->handle;
             }
             SERVER_END_REQ;

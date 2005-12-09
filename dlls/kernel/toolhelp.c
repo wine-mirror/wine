@@ -61,9 +61,8 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
         if (flags & TH32CS_SNAPMODULE)   req->flags |= SNAP_MODULE;
         if (flags & TH32CS_SNAPPROCESS)  req->flags |= SNAP_PROCESS;
         if (flags & TH32CS_SNAPTHREAD)   req->flags |= SNAP_THREAD;
-    
-        req->inherit = (flags & TH32CS_INHERIT) != 0;
-        req->pid     = process;
+        req->attributes = (flags & TH32CS_INHERIT) ? OBJ_INHERIT : 0;
+        req->pid        = process;
         wine_server_call_err( req );
         ret = reply->handle;
     }

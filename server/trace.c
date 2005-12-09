@@ -1494,7 +1494,7 @@ static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *re
 
 static void dump_create_snapshot_request( const struct create_snapshot_request *req )
 {
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " pid=%04x", req->pid );
 }

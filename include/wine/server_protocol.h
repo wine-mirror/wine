@@ -1473,7 +1473,7 @@ struct get_mapping_info_reply
 struct create_snapshot_request
 {
     struct request_header __header;
-    int          inherit;
+    unsigned int attributes;
     int          flags;
     process_id_t pid;
 };
@@ -4316,6 +4316,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 210
+#define SERVER_PROTOCOL_VERSION 211
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1096,7 +1096,7 @@ enum char_info_mode
 #define SNAP_MODULE     0x00000008
 /* Create a snapshot */
 @REQ(create_snapshot)
-    int          inherit;       /* inherit flag */
+    unsigned int attributes;    /* object attributes */
     int          flags;         /* snapshot flags (SNAP_*) */
     process_id_t pid;           /* process id */
 @REPLY
