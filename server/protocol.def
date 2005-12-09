@@ -2399,6 +2399,8 @@ enum message_type
 /* Open a security token */
 @REQ(open_token)
     obj_handle_t   handle;    /* handle to the thread or process */
+    unsigned int   access;    /* access rights to the new token */
+    unsigned int   attributes;/* object attributes */
     unsigned int   flags;     /* flags (see below) */
 @REPLY
     obj_handle_t   token;    /* handle to the token */
@@ -2454,10 +2456,10 @@ enum message_type
 @END
 
 @REQ(duplicate_token)
-    obj_handle_t  handle; /* handle to the token to duplicate */
-    unsigned int  access; /* access rights to the new token */
-    int           inherit; /* inherit flag */
-    int           primary; /* is the new token to be a primary one? */
+    obj_handle_t  handle;        /* handle to the token to duplicate */
+    unsigned int  access;        /* access rights to the new token */
+    unsigned int  attributes;    /* object attributes */
+    int           primary;       /* is the new token to be a primary one? */
     int           impersonation_level; /* impersonation level of the new token */
 @REPLY
     obj_handle_t  new_handle; /* duplicated handle */

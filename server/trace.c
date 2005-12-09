@@ -2949,6 +2949,8 @@ static void dump_set_clipboard_info_reply( const struct set_clipboard_info_reply
 static void dump_open_token_request( const struct open_token_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " flags=%08x", req->flags );
 }
 
@@ -3021,7 +3023,7 @@ static void dump_duplicate_token_request( const struct duplicate_token_request *
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " primary=%d,", req->primary );
     fprintf( stderr, " impersonation_level=%d", req->impersonation_level );
 }

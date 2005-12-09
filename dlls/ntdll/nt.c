@@ -63,10 +63,10 @@ NTSTATUS WINAPI NtDuplicateToken(
 
     SERVER_START_REQ( duplicate_token )
     {
-        req->handle = ExistingToken;
-        req->access = DesiredAccess;
-        req->inherit = ObjectAttributes && (ObjectAttributes->Attributes & OBJ_INHERIT);
-        req->primary = (TokenType == TokenPrimary);
+        req->handle              = ExistingToken;
+        req->access              = DesiredAccess;
+        req->attributes          = ObjectAttributes ? ObjectAttributes->Attributes : 0;
+        req->primary             = (TokenType == TokenPrimary);
         req->impersonation_level = ImpersonationLevel;
         status = wine_server_call( req );
         if (!status) *NewToken = reply->new_handle;
@@ -91,8 +91,10 @@ NTSTATUS WINAPI NtOpenProcessToken(
 
     SERVER_START_REQ( open_token )
     {
-        req->handle = ProcessHandle;
-        req->flags  = 0;
+        req->handle     = ProcessHandle;
+        req->access     = DesiredAccess;
+        req->attributes = 0;
+        req->flags      = 0;
         ret = wine_server_call( req );
         if (!ret) *TokenHandle = reply->token;
     }
@@ -118,8 +120,10 @@ NTSTATUS WINAPI NtOpenThreadToken(
 
     SERVER_START_REQ( open_token )
     {
-        req->handle = ThreadHandle;
-        req->flags  = OPEN_TOKEN_THREAD;
+        req->handle     = ThreadHandle;
+        req->access     = DesiredAccess;
+        req->attributes = 0;
+        req->flags      = OPEN_TOKEN_THREAD;
         if (OpenAsSelf) req->flags |= OPEN_TOKEN_AS_SELF;
         ret = wine_server_call( req );
         if (!ret) *TokenHandle = reply->token;

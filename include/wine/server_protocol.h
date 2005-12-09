@@ -3416,6 +3416,8 @@ struct open_token_request
 {
     struct request_header __header;
     obj_handle_t   handle;
+    unsigned int   access;
+    unsigned int   attributes;
     unsigned int   flags;
 };
 struct open_token_reply
@@ -3498,7 +3500,7 @@ struct duplicate_token_request
     struct request_header __header;
     obj_handle_t  handle;
     unsigned int  access;
-    int           inherit;
+    unsigned int  attributes;
     int           primary;
     int           impersonation_level;
 };
@@ -4319,6 +4321,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 212
+#define SERVER_PROTOCOL_VERSION 213
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
