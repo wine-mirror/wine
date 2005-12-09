@@ -13,6 +13,7 @@ C_SRCS = \
 	htmldoc.c \
 	main.c \
 	nsembed.c \
+	nsservice.c\
 	oleobj.c \
 	olewnd.c \
 	persist.c \

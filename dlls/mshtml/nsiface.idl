@@ -93,6 +93,16 @@ interface nsIServiceManager : nsISupports
 
 [
     object,
+    uuid(00000001-0000-0000-c000-000000000046)
+]
+interface nsIFactory : nsISupports
+{
+    nsresult CreateInstance(nsISupports *aOuter, const nsIID *iid, void **result);
+    nsresult LockFactory(PRBool lock);
+}
+
+[
+    object,
     uuid(db242e01-e4d9-11d2-9dde-000064657374)
 ]
 interface nsIObserver : nsISupports
@@ -448,4 +458,60 @@ interface nsIEmbeddingSiteWindow : nsISupports
     nsresult GetTitle(PRUnichar **aTitle);
     nsresult SetTitle(const PRUnichar *aTitle);
     nsresult GetSiteWindow(void **aSiteWindow);
+}
+
+[
+     object,
+     uuid(2417cbfe-65ad-48a6-b4b6-eb84db174392)
+]
+interface nsIComponentRegistrar : nsISupports
+{
+    nsresult AutoRegister(nsIFile *aSpec);
+    nsresult AutoUnregister(nsIFile *aSpec);
+    nsresult RegisterFactory(const nsCID *aClass, const char *aClassName,
+            const char *aContractID, nsIFactory *aFactory);
+    nsresult UnregisterFactory(const nsCID *aClass, nsIFactory *aFactory);
+    nsresult RegisterFactoryLocation(const nsCID *aClass, const char *aClassName,
+            const char *aContractID, nsIFile *aFile, const char *aLoaderStr,
+            const char *aType);
+    nsresult UnregisterFactoryLocation(const nsCID *aClass, nsIFile *aFile);
+    nsresult IsCIDRegistered(const nsCID *aClass, PRBool *_retval);
+    nsresult IsContractIDRegistered(const char *aContractID, PRBool *_retval);
+    nsresult EnumerateCIDs(nsISimpleEnumerator **_retval);
+    nsresult EnumerateContractIDs(nsISimpleEnumerator **_retval);
+    nsresult CIDToContractID(const nsCID *aClass, char **_retval);
+    nsresult ContractIDToCID(const char *aContractID, nsCID **_retval);
+}
+
+[
+    object,
+    uuid(1630c61a-325e-49ca-8759-a31b16c47aa5)
+]
+interface nsIPromptService : nsISupports
+{
+    nsresult Alert(nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
+            const PRUnichar *aText);
+    nsresult AlertCheck(nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
+            const PRUnichar *aText, const PRUnichar *aCheckMsg, PRBool *aCheckState);
+    nsresult Confirm(nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
+            const PRUnichar *aText, PRBool *_retval);
+    nsresult ConfirmCheck(nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
+            const PRUnichar *aText, const PRUnichar *aCheckMsg, PRBool *aCheckState,
+            PRBool *_retval);
+    nsresult ConfirmEx(nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
+            const PRUnichar *aText, PRUint32 aButtonFlags, const PRUnichar *aButton0Title,
+            const PRUnichar *aButton1Title, const PRUnichar *aButton2Title,
+            const PRUnichar *aCheckMsg, PRBool *aCheckState, PRInt32 *_retval);
+    nsresult Prompt(nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
+            const PRUnichar *aText, PRUnichar **aValue, const PRUnichar *aCheckMsg,
+            PRBool *aCheckState, PRBool *_retval);
+    nsresult PromptUsernameAndPassword(nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
+            const PRUnichar *aText, PRUnichar **aUsername, PRUnichar **aPassword,
+            const PRUnichar *aCheckMsg, PRBool *aCheckState, PRBool *_retval);
+    nsresult PromptPassword(nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
+            const PRUnichar *aText, PRUnichar **aPassword, const PRUnichar *aCheckMsg,
+            PRBool *aCheckState, PRBool *_retval);
+    nsresult Select(nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
+            const PRUnichar *aText, PRUint32 aCount, const PRUnichar **aSelectList,
+            PRInt32 *aOutSelection, PRBool *_retval);
 }

@@ -28,6 +28,7 @@
 #include "nsiface.h"
 
 #define NS_OK                     ((nsresult)0x00000000L)
+#define NS_ERROR_FAILURE          ((nsresult)0x80004005L)
 #define NS_NOINTERFACE            ((nsresult)0x80004002L)
 #define NS_ERROR_NOT_IMPLEMENTED  ((nsresult)0x80004001L)
 #define NS_ERROR_INVALID_ARG      ((nsresult)0x80070057L) 
@@ -141,6 +142,7 @@ BOOL HTMLDocument_OnLoad(HTMLDocument*,LPCWSTR);
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 
 void close_gecko(void);
+void register_nsservice(nsIComponentRegistrar*);
 
 nsIURI *get_nsIURI(LPCWSTR);
 

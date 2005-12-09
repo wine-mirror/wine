@@ -51,6 +51,7 @@ typedef struct nsACString {
 
 static nsresult (*NS_InitXPCOM2)(nsIServiceManager**,void*,void*);
 static nsresult (*NS_ShutdownXPCOM)(nsIServiceManager*);
+static nsresult (*NS_GetComponentRegistrar)(nsIComponentRegistrar**);
 static nsresult (*NS_StringContainerInit)(nsString*);
 static nsresult (*NS_CStringContainerInit)(nsACString*);
 static nsresult (*NS_StringContainerFinish)(nsString*);
@@ -213,6 +214,7 @@ static BOOL load_gecko()
 {
     nsresult nsres;
     nsIObserver *pStartNotif;
+    nsIComponentRegistrar *registrar;
     nsString path;
     nsIFile *gre_dir;
     PRUnichar gre_path[MAX_PATH];
@@ -257,6 +259,7 @@ static BOOL load_gecko()
 
     NS_DLSYM(NS_InitXPCOM2);
     NS_DLSYM(NS_ShutdownXPCOM);
+    NS_DLSYM(NS_GetComponentRegistrar);
     NS_DLSYM(NS_StringContainerInit);
     NS_DLSYM(NS_CStringContainerInit);
     NS_DLSYM(NS_StringContainerFinish);
@@ -299,6 +302,14 @@ static BOOL load_gecko()
         nsIObserver_Release(pStartNotif);
     }else {
         ERR("could not get appstartup-notifier: %08lx\n", nsres);
+    }
+
+    nsres = NS_GetComponentRegistrar(&registrar);
+    if(NS_SUCCEEDED(nsres)) {
+        register_nsservice(registrar);
+        nsIComponentRegistrar_Release(registrar);
+    }else {
+        ERR("NS_GetComponentRegistrar failed: %08lx\n", nsres);
     }
 
     return TRUE;
