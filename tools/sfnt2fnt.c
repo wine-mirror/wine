@@ -73,7 +73,6 @@ static void error(const char *s, ...)
     va_start(ap, s);
     fprintf(stderr, "Error: ");
     vfprintf(stderr, s, ap);
-    fprintf(stderr, "\n");
     va_end(ap);
     exit(1);
 }
