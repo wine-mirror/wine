@@ -225,6 +225,7 @@ static HRESULT WINAPI IStream_fnRead (IStream * iface,
                                       ULONG cb,
                                       ULONG* pcbRead)
 {
+    DWORD dwBytesRead;
     IUMCacheStream *This = (IUMCacheStream *)iface;
 
     TRACE("(%p)->(%p,0x%08lx,%p)\n",This, pv, cb, pcbRead);
@@ -232,7 +233,7 @@ static HRESULT WINAPI IStream_fnRead (IStream * iface,
     if ( !pv )
        return STG_E_INVALIDPOINTER;
 
-    if ( ! ReadFile( This->handle, pv, cb, pcbRead, NULL ) )
+    if ( ! ReadFile( This->handle, pv, cb, (pcbRead ? pcbRead : &dwBytesRead), NULL ) )
        return S_FALSE;
 
     if (!*pcbRead)
