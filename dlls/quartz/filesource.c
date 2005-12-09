@@ -192,6 +192,7 @@ static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * p
 static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * majorType, GUID * minorType)
 {
     HKEY hkeyMediaType = NULL;
+    LONG lRet;
     HRESULT hr = S_OK;
     BOOL bFound = FALSE;
     static const WCHAR wszMediaType[] = {'M','e','d','i','a',' ','T','y','p','e',0};
@@ -199,7 +200,8 @@ static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, 
     CopyMemory(majorType, &GUID_NULL, sizeof(*majorType));
     CopyMemory(minorType, &GUID_NULL, sizeof(*minorType));
 
-    hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_CLASSES_ROOT, wszMediaType, 0, KEY_READ, &hkeyMediaType));
+    lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszMediaType, 0, KEY_READ, &hkeyMediaType);
+    hr = HRESULT_FROM_WIN32(lRet);
 
     if (SUCCEEDED(hr))
     {
