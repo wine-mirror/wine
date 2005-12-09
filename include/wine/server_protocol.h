@@ -754,7 +754,7 @@ struct create_file_request
 {
     struct request_header __header;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     unsigned int sharing;
     int          create;
     unsigned int options;
@@ -773,7 +773,7 @@ struct alloc_file_handle_request
 {
     struct request_header __header;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     int          fd;
 };
 struct alloc_file_handle_reply
@@ -4316,6 +4316,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 208
+#define SERVER_PROTOCOL_VERSION 209
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

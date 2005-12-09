@@ -214,7 +214,7 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         SERVER_START_REQ( create_file )
         {
             req->access     = access;
-            req->inherit    = (attr->Attributes & OBJ_INHERIT) != 0;
+            req->attributes = attr->Attributes;
             req->sharing    = sharing;
             req->create     = disposition;
             req->options    = options;

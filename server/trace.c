@@ -1008,7 +1008,7 @@ static void dump_open_semaphore_reply( const struct open_semaphore_reply *req )
 static void dump_create_file_request( const struct create_file_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " sharing=%08x,", req->sharing );
     fprintf( stderr, " create=%d,", req->create );
     fprintf( stderr, " options=%08x,", req->options );
@@ -1025,7 +1025,7 @@ static void dump_create_file_reply( const struct create_file_reply *req )
 static void dump_alloc_file_handle_request( const struct alloc_file_handle_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " fd=%d", req->fd );
 }
 

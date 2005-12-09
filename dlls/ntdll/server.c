@@ -455,9 +455,9 @@ int wine_server_fd_to_handle( int fd, unsigned int access, int inherit, obj_hand
 
     SERVER_START_REQ( alloc_file_handle )
     {
-        req->access  = access;
-        req->inherit = inherit;
-        req->fd      = fd;
+        req->access     = access;
+        req->attributes = inherit ? OBJ_INHERIT : 0;
+        req->fd         = fd;
         if (!(ret = wine_server_call( req ))) *handle = reply->handle;
     }
     SERVER_END_REQ;

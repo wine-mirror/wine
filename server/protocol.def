@@ -590,7 +590,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Create a file */
 @REQ(create_file)
     unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
+    unsigned int attributes;    /* object attributes */
     unsigned int sharing;       /* sharing flags */
     int          create;        /* file create action */
     unsigned int options;       /* file options */
@@ -604,7 +604,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Allocate a file handle for a Unix fd */
 @REQ(alloc_file_handle)
     unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
+    unsigned int attributes;    /* object attributes */
     int          fd;            /* file descriptor on the client side */
 @REPLY
     obj_handle_t handle;        /* handle to the file */
