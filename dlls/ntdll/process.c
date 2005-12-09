@@ -375,9 +375,9 @@ NTSTATUS  WINAPI NtOpenProcess(PHANDLE handle, ACCESS_MASK access,
 
     SERVER_START_REQ( open_process )
     {
-        req->pid     = (DWORD)cid->UniqueProcess;
-        req->access  = access;
-        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        req->pid        = (process_id_t)cid->UniqueProcess;
+        req->access     = access;
+        req->attributes = attr ? attr->Attributes : 0;
         status = wine_server_call( req );
         if (!status) *handle = reply->handle;
     }

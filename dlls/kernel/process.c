@@ -1603,9 +1603,11 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     WaitForSingleObject( process_info, INFINITE );
     SERVER_START_REQ( get_new_process_info )
     {
-        req->info     = process_info;
-        req->pinherit = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
-        req->tinherit = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle);
+        req->info           = process_info;
+        req->process_access = PROCESS_ALL_ACCESS;
+        req->process_attr   = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle) ? OBJ_INHERIT : 0;
+        req->thread_access  = THREAD_ALL_ACCESS;
+        req->thread_attr    = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle) ? OBJ_INHERIT : 0;
         if ((ret = !wine_server_call_err( req )))
         {
             info->dwProcessId = (DWORD)reply->pid;

@@ -214,9 +214,11 @@ struct security_descriptor
 
 /* Retrieve information about a newly started process */
 @REQ(get_new_process_info)
-    obj_handle_t info;         /* info handle returned from new_process_request */
-    int          pinherit;     /* process handle inherit flag */
-    int          tinherit;     /* thread handle inherit flag */
+    obj_handle_t info;           /* info handle returned from new_process_request */
+    unsigned int process_access; /* access rights for process object */
+    unsigned int process_attr;   /* attributes for process object */
+    unsigned int thread_access;  /* access rights for thread object */
+    unsigned int thread_attr;    /* attributes for thread object */
 @REPLY
     process_id_t pid;          /* process id */
     obj_handle_t phandle;      /* process handle (in the current process) */
@@ -228,8 +230,9 @@ struct security_descriptor
 
 /* Create a new thread from the context of the parent */
 @REQ(new_thread)
+    unsigned int access;       /* wanted access rights */
+    unsigned int attributes;   /* object attributes */
     int          suspend;      /* new thread should be suspended on creation */
-    int          inherit;      /* inherit flag */
     int          request_fd;   /* fd for request pipe */
 @REPLY
     thread_id_t  tid;          /* thread id */
@@ -462,7 +465,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
 @REQ(open_process)
     process_id_t pid;          /* process id to open */
     unsigned int access;       /* wanted access rights */
-    int          inherit;      /* inherit flag */
+    unsigned int attributes;   /* object attributes */
 @REPLY
     obj_handle_t handle;       /* handle to the process */
 @END
@@ -472,7 +475,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
 @REQ(open_thread)
     thread_id_t  tid;          /* thread id to open */
     unsigned int access;       /* wanted access rights */
-    int          inherit;      /* inherit flag */
+    unsigned int attributes;   /* object attributes */
 @REPLY
     obj_handle_t handle;       /* handle to the thread */
 @END

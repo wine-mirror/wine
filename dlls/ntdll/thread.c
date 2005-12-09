@@ -265,8 +265,9 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
 
     SERVER_START_REQ( new_thread )
     {
+        req->access     = THREAD_ALL_ACCESS;
+        req->attributes = 0;  /* FIXME */
         req->suspend    = suspended;
-        req->inherit    = 0;  /* FIXME */
         req->request_fd = request_pipe[0];
         if (!(status = wine_server_call( req )))
         {
@@ -362,9 +363,9 @@ NTSTATUS WINAPI NtOpenThread( HANDLE *handle, ACCESS_MASK access,
 
     SERVER_START_REQ( open_thread )
     {
-        req->tid     = (thread_id_t)id->UniqueThread;
-        req->access  = access;
-        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        req->tid        = (thread_id_t)id->UniqueThread;
+        req->access     = access;
+        req->attributes = attr ? attr->Attributes : 0;
         ret = wine_server_call( req );
         *handle = reply->handle;
     }

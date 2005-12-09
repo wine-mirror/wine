@@ -206,8 +206,10 @@ struct get_new_process_info_request
 {
     struct request_header __header;
     obj_handle_t info;
-    int          pinherit;
-    int          tinherit;
+    unsigned int process_access;
+    unsigned int process_attr;
+    unsigned int thread_access;
+    unsigned int thread_attr;
 };
 struct get_new_process_info_reply
 {
@@ -224,8 +226,9 @@ struct get_new_process_info_reply
 struct new_thread_request
 {
     struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
     int          suspend;
-    int          inherit;
     int          request_fd;
 };
 struct new_thread_reply
@@ -564,7 +567,7 @@ struct open_process_request
     struct request_header __header;
     process_id_t pid;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
 };
 struct open_process_reply
 {
@@ -579,7 +582,7 @@ struct open_thread_request
     struct request_header __header;
     thread_id_t  tid;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
 };
 struct open_thread_reply
 {
@@ -4316,6 +4319,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 211
+#define SERVER_PROTOCOL_VERSION 212
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

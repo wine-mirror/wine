@@ -909,9 +909,9 @@ DECL_HANDLER(get_new_process_info)
         reply->pid = get_process_id( info->process );
         reply->tid = get_thread_id( info->thread );
         reply->phandle = alloc_handle( current->process, info->process,
-                                       PROCESS_ALL_ACCESS, req->pinherit );
+                                       req->process_access, req->process_attr & OBJ_INHERIT );
         reply->thandle = alloc_handle( current->process, info->thread,
-                                       THREAD_ALL_ACCESS, req->tinherit );
+                                       req->thread_access, req->thread_attr & OBJ_INHERIT );
         reply->success = is_process_init_done( info->process );
         release_object( info );
     }
@@ -1009,7 +1009,8 @@ DECL_HANDLER(open_process)
     reply->handle = 0;
     if (process)
     {
-        reply->handle = alloc_handle( current->process, process, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, process, req->access,
+                                      req->attributes & OBJ_INHERIT );
         release_object( process );
     }
 }

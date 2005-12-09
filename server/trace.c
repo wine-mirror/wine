@@ -589,8 +589,10 @@ static void dump_new_process_reply( const struct new_process_reply *req )
 static void dump_get_new_process_info_request( const struct get_new_process_info_request *req )
 {
     fprintf( stderr, " info=%p,", req->info );
-    fprintf( stderr, " pinherit=%d,", req->pinherit );
-    fprintf( stderr, " tinherit=%d", req->tinherit );
+    fprintf( stderr, " process_access=%08x,", req->process_access );
+    fprintf( stderr, " process_attr=%08x,", req->process_attr );
+    fprintf( stderr, " thread_access=%08x,", req->thread_access );
+    fprintf( stderr, " thread_attr=%08x", req->thread_attr );
 }
 
 static void dump_get_new_process_info_reply( const struct get_new_process_info_reply *req )
@@ -604,8 +606,9 @@ static void dump_get_new_process_info_reply( const struct get_new_process_info_r
 
 static void dump_new_thread_request( const struct new_thread_request *req )
 {
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " suspend=%d,", req->suspend );
-    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " request_fd=%d", req->request_fd );
 }
 
@@ -857,7 +860,7 @@ static void dump_open_process_request( const struct open_process_request *req )
 {
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d", req->inherit );
+    fprintf( stderr, " attributes=%08x", req->attributes );
 }
 
 static void dump_open_process_reply( const struct open_process_reply *req )
@@ -869,7 +872,7 @@ static void dump_open_thread_request( const struct open_thread_request *req )
 {
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d", req->inherit );
+    fprintf( stderr, " attributes=%08x", req->attributes );
 }
 
 static void dump_open_thread_reply( const struct open_thread_reply *req )
