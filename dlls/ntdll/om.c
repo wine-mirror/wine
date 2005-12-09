@@ -306,7 +306,7 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source,
         req->src_handle  = source;
         req->dst_process = dest_process;
         req->access      = access;
-        req->inherit     = (attributes & OBJ_INHERIT) != 0;
+        req->attributes  = attributes;
         req->options     = options;
 
         if (!(ret = wine_server_call( req )))

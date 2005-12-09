@@ -547,8 +547,8 @@ struct dup_handle_request
     obj_handle_t src_handle;
     obj_handle_t dst_process;
     unsigned int access;
-    int          inherit;
-    int          options;
+    unsigned int attributes;
+    unsigned int options;
 };
 struct dup_handle_reply
 {
@@ -4321,6 +4321,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 213
+#define SERVER_PROTOCOL_VERSION 214
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

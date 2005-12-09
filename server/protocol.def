@@ -450,8 +450,8 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
     obj_handle_t src_handle;   /* src handle to duplicate */
     obj_handle_t dst_process;  /* dst process handle */
     unsigned int access;       /* wanted access rights */
-    int          inherit;      /* inherit flag */
-    int          options;      /* duplicate options (see below) */
+    unsigned int attributes;   /* object attributes */
+    unsigned int options;      /* duplicate options (see below) */
 @REPLY
     obj_handle_t handle;       /* duplicated handle in dst process */
     int          fd;           /* associated fd to close */

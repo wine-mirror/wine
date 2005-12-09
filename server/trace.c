@@ -846,8 +846,8 @@ static void dump_dup_handle_request( const struct dup_handle_request *req )
     fprintf( stderr, " src_handle=%p,", req->src_handle );
     fprintf( stderr, " dst_process=%p,", req->dst_process );
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " options=%d", req->options );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " options=%08x", req->options );
 }
 
 static void dump_dup_handle_reply( const struct dup_handle_reply *req )

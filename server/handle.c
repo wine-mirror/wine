@@ -573,12 +573,12 @@ DECL_HANDLER(dup_handle)
         if (req->options & DUP_HANDLE_MAKE_GLOBAL)
         {
             reply->handle = duplicate_handle( src, req->src_handle, NULL,
-                                              req->access, req->inherit, req->options );
+                                              req->access, req->attributes & OBJ_INHERIT, req->options );
         }
         else if ((dst = get_process_from_handle( req->dst_process, PROCESS_DUP_HANDLE )))
         {
             reply->handle = duplicate_handle( src, req->src_handle, dst,
-                                              req->access, req->inherit, req->options );
+                                              req->access, req->attributes & OBJ_INHERIT, req->options );
             release_object( dst );
         }
         /* close the handle no matter what happened */
