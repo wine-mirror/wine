@@ -274,10 +274,10 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	case CONSOLE_RENDERER_ACTIVE_SB_EVENT:
 	    SERVER_START_REQ( open_console )
 	    {
-		req->from    = (int)data->hConIn;
-		req->access  = GENERIC_READ | GENERIC_WRITE;
-		req->share   = FILE_SHARE_READ | FILE_SHARE_WRITE;
-		req->inherit = FALSE;
+                req->from       = (int)data->hConIn;
+                req->access     = GENERIC_READ | GENERIC_WRITE;
+                req->attributes = 0;
+                req->share      = FILE_SHARE_READ | FILE_SHARE_WRITE;
 		h = wine_server_call_err( req ) ? 0 : (HANDLE)reply->handle;
 	    }
 	    SERVER_END_REQ;
@@ -608,7 +608,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     SERVER_START_REQ(alloc_console)
     {
         req->access     = GENERIC_READ | GENERIC_WRITE;
-        req->inherit    = FALSE;
+        req->attributes = 0;
         req->pid        = pid;
 
         ret = !wine_server_call_err( req );
@@ -631,10 +631,10 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
 
     SERVER_START_REQ(create_console_output)
     {
-        req->handle_in = (obj_handle_t)data->hConIn;
-        req->access    = GENERIC_WRITE|GENERIC_READ;
-        req->share     = FILE_SHARE_READ|FILE_SHARE_WRITE;
-        req->inherit   = FALSE;
+        req->handle_in  = data->hConIn;
+        req->access     = GENERIC_WRITE|GENERIC_READ;
+        req->attributes = 0;
+        req->share      = FILE_SHARE_READ|FILE_SHARE_WRITE;
         ret = !wine_server_call_err( req );
         data->hConOut  = (HANDLE)reply->handle_out;
     }

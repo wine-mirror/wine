@@ -1169,7 +1169,7 @@ static void dump_set_socket_deferred_request( const struct set_socket_deferred_r
 static void dump_alloc_console_request( const struct alloc_console_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " pid=%04x", req->pid );
 }
 
@@ -1198,7 +1198,7 @@ static void dump_open_console_request( const struct open_console_request *req )
 {
     fprintf( stderr, " from=%d,", req->from );
     fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " share=%d", req->share );
 }
 
@@ -1282,9 +1282,9 @@ static void dump_get_console_input_history_reply( const struct get_console_input
 static void dump_create_console_output_request( const struct create_console_output_request *req )
 {
     fprintf( stderr, " handle_in=%p,", req->handle_in );
-    fprintf( stderr, " access=%d,", req->access );
-    fprintf( stderr, " share=%d,", req->share );
-    fprintf( stderr, " inherit=%d", req->inherit );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " share=%08x", req->share );
 }
 
 static void dump_create_console_output_reply( const struct create_console_output_reply *req )

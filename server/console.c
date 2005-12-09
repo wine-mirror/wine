@@ -1240,7 +1240,7 @@ DECL_HANDLER(alloc_console)
     }
     if ((console = (struct console_input*)create_console_input( current )))
     {
-        if ((in = alloc_handle( renderer, console, req->access, req->inherit )))
+        if ((in = alloc_handle( renderer, console, req->access, req->attributes & OBJ_INHERIT )))
         {
             if ((evt = alloc_handle( renderer, console->evt,
                                      SYNCHRONIZE|GENERIC_READ|GENERIC_WRITE, FALSE )))
@@ -1312,7 +1312,7 @@ DECL_HANDLER(open_console)
     /* FIXME: req->share is not used (as in screen buffer creation)  */
     if (obj)
     {
-        reply->handle = alloc_handle( current->process, obj, req->access, req->inherit );
+        reply->handle = alloc_handle( current->process, obj, req->access, req->attributes & OBJ_INHERIT );
         release_object( obj );
     }
     else if (!get_error()) set_error( STATUS_ACCESS_DENIED );
@@ -1411,7 +1411,7 @@ DECL_HANDLER(create_console_output)
         /* FIXME: should store sharing and test it when opening the CONOUT$ device
          * see file.c on how this could be done */
         reply->handle_out = alloc_handle( current->process, screen_buffer,
-                                          req->access, req->inherit );
+                                          req->access, req->attributes & OBJ_INHERIT );
         release_object( screen_buffer );
     }
     release_object( console );

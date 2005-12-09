@@ -977,7 +977,7 @@ struct alloc_console_request
 {
     struct request_header __header;
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     process_id_t pid;
 };
 struct alloc_console_reply
@@ -1063,7 +1063,7 @@ struct open_console_request
     int          from;
 
     unsigned int access;
-    int          inherit;
+    unsigned int attributes;
     int          share;
 };
 struct open_console_reply
@@ -1183,9 +1183,9 @@ struct create_console_output_request
 {
     struct request_header __header;
     obj_handle_t handle_in;
-    int          access;
-    int          share;
-    int          inherit;
+    unsigned int access;
+    unsigned int attributes;
+    unsigned int share;
 };
 struct create_console_output_reply
 {
@@ -4316,6 +4316,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 209
+#define SERVER_PROTOCOL_VERSION 210
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

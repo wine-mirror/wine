@@ -230,10 +230,10 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creat
 
     SERVER_START_REQ( open_console )
     {
-        req->from    = output;
-        req->access  = access;
-	req->share   = FILE_SHARE_READ | FILE_SHARE_WRITE;
-        req->inherit = inherit;
+        req->from       = output;
+        req->access     = access;
+        req->attributes = inherit ? OBJ_INHERIT : 0;
+        req->share      = FILE_SHARE_READ | FILE_SHARE_WRITE;
         SetLastError(0);
         wine_server_call_err( req );
         ret = reply->handle;
@@ -1665,10 +1665,10 @@ HANDLE WINAPI CreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode
 
     SERVER_START_REQ(create_console_output)
     {
-	req->handle_in = 0;
-	req->access    = dwDesiredAccess;
-	req->share     = dwShareMode;
-	req->inherit   = (sa && sa->bInheritHandle);
+        req->handle_in  = 0;
+        req->access     = dwDesiredAccess;
+        req->attributes = (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+        req->share      = dwShareMode;
 	if (!wine_server_call_err( req )) ret = reply->handle_out;
     }
     SERVER_END_REQ;
