@@ -270,7 +270,7 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **re
     }
 
     /* Mach-o File with Endian set to Big Endian or Little Endian */
-    if (header.macho.magic == 0xfeedface || header.macho.magic == 0xecafdeef)
+    if (header.macho.magic == 0xfeedface || header.macho.magic == 0xcefaedfe)
     {
         switch(header.macho.filetype)
         {
