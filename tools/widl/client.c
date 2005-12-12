@@ -386,37 +386,47 @@ static void init_client(void)
 
 void write_client(ifref_t *ifaces)
 {
-    ifref_t *lcur = ifaces;
+    ifref_t *iface = ifaces;
 
     if (!do_client)
         return;
-    if (!lcur)
+    if (!iface)
         return;
-    END_OF_LIST(lcur);
+    END_OF_LIST(iface);
 
     init_client();
     if (!client)
         return;
 
-    write_formatstringsdecl(lcur->iface);
-    write_implicithandledecl(lcur->iface);
+    while (iface)
+    {
+        fprintf(client, "/*****************************************************************************\n");
+        fprintf(client, " * %s interface\n", iface->iface->name);
+        fprintf(client, " */\n");
+        fprintf(client, "\n");
 
-    write_clientinterfacedecl(lcur->iface);
-    write_stubdescdecl(lcur->iface);
-    write_bindinghandledecl(lcur->iface);
+        write_formatstringsdecl(iface->iface);
+        write_implicithandledecl(iface->iface);
 
-    write_function_stubs(lcur->iface);
-    write_stubdescriptor(lcur->iface);
+        write_clientinterfacedecl(iface->iface);
+        write_stubdescdecl(iface->iface);
+        write_bindinghandledecl(iface->iface);
 
-    print_client("#if !defined(__RPC_WIN32__)\n");
-    print_client("#error  Invalid build platform for this stub.\n");
-    print_client("#endif\n");
-    fprintf(client, "\n");
+        write_function_stubs(iface->iface);
+        write_stubdescriptor(iface->iface);
 
-    write_procformatstring(client, lcur->iface);
-    write_typeformatstring(client);
+        print_client("#if !defined(__RPC_WIN32__)\n");
+        print_client("#error  Invalid build platform for this stub.\n");
+        print_client("#endif\n");
+        fprintf(client, "\n");
 
-    fprintf(client, "\n");
+        write_procformatstring(client, iface->iface);
+        write_typeformatstring(client);
+
+        fprintf(client, "\n");
+
+        iface = PREV_LINK(iface);
+    }
 
     fclose(client);
 }
