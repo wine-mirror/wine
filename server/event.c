@@ -45,6 +45,7 @@ struct event
 static void event_dump( struct object *obj, int verbose );
 static int event_signaled( struct object *obj, struct thread *thread );
 static int event_satisfied( struct object *obj, struct thread *thread );
+static unsigned int event_map_access( struct object *obj, unsigned int access );
 static int event_signal( struct object *obj, unsigned int access);
 
 static const struct object_ops event_ops =
@@ -57,7 +58,7 @@ static const struct object_ops event_ops =
     event_satisfied,           /* satisfied */
     event_signal,              /* signal */
     no_get_fd,                 /* get_fd */
-    no_map_access,             /* map_access */
+    event_map_access,          /* map_access */
     no_lookup_name,            /* lookup_name */
     no_close_handle,           /* close_handle */
     no_destroy                 /* destroy */
@@ -130,6 +131,15 @@ static int event_satisfied( struct object *obj, struct thread *thread )
     /* Reset if it's an auto-reset event */
     if (!event->manual_reset) event->signaled = 0;
     return 0;  /* Not abandoned */
+}
+
+static unsigned int event_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYNCHRONIZE | EVENT_QUERY_STATE;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL | EVENT_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static int event_signal( struct object *obj, unsigned int access )

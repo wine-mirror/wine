@@ -45,6 +45,7 @@ struct semaphore
 static void semaphore_dump( struct object *obj, int verbose );
 static int semaphore_signaled( struct object *obj, struct thread *thread );
 static int semaphore_satisfied( struct object *obj, struct thread *thread );
+static unsigned int semaphore_map_access( struct object *obj, unsigned int access );
 static int semaphore_signal( struct object *obj, unsigned int access );
 
 static const struct object_ops semaphore_ops =
@@ -57,7 +58,7 @@ static const struct object_ops semaphore_ops =
     semaphore_satisfied,           /* satisfied */
     semaphore_signal,              /* signal */
     no_get_fd,                     /* get_fd */
-    no_map_access,                 /* map_access */
+    semaphore_map_access,          /* map_access */
     no_lookup_name,                /* lookup_name */
     no_close_handle,               /* close_handle */
     no_destroy                     /* destroy */
@@ -131,6 +132,15 @@ static int semaphore_satisfied( struct object *obj, struct thread *thread )
     assert( sem->count );
     sem->count--;
     return 0;  /* not abandoned */
+}
+
+static unsigned int semaphore_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYNCHRONIZE;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | SEMAPHORE_MODIFY_STATE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL | SEMAPHORE_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static int semaphore_signal( struct object *obj, unsigned int access )

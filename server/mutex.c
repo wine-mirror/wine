@@ -47,6 +47,7 @@ struct mutex
 static void mutex_dump( struct object *obj, int verbose );
 static int mutex_signaled( struct object *obj, struct thread *thread );
 static int mutex_satisfied( struct object *obj, struct thread *thread );
+static unsigned int mutex_map_access( struct object *obj, unsigned int access );
 static void mutex_destroy( struct object *obj );
 static int mutex_signal( struct object *obj, unsigned int access );
 
@@ -60,7 +61,7 @@ static const struct object_ops mutex_ops =
     mutex_satisfied,           /* satisfied */
     mutex_signal,              /* signal */
     no_get_fd,                 /* get_fd */
-    no_map_access,             /* map_access */
+    mutex_map_access,          /* map_access */
     no_lookup_name,            /* lookup_name */
     no_close_handle,           /* close_handle */
     mutex_destroy              /* destroy */
@@ -141,6 +142,15 @@ static int mutex_satisfied( struct object *obj, struct thread *thread )
     if (!mutex->abandoned) return 0;
     mutex->abandoned = 0;
     return 1;
+}
+
+static unsigned int mutex_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYNCHRONIZE;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | MUTEX_MODIFY_STATE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL | MUTEX_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static int mutex_signal( struct object *obj, unsigned int access )
