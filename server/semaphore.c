@@ -57,6 +57,7 @@ static const struct object_ops semaphore_ops =
     semaphore_satisfied,           /* satisfied */
     semaphore_signal,              /* signal */
     no_get_fd,                     /* get_fd */
+    no_map_access,                 /* map_access */
     no_lookup_name,                /* lookup_name */
     no_close_handle,               /* close_handle */
     no_destroy                     /* destroy */

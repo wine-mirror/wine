@@ -312,6 +312,11 @@ struct fd *no_get_fd( struct object *obj )
     return NULL;
 }
 
+unsigned int no_map_access( struct object *obj, unsigned int access )
+{
+    return access;
+}
+
 struct object *no_lookup_name( struct object *obj, struct unicode_str *name,
                                unsigned int attr )
 {

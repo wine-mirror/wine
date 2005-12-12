@@ -153,6 +153,7 @@ static const struct object_ops msg_queue_ops =
     msg_queue_satisfied,       /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
+    no_map_access,             /* map_access */
     no_lookup_name,            /* lookup_name */
     no_close_handle,           /* close_handle */
     msg_queue_destroy          /* destroy */
@@ -169,6 +170,7 @@ static const struct object_ops thread_input_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
+    no_map_access,                /* map_access */
     no_lookup_name,               /* lookup_name */
     no_close_handle,              /* close_handle */
     thread_input_destroy          /* destroy */

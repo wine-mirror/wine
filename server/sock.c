@@ -111,6 +111,7 @@ static const struct object_ops sock_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     sock_get_fd,                  /* get_fd */
+    no_map_access,                /* map_access */
     no_lookup_name,               /* lookup_name */
     no_close_handle,              /* close_handle */
     sock_destroy                  /* destroy */

@@ -62,6 +62,7 @@ static const struct object_ops directory_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
+    no_map_access,                /* map_access */
     directory_lookup_name,        /* lookup_name */
     no_close_handle,              /* close_handle */
     directory_destroy             /* destroy */

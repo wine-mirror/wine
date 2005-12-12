@@ -110,6 +110,7 @@ static const struct object_ops handle_table_ops =
     NULL,                            /* satisfied */
     no_signal,                       /* signal */
     no_get_fd,                       /* get_fd */
+    no_map_access,                   /* map_access */
     no_lookup_name,                  /* lookup_name */
     no_close_handle,                 /* close_handle */
     handle_table_destroy             /* destroy */
@@ -223,8 +224,11 @@ static obj_handle_t alloc_entry( struct handle_table *table, void *obj, unsigned
 
 /* allocate a handle for an object, incrementing its refcount */
 /* return the handle, or 0 on error */
-obj_handle_t alloc_handle( struct process *process, void *obj, unsigned int access, unsigned int attr )
+obj_handle_t alloc_handle( struct process *process, void *ptr, unsigned int access, unsigned int attr )
 {
+    struct object *obj = ptr;
+
+    access = obj->ops->map_access( obj, access );
     access &= ~RESERVED_ALL;
     if (attr & OBJ_INHERIT) access |= RESERVED_INHERIT;
     if (!process->handles)
