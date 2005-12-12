@@ -459,7 +459,7 @@ static void test_GetStandardColorSpaceProfileA(void)
     ret = pGetStandardColorSpaceProfileA( machine, 0, newprofile, &size );
     GLE = GetLastError();
     todo_wine
-    ok( !ret && GLE == ERROR_INVALID_PARAMETER, 
+    ok( !ret && (GLE == ERROR_INVALID_PARAMETER || GLE == ERROR_NOT_SUPPORTED), 
         "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );
 
     size = 0;
