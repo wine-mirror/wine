@@ -3106,8 +3106,8 @@ static int convert_eai_u2w(int unixret) {
     int i;
 
     for (i=0;ws_eai_map[i][0];i++)
-        if (ws_eai_map[i][0] == unixret)
-            return ws_eai_map[i][1];
+        if (ws_eai_map[i][1] == unixret)
+            return ws_eai_map[i][0];
     return unixret;
 }
 
