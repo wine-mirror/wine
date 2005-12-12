@@ -106,6 +106,7 @@ struct sid_and_attributes
 };
 
 static void token_dump( struct object *obj, int verbose );
+static unsigned int token_map_access( struct object *obj, unsigned int access );
 static void token_destroy( struct object *obj );
 
 static const struct object_ops token_ops =
@@ -118,7 +119,7 @@ static const struct object_ops token_ops =
     NULL,                      /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
-    no_map_access,             /* map_access */
+    token_map_access,          /* map_access */
     no_lookup_name,            /* lookup_name */
     no_close_handle,           /* close_handle */
     token_destroy              /* destroy */
@@ -129,6 +130,15 @@ static void token_dump( struct object *obj, int verbose )
 {
     fprintf( stderr, "Security token\n" );
     /* FIXME: dump token members */
+}
+
+static unsigned int token_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= TOKEN_READ;
+    if (access & GENERIC_WRITE)   access |= TOKEN_WRITE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_ALL)     access |= TOKEN_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static SID *security_sid_alloc( const SID_IDENTIFIER_AUTHORITY *idauthority, int subauthcount, const unsigned int subauth[] )
