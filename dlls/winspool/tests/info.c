@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2003, 2004 Stefan Leichter
+ * Copyright (C) 2005 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,36 +24,88 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "winspool.h"
 
+#define MAGIC_DEAD  0x00dead00
+#define DEFAULT_PRINTER_SIZE 1000
 
 static char env_x86[] = "Windows NT x86";
 static char env_win9x_case[] = "windowS 4.0";
 
+static HANDLE  hwinspool;
+static FARPROC pGetDefaultPrinterA;
+
+
+static LPSTR find_default_printer(VOID)
+{
+    static  LPSTR   default_printer = NULL;
+    static  char    buffer[DEFAULT_PRINTER_SIZE];
+    DWORD   needed;
+    DWORD   res;
+    LPSTR   ptr;
+
+    if ((default_printer == NULL) && (pGetDefaultPrinterA))
+    {
+        /* w2k and above */
+        needed = sizeof(buffer);
+        res = pGetDefaultPrinterA(buffer, &needed);
+        if(res)  default_printer = buffer;
+        trace("default_printer: '%s'\n", default_printer);
+    }
+    if (default_printer == NULL)
+    {
+        HKEY hwindows;
+        DWORD   type;
+        /* NT 3.x and above */
+        if (RegOpenKeyEx(HKEY_CURRENT_USER, 
+                        "Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows",
+                        0, KEY_QUERY_VALUE, &hwindows) == NO_ERROR) {
+
+            needed = sizeof(buffer);
+            if (RegQueryValueEx(hwindows, "device", NULL, 
+                                &type, (LPBYTE)buffer, &needed) == NO_ERROR) {
+
+                ptr = strchr(buffer, ',');
+                if (ptr) {
+                    ptr[0] = '\0';
+                    default_printer = buffer;
+                }
+            }
+            RegCloseKey(hwindows);
+        }
+        trace("default_printer: '%s'\n", default_printer);
+    }
+    if (default_printer == NULL)
+    {
+        /* win9x */
+        needed = sizeof(buffer);
+        res = GetProfileStringA("windows", "device", "*", buffer, needed);
+        if(res) {
+            ptr = strchr(buffer, ',');
+            if (ptr) {
+                ptr[0] = '\0';
+                default_printer = buffer;
+            }
+        }
+        trace("default_printer: '%s'\n", default_printer);
+    }
+    return default_printer;
+}
+
 
 static void test_default_printer(void)
 {
-#define DEFAULT_PRINTER_SIZE 1000
     BOOL    retval;
     DWORD   exact = DEFAULT_PRINTER_SIZE;
     DWORD   size;
-    FARPROC func = NULL;
-    HMODULE lib = NULL;
     char    buffer[DEFAULT_PRINTER_SIZE];
 
-    lib = GetModuleHandleA("winspool.drv");
-    if (!lib) {
-	ok( 0, "GetModuleHandleA(\"winspool.drv\") failed\n");
-	return;
-    }
-
-    func = GetProcAddress( lib, "GetDefaultPrinterA");
-    if (!func)
+    if (!pGetDefaultPrinterA)  return;
 	/* only supported on NT like OSes starting with win2k */
-	return;
 
     SetLastError(ERROR_SUCCESS);
-    retval = func( buffer, &exact);
+    retval = pGetDefaultPrinterA(buffer, &exact);
     if (!retval || !exact || !strlen(buffer) ||
 	(ERROR_SUCCESS != GetLastError())) {
 	if ((ERROR_FILE_NOT_FOUND == GetLastError()) ||
@@ -69,14 +122,14 @@ static void test_default_printer(void)
 	return;
     }
     SetLastError(ERROR_SUCCESS);
-    retval = func( NULL, NULL); 
+    retval = pGetDefaultPrinterA(NULL, NULL); 
     ok( !retval, "function result wrong! False expected\n");
     ok( ERROR_INVALID_PARAMETER == GetLastError(),
 	"Last error wrong! ERROR_INVALID_PARAMETER expected, got 0x%08lx\n",
 	GetLastError());
 
     SetLastError(ERROR_SUCCESS);
-    retval = func( buffer, NULL); 
+    retval = pGetDefaultPrinterA(buffer, NULL); 
     ok( !retval, "function result wrong! False expected\n");
     ok( ERROR_INVALID_PARAMETER == GetLastError(),
 	"Last error wrong! ERROR_INVALID_PARAMETER expected, got 0x%08lx\n",
@@ -84,7 +137,7 @@ static void test_default_printer(void)
 
     SetLastError(ERROR_SUCCESS);
     size = 0;
-    retval = func( NULL, &size); 
+    retval = pGetDefaultPrinterA(NULL, &size); 
     ok( !retval, "function result wrong! False expected\n");
     ok( ERROR_INSUFFICIENT_BUFFER == GetLastError(),
 	"Last error wrong! ERROR_INSUFFICIENT_BUFFER expected, got 0x%08lx\n",
@@ -94,7 +147,7 @@ static void test_default_printer(void)
 
     SetLastError(ERROR_SUCCESS);
     size = DEFAULT_PRINTER_SIZE;
-    retval = func( NULL, &size); 
+    retval = pGetDefaultPrinterA(NULL, &size); 
     ok( !retval, "function result wrong! False expected\n");
     ok( ERROR_INSUFFICIENT_BUFFER == GetLastError(),
 	"Last error wrong! ERROR_INSUFFICIENT_BUFFER expected, got 0x%08lx\n",
@@ -103,7 +156,7 @@ static void test_default_printer(void)
 	exact, size);
 
     size = 0;
-    retval = func( buffer, &size); 
+    retval = pGetDefaultPrinterA(buffer, &size); 
     ok( !retval, "function result wrong! False expected\n");
     ok( ERROR_INSUFFICIENT_BUFFER == GetLastError(),
 	"Last error wrong! ERROR_INSUFFICIENT_BUFFER expected, got 0x%08lx\n",
@@ -112,7 +165,7 @@ static void test_default_printer(void)
 	exact, size);
 
     size = exact;
-    retval = func( buffer, &size); 
+    retval = pGetDefaultPrinterA(buffer, &size); 
     ok( retval, "function result wrong! True expected\n");
     ok( size == exact, "Parameter size wrong! %ld expected got %ld\n",
 	exact, size);
@@ -258,8 +311,151 @@ static void test_printer_directory(void)
     HeapFree( GetProcessHeap(), 0, buffer);
 }
 
+static void test_openprinter(void)
+{
+    PRINTER_DEFAULTSA defaults;
+    HANDLE  hprinter;
+    LPSTR   default_printer;
+    DWORD   res;
+    DWORD   size;
+    CHAR    buffer[DEFAULT_PRINTER_SIZE];
+    LPSTR   ptr;
+
+    SetLastError(MAGIC_DEAD);
+    res = OpenPrinter(NULL, NULL, NULL);    
+    if((res == 0) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE))
+    {
+        trace("The Service 'Spooler' is required for this test\n");
+        return;
+    }
+    ok(!res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "returned %ld with %ld (expected '0' with ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+
+
+    /* Get Handle for the local Printserver (NT only)*/
+    hprinter = (HANDLE) MAGIC_DEAD;
+    SetLastError(MAGIC_DEAD);
+    res = OpenPrinter(NULL, &hprinter, NULL);
+    ok(res || (!res && GetLastError() == ERROR_INVALID_PARAMETER),
+        "returned %ld with %ld (expected '!=0' or '0' with ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+    if(res) {
+        ClosePrinter(hprinter);
+
+        defaults.pDatatype=NULL;
+        defaults.pDevMode=NULL;
+
+        defaults.DesiredAccess=0;
+        hprinter = (HANDLE) MAGIC_DEAD;
+        SetLastError(MAGIC_DEAD);
+        res = OpenPrinter(NULL, &hprinter, &defaults);
+        ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
+        if (res) ClosePrinter(hprinter);
+
+        defaults.DesiredAccess=-1;
+        hprinter = (HANDLE) MAGIC_DEAD;
+        SetLastError(MAGIC_DEAD);
+        res = OpenPrinter(NULL, &hprinter, &defaults);
+        ok(!res && GetLastError() == ERROR_ACCESS_DENIED,
+            "returned %ld with %ld (expected '0' with ERROR_ACCESS_DENIED)\n", 
+            res, GetLastError());
+        if (res) ClosePrinter(hprinter);
+
+    }
+
+    size = sizeof(buffer) - 3 ;
+    ptr = buffer;
+    ptr[0] = '\\';
+    ptr++;
+    ptr[0] = '\\';
+    ptr++;
+    if (GetComputerNameA(ptr, &size)) {
+
+        hprinter = (HANDLE) MAGIC_DEAD;
+        SetLastError(MAGIC_DEAD);
+        res = OpenPrinter(buffer, &hprinter, NULL);
+        todo_wine {
+        ok(res || (!res && GetLastError() == ERROR_INVALID_PARAMETER),
+            "returned %ld with %ld (expected '!=0' or '0' with ERROR_INVALID_PARAMETER)\n",
+            res, GetLastError());
+        }
+        if(res) ClosePrinter(hprinter);
+    }
+
+    /* Invalid Printername */
+    hprinter = (HANDLE) MAGIC_DEAD;
+    SetLastError(MAGIC_DEAD);
+    res = OpenPrinter("illegal,name", &hprinter, NULL);
+    ok(!res && ((GetLastError() == ERROR_INVALID_PRINTER_NAME) || 
+                (GetLastError() == ERROR_INVALID_PARAMETER) ),
+       "returned %ld with %ld (expected '0' with: ERROR_INVALID_PARAMETER or" \
+       "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
+    if(res) ClosePrinter(hprinter);
+
+
+    /* Get Handle for the default Printer */
+    if ((default_printer = find_default_printer()))
+    {
+        hprinter = (HANDLE) MAGIC_DEAD;
+        SetLastError(MAGIC_DEAD);
+        res = OpenPrinter(default_printer, &hprinter, NULL);
+        ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
+        if(res) ClosePrinter(hprinter);
+
+        defaults.pDatatype=NULL;
+        defaults.pDevMode=NULL;
+        defaults.DesiredAccess=0;
+
+        hprinter = (HANDLE) MAGIC_DEAD;
+        SetLastError(MAGIC_DEAD);
+        res = OpenPrinter(default_printer, &hprinter, &defaults);
+        ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
+        if(res) ClosePrinter(hprinter);
+
+        defaults.pDatatype="";
+
+        hprinter = (HANDLE) MAGIC_DEAD;
+        SetLastError(MAGIC_DEAD);
+        res = OpenPrinter(default_printer, &hprinter, &defaults);
+        ok(res || (!res && GetLastError() == ERROR_INVALID_DATATYPE),
+            "returned %ld with %ld (expected '!=0' or '0' with ERROR_INVALID_DATATYPE)\n",
+            res, GetLastError());
+        if(res) ClosePrinter(hprinter);
+
+
+        defaults.pDatatype=NULL;
+        defaults.DesiredAccess=PRINTER_ACCESS_USE;
+
+        hprinter = (HANDLE) MAGIC_DEAD;
+        SetLastError(MAGIC_DEAD);
+        res = OpenPrinter(default_printer, &hprinter, &defaults);
+        ok(res || (!res && GetLastError() == ERROR_ACCESS_DENIED),
+           "returned %ld with %ld (expected '!=0' or '0' with ERROR_ACCESS_DENIED)\n",
+            res, GetLastError());
+        if(res) ClosePrinter(hprinter);
+
+
+        defaults.DesiredAccess=PRINTER_ALL_ACCESS;
+        hprinter = (HANDLE) MAGIC_DEAD;
+        SetLastError(MAGIC_DEAD);
+        res = OpenPrinter(default_printer, &hprinter, &defaults);
+        ok(res || (!res && GetLastError() == ERROR_ACCESS_DENIED),
+           "returned %ld with %ld (expected '!=0' or '0' with ERROR_ACCESS_DENIED)\n",
+            res, GetLastError());
+        if(res) ClosePrinter(hprinter);
+    }
+
+}
+
 START_TEST(info)
 {
+    hwinspool = GetModuleHandleA("winspool.drv");
+    pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
+
+    find_default_printer();
+
     test_default_printer();
     test_printer_directory();
+    test_openprinter();
 }
