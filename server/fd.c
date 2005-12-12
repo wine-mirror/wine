@@ -1479,7 +1479,7 @@ int default_fd_add_queue( struct object *obj, struct wait_queue_entry *entry )
     struct fd *fd = get_obj_fd( obj );
 
     if (!fd) return 0;
-    if (list_empty( &obj->wait_queue ))  /* first on the queue */
+    if (!fd->inode && list_empty( &obj->wait_queue ))  /* first on the queue */
         set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
     add_queue( obj, entry );
     release_object( fd );
@@ -1493,7 +1493,7 @@ void default_fd_remove_queue( struct object *obj, struct wait_queue_entry *entry
 
     grab_object( obj );
     remove_queue( obj, entry );
-    if (list_empty( &obj->wait_queue ))  /* last on the queue is gone */
+    if (!fd->inode && list_empty( &obj->wait_queue ))  /* last on the queue is gone */
         set_fd_events( fd, 0 );
     release_object( obj );
     release_object( fd );
