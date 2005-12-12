@@ -83,6 +83,7 @@ struct thread_apc
 
 static void dump_thread( struct object *obj, int verbose );
 static int thread_signaled( struct object *obj, struct thread *thread );
+static unsigned int thread_map_access( struct object *obj, unsigned int access );
 static void thread_poll_event( struct fd *fd, int event );
 static void destroy_thread( struct object *obj );
 static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_only );
@@ -97,7 +98,7 @@ static const struct object_ops thread_ops =
     no_satisfied,               /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
-    no_map_access,              /* map_access */
+    thread_map_access,          /* map_access */
     no_lookup_name,             /* lookup_name */
     no_close_handle,            /* close_handle */
     destroy_thread              /* destroy */
@@ -269,6 +270,15 @@ static int thread_signaled( struct object *obj, struct thread *thread )
 {
     struct thread *mythread = (struct thread *)obj;
     return (mythread->state == TERMINATED);
+}
+
+static unsigned int thread_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYNCHRONIZE;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | SYNCHRONIZE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_ALL)     access |= THREAD_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 /* get a thread pointer from a thread id (and increment the refcount) */

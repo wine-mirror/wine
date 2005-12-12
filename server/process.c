@@ -59,6 +59,7 @@ static int running_processes;
 
 static void process_dump( struct object *obj, int verbose );
 static int process_signaled( struct object *obj, struct thread *thread );
+static unsigned int process_map_access( struct object *obj, unsigned int access );
 static void process_poll_event( struct fd *fd, int event );
 static void process_destroy( struct object *obj );
 
@@ -72,7 +73,7 @@ static const struct object_ops process_ops =
     no_satisfied,                /* satisfied */
     no_signal,                   /* signal */
     no_get_fd,                   /* get_fd */
-    no_map_access,               /* map_access */
+    process_map_access,          /* map_access */
     no_lookup_name,              /* lookup_name */
     no_close_handle,             /* close_handle */
     process_destroy              /* destroy */
@@ -413,6 +414,15 @@ static int process_signaled( struct object *obj, struct thread *thread )
 {
     struct process *process = (struct process *)obj;
     return !process->running_threads;
+}
+
+static unsigned int process_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYNCHRONIZE;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | SYNCHRONIZE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_ALL)     access |= PROCESS_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void process_poll_event( struct fd *fd, int event )
