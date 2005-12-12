@@ -221,7 +221,7 @@ DWORD ASPI_GetHCforController( int controller )
     RegCloseKey(hkeyPort);
 
     return ((--i) << 16) + atoiW(&wPortName[9]);
-};
+}
 
 int SCSI_OpenDevice( int h, int c, int t, int d )
 {
