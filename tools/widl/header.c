@@ -219,7 +219,7 @@ void write_type(FILE *h, type_t *t, var_t *v, const char *n)
         else fprintf(h, "char");
         break;
       case RPC_FC_WCHAR:
-        fprintf(h, "wchar_t");
+        fprintf(h, "WCHAR");
         break;
       case RPC_FC_USHORT:
       case RPC_FC_SHORT:
