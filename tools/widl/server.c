@@ -235,7 +235,7 @@ static void write_function_stubs(type_t *iface)
         fprintf(server, "\n");
         print_server("_pRpcMessage->BufferLength =\n");
         indent++;
-        print_server("(unsigned int)((long)_StubMsg.Buffer - (long)_pRpcMessage->Buffer);\n");
+        print_server("(unsigned int)(_StubMsg.Buffer - (unsigned char *)_pRpcMessage->Buffer);\n");
         indent--;
         indent--;
         fprintf(server, "}\n");
