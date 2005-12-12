@@ -772,6 +772,23 @@ struct create_file_reply
 
 
 
+struct open_file_object_request
+{
+    struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
+    obj_handle_t rootdir;
+    unsigned int sharing;
+    /* VARARG(filename,unicode_str); */
+};
+struct open_file_object_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+};
+
+
+
 struct alloc_file_handle_request
 {
     struct request_header __header;
@@ -3716,6 +3733,7 @@ enum request
     REQ_release_semaphore,
     REQ_open_semaphore,
     REQ_create_file,
+    REQ_open_file_object,
     REQ_alloc_file_handle,
     REQ_get_handle_fd,
     REQ_set_handle_fd,
@@ -3933,6 +3951,7 @@ union generic_request
     struct release_semaphore_request release_semaphore_request;
     struct open_semaphore_request open_semaphore_request;
     struct create_file_request create_file_request;
+    struct open_file_object_request open_file_object_request;
     struct alloc_file_handle_request alloc_file_handle_request;
     struct get_handle_fd_request get_handle_fd_request;
     struct set_handle_fd_request set_handle_fd_request;
@@ -4148,6 +4167,7 @@ union generic_reply
     struct release_semaphore_reply release_semaphore_reply;
     struct open_semaphore_reply open_semaphore_reply;
     struct create_file_reply create_file_reply;
+    struct open_file_object_reply open_file_object_reply;
     struct alloc_file_handle_reply alloc_file_handle_reply;
     struct get_handle_fd_reply get_handle_fd_reply;
     struct set_handle_fd_reply set_handle_fd_reply;
@@ -4325,6 +4345,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 215
+#define SERVER_PROTOCOL_VERSION 216
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

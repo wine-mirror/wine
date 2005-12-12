@@ -145,7 +145,8 @@ struct fd
     unsigned int         access;      /* file access (GENERIC_READ/WRITE) */
     unsigned int         sharing;     /* file sharing mode */
     int                  unix_fd;     /* unix file descriptor */
-    int                  fs_locks;    /* can we use filesystem locks for this fd? */
+    int                  fs_locks :1; /* can we use filesystem locks for this fd? */
+    int                  unmounted :1;/* has the device been unmounted? */
     int                  poll_index;  /* index of fd in poll array */
     struct list          read_q;      /* async readers of this fd */
     struct list          write_q;     /* async writers of this fd */
@@ -1210,6 +1211,7 @@ static inline void unmount_fd( struct fd *fd )
     if (fd->unix_fd != -1) close( fd->unix_fd );
 
     fd->unix_fd = -1;
+    fd->unmounted = 1;
     fd->closed->unix_fd = -1;
     fd->closed->unlink[0] = 0;
 
@@ -1232,6 +1234,7 @@ struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user )
     fd->sharing    = 0;
     fd->unix_fd    = -1;
     fd->fs_locks   = 1;
+    fd->unmounted  = 0;
     fd->poll_index = -1;
     list_init( &fd->inode_entry );
     list_init( &fd->locks );
@@ -1243,6 +1246,30 @@ struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user )
         release_object( fd );
         return NULL;
     }
+    return fd;
+}
+
+/* allocate a pseudo fd object, for objects that need to behave like files but don't have a unix fd */
+struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *user )
+{
+    struct fd *fd = alloc_object( &fd_ops );
+
+    if (!fd) return NULL;
+
+    fd->fd_ops     = fd_user_ops;
+    fd->user       = user;
+    fd->inode      = NULL;
+    fd->closed     = NULL;
+    fd->access     = 0;
+    fd->sharing    = 0;
+    fd->unix_fd    = -1;
+    fd->fs_locks   = 0;
+    fd->unmounted  = 0;
+    fd->poll_index = -1;
+    list_init( &fd->inode_entry );
+    list_init( &fd->locks );
+    list_init( &fd->read_q );
+    list_init( &fd->write_q );
     return fd;
 }
 
@@ -1409,7 +1436,11 @@ void *get_fd_user( struct fd *fd )
 /* retrieve the unix fd for an object */
 int get_unix_fd( struct fd *fd )
 {
-    if (fd->unix_fd == -1) set_error( STATUS_VOLUME_DISMOUNTED );
+    if (fd->unix_fd == -1)
+    {
+        if (fd->unmounted) set_error( STATUS_VOLUME_DISMOUNTED );
+        else set_error( STATUS_BAD_DEVICE_TYPE );
+    }
     return fd->unix_fd;
 }
 
@@ -1595,8 +1626,11 @@ static void unmount_device( struct fd *device_fd )
     struct device *device;
     struct inode *inode;
     struct fd *fd;
+    int unix_fd = get_unix_fd( device_fd );
 
-    if (device_fd->unix_fd == -1 || fstat( device_fd->unix_fd, &st ) == -1 || !S_ISBLK( st.st_mode ))
+    if (unix_fd == -1) return;
+
+    if (fstat( unix_fd, &st ) == -1 || !S_ISBLK( st.st_mode ))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
@@ -1651,6 +1685,32 @@ DECL_HANDLER(flush_file)
         }
         release_object( fd );
     }
+}
+
+/* open a file object */
+DECL_HANDLER(open_file_object)
+{
+    struct unicode_str name;
+    struct directory *root = NULL;
+    struct object *obj;
+
+    get_req_unicode_str( &name );
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    if ((obj = open_object_dir( root, &name, req->attributes, NULL )))
+    {
+        /* make sure this is a valid file object */
+        struct fd *fd = get_obj_fd( obj );
+        if (fd)
+        {
+            reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
+            release_object( fd );
+        }
+        release_object( obj );
+    }
+
+    if (root) release_object( root );
 }
 
 /* get a Unix fd to access a file */

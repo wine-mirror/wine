@@ -202,6 +202,22 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
     io->u.Status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, disposition,
                                               !(attr->Attributes & OBJ_CASE_INSENSITIVE) );
 
+    if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
+    {
+        SERVER_START_REQ( open_file_object )
+        {
+            req->access     = access;
+            req->attributes = attr->Attributes;
+            req->rootdir    = attr->RootDirectory;
+            req->sharing    = sharing;
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+            io->u.Status = wine_server_call( req );
+            *handle = reply->handle;
+        }
+        SERVER_END_REQ;
+        return io->u.Status;
+    }
+
     if (io->u.Status == STATUS_NO_SUCH_FILE &&
         disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
     {

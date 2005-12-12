@@ -604,6 +604,18 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @END
 
 
+/* Open a file object */
+@REQ(open_file_object)
+    unsigned int access;        /* wanted access rights */
+    unsigned int attributes;    /* open attributes */
+    obj_handle_t rootdir;       /* root directory */
+    unsigned int sharing;       /* sharing flags */
+    VARARG(filename,unicode_str); /* file name */
+@REPLY
+    obj_handle_t handle;        /* handle to the file */
+@END
+
+
 /* Allocate a file handle for a Unix fd */
 @REQ(alloc_file_handle)
     unsigned int access;        /* wanted access rights */

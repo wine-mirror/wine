@@ -1337,7 +1337,7 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *u
 
     /* make sure the device name is ASCII */
     for (i = 0; i < name_len; i++)
-        if (name[i] <= 32 || name[i] >= 127) return STATUS_OBJECT_NAME_NOT_FOUND;
+        if (name[i] <= 32 || name[i] >= 127) return STATUS_BAD_DEVICE_TYPE;
 
     unix_len = strlen(config_dir) + sizeof("/dosdevices/") + name_len + 1;
 
@@ -1405,7 +1405,7 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *u
         dev = NULL; /* last try */
     }
     RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-    return STATUS_OBJECT_NAME_NOT_FOUND;
+    return STATUS_BAD_DEVICE_TYPE;
 }
 
 

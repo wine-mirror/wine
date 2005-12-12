@@ -1296,6 +1296,10 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         {
             dosdev += MAKELONG( 0, 4*sizeof(WCHAR) );  /* adjust position to start of filename */
         }
+        else if (!(GetVersion() & 0x80000000))
+        {
+            dosdev = 0;
+        }
         else if (filename[4])
         {
             ret = VXD_Open( filename+4, access, sa );

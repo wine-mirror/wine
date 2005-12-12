@@ -1025,6 +1025,21 @@ static void dump_create_file_reply( const struct create_file_reply *req )
     fprintf( stderr, " handle=%p", req->handle );
 }
 
+static void dump_open_file_object_request( const struct open_file_object_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
+    fprintf( stderr, " sharing=%08x,", req->sharing );
+    fprintf( stderr, " filename=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_open_file_object_reply( const struct open_file_object_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
 static void dump_alloc_file_handle_request( const struct alloc_file_handle_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
@@ -3223,6 +3238,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_release_semaphore_request,
     (dump_func)dump_open_semaphore_request,
     (dump_func)dump_create_file_request,
+    (dump_func)dump_open_file_object_request,
     (dump_func)dump_alloc_file_handle_request,
     (dump_func)dump_get_handle_fd_request,
     (dump_func)dump_set_handle_fd_request,
@@ -3436,6 +3452,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_release_semaphore_reply,
     (dump_func)dump_open_semaphore_reply,
     (dump_func)dump_create_file_reply,
+    (dump_func)dump_open_file_object_reply,
     (dump_func)dump_alloc_file_handle_reply,
     (dump_func)dump_get_handle_fd_reply,
     (dump_func)dump_set_handle_fd_reply,
@@ -3649,6 +3666,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "release_semaphore",
     "open_semaphore",
     "create_file",
+    "open_file_object",
     "alloc_file_handle",
     "get_handle_fd",
     "set_handle_fd",
@@ -3835,6 +3853,7 @@ static const struct
     { "ACCESS_DENIED",               STATUS_ACCESS_DENIED },
     { "ACCESS_VIOLATION",            STATUS_ACCESS_VIOLATION },
     { "ALIAS_EXISTS",                STATUS_ALIAS_EXISTS },
+    { "BAD_DEVICE_TYPE",             STATUS_BAD_DEVICE_TYPE },
     { "BUFFER_OVERFLOW",             STATUS_BUFFER_OVERFLOW },
     { "BUFFER_TOO_SMALL",            STATUS_BUFFER_TOO_SMALL },
     { "CHILD_MUST_BE_VOLATILE",      STATUS_CHILD_MUST_BE_VOLATILE },
