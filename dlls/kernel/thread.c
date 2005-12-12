@@ -49,34 +49,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 
-/***********************************************************************
- *           THREAD_InitStack
- *
- * Allocate the stack of a thread.
- */
-TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
-{
-    DWORD old_prot;
-    DWORD page_size = getpagesize();
-    void *base;
-
-    stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
-    if (stack_size < 1024 * 1024) stack_size = 1024 * 1024;  /* Xlib needs a large stack */
-
-    if (!(base = VirtualAlloc( NULL, stack_size, MEM_COMMIT, PAGE_READWRITE )))
-        return NULL;
-
-    teb->DeallocationStack = base;
-    teb->Tib.StackBase     = (char *)base + stack_size;
-    teb->Tib.StackLimit    = base;  /* note: limit is lower than base since the stack grows down */
-
-    /* Setup guard pages */
-
-    VirtualProtect( base, 1, PAGE_READWRITE | PAGE_GUARD, &old_prot );
-    return teb;
-}
-
-
 struct new_thread_info
 {
     LPTHREAD_START_ROUTINE func;

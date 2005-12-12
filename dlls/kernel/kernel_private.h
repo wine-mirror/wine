@@ -115,9 +115,6 @@ extern LPVOID DOSMEM_MapDosToLinear(UINT);   /* linear DOS to Wine */
 extern UINT   DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 extern void   load_winedos(void);
 
-/* thread.c */
-extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );
-
 /* environ.c */
 extern void ENV_CopyStartupInformation(void);
 

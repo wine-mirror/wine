@@ -967,6 +967,38 @@ static BOOL process_init(void)
 
 
 /***********************************************************************
+ *           init_stack
+ *
+ * Allocate the stack of new process.
+ */
+static void *init_stack(void)
+{
+    void *base;
+    SIZE_T stack_size, page_size = getpagesize();
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
+
+    stack_size = max( nt->OptionalHeader.SizeOfStackReserve, nt->OptionalHeader.SizeOfStackCommit );
+    stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
+    if (stack_size < 1024 * 1024) stack_size = 1024 * 1024;  /* Xlib needs a large stack */
+
+    if (!(base = VirtualAlloc( NULL, stack_size, MEM_COMMIT, PAGE_READWRITE )))
+    {
+        ERR( "failed to allocate main process stack\n" );
+        ExitProcess( 1 );
+    }
+
+    /* note: limit is lower than base since the stack grows down */
+    NtCurrentTeb()->DeallocationStack = base;
+    NtCurrentTeb()->Tib.StackBase     = (char *)base + stack_size;
+    NtCurrentTeb()->Tib.StackLimit    = base;
+
+    /* setup guard page */
+    VirtualProtect( base, 1, PAGE_READWRITE | PAGE_GUARD, NULL );
+    return NtCurrentTeb()->Tib.StackBase;
+}
+
+
+/***********************************************************************
  *           start_process
  *
  * Startup routine of a new process. Runs on the new process stack.
@@ -1010,7 +1042,6 @@ void __wine_kernel_init(void)
 {
     WCHAR *main_exe_name, *p;
     char error[1024];
-    DWORD stack_size = 0;
     int file_exists;
     PEB *peb = NtCurrentTeb()->Peb;
 
@@ -1130,13 +1161,8 @@ void __wine_kernel_init(void)
     set_library_wargv( __wine_main_argv );
     if (!build_command_line( __wine_main_wargv )) goto error;
 
-    stack_size = RtlImageNtHeader(peb->ImageBaseAddress)->OptionalHeader.SizeOfStackReserve;
-
-    /* allocate main thread stack */
-    if (!THREAD_InitStack( NtCurrentTeb(), stack_size )) goto error;
-
     /* switch to the new stack */
-    wine_switch_to_stack( start_process, NULL, NtCurrentTeb()->Tib.StackBase );
+    wine_switch_to_stack( start_process, NULL, init_stack() );
 
  error:
     ExitProcess( GetLastError() );
