@@ -1039,6 +1039,8 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 /******************************************************************
  *              OpenPrinterA        [WINSPOOL.@]
  *
+ * See OpenPrinterW.
+ *
  */
 BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
 			 LPPRINTER_DEFAULTSA pDefault)
@@ -1068,6 +1070,32 @@ BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
 
 /******************************************************************
  *              OpenPrinterW        [WINSPOOL.@]
+ *
+ * Open a Printer / Printserver or a Printer-Object
+ *
+ * PARAMS
+ *  lpPrinterName [I] Name of Printserver, Printer, or Printer-Object
+ *  phPrinter     [O] The resulting Handle is stored here
+ *  pDefault      [I] PTR to Default Printer Settings or NULL
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  lpPrinterName is one of:
+ *|  Printserver (NT only): "Servername" or NULL for the local Printserver
+ *|  Printer: "PrinterName"
+ *|  Printer-Object: "PrinterName,Job xxx"
+ *|  XcvMonitor: "Servername,XcvMonitor MonitorName"
+ *|  XcvPort: "Servername,XcvPort PortName"
+ *
+ * BUGS
+ *|  Printserver not supported
+ *|  Printer-Object not supported
+ *|  XcvMonitor not supported
+ *|  XcvPort not supported
+ *|  pDefaults not supported
  *
  */
 BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
