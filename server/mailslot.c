@@ -65,6 +65,7 @@ struct mailslot
 struct mailslot_device
 {
     struct object       obj;         /* object header */
+    struct fd          *fd;          /* pseudo-fd for ioctls */
     struct namespace   *mailslots;   /* mailslot namespace */
 };
 
@@ -142,6 +143,7 @@ static const struct fd_ops mail_writer_fd_ops =
 };
 
 static void mailslot_device_dump( struct object *obj, int verbose );
+static struct fd *mailslot_device_get_fd( struct object *obj );
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                    unsigned int attr );
 static void mailslot_device_destroy( struct object *obj );
@@ -149,16 +151,26 @@ static void mailslot_device_destroy( struct object *obj );
 static const struct object_ops mailslot_device_ops =
 {
     sizeof(struct mailslot_device), /* size */
-    mailslot_device_dump,         /* dump */
-    no_add_queue,                 /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    no_satisfied,                 /* satisfied */
-    no_signal,                    /* signal */
-    no_get_fd,                    /* get_fd */
-    mailslot_device_lookup_name,  /* lookup_name */
-    no_close_handle,              /* close_handle */
-    mailslot_device_destroy       /* destroy */
+    mailslot_device_dump,           /* dump */
+    no_add_queue,                   /* add_queue */
+    NULL,                           /* remove_queue */
+    NULL,                           /* signaled */
+    no_satisfied,                   /* satisfied */
+    no_signal,                      /* signal */
+    mailslot_device_get_fd,         /* get_fd */
+    mailslot_device_lookup_name,    /* lookup_name */
+    no_close_handle,                /* close_handle */
+    mailslot_device_destroy         /* destroy */
+};
+
+static const struct fd_ops mailslot_device_fd_ops =
+{
+    default_fd_get_poll_events,   /* get_poll_events */
+    default_poll_event,           /* poll_event */
+    no_flush,                     /* flush */
+    no_get_file_info,             /* get_file_info */
+    default_fd_queue_async,       /* queue_async */
+    default_fd_cancel_async       /* cancel_async */
 };
 
 static void mailslot_destroy( struct object *obj)
@@ -248,6 +260,12 @@ static void mailslot_device_dump( struct object *obj, int verbose )
     fprintf( stderr, "Mail slot device\n" );
 }
 
+static struct fd *mailslot_device_get_fd( struct object *obj )
+{
+    struct mailslot_device *device = (struct mailslot_device *)obj;
+    return device->fd;
+}
+
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                    unsigned int attr )
 {
@@ -266,7 +284,8 @@ static void mailslot_device_destroy( struct object *obj )
 {
     struct mailslot_device *device = (struct mailslot_device*)obj;
     assert( obj->ops == &mailslot_device_ops );
-    free( device->mailslots );
+    if (device->fd) release_object( device->fd );
+    if (device->mailslots) free( device->mailslots );
 }
 
 struct mailslot_device *create_mailslot_device( struct directory *root, const struct unicode_str *name )
@@ -276,7 +295,9 @@ struct mailslot_device *create_mailslot_device( struct directory *root, const st
     if ((dev = create_named_object_dir( root, name, 0, &mailslot_device_ops )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
-        if (!(dev->mailslots = create_namespace( 7 )))
+        dev->mailslots = NULL;
+        if (!(dev->fd = alloc_pseudo_fd( &mailslot_device_fd_ops, &dev->obj )) ||
+            !(dev->mailslots = create_namespace( 7 )))
         {
             release_object( dev );
             dev = NULL;
