@@ -308,7 +308,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
             if (!get_file_size( mapping->file, &size )) goto error;
             if (!size)
             {
-                set_error( STATUS_FILE_INVALID );
+                set_error( STATUS_MAPPED_FILE_SIZE_ZERO );
                 goto error;
             }
         }
