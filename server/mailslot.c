@@ -62,16 +62,10 @@ struct mailslot
     struct list         writers;
 };
 
-struct mailslot_device
-{
-    struct object       obj;         /* object header */
-    struct fd          *fd;          /* pseudo-fd for ioctls */
-    struct namespace   *mailslots;   /* mailslot namespace */
-};
-
 /* mailslot functions */
 static void mailslot_dump( struct object*, int );
 static struct fd *mailslot_get_fd( struct object * );
+static unsigned int mailslot_map_access( struct object *obj, unsigned int access );
 static void mailslot_destroy( struct object * );
 
 static const struct object_ops mailslot_ops =
@@ -84,7 +78,7 @@ static const struct object_ops mailslot_ops =
     no_satisfied,              /* satisfied */
     no_signal,                 /* signal */
     mailslot_get_fd,           /* get_fd */
-    no_map_access,             /* map_access */
+    mailslot_map_access,       /* map_access */
     no_lookup_name,            /* lookup_name */
     no_close_handle,           /* close_handle */
     mailslot_destroy           /* destroy */
@@ -103,17 +97,19 @@ static const struct fd_ops mailslot_fd_ops =
     default_fd_cancel_async     /* cancel_async */
 };
 
+
 struct mail_writer
 {
     struct object         obj;
     struct mailslot      *mailslot;
     struct list           entry;
-    int                   access;
-    int                   sharing;
+    unsigned int          access;
+    unsigned int          sharing;
 };
 
 static void mail_writer_dump( struct object *obj, int verbose );
 static struct fd *mail_writer_get_fd( struct object *obj );
+static unsigned int mail_writer_map_access( struct object *obj, unsigned int access );
 static void mail_writer_destroy( struct object *obj);
 
 static const struct object_ops mail_writer_ops =
@@ -126,7 +122,7 @@ static const struct object_ops mail_writer_ops =
     NULL,                       /* satisfied */
     no_signal,                  /* signal */
     mail_writer_get_fd,         /* get_fd */
-    no_map_access,              /* map_access */
+    mail_writer_map_access,     /* map_access */
     no_lookup_name,             /* lookup_name */
     no_close_handle,            /* close_handle */
     mail_writer_destroy         /* destroy */
@@ -142,6 +138,14 @@ static const struct fd_ops mail_writer_fd_ops =
     mail_writer_get_info,        /* get_file_info */
     no_queue_async,              /* queue_async */
     NULL                         /* cancel_async */
+};
+
+
+struct mailslot_device
+{
+    struct object       obj;         /* object header */
+    struct fd          *fd;          /* pseudo-fd for ioctls */
+    struct namespace   *mailslots;   /* mailslot namespace */
 };
 
 static void mailslot_device_dump( struct object *obj, int verbose );
@@ -229,6 +233,15 @@ static struct fd *mailslot_get_fd( struct object *obj )
     struct mailslot *mailslot = (struct mailslot *) obj;
 
     return (struct fd *)grab_object( mailslot->fd );
+}
+
+static unsigned int mailslot_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
+    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
+    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
+    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void mailslot_queue_async( struct fd *fd, void *apc, void *user,
@@ -396,6 +409,15 @@ static struct fd *mail_writer_get_fd( struct object *obj )
     return (struct fd *)grab_object( writer->mailslot->write_fd );
 }
 
+static unsigned int mail_writer_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
+    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
+    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
+    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
 /*
  * Readers and writers cannot be mixed.
  * If there's more than one writer, all writers must open with FILE_SHARE_WRITE
@@ -409,7 +431,7 @@ static struct mail_writer *create_mail_writer( struct mailslot *mailslot, unsign
     {
         writer = LIST_ENTRY( list_head(&mailslot->writers), struct mail_writer, entry );
 
-        if (((access & GENERIC_WRITE) || (writer->access & GENERIC_WRITE)) &&
+        if (((access & (GENERIC_WRITE|FILE_WRITE_DATA)) || (writer->access & FILE_WRITE_DATA)) &&
            !((sharing & FILE_SHARE_WRITE) && (writer->sharing & FILE_SHARE_WRITE)))
         {
             set_error( STATUS_SHARING_VIOLATION );
@@ -423,8 +445,8 @@ static struct mail_writer *create_mail_writer( struct mailslot *mailslot, unsign
 
     grab_object( mailslot );
     writer->mailslot = mailslot;
-    writer->access = access;
-    writer->sharing = sharing;
+    writer->access   = mail_writer_map_access( &writer->obj, access );
+    writer->sharing  = sharing;
 
     list_add_head( &mailslot->writers, &writer->entry );
 

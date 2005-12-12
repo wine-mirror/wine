@@ -57,12 +57,13 @@ struct file
 {
     struct object       obj;        /* object header */
     struct fd          *fd;         /* file descriptor for this file */
-    unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
+    unsigned int        access;     /* file access (FILE_READ_DATA etc.) */
     unsigned int        options;    /* file options (FILE_DELETE_ON_CLOSE, FILE_SYNCHRONOUS...) */
 };
 
 static void file_dump( struct object *obj, int verbose );
 static struct fd *file_get_fd( struct object *obj );
+static unsigned int file_map_access( struct object *obj, unsigned int access );
 static void file_destroy( struct object *obj );
 
 static int file_get_poll_events( struct fd *fd );
@@ -79,7 +80,7 @@ static const struct object_ops file_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     file_get_fd,                  /* get_fd */
-    no_map_access,                /* map_access */
+    file_map_access,              /* map_access */
     no_lookup_name,               /* lookup_name */
     no_close_handle,              /* close_handle */
     file_destroy                  /* destroy */
@@ -108,7 +109,7 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
 
     if ((file = alloc_object( &file_ops )))
     {
-        file->access     = access;
+        file->access     = file_map_access( &file->obj, access );
         file->options    = FILE_SYNCHRONOUS_IO_NONALERT;
         if (!(file->fd = create_anonymous_fd( &file_fd_ops, fd, &file->obj )))
         {
@@ -125,7 +126,7 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
                                    unsigned int attrs )
 {
     struct file *file;
-    int flags;
+    int flags, rw_mode;
     char *name;
     mode_t mode;
 
@@ -144,13 +145,6 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
     default:                set_error( STATUS_INVALID_PARAMETER ); goto error;
     }
 
-    switch(access & (GENERIC_READ | GENERIC_WRITE))
-    {
-    case 0: break;
-    case GENERIC_READ:  flags |= O_RDONLY; break;
-    case GENERIC_WRITE: flags |= O_WRONLY; break;
-    case GENERIC_READ|GENERIC_WRITE: flags |= O_RDWR; break;
-    }
     mode = (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
 
     if (len >= 4 &&
@@ -159,13 +153,24 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
 
     if (!(file = alloc_object( &file_ops ))) goto error;
 
-    file->access     = access;
+    file->access     = file_map_access( &file->obj, access );
     file->options    = options;
+
+    rw_mode = 0;
+    if (file->access & FILE_UNIX_READ_ACCESS) rw_mode |= FILE_READ_DATA;
+    if (file->access & FILE_UNIX_WRITE_ACCESS) rw_mode |= FILE_WRITE_DATA;
+    switch(rw_mode)
+    {
+    case 0: break;
+    case FILE_READ_DATA:  flags |= O_RDONLY; break;
+    case FILE_WRITE_DATA: flags |= O_WRONLY; break;
+    case FILE_READ_DATA|FILE_WRITE_DATA: flags |= O_RDWR; break;
+    }
 
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
     if (!(file->fd = alloc_fd( &file_fd_ops, &file->obj )) ||
         !(file->fd = open_fd( file->fd, name, flags | O_NONBLOCK | O_LARGEFILE,
-                              &mode, access, sharing, options )))
+                              &mode, file->access, sharing, options )))
     {
         free( name );
         release_object( file );
@@ -223,8 +228,8 @@ static int file_get_poll_events( struct fd *fd )
     struct file *file = get_fd_user( fd );
     int events = 0;
     assert( file->obj.ops == &file_ops );
-    if (file->access & GENERIC_READ) events |= POLLIN;
-    if (file->access & GENERIC_WRITE) events |= POLLOUT;
+    if (file->access & FILE_UNIX_READ_ACCESS) events |= POLLIN;
+    if (file->access & FILE_UNIX_WRITE_ACCESS) events |= POLLOUT;
     return events;
 }
 
@@ -253,6 +258,15 @@ static struct fd *file_get_fd( struct object *obj )
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
     return (struct fd *)grab_object( file->fd );
+}
+
+static unsigned int file_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
+    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
+    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
+    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void file_destroy( struct object *obj )

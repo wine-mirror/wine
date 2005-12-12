@@ -900,7 +900,7 @@ DECL_HANDLER(new_process)
     info->data         = NULL;
 
     if (req->exe_file &&
-        !(info->exe_file = get_file_obj( current->process, req->exe_file, GENERIC_READ )))
+        !(info->exe_file = get_file_obj( current->process, req->exe_file, FILE_READ_DATA )))
         goto done;
 
     if (!(info->data = memdup( get_req_data(), info->data_size ))) goto done;
@@ -999,7 +999,7 @@ DECL_HANDLER(init_process_done)
     process->exe.size = req->module_size;
     process->exe.name = req->name;
 
-    if (req->exe_file) file = get_file_obj( process, req->exe_file, GENERIC_READ );
+    if (req->exe_file) file = get_file_obj( process, req->exe_file, FILE_READ_DATA );
     if (process->exe.file) release_object( process->exe.file );
     process->exe.file = file;
 
@@ -1126,7 +1126,7 @@ DECL_HANDLER(load_dll)
     struct process_dll *dll;
     struct file *file = NULL;
 
-    if (req->handle && !(file = get_file_obj( current->process, req->handle, GENERIC_READ )))
+    if (req->handle && !(file = get_file_obj( current->process, req->handle, FILE_READ_DATA )))
         return;
 
     if ((dll = process_load_dll( current->process, file, req->base,

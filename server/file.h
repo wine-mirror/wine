@@ -125,4 +125,10 @@ static inline void async_terminate_queue( struct list *queue, int status )
     while (!list_empty( queue )) async_terminate_head( queue, status );
 }
 
+/* access rights that require Unix read permission */
+#define FILE_UNIX_READ_ACCESS (FILE_READ_DATA|FILE_READ_ATTRIBUTES|FILE_READ_EA)
+
+/* access rights that require Unix write permission */
+#define FILE_UNIX_WRITE_ACCESS (FILE_WRITE_DATA|FILE_WRITE_ATTRIBUTES|FILE_WRITE_EA)
+
 #endif  /* __WINE_SERVER_FILE_H */

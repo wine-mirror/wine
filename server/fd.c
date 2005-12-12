@@ -142,7 +142,7 @@ struct fd
     struct closed_fd    *closed;      /* structure to store the unix fd at destroy time */
     struct object       *user;        /* object using this file descriptor */
     struct list          locks;       /* list of locks on this fd */
-    unsigned int         access;      /* file access (GENERIC_READ/WRITE) */
+    unsigned int         access;      /* file access (FILE_READ_DATA etc.) */
     unsigned int         sharing;     /* file sharing mode */
     int                  unix_fd;     /* unix file descriptor */
     int                  fs_locks :1; /* can we use filesystem locks for this fd? */
@@ -1302,10 +1302,10 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
         }
     }
 
-    if ((access & GENERIC_READ) && !(existing_sharing & FILE_SHARE_READ)) return 0;
-    if ((access & GENERIC_WRITE) && !(existing_sharing & FILE_SHARE_WRITE)) return 0;
-    if ((existing_access & GENERIC_READ) && !(sharing & FILE_SHARE_READ)) return 0;
-    if ((existing_access & GENERIC_WRITE) && !(sharing & FILE_SHARE_WRITE)) return 0;
+    if ((access & FILE_UNIX_READ_ACCESS) && !(existing_sharing & FILE_SHARE_READ)) return 0;
+    if ((access & FILE_UNIX_WRITE_ACCESS) && !(existing_sharing & FILE_SHARE_WRITE)) return 0;
+    if ((existing_access & FILE_UNIX_READ_ACCESS) && !(sharing & FILE_SHARE_READ)) return 0;
+    if ((existing_access & FILE_UNIX_WRITE_ACCESS) && !(sharing & FILE_SHARE_WRITE)) return 0;
     if (fd->closed->unlink[0] && !(existing_sharing & FILE_SHARE_DELETE)) return 0;
     if (unlink && !(sharing & FILE_SHARE_DELETE)) return 0;
     return 1;

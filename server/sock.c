@@ -90,6 +90,7 @@ struct sock
 static void sock_dump( struct object *obj, int verbose );
 static int sock_signaled( struct object *obj, struct thread *thread );
 static struct fd *sock_get_fd( struct object *obj );
+static unsigned int sock_map_access( struct object *obj, unsigned int access );
 static void sock_destroy( struct object *obj );
 
 static int sock_get_poll_events( struct fd *fd );
@@ -111,7 +112,7 @@ static const struct object_ops sock_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     sock_get_fd,                  /* get_fd */
-    no_map_access,                /* map_access */
+    sock_map_access,              /* map_access */
     no_lookup_name,               /* lookup_name */
     no_close_handle,              /* close_handle */
     sock_destroy                  /* destroy */
@@ -457,6 +458,15 @@ static int sock_signaled( struct object *obj, struct thread *thread )
     return check_fd_events( sock->fd, sock_get_poll_events( sock->fd ) ) != 0;
 }
 
+static unsigned int sock_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
+    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
+    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
+    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
 static int sock_get_poll_events( struct fd *fd )
 {
     struct sock *sock = get_fd_user( fd );
@@ -629,8 +639,7 @@ static struct sock *accept_socket( obj_handle_t handle )
     int	acceptfd;
     struct sockaddr	saddr;
 
-    sock=(struct sock*)get_handle_obj(current->process,handle,
-                                      GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops);
+    sock = (struct sock *)get_handle_obj( current->process, handle, FILE_READ_DATA, &sock_ops );
     if (!sock)
     	return NULL;
 
@@ -801,9 +810,8 @@ DECL_HANDLER(set_socket_event)
     struct event *old_event;
     int pollev;
 
-    if (!(sock = (struct sock*)get_handle_obj( current->process, req->handle,
-                                               GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE, &sock_ops)))
-        return;
+    if (!(sock = (struct sock *)get_handle_obj( current->process, req->handle,
+                                                FILE_WRITE_ATTRIBUTES, &sock_ops))) return;
     old_event = sock->event;
     sock->mask    = req->mask;
     sock->event   = NULL;
@@ -835,7 +843,7 @@ DECL_HANDLER(get_socket_event)
 {
     struct sock *sock;
 
-    sock=(struct sock*)get_handle_obj(current->process,req->handle,GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops);
+    sock = (struct sock *)get_handle_obj( current->process, req->handle, FILE_READ_ATTRIBUTES, &sock_ops );
     if (!sock)
     {
         reply->mask  = 0;
@@ -874,7 +882,7 @@ DECL_HANDLER(enable_socket_event)
     int pollev;
 
     if (!(sock = (struct sock*)get_handle_obj( current->process, req->handle,
-                                               GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE, &sock_ops)))
+                                               FILE_WRITE_ATTRIBUTES, &sock_ops)))
         return;
 
     sock->pmask &= ~req->mask; /* is this safe? */
@@ -895,15 +903,13 @@ DECL_HANDLER(set_socket_deferred)
 {
     struct sock *sock, *acceptsock;
 
-    sock=(struct sock*)get_handle_obj( current->process,req->handle,
-                                       GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops );
+    sock=(struct sock *)get_handle_obj( current->process, req->handle, FILE_WRITE_ATTRIBUTES, &sock_ops );
     if ( !sock )
     {
         set_error( WSAENOTSOCK );
         return;
     }
-    acceptsock = (struct sock*)get_handle_obj( current->process,req->deferred,
-                                               GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops );
+    acceptsock = (struct sock *)get_handle_obj( current->process, req->deferred, 0, &sock_ops );
     if ( !acceptsock )
     {
         release_object( sock );

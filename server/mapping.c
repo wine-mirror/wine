@@ -53,6 +53,7 @@ struct mapping
 
 static void mapping_dump( struct object *obj, int verbose );
 static struct fd *mapping_get_fd( struct object *obj );
+static unsigned int mapping_map_access( struct object *obj, unsigned int access );
 static void mapping_destroy( struct object *obj );
 
 static const struct object_ops mapping_ops =
@@ -65,7 +66,7 @@ static const struct object_ops mapping_ops =
     NULL,                        /* satisfied */
     no_signal,                   /* signal */
     mapping_get_fd,              /* get_fd */
-    no_map_access,               /* map_access */
+    mapping_map_access,          /* map_access */
     no_lookup_name,              /* lookup_name */
     no_close_handle,             /* close_handle */
     mapping_destroy              /* destroy */
@@ -164,7 +165,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 
     /* create a temp file for the mapping */
 
-    if (!(mapping->shared_file = create_temp_file( GENERIC_READ|GENERIC_WRITE ))) return 0;
+    if (!(mapping->shared_file = create_temp_file( FILE_GENERIC_READ|FILE_GENERIC_WRITE ))) return 0;
     if (!grow_file( mapping->shared_file, total_size )) goto error;
     if ((shared_fd = get_file_unix_fd( mapping->shared_file )) == -1) goto error;
 
@@ -293,8 +294,8 @@ static struct object *create_mapping( struct directory *root, const struct unico
     mapping->shared_file = NULL;
     mapping->shared_size = 0;
 
-    if (protect & VPROT_READ) access |= GENERIC_READ;
-    if (protect & VPROT_WRITE) access |= GENERIC_WRITE;
+    if (protect & VPROT_READ) access |= FILE_READ_DATA;
+    if (protect & VPROT_WRITE) access |= FILE_WRITE_DATA;
 
     if (handle)
     {
@@ -355,6 +356,15 @@ static struct fd *mapping_get_fd( struct object *obj )
 {
     struct mapping *mapping = (struct mapping *)obj;
     return get_obj_fd( (struct object *)mapping->file );
+}
+
+static unsigned int mapping_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SECTION_QUERY | SECTION_MAP_READ;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | SECTION_MAP_WRITE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE | SECTION_MAP_EXECUTE;
+    if (access & GENERIC_ALL)     access |= SECTION_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void mapping_destroy( struct object *obj )

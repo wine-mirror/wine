@@ -107,6 +107,7 @@ struct named_pipe_device
 };
 
 static void named_pipe_dump( struct object *obj, int verbose );
+static unsigned int named_pipe_map_access( struct object *obj, unsigned int access );
 static void named_pipe_destroy( struct object *obj );
 
 static const struct object_ops named_pipe_ops =
@@ -119,11 +120,14 @@ static const struct object_ops named_pipe_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
-    no_map_access,                /* map_access */
+    named_pipe_map_access,        /* map_access */
     no_lookup_name,               /* lookup_name */
     no_close_handle,              /* close_handle */
     named_pipe_destroy            /* destroy */
 };
+
+/* functions common to server and client */
+static unsigned int pipe_map_access( struct object *obj, unsigned int access );
 
 /* server end functions */
 static void pipe_server_dump( struct object *obj, int verbose );
@@ -142,7 +146,7 @@ static const struct object_ops pipe_server_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_server_get_fd,           /* get_fd */
-    no_map_access,                /* map_access */
+    pipe_map_access,              /* map_access */
     no_lookup_name,               /* lookup_name */
     no_close_handle,              /* close_handle */
     pipe_server_destroy           /* destroy */
@@ -175,7 +179,7 @@ static const struct object_ops pipe_client_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_client_get_fd,           /* get_fd */
-    no_map_access,                /* map_access */
+    pipe_map_access,              /* map_access */
     no_lookup_name,               /* lookup_name */
     no_close_handle,              /* close_handle */
     pipe_client_destroy           /* destroy */
@@ -207,7 +211,7 @@ static const struct object_ops named_pipe_device_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     named_pipe_device_get_fd,         /* get_fd */
-    no_map_access,                    /* map_access */
+    pipe_map_access,                  /* map_access */
     named_pipe_device_lookup_name,    /* lookup_name */
     no_close_handle,                  /* close_handle */
     named_pipe_device_destroy         /* destroy */
@@ -230,6 +234,15 @@ static void named_pipe_dump( struct object *obj, int verbose )
     fprintf( stderr, "Named pipe " );
     dump_object_name( &pipe->obj );
     fprintf( stderr, "\n" );
+}
+
+static unsigned int named_pipe_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | FILE_CREATE_PIPE_INSTANCE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void pipe_server_dump( struct object *obj, int verbose )
@@ -315,6 +328,15 @@ static void do_disconnect( struct pipe_server *server )
     assert( server->fd );
     release_object( server->fd );
     server->fd = NULL;
+}
+
+static unsigned int pipe_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
+    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
+    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
+    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void pipe_server_destroy( struct object *obj)

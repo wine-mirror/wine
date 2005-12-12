@@ -1408,7 +1408,7 @@ static void load_registry( struct key *key, obj_handle_t handle )
     struct file *file;
     int fd;
 
-    if (!(file = get_file_obj( current->process, handle, GENERIC_READ ))) return;
+    if (!(file = get_file_obj( current->process, handle, FILE_READ_DATA ))) return;
     fd = dup( get_file_unix_fd( file ) );
     release_object( file );
     if (fd != -1)
@@ -1550,7 +1550,7 @@ static void save_registry( struct key *key, obj_handle_t handle )
         set_error( STATUS_KEY_DELETED );
         return;
     }
-    if (!(file = get_file_obj( current->process, handle, GENERIC_WRITE ))) return;
+    if (!(file = get_file_obj( current->process, handle, FILE_WRITE_DATA ))) return;
     fd = dup( get_file_unix_fd( file ) );
     release_object( file );
     if (fd != -1)
