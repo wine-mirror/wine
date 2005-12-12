@@ -173,7 +173,7 @@ LPVOID IMalloc16_fnHeapMinimize(IMalloc16* iface) {
  * IMalloc16_Constructor [VTABLE]
  */
 LPMALLOC16
-IMalloc16_Constructor()
+IMalloc16_Constructor(void)
 {
     static IMalloc16Vtbl vt16;
     static SEGPTR msegvt16;

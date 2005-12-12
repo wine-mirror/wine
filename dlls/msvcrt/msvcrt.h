@@ -65,10 +65,10 @@ typedef long MSVCRT_clock_t;
 typedef long MSVCRT_time_t;
 typedef __int64 MSVCRT_fpos_t;
 
-typedef void (*MSVCRT_terminate_handler)();
-typedef void (*MSVCRT_terminate_function)();
-typedef void (*MSVCRT_unexpected_handler)();
-typedef void (*MSVCRT_unexpected_function)();
+typedef void (*MSVCRT_terminate_handler)(void);
+typedef void (*MSVCRT_terminate_function)(void);
+typedef void (*MSVCRT_unexpected_handler)(void);
+typedef void (*MSVCRT_unexpected_function)(void);
 typedef void (*MSVCRT__se_translator_function)(unsigned int code, struct _EXCEPTION_POINTERS *info);
 typedef void (*MSVCRT__beginthread_start_routine_t)(void *);
 typedef unsigned int (__stdcall *MSVCRT__beginthreadex_start_routine_t)(void *);

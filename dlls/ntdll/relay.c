@@ -266,8 +266,8 @@ typedef struct tagSNOOP_RETURNENTRIES {
 
 #include "poppack.h"
 
-extern void WINAPI SNOOP_Entry();
-extern void WINAPI SNOOP_Return();
+extern void WINAPI SNOOP_Entry(void);
+extern void WINAPI SNOOP_Return(void);
 
 static SNOOP_DLL *firstdll;
 static SNOOP_RETURNENTRIES *firstrets;
