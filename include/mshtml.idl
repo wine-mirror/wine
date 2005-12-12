@@ -1125,6 +1125,88 @@ interface IHTMLRuleStyle : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLDOMNode interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f5da-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDOMNode : IDispatch
+{
+    [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
+    HRESULT nodeType([retval, out] long *p);
+
+    [propget, id(DISPID_IHTMLDOMNODE_PARENTNODE)]
+    HRESULT parentNode([retval, out] IHTMLDOMNode **p);
+
+    [id(DISPID_IHTMLDOMNODE_HASCHILDNODES)]
+    HRESULT hasChildNodes([retval, out] VARIANT_BOOL *fChildren);
+
+    [propget, id(DISPID_IHTMLDOMNODE_CHILDNODES)]
+    HRESULT childNodes([retval, out] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMNODE_ATTRIBUTES)]
+    HRESULT attributes([retval, out] IDispatch **p);
+
+    [id(DISPID_IHTMLDOMNODE_INSERTBEFORE)]
+    HRESULT insertBefore([in] IHTMLDOMNode *newChild,
+                         [optional, in] VARIANT refChild,
+                         [retval, out] IHTMLDOMNode **node);
+
+    [id(DISPID_IHTMLDOMNODE_REMOVECHILD)]
+    HRESULT removeChild([in] IHTMLDOMNode *oldChild,
+                        [retval, out] IHTMLDOMNode **node);
+
+    [id(DISPID_IHTMLDOMNODE_REPLACECHILD)]
+    HRESULT replaceChild([in] IHTMLDOMNode *newChild,
+                         [in] IHTMLDOMNode* oldChild,
+                         [retval, out] IHTMLDOMNode **node);
+
+    [id(DISPID_IHTMLDOMNODE_CLONENODE)]
+    HRESULT cloneNode([in] VARIANT_BOOL fDeep,
+                      [retval, out] IHTMLDOMNode **clonedNode);
+
+    [id(DISPID_IHTMLDOMNODE_REMOVENODE)]
+    HRESULT removeNode([defaultvalue(0), in] VARIANT_BOOL fDeep,
+                       [retval, out] IHTMLDOMNode **removed);
+
+    [id(DISPID_IHTMLDOMNODE_SWAPNODE)]
+    HRESULT swapNode([in] IHTMLDOMNode *otherNode,
+                     [retval, out] IHTMLDOMNode **swappedNode);
+
+    [id(DISPID_IHTMLDOMNODE_REPLACENODE)]
+    HRESULT replaceNode([in] IHTMLDOMNode *replacement,
+                        [retval, out] IHTMLDOMNode **replaced);
+
+    [id(DISPID_IHTMLDOMNODE_APPENDCHILD)]
+    HRESULT appendChild([in] IHTMLDOMNode *newChild,
+                        [retval, out] IHTMLDOMNode **node);
+
+    [propget, id(DISPID_IHTMLDOMNODE_NODENAME)]
+    HRESULT nodeName([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLDOMNODE_NODEVALUE)]
+    HRESULT nodeValue([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOMNODE_NODEVALUE)]
+    HRESULT nodeValue([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLDOMNODE_FIRSTCHILD)]
+    HRESULT firstChild([retval, out] IHTMLDOMNode **p);
+
+    [propget, id(DISPID_IHTMLDOMNODE_LASTCHILD)]
+    HRESULT lastChild([retval, out] IHTMLDOMNode **p);
+
+    [propget, id(DISPID_IHTMLDOMNODE_PREVIOUSSIBLING)]
+    HRESULT previousSibling([retval, out] IHTMLDOMNode **p);
+
+    [propget, id(DISPID_IHTMLDOMNODE_NEXTSIBLING)]
+    HRESULT nextSibling([retval, out] IHTMLDOMNode **p);
+}
+
+/*****************************************************************************
  *    IHTMLElement interface
  */
 [
@@ -2982,6 +3064,149 @@ interface IHTMLDocument2 : IHTMLDocument
         [defaultvalue(-1), in] long lIndex,
         [retval, out] IHTMLStyleSheet **ppnewStyleSheet);
 }
+
+/*****************************************************************************
+ *    IHTMLDocument3 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f485-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDocument3 : IDispatch
+{
+    [id(DISPID_IHTMLDOCUMENT3_RELEASECAPTURE)]
+    HRESULT releaseCapture();
+
+    [id(DISPID_IHTMLDOCUMENT3_RECALC)]
+    HRESULT recalc([defaultvalue(0), in] VARIANT_BOOL fForce);
+
+    [id(DISPID_IHTMLDOCUMENT3_CREATETEXTNODE)]
+    HRESULT createTextNode([in] BSTR text,
+                           [retval, out] IHTMLDOMNode **newTextNode);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_DOCUMENTELEMENT)]
+    HRESULT documentElement([retval, out] IHTMLElement **p);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_UNIQUEID), hidden]
+    HRESULT uniqueID([retval, out] BSTR *p);
+    
+    [id(DISPID_IHTMLDOCUMENT3_ATTACHEVENT)]
+    HRESULT attachEvent([in] BSTR event,
+                        [in] IDispatch* pDisp,
+                        [retval, out] VARIANT_BOOL *pfResult);
+
+    [id(DISPID_IHTMLDOCUMENT3_DETACHEVENT)]
+    HRESULT detachEvent([in] BSTR event,
+                        [in] IDispatch *pDisp);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_ONROWSDELETE)/*, displaybind, bindable*/]
+    HRESULT onrowsdelete([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_ONROWSDELETE)/*, displaybind, bindable*/]
+    HRESULT onrowsdelete([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_ONROWSINSERTED)/*, displaybind, bindable*/]
+    HRESULT onrowsinserted([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_ONROWSINSERTED)/*, displaybind, bindable*/]
+    HRESULT onrowsinserted([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_ONCELLCHANGE)/*, displaybind, bindable*/]
+    HRESULT oncellchange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_ONCELLCHANGE)/*, displaybind, bindable*/]
+    HRESULT oncellchange([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_ONDATASETCHANGED)/*, displaybind, bindable*/]
+    HRESULT ondatasetchanged([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_ONDATASETCHANGED)/*, displaybind, bindable*/]
+    HRESULT ondatasetchanged([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_ONDATAAVAILABLE)/*, displaybind, bindable*/]
+    HRESULT ondataavailable([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_ONDATAAVAILABLE)/*, displaybind, bindable*/]
+    HRESULT ondataavailable([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_ONDATASETCOMPLETE)/*, displaybind, bindable*/]
+    HRESULT ondatasetcomplete([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_ONDATASETCOMPLETE)/*, displaybind, bindable*/]
+    HRESULT ondatasetcomplete([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_ONPROPERTYCHANGE)/*, displaybind, bindable*/]
+    HRESULT onpropertychange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_ONPROPERTYCHANGE)/*, displaybind, bindable*/]
+    HRESULT onpropertychange([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_DIR)]
+    HRESULT dir([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_DIR)]
+    HRESULT dir([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_ONCONTEXTMENU)/*, displaybind, bindable*/]
+    HRESULT oncontextmenu([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_ONCONTEXTMENU)/*, displaybind, bindable*/]
+    HRESULT oncontextmenu([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_ONSTOP)/*, displaybind, bindable*/]
+    HRESULT onstop([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_ONSTOP)/*, displaybind, bindable*/]
+    HRESULT onstop([retval, out] VARIANT *p);
+
+    [id(DISPID_IHTMLDOCUMENT3_CREATEDOCUMENTFRAGMENT)]
+    HRESULT createDocumentFragment([retval, out] IHTMLDocument2 **pNewDoc);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_PARENTDOCUMENT), hidden, restricted]
+    HRESULT parentDocument([retval, out] IHTMLDocument2 **p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_ENABLEDOWNLOAD), hidden, restricted]
+    HRESULT enableDownload([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_ENABLEDOWNLOAD), hidden, restricted]
+    HRESULT enableDownload([retval, out] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_BASEURL), hidden, restricted]
+    HRESULT baseUrl([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_BASEURL), hidden, restricted]
+    HRESULT baseUrl([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_CHILDNODES)]
+    HRESULT childNodes([retval, out] IDispatch **p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_INHERITSTYLESHEETS), hidden, restricted]
+    HRESULT inheritStyleSheets([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_INHERITSTYLESHEETS), hidden, restricted]
+    HRESULT inheritStyleSheets([retval, out] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT3_ONBEFOREEDITFOCUS)/*, displaybind, bindable*/]
+    HRESULT onbeforeeditfocus([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT3_ONBEFOREEDITFOCUS)/*, displaybind, bindable*/]
+    HRESULT onbeforeeditfocus([retval, out] VARIANT *p);
+
+    [id(DISPID_IHTMLDOCUMENT3_GETELEMENTSBYNAME)]
+    HRESULT getElementsByName([in] BSTR v,
+                              [retval, out] IHTMLElementCollection **pelColl);
+
+    [id(DISPID_IHTMLDOCUMENT3_GETELEMENTBYID)]
+    HRESULT getElementById([in] BSTR v,
+                           [retval, out] IHTMLElement **pel);
+
+    [id(DISPID_IHTMLDOCUMENT3_GETELEMENTSBYTAGNAME)]
+    HRESULT getElementsByTagName([in] BSTR v,
+                                 [retval, out] IHTMLElementCollection **pelColl);
+}
+
 
 /*****************************************************************************
  *    HTMLDocument coclass
