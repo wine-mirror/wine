@@ -369,7 +369,7 @@ static void test_GetDisplayName(void)
     }
 
     /* WinXP stores the filenames as both ANSI and UNICODE in the pidls */
-    pidlLast = ILFindLastID(pidlTestFile);
+    pidlLast = pILFindLastID(pidlTestFile);
     todo_wine { 
         ok( pidlLast->mkid.cb >= 76, "Expected pidl length of at least 76, got %d.\n", 
             pidlLast->mkid.cb);
