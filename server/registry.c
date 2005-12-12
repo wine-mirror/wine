@@ -134,6 +134,7 @@ struct file_load_info
 
 
 static void key_dump( struct object *obj, int verbose );
+static unsigned int key_map_access( struct object *obj, unsigned int access );
 static int key_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void key_destroy( struct object *obj );
 
@@ -147,7 +148,7 @@ static const struct object_ops key_ops =
     NULL,                    /* satisfied */
     no_signal,               /* signal */
     no_get_fd,               /* get_fd */
-    no_map_access,           /* map_access */
+    key_map_access,          /* map_access */
     no_lookup_name,          /* lookup_name */
     key_close_handle,        /* close_handle */
     key_destroy              /* destroy */
@@ -299,6 +300,15 @@ static inline struct notify *find_notify( struct key *key, struct process *proce
         if (notify->process == process && notify->hkey == hkey) return notify;
     }
     return NULL;
+}
+
+static unsigned int key_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= KEY_READ;
+    if (access & GENERIC_WRITE)   access |= KEY_WRITE;
+    if (access & GENERIC_EXECUTE) access |= KEY_EXECUTE;
+    if (access & GENERIC_ALL)     access |= KEY_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 /* close the notification associated with a handle */
