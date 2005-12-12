@@ -236,7 +236,7 @@ void marshall_arguments(FILE *file, int indent, func_t *func)
 
         print_file(file, indent, "*((");
         write_type(file, var->type, var, var->tname);
-        fprintf(file, " __RPC_FAR*)_StubMsg.Buffer)++ = ");
+        fprintf(file, " *)_StubMsg.Buffer)++ = ");
         write_name(file, var);
         fprintf(file, ";\n");
         fprintf(file, "\n");
@@ -306,7 +306,7 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func)
         write_name(file, var);
         fprintf(file, " = *((");
         write_type(file, var->type, var, var->tname);
-        fprintf(file, " __RPC_FAR*)_StubMsg.Buffer)++;\n");
+        fprintf(file, " *)_StubMsg.Buffer)++;\n");
         fprintf(file, "\n");
 
         last_size = size;

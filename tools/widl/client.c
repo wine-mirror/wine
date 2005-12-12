@@ -153,9 +153,9 @@ static void write_function_stubs(type_t *iface)
         print_client("NdrSendReceive(\n");
         indent++;
         print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
-        print_client("(unsigned char __RPC_FAR *)_StubMsg.Buffer);\n");
-        /* print_client("(unsigned char __RPC_FAR *)_StubMsg.Buffer,\n"); */
-        /* print_client("(RPC_BINDING_HANDLE __RPC_FAR *) &%s__MIDL_AutoBindHandle);\n", iface->name); */
+        print_client("(unsigned char *)_StubMsg.Buffer);\n");
+        /* print_client("(unsigned char *)_StubMsg.Buffer,\n"); */
+        /* print_client("(RPC_BINDING_HANDLE *) &%s__MIDL_AutoBindHandle);\n", iface->name); */
         indent--;
 
         /* unmarshal return value */
@@ -174,7 +174,7 @@ static void write_function_stubs(type_t *iface)
 
             print_client("_RetVal = *((");
             write_type(client, def->type, def, def->tname);
-            fprintf(client, " __RPC_FAR *)_StubMsg.Buffer)++;\n");
+            fprintf(client, " *)_StubMsg.Buffer)++;\n");
         }
 
         /* update proc_offset */
@@ -244,7 +244,7 @@ static void write_stubdescriptor(type_t *iface)
     print_client("static const MIDL_STUB_DESC %s_StubDesc =\n", iface->name);
     print_client("{\n");
     indent++;
-    print_client("(void __RPC_FAR *)& %s___RpcClientInterface,\n", iface->name);
+    print_client("(void *)& %s___RpcClientInterface,\n", iface->name);
     print_client("MIDL_user_allocate,\n");
     print_client("MIDL_user_free,\n");
     if (implicit_handle)

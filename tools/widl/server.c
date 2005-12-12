@@ -216,12 +216,12 @@ static void write_function_stubs(type_t *iface)
             print_server("RpcRaiseException(_Status);\n");
             indent--;
             fprintf(server, "\n");
-            print_server("_StubMsg.Buffer = (unsigned char __RPC_FAR *)_pRpcMessage->Buffer;\n");
+            print_server("_StubMsg.Buffer = (unsigned char *)_pRpcMessage->Buffer;\n");
             fprintf(server, "\n");
 
             print_server("*((");
             write_type(server, def->type, def, def->tname);
-            fprintf(server, " __RPC_FAR *)_StubMsg.Buffer)++ = _RetVal;\n");
+            fprintf(server, " *)_StubMsg.Buffer)++ = _RetVal;\n");
         }
 
         indent--;
@@ -306,7 +306,7 @@ static void write_stubdescriptor(type_t *iface)
     print_server("static const MIDL_STUB_DESC %s_StubDesc =\n", iface->name);
     print_server("{\n");
     indent++;
-    print_server("(void __RPC_FAR *)& %s___RpcServerInterface,\n", iface->name);
+    print_server("(void *)& %s___RpcServerInterface,\n", iface->name);
     print_server("MIDL_user_allocate,\n");
     print_server("MIDL_user_free,\n");
     print_server("0,\n");
