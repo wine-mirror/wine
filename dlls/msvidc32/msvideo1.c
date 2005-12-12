@@ -482,7 +482,7 @@ LRESULT WINAPI CRAM_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
                                 LPARAM lParam1, LPARAM lParam2 )
 {
     Msvideo1Context *info = (Msvideo1Context *) dwDriverId;
-    LRESULT r = 0;
+    LRESULT r = ICERR_UNSUPPORTED;
 
     TRACE("%ld %p %04x %08lx %08lx\n", dwDriverId, hdrvr, msg, lParam1, lParam2);
 

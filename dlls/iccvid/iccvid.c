@@ -978,14 +978,13 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
     case ICM_DECOMPRESSEX:
         return ICCVID_DecompressEx( info, (ICDECOMPRESSEX*) lParam1, 
                                   (DWORD) lParam2 );
-
     case DRV_CLOSE:
         return ICCVID_Close( info );
 
     default:
         FIXME("Unknown message: %04x %ld %ld\n", msg, lParam1, lParam2);
     }
-    return 0;
+    return ICERR_UNSUPPORTED;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
