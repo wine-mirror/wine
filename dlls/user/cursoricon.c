@@ -284,7 +284,7 @@ static BOOL is_dib_monochrome( const BITMAPINFO* info )
     }
     else  /* assume BITMAPINFOHEADER */
     {
-        RGBQUAD *rgb = info->bmiColors;
+        const RGBQUAD *rgb = info->bmiColors;
 
         /* Check if the first color is black */
         if ((rgb->rgbRed == 0) && (rgb->rgbGreen == 0) &&
