@@ -43,6 +43,7 @@ typedef struct BindStatusCallback BindStatusCallback;
 
 typedef struct {
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
+    const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
     const IPersistMonikerVtbl             *lpPersistMonikerVtbl;
     const IPersistFileVtbl                *lpPersistFileVtbl;
     const IMonikerPropVtbl                *lpMonikerPropVtbl;
@@ -97,6 +98,7 @@ struct NSContainer {
 };
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
+#define HTMLDOC3(x)      ((IHTMLDocument3*)               &(x)->lpHTMLDocument3Vtbl)
 #define PERSIST(x)       ((IPersist*)                     &(x)->lpPersistFileVtbl)
 #define PERSISTMON(x)    ((IPersistMoniker*)              &(x)->lpPersistMonikerVtbl)
 #define PERSISTFILE(x)   ((IPersistFile*)                 &(x)->lpPersistFileVtbl)
@@ -125,6 +127,7 @@ struct NSContainer {
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 
+void HTMLDocument_HTMLDocument3_Init(HTMLDocument*);
 void HTMLDocument_Persist_Init(HTMLDocument*);
 void HTMLDocument_OleObj_Init(HTMLDocument*);
 void HTMLDocument_View_Init(HTMLDocument*);

@@ -53,6 +53,9 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IHTMLDocument2, riid)) {
         TRACE("(%p)->(IID_IHTMLDocument2, %p)\n", This, ppvObject);
         *ppvObject = HTMLDOC(This);
+    }else if(IsEqualGUID(&IID_IHTMLDocument3, riid)) {
+        TRACE("(%p)->(IID_IHTMLDocument3, %p)\n", This, ppvObject);
+        *ppvObject = HTMLDOC3(This);
     }else if(IsEqualGUID(&IID_IPersist, riid)) {
         TRACE("(%p)->(IID_IPersist, %p)\n", This, ppvObject);
         *ppvObject = PERSIST(This);
@@ -985,6 +988,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     LOCK_MODULE();
 
+    HTMLDocument_HTMLDocument3_Init(ret);
     HTMLDocument_Persist_Init(ret);
     HTMLDocument_OleObj_Init(ret);
     HTMLDocument_View_Init(ret);

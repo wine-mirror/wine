@@ -11,6 +11,7 @@ EXTRADEFS = -DCOM_NO_WINDOWS_H
 C_SRCS = \
 	hlink.c \
 	htmldoc.c \
+	htmldoc3.c \
 	main.c \
 	nsembed.c \
 	nsservice.c\
