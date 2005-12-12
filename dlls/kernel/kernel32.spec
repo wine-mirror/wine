@@ -1255,8 +1255,3 @@
 
 # Init code
 @ cdecl __wine_kernel_init()
-
-################################################################
-# Wine dll separation hacks, these will go away, don't use them
-#
-@ cdecl DOSMEM_AllocSelector(long)

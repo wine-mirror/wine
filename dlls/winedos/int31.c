@@ -913,7 +913,9 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
             case 0xe000: entryPoint = 190; break;  /* __E000H */
             case 0xf000: entryPoint = 194; break;  /* __F000H */
             default:
-                SET_AX( context, DOSMEM_AllocSelector(BX_reg(context)) );
+                FIXME("Real mode segment (%x) to descriptor: no longer supported\n",
+                      BX_reg(context));
+                SET_CFLAG( context );
                 break;
             }
             if (entryPoint)

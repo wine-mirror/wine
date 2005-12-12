@@ -254,19 +254,3 @@ LPVOID DOSMEM_MapRealToLinear(DWORD x)
    TRACE_(selector)("(0x%08lx) returns %p.\n", x, lin );
    return lin;
 }
-
-/***********************************************************************
- *           DOSMEM_AllocSelector
- *
- * Allocates a protected mode selector for a realmode segment.
- */
-WORD DOSMEM_AllocSelector(WORD realsel)
-{
-	HMODULE16 hModule = GetModuleHandle16("KERNEL");
-	WORD	sel;
-
-	sel=GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+realsel*16, DOSMEM_64KB,
-                                hModule, WINE_LDT_FLAGS_DATA );
-	TRACE_(selector)("(0x%04x) returns 0x%04x.\n", realsel,sel);
-	return sel;
-}
