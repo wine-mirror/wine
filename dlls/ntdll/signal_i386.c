@@ -830,10 +830,10 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     }
 
     if (stack - 1 > stack || /* check for overflow in subtraction */
-        (char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit + 4096 ||
+        (char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit ||
         (char *)stack > (char *)NtCurrentTeb()->Tib.StackBase)
     {
-        UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit + 4096 - (char *)stack;
+        UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)stack;
         if (diff < 4096)
         {
             ERR( "stack overflow %u bytes in thread %04lx eip %08lx esp %08lx stack %p-%p\n",

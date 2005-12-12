@@ -201,7 +201,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     PRTL_THREAD_START_ROUTINE func = startup_info->entry_point;
     void *arg = startup_info->entry_arg;
     struct debug_info debug_info;
-    SIZE_T size;
+    SIZE_T size, page_size = getpagesize();
 
     debug_info.str_pos = debug_info.strings;
     debug_info.out_pos = debug_info.output;
@@ -219,10 +219,10 @@ static void start_thread( struct wine_pthread_thread_info *info )
                              &size, MEM_SYSTEM, PAGE_READWRITE );
     /* limit is lower than base since the stack grows down */
     teb->Tib.StackBase  = (char *)info->stack_base + info->stack_size;
-    teb->Tib.StackLimit = info->stack_base;
+    teb->Tib.StackLimit = (char *)info->stack_base + page_size;
 
     /* setup the guard page */
-    size = 1;
+    size = page_size;
     NtProtectVirtualMemory( NtCurrentProcess(), &teb->DeallocationStack, &size,
                             PAGE_READWRITE | PAGE_GUARD, NULL );
     RtlFreeHeap( GetProcessHeap(), 0, info );
@@ -252,6 +252,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     DWORD tid = 0;
     int request_pipe[2];
     NTSTATUS status;
+    SIZE_T page_size = getpagesize();
 
     if( ! is_current_process( process ) )
     {
@@ -307,6 +308,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         if (!stack_commit) stack_commit = nt->OptionalHeader.SizeOfStackCommit;
     }
     if (stack_reserve < stack_commit) stack_reserve = stack_commit;
+    stack_reserve += page_size;  /* for the guard page */
     stack_reserve = (stack_reserve + 0xffff) & ~0xffff;  /* round to 64K boundary */
     if (stack_reserve < 1024 * 1024) stack_reserve = 1024 * 1024;  /* Xlib needs a large stack */
 

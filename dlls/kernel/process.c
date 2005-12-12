@@ -978,7 +978,8 @@ static void *init_stack(void)
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
 
     stack_size = max( nt->OptionalHeader.SizeOfStackReserve, nt->OptionalHeader.SizeOfStackCommit );
-    stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
+    stack_size += page_size;  /* for the guard page */
+    stack_size = (stack_size + 0xffff) & ~0xffff;  /* round to 64K boundary */
     if (stack_size < 1024 * 1024) stack_size = 1024 * 1024;  /* Xlib needs a large stack */
 
     if (!(base = VirtualAlloc( NULL, stack_size, MEM_COMMIT, PAGE_READWRITE )))
@@ -990,7 +991,7 @@ static void *init_stack(void)
     /* note: limit is lower than base since the stack grows down */
     NtCurrentTeb()->DeallocationStack = base;
     NtCurrentTeb()->Tib.StackBase     = (char *)base + stack_size;
-    NtCurrentTeb()->Tib.StackLimit    = base;
+    NtCurrentTeb()->Tib.StackLimit    = (char *)base + page_size;
 
     /* setup guard page */
     VirtualProtect( base, 1, PAGE_READWRITE | PAGE_GUARD, NULL );

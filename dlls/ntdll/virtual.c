@@ -1196,7 +1196,7 @@ NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
             ret = STATUS_GUARD_PAGE_VIOLATION;
         }
         /* is it inside the stack guard page? */
-        if (((const char *)addr >= stack) && ((const char *)addr < stack + (page_mask+1)))
+        if (((const char *)addr >= stack - (page_mask + 1)) && ((const char *)addr < stack))
             ret = STATUS_STACK_OVERFLOW;
     }
     RtlLeaveCriticalSection( &csVirtual );
