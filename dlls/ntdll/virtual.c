@@ -1763,8 +1763,8 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         {
             int shared_fd;
 
-            if ((res = wine_server_handle_to_fd( shared_file, GENERIC_READ, &shared_fd,
-                                                 NULL ))) goto done;
+            if ((res = wine_server_handle_to_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
+                                                 &shared_fd, NULL ))) goto done;
             res = map_image( handle, unix_handle, base, size_low, header_size,
                              shared_fd, removable, addr_ptr );
             wine_server_release_fd( shared_file, shared_fd );

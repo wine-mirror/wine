@@ -484,11 +484,6 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
     obj_handle_t fd_handle;
     int ret, removable = -1, fd = -1;
 
-    /* FIXME: callers should be fixed to pass the appropriate specific rights */
-    if (access & GENERIC_READ) access |= FILE_READ_DATA;
-    if (access & GENERIC_WRITE) access |= FILE_WRITE_DATA;
-    access &= ~(GENERIC_READ|GENERIC_WRITE);
-
     RtlEnterCriticalSection( &fd_cache_section );
 
     *unix_fd = -1;

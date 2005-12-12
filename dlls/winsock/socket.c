@@ -1580,7 +1580,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
     do {
         if (is_blocking)
         {
-            int fd = get_sock_fd( s, GENERIC_READ, NULL );
+            int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
             if (fd == -1) return INVALID_SOCKET;
             /* block here */
             do_block(fd, POLLIN, -1);
@@ -1681,7 +1681,7 @@ int WINAPI WS_closesocket(SOCKET s)
  */
 int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
 {
-    int fd = get_sock_fd( s, GENERIC_READ, NULL );
+    int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
 
     TRACE("socket %04x, ptr %p %s, length %d\n", s, name, debugstr_sockaddr(name), namelen);
 
@@ -2346,7 +2346,7 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
  */
 int WINAPI WS_listen(SOCKET s, int backlog)
 {
-    int fd = get_sock_fd( s, GENERIC_READ, NULL );
+    int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
 
     TRACE("socket %04x, backlog %d\n", s, backlog);
     if (fd != -1)
@@ -2416,8 +2416,8 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
     TRACE("read %p, write %p, excp %p timeout %p\n",
           ws_readfds, ws_writefds, ws_exceptfds, ws_timeout);
 
-    p_read = fd_set_import(&readfds, ws_readfds, GENERIC_READ, &highfd, readfd);
-    p_write = fd_set_import(&writefds, ws_writefds, GENERIC_WRITE, &highfd, writefd);
+    p_read = fd_set_import(&readfds, ws_readfds, FILE_READ_DATA, &highfd, readfd);
+    p_write = fd_set_import(&writefds, ws_writefds, FILE_WRITE_DATA, &highfd, writefd);
     p_except = fd_set_import(&exceptfds, ws_exceptfds, 0, &highfd, exceptfd);
     if (ws_timeout)
     {
@@ -2514,7 +2514,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
           s, lpBuffers, dwBufferCount, dwFlags,
           to, tolen, lpOverlapped, lpCompletionRoutine);
 
-    fd = get_sock_fd( s, GENERIC_WRITE, &flags );
+    fd = get_sock_fd( s, FILE_WRITE_DATA, &flags );
     TRACE( "fd=%d, flags=%x\n", fd, flags );
 
     if ( fd == -1 ) return SOCKET_ERROR;
@@ -3880,7 +3880,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
           (lpFromlen ? *lpFromlen : -1L),
           lpOverlapped, lpCompletionRoutine);
 
-    fd = get_sock_fd( s, GENERIC_READ, &flags );
+    fd = get_sock_fd( s, FILE_READ_DATA, &flags );
     TRACE( "fd=%d, flags=%x\n", fd, flags );
 
     if (fd == -1) return SOCKET_ERROR;

@@ -125,7 +125,7 @@ static void INT13_ReadFloppyParams( CONTEXT86 *context )
     h = CreateFileW(drive_root, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
                     FILE_FLAG_BACKUP_SEMANTICS, NULL);
     if (h == INVALID_HANDLE_VALUE ||
-        wine_server_handle_to_fd(h, GENERIC_READ, &floppy_fd, NULL))
+        wine_server_handle_to_fd(h, FILE_READ_DATA, &floppy_fd, NULL))
     {
         WARN("Can't determine floppy geometry !\n");
         INT13_SetStatus( context, 0x07 ); /* drive parameter activity failed */

@@ -491,7 +491,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
     io_status->Information = 0;
-    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_READ, &unix_handle, &flags );
+    io_status->u.Status = wine_server_handle_to_fd( hFile, FILE_READ_DATA, &unix_handle, &flags );
     if (io_status->u.Status) return io_status->u.Status;
 
     if (flags & FD_FLAG_RECV_SHUTDOWN)
@@ -713,7 +713,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
     io_status->Information = 0;
-    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_WRITE, &unix_handle, &flags );
+    io_status->u.Status = wine_server_handle_to_fd( hFile, FILE_WRITE_DATA, &unix_handle, &flags );
     if (io_status->u.Status) return io_status->u.Status;
 
     if (flags & FD_FLAG_SEND_SHUTDOWN)

@@ -1202,7 +1202,7 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 
     TRACE("(%p,%p,%lu,%p,%p,%p)\n", hPipe, lpvBuffer, cbBuffer, lpcbRead, lpcbAvail, lpcbMessage);
 
-    ret = wine_server_handle_to_fd( hPipe, GENERIC_READ, &fd, &flags );
+    ret = wine_server_handle_to_fd( hPipe, FILE_READ_DATA, &fd, &flags );
     if (ret)
     {
         SetLastError( RtlNtStatusToDosError(ret) );

@@ -701,7 +701,7 @@ BOOL WINAPI SetCommBreak(
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
 
-	fd = get_comm_fd( handle, GENERIC_READ );
+	fd = get_comm_fd( handle, FILE_READ_DATA );
 	if(fd<0) return FALSE;
 	result = ioctl(fd,TIOCSBRK,0);
 	release_comm_fd( handle, fd );
@@ -738,7 +738,7 @@ BOOL WINAPI ClearCommBreak(
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
 
-	fd = get_comm_fd( handle, GENERIC_READ );
+	fd = get_comm_fd( handle, FILE_READ_DATA );
 	if(fd<0) return FALSE;
 	result = ioctl(fd,TIOCCBRK,0);
 	release_comm_fd( handle, fd );
@@ -775,7 +775,7 @@ BOOL WINAPI EscapeCommFunction(
 	struct termios	port;
 
     	TRACE("handle %p, function=%d\n", handle, nFunction);
-	fd = get_comm_fd( handle, GENERIC_READ );
+	fd = get_comm_fd( handle, FILE_READ_DATA );
 	if(fd<0) return FALSE;
 
 	if (tcgetattr(fd,&port) == -1) {
@@ -889,7 +889,7 @@ BOOL WINAPI PurgeComm(
 
      TRACE("handle %p, flags %lx\n", handle, flags);
 
-     fd = get_comm_fd( handle, GENERIC_READ );
+     fd = get_comm_fd( handle, FILE_READ_DATA );
      if(fd<0) return FALSE;
 
      /*
@@ -927,7 +927,7 @@ BOOL WINAPI ClearCommError(
 {
     int fd;
 
-    fd=get_comm_fd( handle, GENERIC_READ );
+    fd=get_comm_fd( handle, FILE_READ_DATA );
     if(0>fd) return FALSE;
 
     if (lpStat)
@@ -987,7 +987,7 @@ BOOL WINAPI SetupComm(
     int fd;
 
     FIXME("insize %ld outsize %ld unimplemented stub\n", insize, outsize);
-    fd=get_comm_fd( handle, GENERIC_READ );
+    fd=get_comm_fd( handle, FILE_READ_DATA );
     if(0>fd) return FALSE;
     release_comm_fd( handle, fd );
     return TRUE;
@@ -1085,7 +1085,7 @@ BOOL WINAPI SetCommState(
              lpdcb->fDtrControl);
              
 
-     fd = get_comm_fd( handle, GENERIC_READ );
+     fd = get_comm_fd( handle, FILE_READ_DATA );
      if (fd < 0) return FALSE;
 
      if ((tcgetattr(fd,&port)) == -1) {
@@ -1488,7 +1488,7 @@ BOOL WINAPI GetCommState(
 
      TRACE("handle %p, ptr %p\n", handle, lpdcb);
 
-     fd = get_comm_fd( handle, GENERIC_READ );
+     fd = get_comm_fd( handle, FILE_READ_DATA );
      if (fd < 0) return FALSE;
      if (tcgetattr(fd, &port) == -1) {
                 int save_error=errno;
@@ -1821,7 +1821,7 @@ BOOL WINAPI SetCommTimeouts(
     if (!ret) return FALSE;
 
     /* FIXME: move this stuff to the server */
-    fd = get_comm_fd( hComm, GENERIC_READ );
+    fd = get_comm_fd( hComm, FILE_READ_DATA );
     if (fd < 0) return FALSE;
 
     if (-1==tcgetattr(fd,&tios)) {
@@ -1876,7 +1876,7 @@ BOOL WINAPI GetCommModemStatus(
 
 	*lpModemStat=0;
 #ifdef TIOCMGET
-	fd = get_comm_fd( hFile, GENERIC_READ );
+	fd = get_comm_fd( hFile, FILE_READ_DATA );
 	if(fd<0)
 		return FALSE;
 	result = ioctl(fd, TIOCMGET, &mstat);
@@ -1980,7 +1980,7 @@ static DWORD WINAPI COMM_WaitCommEventService(LPVOID arg)
     serial_irq_info new_irq_info;
     DWORD new_mstat, new_evtmask;
 
-    fd=get_comm_fd( commio->handle, GENERIC_READ );
+    fd=get_comm_fd( commio->handle, FILE_READ_DATA );
 
     TRACE("handle %p fd 0x%08x, mask 0x%08lx buffer %p event %p irq_info %p waitmask 0x%08x\n", 
 	  commio->handle, fd, commio->evtmask, commio->buffer, commio->hEvent, &commio->irq_info, waitmask);
@@ -2038,7 +2038,7 @@ static BOOL COMM_WaitCommEvent(
     if (NtResetEvent(lpOverlapped->hEvent,NULL))
         return FALSE;
 
-    fd = get_comm_fd( hFile, GENERIC_WRITE );
+    fd = get_comm_fd( hFile, FILE_WRITE_DATA );
     if (fd < 0) return FALSE;
 
     commio = HeapAlloc(GetProcessHeap(), 0, sizeof (async_commio));
