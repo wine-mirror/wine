@@ -39,6 +39,7 @@
 #include "windef.h"
 
 #include "widl.h"
+#include "typegen.h"
 
 static int print_file(FILE *file, int indent, const char *format, ...)
 {
@@ -75,6 +76,7 @@ static void write_procformatstring_var(FILE *file, int indent, var_t *var)
     CASE_BASETYPE(FC_SMALL);
     CASE_BASETYPE(FC_FLOAT);
     CASE_BASETYPE(FC_DOUBLE);
+    CASE_BASETYPE(FC_ERROR_STATUS_T);
 #undef CASE_BASETYPE
     default:
         error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
