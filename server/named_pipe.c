@@ -102,6 +102,7 @@ struct named_pipe
 struct named_pipe_device
 {
     struct object       obj;         /* object header */
+    struct fd          *fd;          /* pseudo-fd for ioctls */
     struct namespace   *pipes;       /* named pipe namespace */
 };
 
@@ -188,6 +189,7 @@ static const struct fd_ops pipe_client_fd_ops =
 };
 
 static void named_pipe_device_dump( struct object *obj, int verbose );
+static struct fd *named_pipe_device_get_fd( struct object *obj );
 static struct object *named_pipe_device_lookup_name( struct object *obj,
     struct unicode_str *name, unsigned int attr );
 static void named_pipe_device_destroy( struct object *obj );
@@ -201,10 +203,20 @@ static const struct object_ops named_pipe_device_ops =
     NULL,                             /* signaled */
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
-    no_get_fd,                        /* get_fd */
+    named_pipe_device_get_fd,         /* get_fd */
     named_pipe_device_lookup_name,    /* lookup_name */
     no_close_handle,                  /* close_handle */
     named_pipe_device_destroy         /* destroy */
+};
+
+static const struct fd_ops named_pipe_device_fd_ops =
+{
+    default_fd_get_poll_events,   /* get_poll_events */
+    default_poll_event,           /* poll_event */
+    no_flush,                     /* flush */
+    no_get_file_info,             /* get_file_info */
+    default_fd_queue_async,       /* queue_async */
+    default_fd_cancel_async       /* cancel_async */
 };
 
 static void named_pipe_dump( struct object *obj, int verbose )
@@ -370,6 +382,12 @@ static void named_pipe_device_dump( struct object *obj, int verbose )
     fprintf( stderr, "Named pipe device\n" );
 }
 
+static struct fd *named_pipe_device_get_fd( struct object *obj )
+{
+    struct named_pipe_device *device = (struct named_pipe_device *)obj;
+    return device->fd;
+}
+
 static struct object *named_pipe_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                      unsigned int attr )
 {
@@ -389,7 +407,8 @@ static void named_pipe_device_destroy( struct object *obj )
 {
     struct named_pipe_device *device = (struct named_pipe_device*)obj;
     assert( obj->ops == &named_pipe_device_ops );
-    free( device->pipes );
+    if (device->fd) release_object( device->fd );
+    if (device->pipes) free( device->pipes );
 }
 
 /* this will be deleted as soon an we fix wait_named_pipe */
@@ -403,7 +422,9 @@ struct named_pipe_device *create_named_pipe_device( struct directory *root,
     if ((dev = create_named_object_dir( root, name, 0, &named_pipe_device_ops )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
-        if (!(dev->pipes = create_namespace( 7 )))
+        dev->pipes = NULL;
+        if (!(dev->fd = alloc_pseudo_fd( &named_pipe_device_fd_ops, &dev->obj )) ||
+            !(dev->pipes = create_namespace( 7 )))
         {
             release_object( dev );
             dev = NULL;
