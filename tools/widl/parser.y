@@ -585,7 +585,7 @@ m_int:
 
 int_std:  tINT					{ $$ = make_type(RPC_FC_LONG, &std_int); } /* win32 only */
 	| tSHORT m_int				{ $$ = make_type(RPC_FC_SHORT, NULL); }
-	| tSMALL				{ $$ = make_type(RPC_FC_SHORT, NULL); }
+	| tSMALL				{ $$ = make_type(RPC_FC_SMALL, NULL); }
 	| tLONG m_int				{ $$ = make_type(RPC_FC_LONG, NULL); }
 	| tHYPER m_int				{ $$ = make_type(RPC_FC_HYPER, NULL); }
 	| tINT64				{ $$ = make_type(RPC_FC_HYPER, &std_int64); }

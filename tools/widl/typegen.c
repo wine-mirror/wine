@@ -71,6 +71,7 @@ static void write_procformatstring_var(FILE *file, int indent, var_t *var)
     CASE_BASETYPE(FC_LONG);
     CASE_BASETYPE(FC_HYPER);
     CASE_BASETYPE(FC_IGNORE);
+    CASE_BASETYPE(FC_USMALL);
     CASE_BASETYPE(FC_SMALL);
     CASE_BASETYPE(FC_FLOAT);
     CASE_BASETYPE(FC_DOUBLE);
@@ -162,6 +163,8 @@ unsigned int get_required_buffer_size(type_t *type)
         case RPC_FC_WCHAR:
         case RPC_FC_USHORT:
         case RPC_FC_SHORT:
+        case RPC_FC_USMALL:
+        case RPC_FC_SMALL:
         case RPC_FC_ULONG:
         case RPC_FC_LONG:
         case RPC_FC_FLOAT:
@@ -198,6 +201,8 @@ void marshall_arguments(FILE *file, int indent, func_t *func)
         {
         case RPC_FC_BYTE:
         case RPC_FC_CHAR:
+        case RPC_FC_SMALL:
+        case RPC_FC_USMALL:
             size = 1;
             alignment = 0;
             break;
@@ -266,6 +271,8 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func)
         {
         case RPC_FC_BYTE:
         case RPC_FC_CHAR:
+        case RPC_FC_SMALL:
+        case RPC_FC_USMALL:
             size = 1;
             alignment = 0;
             break;
