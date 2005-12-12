@@ -124,6 +124,7 @@ static void write_function_stubs(type_t *iface)
 {
     func_t *func = iface->funcs;
     char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
     var_t *var;
     int method_count = 0;
     unsigned int proc_offset = 0;
@@ -132,6 +133,26 @@ static void write_function_stubs(type_t *iface)
     while (func)
     {
         var_t *def = func->def;
+        var_t* explicit_handle_var;
+
+        /* check for a defined binding handle */
+        explicit_handle_var = get_explicit_handle_var(func);
+        if (explicit_handle)
+        {
+            if (!explicit_handle_var)
+            {
+                error("%s() does not define an explicit binding handle!\n", def->name);
+                return;
+            }
+        }
+        else if (implicit_handle)
+        {
+            if (explicit_handle_var)
+            {
+                error("%s() must not define a binding handle!\n", def->name);
+                return;
+            }
+        }
 
         write_type(client, def->type, def, def->tname);
         fprintf(client, " ");
@@ -157,7 +178,7 @@ static void write_function_stubs(type_t *iface)
             fprintf(client, " _RetVal;\n");
         }
 
-        if (implicit_handle)
+        if (implicit_handle || explicit_handle_var)
             print_client("RPC_BINDING_HANDLE _Handle = 0;\n");
 
         print_client("RPC_MESSAGE _RpcMessage;\n");
@@ -181,6 +202,11 @@ static void write_function_stubs(type_t *iface)
             print_client("_Handle = %s;\n", implicit_handle);
             fprintf(client, "\n");
         }
+        else if (explicit_handle_var)
+        {
+            print_client("_Handle = %s;\n", explicit_handle_var->name);
+            fprintf(client, "\n");
+        }
 
         /* emit the message buffer size */
         print_client("_StubMsg.BufferLength =");
@@ -191,7 +217,7 @@ static void write_function_stubs(type_t *iface)
         indent++;
         print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
         print_client("_StubMsg.BufferLength,\n");
-        if (implicit_handle)
+        if (implicit_handle || explicit_handle_var)
             print_client("_Handle);\n");
         else
             print_client("%s__MIDL_AutoBindHandle);\n", iface->name);

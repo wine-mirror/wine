@@ -89,14 +89,36 @@ static void write_parameters_init(func_t *func)
 
 static void write_function_stubs(type_t *iface)
 {
+    char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
     func_t *func = iface->funcs;
     var_t *var;
+    var_t* explicit_handle_var;
     unsigned int proc_offset = 0;
 
     while (NEXT_LINK(func)) func = NEXT_LINK(func);
     while (func)
     {
         var_t *def = func->def;
+
+        /* check for a defined binding handle */
+        explicit_handle_var = get_explicit_handle_var(func);
+        if (explicit_handle)
+        {
+            if (!explicit_handle_var)
+            {
+                error("%s() does not define an explicit binding handle!\n", def->name);
+                return;
+            }
+        }
+        else if (implicit_handle)
+        {
+            if (explicit_handle_var)
+            {
+                error("%s() must not define a binding handle!\n", def->name);
+                return;
+            }
+        }
 
         write_type(server, def->type, def, def->tname);
         fprintf(server, " __RPC_STUB\n");
@@ -151,6 +173,12 @@ static void write_function_stubs(type_t *iface)
         fprintf(server, "\n");
 
         write_parameters_init(func);
+
+        if (explicit_handle_var)
+        {
+            print_server("%s = _pRpcMessage->Handle;\n", explicit_handle_var->name);
+            fprintf(server, "\n");
+        }
 
         print_server("RpcTryFinally\n");
         print_server("{\n");

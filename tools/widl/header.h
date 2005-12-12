@@ -42,5 +42,6 @@ extern void write_constdef(var_t *v);
 extern void write_externdef(var_t *v);
 extern void write_library(const char *name, attr_t *attr);
 extern void write_user_types(void);
+extern var_t* get_explicit_handle_var(func_t* func);
 
 #endif
