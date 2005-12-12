@@ -51,38 +51,47 @@ WINE_DEFAULT_DEBUG_CHANNEL(dosmem);
 static char *DOSMEM_dosmem;
 static char *DOSMEM_sysmem;
 
-/* use 2 low bits of 'size' for the housekeeping */
-#define DM_BLOCK_DEBUG		0xABE00000
-#define DM_BLOCK_TERMINAL	0x00000001
-#define DM_BLOCK_FREE		0x00000002
-#define DM_BLOCK_MASK		0x001FFFFC
+/*
+ * Memory Control Block (MCB) definition
+ * FIXME: implement Allocation Strategy
+ */
+
+#define MCB_DUMP(mc) \
+    TRACE ("MCB_DUMP base=%p type=%02xh psp=%04xh size=%04xh\n", mc, mc->type, mc->psp , mc->size )
+ 
+#define MCB_NEXT(mc) \
+    (MCB*) ((mc->type==MCB_TYPE_LAST) ? NULL : (char*)(mc) + ((mc->size + 1) << 4) )
+
+/* FIXME: should we check more? */
+#define MCB_VALID(mc) \
+    ((mc->type==MCB_TYPE_NORMAL) || (mc->type==MCB_TYPE_LAST))
+
+
+#define MCB_TYPE_NORMAL    0x4d
+#define MCB_TYPE_LAST      0x5a
+
+#define MCB_PSP_DOS        0x0060  
+#define MCB_PSP_FREE       0
+
+#include "pshpack1.h"
+typedef struct {
+    BYTE type;
+    WORD psp;     /* segment of owner psp */
+    WORD size;    /* in paragraphs */
+    BYTE pad[3];
+    BYTE name[8];
+} MCB;
+#include "poppack.h"
 
 /*
 #define __DOSMEM_DEBUG__
  */
 
-typedef struct {
-   unsigned	size;
-} dosmem_entry;
-
-typedef struct {
-  unsigned      blocks;
-  unsigned      free;
-} dosmem_info;
-
-static inline dosmem_entry* next_block(dosmem_entry* block)
-{
-    return (dosmem_entry*)((char*)block +
-                           sizeof(dosmem_entry) + (block->size & DM_BLOCK_MASK));
-}
-
 #define VM_STUB(x) (0x90CF00CD|(x<<8)) /* INT x; IRET; NOP */
 #define VM_STUB_SEGMENT 0xf000         /* BIOS segment */
 
-/* FIXME: this should be moved to the LOL, and the whole allocation strategy
- * should use real MCB
- */
-static dosmem_info* DOSMEM_info_block;
+/* FIXME: this should be moved to the LOL */
+static MCB* DOSMEM_root_block;
 
 /***********************************************************************
  *           DOSMEM_MemoryTop
@@ -92,18 +101,6 @@ static dosmem_info* DOSMEM_info_block;
 static char *DOSMEM_MemoryTop(void)
 {
     return DOSMEM_dosmem+0x9FFFC; /* 640K */
-}
-
-/***********************************************************************
- *           DOSMEM_RootBlock
- *
- * Gets the DOS memory root block.
- */
-static dosmem_entry *DOSMEM_RootBlock(void)
-{
-    /* first block has to be paragraph-aligned */
-    return (dosmem_entry*)(((char*)DOSMEM_info_block) +
-                           ((((sizeof(dosmem_info) + 0xf) & ~0xf) - sizeof(dosmem_entry))));
 }
 
 /***********************************************************************
@@ -234,78 +231,82 @@ void BiosTick( WORD timer )
 }
 
 /***********************************************************************
+ *           DOSMEM_Collapse
+ *
+ * Helper function for internal use only.
+ * Atach all following free blocks to this one, even if this one is not free.
+ */
+void DOSMEM_Collapse( MCB* mcb )
+{
+    MCB* next = MCB_NEXT( mcb );
+
+    while (next && next->psp == MCB_PSP_FREE)
+    {
+        mcb->size = mcb->size + next->size + 1;
+        mcb->type = next->type;    /* make sure keeping MCB_TYPE_LAST */
+        next = MCB_NEXT( next );
+    }
+}
+
+/***********************************************************************
  *           DOSMEM_AllocBlock
  *
  * Carve a chunk of the DOS memory block (without selector).
  */
 LPVOID DOSMEM_AllocBlock(UINT size, UINT16* pseg)
 {
-   UINT  	 blocksize;
-   char         *block = NULL;
-   dosmem_info  *info_block = DOSMEM_info_block;
-   dosmem_entry *dm;
-#ifdef __DOSMEM_DEBUG_
-   dosmem_entry *prev = NULL;
-#endif
+    MCB *curr = DOSMEM_root_block;
+    MCB *next = NULL;
+    WORD psp = DOSVM_psp;
+    
+    if (!psp)
+        psp = MCB_PSP_DOS;
+    
+    *pseg = 0;
+    
+    TRACE( "(%04xh)\n", size );
+    
+    /* round up to paragraph */
+    size = (size + 15) >> 4;
 
-   if( size > info_block->free ) return NULL;
-   dm = DOSMEM_RootBlock();
-
-   while (dm && dm->size != DM_BLOCK_TERMINAL)
-   {
 #ifdef __DOSMEM_DEBUG__
-       if( (dm->size & DM_BLOCK_DEBUG) != DM_BLOCK_DEBUG )
-       {
-	    WARN("MCB overrun! [prev = 0x%08x]\n", 4 + (UINT)prev);
-	    return NULL;
-       }
-       prev = dm;
+    DOSMEM_Available();     /* checks the whole MCB list */
 #endif
-       if( dm->size & DM_BLOCK_FREE )
-       {
-	   dosmem_entry  *next = next_block(dm);
-
-	   while ( next->size & DM_BLOCK_FREE ) /* collapse free blocks */
-	   {
-	       dm->size += sizeof(dosmem_entry) + (next->size & DM_BLOCK_MASK);
-	       next->size = (DM_BLOCK_FREE | DM_BLOCK_TERMINAL);
-	       next = next_block(dm);
-	   }
-
-	   blocksize = dm->size & DM_BLOCK_MASK;
-	   if( blocksize >= size )
-           {
-	       block = ((char*)dm) + sizeof(dosmem_entry);
-	       if( blocksize - size > 0x20 )
-	       {
-		   /* split dm so that the next one stays
-		    * paragraph-aligned (and dm loses free bit) */
-
-	           dm->size = (((size + 0xf + sizeof(dosmem_entry)) & ~0xf) -
-			         	      sizeof(dosmem_entry));
-	           next = (dosmem_entry*)(((char*)dm) +
-	 		   sizeof(dosmem_entry) + dm->size);
-	           next->size = (blocksize - (dm->size +
-			   sizeof(dosmem_entry))) | DM_BLOCK_FREE
-#ifdef __DOSMEM_DEBUG__
-					          | DM_BLOCK_DEBUG
-#endif
-						  ;
-	       } else dm->size &= DM_BLOCK_MASK;
-
-	       info_block->blocks++;
-	       info_block->free -= dm->size;
-	       if( pseg ) *pseg = (block - DOSMEM_dosmem) >> 4;
-#ifdef __DOSMEM_DEBUG__
-               dm->size |= DM_BLOCK_DEBUG;
-#endif
-	       break;
-	   }
- 	   dm = next;
-       }
-       else dm = next_block(dm);
-   }
-   return (LPVOID)block;
+    
+    /* loop over all MCB and search the next large enough MCB */
+    while (curr)
+    {
+        if (!MCB_VALID (curr))
+        {
+            ERR( "MCB List Corrupt\n" );
+            MCB_DUMP( curr );
+            return NULL;
+        }
+        if (curr->psp == MCB_PSP_FREE)
+        {
+            DOSMEM_Collapse( curr );            
+            /* is it large enough (one paragaph for the MCB)? */
+            if (curr->size >= size)
+            {
+                if (curr->size > size)
+                {
+                    /* split curr */
+                    next = (MCB *) ((char*) curr + ((size+1) << 4));
+                    next->psp = MCB_PSP_FREE;
+                    next->size = curr->size - (size+1);
+                    next->type = curr->type;
+                    curr->type = MCB_TYPE_NORMAL;
+                    curr->size = size;
+                }
+                /* curr is the found block */
+                curr->psp = psp;
+                if( pseg ) *pseg = (((char*)curr) + 16 - (char*)DOSMEM_dosmem) >> 4;
+                return (LPVOID) ((char*)curr + 16);
+            }
+        }
+        curr = MCB_NEXT(curr);
+    }
+    return NULL;
 }
 
 /***********************************************************************
@@ -313,28 +314,24 @@ LPVOID DOSMEM_AllocBlock(UINT size, UINT16* pseg)
  */
 BOOL DOSMEM_FreeBlock(void* ptr)
 {
-   dosmem_info  *info_block = DOSMEM_info_block;
+    MCB* mcb = (MCB*) ((char*)ptr - 16);
+    
+    TRACE( "(%p)\n", ptr );
 
-   if( ptr >= (void*)(((char*)DOSMEM_RootBlock()) + sizeof(dosmem_entry)) &&
-       ptr < (void*)DOSMEM_MemoryTop() && !((((char*)ptr)
-                  - DOSMEM_dosmem) & 0xf) )
-   {
-       dosmem_entry  *dm = (dosmem_entry*)(((char*)ptr) - sizeof(dosmem_entry));
-
-       if( !(dm->size & (DM_BLOCK_FREE | DM_BLOCK_TERMINAL))
 #ifdef __DOSMEM_DEBUG__
-	 && ((dm->size & DM_BLOCK_DEBUG) == DM_BLOCK_DEBUG )
+    DOSMEM_Available();
 #endif
-	 )
-       {
-	     info_block->blocks--;
-	     info_block->free += dm->size;
-
-	     dm->size |= DM_BLOCK_FREE;
-	     return TRUE;
-       }
-   }
-   return FALSE;
+    
+    if (!MCB_VALID (mcb))
+    {
+        ERR( "MCB invalid\n" );
+        MCB_DUMP( mcb );
+        return FALSE;
+    }
+    
+    mcb->psp = MCB_PSP_FREE;
+    DOSMEM_Collapse( mcb );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -345,72 +342,55 @@ BOOL DOSMEM_FreeBlock(void* ptr)
  * If exact is TRUE, returned value is either old or requested block
  * size. If exact is FALSE, block is expanded even if there is not
  * enough space for full requested block size.
+ *
+ * TODO: return also biggest block size
  */
 UINT DOSMEM_ResizeBlock(void *ptr, UINT size, BOOL exact)
 {
-   char         *block = NULL;
-   dosmem_info  *info_block = DOSMEM_info_block;
-   dosmem_entry *dm;
-   dosmem_entry *next;
-   UINT blocksize;
-   UINT orgsize;
+    MCB* mcb = (MCB*) ((char*)ptr - 16);
+    MCB* next;
+    
+    TRACE( "(%p,%04xh,%s)\n", ptr, size, exact ? "TRUE" : "FALSE" );
+    
+    /* round up to paragraph */
+    size = (size + 15) >> 4;
 
-   if( (ptr < (void*)(sizeof(dosmem_entry) + (char*)DOSMEM_RootBlock())) ||
-       (ptr >= (void*)DOSMEM_MemoryTop()) ||
-       (((((char*)ptr) - DOSMEM_dosmem) & 0xf) != 0) )
-     return (UINT)-1;
+#ifdef __DOSMEM_DEBUG__
+    DOSMEM_Available();
+#endif
+    
+    if (!MCB_VALID (mcb))
+    {
+        ERR( "MCB invalid\n" );
+        MCB_DUMP( mcb );
+        return -1;
+    }
 
-   dm = (dosmem_entry*)(((char*)ptr) - sizeof(dosmem_entry));
-   if( dm->size & (DM_BLOCK_FREE | DM_BLOCK_TERMINAL) )
-       return (UINT)-1;
+    /* resize needed? */
+    if (mcb->size == size)
+        return size;
 
-   next = next_block(dm);
-   orgsize = dm->size & DM_BLOCK_MASK;
-
-   /* collapse free blocks */
-   while ( next->size & DM_BLOCK_FREE )
-   {
-       dm->size += sizeof(dosmem_entry) + (next->size & DM_BLOCK_MASK);
-       next->size = (DM_BLOCK_FREE | DM_BLOCK_TERMINAL);
-       next = next_block(dm);
-   }
-
-   blocksize = dm->size & DM_BLOCK_MASK;
-
-   /*
-    * If collapse didn't help we either expand block to maximum
-    * available size (exact == FALSE) or give collapsed blocks
-    * back to free storage (exact == TRUE).
-    */
-   if (blocksize < size)
-       size = exact ? orgsize : blocksize;
-
-   block = ((char*)dm) + sizeof(dosmem_entry);
-   if( blocksize - size > 0x20 )
-   {
-       /*
-        * split dm so that the next one stays
-        * paragraph-aligned (and next gains free bit) 
-        */
-
-       dm->size = (((size + 0xf + sizeof(dosmem_entry)) & ~0xf) -
-                   sizeof(dosmem_entry));
-       next = (dosmem_entry*)(((char*)dm) +
-                              sizeof(dosmem_entry) + dm->size);
-       next->size = (blocksize - (dm->size +
-                                  sizeof(dosmem_entry))) | DM_BLOCK_FREE;
-   } 
-   else 
-   {
-       dm->size &= DM_BLOCK_MASK;
-   }
-
-   /*
-    * Adjust available memory if block size changes.
-    */
-   info_block->free += orgsize - dm->size;
-
-   return size;
+    /* collapse free blocks */
+    DOSMEM_Collapse( mcb );    
+    
+    /* shrink mcb ? */
+    if (mcb->size > size)
+    {
+        next = (MCB *) ((char*)mcb + ((size+1) << 4));
+        next->type = mcb->type;
+        next->psp = MCB_PSP_FREE;
+        next->size = mcb->size - (size+1);
+        mcb->type = MCB_TYPE_NORMAL;
+        mcb->size = size;
+        return size << 4;
+    }
+    
+    if (!exact)
+    {
+        return mcb->size << 4;
+    }
+    
+    return -1;
 }
 
 /***********************************************************************
@@ -418,39 +398,30 @@ UINT DOSMEM_ResizeBlock(void *ptr, UINT size, BOOL exact)
  */
 UINT DOSMEM_Available(void)
 {
-   UINT  	 blocksize, available = 0;
-   dosmem_entry *dm;
-
-   dm = DOSMEM_RootBlock();
-
-   while (dm && dm->size != DM_BLOCK_TERMINAL)
-   {
+    UINT  available = 0;
+    UINT  total = 0;
+    MCB *curr = DOSMEM_root_block;
+    /* loop over all MCB and search the largest free MCB */
+    while (curr)
+    {
 #ifdef __DOSMEM_DEBUG__
-       if( (dm->size & DM_BLOCK_DEBUG) != DM_BLOCK_DEBUG )
-       {
-	    WARN("MCB overrun! [prev = 0x%08x]\n", 4 + (UINT)prev);
-	    return NULL;
-       }
-       prev = dm;
+        MCB_DUMP( curr );
 #endif
-       if( dm->size & DM_BLOCK_FREE )
-       {
-	   dosmem_entry  *next = next_block(dm);
-
-	   while ( next->size & DM_BLOCK_FREE ) /* collapse free blocks */
-	   {
-	       dm->size += sizeof(dosmem_entry) + (next->size & DM_BLOCK_MASK);
-	       next->size = (DM_BLOCK_FREE | DM_BLOCK_TERMINAL);
-	       next = next_block(dm);
-	   }
-
-	   blocksize = dm->size & DM_BLOCK_MASK;
-	   if ( blocksize > available ) available = blocksize;
- 	   dm = next;
-       }
-       else dm = next_block(dm);
-   }
-   return available;
+        if (!MCB_VALID (curr))
+        {
+            ERR( "MCB List Corrupt\n" );
+            MCB_DUMP( curr );
+            return 0;
+        }
+        if (curr->psp == MCB_PSP_FREE &&
+            curr->size > available )
+            available = curr->size;
+        
+        total += curr->size + 1;
+        curr = MCB_NEXT( curr );
+    }
+    TRACE( " %04xh of %04xh paragraphs available\n", available, total );
+    return available << 4;   
 }
 
 /***********************************************************************
@@ -460,26 +431,14 @@ UINT DOSMEM_Available(void)
  */
 static void DOSMEM_InitMemory(char* addr)
 {
-    dosmem_entry*       root_block;
-    dosmem_entry*       dm;
-
     DOSMEM_FillBiosSegments();
     DOSMEM_FillIsrTable();
 
-    DOSMEM_info_block = (dosmem_info*)addr;
-    root_block = DOSMEM_RootBlock();
-    root_block->size = DOSMEM_MemoryTop() - (((char*)root_block) + sizeof(dosmem_entry));
-
-    DOSMEM_info_block->blocks = 0;
-    DOSMEM_info_block->free = root_block->size;
-
-    dm = next_block(root_block);
-    dm->size = DM_BLOCK_TERMINAL;
-    root_block->size |= DM_BLOCK_FREE
-#ifdef __DOSMEM_DEBUG__
-        | DM_BLOCK_DEBUG
-#endif
-        ;
+    /* align root block to paragraph */
+    DOSMEM_root_block = (MCB*) (( (DWORD_PTR)(addr+0xf) >> 4) << 4);
+    DOSMEM_root_block->type = MCB_TYPE_LAST;
+    DOSMEM_root_block->psp = MCB_PSP_FREE;
+    DOSMEM_root_block->size = (DOSMEM_MemoryTop() - ((char*)DOSMEM_root_block)) >> 4;
 
     TRACE("DOS conventional memory initialized, %d bytes free.\n",
           DOSMEM_Available());
