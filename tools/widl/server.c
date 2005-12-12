@@ -68,6 +68,25 @@ static int print_server(const char *format, ...)
 }
 
 
+static void write_parameters_init(func_t *func)
+{
+    var_t *var;
+
+    if (!func->args)
+        return;
+
+    var = func->args;
+    while (NEXT_LINK(var)) var = NEXT_LINK(var);
+    while (var)
+    {
+        print_server("%s = 0;\n", var->name);
+
+        var = PREV_LINK(var);
+    }
+    fprintf(server, "\n");
+}
+
+
 static void write_function_stubs(type_t *iface)
 {
     func_t *func = iface->funcs;
@@ -130,6 +149,8 @@ static void write_function_stubs(type_t *iface)
         print_server("&%s_StubDesc);\n", iface->name);
         indent--;
         fprintf(server, "\n");
+
+        write_parameters_init(func);
 
         print_server("RpcTryFinally\n");
         print_server("{\n");
