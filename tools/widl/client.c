@@ -66,6 +66,60 @@ static int print_client( const char *format, ... )
 }
 
 
+static void print_message_buffer_size(func_t *func)
+{
+    unsigned int total_size = 0;
+
+    if (func->args)
+    {
+        var_t *var = func->args;
+        while (NEXT_LINK(var)) var = NEXT_LINK(var);
+        while (var)
+        {
+            unsigned int alignment = 8;
+    
+            switch (var->type->type)
+            {
+            case RPC_FC_BYTE:
+            case RPC_FC_CHAR:
+            case RPC_FC_USMALL:
+            case RPC_FC_SMALL:
+                total_size += 1;
+                alignment = 1;
+                break;
+    
+            case RPC_FC_WCHAR:
+            case RPC_FC_USHORT:
+            case RPC_FC_SHORT:
+                total_size += 2 + alignment % 2;
+                alignment = 2;
+                break;
+    
+            case RPC_FC_ULONG:
+            case RPC_FC_LONG:
+            case RPC_FC_FLOAT:
+            case RPC_FC_ERROR_STATUS_T:
+                total_size += 4 + alignment % 4;
+                alignment = 4;
+                break;
+    
+            case RPC_FC_HYPER:
+            case RPC_FC_DOUBLE:
+                total_size += 8 + alignment % 8;
+                alignment = 8;
+                break;
+    
+            default:
+                alignment = 1;
+            }
+    
+            var = PREV_LINK(var);
+        }
+    }
+    fprintf(client, " %u", total_size);
+}
+
+
 static void write_function_stubs(type_t *iface)
 {
     func_t *func = iface->funcs;
@@ -130,7 +184,7 @@ static void write_function_stubs(type_t *iface)
 
         /* emit the message buffer size */
         print_client("_StubMsg.BufferLength =");
-        print_client("0"); /* FIXME */
+        print_message_buffer_size(func);
         fprintf(client, ";\n");
 
         print_client("NdrGetBuffer(\n");
@@ -138,7 +192,7 @@ static void write_function_stubs(type_t *iface)
         print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
         print_client("_StubMsg.BufferLength,\n");
         if (implicit_handle)
-            print_client("%_Handle);\n");
+            print_client("_Handle);\n");
         else
             print_client("%s__MIDL_AutoBindHandle);\n", iface->name);
         indent--;
@@ -150,13 +204,16 @@ static void write_function_stubs(type_t *iface)
 
         /* send/receive message */
         /* print_client("NdrNsSendReceive(\n"); */
+        /* print_client("(unsigned char *)_StubMsg.Buffer,\n"); */
+        /* print_client("(RPC_BINDING_HANDLE *) &%s__MIDL_AutoBindHandle);\n", iface->name); */
         print_client("NdrSendReceive(\n");
         indent++;
         print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
         print_client("(unsigned char *)_StubMsg.Buffer);\n");
-        /* print_client("(unsigned char *)_StubMsg.Buffer,\n"); */
-        /* print_client("(RPC_BINDING_HANDLE *) &%s__MIDL_AutoBindHandle);\n", iface->name); */
         indent--;
+
+        print_client("_StubMsg.BufferStart = (unsigned char *)_RpcMessage.Buffer;\n");
+        print_client("_StubMsg.BufferEnd = _StubMsg.BufferStart + _RpcMessage.BufferLength;\n");
 
         /* unmarshal return value */
         if (!is_void(def->type, NULL))
