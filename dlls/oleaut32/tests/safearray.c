@@ -1418,7 +1418,7 @@ static void test_SafeArrayClear(void)
 static void test_SafeArrayCopy(void)
 {
   SAFEARRAYBOUND sab;
-  SAFEARRAY *sa;
+  SAFEARRAY *sa, *sa2;
   VARIANTARG vSrc, vDst;
   HRESULT hres;
 
@@ -1450,6 +1450,19 @@ static void test_SafeArrayCopy(void)
 
   SafeArrayDestroy(V_ARRAY(&vSrc));
   SafeArrayDestroy(V_ARRAY(&vDst));
+
+  hres = SafeArrayAllocDescriptor(1, &sa);
+  ok(hres == S_OK, "SafeArrayAllocDescriptor failed with error 0x%08lx\n", hres);
+
+  hres = SafeArrayCopy(sa, &sa2);
+  ok(hres == E_INVALIDARG,
+    "SafeArrayCopy with empty array should have failed with error E_INVALIDARG instead of 0x%08lx\n",
+    hres);
+  sa->cbElements = 16;
+  hres = SafeArrayCopy(sa, &sa2);
+  ok(hres == S_OK, "SafeArrayCopy failed with error 0x%08lx\n", hres);
+
+  SafeArrayDestroy(sa);
 }
 
 #define MKARRAY(low,num,typ) sab.lLbound = low; sab.cElements = num; \
