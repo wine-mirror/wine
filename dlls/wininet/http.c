@@ -1865,6 +1865,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
                               sizeof(struct sockaddr_in));
 
         NETCON_close(&lpwhr->netConnection);
+        NETCON_init(&lpwhr->netConnection,lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE);
     }
 
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
