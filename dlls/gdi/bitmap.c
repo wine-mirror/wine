@@ -307,6 +307,30 @@ LONG WINAPI GetBitmapBits(
 
     if (!bmp) return 0;
 
+    if (bmp->dib)  /* simply copy the bits from the DIB */
+    {
+        DIBSECTION *dib = bmp->dib;
+        const char *src = dib->dsBm.bmBits;
+        DWORD max = dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
+        if (count > max) count = max;
+        ret = count;
+        if (!bits) goto done;
+
+        if (bmp->dib->dsBmih.biHeight >= 0)  /* not top-down, need to flip contents vertically */
+        {
+            src += dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
+            while (count > 0)
+            {
+                src -= dib->dsBm.bmWidthBytes;
+                memcpy( bits, src, min( count, dib->dsBm.bmWidthBytes ) );
+                bits = (char *)bits + dib->dsBm.bmWidthBytes;
+                count -= dib->dsBm.bmWidthBytes;
+            }
+        }
+        else memcpy( bits, src, count );
+        goto done;
+    }
+
     /* If the bits vector is null, the function should return the read size */
     if(bits == NULL)
     {
