@@ -228,15 +228,15 @@ static void dump_le_header( const IMAGE_VXD_HEADER *le )
 
 static void dump_le_objects( const void *base, const IMAGE_VXD_HEADER *le )
 {
-    struct o32_obj *pobj;
+    const struct o32_obj *pobj;
     unsigned int i;
 
     printf("\nObject table:\n");
-    pobj = (struct o32_obj *)((const unsigned char *)le + le->e32_objtab);
+    pobj = (const struct o32_obj *)((const unsigned char *)le + le->e32_objtab);
     for (i = 0; i < le->e32_objcnt; i++)
     {
         unsigned int j;
-        struct o32_map *pmap=0;
+        const struct o32_map *pmap=0;
 
         printf("    Obj. Rel.Base Codesize Flags    Tableidx Tablesize Name\n");
         printf("    %04X %08lx %08lx %08lx %08lx %08lx  ", i + 1,
@@ -272,7 +272,7 @@ static void dump_le_objects( const void *base, const IMAGE_VXD_HEADER *le )
 
         printf("    Page tables:\n");
         printf("        Tableidx Offset Flags\n");
-        pmap = (struct o32_map *)((const unsigned char *)le + le->e32_objmap);
+        pmap = (const struct o32_map *)((const unsigned char *)le + le->e32_objmap);
         pmap = &(pmap[pobj->o32_pagemap - 1]);
         for (j = 0; j < pobj->o32_mapsize; j++)
         {
@@ -300,7 +300,7 @@ static void dump_le_names( const void *base, const IMAGE_VXD_HEADER *le )
     if (le->e32_cbnrestab)
     {
         printf( "\nNon-resident name table:\n" );
-        pstr = (unsigned char *)base + le->e32_nrestab;
+        pstr = (const unsigned char *)base + le->e32_nrestab;
         while (*pstr)
         {
             printf( " %4d: %*.*s\n", get_word(pstr + *pstr + 1), *pstr, *pstr,

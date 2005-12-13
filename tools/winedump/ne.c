@@ -108,7 +108,7 @@ static void dump_ne_names( const void *base, const IMAGE_OS2_HEADER *ne )
     if (ne->ne_cbnrestab)
     {
         printf( "\nNon-resident name table:\n" );
-        pstr = (unsigned char *)base + ne->ne_nrestab;
+        pstr = (const unsigned char *)base + ne->ne_nrestab;
         while (*pstr)
         {
             printf( " %4d: %*.*s\n", get_word(pstr + *pstr + 1), *pstr, *pstr, pstr + 1 );
@@ -171,7 +171,7 @@ static void dump_ne_resources( const void *base, const IMAGE_OS2_HEADER *ne )
 static const char *get_export_name( const void *base, const IMAGE_OS2_HEADER *ne, int ordinal )
 {
     static char name[256];
-    BYTE *pstr;
+    const BYTE *pstr;
     int pass = 0;
 
     /* search the resident names */
@@ -180,13 +180,13 @@ static const char *get_export_name( const void *base, const IMAGE_OS2_HEADER *ne
     {
         if (pass == 0)  /* resident names */
         {
-            pstr = (BYTE *)ne + ne->ne_restab;
+            pstr = (const BYTE *)ne + ne->ne_restab;
             if (*pstr) pstr += *pstr + 1 + sizeof(WORD);  /* skip first entry (module name) */
         }
         else  /* non-resident names */
         {
             if (!ne->ne_cbnrestab) break;
-            pstr = (BYTE *)base + ne->ne_nrestab;
+            pstr = (const BYTE *)base + ne->ne_nrestab;
         }
         while (*pstr)
         {
@@ -207,8 +207,8 @@ static const char *get_export_name( const void *base, const IMAGE_OS2_HEADER *ne
 
 static void dump_ne_exports( const void *base, const IMAGE_OS2_HEADER *ne )
 {
-    BYTE *ptr = (BYTE *)ne + ne->ne_enttab;
-    BYTE *end = ptr + ne->ne_cbenttab;
+    const BYTE *ptr = (const BYTE *)ne + ne->ne_enttab;
+    const BYTE *end = ptr + ne->ne_cbenttab;
     int i, ordinal = 1;
 
     if (!ne->ne_cbenttab || !*ptr) return;
