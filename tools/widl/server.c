@@ -120,8 +120,7 @@ static void write_function_stubs(type_t *iface)
             }
         }
 
-        write_type(server, def->type, def, def->tname);
-        fprintf(server, " __RPC_STUB\n");
+        fprintf(server, "void __RPC_STUB\n");
         fprintf(server, "%s_", iface->name);
         write_name(server, def);
         fprintf(server, "(\n");
