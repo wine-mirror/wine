@@ -137,9 +137,52 @@ void write_procformatstring(FILE *file, type_t *iface)
 }
 
 
-void write_typeformatstring(FILE *file)
+static void write_typeformatstring_var(FILE *file, int indent, var_t *var)
+{
+    int ptr_level = var->ptr_level;
+
+    /* basic types don't need a type format string */
+    if (ptr_level == 0)
+        return;
+
+    if (ptr_level == 1)
+    {
+        switch (var->type->type)
+        {
+#define CASE_BASETYPE(fctype) \
+        case RPC_##fctype: \
+            print_file(file, indent, "0x11, 0x08,    /* FC_RP [simple_pointer] */\n"); \
+            print_file(file, indent, "0x%02x,    /* " #fctype " */\n", var->type->type); \
+            print_file(file, indent, "0x5c,          /* FC_PAD */\n"); \
+            break
+        CASE_BASETYPE(FC_BYTE);
+        CASE_BASETYPE(FC_CHAR);
+        CASE_BASETYPE(FC_SMALL);
+        CASE_BASETYPE(FC_USMALL);
+        CASE_BASETYPE(FC_WCHAR);
+        CASE_BASETYPE(FC_SHORT);
+        CASE_BASETYPE(FC_USHORT);
+        CASE_BASETYPE(FC_LONG);
+        CASE_BASETYPE(FC_ULONG);
+        CASE_BASETYPE(FC_FLOAT);
+        CASE_BASETYPE(FC_HYPER);
+        CASE_BASETYPE(FC_DOUBLE);
+        CASE_BASETYPE(FC_ENUM16);
+        CASE_BASETYPE(FC_ENUM32);
+        CASE_BASETYPE(FC_IGNORE);
+        CASE_BASETYPE(FC_ERROR_STATUS_T);
+        default:
+            error("write_typeformatstring_var: Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
+        }
+    }
+}
+
+void write_typeformatstring(FILE *file, type_t *iface)
 {
     int indent = 0;
+    func_t *func = iface->funcs;
+    var_t *var;
+
     print_file(file, indent, "static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString =\n");
     print_file(file, indent, "{\n");
     indent++;
@@ -147,6 +190,23 @@ void write_typeformatstring(FILE *file)
     print_file(file, indent, "{\n");
     indent++;
     print_file(file, indent, "NdrFcShort(0x0),\n");
+
+    while (NEXT_LINK(func)) func = NEXT_LINK(func);
+    while (func)
+    {
+        if (func->args)
+        {
+            var = func->args;
+            while (NEXT_LINK(var)) var = NEXT_LINK(var);
+            while (var)
+            {
+                write_typeformatstring_var(file, indent, var);
+                var = PREV_LINK(var);
+            }
+        }
+        func = PREV_LINK(func);
+    }
+
     print_file(file, indent, "0x0\n");
     indent--;
     print_file(file, indent, "}\n");

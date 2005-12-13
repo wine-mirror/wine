@@ -514,7 +514,7 @@ void write_server(ifref_t *ifaces)
         fprintf(server, "\n");
 
         write_procformatstring(server, iface->iface);
-        write_typeformatstring(server);
+        write_typeformatstring(server, iface->iface);
 
         fprintf(server, "\n");
 
