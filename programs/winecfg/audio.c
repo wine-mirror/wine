@@ -171,10 +171,8 @@ static void initAudioDeviceTree(HWND hDlg)
         }
         else
         {
-            HINSTANCE lib;
-
-            lib = LoadLibrary(name);
-            if (lib)
+            HMODULE lib;
+            if ((lib = GetDriverModuleHandle(hdrv)))
             {
                 int num_wod = 0, num_wid = 0, num_mod = 0, num_mid = 0, num_aux = 0, num_mxd = 0;
                 MessagePtr wodMessagePtr = (MessagePtr)GetProcAddress(lib, "wodMessage");
@@ -371,7 +369,6 @@ static void initAudioDeviceTree(HWND hDlg)
                         }
                     }
                 }
-                FreeLibrary(lib);
             }
         }
     }
