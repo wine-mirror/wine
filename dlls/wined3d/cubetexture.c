@@ -140,7 +140,7 @@ void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
     /* If were dirty then reload the surfaces */
     if (This->baseTexture.dirty != FALSE) {
         for (i = 0; i < This->baseTexture.levels; i++) {
-            for (j = 0; j < 6; j++) {
+            for (j = D3DCUBEMAP_FACE_POSITIVE_X; j <= D3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
                 if(setGlTextureDesc)
                       IWineD3DSurface_SetGlTextureDesc(This->surfaces[j][i], This->baseTexture.textureName, cube_targets[j]);
                 IWineD3DSurface_LoadTexture(This->surfaces[j][i]);
@@ -273,7 +273,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeTexture *if
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     HRESULT hr = D3DERR_INVALIDCALL;
 
-    if (Level < This->baseTexture.levels) {
+    if (Level < This->baseTexture.levels && FaceType >= D3DCUBEMAP_FACE_POSITIVE_X && FaceType <= D3DCUBEMAP_FACE_NEGATIVE_Z) {
         *ppCubeMapSurface = This->surfaces[FaceType][Level];
         IWineD3DSurface_AddRef(*ppCubeMapSurface);
 
@@ -282,7 +282,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeTexture *if
     if (D3D_OK == hr) {
         TRACE("(%p) -> faceType(%d) level(%d) returning surface@%p\n", This, FaceType, Level, This->surfaces[FaceType][Level]);
     } else {
-        WARN("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
+        WARN("(%p) level(%d) overflow Levels(%d) Or FaceType(%d)\n", This, Level, This->baseTexture.levels, FaceType);
     }
 
     return hr;
@@ -292,14 +292,14 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_LockRect(IWineD3DCubeTexture *iface, D3DC
     HRESULT hr = D3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
-    if (Level < This->baseTexture.levels) {
+    if (Level < This->baseTexture.levels && FaceType >= D3DCUBEMAP_FACE_POSITIVE_X && FaceType <= D3DCUBEMAP_FACE_NEGATIVE_Z) {
         hr = IWineD3DSurface_LockRect(This->surfaces[FaceType][Level], pLockedRect, pRect, Flags);
     }
 
     if (D3D_OK == hr) {
         TRACE("(%p) -> faceType(%d) level(%d) returning memory@%p success(%lu)\n", This, FaceType, Level, pLockedRect->pBits, hr);
     } else {
-        WARN("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
+        WARN("(%p) level(%d) overflow Levels(%d)  Or FaceType(%d)\n", This, Level, This->baseTexture.levels, FaceType);
     }
 
     return hr;
@@ -309,23 +309,29 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *iface, D3
     HRESULT hr = D3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
-    if (Level < This->baseTexture.levels) {
+    if (Level < This->baseTexture.levels && FaceType >= D3DCUBEMAP_FACE_POSITIVE_X && FaceType <= D3DCUBEMAP_FACE_NEGATIVE_Z) {
         hr = IWineD3DSurface_UnlockRect(This->surfaces[FaceType][Level]);
     }
 
     if (D3D_OK == hr) {
         TRACE("(%p) -> faceType(%d) level(%d) success(%lu)\n", This, FaceType, Level, hr);
     } else {
-        WARN("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
+        WARN("(%p) level(%d) overflow Levels(%d) Or FaceType(%d)\n", This, Level, This->baseTexture.levels, FaceType);
     }
     return hr;
 }
 
 HRESULT  WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) {
+    HRESULT hr = D3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     This->baseTexture.dirty = TRUE;
     TRACE("(%p) : dirtyfication of faceType(%d) Level (0)\n", This, FaceType);
-    return IWineD3DSurface_AddDirtyRect(This->surfaces[FaceType][0], pDirtyRect);
+    if (FaceType >= D3DCUBEMAP_FACE_POSITIVE_X && FaceType <= D3DCUBEMAP_FACE_NEGATIVE_Z) {
+        hr = IWineD3DSurface_AddDirtyRect(This->surfaces[FaceType][0], pDirtyRect);
+    } else {
+        WARN("(%p) overflow FaceType(%d)\n", This, FaceType);
+    }
+    return hr;
 }
 
 
