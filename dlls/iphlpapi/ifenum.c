@@ -818,6 +818,7 @@ DWORD getInterfaceMtuByName(const char *name, PDWORD mtu)
 #endif
       ret = NO_ERROR;
     }
+    close(fd);
   }
   else
     ret = ERROR_NO_MORE_FILES;
@@ -858,6 +859,7 @@ DWORD getInterfaceStatusByName(const char *name, PDWORD status)
         *status = MIB_IF_OPER_STATUS_NON_OPERATIONAL;
       ret = NO_ERROR;
     }
+    close(fd);
   }
   else
     ret = ERROR_NO_MORE_FILES;
