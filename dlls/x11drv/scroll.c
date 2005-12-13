@@ -94,27 +94,32 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
      * rect are scrolled. So first combine Scroll and Clipping rectangles,
      * if available */
     if( lprcScroll)
+    {
         if( lprcClip)
             IntersectRect( &rcClip, lprcClip, lprcScroll);
         else
             rcClip = *lprcScroll;
+    }
     else
+    {
         if( lprcClip)
             rcClip = *lprcClip;
         else
             GetClipBox( hdc, &rcClip);
+    }
     /* Then clip again to get the source rectangle that will remain in the
      * clipping rect */
     rcSrc = rcClip;
-    OffsetRect( &rcSrc, -dx, -dy);
     IntersectRect( &rcSrc, &rcSrc, &rcClip);
     /* now convert to device coordinates */
     LPtoDP(hdc, (LPPOINT)&rcSrc, 2);
+    TRACE("source rect: %s\n", wine_dbgstr_rect(&rcSrc));
+
     /* also dx and dy */
     SetRect(&offset, 0, 0, dx, dy);
     LPtoDP(hdc, (LPPOINT)&offset, 2);
     dxdev = offset.right - offset.left;
-    dydev= offset.bottom - offset.top;
+    dydev = offset.bottom - offset.top;
     /* now intersect with the visible region to get the pixels that will
      * actually scroll */
     DstRgn = CreateRectRgnIndirect( &rcSrc);
@@ -133,6 +138,8 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
             SelectClipRgn( hdc, DstRgn);
         GetRgnBox( DstRgn, &rect);
         DPtoLP(hdc, (LPPOINT)&rect, 2);
+        TRACE("destination rect: %s\n", wine_dbgstr_rect(&rect));
+
         BitBlt( hdc, rect.left, rect.top,
                     rect.right - rect.left, rect.bottom -rect.top,
                     hdc, rect.left - dx, rect.top - dy, SRCCOPY);
@@ -149,7 +156,7 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
         code = X11DRV_END_EXPOSURES;
         ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code,
                 sizeof(ExpRgn), (LPSTR)&ExpRgn );
-        /* Covert the combined clip rectangle to device coordinates */
+        /* Convert the combined clip rectangle to device coordinates */
         LPtoDP(hdc, (LPPOINT)&rcClip, 2);
         if( hrgn )
             SetRectRgn( hrgn, rcClip.left, rcClip.top, rcClip.right,
