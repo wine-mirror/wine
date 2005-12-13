@@ -3761,7 +3761,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice* iface, IW
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3DVertexShader* pShader) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexShader *oldShader = This->updateStateBlock->vertexShader;
 
     This->updateStateBlock->vertexShader = pShader;
     This->updateStateBlock->changed.vertexShader = TRUE;
@@ -3772,20 +3771,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3
         return D3D_OK;
     }
 
-    if (pShader != NULL) {
-        IUnknown *newVertexShaderParent;
-        /* GetParent will add a ref, so leave it hanging until the vertex buffer is cleared */
-        TRACE("(%p) : setting pShader(%p)\n", This, pShader);
-        IWineD3DVertexShader_GetParent(pShader, &newVertexShaderParent);
-    } else {
-        TRACE("Clear down the shader\n");
-    }
-    if (oldShader != NULL) {
-        IUnknown *oldVertexShaderParent;
-        IWineD3DVertexShader_GetParent(oldShader, &oldVertexShaderParent);
-        IUnknown_Release(oldVertexShaderParent);
-        IUnknown_Release(oldVertexShaderParent);
-    }
+    TRACE("(%p) : setting pShader(%p)\n", This, pShader);
     /**
      * TODO: merge HAL shaders context switching from prototype
      */
@@ -3947,39 +3933,22 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantN(IWineD3DDevice *iface
 #undef GET_SHADER_CONSTANT
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader *pShader) {
-    IUnknown *parent;
     IWineD3DDeviceImpl *This        = (IWineD3DDeviceImpl *)iface;
-    IWineD3DPixelShader *oldpShader = This->updateStateBlock->pixelShader;
 
     This->updateStateBlock->pixelShader         = pShader;
     This->updateStateBlock->changed.pixelShader = TRUE;
     This->updateStateBlock->set.pixelShader     = TRUE;
-
-    if (pShader == NULL) {
-        /* clear down the shader */
-        TRACE("Clear down the shader\n");
-    }
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
         return D3D_OK;
     }
+
+    TRACE("(%p) : setting pShader(%p)\n", This, pShader);
     /**
      * TODO: merge HAL shaders context switching from prototype
      */
-
-    /* manage reference counting. */
-    if (pShader != NULL) {
-        IWineD3DPixelShader_GetParent(pShader, &parent); /* get parent adds a ref for us*/
-    }
-
-    if (oldpShader != NULL) {
-        IWineD3DPixelShader_GetParent(oldpShader, &parent);
-        IUnknown_Release(parent); /* once for the getparent */
-        IUnknown_Release(parent); /* and once for the ref */
-    }
-
     return D3D_OK;
 }
 
