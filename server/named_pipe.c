@@ -200,6 +200,7 @@ static struct fd *named_pipe_device_get_fd( struct object *obj );
 static struct object *named_pipe_device_lookup_name( struct object *obj,
     struct unicode_str *name, unsigned int attr );
 static void named_pipe_device_destroy( struct object *obj );
+static int named_pipe_device_get_file_info( struct fd *fd );
 
 static const struct object_ops named_pipe_device_ops =
 {
@@ -219,12 +220,12 @@ static const struct object_ops named_pipe_device_ops =
 
 static const struct fd_ops named_pipe_device_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
-    default_poll_event,           /* poll_event */
-    no_flush,                     /* flush */
-    no_get_file_info,             /* get_file_info */
-    default_fd_queue_async,       /* queue_async */
-    default_fd_cancel_async       /* cancel_async */
+    default_fd_get_poll_events,       /* get_poll_events */
+    default_poll_event,               /* poll_event */
+    no_flush,                         /* flush */
+    named_pipe_device_get_file_info,  /* get_file_info */
+    default_fd_queue_async,           /* queue_async */
+    default_fd_cancel_async           /* cancel_async */
 };
 
 static void named_pipe_dump( struct object *obj, int verbose )
@@ -435,6 +436,11 @@ static void named_pipe_device_destroy( struct object *obj )
     assert( obj->ops == &named_pipe_device_ops );
     if (device->fd) release_object( device->fd );
     if (device->pipes) free( device->pipes );
+}
+
+static int named_pipe_device_get_file_info( struct fd *fd )
+{
+    return 0;
 }
 
 /* this will be deleted as soon an we fix wait_named_pipe */

@@ -153,6 +153,7 @@ static struct fd *mailslot_device_get_fd( struct object *obj );
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                    unsigned int attr );
 static void mailslot_device_destroy( struct object *obj );
+static int mailslot_device_get_file_info( struct fd *fd );
 
 static const struct object_ops mailslot_device_ops =
 {
@@ -172,12 +173,12 @@ static const struct object_ops mailslot_device_ops =
 
 static const struct fd_ops mailslot_device_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
-    default_poll_event,           /* poll_event */
-    no_flush,                     /* flush */
-    no_get_file_info,             /* get_file_info */
-    default_fd_queue_async,       /* queue_async */
-    default_fd_cancel_async       /* cancel_async */
+    default_fd_get_poll_events,     /* get_poll_events */
+    default_poll_event,             /* poll_event */
+    no_flush,                       /* flush */
+    mailslot_device_get_file_info,  /* get_file_info */
+    default_fd_queue_async,         /* queue_async */
+    default_fd_cancel_async         /* cancel_async */
 };
 
 static void mailslot_destroy( struct object *obj)
@@ -302,6 +303,11 @@ static void mailslot_device_destroy( struct object *obj )
     assert( obj->ops == &mailslot_device_ops );
     if (device->fd) release_object( device->fd );
     if (device->mailslots) free( device->mailslots );
+}
+
+static int mailslot_device_get_file_info( struct fd *fd )
+{
+    return 0;
 }
 
 struct mailslot_device *create_mailslot_device( struct directory *root, const struct unicode_str *name )
