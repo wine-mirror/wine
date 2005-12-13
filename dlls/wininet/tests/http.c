@@ -1120,6 +1120,9 @@ static void HttpHeaders_test(void)
     HINTERNET hSession;
     HINTERNET hConnect;
     HINTERNET hRequest;
+    CHAR      buffer[256];
+    DWORD     len = 256;
+    DWORD     index = 0;
 
     hSession = InternetOpen("Wine Regression Test",
             INTERNET_OPEN_TYPE_PRECONFIG,NULL,NULL,0);
@@ -1132,11 +1135,158 @@ static void HttpHeaders_test(void)
             NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
     ok( hRequest != NULL, "Failed to open request handle\n");
 
-    ok(HttpAddRequestHeaders(hRequest,"Warning:test1",-1,HTTP_ADDREQ_FLAG_ADD), "Failed to add new header\n");
-    ok(HttpAddRequestHeaders(hRequest,"Warning:test2",-1,HTTP_ADDREQ_FLAG_ADD), "Failed to replace header using HTTP_ADDREQ_FLAG_ADD\n");
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+               buffer,&len,&index)==0,"Warning hearder reported as Existing\n");
+    
+    ok(HttpAddRequestHeaders(hRequest,"Warning:test1",-1,HTTP_ADDREQ_FLAG_ADD),
+            "Failed to add new header\n");
+
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index),"Unable to query header\n");
+    ok(index == 1, "Index was not incremented\n");
+    ok(strcmp(buffer,"test1")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index)==0,"Second Index Should Not Exist\n");
+
+    ok(HttpAddRequestHeaders(hRequest,"Warning:test2",-1,HTTP_ADDREQ_FLAG_ADD),
+            "Failed to add duplicate header using HTTP_ADDREQ_FLAG_ADD\n");
+
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index),"Unable to query header\n");
+    ok(index == 1, "Index was not incremented\n");
+    ok(strcmp(buffer,"test1")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index),"Failed to get second header\n");
+    ok(index == 2, "Index was not incremented\n");
+    ok(strcmp(buffer,"test2")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index)==0,"Third Header Should Not Exist\n");
+
     ok(HttpAddRequestHeaders(hRequest,"Warning:test3",-1,HTTP_ADDREQ_FLAG_REPLACE), "Failed to replace header using HTTP_ADDREQ_FLAG_REPLACE\n");
+
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index),"Unable to query header\n");
+    ok(index == 1, "Index was not incremented\n");
+    ok(strcmp(buffer,"test2")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index),"Failed to get second header\n");
+    ok(index == 2, "Index was not incremented\n");
+    ok(strcmp(buffer,"test3")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index)==0,"Third Header Should Not Exist\n");
+    
     ok(HttpAddRequestHeaders(hRequest,"Warning:test4",-1,HTTP_ADDREQ_FLAG_ADD_IF_NEW)==0, "HTTP_ADDREQ_FLAG_ADD_IF_NEW replaced existing header\n");
 
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index),"Unable to query header\n");
+    ok(index == 1, "Index was not incremented\n");
+    ok(strcmp(buffer,"test2")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index),"Failed to get second header\n");
+    ok(index == 2, "Index was not incremented\n");
+    ok(strcmp(buffer,"test3")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index)==0,"Third Header Should Not Exist\n");
+
+    ok(HttpAddRequestHeaders(hRequest,"Warning:test4",-1, HTTP_ADDREQ_FLAG_COALESCE), "HTTP_ADDREQ_FLAG_COALESCE Did not work\n");
+
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index),"Unable to query header\n");
+    ok(index == 1, "Index was not incremented\n");
+    ok(strcmp(buffer,"test2, test4")==0, "incorrect string was returned(%s)\n", buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index),"Failed to get second header\n");
+    ok(index == 2, "Index was not incremented\n");
+    ok(strcmp(buffer,"test3")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index)==0,"Third Header Should Not Exist\n");
+
+    ok(HttpAddRequestHeaders(hRequest,"Warning:test5",-1, HTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA), "HTTP_ADDREQ_FLAG_COALESCE Did not work\n");
+
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index),"Unable to query header\n");
+    ok(index == 1, "Index was not incremented\n");
+    ok(strcmp(buffer,"test2, test4, test5")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index),"Failed to get second header\n");
+    ok(index == 2, "Index was not incremented\n");
+    ok(strcmp(buffer,"test3")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index)==0,"Third Header Should Not Exist\n");
+
+    ok(HttpAddRequestHeaders(hRequest,"Warning:test6",-1, HTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON), "HTTP_ADDREQ_FLAG_COALESCE Did not work\n");
+
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index),"Unable to query header\n");
+    ok(index == 1, "Index was not incremented\n");
+    ok(strcmp(buffer,"test2, test4, test5; test6")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index),"Failed to get second header\n");
+    ok(index == 2, "Index was not incremented\n");
+    ok(strcmp(buffer,"test3")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index)==0,"Third Header Should Not Exist\n");
+
+    ok(HttpAddRequestHeaders(hRequest,"Warning:test7",-1, HTTP_ADDREQ_FLAG_ADD|HTTP_ADDREQ_FLAG_REPLACE), "HTTP_ADDREQ_FLAG_ADD with HTTP_ADDREQ_FLAG_REPALCE Did not work\n");
+
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index),"Unable to query header\n");
+    ok(index == 1, "Index was not incremented\n");
+    ok(strcmp(buffer,"test3")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index),"Failed to get second header\n");
+    ok(index == 2, "Index was not incremented\n");
+    ok(strcmp(buffer,"test7")==0, "incorrect string was returned(%s)\n",buffer);
+    len = sizeof(buffer);
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index)==0,"Third Header Should Not Exist\n");
+
+    
     ok(InternetCloseHandle(hRequest), "Close request handle failed\n");
     ok(InternetCloseHandle(hConnect), "Close connect handle failed\n");
     ok(InternetCloseHandle(hSession), "Close session handle failed\n");

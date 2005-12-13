@@ -2030,9 +2030,12 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                 LPWININETHTTPREQW lpreq = (LPWININETHTTPREQW) lpwhh;
                 WCHAR url[1023];
                 static const WCHAR szFmt[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
+                static const WCHAR szHost[] = {'H','o','s','t',0};
                 DWORD sizeRequired;
+                LPHTTPHEADERW Host;
 
-                sprintfW(url,szFmt,lpreq->StdHeaders[HTTP_QUERY_HOST].lpszValue,lpreq->lpszPath);
+                Host = HTTP_GetHeader(lpreq,szHost);
+                sprintfW(url,szFmt,Host->lpszValue,lpreq->lpszPath);
                 TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
                 if(!bIsUnicode)
                 {

@@ -192,7 +192,8 @@ typedef struct
     LPWSTR lpszVerb;
     LPWSTR lpszRawHeaders;
     WININET_NETCONNECTION netConnection;
-    HTTPHEADERW StdHeaders[HTTP_QUERY_MAX+1];
+    LPWSTR lpszVersion;
+    LPWSTR lpszStatusText;
     HTTPHEADERW *pCustHeaders;
     DWORD nCustHeaders;
 } WININETHTTPREQW, *LPWININETHTTPREQW;
@@ -463,6 +464,8 @@ VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
 VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
                            DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                            DWORD dwStatusInfoLength);
+
+LPHTTPHEADERW HTTP_GetHeader(LPWININETHTTPREQW lpwhr, LPCWSTR header);
 
 BOOL NETCON_connected(WININET_NETCONNECTION *connection);
 void NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL);
