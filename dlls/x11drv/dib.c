@@ -4152,7 +4152,7 @@ static void X11DRV_DIB_DoProtectDIBSection( X_PHYSBITMAP *physBitmap, DWORD new_
  */
 static void X11DRV_DIB_DoCopyDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB,
 					void *colorMap, int nColorMap,
-					Drawable dest,
+					Drawable dest, GC gc,
 					DWORD xSrc, DWORD ySrc,
 					DWORD xDest, DWORD yDest,
 					DWORD width, DWORD height)
@@ -4202,7 +4202,7 @@ static void X11DRV_DIB_DoCopyDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB,
 
   /* Hack for now */
   descr.drawable  = dest;
-  descr.gc        = BITMAP_GC(physBitmap);
+  descr.gc        = gc;
   descr.xSrc      = xSrc;
   descr.ySrc      = ySrc;
   descr.xDest     = xDest;
@@ -4280,7 +4280,7 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
     }
     /* perform the copy */
     X11DRV_DIB_DoCopyDIBSection(physBitmap, FALSE, colorMap, nColorMap,
-				physDevDst->drawable, xSrc, ySrc,
+				physDevDst->drawable, physDevDst->gc, xSrc, ySrc,
                                 physDevDst->org.x + xDest, physDevDst->org.y + yDest,
 				width, height);
     /* free color mapping */
@@ -4299,8 +4299,8 @@ static void X11DRV_DIB_DoUpdateDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB)
     GetObjectW( physBitmap->hbitmap, sizeof(bitmap), &bitmap );
     X11DRV_DIB_DoCopyDIBSection(physBitmap, toDIB,
                                 physBitmap->colorMap, physBitmap->nColorMap,
-                                physBitmap->pixmap, 0, 0, 0, 0,
-                                bitmap.bmWidth, bitmap.bmHeight);
+                                physBitmap->pixmap, BITMAP_GC(physBitmap),
+                                0, 0, 0, 0, bitmap.bmWidth, bitmap.bmHeight);
 }
 
 /***********************************************************************
