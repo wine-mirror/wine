@@ -777,12 +777,12 @@ static void compareNames(const CERT_NAME_INFO *expected,
 {
     ok(got->cRDN == expected->cRDN, "Expected %ld RDNs, got %ld\n",
      expected->cRDN, got->cRDN);
-    if (expected->cRDN)
+    if (got->cRDN)
     {
         ok(got->rgRDN[0].cRDNAttr == expected->rgRDN[0].cRDNAttr,
          "Expected %ld RDN attrs, got %ld\n", expected->rgRDN[0].cRDNAttr,
          got->rgRDN[0].cRDNAttr);
-        if (expected->rgRDN[0].cRDNAttr)
+        if (got->rgRDN[0].cRDNAttr)
         {
             if (expected->rgRDN[0].rgRDNAttr[0].pszObjId &&
              strlen(expected->rgRDN[0].rgRDNAttr[0].pszObjId))
@@ -802,10 +802,12 @@ static void compareNames(const CERT_NAME_INFO *expected,
              "Unexpected data size, got %ld, expected %ld\n",
              got->rgRDN[0].rgRDNAttr[0].Value.cbData,
              expected->rgRDN[0].rgRDNAttr[0].Value.cbData);
-            if (expected->rgRDN[0].rgRDNAttr[0].Value.pbData)
+            if (got->rgRDN[0].rgRDNAttr[0].Value.cbData &&
+             got->rgRDN[0].rgRDNAttr[0].Value.pbData)
                 ok(!memcmp(got->rgRDN[0].rgRDNAttr[0].Value.pbData,
                  expected->rgRDN[0].rgRDNAttr[0].Value.pbData,
-                 expected->rgRDN[0].rgRDNAttr[0].Value.cbData),
+                 min(got->rgRDN[0].rgRDNAttr[0].Value.cbData,
+                 expected->rgRDN[0].rgRDNAttr[0].Value.cbData)),
                  "Unexpected value\n");
         }
     }
@@ -837,7 +839,7 @@ static void test_decodeName(DWORD dwEncoding)
         rdn.rgRDNAttr = (CERT_RDN_ATTR *)&names[i].attr;
         if (buf)
         {
-            compareNames((CERT_NAME_INFO *)buf, &info);
+            compareNames(&info, (CERT_NAME_INFO *)buf);
             LocalFree(buf);
         }
     }
@@ -894,7 +896,7 @@ static void test_decodeName(DWORD dwEncoding)
 
         rdn.cRDNAttr = sizeof(attrs) / sizeof(attrs[0]);
         rdn.rgRDNAttr = attrs;
-        compareNames((CERT_NAME_INFO *)buf, &info);
+        compareNames(&info, (CERT_NAME_INFO *)buf);
         LocalFree(buf);
     }
 }
