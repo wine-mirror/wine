@@ -411,7 +411,7 @@ static void named_pipe_device_dump( struct object *obj, int verbose )
 static struct fd *named_pipe_device_get_fd( struct object *obj )
 {
     struct named_pipe_device *device = (struct named_pipe_device *)obj;
-    return device->fd;
+    return (struct fd *)grab_object( device->fd );
 }
 
 static struct object *named_pipe_device_lookup_name( struct object *obj, struct unicode_str *name,

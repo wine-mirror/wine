@@ -279,7 +279,7 @@ static void mailslot_device_dump( struct object *obj, int verbose )
 static struct fd *mailslot_device_get_fd( struct object *obj )
 {
     struct mailslot_device *device = (struct mailslot_device *)obj;
-    return device->fd;
+    return (struct fd *)grab_object( device->fd );
 }
 
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,
