@@ -1,3 +1,4 @@
 Makefile
+shader.ok
 stateblock.ok
 testlist.c
