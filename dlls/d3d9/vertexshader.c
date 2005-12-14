@@ -148,7 +148,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShader(LPDIRECT3DDEVICE9 iface, IDi
 
     TRACE("(%p) : Relay  device@%p\n", This, This->WineD3DDevice);
     hrc = IWineD3DDevice_GetVertexShader(This->WineD3DDevice, &pShader);
-    if(hrc == D3D_OK){
+    if(hrc == D3D_OK && pShader != NULL){
        hrc = IWineD3DVertexShader_GetParent(pShader, (IUnknown **)ppShader);
        IWineD3DVertexShader_Release(pShader);
     } else {
