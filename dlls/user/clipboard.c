@@ -271,7 +271,7 @@ INT WINAPI GetClipboardFormatNameA(UINT wFormat, LPSTR retStr, INT maxlen)
 
     ret = GetClipboardFormatNameW( wFormat, p, maxlen );
 
-    if (maxlen > 0 && !WideCharToMultiByte( CP_ACP, 0, p, -1, retStr, maxlen, 0, 0))
+    if (ret && maxlen > 0 && !WideCharToMultiByte( CP_ACP, 0, p, -1, retStr, maxlen, 0, 0))
         retStr[maxlen-1] = 0;
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
