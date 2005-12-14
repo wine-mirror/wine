@@ -118,7 +118,7 @@ static RTL_CRITICAL_SECTION csVirtual = { &critsect_debug, -1, 0, 0, 0, 0 };
 # define page_size  0x1000
 /* Note: these are Windows limits, you cannot change them. */
 # define ADDRESS_SPACE_LIMIT  ((void *)0xc0000000)  /* top of the total available address space */
-# define USER_SPACE_LIMIT     ((void *)0x80000000)  /* top of the user address space */
+# define USER_SPACE_LIMIT     ((void *)0x7fff0000)  /* top of the user address space */
 #else
 static UINT page_shift;
 static UINT page_size;
@@ -379,7 +379,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     view->flags   = 0;
     view->mapping = 0;
     view->protect = vprot;
-    memset( view->prot, vprot, size >> page_shift );
+    memset( view->prot, vprot & ~VPROT_IMAGE, size >> page_shift );
 
     /* Insert it in the linked list */
 
@@ -448,22 +448,13 @@ static int VIRTUAL_GetUnixProt( BYTE vprot )
  *           VIRTUAL_GetWin32Prot
  *
  * Convert page protections to Win32 flags.
- *
- * RETURNS
- *	None
  */
-static void VIRTUAL_GetWin32Prot(
-            BYTE vprot,     /* [in] Page protection flags */
-            DWORD *protect, /* [out] Location to store Win32 protection flags */
-            DWORD *state )  /* [out] Location to store mem state flag */
+static DWORD VIRTUAL_GetWin32Prot( BYTE vprot )
 {
-    if (protect) {
-        *protect = VIRTUAL_Win32Flags[vprot & 0x0f];
-        if (vprot & VPROT_NOCACHE) *protect |= PAGE_NOCACHE;
-        if (vprot & VPROT_GUARD) *protect = PAGE_NOACCESS | PAGE_GUARD;
-    }
-
-    if (state) *state = (vprot & VPROT_COMMITTED) ? MEM_COMMIT : MEM_RESERVE;
+    DWORD ret = VIRTUAL_Win32Flags[vprot & 0x0f];
+    if (vprot & VPROT_NOCACHE) ret |= PAGE_NOCACHE;
+    if (vprot & VPROT_GUARD) ret |= PAGE_GUARD;
+    return ret;
 }
 
 
@@ -1461,7 +1452,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
         /* Make sure all the pages are committed */
 
         p = view->prot + ((base - (char *)view->base) >> page_shift);
-        VIRTUAL_GetWin32Prot( *p, &prot, NULL );
+        prot = VIRTUAL_GetWin32Prot( *p );
         for (i = size >> page_shift; i; i--, p++)
         {
             if (!(*p & VPROT_COMMITTED))
@@ -1583,13 +1574,14 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     else
     {
         BYTE vprot = view->prot[(base - alloc_base) >> page_shift];
-        VIRTUAL_GetWin32Prot( vprot, &info->Protect, &info->State );
-        for (size = base - alloc_base; size < view->size; size += page_mask+1)
-            if (view->prot[size >> page_shift] != vprot) break;
-        VIRTUAL_GetWin32Prot( view->protect, &info->AllocationProtect, NULL );
+        info->State = (vprot & VPROT_COMMITTED) ? MEM_COMMIT : MEM_RESERVE;
+        info->Protect = VIRTUAL_GetWin32Prot( vprot );
+        info->AllocationProtect = VIRTUAL_GetWin32Prot( view->protect );
         if (view->protect & VPROT_IMAGE) info->Type = MEM_IMAGE;
         else if (view->flags & VFLAG_VALLOC) info->Type = MEM_PRIVATE;
         else info->Type = MEM_MAPPED;
+        for (size = base - alloc_base; size < view->size; size += page_mask+1)
+            if (view->prot[size >> page_shift] != vprot) break;
     }
     RtlLeaveCriticalSection(&csVirtual);
 
