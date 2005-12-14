@@ -443,9 +443,6 @@ static int named_pipe_device_get_file_info( struct fd *fd )
     return 0;
 }
 
-/* this will be deleted as soon an we fix wait_named_pipe */
-static struct named_pipe_device *named_pipe_device;
-
 struct named_pipe_device *create_named_pipe_device( struct directory *root,
                                                     const struct unicode_str *name )
 {
@@ -462,7 +459,6 @@ struct named_pipe_device *create_named_pipe_device( struct directory *root,
             dev = NULL;
         }
     }
-    named_pipe_device = dev;
     return dev;
 }
 
@@ -846,12 +842,18 @@ DECL_HANDLER(connect_named_pipe)
 
 DECL_HANDLER(wait_named_pipe)
 {
+    struct named_pipe_device *device;
     struct named_pipe *pipe;
     struct pipe_server *server;
     struct unicode_str name;
 
+    device = (struct named_pipe_device *)get_handle_obj( current->process, req->handle,
+                                                         FILE_READ_ATTRIBUTES, &named_pipe_device_ops );
+    if (!device) return;
+
     get_req_unicode_str( &name );
-    pipe = (struct named_pipe *)find_object( named_pipe_device->pipes, &name, OBJ_CASE_INSENSITIVE );
+    pipe = (struct named_pipe *)find_object( device->pipes, &name, OBJ_CASE_INSENSITIVE );
+    release_object( device );
     if (!pipe)
     {
         set_error( STATUS_PIPE_NOT_AVAILABLE );
@@ -862,7 +864,7 @@ DECL_HANDLER(wait_named_pipe)
     {
         /* there's already a server waiting for a client to connect */
         thread_queue_apc( current, NULL, req->func, APC_ASYNC_IO,
-                          1, req->overlapped, NULL, (void *)STATUS_SUCCESS );
+                          1, req->event, NULL, (void *)STATUS_SUCCESS );
         release_object( server );
     }
     else
@@ -875,10 +877,10 @@ DECL_HANDLER(wait_named_pipe)
 
         if (req->timeout == NMPWAIT_WAIT_FOREVER)
             create_async( current, NULL, &pipe->waiters,
-                          req->func, req->overlapped, NULL );
+                          req->func, req->event, NULL );
         else
             create_async( current, &timeout, &pipe->waiters,
-                          req->func, req->overlapped, NULL );
+                          req->func, req->event, NULL );
     }
 
     release_object( pipe );

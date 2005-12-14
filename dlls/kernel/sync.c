@@ -1269,23 +1269,6 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 }
 
 /***********************************************************************
- *           PIPE_CompletionWait   (Internal)
- */
-static void CALLBACK PIPE_CompletionWait(void *user, PIO_STATUS_BLOCK iosb, ULONG status)
-{
-    LPOVERLAPPED        ovlp = (LPOVERLAPPED)user;
-
-    TRACE("for %p/%p, status=%08lx\n", ovlp, iosb, status);
-
-    if (ovlp)
-    {
-        ovlp->Internal = status;
-        SetEvent(ovlp->hEvent);
-    }
-    TRACE("done\n");
-}
-
-/***********************************************************************
  *           WaitNamedPipeA   (KERNEL32.@)
  */
 BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
@@ -1305,59 +1288,83 @@ BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
 
 /***********************************************************************
  *           WaitNamedPipeW   (KERNEL32.@)
+ *
+ *  Waits for a named pipe instance to become available
+ *
+ *  PARAMS
+ *   name     [I] Pointer to a named pipe name to wait for
+ *   nTimeOut [I] How long to wait in ms
+ *
+ *  RETURNS
+ *   TRUE: Success, named pipe can be opened with CreteFile
+ *   FALSE: Failure, GetLastError can be called for further details
  */
 BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
 {
-    BOOL ret;
-    OVERLAPPED ov;
-    UNICODE_STRING nt_name;
     static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
+    NTSTATUS status;
+    UNICODE_STRING nt_name, pipe_dev_name;
+    FILE_PIPE_WAIT_FOR_BUFFER *pipe_wait;
+    IO_STATUS_BLOCK iosb;
+    OBJECT_ATTRIBUTES attr;
+    ULONG sz_pipe_wait;
+    HANDLE pipe_dev;
 
     TRACE("%s 0x%08lx\n",debugstr_w(name),nTimeOut);
 
     if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
         return FALSE;
 
-    if (nt_name.Length >= MAX_PATH * sizeof(WCHAR) )
+    if (nt_name.Length >= MAX_PATH * sizeof(WCHAR) ||
+        nt_name.Length < sizeof(leadin) ||
+        strncmpiW( nt_name.Buffer, leadin, sizeof(leadin)/sizeof(WCHAR) != 0))
     {
         RtlFreeUnicodeString( &nt_name );
+        SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
-    if (nt_name.Length < sizeof(leadin) ||
-        strncmpiW( nt_name.Buffer, leadin, sizeof(leadin)/sizeof(leadin[0])))
+
+    sz_pipe_wait = sizeof(*pipe_wait) + nt_name.Length - sizeof(leadin) - sizeof(WCHAR);
+    if (!(pipe_wait = HeapAlloc( GetProcessHeap(), 0,  sz_pipe_wait)))
     {
         RtlFreeUnicodeString( &nt_name );
+        SetLastError( ERROR_OUTOFMEMORY );
         return FALSE;
     }
 
-    memset(&ov,0,sizeof(ov));
-    ov.hEvent = CreateEventW( NULL, 0, 0, NULL );
-    if (!ov.hEvent)
-        return FALSE;
-
-    SERVER_START_REQ( wait_named_pipe )
+    pipe_dev_name.Buffer = nt_name.Buffer;
+    pipe_dev_name.Length = sizeof(leadin);
+    pipe_dev_name.MaximumLength = sizeof(leadin);
+    InitializeObjectAttributes(&attr,&pipe_dev_name, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    status = NtOpenFile( &pipe_dev, FILE_READ_ATTRIBUTES, &attr,
+                         &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         FILE_SYNCHRONOUS_IO_NONALERT);
+    if (status != ERROR_SUCCESS)
     {
-        req->timeout = nTimeOut;
-        req->overlapped = &ov;
-        req->func = PIPE_CompletionWait;
-        wine_server_add_data( req, nt_name.Buffer + sizeof(leadin)/sizeof(WCHAR),
-                              nt_name.Length - sizeof(leadin) );
-        ret = !wine_server_call_err( req );
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
     }
-    SERVER_END_REQ;
 
+    pipe_wait->TimeoutSpecified = !(nTimeOut == NMPWAIT_USE_DEFAULT_WAIT);
+    pipe_wait->Timeout.QuadPart = nTimeOut * -10000L;
+    pipe_wait->NameLength = nt_name.Length - sizeof(leadin);
+    memcpy(pipe_wait->Name, nt_name.Buffer + sizeof(leadin)/sizeof(WCHAR),
+           pipe_wait->NameLength);
     RtlFreeUnicodeString( &nt_name );
 
-    if(ret)
+    status = NtFsControlFile( pipe_dev, NULL, NULL, NULL, &iosb, FSCTL_PIPE_WAIT,
+                              pipe_wait, sz_pipe_wait, NULL, 0 );
+
+    HeapFree( GetProcessHeap(), 0, pipe_wait );
+    NtClose( pipe_dev );
+
+    if(status != STATUS_SUCCESS)
     {
-        if (WAIT_OBJECT_0==WaitForSingleObject(ov.hEvent,INFINITE))
-        {
-            SetLastError(RtlNtStatusToDosError(ov.Internal));
-            ret = (ov.Internal==STATUS_SUCCESS);
-        }
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
     }
-    CloseHandle(ov.hEvent);
-    return ret;
+    else
+        return TRUE;
 }
 
 

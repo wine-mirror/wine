@@ -931,7 +931,8 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE DeviceHandle, HANDLE Event OPTIONAL, PIO_
                                 PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, ULONG FsControlCode,
                                 PVOID InputBuffer, ULONG InputBufferSize, PVOID OutputBuffer, ULONG OutputBufferSize)
 {
-    NTSTATUS ret;
+    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+    HANDLE internal_event;
 
     TRACE("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx)\n",
     DeviceHandle,Event,ApcRoutine,ApcContext,IoStatusBlock,FsControlCode,
@@ -946,26 +947,46 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE DeviceHandle, HANDLE Event OPTIONAL, PIO_
             break;
 
         case FSCTL_PIPE_LISTEN :
+        case FSCTL_PIPE_WAIT :
         {
-            HANDLE internal_event;
+            OBJECT_ATTRIBUTES obj;
 
             if(!Event)
             {
-                OBJECT_ATTRIBUTES obj;
                 InitializeObjectAttributes(&obj, NULL, 0, 0, NULL);
                 ret = NtCreateEvent(&internal_event, EVENT_ALL_ACCESS, &obj, FALSE, FALSE);
                 if(ret != STATUS_SUCCESS) return ret;
             }
-
-            SERVER_START_REQ(connect_named_pipe)
+            switch(FsControlCode)
             {
-                req->handle = DeviceHandle;
-                req->event = Event ? Event : internal_event;
-                req->func = pipe_completion_wait;
-                ret = wine_server_call(req);
-            }
-            SERVER_END_REQ;
+                case FSCTL_PIPE_LISTEN :
+                    SERVER_START_REQ(connect_named_pipe)
+                    {
+                        req->handle = DeviceHandle;
+                        req->event = Event ? Event : internal_event;
+                        req->func = pipe_completion_wait;
+                        ret = wine_server_call(req);
+                    }
+                    SERVER_END_REQ;
+                    break;
+                case FSCTL_PIPE_WAIT :
+                {
+                    FILE_PIPE_WAIT_FOR_BUFFER *buff = InputBuffer;
 
+                    SERVER_START_REQ(wait_named_pipe)
+                    {
+                        req->handle = DeviceHandle;
+                        req->timeout = buff->TimeoutSpecified ? buff->Timeout.QuadPart / -10000L
+                                                              : NMPWAIT_USE_DEFAULT_WAIT;
+                        req->event = Event ? Event : internal_event;
+                        req->func = pipe_completion_wait;
+                        wine_server_add_data( req, buff->Name, buff->NameLength );
+                        ret = wine_server_call( req );
+                    }
+                    SERVER_END_REQ;
+                    break;
+                }
+            }
             if(ret == STATUS_SUCCESS)
             {
                 if(Event)
@@ -991,7 +1012,6 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE DeviceHandle, HANDLE Event OPTIONAL, PIO_
             break;
         default :
             FIXME("Unsupported FsControlCode %lx\n", FsControlCode);
-            ret = STATUS_NOT_SUPPORTED;
             break;
     }
     IoStatusBlock->u.Status = ret;

@@ -404,6 +404,13 @@ typedef struct _FILE_FS_ATTRIBUTE_INFORMATION {
 	WCHAR	FileSystemName[1];
 } FILE_FS_ATTRIBUTE_INFORMATION, *PFILE_FS_ATTRIBUTE_INFORMATION;
 
+typedef struct _FILE_PIPE_WAIT_FOR_BUFFER {
+    LARGE_INTEGER   Timeout;
+    ULONG           NameLength;
+    BOOLEAN         TimeoutSpecified;
+    WCHAR           Name[1];
+} FILE_PIPE_WAIT_FOR_BUFFER, *PFILE_PIPE_WAIT_FOR_BUFFER;
+
 /* Device GUIDs */
 #ifdef DEFINE_GUID
 

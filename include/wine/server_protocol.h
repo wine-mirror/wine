@@ -2458,8 +2458,9 @@ struct connect_named_pipe_reply
 struct wait_named_pipe_request
 {
     struct request_header __header;
+    obj_handle_t   handle;
     unsigned int   timeout;
-    void*          overlapped;
+    obj_handle_t   event;
     void*          func;
     /* VARARG(name,unicode_str); */
 };
@@ -4345,6 +4346,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 216
+#define SERVER_PROTOCOL_VERSION 217
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

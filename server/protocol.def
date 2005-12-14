@@ -1751,8 +1751,9 @@ enum message_type
 
 /* Wait for a named pipe */
 @REQ(wait_named_pipe)
+    obj_handle_t   handle;
     unsigned int   timeout;
-    void*          overlapped;
+    obj_handle_t   event;
     void*          func;
     VARARG(name,unicode_str);    /* pipe name */
 @END

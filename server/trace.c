@@ -2216,8 +2216,9 @@ static void dump_connect_named_pipe_request( const struct connect_named_pipe_req
 
 static void dump_wait_named_pipe_request( const struct wait_named_pipe_request *req )
 {
+    fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " timeout=%08x,", req->timeout );
-    fprintf( stderr, " overlapped=%p,", req->overlapped );
+    fprintf( stderr, " event=%p,", req->event );
     fprintf( stderr, " func=%p,", req->func );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
