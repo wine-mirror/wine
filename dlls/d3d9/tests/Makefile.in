@@ -7,7 +7,8 @@ IMPORTS   = user32 kernel32
 
 CTESTS = \
 	shader.c \
-	stateblock.c
+	stateblock.c \
+	vertexdeclaration.c
 
 @MAKE_TEST_RULES@
 

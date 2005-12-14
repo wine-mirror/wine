@@ -2,3 +2,4 @@ Makefile
 shader.ok
 stateblock.ok
 testlist.c
+vertexdeclaration.ok
