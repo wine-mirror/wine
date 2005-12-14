@@ -76,6 +76,7 @@ enum spi_index
     SPI_SETPOWEROFFACTIVE_IDX,
     SPI_USERPREFERENCEMASK_IDX,
     SPI_NONCLIENTMETRICS_IDX,
+    SPI_MINIMIZEDMETRICS_IDX,
     SPI_INDEX_COUNT
 };
 
@@ -228,6 +229,11 @@ static const WCHAR METRICS_SMCAPTIONLOGFONT_VALNAME[]={'S','m','C','a','p','t','
 static const WCHAR METRICS_MENULOGFONT_VALNAME[]=     {'M','e','n','u','F','o','n','t',0};
 static const WCHAR METRICS_MESSAGELOGFONT_VALNAME[]=  {'M','e','s','s','a','g','e','F','o','n','t',0};
 static const WCHAR METRICS_STATUSLOGFONT_VALNAME[]=   {'S','t','a','t','u','s','F','o','n','t',0};
+/* minimized metrics */
+static const WCHAR METRICS_MINWIDTH_VALNAME[] =   {'M','i','n','W','i','d','t','h','\0'}; 
+static const WCHAR METRICS_MINHORZGAP_VALNAME[] = {'M','i','n','H','o','r','z','G','a','p','\0'};
+static const WCHAR METRICS_MINVERTGAP_VALNAME[] = {'M','i','n','V','e','r','t','G','a','p','\0'};
+static const WCHAR METRICS_MINARRANGE_VALNAME[] = {'M','i','n','A','r','r','a','n','g','e','\0'}; 
 
 static const WCHAR WINE_CURRENT_USER_REGKEY[] = {'S','o','f','t','w','a','r','e','\\',
                                                  'W','i','n','e',0};
@@ -789,6 +795,27 @@ static BOOL set_uint_param_mirrored( unsigned int idx, LPCWSTR regkey, LPCWSTR r
     return TRUE;
 }
 
+/* save an int parameter in registry */
+static BOOL save_int_param( LPCWSTR regkey, LPCWSTR value, INT *value_ptr,
+                            INT new_val, UINT fWinIni )
+{
+    WCHAR buf[10];
+
+    wsprintfW(buf, CSd, new_val);
+    if (!SYSPARAMS_Save( regkey, value, buf, fWinIni )) return FALSE;
+    *value_ptr = new_val;
+    return TRUE;
+}
+
+/* set an int parameter in the registry */
+static inline BOOL set_int_param( unsigned int idx, LPCWSTR regkey, LPCWSTR value,
+                                  INT *value_ptr, INT new_val, UINT fWinIni )
+{
+    BOOL ret = save_int_param( regkey, value, value_ptr, new_val, fWinIni );
+    if (ret) spi_loaded[idx] = TRUE;
+    return ret;
+}
+
 /* set a uint parameter in the registry */
 static inline BOOL set_uint_param( unsigned int idx, LPCWSTR regkey, LPCWSTR value,
                                    UINT *value_ptr, UINT new_val, UINT fWinIni )
@@ -943,6 +970,26 @@ static BOOL reg_get_logfont(LPCWSTR key, LPCWSTR value, LOGFONTW *lf)
         lf->lfHeight = -MulDiv( lf->lfHeight, get_display_dpi(), 72);
     }
     return found;
+}
+
+/* load all the minimized metrics */
+static void load_minimized_metrics(void)
+{
+    HKEY hkey;
+    if (RegOpenKeyExW (HKEY_CURRENT_USER, METRICS_REGKEY,
+                       0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
+
+    minimized_metrics.iWidth = max( get_reg_metric(hkey,
+            METRICS_MINWIDTH_VALNAME, minimized_metrics.iWidth), 0);
+    minimized_metrics.iHorzGap = max( get_reg_metric(hkey,
+            METRICS_MINHORZGAP_VALNAME, minimized_metrics.iHorzGap), 0);
+    minimized_metrics.iVertGap = max( get_reg_metric(hkey,
+            METRICS_MINVERTGAP_VALNAME, minimized_metrics.iVertGap), 0);
+    minimized_metrics.iArrange = 0x0f & get_reg_metric(hkey,
+            METRICS_MINARRANGE_VALNAME, minimized_metrics.iArrange);
+
+    if (hkey) RegCloseKey( hkey );
+    spi_loaded[SPI_MINIMIZEDMETRICS_IDX] = TRUE;
 }
 
 /* load all the non-client metrics */
@@ -1126,31 +1173,15 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_SETMOUSE:                          /*      4 */
     {
-        WCHAR buf[10];
-
         if (!pvParam) return FALSE;
-
-        spi_idx = SPI_SETMOUSE_IDX;
-        wsprintfW(buf, CSd, ((INT *)pvParam)[0]);
-
-        if (SYSPARAMS_Save( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME1,
-                            buf, fWinIni ))
-        {
-            mouse_threshold1 = ((INT *)pvParam)[0];
-            spi_loaded[spi_idx] = TRUE;
-
-            wsprintfW(buf, CSd, ((INT *)pvParam)[1]);
-            SYSPARAMS_Save( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME2,
-                            buf, fWinIni );
-            mouse_threshold2 = ((INT *)pvParam)[1];
-
-            wsprintfW(buf, CSd, ((INT *)pvParam)[2]);
-            SYSPARAMS_Save( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME3,
-                            buf, fWinIni );
-            mouse_speed = ((INT *)pvParam)[2];
+        ret = set_int_param( SPI_SETMOUSE_IDX, SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME1,
+                             &mouse_threshold1, ((INT *)pvParam)[0], fWinIni);
+        if( ret) {
+            save_int_param( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME2,
+                            &mouse_threshold2, ((INT *)pvParam)[1], fWinIni);
+            save_int_param( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME3,
+                            &mouse_speed, ((INT *)pvParam)[2], fWinIni);
         }
-        else
-            ret = FALSE;
         break;
     }
 
@@ -1479,9 +1510,10 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_GETMINIMIZEDMETRICS:
     {
         MINIMIZEDMETRICS * lpMm = pvParam;
-        if (lpMm && lpMm->cbSize == sizeof(*lpMm))
+        if (lpMm && lpMm->cbSize == sizeof(*lpMm)) {
+            if( spi_loaded[SPI_MINIMIZEDMETRICS_IDX]) load_minimized_metrics();
             memcpy( lpMm, &minimized_metrics, sizeof(*lpMm) );
-        else
+        } else
             ret = FALSE;
         break;
     }
@@ -1489,9 +1521,20 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_SETMINIMIZEDMETRICS:
     {
         MINIMIZEDMETRICS * lpMm = pvParam;
-        if (lpMm && lpMm->cbSize == sizeof(*lpMm))
-            memcpy( &minimized_metrics, lpMm, sizeof(*lpMm) );
-        else
+        if (lpMm && lpMm->cbSize == sizeof(*lpMm)) {
+            ret = save_int_param( METRICS_REGKEY, METRICS_MINWIDTH_VALNAME,
+                                  &minimized_metrics.iWidth, max( lpMm->iWidth, 0), fWinIni);
+            if( ret) ret = save_int_param( METRICS_REGKEY,
+                                           METRICS_MINHORZGAP_VALNAME, &minimized_metrics.iHorzGap,
+                                           max( lpMm->iHorzGap, 0), fWinIni);
+            if( ret) ret = save_int_param( METRICS_REGKEY,
+                                           METRICS_MINVERTGAP_VALNAME, &minimized_metrics.iVertGap,
+                                           max( lpMm->iVertGap, 0), fWinIni);
+            if( ret) ret = save_int_param( METRICS_REGKEY,
+                                           METRICS_MINARRANGE_VALNAME, &minimized_metrics.iArrange,
+                                           0x0f & lpMm->iArrange, fWinIni);
+            if( ret) spi_loaded[SPI_MINIMIZEDMETRICS_IDX] = TRUE;
+        } else
             ret = FALSE;
         break;
     }
@@ -1521,20 +1564,24 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     {
         LPICONMETRICSW lpIcon = pvParam;
         if (lpIcon && lpIcon->cbSize == sizeof(*lpIcon)) {
-            ret = set_uint_param( SPI_ICONVERTICALSPACING_IDX,
-                    SPI_ICONVERTICALSPACING_REGKEY,
-                    SPI_ICONVERTICALSPACING_VALNAME,
-                    (UINT*)&icon_metrics.iVertSpacing,
-                    lpIcon->iVertSpacing, fWinIni);
-            if( ret) ret = set_uint_param( SPI_ICONHORIZONTALSPACING_IDX,
-                    SPI_ICONHORIZONTALSPACING_REGKEY,
-                    SPI_ICONHORIZONTALSPACING_VALNAME,
-                    (UINT*)&icon_metrics.iHorzSpacing,
-                    lpIcon->iHorzSpacing, fWinIni );
-            if( ret) ret = set_bool_param_mirrored( SPI_SETICONTITLEWRAP_IDX,
+            ret = set_int_param( SPI_ICONVERTICALSPACING_IDX,
+                                 SPI_ICONVERTICALSPACING_REGKEY,
+                                 SPI_ICONVERTICALSPACING_VALNAME,
+                                 &icon_metrics.iVertSpacing,
+                                 lpIcon->iVertSpacing, fWinIni);
+            if( ret) {
+                ret = set_int_param( SPI_ICONHORIZONTALSPACING_IDX,
+                                     SPI_ICONHORIZONTALSPACING_REGKEY,
+                                     SPI_ICONHORIZONTALSPACING_VALNAME,
+                                     &icon_metrics.iHorzSpacing,
+                                     lpIcon->iHorzSpacing, fWinIni );
+            }
+            if( ret) {
+                ret = set_bool_param_mirrored( SPI_SETICONTITLEWRAP_IDX,
                     SPI_SETICONTITLEWRAP_REGKEY1, SPI_SETICONTITLEWRAP_REGKEY2,
                     SPI_SETICONTITLEWRAP_VALNAME, &icon_metrics.iTitleWrap,
                     lpIcon->iTitleWrap, fWinIni );
+            }
             if( ret) ret = SYSPARAMS_SaveLogFont( SPI_SETICONTITLELOGFONT_REGKEY,
                     SPI_SETICONTITLELOGFONT_VALNAME, &lpIcon->lfFont, fWinIni);
             if( ret) {
@@ -2467,8 +2514,10 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CYEDGE:
         return GetSystemMetrics(SM_CYBORDER) + 1;
     case SM_CXMINSPACING:
+        if( spi_loaded[SPI_MINIMIZEDMETRICS_IDX]) load_minimized_metrics();
         return GetSystemMetrics(SM_CXMINIMIZED) + minimized_metrics.iHorzGap;
     case SM_CYMINSPACING:
+        if( spi_loaded[SPI_MINIMIZEDMETRICS_IDX]) load_minimized_metrics();
         return GetSystemMetrics(SM_CYMINIMIZED) + minimized_metrics.iVertGap;
     case SM_CXSMICON:
     case SM_CYSMICON:
@@ -2488,8 +2537,10 @@ INT WINAPI GetSystemMetrics( INT index )
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
         return nonclient_metrics.iMenuHeight;
     case SM_ARRANGE:
+        if( spi_loaded[SPI_MINIMIZEDMETRICS_IDX]) load_minimized_metrics();
         return minimized_metrics.iArrange;
     case SM_CXMINIMIZED:
+        if( spi_loaded[SPI_MINIMIZEDMETRICS_IDX]) load_minimized_metrics();
         return minimized_metrics.iWidth + 6;
     case SM_CYMINIMIZED:
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();

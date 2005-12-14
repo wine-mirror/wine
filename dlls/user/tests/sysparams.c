@@ -60,6 +60,11 @@ static int dpi;
 #define SPI_ICONVERTICALSPACING_REGKEY          "Control Panel\\Desktop\\WindowMetrics"
 #define SPI_ICONVERTICALSPACING_REGKEY2         "Control Panel\\Desktop"
 #define SPI_ICONVERTICALSPACING_VALNAME         "IconVerticalSpacing"
+#define SPI_MINIMIZEDMETRICS_REGKEY             "Control Panel\\Desktop\\WindowMetrics"
+#define SPI_MINWIDTH_VALNAME                    "MinWidth"
+#define SPI_MINHORZGAP_VALNAME                  "MinHorzGap"
+#define SPI_MINVERTGAP_VALNAME                  "MinVertGap"
+#define SPI_MINARRANGE_VALNAME                  "MinArrange"
 #define SPI_SETSCREENSAVETIMEOUT_REGKEY         "Control Panel\\Desktop"
 #define SPI_SETSCREENSAVETIMEOUT_VALNAME        "ScreenSaveTimeOut"
 #define SPI_SETSCREENSAVEACTIVE_REGKEY          "Control Panel\\Desktop"
@@ -910,15 +915,19 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
         UINT v;
+        UINT regval;
 
         rc=SystemParametersInfoA( SPI_SETICONTITLEWRAP, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
         test_change_message( SPI_SETICONTITLEWRAP, 1 );
-        test_reg_key_ex( SPI_SETICONTITLEWRAP_REGKEY1,
-                         SPI_SETICONTITLEWRAP_REGKEY2,
-                         SPI_SETICONTITLEWRAP_VALNAME,
-                         vals[i] ? "1" : "0" );
+        regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY2,
+                SPI_SETICONTITLEWRAP_VALNAME, dpi);
+        if( regval != vals[i])
+            regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY1,
+                    SPI_SETICONTITLEWRAP_VALNAME, dpi);
+        ok( regval == vals[i],
+                "wrong value in registry %d, expected %d\n", regval, vals[i] );
 
         rc=SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &v, 0 );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
@@ -1186,6 +1195,7 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
 static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
 {
     BOOL rc;
+    INT regval;
     MINIMIZEDMETRICS lpMm_orig;
     MINIMIZEDMETRICS lpMm_new;
     MINIMIZEDMETRICS lpMm_cur;
@@ -1199,23 +1209,49 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
     rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_orig, FALSE );
     if (!test_error_msg(rc,"SPI_{GET,SET}MINIMIZEDMETRICS"))
         return;
-
+    /* test registry */
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINWIDTH_VALNAME, dpi);
+    ok( regval == lpMm_orig.iWidth, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_orig.iWidth);
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINHORZGAP_VALNAME, dpi);
+    ok( regval == lpMm_orig.iHorzGap, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_orig.iHorzGap);
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINVERTGAP_VALNAME, dpi);
+    ok( regval == lpMm_orig.iVertGap, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_orig.iVertGap);
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINARRANGE_VALNAME, dpi);
+    ok( regval == lpMm_orig.iArrange, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_orig.iArrange);
+    /* set some new values */
     lpMm_cur.iWidth = 180;
     lpMm_cur.iHorzGap = 1;
     lpMm_cur.iVertGap = 1;
     lpMm_cur.iArrange = 5;
-    
-    rc=SystemParametersInfoA( SPI_SETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_cur, FALSE );
+    rc=SystemParametersInfoA( SPI_SETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS),
+        &lpMm_cur, SPIF_UPDATEINIFILE );
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-
+    /* read them back */
     rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_new, FALSE );
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-
+    /* and compare */
     eq( lpMm_new.iWidth,   lpMm_cur.iWidth,   "iWidth",   "%d" );
     eq( lpMm_new.iHorzGap, lpMm_cur.iHorzGap, "iHorzGap", "%d" );
     eq( lpMm_new.iVertGap, lpMm_cur.iVertGap, "iVertGap", "%d" );
     eq( lpMm_new.iArrange, lpMm_cur.iArrange, "iArrange", "%d" );
-
+    /* test registry */
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINWIDTH_VALNAME, dpi);
+    ok( regval == lpMm_new.iWidth, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_new.iWidth);
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINHORZGAP_VALNAME, dpi);
+    ok( regval == lpMm_new.iHorzGap, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_new.iHorzGap);
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINVERTGAP_VALNAME, dpi);
+    ok( regval == lpMm_new.iVertGap, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_new.iVertGap);
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINARRANGE_VALNAME, dpi);
+    ok( regval == lpMm_new.iArrange, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_new.iArrange);
+    /* test some system metrics */
     eq( GetSystemMetrics( SM_CXMINIMIZED ) - 6,
         lpMm_new.iWidth,   "iWidth",   "%d" );
     eq( GetSystemMetrics( SM_CXMINSPACING ) - GetSystemMetrics( SM_CXMINIMIZED ),
@@ -1224,13 +1260,53 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
         lpMm_new.iVertGap, "iVertGap", "%d" );
     eq( GetSystemMetrics( SM_ARRANGE ),
         lpMm_new.iArrange, "iArrange", "%d" );
-
-    rc=SystemParametersInfoA( SPI_SETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_orig, FALSE );
-    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
-    
+    /* now some realy invalid settings */
+    lpMm_cur.iWidth = -1;
+    lpMm_cur.iHorzGap = -1;
+    lpMm_cur.iVertGap = -1;
+    lpMm_cur.iArrange = - 1;
+    rc=SystemParametersInfoA( SPI_SETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS),
+        &lpMm_cur, SPIF_UPDATEINIFILE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    /* read back */
     rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_new, FALSE );
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-    
+    /* the width and H/V gaps have minimum 0, arrange is and'd with 0xf */
+    eq( lpMm_new.iWidth,   0,   "iWidth",   "%d" );
+    eq( lpMm_new.iHorzGap, 0, "iHorzGap", "%d" );
+    eq( lpMm_new.iVertGap, 0, "iVertGap", "%d" );
+    eq( lpMm_new.iArrange, 0xf & lpMm_cur.iArrange, "iArrange", "%d" );
+    /* test registry */
+#if 0 /* FIXME: cannot understand the results of this (11, 11, 11, 0) */
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINWIDTH_VALNAME, dpi);
+    ok( regval == lpMm_new.iWidth, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_new.iWidth);
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINHORZGAP_VALNAME, dpi);
+    ok( regval == lpMm_new.iHorzGap, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_new.iHorzGap);
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINVERTGAP_VALNAME, dpi);
+    ok( regval == lpMm_new.iVertGap, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_new.iVertGap);
+    regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINARRANGE_VALNAME, dpi);
+    ok( regval == lpMm_new.iArrange, "wrong value in registry %d, expected %d\n",
+        regval, lpMm_new.iArrange);
+#endif
+    /* test some system metrics */
+    eq( GetSystemMetrics( SM_CXMINIMIZED ) - 6,
+        lpMm_new.iWidth,   "iWidth",   "%d" );
+    eq( GetSystemMetrics( SM_CXMINSPACING ) - GetSystemMetrics( SM_CXMINIMIZED ),
+        lpMm_new.iHorzGap, "iHorzGap", "%d" );
+    eq( GetSystemMetrics( SM_CYMINSPACING ) - GetSystemMetrics( SM_CYMINIMIZED ),
+        lpMm_new.iVertGap, "iVertGap", "%d" );
+    eq( GetSystemMetrics( SM_ARRANGE ),
+        lpMm_new.iArrange, "iArrange", "%d" );
+    /* restore */
+    rc=SystemParametersInfoA( SPI_SETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS),
+        &lpMm_orig, SPIF_UPDATEINIFILE );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
+    /* check that */
+    rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_new, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
     eq( lpMm_new.iWidth,   lpMm_orig.iWidth,   "iWidth",   "%d" );
     eq( lpMm_new.iHorzGap, lpMm_orig.iHorzGap, "iHorzGap", "%d" );
     eq( lpMm_new.iVertGap, lpMm_orig.iVertGap, "iVertGap", "%d" );
