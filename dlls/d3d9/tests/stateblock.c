@@ -19,18 +19,15 @@
 #include <d3d9.h>
 #include "wine/test.h"
 
+static HMODULE d3d9_handle = 0;
+
 static IDirect3DDevice9 *init_d3d9(void)
 {
     IDirect3D9 * (__stdcall * d3d9_create)(UINT SDKVersion) = 0;
-    HMODULE d3d9_handle = 0;
     IDirect3D9 *d3d9_ptr = 0;
     IDirect3DDevice9 *device_ptr = 0;
     D3DPRESENT_PARAMETERS present_parameters;
     HRESULT hres;
-
-    d3d9_handle = LoadLibrary("d3d9");
-    ok(d3d9_handle != NULL, "Failed to load d3d9.\n");
-    if (!d3d9_handle) return NULL;
 
     d3d9_create = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9");
     ok(d3d9_create != NULL, "Failed to get address of Direct3DCreate9\n");
@@ -83,6 +80,15 @@ static void test_begin_end_state_block(IDirect3DDevice9 *device_ptr)
 
 START_TEST(stateblock)
 {
-    IDirect3DDevice9 *device_ptr = init_d3d9();
+    IDirect3DDevice9 *device_ptr;
+
+    d3d9_handle = LoadLibraryA("d3d9.dll");
+    if (!d3d9_handle)
+    {
+        trace("Could not load d3d9.dll, skipping tests\n");
+        return;
+    }
+
+    device_ptr = init_d3d9();
     test_begin_end_state_block(device_ptr);
 }
