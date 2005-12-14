@@ -3754,7 +3754,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice* iface, IW
 
     TRACE("(%p) : ppDecl=%p\n", This, ppDecl);
 
-    *ppDecl = This->updateStateBlock->vertexDecl;
+    *ppDecl = This->stateBlock->vertexDecl;
     if (NULL != *ppDecl) IWineD3DVertexDeclaration_AddRef(*ppDecl);
     return D3D_OK;
 }
