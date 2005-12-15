@@ -391,11 +391,13 @@ DWORD WINAPI RtlDeleteSecurityObject(DWORD x1) {
  * Glorified "enter xxxx".
  */
 #ifdef __i386__
-void WINAPI __regs__chkstk( CONTEXT86 *context )
-{
-    context->Esp -= context->Eax;
-}
-DEFINE_REGS_ENTRYPOINT( _chkstk, 0, 0 );
+__ASM_GLOBAL_FUNC( _chkstk,
+                   "negl %eax\n\t"
+                   "addl %esp,%eax\n\t"
+                   "xchgl %esp,%eax\n\t"
+                   "movl 0(%eax),%eax\n\t"  /* copy return address from old location */
+                   "movl %eax,0(%esp)\n\t"
+                   "ret" );
 #endif
 
 /**************************************************************************
@@ -404,11 +406,13 @@ DEFINE_REGS_ENTRYPOINT( _chkstk, 0, 0 );
  * Glorified "enter xxxx".
  */
 #ifdef __i386__
-void WINAPI __regs__alloca_probe( CONTEXT86 *context )
-{
-    context->Esp -= context->Eax;
-}
-DEFINE_REGS_ENTRYPOINT( _alloca_probe, 0, 0 );
+__ASM_GLOBAL_FUNC( _alloca_probe,
+                   "negl %eax\n\t"
+                   "addl %esp,%eax\n\t"
+                   "xchgl %esp,%eax\n\t"
+                   "movl 0(%eax),%eax\n\t"  /* copy return address from old location */
+                   "movl %eax,0(%esp)\n\t"
+                   "ret" );
 #endif
 
 

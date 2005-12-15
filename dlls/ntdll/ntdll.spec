@@ -1233,7 +1233,7 @@
 @ stdcall -ret64 _alldiv(double double)
 # @ stub _alldvrm
 @ stdcall -ret64 _allmul(double double)
-@ stdcall -i386 _alloca_probe()
+@ stdcall -i386 -norelay _alloca_probe()
 @ stdcall -ret64 _allrem(double double)
 # @ stub _allshl
 # @ stub _allshr
@@ -1242,7 +1242,7 @@
 # @ stub _aulldvrm
 @ stdcall -ret64 _aullrem(double double)
 # @ stub _aullshr
-@ stdcall -i386 _chkstk()
+@ stdcall -i386 -norelay _chkstk()
 @ stub _fltused
 @ cdecl -ret64 _ftol() NTDLL__ftol
 @ cdecl _i64toa(double ptr long)
