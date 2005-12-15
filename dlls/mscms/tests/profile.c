@@ -515,7 +515,7 @@ static void test_GetStandardColorSpaceProfileW(void)
     /* Parameter checks */
 
     todo_wine 
-    fail_GSCSPW(machineW,  0, newprofile, &size, 0,     (GLE == ERROR_INVALID_PARAMETER));
+    fail_GSCSPW(machineW,  0, newprofile, &size, 0,     (GLE == ERROR_INVALID_PARAMETER || GLE == ERROR_NOT_SUPPORTED));
     todo_wine 
     fail_GSCSPW(NULL,      0, newprofile, NULL,  0,     (GLE == ERROR_INVALID_PARAMETER));
     todo_wine 
