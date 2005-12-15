@@ -44,10 +44,12 @@ typedef BYTE PRUint8;
 typedef BOOL PRBool;
 typedef LARGE_INTEGER PRInt64;
 typedef ULARGE_INTEGER PRUint64;
-
-typedef int nsAString;
-typedef struct nsACString nsACString;
 typedef PRUint64 DOMTimeStamp;
+
+typedef struct nsStringContainer nsStringContainer;
+typedef nsStringContainer nsCStringContainer;
+typedef nsStringContainer nsACString;
+typedef nsStringContainer nsAString;
 
 interface nsIWebBrowserChrome;
 

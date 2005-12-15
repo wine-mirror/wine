@@ -44,22 +44,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define PR_UINT32_MAX 0xffffffff
 
-typedef struct nsACString {
+struct nsStringContainer {
+    void *v;
     void *d1;
     PRUint32 d2;
     void *d3;
-} nsString;
+};
 
 static nsresult (*NS_InitXPCOM2)(nsIServiceManager**,void*,void*);
 static nsresult (*NS_ShutdownXPCOM)(nsIServiceManager*);
 static nsresult (*NS_GetComponentRegistrar)(nsIComponentRegistrar**);
-static nsresult (*NS_StringContainerInit)(nsString*);
-static nsresult (*NS_CStringContainerInit)(nsACString*);
-static nsresult (*NS_StringContainerFinish)(nsString*);
-static nsresult (*NS_CStringContainerFinish)(nsACString*);
-static nsresult (*NS_StringSetData)(nsString*,const PRUnichar*,PRUint32);
+static nsresult (*NS_StringContainerInit)(nsStringContainer*);
+static nsresult (*NS_CStringContainerInit)(nsCStringContainer*);
+static nsresult (*NS_StringContainerFinish)(nsStringContainer*);
+static nsresult (*NS_CStringContainerFinish)(nsCStringContainer*);
+static nsresult (*NS_StringSetData)(nsAString*,const PRUnichar*,PRUint32);
 static nsresult (*NS_CStringSetData)(nsACString*,const char*,PRUint32);
-static nsresult (*NS_NewLocalFile)(const nsString*,PRBool,nsIFile**);
+static nsresult (*NS_NewLocalFile)(const nsAString*,PRBool,nsIFile**);
 static PRUint32 (*NS_CStringGetData)(nsACString*,const char**,PRBool*);
 
 static HINSTANCE hXPCOM = NULL;
@@ -245,7 +246,7 @@ static BOOL load_gecko()
     nsresult nsres;
     nsIObserver *pStartNotif;
     nsIComponentRegistrar *registrar = NULL;
-    nsString path;
+    nsAString path;
     nsIFile *gre_dir;
     PRUnichar gre_path[MAX_PATH];
     WCHAR path_env[MAX_PATH];
