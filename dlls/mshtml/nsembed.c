@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NS_APPSTARTUPNOTIFIER_CONTRACTID "@mozilla.org/embedcomp/appstartup-notifier;1"
 #define NS_WEBBROWSER_CONTRACTID "@mozilla.org/embedding/browser/nsWebBrowser;1"
 #define NS_IOSERVICE_CONTRACTID "@mozilla.org/network/io-service;1"
+#define NS_PROFILE_CONTRACTID "@mozilla.org/profile/manager;1"
 
 #define APPSTARTUP_TOPIC "app-startup"
 
@@ -210,11 +211,40 @@ static BOOL get_wine_gecko_path(PRUnichar *gre_path)
     return TRUE;
 }
 
+static void set_profile(void)
+{
+    nsIProfile *profile;
+    PRBool exists = FALSE;
+    nsresult nsres;
+
+    static const WCHAR wszMSHTML[] = {'M','S','H','T','M','L',0};
+
+    nsres = nsIServiceManager_GetServiceByContactID(pServMgr, NS_PROFILE_CONTRACTID,
+                                         &IID_nsIProfile, (void**)&profile);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get profile service: %08lx\n", nsres);
+        return;
+    }
+
+    nsres = nsIProfile_ProfileExists(profile, wszMSHTML, &exists);
+    if(!exists) {
+        nsres = nsIProfile_CreateNewProfile(profile, wszMSHTML, NULL, NULL, FALSE);
+        if(NS_FAILED(nsres))
+            ERR("CreateNewProfile failed: %08lx\n", nsres);
+    }
+
+    nsres = nsIProfile_SetCurrentProfile(profile, wszMSHTML);
+    if(NS_FAILED(nsres))
+        ERR("SetCurrentProfile failed: %08lx\n", nsres);
+
+    nsIProfile_Release(profile);
+}
+
 static BOOL load_gecko()
 {
     nsresult nsres;
     nsIObserver *pStartNotif;
-    nsIComponentRegistrar *registrar;
+    nsIComponentRegistrar *registrar = NULL;
     nsString path;
     nsIFile *gre_dir;
     PRUnichar gre_path[MAX_PATH];
@@ -292,6 +322,19 @@ static BOOL load_gecko()
     if(NS_FAILED(nsres))
         ERR("Could not get nsIComponentManager: %08lx\n", nsres);
 
+    nsres = NS_GetComponentRegistrar(&registrar);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIComponentRegistrar_AutoRegister(registrar, NULL);
+        if(NS_FAILED(nsres))
+            ERR("AutoRegister(NULL) failed: %08lx\n", nsres);
+
+        nsres = nsIComponentRegistrar_AutoRegister(registrar, gre_dir);
+        if(NS_FAILED(nsres))
+            ERR("AutoRegister(gre_dir) failed: %08lx\n", nsres);
+    }else {
+        ERR("NS_GetComponentRegistrar failed: %08lx\n", nsres);
+    }
+
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_APPSTARTUPNOTIFIER_CONTRACTID,
             NULL, &IID_nsIObserver, (void**)&pStartNotif);
     if(NS_SUCCEEDED(nsres)) {
@@ -304,13 +347,12 @@ static BOOL load_gecko()
         ERR("could not get appstartup-notifier: %08lx\n", nsres);
     }
 
-    nsres = NS_GetComponentRegistrar(&registrar);
-    if(NS_SUCCEEDED(nsres)) {
+    if(registrar) {
         register_nsservice(registrar);
         nsIComponentRegistrar_Release(registrar);
-    }else {
-        ERR("NS_GetComponentRegistrar failed: %08lx\n", nsres);
     }
+
+    set_profile();
 
     return TRUE;
 }

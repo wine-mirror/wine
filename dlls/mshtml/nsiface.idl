@@ -515,3 +515,23 @@ interface nsIPromptService : nsISupports
             const PRUnichar *aText, PRUint32 aCount, const PRUnichar **aSelectList,
             PRInt32 *aOutSelection, PRBool *_retval);
 }
+
+[
+    object,
+    uuid(02b0625a-e7f3-11d2-9f5a-006008a6efe9)
+]
+interface nsIProfile : nsISupports
+{
+    nsresult GetProfileCount(PRInt32 *aProfileCount);
+    nsresult GetProfileList(PRUint32 *length, PRUnichar ***profileNames);
+    nsresult ProfileExists(const PRUnichar *profileName, PRBool *_retval);
+    nsresult GetCurrentProfile(PRUnichar * *aCurrentProfile);
+    nsresult SetCurrentProfile(const PRUnichar * aCurrentProfile);
+    nsresult ShutDownCurrentProfile(PRUint32 shutDownType);
+    nsresult CreateNewProfile(const PRUnichar *profileName,
+            const PRUnichar *nativeProfileDir, const PRUnichar *langcode,
+            PRBool useExistingDir);
+    nsresult RenameProfile(const PRUnichar *oldName, const PRUnichar *newName);
+    nsresult DeleteProfile(const PRUnichar *name, PRBool canDeleteFiles);
+    nsresult CloneProfile(const PRUnichar *profileName);
+}
