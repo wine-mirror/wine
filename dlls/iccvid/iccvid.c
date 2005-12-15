@@ -931,6 +931,16 @@ static LRESULT ICCVID_GetInfo( ICCVID_Info *info, ICINFO *icinfo, DWORD dwSize )
     return sizeof(ICINFO);
 }
 
+static LRESULT ICCVID_DecompressEnd( ICCVID_Info *info )
+{
+    if( info->cvinfo )
+    {
+        free_cvinfo( info->cvinfo );
+        info->cvinfo = NULL;
+    }
+    return ICERR_OK;
+}
+
 LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
                                   LPARAM lParam1, LPARAM lParam2)
 {
@@ -978,6 +988,10 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
     case ICM_DECOMPRESSEX:
         return ICCVID_DecompressEx( info, (ICDECOMPRESSEX*) lParam1, 
                                   (DWORD) lParam2 );
+
+    case ICM_DECOMPRESS_END:
+        return ICCVID_DecompressEnd( info );
+
     case DRV_CLOSE:
         return ICCVID_Close( info );
 
