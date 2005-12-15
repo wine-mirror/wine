@@ -401,7 +401,7 @@
 @ stub SetupGetInfFileListA
 @ stub SetupGetInfFileListW
 @ stdcall SetupGetInfInformationA(ptr long ptr long ptr)
-@ stub SetupGetInfInformationW
+@ stdcall SetupGetInfInformationW(ptr long ptr long ptr)
 @ stub SetupGetInfSections
 @ stdcall SetupGetIntField(ptr long ptr)
 @ stdcall SetupGetLineByIndexA(long str long ptr)
@@ -457,8 +457,8 @@
 @ stub SetupQueryDrivesInDiskSpaceListW
 @ stub SetupQueryFileLogA
 @ stub SetupQueryFileLogW
-@ stub SetupQueryInfFileInformationA
-@ stub SetupQueryInfFileInformationW
+@ stdcall SetupQueryInfFileInformationA(ptr long str long ptr)
+@ stdcall SetupQueryInfFileInformationW(ptr long wstr long ptr)
 @ stub SetupQueryInfOriginalFileInformationA
 @ stub SetupQueryInfOriginalFileInformationW
 @ stub SetupQueryInfVersionInformationA

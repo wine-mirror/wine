@@ -163,6 +163,42 @@ BOOL WINAPI SetupGetInfInformationA( LPCVOID InfSpec, DWORD SearchControl,
 }
 
 /***********************************************************************
+ *      SetupGetInfInformationW    (SETUPAPI.@)
+ */
+BOOL WINAPI SetupGetInfInformationW( LPCVOID InfSpec, DWORD SearchControl,
+                                     PSP_INF_INFORMATION ReturnBuffer,
+                                     DWORD ReturnBufferSize, PDWORD RequiredSize)
+{
+    FIXME("(%p, %ld, %p, %ld, %p) Stub!\n",
+          InfSpec, SearchControl, ReturnBuffer, ReturnBufferSize, RequiredSize );
+    return TRUE;
+}
+
+/***********************************************************************
+ *      SetupQueryInfFileInformationA    (SETUPAPI.@)
+ */
+BOOL WINAPI SetupQueryInfFileInformationA(PSP_INF_INFORMATION InfInformation,
+                                          UINT InfIndex, PSTR ReturnBuffer,
+                                          DWORD ReturnBufferSize, PDWORD RequiredSize)
+{
+    FIXME("(%p, %u, %p, %ld, %p) Stub!\n",
+          InfInformation, InfIndex, ReturnBuffer, ReturnBufferSize, RequiredSize );
+    return TRUE;
+}
+
+/***********************************************************************
+ *      SetupQueryInfFileInformationW    (SETUPAPI.@)
+ */
+BOOL WINAPI SetupQueryInfFileInformationW(PSP_INF_INFORMATION InfInformation,
+                                          UINT InfIndex, PWSTR ReturnBuffer,
+                                          DWORD ReturnBufferSize, PDWORD RequiredSize) 
+{
+    FIXME("(%p, %u, %p, %ld, %p) Stub!\n",
+          InfInformation, InfIndex, ReturnBuffer, ReturnBufferSize, RequiredSize );
+    return TRUE;
+}
+
+/***********************************************************************
  *		SetupInitializeFileLogW(SETUPAPI.@)
  */
 HANDLE WINAPI SetupInitializeFileLogW(LPWSTR LogFileName, DWORD Flags)

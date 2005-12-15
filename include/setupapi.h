@@ -787,6 +787,9 @@ BOOL     WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buf
 DWORD    WINAPI SetupGetFieldCount( PINFCONTEXT context );
 BOOL     WINAPI SetupGetFileQueueCount( HSPFILEQ, UINT, PUINT );
 BOOL     WINAPI SetupGetFileQueueFlags( HSPFILEQ, PDWORD );
+BOOL     WINAPI SetupGetInfInformationA( LPCVOID, DWORD, PSP_INF_INFORMATION, DWORD, PDWORD);
+BOOL     WINAPI SetupGetInfInformationW( LPCVOID, DWORD, PSP_INF_INFORMATION, DWORD, PDWORD);
+#define         SetupGetInfInformation WINELIB_NAME_AW(SetupGetInfInformation)
 BOOL     WINAPI SetupGetIntField( PINFCONTEXT context, DWORD index, PINT result );
 BOOL     WINAPI SetupGetLineByIndexA( HINF, PCSTR, DWORD, INFCONTEXT * );
 BOOL     WINAPI SetupGetLineByIndexW( HINF, PCWSTR, DWORD, INFCONTEXT * );
@@ -824,6 +827,9 @@ HINF     WINAPI SetupOpenInfFileA( PCSTR name, PCSTR pszclass, DWORD style, UINT
 HINF     WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR pszclass, DWORD style, UINT *error );
 #define         SetupOpenInfFile WINELIB_NAME_AW(SetupOpenInfFile)
 HINF     WINAPI SetupOpenMasterInf( VOID );
+BOOL     WINAPI SetupQueryInfFileInformationA(PSP_INF_INFORMATION, UINT, PSTR, DWORD, PDWORD);
+BOOL     WINAPI SetupQueryInfFileInformationW(PSP_INF_INFORMATION, UINT, PWSTR, DWORD, PDWORD);
+#define         SetupQueryInfFileInformation WINELIB_NAME_AW(SetupQueryInFileInformation)
 BOOL     WINAPI SetupQueueCopyA(HSPFILEQ,PCSTR,PCSTR,PCSTR,PCSTR,PCSTR,PCSTR,PCSTR,DWORD);
 BOOL     WINAPI SetupQueueCopyW(HSPFILEQ,PCWSTR,PCWSTR,PCWSTR,PCWSTR,PCWSTR,PCWSTR,PCWSTR,DWORD);
 #define         SetupQueueCopy WINELIB_NAME_AW(SetupQueueCopy)
