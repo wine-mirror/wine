@@ -64,36 +64,31 @@ ULONG WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
             /* Free any streams still bound */
             for (counter = 0 ; counter < MAX_STREAMS ; counter++) {
                 if (This->streamSource[counter] != NULL) {
-                    IUnknown *vertexBufferParent;
-                    IWineD3DVertexBuffer_GetParent(This->streamSource[counter], &vertexBufferParent);
-                    /* Set to NULL here so that Device_ResourceReleased can give a warning if This->streamSource[counter] == ResourceReleased */
+                    IWineD3DVertexBuffer_Release(This->streamSource[counter]);
                     This->streamSource[counter] = NULL;
-                    IUnknown_Release(vertexBufferParent);
-                    IUnknown_Release(vertexBufferParent);
                 }
             }
 
             /* free any index data */
             if (This->pIndexData) {
-                IUnknown *indexBufferParent;
-                IWineD3DIndexBuffer_GetParent(This->pIndexData, &indexBufferParent);
+                IWineD3DIndexBuffer_Release(This->pIndexData);
                 This->pIndexData = NULL;
-                TRACE("Releasing index buffer %p p(%p)", This->pIndexData, indexBufferParent);
-                IUnknown_Release(indexBufferParent);
-                IUnknown_Release(indexBufferParent);
+            }
+
+            if (NULL != This->pixelShader) {
+                IWineD3DPixelShader_Release(This->pixelShader);
+            }
+
+            if (NULL != This->vertexShader) {
+                IWineD3DVertexShader_Release(This->vertexShader);
             }
 
             /* NOTE: according to MSDN: The applicaion is responsible for making sure the texture references are cleared down */
             for (counter = 0; counter < GL_LIMITS(textures); counter++) {
                 if (This->textures[counter]) {
-                    IUnknown *textureParent;
-                    IWineD3DBaseTexture_GetParent(This->textures[counter], &textureParent);
-                    /* FIXME: Were not using internal counting properly, so were making up for it here by releasing the object anyway */
-
-                    IUnknown_Release(textureParent);
                     /* release our 'internal' hold on the texture */
-                    if(0 != IUnknown_Release(textureParent)) {
-                        TRACE("Texture still referenced by stateblock, applications has leaked Stage = %u Texture = %p Parent = %p\n", counter, This->textures[counter], textureParent);
+                    if(0 != IWineD3DBaseTexture_Release(This->textures[counter])) {
+                        TRACE("Texture still referenced by stateblock, applications has leaked Stage = %u Texture = %p \n", counter, This->textures[counter]);
                     }
                 }
             }
