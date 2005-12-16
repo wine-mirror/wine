@@ -546,7 +546,13 @@ DWORD __wine_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION
 
     if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
         return ExceptionContinueSearch;
-    if (wine_frame->u.filter)
+
+    if (wine_frame->u.filter == (void *)1)  /* special hack for page faults */
+    {
+        if (record->ExceptionCode != EXCEPTION_ACCESS_VIOLATION)
+            return ExceptionContinueSearch;
+    }
+    else if (wine_frame->u.filter)
     {
         EXCEPTION_POINTERS ptrs;
         ptrs.ExceptionRecord = record;

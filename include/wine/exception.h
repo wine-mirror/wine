@@ -71,6 +71,7 @@
 #define __EXCEPT(func) __except((func)(GetExceptionInformation()))
 #define __FINALLY(func) __finally { (func)(!AbnormalTermination()); }
 #define __ENDTRY /*nothing*/
+#define __EXCEPT_PAGE_FAULT __except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
 
 #else  /* USE_COMPILER_EXCEPTIONS */
 
@@ -121,6 +122,9 @@
 
 typedef DWORD (CALLBACK *__WINE_FILTER)(PEXCEPTION_POINTERS);
 typedef void (CALLBACK *__WINE_FINALLY)(BOOL);
+
+/* convenience handler for page fault exceptions */
+#define __EXCEPT_PAGE_FAULT __EXCEPT( (__WINE_FILTER)1 )
 
 #define WINE_EXCEPTION_FILTER(func) DWORD WINAPI func( EXCEPTION_POINTERS *__eptr )
 #define WINE_FINALLY_FUNC(func) void WINAPI func( BOOL __normal )
