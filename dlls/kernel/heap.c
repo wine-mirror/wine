@@ -72,13 +72,10 @@ static HANDLE systemHeap;   /* globally shared heap */
 
 
 /* filter for page-fault exceptions */
-/* It is possible for a bogus global pointer to cause a */
-/* page zero reference, so I include EXCEPTION_PRIV_INSTRUCTION too. */
 static WINE_EXCEPTION_FILTER(page_fault)
 {
     switch (GetExceptionCode()) {
         case (EXCEPTION_ACCESS_VIOLATION):
-        case (EXCEPTION_PRIV_INSTRUCTION):
            return EXCEPTION_EXECUTE_HANDLER;
         default:
            return EXCEPTION_CONTINUE_SEARCH;

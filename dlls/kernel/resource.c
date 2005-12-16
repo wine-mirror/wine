@@ -50,8 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
 static WINE_EXCEPTION_FILTER(page_fault)
 {
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ||
-        GetExceptionCode() == EXCEPTION_PRIV_INSTRUCTION)
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
         return EXCEPTION_EXECUTE_HANDLER;
     return EXCEPTION_CONTINUE_SEARCH;
 }
