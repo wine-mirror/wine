@@ -694,8 +694,7 @@ static void test_BindToStorage_fail(void)
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08lx\n", hres);
 
     hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
-    ok(hres == INET_E_DATA_NOT_AVAILABLE,
-            "hres=%08lx, expected INET_E_DATA_NOT_AVAILABLE\n", hres);
+    ok(hres == MK_E_SYNTAX, "hres=%08lx, expected INET_E_SYNTAX\n", hres);
 
     IBindCtx_Release(bctx);
 
