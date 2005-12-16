@@ -1377,7 +1377,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
     object->presentParms.BackBufferFormat               = *(pPresentationParameters->BackBufferFormat);
     object->presentParms.BackBufferCount                = *(pPresentationParameters->BackBufferCount);
     object->presentParms.MultiSampleType                = *(pPresentationParameters->MultiSampleType);
-    object->presentParms.MultiSampleQuality             = *(pPresentationParameters->MultiSampleQuality);
+    object->presentParms.MultiSampleQuality             = NULL == pPresentationParameters->MultiSampleQuality ? 0 : *(pPresentationParameters->MultiSampleQuality);
     object->presentParms.SwapEffect                     = *(pPresentationParameters->SwapEffect);
     object->presentParms.hDeviceWindow                  = *(pPresentationParameters->hDeviceWindow);
     object->presentParms.Windowed                       = *(pPresentationParameters->Windowed);
