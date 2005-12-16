@@ -210,6 +210,7 @@ static struct keyword {
 /* ... */
 	{"dispinterface",		tDISPINTERFACE},
 /* ... */
+	{"displaybind",			tDISPLAYBIND},
 	{"dllname",			tDLLNAME},
 	{"double",			tDOUBLE},
 	{"dual",			tDUAL},
