@@ -140,7 +140,7 @@ static BOOL has_opengl(void)
     opengl_handle = wine_dlopen(SONAME_LIBGL, RTLD_NOW|RTLD_GLOBAL, NULL, 0);
     if (opengl_handle == NULL) return FALSE;
 
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(opengl_handle, #f, NULL, 0)) == NULL) goto sym_not_found;
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(RTLD_DEFAULT, #f, NULL, 0)) == NULL) goto sym_not_found;
 LOAD_FUNCPTR(glGetError)
 LOAD_FUNCPTR(glXChooseVisual)
 LOAD_FUNCPTR(glXGetConfig)
