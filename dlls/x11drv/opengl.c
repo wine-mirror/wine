@@ -588,13 +588,17 @@ XID create_glxpixmap(X11DRV_PDEVICE *physDev)
     XVisualInfo *vis;
     XVisualInfo template;
     int num;
+    GLXFBConfig *cfgs;
 
     wine_tsx11_lock();
-    template.visualid = XVisualIDFromVisual(visual);
+    cfgs = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &num);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[physDev->current_pf - 1], GLX_VISUAL_ID, (int *)&template.visualid);
+
     vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
 
     ret = pglXCreateGLXPixmap(gdi_display, vis, physDev->bitmap->pixmap);
     XFree(vis);
+    XFree(cfgs);
     wine_tsx11_unlock(); 
     TRACE("return %lx\n", ret);
     return ret;
