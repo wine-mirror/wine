@@ -418,9 +418,11 @@ ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclaration *if
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-      HeapFree(GetProcessHeap(), 0, This->pDeclaration8);
-      HeapFree(GetProcessHeap(), 0, This->pDeclaration9);
-      HeapFree(GetProcessHeap(), 0, This);
+        HeapFree(GetProcessHeap(), 0, This->pDeclaration8);
+        HeapFree(GetProcessHeap(), 0, This->pDeclaration9);
+        HeapFree(GetProcessHeap(), 0, This->pDeclarationWine);
+        HeapFree(GetProcessHeap(), 0, This->constants);
+        HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }
