@@ -1165,6 +1165,7 @@ BOOL WINAPI WriteCabinetState(CABINETSTATE *);
  * Path Manipulation Routines
  */
 VOID WINAPI PathGetShortPath(LPWSTR pszPath);
+LONG WINAPI PathProcessCommand(LPCWSTR, LPWSTR, int, DWORD);
 
 /****************************************************************************
  * Drag And Drop Routines
