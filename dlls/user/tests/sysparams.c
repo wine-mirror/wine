@@ -31,6 +31,7 @@
 #include "wingdi.h"
 #include "winreg.h"
 #include "winuser.h"
+#include "winnls.h"
 
 #ifndef SPI_GETDESKWALLPAPER
 # define SPI_GETDESKWALLPAPER 0x0073
@@ -38,6 +39,7 @@
 
 static int strict;
 static int dpi;
+static HDC hdc;
 
 #define eq(received, expected, label, type) \
         ok((received) == (expected), "%s: got " type " instead of " type "\n", (label),(received),(expected))
@@ -52,6 +54,21 @@ static int dpi;
 #define SPI_SETBORDER_REGKEY                    "Control Panel\\Desktop\\WindowMetrics"
 #define SPI_SETBORDER_REGKEY2                   "Control Panel\\Desktop"
 #define SPI_SETBORDER_VALNAME                   "BorderWidth"
+#define SPI_METRIC_REGKEY                       "Control Panel\\Desktop\\WindowMetrics"
+#define SPI_SCROLLWIDTH_VALNAME                 "ScrollWidth"
+#define SPI_SCROLLHEIGHT_VALNAME                "ScrollHeight"
+#define SPI_CAPTIONWIDTH_VALNAME                "CaptionWidth"
+#define SPI_CAPTIONHEIGHT_VALNAME               "CaptionHeight"
+#define SPI_CAPTIONFONT_VALNAME                 "CaptionFont"
+#define SPI_SMCAPTIONWIDTH_VALNAME              "SmCaptionWidth"
+#define SPI_SMCAPTIONHEIGHT_VALNAME             "SmCaptionHeight"
+#define SPI_SMCAPTIONFONT_VALNAME               "SmCaptionFont"
+#define SPI_MENUWIDTH_VALNAME                   "MenuWidth"
+#define SPI_MENUHEIGHT_VALNAME                  "MenuHeight"
+#define SPI_MENUFONT_VALNAME                    "MenuFont"
+#define SPI_STATUSFONT_VALNAME                  "StatusFont"
+#define SPI_MESSAGEFONT_VALNAME                 "MessageFont"
+
 #define SPI_SETKEYBOARDSPEED_REGKEY             "Control Panel\\Keyboard"
 #define SPI_SETKEYBOARDSPEED_VALNAME            "KeyboardSpeed"
 #define SPI_ICONHORIZONTALSPACING_REGKEY        "Control Panel\\Desktop\\WindowMetrics"
@@ -314,6 +331,98 @@ static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName1, LPCS
 #define test_reg_key_ex2( subKey1, subKey2, valName1, valName2, testValue ) \
     _test_reg_key( subKey1, subKey2, valName1, valName2, testValue )
 
+/* get a metric from the registry. If the value is negative
+ * it is assumed to be in twips and converted to pixels */
+static UINT metricfromreg( char *keyname, char *valname, int dpi)
+{
+    HKEY hkey;
+    char buf[64];
+    DWORD ret;
+    DWORD size, type;
+    int value;
+
+    RegOpenKeyA( HKEY_CURRENT_USER, keyname, &hkey );
+    size = sizeof(buf);
+    ret=RegQueryValueExA( hkey, valname, NULL, &type, (LPBYTE)buf, &size );
+    RegCloseKey( hkey );
+    if( ret != ERROR_SUCCESS) return -1;
+    value = atoi( buf);
+    if( value < 0)
+        value = ( -value * dpi + 720) / 1440;
+    return value;
+}
+
+typedef struct
+{
+    INT16  lfHeight;
+    INT16  lfWidth;
+    INT16  lfEscapement;
+    INT16  lfOrientation;
+    INT16  lfWeight;
+    BYTE   lfItalic;
+    BYTE   lfUnderline;
+    BYTE   lfStrikeOut;
+    BYTE   lfCharSet;
+    BYTE   lfOutPrecision;
+    BYTE   lfClipPrecision;
+    BYTE   lfQuality;
+    BYTE   lfPitchAndFamily;
+    CHAR   lfFaceName[LF_FACESIZE];
+} LOGFONT16, *LPLOGFONT16;
+
+/* get logfont from the registry */
+static int lffromreg( char *keyname,  char *valname, LOGFONTA *plf)
+{
+    HKEY hkey;
+    LOGFONTW lfw;
+    DWORD ret, size, type;
+
+    RegOpenKeyA( HKEY_CURRENT_USER, keyname, &hkey ); 
+    size = sizeof( lfw);
+    ret=RegQueryValueExA( hkey, valname, NULL, &type, (LPBYTE)&lfw, &size );
+    RegCloseKey( hkey );
+    ok( ret == ERROR_SUCCESS, "Key \"%s\" value \"%s\" not found\n", keyname, valname);
+    if( ret != ERROR_SUCCESS) 
+        return FALSE;
+    if( size <= sizeof( LOGFONT16)) {
+        LOGFONT16 *plf16 = (LOGFONT16*) &lfw;
+        plf->lfHeight = plf16->lfHeight;
+        plf->lfWidth = plf16->lfWidth;
+        plf->lfEscapement = plf16->lfEscapement;
+        plf->lfOrientation = plf16->lfOrientation;
+        plf->lfWeight = plf16->lfWeight;
+        plf->lfItalic = plf16->lfItalic;
+        plf->lfUnderline = plf16->lfUnderline;
+        plf->lfStrikeOut = plf16->lfStrikeOut;
+        plf->lfCharSet = plf16->lfCharSet;
+        plf->lfOutPrecision = plf16->lfOutPrecision;
+        plf->lfClipPrecision = plf16->lfClipPrecision;
+        plf->lfQuality = plf16->lfQuality;
+        plf->lfPitchAndFamily = plf16->lfPitchAndFamily;
+        memcpy( plf->lfFaceName, plf16->lfFaceName, LF_FACESIZE );
+    } else if( size <= sizeof( LOGFONTA)) {
+        plf = (LOGFONTA*) &lfw;
+    } else {
+        plf->lfHeight = lfw.lfHeight;
+        plf->lfWidth = lfw.lfWidth;
+        plf->lfEscapement = lfw.lfEscapement;
+        plf->lfOrientation = lfw.lfOrientation;
+        plf->lfWeight = lfw.lfWeight;
+        plf->lfItalic = lfw.lfItalic;
+        plf->lfUnderline = lfw.lfUnderline;
+        plf->lfStrikeOut = lfw.lfStrikeOut;
+        plf->lfCharSet = lfw.lfCharSet;
+        plf->lfOutPrecision = lfw.lfOutPrecision;
+        plf->lfClipPrecision = lfw.lfClipPrecision;
+        plf->lfQuality = lfw.lfQuality;
+        plf->lfPitchAndFamily = lfw.lfPitchAndFamily;
+        WideCharToMultiByte( CP_ACP, 0, lfw.lfFaceName, -1, plf->lfFaceName,
+            LF_FACESIZE, NULL, NULL);
+
+    }
+    return TRUE;
+}
+
 static void test_SPI_SETBEEP( void )                   /*      2 */
 {
     BOOL rc;
@@ -515,27 +624,6 @@ static void test_SPI_SETMOUSE( void )                  /*      4 */
 
     rc=SystemParametersInfoA( SPI_SETMOUSE, 0, old_mi, SPIF_UPDATEINIFILE );
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
-}
-
-/* get a metric from the registry. If the value is negative
- * it is assumed to be in twips and converted to pixels */
-static UINT metricfromreg( char *keyname, char *valname, int dpi)
-{
-    HKEY hkey;
-    char buf[64];
-    DWORD ret;
-    DWORD size, type;
-    int value;
-
-    RegOpenKeyA( HKEY_CURRENT_USER, keyname, &hkey );
-    size = sizeof(buf);
-    ret=RegQueryValueExA( hkey, valname, NULL, &type, (LPBYTE)buf, &size );
-    RegCloseKey( hkey );
-    if( ret != ERROR_SUCCESS) return -1;
-    value = atoi( buf);
-    if( value < 0)
-        value = ( -value * dpi + 720) / 1440;
-    return value;
 }
 
 static void test_setborder(UINT curr_val, int usesetborder, int dpi)
@@ -1192,6 +1280,175 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
 
+#define test_reg_metric( KEY, VAL, val) \
+{   INT regval;\
+    regval = metricfromreg( KEY, VAL, dpi);\
+    ok( regval==val, "wrong value \"%s\" in registry %d, expected %d\n", VAL, regval, val);\
+}
+ 
+#define test_reg_metric2( KEY1, KEY2, VAL, val) \
+{   INT regval;\
+    regval = metricfromreg( KEY1, VAL, dpi);\
+    if( regval != val) regval = metricfromreg( KEY2, VAL, dpi);\
+    ok( regval==val, "wrong value \"%s\" in registry %d, expected %d\n", VAL, regval, val);\
+}
+
+#define test_reg_font( KEY, VAL, LF) \
+{   LOGFONTA lfreg;\
+    lffromreg( KEY, VAL, &lfreg);\
+    ok( (lfreg.lfHeight < 0 ? (LF).lfHeight == lfreg.lfHeight :\
+                MulDiv( -(LF).lfHeight , 72, dpi) == lfreg.lfHeight )&&\
+        (LF).lfWidth == lfreg.lfWidth &&\
+        (LF).lfWeight == lfreg.lfWeight &&\
+        !strcmp( (LF).lfFaceName, lfreg.lfFaceName)\
+        , "wrong value \"%s\" in registry %ld, %ld\n", VAL, (LF).lfHeight, lfreg.lfHeight);\
+}
+
+#define TEST_NONCLIENTMETRICS_REG( ncm) \
+test_reg_metric2( SPI_SETBORDER_REGKEY2, SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, (ncm).iBorderWidth);\
+test_reg_metric( SPI_METRIC_REGKEY, SPI_SCROLLWIDTH_VALNAME, (ncm).iScrollWidth);\
+test_reg_metric( SPI_METRIC_REGKEY, SPI_SCROLLHEIGHT_VALNAME, (ncm).iScrollHeight);\
+/*FIXME: test_reg_metric( SPI_METRIC_REGKEY, SPI_CAPTIONWIDTH_VALNAME, (ncm).iCaptionWidth);*/\
+test_reg_metric( SPI_METRIC_REGKEY, SPI_CAPTIONHEIGHT_VALNAME, (ncm).iCaptionHeight);\
+test_reg_metric( SPI_METRIC_REGKEY, SPI_SMCAPTIONWIDTH_VALNAME, (ncm).iSmCaptionWidth);\
+test_reg_metric( SPI_METRIC_REGKEY, SPI_SMCAPTIONHEIGHT_VALNAME, (ncm).iSmCaptionHeight);\
+test_reg_metric( SPI_METRIC_REGKEY, SPI_MENUWIDTH_VALNAME, (ncm).iMenuWidth);\
+test_reg_metric( SPI_METRIC_REGKEY, SPI_MENUHEIGHT_VALNAME, (ncm).iMenuHeight);\
+test_reg_font( SPI_METRIC_REGKEY, SPI_MENUFONT_VALNAME, (ncm).lfMenuFont);\
+test_reg_font( SPI_METRIC_REGKEY, SPI_CAPTIONFONT_VALNAME, (ncm).lfCaptionFont);\
+test_reg_font( SPI_METRIC_REGKEY, SPI_SMCAPTIONFONT_VALNAME, (ncm).lfSmCaptionFont);\
+test_reg_font( SPI_METRIC_REGKEY, SPI_STATUSFONT_VALNAME, (ncm).lfStatusFont);\
+test_reg_font( SPI_METRIC_REGKEY, SPI_MESSAGEFONT_VALNAME, (ncm).lfMessageFont);
+
+/* get text metric height value for the specified logfont */
+static int get_tmheight( LOGFONTA *plf, int flag)
+{
+    TEXTMETRICA tm;
+    HFONT hfont = CreateFontIndirectA( plf);
+    hfont = SelectObject( hdc, hfont);
+    GetTextMetricsA( hdc, &tm);
+    hfont = SelectObject( hdc, hfont);
+    return tm.tmHeight + (flag ? tm.tmExternalLeading : 0);
+}
+
+void test_GetSystemMetrics( void);
+
+static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
+{
+    BOOL rc;
+    INT expect;
+    NONCLIENTMETRICSA Ncmorig;
+    NONCLIENTMETRICSA Ncmnew;
+    NONCLIENTMETRICSA Ncmcur;
+    NONCLIENTMETRICSA Ncmstart;
+
+    Ncmorig.cbSize = sizeof(NONCLIENTMETRICSA);
+    Ncmnew.cbSize = sizeof(NONCLIENTMETRICSA);
+    Ncmcur.cbSize = sizeof(NONCLIENTMETRICSA);
+    Ncmstart.cbSize = sizeof(NONCLIENTMETRICSA);
+
+    trace("testing SPI_{GET,SET}NONCLIENTMETRICS\n");
+    SetLastError(0xdeadbeef);
+    rc=SystemParametersInfoA( SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &Ncmorig, FALSE );
+    if (!test_error_msg(rc,"SPI_{GET,SET}NONCLIENTMETRICS"))
+        return;
+    Ncmstart = Ncmorig;
+    /* SPI_GETNONCLIENTMETRICS returns some "cooked" values. For instance if 
+       the caption font height is higher than the CaptionHeight field,
+       the latter is adjusted accordingly. To be able to restore these setting
+       accurately be restore the raw values. */
+    Ncmorig.iCaptionWidth = metricfromreg( SPI_METRIC_REGKEY, SPI_CAPTIONWIDTH_VALNAME, dpi);
+    Ncmorig.iCaptionHeight = metricfromreg( SPI_METRIC_REGKEY, SPI_CAPTIONHEIGHT_VALNAME, dpi);
+    Ncmorig.iSmCaptionHeight = metricfromreg( SPI_METRIC_REGKEY, SPI_SMCAPTIONHEIGHT_VALNAME, dpi);
+    Ncmorig.iMenuHeight = metricfromreg( SPI_METRIC_REGKEY, SPI_MENUHEIGHT_VALNAME, dpi);
+    /* test registry entries */
+    TEST_NONCLIENTMETRICS_REG( Ncmorig)
+    /* make small changes */
+    Ncmnew = Ncmstart;
+    Ncmnew.iBorderWidth += 1;
+    Ncmnew.iScrollWidth += 1;
+    Ncmnew.iScrollHeight -= 1;
+    Ncmnew.iCaptionWidth -= 2;
+    Ncmnew.iCaptionHeight += 2;
+    Ncmnew.lfCaptionFont.lfHeight +=1;
+    Ncmnew.lfCaptionFont.lfWidth +=2;
+    Ncmnew.lfCaptionFont.lfWeight +=1;
+    Ncmnew.iSmCaptionWidth += 1;
+    Ncmnew.iSmCaptionHeight += 2;
+    Ncmnew.lfSmCaptionFont.lfHeight +=3;
+    Ncmnew.lfSmCaptionFont.lfWidth -=1;
+    Ncmnew.lfSmCaptionFont.lfWeight +=3;
+    Ncmnew.iMenuWidth += 1;
+    Ncmnew.iMenuHeight += 2;
+    Ncmnew.lfMenuFont.lfHeight +=1;
+    Ncmnew.lfMenuFont.lfWidth +=1;
+    Ncmnew.lfMenuFont.lfWeight +=2;
+    Ncmnew.lfStatusFont.lfHeight -=1;
+    Ncmnew.lfStatusFont.lfWidth -=1;
+    Ncmnew.lfStatusFont.lfWeight +=3;
+    Ncmnew.lfMessageFont.lfHeight -=2;
+    Ncmnew.lfMessageFont.lfWidth -=1;
+    Ncmnew.lfMessageFont.lfWeight +=4;
+
+    rc=SystemParametersInfoA( SPI_SETNONCLIENTMETRICS, 0, &Ncmnew, SPIF_UPDATEINIFILE|
+            SPIF_SENDCHANGE);
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    test_change_message( SPI_SETNONCLIENTMETRICS, 1 );
+    /* get them back */
+    rc=SystemParametersInfoA( SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &Ncmcur, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    /* test registry entries */
+    TEST_NONCLIENTMETRICS_REG( Ncmcur)
+    /* test the systemm metrics with these settings */
+    test_GetSystemMetrics();
+    /* now for something invalid: increase the {menu|caption|smcaption} fonts
+       by a large amount will increase the {menu|caption|smcaption} height*/
+    Ncmnew = Ncmstart;
+    Ncmnew.lfMenuFont.lfHeight -= 8;
+    Ncmnew.lfCaptionFont.lfHeight =-4;
+    Ncmnew.lfSmCaptionFont.lfHeight -=10;
+    /* also show that a few values are lo limited */
+    Ncmnew.iCaptionWidth = 0;
+    Ncmnew.iCaptionHeight = 0;
+    Ncmnew.iScrollHeight = 0;
+    Ncmnew.iScrollWidth  = 0;
+
+    rc=SystemParametersInfoA( SPI_SETNONCLIENTMETRICS, 0, &Ncmnew, SPIF_UPDATEINIFILE|
+            SPIF_SENDCHANGE);
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    test_change_message( SPI_SETNONCLIENTMETRICS, 1 );
+    /* raw values are in registry */
+    TEST_NONCLIENTMETRICS_REG( Ncmnew)
+    /* get them back */
+    rc=SystemParametersInfoA( SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &Ncmcur, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    /* cooked values are returned */
+    expect = max( Ncmnew.iMenuHeight, 2 + get_tmheight( &Ncmnew.lfMenuFont, 1));
+    ok( Ncmcur.iMenuHeight == expect,
+        "MenuHeight: %d expected %d\n", Ncmcur.iMenuHeight, expect);
+    expect = max( Ncmnew.iCaptionHeight, 2 + get_tmheight(&Ncmnew.lfCaptionFont, 0));
+    ok( Ncmcur.iCaptionHeight == expect,
+        "CaptionHeight: %d expected %d\n", Ncmcur.iCaptionHeight, expect);
+    expect = max( Ncmnew.iSmCaptionHeight, 2 + get_tmheight( &Ncmnew.lfSmCaptionFont, 0));
+    ok( Ncmcur.iSmCaptionHeight == expect,
+        "SmCaptionHeight: %d expected %d\n", Ncmcur.iSmCaptionHeight, expect);
+
+    ok( Ncmcur.iCaptionWidth == 8 ||
+        Ncmcur.iCaptionWidth == Ncmstart.iCaptionWidth, /* with windows XP theme,  the value never changes */
+        "CaptionWidth: %d expected 8\n", Ncmcur.iCaptionWidth);
+    ok( Ncmcur.iScrollWidth == 8,
+        "ScrollWidth: %d expected 8\n", Ncmcur.iScrollWidth);
+    ok( Ncmcur.iScrollHeight == 8,
+        "ScrollHeight: %d expected 8\n", Ncmcur.iScrollHeight);
+    /* test the systemm metrics with these settings */
+    test_GetSystemMetrics();
+    /* restore */
+    rc=SystemParametersInfoA( SPI_SETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS),
+        &Ncmorig, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+    test_change_message( SPI_SETNONCLIENTMETRICS, 0 );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
+}
+
 static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
 {
     BOOL rc;
@@ -1331,6 +1588,15 @@ static void test_SPI_SETICONMETRICS( void )               /*     46 */
     rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im_orig, FALSE );
     if (!test_error_msg(rc,"SPI_{GET,SET}ICONMETRICS"))
         return;
+   /* check some registry values */ 
+    regval = metricfromreg( SPI_ICONHORIZONTALSPACING_REGKEY, SPI_ICONHORIZONTALSPACING_VALNAME, dpi);
+    ok( regval==im_orig.iHorzSpacing, "wrong value in registry %d, expected %d\n", regval, im_orig.iHorzSpacing);
+    regval = metricfromreg( SPI_ICONVERTICALSPACING_REGKEY, SPI_ICONVERTICALSPACING_VALNAME, dpi);
+    ok( regval==im_orig.iVertSpacing, "wrong value in registry %d, expected %d\n", regval, im_orig.iVertSpacing);
+    regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY2, SPI_SETICONTITLEWRAP_VALNAME, dpi);
+    if( regval != im_orig.iTitleWrap)
+        regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY1, SPI_SETICONTITLEWRAP_VALNAME, dpi);
+    ok( regval==im_orig.iTitleWrap, "wrong value in registry %d, expected %d\n", regval, im_orig.iTitleWrap);
 
     /* change everything without creating something invalid ( Win9x would ignore
      * an invalid font for instance) */
@@ -1887,6 +2153,7 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
     test_SPI_SETMOUSEBUTTONSWAP();              /*     33 */
     test_SPI_SETFASTTASKSWITCH();               /*     36 */
     test_SPI_SETDRAGFULLWINDOWS();              /*     37 */
+    test_SPI_SETNONCLIENTMETRICS();             /*     42 */
     test_SPI_SETMINIMIZEDMETRICS();             /*     44 */
     test_SPI_SETICONMETRICS();                  /*     46 */
     test_SPI_SETWORKAREA();                     /*     47 */
@@ -2136,9 +2403,8 @@ START_TEST(sysparams)
     DWORD dwThreadId;
     HANDLE hInstance = GetModuleHandleA( NULL );
 
-    HDC hdc = GetDC(0);
+    hdc = GetDC(0);
     dpi = GetDeviceCaps( hdc, LOGPIXELSY);
-    ReleaseDC( 0, hdc);
 
     /* This test requires interactivity, if we don't have it, give up */
     if (!SystemParametersInfoA( SPI_SETBEEP, TRUE, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE ) &&
@@ -2177,4 +2443,6 @@ START_TEST(sysparams)
         TranslateMessage( &msg );
         DispatchMessageA( &msg );
     }
+    ReleaseDC( 0, hdc);
+
 }

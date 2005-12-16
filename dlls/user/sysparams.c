@@ -803,7 +803,7 @@ static BOOL save_int_param( LPCWSTR regkey, LPCWSTR value, INT *value_ptr,
 
     wsprintfW(buf, CSd, new_val);
     if (!SYSPARAMS_Save( regkey, value, buf, fWinIni )) return FALSE;
-    *value_ptr = new_val;
+    if( value_ptr) *value_ptr = new_val;
     return TRUE;
 }
 
@@ -992,84 +992,105 @@ static void load_minimized_metrics(void)
     spi_loaded[SPI_MINIMIZEDMETRICS_IDX] = TRUE;
 }
 
+/* adjust some of the raw values found in the registry */
+static void normalize_nonclientmetrics( NONCLIENTMETRICSW *pncm)
+{
+    TEXTMETRICW tm;
+    if( pncm->iBorderWidth < 1) pncm->iBorderWidth = 1;
+    if( pncm->iCaptionWidth < 8) pncm->iCaptionWidth = 8;
+    if( pncm->iScrollWidth < 8) pncm->iScrollWidth = 8;
+    if( pncm->iScrollHeight < 8) pncm->iScrollHeight = 8;
+
+    /* get some extra metrics */
+    get_text_metr_size( get_display_dc(), &pncm->lfMenuFont,
+            &tmMenuFont, NULL);
+    get_text_metr_size( get_display_dc(), &pncm->lfCaptionFont,
+            NULL, &CaptionFontAvCharWidth);
+
+    /* adjust some heights to the corresponding font */
+    pncm->iMenuHeight = max( pncm->iMenuHeight,
+            2 + tmMenuFont.tmHeight + tmMenuFont.tmExternalLeading);
+    get_text_metr_size( get_display_dc(), &pncm->lfCaptionFont, &tm, NULL);
+    pncm->iCaptionHeight = max( pncm->iCaptionHeight, 2 + tm.tmHeight);
+    get_text_metr_size( get_display_dc(), &pncm->lfSmCaptionFont, &tm, NULL);
+    pncm->iSmCaptionHeight = max( pncm->iSmCaptionHeight, 2 + tm.tmHeight);
+}
+
 /* load all the non-client metrics */
 static void load_nonclient_metrics(void)
 {
     HKEY hkey;
+    NONCLIENTMETRICSW ncm;
 
     if (RegOpenKeyExW (HKEY_CURRENT_USER, METRICS_REGKEY,
                        0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
 
     /* initialize geometry entries */
-    nonclient_metrics.iBorderWidth =  get_reg_metric(hkey, METRICS_BORDERWIDTH_VALNAME, 1);
-    if( nonclient_metrics.iBorderWidth < 1) nonclient_metrics.iBorderWidth = 1;
-    nonclient_metrics.iScrollWidth = get_reg_metric(hkey, METRICS_SCROLLWIDTH_VALNAME, 16);
-    nonclient_metrics.iScrollHeight = get_reg_metric(hkey, METRICS_SCROLLHEIGHT_VALNAME, 16);
+    ncm.iBorderWidth =  get_reg_metric(hkey, METRICS_BORDERWIDTH_VALNAME, 1);
+    ncm.iScrollWidth = get_reg_metric(hkey, METRICS_SCROLLWIDTH_VALNAME, 16);
+    ncm.iScrollHeight = get_reg_metric(hkey, METRICS_SCROLLHEIGHT_VALNAME, 16);
 
     /* size of the normal caption buttons */
-    nonclient_metrics.iCaptionHeight = get_reg_metric(hkey, METRICS_CAPTIONHEIGHT_VALNAME, 18);
-    nonclient_metrics.iCaptionWidth = get_reg_metric(hkey, METRICS_CAPTIONWIDTH_VALNAME, nonclient_metrics.iCaptionHeight);
+    ncm.iCaptionHeight = get_reg_metric(hkey, METRICS_CAPTIONHEIGHT_VALNAME, 18);
+    ncm.iCaptionWidth = get_reg_metric(hkey, METRICS_CAPTIONWIDTH_VALNAME, ncm.iCaptionHeight);
 
     /* caption font metrics */
-    if (!reg_get_logfont(METRICS_REGKEY, METRICS_CAPTIONLOGFONT_VALNAME, &nonclient_metrics.lfCaptionFont))
+    if (!reg_get_logfont(METRICS_REGKEY, METRICS_CAPTIONLOGFONT_VALNAME, &ncm.lfCaptionFont))
     {
-        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &nonclient_metrics.lfCaptionFont, 0 );
-        nonclient_metrics.lfCaptionFont.lfWeight = FW_BOLD;
+        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfCaptionFont, 0 );
+        ncm.lfCaptionFont.lfWeight = FW_BOLD;
     }
 
     /* size of the small caption buttons */
-    nonclient_metrics.iSmCaptionWidth = get_reg_metric(hkey, METRICS_SMCAPTIONWIDTH_VALNAME, 13);
-    nonclient_metrics.iSmCaptionHeight = get_reg_metric(hkey, METRICS_SMCAPTIONHEIGHT_VALNAME, 15);
+    ncm.iSmCaptionWidth = get_reg_metric(hkey, METRICS_SMCAPTIONWIDTH_VALNAME, 13);
+    ncm.iSmCaptionHeight = get_reg_metric(hkey, METRICS_SMCAPTIONHEIGHT_VALNAME, 15);
 
     /* small caption font metrics */
-    if (!reg_get_logfont(METRICS_REGKEY, METRICS_SMCAPTIONLOGFONT_VALNAME, &nonclient_metrics.lfSmCaptionFont))
-        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &nonclient_metrics.lfSmCaptionFont, 0 );
+    if (!reg_get_logfont(METRICS_REGKEY, METRICS_SMCAPTIONLOGFONT_VALNAME, &ncm.lfSmCaptionFont))
+        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfSmCaptionFont, 0 );
 
     /* menus, FIXME: names of wine.conf entries are bogus */
 
     /* size of the menu (MDI) buttons */
-    nonclient_metrics.iMenuHeight = get_reg_metric(hkey, METRICS_MENUHEIGHT_VALNAME, 18);
-    nonclient_metrics.iMenuWidth = get_reg_metric(hkey, METRICS_MENUWIDTH_VALNAME, nonclient_metrics.iMenuHeight);
+    ncm.iMenuHeight = get_reg_metric(hkey, METRICS_MENUHEIGHT_VALNAME, 18);
+    ncm.iMenuWidth = get_reg_metric(hkey, METRICS_MENUWIDTH_VALNAME, ncm.iMenuHeight);
 
     /* menu font metrics */
-    if (!reg_get_logfont(METRICS_REGKEY, METRICS_MENULOGFONT_VALNAME, &nonclient_metrics.lfMenuFont))
+    if (!reg_get_logfont(METRICS_REGKEY, METRICS_MENULOGFONT_VALNAME, &ncm.lfMenuFont))
     {
-        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &nonclient_metrics.lfMenuFont, 0 );
-        GetProfileStringW( Desktop, MenuFont, nonclient_metrics.lfCaptionFont.lfFaceName,
-                           nonclient_metrics.lfMenuFont.lfFaceName, LF_FACESIZE );
-        nonclient_metrics.lfMenuFont.lfHeight = -GetProfileIntW( Desktop, MenuFontSize, 11 );
-        nonclient_metrics.lfMenuFont.lfWeight = FW_NORMAL;
+        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfMenuFont, 0 );
+        GetProfileStringW( Desktop, MenuFont, ncm.lfCaptionFont.lfFaceName,
+                           ncm.lfMenuFont.lfFaceName, LF_FACESIZE );
+        ncm.lfMenuFont.lfHeight = -GetProfileIntW( Desktop, MenuFontSize, 11 );
+        ncm.lfMenuFont.lfWeight = FW_NORMAL;
     }
 
     /* status bar font metrics */
-    if (!reg_get_logfont(METRICS_REGKEY, METRICS_STATUSLOGFONT_VALNAME, &nonclient_metrics.lfStatusFont))
+    if (!reg_get_logfont(METRICS_REGKEY, METRICS_STATUSLOGFONT_VALNAME, &ncm.lfStatusFont))
     {
-        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &nonclient_metrics.lfStatusFont, 0 );
-        GetProfileStringW( Desktop, StatusFont, nonclient_metrics.lfCaptionFont.lfFaceName,
-                           nonclient_metrics.lfStatusFont.lfFaceName, LF_FACESIZE );
-        nonclient_metrics.lfStatusFont.lfHeight = -GetProfileIntW( Desktop, StatusFontSize, 11 );
-        nonclient_metrics.lfStatusFont.lfWeight = FW_NORMAL;
+        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfStatusFont, 0 );
+        GetProfileStringW( Desktop, StatusFont, ncm.lfCaptionFont.lfFaceName,
+                           ncm.lfStatusFont.lfFaceName, LF_FACESIZE );
+        ncm.lfStatusFont.lfHeight = -GetProfileIntW( Desktop, StatusFontSize, 11 );
+        ncm.lfStatusFont.lfWeight = FW_NORMAL;
     }
 
     /* message font metrics */
-    if (!reg_get_logfont(METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME, &nonclient_metrics.lfMessageFont))
+    if (!reg_get_logfont(METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME, &ncm.lfMessageFont))
     {
-        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &nonclient_metrics.lfMessageFont, 0 );
-        GetProfileStringW( Desktop, MessageFont, nonclient_metrics.lfCaptionFont.lfFaceName,
-                           nonclient_metrics.lfMessageFont.lfFaceName, LF_FACESIZE );
-        nonclient_metrics.lfMessageFont.lfHeight = -GetProfileIntW( Desktop, MessageFontSize, 11 );
-        nonclient_metrics.lfMessageFont.lfWeight = FW_NORMAL;
+        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfMessageFont, 0 );
+        GetProfileStringW( Desktop, MessageFont, ncm.lfCaptionFont.lfFaceName,
+                           ncm.lfMessageFont.lfFaceName, LF_FACESIZE );
+        ncm.lfMessageFont.lfHeight = -GetProfileIntW( Desktop, MessageFontSize, 11 );
+        ncm.lfMessageFont.lfWeight = FW_NORMAL;
     }
 
     /* some extra fields not in the nonclient structure */
     icon_size.cx = icon_size.cy = get_reg_metric( hkey, METRICS_ICONSIZE_VALNAME, 32 );
 
-    get_text_metr_size( get_display_dc(), &nonclient_metrics.lfMenuFont,
-            &tmMenuFont, NULL);
-    get_text_metr_size( get_display_dc(), &nonclient_metrics.lfCaptionFont,
-            NULL, &CaptionFontAvCharWidth);
-
     if (hkey) RegCloseKey( hkey );
+    normalize_nonclientmetrics( &ncm);
+    memcpy( &nonclient_metrics, &ncm, sizeof(nonclient_metrics) );
     spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
 }
 
@@ -1114,8 +1135,6 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     BOOL ret = TRUE;
     unsigned spi_idx = 0;
-
-    TRACE("(%u, %u, %p, %u)\n", uiAction, uiParam, pvParam, fWinIni);
 
     switch (uiAction)
     {
@@ -1494,15 +1513,55 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
         if (lpnm && lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
         {
-            /* FIXME: there are likely a few more parameters to save here */
-            set_uint_param( SPI_SETBORDER_IDX,
-                              SPI_SETBORDER_REGKEY,
-                              SPI_SETBORDER_VALNAME,
-                              &border,
-                              lpnm->iBorderWidth, fWinIni );
-            if( lpnm->iBorderWidth < 1) lpnm->iBorderWidth = 1;
-            memcpy( &nonclient_metrics, lpnm, sizeof(nonclient_metrics) );
-            spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
+            NONCLIENTMETRICSW ncm;
+            ret = set_uint_param( SPI_SETBORDER_IDX,
+                    SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME,
+                    &border, lpnm->iBorderWidth, fWinIni );
+            if( ret) ret = save_int_param( METRICS_REGKEY,
+                    METRICS_SCROLLWIDTH_VALNAME, NULL,
+                    lpnm->iScrollWidth, fWinIni );
+            if( ret) ret = save_int_param( METRICS_REGKEY,
+                    METRICS_SCROLLHEIGHT_VALNAME, NULL,
+                    lpnm->iScrollHeight, fWinIni );
+            if( ret) ret = save_int_param( METRICS_REGKEY,
+                    METRICS_CAPTIONWIDTH_VALNAME, NULL,
+                    lpnm->iCaptionWidth, fWinIni );
+            if( ret) ret = save_int_param( METRICS_REGKEY,
+                    METRICS_CAPTIONHEIGHT_VALNAME, NULL,
+                    lpnm->iCaptionHeight, fWinIni );
+            if( ret) ret = save_int_param( METRICS_REGKEY,
+                    METRICS_SMCAPTIONWIDTH_VALNAME, NULL,
+                    lpnm->iSmCaptionWidth, fWinIni );
+            if( ret) ret = save_int_param( METRICS_REGKEY,
+                    METRICS_SMCAPTIONHEIGHT_VALNAME, NULL,
+                    lpnm->iSmCaptionHeight, fWinIni );
+            if( ret) ret = save_int_param( METRICS_REGKEY,
+                    METRICS_MENUWIDTH_VALNAME, NULL,
+                    lpnm->iMenuWidth, fWinIni );
+            if( ret) ret = save_int_param( METRICS_REGKEY,
+                    METRICS_MENUHEIGHT_VALNAME, NULL,
+                    lpnm->iMenuHeight, fWinIni );
+            if( ret) ret = SYSPARAMS_SaveLogFont(
+                    METRICS_REGKEY, METRICS_MENULOGFONT_VALNAME,
+                    &lpnm->lfMenuFont, fWinIni);
+            if( ret) ret = SYSPARAMS_SaveLogFont(
+                    METRICS_REGKEY, METRICS_CAPTIONLOGFONT_VALNAME,
+                    &lpnm->lfCaptionFont, fWinIni);
+            if( ret) ret = SYSPARAMS_SaveLogFont(
+                    METRICS_REGKEY, METRICS_SMCAPTIONLOGFONT_VALNAME,
+                    &lpnm->lfSmCaptionFont, fWinIni);
+            if( ret) ret = SYSPARAMS_SaveLogFont(
+                    METRICS_REGKEY, METRICS_STATUSLOGFONT_VALNAME,
+                    &lpnm->lfStatusFont, fWinIni);
+            if( ret) ret = SYSPARAMS_SaveLogFont(
+                    METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME,
+                    &lpnm->lfMessageFont, fWinIni);
+            if( ret) {
+                memcpy( &ncm, lpnm, sizeof(nonclient_metrics) );
+                normalize_nonclientmetrics( &ncm);
+                memcpy( &nonclient_metrics, &ncm, sizeof(nonclient_metrics) );
+                spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
+            }
         }
         break;
     }
@@ -2140,6 +2199,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     if (ret)
         SYSPARAMS_NotifyChange( uiAction, fWinIni );
+    TRACE("(%u, %u, %p, %u) ret %d\n",
+            uiAction, uiParam, pvParam, fWinIni, ret);
     return ret;
 
 #undef WINE_SPI_FIXME
