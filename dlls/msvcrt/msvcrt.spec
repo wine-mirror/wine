@@ -75,7 +75,7 @@
 @ extern _HUGE MSVCRT__HUGE
 @ cdecl _Strftime(str long str ptr ptr)
 @ cdecl _XcptFilter(long ptr)
-@ cdecl -i386 __CxxFrameHandler(ptr ptr ptr ptr)
+@ cdecl -i386 -register __CxxFrameHandler(ptr ptr ptr ptr)
 @ stub __CxxLongjmpUnwind #(ptr) stdcall
 @ cdecl __RTCastToVoid(ptr) MSVCRT___RTCastToVoid
 @ cdecl __RTDynamicCast(ptr long ptr ptr long) MSVCRT___RTDynamicCast
@@ -177,7 +177,7 @@
 @ cdecl _chdir(str)
 @ cdecl _chdrive(long)
 @ cdecl _chgsign( double )
-@ cdecl -i386 _chkesp()
+@ cdecl -i386 -norelay _chkesp()
 @ cdecl _chmod(str long)
 @ cdecl _chsize (long long)
 @ cdecl _clearfp()
@@ -322,7 +322,7 @@
 @ cdecl _lock(long)
 @ cdecl _locking(long long long)
 @ cdecl _logb( double )
-@ cdecl -i386 _longjmpex(ptr long) MSVCRT_longjmp
+@ cdecl -i386 -register _longjmpex(ptr long) MSVCRT_longjmp
 @ cdecl _lrotl(long long)
 @ cdecl _lrotr(long long)
 @ cdecl _lsearch(ptr ptr long long ptr)
@@ -426,8 +426,8 @@
 @ cdecl _set_error_mode(long)
 @ cdecl _set_sbh_threshold(long)
 @ cdecl _seterrormode(long)
-@ cdecl -i386 _setjmp(ptr) MSVCRT__setjmp
-@ cdecl -i386 _setjmp3(ptr long) MSVCRT__setjmp3
+@ cdecl -i386 -register _setjmp(ptr) MSVCRT__setjmp
+@ cdecl -i386 -register _setjmp3(ptr long) MSVCRT__setjmp3
 @ stub _setmaxstdio #(long)
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long)
@@ -659,7 +659,7 @@
 @ cdecl localtime(ptr) MSVCRT_localtime
 @ cdecl log(double)
 @ cdecl log10(double)
-@ cdecl -i386 longjmp(ptr long) MSVCRT_longjmp
+@ cdecl -i386 -register longjmp(ptr long) MSVCRT_longjmp
 @ cdecl malloc(long) MSVCRT_malloc
 @ cdecl mblen(ptr long) MSVCRT_mblen
 @ cdecl mbstowcs(ptr str long) ntdll.mbstowcs

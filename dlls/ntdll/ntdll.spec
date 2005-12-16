@@ -273,7 +273,7 @@
 @ stdcall NtQueryVirtualMemory(long ptr long ptr long ptr)
 @ stdcall NtQueryVolumeInformationFile(long ptr ptr long long)
 @ stdcall NtQueueApcThread(long ptr long long long)
-@ stdcall NtRaiseException(ptr ptr long)
+@ stdcall -register NtRaiseException(ptr ptr long)
 @ stub NtRaiseHardError
 @ stdcall NtReadFile(long long long long long long long long long)
 @ stub NtReadFileScatter
@@ -782,7 +782,7 @@
 @ stdcall RtlQueryTimeZoneInformation(ptr)
 @ stub RtlQueueApcWow64Thread
 @ stub RtlQueueWorkItem
-@ stdcall RtlRaiseException(ptr)
+@ stdcall -register RtlRaiseException(ptr)
 @ stdcall RtlRaiseStatus(long)
 @ stdcall RtlRandom(ptr)
 @ stub RtlRandomEx
@@ -884,7 +884,7 @@
 # @ stub RtlUnlockBootStatusData
 @ stdcall RtlUnlockHeap(long)
 # @ stub RtlUnlockMemoryStreamRegion
-@ stdcall RtlUnwind(ptr ptr ptr long)
+@ stdcall -register RtlUnwind(ptr ptr ptr long)
 @ stdcall RtlUpcaseUnicodeChar(long)
 @ stdcall RtlUpcaseUnicodeString(ptr ptr long)
 @ stdcall RtlUpcaseUnicodeStringToAnsiString(ptr ptr long)
@@ -1115,7 +1115,7 @@
 @ stdcall ZwQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
 @ stdcall ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
 # @ stub ZwQueueApcThread
-@ stdcall ZwRaiseException(ptr ptr long) NtRaiseException
+@ stdcall -register ZwRaiseException(ptr ptr long) NtRaiseException
 @ stub ZwRaiseHardError
 @ stdcall ZwReadFile(long long long long long long long long long) NtReadFile
 # @ stub ZwReadFileScatter
