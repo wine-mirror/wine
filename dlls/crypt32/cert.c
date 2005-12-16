@@ -313,14 +313,6 @@ static BOOL WINAPI CRYPT_SetCertificateContextProperty(
 static const void * WINAPI CRYPT_ReadSerializedElement(const BYTE *pbElement,
  DWORD cbElement, DWORD dwContextTypeFlags, DWORD *pdwContentType);
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 static void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, HCRYPTPROV hCryptProv,
  DWORD dwFlags, CertStoreType type)
 {
@@ -2787,7 +2779,7 @@ static const void * WINAPI CRYPT_ReadSerializedElement(const BYTE *pbElement,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         context = NULL;

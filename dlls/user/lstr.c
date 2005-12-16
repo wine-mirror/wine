@@ -42,13 +42,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
 
 /***********************************************************************
  *           CharNextA   (USER32.@)
@@ -253,7 +246,7 @@ LPSTR WINAPI CharLowerA(LPSTR str)
     {
         CharLowerBuffA( str, strlen(str) );
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
@@ -279,7 +272,7 @@ LPSTR WINAPI CharUpperA(LPSTR str)
     {
         CharUpperBuffA( str, strlen(str) );
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;

@@ -51,13 +51,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(resource);
 static LCID user_lcid, system_lcid;
 static LANGID user_ui_language, system_ui_language;
 
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 /**********************************************************************
  *  is_data_file_module
  *
@@ -281,7 +274,7 @@ NTSTATUS WINAPI LdrFindResourceDirectory_U( HMODULE hmod, const LDR_RESOURCE_INF
         status = find_entry( hmod, info, level, &res, TRUE );
         if (status == STATUS_SUCCESS) *dir = res;
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         return GetExceptionCode();
     }
@@ -309,7 +302,7 @@ NTSTATUS WINAPI LdrFindResource_U( HMODULE hmod, const LDR_RESOURCE_INFO *info,
         status = find_entry( hmod, info, level, &res, FALSE );
         if (status == STATUS_SUCCESS) *entry = res;
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         return GetExceptionCode();
     }
@@ -350,7 +343,7 @@ static inline NTSTATUS access_resource( HMODULE hmod, const IMAGE_RESOURCE_DATA_
             status = STATUS_SUCCESS;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         return GetExceptionCode();
     }

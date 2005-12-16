@@ -64,14 +64,6 @@ void (*wine_tsx11_unlock_ptr)(void) = NULL;
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 /**********************************************************************/
 
 typedef struct {
@@ -221,7 +213,7 @@ HRESULT WINAPI DirectDrawEnumerateExA(
                             lpContext, 0))
                 stop = TRUE;
         }
-        __EXCEPT(page_fault)
+        __EXCEPT_PAGE_FAULT
         {
             return E_INVALIDARG;
         }

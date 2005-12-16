@@ -172,14 +172,6 @@ static BOOL WINAPI CRYPT_AsnDecodeUnsignedIntegerInternal(
  DWORD cbEncoded, DWORD dwFlags, PCRYPT_DECODE_PARA pDecodePara,
  void *pvStructInfo, DWORD *pcbStructInfo);
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
@@ -538,7 +530,7 @@ static BOOL WINAPI CRYPT_AsnEncodePubKeyInfo(DWORD dwCertEncodingType,
          sizeof(items) / sizeof(items[0]), dwFlags, pEncodePara, pbEncoded,
          pcbEncoded);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -569,7 +561,7 @@ static BOOL WINAPI CRYPT_AsnEncodeCert(DWORD dwCertEncodingType,
          sizeof(items) / sizeof(items[0]), dwFlags, pEncodePara, pbEncoded,
          pcbEncoded);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -638,7 +630,7 @@ static BOOL WINAPI CRYPT_AsnEncodeCertInfo(DWORD dwCertEncodingType,
         ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items, cItem,
          dwFlags, pEncodePara, pbEncoded, pcbEncoded);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -782,7 +774,7 @@ static BOOL WINAPI CRYPT_AsnEncodeCRLInfo(DWORD dwCertEncodingType,
         ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items, cItem,
          dwFlags, pEncodePara, pbEncoded, pcbEncoded);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -866,7 +858,7 @@ static BOOL WINAPI CRYPT_AsnEncodeExtensions(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1183,7 +1175,7 @@ static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
                 CryptMemFree(blobs[i].pbData);
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1245,7 +1237,7 @@ static BOOL WINAPI CRYPT_AsnEncodeName(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1441,7 +1433,7 @@ static BOOL WINAPI CRYPT_AsnEncodeAltName(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1478,7 +1470,7 @@ static BOOL WINAPI CRYPT_AsnEncodeBasicConstraints2(DWORD dwCertEncodingType,
         ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items, cItem,
          dwFlags, pEncodePara, pbEncoded, pcbEncoded);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1519,7 +1511,7 @@ static BOOL WINAPI CRYPT_AsnEncodeRsaPubKey(DWORD dwCertEncodingType,
              pcbEncoded);
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1564,7 +1556,7 @@ static BOOL WINAPI CRYPT_AsnEncodeOctets(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1635,7 +1627,7 @@ static BOOL WINAPI CRYPT_AsnEncodeBits(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1674,7 +1666,7 @@ static BOOL WINAPI CRYPT_AsnEncodeBitsSwapBytes(DWORD dwCertEncodingType,
              &newBlob, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
         CryptMemFree(newBlob.pbData);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1773,7 +1765,7 @@ static BOOL WINAPI CRYPT_AsnEncodeInteger(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1844,7 +1836,7 @@ static BOOL WINAPI CRYPT_AsnEncodeUnsignedInteger(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1923,7 +1915,7 @@ static BOOL WINAPI CRYPT_AsnEncodeUtcTime(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -1972,7 +1964,7 @@ static BOOL WINAPI CRYPT_AsnEncodeGeneralizedTime(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -2002,7 +1994,7 @@ static BOOL WINAPI CRYPT_AsnEncodeChoiceOfTime(DWORD dwCertEncodingType,
              lpszStructType, pvStructInfo, dwFlags, pEncodePara, pbEncoded,
              pcbEncoded);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -2051,7 +2043,7 @@ static BOOL WINAPI CRYPT_AsnEncodeSequenceOfAny(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -2190,7 +2182,7 @@ static BOOL WINAPI CRYPT_AsnEncodeCRLDistPoints(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -2976,7 +2968,7 @@ static BOOL WINAPI CRYPT_AsnDecodeCert(DWORD dwCertEncodingType,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
          pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -3093,7 +3085,7 @@ static BOOL WINAPI CRYPT_AsnDecodeCertInfo(DWORD dwCertEncodingType,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
          pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -3188,7 +3180,7 @@ static BOOL WINAPI CRYPT_AsnDecodeCRLInfo(DWORD dwCertEncodingType,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
          pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -3307,7 +3299,7 @@ static BOOL WINAPI CRYPT_AsnDecodeExtensions(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -3422,7 +3414,7 @@ static BOOL WINAPI CRYPT_AsnDecodeOid(const BYTE *pbEncoded, DWORD cbEncoded,
             ret = FALSE;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -3526,7 +3518,7 @@ static BOOL WINAPI CRYPT_AsnDecodeNameValue(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -3566,7 +3558,7 @@ static BOOL WINAPI CRYPT_AsnDecodeRdnAttr(DWORD dwCertEncodingType,
              debugstr_a(attr->pszObjId));
         TRACE("returning %d (%08lx)\n", ret, GetLastError());
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -3590,7 +3582,7 @@ static BOOL WINAPI CRYPT_AsnDecodeRdn(DWORD dwCertEncodingType,
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
          pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -3614,7 +3606,7 @@ static BOOL WINAPI CRYPT_AsnDecodeName(DWORD dwCertEncodingType,
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
          pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -3712,7 +3704,7 @@ static BOOL WINAPI CRYPT_AsnDecodePubKeyInfo(DWORD dwCertEncodingType,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
          pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -3903,7 +3895,7 @@ static BOOL WINAPI CRYPT_AsnDecodeAltName(DWORD dwCertEncodingType,
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
          pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -3986,7 +3978,7 @@ static BOOL WINAPI CRYPT_AsnDecodeBasicConstraints2(DWORD dwCertEncodingType,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
          pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4060,7 +4052,7 @@ static BOOL WINAPI CRYPT_AsnDecodeRsaPubKey(DWORD dwCertEncodingType,
             LocalFree(decodedKey);
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4159,7 +4151,7 @@ static BOOL WINAPI CRYPT_AsnDecodeOctets(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4267,7 +4259,7 @@ static BOOL WINAPI CRYPT_AsnDecodeBits(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4324,7 +4316,7 @@ static BOOL WINAPI CRYPT_AsnDecodeInt(DWORD dwCertEncodingType,
         else if (GetLastError() == ERROR_MORE_DATA)
             SetLastError(CRYPT_E_ASN1_LARGE);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4416,7 +4408,7 @@ static BOOL WINAPI CRYPT_AsnDecodeInteger(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4515,7 +4507,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUnsignedInteger(DWORD dwCertEncodingType,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4583,7 +4575,7 @@ static BOOL WINAPI CRYPT_AsnDecodeEnumerated(DWORD dwCertEncodingType,
             ret = FALSE;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4671,7 +4663,7 @@ static BOOL CRYPT_AsnDecodeTimeZone(const BYTE *pbEncoded, DWORD len,
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4762,7 +4754,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUtcTime(DWORD dwCertEncodingType,
             ret = FALSE;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4857,7 +4849,7 @@ static BOOL WINAPI CRYPT_AsnDecodeGeneralizedTime(DWORD dwCertEncodingType,
             ret = FALSE;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4888,7 +4880,7 @@ static BOOL WINAPI CRYPT_AsnDecodeChoiceOfTime(DWORD dwCertEncodingType,
             ret = FALSE;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -4991,7 +4983,7 @@ static BOOL WINAPI CRYPT_AsnDecodeSequenceOfAny(DWORD dwCertEncodingType,
             return FALSE;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;
@@ -5042,7 +5034,7 @@ static BOOL WINAPI CRYPT_AsnDecodeCRLDistPoints(DWORD dwCertEncodingType,
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
          pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
         ret = FALSE;

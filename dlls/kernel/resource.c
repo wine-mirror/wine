@@ -48,13 +48,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(resource);
 #define HGLOBAL_16(h32) (LOWORD(h32))
 #define HMODULE_16(h32) (LOWORD(h32))
 
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 /* retrieve the resource name to pass to the ntdll functions */
 static NTSTATUS get_res_nameA( LPCSTR name, UNICODE_STRING *str )
 {
@@ -121,7 +114,7 @@ static BOOL get_res_name_type_WtoA( LPCWSTR name, LPCWSTR type, LPSTR *nameA, LP
         }
         else *typeA = (LPSTR)type;
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         if (HIWORD(*nameA)) HeapFree( GetProcessHeap(), 0, *nameA );
         if (HIWORD(*typeA)) HeapFree( GetProcessHeap(), 0, *typeA );
@@ -151,7 +144,7 @@ static HRSRC find_resourceA( HMODULE hModule, LPCSTR type, LPCSTR name, WORD lan
     done:
         if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
     }
@@ -184,7 +177,7 @@ static HRSRC find_resourceW( HMODULE hModule, LPCWSTR type, LPCWSTR name, WORD l
     done:
         if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
     }

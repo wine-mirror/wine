@@ -39,14 +39,6 @@
 static INT (WINAPI *pLoadStringA)(HINSTANCE, UINT, LPSTR, INT);
 static INT (WINAPI *pwvsprintfA)(LPSTR, LPCSTR, va_list);
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 
 /***********************************************************************
  * Helper for k32 family functions
@@ -179,7 +171,7 @@ LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
     {
         strcat( dst, src );
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
@@ -198,7 +190,7 @@ LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
     {
         strcatW( dst, src );
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
@@ -244,7 +236,7 @@ LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
         /* this is how Windows does it */
         memmove( dst, src, strlen(src)+1 );
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
@@ -263,7 +255,7 @@ LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
     {
         strcpyW( dst, src );
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
@@ -308,7 +300,7 @@ LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
         }
         if (count) *d = 0;
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
@@ -342,7 +334,7 @@ LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
         }
         if (count) *d = 0;
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
@@ -372,7 +364,7 @@ INT WINAPI lstrlenA( LPCSTR str )
     {
         ret = strlen(str);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
@@ -392,7 +384,7 @@ INT WINAPI lstrlenW( LPCWSTR str )
     {
         ret = strlenW(str);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;

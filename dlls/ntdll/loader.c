@@ -54,14 +54,6 @@ typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 static int process_detaching = 0;  /* set on process detach to avoid deadlocks with thread detach */
 static int free_lib_count;   /* recursion depth of LdrUnloadDll calls */
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 static const char * const reason_names[] =
 {
     "PROCESS_DETACH",
@@ -1937,7 +1929,7 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
             if (ret->Signature != IMAGE_NT_SIGNATURE) ret = NULL;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         return NULL;
     }

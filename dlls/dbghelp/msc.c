@@ -66,13 +66,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_msc);
  * Debug file access helper routines
  */
 
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 static void dump(const void* ptr, unsigned len)
 {
     int         i, j;
@@ -2334,7 +2327,7 @@ typedef struct _FPO_DATA
 #endif
 
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         ERR("Got a page fault while loading symbols\n");
         ret = FALSE;

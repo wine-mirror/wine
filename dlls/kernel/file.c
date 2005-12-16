@@ -72,13 +72,6 @@ typedef struct
 
 static BOOL oem_file_apis;
 
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 
 /***********************************************************************
  *              create_file_OF
@@ -1724,7 +1717,7 @@ BOOL WINAPI FindClose( HANDLE handle )
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         WARN("Illegal handle %p\n", handle);
         SetLastError( ERROR_INVALID_HANDLE );

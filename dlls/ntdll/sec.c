@@ -46,14 +46,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #define NT_SUCCESS(status) (status == STATUS_SUCCESS)
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 /* helper function to copy an ACL */
 static BOOLEAN copy_acl(DWORD nDestinationAclLength, PACL pDestinationAcl, PACL pSourceAcl)
 {
@@ -393,7 +385,7 @@ BOOLEAN WINAPI RtlValidSid( PSID pSid )
             ret = FALSE;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         WARN("(%p): invalid pointer!\n", pSid);
         return FALSE;
@@ -1268,7 +1260,7 @@ BOOLEAN WINAPI RtlValidAcl(PACL pAcl)
                     }
                 }
 	}
-	__EXCEPT(page_fault)
+	__EXCEPT_PAGE_FAULT
 	{
 		WARN("(%p): invalid pointer!\n", pAcl);
 		return 0;

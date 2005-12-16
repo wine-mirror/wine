@@ -127,14 +127,6 @@ static void dump_obj_locator( const rtti_object_locator *ptr )
     }
 }
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 /* Internal common ctor for exception */
 static void WINAPI EXCEPTION_ctor(exception *_this, const char** name)
 {
@@ -1065,7 +1057,7 @@ const type_info* MSVCRT___RTtypeid(void *cppobj)
         const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
         ret = obj_locator->type_descriptor;
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         __non_rtti_object e;
         MSVCRT___non_rtti_object_ctor( &e, "Bad read pointer - no RTTI data!" );
@@ -1150,7 +1142,7 @@ void* MSVCRT___RTDynamicCast(void *cppobj, int unknown,
             _CxxThrowException( &e, &bad_cast_exception_type );
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         __non_rtti_object e;
         MSVCRT___non_rtti_object_ctor( &e, "Access violation - no RTTI data!" );
@@ -1189,7 +1181,7 @@ void* MSVCRT___RTCastToVoid(void *cppobj)
         const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
         ret = (char *)cppobj - obj_locator->base_class_offset;
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         __non_rtti_object e;
         MSVCRT___non_rtti_object_ctor( &e, "Access violation - no RTTI data!" );

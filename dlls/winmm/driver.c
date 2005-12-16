@@ -82,7 +82,7 @@ LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
         d = (LPWINE_DRIVER)hDrvr;
         if (d && d->dwMagic != WINE_DI_MAGIC) d = NULL;
     }
-    __EXCEPT(NULL)
+    __EXCEPT_PAGE_FAULT
     {
         return NULL;
     }

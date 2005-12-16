@@ -272,14 +272,6 @@ extern void WINAPI SNOOP_Return(void);
 static SNOOP_DLL *firstdll;
 static SNOOP_RETURNENTRIES *firstrets;
 
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ||
-        GetExceptionCode() == EXCEPTION_PRIV_INSTRUCTION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 /***********************************************************************
  *           check_list
  *
@@ -873,7 +865,7 @@ static void SNOOP_PrintArg(DWORD x)
             if (!nostring && i > 5) DPRINTF(" %s",debugstr_wn((LPWSTR)x,i));
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
     }
     __ENDTRY

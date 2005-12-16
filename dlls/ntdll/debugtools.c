@@ -45,14 +45,6 @@ static struct __wine_debug_functions default_funcs;
 
 /* ---------------------------------------------------------------------- */
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 /* get the debug info pointer for the current thread */
 static inline struct debug_info *get_info(void)
 {
@@ -91,7 +83,7 @@ static const char *NTDLL_dbgstr_an( const char *src, int n )
     {
         res = default_funcs.dbgstr_an( src, n );
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         release_temp_buffer( old_pos, 0 );
         return "(invalid)";
@@ -114,7 +106,7 @@ static const char *NTDLL_dbgstr_wn( const WCHAR *src, int n )
     {
         res = default_funcs.dbgstr_wn( src, n );
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         release_temp_buffer( old_pos, 0 );
         return "(invalid)";

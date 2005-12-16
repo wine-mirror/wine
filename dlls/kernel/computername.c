@@ -63,14 +63,6 @@ static const char default_ComputerName[] = "WINE";
 
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 /*********************************************************************** 
  *                    dns_gethostbyname (INTERNAL)
  *
@@ -359,7 +351,7 @@ BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
             st = STATUS_SUCCESS;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         st = STATUS_INVALID_PARAMETER;
     }
@@ -410,7 +402,7 @@ BOOL WINAPI GetComputerNameA(LPSTR name, LPDWORD size)
             ret = TRUE;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         ret = FALSE;
@@ -471,7 +463,7 @@ BOOL WINAPI GetComputerNameExA(COMPUTER_NAME_FORMAT type, LPSTR name, LPDWORD si
                 ret = TRUE;
             }
         }
-        __EXCEPT(page_fault)
+        __EXCEPT_PAGE_FAULT
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return FALSE;
@@ -536,7 +528,7 @@ BOOL WINAPI GetComputerNameExW( COMPUTER_NAME_FORMAT type, LPWSTR name, LPDWORD 
                 ret = TRUE;
             }
         }
-        __EXCEPT(page_fault)
+        __EXCEPT_PAGE_FAULT
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return FALSE;

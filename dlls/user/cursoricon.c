@@ -2202,17 +2202,6 @@ end:
  *
  * See LoadImageW.
  */
-
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
-/*********************************************************************/
-
 HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
                               INT desiredx, INT desiredy, UINT loadflags)
 {
@@ -2227,7 +2216,7 @@ HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
         u_name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
         MultiByteToWideChar( CP_ACP, 0, name, -1, u_name, len );
     }
-    __EXCEPT(page_fault) {
+    __EXCEPT_PAGE_FAULT {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }

@@ -50,14 +50,6 @@ WINE_DECLARE_DEBUG_CHANNEL(seh);
 
 static unsigned int page_size;
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 
 /***********************************************************************
  *             VirtualAlloc   (KERNEL32.@)
@@ -557,7 +549,7 @@ BOOL WINAPI IsBadReadPtr(
         dummy = p[0];
         dummy = p[count - 1];
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         TRACE_(seh)("%p caused page fault during read\n", ptr);
         return TRUE;
@@ -598,7 +590,7 @@ BOOL WINAPI IsBadWritePtr(
         p[0] |= 0;
         p[count - 1] |= 0;
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         TRACE_(seh)("%p caused page fault during write\n", ptr);
         return TRUE;
@@ -677,7 +669,7 @@ BOOL WINAPI IsBadStringPtrA(
         volatile const char *p = str;
         while (p != str + max) if (!*p++) break;
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         TRACE_(seh)("%p caused page fault during read\n", str);
         return TRUE;
@@ -700,7 +692,7 @@ BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
         volatile const WCHAR *p = str;
         while (p != str + max) if (!*p++) break;
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         TRACE_(seh)("%p caused page fault during read\n", str);
         return TRUE;

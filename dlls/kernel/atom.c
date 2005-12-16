@@ -45,14 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(atom);
 
 #define MAX_ATOM_LEN 255
 
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 /******************************************************************
  *		get_local_table
  *
@@ -143,7 +135,7 @@ ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] String to add */ )
 	    }
 	}
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         atom = 0;

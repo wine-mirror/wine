@@ -90,14 +90,6 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 static HMODULE16 NE_GetModuleByFilename( LPCSTR name );
 
 
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
-
 /* patch all the flat cs references of the code segment if necessary */
 inline static void patch_code_segment( NE_MODULE *pModule )
 {
@@ -1373,7 +1365,7 @@ static BOOL16 MODULE_CallWEP( HMODULE16 hModule )
         WOWCallback16Ex( (DWORD)WEP, WCB16_PASCAL, sizeof(args), args, &dwRet );
         ret = LOWORD(dwRet);
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         WARN("Page fault\n");
         ret = 0;

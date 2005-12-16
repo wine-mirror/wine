@@ -70,18 +70,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(heap);
 static HANDLE systemHeap;   /* globally shared heap */
 
 
-
-/* filter for page-fault exceptions */
-static WINE_EXCEPTION_FILTER(page_fault)
-{
-    switch (GetExceptionCode()) {
-        case (EXCEPTION_ACCESS_VIOLATION):
-           return EXCEPTION_EXECUTE_HANDLER;
-        default:
-           return EXCEPTION_CONTINUE_SEARCH;
-    }
-}
-
 /***********************************************************************
  *           HEAP_CreateSystemHeap
  *
@@ -436,7 +424,7 @@ LPVOID WINAPI GlobalLock(
             SetLastError(ERROR_INVALID_HANDLE);
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         WARN("page fault on %p\n", hmem);
         palloc = NULL;
@@ -484,7 +472,7 @@ BOOL WINAPI GlobalUnlock(
             locked=FALSE;
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         ERR("page fault occurred ! Caused by bug ?\n");
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -546,7 +534,7 @@ HGLOBAL WINAPI GlobalHandle(
         handle = 0;
         SetLastError( ERROR_INVALID_HANDLE );
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         SetLastError( ERROR_INVALID_HANDLE );
         handle = 0;
@@ -717,7 +705,7 @@ HGLOBAL WINAPI GlobalFree(
             }
         }
     }
-    __EXCEPT(page_fault)
+    __EXCEPT_PAGE_FAULT
     {
         ERR("page fault occurred ! Caused by bug ?\n");
         SetLastError( ERROR_INVALID_PARAMETER );

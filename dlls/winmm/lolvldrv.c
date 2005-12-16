@@ -447,7 +447,7 @@ LPWINE_MLD	MMDRV_Get(HANDLE _hndl, UINT type, BOOL bCanBeID)
                     mld = MM_MLDrvs[idx];
                     if (mld && mld->type != type) mld = NULL;
                 }
-                __EXCEPT(NULL)
+                __EXCEPT_PAGE_FAULT
                 {
                     mld = NULL;
                 }

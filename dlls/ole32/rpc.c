@@ -110,13 +110,6 @@ struct dispatch_params
     HRESULT            hr; /* hresult (out) */
 };
 
-static WINE_EXCEPTION_FILTER(ole_filter)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_CONTINUE_SEARCH;
-    return EXCEPTION_EXECUTE_HANDLER;
-}
-
 static HRESULT WINAPI RpcChannelBuffer_QueryInterface(LPRPCCHANNELBUFFER iface, REFIID riid, LPVOID *ppv)
 {
     *ppv = NULL;
@@ -453,7 +446,7 @@ void RPC_ExecuteCall(struct dispatch_params *params)
     {
         params->hr = IRpcStubBuffer_Invoke(params->stub, params->msg, params->chan);
     }
-    __EXCEPT(ole_filter)
+    __EXCEPT_PAGE_FAULT
     {
         params->hr = GetExceptionCode();
     }
