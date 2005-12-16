@@ -484,7 +484,7 @@ static inline int get_trap_code( const SIGCONTEXT *sigcontext )
  *
  * Get the error code for a signal.
  */
-static inline int get_error_code( const SIGCONTEXT *sigcontext )
+static inline WORD get_error_code( const SIGCONTEXT *sigcontext )
 {
 #ifdef ERROR_sig
     return ERROR_sig(sigcontext);
@@ -794,6 +794,71 @@ inline static void restore_context( const CONTEXT *context, SIGCONTEXT *sigconte
 
 
 /***********************************************************************
+ *           is_privileged_instr
+ *
+ * Check if the fault location is a privileged instruction.
+ * Based on the instruction emulation code in dlls/kernel/instr.c.
+ */
+static inline int is_privileged_instr( CONTEXT86 *context )
+{
+    const BYTE *instr;
+    unsigned int prefix_count = 0;
+
+    if (!wine_ldt_is_system( context->SegCs )) return 0;
+    instr = (BYTE *)context->Eip;
+
+    for (;;) switch(*instr)
+    {
+    /* instruction prefixes */
+    case 0x2e:  /* %cs: */
+    case 0x36:  /* %ss: */
+    case 0x3e:  /* %ds: */
+    case 0x26:  /* %es: */
+    case 0x64:  /* %fs: */
+    case 0x65:  /* %gs: */
+    case 0x66:  /* opcode size */
+    case 0x67:  /* addr size */
+    case 0xf0:  /* lock */
+    case 0xf2:  /* repne */
+    case 0xf3:  /* repe */
+        if (++prefix_count >= 15) return 0;
+        instr++;
+        continue;
+
+    case 0x0f: /* extended instruction */
+        switch(instr[1])
+        {
+        case 0x20: /* mov crX, reg */
+        case 0x21: /* mov drX, reg */
+        case 0x22: /* mov reg, crX */
+        case 0x23: /* mov reg drX */
+            return 1;
+        }
+        return 0;
+    case 0x6c: /* insb (%dx) */
+    case 0x6d: /* insl (%dx) */
+    case 0x6e: /* outsb (%dx) */
+    case 0x6f: /* outsl (%dx) */
+    case 0xcd: /* int $xx */
+    case 0xe4: /* inb al,XX */
+    case 0xe5: /* in (e)ax,XX */
+    case 0xe6: /* outb XX,al */
+    case 0xe7: /* out XX,(e)ax */
+    case 0xec: /* inb (%dx),%al */
+    case 0xed: /* inl (%dx),%eax */
+    case 0xee: /* outb %al,(%dx) */
+    case 0xef: /* outl %eax,(%dx) */
+    case 0xf4: /* hlt */
+    case 0xfa: /* cli */
+    case 0xfb: /* sti */
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+
+/***********************************************************************
  *           setup_exception
  *
  * Setup a proper stack frame for the raise function, and modify the
@@ -1063,8 +1128,17 @@ static HANDLER_DEF(segv_handler)
     case T_SEGNPFLT:  /* Segment not present exception */
     case T_PROTFLT:   /* General protection fault */
     case T_UNKNOWN:   /* Unknown fault code */
-        rec->ExceptionCode = get_error_code(HANDLER_CONTEXT) ? EXCEPTION_ACCESS_VIOLATION
-                                                             : EXCEPTION_PRIV_INSTRUCTION;
+        if (!get_error_code(HANDLER_CONTEXT) && is_privileged_instr( get_exception_context(rec) ))
+            rec->ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
+        else
+        {
+            WORD err = get_error_code(HANDLER_CONTEXT);
+            rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+            rec->NumberParameters = 2;
+            rec->ExceptionInformation[0] = 0;
+            /* if error contains a LDT selector, use that as fault address */
+            rec->ExceptionInformation[1] = (err & 7) == 4 ? (err & ~7) : 0xffffffff;
+        }
         break;
     case T_PAGEFLT:  /* Page fault */
         rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;

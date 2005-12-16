@@ -9,6 +9,7 @@ CTESTS = \
 	atom.c \
 	env.c \
 	error.c \
+	exception.c \
 	generated.c \
 	info.c \
 	large_int.c \

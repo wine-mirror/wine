@@ -2,6 +2,7 @@ Makefile
 atom.ok
 env.ok
 error.ok
+exception.ok
 generated.ok
 info.ok
 large_int.ok
