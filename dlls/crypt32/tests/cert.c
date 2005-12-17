@@ -1100,6 +1100,26 @@ static void testCertOpenSystemStore(void)
     RegDeleteKeyW(HKEY_CURRENT_USER, BogusPathW);
 }
 
+static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
+ PCCERT_CONTEXT context, DWORD propID)
+{
+    BYTE hash[20] = { 0 }, hashProperty[20];
+    BOOL ret;
+    DWORD size;
+
+    memset(hash, 0, sizeof(hash));
+    memset(hashProperty, 0, sizeof(hashProperty));
+    size = sizeof(hash);
+    ret = CryptHashCertificate(0, algID, 0, data, dataLen, hash, &size);
+    ok(ret, "CryptHashCertificate failed: %08lx\n", GetLastError());
+    ret = CertGetCertificateContextProperty(context, propID, hashProperty,
+     &size);
+    ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
+     GetLastError());
+    ok(!memcmp(hash, hashProperty, size), "Unexpected hash for property %ld\n",
+     propID);
+}
+
 static void testCertProperties(void)
 {
     PCCERT_CONTEXT context = CertCreateCertificateContext(X509_ASN_ENCODING,
@@ -1148,10 +1168,21 @@ static void testCertProperties(void)
          CERT_CERT_PROP_ID, 0, bigCert2);
          */
 
-        /* This crashes.
+        /* These all crash.
         ret = CertGetCertificateContextProperty(context,
          CERT_ACCESS_STATE_PROP_ID, 0, NULL);
+        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID, 
+         NULL, NULL);
+        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID, 
+         hashProperty, NULL);
          */
+        /* A missing prop */
+        size = 0;
+        ret = CertGetCertificateContextProperty(context,
+         CERT_KEY_PROV_INFO_PROP_ID, NULL, &size);
+        ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+        /* And, an implicit property */
         size = sizeof(access);
         ret = CertGetCertificateContextProperty(context,
          CERT_ACCESS_STATE_PROP_ID, &access, &size);
@@ -1181,15 +1212,8 @@ static void testCertProperties(void)
          NULL);
         ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
          GetLastError());
-        size = sizeof(hash);
-        ret = CryptHashCertificate(0, 0, 0, bigCert, sizeof(bigCert) - 1,
-         hash, &size);
-        ok(ret, "CryptHashCertificate failed: %08lx\n", GetLastError());
-        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID,
-         hashProperty, &size);
-        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
-         GetLastError());
-        ok(!memcmp(hash, hashProperty, sizeof(hash)), "Unexpected hash\n");
+        checkHash(bigCert, sizeof(bigCert) - 1, CALG_SHA1, context,
+         CERT_HASH_PROP_ID);
 
         /* Now that the hash property is set, we should get one property when
          * enumerating.
@@ -1202,6 +1226,27 @@ static void testCertProperties(void)
                 numProps++;
         } while (propID != 0);
         ok(numProps == 1, "Expected 1 properties, got %ld\n", numProps);
+
+        /* Check a few other implicit properties */
+        checkHash(bigCert, sizeof(bigCert) - 1, CALG_MD5, context,
+         CERT_MD5_HASH_PROP_ID);
+        checkHash(
+         context->pCertInfo->Subject.pbData,
+         context->pCertInfo->Subject.cbData,
+         CALG_MD5, context, CERT_SUBJECT_NAME_MD5_HASH_PROP_ID);
+        checkHash(
+         context->pCertInfo->SubjectPublicKeyInfo.PublicKey.pbData,
+         context->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData,
+         CALG_MD5, context, CERT_SUBJECT_PUBLIC_KEY_MD5_HASH_PROP_ID);
+
+        /* Odd: this doesn't fail on other certificates, so there must be
+         * something weird about this cert that causes it to fail.
+         */
+        size = 0;
+        ret = CertGetCertificateContextProperty(context,
+         CERT_KEY_IDENTIFIER_PROP_ID, NULL, &size);
+        todo_wine ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+         "Expected ERROR_INVALID_DATA, got %08lx\n", GetLastError());
 
         CertFreeCertificateContext(context);
     }
