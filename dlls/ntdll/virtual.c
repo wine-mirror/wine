@@ -1178,17 +1178,13 @@ NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
     RtlEnterCriticalSection( &csVirtual );
     if ((view = VIRTUAL_FindView( addr )))
     {
-        BYTE vprot = view->prot[((const char *)addr - (const char *)view->base) >> page_shift];
-        void *page = (void *)((UINT_PTR)addr & ~page_mask);
-        char *stack = NtCurrentTeb()->Tib.StackLimit;
+        void *page = ROUND_ADDR( addr, page_mask );
+        BYTE vprot = view->prot[((const char *)page - (const char *)view->base) >> page_shift];
         if (vprot & VPROT_GUARD)
         {
             VIRTUAL_SetProt( view, page, page_mask + 1, vprot & ~VPROT_GUARD );
             ret = STATUS_GUARD_PAGE_VIOLATION;
         }
-        /* is it inside the stack guard page? */
-        if (((const char *)addr >= stack - (page_mask + 1)) && ((const char *)addr < stack))
-            ret = STATUS_STACK_OVERFLOW;
     }
     RtlLeaveCriticalSection( &csVirtual );
     return ret;

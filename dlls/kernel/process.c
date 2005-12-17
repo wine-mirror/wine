@@ -994,7 +994,7 @@ static void *init_stack(void)
     NtCurrentTeb()->Tib.StackLimit    = (char *)base + page_size;
 
     /* setup guard page */
-    VirtualProtect( base, 1, PAGE_READWRITE | PAGE_GUARD, NULL );
+    VirtualProtect( base, page_size, PAGE_NOACCESS, NULL );
     return NtCurrentTeb()->Tib.StackBase;
 }
 

@@ -223,8 +223,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
 
     /* setup the guard page */
     size = page_size;
-    NtProtectVirtualMemory( NtCurrentProcess(), &teb->DeallocationStack, &size,
-                            PAGE_READWRITE | PAGE_GUARD, NULL );
+    NtProtectVirtualMemory( NtCurrentProcess(), &teb->DeallocationStack, &size, PAGE_NOACCESS, NULL );
     RtlFreeHeap( GetProcessHeap(), 0, info );
 
     RtlAcquirePebLock();
