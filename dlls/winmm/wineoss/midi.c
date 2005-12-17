@@ -230,7 +230,7 @@ LRESULT OSS_MidiInit(void)
 	sinfo.device = i;
 	status = ioctl(midiSeqFD, SNDCTL_SYNTH_INFO, &sinfo);
 	if (status == -1) {
-            static const WCHAR fmt[] = {'W','i','n','e',' ','O','S','S',' ','M','i','d','i',' ','O','u','t',' ','(','#','%','d',')',' ','-',' ','d','i','s','a','b','l','e','d',0};
+            static const WCHAR fmt[] = {'W','i','n','e',' ','O','S','S',' ','M','i','d','i',' ','O','u','t',' ','(','#','%','d',')',' ','d','i','s','a','b','l','e','d',0};
 	    ERR("ioctl for synth info failed on %d, disabling it.\n", i);
 
             wsprintfW(MidiOutDev[i].caps.szPname, fmt, i);
@@ -310,7 +310,7 @@ LRESULT OSS_MidiInit(void)
 	/* Product Version. We simply say "1" */
 	MidiOutDev[numsynthdevs + i].caps.vDriverVersion = 0x001;
         if (status == -1) {
-            static const WCHAR fmt[] = {'W','i','n','e',' ','O','S','S',' ','M','i','d','i',' ','O','u','t',' ','(','#','%','d',')',' ','-',' ','d','i','s','a','b','l','e','d',0};
+            static const WCHAR fmt[] = {'W','i','n','e',' ','O','S','S',' ','M','i','d','i',' ','O','u','t',' ','(','#','%','d',')',' ','d','i','s','a','b','l','e','d',0};
             wsprintfW(MidiOutDev[numsynthdevs + i].caps.szPname, fmt, numsynthdevs + i);
             MidiOutDev[numsynthdevs + i].bEnabled = FALSE;
         } else {
@@ -341,7 +341,7 @@ LRESULT OSS_MidiInit(void)
 	/* Product Version. We simply say "1" */
 	MidiInDev[i].caps.vDriverVersion = 0x001;
         if (status == -1) {
-            static const WCHAR fmt[] = {'W','i','n','e',' ','O','S','S',' ','M','i','d','i',' ','I','n',' ','(','#','%','d',')',' ','-',' ','d','i','s','a','b','l','e','d',0};
+            static const WCHAR fmt[] = {'W','i','n','e',' ','O','S','S',' ','M','i','d','i',' ','I','n',' ','(','#','%','d',')',' ','d','i','s','a','b','l','e','d',0};
             wsprintfW(MidiInDev[i].caps.szPname, fmt, numsynthdevs + i);
             MidiInDev[i].state = -1;
         } else {
