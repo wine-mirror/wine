@@ -38,9 +38,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #include "winecfg.h"
+#include "resource.h"
 
 HKEY config_key = NULL;
-
+HMENU hPopupMenus = 0;
 
 
 /* this is called from the WM_SHOWWINDOW handlers of each tab page.
@@ -604,13 +605,17 @@ void PRINTERROR(void)
         WINE_TRACE("error: '%s'\n", msg);
 }
 
-int initialize(void) {
+int initialize(HINSTANCE hInstance)
+{
     DWORD res = RegCreateKey(HKEY_CURRENT_USER, WINE_KEY_ROOT, &config_key);
 
     if (res != ERROR_SUCCESS) {
 	WINE_ERR("RegOpenKey failed on wine config key (%ld)\n", res);
 	return 1;
     }
+
+    /* load any menus */
+    hPopupMenus = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_WINECFG));
 
     /* we could probably just have the list as static data  */
     settings = HeapAlloc(GetProcessHeap(), 0, sizeof(struct list));

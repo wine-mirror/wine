@@ -65,7 +65,7 @@ char **enumerate_values(HKEY root, char *path);
  */
 char *keypath(const char *section); 
 
-int initialize(void);
+int initialize(HINSTANCE hInstance);
 extern HKEY config_key;
 
 /* hack for the property sheet control  */
@@ -132,5 +132,7 @@ static inline void set_text(HWND dialog, WORD id, const char *text)
 }
 
 #define WINE_KEY_ROOT "Software\\Wine"
+
+extern HMENU     hPopupMenus;
 
 #endif

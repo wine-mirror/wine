@@ -259,7 +259,7 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
         return 0;
     }
 
-    if (initialize() != 0) {
+    if (initialize(hInstance) != 0) {
 	WINE_ERR("initialization failed, aborting\n");
 	ExitProcess(1);
     }
