@@ -110,7 +110,11 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
     /* Then clip again to get the source rectangle that will remain in the
      * clipping rect */
     rcSrc = rcClip;
-    IntersectRect( &rcSrc, &rcSrc, &rcClip);
+    if (lprcClip)
+    {
+        OffsetRect( &rcSrc, -dx, -dy);
+        IntersectRect( &rcSrc, &rcSrc, &rcClip);
+    }
     /* now convert to device coordinates */
     LPtoDP(hdc, (LPPOINT)&rcSrc, 2);
     TRACE("source rect: %s\n", wine_dbgstr_rect(&rcSrc));
@@ -141,7 +145,7 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
         TRACE("destination rect: %s\n", wine_dbgstr_rect(&rect));
 
         BitBlt( hdc, rect.left, rect.top,
-                    rect.right - rect.left, rect.bottom -rect.top,
+                    rect.right - rect.left, rect.bottom - rect.top,
                     hdc, rect.left - dx, rect.top - dy, SRCCOPY);
     }
     /* compute the update areas.  This is the combined clip rectangle
@@ -181,6 +185,7 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
         if( !hrgnUpdate)
             DeleteObject( hrgn);
     }
+    /* restore original clipping region */
     SelectClipRgn( hdc, clipRgn);
     DeleteObject( visrgn);
     DeleteObject( DstRgn);

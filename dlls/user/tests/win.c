@@ -2923,6 +2923,60 @@ static void test_scroll(void)
     DestroyWindow( hwnd);
 }
 
+static void test_scrolldc( HWND parent)
+{
+    HDC hdc;
+    HRGN exprgn, tmprgn, hrgn;
+    RECT rc, rc2, rcu, cliprc;
+    HWND hwnd1;
+    COLORREF colr;
+
+    hrgn = CreateRectRgn(0,0,0,0);
+
+    hwnd1 = CreateWindowExA(0, "static", NULL,
+            WS_CHILD| WS_VISIBLE,
+            25, 50, 100, 100, parent, 0, 0, NULL);
+    ShowWindow( parent, SW_SHOW);
+    UpdateWindow( parent);
+    GetClientRect( hwnd1, &rc);
+    hdc = GetDC( hwnd1);
+    /* paint the upper half of the window black */
+    rc2 = rc;
+    rc2.bottom = ( rc.top + rc.bottom) /2;
+    FillRect( hdc, &rc2, GetStockObject(BLACK_BRUSH));
+    /* clip region is the lower half */
+    cliprc=rc; 
+    cliprc.top = (rc.top + rc.bottom) /2;
+    /* test whether scrolled pixels are properly clipped */ 
+    colr = GetPixel( hdc, (rc.left+rc.right)/2, ( rc.top + rc.bottom) /2 - 1);
+    ok ( colr == 0, "pixel should be black, color is %08lx\n", colr); 
+    /* this scroll should not cause any visible changes */ 
+    ScrollDC( hdc, 5, -20, &rc, &cliprc, hrgn, &rcu);
+    colr = GetPixel( hdc, (rc.left+rc.right)/2, ( rc.top + rc.bottom) /2 - 1);
+    ok ( colr == 0, "pixel should be black, color is %08lx\n", colr); 
+
+    ScrollDC( hdc, 20, -20, &rc, NULL, hrgn, &rcu);
+    /*FillRgn(hdc, hrgn, GetStockObject(WHITE_BRUSH));*/
+    trace("update rect: %ld,%ld - %ld,%ld\n",
+           rcu.left, rcu.top, rcu.right, rcu.bottom);
+    if (winetest_debug > 0) dump_region(hrgn);
+    SetRect(&rc2, 0, 0, 100, 100);
+    ok(EqualRect(&rcu, &rc2), "rects do not match (%ld,%ld-%ld,%ld) / (%ld,%ld-%ld,%ld)\n",
+       rcu.left, rcu.top, rcu.right, rcu.bottom, rc2.left, rc2.top, rc2.right, rc2.bottom);
+
+    exprgn = CreateRectRgn(0, 0, 20, 80);
+    tmprgn = CreateRectRgn(0, 80, 100, 100);
+    CombineRgn(exprgn, exprgn, tmprgn, RGN_OR);
+    if (winetest_debug > 0) dump_region(exprgn);
+    ok(EqualRgn(exprgn, hrgn), "wrong update region\n");
+
+    /* clean up */
+    DeleteObject(hrgn);
+    DeleteObject(exprgn);
+    DeleteObject(tmprgn);
+    DestroyWindow(hwnd1);
+}
+
 static void test_params(void)
 {
     HWND hwnd;
@@ -3533,6 +3587,7 @@ START_TEST(win)
     test_validatergn(hwndMain);
     test_nccalcscroll( hwndMain);
     test_scrollvalidate( hwndMain);
+    test_scrolldc( hwndMain);
     test_scroll();
     test_IsWindowUnicode();
     test_vis_rgn(hwndMain);
