@@ -41,7 +41,7 @@
 @ stdcall SearchTreeForFile(str str str) dbghelp.SearchTreeForFile
 @ stdcall SetImageConfigInformation(ptr ptr)
 @ stdcall SplitSymbols(str str str long)
-@ stub StackWalk64
+@ stdcall StackWalk64(long long long ptr ptr ptr ptr ptr ptr) dbghelp.StackWalk64
 @ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr) dbghelp.StackWalk
 @ stdcall SymCleanup(long) dbghelp.SymCleanup
 @ stdcall SymEnumSourceFiles(long long str ptr ptr) dbghelp.SymEnumSourceFiles
