@@ -362,7 +362,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward )
  * The loader_section must be locked while calling this function.
  */
 static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                    DWORD exp_size, int ordinal )
+                                    DWORD exp_size, DWORD ordinal )
 {
     FARPROC proc;
     const DWORD *functions = get_rva( module, exports->AddressOfFunctions );
@@ -389,7 +389,7 @@ static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY
     if (TRACE_ON(relay))
     {
         const WCHAR *user = current_modref ? current_modref->ldr.BaseDllName.Buffer : NULL;
-        proc = RELAY_GetProcAddress( module, exports, exp_size, proc, user );
+        proc = RELAY_GetProcAddress( module, exports, exp_size, proc, ordinal, user );
     }
     return proc;
 }
