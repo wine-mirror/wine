@@ -90,5 +90,7 @@ START_TEST(stateblock)
     }
 
     device_ptr = init_d3d9();
+    if (!device_ptr) return;
+
     test_begin_end_state_block(device_ptr);
 }
