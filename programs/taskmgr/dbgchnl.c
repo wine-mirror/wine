@@ -180,14 +180,6 @@ static void* get_symbol(HANDLE hProcess, char* name, char* lib)
     return ret;
 }
 
-struct dll_option_layout
-{
-    void*               next;
-    void*               prev;
-    char* const*        channels;
-    int                 nb_channels;
-};
-
 typedef int (*EnumChannelCB)(HANDLE, void*, struct __wine_debug_channel*, void*);
 
 /******************************************************************
@@ -196,32 +188,19 @@ typedef int (*EnumChannelCB)(HANDLE, void*, struct __wine_debug_channel*, void*)
  * Enumerates all known channels on process hProcess through callback
  * ce.
  */
-static int enum_channel(HANDLE hProcess, EnumChannelCB ce, void* user, unsigned unique)
+static int enum_channel(HANDLE hProcess, EnumChannelCB ce, void* user)
 {
     struct __wine_debug_channel channel;
     int                         ret = 1;
-    unsigned int                j;
     void*                       addr;
-    const char**                cache = NULL;
-    unsigned                    num_cache, used_cache;
 
     if (!(addr = get_symbol(hProcess, "debug_options", "libwine.so"))) return -1;
-    if (unique)
-        cache = HeapAlloc(GetProcessHeap(), 0, (num_cache = 32) * sizeof(char*));
-    else
-        num_cache = 0;
-    used_cache = 0;
 
     while (ret && addr && ReadProcessMemory(hProcess, addr, &channel, sizeof(channel), NULL))
     {
         if (!channel.name[0]) break;
         ret = ce(hProcess, addr, &channel, user);
         addr = (struct __wine_debug_channel *)addr + 1;
-    }
-    if (unique)
-    {
-        for (j = 0; j < used_cache; j++) HeapFree(GetProcessHeap(), 0, (char*)cache[j]);
-        HeapFree(GetProcessHeap(), 0, cache);
     }
     return 0;
 }
@@ -232,10 +211,10 @@ static void DebugChannels_FillList(HWND hChannelLV)
 
     ListView_DeleteAllItems(hChannelLV);
 
-    hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ, FALSE, get_selected_pid());
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ, FALSE, get_selected_pid());
     if (!hProcess) return; /* FIXME messagebox */
     SendMessage(hChannelLV, WM_SETREDRAW, FALSE, 0);
-    enum_channel(hProcess, list_channel_CB, (void*)hChannelLV, TRUE);
+    enum_channel(hProcess, list_channel_CB, (void*)hChannelLV);
     SendMessage(hChannelLV, WM_SETREDRAW, TRUE, 0);
     CloseHandle(hProcess);
 }
@@ -310,14 +289,14 @@ static void DebugChannels_OnNotify(HWND hDlg, LPARAM lParam)
                 user.value = (val[0] == 'x') ? 0 : bitmask;
                 user.mask = bitmask;
                 user.done = user.notdone = 0;
-                enum_channel(hProcess, change_channel_CB, &user, FALSE);
+                enum_channel(hProcess, change_channel_CB, &user);
                 if (user.done)
                 {
                     val[0] ^= ('x' ^ ' ');
                     ListView_SetItemText(hChannelLV, lhti.iItem, lhti.iSubItem, val);
                 }
                 if (user.notdone)
-                    printf("Some channel instance weren't correctly set\n");
+                    printf("Some channel instances weren't correctly set\n");
             }
             CloseHandle(hProcess);
         }
