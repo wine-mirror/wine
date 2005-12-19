@@ -25,11 +25,13 @@
 @ stdcall SearchTreeForFile(str str str)
 @ stdcall StackWalk64(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
+@ stub SymAddSymbol
 @ stdcall SymCleanup(long)
 @ stdcall SymEnumLines(ptr double str str ptr ptr)
 @ stdcall SymEnumSourceFiles(ptr double str ptr ptr)
 @ stub SymEnumSym
 @ stdcall SymEnumSymbols(ptr double str ptr ptr)
+@ stub SymEnumSymbolsForAddr
 @ stdcall SymEnumTypes(ptr double ptr ptr)
 @ stub SymEnumerateModules64
 @ stdcall SymEnumerateModules(long ptr ptr)
@@ -40,9 +42,11 @@
 @ stdcall SymFindFileInPath(long str str ptr long long long ptr ptr ptr)
 @ stdcall SymFromAddr(ptr double ptr ptr)
 @ stdcall SymFromName(long str ptr)
+@ stub SymFromToken
 @ stub SymFunctionTableAccess64
 @ stdcall SymFunctionTableAccess(long long)
 @ stub SymGetFileLineOffsets64
+@ stub SymGetHomeDirectory
 @ stdcall SymGetLineFromAddr64(long double ptr ptr)
 @ stdcall SymGetLineFromAddr(long long ptr ptr)
 @ stub SymGetLineFromName64
@@ -59,6 +63,9 @@
 @ stub SymGetModuleInfoW
 @ stdcall SymGetOptions()
 @ stdcall SymGetSearchPath(long str long)
+@ stub SymGetSourceFileFromToken
+@ stub SymGetSourceFileToken
+@ stub SymGetSourceVarFromToken
 @ stub SymGetSymFromAddr64
 @ stdcall SymGetSymFromAddr(long long ptr ptr)
 @ stub SymGetSymFromName64
@@ -79,6 +86,7 @@
 @ stdcall SymRegisterCallback(long ptr ptr)
 @ stdcall SymRegisterFunctionEntryCallback64(ptr ptr double)
 @ stdcall SymRegisterFunctionEntryCallback(ptr ptr ptr)
+@ stub SymSearch
 @ stdcall SymSetContext(long ptr ptr)
 @ stdcall SymSetOptions(long)
 @ stdcall SymSetParentWindow(long)
@@ -91,7 +99,7 @@
 @ stdcall UnDecorateSymbolName(str str long long)
 @ stdcall UnmapDebugInformation(ptr)
 @ stub WinDbgExtensionDllInit
-#@ stub dbghelp
+@ stub dbghelp
 #@ stub dh
 #@ stub lm
 #@ stub lmi
