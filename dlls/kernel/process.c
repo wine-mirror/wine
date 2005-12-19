@@ -1736,6 +1736,7 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
 
     WCHAR *name, *pos, *ret = NULL;
     const WCHAR *p;
+    BOOL got_space;
 
     /* if we have an app name, everything is easy */
 
@@ -1780,26 +1781,27 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
         return NULL;
     pos = name;
     p = cmdline;
+    got_space = FALSE;
 
     while (*p)
     {
-        do *pos++ = *p++; while (*p && *p != ' ');
+        do *pos++ = *p++; while (*p && *p != ' ' && *p != '\t');
         *pos = 0;
         if (find_exe_file( name, buffer, buflen, handle ))
         {
             ret = cmdline;
             break;
         }
+        if (*p) got_space = TRUE;
     }
 
-    if (!ret || !strchrW( name, ' ' )) goto done;  /* no change necessary */
-
-    /* now build a new command-line with quotes */
-
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, (strlenW(cmdline) + 3) * sizeof(WCHAR) )))
-        goto done;
-    sprintfW( ret, quotesW, name );
-    strcatW( ret, p );
+    if (ret && got_space)  /* now build a new command-line with quotes */
+    {
+        if (!(ret = HeapAlloc( GetProcessHeap(), 0, (strlenW(cmdline) + 3) * sizeof(WCHAR) )))
+            goto done;
+        sprintfW( ret, quotesW, name );
+        strcatW( ret, p );
+    }
 
  done:
     HeapFree( GetProcessHeap(), 0, name );
