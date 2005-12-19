@@ -91,34 +91,21 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
     } else
         CombineRgn( visrgn, visrgn, clipRgn, RGN_AND);
     /* only those pixels in the scroll rectangle that remain in the clipping
-     * rect are scrolled. So first combine Scroll and Clipping rectangles,
-     * if available */
-    if( lprcScroll)
-    {
-        if( lprcClip)
-            IntersectRect( &rcClip, lprcClip, lprcScroll);
-        else
-            rcClip = *lprcScroll;
-    }
+     * rect are scrolled. */
+    if( lprcClip) 
+        rcClip = *lprcClip;
     else
-    {
-        if( lprcClip)
-            rcClip = *lprcClip;
-        else
-            GetClipBox( hdc, &rcClip);
-    }
-    /* Then clip again to get the source rectangle that will remain in the
-     * clipping rect */
+        GetClipBox( hdc, &rcClip);
     rcSrc = rcClip;
-    if (lprcClip)
-    {
-        OffsetRect( &rcSrc, -dx, -dy);
-        IntersectRect( &rcSrc, &rcSrc, &rcClip);
-    }
+    OffsetRect( &rcClip, -dx, -dy);
+    IntersectRect( &rcSrc, &rcSrc, &rcClip);
+    /* if an scroll rectangle is specified, only the pixels within that
+     * rectangle are scrolled */
+    if( lprcScroll)
+        IntersectRect( &rcSrc, &rcSrc, lprcScroll);
     /* now convert to device coordinates */
     LPtoDP(hdc, (LPPOINT)&rcSrc, 2);
     TRACE("source rect: %s\n", wine_dbgstr_rect(&rcSrc));
-
     /* also dx and dy */
     SetRect(&offset, 0, 0, dx, dy);
     LPtoDP(hdc, (LPPOINT)&offset, 2);
@@ -160,6 +147,17 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
         code = X11DRV_END_EXPOSURES;
         ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code,
                 sizeof(ExpRgn), (LPSTR)&ExpRgn );
+        /* Intersect clip and scroll rectangles, allowing NULL values */ 
+        if( lprcScroll)
+            if( lprcClip)
+                IntersectRect( &rcClip, lprcClip, lprcScroll);
+            else
+                rcClip = *lprcScroll;
+        else
+            if( lprcClip)
+                rcClip = *lprcClip;
+            else
+                GetClipBox( hdc, &rcClip);
         /* Convert the combined clip rectangle to device coordinates */
         LPtoDP(hdc, (LPPOINT)&rcClip, 2);
         if( hrgn )

@@ -2954,7 +2954,7 @@ static void test_scrolldc( HWND parent)
     ScrollDC( hdc, 5, -20, &rc, &cliprc, hrgn, &rcu);
     colr = GetPixel( hdc, (rc.left+rc.right)/2, ( rc.top + rc.bottom) /2 - 1);
     ok ( colr == 0, "pixel should be black, color is %08lx\n", colr); 
-
+    /* test with NULL clip rect */
     ScrollDC( hdc, 20, -20, &rc, NULL, hrgn, &rcu);
     /*FillRgn(hdc, hrgn, GetStockObject(WHITE_BRUSH));*/
     trace("update rect: %ld,%ld - %ld,%ld\n",
@@ -2969,6 +2969,21 @@ static void test_scrolldc( HWND parent)
     CombineRgn(exprgn, exprgn, tmprgn, RGN_OR);
     if (winetest_debug > 0) dump_region(exprgn);
     ok(EqualRgn(exprgn, hrgn), "wrong update region\n");
+    /* test clip rect > scroll rect */ 
+    FillRect( hdc, &rc, GetStockObject(WHITE_BRUSH));
+    rc2=rc;
+    InflateRect( &rc2, -(rc.right-rc.left)/4, -(rc.bottom-rc.top)/4);
+    FillRect( hdc, &rc2, GetStockObject(BLACK_BRUSH));
+    ScrollDC( hdc, 10, 10, &rc2, &rc, hrgn, &rcu);
+    SetRectRgn( exprgn, 25, 25, 75, 35);
+    SetRectRgn( tmprgn, 25, 35, 35, 75);
+    CombineRgn(exprgn, exprgn, tmprgn, RGN_OR);
+    ok(EqualRgn(exprgn, hrgn), "wrong update region\n");
+    colr = GetPixel( hdc, 80, 80);
+    ok ( colr == 0, "pixel should be black, color is %08lx\n", colr); 
+    trace("update rect: %ld,%ld - %ld,%ld\n",
+           rcu.left, rcu.top, rcu.right, rcu.bottom);
+    if (winetest_debug > 0) dump_region(hrgn);
 
     /* clean up */
     DeleteObject(hrgn);
