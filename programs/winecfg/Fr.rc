@@ -47,7 +47,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Paramètres des applications ",IDC_STATIC, 8,4,244,240
     LTEXT           "Wine peut imiter différentes versions de Windows pour chaque application.  Cet onglet est lié aux onglets Bibliothèques et Affichage pour vous permettre de changer des paramètres globaux ou par application dans ces onglets.",
-                    IDC_STATIC,15,20,227,30
+                    IDC_STATIC,15,20,227,40
     CONTROL         "Applications",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,60,230,140
     PUSHBUTTON	    "&Ajouter une application...",IDC_APP_ADDAPP, 70,204,85,14
@@ -82,8 +82,8 @@ BEGIN
  
     GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
 
-    LTEXT	    "Support du Vertex Shader: ",IDC_STATIC,15,150,80,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,100,148,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT	    "Support du Vertex Shader: ",IDC_STATIC,15,150,100,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,110,148,100,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     CONTROL         "Permettre le Pixel Shader (si supporté par le matériel)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
 END
@@ -160,10 +160,10 @@ IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Driver Selection ",IDC_STATIC,8,4,244,195
-    LTEXT	    "Pilote audio: ",IDC_STATIC,15,20,227,30
-    CONTROL         "Devices",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
-    PUSHBUTTON	    "Panneau de configuration",IDC_AUDIO_CONTROL_PANEL,170,50,85,14
+    GROUPBOX        " Sélection du pilote ",IDC_STATIC,8,4,244,195
+    LTEXT           "Sélectionnez un pilote audio en cochant la case en regard du pilote désiré.  Désactivez le son en ne sélectionnant aucun polote. La sélection de pilotes multiples n'est pas recommandé. Configurez le pilote en effectuant un click droit dessus.",IDC_STATIC,15,20,227,60
+    CONTROL         "Matériel",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,60,140,130 
+    PUSHBUTTON	    "Panneau de configuration",IDC_AUDIO_CONTROL_PANEL,160,60,86,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Accélération matérielle: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -174,13 +174,13 @@ IDD_APPEARANCE DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Thèmes ",IDC_STATIC,8,10,244,94
-    LTEXT           "Thème:",IDC_STATIC,15,22,228,8
-    COMBOBOX        IDC_THEME_THEMECOMBO,15,30,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Couleur:",IDC_THEME_COLORTEXT,15,48,228,8
-    COMBOBOX        IDC_THEME_COLORCOMBO,15,56,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Taille:",IDC_THEME_SIZETEXT,15,74,228,8
-    COMBOBOX        IDC_THEME_SIZECOMBO,15,82,228,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Thème:",IDC_STATIC,8,10,244,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,8,18,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Installer un thème...",IDC_THEME_INSTALL,152,32,100,14
+    LTEXT           "Couleur:",IDC_THEME_COLORTEXT,8,48,244,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,8,56,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Taille:",IDC_THEME_SIZETEXT,8,74,244,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,8,82,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 STRINGTABLE DISCARDABLE
@@ -198,4 +198,6 @@ BEGIN
     IDS_TAB_AUDIO           "Audio"
     IDS_TAB_ABOUT           "A propos"
     IDS_WINECFG_TITLE       "Configuration de Wine"
+    IDS_THEMEFILE           "Fichiers de thèmes"
+    IDS_THEMEFILE_SELECT    "Sélectionnez un fichier de thème"
 END
