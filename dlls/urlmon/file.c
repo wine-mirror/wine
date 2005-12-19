@@ -136,7 +136,8 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         return hres;
     }
 
-    IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_DIRECTBIND, NULL);
+    if(!(grfBINDF & BINDF_FROMURLMON))
+        IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_DIRECTBIND, NULL);
 
     if(!This->file) {
         first_call = TRUE;
@@ -164,7 +165,9 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         hres = FindMimeFromData(NULL, url, NULL, 0, NULL, 0, &mime, 0);
         if(SUCCEEDED(hres)) {
             IInternetProtocolSink_ReportProgress(pOIProtSink,
-                                                 BINDSTATUS_MIMETYPEAVAILABLE, mime);
+                    (grfBINDF & BINDF_FROMURLMON) ?
+                    BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE : BINDSTATUS_MIMETYPEAVAILABLE,
+                    mime);
             CoTaskMemFree(mime);
         }
     }

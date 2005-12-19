@@ -35,28 +35,40 @@
     expect_ ## func = TRUE
 
 #define CHECK_EXPECT(func) \
-    ok(expect_ ##func, "unexpected call\n"); \
-    expect_ ## func = FALSE; \
-    called_ ## func = TRUE
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        expect_ ## func = FALSE; \
+        called_ ## func = TRUE; \
+    }while(0)
 
 #define CHECK_EXPECT2(func) \
-    ok(expect_ ##func, "unexpected call\n"); \
-    called_ ## func = TRUE
+    do { \
+        ok(expect_ ##func, "unexpected call " #func  "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
 
 #define CHECK_CALLED(func) \
-    ok(called_ ## func, "expected " #func "\n"); \
-    expect_ ## func = called_ ## func = FALSE
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
 
 DEFINE_EXPECT(GetBindInfo);
 DEFINE_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
 DEFINE_EXPECT(ReportProgress_DIRECTBIND);
 DEFINE_EXPECT(ReportProgress_SENDINGREQUEST);
 DEFINE_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
+DEFINE_EXPECT(ReportProgress_VERIFIEDMIMETYPEAVAILABLE);
 DEFINE_EXPECT(ReportData);
 DEFINE_EXPECT(ReportResult);
 
+static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
+static const WCHAR index_url[] =
+    {'f','i','l','e',':','i','n','d','e','x','.','h','t','m','l',0};
+
 static HRESULT expect_hrResult;
 static LPCWSTR file_name;
+static DWORD bindf = 0;
 
 static HRESULT WINAPI ProtocolSink_QueryInterface(IInternetProtocolSink *iface, REFIID riid, void **ppv)
 {
@@ -111,6 +123,12 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
             if(szStatusText)
                 ok(!*szStatusText, "wrong szStatusText\n");
             break;
+        case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
+            CHECK_EXPECT(ReportProgress_VERIFIEDMIMETYPEAVAILABLE);
+            ok(szStatusText != NULL, "szStatusText == NULL\n");
+            if(szStatusText)
+                ok(!lstrcmpW(szStatusText, text_html), "szStatusText != text/html\n");
+            break;
         default:
             ok(0, "Unexpected call %ld\n", ulStatusCode);
     };
@@ -121,7 +139,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
 static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWORD grfBSCF,
         ULONG ulProgress, ULONG ulProgressMax)
 {
-    CHECK_EXPECT(ReportData);
+    CHECK_EXPECT2(ReportData);
 
     ok(ulProgress == ulProgressMax, "ulProgress != ulProgressMax\n");
     ok(ulProgressMax == 13, "ulProgressMax=%ld, expected 13\n", ulProgressMax);
@@ -183,10 +201,11 @@ static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfB
     CHECK_EXPECT(GetBindInfo);
 
     ok(grfBINDF != NULL, "grfBINDF == NULL\n");
-    if(grfBINDF)
-        ok(!*grfBINDF, "*grfBINDF != 0\n");
     ok(pbindinfo != NULL, "pbindinfo == NULL\n");
-    ok(pbindinfo->cbSize == sizeof(BINDINFO), "wrong size of pbindinfo: %ld\n", pbindinfo->cbSize);
+    ok(pbindinfo->cbSize == sizeof(BINDINFO), "wrong size of pbindinfo: %ld\n",
+       pbindinfo->cbSize);
+
+    *grfBINDF = bindf;
 
     return S_OK;
 }
@@ -238,27 +257,35 @@ static void file_protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL i
     HRESULT hres;
 
     SET_EXPECT(GetBindInfo);
-    SET_EXPECT(ReportProgress_DIRECTBIND);
+    if(!(bindf & BINDF_FROMURLMON))
+       SET_EXPECT(ReportProgress_DIRECTBIND);
     if(is_first) {
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
         SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
-        SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+        if(bindf & BINDF_FROMURLMON)
+            SET_EXPECT(ReportProgress_VERIFIEDMIMETYPEAVAILABLE);
+        else
+            SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
     }
     SET_EXPECT(ReportData);
     if(is_first)
         SET_EXPECT(ReportResult);
- 
+
     expect_hrResult = S_OK;
 
     hres = IInternetProtocol_Start(protocol, url, &protocol_sink, &bind_info, 0, 0);
     ok(hres == S_OK, "Start failed: %08lx\n", hres);
 
     CHECK_CALLED(GetBindInfo);
-    CHECK_CALLED(ReportProgress_DIRECTBIND);
+    if(!(bindf & BINDF_FROMURLMON))
+       CHECK_CALLED(ReportProgress_DIRECTBIND);
     if(is_first) {
         CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
-        CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+        if(bindf & BINDF_FROMURLMON)
+            CHECK_CALLED(ReportProgress_VERIFIEDMIMETYPEAVAILABLE);
+        else
+            CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
     }
     CHECK_CALLED(ReportData);
     if(is_first)
@@ -356,53 +383,13 @@ static void test_file_protocol_url(LPCWSTR url)
     IUnknown_Release(unk);
 }
 
-static void test_file_protocol(void) {
+static void test_file_protocol_fail(void)
+{
     IInternetProtocol *protocol;
-    WCHAR buf[MAX_PATH];
-    DWORD size;
-    ULONG len;
-    HANDLE file;
     HRESULT hres;
 
-    static const WCHAR index_url[] =
-        {'f','i','l','e',':','i','n','d','e','x','.','h','t','m','l',0};
     static const WCHAR index_url2[] =
         {'f','i','l','e',':','/','/','i','n','d','e','x','.','h','t','m','l',0};
-    static const WCHAR wszFile[] = {'f','i','l','e',':',0};
-    static const WCHAR wszFile2[] = {'f','i','l','e',':','/','/','/',0};
-    static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
-    static const char html_doc[] = "<HTML></HTML>";
-
-    file = CreateFileW(wszIndexHtml, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-            FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
-    if(file == INVALID_HANDLE_VALUE)
-        return;
-    WriteFile(file, html_doc, sizeof(html_doc)-1, &size, NULL);
-    CloseHandle(file);
-
-    file_name = wszIndexHtml;
-    test_file_protocol_url(index_url);
-
-    memcpy(buf, wszFile, sizeof(wszFile));
-    len = sizeof(wszFile)/sizeof(WCHAR)-1;
-    len += GetCurrentDirectoryW(sizeof(buf)/sizeof(WCHAR)-len, buf+len);
-    buf[len++] = '\\';
-    memcpy(buf+len, wszIndexHtml, sizeof(wszIndexHtml));
-
-    file_name = buf + sizeof(wszFile)/sizeof(WCHAR)-1;
-    test_file_protocol_url(buf);
-
-    memcpy(buf, wszFile2, sizeof(wszFile2));
-    len = sizeof(wszFile2)/sizeof(WCHAR)-1;
-    len += GetCurrentDirectoryW(sizeof(buf)/sizeof(WCHAR)-len, buf+len);
-    buf[len++] = '\\';
-    memcpy(buf+len, wszIndexHtml, sizeof(wszIndexHtml));
-
-    file_name = buf + sizeof(wszFile2)/sizeof(WCHAR)-1;
-    test_file_protocol_url(buf);
-
-    DeleteFileW(wszIndexHtml);
 
     hres = CoCreateInstance(&CLSID_FileProtocol, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IInternetProtocol, (void**)&protocol);
@@ -417,7 +404,8 @@ static void test_file_protocol(void) {
     CHECK_CALLED(GetBindInfo);
 
     SET_EXPECT(GetBindInfo);
-    SET_EXPECT(ReportProgress_DIRECTBIND);
+    if(!(bindf & BINDF_FROMURLMON))
+        SET_EXPECT(ReportProgress_DIRECTBIND);
     SET_EXPECT(ReportProgress_SENDINGREQUEST);
     SET_EXPECT(ReportResult);
     expect_hrResult = INET_E_RESOURCE_NOT_FOUND;
@@ -425,7 +413,8 @@ static void test_file_protocol(void) {
     ok(hres == INET_E_RESOURCE_NOT_FOUND,
             "Start failed: %08lx expected INET_E_RESOURCE_NOT_FOUND\n", hres);
     CHECK_CALLED(GetBindInfo);
-    CHECK_CALLED(ReportProgress_DIRECTBIND);
+    if(!(bindf & BINDF_FROMURLMON))
+        CHECK_CALLED(ReportProgress_DIRECTBIND);
     CHECK_CALLED(ReportProgress_SENDINGREQUEST);
     CHECK_CALLED(ReportResult);
 
@@ -438,19 +427,79 @@ static void test_file_protocol(void) {
         return;
 
     SET_EXPECT(GetBindInfo);
-    SET_EXPECT(ReportProgress_DIRECTBIND);
+    if(!(bindf & BINDF_FROMURLMON))
+        SET_EXPECT(ReportProgress_DIRECTBIND);
     SET_EXPECT(ReportProgress_SENDINGREQUEST);
     SET_EXPECT(ReportResult);
     expect_hrResult = INET_E_RESOURCE_NOT_FOUND;
+
     hres = IInternetProtocol_Start(protocol, index_url2, &protocol_sink, &bind_info, 0, 0);
     ok(hres == INET_E_RESOURCE_NOT_FOUND,
             "Start failed: %08lx, expected INET_E_RESOURCE_NOT_FOUND\n", hres);
     CHECK_CALLED(GetBindInfo);
-    CHECK_CALLED(ReportProgress_DIRECTBIND);
+    if(!(bindf & BINDF_FROMURLMON))
+        CHECK_CALLED(ReportProgress_DIRECTBIND);
     CHECK_CALLED(ReportProgress_SENDINGREQUEST);
     CHECK_CALLED(ReportResult);
 
     IInternetProtocol_Release(protocol);
+}
+
+static void test_file_protocol(void) {
+    WCHAR buf[MAX_PATH];
+    DWORD size;
+    ULONG len;
+    HANDLE file;
+
+    static const WCHAR wszFile[] = {'f','i','l','e',':',0};
+    static const WCHAR wszFile2[] = {'f','i','l','e',':','/','/','/',0};
+    static const char html_doc[] = "<HTML></HTML>";
+
+    file = CreateFileW(wszIndexHtml, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+    if(file == INVALID_HANDLE_VALUE)
+        return;
+    WriteFile(file, html_doc, sizeof(html_doc)-1, &size, NULL);
+    CloseHandle(file);
+
+    file_name = wszIndexHtml;
+    bindf = 0;
+    test_file_protocol_url(index_url);
+    bindf = BINDF_FROMURLMON;
+    test_file_protocol_url(index_url);
+
+    memcpy(buf, wszFile, sizeof(wszFile));
+    len = sizeof(wszFile)/sizeof(WCHAR)-1;
+    len += GetCurrentDirectoryW(sizeof(buf)/sizeof(WCHAR)-len, buf+len);
+    buf[len++] = '\\';
+    memcpy(buf+len, wszIndexHtml, sizeof(wszIndexHtml));
+
+    file_name = buf + sizeof(wszFile)/sizeof(WCHAR)-1;
+    bindf = 0;
+    test_file_protocol_url(buf);
+    bindf = BINDF_FROMURLMON;
+    test_file_protocol_url(buf);
+
+    memcpy(buf, wszFile2, sizeof(wszFile2));
+    len = sizeof(wszFile2)/sizeof(WCHAR)-1;
+    len += GetCurrentDirectoryW(sizeof(buf)/sizeof(WCHAR)-len, buf+len);
+    buf[len++] = '\\';
+    memcpy(buf+len, wszIndexHtml, sizeof(wszIndexHtml));
+
+    file_name = buf + sizeof(wszFile2)/sizeof(WCHAR)-1;
+
+    bindf = 0;
+    test_file_protocol_url(buf);
+    bindf = BINDF_FROMURLMON;
+    test_file_protocol_url(buf);
+
+    DeleteFileW(wszIndexHtml);
+
+    bindf = 0;
+    test_file_protocol_fail();
+    bindf = BINDF_FROMURLMON;
+    test_file_protocol_fail();
 }
 
 static void test_http_protocol(void)
