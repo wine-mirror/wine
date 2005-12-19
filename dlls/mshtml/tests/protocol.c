@@ -71,7 +71,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
 
     ok(expect_ReportProgress, "unexpected call\n");
     ok(ulStatusCode == BINDSTATUS_MIMETYPEAVAILABLE
-            || ulStatusCode == BINDSTATUS_VERFIEDMIMETYPEAVAILABLE, "ulStatusCode=%ld\n", ulStatusCode);
+            || ulStatusCode == BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE, "ulStatusCode=%ld\n", ulStatusCode);
     ok(!lstrcmpW(szStatusText, text_html), "szStatusText != text/html\n");
     expect_ReportProgress = FALSE;
     called_ReportProgress = TRUE;
