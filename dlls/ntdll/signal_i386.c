@@ -452,7 +452,7 @@ static size_t signal_stack_size;
 
 static wine_signal_handler handlers[256];
 
-extern void DECLSPEC_NORETURN __wine_call_from_32_restore_regs( CONTEXT context );
+extern void DECLSPEC_NORETURN __wine_call_from_32_restore_regs( const CONTEXT *context );
 
 
 /***********************************************************************
@@ -703,6 +703,7 @@ inline static void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
  */
 inline static void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
+    context->ContextFlags |= CONTEXT86_FLOATING_POINT;
 #ifdef FPU_sig
     if (FPU_sig(sigcontext))
     {
@@ -794,6 +795,20 @@ inline static void restore_context( const CONTEXT *context, SIGCONTEXT *sigconte
 
 
 /***********************************************************************
+ *           set_cpu_context
+ *
+ * Set the new CPU context.
+ */
+inline static void DECLSPEC_NORETURN set_cpu_context( CONTEXT *context )
+{
+    DWORD flags = context->ContextFlags & ~CONTEXT_i386;
+
+    if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
+    __wine_call_from_32_restore_regs( context );
+}
+
+
+/***********************************************************************
  *           is_privileged_instr
  *
  * Check if the fault location is a privileged instruction.
@@ -872,7 +887,6 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
         void             *ret_addr;      /* return address from raise_func */
         EXCEPTION_RECORD *rec_ptr;       /* first arg for raise_func */
         CONTEXT          *context_ptr;   /* second arg for raise_func */
-        void             *dummy;         /* dummy ret addr for __wine_call_from_32_restore_regs */
         CONTEXT           context;
         EXCEPTION_RECORD  rec;
         DWORD             ebp;
@@ -912,7 +926,7 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     }
 
     stack--;  /* push the stack_layout structure */
-    stack->ret_addr     = __wine_call_from_32_restore_regs;
+    stack->ret_addr     = (void *)0xdeadbabe;  /* raise_func must not return */
     stack->rec_ptr      = &stack->rec;
     stack->context_ptr  = &stack->context;
 
@@ -977,16 +991,13 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
 /**********************************************************************
  *		raise_segv_exception
  */
-static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+static void WINAPI DECLSPEC_NORETURN raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     switch(rec->ExceptionCode)
     {
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
-        {
-            if (!(rec->ExceptionCode = VIRTUAL_HandleFault( (void *)rec->ExceptionInformation[1] )))
-                return;
-        }
+            rec->ExceptionCode = VIRTUAL_HandleFault( (void *)rec->ExceptionInformation[1] );
         break;
     case EXCEPTION_DATATYPE_MISALIGNMENT:
         /* FIXME: pass through exception handler first? */
@@ -994,18 +1005,20 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         {
             /* Disable AC flag, return */
             context->EFlags &= ~0x00040000;
-            return;
+            goto done;
         }
         break;
     }
     __regs_RtlRaiseException( rec, context );
+done:
+    set_cpu_context( context );
 }
 
 
 /**********************************************************************
  *		raise_trap_exception
  */
-static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+static void WINAPI DECLSPEC_NORETURN raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     DWORD dr0, dr1, dr2, dr3, dr6, dr7;
 
@@ -1043,16 +1056,20 @@ static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
         NtSetContextThread(GetCurrentThread(), context);
     }
+    context->ContextFlags = CONTEXT_FULL;  /* restore flags */
+    set_cpu_context( context );
 }
 
 
 /**********************************************************************
- *		raise_fpu_exception
+ *		raise_exception
+ *
+ * Generic raise function for exceptions that don't need special treatment.
  */
-static void WINAPI raise_fpu_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+static void WINAPI DECLSPEC_NORETURN raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     __regs_RtlRaiseException( rec, context );
-    restore_fpu( context );
+    set_cpu_context( context );
 }
 
 
@@ -1060,7 +1077,7 @@ static void WINAPI raise_fpu_exception( EXCEPTION_RECORD *rec, CONTEXT *context 
 /**********************************************************************
  *		raise_vm86_sti_exception
  */
-static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+static void WINAPI DECLSPEC_NORETURN raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     /* merge_vm86_pending_flags merges the vm86_pending flag in safely */
     NtCurrentTeb()->vm86_pending |= VIP_MASK;
@@ -1071,7 +1088,7 @@ static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *con
             ((char*)context->Eip <= (char*)vm86_return_end) &&
             (VM86_TYPE(context->Eax) != VM86_SIGNAL)) {
             /* exiting from VM86, can't throw */
-            return;
+            goto done;
         }
         merge_vm86_pending_flags( rec );
     }
@@ -1083,6 +1100,8 @@ static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *con
         NtCurrentTeb()->vm86_pending = 0;
         __regs_RtlRaiseException( rec, context );
     }
+done:
+    set_cpu_context( context );
 }
 
 
@@ -1200,7 +1219,7 @@ static HANDLER_DEF(trap_handler)
  */
 static HANDLER_DEF(fpe_handler)
 {
-    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_fpu_exception );
+    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_exception );
     CONTEXT *context;
 
     context = get_exception_context( rec );
@@ -1239,7 +1258,7 @@ static HANDLER_DEF(int_handler)
     init_handler( HANDLER_CONTEXT, &fs, &gs );
     if (!dispatch_signal(SIGINT))
     {
-        EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, __regs_RtlRaiseException );
+        EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_exception );
         rec->ExceptionCode = CONTROL_C_EXIT;
     }
 }
@@ -1251,7 +1270,7 @@ static HANDLER_DEF(int_handler)
  */
 static HANDLER_DEF(abrt_handler)
 {
-    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, __regs_RtlRaiseException );
+    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_exception );
     rec->ExceptionCode  = EXCEPTION_WINE_ASSERTION;
     rec->ExceptionFlags = EH_NONCONTINUABLE;
 }
