@@ -21,12 +21,12 @@
  */
 
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
-                                                                                
+
 IDR_WINECFG MENU DISCARDABLE
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "Configure", IDC_AUDIO_CONFIGURE
+        MENUITEM "Oppsett", IDC_AUDIO_CONFIGURE
     END
 END
 
@@ -67,12 +67,12 @@ BEGIN
 
     CONTROL	    "Tillat DirectX-programmer å hindre musen fra å forlate vinduet",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
     CONTROL	    "Aktiver dobbelt hurtigminne for skrivebordet",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
-    
+
     LTEXT           "Du kan velge å emulere et Windows-skrivebord, der alle vinduene er bundet i en virtuell skjerm, eller du kan få vinduene til å oppføre seg som andre programmer på skrivebordet.",
                     IDC_STATIC,15,73,228,28
     LTEXT           "Skrivebordsstrrelse:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
     LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
-    CONTROL         "Virtuelt skrivebord",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL         "Emuler et virtuelt skrivebord",IDC_ENABLE_DESKTOP,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
 		    
     EDITTEXT        IDC_DESKTOP_WIDTH,64,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
@@ -132,12 +132,12 @@ BEGIN
     LTEXT           "&Sti:",IDC_STATIC,15,123,20,9    
     EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Bla . . .",IDC_BUTTON_BROWSE_PATH,206,120,40,13
-    
+
     LTEXT           "&Type:",IDC_STATIC_TYPE,15,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    
+
     LTEXT           "Volumnavn og serienummer",IDC_LABELSERIAL_STATIC,15,155,95,10
-    
+
     PUSHBUTTON      "Avan&sert visning",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
     CONTROL         "&Finn automatisk fra enhet:",IDC_RADIO_AUTODETECT,"Button",
                     BS_AUTORADIOBUTTON,15,166,93,10
@@ -158,12 +158,12 @@ IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Driver Selection ",IDC_STATIC,8,4,244,195
-    LTEXT	    "Lyddriver: ",IDC_STATIC,15,20,227,30
+    GROUPBOX        " Valg av driver ",IDC_STATIC,8,4,244,195
+    LTEXT           "Velg en lyddriver ved å krysse av i boksen ved siden av den du vil bruke. Deaktiver lyd ved å ikke velge noen. Det anbefales ikke å velge flere drivere. Driverens oppsett kan endres ved å høyreklikke på den.",IDC_STATIC,15,20,227,30
     CONTROL         "Enheter",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140 
     PUSHBUTTON	    "Kontrollpanel",IDC_AUDIO_CONTROL_PANEL,170,50,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
-    LTEXT	    "Maskinvareakselerasjon: ",IDC_STATIC,15,215,90,10
+    LTEXT	 "Maskinvareakselerasjon: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Driveremulering",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,230,230,10
 END
