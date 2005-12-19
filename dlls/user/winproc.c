@@ -956,8 +956,9 @@ LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         if ( WINPROC_TestLBForStr( hwnd ))
         {
             LPARAM *ptr = (LPARAM *)lParam - 1;
-            result = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1,
-                                          (LPSTR)*ptr, 0x7fffffff, NULL, NULL ) - 1;
+            if (result >= 0)
+                result = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1,
+                                              (LPSTR)*ptr, 0x7fffffff, NULL, NULL ) - 1;
             HeapFree( GetProcessHeap(), 0, ptr );
         }
         break;
@@ -1224,7 +1225,8 @@ static LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPA
         if ( WINPROC_TestLBForStr( hwnd ))
         {
             LPARAM *ptr = (LPARAM *)lParam - 1;
-            result = MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, (LPWSTR)*ptr, 0x7fffffff ) - 1;
+            if (result >= 0)
+                result = MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, (LPWSTR)*ptr, 0x7fffffff ) - 1;
             HeapFree( GetProcessHeap(), 0, ptr );
         }
         break;
