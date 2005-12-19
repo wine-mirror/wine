@@ -4061,7 +4061,7 @@ static LRESULT EDIT_WM_Create(EDITSTATE *es, LPCWSTR name)
         EDIT_SetRectNP(es, &clientRect);
 
        if (name && *name) {
-	   EDIT_EM_ReplaceSel(es, FALSE, name, FALSE, TRUE);
+	   EDIT_EM_ReplaceSel(es, FALSE, name, FALSE, FALSE);
 	   /* if we insert text to the editline, the text scrolls out
             * of the window, as the caret is placed after the insert
             * pos normally; thus we reset es->selection... to 0 and

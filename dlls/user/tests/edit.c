@@ -671,6 +671,40 @@ static void test_edit_control_4(void)
     DestroyWindow(hwEdit);
 }
 
+/* Test if creating edit control without ES_AUTOHSCROLL and ES_AUTOVSCROLL
+ * truncates text that doesn't fit.
+ */
+static void test_edit_control_5(void)
+{
+    static const char *str = "test\r\ntest";
+    HWND hWnd;
+    int len;
+
+    hWnd = CreateWindowEx(0,
+              "EDIT",
+              str,
+              0,
+              10, 10, 1, 1,
+              NULL, NULL, NULL, NULL);
+    assert(hWnd);
+
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
+    DestroyWindow(hWnd);
+
+    hWnd = CreateWindowEx(0,
+              "EDIT",
+              str,
+              ES_MULTILINE,
+              10, 10, 1, 1,
+              NULL, NULL, NULL, NULL);
+    assert(hWnd);
+
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
+    DestroyWindow(hWnd);
+}
+
 static void test_margins(void)
 {
     HWND hwEdit;
@@ -931,6 +965,7 @@ START_TEST(edit)
     test_edit_control_2();
     test_edit_control_3();
     test_edit_control_4();
+    test_edit_control_5();
     test_margins();
     test_text_position();
     
