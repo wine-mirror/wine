@@ -448,7 +448,10 @@ static void symt_fill_sym_info(const struct module* module,
     if (!symt_get_info(sym, TI_GET_TYPE, &sym_info->TypeIndex))
         sym_info->TypeIndex = 0;
     sym_info->info = (DWORD)sym;
-    symt_get_info(sym, TI_GET_LENGTH, &size);
+    if (!symt_get_info(sym, TI_GET_LENGTH, &size) &&
+        sym_info->TypeIndex &&
+        !symt_get_info((struct symt*)sym_info->TypeIndex, TI_GET_LENGTH, &size))
+        size = 0;
     sym_info->Size = (DWORD)size;
     sym_info->ModBase = module->module.BaseOfImage;
     sym_info->Flags = 0;

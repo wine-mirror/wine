@@ -142,7 +142,7 @@ struct symt_data
         unsigned long           address;        /* DataIs{Global, FileStatic} */
         struct
         {
-            long                        offset; /* DataIs{Member,Local,Param} in bits*/
+            long                        offset; /* DataIs{Member,Local,Param} in bits */
             unsigned long               length; /* DataIs{Member} in bits */
             unsigned long               reg_id; /* DataIs{Local} (0 if frame relative) */
         } s;
