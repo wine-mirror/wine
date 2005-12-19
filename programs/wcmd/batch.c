@@ -27,7 +27,8 @@ extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
 extern DWORD errorlevel;
 
-#define MAXSTRING 1024
+/* msdn specified max for Win XP */
+#define MAXSTRING 8192
 
 /****************************************************************************
  * WCMD_batch
@@ -93,13 +94,14 @@ BATCH_CONTEXT *prev_context;
  */
 
   while (WCMD_fgets (string, sizeof(string), h)) {
-    if (strlen(string) == MAXSTRING -1)
-      WCMD_output_asis( "Line in Batch processing possible truncated. Using:\n");
-      WCMD_output_asis( string);
-      WCMD_output_asis( "\n");
-    if (string[0] != ':') {                      /* Skip over labels */
-      WCMD_batch_command (string);
-    }
+      if (strlen(string) == MAXSTRING -1) {
+          WCMD_output_asis( "Line in Batch processing possibly truncated. Using:\n");
+          WCMD_output_asis( string);
+          WCMD_output_asis( "\n");
+      }
+      if (string[0] != ':') {                      /* Skip over labels */
+          WCMD_batch_command (string);
+      }
   }
   CloseHandle (h);
 
