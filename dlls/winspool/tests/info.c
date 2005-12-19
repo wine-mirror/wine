@@ -418,8 +418,10 @@ static void test_openprinter(void)
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
-        ok(res || (!res && GetLastError() == ERROR_INVALID_DATATYPE),
-            "returned %ld with %ld (expected '!=0' or '0' with ERROR_INVALID_DATATYPE)\n",
+        ok(res || (GetLastError() == ERROR_INVALID_DATATYPE ||
+                   GetLastError() == RPC_S_SERVER_UNAVAILABLE),
+            "returned %ld with %ld (expected '!=0' or '0' with: " \
+            "ERROR_INVALID_DATATYPE or RPC_S_SERVER_UNAVAILABLE)\n",
             res, GetLastError());
         if(res) ClosePrinter(hprinter);
 
@@ -430,8 +432,10 @@ static void test_openprinter(void)
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
-        ok(res || (!res && GetLastError() == ERROR_ACCESS_DENIED),
-           "returned %ld with %ld (expected '!=0' or '0' with ERROR_ACCESS_DENIED)\n",
+        ok(res || (GetLastError() == ERROR_ACCESS_DENIED ||
+                   GetLastError() == RPC_S_SERVER_UNAVAILABLE),
+            "returned %ld with %ld (expected '!=0' or '0' with: " \
+            "ERROR_ACCESS_DENIED or RPC_S_SERVER_UNAVAILABLE)\n",
             res, GetLastError());
         if(res) ClosePrinter(hprinter);
 
@@ -440,8 +444,10 @@ static void test_openprinter(void)
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
-        ok(res || (!res && GetLastError() == ERROR_ACCESS_DENIED),
-           "returned %ld with %ld (expected '!=0' or '0' with ERROR_ACCESS_DENIED)\n",
+        ok(res || (GetLastError() == ERROR_ACCESS_DENIED ||
+                   GetLastError() == RPC_S_SERVER_UNAVAILABLE),
+            "returned %ld with %ld (expected '!=0' or '0' with: " \
+            "ERROR_ACCESS_DENIED or RPC_S_SERVER_UNAVAILABLE)\n",
             res, GetLastError());
         if(res) ClosePrinter(hprinter);
     }
