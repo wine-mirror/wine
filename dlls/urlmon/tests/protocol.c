@@ -91,15 +91,17 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     switch(ulStatusCode) {
         case BINDSTATUS_MIMETYPEAVAILABLE:
             CHECK_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
-            if(szStatusText)
-                ok(!lstrcmpW(szStatusText, text_html), "szStatusText != text/html\n");
-        case BINDSTATUS_DIRECTBIND:
-            CHECK_EXPECT2(ReportProgress_DIRECTBIND);
+            ok(szStatusText != NULL, "szStatusText == NULL\n");
             if(szStatusText)
                 ok(!lstrcmpW(szStatusText, text_html), "szStatusText != text/html\n");
             break;
+        case BINDSTATUS_DIRECTBIND:
+            CHECK_EXPECT(ReportProgress_DIRECTBIND);
+            ok(szStatusText == NULL, "szStatucText != NULL\n");
+            break;
         case BINDSTATUS_CACHEFILENAMEAVAILABLE:
             CHECK_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
+            ok(szStatusText != NULL, "szStatusText == NULL\n");
             if(szStatusText)
                 ok(!lstrcmpW(szStatusText, file_name), "szStatusText != file_name\n");
             break;
@@ -241,9 +243,10 @@ static void file_protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL i
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
         SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
         SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
-        SET_EXPECT(ReportResult);
     }
     SET_EXPECT(ReportData);
+    if(is_first)
+        SET_EXPECT(ReportResult);
  
     expect_hrResult = S_OK;
 
@@ -256,9 +259,10 @@ static void file_protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL i
         CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
         CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
-        CHECK_CALLED(ReportResult);
     }
     CHECK_CALLED(ReportData);
+    if(is_first)
+        CHECK_CALLED(ReportResult);
 }
 
 static void test_file_protocol_url(LPCWSTR url)
@@ -365,6 +369,7 @@ static void test_file_protocol(void) {
     static const WCHAR index_url2[] =
         {'f','i','l','e',':','/','/','i','n','d','e','x','.','h','t','m','l',0};
     static const WCHAR wszFile[] = {'f','i','l','e',':',0};
+    static const WCHAR wszFile2[] = {'f','i','l','e',':','/','/','/',0};
     static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
     static const char html_doc[] = "<HTML></HTML>";
 
@@ -386,6 +391,15 @@ static void test_file_protocol(void) {
     memcpy(buf+len, wszIndexHtml, sizeof(wszIndexHtml));
 
     file_name = buf + sizeof(wszFile)/sizeof(WCHAR)-1;
+    test_file_protocol_url(buf);
+
+    memcpy(buf, wszFile2, sizeof(wszFile2));
+    len = sizeof(wszFile2)/sizeof(WCHAR)-1;
+    len += GetCurrentDirectoryW(sizeof(buf)/sizeof(WCHAR)-len, buf+len);
+    buf[len++] = '\\';
+    memcpy(buf+len, wszIndexHtml, sizeof(wszIndexHtml));
+
+    file_name = buf + sizeof(wszFile2)/sizeof(WCHAR)-1;
     test_file_protocol_url(buf);
 
     DeleteFileW(wszIndexHtml);
