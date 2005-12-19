@@ -1381,7 +1381,7 @@ static BOOL elf_load_cb(const char* name, unsigned long addr, void* user)
     if (!p++) p = name;
     if (!memcmp(p, el->name, strlen(el->name)))
     {
-        elf_search_and_load_file(el->pcs, name, addr, &el->elf_info);
+        el->ret = elf_search_and_load_file(el->pcs, name, addr, &el->elf_info);
         return FALSE;
     }
     return TRUE;
