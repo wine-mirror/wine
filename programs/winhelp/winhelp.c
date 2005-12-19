@@ -161,10 +161,10 @@ static HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile, HWND
  */
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
-    MSG         msg;
-    LONG        lHash = 0;
-    HLPFILE*    hlpfile;
-    CHAR*       quote;
+    MSG                 msg;
+    LONG                lHash = 0;
+    HLPFILE*            hlpfile;
+    char*               wndname = "main";
     WINHELP_DLL*        dll;
 
     Globals.hInstance = hInstance;
@@ -214,17 +214,23 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
     if (*cmdline)
     {
-        if ((*cmdline == '"') && (quote = strchr(cmdline+1, '"')))
+        char*   ptr;
+        if ((*cmdline == '"') && (ptr = strchr(cmdline+1, '"')))
         {
             cmdline++;
-            *quote = '\0';
+            *ptr = '\0';
+        }
+        if ((ptr = strchr(cmdline, '>')))
+        {
+            *ptr = '\0';
+            wndname = ptr + 1;
         }
         hlpfile = WINHELP_LookupHelpFile(cmdline);
         if (!hlpfile) return 0;
     }
     else hlpfile = NULL;
     WINHELP_CreateHelpWindowByHash(hlpfile, lHash, 
-                                   WINHELP_GetWindowInfo(hlpfile, "main"), show);
+                                   WINHELP_GetWindowInfo(hlpfile, wndname), show);
 
     /* Message loop */
     while (GetMessage(&msg, 0, 0, 0))
