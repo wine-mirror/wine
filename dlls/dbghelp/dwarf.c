@@ -443,6 +443,17 @@ typedef enum dwarf_operation_e {
   DW_OP_nop = 0x96
 } dwarf_operation_t;
 
+enum dwarf_calling_convention
+{
+    DW_CC_normal = 0x1,
+    DW_CC_program = 0x2,
+    DW_CC_nocall = 0x3
+};
+
+#define DW_CC_lo_user 0x40
+#define DW_CC_hi_user 0xff
+
+
 /**
  * Parsers
  */
@@ -1876,6 +1887,8 @@ static struct symt_function* dwarf2_parse_subprogram(struct module* module, dwar
   unsigned char decl_line = 0;
   dwarf2_abbrev_entry_attr_t* attr = NULL;
   unsigned long next_sibling = 0;
+  enum CV_call_e call_conv = CV_CALL_FAR_C; /* FIXME: assuming C source code */
+  unsigned cc;
 
   TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
 
@@ -1908,6 +1921,14 @@ static struct symt_function* dwarf2_parse_subprogram(struct module* module, dwar
     case DW_AT_inline:
       inl_flags = dwarf2_parse_byte(ctx);
       break;
+    case DW_AT_calling_convention:
+        switch (cc = dwarf2_parse_byte(ctx))
+        {
+        case DW_CC_normal: break;
+        case DW_CC_nocall: call_conv = -1;
+        default: FIXME("Unsupported calling convention %d\n", cc);
+        }
+        break;
     /* not work yet, need parsing .debug_line and using Compil Unit stmt_list
     case DW_AT_decl_file:
       decl_file =  dwarf2_parse_byte(ctx);
@@ -1921,7 +1942,7 @@ static struct symt_function* dwarf2_parse_subprogram(struct module* module, dwar
       dwarf2_parse_attr(attr, ctx);
     }
   }
-  sig_type = symt_new_function_signature(module, ret_type);
+  sig_type = symt_new_function_signature(module, ret_type, call_conv);
   if (!is_decl) {
     func_type = symt_new_function(module, compiland, name, addr, size, &sig_type->symt);
     if (low_pc && high_pc) {

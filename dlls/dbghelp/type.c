@@ -298,7 +298,8 @@ struct symt_array* symt_new_array(struct module* module, int min, int max,
 }
 
 struct symt_function_signature* symt_new_function_signature(struct module* module, 
-                                                            struct symt* ret_type)
+                                                            struct symt* ret_type,
+                                                            enum CV_call_e call_conv)
 {
     struct symt_function_signature*     sym;
 
@@ -307,6 +308,7 @@ struct symt_function_signature* symt_new_function_signature(struct module* modul
         sym->symt.tag = SymTagFunctionType;
         sym->rettype  = ret_type;
         vector_init(&sym->vchildren, sizeof(struct symt*), 4);
+        sym->call_conv = call_conv;
         symt_add_type(module, &sym->symt);
     }
     return sym;
@@ -735,11 +737,20 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         X(VARIANT) = ((const struct symt_data*)type)->u.value;
         break;
 
+    case TI_GET_CALLING_CONVENTION:
+        if (type->tag != SymTagFunctionType) return FALSE;
+        if (((const struct symt_function_signature*)type)->call_conv == -1)
+        {
+            FIXME("No support for calling convention for this signature\n");
+            X(DWORD) = CV_CALL_FAR_C; /* FIXME */
+        }
+        else X(DWORD) = ((const struct symt_function_signature*)type)->call_conv;
+        break;
+
 #undef X
 
     case TI_GET_ADDRESSOFFSET:
     case TI_GET_ARRAYINDEXTYPEID:
-    case TI_GET_CALLING_CONVENTION:
     case TI_GET_CLASSPARENTID:
     case TI_GET_SYMINDEX:
     case TI_GET_THISADJUST:
@@ -748,6 +759,9 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
     case TI_GET_VIRTUALTABLESHAPEID:
     case TI_IS_EQUIV_TO:
         FIXME("Unsupported GetInfo request (%u)\n", req);
+        return FALSE;
+    default:
+        FIXME("Unknown GetInfo request (%u)\n", req);
         return FALSE;
     }
 

@@ -220,6 +220,7 @@ struct symt_function_signature
     struct symt                 symt;
     struct symt*                rettype;
     struct vector               vchildren;
+    enum CV_call_e              call_conv;
 };
 
 struct symt_function_arg_type
@@ -472,7 +473,8 @@ extern struct symt_array*
                                    struct symt* base);
 extern struct symt_function_signature*
                     symt_new_function_signature(struct module* module, 
-                                                struct symt* ret_type);
+                                                struct symt* ret_type,
+                                                enum CV_call_e call_conv);
 extern BOOL         symt_add_function_signature_parameter(struct module* module,
                                                           struct symt_function_signature* sig,
                                                           struct symt* param);

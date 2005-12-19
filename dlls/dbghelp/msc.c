@@ -726,11 +726,12 @@ static int codeview_add_type_struct(struct module* module, unsigned int typeno,
 }
 
 static int codeview_new_func_signature(struct module* module, unsigned typeno,
-                                           unsigned ret_type)
+                                       unsigned ret_type, enum CV_call_e call_conv)
 {
     struct symt* symt;
     symt = &symt_new_function_signature(module, 
-                                        codeview_get_type(ret_type, FALSE))->symt;
+                                        codeview_get_type(ret_type, FALSE),
+                                        call_conv)->symt;
     return codeview_add_type(typeno, symt);
 }
 
@@ -916,25 +917,29 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
             break;
         case LF_PROCEDURE_V1:
             retv = codeview_new_func_signature(module, curr_type, 
-                                               type->procedure_v1.rvtype);
+                                               type->procedure_v1.rvtype,
+                                               type->procedure_v1.call);
             break;
         case LF_PROCEDURE_V2:
             retv = codeview_new_func_signature(module, curr_type, 
-                                               type->procedure_v2.rvtype);
+                                               type->procedure_v2.rvtype,
+                                               type->procedure_v2.call);
             break;
         case LF_MFUNCTION_V1:
             /* FIXME: for C++, this is plain wrong, but as we don't use arg types
              * nor class information, this would just do for now
              */
             retv = codeview_new_func_signature(module, curr_type,
-                                               type->mfunction_v1.rvtype);
+                                               type->mfunction_v1.rvtype,
+                                               type->mfunction_v1.call);
             break;
         case LF_MFUNCTION_V2:
             /* FIXME: for C++, this is plain wrong, but as we don't use arg types
              * nor class information, this would just do for now
              */
             retv = codeview_new_func_signature(module, curr_type,
-                                               type->mfunction_v2.rvtype);
+                                               type->mfunction_v2.rvtype,
+                                               type->mfunction_v2.call);
             break;
         case LF_ARGLIST_V1:
         case LF_ARGLIST_V2:

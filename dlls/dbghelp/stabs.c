@@ -848,7 +848,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
 	    break;
 	case 'f':
 	    PTS_ABORTIF(ptd, stabs_pts_read_type_def(ptd, NULL, &ref_dt) == -1);
-	    new_dt = &symt_new_function_signature(ptd->module, ref_dt)->symt;
+	    new_dt = &symt_new_function_signature(ptd->module, ref_dt, -1)->symt;
 	    break;
 	case 'e':
 	    new_dt = &symt_new_enum(ptd->module, typename)->symt;
@@ -930,7 +930,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
             {
                 ptd->ptr++;
                 PTS_ABORTIF(ptd, stabs_pts_read_type_def(ptd, NULL, &ref_dt) == -1);
-                new_dt = &symt_new_function_signature(ptd->module, ref_dt)->symt;
+                new_dt = &symt_new_function_signature(ptd->module, ref_dt, -1)->symt;
             }
             else
             {
@@ -940,7 +940,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
                 PTS_ABORTIF(ptd, stabs_pts_read_type_def(ptd, NULL, &cls_dt) == -1);
                 PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
                 PTS_ABORTIF(ptd, stabs_pts_read_type_def(ptd, NULL, &ref_dt) == -1);
-                new_dt = &symt_new_function_signature(ptd->module, ref_dt)->symt;
+                new_dt = &symt_new_function_signature(ptd->module, ref_dt, -1)->symt;
                 while (*ptd->ptr == ',')
                 {
                     ptd->ptr++;
@@ -1422,7 +1422,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                                                 (load_offset + stab_ptr->n_value - curr_func->address) : 0);
                 }
                 func_type = symt_new_function_signature(module, 
-                                                        stabs_parse_type(ptr));
+                                                        stabs_parse_type(ptr), -1);
                 curr_func = symt_new_function(module, compiland, symname, 
                                               load_offset + stab_ptr->n_value, 0,
                                               &func_type->symt);
