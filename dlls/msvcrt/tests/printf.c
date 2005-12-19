@@ -51,6 +51,11 @@ static void test_sprintf( void )
     ok(!strcmp(buffer, "1"), "Problem with \"ll\" interpretation\n");
     ok( r==1, "return count wrong\n");
 
+    format = "%I";
+    r = sprintf(buffer,format,1);
+    ok(!strcmp(buffer, "I"), "Problem with \"I\" interpretation\n");
+    ok( r==1, "return count wrong\n");
+
     format = "%S";
     r = sprintf(buffer,format,wide);
     ok(!strcmp(buffer,"wide"),"Problem with wide string format\n");

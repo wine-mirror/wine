@@ -347,19 +347,17 @@ static inline int pf_output_format_A( pf_output *out, LPCSTR str,
 
 static inline BOOL pf_is_double_format( char fmt )
 {
-    char float_fmts[] = "aefg";
+    static const char float_fmts[] = "aeEfgG";
     if (!fmt)
         return FALSE;
-    fmt = tolower( fmt );
     return strchr( float_fmts, fmt ) ? TRUE : FALSE;
 }
 
 static inline BOOL pf_is_valid_format( char fmt )
 {
-    char float_fmts[] = "acdefginoux";
+    static const char float_fmts[] = "acCdeEfgGinouxX";
     if (!fmt)
         return FALSE;
-    fmt = tolower( fmt );
     return strchr( float_fmts, fmt ) ? TRUE : FALSE;
 }
 
