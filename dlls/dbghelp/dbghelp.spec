@@ -81,7 +81,7 @@
 @ stdcall SymLoadModule(long long str str long long)
 @ stdcall SymLoadModuleEx(long long str str double long ptr long)
 @ stdcall SymMatchFileName(str str ptr ptr)
-@ stub SymMatchString
+@ stdcall SymMatchString(str str long)
 @ stdcall SymRegisterCallback64(long ptr double)
 @ stdcall SymRegisterCallback(long ptr ptr)
 @ stdcall SymRegisterFunctionEntryCallback64(ptr ptr double)

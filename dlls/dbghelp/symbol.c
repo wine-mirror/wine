@@ -81,11 +81,12 @@ static inline void re_append(char** mask, unsigned* len, char ch)
  *      +       1 or more of preceding char
  *      escapes \ on #, ?, [, ], *, +. don't work on -
  */
-static void compile_regex(const char* str, int numchar, regex_t* re)
+static void compile_regex(const char* str, int numchar, regex_t* re, BOOL _case)
 {
     char*       mask = HeapAlloc(GetProcessHeap(), 0, 1);
     unsigned    len = 1;
     BOOL        in_escape = FALSE;
+    unsigned    flags = REG_NOSUB;
 
     re_append(&mask, &len, '^');
 
@@ -118,7 +119,8 @@ static void compile_regex(const char* str, int numchar, regex_t* re)
     }
     re_append(&mask, &len, '$');
     mask[len - 1] = '\0';
-    if (regcomp(re, mask, REG_NOSUB)) FIXME("Couldn't compile %s\n", mask);
+    if (_case) flags |= REG_ICASE;
+    if (regcomp(re, mask, flags)) FIXME("Couldn't compile %s\n", mask);
     HeapFree(GetProcessHeap(), 0, mask);
 }
 
@@ -733,7 +735,7 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
         BOOL            ret;
         regex_t         preg;
 
-        compile_regex(mask ? mask : "*", -1, &preg);
+        compile_regex(mask ? mask : "*", -1, &preg, FALSE);
         ret = symt_enum_locals_helper(pcs, module, &preg, EnumSymbolsCallback, 
                                       UserContext, sym_info, 
                                       &((struct symt_function*)sym)->vchildren);
@@ -780,8 +782,8 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
 
         if (bang == Mask) return FALSE;
 
-        compile_regex(Mask, bang - Mask, &mod_regex);
-        compile_regex(bang + 1, -1, &sym_regex);
+        compile_regex(Mask, bang - Mask, &mod_regex, FALSE);
+        compile_regex(bang + 1, -1, &sym_regex, FALSE);
         
         for (module = pcs->lmodules; module; module = module->next)
         {
@@ -824,7 +826,7 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
         Mask = bang + 1;
     }
 
-    compile_regex(Mask ? Mask : "*", -1, &sym_regex);
+    compile_regex(Mask ? Mask : "*", -1, &sym_regex, FALSE);
     symt_enum_module(module, &sym_regex, EnumSymbolsCallback, UserContext);
     regfree(&sym_regex);
 
@@ -1288,3 +1290,21 @@ DWORD WINAPI UnDecorateSymbolName(LPCSTR DecoratedName, LPSTR UnDecoratedName,
         return 0;
     return strlen(UnDecoratedName);
 }
+
+/******************************************************************
+ *		SymMatchString (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymMatchString(PCSTR string, PCSTR re, BOOL _case)
+{
+    regex_t     preg;
+    BOOL        ret;
+
+    TRACE("%s %s %c\n", string, re, _case ? 'Y' : 'N');
+
+    compile_regex(re, -1, &preg, _case);
+    ret = regexec(&preg, string, 0, NULL, 0) == 0;
+    regfree(&preg);
+    return ret;
+}
+
