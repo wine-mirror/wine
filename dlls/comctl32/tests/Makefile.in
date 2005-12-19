@@ -15,6 +15,7 @@ CTESTS = \
 	subclass.c \
 	tab.c \
 	toolbar.c \
+	tooltips.c \
 	treeview.c \
 	updown.c
 
