@@ -255,9 +255,12 @@ static void write_function_stubs(type_t *iface)
             indent -= 2;
             fprintf(client, "\n");
 
-            print_client("_RetVal = *((");
+            print_client("_RetVal = *(");
             write_type(client, def->type, def, def->tname);
-            fprintf(client, " *)_StubMsg.Buffer)++;\n");
+            fprintf(client, " *)_StubMsg.Buffer;\n");
+            fprintf(client, "_StubMsg.Buffer += sizeof(");
+            write_type(client, def->type, def, def->tname);
+            fprintf(client, ");\n");
         }
 
         /* update proc_offset */

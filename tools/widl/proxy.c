@@ -323,9 +323,12 @@ static void marshall_copy_arg( var_t *arg )
   case RPC_FC_LONG:
   case RPC_FC_ULONG:
   case RPC_FC_ENUM32:
-    print_proxy( "*((");
+    print_proxy( "*(");
     write_type(proxy, arg->type, arg, arg->tname);
-    fprintf(proxy,"*)_StubMsg.Buffer)++ = %s;\n", arg->name );
+    fprintf(proxy, " *)_StubMsg.Buffer = %s;\n", arg->name );
+    fprintf(proxy, "_StubMsg.Buffer += sizeof(");
+    write_type(proxy, arg->type, arg, arg->tname);
+    fprintf(proxy, ");\n");
     break;
       
   case RPC_FC_STRUCT:
@@ -419,9 +422,12 @@ static void unmarshall_copy_arg( var_t *arg )
   case RPC_FC_LONG:
   case RPC_FC_ULONG:
   case RPC_FC_ENUM32:
-    print_proxy( "%s = *((", arg->name );
+    print_proxy( "%s = *(", arg->name );
     write_type(proxy, arg->type, arg, arg->tname);
-    fprintf(proxy,"*)_StubMsg.Buffer)++;\n");
+    fprintf(proxy," *)_StubMsg.Buffer;\n");
+    fprintf(proxy, "_StubMsg.Buffer += sizeof(");
+    write_type(proxy, arg->type, arg, arg->tname);
+    fprintf(proxy, ");\n");
     break;
       
   case RPC_FC_STRUCT:
@@ -595,9 +601,12 @@ static void gen_proxy(type_t *iface, func_t *cur, int idx)
      */
     print_proxy( "_StubMsg.Buffer = (unsigned char *)(((long)_StubMsg.Buffer + 3) & ~ 0x3);\n");
 
-    print_proxy( "_RetVal = *((" );
+    print_proxy( "_RetVal = *(" );
     write_type(proxy, def->type, def, def->tname);
-    fprintf(proxy, "*)_StubMsg.Buffer)++;\n");
+    fprintf(proxy, " *)_StubMsg.Buffer;\n");
+    fprintf(proxy, "_StubMsg.Buffer += sizeof(");
+    write_type(proxy, def->type, def, def->tname);
+    fprintf(proxy, ");\n");
   }
 
   indent--;
@@ -798,9 +807,12 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
      */
     print_proxy( "_StubMsg.Buffer = (unsigned char *)(((long)_StubMsg.Buffer + 3) & ~ 0x3);\n");
 
-    print_proxy( "*((" );
+    print_proxy( "*(" );
     write_type(proxy, def->type, def, def->tname);
-    fprintf(proxy, "*)_StubMsg.Buffer)++ = _RetVal;\n");
+    fprintf(proxy, " *)_StubMsg.Buffer = _RetVal;\n");
+    fprintf(proxy, "_StubMsg.Buffer += sizeof(");
+    write_type(proxy, def->type, def, def->tname);
+    fprintf(proxy, ");\n");
   }
 
   indent--;

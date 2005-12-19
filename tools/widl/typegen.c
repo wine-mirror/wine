@@ -301,11 +301,14 @@ void marshall_arguments(FILE *file, int indent, func_t *func)
         if (alignment != 0)
             print_file(file, indent, "_StubMsg.Buffer += %u;\n", alignment);
 
-        print_file(file, indent, "*((");
+        print_file(file, indent, "*(");
         write_type(file, var->type, var, var->tname);
-        fprintf(file, " *)_StubMsg.Buffer)++ = ");
+        fprintf(file, " *)_StubMsg.Buffer = ");
         write_name(file, var);
         fprintf(file, ";\n");
+        fprintf(file, "_StubMsg.Buffer += sizeof(");
+        write_type(file, var->type, var, var->tname);
+        fprintf(file, ");\n");
         fprintf(file, "\n");
 
         last_size = size;
@@ -373,9 +376,12 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func)
 
         print_file(file, indent, "");
         write_name(file, var);
-        fprintf(file, " = *((");
+        fprintf(file, " = *(");
         write_type(file, var->type, var, var->tname);
-        fprintf(file, " *)_StubMsg.Buffer)++;\n");
+        fprintf(file, " *)_StubMsg.Buffer;\n");
+        fprintf(file, "_StubMsg.Buffer += sizeof(");
+        write_type(file, var->type, var, var->tname);
+        fprintf(file, ");\n");
         fprintf(file, "\n");
 
         last_size = size;

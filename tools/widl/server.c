@@ -267,9 +267,12 @@ static void write_function_stubs(type_t *iface)
             print_server("_StubMsg.Buffer = (unsigned char *)_pRpcMessage->Buffer;\n");
             fprintf(server, "\n");
 
-            print_server("*((");
+            print_server("*(");
             write_type(server, def->type, def, def->tname);
-            fprintf(server, " *)_StubMsg.Buffer)++ = _RetVal;\n");
+            fprintf(server, " *)_StubMsg.Buffer = _RetVal;\n");
+            fprintf(server, "_StubMsg.Buffer += sizeof(");
+            write_type(server, def->type, def, def->tname);
+            fprintf(server, ");\n");
         }
 
         indent--;
