@@ -199,12 +199,6 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     dump_PIXELFORMATDESCRIPTOR((const PIXELFORMATDESCRIPTOR *) ppfd);
   }
 
-  if (ppfd->dwFlags & PFD_DRAW_TO_BITMAP) {
-    ERR("Flag not supported !\n");
-    /* Should SetError here... */
-    return 0;
-  }
-
   /* Now, build the request to GLX */
   
   if (ppfd->iPixelType == PFD_TYPE_COLORINDEX) {

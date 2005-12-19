@@ -43,10 +43,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 #define X11DRV_ESCAPE 6789
 enum x11drv_escape_codes
 {
-    X11DRV_GET_DISPLAY,   /* get X11 display for a DC */
-    X11DRV_GET_DRAWABLE,  /* get current drawable for a DC */
-    X11DRV_GET_FONT,      /* get current X font for a DC */
-    X11DRV_SET_DRAWABLE,     /* set current drawable for a DC */
+    X11DRV_GET_DISPLAY,         /* get X11 display for a DC */
+    X11DRV_GET_DRAWABLE,        /* get current drawable for a DC */
+    X11DRV_GET_FONT,            /* get current X font for a DC */
+    X11DRV_SET_DRAWABLE,        /* set current drawable for a DC */
+    X11DRV_START_EXPOSURES,     /* start graphics exposures */
+    X11DRV_END_EXPOSURES,       /* end graphics exposures */
+    X11DRV_GET_DCE,             /* get the DCE pointer */
+    X11DRV_SET_DCE,             /* set the DCE pointer */
+    X11DRV_GET_GLX_DRAWABLE     /* get current glx drawable for a DC */
 };
 
 void (*wine_tsx11_lock_ptr)(void) = NULL;
@@ -121,11 +126,11 @@ inline static Display *get_display( HDC hdc )
 }
 
 
-/* retrieve the X drawable to use on a given DC */
+/* retrieve the GLX drawable to use on a given DC */
 inline static Drawable get_drawable( HDC hdc )
 {
-    Drawable drawable;
-    enum x11drv_escape_codes escape = X11DRV_GET_DRAWABLE;
+    GLXDrawable drawable;
+    enum x11drv_escape_codes escape = X11DRV_GET_GLX_DRAWABLE;
 
     if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
                     sizeof(drawable), (LPSTR)&drawable )) drawable = 0;
@@ -144,7 +149,7 @@ inline static HDC get_hdc_from_Drawable(GLXDrawable d)
   return NULL;
 }
 
-/* retrieve the X drawable to use on a given DC */
+/* retrieve the X font to use on a given DC */
 inline static Font get_font( HDC hdc )
 {
     Font font;
@@ -469,6 +474,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 BOOL WINAPI wglMakeCurrent(HDC hdc,
 			   HGLRC hglrc) {
   BOOL ret;
+  DWORD type = GetObjectType(hdc);
 
   TRACE("(%p,%p)\n", hdc, hglrc);
 
@@ -523,6 +529,8 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
       }
       TRACE(" make current for dis %p, drawable %p, ctx %p\n", ctx->display, (void*) drawable, ctx->ctx);
       ret = glXMakeCurrent(ctx->display, drawable, ctx->ctx);
+      if(ret && type == OBJ_MEMDC)
+          glDrawBuffer(GL_FRONT_LEFT);
   }
   LEAVE_GL();
   TRACE(" returning %s\n", (ret ? "True" : "False"));

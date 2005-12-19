@@ -415,6 +415,7 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
                         if(!physDev->bitmap->glxpixmap)
                             physDev->bitmap->glxpixmap = create_glxpixmap(physDev);
 
+                        X11DRV_CoerceDIBSection(physDev, DIB_Status_GdiMod, FALSE);
                         *(Drawable *)out_data = physDev->bitmap->glxpixmap;
                     }
                     else
