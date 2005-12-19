@@ -20,6 +20,11 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
+# Note that the link is a relative unix-style path name.  Since the / character
+# is not valid in Windows filenames it is an adequate separator to show the
+# menu structure.  (This program may need to split the menu structure out for
+# implementing xdg-style menus)
+
 mode=""
 args=""
 menu=""
@@ -38,7 +43,7 @@ options:
   --desktop     create a desktop link
   --menu        create a menu entry
   --path xx     path to the application
-  --link xx     name of link to create
+  --link xx     name of link to create, including path
   --args xx     command-line arguments for the application
   --icon xx     icon to display
   --workdir xx  working directory for the application

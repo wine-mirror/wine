@@ -5,6 +5,7 @@
  * Copyright 1998 Juergen Schmied
  * Copyright 2003 Mike McCormack for CodeWeavers
  * Copyright 2004 Dmitry Timoshkov
+ * Copyright 2005 Bill Medland
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +22,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
+ *  This program is used to replicate the Windows desktop and start menu
+ * into the native desktop's copies.  Desktop entries are merged directly
+ * into the native desktop.  The Windows Start Menu corresponds to a Wine
+ * entry within the native "start" menu and replicates the whole tree
+ * structure of the Windows Start Menu.  Currently it does not differentiate
+ * between the user's desktop/start menu and the "All Users" copies.
+ *
  *  This program will read a Windows shortcut file using the IShellLink
  * interface, then invoke wineshelllink with the appropriate arguments
  * to create a KDE/Gnome menu entry for the shortcut.
@@ -28,10 +36,21 @@
  *  winemenubuilder [ -r ] <shortcut.lnk>
  *
  *  If the -r parameter is passed, and the shortcut cannot be created,
- * this program will add RunOnce entry to invoke itself at the next
+ * this program will add a RunOnce entry to invoke itself at the next
  * reboot.  This covers the case when a ShortCut is created before the
  * executable containing its icon.
  *
+ * TODO
+ *  Handle data lnk files. There is no icon in the file; the icon is in 
+ * the handler for the file type (or pointed to by the lnk file).  Also it 
+ * might be better to use a native handler (e.g. a native acroread for pdf
+ * files).  
+ *  Differentiate between the user's entries and the "All Users" entries.
+ * If it is possible to add the desktop files to the native system's
+ * shared location for an "All Users" entry then do so.  As a suggestion the
+ * shared menu Wine base could be writable to the wine group, or a wineadm 
+ * group.
+ * 
  */
 
 #include "config.h"
@@ -650,32 +669,46 @@ static int fork_and_wait( const char *linker, const char *link_name, const char 
     return retcode;
 }
 
-static char *cleanup_link( LPCWSTR link )
+/* Return a heap-allocated copy of the unix format difference between the two
+ * Windows-format paths.
+ * locn is the owning location
+ * link is within locn
+ */
+static char *relative_path( LPCWSTR link, LPCWSTR locn )
 {
-    char *unix_file_name;
-    char  *p, *link_name;
+    char *unix_locn, *unix_link;
+    char *relative = NULL;
 
-    unix_file_name = wine_get_unix_file_name(link);
-    if (!unix_file_name)
+    unix_locn = wine_get_unix_file_name(locn);
+    unix_link = wine_get_unix_file_name(link);
+    if (unix_locn && unix_link)
     {
-        WINE_ERR("target link %s not found\n", wine_dbgstr_w(link));
-        return NULL;
+        size_t len_unix_locn, len_unix_link;
+        len_unix_locn = strlen (unix_locn);
+        len_unix_link = strlen (unix_link);
+        if (len_unix_locn < len_unix_link && memcmp (unix_locn, unix_link, len_unix_locn) == 0 && unix_link[len_unix_locn] == '/')
+        {
+            size_t len_rel;
+            char *p = strrchr (unix_link + len_unix_locn, '/');
+            p = strrchr (p, '.');
+            if (p)
+            {
+                *p = '\0';
+                len_unix_link = p - unix_link;
+            }
+            len_rel = len_unix_link - len_unix_locn;
+            relative = HeapAlloc(GetProcessHeap(), 0, len_rel);
+            if (relative)
+            {
+                memcpy (relative, unix_link + len_unix_locn + 1, len_rel);
+            }
+        }
     }
-
-    link_name = unix_file_name;
-    p = strrchr( link_name, '/' );
-    if (p)
-        link_name = p + 1;
-
-    p = strrchr( link_name, '.' );
-    if (p)
-        *p = 0;
-
-    p = HeapAlloc(GetProcessHeap(), 0, strlen(link_name) + 1);
-    strcpy(p, link_name);
-    HeapFree(GetProcessHeap(), 0, unix_file_name);
-
-    return p;
+    if (!relative)
+        WINE_WARN("Could not separate the relative link path of %s in %s\n", wine_dbgstr_w(link), wine_dbgstr_w(locn));
+    HeapFree(GetProcessHeap(), 0, unix_locn);
+    HeapFree(GetProcessHeap(), 0, unix_link);
+    return relative;
 }
 
 /***********************************************************************
@@ -683,9 +716,11 @@ static char *cleanup_link( LPCWSTR link )
  *           GetLinkLocation
  *
  * returns TRUE if successful
- * *loc will contain CS_DESKTOPDIRECTORY, CS_STARTMENU, CS_STARTUP
+ * *loc will contain CS_DESKTOPDIRECTORY, CS_STARTMENU, CS_STARTUP etc.
+ * *relative will contain the address of a heap-allocated copy of the portion
+ * of the filename that is within the specified location, in unix form
  */
-static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc )
+static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc, char **relative )
 {
     WCHAR filename[MAX_PATH], buffer[MAX_PATH];
     DWORD len, i, r, filelen;
@@ -708,7 +743,7 @@ static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc )
 
         len = lstrlenW(buffer);
         if (len >= MAX_PATH)
-            continue;
+            continue; /* We've just trashed memory! Hopefully we are OK */
 
         if (len > filelen || filename[len]!='\\')
             continue;
@@ -721,7 +756,8 @@ static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc )
 
         /* return the remainder of the string and link type */
         *loc = locations[i];
-        return TRUE;
+        *relative = relative_path (filename, buffer);
+        return (*relative != NULL);
     }
 
     return FALSE;
@@ -856,7 +892,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
         return FALSE;
     }
 
-    if( !GetLinkLocation( link, &csidl ) )
+    if( !GetLinkLocation( link, &csidl, &link_name ) )
     {
         WINE_WARN("Unknown link location '%s'. Ignoring.\n",wine_dbgstr_w(link));
         return TRUE;
@@ -866,6 +902,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
         WINE_WARN("Not under desktop or start menu. Ignoring.\n");
         return TRUE;
     }
+    WINE_TRACE("Link       : %s\n", wine_dbgstr_a(link_name));
 
     szWorkDir[0] = 0;
     IShellLinkW_GetWorkingDirectory( sl, szWorkDir, MAX_PATH );
@@ -933,13 +970,6 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
         lstrcpynW(szArgs, link, MAX_PATH);
         GetWindowsDirectoryW(szPath, MAX_PATH);
         lstrcatW(szPath, startW);
-    }
-
-    link_name = cleanup_link( link );
-    if( !link_name )
-    {
-        WINE_ERR("Couldn't clean up link name %s\n", wine_dbgstr_w(link));
-        goto cleanup;
     }
 
     /* escape the path and parameters */
