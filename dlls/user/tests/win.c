@@ -2769,6 +2769,9 @@ static void test_scrollvalidate( HWND parent)
      * hwnd2 because of the WS_CLIPSIBLING style */
     HWND hwnd1, hwnd2;
 
+    clipping = CreateRectRgn(0,0,0,0);
+    tmprgn = CreateRectRgn(0,0,0,0);
+    exprgn = CreateRectRgn(0,0,0,0);
     hwnd2 = CreateWindowExA(0, "static", NULL,
             WS_CHILD| WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER ,
             75, 30, 100, 100, parent, 0, 0, NULL);
@@ -2779,17 +2782,17 @@ static void test_scrollvalidate( HWND parent)
     UpdateWindow( parent);
     GetClientRect( hwnd1, &rc);
     cliprc=rc; 
-    clipping = CreateRectRgn( 10, 10, 90, 90);
+    SetRectRgn( clipping, 10, 10, 90, 90);
     hdc = GetDC( hwnd1);
     /* for a visual touch */
     TextOut( hdc, 0,10, "0123456789", 10);
     ScrollDC( hdc, -10, -5, &rc, &cliprc, hrgn, &rcu);
     if (winetest_debug > 0) dump_region(hrgn);
     /* create a region with what is expected */
-    exprgn = CreateRectRgn( 39,0,49,74);
-    tmprgn = CreateRectRgn( 88,79,98,93);
+    SetRectRgn( exprgn, 39,0,49,74);
+    SetRectRgn( tmprgn, 88,79,98,93);
     CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
-    tmprgn = CreateRectRgn( 0,93,98,98);
+    SetRectRgn( tmprgn, 0,93,98,98);
     CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
     ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
     trace("update rect is %ld,%ld - %ld,%ld\n",
@@ -2799,10 +2802,10 @@ static void test_scrollvalidate( HWND parent)
     ScrollDC( hdc, -10, -5, &rc, &cliprc, hrgn, &rcu);
     if (winetest_debug > 0) dump_region(hrgn);
     /* create a region with what is expected */
-    exprgn = CreateRectRgn( 39,10,49,74);
-    tmprgn = CreateRectRgn( 80,79,90,85);
+    SetRectRgn( exprgn, 39,10,49,74);
+    SetRectRgn( tmprgn, 80,79,90,85);
     CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
-    tmprgn = CreateRectRgn( 10,85,90,90);
+    SetRectRgn( tmprgn, 10,85,90,90);
     CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
     ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
     trace("update rect is %ld,%ld - %ld,%ld\n",
@@ -2819,8 +2822,8 @@ static void test_scrollvalidate( HWND parent)
     ScrollWindowEx( hwnd1, -10, 0, &rc, &cliprc, hrgn, &rcu,
       SW_SCROLLCHILDREN | SW_INVALIDATE);
     if (winetest_debug > 0) dump_region(hrgn);
-    exprgn = CreateRectRgn( 88,0,98,98);
-    tmprgn = CreateRectRgn( 30, 40, 50, 50);
+    SetRectRgn( exprgn, 88,0,98,98);
+    SetRectRgn( tmprgn, 30, 40, 50, 50);
     CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
     ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
 
@@ -2841,8 +2844,8 @@ static void test_scrollvalidate( HWND parent)
     ScrollWindowEx( hwnd1, -10, -10, &rc, &cliprc, hrgn, &rcu,
       SW_SCROLLCHILDREN | SW_INVALIDATE);
     if (winetest_debug > 0) dump_region(hrgn);
-    exprgn = CreateRectRgn( 88,0,98,88);
-    tmprgn = CreateRectRgn( 0,88,98,98);
+    SetRectRgn( exprgn, 88,0,98,88);
+    SetRectRgn( tmprgn, 0,88,98,98);
     CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
     ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
 
@@ -2870,12 +2873,12 @@ static void test_scrollvalidate( HWND parent)
     ValidateRect( hwnd2, NULL);
     ScrollWindowEx( hwnd1, -10, -10, &rc, &cliprc, hrgn, &rcu, SW_INVALIDATE);
     if (winetest_debug > 0) dump_region(hrgn);
-    exprgn = CreateRectRgn( 88,0,98,20);
-    tmprgn = CreateRectRgn( 20,20,98,30);
+    SetRectRgn( exprgn, 88,0,98,20);
+    SetRectRgn( tmprgn, 20,20,98,30);
     CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
-    tmprgn = CreateRectRgn( 20,30,30,88);
+    SetRectRgn( tmprgn, 20,30,30,88);
     CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
-    tmprgn = CreateRectRgn( 0,88,30,98);
+    SetRectRgn( tmprgn, 0,88,30,98);
     CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
     ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
 
@@ -2932,6 +2935,8 @@ static void test_scrolldc( HWND parent)
     COLORREF colr;
 
     hrgn = CreateRectRgn(0,0,0,0);
+    tmprgn = CreateRectRgn(0,0,0,0);
+    exprgn = CreateRectRgn(0,0,0,0);
 
     hwnd1 = CreateWindowExA(0, "static", NULL,
             WS_CHILD| WS_VISIBLE,
@@ -2964,8 +2969,8 @@ static void test_scrolldc( HWND parent)
     ok(EqualRect(&rcu, &rc2), "rects do not match (%ld,%ld-%ld,%ld) / (%ld,%ld-%ld,%ld)\n",
        rcu.left, rcu.top, rcu.right, rcu.bottom, rc2.left, rc2.top, rc2.right, rc2.bottom);
 
-    exprgn = CreateRectRgn(0, 0, 20, 80);
-    tmprgn = CreateRectRgn(0, 80, 100, 100);
+    SetRectRgn( exprgn, 0, 0, 20, 80);
+    SetRectRgn( tmprgn, 0, 80, 100, 100);
     CombineRgn(exprgn, exprgn, tmprgn, RGN_OR);
     if (winetest_debug > 0) dump_region(exprgn);
     ok(EqualRgn(exprgn, hrgn), "wrong update region\n");
