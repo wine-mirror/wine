@@ -3796,145 +3796,141 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDevice *iface, IWineD3
     return D3D_OK;
 }
 
-#define GET_SHADER_CONSTANT(_vertexshaderconstant, _count, _sizecount) \
-    count = min(_count, MAX_VSHADER_CONSTANTS - (StartRegister + 1)); \
-if (NULL == pConstantData || count < 0 /* || _count != count */ ) \
-    return D3DERR_INVALIDCALL; \
-memcpy(pConstantData, This->updateStateBlock->_vertexshaderconstant + (StartRegister * _sizecount), count * (sizeof(*pConstantData) * _sizecount));
-
-#define SET_SHADER_CONSTANT(_vertexshaderconstant, _count, _sizecount) \
-int count = min(_count, MAX_VSHADER_CONSTANTS - (StartRegister + 1)); \
-if (NULL == pConstantData || count < 0 /* || _count != count */ ) \
-    return D3DERR_INVALIDCALL; \
-memcpy(This->updateStateBlock->_vertexshaderconstant + (StartRegister * _sizecount), pConstantData, count * (sizeof(*pConstantData) * _sizecount)); \
-This->updateStateBlock->changed.vertexShader = TRUE; \
-This->updateStateBlock->set.vertexShader = TRUE;
-
-HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(IWineD3DDevice *iface, UINT StartRegister, CONST BOOL  *pConstantData, UINT BoolCount){
+HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstant(IWineD3DDevice *iface, void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT registersize) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i;
-    SET_SHADER_CONSTANT(vertexShaderConstantB, BoolCount, 1);
 
-    /* populate the bitmap that says which constant type we should load */
-    for (i = StartRegister; i < BoolCount + StartRegister; ++i) {
+    int i;
+    int cnt = min(count, MAX_VSHADER_CONSTANTS - (start + 1));
+
+    TRACE("(iface %p, dstData %p, srcData %p, type %d, start %d, count %d, registersize %d)\n",
+            iface, dstData, srcData, type, start, count, registersize);
+
+    if (type != WINESHADERCNST_NONE) {
+        if (srcData == NULL || cnt < 0) {
+            return D3DERR_INVALIDCALL;
+        }
+
+        CopyMemory((char *)dstData + (start * registersize), srcData, cnt * registersize);
+    }
+
+    for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.vertexShaderConstants[i] = TRUE;
         This->updateStateBlock->set.vertexShaderConstants[i]     = TRUE;
-        This->updateStateBlock->vertexShaderConstantT[i]         = WINESHADERCNST_BOOL;
-        TRACE("(%p) : Setting vsb %d to %d\n", This->updateStateBlock, i, pConstantData[i - StartRegister]);
+        This->updateStateBlock->vertexShaderConstantT[i]         = type;
     }
 
     return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstant(IWineD3DDevice *iface, void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT registersize) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    int i;
+    int cnt = min(count, MAX_VSHADER_CONSTANTS - (start + 1));
+
+    TRACE("(iface %p, dstData %p, srcData %p, type %d, start %d, count %d, registersize %d)\n",
+            iface, dstData, srcData, type, start, count, registersize);
+
+    /* Verify that the requested shader constant was populated with the correct type */
+    for (i = start; i < cnt + start; ++i) {
+        if (This->updateStateBlock->vertexShaderConstantT[i] != type) {
+            TRACE("(%p) : Caller requested 0x%x while type is 0x%x. Returning D3DERR_INVALIDCALL\n", 
+                    This, type, This->updateStateBlock->vertexShaderConstantT[i]);
+            return D3DERR_INVALIDCALL;
+        }
+    }
+
+    if (dstData == NULL || cnt < 0) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    CopyMemory(dstData, (char *)srcData + (start * registersize), cnt * registersize);
+
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(IWineD3DDevice *iface, UINT StartRegister, CONST BOOL  *pConstantData, UINT BoolCount){
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    
+    return IWineD3DDeviceImpl_SetVertexShaderConstant(iface, 
+            This->updateStateBlock->vertexShaderConstantB, 
+            pConstantData, 
+            WINESHADERCNST_BOOL, 
+            StartRegister, 
+            BoolCount, 
+            sizeof(*pConstantData));
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantB(IWineD3DDevice *iface, UINT StartRegister, BOOL *pConstantData, UINT BoolCount){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, count;
-
-    /* verify that the requested shader constant was populated with a boolean */
-    for (i = StartRegister; i < BoolCount; ++i) {
-        if (This->updateStateBlock->vertexShaderConstantT[i] != WINESHADERCNST_BOOL) {
-
-            /* the constant for this register isn't a boolean */
-            WARN("(%p) : Caller requested a boolean where stateblock (%p) entry is a %s. Returning D3DERR_INVALIDCALL\n", This,This->updateStateBlock,
-                This->updateStateBlock->vertexShaderConstantT[i] == WINESHADERCNST_INTEGER ? "integer" : "float");
-            return D3DERR_INVALIDCALL;
-        }
-    }
-
-    GET_SHADER_CONSTANT(vertexShaderConstantB, BoolCount, 1);
-    return D3D_OK;
+    
+    return IWineD3DDeviceImpl_GetVertexShaderConstant(iface, 
+            pConstantData, 
+            This->updateStateBlock->vertexShaderConstantB, 
+            WINESHADERCNST_BOOL, 
+            StartRegister, 
+            BoolCount, 
+            sizeof(*pConstantData));
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(IWineD3DDevice *iface, UINT StartRegister, CONST int *pConstantData, UINT Vector4iCount){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i;
-
-    SET_SHADER_CONSTANT(vertexShaderConstantI, Vector4iCount, 4);
-
-    /* populate the bitmap that says which constant type we should load */
-    for (i = StartRegister; i < StartRegister + Vector4iCount; ++i) {
-        This->updateStateBlock->changed.vertexShaderConstants[i] = TRUE;
-        This->updateStateBlock->set.vertexShaderConstants[i]     = TRUE;
-        This->updateStateBlock->vertexShaderConstantT[i]         = WINESHADERCNST_INTEGER;
-        TRACE("(%p) : Setting vsi %d to %d\n", This->updateStateBlock, i, pConstantData[i - StartRegister]);
-    }
-
-    return D3D_OK;
+    
+    return IWineD3DDeviceImpl_SetVertexShaderConstant(iface, 
+            This->updateStateBlock->vertexShaderConstantI, 
+            pConstantData, 
+            WINESHADERCNST_INTEGER, 
+            StartRegister, 
+            Vector4iCount, 
+            4 * sizeof(*pConstantData));
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantI(IWineD3DDevice *iface, UINT StartRegister, int         *pConstantData, UINT Vector4iCount){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, count;
-
-    /* verify that the requested shader constant was populated with a integer */
-    for (i = StartRegister; i < Vector4iCount; ++i) {
-        if (This->updateStateBlock->vertexShaderConstantT[i] != WINESHADERCNST_INTEGER) {
-
-            /* the constant for this register isn't a integer */
-            WARN("(%p) : Caller requested a integer where stateblock (%p) entry is a %s. Returning D3DERR_INVALIDCALL\n", This, This->updateStateBlock,
-                This->updateStateBlock->vertexShaderConstantT[i] == WINESHADERCNST_BOOL ? "boolean" : "float");
-            return D3DERR_INVALIDCALL;
-        }
-    }
-
-    GET_SHADER_CONSTANT(vertexShaderConstantI, Vector4iCount, 4);
-
-    return D3D_OK;
+    
+    return IWineD3DDeviceImpl_GetVertexShaderConstant(iface, 
+            pConstantData, 
+            This->updateStateBlock->vertexShaderConstantI, 
+            WINESHADERCNST_INTEGER, 
+            StartRegister, 
+            Vector4iCount, 
+            4 * sizeof(*pConstantData));
 }
+
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(IWineD3DDevice *iface, UINT StartRegister, CONST float *pConstantData, UINT Vector4fCount){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i;
 
-    SET_SHADER_CONSTANT(vertexShaderConstantF, Vector4fCount, 4);
-
-    /* populate the bitmap that says which constant type we should load */
-    for (i = StartRegister; i < StartRegister + Vector4fCount; ++i) {
-        This->updateStateBlock->changed.vertexShaderConstants[i] = TRUE;
-        This->updateStateBlock->set.vertexShaderConstants[i]     = TRUE;
-        This->updateStateBlock->vertexShaderConstantT[i]         = WINESHADERCNST_FLOAT;
-        TRACE("(%p) : Setting vsf %d to %f\n", This->updateStateBlock, i, pConstantData[i - StartRegister]);
-    }
-    return D3D_OK;
+    return IWineD3DDeviceImpl_SetVertexShaderConstant(iface, 
+            This->updateStateBlock->vertexShaderConstantF, 
+            pConstantData, 
+            WINESHADERCNST_FLOAT, 
+            StartRegister, 
+            Vector4fCount, 
+            4 * sizeof(*pConstantData));
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantF(IWineD3DDevice *iface, UINT StartRegister, float       *pConstantData, UINT Vector4fCount){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, count;
 
-    /* verify that the requested shader constant was populated with a float */
-    for (i = StartRegister; i < Vector4fCount; ++i) {
-        if (This->updateStateBlock->vertexShaderConstantT[i] != WINESHADERCNST_FLOAT) {
-
-            /* the constant for this register isn't a float */
-            WARN("(%p) : Caller requested a float where stateblock (%p) entry is a %s. Returning D3DERR_INVALIDCALL\n", This, This->updateStateBlock,
-                This->updateStateBlock->vertexShaderConstantT[i] == WINESHADERCNST_BOOL ? "boolean" : "integer");
-            return D3DERR_INVALIDCALL;
-        }
-    }
-
-
-
-    GET_SHADER_CONSTANT(vertexShaderConstantF, Vector4fCount, 4);
-
-    return D3D_OK;
+    return IWineD3DDeviceImpl_GetVertexShaderConstant(iface, 
+            pConstantData, 
+            This->updateStateBlock->vertexShaderConstantF, 
+            WINESHADERCNST_FLOAT, 
+            StartRegister, 
+            Vector4fCount, 
+            4 * sizeof(*pConstantData));
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantN(IWineD3DDevice *iface, UINT StartRegister, UINT VectorNCount){
-   IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-   int i;
-       /* populate the bitmap that says which constant type we should load */
-   for (i = StartRegister; i < StartRegister + VectorNCount; ++i) {
-       This->updateStateBlock->changed.vertexShaderConstants[i] = TRUE;
-       This->updateStateBlock->set.vertexShaderConstants[i]     = TRUE;
-       This->updateStateBlock->vertexShaderConstantT[i]         = WINESHADERCNST_NONE;
-       TRACE("(%p) : Setting vsf %d\n", This, i);
-   }
-   return D3D_OK;
+    return IWineD3DDeviceImpl_SetVertexShaderConstant(iface, 
+            NULL, 
+            NULL, 
+            WINESHADERCNST_NONE, 
+            StartRegister, 
+            VectorNCount, 
+            0);
 }
-
-#undef SET_SHADER_CONSTANT
-#undef GET_SHADER_CONSTANT
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader *pShader) {
     IWineD3DDeviceImpl *This        = (IWineD3DDeviceImpl *)iface;
@@ -3979,149 +3975,140 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface, IWineD3D
     return D3D_OK;
 }
 
-#define GET_SHADER_CONSTANT(_pixelshaderconstant, _count, _sizecount) \
-count = min(_count, MAX_PSHADER_CONSTANTS - (StartRegister + 1)); \
-if (NULL == pConstantData || count < 0 /* || _count != count */ ) \
-    return D3DERR_INVALIDCALL; \
-memcpy(pConstantData, This->updateStateBlock->_pixelshaderconstant + (StartRegister * _sizecount), count * (sizeof(*pConstantData) * _sizecount)); \
-
-
-#define SET_SHADER_CONSTANT(_pixelshaderconstant, _count, _sizecount) \
-int count = min(_count, MAX_PSHADER_CONSTANTS - (StartRegister + 1)); \
-if (NULL == pConstantData || count < 0 /* || _count != count */ ) \
-    return D3DERR_INVALIDCALL; \
-memcpy(This->updateStateBlock->_pixelshaderconstant + (StartRegister * _sizecount), pConstantData, count * (sizeof(*pConstantData) * _sizecount));
-
-
-HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(IWineD3DDevice *iface, UINT StartRegister, CONST BOOL   *pConstantData, UINT BoolCount) {
+HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstant(IWineD3DDevice *iface, void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT registersize) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
     int i;
+    int cnt = min(count, MAX_PSHADER_CONSTANTS - (start + 1));
 
-    SET_SHADER_CONSTANT(pixelShaderConstantB, BoolCount, 1);
+    TRACE("(iface %p, dstData %p, srcData %p, type %d, start %d, count %d, registersize %d)\n",
+            iface, dstData, srcData, type, start, count, registersize);
 
-    /* populate the bitmap that says which constant type we should load */
-    for (i = StartRegister; i < BoolCount + StartRegister; ++i) {
+    if (type != WINESHADERCNST_NONE) {
+        if (srcData == NULL || cnt < 0) {
+            return D3DERR_INVALIDCALL;
+        }
+
+        CopyMemory((char *)dstData + (start * registersize), srcData, cnt * registersize);
+    }
+
+    for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.pixelShaderConstants[i] = TRUE;
         This->updateStateBlock->set.pixelShaderConstants[i]     = TRUE;
-        This->updateStateBlock->pixelShaderConstantT[i]         = WINESHADERCNST_BOOL;
-        TRACE("(%p) : Setting psb %d to %d\n", This->updateStateBlock, i, pConstantData[i - StartRegister]);
+        This->updateStateBlock->pixelShaderConstantT[i]         = type;
     }
 
     return D3D_OK;
+}
 
+HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstant(IWineD3DDevice *iface, void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT registersize) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    int i;
+    int cnt = min(count, MAX_PSHADER_CONSTANTS - (start + 1));
+
+    TRACE("(iface %p, dstData %p, srcData %p, type %d, start %d, count %d, registersize %d)\n",
+            iface, dstData, srcData, type, start, count, registersize);
+
+    /* Verify that the requested shader constant was populated with the correct type */
+    for (i = start; i < cnt + start; ++i) {
+        if (This->updateStateBlock->pixelShaderConstantT[i] != type) {
+            TRACE("(%p) : Caller requested 0x%x while type is 0x%x. Returning D3DERR_INVALIDCALL\n", 
+                    This, type, This->updateStateBlock->pixelShaderConstantT[i]);
+            return D3DERR_INVALIDCALL;
+        }
+    }
+
+    if (dstData == NULL || cnt < 0) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    CopyMemory(dstData, (char *)srcData + (start * registersize), cnt * registersize);
+
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(IWineD3DDevice *iface, UINT StartRegister, CONST BOOL   *pConstantData, UINT BoolCount) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    
+    return IWineD3DDeviceImpl_SetPixelShaderConstant(iface, 
+            This->updateStateBlock->pixelShaderConstantB, 
+            pConstantData, 
+            WINESHADERCNST_BOOL, 
+            StartRegister, 
+            BoolCount, 
+            sizeof(*pConstantData));
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantB(IWineD3DDevice *iface, UINT StartRegister, BOOL         *pConstantData, UINT BoolCount) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, count;
 
-    /* verify that the requested shader constant was populated with a integer */
-    for (i = StartRegister; i < BoolCount; ++i) {
-        if (WINESHADERCNST_BOOL != This->updateStateBlock->pixelShaderConstantT[i]) {
-
-            /* the constant for this register isn't a boolean */
-            WARN("(%p) : Caller requested a integer where stateblock (%p) entry is a %s. Returning D3DERR_INVALIDCALL\n", This, This->updateStateBlock,
-                WINESHADERCNST_INTEGER == This->updateStateBlock->vertexShaderConstantT[i] ? "integer" : "float");
-            return D3DERR_INVALIDCALL;
-        }
-    }
-
-
-    GET_SHADER_CONSTANT(pixelShaderConstantB, BoolCount, 1);
-
-    return D3D_OK;
+    return IWineD3DDeviceImpl_GetPixelShaderConstant(iface, 
+            pConstantData, 
+            This->updateStateBlock->pixelShaderConstantB, 
+            WINESHADERCNST_BOOL, 
+            StartRegister, 
+            BoolCount, 
+            sizeof(*pConstantData));
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(IWineD3DDevice *iface, UINT StartRegister, CONST int    *pConstantData, UINT Vector4iCount) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i;
 
-    SET_SHADER_CONSTANT(pixelShaderConstantI, Vector4iCount, 4);
-
-    /* populate the bitmap that says which constant type we should load */
-    for (i = StartRegister; i < Vector4iCount + StartRegister; ++i) {
-        This->updateStateBlock->changed.pixelShaderConstants[i] = TRUE;
-        This->updateStateBlock->set.pixelShaderConstants[i]     = TRUE;
-        This->updateStateBlock->pixelShaderConstantT[i]         = WINESHADERCNST_INTEGER;
-        TRACE("(%p) : Setting psb %d to %d\n", This->updateStateBlock, i, pConstantData[i - StartRegister]);
-    }
-
-    return D3D_OK;
+    return IWineD3DDeviceImpl_SetPixelShaderConstant(iface, 
+            This->updateStateBlock->pixelShaderConstantI, 
+            pConstantData, 
+            WINESHADERCNST_INTEGER, 
+            StartRegister, 
+            Vector4iCount, 
+            4 * sizeof(*pConstantData));
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantI(IWineD3DDevice *iface, UINT StartRegister, int          *pConstantData, UINT Vector4iCount) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, count;
-
-    /* verify that the requested shader constant was populated with a integer */
-    for (i = StartRegister; i < Vector4iCount; ++i) {
-        if (WINESHADERCNST_INTEGER != This->updateStateBlock->pixelShaderConstantT[i]) {
-
-            /* the constant for this register isn't a integer */
-            WARN("(%p) : Caller requested a integer where stateblock (%p) entry is a %s. Returning D3DERR_INVALIDCALL\n", This, This->updateStateBlock,
-                WINESHADERCNST_BOOL == This->updateStateBlock->vertexShaderConstantT[i] ? "boolean" : "float");
-            return D3DERR_INVALIDCALL;
-        }
-    }
-
-    GET_SHADER_CONSTANT(pixelShaderConstantI, Vector4iCount, 4);
-
-    return D3D_OK;
+    
+    return IWineD3DDeviceImpl_GetPixelShaderConstant(iface, 
+            pConstantData, 
+            This->updateStateBlock->pixelShaderConstantI, 
+            WINESHADERCNST_INTEGER, 
+            StartRegister, 
+            Vector4iCount, 
+            4 * sizeof(*pConstantData));
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(IWineD3DDevice *iface, UINT StartRegister, CONST float  *pConstantData, UINT Vector4fCount) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i;
-    SET_SHADER_CONSTANT(pixelShaderConstantF, Vector4fCount, 4);
-
-    /* populate the bitmap that says which constant type we should load */
-    for (i = StartRegister; i < Vector4fCount + StartRegister; ++i) {
-        This->updateStateBlock->changed.pixelShaderConstants[i] = TRUE;
-        This->updateStateBlock->set.pixelShaderConstants[i]     = TRUE;
-        This->updateStateBlock->pixelShaderConstantT[i]         = WINESHADERCNST_FLOAT;
-        TRACE("(%p) : Setting psb %d to %f\n", This->updateStateBlock, i, pConstantData[i - StartRegister]);
-    }
-
-    return D3D_OK;
+    
+    return IWineD3DDeviceImpl_SetPixelShaderConstant(iface, 
+            This->updateStateBlock->pixelShaderConstantF, 
+            pConstantData, 
+            WINESHADERCNST_FLOAT, 
+            StartRegister, 
+            Vector4fCount, 
+            4 * sizeof(*pConstantData));
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(IWineD3DDevice *iface, UINT StartRegister, float        *pConstantData, UINT Vector4fCount) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, count;
 
-    /* verify that the requested shader constant was populated with a integer */
-    for (i = StartRegister; i < Vector4fCount; ++i) {
-        if (WINESHADERCNST_FLOAT != This->updateStateBlock->pixelShaderConstantT[i]) {
-
-            /* the constant for this register isn't a float */
-            WARN("(%p) : Caller requested a integer where stateblock (%p) entry is a %s. Returning D3DERR_INVALIDCALL\n", This, This->updateStateBlock,
-                WINESHADERCNST_BOOL == This->updateStateBlock->vertexShaderConstantT[i] ? "boolean" : "integer");
-            return D3DERR_INVALIDCALL;
-        }
-    }
-
-    GET_SHADER_CONSTANT(pixelShaderConstantF, Vector4fCount, 4);
-
-    return D3D_OK;
+    return IWineD3DDeviceImpl_GetPixelShaderConstant(iface, 
+            pConstantData, 
+            This->updateStateBlock->pixelShaderConstantF, 
+            WINESHADERCNST_FLOAT, 
+            StartRegister, 
+            Vector4fCount, 
+            4 * sizeof(*pConstantData));
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantN(IWineD3DDevice *iface, UINT StartRegister, UINT VectorNCount){
-   IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-   int i;
-
-   /* populate the bitmap that says which constant type we should load */
-   for (i = StartRegister; i < StartRegister + VectorNCount; ++i) {
-        This->updateStateBlock->changed.pixelShaderConstants[i] = TRUE;
-        This->updateStateBlock->set.pixelShaderConstants[i]     = TRUE;
-        This->updateStateBlock->pixelShaderConstantT[i]         = WINESHADERCNST_NONE;
-        TRACE("(%p) : Setting vsf %d\n", This, i);
-   }
-
-   return D3D_OK;
+    return IWineD3DDeviceImpl_SetPixelShaderConstant(iface, 
+            NULL, 
+            NULL, 
+            WINESHADERCNST_NONE, 
+            StartRegister, 
+            VectorNCount, 
+            0);
 }
-
-#undef SET_SHADER_CONSTANT
-#undef GET_SHADER_CONSTANT
 
 HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IWineD3DVertexBuffer* pDestBuffer, IWineD3DVertexBuffer* pVertexDecl, DWORD Flags) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -6456,6 +6443,8 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetPaletteEntries,
     IWineD3DDeviceImpl_SetPixelShader,
     IWineD3DDeviceImpl_GetPixelShader,
+    IWineD3DDeviceImpl_SetPixelShaderConstant,
+    IWineD3DDeviceImpl_GetPixelShaderConstant,
     IWineD3DDeviceImpl_SetPixelShaderConstantB,
     IWineD3DDeviceImpl_GetPixelShaderConstantB,
     IWineD3DDeviceImpl_SetPixelShaderConstantI,
@@ -6487,6 +6476,8 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetVertexDeclaration,
     IWineD3DDeviceImpl_SetVertexShader,
     IWineD3DDeviceImpl_GetVertexShader,
+    IWineD3DDeviceImpl_SetVertexShaderConstant,
+    IWineD3DDeviceImpl_GetVertexShaderConstant,
     IWineD3DDeviceImpl_SetVertexShaderConstantB,
     IWineD3DDeviceImpl_GetVertexShaderConstantB,
     IWineD3DDeviceImpl_SetVertexShaderConstantI,

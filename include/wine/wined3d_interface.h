@@ -326,6 +326,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(GetPaletteEntries)(THIS_ UINT PaletteNumber,PALETTEENTRY* pEntries) PURE;
     STDMETHOD(SetPixelShader)(THIS_ struct IWineD3DPixelShader  *pShader) PURE;
     STDMETHOD(GetPixelShader)(THIS_ struct IWineD3DPixelShader **ppShader) PURE;
+    STDMETHOD(SetPixelShaderConstant)(THIS_ void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT countsize);
+    STDMETHOD(GetPixelShaderConstant)(THIS_ void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT countsize);
     STDMETHOD(SetPixelShaderConstantB)(THIS_ UINT StartRegister, CONST BOOL* pConstantData, UINT  BoolCount) PURE;
     STDMETHOD(GetPixelShaderConstantB)(THIS_ UINT StartRegister, BOOL* pConstantData, UINT BoolCount) PURE;
     STDMETHOD(SetPixelShaderConstantI)(THIS_ UINT StartRegister, CONST int* pConstantData, UINT Vector4iCount) PURE;
@@ -357,6 +359,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(GetVertexDeclaration)(THIS_ struct IWineD3DVertexDeclaration** ppDecl) PURE;
     STDMETHOD(SetVertexShader)(THIS_ struct IWineD3DVertexShader* pShader) PURE;
     STDMETHOD(GetVertexShader)(THIS_ struct IWineD3DVertexShader** ppShader) PURE;
+    STDMETHOD(SetVertexShaderConstant)(THIS_ void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT countsize);
+    STDMETHOD(GetVertexShaderConstant)(THIS_ void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT countsize);
     STDMETHOD(SetVertexShaderConstantB)(THIS_ UINT StartRegister, CONST BOOL*  pConstantData, UINT BoolCount) PURE;
     STDMETHOD(GetVertexShaderConstantB)(THIS_ UINT StartRegister, BOOL*        pConstantData, UINT BoolCount) PURE;
     STDMETHOD(SetVertexShaderConstantI)(THIS_ UINT StartRegister, CONST int*   pConstantData, UINT Vector4iCount) PURE;
@@ -456,6 +460,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_GetPaletteEntries(p,a,b)                 (p)->lpVtbl->GetPaletteEntries(p,a,b)
 #define IWineD3DDevice_SetPixelShader(p,a)                      (p)->lpVtbl->SetPixelShader(p,a)
 #define IWineD3DDevice_GetPixelShader(p,a)                      (p)->lpVtbl->GetPixelShader(p,a)
+#define IWineD3DDevice_SetPixelShaderConstant(p,a,b,c,d,e,f);   (p)->lpVtbl->SetPixelShaderConstant(p,a,b,c,d,e,f)
+#define IWineD3DDevice_GetPixelShaderConstant(p,a,b,c,d,e,f);   (p)->lpVtbl->GetPixelShaderConstant(p,a,b,c,d,e,f)
 #define IWineD3DDevice_SetPixelShaderConstantB(p,a,b,c)         (p)->lpVtbl->SetPixelShaderConstantB(p,a,b,c)
 #define IWineD3DDevice_GetPixelShaderConstantB(p,a,b,c)         (p)->lpVtbl->GetPixelShaderConstantB(p,a,b,c)
 #define IWineD3DDevice_SetPixelShaderConstantI(p,a,b,c)         (p)->lpVtbl->SetPixelShaderConstantI(p,a,b,c)
@@ -489,6 +495,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_GetVertexDeclaration(p,a)                (p)->lpVtbl->GetVertexDeclaration(p,a)
 #define IWineD3DDevice_SetVertexShader(p,a)                     (p)->lpVtbl->SetVertexShader(p,a)
 #define IWineD3DDevice_GetVertexShader(p,a)                     (p)->lpVtbl->GetVertexShader(p,a)
+#define IWineD3DDevice_SetVertexShaderConstant(p,a,b,c,d,e,f);  (p)->lpVtbl->SetVertexShaderConstant(p,a,b,c,d,e,f)
+#define IWineD3DDevice_GetVertexShaderConstant(p,a,b,c,d,e,f);  (p)->lpVtbl->GetVertexShaderConstant(p,a,b,c,d,e,f)
 #define IWineD3DDevice_SetVertexShaderConstantB(p,a,b,c)        (p)->lpVtbl->SetVertexShaderConstantB(p,a,b,c)
 #define IWineD3DDevice_GetVertexShaderConstantB(p,a,b,c)        (p)->lpVtbl->GetVertexShaderConstantB(p,a,b,c)
 #define IWineD3DDevice_SetVertexShaderConstantI(p,a,b,c)        (p)->lpVtbl->SetVertexShaderConstantI(p,a,b,c)
