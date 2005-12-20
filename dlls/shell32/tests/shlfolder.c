@@ -905,9 +905,18 @@ void test_FolderShortcut(void) {
     BOOL result;
     CLSID clsid;
     LPITEMIDLIST pidlCurrentFolder, pidlWineTestFolder, pidlSubFolder;
+    HKEY hShellExtKey;
     WCHAR wszWineTestFolder[] = {
         ':',':','{','9','B','3','5','2','E','B','F','-','2','7','6','5','-','4','5','C','1','-',
         'B','4','C','6','-','8','5','C','C','7','F','7','A','B','C','6','4','}',0 };
+    WCHAR wszShellExtKey[] = { 'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'E','x','p','l','o','r','e','r','\\','D','e','s','k','t','o','p','\\',
+        'N','a','m','e','S','p','a','c','e','\\',
+        '{','9','b','3','5','2','e','b','f','-','2','7','6','5','-','4','5','c','1','-',
+        'b','4','c','6','-','8','5','c','c','7','f','7','a','b','c','6','4','}',0 };
+    
     WCHAR wszSomeSubFolder[] = { 'S','u','b','F','o','l','d','e','r', 0};
     static const GUID CLSID_UnixDosFolder = 
         {0x9d20aae8, 0x0625, 0x44b0, {0x9c, 0xa7, 0x71, 0x88, 0x9c, 0x22, 0x54, 0xd9}};
@@ -973,8 +982,13 @@ void test_FolderShortcut(void) {
     ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08lx\n", hr);
     if (FAILED(hr)) return;
 
+    /* Temporarily register WineTestFolder as a shell namespace extension at the Desktop. 
+     * Otherwise ParseDisplayName fails on WinXP with E_INVALIDARG */
+    RegCreateKeyW(HKEY_CURRENT_USER, wszShellExtKey, &hShellExtKey);
+    RegCloseKey(hShellExtKey);
     hr = IShellFolder_ParseDisplayName(pDesktopFolder, NULL, NULL, wszWineTestFolder, NULL,
                                        &pidlWineTestFolder, NULL);
+    RegDeleteKeyW(HKEY_CURRENT_USER, wszShellExtKey);
     IShellFolder_Release(pDesktopFolder);
     ok (SUCCEEDED(hr), "IShellFolder::ParseDisplayName failed! hr = %08lx\n", hr);
     if (FAILED(hr)) return;
