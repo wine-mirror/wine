@@ -185,7 +185,7 @@ void wait_suspend( CONTEXT *context )
  *
  * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
  */
-static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
+static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
 {
     int ret;
     HANDLE handle = 0;
@@ -269,6 +269,7 @@ void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
     EXCEPTION_REGISTRATION_RECORD *frame, *dispatch, *nested_frame;
     EXCEPTION_RECORD newrec;
     DWORD res, c;
+    NTSTATUS status;
 
     TRACE( "code=%lx flags=%lx addr=%p\n", rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
     for (c=0; c<rec->NumberParameters; c++) TRACE(" info[%ld]=%08lx\n", c, rec->ExceptionInformation[c]);
@@ -295,7 +296,8 @@ void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
     }
 #endif
 
-    if (send_debug_event( rec, TRUE, context ) == DBG_CONTINUE) return;  /* continue execution */
+    status = send_debug_event( rec, TRUE, context );
+    if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED) return;  /* continue execution */
 
     if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION) return;
 
