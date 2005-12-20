@@ -24,6 +24,7 @@
 #include "winerror.h"
 #include "psapi.h"
 #include "wine/debug.h"
+#include "wdbgexts.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
@@ -370,4 +371,21 @@ LPAPI_VERSION WINAPI ImagehlpApiVersionEx(LPAPI_VERSION AppVersion)
     AppVersion->Reserved = api_version.Reserved;
 
     return AppVersion;
+}
+
+/******************************************************************
+ *		ExtensionApiVersion (DBGHELP.@)
+ */
+LPEXT_API_VERSION WINAPI ExtensionApiVersion(void)
+{
+    static EXT_API_VERSION      eav = {5, 5, 5, 0};
+    return &eav;
+}
+
+/******************************************************************
+ *		WinDbgExtensionDllInit (DBGHELP.@)
+ */
+void WINAPI WinDbgExtensionDllInit(PWINDBG_EXTENSION_APIS lpExtensionApis,
+                                   unsigned short major, unsigned short minor)
+{
 }

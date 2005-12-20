@@ -3,7 +3,7 @@
 @ stdcall EnumDirTree(long str str ptr ptr ptr)
 @ stub EnumerateLoadedModules64
 @ stdcall EnumerateLoadedModules(long ptr ptr)
-@ stub ExtensionApiVersion
+@ stdcall ExtensionApiVersion()
 @ stdcall FindDebugInfoFile(str str ptr)
 @ stdcall FindDebugInfoFileEx(str str ptr ptr ptr)
 @ stdcall FindExecutableImage(str str str)
@@ -98,12 +98,14 @@
 @ stdcall SymUnloadModule(long long)
 @ stdcall UnDecorateSymbolName(str str long long)
 @ stdcall UnmapDebugInformation(ptr)
-@ stub WinDbgExtensionDllInit
-@ stub dbghelp
+@ stdcall WinDbgExtensionDllInit(ptr long long)
+#@ stub dbghelp
 #@ stub dh
+#@ stub fptr
 #@ stub lm
 #@ stub lmi
 #@ stub omap
 #@ stub srcfiles
 #@ stub sym
+#@ stub symsvr
 #@ stub vc7fpo
