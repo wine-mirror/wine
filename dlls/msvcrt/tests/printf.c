@@ -66,6 +66,11 @@ static void test_sprintf( void )
     ok(!strcmp(buffer,"0001"),"Character not zero-prefixed \"%s\"\n",buffer);
     ok( r==4, "return count wrong\n");
 
+    format = "%-04c";
+    r = sprintf(buffer,format,'1');
+    ok(!strcmp(buffer,"1   "),"Character zero-padded and/or not left-adjusted \"%s\"\n",buffer);
+    ok( r==4, "return count wrong\n");
+
     format = "%p";
     r = sprintf(buffer,format,(void *)57);
     ok(!strcmp(buffer,"00000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);

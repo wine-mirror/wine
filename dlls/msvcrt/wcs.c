@@ -286,12 +286,11 @@ static inline int pf_fill( pf_output *out, int len, pf_flags *flags, char left )
     int i, r = 0;
 
     if( ( !left &&  flags->LeftAlign ) || 
-        (  left && !flags->LeftAlign ) ||
-        (  left &&  flags->PadZero   ) )
+        (  left && !flags->LeftAlign ))
     {
         for( i=0; (i<(flags->FieldLength-len)) && (r>=0); i++ )
         {
-            if( flags->PadZero )
+            if( left && flags->PadZero )
                 r = pf_output_stringA( out, "0", 1 );
             else
                 r = pf_output_stringA( out, " ", 1 );
