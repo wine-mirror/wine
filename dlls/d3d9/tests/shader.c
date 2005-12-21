@@ -151,8 +151,11 @@ START_TEST(shader)
     {
         test_get_set_vertex_shader(device_ptr);
     }
+    else trace("No vertex shader support, skipping test\n");
+
     if (caps.PixelShaderVersion & 0xffff)
     {
         test_get_set_pixel_shader(device_ptr);
     }
+    else trace("No pixel shader support, skipping test\n");
 }
