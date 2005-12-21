@@ -54,9 +54,6 @@ static inline int IsLeapYear(int Year)
 #define TICKSPERMSEC      10000
 #define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
 
-/* native uses a single static buffer for localtime/gmtime/mktime */
-static struct MSVCRT_tm tm;
-
 /**********************************************************************
  *		mktime (MSVCRT.@)
  */
@@ -65,7 +62,7 @@ MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
     MSVCRT_time_t secs;
     FILETIME lft, uft;
     ULONGLONG time;
-    struct MSVCRT_tm ts;
+    struct MSVCRT_tm ts, *ptm;
     int cleaps, day;
 
     ts=*t;
@@ -125,7 +122,7 @@ MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
     secs = time - SECS_1601_TO_1970;
     /* compute tm_wday, tm_yday and renormalize the other fields of the
      * tm structure */
-    if( MSVCRT_localtime( &secs)) *t = tm;
+    if ((ptm = MSVCRT_localtime( &secs ))) *t = *ptm;
 
     return secs; 
 }
@@ -135,8 +132,8 @@ MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
  */
 struct MSVCRT_tm* MSVCRT_localtime(const MSVCRT_time_t* secs)
 {
+  thread_data_t * const data = msvcrt_get_thread_data();
   int i;
-
   FILETIME ft, lft;
   SYSTEMTIME st;
   DWORD tzid;
@@ -152,34 +149,37 @@ struct MSVCRT_tm* MSVCRT_localtime(const MSVCRT_time_t* secs)
 
   if (st.wYear < 1970) return NULL;
 
-  tm.tm_sec  = st.wSecond;
-  tm.tm_min  = st.wMinute;
-  tm.tm_hour = st.wHour;
-  tm.tm_mday = st.wDay;
-  tm.tm_year = st.wYear - 1900;
-  tm.tm_mon  = st.wMonth  - 1;
-  tm.tm_wday = st.wDayOfWeek;
+  data->time_buffer.tm_sec  = st.wSecond;
+  data->time_buffer.tm_min  = st.wMinute;
+  data->time_buffer.tm_hour = st.wHour;
+  data->time_buffer.tm_mday = st.wDay;
+  data->time_buffer.tm_year = st.wYear - 1900;
+  data->time_buffer.tm_mon  = st.wMonth  - 1;
+  data->time_buffer.tm_wday = st.wDayOfWeek;
 
-  for (i = tm.tm_yday = 0; i < st.wMonth - 1; i++) {
-    tm.tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
+  for (i = data->time_buffer.tm_yday = 0; i < st.wMonth - 1; i++) {
+    data->time_buffer.tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
   }
 
-  tm.tm_yday += st.wDay - 1;
+  data->time_buffer.tm_yday += st.wDay - 1;
  
   tzid = GetTimeZoneInformation(&tzinfo);
 
   if (tzid == TIME_ZONE_ID_INVALID)
-    tm.tm_isdst = -1;
+    data->time_buffer.tm_isdst = -1;
   else 
-    tm.tm_isdst = (tzid == TIME_ZONE_ID_DAYLIGHT?1:0);
+    data->time_buffer.tm_isdst = (tzid == TIME_ZONE_ID_DAYLIGHT?1:0);
 
-  return &tm;
+  return &data->time_buffer;
 }
 
+/*********************************************************************
+ *      gmtime (MSVCRT.@)
+ */
 struct MSVCRT_tm* MSVCRT_gmtime(const MSVCRT_time_t* secs)
 {
+  thread_data_t * const data = msvcrt_get_thread_data();
   int i;
-
   FILETIME ft;
   SYSTEMTIME st;
 
@@ -192,21 +192,21 @@ struct MSVCRT_tm* MSVCRT_gmtime(const MSVCRT_time_t* secs)
 
   if (st.wYear < 1970) return NULL;
 
-  tm.tm_sec  = st.wSecond;
-  tm.tm_min  = st.wMinute;
-  tm.tm_hour = st.wHour;
-  tm.tm_mday = st.wDay;
-  tm.tm_year = st.wYear - 1900;
-  tm.tm_mon  = st.wMonth - 1;
-  tm.tm_wday = st.wDayOfWeek;
-  for (i = tm.tm_yday = 0; i < st.wMonth - 1; i++) {
-    tm.tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
+  data->time_buffer.tm_sec  = st.wSecond;
+  data->time_buffer.tm_min  = st.wMinute;
+  data->time_buffer.tm_hour = st.wHour;
+  data->time_buffer.tm_mday = st.wDay;
+  data->time_buffer.tm_year = st.wYear - 1900;
+  data->time_buffer.tm_mon  = st.wMonth - 1;
+  data->time_buffer.tm_wday = st.wDayOfWeek;
+  for (i = data->time_buffer.tm_yday = 0; i < st.wMonth - 1; i++) {
+    data->time_buffer.tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
   }
 
-  tm.tm_yday += st.wDay - 1;
-  tm.tm_isdst = 0;
+  data->time_buffer.tm_yday += st.wDay - 1;
+  data->time_buffer.tm_isdst = 0;
 
-  return &tm;
+  return &data->time_buffer;
 }
 
 /**********************************************************************

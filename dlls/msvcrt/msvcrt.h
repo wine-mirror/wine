@@ -74,6 +74,18 @@ typedef void (*MSVCRT__beginthread_start_routine_t)(void *);
 typedef unsigned int (__stdcall *MSVCRT__beginthreadex_start_routine_t)(void *);
 typedef int (*MSVCRT__onexit_t)(void);
 
+struct MSVCRT_tm {
+    int tm_sec;
+    int tm_min;
+    int tm_hour;
+    int tm_mday;
+    int tm_mon;
+    int tm_year;
+    int tm_wday;
+    int tm_yday;
+    int tm_isdst;
+};
+
 
 /* TLS data */
 extern DWORD msvcrt_tls_index;
@@ -84,6 +96,7 @@ struct __thread_data {
     unsigned char                  *mbstok_next;        /* next ptr for mbstok() */
     char                           *efcvt_buffer;       /* buffer for ecvt/fcvt */
     MSVCRT_wchar_t                 *wasctime_buffer;    /* buffer for asctime */
+    struct MSVCRT_tm                time_buffer;        /* buffer for localtime/gmtime */
     int                             fpecode;
     MSVCRT_terminate_function       terminate_handler;
     MSVCRT_unexpected_function      unexpected_handler;
@@ -172,18 +185,6 @@ extern unsigned msvcrt_create_io_inherit_block(STARTUPINFOA*);
 #define _RT_TLOSS       122
 #define _RT_CRNL        252
 #define _RT_BANNER      255
-
-struct MSVCRT_tm {
-    int tm_sec;
-    int tm_min;
-    int tm_hour;
-    int tm_mday;
-    int tm_mon;
-    int tm_year;
-    int tm_wday;
-    int tm_yday;
-    int tm_isdst;
-};
 
 struct MSVCRT__timeb {
     MSVCRT_time_t  time;
