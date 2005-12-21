@@ -438,7 +438,10 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
         while (*p)
         {
             if( *p == '+' || *p == ' ' )
-                flags.Sign = '+';
+            {
+                if ( flags.Sign != '+' )
+                    flags.Sign = *p;
+            }
             else if( *p == '-' )
                 flags.LeftAlign = *p;
             else if( *p == '0' )
