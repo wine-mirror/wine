@@ -142,7 +142,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
             context->Fpcr = regs.regs[EF_SIZE/8+31];
             context->SoftFpcr = 0; /* FIXME */
         }
-        if (ptrace( PTRACE_SETREGS, pid, 0, &regs ) == -1) goto error;
+        context->ContextFlags |= flags & CONTEXT_FULL;
     }
     return;
  error:
@@ -231,6 +231,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
             regs.regs[EF_SIZE/8+30] = context->FltF30;
             regs.regs[EF_SIZE/8+31] = context->Fpcr;
         }
+        if (ptrace( PTRACE_SETREGS, pid, 0, &regs ) == -1) goto error;
     }
     return;
  error:
@@ -238,7 +239,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
 }
 
 /* copy a context structure according to the flags */
-static void copy_context( CONTEXT *to, const CONTEXT *from, int flags )
+static void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
 {
     if (flags & CONTEXT_CONTROL)
     {
@@ -317,6 +318,7 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, int flags )
         to->Fpcr = from->Fpcr;
         to->SoftFpcr = from->SoftFpcr;
     }
+    to->ContextFlags |= flags;
 }
 
 /* retrieve the current instruction pointer of a thread */
@@ -346,60 +348,36 @@ int tkill( int pid, int sig )
     return -1;
 }
 
-/* retrieve the current context of a thread */
-DECL_HANDLER(get_thread_context)
+/* retrieve the thread context */
+void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
-    struct thread *thread;
-    void *data;
-    int flags = req->flags & ~CONTEXT_ALPHA;  /* get rid of CPU id */
+    context->ContextFlags |= CONTEXT_ALPHA;
+    flags &= ~CONTEXT_ALPHA;  /* get rid of CPU id */
 
-    if (get_reply_max_size() < sizeof(CONTEXT))
+    if (thread->context)  /* thread is inside an exception event or suspended */
     {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
+        copy_context( context, thread->context, flags );
     }
-    if (!(thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT ))) return;
-
-    if ((data = set_reply_data_size( sizeof(CONTEXT) )))
+    else if (flags && suspend_for_ptrace( thread ))
     {
-        if (thread->context)  /* thread is inside an exception event */
-        {
-            copy_context( data, thread->context, flags );
-            flags = 0;
-        }
-        if (flags && suspend_for_ptrace( thread ))
-        {
-            get_thread_context( thread, flags, data );
-            resume_after_ptrace( thread );
-        }
+        get_thread_context_ptrace( thread, flags, context );
+        resume_after_ptrace( thread );
     }
-    release_object( thread );
 }
 
-/* set the current context of a thread */
-DECL_HANDLER(set_thread_context)
+/* set the thread context */
+void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
 {
-    struct thread *thread;
-    int flags = req->flags & ~CONTEXT_ALPHA;  /* get rid of CPU id */
+    flags &= ~CONTEXT_ALPHA;  /* get rid of CPU id */
 
-    if (get_req_data_size() < sizeof(CONTEXT))
+    if (thread->context)  /* thread is inside an exception event or suspended */
     {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
+        copy_context( thread->context, context, flags );
     }
-    if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
+    else if (flags && suspend_for_ptrace( thread ))
     {
-        if (thread->context)  /* thread is inside an exception event */
-        {
-            copy_context( thread->context, get_req_data(), flags );
-            flags = 0;
-        }
-        if (flags && suspend_for_ptrace( thread ))
-        {
-            set_thread_context( thread, flags, get_req_data() );
-            resume_after_ptrace( thread );
-        }
-        release_object( thread );
+        set_thread_context_ptrace( thread, flags, context );
+        resume_after_ptrace( thread );
     }
 }
 

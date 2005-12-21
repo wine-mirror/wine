@@ -106,6 +106,7 @@ static void get_thread_context_ptrace( struct thread *thread, unsigned int flags
             context->SegFs = regs.fs;
             context->SegGs = regs.gs;
         }
+        context->ContextFlags |= flags & CONTEXT_FULL;
     }
     if (flags & CONTEXT_DEBUG_REGISTERS)
     {
@@ -115,12 +116,14 @@ static void get_thread_context_ptrace( struct thread *thread, unsigned int flags
         if (get_debug_reg( pid, 3, &context->Dr3 ) == -1) goto error;
         if (get_debug_reg( pid, 6, &context->Dr6 ) == -1) goto error;
         if (get_debug_reg( pid, 7, &context->Dr7 ) == -1) goto error;
+        context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
     }
     if (flags & CONTEXT_FLOATING_POINT)
     {
         /* we can use context->FloatSave directly as it is using the */
         /* correct structure (the same as fsave/frstor) */
         if (ptrace( PTRACE_GETFPREGS, pid, 0, &context->u.FltSave ) == -1) goto error;
+        context->ContextFlags |= CONTEXT_FLOATING_POINT;
     }
     return;
  error:
@@ -200,7 +203,7 @@ static void set_thread_context_ptrace( struct thread *thread, unsigned int flags
 
 
 /* copy a context structure according to the flags */
-static void copy_context( CONTEXT *to, const CONTEXT *from, int flags )
+static void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
 {
     if (flags & CONTEXT_CONTROL)
     {
@@ -242,6 +245,7 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, int flags )
     }
     /* we don't bother copying the debug registers, since they */
     /* always need to be accessed by ptrace anyway */
+    to->ContextFlags |= flags & ~CONTEXT_DEBUG_REGISTERS;
 }
 
 /* retrieve the current instruction pointer of a thread */
@@ -285,6 +289,7 @@ int tkill( int pid, int sig )
 /* retrieve the thread context */
 void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
+    context->ContextFlags |= CONTEXT_AMD64;
     flags &= ~CONTEXT_AMD64;  /* get rid of CPU id */
 
     if (thread->context)  /* thread is inside an exception event or suspended */

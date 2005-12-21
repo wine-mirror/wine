@@ -82,6 +82,7 @@ static void get_thread_context_ptrace( struct thread *thread, unsigned int flags
             context->wim = 0;  /* FIXME */
             context->tbr = 0;  /* FIXME */
         }
+        context |= flags & (CONTEXT_CONTROL|CONTEXT_INTEGER);
     }
     if (flags & CONTEXT_FLOATING_POINT)
     {
@@ -105,7 +106,7 @@ static void set_thread_context_ptrace( struct thread *thread, unsigned int flags
 
 
 /* copy a context structure according to the flags */
-static void copy_context( CONTEXT *to, const CONTEXT *from, int flags )
+static void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
 {
     if (flags & CONTEXT_CONTROL)
     {
@@ -155,6 +156,7 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, int flags )
     {
         /* FIXME */
     }
+    context |= flags & (CONTEXT_CONTROL|CONTEXT_INTEGER);
 }
 
 /* retrieve the current instruction pointer of a thread */
@@ -187,6 +189,7 @@ int tkill( int pid, int sig )
 /* retrieve the thread context */
 void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
+    context->ContextFlags |= CONTEXT_SPARC;
     flags &= ~CONTEXT_SPARC;  /* get rid of CPU id */
 
     if (thread->context)  /* thread is inside an exception event or suspended */
