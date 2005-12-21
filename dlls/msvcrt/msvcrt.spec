@@ -487,7 +487,7 @@
 @ cdecl _vsnprintf(ptr long ptr ptr) MSVCRT_vsnprintf
 @ cdecl _vsnwprintf(ptr long wstr long) MSVCRT_vsnwprintf
 @ cdecl _waccess(wstr long)
-@ stub _wasctime #(ptr) MSVCRT__wasctime
+@ cdecl _wasctime(ptr) MSVCRT__wasctime
 @ cdecl _wchdir(wstr)
 @ cdecl _wchmod(wstr long)
 @ extern _wcmdln MSVCRT__wcmdln
@@ -503,7 +503,7 @@
 @ cdecl _wcsrev(wstr)
 @ cdecl _wcsset(wstr long)
 @ cdecl _wcsupr(wstr) ntdll._wcsupr
-@ stub _wctime #(ptr)
+@ cdecl _wctime(ptr) MSVCRT__wctime
 @ extern _wenviron
 @ stub _wexecl #(wstr wstr) varargs
 @ stub _wexecle #(wstr wstr) varargs

@@ -83,6 +83,7 @@ struct __thread_data {
     unsigned long                   thread_doserrno;
     unsigned char                  *mbstok_next;        /* next ptr for mbstok() */
     char                           *efcvt_buffer;       /* buffer for ecvt/fcvt */
+    MSVCRT_wchar_t                 *wasctime_buffer;    /* buffer for asctime */
     int                             fpecode;
     MSVCRT_terminate_function       terminate_handler;
     MSVCRT_unexpected_function      unexpected_handler;

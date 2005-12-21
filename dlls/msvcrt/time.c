@@ -410,3 +410,35 @@ void MSVCRT__tzset(void)
     lstrcpynA(tzname_dst, tzname[1], sizeof(tzname_dst));
     tzname_dst[sizeof(tzname_dst) - 1] = '\0';
 }
+
+/*********************************************************************
+ *		_wctime (MSVCRT.@)
+ */
+MSVCRT_wchar_t *MSVCRT__wasctime(const struct MSVCRT_tm *mstm) {
+    thread_data_t *data = msvcrt_get_thread_data();
+    struct tm xtm;
+
+    memset(&xtm,0,sizeof(xtm));
+    xtm.tm_sec = mstm->tm_sec;
+    xtm.tm_min = mstm->tm_min;
+    xtm.tm_hour = mstm->tm_hour;
+    xtm.tm_mday = mstm->tm_mday;
+    xtm.tm_mon = mstm->tm_mon;
+    xtm.tm_year = mstm->tm_year;
+    xtm.tm_wday = mstm->tm_wday;
+    xtm.tm_yday = mstm->tm_yday;
+    xtm.tm_isdst = mstm->tm_isdst;
+
+    if (!data->wasctime_buffer)
+        data->wasctime_buffer = MSVCRT_malloc( 30*sizeof(MSVCRT_wchar_t) ); /* ought to be enough */
+    MultiByteToWideChar( CP_UNIXCP, 0, asctime(&xtm), -1, data->wasctime_buffer, 30 );
+    return data->wasctime_buffer;
+}
+
+/*********************************************************************
+ *		_wctime (MSVCRT.@)
+ */
+MSVCRT_wchar_t *MSVCRT__wctime(MSVCRT_time_t *time)
+{
+    return MSVCRT__wasctime( MSVCRT_localtime(time) );
+}
