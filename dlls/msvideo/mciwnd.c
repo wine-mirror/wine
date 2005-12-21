@@ -429,6 +429,21 @@ static LRESULT mci_get_devcaps(MCIWndInfo *mwi, UINT cap)
     return mci_devcaps.dwReturn;
 }
 
+static LRESULT MCIWND_KeyDown(MCIWndInfo *mwi, UINT key)
+{
+    TRACE("%p, key %04x\n", mwi->hWnd, key);
+
+    switch(key)
+    {
+    case VK_ESCAPE:
+        SendMessageW(mwi->hWnd, MCI_STOP, 0, 0);
+        return 0;
+
+    default:
+        return 0;
+    }
+}
+
 static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
     MCIWndInfo *mwi;
@@ -476,6 +491,9 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
 
     case WM_COMMAND:
         return MCIWND_Command(mwi, wParam, lParam);
+
+    case WM_KEYDOWN:
+        return MCIWND_KeyDown(mwi, wParam);
 
     case WM_NCACTIVATE:
         if (mwi->uTimer)
