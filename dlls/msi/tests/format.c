@@ -109,7 +109,7 @@ static void test_formatrecord(void)
     char buffer[100];
     MSIHANDLE hrec;
     UINT r;
-    DWORD sz=100;
+    DWORD sz;
 
     r = MsiFormatRecord(0, 0, NULL, NULL );
     ok( r == ERROR_INVALID_HANDLE, "wrong error\n");
@@ -122,6 +122,11 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     buffer[0] = 'x';
     buffer[1] = 0;
+    sz=0;
+    r = MsiFormatRecord(0, hrec, buffer+1, &sz);
+    ok( r == ERROR_MORE_DATA && buffer[0] == 'x', "format failed measuring with buffer\n");
+    ok( sz == 16, "size wrong\n");
+    sz=100;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed with empty buffer\n");
     ok( sz == 16, "size wrong\n");
