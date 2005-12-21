@@ -2127,17 +2127,19 @@ void WINAPI ExitProcess( DWORD status )
 
 
 /***********************************************************************
- * GetExitCodeProcess [KERNEL32.@]
+ * GetExitCodeProcess           [KERNEL32.@]
  *
- * Gets termination status of specified process
+ * Gets termination status of specified process.
+ *
+ * PARAMS
+ *   hProcess   [in]  Handle to the process.
+ *   lpExitCode [out] Address to receive termination status.
  *
  * RETURNS
  *   Success: TRUE
  *   Failure: FALSE
  */
-BOOL WINAPI GetExitCodeProcess(
-    HANDLE hProcess,    /* [in] handle to the process */
-    LPDWORD lpExitCode) /* [out] address to receive termination status */
+BOOL WINAPI GetExitCodeProcess( HANDLE hProcess, LPDWORD lpExitCode )
 {
     NTSTATUS status;
     PROCESS_BASIC_INFORMATION pbi;
@@ -2166,12 +2168,12 @@ UINT WINAPI SetErrorMode( UINT mode )
 
 
 /**********************************************************************
- * TlsAlloc [KERNEL32.@]  Allocates a TLS index.
+ * TlsAlloc             [KERNEL32.@]
  *
- * Allocates a thread local storage index
+ * Allocates a thread local storage index.
  *
  * RETURNS
- *    Success: TLS Index
+ *    Success: TLS index.
  *    Failure: 0xFFFFFFFF
  */
 DWORD WINAPI TlsAlloc( void )
@@ -2209,16 +2211,18 @@ DWORD WINAPI TlsAlloc( void )
 
 
 /**********************************************************************
- * TlsFree [KERNEL32.@]  Releases a TLS index.
+ * TlsFree              [KERNEL32.@]
  *
- * Releases a thread local storage index, making it available for reuse
+ * Releases a thread local storage index, making it available for reuse.
+ *
+ * PARAMS
+ *    index [in] TLS index to free.
  *
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI TlsFree(
-    DWORD index) /* [in] TLS Index to free */
+BOOL WINAPI TlsFree( DWORD index )
 {
     BOOL ret;
 
@@ -2241,14 +2245,18 @@ BOOL WINAPI TlsFree(
 
 
 /**********************************************************************
- * TlsGetValue [KERNEL32.@]  Gets value in a thread's TLS slot
+ * TlsGetValue          [KERNEL32.@]
+ *
+ * Gets value in a thread's TLS slot.
+ *
+ * PARAMS
+ *    index [in] TLS index to retrieve value for.
  *
  * RETURNS
- *    Success: Value stored in calling thread's TLS slot for index
- *    Failure: 0 and GetLastError() returns NO_ERROR
+ *    Success: Value stored in calling thread's TLS slot for index.
+ *    Failure: 0 and GetLastError() returns NO_ERROR.
  */
-LPVOID WINAPI TlsGetValue(
-    DWORD index) /* [in] TLS index to retrieve value for */
+LPVOID WINAPI TlsGetValue( DWORD index )
 {
     LPVOID ret;
 
@@ -2273,15 +2281,19 @@ LPVOID WINAPI TlsGetValue(
 
 
 /**********************************************************************
- * TlsSetValue [KERNEL32.@]  Stores a value in the thread's TLS slot.
+ * TlsSetValue          [KERNEL32.@]
+ *
+ * Stores a value in the thread's TLS slot.
+ *
+ * PARAMS
+ *    index [in] TLS index to set value for.
+ *    value [in] Value to be stored.
  *
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI TlsSetValue(
-    DWORD index,  /* [in] TLS index to set value for */
-    LPVOID value) /* [in] Value to be stored */
+BOOL WINAPI TlsSetValue( DWORD index, LPVOID value )
 {
     if (index < TLS_MINIMUM_AVAILABLE)
     {
