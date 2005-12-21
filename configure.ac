@@ -552,6 +552,14 @@ then
              LDAPLIBS="-lldap_r -llber"],,
              [$LIBPTHREAD])],,
              [$LIBPTHREAD])
+    ac_save_LIBS="$LIBS"
+    LIBS="$LIBS $LDAPLIBS $LIBPTHREAD"
+    AC_CHECK_FUNCS(\
+	ldap_count_references \
+	ldap_first_reference \
+	ldap_next_reference \
+	ldap_parse_reference)
+    LIBS="$ac_save_LIBS"
 fi
 
 dnl **** Check for FreeType 2 ****

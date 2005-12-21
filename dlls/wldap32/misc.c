@@ -115,7 +115,7 @@ ULONG WLDAP32_ldap_count_entries( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res )
 ULONG WLDAP32_ldap_count_references( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
-#ifdef HAVE_LDAP
+#ifdef HAVE_LDAP_COUNT_REFERENCES
 
     TRACE( "(%p, %p)\n", ld, res );
 
@@ -250,7 +250,7 @@ WLDAP32_LDAPMessage *WLDAP32_ldap_first_entry( WLDAP32_LDAP *ld, WLDAP32_LDAPMes
 
 WLDAP32_LDAPMessage *WLDAP32_ldap_first_reference( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res )
 {
-#ifdef HAVE_LDAP
+#ifdef HAVE_LDAP_FIRST_REFERENCE
 
     TRACE( "(%p, %p)\n", ld, res );
 
@@ -367,7 +367,7 @@ WLDAP32_LDAPMessage *WLDAP32_ldap_next_entry( WLDAP32_LDAP *ld, WLDAP32_LDAPMess
 
 WLDAP32_LDAPMessage *WLDAP32_ldap_next_reference( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry )
 {
-#ifdef HAVE_LDAP
+#ifdef HAVE_LDAP_NEXT_REFERENCE
 
     TRACE( "(%p, %p)\n", ld, entry );
 

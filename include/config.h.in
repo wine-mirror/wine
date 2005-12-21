@@ -239,8 +239,20 @@
 /* Define if you have the OpenLDAP development environment */
 #undef HAVE_LDAP
 
+/* Define to 1 if you have the `ldap_count_references' function. */
+#undef HAVE_LDAP_COUNT_REFERENCES
+
+/* Define to 1 if you have the `ldap_first_reference' function. */
+#undef HAVE_LDAP_FIRST_REFERENCE
+
 /* Define to 1 if you have the <ldap.h> header file. */
 #undef HAVE_LDAP_H
+
+/* Define to 1 if you have the `ldap_next_reference' function. */
+#undef HAVE_LDAP_NEXT_REFERENCE
+
+/* Define to 1 if you have the `ldap_parse_reference' function. */
+#undef HAVE_LDAP_PARSE_REFERENCE
 
 /* Define if you have libaudioIO */
 #undef HAVE_LIBAUDIOIO
