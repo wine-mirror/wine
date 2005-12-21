@@ -516,6 +516,23 @@ start_over:
     free(tokens);
 }
 
+static void selectDriver(HWND hDlg, const char * driver)
+{
+    WCHAR text[1024];
+    WCHAR caption[64];
+
+    strcpy(curAudioDriver, driver);
+    set_reg_key(config_key, "Drivers", "Audio", curAudioDriver);
+
+    if (LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_MISSING, text, sizeof(text)/sizeof(text[0])))
+    {
+        if (LoadStringW(GetModuleHandle(NULL), IDS_WINECFG_TITLE, caption, sizeof(caption)/sizeof(caption[0])))
+            MessageBoxW(hDlg, text, caption, MB_OK | MB_ICONINFORMATION);
+    }
+   
+    SendMessage(GetParent(hDlg), PSM_CHANGED, (WPARAM) hDlg, 0); /* enable apply button */
+}
+
 static void initAudioDlg (HWND hDlg)
 {
     int i;
@@ -523,13 +540,53 @@ static void initAudioDlg (HWND hDlg)
 
     WINE_TRACE("\n");
 
-    /* make a local copy of the current registry setting */
-    strcpy(curAudioDriver, get_reg_key(config_key, "Drivers", "Audio", ""));
-
-    WINE_TRACE("curAudioDriver = %s\n", curAudioDriver);
-
     /* make a list of all drivers that can be loaded */
     findAudioDrivers();
+
+    /* get current registry setting if available */
+    buf = get_reg_key(config_key, "Drivers", "Audio", NULL);
+
+    /* check for first time install and set a default driver
+     * select in this order: oss, alsa, first available driver, none
+     */
+    if (buf == NULL)
+    {
+        const AUDIO_DRIVER *pAudioDrv = NULL;
+
+        /* select oss if available */
+        for (pAudioDrv = loadedAudioDrv; *pAudioDrv->szName; pAudioDrv++)
+        {
+            if (strcmp(pAudioDrv->szDriver, "oss") == 0)
+            {
+                selectDriver(hDlg, "oss");
+                break;
+            }
+        }
+
+        if (strlen(curAudioDriver) == 0)
+        {
+            /* select alsa if available */
+            for (pAudioDrv = loadedAudioDrv; *pAudioDrv->szName; pAudioDrv++)
+            {
+                if (strcmp(pAudioDrv->szDriver, "alsa") == 0)
+                {
+                    selectDriver(hDlg, "alsa");
+                    break;
+                }
+            }
+        }
+
+        if (strlen(curAudioDriver) == 0)
+        {
+            /* select first available driver */
+            if (*loadedAudioDrv->szDriver)
+                selectDriver(hDlg, loadedAudioDrv->szDriver);
+        }
+    }
+    else /* make a local copy of the current registry setting */
+        strcpy(curAudioDriver, buf);
+
+    WINE_TRACE("curAudioDriver = %s\n", curAudioDriver);
 
     /* check for drivers that can't be loaded */
     checkRegistrySetting(hDlg);

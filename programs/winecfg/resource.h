@@ -141,6 +141,7 @@
 #define IDR_WINECFG			1305
 #define IDB_CHECKBOX                    1306
 #define IDB_DEVICE                      1307
+#define IDS_AUDIO_MISSING               1308
 
 /* appearance tab */
 #define IDC_THEME_COLORCOMBO            1401
