@@ -160,6 +160,9 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 
     *ppObj = NULL;
 
+    if(!riid)
+        return DDERR_INVALIDPARAMS;
+
     if (IsEqualGUID(&IID_IUnknown, riid)
 	|| IsEqualGUID(&IID_IDirectDrawSurface7, riid)
 	|| IsEqualGUID(&IID_IDirectDrawSurface4, riid))

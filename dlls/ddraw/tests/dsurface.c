@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2005 Antoine Chavasse (a.chavasse@gmail.com)
  * Copyright (C) 2005 Christian Costa
+ * Copyright 2005 Ivan Leo Puoti
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -220,11 +221,38 @@ static void SrcColorKey32BlitTest(void)
     IDirectDrawSurface_Release(lpDst);
 }
 
+static void QueryInterface(void)
+{
+    LPDIRECTDRAWSURFACE dsurface;
+    DDSURFACEDESC surface;
+    LPVOID object;
+    HRESULT ret;
+
+    /* Create a surface */
+    ZeroMemory(&surface, sizeof(surface));
+    surface.dwSize = sizeof(surface);
+    surface.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
+    surface.dwHeight = 10;
+    surface.dwWidth = 10;
+    ret = IDirectDraw_CreateSurface(lpDD, &surface, &dsurface, NULL);
+    if(ret != DD_OK)
+    {
+        ok(FALSE, "IDirectDraw::CreateSurface failed with error %lx\n", ret);
+        return;
+    }
+
+    /* Call IUnkown::QueryInterface */
+    ret = IDirectDrawSurface_QueryInterface(dsurface, 0, &object);
+    ok(ret == DDERR_INVALIDPARAMS, "IDirectDrawSurface::QueryInterface returned %lx\n", ret);
+
+    IDirectDrawSurface_Release(dsurface);
+}
 
 START_TEST(dsurface)
 {
     CreateDirectDraw();
     MipMapCreationTest();
     SrcColorKey32BlitTest();
+    QueryInterface();
     ReleaseDirectDraw();
 }
