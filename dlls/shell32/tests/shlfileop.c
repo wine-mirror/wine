@@ -72,31 +72,31 @@ static void init_shfo_tests(void)
     if(len && (CURR_DIR[len-1] == '\\'))
         CURR_DIR[len-1] = 0;
 
-    createTestFile(".\\test1.txt");
-    createTestFile(".\\test2.txt");
-    createTestFile(".\\test3.txt");
-    CreateDirectoryA(".\\test4.txt", NULL);
-    CreateDirectoryA(".\\testdir2", NULL);
+    createTestFile("test1.txt");
+    createTestFile("test2.txt");
+    createTestFile("test3.txt");
+    CreateDirectoryA("test4.txt", NULL);
+    CreateDirectoryA("testdir2", NULL);
 }
 
 /* cleans after tests */
 static void clean_after_shfo_tests(void)
 {
-    DeleteFileA(".\\test1.txt");
-    DeleteFileA(".\\test2.txt");
-    DeleteFileA(".\\test3.txt");
-    DeleteFileA(".\\test4.txt\\test1.txt");
-    DeleteFileA(".\\test4.txt\\test2.txt");
-    DeleteFileA(".\\test4.txt\\test3.txt");
-    RemoveDirectoryA(".\\test4.txt");
-    DeleteFileA(".\\testdir2\\test1.txt");
-    DeleteFileA(".\\testdir2\\test2.txt");
-    DeleteFileA(".\\testdir2\\test3.txt");
-    DeleteFileA(".\\testdir2\\test4.txt\\test1.txt");
-    RemoveDirectoryA(".\\testdir2\\test4.txt");
-    RemoveDirectoryA(".\\testdir2");
-    DeleteFileA(".\\nonexistent\\test2.txt");
-    RemoveDirectoryA(".\\nonexistent");
+    DeleteFileA("test1.txt");
+    DeleteFileA("test2.txt");
+    DeleteFileA("test3.txt");
+    DeleteFileA("test4.txt\\test1.txt");
+    DeleteFileA("test4.txt\\test2.txt");
+    DeleteFileA("test4.txt\\test3.txt");
+    RemoveDirectoryA("test4.txt");
+    DeleteFileA("testdir2\\test1.txt");
+    DeleteFileA("testdir2\\test2.txt");
+    DeleteFileA("testdir2\\test3.txt");
+    DeleteFileA("testdir2\\test4.txt\\test1.txt");
+    RemoveDirectoryA("testdir2\\test4.txt");
+    RemoveDirectoryA("testdir2");
+    DeleteFileA("nonexistent\\test2.txt");
+    RemoveDirectoryA("nonexistent");
 }
 
 /*
@@ -140,17 +140,17 @@ static void test_delete(void)
     shfo.lpszProgressTitle = NULL;
 
     ok(!SHFileOperationA(&shfo), "Deletion was successful\n");
-    ok(file_exists(".\\test4.txt"), "Directory should not be removed\n");
-    ok(!file_exists(".\\test1.txt"), "File should be removed\n");
+    ok(file_exists("test4.txt"), "Directory should not be removed\n");
+    ok(!file_exists("test1.txt"), "File should be removed\n");
 
     ret = SHFileOperationA(&shfo);
     ok(!ret, "Directory exists, but is not removed, ret=%ld\n", ret);
-    ok(file_exists(".\\test4.txt"), "Directory should not be removed\n");
+    ok(file_exists("test4.txt"), "Directory should not be removed\n");
 
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
 
     ok(!SHFileOperationA(&shfo), "Directory removed\n");
-    ok(!file_exists(".\\test4.txt"), "Directory should be removed\n");
+    ok(!file_exists("test4.txt"), "Directory should be removed\n");
 
     ret = SHFileOperationA(&shfo);
     ok(!ret, "The requested file does not exist, ret=%ld\n", ret);
@@ -158,16 +158,19 @@ static void test_delete(void)
     init_shfo_tests();
     sprintf(buf, "%s\\%s", CURR_DIR, "test4.txt");
     buf[strlen(buf) + 1] = '\0';
-    ok(MoveFileA(".\\test1.txt", ".\\test4.txt\\test1.txt"), "Fill the subdirectory\n");
+    ok(MoveFileA("test1.txt", "test4.txt\\test1.txt"), "Fill the subdirectory\n");
     ok(!SHFileOperationA(&shfo), "Directory removed\n");
-    ok(!file_exists(".\\test4.txt"), "Directory is removed\n");
+    ok(!file_exists("test4.txt"), "Directory is removed\n");
 
     init_shfo_tests();
-    shfo.pFrom = ".\\test1.txt\0.\\test4.txt\0";
-    ok(!SHFileOperationA(&shfo), "Directory and a file removed\n");
-    ok(!file_exists(".\\test1.txt"), "The file should be removed\n");
-    ok(!file_exists(".\\test4.txt"), "Directory should be removed\n");
-    ok(file_exists(".\\test2.txt"), "This file should not be removed\n");
+    shfo.pFrom = "test1.txt\0test4.txt\0";
+    todo_wine
+    {
+        ok(!SHFileOperationA(&shfo), "Directory and a file removed\n");
+        ok(!file_exists("test1.txt"), "The file should be removed\n");
+        ok(!file_exists("test4.txt"), "Directory should be removed\n");
+    }
+    ok(file_exists("test2.txt"), "This file should not be removed\n");
 }
 
 /* tests the FO_RENAME action */
@@ -190,19 +193,19 @@ static void test_rename(void)
     set_curr_dir_path(to, "test4.txt\0");
     ok(SHFileOperationA(&shfo), "File is not renamed moving to other directory "
        "when specifying directory name only\n");
-    ok(file_exists(".\\test1.txt"), "The file is removed\n");
+    ok(file_exists("test1.txt"), "The file is removed\n");
 
     set_curr_dir_path(from, "test3.txt\0");
     set_curr_dir_path(to, "test4.txt\\test1.txt\0");
     ok(!SHFileOperationA(&shfo), "File is renamed moving to other directory\n");
-    ok(file_exists(".\\test4.txt\\test1.txt"), "The file is not renamed\n");
+    ok(file_exists("test4.txt\\test1.txt"), "The file is not renamed\n");
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     retval = SHFileOperationA(&shfo); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
     ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_INVALID_TARGET_HANDLE,
        "Can't rename many files, retval = %ld\n", retval);
-    ok(file_exists(".\\test1.txt"), "The file is renamed - many files are specified\n");
+    ok(file_exists("test1.txt"), "The file is renamed - many files are specified\n");
 
     memcpy(&shfo2, &shfo, sizeof(SHFILEOPSTRUCTA));
     shfo2.fFlags |= FOF_MULTIDESTFILES;
@@ -212,14 +215,14 @@ static void test_rename(void)
     retval = SHFileOperationA(&shfo2); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
     ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_INVALID_TARGET_HANDLE,
        "Can't rename many files, retval = %ld\n", retval);
-    ok(file_exists(".\\test1.txt"), "The file is not renamed - many files are specified\n");
+    ok(file_exists("test1.txt"), "The file is not renamed - many files are specified\n");
 
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
     retval = SHFileOperationA(&shfo);
     ok(!retval, "Rename file failed, retval = %ld\n", retval);
-    ok(!file_exists(".\\test1.txt"), "The file is not renamed\n");
-    ok(file_exists(".\\test6.txt"), "The file is not renamed\n");
+    ok(!file_exists("test1.txt"), "The file is not renamed\n");
+    ok(file_exists("test6.txt"), "The file is not renamed\n");
 
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test1.txt\0");
@@ -230,8 +233,8 @@ static void test_rename(void)
     set_curr_dir_path(to, "test6.txt\0");
     retval = SHFileOperationA(&shfo);
     ok(!retval, "Rename dir failed, retval = %ld\n", retval);
-    ok(!file_exists(".\\test4.txt"), "The dir is not renamed\n");
-    ok(file_exists(".\\test6.txt"), "The dir is not renamed\n");
+    ok(!file_exists("test4.txt"), "The dir is not renamed\n");
+    ok(file_exists("test6.txt"), "The dir is not renamed\n");
 
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
@@ -259,7 +262,7 @@ static void test_copy(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     ok(SHFileOperationA(&shfo), "Can't copy many files\n");
-    ok(!file_exists(".\\test6.txt"), "The file is not copied - many files are "
+    ok(!file_exists("test6.txt"), "The file is not copied - many files are "
        "specified as a target\n");
 
     memcpy(&shfo2, &shfo, sizeof(SHFILEOPSTRUCTA));
@@ -268,50 +271,50 @@ static void test_copy(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     ok(!SHFileOperationA(&shfo2), "Can't copy many files\n");
-    ok(file_exists(".\\test6.txt"), "The file is copied - many files are "
+    ok(file_exists("test6.txt"), "The file is copied - many files are "
        "specified as a target\n");
-    DeleteFileA(".\\test6.txt");
-    DeleteFileA(".\\test7.txt");
-    RemoveDirectoryA(".\\test8.txt");
+    DeleteFileA("test6.txt");
+    DeleteFileA("test7.txt");
+    RemoveDirectoryA("test8.txt");
 
     /* number of sources do not correspond to number of targets */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
     ok(SHFileOperationA(&shfo2), "Can't copy many files\n");
-    ok(!file_exists(".\\test6.txt"), "The file is not copied - many files are "
+    ok(!file_exists("test6.txt"), "The file is not copied - many files are "
        "specified as a target\n");
 
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
     ok(!SHFileOperationA(&shfo), "Prepare test to check how directories are copied recursively\n");
-    ok(file_exists(".\\test4.txt\\test1.txt"), "The file is copied\n");
+    ok(file_exists("test4.txt\\test1.txt"), "The file is copied\n");
 
     set_curr_dir_path(from, "test?.txt\0");
     set_curr_dir_path(to, "testdir2\0");
-    ok(!file_exists(".\\testdir2\\test1.txt"), "The file is not copied yet\n");
-    ok(!file_exists(".\\testdir2\\test4.txt"), "The directory is not copied yet\n");
+    ok(!file_exists("testdir2\\test1.txt"), "The file is not copied yet\n");
+    ok(!file_exists("testdir2\\test4.txt"), "The directory is not copied yet\n");
     ok(!SHFileOperationA(&shfo), "Files and directories are copied to directory\n");
-    ok(file_exists(".\\testdir2\\test1.txt"), "The file is copied\n");
-    ok(file_exists(".\\testdir2\\test4.txt"), "The directory is copied\n");
-    ok(file_exists(".\\testdir2\\test4.txt\\test1.txt"), "The file in subdirectory is copied\n");
+    ok(file_exists("testdir2\\test1.txt"), "The file is copied\n");
+    ok(file_exists("testdir2\\test4.txt"), "The directory is copied\n");
+    ok(file_exists("testdir2\\test4.txt\\test1.txt"), "The file in subdirectory is copied\n");
     clean_after_shfo_tests();
 
     init_shfo_tests();
     shfo.fFlags |= FOF_FILESONLY;
-    ok(!file_exists(".\\testdir2\\test1.txt"), "The file is not copied yet\n");
-    ok(!file_exists(".\\testdir2\\test4.txt"), "The directory is not copied yet\n");
+    ok(!file_exists("testdir2\\test1.txt"), "The file is not copied yet\n");
+    ok(!file_exists("testdir2\\test4.txt"), "The directory is not copied yet\n");
     ok(!SHFileOperationA(&shfo), "Files are copied to other directory\n");
-    ok(file_exists(".\\testdir2\\test1.txt"), "The file is copied\n");
-    ok(!file_exists(".\\testdir2\\test4.txt"), "The directory is copied\n");
+    ok(file_exists("testdir2\\test1.txt"), "The file is copied\n");
+    ok(!file_exists("testdir2\\test4.txt"), "The directory is copied\n");
     clean_after_shfo_tests();
 
     init_shfo_tests();
     set_curr_dir_path(from, "test1.txt\0test2.txt\0");
-    ok(!file_exists(".\\testdir2\\test1.txt"), "The file is not copied yet\n");
-    ok(!file_exists(".\\testdir2\\test2.txt"), "The file is not copied yet\n");
+    ok(!file_exists("testdir2\\test1.txt"), "The file is not copied yet\n");
+    ok(!file_exists("testdir2\\test2.txt"), "The file is not copied yet\n");
     ok(!SHFileOperationA(&shfo), "Files are copied to other directory\n");
-    ok(file_exists(".\\testdir2\\test1.txt"), "The file is copied\n");
-    ok(file_exists(".\\testdir2\\test2.txt"), "The file is copied\n");
+    ok(file_exists("testdir2\\test1.txt"), "The file is copied\n");
+    ok(file_exists("testdir2\\test2.txt"), "The file is copied\n");
     clean_after_shfo_tests();
 
     /* Copying multiple files with one not existing as source, fails the
@@ -319,19 +322,19 @@ static void test_copy(void)
     init_shfo_tests();
     tmp_flags = shfo.fFlags;
     set_curr_dir_path(from, "test1.txt\0test10.txt\0test2.txt\0");
-    ok(!file_exists(".\\testdir2\\test1.txt"), "The file is not copied yet\n");
-    ok(!file_exists(".\\testdir2\\test2.txt"), "The file is not copied yet\n");
+    ok(!file_exists("testdir2\\test1.txt"), "The file is not copied yet\n");
+    ok(!file_exists("testdir2\\test2.txt"), "The file is not copied yet\n");
     retval = SHFileOperationA(&shfo);
     if (!retval)
       /* Win 95/NT returns success but copies only the files up to the nonexistent source */
-      ok(file_exists(".\\testdir2\\test1.txt"), "The file is not copied\n");
+      ok(file_exists("testdir2\\test1.txt"), "The file is not copied\n");
     else
     {
       /* Win 98/ME/2K/XP fail the entire operation with return code 1026 if one source file does not exist */
       ok(retval == 1026, "Files are copied to other directory\n");
-      ok(!file_exists(".\\testdir2\\test1.txt"), "The file is copied\n");
+      ok(!file_exists("testdir2\\test1.txt"), "The file is copied\n");
     }
-    ok(!file_exists(".\\testdir2\\test2.txt"), "The file is copied\n");
+    ok(!file_exists("testdir2\\test2.txt"), "The file is copied\n");
     shfo.fFlags = tmp_flags;
 
     /* copy into a nonexistent directory */
@@ -344,7 +347,7 @@ static void test_copy(void)
     todo_wine
     {
         ok(!retval, "Error copying into nonexistent directory\n");
-        ok(file_exists(".\\nonexistent\\test2.txt"), "Directory not created\n");
+        ok(file_exists("nonexistent\\test2.txt"), "Directory not created\n");
     }
 }
 
@@ -366,16 +369,16 @@ static void test_move(void)
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
     ok(!SHFileOperationA(&shfo), "Prepare test to check how directories are moved recursively\n");
-    ok(file_exists(".\\test4.txt\\test1.txt"), "The file is moved\n");
+    ok(file_exists("test4.txt\\test1.txt"), "The file is moved\n");
 
     set_curr_dir_path(from, "test?.txt\0");
     set_curr_dir_path(to, "testdir2\0");
-    ok(!file_exists(".\\testdir2\\test2.txt"), "The file is not moved yet\n");
-    ok(!file_exists(".\\testdir2\\test4.txt"), "The directory is not moved yet\n");
+    ok(!file_exists("testdir2\\test2.txt"), "The file is not moved yet\n");
+    ok(!file_exists("testdir2\\test4.txt"), "The directory is not moved yet\n");
     ok(!SHFileOperationA(&shfo), "Files and directories are moved to directory\n");
-    ok(file_exists(".\\testdir2\\test2.txt"), "The file is moved\n");
-    ok(file_exists(".\\testdir2\\test4.txt"), "The directory is moved\n");
-    ok(file_exists(".\\testdir2\\test4.txt\\test1.txt"), "The file in subdirectory is moved\n");
+    ok(file_exists("testdir2\\test2.txt"), "The file is moved\n");
+    ok(file_exists("testdir2\\test4.txt"), "The directory is moved\n");
+    ok(file_exists("testdir2\\test4.txt\\test1.txt"), "The file in subdirectory is moved\n");
 
     clean_after_shfo_tests();
     init_shfo_tests();
@@ -386,11 +389,11 @@ static void test_move(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     ok(!SHFileOperationA(&shfo2), "Move many files\n");
-    ok(file_exists(".\\test6.txt"), "The file is moved - many files are "
+    ok(file_exists("test6.txt"), "The file is moved - many files are "
        "specified as a target\n");
-    DeleteFileA(".\\test6.txt");
-    DeleteFileA(".\\test7.txt");
-    RemoveDirectoryA(".\\test8.txt");
+    DeleteFileA("test6.txt");
+    DeleteFileA("test7.txt");
+    RemoveDirectoryA("test8.txt");
 
     init_shfo_tests();
 
@@ -398,7 +401,7 @@ static void test_move(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
     ok(SHFileOperationA(&shfo2), "Can't move many files\n");
-    ok(!file_exists(".\\test6.txt"), "The file is not moved - many files are "
+    ok(!file_exists("test6.txt"), "The file is not moved - many files are "
        "specified as a target\n");
 
     init_shfo_tests();
@@ -406,19 +409,19 @@ static void test_move(void)
     set_curr_dir_path(from, "test3.txt\0");
     set_curr_dir_path(to, "test4.txt\\test1.txt\0");
     ok(!SHFileOperationA(&shfo), "File is moved moving to other directory\n");
-    ok(file_exists(".\\test4.txt\\test1.txt"), "The file is moved\n");
+    ok(file_exists("test4.txt\\test1.txt"), "The file is moved\n");
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     ok(SHFileOperationA(&shfo), "Cannot move many files\n");
-    ok(file_exists(".\\test1.txt"), "The file is not moved. Many files are specified\n");
-    ok(file_exists(".\\test4.txt"), "The directory is not moved. Many files are specified\n");
+    ok(file_exists("test1.txt"), "The file is not moved. Many files are specified\n");
+    ok(file_exists("test4.txt"), "The directory is not moved. Many files are specified\n");
 
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
     ok(!SHFileOperationA(&shfo), "Move file\n");
-    ok(!file_exists(".\\test1.txt"), "The file is moved\n");
-    ok(file_exists(".\\test6.txt"), "The file is moved\n");
+    ok(!file_exists("test1.txt"), "The file is moved\n");
+    ok(file_exists("test6.txt"), "The file is moved\n");
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test1.txt\0");
     ok(!SHFileOperationA(&shfo), "Move file back\n");
@@ -426,8 +429,8 @@ static void test_move(void)
     set_curr_dir_path(from, "test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
     ok(!SHFileOperationA(&shfo), "Move dir\n");
-    ok(!file_exists(".\\test4.txt"), "The dir is moved\n");
-    ok(file_exists(".\\test6.txt"), "The dir is moved\n");
+    ok(!file_exists("test4.txt"), "The dir is moved\n");
+    ok(file_exists("test6.txt"), "The dir is moved\n");
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
     ok(!SHFileOperationA(&shfo), "Move dir back\n");
@@ -447,8 +450,8 @@ static void test_sh_create_dir(void)
     set_curr_dir_path(path, "testdir2\\test4.txt\0");
     ret = pSHCreateDirectoryExA(NULL, path, NULL);
     ok(ERROR_SUCCESS == ret, "SHCreateDirectoryEx failed to create directory recursively, ret = %d\n", ret);
-    ok(file_exists(".\\testdir2"), "The first directory is not created\n");
-    ok(file_exists(".\\testdir2\\test4.txt"), "The second directory is not created\n");
+    ok(file_exists("testdir2"), "The first directory is not created\n");
+    ok(file_exists("testdir2\\test4.txt"), "The second directory is not created\n");
 
     ret = pSHCreateDirectoryExA(NULL, path, NULL);
     ok(ERROR_ALREADY_EXISTS == ret, "SHCreateDirectoryEx should fail to create existing directory, ret = %d\n", ret);
