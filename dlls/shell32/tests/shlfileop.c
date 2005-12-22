@@ -738,6 +738,7 @@ static void test_move(void)
     SHFILEOPSTRUCTA shfo, shfo2;
     CHAR from[MAX_PATH];
     CHAR to[MAX_PATH];
+    DWORD retval;
 
     shfo.hwnd = NULL;
     shfo.wFunc = FO_MOVE;
@@ -750,7 +751,8 @@ static void test_move(void)
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
     ok(!SHFileOperationA(&shfo), "Prepare test to check how directories are moved recursively\n");
-    ok(file_exists("test4.txt\\test1.txt"), "The file is moved\n");
+    ok(!file_exists("test1.txt"), "test1.txt should not exist\n");
+    ok(file_exists("test4.txt\\test1.txt"), "The file is not moved\n");
 
     set_curr_dir_path(from, "test?.txt\0");
     set_curr_dir_path(to, "testdir2\0");
@@ -815,6 +817,83 @@ static void test_move(void)
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
     ok(!SHFileOperationA(&shfo), "Move dir back\n");
+
+    /* move one file to two others */
+    init_shfo_tests();
+    shfo.pFrom = "test1.txt\0";
+    shfo.pTo = "a.txt\0b.txt\0";
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(!file_exists("test1.txt"), "Expected test1.txt to not exist\n");
+        ok(DeleteFile("a.txt"), "Expected a.txt to exist\n");
+    }
+    ok(!file_exists("b.txt"), "Expected b.txt to not exist\n");
+
+    /* move two files to one other */
+    shfo.pFrom = "test2.txt\0test3.txt\0";
+    shfo.pTo = "test1.txt\0";
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(!file_exists("test1.txt"), "Expected test1.txt to not exist\n");
+    }
+    ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
+    ok(file_exists("test3.txt"), "Expected test3.txt to exist\n");
+
+    /* move a directory into itself */
+    shfo.pFrom = "test4.txt\0";
+    shfo.pTo = "test4.txt\\b.txt\0";
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    }
+    ok(!RemoveDirectory("test4.txt\\b.txt"), "Expected test4.txt\\b.txt to not exist\n");
+    ok(file_exists("test4.txt"), "Expected test4.txt to exist\n");
+
+    /* move many files without FOF_MULTIDESTFILES */
+    shfo.pFrom = "test2.txt\0test3.txt\0";
+    shfo.pTo = "d.txt\0e.txt\0";
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(!DeleteFile("d.txt"), "Expected d.txt to not exist\n");
+    ok(!DeleteFile("e.txt"), "Expected e.txt to not exist\n");
+
+    /* number of sources != number of targets */
+    shfo.pTo = "d.txt\0";
+    shfo.fFlags |= FOF_MULTIDESTFILES;
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(!DeleteFile("d.txt"), "Expected d.txt to not exist\n");
+
+    /* FO_MOVE does not create dest directories */
+    shfo.pFrom = "test2.txt\0";
+    shfo.pTo = "dir1\\dir2\\test2.txt\0";
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(!file_exists("dir1"), "Expected dir1 to exist\n");
+
+    /* try to overwrite an existing file */
+    shfo.pTo = "test3.txt\0";
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(!file_exists("test2.txt"), "Expected test2.txt to not exist\n");
+    }
+    ok(file_exists("test3.txt"), "Expected test3.txt to exist\n");
 }
 
 static void test_sh_create_dir(void)
