@@ -24,7 +24,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#define _WIN32_WINNT 0x0500 /* For WM_CHANGEUISTATE */
+#define _WIN32_WINNT 0x0501 /* For WM_CHANGEUISTATE,QS_RAWINPUT */
 
 #include "windef.h"
 #include "winbase.h"
@@ -6680,6 +6680,288 @@ static void test_edit_messages(void)
 
 /**************************** End of Edit test ******************************/
 
+static const struct message WmChar[] = {
+    { WM_CHAR, sent|wparam, 'z' },
+    { 0 }
+};
+
+static const struct message WmKeyDownUp[] = {
+    { WM_KEYDOWN, sent|wparam|lparam, 'N', 0x00000001 },
+    { WM_KEYUP, sent|wparam|lparam, 'N', 0xc0000001 },
+    { 0 }
+};
+
+static const struct message WmUserChar[] = {
+    { WM_USER, sent },
+    { WM_CHAR, sent|wparam, 'z' },
+    { 0 }
+};
+
+#define EV_START_STOP 0
+#define EV_SENDMSG 1
+#define EV_ACK 2
+
+struct thread_info_2
+{
+    HWND  hwnd;
+    HANDLE hevent[3]; /* 0 - start/stop, 1 - SendMessage, 2 - ack */
+};
+
+static DWORD CALLBACK send_msg_thread_2(void *param)
+{
+    DWORD ret;
+    struct thread_info_2 *info = param;
+
+    trace("thread: waiting for start\n");
+    WaitForSingleObject(info->hevent[EV_START_STOP], INFINITE);
+    trace("thread: looping\n");
+
+    while (1)
+    {
+        ret = WaitForMultipleObjects(2, info->hevent, FALSE, INFINITE);
+
+        switch (ret)
+        {
+        case WAIT_OBJECT_0 + EV_START_STOP:
+            trace("thread: exiting\n");
+            return 0;
+
+        case WAIT_OBJECT_0 + EV_SENDMSG:
+            trace("thread: sending message\n");
+            SendNotifyMessageA(info->hwnd, WM_USER, 0, 0);
+            SetEvent(info->hevent[EV_ACK]);
+            break;
+
+        default:
+            trace("unexpected return: %04lx\n", ret);
+            assert(0);
+            break;
+        }
+    }
+    return 0;
+}
+
+static void test_PeekMessage(void)
+{
+    MSG msg;
+    HANDLE hthread;
+    DWORD tid, qstatus;
+    UINT qs_all_input = QS_ALLINPUT;
+    UINT qs_input = QS_INPUT;
+    struct thread_info_2 info;
+
+    info.hwnd = CreateWindowA("TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                              100, 100, 200, 200, 0, 0, 0, NULL);
+    ShowWindow(info.hwnd, SW_SHOW);
+    UpdateWindow(info.hwnd);
+
+    info.hevent[EV_START_STOP] = CreateEventA(NULL, 0, 0, NULL);
+    info.hevent[EV_SENDMSG] = CreateEventA(NULL, 0, 0, NULL);
+    info.hevent[EV_ACK] = CreateEventA(NULL, 0, 0, NULL);
+
+    hthread = CreateThread(NULL, 0, send_msg_thread_2, &info, 0, &tid);
+
+    trace("signalling to start looping\n");
+    SetEvent(info.hevent[EV_START_STOP]);
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    flush_sequence();
+
+    SetLastError(0xdeadbeef);
+    qstatus = GetQueueStatus(qs_all_input);
+    if (GetLastError() == ERROR_INVALID_FLAGS)
+    {
+        trace("QS_RAWINPUT not supported on this platform\n");
+        qs_all_input &= ~QS_RAWINPUT;
+        qs_input &= ~QS_RAWINPUT;
+    }
+todo_wine {
+    ok(qstatus == 0, "wrong qstatus %08lx\n", qstatus);
+}
+
+    trace("signalling to send message\n");
+    SetEvent(info.hevent[EV_SENDMSG]);
+    WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
+
+    /* pass invalid QS_xxxx flags */
+    SetLastError(0xdeadbeef);
+    qstatus = GetQueueStatus(0xffffffff);
+    ok(qstatus == 0, "GetQueueStatus should fail: %08lx\n", qstatus);
+    ok(GetLastError() == ERROR_INVALID_FLAGS, "wrong error %ld\n", GetLastError());
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(WmUser, "WmUser", TRUE); /* todo_wine */
+
+    qstatus = GetQueueStatus(qs_all_input);
+    ok(qstatus == 0, "wrong qstatus %08lx\n", qstatus);
+
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
+    qstatus = GetQueueStatus(qs_all_input);
+    ok(qstatus == MAKELONG(QS_KEY, QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+
+    PostMessageA(info.hwnd, WM_CHAR, 'z', 0);
+    qstatus = GetQueueStatus(qs_all_input);
+    ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+
+    InvalidateRect(info.hwnd, NULL, FALSE);
+    qstatus = GetQueueStatus(qs_all_input);
+    ok(qstatus == MAKELONG(QS_PAINT, QS_PAINT|QS_POSTMESSAGE|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+
+    trace("signalling to send message\n");
+    SetEvent(info.hevent[EV_SENDMSG]);
+    WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
+
+    qstatus = GetQueueStatus(qs_all_input);
+    ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_PAINT|QS_POSTMESSAGE|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (qs_input << 16))) DispatchMessageA(&msg);
+    ok_sequence(WmUser, "WmUser", TRUE); /* todo_wine */
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(0, QS_PAINT|QS_POSTMESSAGE|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    trace("signalling to send message\n");
+    SetEvent(info.hevent[EV_SENDMSG]);
+    WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_PAINT|QS_POSTMESSAGE|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+}
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_POSTMESSAGE)) DispatchMessageA(&msg);
+    ok_sequence(WmUser, "WmUser", FALSE);
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(0, QS_PAINT|QS_POSTMESSAGE|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_POSTMESSAGE)) DispatchMessageA(&msg);
+    ok_sequence(WmChar, "WmChar", TRUE); /* todo_wine */
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(0, QS_PAINT|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_PAINT)) DispatchMessageA(&msg);
+    ok_sequence(WmPaint, "WmPaint", TRUE); /* todo_wine */
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(0, QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    trace("signalling to send message\n");
+    SetEvent(info.hevent[EV_SENDMSG]);
+    WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    PostMessageA(info.hwnd, WM_CHAR, 'z', 0);
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_SENDMESSAGE|QS_POSTMESSAGE|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    while (PeekMessageA(&msg, 0, WM_CHAR, WM_CHAR, PM_REMOVE)) DispatchMessage(&msg);
+    ok_sequence(WmUserChar, "WmUserChar", FALSE);
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(0, QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    PostMessageA(info.hwnd, WM_CHAR, 'z', 0);
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    trace("signalling to send message\n");
+    SetEvent(info.hevent[EV_SENDMSG]);
+    WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_POSTMESSAGE|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (QS_KEY << 16))) DispatchMessage(&msg);
+    ok_sequence(WmUser, "WmUser", TRUE); /* todo_wine */
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(0, QS_POSTMESSAGE|QS_KEY),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (QS_RAWINPUT << 16))) DispatchMessage(&msg);
+    ok_sequence(WmKeyDownUp, "WmKeyDownUp", TRUE); /* todo_wine */
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(0, QS_POSTMESSAGE),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE)) DispatchMessage(&msg);
+    ok_sequence(WmEmptySeq, "WmEmptySeq", FALSE);
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(0, QS_POSTMESSAGE),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(WmChar, "WmChar", TRUE); /* todo_wine */
+
+    qstatus = GetQueueStatus(qs_all_input);
+    ok(qstatus == 0,
+       "wrong qstatus %08lx\n", qstatus);
+
+    trace("signalling to exit\n");
+    SetEvent(info.hevent[EV_START_STOP]);
+
+    WaitForSingleObject(hthread, INFINITE);
+
+    CloseHandle(hthread);
+    CloseHandle(info.hevent[0]);
+    CloseHandle(info.hevent[1]);
+    CloseHandle(info.hevent[2]);
+
+    DestroyWindow(info.hwnd);
+}
+
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -6723,6 +7005,7 @@ START_TEST(msg)
     hEvent_hook = 0;
 #endif
 
+    test_PeekMessage();
     test_scrollwindowex();
     test_messages();
     test_mdi_messages();
