@@ -44,74 +44,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mciavi);
 
 static DWORD MCIAVI_mciStop(UINT, DWORD, LPMCI_GENERIC_PARMS);
 
-/* ===================================================================
- * ===================================================================
- * FIXME: should be using the new mmThreadXXXX functions from WINMM
- * instead of those
- * it would require to add a wine internal flag to mmThreadCreate
- * in order to pass a 32 bit function instead of a 16 bit one
- * ===================================================================
- * =================================================================== */
-
-struct SCA {
-    MCIDEVICEID wDevID;
-    UINT        wMsg;
-    DWORD_PTR   dwParam1;
-    DWORD_PTR   dwParam2;
-};
-
-/**************************************************************************
- * 				MCI_SCAStarter			[internal]
- */
-static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
-{
-    struct SCA*	sca = (struct SCA*)arg;
-    DWORD	ret;
-
-    TRACE("In thread before async command (%08x,%04x,%08lx,%08lx)\n",
-	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
-    ret = mciSendCommandA(sca->wDevID, sca->wMsg, sca->dwParam1 | MCI_WAIT, sca->dwParam2);
-    TRACE("In thread after async command (%08x,%04x,%08lx,%08lx)\n",
-	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
-    HeapFree(GetProcessHeap(), 0, sca);
-    return ret;
-}
-
-/**************************************************************************
- * 				MCI_SendCommandAsync		[internal]
- */
-static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
-                                  DWORD_PTR dwParam2, UINT size)
-{
-    HANDLE handle;
-    struct SCA*	sca = HeapAlloc(GetProcessHeap(), 0, sizeof(struct SCA) + size);
-
-    if (sca == 0)
-	return MCIERR_OUT_OF_MEMORY;
-
-    sca->wDevID   = wDevID;
-    sca->wMsg     = wMsg;
-    sca->dwParam1 = dwParam1;
-
-    if (size && dwParam2) {
-       sca->dwParam2 = (DWORD_PTR)sca + sizeof(struct SCA);
-	/* copy structure passed by program in dwParam2 to be sure
-	 * we can still use it whatever the program does
-	 */
-	memcpy((LPVOID)sca->dwParam2, (LPVOID)dwParam2, size);
-    } else {
-	sca->dwParam2 = dwParam2;
-    }
-
-    if ((handle = CreateThread(NULL, 0, MCI_SCAStarter, sca, 0, NULL)) == 0) {
-	WARN("Couldn't allocate thread for async command handling, sending synchronously\n");
-	return MCI_SCAStarter(&sca);
-    }
-    SetThreadPriority(handle, THREAD_PRIORITY_TIME_CRITICAL);
-    CloseHandle(handle);
-    return 0;
-}
-
 /*======================================================================*
  *                  	    MCI AVI implemantation			*
  *======================================================================*/
@@ -152,6 +84,7 @@ static	DWORD	MCIAVI_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 	return 0;
 
     InitializeCriticalSection(&wma->cs);
+    wma->ack_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     wma->hStopEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wma->wDevID = modp->wDeviceID;
     wma->wCommandTable = mciLoadCommandResource(MCIAVI_hInstance, mciAviWStr, 0);
@@ -184,6 +117,7 @@ static	DWORD	MCIAVI_drvClose(DWORD dwDevID)
 	mciSetDriverData(dwDevID, 0);
 	mciFreeCommandResource(wma->wCommandTable);
 
+        CloseHandle(wma->ack_event);
         CloseHandle(wma->hStopEvent);
 
         LeaveCriticalSection(&wma->cs);
@@ -393,6 +327,61 @@ DWORD MCIAVI_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
     return dwRet;
 }
 
+static DWORD MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms);
+
+struct MCIAVI_play_data
+{
+    MCIDEVICEID wDevID;
+    DWORD flags;
+    MCI_PLAY_PARMS params;
+};
+
+/*
+ * MCIAVI_mciPlay_thread
+ *
+ * FIXME: probably should use a common worker thread created at the driver
+ * load time and queue all async commands to it.
+ */
+static DWORD WINAPI MCIAVI_mciPlay_thread(LPVOID arg)
+{
+    struct MCIAVI_play_data *data = (struct MCIAVI_play_data *)arg;
+    DWORD ret;
+
+    TRACE("In thread before async play command (id %08x, flags %08lx)\n", data->wDevID, data->flags);
+    ret = MCIAVI_mciPlay(data->wDevID, data->flags | MCI_WAIT, &data->params);
+    TRACE("In thread after async play command (id %08x, flags %08lx)\n", data->wDevID, data->flags);
+
+    HeapFree(GetProcessHeap(), 0, data);
+    return ret;
+}
+
+/*
+ * MCIAVI_mciPlay_async
+ */
+static DWORD MCIAVI_mciPlay_async(WINE_MCIAVI *wma, DWORD dwFlags, LPMCI_PLAY_PARMS lpParams)
+{
+    HANDLE handle, ack_event = wma->ack_event;
+    struct MCIAVI_play_data *data = HeapAlloc(GetProcessHeap(), 0, sizeof(struct MCIAVI_play_data));
+
+    if (!data) return MCIERR_OUT_OF_MEMORY;
+
+    data->wDevID = wma->wDevID;
+    data->flags = dwFlags;
+    memcpy(&data->params, lpParams, sizeof(MCI_PLAY_PARMS));
+
+    if (!(handle = CreateThread(NULL, 0, MCIAVI_mciPlay_thread, data, 0, NULL)))
+    {
+        WARN("Couldn't create thread for async play, playing synchronously\n");
+        return MCIAVI_mciPlay_thread(data);
+    }
+    SetThreadPriority(handle, THREAD_PRIORITY_TIME_CRITICAL);
+    CloseHandle(handle);
+    /* wait until the thread starts up, so the app could see a changed status */
+    WaitForSingleObject(ack_event, INFINITE);
+    TRACE("Async play has started\n");
+    return 0;
+}
+
 /***************************************************************************
  * 				MCIAVI_mciPlay			[internal]
  */
@@ -429,10 +418,8 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 
     LeaveCriticalSection(&wma->cs);
 
-    if (!(dwFlags & MCI_WAIT)) {
-       return MCI_SendCommandAsync(wDevID, MCI_PLAY, dwFlags,
-                                   (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
-    }
+    if (!(dwFlags & MCI_WAIT))
+        return MCIAVI_mciPlay_async(wma, dwFlags, lpParms);
 
     if (!(GetWindowLongW(wma->hWndPaint, GWL_STYLE) & WS_VISIBLE))
         ShowWindow(wma->hWndPaint, SW_SHOWNA);
@@ -460,16 +447,20 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     if (wma->dwStatus == MCI_MODE_PLAY)
     {
         LeaveCriticalSection(&wma->cs);
+        SetEvent(wma->ack_event);
         return 0;
     }
 
     if (wma->dwToVideoFrame <= wma->dwCurrVideoFrame)
     {
         dwRet = 0;
+        SetEvent(wma->ack_event);
         goto mci_play_done;
     }
 
     wma->dwStatus = MCI_MODE_PLAY;
+    /* signal the state change */
+    SetEvent(wma->ack_event);
 
     if (dwFlags & (MCI_DGV_PLAY_REPEAT|MCI_DGV_PLAY_REVERSE|MCI_MCIAVI_PLAY_WINDOW|MCI_MCIAVI_PLAY_FULLSCREEN))
 	FIXME("Unsupported flag %08lx\n", dwFlags);
@@ -492,6 +483,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     while (wma->dwStatus == MCI_MODE_PLAY)
     {
         HDC hDC;
+        DWORD ret;
 
 	tc = GetTickCount();
 
@@ -504,7 +496,6 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 
 	if (wma->lpWaveFormat) {
             HANDLE events[2];
-            DWORD ret;
 
             events[0] = wma->hStopEvent;
             events[1] = wma->hEvent;
@@ -522,15 +513,15 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 
 	delta = GetTickCount() - tc;
 	if (delta < frameTime)
-        {
-            DWORD ret;
+            delta = frameTime - delta;
+        else
+            delta = 0;
 
-            LeaveCriticalSection(&wma->cs);
-            ret = MsgWaitForMultipleObjectsEx(1, &wma->hStopEvent, frameTime - delta,
-                                              QS_ALLINPUT, MWMO_INPUTAVAILABLE);
-            EnterCriticalSection(&wma->cs);
-            if (ret == WAIT_OBJECT_0) break;
-        }
+        LeaveCriticalSection(&wma->cs);
+        ret = MsgWaitForMultipleObjectsEx(1, &wma->hStopEvent, delta,
+                                          QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+        EnterCriticalSection(&wma->cs);
+        if (ret == WAIT_OBJECT_0) break;
 
        if (wma->dwCurrVideoFrame < dwToFrame)
            wma->dwCurrVideoFrame++;
@@ -617,6 +608,8 @@ static	DWORD	MCIAVI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
     EnterCriticalSection(&wma->cs);
+
+    TRACE("current status %04lx\n", wma->dwStatus);
 
     switch (wma->dwStatus) {
     case MCI_MODE_PLAY:
