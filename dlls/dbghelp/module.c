@@ -33,10 +33,27 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
-static void module_fill_module(const char* in, char* out, unsigned size)
+static const char* ext[] = {".acm", ".dll", ".drv", ".exe", ".ocx", ".vxd", NULL};
+
+static int match_ext(const char* ptr, size_t len)
 {
-    const char          *ptr,*endptr;
-    unsigned            len;
+    const char**e;
+    size_t      l;
+
+    for (e = ext; *e; e++)
+    {
+        l = strlen(*e);
+        if (l >= len) return FALSE;
+        if (strncasecmp(&ptr[len - l], *e, l)) continue;
+        return l;
+    }
+    return 0;
+}
+        
+static void module_fill_module(const char* in, char* out, size_t size)
+{
+    const char  *ptr,*endptr;
+    size_t      len, l;
 
     endptr = in + strlen(in);
     for (ptr = endptr - 1;
@@ -46,24 +63,17 @@ static void module_fill_module(const char* in, char* out, unsigned size)
     len = min(endptr-ptr,size-1);
     memcpy(out, ptr, len);
     out[len] = '\0';
-    if (len > 4 && 
-        (!strcasecmp(&out[len - 4], ".dll") || !strcasecmp(&out[len - 4], ".exe")))
-        out[len - 4] = '\0';
-    else if (((len > 12 && out[len - 13] == '/') || len == 12) && 
+    if (len > 4 && (l = match_ext(out, len)))
+        out[len - l] = '\0';
+    else if (len > 12 &&
              (!strcasecmp(out + len - 12, "wine-pthread") || 
               !strcasecmp(out + len - 12, "wine-kthread")))
-        lstrcpynA(out, "<wine-loader>",size);
+        lstrcpynA(out, "<wine-loader>", size);
     else
     {
-        if (len > 7 && 
-            (!strcasecmp(&out[len - 7], ".dll.so") || !strcasecmp(&out[len - 7], ".exe.so")))
-            strcpy(&out[len - 7], "<elf>");
-        else if (len > 7 &&
-                 out[len - 7] == '.' && !strcasecmp(&out[len - 3], ".so"))
-        {
-            if (len + 3 < size) strcpy(&out[len - 3], "<elf>");
-            else WARN("Buffer too short: %s\n", out);
-        }
+        if (len > 3 && !strcasecmp(&out[len - 3], ".so") &&
+            (l = match_ext(out, len - 3)))
+            strcpy(&out[len - l - 3], "<elf>");
     }
     while ((*out = tolower(*out))) out++;
 }
