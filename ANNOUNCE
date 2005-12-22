@@ -1,21 +1,21 @@
-This is release 0.9.3 of Wine, a free implementation of Windows on Unix.
+This is release 0.9.4 of Wine, a free implementation of Windows on Unix.
 
 What's new in this release:
-  - Many marshalling fixes in rpcrt4.
-  - Various OLE improvements and fixes.
-  - Better audio driver management in winecfg.
-  - Many wininet fixes.
-  - Several Web browser improvements.
-  - More dbghelp APIs implemented.
-  - Directory objects in wineserver.
+  - Improvements to the IDL compiler.
+  - Some infrastructure work for loadable driver support.
+  - The usual assortment of Direct3D improvements.
+  - IME support in the edit control.
+  - Better support for AVI animations.
+  - Debugging support improvements.
+  - Relay traces now work on NX platforms.
   - Lots of bug fixes.
 
 Because of lags created by using mirrors, this message may reach you
 before the release is available at the public sites. The sources will
 be available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-0.9.3.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-0.9.3.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-0.9.4.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-0.9.4.tar.bz2
 
 Binary packages for various distributions will be available from:
 
