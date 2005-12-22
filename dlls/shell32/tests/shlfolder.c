@@ -1059,6 +1059,155 @@ void test_FolderShortcut(void) {
     IPersistFolder3_Release(pPersistFolder3);
 }
 
+#include "pshpack1.h"
+struct FileStructA {
+    BYTE  type;
+    BYTE  dummy;
+    DWORD dwFileSize;
+    WORD  uFileDate;    /* In our current implementation this is */
+    WORD  uFileTime;    /* FileTimeToDosDate(WIN32_FIND_DATA->ftLastWriteTime) */
+    WORD  uFileAttribs;
+    CHAR  szName[1];
+};
+
+struct FileStructW {
+    WORD  cbLen;        /* Length of this element. */
+    BYTE  abFooBar1[6]; /* Beyond any recognition. */
+    WORD  uDate;        /* FileTimeToDosDate(WIN32_FIND_DATA->ftCreationTime)? */
+    WORD  uTime;        /* (this is currently speculation) */
+    WORD  uDate2;       /* FileTimeToDosDate(WIN32_FIND_DATA->ftLastAccessTime)? */
+    WORD  uTime2;       /* (this is currently speculation) */
+    BYTE  abFooBar2[4]; /* Beyond any recognition. */
+    WCHAR wszName[1];   /* The long filename in unicode. */
+    /* Just for documentation: Right after the unicode string: */
+    WORD  cbOffset;     /* FileStructW's offset from the beginning of the SHITMEID. 
+                         * SHITEMID->cb == uOffset + cbLen */
+};
+#include "poppack.h"
+
+void test_ITEMIDLIST_format(void) {
+    WCHAR wszPersonal[MAX_PATH];
+    LPSHELLFOLDER psfDesktop, psfPersonal;
+    LPITEMIDLIST pidlPersonal, pidlFile;
+    HANDLE hFile;
+    HRESULT hr;
+    BOOL bResult;
+    WCHAR wszFile[3][17] = { { 'e','v','e','n','_',0 }, { 'o','d','d','_',0 }, 
+        { 'l','o','n','g','e','r','_','t','h','a','n','.','8','_','3',0 } };
+    int i;
+    
+    if(!pSHGetSpecialFolderPathW) return;
+
+    bResult = pSHGetSpecialFolderPathW(NULL, wszPersonal, CSIDL_PERSONAL, FALSE);
+    ok(bResult, "SHGetSpecialFolderPathW failed! Last error: %08lx\n", GetLastError());
+    if (!bResult) return;
+
+    bResult = SetCurrentDirectoryW(wszPersonal);
+    ok(bResult, "SetCurrentDirectory failed! Last error: %ld\n", GetLastError());
+    if (!bResult) return;
+
+    hr = SHGetDesktopFolder(&psfDesktop);
+    ok(SUCCEEDED(hr), "SHGetDesktopFolder failed! hr: %08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszPersonal, NULL, &pidlPersonal, NULL);
+    ok(SUCCEEDED(hr), "psfDesktop->ParseDisplayName failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
+
+    hr = IShellFolder_BindToObject(psfDesktop, pidlPersonal, NULL, &IID_IShellFolder, 
+        (LPVOID*)&psfPersonal);
+    IShellFolder_Release(psfDesktop);
+    ILFree(pidlPersonal);
+    ok(SUCCEEDED(hr), "psfDesktop->BindToObject failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    for (i=0; i<3; i++) {
+        CHAR szFile[MAX_PATH];
+        struct FileStructA *pFileStructA;
+        WORD cbOffset;
+        
+        WideCharToMultiByte(CP_ACP, 0, wszFile[i], -1, szFile, MAX_PATH, NULL, NULL);
+        
+        hFile = CreateFileW(wszFile[i], GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_FLAG_WRITE_THROUGH, NULL);
+        ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed! (%ld)\n", GetLastError());
+        if (hFile == INVALID_HANDLE_VALUE) {
+            IShellFolder_Release(psfPersonal);
+            return;
+        }
+        CloseHandle(hFile);
+
+        hr = IShellFolder_ParseDisplayName(psfPersonal, NULL, NULL, wszFile[i], NULL, &pidlFile, NULL);
+        DeleteFileW(wszFile[i]);
+        ok(SUCCEEDED(hr), "psfPersonal->ParseDisplayName failed! hr: %08lx\n", hr);
+        if (FAILED(hr)) {
+            IShellFolder_Release(psfPersonal);
+            return;
+        }
+
+        pFileStructA = (struct FileStructA *)pidlFile->mkid.abID;
+        ok(pFileStructA->type == 0x32, "PIDLTYPE should be 0x32!\n");
+        ok(pFileStructA->dummy == 0x00, "Dummy Byte should be 0x00!\n");
+        ok(pFileStructA->dwFileSize == 0, "Filesize should be zero!\n"); 
+
+        if (i < 2) /* First two file names are already in valid 8.3 format */ 
+            ok(!strcmp(szFile, (CHAR*)&pidlFile->mkid.abID[12]), "Wrong file name!\n");
+        else 
+            /* WinXP stores a derived 8.3 dos name (LONGER~1.8_3) here. We probably
+             * can't implement this correctly, since unix filesystems don't support
+             * this nasty short/long filename stuff. So we'll probably stay with our
+             * current habbit of storing the long filename here, which seems to work
+             * just fine. */
+            todo_wine { ok(pidlFile->mkid.abID[18] == '~', "Should be derived 8.3 name!\n"); }
+
+        if (i == 0) /* First file name has an even number of chars. No need for alignment. */
+            todo_wine { ok(pidlFile->mkid.abID[12 + strlen(szFile) + 1] != '\0', 
+                "Alignment byte, where there shouldn't be!\n"); }
+        
+        if (i == 1) /* Second file name has an uneven number of chars => alignment byte */
+            ok(pidlFile->mkid.abID[12 + strlen(szFile) + 1] == '\0', 
+                "There should be an alignment byte, but isn't!\n");
+
+        /* The offset of the FileStructW member is stored as a WORD at the end of the pidl. */
+        cbOffset = *(WORD*)(((LPBYTE)pidlFile)+pidlFile->mkid.cb-sizeof(WORD));
+        todo_wine { ok (cbOffset >= sizeof(struct FileStructA) && 
+            cbOffset <= pidlFile->mkid.cb - sizeof(struct FileStructW),
+            "Wrong offset value (%d) stored at the end of the PIDL\n", cbOffset); }
+
+        if (cbOffset >= sizeof(struct FileStructA) &&
+            cbOffset <= pidlFile->mkid.cb - sizeof(struct FileStructW)) 
+        {
+            struct FileStructW *pFileStructW = (struct FileStructW *)(((LPBYTE)pidlFile)+cbOffset);
+
+            ok(pidlFile->mkid.cb == cbOffset + pFileStructW->cbLen, 
+                "FileStructW's offset and length should add up to the PIDL's length!\n");
+
+            if (pidlFile->mkid.cb == cbOffset + pFileStructW->cbLen) {
+                /* Since we just created the file, time of creation,
+                 * time of last access and time of last write access just be the same. 
+                 * These tests seem to fail sometimes (on WinXP), if the test is run again shortly 
+                 * after the first run. I do remember something with NTFS keeping the creation time
+                 * if a file is deleted and then created again within a couple of seconds or so.
+                 * Might be the reason. */
+                ok (pFileStructA->uFileDate == pFileStructW->uDate &&
+                    pFileStructA->uFileTime == pFileStructW->uTime,
+                    "Last write time should match creation time!\n");
+    
+                ok (pFileStructA->uFileDate == pFileStructW->uDate2 &&
+                    pFileStructA->uFileTime == pFileStructW->uTime2,
+                    "Last write time should match last access time!\n");
+
+                ok (!lstrcmpW(wszFile[i], pFileStructW->wszName),
+                    "The filename should be stored in unicode at this position!\n");
+            }
+        }
+
+        ILFree(pidlFile);
+    }
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -1074,6 +1223,7 @@ START_TEST(shlfolder)
     test_SHGetPathFromIDList();
     test_CallForAttributes();
     test_FolderShortcut();
+    test_ITEMIDLIST_format();
 
     OleUninitialize();
 }
