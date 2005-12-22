@@ -38,6 +38,12 @@
 #include "console.h"
 #include "winternl.h"
 
+/* specific access rights (FIXME: should use finer-grained access rights) */
+#define CONSOLE_READ   0x01
+#define CONSOLE_WRITE  0x02
+
+static unsigned int console_map_access( struct object *obj, unsigned int access );
+
 static void console_input_dump( struct object *obj, int verbose );
 static void console_input_destroy( struct object *obj );
 
@@ -51,7 +57,7 @@ static const struct object_ops console_input_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
-    no_map_access,                    /* map_access */
+    console_map_access,               /* map_access */
     no_lookup_name,                   /* lookup_name */
     no_close_handle,                  /* close_handle */
     console_input_destroy             /* destroy */
@@ -79,7 +85,7 @@ static const struct object_ops console_input_events_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
-    no_map_access,                    /* map_access */
+    console_map_access,               /* map_access */
     no_lookup_name,                   /* lookup_name */
     no_close_handle,                  /* close_handle */
     console_input_events_destroy      /* destroy */
@@ -118,7 +124,7 @@ static const struct object_ops screen_buffer_ops =
     NULL,                             /* satisfied */
     no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
-    no_map_access,                    /* map_access */
+    console_map_access,               /* map_access */
     no_lookup_name,                   /* lookup_name */
     no_close_handle,                  /* close_handle */
     screen_buffer_destroy             /* destroy */
@@ -127,6 +133,16 @@ static const struct object_ops screen_buffer_ops =
 static struct list screen_buffer_list = LIST_INIT(screen_buffer_list);
 
 static const char_info_t empty_char_info = { ' ', 0x000f };  /* white on black space */
+
+/* access mapping for all console objects */
+static unsigned int console_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= SYNCHRONIZE | STANDARD_RIGHTS_READ | CONSOLE_READ;
+    if (access & GENERIC_WRITE)   access |= SYNCHRONIZE | STANDARD_RIGHTS_WRITE | CONSOLE_WRITE;
+    if (access & GENERIC_EXECUTE) access |= SYNCHRONIZE | STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL | CONSOLE_READ | CONSOLE_WRITE;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
 
 /* dumps the renderer events of a console */
 static void console_input_events_dump( struct object *obj, int verbose )
@@ -451,7 +467,7 @@ static int get_console_mode( obj_handle_t handle )
     struct object *obj;
     int ret = 0;
 
-    if ((obj = get_handle_obj( current->process, handle, GENERIC_READ, NULL )))
+    if ((obj = get_handle_obj( current->process, handle, CONSOLE_READ, NULL )))
     {
         if (obj->ops == &console_input_ops)
             ret = ((struct console_input *)obj)->mode;
@@ -470,7 +486,7 @@ static int set_console_mode( obj_handle_t handle, int mode )
     struct object *obj;
     int ret = 0;
 
-    if (!(obj = get_handle_obj( current->process, handle, GENERIC_WRITE, NULL )))
+    if (!(obj = get_handle_obj( current->process, handle, CONSOLE_WRITE, NULL )))
         return 0;
     if (obj->ops == &console_input_ops)
     {
@@ -539,7 +555,7 @@ static int read_console_input( obj_handle_t handle, int count, int flush )
     struct console_input *console;
 
     if (!(console = (struct console_input *)get_handle_obj( current->process, handle,
-                                                            GENERIC_READ, &console_input_ops )))
+                                                            CONSOLE_READ, &console_input_ops )))
         return -1;
 
     if (!count)
@@ -582,14 +598,14 @@ static int set_console_input_info( const struct set_console_input_info_request *
     struct console_input *console;
     struct console_renderer_event evt;
 
-    if (!(console = console_input_get( req->handle, GENERIC_WRITE ))) goto error;
+    if (!(console = console_input_get( req->handle, CONSOLE_WRITE ))) goto error;
 
     if (req->mask & SET_CONSOLE_INPUT_INFO_ACTIVE_SB)
     {
 	struct screen_buffer *screen_buffer;
 
 	screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, req->active_sb,
-								GENERIC_READ, &screen_buffer_ops );
+								CONSOLE_READ, &screen_buffer_ops );
 	if (!screen_buffer || screen_buffer->input != console)
 	{
 	    set_error( STATUS_INVALID_PARAMETER );
@@ -1170,7 +1186,7 @@ static void scroll_console_output( obj_handle_t handle, int xsrc, int ysrc, int 
     struct console_renderer_event evt;
 
     if (!(screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, handle,
-								  GENERIC_READ, &screen_buffer_ops )))
+                                                                  CONSOLE_READ, &screen_buffer_ops )))
 	return;
     if (xsrc < 0 || ysrc < 0 || xdst < 0 || ydst < 0 ||
 	xsrc + w > screen_buffer->width  ||
@@ -1277,7 +1293,7 @@ DECL_HANDLER(get_console_renderer_events)
     struct console_input_events *evt;
 
     evt = (struct console_input_events *)get_handle_obj( current->process, req->handle,
-                                                         GENERIC_WRITE, &console_input_events_ops );
+                                                         CONSOLE_READ, &console_input_events_ops );
     if (!evt) return;
     console_input_events_get( evt );
     release_object( evt );
@@ -1302,7 +1318,7 @@ DECL_HANDLER(open_console)
         break;
     default:
         if ((obj = get_handle_obj( current->process, (obj_handle_t)req->from,
-                                   GENERIC_READ|GENERIC_WRITE, &console_input_ops )))
+                                   CONSOLE_READ|CONSOLE_WRITE, &console_input_ops )))
         {
             struct console_input* console = (struct console_input*)obj;
             obj = (console->active) ? grab_object( console->active ) : NULL;
@@ -1331,7 +1347,7 @@ DECL_HANDLER(get_console_input_info)
 {
     struct console_input *console;
 
-    if (!(console = console_input_get( req->handle, GENERIC_READ ))) return;
+    if (!(console = console_input_get( req->handle, CONSOLE_READ ))) return;
     if (console->title)
     {
         size_t len = strlenW( console->title ) * sizeof(WCHAR);
@@ -1365,7 +1381,7 @@ DECL_HANDLER(write_console_input)
 
     reply->written = 0;
     if (!(console = (struct console_input *)get_handle_obj( current->process, req->handle,
-                                                            GENERIC_WRITE, &console_input_ops )))
+                                                            CONSOLE_WRITE, &console_input_ops )))
         return;
     reply->written = write_console_input( console, get_req_data_size() / sizeof(INPUT_RECORD),
                                           get_req_data() );
@@ -1384,7 +1400,7 @@ DECL_HANDLER(append_console_input_history)
 {
     struct console_input *console;
 
-    if (!(console = console_input_get( req->handle, GENERIC_WRITE ))) return;
+    if (!(console = console_input_get( req->handle, CONSOLE_WRITE ))) return;
     console_input_append_hist( console, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
     release_object( console );
 }
@@ -1394,7 +1410,7 @@ DECL_HANDLER(get_console_input_history)
 {
     struct console_input *console;
 
-    if (!(console = console_input_get( req->handle, GENERIC_WRITE ))) return;
+    if (!(console = console_input_get( req->handle, CONSOLE_WRITE ))) return;
     reply->total = console_input_get_hist( console, req->index );
     release_object( console );
 }
@@ -1405,7 +1421,7 @@ DECL_HANDLER(create_console_output)
     struct console_input*	console;
     struct screen_buffer*	screen_buffer;
 
-    if (!(console = console_input_get( req->handle_in, GENERIC_WRITE))) return;
+    if (!(console = console_input_get( req->handle_in, CONSOLE_WRITE ))) return;
 
     screen_buffer = create_console_output( console );
     if (screen_buffer)
@@ -1424,7 +1440,7 @@ DECL_HANDLER(set_console_output_info)
     struct screen_buffer *screen_buffer;
 
     if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
-                                                                GENERIC_WRITE, &screen_buffer_ops)))
+                                                                CONSOLE_WRITE, &screen_buffer_ops)))
     {
         set_console_output_info( screen_buffer, req );
         release_object( screen_buffer );
@@ -1437,7 +1453,7 @@ DECL_HANDLER(get_console_output_info)
     struct screen_buffer *screen_buffer;
 
     if ((screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, req->handle,
-                                                                 GENERIC_READ, &screen_buffer_ops)))
+                                                                 CONSOLE_READ, &screen_buffer_ops)))
     {
         reply->cursor_size    = screen_buffer->cursor_size;
         reply->cursor_visible = screen_buffer->cursor_visible;
@@ -1462,7 +1478,7 @@ DECL_HANDLER(read_console_output)
     struct screen_buffer *screen_buffer;
 
     if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
-                                                                GENERIC_READ, &screen_buffer_ops )))
+                                                                CONSOLE_READ, &screen_buffer_ops )))
     {
         read_console_output( screen_buffer, req->x, req->y, req->mode, req->wrap );
         reply->width  = screen_buffer->width;
@@ -1477,7 +1493,7 @@ DECL_HANDLER(write_console_output)
     struct screen_buffer *screen_buffer;
 
     if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
-                                                                GENERIC_WRITE, &screen_buffer_ops)))
+                                                                CONSOLE_WRITE, &screen_buffer_ops)))
     {
         reply->written = write_console_output( screen_buffer, get_req_data_size(), get_req_data(),
                                                req->mode, req->x, req->y, req->wrap );
@@ -1493,7 +1509,7 @@ DECL_HANDLER(fill_console_output)
     struct screen_buffer *screen_buffer;
 
     if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
-                                                                GENERIC_WRITE, &screen_buffer_ops)))
+                                                                CONSOLE_WRITE, &screen_buffer_ops)))
     {
         reply->written = fill_console_output( screen_buffer, req->data, req->mode,
                                               req->x, req->y, req->count, req->wrap );
