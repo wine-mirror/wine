@@ -154,6 +154,13 @@ static void init_dialog(HWND dialog)
     }
     HeapFree(GetProcessHeap(), 0, buf);
 
+    buf = get_reg_key(config_key, keypath("X11 Driver"), "Managed", "Y");
+    if (IS_OPTION_TRUE(*buf))
+	CheckDlgButton(dialog, IDC_ENABLE_MANAGED, BST_CHECKED);
+    else
+	CheckDlgButton(dialog, IDC_ENABLE_MANAGED, BST_UNCHECKED);
+    HeapFree(GetProcessHeap(), 0, buf);
+
     SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_RESETCONTENT, 0, 0);
     for (it = 0; NULL != D3D_VS_Modes[it]; ++it) {
       SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_ADDSTRING, 0, (LPARAM) D3D_VS_Modes[it]);
@@ -219,6 +226,16 @@ static void on_enable_desktop_clicked(HWND dialog) {
     }
     
     update_gui_for_desktop_mode(dialog);
+}
+
+static void on_enable_managed_clicked(HWND dialog) {
+    WINE_TRACE("\n");
+    
+    if (IsDlgButtonChecked(dialog, IDC_ENABLE_MANAGED) == BST_CHECKED) {
+        set_reg_key(config_key, keypath("X11 Driver"), "Managed", "Y");
+    } else {
+        set_reg_key(config_key, keypath("X11 Driver"), "Managed", "N");
+    }
 }
 
 static void on_screen_depth_changed(HWND dialog) {
@@ -290,6 +307,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
 		    switch(LOWORD(wParam)) {
 			case IDC_ENABLE_DESKTOP: on_enable_desktop_clicked(hDlg); break;
+                        case IDC_ENABLE_MANAGED: on_enable_managed_clicked(hDlg); break;
 			case IDC_DX_MOUSE_GRAB:  on_dx_mouse_grab_clicked(hDlg); break;
                         case IDC_DOUBLE_BUFFER:  on_double_buffer_clicked(hDlg); break;
 		        case IDC_D3D_PSHADER_MODE: on_d3d_pshader_mode_clicked(hDlg); break;
