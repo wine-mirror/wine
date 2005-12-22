@@ -323,6 +323,40 @@ static void test_rename(void)
     set_curr_dir_path(to, "test4.txt\0");
     retval = SHFileOperationA(&shfo);
     ok(!retval, "Rename dir back failed, retval = %ld\n", retval);
+
+    /* try to rename more than one file to a single file */
+    shfo.pFrom = "test1.txt\0test2.txt\0";
+    shfo.pTo = "a.txt\0";
+    retval = SHFileOperationA(&shfo);
+    ok(retval == ERROR_GEN_FAILURE, "Expected ERROR_GEN_FAILURE, got %ld\n", retval);
+    ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
+    ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
+
+    /* pFrom is valid, but pTo is empty */
+    shfo.pFrom = "test1.txt\0";
+    shfo.pTo = "\0";
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
+
+    /* pFrom is empty */
+    shfo.pFrom = "\0";
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %ld\n", retval);
+    }
+
+    /* pFrom is NULL */
+    shfo.pFrom = NULL;
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", retval);
+    }
 }
 
 /* tests the FO_COPY action */
