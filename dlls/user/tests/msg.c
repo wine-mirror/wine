@@ -6775,9 +6775,7 @@ static void test_PeekMessage(void)
         qs_all_input &= ~QS_RAWINPUT;
         qs_input &= ~QS_RAWINPUT;
     }
-todo_wine {
     ok(qstatus == 0, "wrong qstatus %08lx\n", qstatus);
-}
 
     trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
@@ -6790,13 +6788,11 @@ todo_wine {
     ok(GetLastError() == ERROR_INVALID_FLAGS, "wrong error %ld\n", GetLastError());
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE),
        "wrong qstatus %08lx\n", qstatus);
-}
 
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    ok_sequence(WmUser, "WmUser", TRUE); /* todo_wine */
+    ok_sequence(WmUser, "WmUser", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == 0, "wrong qstatus %08lx\n", qstatus);
