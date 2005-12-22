@@ -443,29 +443,293 @@ static void test_copy(void)
     ok(!file_exists("testdir2\\test2.txt"), "The file is not copied yet\n");
     retval = SHFileOperationA(&shfo);
     if (!retval)
-      /* Win 95/NT returns success but copies only the files up to the nonexistent source */
-      ok(file_exists("testdir2\\test1.txt"), "The file is not copied\n");
+        /* Win 95/NT returns success but copies only the files up to the nonexistent source */
+        ok(file_exists("testdir2\\test1.txt"), "The file is not copied\n");
     else
     {
-      /* Win 98/ME/2K/XP fail the entire operation with return code 1026 if one source file does not exist */
-      ok(retval == 1026, "Files are copied to other directory\n");
-      ok(!file_exists("testdir2\\test1.txt"), "The file is copied\n");
+        /* Win 98/ME/2K/XP fail the entire operation with return code 1026 if one source file does not exist */
+        ok(retval == 1026, "Files are copied to other directory\n");
+        ok(!file_exists("testdir2\\test1.txt"), "The file is copied\n");
     }
     ok(!file_exists("testdir2\\test2.txt"), "The file is copied\n");
     shfo.fFlags = tmp_flags;
 
     /* copy into a nonexistent directory */
     init_shfo_tests();
-    shfo.fFlags = FOF_NOCONFIRMMKDIR;
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI | FOF_NOCONFIRMMKDIR;
     set_curr_dir_path(from, "test1.txt\0");
-    set_curr_dir_path(to, "nonexistent\\test2.txt\0");
+    set_curr_dir_path(to, "nonexistent\\notreal\\test2.txt\0");
     retval= SHFileOperation(&shfo);
 
     todo_wine
     {
         ok(!retval, "Error copying into nonexistent directory\n");
-        ok(file_exists("nonexistent\\test2.txt"), "Directory not created\n");
+        ok(file_exists("nonexistent"), "nonexistent not created\n");
+        ok(file_exists("nonexistent\\notreal"), "nonexistent\\notreal not created\n");
+        ok(file_exists("nonexistent\\notreal\\test2.txt"), "Directory not created\n");
     }
+    ok(!file_exists("nonexistent\\notreal\\test1.txt"), "test1.txt should not exist\n");
+
+    /* a relative dest directory is OK */
+    clean_after_shfo_tests();
+    init_shfo_tests();
+    shfo.pFrom = "test1.txt\0test2.txt\0test3.txt\0";
+    shfo.pTo = "testdir2\0";
+    retval = SHFileOperation(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(file_exists("testdir2\\test1.txt"), "Expected testdir2\\test1 to exist");
+
+    /* try to copy files to a file */
+    clean_after_shfo_tests();
+    init_shfo_tests();
+    shfo.pFrom = from;
+    shfo.pTo = to;
+    set_curr_dir_path(from, "test1.txt\0test2.txt\0");
+    set_curr_dir_path(to, "test3.txt\0");
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(shfo.fAnyOperationsAborted, "Expected aborted operations\n");
+    ok(!file_exists("test3.txt\\test2.txt"), "Expected test3.txt\\test2.txt to not exist\n");
+
+    /* try to copy many files to nonexistent directory */
+    DeleteFile(to);
+    shfo.fAnyOperationsAborted = FALSE;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(DeleteFile("test3.txt\\test1.txt"), "Expected test3.txt\\test1.txt to exist\n");
+        ok(DeleteFile("test3.txt\\test2.txt"), "Expected test3.txt\\test1.txt to exist\n");
+        ok(RemoveDirectory(to), "Expected test3.txt to exist\n");
+    }
+
+    /* send in FOF_MULTIDESTFILES with too many destination files */
+    init_shfo_tests();
+    shfo.pFrom = "test1.txt\0test2.txt\0test3.txt\0";
+    shfo.pTo = "testdir2\\a.txt\0testdir2\\b.txt\0testdir2\\c.txt\0testdir2\\d.txt\0";
+    shfo.fFlags |= FOF_NOERRORUI | FOF_MULTIDESTFILES;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(shfo.fAnyOperationsAborted, "Expected aborted operations\n");
+    ok(!file_exists("testdir2\\a.txt"), "Expected testdir2\\a.txt to not exist\n");
+
+    /* send in FOF_MULTIDESTFILES with too many destination files */
+    shfo.pFrom = "test1.txt\0test2.txt\0test3.txt\0";
+    shfo.pTo = "e.txt\0f.txt\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(shfo.fAnyOperationsAborted, "Expected aborted operations\n");
+    ok(!file_exists("e.txt"), "Expected e.txt to not exist\n");
+
+    /* use FOF_MULTIDESTFILES with files and a source directory */
+    shfo.pFrom = "test1.txt\0test2.txt\0test4.txt\0";
+    shfo.pTo = "testdir2\\a.txt\0testdir2\\b.txt\0testdir2\\c.txt\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    retval = SHFileOperation(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFile("testdir2\\a.txt"), "Expected testdir2\\a.txt to exist\n");
+    ok(DeleteFile("testdir2\\b.txt"), "Expected testdir2\\b.txt to exist\n");
+    ok(RemoveDirectory("testdir2\\c.txt"), "Expected testdir2\\c.txt to exist\n");
+
+    /* try a glob */
+    shfo.pFrom = "test?.txt\0";
+    shfo.pTo = "testdir2\0";
+    shfo.fFlags &= ~FOF_MULTIDESTFILES;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(file_exists("testdir2\\test1.txt"), "Expected testdir2\\test1.txt to exist\n");
+    }
+
+    /* try a glob with FOF_FILESONLY */
+    clean_after_shfo_tests();
+    init_shfo_tests();
+    shfo.pFrom = "test?.txt\0";
+    shfo.fFlags |= FOF_FILESONLY;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(file_exists("testdir2\\test1.txt"), "Expected testdir2\\test1.txt to exist\n");
+    }
+    ok(!file_exists("testdir2\\test4.txt"), "Expected testdir2\\test4.txt to not exist\n");
+
+    /* try a glob with FOF_MULTIDESTFILES and the same number
+    * of dest files that we would expect
+    */
+    clean_after_shfo_tests();
+    init_shfo_tests();
+    shfo.pTo = "testdir2\\a.txt\0testdir2\\b.txt\0testdir2\\c.txt\0testdir2\\d.txt\0";
+    shfo.fFlags &= ~FOF_FILESONLY;
+    shfo.fFlags |= FOF_MULTIDESTFILES;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(shfo.fAnyOperationsAborted, "Expected aborted operations\n");
+    ok(!file_exists("testdir2\\a.txt"), "Expected testdir2\\test1.txt to not exist\n");
+    ok(!RemoveDirectory("b.txt"), "b.txt should not exist\n");
+
+    /* copy one file to two others, second is ignored */
+    clean_after_shfo_tests();
+    init_shfo_tests();
+    shfo.pFrom = "test1.txt\0";
+    shfo.pTo = "b.txt\0c.txt\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(DeleteFile("b.txt"), "Expected b.txt to exist\n");
+    }
+    ok(!DeleteFile("c.txt"), "Expected c.txt to not exist\n");
+
+    /* copy two file to three others, all fail */
+    shfo.pFrom = "test1.txt\0test2.txt\0";
+    shfo.pTo = "b.txt\0c.txt\0d.txt\0";
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(shfo.fAnyOperationsAborted, "Expected operations to be aborted\n");
+    ok(!DeleteFile("b.txt"), "Expected b.txt to not exist\n");
+
+    /* copy one file and one directory to three others */
+    shfo.pFrom = "test1.txt\0test4.txt\0";
+    shfo.pTo = "b.txt\0c.txt\0d.txt\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(shfo.fAnyOperationsAborted, "Expected operations to be aborted\n");
+    ok(!DeleteFile("b.txt"), "Expected b.txt to not exist\n");
+    ok(!DeleteFile("c.txt"), "Expected c.txt to not exist\n");
+
+    /* copy a directory with a file beneath it, plus some files */
+    createTestFile("test4.txt\\a.txt");
+    shfo.pFrom = "test4.txt\0test1.txt\0";
+    shfo.pTo = "testdir2\0";
+    shfo.fFlags &= ~FOF_MULTIDESTFILES;
+    shfo.fAnyOperationsAborted = FALSE;
+    retval = SHFileOperation(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFile("testdir2\\test1.txt"), "Expected newdir\\test1.txt to exist\n");
+    ok(DeleteFile("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
+    ok(RemoveDirectory("testdir2\\test4.txt"), "Expected testdir2\\test4.txt to exist\n");
+
+    /* copy one directory and a file in that dir to another dir */
+    shfo.pFrom = "test4.txt\0test4.txt\\a.txt\0";
+    shfo.pTo = "testdir2\0";
+    retval = SHFileOperation(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFile("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
+    ok(DeleteFile("testdir2\\a.txt"), "Expected testdir2\\a.txt to exist\n");
+
+    /* copy a file in a directory first, and then the directory to a nonexistent dir */
+    shfo.pFrom = "test4.txt\\a.txt\0test4.txt\0";
+    shfo.pTo = "nonexistent\0";
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(shfo.fAnyOperationsAborted, "Expected operations to be aborted\n");
+    ok(!file_exists("nonexistent\\test4.txt"), "Expected nonexistent\\test4.txt to not exist\n");
+    DeleteFile("test4.txt\\a.txt");
+
+    /* destination is same as source file */
+    shfo.pFrom = "test1.txt\0test2.txt\0test3.txt\0";
+    shfo.pTo = "b.txt\0test2.txt\0c.txt\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    shfo.fFlags = FOF_NOERRORUI | FOF_MULTIDESTFILES;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == 113, "Expected 113, got %ld\n", retval);
+        ok(!shfo.fAnyOperationsAborted, "Expected no operations to be aborted\n");
+        ok(DeleteFile("b.txt"), "Expected b.txt to exist\n");
+    }
+    ok(!file_exists("c.txt"), "Expected c.txt to not exist\n");
+
+    /* destination is same as source directory */
+    shfo.pFrom = "test1.txt\0test4.txt\0test3.txt\0";
+    shfo.pTo = "b.txt\0test4.txt\0c.txt\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(DeleteFile("b.txt"), "Expected b.txt to exist\n");
+    }
+    ok(!file_exists("c.txt"), "Expected c.txt to not exist\n");
+
+    /* copy a directory into itself, error displayed in UI */
+    shfo.pFrom = "test4.txt\0";
+    shfo.pTo = "test4.txt\\newdir\0";
+    shfo.fFlags &= ~FOF_MULTIDESTFILES;
+    shfo.fAnyOperationsAborted = FALSE;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    }
+    ok(!RemoveDirectory("test4.txt\\newdir"), "Expected test4.txt\\newdir to not exist\n");
+
+    /* copy a directory to itself, error displayed in UI */
+    shfo.pFrom = "test4.txt\0";
+    shfo.pTo = "test4.txt\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    }
+
+    /* copy a file into a directory, and the directory into itself */
+    shfo.pFrom = "test1.txt\0test4.txt\0";
+    shfo.pTo = "test4.txt\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    shfo.fFlags = FOF_NOCONFIRMATION;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    }
+    ok(DeleteFile("test4.txt\\test1.txt"), "Expected test4.txt\\test1.txt to exist\n");
+
+    /* copy a file to a file, and the directory into itself */
+    shfo.pFrom = "test1.txt\0test4.txt\0";
+    shfo.pTo = "test4.txt\\a.txt\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(!file_exists("test4.txt\\a.txt"), "Expected test4.txt\\a.txt to not exist\n");
+
+    /* copy a nonexistent file to a nonexistent directory */
+    shfo.pFrom = "e.txt\0";
+    shfo.pTo = "nonexistent\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    retval = SHFileOperation(&shfo);
+    ok(retval == 1026, "Expected 1026, got %ld\n", retval);
+    ok(!file_exists("nonexistent\\e.txt"), "Expected nonexistent\\e.txt to not exist\n");
 }
 
 /* tests the FO_MOVE action */
