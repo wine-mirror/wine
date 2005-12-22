@@ -1342,14 +1342,17 @@ void wgl_ext_initialize_extensions(Display *display, int screen, glXGetProcAddre
     const char *client_glx_extensions = glXGetClientString(display, GLX_EXTENSIONS);
     const char *gl_extensions = (const char *) glGetString(GL_EXTENSIONS);
     const char *gl_version = (const char *) glGetString(GL_VERSION);
+    const char *server_glx_version = glXQueryServerString(display, screen, GLX_VERSION);
     const char *glx_version = glXGetClientString(display, GLX_VERSION);
     int i;
 
-    TRACE("GL version      : %s.\n", debugstr_a(gl_version));
-    TRACE("GL exts         : %s.\n", debugstr_a(gl_extensions));
-    TRACE("GLX exts        : %s.\n", debugstr_a(glx_extensions));
-    TRACE("Server GLX exts : %s.\n", debugstr_a(server_glx_extensions));
-    TRACE("Client GLX exts : %s.\n", debugstr_a(client_glx_extensions));
+    TRACE("GL version         : %s.\n", debugstr_a(gl_version));
+    TRACE("GL exts            : %s.\n", debugstr_a(gl_extensions));
+    TRACE("GLX exts           : %s.\n", debugstr_a(glx_extensions));
+    TRACE("Server GLX version : %s.\n", debugstr_a(server_glx_version));
+    TRACE("Client GLX version : %s.\n", debugstr_a(glx_version));
+    TRACE("Server GLX exts    : %s.\n", debugstr_a(server_glx_extensions));
+    TRACE("Client GLX exts    : %s.\n", debugstr_a(client_glx_extensions));
 
     for (i = 0; i < (sizeof(extension_list) / sizeof(extension_list[0])); i++) {
         if (strstr(disabled_extensions, extension_list[i].name)) continue ; /* disabled by config, next */

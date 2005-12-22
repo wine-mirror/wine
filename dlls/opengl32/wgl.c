@@ -39,6 +39,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
+/** global glx object */
+wine_glx_t wine_glx;
+
 /* x11drv GDI escapes */
 #define X11DRV_ESCAPE 6789
 enum x11drv_escape_codes
@@ -196,7 +199,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
     GLXFBConfig* cfgs_fmt = NULL;
     int value;
     int gl_test = 0;
-    cfgs_fmt = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs_fmt);
+    cfgs_fmt = wine_glx.p_glXGetFBConfigs(display, DefaultScreen(display), &nCfgs_fmt);
     if (NULL == cfgs_fmt || 0 == nCfgs_fmt) {
       ERR("Cannot get FB Configs, expect problems.\n");
       SetLastError(ERROR_INVALID_PIXEL_FORMAT);
@@ -208,7 +211,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
       return NULL;
     }
     cur_cfg = cfgs_fmt[hdcPF - 1];
-    gl_test = glXGetFBConfigAttrib(display, cur_cfg, GLX_FBCONFIG_ID, &value);
+    gl_test = wine_glx.p_glXGetFBConfigAttrib(display, cur_cfg, GLX_FBCONFIG_ID, &value);
     if (gl_test) {
       ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
       SetLastError(ERROR_INVALID_PIXEL_FORMAT);
@@ -225,7 +228,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
   ret->display = display;
   ret->fb_conf = cur_cfg;
   /*ret->vis = vis;*/
-  ret->vis = glXGetVisualFromFBConfig(display, cur_cfg);
+  ret->vis = wine_glx.p_glXGetVisualFromFBConfig(display, cur_cfg);
 
   TRACE(" creating context %p (GL context creation delayed)\n", ret);
   return (HGLRC) ret;
@@ -468,6 +471,38 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   }
 }
 
+static int describeContext(Wine_GLContext* ctx) {
+  int tmp;
+  int ctx_vis_id;
+  TRACE(" Context %p have (vis:%p):\n", ctx, ctx->vis);
+  wine_glx.p_glXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_FBCONFIG_ID, &tmp);
+  TRACE(" - FBCONFIG_ID 0x%x\n", tmp);
+  wine_glx.p_glXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_VISUAL_ID, &tmp);
+  TRACE(" - VISUAL_ID 0x%x\n", tmp);
+  ctx_vis_id = tmp;
+  return ctx_vis_id;
+}
+
+static int describeDrawable(Wine_GLContext* ctx, Drawable drawable) {
+  int tmp;
+  int draw_vis_id;
+  if (3 > wine_glx.version || NULL == wine_glx.p_glXQueryDrawable)  {
+    /** glXQueryDrawable not available so returns not supported */
+    return -1;
+  }
+  TRACE(" Drawable %p have :\n", (void*) drawable);
+  wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &tmp);
+  TRACE(" - FBCONFIG_ID as 0x%x\n", tmp);
+  wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_VISUAL_ID, (unsigned int*) &tmp);
+  TRACE(" - VISUAL_ID as 0x%x\n", tmp);
+  draw_vis_id = tmp;
+  wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_WIDTH, (unsigned int*) &tmp);
+  TRACE(" - WIDTH as %d\n", tmp);
+  wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_HEIGHT, (unsigned int*) &tmp);
+  TRACE(" - HEIGHT as %d\n", tmp);
+  return draw_vis_id;
+}
+
 /***********************************************************************
  *		wglMakeCurrent (OPENGL32.@)
  */
@@ -485,31 +520,13 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
       Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
       Drawable drawable = get_drawable( hdc );
       if (ctx->ctx == NULL) {
-	int tmp;
 	int draw_vis_id, ctx_vis_id;
         VisualID visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
+	TRACE(" Wine desktop VISUAL_ID is 0x%x\n", (unsigned int) visualid);
+	draw_vis_id = describeDrawable(ctx, drawable);
+	ctx_vis_id = describeContext(ctx);
 
-	TRACE(" desktop VISUAL_ID is 0x%x\n", (unsigned int) visualid);
-
-	TRACE(" drawable %p have :\n", (void*) drawable);
-	glXQueryDrawable(ctx->display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &tmp);
-	TRACE(" - FBCONFIG_ID as 0x%x\n", tmp);
-	glXQueryDrawable(ctx->display, drawable, GLX_VISUAL_ID, (unsigned int*) &tmp);
-	TRACE(" - VISUAL_ID as 0x%x\n", tmp);
-	draw_vis_id = tmp;
-	glXQueryDrawable(ctx->display, drawable, GLX_WIDTH, (unsigned int*) &tmp);
-	TRACE(" - WIDTH as %d\n", tmp);
-	glXQueryDrawable(ctx->display, drawable, GLX_HEIGHT, (unsigned int*) &tmp);
-	TRACE(" - HEIGHT as %d\n", tmp);
-
-	TRACE(" Context %p have (vis:%p):\n", ctx, ctx->vis);
-	glXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_FBCONFIG_ID, &tmp);
-	TRACE(" - FBCONFIG_ID 0x%x\n", tmp);
-	glXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_VISUAL_ID, &tmp);
-	TRACE(" - VISUAL_ID 0x%x\n", tmp);
-	ctx_vis_id = tmp;
-
-	if (draw_vis_id == visualid && draw_vis_id != ctx_vis_id) {
+	if (-1 == draw_vis_id || (draw_vis_id == visualid && draw_vis_id != ctx_vis_id)) {
 	  /**
 	   * Inherits from root window so reuse desktop visual
 	   */
@@ -547,17 +564,21 @@ BOOL WINAPI wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc)
 
   ENTER_GL();
   if (hglrc == NULL) {
-      ret = glXMakeCurrent(default_display, None, NULL);
+    ret = glXMakeCurrent(default_display, None, NULL);
   } else {
-    Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-    Drawable d_draw = get_drawable( hDrawDC );
-    Drawable d_read = get_drawable( hReadDC );
-
-    if (ctx->ctx == NULL) {
-      ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, True);
-      TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
+    if (NULL == wine_glx.p_glXMakeContextCurrent) {
+      ret = FALSE;
+    } else {
+      Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
+      Drawable d_draw = get_drawable( hDrawDC );
+      Drawable d_read = get_drawable( hReadDC );
+      
+      if (ctx->ctx == NULL) {
+	ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, True);
+	TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
+      }
+      ret = wine_glx.p_glXMakeContextCurrent(ctx->display, d_draw, d_read, ctx->ctx);
     }
-    ret = glXMakeContextCurrent(ctx->display, d_draw, d_read, ctx->ctx);
   }
   LEAVE_GL();
   
@@ -626,12 +647,14 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
   } else {
     if (org->ctx == NULL) {
       ENTER_GL();
+      describeContext(org);
       org->ctx = glXCreateContext(org->display, org->vis, NULL, True);
       LEAVE_GL();
       TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
     }
     if (NULL != dest) {
       ENTER_GL();
+      describeContext(dest);
       /* Create the destination context with display lists shared */
       dest->ctx = glXCreateContext(org->display, dest->vis, org->ctx, True);
       LEAVE_GL();
@@ -883,7 +906,21 @@ const GLubyte * internal_glGetString(GLenum name) {
 }
 
 void internal_glGetIntegerv(GLenum pname, GLint* params) {
-  glGetIntegerv(pname, params); 
+  glGetIntegerv(pname, params);
+  if (pname == GL_DEPTH_BITS) { 
+    GLXContext gl_ctx = glXGetCurrentContext();
+    Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
+    /*TRACE("returns Wine Ctx as %p\n", ret);*/
+    /** 
+     * if we cannot find a Wine Context
+     * we only have the default wine desktop context, 
+     * so if we have only a 24 depth say we have 32
+     */
+    if (NULL == ret && 24 == *params) { 
+      *params = 32;
+    }
+    TRACE("returns GL_DEPTH_BITS as '%d'\n", *params);
+  }
   if (pname == GL_ALPHA_BITS) {
     GLint tmp;
     GLXContext gl_ctx = glXGetCurrentContext();
@@ -901,6 +938,45 @@ void internal_glGetIntegerv(GLenum pname, GLint* params) {
 #ifndef SONAME_LIBGL
 #define SONAME_LIBGL "libGL.so"
 #endif
+
+static void wgl_initialize_glx(Display *display, int screen, glXGetProcAddressARB_t proc) 
+{
+  const char *server_glx_version = glXQueryServerString(display, screen, GLX_VERSION);
+  const char *server_glx_extensions = glXQueryServerString(display, screen, GLX_EXTENSIONS);
+  /*
+  const char *client_glx_version = glXGetClientString(display, GLX_VERSION);
+  const char *client_glx_extensions = glXGetClientString(display, GLX_EXTENSIONS);
+  const char *glx_extensions = glXQueryExtensionsString(display, screen);
+  */
+
+  memset(&wine_glx, 0, sizeof(wine_glx));
+
+  if (!strcmp("1.2", server_glx_version)) {
+    wine_glx.version = 2;
+  } else {
+    wine_glx.version = 3;
+  }
+
+  if (2 < wine_glx.version) {
+    wine_glx.p_glXChooseFBConfig = proc( (const GLubyte *) "glXChooseFBConfig");
+    wine_glx.p_glXGetFBConfigAttrib = proc( (const GLubyte *) "glXGetFBConfigAttrib");
+    wine_glx.p_glXGetVisualFromFBConfig = proc( (const GLubyte *) "glXGetVisualFromFBConfig");
+
+    /*wine_glx.p_glXGetFBConfigs = proc( (const GLubyte *) "glXGetFBConfigs");*/
+    wine_glx.p_glXQueryDrawable = proc( (const GLubyte *) "glXQueryDrawable");
+  } else {
+    if (NULL != strstr(server_glx_extensions, "GLX_SGIX_fbconfig")) {
+      wine_glx.p_glXChooseFBConfig = proc( (const GLubyte *) "glXChooseFBConfigSGIX");
+      wine_glx.p_glXGetFBConfigAttrib = proc( (const GLubyte *) "glXGetFBConfigAttribSGIX");
+      wine_glx.p_glXGetVisualFromFBConfig = proc( (const GLubyte *) "glXGetVisualFromFBConfigSGIX");
+    } else {
+      ERR(" glx_version as %s and GLX_SGIX_fbconfig extension is unsupported. Expect problems.\n", server_glx_version);
+    }
+  }
+  /** try anyway to retrieve that calls, maybe they works using glx client tricks */
+  wine_glx.p_glXGetFBConfigs = proc( (const GLubyte *) "glXGetFBConfigs");
+  wine_glx.p_glXMakeContextCurrent = proc( (const GLubyte *) "glXMakeContextCurrent");
+}
 
 /* This is for brain-dead applications that use OpenGL functions before even
    creating a rendering context.... */
@@ -983,6 +1059,7 @@ static BOOL process_attach(void)
   else
   {
     /* After context initialize also the list of supported WGL extensions. */
+    wgl_initialize_glx(default_display, DefaultScreen(default_display), p_glXGetProcAddressARB);
     wgl_ext_initialize_extensions(default_display, DefaultScreen(default_display), p_glXGetProcAddressARB, internal_gl_disabled_extensions);
   }
   return TRUE;
