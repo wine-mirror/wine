@@ -567,7 +567,7 @@ START_TEST(console)
 
     /* first, we detach and open a fresh console to play with */
     FreeConsole();
-    AllocConsole();
+    ok(AllocConsole(), "Couldn't alloc console\n");
     hConIn = CreateFileA("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     hConOut = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
 
@@ -585,7 +585,6 @@ START_TEST(console)
     /* will test line scrolling at the bottom of the screen */
     /* testBottomScroll(); */
     /* will test all the scrolling operations */
-    /* this one is disabled for now, Wine's result are way too bad */
     testScroll(hConOut, sbi.dwSize);
     /* will test sb creation / modification... */
     /* testScreenBuffer() */
