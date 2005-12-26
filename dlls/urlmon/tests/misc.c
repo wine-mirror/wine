@@ -26,6 +26,10 @@
 #include "ole2.h"
 #include "urlmon.h"
 
+#include "initguid.h"
+
+DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
+
 static void test_CreateFormatEnum(void)
 {
     IEnumFORMATETC *fenum = NULL, *fenum2 = NULL;
@@ -409,25 +413,37 @@ static void test_FindMimeFromData(void)
     ok(hres == E_INVALIDARG, "FindMimeFromData failed: %08lx, expected E_INVALIDARG\n", hres);
 }
 
+static const BYTE secid1[] = {'f','i','l','e',':',0,0,0,0};
+static const BYTE secid4[] ={'f','i','l','e',':',3,0,0,0};
+static const BYTE secid5[] = {'h','t','t','p',':','w','w','w','.','w','i','n','e','h','q',
+    '.','o','r','g',3,0,0,0};
+static const BYTE secid6[] = {'a','b','o','u','t',':','b','l','a','n','k',3,0,0,0};
+static const BYTE secid7[] = {'f','t','p',':','w','i','n','e','h','q','.','o','r','g',
+                              3,0,0,0};
+
 static struct secmgr_test {
     LPCWSTR url;
     DWORD zone;
     HRESULT zone_hres;
+    DWORD secid_size;
+    const BYTE *secid;
+    HRESULT secid_hres;
 } secmgr_tests[] = {
-    {url1, 0,   S_OK},
-    {url2, 100, 0x80041001},
-    {url3, 0,   S_OK},
-    {url4, 3,   S_OK},
-    {url5, 3,   S_OK},
-    {url6, 3,   S_OK},
-    {url7, 3,   S_OK}
+    {url1, 0,   S_OK, sizeof(secid1), secid1, S_OK},
+    {url2, 100, 0x80041001, 0, NULL, E_INVALIDARG},
+    {url3, 0,   S_OK, sizeof(secid1), secid1, S_OK},
+    {url4, 3,   S_OK, sizeof(secid4), secid4, S_OK},
+    {url5, 3,   S_OK, sizeof(secid5), secid5, S_OK},
+    {url6, 3,   S_OK, sizeof(secid6), secid6, S_OK},
+    {url7, 3,   S_OK, sizeof(secid7), secid7, S_OK}
 };
 
 static void test_SecurityManager(void)
 {
     int i;
     IInternetSecurityManager *secmgr = NULL;
-    DWORD zone;
+    BYTE buf[512];
+    DWORD zone, size;
     HRESULT hres;
 
     hres = CoInternetCreateSecurityManager(NULL, &secmgr, 0);
@@ -437,16 +453,44 @@ static void test_SecurityManager(void)
 
     for(i=0; i < sizeof(secmgr_tests)/sizeof(secmgr_tests[0]); i++) {
         zone = 100;
-        hres = IInternetSecurityManager_MapUrlToZone(secmgr, secmgr_tests[i].url, &zone, 0);
-        ok(hres == secmgr_tests[i].zone_hres, "[%d] MapUrlToZone failed: %08lx, expected %08lx\n",
+        hres = IInternetSecurityManager_MapUrlToZone(secmgr, secmgr_tests[i].url,
+                                                     &zone, 0);
+        ok(hres == secmgr_tests[i].zone_hres,
+           "[%d] MapUrlToZone failed: %08lx, expected %08lx\n",
                 i, hres, secmgr_tests[i].zone_hres);
         ok(zone == secmgr_tests[i].zone, "[%d] zone=%ld, expected %ld\n", i, zone,
                 secmgr_tests[i].zone);
+
+        size = sizeof(buf);
+        memset(buf, 0xf0, sizeof(buf));
+        hres = IInternetSecurityManager_GetSecurityId(secmgr, secmgr_tests[i].url,
+                buf, &size, 0);
+        ok(hres == secmgr_tests[i].secid_hres,
+           "[%d] GetSecurityId failed: %08lx, expected %08lx\n",
+           i, hres, secmgr_tests[i].secid_hres);
+        if(secmgr_tests[i].secid) {
+            ok(size == secmgr_tests[i].secid_size, "[%d] size=%ld, expected %ld\n",
+                    i, size, secmgr_tests[i].secid_size);
+            ok(!memcmp(buf, secmgr_tests[i].secid, size), "[%d] wrong secid\n", i);
+        }
     }
 
     zone = 100;
     hres = IInternetSecurityManager_MapUrlToZone(secmgr, NULL, &zone, 0);
     ok(hres == E_INVALIDARG, "MapUrlToZone failed: %08lx, expected E_INVALIDARG\n", hres);
+
+    size = sizeof(buf);
+    hres = IInternetSecurityManager_GetSecurityId(secmgr, NULL, buf, &size, 0);
+    ok(hres == E_INVALIDARG,
+       "GetSecurityId failed: %08lx, expected E_INVALIDARG\n", hres);
+    hres = IInternetSecurityManager_GetSecurityId(secmgr, secmgr_tests[1].url,
+                                                  NULL, &size, 0);
+    ok(hres == E_INVALIDARG,
+       "GetSecurityId failed: %08lx, expected E_INVALIDARG\n", hres);
+    hres = IInternetSecurityManager_GetSecurityId(secmgr, secmgr_tests[1].url,
+                                                  buf, NULL, 0);
+    ok(hres == E_INVALIDARG,
+       "GetSecurityId failed: %08lx, expected E_INVALIDARG\n", hres);
 
     IInternetSecurityManager_Release(secmgr);
 }
@@ -486,12 +530,43 @@ static void test_ZoneManager(void)
     IInternetZoneManager_Release(zonemgr);
 }
 
+static void register_protocols(void)
+{
+    IInternetSession *session;
+    IClassFactory *factory;
+    HRESULT hres;
+
+    static const WCHAR wszAbout[] = {'a','b','o','u','t',0};
+
+    hres = CoInternetGetSession(0, &session, 0);
+    ok(hres == S_OK, "CoInternetGetSession failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = CoGetClassObject(&CLSID_AboutProtocol, CLSCTX_INPROC_SERVER, NULL,
+            &IID_IClassFactory, (void**)&factory);
+    ok(hres == S_OK, "Coud not get AboutProtocol factory: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    IInternetSession_RegisterNameSpace(session, factory, &CLSID_AboutProtocol,
+                                       wszAbout, 0, NULL, 0);
+    IClassFactory_Release(factory);
+
+}
+
 START_TEST(misc)
 {
+    OleInitialize(NULL);
+
+    register_protocols();
+
     test_CreateFormatEnum();
     test_RegisterFormatEnumerator();
     test_CoInternetParseUrl();
     test_FindMimeFromData();
     test_SecurityManager();
     test_ZoneManager();
+
+    OleUninitialize();
 }
