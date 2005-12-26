@@ -738,7 +738,8 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
         BOOL            ret;
         regex_t         preg;
 
-        compile_regex(mask ? mask : "*", -1, &preg, FALSE);
+        compile_regex(mask ? mask : "*", -1, &preg,
+                      dbghelp_options & SYMOPT_CASE_INSENSITIVE);
         ret = symt_enum_locals_helper(pcs, module, &preg, EnumSymbolsCallback, 
                                       UserContext, sym_info, 
                                       &((struct symt_function*)sym)->vchildren);
@@ -785,8 +786,10 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
 
         if (bang == Mask) return FALSE;
 
-        compile_regex(Mask, bang - Mask, &mod_regex, FALSE);
-        compile_regex(bang + 1, -1, &sym_regex, FALSE);
+        compile_regex(Mask, bang - Mask, &mod_regex, 
+                      dbghelp_options & SYMOPT_CASE_INSENSITIVE);
+        compile_regex(bang + 1, -1, &sym_regex, 
+                      dbghelp_options & SYMOPT_CASE_INSENSITIVE);
         
         for (module = pcs->lmodules; module; module = module->next)
         {
@@ -829,7 +832,8 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
         Mask = bang + 1;
     }
 
-    compile_regex(Mask ? Mask : "*", -1, &sym_regex, FALSE);
+    compile_regex(Mask ? Mask : "*", -1, &sym_regex, 
+                      dbghelp_options & SYMOPT_CASE_INSENSITIVE);
     symt_enum_module(module, &sym_regex, EnumSymbolsCallback, UserContext);
     regfree(&sym_regex);
 
@@ -1311,3 +1315,42 @@ BOOL WINAPI SymMatchString(PCSTR string, PCSTR re, BOOL _case)
     return ret;
 }
 
+/******************************************************************
+ *		SymSearch (DBGHELP.@)
+ */
+BOOL WINAPI SymSearch(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
+                      DWORD SymTag, PCSTR Mask, DWORD64 Address,
+                      PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
+                      PVOID UserContext, DWORD Options)
+{
+    TRACE("(%p %s %lu %lu %s %s %p %p %lx)\n",
+          hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, Mask, 
+          wine_dbgstr_longlong(Address), EnumSymbolsCallback,
+          UserContext, Options);
+
+    if (Index != 0)
+    {
+        FIXME("Unsupported searching for a given Index (%lu)\n", Index);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (SymTag != 0)
+    {
+        FIXME("Unsupported searching for a given SymTag (%lu)\n", SymTag);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (Address != 0)
+    {
+        FIXME("Unsupported searching for a given Address (%s)\n", wine_dbgstr_longlong(Address));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (Options != SYMSEARCH_GLOBALSONLY)
+    {
+        FIXME("Unsupported searching with options (%lx)\n", Options);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    return SymEnumSymbols(hProcess, BaseOfDll, Mask, EnumSymbolsCallback, UserContext);
+}

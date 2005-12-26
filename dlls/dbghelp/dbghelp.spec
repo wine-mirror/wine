@@ -86,7 +86,7 @@
 @ stdcall SymRegisterCallback(long ptr ptr)
 @ stdcall SymRegisterFunctionEntryCallback64(ptr ptr double)
 @ stdcall SymRegisterFunctionEntryCallback(ptr ptr ptr)
-@ stub SymSearch
+@ stdcall SymSearch(long double long long str double ptr ptr long)
 @ stdcall SymSetContext(long ptr ptr)
 @ stdcall SymSetOptions(long)
 @ stdcall SymSetParentWindow(long)
