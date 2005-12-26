@@ -181,6 +181,7 @@ static void initAudioDeviceTree(HWND hDlg)
     HWND tree = NULL;
     HIMAGELIST hImageList;
     HBITMAP hBitMap;
+    HCURSOR old_cursor;
 
     tree = GetDlgItem(hDlg, IDC_AUDIO_TREE);
 
@@ -204,6 +205,11 @@ static void initAudioDeviceTree(HWND hDlg)
     insert.u.item.pszText = "Sound Drivers";
     insert.u.item.cChildren = 1;
     root = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+
+    /* change to the wait cursor because this can take a while if there is a
+     * misbehaving driver that takes a long time to open
+     */
+    old_cursor = SetCursor(LoadCursor(0, IDC_WAIT));
 
     /* iterate over list of loaded drivers */
     for (pAudioDrv = loadedAudioDrv, i = 0; *pAudioDrv->szName; i++, pAudioDrv++) {
@@ -433,6 +439,9 @@ static void initAudioDeviceTree(HWND hDlg)
         }
     }
 
+    /* restore the original cursor */
+    SetCursor(old_cursor);
+
     SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_SELECTITEM, 0, 0);
     SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_EXPAND, TVE_EXPAND, (LPARAM)root);
     for (j = 0; j < i; j++)
@@ -444,6 +453,7 @@ static void findAudioDrivers(void)
 {
     int numFound = 0;
     const AUDIO_DRIVER *pAudioDrv = NULL;
+    HCURSOR old_cursor;
 
     /* delete an existing list */
     if (loadedAudioDrv)
@@ -451,6 +461,11 @@ static void findAudioDrivers(void)
         HeapFree(GetProcessHeap(), 0, loadedAudioDrv);
         loadedAudioDrv = 0;
     }
+
+    /* change to the wait cursor because this can take a while if there is a
+     * misbehaving driver that takes a long time to open
+     */
+    old_cursor = SetCursor(LoadCursor(0, IDC_WAIT));
 
     for (pAudioDrv = getAudioDrivers(); *pAudioDrv->szName; pAudioDrv++)
     {
@@ -475,6 +490,9 @@ static void findAudioDrivers(void)
             }
         }
     }
+
+    /* restore the original cursor */
+    SetCursor(old_cursor);
 
     /* terminate list with empty driver */
     loadedAudioDrv = HeapReAlloc(GetProcessHeap(), 0, loadedAudioDrv, (numFound + 1) * sizeof(AUDIO_DRIVER));
