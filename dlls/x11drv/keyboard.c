@@ -401,7 +401,7 @@ static const char main_key_ET[MAIN_LEN][4] =
  "<>"
 };
 
-/*** Canadian French keyboard layout */
+/*** Canadian French keyboard layout (setxkbmap ca_enhanced) */
 static const char main_key_CF[MAIN_LEN][4] =
 {
  "#|\\","1!±","2\"@","3/£","4$¢","5%¤","6?¬","7&¦","8*²","9(³","0)¼","-_½","=+¾",
@@ -411,13 +411,11 @@ static const char main_key_CF[MAIN_LEN][4] =
  "«»°"
 };
 
-/*** Canadian CAN/CSA Z243.200-92 keyboard layout 
- *** Contributed by Jean-Michel Dault <jmdault@revolutionlinux.com> */
+/*** Canadian keyboard layout (setxkbmap ca) */
 static const char main_key_CA[MAIN_LEN][4] =
 {
-
  "/\\","1!¹¡","2@²","3#³£","4$¼¤","5%½","6?¾","7&","8*","9(","0)","-_","=+",
- "qQ","wW","eE","rR¶®","tT","yY","uU","iI","oOøØ","pPþÞ","^¨åÅ","çÇ~",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oOøØ","pPþÞ","^¨¨","çÇ~",
  "aAæÆ","sSß§","dDðÐ","fF","gG","hH","jJ","kK","lL",";:´","èÈ","àÀ",
  "zZ","xX","cC¢©","vV","bB","nN","mMµº",",'",".\"·÷","éÉ",
  "ùÙ"
@@ -901,7 +899,7 @@ static const struct {
  {0x0406, "Danish keyboard layout", &main_key_DA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x040c, "French keyboard layout", &main_key_FR, &main_key_scan_qwerty, &main_key_vkey_azerty},
  {0x0c0c, "Canadian French keyboard layout", &main_key_CF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {0x0c0c, "Canadian CAN/CSA-Z243.200-92 keyboard layout", &main_key_CA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0c0c, "Canadian keyboard layout", &main_key_CA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x080c, "Belgian keyboard layout", &main_key_BE, &main_key_scan_qwerty, &main_key_vkey_azerty},
  {0x0816, "Portuguese keyboard layout", &main_key_PT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0416, "Brazilian ABNT-2 keyboard layout", &main_key_PT_br, &main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
