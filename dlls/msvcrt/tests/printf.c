@@ -39,12 +39,153 @@ static void test_sprintf( void )
     }
     ok( r==23, "return count wrong\n");
 
-    todo_wine {
     format = "%I64d";
     r = sprintf(buffer,format,((ULONGLONG)0xffffffff)*0xffffffff);
     ok(!strcmp(buffer,"-8589934591"),"Problem with long long\n");
     ok( r==11, "return count wrong\n");
-    }
+
+    format = "%+8I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"    +100") && r==8,"+8I64d failed: '%s'\n", buffer);
+
+    format = "%+.8I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"+00000100") && r==9,"+.8I64d failed: '%s'\n", buffer);
+
+    format = "%+10.8I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer," +00000100") && r==10,"+10.8I64d failed: '%s'\n", buffer);
+    format = "%_1I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"_1I64d") && r==6,"_1I64d failed\n");
+
+    format = "%-1.5I64d";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer,"-00100") && r==6,"-1.5I64d failed: '%s'\n", buffer);
+
+    format = "%5I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"  100") && r==5,"5I64d failed: '%s'\n", buffer);
+
+    format = "%5I64d";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer," -100") && r==5,"5I64d failed: '%s'\n", buffer);
+
+    format = "%-5I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"100  ") && r==5,"-5I64d failed: '%s'\n", buffer);
+
+    format = "%-5I64d";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer,"-100 ") && r==5,"-5I64d failed: '%s'\n", buffer);
+
+    format = "%-.5I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"00100") && r==5,"-.5I64d failed: '%s'\n", buffer);
+
+    format = "%-.5I64d";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer,"-00100") && r==6,"-.5I64d failed: '%s'\n", buffer);
+
+    format = "%-8.5I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"00100   ") && r==8,"-8.5I64d failed: '%s'\n", buffer);
+
+    format = "%-8.5I64d";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer,"-00100  ") && r==8,"-8.5I64d failed: '%s'\n", buffer);
+
+    format = "%05I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"00100") && r==5,"05I64d failed: '%s'\n", buffer);
+
+    format = "%05I64d";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer,"-0100") && r==5,"05I64d failed: '%s'\n", buffer);
+
+    format = "% I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer," 100") && r==4,"' I64d' failed: '%s'\n", buffer);
+
+    format = "% I64d";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer,"-100") && r==4,"' I64d' failed: '%s'\n", buffer);
+
+    format = "% 5I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"  100") && r==5,"' 5I64d' failed: '%s'\n", buffer);
+
+    format = "% 5I64d";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer," -100") && r==5,"' 5I64d' failed: '%s'\n", buffer);
+
+    format = "% .5I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer," 00100") && r==6,"' .5I64d' failed: '%s'\n", buffer);
+
+    format = "% .5I64d";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer,"-00100") && r==6,"' .5I64d' failed: '%s'\n", buffer);
+
+    format = "% 8.5I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"   00100") && r==8,"' 8.5I64d' failed: '%s'\n", buffer);
+
+    format = "% 8.5I64d";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer,"  -00100") && r==8,"' 8.5I64d' failed: '%s'\n", buffer);
+
+    format = "%.0I64d";
+    r = sprintf(buffer,format,(LONGLONG)0);
+    ok(r==0,".0I64d failed: '%s'\n", buffer);
+
+    format = "%#+21.18I64x";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer," 0x00ffffffffffffff9c") && r==21,"#+21.18I64x failed: '%s'\n", buffer);
+
+    format = "%#.25I64o";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer,"0001777777777777777777634") && r==25,"#.25I64o failed: '%s'\n", buffer);
+
+    format = "%#+24.20I64o";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer," 01777777777777777777634") && r==24,"#+24.20I64o failed: '%s'\n", buffer);
+
+    format = "%#+18.21I64X";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer,"0X00000FFFFFFFFFFFFFF9C") && r==23,"#+18.21I64X failed: '%s '\n", buffer);
+
+    format = "%#+20.24I64o";
+    r = sprintf(buffer,format,(LONGLONG)-100);
+    ok(!strcmp(buffer,"001777777777777777777634") && r==24,"#+20.24I64o failed: '%s'\n", buffer);
+
+    format = "%#+25.22I64u";
+    r = sprintf(buffer,format,(LONGLONG)-1);
+    ok(!strcmp(buffer,"   0018446744073709551615") && r==25,"#+25.22I64u conversion failed: '%s'\n", buffer);
+
+    format = "%#+25.22I64u";
+    r = sprintf(buffer,format,(LONGLONG)-1);
+    ok(!strcmp(buffer,"   0018446744073709551615") && r==25,"#+25.22I64u failed: '%s'\n", buffer);
+
+    format = "%#+30.25I64u";
+    r = sprintf(buffer,format,(LONGLONG)-1);
+    ok(!strcmp(buffer,"     0000018446744073709551615") && r==30,"#+30.25I64u failed: '%s'\n", buffer);
+
+    format = "%+#25.22I64d";
+    r = sprintf(buffer,format,(LONGLONG)-1);
+    ok(!strcmp(buffer,"  -0000000000000000000001") && r==25,"+#25.22I64d failed: '%s'\n", buffer);
+
+    format = "%#-8.5I64o";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"00144   ") && r==8,"-8.5I64o failed: '%s'\n", buffer);
+
+    format = "%#-+ 08.5I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"+00100  ") && r==8,"'#-+ 08.5I64d failed: '%s'\n", buffer);
+
+    format = "%#-+ 08.5I64d";
+    r = sprintf(buffer,format,(LONGLONG)100);
+    ok(!strcmp(buffer,"+00100  ") && r==8,"#-+ 08.5I64d failed: '%s'\n", buffer);
 
     format = "%lld";
     r = sprintf(buffer,format,((ULONGLONG)0xffffffff)*0xffffffff);
@@ -336,10 +477,7 @@ static void test_swprintf( void )
         ok(wcsstr(buffer,e008) != 0,"Sprintf different\n");
       }
     swprintf(buffer,I64d,((ULONGLONG)0xffffffff)*0xffffffff);
-    todo_wine
-      {
-        ok(wcslen(buffer) == 11,"Problem with long long\n");
-      }
+      ok(wcslen(buffer) == 11,"Problem with long long\n");
     swprintf(buffer,S,string);
       ok(wcslen(buffer) == 6,"Problem with \"%%S\" interpretation\n");
 }
