@@ -227,7 +227,7 @@ static void write_function_stubs(type_t *iface)
 
 
         /* marshal arguments */
-        marshall_arguments(client, indent, func, &type_offset);
+        marshall_arguments(client, indent, func, &type_offset, PASS_IN);
 
         /* send/receive message */
         /* print_client("NdrNsSendReceive(\n"); */

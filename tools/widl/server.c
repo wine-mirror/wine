@@ -198,7 +198,7 @@ static void write_function_stubs(type_t *iface)
             indent -= 2;
             fprintf(server, "\n");
 
-            unmarshall_arguments(server, indent, func, &type_offset);
+            unmarshall_arguments(server, indent, func, &type_offset, PASS_OUT);
         }
 
         print_server("if (_StubMsg.Buffer > _StubMsg.BufferEnd)\n");

@@ -281,7 +281,8 @@ unsigned int get_required_buffer_size(type_t *type)
     }
 }
 
-void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type_offset)
+void marshall_arguments(FILE *file, int indent, func_t *func,
+                        unsigned int *type_offset, enum pass pass)
 {
     unsigned int last_size = 0;
     var_t *var;
@@ -293,6 +294,26 @@ void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     for (; var; *type_offset += get_size_typeformatstring_var(var), var = PREV_LINK(var))
     {
+        int in_attr = is_attr(var->attrs, ATTR_IN);
+        int out_attr = is_attr(var->attrs, ATTR_OUT);
+
+        if (!in_attr && !out_attr)
+            in_attr = 1;
+
+        switch (pass)
+        {
+        case PASS_IN:
+            if (!in_attr)
+                continue;
+            break;
+        case PASS_OUT:
+            if (!out_attr)
+                continue;
+            break;
+        case PASS_RETURN:
+            break;
+        }
+
         if (var->ptr_level == 0 && !var->array)
         {
             unsigned int size;
@@ -413,7 +434,8 @@ void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type
     }
 }
 
-void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type_offset)
+void unmarshall_arguments(FILE *file, int indent, func_t *func,
+                          unsigned int *type_offset, enum pass pass)
 {
     unsigned int last_size = 0;
     var_t *var;
@@ -425,6 +447,26 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *ty
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     for (; var; *type_offset += get_size_typeformatstring_var(var), var = PREV_LINK(var))
     {
+        int in_attr = is_attr(var->attrs, ATTR_IN);
+        int out_attr = is_attr(var->attrs, ATTR_OUT);
+
+        if (!in_attr && !out_attr)
+            in_attr = 1;
+
+        switch (pass)
+        {
+        case PASS_IN:
+            if (!in_attr)
+                continue;
+            break;
+        case PASS_OUT:
+            if (!out_attr)
+                continue;
+            break;
+        case PASS_RETURN:
+            break;
+        }
+
         if (var->ptr_level == 0 && !var->array)
         {
             unsigned int size;
