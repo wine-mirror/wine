@@ -115,7 +115,7 @@ const char* get_name(const var_t *v)
   return v->name;
 }
 
-static void write_array(FILE *h, const expr_t *v, int field)
+void write_array(FILE *h, const expr_t *v, int field)
 {
   if (!v) return;
   while (NEXT_LINK(v)) v = NEXT_LINK(v);

@@ -210,6 +210,8 @@ static void write_function_stubs(type_t *iface)
         print_client("_StubMsg.BufferStart = (unsigned char *)_RpcMessage.Buffer;\n");
         print_client("_StubMsg.BufferEnd = _StubMsg.BufferStart + _RpcMessage.BufferLength;\n\n");
 
+        unmarshall_arguments(client, indent, func, &type_offset, PASS_OUT);
+
         /* unmarshal return value */
         if (!is_void(def->type, NULL))
         {

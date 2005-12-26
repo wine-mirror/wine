@@ -153,6 +153,7 @@ static void write_function_stubs(type_t *iface)
                 write_type(server, var->type, var, var->tname);
                 fprintf(server, " ");
                 write_name(server, var);
+                write_array(server, var->array, 0);
                 fprintf(server, ";\n");
 
                 var = PREV_LINK(var);
@@ -292,6 +293,8 @@ static void write_function_stubs(type_t *iface)
             print_server("_StubMsg.Buffer = (unsigned char *)_pRpcMessage->Buffer;\n");
             fprintf(server, "\n");
         }
+
+        marshall_arguments(server, indent, func, &type_offset, PASS_OUT);
 
         /* marshall the return value */
         if (!is_void(def->type, NULL))
