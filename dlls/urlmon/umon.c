@@ -880,8 +880,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
     if(url.nScheme == INTERNET_SCHEME_HTTP
        || url.nScheme== INTERNET_SCHEME_HTTPS
        || url.nScheme== INTERNET_SCHEME_FTP
-       || url.nScheme == INTERNET_SCHEME_GOPHER
-       || url.nScheme == INTERNET_SCHEME_FILE)
+       || url.nScheme == INTERNET_SCHEME_GOPHER)
         return URLMonikerImpl_BindToStorage_hack(This->URLName, pbc, pmkToLeft, riid, ppvObject);
 
     TRACE("(%p)->(%p %p %s %p)\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppvObject);
@@ -1198,9 +1197,20 @@ static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszLeft
             HeapFree(GetProcessHeap(), 0, This->URLName);
             return hres;
         }
+    }else {
+        /* FIXME:
+         * We probably should use CoInternetParseUrl or something similar here.
+         */
+
+        static const WCHAR wszFile[] = {'f','i','l','e',':','/','/',};
+
+        /* file protocol is a special case */
+        if(sizeStr > sizeof(wszFile)/sizeof(WCHAR)
+                && !memcmp(lpszURLName, wszFile, sizeof(wszFile)))
+            UrlCanonicalizeW(lpszURLName, This->URLName, &sizeStr, URL_FILE_USE_PATHURL);
+        else
+            strcpyW(This->URLName,lpszURLName);
     }
-    else
-        strcpyW(This->URLName,lpszURLName);
 
     URLMON_LockModule();
 
