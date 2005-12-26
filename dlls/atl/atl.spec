@@ -22,7 +22,7 @@
 27 stub AtlHiMetricToPixel
 28 stub AtlPixelToHiMetric
 29 stub AtlDevModeW2A
-30 stub AtlComPtrAssign
+30 stdcall AtlComPtrAssign(ptr ptr)
 31 stub AtlComQIPtrAssign
 32 stdcall AtlInternalQueryInterface(ptr ptr ptr ptr)
 34 stub AtlGetVersion

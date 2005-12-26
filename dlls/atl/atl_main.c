@@ -73,6 +73,10 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE 
     pM->m_pObjMap = p;
     pM->m_hHeap = GetProcessHeap();
 
+    InitializeCriticalSection(&pM->u.m_csTypeInfoHolder);
+    InitializeCriticalSection(&pM->m_csWindowCreate);
+    InitializeCriticalSection(&pM->m_csObjMap);
+
     /* call mains */
     i = 0;
     if (pM->m_pObjMap != NULL  && size > ATLVer1Size)
@@ -178,6 +182,17 @@ BOOL WINAPI AtlAxWinInit(void)
 {
     FIXME("Try use native atl.dll if possible\n");
     return FALSE;
+}
+
+
+IUnknown* WINAPI AtlComPtrAssign(IUnknown** pp, IUnknown *p)
+{
+    TRACE("(%p %p)\n", pp, p);
+
+    if (p) IUnknown_AddRef(p);
+    if (*pp) IUnknown_Release(*pp);
+    *pp = p;
+    return p;
 }
 
 
