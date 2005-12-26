@@ -428,11 +428,32 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
             }
             else
             {
+                const char *ndrtype;
+
                 switch (var->type->type)
                 {
+                case RPC_FC_STRUCT:
+                    ndrtype = "SimpleStruct";
+                    break;
+                case RPC_FC_CSTRUCT:
+                case RPC_FC_CPSTRUCT:
+                    ndrtype = "ConformantStruct";
+                    break;
+                case RPC_FC_CVSTRUCT:
+                    ndrtype = "ConformantVaryingStruct";
+                    break;
+                case RPC_FC_BOGUS_STRUCT:
+                    ndrtype = "ComplexStruct";
+                    break;
                 default:
-                    error("marshall_arguments: Unsupported type: %s (0x%02x, ptr_level: 1)\n", var->name, var->type->type);
+                    error("marshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
+                        var->name, var->type->type, var->ptr_level);
+                    ndrtype = NULL;
                 }
+
+                print_file(file, indent,
+                    "Ndr%sMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                    ndrtype, var->name, *type_offset);
             }
             last_size = 1;
         }
@@ -583,12 +604,32 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
             }
             else
             {
+                const char *ndrtype;
+
                 switch (var->type->type)
                 {
+                case RPC_FC_STRUCT:
+                    ndrtype = "SimpleStruct";
+                    break;
+                case RPC_FC_CSTRUCT:
+                case RPC_FC_CPSTRUCT:
+                    ndrtype = "ConformantStruct";
+                    break;
+                case RPC_FC_CVSTRUCT:
+                    ndrtype = "ConformantVaryingStruct";
+                    break;
+                case RPC_FC_BOGUS_STRUCT:
+                    ndrtype = "ComplexStruct";
+                    break;
                 default:
                     error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
                         var->name, var->type->type, var->ptr_level);
+                    ndrtype = NULL;
                 }
+
+                print_file(file, indent,
+                    "Ndr%sUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
+                    ndrtype, var->name, *type_offset);
             }
             last_size = 1;
         }
