@@ -1145,8 +1145,6 @@ static const char * typekind_desc[] =
 static void dump_TLBFuncDescOne(const TLBFuncDesc * pfd)
 {
   int i;
-  if (!TRACE_ON(typelib))
-      return;
   MESSAGE("%s(%u)\n", debugstr_w(pfd->Name), pfd->funcdesc.cParams);
   for (i=0;i<pfd->funcdesc.cParams;i++)
       MESSAGE("\tparm%d: %s\n",i,debugstr_w(pfd->pParamDesc[i].Name));
@@ -1282,14 +1280,16 @@ static void dump_DispParms(const DISPPARAMS * pdp)
 static void dump_TypeInfo(const ITypeInfoImpl * pty)
 {
     TRACE("%p ref=%lu\n", pty, pty->ref);
+    TRACE("%s %s\n", debugstr_w(pty->Name), debugstr_w(pty->DocString));
     TRACE("attr:%s\n", debugstr_guid(&(pty->TypeAttr.guid)));
     TRACE("kind:%s\n", typekind_desc[pty->TypeAttr.typekind]);
     TRACE("fct:%u var:%u impl:%u\n",
       pty->TypeAttr.cFuncs, pty->TypeAttr.cVars, pty->TypeAttr.cImplTypes);
+    TRACE("wTypeFlags: 0x%04x\n", pty->TypeAttr.wTypeFlags);
     TRACE("parent tlb:%p index in TLB:%u\n",pty->pTypeLib, pty->index);
-    TRACE("%s %s\n", debugstr_w(pty->Name), debugstr_w(pty->DocString));
     if (pty->TypeAttr.typekind == TKIND_MODULE) TRACE("dllname:%s\n", debugstr_w(pty->DllName));
-    dump_TLBFuncDesc(pty->funclist);
+    if (TRACE_ON(ole))
+        dump_TLBFuncDesc(pty->funclist);
     dump_TLBVarDesc(pty->varlist);
     dump_TLBImplType(pty->impltypelist);
 }
@@ -2968,7 +2968,8 @@ static SLTG_TypeInfoTail *SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 	if(pFunc->next == 0xffff) break;
     }
     pTI->TypeAttr.cFuncs = num;
-    dump_TLBFuncDesc(pTI->funclist);
+    if (TRACE_ON(typelib))
+        dump_TLBFuncDesc(pTI->funclist);
     return (SLTG_TypeInfoTail*)(pFirstItem + pMemHeader->cbExtra);
 }
 
@@ -5593,7 +5594,8 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
     for(pFDesc=This->funclist; pFDesc; pFDesc=pFDesc->next)
         if(pFDesc->funcdesc.memid==memid){
 	    dump_TypeInfo(This);
-	    dump_TLBFuncDescOne(pFDesc);
+	    if (TRACE_ON(ole))
+		dump_TLBFuncDescOne(pFDesc);
 
 	    if (pBstrDllName)
 		*pBstrDllName = SysAllocString(This->DllName);
