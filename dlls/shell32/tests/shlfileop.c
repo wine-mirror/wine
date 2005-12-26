@@ -75,8 +75,12 @@ static void init_shfo_tests(void)
     createTestFile("test1.txt");
     createTestFile("test2.txt");
     createTestFile("test3.txt");
+    createTestFile("test_5.txt");
     CreateDirectoryA("test4.txt", NULL);
     CreateDirectoryA("testdir2", NULL);
+    CreateDirectoryA("testdir2\\nested", NULL);
+    createTestFile("testdir2\\one.txt");
+    createTestFile("testdir2\\nested\\two.txt");
 }
 
 /* cleans after tests */
@@ -85,17 +89,22 @@ static void clean_after_shfo_tests(void)
     DeleteFileA("test1.txt");
     DeleteFileA("test2.txt");
     DeleteFileA("test3.txt");
+    DeleteFileA("test_5.txt");
     DeleteFileA("test4.txt\\test1.txt");
     DeleteFileA("test4.txt\\test2.txt");
     DeleteFileA("test4.txt\\test3.txt");
     RemoveDirectoryA("test4.txt");
+    DeleteFileA("testdir2\\one.txt");
     DeleteFileA("testdir2\\test1.txt");
     DeleteFileA("testdir2\\test2.txt");
     DeleteFileA("testdir2\\test3.txt");
     DeleteFileA("testdir2\\test4.txt\\test1.txt");
+    DeleteFileA("testdir2\\nested\\two.txt");
     RemoveDirectoryA("testdir2\\test4.txt");
+    RemoveDirectoryA("testdir2\\nested");
     RemoveDirectoryA("testdir2");
-    DeleteFileA("nonexistent\\test2.txt");
+    DeleteFileA("nonexistent\\notreal\\test2.txt");
+    RemoveDirectoryA("nonexistent\\notreal");
     RemoveDirectoryA("nonexistent");
 }
 
@@ -180,8 +189,8 @@ static void test_delete(void)
     {
         ok(!SHFileOperation(&shfo), "Failed to delete files\n");
         ok(!file_exists("test1.txt"), "test1.txt should be removed\n");
+        ok(!file_exists("test_5.txt"), "test_5.txt should be removed\n");
     }
-    ok(!file_exists("test_5.txt"), "test_5.txt should be removed\n");
     ok(file_exists("test4.txt"), "test4.txt should not be removed\n");
 
     /* FOF_FILESONLY only deletes a dir if explicitly specified */
@@ -191,8 +200,8 @@ static void test_delete(void)
     {
         ok(!SHFileOperation(&shfo), "Failed to delete files\n");
         ok(!file_exists("test4.txt"), "test4.txt should be removed\n");
+        ok(!file_exists("test_5.txt"), "test_5.txt should be removed\n");
     }
-    ok(!file_exists("test_5.txt"), "test_5.txt should be removed\n");
     ok(file_exists("test1.txt"), "test1.txt should not be removed\n");
 
     /* try to delete an invalid filename */
@@ -251,9 +260,9 @@ static void test_delete(void)
     todo_wine
     {
         ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", ret);
+        ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
+        ok(!file_exists("testdir2\\nested"), "Expected testdir2\\nested to exist\n");
     }
-    ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
-    ok(!file_exists("testdir2\\nested"), "Expected testdir2\\nested to exist\n");
 }
 
 /* tests the FO_RENAME action */
@@ -331,6 +340,22 @@ static void test_rename(void)
     ok(retval == ERROR_GEN_FAILURE, "Expected ERROR_GEN_FAILURE, got %ld\n", retval);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
     ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
+
+    /* pFrom doesn't exist */
+    shfo.pFrom = "idontexist\0";
+    shfo.pTo = "newfile\0";
+    retval = SHFileOperationA(&shfo);
+    ok(retval == 1026, "Expected 1026, got %ld\n", retval);
+    ok(!file_exists("newfile"), "Expected newfile to not exist\n");
+
+    /* pTo already exist */
+    shfo.pFrom = "test1.txt\0";
+    shfo.pTo = "test2.txt\0";
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_ALREADY_EXISTS, "Expected ERROR_ALREADY_EXISTS, got %ld\n", retval);
+    }
 
     /* pFrom is valid, but pTo is empty */
     shfo.pFrom = "test1.txt\0";
@@ -541,6 +566,18 @@ static void test_copy(void)
     ok(DeleteFile("testdir2\\b.txt"), "Expected testdir2\\b.txt to exist\n");
     ok(RemoveDirectory("testdir2\\c.txt"), "Expected testdir2\\c.txt to exist\n");
 
+    /* try many dest files without FOF_MULTIDESTFILES flag */
+    shfo.pFrom = "test1.txt\0test2.txt\0test3.txt\0";
+    shfo.pTo = "a.txt\0b.txt\0c.txt\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    shfo.fFlags &= ~FOF_MULTIDESTFILES;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+    }
+    ok(!file_exists("a.txt"), "Expected a.txt to not exist\n");
+
     /* try a glob */
     shfo.pFrom = "test?.txt\0";
     shfo.pTo = "testdir2\0";
@@ -660,7 +697,8 @@ static void test_copy(void)
     retval = SHFileOperation(&shfo);
     todo_wine
     {
-        ok(retval == 113, "Expected 113, got %ld\n", retval);
+        ok(retval == ERROR_NO_MORE_SEARCH_HANDLES,
+           "Expected ERROR_NO_MORE_SEARCH_HANDLES, got %ld\n", retval);
         ok(!shfo.fAnyOperationsAborted, "Expected no operations to be aborted\n");
         ok(DeleteFile("b.txt"), "Expected b.txt to exist\n");
     }
@@ -730,6 +768,7 @@ static void test_copy(void)
     retval = SHFileOperation(&shfo);
     ok(retval == 1026, "Expected 1026, got %ld\n", retval);
     ok(!file_exists("nonexistent\\e.txt"), "Expected nonexistent\\e.txt to not exist\n");
+    ok(!file_exists("nonexistent"), "Expected nonexistent to not exist\n");
 }
 
 /* tests the FO_MOVE action */
@@ -883,7 +922,7 @@ static void test_move(void)
     {
         ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
     }
-    ok(!file_exists("dir1"), "Expected dir1 to exist\n");
+    ok(!file_exists("dir1"), "Expected dir1 to not exist\n");
 
     /* try to overwrite an existing file */
     shfo.pTo = "test3.txt\0";
