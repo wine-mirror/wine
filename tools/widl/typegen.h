@@ -29,7 +29,7 @@ enum pass
 
 void write_procformatstring(FILE *file, type_t *iface);
 void write_typeformatstring(FILE *file, type_t *iface);
-unsigned int get_required_buffer_size(type_t *type);
+unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment);
 void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type_offset, enum pass pass);
 void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type_offset, enum pass pass);
 size_t get_size_procformatstring_var(var_t *var);

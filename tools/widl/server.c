@@ -101,6 +101,7 @@ static void write_function_stubs(type_t *iface)
     while (func)
     {
         var_t *def = func->def;
+        unsigned long buffer_size = 0;
 
         /* check for a defined binding handle */
         explicit_handle_var = get_explicit_handle_var(func);
@@ -198,7 +199,7 @@ static void write_function_stubs(type_t *iface)
             indent -= 2;
             fprintf(server, "\n");
 
-            unmarshall_arguments(server, indent, func, &type_offset, PASS_OUT);
+            unmarshall_arguments(server, indent, func, &type_offset, PASS_IN);
         }
 
         print_server("if (_StubMsg.Buffer > _StubMsg.BufferEnd)\n");
@@ -252,11 +253,34 @@ static void write_function_stubs(type_t *iface)
             fprintf(server, "();\n");
         }
 
-        /* marshall the return value */
+        if (func->args)
+        {
+            var_t *var = func->args;
+            while (NEXT_LINK(var)) var = NEXT_LINK(var);
+            while (var)
+            {
+                if (is_attr(var->attrs, ATTR_OUT))
+                {
+                    unsigned int alignment;
+                    buffer_size += get_required_buffer_size(var, &alignment);
+                    buffer_size += alignment;
+                }
+        
+                var = PREV_LINK(var);
+            }
+        }
+
         if (!is_void(def->type, NULL))
         {
+            unsigned int alignment;
+            buffer_size += get_required_buffer_size(def, &alignment);
+            buffer_size += alignment;
+        }
+
+        if (buffer_size)
+        {
             fprintf(server, "\n");
-            print_server("_StubMsg.BufferLength = %uU;\n", get_required_buffer_size(def->type));
+            print_server("_StubMsg.BufferLength = %uU;\n", buffer_size);
             print_server("_pRpcMessage->BufferLength = _StubMsg.BufferLength;\n");
             fprintf(server, "\n");
             print_server("_Status = I_RpcGetBuffer(_pRpcMessage);\n");
@@ -267,7 +291,11 @@ static void write_function_stubs(type_t *iface)
             fprintf(server, "\n");
             print_server("_StubMsg.Buffer = (unsigned char *)_pRpcMessage->Buffer;\n");
             fprintf(server, "\n");
+        }
 
+        /* marshall the return value */
+        if (!is_void(def->type, NULL))
+        {
             print_server("*(");
             write_type(server, def->type, def, def->tname);
             fprintf(server, " *)_StubMsg.Buffer = _RetVal;\n");

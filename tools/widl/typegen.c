@@ -253,32 +253,43 @@ void write_typeformatstring(FILE *file, type_t *iface)
 }
 
 
-unsigned int get_required_buffer_size(type_t *type)
+unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment)
 {
-    switch(type->type)
+    *alignment = 0;
+    if (var->ptr_level == 0 && !var->array)
     {
+        switch (var->type->type)
+        {
         case RPC_FC_BYTE:
         case RPC_FC_CHAR:
+        case RPC_FC_USMALL:
+        case RPC_FC_SMALL:
+            return 1;
+
         case RPC_FC_WCHAR:
         case RPC_FC_USHORT:
         case RPC_FC_SHORT:
-        case RPC_FC_USMALL:
-        case RPC_FC_SMALL:
+            *alignment = 2;
+            return 2;
+
         case RPC_FC_ULONG:
         case RPC_FC_LONG:
         case RPC_FC_FLOAT:
-        case RPC_FC_IGNORE:
         case RPC_FC_ERROR_STATUS_T:
+            *alignment = 4;
             return 4;
 
         case RPC_FC_HYPER:
         case RPC_FC_DOUBLE:
+            *alignment = 8;
             return 8;
 
         default:
-            error("Unknown/unsupported type: %s (0x%02x)\n", type->name, type->type);
+            error("get_required_buffer_size: Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
             return 0;
+        }
     }
+    return 0;
 }
 
 void marshall_arguments(FILE *file, int indent, func_t *func,
