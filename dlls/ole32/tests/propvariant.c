@@ -140,7 +140,7 @@ static void test_validtypes(void)
     hr = PropVariantClear(&propvar);
     if (hr == S_OK)
     {
-        propvar.vt = VT_I8;
+        propvar.vt = VT_I8 | VT_ARRAY;
         hr = PropVariantClear(&propvar);
         if (hr == S_OK)
         {
