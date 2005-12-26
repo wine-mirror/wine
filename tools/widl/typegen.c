@@ -351,8 +351,8 @@ void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type
 
             last_size = size;
         }
-        else if (var->ptr_level == 1 ||
-            (var->ptr_level == 0 && var->array && !NEXT_LINK(var->array)))
+        else if ((var->ptr_level == 1 && !var->array) ||
+            (var->ptr_level == 0 && var->array))
         {
             if (is_attr(var->attrs, ATTR_STRING))
             {
@@ -367,6 +367,32 @@ void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type
                 default:
                     error("marshall_arguments: Unsupported [string] type: %s (0x%02x, ptr_level: 1)\n", var->name, var->type->type);
                 }
+            }
+            else if (var->array)
+            {
+                const expr_t *length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
+                const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+                const char *array_type;
+                int has_length = length_is && (length_is->type != EXPR_VOID);
+                int has_size = size_is && (size_is->type != EXPR_VOID) && !var->array->is_const;
+
+                if (NEXT_LINK(var->array)) /* multi-dimensional array */
+                    array_type = "ComplexArray";
+                else
+                {
+                    if (!has_length && !has_size)
+                        array_type = "FixedArray";
+                    else if (has_length && !has_size)
+                        array_type = "VaryingArray";
+                    else if (!has_length && has_size)
+                        array_type = "ConformantArray";
+                    else
+                        array_type = "ConformantVaryingArray";
+                }
+
+                print_file(file, indent,
+                    "Ndr%sMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                    array_type, var->name, *type_offset);
             }
             else
             {
@@ -383,6 +409,7 @@ void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type
             error("marshall_arguments: Pointer level %d not supported for variable %s\n", var->ptr_level, var->name);
             last_size = 1;
         }
+        fprintf(file, "\n");
     }
 }
 
@@ -457,8 +484,8 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *ty
 
             last_size = size;
         }
-        else if (var->ptr_level == 1 ||
-            (var->ptr_level == 0 && var->array && !NEXT_LINK(var->array)))
+        else if ((var->ptr_level == 1 && !var->array) ||
+            (var->ptr_level == 0 && var->array))
         {
             if (is_attr(var->attrs, ATTR_STRING))
             {
@@ -471,15 +498,43 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *ty
                         var->name, *type_offset);
                     break;
                 default:
-                    error("unmarshall_arguments: Unsupported [string] type: %s (0x%02x, ptr_level: 1)\n", var->name, var->type->type);
+                    error("unmarshall_arguments: Unsupported [string] type: %s (0x%02x, ptr_level: %d)\n",
+                        var->name, var->type->type, var->ptr_level);
                 }
+            }
+            else if (var->array)
+            {
+                const expr_t *length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
+                const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+                const char *array_type;
+                int has_length = length_is && (length_is->type != EXPR_VOID);
+                int has_size = size_is && (size_is->type != EXPR_VOID) && !var->array->is_const;
+
+                if (NEXT_LINK(var->array)) /* multi-dimensional array */
+                    array_type = "ComplexArray";
+                else
+                {
+                    if (!has_length && !has_size)
+                        array_type = "FixedArray";
+                    else if (has_length && !has_size)
+                        array_type = "VaryingArray";
+                    else if (!has_length && has_size)
+                        array_type = "ConformantArray";
+                    else
+                        array_type = "ConformantVaryingArray";
+                }
+
+                print_file(file, indent,
+                    "Ndr%sUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
+                    array_type, var->name, *type_offset);
             }
             else
             {
                 switch (var->type->type)
                 {
                 default:
-                    error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: 1)\n", var->name, var->type->type);
+                    error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
+                        var->name, var->type->type, var->ptr_level);
                 }
             }
             last_size = 1;
@@ -489,6 +544,7 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *ty
             error("unmarshall_arguments: Pointer level %d not supported for variable %s\n", var->ptr_level, var->name);
             last_size = 1;
         }
+        fprintf(file, "\n");
     }
 }
 
