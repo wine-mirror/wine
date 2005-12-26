@@ -293,7 +293,7 @@ void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     for (; var; *type_offset += get_size_typeformatstring_var(var), var = PREV_LINK(var))
     {
-        if (var->ptr_level == 0)
+        if (var->ptr_level == 0 && !var->array)
         {
             unsigned int size;
             unsigned int alignment = 0;
@@ -351,7 +351,8 @@ void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type
 
             last_size = size;
         }
-        else if (var->ptr_level == 1)
+        else if (var->ptr_level == 1 ||
+            (var->ptr_level == 0 && var->array && !NEXT_LINK(var->array)))
         {
             if (is_attr(var->attrs, ATTR_STRING))
             {
@@ -397,7 +398,7 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *ty
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     for (; var; *type_offset += get_size_typeformatstring_var(var), var = PREV_LINK(var))
     {
-        if (var->ptr_level == 0)
+        if (var->ptr_level == 0 && !var->array)
         {
             unsigned int size;
             unsigned int alignment = 0;
@@ -456,7 +457,8 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *ty
 
             last_size = size;
         }
-        else if (var->ptr_level == 1)
+        else if (var->ptr_level == 1 ||
+            (var->ptr_level == 0 && var->array && !NEXT_LINK(var->array)))
         {
             if (is_attr(var->attrs, ATTR_STRING))
             {
