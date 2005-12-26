@@ -291,7 +291,7 @@ void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type
 
     var = func->args;
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    while (var)
+    for (; var; var = PREV_LINK(var))
     {
         if (var->ptr_level == 0)
         {
@@ -382,8 +382,6 @@ void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type
             error("marshall_arguments: Pointer level %d not supported for variable %s\n", var->ptr_level, var->name);
             last_size = 1;
         }
-
-        var = PREV_LINK(var);
     }
 }
 
@@ -397,7 +395,7 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *ty
 
     var = func->args;
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    while (var)
+    for (; var; var = PREV_LINK(var))
     {
         if (var->ptr_level == 0)
         {
@@ -489,8 +487,6 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *ty
             error("unmarshall_arguments: Pointer level %d not supported for variable %s\n", var->ptr_level, var->name);
             last_size = 1;
         }
-
-        var = PREV_LINK(var);
     }
 }
 
