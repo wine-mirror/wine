@@ -403,32 +403,33 @@ static void write_formatdesc( const char *str )
 
 static void write_formatstringsdecl(type_t *iface)
 {
-    func_t *func;
-    var_t *var;
     int byte_count = 1;
 
     print_client("#define TYPE_FORMAT_STRING_SIZE %d\n", 3); /* FIXME */
 
     /* determine the proc format string size */
-    func = iface->funcs;
-    while (NEXT_LINK(func)) func = NEXT_LINK(func);
-    while (func)
+    if (iface->funcs)
     {
-        /* argument list size */
-        if (func->args)
+        func_t *func = iface->funcs;
+        while (NEXT_LINK(func)) func = NEXT_LINK(func);
+        while (func)
         {
-            var = func->args;
-            while (NEXT_LINK(var)) var = NEXT_LINK(var);
-            while (var)
+            /* argument list size */
+            if (func->args)
             {
-                byte_count += 2; /* FIXME: determine real size */
-                var = PREV_LINK(var);
+                var_t *var = func->args;
+                while (NEXT_LINK(var)) var = NEXT_LINK(var);
+                while (var)
+                {
+                    byte_count += 2; /* FIXME: determine real size */
+                    var = PREV_LINK(var);
+                }
             }
+    
+            /* return value size */
+            byte_count += 2; /* FIXME: determine real size */
+            func = PREV_LINK(func);
         }
-
-        /* return value size */
-        byte_count += 2; /* FIXME: determine real size */
-        func = PREV_LINK(func);
     }
     print_client("#define PROC_FORMAT_STRING_SIZE %d\n", byte_count);
 
@@ -492,15 +493,18 @@ void write_client(ifref_t *ifaces)
         fprintf(client, " */\n");
         fprintf(client, "\n");
 
-        write_formatstringsdecl(iface->iface);
-        write_implicithandledecl(iface->iface);
-
-        write_clientinterfacedecl(iface->iface);
-        write_stubdescdecl(iface->iface);
-        write_bindinghandledecl(iface->iface);
-
-        write_function_stubs(iface->iface);
-        write_stubdescriptor(iface->iface);
+        if (iface->iface->funcs)
+        {
+            write_formatstringsdecl(iface->iface);
+            write_implicithandledecl(iface->iface);
+    
+            write_clientinterfacedecl(iface->iface);
+            write_stubdescdecl(iface->iface);
+            write_bindinghandledecl(iface->iface);
+    
+            write_function_stubs(iface->iface);
+            write_stubdescriptor(iface->iface);
+        }
 
         print_client("#if !defined(__RPC_WIN32__)\n");
         print_client("#error  Invalid build platform for this stub.\n");

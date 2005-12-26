@@ -119,7 +119,6 @@ static size_t write_procformatstring_var(FILE *file, int indent, var_t *var, int
 void write_procformatstring(FILE *file, type_t *iface)
 {
     int indent = 0;
-    func_t *func = iface->funcs;
     var_t *var;
     unsigned int type_offset = 2;
 
@@ -130,32 +129,34 @@ void write_procformatstring(FILE *file, type_t *iface)
     print_file(file, indent, "{\n");
     indent++;
 
-    while (NEXT_LINK(func)) func = NEXT_LINK(func);
-    while (func)
+    if (iface->funcs)
     {
-        /* emit argument data */
-        if (func->args)
+        func_t *func = iface->funcs;
+        while (NEXT_LINK(func)) func = NEXT_LINK(func);
+        for (; func; func = PREV_LINK(func))
         {
-            var = func->args;
-            while (NEXT_LINK(var)) var = NEXT_LINK(var);
-            while (var)
+            /* emit argument data */
+            if (func->args)
             {
-                write_procformatstring_var(file, indent, var, FALSE, &type_offset);
-                var = PREV_LINK(var);
+                var = func->args;
+                while (NEXT_LINK(var)) var = NEXT_LINK(var);
+                while (var)
+                {
+                    write_procformatstring_var(file, indent, var, FALSE, &type_offset);
+                    var = PREV_LINK(var);
+                }
             }
+    
+            /* emit return value data */
+            var = func->def;
+            if (is_void(var->type, NULL))
+            {
+                print_file(file, indent, "0x5b,    /* FC_END */\n");
+                print_file(file, indent, "0x5c,    /* FC_PAD */\n");
+            }
+            else
+                write_procformatstring_var(file, indent, var, TRUE, &type_offset);
         }
-
-        /* emit return value data */
-        var = func->def;
-        if (is_void(var->type, NULL))
-        {
-            print_file(file, indent, "0x5b,    /* FC_END */\n");
-            print_file(file, indent, "0x5c,    /* FC_PAD */\n");
-        }
-        else
-            write_procformatstring_var(file, indent, var, TRUE, &type_offset);
-
-        func = PREV_LINK(func);
     }
 
     print_file(file, indent, "0x0\n");
@@ -214,7 +215,6 @@ static size_t write_typeformatstring_var(FILE *file, int indent, var_t *var)
 void write_typeformatstring(FILE *file, type_t *iface)
 {
     int indent = 0;
-    func_t *func = iface->funcs;
     var_t *var;
 
     print_file(file, indent, "static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString =\n");
@@ -225,20 +225,23 @@ void write_typeformatstring(FILE *file, type_t *iface)
     indent++;
     print_file(file, indent, "NdrFcShort(0x0),\n");
 
-    while (NEXT_LINK(func)) func = NEXT_LINK(func);
-    while (func)
+    if (iface->funcs)
     {
-        if (func->args)
+        func_t *func = iface->funcs;
+        while (NEXT_LINK(func)) func = NEXT_LINK(func);
+        for (; func; func = PREV_LINK(func))
         {
-            var = func->args;
-            while (NEXT_LINK(var)) var = NEXT_LINK(var);
-            while (var)
+            if (func->args)
             {
-                write_typeformatstring_var(file, indent, var);
-                var = PREV_LINK(var);
+                var = func->args;
+                while (NEXT_LINK(var)) var = NEXT_LINK(var);
+                while (var)
+                {
+                    write_typeformatstring_var(file, indent, var);
+                    var = PREV_LINK(var);
+                }
             }
         }
-        func = PREV_LINK(func);
     }
 
     print_file(file, indent, "0x0\n");
