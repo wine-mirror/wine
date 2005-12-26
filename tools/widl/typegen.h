@@ -25,3 +25,5 @@ void write_typeformatstring(FILE *file, type_t *iface);
 unsigned int get_required_buffer_size(type_t *type);
 void marshall_arguments(FILE *file, int indent, func_t *func);
 void unmarshall_arguments(FILE *file, int indent, func_t *func);
+size_t get_size_procformatstring_var(var_t *var);
+size_t get_size_typeformatstring_var(var_t *var);

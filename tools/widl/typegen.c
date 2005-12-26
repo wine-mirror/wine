@@ -46,6 +46,8 @@ static int print_file(FILE *file, int indent, const char *format, ...)
     va_list va;
     int i, r;
 
+    if (!file) return 0;
+
     va_start(va, format);
     for (i = 0; i < indent; i++)
         fprintf(file, "    ");
@@ -54,13 +56,15 @@ static int print_file(FILE *file, int indent, const char *format, ...)
     return r;
 }
 
-static void write_procformatstring_var(FILE *file, int indent, var_t *var)
+static size_t write_procformatstring_var(FILE *file, int indent, var_t *var)
 {
+    size_t size;
     switch(var->type->type)
     {
 #define CASE_BASETYPE(fctype) \
     case RPC_##fctype: \
         print_file(file, indent, "0x%02x,    /* " #fctype " */\n", var->type->type); \
+        size = 2; /* includes param type prefix */ \
         break
 
     CASE_BASETYPE(FC_BYTE);
@@ -80,7 +84,9 @@ static void write_procformatstring_var(FILE *file, int indent, var_t *var)
 #undef CASE_BASETYPE
     default:
         error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
+        size = 0;
     }
+    return size;
 }
 
 void write_procformatstring(FILE *file, type_t *iface)
@@ -137,13 +143,13 @@ void write_procformatstring(FILE *file, type_t *iface)
 }
 
 
-static void write_typeformatstring_var(FILE *file, int indent, var_t *var)
+static size_t write_typeformatstring_var(FILE *file, int indent, var_t *var)
 {
     int ptr_level = var->ptr_level;
 
     /* basic types don't need a type format string */
     if (ptr_level == 0)
-        return;
+        return 0;
 
     if (ptr_level == 1)
     {
@@ -154,7 +160,7 @@ static void write_typeformatstring_var(FILE *file, int indent, var_t *var)
             print_file(file, indent, "0x11, 0x08,    /* FC_RP [simple_pointer] */\n"); \
             print_file(file, indent, "0x%02x,    /* " #fctype " */\n", var->type->type); \
             print_file(file, indent, "0x5c,          /* FC_PAD */\n"); \
-            break
+            return 4
         CASE_BASETYPE(FC_BYTE);
         CASE_BASETYPE(FC_CHAR);
         CASE_BASETYPE(FC_SMALL);
@@ -175,7 +181,10 @@ static void write_typeformatstring_var(FILE *file, int indent, var_t *var)
             error("write_typeformatstring_var: Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
         }
     }
+    error("write_typeformatstring_var: Pointer level %d not supported for variable %s\n", ptr_level, var->name);
+    return 0;
 }
+
 
 void write_typeformatstring(FILE *file, type_t *iface)
 {
@@ -388,4 +397,16 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func)
 
         var = PREV_LINK(var);
     }
+}
+
+
+size_t get_size_procformatstring_var(var_t *var)
+{
+    return write_procformatstring_var(NULL, 0, var);
+}
+
+
+size_t get_size_typeformatstring_var(var_t *var)
+{
+    return write_typeformatstring_var(NULL, 0, var);
 }

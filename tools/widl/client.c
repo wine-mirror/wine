@@ -270,11 +270,12 @@ static void write_function_stubs(type_t *iface)
             while (NEXT_LINK(var)) var = NEXT_LINK(var);
             while (var)
             {
-                proc_offset += 2; /* FIXME */
+                proc_offset += get_size_procformatstring_var(var);
                 var = PREV_LINK(var);
             }
         }
-        proc_offset += 2;  /* FIXME */
+        if (!is_void(def->type, NULL))
+            proc_offset += get_size_procformatstring_var(def);
 
         indent--;
         print_client("}\n");
