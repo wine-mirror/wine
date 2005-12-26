@@ -1350,6 +1350,42 @@ HRESULT WINAPI IsAsyncMoniker(IMoniker *pmk)
 }
 
 /***********************************************************************
+ *           BindAsyncMoniker (URLMON.@)
+ *
+ * Bind a bind status callback to an asynchronous URL Moniker.
+ *
+ * PARAMS
+ *  pmk           [I] Moniker object to bind status callback to
+ *  grfOpt        [I] Options, seems not used
+ *  pbsc          [I] Status callback to bind
+ *  iidResult     [I] Interface to return
+ *  ppvResult     [O] Resulting asynchronous moniker object
+ *
+ * RETURNS
+ *    Success: S_OK.
+ *    Failure: E_INVALIDARG, if any argument is invalid, or
+ *             E_OUTOFMEMORY if memory allocation fails.
+ */
+HRESULT WINAPI BindAsyncMoniker(IMoniker *pmk, DWORD grfOpt, IBindStatusCallback *pbsc, REFIID iidResult, LPVOID *ppvResult)
+{
+    LPBC pbc = NULL;
+    HRESULT hr = E_INVALIDARG;
+
+    if (pmk && ppvResult)
+    {
+        *ppvResult = NULL;
+
+        hr = CreateAsyncBindCtx(0, pbsc, NULL, &pbc);
+        if (hr == NOERROR)
+        {
+            hr = IMoniker_BindToObject(pmk, pbc, NULL, iidResult, ppvResult);
+            IBindCtx_Release(pbc);
+        }
+    }
+    return hr;
+}
+
+/***********************************************************************
  *           RegisterBindStatusCallback (URLMON.@)
  *
  * Register a bind status callback.
