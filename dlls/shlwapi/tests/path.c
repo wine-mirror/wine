@@ -60,10 +60,19 @@ const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"http://www.winehq.org/tests/../?query=x&return=y", 0, S_OK, "http://www.winehq.org/?query=x&return=y"},
     {"http://www.winehq.org/tests/..#example", 0, S_OK, "http://www.winehq.org/#example"},
     {"http://www.winehq.org/tests/../#example", 0, S_OK, "http://www.winehq.org/#example"},
+    {"http://www.winehq.org/tests\\../#example", 0, S_OK, "http://www.winehq.org/#example"},
+    {"http://www.winehq.org/tests/..\\#example", 0, S_OK, "http://www.winehq.org/#example"},
+    {"http://www.winehq.org\\tests/../#example", 0, S_OK, "http://www.winehq.org/#example"},
     {"http://www.winehq.org/tests/../#example", URL_DONT_SIMPLIFY, S_OK, "http://www.winehq.org/tests/../#example"},
     {"http://www.winehq.org/tests/foo bar", URL_ESCAPE_SPACES_ONLY| URL_DONT_ESCAPE_EXTRA_INFO , S_OK, "http://www.winehq.org/tests/foo%20bar"},
     {"http://www.winehq.org/tests/foo%20bar", URL_UNESCAPE , S_OK, "http://www.winehq.org/tests/foo bar"},
     {"file:///c:/tests/foo%20bar", URL_UNESCAPE , S_OK, "file:///c:/tests/foo bar"},
+    {"file:///c:/tests\\foo%20bar", URL_UNESCAPE , S_OK, "file:///c:/tests/foo bar"},
+    {"file:///c:/tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "file://c:\\tests\\foo bar"},
+    {"file://c:/tests/../tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "file://c:\\tests\\foo bar"},
+    {"file://c:/tests\\../tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "file://c:\\tests\\foo bar"},
+    {"file://c:/tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "file://c:\\tests\\foo bar"},
+    {"file:///c://tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "file://c:\\\\tests\\foo bar"}
 };
 
 typedef struct _TEST_URL_ESCAPE {
