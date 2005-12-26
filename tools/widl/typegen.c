@@ -41,6 +41,9 @@
 #include "widl.h"
 #include "typegen.h"
 
+static size_t get_size_typeformatstring_type(const type_t *type, int ptr_level,
+    const expr_t *array, const char *name);
+
 static int print_file(FILE *file, int indent, const char *format, ...)
 {
     va_list va;
@@ -56,21 +59,34 @@ static int print_file(FILE *file, int indent, const char *format, ...)
     return r;
 }
 
-static size_t write_procformatstring_var(FILE *file, int indent, var_t *var, int is_return, unsigned int *type_offset)
+static inline int type_has_ref(const type_t *type)
+{
+    return (type->type == 0 && type->ref);
+}
+
+static size_t write_procformatstring_type(FILE *file, int indent,
+    const type_t *type, int ptr_level, const expr_t *array, const char *name,
+    int is_in, int is_out, int is_return, unsigned int *type_offset)
 {
     size_t size;
-    if (var->ptr_level == 0 && !var->array)
+
+    if (ptr_level == 0 && type_has_ref(type))
+        return write_procformatstring_type(file, indent, type->ref, ptr_level,
+                                           array, name, is_in, is_out,
+                                           is_return, type_offset);
+
+    if (ptr_level == 0 && !array)
     {
         if (is_return)
             print_file(file, indent, "0x53,    /* FC_RETURN_PARAM_BASETYPE */\n");
         else
             print_file(file, indent, "0x4e,    /* FC_IN_PARAM_BASETYPE */\n");
 
-        switch(var->type->type)
+        switch(type->type)
         {
 #define CASE_BASETYPE(fctype) \
         case RPC_##fctype: \
-            print_file(file, indent, "0x%02x,    /* " #fctype " */\n", var->type->type); \
+            print_file(file, indent, "0x%02x,    /* " #fctype " */\n", RPC_##fctype); \
             size = 2; /* includes param type prefix */ \
             break
 
@@ -90,20 +106,17 @@ static size_t write_procformatstring_var(FILE *file, int indent, var_t *var, int
         CASE_BASETYPE(FC_ERROR_STATUS_T);
 #undef CASE_BASETYPE
         default:
-            error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
+            error("Unknown/unsupported type: %s (0x%02x)\n", name, type->type);
             size = 0;
         }
     }
     else
     {
-        int in_attr = is_attr(var->attrs, ATTR_IN);
-        int out_attr = is_attr(var->attrs, ATTR_OUT);
-
         if (is_return)
             print_file(file, indent, "0x52,    /* FC_RETURN_PARAM */\n");
-        else if (in_attr && out_attr)
+        else if (is_in && is_out)
             print_file(file, indent, "0x50,    /* FC_IN_OUT_PARAM */\n");
-        else if (out_attr)
+        else if (is_out)
             print_file(file, indent, "0x51,    /* FC_OUT_PARAM */\n");
         else
             print_file(file, indent, "0x4d,    /* FC_IN_PARAM */\n");
@@ -112,7 +125,7 @@ static size_t write_procformatstring_var(FILE *file, int indent, var_t *var, int
         print_file(file, indent, "NdrFcShort(0x%x),\n", *type_offset);
         size = 4; /* includes param type prefix */
     }
-    *type_offset += get_size_typeformatstring_var(var);
+    *type_offset += get_size_typeformatstring_type(type, ptr_level, array, name);
     return size;
 }
 
@@ -142,7 +155,14 @@ void write_procformatstring(FILE *file, type_t *iface)
                 while (NEXT_LINK(var)) var = NEXT_LINK(var);
                 while (var)
                 {
-                    write_procformatstring_var(file, indent, var, FALSE, &type_offset);
+                    int is_in = is_attr(var->attrs, ATTR_IN);
+                    int is_out = is_attr(var->attrs, ATTR_OUT);
+
+                    if (!is_in && !is_out) is_in = TRUE;
+                    write_procformatstring_type(file, indent, var->type,
+                        var->ptr_level, var->array, var->name,
+                        is_in, is_out, FALSE, &type_offset);
+
                     var = PREV_LINK(var);
                 }
             }
@@ -155,7 +175,9 @@ void write_procformatstring(FILE *file, type_t *iface)
                 print_file(file, indent, "0x5c,    /* FC_PAD */\n");
             }
             else
-                write_procformatstring_var(file, indent, var, TRUE, &type_offset);
+                write_procformatstring_type(file, indent, var->type,
+                    var->ptr_level, var->array, var->name, FALSE, FALSE, TRUE,
+                    &type_offset);
         }
     }
 
@@ -168,23 +190,26 @@ void write_procformatstring(FILE *file, type_t *iface)
 }
 
 
-static size_t write_typeformatstring_var(FILE *file, int indent, var_t *var)
+static size_t write_typeformatstring_type(FILE *file, int indent,
+    const type_t *type, int ptr_level, const expr_t *array, const char *name)
 {
-    int ptr_level = var->ptr_level;
+    if (ptr_level == 0 && type_has_ref(type))
+        return write_typeformatstring_type(file, indent,
+            type->ref, 0 /* FIXME */, array, name);
 
     /* basic types don't need a type format string */
-    if (ptr_level == 0 && !var->array)
+    if (ptr_level == 0 && !array)
         return 0;
 
-    if (ptr_level == 1 ||
-        (var->ptr_level == 0 && var->array && !NEXT_LINK(var->array)))
+    if ((ptr_level == 1 && !type_has_ref(type)) ||
+        (ptr_level == 0 && array && !NEXT_LINK(array)))
     {
-        switch (var->type->type)
+        switch (type->type)
         {
 #define CASE_BASETYPE(fctype) \
         case RPC_##fctype: \
             print_file(file, indent, "0x11, 0x08,    /* FC_RP [simple_pointer] */\n"); \
-            print_file(file, indent, "0x%02x,    /* " #fctype " */\n", var->type->type); \
+            print_file(file, indent, "0x%02x,    /* " #fctype " */\n", RPC_##fctype); \
             print_file(file, indent, "0x5c,          /* FC_PAD */\n"); \
             return 4
         CASE_BASETYPE(FC_BYTE);
@@ -204,10 +229,10 @@ static size_t write_typeformatstring_var(FILE *file, int indent, var_t *var)
         CASE_BASETYPE(FC_IGNORE);
         CASE_BASETYPE(FC_ERROR_STATUS_T);
         default:
-            error("write_typeformatstring_var: Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
+            error("write_typeformatstring_var: Unknown/unsupported type: %s (0x%02x)\n", name, type->type);
         }
     }
-    error("write_typeformatstring_var: Pointer level %d not supported for variable %s\n", ptr_level, var->name);
+    error("write_typeformatstring_var: Pointer level %d not supported for variable %s\n", ptr_level, name);
     return 0;
 }
 
@@ -237,7 +262,8 @@ void write_typeformatstring(FILE *file, type_t *iface)
                 while (NEXT_LINK(var)) var = NEXT_LINK(var);
                 while (var)
                 {
-                    write_typeformatstring_var(file, indent, var);
+                    write_typeformatstring_type(file, indent, var->type,
+                        var->ptr_level, var->array, var->name);
                     var = PREV_LINK(var);
                 }
             }
@@ -252,13 +278,14 @@ void write_typeformatstring(FILE *file, type_t *iface)
     print_file(file, indent, "\n");
 }
 
-
-unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment)
+static unsigned int get_required_buffer_size_type(
+    const type_t *type, int ptr_level, const expr_t *array,
+    const char *name, unsigned int *alignment)
 {
     *alignment = 0;
-    if (var->ptr_level == 0 && !var->array)
+    if (ptr_level == 0 && !array && !type_has_ref(type))
     {
-        switch (var->type->type)
+        switch (type->type)
         {
         case RPC_FC_BYTE:
         case RPC_FC_CHAR:
@@ -285,11 +312,18 @@ unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment)
             return 8;
 
         default:
-            error("get_required_buffer_size: Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
+            error("get_required_buffer_size: Unknown/unsupported type: %s (0x%02x)\n", name, type->type);
             return 0;
         }
     }
+    if (ptr_level == 0 && type_has_ref(type))
+        return get_required_buffer_size_type(type->ref, 0 /* FIXME */, array, name, alignment);
     return 0;
+}
+
+unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment)
+{
+    return get_required_buffer_size_type(var->type, var->ptr_level, var->array, var->name, alignment);
 }
 
 void marshall_arguments(FILE *file, int indent, func_t *func,
@@ -643,14 +677,23 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
 }
 
 
+static size_t get_size_typeformatstring_type(const type_t *type, int ptr_level,
+    const expr_t *array, const char *name)
+{
+    return write_typeformatstring_type(NULL, 0, type, ptr_level, array, name);
+}
+
+
 size_t get_size_procformatstring_var(var_t *var)
 {
     unsigned int type_offset = 2;
-    return write_procformatstring_var(NULL, 0, var, FALSE, &type_offset);
+    return write_procformatstring_type(NULL, 0, var->type,
+        var->ptr_level, var->array, var->name, FALSE, FALSE, FALSE, &type_offset);
 }
 
 
 size_t get_size_typeformatstring_var(var_t *var)
 {
-    return write_typeformatstring_var(NULL, 0, var);
+    return write_typeformatstring_type(NULL, 0, var->type, var->ptr_level,
+        var->array, var->name);
 }
