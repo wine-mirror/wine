@@ -413,7 +413,6 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
             fprintf(file, "_StubMsg.Buffer += sizeof(");
             write_type(file, var->type, var, var->tname);
             fprintf(file, ");\n");
-            fprintf(file, "\n");
 
             last_size = size;
         }
@@ -588,7 +587,6 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
             fprintf(file, "_StubMsg.Buffer += sizeof(");
             write_type(file, var->type, var, var->tname);
             fprintf(file, ");\n");
-            fprintf(file, "\n");
 
             last_size = size;
         }
