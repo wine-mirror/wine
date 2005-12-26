@@ -5326,41 +5326,44 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	switch (func_desc->funckind) {
 	case FUNC_PUREVIRTUAL:
 	case FUNC_VIRTUAL: {
-	    DWORD res;
-	    int   numargs, numargs2, argspos, args2pos;
-	    DWORD *args , *args2;
+            DWORD res;
+            int   numargs, numargs2, argspos, args2pos;
+            DWORD *args , *args2;
             VARIANT *rgvarg = HeapAlloc(GetProcessHeap(), 0, sizeof(VARIANT) * func_desc->cParams);
             memcpy(rgvarg,pDispParams->rgvarg,sizeof(VARIANT)*pDispParams->cArgs);
 
-	    hres = S_OK;
-	    numargs = 1; /* sizeof(thisptr) */
-	    numargs2 = 0;
-	    for (i = 0; i < func_desc->cParams; i++) {
+            hres = S_OK;
+            numargs = 1; /* sizeof(thisptr) */
+            numargs2 = 0;
+            for (i = 0; i < func_desc->cParams; i++)
+            {
                 TYPEDESC *tdesc = &func_desc->lprgelemdescParam[i].tdesc;
 
-		numargs += _argsize(tdesc->vt);
-		if (i>=pDispParams->cArgs) { /* arguments to return */
-		    if (tdesc->vt == VT_PTR) {
-		    	numargs2	+= _argsize(tdesc->u.lptdesc->vt);
-		    } else {
-			FIXME("The variant type here should have been VT_PTR, not vt %d\n", tdesc->vt);
-		    	numargs2	+= _argsize(tdesc->vt);
-		    }
-		}
-	    }
+                numargs += _argsize(tdesc->vt);
+                if (i>=pDispParams->cArgs) { /* arguments to return */
+                    if (tdesc->vt == VT_PTR) {
+                        numargs2	+= _argsize(tdesc->u.lptdesc->vt);
+                    } else {
+                        FIXME("The variant type here should have been VT_PTR, not vt %d\n", tdesc->vt);
+                        numargs2	+= _argsize(tdesc->vt);
+                    }
+                }
+            }
 
-	    args = HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*numargs);
-	    args2 = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DWORD)*numargs2);
+            args = HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*numargs);
+            args2 = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DWORD)*numargs2);
 
-	    args[0] = (DWORD)pIUnk;
-	    argspos = 1; args2pos = 0;
-	    for (i = 0; i < func_desc->cParams; i++) {
-		ELEMDESC *elemdesc = &(func_desc->lprgelemdescParam[i]);
-		TYPEDESC *tdesc = &(elemdesc->tdesc);
-		USHORT paramFlags = elemdesc->u.paramdesc.wParamFlags;
-		int arglen = _argsize(tdesc->vt);
+            args[0] = (DWORD)pIUnk;
+            argspos = 1; args2pos = 0;
+            for (i = 0; i < func_desc->cParams; i++)
+            {
+                ELEMDESC *elemdesc = &(func_desc->lprgelemdescParam[i]);
+                TYPEDESC *tdesc = &(elemdesc->tdesc);
+                USHORT paramFlags = elemdesc->u.paramdesc.wParamFlags;
+                int arglen = _argsize(tdesc->vt);
 
-		if (i<pDispParams->cArgs) {
+                if (i<pDispParams->cArgs)
+                {
                     VARIANT *arg = &rgvarg[pDispParams->cArgs-i-1];
 
                     if (paramFlags & PARAMFLAG_FOPT) {
@@ -5381,7 +5384,9 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     hres = _copy_arg(iface, tdesc, &args[argspos], arg, tdesc->vt);
                     if (FAILED(hres)) goto func_fail;
                     argspos += arglen;
-                } else if (paramFlags & PARAMFLAG_FOPT) {
+                }
+                else if (paramFlags & PARAMFLAG_FOPT)
+                {
                     VARIANT *arg = &rgvarg[i];
 
                     if (i < func_desc->cParams - func_desc->cParamsOpt)
@@ -5395,36 +5400,38 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     hres = _copy_arg(iface, tdesc, &args[argspos], arg, tdesc->vt);
                     if (FAILED(hres)) goto func_fail;
                     argspos += arglen;
-		} else {
-		    if (tdesc->vt == VT_PTR)
-			arglen = _argsize(tdesc->u.lptdesc->vt);
-		    else
-		    	FIXME("set %d to pointer for get (type is %d)\n",i,tdesc->vt);
+                }
+                else
+                {
+                    if (tdesc->vt == VT_PTR)
+                        arglen = _argsize(tdesc->u.lptdesc->vt);
+                    else
+                        FIXME("set %d to pointer for get (type is %d)\n",i,tdesc->vt);
 
-		    /* Supply pointers for the rest, so propertyget works*/
-		    args[argspos] = (DWORD)&args2[args2pos];
+                    /* Supply pointers for the rest, so propertyget works*/
+                    args[argspos] = (DWORD)&args2[args2pos];
 
-		    /* If pointer to variant, pass reference it. */
-		    if ((tdesc->vt == VT_PTR) &&
-			(tdesc->u.lptdesc->vt == VT_VARIANT) &&
-			pVarResult
+                    /* If pointer to variant, pass reference it. */
+                    if ((tdesc->vt == VT_PTR) &&
+                        (tdesc->u.lptdesc->vt == VT_VARIANT) &&
+                        pVarResult
                     )
                         args[argspos]= (DWORD)pVarResult;
-		    argspos	+= 1;
-		    args2pos	+= arglen;
-		}
-	    }
-	    if (func_desc->cParamsOpt < 0)
-		FIXME("Does not support optional parameters (%d)\n", func_desc->cParamsOpt);
+                    argspos	+= 1;
+                    args2pos	+= arglen;
+                }
+            }
+            if (func_desc->cParamsOpt < 0)
+                FIXME("Does not support optional parameters (%d)\n", func_desc->cParamsOpt);
 
-	    res = _invoke((*(FARPROC**)pIUnk)[func_desc->oVft/4],
-		    func_desc->callconv,
-		    numargs,
-		    args
-	    );
+            res = _invoke((*(FARPROC**)pIUnk)[func_desc->oVft/4],
+                    func_desc->callconv,
+                    numargs,
+                    args
+            );
 
-	    if (pVarResult) {
-		for (i = 0; i < func_desc->cParams; i++) {
+            if (pVarResult) {
+                for (i = 0; i < func_desc->cParams; i++) {
                     USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
                     if (wParamFlags & PARAMFLAG_FRETVAL) {
                         ELEMDESC *elemdesc = &func_desc->lprgelemdescParam[i];
@@ -5455,19 +5462,21 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                                 IUnknown_Release(*V_UNKNOWNREF(&varresult));
                         }
                         break;
-		    }
-		}
-	    }
+                    }
+                }
+            }
 
-	    if ((func_desc->elemdescFunc.tdesc.vt == VT_HRESULT) && FAILED(res)) {
-	        WARN("invoked function failed with error 0x%08lx\n", res);
-	        hres = DISP_E_EXCEPTION;
-	        if (pExcepInfo) pExcepInfo->scode = res;
-	    }
+            if ((func_desc->elemdescFunc.tdesc.vt == VT_HRESULT) && FAILED(res))
+            {
+                WARN("invoked function failed with error 0x%08lx\n", res);
+                hres = DISP_E_EXCEPTION;
+                if (pExcepInfo) pExcepInfo->scode = res;
+            }
+
 func_fail:
             HeapFree(GetProcessHeap(), 0, rgvarg);
-	    HeapFree(GetProcessHeap(),0,args2);
-	    HeapFree(GetProcessHeap(),0,args);
+            HeapFree(GetProcessHeap(),0,args2);
+            HeapFree(GetProcessHeap(),0,args);
             break;
 	}
 	case FUNC_DISPATCH:  {
