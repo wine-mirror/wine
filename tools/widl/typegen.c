@@ -59,7 +59,7 @@ static int print_file(FILE *file, int indent, const char *format, ...)
 static size_t write_procformatstring_var(FILE *file, int indent, var_t *var, int is_return, unsigned int *type_offset)
 {
     size_t size;
-    if (var->ptr_level == 0)
+    if (var->ptr_level == 0 && !var->array)
     {
         if (is_return)
             print_file(file, indent, "0x53,    /* FC_RETURN_PARAM_BASETYPE */\n");
@@ -97,9 +97,9 @@ static size_t write_procformatstring_var(FILE *file, int indent, var_t *var, int
     else
     {
         if (is_return)
-            print_file(file, indent, "0x4d,    /* FC_IN_PARAM */\n");
-        else
             print_file(file, indent, "0x52,    /* FC_RETURN_PARAM */\n");
+        else
+            print_file(file, indent, "0x4d,    /* FC_IN_PARAM */\n");
         print_file(file, indent, "0x01,\n");
         print_file(file, indent, "NdrFcShort(0x%x),\n", *type_offset);
         size = 4; /* includes param type prefix */
@@ -164,10 +164,11 @@ static size_t write_typeformatstring_var(FILE *file, int indent, var_t *var)
     int ptr_level = var->ptr_level;
 
     /* basic types don't need a type format string */
-    if (ptr_level == 0)
+    if (ptr_level == 0 && !var->array)
         return 0;
 
-    if (ptr_level == 1)
+    if (ptr_level == 1 ||
+        (var->ptr_level == 0 && var->array && !NEXT_LINK(var->array)))
     {
         switch (var->type->type)
         {
