@@ -56,6 +56,21 @@ static void test_sprintf( void )
     ok(!strcmp(buffer, "I"), "Problem with \"I\" interpretation\n");
     ok( r==1, "return count wrong\n");
 
+    format = "%I0d";
+    r = sprintf(buffer,format,1);
+    ok(!strcmp(buffer,"I0d"),"I0d failed\n");
+    ok( r==3, "return count wrong\n");
+
+    format = "%I32d";
+    r = sprintf(buffer,format,1);
+    ok(!strcmp(buffer,"1"),"I32d failed\n");
+    ok( r==1, "return count wrong\n");
+
+    format = "%I64D";
+    r = sprintf(buffer,format,(LONGLONG)-1);
+    ok(!strcmp(buffer,"D"),"I64D failed: %s\n",buffer);
+    ok( r==1, "return count wrong\n");
+
     format = "% d";
     r = sprintf(buffer,format,1);
     ok(!strcmp(buffer, " 1"),"Problem with sign place-holder: '%s'\n",buffer);

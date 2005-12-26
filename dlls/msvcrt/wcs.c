@@ -495,6 +495,20 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
                     flags.IntegerLength = *p;
                 p++;
             }
+            else if( *p == 'I' )
+            {
+                if( *(p+1) == '6' && *(p+2) == '4' )
+                {
+                    flags.IntegerDouble++;
+                    p += 3;
+                }
+                else if( *(p+1) == '3' && *(p+2) == '2' )
+                    p += 3;
+                else if( isdigit(*(p+1)) || *(p+1) == 0 )
+                    break;
+                else
+                    p++;
+            }
             else if( *p == 'w' )
                 flags.WideString = *p++;
             else if( *p == 'F' )
