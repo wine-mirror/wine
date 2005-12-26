@@ -452,7 +452,8 @@ static void test_file_protocol(void) {
     HANDLE file;
 
     static const WCHAR wszFile[] = {'f','i','l','e',':',0};
-    static const WCHAR wszFile2[] = {'f','i','l','e',':','/','/','/',0};
+    static const WCHAR wszFile2[] = {'f','i','l','e',':','/','/',0};
+    static const WCHAR wszFile3[] = {'f','i','l','e',':','/','/','/',0};
     static const char html_doc[] = "<HTML></HTML>";
 
     file = CreateFileW(wszIndexHtml, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
@@ -488,7 +489,18 @@ static void test_file_protocol(void) {
     memcpy(buf+len, wszIndexHtml, sizeof(wszIndexHtml));
 
     file_name = buf + sizeof(wszFile2)/sizeof(WCHAR)-1;
+    bindf = 0;
+    test_file_protocol_url(buf);
+    bindf = BINDF_FROMURLMON;
+    test_file_protocol_url(buf);
 
+    memcpy(buf, wszFile3, sizeof(wszFile3));
+    len = sizeof(wszFile3)/sizeof(WCHAR)-1;
+    len += GetCurrentDirectoryW(sizeof(buf)/sizeof(WCHAR)-len, buf+len);
+    buf[len++] = '\\';
+    memcpy(buf+len, wszIndexHtml, sizeof(wszIndexHtml));
+
+    file_name = buf + sizeof(wszFile3)/sizeof(WCHAR)-1;
     bindf = 0;
     test_file_protocol_url(buf);
     bindf = BINDF_FROMURLMON;
