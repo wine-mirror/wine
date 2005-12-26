@@ -95,6 +95,7 @@ static void write_function_stubs(type_t *iface)
     var_t *var;
     var_t* explicit_handle_var;
     unsigned int proc_offset = 0;
+    unsigned int type_offset = 2;
 
     while (NEXT_LINK(func)) func = NEXT_LINK(func);
     while (func)
@@ -197,7 +198,7 @@ static void write_function_stubs(type_t *iface)
             indent -= 2;
             fprintf(server, "\n");
 
-            unmarshall_arguments(server, indent, func);
+            unmarshall_arguments(server, indent, func, &type_offset);
         }
 
         print_server("if (_StubMsg.Buffer > _StubMsg.BufferEnd)\n");

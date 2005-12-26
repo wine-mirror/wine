@@ -128,6 +128,7 @@ static void write_function_stubs(type_t *iface)
     var_t *var;
     int method_count = 0;
     unsigned int proc_offset = 0;
+    unsigned int type_offset = 2;
 
     while (NEXT_LINK(func)) func = NEXT_LINK(func);
     while (func)
@@ -226,7 +227,7 @@ static void write_function_stubs(type_t *iface)
 
 
         /* marshal arguments */
-        marshall_arguments(client, indent, func);
+        marshall_arguments(client, indent, func, &type_offset);
 
         /* send/receive message */
         /* print_client("NdrNsSendReceive(\n"); */

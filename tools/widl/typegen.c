@@ -281,7 +281,7 @@ unsigned int get_required_buffer_size(type_t *type)
     }
 }
 
-void marshall_arguments(FILE *file, int indent, func_t *func)
+void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type_offset)
 {
     unsigned int last_size = 0;
     var_t *var;
@@ -332,8 +332,8 @@ void marshall_arguments(FILE *file, int indent, func_t *func)
                 break;
 
             default:
+                error("marshall_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, var->type->type);
                 size = 0;
-                error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
             }
 
             if (alignment != 0)
@@ -351,17 +351,43 @@ void marshall_arguments(FILE *file, int indent, func_t *func)
 
             last_size = size;
         }
+        else if (var->ptr_level == 1)
+        {
+            if (is_attr(var->attrs, ATTR_STRING))
+            {
+                switch (var->type->type)
+                {
+                case RPC_FC_CHAR:
+                case RPC_FC_WCHAR:
+                    print_file(file, indent,
+                        "NdrConformantStringMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                        var->name, *type_offset);
+                    break;
+                default:
+                    error("marshall_arguments: Unsupported [string] type: %s (0x%02x, ptr_level: 1)\n", var->name, var->type->type);
+                }
+            }
+            else
+            {
+                switch (var->type->type)
+                {
+                default:
+                    error("marshall_arguments: Unsupported type: %s (0x%02x, ptr_level: 1)\n", var->name, var->type->type);
+                }
+            }
+            last_size = 1;
+        }
         else
         {
             error("marshall_arguments: Pointer level %d not supported for variable %s\n", var->ptr_level, var->name);
-            last_size = 0;
+            last_size = 1;
         }
 
         var = PREV_LINK(var);
     }
 }
 
-void unmarshall_arguments(FILE *file, int indent, func_t *func)
+void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type_offset)
 {
     unsigned int last_size = 0;
     var_t *var;
@@ -413,8 +439,8 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func)
                 break;
 
             default:
+                error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, var->type->type);
                 size = 0;
-                error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
             }
 
             if (alignment != 0)
@@ -432,10 +458,36 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func)
 
             last_size = size;
         }
+        else if (var->ptr_level == 1)
+        {
+            if (is_attr(var->attrs, ATTR_STRING))
+            {
+                switch (var->type->type)
+                {
+                case RPC_FC_CHAR:
+                case RPC_FC_WCHAR:
+                    print_file(file, indent,
+                        "NdrConformantStringUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
+                        var->name, *type_offset);
+                    break;
+                default:
+                    error("unmarshall_arguments: Unsupported [string] type: %s (0x%02x, ptr_level: 1)\n", var->name, var->type->type);
+                }
+            }
+            else
+            {
+                switch (var->type->type)
+                {
+                default:
+                    error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: 1)\n", var->name, var->type->type);
+                }
+            }
+            last_size = 1;
+        }
         else
         {
             error("unmarshall_arguments: Pointer level %d not supported for variable %s\n", var->ptr_level, var->name);
-            last_size = 0;
+            last_size = 1;
         }
 
         var = PREV_LINK(var);
