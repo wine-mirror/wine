@@ -3614,7 +3614,11 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoOfGuid(
 
     TRACE("(%p)\n\tguid:\t%s)\n",This,debugstr_guid(guid));
 
-    if (!pTypeInfo) return TYPE_E_ELEMENTNOTFOUND;
+    if (!pTypeInfo)
+    {
+        WARN("-- element not found\n");
+        return TYPE_E_ELEMENTNOTFOUND;
+    }
 
     /* search linked list for guid */
     while( !IsEqualIID(guid,&pTypeInfo->TypeAttr.guid) )
@@ -3624,7 +3628,7 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoOfGuid(
       if (!pTypeInfo)
       {
         /* end of list reached */
-        TRACE("-- element not found\n");
+        WARN("-- element not found\n");
         return TYPE_E_ELEMENTNOTFOUND;
       }
     }
@@ -4771,11 +4775,17 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
     TLBFuncDesc * pFDesc;
     TLBVarDesc * pVDesc;
     HRESULT ret=S_OK;
+    int i;
 
     TRACE("(%p) Name %s cNames %d\n", This, debugstr_w(*rgszNames),
             cNames);
+
+    /* init out parameters in case of failure */
+    for (i = 0; i < cNames; i++)
+        pMemId[i] = MEMBERID_NIL;
+
     for(pFDesc=This->funclist; pFDesc; pFDesc=pFDesc->next) {
-        int i, j;
+        int j;
         if(!lstrcmpiW(*rgszNames, pFDesc->Name)) {
             if(cNames) *pMemId=pFDesc->funcdesc.memid;
             for(i=1; i < cNames; i++){
@@ -4787,6 +4797,7 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
                 else
                    ret=DISP_E_UNKNOWNNAME;
             };
+            TRACE("-- 0x%08lx\n", ret);
             return ret;
         }
     }
