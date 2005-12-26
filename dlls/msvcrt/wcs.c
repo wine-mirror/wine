@@ -489,10 +489,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
         {
             if( *p == 'h' || *p == 'l' || *p == 'L' )
             {
-                if( flags.IntegerLength == *p )  /* FIXME: this is wrong */
-                    flags.IntegerDouble++;
-                else
-                    flags.IntegerLength = *p;
+                flags.IntegerLength = *p;
                 p++;
             }
             else if( *p == 'I' )
