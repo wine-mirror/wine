@@ -18,7 +18,7 @@
 
 /* TODO:
  *   - some improvements possible
- *   - implement DecompressSetPalette? -- does we need it for anything?
+ *   - implement DecompressSetPalette? -- do we need it for anything?
  */
 
 #include <assert.h>
