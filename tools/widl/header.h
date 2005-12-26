@@ -21,13 +21,13 @@
 #ifndef __WIDL_HEADER_H
 #define __WIDL_HEADER_H
 
-extern int is_attr(attr_t *a, enum attr_type t);
-extern void *get_attrp(attr_t *a, enum attr_type t);
-extern unsigned long get_attrv(attr_t *a, enum attr_type t);
-extern int is_void(type_t *t, var_t *v);
-extern void write_name(FILE *h, var_t *v);
-extern char* get_name(var_t *v);
-extern void write_type(FILE *h, type_t *t, var_t *v, const char *n);
+extern int is_attr(const attr_t *a, enum attr_type t);
+extern void *get_attrp(const attr_t *a, enum attr_type t);
+extern unsigned long get_attrv(const attr_t *a, enum attr_type t);
+extern int is_void(const type_t *t, const var_t *v);
+extern void write_name(FILE *h, const var_t *v);
+extern const char* get_name(const var_t *v);
+extern void write_type(FILE *h, type_t *t, const var_t *v, const char *n);
 extern int is_object(attr_t *a);
 extern int is_local(attr_t *a);
 extern var_t *is_callas(attr_t *a);
@@ -36,10 +36,10 @@ extern void write_forward(type_t *iface);
 extern void write_interface(type_t *iface);
 extern void write_dispinterface(type_t *iface);
 extern void write_coclass(class_t *iface);
-extern void write_typedef(type_t *type, var_t *names);
+extern void write_typedef(type_t *type, const var_t *names);
 extern void write_expr(FILE *h, expr_t *e);
-extern void write_constdef(var_t *v);
-extern void write_externdef(var_t *v);
+extern void write_constdef(const var_t *v);
+extern void write_externdef(const var_t *v);
 extern void write_library(const char *name, attr_t *attr);
 extern void write_user_types(void);
 extern var_t* get_explicit_handle_var(func_t* func);

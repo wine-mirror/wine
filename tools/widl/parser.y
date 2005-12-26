@@ -84,7 +84,7 @@ static var_t *make_var(char *name);
 static func_t *make_func(var_t *def, var_t *args);
 static class_t *make_class(char *name);
 
-static type_t *reg_type(type_t *type, char *name, int t);
+static type_t *reg_type(type_t *type, const char *name, int t);
 static type_t *reg_types(type_t *type, var_t *names, int t);
 static type_t *find_type(const char *name, int t);
 static type_t *find_type2(char *name, int t);
@@ -1102,7 +1102,7 @@ static int hash_ident(const char *name)
 /***** type repository *****/
 
 struct rtype {
-  char *name;
+  const char *name;
   type_t *type;
   int t;
   struct rtype *next;
@@ -1110,7 +1110,7 @@ struct rtype {
 
 struct rtype *type_hash[HASHMAX];
 
-static type_t *reg_type(type_t *type, char *name, int t)
+static type_t *reg_type(type_t *type, const char *name, int t)
 {
   struct rtype *nt;
   int hash;

@@ -46,7 +46,7 @@ static void indent(FILE *h, int delta)
   if (delta > 0) indentation += delta;
 }
 
-int is_attr(attr_t *a, enum attr_type t)
+int is_attr(const attr_t *a, enum attr_type t)
 {
   while (a) {
     if (a->type == t) return 1;
@@ -55,7 +55,7 @@ int is_attr(attr_t *a, enum attr_type t)
   return 0;
 }
 
-void *get_attrp(attr_t *a, enum attr_type t)
+void *get_attrp(const attr_t *a, enum attr_type t)
 {
   while (a) {
     if (a->type == t) return a->u.pval;
@@ -64,7 +64,7 @@ void *get_attrp(attr_t *a, enum attr_type t)
   return NULL;
 }
 
-unsigned long get_attrv(attr_t *a, enum attr_type t)
+unsigned long get_attrv(const attr_t *a, enum attr_type t)
 {
   while (a) {
     if (a->type == t) return a->u.ival;
@@ -73,7 +73,7 @@ unsigned long get_attrv(attr_t *a, enum attr_type t)
   return 0;
 }
 
-int is_void(type_t *t, var_t *v)
+int is_void(const type_t *t, const var_t *v)
 {
   if (v && v->ptr_level) return 0;
   if (!t->type && !t->ref) return 1;
@@ -90,7 +90,7 @@ static void write_guid(const char *guid_prefix, const char *name, UUID *uuid)
         uuid->Data4[6], uuid->Data4[7]);
 }
 
-static void write_pident(FILE *h, var_t *v)
+static void write_pident(FILE *h, const var_t *v)
 {
   int c;
   for (c=0; c<v->ptr_level; c++) {
@@ -99,7 +99,7 @@ static void write_pident(FILE *h, var_t *v)
   if (v->name) fprintf(h, "%s", v->name);
 }
 
-void write_name(FILE *h, var_t *v)
+void write_name(FILE *h, const var_t *v)
 {
   if (is_attr( v->attrs, ATTR_PROPGET ))
     fprintf(h, "get_" );
@@ -110,12 +110,12 @@ void write_name(FILE *h, var_t *v)
   fprintf(h, "%s", v->name);
 }
 
-char* get_name(var_t *v)
+const char* get_name(const var_t *v)
 {
   return v->name;
 }
 
-static void write_array(FILE *h, expr_t *v, int field)
+static void write_array(FILE *h, const expr_t *v, int field)
 {
   if (!v) return;
   while (NEXT_LINK(v)) v = NEXT_LINK(v);
@@ -199,7 +199,7 @@ static void write_enums(FILE *h, var_t *v)
   fprintf(h, "\n");
 }
 
-void write_type(FILE *h, type_t *t, var_t *v, const char *n)
+void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
 {
   int c;
 
@@ -381,10 +381,10 @@ void write_user_types(void)
   }
 }
 
-void write_typedef(type_t *type, var_t *names)
+void write_typedef(type_t *type, const var_t *names)
 {
   char *tname = names->tname;
-  var_t *lname;
+  const var_t *lname;
   while (NEXT_LINK(names)) names = NEXT_LINK(names);
   lname = names;
   fprintf(header, "typedef ");
@@ -477,14 +477,14 @@ void write_expr(FILE *h, expr_t *e)
   do_write_expr(h, e, 0);
 }
 
-void write_constdef(var_t *v)
+void write_constdef(const var_t *v)
 {
   fprintf(header, "#define %s (", get_name(v));
   write_expr(header, v->eval);
   fprintf(header, ")\n\n");
 }
 
-void write_externdef(var_t *v)
+void write_externdef(const var_t *v)
 {
   fprintf(header, "extern const ");
   write_type(header, v->type, NULL, v->tname);
@@ -545,7 +545,7 @@ var_t *is_callas(attr_t *a)
   return get_attrp(a, ATTR_CALLAS);
 }
 
-static int write_method_macro(type_t *iface, char *name)
+static int write_method_macro(const type_t *iface, const char *name)
 {
   int idx;
   func_t *cur = iface->funcs;
@@ -636,7 +636,7 @@ void write_args(FILE *h, var_t *arg, const char *name, int method, int do_indent
   if (do_indent) indentation--;
 }
 
-static void write_cpp_method_def(type_t *iface)
+static void write_cpp_method_def(const type_t *iface)
 {
   func_t *cur = iface->funcs;
 
@@ -659,7 +659,7 @@ static void write_cpp_method_def(type_t *iface)
   }
 }
 
-static void do_write_c_method_def(type_t *iface, char *name)
+static void do_write_c_method_def(const type_t *iface, char *name)
 {
   func_t *cur = iface->funcs;
 
@@ -685,17 +685,17 @@ static void do_write_c_method_def(type_t *iface, char *name)
   }
 }
 
-static void write_c_method_def(type_t *iface)
+static void write_c_method_def(const type_t *iface)
 {
   do_write_c_method_def(iface, iface->name);
 }
 
-static void write_c_disp_method_def(type_t *iface)
+static void write_c_disp_method_def(const type_t *iface)
 {
   do_write_c_method_def(iface->ref, iface->name);
 }
 
-static void write_method_proto(type_t *iface)
+static void write_method_proto(const type_t *iface)
 {
   func_t *cur = iface->funcs;
 
@@ -759,7 +759,7 @@ static void write_method_proto(type_t *iface)
   }
 }
 
-static void write_function_proto(type_t *iface)
+static void write_function_proto(const type_t *iface)
 {
   char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
   int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
@@ -816,13 +816,13 @@ void write_forward(type_t *iface)
   }
 }
 
-static void write_iface_guid(type_t *iface)
+static void write_iface_guid(const type_t *iface)
 {
   UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
   write_guid("IID", iface->name, uuid);
 } 
 
-static void write_dispiface_guid(type_t *iface)
+static void write_dispiface_guid(const type_t *iface)
 {
   UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
   write_guid("DIID", iface->name, uuid);
@@ -895,7 +895,7 @@ static void write_com_interface(type_t *iface)
   fprintf(header,"\n#endif  /* __%s_INTERFACE_DEFINED__ */\n\n", iface->name);
 }
 
-static void write_rpc_interface(type_t *iface)
+static void write_rpc_interface(const type_t *iface)
 {
   unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
   char *var = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);

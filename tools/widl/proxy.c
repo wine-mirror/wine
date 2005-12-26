@@ -206,7 +206,7 @@ static void proxy_check_pointers( var_t *arg )
 static void marshall_size_arg( var_t *arg )
 {
   int index = 0;
-  type_t *type = get_base_type(arg);
+  const type_t *type = get_base_type(arg);
   expr_t *expr;
 
   expr = get_attrp( arg->attrs, ATTR_SIZEIS );
@@ -728,7 +728,7 @@ static void stub_genmarshall( var_t *args )
   stub_gen_marshall_copydata( args );
 }
 
-static void gen_stub(type_t *iface, func_t *cur, char *cas)
+static void gen_stub(type_t *iface, func_t *cur, const char *cas)
 {
   var_t *def = cur->def;
   var_t *arg;
@@ -892,7 +892,7 @@ static void write_proxy(type_t *iface)
     var_t *def = cur->def;
     if (!is_local(def->attrs)) {
       var_t *cas = is_callas(def->attrs);
-      char *cname = cas ? cas->name : NULL;
+      const char *cname = cas ? cas->name : NULL;
       int idx = cur->idx;
       if (cname) {
         func_t *m = iface->funcs;

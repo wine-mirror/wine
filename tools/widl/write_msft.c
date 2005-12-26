@@ -1627,7 +1627,7 @@ static HRESULT add_impl_type(msft_typeinfo_t *typeinfo, type_t *ref)
 }
 
 static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_kind kind,
-                                             char *name, attr_t *attr, int idx)
+                                             const char *name, attr_t *attr, int idx)
 {
     msft_typeinfo_t *msft_typeinfo;
     int nameoffset;
