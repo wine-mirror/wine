@@ -5320,7 +5320,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
         if (TRACE_ON(ole))
         {
             TRACE("invoking:\n");
-            dump_TLBFuncDesc(pFuncInfo);
+            dump_TLBFuncDescOne(pFuncInfo);
         }
         
 	switch (func_desc->funckind) {
@@ -5430,39 +5430,43 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     args
             );
 
-            if (pVarResult) {
-                for (i = 0; i < func_desc->cParams; i++) {
-                    USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
-                    if (wParamFlags & PARAMFLAG_FRETVAL) {
-                        ELEMDESC *elemdesc = &func_desc->lprgelemdescParam[i];
-                        TYPEDESC *tdesc = &elemdesc->tdesc;
-                        VARIANTARG varresult;
-                        V_VT(&varresult) = 0;
-                        hres = typedescvt_to_variantvt((ITypeInfo *)iface, tdesc, &V_VT(&varresult));
-                        if (hres)
-                            break;
-                        /* FIXME: this is really messy - we should keep the
-                         * args in VARIANTARGs rather than a DWORD array */
-                        memcpy(&V_UI4(&varresult), &args[i+1], sizeof(DWORD));
-                        if (TRACE_ON(ole))
-                        {
-                            TRACE("varresult: ");
-                            dump_Variant(&varresult);
-                        }
-                        hres = VariantCopyInd(pVarResult, &varresult);
-                        /* free data stored in varresult. Note that
-                         * VariantClear doesn't do what we want because we are
-                         * working with byref types. */
-                        /* FIXME: clear safearrays, bstrs, records and
-                         * variants here too */
-                        if ((V_VT(&varresult) == (VT_UNKNOWN | VT_BYREF)) ||
-                            (V_VT(&varresult) == (VT_DISPATCH | VT_BYREF)))
-                        {
-                            if(*V_UNKNOWNREF(&varresult))
-                                IUnknown_Release(*V_UNKNOWNREF(&varresult));
-                        }
+            for (i = 0; i < func_desc->cParams; i++)
+            {
+                USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+                if (wParamFlags & PARAMFLAG_FRETVAL)
+                {
+                    ELEMDESC *elemdesc = &func_desc->lprgelemdescParam[i];
+                    TYPEDESC *tdesc = &elemdesc->tdesc;
+                    VARIANTARG varresult;
+                    V_VT(&varresult) = 0;
+                    hres = typedescvt_to_variantvt((ITypeInfo *)iface, tdesc, &V_VT(&varresult));
+                    if (hres)
                         break;
+                    /* FIXME: this is really messy - we should keep the
+                        * args in VARIANTARGs rather than a DWORD array */
+                    memcpy(&V_UI4(&varresult), &args[i+1], sizeof(DWORD));
+                    if (TRACE_ON(ole))
+                    {
+                        TRACE("varresult: ");
+                        dump_Variant(&varresult);
                     }
+
+                    if (pVarResult)
+                        /* deref return value */
+                        hres = VariantCopyInd(pVarResult, &varresult);
+
+                    /* free data stored in varresult. Note that
+                     * VariantClear doesn't do what we want because we are
+                     * working with byref types. */
+                    /* FIXME: clear safearrays, bstrs, records and
+                        * variants here too */
+                    if ((V_VT(&varresult) == (VT_UNKNOWN | VT_BYREF)) ||
+                        (V_VT(&varresult) == (VT_DISPATCH | VT_BYREF)))
+                    {
+                        if(*V_UNKNOWNREF(&varresult))
+                            IUnknown_Release(*V_UNKNOWNREF(&varresult));
+                    }
+                    break;
                 }
             }
 
