@@ -285,6 +285,16 @@ static inline int pf_fill( pf_output *out, int len, pf_flags *flags, char left )
 {
     int i, r = 0;
 
+    if( flags->Sign && !( flags->Format == 'd' || flags->Format == 'i' ) )
+        flags->Sign = 0;
+
+    if( left && flags->Sign )
+    {
+        flags->FieldLength--;
+        if( flags->PadZero )
+            r = pf_output_stringA( out, &flags->Sign, 1 );
+    }
+
     if( ( !left &&  flags->LeftAlign ) || 
         (  left && !flags->LeftAlign ))
     {
@@ -296,6 +306,9 @@ static inline int pf_fill( pf_output *out, int len, pf_flags *flags, char left )
                 r = pf_output_stringA( out, " ", 1 );
         }
     }
+
+    if( left && flags->Sign && !flags->PadZero )
+        r = pf_output_stringA( out, &flags->Sign, 1 );
 
     return r;
 }
@@ -344,6 +357,14 @@ static inline int pf_output_format_A( pf_output *out, LPCSTR str,
     return r;
 }
 
+static inline BOOL pf_is_integer_format( char fmt )
+{
+    static const char float_fmts[] = "diouxX";
+    if (!fmt)
+        return FALSE;
+    return strchr( float_fmts, fmt ) ? TRUE : FALSE;
+}
+
 static inline BOOL pf_is_double_format( char fmt )
 {
     static const char float_fmts[] = "aeEfgG";
@@ -383,6 +404,70 @@ static void pf_rebuild_format_string( char *p, pf_flags *flags )
     }
     *p++ = flags->Format;
     *p++ = 0;
+}
+
+/* pf_integer_conv:  prints x to buf, including alternate formats,
+   but not the sign */
+static void pf_integer_conv( char *buf, pf_flags *flags, LONGLONG x )
+{
+    unsigned int base;
+    char *digits;
+
+    int i, j, k;
+    char tmp[40];
+
+    base = 10;
+    if( flags->Format == 'o' )
+        base = 8;
+    else if( flags->Format == 'x' || flags->Format == 'X' )
+        base = 16;
+
+    if( flags->Format == 'X' )
+        digits = "0123456789ABCDEFX";
+    else
+        digits = "0123456789abcdefx";
+
+    if( x < 0 && ( flags->Format == 'd' || flags->Format == 'i' ) )
+    {
+        x = -x;
+        flags->Sign = '-';
+    }
+
+    /* Do conversion (backwards) */
+    i = 0;
+    if( x == 0 && flags->Precision )
+        tmp[i++] = '0';
+    else
+        while( x != 0 )
+        {
+            j = (ULONGLONG) x % base;
+            x = (ULONGLONG) x / base;
+            tmp[i++] = digits[j];
+        }
+    k = flags->Precision - i;
+    while( k-- > 0 )
+        tmp[i++] = '0';
+    if( flags->Alternate )
+    {
+        if( base == 16 )
+        {
+            tmp[i++] = digits[16];
+            tmp[i++] = '0';
+        }
+        else if( base == 8 && tmp[i-1] != '0' )
+            tmp[i++] = '0';
+    }
+
+    /* Reverse for buf */
+    j = 0;
+    while( i-- > 0 )
+        buf[j++] = tmp[i];
+    buf[j] = '\0';
+
+    /* Adjust precision so pf_fill won't truncate the number later */
+    flags->Precision = strlen( buf );
+
+    return;
 }
 
 /*********************************************************************
@@ -581,6 +666,21 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
         {
             int *x = va_arg(valist, int *);
             *x = out->used;
+        }
+
+        /* deal with 64-bit integers */
+        else if( pf_is_integer_format( flags.Format ) && flags.IntegerDouble )
+        {
+            char number[40], *x = number;
+
+            if( flags.FieldLength >= sizeof number )
+                x = HeapAlloc( GetProcessHeap(), 0, flags.FieldLength+1 );
+
+            pf_integer_conv( x, &flags, va_arg(valist, LONGLONG) );
+
+            r = pf_output_format_A( out, x, -1, &flags );
+            if( x != number )
+                HeapFree( GetProcessHeap(), 0, number );
         }
 
         /* deal with integers and floats using libc's printf */
