@@ -146,7 +146,7 @@ void write_procformatstring(FILE *file, type_t *iface)
                     var = PREV_LINK(var);
                 }
             }
-    
+
             /* emit return value data */
             var = func->def;
             if (is_void(var->type, NULL))
@@ -283,8 +283,6 @@ unsigned int get_required_buffer_size(type_t *type)
 
 void marshall_arguments(FILE *file, int indent, func_t *func)
 {
-    unsigned int alignment;
-    unsigned int size;
     unsigned int last_size = 0;
     var_t *var;
 
@@ -295,60 +293,69 @@ void marshall_arguments(FILE *file, int indent, func_t *func)
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     while (var)
     {
-        alignment = 0;
-        switch (var->type->type)
+        if (var->ptr_level == 0)
         {
-        case RPC_FC_BYTE:
-        case RPC_FC_CHAR:
-        case RPC_FC_SMALL:
-        case RPC_FC_USMALL:
-            size = 1;
-            alignment = 0;
-            break;
+            unsigned int size;
+            unsigned int alignment = 0;
+            switch (var->type->type)
+            {
+            case RPC_FC_BYTE:
+            case RPC_FC_CHAR:
+            case RPC_FC_SMALL:
+            case RPC_FC_USMALL:
+                size = 1;
+                alignment = 0;
+                break;
 
-        case RPC_FC_WCHAR:
-        case RPC_FC_USHORT:
-        case RPC_FC_SHORT:
-            size = 2;
-            if (last_size != 0 && last_size < 2)
-                alignment = (2 - last_size);
-            break;
+            case RPC_FC_WCHAR:
+            case RPC_FC_USHORT:
+            case RPC_FC_SHORT:
+                size = 2;
+                if (last_size != 0 && last_size < 2)
+                    alignment = (2 - last_size);
+                break;
 
-        case RPC_FC_ULONG:
-        case RPC_FC_LONG:
-        case RPC_FC_FLOAT:
-        case RPC_FC_ERROR_STATUS_T:
-            size = 4;
-            if (last_size != 0 && last_size < 4)
-                alignment = (4 - last_size);
-            break;
+            case RPC_FC_ULONG:
+            case RPC_FC_LONG:
+            case RPC_FC_FLOAT:
+            case RPC_FC_ERROR_STATUS_T:
+                size = 4;
+                if (last_size != 0 && last_size < 4)
+                    alignment = (4 - last_size);
+                break;
 
-        case RPC_FC_HYPER:
-        case RPC_FC_DOUBLE:
-            size = 8;
-            if (last_size != 0 && last_size < 4)
-                alignment = (4 - last_size);
-            break;
+            case RPC_FC_HYPER:
+            case RPC_FC_DOUBLE:
+                size = 8;
+                if (last_size != 0 && last_size < 4)
+                    alignment = (4 - last_size);
+                break;
 
-        default:
-            size = 0;
-            error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
+            default:
+                size = 0;
+                error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
+            }
+
+            if (alignment != 0)
+                print_file(file, indent, "_StubMsg.Buffer += %u;\n", alignment);
+
+            print_file(file, indent, "*(");
+            write_type(file, var->type, var, var->tname);
+            fprintf(file, " *)_StubMsg.Buffer = ");
+            write_name(file, var);
+            fprintf(file, ";\n");
+            fprintf(file, "_StubMsg.Buffer += sizeof(");
+            write_type(file, var->type, var, var->tname);
+            fprintf(file, ");\n");
+            fprintf(file, "\n");
+
+            last_size = size;
         }
-
-        if (alignment != 0)
-            print_file(file, indent, "_StubMsg.Buffer += %u;\n", alignment);
-
-        print_file(file, indent, "*(");
-        write_type(file, var->type, var, var->tname);
-        fprintf(file, " *)_StubMsg.Buffer = ");
-        write_name(file, var);
-        fprintf(file, ";\n");
-        fprintf(file, "_StubMsg.Buffer += sizeof(");
-        write_type(file, var->type, var, var->tname);
-        fprintf(file, ");\n");
-        fprintf(file, "\n");
-
-        last_size = size;
+        else
+        {
+            error("marshall_arguments: Pointer level %d not supported for variable %s\n", var->ptr_level, var->name);
+            last_size = 0;
+        }
 
         var = PREV_LINK(var);
     }
@@ -356,8 +363,6 @@ void marshall_arguments(FILE *file, int indent, func_t *func)
 
 void unmarshall_arguments(FILE *file, int indent, func_t *func)
 {
-    unsigned int alignment;
-    unsigned int size;
     unsigned int last_size = 0;
     var_t *var;
 
@@ -368,60 +373,70 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func)
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     while (var)
     {
-        alignment = 0;
-        switch (var->type->type)
+        if (var->ptr_level == 0)
         {
-        case RPC_FC_BYTE:
-        case RPC_FC_CHAR:
-        case RPC_FC_SMALL:
-        case RPC_FC_USMALL:
-            size = 1;
-            alignment = 0;
-            break;
+            unsigned int size;
+            unsigned int alignment = 0;
 
-        case RPC_FC_WCHAR:
-        case RPC_FC_USHORT:
-        case RPC_FC_SHORT:
-            size = 2;
-            if (last_size != 0 && last_size < 2)
-                alignment = (2 - last_size);
-            break;
+            switch (var->type->type)
+            {
+            case RPC_FC_BYTE:
+            case RPC_FC_CHAR:
+            case RPC_FC_SMALL:
+            case RPC_FC_USMALL:
+                size = 1;
+                alignment = 0;
+                break;
 
-        case RPC_FC_ULONG:
-        case RPC_FC_LONG:
-        case RPC_FC_FLOAT:
-        case RPC_FC_ERROR_STATUS_T:
-            size = 4;
-            if (last_size != 0 && last_size < 4)
-                alignment = (4 - last_size);
-            break;
+            case RPC_FC_WCHAR:
+            case RPC_FC_USHORT:
+            case RPC_FC_SHORT:
+                size = 2;
+                if (last_size != 0 && last_size < 2)
+                    alignment = (2 - last_size);
+                break;
 
-        case RPC_FC_HYPER:
-        case RPC_FC_DOUBLE:
-            size = 8;
-            if (last_size != 0 && last_size < 4)
-                alignment = (4 - last_size);
-            break;
+            case RPC_FC_ULONG:
+            case RPC_FC_LONG:
+            case RPC_FC_FLOAT:
+            case RPC_FC_ERROR_STATUS_T:
+                size = 4;
+                if (last_size != 0 && last_size < 4)
+                    alignment = (4 - last_size);
+                break;
 
-        default:
-            size = 0;
-            error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
+            case RPC_FC_HYPER:
+            case RPC_FC_DOUBLE:
+                size = 8;
+                if (last_size != 0 && last_size < 4)
+                    alignment = (4 - last_size);
+                break;
+
+            default:
+                size = 0;
+                error("Unknown/unsupported type: %s (0x%02x)\n", var->name, var->type->type);
+            }
+
+            if (alignment != 0)
+                print_file(file, indent, "_StubMsg.Buffer += %u;\n", alignment);
+
+            print_file(file, indent, "");
+            write_name(file, var);
+            fprintf(file, " = *(");
+            write_type(file, var->type, var, var->tname);
+            fprintf(file, " *)_StubMsg.Buffer;\n");
+            fprintf(file, "_StubMsg.Buffer += sizeof(");
+            write_type(file, var->type, var, var->tname);
+            fprintf(file, ");\n");
+            fprintf(file, "\n");
+
+            last_size = size;
         }
-
-        if (alignment != 0)
-            print_file(file, indent, "_StubMsg.Buffer += %u;\n", alignment);
-
-        print_file(file, indent, "");
-        write_name(file, var);
-        fprintf(file, " = *(");
-        write_type(file, var->type, var, var->tname);
-        fprintf(file, " *)_StubMsg.Buffer;\n");
-        fprintf(file, "_StubMsg.Buffer += sizeof(");
-        write_type(file, var->type, var, var->tname);
-        fprintf(file, ");\n");
-        fprintf(file, "\n");
-
-        last_size = size;
+        else
+        {
+            error("unmarshall_arguments: Pointer level %d not supported for variable %s\n", var->ptr_level, var->name);
+            last_size = 0;
+        }
 
         var = PREV_LINK(var);
     }
