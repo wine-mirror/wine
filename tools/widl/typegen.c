@@ -96,10 +96,18 @@ static size_t write_procformatstring_var(FILE *file, int indent, var_t *var, int
     }
     else
     {
+        int in_attr = is_attr(var->attrs, ATTR_IN);
+        int out_attr = is_attr(var->attrs, ATTR_OUT);
+
         if (is_return)
             print_file(file, indent, "0x52,    /* FC_RETURN_PARAM */\n");
+        else if (in_attr && out_attr)
+            print_file(file, indent, "0x50,    /* FC_IN_OUT_PARAM */\n");
+        else if (out_attr)
+            print_file(file, indent, "0x51,    /* FC_OUT_PARAM */\n");
         else
             print_file(file, indent, "0x4d,    /* FC_IN_PARAM */\n");
+
         print_file(file, indent, "0x01,\n");
         print_file(file, indent, "NdrFcShort(0x%x),\n", *type_offset);
         size = 4; /* includes param type prefix */
