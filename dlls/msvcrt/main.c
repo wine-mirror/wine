@@ -70,8 +70,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   case DLL_THREAD_DETACH:
     /* Free TLS */
     tls = TlsGetValue(msvcrt_tls_index);
-    HeapFree(GetProcessHeap(),0,tls->efcvt_buffer);
-    HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
+    if (tls)
+    {
+	HeapFree(GetProcessHeap(),0,tls->efcvt_buffer);
+	HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
+    }
     HeapFree(GetProcessHeap(), 0, tls);
     TRACE("finished thread free\n");
     break;
