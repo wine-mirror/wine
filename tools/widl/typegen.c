@@ -291,7 +291,7 @@ void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type
 
     var = func->args;
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    for (; var; var = PREV_LINK(var))
+    for (; var; *type_offset += get_size_typeformatstring_var(var), var = PREV_LINK(var))
     {
         if (var->ptr_level == 0)
         {
@@ -395,7 +395,7 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *ty
 
     var = func->args;
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    for (; var; var = PREV_LINK(var))
+    for (; var; *type_offset += get_size_typeformatstring_var(var), var = PREV_LINK(var))
     {
         if (var->ptr_level == 0)
         {
