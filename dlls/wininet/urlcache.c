@@ -1233,7 +1233,7 @@ static BOOL URLCache_DeleteEntryFromHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpsz
  *    FALSE if the entry could not be added
  *
  */
-static BOOL URLCache_AddEntryToHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, DWORD dwOffsetEntry)
+static BOOL URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, DWORD dwOffsetEntry)
 {
     /* see URLCache_FindEntryInHash for structure of hash tables */
 
@@ -1272,8 +1272,13 @@ static BOOL URLCache_AddEntryToHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, 
             }
         }
     }
-    FIXME("need to create another hash table\n");
-    return FALSE;
+    pHashEntry = URLCache_CreateHashTable(pHeader, pHashEntry);
+    if (!pHashEntry)
+        return FALSE;
+
+    pHashEntry->HashTable[offset].dwHashKey = key;
+    pHashEntry->HashTable[offset].dwOffsetEntry = dwOffsetEntry;
+    return TRUE;
 }
 
 static HASH_CACHEFILE_ENTRY *URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_ENTRY *pPrevHash)
@@ -2149,6 +2154,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
         ERR("no free entries\n");
+        SetLastError(ERROR_DISK_FULL);
         return FALSE;
     }
 
