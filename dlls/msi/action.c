@@ -4210,11 +4210,23 @@ static UINT ACTION_UnregisterFonts( MSIPACKAGE *package )
     return msi_unimplemented_action_stub( package, "UnregisterFonts", table );
 }
 
+static UINT ACTION_CCPSearch( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = { 'C','C','P','S','e','a','r','c','h',0 };
+    return msi_unimplemented_action_stub( package, "CCPSearch", table );
+}
+
+static UINT ACTION_RMCCPSearch( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = { 'C','C','P','S','e','a','r','c','h',0 };
+    return msi_unimplemented_action_stub( package, "RMCCPSearch", table );
+}
+
 static struct _actions StandardActions[] = {
     { szAllocateRegistrySpace, ACTION_AllocateRegistrySpace },
     { szAppSearch, ACTION_AppSearch },
     { szBindImage, ACTION_BindImage },
-    { szCCPSearch, NULL},
+    { szCCPSearch, ACTION_CCPSearch},
     { szCostFinalize, ACTION_CostFinalize },
     { szCostInitialize, ACTION_CostInitialize },
     { szCreateFolders, ACTION_CreateFolders },
@@ -4266,7 +4278,7 @@ static struct _actions StandardActions[] = {
     { szRemoveRegistryValues, NULL},
     { szRemoveShortcuts, NULL},
     { szResolveSource, ACTION_ResolveSource},
-    { szRMCCPSearch, NULL},
+    { szRMCCPSearch, ACTION_RMCCPSearch},
     { szScheduleReboot, NULL},
     { szSelfRegModules, ACTION_SelfRegModules },
     { szSelfUnregModules, ACTION_SelfUnregModules },
