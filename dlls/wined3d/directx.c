@@ -1073,6 +1073,9 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(WineD3D_Context* c
   case WINED3DFMT_A1R5G5B5:
     if (5 == rb && 5 == gb && 5 == bb && 1 == ab) return TRUE;
     break;
+  case WINED3DFMT_X4R4G4B4:
+    if (16 == buf_sz && 4 == rb && 4 == gb && 4 == bb) return TRUE;
+    break;
   case WINED3DFMT_R5G6B5:
     if (5 == rb && 6 == gb && 5 == bb) return TRUE;
     break;

@@ -752,6 +752,25 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
             vcheckGLcall("glRasterPos2f");
             switch (This->resource.format) {
+	    case WINED3DFMT_X4R4G4B4:
+	        {
+		    int size;
+                    unsigned short *data;
+                    data = (unsigned short *)This->resource.allocatedMemory;
+                    size = (This->lockedRect.bottom - This->lockedRect.top) * (This->lockedRect.right - This->lockedRect.left);
+                    while(size > 0) {
+                            *data |= 0xF000;
+                            data++;
+                            size--;
+                    }
+		}
+	    case WINED3DFMT_A4R4G4B4:
+	        {
+                    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
+                                 GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4_REV, This->resource.allocatedMemory);
+                    vcheckGLcall("glDrawPixels");
+	        }
+		break;
             case WINED3DFMT_R5G6B5:
                 {
                     glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
