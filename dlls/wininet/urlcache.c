@@ -785,8 +785,17 @@ static BOOL URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBlock
  *    FALSE if it failed
  *
  */
-static BOOL URLCache_DeleteEntry(CACHEFILE_ENTRY * pEntry)
+static BOOL URLCache_DeleteEntry(LPURLCACHE_HEADER pHeader, CACHEFILE_ENTRY * pEntry)
 {
+    DWORD dwStartBlock;
+    DWORD dwBlock;
+    BYTE * AllocationTable = (LPBYTE)pHeader + ALLOCATION_TABLE_OFFSET;
+
+    /* update allocation table */
+    dwStartBlock = ((DWORD)((BYTE *)pEntry - (BYTE *)pHeader)) / BLOCKSIZE;
+    for (dwBlock = dwStartBlock; dwBlock < dwStartBlock + pEntry->dwBlocksUsed; dwBlock++)
+        URLCache_Allocation_BlockFree(AllocationTable, dwBlock);
+
     ZeroMemory(pEntry, pEntry->dwBlocksUsed * BLOCKSIZE);
     return TRUE;
 }
@@ -2199,6 +2208,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
 
     if (!URLCache_AddEntryToHash(pHeader, achUrl, (DWORD)((LPBYTE)pUrlEntry - (LPBYTE)pHeader)))
     {
+        URLCache_DeleteEntry(pHeader, &pUrlEntry->CacheFileEntry);
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
         return FALSE;
     }
@@ -2496,9 +2506,6 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
     URLCACHECONTAINER * pContainer;
     LPURLCACHE_HEADER pHeader;
     CACHEFILE_ENTRY * pEntry;
-    DWORD dwStartBlock;
-    DWORD dwBlock;
-    BYTE * AllocationTable;
 
     TRACE("(%s)\n", debugstr_a(lpszUrlName));
 
@@ -2519,14 +2526,7 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
         return FALSE;
     }
 
-    AllocationTable = (LPBYTE)pHeader + ALLOCATION_TABLE_OFFSET;
-
-    /* update allocation table */
-    dwStartBlock = ((DWORD)pEntry - (DWORD)pHeader) / BLOCKSIZE;
-    for (dwBlock = dwStartBlock; dwBlock < dwStartBlock + pEntry->dwBlocksUsed; dwBlock++)
-        URLCache_Allocation_BlockFree(AllocationTable, dwBlock);
-
-    URLCache_DeleteEntry(pEntry);
+    URLCache_DeleteEntry(pHeader, pEntry);
 
     URLCache_DeleteEntryFromHash(pHeader, lpszUrlName);
 
