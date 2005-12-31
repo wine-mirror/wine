@@ -137,7 +137,7 @@ static char *join_hostnames( char *scheme, char **hostnames, ULONG portnumber )
     char *res, *p, *q, **v;
     unsigned int i = 0, size = 0; 
     static const char sep[] = " ", fmt[] = ":%ld";
-    char port[6];
+    char port[7];
 
     sprintf( port, fmt, portnumber ); 
 
@@ -198,18 +198,26 @@ static char *join_hostnames( char *scheme, char **hostnames, ULONG portnumber )
 
 static char *urlify_hostnames( char *scheme, char *hostnames, ULONG port )
 {
-    char *url, **strarray;
+    char *url = NULL, **strarray;
 
     strarray = split_hostnames( hostnames );
-    url = join_hostnames( scheme, strarray, port );
-    strarrayfreeU( strarray );
+    if (strarray)
+        url = join_hostnames( scheme, strarray, port );
+    else
+        return NULL;
 
+    strarrayfreeU( strarray );
     return url;
 }
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+/***********************************************************************
+ *      cldap_openA     (WLDAP32.@)
+ *
+ * See cldap_openW.
+ */
 WLDAP32_LDAP *cldap_openA( PCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
@@ -233,6 +241,27 @@ exit:
     return NULL;
 }
 
+/***********************************************************************
+ *      cldap_openW     (WLDAP32.@)
+ *
+ * Initialize an LDAP context and create a UDP connection.
+ *
+ * PARAMS
+ *  hostname   [I] Name of the host to connect to.
+ *  portnumber [I] Portnumber to use.
+ *
+ * RETURNS
+ *  Success: Pointer to an LDAP context.
+ *  Failure: NULL
+ *
+ * NOTES
+ *  The hostname string can be a space separated string of hostnames,
+ *  in which case the LDAP runtime will try to connect to the hosts
+ *  in order, until a connection can be made. A hostname may have a
+ *  trailing portnumber (separated from the hostname by a ':'), which 
+ *  will take precedence over the portnumber supplied as a parameter
+ *  to this function.
+ */
 WLDAP32_LDAP *cldap_openW( PWCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
@@ -264,14 +293,37 @@ exit:
     return NULL;
 }
 
+/***********************************************************************
+ *      ldap_connect     (WLDAP32.@)
+ *
+ * Connect to an LDAP server. 
+ *
+ * PARAMS
+ *  ld      [I] Pointer to an LDAP context.
+ *  timeout [I] Pointer to an l_timeval structure specifying the
+ *              timeout in seconds.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  The timeout parameter may be NULL in which case a default timeout
+ *  value will be used.
+ */
 ULONG ldap_connect( WLDAP32_LDAP *ld, struct l_timeval *timeout )
 {
     TRACE( "(%p, %p)\n", ld, timeout );
 
-    if (!ld || !timeout) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
     return LDAP_SUCCESS; /* FIXME: do something, e.g. ping the host */
 }
 
+/***********************************************************************
+ *      ldap_initA     (WLDAP32.@)
+ *
+ * See ldap_initW.
+ */
 WLDAP32_LDAP *ldap_initA( PCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
@@ -295,6 +347,28 @@ exit:
     return NULL;
 }
 
+/***********************************************************************
+ *      ldap_initW     (WLDAP32.@)
+ *
+ * Initialize an LDAP context and create a TCP connection.
+ *
+ * PARAMS
+ *  hostname   [I] Name of the host to connect to.
+ *  portnumber [I] Portnumber to use.
+ *
+ * RETURNS
+ *  Success: Pointer to an LDAP context.
+ *  Failure: NULL
+ *
+ * NOTES
+ *  The hostname string can be a space separated string of hostnames,
+ *  in which case the LDAP runtime will try to connect to the hosts
+ *  in order, until a connection can be made. A hostname may have a
+ *  trailing portnumber (separated from the hostname by a ':'), which 
+ *  will take precedence over the portnumber supplied as a parameter
+ *  to this function. The connection will not be made until the first
+ *  LDAP function that needs it is called.
+ */
 WLDAP32_LDAP *ldap_initW( PWCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
@@ -326,6 +400,11 @@ exit:
     return NULL;
 }
 
+/***********************************************************************
+ *      ldap_openA     (WLDAP32.@)
+ *
+ * See ldap_openW.
+ */
 WLDAP32_LDAP *ldap_openA( PCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
@@ -349,6 +428,27 @@ exit:
     return NULL;
 }
 
+/***********************************************************************
+ *      ldap_openW     (WLDAP32.@)
+ *
+ * Initialize an LDAP context and create a TCP connection.
+ *
+ * PARAMS
+ *  hostname   [I] Name of the host to connect to.
+ *  portnumber [I] Portnumber to use.
+ *
+ * RETURNS
+ *  Success: Pointer to an LDAP context.
+ *  Failure: NULL
+ *
+ * NOTES
+ *  The hostname string can be a space separated string of hostnames,
+ *  in which case the LDAP runtime will try to connect to the hosts
+ *  in order, until a connection can be made. A hostname may have a
+ *  trailing portnumber (separated from the hostname by a ':'), which 
+ *  will take precedence over the portnumber supplied as a parameter
+ *  to this function.
+ */
 WLDAP32_LDAP *ldap_openW( PWCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
@@ -380,6 +480,11 @@ exit:
     return NULL;
 }
 
+/***********************************************************************
+ *      ldap_sslinitA     (WLDAP32.@)
+ *
+ * See ldap_sslinitW.
+ */
 WLDAP32_LDAP *ldap_sslinitA( PCHAR hostname, ULONG portnumber, int secure )
 {
 #ifdef HAVE_LDAP
@@ -402,6 +507,29 @@ WLDAP32_LDAP *ldap_sslinitA( PCHAR hostname, ULONG portnumber, int secure )
     return NULL;
 }
 
+/***********************************************************************
+ *      ldap_sslinitW     (WLDAP32.@)
+ *
+ * Initialize an LDAP context and create a secure TCP connection.
+ *
+ * PARAMS
+ *  hostname   [I] Name of the host to connect to.
+ *  portnumber [I] Portnumber to use.
+ *  secure     [I] Ask the server to create an SSL connection.
+ *
+ * RETURNS
+ *  Success: Pointer to an LDAP context.
+ *  Failure: NULL
+ *
+ * NOTES
+ *  The hostname string can be a space separated string of hostnames,
+ *  in which case the LDAP runtime will try to connect to the hosts
+ *  in order, until a connection can be made. A hostname may have a
+ *  trailing portnumber (separated from the hostname by a ':'), which 
+ *  will take precedence over the portnumber supplied as a parameter
+ *  to this function. The connection will not be made until the first
+ *  LDAP function that needs it is called.
+ */
 WLDAP32_LDAP *ldap_sslinitW( PWCHAR hostname, ULONG portnumber, int secure )
 {
 #ifdef HAVE_LDAP
@@ -436,6 +564,11 @@ exit:
     return NULL;
 }
 
+/***********************************************************************
+ *      ldap_start_tls_sA     (WLDAP32.@)
+ *
+ * See ldap_start_tls_sW.
+ */
 ULONG ldap_start_tls_sA( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **result,
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls )
 {
@@ -468,6 +601,25 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_start_tls_s     (WLDAP32.@)
+ *
+ * Start TLS encryption on an LDAP connection.
+ *
+ * PARAMS
+ *  ld          [I] Pointer to an LDAP context.
+ *  retval      [I] Return value from the server.
+ *  result      [I] Response message from the server.
+ *  serverctrls [I] Array of LDAP server controls.
+ *  clientctrls [I] Array of LDAP client controls.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  LDAP function that needs it is called.
+ */
 ULONG ldap_start_tls_sW( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **result,
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls )
 {
@@ -500,14 +652,29 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_startup     (WLDAP32.@)
+ */
 ULONG ldap_startup( PLDAP_VERSION_INFO version, HANDLE *instance )
 {
     TRACE( "(%p, %p)\n", version, instance );
     return LDAP_SUCCESS;
 }
 
+/***********************************************************************
+ *      ldap_stop_tls_s     (WLDAP32.@)
+ *
+ * Stop TLS encryption on an LDAP connection.
+ *
+ * PARAMS
+ *  ld [I] Pointer to an LDAP context.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
 BOOLEAN ldap_stop_tls_s( WLDAP32_LDAP *ld )
 {
     TRACE( "(%p)\n", ld );
-    return 0; /* FIXME: find a way to stop tls on a connection */
+    return TRUE; /* FIXME: find a way to stop tls on a connection */
 }
