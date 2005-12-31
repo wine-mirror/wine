@@ -213,7 +213,7 @@ static void marshall_size_arg( var_t *arg )
   if (expr)
   {
     print_proxy( "_StubMsg.MaxCount = ", arg->name );
-    write_expr(proxy, expr);
+    write_expr(proxy, expr, 0);
     fprintf(proxy, ";\n\n");
     print_proxy( "NdrConformantArrayBufferSize( &_StubMsg, (unsigned char*)%s, ", arg->name );
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
@@ -305,7 +305,7 @@ static void marshall_copy_arg( var_t *arg )
   if (expr)
   {
     print_proxy( "_StubMsg.MaxCount = ", arg->name );
-    write_expr(proxy, expr);
+    write_expr(proxy, expr, 0);
     fprintf(proxy, ";\n\n");
     print_proxy( "NdrConformantArrayMarshall( &_StubMsg, (unsigned char*)%s, ", arg->name );
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
@@ -494,7 +494,7 @@ static void free_variable( var_t *arg )
   if (expr)
   {
     print_proxy( "_StubMsg.MaxCount = ", arg->name );
-    write_expr(proxy, expr);
+    write_expr(proxy, expr, 0);
     fprintf(proxy, ";\n\n");
     print_proxy( "NdrClearOutParameters( &_StubMsg, ");
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], ", index );

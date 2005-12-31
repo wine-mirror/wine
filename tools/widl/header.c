@@ -189,7 +189,7 @@ static void write_enums(FILE *h, var_t *v)
       write_name(h, v);
       if (v->eval) {
         fprintf(h, " = ");
-        write_expr(h, v->eval);
+        write_expr(h, v->eval, 0);
       }
     }
     if (PREV_LINK(v))
@@ -399,7 +399,7 @@ void write_typedef(type_t *type, const var_t *names)
   fprintf(header, ";\n");
 }
 
-static void do_write_expr(FILE *h, expr_t *e, int p)
+void write_expr(FILE *h, const expr_t *e, int brackets)
 {
   switch (e->type) {
   case EXPR_VOID:
@@ -415,21 +415,21 @@ static void do_write_expr(FILE *h, expr_t *e, int p)
     break;
   case EXPR_NEG:
     fprintf(h, "-");
-    do_write_expr(h, e->ref, 1);
+    write_expr(h, e->ref, 1);
     break;
   case EXPR_NOT:
     fprintf(h, "~");
-    do_write_expr(h, e->ref, 1);
+    write_expr(h, e->ref, 1);
     break;
   case EXPR_PPTR:
     fprintf(h, "*");
-    do_write_expr(h, e->ref, 1);
+    write_expr(h, e->ref, 1);
     break;
   case EXPR_CAST:
     fprintf(h, "(");
     write_type(h, e->u.tref->ref, NULL, e->u.tref->name);
     fprintf(h, ")");
-    do_write_expr(h, e->ref, 1);
+    write_expr(h, e->ref, 1);
     break;
   case EXPR_SIZEOF:
     fprintf(h, "sizeof(");
@@ -444,8 +444,8 @@ static void do_write_expr(FILE *h, expr_t *e, int p)
   case EXPR_SUB:
   case EXPR_AND:
   case EXPR_OR:
-    if (p) fprintf(h, "(");
-    do_write_expr(h, e->ref, 1);
+    if (brackets) fprintf(h, "(");
+    write_expr(h, e->ref, 1);
     switch (e->type) {
     case EXPR_SHL: fprintf(h, " << "); break;
     case EXPR_SHR: fprintf(h, " >> "); break;
@@ -457,30 +457,25 @@ static void do_write_expr(FILE *h, expr_t *e, int p)
     case EXPR_OR:  fprintf(h, " | "); break;
     default: break;
     }
-    do_write_expr(h, e->u.ext, 1);
-    if (p) fprintf(h, ")");
+    write_expr(h, e->u.ext, 1);
+    if (brackets) fprintf(h, ")");
     break;
   case EXPR_COND:
-    if (p) fprintf(h, "(");
-    do_write_expr(h, e->ref, 1);
+    if (brackets) fprintf(h, "(");
+    write_expr(h, e->ref, 1);
     fprintf(h, " ? ");
-    do_write_expr(h, e->u.ext, 1);
+    write_expr(h, e->u.ext, 1);
     fprintf(h, " : ");
-    do_write_expr(h, e->ext2, 1);
-    if (p) fprintf(h, ")");
+    write_expr(h, e->ext2, 1);
+    if (brackets) fprintf(h, ")");
     break;
   }
-}
-
-void write_expr(FILE *h, expr_t *e)
-{
-  do_write_expr(h, e, 0);
 }
 
 void write_constdef(const var_t *v)
 {
   fprintf(header, "#define %s (", get_name(v));
-  write_expr(header, v->eval);
+  write_expr(header, v->eval, 0);
   fprintf(header, ")\n\n");
 }
 
