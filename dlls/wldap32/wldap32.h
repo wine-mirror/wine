@@ -237,6 +237,59 @@ static inline void strarrayfreeU( char **strarray )
 
 #ifdef HAVE_LDAP
 
+static inline struct berval *bvdup( struct berval *bv )
+{
+    struct berval *berval;
+    DWORD size = sizeof(struct berval) + bv->bv_len;
+
+    berval = HeapAlloc( GetProcessHeap(), 0, size );
+    if (berval)
+    {
+        char *val = (char *)berval + sizeof(struct berval);
+
+        berval->bv_len = bv->bv_len;
+        berval->bv_val = val;
+        memcpy( val, bv->bv_val, bv->bv_len );
+    }
+    return berval;
+}
+
+static inline DWORD bvarraylen( struct berval **bv )
+{
+    struct berval **p = bv;
+    while (*p) p++;
+    return p - bv;
+}
+
+static inline struct berval **bvarraydup( struct berval **bv )
+{
+    struct berval **berval = NULL;
+    DWORD size;
+
+    if (bv)
+    {
+        size = sizeof(struct berval *) * (bvarraylen( bv ) + 1);
+        berval = HeapAlloc( GetProcessHeap(), 0, size );
+
+        if (berval)
+        {
+            struct berval **p = bv;
+            struct berval **q = berval;
+
+            while (*p) *q++ = bvdup( *p++ );
+            *q = NULL;
+        }
+    }
+    return berval;
+}
+
+static inline void bvarrayfree( struct berval **bv )
+{
+    struct berval **p = bv;
+    while (*p) HeapFree( GetProcessHeap(), 0, *p++ );
+    HeapFree( GetProcessHeap(), 0, bv );
+}
+
 static inline LDAPModW *modAtoW( LDAPModA *mod )
 {
     LDAPModW *modW;
@@ -248,7 +301,7 @@ static inline LDAPModW *modAtoW( LDAPModA *mod )
         modW->mod_type = strAtoW( mod->mod_type );
 
         if (mod->mod_op & LDAP_MOD_BVALUES)
-            modW->mod_vals.modv_bvals = mod->mod_vals.modv_bvals;
+            modW->mod_vals.modv_bvals = bvarraydup( mod->mod_vals.modv_bvals );
         else
             modW->mod_vals.modv_strvals = strarrayAtoW( mod->mod_vals.modv_strvals );
     }
@@ -266,7 +319,7 @@ static inline LDAPMod *modWtoU( LDAPModW *mod )
         modU->mod_type = strWtoU( mod->mod_type );
 
         if (mod->mod_op & LDAP_MOD_BVALUES)
-            modU->mod_vals.modv_bvals = mod->mod_vals.modv_bvals;
+            modU->mod_vals.modv_bvals = bvarraydup( mod->mod_vals.modv_bvals );
         else
             modU->mod_vals.modv_strvals = strarrayWtoU( mod->mod_vals.modv_strvals );
     }
@@ -275,14 +328,18 @@ static inline LDAPMod *modWtoU( LDAPModW *mod )
 
 static inline void modfreeW( LDAPModW *mod )
 {
-    if (!(mod->mod_op & LDAP_MOD_BVALUES))
+    if (mod->mod_op & LDAP_MOD_BVALUES)
+        bvarrayfree( mod->mod_vals.modv_bvals );
+    else
         strarrayfreeW( mod->mod_vals.modv_strvals );
     HeapFree( GetProcessHeap(), 0, mod );
 }
 
 static inline void modfreeU( LDAPMod *mod )
 {
-    if (!(mod->mod_op & LDAP_MOD_BVALUES))
+    if (mod->mod_op & LDAP_MOD_BVALUES)
+        bvarrayfree( mod->mod_vals.modv_bvals );
+    else
         strarrayfreeU( mod->mod_vals.modv_strvals );
     HeapFree( GetProcessHeap(), 0, mod );
 }
@@ -368,52 +425,112 @@ static inline void modarrayfreeU( LDAPMod **modarray )
 static inline LDAPControlW *controlAtoW( LDAPControlA *control )
 {
     LDAPControlW *controlW;
+    DWORD len = control->ldctl_value.bv_len;
+    char *val = NULL;
+
+    if (control->ldctl_value.bv_val)
+    {
+        val = HeapAlloc( GetProcessHeap(), 0, len );
+        if (!val) return NULL;
+        memcpy( val, control->ldctl_value.bv_val, len );
+    }
 
     controlW = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPControlW) );
-    if (controlW)
+    if (!controlW)
     {
-        memcpy( controlW, control, sizeof(LDAPControlW) );
-        controlW->ldctl_oid = strAtoW( control->ldctl_oid );
+        HeapFree( GetProcessHeap(), 0, val );
+        return NULL;
     }
+
+    controlW->ldctl_oid = strAtoW( control->ldctl_oid );
+    controlW->ldctl_value.bv_len = len; 
+    controlW->ldctl_value.bv_val = val; 
+    controlW->ldctl_iscritical = control->ldctl_iscritical;
+
     return controlW;
 }
 
 static inline LDAPControlA *controlWtoA( LDAPControlW *control )
 {
     LDAPControlA *controlA;
+    DWORD len = control->ldctl_value.bv_len;
+    char *val = NULL;
 
-    controlA = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPControl) );
-    if (controlA)
+    if (control->ldctl_value.bv_val)
     {
-        memcpy( controlA, control, sizeof(LDAPControlA) );
-        controlA->ldctl_oid = strWtoA( control->ldctl_oid );
+        val = HeapAlloc( GetProcessHeap(), 0, len );
+        if (!val) return NULL;
+        memcpy( val, control->ldctl_value.bv_val, len );
     }
+
+    controlA = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPControlA) );
+    if (!controlA)
+    {
+        HeapFree( GetProcessHeap(), 0, val );
+        return NULL;
+    }
+
+    controlA->ldctl_oid = strWtoA( control->ldctl_oid );
+    controlA->ldctl_value.bv_len = len; 
+    controlA->ldctl_value.bv_val = val;
+    controlA->ldctl_iscritical = control->ldctl_iscritical;
+
     return controlA;
 }
 
 static inline LDAPControl *controlWtoU( LDAPControlW *control )
 {
     LDAPControl *controlU;
+    DWORD len = control->ldctl_value.bv_len;
+    char *val = NULL;
+
+    if (control->ldctl_value.bv_val)
+    {
+        val = HeapAlloc( GetProcessHeap(), 0, len );
+        if (!val) return NULL;
+        memcpy( val, control->ldctl_value.bv_val, len );
+    }
 
     controlU = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPControl) );
-    if (controlU)
+    if (!controlU)
     {
-        memcpy( controlU, control, sizeof(LDAPControl) );
-        controlU->ldctl_oid = strWtoU( control->ldctl_oid );
+        HeapFree( GetProcessHeap(), 0, val );
+        return NULL;
     }
+
+    controlU->ldctl_oid = strWtoU( control->ldctl_oid );
+    controlU->ldctl_value.bv_len = len; 
+    controlU->ldctl_value.bv_val = val; 
+    controlU->ldctl_iscritical = control->ldctl_iscritical;
+
     return controlU;
 }
 
 static inline LDAPControlW *controlUtoW( LDAPControl *control )
 {
     LDAPControlW *controlW;
+    DWORD len = control->ldctl_value.bv_len;
+    char *val = NULL;
+
+    if (control->ldctl_value.bv_val)
+    {
+        val = HeapAlloc( GetProcessHeap(), 0, len );
+        if (!val) return NULL;
+        memcpy( val, control->ldctl_value.bv_val, len );
+    }
 
     controlW = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPControlW) );
-    if (controlW)
+    if (!controlW)
     {
-        memcpy( controlW, control, sizeof(LDAPControlW) );
-        controlW->ldctl_oid = strUtoW( control->ldctl_oid );
+        HeapFree( GetProcessHeap(), 0, val );
+        return NULL;
     }
+
+    controlW->ldctl_oid = strUtoW( control->ldctl_oid );
+    controlW->ldctl_value.bv_len = len; 
+    controlW->ldctl_value.bv_val = val; 
+    controlW->ldctl_iscritical = control->ldctl_iscritical;
+ 
     return controlW;
 }
 
@@ -422,6 +539,7 @@ static inline void controlfreeA( LDAPControlA *control )
     if (control)
     {
         strfreeA( control->ldctl_oid );
+        HeapFree( GetProcessHeap(), 0, control->ldctl_value.bv_val );
         HeapFree( GetProcessHeap(), 0, control );
     }
 }
@@ -431,6 +549,7 @@ static inline void controlfreeW( LDAPControlW *control )
     if (control)
     {
         strfreeW( control->ldctl_oid );
+        HeapFree( GetProcessHeap(), 0, control->ldctl_value.bv_val );
         HeapFree( GetProcessHeap(), 0, control );
     }
 }
@@ -440,6 +559,7 @@ static inline void controlfreeU( LDAPControl *control )
     if (control)
     {
         strfreeU( control->ldctl_oid );
+        HeapFree( GetProcessHeap(), 0, control->ldctl_value.bv_val );
         HeapFree( GetProcessHeap(), 0, control );
     }
 }
