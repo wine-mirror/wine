@@ -3096,7 +3096,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     }
     msi_free(buffer);
     
-    FIXME("Need to write more keys to the user registry\n");
+    /* FIXME: Need to write more keys to the user registry */
   
     hDb= alloc_msihandle( &package->db->hdr );
     rc = MsiGetSummaryInformationW(hDb, NULL, 0, &hSumInfo); 
@@ -3540,7 +3540,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         return rc;
 
     /* dump all the info i can grab */
-    FIXME("Flesh out more information\n");
+    /* FIXME: Flesh out more information */
 
     msi_write_uninstall_property_vals( package, hkey );
 
@@ -3554,7 +3554,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     RegSetValueExW(hkey,szUninstallString,0,REG_EXPAND_SZ,(LPBYTE)buffer,size);
     msi_free(buffer);
 
-    FIXME("Write real Estimated Size when we have it\n");
+    /* FIXME: Write real Estimated Size when we have it */
     msi_reg_set_val_dword( hkey, szEstimatedSize, 0 );
    
     GetLocalTime(&systime);
