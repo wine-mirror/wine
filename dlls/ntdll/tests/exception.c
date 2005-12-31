@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <assert.h>
 #include <stdarg.h>
 
 #ifndef _WIN32_WINNT
@@ -36,6 +37,8 @@
 
 #ifdef __i386__
 
+static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
+
 /* Test various instruction combinations that cause a protection fault on the i386,
  * and check what the resulting exception looks like.
  */
@@ -51,6 +54,8 @@ static const struct exception
 } exceptions[] =
 {
     /* test some privileged instructions */
+    { { 0xfb, 0xc3 },  /* sti; ret */
+      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
     { { 0x6c, 0xc3 },  /* insb (%dx); ret */
       0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
     { { 0x6d, 0xc3 },  /* insl (%dx); ret */
@@ -76,8 +81,6 @@ static const struct exception
     { { 0xf4, 0xc3 },  /* hlt; ret */
       0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
     { { 0xfa, 0xc3 },  /* cli; ret */
-      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
-    { { 0xfb, 0xc3 },  /* sti; ret */
       0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
 
     /* test long jump to invalid selector */
@@ -198,19 +201,27 @@ static void test_prot_fault(void)
         const struct exception       *except;
     } exc_frame;
 
+    pNtCurrentTeb = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtCurrentTeb" );
+    assert( pNtCurrentTeb );
+
     exc_frame.frame.Handler = handler;
-    exc_frame.frame.Prev = NtCurrentTeb()->Tib.ExceptionList;
-    NtCurrentTeb()->Tib.ExceptionList = &exc_frame.frame;
+    exc_frame.frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = &exc_frame.frame;
     for (i = 0; i < sizeof(exceptions)/sizeof(exceptions[0]); i++)
     {
         void (*func)(void) = (void *)exceptions[i].code;
         exc_frame.except = &exceptions[i];
         got_exception = 0;
         func();
+        if (!i && !got_exception)
+        {
+            trace( "No exception, assuming win9x, no point in testing further\n" );
+            break;
+        }
         ok( got_exception == (exceptions[i].status != 0),
             "%u: bad exception count %d\n", i, got_exception );
     }
-    NtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
+    pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
 }
 
 #endif  /* __i386__ */
