@@ -671,7 +671,7 @@ void CC_EditSetHSL( HWND hDlg, int h, int s, int l )
 {
  char buffer[10];
  LCCPRIV lpp = (LCCPRIV)GetWindowLongPtrW(hDlg, DWLP_USER);
- lpp->updating = TRUE;
+
  if (IsWindowVisible( GetDlgItem(hDlg, 0x2c6) ))   /* if full size */
  {
    lpp->updating = TRUE;
@@ -938,7 +938,7 @@ LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notifyCode, 
     COLORREF *cr;
     LCCPRIV lpp = (LCCPRIV)GetWindowLongPtrW(hDlg, DWLP_USER);
     TRACE("CC_WMCommand wParam=%x lParam=%lx\n", wParam, lParam);
-    switch (wParam)
+    switch (LOWORD(wParam))
     {
           case 0x2c2:  /* edit notify RGB */
 	  case 0x2c3:
@@ -950,7 +950,7 @@ LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notifyCode, 
 			   g = GetGValue(lpp->lpcc->rgbResult);
 			   b= GetBValue(lpp->lpcc->rgbResult);
 			   xx = 0;
-			   switch (wParam)
+			   switch (LOWORD(wParam))
 			   {
 			    case 0x2c2: if ((xx = (i != r))) r = i; break;
 			    case 0x2c3: if ((xx = (i != g))) g = i; break;
@@ -975,9 +975,9 @@ LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notifyCode, 
 	  case 0x2c1:
 	       if (notifyCode == EN_UPDATE && !lpp->updating)
 			 {
-			   i = CC_CheckDigitsInEdit(hwndCtl , wParam == 0x2bf ? 239:240);
+			   i = CC_CheckDigitsInEdit(hwndCtl , LOWORD(wParam) == 0x2bf ? 239:240);
 			   xx = 0;
-			   switch (wParam)
+			   switch (LOWORD(wParam))
 			   {
 			    case 0x2bf: if ((xx = ( i != lpp->h))) lpp->h = i; break;
 			    case 0x2c0: if ((xx = ( i != lpp->s))) lpp->s = i; break;
