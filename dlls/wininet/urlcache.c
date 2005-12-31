@@ -179,7 +179,7 @@ typedef struct _URLCACHECONTAINER
 /* List of all containers available */
 static struct list UrlContainers = LIST_INIT(UrlContainers);
 
-static BOOL URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBlocksNeeded, CACHEFILE_ENTRY ** ppEntry);
+static HASH_CACHEFILE_ENTRY *URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_ENTRY *pPrevHash);
 
 /***********************************************************************
  *           URLCache_PathToObjectName (Internal)
@@ -297,7 +297,6 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 		    WCHAR wszDirPath[MAX_PATH];
 		    FILETIME ft;
 		    int i, j;
-		    HASH_CACHEFILE_ENTRY *pPrevHash = 0;
 
 		    dwFileSize = NEWFILE_SIZE;
 		
@@ -328,37 +327,7 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 			RegCloseKey(key);
 		    }
 		
-		    /* Now create the hash table entries. Windows would create
-		     * these as needed, but WINE doesn't do that yet, so create
-		     * four and hope it's enough.
-		     */
-
-		    for (i = 0; i < 4; ++i)
-		    {
-			HASH_CACHEFILE_ENTRY *pHash;
-			DWORD dwOffset;
-
-		        /* Request 0x20 blocks - no need to check for failure here because
-			 * we started with an empty file
-			 */
-			URLCache_FindFirstFreeEntry(pHeader, 0x20, (CACHEFILE_ENTRY **) &pHash);
-
-			dwOffset = (BYTE *) pHash - (BYTE *) pHeader;
-
-			if (pPrevHash)
-			    pPrevHash->dwAddressNext = dwOffset;
-			else
-			    pHeader->dwOffsetFirstHashTable = dwOffset;
-			pHash->CacheFileEntry.dwSignature = HASH_SIGNATURE;
-			pHash->CacheFileEntry.dwBlocksUsed = 0x20;
-			pHash->dwHashTableNumber = i;
-			for (j = 0; j < HASHTABLE_SIZE; ++j)
-			{
-			    pHash->HashTable[j].dwOffsetEntry = 0;
-			    pHash->HashTable[j].dwHashKey = HASHTABLE_FREE;
-			}
-			pPrevHash = pHash;
-		    }
+		    URLCache_CreateHashTable(pHeader, NULL);
 
 		    /* Last step - create the directories */
 	
@@ -1305,6 +1274,36 @@ static BOOL URLCache_AddEntryToHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, 
     }
     FIXME("need to create another hash table\n");
     return FALSE;
+}
+
+static HASH_CACHEFILE_ENTRY *URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_ENTRY *pPrevHash)
+{
+    HASH_CACHEFILE_ENTRY *pHash;
+    DWORD dwOffset;
+    int i;
+
+    if (!URLCache_FindFirstFreeEntry(pHeader, 0x20, (CACHEFILE_ENTRY **)&pHash))
+    {
+        FIXME("no free space for hash table\n");
+        SetLastError(ERROR_DISK_FULL);
+        return NULL;
+    }
+
+    dwOffset = (BYTE *)pHash - (BYTE *)pHeader;
+
+    if (pPrevHash)
+        pPrevHash->dwAddressNext = dwOffset;
+    else
+        pHeader->dwOffsetFirstHashTable = dwOffset;
+    pHash->CacheFileEntry.dwSignature = HASH_SIGNATURE;
+    pHash->CacheFileEntry.dwBlocksUsed = 0x20;
+    pHash->dwHashTableNumber = pPrevHash ? pPrevHash->dwHashTableNumber + 1 : 0;
+    for (i = 0; i < HASHTABLE_SIZE; i++)
+    {
+        pHash->HashTable[i].dwOffsetEntry = 0;
+        pHash->HashTable[i].dwHashKey = HASHTABLE_FREE;
+    }
+    return pHash;
 }
 
 /***********************************************************************
