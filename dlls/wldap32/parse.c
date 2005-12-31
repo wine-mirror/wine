@@ -88,24 +88,6 @@ ULONG ldap_parse_extended_resultW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *result
     return ret;
 }
 
-ULONG ldap_parse_page_controlA( WLDAP32_LDAP *ld, PLDAPControlA *serverctrls,
-    ULONG *count, struct WLDAP32_berval **cookie )
-{
-    FIXME( "(%p, %p, %p, %p)\n", ld, serverctrls, count, cookie );
-
-    if (!ld) return ~0UL;
-    return LDAP_NOT_SUPPORTED;
-}
-
-ULONG ldap_parse_page_controlW( WLDAP32_LDAP *ld, PLDAPControlW *serverctrls,
-    ULONG *count, struct WLDAP32_berval **cookie )
-{
-    FIXME( "(%p, %p, %p, %p)\n", ld, serverctrls, count, cookie );
-
-    if (!ld) return ~0UL;
-    return LDAP_NOT_SUPPORTED;
-}
-
 ULONG ldap_parse_referenceA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *message,
     PCHAR **referrals )
 {

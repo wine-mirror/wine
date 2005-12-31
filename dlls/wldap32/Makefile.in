@@ -23,6 +23,7 @@ C_SRCS = \
 	modify.c \
 	modrdn.c \
 	option.c \
+	page.c \
 	parse.c \
 	rename.c \
 	search.c \

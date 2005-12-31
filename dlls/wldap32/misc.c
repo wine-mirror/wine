@@ -261,35 +261,6 @@ WLDAP32_LDAPMessage *WLDAP32_ldap_first_reference( WLDAP32_LDAP *ld, WLDAP32_LDA
     return NULL;
 }
 
-ULONG ldap_get_next_page( WLDAP32_LDAP *ld, PLDAPSearch search, ULONG pagesize,
-    ULONG *message )
-{
-    FIXME( "(%p, %p, 0x%08lx, %p)\n", ld, search, pagesize, message );
-
-    if (!ld) return ~0UL;
-    return LDAP_NOT_SUPPORTED;
-}
-
-ULONG ldap_get_next_page_s( WLDAP32_LDAP *ld, PLDAPSearch search,
-    struct l_timeval *timeout, ULONG pagesize, ULONG *count,
-    WLDAP32_LDAPMessage **results )
-{
-    FIXME( "(%p, %p, %p, 0x%08lx, %p, %p)\n", ld, search, timeout,
-           pagesize, count, results );
-
-    if (!ld) return ~0UL;
-    return LDAP_NOT_SUPPORTED;
-}
-
-ULONG ldap_get_paged_count( WLDAP32_LDAP *ld, PLDAPSearch search,
-    ULONG *count, WLDAP32_LDAPMessage *results )
-{
-    FIXME( "(%p, %p, %p, %p)\n", ld, search, count, results );
-
-    if (!ld) return ~0UL;
-    return LDAP_NOT_SUPPORTED;
-}
-
 void ldap_memfreeA( PCHAR block )
 {
     TRACE( "(%p)\n", block );

@@ -173,6 +173,10 @@ typedef struct WLDAP32_berval
     PCHAR bv_val;
 } LDAP_BERVAL, *PLDAP_BERVAL, BERVAL, *PBERVAL, WLDAP32_BerValue;
 
+#define LDAP_PAGED_RESULT_OID_STRING "1.2.840.113556.1.4.319"
+#define LDAP_PAGED_RESULT_OID_STRING_W (const WCHAR []){'1','.','2','.', \
+        '8','4','0','.','1','1','3','5','5','6','.','1','.','4','.','3','1','9',0}
+
 typedef struct ldapcontrolA
 {
     PCHAR ldctl_oid;

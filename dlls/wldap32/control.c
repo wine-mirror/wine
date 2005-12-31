@@ -122,49 +122,6 @@ ULONG ldap_controls_freeW( LDAPControlW **controls )
 }
 
 /***********************************************************************
- *      ldap_create_page_controlA     (WLDAP32.@)
- *
- * See ldap_create_page_controlW.
- */
-ULONG ldap_create_page_controlA( WLDAP32_LDAP *ld, ULONG pagesize,
-    struct WLDAP32_berval *cookie, UCHAR critical, PLDAPControlA *control )
-{
-    FIXME( "(%p, 0x%08lx, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
-           critical, control );
-    return LDAP_NOT_SUPPORTED;
-}
-
-/***********************************************************************
- *      ldap_create_page_controlW     (WLDAP32.@)
- *
- * Create a control for paged search results.
- *
- * PARAMS
- *  ld       [I] Pointer to an LDAP context.
- *  pagesize [I] Number of entries to return per page.
- *  cookie   [I] Used by the server to track its location in the
- *               search results.
- *  critical [I] Tells the server this control is critical to the
- *               search operation.
- *  control  [O] LDAPControl created.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Not implemented. It may be possible to implement this function
- *  on top of ldap_create_vlv_control.
- */
-ULONG ldap_create_page_controlW( WLDAP32_LDAP *ld, ULONG pagesize,
-    struct WLDAP32_berval *cookie, UCHAR critical, PLDAPControlW *control )
-{
-    FIXME( "(%p, 0x%08lx, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
-           critical, control );
-    return LDAP_NOT_SUPPORTED;
-}
-
-/***********************************************************************
  *      ldap_create_sort_controlA     (WLDAP32.@)
  *
  * See ldap_create_sort_controlW.
