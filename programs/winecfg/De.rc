@@ -26,7 +26,7 @@ IDR_WINECFG MENU DISCARDABLE
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "Configure", IDC_AUDIO_CONFIGURE
+        MENUITEM "Konfigurieren", IDC_AUDIO_CONFIGURE
     END
 END
 
@@ -60,31 +60,34 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT	    "Bildschirmfarbtiefe: ",IDC_STATIC,8,10,70,30
-    COMBOBOX	    IDC_SCREEN_DEPTH,80,8,170,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Bildschirmfarbtiefe: ",IDC_STATIC,8,10,70,30
+    COMBOBOX        IDC_SCREEN_DEPTH,80,8,170,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    GROUPBOX        " Fenstereinstellungen ",IDC_STATIC,8,25,244,120
+    GROUPBOX        " Fenstereinstellungen ",IDC_STATIC,8,25,244,180
 
-    CONTROL	    "Erlaube DirectX Anwendungen, dass die Maus das Anwendungsfenster nicht verlassen kann.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL	    "Aktivierung der Doppelpufferung des Desktops",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
-    
+    CONTROL         "Erlaube DirectX Anwendungen, dass die Maus ihr Fenster nicht verlassen kann.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL         "Aktivierung der Doppelpufferung des Desktops",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    LTEXT           "Wenn die Fenster durch deinen Fenstermanager kontrolliert werden, dann werden sie die gleichen Ränder haben, der eingestellte virtuelle Desktop wird respektiert und sie werden in der Fensterliste auftauchen.\nWenn die Fenster nicht kontrolliert werden, werden sie unabhängig vom verwerdeten Fenstermanager sein. Das bedeutet, dass die Fenster sich nicht an den Desktop anpassen werden. Der Vorteil ist, dass dann die Emulation akkurater ist, was einigen Anwendungen hilft, besser zu arbeiten.",
+                    IDC_STATIC,15,58,228,80
+    CONTROL         "Erlaube dem Fenstermanager die Fenster zu kontrollieren.",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8
+
     /* FIXME: the wording of this explanation could be a lot better */
     LTEXT           "Sie können entweder einen Windows Desktop emulieren, in dem alle Fenster in einem 'virtuellen Bildschirm' zusammen sind, oder Sie lassen es zu, dass die Fenster auf ihren normalen Desktop platziert werden.",
-                    IDC_STATIC,15,73,228,28
-    LTEXT           "Desktop-Größe:",IDC_DESKTOP_SIZE,15,115,50,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,114,115,8,8,WS_DISABLED
+                    IDC_STATIC,15,146,228,28
+    LTEXT           "Desktop-Größe:",IDC_DESKTOP_SIZE,15,188,50,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,114,188,8,8,WS_DISABLED
     CONTROL         "Emuliere einen virtuellen Desktop",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,173,230,10
 		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,70,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,123,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,70,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,123,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,210,244,50
     
-    LTEXT           "Vertex Shader Unterstützung: ",IDC_STATIC,15,150,80,35
-    COMBOBOX        IDC_D3D_VSHADER_MODE,100,150,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Vertex Shader Unterstützung: ",IDC_STATIC,15,220,80,30
+    COMBOBOX        IDC_D3D_VSHADER_MODE,100,218,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     
-    CONTROL         "Erlaube Pixel Shader (wenn es durch die Hardware unterstützt wird)", IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,170,230,10
+    CONTROL         "Erlaube Pixel Shader (wenn es durch die Hardware unterstützt wird)", IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,242,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -134,7 +137,7 @@ BEGIN
     EDITTEXT        IDC_EDIT_PATH,41,120,155,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Durchsuchen",IDC_BUTTON_BROWSE_PATH,201,120,45,13
 
-    LTEXT           "&Typ:",IDC_STATIC,14,138,21,10
+    LTEXT           "&Typ:",IDC_STATIC_TYPE,14,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     LTEXT           "Bezeichnung und Seriennummer",IDC_LABELSERIAL_STATIC,15,155,125,10
@@ -160,7 +163,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Treiber Auswahl ",IDC_STATIC,8,4,244,195
-    LTEXT           "Audio Treiber: ",IDC_STATIC,15,20,227,30
+    LTEXT           "Wählen Sie einen Sound Treiber durch das Auswählen eines verfügbaren Treibers. Der Sound wird deaktiviert, wenn kein Treiber ausgewählt wird. Die Auswahl mehrer Treiber ist nicht empfohlen. Der Treiber kann durch einen Rechtsklick konfiguriert werden.",IDC_STATIC,15,20,227,30
     CONTROL         "Geräte",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,10,50,140,140
     PUSHBUTTON      "Kontrollschirm",IDC_AUDIO_CONTROL_PANEL,170,50,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60    
@@ -199,4 +202,5 @@ BEGIN
     IDS_WINECFG_TITLE       "Wine-Konfiguration"
     IDS_THEMEFILE           "Motiv-Dateien"
     IDS_THEMEFILE_SELECT    "Motiv-Datei auswählen"
+    IDS_AUDIO_MISSING       "Zur Zeit ist kein Audio Treiber in der Registry eingetragen.\n\nEin bevorzugter Treiber wurde für Sie ausgewählt.\nSie können diesen Treiber nutzen oder einen anderen auswählen, sofern dieser vorhanden ist.\n\nSie müssen auf Anwenden klicken, damit die Änderung übernommen wird."
 END
