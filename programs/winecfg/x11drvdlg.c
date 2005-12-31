@@ -135,7 +135,7 @@ static void init_dialog(HWND dialog)
     SendDlgItemMessage(dialog, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
     SendDlgItemMessage(dialog, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
 
-    buf = get_reg_key(config_key, keypath("X11 Driver"), "DXGrab", "Y");
+    buf = get_reg_key(config_key, keypath("X11 Driver"), "DXGrab", "N");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(dialog, IDC_DX_MOUSE_GRAB, BST_CHECKED);
     else
