@@ -448,11 +448,31 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
                     if (!has_length && !has_size)
                         array_type = "FixedArray";
                     else if (has_length && !has_size)
+                    {
+                        print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
+                        print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
+                        write_expr(file, length_is, 1);
+                        fprintf(file, ";\n\n");
                         array_type = "VaryingArray";
+                    }
                     else if (!has_length && has_size)
+                    {
+                        print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
+                        write_expr(file, size_is ? size_is : var->array, 1);
+                        fprintf(file, ";\n\n");
                         array_type = "ConformantArray";
+                    }
                     else
+                    {
+                        print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
+                        write_expr(file, size_is ? size_is : var->array, 1);
+                        fprintf(file, ";\n");
+                        print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
+                        print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
+                        write_expr(file, length_is, 1);
+                        fprintf(file, ";\n\n");
                         array_type = "ConformantVaryingArray";
+                    }
                 }
 
                 print_file(file, indent,
