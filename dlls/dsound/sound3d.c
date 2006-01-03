@@ -332,7 +332,7 @@ static void DSOUND_Mix3DBuffer(IDirectSoundBufferImpl *dsb)
 	DSOUND_ForceRemix(dsb);			
 }
 
-static void WINAPI DSOUND_ChangeListener(IDirectSound3DListenerImpl *ds3dl)
+static void DSOUND_ChangeListener(IDirectSound3DListenerImpl *ds3dl)
 {
 	int i;
 	TRACE("(%p)\n",ds3dl);
@@ -705,7 +705,7 @@ static const IDirectSound3DBufferVtbl ds3dbvt =
 	IDirectSound3DBufferImpl_SetVelocity,
 };
 
-HRESULT WINAPI IDirectSound3DBufferImpl_Create(
+HRESULT IDirectSound3DBufferImpl_Create(
 	IDirectSoundBufferImpl *dsb,
 	IDirectSound3DBufferImpl **pds3db)
 {
@@ -749,7 +749,7 @@ HRESULT WINAPI IDirectSound3DBufferImpl_Create(
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectSound3DBufferImpl_Destroy(
+HRESULT IDirectSound3DBufferImpl_Destroy(
     IDirectSound3DBufferImpl *pds3db)
 {
     TRACE("(%p)\n",pds3db);
@@ -1071,7 +1071,7 @@ static const IDirectSound3DListenerVtbl ds3dlvt =
 	IDirectSound3DListenerImpl_CommitDeferredSettings,
 };
 
-HRESULT WINAPI IDirectSound3DListenerImpl_Create(
+HRESULT IDirectSound3DListenerImpl_Create(
 	PrimaryBufferImpl *This,
 	IDirectSound3DListenerImpl **pdsl)
 {

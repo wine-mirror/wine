@@ -1016,7 +1016,7 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
     return ref;
 }
 
-HRESULT WINAPI IDirectSoundImpl_Create(
+HRESULT IDirectSoundImpl_Create(
     LPDIRECTSOUND8 * ppDS)
 {
     IDirectSoundImpl* pDS;
@@ -1082,7 +1082,7 @@ static const IUnknownVtbl DirectSound_Unknown_Vtbl =
     IDirectSound_IUnknown_Release
 };
 
-HRESULT WINAPI IDirectSound_IUnknown_Create(
+HRESULT IDirectSound_IUnknown_Create(
     LPDIRECTSOUND8 pds,
     LPUNKNOWN * ppunk)
 {
@@ -1243,7 +1243,7 @@ static const IDirectSoundVtbl DirectSound_DirectSound_Vtbl =
     IDirectSound_IDirectSound_Initialize
 };
 
-HRESULT WINAPI IDirectSound_IDirectSound_Create(
+HRESULT IDirectSound_IDirectSound_Create(
     LPDIRECTSOUND8  pds,
     LPDIRECTSOUND * ppds)
 {
@@ -1321,7 +1321,7 @@ static const IUnknownVtbl DirectSound8_Unknown_Vtbl =
     IDirectSound8_IUnknown_Release
 };
 
-HRESULT WINAPI IDirectSound8_IUnknown_Create(
+HRESULT IDirectSound8_IUnknown_Create(
     LPDIRECTSOUND8 pds,
     LPUNKNOWN * ppunk)
 {
@@ -1482,7 +1482,7 @@ static const IDirectSoundVtbl DirectSound8_DirectSound_Vtbl =
     IDirectSound8_IDirectSound_Initialize
 };
 
-HRESULT WINAPI IDirectSound8_IDirectSound_Create(
+HRESULT IDirectSound8_IDirectSound_Create(
     LPDIRECTSOUND8 pds,
     LPDIRECTSOUND * ppds)
 {
@@ -1653,7 +1653,7 @@ static const IDirectSound8Vtbl DirectSound8_DirectSound8_Vtbl =
     IDirectSound8_IDirectSound8_VerifyCertification
 };
 
-HRESULT WINAPI IDirectSound8_IDirectSound8_Create(
+HRESULT IDirectSound8_IDirectSound8_Create(
     LPDIRECTSOUND8 pds,
     LPDIRECTSOUND8 * ppds)
 {
@@ -1688,7 +1688,7 @@ HRESULT WINAPI IDirectSound8_IDirectSound8_Create(
     return DS_OK;
 }
 
-HRESULT WINAPI DSOUND_Create(
+HRESULT DSOUND_Create(
     LPDIRECTSOUND *ppDS,
     IUnknown *pUnkOuter)
 {
@@ -1769,7 +1769,7 @@ HRESULT WINAPI DirectSoundCreate(
     return hr;
 }
 
-HRESULT WINAPI DSOUND_Create8(
+HRESULT DSOUND_Create8(
     LPDIRECTSOUND8 *ppDS,
     IUnknown *pUnkOuter)
 {

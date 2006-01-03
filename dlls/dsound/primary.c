@@ -1033,7 +1033,7 @@ static const IDirectSoundBuffer8Vtbl dspbvt =
 	PrimaryBufferImpl_GetObjectInPath
 };
 
-HRESULT WINAPI PrimaryBufferImpl_Create(
+HRESULT PrimaryBufferImpl_Create(
 	IDirectSoundImpl *ds,
 	PrimaryBufferImpl **pdsb,
 	LPCDSBUFFERDESC dsbd)

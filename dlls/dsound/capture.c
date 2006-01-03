@@ -68,7 +68,7 @@ static const char * captureStateString[] = {
     "STATE_STOPPING"
 };
 
-HRESULT WINAPI IDirectSoundCaptureImpl_Create(
+HRESULT IDirectSoundCaptureImpl_Create(
     LPDIRECTSOUNDCAPTURE8 * ppDSC)
 {
     IDirectSoundCaptureImpl *pDSC;
@@ -91,7 +91,7 @@ HRESULT WINAPI IDirectSoundCaptureImpl_Create(
     return DS_OK;
 }
 
-HRESULT WINAPI DSOUND_CaptureCreate(
+HRESULT DSOUND_CaptureCreate(
     LPDIRECTSOUNDCAPTURE *ppDSC,
     IUnknown *pUnkOuter)
 {
@@ -114,7 +114,7 @@ HRESULT WINAPI DSOUND_CaptureCreate(
     return hr;
 }
 
-HRESULT WINAPI DSOUND_CaptureCreate8(
+HRESULT DSOUND_CaptureCreate8(
     LPDIRECTSOUNDCAPTURE8 *ppDSC8,
     IUnknown *pUnkOuter)
 {
@@ -1030,7 +1030,7 @@ static const IDirectSoundNotifyVtbl dscnvt =
     IDirectSoundCaptureNotifyImpl_SetNotificationPositions,
 };
 
-HRESULT WINAPI IDirectSoundCaptureNotifyImpl_Create(
+HRESULT IDirectSoundCaptureNotifyImpl_Create(
     IDirectSoundCaptureBufferImpl *dscb,
     IDirectSoundCaptureNotifyImpl **pdscn)
 {

@@ -194,7 +194,7 @@ static const IKsPropertySetVtbl iksbvt = {
     IKsBufferPropertySetImpl_QuerySupport
 };
 
-HRESULT WINAPI IKsBufferPropertySetImpl_Create(
+HRESULT IKsBufferPropertySetImpl_Create(
     IDirectSoundBufferImpl *dsb,
     IKsBufferPropertySetImpl **piks)
 {
@@ -219,7 +219,7 @@ HRESULT WINAPI IKsBufferPropertySetImpl_Create(
     return S_OK;
 }
 
-HRESULT WINAPI IKsBufferPropertySetImpl_Destroy(
+HRESULT IKsBufferPropertySetImpl_Destroy(
     IKsBufferPropertySetImpl *piks)
 {
     TRACE("(%p)\n",piks);
@@ -1503,7 +1503,7 @@ static const IKsPropertySetVtbl ikspvt = {
     IKsPrivatePropertySetImpl_QuerySupport
 };
 
-HRESULT WINAPI IKsPrivatePropertySetImpl_Create(
+HRESULT IKsPrivatePropertySetImpl_Create(
     IKsPrivatePropertySetImpl **piks)
 {
     IKsPrivatePropertySetImpl *iks;
