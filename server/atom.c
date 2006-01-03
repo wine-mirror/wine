@@ -413,10 +413,11 @@ DECL_HANDLER(get_atom_information)
         if ((entry = get_atom_entry( table, req->atom )))
         {
             size_t len = entry->len * sizeof(WCHAR);
-            if (len <= get_reply_max_size()) set_reply_data( entry->str, len );
-            else if (get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
+            if (get_reply_max_size())
+                set_reply_data( entry->str, min( len, get_reply_max_size()));
             reply->count = entry->count;
             reply->pinned = entry->pinned;
+            reply->total = len;
         }
         else reply->count = -1;
         release_object( table );

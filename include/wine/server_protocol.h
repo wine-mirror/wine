@@ -2078,6 +2078,7 @@ struct get_atom_information_reply
     struct reply_header __header;
     int          count;
     int          pinned;
+    size_t       total;
     /* VARARG(name,unicode_str); */
 };
 
@@ -4346,6 +4347,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 217
+#define SERVER_PROTOCOL_VERSION 218
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

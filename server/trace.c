@@ -1961,6 +1961,7 @@ static void dump_get_atom_information_reply( const struct get_atom_information_r
 {
     fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " pinned=%d,", req->pinned );
+    fprintf( stderr, " total=%d,", req->total );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }

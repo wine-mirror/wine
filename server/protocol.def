@@ -1488,6 +1488,7 @@ enum char_info_mode
 @REPLY
     int          count;        /* atom lock count */
     int          pinned;       /* whether the atom has been pinned */
+    size_t       total;        /* actual length of atom name */
     VARARG(name,unicode_str);  /* atom name */
 @END
 
