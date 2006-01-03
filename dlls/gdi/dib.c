@@ -1148,6 +1148,12 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
                                            &planes, &bpp, &compression, &sizeImage )) == -1))
         return 0;
 
+    if (compression != BI_RGB && compression != BI_BITFIELDS)
+    {
+        TRACE("can't create a compressed (%lu) dibsection\n", compression);
+        return 0;
+    }
+
     if (!(dib = HeapAlloc( GetProcessHeap(), 0, sizeof(*dib) ))) return 0;
 
     TRACE("format (%ld,%ld), planes %d, bpp %d, size %ld, %s\n",
@@ -1186,12 +1192,7 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
     if( bpp <= 8 )
         dib->dsBmih.biClrUsed = 1 << bpp;
 
-    /* only use sizeImage if it's valid and we're dealing with a compressed bitmap */
-    if (sizeImage && (compression == BI_RLE4 || compression == BI_RLE8))
-        dib->dsBmih.biSizeImage = sizeImage;
-    else
-        dib->dsBmih.biSizeImage = dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
-
+    dib->dsBmih.biSizeImage = dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
 
     /* set dsBitfields values */
     if (usage == DIB_PAL_COLORS || bpp <= 8)
