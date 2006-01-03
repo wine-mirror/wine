@@ -263,11 +263,13 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
     HMODULE module;
     struct graphics_driver *driver;
     static const WCHAR displayW[] = { 'd','i','s','p','l','a','y',0 };
+    static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
 
     EnterCriticalSection( &driver_section );
 
     /* display driver is a special case */
-    if (!strcmpiW( name, displayW ))
+    if (!strcmpiW( name, displayW ) || 
+        !strcmpiW( name, display1W ))
     {
         driver = load_display_driver();
         LeaveCriticalSection( &driver_section );

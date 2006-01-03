@@ -67,6 +67,7 @@ static void test_enumdisplaydevices(void)
     while(1)
     {
         BOOL ret;
+        HDC dc;
         ret = pEnumDisplayDevicesA(NULL, num, &dd, 0);
         ok(ret || num != 0, "EnumDisplayDevices fails with num == 0\n");
         if(!ret) break;
@@ -74,6 +75,13 @@ static void test_enumdisplaydevices(void)
         {
             strcpy(primary_device_name, dd.DeviceName);
             primary_num = num;
+        }
+        if(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
+        {
+            /* test creating DC */
+            dc = CreateDCA(dd.DeviceName, NULL, NULL, NULL);
+            ok(dc != NULL, "Failed to CreateDC(\"%s\") err=%ld\n", dd.DeviceName, GetLastError());
+            DeleteDC(dc);
         }
         num++;
     }
