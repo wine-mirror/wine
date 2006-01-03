@@ -241,7 +241,7 @@ static void QueryInterface(void)
         return;
     }
 
-    /* Call IUnkown::QueryInterface */
+    /* Call IUnknown::QueryInterface */
     ret = IDirectDrawSurface_QueryInterface(dsurface, 0, &object);
     ok(ret == DDERR_INVALIDPARAMS, "IDirectDrawSurface::QueryInterface returned %lx\n", ret);
 

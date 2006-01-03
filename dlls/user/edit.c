@@ -155,7 +155,7 @@ typedef struct
 	/*
 	 * IME Data
 	 */
-	UINT composition_len;   /* lenght of composition, 0 == no composition */
+	UINT composition_len;   /* length of composition, 0 == no composition */
 	int composition_start;  /* the character position for the composition */
 } EDITSTATE;
 
