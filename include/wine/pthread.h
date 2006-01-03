@@ -73,9 +73,7 @@ struct wine_pthread_callbacks
 
 /* we don't want to include winnt.h here */
 #ifndef DECLSPEC_NORETURN
-# if defined(_MSC_VER) && (_MSC_VER >= 1200)
-#  define DECLSPEC_NORETURN __declspec(noreturn)
-# elif defined(__GNUC__)
+# ifdef __GNUC__
 #  define DECLSPEC_NORETURN __attribute__((noreturn))
 # else
 #  define DECLSPEC_NORETURN
