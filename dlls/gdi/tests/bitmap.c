@@ -198,9 +198,67 @@ static void test_dibsections(void)
     COLORREF c0, c1;
     int i;
     int screen_depth;
+    MEMORY_BASIC_INFORMATION info;
 
     hdc = GetDC(0);
     screen_depth = GetDeviceCaps(hdc, BITSPIXEL) * GetDeviceCaps(hdc, PLANES);
+
+    memset(pbmi, 0, sizeof(bmibuf));
+    pbmi->bmiHeader.biSize = sizeof(pbmi->bmiHeader);
+    pbmi->bmiHeader.biHeight = 100;
+    pbmi->bmiHeader.biWidth = 512;
+    pbmi->bmiHeader.biBitCount = 24;
+    pbmi->bmiHeader.biPlanes = 1;
+    pbmi->bmiHeader.biCompression = BI_RGB;
+
+    SetLastError(0xdeadbeef);
+    hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection error %ld\n", GetLastError());
+    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIBSection\n");
+    ok(dibsec.dsBm.bmBits == bits, "dibsec.dsBits %p != bits %p\n", dibsec.dsBm.bmBits, bits);
+
+    /* test the DIB memory */
+    ok(VirtualQuery(bits, &info, sizeof(info)) == sizeof(info),
+        "VirtualQuery failed\n");
+    ok(info.BaseAddress == bits, "%p != %p\n", info.BaseAddress, bits);
+    ok(info.AllocationBase == bits, "%p != %p\n", info.AllocationBase, bits);
+    ok(info.AllocationProtect == PAGE_READWRITE, "%lx != PAGE_READWRITE\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x26000, "0x%lx != 0x26000\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "%lx != MEM_COMMIT\n", info.State);
+    ok(info.Protect == PAGE_READWRITE, "%lx != PAGE_READWRITE\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "%lx != MEM_PRIVATE\n", info.Type);
+
+    DeleteObject(hdib);
+
+    pbmi->bmiHeader.biBitCount = 8;
+    pbmi->bmiHeader.biCompression = BI_RLE8;
+    SetLastError(0xdeadbeef);
+    hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib == NULL, "CreateDIBSection should fail when asked to create a compressed DIB section\n");
+    ok(GetLastError() == 0xdeadbeef, "wrong error %ld\n", GetLastError());
+
+    pbmi->bmiHeader.biBitCount = 16;
+    pbmi->bmiHeader.biCompression = BI_BITFIELDS;
+    ((PDWORD)pbmi->bmiColors)[0] = 0xf800;
+    ((PDWORD)pbmi->bmiColors)[1] = 0x07e0;
+    ((PDWORD)pbmi->bmiColors)[2] = 0x001f;
+    SetLastError(0xdeadbeef);
+    hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection error %ld\n", GetLastError());
+
+    /* test the DIB memory */
+    ok(VirtualQuery(bits, &info, sizeof(info)) == sizeof(info),
+        "VirtualQuery failed\n");
+    ok(info.BaseAddress == bits, "%p != %p\n", info.BaseAddress, bits);
+    ok(info.AllocationBase == bits, "%p != %p\n", info.AllocationBase, bits);
+    ok(info.AllocationProtect == PAGE_READWRITE, "%lx != PAGE_READWRITE\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x19000, "0x%lx != 0x19000\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "%lx != MEM_COMMIT\n", info.State);
+    ok(info.Protect == PAGE_READWRITE, "%lx != PAGE_READWRITE\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "%lx != MEM_PRIVATE\n", info.Type);
+
+    DeleteObject(hdib);
+
     memset(pbmi, 0, sizeof(bmibuf));
     pbmi->bmiHeader.biSize = sizeof(pbmi->bmiHeader);
     pbmi->bmiHeader.biHeight = 16;
