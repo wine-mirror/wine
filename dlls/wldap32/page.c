@@ -187,6 +187,9 @@ ULONG ldap_get_paged_count( WLDAP32_LDAP *ld, PLDAPSearch search,
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_parse_page_controlA      (WLDAP32.@)
+ */
 ULONG ldap_parse_page_controlA( WLDAP32_LDAP *ld, PLDAPControlA *ctrls,
     ULONG *count, struct WLDAP32_berval **cookie )
 {
@@ -209,6 +212,9 @@ ULONG ldap_parse_page_controlA( WLDAP32_LDAP *ld, PLDAPControlA *ctrls,
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_parse_page_controlW      (WLDAP32.@)
+ */
 ULONG ldap_parse_page_controlW( WLDAP32_LDAP *ld, PLDAPControlW *ctrls,
     ULONG *count, struct WLDAP32_berval **cookie )
 {
