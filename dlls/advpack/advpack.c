@@ -190,8 +190,17 @@ typedef struct
 
 /***********************************************************************
  *		DoInfInstall  (ADVPACK.@)
+ *
+ * Install an INF section.
+ *
+ * PARAMS
+ *  setup [I] Structure containing install information.
+ *
+ * RETURNS
+ *   S_OK                                Everything OK
+ *   HRESULT_FROM_WIN32(GetLastError())  Some other error
  */
-BOOL WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
+HRESULT WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
 {
     BOOL ret;
     HINF hinf;
@@ -202,7 +211,7 @@ BOOL WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
           debugstr_a(setup->section_name));
 
     hinf = SetupOpenInfFileA(setup->inf_name, NULL, INF_STYLE_WIN4, NULL);
-    if (hinf == INVALID_HANDLE_VALUE) return FALSE;
+    if (hinf == INVALID_HANDLE_VALUE) return HRESULT_FROM_WIN32(GetLastError());
 
     callback_context = SetupInitDefaultQueueCallback(setup->hwnd);
 
@@ -212,7 +221,7 @@ BOOL WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
     SetupTermDefaultQueueCallback(callback_context);
     SetupCloseInfFile(hinf);
 
-    return ret;
+    return ret ? S_OK : HRESULT_FROM_WIN32(GetLastError());
 }
 
 /***********************************************************************
