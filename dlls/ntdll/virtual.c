@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
@@ -835,6 +836,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     NTSTATUS status = STATUS_CONFLICTING_ADDRESSES;
     int i;
     off_t pos;
+    struct stat st;
     struct file_view *view = NULL;
     char *ptr;
 
@@ -857,7 +859,13 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 
     /* map the header */
 
+    if (fstat( fd, &st ) == -1)
+    {
+        status = FILE_GetNtStatus();
+        goto error;
+    }
     status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
+    if (header_size > st.st_size) goto error;
     if (map_file_into_view( view, fd, 0, header_size, 0, VPROT_COMMITTED | VPROT_READ,
                             removable ) != STATUS_SUCCESS) goto error;
     dos = (IMAGE_DOS_HEADER *)ptr;
@@ -996,7 +1004,9 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         /* Note: if the section is not aligned properly map_file_into_view will magically
          *       fall back to read(), so we don't need to check anything here.
          */
-        if (map_file_into_view( view, fd, sec->VirtualAddress, file_size, sec->PointerToRawData,
+        end = sec->PointerToRawData + file_size;
+        if (sec->PointerToRawData >= st.st_size || end > st.st_size || end < sec->PointerToRawData ||
+            map_file_into_view( view, fd, sec->VirtualAddress, file_size, sec->PointerToRawData,
                                 VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
                                 removable ) != STATUS_SUCCESS)
         {
