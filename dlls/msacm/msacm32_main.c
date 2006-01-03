@@ -221,11 +221,24 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
         FIXME("ACM_METRIC_COUNT_HARDWARE not implemented\n");
         break;
 
+    case ACM_METRIC_DRIVER_PRIORITY:
+        /* Return current list position of driver */
+        if (!hao) return MMSYSERR_INVALHANDLE;
+        if (!pMetric) return MMSYSERR_INVALPARAM;
+        mmr = MMSYSERR_INVALHANDLE;
+        for (i = 1, padid = MSACM_pFirstACMDriverID; padid; i++, padid = padid->pNextACMDriverID) {
+            if (padid == (PWINE_ACMDRIVERID)hao) {
+                *(LPDWORD)pMetric = i;
+                mmr = MMSYSERR_NOERROR;
+                break;
+            }
+        }
+        break;
+        
     case ACM_METRIC_HARDWARE_WAVE_INPUT:
     case ACM_METRIC_HARDWARE_WAVE_OUTPUT:
     case ACM_METRIC_MAX_SIZE_FILTER:
     case ACM_METRIC_DRIVER_SUPPORT:
-    case ACM_METRIC_DRIVER_PRIORITY:
     default:
 	FIXME("(%p, %d, %p): stub\n", hao, uMetric, pMetric);
 	mmr = MMSYSERR_NOTSUPPORTED;
