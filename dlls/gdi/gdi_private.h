@@ -27,6 +27,8 @@
    based metafile has mtType == 1 */
 #define METAFILE_MEMORY 1
 #define METAFILE_DISK   2
+#define MFHEADERSIZE (sizeof(METAHEADER))
+#define MFVERSION 0x300
 
 typedef struct {
     EMR   emr;
@@ -395,6 +397,9 @@ extern BOOL GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc);
 extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh);
 extern HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh);
 extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCVOID filename, BOOL unicode );
+extern METAHEADER *MF_ReadMetaFile(HANDLE hfile);
+extern METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh);
+extern BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh);
 
 /* path.c */
 

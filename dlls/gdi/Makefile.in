@@ -56,6 +56,7 @@ C_SRCS16 = \
 	dispdib.c \
 	env.c \
 	gdi16.c \
+	metafile16.c \
 	wing.c
 
 RC_SRCS = version.rc

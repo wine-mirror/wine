@@ -342,6 +342,29 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 }
 
 /******************************************************************
+ *         MF_Create_HMETATFILE16
+ *
+ * Creates a HMETAFILE16 object from a METAHEADER
+ *
+ * HMETAFILE16s are Global memory handles.
+ */
+HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh)
+{
+    HMETAFILE16 hmf;
+    DWORD size = mh->mtSize * sizeof(WORD);
+
+    hmf = GlobalAlloc16(GMEM_MOVEABLE, size);
+    if(hmf)
+    {
+	METAHEADER *mh_dest = GlobalLock16(hmf);
+	memcpy(mh_dest, mh, size);
+	GlobalUnlock16(hmf);
+    }
+    HeapFree(GetProcessHeap(), 0, mh);
+    return hmf;
+}
+
+/******************************************************************
  *	     CloseMetaFile     (GDI.126)
  *
  * PARAMS
