@@ -162,7 +162,10 @@ static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName,
         return FALSE;
 
     if (!(fXPMFile = fopen(szXPMFileName, "w")))
+    {
+        WINE_TRACE("unable to open '%s' for writing: %s\n", szXPMFileName, strerror(errno));
         return FALSE;
+    }
 
     i = WideCharToMultiByte(CP_UNIXCP, 0, commentW, -1, NULL, 0, NULL, NULL);
     comment = malloc(i);
@@ -361,7 +364,10 @@ static int ExtractFromICO(LPCWSTR szFileName, const char *szXPMFileName)
 
     filename = wine_get_unix_file_name(szFileName);
     if (!(fICOFile = fopen(filename, "r")))
+    {
+        WINE_TRACE("unable to open '%s' for reading: %s\n", filename, strerror(errno));
         goto error1;
+    }
 
     if (fread(&iconDir, sizeof (ICONDIR), 1, fICOFile) != 1)
         goto error2;
@@ -487,15 +493,18 @@ static char *extract_icon( LPCWSTR path, int index)
     if (!iconsdir)
     {
         WCHAR path[MAX_PATH];
-
-        if (GetTempPathW(MAX_PATH, path)) iconsdir = wine_get_unix_file_name(path);
+        if (GetTempPathW(MAX_PATH, path))
+            iconsdir = wine_get_unix_file_name(path);
+        if (!iconsdir)
+        {
+            WINE_TRACE("no IconsDir\n");
+            return NULL;  /* No icon created */
+        }
     }
-
-    if (!iconsdir)
-        return NULL;  /* No icon created */
     
     if (!*iconsdir)
     {
+        WINE_TRACE("icon generation disabled\n");
         HeapFree(GetProcessHeap(), 0, iconsdir);
         return NULL;  /* No icon created */
     }
