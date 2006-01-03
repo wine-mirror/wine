@@ -3173,6 +3173,7 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
   WORD wCtrl = HIWORD(GetKeyState(VK_CONTROL));
   BOOL bResult = FALSE;
 
+  TRACE("nItem=%d, wShift=%d, wCtrl=%d\n", nItem, wShift, wCtrl);
   if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
   {
     if (infoPtr->dwStyle & LVS_SINGLESEL)
@@ -3189,6 +3190,14 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
       }
       else if (wCtrl)
       {
+        LVITEMW lvItem;
+        lvItem.state = ~LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED);
+        lvItem.stateMask = LVIS_SELECTED;
+        LISTVIEW_SetItemState(infoPtr, nItem, &lvItem);
+
+        if (lvItem.state & LVIS_SELECTED)
+            infoPtr->nSelectionMark = nItem;
+
         bResult = LISTVIEW_SetItemFocus(infoPtr, nItem);
       }
       else
@@ -8016,6 +8025,10 @@ static LRESULT LISTVIEW_KeyDown(LISTVIEW_INFO *infoPtr, INT nVirtualKey, LONG lK
 
   switch (nVirtualKey)
   {
+  case VK_SPACE:
+    nItem = infoPtr->nFocusedItem;
+    break;
+
   case VK_RETURN:
     if ((infoPtr->nItemCount > 0) && (infoPtr->nFocusedItem != -1))
     {
@@ -8082,7 +8095,7 @@ static LRESULT LISTVIEW_KeyDown(LISTVIEW_INFO *infoPtr, INT nVirtualKey, LONG lK
     break;
   }
 
-  if ((nItem != -1) && (nItem != infoPtr->nFocusedItem))
+  if ((nItem != -1) && (nItem != infoPtr->nFocusedItem || nVirtualKey == VK_SPACE))
       LISTVIEW_KeySelection(infoPtr, nItem);
 
   return 0;
