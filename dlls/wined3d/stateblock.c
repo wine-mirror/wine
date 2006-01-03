@@ -88,7 +88,7 @@ ULONG WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                 if (This->textures[counter]) {
                     /* release our 'internal' hold on the texture */
                     if(0 != IWineD3DBaseTexture_Release(This->textures[counter])) {
-                        TRACE("Texture still referenced by stateblock, applications has leaked Stage = %u Texture = %p \n", counter, This->textures[counter]);
+                        TRACE("Texture still referenced by stateblock, applications has leaked Stage = %u Texture = %p\n", counter, This->textures[counter]);
                     }
                 }
             }

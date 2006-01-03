@@ -502,7 +502,7 @@ static void test_copy(void)
     shfo.pTo = "testdir2\0";
     retval = SHFileOperation(&shfo);
     ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-    ok(file_exists("testdir2\\test1.txt"), "Expected testdir2\\test1 to exist");
+    ok(file_exists("testdir2\\test1.txt"), "Expected testdir2\\test1 to exist\n");
 
     /* try to copy files to a file */
     clean_after_shfo_tests();
