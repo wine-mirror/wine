@@ -2,7 +2,6 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LEXOPT    = -Cf #-w -b
 MODULE    = libwpp.a
 
 C_SRCS = \
@@ -29,7 +28,7 @@ ppy.tab.h: ppy.tab.c
 ppy.tab.o: ppy.tab.h
 
 @LEX_OUTPUT_ROOT@.c: ppl.l
-	$(LEX) $(LEXOPT) -d -Ppp -o$@ -8 $(SRCDIR)/ppl.l
+	$(LEX) -o$@ $(SRCDIR)/ppl.l
 
 @LEX_OUTPUT_ROOT@.o: ppy.tab.h
 

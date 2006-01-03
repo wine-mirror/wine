@@ -3,7 +3,6 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LEXOPT    = -Cf #-w -b
 EXEEXT    = @EXEEXT@
 
 PROGRAMS = wrc$(EXEEXT)
@@ -38,7 +37,7 @@ parser.tab.h: parser.tab.c
 parser.tab.o: parser.tab.h
 
 @LEX_OUTPUT_ROOT@.c: parser.l
-	$(LEX) $(LEXOPT) -d -8 $(SRCDIR)/parser.l
+	$(LEX) $(SRCDIR)/parser.l
 
 @LEX_OUTPUT_ROOT@.o: parser.tab.h
 

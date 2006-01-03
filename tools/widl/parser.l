@@ -1,4 +1,4 @@
-/*
+/* -*-C-*-
  * IDL Compiler
  *
  * Copyright 2002 Ove Kaaven
@@ -19,7 +19,8 @@
  */
 
 %option stack
-%option never-interactive
+%option nounput noyy_top_state
+%option 8bit never-interactive
 
 nl	\r?\n
 ws	[ \f\t\r]

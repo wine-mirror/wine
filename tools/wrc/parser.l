@@ -87,7 +87,8 @@
 %x pp_code_page
 
 %option stack
-%option never-interactive
+%option nounput noyy_top_state
+%option 8bit never-interactive
 
 /* Some shortcut definitions */
 ws	[ \f\t\r]
