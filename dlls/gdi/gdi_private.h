@@ -28,6 +28,12 @@
 #define METAFILE_MEMORY 1
 #define METAFILE_DISK   2
 
+typedef struct {
+    EMR   emr;
+    INT   nBreakExtra;
+    INT   nBreakCount;
+} EMRSETTEXTJUSTIFICATION, *PEMRSETTEXTJUSTIFICATION;
+
 /* extra stock object: default 1x1 bitmap for memory DCs */
 #define DEFAULT_BITMAP (STOCK_LAST+1)
 

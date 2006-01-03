@@ -2648,12 +2648,6 @@ typedef struct {
   BYTE  Data[1];
 } EMRGLSBOUNDEDRECORD, *PEMRGLSBOUNDEDRECORD;
 
-typedef struct {
-	EMR   emr;
-	INT   nBreakExtra;
-	INT	  nBreakCount;
-} EMRSETTEXTJUSTIFICATION, *PEMRSETTEXTJUSTIFICATION;
-
 typedef INT (CALLBACK *ENHMFENUMPROC)(HDC, HANDLETABLE *,
                                       const ENHMETARECORD *, INT, LPARAM);
 
