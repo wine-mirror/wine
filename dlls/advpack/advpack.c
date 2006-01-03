@@ -127,7 +127,23 @@ HRESULT WINAPI RunSetupCommand( HWND hWnd, LPCSTR szCmdName,
 /***********************************************************************
  *		LaunchINFSection  (ADVPACK.@)
  *
- * See LaunchINFSectionEx.
+ * Installs an INF section without BACKUP/ROLLBACK capabilities.
+ *
+ * PARAMS
+ *   hWnd    [I] Handle to parent window, NULL for desktop.
+ *   hInst   [I] Instance of the process.
+ *   cmdline [I] Contains parameters in the order INF,section,flags.
+ *   show    [I] Reboot behaviour:
+ *              'A' reboot always
+ *              'I' default, reboot if needed
+ *              'N' no reboot
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: S_FALSE
+ *
+ * BUGS
+ *  Unimplemented.
  */
 INT WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
 {
@@ -138,13 +154,16 @@ INT WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show
 /***********************************************************************
  *		LaunchINFSectionEx  (ADVPACK.@)
  *
- * Installs an INF section.
+ * Installs an INF section with BACKUP/ROLLBACK capabilities.
  *
  * PARAMS
- *   hWnd    [I] Handle to the window used for the display.
+ *   hWnd    [I] Handle to parent window, NULL for desktop.
  *   hInst   [I] Instance of the process.
  *   cmdline [I] Contains parameters in the order INF,section,CAB,flags.
- *   show    [I] How the window should be shown.
+ *   show    [I] Reboot behaviour:
+ *              'A' reboot always
+ *              'I' default, reboot if needed
+ *              'N' no reboot
  *
  * RETURNS
  *  Success: S_OK.
