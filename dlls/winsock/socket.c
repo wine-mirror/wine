@@ -900,7 +900,7 @@ static struct WS_protoent *check_buffer_pe(int size)
  * start with. Note that the returned pointer may be the original pointer
  * if no conversion is necessary.
  */
-static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsaddrlen, unsigned int *uaddrlen)
+static struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsaddrlen, unsigned int *uaddrlen)
 {
     switch (wsaddr->sa_family)
     {
@@ -924,7 +924,7 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
 #ifdef IPX_FRAME_NONE
             uipx->sipx_type=IPX_FRAME_NONE;
 #endif
-            return (const struct sockaddr*)uipx;
+            return (struct sockaddr*)uipx;
         }
 #endif
     case WS_AF_INET6: {
@@ -943,7 +943,7 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
             uin6->sin6_port     = win6old->sin6_port;
             uin6->sin6_flowinfo = win6old->sin6_flowinfo;
             memcpy(&uin6->sin6_addr,&win6old->sin6_addr,16); /* 16 bytes = 128 address bits */
-            return (const struct sockaddr*)uin6;
+            return (struct sockaddr*)uin6;
         }
         if (wsaddrlen>=sizeof(struct WS_sockaddr_in6)) {
             *uaddrlen=sizeof(struct sockaddr_in6);
@@ -953,7 +953,7 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
             uin6->sin6_flowinfo = win6->sin6_flowinfo;
             uin6->sin6_scope_id = win6->sin6_scope_id;
             memcpy(&uin6->sin6_addr,&win6->sin6_addr,16); /* 16 bytes = 128 address bits */
-            return (const struct sockaddr*)uin6;
+            return (struct sockaddr*)uin6;
         }
         FIXME("bad size %d for WS_sockaddr_in6\n",wsaddrlen);
         return NULL;
@@ -969,7 +969,26 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
         uin->sin_family = AF_INET;
         uin->sin_port   = win->sin_port;
         memcpy(&uin->sin_addr,&win->sin_addr,4); /* 4 bytes = 32 address bits */
-        return (const struct sockaddr*)uin;
+        return (struct sockaddr*)uin;
+    }
+    case WS_AF_UNSPEC: {
+        /* Try to determine the needed space by the passed windows sockaddr space */
+        switch (wsaddrlen) {
+        default: /* likely a ipv4 address */
+        case sizeof(struct WS_sockaddr_in):
+            *uaddrlen = sizeof(struct sockaddr_in);
+            break;
+#ifdef HAVE_IPX
+        case sizeof(struct WS_sockaddr_ipx):
+            *uaddrlen = sizeof(struct sockaddr_ipx);
+            break;
+#endif
+        case sizeof(struct WS_sockaddr_in6):
+        case sizeof(struct WS_sockaddr_in6_old):
+            *uaddrlen = sizeof(struct sockaddr_in6);
+            break;
+        }
+        return HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,*uaddrlen);
     }
     default:
         FIXME("Unknown address family %d, return NULL.\n", wsaddr->sa_family);
@@ -995,7 +1014,7 @@ static inline struct sockaddr* ws_sockaddr_alloc(const struct WS_sockaddr* wsadd
     else
         *uaddrlen=max(sizeof(struct sockaddr),*wsaddrlen);
 
-    return HeapAlloc(GetProcessHeap(), 0, *uaddrlen);
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *uaddrlen);
 }
 
 /* Returns 0 if successful, -1 if the buffer is too small */
@@ -1081,6 +1100,10 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
         win->sin_port   = uin->sin_port;
         memcpy(&win->sin_addr,&uin->sin_addr,4); /* 4 bytes = 32 address bits */
         *wsaddrlen = sizeof(struct WS_sockaddr_in);
+        return 0;
+    }
+    case AF_UNSPEC: {
+        memset(wsaddr,0,*wsaddrlen);
         return 0;
     }
     default:
