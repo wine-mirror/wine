@@ -390,59 +390,6 @@ ATOM WINAPI FindAtomW( LPCWSTR str )
 }
 
 
-static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, struct atom_table* table )
-{
-    INT len;
-
-    if (count <= 0)
-    {
-        SetLastError( ERROR_MORE_DATA );
-        return 0;
-    }
-    if (atom < MAXINTATOM)
-    {
-        char name[8];
-        if (!atom)
-        {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            return 0;
-        }
-        len = sprintf( name, "#%d", atom );
-        lstrcpynA( buffer, name, count );
-    }
-    else
-    {
-        WCHAR full_name[MAX_ATOM_LEN];
-
-        len = 0;
-        SERVER_START_REQ( get_atom_information )
-        {
-            req->atom = atom;
-            req->table = table;
-            wine_server_set_reply( req, full_name, sizeof(full_name) );
-            if (!wine_server_call_err( req ))
-            {
-                len = WideCharToMultiByte( CP_ACP, 0, full_name,
-                                           wine_server_reply_size(reply) / sizeof(WCHAR),
-                                           buffer, count - 1, NULL, NULL );
-                if (!len) len = count; /* overflow */
-                else buffer[len] = 0;
-            }
-        }
-        SERVER_END_REQ;
-    }
-
-    if (len && count <= len)
-    {
-        SetLastError( ERROR_MORE_DATA );
-        buffer[count-1] = 0;
-        return 0;
-    }
-    TRACE( "(%s) %x -> %s\n", table ? "local" : "global", atom, debugstr_a(buffer) );
-    return len;
-}
-
-
 /***********************************************************************
  *           GlobalGetAtomNameA   (KERNEL32.@)
  *
@@ -457,7 +404,25 @@ UINT WINAPI GlobalGetAtomNameA(
               LPSTR buffer, /* [out] Pointer to buffer for atom string */
               INT count )   /* [in]  Size of buffer */
 {
-    return ATOM_GetAtomNameA( atom, buffer, count, NULL );
+    WCHAR       tmpW[MAX_ATOM_LEN + 1];
+    UINT        wlen, len = 0, c;
+
+    if (count <= 0) SetLastError( ERROR_MORE_DATA );
+    else if ((wlen = GlobalGetAtomNameW( atom, tmpW, MAX_ATOM_LEN + 1 )))
+    {
+        char    tmp[MAX_ATOM_LEN + 1];
+
+        len = WideCharToMultiByte( CP_ACP, 0, tmpW, wlen, tmp, MAX_ATOM_LEN + 1, NULL, NULL );
+        c = min(len, count - 1);
+        memcpy(buffer, tmp, c);
+        buffer[c] = '\0';
+        if (len >= count)
+        {
+            len = 0;
+            SetLastError( ERROR_MORE_DATA );
+        }
+    }
+    return len;
 }
 
 
@@ -475,53 +440,24 @@ UINT WINAPI GetAtomNameA(
               LPSTR buffer, /* [out] Pointer to string for atom string */
               INT count)    /* [in]  Size of buffer */
 {
-    return ATOM_GetAtomNameA( atom, buffer, count, get_local_table(0) );
-}
+    WCHAR       tmpW[MAX_ATOM_LEN + 1];
+    UINT        wlen, len = 0, c;
 
-
-static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, struct atom_table* table )
-{
-    INT len;
-
-    if (count <= 0)
+    if (count <= 0) SetLastError( ERROR_MORE_DATA );
+    else if ((wlen = GetAtomNameW( atom, tmpW, MAX_ATOM_LEN + 1 )))
     {
-        SetLastError( ERROR_MORE_DATA );
-        return 0;
-    }
-    if (atom < MAXINTATOM)
-    {
-        char name[8];
-        if (!atom)
+        char    tmp[MAX_ATOM_LEN + 1];
+
+        len = WideCharToMultiByte( CP_ACP, 0, tmpW, wlen, tmp, MAX_ATOM_LEN + 1, NULL, NULL );
+        c = min(len, count - 1);
+        memcpy(buffer, tmp, c);
+        buffer[c] = '\0';
+        if (len >= count)
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            return 0;
+            len = c;
+            SetLastError( ERROR_MORE_DATA );
         }
-        sprintf( name, "#%d", atom );
-        len = MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, count );
-        if (!len) buffer[count-1] = 0;  /* overflow */
     }
-    else
-    {
-        WCHAR full_name[MAX_ATOM_LEN];
-
-        len = 0;
-        SERVER_START_REQ( get_atom_information )
-        {
-            req->atom = atom;
-            req->table = table;
-            wine_server_set_reply( req, full_name, sizeof(full_name) );
-            if (!wine_server_call_err( req ))
-            {
-                len = wine_server_reply_size(reply) / sizeof(WCHAR);
-                if (count > len) count = len + 1;
-                memcpy( buffer, full_name, (count-1) * sizeof(WCHAR) );
-                buffer[count-1] = 0;
-            }
-        }
-        SERVER_END_REQ;
-        if (!len) return 0;
-    }
-    TRACE( "(%s) %x -> %s\n", table ? "local" : "global", atom, debugstr_w(buffer) );
     return len;
 }
 
@@ -533,7 +469,31 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, struct atom_
  */
 UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
 {
-    return ATOM_GetAtomNameW( atom, buffer, count, NULL);
+    char        ptr[sizeof(ATOM_BASIC_INFORMATION) + MAX_ATOM_LEN * sizeof(WCHAR)];
+    ATOM_BASIC_INFORMATION*     abi = (ATOM_BASIC_INFORMATION*)ptr;
+    ULONG       ptr_size = sizeof(ATOM_BASIC_INFORMATION) + MAX_ATOM_LEN * sizeof(WCHAR);
+    NTSTATUS    status;
+    UINT        length = 0;
+
+    if (count <= 0)
+    {
+        SetLastError( ERROR_MORE_DATA );
+        return 0;
+    }
+    status = NtQueryInformationAtom( atom, AtomBasicInformation, (void*)ptr, ptr_size, NULL );
+    if (status) SetLastError( RtlNtStatusToDosError( status ) );
+    else
+    {
+        length = min( abi->NameLength / sizeof(WCHAR), count);
+        memcpy( buffer, abi->Name, length * sizeof(WCHAR) );
+        if (length < abi->NameLength / sizeof(WCHAR))
+        {
+            SetLastError( ERROR_MORE_DATA );
+            length = count;
+        }
+        else buffer[length] = '\0';
+    }
+    return length;
 }
 
 
@@ -544,5 +504,28 @@ UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
  */
 UINT WINAPI GetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
 {
-    return ATOM_GetAtomNameW( atom, buffer, count, get_local_table(0) );
+    NTSTATUS            status;
+    RTL_ATOM_TABLE      table;
+    DWORD               length;
+    WCHAR               tmp[MAX_ATOM_LEN + 1];
+
+    if (count <= 0)
+    {
+        SetLastError( ERROR_MORE_DATA );
+        return 0;
+    }
+    if (!(table = get_local_table( 0 ))) return 0;
+    length = sizeof(tmp);
+    status = RtlQueryAtomInAtomTable( table, atom, NULL, NULL, tmp, &length );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return 0;
+    }
+    length = min(length, (count - 1) * sizeof(WCHAR));
+    if (length) memcpy(buffer, tmp, length);
+    else SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    length /= sizeof(WCHAR);
+    buffer[length] = '\0';
+    return length;
 }

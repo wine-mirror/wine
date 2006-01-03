@@ -262,10 +262,7 @@ static void test_get_atom_name(void)
             {
                 WCHAR res[20];
                 
-                if (len < 7) /* FIXME: temporary before we fix it */
-                    ok( (len > 1) && (len < 7), "bad length %d\n", len );
-                else
-                    todo_wine ok( (len > 1) && (len < 7), "bad length %d\n", len );
+                ok( (len > 1) && (len < 7), "bad length %d\n", len );
                 print_integral( res, i );
                 memset( res + lstrlenW(res) + 1, 'a', 10 * sizeof(WCHAR));
                 ok( !memcmp( res, outW, 10 * sizeof(WCHAR) ), "bad buffer contents for %d\n", i );
@@ -277,7 +274,7 @@ static void test_get_atom_name(void)
             len = GlobalGetAtomNameW( (ATOM)i, outW, 1);
             if (i)
             {
-                todo_wine ok(len == 1, "succeed (got %u instead of 1)\n", len);
+                ok(len == 1, "succeed (got %u instead of 1)\n", len);
                 ok(outW[1] == DOUBLE('.'), "buffer overwrite\n");
             }
             else ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "0 badly handled\n");
@@ -295,13 +292,10 @@ static void test_get_atom_name(void)
         ok(outW[255] == '\0', "wrong end of string\n");
         memset(outW, '.', sizeof(outW));
         len = GlobalGetAtomNameW(atom, outW, 10);
-        todo_wine ok(len == 10, "succeeded\n");
+        ok(len == 10, "succeeded\n");
         for (i = 0; i < 10; i++)
         {
-            if (i < 9) /* FIXME: temporary */
-                ok(outW[i] == "abcdefghij"[i % 10], "wrong string at %i (%c instead of %c)\n", i, outW[i], "abcdefghij"[i % 10]);
-            else
-                todo_wine ok(outW[i] == "abcdefghij"[i % 10], "wrong string at %i (%c instead of %c)\n", i, outW[i], "abcdefghij"[i % 10]);
+            ok(outW[i] == "abcdefghij"[i % 10], "wrong string at %i (%c instead of %c)\n", i, outW[i], "abcdefghij"[i % 10]);
         }
         ok(outW[10] == DOUBLE('.'), "wrote after end of buf\n");
         do_initW(inW, "abcdefghij", 256);
@@ -488,7 +482,7 @@ static void test_local_get_atom_name(void)
     ok(out[255] == '\0', "wrong end of string\n");
     memset(out, '.', sizeof(out));
     len = GetAtomNameA(atom, out, 10);
-    todo_wine ok(len == 9, "succeeded %d\n", len);
+    ok(len == 9, "succeeded %d\n", len);
     for (i = 0; i < 9; i++)
     {
         ok(out[i] == "abcdefghij"[i % 10], "wrong string at %i (%c instead of %c)\n", i, out[i], "abcdefghij"[i % 10]);
@@ -516,10 +510,7 @@ static void test_local_get_atom_name(void)
             {
                 WCHAR res[20];
                 
-                if (len < 7) /* FIXME: temporary before we fix it */
-                    ok( (len > 1) && (len < 7), "bad length %d\n", len );
-                else
-                    todo_wine ok( (len > 1) && (len < 7), "bad length %d\n", len );
+                ok( (len > 1) && (len < 7), "bad length %d\n", len );
                 print_integral( res, i );
                 memset( res + lstrlenW(res) + 1, 'a', 10 * sizeof(WCHAR));
                 ok( !memcmp( res, outW, 10 * sizeof(WCHAR) ), "bad buffer contents for %d\n", i );
@@ -547,7 +538,7 @@ static void test_local_get_atom_name(void)
         ok(outW[255] == '\0', "wrong end of string\n");
         memset(outW, '.', sizeof(outW));
         len = GetAtomNameW(atom, outW, 10);
-        todo_wine ok(len == 9, "succeeded %d\n", len);
+        ok(len == 9, "succeeded %d\n", len);
         for (i = 0; i < 9; i++)
         {
             ok(outW[i] == "abcdefghij"[i % 10], "wrong string at %i (%c instead of %c)\n", i, outW[i], "abcdefghij"[i % 10]);
