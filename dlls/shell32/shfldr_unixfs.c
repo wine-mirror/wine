@@ -168,16 +168,14 @@ const GUID CLSID_UnixDosFolder = {0x9d20aae8, 0x0625, 0x44b0, {0x9c, 0xa7, 0x71,
 #define ADJUST_THIS(c,m,p) ((c*)(((long)p)-(long)&(((c*)0)->lp##m##Vtbl)))
 #define STATIC_CAST(i,p) ((i*)&p->lp##i##Vtbl)
 
-/* FileStruct reserves one byte for szNames, thus we don't have to 
- * alloc a byte for the terminating '\0' of 'name'. Two of the
- * additional bytes are for SHITEMID's cb field. One is for IDLDATA's
- * type field. One is for FileStruct's szNames field, to terminate
- * the alternate DOS name, which we don't use here.
- */
-#define SHITEMID_LEN_FROM_NAME_LEN(n) \
-    (sizeof(USHORT)+sizeof(PIDLTYPE)+sizeof(FileStruct)+(n)+sizeof(char))
-#define NAME_LEN_FROM_LPSHITEMID(s) \
-    (((LPSHITEMID)s)->cb-sizeof(USHORT)-sizeof(PIDLTYPE)-sizeof(FileStruct)-sizeof(char))
+#define LEN_SHITEMID_FIXED_PART ((USHORT) \
+    ( sizeof(USHORT)      /* SHITEMID's cb field. */ \
+    + sizeof(PIDLTYPE)    /* PIDLDATA's type field. */ \
+    + sizeof(FileStruct)  /* Well, the FileStruct. */ \
+    - sizeof(char)        /* One char too much in FileStruct. */ \
+    + sizeof(FileStructW) /* You name it. */ \
+    - sizeof(WCHAR)       /* One WCHAR too much in FileStructW. */ \
+    + sizeof(WORD) ))     /* Offset of FileStructW field in PIDL. */
 
 #define PATHMODE_UNIX 0
 #define PATHMODE_DOS  1
@@ -191,7 +189,7 @@ typedef struct _UnixFolder {
     const IDropTargetVtbl         *lpIDropTargetVtbl;
     const ISFHelperVtbl           *lpISFHelperVtbl;
     LONG         m_cRef;
-    CHAR         *m_pszPath;     /* Target path of the shell folder */
+    CHAR         *m_pszPath;     /* Target path of the shell folder (CP_UNIXCP) */
     LPITEMIDLIST m_pidlLocation; /* Location in the shell namespace */
     DWORD        m_dwPathMode;
     DWORD        m_dwAttributes;
@@ -229,7 +227,126 @@ BOOL UNIXFS_is_rooted_at_desktop(void) {
 }
 
 /******************************************************************************
- * UNIXFS_is_pidl_of_type [INTERNAL]
+ * UNIXFS_filename_from_shitemid [Internal]
+ *
+ *  Get CP_UNIXCP encoded filename corresponding to the first item of a pidl
+ * 
+ * PARAMS
+ *  pidl           [I] A simple SHITEMID
+ *  pszPathElement [O] Filename in CP_UNIXCP encoding will be stored here
+ *
+ * RETURNS
+ *  Success: Number of bytes necessary to store the CP_UNIXCP encoded filename 
+ *   _without_ the terminating NUL.
+ *  Failure: 0
+ *  
+ * NOTES
+ *  Size of the buffer at pszPathElement has to be FILENAME_MAX. pszPathElement
+ *  may be NULL, if you are only interested in the return value. 
+ */
+static int UNIXFS_filename_from_shitemid(LPCITEMIDLIST pidl, char* pszPathElement) {
+    FileStructW *pFileStructW = _ILGetFileStructW(pidl);
+    int cLen = 0;
+
+    if (pFileStructW) {
+        cLen = WideCharToMultiByte(CP_UNIXCP, 0, pFileStructW->wszName, -1, pszPathElement,
+            pszPathElement ? FILENAME_MAX : 0, 0, 0);
+    } else {
+        /* There might be pidls slipping in from shfldr_fs.c, which don't contain the
+         * FileStructW field. In this case, we have to convert from CP_ACP to CP_UNIXCP. */
+        char *pszText = _ILGetTextPointer(pidl);
+        WCHAR *pwszPathElement = NULL;
+        int cWideChars;
+    
+        cWideChars = MultiByteToWideChar(CP_ACP, 0, pszText, -1, NULL, 0);
+        if (!cWideChars) goto cleanup;
+
+        pwszPathElement = SHAlloc(cWideChars * sizeof(WCHAR));
+        if (!pwszPathElement) goto cleanup;
+    
+        cWideChars = MultiByteToWideChar(CP_ACP, 0, pszText, -1, pwszPathElement, cWideChars);
+        if (!cWideChars) goto cleanup; 
+
+        cLen = WideCharToMultiByte(CP_UNIXCP, 0, pwszPathElement, -1, pszPathElement, 
+            pszPathElement ? FILENAME_MAX : 0, 0, 0);
+
+    cleanup:
+        SHFree(pwszPathElement);
+    }
+        
+    if (cLen) cLen--; /* Don't count terminating NUL! */
+    return cLen;
+}
+
+/******************************************************************************
+ * UNIXFS_shitemid_len_from_filename [Internal]
+ *
+ * Computes the necessary length of a pidl to hold a path element
+ *
+ * PARAMS
+ *  szPathElement    [I] The path element string in CP_UNIXCP encoding.
+ *  ppszPathElement  [O] Path element string in CP_ACP encoding.
+ *  ppwszPathElement [O] Path element string as WCHAR string.
+ *
+ * RETURNS
+ *  Success: Length in bytes of a SHITEMID representing szPathElement
+ *  Failure: 0
+ * 
+ * NOTES
+ *  Provide NULL values if not interested in pp(w)szPathElement. Otherwise
+ *  caller is responsible to free ppszPathElement and ppwszPathElement with
+ *  SHFree.
+ */
+static USHORT UNIXFS_shitemid_len_from_filename(
+    const char *szPathElement, char **ppszPathElement, WCHAR **ppwszPathElement) 
+{
+    USHORT cbPidlLen = 0;
+    WCHAR *pwszPathElement = NULL;
+    char *pszPathElement = NULL;
+    int cWideChars, cChars;
+
+    /* There and Back Again: A Hobbit's Holiday. CP_UNIXCP might be some ANSI
+     * codepage or it might be a real multi-byte encoding like utf-8. There is no
+     * other way to figure out the length of the corresponding WCHAR and CP_ACP 
+     * strings without actually doing the full CP_UNIXCP -> WCHAR -> CP_ACP cycle. */
+    
+    cWideChars = MultiByteToWideChar(CP_UNIXCP, 0, szPathElement, -1, NULL, 0);
+    if (!cWideChars) goto cleanup;
+
+    pwszPathElement = SHAlloc(cWideChars * sizeof(WCHAR));
+    if (!pwszPathElement) goto cleanup;
+
+    cWideChars = MultiByteToWideChar(CP_UNIXCP, 0, szPathElement, -1, pwszPathElement, cWideChars);
+    if (!cWideChars) goto cleanup; 
+
+    cChars = WideCharToMultiByte(CP_ACP, 0, pwszPathElement, -1, NULL, 0, 0, 0);
+    if (!cChars) goto cleanup;
+
+    pszPathElement = SHAlloc(cChars);
+    if (!pszPathElement) goto cleanup;
+
+    cChars = WideCharToMultiByte(CP_ACP, 0, pwszPathElement, -1, pszPathElement, cChars, 0, 0);
+    if (!cChars) goto cleanup;
+
+    /* (cChars & 0x1) is for the potential alignment byte */
+    cbPidlLen = LEN_SHITEMID_FIXED_PART + cChars + (cChars & 0x1) + cWideChars * sizeof(WCHAR);
+    
+cleanup:
+    if (cbPidlLen && ppszPathElement) 
+        *ppszPathElement = pszPathElement;
+    else 
+        SHFree(pszPathElement);
+
+    if (cbPidlLen && ppwszPathElement)
+        *ppwszPathElement = pwszPathElement;
+    else
+        SHFree(pwszPathElement);
+
+    return cbPidlLen;
+}
+
+/******************************************************************************
+ * UNIXFS_is_pidl_of_type [Internal]
  *
  * Checks for the first SHITEMID of an ITEMIDLIST if it passes a filter.
  *
@@ -413,6 +530,28 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
 }
 
 /******************************************************************************
+ * UNIXFS_seconds_since_1970_to_dos_date_time [Internal]
+ *
+ * Convert unix time to FAT time
+ *
+ * PARAMS 
+ *  ss1970 [I] Unix time (seconds since 1970)
+ *  pDate  [O] Corresponding FAT date
+ *  pTime  [O] Corresponding FAT time
+ */
+static inline void UNIXFS_seconds_since_1970_to_dos_date_time(
+    time_t ss1970, LPWORD pDate, LPWORD pTime)
+{
+    LARGE_INTEGER time;
+    FILETIME fileTime;
+
+    RtlSecondsSince1970ToTime( ss1970, &time );
+    fileTime.dwLowDateTime = time.u.LowPart;
+    fileTime.dwHighDateTime = time.u.HighPart;
+    FileTimeToDosDateTime(&fileTime, pDate, pTime);
+}
+
+/******************************************************************************
  * UNIXFS_build_shitemid [Internal]
  *
  * Constructs a new SHITEMID for the last component of path 'pszUnixPath' into 
@@ -432,39 +571,57 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
  *  a 0 USHORT value.
  */
 static char* UNIXFS_build_shitemid(char *pszUnixPath, void *pIDL) {
-    LARGE_INTEGER time;
-    FILETIME fileTime;
     LPPIDLDATA pIDLData;
     struct stat fileStat;
-    char *pszComponent;
-    int cComponentLen;
+    char *pszComponentU, *pszComponentA;
+    WCHAR *pwszComponentW;
+    int cComponentULen, cComponentALen;
+    USHORT cbLen;
+    FileStructW *pFileStructW;
+    WORD uOffsetW, *pOffsetW;
 
     TRACE("(pszUnixPath=%s, pIDL=%p)\n", debugstr_a(pszUnixPath), pIDL);
 
-    /* Compute the SHITEMID's length and wipe it. */
-    pszComponent = strrchr(pszUnixPath, '/') + 1;
-    cComponentLen = strlen(pszComponent);
-    memset(pIDL, 0, SHITEMID_LEN_FROM_NAME_LEN(cComponentLen));
-    ((LPSHITEMID)pIDL)->cb = SHITEMID_LEN_FROM_NAME_LEN(cComponentLen) ;
-   
     /* We are only interested in regular files and directories. */
     if (stat(pszUnixPath, &fileStat)) return NULL;
     if (!S_ISDIR(fileStat.st_mode) && !S_ISREG(fileStat.st_mode)) return NULL;
+    
+    /* Compute the SHITEMID's length and wipe it. */
+    pszComponentU = strrchr(pszUnixPath, '/') + 1;
+    cComponentULen = strlen(pszComponentU);
+    cbLen = UNIXFS_shitemid_len_from_filename(pszComponentU, &pszComponentA, &pwszComponentW);
+    if (!cbLen) return NULL;
+    memset(pIDL, 0, cbLen);
+    ((LPSHITEMID)pIDL)->cb = cbLen;
     
     /* Set shell32's standard SHITEMID data fields. */
     pIDLData = _ILGetDataPointer((LPCITEMIDLIST)pIDL);
     pIDLData->type = S_ISDIR(fileStat.st_mode) ? PT_FOLDER : PT_VALUE;
     pIDLData->u.file.dwFileSize = (DWORD)fileStat.st_size;
-    RtlSecondsSince1970ToTime( fileStat.st_mtime, &time );
-    fileTime.dwLowDateTime = time.u.LowPart;
-    fileTime.dwHighDateTime = time.u.HighPart;
-    FileTimeToDosDateTime(&fileTime, &pIDLData->u.file.uFileDate, &pIDLData->u.file.uFileTime);
+    UNIXFS_seconds_since_1970_to_dos_date_time(fileStat.st_mtime, &pIDLData->u.file.uFileDate, 
+        &pIDLData->u.file.uFileTime);
     pIDLData->u.file.uFileAttribs = 0;
     if (S_ISDIR(fileStat.st_mode)) pIDLData->u.file.uFileAttribs |= FILE_ATTRIBUTE_DIRECTORY;
-    if (pszComponent[0] == '.') pIDLData->u.file.uFileAttribs |=  FILE_ATTRIBUTE_HIDDEN;
-    memcpy(pIDLData->u.file.szNames, pszComponent, cComponentLen);
+    if (pszComponentU[0] == '.') pIDLData->u.file.uFileAttribs |=  FILE_ATTRIBUTE_HIDDEN;
+    cComponentALen = lstrlenA(pszComponentA) + 1;
+    memcpy(pIDLData->u.file.szNames, pszComponentA, cComponentALen);
+    
+    pFileStructW = (FileStructW*)(pIDLData->u.file.szNames + cComponentALen + (cComponentALen & 0x1));
+    uOffsetW = (WORD)(((LPBYTE)pFileStructW) - ((LPBYTE)pIDL));
+    pFileStructW->cbLen = cbLen - uOffsetW;
+    UNIXFS_seconds_since_1970_to_dos_date_time(fileStat.st_mtime, &pFileStructW->uCreationDate, 
+        &pFileStructW->uCreationTime);
+    UNIXFS_seconds_since_1970_to_dos_date_time(fileStat.st_atime, &pFileStructW->uLastAccessDate,
+        &pFileStructW->uLastAccessTime);
+    lstrcpyW(pFileStructW->wszName, pwszComponentW);
 
-    return pszComponent + cComponentLen;
+    pOffsetW = (WORD*)(((LPBYTE)pIDL) + cbLen - sizeof(WORD));
+    *pOffsetW = uOffsetW;
+    
+    SHFree(pszComponentA);
+    SHFree(pwszComponentW);
+    
+    return pszComponentU + cComponentULen;
 }
 
 /******************************************************************************
@@ -484,8 +641,9 @@ static char* UNIXFS_build_shitemid(char *pszUnixPath, void *pIDL) {
  */
 static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPITEMIDLIST *ppidl) {
     LPITEMIDLIST pidl;
-    int cSubDirs, cPidlLen, cPathLen;
-    char *pSlash, szCompletePath[FILENAME_MAX], *pNextPathElement;
+    int cPidlLen, cPathLen;
+    char *pSlash, *pNextSlash, szCompletePath[FILENAME_MAX], *pNextPathElement, *pszAPath;
+    WCHAR *pwszPath;
 
     TRACE("pUnixFolder=%p, path=%s, ppidl=%p\n", pUnixFolder, debugstr_w(path), ppidl);
    
@@ -551,17 +709,28 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
      * and _not_ terminated by a '/'. */
     TRACE("complete path: %s, relative path: %s\n", szCompletePath, pNextPathElement);
     
-    /* Count the number of sub-directories in the path */
-    cSubDirs = 0;
-    pSlash = pNextPathElement;
+    /* Convert to CP_ACP and WCHAR */
+    if (!UNIXFS_shitemid_len_from_filename(pNextPathElement, &pszAPath, &pwszPath))
+        return 0;
+
+    /* Compute the length of the complete ITEMIDLIST */
+    cPidlLen = 0;
+    pSlash = pszAPath;
     while (pSlash) {
-        cSubDirs++;
-        pSlash = strchr(pSlash+1, '/');
+        pNextSlash = strchr(pSlash+1, '/');
+        cPidlLen += LEN_SHITEMID_FIXED_PART + /* Fixed part length plus potential alignment byte. */
+            (pNextSlash ? (pNextSlash - pSlash) & 0x1 : lstrlenA(pSlash) & 0x1); 
+        pSlash = pNextSlash;
     }
-  
-    /* Allocate enough memory to hold the path. The -cSubDirs is for the '/' 
-     * characters, which are not stored in the ITEMIDLIST. */
-    cPidlLen = strlen(pNextPathElement) - cSubDirs + cSubDirs * SHITEMID_LEN_FROM_NAME_LEN(0) + sizeof(USHORT);
+
+    /* The USHORT is for the ITEMIDLIST terminator. The NUL terminators for the sub-path-strings
+     * are accounted for by the '/' separators, which are not stored in the SHITEMIDs. Above we
+     * have ensured that the number of '/'s exactly matches the number of sub-path-strings. */
+    cPidlLen += lstrlenA(pszAPath) + lstrlenW(pwszPath) * sizeof(WCHAR) + sizeof(USHORT);
+
+    SHFree(pszAPath);
+    SHFree(pwszPath);
+
     *ppidl = pidl = (LPITEMIDLIST)SHAlloc(cPidlLen);
     if (!pidl) return FALSE;
 
@@ -613,7 +782,7 @@ static HRESULT UNIXFS_initialize_target_folder(UnixFolder *This, const char *szB
         
     /* Determine the path's length bytes */
     while (current && current->mkid.cb) {
-        dwPathLen += NAME_LEN_FROM_LPSHITEMID(current) + 1; /* For the '/' */
+        dwPathLen += UNIXFS_filename_from_shitemid(current, NULL) + 1; /* For the '/' */
         current = ILGetNext(current);
     };
 
@@ -636,8 +805,7 @@ static HRESULT UNIXFS_initialize_target_folder(UnixFolder *This, const char *szB
             This->m_dwAttributes |= SFGAO_FILESYSTEM;
     }
     while (current && current->mkid.cb) {
-        memcpy(pNextDir, _ILGetTextPointer(current), NAME_LEN_FROM_LPSHITEMID(current));
-        pNextDir += NAME_LEN_FROM_LPSHITEMID(current);
+        pNextDir += UNIXFS_filename_from_shitemid(current, pNextDir);
         if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
             *pNextDir = '\0';
             if (!stat(This->m_pszPath, &statPrefix) && UNIXFS_is_dos_device(&statPrefix))
@@ -847,8 +1015,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_CompareIDs(IShellFolder2* iface, 
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)1);
 
     compare = CompareStringA(LOCALE_USER_DEFAULT, NORM_IGNORECASE, 
-                             _ILGetTextPointer(pidl1), NAME_LEN_FROM_LPSHITEMID(pidl1),
-                             _ILGetTextPointer(pidl2), NAME_LEN_FROM_LPSHITEMID(pidl2));
+                             _ILGetTextPointer(pidl1), -1,
+                             _ILGetTextPointer(pidl2), -1);
     
     if ((compare == CSTR_LESS_THAN) || (compare == CSTR_GREATER_THAN)) 
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)((compare == CSTR_LESS_THAN)?-1:1));
@@ -921,9 +1089,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetAttributesOf(IShellFolder2* if
         for (i=0; i<cidl; i++) {
             if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
                 struct stat fileStat;
-                char *pszName = _ILGetTextPointer(apidl[i]);
-                if (!pszName) return E_INVALIDARG;
-                lstrcpyA(pszRelativePath, pszName);
+                if (!UNIXFS_filename_from_shitemid(apidl[i], pszRelativePath)) 
+                    return E_INVALIDARG;
                 if (stat(szAbsolutePath, &fileStat) || !UNIXFS_is_dos_device(&fileStat))
                     *rgfInOut &= ~SFGAO_FILESYSTEM;
             }
@@ -986,22 +1153,6 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetUIObjectOf(IShellFolder2* ifac
     }
 }
 
-/******************************************************************************
- * Translate file name from unix to ANSI encoding.
- */
-static void strcpyn_U2A(char *win_fn, UINT win_fn_len, const char *unix_fn)
-{
-    UINT len;
-    WCHAR *unicode_fn;
-
-    len = MultiByteToWideChar(CP_UNIXCP, 0, unix_fn, -1, NULL, 0);
-    unicode_fn = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_UNIXCP, 0, unix_fn, -1, unicode_fn, len);
-
-    WideCharToMultiByte(CP_ACP, 0, unicode_fn, len, win_fn, win_fn_len, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, unicode_fn);
-}
-
 static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* iface, 
     LPCITEMIDLIST pidl, SHGDNF uFlags, STRRET* lpName)
 {
@@ -1014,16 +1165,20 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
         (GET_SHGDN_RELATION(uFlags) != SHGDN_INFOLDER))
     {
         if (!pidl || !pidl->mkid.cb) {
-            lpName->uType = STRRET_CSTR;
+            lpName->uType = STRRET_WSTR;
             if (This->m_dwPathMode == PATHMODE_UNIX) {
-                strcpyn_U2A(lpName->u.cStr, MAX_PATH, This->m_pszPath);
+                UINT len = MultiByteToWideChar(CP_UNIXCP, 0, This->m_pszPath, -1, NULL, 0);
+                lpName->u.pOleStr = SHAlloc(len * sizeof(WCHAR));
+                if (!lpName->u.pOleStr) return HRESULT_FROM_WIN32(GetLastError());
+                MultiByteToWideChar(CP_UNIXCP, 0, This->m_pszPath, -1, lpName->u.pOleStr, len);
             } else {
-                WCHAR *pwszDosPath = wine_get_dos_file_name(This->m_pszPath);
-                if (!pwszDosPath)
-                    return HRESULT_FROM_WIN32(GetLastError());
-                PathRemoveBackslashW(pwszDosPath);
-                WideCharToMultiByte(CP_ACP, 0, pwszDosPath, -1, lpName->u.cStr, MAX_PATH, NULL, NULL);
-                HeapFree(GetProcessHeap(), 0, pwszDosPath);        
+                LPWSTR pwszDosFileName = wine_get_dos_file_name(This->m_pszPath);
+                if (!pwszDosFileName) return HRESULT_FROM_WIN32(GetLastError());
+                lpName->u.pOleStr = SHAlloc((lstrlenW(pwszDosFileName) + 1) * sizeof(WCHAR));
+                if (!lpName->u.pOleStr) return HRESULT_FROM_WIN32(GetLastError());
+                lstrcpyW(lpName->u.pOleStr, pwszDosFileName);
+                PathRemoveBackslashW(lpName->u.pOleStr);
+                HeapFree(GetProcessHeap(), 0, pwszDosFileName);
             }
         } else {
             IShellFolder *pSubFolder;
@@ -1036,18 +1191,20 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
             IShellFolder_Release(pSubFolder);
         }
     } else {
-        char *pszFileName = _ILGetTextPointer(pidl);
-        lpName->uType = STRRET_CSTR;
-        strcpyn_U2A(lpName->u.cStr, MAX_PATH, pszFileName ? pszFileName : "");
+        WCHAR wszFileName[MAX_PATH];
+        if (!_ILSimpleGetTextW(pidl, wszFileName, MAX_PATH)) return E_INVALIDARG;
+        lpName->uType = STRRET_WSTR;
+        lpName->u.pOleStr = SHAlloc((lstrlenW(wszFileName)+1)*sizeof(WCHAR));
+        if (!lpName->u.pOleStr) return HRESULT_FROM_WIN32(GetLastError());
+        lstrcpyW(lpName->u.pOleStr, wszFileName);
+        if (!(GET_SHGDN_FOR(uFlags) & SHGDN_FORPARSING) && This->m_dwPathMode == PATHMODE_DOS && 
+            !_ILIsFolder(pidl) && wszFileName[0] != '.' && SHELL_FS_HideExtension(wszFileName))
+        {
+            PathRemoveExtensionW(lpName->u.pOleStr);
+        }
     }
 
-    /* If in dos mode, do some post-processing on the path.
-     * (e.g. remove filename extension, if uFlags & SHGDN_FOREDITING) 
-     */
-    if (SUCCEEDED(hr) && This->m_dwPathMode == PATHMODE_DOS && !_ILIsFolder(pidl))
-        SHELL_FS_ProcessDisplayFilename(lpName->u.cStr, uFlags);
-    
-    TRACE("--> %s\n", lpName->u.cStr);
+    TRACE("--> %s\n", debugstr_w(lpName->u.pOleStr));
     
     return hr;
 }
@@ -1075,7 +1232,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
     
     /* build source path */
     memcpy(szSrc, This->m_pszPath, cBasePathLen);
-    lstrcpyA(szSrc+cBasePathLen, _ILGetTextPointer(pidl));
+    UNIXFS_filename_from_shitemid(pidl, szSrc + cBasePathLen);
 
     /* build destination path */
     if (uFlags & SHGDN_FORPARSING) { /* absolute path in lpszName */
@@ -1091,8 +1248,10 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
         if (_ILSimpleGetTextW(pidl, wszSrcRelative, MAX_PATH) && 
             SHELL_FS_HideExtension(wszSrcRelative))
         {
-            char *pszExt = PathFindExtensionA(_ILGetTextPointer(pidl));
-            lstrcatA(szDest, pszExt);
+            WCHAR *pwszExt = PathFindExtensionW(wszSrcRelative);
+            int cLenDest = strlen(szDest);
+            WideCharToMultiByte(CP_UNIXCP, 0, pwszExt, -1, szDest + cLenDest, 
+                FILENAME_MAX - cLenDest, NULL, NULL);
         }
     } 
 
@@ -1198,11 +1357,10 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsOf(IShellFolder2* iface
     } else {
         struct stat statItem;
         if (iColumn == 4 || iColumn == 5 || iColumn == 6) {
-            char szPath[FILENAME_MAX], *pszFile = _ILGetTextPointer(pidl);
-            if (!pszFile) 
+            char szPath[FILENAME_MAX];
+            strcpy(szPath, This->m_pszPath);
+            if (!UNIXFS_filename_from_shitemid(pidl, szPath + strlen(szPath)))
                 return E_INVALIDARG;
-            lstrcpyA(szPath, This->m_pszPath);
-            lstrcatA(szPath, pszFile);
             if (stat(szPath, &statItem)) 
                 return E_INVALIDARG;
         }
@@ -1635,7 +1793,8 @@ static HRESULT WINAPI UnixFolder_ISFHelper_DeleteItems(ISFHelper* iface, UINT ci
     pszRelative = szAbsolute + lstrlenA(szAbsolute);
     
     for (i=0; i<cidl && SUCCEEDED(hr); i++) {
-        lstrcpyA(pszRelative, _ILGetTextPointer(apidl[i]));
+        if (!UNIXFS_filename_from_shitemid(apidl[i], pszRelative))
+            return E_INVALIDARG;
         pidlAbsolute = ILCombine(This->m_pidlLocation, apidl[i]);
         if (_ILIsFolder(apidl[i])) {
             if (rmdir(szAbsolute)) {
@@ -1693,7 +1852,7 @@ static HRESULT WINAPI UnixFolder_ISFHelper_CopyItems(ISFHelper* iface, IShellFol
             return E_FAIL;
 
         /* Build the unix path of the current destination item */
-        lstrcpyA(pszRelativeDst, _ILGetTextPointer(apidl[i]));
+        UNIXFS_filename_from_shitemid(apidl[i], pszRelativeDst);
 
         FIXME("Would copy %s to %s. Not yet implemented.\n", szSrc, szAbsoluteDst);
     }
@@ -2036,7 +2195,8 @@ static HRESULT WINAPI UnixSubFolderIterator_IEnumIDList_Next(IEnumIDList* iface,
              * and see if it passes the filter. 
              */
             lstrcpyA(pszRelativePath, pDirEntry->d_name);
-            rgelt[i] = (LPITEMIDLIST)SHAlloc(SHITEMID_LEN_FROM_NAME_LEN(lstrlenA(pszRelativePath))+sizeof(USHORT));
+            rgelt[i] = (LPITEMIDLIST)SHAlloc(
+                UNIXFS_shitemid_len_from_filename(pszRelativePath, NULL, NULL)+sizeof(USHORT));
             if (!UNIXFS_build_shitemid(This->m_szFolder, rgelt[i]) ||
                 !UNIXFS_is_pidl_of_type(rgelt[i], This->m_fFilter)) 
             {

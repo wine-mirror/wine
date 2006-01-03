@@ -370,10 +370,7 @@ static void test_GetDisplayName(void)
 
     /* WinXP stores the filenames as both ANSI and UNICODE in the pidls */
     pidlLast = pILFindLastID(pidlTestFile);
-    todo_wine { 
-        ok( pidlLast->mkid.cb >= 76, "Expected pidl length of at least 76, got %d.\n", 
-            pidlLast->mkid.cb);
-    }
+    ok(pidlLast->mkid.cb >=76, "Expected pidl length of at least 76, got %d.\n", pidlLast->mkid.cb);
     if (pidlLast->mkid.cb >= 76) {
         ok(!lstrcmpW((WCHAR*)&pidlLast->mkid.abID[46], wszFileName),
             "WinXP stores the filename as a wchar-string at this position!\n");
@@ -1163,8 +1160,8 @@ void test_ITEMIDLIST_format(void) {
             todo_wine { ok(pidlFile->mkid.abID[18] == '~', "Should be derived 8.3 name!\n"); }
 
         if (i == 0) /* First file name has an even number of chars. No need for alignment. */
-            todo_wine { ok(pidlFile->mkid.abID[12 + strlen(szFile) + 1] != '\0', 
-                "Alignment byte, where there shouldn't be!\n"); }
+            ok(pidlFile->mkid.abID[12 + strlen(szFile) + 1] != '\0', 
+                "Alignment byte, where there shouldn't be!\n"); 
         
         if (i == 1) /* Second file name has an uneven number of chars => alignment byte */
             ok(pidlFile->mkid.abID[12 + strlen(szFile) + 1] == '\0', 
@@ -1172,9 +1169,9 @@ void test_ITEMIDLIST_format(void) {
 
         /* The offset of the FileStructW member is stored as a WORD at the end of the pidl. */
         cbOffset = *(WORD*)(((LPBYTE)pidlFile)+pidlFile->mkid.cb-sizeof(WORD));
-        todo_wine { ok (cbOffset >= sizeof(struct FileStructA) && 
+        ok (cbOffset >= sizeof(struct FileStructA) &&
             cbOffset <= pidlFile->mkid.cb - sizeof(struct FileStructW),
-            "Wrong offset value (%d) stored at the end of the PIDL\n", cbOffset); }
+            "Wrong offset value (%d) stored at the end of the PIDL\n", cbOffset);
 
         if (cbOffset >= sizeof(struct FileStructA) &&
             cbOffset <= pidlFile->mkid.cb - sizeof(struct FileStructW)) 
