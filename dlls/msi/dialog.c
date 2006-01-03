@@ -1512,6 +1512,12 @@ static UINT msi_dialog_evaluate_control_conditions( msi_dialog *dialog )
     return r;
 }
 
+UINT msi_dialog_reset( msi_dialog *dialog )
+{
+    /* FIXME: should restore the original values of any properties we changed */
+    return msi_dialog_evaluate_control_conditions( dialog );
+}
+
 /* figure out the height of 10 point MS Sans Serif */
 static INT msi_dialog_get_sans_serif_height( HWND hwnd )
 {
