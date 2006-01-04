@@ -71,15 +71,6 @@ struct wine_pthread_callbacks
 
 #endif /* HAVE_PTHREAD_H */
 
-/* we don't want to include winnt.h here */
-#ifndef DECLSPEC_NORETURN
-# ifdef __GNUC__
-#  define DECLSPEC_NORETURN __attribute__((noreturn))
-# else
-#  define DECLSPEC_NORETURN
-# endif
-#endif
-
 /* thread information used to creating and exiting threads */
 struct wine_pthread_thread_info
 {
@@ -101,8 +92,13 @@ struct wine_pthread_functions
     int    (*create_thread)( struct wine_pthread_thread_info *info );
     void   (*init_current_teb)( struct wine_pthread_thread_info *info );
     void * (*get_current_teb)(void);
-    void   (* DECLSPEC_NORETURN exit_thread)( struct wine_pthread_thread_info *info );
-    void   (* DECLSPEC_NORETURN abort_thread)( long status );
+#ifdef __GNUC__
+    void   (* __attribute__((noreturn)) exit_thread)( struct wine_pthread_thread_info *info );
+    void   (* __attribute__((noreturn)) abort_thread)( long status );
+#else
+    void   (*exit_thread)( struct wine_pthread_thread_info *info );
+    void   (*abort_thread)( long status );
+#endif
 };
 
 extern void wine_pthread_get_functions( struct wine_pthread_functions *functions, size_t size );
