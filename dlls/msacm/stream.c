@@ -99,6 +99,9 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
 	return ACMERR_UNPREPARED;
     }
 
+    pash->cbSrcLengthUsed = 0;
+    pash->cbDstLengthUsed = 0;
+
     /* Note: the ACMSTREAMHEADER and ACMDRVSTREAMHEADER structs are of same
      * size. some fields are private to msacm internals, and are exposed
      * in ACMSTREAMHEADER in the dwReservedDriver array
