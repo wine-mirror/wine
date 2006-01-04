@@ -210,74 +210,64 @@ const struct builtin_class_descr MENU_builtin_class =
 static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
 				    const char *postfix)
 {
+    static const char * const hbmmenus[] = { "HBMMENU_CALLBACK", "", "HBMMENU_SYSTEM",
+    "HBMMENU_MBAR_RESTORE", "HBMMENU_MBAR_MINIMIZE", "HBMMENU_MBAR_CLOSE",
+    "HBMMENU_MBAR_CLOSE_D", "HBMMENU_MBAR_MINIMIZE_D", "HBMMENU_POPUP_CLOSE",
+    "HBMMENU_POPUP_RESTORE", "HBMMENU_POPUP_MAXIMIZE", "HBMMENU_POPUP_MINIMIZE"};
     TRACE("%s ", prefix);
     if (mp) {
-	UINT flags = mp->fType;
-	int type = MENU_ITEM_TYPE(flags);
-	TRACE( "{ ID=0x%x", mp->wID);
-	if (flags & MF_POPUP)
-	    TRACE( ", Sub=%p", mp->hSubMenu);
-	if (flags) {
-	    int count = 0;
-	    TRACE( ", Type=");
-	    if (type == MFT_STRING)
-		/* Nothing */ ;
-	    else if (type == MFT_SEPARATOR)
-		MENUOUT("sep");
-	    else if (type == MFT_OWNERDRAW)
-		MENUOUT("own");
-	    else if (type == MFT_BITMAP)
-		MENUOUT("bit");
-	    else
-		MENUOUT("???");
-	    flags -= type;
-
-	    MENUFLAG(MF_POPUP, "pop");
-	    MENUFLAG(MFT_MENUBARBREAK, "barbrk");
-	    MENUFLAG(MFT_MENUBREAK, "brk");
-	    MENUFLAG(MFT_RADIOCHECK, "radio");
-	    MENUFLAG(MFT_RIGHTORDER, "rorder");
-	    MENUFLAG(MF_SYSMENU, "sys");
-	    MENUFLAG(MFT_RIGHTJUSTIFY, "right");	/* same as MF_HELP */
-
-	    if (flags)
-		TRACE( "+0x%x", flags);
-	}
-	flags = mp->fState;
-	if (flags) {
-	    int count = 0;
-	    TRACE( ", State=");
-	    MENUFLAG(MFS_GRAYED, "grey");
-	    MENUFLAG(MFS_DEFAULT, "default");
-	    MENUFLAG(MFS_DISABLED, "dis");
-	    MENUFLAG(MFS_CHECKED, "check");
-	    MENUFLAG(MFS_HILITE, "hi");
-	    MENUFLAG(MF_USECHECKBITMAPS, "usebit");
-	    MENUFLAG(MF_MOUSESELECT, "mouse");
-	    if (flags)
-		TRACE( "+0x%x", flags);
-	}
-	if (mp->hCheckBit)
-	    TRACE( ", Chk=%p", mp->hCheckBit);
-	if (mp->hUnCheckBit)
-	    TRACE( ", Unc=%p", mp->hUnCheckBit);
-
-	if (type == MFT_STRING) {
-	    if (mp->text)
-		TRACE( ", Text=%s", debugstr_w(mp->text));
-	    else
-		TRACE( ", Text=Null");
-	} else if (mp->text == NULL)
-	    /* Nothing */ ;
-	else
-	    TRACE( ", Text=%p", mp->text);
-	if (mp->dwItemData)
-	    TRACE( ", ItemData=0x%08lx", mp->dwItemData);
-	TRACE( " }");
-    } else {
-	TRACE( "NULL");
-    }
-
+        UINT flags = mp->fType;
+        TRACE( "{ ID=0x%x", mp->wID);
+        if ( mp->hSubMenu)
+            TRACE( ", Sub=%p", mp->hSubMenu);
+        if (flags) {
+            int count = 0;
+            TRACE( ", fType=");
+            MENUFLAG( MFT_SEPARATOR, "sep");
+            MENUFLAG( MFT_OWNERDRAW, "own");
+            MENUFLAG( MFT_BITMAP, "bit");
+            MENUFLAG(MF_POPUP, "pop");
+            MENUFLAG(MFT_MENUBARBREAK, "barbrk");
+            MENUFLAG(MFT_MENUBREAK, "brk");
+            MENUFLAG(MFT_RADIOCHECK, "radio");
+            MENUFLAG(MFT_RIGHTORDER, "rorder");
+            MENUFLAG(MF_SYSMENU, "sys");
+            MENUFLAG(MFT_RIGHTJUSTIFY, "right");  /* same as MF_HELP */
+            if (flags)
+                TRACE( "+0x%x", flags);
+        }
+        flags = mp->fState;
+        if (flags) {
+            int count = 0;
+            TRACE( ", State=");
+            MENUFLAG(MFS_GRAYED, "grey");
+            MENUFLAG(MFS_DEFAULT, "default");
+            MENUFLAG(MFS_DISABLED, "dis");
+            MENUFLAG(MFS_CHECKED, "check");
+            MENUFLAG(MFS_HILITE, "hi");
+            MENUFLAG(MF_USECHECKBITMAPS, "usebit");
+            MENUFLAG(MF_MOUSESELECT, "mouse");
+            if (flags)
+                TRACE( "+0x%x", flags);
+        }
+        if (mp->hCheckBit)
+            TRACE( ", Chk=%p", mp->hCheckBit);
+        if (mp->hUnCheckBit)
+            TRACE( ", Unc=%p", mp->hUnCheckBit);
+        if (mp->text)
+            TRACE( ", Text=%s", debugstr_w(mp->text));
+        if (mp->dwItemData)
+            TRACE( ", ItemData=0x%08lx", mp->dwItemData);
+        if (mp->hbmpItem)
+        {
+            if( IS_MAGIC_BITMAP(mp->hbmpItem))
+                TRACE( ", hbitmap=%s", hbmmenus[ (INT_PTR)mp->hbmpItem + 1]);
+            else
+                TRACE( ", hbitmap=%p", mp->hbmpItem);
+        }
+        TRACE( " }");
+    } else
+        TRACE( "NULL");
     TRACE(" %s\n", postfix);
 }
 
@@ -965,7 +955,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 	                   - arrow_bitmap_width;
 	}
     }
-    TRACE("(%ld,%ld)-(%ld,%ld)\n", lpitem->rect.left, lpitem->rect.top, lpitem->rect.right, lpitem->rect.bottom);
+    TRACE("%s\n", wine_dbgstr_rect( &lpitem->rect));
 }
 
 
@@ -1059,8 +1049,7 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
 
     if ((lprect == NULL) || (lppop == NULL)) return;
     if (lppop->nItems == 0) return;
-    TRACE("left=%ld top=%ld right=%ld bottom=%ld\n",
-          lprect->left, lprect->top, lprect->right, lprect->bottom);
+    TRACE("lprect %p %s\n", lprect, wine_dbgstr_rect( lprect));
     lppop->Width  = lprect->right - lprect->left;
     lppop->Height = 0;
     maxY = lprect->top+1;
@@ -1081,8 +1070,7 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
 	    if ((i != start) &&
 		(lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
 
-	    TRACE("calling MENU_CalcItemSize org=(%d, %d)\n",
-			 orgX, orgY );
+	    TRACE("calling MENU_CalcItemSize org=(%d, %d)\n", orgX, orgY );
 	    debug_print_menuitem ("  item: ", lpitem, "");
 	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, TRUE, lppop );
 
@@ -1192,16 +1180,14 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         dis.hDC        = hdc;
         dis.rcItem     = lpitem->rect;
         TRACE("Ownerdraw: owner=%p itemID=%d, itemState=%d, itemAction=%d, "
-	      "hwndItem=%p, hdc=%p, rcItem={%ld,%ld,%ld,%ld}\n", hwndOwner,
+	      "hwndItem=%p, hdc=%p, rcItem=%s\n", hwndOwner,
 	      dis.itemID, dis.itemState, dis.itemAction, dis.hwndItem,
-	      dis.hDC, dis.rcItem.left, dis.rcItem.top, dis.rcItem.right,
-	      dis.rcItem.bottom);
+	      dis.hDC, wine_dbgstr_rect( &dis.rcItem));
         SendMessageW( hwndOwner, WM_DRAWITEM, 0, (LPARAM)&dis );
         /* Fall through to draw popup-menu arrow */
     }
 
-    TRACE("rect={%ld,%ld,%ld,%ld}\n", lpitem->rect.left, lpitem->rect.top,
-					lpitem->rect.right,lpitem->rect.bottom);
+    TRACE("rect=%s\n", wine_dbgstr_rect( &lpitem->rect));
 
     if (menuBar && (lpitem->fType & MF_SEPARATOR)) return;
 
@@ -2656,9 +2642,8 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     mt.pt.x = x;
     mt.pt.y = y;
 
-    TRACE("hmenu=%p flags=0x%08x (%d,%d) hwnd=%p (%ld,%ld)-(%ld,%ld)\n",
-          hmenu, wFlags, x, y, hwnd, (lprect) ? lprect->left : 0, (lprect) ? lprect->top : 0,
-          (lprect) ? lprect->right : 0,  (lprect) ? lprect->bottom : 0);
+    TRACE("hmenu=%p flags=0x%08x (%d,%d) hwnd=%p %s\n",
+          hmenu, wFlags, x, y, hwnd, wine_dbgstr_rect( lprect));
 
     fEndMenu = FALSE;
     if (!(menu = MENU_GetMenu( hmenu )))
@@ -2989,7 +2974,7 @@ void MENU_TrackMouseMenuBar( HWND hWnd, INT ht, POINT pt )
     HMENU hMenu = (ht == HTSYSMENU) ? get_win_sys_menu( hWnd ) : GetMenu( hWnd );
     UINT wFlags = TPM_ENTERIDLEEX | TPM_BUTTONDOWN | TPM_LEFTALIGN | TPM_LEFTBUTTON;
 
-    TRACE("wnd=%p ht=0x%04x (%ld,%ld)\n", hWnd, ht, pt.x, pt.y);
+    TRACE("wnd=%p ht=0x%04x %s\n", hWnd, ht, wine_dbgstr_point( &pt));
 
     if (IsMenu(hMenu))
     {
@@ -3543,13 +3528,9 @@ BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
     MENUITEM *item;
 
     if (IS_STRING_ITEM(flags))
-    {
         TRACE("%p %d %04x %04x %s\n", hMenu, pos, flags, id, debugstr_w(str) );
-    }
     else
-    {
         TRACE("%p %d %04x %04x %p\n", hMenu, pos, flags, id, str );
-    }
 
     if (!(item = MENU_FindItem( &hMenu, &pos, flags ))) return FALSE;
     MENU_GetMenu(hMenu)->Height = 0; /* force size recalculate */
