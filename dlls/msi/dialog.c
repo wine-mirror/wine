@@ -1129,15 +1129,16 @@ static struct msi_maskedit_info * msi_dialog_parse_groups( LPCWSTR mask )
     if( !mask )
         return info;
 
-    p = strchrW(mask, '<');
-    if( !p )
-        return info;
-
     info = msi_alloc_zero( sizeof *info );
     if( !info )
         return info;
 
-    p++;
+    p = strchrW(mask, '<');
+    if( p )
+        p++;
+    else
+        p = mask;
+
     for( i=0; i<MASK_MAX_GROUPS; i++ )
     {
         /* stop at the end of the string */
@@ -1177,7 +1178,7 @@ msi_maskedit_create_children( struct msi_maskedit_info *info, LPCWSTR font )
     HWND hwnd;
     UINT i;
 
-    style = WS_CHILD | WS_BORDER | WS_VISIBLE | WS_TABSTOP;
+    style = WS_CHILD | WS_BORDER | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL;
 
     GetClientRect( info->hwnd, &rect );
 
