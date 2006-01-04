@@ -238,7 +238,7 @@ Support programs, libraries, etc:
 	server/			- the Wine server
 	tools/			- various tools used to build/check Wine
 	tools/widl/		- the IDL compiler
-	tools/winapi{,_check}/	- A Win32 API checker
+	tools/winapi/	- A Win32 API checker
 	tools/winebuild/	- Wine build tool
 	tools/winedump/		- a .DLL dump utility
 	tools/winegcc/		- a MinGW command line compatible gcc wrapper
