@@ -40,11 +40,7 @@ sub check_modules($$) {
 		foreach my $internal_name ($winapi->all_internal_functions_in_module($module)) {
 		    next if $internal_name =~ /\./;
 		    my $function = $functions->{$internal_name};
-		    if(!defined($function) && !$nativeapi->is_function($internal_name) &&
-               # FIXME: remove these when DLL separation is complete
-               !($module eq "user32" || $module eq "gdi32" || $module eq "kernel32" ||
-                 $module eq "user.exe" || $module eq "keyboard.drv" || $module eq "ddeml" ||
-                 $module eq "gdi.exe" || $module eq "dispdib" || $module eq "krnl386.exe"))
+		    if(!defined($function) && !$nativeapi->is_function($internal_name))
 		    {
 			$output->write("*.c: $module: $internal_name: " .
 				       "function declared but not implemented or declared external\n");
