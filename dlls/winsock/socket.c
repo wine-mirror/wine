@@ -3161,8 +3161,14 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
         memset(&unixhints, 0, sizeof(unixhints));
         punixhints->ai_flags    = convert_aiflag_w2u(hints->ai_flags);
         punixhints->ai_family   = convert_af_w2u(hints->ai_family);
-        punixhints->ai_socktype = convert_socktype_w2u(hints->ai_socktype);
-        punixhints->ai_protocol = convert_proto_w2u(hints->ai_protocol);
+        if (hints->ai_socktype == 0) /* wildcard, specific to getaddrinfo() */
+            punixhints->ai_socktype = 0;
+        else
+            punixhints->ai_socktype = convert_socktype_w2u(hints->ai_socktype);
+        if (hints->ai_protocol == 0) /* wildcard, specific to getaddrinfo() */
+            punixhints->ai_protocol = 0;
+        else
+            punixhints->ai_protocol = convert_proto_w2u(hints->ai_protocol);
     }
 
     /* getaddrinfo(3) is thread safe, no need to wrap in CS */
