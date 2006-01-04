@@ -934,6 +934,7 @@ static void attach_implicitly_loaded_dlls( LPVOID reserved )
             if (mod->Flags & (LDR_LOAD_IN_PROGRESS | LDR_PROCESS_ATTACHED)) continue;
             TRACE( "found implicitly loaded %s, attaching to it\n",
                    debugstr_w(mod->BaseDllName.Buffer));
+            mod->LoadCount = -1;  /* we can't unload it anyway */
             process_attach( CONTAINING_RECORD(mod, WINE_MODREF, ldr), reserved );
             break;  /* restart the search from the start */
         }
