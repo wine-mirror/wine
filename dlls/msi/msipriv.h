@@ -317,6 +317,8 @@ extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
 
 /* transform functions */
 extern UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg );
+extern UINT MSI_DatabaseApplyTransformW( MSIDATABASE *db, 
+                 LPCWSTR szTransformFile, int iErrorCond );
 
 /* action internals */
 extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR );

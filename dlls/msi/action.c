@@ -569,6 +569,30 @@ static UINT msi_apply_patches( MSIPACKAGE *package )
     return r;
 }
 
+static UINT msi_apply_transforms( MSIPACKAGE *package )
+{
+    static const WCHAR szTransforms[] = {
+        'T','R','A','N','S','F','O','R','M','S',0 };
+    LPWSTR xform_list, *xforms;
+    UINT i, r = ERROR_SUCCESS;
+
+    xform_list = msi_dup_property( package, szTransforms );
+    xforms = msi_split_string( xform_list, ';' );
+
+    for( i=0; xforms && xforms[i] && r == ERROR_SUCCESS; i++ )
+    {
+        if (xforms[i][0] == ':')
+            r = msi_apply_substorage_transform( package, package->db, &xforms[i][1] );
+        else
+            r = MSI_DatabaseApplyTransformW( package->db, xforms[i], 0 );
+    }
+
+    msi_free( xforms );
+    msi_free( xform_list );
+
+    return r;
+}
+
 /****************************************************
  * TOP level entry points 
  *****************************************************/
@@ -618,6 +642,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     msi_parse_command_line( package, szCommandLine );
 
+    msi_apply_transforms( package );
     msi_apply_patches( package );
 
     if ( msi_get_property_int(package, szUILevel, 0) >= INSTALLUILEVEL_REDUCED )
