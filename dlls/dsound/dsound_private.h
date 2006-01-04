@@ -284,6 +284,12 @@ struct IDirectSoundCaptureImpl
     DirectSoundCaptureDevice          *device;
 };
 
+HRESULT IDirectSoundCaptureImpl_Create(
+    LPDIRECTSOUNDCAPTURE8 * ppds);
+
+/*****************************************************************************
+ * DirectSoundCaptureDevice implementation structure
+ */
 struct DirectSoundCaptureDevice
 {
     /* IDirectSoundCaptureImpl fields */
@@ -314,16 +320,14 @@ struct DirectSoundCaptureDevice
     CRITICAL_SECTION                   lock;
 };
 
-HRESULT IDirectSoundCaptureImpl_Create(
-    LPDIRECTSOUNDCAPTURE8 * ppds);
+HRESULT DirectSoundCaptureDevice_Create(
+    DirectSoundCaptureDevice ** ppDevice);
 
-HRESULT DSOUND_CaptureCreate(
-    LPDIRECTSOUNDCAPTURE *ppDSC,
-    IUnknown *pUnkOuter);
+ULONG DirectSoundCaptureDevice_AddRef(
+    DirectSoundCaptureDevice * device);
 
-HRESULT DSOUND_CaptureCreate8(
-    LPDIRECTSOUNDCAPTURE8 *ppDSC8,
-    IUnknown *pUnkOuter);
+ULONG DirectSoundCaptureDevice_Release(
+    DirectSoundCaptureDevice * device);
 
 /*****************************************************************************
  * IDirectSoundCaptureBuffer implementation structure
@@ -346,6 +350,11 @@ struct IDirectSoundCaptureBufferImpl
     int                                 nrofnotifies;
     PIDSDRIVERNOTIFY                    hwnotify;
 };
+
+HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
+    IDirectSoundCaptureImpl *ipDSC,
+    LPCDSCBUFFERDESC lpcDSCBufferDesc,
+    LPVOID * ppobj);
 
 /*****************************************************************************
  * IDirectSoundFullDuplex implementation structure

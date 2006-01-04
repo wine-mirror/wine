@@ -44,18 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-static HRESULT WINAPI IDirectSoundCaptureImpl_Initialize(
-    LPDIRECTSOUNDCAPTURE iface,
-    LPCGUID lpcGUID );
-static ULONG WINAPI IDirectSoundCaptureImpl_Release(
-    LPDIRECTSOUNDCAPTURE iface );
-static ULONG WINAPI IDirectSoundCaptureBufferImpl_Release(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface );
-static HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
-    IDirectSoundCaptureImpl *ipDSC,
-    LPCDSCBUFFERDESC lpcDSCBufferDesc,
-    LPVOID* ppobj );
-
 static const IDirectSoundCaptureVtbl dscvt;
 static const IDirectSoundCaptureBuffer8Vtbl dscbvt;
 
@@ -68,30 +56,7 @@ static const char * captureStateString[] = {
     "STATE_STOPPING"
 };
 
-HRESULT IDirectSoundCaptureImpl_Create(
-    LPDIRECTSOUNDCAPTURE8 * ppDSC)
-{
-    IDirectSoundCaptureImpl *pDSC;
-    TRACE("(%p)\n", ppDSC);
-
-    /* Allocate memory */
-    pDSC = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundCaptureImpl));
-    if (pDSC == NULL) {
-        WARN("out of memory\n");
-        *ppDSC = NULL;
-        return DSERR_OUTOFMEMORY;
-    }
-
-    pDSC->lpVtbl = &dscvt;
-    pDSC->ref    = 0;
-    pDSC->device = NULL;
-
-    *ppDSC = (LPDIRECTSOUNDCAPTURE8)pDSC;
-
-    return DS_OK;
-}
-
-HRESULT DSOUND_CaptureCreate(
+static HRESULT DSOUND_CaptureCreate(
     LPDIRECTSOUNDCAPTURE *ppDSC,
     IUnknown *pUnkOuter)
 {
@@ -114,7 +79,7 @@ HRESULT DSOUND_CaptureCreate(
     return hr;
 }
 
-HRESULT DSOUND_CaptureCreate8(
+static HRESULT DSOUND_CaptureCreate8(
     LPDIRECTSOUNDCAPTURE8 *ppDSC8,
     IUnknown *pUnkOuter)
 {
@@ -247,31 +212,6 @@ HRESULT WINAPI DirectSoundCaptureCreate8(
     *ppDSC8 = pDSC8;
 
     return hr;
-}
-
-static HRESULT DirectSoundCaptureDevice_Create(
-    DirectSoundCaptureDevice ** ppDevice)
-{
-    DirectSoundCaptureDevice * device;
-    TRACE("(%p)\n", ppDevice);
-
-    /* Allocate memory */
-    device = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DirectSoundCaptureDevice));
-
-    if (device == NULL) {
-	WARN("out of memory\n");
-        return DSERR_OUTOFMEMORY;
-    }
-
-    device->ref = 1;
-    device->state = STATE_STOPPED;
-
-    InitializeCriticalSection( &(device->lock) );
-    device->lock.DebugInfo->Spare[0] = (DWORD_PTR)"DSCAPTURE_lock";
-
-    *ppDevice = device;
-
-    return DS_OK;
 }
 
 /***************************************************************************
@@ -451,6 +391,9 @@ DSOUND_capture_callback(
     TRACE("completed\n");
 }
 
+/***************************************************************************
+ * IDirectSoundCaptureImpl
+ */
 static HRESULT WINAPI
 IDirectSoundCaptureImpl_QueryInterface(
     LPDIRECTSOUNDCAPTURE iface,
@@ -487,35 +430,6 @@ IDirectSoundCaptureImpl_AddRef( LPDIRECTSOUNDCAPTURE iface )
     IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
     TRACE("(%p) ref was %ld\n", This, ref - 1);
-    return ref;
-}
-
-static ULONG DirectSoundCaptureDevice_Release(
-    DirectSoundCaptureDevice * device)
-{
-    ULONG ref;
-    TRACE("(%p) ref was %lu\n", device, device->ref);
-
-    device->ref--;
-    ref=device->ref;
-    if (device->ref == 0) {
-        TRACE("deleting object\n");
-        if (device->capture_buffer)
-            IDirectSoundCaptureBufferImpl_Release(
-		(LPDIRECTSOUNDCAPTUREBUFFER8) device->capture_buffer);
-
-        if (device->driver) {
-            IDsCaptureDriver_Close(device->driver);
-            IDsCaptureDriver_Release(device->driver);
-        }
-
-        HeapFree(GetProcessHeap(), 0, device->pwfx);
-        device->lock.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection( &(device->lock) );
-        DSOUND_capture[device->drvdesc.dnDevNode] = NULL;
-        HeapFree(GetProcessHeap(), 0, device);
-	TRACE("(%p) released\n", device);
-    }
     return ref;
 }
 
@@ -757,173 +671,26 @@ static const IDirectSoundCaptureVtbl dscvt =
     IDirectSoundCaptureImpl_Initialize
 };
 
-static HRESULT
-DSOUND_CreateDirectSoundCaptureBuffer(
-    IDirectSoundCaptureImpl *ipDSC,
-    LPCDSCBUFFERDESC lpcDSCBufferDesc,
-    LPVOID* ppobj )
+HRESULT IDirectSoundCaptureImpl_Create(
+    LPDIRECTSOUNDCAPTURE8 * ppDSC)
 {
-    LPWAVEFORMATEX  wfex;
-    TRACE( "(%p,%p)\n", lpcDSCBufferDesc, ppobj );
+    IDirectSoundCaptureImpl *pDSC;
+    TRACE("(%p)\n", ppDSC);
 
-    if (ipDSC == NULL) {
-	WARN("invalid parameter: ipDSC == NULL\n");
-	return DSERR_INVALIDPARAM;
+    /* Allocate memory */
+    pDSC = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundCaptureImpl));
+    if (pDSC == NULL) {
+        WARN("out of memory\n");
+        *ppDSC = NULL;
+        return DSERR_OUTOFMEMORY;
     }
 
-    if (lpcDSCBufferDesc == NULL) {
-	WARN("invalid parameter: lpcDSCBufferDesc == NULL\n");
-	return DSERR_INVALIDPARAM;
-    }
+    pDSC->lpVtbl = &dscvt;
+    pDSC->ref    = 0;
+    pDSC->device = NULL;
 
-    if (ppobj == NULL) {
-	WARN("invalid parameter: ppobj == NULL\n");
-	return DSERR_INVALIDPARAM;
-    }
+    *ppDSC = (LPDIRECTSOUNDCAPTURE8)pDSC;
 
-    if ( ((lpcDSCBufferDesc->dwSize != sizeof(DSCBUFFERDESC)) &&
-          (lpcDSCBufferDesc->dwSize != sizeof(DSCBUFFERDESC1))) ||
-        (lpcDSCBufferDesc->dwBufferBytes == 0) ||
-        (lpcDSCBufferDesc->lpwfxFormat == NULL) ) {
-	WARN("invalid lpcDSCBufferDesc\n");
-	*ppobj = NULL;
-	return DSERR_INVALIDPARAM;
-    }
-
-    if ( !ipDSC->device) {
-	WARN("not initialized\n");
-	*ppobj = NULL;
-	return DSERR_UNINITIALIZED;
-    }
-
-    wfex = lpcDSCBufferDesc->lpwfxFormat;
-
-    if (wfex) {
-        TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
-            "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
-            wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
-            wfex->nAvgBytesPerSec, wfex->nBlockAlign,
-            wfex->wBitsPerSample, wfex->cbSize);
-
-        if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
-	    ipDSC->device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX));
-            CopyMemory(ipDSC->device->pwfx, wfex, sizeof(WAVEFORMATEX));
-	    ipDSC->device->pwfx->cbSize = 0;
-	} else {
-	    ipDSC->device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX)+wfex->cbSize);
-            CopyMemory(ipDSC->device->pwfx, wfex, sizeof(WAVEFORMATEX)+wfex->cbSize);
-        }
-    } else {
-	WARN("lpcDSCBufferDesc->lpwfxFormat == 0\n");
-	*ppobj = NULL;
-	return DSERR_INVALIDPARAM; /* FIXME: DSERR_BADFORMAT ? */
-    }
-
-    *ppobj = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-        sizeof(IDirectSoundCaptureBufferImpl));
-
-    if ( *ppobj == NULL ) {
-	WARN("out of memory\n");
-	*ppobj = NULL;
-	return DSERR_OUTOFMEMORY;
-    } else {
-    	HRESULT err = DS_OK;
-        LPBYTE newbuf;
-        DWORD buflen;
-        IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)*ppobj;
-
-        This->ref = 1;
-        This->dsound = ipDSC;
-        This->dsound->device->capture_buffer = This;
-	This->notify = NULL;
-	This->nrofnotifies = 0;
-	This->hwnotify = NULL;
-
-        This->pdscbd = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-            lpcDSCBufferDesc->dwSize);
-        if (This->pdscbd)
-            CopyMemory(This->pdscbd, lpcDSCBufferDesc, lpcDSCBufferDesc->dwSize);
-        else {
-            WARN("no memory\n");
-            This->dsound->device->capture_buffer = 0;
-            HeapFree( GetProcessHeap(), 0, This );
-            *ppobj = NULL;
-            return DSERR_OUTOFMEMORY;
-        }
-
-        This->lpVtbl = &dscbvt;
-
-	if (ipDSC->device->driver) {
-            if (This->dsound->device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
-                FIXME("DSDDESC_DOMMSYSTEMOPEN not supported\n");
-
-            if (This->dsound->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
-                /* allocate buffer from system memory */
-                buflen = lpcDSCBufferDesc->dwBufferBytes;
-                TRACE("desired buflen=%ld, old buffer=%p\n", buflen, ipDSC->device->buffer);
-                if (ipDSC->device->buffer)
-                    newbuf = HeapReAlloc(GetProcessHeap(),0,ipDSC->device->buffer,buflen);
-                else
-                    newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
-
-                if (newbuf == NULL) {
-                    WARN("failed to allocate capture buffer\n");
-                    err = DSERR_OUTOFMEMORY;
-                    /* but the old buffer might still exist and must be re-prepared */
-                } else {
-                    ipDSC->device->buffer = newbuf;
-                    ipDSC->device->buflen = buflen;
-                }
-            } else {
-                /* let driver allocate memory */
-                ipDSC->device->buflen = lpcDSCBufferDesc->dwBufferBytes;
-                /* FIXME: */
-                HeapFree( GetProcessHeap(), 0, ipDSC->device->buffer);
-                ipDSC->device->buffer = NULL;
-            }
-
-	    err = IDsCaptureDriver_CreateCaptureBuffer(ipDSC->device->driver,
-		ipDSC->device->pwfx,0,0,&(ipDSC->device->buflen),&(ipDSC->device->buffer),(LPVOID*)&(ipDSC->device->hwbuf));
-	    if (err != DS_OK) {
-		WARN("IDsCaptureDriver_CreateCaptureBuffer failed\n");
-		This->dsound->device->capture_buffer = 0;
-		HeapFree( GetProcessHeap(), 0, This );
-		*ppobj = NULL;
-		return err;
-	    }
-	} else {
-	    DWORD flags = CALLBACK_FUNCTION;
-	    if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
-		flags |= WAVE_DIRECTSOUND;
-            err = mmErr(waveInOpen(&(ipDSC->device->hwi),
-                ipDSC->device->drvdesc.dnDevNode, ipDSC->device->pwfx,
-                (DWORD_PTR)DSOUND_capture_callback, (DWORD)ipDSC->device, flags));
-            if (err != DS_OK) {
-                WARN("waveInOpen failed\n");
-		This->dsound->device->capture_buffer = 0;
-		HeapFree( GetProcessHeap(), 0, This );
-		*ppobj = NULL;
-		return err;
-            }
-
-	    buflen = lpcDSCBufferDesc->dwBufferBytes;
-            TRACE("desired buflen=%ld, old buffer=%p\n", buflen, ipDSC->device->buffer);
-	    if (ipDSC->device->buffer)
-                newbuf = HeapReAlloc(GetProcessHeap(),0,ipDSC->device->buffer,buflen);
-	    else
-		newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
-            if (newbuf == NULL) {
-                WARN("failed to allocate capture buffer\n");
-                err = DSERR_OUTOFMEMORY;
-                /* but the old buffer might still exist and must be re-prepared */
-            } else {
-                ipDSC->device->buffer = newbuf;
-                ipDSC->device->buflen = buflen;
-            }
-	}
-    }
-
-    TRACE("returning DS_OK\n");
     return DS_OK;
 }
 
@@ -1719,6 +1486,233 @@ static const IDirectSoundCaptureBuffer8Vtbl dscbvt =
     IDirectSoundCaptureBufferImpl_GetObjectInPath,
     IDirectSoundCaptureBufferImpl_GetFXStatus
 };
+
+HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
+    IDirectSoundCaptureImpl *ipDSC,
+    LPCDSCBUFFERDESC lpcDSCBufferDesc,
+    LPVOID* ppobj )
+{
+    LPWAVEFORMATEX  wfex;
+    TRACE( "(%p,%p)\n", lpcDSCBufferDesc, ppobj );
+
+    if (ipDSC == NULL) {
+	WARN("invalid parameter: ipDSC == NULL\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    if (lpcDSCBufferDesc == NULL) {
+	WARN("invalid parameter: lpcDSCBufferDesc == NULL\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    if (ppobj == NULL) {
+	WARN("invalid parameter: ppobj == NULL\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    if ( ((lpcDSCBufferDesc->dwSize != sizeof(DSCBUFFERDESC)) &&
+          (lpcDSCBufferDesc->dwSize != sizeof(DSCBUFFERDESC1))) ||
+        (lpcDSCBufferDesc->dwBufferBytes == 0) ||
+        (lpcDSCBufferDesc->lpwfxFormat == NULL) ) {
+	WARN("invalid lpcDSCBufferDesc\n");
+	*ppobj = NULL;
+	return DSERR_INVALIDPARAM;
+    }
+
+    if ( !ipDSC->device) {
+	WARN("not initialized\n");
+	*ppobj = NULL;
+	return DSERR_UNINITIALIZED;
+    }
+
+    wfex = lpcDSCBufferDesc->lpwfxFormat;
+
+    if (wfex) {
+        TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
+            "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
+            wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
+            wfex->nAvgBytesPerSec, wfex->nBlockAlign,
+            wfex->wBitsPerSample, wfex->cbSize);
+
+        if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
+	    ipDSC->device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX));
+            CopyMemory(ipDSC->device->pwfx, wfex, sizeof(WAVEFORMATEX));
+	    ipDSC->device->pwfx->cbSize = 0;
+	} else {
+	    ipDSC->device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX)+wfex->cbSize);
+            CopyMemory(ipDSC->device->pwfx, wfex, sizeof(WAVEFORMATEX)+wfex->cbSize);
+        }
+    } else {
+	WARN("lpcDSCBufferDesc->lpwfxFormat == 0\n");
+	*ppobj = NULL;
+	return DSERR_INVALIDPARAM; /* FIXME: DSERR_BADFORMAT ? */
+    }
+
+    *ppobj = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+        sizeof(IDirectSoundCaptureBufferImpl));
+
+    if ( *ppobj == NULL ) {
+	WARN("out of memory\n");
+	*ppobj = NULL;
+	return DSERR_OUTOFMEMORY;
+    } else {
+    	HRESULT err = DS_OK;
+        LPBYTE newbuf;
+        DWORD buflen;
+        IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)*ppobj;
+
+        This->ref = 1;
+        This->dsound = ipDSC;
+        This->dsound->device->capture_buffer = This;
+	This->notify = NULL;
+	This->nrofnotifies = 0;
+	This->hwnotify = NULL;
+
+        This->pdscbd = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+            lpcDSCBufferDesc->dwSize);
+        if (This->pdscbd)
+            CopyMemory(This->pdscbd, lpcDSCBufferDesc, lpcDSCBufferDesc->dwSize);
+        else {
+            WARN("no memory\n");
+            This->dsound->device->capture_buffer = 0;
+            HeapFree( GetProcessHeap(), 0, This );
+            *ppobj = NULL;
+            return DSERR_OUTOFMEMORY;
+        }
+
+        This->lpVtbl = &dscbvt;
+
+	if (ipDSC->device->driver) {
+            if (This->dsound->device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
+                FIXME("DSDDESC_DOMMSYSTEMOPEN not supported\n");
+
+            if (This->dsound->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
+                /* allocate buffer from system memory */
+                buflen = lpcDSCBufferDesc->dwBufferBytes;
+                TRACE("desired buflen=%ld, old buffer=%p\n", buflen, ipDSC->device->buffer);
+                if (ipDSC->device->buffer)
+                    newbuf = HeapReAlloc(GetProcessHeap(),0,ipDSC->device->buffer,buflen);
+                else
+                    newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
+
+                if (newbuf == NULL) {
+                    WARN("failed to allocate capture buffer\n");
+                    err = DSERR_OUTOFMEMORY;
+                    /* but the old buffer might still exist and must be re-prepared */
+                } else {
+                    ipDSC->device->buffer = newbuf;
+                    ipDSC->device->buflen = buflen;
+                }
+            } else {
+                /* let driver allocate memory */
+                ipDSC->device->buflen = lpcDSCBufferDesc->dwBufferBytes;
+                /* FIXME: */
+                HeapFree( GetProcessHeap(), 0, ipDSC->device->buffer);
+                ipDSC->device->buffer = NULL;
+            }
+
+	    err = IDsCaptureDriver_CreateCaptureBuffer(ipDSC->device->driver,
+		ipDSC->device->pwfx,0,0,&(ipDSC->device->buflen),&(ipDSC->device->buffer),(LPVOID*)&(ipDSC->device->hwbuf));
+	    if (err != DS_OK) {
+		WARN("IDsCaptureDriver_CreateCaptureBuffer failed\n");
+		This->dsound->device->capture_buffer = 0;
+		HeapFree( GetProcessHeap(), 0, This );
+		*ppobj = NULL;
+		return err;
+	    }
+	} else {
+	    DWORD flags = CALLBACK_FUNCTION;
+	    if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
+		flags |= WAVE_DIRECTSOUND;
+            err = mmErr(waveInOpen(&(ipDSC->device->hwi),
+                ipDSC->device->drvdesc.dnDevNode, ipDSC->device->pwfx,
+                (DWORD_PTR)DSOUND_capture_callback, (DWORD)ipDSC->device, flags));
+            if (err != DS_OK) {
+                WARN("waveInOpen failed\n");
+		This->dsound->device->capture_buffer = 0;
+		HeapFree( GetProcessHeap(), 0, This );
+		*ppobj = NULL;
+		return err;
+            }
+
+	    buflen = lpcDSCBufferDesc->dwBufferBytes;
+            TRACE("desired buflen=%ld, old buffer=%p\n", buflen, ipDSC->device->buffer);
+	    if (ipDSC->device->buffer)
+                newbuf = HeapReAlloc(GetProcessHeap(),0,ipDSC->device->buffer,buflen);
+	    else
+		newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
+            if (newbuf == NULL) {
+                WARN("failed to allocate capture buffer\n");
+                err = DSERR_OUTOFMEMORY;
+                /* but the old buffer might still exist and must be re-prepared */
+            } else {
+                ipDSC->device->buffer = newbuf;
+                ipDSC->device->buflen = buflen;
+            }
+	}
+    }
+
+    TRACE("returning DS_OK\n");
+    return DS_OK;
+}
+
+/*******************************************************************************
+ * DirectSoundCaptureDevice
+ */
+
+HRESULT DirectSoundCaptureDevice_Create(
+    DirectSoundCaptureDevice ** ppDevice)
+{
+    DirectSoundCaptureDevice * device;
+    TRACE("(%p)\n", ppDevice);
+
+    /* Allocate memory */
+    device = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DirectSoundCaptureDevice));
+
+    if (device == NULL) {
+	WARN("out of memory\n");
+        return DSERR_OUTOFMEMORY;
+    }
+
+    device->ref = 1;
+    device->state = STATE_STOPPED;
+
+    InitializeCriticalSection( &(device->lock) );
+    device->lock.DebugInfo->Spare[0] = (DWORD_PTR)"DSCAPTURE_lock";
+
+    *ppDevice = device;
+
+    return DS_OK;
+}
+
+ULONG DirectSoundCaptureDevice_Release(
+    DirectSoundCaptureDevice * device)
+{
+    ULONG ref;
+    TRACE("(%p) ref was %lu\n", device, device->ref);
+
+    device->ref--;
+    ref=device->ref;
+    if (device->ref == 0) {
+        TRACE("deleting object\n");
+        if (device->capture_buffer)
+            IDirectSoundCaptureBufferImpl_Release(
+		(LPDIRECTSOUNDCAPTUREBUFFER8) device->capture_buffer);
+
+        if (device->driver) {
+            IDsCaptureDriver_Close(device->driver);
+            IDsCaptureDriver_Release(device->driver);
+        }
+
+        HeapFree(GetProcessHeap(), 0, device->pwfx);
+        device->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection( &(device->lock) );
+        DSOUND_capture[device->drvdesc.dnDevNode] = NULL;
+        HeapFree(GetProcessHeap(), 0, device);
+	TRACE("(%p) released\n", device);
+    }
+    return ref;
+}
 
 /*******************************************************************************
  * DirectSoundCapture ClassFactory
