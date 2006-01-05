@@ -1,4 +1,42 @@
-100 stub @
+100 stub -noname EnumPrinterPropertySheets
+101 stub -noname ClusterSplOpen
+102 stub -noname ClusterSplClose
+103 stub -noname ClusterSplIsAlive
+104 stub PerfClose
+105 stub PerfCollect
+106 stub PerfOpen
+201 stdcall GetDefaultPrinterA(ptr ptr)
+202 stub SetDefaultPrinterA
+203 stdcall GetDefaultPrinterW(ptr ptr)
+204 stub SetDefaultPrinterW
+205 stub -noname SplReadPrinter
+206 stub -noname AddPerMachineConnectionA
+207 stub -noname AddPerMachineConnectionW
+208 stub -noname DeletePerMachineConnectionA
+209 stub -noname DeletePerMachineConnectionW
+210 stub -noname EnumPerMachineConnectionsA
+211 stub -noname EnumPerMachineConnectionsW
+212 stub -noname LoadPrinterDriver
+213 stub -noname RefCntLoadDriver
+214 stub -noname RefCntUnloadDriver
+215 stub -noname ForceUnloadDriver
+216 stub -noname PublishPrinterA
+217 stub -noname PublishPrinterW
+218 stub -noname CallCommonPropertySheetUI
+219 stub -noname PrintUIQueueCreate
+220 stub -noname PrintUIPrinterPropPages
+221 stub -noname PrintUIDocumentDefaults
+222 stub -noname SendRecvBidiData
+223 stub -noname RouterFreeBidiResponseContainer
+224 stub -noname ExternalConnectToLd64In32Server
+226 stub -noname PrintUIWebPnpEntry
+227 stub -noname PrintUIWebPnpPostEntry
+228 stub -noname PrintUICreateInstance
+229 stub -noname PrintUIDocumentPropertiesWrap
+230 stub -noname PrintUIPrinterSetup
+231 stub -noname PrintUIServerPropPages
+232 stub -noname AddDriverCatalog
+
 @ stub ADVANCEDSETUPDIALOG
 @ stdcall AbortPrinter(long)
 @ stdcall AddFormA(long long ptr)
@@ -89,8 +127,6 @@
 @ stdcall FindFirstPrinterChangeNotification(long long long ptr)
 @ stdcall FindNextPrinterChangeNotification(long ptr ptr ptr)
 @ stdcall FreePrinterNotifyInfo(ptr)
-@ stdcall GetDefaultPrinterA(ptr ptr)
-@ stdcall GetDefaultPrinterW(ptr ptr)
 @ stdcall GetFormA(long str long ptr long ptr)
 @ stdcall GetFormW(long wstr long ptr long ptr)
 @ stdcall GetJobA(long long long ptr long ptr)
