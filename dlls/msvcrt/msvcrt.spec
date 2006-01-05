@@ -75,7 +75,7 @@
 @ extern _HUGE MSVCRT__HUGE
 @ cdecl _Strftime(str long str ptr ptr)
 @ cdecl _XcptFilter(long ptr)
-@ cdecl -i386 -register __CxxFrameHandler(ptr ptr ptr ptr)
+@ cdecl -i386 -norelay __CxxFrameHandler(ptr ptr ptr ptr)
 @ stub __CxxLongjmpUnwind #(ptr) stdcall
 @ cdecl __RTCastToVoid(ptr) MSVCRT___RTCastToVoid
 @ cdecl __RTDynamicCast(ptr long ptr ptr long) MSVCRT___RTDynamicCast
