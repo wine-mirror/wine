@@ -89,11 +89,15 @@ struct stack_walk_callback
         {
             PREAD_PROCESS_MEMORY_ROUTINE        f_read_mem;
             PTRANSLATE_ADDRESS_ROUTINE          f_xlat_adr;
+            PFUNCTION_TABLE_ACCESS_ROUTINE      f_tabl_acs;
+            PGET_MODULE_BASE_ROUTINE            f_modl_bas;
         } s32;
         struct
         {
             PREAD_PROCESS_MEMORY_ROUTINE64      f_read_mem;
             PTRANSLATE_ADDRESS_ROUTINE64        f_xlat_adr;
+            PFUNCTION_TABLE_ACCESS_ROUTINE64    f_tabl_acs;
+            PGET_MODULE_BASE_ROUTINE64          f_modl_bas;
         } s64;
     } u;
 };
@@ -122,17 +126,32 @@ static inline BOOL sw_read_mem(struct stack_walk_callback* cb, DWORD addr, void*
 
 static inline DWORD sw_xlat_addr(struct stack_walk_callback* cb, ADDRESS* addr)
 {
-    if (cb->is32)
-        return cb->u.s32.f_xlat_adr(cb->hProcess, cb->hThread, addr);
-    else if (cb->u.s64.f_xlat_adr)
+    if (addr->Mode == AddrModeFlat) return addr->Offset;
+    if (cb->is32) return cb->u.s32.f_xlat_adr(cb->hProcess, cb->hThread, addr);
+    if (cb->u.s64.f_xlat_adr)
     {
         ADDRESS64       addr64;
 
         addr_32to64(addr, &addr64);
         return cb->u.s64.f_xlat_adr(cb->hProcess, cb->hThread, &addr64);
     }
+    return addr_to_linear(cb->hProcess, cb->hThread, addr);
+}
+
+static inline void* sw_tabl_acs(struct stack_walk_callback* cb, DWORD addr)
+{
+    if (cb->is32)
+        return cb->u.s32.f_tabl_acs(cb->hProcess, addr);
     else
-        return addr_to_linear(cb->hProcess, cb->hThread, addr);
+        return cb->u.s64.f_tabl_acs(cb->hProcess, addr);
+}
+
+static inline DWORD sw_modl_bas(struct stack_walk_callback* cb, DWORD addr)
+{
+    if (cb->is32)
+        return cb->u.s32.f_modl_bas(cb->hProcess, addr);
+    else
+        return cb->u.s64.f_modl_bas(cb->hProcess, addr);
 }
 
 static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
@@ -223,6 +242,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
         /* don't set up AddrStack on first call. Either the caller has set it up, or
          * we will get it in the next frame
          */
+        memset(&frame->AddrBStore, 0, sizeof(frame->AddrBStore));
     }
     else
     {
@@ -414,16 +434,21 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
                     frame->Params, sizeof(frame->Params));
     }
 
-    frame->Far = FALSE;
-    frame->Virtual = FALSE;
+    frame->Far = TRUE;
+    frame->Virtual = TRUE;
+    p = sw_xlat_addr(cb, &frame->AddrPC);
+    if (p && sw_modl_bas(cb, p))
+        frame->FuncTableEntry = sw_tabl_acs(cb, p);
+    else
+        frame->FuncTableEntry = NULL;
 
-    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%08lx nSwitch=%08lx\n",
+    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%08lx nSwitch=%08lx FuncTable=%p\n",
           wine_dbgstr_addr(&frame->AddrPC), 
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack), 
           curr_mode == stm_start ? "start" : (curr_mode == stm_16bit ? "16bit" : "32bit"),
-          curr_switch, next_switch);
+          curr_switch, next_switch, frame->FuncTableEntry);
 
     return TRUE;
 done_err:
@@ -460,6 +485,8 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     /* sigh... MS isn't even consistent in the func prototypes */
     swcb.u.s32.f_read_mem = (f_read_mem) ? f_read_mem : read_mem;
     swcb.u.s32.f_xlat_adr = (f_xlat_adr) ? f_xlat_adr : addr_to_linear;
+    swcb.u.s32.f_tabl_acs = (FunctionTableAccessRoutine) ? FunctionTableAccessRoutine : SymFunctionTableAccess;
+    swcb.u.s32.f_modl_bas = (GetModuleBaseRoutine) ? GetModuleBaseRoutine : SymGetModuleBase;
 
     return stack_walk(&swcb, frame);
 }
@@ -479,7 +506,7 @@ BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     STACKFRAME                  frame32;
     BOOL                        ret;
 
-    TRACE("(%ld, %p, %p, %p, %p, %p, %p, %p, %p) - stub!\n",
+    TRACE("(%ld, %p, %p, %p, %p, %p, %p, %p, %p)\n",
           MachineType, hProcess, hThread, frame64, ctx,
           f_read_mem, FunctionTableAccessRoutine,
           GetModuleBaseRoutine, f_xlat_adr);
@@ -509,6 +536,8 @@ BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     /* sigh... MS isn't even consistent in the func prototypes */
     swcb.u.s64.f_read_mem = (f_read_mem) ? f_read_mem : read_mem64;
     swcb.u.s64.f_xlat_adr = f_xlat_adr;
+    swcb.u.s64.f_tabl_acs = (FunctionTableAccessRoutine) ? FunctionTableAccessRoutine : SymFunctionTableAccess64;
+    swcb.u.s64.f_modl_bas = (GetModuleBaseRoutine) ? GetModuleBaseRoutine : SymGetModuleBase64;
 
     ret = stack_walk(&swcb, &frame32);
 
@@ -529,6 +558,15 @@ BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     frame64->Reserved[1] = (ULONG)frame32.Reserved[1];
     frame64->Reserved[2] = (ULONG)frame32.Reserved[2];
     /* we don't handle KdHelp */
+    frame64->KdHelp.Thread = 0xC000FADE;
+    frame64->KdHelp.ThCallbackStack = 0x10;
+    frame64->KdHelp.ThCallbackBStore = 0;
+    frame64->KdHelp.NextCallback = 0;
+    frame64->KdHelp.FramePointer = 0;
+    frame64->KdHelp.KiCallUserMode = 0xD000DAFE;
+    frame64->KdHelp.KeUserCallbackDispatcher = 0xE000F000;
+    frame64->KdHelp.SystemRangeStart = 0xC0000000;
+    frame64->KdHelp.Reserved[0] /* KiUserExceptionDispatcher */ = 0xE0005000;
 
     return ret;
 }

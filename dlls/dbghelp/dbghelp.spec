@@ -43,7 +43,7 @@
 @ stdcall SymFromAddr(ptr double ptr ptr)
 @ stdcall SymFromName(long str ptr)
 @ stub SymFromToken
-@ stub SymFunctionTableAccess64
+@ stdcall SymFunctionTableAccess64(long double)
 @ stdcall SymFunctionTableAccess(long long)
 @ stub SymGetFileLineOffsets64
 @ stub SymGetHomeDirectory
@@ -55,7 +55,7 @@
 @ stdcall SymGetLineNext(long ptr)
 @ stdcall SymGetLinePrev64(long ptr)
 @ stdcall SymGetLinePrev(long ptr)
-@ stub SymGetModuleBase64
+@ stdcall SymGetModuleBase64(long double)
 @ stdcall SymGetModuleBase(long long)
 @ stdcall SymGetModuleInfo64(long double ptr)
 @ stdcall SymGetModuleInfo(long long ptr)

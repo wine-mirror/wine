@@ -642,7 +642,7 @@ BOOL  WINAPI SymGetModuleInfo64(HANDLE hProcess, DWORD64 dwAddr,
 }
 
 /***********************************************************************
- *		SymGetModuleBase (IMAGEHLP.@)
+ *		SymGetModuleBase (DBGHELP.@)
  */
 DWORD WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr)
 {
@@ -653,6 +653,15 @@ DWORD WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr)
     module = module_find_by_addr(pcs, dwAddr, DMT_UNKNOWN);
     if (!module) return 0;
     return module->module.BaseOfImage;
+}
+
+/***********************************************************************
+ *		SymGetModuleBase64 (DBGHELP.@)
+ */
+DWORD64 WINAPI SymGetModuleBase64(HANDLE hProcess, DWORD64 dwAddr)
+{
+    if (!validate_addr64(dwAddr)) return 0;
+    return SymGetModuleBase(hProcess, (DWORD)dwAddr);
 }
 
 /******************************************************************
