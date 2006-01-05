@@ -44,6 +44,7 @@ typedef struct {
 
     IBindStatusCallback *callback;
     IInternetProtocol *protocol;
+    IServiceProvider *service_provider;
     IStream *stream;
 
     BINDINFO bindinfo;
@@ -112,6 +113,8 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
             IBindStatusCallback_Release(This->callback);
         if(This->protocol)
             IInternetProtocol_Release(This->protocol);
+        if(This->service_provider)
+            IServiceProvider_Release(This->service_provider);
         if(This->stream)
             IStream_Release(This->stream);
 
@@ -459,6 +462,13 @@ static HRESULT get_protocol(Binding *This, LPCWSTR url)
     if(SUCCEEDED(hres))
         return S_OK;
 
+    if(This->service_provider) {
+        hres = IServiceProvider_QueryService(This->service_provider, &IID_IInternetProtocol,
+                &IID_IInternetProtocol, (void**)&This->protocol);
+        if(SUCCEEDED(hres))
+            return S_OK;
+    }
+
     hres = get_protocol_iface(url, &unk);
     if(FAILED(hres))
         return hres;
@@ -498,6 +508,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
 
     ret->callback = NULL;
     ret->protocol = NULL;
+    ret->service_provider = NULL;
     ret->stream = NULL;
     ret->mime = NULL;
     ret->url = NULL;
@@ -512,6 +523,9 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
         IBinding_Release(BINDING(ret));
         return hres;
     }
+
+    IBindStatusCallback_QueryInterface(ret->callback, &IID_IServiceProvider,
+                                       (void**)&ret->service_provider);
 
     hres = get_protocol(ret, url);
     if(FAILED(hres)) {
