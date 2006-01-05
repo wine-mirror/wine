@@ -161,12 +161,11 @@ static void create_scsi_entry( PSCSI_ADDRESS scsi_addr, LPSTR lpDriver, UINT uDr
         int fd, dma;
         
         fd = open(lpUnixDeviceName, O_RDONLY|O_NONBLOCK);
-        if (fd)
+        if (fd != -1)
         {
             if (ioctl(fd, HDIO_GET_DMA, &dma) != -1) value = dma;
             close(fd);
-        }else
-            ERR("Can't open %s", buffer);
+        }
 #endif
         RtlCreateUnicodeStringFromAsciiz( &nameW, "DMAEnabled" );
         NtSetValueKey( portKey,&nameW, 0, REG_DWORD, (BYTE *)&value, sizeof(DWORD));
