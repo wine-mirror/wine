@@ -39,7 +39,6 @@ struct lexret  yylval;
 #define YY_INPUT(buf,result,max_size)\
   if ((result = *macroptr ? 1 : 0)) buf[0] = *macroptr++;
 
-#define YY_NO_UNPUT
 %}
 %%
 

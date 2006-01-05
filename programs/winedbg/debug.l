@@ -70,8 +70,6 @@ static size_t last_line_idx = 0;
 	if ((result = read_input("Wine-dbg>", buf, max_size)) < 0) \
 	    YY_FATAL_ERROR("read_input in flex scanner failed");
 
-#define YY_NO_UNPUT
-
 static int syntax_error;
 %}
 

@@ -53,10 +53,6 @@ uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
 
 #include "parser.tab.h"
 
-#define YY_USE_PROTOS
-#define YY_NO_UNPUT
-#define YY_NO_TOP_STATE
-
 extern char *temp_name;
 
 static void addcchar(char c);
