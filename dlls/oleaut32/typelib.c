@@ -5335,10 +5335,11 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	switch (func_desc->funckind) {
 	case FUNC_PUREVIRTUAL:
 	case FUNC_VIRTUAL: {
-            DWORD res;
             int   numargs, numargs2, argspos, args2pos;
             DWORD *args , *args2;
             VARIANT *rgvarg = HeapAlloc(GetProcessHeap(), 0, sizeof(VARIANT) * func_desc->cParams);
+            VARIANT varresult;
+
             memcpy(rgvarg,pDispParams->rgvarg,sizeof(VARIANT)*pDispParams->cArgs);
 
             hres = S_OK;
@@ -5433,7 +5434,11 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             if (func_desc->cParamsOpt < 0)
                 FIXME("Does not support optional parameters (%d)\n", func_desc->cParamsOpt);
 
-            res = _invoke((*(FARPROC**)pIUnk)[func_desc->oVft/4],
+            V_VT(&varresult) = 0;
+            hres = typedescvt_to_variantvt((ITypeInfo *)iface, &func_desc->elemdescFunc.tdesc, &V_VT(&varresult));
+            if (FAILED(hres)) goto func_fail; /* FIXME: we don't free changed types here */
+
+            V_ERROR(&varresult) = _invoke((*(FARPROC**)pIUnk)[func_desc->oVft/4],
                     func_desc->callconv,
                     numargs,
                     args
@@ -5479,11 +5484,11 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 }
             }
 
-            if ((func_desc->elemdescFunc.tdesc.vt == VT_HRESULT) && FAILED(res))
+            if ((V_VT(&varresult) == VT_ERROR) && FAILED(V_ERROR(&varresult)))
             {
-                WARN("invoked function failed with error 0x%08lx\n", res);
+                WARN("invoked function failed with error 0x%08lx\n", V_ERROR(&varresult));
                 hres = DISP_E_EXCEPTION;
-                if (pExcepInfo) pExcepInfo->scode = res;
+                if (pExcepInfo) pExcepInfo->scode = V_ERROR(&varresult);
             }
 
 func_fail:
@@ -5491,7 +5496,7 @@ func_fail:
             HeapFree(GetProcessHeap(),0,args2);
             HeapFree(GetProcessHeap(),0,args);
             break;
-	}
+        }
 	case FUNC_DISPATCH:  {
 	   IDispatch *disp;
 
