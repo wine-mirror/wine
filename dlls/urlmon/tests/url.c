@@ -327,18 +327,15 @@ static const IInternetProtocolVtbl ProtocolVtbl = {
 
 static IInternetProtocol Protocol = { &ProtocolVtbl };
 
-typedef struct {
-    const IBindStatusCallbackVtbl *lpVtbl;
-    LONG ref;
-    IBinding *pbind;
-    IStream *pstr;
-} statusclb;
-
 static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFIID riid, void **ppv)
 {
-    if(emulate_protocol && IsEqualGUID(&IID_IInternetProtocol, riid)) {
-        *ppv = &Protocol;
-        return S_OK;
+    if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
+        if(emulate_protocol) {
+            *ppv = &Protocol;
+            return S_OK;
+        }else {
+            return E_NOINTERFACE;
+        }
     }
 
     return E_NOINTERFACE;
@@ -346,32 +343,23 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFII
 
 static ULONG WINAPI statusclb_AddRef(IBindStatusCallback *iface)
 {
-    return InterlockedIncrement(&((statusclb*)iface)->ref);
+    return 2;
 }
 
 static ULONG WINAPI statusclb_Release(IBindStatusCallback *iface)
 {
-    statusclb *This = (statusclb*)iface;
-    ULONG ref;
-    ref = InterlockedDecrement(&This->ref);
-    if(!ref)
-        HeapFree(GetProcessHeap(), 0, This);
-    return ref;
+    return 1;
 }
 
 static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallback *iface, DWORD dwReserved,
         IBinding *pib)
 {
-    statusclb *This = (statusclb*)iface;
     HRESULT hres;
     IMoniker *mon;
 
     CHECK_EXPECT(OnStartBinding);
 
-    This->pbind = pib;
     ok(pib != NULL, "pib should not be NULL\n");
-    if(pib)
-        IBinding_AddRef(pib);
 
     hres = IBinding_QueryInterface(pib, &IID_IMoniker, (void**)&mon);
     ok(hres == E_NOINTERFACE, "IBinding should not have IMoniker interface\n");
@@ -437,17 +425,11 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
 
 static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallback *iface, HRESULT hresult, LPCWSTR szError)
 {
-    statusclb *This = (statusclb*)iface;
-
     CHECK_EXPECT(OnStopBinding);
 
     ok(SUCCEEDED(hresult), "Download failed: %08lx\n", hresult);
     ok(szError == NULL, "szError should be NULL\n");
     stopped_binding = TRUE;
-    IBinding_Release(This->pbind);
-    ok(This->pstr != NULL, "pstr should not be NULL here\n");
-    if(This->pstr)
-        IStream_Release(This->pstr);
 
     return S_OK;
 }
@@ -469,23 +451,17 @@ static HRESULT WINAPI statusclb_GetBindInfo(IBindStatusCallback *iface, DWORD *g
 static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWORD grfBSCF,
         DWORD dwSize, FORMATETC* pformatetc, STGMEDIUM* pstgmed)
 {
-    statusclb *This = (statusclb*)iface;
     HRESULT hres;
     DWORD readed;
     BYTE buf[512];
 
     CHECK_EXPECT2(OnDataAvailable);
 
-    if(!This->pstr) {
-        ok(grfBSCF & BSCF_FIRSTDATANOTIFICATION, "pstr should be set when BSCF_FIRSTDATANOTIFICATION\n");
-        This->pstr = U(*pstgmed).pstm;
-        IStream_AddRef(This->pstr);
-        ok(This->pstr != NULL, "pstr should not be NULL here\n");
+    if(U(*pstgmed).pstm) {
+        do hres = IStream_Read(U(*pstgmed).pstm, buf, 512, &readed);
+        while(hres == S_OK);
+        ok(hres == S_FALSE || hres == E_PENDING, "IStream_Read returned %08lx\n", hres);
     }
-
-    do hres = IStream_Read(This->pstr, buf, 512, &readed);
-    while(hres == S_OK);
-    ok(hres == S_FALSE || hres == E_PENDING, "IStream_Read returned %08lx\n", hres);
 
     return S_OK;
 }
@@ -496,7 +472,7 @@ static HRESULT WINAPI statusclb_OnObjectAvailable(IBindStatusCallback *iface, RE
     return E_NOTIMPL;
 }
 
-static const IBindStatusCallbackVtbl statusclbVtbl = {
+static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
     statusclb_QueryInterface,
     statusclb_AddRef,
     statusclb_Release,
@@ -510,15 +486,7 @@ static const IBindStatusCallbackVtbl statusclbVtbl = {
     statusclb_OnObjectAvailable
 };
 
-static IBindStatusCallback* statusclb_create(void)
-{
-    statusclb *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(statusclb));
-    ret->lpVtbl = &statusclbVtbl;
-    ret->ref = 1;
-    ret->pbind = NULL;
-    ret->pstr = NULL;
-    return (IBindStatusCallback*)ret;
-}
+static IBindStatusCallback bsc = { &BindStatusCallbackVtbl };
 
 static void test_CreateAsyncBindCtx(void)
 {
@@ -526,7 +494,6 @@ static void test_CreateAsyncBindCtx(void)
     HRESULT hres;
     ULONG ref;
     BIND_OPTS bindopts;
-    IBindStatusCallback *bsc = statusclb_create();
 
     hres = CreateAsyncBindCtx(0, NULL, NULL, &bctx);
     ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed. expected: E_INVALIDARG, got: %08lx\n", hres);
@@ -535,12 +502,8 @@ static void test_CreateAsyncBindCtx(void)
     hres = CreateAsyncBindCtx(0, NULL, NULL, NULL);
     ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed. expected: E_INVALIDARG, got: %08lx\n", hres);
 
-    hres = CreateAsyncBindCtx(0, bsc, NULL, &bctx);
+    hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
     ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08lx\n", hres);
-    if(FAILED(hres)) {
-        IBindStatusCallback_Release(bsc);
-        return;
-    }
 
     bindopts.cbStruct = sizeof(bindopts);
     hres = IBindCtx_GetBindOptions(bctx, &bindopts);
@@ -555,14 +518,11 @@ static void test_CreateAsyncBindCtx(void)
 
     ref = IBindCtx_Release(bctx);
     ok(ref == 0, "bctx should be destroyed here\n");
-    ref = IBindStatusCallback_Release(bsc);
-    ok(ref == 0, "bsc should be destroyed here\n");
 }
 
 static void test_CreateAsyncBindCtxEx(void)
 {
     IBindCtx *bctx = NULL, *bctx_arg = NULL;
-    IBindStatusCallback *bsc = statusclb_create();
     BIND_OPTS bindopts;
     HRESULT hres;
 
@@ -608,13 +568,11 @@ static void test_CreateAsyncBindCtxEx(void)
 
     IBindCtx_Release(bctx_arg);
 
-    hres = CreateAsyncBindCtxEx(NULL, 0, bsc, NULL, &bctx, 0);
+    hres = CreateAsyncBindCtxEx(NULL, 0, &bsc, NULL, &bctx, 0);
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08lx\n", hres);
 
     if(SUCCEEDED(hres))
         IBindCtx_Release(bctx);
-
-    IBindStatusCallback_Release(bsc);
 }
 
 static void test_BindToStorage(void)
@@ -624,27 +582,24 @@ static void test_BindToStorage(void)
     LPOLESTR display_name;
     IBindCtx *bctx;
     MSG msg;
-    IBindStatusCallback *previousclb, *sclb = statusclb_create();
+    IBindStatusCallback *previousclb;
     IUnknown *unk = (IUnknown*)0x00ff00ff;
     IBinding *bind;
 
-    hres = CreateAsyncBindCtx(0, sclb, NULL, &bctx);
+    hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
     ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08lx\n\n", hres);
-    if(FAILED(hres)) {
-        IBindStatusCallback_Release(sclb);
+    if(FAILED(hres))
         return;
-    }
 
-    hres = RegisterBindStatusCallback(bctx, sclb, &previousclb, 0);
+    hres = RegisterBindStatusCallback(bctx, &bsc, &previousclb, 0);
     ok(SUCCEEDED(hres), "RegisterBindStatusCallback failed: %08lx\n", hres);
-    ok(previousclb == sclb, "previousclb(%p) != sclb(%p)\n", previousclb, sclb);
+    ok(previousclb == &bsc, "previousclb(%p) != sclb(%p)\n", previousclb, &bsc);
     if(previousclb)
         IBindStatusCallback_Release(previousclb);
 
     hres = CreateURLMoniker(NULL, urls[test_protocol], &mon);
     ok(SUCCEEDED(hres), "failed to create moniker: %08lx\n", hres);
     if(FAILED(hres)) {
-        IBindStatusCallback_Release(sclb);
         IBindCtx_Release(bctx);
         return;
     }
@@ -727,7 +682,6 @@ static void test_BindToStorage(void)
 
     ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
     ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
-    ok(IBindStatusCallback_Release(sclb) == 0, "scbl should be destroyed here\n");
 }
 
 static void set_file_url(void)
