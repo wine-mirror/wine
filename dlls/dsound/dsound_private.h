@@ -323,6 +323,10 @@ struct DirectSoundCaptureDevice
 HRESULT DirectSoundCaptureDevice_Create(
     DirectSoundCaptureDevice ** ppDevice);
 
+HRESULT DirectSoundCaptureDevice_Initialize(
+    DirectSoundCaptureDevice ** ppDevice,
+    LPCGUID lpcGUID);
+
 ULONG DirectSoundCaptureDevice_AddRef(
     DirectSoundCaptureDevice * device);
 
@@ -339,7 +343,7 @@ struct IDirectSoundCaptureBufferImpl
     LONG                                ref;
 
     /* IDirectSoundCaptureBufferImpl fields */
-    IDirectSoundCaptureImpl*            dsound;
+    DirectSoundCaptureDevice*           device;
     /* FIXME: don't need this */
     LPDSCBUFFERDESC                     pdscbd;
     DWORD                               flags;
@@ -351,10 +355,10 @@ struct IDirectSoundCaptureBufferImpl
     PIDSDRIVERNOTIFY                    hwnotify;
 };
 
-HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
-    IDirectSoundCaptureImpl *ipDSC,
-    LPCDSCBUFFERDESC lpcDSCBufferDesc,
-    LPVOID * ppobj);
+HRESULT IDirectSoundCaptureBufferImpl_Create(
+    DirectSoundCaptureDevice *device,
+    IDirectSoundCaptureBufferImpl ** ppobj,
+    LPCDSCBUFFERDESC lpcDSCBufferDesc);
 
 /*****************************************************************************
  * IDirectSoundFullDuplex implementation structure

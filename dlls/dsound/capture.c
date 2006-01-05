@@ -44,9 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-static const IDirectSoundCaptureVtbl dscvt;
-static const IDirectSoundCaptureBuffer8Vtbl dscbvt;
-
 DirectSoundCaptureDevice * DSOUND_capture[MAXWAVEDRIVERS];
 
 static const char * captureStateString[] = {
@@ -445,7 +442,7 @@ IDirectSoundCaptureImpl_Release( LPDIRECTSOUNDCAPTURE iface )
             DirectSoundCaptureDevice_Release(This->device);
 
         HeapFree( GetProcessHeap(), 0, This );
-	TRACE("(%p) released\n", This);
+        TRACE("(%p) released\n", This);
     }
     return ref;
 }
@@ -488,11 +485,11 @@ IDirectSoundCaptureImpl_CreateCaptureBuffer(
 	return DSERR_INVALIDPARAM;    /* DSERR_GENERIC ? */
     }
 
-    hr = DSOUND_CreateDirectSoundCaptureBuffer(This, lpcDSCBufferDesc,
-        (LPVOID*)lplpDSCaptureBuffer );
+    hr = IDirectSoundCaptureBufferImpl_Create(This->device,
+        (IDirectSoundCaptureBufferImpl **)lplpDSCaptureBuffer, lpcDSCBufferDesc);
 
     if (hr != DS_OK)
-	WARN("DSOUND_CreateDirectSoundCaptureBuffer failed\n");
+	WARN("IDirectSoundCaptureBufferImpl_Create failed\n");
 
     return hr;
 }
@@ -536,126 +533,15 @@ IDirectSoundCaptureImpl_Initialize(
     LPDIRECTSOUNDCAPTURE iface,
     LPCGUID lpcGUID )
 {
-    HRESULT err = DSERR_INVALIDPARAM;
-    unsigned wid, widn;
-    BOOLEAN found = FALSE;
-    GUID devGUID;
     IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
-    DirectSoundCaptureDevice *device = This->device;
-    TRACE("(%p)\n", This);
+    TRACE("(%p,%s)\n", This, debugstr_guid(lpcGUID));
 
-    if (!This) {
-	WARN("invalid parameter: This == NULL\n");
-	return DSERR_INVALIDPARAM;
-    }
-
-    if (device != NULL) {
+    if (This->device != NULL) {
 	WARN("already initialized\n");
 	return DSERR_ALREADYINITIALIZED;
     }
 
-    /* Default device? */
-    if ( !lpcGUID || IsEqualGUID(lpcGUID, &GUID_NULL) )
-	lpcGUID = &DSDEVID_DefaultCapture;
-
-    if (GetDeviceID(lpcGUID, &devGUID) != DS_OK) {
-        WARN("invalid parameter: lpcGUID\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    widn = waveInGetNumDevs();
-    if (!widn) {
-	WARN("no audio devices found\n");
-	return DSERR_NODRIVER;
-    }
-
-    /* enumerate WINMM audio devices and find the one we want */
-    for (wid=0; wid<widn; wid++) {
-    	if (IsEqualGUID( &devGUID, &DSOUND_capture_guids[wid]) ) {
-	    found = TRUE;
-	    break;
-	}
-    }
-
-    if (found == FALSE) {
-	WARN("No device found matching given ID!\n");
-	return DSERR_NODRIVER;
-    }
-
-    if (DSOUND_capture[wid]) {
-        WARN("already in use\n");
-        return DSERR_ALLOCATED;
-    }
-
-    err = DirectSoundCaptureDevice_Create(&(device));
-    if (err != DS_OK) {
-        WARN("DirectSoundCaptureDevice_Create failed\n");
-        return err;
-    }
-
-    This->device = device;
-    device->guid = devGUID;
-
-    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&(This->device->driver),0));
-    if ( (err != DS_OK) && (err != DSERR_UNSUPPORTED) ) {
-	WARN("waveInMessage failed; err=%lx\n",err);
-	return err;
-    }
-    err = DS_OK;
-
-    /* Disable the direct sound driver to force emulation if requested. */
-    if (ds_hw_accel == DS_HW_ACCEL_EMULATION)
-	This->device->driver = NULL;
-
-    /* Get driver description */
-    if (This->device->driver) {
-        TRACE("using DirectSound driver\n");
-        err = IDsCaptureDriver_GetDriverDesc(This->device->driver, &(This->device->drvdesc));
-	if (err != DS_OK) {
-	    WARN("IDsCaptureDriver_GetDriverDesc failed\n");
-	    return err;
-	}
-    } else {
-        TRACE("using WINMM\n");
-        /* if no DirectSound interface available, use WINMM API instead */
-        This->device->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN |
-            DSDDESC_DOMMSYSTEMSETFORMAT;
-    }
-
-    This->device->drvdesc.dnDevNode = wid;
-
-    /* open the DirectSound driver if available */
-    if (This->device->driver && (err == DS_OK))
-        err = IDsCaptureDriver_Open(This->device->driver);
-
-    if (err == DS_OK) {
-        This->device = device;
-
-        /* the driver is now open, so it's now allowed to call GetCaps */
-        if (This->device->driver) {
-	    This->device->drvcaps.dwSize = sizeof(This->device->drvcaps);
-            err = IDsCaptureDriver_GetCaps(This->device->driver,&(This->device->drvcaps));
-	    if (err != DS_OK) {
-		WARN("IDsCaptureDriver_GetCaps failed\n");
-		return err;
-	    }
-        } else /*if (This->hwi)*/ {
-            WAVEINCAPSA    wic;
-            err = mmErr(waveInGetDevCapsA((UINT)This->device->drvdesc.dnDevNode, &wic, sizeof(wic)));
-
-            if (err == DS_OK) {
-                This->device->drvcaps.dwFlags = 0;
-                lstrcpynA(This->device->drvdesc.szDrvname, wic.szPname,
-                          sizeof(This->device->drvdesc.szDrvname));
-
-                This->device->drvcaps.dwFlags |= DSCCAPS_EMULDRIVER;
-                This->device->drvcaps.dwFormats = wic.dwFormats;
-                This->device->drvcaps.dwChannels = wic.wChannels;
-            }
-        }
-    }
-
-    return err;
+    return DirectSoundCaptureDevice_Initialize(&This->device, lpcGUID);
 }
 
 static const IDirectSoundCaptureVtbl dscvt =
@@ -845,8 +731,8 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
 	if (!This->notify)
 	    hres = IDirectSoundCaptureNotifyImpl_Create(This, &This->notify);
 	if (This->notify) {
-	    if (This->dsound->device->hwbuf) {
-		hres = IDsCaptureDriverBuffer_QueryInterface(This->dsound->device->hwbuf,
+	    if (This->device->hwbuf) {
+		hres = IDsCaptureDriverBuffer_QueryInterface(This->device->hwbuf,
 		    &IID_IDsDriverNotify, (LPVOID*)&(This->hwnotify));
 		if (hres != DS_OK) {
 		    WARN("IDsCaptureDriverBuffer_QueryInterface failed\n");
@@ -893,25 +779,25 @@ IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 
     if (!ref) {
         TRACE("deleting object\n");
-	if (This->dsound->device->state == STATE_CAPTURING)
-	    This->dsound->device->state = STATE_STOPPING;
+	if (This->device->state == STATE_CAPTURING)
+	    This->device->state = STATE_STOPPING;
 
         HeapFree(GetProcessHeap(),0, This->pdscbd);
 
-	if (This->dsound->device->hwi) {
-	    waveInReset(This->dsound->device->hwi);
-	    waveInClose(This->dsound->device->hwi);
-            HeapFree(GetProcessHeap(),0, This->dsound->device->pwave);
-            This->dsound->device->pwave = 0;
-	    This->dsound->device->hwi = 0;
+	if (This->device->hwi) {
+	    waveInReset(This->device->hwi);
+	    waveInClose(This->device->hwi);
+            HeapFree(GetProcessHeap(),0, This->device->pwave);
+            This->device->pwave = 0;
+	    This->device->hwi = 0;
 	}
 
-	if (This->dsound->device->hwbuf)
-	    IDsCaptureDriverBuffer_Release(This->dsound->device->hwbuf);
+	if (This->device->hwbuf)
+	    IDsCaptureDriverBuffer_Release(This->device->hwbuf);
 
-        /* remove from IDirectSoundCaptureImpl */
-        if (This->dsound)
-            This->dsound->device->capture_buffer = NULL;
+        /* remove from DirectSoundCaptureDevice */
+        if (This->device)
+            This->device->capture_buffer = NULL;
         else
             ERR("does not reference dsound\n");
 
@@ -949,8 +835,8 @@ IDirectSoundCaptureBufferImpl_GetCaps(
         return DSERR_INVALIDPARAM;
     }
 
-    if (This->dsound == NULL) {
-        WARN("invalid parameter: This->dsound == NULL\n");
+    if (This->device == NULL) {
+        WARN("invalid parameter: This->device == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -978,38 +864,38 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
         return DSERR_INVALIDPARAM;
     }
 
-    if (This->dsound == NULL) {
-        WARN("invalid parameter: This->dsound == NULL\n");
+    if (This->device == NULL) {
+        WARN("invalid parameter: This->device == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
-    if (This->dsound->device->driver) {
-        hres = IDsCaptureDriverBuffer_GetPosition(This->dsound->device->hwbuf, lpdwCapturePosition, lpdwReadPosition );
+    if (This->device->driver) {
+        hres = IDsCaptureDriverBuffer_GetPosition(This->device->hwbuf, lpdwCapturePosition, lpdwReadPosition );
 	if (hres != DS_OK)
 	    WARN("IDsCaptureDriverBuffer_GetPosition failed\n");
-    } else if (This->dsound->device->hwi) {
-	EnterCriticalSection(&(This->dsound->device->lock));
-	TRACE("old This->dsound->device->state=%s\n",captureStateString[This->dsound->device->state]);
+    } else if (This->device->hwi) {
+	EnterCriticalSection(&(This->device->lock));
+	TRACE("old This->device->state=%s\n",captureStateString[This->device->state]);
         if (lpdwCapturePosition) {
             MMTIME mtime;
             mtime.wType = TIME_BYTES;
-            waveInGetPosition(This->dsound->device->hwi, &mtime, sizeof(mtime));
-	    TRACE("mtime.u.cb=%ld,This->dsound->device->buflen=%ld\n", mtime.u.cb,
-		This->dsound->device->buflen);
-	    mtime.u.cb = mtime.u.cb % This->dsound->device->buflen;
+            waveInGetPosition(This->device->hwi, &mtime, sizeof(mtime));
+	    TRACE("mtime.u.cb=%ld,This->device->buflen=%ld\n", mtime.u.cb,
+		This->device->buflen);
+	    mtime.u.cb = mtime.u.cb % This->device->buflen;
             *lpdwCapturePosition = mtime.u.cb;
         }
 
 	if (lpdwReadPosition) {
-            if (This->dsound->device->state == STATE_STARTING) {
+            if (This->device->state == STATE_STARTING) {
 		if (lpdwCapturePosition)
-		    This->dsound->device->read_position = *lpdwCapturePosition;
-                This->dsound->device->state = STATE_CAPTURING;
+		    This->device->read_position = *lpdwCapturePosition;
+                This->device->state = STATE_CAPTURING;
             }
-            *lpdwReadPosition = This->dsound->device->read_position;
+            *lpdwReadPosition = This->device->read_position;
         }
-	TRACE("new This->dsound->device->state=%s\n",captureStateString[This->dsound->device->state]);
-	LeaveCriticalSection(&(This->dsound->device->lock));
+	TRACE("new This->device->state=%s\n",captureStateString[This->device->state]);
+	LeaveCriticalSection(&(This->device->lock));
 	if (lpdwCapturePosition) TRACE("*lpdwCapturePosition=%ld\n",*lpdwCapturePosition);
 	if (lpdwReadPosition) TRACE("*lpdwReadPosition=%ld\n",*lpdwReadPosition);
     } else {
@@ -1038,21 +924,21 @@ IDirectSoundCaptureBufferImpl_GetFormat(
         return DSERR_INVALIDPARAM;
     }
 
-    if (This->dsound == NULL) {
-        WARN("invalid parameter: This->dsound == NULL\n");
+    if (This->device == NULL) {
+        WARN("invalid parameter: This->device == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
-    if (dwSizeAllocated > (sizeof(WAVEFORMATEX) + This->dsound->device->pwfx->cbSize))
-        dwSizeAllocated = sizeof(WAVEFORMATEX) + This->dsound->device->pwfx->cbSize;
+    if (dwSizeAllocated > (sizeof(WAVEFORMATEX) + This->device->pwfx->cbSize))
+        dwSizeAllocated = sizeof(WAVEFORMATEX) + This->device->pwfx->cbSize;
 
     if (lpwfxFormat) { /* NULL is valid (just want size) */
-        CopyMemory(lpwfxFormat, This->dsound->device->pwfx, dwSizeAllocated);
+        CopyMemory(lpwfxFormat, This->device->pwfx, dwSizeAllocated);
         if (lpdwSizeWritten)
             *lpdwSizeWritten = dwSizeAllocated;
     } else {
         if (lpdwSizeWritten)
-            *lpdwSizeWritten = sizeof(WAVEFORMATEX) + This->dsound->device->pwfx->cbSize;
+            *lpdwSizeWritten = sizeof(WAVEFORMATEX) + This->device->pwfx->cbSize;
         else {
             TRACE("invalid parameter: lpdwSizeWritten = NULL\n");
             hres = DSERR_INVALIDPARAM;
@@ -1076,8 +962,8 @@ IDirectSoundCaptureBufferImpl_GetStatus(
         return DSERR_INVALIDPARAM;
     }
 
-    if (This->dsound == NULL) {
-        WARN("invalid parameter: This->dsound == NULL\n");
+    if (This->device == NULL) {
+        WARN("invalid parameter: This->device == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -1087,19 +973,19 @@ IDirectSoundCaptureBufferImpl_GetStatus(
     }
 
     *lpdwStatus = 0;
-    EnterCriticalSection(&(This->dsound->device->lock));
+    EnterCriticalSection(&(This->device->lock));
 
-    TRACE("old This->dsound->state=%s, old lpdwStatus=%08lx\n",
-	captureStateString[This->dsound->device->state],*lpdwStatus);
-    if ((This->dsound->device->state == STATE_STARTING) ||
-        (This->dsound->device->state == STATE_CAPTURING)) {
+    TRACE("old This->device->state=%s, old lpdwStatus=%08lx\n",
+	captureStateString[This->device->state],*lpdwStatus);
+    if ((This->device->state == STATE_STARTING) ||
+        (This->device->state == STATE_CAPTURING)) {
         *lpdwStatus |= DSCBSTATUS_CAPTURING;
         if (This->flags & DSCBSTART_LOOPING)
             *lpdwStatus |= DSCBSTATUS_LOOPING;
     }
-    TRACE("new This->dsound->state=%s, new lpdwStatus=%08lx\n",
-	captureStateString[This->dsound->device->state],*lpdwStatus);
-    LeaveCriticalSection(&(This->dsound->device->lock));
+    TRACE("new This->device->state=%s, new lpdwStatus=%08lx\n",
+	captureStateString[This->device->state],*lpdwStatus);
+    LeaveCriticalSection(&(This->device->lock));
 
     TRACE("status=%lx\n", *lpdwStatus);
     TRACE("returning DS_OK\n");
@@ -1141,8 +1027,8 @@ IDirectSoundCaptureBufferImpl_Lock(
         return DSERR_INVALIDPARAM;
     }
 
-    if (This->dsound == NULL) {
-        WARN("invalid parameter: This->dsound == NULL\n");
+    if (This->device == NULL) {
+        WARN("invalid parameter: This->device == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -1156,21 +1042,21 @@ IDirectSoundCaptureBufferImpl_Lock(
         return DSERR_INVALIDPARAM;
     }
 
-    EnterCriticalSection(&(This->dsound->device->lock));
+    EnterCriticalSection(&(This->device->lock));
 
-    if (This->dsound->device->driver) {
-        hres = IDsCaptureDriverBuffer_Lock(This->dsound->device->hwbuf, lplpvAudioPtr1,
+    if (This->device->driver) {
+        hres = IDsCaptureDriverBuffer_Lock(This->device->hwbuf, lplpvAudioPtr1,
                                            lpdwAudioBytes1, lplpvAudioPtr2,
                                            lpdwAudioBytes2, dwReadCusor,
                                            dwReadBytes, dwFlags);
 	if (hres != DS_OK)
 	    WARN("IDsCaptureDriverBuffer_Lock failed\n");
-    } else if (This->dsound->device->hwi) {
-        *lplpvAudioPtr1 = This->dsound->device->buffer + dwReadCusor;
-        if ( (dwReadCusor + dwReadBytes) > This->dsound->device->buflen) {
-            *lpdwAudioBytes1 = This->dsound->device->buflen - dwReadCusor;
+    } else if (This->device->hwi) {
+        *lplpvAudioPtr1 = This->device->buffer + dwReadCusor;
+        if ( (dwReadCusor + dwReadBytes) > This->device->buflen) {
+            *lpdwAudioBytes1 = This->device->buflen - dwReadCusor;
 	    if (lplpvAudioPtr2)
-            	*lplpvAudioPtr2 = This->dsound->device->buffer;
+            	*lplpvAudioPtr2 = This->device->buffer;
 	    if (lpdwAudioBytes2)
 		*lpdwAudioBytes2 = dwReadBytes - *lpdwAudioBytes1;
         } else {
@@ -1185,7 +1071,7 @@ IDirectSoundCaptureBufferImpl_Lock(
         hres = DSERR_INVALIDCALL;   /* DSERR_NODRIVER ? */
     }
 
-    LeaveCriticalSection(&(This->dsound->device->lock));
+    LeaveCriticalSection(&(This->device->lock));
 
     TRACE("returning %08lx\n", hres);
     return hres;
@@ -1205,141 +1091,141 @@ IDirectSoundCaptureBufferImpl_Start(
         return DSERR_INVALIDPARAM;
     }
 
-    if (This->dsound == NULL) {
-        WARN("invalid parameter: This->dsound == NULL\n");
+    if (This->device == NULL) {
+        WARN("invalid parameter: This->device == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
-    if ( (This->dsound->device->driver == 0) && (This->dsound->device->hwi == 0) ) {
+    if ( (This->device->driver == 0) && (This->device->hwi == 0) ) {
         WARN("no driver\n");
         return DSERR_NODRIVER;
     }
 
-    EnterCriticalSection(&(This->dsound->device->lock));
+    EnterCriticalSection(&(This->device->lock));
 
     This->flags = dwFlags;
-    TRACE("old This->dsound->state=%s\n",captureStateString[This->dsound->device->state]);
-    if (This->dsound->device->state == STATE_STOPPED)
-        This->dsound->device->state = STATE_STARTING;
-    else if (This->dsound->device->state == STATE_STOPPING)
-        This->dsound->device->state = STATE_CAPTURING;
-    TRACE("new This->dsound->device->state=%s\n",captureStateString[This->dsound->device->state]);
+    TRACE("old This->state=%s\n",captureStateString[This->device->state]);
+    if (This->device->state == STATE_STOPPED)
+        This->device->state = STATE_STARTING;
+    else if (This->device->state == STATE_STOPPING)
+        This->device->state = STATE_CAPTURING;
+    TRACE("new This->device->state=%s\n",captureStateString[This->device->state]);
 
-    LeaveCriticalSection(&(This->dsound->device->lock));
+    LeaveCriticalSection(&(This->device->lock));
 
-    if (This->dsound->device->driver) {
-        hres = IDsCaptureDriverBuffer_Start(This->dsound->device->hwbuf, dwFlags);
+    if (This->device->driver) {
+        hres = IDsCaptureDriverBuffer_Start(This->device->hwbuf, dwFlags);
 	if (hres != DS_OK)
 	    WARN("IDsCaptureDriverBuffer_Start failed\n");
-    } else if (This->dsound->device->hwi) {
-        IDirectSoundCaptureImpl* ipDSC = This->dsound;
+    } else if (This->device->hwi) {
+        DirectSoundCaptureDevice *device = This->device;
 
-        if (ipDSC->device->buffer) {
+        if (device->buffer) {
             if (This->nrofnotifies) {
             	int c;
 
-		ipDSC->device->nrofpwaves = This->nrofnotifies;
+		device->nrofpwaves = This->nrofnotifies;
 		TRACE("nrofnotifies=%d\n", This->nrofnotifies);
 
                 /* prepare headers */
-		if (ipDSC->device->pwave)
-                    ipDSC->device->pwave = HeapReAlloc(GetProcessHeap(),0,ipDSC->device->pwave,
-	                ipDSC->device->nrofpwaves*sizeof(WAVEHDR));
+		if (device->pwave)
+                    device->pwave = HeapReAlloc(GetProcessHeap(),0,device->pwave,
+	                device->nrofpwaves*sizeof(WAVEHDR));
 		else
-                    ipDSC->device->pwave = HeapAlloc(GetProcessHeap(),0,
-	                ipDSC->device->nrofpwaves*sizeof(WAVEHDR));
+                    device->pwave = HeapAlloc(GetProcessHeap(),0,
+	                device->nrofpwaves*sizeof(WAVEHDR));
 
-                for (c = 0; c < ipDSC->device->nrofpwaves; c++) {
+                for (c = 0; c < device->nrofpwaves; c++) {
                     if (This->notifies[c].dwOffset == DSBPN_OFFSETSTOP) {
                         TRACE("got DSBPN_OFFSETSTOP\n");
-                        ipDSC->device->nrofpwaves = c;
+                        device->nrofpwaves = c;
                         break;
                     }
                     if (c == 0) {
-                        ipDSC->device->pwave[0].lpData = (LPSTR)ipDSC->device->buffer;
-                        ipDSC->device->pwave[0].dwBufferLength =
+                        device->pwave[0].lpData = (LPSTR)device->buffer;
+                        device->pwave[0].dwBufferLength =
                             This->notifies[0].dwOffset + 1;
                     } else {
-                        ipDSC->device->pwave[c].lpData = (LPSTR)ipDSC->device->buffer +
+                        device->pwave[c].lpData = (LPSTR)device->buffer +
                             This->notifies[c-1].dwOffset + 1;
-                        ipDSC->device->pwave[c].dwBufferLength =
+                        device->pwave[c].dwBufferLength =
                             This->notifies[c].dwOffset -
                             This->notifies[c-1].dwOffset;
                     }
-                    ipDSC->device->pwave[c].dwBytesRecorded = 0;
-                    ipDSC->device->pwave[c].dwUser = (DWORD)ipDSC;
-                    ipDSC->device->pwave[c].dwFlags = 0;
-                    ipDSC->device->pwave[c].dwLoops = 0;
-                    hres = mmErr(waveInPrepareHeader(ipDSC->device->hwi,
-                        &(ipDSC->device->pwave[c]),sizeof(WAVEHDR)));
+                    device->pwave[c].dwBytesRecorded = 0;
+                    device->pwave[c].dwUser = (DWORD)device;
+                    device->pwave[c].dwFlags = 0;
+                    device->pwave[c].dwLoops = 0;
+                    hres = mmErr(waveInPrepareHeader(device->hwi,
+                        &(device->pwave[c]),sizeof(WAVEHDR)));
 		    if (hres != DS_OK) {
                         WARN("waveInPrepareHeader failed\n");
 			while (c--)
-			    waveInUnprepareHeader(ipDSC->device->hwi,
-				&(ipDSC->device->pwave[c]),sizeof(WAVEHDR));
+			    waveInUnprepareHeader(device->hwi,
+				&(device->pwave[c]),sizeof(WAVEHDR));
 			break;
 		    }
 
-	            hres = mmErr(waveInAddBuffer(ipDSC->device->hwi,
-			&(ipDSC->device->pwave[c]), sizeof(WAVEHDR)));
+	            hres = mmErr(waveInAddBuffer(device->hwi,
+			&(device->pwave[c]), sizeof(WAVEHDR)));
 		    if (hres != DS_OK) {
                         WARN("waveInAddBuffer failed\n");
                         while (c--)
-			    waveInUnprepareHeader(ipDSC->device->hwi,
-				&(ipDSC->device->pwave[c]),sizeof(WAVEHDR));
+			    waveInUnprepareHeader(device->hwi,
+				&(device->pwave[c]),sizeof(WAVEHDR));
 			break;
 		    }
                 }
 
-                FillMemory(ipDSC->device->buffer, ipDSC->device->buflen,
-                    (ipDSC->device->pwfx->wBitsPerSample == 8) ? 128 : 0);
+                FillMemory(device->buffer, device->buflen,
+                    (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
             } else {
 		TRACE("no notifiers specified\n");
 		/* no notifiers specified so just create a single default header */
-		ipDSC->device->nrofpwaves = 1;
-		if (ipDSC->device->pwave)
-                    ipDSC->device->pwave = HeapReAlloc(GetProcessHeap(),0,ipDSC->device->pwave,sizeof(WAVEHDR));
+		device->nrofpwaves = 1;
+		if (device->pwave)
+                    device->pwave = HeapReAlloc(GetProcessHeap(),0,device->pwave,sizeof(WAVEHDR));
 		else
-                    ipDSC->device->pwave = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEHDR));
+                    device->pwave = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEHDR));
 
-                ipDSC->device->pwave[0].lpData = (LPSTR)ipDSC->device->buffer;
-                ipDSC->device->pwave[0].dwBufferLength = ipDSC->device->buflen;
-                ipDSC->device->pwave[0].dwBytesRecorded = 0;
-                ipDSC->device->pwave[0].dwUser = (DWORD)ipDSC;
-                ipDSC->device->pwave[0].dwFlags = 0;
-                ipDSC->device->pwave[0].dwLoops = 0;
+                device->pwave[0].lpData = (LPSTR)device->buffer;
+                device->pwave[0].dwBufferLength = device->buflen;
+                device->pwave[0].dwBytesRecorded = 0;
+                device->pwave[0].dwUser = (DWORD)device;
+                device->pwave[0].dwFlags = 0;
+                device->pwave[0].dwLoops = 0;
 
-                hres = mmErr(waveInPrepareHeader(ipDSC->device->hwi,
-                    &(ipDSC->device->pwave[0]),sizeof(WAVEHDR)));
+                hres = mmErr(waveInPrepareHeader(device->hwi,
+                    &(device->pwave[0]),sizeof(WAVEHDR)));
                 if (hres != DS_OK) {
 		    WARN("waveInPrepareHeader failed\n");
-                    waveInUnprepareHeader(ipDSC->device->hwi,
-                        &(ipDSC->device->pwave[0]),sizeof(WAVEHDR));
+                    waveInUnprepareHeader(device->hwi,
+                        &(device->pwave[0]),sizeof(WAVEHDR));
 		}
-	        hres = mmErr(waveInAddBuffer(ipDSC->device->hwi,
-		    &(ipDSC->device->pwave[0]), sizeof(WAVEHDR)));
+	        hres = mmErr(waveInAddBuffer(device->hwi,
+		    &(device->pwave[0]), sizeof(WAVEHDR)));
 		if (hres != DS_OK) {
 		    WARN("waveInAddBuffer failed\n");
-	    	    waveInUnprepareHeader(ipDSC->device->hwi,
-			&(ipDSC->device->pwave[0]),sizeof(WAVEHDR));
+	    	    waveInUnprepareHeader(device->hwi,
+			&(device->pwave[0]),sizeof(WAVEHDR));
 		}
 	    }
         }
 
-        ipDSC->device->index = 0;
-        ipDSC->device->read_position = 0;
+        device->index = 0;
+        device->read_position = 0;
 
 	if (hres == DS_OK) {
 	    /* start filling the first buffer */
-	    hres = mmErr(waveInStart(ipDSC->device->hwi));
+	    hres = mmErr(waveInStart(device->hwi));
             if (hres != DS_OK)
                 WARN("waveInStart failed\n");
         }
 
         if (hres != DS_OK) {
             WARN("calling waveInClose because of error\n");
-            waveInClose(This->dsound->device->hwi);
-            This->dsound->device->hwi = 0;
+            waveInClose(device->hwi);
+            device->hwi = 0;
         }
     } else {
         WARN("no driver\n");
@@ -1362,28 +1248,28 @@ IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
         return DSERR_INVALIDPARAM;
     }
 
-    if (This->dsound == NULL) {
-        WARN("invalid parameter: This->dsound == NULL\n");
+    if (This->device == NULL) {
+        WARN("invalid parameter: This->device == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
-    EnterCriticalSection(&(This->dsound->device->lock));
+    EnterCriticalSection(&(This->device->lock));
 
-    TRACE("old This->dsound->state=%s\n",captureStateString[This->dsound->device->state]);
-    if (This->dsound->device->state == STATE_CAPTURING)
-	This->dsound->device->state = STATE_STOPPING;
-    else if (This->dsound->device->state == STATE_STARTING)
-	This->dsound->device->state = STATE_STOPPED;
-    TRACE("new This->dsound->device->state=%s\n",captureStateString[This->dsound->device->state]);
+    TRACE("old This->device->state=%s\n",captureStateString[This->device->state]);
+    if (This->device->state == STATE_CAPTURING)
+	This->device->state = STATE_STOPPING;
+    else if (This->device->state == STATE_STARTING)
+	This->device->state = STATE_STOPPED;
+    TRACE("new This->device->state=%s\n",captureStateString[This->device->state]);
 
-    LeaveCriticalSection(&(This->dsound->device->lock));
+    LeaveCriticalSection(&(This->device->lock));
 
-    if (This->dsound->device->driver) {
-        hres = IDsCaptureDriverBuffer_Stop(This->dsound->device->hwbuf);
+    if (This->device->driver) {
+        hres = IDsCaptureDriverBuffer_Stop(This->device->hwbuf);
         if (hres != DS_OK)
             WARN("IDsCaptureDriverBuffer_Stop() failed\n");
-    } else if (This->dsound->device->hwi) {
-        hres = mmErr(waveInReset(This->dsound->device->hwi));
+    } else if (This->device->hwi) {
+        hres = mmErr(waveInReset(This->device->hwi));
         if (hres != DS_OK)
             WARN("waveInReset() failed\n");
     } else {
@@ -1418,14 +1304,14 @@ IDirectSoundCaptureBufferImpl_Unlock(
         return DSERR_INVALIDPARAM;
     }
 
-    if (This->dsound->device->driver) {
-        hres = IDsCaptureDriverBuffer_Unlock(This->dsound->device->hwbuf, lpvAudioPtr1,
+    if (This->device->driver) {
+        hres = IDsCaptureDriverBuffer_Unlock(This->device->hwbuf, lpvAudioPtr1,
                                              dwAudioBytes1, lpvAudioPtr2, dwAudioBytes2);
 	if (hres != DS_OK)
 	    WARN("IDsCaptureDriverBuffer_Unlock failed\n");
-    } else if (This->dsound->device->hwi) {
-        This->dsound->device->read_position = (This->dsound->device->read_position +
-            (dwAudioBytes1 + dwAudioBytes2)) % This->dsound->device->buflen;
+    } else if (This->device->hwi) {
+        This->device->read_position = (This->device->read_position +
+            (dwAudioBytes1 + dwAudioBytes2)) % This->device->buflen;
     } else {
         WARN("invalid call\n");
         hres = DSERR_INVALIDCALL;
@@ -1487,26 +1373,28 @@ static const IDirectSoundCaptureBuffer8Vtbl dscbvt =
     IDirectSoundCaptureBufferImpl_GetFXStatus
 };
 
-HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
-    IDirectSoundCaptureImpl *ipDSC,
-    LPCDSCBUFFERDESC lpcDSCBufferDesc,
-    LPVOID* ppobj )
+HRESULT IDirectSoundCaptureBufferImpl_Create(
+    DirectSoundCaptureDevice *device,
+    IDirectSoundCaptureBufferImpl ** ppobj,
+    LPCDSCBUFFERDESC lpcDSCBufferDesc)
 {
     LPWAVEFORMATEX  wfex;
-    TRACE( "(%p,%p)\n", lpcDSCBufferDesc, ppobj );
+    TRACE( "(%p,%p,%p)\n", device, ppobj, lpcDSCBufferDesc);
 
-    if (ipDSC == NULL) {
-	WARN("invalid parameter: ipDSC == NULL\n");
+    if (ppobj == NULL) {
+	WARN("invalid parameter: ppobj == NULL\n");
 	return DSERR_INVALIDPARAM;
+    }
+
+    if (!device) {
+	WARN("not initialized\n");
+        *ppobj = NULL;
+	return DSERR_UNINITIALIZED;
     }
 
     if (lpcDSCBufferDesc == NULL) {
 	WARN("invalid parameter: lpcDSCBufferDesc == NULL\n");
-	return DSERR_INVALIDPARAM;
-    }
-
-    if (ppobj == NULL) {
-	WARN("invalid parameter: ppobj == NULL\n");
+        *ppobj = NULL;
 	return DSERR_INVALIDPARAM;
     }
 
@@ -1519,12 +1407,6 @@ HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
 	return DSERR_INVALIDPARAM;
     }
 
-    if ( !ipDSC->device) {
-	WARN("not initialized\n");
-	*ppobj = NULL;
-	return DSERR_UNINITIALIZED;
-    }
-
     wfex = lpcDSCBufferDesc->lpwfxFormat;
 
     if (wfex) {
@@ -1535,12 +1417,12 @@ HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
             wfex->wBitsPerSample, wfex->cbSize);
 
         if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
-	    ipDSC->device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX));
-            CopyMemory(ipDSC->device->pwfx, wfex, sizeof(WAVEFORMATEX));
-	    ipDSC->device->pwfx->cbSize = 0;
+	    device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX));
+            CopyMemory(device->pwfx, wfex, sizeof(WAVEFORMATEX));
+	    device->pwfx->cbSize = 0;
 	} else {
-	    ipDSC->device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX)+wfex->cbSize);
-            CopyMemory(ipDSC->device->pwfx, wfex, sizeof(WAVEFORMATEX)+wfex->cbSize);
+	    device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX)+wfex->cbSize);
+            CopyMemory(device->pwfx, wfex, sizeof(WAVEFORMATEX)+wfex->cbSize);
         }
     } else {
 	WARN("lpcDSCBufferDesc->lpwfxFormat == 0\n");
@@ -1562,8 +1444,8 @@ HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
         IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)*ppobj;
 
         This->ref = 1;
-        This->dsound = ipDSC;
-        This->dsound->device->capture_buffer = This;
+        This->device = device;
+        This->device->capture_buffer = This;
 	This->notify = NULL;
 	This->nrofnotifies = 0;
 	This->hwnotify = NULL;
@@ -1574,7 +1456,7 @@ HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
             CopyMemory(This->pdscbd, lpcDSCBufferDesc, lpcDSCBufferDesc->dwSize);
         else {
             WARN("no memory\n");
-            This->dsound->device->capture_buffer = 0;
+            This->device->capture_buffer = 0;
             HeapFree( GetProcessHeap(), 0, This );
             *ppobj = NULL;
             return DSERR_OUTOFMEMORY;
@@ -1582,16 +1464,16 @@ HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
 
         This->lpVtbl = &dscbvt;
 
-	if (ipDSC->device->driver) {
-            if (This->dsound->device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
+	if (device->driver) {
+            if (This->device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
                 FIXME("DSDDESC_DOMMSYSTEMOPEN not supported\n");
 
-            if (This->dsound->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
+            if (This->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
                 /* allocate buffer from system memory */
                 buflen = lpcDSCBufferDesc->dwBufferBytes;
-                TRACE("desired buflen=%ld, old buffer=%p\n", buflen, ipDSC->device->buffer);
-                if (ipDSC->device->buffer)
-                    newbuf = HeapReAlloc(GetProcessHeap(),0,ipDSC->device->buffer,buflen);
+                TRACE("desired buflen=%ld, old buffer=%p\n", buflen, device->buffer);
+                if (device->buffer)
+                    newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer,buflen);
                 else
                     newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
 
@@ -1600,22 +1482,22 @@ HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
                     err = DSERR_OUTOFMEMORY;
                     /* but the old buffer might still exist and must be re-prepared */
                 } else {
-                    ipDSC->device->buffer = newbuf;
-                    ipDSC->device->buflen = buflen;
+                    device->buffer = newbuf;
+                    device->buflen = buflen;
                 }
             } else {
                 /* let driver allocate memory */
-                ipDSC->device->buflen = lpcDSCBufferDesc->dwBufferBytes;
+                device->buflen = lpcDSCBufferDesc->dwBufferBytes;
                 /* FIXME: */
-                HeapFree( GetProcessHeap(), 0, ipDSC->device->buffer);
-                ipDSC->device->buffer = NULL;
+                HeapFree( GetProcessHeap(), 0, device->buffer);
+                device->buffer = NULL;
             }
 
-	    err = IDsCaptureDriver_CreateCaptureBuffer(ipDSC->device->driver,
-		ipDSC->device->pwfx,0,0,&(ipDSC->device->buflen),&(ipDSC->device->buffer),(LPVOID*)&(ipDSC->device->hwbuf));
+	    err = IDsCaptureDriver_CreateCaptureBuffer(device->driver,
+		device->pwfx,0,0,&(device->buflen),&(device->buffer),(LPVOID*)&(device->hwbuf));
 	    if (err != DS_OK) {
 		WARN("IDsCaptureDriver_CreateCaptureBuffer failed\n");
-		This->dsound->device->capture_buffer = 0;
+		This->device->capture_buffer = 0;
 		HeapFree( GetProcessHeap(), 0, This );
 		*ppobj = NULL;
 		return err;
@@ -1624,21 +1506,21 @@ HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
 	    DWORD flags = CALLBACK_FUNCTION;
 	    if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
 		flags |= WAVE_DIRECTSOUND;
-            err = mmErr(waveInOpen(&(ipDSC->device->hwi),
-                ipDSC->device->drvdesc.dnDevNode, ipDSC->device->pwfx,
-                (DWORD_PTR)DSOUND_capture_callback, (DWORD)ipDSC->device, flags));
+            err = mmErr(waveInOpen(&(device->hwi),
+                device->drvdesc.dnDevNode, device->pwfx,
+                (DWORD_PTR)DSOUND_capture_callback, (DWORD)device, flags));
             if (err != DS_OK) {
                 WARN("waveInOpen failed\n");
-		This->dsound->device->capture_buffer = 0;
+		This->device->capture_buffer = 0;
 		HeapFree( GetProcessHeap(), 0, This );
 		*ppobj = NULL;
 		return err;
             }
 
 	    buflen = lpcDSCBufferDesc->dwBufferBytes;
-            TRACE("desired buflen=%ld, old buffer=%p\n", buflen, ipDSC->device->buffer);
-	    if (ipDSC->device->buffer)
-                newbuf = HeapReAlloc(GetProcessHeap(),0,ipDSC->device->buffer,buflen);
+            TRACE("desired buflen=%ld, old buffer=%p\n", buflen, device->buffer);
+	    if (device->buffer)
+                newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer,buflen);
 	    else
 		newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
             if (newbuf == NULL) {
@@ -1646,8 +1528,8 @@ HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
                 err = DSERR_OUTOFMEMORY;
                 /* but the old buffer might still exist and must be re-prepared */
             } else {
-                ipDSC->device->buffer = newbuf;
-                ipDSC->device->buflen = buflen;
+                device->buffer = newbuf;
+                device->buflen = buflen;
             }
 	}
     }
@@ -1659,6 +1541,120 @@ HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
 /*******************************************************************************
  * DirectSoundCaptureDevice
  */
+HRESULT DirectSoundCaptureDevice_Initialize(
+    DirectSoundCaptureDevice ** ppDevice,
+    LPCGUID lpcGUID)
+{
+    HRESULT err = DSERR_INVALIDPARAM;
+    unsigned wid, widn;
+    BOOLEAN found = FALSE;
+    GUID devGUID;
+    DirectSoundCaptureDevice *device = *ppDevice;
+    TRACE("(%p, %s)\n", ppDevice, debugstr_guid(lpcGUID));
+
+    /* Default device? */
+    if ( !lpcGUID || IsEqualGUID(lpcGUID, &GUID_NULL) )
+	lpcGUID = &DSDEVID_DefaultCapture;
+
+    if (GetDeviceID(lpcGUID, &devGUID) != DS_OK) {
+        WARN("invalid parameter: lpcGUID\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    widn = waveInGetNumDevs();
+    if (!widn) {
+	WARN("no audio devices found\n");
+	return DSERR_NODRIVER;
+    }
+
+    /* enumerate WINMM audio devices and find the one we want */
+    for (wid=0; wid<widn; wid++) {
+    	if (IsEqualGUID( &devGUID, &DSOUND_capture_guids[wid]) ) {
+	    found = TRUE;
+	    break;
+	}
+    }
+
+    if (found == FALSE) {
+	WARN("No device found matching given ID!\n");
+	return DSERR_NODRIVER;
+    }
+
+    if (DSOUND_capture[wid]) {
+        WARN("already in use\n");
+        return DSERR_ALLOCATED;
+    }
+
+    err = DirectSoundCaptureDevice_Create(&(device));
+    if (err != DS_OK) {
+        WARN("DirectSoundCaptureDevice_Create failed\n");
+        return err;
+    }
+
+    *ppDevice = device;
+    device->guid = devGUID;
+
+    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&(device->driver),0));
+    if ( (err != DS_OK) && (err != DSERR_UNSUPPORTED) ) {
+	WARN("waveInMessage failed; err=%lx\n",err);
+	return err;
+    }
+    err = DS_OK;
+
+    /* Disable the direct sound driver to force emulation if requested. */
+    if (ds_hw_accel == DS_HW_ACCEL_EMULATION)
+	device->driver = NULL;
+
+    /* Get driver description */
+    if (device->driver) {
+        TRACE("using DirectSound driver\n");
+        err = IDsCaptureDriver_GetDriverDesc(device->driver, &(device->drvdesc));
+	if (err != DS_OK) {
+	    WARN("IDsCaptureDriver_GetDriverDesc failed\n");
+	    return err;
+	}
+    } else {
+        TRACE("using WINMM\n");
+        /* if no DirectSound interface available, use WINMM API instead */
+        device->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN |
+            DSDDESC_DOMMSYSTEMSETFORMAT;
+    }
+
+    device->drvdesc.dnDevNode = wid;
+
+    /* open the DirectSound driver if available */
+    if (device->driver && (err == DS_OK))
+        err = IDsCaptureDriver_Open(device->driver);
+
+    if (err == DS_OK) {
+        *ppDevice = device;
+
+        /* the driver is now open, so it's now allowed to call GetCaps */
+        if (device->driver) {
+	    device->drvcaps.dwSize = sizeof(device->drvcaps);
+            err = IDsCaptureDriver_GetCaps(device->driver,&(device->drvcaps));
+	    if (err != DS_OK) {
+		WARN("IDsCaptureDriver_GetCaps failed\n");
+		return err;
+	    }
+        } else /*if (device->hwi)*/ {
+            WAVEINCAPSA    wic;
+            err = mmErr(waveInGetDevCapsA((UINT)device->drvdesc.dnDevNode, &wic, sizeof(wic)));
+
+            if (err == DS_OK) {
+                device->drvcaps.dwFlags = 0;
+                lstrcpynA(device->drvdesc.szDrvname, wic.szPname,
+                          sizeof(device->drvdesc.szDrvname));
+
+                device->drvcaps.dwFlags |= DSCCAPS_EMULDRIVER;
+                device->drvcaps.dwFormats = wic.dwFormats;
+                device->drvcaps.dwChannels = wic.wChannels;
+            }
+        }
+    }
+
+    return err;
+}
 
 HRESULT DirectSoundCaptureDevice_Create(
     DirectSoundCaptureDevice ** ppDevice)
@@ -1685,15 +1681,21 @@ HRESULT DirectSoundCaptureDevice_Create(
     return DS_OK;
 }
 
+ULONG DirectSoundCaptureDevice_AddRef(
+    DirectSoundCaptureDevice * device)
+{
+    ULONG ref = InterlockedIncrement(&(device->ref));
+    TRACE("(%p) ref was %ld\n", device, ref - 1);
+    return ref;
+}
+
 ULONG DirectSoundCaptureDevice_Release(
     DirectSoundCaptureDevice * device)
 {
-    ULONG ref;
-    TRACE("(%p) ref was %lu\n", device, device->ref);
+    ULONG ref = InterlockedDecrement(&(device->ref));
+    TRACE("(%p) ref was %ld\n", device, ref + 1);
 
-    device->ref--;
-    ref=device->ref;
-    if (device->ref == 0) {
+    if (!ref) {
         TRACE("deleting object\n");
         if (device->capture_buffer)
             IDirectSoundCaptureBufferImpl_Release(
