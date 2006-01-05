@@ -42,7 +42,7 @@
 #include "msvcrt/float.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
+WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 /* VC++ extensions to Win32 SEH */
 typedef struct _SCOPETABLE
@@ -261,6 +261,33 @@ int _abnormal_termination(void)
 #define MSVCRT_JMP_MAGIC 0x56433230 /* ID value for new jump structure */
 typedef void (*MSVCRT_unwind_function)(const void*);
 
+/* define an entrypoint for setjmp/setjmp3 that stores the registers in the jmp buf */
+/* and then jumps to the C backend function */
+#define DEFINE_SETJMP_ENTRYPOINT(name) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "movl 4(%esp),%ecx\n\t"   /* jmp_buf */      \
+                       "movl %ebp,0(%ecx)\n\t"   /* jmp_buf.Ebp */  \
+                       "movl %ebx,4(%ecx)\n\t"   /* jmp_buf.Ebx */  \
+                       "movl %edi,8(%ecx)\n\t"   /* jmp_buf.Edi */  \
+                       "movl %esi,12(%ecx)\n\t"  /* jmp_buf.Esi */  \
+                       "movl %esp,16(%ecx)\n\t"  /* jmp_buf.Esp */  \
+                       "movl 0(%esp),%eax\n\t"                      \
+                       "movl %eax,20(%ecx)\n\t"  /* jmp_buf.Eip */  \
+                       "jmp " __ASM_NAME("__regs_") # name )
+
+/* restore the registers from the jmp buf upon longjmp */
+extern void DECLSPEC_NORETURN longjmp_set_regs( struct MSVCRT___JUMP_BUFFER *jmp, int retval );
+__ASM_GLOBAL_FUNC( longjmp_set_regs,
+                   "movl 4(%esp),%ecx\n\t"   /* jmp_buf */
+                   "movl 8(%esp),%eax\n\t"   /* retval */
+                   "movl 0(%ecx),%ebp\n\t"   /* jmp_buf.Ebp */
+                   "movl 4(%ecx),%ebx\n\t"   /* jmp_buf.Ebx */
+                   "movl 8(%ecx),%edi\n\t"   /* jmp_buf.Edi */
+                   "movl 12(%ecx),%esi\n\t"  /* jmp_buf.Esi */
+                   "movl 16(%ecx),%esp\n\t"  /* jmp_buf.Esp */
+                   "addl $4,%esp\n\t"        /* get rid of return address */
+                   "jmp *20(%ecx)\n\t"       /* jmp_buf.Eip */ );
+
 /*
  * The signatures of the setjmp/longjmp functions do not match that
  * declared in the setjmp header so they don't follow the regular naming
@@ -270,38 +297,26 @@ typedef void (*MSVCRT_unwind_function)(const void*);
 /*******************************************************************
  *		_setjmp (MSVCRT.@)
  */
-DEFINE_REGS_ENTRYPOINT( MSVCRT__setjmp, 4, 0 );
-void WINAPI __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp, CONTEXT86* context)
+DEFINE_SETJMP_ENTRYPOINT(MSVCRT__setjmp);
+int __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp)
 {
-    TRACE("(%p)\n",jmp);
-    jmp->Ebp = context->Ebp;
-    jmp->Ebx = context->Ebx;
-    jmp->Edi = context->Edi;
-    jmp->Esi = context->Esi;
-    jmp->Esp = context->Esp;
-    jmp->Eip = context->Eip;
     jmp->Registration = (unsigned long)NtCurrentTeb()->Tib.ExceptionList;
     if (jmp->Registration == TRYLEVEL_END)
         jmp->TryLevel = TRYLEVEL_END;
     else
         jmp->TryLevel = ((MSVCRT_EXCEPTION_FRAME*)jmp->Registration)->trylevel;
-    TRACE("returning 0\n");
-    context->Eax=0;
+
+    TRACE("buf=%p ebx=%08lx esi=%08lx edi=%08lx ebp=%08lx esp=%08lx eip=%08lx frame=%08lx\n",
+          jmp, jmp->Ebx, jmp->Esi, jmp->Edi, jmp->Ebp, jmp->Esp, jmp->Eip, jmp->Registration );
+    return 0;
 }
 
 /*******************************************************************
  *		_setjmp3 (MSVCRT.@)
  */
-DEFINE_REGS_ENTRYPOINT( MSVCRT__setjmp3, 8, 0 );
-void WINAPI __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, CONTEXT86* context)
+DEFINE_SETJMP_ENTRYPOINT( MSVCRT__setjmp3 );
+int __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args)
 {
-    TRACE("(%p,%d)\n",jmp,nb_args);
-    jmp->Ebp = context->Ebp;
-    jmp->Ebx = context->Ebx;
-    jmp->Edi = context->Edi;
-    jmp->Esi = context->Esi;
-    jmp->Esp = context->Esp;
-    jmp->Eip = context->Eip;
     jmp->Cookie = MSVCRT_JMP_MAGIC;
     jmp->UnwindFunc = 0;
     jmp->Registration = (unsigned long)NtCurrentTeb()->Tib.ExceptionList;
@@ -311,7 +326,7 @@ void WINAPI __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args
     }
     else
     {
-        void **args = ((void**)context->Esp)+2;
+        void **args = ((void**)jmp->Esp)+2;
 
         if (nb_args > 0) jmp->UnwindFunc = (unsigned long)*args++;
         if (nb_args > 1) jmp->TryLevel = (unsigned long)*args++;
@@ -322,19 +337,21 @@ void WINAPI __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args
             memcpy( jmp->UnwindData, args, min( size, sizeof(jmp->UnwindData) ));
         }
     }
-    TRACE("returning 0\n");
-    context->Eax = 0;
+
+    TRACE("buf=%p ebx=%08lx esi=%08lx edi=%08lx ebp=%08lx esp=%08lx eip=%08lx frame=%08lx\n",
+          jmp, jmp->Ebx, jmp->Esi, jmp->Edi, jmp->Ebp, jmp->Esp, jmp->Eip, jmp->Registration );
+    return 0;
 }
 
 /*********************************************************************
  *		longjmp (MSVCRT.@)
  */
-DEFINE_REGS_ENTRYPOINT( MSVCRT_longjmp, 8, 0 );
-void WINAPI __regs_MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval, CONTEXT86* context)
+int MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval)
 {
     unsigned long cur_frame = 0;
 
-    TRACE("(%p,%d)\n", jmp, retval);
+    TRACE("buf=%p ebx=%08lx esi=%08lx edi=%08lx ebp=%08lx esp=%08lx eip=%08lx frame=%08lx retval=%08x\n",
+          jmp, jmp->Ebx, jmp->Esi, jmp->Edi, jmp->Ebp, jmp->Esp, jmp->Eip, jmp->Registration, retval );
 
     cur_frame=(unsigned long)NtCurrentTeb()->Tib.ExceptionList;
     TRACE("cur_frame=%lx\n",cur_frame);
@@ -360,14 +377,7 @@ void WINAPI __regs_MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval, 
     if (!retval)
         retval = 1;
 
-    TRACE("Jump to %lx returning %d\n",jmp->Eip,retval);
-    context->Ebp = jmp->Ebp;
-    context->Ebx = jmp->Ebx;
-    context->Edi = jmp->Edi;
-    context->Esi = jmp->Esi;
-    context->Esp = jmp->Esp;
-    context->Eip = jmp->Eip;
-    context->Eax = retval;
+    longjmp_set_regs( jmp, retval );
 }
 
 /*********************************************************************
