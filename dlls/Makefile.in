@@ -123,6 +123,7 @@ BASEDIRS = \
 	rsabase \
 	rsaenh \
 	secur32 \
+	security \
 	sensapi \
 	serialui \
 	setupapi \
@@ -374,6 +375,7 @@ SYMLINKS_SO = \
 	rsabase.dll.so \
 	rsaenh.dll.so \
 	secur32.dll.so \
+	security.dll.so \
 	sensapi.dll.so \
 	serialui.dll.so \
 	setupapi.dll.so \
@@ -834,6 +836,9 @@ rsaenh.dll.so: rsaenh/rsaenh.dll.so
 
 secur32.dll.so: secur32/secur32.dll.so
 	$(RM) $@ && $(LN_S) secur32/secur32.dll.so $@
+
+security.dll.so: security/security.dll.so
+	$(RM) $@ && $(LN_S) security/security.dll.so $@
 
 sensapi.dll.so: sensapi/sensapi.dll.so
 	$(RM) $@ && $(LN_S) sensapi/sensapi.dll.so $@
@@ -1692,6 +1697,7 @@ rpcrt4/rpcrt4.dll.so: rpcrt4
 rsabase/rsabase.dll.so: rsabase
 rsaenh/rsaenh.dll.so: rsaenh
 secur32/secur32.dll.so: secur32
+security/security.dll.so: security
 sensapi/sensapi.dll.so: sensapi
 serialui/serialui.dll.so: serialui
 setupapi/setupapi.dll.so: setupapi
