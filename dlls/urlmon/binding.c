@@ -351,7 +351,39 @@ static HRESULT WINAPI InternetBindInfo_GetBindString(IInternetBindInfo *iface,
         ULONG ulStringType, LPOLESTR *ppwzStr, ULONG cEl, ULONG *pcElFetched)
 {
     Binding *This = BINDINF_THIS(iface);
-    FIXME("(%p)->(%ld %p %ld %p)\n", This, ulStringType, ppwzStr, cEl, pcElFetched);
+
+    TRACE("(%p)->(%ld %p %ld %p)\n", This, ulStringType, ppwzStr, cEl, pcElFetched);
+
+    switch(ulStringType) {
+    case BINDSTRING_ACCEPT_MIMES: {
+        static const WCHAR wszMimes[] = {'*','/','*',0};
+
+        if(!ppwzStr || !pcElFetched)
+            return E_INVALIDARG;
+
+        ppwzStr[0] = CoTaskMemAlloc(sizeof(wszMimes));
+        memcpy(ppwzStr[0], wszMimes, sizeof(wszMimes));
+        *pcElFetched = 1;
+        return S_OK;
+    }
+    case BINDSTRING_USER_AGENT: {
+        IInternetBindInfo *bindinfo = NULL;
+        HRESULT hres;
+
+        hres = IBindStatusCallback_QueryInterface(This->callback, &IID_IInternetBindInfo,
+                                                  (void**)&bindinfo);
+        if(FAILED(hres))
+            return hres;
+
+        hres = IInternetBindInfo_GetBindString(bindinfo, ulStringType, ppwzStr,
+                                               cEl, pcElFetched);
+        IInternetBindInfo_Release(bindinfo);
+
+        return hres;
+    }
+    }
+
+    FIXME("not supported string type %ld\n", ulStringType);
     return E_NOTIMPL;
 }
 
