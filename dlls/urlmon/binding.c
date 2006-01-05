@@ -58,6 +58,77 @@ typedef struct {
 #define BINDINF(x)   ((IInternetBindInfo*)      &(x)->lpInternetBindInfoVtbl)
 #define SERVPROV(x)  ((IServiceProvider*)       &(x)->lpServiceProviderVtbl)
 
+static HRESULT WINAPI HttpNegotiate_QueryInterface(IHttpNegotiate2 *iface,
+                                                   REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(IID_IUnknown %p)\n", ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(&IID_IHttpNegotiate, riid)) {
+        TRACE("(IID_IHttpNegotiate %p)\n", ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(&IID_IHttpNegotiate2, riid)) {
+        TRACE("(IID_IHttpNegotiate2 %p)\n", ppv);
+        *ppv = iface;
+    }
+
+    if(*ppv) {
+        IHttpNegotiate2_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HttpNegotiate_AddRef(IHttpNegotiate2 *iface)
+{
+    URLMON_LockModule();
+    return 2;
+}
+
+static ULONG WINAPI HttpNegotiate_Release(IHttpNegotiate2 *iface)
+{
+    URLMON_UnlockModule();
+    return 1;
+}
+
+static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
+        LPCWSTR szURL, LPCWSTR szHeaders, DWORD dwReserved, LPWSTR *pszAdditionalHeaders)
+{
+    FIXME("(%s %s %ld %p)\n", debugstr_w(szURL), debugstr_w(szHeaders), dwReserved,
+          pszAdditionalHeaders);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HttpNegotiate_OnResponse(IHttpNegotiate2 *iface, DWORD dwResponseCode,
+        LPCWSTR szResponseHeaders, LPCWSTR szRequestHeaders,
+        LPWSTR *pszAdditionalRequestHeaders)
+{
+    FIXME("(%ld %s %s %p)\n", dwResponseCode, debugstr_w(szResponseHeaders),
+          debugstr_w(szRequestHeaders), pszAdditionalRequestHeaders);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HttpNegotiate_GetRootSecurityId(IHttpNegotiate2 *iface,
+        BYTE *pbSecurityId, DWORD *pcbSecurityId, DWORD_PTR dwReserved)
+{
+    FIXME("(%p %p %ld)\n", pbSecurityId, pcbSecurityId, dwReserved);
+    return E_NOTIMPL;
+}
+
+static const IHttpNegotiate2Vtbl HttpNegotiate2Vtbl = {
+    HttpNegotiate_QueryInterface,
+    HttpNegotiate_AddRef,
+    HttpNegotiate_Release,
+    HttpNegotiate_BeginningTransaction,
+    HttpNegotiate_OnResponse,
+    HttpNegotiate_GetRootSecurityId
+};
+
+static IHttpNegotiate2 HttpNegotiate = { &HttpNegotiate2Vtbl };
 
 #define BINDING_THIS(iface) DEFINE_THIS(Binding, Binding, iface)
 
@@ -425,7 +496,22 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
         REFGUID guidService, REFIID riid, void **ppv)
 {
     Binding *This = SERVPROV_THIS(iface);
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+
+    if(This->service_provider) {
+        hres = IServiceProvider_QueryService(This->service_provider, guidService,
+                                             riid, ppv);
+        if(SUCCEEDED(hres))
+            return hres;
+    }
+
+    if(IsEqualGUID(&IID_IHttpNegotiate, guidService)
+       || IsEqualGUID(&IID_IHttpNegotiate2, guidService))
+        return IHttpNegotiate2_QueryInterface(&HttpNegotiate, riid, ppv);
+
+    WARN("unknown service %s\n", debugstr_guid(guidService));
     return E_NOTIMPL;
 }
 
