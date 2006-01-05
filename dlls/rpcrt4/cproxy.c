@@ -104,7 +104,7 @@ static HRESULT WINAPI ObjectStubless(DWORD index)
   unsigned bytes = *(const WORD*)(fs+8) - STACK_ADJUST;
   TRACE("(%p)->(%ld)([%d bytes]) ret=%08lx\n", iface, index, bytes, *(DWORD*)(args+bytes));
 
-  return RPCRT4_NdrClientCall2(This->stubless->pStubDesc, fs, args);
+  return NdrClientCall2(This->stubless->pStubDesc, fs, args);
 }
 
 #else  /* __i386__ */
