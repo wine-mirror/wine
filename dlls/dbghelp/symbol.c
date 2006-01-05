@@ -1263,7 +1263,7 @@ PVOID WINAPI SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase)
  */
 BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL sym, LPSTR UnDecName, DWORD UnDecNameLength)
 {
-    TRACE("(%p %s %lu): stub\n", sym, UnDecName, UnDecNameLength);
+    TRACE("(%p %s %lu)\n", sym, UnDecName, UnDecNameLength);
     return UnDecorateSymbolName(sym->Name, UnDecName, UnDecNameLength, 
                                 UNDNAME_COMPLETE) != 0;
 }
@@ -1281,7 +1281,7 @@ DWORD WINAPI UnDecorateSymbolName(LPCSTR DecoratedName, LPSTR UnDecoratedName,
     static char* (*p_undname)(char*, const char*, int, void* (*)(size_t), void (*)(void*), unsigned short);
     static WCHAR szMsvcrt[] = {'m','s','v','c','r','t','.','d','l','l',0};
 
-    TRACE("(%s, %p, %ld, 0x%08lx): stub\n",
+    TRACE("(%s, %p, %ld, 0x%08lx)\n",
           debugstr_a(DecoratedName), UnDecoratedName, UndecoratedLength, Flags);
 
     if (!p_undname)
