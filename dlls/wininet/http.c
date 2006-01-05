@@ -32,6 +32,9 @@
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
+#ifdef HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -985,6 +988,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
     DWORD len;
     LPHTTPHEADERW Host;
+    char szaddr[32];
 
     TRACE("-->\n");
 
@@ -1140,10 +1144,11 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         goto lend;
     }
 
+    inet_ntop(lpwhs->socketAddress.sin_family, &lpwhs->socketAddress.sin_addr,
+              szaddr, sizeof(szaddr));
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_NAME_RESOLVED,
-                          &(lpwhs->socketAddress),
-                          sizeof(struct sockaddr_in));
+                          szaddr, strlen(szaddr)+1);
 
 lend:
     if( lpwhr )
@@ -1932,6 +1937,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
     LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
     LPWININETAPPINFOW hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
     WCHAR path[2048];
+    char szaddr[32];
 
     if(lpszUrl[0]=='/')
     {
@@ -2044,10 +2050,11 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
             return FALSE;
         }
 
+        inet_ntop(lpwhs->socketAddress.sin_family, &lpwhs->socketAddress.sin_addr,
+              szaddr, sizeof(szaddr));
         INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                               INTERNET_STATUS_NAME_RESOLVED,
-                              &(lpwhs->socketAddress),
-                              sizeof(struct sockaddr_in));
+                              szaddr, strlen(szaddr)+1);
 
         NETCON_close(&lpwhr->netConnection);
         NETCON_init(&lpwhr->netConnection,lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE);
@@ -2407,6 +2414,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     BOOL bSuccess = FALSE;
     LPWININETHTTPSESSIONW lpwhs;
     LPWININETAPPINFOW hIC = NULL;
+    char szaddr[32];
 
     TRACE("-->\n");
 
@@ -2420,10 +2428,12 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     lpwhs = (LPWININETHTTPSESSIONW)lpwhr->hdr.lpwhparent;
 
     hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
+    inet_ntop(lpwhs->socketAddress.sin_family, &lpwhs->socketAddress.sin_addr,
+              szaddr, sizeof(szaddr));
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_CONNECTING_TO_SERVER,
-                          &(lpwhs->socketAddress),
-                          sizeof(struct sockaddr_in));
+                          szaddr,
+                          strlen(szaddr)+1);
 
     if (!NETCON_create(&lpwhr->netConnection, lpwhs->socketAddress.sin_family,
                          SOCK_STREAM, 0))
@@ -2456,8 +2466,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_CONNECTED_TO_SERVER,
-                          &(lpwhs->socketAddress),
-                          sizeof(struct sockaddr_in));
+                          szaddr, strlen(szaddr)+1);
 
     bSuccess = TRUE;
 
