@@ -5358,152 +5358,158 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	switch (func_desc->funckind) {
 	case FUNC_PUREVIRTUAL:
 	case FUNC_VIRTUAL: {
-            int   numargs, numargs2, argspos, args2pos;
-            DWORD *args , *args2;
-            VARIANT *rgvarg = HeapAlloc(GetProcessHeap(), 0, sizeof(VARIANT) * func_desc->cParams);
+            VARIANTARG *rgvarg = NULL;
+            VARIANTARG **prgpvarg = HeapAlloc(GetProcessHeap(), 0, sizeof(*prgpvarg) * func_desc->cParams);
+            VARTYPE *rgvt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rgvt) * func_desc->cParams);
             VARIANT varresult;
-
-            memcpy(rgvarg,pDispParams->rgvarg,sizeof(VARIANT)*pDispParams->cArgs);
+            SHORT missing_param_offset = func_desc->cParams;
+            SHORT missing_params = 0;
+            void *retval; /* pointer for storing byref retvals in */
 
             hres = S_OK;
-            numargs = 1; /* sizeof(thisptr) */
-            numargs2 = 0;
             for (i = 0; i < func_desc->cParams; i++)
             {
                 TYPEDESC *tdesc = &func_desc->lprgelemdescParam[i].tdesc;
-
-                numargs += _argsize(tdesc->vt);
-                if (i>=pDispParams->cArgs) { /* arguments to return */
-                    if (tdesc->vt == VT_PTR) {
-                        numargs2	+= _argsize(tdesc->u.lptdesc->vt);
-                    } else {
-                        FIXME("The variant type here should have been VT_PTR, not vt %d\n", tdesc->vt);
-                        numargs2	+= _argsize(tdesc->vt);
-                    }
-                }
+                USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+                hres = typedescvt_to_variantvt((ITypeInfo *)iface, tdesc, &rgvt[i]);
+                if (FAILED(hres))
+                    goto func_fail;
+                if ((i >= pDispParams->cArgs) &&
+                    (wParamFlags & PARAMFLAG_FOPT) &&
+                    !(wParamFlags & PARAMFLAG_FHASDEFAULT))
+                    missing_params++;
             }
 
-            args = HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*numargs);
-            args2 = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DWORD)*numargs2);
+            rgvarg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rgvarg) * (func_desc->cParams + missing_params));
 
-            args[0] = (DWORD)pIUnk;
-            argspos = 1; args2pos = 0;
+            TRACE("changing args\n");
             for (i = 0; i < func_desc->cParams; i++)
             {
-                ELEMDESC *elemdesc = &(func_desc->lprgelemdescParam[i]);
-                TYPEDESC *tdesc = &(elemdesc->tdesc);
-                USHORT paramFlags = elemdesc->u.paramdesc.wParamFlags;
-                int arglen = _argsize(tdesc->vt);
-
-                if (i<pDispParams->cArgs)
+                USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+                if (wParamFlags & PARAMFLAG_FRETVAL)
                 {
-                    VARIANT *arg = &rgvarg[pDispParams->cArgs-i-1];
-
-                    if (paramFlags & PARAMFLAG_FOPT) {
-                        if(i < func_desc->cParams - func_desc->cParamsOpt)
-                            ERR("Parameter has PARAMFLAG_FOPT flag but is not one of last cParamOpt parameters\n");
-                        if(V_VT(arg) == VT_EMPTY
-                          || ((V_ISBYREF(arg)) && !V_BYREF(arg))) {
-                               /* FIXME: Documentation says that we do this when parameter is left unspecified.
-                                         How to determine it? */
-
-                            if(paramFlags & PARAMFLAG_FHASDEFAULT)
-                                FIXME("PARAMFLAG_FHASDEFAULT flag not supported\n");
-                            V_VT(arg) = VT_ERROR;
-                            V_ERROR(arg) = DISP_E_PARAMNOTFOUND;
-                            arglen = _argsize(VT_ERROR);
-                        }
+                    /* note: this check is placed so that if the caller passes
+                     * in a VARIANTARG for the retval we just ignore it, like
+                     * native does */
+                    if (i == func_desc->cParams - 1)
+                    {
+                        VARIANTARG *arg;
+                        arg = prgpvarg[i] = &rgvarg[i];
+                        memset(arg, 0, sizeof(*arg));
+                        V_VT(arg) = rgvt[i];
+                        retval = NULL;
+                        V_BYREF(arg) = &retval;
                     }
-                    hres = _copy_arg(iface, tdesc, &args[argspos], arg, tdesc->vt);
-                    if (FAILED(hres)) goto func_fail;
-                    argspos += arglen;
+                    else
+                    {
+                        ERR("[retval] parameter must be the last parameter of the method (%d/%d)\n", i, func_desc->cParams);
+                        hres = E_UNEXPECTED;
+                        break;
+                    }
                 }
-                else if (paramFlags & PARAMFLAG_FOPT)
+                else if (i < pDispParams->cArgs)
                 {
-                    VARIANT *arg = &rgvarg[i];
-
-                    if (i < func_desc->cParams - func_desc->cParamsOpt)
-                        ERR("Parameter has PARAMFLAG_FOPT flag but is not one of last cParamOpt parameters\n");
-                    if (paramFlags & PARAMFLAG_FHASDEFAULT)
-                        FIXME("PARAMFLAG_FHASDEFAULT flag not supported\n");
-
-                    V_VT(arg) = VT_ERROR;
-                    V_ERROR(arg) = DISP_E_PARAMNOTFOUND;
-                    arglen = _argsize(VT_ERROR);
-                    hres = _copy_arg(iface, tdesc, &args[argspos], arg, tdesc->vt);
-                    if (FAILED(hres)) goto func_fail;
-                    argspos += arglen;
+                    V_VT(&rgvarg[i]) = V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i]);
+                    dump_Variant(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i]);
+                    /* FIXME: this doesn't work for VT_BYREF arguments if
+                     * they are not the same type as in the paramdesc */
+                    hres = VariantChangeType(&rgvarg[i], &pDispParams->rgvarg[pDispParams->cArgs - 1 - i], 0, rgvt[i]);
+                    if (FAILED(hres))
+                    {
+                        ERR("failed to convert param %d to vt %d\n", i, rgvt[i]);
+                        break;
+                    }
+                    V_VT(&rgvarg[i]) = rgvt[i];
+                    prgpvarg[i] = &rgvarg[i];
+                }
+                else if (wParamFlags & PARAMFLAG_FOPT)
+                {
+                    VARIANTARG *arg;
+                    arg = prgpvarg[i] = &rgvarg[i];
+                    if (wParamFlags & PARAMFLAG_FHASDEFAULT)
+                    {
+                        hres = VariantCopy(arg, &func_desc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
+                        if (FAILED(hres))
+                            break;
+                    }
+                    else
+                    {
+                        V_VT(arg) = VT_VARIANT | VT_BYREF;
+                        V_VARIANTREF(arg) = &rgvarg[missing_param_offset];
+                        missing_param_offset++;
+                        V_VT(V_VARIANTREF(arg)) = VT_ERROR;
+                        V_ERROR(V_VARIANTREF(arg)) = DISP_E_PARAMNOTFOUND;
+                    }
                 }
                 else
                 {
-                    if (tdesc->vt == VT_PTR)
-                        arglen = _argsize(tdesc->u.lptdesc->vt);
-                    else
-                        FIXME("set %d to pointer for get (type is %d)\n",i,tdesc->vt);
-
-                    /* Supply pointers for the rest, so propertyget works*/
-                    args[argspos] = (DWORD)&args2[args2pos];
-
-                    /* If pointer to variant, pass reference it. */
-                    if ((tdesc->vt == VT_PTR) &&
-                        (tdesc->u.lptdesc->vt == VT_VARIANT) &&
-                        pVarResult
-                    )
-                        args[argspos]= (DWORD)pVarResult;
-                    argspos	+= 1;
-                    args2pos	+= arglen;
+                    hres = DISP_E_BADPARAMCOUNT;
+                    break;
                 }
             }
             if (func_desc->cParamsOpt < 0)
-                FIXME("Does not support optional parameters (%d)\n", func_desc->cParamsOpt);
+            {
+                FIXME("Does not support safearray optional parameters\n");
+                hres = DISP_E_BADPARAMCOUNT;
+                goto func_fail; /* FIXME: we don't free changed types here */
+            }
 
             V_VT(&varresult) = 0;
             hres = typedescvt_to_variantvt((ITypeInfo *)iface, &func_desc->elemdescFunc.tdesc, &V_VT(&varresult));
             if (FAILED(hres)) goto func_fail; /* FIXME: we don't free changed types here */
 
-            V_ERROR(&varresult) = _invoke((*(FARPROC**)pIUnk)[func_desc->oVft/4],
-                    func_desc->callconv,
-                    numargs,
-                    args
-            );
+            hres = DispCallFunc(pIUnk, func_desc->oVft, func_desc->callconv,
+                                V_VT(&varresult), func_desc->cParams, rgvt,
+                                prgpvarg, &varresult);
 
             for (i = 0; i < func_desc->cParams; i++)
             {
                 USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
                 if (wParamFlags & PARAMFLAG_FRETVAL)
                 {
-                    ELEMDESC *elemdesc = &func_desc->lprgelemdescParam[i];
-                    TYPEDESC *tdesc = &elemdesc->tdesc;
-                    VARIANTARG varresult;
-                    V_VT(&varresult) = 0;
-                    hres = typedescvt_to_variantvt((ITypeInfo *)iface, tdesc, &V_VT(&varresult));
-                    if (hres)
-                        break;
-                    /* FIXME: this is really messy - we should keep the
-                        * args in VARIANTARGs rather than a DWORD array */
-                    memcpy(&V_UI4(&varresult), &args[i+1], sizeof(DWORD));
                     if (TRACE_ON(ole))
                     {
                         TRACE("varresult: ");
-                        dump_Variant(&varresult);
+                        dump_Variant(prgpvarg[i]);
                     }
 
                     if (pVarResult)
                         /* deref return value */
-                        hres = VariantCopyInd(pVarResult, &varresult);
+                        hres = VariantCopyInd(pVarResult, prgpvarg[i]);
 
                     /* free data stored in varresult. Note that
                      * VariantClear doesn't do what we want because we are
                      * working with byref types. */
                     /* FIXME: clear safearrays, bstrs, records and
-                        * variants here too */
-                    if ((V_VT(&varresult) == (VT_UNKNOWN | VT_BYREF)) ||
-                        (V_VT(&varresult) == (VT_DISPATCH | VT_BYREF)))
+                     * variants here too */
+                    if ((V_VT(prgpvarg[i]) == (VT_UNKNOWN | VT_BYREF)) ||
+                         (V_VT(prgpvarg[i]) == (VT_DISPATCH | VT_BYREF)))
                     {
-                        if(*V_UNKNOWNREF(&varresult))
-                            IUnknown_Release(*V_UNKNOWNREF(&varresult));
+                        if(*V_UNKNOWNREF(prgpvarg[i]))
+                            IUnknown_Release(*V_UNKNOWNREF(prgpvarg[i]));
                     }
                     break;
+                }
+                else if (i < pDispParams->cArgs)
+                {
+                    if (wParamFlags & PARAMFLAG_FOUT)
+                    {
+                        hres = VariantChangeType(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i],
+                                                 &rgvarg[i], 0,
+                                                 V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i]));
+                        if (FAILED(hres))
+                        {
+                            ERR("failed to convert param %d to vt %d\n", i,
+                                V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i]));
+                            break;
+                        }
+                    }
+                    VariantClear(&rgvarg[i]);
+                }
+                else if (wParamFlags & PARAMFLAG_FOPT)
+                {
+                    if (wParamFlags & PARAMFLAG_FHASDEFAULT)
+                        VariantClear(&rgvarg[i]);
                 }
             }
 
@@ -5515,9 +5521,9 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             }
 
 func_fail:
+            HeapFree(GetProcessHeap(), 0, prgpvarg);
             HeapFree(GetProcessHeap(), 0, rgvarg);
-            HeapFree(GetProcessHeap(),0,args2);
-            HeapFree(GetProcessHeap(),0,args);
+            HeapFree(GetProcessHeap(), 0, rgvt);
             break;
         }
 	case FUNC_DISPATCH:  {
