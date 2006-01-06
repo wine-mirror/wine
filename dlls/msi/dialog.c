@@ -59,6 +59,7 @@ struct msi_control_tag
     HBITMAP hBitmap;
     HICON hIcon;
     LPWSTR tabnext;
+    HMODULE hDll;
     WCHAR name[1];
 };
 
@@ -328,6 +329,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     control->value = NULL;
     control->hBitmap = NULL;
     control->hIcon = NULL;
+    control->hDll = NULL;
     control->tabnext = strdupW( MSI_RecordGetString( rec, 11) );
 
     x = MSI_RecordGetInteger( rec, 4 );
@@ -700,7 +702,6 @@ struct msi_scrolltext_info
     msi_dialog *dialog;
     msi_control *control;
     WNDPROC oldproc;
-    HMODULE hRichedit;
 };
 
 static LRESULT WINAPI
@@ -718,7 +719,6 @@ MSIScrollText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch( msg )
     {
     case WM_NCDESTROY:
-        FreeLibrary( info->hRichedit );
         msi_free( info );
         RemovePropW( hWnd, szButtonData );
         break;
@@ -778,23 +778,26 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
     };
     struct msi_scrolltext_info *info;
     msi_control *control;
+    HMODULE hRichedit;
     DWORD style;
 
     info = msi_alloc( sizeof *info );
     if (!info)
         return ERROR_FUNCTION_FAILED;
 
-    info->hRichedit = LoadLibraryA("riched20");
+    hRichedit = LoadLibraryA("riched20");
 
     style = WS_BORDER | ES_MULTILINE | WS_VSCROLL |
             ES_READONLY | ES_AUTOVSCROLL | WS_TABSTOP;
     control = msi_dialog_add_control( dialog, rec, szRichEdit20W, style );
     if (!control)
     {
-        FreeLibrary( info->hRichedit );
+        FreeLibrary( hRichedit );
         msi_free( info );
         return ERROR_FUNCTION_FAILED;
     }
+
+    control->hDll = hRichedit;
 
     info->dialog = dialog;
     info->control = control;
@@ -2212,6 +2215,8 @@ void msi_dialog_destroy( msi_dialog *dialog )
             DestroyIcon( t->hIcon );
         msi_free( t->tabnext );
         msi_free( t );
+        if (t->hDll)
+            FreeLibrary( t->hDll );
     }
 
     /* destroy the list of fonts */
