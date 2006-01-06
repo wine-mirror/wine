@@ -144,7 +144,10 @@ HRESULT WINAPI CStdStubBuffer_Invoke(LPRPCSTUBBUFFER iface,
   DWORD dwPhase = STUB_UNMARSHAL;
   TRACE("(%p)->Invoke(%p,%p)\n",This,pMsg,pChannel);
 
-  STUB_HEADER(This).pDispatchTable[pMsg->iMethod](iface, pChannel, (PRPC_MESSAGE)pMsg, &dwPhase);
+  if (STUB_HEADER(This).pDispatchTable)
+    STUB_HEADER(This).pDispatchTable[pMsg->iMethod](iface, pChannel, (PRPC_MESSAGE)pMsg, &dwPhase);
+  else /* pure interpreted */
+    NdrStubCall2(iface, pChannel, (PRPC_MESSAGE)pMsg, &dwPhase);
   return S_OK;
 }
 
