@@ -4287,7 +4287,12 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
          it means that function is called by ITypeLib2_Release */
       ITypeLib2_Release((ITypeLib2*)This->pTypeLib);
     } else   {
-      FIXME("destroy child objects\n");
+      static int once = 0;
+      if (!once)
+      {
+          once = 1;
+          FIXME("destroy child objects\n");
+      }
 
       TRACE("destroying ITypeInfo(%p)\n",This);
       if (This->Name)
