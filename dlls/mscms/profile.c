@@ -775,7 +775,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
 
     if (profile->dwType & PROFILE_MEMBUFFER)
     {
-        FIXME( "access flags not implemented for memory based profiles\n" );
+        /* FIXME: access flags not implemented for memory based profiles */
 
         iccprofile = profile->pProfileData;
         size = profile->cbDataSize;
