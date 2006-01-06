@@ -722,7 +722,8 @@ MSIScrollText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         msi_free( info );
         RemovePropW( hWnd, szButtonData );
         break;
-    case WM_VSCROLL:
+    case WM_PAINT:
+        /* native MSI sets a wait cursor here */
         msi_dialog_button_handler( info->dialog, info->control, BN_CLICKED );
         break;
     }
@@ -2007,16 +2008,29 @@ static LRESULT WINAPI MSIDialog_WndProc( HWND hwnd, UINT msg,
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
+static BOOL CALLBACK msi_radioground_child_enum( HWND hWnd, LPARAM lParam )
+{
+    EnableWindow( hWnd, lParam );
+    return TRUE;
+}
+
 static LRESULT WINAPI MSIRadioGroup_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     WNDPROC oldproc = (WNDPROC) GetPropW(hWnd, szButtonData);
+    LRESULT r;
 
     TRACE("hWnd %p msg %04x wParam 0x%08x lParam 0x%08lx\n", hWnd, msg, wParam, lParam);
 
     if (msg == WM_COMMAND) /* Forward notifications to dialog */
         SendMessageW(GetParent(hWnd), msg, wParam, lParam);
 
-    return CallWindowProcW(oldproc, hWnd, msg, wParam, lParam);
+    r = CallWindowProcW(oldproc, hWnd, msg, wParam, lParam);
+
+    /* make sure the radio buttons show as disabled if the parent is disabled */
+    if (msg == WM_ENABLE)
+        EnumChildWindows( hWnd, msi_radioground_child_enum, wParam );
+
+    return r;
 }
 
 static LRESULT WINAPI MSIHiddenWindowProc( HWND hwnd, UINT msg,
