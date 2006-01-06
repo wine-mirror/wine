@@ -877,10 +877,10 @@ static LRESULT SYSLINK_Draw (SYSLINK_INFO *infoPtr, HDC hdc)
                 ExtTextOutW(hdc, bl->rc.left, bl->rc.top, ETO_OPAQUE | ETO_CLIPPED, &bl->rc, tx, bl->nChars, NULL);
                 if((Current->Type == slLink) && (Current->u.Link.state & LIS_FOCUSED) && infoPtr->HasFocus)
                 {
-                    COLORREF PrevColor;
-                    PrevColor = SetBkColor(hdc, OldBkColor);
+                    COLORREF PrevTextColor;
+                    PrevTextColor = SetTextColor(hdc, infoPtr->TextColor);
                     DrawFocusRect(hdc, &bl->rc);
-                    SetBkColor(hdc, PrevColor);
+                    SetTextColor(hdc, PrevTextColor);
                 }
                 tx += bl->nChars;
                 n -= bl->nChars + bl->nSkip;
@@ -907,8 +907,11 @@ static LRESULT SYSLINK_Paint (SYSLINK_INFO *infoPtr, HDC hdcParam)
     PAINTSTRUCT ps;
 
     hdc = hdcParam ? hdcParam : BeginPaint (infoPtr->Self, &ps);
-    SYSLINK_Draw (infoPtr, hdc);
-    if (!hdcParam) EndPaint (infoPtr->Self, &ps);
+    if (hdc)
+    {
+        SYSLINK_Draw (infoPtr, hdc);
+        if (!hdcParam) EndPaint (infoPtr->Self, &ps);
+    }
     return 0;
 }
 
@@ -972,8 +975,7 @@ static LRESULT SYSLINK_SetText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
     /* clear the document */
     SYSLINK_ClearDoc(infoPtr);
     
-    textlen = lstrlenW(Text);
-    if(Text == NULL || textlen == 0)
+    if(Text == NULL || (textlen = lstrlenW(Text)) == 0)
     {
         return TRUE;
     }
@@ -983,9 +985,13 @@ static LRESULT SYSLINK_SetText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
     {
         /* Render text position and word wrapping in memory */
         HDC hdc = GetDC(infoPtr->Self);
-        SYSLINK_Render(infoPtr, hdc);
-        SYSLINK_Draw(infoPtr, hdc);
-        ReleaseDC(infoPtr->Self, hdc);
+        if (hdc != NULL)
+        {
+            SYSLINK_Render(infoPtr, hdc);
+            ReleaseDC(infoPtr->Self, hdc);
+
+            InvalidateRect(infoPtr->Self, NULL, TRUE);
+        }
     }
     
     return TRUE;
