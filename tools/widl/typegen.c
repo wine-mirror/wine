@@ -64,6 +64,33 @@ static inline int type_has_ref(const type_t *type)
     return (type->type == 0 && type->ref);
 }
 
+static inline int is_base_type(unsigned char type)
+{
+    switch (type)
+    {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_USMALL:
+    case RPC_FC_SMALL:
+    case RPC_FC_WCHAR:
+    case RPC_FC_USHORT:
+    case RPC_FC_SHORT:
+    case RPC_FC_ULONG:
+    case RPC_FC_LONG:
+    case RPC_FC_HYPER:
+    case RPC_FC_IGNORE:
+    case RPC_FC_FLOAT:
+    case RPC_FC_DOUBLE:
+    case RPC_FC_ENUM16:
+    case RPC_FC_ENUM32:
+    case RPC_FC_ERROR_STATUS_T:
+        return TRUE;
+
+    default:
+        return FALSE;
+    }
+}
+
 static size_t write_procformatstring_type(FILE *file, int indent,
     const type_t *type, int ptr_level, const expr_t *array, const char *name,
     int is_in, int is_out, int is_return, unsigned int *type_offset)
@@ -75,7 +102,7 @@ static size_t write_procformatstring_type(FILE *file, int indent,
                                            array, name, is_in, is_out,
                                            is_return, type_offset);
 
-    if (ptr_level == 0 && !array)
+    if (ptr_level == 0 && !array && is_base_type(type->type))
     {
         if (is_return)
             print_file(file, indent, "0x53,    /* FC_RETURN_PARAM_BASETYPE */\n");
@@ -198,7 +225,7 @@ static size_t write_typeformatstring_type(FILE *file, int indent,
             type->ref, 0 /* FIXME */, array, name);
 
     /* basic types don't need a type format string */
-    if (ptr_level == 0 && !array)
+    if (ptr_level == 0 && !array && is_base_type(type->type))
         return 0;
 
     if ((ptr_level == 1 && !type_has_ref(type)) ||
@@ -310,6 +337,20 @@ static unsigned int get_required_buffer_size_type(
         case RPC_FC_DOUBLE:
             *alignment = 8;
             return 8;
+
+        case RPC_FC_STRUCT:
+        {
+            size_t size = 0;
+            const var_t *field;
+            for (field = type->fields; field; field = NEXT_LINK(field))
+            {
+                unsigned int alignment;
+                size += get_required_buffer_size_type(
+                    field->type, field->ptr_level, field->array, field->name,
+                    &alignment);
+            }
+            return size;
+        }
 
         default:
             error("get_required_buffer_size: Unknown/unsupported type: %s (0x%02x)\n", name, type->type);
