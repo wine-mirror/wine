@@ -25,10 +25,7 @@ BEGIN {
 }
 
 use config qw(
-    file_type files_filter
-    file_skip files_skip
-    file_normalize
-    get_spec_files
+    files_filter files_skip
     $current_dir $wine_dir $winapi_dir
 );
 use output qw($output);
