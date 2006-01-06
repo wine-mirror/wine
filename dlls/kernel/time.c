@@ -77,7 +77,11 @@ static inline int IsLeapYear(int Year)
 /***********************************************************************
  *  TIME_DayLightCompareDate
  *
- *  Compares two dates without looking at the year
+ * Compares two dates without looking at the year.
+ *
+ * PARAMS
+ *   date        [in] The local time to compare.
+ *   compareDate [in] The daylight saving begin or end date.
  *
  * RETURNS
  *
@@ -86,10 +90,8 @@ static inline int IsLeapYear(int Year)
  *   1 if date > compareDate
  *  -2 if an error occurs
  */
-static int TIME_DayLightCompareDate(
-    const SYSTEMTIME *date,        /* [in] The local time to compare. */
-    const SYSTEMTIME *compareDate) /* [in] The daylight saving begin
-                                       or end date */
+static int TIME_DayLightCompareDate( const SYSTEMTIME *date,
+    const SYSTEMTIME *compareDate )
 {
     int limit_day, dayinsecs;
 
@@ -133,19 +135,21 @@ static int TIME_DayLightCompareDate(
 /***********************************************************************
  *  TIME_CompTimeZoneID
  *
- *  Computes the local time bias for a given time and time zone
+ *  Computes the local time bias for a given time and time zone.
  *
- *  Returns:
+ *  PARAMS
+ *      pTZinfo     [in] The time zone data.
+ *      lpFileTime  [in] The system or local time.
+ *      islocal     [in] it is local time.
+ *
+ *  RETURNS
  *      TIME_ZONE_ID_INVALID    An error occurred
  *      TIME_ZONE_ID_UNKNOWN    There are no transition time known
  *      TIME_ZONE_ID_STANDARD   Current time is standard time
  *      TIME_ZONE_ID_DAYLIGHT   Current time is dayligh saving time
  */
-static BOOL TIME_CompTimeZoneID (
-    const TIME_ZONE_INFORMATION *pTZinfo, /* [in] The time zone data. */
-    FILETIME      *lpFileTime,            /* [in] The system or local time. */
-    BOOL           islocal                /* [in] it is local time */       
-    )
+static BOOL TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
+    FILETIME *lpFileTime, BOOL islocal )
 {
     int ret;
     BOOL beforeStandardDate, afterDaylightDate;
@@ -216,15 +220,16 @@ static BOOL TIME_CompTimeZoneID (
  *
  *  Calculates whether daylight saving is on now.
  *
- *  Returns:
+ *  PARAMS
+ *      pTzi [in] Timezone info.
+ *
+ *  RETURNS
  *      TIME_ZONE_ID_INVALID    An error occurred
  *      TIME_ZONE_ID_UNKNOWN    There are no transition time known
  *      TIME_ZONE_ID_STANDARD   Current time is standard time
  *      TIME_ZONE_ID_DAYLIGHT   Current time is dayligh saving time
  */
-static DWORD TIME_ZoneID(
-        const TIME_ZONE_INFORMATION  *pTzi   /* Timezone info */
-        )
+static DWORD TIME_ZoneID( const TIME_ZONE_INFORMATION *pTzi )
 {
     FILETIME ftTime;
     GetSystemTimeAsFileTime( &ftTime);
@@ -234,19 +239,19 @@ static DWORD TIME_ZoneID(
 /***********************************************************************
  *  TIME_GetTimezoneBias
  *
- *  Calculates the local time bias for a given time zone
+ *  Calculates the local time bias for a given time zone.
+ *
+ * PARAMS
+ *  pTZinfo    [in]  The time zone data.
+ *  lpFileTime [in]  The system or local time.
+ *  islocal    [in]  It is local time.
+ *  pBias      [out] The calculated bias in minutes.
  *
  * RETURNS
- *
- *  Returns TRUE when the time zone bias was calculated.
+ *  TRUE when the time zone bias was calculated.
  */
-static BOOL TIME_GetTimezoneBias(
-    const TIME_ZONE_INFORMATION
-                  *pTZinfo, /* [in] The time zone data. */
-    FILETIME      *lpFileTime,         /* [in] The system or local time. */
-    BOOL           islocal,            /* [in] it is local time */       
-    LONG          *pBias               /* [out] The calculated bias in minutes */
-    )
+static BOOL TIME_GetTimezoneBias( const TIME_ZONE_INFORMATION *pTZinfo,
+    FILETIME *lpFileTime, BOOL islocal, LONG *pBias )
 {
     LONG bias = pTZinfo->Bias;
     DWORD tzid = TIME_CompTimeZoneID( pTZinfo, lpFileTime, islocal);
@@ -268,13 +273,15 @@ static BOOL TIME_GetTimezoneBias(
  *  Set the local time using current time zone and daylight
  *  savings settings.
  *
+ * PARAMS
+ *  systime [in] The desired local time.
+ *
  * RETURNS
- *  Success: TRUE. The time was set
+ *  Success: TRUE. The time was set.
  *  Failure: FALSE, if the time was invalid or caller does not have
  *           permission to change the time.
  */
-BOOL WINAPI SetLocalTime(
-    const SYSTEMTIME *systime) /* [in] The desired local time. */
+BOOL WINAPI SetLocalTime( const SYSTEMTIME *systime )
 {
     FILETIME ft;
     LARGE_INTEGER st, st2;
@@ -298,16 +305,19 @@ BOOL WINAPI SetLocalTime(
  *  Get the period between clock interrupts and the amount the clock
  *  is adjusted each interrupt so as to keep it in sync with an external source.
  *
+ * PARAMS
+ *  lpTimeAdjustment [out] The clock adjustment per interrupt in 100's of nanoseconds.
+ *  lpTimeIncrement  [out] The time between clock interrupts in 100's of nanoseconds.
+ *  lpTimeAdjustmentDisabled [out] The clock synchronisation has been disabled.
+ *
  * RETURNS
  *  TRUE.
  *
  * BUGS
  *  Only the special case of disabled time adjustments is supported.
  */
-BOOL WINAPI GetSystemTimeAdjustment(
-    PDWORD lpTimeAdjustment,         /* [out] The clock adjustment per interrupt in 100's of nanoseconds. */
-    PDWORD lpTimeIncrement,          /* [out] The time between clock interrupts in 100's of nanoseconds. */
-    PBOOL  lpTimeAdjustmentDisabled) /* [out] The clock synchronisation has been disabled. */
+BOOL WINAPI GetSystemTimeAdjustment( PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement,
+    PBOOL  lpTimeAdjustmentDisabled )
 {
     *lpTimeAdjustment = 0;
     *lpTimeIncrement = 0;
@@ -321,13 +331,15 @@ BOOL WINAPI GetSystemTimeAdjustment(
  *
  *  Set the system time in utc.
  *
+ * PARAMS
+ *  systime [in] The desired system time.
+ *
  * RETURNS
- *  Success: TRUE. The time was set
+ *  Success: TRUE. The time was set.
  *  Failure: FALSE, if the time was invalid or caller does not have
  *           permission to change the time.
  */
-BOOL WINAPI SetSystemTime(
-    const SYSTEMTIME *systime) /* [in] The desired system time. */
+BOOL WINAPI SetSystemTime( const SYSTEMTIME *systime )
 {
     FILETIME ft;
     LARGE_INTEGER t;
@@ -347,13 +359,15 @@ BOOL WINAPI SetSystemTime(
  *
  *  Enables or disables the timing adjustments to the system's clock.
  *
+ * PARAMS
+ *  dwTimeAdjustment        [in] Number of units to add per clock interrupt.
+ *  bTimeAdjustmentDisabled [in] Adjustment mode.
+ *
  * RETURNS
  *  Success: TRUE.
  *  Failure: FALSE.
  */
-BOOL WINAPI SetSystemTimeAdjustment(
-    DWORD dwTimeAdjustment,
-    BOOL bTimeAdjustmentDisabled)
+BOOL WINAPI SetSystemTimeAdjustment( DWORD dwTimeAdjustment, BOOL bTimeAdjustmentDisabled )
 {
     /* Fake function for now... */
     FIXME("(%08lx,%d): stub !\n", dwTimeAdjustment, bTimeAdjustmentDisabled);
@@ -365,14 +379,16 @@ BOOL WINAPI SetSystemTimeAdjustment(
  *
  *  Get information about the current local time zone.
  *
+ * PARAMS
+ *  tzinfo [out] Destination for time zone information.
+ *
  * RETURNS
- *      TIME_ZONE_ID_INVALID    An error occurred
- *      TIME_ZONE_ID_UNKNOWN    There are no transition time known
- *      TIME_ZONE_ID_STANDARD   Current time is standard time
- *      TIME_ZONE_ID_DAYLIGHT   Current time is dayligh saving time
+ *  TIME_ZONE_ID_INVALID    An error occurred
+ *  TIME_ZONE_ID_UNKNOWN    There are no transition time known
+ *  TIME_ZONE_ID_STANDARD   Current time is standard time
+ *  TIME_ZONE_ID_DAYLIGHT   Current time is dayligh saving time
  */
-DWORD WINAPI GetTimeZoneInformation(
-    LPTIME_ZONE_INFORMATION tzinfo) /* [out] Destination for time zone information */
+DWORD WINAPI GetTimeZoneInformation( LPTIME_ZONE_INFORMATION tzinfo )
 {
     NTSTATUS status;
 
@@ -390,12 +406,14 @@ DWORD WINAPI GetTimeZoneInformation(
  *
  *  Change the settings of the current local time zone.
  *
+ * PARAMS
+ *  tzinfo [in] The new time zone.
+ *
  * RETURNS
- *  Success: TRUE. The time zone was updated with the settings from tzinfo
+ *  Success: TRUE. The time zone was updated with the settings from tzinfo.
  *  Failure: FALSE.
  */
-BOOL WINAPI SetTimeZoneInformation(
-    const TIME_ZONE_INFORMATION *tzinfo) /* [in] The new time zone. */
+BOOL WINAPI SetTimeZoneInformation( const TIME_ZONE_INFORMATION *tzinfo )
 {
     NTSTATUS status;
     status = RtlSetTimeZoneInformation( (RTL_TIME_ZONE_INFORMATION*) tzinfo );
@@ -409,16 +427,19 @@ BOOL WINAPI SetTimeZoneInformation(
  *
  *  Convert a utc system time to a local time in a given time zone.
  *
+ * PARAMS
+ *  lpTimeZoneInformation [in]  The desired time zone.
+ *  lpUniversalTime       [in]  The utc time to base local time on.
+ *  lpLocalTime           [out] The local time in the time zone.
+ *
  * RETURNS
  *  Success: TRUE. lpLocalTime contains the converted time
  *  Failure: FALSE.
  */
 
 BOOL WINAPI SystemTimeToTzSpecificLocalTime(
-    LPTIME_ZONE_INFORMATION
-           lpTimeZoneInformation, /* [in] The desired time zone. */
-    LPSYSTEMTIME lpUniversalTime, /* [in] The utc time to base local time on. */
-    LPSYSTEMTIME lpLocalTime)     /* [out] The local time in the time zone. */
+    LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
+    LPSYSTEMTIME lpUniversalTime, LPSYSTEMTIME lpLocalTime )
 {
     FILETIME ft;
     LONG lBias;
@@ -453,14 +474,18 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
  *
  *  Converts a local time to a time in utc.
  *
+ * PARAMS
+ *  lpTimeZoneInformation [in]  The desired time zone.
+ *  lpLocalTime           [in]  The local time.
+ *  lpUniversalTime       [out] The calculated utc time.
+ *
  * RETURNS
- *  Success: TRUE. lpUniversalTime contains the converted time
+ *  Success: TRUE. lpUniversalTime contains the converted time.
  *  Failure: FALSE.
  */
 BOOL WINAPI TzSpecificLocalTimeToSystemTime(
-    LPTIME_ZONE_INFORMATION lpTimeZoneInformation, /* [in] The desired time zone. */
-    LPSYSTEMTIME            lpLocalTime,           /* [in] The local time. */
-    LPSYSTEMTIME            lpUniversalTime)       /* [out] The calculated utc time. */
+    LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
+    LPSYSTEMTIME lpLocalTime, LPSYSTEMTIME lpUniversalTime)
 {
     FILETIME ft;
     LONG lBias;
@@ -534,6 +559,13 @@ static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
  *  Get the user and kernel execution times of a process,
  *  along with the creation and exit times if known.
  *
+ * PARAMS
+ *  hprocess       [in]  The process to be queried.
+ *  lpCreationTime [out] The creation time of the process.
+ *  lpExitTime     [out] The exit time of the process if exited.
+ *  lpKernelTime   [out] The time spent in kernel routines in 100's of nanoseconds.
+ *  lpUserTime     [out] The time spent in user routines in 100's of nanoseconds.
+ *
  * RETURNS
  *  TRUE.
  *
@@ -545,12 +577,8 @@ static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
  * BUGS
  *  lpCreationTime and lpExitTime are not initialised in the Wine implementation.
  */
-BOOL WINAPI GetProcessTimes(
-    HANDLE     hprocess,       /* [in] The process to be queried (obtained from PROCESS_QUERY_INFORMATION). */
-    LPFILETIME lpCreationTime, /* [out] The creation time of the process. */
-    LPFILETIME lpExitTime,     /* [out] The exit time of the process if exited. */
-    LPFILETIME lpKernelTime,   /* [out] The time spent in kernel routines in 100's of nanoseconds. */
-    LPFILETIME lpUserTime)     /* [out] The time spent in user routines in 100's of nanoseconds. */
+BOOL WINAPI GetProcessTimes( HANDLE hprocess, LPFILETIME lpCreationTime,
+    LPFILETIME lpExitTime, LPFILETIME lpKernelTime, LPFILETIME lpUserTime )
 {
     struct tms tms;
 
@@ -866,10 +894,13 @@ INT WINAPI CompareFileTime( const FILETIME *x, const FILETIME *y )
  *
  * Get the current local time.
  *
+ * PARAMS
+ *  systime [O] Destination for current time.
+ *
  * RETURNS
  *  Nothing.
  */
-VOID WINAPI GetLocalTime(LPSYSTEMTIME systime) /* [O] Destination for current time */
+VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
 {
     FILETIME lft;
     LARGE_INTEGER ft, ft2;
@@ -886,10 +917,13 @@ VOID WINAPI GetLocalTime(LPSYSTEMTIME systime) /* [O] Destination for current ti
  *
  * Get the current system time.
  *
+ * PARAMS
+ *  systime [O] Destination for current time.
+ *
  * RETURNS
  *  Nothing.
  */
-VOID WINAPI GetSystemTime(LPSYSTEMTIME systime) /* [O] Destination for current time */
+VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
 {
     FILETIME ft;
     LARGE_INTEGER t;
@@ -903,10 +937,14 @@ VOID WINAPI GetSystemTime(LPSYSTEMTIME systime) /* [O] Destination for current t
 /*********************************************************************
  *      GetDaylightFlag                                   (KERNEL32.@)
  *
- *      returns TRUE if daylight saving time is in operation
+ *  Specifies if daylight saving time is in operation.
  *
- *      Note: this function is called from the Win98's control applet
- *      timedate.cpl
+ * NOTES
+ *  This function is called from the Win98's control applet timedate.cpl.
+ *
+ * RETURNS
+ *  TRUE if daylight saving time is in operation.
+ *  FALSE otherwise.
  */
 BOOL WINAPI GetDaylightFlag(void)
 {
