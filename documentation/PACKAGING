@@ -88,6 +88,9 @@ they should appear as "Suggests" or "Recommends", as the case may be.
       Wine with Mesa3D (http://www.mesa3d.org), which requires no
       hardware support to install.
 
+    * OpenLDAP: http://www.openldap.org
+      Used by WLDAP32 to implement LDAP support.
+
     * LittleCMS: http://www.littlecms.com
       This library is used to implement MSCMS (Color Management System)
       which is needed by an increasing number of graphics applications.
