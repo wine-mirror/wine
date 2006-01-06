@@ -108,7 +108,7 @@ sub file_skip($) {
 
     $_ = file_absolutize($_);
 
-    m%^(?:libs|programs|server|tools)/% && return 1;
+    m%^(?:loader|libs|programs|server|tools)/% && return 1;
     m%^dlls/wineps/data/% && return 1;
     m%^dlls/winmm/wineoss/midipatch\.c$% && return 1;
     m%spec\.c$% && return 1;
