@@ -738,113 +738,6 @@ void _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT_wchar
     if (ext) strcpyW( ext, end );
 }
 
-/* INTERNAL: Helper for _fullpath. Modified PD code from 'snippets'. */
-static void wmsvcrt_fln_fix(MSVCRT_wchar_t *path)
-{
-  int dir_flag = 0, root_flag = 0;
-  MSVCRT_wchar_t *r, *p, *q, *s;
-  MSVCRT_wchar_t szbsdot[] = { '\\', '.', 0 };
-
-  /* Skip drive */
-  if (NULL == (r = strrchrW(path, ':')))
-    r = path;
-  else
-    ++r;
-
-  /* Ignore leading slashes */
-  while ('\\' == *r)
-    if ('\\' == r[1])
-      strcpyW(r, &r[1]);
-    else
-    {
-      root_flag = 1;
-      ++r;
-    }
-
-  p = r; /* Change "\\" to "\" */
-  while (NULL != (p = strchrW(p, '\\')))
-    if ('\\' ==  p[1])
-      strcpyW(p, &p[1]);
-    else
-      ++p;
-
-  while ('.' == *r) /* Scrunch leading ".\" */
-  {
-    if ('.' == r[1])
-    {
-      /* Ignore leading ".." */
-      for (p = (r += 2); *p && (*p != '\\'); ++p)
-        ;
-    }
-    else
-    {
-      for (p = r + 1 ;*p && (*p != '\\'); ++p)
-	;
-    }
-    strcpyW(r, p + ((*p) ? 1 : 0));
-  }
-
-  while ('\\' == path[strlenW(path)-1])   /* Strip last '\\' */
-  {
-    dir_flag = 1;
-    path[strlenW(path)-1] = '\0';
-  }
-
-  s = r;
-
-  /* Look for "\." in path */
-
-  while (NULL != (p = strstrW(s, szbsdot)))
-  {
-    if ('.' == p[2])
-    {
-      /* Execute this section if ".." found */
-      q = p - 1;
-      while (q > r)           /* Backup one level           */
-      {
-        if (*q == '\\')
-          break;
-        --q;
-      }
-      if (q > r)
-      {
-        strcpyW(q, p + 3);
-        s = q;
-      }
-      else if ('.' != *q)
-      {
-        strcpyW(q + ((*q == '\\') ? 1 : 0),
-                p + 3 + ((*(p + 3)) ? 1 : 0));
-        s = q;
-      }
-      else  s = ++p;
-    }
-    else
-    {
-      /* Execute this section if "." found */
-      q = p + 2;
-      for ( ;*q && (*q != '\\'); ++q)
-        ;
-      strcpyW (p, q);
-    }
-  }
-
-  if (root_flag)  /* Embedded ".." could have bubbled up to root  */
-  {
-    for (p = r; *p && ('.' == *p || '\\' == *p); ++p)
-      ;
-    if (r != p)
-      strcpyW(r, p);
-  }
-
-  if (dir_flag)
-  {
-    MSVCRT_wchar_t szbs[] = { '\\', 0 };
-
-    strcatW(path, szbs);
-  }
-}
-
 /*********************************************************************
  *		_wfullpath (MSVCRT.@)
  *
@@ -852,16 +745,22 @@ static void wmsvcrt_fln_fix(MSVCRT_wchar_t *path)
  */
 MSVCRT_wchar_t *_wfullpath(MSVCRT_wchar_t * absPath, const MSVCRT_wchar_t* relPath, MSVCRT_size_t size)
 {
-  MSVCRT_wchar_t drive[5],dir[MAX_PATH],file[MAX_PATH],ext[MAX_PATH];
-  MSVCRT_wchar_t res[MAX_PATH];
-  size_t len;
-  MSVCRT_wchar_t szbs[] = { '\\', 0 };
-
-
-  res[0] = '\0';
+  DWORD rc;
+  WCHAR* buffer;
+  WCHAR* lastpart;
+  BOOL alloced = FALSE;
 
   if (!relPath || !*relPath)
     return _wgetcwd(absPath, size);
+
+  if (absPath == NULL)
+  {
+      buffer = MSVCRT_malloc(MAX_PATH * sizeof(WCHAR));
+      size = MAX_PATH;
+      alloced = TRUE;
+  }
+  else
+      buffer = absPath;
 
   if (size < 4)
   {
@@ -871,140 +770,16 @@ MSVCRT_wchar_t *_wfullpath(MSVCRT_wchar_t * absPath, const MSVCRT_wchar_t* relPa
 
   TRACE(":resolving relative path '%s'\n",debugstr_w(relPath));
 
-  _wsplitpath(relPath, drive, dir, file, ext);
+  rc = GetFullPathNameW(relPath,size,buffer,&lastpart);
 
-  /* Get Directory and drive into 'res' */
-  if (!dir[0] || (dir[0] != '/' && dir[0] != '\\'))
-  {
-    /* Relative or no directory given */
-    _wgetdcwd(drive[0] ? toupper(drive[0]) - 'A' + 1 :  0, res, MAX_PATH);
-    strcatW(res,szbs);
-    if (dir[0])
-      strcatW(res,dir);
-    if (drive[0])
-      res[0] = drive[0]; /* If given a drive, preserve the letter case */
-  }
+  if (rc > 0 && rc <= size )
+    return buffer;
   else
   {
-    strcpyW(res,drive);
-    strcatW(res,dir);
+      if (alloced)
+          MSVCRT_free(buffer);
+        return NULL;
   }
-
-  strcatW(res,szbs);
-  strcatW(res, file);
-  strcatW(res, ext);
-  wmsvcrt_fln_fix(res);
-
-  len = strlenW(res);
-  if (len >= MAX_PATH || len >= (size_t)size)
-    return NULL; /* FIXME: errno? */
-
-  if (!absPath)
-    return _wcsdup(res);
-  strcpyW(absPath,res);
-  return absPath;
-}
-
-/* INTERNAL: Helper for _fullpath. Modified PD code from 'snippets'. */
-static void msvcrt_fln_fix(char *path)
-{
-  int dir_flag = 0, root_flag = 0;
-  char *r, *p, *q, *s;
-
-  /* Skip drive */
-  if (NULL == (r = strrchr(path, ':')))
-    r = path;
-  else
-    ++r;
-
-  /* Ignore leading slashes */
-  while ('\\' == *r)
-    if ('\\' == r[1])
-      strcpy(r, &r[1]);
-    else
-    {
-      root_flag = 1;
-      ++r;
-    }
-
-  p = r; /* Change "\\" to "\" */
-  while (NULL != (p = strchr(p, '\\')))
-    if ('\\' ==  p[1])
-      strcpy(p, &p[1]);
-    else
-      ++p;
-
-  while ('.' == *r) /* Scrunch leading ".\" */
-  {
-    if ('.' == r[1])
-    {
-      /* Ignore leading ".." */
-      for (p = (r += 2); *p && (*p != '\\'); ++p)
-        ;
-    }
-    else
-    {
-      for (p = r + 1 ;*p && (*p != '\\'); ++p)
-        ;
-    }
-    strcpy(r, p + ((*p) ? 1 : 0));
-  }
-
-  while ('\\' == path[strlen(path)-1])   /* Strip last '\\' */
-  {
-    dir_flag = 1;
-    path[strlen(path)-1] = '\0';
-  }
-
-  s = r;
-
-  /* Look for "\." in path */
-
-  while (NULL != (p = strstr(s, "\\.")))
-  {
-    if ('.' == p[2])
-    {
-      /* Execute this section if ".." found */
-      q = p - 1;
-      while (q > r)           /* Backup one level           */
-      {
-        if (*q == '\\')
-          break;
-        --q;
-      }
-      if (q > r)
-      {
-        strcpy(q, p + 3);
-        s = q;
-      }
-      else if ('.' != *q)
-      {
-        strcpy(q + ((*q == '\\') ? 1 : 0),
-               p + 3 + ((*(p + 3)) ? 1 : 0));
-        s = q;
-      }
-      else  s = ++p;
-    }
-    else
-    {
-      /* Execute this section if "." found */
-      q = p + 2;
-      for ( ;*q && (*q != '\\'); ++q)
-        ;
-      strcpy (p, q);
-    }
-  }
-
-  if (root_flag)  /* Embedded ".." could have bubbled up to root  */
-  {
-    for (p = r; *p && ('.' == *p || '\\' == *p); ++p)
-      ;
-    if (r != p)
-      strcpy(r, p);
-  }
-
-  if (dir_flag)
-    strcat(path, "\\");
 }
 
 /*********************************************************************
@@ -1024,14 +799,22 @@ static void msvcrt_fln_fix(char *path)
  */
 char *_fullpath(char * absPath, const char* relPath, unsigned int size)
 {
-  char drive[5],dir[MAX_PATH],file[MAX_PATH],ext[MAX_PATH];
-  char res[MAX_PATH];
-  size_t len;
-
-  res[0] = '\0';
+  DWORD rc;
+  char* lastpart;
+  char* buffer;
+  BOOL alloced = FALSE;
 
   if (!relPath || !*relPath)
     return _getcwd(absPath, size);
+
+  if (absPath == NULL)
+  {
+      buffer = MSVCRT_malloc(MAX_PATH);
+      size = MAX_PATH;
+      alloced = TRUE;
+  }
+  else
+      buffer = absPath;
 
   if (size < 4)
   {
@@ -1041,38 +824,16 @@ char *_fullpath(char * absPath, const char* relPath, unsigned int size)
 
   TRACE(":resolving relative path '%s'\n",relPath);
 
-  _splitpath(relPath, drive, dir, file, ext);
+  rc = GetFullPathNameA(relPath,size,buffer,&lastpart);
 
-  /* Get Directory and drive into 'res' */
-  if (!dir[0] || (dir[0] != '/' && dir[0] != '\\'))
-  {
-    /* Relative or no directory given */
-    _getdcwd(drive[0] ? toupper(drive[0]) - 'A' + 1 :  0, res, MAX_PATH);
-    strcat(res,"\\");
-    if (dir[0])
-      strcat(res,dir);
-    if (drive[0])
-      res[0] = drive[0]; /* If given a drive, preserve the letter case */
-  }
+  if (rc > 0 && rc <= size)
+    return buffer;
   else
   {
-    strcpy(res,drive);
-    strcat(res,dir);
+      if (alloced)
+          MSVCRT_free(buffer);
+        return NULL;
   }
-
-  strcat(res,"\\");
-  strcat(res, file);
-  strcat(res, ext);
-  msvcrt_fln_fix(res);
-
-  len = strlen(res);
-  if (len >= MAX_PATH || len >= (size_t)size)
-    return NULL; /* FIXME: errno? */
-
-  if (!absPath)
-    return _strdup(res);
-  strcpy(absPath,res);
-  return absPath;
 }
 
 /*********************************************************************
