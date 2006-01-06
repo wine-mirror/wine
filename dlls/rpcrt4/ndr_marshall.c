@@ -300,6 +300,11 @@ static void WINAPI NdrFree(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *Pointer)
   pStubMsg->pfnFree(Pointer);
 }
 
+static inline BOOL IsConformanceOrVariancePresent(PFORMAT_STRING pFormat)
+{
+    return (*(const ULONG *)pFormat != -1);
+}
+
 PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
 {
   pStubMsg->MaxCount = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
@@ -325,8 +330,7 @@ PFORMAT_STRING ComputeConformanceOrVariance(
   LPVOID ptr = NULL;
   DWORD data = 0;
 
-  /* FIXME: is this correct? */
-  if (pFormat[0] == 0xff) {
+  if (!IsConformanceOrVariancePresent(pFormat)) {
     /* null descriptor */
     *pCount = def;
     goto finish_conf;
@@ -2089,24 +2093,32 @@ unsigned char * WINAPI NdrComplexArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                unsigned char *pMemory,
                                                PFORMAT_STRING pFormat)
 {
-  DWORD size = 0, count, def;
+  ULONG count, def;
+  BOOL variance_present;
+
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
   def = *(const WORD*)&pFormat[2];
   pFormat += 4;
 
   pFormat = ComputeConformance(pStubMsg, pMemory, pFormat, def);
-  size = pStubMsg->MaxCount;
-  TRACE("conformance=%ld\n", size);
+  TRACE("conformance = %ld\n", pStubMsg->MaxCount);
 
-  if (*(const DWORD*)pFormat != 0xffffffff)
-    FIXME("compute variance\n");
-  pFormat += 4;
+  variance_present = IsConformanceOrVariancePresent(pFormat);
+  pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, pStubMsg->MaxCount);
+  TRACE("variance = %ld\n", pStubMsg->ActualCount);
 
-  NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, size);
+  NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->MaxCount);
   pStubMsg->Buffer += 4;
+  if (variance_present)
+  {
+    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->Offset);
+    pStubMsg->Buffer += 4;
+    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->ActualCount);
+    pStubMsg->Buffer += 4;
+  }
 
-  for (count=0; count<size; count++)
+  for (count = 0; count < pStubMsg->ActualCount; count++)
     pMemory = ComplexMarshall(pStubMsg, pMemory, pFormat, NULL);
 
   STD_OVERFLOW_CHECK(pStubMsg);
@@ -2122,25 +2134,35 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                  PFORMAT_STRING pFormat,
                                                  unsigned char fMustAlloc)
 {
-  DWORD size = 0, count, esize;
+  ULONG offset, count, esize;
   unsigned char *pMemory;
+
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
   pFormat += 4;
 
   pFormat = ReadConformance(pStubMsg, pFormat);
-  size = pStubMsg->MaxCount;
-  TRACE("conformance=%ld\n", size);
-
-  pFormat += 4;
+  TRACE("conformance = %ld\n", pStubMsg->MaxCount);
+  if (IsConformanceOrVariancePresent(pFormat))
+  {
+    offset = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
+    pStubMsg->Buffer += 4;
+    pFormat = ReadVariance(pStubMsg, pFormat);
+    TRACE("variance = %ld\n", pStubMsg->ActualCount);
+  }
+  else
+  {
+    offset = 0;
+    pStubMsg->ActualCount = pStubMsg->MaxCount;
+  }
 
   esize = ComplexStructSize(pStubMsg, pFormat);
 
   if (fMustAlloc || !*ppMemory)
-    *ppMemory = NdrAllocate(pStubMsg, size*esize);
+    *ppMemory = NdrAllocate(pStubMsg, pStubMsg->MaxCount * esize);
 
   pMemory = *ppMemory;
-  for (count=0; count<size; count++)
+  for (count = 0; count < pStubMsg->ActualCount; count++)
     pMemory = ComplexUnmarshall(pStubMsg, pMemory, pFormat, NULL, fMustAlloc);
 
   return NULL;
@@ -2153,21 +2175,26 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                       unsigned char *pMemory,
                                       PFORMAT_STRING pFormat)
 {
-  DWORD size = 0, count, def;
+  ULONG count, def;
+  BOOL variance_present;
+
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
   def = *(const WORD*)&pFormat[2];
   pFormat += 4;
 
   pFormat = ComputeConformance(pStubMsg, pMemory, pFormat, def);
-  size = pStubMsg->MaxCount;
-  TRACE("conformance=%ld\n", size);
+  TRACE("conformance = %ld\n", pStubMsg->MaxCount);
+  pStubMsg->BufferLength += sizeof(ULONG);
 
-  if (*(const DWORD*)pFormat != 0xffffffff)
-    FIXME("compute variance\n");
-  pFormat += 4;
+  variance_present = IsConformanceOrVariancePresent(pFormat);
+  pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, pStubMsg->MaxCount);
+  TRACE("variance = %ld\n", pStubMsg->ActualCount);
 
-  for (count=0; count<size; count++)
+  if (variance_present)
+    pStubMsg->BufferLength += 2*sizeof(ULONG);
+
+  for (count=0; count < pStubMsg->ActualCount; count++)
     pMemory = ComplexBufferSize(pStubMsg, pMemory, pFormat, NULL);
 }
 
@@ -2198,21 +2225,20 @@ void WINAPI NdrComplexArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-  DWORD size = 0, count, def;
+  ULONG count, def;
+
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
   def = *(const WORD*)&pFormat[2];
   pFormat += 4;
 
   pFormat = ComputeConformance(pStubMsg, pMemory, pFormat, def);
-  size = pStubMsg->MaxCount;
-  TRACE("conformance=%ld\n", size);
+  TRACE("conformance = %ld\n", pStubMsg->MaxCount);
 
-  if (*(const DWORD*)pFormat != 0xffffffff)
-    FIXME("compute variance\n");
-  pFormat += 4;
+  pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, pStubMsg->MaxCount);
+  TRACE("variance = %ld\n", pStubMsg->ActualCount);
 
-  for (count=0; count<size; count++)
+  for (count=0; count < pStubMsg->ActualCount; count++)
     pMemory = ComplexFree(pStubMsg, pMemory, pFormat, NULL);
 }
 
