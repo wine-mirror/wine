@@ -72,7 +72,7 @@ sub read_spec_file($) {
     close(IN);
 
     # FIXME: Kludge
-    if($module =~ /^(?:(?:imm|ole2conv|ole2prox|ole2thk|rasapi16|windebug)\.dll|comm\.drv)$/) {
+    if($module =~ /^(?:(?:imm|ole2conv|ole2prox|ole2thk|rasapi16|msacm|windebug)\.dll|comm\.drv)$/) {
 	$type = "win16";
     }
 
@@ -91,6 +91,8 @@ if ($options->wine || $options->winetest) {
 
 my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv);
 
+push @makefile_in_files, "libs/wine/Makefile.in";
+push @makefile_in_files, "libs/unicode/Makefile.in";
 push @makefile_in_files, "tools/winebuild/Makefile.in";
 
 sub filter_files($$) {
@@ -124,6 +126,11 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 
     my $again = 0;
     my $lookahead = 0;
+
+    if($makefile_in_file eq "loader/Makefile.in") {
+        next;
+    }
+
     while($again || defined(my $line = <IN>)) {
 	if(!$again) {
 	    chomp $line;
@@ -150,16 +157,14 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    $module = $1;
 
 	    if($module eq "none") {
-		if($makefile_in_file eq "library/Makefile.in") {
-		    $module = "wine.dll";
-		} elsif($makefile_in_file eq "unicode/Makefile.in") {
-		    $module = "wine_unicode.dll";
-		} elsif($makefile_in_file eq "tools/winebuild/Makefile.in") {
+		if($makefile_in_file eq "tools/winebuild/Makefile.in") {
 		    $module = "winebuild.exe";
 		} else {
 		    next MAKEFILE_IN;
 		}
 	    }
+	} elsif(/^LIBRARY\s*=\s*(\S+)\s*$/) {
+	    $module = $1  . "\.lib";
 	} elsif(/^TOPOBJDIR\s*=\s*(\S+)\s*$/) {
 	    $topobjdir = $1;
 	} elsif (/^TESTDLL\s*=\s*(\S+)\s*$/) {
@@ -747,10 +752,10 @@ sub _generate_dsp($$) {
     if ($project eq "winebuild") {
 	print OUT "# Begin Special Build Tool\r\n";
 	print OUT "SOURCE=\"\$(InputPath)\"\r\n";
-        print OUT "PostBuild_Desc=Copying wine.dll and wine_unicode.dll ...\r\n";
+        print OUT "PostBuild_Desc=Copying wine.lib and wine_unicode.lib ...\r\n";
 	print OUT "PostBuild_Cmds=";
-	print OUT "copy ..\\..\\library\\$output_dir\\wine.dll \$(OutDir)\t";
-	print OUT "copy ..\\..\\unicode\\$output_dir\\wine_unicode.dll \$(OutDir)\r\n";
+	print OUT "copy ..\\..\\libs\\wine\\$output_dir\\wine.lib \$(OutDir)\t";
+	print OUT "copy ..\\..\\libs\\unicode\\$output_dir\\wine_unicode.lib \$(OutDir)\r\n";
 	print OUT "# End Special Build Tool\r\n";
     }
     print OUT "# Begin Target\r\n";
