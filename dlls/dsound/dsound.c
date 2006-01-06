@@ -248,13 +248,8 @@ static ULONG WINAPI IDirectSoundImpl_Release(
     TRACE("(%p) ref was %ld\n", This, ref + 1);
 
     if (!ref) {
-        if (This->device) {
-            if (DirectSoundDevice_Release(This->device) != 0) {
-                /* device not released so make sure primary reference to This removed */
-                if (This->device->primary)
-                    This->device->primary->dsound = NULL;
-            }
-        }
+        if (This->device)
+            DirectSoundDevice_Release(This->device);
         HeapFree(GetProcessHeap(),0,This);
         TRACE("(%p) released\n", This);
     }
@@ -330,10 +325,9 @@ static HRESULT WINAPI DSOUND_CreateSoundBuffer(
             WARN("Primary Buffer already created\n");
             IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(This->device->primary));
             *ppdsb = (LPDIRECTSOUNDBUFFER)(This->device->primary);
-            This->device->primary->dsound = This;
         } else {
            This->device->dsbd = *dsbd;
-           hres = PrimaryBufferImpl_Create(This, (PrimaryBufferImpl**)&(This->device->primary), &(This->device->dsbd));
+           hres = PrimaryBufferImpl_Create(This->device, (PrimaryBufferImpl**)&(This->device->primary), &(This->device->dsbd));
            if (This->device->primary) {
                IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(This->device->primary));
                *ppdsb = (LPDIRECTSOUNDBUFFER)(This->device->primary);
@@ -362,7 +356,7 @@ static HRESULT WINAPI DSOUND_CreateSoundBuffer(
             return DSERR_INVALIDPARAM;
         }
 
-        hres = IDirectSoundBufferImpl_Create(This, (IDirectSoundBufferImpl**)&dsb, dsbd);
+        hres = IDirectSoundBufferImpl_Create(This->device, (IDirectSoundBufferImpl**)&dsb, dsbd);
         if (dsb) {
             hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
             if (*ppdsb) {
@@ -474,8 +468,8 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
         return DSERR_INVALIDPARAM;
     }
 
-    /* FIXME: hack to make sure we have a secondary buffer */
-    if ((IDirectSoundImpl *)((SecondaryBufferImpl *)psb)->dsb == This) {
+    /* make sure we have a secondary buffer */
+    if ((PrimaryBufferImpl *)psb == This->device->primary) {
         WARN("trying to duplicate primary buffer\n");
         *ppdsb = NULL;
         return DSERR_INVALIDCALL;
@@ -532,7 +526,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     dsb->state = STATE_STOPPED;
     dsb->playpos = 0;
     dsb->buf_mixpos = 0;
-    dsb->dsound = This;
+    dsb->device = This->device;
     dsb->ds3db = NULL;
     dsb->iks = NULL; /* FIXME? */
     dsb->secondary = NULL;
@@ -555,7 +549,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     dsb->lock.DebugInfo->Spare[0] = (DWORD_PTR)"DSOUNDBUFFER_lock";
 
     /* register buffer */
-    hres = DSOUND_AddBuffer(This, dsb);
+    hres = DSOUND_AddBuffer(This->device, dsb);
     if (hres != DS_OK) {
         IDirectSoundBuffer8_Release(psb);
         dsb->lock.DebugInfo->Spare[0] = 0;
@@ -1855,32 +1849,32 @@ HRESULT WINAPI DirectSoundCreate8(
  * Gets exclusive access to buffer for writing.
  */
 HRESULT DSOUND_AddBuffer(
-    IDirectSoundImpl * pDS,
+    DirectSoundDevice * device,
     IDirectSoundBufferImpl * pDSB)
 {
     IDirectSoundBufferImpl **newbuffers;
     HRESULT hr = DS_OK;
 
-    TRACE("(%p, %p)\n", pDS, pDSB);
+    TRACE("(%p, %p)\n", device, pDSB);
 
-    RtlAcquireResourceExclusive(&(pDS->device->buffer_list_lock), TRUE);
+    RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
 
-    if (pDS->device->buffers)
-        newbuffers = HeapReAlloc(GetProcessHeap(),0,pDS->device->buffers,sizeof(IDirectSoundBufferImpl*)*(pDS->device->nrofbuffers+1));
+    if (device->buffers)
+        newbuffers = HeapReAlloc(GetProcessHeap(),0,device->buffers,sizeof(IDirectSoundBufferImpl*)*(device->nrofbuffers+1));
     else
-        newbuffers = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBufferImpl*)*(pDS->device->nrofbuffers+1));
+        newbuffers = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBufferImpl*)*(device->nrofbuffers+1));
 
     if (newbuffers) {
-        pDS->device->buffers = newbuffers;
-        pDS->device->buffers[pDS->device->nrofbuffers] = pDSB;
-        pDS->device->nrofbuffers++;
-        TRACE("buffer count is now %d\n", pDS->device->nrofbuffers);
+        device->buffers = newbuffers;
+        device->buffers[device->nrofbuffers] = pDSB;
+        device->nrofbuffers++;
+        TRACE("buffer count is now %d\n", device->nrofbuffers);
     } else {
-        ERR("out of memory for buffer list! Current buffer count is %d\n", pDS->device->nrofbuffers);
+        ERR("out of memory for buffer list! Current buffer count is %d\n", device->nrofbuffers);
         hr = DSERR_OUTOFMEMORY;
     }
 
-    RtlReleaseResource(&(pDS->device->buffer_list_lock));
+    RtlReleaseResource(&(device->buffer_list_lock));
 
     return hr;
 }
@@ -1890,34 +1884,34 @@ HRESULT DSOUND_AddBuffer(
  * Gets exclusive access to buffer for writing.
  */
 HRESULT DSOUND_RemoveBuffer(
-    IDirectSoundImpl * pDS,
+    DirectSoundDevice * device,
     IDirectSoundBufferImpl * pDSB)
 {
     int i;
     HRESULT hr = DS_OK;
 
-    TRACE("(%p, %p)\n", pDS, pDSB);
+    TRACE("(%p, %p)\n", device, pDSB);
 
-    RtlAcquireResourceExclusive(&(pDS->device->buffer_list_lock), TRUE);
+    RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
 
-    for (i = 0; i < pDS->device->nrofbuffers; i++)
-        if (pDS->device->buffers[i] == pDSB)
+    for (i = 0; i < device->nrofbuffers; i++)
+        if (device->buffers[i] == pDSB)
             break;
 
-    if (i < pDS->device->nrofbuffers) {
+    if (i < device->nrofbuffers) {
         /* Put the last buffer of the list in the (now empty) position */
-        pDS->device->buffers[i] = pDS->device->buffers[pDS->device->nrofbuffers - 1];
-        pDS->device->nrofbuffers--;
-        pDS->device->buffers = HeapReAlloc(GetProcessHeap(),0,pDS->device->buffers,sizeof(LPDIRECTSOUNDBUFFER8)*pDS->device->nrofbuffers);
-        TRACE("buffer count is now %d\n", pDS->device->nrofbuffers);
+        device->buffers[i] = device->buffers[device->nrofbuffers - 1];
+        device->nrofbuffers--;
+        device->buffers = HeapReAlloc(GetProcessHeap(),0,device->buffers,sizeof(LPDIRECTSOUNDBUFFER8)*device->nrofbuffers);
+        TRACE("buffer count is now %d\n", device->nrofbuffers);
     }
 
-    if (pDS->device->nrofbuffers == 0) {
-        HeapFree(GetProcessHeap(),0,pDS->device->buffers);
-        pDS->device->buffers = NULL;
+    if (device->nrofbuffers == 0) {
+        HeapFree(GetProcessHeap(),0,device->buffers);
+        device->buffers = NULL;
     }
 
-    RtlReleaseResource(&(pDS->device->buffer_list_lock));
+    RtlReleaseResource(&(device->buffer_list_lock));
 
     return hr;
 }

@@ -326,7 +326,7 @@ HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LP
 static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 	LPDIRECTSOUNDBUFFER8 iface,LPCWAVEFORMATEX wfex
 ) {
-	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	HRESULT err = DS_OK;
 	int i, alloc_size, cp_size;
 	DWORD nSamplesPerSec;
@@ -433,7 +433,7 @@ done:
 static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
 	LPDIRECTSOUNDBUFFER8 iface,LONG vol
 ) {
-	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	DWORD ampfactors;
 	DSVOLUMEPAN volpan;
         HRESULT hres = DS_OK;
@@ -478,7 +478,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
 static HRESULT WINAPI PrimaryBufferImpl_GetVolume(
 	LPDIRECTSOUNDBUFFER8 iface,LPLONG vol
 ) {
-	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	DWORD ampfactors;
 	DSVOLUMEPAN volpan;
 	TRACE("(%p,%p)\n", iface, vol);
@@ -515,7 +515,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFrequency(
 static HRESULT WINAPI PrimaryBufferImpl_Play(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD reserved1,DWORD reserved2,DWORD flags
 ) {
-	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	TRACE("(%p,%08lx,%08lx,%08lx)\n", iface, reserved1, reserved2, flags);
 
 	if (!(flags & DSBPLAY_LOOPING)) {
@@ -539,7 +539,7 @@ static HRESULT WINAPI PrimaryBufferImpl_Play(
 
 static HRESULT WINAPI PrimaryBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 {
-	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	TRACE("(%p)\n", iface);
 
 	/* **** */
@@ -571,7 +571,7 @@ static ULONG WINAPI PrimaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
     TRACE("(%p) ref was %ld\n", This, ref + 1);
 
     if (!ref) {
-        This->dsound->device->primary = NULL;
+        This->device->primary = NULL;
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
@@ -582,7 +582,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetCurrentPosition(
 	LPDIRECTSOUNDBUFFER8 iface,LPDWORD playpos,LPDWORD writepos
 ) {
 	HRESULT	hres;
-        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	TRACE("(%p,%p,%p)\n", iface, playpos, writepos);
 
 	hres = DSOUND_PrimaryGetPosition(device, playpos, writepos);
@@ -603,7 +603,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetCurrentPosition(
 static HRESULT WINAPI PrimaryBufferImpl_GetStatus(
 	LPDIRECTSOUNDBUFFER8 iface,LPDWORD status
 ) {
-        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	TRACE("(%p,%p)\n", iface, status);
 
 	if (status == NULL) {
@@ -628,7 +628,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetFormat(
     LPDWORD wfwritten)
 {
     DWORD size;
-    DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+    DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
     TRACE("(%p,%p,%ld,%p)\n", iface, lpwf, wfsize, wfwritten);
 
     size = sizeof(WAVEFORMATEX) + device->pwfx->cbSize;
@@ -659,7 +659,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetFormat(
 static HRESULT WINAPI PrimaryBufferImpl_Lock(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD writecursor,DWORD writebytes,LPVOID lplpaudioptr1,LPDWORD audiobytes1,LPVOID lplpaudioptr2,LPDWORD audiobytes2,DWORD flags
 ) {
-        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	TRACE("(%p,%ld,%ld,%p,%p,%p,%p,0x%08lx) at %ld\n",
 		iface,
 		writecursor,
@@ -742,7 +742,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetCurrentPosition(
 static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 	LPDIRECTSOUNDBUFFER8 iface,LONG pan
 ) {
-        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	DWORD ampfactors;
 	DSVOLUMEPAN volpan;
         HRESULT hres = DS_OK;
@@ -787,7 +787,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 static HRESULT WINAPI PrimaryBufferImpl_GetPan(
 	LPDIRECTSOUNDBUFFER8 iface,LPLONG pan
 ) {
-        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	DWORD ampfactors;
 	DSVOLUMEPAN volpan;
 	TRACE("(%p,%p)\n", iface, pan);
@@ -813,7 +813,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetPan(
 static HRESULT WINAPI PrimaryBufferImpl_Unlock(
 	LPDIRECTSOUNDBUFFER8 iface,LPVOID p1,DWORD x1,LPVOID p2,DWORD x2
 ) {
-        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	TRACE("(%p,%p,%ld,%p,%ld)\n", iface, p1, x1, p2, x2);
 
 	if (device->priolevel != DSSCL_WRITEPRIMARY) {
@@ -845,7 +845,7 @@ static HRESULT WINAPI PrimaryBufferImpl_Restore(
 static HRESULT WINAPI PrimaryBufferImpl_GetFrequency(
 	LPDIRECTSOUNDBUFFER8 iface,LPDWORD freq
 ) {
-        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	TRACE("(%p,%p)\n", iface, freq);
 
 	if (freq == NULL) {
@@ -915,7 +915,7 @@ static HRESULT WINAPI PrimaryBufferImpl_Initialize(
 static HRESULT WINAPI PrimaryBufferImpl_GetCaps(
 	LPDIRECTSOUNDBUFFER8 iface,LPDSBCAPS caps
 ) {
-        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->dsound->device;
+        DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
   	TRACE("(%p,%p)\n", iface, caps);
 
 	if (caps == NULL) {
@@ -948,7 +948,7 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(
 	LPDIRECTSOUNDBUFFER8 iface,REFIID riid,LPVOID *ppobj
 ) {
         PrimaryBufferImpl *This = (PrimaryBufferImpl *)iface;
-        DirectSoundDevice *device = This->dsound->device;
+        DirectSoundDevice *device = This->device;
 	TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppobj);
 
 	if (ppobj == NULL) {
@@ -985,7 +985,7 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(
 
         if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
 		if (!device->listener)
-			IDirectSound3DListenerImpl_Create(This, &device->listener);
+			IDirectSound3DListenerImpl_Create(device, &device->listener);
 		if (device->listener) {
 			*ppobj = device->listener;
 			IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)*ppobj);
@@ -1034,16 +1034,16 @@ static const IDirectSoundBuffer8Vtbl dspbvt =
 };
 
 HRESULT PrimaryBufferImpl_Create(
-	IDirectSoundImpl *ds,
-	PrimaryBufferImpl **pdsb,
+	DirectSoundDevice * device,
+	PrimaryBufferImpl ** ppdsb,
 	LPCDSBUFFERDESC dsbd)
 {
 	PrimaryBufferImpl *dsb;
-	TRACE("%p,%p,%p)\n",ds,pdsb,dsbd);
+	TRACE("%p,%p,%p)\n",device,ppdsb,dsbd);
 
 	if (dsbd->lpwfxFormat) {
 		WARN("invalid parameter: dsbd->lpwfxFormat != NULL\n");
-		*pdsb = NULL;
+		*ppdsb = NULL;
 		return DSERR_INVALIDPARAM;
 	}
 
@@ -1051,23 +1051,24 @@ HRESULT PrimaryBufferImpl_Create(
 
 	if (dsb == NULL) {
 		WARN("out of memory\n");
-		*pdsb = NULL;
+		*ppdsb = NULL;
 		return DSERR_OUTOFMEMORY;
 	}
 
 	dsb->ref = 0;
-	dsb->dsound = ds;
+	dsb->device = device;
 	dsb->lpVtbl = &dspbvt;
 
-	CopyMemory(&ds->device->dsbd, dsbd, sizeof(*dsbd));
+	CopyMemory(&device->dsbd, dsbd, sizeof(*dsbd));
 
 	TRACE("Created primary buffer at %p\n", dsb);
 	TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
 		"bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
-		ds->device->pwfx->wFormatTag, ds->device->pwfx->nChannels, ds->device->pwfx->nSamplesPerSec,
-		ds->device->pwfx->nAvgBytesPerSec, ds->device->pwfx->nBlockAlign,
-		ds->device->pwfx->wBitsPerSample, ds->device->pwfx->cbSize);
+		device->pwfx->wFormatTag, device->pwfx->nChannels,
+                device->pwfx->nSamplesPerSec, device->pwfx->nAvgBytesPerSec,
+                device->pwfx->nBlockAlign, device->pwfx->wBitsPerSample,
+                device->pwfx->cbSize);
 
-	*pdsb = dsb;
+	*ppdsb = dsb;
 	return S_OK;
 }

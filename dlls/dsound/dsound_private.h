@@ -200,7 +200,7 @@ struct IDirectSoundBufferImpl
     LONG                        ref;
     /* IDirectSoundBufferImpl fields */
     SecondaryBufferImpl*        secondary;
-    IDirectSoundImpl*           dsound;
+    DirectSoundDevice*          device;
     CRITICAL_SECTION            lock;
     PIDSDRIVERBUFFER            hwbuf;
     PWAVEFORMATEX               pwfx;
@@ -235,8 +235,8 @@ struct IDirectSoundBufferImpl
 };
 
 HRESULT IDirectSoundBufferImpl_Create(
-    IDirectSoundImpl *ds,
-    IDirectSoundBufferImpl **pdsb,
+    DirectSoundDevice *device,
+    IDirectSoundBufferImpl **ppdsb,
     LPCDSBUFFERDESC dsbd);
 HRESULT IDirectSoundBufferImpl_Destroy(
     IDirectSoundBufferImpl *pdsb);
@@ -264,12 +264,12 @@ struct PrimaryBufferImpl
 {
     const IDirectSoundBuffer8Vtbl *lpVtbl;
     LONG                        ref;
-    IDirectSoundImpl*           dsound;
+    DirectSoundDevice*          device;
 };
 
 HRESULT PrimaryBufferImpl_Create(
-    IDirectSoundImpl *ds,
-    PrimaryBufferImpl **pdsb,
+    DirectSoundDevice * device,
+    PrimaryBufferImpl **ppdsb,
     LPCDSBUFFERDESC dsbd);
 
 /*****************************************************************************
@@ -413,11 +413,11 @@ struct IDirectSound3DListenerImpl
     const IDirectSound3DListenerVtbl *lpVtbl;
     LONG                        ref;
     /* IDirectSound3DListenerImpl fields */
-    IDirectSoundImpl*           dsound;
+    DirectSoundDevice*          device;
 };
 
 HRESULT IDirectSound3DListenerImpl_Create(
-    PrimaryBufferImpl *pb,
+    DirectSoundDevice           *device,
     IDirectSound3DListenerImpl **pdsl);
 
 /*****************************************************************************
@@ -488,8 +488,8 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);
 
 /* dsound.c */
 
-HRESULT DSOUND_AddBuffer(IDirectSoundImpl * pDS, IDirectSoundBufferImpl * pDSB);
-HRESULT DSOUND_RemoveBuffer(IDirectSoundImpl * pDS, IDirectSoundBufferImpl * pDSB);
+HRESULT DSOUND_AddBuffer(DirectSoundDevice *device, IDirectSoundBufferImpl * pDSB);
+HRESULT DSOUND_RemoveBuffer(DirectSoundDevice *device, IDirectSoundBufferImpl * pDSB);
 
 /* primary.c */
 
