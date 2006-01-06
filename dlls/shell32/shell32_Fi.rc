@@ -20,8 +20,8 @@ LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 
 MENU_001 MENU DISCARDABLE
 BEGIN
-	MENUITEM "&Suuret Kuvakkeet",		FCIDM_SHVIEW_BIGICON
-	MENUITEM "&Pienet Kuvakkeet",		FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&Suuret kuvakkeet",		FCIDM_SHVIEW_BIGICON
+	MENUITEM "&Pienet kuvakkeet",		FCIDM_SHVIEW_SMALLICON
 	MENUITEM "&Lista",			FCIDM_SHVIEW_LISTVIEW
 	MENUITEM "&Tiedot",			FCIDM_SHVIEW_REPORTVIEW
 END
@@ -35,32 +35,32 @@ BEGIN
 	BEGIN
 	  POPUP "&Näkymä"
 	  BEGIN
-	    MENUITEM "&Pienet Kuvakkeet",	FCIDM_SHVIEW_BIGICON
-	    MENUITEM "&Suuret Kuvakkeet",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Pienet kuvakkeet",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "&Suuret kuvakkeet",	FCIDM_SHVIEW_SMALLICON
 	    MENUITEM "&Lista",			FCIDM_SHVIEW_LISTVIEW
 	    MENUITEM "&Tiedot",			FCIDM_SHVIEW_REPORTVIEW
 	  END
 	  MENUITEM SEPARATOR
-	  POPUP "&Järjestä Kuvakkeet"
+	  POPUP "&Järjestä kuvakkeet"
 	  BEGIN
 	    MENUITEM "&Nimen mukaan",		0x30	/* column 0 */
 	    MENUITEM "&Tyypin mukaan",		0x32	/* column 2 */
 	    MENUITEM "&Koon mukaan",		0x31	/* ... */
 	    MENUITEM "&Päivämäärän mukaan",	0x33
 	    MENUITEM SEPARATOR
-	    MENUITEM "Järjestä &Automaattisesti", FCIDM_SHVIEW_AUTOARRANGE
+	    MENUITEM "Järjestä &automaattisesti", FCIDM_SHVIEW_AUTOARRANGE
 	  END
 	  MENUITEM "Järjestä kuvakkeet riviin",	FCIDM_SHVIEW_SNAPTOGRID
 	  MENUITEM SEPARATOR
 	  MENUITEM "Päivitä",			FCIDM_SHVIEW_REFRESH
 	  MENUITEM SEPARATOR
 	  MENUITEM "Liitä",			FCIDM_SHVIEW_INSERT
-	  MENUITEM "Liitä Linkiksi",		FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM "Liitä linkiksi",		FCIDM_SHVIEW_INSERTLINK
 	  MENUITEM SEPARATOR
 	  POPUP "Uusi"
 	  BEGIN
-	    MENUITEM "Uusi &Kansio",		FCIDM_SHVIEW_NEWFOLDER
-	    MENUITEM "Uusi &Linkki",		FCIDM_SHVIEW_NEWLINK
+	    MENUITEM "Uusi &kansio",		FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "Uusi &linkki",		FCIDM_SHVIEW_NEWLINK
 	    MENUITEM SEPARATOR
 	  END
 	  MENUITEM SEPARATOR
@@ -81,9 +81,9 @@ BEGIN
 	  MENUITEM "&Leikkaa",			FCIDM_SHVIEW_CUT
 	  MENUITEM "&Kopioi",			FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "Lu&o Linkki",		FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Lu&o linkki",		FCIDM_SHVIEW_CREATELINK
 	  MENUITEM "&Poista",			FCIDM_SHVIEW_DELETE
-	  MENUITEM "&Nimeä Uudelleen",		FCIDM_SHVIEW_RENAME
+	  MENUITEM "&Nimeä uudelleen",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
 	  MENUITEM "&Ominaisuudet",		FCIDM_SHVIEW_PROPERTIES
 	END
@@ -91,7 +91,7 @@ END
 
 SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Valitse Kansio"
+CAPTION "Valitse kansio"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -123,7 +123,7 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Anna ohjelma, dokumentti, tai Internet -ressurssi, ja Wine avaa sen Sinulle.", 12289, 36, 11, 182, 18
+ LTEXT "Anna ohjelma, dokumentti, tai Internet -resurssi, ja Wine avaa sen Sinulle.", 12289, 36, 11, 182, 18
  LTEXT "&Avaa:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
@@ -148,11 +148,11 @@ STRINGTABLE DISCARDABLE
 
         /* special folders */
 	IDS_DESKTOP		"Työpöytä"
-	IDS_MYCOMPUTER		"Oma Tietokone"
+	IDS_MYCOMPUTER		"Oma tietokone"
 
         /* context menus */
-	IDS_VIEW_LARGE		"&Suuret Kuvakkeet"
-	IDS_VIEW_SMALL		"&Pienet Kuvakkeet"
+	IDS_VIEW_LARGE		"&Suuret kuvakkeet"
+	IDS_VIEW_SMALL		"&Pienet kuvakkeet"
 	IDS_VIEW_LIST		"&Lista"
 	IDS_VIEW_DETAILS	"&Tiedot"
 	IDS_SELECT		"Valitse"
@@ -165,40 +165,40 @@ STRINGTABLE DISCARDABLE
 	IDS_DELETEITEM_TEXT "Haluatko varmasti tuhota '%1':n?"
 	IDS_DELETEMULTIPLE_TEXT "Haluatko varmasti tuhota nämä %1?"
 	IDS_OVERWRITEFILE_TEXT "Ylikirjoita tiedosto %1?"
-	IDS_OVERWRITEFILE_CAPTION "Vahvista Tiedoston Ylikirjoitus"
+	IDS_OVERWRITEFILE_CAPTION "Vahvista tiedoston ylikirjoitus"
 
         /* message box strings */
-        IDS_RESTART_TITLE       "Käynnistä uudestaan"
-        IDS_RESTART_PROMPT      "Haluatko simuloida Windows:n uudelleenkäynnistämistä?"
+        IDS_RESTART_TITLE       "Käynnistä uudelleen"
+        IDS_RESTART_PROMPT      "Haluatko simuloida Windowsin uudelleenkäynnistämistä?"
         IDS_SHUTDOWN_TITLE      "Sammuta"
-        IDS_SHUTDOWN_PROMPT     "Haluatko lopettaa Wine:n istunnon?"
+        IDS_SHUTDOWN_PROMPT     "Haluatko lopettaa Wine-istunnon?"
 
         /* shell folder path default values */
-	IDS_PROGRAMS                "Käynnistä\\Ohjelmat"
+	IDS_PROGRAMS                "Käynnistä-valikko\\Ohjelmat"
 	IDS_PERSONAL                "Omat tiedostot"
 	IDS_FAVORITES               "Suosikit"
-	IDS_STARTUP                 "Käynnistä\\Ohjelmat\\Käynnistys"
+	IDS_STARTUP                 "Käynnistä-valikko\\Ohjelmat\\Käynnistys"
 	IDS_RECENT                  "Äskettäin käytetyt"
 	IDS_SENDTO                  "Lähetä"
-	IDS_STARTMENU               "Käynnistä"
+	IDS_STARTMENU               "Käynnistä-valikko"
 	IDS_MYMUSIC                 "Omat tiedostot\\Omat musiikkitiedostot"
 	IDS_MYVIDEO                 "Omat tiedostot\\Omat videotiedostot"
 	IDS_DESKTOPDIRECTORY        "Työpöytä"
 	IDS_NETHOOD                 "Verkkoympäristö"
 	IDS_TEMPLATES               "Mallit"
-	IDS_APPDATA                 "Ohjelmien Tiedot"
+	IDS_APPDATA                 "Ohjelmien tiedot"
 	IDS_PRINTHOOD               "Tulostinympäristö"
-	IDS_LOCAL_APPDATA           "Paikalliset Asetukset\\Ohjelmien Tiedot"
-	IDS_INTERNET_CACHE          "Paikalliset Asetukset\\Väliaikaiset Internet-tiedostot"
+	IDS_LOCAL_APPDATA           "Paikalliset asetukset\\Ohjelmien tiedot"
+	IDS_INTERNET_CACHE          "Paikalliset asetukset\\Väliaikaiset Internet-tiedostot"
 	IDS_COOKIES                 "Evästeet"
-	IDS_HISTORY                 "Paikalliset Asetukset\\Historia"
-	IDS_PROGRAM_FILES           "Ohjelmat"
+	IDS_HISTORY                 "Paikalliset asetukset\\Historia"
+	IDS_PROGRAM_FILES           "Ohjelmatiedostot"
 	IDS_MYPICTURES              "Omat tiedostot\\Omat kuvatiedostot"
-	IDS_PROGRAM_FILES_COMMON    "Ohjelmat\\Yhteiset Tiedostot"
+	IDS_PROGRAM_FILES_COMMON    "Ohjelmat\\Yhteiset tiedostot"
 	IDS_COMMON_DOCUMENTS        "Dokumentit"
-	IDS_ADMINTOOLS              "Käynnistys\\Ohjauspaneeli\\Administrative Tools"
+	IDS_ADMINTOOLS              "Käynnistä-valikko\\Ohjelmat\\Administrative Tools"
 	IDS_COMMON_MUSIC            "Dokumentit\\Omat musiikkitiedostot"
 	IDS_COMMON_PICTURES         "Dokumentit\\Omat kuvatiedostot"
 	IDS_COMMON_VIDEO            "Dokumentit\\Omat videotiedostot"
-	IDS_CDBURN_AREA             "Paikalliset Asetukset\\Ohjelmien Tiedot\\Microsoft\\CD Burning"
+	IDS_CDBURN_AREA             "Paikalliset asetukset\\Ohjelmien tiedot\\Microsoft\\CD Burning"
 }
