@@ -497,7 +497,7 @@ static HRESULT test_primary8(LPGUID lpGuid)
             trace("All subsequent tones should be identical to this one.\n");
             trace("Listen for stutter, changes in pitch, volume, etc.\n");
         }
-        test_buffer8(dso,primary,1,FALSE,0,FALSE,0,winetest_interactive &&
+        test_buffer8(dso,&primary,1,FALSE,0,FALSE,0,winetest_interactive &&
                      !(dscaps.dwFlags & DSCAPS_EMULDRIVER),5.0,0,0,0,0);
 
         ref=IDirectSoundBuffer_Release(primary);
@@ -633,7 +633,7 @@ static HRESULT test_primary_secondary8(LPGUID lpGuid)
                "buffer %s\n",DXGetErrorString8(rc));
 
             if (rc==DS_OK && secondary!=NULL) {
-                test_buffer8(dso,secondary,0,FALSE,0,FALSE,0,
+                test_buffer8(dso,&secondary,0,FALSE,0,FALSE,0,
                              winetest_interactive,1.0,0,NULL,0,0);
 
                 ref=IDirectSoundBuffer_Release(secondary);
@@ -746,7 +746,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                "buffer: %s\n",DXGetErrorString8(rc));
 
             if (rc==DS_OK && secondary!=NULL) {
-                test_buffer8(dso,secondary,0,FALSE,0,FALSE,0,
+                test_buffer8(dso,&secondary,0,FALSE,0,FALSE,0,
                              winetest_interactive,1.0,0,NULL,0,0);
 
                 ref=IDirectSoundBuffer_Release(secondary);
