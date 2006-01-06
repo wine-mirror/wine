@@ -422,49 +422,24 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
 
   if (This->fileBased)
   {
-    char buf[10];
-    DWORD w;
+    LARGE_INTEGER newpos;
 
-    /*
-     * close file-mapping object, must be done before call to SetEndFile
-     */
-    if( This->hfilemap )
-      CloseHandle(This->hfilemap);
-    This->hfilemap = 0;
+    newpos.QuadPart = newSize.QuadPart;
+    if (SetFilePointerEx(This->hfile, newpos, NULL, FILE_BEGIN))
+    {
+        if( This->hfilemap ) CloseHandle(This->hfilemap);
 
-    /*
-     * BEGIN HACK
-     * This fixes a bug when saving through smbfs.
-     * smbmount a Windows shared directory, save a structured storage file
-     * to that dir: crash.
-     *
-     * The problem is that the SetFilePointer-SetEndOfFile combo below
-     * doesn't always succeed. The file is not grown. It seems like the
-     * operation is cached. By doing the WriteFile, the file is actually
-     * grown on disk.
-     * This hack is only needed when saving to smbfs.
-     */
-    memset(buf, '0', 10);
-    SetFilePointer(This->hfile, newSize.u.LowPart, NULL, FILE_BEGIN);
-    WriteFile(This->hfile, buf, 10, &w, NULL);
-    /*
-     * END HACK
-     */
+        SetEndOfFile(This->hfile);
 
-    /*
-     * set the new end of file
-     */
-    SetFilePointer(This->hfile, newSize.u.LowPart, NULL, FILE_BEGIN);
-    SetEndOfFile(This->hfile);
-
-    /*
-     * re-create the file mapping object
-     */
-    This->hfilemap = CreateFileMappingA(This->hfile,
-                                        NULL,
-                                        This->flProtect,
-                                        0, 0,
-                                        NULL);
+        /*
+         * re-create the file mapping object
+         */
+        This->hfilemap = CreateFileMappingA(This->hfile,
+                                            NULL,
+                                            This->flProtect,
+                                            0, 0,
+                                            NULL);
+    }
   }
   else
   {
