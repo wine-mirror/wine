@@ -31,7 +31,6 @@
  *   Styles
  *   - SS_EDITCONTROL
  *   - SS_ENDELLIPSIS
- *   - SS_ENHMETAFILE
  *   - SS_PATHELLIPSIS
  *   - SS_REALSIZECONTROL
  *   - SS_REALSIZEIMAGE
@@ -43,7 +42,7 @@
  *   - STN_ENABLE
  *
  *   Messages
- *   - STM_SETIMAGE: IMAGE_CURSOR, IMAGE_ENHMETAFILE
+ *   - STM_SETIMAGE: IMAGE_CURSOR
  */
 
 #include <stdarg.h>
@@ -63,6 +62,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style );
 static void STATIC_PaintRectfn( HWND hwnd, HDC hdc, DWORD style );
 static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style );
 static void STATIC_PaintBitmapfn( HWND hwnd, HDC hdc, DWORD style );
+static void STATIC_PaintEnhMetafn( HWND hwnd, HDC hdc, DWORD style );
 static void STATIC_PaintEtchedfn( HWND hwnd, HDC hdc, DWORD style );
 static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI StaticWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
@@ -93,7 +93,7 @@ static pfPaint staticPaintFunc[SS_TYPEMASK+1] =
     STATIC_PaintTextfn,      /* SS_LEFTNOWORDWRAP */
     STATIC_PaintOwnerDrawfn, /* SS_OWNERDRAW */
     STATIC_PaintBitmapfn,    /* SS_BITMAP */
-    NULL,                    /* SS_ENHMETAFILE */
+    STATIC_PaintEnhMetafn,   /* SS_ENHMETAFILE */
     STATIC_PaintEtchedfn,    /* SS_ETCHEDHORZ */
     STATIC_PaintEtchedfn,    /* SS_ETCHEDVERT */
     STATIC_PaintEtchedfn,    /* SS_ETCHEDFRAME */
@@ -127,7 +127,7 @@ static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
 
     if ((style & SS_TYPEMASK) != SS_ICON) return 0;
     if (hicon && !info) {
-	ERR("huh? hicon!=0, but info=0???\n");
+	ERR("hicon != 0, but info == 0\n");
     	return 0;
     }
     prevIcon = (HICON)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hicon );
@@ -151,7 +151,7 @@ static HBITMAP STATIC_SetBitmap( HWND hwnd, HBITMAP hBitmap, DWORD style )
 
     if ((style & SS_TYPEMASK) != SS_BITMAP) return 0;
     if (hBitmap && GetObjectType(hBitmap) != OBJ_BITMAP) {
-	ERR("huh? hBitmap!=0, but not bitmap\n");
+	ERR("hBitmap != 0, but it's not a bitmap\n");
     	return 0;
     }
     hOldBitmap = (HBITMAP)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hBitmap );
@@ -163,6 +163,21 @@ static HBITMAP STATIC_SetBitmap( HWND hwnd, HBITMAP hBitmap, DWORD style )
 		      SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
     }
     return hOldBitmap;
+}
+
+/***********************************************************************
+ *           STATIC_SetEnhMetaFile
+ *
+ * Set the enhanced metafile for an SS_ENHMETAFILE control.
+ */
+static HENHMETAFILE STATIC_SetEnhMetaFile( HWND hwnd, HENHMETAFILE hEnhMetaFile, DWORD style )
+{
+    if ((style & SS_TYPEMASK) != SS_ENHMETAFILE) return 0;
+    if (hEnhMetaFile && GetObjectType(hEnhMetaFile) != OBJ_ENHMETAFILE) {
+        ERR("hEnhMetaFile != 0, but it's not an enhanced metafile\n");
+        return 0;
+    }
+    return (HENHMETAFILE)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hEnhMetaFile );
 }
 
 /***********************************************************************
@@ -335,6 +350,9 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
             STATIC_SetBitmap(hwnd, hBitmap, full_style);
 	    break;
 	}
+	/* SS_ENHMETAFILE: Despite what MSDN says, Windows does not load
+	   the enhanced metafile that was specified as the window text. */
+
 	case SS_LEFT:
 	case SS_CENTER:
 	case SS_RIGHT:
@@ -399,8 +417,12 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         return 0;
 
     case STM_GETIMAGE:
+        /* FIXME: Return NULL if wParam doesn't match the control's style.
+                  wParam is IMAGE_BITMAP, IMAGE_CURSOR, IMAGE_ENHMETAFILE
+                  or IMAGE_ICON */
     case STM_GETICON16:
     case STM_GETICON:
+        /* FIXME: Return NULL if this control doesn't show an icon */
         return GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET );
 
     case STM_SETIMAGE:
@@ -412,7 +434,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 	    FIXME("STM_SETIMAGE: Unhandled type IMAGE_CURSOR\n");
 	    break;
 	case IMAGE_ENHMETAFILE:
-	    FIXME("STM_SETIMAGE: Unhandled type IMAGE_ENHMETAFILE\n");
+	    lResult = (LRESULT)STATIC_SetEnhMetaFile( hwnd, (HENHMETAFILE)lParam, full_style );
 	    break;
 	case IMAGE_ICON:
 	    lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)lParam, full_style );
@@ -637,6 +659,24 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
 	       SRCCOPY);
 	SelectObject(hMemDC, oldbitmap);
 	DeleteDC(hMemDC);
+    }
+}
+
+
+static void STATIC_PaintEnhMetafn(HWND hwnd, HDC hdc, DWORD style )
+{
+    HENHMETAFILE hEnhMetaFile;
+
+    /* message is still sent, even if the returned brush is not used */
+    SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC,
+                                   (WPARAM)hdc, (LPARAM)hwnd );
+
+    if ((hEnhMetaFile = (HENHMETAFILE)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET )))
+    {
+        RECT clientRect;
+        if(GetObjectType(hEnhMetaFile) != OBJ_ENHMETAFILE) return;
+        GetClientRect(hwnd, &clientRect);
+        PlayEnhMetaFile(hdc, hEnhMetaFile, &clientRect);
     }
 }
 
