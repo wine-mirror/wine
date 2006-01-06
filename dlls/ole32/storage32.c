@@ -5737,7 +5737,7 @@ HRESULT WINAPI StgCreatePropSetStg(IStorage *pstg, DWORD reserved,
 {
     HRESULT hr;
 
-    TRACE("(%p, 0x%lx, %p): stub\n", pstg, reserved, ppPropSetStg);
+    TRACE("(%p, 0x%lx, %p)\n", pstg, reserved, ppPropSetStg);
     if (reserved)
         hr = STG_E_INVALIDPARAMETER;
     else

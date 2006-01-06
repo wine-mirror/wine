@@ -929,7 +929,7 @@ HRESULT WINAPI OleSetContainedObject(
   IRunnableObject* runnable = NULL;
   HRESULT          hres;
 
-  TRACE("(%p,%x), stub!\n", pUnknown, fContained);
+  TRACE("(%p,%x)\n", pUnknown, fContained);
 
   hres = IUnknown_QueryInterface(pUnknown,
 				 &IID_IRunnableObject,
