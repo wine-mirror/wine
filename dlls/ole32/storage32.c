@@ -3453,18 +3453,26 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
                                                DEF_SMALL_BLOCK_SIZE,
                                                buffer,
                                                &cbRead);
-    cbTotalRead += cbRead;
+    if (FAILED(successRead))
+        break;
 
-    successWrite = BlockChainStream_WriteAt(bbTempChain,
+    if (cbRead > 0)
+    {
+        cbTotalRead += cbRead;
+
+        successWrite = BlockChainStream_WriteAt(bbTempChain,
                                             offset,
                                             cbRead,
                                             buffer,
                                             &cbWritten);
-    cbTotalWritten += cbWritten;
 
-    offset.u.LowPart += This->smallBlockSize;
+        if (!successWrite)
+            break;
 
-  } while (SUCCEEDED(successRead) && successWrite);
+        cbTotalWritten += cbWritten;
+        offset.u.LowPart += This->smallBlockSize;
+    }
+  } while (cbRead > 0);
   HeapFree(GetProcessHeap(),0,buffer);
 
   assert(cbTotalRead == cbTotalWritten);
