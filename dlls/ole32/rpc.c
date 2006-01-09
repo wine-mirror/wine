@@ -797,8 +797,8 @@ HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
         hPipe = CreateFileW(pipefn, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
         if (hPipe == INVALID_HANDLE_VALUE) {
             if (tries == 1) {
-                if ( (hres = create_server(rclsid)) &&
-                     (hres = create_local_service(rclsid)) )
+                if ( (hres = create_local_service(rclsid)) &&
+                     (hres = create_server(rclsid)) )
                     return hres;
                 Sleep(1000);
             } else {
