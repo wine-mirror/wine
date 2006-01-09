@@ -52,13 +52,27 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 }
 
 /***********************************************************************
+ *      ScriptFreeCache (USP10.@)
+ *
+ */
+HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
+{
+    FIXME("%p\n", psc);
+
+    if (psc) *psc = NULL;
+    return 0;
+}
+
+/***********************************************************************
  *      ScriptGetProperties (USP10.@)
  *
  */
 HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***ppSp, int *piNumScripts)
 {
     FIXME("%p,%p\n",ppSp,piNumScripts);
-    return E_NOTIMPL;
+
+    if (piNumScripts) *piNumScripts = 0;
+    return 0;
 }
 
 /***********************************************************************
@@ -111,7 +125,12 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
 {
     FIXME("%s,%d,%d,%p,%p,%p,%p\n", debugstr_w(pwcInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
-    return E_INVALIDARG;
+
+    if (!pwcInChars || !cInChars || !pItems || cMaxItems < 2)
+        return E_INVALIDARG;
+
+    *pcItems = 0;
+    return 0;
 }
 
 /***********************************************************************

@@ -4,7 +4,7 @@
 @ stub ScriptBreak
 @ stub ScriptCPtoX
 @ stub ScriptCacheGetHeight
-@ stub ScriptFreeCache
+@ stdcall ScriptFreeCache(ptr)
 @ stub ScriptGetCMap
 @ stdcall ScriptGetFontProperties(long ptr ptr)
 @ stub ScriptGetGlyphABCWidth
