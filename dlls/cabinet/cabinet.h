@@ -613,6 +613,10 @@ static const cab_UWORD Zipmask[17] = {                                          
  0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff                    \
 }
 
+/* EXTRACTdest flags */
+#define EXTRACT_FILLFILELIST  0x00000001
+#define EXTRACT_EXTRACTFILES  0x00000002
+
 struct ExtractFileList {
         LPSTR  filename;
         struct ExtractFileList *next;
