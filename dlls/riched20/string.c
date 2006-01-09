@@ -155,29 +155,22 @@ int ME_StrVLen(ME_String *s) {
   return s->nLen;
 }
 
-/* FIXME we use widechars, not multibytes, inside, no need for complex logic anymore */
 int ME_StrRelPos(ME_String *s, int nVChar, int *pRelChars)
 {
+  int nRelChars = *pRelChars;
+  
   TRACE("%s,%d,&%d\n", debugstr_w(s->szData), nVChar, *pRelChars);
 
   assert(*pRelChars);
-  if (!*pRelChars) return nVChar;
-  
-  if (*pRelChars>0)
-  {
-    while(nVChar<s->nLen && *pRelChars>0)
-    {
-      nVChar++;
-      (*pRelChars)--;
-    }
+  if (!nRelChars)
     return nVChar;
-  }
-
-  while(nVChar>0 && *pRelChars<0)
-  {
-    nVChar--;
-    (*pRelChars)++;
-  }
+  
+  if (nRelChars>0)
+    nRelChars = min(*pRelChars, s->nLen - nVChar);
+  else
+    nRelChars = max(*pRelChars, -nVChar);
+  nVChar += nRelChars;
+  *pRelChars -= nRelChars;
   return nVChar;
 }
 
