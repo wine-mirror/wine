@@ -169,7 +169,6 @@ extern void* StdGlobalInterfaceTableInstance;
 
 /* FIXME: these shouldn't be needed, except for 16-bit functions */
 extern HRESULT WINE_StringFromCLSID(const CLSID *id,LPSTR idstr);
-HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id);
 
 HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY *key);
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);

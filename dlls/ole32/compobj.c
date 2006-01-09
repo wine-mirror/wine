@@ -795,31 +795,23 @@ HRESULT WINAPI CoCreateGuid(GUID *pguid)
  *   S_OK on success
  *   CO_E_CLASSSTRING if idstr is not a valid CLSID
  *
- * BUGS
- *
- * In Windows, if idstr is not a valid CLSID string then it gets
- * treated as a ProgID. Wine currently doesn't do this. If idstr is
- * NULL it's treated as an all-zero GUID.
- *
  * SEE ALSO
  *  StringFromCLSID
  */
-HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id)
+static HRESULT WINAPI __CLSIDFromString(LPCWSTR s, CLSID *id)
 {
-  const BYTE *s;
   int	i;
   BYTE table[256];
 
-  if (!idstr) {
+  if (!s) {
     memset( id, 0, sizeof (CLSID) );
     return S_OK;
   }
 
   /* validate the CLSID string */
-  if (strlen(idstr) != 38)
+  if (strlenW(s) != 38)
     return CO_E_CLASSSTRING;
 
-  s = (const BYTE *) idstr;
   if ((s[0]!='{') || (s[9]!='-') || (s[14]!='-') || (s[19]!='-') || (s[24]!='-') || (s[37]!='}'))
     return CO_E_CLASSSTRING;
 
@@ -831,7 +823,7 @@ HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id)
        return CO_E_CLASSSTRING;
   }
 
-  TRACE("%s -> %p\n", s, id);
+  TRACE("%s -> %p\n", debugstr_w(s), id);
 
   /* quick lookup table */
   memset(table, 0, 256);
@@ -868,14 +860,9 @@ HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id)
 
 HRESULT WINAPI CLSIDFromString(LPOLESTR idstr, CLSID *id )
 {
-    char xid[40];
     HRESULT ret;
 
-    if (!WideCharToMultiByte( CP_ACP, 0, idstr, -1, xid, sizeof(xid), NULL, NULL ))
-        return CO_E_CLASSSTRING;
-
-
-    ret = __CLSIDFromStringA(xid,id);
+    ret = __CLSIDFromString(idstr, id);
     if(ret != S_OK) { /* It appears a ProgID is also valid */
         ret = CLSIDFromProgID(idstr, id);
     }
