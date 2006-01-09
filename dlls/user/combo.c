@@ -435,6 +435,10 @@ static void CBCalcPlacement(
        lprLB->right = lprLB->left + lphc->droppedWidth;
   }
 
+  /* don't allow negative window width */
+  if (lprEdit->right < lprEdit->left)
+    lprEdit->right = lprEdit->left;
+
   TRACE("\ttext\t= (%ld,%ld-%ld,%ld)\n",
 	lprEdit->left, lprEdit->top, lprEdit->right, lprEdit->bottom);
 
