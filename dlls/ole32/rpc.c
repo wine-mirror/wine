@@ -503,7 +503,20 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
         CloseHandle(params->handle);
     }
     else
+    {
+        BOOL joined = FALSE;
+        if (!COM_CurrentInfo()->apt)
+        {
+            apartment_joinmta();
+            joined = TRUE;
+        }
         RPC_ExecuteCall(params);
+        if (joined)
+        {
+            apartment_release(COM_CurrentInfo()->apt);
+            COM_CurrentInfo()->apt = NULL;
+        }
+    }
 
     HeapFree(GetProcessHeap(), 0, params);
 

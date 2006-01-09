@@ -228,6 +228,7 @@ static inline HRESULT apartment_getoxid(struct apartment *apt, OXID *oxid)
     *oxid = apt->oxid;
     return S_OK;
 }
+void apartment_joinmta(void);
 
 
 /* DCOM messages used by the apartment window (not compatible with native) */

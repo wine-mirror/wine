@@ -422,6 +422,12 @@ static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LP
     }
 }
 
+void apartment_joinmta(void)
+{
+    apartment_addref(MTA);
+    COM_CurrentInfo()->apt = MTA;
+}
+
 /*****************************************************************************
  * This section contains OpenDllList implemantation
  */
