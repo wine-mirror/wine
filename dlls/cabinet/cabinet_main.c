@@ -69,22 +69,37 @@ HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
 /***********************************************************************
  * Extract (CABINET.3)
  *
- * Apparently an undocumented function, presumably to extract a CAB file
- * to somewhere...
+ * Extracts the contents of the cabinet file to the specified
+ * destination.
  *
  * PARAMS
- *   dest         pointer to a buffer of 0x32c bytes containing
- *           [I]  - number with value 1 at index 0x18
- *                - the dest path starting at index 0x1c
- *           [O]  - a linked list with the filename existing inside the
- *                  CAB file at idx 0x10
- *                - the number of files inside the CAB file at index 0x14
- *                - the name of the last file with dest path at idx 0x120
+ *   dest      [I/O] Controls the operation of Extract.  See NOTES.
  *   szCabName [I] Filename of the cabinet to extract.
  *
  * RETURNS
- *     Success: S_OK
- *     Failure: E_OUTOFMEMORY (?)
+ *     Success: S_OK.
+ *     Failure: E_FAIL.
+ *
+ * NOTES
+ *   The following members of the dest struct control the operation
+ *   of Extract:
+ *       filelist  [I] A linked list of filenames.  Extract only extracts
+ *                     files from the cabinet that are in this list.
+ *       filecount [O] Contains the number of files in filelist on
+ *                     completion.
+ *       flags     [I] See Operation.
+ *       directory [I] The destination directory.
+ *       lastfile  [O] The last file extracted.
+ *
+ *   Operation
+ *     If flags contains EXTRACT_FILLFILELIST, then filelist will be
+ *     filled with all the files in the cabinet.  If flags contains
+ *     EXTRACT_EXTRACTFILES, then only the files in the filelist will
+ *     be extracted from the cabinet.  EXTRACT_FILLFILELIST can be called
+ *     by itself, but EXTRACT_EXTRACTFILES must have a valid filelist
+ *     in order to succeed.  If flags contains both EXTRACT_FILLFILELIST
+ *     and EXTRACT_EXTRACTFILES, then all the files in the cabinet
+ *     will be extracted.
  */
 HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR szCabName)
 {
