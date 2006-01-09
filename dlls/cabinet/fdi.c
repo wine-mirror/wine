@@ -2370,6 +2370,7 @@ BOOL __cdecl FDICopy(
 
   CAB(setID) = fdici.setID;
   CAB(iCabinet) = fdici.iCabinet;
+  CAB(cabhf) = cabhf;
 
   /* read folders */
   for (i = 0; i < fdici.cFolders; i++) {
@@ -2554,7 +2555,6 @@ BOOL __cdecl FDICopy(
       /* set up decomp_state */
       CAB(hfdi) = hfdi;
       CAB(filehf) = filehf;
-      CAB(cabhf) = cabhf;
 
       /* Was there a change of folder?  Compression type?  Did we somehow go backwards? */
       if ((ct1 != ct2) || (CAB(current) != fol) || (file->offset < CAB(offset))) {
