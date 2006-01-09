@@ -2098,6 +2098,13 @@ unsigned char * WINAPI NdrComplexArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
+  if (pFormat[0] != RPC_FC_BOGUS_ARRAY)
+  {
+      ERR("invalid format type %x\n", pFormat[0]);
+      RpcRaiseException(RPC_S_INTERNAL_ERROR);
+      return NULL;
+  }
+
   def = *(const WORD*)&pFormat[2];
   pFormat += 4;
 
@@ -2138,6 +2145,13 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned char *pMemory;
 
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
+
+  if (pFormat[0] != RPC_FC_BOGUS_ARRAY)
+  {
+      ERR("invalid format type %x\n", pFormat[0]);
+      RpcRaiseException(RPC_S_INTERNAL_ERROR);
+      return NULL;
+  }
 
   pFormat += 4;
 
@@ -2180,6 +2194,13 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
+  if (pFormat[0] != RPC_FC_BOGUS_ARRAY)
+  {
+      ERR("invalid format type %x\n", pFormat[0]);
+      RpcRaiseException(RPC_S_INTERNAL_ERROR);
+      return;
+  }
+
   def = *(const WORD*)&pFormat[2];
   pFormat += 4;
 
@@ -2207,6 +2228,13 @@ unsigned long WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   DWORD size = 0;
   FIXME("(%p,%p): stub\n", pStubMsg, pFormat);
 
+  if (pFormat[0] != RPC_FC_BOGUS_ARRAY)
+  {
+      ERR("invalid format type %x\n", pFormat[0]);
+      RpcRaiseException(RPC_S_INTERNAL_ERROR);
+      return 0;
+  }
+
   pFormat += 4;
 
   pFormat = ReadConformance(pStubMsg, pFormat);
@@ -2228,6 +2256,13 @@ void WINAPI NdrComplexArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
   ULONG count, def;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
+
+  if (pFormat[0] != RPC_FC_BOGUS_ARRAY)
+  {
+      ERR("invalid format type %x\n", pFormat[0]);
+      RpcRaiseException(RPC_S_INTERNAL_ERROR);
+      return;
+  }
 
   def = *(const WORD*)&pFormat[2];
   pFormat += 4;
