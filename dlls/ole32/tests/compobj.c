@@ -32,6 +32,16 @@
 
 static const CLSID CLSID_CDeviceMoniker = { 0x4315d437, 0x5b8c, 0x11d0, { 0xbd, 0x3b, 0x00, 0xa0, 0xc9, 0x11, 0xce, 0x86 } };
 static const WCHAR devicedotone[] = {'d','e','v','i','c','e','.','1',0};
+static const WCHAR wszCLSID_CDeviceMoniker[] =
+{
+    '{',
+    '4','3','1','5','d','4','3','7','-',
+    '5','b','8','c','-',
+    '1','1','d','0','-',
+    'b','d','3','b','-',
+    '0','0','a','0','c','9','1','1','c','e','8','6',
+    '}',0
+};
 
 static void test_ProgIDFromCLSID(void)
 {
@@ -51,10 +61,23 @@ static void test_CLSIDFromProgID(void)
     HRESULT hr = CLSIDFromProgID(devicedotone, &clsid);
     ok(hr == S_OK, "CLSIDFromProgID failed with error 0x%08lx\n", hr);
     ok(IsEqualCLSID(&clsid, &CLSID_CDeviceMoniker), "clsid wasn't equal to CLSID_CDeviceMoniker\n");
+
+    hr = CLSIDFromString((LPOLESTR)devicedotone, &clsid);
+    ok_ole_success(hr, "CLSIDFromString");
+    ok(IsEqualCLSID(&clsid, &CLSID_CDeviceMoniker), "clsid wasn't equal to CLSID_CDeviceMoniker\n");
+}
+
+static void test_CLSIDFromString(void)
+{
+    CLSID clsid;
+    HRESULT hr = CLSIDFromString((LPOLESTR)wszCLSID_CDeviceMoniker, &clsid);
+    ok_ole_success(hr, "CLSIDFromString");
+    ok(IsEqualCLSID(&clsid, &CLSID_CDeviceMoniker), "clsid wasn't equal to CLSID_CDeviceMoniker\n");
 }
 
 START_TEST(compobj)
 {
     test_ProgIDFromCLSID();
     test_CLSIDFromProgID();
+    test_CLSIDFromString();
 }
