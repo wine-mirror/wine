@@ -39,6 +39,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hInstance);
             CRYPT_InitFunctionSets();
             break;
         case DLL_PROCESS_DETACH:

@@ -335,6 +335,7 @@ int WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hInstance);
             init_handle_table(&handle_table);
             break;
 
