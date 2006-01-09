@@ -1,5 +1,6 @@
 /*
  * Copyright 1998 Juergen Schmied
+ * Copyright 2006 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,17 +19,103 @@
 
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
+MENU_001 MENU DISCARDABLE
+BEGIN
+MENUITEM "큰 아이콘(&g)",	FCIDM_SHVIEW_BIGICON
+MENUITEM "작은 아이콘(&m)",	FCIDM_SHVIEW_SMALLICON
+MENUITEM "목록(&L)",		FCIDM_SHVIEW_LISTVIEW
+MENUITEM "자세히(&D)",		FCIDM_SHVIEW_REPORTVIEW
+END
+
+/*
+shellview background menu
+*/
+MENU_002 MENU DISCARDABLE
+BEGIN
+POPUP ""
+BEGIN
+POPUP "보기(&V)"
+BEGIN
+MENUITEM "큰 아이콘(&g)",	FCIDM_SHVIEW_BIGICON
+MENUITEM "작은 아이콘(&m)",	FCIDM_SHVIEW_SMALLICON
+MENUITEM "목록(&L)",		FCIDM_SHVIEW_LISTVIEW
+MENUITEM "자세히(&D)",	FCIDM_SHVIEW_REPORTVIEW
+END
+MENUITEM SEPARATOR
+POPUP "아이콘 정렬(&I)"
+BEGIN
+MENUITEM "이름으로(&N)",	0x30	/* column 0 */
+MENUITEM "형식으로(&T)",	0x32	/* column 2 */
+MENUITEM "크기로(&S)",	0x31	/* ... */
+MENUITEM "날짜로(&D)",	0x33
+MENUITEM SEPARATOR
+MENUITEM "자동 정렬(&A)",	FCIDM_SHVIEW_AUTOARRANGE
+END
+MENUITEM "아이콘 정렬",	FCIDM_SHVIEW_SNAPTOGRID
+MENUITEM SEPARATOR
+MENUITEM "새로 고침",		FCIDM_SHVIEW_REFRESH
+MENUITEM SEPARATOR
+MENUITEM "붙여넣기",		FCIDM_SHVIEW_INSERT
+MENUITEM "링크로 붙여넣기",	FCIDM_SHVIEW_INSERTLINK
+MENUITEM SEPARATOR
+POPUP "새 작업"
+BEGIN
+MENUITEM "새 폴더(&F)",	FCIDM_SHVIEW_NEWFOLDER
+MENUITEM "새 링크(&L)",	FCIDM_SHVIEW_NEWLINK
+MENUITEM SEPARATOR
+END
+MENUITEM SEPARATOR
+MENUITEM "속성",	FCIDM_SHVIEW_PROPERTIES
+END
+END
+
+/*
+shellview item menu
+*/
+MENU_SHV_FILE MENU DISCARDABLE
+BEGIN
+POPUP ""
+BEGIN
+MENUITEM "탐색(&x)",		FCIDM_SHVIEW_EXPLORE
+MENUITEM "열기(&O)",		FCIDM_SHVIEW_OPEN
+MENUITEM SEPARATOR
+MENUITEM "잘라내기(&u)",		FCIDM_SHVIEW_CUT
+MENUITEM "복사(&C)",		FCIDM_SHVIEW_COPY
+MENUITEM SEPARATOR
+MENUITEM "링크 만들기(&L)",	FCIDM_SHVIEW_CREATELINK
+MENUITEM "지우기(&D)",		FCIDM_SHVIEW_DELETE
+MENUITEM "이름 바꾸기(&R)",		FCIDM_SHVIEW_RENAME
+MENUITEM SEPARATOR
+MENUITEM "속성(&P)",	FCIDM_SHVIEW_PROPERTIES
+END
+END
+
+SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "폴더 탐색"
+FONT 8, "MS Shell Dlg"
+{
+DEFPUSHBUTTON "확인", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+PUSHBUTTON "취소", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+LTEXT "", IDD_TITLE, 4, 4, 180, 12
+LTEXT "", IDD_STATUS, 4, 25, 180, 12
+CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+WS_BORDER | WS_TABSTOP,
+4, 40, 180, 120
+}
+
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "%s에 관하여"
+CAPTION "%s 정보"
 FONT 10, "MS Shell Dlg"
 {
- DEFPUSHBUTTON "확인", IDOK, 153, 133, 50, 12, WS_TABSTOP
- LISTBOX 99, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
- ICON "", 1088, 10, 10, 14, 16
- LTEXT "", 100, 30, 10, 137, 10
- LTEXT "", 101, 30, 22, 137, 10
- LTEXT "Wine was brought to you by:", 98, 8, 55, 137, 10
+DEFPUSHBUTTON "확인", IDOK, 153, 133, 50, 12, WS_TABSTOP
+LISTBOX 99, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
+ICON "", 1088, 10, 10, 14, 16
+LTEXT "", 100, 30, 10, 137, 10
+LTEXT "", 101, 30, 22, 137, 10
+LTEXT "Wine은 당신을 위해 제공되었습니다.:", 98, 8, 55, 137, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -36,11 +123,83 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
- ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Type the name of a program, folder, document, or Internet resource, and Wine will open it for you.", 12289, 36, 11, 182, 18
- LTEXT "&Open:", 12305, 7, 39, 24, 10
- CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
- DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "Cancel", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "&Browse...", 12288, 170, 63, 50, 14, WS_TABSTOP
+ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
+LTEXT "풀그림,폴더,문서나 인터넷 자원, 그리고 Wine이 열 이름을 적어주세요.", 12289, 36, 11, 182, 18
+LTEXT "열기(&O):", 12305, 7, 39, 24, 10
+CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
+DEFPUSHBUTTON "확인", IDOK, 62, 63, 50, 14, WS_TABSTOP
+PUSHBUTTON "취소", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+PUSHBUTTON "찾기(&B)...", 12288, 170, 63, 50, 14, WS_TABSTOP
+}
+
+STRINGTABLE DISCARDABLE
+{
+/* columns in the shellview */
+IDS_SHV_COLUMN1		"파일"
+IDS_SHV_COLUMN2		"크기"
+IDS_SHV_COLUMN3		"형식"
+IDS_SHV_COLUMN4		"수정날짜"
+IDS_SHV_COLUMN5		"속성"
+IDS_SHV_COLUMN6		"크기"
+IDS_SHV_COLUMN7		"가능한 크기"
+IDS_SHV_COLUMN8		"이름"
+IDS_SHV_COLUMN9		"주석"
+IDS_SHV_COLUMN10	"소유자"
+IDS_SHV_COLUMN11	"그룹"
+
+/* special folders */
+IDS_DESKTOP		"데스크탑"
+IDS_MYCOMPUTER		"내 컴퓨터"
+
+/* context menus */
+IDS_VIEW_LARGE		"큰 아이콘(&g)"
+IDS_VIEW_SMALL		"작은 아이콘(&m)"
+IDS_VIEW_LIST		"목록(&L)"
+IDS_VIEW_DETAILS	"자세히(&D)"
+IDS_SELECT		"선택"
+IDS_OPEN		"열기"
+
+IDS_CREATEFOLDER_DENIED "새 폴더를 만들 수 없습니다: 만들 권한이 없습니다."
+IDS_CREATEFOLDER_CAPTION "새 폴더를 만드는 과정에서 에러발생"
+IDS_DELETEITEM_CAPTION "파일 지우기 확인"
+IDS_DELETEFOLDER_CAPTION "폴더 지우기 확인"
+IDS_DELETEITEM_TEXT "당신은  '%1'을 지우기를 바랍니까?"
+IDS_DELETEMULTIPLE_TEXT "당신은 이것 %1 아이템을 지우기를 바랍니까?"
+IDS_OVERWRITEFILE_TEXT "파일 %1을 덮어쓰겠습니까?"
+IDS_OVERWRITEFILE_CAPTION "파일 덮어쓰기 확인"
+
+/* message box strings */
+IDS_RESTART_TITLE       "다시 시작"
+IDS_RESTART_PROMPT      "당신은 윈도우즈 재부팅을  재현하겠습니까?"
+IDS_SHUTDOWN_TITLE      "끄기"
+IDS_SHUTDOWN_PROMPT     "당신은  Wine 세션을 끄겠습니까?"
+
+/* shell folder path default values */
+IDS_PROGRAMS                "Start Menu\\Programs"
+IDS_PERSONAL                "My Documents"
+IDS_FAVORITES               "Favorites"
+IDS_STARTUP                 "Start Menu\\Programs\\StartUp"
+IDS_RECENT                  "Recent"
+IDS_SENDTO                  "SendTo"
+IDS_STARTMENU               "Start Menu"
+IDS_MYMUSIC                 "My Documents\\My Music"
+IDS_MYVIDEO                 "My Documents\\My Video"
+IDS_DESKTOPDIRECTORY        "Desktop"
+IDS_NETHOOD                 "NetHood"
+IDS_TEMPLATES               "Templates"
+IDS_APPDATA                 "Application Data"
+IDS_PRINTHOOD               "PrintHood"
+IDS_LOCAL_APPDATA           "Local Settings\\Application Data"
+IDS_INTERNET_CACHE          "Local Settings\\Temporary Internet Files"
+IDS_COOKIES                 "Cookies"
+IDS_HISTORY                 "Local Settings\\History"
+IDS_PROGRAM_FILES           "Program Files"
+IDS_MYPICTURES              "My Documents\\My Pictures"
+IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
+IDS_COMMON_DOCUMENTS        "Documents"
+IDS_ADMINTOOLS              "Start Menu\\Programs\\Administrative Tools"
+IDS_COMMON_MUSIC            "Documents\\My Music"
+IDS_COMMON_PICTURES         "Documents\\My Pictures"
+IDS_COMMON_VIDEO            "Documents\\My Video"
+IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
 }
