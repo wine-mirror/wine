@@ -29,7 +29,6 @@
  * TODO:
  *   - ComboBox_[GS]etMinVisible()
  *   - CB_GETMINVISIBLE, CB_SETMINVISIBLE
- *   - CB_LIMITTEXT
  *   - CB_SETTOPINDEX
  */
 
