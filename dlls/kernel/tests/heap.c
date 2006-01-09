@@ -102,4 +102,12 @@ START_TEST(heap)
     gbl = LocalReAlloc(0, 10, LMEM_MOVEABLE);
     ok(gbl == NULL, "local realloc allocated memory\n");
 
+    /* trying to lock empty memory should give an error */
+    gbl = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT,0);
+    ok(gbl != NULL, "returned NULL\n");
+    SetLastError(0xdeadbeef);
+    mem = GlobalLock(gbl);
+    ok( GetLastError() == ERROR_DISCARDED, "should return an error\n");
+    ok( mem == NULL, "should return NULL\n");
+    GlobalFree(gbl);
 }

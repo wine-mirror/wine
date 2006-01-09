@@ -413,9 +413,11 @@ LPVOID WINAPI GlobalLock(
         pintern = HANDLE_TO_INTERN(hmem);
         if (pintern->Magic == MAGIC_GLOBAL_USED)
         {
-            if (pintern->LockCount < GLOBAL_LOCK_MAX)
-                pintern->LockCount++;
             palloc = pintern->Pointer;
+            if (!pintern->Pointer)
+                SetLastError(ERROR_DISCARDED);
+            else if (pintern->LockCount < GLOBAL_LOCK_MAX)
+                    pintern->LockCount++;
         }
         else
         {
