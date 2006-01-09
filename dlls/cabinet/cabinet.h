@@ -625,7 +625,7 @@ typedef struct {
         long  unknown1[3];      /* 0x004 */
         struct ExtractFileList *filelist; /* 0x010 */
         long  filecount;        /* 0x014 */
-        long  unknown2;         /* 0x018 */
+        DWORD flags;            /* 0x018 */
         char  directory[0x104]; /* 0x01c */
         char  lastfile[0x20c];  /* 0x120 */
 } EXTRACTdest;
