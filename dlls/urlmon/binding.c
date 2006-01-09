@@ -34,6 +34,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
+typedef struct ProtocolStream ProtocolStream;
+
 typedef struct {
     const IBindingVtbl               *lpBindingVtbl;
     const IInternetProtocolSinkVtbl  *lpInternetProtocolSinkVtbl;
@@ -45,7 +47,7 @@ typedef struct {
     IBindStatusCallback *callback;
     IInternetProtocol *protocol;
     IServiceProvider *service_provider;
-    IStream *stream;
+    ProtocolStream *stream;
 
     BINDINFO bindinfo;
     DWORD bindf;
@@ -53,10 +55,23 @@ typedef struct {
     LPWSTR url;
 } Binding;
 
+struct ProtocolStream {
+    const IStreamVtbl *lpStreamVtbl;
+
+    LONG ref;
+
+    IInternetProtocol *protocol;
+
+    BYTE buf[1024*8];
+    DWORD buf_size;
+};
+
 #define BINDING(x)   ((IBinding*)               &(x)->lpBindingVtbl)
 #define PROTSINK(x)  ((IInternetProtocolSink*)  &(x)->lpInternetProtocolSinkVtbl)
 #define BINDINF(x)   ((IInternetBindInfo*)      &(x)->lpInternetBindInfoVtbl)
 #define SERVPROV(x)  ((IServiceProvider*)       &(x)->lpServiceProviderVtbl)
+
+#define STREAM(x) ((IStream*) &(x)->lpStreamVtbl)
 
 static HRESULT WINAPI HttpNegotiate_QueryInterface(IHttpNegotiate2 *iface,
                                                    REFIID riid, void **ppv)
@@ -130,7 +145,217 @@ static const IHttpNegotiate2Vtbl HttpNegotiate2Vtbl = {
 
 static IHttpNegotiate2 HttpNegotiate = { &HttpNegotiate2Vtbl };
 
+#define STREAM_THIS(iface) DEFINE_THIS(ProtocolStream, Stream, iface)
+
+static HRESULT WINAPI ProtocolStream_QueryInterface(IStream *iface,
+                                                          REFIID riid, void **ppv)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = STREAM(This);
+    }else if(IsEqualGUID(&IID_ISequentialStream, riid)) {
+        TRACE("(%p)->(IID_ISequentialStream %p)\n", This, ppv);
+        *ppv = STREAM(This);
+    }else if(IsEqualGUID(&IID_IStream, riid)) {
+        TRACE("(%p)->(IID_IStream %p)\n", This, ppv);
+        *ppv = STREAM(This);
+    }
+
+    if(*ppv) {
+        IStream_AddRef(STREAM(This));
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ProtocolStream_AddRef(IStream *iface)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ProtocolStream_Release(IStream *iface)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    if(!ref) {
+        IInternetProtocol_Release(This->protocol);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI ProtocolStream_Read(IStream *iface, void *pv,
+                                         ULONG cb, ULONG *pcbRead)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+    DWORD read = 0, pread = 0;
+
+    TRACE("(%p)->(%p %ld %p)\n", This, pv, cb, pcbRead);
+
+    if(This->buf_size) {
+        read = cb;
+
+        if(read > This->buf_size)
+            read = This->buf_size;
+
+        memcpy(pv, This->buf, read);
+
+        if(read < This->buf_size)
+            memmove(This->buf, This->buf+read, This->buf_size-read);
+        This->buf_size -= read;
+    }
+
+    if(read == cb) {
+        *pcbRead = read;
+        return S_OK;
+    }
+
+    IInternetProtocol_Read(This->protocol, (PBYTE)pv+read, cb-read, &pread);
+    *pcbRead = read + pread;
+
+    return read || pread ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI ProtocolStream_Write(IStream *iface, const void *pv,
+                                          ULONG cb, ULONG *pcbWritten)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+
+    TRACE("(%p)->(%p %ld %p)\n", This, pv, cb, pcbWritten);
+
+    return STG_E_ACCESSDENIED;
+}
+
+static HRESULT WINAPI ProtocolStream_Seek(IStream *iface, LARGE_INTEGER dlibMove,
+                                         DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+    FIXME("(%p)->(%ld %08lx %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProtocolStream_SetSize(IStream *iface, ULARGE_INTEGER libNewSize)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+    FIXME("(%p)->(%ld)\n", This, libNewSize.u.LowPart);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProtocolStream_CopyTo(IStream *iface, IStream *pstm,
+        ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+    FIXME("(%p)->(%p %ld %p %p)\n", This, pstm, cb.u.LowPart, pcbRead, pcbWritten);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProtocolStream_Commit(IStream *iface, DWORD grfCommitFlags)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+
+    TRACE("(%p)->(%08lx)\n", This, grfCommitFlags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProtocolStream_Revert(IStream *iface)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+
+    TRACE("(%p)\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProtocolStream_LockRegion(IStream *iface, ULARGE_INTEGER libOffset,
+                                               ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+    FIXME("(%p)->(%ld %ld %ld)\n", This, libOffset.u.LowPart, cb.u.LowPart, dwLockType);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProtocolStream_UnlockRegion(IStream *iface,
+        ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+    FIXME("(%p)->(%ld %ld %ld)\n", This, libOffset.u.LowPart, cb.u.LowPart, dwLockType);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProtocolStream_Stat(IStream *iface, STATSTG *pstatstg,
+                                         DWORD dwStatFlag)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+    FIXME("(%p)->(%p %08lx)\n", This, pstatstg, dwStatFlag);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProtocolStream_Clone(IStream *iface, IStream **ppstm)
+{
+    ProtocolStream *This = STREAM_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, ppstm);
+    return E_NOTIMPL;
+}
+
+#undef STREAM_THIS
+
+static const IStreamVtbl ProtocolStreamVtbl = {
+    ProtocolStream_QueryInterface,
+    ProtocolStream_AddRef,
+    ProtocolStream_Release,
+    ProtocolStream_Read,
+    ProtocolStream_Write,
+    ProtocolStream_Seek,
+    ProtocolStream_SetSize,
+    ProtocolStream_CopyTo,
+    ProtocolStream_Commit,
+    ProtocolStream_Revert,
+    ProtocolStream_LockRegion,
+    ProtocolStream_UnlockRegion,
+    ProtocolStream_Stat,
+    ProtocolStream_Clone
+};
+
 #define BINDING_THIS(iface) DEFINE_THIS(Binding, Binding, iface)
+
+static ProtocolStream *create_stream(IInternetProtocol *protocol)
+{
+    ProtocolStream *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(ProtocolStream));
+
+    ret->lpStreamVtbl = &ProtocolStreamVtbl;
+    ret->ref = 1;
+    ret->buf_size = 0;
+
+    IInternetProtocol_AddRef(protocol);
+    ret->protocol = protocol;
+
+    return ret;
+}
+
+static void fill_stream_buffer(ProtocolStream *This)
+{
+    DWORD read = 0;
+
+    IInternetProtocol_Read(This->protocol, This->buf+This->buf_size,
+                           sizeof(This->buf)-This->buf_size, &read);
+    This->buf_size += read;
+}
 
 static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void **ppv)
 {
@@ -187,7 +412,7 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
         if(This->service_provider)
             IServiceProvider_Release(This->service_provider);
         if(This->stream)
-            IStream_Release(This->stream);
+            IStream_Release(STREAM(This->stream));
 
         ReleaseBindInfo(&This->bindinfo);
         HeapFree(GetProcessHeap(), 0, This->mime);
@@ -321,9 +546,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
         DWORD grfBSCF, ULONG ulProgress, ULONG ulProgressMax)
 {
     Binding *This = PROTSINK_THIS(iface);
-    DWORD read = 0, cread;
     STGMEDIUM stgmed;
-    BYTE buf[1024];
 
     TRACE("(%p)->(%ld %lu %lu)\n", This, grfBSCF, ulProgress, ulProgressMax);
 
@@ -341,17 +564,13 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
 
     if(grfBSCF & BSCF_FIRSTDATANOTIFICATION)
         IInternetProtocol_LockRequest(This->protocol, 0);
-    do {
-        cread = 0;
-        IInternetProtocol_Read(This->protocol, buf, sizeof(buf), &cread);
-        IStream_Write(This->stream, buf, read, NULL);
-        read += cread;
-    }while(cread);
+
+    fill_stream_buffer(This->stream);
 
     stgmed.tymed = TYMED_ISTREAM;
-    stgmed.u.pstm = This->stream;
+    stgmed.u.pstm = STREAM(This->stream);
 
-    IBindStatusCallback_OnDataAvailable(This->callback, grfBSCF, read,
+    IBindStatusCallback_OnDataAvailable(This->callback, grfBSCF, This->stream->buf_size,
             NULL /* FIXME */, &stgmed);
 
     if(grfBSCF & BSCF_LASTDATANOTIFICATION)
@@ -637,7 +856,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
     memcpy(ret->url, url, len*sizeof(WCHAR));
 
-    CreateStreamOnHGlobal(NULL, TRUE, &ret->stream);
+    ret->stream = create_stream(ret->protocol);
 
     *binding = ret;
     return S_OK;
@@ -673,7 +892,7 @@ HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
         IBindStatusCallback_OnStopBinding(binding->callback, S_OK, NULL);
     }
 
-    IStream_AddRef(binding->stream);
+    IStream_AddRef(STREAM(binding->stream));
     *ppv = binding->stream;
 
     IBinding_Release(BINDING(binding));
