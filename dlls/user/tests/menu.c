@@ -348,6 +348,19 @@ static void test_menu_add_string( void )
     ok (GetMenuString( hmenu, 0, strback, 99, MF_BYPOSITION), "GetMenuString on ownerdraw entry failed\n");
     ok (!strcmp( strback, "string2" ), "Menu text from Ansi version incorrect\n");
 
+    /*  crashes with wine 0.9.5 */
+    memset(&info, 0x00, sizeof(info));
+    info.cbSize= sizeof(MENUITEMINFO); 
+    info.fMask= MIIM_FTYPE | MIIM_STRING; /* Set OwnerDraw + typeData */
+    info.fType= MFT_OWNERDRAW;
+    rc = InsertMenuItem( hmenu, 0, TRUE, &info );
+    ok (rc, "InsertMenuItem failed\n");
+    ok (!GetMenuString( hmenu, 0, NULL, 0, MF_BYPOSITION),
+            "GetMenuString on ownerdraw entry succeeded.\n");
+    ok (!GetMenuStringW( hmenu, 0, NULL, 0, MF_BYPOSITION),
+            "GetMenuStringW on ownerdraw entry succeeded.\n");
+
+
     DestroyMenu( hmenu );
 }
 

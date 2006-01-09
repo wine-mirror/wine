@@ -3295,6 +3295,7 @@ INT WINAPI GetMenuStringA(
         SetLastError( ERROR_MENU_ITEM_NOT_FOUND);
         return 0;
     }
+    if (!item->text) return 0;
     if (!str || !nMaxSiz) return strlenW(item->text);
     if (!WideCharToMultiByte( CP_ACP, 0, item->text, -1, str, nMaxSiz, NULL, NULL ))
         str[nMaxSiz-1] = 0;
