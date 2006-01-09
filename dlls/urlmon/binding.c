@@ -547,6 +547,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
 {
     Binding *This = PROTSINK_THIS(iface);
     STGMEDIUM stgmed;
+    FORMATETC formatetc;
 
     TRACE("(%p)->(%ld %lu %lu)\n", This, grfBSCF, ulProgress, ulProgressMax);
 
@@ -570,8 +571,14 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
     stgmed.tymed = TYMED_ISTREAM;
     stgmed.u.pstm = STREAM(This->stream);
 
+    formatetc.cfFormat = 0; /* FIXME */
+    formatetc.ptd = NULL;
+    formatetc.dwAspect = 1;
+    formatetc.lindex = -1;
+    formatetc.tymed = TYMED_ISTREAM;
+
     IBindStatusCallback_OnDataAvailable(This->callback, grfBSCF, This->stream->buf_size,
-            NULL /* FIXME */, &stgmed);
+            &formatetc, &stgmed);
 
     if(grfBSCF & BSCF_LASTDATANOTIFICATION)
         IBindStatusCallback_OnStopBinding(This->callback, S_OK, NULL);
