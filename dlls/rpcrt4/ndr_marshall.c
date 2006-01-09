@@ -315,9 +315,21 @@ PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pForm
 
 static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
 {
+  if (!IsConformanceOrVariancePresent(pFormat))
+  {
+    pStubMsg->Offset = 0;
+    pStubMsg->ActualCount = pStubMsg->MaxCount;
+    goto done;
+  }
+
+  pStubMsg->Offset      = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
+  pStubMsg->Buffer += 4;
+  TRACE("offset is %ld\n", pStubMsg->Offset);
   pStubMsg->ActualCount = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
   pStubMsg->Buffer += 4;
-  TRACE("unmarshalled variance is %ld\n", pStubMsg->ActualCount);
+  TRACE("variance is %ld\n", pStubMsg->ActualCount);
+
+done:
   return pFormat+4;
 }
 
@@ -2008,7 +2020,6 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
                                                            PFORMAT_STRING pFormat,
                                                            unsigned char fMustAlloc )
 {
-    DWORD offset;
     DWORD esize = *(const WORD*)(pFormat+2);
 
     TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
@@ -2020,13 +2031,11 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
         return NULL;
     }
     pFormat = ReadConformance(pStubMsg, pFormat);
-    offset = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
-    pStubMsg->Buffer += 4;
     pFormat = ReadVariance(pStubMsg, pFormat);
 
     if (!*ppMemory || fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, pStubMsg->MaxCount * esize);
-    memcpy(*ppMemory + offset, pStubMsg->Buffer, pStubMsg->ActualCount * esize);
+    memcpy(*ppMemory + pStubMsg->Offset, pStubMsg->Buffer, pStubMsg->ActualCount * esize);
     pStubMsg->Buffer += pStubMsg->ActualCount * esize;
 
     EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
@@ -2141,7 +2150,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                  PFORMAT_STRING pFormat,
                                                  unsigned char fMustAlloc)
 {
-  ULONG offset, count, esize;
+  ULONG count, esize;
   unsigned char *pMemory;
 
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
@@ -2156,19 +2165,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 4;
 
   pFormat = ReadConformance(pStubMsg, pFormat);
-  TRACE("conformance = %ld\n", pStubMsg->MaxCount);
-  if (IsConformanceOrVariancePresent(pFormat))
-  {
-    offset = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
-    pStubMsg->Buffer += 4;
-    pFormat = ReadVariance(pStubMsg, pFormat);
-    TRACE("variance = %ld\n", pStubMsg->ActualCount);
-  }
-  else
-  {
-    offset = 0;
-    pStubMsg->ActualCount = pStubMsg->MaxCount;
-  }
+  pFormat = ReadVariance(pStubMsg, pFormat);
 
   esize = ComplexStructSize(pStubMsg, pFormat);
 
