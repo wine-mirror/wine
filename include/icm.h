@@ -398,6 +398,13 @@ BOOL       WINAPI UnregisterCMMW(PCWSTR,DWORD);
 #define SPACE_HLS   0x484C5320   /* 'HLS ' */
 #define SPACE_CMYK  0x434D594B   /* 'CMYK' */
 #define SPACE_CMY   0x434D5920   /* 'CMY ' */
+#define SPACE_2_CHANNEL 0x32434c52   /* '2CLR' */
+#define SPACE_3_CHANNEL 0x33434c52   /* '3CLR' */
+#define SPACE_4_CHANNEL 0x34434c52   /* '4CLR' */
+#define SPACE_5_CHANNEL 0x35434c52   /* '5CLR' */
+#define SPACE_6_CHANNEL 0x36434c52   /* '6CLR' */
+#define SPACE_7_CHANNEL 0x37434c52   /* '7CLR' */
+#define SPACE_8_CHANNEL 0x38434c52   /* '8CLR' */
 
 #ifdef __cplusplus
 }
