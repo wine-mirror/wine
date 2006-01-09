@@ -80,13 +80,13 @@ HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
  *                  CAB file at idx 0x10
  *                - the number of files inside the CAB file at index 0x14
  *                - the name of the last file with dest path at idx 0x120
- *   what    [I]  char* describing what to uncompress, I guess.
+ *   szCabName [I] Filename of the cabinet to extract.
  *
  * RETURNS
  *     Success: S_OK
  *     Failure: E_OUTOFMEMORY (?)
  */
-HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR what)
+HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR szCabName)
 {
 #define DUMPC(idx)      idx >= sizeof(EXTRACTdest) ? ' ' : \
                         ((unsigned char*) dest)[idx] >= 0x20 ? \
@@ -97,7 +97,7 @@ HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR what)
   LPSTR dir;
   unsigned int i;
 
-  TRACE("(dest == %0lx, what == %s)\n", (long) dest, debugstr_a(what));
+  TRACE("(dest == %0lx, szCabName == %s)\n", (long) dest, debugstr_a(szCabName));
 
   if (!dest) {
     /* win2k will crash here */
@@ -121,7 +121,7 @@ HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR what)
   TRACE("extracting to dir: %s\n", debugstr_a(dir));
 
   /* FIXME: what to do on failure? */
-  if (!process_cabinet(what, dir, FALSE, FALSE, dest)) {
+  if (!process_cabinet(szCabName, dir, FALSE, FALSE, dest)) {
     LocalFree(dir);
     return E_OUTOFMEMORY;
   }
