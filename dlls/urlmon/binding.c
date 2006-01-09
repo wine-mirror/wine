@@ -194,6 +194,8 @@ static ULONG WINAPI ProtocolStream_Release(IStream *iface)
     if(!ref) {
         IInternetProtocol_Release(This->protocol);
         HeapFree(GetProcessHeap(), 0, This);
+
+        URLMON_UnlockModule();
     }
 
     return ref;
@@ -345,6 +347,8 @@ static ProtocolStream *create_stream(IInternetProtocol *protocol)
     IInternetProtocol_AddRef(protocol);
     ret->protocol = protocol;
 
+    URLMON_LockModule();
+
     return ret;
 }
 
@@ -380,8 +384,10 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
         *ppv = SERVPROV(This);
     }
 
-    if(*ppv)
+    if(*ppv) {
+        IBinding_AddRef(BINDING(This));
         return S_OK;
+    }
 
     WARN("Unsupported interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
@@ -419,6 +425,8 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
         HeapFree(GetProcessHeap(), 0, This->url);
 
         HeapFree(GetProcessHeap(), 0, This);
+
+        URLMON_UnlockModule();
     }
 
     return ref;
@@ -808,6 +816,8 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
         FIXME("Unsupported riid %s\n", debugstr_guid(riid));
         return E_NOTIMPL;
     }
+
+    URLMON_LockModule();
 
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(Binding));
 
