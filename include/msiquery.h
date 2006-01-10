@@ -256,8 +256,8 @@ UINT WINAPI MsiOpenDatabaseW(LPCWSTR, LPCWSTR, MSIHANDLE*);
 UINT WINAPI MsiOpenDatabaseA(LPCSTR, LPCSTR, MSIHANDLE*);
 #define     MsiOpenDatabase WINELIB_NAME_AW(MsiOpenDatabase)
 
-UINT WINAPI MsiDatabaseIsTablePersistentA(MSIHANDLE, LPSTR);
-UINT WINAPI MsiDatabaseIsTablePersistentW(MSIHANDLE, LPWSTR);
+MSICONDITION WINAPI MsiDatabaseIsTablePersistentA(MSIHANDLE, LPSTR);
+MSICONDITION WINAPI MsiDatabaseIsTablePersistentW(MSIHANDLE, LPWSTR);
 #define     MsiDatabaseIsTablePersistent WINELIB_NAME_AW(MsiDatabaseIsTablePersistent)
 
 UINT WINAPI MsiSequenceA(MSIHANDLE, LPCSTR, INT);

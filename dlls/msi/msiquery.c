@@ -853,16 +853,29 @@ UINT WINAPI MsiDatabaseGetPrimaryKeysA(MSIHANDLE hdb,
     return r;
 }
 
-UINT WINAPI MsiDatabaseIsTablePersistentA(
+MSICONDITION WINAPI MsiDatabaseIsTablePersistentA(
               MSIHANDLE hDatabase, LPSTR szTableName)
 {
-    FIXME("%lx %s\n", hDatabase, debugstr_a(szTableName));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    LPWSTR szwTableName = NULL;
+    MSICONDITION r;
+
+    TRACE("%lx %s\n", hDatabase, debugstr_a(szTableName));
+
+    if( szTableName )
+    {
+        szwTableName = strdupAtoW( szTableName );
+        if( !szwTableName )
+            return MSICONDITION_ERROR;
+    }
+    r = MsiDatabaseIsTablePersistentW( hDatabase, szwTableName );
+    msi_free( szwTableName );
+
+    return r;
 }
 
-UINT WINAPI MsiDatabaseIsTablePersistentW(
+MSICONDITION WINAPI MsiDatabaseIsTablePersistentW(
               MSIHANDLE hDatabase, LPWSTR szTableName)
 {
     FIXME("%lx %s\n", hDatabase, debugstr_w(szTableName));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return MSICONDITION_FALSE;
 }
