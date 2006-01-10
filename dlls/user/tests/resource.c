@@ -283,6 +283,18 @@ static void test_PrivateExtractIcons(void) {
     ok(cIcons == 4, "Three icons requested, four expected, got cIcons=%d\n", cIcons);
 }
 
+static void test_LoadImage(void) {
+    HBITMAP bmp;
+    
+    bmp = LoadBitmapA(NULL, MAKEINTRESOURCE(OBM_CHECK));
+    ok(bmp != NULL, "Could not load the OBM_CHECK bitmap");
+    if (bmp) DeleteObject(bmp);
+    
+    bmp = LoadBitmapA(NULL, "#32760"); /* Value of OBM_CHECK */
+    ok(bmp != NULL, "Could not load the OBM_CHECK bitmap");
+    if (bmp) DeleteObject(bmp);
+}    
+
 START_TEST(resource)
 {
     init_function_pointers();
@@ -290,4 +302,5 @@ START_TEST(resource)
     test_accel1();
     test_accel2();
     test_PrivateExtractIcons();
+    test_LoadImage();
 }
