@@ -331,19 +331,13 @@ ME_InternalInsertTextFromCursor(ME_TextEditor *editor, int nCursor,
                                 const WCHAR *str, int len, ME_Style *style,
                                 int flags)
 {
-  ME_DisplayItem *pNewRun = NULL;
   ME_Cursor *p = &editor->pCursors[nCursor];
 
   editor->bCaretAtEnd = FALSE;
   
   assert(p->pRun->type == diRun);
   
-  ME_AddRefStyle(style);
-  
-  pNewRun = ME_MakeRun(style, ME_MakeStringN(str, len), flags); /* addrefs style */
-  ME_InsertRun(editor, ME_CharOfsFromRunOfs(editor, p->pRun, p->nOffset), pNewRun);
-  ME_DestroyDisplayItem(pNewRun);
-  ME_ReleaseStyle(style);
+  ME_InsertRunAtCursor(editor, p, style, str, len, flags);
 }
 
 
@@ -385,14 +379,10 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
     }
     if (pos-str < len) {   /* handle EOLs */
       ME_DisplayItem *tp, *end_run;
-      ME_Paragraph *para;
       ME_Style *tmp_style;
       if (pos!=str)
         ME_InternalInsertTextFromCursor(editor, nCursor, str, pos-str, style, 0);
       p = &editor->pCursors[nCursor];
-      tp = ME_FindItemBack(p->pRun, diParagraph);
-      para = &tp->member.para;
-      assert(tp);
       if (p->nOffset) {
         ME_SplitRunSimple(editor, p->pRun, p->nOffset);
         p = &editor->pCursors[nCursor];

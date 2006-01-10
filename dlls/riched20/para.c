@@ -303,21 +303,37 @@ void ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, PARAFORMAT2 *
     para->member.para.nFlags |= MEPF_REWRAP;
 }
 
+
+void
+ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayItem **para_end)
+{
+  ME_Cursor *pEndCursor = &editor->pCursors[1];
+  
+  *para = ME_GetParagraph(editor->pCursors[0].pRun);
+  *para_end = ME_GetParagraph(editor->pCursors[1].pRun);
+  if ((*para_end)->member.para.nCharOfs < (*para)->member.para.nCharOfs) {
+    ME_DisplayItem *tmp = *para;
+
+    *para = *para_end;
+    *para_end = tmp;
+    pEndCursor = &editor->pCursors[0];
+  }
+  
+  /* selection consists of chars from nFrom up to nTo-1 */
+  if ((*para_end)->member.para.nCharOfs > (*para)->member.para.nCharOfs) {
+    if (!pEndCursor->nOffset) {
+      *para_end = ME_GetParagraph(ME_FindItemBack(pEndCursor->pRun, diRun));
+    }
+  }
+}
+
+
 void ME_SetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
 {
-  int nFrom, nTo;
-  ME_DisplayItem *para, *para_end, *run;
-  int nOffset;
+  ME_DisplayItem *para, *para_end;
   
-  ME_GetSelection(editor, &nFrom, &nTo);
-  if (nTo>nFrom) /* selection consists of chars from nFrom up to nTo-1 */
-    nTo--;
-  
-  ME_RunOfsFromCharOfs(editor, nFrom, &run, &nOffset);
-  para = ME_GetParagraph(run);
-  ME_RunOfsFromCharOfs(editor, nTo, &run, &nOffset);
-  para_end = ME_GetParagraph(run);
-  
+  ME_GetSelectionParas(editor, &para, &para_end);
+ 
   do {
     ME_SetParaFormat(editor, para, pFmt);
     if (para == para_end)
@@ -338,19 +354,10 @@ void ME_GetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, PARAFORMAT2 *
 
 void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
 {
-  int nFrom, nTo;
-  ME_DisplayItem *para, *para_end, *run;
-  int nOffset;
+  ME_DisplayItem *para, *para_end;
   PARAFORMAT2 tmp;
   
-  ME_GetSelection(editor, &nFrom, &nTo);
-  if (nTo>nFrom) /* selection consists of chars from nFrom up to nTo-1 */
-    nTo--;
-  
-  ME_RunOfsFromCharOfs(editor, nFrom, &run, &nOffset);
-  para = ME_GetParagraph(run);
-  ME_RunOfsFromCharOfs(editor, nTo, &run, &nOffset);
-  para_end = ME_GetParagraph(run);
+  ME_GetSelectionParas(editor, &para, &para_end);
   
   ME_GetParaFormat(editor, para, pFmt);
   if (para == para_end) return;
