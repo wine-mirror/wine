@@ -653,7 +653,8 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
 
     if (pipe==INVALID_HANDLE_VALUE)
     {
-        ERR("failed to create pipe, error = %ld\n", GetLastError());
+        ERR("failed to create pipe for %s, error = %ld\n",
+            debugstr_w(service->name), GetLastError());
         return 0;
     }
 
