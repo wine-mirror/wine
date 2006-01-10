@@ -77,6 +77,7 @@ static RTL_CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0
 # error You must define GET_IP for this CPU
 #endif
 
+extern void DECLSPEC_NORETURN __wine_call_from_32_restore_regs( const CONTEXT *context );
 
 /*******************************************************************
  *         EXC_RaiseHandler
@@ -241,65 +242,15 @@ static LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 }
 
 
-/*******************************************************************
- *         EXC_DefaultHandling
+/**********************************************************************
+ *           call_stack_handlers
  *
- * Default handling for exceptions. Called when we didn't find a suitable handler.
+ * Call the stack handlers chain.
  */
-static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    if (send_debug_event( rec, FALSE, context ) == DBG_CONTINUE) return;  /* continue execution */
-
-    if (rec->ExceptionFlags & EH_STACK_INVALID)
-        ERR("Exception frame is not in stack limits => unable to dispatch exception.\n");
-    else if (rec->ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
-        ERR("Process attempted to continue execution after noncontinuable exception.\n");
-    else
-        ERR("Unhandled exception code %lx flags %lx addr %p\n",
-            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
-    NtTerminateProcess( NtCurrentProcess(), 1 );
-}
-
-
-/***********************************************************************
- *		RtlRaiseException (NTDLL.@)
- */
-void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
+static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     EXCEPTION_REGISTRATION_RECORD *frame, *dispatch, *nested_frame;
-    EXCEPTION_RECORD newrec;
-    DWORD res, c;
-    NTSTATUS status;
-
-    TRACE( "code=%lx flags=%lx addr=%p\n", rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
-    for (c=0; c<rec->NumberParameters; c++) TRACE(" info[%ld]=%08lx\n", c, rec->ExceptionInformation[c]);
-    if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
-    {
-        if (HIWORD(rec->ExceptionInformation[1]))
-            MESSAGE( "wine: Call from %p to unimplemented function %s.%s, aborting\n",
-                   rec->ExceptionAddress,
-                   (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
-        else
-            MESSAGE( "wine: Call from %p to unimplemented function %s.%ld, aborting\n",
-                   rec->ExceptionAddress,
-                   (char*)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
-    }
-#ifdef __i386__
-    else
-    {
-        TRACE(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
-              context->Eax, context->Ebx, context->Ecx,
-              context->Edx, context->Esi, context->Edi );
-        TRACE(" ebp=%08lx esp=%08lx cs=%04lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
-              context->Ebp, context->Esp, context->SegCs, context->SegDs,
-              context->SegEs, context->SegFs, context->SegGs, context->EFlags );
-    }
-#endif
-
-    status = send_debug_event( rec, TRUE, context );
-    if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED) return;  /* continue execution */
-
-    if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION) return;
+    DWORD res;
 
     frame = NtCurrentTeb()->Tib.ExceptionList;
     nested_frame = NULL;
@@ -326,13 +277,8 @@ void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
         switch(res)
         {
         case ExceptionContinueExecution:
-            if (!(rec->ExceptionFlags & EH_NONCONTINUABLE)) return;
-            newrec.ExceptionCode    = STATUS_NONCONTINUABLE_EXCEPTION;
-            newrec.ExceptionFlags   = EH_NONCONTINUABLE;
-            newrec.ExceptionRecord  = rec;
-            newrec.NumberParameters = 0;
-            RtlRaiseException( &newrec );  /* never returns */
-            break;
+            if (!(rec->ExceptionFlags & EH_NONCONTINUABLE)) return STATUS_SUCCESS;
+            return STATUS_NONCONTINUABLE_EXCEPTION;
         case ExceptionContinueSearch:
             break;
         case ExceptionNestedException:
@@ -340,16 +286,109 @@ void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
             rec->ExceptionFlags |= EH_NESTED_CALL;
             break;
         default:
-            newrec.ExceptionCode    = STATUS_INVALID_DISPOSITION;
-            newrec.ExceptionFlags   = EH_NONCONTINUABLE;
-            newrec.ExceptionRecord  = rec;
-            newrec.NumberParameters = 0;
-            RtlRaiseException( &newrec );  /* never returns */
-            break;
+            return STATUS_INVALID_DISPOSITION;
         }
         frame = frame->Prev;
     }
-    EXC_DefaultHandling( rec, context );
+    return STATUS_UNHANDLED_EXCEPTION;
+}
+
+
+/*******************************************************************
+ *		raise_exception
+ *
+ * Implementation of NtRaiseException.
+ */
+static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+{
+    NTSTATUS status;
+
+    if (first_chance)
+    {
+        DWORD c;
+
+        TRACE( "code=%lx flags=%lx addr=%p\n",
+               rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+        for (c = 0; c < rec->NumberParameters; c++)
+            TRACE( " info[%ld]=%08lx\n", c, rec->ExceptionInformation[c] );
+        if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
+        {
+            if (rec->ExceptionInformation[1] >> 16)
+                MESSAGE( "wine: Call from %p to unimplemented function %s.%s, aborting\n",
+                         rec->ExceptionAddress,
+                         (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
+            else
+                MESSAGE( "wine: Call from %p to unimplemented function %s.%ld, aborting\n",
+                         rec->ExceptionAddress,
+                         (char*)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
+        }
+#ifdef __i386__
+        else
+        {
+            TRACE(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
+                  context->Eax, context->Ebx, context->Ecx,
+                  context->Edx, context->Esi, context->Edi );
+            TRACE(" ebp=%08lx esp=%08lx cs=%04lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+                  context->Ebp, context->Esp, context->SegCs, context->SegDs,
+                  context->SegEs, context->SegFs, context->SegGs, context->EFlags );
+        }
+#endif
+        status = send_debug_event( rec, TRUE, context );
+        if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+            return STATUS_SUCCESS;
+
+        if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
+            return STATUS_SUCCESS;
+
+        if ((status = call_stack_handlers( rec, context )) != STATUS_UNHANDLED_EXCEPTION)
+            return status;
+    }
+
+    /* last chance exception */
+
+    status = send_debug_event( rec, FALSE, context );
+    if (status != DBG_CONTINUE)
+    {
+        if (rec->ExceptionFlags & EH_STACK_INVALID)
+            ERR("Exception frame is not in stack limits => unable to dispatch exception.\n");
+        else if (rec->ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
+            ERR("Process attempted to continue execution after noncontinuable exception.\n");
+        else
+            ERR("Unhandled exception code %lx flags %lx addr %p\n",
+                rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+        NtTerminateProcess( NtCurrentProcess(), 1 );
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/*******************************************************************
+ *		NtRaiseException (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+{
+    NTSTATUS status = raise_exception( rec, context, first_chance );
+#ifdef DEFINE_REGS_ENTRYPOINT
+    if (status == STATUS_SUCCESS) __wine_call_from_32_restore_regs( context );
+#endif
+    return status;
+}
+
+/***********************************************************************
+ *		RtlRaiseException (NTDLL.@)
+ */
+void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status = raise_exception( rec, context, TRUE );
+    if (status != STATUS_SUCCESS)
+    {
+        EXCEPTION_RECORD newrec;
+        newrec.ExceptionCode    = status;
+        newrec.ExceptionFlags   = EH_NONCONTINUABLE;
+        newrec.ExceptionRecord  = rec;
+        newrec.NumberParameters = 0;
+        RtlRaiseException( &newrec );  /* never returns */
+    }
 }
 
 /**********************************************************************/
@@ -450,28 +489,6 @@ void WINAPI RtlUnwind( PVOID pEndFrame, PVOID unusedEip,
     CONTEXT context;
     memset( &context, 0, sizeof(context) );
     __regs_RtlUnwind( pEndFrame, unusedEip, pRecord, returnEax, &context );
-}
-#endif
-
-
-/*******************************************************************
- *		NtRaiseException (NTDLL.@)
- */
-void WINAPI __regs_NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *ctx,
-                                  BOOL first, CONTEXT *context )
-{
-    __regs_RtlRaiseException( rec, ctx );
-    *context = *ctx;
-}
-
-#ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( NtRaiseException, 12, 12 );
-#else
-void WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *ctx, BOOL first )
-{
-    CONTEXT context;
-    memset( &context, 0, sizeof(context) );
-    __regs_NtRaiseException( rec, ctx, first, &context );
 }
 #endif
 

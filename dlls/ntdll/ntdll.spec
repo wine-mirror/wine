@@ -273,7 +273,7 @@
 @ stdcall NtQueryVirtualMemory(long ptr long ptr long ptr)
 @ stdcall NtQueryVolumeInformationFile(long ptr ptr long long)
 @ stdcall NtQueueApcThread(long ptr long long long)
-@ stdcall -register NtRaiseException(ptr ptr long)
+@ stdcall NtRaiseException(ptr ptr long)
 @ stub NtRaiseHardError
 @ stdcall NtReadFile(long long long long long long long long long)
 @ stub NtReadFileScatter
