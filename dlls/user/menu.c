@@ -3235,7 +3235,7 @@ DWORD WINAPI CheckMenuItem( HMENU hMenu, UINT id, UINT flags )
 /**********************************************************************
  *         EnableMenuItem    (USER32.@)
  */
-UINT WINAPI EnableMenuItem( HMENU hMenu, UINT wItemID, UINT wFlags )
+BOOL WINAPI EnableMenuItem( HMENU hMenu, UINT wItemID, UINT wFlags )
 {
     UINT    oldflags;
     MENUITEM *item;

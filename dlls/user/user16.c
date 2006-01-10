@@ -531,7 +531,7 @@ BOOL16 WINAPI CheckMenuItem16( HMENU16 hMenu, UINT16 id, UINT16 flags )
 /**********************************************************************
  *         EnableMenuItem    (USER.155)
  */
-UINT16 WINAPI EnableMenuItem16( HMENU16 hMenu, UINT16 wItemID, UINT16 wFlags )
+BOOL16 WINAPI EnableMenuItem16( HMENU16 hMenu, UINT16 wItemID, UINT16 wFlags )
 {
     return EnableMenuItem( HMENU_32(hMenu), wItemID, wFlags );
 }

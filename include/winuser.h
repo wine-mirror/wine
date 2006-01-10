@@ -4260,7 +4260,7 @@ INT         WINAPI DrawTextExA(HDC,LPSTR,INT,LPRECT,UINT,LPDRAWTEXTPARAMS);
 INT         WINAPI DrawTextExW(HDC,LPWSTR,INT,LPRECT,UINT,LPDRAWTEXTPARAMS);
 #define     DrawTextEx WINELIB_NAME_AW(DrawTextEx)
 BOOL        WINAPI EmptyClipboard(void);
-UINT        WINAPI EnableMenuItem(HMENU,UINT,UINT);
+BOOL        WINAPI EnableMenuItem(HMENU,UINT,UINT);
 BOOL        WINAPI EnableScrollBar(HWND,INT,UINT);
 BOOL        WINAPI EnableWindow(HWND,BOOL);
 BOOL        WINAPI EndDeferWindowPos(HDWP);
