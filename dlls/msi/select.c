@@ -245,20 +245,23 @@ static UINT SELECT_AddColumn( MSISELECTVIEW *sv, LPCWSTR name )
     return ERROR_SUCCESS;
 }
 
+int select_count_columns( column_info *col )
+{
+    int n;
+    for (n = 0; col; col = col->next)
+        n++;
+    return n;
+}
+
 UINT SELECT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
                         column_info *columns )
 {
     MSISELECTVIEW *sv = NULL;
-    UINT count = 0, r;
+    UINT count = 0, r = ERROR_SUCCESS;
 
     TRACE("%p\n", sv );
 
-    r = table->ops->get_dimensions( table, NULL, &count );
-    if( r != ERROR_SUCCESS )
-    {
-        ERR("can't get table dimensions\n");
-        return r;
-    }
+    count = select_count_columns( columns );
 
     sv = msi_alloc_zero( sizeof *sv + count*sizeof (UINT) );
     if( !sv )
