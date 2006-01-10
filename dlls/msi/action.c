@@ -1417,6 +1417,12 @@ static UINT execute_script(MSIPACKAGE *package, UINT script )
 
     TRACE("Executing Script %i\n",script);
 
+    if (!package->script)
+    {
+        ERR("no script!\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
     for (i = 0; i < package->script->ActionCount[script]; i++)
     {
         LPWSTR action;
