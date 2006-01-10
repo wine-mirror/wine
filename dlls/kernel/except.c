@@ -51,7 +51,6 @@
 #include "wine/exception.h"
 #include "wine/library.h"
 #include "excpt.h"
-#include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -174,38 +173,6 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
     return len+len2;
 }
 
-
-/**********************************************************************
- *           send_debug_event
- *
- * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
- */
-static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
-{
-    NTSTATUS ret;
-    HANDLE handle = 0;
-
-    SERVER_START_REQ( queue_exception_event )
-    {
-        req->first   = first_chance;
-        wine_server_add_data( req, context, sizeof(*context) );
-        wine_server_add_data( req, rec, sizeof(*rec) );
-        if (!(ret = wine_server_call( req ))) handle = reply->handle;
-    }
-    SERVER_END_REQ;
-    if (ret) return ret;
-
-    WaitForSingleObject( handle, INFINITE );
-
-    SERVER_START_REQ( get_exception_status )
-    {
-        req->handle = handle;
-        wine_server_set_reply( req, context, sizeof(*context) );
-        ret = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
 
 /******************************************************************
  *		start_debugger
@@ -452,8 +419,6 @@ inline static BOOL check_resource_write( const EXCEPTION_RECORD *rec )
  */
 DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
-    NTSTATUS status;
-
     if (check_resource_write( epointers->ExceptionRecord )) return EXCEPTION_CONTINUE_EXECUTION;
 
     if (!NtCurrentTeb()->Peb->BeingDebugged)
@@ -475,21 +440,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
         if (!start_debugger_atomic( epointers ) || !NtCurrentTeb()->Peb->BeingDebugged)
             return EXCEPTION_EXECUTE_HANDLER;
     }
-
-    /* send a last chance event to the debugger */
-    status = send_debug_event( epointers->ExceptionRecord, FALSE, epointers->ContextRecord );
-    switch (status)
-    {
-    case DBG_CONTINUE:
-        return EXCEPTION_CONTINUE_EXECUTION;
-    case DBG_EXCEPTION_NOT_HANDLED:
-        TerminateProcess( GetCurrentProcess(), epointers->ExceptionRecord->ExceptionCode );
-        break; /* not reached */
-    default:
-        FIXME("Unhandled error on debug event: %lx\n", status);
-        break;
-    }
-    return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 
