@@ -86,7 +86,7 @@ DWORD WINAPI GetModuleBaseNameW(HANDLE, HMODULE, LPWSTR, DWORD);
 #define      GetModuleBaseName WINELIB_NAME_AW(GetModuleBaseName)
 DWORD WINAPI GetModuleFileNameExA(HANDLE, HMODULE, LPSTR, DWORD);
 DWORD WINAPI GetModuleFileNameExW(HANDLE, HMODULE, LPWSTR, DWORD);
-#define      GetModuleFileName WINELIB_NAME_AW(GetModuleFileName)
+#define      GetModuleFileNameEx WINELIB_NAME_AW(GetModuleFileNameEx)
 BOOL  WINAPI GetModuleInformation(HANDLE, HMODULE, LPMODULEINFO, DWORD);
 BOOL  WINAPI EmptyWorkingSet(HANDLE);
 BOOL  WINAPI QueryWorkingSet(HANDLE, PVOID, DWORD);
