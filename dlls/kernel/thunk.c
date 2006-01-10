@@ -626,6 +626,8 @@ void WINAPI __regs_FT_Thunk( CONTEXT86 *context )
 DEFINE_REGS_ENTRYPOINT( FT_Thunk, 0, 0 );
 #endif
 
+#ifdef __i386__
+
 /***********************************************************************
  *		FT_Exit0 (KERNEL32.@)
  *		FT_Exit4 (KERNEL32.@)
@@ -651,33 +653,15 @@ DEFINE_REGS_ENTRYPOINT( FT_Thunk, 0, 0 );
  * and perform a return to the CALLER of the thunk code (while removing
  * the given number of arguments from the caller's stack).
  */
-static inline void FT_Exit(CONTEXT86 *context)
-{
-    /* Return value is in EBX */
-    context->Eax = context->Ebx;
-
-    /* Restore EBX, ESI, and EDI registers */
-    context->Ebx = *(DWORD *)(context->Ebp -  4);
-    context->Esi = *(DWORD *)(context->Ebp -  8);
-    context->Edi = *(DWORD *)(context->Ebp - 12);
-
-    /* Clean up stack frame */
-    context->Esp = context->Ebp;
-    context->Ebp = stack32_pop(context);
-
-    /* Pop return address to CALLER of thunk code */
-    context->Eip = stack32_pop(context);
-}
-
-#ifdef DEFINE_REGS_ENTRYPOINT
+#define FT_EXIT_RESTORE_REGS \
+    "movl %ebx,%eax\n\t" \
+    "movl -4(%ebp),%ebx\n\t" \
+    "movl -8(%ebp),%esi\n\t" \
+    "movl -12(%ebp),%edi\n\t" \
+    "leave\n\t"
 
 #define DEFINE_FT_Exit(n) \
-void WINAPI __regs_FT_Exit ## n(CONTEXT86 *context) \
-{ \
-    FT_Exit(context); \
-    context->Esp += n; \
-} \
-DEFINE_REGS_ENTRYPOINT( FT_Exit ## n, 0, 0 )
+    __ASM_GLOBAL_FUNC( FT_Exit ## n, FT_EXIT_RESTORE_REGS "ret $" #n );
 
 DEFINE_FT_Exit(0);
 DEFINE_FT_Exit(4);
@@ -695,7 +679,7 @@ DEFINE_FT_Exit(48);
 DEFINE_FT_Exit(52);
 DEFINE_FT_Exit(56);
 
-#endif /* DEFINE_REGS_ENTRYPOINT */
+#endif /* __i386__ */
 
 
 /***********************************************************************
