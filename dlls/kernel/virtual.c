@@ -45,7 +45,6 @@
 
 #include "kernel_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(virtual);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
 
 static unsigned int page_size;
