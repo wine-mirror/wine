@@ -261,10 +261,8 @@ unsigned char * WINAPI NdrInterfacePointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                 pStubMsg->dwDestContext, pStubMsg->pvDestContext,
                                 MSHLFLAGS_NORMAL);
       IStream_Release(stream);
-      if (FAILED(hr)) {
-        IUnknown_Release((LPUNKNOWN)pMemory);
+      if (FAILED(hr))
         RpcRaiseException(hr);
-      }
     }
   }
   return NULL;
