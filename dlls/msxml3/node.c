@@ -743,8 +743,8 @@ static ULONG WINAPI Internal_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        assert( This->node->doc );
-        xmldoc_release( This->node->doc );
+        if( This->node )
+	    xmldoc_release( This->node->doc );
         HeapFree( GetProcessHeap(), 0, This );
     }
 

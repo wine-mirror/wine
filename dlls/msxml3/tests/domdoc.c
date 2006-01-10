@@ -517,6 +517,13 @@ static void test_refs(void)
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
     if( r != S_OK )
         return;
+    ref = IXMLDOMDocument_Release(doc);
+    ok( ref == 0, "ref %ld\n", ref);
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
+    if( r != S_OK )
+        return;
 
     str = SysAllocString( szComplete4 );
     r = IXMLDOMDocument_loadXML( doc, str, &b );
