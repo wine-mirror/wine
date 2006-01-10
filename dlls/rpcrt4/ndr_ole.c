@@ -353,17 +353,3 @@ void WINAPI NdrOleFree(void *NodeToFree)
   if (!LoadCOM()) return;
   COM_MemFree(NodeToFree);
 }
-
-/* internal */
-HRESULT RPCRT4_GetPSFactory(REFIID riid, LPPSFACTORYBUFFER *pPS)
-{
-  HRESULT hr;
-  CLSID clsid;
-
-  if (!LoadCOM()) return RPC_E_UNEXPECTED;
-  hr = COM_GetPSClsid(riid, &clsid);
-  if (FAILED(hr)) return hr;
-  hr = COM_GetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL,
-                          &IID_IPSFactoryBuffer, (LPVOID *)pPS);
-  return hr;
-}
