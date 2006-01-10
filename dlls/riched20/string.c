@@ -40,13 +40,13 @@ ME_String *ME_MakeString(LPCWSTR szText)
 ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars)
 {
   ME_String *s = ALLOC_OBJ(ME_String);
-  int i;
-  for (i=0; i<nMaxChars && szText[i]; i++)
-    ;
-  s->nLen = i;
+  
+  s->nLen = nMaxChars;
   s->nBuffer = ME_GetOptimalBuffer(s->nLen+1);
   s->szData = ALLOC_N_OBJ(WCHAR, s->nBuffer);
-  lstrcpynW(s->szData, szText, s->nLen+1);
+  /* Native allows NUL chars */
+  memmove(s->szData, szText, s->nLen * sizeof(WCHAR));
+  s->szData[s->nLen] = 0;
   return s;
 }
 
