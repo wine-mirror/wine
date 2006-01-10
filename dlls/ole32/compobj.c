@@ -422,6 +422,12 @@ static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LP
     }
 }
 
+HWND apartment_getwindow(struct apartment *apt)
+{
+    assert(apt->model & COINIT_APARTMENTTHREADED);
+    return apt->win;
+}
+
 void apartment_joinmta(void)
 {
     apartment_addref(MTA);

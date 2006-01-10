@@ -230,6 +230,7 @@ static inline HRESULT apartment_getoxid(struct apartment *apt, OXID *oxid)
     *oxid = apt->oxid;
     return S_OK;
 }
+HWND apartment_getwindow(struct apartment *apt);
 void apartment_joinmta(void);
 
 

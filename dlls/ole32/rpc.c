@@ -254,7 +254,7 @@ static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPC
 
         TRACE("Calling apartment thread 0x%08lx...\n", apt->tid);
 
-        if (!PostMessageW(apt->win, DM_EXECUTERPC, 0, (LPARAM)params))
+        if (!PostMessageW(apartment_getwindow(apt), DM_EXECUTERPC, 0, (LPARAM)params))
         {
             ERR("PostMessage failed with error %ld\n", GetLastError());
             hr = HRESULT_FROM_WIN32(GetLastError());
@@ -509,7 +509,7 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
 
         TRACE("Calling apartment thread 0x%08lx...\n", apt->tid);
 
-        if (PostMessageW(apt->win, DM_EXECUTERPC, 0, (LPARAM)params))
+        if (PostMessageW(apartment_getwindow(apt), DM_EXECUTERPC, 0, (LPARAM)params))
             WaitForSingleObject(params->handle, INFINITE);
         else
         {
