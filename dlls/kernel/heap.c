@@ -299,7 +299,6 @@ SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPVOID ptr )
  */
 
 #define MAGIC_GLOBAL_USED 0x5342
-#define GLOBAL_LOCK_MAX   0xFF
 #define HANDLE_TO_INTERN(h)  ((PGLOBAL32_INTERN)(((char *)(h))-2))
 #define INTERN_TO_HANDLE(i)  ((HGLOBAL) &((i)->Pointer))
 #define POINTER_TO_HANDLE(p) (*(((HGLOBAL *)(p))-2))
@@ -416,8 +415,8 @@ LPVOID WINAPI GlobalLock(
             palloc = pintern->Pointer;
             if (!pintern->Pointer)
                 SetLastError(ERROR_DISCARDED);
-            else if (pintern->LockCount < GLOBAL_LOCK_MAX)
-                    pintern->LockCount++;
+            else if (pintern->LockCount < GMEM_LOCKCOUNT)
+                pintern->LockCount++;
         }
         else
         {
@@ -461,11 +460,18 @@ BOOL WINAPI GlobalUnlock(
         pintern=HANDLE_TO_INTERN(hmem);
         if(pintern->Magic==MAGIC_GLOBAL_USED)
         {
-            if((pintern->LockCount<GLOBAL_LOCK_MAX)&&(pintern->LockCount>0))
+            if(pintern->LockCount)
+            {
                 pintern->LockCount--;
-
-            locked = (pintern->LockCount != 0);
-            if (!locked) SetLastError(NO_ERROR);
+                locked = (pintern->LockCount != 0);
+                if (!locked) SetLastError(NO_ERROR);
+            }
+            else
+            {
+                WARN("%p not locked\n", hmem);
+                SetLastError(ERROR_NOT_LOCKED);
+                locked = FALSE;
+            }
         }
         else
         {
