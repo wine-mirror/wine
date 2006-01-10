@@ -227,7 +227,6 @@ static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPC
     DWORD index;
     struct dispatch_params *params;
     DWORD tid;
-    IRpcStubBuffer *stub;
     APARTMENT *apt;
     IPID ipid;
 
@@ -248,11 +247,9 @@ static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPC
      * from DllMain */
 
     RpcBindingInqObject(msg->Handle, &ipid);
-    stub = ipid_to_apt_and_stubbuffer(&ipid, &apt);
-    if (apt && (apt->model & COINIT_APARTMENTTHREADED))
+    hr = ipid_get_dispatch_params(&ipid, &apt, &params->stub, &params->chan);
+    if ((hr == S_OK) && (apt->model & COINIT_APARTMENTTHREADED))
     {
-        params->stub = stub;
-        params->chan = NULL; /* FIXME: pass server channel */
         params->handle = CreateEventW(NULL, FALSE, FALSE, NULL);
 
         TRACE("Calling apartment thread 0x%08lx...\n", apt->tid);
@@ -261,7 +258,15 @@ static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPC
     }
     else
     {
-        if (stub) IRpcStubBuffer_Release(stub);
+        if (hr == S_OK)
+        {
+            /* otherwise, we go via RPC runtime so the stub and channel aren't
+             * needed here */
+            IRpcStubBuffer_Release(params->stub);
+            params->stub = NULL;
+            IRpcChannelBuffer_Release(params->chan);
+            params->chan = NULL;
+        }
 
         /* we use a separate thread here because we need to be able to
          * pump the message loop in the application thread: if we do not,
@@ -275,6 +280,8 @@ static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPC
             ERR("Could not create RpcSendReceive thread, error %lx\n", GetLastError());
             hr = E_UNEXPECTED;
         }
+        else
+            hr = S_OK;
     }
     if (apt) apartment_release(apt);
 
@@ -459,35 +466,35 @@ void RPC_ExecuteCall(struct dispatch_params *params)
     }
     __ENDTRY
     IRpcStubBuffer_Release(params->stub);
+    IRpcChannelBuffer_Release(params->chan);
     if (params->handle) SetEvent(params->handle);
 }
 
 static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
 {
     struct dispatch_params *params;
-    IRpcStubBuffer     *stub;
-    APARTMENT          *apt;
-    IPID                ipid;
+    APARTMENT *apt;
+    IPID ipid;
+    HRESULT hr;
 
     RpcBindingInqObject(msg->Handle, &ipid);
 
     TRACE("ipid = %s, iMethod = %d\n", debugstr_guid(&ipid), msg->ProcNum);
 
-    params = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*params));
+    params = HeapAlloc(GetProcessHeap(), 0, sizeof(*params));
     if (!params) return RpcRaiseException(E_OUTOFMEMORY);
 
-    stub = ipid_to_apt_and_stubbuffer(&ipid, &apt);
-    if (!apt || !stub)
+    hr = ipid_get_dispatch_params(&ipid, &apt, &params->stub, &params->chan);
+    if (hr != S_OK)
     {
-        if (apt) apartment_release(apt);
         ERR("no apartment found for ipid %s\n", debugstr_guid(&ipid));
-        return RpcRaiseException(RPC_E_DISCONNECTED);
+        return RpcRaiseException(hr);
     }
 
     params->msg = (RPCOLEMESSAGE *)msg;
-    params->stub = stub;
-    params->chan = NULL; /* FIXME: pass server channel */
     params->status = RPC_S_OK;
+    params->hr = S_OK;
+    params->handle = NULL;
 
     /* Note: this is the important difference between STAs and MTAs - we
      * always execute RPCs to STAs in the thread that originally created the

@@ -72,6 +72,7 @@ struct ifstub
     IPID              ipid;       /* RO */
     IUnknown         *iface;      /* RO */
     MSHLFLAGS         flags;      /* so we can enforce process-local marshalling rules (RO) */
+    IRpcChannelBuffer*chan;       /* channel passed to IRpcStubBuffer::Invoke (RO) */
 };
 
 
@@ -188,7 +189,7 @@ BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid);
 BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid);
 void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid);
 HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub_manager **stubmgr_ret);
-IRpcStubBuffer *ipid_to_apt_and_stubbuffer(const IPID *ipid, APARTMENT **stub_apt);
+HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt, IRpcStubBuffer **stub, IRpcChannelBuffer **chan);
 HRESULT start_apartment_remote_unknown(void);
 
 HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags);
@@ -199,6 +200,7 @@ struct dispatch_params;
 
 void    RPC_StartRemoting(struct apartment *apt);
 HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid, IRpcChannelBuffer **pipebuf);
+HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan);
 void    RPC_ExecuteCall(struct dispatch_params *params);
 HRESULT RPC_RegisterInterface(REFIID riid);
 void    RPC_UnregisterInterface(REFIID riid);

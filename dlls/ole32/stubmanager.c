@@ -365,29 +365,38 @@ HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub
     return S_OK;
 }
 
-/* gets the apartment and IRpcStubBuffer from an object. the caller must
- * release the references to both objects */
-IRpcStubBuffer *ipid_to_apt_and_stubbuffer(const IPID *ipid, APARTMENT **stub_apt)
+/* gets the apartment, stub and channel of an object. the caller must
+ * release the references to all objects if the function returned success,
+ * otherwise no references are returned. */
+HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt,
+                                 IRpcStubBuffer **stub, IRpcChannelBuffer **chan)
 {
-    IRpcStubBuffer *ret = NULL;
     struct stub_manager *stubmgr;
     struct ifstub *ifstub;
+    APARTMENT *apt;
     HRESULT hr;
 
-    *stub_apt = NULL;
-
-    hr = ipid_to_stub_manager(ipid, stub_apt, &stubmgr);
-    if (hr != S_OK) return NULL;
+    hr = ipid_to_stub_manager(ipid, &apt, &stubmgr);
+    if (hr != S_OK) return RPC_E_DISCONNECTED;
 
     ifstub = stub_manager_ipid_to_ifstub(stubmgr, ipid);
     if (ifstub)
-        ret = ifstub->stubbuffer;
+    {
+        *stub = ifstub->stubbuffer;
+        IRpcStubBuffer_AddRef(*stub);
+        *chan = ifstub->chan;
+        IRpcChannelBuffer_AddRef(*chan);
+        *stub_apt = apt;
 
-    if (ret) IRpcStubBuffer_AddRef(ret);
-
-    stub_manager_int_release(stubmgr);
-
-    return ret;
+        stub_manager_int_release(stubmgr);
+        return S_OK;
+    }
+    else
+    {
+        stub_manager_int_release(stubmgr);
+        apartment_release(apt);
+        return RPC_E_DISCONNECTED;
+    }
 }
 
 /* generates an ipid in the following format (similar to native version):
@@ -417,12 +426,20 @@ static inline HRESULT generate_ipid(struct stub_manager *m, IPID *ipid)
 struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, MSHLFLAGS flags)
 {
     struct ifstub *stub;
+    HRESULT hr;
 
     TRACE("oid=%s, stubbuffer=%p, iptr=%p, iid=%s\n",
           wine_dbgstr_longlong(m->oid), sb, iptr, debugstr_guid(iid));
 
     stub = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct ifstub));
     if (!stub) return NULL;
+
+    hr = RPC_CreateServerChannel(&stub->chan);
+    if (hr != S_OK)
+    {
+        HeapFree(GetProcessHeap(), 0, stub);
+        return NULL;
+    }
 
     stub->stubbuffer = sb;
     if (sb) IRpcStubBuffer_AddRef(sb);
@@ -468,9 +485,10 @@ static void stub_manager_delete_ifstub(struct stub_manager *m, struct ifstub *if
     list_remove(&ifstub->entry);
 
     RPC_UnregisterInterface(&ifstub->iid);
-        
+
     if (ifstub->stubbuffer) IUnknown_Release(ifstub->stubbuffer);
     IUnknown_Release(ifstub->iface);
+    IRpcChannelBuffer_Release(ifstub->chan);
 
     HeapFree(GetProcessHeap(), 0, ifstub);
 }
