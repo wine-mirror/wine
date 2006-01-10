@@ -150,12 +150,14 @@ void ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars);
 void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor, 
                              const WCHAR *str, int len, ME_Style *style);
 void ME_SetCharFormat(ME_TextEditor *editor, int nOfs, int nChars, CHARFORMAT2W *pFmt);
-BOOL ME_ArrowKey(ME_TextEditor *ed, int nVKey, int nCtrl);
+BOOL ME_ArrowKey(ME_TextEditor *ed, int nVKey, BOOL extend);
 
 void ME_InitContext(ME_Context *c, ME_TextEditor *editor, HDC hDC);
 void ME_DestroyContext(ME_Context *c);
 ME_Style *GetInsertStyle(ME_TextEditor *editor, int nCursor);
 void ME_MustBeWrapped(ME_Context *c, ME_DisplayItem *para);
+void ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
+                             int *x, int *y, int *height);
 int ME_GetCursorOfs(ME_TextEditor *editor, int nCursor);
 void ME_GetSelection(ME_TextEditor *editor, int *from, int *to);
 int ME_CountParagraphsBetween(ME_TextEditor *editor, int from, int to);
@@ -203,6 +205,9 @@ int ME_GetYScrollPos(ME_TextEditor *editor);
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun);
 COLORREF ME_GetBackColor(ME_TextEditor *editor);
 void ME_Scroll(ME_TextEditor *editor, int cx, int cy);
+void ME_InvalidateFromOfs(ME_TextEditor *editor, int nCharOfs);
+void ME_InvalidateSelection(ME_TextEditor *editor);
+void ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor);
 BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator);
 
 /* richole.c */

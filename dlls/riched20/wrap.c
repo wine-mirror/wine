@@ -380,15 +380,17 @@ void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
 
 
 void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
-  ME_DisplayItem *p;
+  ME_DisplayItem *p, *pRow;
 
   /* remove all items that will be reinserted by paragraph wrapper anyway */
   tp->member.para.nRows = 0;
   for (p = tp->next; p!=tp->member.para.next_para; p = p->next) {
     switch(p->type) {
       case diStartRow:
+        pRow = p;
         p = p->prev;
-        ME_Remove(p->next);
+        ME_Remove(pRow);
+        ME_DestroyDisplayItem(pRow);
         break;
       default:
         break;
@@ -422,6 +424,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
   ME_DisplayItem *item;
   ME_Context c;
   BOOL bModified = FALSE;
+  int yStart = -1, yEnd = -1;
 
   ME_InitContext(&c, editor, hDC);
   c.pt.x = 0;
@@ -439,11 +442,17 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
     ME_WrapTextParagraph(&c, item);
 
     if (bRedraw)
+    {
       item->member.para.nFlags |= MEPF_REPAINT;
+      if (yStart == -1)
+        yStart = c.pt.y;
+    }
 
     bModified = bModified | bRedraw;
 
     c.pt.y += item->member.para.nHeight;
+    if (bRedraw)
+      yEnd = c.pt.y;
     item = item->member.para.next_para;
   }
   editor->sizeWindow.cx = c.rcView.right-c.rcView.left;
@@ -453,6 +462,32 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
 
   ME_DestroyContext(&c);
   ReleaseDC(hWnd, hDC);
+
+  if (editor->bRedraw)
+  {
+     RECT rc = c.rcView;
+     
+     /* Invalidate rewrapped rows */
+     if (yStart != -1)
+     {
+       yStart -= ME_GetYScrollPos(editor);
+       yEnd -= ME_GetYScrollPos(editor);
+       if ((yStart >= 0 && yStart < c.rcView.bottom - c.rcView.top)
+           || (yEnd >= 0 && yEnd < c.rcView.bottom - c.rcView.top))
+       {
+         rc.top = yStart;
+         rc.bottom = yEnd;
+         InvalidateRect(editor->hWnd, &rc, TRUE);
+       }
+     }
+
+     /* Invalidate cursor row */
+     if (editor->nInvalidOfs != -1)
+     {
+       ME_InvalidateFromOfs(editor, editor->nInvalidOfs);
+       editor->nInvalidOfs = -1;
+     }
+  }
   return bModified;
 }
 

@@ -285,6 +285,7 @@ typedef struct tagME_TextEditor
   int nZoomNumerator, nZoomDenominator;
   RECT rcFormat;
   BOOL bRedraw;
+  int nInvalidOfs;
 } ME_TextEditor;
 
 typedef struct tagME_Context

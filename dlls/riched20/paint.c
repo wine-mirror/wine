@@ -143,7 +143,6 @@ void ME_Repaint(ME_TextEditor *editor)
   ME_Cursor *pCursor = &editor->pCursors[0];
   ME_DisplayItem *pRun = NULL;
   int nOffset = -1;
-  HDC hDC;
   int nCharOfs = ME_CharOfsFromRunOfs(editor, pCursor->pRun, pCursor->nOffset);
   
   ME_RunOfsFromCharOfs(editor, nCharOfs, &pRun, &nOffset);
@@ -155,11 +154,6 @@ void ME_Repaint(ME_TextEditor *editor)
   }
   if (editor->bRedraw)
   {
-    hDC = GetDC(editor->hWnd);
-    ME_HideCaret(editor);
-    ME_PaintContent(editor, hDC, TRUE, NULL);
-    ReleaseDC(editor->hWnd, hDC);
-    ME_ShowCaret(editor);
     ME_EnsureVisible(editor, pCursor->pRun);
   }
 }
@@ -516,7 +510,64 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun)
     }
   }
 }
-        
+
+
+void
+ME_InvalidateFromOfs(ME_TextEditor *editor, int nCharOfs)
+{
+  RECT rc;
+  int x, y, height;
+  ME_Cursor tmp;
+
+  ME_RunOfsFromCharOfs(editor, nCharOfs, &tmp.pRun, &tmp.nOffset);
+  ME_GetCursorCoordinates(editor, &tmp, &x, &y, &height);
+
+  rc.left = 0;
+  rc.top = y;
+  rc.bottom = y + height;
+  rc.right = editor->rcFormat.right;
+  InvalidateRect(editor->hWnd, &rc, FALSE);
+}
+
+
+void
+ME_InvalidateSelection(ME_TextEditor *editor)
+{
+  if (ME_IsSelection(editor) || editor->nLastSelStart != editor->nLastSelEnd)
+  {
+    int x, y, height;
+    int x2, y2, height2;
+    int last_x, last_y, last_height;
+    int last_x2, last_y2, last_height2;
+    RECT rc;
+    ME_Cursor tmp;
+  
+    ME_GetCursorCoordinates(editor, &editor->pCursors[1], &x, &y, &height);
+    ME_GetCursorCoordinates(editor, &editor->pCursors[0], &x2, &y2, &height2);
+    ME_RunOfsFromCharOfs(editor, editor->nLastSelStart, &tmp.pRun, &tmp.nOffset);
+    ME_GetCursorCoordinates(editor, &tmp, &last_x, &last_y, &last_height);
+    ME_RunOfsFromCharOfs(editor, editor->nLastSelEnd, &tmp.pRun, &tmp.nOffset);
+    ME_GetCursorCoordinates(editor, &tmp, &last_x2, &last_y2, &last_height2);
+    {
+      rc.left = 0;
+
+      rc.top = min(min(y, last_y), min(y2, last_y2));
+      rc.right = editor->rcFormat.right;
+      rc.bottom = max(max(y + height, last_y + last_height),
+                      max(y2 + height2, last_y2 + last_height2));
+      InvalidateRect(editor->hWnd, &rc, FALSE);
+    }
+  }
+  ME_GetSelection(editor, &editor->nLastSelStart, &editor->nLastSelEnd);
+}
+
+
+void
+ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor)
+{
+  editor->nInvalidOfs = ME_GetCursorOfs(editor, nCursor);
+}
+
 
 BOOL
 ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator)

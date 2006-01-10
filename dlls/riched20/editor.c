@@ -625,7 +625,6 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   editor->nEventMask = nEventMask;
   if (editor->bRedraw)
   {
-    InvalidateRect(editor->hWnd, NULL, TRUE);
     ME_UpdateRepaint(editor);
   }
   if (!(format & SFF_SELECTION)) {
@@ -800,6 +799,62 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CH
 }
 
 
+static BOOL
+ME_KeyDown(ME_TextEditor *editor, WORD nKey)
+{
+  BOOL ctrl_is_down = GetKeyState(VK_CONTROL) & 0x8000;
+  BOOL shift_is_down = GetKeyState(VK_SHIFT) & 0x8000;
+  
+  switch (nKey)
+  {
+    case VK_LEFT:
+    case VK_RIGHT:
+    case VK_UP:
+    case VK_DOWN:
+    case VK_HOME:
+    case VK_END:
+    case VK_PRIOR:
+    case VK_NEXT:
+      ME_ArrowKey(editor, nKey, shift_is_down);
+      return TRUE;
+    case VK_BACK:
+    case VK_DELETE:
+      /* FIXME backspace and delete aren't the same, they act different wrt paragraph style of the merged paragraph */
+      if (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_READONLY)
+        return FALSE;
+      if (ME_IsSelection(editor))
+        ME_DeleteSelection(editor);
+      else if (nKey == VK_DELETE || ME_ArrowKey(editor, VK_LEFT, FALSE))
+        ME_DeleteTextAtCursor(editor, 1, 1);
+      else
+        return TRUE;
+      ME_QueueInvalidateFromCursor(editor, 1);
+      ME_UpdateRepaint(editor);
+      ME_SendRequestResize(editor, FALSE);
+      return TRUE;
+
+    default:
+      if (ctrl_is_down)
+      {
+        if (nKey == 'W')
+        {
+          CHARFORMAT2W chf;
+          char buf[2048];
+          
+          ME_GetSelectionCharFormat(editor, &chf);
+          ME_DumpStyleToBuf(&chf, buf);
+          MessageBoxA(NULL, buf, "Style dump", MB_OK);
+        }
+        if (nKey == 'Q')
+        {
+          ME_CheckCharOffsets(editor);
+        }
+      }
+  }
+  return FALSE;
+}
+
+
 ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
   HDC hDC;
@@ -832,6 +887,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nScrollPosY = 0;
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ed->bRedraw = TRUE;
+  ed->nInvalidOfs = -1;
   GetClientRect(hWnd, &ed->rcFormat);
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
@@ -1820,29 +1876,8 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     TRACE("editor wnd command = %d\n", LOWORD(wParam));
     return 0;
   case WM_KEYDOWN:
-    if (ME_ArrowKey(editor, LOWORD(wParam), GetKeyState(VK_CONTROL)<0)) {
-      ME_CommitUndo(editor);
-      ME_EnsureVisible(editor, editor->pCursors[0].pRun);
-      HideCaret(hWnd);
-      ME_MoveCaret(editor);
-      ShowCaret(hWnd);
+    if (ME_KeyDown(editor, LOWORD(wParam)))
       return 0;
-    }
-    if (GetKeyState(VK_CONTROL)<0)
-    {
-      if (LOWORD(wParam)=='W')
-      {
-        CHARFORMAT2W chf;
-        char buf[2048];
-        ME_GetSelectionCharFormat(editor, &chf);
-        ME_DumpStyleToBuf(&chf, buf);
-        MessageBoxA(NULL, buf, "Style dump", MB_OK);
-      }
-      if (LOWORD(wParam)=='Q')
-      {
-        ME_CheckCharOffsets(editor);
-      }
-    }
     goto do_default;
   case WM_CHAR: 
   {
