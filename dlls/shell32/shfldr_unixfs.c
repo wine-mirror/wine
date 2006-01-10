@@ -1266,7 +1266,17 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
         return E_FAIL;
     
     /* Build a pidl for the path of the renamed file */
-    pwszDosDest = wine_get_dos_file_name(szDest);
+    if (This->m_dwPathMode == PATHMODE_DOS)
+    {
+        pwszDosDest = wine_get_dos_file_name(szDest);
+    }
+    else
+    {
+	int len = MultiByteToWideChar(CP_UNIXCP, 0, szDest, -1, NULL, 0);
+
+        pwszDosDest = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_UNIXCP, 0, szDest, -1, pwszDosDest, len);
+    }
     if (!pwszDosDest || !UNIXFS_path_to_pidl(This, pwszDosDest, &pidlDest)) {
         HeapFree(GetProcessHeap(), 0, pwszDosDest);
         rename(szDest, szSrc); /* Undo the renaming */
