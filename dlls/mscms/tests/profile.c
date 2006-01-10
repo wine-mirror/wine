@@ -439,6 +439,59 @@ static void test_GetCountColorProfileElements(void)
     }
 }
 
+typedef struct colorspace_description_struct {
+    DWORD dwID;
+    char *szName;
+} colorspace_descr;
+
+#define describe_colorspace(id) {id, #id}
+
+colorspace_descr known_colorspaces[] = { 
+    describe_colorspace(SPACE_XYZ),
+    describe_colorspace(SPACE_Lab),
+    describe_colorspace(SPACE_Luv),
+    describe_colorspace(SPACE_YCbCr),
+    describe_colorspace(SPACE_Yxy),
+    describe_colorspace(SPACE_RGB),
+    describe_colorspace(SPACE_GRAY),
+    describe_colorspace(SPACE_HSV),
+    describe_colorspace(SPACE_HLS),
+    describe_colorspace(SPACE_CMYK),
+    describe_colorspace(SPACE_CMY),
+    describe_colorspace(SPACE_2_CHANNEL),
+    describe_colorspace(SPACE_3_CHANNEL),
+    describe_colorspace(SPACE_4_CHANNEL),
+    describe_colorspace(SPACE_5_CHANNEL),
+    describe_colorspace(SPACE_6_CHANNEL),
+    describe_colorspace(SPACE_7_CHANNEL),
+    describe_colorspace(SPACE_8_CHANNEL)
+};
+
+static void enum_registered_color_profiles(void)
+{
+    BOOL ret;
+    DWORD size, count, i, present;
+    CHAR profile[MAX_PATH];
+
+    size = sizeof(profile);
+    count = sizeof(known_colorspaces)/sizeof(known_colorspaces[0]);
+
+    present = 0;
+    trace("\n");
+    trace("Searching for registered standard colorspace profiles:\n");
+    for (i=0; i<count; i++)
+    {
+        ret = pGetStandardColorSpaceProfileA(NULL, known_colorspaces[i].dwID, profile, &size);
+        if (ret) 
+        {
+            present++;
+            trace(" found %s\n", known_colorspaces[i].szName);
+        }
+    }
+    trace("Total profiles found: %ld.\n", present);
+    trace("\n");
+}
+
 #define fail_GSCSPA(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
 do {                                                                            \
     size = dwSz;                                                                \
@@ -1115,6 +1168,8 @@ START_TEST(profile)
     test_GetColorProfileHeader();
 
     test_GetCountColorProfileElements();
+
+    enum_registered_color_profiles();
 
     test_GetStandardColorSpaceProfileA();
     test_GetStandardColorSpaceProfileW();
