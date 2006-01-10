@@ -677,20 +677,20 @@ static HRESULT create_server(REFCLSID rclsid)
 /*
  * start_local_service()  - start a service given its name and parameters
  */
-static DWORD start_local_service(LPCWSTR name, DWORD num, LPWSTR *params)
+static DWORD start_local_service(LPCWSTR name, DWORD num, LPCWSTR *params)
 {
     SC_HANDLE handle, hsvc;
     DWORD     r = ERROR_FUNCTION_FAILED;
 
     TRACE("Starting service %s %ld params\n", debugstr_w(name), num);
 
-    handle = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    handle = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
     if (!handle)
         return r;
-    hsvc = OpenServiceW(handle, name, SC_MANAGER_ALL_ACCESS);
+    hsvc = OpenServiceW(handle, name, SERVICE_START);
     if (hsvc)
     {
-        if(StartServiceW(hsvc, num, (LPCWSTR*)params))
+        if(StartServiceW(hsvc, num, params))
             r = ERROR_SUCCESS;
         else
             r = GetLastError();
@@ -768,7 +768,7 @@ static HRESULT create_local_service(REFCLSID rclsid)
             num_args++;
             RegQueryValueExW(hkey, szServiceParams, NULL, &type, (LPBYTE)args[0], &sz);
         }
-        r = start_local_service(buf, num_args, args);
+        r = start_local_service(buf, num_args, (LPCWSTR *)args);
         if (r==ERROR_SUCCESS)
             hres = S_OK;
         HeapFree(GetProcessHeap(),0,args[0]);
