@@ -698,9 +698,11 @@ static DWORD start_local_service(LPCWSTR name, DWORD num, LPWSTR *params)
             r = ERROR_SUCCESS;
         CloseServiceHandle(hsvc);
     }
+    else
+        r = GetLastError();
     CloseServiceHandle(handle);
 
-    TRACE("StartService returned error %ld (%s)\n", r, r?"ok":"failed");
+    TRACE("StartService returned error %ld (%s)\n", r, (r == ERROR_SUCCESS) ? "ok":"failed");
 
     return r;
 }
