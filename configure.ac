@@ -1524,6 +1524,7 @@ dlls/atl/Makefile
 dlls/avicap32/Makefile
 dlls/avifil32/Makefile
 dlls/cabinet/Makefile
+dlls/cabinet/tests/Makefile
 dlls/capi2032/Makefile
 dlls/cards/Makefile
 dlls/cfgmgr32/Makefile
