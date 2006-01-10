@@ -480,20 +480,24 @@ static LRESULT WINAPI StaticWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 static void STATIC_PaintOwnerDrawfn( HWND hwnd, HDC hdc, DWORD style )
 {
   DRAWITEMSTRUCT dis;
+  HFONT font, oldFont = NULL;
   UINT id = (UINT)GetWindowLongPtrW( hwnd, GWLP_ID );
 
   dis.CtlType    = ODT_STATIC;
   dis.CtlID      = id;
   dis.itemID     = 0;
   dis.itemAction = ODA_DRAWENTIRE;
-  dis.itemState  = 0;
+  dis.itemState  = IsWindowEnabled(hwnd) ? 0 : ODS_DISABLED;
   dis.hwndItem   = hwnd;
   dis.hDC        = hdc;
   dis.itemData   = 0;
   GetClientRect( hwnd, &dis.rcItem );
 
+  font = (HFONT)GetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET );
+  if (font) oldFont = SelectObject( hdc, font );
   SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, (WPARAM)hdc, (LPARAM)hwnd );
   SendMessageW( GetParent(hwnd), WM_DRAWITEM, id, (LPARAM)&dis );
+  if (font) SelectObject( hdc, oldFont );
 }
 
 static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
