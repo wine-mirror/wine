@@ -98,6 +98,10 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
     if (hr != S_OK)
         return hr;
 
+    hr = apartment_createwindowifneeded(apt);
+    if (hr != S_OK)
+        return hr;
+
     hr = IUnknown_QueryInterface(object, riid, (void **)&iobject);
     if (hr != S_OK)
     {

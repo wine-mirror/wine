@@ -139,7 +139,7 @@ struct apartment
   DWORD tid;               /* thread id (RO) */
   OXID oxid;               /* object exporter ID (RO) */
   LONG ipidc;              /* interface pointer ID counter, starts at 1 (LOCK) */
-  HWND win;                /* message window (RO) */
+  HWND win;                /* message window (LOCK) */
   CRITICAL_SECTION cs;     /* thread safety */
   LPMESSAGEFILTER filter;  /* message filter (CS cs) */
   struct list proxies;     /* imported objects (CS cs) */
@@ -230,6 +230,7 @@ static inline HRESULT apartment_getoxid(struct apartment *apt, OXID *oxid)
     *oxid = apt->oxid;
     return S_OK;
 }
+HRESULT apartment_createwindowifneeded(struct apartment *apt);
 HWND apartment_getwindow(struct apartment *apt);
 void apartment_joinmta(void);
 
