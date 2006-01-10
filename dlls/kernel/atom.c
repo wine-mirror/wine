@@ -35,7 +35,6 @@
 
 #include "wine/exception.h"
 #include "excpt.h"
-#include "wine/server.h"
 #include "wine/unicode.h"
 #include "kernel_private.h"
 

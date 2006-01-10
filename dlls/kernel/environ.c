@@ -31,7 +31,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "wine/server.h"
 #include "wine/library.h"
 #include "winternl.h"
 #include "wine/unicode.h"

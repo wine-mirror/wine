@@ -49,7 +49,6 @@
 #include "winioctl.h"
 #include "ntddscsi.h"
 #include "wine/library.h"
-#include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "kernel_private.h"

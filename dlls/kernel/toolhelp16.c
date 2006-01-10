@@ -30,10 +30,11 @@
 #include <assert.h>
 #include "windef.h"
 #include "winbase.h"
-#include "wine/winbase16.h"
+#include "winternl.h"
 #include "winerror.h"
+
+#include "wine/winbase16.h"
 #include "toolhelp.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(toolhelp);
