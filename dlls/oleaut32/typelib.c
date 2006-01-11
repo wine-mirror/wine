@@ -5205,7 +5205,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             VARIANT varresult;
             SHORT missing_param_offset = func_desc->cParams;
             SHORT missing_params = 0;
-            void *retval; /* pointer for storing byref retvals in */
+            VARIANT retval; /* pointer for storing byref retvals in */
 
             hres = S_OK;
             for (i = 0; i < func_desc->cParams; i++)
@@ -5238,7 +5238,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         arg = prgpvarg[i] = &rgvarg[i];
                         memset(arg, 0, sizeof(*arg));
                         V_VT(arg) = rgvt[i];
-                        retval = NULL;
+                        memset(&retval, 0, sizeof(retval));
                         V_BYREF(arg) = &retval;
                     }
                     else
