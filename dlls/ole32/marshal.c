@@ -421,7 +421,7 @@ static HRESULT ifproxy_get_public_ref(struct ifproxy * This)
         hr = proxy_manager_get_remunknown(This->parent, &remunk);
         if (hr == S_OK)
         {
-            HRESULT hrref;
+            HRESULT hrref = S_OK;
             REMINTERFACEREF rif;
             rif.ipid = This->stdobjref.ipid;
             rif.cPublicRefs = NORMALEXTREFS;
