@@ -404,13 +404,20 @@ static BOOL supportedFormat(LPWAVEFORMATEX wf)
 
 static void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
 {
+    unsigned int iLength;        
+
     ZeroMemory(wf2, sizeof(wf2));
     if (wf1->wFormatTag == WAVE_FORMAT_PCM)
-        memcpy(wf2, wf1, sizeof(PCMWAVEFORMAT));
+        iLength = sizeof(PCMWAVEFORMAT);
     else if (wf1->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-        memcpy(wf2, wf1, sizeof(WAVEFORMATPCMEX));
+        iLength = sizeof(WAVEFORMATPCMEX);
     else
-        memcpy(wf2, wf1, sizeof(WAVEFORMATEX) + wf1->cbSize);
+        iLength = sizeof(WAVEFORMATEX) + wf1->cbSize;
+    if (iLength > sizeof(WAVEFORMATPCMEX)) {
+        ERR("calculated %u bytes, capping to %u bytes\n", iLength, sizeof(WAVEFORMATPCMEX));
+        iLength = sizeof(WAVEFORMATPCMEX);
+    }
+    memcpy(wf2, wf1, iLength);
 }
 
 /*----------------------------------------------------------------------------
