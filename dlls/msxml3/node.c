@@ -563,6 +563,9 @@ static HRESULT WINAPI xmlnode_selectNodes(
     if (!str)
         return r;
 
+    if( !This->node->children )
+        return S_FALSE;
+
     *resultList = create_filtered_nodelist( This->node->children, str );
     HeapFree( GetProcessHeap(), 0, str );
     return S_OK;
@@ -580,7 +583,7 @@ static HRESULT WINAPI xmlnode_selectSingleNode(
     TRACE("%p %s %p\n", This, debugstr_w(queryString), resultNode );
 
     r = IXMLDOMNode_selectNodes(iface, queryString, &list);
-    if(SUCCEEDED(r))
+    if(r == S_OK)
     {
         r = IXMLDOMNodeList_nextNode(list, resultNode);
         IXMLDOMNodeList_Release(list);
