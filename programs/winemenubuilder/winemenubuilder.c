@@ -291,7 +291,11 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, const char *szXPMFile
         hResInfo=NULL;
         sEnumRes.pResInfo = &hResInfo;
         sEnumRes.nIndex = nIndex;
-        EnumResourceNamesW(hModule, (LPCWSTR)RT_GROUP_ICON, EnumResNameProc, (LONG_PTR)&sEnumRes);
+        if (!EnumResourceNamesW(hModule, (LPCWSTR)RT_GROUP_ICON,
+                                EnumResNameProc, (LONG_PTR)&sEnumRes))
+        {
+            WINE_TRACE("EnumResourceNamesW failed, error %ld\n", GetLastError());
+        }
     }
 
     if (hResInfo)
@@ -320,7 +324,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, const char *szXPMFile
     }
     else
     {
-        WINE_ERR("ExtractFromEXEDLL failed, error %ld\n", GetLastError());
+        WINE_ERR("found no icon\n");
         FreeLibrary(hModule);
         return FALSE;
     }
