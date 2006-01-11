@@ -1400,6 +1400,7 @@ enum TYPE_FILTER {
 static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 {
 	TCHAR drv[_MAX_DRIVE+1], dir[_MAX_DIR], name[_MAX_FNAME], ext[_MAX_EXT];
+	TCHAR dir_path[MAX_PATH];
 	TCHAR b1[BUFFER_LEN];
 	static const TCHAR sAsterics[] = {'*', '\0'};
 
@@ -1444,7 +1445,9 @@ static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 
 	root->entry.level = 0;
 
-	entry = read_tree(root, path, pidl, drv, child->sortOrder, hwnd);
+	lstrcpy(dir_path, drv);
+	lstrcat(dir_path, dir);
+	entry = read_tree(root, dir_path, pidl, drv, child->sortOrder, hwnd);
 
 #ifdef _SHELL_FOLDERS
 	if (root->entry.etype == ET_SHELL)
@@ -4750,6 +4753,36 @@ static void show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 	Globals.prescan_node = FALSE;
 
 	UpdateWindow(Globals.hMainWnd);
+
+	if (path && path[0])
+	{
+		int index,count;
+		TCHAR drv[_MAX_DRIVE+1], dir[_MAX_DIR], name[_MAX_FNAME], ext[_MAX_EXT];
+		TCHAR fullname[_MAX_FNAME+_MAX_EXT+1];
+
+		memset(name,0,sizeof(name));
+		memset(name,0,sizeof(ext));
+		_tsplitpath(path, drv, dir, name, ext);
+		if (name[0])
+		{
+			count = ListBox_GetCount(child->right.hwnd);
+			lstrcpy(fullname,name);
+			lstrcat(fullname,ext);
+
+			for (index = 0; index < count; index ++)
+			{
+				Entry* entry = (Entry*) ListBox_GetItemData(child->right.hwnd,
+						index);
+				if (lstrcmp(entry->data.cFileName,fullname)==0 ||
+						lstrcmp(entry->data.cAlternateFileName,fullname)==0)
+				{
+					ListBox_SetCurSel(child->right.hwnd, index);
+					SetFocus(child->right.hwnd);
+					break;
+				}
+			}
+		}
+	}
 }
 
 static void ExitInstance(void)
