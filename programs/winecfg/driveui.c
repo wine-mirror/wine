@@ -270,8 +270,7 @@ static int fill_drives_list(HWND dialog)
     for(i = 0; i < 26; i++)
     {
         LVITEM item;
-        char *letter = 0;
-        int len;
+        char letter[4];
 
         /* skip over any unused drives */
         if (!drives[i].in_use)
@@ -280,34 +279,19 @@ static int fill_drives_list(HWND dialog)
         if (drives[i].letter == 'C')
             drivec_present = TRUE;
 
-        len = snprintf(letter, 0, "%c:", 'A' + i);
-        len++; /* add a byte for the trailing null */
-
-        letter = HeapAlloc(GetProcessHeap(), 0, len);
-        snprintf(letter, len, "%c:", 'A' + i);
+        snprintf(letter, sizeof(letter), "%c:", 'A' + i);
 
         memset(&item, 0, sizeof(item));
-        item.mask = LVIF_TEXT;
+        item.mask = LVIF_TEXT | LVIF_PARAM;
         item.iItem = count;
         item.iSubItem = 0;
         item.pszText = letter;
         item.cchTextMax = lstrlen(item.pszText);
+        item.lParam = (LPARAM) &drives[i];
 
         lv_insert_item(dialog, &item);
+        lv_set_item_text(dialog, count, 1, drives[i].unixpath);
 
-        item.iSubItem = 1;
-        item.pszText = drives[i].unixpath;
-        item.cchTextMax = lstrlen(item.pszText);
-
-        lv_set_item(dialog, &item);
-
-        item.mask = LVIF_PARAM;
-        item.iSubItem = 0;
-        item.lParam = (LPARAM) &drives[i];
-        
-        lv_set_item(dialog, &item);
-
-        HeapFree(GetProcessHeap(), 0, letter);
         count++;
     }
 
@@ -331,6 +315,8 @@ static void on_options_click(HWND dialog)
         set_reg_key(config_key, "", "ShowDotFiles", "Y");
     else
         set_reg_key(config_key, "", "ShowDotFiles", "N");
+
+    SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
 }
 
 static void on_add_click(HWND dialog)
@@ -659,11 +645,8 @@ static void browse_for_folder(HWND dialog)
         hr = StrRetToStr(&strSelectedPath, pidlSelectedPath, &pszSelectedPath);
         SHFree(pidlSelectedPath);
         if (!SUCCEEDED(hr)) return;
-    
-        HeapFree(GetProcessHeap(), 0, current_drive->unixpath);
-        current_drive->unixpath = strdupA(pszSelectedPath);
-        fill_drives_list(dialog);
-        update_controls(dialog);   
+
+        set_text(dialog, IDC_EDIT_PATH, pszSelectedPath);
         
         CoTaskMemFree(pszSelectedPath);
     }
@@ -736,8 +719,6 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     break;
 
                 case BN_CLICKED:
-                    SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
-
                     switch (LOWORD(wParam))
                     {
                         case IDC_SHOW_DOT_FILES:
@@ -773,6 +754,7 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                 case IDC_BUTTON_AUTODETECT:
                     autodetect_drives();
                     fill_drives_list(dialog);
+                    SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
                     break;
 
                 case IDC_BUTTON_SHOW_HIDE_ADVANCED:
