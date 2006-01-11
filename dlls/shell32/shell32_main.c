@@ -536,7 +536,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
         {
             WCHAR sTemp [MAX_PATH];
             WCHAR * szExt;
-            DWORD dwNr=0;
+            int icon_idx=0;
 
             lstrcpynW(sTemp, szFullPath, MAX_PATH);
 
@@ -550,14 +550,14 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                 szExt = (LPWSTR) PathFindExtensionW(sTemp);
                 if ( szExt &&
                      HCR_MapTypeToValueW(szExt, sTemp, MAX_PATH, TRUE) &&
-                     HCR_GetDefaultIconW(sTemp, sTemp, MAX_PATH, &dwNr))
+                     HCR_GetDefaultIconW(sTemp, sTemp, MAX_PATH, &icon_idx))
                 {
                     if (!lstrcmpW(p1W,sTemp))            /* icon is in the file */
                         strcpyW(sTemp, szFullPath);
 
                     if (flags & SHGFI_SYSICONINDEX) 
                     {
-                        psfi->iIcon = SIC_GetIconIndex(sTemp,dwNr,0);
+                        psfi->iIcon = SIC_GetIconIndex(sTemp,icon_idx,0);
                         if (psfi->iIcon == -1)
                             psfi->iIcon = 0;
                     }
@@ -565,16 +565,16 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                     {
                         IconNotYetLoaded=FALSE;
                         if (flags & SHGFI_SMALLICON)
-                            PrivateExtractIconsW( sTemp,dwNr,
+                            PrivateExtractIconsW( sTemp,icon_idx,
                                 GetSystemMetrics( SM_CXSMICON ),
                                 GetSystemMetrics( SM_CYSMICON ),
                                 &psfi->hIcon, 0, 1, 0);
                         else
-                            PrivateExtractIconsW( sTemp, dwNr,
+                            PrivateExtractIconsW( sTemp, icon_idx,
                                 GetSystemMetrics( SM_CXICON),
                                 GetSystemMetrics( SM_CYICON),
                                 &psfi->hIcon, 0, 1, 0);
-                        psfi->iIcon = dwNr;
+                        psfi->iIcon = icon_idx;
                     }
                 }
             }

@@ -164,31 +164,31 @@ static BOOL HCR_RegOpenClassIDKey(REFIID riid, HKEY *hkey)
 	return !RegOpenKeyExA(HKEY_CLASSES_ROOT, xriid, 0, KEY_READ, hkey);
 }
 
-static BOOL HCR_RegGetDefaultIconW(HKEY hkey, LPWSTR szDest, DWORD len, LPDWORD dwNr)
+static BOOL HCR_RegGetDefaultIconW(HKEY hkey, LPWSTR szDest, DWORD len, int* picon_idx)
 {
-	DWORD dwType;
-	WCHAR sTemp[MAX_PATH];
-	WCHAR sNum[5];
+    DWORD dwType;
+    WCHAR sTemp[MAX_PATH];
+    WCHAR sNum[5];
 
-	if (!RegQueryValueExW(hkey, NULL, 0, &dwType, (LPBYTE)szDest, &len))
-	{
+    if (!RegQueryValueExW(hkey, NULL, 0, &dwType, (LPBYTE)szDest, &len))
+    {
       if (dwType == REG_EXPAND_SZ)
-	  {
-	    ExpandEnvironmentStringsW(szDest, sTemp, MAX_PATH);
-	    lstrcpynW(szDest, sTemp, len);
-	  }
-	  if (ParseFieldW (szDest, 2, sNum, 5))
-             *dwNr = atoiW(sNum);
+      {
+        ExpandEnvironmentStringsW(szDest, sTemp, MAX_PATH);
+        lstrcpynW(szDest, sTemp, len);
+      }
+      if (ParseFieldW (szDest, 2, sNum, 5))
+             *picon_idx = atoiW(sNum);
           else
-             *dwNr=0; /* sometimes the icon number is missing */
-	  ParseFieldW (szDest, 1, szDest, len);
+             *picon_idx=0; /* sometimes the icon number is missing */
+      ParseFieldW (szDest, 1, szDest, len);
           PathUnquoteSpacesW(szDest);
-	  return TRUE;
-	}
-	return FALSE;
+      return TRUE;
+    }
+    return FALSE;
 }
 
-static BOOL HCR_RegGetDefaultIconA(HKEY hkey, LPSTR szDest, DWORD len, LPDWORD dwNr)
+static BOOL HCR_RegGetDefaultIconA(HKEY hkey, LPSTR szDest, DWORD len, int* picon_idx)
 {
 	DWORD dwType;
 	char sTemp[MAX_PATH];
@@ -202,9 +202,9 @@ static BOOL HCR_RegGetDefaultIconA(HKEY hkey, LPSTR szDest, DWORD len, LPDWORD d
 	    lstrcpynA(szDest, sTemp, len);
 	  }
 	  if (ParseFieldA (szDest, 2, sNum, 5))
-             *dwNr=atoi(sNum);
+             *picon_idx=atoi(sNum);
           else
-             *dwNr=0; /* sometimes the icon number is missing */
+             *picon_idx=0; /* sometimes the icon number is missing */
 	  ParseFieldA (szDest, 1, szDest, len);
           PathUnquoteSpacesA(szDest);
 	  return TRUE;
@@ -212,7 +212,7 @@ static BOOL HCR_RegGetDefaultIconA(HKEY hkey, LPSTR szDest, DWORD len, LPDWORD d
 	return FALSE;
 }
 
-BOOL HCR_GetDefaultIconW(LPCWSTR szClass, LPWSTR szDest, DWORD len, LPDWORD dwNr)
+BOOL HCR_GetDefaultIconW(LPCWSTR szClass, LPWSTR szDest, DWORD len, int* picon_idx)
 {
         static const WCHAR swDefaultIcon[] = {'\\','D','e','f','a','u','l','t','I','c','o','n',0};
 	HKEY	hkey;
@@ -226,19 +226,19 @@ BOOL HCR_GetDefaultIconW(LPCWSTR szClass, LPWSTR szDest, DWORD len, LPDWORD dwNr
 
 	if (!RegOpenKeyExW(HKEY_CLASSES_ROOT, sTemp, 0, 0x02000000, &hkey))
 	{
-	  ret = HCR_RegGetDefaultIconW(hkey, szDest, len, dwNr);
+	  ret = HCR_RegGetDefaultIconW(hkey, szDest, len, picon_idx);
 	  RegCloseKey(hkey);
 	}
 
         if(ret)
-            TRACE("-- %s %li\n", debugstr_w(szDest), *dwNr );
+            TRACE("-- %s %i\n", debugstr_w(szDest), *picon_idx);
         else
             TRACE("-- not found\n");
 
 	return ret;
 }
 
-BOOL HCR_GetDefaultIconA(LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr)
+BOOL HCR_GetDefaultIconA(LPCSTR szClass, LPSTR szDest, DWORD len, int* picon_idx)
 {
 	HKEY	hkey;
 	char	sTemp[MAX_PATH];
@@ -250,24 +250,24 @@ BOOL HCR_GetDefaultIconA(LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr)
 
 	if (!RegOpenKeyExA(HKEY_CLASSES_ROOT, sTemp, 0, 0x02000000, &hkey))
 	{
-	  ret = HCR_RegGetDefaultIconA(hkey, szDest, len, dwNr);
+	  ret = HCR_RegGetDefaultIconA(hkey, szDest, len, picon_idx);
 	  RegCloseKey(hkey);
 	}
-	TRACE("-- %s %li\n", szDest, *dwNr );
+	TRACE("-- %s %i\n", szDest, *picon_idx);
 	return ret;
 }
 
-BOOL HCR_GetDefaultIconFromGUIDW(REFIID riid, LPWSTR szDest, DWORD len, LPDWORD dwNr)
+BOOL HCR_GetDefaultIconFromGUIDW(REFIID riid, LPWSTR szDest, DWORD len, int* picon_idx)
 {
 	HKEY	hkey;
 	BOOL	ret = FALSE;
 
 	if (HCR_RegOpenClassIDKey(riid, &hkey))
 	{
-	  ret = HCR_RegGetDefaultIconW(hkey, szDest, len, dwNr);
+	  ret = HCR_RegGetDefaultIconW(hkey, szDest, len, picon_idx);
 	  RegCloseKey(hkey);
 	}
-	TRACE("-- %s %li\n", debugstr_w(szDest), *dwNr );
+	TRACE("-- %s %i\n", debugstr_w(szDest), *picon_idx);
 	return ret;
 }
 

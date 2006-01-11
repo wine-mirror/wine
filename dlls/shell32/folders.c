@@ -166,7 +166,7 @@ static HRESULT getIconLocationForFolder(IExtractIconW *iface, UINT uFlags,
  LPWSTR szIconFile, UINT cchMax, int *piIndex, UINT *pwFlags)
 {
     IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
-    DWORD dwNr;
+    int icon_idx;
     WCHAR wszPath[MAX_PATH];
     WCHAR wszCLSIDValue[CHARS_IN_GUID];
     static const WCHAR shellClassInfo[] = { '.','S','h','e','l','l','C','l','a','s','s','I','n','f','o',0 };
@@ -185,27 +185,32 @@ static HRESULT getIconLocationForFolder(IExtractIconW *iface, UINT uFlags,
     }
     else if (SHELL32_GetCustomFolderAttribute(This->pidl, shellClassInfo, clsid,
         wszCLSIDValue, CHARS_IN_GUID) &&
-        HCR_GetDefaultIconW(wszCLSIDValue, szIconFile, cchMax, &dwNr))
+        HCR_GetDefaultIconW(wszCLSIDValue, szIconFile, cchMax, &icon_idx))
     {
-       *piIndex = dwNr;
+       *piIndex = icon_idx;
     }
     else if (SHELL32_GetCustomFolderAttribute(This->pidl, shellClassInfo, clsid2,
         wszCLSIDValue, CHARS_IN_GUID) &&
-        HCR_GetDefaultIconW(wszCLSIDValue, szIconFile, cchMax, &dwNr))
+        HCR_GetDefaultIconW(wszCLSIDValue, szIconFile, cchMax, &icon_idx))
     {
-       *piIndex = dwNr;
+       *piIndex = icon_idx;
     }
     else
     {
         static const WCHAR folder[] = { 'F','o','l','d','e','r',0 };
 
-        if (!HCR_GetDefaultIconW(folder, szIconFile, cchMax, &dwNr))
+        if (!HCR_GetDefaultIconW(folder, szIconFile, cchMax, &icon_idx))
         {
             lstrcpynW(szIconFile, swShell32Name, cchMax);
-            dwNr = IDI_SHELL_FOLDER;
+            icon_idx = -IDI_SHELL_FOLDER;
         }
-        *piIndex = -((uFlags & GIL_OPENICON) ? dwNr + 1 : dwNr);
+
+        if (uFlags & GIL_OPENICON)
+            *piIndex = icon_idx<0? icon_idx-1: icon_idx+1;
+        else
+            *piIndex = icon_idx;
     }
+
     return S_OK;
 }
 
@@ -227,7 +232,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
 
 	char	sTemp[MAX_PATH];
-	DWORD	dwNr;
+	int		icon_idx;
 	GUID const * riid;
 	LPITEMIDLIST	pSimplePidl = ILFindLastID(This->pidl);
 
@@ -256,9 +261,9 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	          riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
 	          riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7]);
 
-	  if (HCR_GetDefaultIconW(xriid, szIconFile, cchMax, &dwNr))
+	  if (HCR_GetDefaultIconW(xriid, szIconFile, cchMax, &icon_idx))
 	  {
-	    *piIndex = dwNr;
+	    *piIndex = icon_idx;
 	  }
 	  else
 	  {
@@ -301,9 +306,9 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	  }
 	  else
 	  {
-		if (HCR_GetDefaultIconW(drive, szIconFile, cchMax, &dwNr))
+		if (HCR_GetDefaultIconW(drive, szIconFile, cchMax, &icon_idx))
 		{
-		  *piIndex = dwNr;
+		  *piIndex = icon_idx;
 		}
 		else
 		{
@@ -329,7 +334,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	  else if (_ILGetExtension(pSimplePidl, sTemp, MAX_PATH))
 	  {
 	    if (HCR_MapTypeToValueA(sTemp, sTemp, MAX_PATH, TRUE)
-		&& HCR_GetDefaultIconA(sTemp, sTemp, MAX_PATH, &dwNr))
+		&& HCR_GetDefaultIconA(sTemp, sTemp, MAX_PATH, &icon_idx))
 	    {
 	      if (!lstrcmpA("%1", sTemp))		/* icon is in the file */
 	      {
@@ -339,7 +344,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	      else
 	      {
 		MultiByteToWideChar(CP_ACP, 0, sTemp, -1, szIconFile, cchMax);
-		*piIndex = dwNr;
+		*piIndex = icon_idx;
 	      }
 
 	      found = TRUE;
