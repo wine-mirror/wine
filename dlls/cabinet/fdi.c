@@ -2819,7 +2819,21 @@ BOOL __cdecl FDIDestroy(HFDI hfdi)
 /***********************************************************************
  *		FDITruncateCabinet (CABINET.24)
  *
- * Undocumented and unimplemented.
+ * Removes all folders of a cabinet file after and including the
+ * specified folder number.
+ * 
+ * PARAMS
+ *   hfdi            [I] Handle to the FDI context.
+ *   pszCabinetName  [I] Filename of the cabinet.
+ *   iFolderToDelete [I] Index of the first folder to delete.
+ * 
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FALSE.
+ * 
+ * NOTES
+ *   The PFNWRITE function supplied to FDICreate must truncate the
+ *   file at the current position if the number of bytes to write is 0.
  */
 BOOL __cdecl FDITruncateCabinet(
 	HFDI    hfdi,
