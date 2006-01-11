@@ -2480,18 +2480,29 @@ PRINTDLG_PS_UpdateDlgStructA(HWND hDlg, PageSetupDataA *pda) {
     
     dn = GlobalLock(pda->pdlg.hDevNames);
     dm = GlobalLock(pda->pdlg.hDevMode);
+
+    /* Save paper orientation into device context */
     if(pda->curdlg.ptPaperSize.x > pda->curdlg.ptPaperSize.y)
-	dm->u1.s1.dmOrientation = DMORIENT_LANDSCAPE;
+        dm->u1.s1.dmOrientation = DMORIENT_LANDSCAPE;
     else
-	dm->u1.s1.dmOrientation = DMORIENT_PORTRAIT;
-    
+        dm->u1.s1.dmOrientation = DMORIENT_PORTRAIT;
+
+    /* Save paper size into the device context */
     paperword = SendDlgItemMessageA(hDlg,cmb2,CB_GETITEMDATA,
-	SendDlgItemMessageA(hDlg, cmb2, CB_GETCURSEL, 0, 0), 0);
+        SendDlgItemMessageA(hDlg, cmb2, CB_GETCURSEL, 0, 0), 0);
     if (paperword != CB_ERR)
-	dm->u1.s1.dmPaperSize = paperword;
+        dm->u1.s1.dmPaperSize = paperword;
     else
-	FIXME("could not get dialog text for papersize cmbbox?\n");
-    
+        FIXME("could not get dialog text for papersize cmbbox?\n");
+
+    /* Save paper source into the device context */
+    paperword = SendDlgItemMessageA(hDlg,cmb1,CB_GETITEMDATA,
+        SendDlgItemMessageA(hDlg, cmb1, CB_GETCURSEL, 0, 0), 0);
+    if (paperword != CB_ERR)
+        dm->dmDefaultSource = paperword;
+    else
+        FIXME("could not get dialog text for papersize cmbbox?\n");
+
     GlobalUnlock(pda->pdlg.hDevNames);
     GlobalUnlock(pda->pdlg.hDevMode);
 
@@ -2510,7 +2521,10 @@ PRINTDLG_PS_UpdateDlgStructW(HWND hDlg, PageSetupDataW *pda) {
     dm = GlobalLock(pda->pdlg.hDevMode);
     devname	= ((WCHAR*)dn)+dn->wDeviceOffset;
     portname	= ((WCHAR*)dn)+dn->wOutputOffset;
+
+    /* Save paper size into device context */
     PRINTDLG_SetUpPaperComboBoxW(hDlg,cmb2,devname,portname,dm);
+    /* Save paper source into device context */
     PRINTDLG_SetUpPaperComboBoxW(hDlg,cmb3,devname,portname,dm);
 
     if (GetDlgItemTextW(hDlg,cmb2,papername,sizeof(papername))>0) {
@@ -3345,20 +3359,26 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
             return FALSE;
         }
 
-    /* First get default printer data, we need it right after that. */
+    /* Initialize default printer struct. If no printer device info is specified
+       retrieve the default printer data. */
     memset(&pdlg,0,sizeof(pdlg));
     pdlg.lStructSize	= sizeof(pdlg);
-    pdlg.Flags		= PD_RETURNDEFAULT;
-    bRet = PrintDlgA(&pdlg);
-    if (!bRet){
-	if(!(setupdlg->Flags & PSD_NOWARNING)){
-	    char errstr[256];
-    	    LoadStringA(COMDLG32_hInstance, PD32_NO_DEFAULT_PRINTER, errstr, 255);
-    	    MessageBoxA(setupdlg->hwndOwner, errstr, 0, MB_OK | MB_ICONERROR);
-	}
-	return FALSE;
+    if (setupdlg->hDevMode && setupdlg->hDevNames) {
+        pdlg.hDevMode = setupdlg->hDevMode;
+        pdlg.hDevNames = setupdlg->hDevNames;
+    } else {
+        pdlg.Flags = PD_RETURNDEFAULT;
+        bRet = PrintDlgA(&pdlg);
+        if (!bRet){
+            if (!(setupdlg->Flags & PSD_NOWARNING)) {
+                char errstr[256];
+                LoadStringA(COMDLG32_hInstance, PD32_NO_DEFAULT_PRINTER, errstr, 255);
+                MessageBoxA(setupdlg->hwndOwner, errstr, 0, MB_OK | MB_ICONERROR);
+            }
+            return FALSE;
+        }
     }
-   
+
     /* short cut exit, just return default values */
     if (setupdlg->Flags & PSD_RETURNDEFAULT) {
 	DEVMODEA *dm;
@@ -3427,12 +3447,25 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
 	      setupdlg->hInstance, setupdlg->Flags, flagstr);
     }
 
-    /* First get default printer data, we need it right after that. */
+    /* Initialize default printer struct. If no printer device info is specified
+       retrieve the default printer data. */
     memset(&pdlg,0,sizeof(pdlg));
     pdlg.lStructSize	= sizeof(pdlg);
-    pdlg.Flags		= PD_RETURNDEFAULT;
-    bRet = PrintDlgW(&pdlg);
-    if (!bRet) return FALSE;
+    if (setupdlg->hDevMode && setupdlg->hDevNames) {
+        pdlg.hDevMode = setupdlg->hDevMode;
+        pdlg.hDevNames = setupdlg->hDevNames;
+    } else {
+        pdlg.Flags = PD_RETURNDEFAULT;
+        bRet = PrintDlgW(&pdlg);
+        if (!bRet){
+            if (!(setupdlg->Flags & PSD_NOWARNING)) {
+                WCHAR errstr[256];
+                LoadStringW(COMDLG32_hInstance, PD32_NO_DEFAULT_PRINTER, errstr, 255);
+                MessageBoxW(setupdlg->hwndOwner, errstr, 0, MB_OK | MB_ICONERROR);
+            }
+            return FALSE;
+        }
+    }
 
     /* short cut exit, just return default values */
     if (setupdlg->Flags & PSD_RETURNDEFAULT) {
