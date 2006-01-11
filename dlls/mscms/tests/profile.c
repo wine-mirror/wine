@@ -495,7 +495,7 @@ static void enum_registered_color_profiles(void)
 #define fail_GSCSPA(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
 do {                                                                            \
     size = dwSz;                                                                \
-    SetLastError(0);                                                            \
+    SetLastError(0xfaceabad);                                                   \
     ret = pGetStandardColorSpaceProfileA(pMachName, dwProfID, pProfName, pdwSz);\
     GLE = GetLastError();                                                       \
     ok( !ret && GLE_OK,                                                         \
@@ -562,7 +562,7 @@ static void test_GetStandardColorSpaceProfileA(void)
 #define fail_GSCSPW(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
 do {                                                                            \
     size = dwSz;                                                                \
-    SetLastError(0);                                                            \
+    SetLastError(0xfaceabad);                                                   \
     ret = pGetStandardColorSpaceProfileW(pMachName, dwProfID, pProfName, pdwSz);\
     GLE = GetLastError();                                                       \
     ok( !ret && GLE_OK,                                                         \
