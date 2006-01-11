@@ -34,22 +34,55 @@
 void test_fullpath()
 {
     char full[MAX_PATH];
+    char tmppath[MAX_PATH];
+    char level1[MAX_PATH];
+    char level2[MAX_PATH];
+    char teststring[MAX_PATH];
     char *freeme;
+    BOOL rc,free1,free2;
 
-    SetCurrentDirectory("C:\\Windows\\System\\");
+    free1=free2=TRUE;
+    GetTempPath(MAX_PATH,tmppath);
+    strcpy(level1,tmppath);
+    strcat(level1,"msvcrt-test\\");
 
-    ok(_fullpath(full,"test", MAX_PATH)>0,"_fullpath failed\n");
-    ok(strcmp(full,"C:\\Windows\\System\\test")==0,"Invalid Path\n");
-    ok(_fullpath(full,"\\test", MAX_PATH)>0,"_fullpath failed\n");
-    ok(strcmp(full,"C:\\test")==0,"Invalid Path\n");
-    ok(_fullpath(full,"..\\test", MAX_PATH)>0,"_fullpath failed\n");
-    ok(strcmp(full,"C:\\Windows\\test")==0,"Invalid Path\n");
+    rc = CreateDirectory(level1,NULL);
+    if (!rc && GetLastError()==ERROR_ALREADY_EXISTS)
+        free1=FALSE;
+
+    strcpy(level2,level1);
+    strcat(level2,"nextlevel\\");
+    rc = CreateDirectory(level2,NULL);
+    if (!rc && GetLastError()==ERROR_ALREADY_EXISTS)
+        free2=FALSE;
+    SetCurrentDirectory(level2);
+
+    ok(_fullpath(full,"test", MAX_PATH)!=NULL,"_fullpath failed\n");
+    strcpy(teststring,level2);
+    strcat(teststring,"test");
+    ok(strcmp(full,teststring)==0,"Invalid Path returned %s\n",full);
+    ok(_fullpath(full,"\\test", MAX_PATH)!=NULL,"_fullpath failed\n");
+    strncpy(teststring,level2,3);
+    teststring[3]=0;
+    strcat(teststring,"test");
+    ok(strcmp(full,teststring)==0,"Invalid Path returned %s\n",full);
+    ok(_fullpath(full,"..\\test", MAX_PATH)!=NULL,"_fullpath failed\n");
+    strcpy(teststring,level1);
+    strcat(teststring,"test");
+    ok(strcmp(full,teststring)==0,"Invalid Path returned %s\n",full);
     ok(_fullpath(full,"..\\test", 10)==NULL,"_fullpath failed to generate error\n");
 
     freeme = _fullpath(NULL,"test", 0);
     ok(freeme!=NULL,"No path returned\n");
-    ok(strcmp(freeme,"C:\\Windows\\System\\test")==0,"Invalid Path\n");
+    strcpy(teststring,level2);
+    strcat(teststring,"test");
+    ok(strcmp(freeme,teststring)==0,"Invalid Path returned %s\n",freeme);
     free(freeme);
+
+    if (free2)
+        RemoveDirectory(level2);
+    if (free1)
+        RemoveDirectory(level1);
 }
 
 START_TEST(dir)
