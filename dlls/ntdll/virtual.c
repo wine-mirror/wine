@@ -727,7 +727,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
     pread( fd, ptr, size, offset );
     if (prot != (PROT_READ|PROT_WRITE)) mprotect( ptr, size, prot );  /* Set the right protection */
 done:
-    memset( view->prot + (start >> page_shift), vprot, size >> page_shift );
+    memset( view->prot + (start >> page_shift), vprot, ROUND_SIZE(start,size) >> page_shift );
     return STATUS_SUCCESS;
 }
 
