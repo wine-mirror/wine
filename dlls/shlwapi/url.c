@@ -341,140 +341,139 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     nByteLen = (lstrlenW(pszUrl) + 1) * sizeof(WCHAR); /* length in bytes */
     lpszUrlCpy = HeapAlloc(GetProcessHeap(), 0, nByteLen);
 
-    if (dwFlags & URL_DONT_SIMPLIFY)
-        memcpy(lpszUrlCpy, pszUrl, nByteLen);
-    else {
+    /*
+     * state =
+     *         0   initial  1,3
+     *         1   have 2[+] alnum  2,3
+     *         2   have scheme (found :)  4,6,3
+     *         3   failed (no location)
+     *         4   have //  5,3
+     *         5   have 1[+] alnum  6,3
+     *         6   have location (found /) save root location
+     */
 
-	/*
-	 * state =
-	 *         0   initial  1,3
-	 *         1   have 2[+] alnum  2,3
-	 *         2   have scheme (found :)  4,6,3
-	 *         3   failed (no location)
-	 *         4   have //  5,3
-	 *         5   have 1[+] alnum  6,3
-	 *         6   have location (found /) save root location
-	 */
+    wk1 = (LPWSTR)pszUrl;
+    wk2 = lpszUrlCpy;
+    state = 0;
+    while (*wk1) {
+        switch (state) {
+        case 0:
+            if (!isalnumW(*wk1)) {state = 3; break;}
+            *wk2++ = *wk1++;
+            if (!isalnumW(*wk1)) {state = 3; break;}
+            *wk2++ = *wk1++;
+            state = 1;
+            break;
+        case 1:
+            *wk2++ = *wk1;
+            if (*wk1++ == L':') state = 2;
+            break;
+        case 2:
+            if (*wk1 != L'/') {state = 3; break;}
+            *wk2++ = *wk1++;
+            if (*wk1 != L'/') {state = 6; break;}
+            *wk2++ = *wk1++;
+            if(*wk1 == '/' && (dwFlags & URL_FILE_USE_PATHURL))
+                wk1++;
+            state = 4;
+            break;
+        case 3:
+            nWkLen = strlenW(wk1);
+            memcpy(wk2, wk1, (nWkLen + 1) * sizeof(WCHAR));
+            mp = wk2;
+            wk1 += nWkLen;
+            wk2 += nWkLen;
 
-	wk1 = (LPWSTR)pszUrl;
-	wk2 = lpszUrlCpy;
-	state = 0;
-	while (*wk1) {
-	    switch (state) {
-	    case 0:
-		if (!isalnumW(*wk1)) {state = 3; break;}
-		*wk2++ = *wk1++;
-		if (!isalnumW(*wk1)) {state = 3; break;}
-		*wk2++ = *wk1++;
-		state = 1;
-		break;
-	    case 1:
-		*wk2++ = *wk1;
-		if (*wk1++ == L':') state = 2;
-		break;
-	    case 2:
-		if (*wk1 != L'/') {state = 3; break;}
-		*wk2++ = *wk1++;
-		if (*wk1 != L'/') {state = 6; break;}
-		*wk2++ = *wk1++;
-                if((dwFlags & URL_FILE_USE_PATHURL) && *wk1 == '/')
-                    wk1++;
-		state = 4;
-		break;
-	    case 3:
-		nWkLen = strlenW(wk1);
-		memcpy(wk2, wk1, (nWkLen + 1) * sizeof(WCHAR));
-                mp = wk2;
-		wk1 += nWkLen;
-		wk2 += nWkLen;
-
-                while(mp < wk2) {
-                    if(*mp == '/' || *mp == '\\')
-                        *mp = slash;
-                    mp++;
-                }
-		break;
-	    case 4:
-                if (!isalnumW(*wk1) && (*wk1 != L'-') && (*wk1 != L'.') && (*wk1 != ':'))
-                    {state = 3; break;}
-                while(isalnumW(*wk1) || (*wk1 == L'-') || (*wk1 == L'.') || (*wk1 == ':'))
-                    *wk2++ = *wk1++;
-                state = 5;
+            while(mp < wk2) {
+                if(*mp == '/' || *mp == '\\')
+                    *mp = slash;
+                mp++;
+            }
+            break;
+        case 4:
+            if (!isalnumW(*wk1) && (*wk1 != L'-') && (*wk1 != L'.') && (*wk1 != ':'))
+                {state = 3; break;}
+            while(isalnumW(*wk1) || (*wk1 == L'-') || (*wk1 == L'.') || (*wk1 == ':'))
+                *wk2++ = *wk1++;
+            state = 5;
+            break;
+        case 5:
+            if (*wk1 != '/' && *wk1 != '\\') {state = 3; break;}
+            while(*wk1 == '/' || *wk1 == '\\') {
+                *wk2++ = slash;
+                wk1++;
+            }
+            state = 6;
+            break;
+        case 6:
+            if(dwFlags & URL_DONT_SIMPLIFY) {
+                state = 3;
                 break;
-            case 5:
-                if (*wk1 != '/' && *wk1 != '\\') {state = 3; break;}
-                while(*wk1 == '/') {
-                    *wk2++ = slash;
-                    wk1++;
+            }
+ 
+            /* Now at root location, cannot back up any more. */
+            /* "root" will point at the '/' */
+
+            root = wk2-1;
+            while (*wk1) {
+                mp = strchrW(wk1, '/');
+                mp2 = strchrW(wk1, '\\');
+                if(mp2 && (!mp || mp2 < mp))
+                    mp = mp2;
+                if (!mp) {
+                    nWkLen = strlenW(wk1);
+                    memcpy(wk2, wk1, (nWkLen + 1) * sizeof(WCHAR));
+                    wk1 += nWkLen;
+                    wk2 += nWkLen;
+                    continue;
                 }
-                state = 6;
-		break;
-	    case 6:
-		/* Now at root location, cannot back up any more. */
-		/* "root" will point at the '/' */
-		root = wk2-1;
-		while (*wk1) {
-		    TRACE("wk1=%c\n", (CHAR)*wk1);
+                nLen = mp - wk1;
+                if(nLen) {
+                    memcpy(wk2, wk1, nLen * sizeof(WCHAR));
+                    wk2 += nLen;
+                    wk1 += nLen;
+                }
+                *wk2++ = slash;
+                wk1++;
 
-                    mp = strchrW(wk1, '/');
-                    mp2 = strchrW(wk1, '\\');
-                    if(mp2 && mp2 < mp)
-                        mp = mp2;
-		    if (!mp) {
-			nWkLen = strlenW(wk1);
-			memcpy(wk2, wk1, (nWkLen + 1) * sizeof(WCHAR));
-			wk1 += nWkLen;
-			wk2 += nWkLen;
-			continue;
-		    }
-                    nLen = mp - wk1;
-                    if(nLen) {
-                        memcpy(wk2, wk1, nLen * sizeof(WCHAR));
-                        wk2 += nLen;
-                        wk1 += nLen;
+                if (*wk1 == L'.') {
+                    TRACE("found '/.'\n");
+                    if (wk1[1] == '/' || wk1[1] == '\\') {
+                        /* case of /./ -> skip the ./ */
+                        wk1 += 2;
                     }
-                    *wk2++ = slash;
-                    wk1++;
-
-		    if (*wk1 == L'.') {
-			TRACE("found '/.'\n");
-                        if (wk1[1] == '/' || wk1[1] == '\\') {
-			    /* case of /./ -> skip the ./ */
-			    wk1 += 2;
-			}
-                        else if (wk1[1] == '.') {
-			    /* found /..  look for next / */
-			    TRACE("found '/..'\n");
-                            if (wk1[2] == '/' || wk1[2] == '\\' ||wk1[2] == '?'
-                                    || wk1[2] == '#' || !wk1[2]) {
-				/* case /../ -> need to backup wk2 */
-				TRACE("found '/../'\n");
-				*(wk2-1) = L'\0';  /* set end of string */
-                                mp = strrchrW(root, slash);
-				if (mp && (mp >= root)) {
-				    /* found valid backup point */
-				    wk2 = mp + 1;
-                                    if(wk1[2] != '/' && wk1[2] != '\\')
-				        wk1 += 2;
-				    else
-				        wk1 += 3;
-				}
-				else {
-                                    /* did not find point, restore '/' */
-                                    *(wk2-1) = slash;
-				}
-			    }
-			}
-		    }
-		}
-		*wk2 = L'\0';
-		break;
-	    default:
-		FIXME("how did we get here - state=%d\n", state);
-                HeapFree(GetProcessHeap(), 0, lpszUrlCpy);
-		return E_INVALIDARG;
-	    }
-	}
+                    else if (wk1[1] == '.') {
+                        /* found /..  look for next / */
+                        TRACE("found '/..'\n");
+                        if (wk1[2] == '/' || wk1[2] == '\\' ||wk1[2] == '?'
+                            || wk1[2] == '#' || !wk1[2]) {
+                            /* case /../ -> need to backup wk2 */
+                            TRACE("found '/../'\n");
+                            *(wk2-1) = L'\0';  /* set end of string */
+                            mp = strrchrW(root, slash);
+                            if (mp && (mp >= root)) {
+                                /* found valid backup point */
+                                wk2 = mp + 1;
+                                if(wk1[2] != '/' && wk1[2] != '\\')
+                                    wk1 += 2;
+                                else
+                                    wk1 += 3;
+                            }
+                            else {
+                                /* did not find point, restore '/' */
+                                *(wk2-1) = slash;
+                            }
+                        }
+                    }
+                }
+            }
+            *wk2 = L'\0';
+            break;
+        default:
+            FIXME("how did we get here - state=%d\n", state);
+            HeapFree(GetProcessHeap(), 0, lpszUrlCpy);
+            return E_INVALIDARG;
+        }
 	*wk2 = L'\0';
 	TRACE("Simplified, orig <%s>, simple <%s>\n",
 	      debugstr_w(pszUrl), debugstr_w(lpszUrlCpy));
