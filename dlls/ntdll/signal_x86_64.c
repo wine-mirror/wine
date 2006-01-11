@@ -196,6 +196,17 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 }
 
 
+/***********************************************************************
+ *           set_cpu_context
+ *
+ * Set the new CPU context.
+ */
+void set_cpu_context( const CONTEXT *context )
+{
+    FIXME("not implemented\n");
+}
+
+
 /**********************************************************************
  *		segv_handler
  *

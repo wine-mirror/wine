@@ -1908,6 +1908,11 @@ static void dump_set_thread_context_request( const struct set_thread_context_req
     dump_varargs_context( cur_size );
 }
 
+static void dump_set_thread_context_reply( const struct set_thread_context_reply *req )
+{
+    fprintf( stderr, " self=%d", req->self );
+}
+
 static void dump_get_selector_entry_request( const struct get_selector_entry_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
@@ -3527,7 +3532,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_cancel_timer_reply,
     (dump_func)dump_get_timer_info_reply,
     (dump_func)dump_get_thread_context_reply,
-    (dump_func)0,
+    (dump_func)dump_set_thread_context_reply,
     (dump_func)dump_get_selector_entry_reply,
     (dump_func)dump_add_atom_reply,
     (dump_func)0,

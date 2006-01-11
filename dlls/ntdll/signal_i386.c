@@ -722,13 +722,13 @@ inline static void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
  *
  * Restore the FPU context to a sigcontext.
  */
-inline static void restore_fpu( CONTEXT *context )
+inline static void restore_fpu( const CONTEXT *context )
 {
+    FLOATING_SAVE_AREA float_status = context->FloatSave;
     /* reset the current interrupt status */
-    context->FloatSave.StatusWord &= context->FloatSave.ControlWord | 0xffffff80;
+    float_status.StatusWord &= float_status.ControlWord | 0xffffff80;
 #ifdef __GNUC__
-    /* avoid nested exceptions */
-    __asm__ __volatile__( "frstor %0; fwait" : : "m" (context->FloatSave) );
+    __asm__ __volatile__( "frstor %0; fwait" : : "m" (float_status) );
 #endif  /* __GNUC__ */
 }
 
@@ -799,12 +799,19 @@ inline static void restore_context( const CONTEXT *context, SIGCONTEXT *sigconte
  *
  * Set the new CPU context.
  */
-inline static void DECLSPEC_NORETURN set_cpu_context( CONTEXT *context )
+void set_cpu_context( const CONTEXT *context )
 {
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
 
     if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
-    __wine_call_from_32_restore_regs( context );
+
+    if (flags & CONTEXT_FULL)
+    {
+        if ((flags & CONTEXT_FULL) != (CONTEXT_FULL & ~CONTEXT_i386))
+            FIXME( "setting partial context (%lx) not supported\n", flags );
+        else
+            __wine_call_from_32_restore_regs( context );
+    }
 }
 
 
@@ -991,7 +998,7 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
 /**********************************************************************
  *		raise_segv_exception
  */
-static void WINAPI DECLSPEC_NORETURN raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     switch(rec->ExceptionCode)
     {
@@ -1011,14 +1018,14 @@ static void WINAPI DECLSPEC_NORETURN raise_segv_exception( EXCEPTION_RECORD *rec
     }
     __regs_RtlRaiseException( rec, context );
 done:
-    set_cpu_context( context );
+    NtSetContextThread( GetCurrentThread(), context );
 }
 
 
 /**********************************************************************
  *		raise_trap_exception
  */
-static void WINAPI DECLSPEC_NORETURN raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     DWORD dr0, dr1, dr2, dr3, dr6, dr7;
 
@@ -1037,6 +1044,7 @@ static void WINAPI DECLSPEC_NORETURN raise_trap_exception( EXCEPTION_RECORD *rec
              * shall return a breakpoint, not a single step exception
              */
             if (!(context->Dr6 & 0xf)) rec->ExceptionCode = EXCEPTION_BREAKPOINT;
+            context->ContextFlags |= CONTEXT_FULL;  /* restore flags */
         }
     }
 
@@ -1049,15 +1057,14 @@ static void WINAPI DECLSPEC_NORETURN raise_trap_exception( EXCEPTION_RECORD *rec
 
     __regs_RtlRaiseException( rec, context );
 
+    context->ContextFlags = CONTEXT_FULL;
     if (dr0 != context->Dr0 || dr1 != context->Dr1 || dr2 != context->Dr2 ||
         dr3 != context->Dr3 || dr6 != context->Dr6 || dr7 != context->Dr7)
     {
         /* the debug registers have changed, set the new values */
-        context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
-        NtSetContextThread(GetCurrentThread(), context);
+        context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
     }
-    context->ContextFlags = CONTEXT_FULL;  /* restore flags */
-    set_cpu_context( context );
+    NtSetContextThread( GetCurrentThread(), context );
 }
 
 
@@ -1066,10 +1073,10 @@ static void WINAPI DECLSPEC_NORETURN raise_trap_exception( EXCEPTION_RECORD *rec
  *
  * Generic raise function for exceptions that don't need special treatment.
  */
-static void WINAPI DECLSPEC_NORETURN raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+static void WINAPI raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     __regs_RtlRaiseException( rec, context );
-    set_cpu_context( context );
+    NtSetContextThread( GetCurrentThread(), context );
 }
 
 
@@ -1077,7 +1084,7 @@ static void WINAPI DECLSPEC_NORETURN raise_exception( EXCEPTION_RECORD *rec, CON
 /**********************************************************************
  *		raise_vm86_sti_exception
  */
-static void WINAPI DECLSPEC_NORETURN raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     /* merge_vm86_pending_flags merges the vm86_pending flag in safely */
     NtCurrentTeb()->vm86_pending |= VIP_MASK;
@@ -1101,7 +1108,7 @@ static void WINAPI DECLSPEC_NORETURN raise_vm86_sti_exception( EXCEPTION_RECORD 
         __regs_RtlRaiseException( rec, context );
     }
 done:
-    set_cpu_context( context );
+    NtSetContextThread( GetCurrentThread(), context );
 }
 
 

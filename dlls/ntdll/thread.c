@@ -491,41 +491,55 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 {
     NTSTATUS ret;
     DWORD dummy, i;
+    BOOL self = FALSE;
 
-    SERVER_START_REQ( set_thread_context )
-    {
-        req->handle  = handle;
-        req->flags   = context->ContextFlags;
-        req->suspend = 0;
-        wine_server_add_data( req, context, sizeof(*context) );
-        ret = wine_server_call( req );
-    }
-    SERVER_END_REQ;
+#ifdef __i386__
+    /* on i386 debug registers always require a server call */
+    self = ((handle == GetCurrentThread()) &&
+            !(context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)));
+#endif
 
-    if (ret == STATUS_PENDING)
+    if (!self)
     {
-        if (NtSuspendThread( handle, &dummy ) == STATUS_SUCCESS)
+        SERVER_START_REQ( set_thread_context )
         {
-            for (i = 0; i < 100; i++)
-            {
-                SERVER_START_REQ( set_thread_context )
-                {
-                    req->handle  = handle;
-                    req->flags   = context->ContextFlags;
-                    req->suspend = 0;
-                    wine_server_add_data( req, context, sizeof(*context) );
-                    ret = wine_server_call( req );
-                }
-                SERVER_END_REQ;
-                if (ret != STATUS_PENDING) break;
-                NtYieldExecution();
-            }
-            NtResumeThread( handle, &dummy );
+            req->handle  = handle;
+            req->flags   = context->ContextFlags;
+            req->suspend = 0;
+            wine_server_add_data( req, context, sizeof(*context) );
+            ret = wine_server_call( req );
+            self = reply->self;
         }
+        SERVER_END_REQ;
+
+        if (ret == STATUS_PENDING)
+        {
+            if (NtSuspendThread( handle, &dummy ) == STATUS_SUCCESS)
+            {
+                for (i = 0; i < 100; i++)
+                {
+                    SERVER_START_REQ( set_thread_context )
+                    {
+                        req->handle  = handle;
+                        req->flags   = context->ContextFlags;
+                        req->suspend = 0;
+                        wine_server_add_data( req, context, sizeof(*context) );
+                        ret = wine_server_call( req );
+                    }
+                    SERVER_END_REQ;
+                    if (ret != STATUS_PENDING) break;
+                    NtYieldExecution();
+                }
+                NtResumeThread( handle, &dummy );
+            }
+            if (ret == STATUS_PENDING) ret = STATUS_ACCESS_DENIED;
+        }
+
+        if (ret) return ret;
     }
 
-    if (ret == STATUS_PENDING) ret = STATUS_ACCESS_DENIED;
-    return ret;
+    if (self) set_cpu_context( context );
+    return STATUS_SUCCESS;
 }
 
 

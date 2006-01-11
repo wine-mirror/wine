@@ -1132,6 +1132,7 @@ DECL_HANDLER(set_thread_context)
     {
         set_thread_context( thread, get_req_data(), req->flags );
     }
+    reply->self = (thread == current);
     release_object( thread );
 }
 
