@@ -575,6 +575,152 @@ HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved )
     return E_FAIL;
 }
 
+/* The following defintions were copied from dlls/cabinet/cabinet.h */
+
+/* EXTRACTdest flags */
+#define EXTRACT_FILLFILELIST  0x00000001
+#define EXTRACT_EXTRACTFILES  0x00000002
+
+struct ExtractFileList {
+        LPSTR  filename;
+        struct ExtractFileList *next;
+        BOOL   unknown;  /* always 1L */
+} ;
+
+/* the first parameter of the function Extract */
+typedef struct {
+        long  result1;          /* 0x000 */
+        long  unknown1[3];      /* 0x004 */
+        struct ExtractFileList *filelist; /* 0x010 */
+        long  filecount;        /* 0x014 */
+        DWORD flags;            /* 0x018 */
+        char  directory[0x104]; /* 0x01c */
+        char  lastfile[0x20c];  /* 0x120 */
+} EXTRACTdest;
+
+static HRESULT (WINAPI *pExtract)(EXTRACTdest*, LPCSTR);
+
+/* removes legal characters before and after file list, and
+ * converts the file list to a NULL-separated list
+ */
+static LPSTR convert_file_list(LPCSTR FileList, DWORD *dwNumFiles)
+{
+    DWORD dwLen;
+    char *first = (char *)FileList;
+    char *last = (char *)FileList + strlen(FileList) - 1;
+    LPSTR szConvertedList, temp;
+    
+    /* any number of these chars before the list is OK */
+    while (first < last && (*first == ' ' || *first == '\t' || *first == ':'))
+        first++;
+
+    /* any number of these chars after the list is OK */
+    while (last > first && (*last == ' ' || *last == '\t' || *last == ':'))
+        last--;
+
+    if (first == last)
+        return NULL;
+
+    dwLen = last - first + 3; /* room for double-null termination */
+    szConvertedList = HeapAlloc(GetProcessHeap(), 0, dwLen);
+    lstrcpynA(szConvertedList, first, dwLen - 1);
+
+    szConvertedList[dwLen - 1] = '\0';
+    szConvertedList[dwLen] = '\0';
+
+    /* empty list */
+    if (!lstrlenA(szConvertedList))
+        return NULL;
+        
+    *dwNumFiles = 1;
+
+    /* convert the colons to double-null termination */
+    temp = szConvertedList;
+    while (*temp)
+    {
+        if (*temp == ':')
+        {
+            *temp = '\0';
+            (*dwNumFiles)++;
+        }
+
+        temp++;
+    }
+
+    return szConvertedList;
+}
+
+static void free_file_node(struct ExtractFileList *pNode)
+{
+    HeapFree(GetProcessHeap(), 0, pNode->filename);
+    HeapFree(GetProcessHeap(), 0, pNode);
+}
+
+/* determines whether szFile is in the NULL-separated szFileList */
+static BOOL file_in_list(LPSTR szFile, LPSTR szFileList)
+{
+    DWORD dwLen = lstrlenA(szFile);
+    DWORD dwTestLen;
+
+    while (*szFileList)
+    {
+        dwTestLen = lstrlenA(szFileList);
+
+        if (dwTestLen == dwLen)
+        {
+            if (!lstrcmpiA(szFile, szFileList))
+                return TRUE;
+        }
+
+        szFileList += dwTestLen + 1;
+    }
+
+    return FALSE;
+}
+
+/* removes nodes from the linked list that aren't specified in szFileList
+ * returns the number of files that are in both the linked list and szFileList
+ */
+static DWORD fill_file_list(EXTRACTdest *extractDest, LPCSTR szCabName, LPSTR szFileList)
+{
+    DWORD dwNumFound = 0;
+    struct ExtractFileList *pNode;
+    struct ExtractFileList *prev = NULL;
+
+    extractDest->flags |= EXTRACT_FILLFILELIST;
+    if (pExtract(extractDest, szCabName))
+    {
+        extractDest->flags &= ~EXTRACT_FILLFILELIST;
+        return -1;
+    }
+
+    pNode = extractDest->filelist;
+    while (pNode)
+    {
+        if (file_in_list(pNode->filename, szFileList))
+        {
+            prev = pNode;
+            pNode = pNode->next;
+            dwNumFound++;
+        }
+        else if (prev)
+        {
+            prev->next = pNode->next;
+            free_file_node(pNode);
+            pNode = prev->next;
+        }
+        else
+        {
+            extractDest->filelist = pNode->next;
+            free_file_node(pNode);
+            pNode = extractDest->filelist;
+        }
+    }
+
+    extractDest->flags &= ~EXTRACT_FILLFILELIST;
+    return dwNumFound;
+}
+
 /***********************************************************************
  *             ExtractFiles    (ADVPACK.@)
  *
@@ -599,16 +745,67 @@ HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved )
  *   cab file, otherwise all files will be extracted.  Any number of
  *   spaces, tabs, or colons can be before or after the list, but
  *   the list itself must only be separated by colons.
- *
- * BUGS
- *   Unimplemented.
  */
 HRESULT WINAPI ExtractFiles ( LPCSTR CabName, LPCSTR ExpandDir, DWORD Flags,
                               LPCSTR FileList, LPVOID LReserved, DWORD Reserved)
-{
-    FIXME("(%p %p 0x%08lx %p %p 0x%08lx): stub\n", CabName, ExpandDir, Flags, 
+{   
+    EXTRACTdest extractDest;
+    HMODULE hCabinet;
+    HRESULT res = S_OK;
+    DWORD dwFileCount = 0;
+    DWORD dwFilesFound = 0;
+    LPSTR szConvertedList = NULL;
+
+    TRACE("(%p %p %ld %p %p %ld): stub\n", CabName, ExpandDir, Flags,
           FileList, LReserved, Reserved);
-    return E_FAIL;
+
+    if (!CabName || !ExpandDir)
+        return E_INVALIDARG;
+
+    if (GetFileAttributesA(ExpandDir) == INVALID_FILE_ATTRIBUTES)
+        return HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
+
+    hCabinet = LoadLibraryA("cabinet.dll");
+    if (!hCabinet)
+        return E_FAIL;
+
+    pExtract = (void *)GetProcAddress(hCabinet, "Extract");
+    if (!pExtract)
+    {
+        res = E_FAIL;
+        goto done;
+    }
+
+    ZeroMemory(&extractDest, sizeof(EXTRACTdest));
+    lstrcpyA(extractDest.directory, ExpandDir);
+
+    if (FileList)
+    {
+        szConvertedList = convert_file_list(FileList, &dwFileCount);
+        if (!szConvertedList || dwFileCount == -1)
+        {
+            res = E_FAIL;
+            goto done;
+        }
+
+        dwFilesFound = fill_file_list(&extractDest, CabName, szConvertedList);
+        if (dwFilesFound != dwFileCount)
+        {
+            res = E_FAIL;
+            goto done;
+        }
+    }
+    else
+        extractDest.flags |= EXTRACT_FILLFILELIST;
+
+    extractDest.flags |= EXTRACT_EXTRACTFILES;
+    res = pExtract(&extractDest, CabName);
+
+done:
+    FreeLibrary(hCabinet);
+    HeapFree(GetProcessHeap(), 0, szConvertedList);
+
+    return res;
 }
 
 /***********************************************************************

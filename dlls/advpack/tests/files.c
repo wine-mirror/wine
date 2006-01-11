@@ -297,27 +297,18 @@ static void test_ExtractFiles()
 
     /* try NULL cab file */
     hr = pExtractFiles(NULL, destFolder, 0, NULL, NULL, 0);
-    todo_wine
-    {
-        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
-    }
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
     ok(RemoveDirectoryA("dest"), "Expected dest to exist\n");
     
     /* try NULL destination */
     hr = pExtractFiles("extract.cab", NULL, 0, NULL, NULL, 0);
-    todo_wine
-    {
-        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
-    }
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
     ok(!RemoveDirectoryA("dest"), "Expected dest to not exist\n");
 
     /* extract all files in the cab to nonexistent destination directory */
     hr = pExtractFiles("extract.cab", destFolder, 0, NULL, NULL, 0);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND),
-           "Expected %ld, got %ld\n", HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), hr);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND),
+       "Expected %ld, got %ld\n", HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), hr);
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
     ok(!RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to not exist\n");
@@ -326,49 +317,37 @@ static void test_ExtractFiles()
     /* extract all files in the cab to the destination directory */
     CreateDirectoryA("dest", NULL);
     hr = pExtractFiles("extract.cab", destFolder, 0, NULL, NULL, 0);
-    todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
-        ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
-        ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
-        ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
-        ok(DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to exist\n");
-        ok(RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to exist\n");
-    }
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
+    ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
+    ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
+    ok(DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to exist\n");
+    ok(RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to exist\n");
 
     /* extract all files to a relative destination directory */
     hr = pExtractFiles("extract.cab", "dest", 0, NULL, NULL, 0);
-    todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
-        ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
-        ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
-        ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
-        ok(DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to exist\n");
-        ok(RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to exist\n");
-    }
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
+    ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
+    ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
+    ok(DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to exist\n");
+    ok(RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to exist\n");
 
     /* only extract two of the files from the cab */
     hr = pExtractFiles("extract.cab", "dest", 0, "a.txt:testdir\\c.txt", NULL, 0);
-    todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
-        ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
-        ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
-        ok(RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to exist\n");
-    }
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
+    ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
+    ok(RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to exist\n");
     ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
 
     /* use valid chars before and after file list */
     hr = pExtractFiles("extract.cab", "dest", 0, " :\t: a.txt:testdir\\c.txt  \t:", NULL, 0);
-    todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
-        ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
-        ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
-        ok(RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to exist\n");
-    }
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
+    ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
+    ok(RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to exist\n");
     ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
 
