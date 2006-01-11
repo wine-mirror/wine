@@ -105,9 +105,6 @@ static void init_page_size(void)
 }
 #endif  /* __i386__ */
 
-#define ROUND_SIZE_MASK(addr,size,mask) \
-   (((int)(size) + ((int)(addr) & (mask)) + (mask)) & ~(mask))
-
 #define ROUND_SIZE(size)  (((size) + page_mask) & ~page_mask)
 
 
@@ -246,8 +243,7 @@ static int get_image_params( struct mapping *mapping )
 
     mapping->size        = ROUND_SIZE( nt.OptionalHeader.SizeOfImage );
     mapping->base        = (void *)nt.OptionalHeader.ImageBase;
-    mapping->header_size = ROUND_SIZE_MASK( mapping->base, nt.OptionalHeader.SizeOfHeaders,
-                                            nt.OptionalHeader.SectionAlignment - 1 );
+    mapping->header_size = nt.OptionalHeader.SizeOfHeaders;
     mapping->protect     = VPROT_IMAGE;
 
     /* sanity check */
