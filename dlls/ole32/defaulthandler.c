@@ -654,9 +654,6 @@ static HRESULT WINAPI DefaultHandler_GetUserClassID(
   if (This->pOleDelegate)
     return IOleObject_GetUserClassID(This->pOleDelegate, pClsid);
 
-  if (This->pOleDelegate)
-    return IOleObject_GetUserClassID(This->pOleDelegate, pClsid);
-
   /* Sanity check. */
   if (!pClsid)
     return E_POINTER;
@@ -864,9 +861,6 @@ static HRESULT WINAPI DefaultHandler_GetMiscStatus(
   DefaultHandler *This = impl_from_IOleObject(iface);
 
   TRACE("(%p, %lx, %p)\n", iface, dwAspect, pdwStatus);
-
-  if (This->pOleDelegate)
-    return IOleObject_GetMiscStatus(This->pOleDelegate, dwAspect, pdwStatus);
 
   if (This->pOleDelegate)
     return IOleObject_GetMiscStatus(This->pOleDelegate, dwAspect, pdwStatus);
