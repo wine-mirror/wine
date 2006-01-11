@@ -254,6 +254,7 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
     ok(status==0,"status=0x%lx instead of 0\n",status);
 
     if (is_primary) {
+        DSBCAPS new_dsbcaps;
         /* We must call SetCooperativeLevel to be allowed to call SetFormat */
         /* DSOUND: Setting DirectSound cooperative level to DSSCL_PRIORITY */
         rc=IDirectSound8_SetCooperativeLevel(dso,get_hwnd(),DSSCL_PRIORITY);
@@ -290,6 +291,30 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
             trace("Got tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
                   wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
                   wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
+        }
+
+        ZeroMemory(&new_dsbcaps, sizeof(new_dsbcaps));
+        new_dsbcaps.dwSize = sizeof(new_dsbcaps);
+        rc=IDirectSoundBuffer_GetCaps(*dsbo,&new_dsbcaps);
+        ok(rc==DS_OK,"IDirectSoundBuffer_GetCaps() failed: %s\n",
+           DXGetErrorString8(rc));
+        if (rc==DS_OK && winetest_debug > 1) {
+            trace("    new Caps: flags=0x%08lx size=%ld\n",new_dsbcaps.dwFlags,
+                  new_dsbcaps.dwBufferBytes);
+        }
+
+        /* Check for primary buffer size change */
+        if (new_dsbcaps.dwBufferBytes != dsbcaps.dwBufferBytes) {
+            trace("    buffer size changed after SetFormat() - "
+                  "previous size was %lu, current size is %lu\n",
+                  dsbcaps.dwBufferBytes, new_dsbcaps.dwBufferBytes);
+        }
+
+        /* Check for primary buffer flags change */
+        if (new_dsbcaps.dwFlags != dsbcaps.dwFlags) {
+            trace("    flags changed after SetFormat() - "
+                  "previous flags were %08lx, current flags are %08lx\n",
+                  dsbcaps.dwFlags, new_dsbcaps.dwFlags);
         }
 
         /* Set the CooperativeLevel back to normal */
