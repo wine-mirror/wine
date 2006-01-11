@@ -168,20 +168,20 @@ void ME_DumpDocument(ME_TextBuffer *buffer)
     switch(pItem->type)
     {
       case diTextStart:
-        TRACE("Start");
+        TRACE("Start\n");
         break;
       case diParagraph:
-        TRACE("\nParagraph(ofs=%d)", pItem->member.para.nCharOfs);
+        TRACE("Paragraph(ofs=%d)\n", pItem->member.para.nCharOfs);
         break;
       case diStartRow:
-        TRACE(" - StartRow");
+        TRACE(" - StartRow\n");
         break;
       case diRun:
-        TRACE(" - Run(\"%s\", %d)", debugstr_w(pItem->member.run.strText->szData), 
+        TRACE(" - Run(\"%s\", %d)\n", debugstr_w(pItem->member.run.strText->szData), 
           pItem->member.run.nCharOfs);
         break;
       case diTextEnd:
-        TRACE("\nEnd(ofs=%d)\n", pItem->member.para.nCharOfs);
+        TRACE("End(ofs=%d)\n", pItem->member.para.nCharOfs);
         break;
       default:
         break;
