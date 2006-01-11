@@ -459,7 +459,8 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
                               LPCWSTR attribute, MSIRECORD *rec )
 {
     msi_control* ctrl;
-    LPCWSTR text;
+    LPCWSTR font_text, text = NULL;
+    LPWSTR font;
 
     ctrl = msi_dialog_find_control( dialog, control );
     if (!ctrl)
@@ -469,8 +470,10 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
         ERR("Attribute %s\n", debugstr_w(attribute));
         return;
     }
-    text = MSI_RecordGetString( rec , 1 );
+    font_text = MSI_RecordGetString( rec , 1 );
+    font = msi_dialog_get_style( font_text, &text );
     SetWindowTextW( ctrl->hwnd, text );
+    msi_free( font );
     msi_dialog_check_messages( NULL );
 }
 
