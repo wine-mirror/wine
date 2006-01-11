@@ -45,6 +45,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 
+extern HINSTANCE msi_hInstance;
+
 struct msi_control_tag;
 typedef struct msi_control_tag msi_control;
 typedef UINT (*msi_handler)( msi_dialog *, msi_control *, WPARAM );
@@ -1387,9 +1389,145 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** Selection Tree ***************************************/
 
+struct msi_selection_tree_info
+{
+    msi_dialog *dialog;
+    HWND hwnd;
+    WNDPROC oldproc;
+};
+
 static void
-msi_dialog_tv_add_child_features( MSIPACKAGE *package, HWND hwnd,
-                                  LPCWSTR parent, HTREEITEM hParent )
+msi_seltree_sync_item_state( HWND hwnd, MSIFEATURE *feature, HTREEITEM hItem )
+{
+    TVITEMW tvi;
+
+    TRACE("Feature %s -> %d %d %d\n", debugstr_w(feature->Title),
+        feature->Installed, feature->Action, feature->ActionRequest);
+
+    tvi.mask = TVIF_STATE;
+    tvi.hItem = hItem;
+    tvi.state = INDEXTOSTATEIMAGEMASK( feature->Action );
+    tvi.stateMask = TVIS_STATEIMAGEMASK;
+
+    SendMessageW( hwnd, TVM_SETITEMW, 0, (LPARAM) &tvi );
+}
+
+static UINT
+msi_seltree_popup_menu( HWND hwnd, INT x, INT y )
+{
+    HMENU hMenu;
+    INT r;
+
+    /* create a menu to display */
+    hMenu = CreatePopupMenu();
+
+    /* FIXME: load strings from resources */
+    AppendMenuA( hMenu, MF_ENABLED, INSTALLSTATE_LOCAL, "Install feature locally");
+    AppendMenuA( hMenu, MF_GRAYED, 0x1000, "Install entire feature");
+    AppendMenuA( hMenu, MF_ENABLED, INSTALLSTATE_ADVERTISED, "Install on demand");
+    AppendMenuA( hMenu, MF_ENABLED, INSTALLSTATE_ABSENT, "Don't install");
+    r = TrackPopupMenu( hMenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RETURNCMD,
+                        x, y, 0, hwnd, NULL );
+    DestroyMenu( hMenu );
+    return r;
+}
+
+static MSIFEATURE *
+msi_seltree_feature_from_item( HWND hwnd, HTREEITEM hItem )
+{
+    TVITEMW tvi;
+
+    /* get the feature from the item */
+    memset( &tvi, 0, sizeof tvi );
+    tvi.hItem = hItem;
+    tvi.mask = TVIF_PARAM | TVIF_HANDLE;
+    SendMessageW( hwnd, TVM_GETITEMW, 0, (LPARAM) &tvi );
+
+    return (MSIFEATURE*) tvi.lParam;
+}
+
+static LRESULT
+msi_seltree_menu( HWND hwnd, HTREEITEM hItem )
+{
+    MSIFEATURE *feature;
+    union {
+        RECT rc;
+        POINT pt[2];
+        HTREEITEM hItem;
+    } u;
+    UINT r;
+
+    feature = msi_seltree_feature_from_item( hwnd, hItem );
+    if (!feature)
+    {
+        ERR("item %p feature was NULL\n", hItem);
+        return 0;
+    }
+
+    /* get the item's rectangle to put the menu just below it */
+    u.hItem = hItem;
+    SendMessageW( hwnd, TVM_GETITEMRECT, 0, (LPARAM) &u.rc );
+    MapWindowPoints( hwnd, NULL, u.pt, 2 );
+
+    r = msi_seltree_popup_menu( hwnd, u.rc.left, u.rc.top );
+
+    switch (r)
+    {
+    case INSTALLSTATE_LOCAL:
+    case INSTALLSTATE_ADVERTISED:
+    case INSTALLSTATE_ABSENT:
+        feature->ActionRequest = r;
+        feature->Action = r;
+        break;
+    default:
+        FIXME("select feature and all children\n");
+    }
+
+    /* update */
+    msi_seltree_sync_item_state( hwnd, feature, hItem );
+
+    return 0;
+}
+
+static LRESULT WINAPI
+MSISelectionTree_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    struct msi_selection_tree_info *info;
+    TVHITTESTINFO tvhti;
+    HRESULT r;
+
+    TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
+
+    info = GetPropW(hWnd, szButtonData);
+
+    switch( msg )
+    {
+    case WM_LBUTTONDOWN:
+        tvhti.pt.x = LOWORD( lParam );
+        tvhti.pt.y = HIWORD( lParam );
+        tvhti.flags = 0;
+        tvhti.hItem = 0;
+        r = CallWindowProcW(info->oldproc, hWnd, TVM_HITTEST, 0, (LPARAM) &tvhti );
+        if (tvhti.flags & TVHT_ONITEMSTATEICON)
+            return msi_seltree_menu( hWnd, tvhti.hItem );
+        break;
+    }
+
+    r = CallWindowProcW(info->oldproc, hWnd, msg, wParam, lParam);
+
+    switch( msg )
+    {
+    case WM_NCDESTROY:
+        msi_free( info );
+        RemovePropW( hWnd, szButtonData );
+        break;
+    }
+    return r;
+}
+
+static void
+msi_seltree_add_child_features( MSIPACKAGE *package, HWND hwnd,
+                                LPCWSTR parent, HTREEITEM hParent )
 {
     MSIFEATURE *feature;
     TVINSERTSTRUCTW tvis;
@@ -1406,38 +1544,90 @@ msi_dialog_tv_add_child_features( MSIPACKAGE *package, HWND hwnd,
         memset( &tvis, 0, sizeof tvis );
         tvis.hParent = hParent;
         tvis.hInsertAfter = TVI_SORT;
-        if (feature->Title)
-        {
-            tvis.u.item.mask = TVIF_TEXT;
-            tvis.u.item.pszText = feature->Title;
-        }
+        tvis.u.item.mask = TVIF_TEXT | TVIF_PARAM;
+        tvis.u.item.pszText = feature->Title;
         tvis.u.item.lParam = (LPARAM) feature;
+
         hitem = (HTREEITEM) SendMessageW( hwnd, TVM_INSERTITEMW, 0, (LPARAM) &tvis );
         if (!hitem)
             continue;
 
-        msi_dialog_tv_add_child_features( package, hwnd,
-                                          feature->Feature, hitem );
+        msi_seltree_sync_item_state( hwnd, feature, hitem );
+        msi_seltree_add_child_features( package, hwnd,
+                                        feature->Feature, hitem );
     }
+}
+
+static void msi_seltree_create_imagelist( HWND hwnd )
+{
+    const int bm_width = 32, bm_height = 16, bm_count = 3;
+    const int bm_resource = 0x1001;
+    HIMAGELIST himl;
+    int i;
+    HBITMAP hbmp;
+
+    himl = ImageList_Create( bm_width, bm_height, FALSE, 4, 0 );
+    if (!himl)
+    {
+        ERR("failed to create image list\n");
+        return;
+    }
+
+    for (i=0; i<bm_count; i++)
+    {
+        hbmp = LoadBitmapW( msi_hInstance, MAKEINTRESOURCEW(i+bm_resource) );
+        if (!hbmp)
+        {
+            ERR("failed to load bitmap %d\n", i);
+            break;
+        }
+
+        /*
+         * Add a dummy bitmap at offset zero because the treeview
+         * can't use it as a state mask (zero means no user state).
+         */
+        if (!i)
+            ImageList_Add( himl, hbmp, NULL );
+
+        ImageList_Add( himl, hbmp, NULL );
+    }
+
+    SendMessageW( hwnd, TVM_SETIMAGELIST, TVSIL_STATE, (LPARAM)himl );
 }
 
 static UINT msi_dialog_selection_tree( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
     LPCWSTR prop;
-    LPWSTR val;
     MSIPACKAGE *package = dialog->package;
+    DWORD style;
+    struct msi_selection_tree_info *info;
 
-    prop = MSI_RecordGetString( rec, 9 );
-    val = msi_dup_property( package, prop );
-    control = msi_dialog_add_control( dialog, rec, WC_TREEVIEWW,
-                                      TVS_HASBUTTONS | WS_GROUP | WS_VSCROLL );
-    if (!control)
+    info = msi_alloc( sizeof *info );
+    if (!info)
         return ERROR_FUNCTION_FAILED;
 
-    msi_dialog_tv_add_child_features( package, control->hwnd, NULL, NULL );
+    /* create the treeview control */
+    prop = MSI_RecordGetString( rec, 9 );
+    style = TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT;
+    style |= WS_GROUP | WS_VSCROLL;
+    control = msi_dialog_add_control( dialog, rec, WC_TREEVIEWW, style );
+    if (!control)
+    {
+        msi_free(info);
+        return ERROR_FUNCTION_FAILED;
+    }
 
-    msi_free( val );
+    /* subclass */
+    info->dialog = dialog;
+    info->hwnd = control->hwnd;
+    info->oldproc = (WNDPROC) SetWindowLongPtrW( control->hwnd, GWLP_WNDPROC,
+                                          (LONG_PTR)MSISelectionTree_WndProc );
+    SetPropW( control->hwnd, szButtonData, info );
+
+    /* initialize it */
+    msi_seltree_create_imagelist( control->hwnd );
+    msi_seltree_add_child_features( package, control->hwnd, NULL, NULL );
 
     return ERROR_SUCCESS;
 }
