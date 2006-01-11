@@ -537,10 +537,10 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
 	  vis = XGetVisualInfo(ctx->display, VisualIDMask, &template, &num);
 
 	  TRACE(" Creating GLX Context\n");
-	  ctx->ctx = glXCreateContext(ctx->display, vis, NULL, True);
+	  ctx->ctx = glXCreateContext(ctx->display, vis, NULL, type == OBJ_MEMDC ? False : True);
 	} else {
 	  TRACE(" Creating GLX Context\n");
-	  ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, True);
+	  ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, type == OBJ_MEMDC ? False : True);
 	}
 	TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
       }
@@ -574,8 +574,8 @@ BOOL WINAPI wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc)
       Drawable d_read = get_drawable( hReadDC );
       
       if (ctx->ctx == NULL) {
-	ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, True);
-	TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
+        ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, GetObjectType(hDrawDC) == OBJ_MEMDC ? False : True);
+        TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
       }
       ret = wine_glx.p_glXMakeContextCurrent(ctx->display, d_draw, d_read, ctx->ctx);
     }
@@ -648,7 +648,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
     if (org->ctx == NULL) {
       ENTER_GL();
       describeContext(org);
-      org->ctx = glXCreateContext(org->display, org->vis, NULL, True);
+      org->ctx = glXCreateContext(org->display, org->vis, NULL, GetObjectType(org->hdc) == OBJ_MEMDC ? False : True);
       LEAVE_GL();
       TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
     }
@@ -656,7 +656,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
       ENTER_GL();
       describeContext(dest);
       /* Create the destination context with display lists shared */
-      dest->ctx = glXCreateContext(org->display, dest->vis, org->ctx, True);
+      dest->ctx = glXCreateContext(org->display, dest->vis, org->ctx, GetObjectType(org->hdc) == OBJ_MEMDC ? False : True);
       LEAVE_GL();
       TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
       return TRUE;
