@@ -375,8 +375,54 @@ static HRESULT WINAPI xmlnode_insertBefore(
     VARIANT refChild,
     IXMLDOMNode** outNewChild)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    xmlNodePtr before_node, new_child_node;
+    IXMLDOMNode *before = NULL, *new;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p,var,%p)\n",This,newChild,outNewChild);
+
+    switch(V_VT(&refChild))
+    {
+    case VT_EMPTY:
+    case VT_NULL:
+        break;
+
+    case VT_UNKNOWN:
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&refChild), &IID_IXMLDOMNode, (LPVOID)&before);
+        if(FAILED(hr)) return hr;
+        break;
+
+    case VT_DISPATCH:
+        hr = IDispatch_QueryInterface(V_DISPATCH(&refChild), &IID_IXMLDOMNode, (LPVOID)&before);
+        if(FAILED(hr)) return hr;
+        break;
+
+    default:
+        FIXME("refChild var type %x\n", V_VT(&refChild));
+        return E_FAIL;
+    }
+
+    IXMLDOMNode_QueryInterface(newChild, &IID_IXMLDOMNode, (LPVOID)&new);
+    new_child_node = impl_from_IXMLDOMNode(new)->node;
+    TRACE("new_child_node %p This->node %p\n", new_child_node, This->node);
+
+    if(before)
+    {
+        before_node = impl_from_IXMLDOMNode(before)->node;
+        xmlAddPrevSibling(before_node, new_child_node);
+        IXMLDOMNode_Release(before);
+    }
+    else
+    {
+        xmlAddChild(This->node, new_child_node);
+    }
+
+    IXMLDOMNode_Release(new);
+    IXMLDOMNode_AddRef(newChild);
+    *outNewChild = newChild;
+    TRACE("ret S_OK\n");
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_replaceChild(
@@ -403,8 +449,12 @@ static HRESULT WINAPI xmlnode_appendChild(
     IXMLDOMNode* newChild,
     IXMLDOMNode** outNewChild)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    VARIANT var;
+
+    TRACE("(%p)->(%p,%p)\n", This, newChild, outNewChild);
+    VariantInit(&var);
+    return IXMLDOMNode_insertBefore(iface, newChild, var, outNewChild);
 }
 
 static HRESULT WINAPI xmlnode_hasChildNodes(

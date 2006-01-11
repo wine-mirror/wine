@@ -598,6 +598,75 @@ static void test_refs(void)
 
 }
 
+static void test_create(void)
+{
+    HRESULT r;
+    VARIANT var;
+    BSTR str;
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *root, *node, *child;
+    IUnknown *unk;
+    LONG ref;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
+    if( r != S_OK )
+        return;
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = NODE_ELEMENT;
+    str = SysAllocString( szlc );
+    r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
+    ok( r == S_OK, "returns %08lx\n", r );
+    r = IXMLDOMDocument_appendChild( doc, node, &root );
+    ok( r == S_OK, "returns %08lx\n", r );
+    ok( node == root, "%p %p\n", node, root );
+
+    ref = IXMLDOMNode_AddRef( node );
+    ok(ref == 3, "ref %ld\n", ref);
+    IXMLDOMNode_Release( node );
+
+    ref = IXMLDOMNode_Release( node );
+    ok(ref == 1, "ref %ld\n", ref);
+    SysFreeString( str );
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = NODE_ELEMENT;
+    str = SysAllocString( szbs );
+    r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
+    ok( r == S_OK, "returns %08lx\n", r );
+
+    ref = IXMLDOMNode_AddRef( node );
+    ok(ref == 2, "ref = %ld\n", ref);
+    IXMLDOMNode_Release( node );
+
+    r = IXMLDOMNode_QueryInterface( node, &IID_IUnknown, (LPVOID*)&unk );
+    ok( r == S_OK, "returns %08lx\n", r );
+
+    ref = IXMLDOMNode_AddRef( unk );
+    ok(ref == 3, "ref = %ld\n", ref);
+    IXMLDOMNode_Release( unk );
+
+    V_VT(&var) = VT_EMPTY;
+    r = IXMLDOMNode_insertBefore( root, (IXMLDOMNode*)unk, var, &child );
+    ok( r == S_OK, "returns %08lx\n", r );
+    ok( unk == (IUnknown*)child, "%p %p\n", unk, child );
+    IXMLDOMNode_Release( child );
+    IUnknown_Release( unk );
+
+
+    V_VT(&var) = VT_NULL;
+    V_DISPATCH(&var) = (IDispatch*)node;
+    r = IXMLDOMNode_insertBefore( root, node, var, &child );
+    ok( r == S_OK, "returns %08lx\n", r );
+    ok( node == child, "%p %p\n", node, child );
+    IXMLDOMNode_Release( child );
+    IXMLDOMNode_Release( node );
+    IXMLDOMNode_Release( root );
+    IXMLDOMDocument_Release( doc );
+}
+
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -608,6 +677,7 @@ START_TEST(domdoc)
     test_domdoc();
     test_domnode();
     test_refs();
+    test_create();
 
     CoUninitialize();
 }

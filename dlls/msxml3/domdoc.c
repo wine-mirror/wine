@@ -657,6 +657,14 @@ static HRESULT WINAPI domdoc_getElementsByTagName(
     return E_NOTIMPL;
 }
 
+static DOMNodeType get_node_type(VARIANT Type)
+{
+    if(V_VT(&Type) == VT_I4)
+        return V_I4(&Type);
+
+    FIXME("Unsupported variant type %x\n", V_VT(&Type));
+    return 0;
+}
 
 static HRESULT WINAPI domdoc_createNode(
     IXMLDOMDocument *iface,
@@ -665,10 +673,46 @@ static HRESULT WINAPI domdoc_createNode(
     BSTR namespaceURI,
     IXMLDOMNode** node )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
-}
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    DOMNodeType node_type;
+    xmlNodePtr xmlnode = NULL;
+    xmlChar *xml_name;
+    xmlDocPtr xmldoc;
 
+    TRACE("(%p)->(type,%s,%s,%p)\n", This, debugstr_w(name), debugstr_w(namespaceURI), node);
+
+    node_type = get_node_type(Type);
+    TRACE("node_type %d\n", node_type);
+
+    xml_name = xmlChar_from_wchar((WCHAR*)name);
+
+    if(!get_doc(This))
+    {
+        xmldoc = xmlNewDoc(NULL);
+        xmldoc->_private = 0;
+        attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
+    }
+
+    switch(node_type)
+    {
+    case NODE_ELEMENT:
+        xmlnode = xmlNewDocNode(get_doc(This), NULL, xml_name, NULL);
+        *node = create_node(xmlnode);
+        TRACE("created %p\n", xmlnode);
+        break;
+
+    default:
+        FIXME("unhandled node type %d\n", node_type);
+        break;
+    }
+
+    HeapFree(GetProcessHeap(), 0, xml_name);
+
+    if(xmlnode && *node)
+        return S_OK;
+
+    return E_FAIL;
+}
 
 static HRESULT WINAPI domdoc_nodeFromID(
     IXMLDOMDocument *iface,
