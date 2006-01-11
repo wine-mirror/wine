@@ -443,17 +443,25 @@ BOOL WINAPI SetThreadPriorityBoost(
  */
 DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
 {
-    DWORD ret;
-    SERVER_START_REQ( set_thread_info )
+    NTSTATUS                    status;
+    THREAD_BASIC_INFORMATION    tbi;
+
+    status = NtQueryInformationThread( hThread, ThreadBasicInformation, 
+                                       &tbi, sizeof(tbi), NULL );
+    if (status)
     {
-        req->handle   = hThread;
-        req->affinity = dwThreadAffinityMask;
-        req->mask     = SET_THREAD_INFO_AFFINITY;
-        ret = !wine_server_call_err( req );
-        /* FIXME: should return previous value */
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
     }
-    SERVER_END_REQ;
-    return ret;
+    status = NtSetInformationThread( hThread, ThreadAffinityMask, 
+                                     &dwThreadAffinityMask,
+                                     sizeof(dwThreadAffinityMask));
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
+    return tbi.AffinityMask;
 }
 
 

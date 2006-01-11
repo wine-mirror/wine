@@ -982,10 +982,23 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
             SERVER_END_REQ;
         }
         return status;
+    case ThreadAffinityMask:
+        {
+            const DWORD *paff = data;
+            if (length != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
+            SERVER_START_REQ( set_thread_info )
+            {
+                req->handle   = handle;
+                req->affinity = *paff;
+                req->mask     = SET_THREAD_INFO_AFFINITY;
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        }
+        return status;
     case ThreadBasicInformation:
     case ThreadTimes:
     case ThreadPriority:
-    case ThreadAffinityMask:
     case ThreadDescriptorTableEntry:
     case ThreadEnableAlignmentFaultFixup:
     case ThreadEventPair_Reusable:
