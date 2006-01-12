@@ -1878,7 +1878,7 @@ static HRESULT WINAPI IShellView_fnCreateViewWindow(
 	*phWnd = CreateWindowExA(0,
 				SV_CLASS_NAME,
 				NULL,
-				WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+				WS_CHILD | WS_TABSTOP,
 				prcView->left,
 				prcView->top,
 				prcView->right - prcView->left,
@@ -1891,6 +1891,9 @@ static HRESULT WINAPI IShellView_fnCreateViewWindow(
 	CheckToolbar(This);
 
 	if(!*phWnd) return E_FAIL;
+
+	SetWindowPos(*phWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+	UpdateWindow(*phWnd);
 
 	return S_OK;
 }
