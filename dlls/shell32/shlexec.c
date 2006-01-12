@@ -1315,9 +1315,22 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 		strcpyW(wszApplicationName, wExplorer);
 
 		sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
-	    } else if (HCR_GetExecuteCommandW(0, wszFolder, sei_tmp.lpVerb?sei_tmp.lpVerb:wszOpen, buffer, sizeof(buffer))) {
-		SHELL_ArgifyW(wszApplicationName, sizeof(wszApplicationName)/sizeof(WCHAR), buffer, NULL, sei_tmp.lpIDList, NULL);
-
+	    } else {
+                WCHAR target[MAX_PATH];
+                DWORD attribs;
+		/* Check if we're executing a directory and if so use the
+		   handler for the Folder class */
+		strcpyW(target, buffer);
+		attribs = GetFileAttributesW(buffer);
+		if (attribs != INVALID_FILE_ATTRIBUTES &&
+		    (attribs & FILE_ATTRIBUTE_DIRECTORY) &&
+		    HCR_GetExecuteCommandW(0, wszFolder,
+		                           sei_tmp.lpVerb?sei_tmp.lpVerb:wszOpen,
+		                           buffer, sizeof(buffer))) {
+		    SHELL_ArgifyW(wszApplicationName,
+		                  sizeof(wszApplicationName)/sizeof(WCHAR),
+		                  buffer, target, sei_tmp.lpIDList, NULL);
+		}
 		sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
 	    }
 	}
