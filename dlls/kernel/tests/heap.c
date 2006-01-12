@@ -63,11 +63,8 @@ START_TEST(heap)
     size = GlobalSize(gbl);
     ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%ld\n", size);
 
-    todo_wine
-    { 
-        gbl = GlobalReAlloc(gbl, 0, GMEM_MOVEABLE);
-        ok(gbl != NULL, "GlobalReAlloc should not fail on size 0\n");
-    }
+    gbl = GlobalReAlloc(gbl, 0, GMEM_MOVEABLE);
+    ok(gbl != NULL, "GlobalReAlloc should not fail on size 0\n");
 
     size = GlobalSize(gbl);
     ok(size == 0, "Memory not resized to size 0, instead size=%ld\n", size);
@@ -87,11 +84,8 @@ START_TEST(heap)
     size = LocalSize(gbl);
     ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%ld\n", size);
 
-    todo_wine
-    {
-        gbl = LocalReAlloc(gbl, 0, LMEM_MOVEABLE);
-        ok(gbl != NULL, "LocalReAlloc should not fail on size 0\n");
-    }
+    gbl = LocalReAlloc(gbl, 0, LMEM_MOVEABLE);
+    ok(gbl != NULL, "LocalReAlloc should not fail on size 0\n");
 
     size = LocalSize(gbl);
     ok(size == 0, "Memory not resized to size 0, instead size=%ld\n", size);

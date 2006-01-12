@@ -657,11 +657,17 @@ HGLOBAL WINAPI GlobalReAlloc(
          }
          else
          {
-            if(pintern->Pointer)
+            if (pintern->LockCount == 0)
             {
-               HeapFree(GetProcessHeap(), 0, (char *) pintern->Pointer-HGLOBAL_STORAGE);
-               pintern->Pointer=NULL;
+                if(pintern->Pointer)
+                {
+                    HeapFree(GetProcessHeap(), 0, (char *) pintern->Pointer-HGLOBAL_STORAGE);
+                    pintern->Pointer = NULL;
+                }
+                hnew = hmem;
             }
+            else
+                WARN("not freeing memory associated with locked handle\n");
          }
       }
    }
