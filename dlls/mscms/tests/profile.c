@@ -502,6 +502,16 @@ do {                                                                            
         "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );   \
 } while (0)
 
+#define test_GSCSPA(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
+do {                                                                            \
+    size = dwSz;                                                                \
+    SetLastError(0);                                                            \
+    ret = pGetStandardColorSpaceProfileA(pMachName, dwProfID, pProfName, pdwSz);\
+    GLE = GetLastError();                                                       \
+    ok( (!ret && GLE_OK) || (ret && !lstrcmpiA( pProfName, "" )),               \
+        "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );   \
+} while (0)
+
 static void test_GetStandardColorSpaceProfileA(void)
 {
     BOOL ret;
@@ -533,7 +543,7 @@ static void test_GetStandardColorSpaceProfileA(void)
     todo_wine 
     fail_GSCSPA(NULL,     0, NULL,       &size, 0,     (GLE == ERROR_INSUFFICIENT_BUFFER || GLE == ERROR_FILE_NOT_FOUND));
     todo_wine 
-    fail_GSCSPA(NULL,     0, newprofile, &size, sizeP, (GLE == ERROR_FILE_NOT_FOUND));
+    test_GSCSPA(NULL,     0, newprofile, &size, sizeP, (GLE == ERROR_FILE_NOT_FOUND));
 
     /* Functional checks */
 
@@ -569,12 +579,23 @@ do {                                                                            
         "GetStandardColorSpaceProfileW() returns %d (GLE=%ld)\n", ret, GLE );   \
 } while (0)
 
+#define test_GSCSPW(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
+do {                                                                            \
+    size = dwSz;                                                                \
+    SetLastError(0);                                                            \
+    ret = pGetStandardColorSpaceProfileW(pMachName, dwProfID, pProfName, pdwSz);\
+    GLE = GetLastError();                                                       \
+    ok( (!ret && GLE_OK) || (ret && !lstrcmpiW( pProfName, emptyW )),           \
+        "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );   \
+} while (0)
+
 static void test_GetStandardColorSpaceProfileW(void)
 {
     BOOL ret;
     DWORD size, sizeP, GLE;
     WCHAR oldprofile[MAX_PATH];
     WCHAR newprofile[MAX_PATH];
+    WCHAR emptyW[] = {0};
 
     sizeP = sizeof(newprofile);
 
@@ -600,7 +621,7 @@ static void test_GetStandardColorSpaceProfileW(void)
     todo_wine 
     fail_GSCSPW(NULL,      0, NULL,       &size, 0,     (GLE == ERROR_INSUFFICIENT_BUFFER || GLE == ERROR_FILE_NOT_FOUND));
     todo_wine 
-    fail_GSCSPW(NULL,      0, newprofile, &size, sizeP, (GLE == ERROR_FILE_NOT_FOUND));
+    test_GSCSPW(NULL,      0, newprofile, &size, sizeP, (GLE == ERROR_FILE_NOT_FOUND));
 
     /* Functional checks */
 
