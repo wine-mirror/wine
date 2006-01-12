@@ -2467,6 +2467,10 @@ DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
 {
     unsigned int i;
     FIXME("(%p,%ld,%p): almost empty stub!\n", hDC, cPairs, lpKerningPairs);
+
+    if(!lpKerningPairs) /* return the number of kerning pairs */
+        return 0;
+
     for (i = 0; i < cPairs; i++)
         lpKerningPairs[i].iKernAmount = 0;
     return 0;
