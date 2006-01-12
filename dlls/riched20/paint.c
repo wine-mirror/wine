@@ -141,13 +141,7 @@ static void ME_MarkSelectionForRepaint(ME_TextEditor *editor)
 void ME_Repaint(ME_TextEditor *editor)
 {
   ME_Cursor *pCursor = &editor->pCursors[0];
-  ME_DisplayItem *pRun = NULL;
-  int nOffset = -1;
-  int nCharOfs = ME_CharOfsFromRunOfs(editor, pCursor->pRun, pCursor->nOffset);
-  
-  ME_RunOfsFromCharOfs(editor, nCharOfs, &pRun, &nOffset);
-  assert(pRun == pCursor->pRun);
-  assert(nOffset == pCursor->nOffset);
+
   ME_MarkSelectionForRepaint(editor);
   if (ME_WrapMarkedParagraphs(editor)) {
     ME_UpdateScrollBar(editor);
