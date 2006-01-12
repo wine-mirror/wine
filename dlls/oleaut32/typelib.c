@@ -5008,7 +5008,7 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, 
     HRESULT hr = S_OK;
 
     /* enforce only one level of pointer indirection */
-    if (!(*vt & VT_BYREF) && (tdesc->vt == VT_PTR))
+    if (!(*vt & VT_BYREF) && !(*vt & VT_ARRAY) && (tdesc->vt == VT_PTR))
     {
         tdesc = tdesc->u.lptdesc;
 
@@ -5045,9 +5045,17 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, 
     case VT_USERDEFINED:
         hr = userdefined_to_variantvt(tinfo, tdesc, vt);
         break;
+    case VT_VOID:
+    case VT_CARRAY:
     case VT_PTR:
-        ERR("cannot convert VT_PTR into variant VT\n");
-        hr = E_FAIL;
+    case VT_LPSTR:
+    case VT_LPWSTR:
+        ERR("cannot convert type %d into variant VT\n", tdesc->vt);
+        hr = DISP_E_BADVARTYPE;
+        break;
+    case VT_SAFEARRAY:
+        *vt |= VT_ARRAY;
+        hr = typedescvt_to_variantvt(tinfo, tdesc->u.lptdesc, vt);
         break;
     default:
         *vt |= tdesc->vt;
@@ -5288,6 +5296,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     break;
                 }
             }
+            if (FAILED(hres)) goto func_fail; /* FIXME: we don't free changed types here */
             if (func_desc->cParamsOpt < 0)
             {
                 FIXME("Does not support safearray optional parameters\n");
