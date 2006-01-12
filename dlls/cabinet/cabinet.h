@@ -635,8 +635,7 @@ typedef struct {
 } EXTRACTdest;
 
 
-/* from cabextract.c */
-BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower, EXTRACTdest *dest);
+/* from fdi.c */
 void QTMupdatemodel(struct QTMmodel *model, int sym);
 int make_decode_table(cab_ULONG nsyms, cab_ULONG nbits, cab_UBYTE *length, cab_UWORD *table);
 cab_ULONG checksum(cab_UBYTE *data, cab_UWORD bytes, cab_ULONG csum);
