@@ -224,7 +224,8 @@ void pdump (LPCITEMIDLIST pidl)
 static void dump_pidl_hex( LPCITEMIDLIST pidl )
 {
     const unsigned char *p = (const unsigned char *)pidl;
-    const int max_bytes = 0x80, max_line = 0x10;
+    const int max_bytes = 0x80;
+#define max_line 0x10
     char szHex[max_line*3+1], szAscii[max_line+1];
     int i, n;
 
