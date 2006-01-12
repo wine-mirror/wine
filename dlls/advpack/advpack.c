@@ -565,6 +565,17 @@ HRESULT WINAPI DelNodeRunDLL32( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT s
 
 /***********************************************************************
  *             ExecuteCab    (ADVPACK.@)
+ * 
+ * Installs the INF file extracted from a specified cabinet file.
+ * 
+ * PARAMS
+ *   hwnd      [I] Handle to the window used for the display.
+ *   pCab      [I] Information about the cabinet file.
+ *   pReserved [I] Reserved.  Must be NULL.
+ * 
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
  *
  * BUGS
  *   Unimplemented
