@@ -615,7 +615,7 @@ static DWORD CALLBACK no_couninitialize_server_proc(LPVOID p)
 
 /* tests apartment that an apartment with a stub is released without deadlock
  * if the owning thread exits */
-static void test_no_couninitialize_server()
+static void test_no_couninitialize_server(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -679,7 +679,7 @@ static DWORD CALLBACK no_couninitialize_client_proc(LPVOID p)
 }
 
 /* tests STA -> STA call during DLL_THREAD_DETACH doesn't deadlock */
-static void test_no_couninitialize_client()
+static void test_no_couninitialize_client(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -1564,7 +1564,7 @@ static const IClassFactoryVtbl TestClassFactoryOOP_Vtbl =
 static IClassFactory TestOOP_ClassFactory = { &TestClassFactoryOOP_Vtbl };
 
 /* tests functions commonly used by out of process COM servers */
-static void test_out_of_process_com()
+static void test_out_of_process_com(void)
 {
     static const CLSID CLSID_WineOOPTest = {
         0x5201163f,
