@@ -286,6 +286,7 @@ typedef struct tagME_TextEditor
   RECT rcFormat;
   BOOL bRedraw;
   int nInvalidOfs;
+  EDITWORDBREAKPROCW pfnWordBreak;
 } ME_TextEditor;
 
 typedef struct tagME_Context

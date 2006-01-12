@@ -271,6 +271,54 @@ int ME_ReverseFindWhitespaceV(ME_String *s, int nVChar) {
   return i;
 }
 
+
+static int
+ME_WordBreakProc(LPWSTR s, INT start, INT len, INT code)
+{
+  /* FIXME: Native also knows about punctuation */
+  TRACE("s==%s, start==%d, len==%d, code==%d\n",
+        debugstr_wn(s, len), start, len, code);
+  switch (code)
+  {
+    case WB_ISDELIMITER:
+      return ME_IsWSpace(s[start]);
+    case WB_LEFT:
+    case WB_MOVEWORDLEFT:
+      while (start && ME_IsWSpace(s[start - 1]))
+        start--;
+      while (start && !ME_IsWSpace(s[start - 1]))
+        start--;
+      return start;
+    case WB_RIGHT:
+    case WB_MOVEWORDRIGHT:
+      if (start && ME_IsWSpace(s[start - 1]))
+      {
+        while (start < len && ME_IsWSpace(s[start]))
+          start++;
+      }
+      else
+      {
+        while (start < len && !ME_IsWSpace(s[start]))
+          start++;
+        while (start < len && ME_IsWSpace(s[start]))
+          start++;
+      }
+      return start;
+  }
+  return 0;
+}
+
+
+int
+ME_CallWordBreakProc(ME_TextEditor *editor, ME_String *str, INT start, INT code)
+{
+  /* FIXME: ANSIfy the string when bEmulateVersion10 is TRUE */
+  if (!editor->pfnWordBreak)
+    return ME_WordBreakProc(str->szData, start, str->nLen, code);
+  else
+    return editor->pfnWordBreak(str->szData, start, str->nLen, code);
+}
+
 LPWSTR ME_ToUnicode(HWND hWnd, LPVOID psz)
 {
   if (IsWindowUnicode(hWnd))

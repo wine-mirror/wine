@@ -71,7 +71,7 @@
 ? + EM_GETTEXTRANGE (ANSI&Unicode)
   - EM_GETTYPOGRAPHYOPTIONS 3.0
   - EM_GETUNDONAME
-  - EM_GETWORDBREAKPROC
+  + EM_GETWORDBREAKPROC
   - EM_GETWORDBREAKPROCEX
   - EM_GETWORDWRAPMODE 1.0asian
   + EM_GETZOOM 3.0
@@ -117,7 +117,7 @@
   - EM_SETTEXTMODE 2.0
   - EM_SETTYPOGRAPHYOPTIONS 3.0
   - EM_SETUNDOLIMIT 2.0
-  - EM_SETWORDBREAKPROC
+  + EM_SETWORDBREAKPROC (used only for word movement at the moment)
   - EM_SETWORDBREAKPROCEX
   - EM_SETWORDWRAPMODE 1.0asian
   + EM_SETZOOM 3.0
@@ -815,7 +815,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
     case VK_END:
     case VK_PRIOR:
     case VK_NEXT:
-      ME_ArrowKey(editor, nKey, shift_is_down);
+      ME_ArrowKey(editor, nKey, shift_is_down, ctrl_is_down);
       return TRUE;
     case VK_BACK:
     case VK_DELETE:
@@ -824,7 +824,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
         return FALSE;
       if (ME_IsSelection(editor))
         ME_DeleteSelection(editor);
-      else if (nKey == VK_DELETE || ME_ArrowKey(editor, VK_LEFT, FALSE))
+      else if (nKey == VK_DELETE || ME_ArrowKey(editor, VK_LEFT, FALSE, FALSE))
         ME_DeleteTextAtCursor(editor, 1, 1);
       else
         return TRUE;
@@ -888,6 +888,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ed->bRedraw = TRUE;
   ed->nInvalidOfs = -1;
+  ed->pfnWordBreak = NULL;
   GetClientRect(hWnd, &ed->rcFormat);
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
@@ -1194,7 +1195,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETTEXTMODE)
   UNSUPPORTED_MSG(EM_GETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_GETUNDONAME)
-  UNSUPPORTED_MSG(EM_GETWORDBREAKPROC)
   UNSUPPORTED_MSG(EM_GETWORDBREAKPROCEX)
   UNSUPPORTED_MSG(EM_HIDESELECTION)
   UNSUPPORTED_MSG(EM_LIMITTEXT) /* also known as EM_SETLIMITTEXT */
@@ -1216,7 +1216,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETTEXTMODE)
   UNSUPPORTED_MSG(EM_SETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_SETUNDOLIMIT)
-  UNSUPPORTED_MSG(EM_SETWORDBREAKPROC)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
   UNSUPPORTED_MSG(EM_SHOWSCROLLBAR)
   UNSUPPORTED_MSG(WM_SETFONT)
@@ -2040,6 +2039,15 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     LPVOID *ppvObj = (LPVOID*) lParam;
     FIXME("EM_GETOLEINTERFACE %p: stub\n", ppvObj);
     return CreateIRichEditOle(ppvObj);
+  }
+  case EM_GETWORDBREAKPROC:
+    return (LRESULT)editor->pfnWordBreak;
+  case EM_SETWORDBREAKPROC:
+  {
+    EDITWORDBREAKPROCW pfnOld = editor->pfnWordBreak;
+
+    editor->pfnWordBreak = (EDITWORDBREAKPROCW)lParam;
+    return (LRESULT)pfnOld;
   }
   default:
   do_default:

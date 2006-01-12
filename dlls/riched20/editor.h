@@ -72,6 +72,7 @@ int ME_StrLen(ME_String *s);
 int ME_StrVLen(ME_String *s);
 int ME_FindNonWhitespaceV(ME_String *s, int nVChar);
 int ME_FindWhitespaceV(ME_String *s, int nVChar);
+int ME_CallWordBreakProc(ME_TextEditor *editor, ME_String *str, INT start, INT code);
 int ME_GetCharFwd(ME_String *s, int nPos); /* get char starting from start */
 int ME_GetCharBack(ME_String *s, int nPos); /* get char starting from \0  */
 int ME_StrRelPos(ME_String *s, int nVChar, int *pRelChars);
@@ -150,7 +151,7 @@ void ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars);
 void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor, 
                              const WCHAR *str, int len, ME_Style *style);
 void ME_SetCharFormat(ME_TextEditor *editor, int nOfs, int nChars, CHARFORMAT2W *pFmt);
-BOOL ME_ArrowKey(ME_TextEditor *ed, int nVKey, BOOL extend);
+BOOL ME_ArrowKey(ME_TextEditor *ed, int nVKey, BOOL extend, BOOL ctrl);
 
 void ME_InitContext(ME_Context *c, ME_TextEditor *editor, HDC hDC);
 void ME_DestroyContext(ME_Context *c);

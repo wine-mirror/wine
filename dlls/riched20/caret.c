@@ -2,6 +2,7 @@
  * RichEdit - Caret and selection functions.
  *
  * Copyright 2004 by Krzysztof Foltman
+ * Copyright 2005 by Phil Krylov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -491,6 +492,90 @@ ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
 }
 
 
+static BOOL
+ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
+{
+  ME_DisplayItem *pRun = cursor->pRun, *pOtherRun;
+  int nOffset = cursor->nOffset;
+  
+  if (nRelOfs == -1)
+  {
+    /* Backward movement */
+    while (TRUE)
+    {
+      nOffset = ME_CallWordBreakProc(editor, pRun->member.run.strText,
+                                     nOffset, WB_MOVEWORDLEFT);
+       if (nOffset)
+        break;
+      pOtherRun = ME_FindItemBack(pRun, diRunOrParagraph);
+      if (pOtherRun->type == diRun)
+      {
+        if (ME_CallWordBreakProc(editor, pOtherRun->member.run.strText,
+                                 pOtherRun->member.run.strText->nLen - 1,
+                                 WB_ISDELIMITER)
+            && !(pRun->member.run.nFlags & MERF_ENDPARA)
+            && !(cursor->pRun == pRun && cursor->nOffset == 0)
+            && !ME_CallWordBreakProc(editor, pRun->member.run.strText, 0,
+                                     WB_ISDELIMITER))
+          break;
+        pRun = pOtherRun;
+        nOffset = pOtherRun->member.run.strText->nLen;
+      }
+      else if (pOtherRun->type == diParagraph)
+      {
+        if (cursor->pRun == pRun && cursor->nOffset == 0)
+        {
+          /* Paragraph breaks are treated as separate words */
+          if (pOtherRun->member.para.prev_para->type == diTextStart)
+            return FALSE;
+          pRun = ME_FindItemBack(pOtherRun, diRunOrParagraph);
+        }
+        break;
+      }
+    }
+  }
+  else
+  {
+    /* Forward movement */
+    BOOL last_delim = FALSE;
+    
+    while (TRUE)
+    {
+      if (last_delim && !ME_CallWordBreakProc(editor, pRun->member.run.strText,
+                                              nOffset, WB_ISDELIMITER))
+        break;
+      nOffset = ME_CallWordBreakProc(editor, pRun->member.run.strText,
+                                     nOffset, WB_MOVEWORDRIGHT);
+      if (nOffset < pRun->member.run.strText->nLen)
+        break;
+      pOtherRun = ME_FindItemFwd(pRun, diRunOrParagraphOrEnd);
+      if (pOtherRun->type == diRun)
+      {
+        last_delim = ME_CallWordBreakProc(editor, pRun->member.run.strText,
+                                          nOffset - 1, WB_ISDELIMITER);
+        pRun = pOtherRun;
+        nOffset = 0;
+      }
+      else if (pOtherRun->type == diParagraph)
+      {
+        if (cursor->pRun == pRun)
+          pRun = ME_FindItemFwd(pOtherRun, diRun);
+        nOffset = 0;
+        break;
+      }
+      else /* diTextEnd */
+      {
+        if (cursor->pRun == pRun)
+          return FALSE;
+        nOffset = 0;
+        break;
+      }
+    }
+  }
+  cursor->pRun = pRun;
+  cursor->nOffset = nOffset;
+  return TRUE;
+}
 
 
 int ME_GetCursorOfs(ME_TextEditor *editor, int nCursor)
@@ -1032,7 +1117,7 @@ void ME_SendSelChange(ME_TextEditor *editor)
 
 
 BOOL
-ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend)
+ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
 {
   int nCursor = 0;
   ME_Cursor *p = &editor->pCursors[nCursor];
@@ -1046,11 +1131,17 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend)
   switch(nVKey) {
     case VK_LEFT:
       editor->bCaretAtEnd = 0;
-      success = ME_MoveCursorChars(editor, &tmp_curs, -1);
+      if (ctrl)
+        success = ME_MoveCursorWords(editor, &tmp_curs, -1);
+      else
+        success = ME_MoveCursorChars(editor, &tmp_curs, -1);
       break;
     case VK_RIGHT:
       editor->bCaretAtEnd = 0;
-      success = ME_MoveCursorChars(editor, &tmp_curs, +1);
+      if (ctrl)
+        success = ME_MoveCursorWords(editor, &tmp_curs, +1);
+      else
+        success = ME_MoveCursorChars(editor, &tmp_curs, +1);
       break;
     case VK_UP:
       ME_MoveCursorLines(editor, &tmp_curs, -1);
@@ -1065,7 +1156,7 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend)
       ME_ArrowPageDown(editor, &tmp_curs);
       break;
     case VK_HOME: {
-      if (GetKeyState(VK_CONTROL)<0)
+      if (ctrl)
         ME_ArrowCtrlHome(editor, &tmp_curs);
       else
         ME_ArrowHome(editor, &tmp_curs);
@@ -1073,7 +1164,7 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend)
       break;
     }
     case VK_END: 
-      if (GetKeyState(VK_CONTROL)<0)
+      if (ctrl)
         ME_ArrowCtrlEnd(editor, &tmp_curs);
       else
         ME_ArrowEnd(editor, &tmp_curs);
