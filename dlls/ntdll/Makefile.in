@@ -36,6 +36,7 @@ C_SRCS = \
 	rtlbitmap.c \
 	rtlstr.c \
 	sec.c \
+	serial.c \
 	server.c \
 	signal_i386.c \
 	signal_powerpc.c \

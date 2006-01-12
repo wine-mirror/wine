@@ -61,6 +61,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winioctl.h"
+#include "ddk/ntddser.h"
 
 #include "wine/server.h"
 #include "wine/unicode.h"
@@ -686,6 +688,9 @@ static BOOL COMM_GetCommError(HANDLE handle, LPDWORD lperror)
  *
  *  Halts the transmission of characters to a communications device.
  *
+ * PARAMS
+ *      handle  [in] The communications device to suspend
+ *
  * RETURNS
  *
  *  True on success, and false if the communications device could not be found,
@@ -695,34 +700,19 @@ static BOOL COMM_GetCommError(HANDLE handle, LPDWORD lperror)
  *
  *  Only TIOCSBRK and TIOCCBRK are supported.
  */
-BOOL WINAPI SetCommBreak(
-    HANDLE handle) /* [in] The communications device to suspend. */
+BOOL WINAPI SetCommBreak(HANDLE handle)
 {
-#if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
-        int fd,result;
-
-	fd = get_comm_fd( handle, FILE_READ_DATA );
-	if(fd<0) return FALSE;
-	result = ioctl(fd,TIOCSBRK,0);
-	release_comm_fd( handle, fd );
-	if (result ==-1)
-	  {
-	        TRACE("ioctl failed\n");
-		SetLastError(ERROR_NOT_SUPPORTED);
-		return FALSE;
-	  }
-	return TRUE;
-#else
-	FIXME("ioctl not available\n");
-	SetLastError(ERROR_NOT_SUPPORTED);
-	return FALSE;
-#endif
+    return DeviceIoControl(handle, IOCTL_SERIAL_SET_BREAK_ON, NULL, 0, NULL, 0, NULL, NULL);
 }
 
 /*****************************************************************************
  *	ClearCommBreak		(KERNEL32.@)
  *
  *  Resumes character transmission from a communication device.
+ *
+ * PARAMS
+ *
+ *      handle [in] The halted communication device whose character transmission is to be resumed
  *
  * RETURNS
  *
@@ -732,28 +722,9 @@ BOOL WINAPI SetCommBreak(
  *
  *  Only TIOCSBRK and TIOCCBRK are supported.
  */
-BOOL WINAPI ClearCommBreak(
-    HANDLE handle) /* [in] The halted communication device whose character transmission is to be resumed. */
+BOOL WINAPI ClearCommBreak(HANDLE handle)
 {
-#if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
-        int fd,result;
-
-	fd = get_comm_fd( handle, FILE_READ_DATA );
-	if(fd<0) return FALSE;
-	result = ioctl(fd,TIOCCBRK,0);
-	release_comm_fd( handle, fd );
-	if (result ==-1)
-	  {
-	        TRACE("ioctl failed\n");
-		SetLastError(ERROR_NOT_SUPPORTED);
-		return FALSE;
-	  }
-	return TRUE;
-#else
-	FIXME("ioctl not available\n");
-	SetLastError(ERROR_NOT_SUPPORTED);
-	return FALSE;
-#endif
+    return DeviceIoControl(handle, IOCTL_SERIAL_SET_BREAK_OFF, NULL, 0, NULL, 0, NULL, NULL);
 }
 
 /*****************************************************************************

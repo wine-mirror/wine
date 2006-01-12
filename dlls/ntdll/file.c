@@ -872,18 +872,27 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE DeviceHandle, HANDLE hEvent,
                                       PVOID OutputBuffer,
                                       ULONG OutputBufferSize)
 {
+    NTSTATUS    ret;
+
     TRACE("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx)\n",
           DeviceHandle, hEvent, UserApcRoutine, UserApcContext,
           IoStatusBlock, IoControlCode, 
           InputBuffer, InputBufferSize, OutputBuffer, OutputBufferSize);
 
-    if (CDROM_DeviceIoControl(DeviceHandle, hEvent,
-                              UserApcRoutine, UserApcContext,
-                              IoStatusBlock, IoControlCode,
-                              InputBuffer, InputBufferSize,
-                              OutputBuffer, OutputBufferSize) == STATUS_NO_SUCH_DEVICE)
+    if ((IoControlCode >> 16) == FILE_DEVICE_SERIAL_PORT)
+        ret = COMM_DeviceIoControl(DeviceHandle, hEvent,
+                                   UserApcRoutine, UserApcContext,
+                                   IoStatusBlock, IoControlCode,
+                                   InputBuffer, InputBufferSize,
+                                   OutputBuffer, OutputBufferSize);
+    else ret = CDROM_DeviceIoControl(DeviceHandle, hEvent,
+                                     UserApcRoutine, UserApcContext,
+                                     IoStatusBlock, IoControlCode,
+                                     InputBuffer, InputBufferSize,
+                                     OutputBuffer, OutputBufferSize);
+    if (ret == STATUS_NO_SUCH_DEVICE)
     {
-        /* it wasn't a CDROM */
+        /* it wasn't a supported device (CDROM, COMM) */
         FIXME("Unimplemented dwIoControlCode=%08lx\n", IoControlCode);
         IoStatusBlock->u.Status = STATUS_NOT_IMPLEMENTED;
         IoStatusBlock->Information = 0;
