@@ -20,9 +20,9 @@
 @ stub OpenINFEngine
 @ stub RebootCheckOnInstall
 @ stdcall RegInstall(ptr str ptr)
-@ stub RegRestoreAll
-@ stub RegSaveRestore
-@ stub RegSaveRestoreOnINF
+@ stdcall RegRestoreAll(ptr str long)
+@ stdcall RegSaveRestore(ptr str long str str str long)
+@ stdcall RegSaveRestoreOnINF(ptr str str str long long long)
 @ stdcall RegisterOCX(ptr ptr str long)
 @ stdcall RunSetupCommand(long str str str str ptr long ptr)
 @ stub SetPerUserSecValues

@@ -72,6 +72,20 @@ typedef CSTRTABLE *LPCSTRTABLE;
 #define ADN_DONT_DEL_DIR            0x00000004
 #define ADN_DEL_UNC_PATHS           0x00000008
 
+/* Flags for RegRestoreAll, RegSaveRestore, RegSaveRestoreOnINF */
+#define  IE4_RESTORE                0x00000001
+#define  IE4_BACKNEW                0x00000002
+#define  IE4_NODELETENEW            0x00000004
+#define  IE4_NOMESSAGES             0x00000008
+#define  IE4_NOPROGRESS             0x00000010
+#define  IE4_NOENUMKEY              0x00000020
+#define  IE4_NO_CRC_MAPPING         0x00000040
+#define  IE4_REGSECTION             0x00000080
+#define  IE4_FRDOALL                0x00000100
+#define  IE4_UPDREFCNT              0x00000200
+#define  IE4_USEREFCNT              0x00000400
+#define  IE4_EXTRAINCREFCNT         0x00000800
+
 HRESULT WINAPI AdvInstallFile(HWND hwnd, LPCSTR lpszSourceDir,
      LPCSTR lpszSourceFile, LPCSTR lpszDestDir, LPCSTR lpszDestFile,
      DWORD dwFlags, DWORD dwReserved);
@@ -87,6 +101,11 @@ HRESULT WINAPI LaunchINFSectionEx(HWND,HINSTANCE,LPSTR,INT);
 DWORD WINAPI NeedRebootInit(VOID);
 BOOL WINAPI NeedReboot(DWORD dwRebootCheck);
 HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable);
+HRESULT WINAPI RegRestoreAll(HWND hWnd, PSTR pszTitleString, HKEY hkBackupKey);
+HRESULT WINAPI RegSaveRestore(HWND hWnd, PCSTR pszTitleString, HKEY hkBackupKey,
+     PCSTR pcszRootKey, PCSTR pcszSubKey, PCSTR pcszValueName, DWORD dwFlags);
+HRESULT WINAPI RegSaveRestoreOnINF(HWND hWnd, PCSTR pszTitle, PCSTR pszINF,
+     PCSTR pszSection, HKEY hHKLMBackKey, HKEY hHKCUBackKey, DWORD dwFlags);
 HRESULT WINAPI RunSetupCommand(HWND hWnd,
      LPCSTR szCmdName, LPCSTR szInfSection, LPCSTR szDir, LPCSTR lpszTitle,
      HANDLE *phEXE, DWORD dwFlags, LPVOID pvReserved);

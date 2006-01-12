@@ -100,6 +100,17 @@ error:
 /***********************************************************************
  *          RegInstall (advpack.@)
  *
+ * Loads an INF from a string resource, adds entries to the string
+ * substitution table, and executes the INF.
+ *
+ * PARAMS
+ *   hm         [I] Module that contains the REGINST resouce.
+ *   pszSection [I] The INF section to execute.
+ *   pstTable   [I] Table of string substitutions.
+ * 
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
  */
 HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable)
 {
@@ -175,4 +186,90 @@ HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable)
     DeleteFileW(tmp_ini_path);
 
     return S_OK;
+}
+
+/***********************************************************************
+ *          RegRestoreAll (advpack.@)
+ *
+ * Restores all saved registry entries.
+ *
+ * PARAMS
+ *   hWnd           [I] Handle to the window used for the display.
+ *   pszTitleString [I] Title of the window.
+ *   hkBackupKey    [I] Handle to the backup key.
+ *
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
+ *
+ * BUGS
+ *   Unimplemented.
+ */
+HRESULT WINAPI RegRestoreAll(HWND hWnd, PSTR pszTitleString, HKEY hkBackupKey)
+{
+    FIXME("(%p, %p, %p) stub\n", hWnd, pszTitleString, hkBackupKey);
+    
+    return E_FAIL;   
+}
+
+/***********************************************************************
+ *          RegSaveRestore (advpack.@)
+ *
+ * Saves or restores the specified registry value.
+ *
+ * PARAMS
+ *   hWnd           [I] Handle to the window used for the display.
+ *   pszTitleString [I] Title of the window.
+ *   hkBackupKey    [I] Key used to store the backup data.
+ *   pcszRootKey    [I] Root key of the registry value
+ *   pcszSubKey     [I] Sub key of the registry value.
+ *   pcszValueName  [I] Value to save or restore. 
+ *   dwFlags        [I] See advpub.h.
+ * 
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
+ *
+ * BUGS
+ *   Unimplemented.
+ */
+HRESULT WINAPI RegSaveRestore(HWND hWnd, PCSTR pszTitleString, HKEY hkBackupKey,
+                              PCSTR pcszRootKey, PCSTR pcszSubKey,
+                              PCSTR pcszValueName, DWORD dwFlags)
+{
+    FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, pszTitleString,
+          hkBackupKey, pcszRootKey, pcszSubKey, pcszValueName, dwFlags);
+
+    return E_FAIL;   
+}
+
+/***********************************************************************
+ *          RegSaveRestoreOnINF (advpack.@)
+ *
+ * Saves or restores the specified INF Reg section.
+ *
+ * PARAMS
+ *   hWnd         [I] Handle to the window used for the display.
+ *   pszTitle     [I] Title of the window.
+ *   pszINF       [I] Filename of the INF.
+ *   pszSection   [I] Section to save or restore.
+ *   hHKLMBackKey [I] Opened key in HKLM to store data.
+ *   hHKCUBackKey [I] Opened key in HKCU to store data.
+ *   dwFlags      [I] See advpub.h
+ *
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
+ *
+ * BUGS
+ *   Unimplemented.
+ */
+HRESULT WINAPI RegSaveRestoreOnINF(HWND hWnd, PCSTR pszTitle, PCSTR pszINF,
+                                   PCSTR pszSection, HKEY hHKLMBackKey,
+                                   HKEY hHKCUBackKey, DWORD dwFlags)
+{
+    FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, pszTitle, pszINF,
+          pszSection, hHKLMBackKey, hHKCUBackKey, dwFlags);
+
+    return E_FAIL;   
 }
