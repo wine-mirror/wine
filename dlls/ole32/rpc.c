@@ -227,7 +227,7 @@ static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPC
     DWORD index;
     struct dispatch_params *params;
     DWORD tid;
-    APARTMENT *apt;
+    APARTMENT *apt = NULL;
     IPID ipid;
 
     TRACE("(%p) iMethod=%ld\n", olemsg, olemsg->iMethod);
