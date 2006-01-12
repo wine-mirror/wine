@@ -88,7 +88,7 @@ extern LPITEMIDLIST     GetParentPidl(LPITEMIDLIST pidl);
 extern LPITEMIDLIST     GetPidlFromName(IShellFolder *psf,LPCSTR lpcstrFileName);
 
 extern int     FILEDLG95_LOOKIN_SelectItem(HWND hwnd,LPITEMIDLIST pidl);
-extern void    SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
+extern LRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 
 
 /*

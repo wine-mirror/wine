@@ -228,7 +228,7 @@ static void *MemAlloc(UINT size);
 static void MemFree(void *mem);
 
 INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
+LRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 static INT_PTR FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCount, UINT sizeUsed);
 static BOOL BrowseSelectedFolder(HWND hwnd);
@@ -811,13 +811,15 @@ static HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
 * Send CustomDialogNotification (CDN_FIRST -- CDN_LAST) message to the custom template dialog
 */
 
-void SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
+LRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
 {
+    LRESULT hook_result = 0;
+
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwndParentDlg,FileOpenDlgInfosStr);
 
     TRACE("%p 0x%04x\n",hwndParentDlg, uCode);
 
-    if(!fodInfos) return;
+    if(!fodInfos) return 0;
 
     if(fodInfos->DlgInfos.hwndCustomDlg)
     {
@@ -830,7 +832,7 @@ void SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
             ofnNotify.hdr.code = uCode;
             ofnNotify.lpOFN = fodInfos->ofnInfos;
             ofnNotify.pszFile = NULL;
-            SendMessageW(fodInfos->DlgInfos.hwndCustomDlg,WM_NOTIFY,0,(LPARAM)&ofnNotify);
+            hook_result = SendMessageW(fodInfos->DlgInfos.hwndCustomDlg,WM_NOTIFY,0,(LPARAM)&ofnNotify);
         }
         else
         {
@@ -840,10 +842,12 @@ void SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
             ofnNotify.hdr.code = uCode;
             ofnNotify.lpOFN = (LPOPENFILENAMEA)fodInfos->ofnInfos;
             ofnNotify.pszFile = NULL;
-            SendMessageA(fodInfos->DlgInfos.hwndCustomDlg,WM_NOTIFY,0,(LPARAM)&ofnNotify);
+            hook_result = SendMessageA(fodInfos->DlgInfos.hwndCustomDlg,WM_NOTIFY,0,(LPARAM)&ofnNotify);
         }
 	TRACE("RET NOTIFY\n");
     }
+    TRACE("Retval: 0x%08lx\n", hook_result);
+    return hook_result;
 }
 
 static INT_PTR FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID buffer)
@@ -1593,22 +1597,24 @@ static BOOL FILEDLG95_SendFileOK( HWND hwnd, FileOpenDlgInfos *fodInfos )
     /* ask the hook if we can close */
     if(IsHooked(fodInfos))
     {
+        LRESULT retval;
+
         TRACE("---\n");
         /* First send CDN_FILEOK as MSDN doc says */
-        SendCustomDlgNotificationMessage(hwnd,CDN_FILEOK);
+        retval = SendCustomDlgNotificationMessage(hwnd,CDN_FILEOK);
         if (GetWindowLongPtrW(fodInfos->DlgInfos.hwndCustomDlg, DWLP_MSGRESULT))
         {
             TRACE("canceled\n");
-            return FALSE;
+            return (retval == 0);
         }
 
         /* fodInfos->ofnInfos points to an ASCII or UNICODE structure as appropriate */
-        SendMessageW(fodInfos->DlgInfos.hwndCustomDlg,
-                     fodInfos->HookMsg.fileokstring, 0, (LPARAM)fodInfos->ofnInfos);
+        retval = SendMessageW(fodInfos->DlgInfos.hwndCustomDlg,
+                              fodInfos->HookMsg.fileokstring, 0, (LPARAM)fodInfos->ofnInfos);
         if (GetWindowLongPtrW(fodInfos->DlgInfos.hwndCustomDlg, DWLP_MSGRESULT))
         {
             TRACE("canceled\n");
-            return FALSE;
+            return (retval == 0);
         }
     }
     return TRUE;
