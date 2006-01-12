@@ -18,7 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <assert.h>
 #include <stdarg.h>
 
 #ifndef _WIN32_WINNT
@@ -202,7 +201,11 @@ static void test_prot_fault(void)
     } exc_frame;
 
     pNtCurrentTeb = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtCurrentTeb" );
-    assert( pNtCurrentTeb );
+    if (!pNtCurrentTeb)
+    {
+        trace( "NtCurrentTeb not found, skipping tests\n" );
+        return;
+    }
 
     exc_frame.frame.Handler = handler;
     exc_frame.frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
