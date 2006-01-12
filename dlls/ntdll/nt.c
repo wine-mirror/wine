@@ -189,15 +189,15 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 */
 NTSTATUS WINAPI NtQueryInformationToken(
 	HANDLE token,
-	DWORD tokeninfoclass,
-	LPVOID tokeninfo,
-	DWORD tokeninfolength,
-	LPDWORD retlen )
+	TOKEN_INFORMATION_CLASS tokeninfoclass,
+	PVOID tokeninfo,
+	ULONG tokeninfolength,
+	PULONG retlen )
 {
-    unsigned int len = 0;
+    ULONG len;
     NTSTATUS status = STATUS_SUCCESS;
 
-    TRACE("(%p,%ld,%p,%ld,%p)\n",
+    TRACE("(%p,%d,%p,%ld,%p)\n",
           token,tokeninfoclass,tokeninfo,tokeninfolength,retlen);
 
     switch (tokeninfoclass)
@@ -224,10 +224,11 @@ NTSTATUS WINAPI NtQueryInformationToken(
     case TokenImpersonationLevel:
     case TokenStatistics:
 #endif /* 0 */
+    default:
+        len = 0;
     }
 
-    /* FIXME: what if retlen == NULL ? */
-    *retlen = len;
+    if (retlen) *retlen = len;
 
     if (tokeninfolength < len)
         return STATUS_BUFFER_TOO_SMALL;
@@ -244,7 +245,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
             req->handle = token;
             wine_server_set_reply( req, sid, sid_len );
             status = wine_server_call( req );
-            *retlen = reply->user_len + sizeof(TOKEN_USER);
+            if (retlen) *retlen = reply->user_len + sizeof(TOKEN_USER);
             if (status == STATUS_SUCCESS)
             {
                 tuser->User.Sid = sid;
@@ -291,7 +292,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
             if (tpriv && tokeninfolength > FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ))
                 wine_server_set_reply( req, &tpriv->Privileges, tokeninfolength - FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ) );
             status = wine_server_call( req );
-            *retlen = FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ) + reply->len;
+            if (retlen) *retlen = FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ) + reply->len;
             if (tpriv) tpriv->PrivilegeCount = reply->len / sizeof(LUID_AND_ATTRIBUTES);
         }
         SERVER_END_REQ;
@@ -309,7 +310,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
         break;
     default:
         {
-            ERR("Unhandled Token Information class %ld!\n", tokeninfoclass);
+            ERR("Unhandled Token Information class %d!\n", tokeninfoclass);
             return STATUS_NOT_IMPLEMENTED;
         }
     }
