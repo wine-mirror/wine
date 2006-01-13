@@ -19,6 +19,7 @@
  */
 
 #define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -356,7 +357,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     MSI_SetPropertyW( package, szVersionMsi, bufstr );
 
     GetSystemInfo( &sys_info );
-    if (sys_info.u.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
+    if (sys_info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
     {
         sprintfW( bufstr, szScreenFormat, sys_info.wProcessorLevel );
         MSI_SetPropertyW( package, szIntel, bufstr );
