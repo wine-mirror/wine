@@ -191,8 +191,6 @@
  * - Undo coalescing 
  * - add remaining CHARFORMAT/PARAFORMAT fields
  * - right/center align should strip spaces from the beginning
- * - more advanced navigation (Ctrl-arrows)
- * - tabs
  * - pictures/OLE objects (not just smiling faces that lack API support ;-) )
  * - COM interface (looks like a major pain in the TODO list)
  * - calculate heights of pictures (half-done)
