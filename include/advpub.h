@@ -86,6 +86,16 @@ typedef CSTRTABLE *LPCSTRTABLE;
 #define  IE4_USEREFCNT              0x00000400
 #define  IE4_EXTRAINCREFCNT         0x00000800
 
+/* Flags for file save and restore functions */
+#define  AFSR_RESTORE               IE4_RESTORE
+#define  AFSR_BACKNEW               IE4_BACKNEW
+#define  AFSR_NODELETENEW           IE4_NODELETENEW
+#define  AFSR_NOMESSAGES            IE4_NOMESSAGES
+#define  AFSR_NOPROGRESS            IE4_NOPROGRESS
+#define  AFSR_UPDREFCNT             IE4_UPDREFCNT
+#define  AFSR_USEREFCNT             IE4_USEREFCNT
+#define  AFSR_EXTRAINCREFCNT        IE4_EXTRAINCREFCNT
+
 HRESULT WINAPI AdvInstallFile(HWND hwnd, LPCSTR lpszSourceDir,
      LPCSTR lpszSourceFile, LPCSTR lpszDestDir, LPCSTR lpszDestFile,
      DWORD dwFlags, DWORD dwReserved);
@@ -93,6 +103,11 @@ HRESULT WINAPI DelNode(LPCSTR pszFileOrDirName, DWORD dwFlags);
 HRESULT WINAPI DelNodeRunDLL32(HWND,HINSTANCE,LPSTR,INT);
 HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved );
 HRESULT WINAPI ExtractFiles(LPCSTR,LPCSTR,DWORD,LPCSTR,LPVOID,DWORD);
+HRESULT WINAPI FileSaveMarkNotExist(LPSTR pszFileList, LPSTR pszDir, LPSTR pszBaseName);
+HRESULT WINAPI FileSaveRestore(HWND hDlg, LPSTR pszFileList, LPSTR pszDir,
+     LPSTR pszBaseName, DWORD dwFlags);
+HRESULT WINAPI FileSaveRestoreOnINF(HWND hWnd, PCSTR pszTitle, PCSTR pszINF,
+     PCSTR pszSection, PCSTR pszBackupDir, PCSTR pszBaseBackupFile, DWORD dwFlags);
 HRESULT WINAPI GetVersionFromFile(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
 HRESULT WINAPI GetVersionFromFileEx(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
 BOOL WINAPI IsNTAdmin(DWORD,LPDWORD);

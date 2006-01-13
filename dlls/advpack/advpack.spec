@@ -7,9 +7,9 @@
 @ stdcall DoInfInstall(ptr)
 @ stdcall ExecuteCab(ptr ptr ptr)
 @ stdcall ExtractFiles(str str long ptr ptr long)
-@ stub FileSaveMarkNotExist
-@ stub FileSaveRestore
-@ stub FileSaveRestoreOnINF
+@ stdcall FileSaveMarkNotExist(str str str)
+@ stdcall FileSaveRestore(ptr str str str long)
+@ stdcall FileSaveRestoreOnINF(ptr str str str str str long)
 @ stdcall GetVersionFromFile(str ptr ptr long)
 @ stdcall GetVersionFromFileEx(str ptr ptr long)
 @ stdcall IsNTAdmin(long ptr)

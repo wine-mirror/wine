@@ -9,6 +9,7 @@ EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	advpack.c \
+	files.c \
 	reg.c
 
 SUBDIRS = tests
