@@ -505,10 +505,11 @@ do {                                                                            
 #define test_GSCSPA(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
 do {                                                                            \
     size = dwSz;                                                                \
-    SetLastError(0);                                                            \
+    SetLastError(0xfaceabad);                                                   \
     ret = pGetStandardColorSpaceProfileA(pMachName, dwProfID, pProfName, pdwSz);\
     GLE = GetLastError();                                                       \
-    ok( (!ret && GLE_OK) || (ret && !lstrcmpiA( pProfName, "" )),               \
+    ok( (!ret && GLE_OK) ||                                                     \
+        (ret && !lstrcmpiA( pProfName, "" ) && GLE == 0xfaceabad),              \
         "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );   \
 } while (0)
 
@@ -582,10 +583,11 @@ do {                                                                            
 #define test_GSCSPW(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
 do {                                                                            \
     size = dwSz;                                                                \
-    SetLastError(0);                                                            \
+    SetLastError(0xfaceabad);                                                   \
     ret = pGetStandardColorSpaceProfileW(pMachName, dwProfID, pProfName, pdwSz);\
     GLE = GetLastError();                                                       \
-    ok( (!ret && GLE_OK) || (ret && !lstrcmpiW( pProfName, emptyW )),           \
+    ok( (!ret && GLE_OK) ||                                                     \
+        (ret && !lstrcmpiW( pProfName, emptyW ) && GLE == 0xfaceabad),          \
         "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );   \
 } while (0)
 
