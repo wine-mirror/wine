@@ -617,8 +617,12 @@ HRESULT WINAPI DelNode( LPCSTR pszFileOrDirName, DWORD dwFlags )
 {
     CHAR fname[MAX_PATH];
     HRESULT ret = E_FAIL;
+    
+    TRACE("(%s, 0x%08lx)\n", debugstr_a(pszFileOrDirName), dwFlags);
+    
+    if (dwFlags)
+        FIXME("Flags ignored!\n");
 
-    FIXME("(%s, 0x%08lx): flags ignored\n", debugstr_a(pszFileOrDirName), dwFlags);
     if (pszFileOrDirName && *pszFileOrDirName)
     {
         lstrcpyA(fname, pszFileOrDirName);
