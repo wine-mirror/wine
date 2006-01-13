@@ -346,7 +346,17 @@ BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile
 
     TRACE( "( 0x%08lx, %p, %p )\n", id, profile, size );
 
-    if (machine || !size) return FALSE;
+    if (machine) 
+    {
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+
+    if (!size) 
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
 
     sizeW = *size * sizeof(WCHAR);
 
@@ -401,7 +411,18 @@ BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profi
 
     TRACE( "( 0x%08lx, %p, %p )\n", id, profile, size );
 
-    if (machine || !size) return FALSE;
+    if (machine) 
+    {
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+
+    if (!size) 
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
     GetColorDirectoryW( machine, rgbprofile, &len );
 
     switch (id)

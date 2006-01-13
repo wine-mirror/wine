@@ -525,7 +525,6 @@ static void test_GetStandardColorSpaceProfileA(void)
     /* Parameter checks */
 
     /* Single invalid parameter checks */
-    todo_wine
     fail_GSCSPA(machine, SPACE_RGB, newprofile, &size, sizeP, (GLE == ERROR_NOT_SUPPORTED));
     todo_wine
     fail_GSCSPA(NULL,    (DWORD)-1, newprofile, &size, sizeP, (GLE == ERROR_FILE_NOT_FOUND));
@@ -537,7 +536,6 @@ static void test_GetStandardColorSpaceProfileA(void)
     fail_GSCSPA(NULL,    SPACE_RGB, newprofile, &size, 0,     (GLE == ERROR_MORE_DATA || GLE == ERROR_INSUFFICIENT_BUFFER));
 
     /* Several invalid parameter checks */
-    todo_wine 
     fail_GSCSPA(machine,  0, newprofile, &size, 0,     (GLE == ERROR_INVALID_PARAMETER || GLE == ERROR_NOT_SUPPORTED));
     todo_wine 
     fail_GSCSPA(NULL,     0, newprofile, NULL,  0,     (GLE == ERROR_INVALID_PARAMETER));
@@ -604,7 +602,6 @@ static void test_GetStandardColorSpaceProfileW(void)
     /* Parameter checks */
 
     /* Single invalid parameter checks */
-    todo_wine
     fail_GSCSPW(machineW, SPACE_RGB, newprofile, &size, sizeP, (GLE == ERROR_NOT_SUPPORTED));
     todo_wine
     fail_GSCSPW(NULL,     (DWORD)-1, newprofile, &size, sizeP, (GLE == ERROR_FILE_NOT_FOUND));
@@ -616,7 +613,6 @@ static void test_GetStandardColorSpaceProfileW(void)
     fail_GSCSPW(NULL,     SPACE_RGB, newprofile, &size, 0,     (GLE == ERROR_MORE_DATA || GLE == ERROR_INSUFFICIENT_BUFFER));
 
     /* Several invalid parameter checks */
-    todo_wine 
     fail_GSCSPW(machineW,  0, newprofile, &size, 0,     (GLE == ERROR_INVALID_PARAMETER || GLE == ERROR_NOT_SUPPORTED));
     todo_wine 
     fail_GSCSPW(NULL,      0, newprofile, NULL,  0,     (GLE == ERROR_INVALID_PARAMETER));
