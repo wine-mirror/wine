@@ -838,7 +838,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     off_t pos;
     struct stat st;
     struct file_view *view = NULL;
-    char *ptr;
+    char *ptr, *header_end;
 
     /* zero-map the whole range */
 
@@ -870,10 +870,10 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
                             removable ) != STATUS_SUCCESS) goto error;
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
-    if ((char *)(nt + 1) > ptr + header_size) goto error;
-
+    header_end = ptr + ROUND_SIZE( 0, header_size );
+    if ((char *)(nt + 1) > header_end) goto error;
     sec = (IMAGE_SECTION_HEADER*)((char*)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
-    if ((char *)(sec + nt->FileHeader.NumberOfSections) > ptr + header_size) goto error;
+    if ((char *)(sec + nt->FileHeader.NumberOfSections) > header_end) goto error;
 
     imports = nt->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_IMPORT;
     if (!imports->Size || !imports->VirtualAddress) imports = NULL;
