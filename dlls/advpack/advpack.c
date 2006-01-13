@@ -36,6 +36,31 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
 typedef HRESULT (WINAPI *DLLREGISTER) (void);
 
+/* FIXME: this is only for the local case, X:\ */
+#define ROOT_LENGTH 3
+
+UINT CALLBACK pQuietQueueCallback(PVOID Context, UINT Notification,
+                                  UINT_PTR Param1, UINT_PTR Param2)
+{
+    return 1;
+}
+
+UINT CALLBACK pQueueCallback(PVOID Context, UINT Notification,
+                             UINT_PTR Param1, UINT_PTR Param2)
+{
+    /* only be verbose for error notifications */
+    if (!Notification ||
+        Notification == SPFILENOTIFY_RENAMEERROR ||
+        Notification == SPFILENOTIFY_DELETEERROR ||
+        Notification == SPFILENOTIFY_COPYERROR)
+    {
+        return SetupDefaultQueueCallbackA(Context, Notification,
+                                          Param1, Param2);
+    }
+
+    return 1;
+}
+
 /***********************************************************************
  *      AdvInstallFile (ADVPACK.@)
  *
@@ -57,18 +82,85 @@ typedef HRESULT (WINAPI *DLLREGISTER) (void);
  * NOTES
  *   If lpszDestFile is NULL, the destination filename is the same as
  *   lpszSourceFIle.
- *
- * BUGS
- *   Unimplemented.
  */
 HRESULT WINAPI AdvInstallFile(HWND hwnd, LPCSTR lpszSourceDir, LPCSTR lpszSourceFile,
                               LPCSTR lpszDestDir, LPCSTR lpszDestFile,
                               DWORD dwFlags, DWORD dwReserved)
 {
-    FIXME("(%p,%p,%p,%p,%p,%ld,%ld) stub\n", hwnd, debugstr_a(lpszSourceDir),
+    PSP_FILE_CALLBACK_A pFileCallback;
+    LPSTR szPath, szDestFilename;
+    char szRootPath[ROOT_LENGTH];
+    DWORD dwLen, dwLastError;
+    HSPFILEQ fileQueue;
+    PVOID pContext;
+
+    TRACE("(%p,%p,%p,%p,%p,%ld,%ld) stub\n", hwnd, debugstr_a(lpszSourceDir),
           debugstr_a(lpszSourceFile), debugstr_a(lpszDestDir),
           debugstr_a(lpszDestFile), dwFlags, dwReserved);
-    return E_FAIL;
+
+    if (!lpszSourceDir || !lpszSourceFile || !lpszDestDir)
+        return E_INVALIDARG;
+        
+    fileQueue = SetupOpenFileQueue();
+    if (fileQueue == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    pContext = NULL;
+    dwLastError = ERROR_SUCCESS;
+
+    lstrcpynA(szRootPath, lpszSourceDir, ROOT_LENGTH);
+    szPath = (LPSTR)lpszSourceDir + ROOT_LENGTH;
+
+    /* use lpszSourceFile as destination filename if lpszDestFile is NULL */
+    if (lpszDestFile)
+    {
+        dwLen = lstrlenA(lpszDestFile);
+        szDestFilename = HeapAlloc(GetProcessHeap(), 0, dwLen);
+        lstrcpyA(szDestFilename, lpszDestFile);
+    }
+    else
+    {
+        dwLen = lstrlenA(lpszSourceFile);
+        szDestFilename = HeapAlloc(GetProcessHeap(), 0, dwLen);
+        lstrcpyA(szDestFilename, lpszSourceFile);
+    }
+
+    /* add the file copy operation to the setup queue */
+    if (!SetupQueueCopyA(fileQueue, szRootPath, szPath, lpszSourceFile, NULL,
+                         NULL, lpszDestDir, szDestFilename, dwFlags))
+    {
+        dwLastError = GetLastError();
+        goto done;
+    }
+
+    pContext = SetupInitDefaultQueueCallbackEx(hwnd, INVALID_HANDLE_VALUE,
+                                               0, 0, NULL);
+    if (!pContext)
+    {
+        dwLastError = GetLastError();
+        goto done;
+    }
+
+    /* don't output anything for AIF_QUIET */
+    if (dwFlags & AIF_QUIET)
+        pFileCallback = pQuietQueueCallback;
+    else
+        pFileCallback = pQueueCallback;
+
+    /* perform the file copy */
+    if (!SetupCommitFileQueueA(hwnd, fileQueue, pFileCallback, pContext))
+    {
+        dwLastError = GetLastError();
+        goto done;
+    }
+
+done:
+    SetupTermDefaultQueueCallback(pContext);
+    SetupCloseFileQueue(fileQueue);
+    
+    HeapFree(GetProcessHeap(), 0, szDestFilename);
+    
+    return HRESULT_FROM_WIN32(dwLastError);
 }
 
 /***********************************************************************
