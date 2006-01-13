@@ -578,6 +578,17 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
 }
 
 
+void
+ME_SelectWord(ME_TextEditor *editor)
+{
+  if (!(editor->pCursors[0].pRun->member.run.nFlags & MERF_ENDPARA))
+    ME_MoveCursorWords(editor, &editor->pCursors[0], -1);
+  ME_MoveCursorWords(editor, &editor->pCursors[1], +1);
+  ME_InvalidateSelection(editor);
+  ME_SendSelChange(editor);
+}
+
+
 int ME_GetCursorOfs(ME_TextEditor *editor, int nCursor)
 {
   ME_Cursor *pCursor = &editor->pCursors[nCursor];

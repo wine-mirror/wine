@@ -3,6 +3,7 @@
  *
  * Copyright 2004 by Krzysztof Foltman
  * Copyright 2005 by Cihan Altinay
+ * Copyright 2005 by Phil Krylov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1837,6 +1838,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     if (GetCapture() == hWnd)
       ReleaseCapture();
     break;
+  case WM_LBUTTONDBLCLK:
+    ME_SelectWord(editor);
+    break;
   case WM_PAINT:
     if (editor->bRedraw)
     {
@@ -2167,7 +2171,7 @@ void ME_RegisterEditorClass(HINSTANCE hInstance)
   WNDCLASSW wcW;
   WNDCLASSA wcA;
   
-  wcW.style = CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
+  wcW.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
   wcW.lpfnWndProc = RichEditANSIWndProc;
   wcW.cbClsExtra = 0;
   wcW.cbWndExtra = 4;
@@ -2183,7 +2187,7 @@ void ME_RegisterEditorClass(HINSTANCE hInstance)
   bResult = RegisterClassW(&wcW);  
   assert(bResult);
 
-  wcA.style = CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
+  wcA.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
   wcA.lpfnWndProc = RichEditANSIWndProc;
   wcA.cbClsExtra = 0;
   wcA.cbWndExtra = 4;
