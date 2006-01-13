@@ -562,14 +562,13 @@ LPVOID WINAPI MapSLFix( SEGPTR sptr )
 
 /***********************************************************************
  *           UnMapSLFixArray   (KERNEL32.@)
+ *
+ * Must not change EAX, hence defined as asm function.
  */
-void WINAPI __regs_UnMapSLFixArray( SEGPTR sptr[], INT length, CONTEXT86 *context )
-{
-    /* Must not change EAX, hence defined as 'register' function */
-}
-#ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( UnMapSLFixArray, 8, 8 );
+#ifdef __i386__
+__ASM_GLOBAL_FUNC( UnMapSLFixArray, "ret $8" );
 #endif
+
 
 /***********************************************************************
  *           GetThreadSelectorEntry   (KERNEL32.@)
@@ -638,32 +637,29 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
 }
 
 
-#ifdef DEFINE_REGS_ENTRYPOINT
+#ifdef __i386__
 
 /***********************************************************************
  *		SMapLS (KERNEL32.@)
  */
-void WINAPI __regs_SMapLS( CONTEXT86 *context )
-{
-    if (HIWORD(context->Eax))
-    {
-        context->Eax = MapLS( (LPVOID)context->Eax );
-        context->Edx = context->Eax;
-    } else {
-        context->Edx = 0;
-    }
-}
-DEFINE_REGS_ENTRYPOINT( SMapLS, 0, 0 );
+__ASM_GLOBAL_FUNC( SMapLS,
+                   "xor %edx,%edx\n\t"
+                   "testl $0xffff0000,%eax\n\t"
+                   "jz 1f\n\t"
+                   "pushl %eax\n\t"
+                   "call " __ASM_NAME("MapLS") "\n\t"
+                   "movl %eax,%edx\n"
+                   "1:\tret" );
 
 /***********************************************************************
  *		SUnMapLS (KERNEL32.@)
  */
-void WINAPI __regs_SUnMapLS( CONTEXT86 *context )
-{
-    if (HIWORD(context->Eax)) UnMapLS( (SEGPTR)context->Eax );
-}
-DEFINE_REGS_ENTRYPOINT( SUnMapLS, 0, 0 );
-
+__ASM_GLOBAL_FUNC( SUnMapLS,
+                   "pushl %eax\n\t"  /* preserve eax */
+                   "pushl %eax\n\t"
+                   "call " __ASM_NAME("UnMapLS") "\n\t"
+                   "popl %eax\n\t"
+                   "ret" );
 
 /***********************************************************************
  *		SMapLS_IP_EBP_8 (KERNEL32.@)
@@ -682,17 +678,11 @@ DEFINE_REGS_ENTRYPOINT( SUnMapLS, 0, 0 );
  * unravel them at SUnMapLS. We just store the segmented pointer there.
  */
 #define DEFINE_SMapLS(n) \
-void WINAPI __regs_SMapLS_IP_EBP_ ## n (CONTEXT86 *context) \
-{ \
-    SEGPTR *ptr = (SEGPTR *)(context->Ebp + n); \
-    if (!HIWORD(*ptr)) \
-    { \
-        context->Eax = *ptr; \
-        *ptr = 0; \
-    } \
-    else *ptr = context->Eax = MapLS((LPVOID)*ptr); \
-} \
-DEFINE_REGS_ENTRYPOINT( SMapLS_IP_EBP_ ## n, 0, 0 )
+  __ASM_GLOBAL_FUNC( SMapLS_IP_EBP_ ## n, \
+                     "movl " #n "(%ebp),%eax\n\t" \
+                     "call " __ASM_NAME("SMapLS") "\n\t" \
+                     "movl %edx," #n "(%ebp)\n\t" \
+                     "ret" );
 
 DEFINE_SMapLS(8);
 DEFINE_SMapLS(12);
@@ -718,13 +708,13 @@ DEFINE_SMapLS(40);
  */
 
 #define DEFINE_SUnMapLS(n) \
-void WINAPI __regs_SUnMapLS_IP_EBP_ ## n (CONTEXT86 *context) \
-{ \
-    SEGPTR *ptr = (SEGPTR *)(context->Ebp + n); \
-    UnMapLS( *ptr ); \
-    *ptr = 0; \
-} \
-DEFINE_REGS_ENTRYPOINT( SUnMapLS_IP_EBP_ ## n, 0, 0 )
+  __ASM_GLOBAL_FUNC( SUnMapLS_IP_EBP_ ## n, \
+                     "pushl %eax\n\t"  /* preserve eax */ \
+                     "pushl " #n "(%ebp)\n\t" \
+                     "call " __ASM_NAME("UnMapLS") "\n\t" \
+                     "movl $0," #n "(%ebp)\n\t" \
+                     "popl %eax\n\t" \
+                     "ret" )
 
 DEFINE_SUnMapLS(8);
 DEFINE_SUnMapLS(12);
@@ -736,4 +726,4 @@ DEFINE_SUnMapLS(32);
 DEFINE_SUnMapLS(36);
 DEFINE_SUnMapLS(40);
 
-#endif  /* DEFINE_REGS_ENTRYPOINT */
+#endif  /* __i386__ */
