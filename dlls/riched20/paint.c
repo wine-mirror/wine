@@ -2,6 +2,7 @@
  * RichEdit - painting functions
  *
  * Copyright 2004 by Krzysztof Foltman
+ * Copyright 2005 by Phil Krylov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -265,25 +266,29 @@ void ME_DrawGraphics(ME_Context *c, int x, int y, ME_Run *run,
 
 static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Paragraph *para) {
   ME_Run *run = &rundi->member.run;
+  ME_DisplayItem *start = ME_FindItemBack(rundi, diStartRow);
   int runofs = run->nCharOfs+para->nCharOfs;
+  int nSelFrom, nSelTo;
+  const WCHAR wszSpace[] = {' ', 0};
   
+  ME_GetSelection(c->editor, &nSelFrom, &nSelTo);
+
+  /* Draw selected end-of-paragraph mark */
+  if (run->nFlags & MERF_ENDPARA && runofs >= nSelFrom && runofs < nSelTo)
+    ME_DrawTextWithStyle(c, x, y, wszSpace, 1, run->style, NULL, 0, 1,
+                         c->pt.y + start->member.row.nYPos,
+                         start->member.row.nHeight);
+          
   /* you can always comment it out if you need visible paragraph marks */
   if (run->nFlags & (MERF_ENDPARA|MERF_TAB)) 
     return;
-  if (run->nFlags & MERF_GRAPHICS) {
-    int blfrom, blto;
-    ME_GetSelection(c->editor, &blfrom, &blto);
-    ME_DrawGraphics(c, x, y, run, para, (runofs >= blfrom) && (runofs < blto));
-  } else
-  {
-    int blfrom, blto;
-    ME_DisplayItem *start = ME_FindItemBack(rundi, diStartRow);
-    ME_GetSelection(c->editor, &blfrom, &blto);
-    
+
+  if (run->nFlags & MERF_GRAPHICS)
+    ME_DrawGraphics(c, x, y, run, para, (runofs >= nSelFrom) && (runofs < nSelTo));
+  else
     ME_DrawTextWithStyle(c, x, y, 
       run->strText->szData, ME_StrVLen(run->strText), run->style, NULL, 
-        blfrom-runofs, blto-runofs, c->pt.y+start->member.row.nYPos, start->member.row.nHeight);
-  }
+        nSelFrom-runofs,nSelTo-runofs, c->pt.y+start->member.row.nYPos, start->member.row.nHeight);
 }
 
 COLORREF ME_GetBackColor(ME_TextEditor *editor)

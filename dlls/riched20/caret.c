@@ -725,10 +725,9 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y)
       is_selection = 1;
     }
   }
+  ME_InvalidateSelection(editor);
   HideCaret(editor->hWnd);
   ME_MoveCaret(editor);
-  if (is_selection)
-    ME_Repaint(editor);
   ShowCaret(editor->hWnd);
   ME_ClearTempStyle(editor);
   ME_SendSelChange(editor);
