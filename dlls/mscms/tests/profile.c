@@ -485,7 +485,7 @@ static void enum_registered_color_profiles(void)
         if (ret) 
         {
             present++;
-            trace(" found %s\n", known_colorspaces[i].szName);
+            trace(" found %s, pointing to '%s' (%d chars)\n", known_colorspaces[i].szName, profile, strlen(profile));
         }
     }
     trace("Total profiles found: %ld.\n", present);
