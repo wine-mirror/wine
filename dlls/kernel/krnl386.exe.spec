@@ -374,8 +374,8 @@
 469 stub WOAGimmeTitle
 470 stub WOADestroyConsole
 471 pascal GetCurrentProcessId() GetCurrentProcessId
-472 pascal -register MapHInstLS() __regs_MapHInstLS
-473 pascal -register MapHInstSL() __regs_MapHInstSL
+472 pascal -register MapHInstLS() MapHInstLS16
+473 pascal -register MapHInstSL() MapHInstSL16
 474 pascal CloseW32Handle(long) CloseHandle
 475 pascal -ret16 GetTEBSelectorFS() GetTEBSelectorFS16
 476 pascal ConvertToGlobalHandle(long) ConvertToGlobalHandle

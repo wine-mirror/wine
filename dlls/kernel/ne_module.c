@@ -2138,47 +2138,57 @@ HMODULE WINAPI MapHModuleSL(HMODULE16 hmod)
 }
 
 /***************************************************************************
- *		MapHInstLS			(KERNEL32.@)
  *		MapHInstLS			(KERNEL.472)
  */
-void WINAPI __regs_MapHInstLS( CONTEXT86 *context )
+void WINAPI MapHInstLS16( CONTEXT86 *context )
 {
     context->Eax = MapHModuleLS( (HMODULE)context->Eax );
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( MapHInstLS, 0, 0 );
-#endif
 
 /***************************************************************************
- *		MapHInstSL			(KERNEL32.@)
  *		MapHInstSL			(KERNEL.473)
  */
-void WINAPI __regs_MapHInstSL( CONTEXT86 *context )
+void WINAPI MapHInstSL16( CONTEXT86 *context )
 {
     context->Eax = (DWORD)MapHModuleSL( context->Eax );
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( MapHInstSL, 0, 0 );
-#endif
+
+#ifdef __i386__
+
+/***************************************************************************
+ *		MapHInstLS			(KERNEL32.@)
+ */
+__ASM_GLOBAL_FUNC( MapHInstLS,
+                   "pushl %eax\n\t"
+                   "call " __ASM_NAME("MapHModuleLS") "\n\t"
+                   "ret" );
+
+/***************************************************************************
+ *		MapHInstSL			(KERNEL32.@)
+ */
+__ASM_GLOBAL_FUNC( MapHInstSL,
+                   "pushl %eax\n\t"
+                   "call " __ASM_NAME("MapHModuleSL") "\n\t"
+                   "ret" );
 
 /***************************************************************************
  *		MapHInstLS_PN			(KERNEL32.@)
  */
-void WINAPI __regs_MapHInstLS_PN( CONTEXT86 *context )
-{
-    if (context->Eax) context->Eax = MapHModuleLS( (HMODULE)context->Eax );
-}
-#ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( MapHInstLS_PN, 0, 0 );
-#endif
+__ASM_GLOBAL_FUNC( MapHInstLS_PN,
+                   "testl %eax,%eax\n\t"
+                   "jz 1f\n\t"
+                   "pushl %eax\n\t"
+                   "call " __ASM_NAME("MapHModuleLS") "\n"
+                   "1:\tret" );
 
 /***************************************************************************
  *		MapHInstSL_PN			(KERNEL32.@)
  */
-void WINAPI __regs_MapHInstSL_PN( CONTEXT86 *context )
-{
-    if (context->Eax) context->Eax = (DWORD)MapHModuleSL( context->Eax );
-}
-#ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( MapHInstSL_PN, 0, 0 );
-#endif
+__ASM_GLOBAL_FUNC( MapHInstSL_PN,
+                   "andl $0xffff,%eax\n\t"
+                   "jz 1f\n\t"
+                   "pushl %eax\n\t"
+                   "call " __ASM_NAME("MapHModuleSL") "\n"
+                   "1:\tret" );
+
+#endif  /* __i386__ */
