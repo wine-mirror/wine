@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <windows.h>
+#include <advpub.h>
 #include <fci.h>
 #include "wine/test.h"
 
@@ -30,6 +31,7 @@
 /* function pointers */
 HMODULE hAdvPack;
 static HRESULT (WINAPI *pExtractFiles)(LPCSTR, LPCSTR, DWORD, LPCSTR, LPVOID, DWORD);
+static HRESULT (WINAPI *pAdvInstallFile)(HWND,LPCSTR,LPCSTR,LPCSTR,LPCSTR,DWORD,DWORD);
 
 CHAR CURR_DIR[MAX_PATH];
 
@@ -40,6 +42,7 @@ static void init_function_pointers()
     if (hAdvPack)
     {
         pExtractFiles = (void *)GetProcAddress(hAdvPack, "ExtractFiles");
+        pAdvInstallFile = (void*)GetProcAddress(hAdvPack, "AdvInstallFile");
     }
 }
 
@@ -372,6 +375,53 @@ static void test_ExtractFiles()
     ok(!RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to not exist\n");
 }
 
+static void test_AdvInstallFile(void)
+{
+    HRESULT hr;
+    char CURR_DIR[MAX_PATH];
+    char destFolder[MAX_PATH];
+
+    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
+
+    lstrcpyA(destFolder, CURR_DIR);
+    lstrcatA(destFolder, "\\");
+    lstrcatA(destFolder, "dest");
+
+    createTestFile("source.txt");
+
+    /* try invalid source directory */
+    hr = pAdvInstallFile(NULL, NULL, "source.txt", destFolder, "destination.txt", 0, 0);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(!DeleteFileA("dest\\destination.txt"), "Expected dest\\destination.txt to not exist\n");
+
+    /* try invalid source file */
+    hr = pAdvInstallFile(NULL, CURR_DIR, NULL, destFolder, "destination.txt", 0, 0);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(!DeleteFileA("dest\\destination.txt"), "Expected dest\\destination.txt to not exist\n");
+
+    /* try invalid destination directory */
+    hr = pAdvInstallFile(NULL, CURR_DIR, "source.txt", NULL, "destination.txt", 0, 0);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(!DeleteFileA("dest\\destination.txt"), "Expected dest\\destination.txt to not exist\n");
+
+    /* try copying to nonexistent destination directory */
+    hr = pAdvInstallFile(NULL, CURR_DIR, "source.txt", destFolder, "destination.txt", 0, 0);
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(DeleteFileA("dest\\destination.txt"), "Expected dest\\destination.txt to exist\n");
+
+    /* native windows screws up if the source file doesn't exist */
+
+    /* test AIF_NOOVERWRITE behavior, asks the user to overwrite if AIF_QUIET is not specified */
+    createTestFile("dest\\destination.txt");
+    hr = pAdvInstallFile(NULL, CURR_DIR, "source.txt", destFolder,
+                         "destination.txt", AIF_NOOVERWRITE | AIF_QUIET, 0);
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(DeleteFileA("dest\\destination.txt"), "Expected dest\\destination.txt to exist\n");
+    ok(RemoveDirectoryA("dest"), "Expected dest to exist\n");
+
+    DeleteFileA("source.txt");
+}
+
 START_TEST(files)
 {
     init_function_pointers();
@@ -379,6 +429,7 @@ START_TEST(files)
     create_cab_file();
 
     test_ExtractFiles();
+    test_AdvInstallFile();
 
     delete_test_files();
 }
