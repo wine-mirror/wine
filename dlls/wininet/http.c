@@ -1788,15 +1788,27 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
         workRequest.asyncall = HTTPSENDREQUESTW;
         workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
         req = &workRequest.u.HttpSendRequestW;
-        if (lpBuffersIn->lpcszHeader)
-            /* FIXME: this should use dwHeadersLength or may not be necessary at all */
-            req->lpszHeader = WININET_strdupW(lpBuffersIn->lpcszHeader);
+        if (lpBuffersIn)
+        {
+            if (lpBuffersIn->lpcszHeader)
+                /* FIXME: this should use dwHeadersLength or may not be necessary at all */
+                req->lpszHeader = WININET_strdupW(lpBuffersIn->lpcszHeader);
+            else
+                req->lpszHeader = NULL;
+            req->dwHeaderLength = lpBuffersIn->dwHeadersLength;
+            req->lpOptional = lpBuffersIn->lpvBuffer;
+            req->dwOptionalLength = lpBuffersIn->dwBufferLength;
+            req->dwContentLength = lpBuffersIn->dwBufferTotal;
+        }
         else
+        {
             req->lpszHeader = NULL;
-        req->dwHeaderLength = lpBuffersIn->dwHeadersLength;
-        req->lpOptional = lpBuffersIn->lpvBuffer;
-        req->dwOptionalLength = lpBuffersIn->dwBufferLength;
-        req->dwContentLength = lpBuffersIn->dwBufferTotal;
+            req->dwHeaderLength = 0;
+            req->lpOptional = NULL;
+            req->dwOptionalLength = 0;
+            req->dwContentLength = 0;
+        }
+
         req->bEndRequest = FALSE;
 
         INTERNET_AsyncCall(&workRequest);
