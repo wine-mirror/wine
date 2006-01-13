@@ -2270,9 +2270,9 @@ static void test_encodeCRLDistPoints(DWORD dwEncoding)
     /* A dist point with an invalid name */
     point.DistPointName.dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
     entry.dwAltNameChoice = CERT_ALT_NAME_URL;
-    entry.pwszURL = (LPWSTR)nihongoURL;
-    point.DistPointName.FullName.cAltEntry = 1;
-    point.DistPointName.FullName.rgAltEntry = &entry;
+    U(entry).pwszURL = (LPWSTR)nihongoURL;
+    U(point.DistPointName).FullName.cAltEntry = 1;
+    U(point.DistPointName).FullName.rgAltEntry = &entry;
     ret = CryptEncodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_IA5_STRING,
@@ -2282,7 +2282,7 @@ static void test_encodeCRLDistPoints(DWORD dwEncoding)
      "Expected invalid char at index 7, got %ld\n",
      GET_CERT_ALT_NAME_VALUE_ERR_INDEX(size));
     /* A dist point with (just) a valid name */
-    entry.pwszURL = (LPWSTR)url;
+    U(entry).pwszURL = (LPWSTR)url;
     ret = CryptEncodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     if (buf)
@@ -2376,13 +2376,13 @@ static void test_decodeCRLDistPoints(DWORD dwEncoding)
          CRL_DIST_POINT_FULL_NAME,
          "Expected CRL_DIST_POINT_FULL_NAME, got %ld\n",
          point->DistPointName.dwDistPointNameChoice);
-        ok(point->DistPointName.FullName.cAltEntry == 1,
+        ok(U(point->DistPointName).FullName.cAltEntry == 1,
          "Expected 1 name entry, got %ld\n",
-         point->DistPointName.FullName.cAltEntry);
-        entry = point->DistPointName.FullName.rgAltEntry;
+         U(point->DistPointName).FullName.cAltEntry);
+        entry = U(point->DistPointName).FullName.rgAltEntry;
         ok(entry->dwAltNameChoice == CERT_ALT_NAME_URL,
          "Expected CERT_ALT_NAME_URL, got %ld\n", entry->dwAltNameChoice);
-        ok(!lstrcmpW(entry->pwszURL, url), "Unexpected name\n");
+        ok(!lstrcmpW(U(*entry).pwszURL, url), "Unexpected name\n");
         ok(point->ReasonFlags.cbData == 0, "Expected no reason\n");
         ok(point->CRLIssuer.cAltEntry == 0, "Expected no issuer\n");
         LocalFree(buf);
@@ -2426,20 +2426,20 @@ static void test_decodeCRLDistPoints(DWORD dwEncoding)
          CRL_DIST_POINT_FULL_NAME,
          "Expected CRL_DIST_POINT_FULL_NAME, got %ld\n",
          point->DistPointName.dwDistPointNameChoice);
-        ok(point->DistPointName.FullName.cAltEntry == 1,
+        ok(U(point->DistPointName).FullName.cAltEntry == 1,
          "Expected 1 name entry, got %ld\n",
-         point->DistPointName.FullName.cAltEntry);
-        entry = point->DistPointName.FullName.rgAltEntry;
+         U(point->DistPointName).FullName.cAltEntry);
+        entry = U(point->DistPointName).FullName.rgAltEntry;
         ok(entry->dwAltNameChoice == CERT_ALT_NAME_URL,
          "Expected CERT_ALT_NAME_URL, got %ld\n", entry->dwAltNameChoice);
-        ok(!lstrcmpW(entry->pwszURL, url), "Unexpected name\n");
+        ok(!lstrcmpW(U(*entry).pwszURL, url), "Unexpected name\n");
         ok(point->ReasonFlags.cbData == 0, "Expected no reason\n");
         ok(point->CRLIssuer.cAltEntry == 1,
          "Expected 1 issuer entry, got %ld\n", point->CRLIssuer.cAltEntry);
         entry = point->CRLIssuer.rgAltEntry;
         ok(entry->dwAltNameChoice == CERT_ALT_NAME_URL,
          "Expected CERT_ALT_NAME_URL, got %ld\n", entry->dwAltNameChoice);
-        ok(!lstrcmpW(entry->pwszURL, url), "Unexpected name\n");
+        ok(!lstrcmpW(U(*entry).pwszURL, url), "Unexpected name\n");
         LocalFree(buf);
     }
 }
