@@ -1895,6 +1895,7 @@ static void dump_get_thread_context_request( const struct get_thread_context_req
 
 static void dump_get_thread_context_reply( const struct get_thread_context_reply *req )
 {
+    fprintf( stderr, " self=%d,", req->self );
     fprintf( stderr, " context=" );
     dump_varargs_context( cur_size );
 }

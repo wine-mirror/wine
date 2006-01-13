@@ -1990,6 +1990,7 @@ struct get_thread_context_request
 struct get_thread_context_reply
 {
     struct reply_header __header;
+    int          self;
     /* VARARG(context,context); */
 };
 
@@ -4348,6 +4349,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 219
+#define SERVER_PROTOCOL_VERSION 220
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

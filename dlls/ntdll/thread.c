@@ -294,6 +294,9 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->ClientId.UniqueProcess = (HANDLE)GetCurrentProcessId();
     teb->ClientId.UniqueThread  = (HANDLE)tid;
 
+    /* inherit registers from parent thread */
+    memcpy( teb->SpareBytes1, ntdll_get_thread_regs(), sizeof(teb->SpareBytes1) );
+
     thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
     thread_data->request_fd  = request_pipe[1];
 
@@ -495,8 +498,14 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
 #ifdef __i386__
     /* on i386 debug registers always require a server call */
-    self = ((handle == GetCurrentThread()) &&
-            !(context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)));
+    self = (handle == GetCurrentThread());
+    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)))
+    {
+        struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
+        self = (regs->dr0 == context->Dr0 && regs->dr1 == context->Dr1 &&
+                regs->dr2 == context->Dr2 && regs->dr3 == context->Dr3 &&
+                regs->dr6 == context->Dr6 && regs->dr7 == context->Dr7);
+    }
 #endif
 
     if (!self)
@@ -781,6 +790,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     NTSTATUS ret;
     CONTEXT ctx;
     DWORD dummy, i;
+    BOOL self = FALSE;
 
     SERVER_START_REQ( get_thread_context )
     {
@@ -789,6 +799,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         req->suspend = 0;
         wine_server_set_reply( req, &ctx, sizeof(ctx) );
         ret = wine_server_call( req );
+        self = reply->self;
     }
     SERVER_END_REQ;
 
@@ -814,7 +825,23 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         }
     }
 
-    if (ret == STATUS_SUCCESS) copy_context( context, &ctx, context->ContextFlags );
+    if (ret == STATUS_SUCCESS)
+    {
+        copy_context( context, &ctx, context->ContextFlags );
+#ifdef __i386__
+        /* update the cached version of the debug registers */
+        if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)))
+        {
+            struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
+            regs->dr0 = context->Dr0;
+            regs->dr1 = context->Dr1;
+            regs->dr2 = context->Dr2;
+            regs->dr3 = context->Dr3;
+            regs->dr6 = context->Dr6;
+            regs->dr7 = context->Dr7;
+        }
+#endif
+    }
     else if (ret == STATUS_PENDING) ret = STATUS_ACCESS_DENIED;
     return ret;
 }

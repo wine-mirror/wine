@@ -1432,6 +1432,7 @@ enum char_info_mode
     unsigned int flags;        /* context flags */
     int          suspend;      /* if getting context during suspend */
 @REPLY
+    int          self;         /* was it a handle to the current thread? */
     VARARG(context,context);   /* thread context */
 @END
 

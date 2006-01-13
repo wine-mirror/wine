@@ -1094,6 +1094,7 @@ DECL_HANDLER(get_thread_context)
         memset( data, 0, sizeof(CONTEXT) );
         get_thread_context( thread, data, req->flags );
     }
+    reply->self = (thread == current);
     release_object( thread );
 }
 

@@ -740,7 +740,9 @@ inline static void restore_fpu( const CONTEXT *context )
  */
 inline static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext, WORD fs, WORD gs )
 {
-    context->ContextFlags = CONTEXT_FULL;
+    struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
+
+    context->ContextFlags = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS;
     context->Eax          = EAX_sig(sigcontext);
     context->Ebx          = EBX_sig(sigcontext);
     context->Ecx          = ECX_sig(sigcontext);
@@ -757,6 +759,12 @@ inline static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext,
     context->SegFs        = fs;
     context->SegGs        = gs;
     context->SegSs        = LOWORD(SS_sig(sigcontext));
+    context->Dr0          = regs->dr0;
+    context->Dr1          = regs->dr1;
+    context->Dr2          = regs->dr2;
+    context->Dr3          = regs->dr3;
+    context->Dr6          = regs->dr6;
+    context->Dr7          = regs->dr7;
 }
 
 
@@ -767,6 +775,14 @@ inline static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext,
  */
 inline static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 {
+    struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
+
+    regs->dr0 = context->Dr0;
+    regs->dr1 = context->Dr1;
+    regs->dr2 = context->Dr2;
+    regs->dr3 = context->Dr3;
+    regs->dr6 = context->Dr6;
+    regs->dr7 = context->Dr7;
     EAX_sig(sigcontext) = context->Eax;
     EBX_sig(sigcontext) = context->Ebx;
     ECX_sig(sigcontext) = context->Ecx;
@@ -797,7 +813,7 @@ inline static void restore_context( const CONTEXT *context, SIGCONTEXT *sigconte
 /***********************************************************************
  *           set_cpu_context
  *
- * Set the new CPU context.
+ * Set the new CPU context. Used by NtSetContextThread.
  */
 void set_cpu_context( const CONTEXT *context )
 {
@@ -805,6 +821,16 @@ void set_cpu_context( const CONTEXT *context )
 
     if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
 
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
+        regs->dr0 = context->Dr0;
+        regs->dr1 = context->Dr1;
+        regs->dr2 = context->Dr2;
+        regs->dr3 = context->Dr3;
+        regs->dr6 = context->Dr6;
+        regs->dr7 = context->Dr7;
+    }
     if (flags & CONTEXT_FULL)
     {
         if ((flags & CONTEXT_FULL) != (CONTEXT_FULL & ~CONTEXT_i386))
@@ -1027,8 +1053,6 @@ done:
  */
 static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    DWORD dr0, dr1, dr2, dr3, dr6, dr7;
-
     if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
     {
         if (context->EFlags & 0x100)
@@ -1048,22 +1072,7 @@ static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         }
     }
 
-    dr0 = context->Dr0;
-    dr1 = context->Dr1;
-    dr2 = context->Dr2;
-    dr3 = context->Dr3;
-    dr6 = context->Dr6;
-    dr7 = context->Dr7;
-
     __regs_RtlRaiseException( rec, context );
-
-    context->ContextFlags = CONTEXT_FULL;
-    if (dr0 != context->Dr0 || dr1 != context->Dr1 || dr2 != context->Dr2 ||
-        dr3 != context->Dr3 || dr6 != context->Dr6 || dr7 != context->Dr7)
-    {
-        /* the debug registers have changed, set the new values */
-        context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
-    }
     NtSetContextThread( GetCurrentThread(), context );
 }
 

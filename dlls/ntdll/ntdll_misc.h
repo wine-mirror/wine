@@ -134,4 +134,21 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
     return (struct ntdll_thread_data *)NtCurrentTeb()->SystemReserved2;
 }
 
+/* thread registers, stored in NtCurrentTeb()->SpareBytes1 */
+struct ntdll_thread_regs
+{
+    DWORD              dr0;           /* debug registers */
+    DWORD              dr1;
+    DWORD              dr2;
+    DWORD              dr3;
+    DWORD              dr6;
+    DWORD              dr7;
+    DWORD              spare[4];      /* change this if you add fields! */
+};
+
+static inline struct ntdll_thread_regs *ntdll_get_thread_regs(void)
+{
+    return (struct ntdll_thread_regs *)NtCurrentTeb()->SpareBytes1;
+}
+
 #endif
