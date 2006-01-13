@@ -2679,14 +2679,38 @@ static void FTVectorToPOINTFX(FT_Vector *vec, POINTFX *pt)
     return;
 }
 
+/***************************************************
+ * According to the MSDN documentation on WideCharToMultiByte,
+ * certain codepages cannot set the default_used parameter.
+ * This returns TRUE if the codepage can set that parameter, false else
+ * so that calls to WideCharToMultiByte don't fail with ERROR_INVALID_PARAMETER
+ */
+static BOOL codepage_sets_default_used(UINT codepage)
+{
+   switch (codepage)
+   {
+       case CP_UTF7:
+       case CP_UTF8:
+       case CP_SYMBOL:
+           return FALSE;
+       default:
+           return TRUE;
+   }
+}
+
 static FT_UInt get_glyph_index(GdiFont font, UINT glyph)
 {
     if(font->ft_face->charmap->encoding == FT_ENCODING_NONE) {
         WCHAR wc = (WCHAR)glyph;
         BOOL default_used;
+        BOOL *default_used_pointer;
         FT_UInt ret;
         char buf;
-        if(!WideCharToMultiByte(font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, &default_used) || default_used)
+        default_used_pointer = NULL;
+        default_used = FALSE;
+        if (codepage_sets_default_used(font->codepage))
+            default_used_pointer = &default_used;
+        if(!WideCharToMultiByte(font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, default_used_pointer) || default_used)
             ret = 0;
         else
             ret = pFT_Get_Char_Index(font->ft_face, (unsigned char)buf);
