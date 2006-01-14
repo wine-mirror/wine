@@ -318,19 +318,12 @@ HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LP
 	return DS_OK;
 }
 
-/*******************************************************************************
- *		PrimaryBuffer
- */
-/* This sets this format for the <em>Primary Buffer Only</em> */
-/* See file:///cdrom/sdk52/docs/worddoc/dsound.doc page 120 */
-static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
-	LPDIRECTSOUNDBUFFER8 iface,LPCWAVEFORMATEX wfex
-) {
-	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
+HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
+{
 	HRESULT err = DS_OK;
 	int i, alloc_size, cp_size;
 	DWORD nSamplesPerSec;
-	TRACE("(%p,%p)\n", iface, wfex);
+	TRACE("(%p,%p)\n", device, wfex);
 
 	if (device->priolevel == DSSCL_NORMAL) {
 		WARN("failed priority check!\n");
@@ -428,6 +421,19 @@ done:
 	/* **** */
 
 	return err;
+}
+
+/*******************************************************************************
+ *		PrimaryBuffer
+ */
+/* This sets this format for the <em>Primary Buffer Only</em> */
+/* See file:///cdrom/sdk52/docs/worddoc/dsound.doc page 120 */
+static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
+    LPDIRECTSOUNDBUFFER8 iface,
+    LPCWAVEFORMATEX wfex)
+{
+    TRACE("(%p,%p)\n", iface, wfex);
+    return DSOUND_PrimarySetFormat(((PrimaryBufferImpl *)iface)->device, wfex);
 }
 
 static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
