@@ -14619,6 +14619,7 @@ fi
 
 
 
+
 for ac_func in \
 	_lwp_create \
 	_lwp_self \
@@ -14629,6 +14630,7 @@ for ac_func in \
 	_stricmp \
 	_strnicmp \
 	_vsnprintf \
+	asctime_r \
 	chsize \
 	clone \
 	epoll_create \

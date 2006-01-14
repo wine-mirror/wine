@@ -47,6 +47,20 @@ static inline int IsLeapYear(int Year)
     return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
 }
 
+static inline void msvcrt_tm_to_unix( struct tm *dest, const struct MSVCRT_tm *src )
+{
+    memset( dest, 0, sizeof(*dest) );
+    dest->tm_sec   = src->tm_sec;
+    dest->tm_min   = src->tm_min;
+    dest->tm_hour  = src->tm_hour;
+    dest->tm_mday  = src->tm_mday;
+    dest->tm_mon   = src->tm_mon;
+    dest->tm_year  = src->tm_year;
+    dest->tm_wday  = src->tm_wday;
+    dest->tm_yday  = src->tm_yday;
+    dest->tm_isdst = src->tm_isdst;
+}
+
 #define SECSPERDAY        86400
 /* 1601 to 1970 is 369 years plus 89 leap days */
 #define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
@@ -412,33 +426,73 @@ void MSVCRT__tzset(void)
 }
 
 /*********************************************************************
- *		_wctime (MSVCRT.@)
+ *		strftime (MSVCRT.@)
  */
-MSVCRT_wchar_t *MSVCRT__wasctime(const struct MSVCRT_tm *mstm) {
-    thread_data_t *data = msvcrt_get_thread_data();
-    struct tm xtm;
+MSVCRT_size_t MSVCRT_strftime( char *str, MSVCRT_size_t max, const char *format,
+                               const struct MSVCRT_tm *mstm )
+{
+    struct tm tm;
 
-    memset(&xtm,0,sizeof(xtm));
-    xtm.tm_sec = mstm->tm_sec;
-    xtm.tm_min = mstm->tm_min;
-    xtm.tm_hour = mstm->tm_hour;
-    xtm.tm_mday = mstm->tm_mday;
-    xtm.tm_mon = mstm->tm_mon;
-    xtm.tm_year = mstm->tm_year;
-    xtm.tm_wday = mstm->tm_wday;
-    xtm.tm_yday = mstm->tm_yday;
-    xtm.tm_isdst = mstm->tm_isdst;
+    msvcrt_tm_to_unix( &tm, mstm );
+    return strftime( str, max, format, &tm );
+}
+
+/*********************************************************************
+ *		asctime (MSVCRT.@)
+ */
+char *MSVCRT_asctime(const struct MSVCRT_tm *mstm)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+    struct tm tm;
+
+    msvcrt_tm_to_unix( &tm, mstm );
+
+    if (!data->asctime_buffer)
+        data->asctime_buffer = MSVCRT_malloc( 30 ); /* ought to be enough */
+
+    /* FIXME: may want to map from Unix codepage to CP_ACP */
+#ifdef HAVE_ASCTIME_R
+    asctime_r( &tm, data->asctime_buffer );
+#else
+    strcpy( data->asctime_buffer, asctime(&tm) );
+#endif
+    return data->asctime_buffer;
+}
+
+/*********************************************************************
+ *		_wasctime (MSVCRT.@)
+ */
+MSVCRT_wchar_t *MSVCRT__wasctime(const struct MSVCRT_tm *mstm)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+    struct tm tm;
+    char buffer[30];
+
+    msvcrt_tm_to_unix( &tm, mstm );
 
     if (!data->wasctime_buffer)
         data->wasctime_buffer = MSVCRT_malloc( 30*sizeof(MSVCRT_wchar_t) ); /* ought to be enough */
-    MultiByteToWideChar( CP_UNIXCP, 0, asctime(&xtm), -1, data->wasctime_buffer, 30 );
+#ifdef HAVE_ASCTIME_R
+    asctime_r( &tm, buffer );
+#else
+    strcpy( buffer, asctime(&tm) );
+#endif
+    MultiByteToWideChar( CP_UNIXCP, 0, buffer, -1, data->wasctime_buffer, 30 );
     return data->wasctime_buffer;
+}
+
+/*********************************************************************
+ *		ctime (MSVCRT.@)
+ */
+char *MSVCRT_ctime(const MSVCRT_time_t *time)
+{
+    return MSVCRT_asctime( MSVCRT_localtime(time) );
 }
 
 /*********************************************************************
  *		_wctime (MSVCRT.@)
  */
-MSVCRT_wchar_t *MSVCRT__wctime(MSVCRT_time_t *time)
+MSVCRT_wchar_t *MSVCRT__wctime(const MSVCRT_time_t *time)
 {
     return MSVCRT__wasctime( MSVCRT_localtime(time) );
 }

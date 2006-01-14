@@ -95,7 +95,8 @@ struct __thread_data {
     unsigned long                   thread_doserrno;
     unsigned char                  *mbstok_next;        /* next ptr for mbstok() */
     char                           *efcvt_buffer;       /* buffer for ecvt/fcvt */
-    MSVCRT_wchar_t                 *wasctime_buffer;    /* buffer for asctime */
+    char                           *asctime_buffer;     /* buffer for asctime */
+    MSVCRT_wchar_t                 *wasctime_buffer;    /* buffer for wasctime */
     struct MSVCRT_tm                time_buffer;        /* buffer for localtime/gmtime */
     int                             fpecode;
     MSVCRT_terminate_function       terminate_handler;

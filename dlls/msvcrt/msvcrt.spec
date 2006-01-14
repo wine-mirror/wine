@@ -570,7 +570,7 @@
 @ cdecl abort() MSVCRT_abort
 @ cdecl abs(long)
 @ cdecl acos(double)
-@ cdecl asctime(ptr)
+@ cdecl asctime(ptr) MSVCRT_asctime
 @ cdecl asin(double)
 @ cdecl atan(double)
 @ cdecl atan2(double double)
@@ -585,7 +585,7 @@
 @ cdecl clock() MSVCRT_clock
 @ cdecl cos(double)
 @ cdecl cosh(double)
-@ cdecl ctime(ptr)
+@ cdecl ctime(ptr) MSVCRT_ctime
 @ cdecl difftime(long long) MSVCRT_difftime
 @ cdecl div(long long) MSVCRT_div
 @ cdecl exit(long) MSVCRT_exit
@@ -704,7 +704,7 @@
 @ cdecl strcpy(ptr str)
 @ cdecl strcspn(str str)
 @ cdecl strerror(long) MSVCRT_strerror
-@ cdecl strftime(str long str ptr)
+@ cdecl strftime(str long str ptr) MSVCRT_strftime
 @ cdecl strlen(str)
 @ cdecl strncat(str str long)
 @ cdecl strncmp(str str long)

@@ -1157,6 +1157,7 @@ AC_CHECK_FUNCS(\
 	_stricmp \
 	_strnicmp \
 	_vsnprintf \
+	asctime_r \
 	chsize \
 	clone \
 	epoll_create \
