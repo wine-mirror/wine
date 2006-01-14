@@ -4628,8 +4628,8 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
         BSTR  *rgBstrNames, UINT cMaxNames, UINT  *pcNames)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    TLBFuncDesc * pFDesc;
-    TLBVarDesc * pVDesc;
+    const TLBFuncDesc *pFDesc;
+    const TLBVarDesc *pVDesc;
     int i;
     TRACE("(%p) memid=0x%08lx Maxname=%d\n", This, memid, cMaxNames);
     for(pFDesc=This->funclist; pFDesc && pFDesc->funcdesc.memid != memid; pFDesc=pFDesc->next);
@@ -4698,7 +4698,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeOfImplType(
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     int i;
     HRESULT hr = S_OK;
-    TLBImplType *pImpl = This->impltypelist;
+    const TLBImplType *pImpl = This->impltypelist;
 
     TRACE("(%p) index %d\n", This, index);
     if (TRACE_ON(ole)) dump_TypeInfo(This);
@@ -4777,8 +4777,8 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
         LPOLESTR  *rgszNames, UINT cNames, MEMBERID  *pMemId)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    TLBFuncDesc * pFDesc;
-    TLBVarDesc * pVDesc;
+    const TLBFuncDesc *pFDesc;
+    const TLBVarDesc *pVDesc;
     HRESULT ret=S_OK;
     int i;
 
@@ -5446,8 +5446,8 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
         DWORD  *pdwHelpContext, BSTR  *pBstrHelpFile)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    TLBFuncDesc * pFDesc;
-    TLBVarDesc * pVDesc;
+    const TLBFuncDesc *pFDesc;
+    const TLBVarDesc *pVDesc;
     TRACE("(%p) memid %ld Name(%p) DocString(%p)"
           " HelpContext(%p) HelpFile(%p)\n",
         This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
@@ -5497,7 +5497,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
         WORD  *pwOrdinal)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    TLBFuncDesc *pFDesc;
+    const TLBFuncDesc *pFDesc;
 
     TRACE("(%p)->(memid %lx, %d, %p, %p, %p)\n", This, memid, invKind, pBstrDllName, pBstrName, pwOrdinal);
 
@@ -5831,7 +5831,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncIndexOfMemId( ITypeInfo2 * iface,
     MEMBERID memid, INVOKEKIND invKind, UINT *pFuncIndex)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    TLBFuncDesc *pFuncInfo;
+    const TLBFuncDesc *pFuncInfo;
     int i;
     HRESULT result;
 
@@ -6055,8 +6055,8 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation2(
 	BSTR *pbstrHelpStringDll)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    TLBFuncDesc * pFDesc;
-    TLBVarDesc * pVDesc;
+    const TLBFuncDesc *pFDesc;
+    const TLBVarDesc *pVDesc;
     TRACE("(%p) memid %ld lcid(0x%lx)  HelpString(%p) "
           "HelpStringContext(%p) HelpStringDll(%p)\n",
           This, memid, lcid, pbstrHelpString, pdwHelpStringContext,
@@ -6429,8 +6429,8 @@ static HRESULT WINAPI ITypeComp_fnBind(
     BINDPTR * pBindPtr)
 {
     ITypeInfoImpl *This = info_impl_from_ITypeComp(iface);
-    TLBFuncDesc * pFDesc;
-    TLBVarDesc * pVDesc;
+    const TLBFuncDesc *pFDesc;
+    const TLBVarDesc *pVDesc;
 
     TRACE("(%s, %lx, 0x%x, %p, %p, %p)\n", debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
 
