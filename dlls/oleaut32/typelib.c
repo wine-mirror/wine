@@ -6385,6 +6385,12 @@ HRESULT WINAPI CreateDispTypeInfo(
             (*ppFuncDesc)->funcdesc.lprgelemdescParam[param].tdesc.vt = md->ppdata[param].vt;
             (*ppFuncDesc)->pParamDesc[param].Name = SysAllocString(md->ppdata[param].szName);
         }
+        (*ppFuncDesc)->helpcontext = 0;
+        (*ppFuncDesc)->HelpStringContext = 0;
+        (*ppFuncDesc)->HelpString = NULL;
+        (*ppFuncDesc)->Entry = NULL;
+        (*ppFuncDesc)->ctCustData = 0;
+        (*ppFuncDesc)->pCustData = NULL;
         ppFuncDesc = &(*ppFuncDesc)->next;
     }        
     *pptinfo = (ITypeInfo*)pTIImpl;
