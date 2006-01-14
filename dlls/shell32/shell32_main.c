@@ -512,7 +512,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
         UINT uDummy,uFlags;
 
         hr = IShellFolder_GetUIObjectOf(psfParent, 0, 1,
-               (LPCITEMIDLIST*)&pidlLast, &IID_IExtractIconA,
+               (LPCITEMIDLIST*)&pidlLast, &IID_IExtractIconW,
                &uDummy, (LPVOID*)&pei);
         if (SUCCEEDED(hr))
         {
@@ -525,7 +525,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
             else
                 ret = FALSE;
 
-            IExtractIconA_Release(pei);
+            IExtractIconW_Release(pei);
         }
     }
 
