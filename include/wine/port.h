@@ -210,32 +210,6 @@ struct statvfs
 #endif  /* __GNUC__ */
 
 
-/* Constructor functions */
-
-#ifdef __GNUC__
-# define DECL_GLOBAL_CONSTRUCTOR(func) \
-    static void func(void) __attribute__((constructor)); \
-    static void func(void)
-#elif defined(__i386__)
-# define DECL_GLOBAL_CONSTRUCTOR(func) \
-    static void __dummy_init_##func(void) { \
-        asm(".section .init,\"ax\"\n\t" \
-            "call " #func "\n\t" \
-            ".previous"); } \
-    static void func(void)
-#elif defined(__sparc__)
-# define DECL_GLOBAL_CONSTRUCTOR(func) \
-    static void __dummy_init_##func(void) { \
-        asm("\t.section \".init\",#alloc,#execinstr\n" \
-            "\tcall " #func "\n" \
-            "\tnop\n" \
-            "\t.section \".text\",#alloc,#execinstr\n" ); } \
-    static void func(void)
-#else
-# error You must define the DECL_GLOBAL_CONSTRUCTOR macro for your platform
-#endif
-
-
 /* Register functions */
 
 #ifdef __i386__

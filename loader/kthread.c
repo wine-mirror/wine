@@ -974,7 +974,14 @@ void __pthread_initialize(void)
         if (libc_pthread_init) libc_multiple_threads = libc_pthread_init( &libc_pthread_functions );
     }
 }
-DECL_GLOBAL_CONSTRUCTOR(init) { __pthread_initialize(); }
+
+#ifdef __GNUC__
+static void init(void) __attribute__((constructor));
+static void init(void)
+{
+    __pthread_initialize();
+}
+#endif
 
 static struct pthread_functions libc_pthread_functions =
 {
