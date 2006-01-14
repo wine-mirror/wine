@@ -46,6 +46,10 @@ typedef struct _StrTable {
 typedef const STRTABLE CSTRTABLE;
 typedef CSTRTABLE *LPCSTRTABLE;
 
+/* Flags for AddDelBackupEntry */
+#define AADBE_ADD_ENTRY             0x01
+#define AADBE_DEL_ENTRY             0x02
+
 /* Flags for AdvInstallFile */
 #define AIF_WARNIFSKIP              0x00000001
 #define AIF_NOSKIP                  0x00000002
@@ -96,6 +100,8 @@ typedef CSTRTABLE *LPCSTRTABLE;
 #define  AFSR_USEREFCNT             IE4_USEREFCNT
 #define  AFSR_EXTRAINCREFCNT        IE4_EXTRAINCREFCNT
 
+HRESULT WINAPI AddDelBackupEntry(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
+     LPCSTR lpcszBaseName, DWORD dwFlags);
 HRESULT WINAPI AdvInstallFile(HWND hwnd, LPCSTR lpszSourceDir,
      LPCSTR lpszSourceFile, LPCSTR lpszDestDir, LPCSTR lpszDestFile,
      DWORD dwFlags, DWORD dwReserved);

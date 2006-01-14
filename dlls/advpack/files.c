@@ -31,6 +31,34 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
+/***********************************************************************
+ *      AddDelBackupEntry (ADVPACK.@)
+ *
+ * Either marks the file in the file list as not existing during file
+ * save, or deletes the file entry from the INI.
+ *
+ * PARAMS
+ *   lpcszFileList  [I] NULL-separated list of filenames.
+ *   lpcszBackupDir [I] Path of the backup directory.
+ *   lpcszBaseName  [I] Basename of the backup files.
+ *   dwFlags        [I] See advpub.h.
+ *
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
+ *
+ * BUGS
+ *   Unimplemented.
+ */
+HRESULT WINAPI AddDelBackupEntry(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
+                                 LPCSTR lpcszBaseName, DWORD dwFlags)
+{
+    FIXME("(%p, %p, %p, %ld) stub\n", lpcszFileList, lpcszBackupDir,
+          lpcszBaseName, dwFlags);
+
+    return E_FAIL;
+}
+
 /* FIXME: this is only for the local case, X:\ */
 #define ROOT_LENGTH 3
 
