@@ -905,12 +905,18 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* i
     {
         IShellFolder *pParentSF;
         LPCITEMIDLIST pidlLast;
+        LPITEMIDLIST pidlComplete = ILCombine(This->m_pidlLocation, *ppidl);
         HRESULT hr;
         
-        hr = SHBindToParent(*ppidl, &IID_IShellFolder, (LPVOID*)&pParentSF, &pidlLast);
-        if (FAILED(hr)) return E_FAIL;
+        hr = SHBindToParent(pidlComplete, &IID_IShellFolder, (LPVOID*)&pParentSF, &pidlLast);
+        if (FAILED(hr)) {
+            FIXME("SHBindToParent failed! hr = %08lx\n", hr);
+            ILFree(pidlComplete);
+            return E_FAIL;
+        }
         IShellFolder_GetAttributesOf(pParentSF, 1, &pidlLast, pdwAttributes);
         IShellFolder_Release(pParentSF);
+        ILFree(pidlComplete);
     }
 
     if (!result) TRACE("FAILED!\n");
@@ -1272,7 +1278,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
     }
     else
     {
-	int len = MultiByteToWideChar(CP_UNIXCP, 0, szDest, -1, NULL, 0);
+        int len = MultiByteToWideChar(CP_UNIXCP, 0, szDest, -1, NULL, 0);
 
         pwszDosDest = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_UNIXCP, 0, szDest, -1, pwszDosDest, len);
