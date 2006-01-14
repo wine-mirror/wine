@@ -1,7 +1,7 @@
 /*
  * explorer.exe
  *
- * Copyright 2005 CodeWeavers, Aric Stewart
+ * Copyright 2005,2006 CodeWeavers, Aric Stewart
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -148,14 +148,49 @@ int WINAPI WinMain(HINSTANCE hinstance,
     parameters_struct   parameters;
     BOOL rc;
     static WCHAR winefile[] = {'w','i','n','e','f','i','l','e','.','e','x','e',0};
+    static WCHAR space[] = {' ',0};
+    LPWSTR winefile_commandline = NULL;
+    DWORD len = 0;
 
     memset(&parameters,0,sizeof(parameters));
     memset(&si,0,sizeof(STARTUPINFOW));
 
     ParseCommandLine(cmdline,&parameters);
+    len = lstrlenW(winefile) +1;
+    
+    if (parameters.selection[0])
+    {
+        len += lstrlenW(parameters.selection) + 2;
+        winefile_commandline = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
 
-    rc = CreateProcessW(NULL, winefile, NULL, NULL, FALSE, 0, NULL,
+        lstrcpyW(winefile_commandline,winefile);
+        lstrcatW(winefile_commandline,space);
+        lstrcatW(winefile_commandline,parameters.selection);
+    }
+    else if (parameters.root[0])
+    {
+        len += lstrlenW(parameters.root) + 3;
+        winefile_commandline = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+
+        lstrcpyW(winefile_commandline,winefile);
+        lstrcatW(winefile_commandline,space);
+        lstrcatW(winefile_commandline,parameters.root);
+        if (winefile_commandline[lstrlenW(winefile_commandline)-1]!='\\')
+        {
+            static const WCHAR slash[] = {'\\',0};
+            lstrcatW(winefile_commandline,slash);
+        }
+    }
+    else
+    {
+        winefile_commandline = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+        lstrcpyW(winefile_commandline,winefile);
+    }
+
+    rc = CreateProcessW(NULL, winefile_commandline, NULL, NULL, FALSE, 0, NULL,
                         parameters.root, &si, &info);
+
+    HeapFree(GetProcessHeap(),0,winefile_commandline);
     
     if (!rc)
         return 0;
