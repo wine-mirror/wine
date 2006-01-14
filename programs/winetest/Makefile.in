@@ -26,6 +26,7 @@ TESTBINS = \
 	@XFILES@ \
 	advpack_test.exe$(DLLEXT) \
 	advapi32_test.exe$(DLLEXT) \
+	cabinet_test.exe$(DLLEXT) \
 	comctl32_test.exe$(DLLEXT) \
 	crypt32_test.exe$(DLLEXT) \
 	dinput_test.exe$(DLLEXT) \
@@ -102,6 +103,8 @@ advpack_test.exe$(DLLEXT): $(DLLDIR)/advpack/tests/advpack_test.exe$(DLLEXT)
 	cp $(DLLDIR)/advpack/tests/advpack_test.exe$(DLLEXT) $@ && $(STRIP) $@
 advapi32_test.exe$(DLLEXT): $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+cabinet_test.exe$(DLLEXT): $(DLLDIR)/cabinet/tests/cabinet_test.exe$(DLLEXT)
+	cp $(DLLDIR)/cabinet/tests/cabinet_test.exe$(DLLEXT) $@ && $(STRIP) $@
 comctl32_test.exe$(DLLEXT): $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 crypt32_test.exe$(DLLEXT): $(DLLDIR)/crypt32/tests/crypt32_test.exe$(DLLEXT)
