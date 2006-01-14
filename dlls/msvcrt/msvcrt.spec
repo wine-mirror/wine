@@ -270,7 +270,7 @@
 @ cdecl _heapset(long)
 @ stub _heapused #(ptr ptr)
 @ cdecl _heapwalk(ptr)
-@ cdecl _hypot(double double) hypot
+@ cdecl _hypot(double double)
 @ cdecl _i64toa(long long ptr long) ntdll._i64toa
 @ cdecl _i64tow(long long ptr long) ntdll._i64tow
 @ cdecl _initterm(ptr ptr)
@@ -312,9 +312,9 @@
 @ cdecl _isnan( double )
 @ cdecl _itoa(long ptr long) ntdll._itoa
 @ cdecl _itow(long ptr long) ntdll._itow
-@ cdecl _j0(double) j0
-@ cdecl _j1(double) j1
-@ cdecl _jn(long double) jn
+@ cdecl _j0(double)
+@ cdecl _j1(double)
+@ cdecl _jn(long double)
 @ cdecl _kbhit()
 @ cdecl _lfind(ptr ptr ptr long ptr)
 @ cdecl _loaddll(str)
@@ -346,11 +346,11 @@
 @ cdecl _mbctoupper(long)
 @ extern _mbctype MSVCRT_mbctype
 @ stub _mbsbtype #(str long)
-@ cdecl _mbscat(str str) strcat
+@ cdecl _mbscat(str str)
 @ cdecl _mbschr(str long)
 @ cdecl _mbscmp(str str)
 @ cdecl _mbscoll(str str)
-@ cdecl _mbscpy(ptr str) strcpy
+@ cdecl _mbscpy(ptr str)
 @ cdecl _mbscspn (str str)
 @ cdecl _mbsdec(ptr ptr)
 @ cdecl _mbsdup(str) _strdup
@@ -383,7 +383,7 @@
 @ cdecl _mbsset(str long)
 @ cdecl _mbsspn(str str)
 @ stub _mbsspnp #(str str)
-@ cdecl _mbsstr(str str) strstr
+@ cdecl _mbsstr(str str)
 @ cdecl _mbstok(str str)
 @ cdecl _mbstrlen(str)
 @ cdecl _mbsupr(str)
@@ -575,12 +575,12 @@
 @ cdecl atan(double) MSVCRT_atan
 @ cdecl atan2(double double) MSVCRT_atan2
 @ cdecl atexit(ptr) MSVCRT_atexit
-@ cdecl atof(str)
+@ cdecl atof(str) MSVCRT_atof
 @ cdecl atoi(str)
 @ cdecl atol(str)
 @ cdecl bsearch(ptr ptr long long ptr)
 @ cdecl calloc(long long) MSVCRT_calloc
-@ cdecl ceil(double)
+@ cdecl ceil(double) MSVCRT_ceil
 @ cdecl clearerr(ptr) MSVCRT_clearerr
 @ cdecl clock() MSVCRT_clock
 @ cdecl cos(double) MSVCRT_cos
@@ -590,7 +590,7 @@
 @ cdecl div(long long) MSVCRT_div
 @ cdecl exit(long) MSVCRT_exit
 @ cdecl exp(double) MSVCRT_exp
-@ cdecl fabs(double)
+@ cdecl fabs(double) MSVCRT_fabs
 @ cdecl fclose(ptr) MSVCRT_fclose
 @ cdecl feof(ptr) MSVCRT_feof
 @ cdecl ferror(ptr) MSVCRT_ferror
@@ -600,7 +600,7 @@
 @ cdecl fgets(ptr long ptr) MSVCRT_fgets
 @ cdecl fgetwc(ptr) MSVCRT_fgetwc
 @ cdecl fgetws(ptr long ptr) MSVCRT_fgetws
-@ cdecl floor(double)
+@ cdecl floor(double) MSVCRT_floor
 @ cdecl fmod(double double) MSVCRT_fmod
 @ cdecl fopen(str str) MSVCRT_fopen
 @ varargs fprintf(ptr str) MSVCRT_fprintf
@@ -611,7 +611,7 @@
 @ cdecl fread(ptr long long ptr) MSVCRT_fread
 @ cdecl free(ptr) MSVCRT_free
 @ cdecl freopen(str str ptr) MSVCRT_freopen
-@ cdecl frexp(double ptr)
+@ cdecl frexp(double ptr) MSVCRT_frexp
 @ varargs fscanf(ptr str) MSVCRT_fscanf
 @ cdecl fseek(ptr long long) MSVCRT_fseek
 @ cdecl fsetpos(ptr ptr) MSVCRT_fsetpos
@@ -670,7 +670,7 @@
 @ cdecl memmove(ptr ptr long)
 @ cdecl memset(ptr long long)
 @ cdecl mktime(ptr) MSVCRT_mktime
-@ cdecl modf(double ptr)
+@ cdecl modf(double ptr) MSVCRT_modf
 @ cdecl perror(str) MSVCRT_perror
 @ cdecl pow(double double) MSVCRT_pow
 @ varargs printf(str) MSVCRT_printf
@@ -700,7 +700,7 @@
 @ cdecl strcat(str str)
 @ cdecl strchr(str long)
 @ cdecl strcmp(str str)
-@ cdecl strcoll(str str)
+@ cdecl strcoll(str str) MSVCRT_strcoll
 @ cdecl strcpy(ptr str)
 @ cdecl strcspn(str str)
 @ cdecl strerror(long) MSVCRT_strerror
@@ -713,11 +713,11 @@
 @ cdecl strrchr(str long)
 @ cdecl strspn(str str)
 @ cdecl strstr(str str)
-@ cdecl strtod(str ptr)
+@ cdecl strtod(str ptr) MSVCRT_strtod
 @ cdecl strtok(str str) MSVCRT_strtok
 @ cdecl strtol(str ptr long)
 @ cdecl strtoul(str ptr long)
-@ cdecl strxfrm(ptr str long)
+@ cdecl strxfrm(ptr str long) MSVCRT_strxfrm
 @ varargs swprintf(wstr wstr) MSVCRT_swprintf
 @ varargs swscanf(wstr wstr) MSVCRT_swscanf
 @ cdecl system(str) MSVCRT_system

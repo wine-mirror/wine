@@ -606,6 +606,32 @@ int _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t
 }
 
 /*********************************************************************
+ *		_mbscat (MSVCRT.@)
+ */
+unsigned char *_mbscat( unsigned char *dst, const unsigned char *src )
+{
+    strcat( (char *)dst, (const char *)src );
+    return dst;
+}
+
+/*********************************************************************
+ *		_mbscpy (MSVCRT.@)
+ */
+unsigned char* _mbscpy( unsigned char *dst, const unsigned char *src )
+{
+    strcpy( (char *)dst, (const char *)src );
+    return dst;
+}
+
+/*********************************************************************
+ *		_mbsstr (MSVCRT.@)
+ */
+unsigned char *_mbsstr(const unsigned char *haystack, const unsigned char *needle)
+{
+    return (unsigned char *)strstr( (const char *)haystack, (const char *)needle );
+}
+
+/*********************************************************************
  *		_mbschr(MSVCRT.@)
  *
  * Find a multibyte character in a multibyte string.

@@ -21,6 +21,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdlib.h>
 #include "msvcrt.h"
 #include "wine/debug.h"
 
@@ -135,6 +136,41 @@ void MSVCRT__swab(char* src, char* dst, int len)
     }
   }
 }
+
+/*********************************************************************
+ *		atof  (MSVCRT.@)
+ */
+double MSVCRT_atof( const char *str )
+{
+    return atof( str );
+}
+
+/*********************************************************************
+ *		strtod  (MSVCRT.@)
+ */
+double MSVCRT_strtod( const char *str, char **end )
+{
+    return strtod( str, end );
+}
+
+/*********************************************************************
+ *		strcoll (MSVCRT.@)
+ */
+int MSVCRT_strcoll( const char* str1, const char* str2 )
+{
+    /* FIXME: handle Windows locale */
+    return strcoll( str1, str2 );
+}
+
+/*********************************************************************
+ *		strxfrm (MSVCRT.@)
+ */
+MSVCRT_size_t MSVCRT_strxfrm( char *dest, const char *src, MSVCRT_size_t len )
+{
+    /* FIXME: handle Windows locale */
+    return strxfrm( dest, src, len );
+}
+
 /*********************************************************************
  *		_stricoll (MSVCRT.@)
  */

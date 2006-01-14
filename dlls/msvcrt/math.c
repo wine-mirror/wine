@@ -490,6 +490,55 @@ double _scalb(double num, long power)
 }
 
 /*********************************************************************
+ *		_hypot (MSVCRT.@)
+ */
+double _hypot(double x, double y)
+{
+  /* FIXME: errno handling */
+  return hypot( x, y );
+}
+
+/*********************************************************************
+ *		ceil (MSVCRT.@)
+ */
+double MSVCRT_ceil( double x )
+{
+  return ceil(x);
+}
+
+/*********************************************************************
+ *		floor (MSVCRT.@)
+ */
+double MSVCRT_floor( double x )
+{
+  return floor(x);
+}
+
+/*********************************************************************
+ *		fabs (MSVCRT.@)
+ */
+double MSVCRT_fabs( double x )
+{
+  return fabs(x);
+}
+
+/*********************************************************************
+ *		frexp (MSVCRT.@)
+ */
+double MSVCRT_frexp( double x, int *exp )
+{
+  return frexp( x, exp );
+}
+
+/*********************************************************************
+ *		modf (MSVCRT.@)
+ */
+double MSVCRT_modf( double x, double *iptr )
+{
+  return modf( x, iptr );
+}
+
+/*********************************************************************
  *		_matherr (MSVCRT.@)
  */
 int MSVCRT__matherr(struct MSVCRT__exception *e)
@@ -712,6 +761,33 @@ INT  _isnan(double num)
    * Do the same, as the result may be used in calculations
    */
   return isnan(num) ? 1 : 0;
+}
+
+/*********************************************************************
+ *		_j0 (MSVCRT.@)
+ */
+double _j0(double num)
+{
+  /* FIXME: errno handling */
+  return j0(num);
+}
+
+/*********************************************************************
+ *		_j1 (MSVCRT.@)
+ */
+double _j1(double num)
+{
+  /* FIXME: errno handling */
+  return j1(num);
+}
+
+/*********************************************************************
+ *		jn (MSVCRT.@)
+ */
+double _jn(int n, double num)
+{
+  /* FIXME: errno handling */
+  return jn(n, num);
 }
 
 /*********************************************************************
