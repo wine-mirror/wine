@@ -39,11 +39,25 @@ void _beep( unsigned int freq, unsigned int duration)
 }
 
 /*********************************************************************
+ *		srand (MSVCRT.@)
+ */
+void MSVCRT_srand( unsigned int seed )
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+    data->random_seed = seed;
+}
+
+/*********************************************************************
  *		rand (MSVCRT.@)
  */
 int MSVCRT_rand(void)
 {
-  return (rand() & 0x7fff);
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    /* this is the algorithm used by MSVC, according to
+     * http://en.wikipedia.org/wiki/List_of_pseudorandom_number_generators */
+    data->random_seed = data->random_seed * 214013 + 2531011;
+    return (data->random_seed >> 16) & MSVCRT_RAND_MAX;
 }
 
 /*********************************************************************

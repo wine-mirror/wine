@@ -44,6 +44,7 @@ thread_data_t *msvcrt_get_thread_data(void)
         if (!(ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ptr) )))
             _amsg_exit( _RT_THREAD );
         if (!TlsSetValue( msvcrt_tls_index, ptr )) _amsg_exit( _RT_THREAD );
+        ptr->random_seed = 1;
     }
     SetLastError( err );
     return ptr;

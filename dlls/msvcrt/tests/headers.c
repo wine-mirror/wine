@@ -303,6 +303,7 @@ static void test_defines(void)
     CHECK_DEF(WEOF);
     CHECK_DEF(EOF);
     CHECK_DEF(TMP_MAX);
+    CHECK_DEF(RAND_MAX);
     CHECK_DEF(BUFSIZ);
     CHECK_DEF(STDIN_FILENO);
     CHECK_DEF(STDOUT_FILENO);

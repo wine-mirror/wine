@@ -93,6 +93,7 @@ extern DWORD msvcrt_tls_index;
 struct __thread_data {
     int                             thread_errno;
     unsigned long                   thread_doserrno;
+    unsigned int                    random_seed;        /* seed for rand() */
     char                           *strtok_next;        /* next ptr for strtok() */
     unsigned char                  *mbstok_next;        /* next ptr for mbstok() */
     MSVCRT_wchar_t                 *wcstok_next;        /* next ptr for wcstok() */
@@ -375,6 +376,7 @@ struct MSVCRT__stati64 {
 #define MSVCRT_WEOF (MSVCRT_wint_t)(0xFFFF)
 #define MSVCRT_EOF       (-1)
 #define MSVCRT_TMP_MAX   0x7fff
+#define MSVCRT_RAND_MAX  0x7fff
 #define MSVCRT_BUFSIZ    512
 
 #define MSVCRT_STDIN_FILENO  0

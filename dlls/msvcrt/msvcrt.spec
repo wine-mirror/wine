@@ -695,7 +695,7 @@
 @ cdecl sinh(double)
 @ varargs sprintf(ptr str) MSVCRT_sprintf
 @ cdecl sqrt(double)
-@ cdecl srand(long)
+@ cdecl srand(long) MSVCRT_srand
 @ varargs sscanf(str str) MSVCRT_sscanf
 @ cdecl strcat(str str)
 @ cdecl strchr(str long)
