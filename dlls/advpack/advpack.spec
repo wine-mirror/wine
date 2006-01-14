@@ -1,6 +1,6 @@
 @ stdcall AddDelBackupEntry(str str str long)
 @ stdcall AdvInstallFile(long str str str str long long)
-@ stub CloseINFEngine
+@ stdcall CloseINFEngine(long)
 @ stdcall DelNode(str long)
 @ stdcall DelNodeRunDLL32(ptr ptr str long)
 @ stdcall -private DllMain(long long ptr)
@@ -17,7 +17,7 @@
 @ stdcall LaunchINFSectionEx(ptr ptr str long)
 @ stdcall NeedReboot(long)
 @ stdcall NeedRebootInit()
-@ stub OpenINFEngine
+@ stdcall OpenINFEngine(str str long ptr ptr)
 @ stub RebootCheckOnInstall
 @ stdcall RegInstall(ptr str ptr)
 @ stdcall RegRestoreAll(ptr str long)
@@ -27,6 +27,6 @@
 @ stdcall RunSetupCommand(long str str str str ptr long ptr)
 @ stub SetPerUserSecValues
 @ stdcall TranslateInfString(str str str str ptr long ptr ptr)
-@ stub TranslateInfStringEx
+@ stdcall TranslateInfStringEx(long str str str str long ptr ptr)
 @ stub UserInstStubWrapper
 @ stub UserUnInstStubWrapper

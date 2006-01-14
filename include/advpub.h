@@ -46,6 +46,10 @@ typedef struct _StrTable {
 typedef const STRTABLE CSTRTABLE;
 typedef CSTRTABLE *LPCSTRTABLE;
 
+#ifndef _INC_SETUPAPI
+typedef PVOID HINF;
+#endif
+
 /* Flags for AddDelBackupEntry */
 #define AADBE_ADD_ENTRY             0x01
 #define AADBE_DEL_ENTRY             0x02
@@ -105,6 +109,7 @@ HRESULT WINAPI AddDelBackupEntry(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
 HRESULT WINAPI AdvInstallFile(HWND hwnd, LPCSTR lpszSourceDir,
      LPCSTR lpszSourceFile, LPCSTR lpszDestDir, LPCSTR lpszDestFile,
      DWORD dwFlags, DWORD dwReserved);
+HRESULT WINAPI CloseINFEngine(HINF hInf);
 HRESULT WINAPI DelNode(LPCSTR pszFileOrDirName, DWORD dwFlags);
 HRESULT WINAPI DelNodeRunDLL32(HWND,HINSTANCE,LPSTR,INT);
 HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved );
@@ -121,6 +126,8 @@ INT WINAPI LaunchINFSection(HWND,HINSTANCE,LPSTR,INT);
 HRESULT WINAPI LaunchINFSectionEx(HWND,HINSTANCE,LPSTR,INT);
 DWORD WINAPI NeedRebootInit(VOID);
 BOOL WINAPI NeedReboot(DWORD dwRebootCheck);
+HRESULT WINAPI OpenINFEngine(PCSTR pszInfFilename, PCSTR pszInstallSection,
+     DWORD dwFlags, HINF *phInf, PVOID pvReserved);
 HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable);
 HRESULT WINAPI RegRestoreAll(HWND hWnd, PSTR pszTitleString, HKEY hkBackupKey);
 HRESULT WINAPI RegSaveRestore(HWND hWnd, PCSTR pszTitleString, HKEY hkBackupKey,
@@ -133,6 +140,9 @@ HRESULT WINAPI RunSetupCommand(HWND hWnd,
 HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
      PCSTR pszTranslateSection, PCSTR pszTranslateKey, PSTR pszBuffer,
      DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved);
+HRESULT WINAPI TranslateInfStringEx(HINF hInf, PCSTR pszInfFilename,
+    PCSTR pszTranslateSection, PCSTR pszTranslateKey, PSTR pszBuffer,
+    DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved);
 
 #ifdef __cplusplus
 }

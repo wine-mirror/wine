@@ -37,6 +37,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 typedef HRESULT (WINAPI *DLLREGISTER) (void);
 
 /***********************************************************************
+ *           CloseINFEngine (ADVPACK.@)
+ *
+ *
+ * PARAMS
+ *   hInf [I]
+ *
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
+ *
+ * BUGS
+ *   Unimplemented.
+ */
+HRESULT WINAPI CloseINFEngine(HINF hInf)
+{
+    FIXME("(%p) stub\n", hInf);
+
+    return E_FAIL;
+}
+
+/***********************************************************************
  *           DllMain (ADVPACK.@)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -245,6 +266,35 @@ BOOL WINAPI NeedReboot(DWORD dwRebootCheck)
 }
 
 /***********************************************************************
+ *             OpenINFEngine    (ADVPACK.@)
+ *
+ * Opens and returns a handle to an INF file to be used by
+ * TranslateInfStringEx to continuously translate the INF file.
+ *
+ * PARAMS
+ *   pszInfFilename    [I] Filename of the INF to open.
+ *   pszInstallSection [I] Name of the Install section in the INF.
+ *   dwFlags           [I] See advpub.h.
+ *   phInf             [O] Handle to the loaded INF file.
+ *   pvReserved        [I] Reserved.  Must be NULL.
+ *
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
+ *
+ * BUGS
+ *   Unimplemented.
+ */
+HRESULT WINAPI OpenINFEngine(PCSTR pszInfFilename, PCSTR pszInstallSection,
+                             DWORD dwFlags, HINF *phInf, PVOID pvReserved)
+{
+    FIXME("(%p, %p, %ld, %p, %p) stub\n", pszInfFilename, pszInstallSection,
+          dwFlags, phInf, pvReserved);
+
+    return E_FAIL;
+}
+
+/***********************************************************************
  *             RegisterOCX    (ADVPACK.@)
  */
 void WINAPI RegisterOCX( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
@@ -360,4 +410,48 @@ HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
     }
 
     return S_OK;
+}
+
+/***********************************************************************
+ *             TranslateInfStringEx    (ADVPACK.@)
+ *
+ * Using a handle to an INF file opened with OpenINFEngine, translates
+ * the value of a specified key in an inf file into the current locale
+ * by expanding string macros.
+ *
+ * PARAMS
+ *   hInf                [I] Handle to the INF file.
+ *   pszInfFilename      [I] Filename of the INF file.
+ *   pszTranslateSection [I] Inf section where the key exists.
+ *   pszTranslateKey     [I] Key to translate.
+ *   pszBuffer           [O] Contains the translated string on exit.
+ *   dwBufferSize        [I] Size on input of pszBuffer.
+ *   pdwRequiredSize     [O] Length of the translated key.
+ *   pvReserved          [I] Reserved.  Must be NULL.
+ *
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
+ *
+ * NOTES
+ *   To use TranslateInfStringEx to translate an INF file continuously,
+ *   open the INF file with OpenINFEngine, call TranslateInfStringEx as
+ *   many times as needed, then release the handle with CloseINFEngine.
+ *   When translating more than one keys, this method is more efficient
+ *   than calling TranslateInfString, because the INF file is only
+ *   opened once.
+ *
+ * BUGS
+ *   Unimplemented.
+ */
+HRESULT WINAPI TranslateInfStringEx(HINF hInf, PCSTR pszInfFilename,
+                                    PCSTR pszTranslateSection, PCSTR pszTranslateKey,
+                                    PSTR pszBuffer, DWORD dwBufferSize,
+                                    PDWORD pdwRequiredSize, PVOID pvReserved)
+{
+    FIXME("(%p, %p, %p, %p, %p, %ld, %p, %p) stub\n", hInf, pszInfFilename,
+          pszTranslateSection, pszTranslateKey, pszBuffer, dwBufferSize,
+          pdwRequiredSize, pvReserved);
+
+    return E_FAIL;   
 }
