@@ -117,7 +117,7 @@ HRESULT WINAPI AdvInstallFile(HWND hwnd, LPCSTR lpszSourceDir, LPCSTR lpszSource
     HSPFILEQ fileQueue;
     PVOID pContext;
 
-    TRACE("(%p,%p,%p,%p,%p,%ld,%ld) stub\n", hwnd, debugstr_a(lpszSourceDir),
+    TRACE("(%p,%p,%p,%p,%p,%ld,%ld)\n", hwnd, debugstr_a(lpszSourceDir),
           debugstr_a(lpszSourceFile), debugstr_a(lpszDestDir),
           debugstr_a(lpszDestFile), dwFlags, dwReserved);
 
@@ -494,7 +494,7 @@ HRESULT WINAPI ExtractFiles ( LPCSTR CabName, LPCSTR ExpandDir, DWORD Flags,
     DWORD dwFilesFound = 0;
     LPSTR szConvertedList = NULL;
 
-    TRACE("(%p %p %ld %p %p %ld): stub\n", CabName, ExpandDir, Flags,
+    TRACE("(%p %p %ld %p %p %ld)\n", CabName, ExpandDir, Flags,
           FileList, LReserved, Reserved);
 
     if (!CabName || !ExpandDir)
