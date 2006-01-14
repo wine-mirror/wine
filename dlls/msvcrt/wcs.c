@@ -712,9 +712,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
 
     /* check we reached the end, and null terminate the string */
     assert( *p == 0 );
-    r = pf_output_stringW( out, p, 1 );
-    if( r<0 )
-        return r;
+    pf_output_stringW( out, p, 1 );
 
     return out->used - 1;
 }
@@ -750,6 +748,19 @@ int MSVCRT_vsnprintf( char *str, unsigned int len,
 }
 
 /*********************************************************************
+ *		_snprintf (MSVCRT.@)
+ */
+int MSVCRT__snprintf(char *str, unsigned int len, const char *format, ...)
+{
+    int retval;
+    va_list valist;
+    va_start(valist, format);
+    retval = MSVCRT_vsnprintf(str, len, format, valist);
+    va_end(valist);
+    return retval;
+}
+
+/*********************************************************************
  *		_vsnwsprintf (MSVCRT.@)
  */
 int MSVCRT_vsnwprintf( MSVCRT_wchar_t *str, unsigned int len,
@@ -763,6 +774,19 @@ int MSVCRT_vsnwprintf( MSVCRT_wchar_t *str, unsigned int len,
     out.len = len;
 
     return pf_vsnprintf( &out, format, valist );
+}
+
+/*********************************************************************
+ *		_snwprintf (MSVCRT.@)
+ */
+int MSVCRT__snwprintf( MSVCRT_wchar_t *str, unsigned int len, const MSVCRT_wchar_t *format, ...)
+{
+    int retval;
+    va_list valist;
+    va_start(valist, format);
+    retval = MSVCRT_vsnwprintf(str, len, format, valist);
+    va_end(valist);
+    return retval;
 }
 
 /*********************************************************************

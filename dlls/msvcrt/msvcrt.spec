@@ -433,8 +433,8 @@
 @ cdecl _setmode(long long)
 @ stub _setsystime #(ptr long)
 @ cdecl _sleep(long)
-@ varargs _snprintf(str long str) snprintf
-@ varargs _snwprintf(wstr long wstr) ntdll._snwprintf
+@ varargs _snprintf(str long str) MSVCRT__snprintf
+@ varargs _snwprintf(wstr long wstr) MSVCRT__snwprintf
 @ varargs _sopen(str long long) MSVCRT__sopen
 @ varargs _spawnl(long str str)
 @ varargs _spawnle(long str str)

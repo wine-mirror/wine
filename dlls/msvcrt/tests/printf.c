@@ -496,16 +496,12 @@ static void test_snprintf (void)
     struct snprintf_test {
         const char *format;
         int expected;
-        struct {
-            int retval;
-            int render;
-        } todo;
     };
     /* Pre-2.1 libc behaviour, not C99 compliant. */
-    const struct snprintf_test tests[] = {{"short", 5, {0, 0}},
-                                          {"justfit", 7, {0, 0}},
-                                          {"justfits", 8, {0, 1}},
-                                          {"muchlonger", -1, {1, 1}}};
+    const struct snprintf_test tests[] = {{"short", 5},
+                                          {"justfit", 7},
+                                          {"justfits", 8},
+                                          {"muchlonger", -1}};
     char buffer[8];
     const int bufsiz = sizeof buffer;
     unsigned int i;
@@ -516,12 +512,10 @@ static void test_snprintf (void)
         const int n      = _snprintf (buffer, bufsiz, fmt);
         const int valid  = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
-        todo (tests[i].todo.retval ? "wine" : "none")
-            ok (n == expect, "\"%s\": expected %d, returned %d\n",
-                fmt, expect, n);
-        todo (tests[i].todo.render ? "wine" : "none")
-            ok (!memcmp (fmt, buffer, valid),
-                "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
+        ok (n == expect, "\"%s\": expected %d, returned %d\n",
+            fmt, expect, n);
+        ok (!memcmp (fmt, buffer, valid),
+            "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
     };
 }
 
