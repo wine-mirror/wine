@@ -569,11 +569,11 @@
 @ cdecl _yn(long double )
 @ cdecl abort() MSVCRT_abort
 @ cdecl abs(long)
-@ cdecl acos(double)
+@ cdecl acos(double) MSVCRT_acos
 @ cdecl asctime(ptr) MSVCRT_asctime
-@ cdecl asin(double)
-@ cdecl atan(double)
-@ cdecl atan2(double double)
+@ cdecl asin(double) MSVCRT_asin
+@ cdecl atan(double) MSVCRT_atan
+@ cdecl atan2(double double) MSVCRT_atan2
 @ cdecl atexit(ptr) MSVCRT_atexit
 @ cdecl atof(str)
 @ cdecl atoi(str)
@@ -583,13 +583,13 @@
 @ cdecl ceil(double)
 @ cdecl clearerr(ptr) MSVCRT_clearerr
 @ cdecl clock() MSVCRT_clock
-@ cdecl cos(double)
-@ cdecl cosh(double)
+@ cdecl cos(double) MSVCRT_cos
+@ cdecl cosh(double) MSVCRT_cosh
 @ cdecl ctime(ptr) MSVCRT_ctime
 @ cdecl difftime(long long) MSVCRT_difftime
 @ cdecl div(long long) MSVCRT_div
 @ cdecl exit(long) MSVCRT_exit
-@ cdecl exp(double)
+@ cdecl exp(double) MSVCRT_exp
 @ cdecl fabs(double)
 @ cdecl fclose(ptr) MSVCRT_fclose
 @ cdecl feof(ptr) MSVCRT_feof
@@ -601,7 +601,7 @@
 @ cdecl fgetwc(ptr) MSVCRT_fgetwc
 @ cdecl fgetws(ptr long ptr) MSVCRT_fgetws
 @ cdecl floor(double)
-@ cdecl fmod(double double)
+@ cdecl fmod(double double) MSVCRT_fmod
 @ cdecl fopen(str str) MSVCRT_fopen
 @ varargs fprintf(ptr str) MSVCRT_fprintf
 @ cdecl fputc(long ptr) MSVCRT_fputc
@@ -657,8 +657,8 @@
 @ cdecl ldiv(long long) MSVCRT_ldiv
 @ cdecl localeconv() MSVCRT_localeconv
 @ cdecl localtime(ptr) MSVCRT_localtime
-@ cdecl log(double)
-@ cdecl log10(double)
+@ cdecl log(double) MSVCRT_log
+@ cdecl log10(double) MSVCRT_log10
 @ cdecl -i386 longjmp(ptr long) MSVCRT_longjmp
 @ cdecl malloc(long) MSVCRT_malloc
 @ cdecl mblen(ptr long) MSVCRT_mblen
@@ -672,7 +672,7 @@
 @ cdecl mktime(ptr) MSVCRT_mktime
 @ cdecl modf(double ptr)
 @ cdecl perror(str) MSVCRT_perror
-@ cdecl pow(double double)
+@ cdecl pow(double double) MSVCRT_pow
 @ varargs printf(str) MSVCRT_printf
 @ cdecl putc(long ptr) MSVCRT_putc
 @ cdecl putchar(long) MSVCRT_putchar
@@ -691,10 +691,10 @@
 @ cdecl setlocale(long str) MSVCRT_setlocale
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
 @ cdecl signal(long long) MSVCRT_signal
-@ cdecl sin(double)
-@ cdecl sinh(double)
+@ cdecl sin(double) MSVCRT_sin
+@ cdecl sinh(double) MSVCRT_sinh
 @ varargs sprintf(ptr str) MSVCRT_sprintf
-@ cdecl sqrt(double)
+@ cdecl sqrt(double) MSVCRT_sqrt
 @ cdecl srand(long) MSVCRT_srand
 @ varargs sscanf(str str) MSVCRT_sscanf
 @ cdecl strcat(str str)
@@ -721,8 +721,8 @@
 @ varargs swprintf(wstr wstr) MSVCRT_swprintf
 @ varargs swscanf(wstr wstr) MSVCRT_swscanf
 @ cdecl system(str) MSVCRT_system
-@ cdecl tan(double)
-@ cdecl tanh(double)
+@ cdecl tan(double) MSVCRT_tan
+@ cdecl tanh(double) MSVCRT_tanh
 @ cdecl time(ptr) MSVCRT_time
 @ cdecl tmpfile() MSVCRT_tmpfile
 @ cdecl tmpnam(ptr) MSVCRT_tmpnam

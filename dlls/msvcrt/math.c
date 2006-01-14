@@ -51,6 +51,155 @@ typedef int (*MSVCRT_matherr_func)(struct MSVCRT__exception *);
 
 static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 
+/*********************************************************************
+ *		MSVCRT_acos (MSVCRT.@)
+ */
+double MSVCRT_acos( double x )
+{
+  if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return acos(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_asin (MSVCRT.@)
+ */
+double MSVCRT_asin( double x )
+{
+  if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return asin(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_atan (MSVCRT.@)
+ */
+double MSVCRT_atan( double x )
+{
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return atan(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_atan2 (MSVCRT.@)
+ */
+double MSVCRT_atan2( double x, double y )
+{
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return atan2(x,y);
+}
+
+/*********************************************************************
+ *		MSVCRT_cos (MSVCRT.@)
+ */
+double MSVCRT_cos( double x )
+{
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return cos(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_cosh (MSVCRT.@)
+ */
+double MSVCRT_cosh( double x )
+{
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return cosh(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_exp (MSVCRT.@)
+ */
+double MSVCRT_exp( double x )
+{
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return exp(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_fmod (MSVCRT.@)
+ */
+double MSVCRT_fmod( double x, double y )
+{
+  if (!finite(x) || !finite(y)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return fmod(x,y);
+}
+
+/*********************************************************************
+ *		MSVCRT_log (MSVCRT.@)
+ */
+double MSVCRT_log( double x)
+{
+  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
+  return log(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_log10 (MSVCRT.@)
+ */
+double MSVCRT_log10( double x )
+{
+  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
+  return log10(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_pow (MSVCRT.@)
+ */
+double MSVCRT_pow( double x, double y )
+{
+  /* FIXME: If x < 0 and y is not integral, set EDOM */
+  double z = pow(x,y);
+  if (!finite(z)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return z;
+}
+
+/*********************************************************************
+ *		MSVCRT_sin (MSVCRT.@)
+ */
+double MSVCRT_sin( double x )
+{
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return sin(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_sinh (MSVCRT.@)
+ */
+double MSVCRT_sinh( double x )
+{
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return sinh(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_sqrt (MSVCRT.@)
+ */
+double MSVCRT_sqrt( double x )
+{
+  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return sqrt(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_tan (MSVCRT.@)
+ */
+double MSVCRT_tan( double x )
+{
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return tan(x);
+}
+
+/*********************************************************************
+ *		MSVCRT_tanh (MSVCRT.@)
+ */
+double MSVCRT_tanh( double x )
+{
+  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return tanh(x);
+}
+
+
 #if defined(__GNUC__) && defined(__i386__)
 
 #define FPU_DOUBLE(var) double var; \
@@ -65,8 +214,7 @@ static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 double _CIacos(void)
 {
   FPU_DOUBLE(x);
-  if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return acos(x);
+  return MSVCRT_acos(x);
 }
 
 /*********************************************************************
@@ -75,8 +223,7 @@ double _CIacos(void)
 double _CIasin(void)
 {
   FPU_DOUBLE(x);
-  if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return asin(x);
+  return MSVCRT_asin(x);
 }
 
 /*********************************************************************
@@ -85,8 +232,7 @@ double _CIasin(void)
 double _CIatan(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return atan(x);
+  return MSVCRT_atan(x);
 }
 
 /*********************************************************************
@@ -95,8 +241,7 @@ double _CIatan(void)
 double _CIatan2(void)
 {
   FPU_DOUBLES(x,y);
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return atan2(x,y);
+  return MSVCRT_atan2(x,y);
 }
 
 /*********************************************************************
@@ -105,8 +250,7 @@ double _CIatan2(void)
 double _CIcos(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return cos(x);
+  return MSVCRT_cos(x);
 }
 
 /*********************************************************************
@@ -115,8 +259,7 @@ double _CIcos(void)
 double _CIcosh(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return cosh(x);
+  return MSVCRT_cosh(x);
 }
 
 /*********************************************************************
@@ -125,8 +268,7 @@ double _CIcosh(void)
 double _CIexp(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return exp(x);
+  return MSVCRT_exp(x);
 }
 
 /*********************************************************************
@@ -135,8 +277,7 @@ double _CIexp(void)
 double _CIfmod(void)
 {
   FPU_DOUBLES(x,y);
-  if (!finite(x) || !finite(y)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return fmod(x,y);
+  return MSVCRT_fmod(x,y);
 }
 
 /*********************************************************************
@@ -145,9 +286,7 @@ double _CIfmod(void)
 double _CIlog(void)
 {
   FPU_DOUBLE(x);
-  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
-  return log(x);
+  return MSVCRT_log(x);
 }
 
 /*********************************************************************
@@ -156,9 +295,7 @@ double _CIlog(void)
 double _CIlog10(void)
 {
   FPU_DOUBLE(x);
-  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
-  return log10(x);
+  return MSVCRT_log10(x);
 }
 
 /*********************************************************************
@@ -166,12 +303,8 @@ double _CIlog10(void)
  */
 double _CIpow(void)
 {
-  double z;
   FPU_DOUBLES(x,y);
-  /* FIXME: If x < 0 and y is not integral, set EDOM */
-  z = pow(x,y);
-  if (!finite(z)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return z;
+  return MSVCRT_pow(x,y);
 }
 
 /*********************************************************************
@@ -180,8 +313,7 @@ double _CIpow(void)
 double _CIsin(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return sin(x);
+  return MSVCRT_sin(x);
 }
 
 /*********************************************************************
@@ -190,8 +322,7 @@ double _CIsin(void)
 double _CIsinh(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return sinh(x);
+  return MSVCRT_sinh(x);
 }
 
 /*********************************************************************
@@ -200,8 +331,7 @@ double _CIsinh(void)
 double _CIsqrt(void)
 {
   FPU_DOUBLE(x);
-  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return sqrt(x);
+  return MSVCRT_sqrt(x);
 }
 
 /*********************************************************************
@@ -210,8 +340,7 @@ double _CIsqrt(void)
 double _CItan(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return tan(x);
+  return MSVCRT_tan(x);
 }
 
 /*********************************************************************
@@ -220,8 +349,7 @@ double _CItan(void)
 double _CItanh(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return tanh(x);
+  return MSVCRT_tanh(x);
 }
 
 #else /* defined(__GNUC__) && defined(__i386__) */
