@@ -93,7 +93,9 @@ extern DWORD msvcrt_tls_index;
 struct __thread_data {
     int                             thread_errno;
     unsigned long                   thread_doserrno;
+    char                           *strtok_next;        /* next ptr for strtok() */
     unsigned char                  *mbstok_next;        /* next ptr for mbstok() */
+    MSVCRT_wchar_t                 *wcstok_next;        /* next ptr for wcstok() */
     char                           *efcvt_buffer;       /* buffer for ecvt/fcvt */
     char                           *asctime_buffer;     /* buffer for asctime */
     MSVCRT_wchar_t                 *wasctime_buffer;    /* buffer for wasctime */

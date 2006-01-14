@@ -825,6 +825,27 @@ MSVCRT_wchar_t* MSVCRT_wcspbrk( const MSVCRT_wchar_t* str, const MSVCRT_wchar_t*
 }
 
 /*********************************************************************
+ *		wcstok  (MSVCRT.@)
+ */
+MSVCRT_wchar_t *MSVCRT_wcstok( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim )
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+    MSVCRT_wchar_t *ret;
+
+    if (!str)
+        if (!(str = data->wcstok_next)) return NULL;
+
+    while (*str && strchrW( delim, *str )) str++;
+    if (!*str) return NULL;
+    ret = str++;
+    while (*str && !strchrW( delim, *str )) str++;
+    if (*str) *str++ = 0;
+    data->wcstok_next = str;
+    return ret;
+}
+
+
+/*********************************************************************
  *		wctomb (MSVCRT.@)
  */
 INT MSVCRT_wctomb( char *dst, MSVCRT_wchar_t ch )

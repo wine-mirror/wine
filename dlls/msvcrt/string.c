@@ -97,6 +97,27 @@ char* _strset(char* str, int value)
 }
 
 /*********************************************************************
+ *		strtok  (MSVCRT.@)
+ */
+char *MSVCRT_strtok( char *str, const char *delim )
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+    char *ret;
+
+    if (!str)
+        if (!(str = data->strtok_next)) return NULL;
+
+    while (*str && strchr( delim, *str )) str++;
+    if (!*str) return NULL;
+    ret = str++;
+    while (*str && !strchr( delim, *str )) str++;
+    if (*str) *str++ = 0;
+    data->strtok_next = str;
+    return ret;
+}
+
+
+/*********************************************************************
  *		_swab (MSVCRT.@)
  */
 void MSVCRT__swab(char* src, char* dst, int len)

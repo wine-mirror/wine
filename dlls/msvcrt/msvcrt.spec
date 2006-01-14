@@ -714,7 +714,7 @@
 @ cdecl strspn(str str)
 @ cdecl strstr(str str)
 @ cdecl strtod(str ptr)
-@ cdecl strtok(str str)
+@ cdecl strtok(str str) MSVCRT_strtok
 @ cdecl strtol(str ptr long)
 @ cdecl strtoul(str ptr long)
 @ cdecl strxfrm(ptr str long)
@@ -754,7 +754,7 @@
 @ cdecl wcsspn(wstr wstr) ntdll.wcsspn
 @ cdecl wcsstr(wstr wstr) ntdll.wcsstr
 @ cdecl wcstod(wstr ptr) MSVCRT_wcstod
-@ cdecl wcstok(wstr wstr) ntdll.wcstok
+@ cdecl wcstok(wstr wstr) MSVCRT_wcstok
 @ cdecl wcstol(wstr ptr long) ntdll.wcstol
 @ cdecl wcstombs(ptr ptr long) ntdll.wcstombs
 @ cdecl wcstoul(wstr ptr long) ntdll.wcstoul
