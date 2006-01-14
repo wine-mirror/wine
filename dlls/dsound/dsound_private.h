@@ -81,6 +81,12 @@ struct IDirectSoundImpl
     LPDIRECTSOUND8              pDS8;
 };
 
+HRESULT IDirectSoundImpl_Create(
+    LPDIRECTSOUND8 * ppds);
+
+/*****************************************************************************
+ * IDirectSoundDevice implementation structure
+ */
 struct DirectSoundDevice
 {
     LONG                        ref;
@@ -122,16 +128,15 @@ typedef struct BufferMemory
     LPBYTE                      memory;
 } BufferMemory;
 
-HRESULT IDirectSoundImpl_Create(
-    LPDIRECTSOUND8 * ppds);
-
-HRESULT DSOUND_Create(
-    LPDIRECTSOUND *ppDS,
-    IUnknown *pUnkOuter);
-
-HRESULT DSOUND_Create8(
-    LPDIRECTSOUND8 *ppDS,
-    IUnknown *pUnkOuter);
+HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice);
+ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device);
+ULONG DirectSoundDevice_Release(DirectSoundDevice * device);
+HRESULT DirectSoundDevice_AddBuffer(
+    DirectSoundDevice *device,
+    IDirectSoundBufferImpl * pDSB);
+HRESULT DirectSoundDevice_RemoveBuffer(
+    DirectSoundDevice *device,
+    IDirectSoundBufferImpl * pDSB);
 
 /*****************************************************************************
  * IDirectSound COM components
@@ -239,6 +244,10 @@ HRESULT IDirectSoundBufferImpl_Create(
     IDirectSoundBufferImpl **ppdsb,
     LPCDSBUFFERDESC dsbd);
 HRESULT IDirectSoundBufferImpl_Destroy(
+    IDirectSoundBufferImpl *pdsb);
+HRESULT IDirectSoundBufferImpl_Duplicate(
+    DirectSoundDevice *device,
+    IDirectSoundBufferImpl **ppdsb,
     IDirectSoundBufferImpl *pdsb);
 
 /*****************************************************************************
@@ -488,8 +497,8 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);
 
 /* dsound.c */
 
-HRESULT DSOUND_AddBuffer(DirectSoundDevice *device, IDirectSoundBufferImpl * pDSB);
-HRESULT DSOUND_RemoveBuffer(DirectSoundDevice *device, IDirectSoundBufferImpl * pDSB);
+HRESULT DSOUND_Create(LPDIRECTSOUND *ppDS, IUnknown *pUnkOuter);
+HRESULT DSOUND_Create8(LPDIRECTSOUND8 *ppDS, IUnknown *pUnkOuter);
 
 /* primary.c */
 

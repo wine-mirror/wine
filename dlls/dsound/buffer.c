@@ -364,7 +364,7 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
     TRACE("(%p) ref was %ld\n", This, ref + 1);
 
     if (!ref) {
-	DSOUND_RemoveBuffer(This->device, This);
+	DirectSoundDevice_RemoveBuffer(This->device, This);
 
 	This->lock.DebugInfo->Spare[0] = 0;
 	DeleteCriticalSection(&(This->lock));
@@ -1158,7 +1158,7 @@ HRESULT IDirectSoundBufferImpl_Create(
 
 	/* register buffer if not primary */
 	if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER)) {
-		err = DSOUND_AddBuffer(device, dsb);
+		err = DirectSoundDevice_AddBuffer(device, dsb);
 		if (err != DS_OK) {
 			HeapFree(GetProcessHeap(),0,dsb->buffer->memory);
 			HeapFree(GetProcessHeap(),0,dsb->buffer);
@@ -1210,6 +1210,104 @@ HRESULT IDirectSoundBufferImpl_Destroy(
     while (IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)pdsb) > 0);
 
     return S_OK;
+}
+
+HRESULT IDirectSoundBufferImpl_Duplicate(
+    DirectSoundDevice *device,
+    IDirectSoundBufferImpl **ppdsb,
+    IDirectSoundBufferImpl *pdsb)
+{
+    IDirectSoundBufferImpl *dsb;
+    HRESULT hres = DS_OK;
+    int size;
+    TRACE("(%p,%p,%p)\n", device, pdsb, pdsb);
+
+    dsb = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsb));
+
+    if (dsb == NULL) {
+        WARN("out of memory\n");
+        *ppdsb = NULL;
+        return DSERR_OUTOFMEMORY;
+    }
+
+    CopyMemory(dsb, pdsb, sizeof(IDirectSoundBufferImpl));
+
+    if (pdsb->hwbuf) {
+        TRACE("duplicating hardware buffer\n");
+
+        hres = IDsDriver_DuplicateSoundBuffer(device->driver, pdsb->hwbuf,
+                                              (LPVOID *)&dsb->hwbuf);
+        if (hres != DS_OK) {
+            TRACE("IDsDriver_DuplicateSoundBuffer failed, falling back to "
+                  "software buffer\n");
+            dsb->hwbuf = NULL;
+            /* allocate buffer */
+            if (device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
+                dsb->buffer = HeapAlloc(GetProcessHeap(),0,sizeof(*(dsb->buffer)));
+                if (dsb->buffer == NULL) {
+                    WARN("out of memory\n");
+                    HeapFree(GetProcessHeap(),0,dsb);
+                    *ppdsb = NULL;
+                    return DSERR_OUTOFMEMORY;
+                }
+
+                dsb->buffer->memory = HeapAlloc(GetProcessHeap(),0,dsb->buflen);
+                if (dsb->buffer->memory == NULL) {
+                    WARN("out of memory\n");
+                    HeapFree(GetProcessHeap(),0,dsb->buffer);
+                    HeapFree(GetProcessHeap(),0,dsb);
+                    *ppdsb = NULL;
+                    return DSERR_OUTOFMEMORY;
+                }
+                dsb->buffer->ref = 1;
+
+                /* FIXME: copy buffer ? */
+            }
+        }
+    } else {
+        dsb->hwbuf = NULL;
+        dsb->buffer->ref++;
+    }
+
+    dsb->ref = 0;
+    dsb->state = STATE_STOPPED;
+    dsb->playpos = 0;
+    dsb->buf_mixpos = 0;
+    dsb->device = device;
+    dsb->ds3db = NULL;
+    dsb->iks = NULL; /* FIXME? */
+    dsb->secondary = NULL;
+
+    /* variable sized struct so calculate size based on format */
+    size = sizeof(WAVEFORMATEX) + pdsb->pwfx->cbSize;
+
+    dsb->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,size);
+    if (dsb->pwfx == NULL) {
+            WARN("out of memory\n");
+            HeapFree(GetProcessHeap(),0,dsb->buffer);
+            HeapFree(GetProcessHeap(),0,dsb);
+            *ppdsb = NULL;
+            return DSERR_OUTOFMEMORY;
+    }
+
+    CopyMemory(dsb->pwfx, pdsb->pwfx, size);
+
+    InitializeCriticalSection(&(dsb->lock));
+    dsb->lock.DebugInfo->Spare[0] = (DWORD_PTR)"DSOUNDBUFFER_lock";
+
+    /* register buffer */
+    hres = DirectSoundDevice_AddBuffer(device, dsb);
+    if (hres != DS_OK) {
+        dsb->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&(dsb->lock));
+        HeapFree(GetProcessHeap(),0,dsb->buffer);
+        HeapFree(GetProcessHeap(),0,dsb->pwfx);
+        HeapFree(GetProcessHeap(),0,dsb);
+        *ppdsb = 0;
+    }
+
+    *ppdsb = dsb;
+    return hres;
 }
 
 /*******************************************************************************

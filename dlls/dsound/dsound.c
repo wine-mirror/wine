@@ -45,10 +45,6 @@ static ULONG WINAPI IDirectSound8_IUnknown_AddRef(LPUNKNOWN iface);
 static ULONG WINAPI IDirectSound8_IDirectSound_AddRef(LPDIRECTSOUND iface);
 static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(LPDIRECTSOUND8 iface);
 
-static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice);
-static ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device);
-static ULONG DirectSoundDevice_Release(DirectSoundDevice * device);
-
 static const char * dumpCooperativeLevel(DWORD level)
 {
     static char unknown[32];
@@ -440,10 +436,8 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     LPDIRECTSOUNDBUFFER psb,
     LPLPDIRECTSOUNDBUFFER ppdsb)
 {
-    IDirectSoundBufferImpl* pdsb;
     IDirectSoundBufferImpl* dsb;
     HRESULT hres = DS_OK;
-    int size;
     IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
 
     TRACE("(%p,%p,%p)\n",This,psb,ppdsb);
@@ -475,90 +469,11 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
         return DSERR_INVALIDCALL;
     }
 
-    pdsb = ((SecondaryBufferImpl *)psb)->dsb;
+    /* duplicate the actual buffer implementation */
+    hres = IDirectSoundBufferImpl_Duplicate(This->device, &dsb,
+                                           ((SecondaryBufferImpl *)psb)->dsb);
 
-    dsb = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsb));
-
-    if (dsb == NULL) {
-        WARN("out of memory\n");
-        *ppdsb = NULL;
-        return DSERR_OUTOFMEMORY;
-    }
-
-    CopyMemory(dsb, pdsb, sizeof(IDirectSoundBufferImpl));
-
-    if (pdsb->hwbuf) {
-        TRACE("duplicating hardware buffer\n");
-
-        hres = IDsDriver_DuplicateSoundBuffer(This->device->driver, pdsb->hwbuf, (LPVOID *)&dsb->hwbuf);
-        if (hres != DS_OK) {
-            TRACE("IDsDriver_DuplicateSoundBuffer failed, falling back to software buffer\n");
-            dsb->hwbuf = NULL;
-            /* allocate buffer */
-            if (This->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
-                dsb->buffer = HeapAlloc(GetProcessHeap(),0,sizeof(*(dsb->buffer)));
-                if (dsb->buffer == NULL) {
-                    WARN("out of memory\n");
-                    HeapFree(GetProcessHeap(),0,dsb);
-                    *ppdsb = NULL;
-                    return DSERR_OUTOFMEMORY;
-                }
-
-                dsb->buffer->memory = HeapAlloc(GetProcessHeap(),0,dsb->buflen);
-                if (dsb->buffer->memory == NULL) {
-                    WARN("out of memory\n");
-                    HeapFree(GetProcessHeap(),0,dsb->buffer);
-                    HeapFree(GetProcessHeap(),0,dsb);
-                    *ppdsb = NULL;
-                    return DSERR_OUTOFMEMORY;
-                }
-                dsb->buffer->ref = 1;
-
-                /* FIXME: copy buffer ? */
-            }
-        }
-    } else {
-        dsb->hwbuf = NULL;
-        dsb->buffer->ref++;
-    }
-
-    dsb->ref = 0;
-    dsb->state = STATE_STOPPED;
-    dsb->playpos = 0;
-    dsb->buf_mixpos = 0;
-    dsb->device = This->device;
-    dsb->ds3db = NULL;
-    dsb->iks = NULL; /* FIXME? */
-    dsb->secondary = NULL;
-
-    /* variable sized struct so calculate size based on format */
-    size = sizeof(WAVEFORMATEX) + pdsb->pwfx->cbSize;
-
-    dsb->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,size);
-    if (dsb->pwfx == NULL) {
-            WARN("out of memory\n");
-            HeapFree(GetProcessHeap(),0,dsb->buffer);
-            HeapFree(GetProcessHeap(),0,dsb);
-            *ppdsb = NULL;
-            return DSERR_OUTOFMEMORY;
-    }
-
-    CopyMemory(dsb->pwfx, pdsb->pwfx, size);
-
-    InitializeCriticalSection(&(dsb->lock));
-    dsb->lock.DebugInfo->Spare[0] = (DWORD_PTR)"DSOUNDBUFFER_lock";
-
-    /* register buffer */
-    hres = DSOUND_AddBuffer(This->device, dsb);
-    if (hres != DS_OK) {
-        IDirectSoundBuffer8_Release(psb);
-        dsb->lock.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&(dsb->lock));
-        HeapFree(GetProcessHeap(),0,dsb->buffer);
-        HeapFree(GetProcessHeap(),0,dsb->pwfx);
-        HeapFree(GetProcessHeap(),0,dsb);
-        *ppdsb = 0;
-    } else {
+    if (hres == DS_OK) {
         hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
         if (*ppdsb) {
             dsb->secondary = (SecondaryBufferImpl*)*ppdsb;
@@ -867,7 +782,7 @@ static const IDirectSound8Vtbl IDirectSoundImpl_Vtbl =
     IDirectSoundImpl_VerifyCertification
 };
 
-static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
+HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
 {
     DirectSoundDevice * device;
     TRACE("(%p)\n", ppDevice);
@@ -947,14 +862,14 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     return DS_OK;
 }
 
-static ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device)
+ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device)
 {
     ULONG ref = InterlockedIncrement(&(device->ref));
     TRACE("(%p) ref was %ld\n", device, ref - 1);
     return ref;
 }
 
-static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
+ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
 {
     HRESULT hr;
     ULONG ref = InterlockedDecrement(&(device->ref));
@@ -1005,7 +920,7 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
         device->mixlock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&device->mixlock);
         HeapFree(GetProcessHeap(),0,device);
-        TRACE("(%p) released\n", device); 
+        TRACE("(%p) released\n", device);
     }
     return ref;
 }
@@ -1848,7 +1763,7 @@ HRESULT WINAPI DirectSoundCreate8(
  * Add secondary buffer to buffer list.
  * Gets exclusive access to buffer for writing.
  */
-HRESULT DSOUND_AddBuffer(
+HRESULT DirectSoundDevice_AddBuffer(
     DirectSoundDevice * device,
     IDirectSoundBufferImpl * pDSB)
 {
@@ -1883,7 +1798,7 @@ HRESULT DSOUND_AddBuffer(
  * Remove secondary buffer from buffer list.
  * Gets exclusive access to buffer for writing.
  */
-HRESULT DSOUND_RemoveBuffer(
+HRESULT DirectSoundDevice_RemoveBuffer(
     DirectSoundDevice * device,
     IDirectSoundBufferImpl * pDSB)
 {
