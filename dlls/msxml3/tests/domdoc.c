@@ -71,6 +71,7 @@ static const WCHAR szOpen[] = { 'o','p','e','n',0 };
 static const WCHAR szdl[] = { 'd','l',0 };
 static const WCHAR szlc[] = { 'l','c',0 };
 static const WCHAR szbs[] = { 'b','s',0 };
+static const WCHAR szstr1[] = { 's','t','r','1',0 };
 
 void test_domdoc( void )
 {
@@ -310,6 +311,25 @@ void test_domnode( void )
         ok ( r == S_OK, "get_nodeName wrong code\n");
         ok ( str != NULL, "str is null\n");
         ok( !lstrcmpW( str, szlc ), "incorrect nodeName\n");
+        SysFreeString( str );
+
+        str = SysAllocString( szNonExistentFile );	
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = 0x1234;
+        r = IXMLDOMElement_getAttribute( element, str, &var );
+        ok( r == E_FAIL, "getAttribute ret %08lx\n", r );
+        ok( V_VT(&var) == VT_EMPTY, "vt = %x\n", V_VT(&var));
+        VariantClear(&var);
+        SysFreeString( str );
+
+        str = SysAllocString( szdl );	
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = 0x1234;
+        r = IXMLDOMElement_getAttribute( element, str, &var );
+        ok( r == S_OK, "getAttribute ret %08lx\n", r );
+        ok( V_VT(&var) == VT_BSTR, "vt = %x\n", V_VT(&var));
+        ok( !lstrcmpW(V_BSTR(&var), szstr1), "wrong attr value\n");
+        VariantClear( &var );
         SysFreeString( str );
 
         r = IXMLDOMElement_get_attributes( element, &map );

@@ -454,10 +454,32 @@ static HRESULT WINAPI domelem_get_tagName(
 
 static HRESULT WINAPI domelem_getAttribute(
     IXMLDOMElement *iface,
-    BSTR p, VARIANT* var)
+    BSTR name, VARIANT* value)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    xmlNodePtr element;
+    xmlChar *xml_name, *xml_value;
+    HRESULT hr = E_FAIL;
+
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_w(name), value);
+
+    element = get_element( This );
+    if ( !element )
+        return E_FAIL;
+
+    VariantInit(value);
+    xml_name = xmlChar_from_wchar( name );
+    xml_value = xmlGetNsProp(element, xml_name, NULL);
+    HeapFree(GetProcessHeap(), 0, xml_name);
+    if(xml_value)
+    {
+        V_VT(value) = VT_BSTR;
+        V_BSTR(value) = bstr_from_xmlChar( xml_value );
+        xmlFree(xml_value);
+        hr = S_OK;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domelem_setAttribute(
