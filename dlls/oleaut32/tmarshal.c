@@ -508,6 +508,7 @@ serialize_param(
 	return S_OK;
     case VT_I8:
     case VT_UI8:
+    case VT_CY:
 	hres = S_OK;
 	if (debugout) TRACE_(olerelay)("%lx%lx",arg[0],arg[1]);
 	if (writeit)
@@ -825,6 +826,7 @@ deserialize_param(
 	}
         case VT_I8:
         case VT_UI8:
+        case VT_CY:
 	    if (readit) {
 		hres = xbuf_get(buf,(LPBYTE)arg,8);
 		if (hres) ERR("Failed to read integer 8 byte\n");
