@@ -290,7 +290,10 @@ static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPC
     if (apt) apartment_release(apt);
 
     if (hr == S_OK)
-        hr = CoWaitForMultipleHandles(0, INFINITE, 1, &params->handle, &index);
+    {
+        if (WaitForSingleObject(params->handle, 0))
+            hr = CoWaitForMultipleHandles(0, INFINITE, 1, &params->handle, &index);
+    }
     CloseHandle(params->handle);
 
     if (hr == S_OK) hr = params->hr;
