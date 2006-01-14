@@ -973,7 +973,7 @@ __ASM_GLOBAL_FUNC(call_server_func,
     "movl 12(%ebp), %esi\n\t"
     "shrl $2, %ecx\n\t"         /* divide by 4 */
     "cld\n\t"
-    "rep movsl\n\t"             /* Copy dword blocks */
+    "rep; movsl\n\t"            /* Copy dword blocks */
     "call *8(%ebp)\n\t"         /* Call function */
     "leal -8(%ebp), %esp\n\t"   /* Restore stack */
     "popl %esi\n\t"             /* Restore registers */
