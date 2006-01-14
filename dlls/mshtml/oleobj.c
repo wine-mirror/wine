@@ -73,16 +73,18 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     if(pClientSite == This->client)
         return S_OK;
 
-    if(This->client)
+    if(This->client) {
         IOleClientSite_Release(This->client);
-
-    if(This->hostui)
-        IDocHostUIHandler_Release(This->hostui);
-
-    if(!pClientSite) {
         This->client = NULL;
-        return S_OK;
     }
+
+    if(This->hostui) {
+        IDocHostUIHandler_Release(This->hostui);
+        This->hostui = NULL;
+    }
+
+    if(!pClientSite)
+        return S_OK;
 
     hres = IOleObject_QueryInterface(pClientSite, &IID_IDocHostUIHandler, (void**)&pDocHostUIHandler);
     if(SUCCEEDED(hres)) {
@@ -120,6 +122,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
                     }
                     CoTaskMemFree(override_key_path);
                 }
+                IDocHostUIHandler2_Release(pDocHostUIHandler2);
             }
 
             This->has_key_path = TRUE;
