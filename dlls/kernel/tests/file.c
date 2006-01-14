@@ -1369,6 +1369,10 @@ static void test_read_write(void)
 	bytes == 10, /* Win9x */
 	"bytes = %ld\n", bytes);
 
+    /* make sure the file contains data */
+    WriteFile(hFile, "this is the test data", 21, &bytes, NULL);
+    SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+
     SetLastError(12345678);
     bytes = 12345678;
     ret = ReadFile(hFile, NULL, 0, &bytes, NULL);
