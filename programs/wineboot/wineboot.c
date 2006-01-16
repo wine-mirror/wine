@@ -51,6 +51,8 @@
  *   processed (requires translations from Unicode to Ansi).
  */
 
+#define WIN32_LEAN_AND_MEAN
+
 #include <stdio.h>
 #include <windows.h>
 #include <wine/debug.h>
@@ -240,7 +242,7 @@ static BOOL pendingRename(void)
         goto end;
     }
 
-    buffer=malloc( dataLength );
+    buffer=HeapAlloc( GetProcessHeap(),0,dataLength );
     if( buffer==NULL )
     {
         WINE_ERR("Couldn't allocate %lu bytes for the value\n", dataLength );
@@ -325,7 +327,7 @@ static BOOL pendingRename(void)
     
 end:
     if( buffer!=NULL )
-        free(buffer);
+        HeapFree(GetProcessHeap(), 0, buffer);
 
     if( hSession!=NULL )
         RegCloseKey( hSession );
@@ -460,7 +462,7 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
         goto end;
     }
     
-    if( (szCmdLine=malloc(nMaxCmdLine))==NULL )
+    if( (szCmdLine=HeapAlloc(GetProcessHeap(),0,nMaxCmdLine))==NULL )
     {
         WINE_ERR("Couldn't allocate memory for the commands to be executed\n");
 
@@ -468,7 +470,7 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
         goto end;
     }
 
-    if( (szValue=malloc((++nMaxValue)*sizeof(*szValue)))==NULL )
+    if( (szValue=HeapAlloc(GetProcessHeap(),0,(++nMaxValue)*sizeof(*szValue)))==NULL )
     {
         WINE_ERR("Couldn't allocate memory for the value names\n");
 
