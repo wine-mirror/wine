@@ -442,9 +442,11 @@ static void test_GetCountColorProfileElements(void)
 typedef struct colorspace_description_struct {
     DWORD dwID;
     char *szName;
+    BOOL registered;
+    char filename[MAX_PATH];
 } colorspace_descr;
 
-#define describe_colorspace(id) {id, #id}
+#define describe_colorspace(id) {id, #id, FALSE, ""}
 
 colorspace_descr known_colorspaces[] = { 
     describe_colorspace(SPACE_XYZ),
@@ -478,12 +480,14 @@ static void enum_registered_color_profiles(void)
 
     present = 0;
     trace("\n");
-    trace("Searching for registered standard colorspace profiles:\n");
+    trace("Querying registered standard colorspace profiles via GetStandardColorSpaceProfileA():\n");
     for (i=0; i<count; i++)
     {
         ret = pGetStandardColorSpaceProfileA(NULL, known_colorspaces[i].dwID, profile, &size);
         if (ret) 
         {
+            lstrcpynA(known_colorspaces[i].filename, profile, MAX_PATH);
+            known_colorspaces[i].registered = TRUE;
             present++;
             trace(" found %s, pointing to '%s' (%d chars)\n", known_colorspaces[i].szName, profile, strlen(profile));
         }
