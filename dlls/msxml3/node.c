@@ -225,10 +225,14 @@ static HRESULT WINAPI xmlnode_get_nodeValue(
     switch ( This->node->type )
     {
     case XML_ATTRIBUTE_NODE:
+      {
+        xmlChar *content = xmlNodeGetContent(This->node);
         V_VT(value) = VT_BSTR;
-        V_BSTR(value) = bstr_from_xmlChar( This->node->name );
+        V_BSTR(value) = bstr_from_xmlChar( content );
+        xmlFree(content);
         r = S_OK;
         break;
+      }
     case XML_TEXT_NODE:
         V_VT(value) = VT_BSTR;
         V_BSTR(value) = bstr_from_xmlChar( This->node->content );

@@ -404,6 +404,12 @@ void test_domnode( void )
         ok( r == S_OK, "get_baseName returned wrong code\n");
         ok( lstrcmpW(str,szdl) == 0, "basename was wrong\n");
 
+        r = IXMLDOMNode_get_nodeValue( node, &var );
+        ok( r == S_OK, "returns %08lx\n", r );
+        ok( V_VT(&var) == VT_BSTR, "vt %x\n", V_VT(&var));
+        ok( !lstrcmpW(V_BSTR(&var), szstr1), "nodeValue incorrect\n");
+        VariantClear(&var);
+
         r = IXMLDOMNode_get_childNodes( node, NULL );
         ok( r == E_INVALIDARG, "get_childNodes returned wrong code\n");
 
