@@ -677,21 +677,23 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
         else
         {
             int cLen = 0;
-                
+
             /* file system folder or file rooted at the desktop */
             if ((GET_SHGDN_FOR(dwFlags) == SHGDN_FORPARSING) &&
                 (GET_SHGDN_RELATION(dwFlags) != SHGDN_INFOLDER))
             {
-                WideCharToMultiByte(CP_ACP, 0, This->sPathTarget, -1, strRet->u.cStr, MAX_PATH,
-                                    NULL, NULL);
-                PathAddBackslashA(strRet->u.cStr);
-                cLen = lstrlenA(strRet->u.cStr);
+                lstrcpynW(wszPath, This->sPathTarget, MAX_PATH - 1);
+                PathAddBackslashW(wszPath);
+                cLen = lstrlenW(wszPath);
             }
-    
-            _ILSimpleGetText (pidl, strRet->u.cStr + cLen, MAX_PATH - cLen);
+
+            _ILSimpleGetTextW(pidl, wszPath + cLen, MAX_PATH - cLen);
 
             if (!_ILIsFolder(pidl))
-                SHELL_FS_ProcessDisplayFilename(strRet->u.cStr, dwFlags);
+                SHELL_FS_ProcessDisplayFilename(wszPath, dwFlags);
+
+            WideCharToMultiByte(CP_ACP, 0, wszPath, -1, strRet->u.cStr, MAX_PATH,
+                                NULL, NULL);
         }
     }
     else
