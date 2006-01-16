@@ -190,11 +190,11 @@ int main(int argc, char* argv[])
      */
     for(i = 1; i < argc; i++)
     {
-        if (!strcasecmp(argv[i], "/u"))
+        if ((!strcasecmp(argv[i], "/u")) ||(!strcasecmp(argv[i], "-u")))
                 Unregister = TRUE;
-        else if (!strcasecmp(argv[i], "/s"))
+        else if ((!strcasecmp(argv[i], "/s"))||(!strcasecmp(argv[i], "-s")))
                 Silent = 1;
-        else if (!strncasecmp(argv[i], "/i", strlen("/i")))
+        else if ((!strncasecmp(argv[i], "/i", strlen("/i")))||(!strncasecmp(argv[i], "-i", strlen("-i"))))
         {
             CHAR* command_line = argv[i] + strlen("/i");
 
@@ -236,7 +236,7 @@ int main(int argc, char* argv[])
                 wsCommandLine = EmptyLine;
             }
         }
-        else if(!strcasecmp(argv[i], "/n"))
+        else if((!strcasecmp(argv[i], "/n"))||(!strcasecmp(argv[i], "-n")))
             CallRegister = FALSE;
         else if (argv[i][0] == '/' && (!argv[i][2] || argv[i][2] == ':'))
             printf("Unrecognized switch %s\n", argv[i]);
