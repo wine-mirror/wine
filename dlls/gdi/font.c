@@ -2785,22 +2785,84 @@ GetCharacterPlacementW(
 
 /*************************************************************************
  *      GetCharABCWidthsFloatA [GDI32.@]
+ *
+ * See GetCharABCWidthsFloatW.
  */
-BOOL WINAPI GetCharABCWidthsFloatA(HDC hdc, UINT iFirstChar, UINT iLastChar,
-		                        LPABCFLOAT lpABCF)
+BOOL WINAPI GetCharABCWidthsFloatA( HDC hdc, UINT first, UINT last, LPABCFLOAT abcf )
 {
-       FIXME_(gdi)("GetCharABCWidthsFloatA, stub\n");
-       return 0;
+    INT i, wlen, count = (INT)(last - first + 1);
+    LPSTR str;
+    LPWSTR wstr;
+    BOOL ret = TRUE;
+
+    if (count <= 0) return FALSE;
+
+    str = HeapAlloc(GetProcessHeap(), 0, count);
+
+    for(i = 0; i < count; i++)
+        str[i] = (BYTE)(first + i);
+
+    wstr = FONT_mbtowc( hdc, str, count, &wlen, NULL );
+
+    for (i = 0; i < wlen; i++)
+    {
+        if (!GetCharABCWidthsFloatW( hdc, wstr[i], wstr[i], abcf ))
+        {
+            ret = FALSE;
+            break;
+        }
+        abcf++;
+    }
+
+    HeapFree( GetProcessHeap(), 0, str );
+    HeapFree( GetProcessHeap(), 0, wstr );
+
+    return ret;
 }
 
 /*************************************************************************
  *      GetCharABCWidthsFloatW [GDI32.@]
+ *
+ * Retrieves widths of a range of characters.
+ *
+ * PARAMS
+ *    hdc   [I] Handle to device context.
+ *    first [I] First character in range to query.
+ *    last  [I] Last character in range to query.
+ *    abcf  [O] Array of LPABCFLOAT structures.
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ *
+ * BUGS
+ *    Only works with TrueType fonts. It also doesn't return real
+ *    floats but converted integers because it's implemented on
+ *    top of GetCharABCWidthsW.
  */
-BOOL WINAPI GetCharABCWidthsFloatW(HDC hdc, UINT iFirstChar,
-		                        UINT iLastChar, LPABCFLOAT lpABCF)
+BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT abcf )
 {
-       FIXME_(gdi)("GetCharABCWidthsFloatW, stub\n");
-       return 0;
+    ABC *abc;
+    unsigned int i, size = sizeof(ABC) * (last - first + 1);
+    BOOL ret;
+
+    TRACE("%p, %d, %d, %p - partial stub\n", hdc, first, last, abcf);
+
+    abc = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!abc) return FALSE;
+
+    ret = GetCharABCWidthsW( hdc, first, last, abc );
+    if (ret == TRUE)
+    {
+        for (i = first; i <= last; i++, abc++, abcf++)
+        {
+            abcf->abcfA = abc->abcA;
+            abcf->abcfB = abc->abcB;
+            abcf->abcfC = abc->abcC;
+        }
+    }
+    HeapFree( GetProcessHeap(), 0, abc );
+    return ret;
 }
 
 /*************************************************************************
