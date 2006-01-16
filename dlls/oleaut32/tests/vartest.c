@@ -100,6 +100,14 @@ static HRESULT (WINAPI *pVarFormat)(LPVARIANT,LPOLESTR,int,int,ULONG,BSTR*);
 #define R8_MAX DBL_MAX
 #define R8_MIN DBL_MIN
 
+/* Macros to set a DECIMAL */
+#define SETDEC(dec, scl, sgn, hi, lo) S(U(dec)).scale = (BYTE)scl; \
+        S(U(dec)).sign = (BYTE)sgn; dec.Hi32 = (ULONG)hi; \
+        U1(dec).Lo64 = (ULONG64)lo
+#define SETDEC64(dec, scl, sgn, hi, mid, lo) S(U(dec)).scale = (BYTE)scl; \
+        S(U(dec)).sign = (BYTE)sgn; dec.Hi32 = (ULONG)hi; \
+        S1(U1(dec)).Mid32 = mid; S1(U1(dec)).Lo32 = lo;
+
 static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 {
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
@@ -4922,6 +4930,237 @@ static void test_VarAdd(void)
     ok(hres == S_OK && EQ_DOUBLE(r, -15.2), "VarAdd: DECIMAL value %f, expected %f\n", r, (double)-15.2);
 }
 
+static HRESULT (WINAPI *pVarCmp)(LPVARIANT,LPVARIANT,LCID,ULONG);
+
+/* ERROR from wingdi.h is interfering here */
+#undef ERROR
+#define _VARCMP(vt1,val1,vtfl1,vt2,val2,vtfl2,lcid,flags,result) \
+        V_##vt1(&left) = val1; V_VT(&left) = VT_##vt1 | vtfl1; \
+        V_##vt2(&right) = val2; V_VT(&right) = VT_##vt2 | vtfl2; \
+        hres = pVarCmp(&left,&right,lcid,flags); \
+        ok(hres == result, "VarCmp(VT_" #vt1 "|" #vtfl1 ",VT_" #vt2 "|" #vtfl2 "): expected " #result ", got hres=0x%lx\n", hres)
+#define VARCMPEX(vt1,val1,vt2,val2,res1,res2,res3,res4) \
+        _VARCMP(vt1,val1,0,vt2,val2,0,lcid,0,res1); \
+        _VARCMP(vt1,val1,VT_RESERVED,vt2,val2,0,lcid,0,res2); \
+        _VARCMP(vt1,val1,0,vt2,val2,VT_RESERVED,lcid,0,res3); \
+        _VARCMP(vt1,val1,VT_RESERVED,vt2,val2,VT_RESERVED,lcid,0,res4)
+#define VARCMP(vt1,val1,vt2,val2,result) \
+        VARCMPEX(vt1,val1,vt2,val2,result,result,result,result)
+
+static void test_VarCmp(void)
+{
+    VARIANT left, right;
+    VARTYPE i;
+    LCID lcid;
+    HRESULT hres;
+    DECIMAL dec;
+    static const WCHAR szhuh[] = {'h','u','h','?','\0'};
+    static const WCHAR sz2cents[] = {'2','c','e','n','t','s','\0'};
+    static const WCHAR szempty[] = {'\0'};
+    static const WCHAR sz0[] = {'0','\0'};
+    static const WCHAR sz1[] = {'1','\0'};
+    static const WCHAR sz7[] = {'7','\0'};
+    static const WCHAR sz42[] = {'4','2','\0'};
+    static const WCHAR sz1neg[] = {'-','1','\0'};
+    static const WCHAR sz666neg[] = {'-','6','6','6','\0'};
+    static const WCHAR sz1few[] = {'1','.','0','0','0','0','0','0','0','1','\0'};
+    BSTR bstrhuh, bstrempty, bstr0, bstr1, bstr7, bstr42, bstr1neg, bstr666neg;
+    BSTR bstr2cents, bstr1few;
+
+    CHECKPTR(VarCmp);
+
+    lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+    bstrempty = SysAllocString(szempty);
+    bstrhuh = SysAllocString(szhuh);
+    bstr2cents = SysAllocString(sz2cents);
+    bstr0 = SysAllocString(sz0);
+    bstr1 = SysAllocString(sz1);
+    bstr7 = SysAllocString(sz7);
+    bstr42 = SysAllocString(sz42);
+    bstr1neg = SysAllocString(sz1neg);
+    bstr666neg = SysAllocString(sz666neg);
+    bstr1few = SysAllocString(sz1few);
+
+    /* Test all possible flag/vt combinations & the resulting vt type */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE leftvt, rightvt;
+
+        for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+        {
+
+            SKIPTESTS(leftvt);
+
+            for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+            {
+                BOOL bFail = FALSE;
+                HRESULT expect = VARCMP_EQ;
+
+                SKIPTESTS(rightvt);
+
+                memset(&left, 0, sizeof(left));
+                memset(&right, 0, sizeof(right));
+                V_VT(&left) = leftvt | ExtraFlags[i];
+                if (leftvt == VT_BSTR) {
+                    V_BSTR(&left) = bstr1neg;
+                    if (ExtraFlags[i] & VT_RESERVED)
+                        expect = VARCMP_LT;
+                    else
+                        expect = VARCMP_GT;
+                }
+                V_VT(&right) = rightvt | ExtraFlags[i];
+                if (rightvt == VT_BSTR) {
+                    V_BSTR(&right) = bstr1neg;
+                    if (ExtraFlags[i] & VT_RESERVED)
+                        expect = VARCMP_GT;
+                    else
+                        expect = VARCMP_LT;
+                }
+
+                /* Don't ask me why but native VarCmp cannot handle:
+                   VT_I1, VT_UI2, VT_UI4, VT_UINT and VT_UI8.
+                   VT_INT is only supported as left variant. Go figure.
+                   Tested with DCOM98, Win2k, WinXP */
+                if (ExtraFlags[i] & VT_ARRAY || ExtraFlags[i] & VT_BYREF ||
+                    !IsValidVariantClearVT(leftvt, ExtraFlags[i] & ~VT_RESERVED) ||
+                    !IsValidVariantClearVT(rightvt, ExtraFlags[i] & ~VT_RESERVED) ||
+                    leftvt == VT_CLSID || rightvt == VT_CLSID ||
+                    leftvt == VT_DISPATCH || rightvt == VT_DISPATCH ||
+                    leftvt == VT_ERROR || rightvt == VT_ERROR ||
+                    leftvt == VT_RECORD || rightvt == VT_RECORD ||
+                    leftvt == VT_UNKNOWN || rightvt == VT_UNKNOWN ||
+                    leftvt == VT_VARIANT || rightvt == VT_VARIANT ||
+                    leftvt == VT_I1 || rightvt == VT_I1 ||
+                    leftvt == VT_UI2 || rightvt == VT_UI2 ||
+                    leftvt == VT_UI4 || rightvt == VT_UI4 ||
+                    leftvt == VT_UI8 || rightvt == VT_UI8 ||
+                    rightvt == VT_INT ||
+                    leftvt == VT_UINT || rightvt == VT_UINT) {
+                    bFail = TRUE;
+                }
+
+                if (leftvt == VT_ERROR && rightvt == VT_ERROR &&
+                    !(ExtraFlags[i] & ~VT_RESERVED)) {
+                    expect = VARCMP_EQ;
+                    bFail = FALSE;
+                } else if (leftvt == VT_NULL || rightvt == VT_NULL)
+                    expect = VARCMP_NULL;
+                else if (leftvt == VT_BSTR && rightvt == VT_BSTR)
+                    expect = VARCMP_EQ;
+                else if (leftvt == VT_BSTR && rightvt == VT_EMPTY)
+                    expect = VARCMP_GT;
+                else if (leftvt == VT_EMPTY && rightvt == VT_BSTR)
+                    expect = VARCMP_LT;
+
+                hres = pVarCmp(&left, &right, LOCALE_USER_DEFAULT, 0);
+                if (bFail) {
+                    ok(hres == DISP_E_TYPEMISMATCH || hres == DISP_E_BADVARTYPE,
+                       "VarCmp: %d|0x%X, %d|0x%X: Expected failure, got 0x%lX\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], hres);
+                } else {
+                    ok(hres == expect,
+                       "VarCmp: %d|0x%X, %d|0x%X: Expected 0x%lX, got 0x%lX\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], expect,
+                       hres);
+                }
+            }
+        }
+    }
+
+    /* VARCMP{,EX} run each 4 tests with a permutation of all posible
+       input variants with (1) and without (0) VT_RESERVED set. The order
+       of the permutations is (0,0); (1,0); (0,1); (1,1) */
+    VARCMP(INT,4711,I2,4711,VARCMP_EQ);
+    ok(V_VT(&left) & V_VT(&right) & VT_RESERVED, "VT_RESERVED filtered out!\n");
+    VARCMP(INT,4711,I2,-4711,VARCMP_GT);
+    VARCMP(ERROR,0,ERROR,0,VARCMP_EQ);
+    VARCMP(ERROR,0,UI1,0,DISP_E_TYPEMISMATCH);
+    VARCMP(EMPTY,0,EMPTY,0,VARCMP_EQ);
+    VARCMP(I4,1,R8,1.0,VARCMP_EQ);
+    VARCMP(EMPTY,19,I2,0,VARCMP_EQ);
+    ok(V_EMPTY(&left) == 19, "VT_EMPTY modified!\n");
+    ok(V_VT(&left) & V_VT(&right) & VT_RESERVED, "VT_RESERVED filtered out!\n");
+    VARCMP(I4,1,UI1,1,VARCMP_EQ);
+
+    /* BSTR handling, especialy in conjunction with VT_RESERVED */
+    VARCMP(BSTR,bstr0,BSTR,bstr0,VARCMP_EQ);
+    VARCMP(BSTR,bstrempty,BSTR,bstr0,VARCMP_LT);
+    VARCMP(BSTR,bstr7,BSTR,bstr0,VARCMP_GT);
+    VARCMP(BSTR,bstr7,BSTR,bstr1neg,VARCMP_GT);
+    VARCMP(BSTR,bstr0,BSTR,NULL,VARCMP_GT);
+    VARCMP(BSTR,NULL,BSTR,NULL,VARCMP_EQ);
+    VARCMP(BSTR,bstrempty,BSTR,NULL,VARCMP_EQ);
+    VARCMP(BSTR,NULL,EMPTY,0,VARCMP_EQ);
+    VARCMP(EMPTY,0,BSTR,bstrempty,VARCMP_EQ);
+    VARCMP(EMPTY,1,BSTR,bstrempty,VARCMP_EQ);
+    VARCMP(BSTR,bstr0,EMPTY,0,VARCMP_GT);
+    VARCMPEX(BSTR,bstrempty,UI1,0,VARCMP_GT,VARCMP_LT,VARCMP_GT,VARCMP_GT);
+    VARCMPEX(BSTR,bstrempty,I2,-1,VARCMP_GT,VARCMP_LT,VARCMP_GT,VARCMP_GT);
+    VARCMPEX(I4,0,BSTR,bstrempty,VARCMP_LT,VARCMP_LT,VARCMP_GT,VARCMP_LT);
+    VARCMPEX(BSTR,NULL,UI1,0,VARCMP_GT,VARCMP_LT,VARCMP_GT,VARCMP_GT);
+    VARCMPEX(I4,7,BSTR,NULL,VARCMP_LT,VARCMP_LT,VARCMP_GT,VARCMP_LT);
+    VARCMPEX(BSTR,bstr0,UI1,0,VARCMP_GT,VARCMP_EQ,VARCMP_EQ,VARCMP_GT);
+    VARCMPEX(I2,0,BSTR,bstr0,VARCMP_LT,VARCMP_EQ,VARCMP_EQ,VARCMP_LT);
+    ok(V_VT(&left) & V_VT(&right) & VT_RESERVED, "VT_RESERVED filtered out!\n");
+    VARCMP(BSTR,bstrhuh,I4,I4_MAX,VARCMP_GT);
+    VARCMP(BSTR,bstr2cents,I4,2,VARCMP_GT);
+    VARCMPEX(BSTR,bstr2cents,I4,42,VARCMP_GT,VARCMP_LT,VARCMP_GT,VARCMP_GT);
+    VARCMP(BSTR,bstr2cents,I4,-1,VARCMP_GT);
+    VARCMPEX(BSTR,bstr2cents,I4,-666,VARCMP_GT,VARCMP_LT,VARCMP_GT,VARCMP_GT);
+    VARCMPEX(BSTR,bstr0,I4,0,VARCMP_GT,VARCMP_EQ,VARCMP_EQ,VARCMP_GT);
+    VARCMPEX(BSTR,bstr0,I4,-666,VARCMP_GT,VARCMP_LT,VARCMP_GT,VARCMP_GT);
+    VARCMP(BSTR,bstr1,I4,0,VARCMP_GT);
+    VARCMPEX(BSTR,bstr1,I4,1,VARCMP_GT,VARCMP_EQ,VARCMP_EQ,VARCMP_GT);
+    VARCMPEX(BSTR,bstr1,I4,I4_MAX,VARCMP_GT,VARCMP_LT,VARCMP_LT,VARCMP_GT);
+    VARCMPEX(BSTR,bstr1,I4,-1,VARCMP_GT,VARCMP_LT,VARCMP_GT,VARCMP_GT);
+    VARCMP(BSTR,bstr7,I4,1,VARCMP_GT);
+    VARCMPEX(BSTR,bstr7,I4,7,VARCMP_GT,VARCMP_EQ,VARCMP_EQ,VARCMP_GT);
+    VARCMPEX(BSTR,bstr7,I4,42,VARCMP_GT,VARCMP_GT,VARCMP_LT,VARCMP_GT);
+    VARCMPEX(BSTR,bstr42,I4,7,VARCMP_GT,VARCMP_LT,VARCMP_GT,VARCMP_GT);
+    VARCMPEX(BSTR,bstr42,I4,42,VARCMP_GT,VARCMP_EQ,VARCMP_EQ,VARCMP_GT);
+    VARCMPEX(BSTR,bstr42,I4,I4_MAX,VARCMP_GT,VARCMP_GT,VARCMP_LT,VARCMP_GT);
+    VARCMPEX(BSTR,bstr1neg,I4,1,VARCMP_GT,VARCMP_GT,VARCMP_LT,VARCMP_LT);
+    VARCMPEX(BSTR,bstr1neg,I4,42,VARCMP_GT,VARCMP_LT,VARCMP_LT,VARCMP_LT);
+    VARCMPEX(BSTR,bstr1neg,I4,-1,VARCMP_GT,VARCMP_EQ,VARCMP_EQ,VARCMP_LT);
+    VARCMPEX(BSTR,bstr1neg,I4,-666,VARCMP_GT,VARCMP_LT,VARCMP_GT,VARCMP_LT);
+    VARCMPEX(BSTR,bstr666neg,I4,1,VARCMP_GT,VARCMP_GT,VARCMP_LT,VARCMP_LT);
+    VARCMPEX(BSTR,bstr666neg,I4,7,VARCMP_GT,VARCMP_LT,VARCMP_LT,VARCMP_LT);
+    VARCMPEX(BSTR,bstr666neg,I4,42,VARCMP_GT,VARCMP_GT,VARCMP_LT,VARCMP_LT);
+    VARCMPEX(BSTR,bstr666neg,I4,I4_MAX,VARCMP_GT,VARCMP_GT,VARCMP_LT,VARCMP_LT);
+    VARCMPEX(BSTR,bstr666neg,I4,-1,VARCMP_GT,VARCMP_GT,VARCMP_LT,VARCMP_LT);
+    VARCMPEX(BSTR,bstr666neg,I4,-666,VARCMP_GT,VARCMP_EQ,VARCMP_EQ,VARCMP_LT);
+    VARCMPEX(BSTR,bstr7,R8,7.0,VARCMP_GT,VARCMP_EQ,VARCMP_EQ,VARCMP_GT);
+    VARCMPEX(R8,3.141592,BSTR,NULL,VARCMP_LT,VARCMP_LT,VARCMP_GT,VARCMP_LT);
+
+    /* DECIMAL handling */
+    SETDEC(dec,0,0,0,0);
+    VARCMPEX(DECIMAL,dec,BSTR,bstr0,VARCMP_LT,VARCMP_EQ,VARCMP_EQ,VARCMP_LT);
+    SETDEC64(dec,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF); /* max DECIMAL */
+    VARCMP(DECIMAL,dec,R8,R8_MAX,VARCMP_LT);    /* R8 has bigger range */
+    VARCMP(DECIMAL,dec,DATE,R8_MAX,VARCMP_LT);  /* DATE has bigger range */
+    SETDEC64(dec,0,0x80,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF);
+    VARCMP(DECIMAL,dec,R8,-R8_MAX,VARCMP_GT);
+    SETDEC64(dec,20,0,0x5,0x6BC75E2D,0x63100001);     /* 1+1e-20 */
+    VARCMP(DECIMAL,dec,R8,1,VARCMP_GT); /* DECIMAL has higher precission */
+
+    /* Show that DATE is handled just as a R8 */
+    VARCMP(DATE,DATE_MAX,DATE,DATE_MAX+1,VARCMP_LT);
+    VARCMP(DATE,DATE_MIN,DATE,DATE_MIN-1,VARCMP_GT);
+    VARCMP(DATE,R8_MIN,R8,R8_MIN,VARCMP_EQ);
+    VARCMP(DATE,1,DATE,1+1e-15,VARCMP_LT);      /* 1e-15 == 8.64e-11 seconds */
+
+    /* R4 precission handling */
+    VARCMP(R4,1,R8,1+1e-8,VARCMP_EQ);
+    VARCMP(R8,1+1e-8,R4,1,VARCMP_EQ);
+    VARCMP(R8,1+1e-8,R8,1,VARCMP_GT);
+    VARCMP(R8,R4_MAX*1.1,R4,R4_MAX,VARCMP_GT);
+    VARCMP(R4,R4_MAX,R8,R8_MAX,VARCMP_LT);
+    VARCMP(R4,1,DATE,1+1e-8,VARCMP_EQ);
+    VARCMP(R4,1,BSTR,bstr1few,VARCMP_LT); /* bstr1few == 1+1e-8 */
+    SETDEC(dec,8,0,0,0x5F5E101);          /* 1+1e-8 */
+    VARCMP(R4,1,DECIMAL,dec,VARCMP_LT);
+}
+
 START_TEST(vartest)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -4953,4 +5192,5 @@ START_TEST(vartest)
   test_VarEqv();
   test_VarMul();
   test_VarAdd();
+  test_VarCmp();
 }
