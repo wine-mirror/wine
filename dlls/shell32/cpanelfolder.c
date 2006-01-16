@@ -652,7 +652,8 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDisplayNameOf(IShellFolder2 * iface,
 {
     ICPanelImpl *This = (ICPanelImpl *)iface;
 
-    CHAR szPath[MAX_PATH*2];
+    CHAR szPath[MAX_PATH];
+    WCHAR wszPath[MAX_PATH+1]; /* +1 for potential backslash */
     PIDLCPanelStruct* pcpanel;
 
     *szPath = '\0';
@@ -676,7 +677,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDisplayNameOf(IShellFolder2 * iface,
 	BOOL bSimplePidl = _ILIsPidlSimple(pidl);
 
 	if (bSimplePidl) {
-	    _ILSimpleGetText(pidl, szPath, MAX_PATH);	/* append my own path */
+	    _ILSimpleGetTextW(pidl, wszPath, MAX_PATH);	/* append my own path */
 	} else {
 	    FIXME("special pidl\n");
 	}
@@ -684,12 +685,14 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDisplayNameOf(IShellFolder2 * iface,
 	if ((dwFlags & SHGDN_FORPARSING) && !bSimplePidl) { /* go deeper if needed */
 	    int len = 0;
 
-	    PathAddBackslashA(szPath); /*FIXME*/
-	    len = lstrlenA(szPath);
+	    PathAddBackslashW(wszPath);
+	    len = lstrlenW(wszPath);
 
 	    if (!SUCCEEDED
-	      (SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags | SHGDN_INFOLDER, szPath + len, MAX_PATH - len)))
+	      (SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags | SHGDN_INFOLDER, wszPath + len, MAX_PATH + 1 - len)))
 		return E_OUTOFMEMORY;
+	    if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, szPath, MAX_PATH, NULL, NULL))
+		wszPath[0] = '\0';
 	}
     }
 

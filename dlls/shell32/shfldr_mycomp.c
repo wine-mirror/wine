@@ -617,12 +617,19 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
                     if ((GET_SHGDN_RELATION (dwFlags) == SHGDN_NORMAL) &&
                         bWantsForParsing)
                     {
+                        WCHAR wszPath[MAX_PATH];
                         /*
                          * We need the filesystem path to the destination folder
                          * Only the folder itself can know it
                          */
                         hr = SHELL32_GetDisplayNameOfChild (iface, pidl,
-                                                dwFlags, szPath, MAX_PATH);
+                                                dwFlags, wszPath, MAX_PATH);
+                        if (SUCCEEDED(hr))
+                        {
+                            if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, szPath, MAX_PATH,
+                                                     NULL, NULL))
+                                wszPath[0] = '\0';
+                        }
                     }
                     else
                     {
@@ -677,9 +684,16 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
     }
     else
     {
+        WCHAR wszPath[MAX_PATH];
         /* Complex pidl. Let the child folder do the work */
         strRet->uType = STRRET_CSTR;
-        hr = SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags, szPath, MAX_PATH);
+        hr = SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags, wszPath, MAX_PATH);
+        if (SUCCEEDED(hr))
+        {
+            if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, szPath, MAX_PATH,
+                                     NULL, NULL))
+                wszPath[0] = '\0';
+        }
     }
 
     if (SUCCEEDED (hr))

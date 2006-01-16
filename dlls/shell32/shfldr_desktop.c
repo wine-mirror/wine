@@ -562,6 +562,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
 {
     IGenericSFImpl *This = (IGenericSFImpl *)iface;
     HRESULT hr = S_OK;
+    WCHAR wszPath[MAX_PATH];
 
     TRACE ("(%p)->(pidl=%p,0x%08lx,%p)\n", This, pidl, dwFlags, strRet);
     pdump (pidl);
@@ -645,13 +646,20 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
                 if ((GET_SHGDN_RELATION (dwFlags) == SHGDN_NORMAL) &&
                      bWantsForParsing)
                 {
+                    WCHAR wszPath[MAX_PATH];
                     /*
                      * we need the filesystem path to the destination folder.
                      * Only the folder itself can know it
                      */
                     hr = SHELL32_GetDisplayNameOfChild (iface, pidl, dwFlags,
-                                                        strRet->u.cStr,
+                                                        wszPath,
                                                         MAX_PATH);
+                    if (SUCCEEDED(hr))
+                    {
+                        if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, strRet->u.cStr, MAX_PATH,
+                                                 NULL, NULL))
+                            wszPath[0] = '\0';
+                    }
                 }
                 else
                 {
@@ -690,7 +698,13 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
     {
         /* a complex pidl, let the subfolder do the work */
         hr = SHELL32_GetDisplayNameOfChild (iface, pidl, dwFlags,
-         strRet->u.cStr, MAX_PATH);
+                                            wszPath, MAX_PATH);
+        if (SUCCEEDED(hr))
+        {
+            if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, strRet->u.cStr, MAX_PATH,
+                                     NULL, NULL))
+                wszPath[0] = '\0';
+        }
     }
 
     TRACE ("-- (%p)->(%s,0x%08lx)\n", This,

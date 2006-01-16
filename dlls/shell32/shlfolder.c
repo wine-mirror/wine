@@ -331,7 +331,7 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
  * virtual folders with the registry key WantsFORPARSING set.
  */
 HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
-				       LPCITEMIDLIST pidl, DWORD dwFlags, LPSTR szOut, DWORD dwOutLen)
+				       LPCITEMIDLIST pidl, DWORD dwFlags, LPWSTR szOut, DWORD dwOutLen)
 {
     LPITEMIDLIST pidlFirst;
     HRESULT hr = E_INVALIDARG;
@@ -350,7 +350,7 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
 
 	    hr = IShellFolder_GetDisplayNameOf (psfChild, pidlNext, dwFlags, &strTemp);
 	    if (SUCCEEDED (hr)) {
-		hr = StrRetToStrNA (szOut, dwOutLen, &strTemp, pidlNext);
+		hr = StrRetToStrNW (szOut, dwOutLen, &strTemp, pidlNext);
 	    }
 	    IShellFolder_Release (psfChild);
 	}
@@ -358,7 +358,7 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
     } else
 	hr = E_OUTOFMEMORY;
 
-    TRACE ("-- ret=0x%08lx %s\n", hr, szOut);
+    TRACE ("-- ret=0x%08lx %s\n", hr, debugstr_w(szOut));
 
     return hr;
 }

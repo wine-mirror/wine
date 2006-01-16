@@ -816,7 +816,13 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
         _ILSimpleGetText(pidl, strRet->u.cStr + len, MAX_PATH - len);
         if (!_ILIsFolder(pidl)) SHELL_FS_ProcessDisplayFilename(strRet->u.cStr, dwFlags);
     } else {
-        hr = SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags, strRet->u.cStr, MAX_PATH);
+        WCHAR wszPath[MAX_PATH];
+        hr = SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags, wszPath, MAX_PATH);
+        if (SUCCEEDED(hr)) {
+            if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, strRet->u.cStr, MAX_PATH,
+                                     NULL, NULL))
+                wszPath[0] = '\0';
+        }
     }
 
     TRACE ("-- (%p)->(%s)\n", This, strRet->u.cStr);
