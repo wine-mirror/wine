@@ -527,6 +527,20 @@ void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, D
 
 void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
 
+/* capture.c */
+
+HRESULT WINAPI IDirectSoundCaptureImpl_CreateCaptureBuffer(
+    LPDIRECTSOUNDCAPTURE iface,
+    LPCDSCBUFFERDESC lpcDSCBufferDesc,
+    LPDIRECTSOUNDCAPTUREBUFFER* lplpDSCaptureBuffer,
+    LPUNKNOWN pUnk);
+HRESULT WINAPI IDirectSoundCaptureImpl_GetCaps(
+    LPDIRECTSOUNDCAPTURE iface,
+    LPDSCCAPS lpDSCCaps);
+HRESULT WINAPI IDirectSoundCaptureImpl_Initialize(
+    LPDIRECTSOUNDCAPTURE iface,
+    LPCGUID lpcGUID);
+
 #define STATE_STOPPED   0
 #define STATE_STARTING  1
 #define STATE_PLAYING   2
