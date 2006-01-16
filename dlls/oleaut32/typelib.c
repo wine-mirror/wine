@@ -5207,29 +5207,21 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	switch (func_desc->funckind) {
 	case FUNC_PUREVIRTUAL:
 	case FUNC_VIRTUAL: {
-            VARIANTARG *rgvarg = NULL;
+            VARIANTARG *rgvarg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rgvarg) * func_desc->cParams);
             VARIANTARG **prgpvarg = HeapAlloc(GetProcessHeap(), 0, sizeof(*prgpvarg) * func_desc->cParams);
             VARTYPE *rgvt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rgvt) * func_desc->cParams);
+            VARIANTARG *missing_arg = HeapAlloc(GetProcessHeap(), 0, sizeof(*missing_arg) * func_desc->cParams);
             VARIANT varresult;
-            SHORT missing_param_offset = func_desc->cParams;
-            SHORT missing_params = 0;
             VARIANT retval; /* pointer for storing byref retvals in */
 
             hres = S_OK;
             for (i = 0; i < func_desc->cParams; i++)
             {
                 TYPEDESC *tdesc = &func_desc->lprgelemdescParam[i].tdesc;
-                USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
                 hres = typedescvt_to_variantvt((ITypeInfo *)iface, tdesc, &rgvt[i]);
                 if (FAILED(hres))
                     goto func_fail;
-                if ((i >= pDispParams->cArgs) &&
-                    (wParamFlags & PARAMFLAG_FOPT) &&
-                    !(wParamFlags & PARAMFLAG_FHASDEFAULT))
-                    missing_params++;
             }
-
-            rgvarg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rgvarg) * (func_desc->cParams + missing_params));
 
             TRACE("changing args\n");
             for (i = 0; i < func_desc->cParams; i++)
@@ -5284,8 +5276,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     else
                     {
                         V_VT(arg) = VT_VARIANT | VT_BYREF;
-                        V_VARIANTREF(arg) = &rgvarg[missing_param_offset];
-                        missing_param_offset++;
+                        V_VARIANTREF(arg) = &missing_arg[i];
                         V_VT(V_VARIANTREF(arg)) = VT_ERROR;
                         V_ERROR(V_VARIANTREF(arg)) = DISP_E_PARAMNOTFOUND;
                     }
@@ -5371,6 +5362,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             }
 
 func_fail:
+            HeapFree(GetProcessHeap(), 0, missing_arg);
             HeapFree(GetProcessHeap(), 0, prgpvarg);
             HeapFree(GetProcessHeap(), 0, rgvarg);
             HeapFree(GetProcessHeap(), 0, rgvt);
