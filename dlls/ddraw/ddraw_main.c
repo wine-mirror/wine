@@ -1067,7 +1067,8 @@ Main_DirectDraw_GetVerticalBlankStatus(LPDIRECTDRAW7 iface, LPBOOL status)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     TRACE("(%p)->(%p)\n",This,status);
-    *status = TRUE;
+    *status = This->fake_vblank;
+    This->fake_vblank = !This->fake_vblank;
     return DD_OK;
 }
 

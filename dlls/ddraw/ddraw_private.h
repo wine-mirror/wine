@@ -114,6 +114,8 @@ struct IDirectDrawImpl
     DDPIXELFORMAT pixelformat;
     DWORD cur_scanline;
 
+    BOOL fake_vblank;
+    
     /* Should each of these go into some structure? */
     DWORD orig_width, orig_height;
     LONG orig_pitch;
