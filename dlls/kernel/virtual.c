@@ -52,17 +52,20 @@ static unsigned int page_size;
 
 /***********************************************************************
  *             VirtualAlloc   (KERNEL32.@)
- * Reserves or commits a region of pages in virtual address space
+ *
+ * Reserves or commits a region of pages in virtual address space.
+ *
+ * PARAMS
+ *  addr    [I] Address of region to reserve or commit.
+ *  size    [I] Size of region.
+ *  type    [I] Type of allocation.
+ *  protect [I] Type of access protection.
  *
  * RETURNS
- *	Base address of allocated region of pages
- *	NULL: Failure
+ *	Success: Base address of allocated region of pages.
+ *	Failure: NULL.
  */
-LPVOID WINAPI VirtualAlloc(
-              LPVOID addr,  /* [in] Address of region to reserve or commit */
-              SIZE_T size,  /* [in] Size of region */
-              DWORD type,   /* [in] Type of allocation */
-              DWORD protect)/* [in] Type of access protection */
+LPVOID WINAPI VirtualAlloc( LPVOID addr, SIZE_T size, DWORD type, DWORD protect )
 {
     return VirtualAllocEx( GetCurrentProcess(), addr, size, type, protect );
 }
@@ -73,16 +76,20 @@ LPVOID WINAPI VirtualAlloc(
  *
  * Seems to be just as VirtualAlloc, but with process handle.
  *
+ * PARAMS
+ *  hProcess [I] Handle to process to do mem operation.
+ *  addr     [I] Address of region to reserve or commit.
+ *  size     [I] Size of region.
+ *  type     [I] Type of allocation.
+ *  protect  [I] Type of access protection.
+ *
+ *
  * RETURNS
- *	Base address of allocated region of pages
- *	NULL: Failure
+ *	Success: Base address of allocated region of pages.
+ *	Failure: NULL.
  */
-LPVOID WINAPI VirtualAllocEx(
-              HANDLE hProcess, /* [in] Handle of process to do mem operation */
-              LPVOID addr,     /* [in] Address of region to reserve or commit */
-              SIZE_T size,     /* [in] Size of region */
-              DWORD type,      /* [in] Type of allocation */
-              DWORD protect )  /* [in] Type of access protection */
+LPVOID WINAPI VirtualAllocEx( HANDLE hProcess, LPVOID addr, SIZE_T size,
+    DWORD type, DWORD protect )
 {
     LPVOID ret = addr;
     NTSTATUS status;
@@ -98,28 +105,38 @@ LPVOID WINAPI VirtualAllocEx(
 
 /***********************************************************************
  *             VirtualFree   (KERNEL32.@)
- * Release or decommits a region of pages in virtual address space.
+ *
+ * Releases or decommits a region of pages in virtual address space.
+ *
+ * PARAMS
+ *  addr [I] Address of region of committed pages.
+ *  size [I] Size of region.
+ *  type [I] Type of operation.
  *
  * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
+ *	Success: TRUE.
+ *	Failure: FALSE.
  */
-BOOL WINAPI VirtualFree(
-              LPVOID addr, /* [in] Address of region of committed pages */
-              SIZE_T size, /* [in] Size of region */
-              DWORD type   /* [in] Type of operation */
-) {
+BOOL WINAPI VirtualFree( LPVOID addr, SIZE_T size, DWORD type )
+{
     return VirtualFreeEx( GetCurrentProcess(), addr, size, type );
 }
 
 
 /***********************************************************************
  *             VirtualFreeEx   (KERNEL32.@)
- * Release or decommits a region of pages in virtual address space.
+ *
+ * Releases or decommits a region of pages in virtual address space.
+ *
+ * PARAMS
+ *  process [I] Handle to process.
+ *  addr    [I] Address of region to free.
+ *  size    [I] Size of region.
+ *  type    [I] Type of operation.
  *
  * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
+ *	Success: TRUE.
+ *	Failure: FALSE.
  */
 BOOL WINAPI VirtualFreeEx( HANDLE process, LPVOID addr, SIZE_T size, DWORD type )
 {
@@ -131,17 +148,22 @@ BOOL WINAPI VirtualFreeEx( HANDLE process, LPVOID addr, SIZE_T size, DWORD type 
 
 /***********************************************************************
  *             VirtualLock   (KERNEL32.@)
- * Locks the specified region of virtual address space
  *
- * NOTE
- *	Always returns TRUE
+ * Locks the specified region of virtual address space.
+ *
+ * PARAMS
+ *  addr [I] Address of first byte of range to lock.
+ *  size [I] Number of bytes in range to lock.
  *
  * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
+ *	Success: TRUE.
+ *	Failure: FALSE.
+ *
+ * NOTES
+ *	Always returns TRUE.
+ *
  */
-BOOL WINAPI VirtualLock( LPVOID addr, /* [in] Address of first byte of range to lock */
-                         SIZE_T size ) /* [in] Number of bytes in range to lock */
+BOOL WINAPI VirtualLock( LPVOID addr, SIZE_T size )
 {
     NTSTATUS status = NtLockVirtualMemory( GetCurrentProcess(), &addr, &size, 1 );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
@@ -151,17 +173,22 @@ BOOL WINAPI VirtualLock( LPVOID addr, /* [in] Address of first byte of range to 
 
 /***********************************************************************
  *             VirtualUnlock   (KERNEL32.@)
- * Unlocks a range of pages in the virtual address space
  *
- * NOTE
- *	Always returns TRUE
+ * Unlocks a range of pages in the virtual address space.
+ *
+ * PARAMS
+ *  addr [I] Address of first byte of range.
+ *  size [I] Number of bytes in range.
  *
  * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
+ *	Success: TRUE.
+ *	Failure: FALSE.
+ *
+ * NOTES
+ *	Always returns TRUE.
+ *
  */
-BOOL WINAPI VirtualUnlock( LPVOID addr, /* [in] Address of first byte of range */
-                           SIZE_T size ) /* [in] Number of bytes in range */
+BOOL WINAPI VirtualUnlock( LPVOID addr, SIZE_T size )
 {
     NTSTATUS status = NtUnlockVirtualMemory( GetCurrentProcess(), &addr, &size, 1 );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
@@ -171,37 +198,44 @@ BOOL WINAPI VirtualUnlock( LPVOID addr, /* [in] Address of first byte of range *
 
 /***********************************************************************
  *             VirtualProtect   (KERNEL32.@)
- * Changes the access protection on a region of committed pages
+ *
+ * Changes the access protection on a region of committed pages.
+ *
+ * PARAMS
+ *  addr     [I] Address of region of committed pages.
+ *  size     [I] Size of region.
+ *  new_prot [I] Desired access protection.
+ *  old_prot [O] Address of variable to get old protection.
  *
  * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
+ *	Success: TRUE.
+ *	Failure: FALSE.
  */
-BOOL WINAPI VirtualProtect(
-              LPVOID addr,     /* [in] Address of region of committed pages */
-              SIZE_T size,     /* [in] Size of region */
-              DWORD new_prot,  /* [in] Desired access protection */
-              LPDWORD old_prot /* [out] Address of variable to get old protection */
-) {
+BOOL WINAPI VirtualProtect( LPVOID addr, SIZE_T size, DWORD new_prot, LPDWORD old_prot)
+{
     return VirtualProtectEx( GetCurrentProcess(), addr, size, new_prot, old_prot );
 }
 
 
 /***********************************************************************
  *             VirtualProtectEx   (KERNEL32.@)
+ *
  * Changes the access protection on a region of committed pages in the
- * virtual address space of a specified process
+ * virtual address space of a specified process.
+ *
+ * PARAMS
+ *  process  [I] Handle of process.
+ *  addr     [I] Address of region of committed pages.
+ *  size     [I] Size of region.
+ *  new_prot [I] Desired access protection.
+ *  old_prot [O] Address of variable to get old protection.
  *
  * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
+ *	Success: TRUE.
+ *	Failure: FALSE.
  */
-BOOL WINAPI VirtualProtectEx(
-              HANDLE process,  /* [in]  Handle of process */
-              LPVOID addr,     /* [in]  Address of region of committed pages */
-              SIZE_T size,     /* [in]  Size of region */
-              DWORD new_prot,  /* [in]  Desired access protection */
-              LPDWORD old_prot /* [out] Address of variable to get old protection */ )
+BOOL WINAPI VirtualProtectEx( HANDLE process, LPVOID addr, SIZE_T size,
+    DWORD new_prot, LPDWORD old_prot )
 {
     NTSTATUS status = NtProtectVirtualMemory( process, &addr, &size, new_prot, old_prot );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
@@ -211,34 +245,42 @@ BOOL WINAPI VirtualProtectEx(
 
 /***********************************************************************
  *             VirtualQuery   (KERNEL32.@)
- * Provides info about a range of pages in virtual address space
+ *
+ * Provides info about a range of pages in virtual address space.
+ *
+ * PARAMS
+ *  addr [I] Address of region.
+ *  info [O] Address of info buffer.
+ *  len  [I] Size of buffer.
  *
  * RETURNS
- *	Number of bytes returned in information buffer
- *	or 0 if addr is >= 0xc0000000 (kernel space).
+ *	Number of bytes returned in information buffer or 0 if
+ *	addr >= 0xc0000000 (kernel space).
  */
-SIZE_T WINAPI VirtualQuery(
-             LPCVOID addr,                    /* [in]  Address of region */
-             PMEMORY_BASIC_INFORMATION info,  /* [out] Address of info buffer */
-             SIZE_T len                       /* [in]  Size of buffer */
-) {
+SIZE_T WINAPI VirtualQuery( LPCVOID addr, PMEMORY_BASIC_INFORMATION info,
+    SIZE_T len )
+{
     return VirtualQueryEx( GetCurrentProcess(), addr, info, len );
 }
 
 
 /***********************************************************************
  *             VirtualQueryEx   (KERNEL32.@)
+ *
  * Provides info about a range of pages in virtual address space of a
- * specified process
+ * specified process.
+ *
+ * PARAMS
+ *  process [I] Handle to process.
+ *  addr    [I] Address of region.
+ *  info    [O] Address of info buffer.
+ *  len     [I] Size of buffer.
  *
  * RETURNS
- *	Number of bytes returned in information buffer
+ *	Number of bytes returned in information buffer.
  */
-SIZE_T WINAPI VirtualQueryEx(
-             HANDLE process,                  /* [in] Handle of process */
-             LPCVOID addr,                    /* [in] Address of region */
-             PMEMORY_BASIC_INFORMATION info,  /* [out] Address of info buffer */
-             SIZE_T len                       /* [in] Size of buffer */ )
+SIZE_T WINAPI VirtualQueryEx( HANDLE process, LPCVOID addr,
+    PMEMORY_BASIC_INFORMATION info, SIZE_T len )
 {
     SIZE_T ret;
     NTSTATUS status;
@@ -254,20 +296,23 @@ SIZE_T WINAPI VirtualQueryEx(
 
 /***********************************************************************
  *             CreateFileMappingA   (KERNEL32.@)
- * Creates a named or unnamed file-mapping object for the specified file
+ *
+ * Creates a named or unnamed file-mapping object for the specified file.
+ *
+ * PARAMS
+ *  hFile     [I] Handle to the file to map.
+ *  sa        [I] Optional security attributes.
+ *  protect   [I] Protection for mapping object.
+ *  size_high [I] High-order 32 bits of object size.
+ *  size_low  [I] Low-order 32 bits of object size.
+ *  name      [I] Name of file-mapping object.
  *
  * RETURNS
- *	Handle: Success
- *	0: Mapping object does not exist
- *	NULL: Failure
+ *	Success: Handle.
+ *	Failure: NULL. Mapping object does not exist.
  */
-HANDLE WINAPI CreateFileMappingA(
-                HANDLE hFile,   /* [in] Handle of file to map */
-                SECURITY_ATTRIBUTES *sa, /* [in] Optional security attributes*/
-                DWORD protect,   /* [in] Protection for mapping object */
-                DWORD size_high, /* [in] High-order 32 bits of object size */
-                DWORD size_low,  /* [in] Low-order 32 bits of object size */
-                LPCSTR name      /* [in] Name of file-mapping object */ )
+HANDLE WINAPI CreateFileMappingA( HANDLE hFile, SECURITY_ATTRIBUTES *sa,
+    DWORD protect, DWORD size_high, DWORD size_low, LPCSTR name )
 {
     WCHAR buffer[MAX_PATH];
 
@@ -284,6 +329,7 @@ HANDLE WINAPI CreateFileMappingA(
 
 /***********************************************************************
  *             CreateFileMappingW   (KERNEL32.@)
+ *
  * See CreateFileMappingA.
  */
 HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
@@ -359,16 +405,19 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
 
 /***********************************************************************
  *             OpenFileMappingA   (KERNEL32.@)
+ *
  * Opens a named file-mapping object.
  *
+ * PARAMS
+ *  access  [I] Access mode.
+ *  inherit [I] Inherit flag.
+ *  name    [I] Name of file-mapping object.
+ *
  * RETURNS
- *	Handle: Success
- *	NULL: Failure
+ *	Success: Handle.
+ *	Failure: NULL.
  */
-HANDLE WINAPI OpenFileMappingA(
-                DWORD access,   /* [in] Access mode */
-                BOOL inherit, /* [in] Inherit flag */
-                LPCSTR name )   /* [in] Name of file-mapping object */
+HANDLE WINAPI OpenFileMappingA( DWORD access, BOOL inherit, LPCSTR name )
 {
     WCHAR buffer[MAX_PATH];
 
@@ -385,6 +434,7 @@ HANDLE WINAPI OpenFileMappingA(
 
 /***********************************************************************
  *             OpenFileMappingW   (KERNEL32.@)
+ *
  * See OpenFileMappingA.
  */
 HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
@@ -420,19 +470,23 @@ HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
 
 /***********************************************************************
  *             MapViewOfFile   (KERNEL32.@)
- * Maps a view of a file into the address space
+ *
+ * Maps a view of a file into the address space.
+ *
+ * PARAMS
+ *  mapping     [I] File-mapping object to map.
+ *  access      [I] Access mode.
+ *  offset_high [I] High-order 32 bits of file offset.
+ *  offset_low  [I] Low-order 32 bits of file offset.
+ *  count       [I] Number of bytes to map.
  *
  * RETURNS
- *	Starting address of mapped view
- *	NULL: Failure
+ *	Success: Starting address of mapped view.
+ *	Failure: NULL.
  */
-LPVOID WINAPI MapViewOfFile(
-              HANDLE mapping,  /* [in] File-mapping object to map */
-              DWORD access,      /* [in] Access mode */
-              DWORD offset_high, /* [in] High-order 32 bits of file offset */
-              DWORD offset_low,  /* [in] Low-order 32 bits of file offset */
-              SIZE_T count       /* [in] Number of bytes to map */
-) {
+LPVOID WINAPI MapViewOfFile( HANDLE mapping, DWORD access,
+    DWORD offset_high, DWORD offset_low, SIZE_T count )
+{
     return MapViewOfFileEx( mapping, access, offset_high,
                             offset_low, count, NULL );
 }
@@ -440,20 +494,24 @@ LPVOID WINAPI MapViewOfFile(
 
 /***********************************************************************
  *             MapViewOfFileEx   (KERNEL32.@)
- * Maps a view of a file into the address space
+ *
+ * Maps a view of a file into the address space.
+ *
+ * PARAMS
+ *  handle      [I] File-mapping object to map.
+ *  access      [I] Access mode.
+ *  offset_high [I] High-order 32 bits of file offset.
+ *  offset_low  [I] Low-order 32 bits of file offset.
+ *  count       [I] Number of bytes to map.
+ *  addr        [I] Suggested starting address for mapped view.
  *
  * RETURNS
- *	Starting address of mapped view
- *	NULL: Failure
+ *	Success: Starting address of mapped view.
+ *	Failure: NULL.
  */
-LPVOID WINAPI MapViewOfFileEx(
-              HANDLE handle,   /* [in] File-mapping object to map */
-              DWORD access,      /* [in] Access mode */
-              DWORD offset_high, /* [in] High-order 32 bits of file offset */
-              DWORD offset_low,  /* [in] Low-order 32 bits of file offset */
-              SIZE_T count,      /* [in] Number of bytes to map */
-              LPVOID addr        /* [in] Suggested starting address for mapped view */
-) {
+LPVOID WINAPI MapViewOfFileEx( HANDLE handle, DWORD access,
+    DWORD offset_high, DWORD offset_low, SIZE_T count, LPVOID addr )
+{
     NTSTATUS status;
     LARGE_INTEGER offset;
     ULONG protect;
@@ -478,16 +536,20 @@ LPVOID WINAPI MapViewOfFileEx(
 
 /***********************************************************************
  *             UnmapViewOfFile   (KERNEL32.@)
+ *
  * Unmaps a mapped view of a file.
+ *
+ * PARAMS
+ *  addr [I] Address where mapped view begins.
+ *
+ * RETURNS
+ *	Success: TRUE.
+ *	Failure: FALSE.
  *
  * NOTES
  *	Should addr be an LPCVOID?
- *
- * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
  */
-BOOL WINAPI UnmapViewOfFile( LPVOID addr ) /* [in] Address where mapped view begins */
+BOOL WINAPI UnmapViewOfFile( LPVOID addr )
 {
     NTSTATUS status = NtUnmapViewOfSection( GetCurrentProcess(), addr );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
@@ -497,14 +559,18 @@ BOOL WINAPI UnmapViewOfFile( LPVOID addr ) /* [in] Address where mapped view beg
 
 /***********************************************************************
  *             FlushViewOfFile   (KERNEL32.@)
- * Writes to the disk a byte range within a mapped view of a file
+ *
+ * Writes to the disk a byte range within a mapped view of a file.
+ *
+ * PARAMS
+ *  base [I] Start address of byte range to flush.
+ *  size [I] Number of bytes in range.
  *
  * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
+ *	Success: TRUE.
+ *	Failure: FALSE.
  */
-BOOL WINAPI FlushViewOfFile( LPCVOID base,  /* [in] Start address of byte range to flush */
-                             SIZE_T size )   /* [in] Number of bytes in range */
+BOOL WINAPI FlushViewOfFile( LPCVOID base, SIZE_T size )
 {
     NTSTATUS status = NtFlushVirtualMemory( GetCurrentProcess(), &base, &size, 0 );
     if (status)
@@ -521,13 +587,14 @@ BOOL WINAPI FlushViewOfFile( LPCVOID base,  /* [in] Start address of byte range 
  *
  * Check for read access on a memory block.
  *
+ * ptr  [I] Address of memory block.
+ * size [I] Size of block.
+ *
  * RETURNS
- *	FALSE: Process has read access to entire block
- *      TRUE: Otherwise
+ *  Success: TRUE.
+ *	Failure: FALSE. Process has read access to entire block.
  */
-BOOL WINAPI IsBadReadPtr(
-              LPCVOID ptr, /* [in] Address of memory block */
-              UINT size )  /* [in] Size of block */
+BOOL WINAPI IsBadReadPtr( LPCVOID ptr, UINT size )
 {
     if (!size) return FALSE;  /* handle 0 size case w/o reference */
     if (!ptr) return TRUE;
@@ -563,13 +630,15 @@ BOOL WINAPI IsBadReadPtr(
  *
  * Check for write access on a memory block.
  *
+ * PARAMS
+ *  ptr  [I] Address of memory block.
+ *  size [I] Size of block in bytes.
+ *
  * RETURNS
- *	FALSE: Process has write access to entire block
- *      TRUE: Otherwise
+ *  Success: TRUE.
+ *	Failure: FALSE. Process has write access to entire block.
  */
-BOOL WINAPI IsBadWritePtr(
-              LPVOID ptr, /* [in] Address of memory block */
-              UINT size ) /* [in] Size of block in bytes */
+BOOL WINAPI IsBadWritePtr( LPVOID ptr, UINT size )
 {
     if (!size) return FALSE;  /* handle 0 size case w/o reference */
     if (!ptr) return TRUE;
@@ -604,14 +673,16 @@ BOOL WINAPI IsBadWritePtr(
  *
  * Check for read access on a memory block.
  *
+ * PARAMS
+ *  ptr  [I] Address of memory block.
+ *  size [I] Size of block.
+ *
  * RETURNS
- *	FALSE: Process has read access to entire block
- *      TRUE: Otherwise
+ *  Success: TRUE.
+ *	Failure: FALSE. Process has read access to entire block.
  */
-BOOL WINAPI IsBadHugeReadPtr(
-              LPCVOID ptr, /* [in] Address of memory block */
-              UINT size  /* [in] Size of block */
-) {
+BOOL WINAPI IsBadHugeReadPtr( LPCVOID ptr, UINT size )
+{
     return IsBadReadPtr( ptr, size );
 }
 
@@ -621,14 +692,16 @@ BOOL WINAPI IsBadHugeReadPtr(
  *
  * Check for write access on a memory block.
  *
+ * PARAMS
+ *  ptr  [I] Address of memory block.
+ *  size [I] Size of block.
+ *
  * RETURNS
- *	FALSE: Process has write access to entire block
- *      TRUE: Otherwise
+ *  Success: TRUE.
+ *	Failure: FALSE. Process has write access to entire block.
  */
-BOOL WINAPI IsBadHugeWritePtr(
-              LPVOID ptr, /* [in] Address of memory block */
-              UINT size /* [in] Size of block */
-) {
+BOOL WINAPI IsBadHugeWritePtr( LPVOID ptr, UINT size )
+{
     return IsBadWritePtr( ptr, size );
 }
 
@@ -638,11 +711,14 @@ BOOL WINAPI IsBadHugeWritePtr(
  *
  * Check for read access on a memory address.
  *
+ * PARAMS
+ *  ptr [I] Address of function.
+ *
  * RETURNS
- *	FALSE: Process has read access to specified memory
- *	TRUE: Otherwise
+ *	Success: TRUE.
+ *	Failure: FALSE. Process has read access to specified memory.
  */
-BOOL WINAPI IsBadCodePtr( FARPROC ptr ) /* [in] Address of function */
+BOOL WINAPI IsBadCodePtr( FARPROC ptr )
 {
     return IsBadReadPtr( ptr, 1 );
 }
@@ -653,13 +729,15 @@ BOOL WINAPI IsBadCodePtr( FARPROC ptr ) /* [in] Address of function */
  *
  * Check for read access on a range of memory pointed to by a string pointer.
  *
+ * PARAMS
+ *  str [I] Address of string.
+ *  max [I] Maximum size of string.
+ *
  * RETURNS
- *	FALSE: Read access to all bytes in string
- *	TRUE: Else
+ *	Success: TRUE.
+ *	Failure: FALSE. Read access to all bytes in string.
  */
-BOOL WINAPI IsBadStringPtrA(
-              LPCSTR str, /* [in] Address of string */
-              UINT max )  /* [in] Maximum size of string */
+BOOL WINAPI IsBadStringPtrA( LPCSTR str, UINT max )
 {
     if (!str) return TRUE;
     
@@ -680,6 +758,7 @@ BOOL WINAPI IsBadStringPtrA(
 
 /***********************************************************************
  *             IsBadStringPtrW   (KERNEL32.@)
+ *
  * See IsBadStringPtrA.
  */
 BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
