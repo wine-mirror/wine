@@ -1171,6 +1171,7 @@ typedef struct _WIN32_STREAM_ID {
 #define SCS_PIF_BINARY      3
 #define SCS_POSIX_BINARY    4
 #define SCS_OS216_BINARY    5
+#define SCS_64BIT_BINARY    6
 
 /* flags for DefineDosDevice */
 #define DDD_RAW_TARGET_PATH         0x00000001
