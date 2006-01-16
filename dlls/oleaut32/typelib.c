@@ -5262,14 +5262,27 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 }
                 else if (i < pDispParams->cArgs)
                 {
-                    V_VT(&rgvarg[i]) = V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i]);
-                    dump_Variant(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i]);
+                    VARIANTARG *src_arg = &pDispParams->rgvarg[pDispParams->cArgs - 1 - i];
+                    V_VT(&rgvarg[i]) = V_VT(src_arg);
+                    dump_Variant(src_arg);
+
                     /* FIXME: this doesn't work for VT_BYREF arguments if
                      * they are not the same type as in the paramdesc */
-                    hres = VariantChangeType(&rgvarg[i], &pDispParams->rgvarg[pDispParams->cArgs - 1 - i], 0, rgvt[i]);
+                    if ((rgvt[i] & VT_BYREF) && !V_ISBYREF(src_arg))
+                    {
+                        VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
+                        V_VT(&missing_arg[i]) = V_VT(src_arg);
+                        hres = VariantChangeType(&missing_arg[i], src_arg, 0, rgvt[i] & ~VT_BYREF);
+                        V_BYREF(&rgvarg[i]) = &V_NONE(&missing_arg[i]);
+                    }
+                    else
+                        hres = VariantChangeType(&rgvarg[i], src_arg, 0, rgvt[i]);
+
                     if (FAILED(hres))
                     {
-                        ERR("failed to convert param %d to vt %d\n", i, rgvt[i]);
+                        ERR("failed to convert param %d to %s%s from %s%s\n", i,
+                            debugstr_vt(rgvt[i]), debugstr_vf(rgvt[i]),
+                            debugstr_VT(src_arg), debugstr_VF(src_arg));
                         break;
                     }
                     V_VT(&rgvarg[i]) = rgvt[i];
