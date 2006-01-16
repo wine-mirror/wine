@@ -3851,6 +3851,13 @@ typedef union _FILE_SEGMENT_ELEMENT {
 	ULONGLONG Alignment;
 } FILE_SEGMENT_ELEMENT, *PFILE_SEGMENT_ELEMENT;
 
+typedef struct _FILE_NOTIFY_INFORMATION {
+	DWORD NextEntryOffset;
+	DWORD Action;
+	DWORD FileNameLength;
+	WCHAR FileName[1];
+} FILE_NOTIFY_INFORMATION, *PFILE_NOTIFY_INFORMATION;
+
 /* ----------------------------- begin registry ----------------------------- */
 
 /* Registry security values */
