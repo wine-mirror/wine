@@ -491,9 +491,8 @@ struct IClassFactoryImpl
 extern IClassFactoryImpl DSOUND_CAPTURE_CF;
 extern IClassFactoryImpl DSOUND_FULLDUPLEX_CF;
 
-void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan);
-void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan);
-void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);
+/*******************************************************************************
+ */
 
 /* dsound.c */
 
@@ -520,6 +519,9 @@ void DSOUND_ForceRemix(IDirectSoundBufferImpl *dsb);
 void DSOUND_MixCancelAt(IDirectSoundBufferImpl *dsb, DWORD buf_writepos);
 void DSOUND_WaveQueue(DirectSoundDevice *device, DWORD mixq);
 void DSOUND_PerformMix(DirectSoundDevice *device);
+void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan);
+void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan);
+void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
 void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
 
@@ -555,6 +557,7 @@ extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS];
 extern DirectSoundCaptureDevice * DSOUND_capture[MAXWAVEDRIVERS];
 extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS];
 
-extern HRESULT mmErr(UINT err);
-extern void setup_dsound_options(void);
-extern const char * get_device_id(LPCGUID pGuid);
+HRESULT mmErr(UINT err);
+void setup_dsound_options(void);
+const char * get_device_id(LPCGUID pGuid);
+const char * dumpCooperativeLevel(DWORD level);

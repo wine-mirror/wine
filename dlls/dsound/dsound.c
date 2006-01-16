@@ -45,7 +45,7 @@ static ULONG WINAPI IDirectSound8_IUnknown_AddRef(LPUNKNOWN iface);
 static ULONG WINAPI IDirectSound8_IDirectSound_AddRef(LPDIRECTSOUND iface);
 static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(LPDIRECTSOUND8 iface);
 
-static const char * dumpCooperativeLevel(DWORD level)
+const char * dumpCooperativeLevel(DWORD level)
 {
     static char unknown[32];
 #define LE(x) case x: return #x
