@@ -117,6 +117,7 @@ int main( int argc, const char** argv )
     fprintf( out,
              "/* Automatically generated file; DO NOT EDIT!! */\n"
              "\n"
+             "#define WIN32_LEAN_AND_MEAN\n"
              "#include <windows.h>\n\n"
              "#define STANDALONE\n"
              "#include \"wine/test.h\"\n\n" );
