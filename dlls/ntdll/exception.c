@@ -568,7 +568,7 @@ DWORD __wine_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION
 
     if (wine_frame->u.filter == (void *)1)  /* special hack for page faults */
     {
-        if (record->ExceptionCode != EXCEPTION_ACCESS_VIOLATION)
+        if (record->ExceptionCode != STATUS_ACCESS_VIOLATION)
             return ExceptionContinueSearch;
     }
     else if (wine_frame->u.filter)
