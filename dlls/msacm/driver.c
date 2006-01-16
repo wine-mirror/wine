@@ -123,7 +123,7 @@ MMRESULT WINAPI acmDriverClose(HACMDRIVER had, DWORD fdwClose)
     padid = pad->obj.pACMDriverID;
 
     /* remove driver from list */
-    for (tpad = &(padid->pACMDriverList); *tpad; *tpad = (*tpad)->pNextACMDriver) {
+    for (tpad = &(padid->pACMDriverList); *tpad; tpad = &((*tpad)->pNextACMDriver)) {
 	if (*tpad == pad) {
 	    *tpad = (*tpad)->pNextACMDriver;
 	    break;
