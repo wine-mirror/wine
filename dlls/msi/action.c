@@ -2849,10 +2849,8 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
 static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = (MSIPACKAGE*)param;
-    LPWSTR target_file, target_folder;
+    LPWSTR target_file, target_folder, filename;
     LPCWSTR buffer;
-    WCHAR filename[0x100];
-    DWORD sz;
     MSICOMPONENT *comp;
     static const WCHAR szlnk[]={'.','l','n','k',0};
     IShellLinkW *sl;
@@ -2899,13 +2897,13 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     /* may be needed because of a bug somehwere else */
     create_full_pathW(target_folder);
 
-    sz = 0x100;
-    MSI_RecordGetStringW(row,3,filename,&sz);
+    filename = msi_dup_record_field( row, 3 );
     reduce_to_longfilename(filename);
     if (!strchrW(filename,'.') || strcmpiW(strchrW(filename,'.'),szlnk))
         strcatW(filename,szlnk);
     target_file = build_directory_name(2, target_folder, filename);
     msi_free(target_folder);
+    msi_free(filename);
 
     buffer = MSI_RecordGetString(row,5);
     if (strchrW(buffer,'['))
