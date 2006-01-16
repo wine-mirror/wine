@@ -1216,50 +1216,54 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
 }
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, HWND hwnd, 
-    LPCITEMIDLIST pidl, LPCOLESTR lpszName, SHGDNF uFlags, LPITEMIDLIST* ppidlOut)
+    LPCITEMIDLIST pidl, LPCOLESTR lpcwszName, SHGDNF uFlags, LPITEMIDLIST* ppidlOut)
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
 
+    static const WCHAR awcInvalidChars[] = { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
     char szSrc[FILENAME_MAX], szDest[FILENAME_MAX];
-    WCHAR *pwszDosDest;
-    int cBasePathLen = lstrlenA(This->m_pszPath);
+    WCHAR wszSrcRelative[MAX_PATH];
+    int cBasePathLen = lstrlenA(This->m_pszPath), i;
     struct stat statDest;
-    LPITEMIDLIST pidlSrc, pidlDest;
+    LPITEMIDLIST pidlSrc, pidlDest, pidlRelativeDest;
+    LPOLESTR lpwszName;
+    HRESULT hr;
    
-    TRACE("(iface=%p, hwnd=%p, pidl=%p, lpszName=%s, uFlags=0x%08lx, ppidlOut=%p)\n",
-          iface, hwnd, pidl, debugstr_w(lpszName), uFlags, ppidlOut); 
+    TRACE("(iface=%p, hwnd=%p, pidl=%p, lpcwszName=%s, uFlags=0x%08lx, ppidlOut=%p)\n",
+          iface, hwnd, pidl, debugstr_w(lpcwszName), uFlags, ppidlOut); 
 
-    /* pidl has to contain a single non-empty SHITEMID */
-    if (_ILIsDesktop(pidl) || !_ILIsPidlSimple(pidl) || !_ILGetTextPointer(pidl))
-        return E_INVALIDARG;
-   
+    /* prepare to fail */
     if (ppidlOut)
         *ppidlOut = NULL;
     
+    /* pidl has to contain a single non-empty SHITEMID */
+    if (_ILIsDesktop(pidl) || !_ILIsPidlSimple(pidl) || !_ILGetTextPointer(pidl))
+        return E_INVALIDARG;
+ 
+    /* check for invalid characters in lpcwszName. */
+    for (i=0; i < sizeof(awcInvalidChars)/sizeof(*awcInvalidChars); i++)
+        if (StrChrW(lpcwszName, awcInvalidChars[i]))
+            return HRESULT_FROM_WIN32(ERROR_CANCELLED);
+
     /* build source path */
     memcpy(szSrc, This->m_pszPath, cBasePathLen);
     UNIXFS_filename_from_shitemid(pidl, szSrc + cBasePathLen);
 
     /* build destination path */
-    if (uFlags & SHGDN_FORPARSING) { /* absolute path in lpszName */
-        WideCharToMultiByte(CP_UNIXCP, 0, lpszName, -1, szDest, FILENAME_MAX, NULL, NULL);
-    } else {
-        WCHAR wszSrcRelative[MAX_PATH];
-        memcpy(szDest, This->m_pszPath, cBasePathLen);
-        WideCharToMultiByte(CP_UNIXCP, 0, lpszName, -1, szDest+cBasePathLen, 
-                            FILENAME_MAX-cBasePathLen, NULL, NULL);
+    memcpy(szDest, This->m_pszPath, cBasePathLen);
+    WideCharToMultiByte(CP_UNIXCP, 0, lpcwszName, -1, szDest+cBasePathLen, 
+                        FILENAME_MAX-cBasePathLen, NULL, NULL);
 
-        /* uFlags is SHGDN_FOREDITING of SHGDN_FORADDRESSBAR. If the filename's 
-         * extension is hidden to the user, we have to append it. */
-        if (_ILSimpleGetTextW(pidl, wszSrcRelative, MAX_PATH) && 
-            SHELL_FS_HideExtension(wszSrcRelative))
-        {
-            WCHAR *pwszExt = PathFindExtensionW(wszSrcRelative);
-            int cLenDest = strlen(szDest);
-            WideCharToMultiByte(CP_UNIXCP, 0, pwszExt, -1, szDest + cLenDest, 
-                FILENAME_MAX - cLenDest, NULL, NULL);
-        }
-    } 
+    /* If the filename's extension is hidden to the user, we have to append it. */
+    if (!(uFlags & SHGDN_FORPARSING) && 
+        _ILSimpleGetTextW(pidl, wszSrcRelative, MAX_PATH) && 
+        SHELL_FS_HideExtension(wszSrcRelative))
+    {
+        WCHAR *pwszExt = PathFindExtensionW(wszSrcRelative);
+        int cLenDest = strlen(szDest);
+        WideCharToMultiByte(CP_UNIXCP, 0, pwszExt, -1, szDest + cLenDest, 
+            FILENAME_MAX - cLenDest, NULL, NULL);
+    }
 
     TRACE("src=%s dest=%s\n", szSrc, szDest);
 
@@ -1272,36 +1276,30 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
         return E_FAIL;
     
     /* Build a pidl for the path of the renamed file */
-    if (This->m_dwPathMode == PATHMODE_DOS)
-    {
-        pwszDosDest = wine_get_dos_file_name(szDest);
-    }
-    else
-    {
-        int len = MultiByteToWideChar(CP_UNIXCP, 0, szDest, -1, NULL, 0);
-
-        pwszDosDest = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        MultiByteToWideChar(CP_UNIXCP, 0, szDest, -1, pwszDosDest, len);
-    }
-    if (!pwszDosDest || !UNIXFS_path_to_pidl(This, pwszDosDest, &pidlDest)) {
-        HeapFree(GetProcessHeap(), 0, pwszDosDest);
+    lpwszName = SHAlloc((lstrlenW(lpcwszName)+1)*sizeof(WCHAR)); /* due to const correctness. */
+    lstrcpyW(lpwszName, lpcwszName);
+    hr = IShellFolder2_ParseDisplayName(iface, NULL, NULL, lpwszName, NULL, &pidlRelativeDest, NULL);
+    SHFree(lpwszName);
+    if (FAILED(hr)) {
         rename(szDest, szSrc); /* Undo the renaming */
         return E_FAIL;
     }
+    pidlDest = ILCombine(This->m_pidlLocation, pidlRelativeDest);
+    ILFree(pidlRelativeDest);
+    pidlSrc = ILCombine(This->m_pidlLocation, pidl);
     
     /* Inform the shell */
-    pidlSrc = ILCombine(This->m_pidlLocation, pidl);
     if (_ILIsFolder(ILFindLastID(pidlDest))) 
         SHChangeNotify(SHCNE_RENAMEFOLDER, SHCNF_IDLIST, pidlSrc, pidlDest);
     else 
         SHChangeNotify(SHCNE_RENAMEITEM, SHCNF_IDLIST, pidlSrc, pidlDest);
+    
+    if (ppidlOut) 
+        *ppidlOut = ILClone(ILFindLastID(pidlDest));
+        
     ILFree(pidlSrc);
     ILFree(pidlDest);
     
-    if (ppidlOut) 
-        _ILCreateFromPathW(pwszDosDest, ppidlOut);
-    
-    HeapFree(GetProcessHeap(), 0, pwszDosDest);
     return S_OK;
 }
 

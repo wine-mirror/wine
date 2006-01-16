@@ -383,6 +383,35 @@ static void test_GetDisplayName(void)
     if (SUCCEEDED(hr)) {
         IShellFolder_Release(psfFile);
     }
+  
+    /* Some tests for IShellFolder::SetNameOf */
+    hr = pSHBindToParent(pidlTestFile, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast);
+    ok(SUCCEEDED(hr), "SHBindToParent failed! hr = %08lx\n", hr);
+    if (SUCCEEDED(hr)) {
+        /* It's ok to use this fixed path. Call will fail anyway. */
+        WCHAR wszAbsoluteFilename[] = { 'C',':','\\','w','i','n','e','t','e','s','t', 0 };
+        LPITEMIDLIST pidlNew;
+
+        /* The pidl returned through the last parameter of SetNameOf is a simple one. */
+        hr = IShellFolder_SetNameOf(psfPersonal, NULL, pidlLast, wszDirName, SHGDN_NORMAL, &pidlNew);
+        ok (SUCCEEDED(hr), "SetNameOf failed! hr = %08lx\n", hr);
+        ok (((LPITEMIDLIST)((LPBYTE)pidlNew+pidlNew->mkid.cb))->mkid.cb == 0, 
+            "pidl returned from SetNameOf should be simple!\n");
+
+        /* Passing an absolute path to SetNameOf fails. The HRESULT code indicates that SetNameOf
+         * is implemented on top of SHFileOperation in WinXP. */
+        hr = IShellFolder_SetNameOf(psfPersonal, NULL, pidlNew, wszAbsoluteFilename, 
+                SHGDN_FORPARSING, NULL);
+        ok (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED), "SetNameOf succeeded! hr = %08lx\n", hr);
+   
+        /* Rename the file back to it's original name. SetNameOf ignores the fact, that the 
+         * SHGDN flags specify an absolute path. */
+        hr = IShellFolder_SetNameOf(psfPersonal, NULL, pidlNew, wszFileName, SHGDN_FORPARSING, NULL);
+        ok (SUCCEEDED(hr), "SetNameOf failed! hr = %08lx\n", hr);
+
+        ILFree(pidlNew);
+        IShellFolder_Release(psfPersonal);
+    }
     
     /* Deleting the file and the directory */
     DeleteFileA(szTestFile);
