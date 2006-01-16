@@ -5167,6 +5167,17 @@ DispCallFunc(
     return S_OK;
 }
 
+#define INVBUF_ELEMENT_SIZE \
+    (sizeof(VARIANTARG) + sizeof(VARIANTARG) + sizeof(VARIANTARG *) + sizeof(VARTYPE))
+#define INVBUF_GET_ARG_ARRAY(buffer, params) \
+    ((VARIANTARG *)(buffer))
+#define INVBUF_GET_MISSING_ARG_ARRAY(buffer, params) \
+    ((VARIANTARG *)((char *)(buffer) + sizeof(VARIANTARG) * (params)))
+#define INVBUF_GET_ARG_PTR_ARRAY(buffer, params) \
+    ((VARIANTARG **)((char *)(buffer) + (sizeof(VARIANTARG) + sizeof(VARIANTARG)) * (params)))
+#define INVBUF_GET_ARG_TYPE_ARRAY(buffer, params) \
+    ((VARTYPE *)((char *)(buffer) + (sizeof(VARIANTARG) + sizeof(VARIANTARG) + sizeof(VARIANTARG *)) * (params)))
+
 static HRESULT WINAPI ITypeInfo_fnInvoke(
     ITypeInfo2 *iface,
     VOID  *pIUnk,
@@ -5207,12 +5218,12 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	switch (func_desc->funckind) {
 	case FUNC_PUREVIRTUAL:
 	case FUNC_VIRTUAL: {
-            VARIANTARG *rgvarg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rgvarg) * func_desc->cParams);
-            VARIANTARG **prgpvarg = HeapAlloc(GetProcessHeap(), 0, sizeof(*prgpvarg) * func_desc->cParams);
-            VARTYPE *rgvt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rgvt) * func_desc->cParams);
-            VARIANTARG *missing_arg = HeapAlloc(GetProcessHeap(), 0, sizeof(*missing_arg) * func_desc->cParams);
+            void *buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, INVBUF_ELEMENT_SIZE * func_desc->cParams);
             VARIANT varresult;
             VARIANT retval; /* pointer for storing byref retvals in */
+            VARIANTARG **prgpvarg = INVBUF_GET_ARG_PTR_ARRAY(buffer, func_desc->cParams);
+            VARIANTARG *rgvarg = INVBUF_GET_ARG_ARRAY(buffer, func_desc->cParams);
+            VARTYPE *rgvt = INVBUF_GET_ARG_TYPE_ARRAY(buffer, func_desc->cParams);
 
             hres = S_OK;
             for (i = 0; i < func_desc->cParams; i++)
@@ -5227,6 +5238,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             for (i = 0; i < func_desc->cParams; i++)
             {
                 USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+
                 if (wParamFlags & PARAMFLAG_FRETVAL)
                 {
                     /* note: this check is placed so that if the caller passes
@@ -5275,6 +5287,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     }
                     else
                     {
+                        VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
                         V_VT(arg) = VT_VARIANT | VT_BYREF;
                         V_VARIANTREF(arg) = &missing_arg[i];
                         V_VT(V_VARIANTREF(arg)) = VT_ERROR;
@@ -5310,7 +5323,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 {
                     if (TRACE_ON(ole))
                     {
-                        TRACE("varresult: ");
+                        TRACE("[retval] value: ");
                         dump_Variant(prgpvarg[i]);
                     }
 
@@ -5362,10 +5375,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             }
 
 func_fail:
-            HeapFree(GetProcessHeap(), 0, missing_arg);
-            HeapFree(GetProcessHeap(), 0, prgpvarg);
-            HeapFree(GetProcessHeap(), 0, rgvarg);
-            HeapFree(GetProcessHeap(), 0, rgvt);
+            HeapFree(GetProcessHeap(), 0, buffer);
             break;
         }
 	case FUNC_DISPATCH:  {
