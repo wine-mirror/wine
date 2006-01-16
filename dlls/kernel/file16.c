@@ -733,3 +733,12 @@ BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
     return GetDiskFreeSpaceA( root, cluster_sectors, sector_bytes,
                                 free_clusters, total_clusters );
 }
+
+/***********************************************************************
+ *	FileCDR (KERNEL.130)
+ */
+FARPROC16 WINAPI FileCDR16(FARPROC16 x)
+{
+    FIXME("(%p): stub\n", x);
+    return (FARPROC16)TRUE;
+}

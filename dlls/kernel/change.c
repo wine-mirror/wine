@@ -31,7 +31,6 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "kernel_private.h"
-#include "wine/windef16.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -124,15 +123,6 @@ BOOL WINAPI FindNextChangeNotification( HANDLE handle )
 BOOL WINAPI FindCloseChangeNotification( HANDLE handle )
 {
     return CloseHandle( handle );
-}
-
-/***********************************************************************
-*	FileCDR (KERNEL.130)
-*/
-FARPROC16 WINAPI FileCDR16(FARPROC16 x)
-{
-    FIXME("(%p): stub\n", x);
-    return (FARPROC16)TRUE;
 }
 
 BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL subtree,
