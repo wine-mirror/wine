@@ -965,6 +965,8 @@ IShellFolder_fnGetDetailsOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
          psd->str.u.cStr, MAX_PATH);
         return S_OK;
     } else {
+        hr = S_OK;
+        psd->str.uType = STRRET_CSTR;
         /* the data from the pidl */
         switch (iColumn) {
         case 0:                /* name */
@@ -984,8 +986,6 @@ IShellFolder_fnGetDetailsOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
             _ILGetFileAttributes (pidl, psd->str.u.cStr, MAX_PATH);
             break;
         }
-        hr = S_OK;
-        psd->str.uType = STRRET_CSTR;
     }
 
     return hr;
