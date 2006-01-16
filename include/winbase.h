@@ -1216,6 +1216,7 @@ BOOL        WINAPI Beep(DWORD,DWORD);
 HANDLE      WINAPI BeginUpdateResourceA(LPCSTR,BOOL);
 HANDLE      WINAPI BeginUpdateResourceW(LPCWSTR,BOOL);
 #define     BeginUpdateResource WINELIB_NAME_AW(BeginUpdateResource)
+BOOL        WINAPI BindIoCompletionCallback(HANDLE,LPOVERLAPPED_COMPLETION_ROUTINE,ULONG);
 BOOL        WINAPI BuildCommDCBA(LPCSTR,LPDCB);
 BOOL        WINAPI BuildCommDCBW(LPCWSTR,LPDCB);
 #define     BuildCommDCB WINELIB_NAME_AW(BuildCommDCB)
