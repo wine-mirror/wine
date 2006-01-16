@@ -21,6 +21,7 @@
  *
  */
 
+#define WIN32_LEAN_AND_MEAN
 #define NONAMELESSUNION
 #include <windows.h>
 #include <commdlg.h>

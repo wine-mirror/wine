@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define WIN32_LEAN_AND_MEAN
+
 #include "config.h"
 
 #include <windows.h>

@@ -32,6 +32,8 @@
  * - Messages etc need international support
  */
 
+#define WIN32_LEAN_AND_MEAN
+
 #include "wcmd.h"
 
 void WCMD_execute (char *orig_command, char *parameter, char *substitution);

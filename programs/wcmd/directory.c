@@ -27,6 +27,8 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#define WIN32_LEAN_AND_MEAN
+
 #include "wcmd.h"
 
 int WCMD_dir_sort (const void *a, const void *b);

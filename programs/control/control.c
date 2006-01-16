@@ -17,6 +17,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define WIN32_LEAN_AND_MEAN
+
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
@@ -27,7 +29,7 @@ extern void WINAPI Control_RunDLL(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD 
 static void launch(const char *what)
 {
   Control_RunDLL(GetDesktopWindow(), 0, what, SW_SHOW);
-  exit(0);
+  ExitProcess(0);
 }
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpszCmdLine, INT nCmdShow)
