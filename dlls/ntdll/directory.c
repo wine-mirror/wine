@@ -1777,3 +1777,18 @@ done:
     RtlReleasePebLock();
     return status;
 }
+
+/******************************************************************************
+ *  NtNotifyChangeDirectoryFile [NTDLL.@]
+ */
+NTSTATUS WINAPI
+NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
+        PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext,
+        PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer,
+        ULONG BufferSize, ULONG CompletionFilter, BOOLEAN WatchTree )
+{
+    FIXME("%p %p %p %p %p %p %lu %lu %d\n",
+          FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock,
+          Buffer, BufferSize, CompletionFilter, WatchTree );
+    return STATUS_NOT_IMPLEMENTED;
+}

@@ -200,7 +200,7 @@
 # @ stub NtMapUserPhysicalPagesScatter
 @ stdcall NtMapViewOfSection(long long ptr long long ptr ptr long long long)
 # @ stub NtModifyBootEntry
-@ stub NtNotifyChangeDirectoryFile
+@ stdcall NtNotifyChangeDirectoryFile(long long ptr ptr ptr ptr long long long)
 @ stdcall NtNotifyChangeKey(long long ptr ptr ptr long long ptr long long)
 # @ stub NtNotifyChangeMultipleKeys
 @ stdcall NtOpenDirectoryObject(long long long)
