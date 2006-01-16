@@ -748,7 +748,7 @@ static BOOL get_uint_param( unsigned int idx, LPCWSTR regkey, LPCWSTR value,
     if (!ret_ptr) return FALSE;
     if (!spi_loaded[idx])
     {
-        WCHAR buf[10];
+        WCHAR buf[12];
 
         if (SYSPARAMS_Load( regkey, value, buf, sizeof(buf) )) *value_ptr = atoiW( buf );
         spi_loaded[idx] = TRUE;
@@ -764,7 +764,7 @@ static BOOL get_twips_param( unsigned int idx, LPCWSTR regkey, LPCWSTR value,
     if (!ret_ptr) return FALSE;
     if (!spi_loaded[idx])
     {
-        WCHAR buf[10];
+        WCHAR buf[12];
 
         if (SYSPARAMS_Load( regkey, value, buf, sizeof(buf) ))
             *value_ptr = SYSPARAMS_Twips2Pixels( atoiW(buf) );
@@ -785,7 +785,7 @@ static inline BOOL get_bool_param( unsigned int idx, LPCWSTR regkey, LPCWSTR val
 static BOOL set_uint_param_mirrored( unsigned int idx, LPCWSTR regkey, LPCWSTR regkey_mirror,
                                      LPCWSTR value, UINT *value_ptr, UINT new_val, UINT fWinIni )
 {
-    WCHAR buf[10];
+    WCHAR buf[12];
 
     wsprintfW(buf, CSu, new_val);
     if (!SYSPARAMS_Save( regkey, value, buf, fWinIni )) return FALSE;
@@ -799,7 +799,7 @@ static BOOL set_uint_param_mirrored( unsigned int idx, LPCWSTR regkey, LPCWSTR r
 static BOOL save_int_param( LPCWSTR regkey, LPCWSTR value, INT *value_ptr,
                             INT new_val, UINT fWinIni )
 {
-    WCHAR buf[10];
+    WCHAR buf[12];
 
     wsprintfW(buf, CSd, new_val);
     if (!SYSPARAMS_Save( regkey, value, buf, fWinIni )) return FALSE;
@@ -1172,7 +1172,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         spi_idx = SPI_SETMOUSE_IDX;
         if (!spi_loaded[spi_idx])
         {
-            WCHAR buf[10];
+            WCHAR buf[12];
 
             if (SYSPARAMS_Load( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME1,
                                 buf, sizeof(buf) ))
@@ -1278,7 +1278,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_SETSCREENSAVEACTIVE:               /*     17 */
     {
-        WCHAR buf[5];
+        WCHAR buf[12];
 
         wsprintfW(buf, CSu, uiParam);
         USER_Driver->pSetScreenSaveActive( uiParam );
