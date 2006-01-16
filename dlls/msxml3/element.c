@@ -484,10 +484,39 @@ static HRESULT WINAPI domelem_getAttribute(
 
 static HRESULT WINAPI domelem_setAttribute(
     IXMLDOMElement *iface,
-    BSTR p, VARIANT var)
+    BSTR name, VARIANT value)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    xmlNodePtr element;
+    xmlChar *xml_name, *xml_value;
+    HRESULT hr;
+    VARIANT var;
+
+    TRACE("(%p)->(%s, var)\n", This, debugstr_w(name));
+
+    element = get_element( This );
+    if ( !element )
+        return E_FAIL;
+
+    VariantInit(&var);
+    hr = VariantChangeType(&var, &value, 0, VT_BSTR);
+    if(hr != S_OK)
+    {
+        FIXME("VariantChangeType failed\n");
+        return hr;
+    }
+
+    xml_name = xmlChar_from_wchar( name );
+    xml_value = xmlChar_from_wchar( V_BSTR(&var) );
+
+    if(!xmlSetNsProp(element, NULL,  xml_name, xml_value))
+        hr = E_FAIL;
+
+    HeapFree(GetProcessHeap(), 0, xml_value);
+    HeapFree(GetProcessHeap(), 0, xml_name);
+    VariantClear(&var);
+
+    return hr;
 }
 
 static HRESULT WINAPI domelem_removeAttribute(

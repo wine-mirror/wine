@@ -72,6 +72,7 @@ static const WCHAR szdl[] = { 'd','l',0 };
 static const WCHAR szlc[] = { 'l','c',0 };
 static const WCHAR szbs[] = { 'b','s',0 };
 static const WCHAR szstr1[] = { 's','t','r','1',0 };
+static const WCHAR szstr2[] = { 's','t','r','2',0 };
 
 void test_domdoc( void )
 {
@@ -622,11 +623,13 @@ static void test_create(void)
 {
     HRESULT r;
     VARIANT var;
-    BSTR str;
+    BSTR str, name;
     IXMLDOMDocument *doc;
+    IXMLDOMElement *element;
     IXMLDOMNode *root, *node, *child;
+    IXMLDOMNamedNodeMap *attr_map;
     IUnknown *unk;
-    LONG ref;
+    LONG ref, num;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
@@ -682,6 +685,75 @@ static void test_create(void)
     ok( node == child, "%p %p\n", node, child );
     IXMLDOMNode_Release( child );
     IXMLDOMNode_Release( node );
+
+
+    r = IXMLDOMNode_QueryInterface( root, &IID_IXMLDOMElement, (LPVOID*)&element );
+    ok( r == S_OK, "returns %08lx\n", r );
+
+    r = IXMLDOMElement_get_attributes( element, &attr_map );
+    ok( r == S_OK, "returns %08lx\n", r );
+    r = IXMLDOMNamedNodeMap_get_length( attr_map, &num );
+    ok( r == S_OK, "returns %08lx\n", r );
+    ok( num == 0, "num %ld\n", num );
+    IXMLDOMNamedNodeMap_Release( attr_map );
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString( szstr1 );
+    name = SysAllocString( szdl );
+    r = IXMLDOMElement_setAttribute( element, name, var );
+    ok( r == S_OK, "returns %08lx\n", r );
+    r = IXMLDOMElement_get_attributes( element, &attr_map );
+    ok( r == S_OK, "returns %08lx\n", r );
+    r = IXMLDOMNamedNodeMap_get_length( attr_map, &num );
+    ok( r == S_OK, "returns %08lx\n", r );
+    ok( num == 1, "num %ld\n", num );
+    IXMLDOMNamedNodeMap_Release( attr_map );
+    VariantClear(&var);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString( szstr2 );
+    r = IXMLDOMElement_setAttribute( element, name, var );
+    ok( r == S_OK, "returns %08lx\n", r );
+    r = IXMLDOMElement_get_attributes( element, &attr_map );
+    ok( r == S_OK, "returns %08lx\n", r );
+    r = IXMLDOMNamedNodeMap_get_length( attr_map, &num );
+    ok( r == S_OK, "returns %08lx\n", r );
+    ok( num == 1, "num %ld\n", num );
+    IXMLDOMNamedNodeMap_Release( attr_map );
+    VariantClear(&var);
+    r = IXMLDOMElement_getAttribute( element, name, &var );
+    ok( r == S_OK, "returns %08lx\n", r );
+    ok( !lstrcmpW(V_BSTR(&var), szstr2), "wrong attr value\n");
+    VariantClear(&var);
+    SysFreeString(name);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString( szstr1 );
+    name = SysAllocString( szlc );
+    r = IXMLDOMElement_setAttribute( element, name, var );
+    ok( r == S_OK, "returns %08lx\n", r );
+    r = IXMLDOMElement_get_attributes( element, &attr_map );
+    ok( r == S_OK, "returns %08lx\n", r );
+    r = IXMLDOMNamedNodeMap_get_length( attr_map, &num );
+    ok( r == S_OK, "returns %08lx\n", r );
+    ok( num == 2, "num %ld\n", num );
+    IXMLDOMNamedNodeMap_Release( attr_map );
+    VariantClear(&var);
+    SysFreeString(name);
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 10;
+    name = SysAllocString( szbs );
+    r = IXMLDOMElement_setAttribute( element, name, var );
+    ok( r == S_OK, "returns %08lx\n", r );
+    VariantClear(&var);
+    r = IXMLDOMElement_getAttribute( element, name, &var );
+    ok( r == S_OK, "returns %08lx\n", r );
+    ok( V_VT(&var) == VT_BSTR, "variant type %x\n", V_VT(&var));
+    VariantClear(&var);
+    SysFreeString(name);
+
+    IXMLDOMElement_Release( element );
     IXMLDOMNode_Release( root );
     IXMLDOMDocument_Release( doc );
 }
