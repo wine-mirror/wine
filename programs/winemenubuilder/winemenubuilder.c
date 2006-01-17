@@ -159,7 +159,10 @@ static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName,
     char *comment;
 
     if (!((pIcon->bmiHeader.biBitCount == 4) || (pIcon->bmiHeader.biBitCount == 8)))
+    {
+        WINE_FIXME("Unsupported color depth %d-bit\n", pIcon->bmiHeader.biBitCount);
         return FALSE;
+    }
 
     if (!(fXPMFile = fopen(szXPMFileName, "w")))
     {
@@ -168,7 +171,7 @@ static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName,
     }
 
     i = WideCharToMultiByte(CP_UNIXCP, 0, commentW, -1, NULL, 0, NULL, NULL);
-    comment = malloc(i);
+    comment = HeapAlloc(GetProcessHeap(), 0, i);
     WideCharToMultiByte(CP_UNIXCP, 0, commentW, -1, comment, i, NULL, NULL);
 
     nHeight = pIcon->bmiHeader.biHeight / 2;
@@ -234,12 +237,12 @@ static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName,
 #undef MASK
 #undef COLOR
 
-    free(comment);
+    HeapFree(GetProcessHeap(), 0, comment);
     fclose(fXPMFile);
     return TRUE;
 
  error:
-    free(comment);
+    HeapFree(GetProcessHeap(), 0, comment);
     fclose(fXPMFile);
     unlink( szXPMFileName );
     return FALSE;
@@ -373,12 +376,14 @@ static int ExtractFromICO(LPCWSTR szFileName, const char *szXPMFileName)
         goto error1;
     }
 
-    if (fread(&iconDir, sizeof (ICONDIR), 1, fICOFile) != 1)
+    if (fread(&iconDir, sizeof (ICONDIR), 1, fICOFile) != 1 ||
+        (iconDir.idReserved != 0) || (iconDir.idType != 1))
+    {
+        WINE_ERR("Invalid ico file format\n");
         goto error2;
-    if ((iconDir.idReserved != 0) || (iconDir.idType != 1))
-        goto error2;
+    }
 
-    if ((pIconDirEntry = malloc(iconDir.idCount * sizeof (ICONDIRENTRY))) == NULL)
+    if ((pIconDirEntry = HeapAlloc(GetProcessHeap(), 0, iconDir.idCount * sizeof (ICONDIRENTRY))) == NULL)
         goto error2;
     if (fread(pIconDirEntry, sizeof (ICONDIRENTRY), iconDir.idCount, fICOFile) != iconDir.idCount)
         goto error3;
@@ -389,7 +394,7 @@ static int ExtractFromICO(LPCWSTR szFileName, const char *szXPMFileName)
             nIndex = i;
             nMax = pIconDirEntry[i].bHeight * pIconDirEntry[i].bWidth;
         }
-    if ((pIcon = malloc(pIconDirEntry[nIndex].dwBytesInRes)) == NULL)
+    if ((pIcon = HeapAlloc(GetProcessHeap(), 0, pIconDirEntry[nIndex].dwBytesInRes)) == NULL)
         goto error3;
     if (fseek(fICOFile, pIconDirEntry[nIndex].dwImageOffset, SEEK_SET))
         goto error4;
@@ -399,16 +404,16 @@ static int ExtractFromICO(LPCWSTR szFileName, const char *szXPMFileName)
     if(!SaveIconResAsXPM(pIcon, szXPMFileName, szFileName))
         goto error4;
 
-    free(pIcon);
-    free(pIconDirEntry);
+    HeapFree(GetProcessHeap(), 0, pIcon);
+    HeapFree(GetProcessHeap(), 0, pIconDirEntry);
     fclose(fICOFile);
     HeapFree(GetProcessHeap(), 0, filename);
     return 1;
 
  error4:
-    free(pIcon);
+    HeapFree(GetProcessHeap(), 0, pIcon);
  error3:
-    free(pIconDirEntry);
+    HeapFree(GetProcessHeap(), 0, pIconDirEntry);
  error2:
     fclose(fICOFile);
  error1:
