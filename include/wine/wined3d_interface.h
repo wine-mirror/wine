@@ -43,6 +43,7 @@
  */
 
 struct IWineD3D;
+struct IWineD3DBase;
 struct IWineD3DDevice;
 struct IWineD3DResource;
 struct IWineD3DVertexBuffer;
@@ -64,6 +65,9 @@ struct IWineD3DSwapChain;
 /* {108F9C44-6F30-11d9-C687-00046142C14F} */
 DEFINE_GUID(IID_IWineD3D, 
 0x108f9c44, 0x6f30, 0x11d9, 0xc6, 0x87, 0x0, 0x4, 0x61, 0x42, 0xc1, 0x4f);
+
+DEFINE_GUID(IID_IWineD3DBase,
+0x46799311, 0x8e0e, 0x40ce, 0xb2, 0xec, 0xdd, 0xb9, 0x9f, 0x18, 0xfc, 0xb4);
 
 /* {108F9C44-6F30-11d9-C687-00046142C14F} */
 DEFINE_GUID(IID_IWineD3DDevice, 
@@ -203,18 +207,44 @@ typedef HRESULT WINAPI (*D3DCB_CREATEADDITIONALSWAPCHAIN) (IUnknown *pDevice,
                                                );
 
 /*****************************************************************************
- * IWineD3D interface 
+ * IWineD3DBase interface
  */
 
-#define INTERFACE IWineD3D
-DECLARE_INTERFACE_(IWineD3D,IUnknown)
+#define INTERFACE IWineD3DBase
+DECLARE_INTERFACE_(IWineD3DBase, IUnknown)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void **ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3D methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DBase_QueryInterface(p,a,b)                    (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DBase_AddRef(p)                                (p)->lpVtbl->AddRef(p)
+#define IWineD3DBase_Release(p)                               (p)->lpVtbl->Release(p)
+/*** IWineD3DBase methods ***/
+#define IWineD3DBase_GetParent(p,a)                           (p)->lpVtbl->GetParent(p,a)
+#endif
+
+/*****************************************************************************
+ * IWineD3D interface 
+ */
+
+#define INTERFACE IWineD3D
+DECLARE_INTERFACE_(IWineD3D, IWineD3DBase)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void **ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3DBase methods ***/
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3D methods ***/
     STDMETHOD_(UINT,GetAdapterCount)(THIS) PURE;
     STDMETHOD(RegisterSoftwareDevice)(THIS_ void * pInitializeFunction) PURE;
     STDMETHOD_(HMONITOR,GetAdapterMonitor)(THIS_ UINT Adapter) PURE;
@@ -238,8 +268,9 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown)
 #define IWineD3D_QueryInterface(p,a,b)                    (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3D_AddRef(p)                                (p)->lpVtbl->AddRef(p)
 #define IWineD3D_Release(p)                               (p)->lpVtbl->Release(p)
-/*** IWineD3D methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3D_GetParent(p,a)                           (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3D methods ***/
 #define IWineD3D_GetAdapterCount(p)                       (p)->lpVtbl->GetAdapterCount(p)
 #define IWineD3D_RegisterSoftwareDevice(p,a)              (p)->lpVtbl->RegisterSoftwareDevice(p,a)
 #define IWineD3D_GetAdapterMonitor(p,a)                   (p)->lpVtbl->GetAdapterMonitor(p,a)
@@ -263,14 +294,15 @@ IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *p
  * IWineD3DDevice interface 
  */
 #define INTERFACE IWineD3DDevice
-DECLARE_INTERFACE_(IWineD3DDevice,IUnknown) 
+DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase) 
 { 
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DDevice methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DDevice methods ***/
     STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,struct IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent) PURE;
     STDMETHOD(CreateIndexBuffer)(THIS_ UINT Length, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DIndexBuffer** ppIndexBuffer, HANDLE* pSharedHandle, IUnknown *parent) PURE;
     STDMETHOD(CreateStateBlock)(THIS_ WINED3DSTATEBLOCKTYPE Type, struct IWineD3DStateBlock **ppStateBlock, IUnknown *parent) PURE;
@@ -405,8 +437,9 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DDevice_AddRef(p)                         (p)->lpVtbl->AddRef(p)
 #define IWineD3DDevice_Release(p)                        (p)->lpVtbl->Release(p)
-/*** IWineD3DDevice methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DDevice_GetParent(p,a)                           (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DDevice methods ***/
 #define IWineD3DDevice_CreateVertexBuffer(p,a,b,c,d,e,f,g)      (p)->lpVtbl->CreateVertexBuffer(p,a,b,c,d,e,f,g)
 #define IWineD3DDevice_CreateIndexBuffer(p,a,b,c,d,e,f,g)       (p)->lpVtbl->CreateIndexBuffer(p,a,b,c,d,e,f,g)
 #define IWineD3DDevice_CreateStateBlock(p,a,b,c)                (p)->lpVtbl->CreateStateBlock(p,a,b,c)
@@ -537,14 +570,15 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
  * WineD3DResource interface 
  */
 #define INTERFACE IWineD3DResource
-DECLARE_INTERFACE_(IWineD3DResource,IUnknown)
+DECLARE_INTERFACE_(IWineD3DResource,IWineD3DBase)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DResource methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DResource methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
@@ -561,8 +595,9 @@ DECLARE_INTERFACE_(IWineD3DResource,IUnknown)
 #define IWineD3DResource_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DResource_AddRef(p)                    (p)->lpVtbl->AddRef(p)
 #define IWineD3DResource_Release(p)                   (p)->lpVtbl->Release(p)
-/*** IWineD3DResource methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DResource_GetParent(p,a)               (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DResource methods ***/
 #define IWineD3DResource_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DResource_SetPrivateData(p,a,b,c,d)    (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
 #define IWineD3DResource_GetPrivateData(p,a,b,c)      (p)->lpVtbl->GetPrivateData(p,a,b,c)
@@ -583,8 +618,9 @@ DECLARE_INTERFACE_(IWineD3DVertexBuffer,IWineD3DResource)
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DResource methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DResource methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
@@ -605,8 +641,9 @@ DECLARE_INTERFACE_(IWineD3DVertexBuffer,IWineD3DResource)
 #define IWineD3DVertexBuffer_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DVertexBuffer_AddRef(p)                    (p)->lpVtbl->AddRef(p)
 #define IWineD3DVertexBuffer_Release(p)                   (p)->lpVtbl->Release(p)
-/*** IWineD3DResource methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DVertexBuffer_GetParent(p,a)               (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DResource methods ***/
 #define IWineD3DVertexBuffer_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DVertexBuffer_SetPrivateData(p,a,b,c,d)    (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
 #define IWineD3DVertexBuffer_GetPrivateData(p,a,b,c)      (p)->lpVtbl->GetPrivateData(p,a,b,c)
@@ -631,8 +668,9 @@ DECLARE_INTERFACE_(IWineD3DIndexBuffer,IWineD3DResource)
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DResource methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DResource methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
@@ -653,8 +691,9 @@ DECLARE_INTERFACE_(IWineD3DIndexBuffer,IWineD3DResource)
 #define IWineD3DIndexBuffer_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DIndexBuffer_AddRef(p)                    (p)->lpVtbl->AddRef(p)
 #define IWineD3DIndexBuffer_Release(p)                   (p)->lpVtbl->Release(p)
-/*** IWineD3DResource methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DIndexBuffer_GetParent(p,a)               (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DResource methods ***/
 #define IWineD3DIndexBuffer_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DIndexBuffer_SetPrivateData(p,a,b,c,d)    (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
 #define IWineD3DIndexBuffer_GetPrivateData(p,a,b,c)      (p)->lpVtbl->GetPrivateData(p,a,b,c)
@@ -681,8 +720,9 @@ DECLARE_INTERFACE_(IWineD3DBaseTexture,IWineD3DResource)
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DResource methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DResource methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
@@ -713,8 +753,9 @@ DECLARE_INTERFACE_(IWineD3DBaseTexture,IWineD3DResource)
 #define IWineD3DBaseTexture_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DBaseTexture_AddRef(p)                  (p)->lpVtbl->AddRef(p)
 #define IWineD3DBaseTexture_Release(p)                 (p)->lpVtbl->Release(p)
-/*** IWineD3DBaseTexture methods: IWineD3DResource ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DBaseTexture_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DBaseTexture methods: IWineD3DResource ***/
 #define IWineD3DBaseTexture_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DBaseTexture_SetPrivateData(p,a,b,c,d)  (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
 #define IWineD3DBaseTexture_GetPrivateData(p,a,b,c)    (p)->lpVtbl->GetPrivateData(p,a,b,c)
@@ -749,8 +790,9 @@ DECLARE_INTERFACE_(IWineD3DTexture,IWineD3DBaseTexture)
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DResource methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DResource methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
@@ -786,8 +828,9 @@ DECLARE_INTERFACE_(IWineD3DTexture,IWineD3DBaseTexture)
 #define IWineD3DTexture_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DTexture_AddRef(p)                  (p)->lpVtbl->AddRef(p)
 #define IWineD3DTexture_Release(p)                 (p)->lpVtbl->Release(p)
-/*** IWineD3DTexture methods: IWineD3DResource ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DTexture_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DTexture methods: IWineD3DResource ***/
 #define IWineD3DTexture_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DTexture_SetPrivateData(p,a,b,c,d)  (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
 #define IWineD3DTexture_GetPrivateData(p,a,b,c)    (p)->lpVtbl->GetPrivateData(p,a,b,c)
@@ -827,8 +870,9 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DResource methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DResource methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
@@ -864,8 +908,9 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
 #define IWineD3DCubeTexture_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DCubeTexture_AddRef(p)                  (p)->lpVtbl->AddRef(p)
 #define IWineD3DCubeTexture_Release(p)                 (p)->lpVtbl->Release(p)
-/*** IWineD3DCubeTexture methods: IWineD3DResource ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DCubeTexture_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DCubeTexture methods: IWineD3DResource ***/
 #define IWineD3DCubeTexture_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DCubeTexture_SetPrivateData(p,a,b,c,d)  (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
 #define IWineD3DCubeTexture_GetPrivateData(p,a,b,c)    (p)->lpVtbl->GetPrivateData(p,a,b,c)
@@ -906,8 +951,9 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DResource methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DResource methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
@@ -943,8 +989,9 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
 #define IWineD3DVolumeTexture_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DVolumeTexture_AddRef(p)                  (p)->lpVtbl->AddRef(p)
 #define IWineD3DVolumeTexture_Release(p)                 (p)->lpVtbl->Release(p)
-/*** IWineD3DVolumeTexture methods: IWineD3DResource ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DVolumeTexture_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DVolumeTexture methods: IWineD3DResource ***/
 #define IWineD3DVolumeTexture_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DVolumeTexture_SetPrivateData(p,a,b,c,d)  (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
 #define IWineD3DVolumeTexture_GetPrivateData(p,a,b,c)    (p)->lpVtbl->GetPrivateData(p,a,b,c)
@@ -984,8 +1031,9 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DResource methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DResource methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
@@ -1020,8 +1068,9 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DSurface_AddRef(p)                    (p)->lpVtbl->AddRef(p)
 #define IWineD3DSurface_Release(p)                   (p)->lpVtbl->Release(p)
-/*** IWineD3DResource methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DSurface_GetParent(p,a)               (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DResource methods ***/
 #define IWineD3DSurface_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DSurface_SetPrivateData(p,a,b,c,d)    (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
 #define IWineD3DSurface_GetPrivateData(p,a,b,c)      (p)->lpVtbl->GetPrivateData(p,a,b,c)
@@ -1060,8 +1109,9 @@ DECLARE_INTERFACE_(IWineD3DVolume,IWineD3DResource)
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DResource methods ***/    
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DResource methods ***/    
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
@@ -1087,8 +1137,9 @@ DECLARE_INTERFACE_(IWineD3DVolume,IWineD3DResource)
 #define IWineD3DVolume_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DVolume_AddRef(p)                  (p)->lpVtbl->AddRef(p)
 #define IWineD3DVolume_Release(p)                 (p)->lpVtbl->Release(p)
-/*** IWineD3DResource methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DVolume_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DResource methods ***/
 #define IWineD3DVolume_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DVolume_SetPrivateData(p,a,b,c,d)  (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
 #define IWineD3DVolume_GetPrivateData(p,a,b,c)    (p)->lpVtbl->GetPrivateData(p,a,b,c)
@@ -1112,14 +1163,15 @@ DECLARE_INTERFACE_(IWineD3DVolume,IWineD3DResource)
  * IWineD3DVertexDeclaration interface
  */
 #define INTERFACE IWineD3DVertexDeclaration
-DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IUnknown)
+DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IWineD3DBase)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void **ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DVertexDeclaration methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DVertexDeclaration methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice **ppDevice) PURE;
     STDMETHOD(GetDeclaration)(THIS_ VOID *pDecl, DWORD *pSize) PURE;
     STDMETHOD(SetDeclaration)(THIS_ VOID *pDecl) PURE;
@@ -1131,8 +1183,9 @@ DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IUnknown)
 #define IWineD3DVertexDeclaration_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DVertexDeclaration_AddRef(p)                  (p)->lpVtbl->AddRef(p)
 #define IWineD3DVertexDeclaration_Release(p)                 (p)->lpVtbl->Release(p)
-/*** IWineD3DVertexDeclaration methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DVertexDeclaration_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DVertexDeclaration methods ***/
 #define IWineD3DVertexDeclaration_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DVertexDeclaration_GetDeclaration(p,a,b)      (p)->lpVtbl->GetDeclaration(p,a,b)
 #define IWineD3DVertexDeclaration_SetDeclaration(p,b)        (p)->lpVtbl->SetDeclaration(p,b)
@@ -1142,14 +1195,15 @@ DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IUnknown)
  * IWineD3DStateBlock interface 
  */
 #define INTERFACE IWineD3DStateBlock
-DECLARE_INTERFACE_(IWineD3DStateBlock,IUnknown)
+DECLARE_INTERFACE_(IWineD3DStateBlock,IWineD3DBase)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DStateBlock methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DStateBlock methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice **pDevice) PURE;
     STDMETHOD(Capture)(THIS) PURE;
     STDMETHOD(Apply)(THIS) PURE;
@@ -1162,8 +1216,9 @@ DECLARE_INTERFACE_(IWineD3DStateBlock,IUnknown)
 #define IWineD3DStateBlock_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DStateBlock_AddRef(p)                            (p)->lpVtbl->AddRef(p)
 #define IWineD3DStateBlock_Release(p)                           (p)->lpVtbl->Release(p)
-/*** IWineD3DStateBlock methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DStateBlock_GetParent(p,a)                       (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DStateBlock methods ***/
 #define IWineD3DStateBlock_GetDevice(p,a)                       (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DStateBlock_Capture(p)                           (p)->lpVtbl->Capture(p)
 #define IWineD3DStateBlock_Apply(p)                             (p)->lpVtbl->Apply(p)
@@ -1174,14 +1229,15 @@ DECLARE_INTERFACE_(IWineD3DStateBlock,IUnknown)
  * WineD3DQuery interface 
  */
 #define INTERFACE IWineD3DQuery
-DECLARE_INTERFACE_(IWineD3DQuery,IUnknown)
+DECLARE_INTERFACE_(IWineD3DQuery,IWineD3DBase)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void **ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DQuery methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DQuery methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice **ppDevice) PURE;
     STDMETHOD(GetData)(THIS_  void *pData, DWORD dwSize, DWORD dwGetDataFlags) PURE;
     STDMETHOD_(DWORD,GetDataSize)(THIS) PURE;
@@ -1196,8 +1252,9 @@ DECLARE_INTERFACE_(IWineD3DQuery,IUnknown)
 #define IWineD3DQuery_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DQuery_AddRef(p)                    (p)->lpVtbl->AddRef(p)
 #define IWineD3DQuery_Release(p)                   (p)->lpVtbl->Release(p)
-/*** IWineD3DQuery methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DQuery_GetParent(p,a)               (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DQuery methods ***/
 #define IWineD3DQuery_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DQuery_GetData(p,a,b,c)             (p)->lpVtbl->GetData(p,a,b,c)
 #define IWineD3DQuery_GetDataSize(p)               (p)->lpVtbl->GetDataSize(p)
@@ -1212,14 +1269,15 @@ DECLARE_INTERFACE_(IWineD3DQuery,IUnknown)
  * (There kinda missing from Microsofts DirectX!)
  */
 #define INTERFACE IWineD3DSwapChain
-DECLARE_INTERFACE_(IWineD3DSwapChain,IUnknown)
+DECLARE_INTERFACE_(IWineD3DSwapChain,IWineD3DBase)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void **ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IDirect3DSwapChain9 methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IDirect3DSwapChain9 methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice **ppDevice) PURE;
     STDMETHOD(Present)(THIS_ CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) PURE;
     STDMETHOD(GetFrontBufferData)(THIS_ IWineD3DSurface *pDestSurface) PURE;
@@ -1237,9 +1295,10 @@ DECLARE_INTERFACE_(IWineD3DSwapChain,IUnknown)
 #define IWineD3DSwapChain_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DSwapChain_AddRef(p)                    (p)->lpVtbl->AddRef(p)
 #define IWineD3DSwapChain_Release(p)                   (p)->lpVtbl->Release(p)
+/*** IWineD3DBase methods ***/
+#define IWineD3DSwapChain_GetParent(p,a)               (p)->lpVtbl->GetParent(p,a)
 /*** IWineD3DSwapChain methods ***/
 
-#define IWineD3DSwapChain_GetParent(p,a)               (p)->lpVtbl->GetParent(p,a)
 #define IWineD3DSwapChain_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DSwapChain_Present(p,a,b,c,d,e)         (p)->lpVtbl->Present(p,a,b,c,d,e)
 #define IWineD3DSwapChain_GetFrontBufferData(p,a)      (p)->lpVtbl->GetFrontBufferData(p,a)
@@ -1255,14 +1314,15 @@ DECLARE_INTERFACE_(IWineD3DSwapChain,IUnknown)
  * IWineD3DVertexShader interface 
  */
 #define INTERFACE IWineD3DVertexShader
-DECLARE_INTERFACE_(IWineD3DVertexShader,IUnknown)
+DECLARE_INTERFACE_(IWineD3DVertexShader,IWineD3DBase)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DVertexShader methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DVertexShader methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;
     STDMETHOD(GetFunction)(THIS_ VOID *pData, UINT *pSizeOfData) PURE;
     STDMETHOD(SetFunction)(THIS_ CONST DWORD *pFunction) PURE;
@@ -1282,8 +1342,9 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IUnknown)
 #define IWineD3DVertexShader_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DVertexShader_AddRef(p)                 (p)->lpVtbl->AddRef(p)
 #define IWineD3DVertexShader_Release(p)                (p)->lpVtbl->Release(p)
-/*** IWineD3DVertexShader methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DVertexShader_GetParent(p,a)            (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DVertexShader methods ***/
 #define IWineD3DVertexShader_GetDevice(p,a)            (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DVertexShader_GetFunction(p,a,b)        (p)->lpVtbl->GetFunction(p,a,b)
 #define IWineD3DVertexShader_SetFunction(p,a)          (p)->lpVtbl->SetFunction(p,a)
@@ -1300,14 +1361,15 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IUnknown)
  * IWineD3DPixelShader interface
  */
 #define INTERFACE IWineD3DPixelShader
-DECLARE_INTERFACE_(IWineD3DPixelShader,IUnknown)
+DECLARE_INTERFACE_(IWineD3DPixelShader,IWineD3DBase)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IWineD3DPixelShader methods ***/
+    /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DPixelShader methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;
     STDMETHOD(GetFunction)(THIS_ VOID* pData, UINT* pSizeOfData) PURE;
     /* Internal Interfaces */
@@ -1320,8 +1382,9 @@ DECLARE_INTERFACE_(IWineD3DPixelShader,IUnknown)
 #define IWineD3DPixelShader_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DPixelShader_AddRef(p)                  (p)->lpVtbl->AddRef(p)
 #define IWineD3DPixelShader_Release(p)                 (p)->lpVtbl->Release(p)
-/*** IWineD3DPixelShader methods ***/
+/*** IWineD3DBase methods ***/
 #define IWineD3DPixelShader_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DPixelShader methods ***/
 #define IWineD3DPixelShader_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DPixelShader_GetFunction(p,a,b)         (p)->lpVtbl->GetFunction(p,a,b)
 #define IWineD3DPixelShader_SetFunction(p,a)          (p)->lpVtbl->SetFunction(p,a)
