@@ -54,6 +54,10 @@ typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct IDirectSoundCaptureImpl       IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
 typedef struct IDirectSoundFullDuplexImpl    IDirectSoundFullDuplexImpl;
+typedef struct IDirectSoundFullDuplex_IUnknown IDirectSoundFullDuplex_IUnknown;
+typedef struct IDirectSoundFullDuplex_IDirectSound IDirectSoundFullDuplex_IDirectSound;
+typedef struct IDirectSoundFullDuplex_IDirectSound8 IDirectSoundFullDuplex_IDirectSound8;
+typedef struct IDirectSoundFullDuplex_IDirectSoundCapture IDirectSoundFullDuplex_IDirectSoundCapture;
 typedef struct IDirectSoundNotifyImpl        IDirectSoundNotifyImpl;
 typedef struct IDirectSoundCaptureNotifyImpl IDirectSoundCaptureNotifyImpl;
 typedef struct IDirectSound3DListenerImpl    IDirectSound3DListenerImpl;
@@ -357,14 +361,11 @@ struct DirectSoundCaptureDevice
 
 HRESULT DirectSoundCaptureDevice_Create(
     DirectSoundCaptureDevice ** ppDevice);
-
 HRESULT DirectSoundCaptureDevice_Initialize(
     DirectSoundCaptureDevice ** ppDevice,
     LPCGUID lpcGUID);
-
 ULONG DirectSoundCaptureDevice_AddRef(
     DirectSoundCaptureDevice * device);
-
 ULONG DirectSoundCaptureDevice_Release(
     DirectSoundCaptureDevice * device);
 
@@ -402,10 +403,60 @@ struct IDirectSoundFullDuplexImpl
 {
     /* IUnknown fields */
     const IDirectSoundFullDuplexVtbl *lpVtbl;
-    LONG                        ref;
+    LONG                              ref;
 
     /* IDirectSoundFullDuplexImpl fields */
+    DirectSoundDevice                *renderer_device;
+    DirectSoundCaptureDevice         *capture_device;
+
+    LPUNKNOWN                         pUnknown;
+    LPDIRECTSOUND                     pDS;
+    LPDIRECTSOUND8                    pDS8;
+    LPDIRECTSOUNDCAPTURE              pDSC;
 };
+
+/*****************************************************************************
+ * IDirectSoundFullDuplex COM components
+ */
+struct IDirectSoundFullDuplex_IUnknown {
+    const IUnknownVtbl         *lpVtbl;
+    LONG                        ref;
+    IDirectSoundFullDuplexImpl *pdsfd;
+};
+
+HRESULT IDirectSoundFullDuplex_IUnknown_Create(
+    LPDIRECTSOUNDFULLDUPLEX pdsfd,
+    LPUNKNOWN * ppunk);
+
+struct IDirectSoundFullDuplex_IDirectSound {
+    const IDirectSoundVtbl     *lpVtbl;
+    LONG                        ref;
+    IDirectSoundFullDuplexImpl *pdsfd;
+};
+
+HRESULT IDirectSoundFullDuplex_IDirectSound_Create(
+    LPDIRECTSOUNDFULLDUPLEX pdsfd,
+    LPDIRECTSOUND * ppds);
+
+struct IDirectSoundFullDuplex_IDirectSound8 {
+    const IDirectSound8Vtbl    *lpVtbl;
+    LONG                        ref;
+    IDirectSoundFullDuplexImpl *pdsfd;
+};
+
+HRESULT IDirectSoundFullDuplex_IDirectSound8_Create(
+    LPDIRECTSOUNDFULLDUPLEX pdsfd,
+    LPDIRECTSOUND8 * ppds8);
+
+struct IDirectSoundFullDuplex_IDirectSoundCapture {
+    const IDirectSoundCaptureVtbl *lpVtbl;
+    LONG                           ref;
+    IDirectSoundFullDuplexImpl    *pdsfd;
+};
+
+HRESULT IDirectSoundFullDuplex_IDirectSoundCapture_Create(
+    LPDIRECTSOUNDFULLDUPLEX pdsfd,
+    LPDIRECTSOUNDCAPTURE8 * ppdsc8);
 
 /*****************************************************************************
  * IDirectSoundNotify implementation structure
@@ -554,6 +605,10 @@ void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, D
 /* sound3d.c */
 
 void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
+
+/* duplex.c */
+
+HRESULT DSOUND_FullDuplexCreate(LPDIRECTSOUNDFULLDUPLEX* ppDSFD, IUnknown *pUnkOuter);
 
 /* capture.c */
 
