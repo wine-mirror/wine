@@ -201,6 +201,32 @@ static HENHMETAFILE STATIC_SetEnhMetaFile( HWND hwnd, HENHMETAFILE hEnhMetaFile,
 }
 
 /***********************************************************************
+ *           STATIC_GetImage
+ *
+ * Gets the bitmap for an SS_BITMAP control, the icon/cursor for an
+ * SS_ICON control or the enhanced metafile for an SS_ENHMETAFILE control.
+ */
+static HANDLE STATIC_GetImage( HWND hwnd, WPARAM wParam, DWORD style )
+{
+    switch(style & SS_TYPEMASK)
+    {
+        case SS_ICON:
+            if ((wParam != IMAGE_ICON) &&
+                (wParam != IMAGE_CURSOR)) return NULL;
+            break;
+        case SS_BITMAP:
+            if (wParam != IMAGE_BITMAP) return NULL;
+            break;
+        case SS_ENHMETAFILE:
+            if (wParam != IMAGE_ENHMETAFILE) return NULL;
+            break;
+        default:
+            return NULL;
+    }
+    return (HANDLE)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET );
+}
+
+/***********************************************************************
  *           STATIC_LoadIconA
  *
  * Load the icon for an SS_ICON control.
@@ -473,13 +499,11 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         return 0;
 
     case STM_GETIMAGE:
-        /* FIXME: Return NULL if wParam doesn't match the control's style.
-                  wParam is IMAGE_BITMAP, IMAGE_CURSOR, IMAGE_ENHMETAFILE
-                  or IMAGE_ICON */
+        return (LRESULT)STATIC_GetImage( hwnd, wParam, full_style );
+    
     case STM_GETICON16:
     case STM_GETICON:
-        /* FIXME: Return NULL if this control doesn't show an icon */
-        return GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET );
+        return (LRESULT)STATIC_GetImage( hwnd, IMAGE_ICON, full_style );
 
     case STM_SETIMAGE:
         switch(wParam) {
