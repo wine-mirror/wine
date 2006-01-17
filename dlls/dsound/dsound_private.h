@@ -71,8 +71,6 @@ typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
  */
 struct IDirectSoundImpl
 {
-    /* IUnknown fields */
-    const IDirectSound8Vtbl    *lpVtbl;
     LONG                        ref;
 
     DirectSoundDevice          *device;
@@ -131,12 +129,40 @@ typedef struct BufferMemory
 HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice);
 ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device);
 ULONG DirectSoundDevice_Release(DirectSoundDevice * device);
+HRESULT DirectSoundDevice_Initialize(
+    DirectSoundDevice ** ppDevice,
+    LPCGUID lpcGUID);
 HRESULT DirectSoundDevice_AddBuffer(
-    DirectSoundDevice *device,
+    DirectSoundDevice * device,
     IDirectSoundBufferImpl * pDSB);
 HRESULT DirectSoundDevice_RemoveBuffer(
-    DirectSoundDevice *device,
+    DirectSoundDevice * device,
     IDirectSoundBufferImpl * pDSB);
+HRESULT DirectSoundDevice_GetCaps(DirectSoundDevice * device, LPDSCAPS lpDSCaps);
+HRESULT DirectSoundDevice_CreateSoundBuffer(
+    DirectSoundDevice * device,
+    LPCDSBUFFERDESC dsbd,
+    LPLPDIRECTSOUNDBUFFER ppdsb,
+    LPUNKNOWN lpunk,
+    BOOL from8);
+HRESULT DirectSoundDevice_DuplicateSoundBuffer(
+    DirectSoundDevice * device,
+    LPDIRECTSOUNDBUFFER psb,
+    LPLPDIRECTSOUNDBUFFER ppdsb);
+HRESULT DirectSoundDevice_SetCooperativeLevel(
+    DirectSoundDevice * devcie,
+    HWND hwnd,
+    DWORD level);
+HRESULT DirectSoundDevice_Compact(DirectSoundDevice * device);
+HRESULT DirectSoundDevice_GetSpeakerConfig(
+    DirectSoundDevice * device,
+    LPDWORD lpdwSpeakerConfig);
+HRESULT DirectSoundDevice_SetSpeakerConfig(
+    DirectSoundDevice * device,
+    DWORD config);
+HRESULT DirectSoundDevice_VerifyCertification(
+    DirectSoundDevice * device,
+    LPDWORD pdwCertified);
 
 /*****************************************************************************
  * IDirectSound COM components
