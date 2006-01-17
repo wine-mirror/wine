@@ -29,13 +29,9 @@
  * TODO:
  *
  *   Styles
- *   - SS_EDITCONTROL
- *   - SS_ENDELLIPSIS
- *   - SS_PATHELLIPSIS
  *   - SS_REALSIZECONTROL
  *   - SS_REALSIZEIMAGE
  *   - SS_RIGHTJUST
- *   - SS_WORDELLIPSIS
  *
  *   Notifications
  *   - STN_DISABLE
@@ -252,6 +248,20 @@ static VOID STATIC_TryPaintFcn(HWND hwnd, LONG full_style)
 	(staticPaintFunc[style])( hwnd, hdc, full_style );
 	ReleaseDC( hwnd, hdc );
     }
+}
+
+static HBRUSH STATIC_SendWmCtlColorStatic(HWND hwnd, HDC hdc)
+{
+    HBRUSH hBrush = (HBRUSH) SendMessageW( GetParent(hwnd),
+                    WM_CTLCOLORSTATIC, (WPARAM)hdc, (LPARAM)hwnd );
+    if (!hBrush) /* did the app forget to call DefWindowProc ? */
+    {
+        /* FIXME: DefWindowProc should return different colors if a
+                  manifest is present */
+        hBrush = (HBRUSH)DefWindowProcW(GetParent(hwnd), WM_CTLCOLORSTATIC,
+                                        (WPARAM)hdc, (LPARAM)hwnd);
+    }
+    return hBrush;
 }
 
 static VOID STATIC_InitColours(void)
@@ -504,7 +514,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
 {
     RECT rc;
     HBRUSH hBrush;
-    HFONT hFont;
+    HFONT hFont, hOldFont = NULL;
     WORD wFormat;
     INT len;
     WCHAR *text;
@@ -538,28 +548,56 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
     }
 
     if (style & SS_NOPREFIX)
-	wFormat |= DT_NOPREFIX;
-    if ((style & SS_CENTERIMAGE) && (style & SS_TYPEMASK) != SS_SIMPLE)
-        wFormat |= DT_SINGLELINE | DT_VCENTER;
-
-    if ((hFont = (HFONT)GetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET ))) SelectObject( hdc, hFont );
-
-    if ((style & SS_NOPREFIX) || ((style & SS_TYPEMASK) != SS_SIMPLE))
+        wFormat |= DT_NOPREFIX;
+    
+    if ((style & SS_TYPEMASK) != SS_SIMPLE)
     {
-        hBrush = (HBRUSH)SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC,
-				       (WPARAM)hdc, (LPARAM)hwnd );
-        if (!hBrush) /* did the app forget to call defwindowproc ? */
-            hBrush = (HBRUSH)DefWindowProcW(GetParent(hwnd), WM_CTLCOLORSTATIC,
-					    (WPARAM)hdc, (LPARAM)hwnd);
-        FillRect( hdc, &rc, hBrush );
+        if (style & SS_CENTERIMAGE)
+            wFormat |= DT_SINGLELINE | DT_VCENTER;
+        if (style & SS_EDITCONTROL)
+            wFormat |= DT_EDITCONTROL;
+        if (style & SS_ENDELLIPSIS)
+            wFormat |= DT_SINGLELINE | DT_END_ELLIPSIS;
+        if (style & SS_PATHELLIPSIS)
+            wFormat |= DT_SINGLELINE | DT_PATH_ELLIPSIS;
+        if (style & SS_WORDELLIPSIS)
+            wFormat |= DT_SINGLELINE | DT_WORD_ELLIPSIS;
     }
-    if (!IsWindowEnabled(hwnd)) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+
+    if ((hFont = (HFONT)GetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET )))
+        hOldFont = (HFONT)SelectObject( hdc, hFont );
+
+    /* SS_SIMPLE controls: WM_CTLCOLORSTATIC is sent, but the returned
+                           brush is not used */
+    hBrush = STATIC_SendWmCtlColorStatic(hwnd, hdc);
+    
+    if ((style & SS_TYPEMASK) != SS_SIMPLE)
+    {
+        FillRect( hdc, &rc, hBrush );
+        if (!IsWindowEnabled(hwnd)) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+    }
 
     if (!(len = SendMessageW( hwnd, WM_GETTEXTLENGTH, 0, 0 ))) return;
     if (!(text = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return;
     SendMessageW( hwnd, WM_GETTEXT, len + 1, (LPARAM)text );
-    DrawTextW( hdc, text, -1, &rc, wFormat );
+    
+    if (((style & SS_TYPEMASK) == SS_SIMPLE) && (style & SS_NOPREFIX))
+    {
+        /* Windows uses the faster ExtTextOut() to draw the text and
+           to paint the whole client rectangle with the text background
+           color. Reference: "Static Controls" by Kyle Marsh, 1992 */
+        ExtTextOutW( hdc, rc.left, rc.top, ETO_CLIPPED | ETO_OPAQUE,
+                     &rc, text, len, NULL );
+    }
+    else
+    {
+        DrawTextW( hdc, text, -1, &rc, wFormat );
+    }
+    
     HeapFree( GetProcessHeap(), 0, text );
+    
+    if (hFont)
+        SelectObject( hdc, hOldFont );
 }
 
 static void STATIC_PaintRectfn( HWND hwnd, HDC hdc, DWORD style )
