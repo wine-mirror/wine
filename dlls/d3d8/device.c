@@ -3054,6 +3054,21 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
         /* Unhandled yet...! */
     case D3DRS_EDGEANTIALIAS             :
+    {
+        if(Value) {
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_BLEND);
+            checkGLcall("glEnable GL_BLEND");
+            glEnable(GL_LINE_SMOOTH);
+            checkGLcall("glEnable Gl_LINE_SMOOTH");
+        } else {
+            glDisable(GL_BLEND);
+            checkGLcall("glDisable GL_BLEND");
+            glDisable(GL_LINE_SMOOTH);
+            checkGLcall("glDisable GL_LINE_SMOOTH");
+        }
+        break;
+    }
     case D3DRS_WRAP0                     :
     case D3DRS_WRAP1                     :
     case D3DRS_WRAP2                     :
@@ -3062,8 +3077,48 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_WRAP5                     :
     case D3DRS_WRAP6                     :
     case D3DRS_WRAP7                     :
+    {
+        FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
+        break;
+    }
     case D3DRS_POINTSPRITEENABLE         :
+    {
+        if(Value) {
+            if(GL_SUPPORT(GL_ARB_point_sprite)) {
+                glEnable(GL_POINT_SPRITE_ARB);
+                checkGLcall("glEnable GL_POINT_SPRITE_ARB");
+            } else {
+                TRACE("Point sprites cannot be enabled in this version of opengl\n");
+            }
+        } else {
+            if(GL_SUPPORT(GL_ARB_point_sprite)) {
+                glDisable(GL_POINT_SPRITE_ARB);
+                checkGLcall("glDisable GL_POINT_SPRITE_ARB");
+            } else {
+                TRACE("Point sprites cannot be disabled in this version of opengl\n");
+            }
+        }
+        break;
+    }
     case D3DRS_MULTISAMPLEANTIALIAS      :
+    {
+        if(Value) {
+            if(GL_SUPPORT(GL_ARB_multisample)) {
+                glEnable(GL_MULTISAMPLE_ARB);
+                checkGLcall("glEnable GL_MULTISAMPLE_ARB");
+            } else {
+                TRACE("Multisample antialiasing cannot be enabled in this version of opengl\n");
+            }
+        } else {
+            if(GL_SUPPORT(GL_ARB_multisample)) {
+                glDisable(GL_MULTISAMPLE_ARB);
+                checkGLcall("glDisable GL_MULTISAMPLE_ARB");
+            } else {
+                TRACE("Multisample antialiasing cannot be disabled in this version of opengl\n");
+            }
+        }
+        break;
+    }
     case D3DRS_MULTISAMPLEMASK           :
     case D3DRS_PATCHEDGESTYLE            :
     case D3DRS_PATCHSEGMENTS             :
