@@ -410,20 +410,18 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
             trace("    new Caps: flags=0x%08lx size=%ld\n",new_dsbcaps.dwFlags,
                   new_dsbcaps.dwBufferBytes);
         }
-                                                                                
+
         /* Check for primary buffer size change */
-        if (new_dsbcaps.dwBufferBytes != dsbcaps.dwBufferBytes) {
-            trace("    buffer size changed after SetFormat() - "
-                  "previous size was %lu, current size is %lu\n",
-                  dsbcaps.dwBufferBytes, new_dsbcaps.dwBufferBytes);
-        }
+        ok(new_dsbcaps.dwBufferBytes == dsbcaps.dwBufferBytes,
+           "    buffer size changed after SetFormat() - "
+           "previous size was %lu, current size is %lu\n",
+           dsbcaps.dwBufferBytes, new_dsbcaps.dwBufferBytes);
 
         /* Check for primary buffer flags change */
-        if (new_dsbcaps.dwFlags != dsbcaps.dwFlags) {
-            trace("    flags changed after SetFormat() - "
-                  "previous flags were %08lx, current flags are %08lx\n",
-                  dsbcaps.dwFlags, new_dsbcaps.dwFlags);
-        }
+        ok(new_dsbcaps.dwFlags == dsbcaps.dwFlags,
+           "    flags changed after SetFormat() - "
+           "previous flags were %08lx, current flags are %08lx\n",
+           dsbcaps.dwFlags, new_dsbcaps.dwFlags);
 
         /* Set the CooperativeLevel back to normal */
         /* DSOUND: Setting DirectSound cooperative level to DSSCL_NORMAL */
