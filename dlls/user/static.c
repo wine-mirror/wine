@@ -336,6 +336,27 @@ static VOID STATIC_InitColours(void)
 }
 
 /***********************************************************************
+ *           hasTextStyle
+ *
+ * Tests if the control displays text.
+ */
+static BOOL hasTextStyle( DWORD style )
+{
+    switch(style & SS_TYPEMASK)
+    {
+        case SS_SIMPLE:
+        case SS_LEFT:
+        case SS_LEFTNOWORDWRAP:
+        case SS_CENTER:
+        case SS_RIGHT:
+        case SS_OWNERDRAW:
+            return TRUE;
+    }
+    
+    return FALSE;
+}
+
+/***********************************************************************
  *           StaticWndProc_common
  */
 static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
@@ -402,76 +423,74 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         break;
 
     case WM_NCCREATE:
-	if (full_style & SS_SUNKEN)
-            SetWindowLongW( hwnd, GWL_EXSTYLE,
-                            GetWindowLongW( hwnd, GWL_EXSTYLE ) | WS_EX_STATICEDGE );
+        {
+            LPCSTR textA;
+            LPCWSTR textW;
+    
+            if (full_style & SS_SUNKEN)
+                SetWindowLongW( hwnd, GWL_EXSTYLE,
+                                GetWindowLongW( hwnd, GWL_EXSTYLE ) | WS_EX_STATICEDGE );
 
-	if(unicode)
-	    lParam = (LPARAM)(((LPCREATESTRUCTW)lParam)->lpszName);
-	else
-	    lParam = (LPARAM)(((LPCREATESTRUCTA)lParam)->lpszName);
-	/* fall through */
+            if(unicode)
+            {
+                textA = NULL;
+                textW = ((LPCREATESTRUCTW)lParam)->lpszName;
+            }
+            else
+            {
+                textA = ((LPCREATESTRUCTA)lParam)->lpszName;
+                textW = NULL;
+            }
+
+            switch (style) {
+            case SS_ICON:
+                {
+                    HICON hIcon;
+                    if(unicode)
+                       hIcon = STATIC_LoadIconW(hwnd, textW, full_style);
+                    else
+                       hIcon = STATIC_LoadIconA(hwnd, textA, full_style);
+                    STATIC_SetIcon(hwnd, hIcon, full_style);
+                }
+                break;
+            case SS_BITMAP:
+                {
+                    HBITMAP hBitmap;
+                    if(unicode)
+                        hBitmap = STATIC_LoadBitmapW(hwnd, textW);
+                    else
+                        hBitmap = STATIC_LoadBitmapA(hwnd, textA);
+                    STATIC_SetBitmap(hwnd, hBitmap, full_style);
+                }
+                break;
+            }
+            /* SS_ENHMETAFILE: Despite what MSDN says, Windows does not load
+               the enhanced metafile that was specified as the window text. */
+        }
+        return unicode ? DefWindowProcW(hwnd, uMsg, wParam, lParam) :
+                         DefWindowProcA(hwnd, uMsg, wParam, lParam);
+
     case WM_SETTEXT:
-	switch (style) {
-	case SS_ICON:
-	{
-	    HICON hIcon;
-	    if(unicode)
-		hIcon = STATIC_LoadIconW(hwnd, (LPCWSTR)lParam, full_style);
-	    else
-		hIcon = STATIC_LoadIconA(hwnd, (LPCSTR)lParam, full_style);
-            /* FIXME : should we also return the previous hIcon here ??? */
-            STATIC_SetIcon(hwnd, hIcon, full_style);
-	    break;
-	}
-        case SS_BITMAP:
-	{
-	    HBITMAP hBitmap;
-	    if(unicode)
-		hBitmap = STATIC_LoadBitmapW(hwnd, (LPCWSTR)lParam);
-	    else
-		hBitmap = STATIC_LoadBitmapA(hwnd, (LPCSTR)lParam);
-            STATIC_SetBitmap(hwnd, hBitmap, full_style);
-	    break;
-	}
-	/* SS_ENHMETAFILE: Despite what MSDN says, Windows does not load
-	   the enhanced metafile that was specified as the window text. */
-
-	case SS_LEFT:
-	case SS_CENTER:
-	case SS_RIGHT:
-	case SS_SIMPLE:
-	case SS_LEFTNOWORDWRAP:
+        if (hasTextStyle( full_style ))
         {
 	    if (HIWORD(lParam))
 	    {
-		if(unicode)
-		    lResult = DefWindowProcW( hwnd, WM_SETTEXT, wParam, lParam );
-		else
-		    lResult = DefWindowProcA( hwnd, WM_SETTEXT, wParam, lParam );
+	        if(unicode)
+		     lResult = DefWindowProcW( hwnd, uMsg, wParam, lParam );
+                else
+                    lResult = DefWindowProcA( hwnd, uMsg, wParam, lParam );
+	        STATIC_TryPaintFcn( hwnd, full_style );
 	    }
-	    if (uMsg == WM_SETTEXT)
-		STATIC_TryPaintFcn( hwnd, full_style );
-	    break;
 	}
-	default:
-	    if (HIWORD(lParam))
-	    {
-		if(unicode)
-		    lResult = DefWindowProcW( hwnd, WM_SETTEXT, wParam, lParam );
-		else
-		    lResult = DefWindowProcA( hwnd, WM_SETTEXT, wParam, lParam );
-	    }
-	    if(uMsg == WM_SETTEXT)
-		InvalidateRect(hwnd, NULL, TRUE);
-	}
-        return 1; /* success. FIXME: check text length */
+        break;
 
     case WM_SETFONT:
-        if ((style == SS_ICON) || (style == SS_BITMAP)) return 0;
-        SetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET, wParam );
-        if (LOWORD(lParam))
-            InvalidateRect( hwnd, NULL, TRUE );
+        if (hasTextStyle( full_style ))
+        {
+            SetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET, wParam );
+            if (LOWORD(lParam))
+                STATIC_TryPaintFcn( hwnd, full_style );
+        }
         break;
 
     case WM_GETFONT:
