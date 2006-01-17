@@ -1505,16 +1505,23 @@ int default_fd_signaled( struct object *obj, struct thread *thread )
     int events, ret;
     struct fd *fd = get_obj_fd( obj );
 
-    if (fd->inode) return 1;  /* regular files are always signaled */
+    if (fd->inode) ret = 1; /* regular files are always signaled */
+    else
+    {
+        events = fd->fd_ops->get_poll_events( fd );
+        ret = check_fd_events( fd, events ) != 0;
 
-    events = fd->fd_ops->get_poll_events( fd );
-    ret = check_fd_events( fd, events ) != 0;
-
-    if (ret)
-        set_fd_events( fd, 0 ); /* stop waiting on select() if we are signaled */
-    else if (!list_empty( &obj->wait_queue ))
-        set_fd_events( fd, events ); /* restart waiting on poll() if we are no longer signaled */
-
+        if (ret)
+        {
+            /* stop waiting on select() if we are signaled */
+            set_fd_events( fd, 0 );
+        }
+        else if (!list_empty( &obj->wait_queue ))
+        {
+            /* restart waiting on poll() if we are no longer signaled */
+            set_fd_events( fd, events );
+        }
+    }
     release_object( fd );
     return ret;
 }
