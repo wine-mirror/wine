@@ -4,5 +4,6 @@ ds3d.ok
 ds3d8.ok
 dsound.ok
 dsound8.ok
+duplex.ok
 propset.ok
 testlist.c
