@@ -29,7 +29,6 @@
  * TODO:
  *
  *   Styles
- *   - SS_REALSIZECONTROL
  *   - SS_REALSIZEIMAGE
  *   - SS_RIGHTJUST
  *
@@ -119,20 +118,33 @@ const struct builtin_class_descr STATIC_builtin_class =
 static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
 {
     HICON prevIcon;
-    CURSORICONINFO *info = hicon?(CURSORICONINFO *) GlobalLock16(HICON_16(hicon)):NULL;
-
+    CURSORICONINFO * info;
+    
     if ((style & SS_TYPEMASK) != SS_ICON) return 0;
+    info = hicon?(CURSORICONINFO *) GlobalLock16(HICON_16(hicon)):NULL;
     if (hicon && !info) {
-	ERR("hicon != 0, but info == 0\n");
-    	return 0;
+        WARN("hicon != 0, but info == 0\n");
+        return 0;
     }
     prevIcon = (HICON)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hicon );
-    if (hicon && !(style & SS_CENTERIMAGE))
+    if (hicon && !(style & SS_CENTERIMAGE) && !(style & SS_REALSIZECONTROL))
     {
-        SetWindowPos( hwnd, 0, 0, 0, info->nWidth, info->nHeight,
-                        SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
-        GlobalUnlock16(HICON_16(hicon));
+        /* Windows currently doesn't implement SS_RIGHTJUST */
+        /*
+        if ((style & SS_RIGHTJUST) != 0)
+        {
+            RECT wr;
+            GetWindowRect(hwnd, &wr);
+            SetWindowPos( hwnd, 0, wr.right - info->nWidth, wr.bottom - info->nHeight,
+                          info->nWidth, info->nHeight, SWP_NOACTIVATE | SWP_NOZORDER );
+        }
+        else */
+        {
+            SetWindowPos( hwnd, 0, 0, 0, info->nWidth, info->nHeight,
+                          SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
+        }
     }
+    if (info) GlobalUnlock16(HICON_16(hicon));
     return prevIcon;
 }
 
@@ -147,16 +159,29 @@ static HBITMAP STATIC_SetBitmap( HWND hwnd, HBITMAP hBitmap, DWORD style )
 
     if ((style & SS_TYPEMASK) != SS_BITMAP) return 0;
     if (hBitmap && GetObjectType(hBitmap) != OBJ_BITMAP) {
-	ERR("hBitmap != 0, but it's not a bitmap\n");
-    	return 0;
+        WARN("hBitmap != 0, but it's not a bitmap\n");
+        return 0;
     }
     hOldBitmap = (HBITMAP)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hBitmap );
-    if (hBitmap && !(style & SS_CENTERIMAGE))
+    if (hBitmap && !(style & SS_CENTERIMAGE) && !(style & SS_REALSIZECONTROL))
     {
         BITMAP bm;
         GetObjectW(hBitmap, sizeof(bm), &bm);
-        SetWindowPos( hwnd, 0, 0, 0, bm.bmWidth, bm.bmHeight,
-		      SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
+        /* Windows currently doesn't implement SS_RIGHTJUST */
+        /*
+        if ((style & SS_RIGHTJUST) != 0)
+        {
+            RECT wr;
+            GetWindowRect(hwnd, &wr);
+            SetWindowPos( hwnd, 0, wr.right - bm.bmWidth, wr.bottom - bm.bmHeight,
+                          bm.bmWidth, bm.bmHeight, SWP_NOACTIVATE | SWP_NOZORDER );
+        }
+        else */
+        {
+            SetWindowPos( hwnd, 0, 0, 0, bm.bmWidth, bm.bmHeight,
+                          SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
+        }
+	
     }
     return hOldBitmap;
 }
@@ -170,7 +195,7 @@ static HENHMETAFILE STATIC_SetEnhMetaFile( HWND hwnd, HENHMETAFILE hEnhMetaFile,
 {
     if ((style & SS_TYPEMASK) != SS_ENHMETAFILE) return 0;
     if (hEnhMetaFile && GetObjectType(hEnhMetaFile) != OBJ_ENHMETAFILE) {
-        ERR("hEnhMetaFile != 0, but it's not an enhanced metafile\n");
+        WARN("hEnhMetaFile != 0, but it's not an enhanced metafile\n");
         return 0;
     }
     return (HENHMETAFILE)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hEnhMetaFile );
