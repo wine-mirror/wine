@@ -2668,10 +2668,30 @@ BOOL WINAPI PostThreadMessageW( DWORD thread, UINT msg, WPARAM wparam, LPARAM lp
 
 /***********************************************************************
  *		PostQuitMessage  (USER32.@)
+ *
+ * Posts a quit message to the current thread's message queue.
+ *
+ * PARAMS
+ *  exit_code [I] Exit code to return from message loop.
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  This function is not the same as calling:
+ *|PostThreadMessage(GetCurrentThreadId(), WM_QUIT, exit_code, 0);
+ *  It instead sets a flag in the message queue that signals it to generate
+ *  a WM_QUIT message when there are no other pending sent or posted messages
+ *  in the queue.
  */
-void WINAPI PostQuitMessage( INT exitCode )
+void WINAPI PostQuitMessage( INT exit_code )
 {
-    PostThreadMessageW( GetCurrentThreadId(), WM_QUIT, exitCode, 0 );
+    SERVER_START_REQ( post_quit_message )
+    {
+        req->exit_code = exit_code;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
 }
 
 

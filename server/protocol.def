@@ -1573,6 +1573,10 @@ enum char_info_mode
     VARARG(data,bytes);        /* message data for sent messages */
 @END
 
+@REQ(post_quit_message)
+    int             exit_code; /* exit code to return */
+@END
+
 enum message_type
 {
     MSG_ASCII,          /* Ascii message (from SendMessageA) */

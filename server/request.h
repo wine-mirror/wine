@@ -232,6 +232,7 @@ DECL_HANDLER(set_queue_mask);
 DECL_HANDLER(get_queue_status);
 DECL_HANDLER(wait_input_idle);
 DECL_HANDLER(send_message);
+DECL_HANDLER(post_quit_message);
 DECL_HANDLER(get_message);
 DECL_HANDLER(reply_message);
 DECL_HANDLER(accept_hardware_message);
@@ -449,6 +450,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_queue_status,
     (req_handler)req_wait_input_idle,
     (req_handler)req_send_message,
+    (req_handler)req_post_quit_message,
     (req_handler)req_get_message,
     (req_handler)req_reply_message,
     (req_handler)req_accept_hardware_message,

@@ -2058,6 +2058,11 @@ static void dump_send_message_request( const struct send_message_request *req )
     dump_varargs_bytes( cur_size );
 }
 
+static void dump_post_quit_message_request( const struct post_quit_message_request *req )
+{
+    fprintf( stderr, " exit_code=%d", req->exit_code );
+}
+
 static void dump_get_message_request( const struct get_message_request *req )
 {
     fprintf( stderr, " flags=%d,", req->flags );
@@ -3333,6 +3338,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_queue_status_request,
     (dump_func)dump_wait_input_idle_request,
     (dump_func)dump_send_message_request,
+    (dump_func)dump_post_quit_message_request,
     (dump_func)dump_get_message_request,
     (dump_func)dump_reply_message_request,
     (dump_func)dump_accept_hardware_message_request,
@@ -3546,6 +3552,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_queue_mask_reply,
     (dump_func)dump_get_queue_status_reply,
     (dump_func)dump_wait_input_idle_reply,
+    (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_message_reply,
     (dump_func)0,
@@ -3761,6 +3768,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_queue_status",
     "wait_input_idle",
     "send_message",
+    "post_quit_message",
     "get_message",
     "reply_message",
     "accept_hardware_message",

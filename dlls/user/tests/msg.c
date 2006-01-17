@@ -6958,6 +6958,57 @@ todo_wine {
 }
 
 
+static void test_quit_message(void)
+{
+    MSG msg;
+    BOOL ret;
+
+    /* test using PostQuitMessage */
+    PostQuitMessage(0xbeef);
+
+    ret = PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE);
+    ok(ret, "PeekMessage failed with error %ld\n", GetLastError());
+    ok(msg.message == WM_QUIT, "Received message 0x%04x instead of WM_QUIT\n", msg.message);
+    ok(msg.wParam == 0xbeef, "wParam was 0x%x instead of 0xbeef\n", msg.wParam);
+
+    ret = PostThreadMessage(GetCurrentThreadId(), WM_USER, 0, 0);
+    ok(ret, "PostMessage failed with error %ld\n", GetLastError());
+
+    ret = GetMessage(&msg, NULL, 0, 0);
+    ok(ret > 0, "GetMessage failed with error %ld\n", GetLastError());
+    ok(msg.message == WM_USER, "Received message 0x%04x instead of WM_USER\n", msg.message);
+
+    /* note: WM_QUIT message received after WM_USER message */
+    ret = GetMessage(&msg, NULL, 0, 0);
+    ok(!ret, "GetMessage return %d with error %ld instead of FALSE\n", ret, GetLastError());
+    ok(msg.message == WM_QUIT, "Received message 0x%04x instead of WM_QUIT\n", msg.message);
+    ok(msg.wParam == 0xbeef, "wParam was 0x%x instead of 0xbeef\n", msg.wParam);
+
+    ret = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+    ok( !ret || msg.message != WM_QUIT, "Received WM_QUIT again\n" );
+
+    /* now test with PostThreadMessage - different behaviour! */
+    PostThreadMessage(GetCurrentThreadId(), WM_QUIT, 0xdead, 0);
+
+    ret = PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE);
+    ok(ret, "PeekMessage failed with error %ld\n", GetLastError());
+    ok(msg.message == WM_QUIT, "Received message 0x%04x instead of WM_QUIT\n", msg.message);
+    ok(msg.wParam == 0xdead, "wParam was 0x%x instead of 0xdead\n", msg.wParam);
+
+    ret = PostThreadMessage(GetCurrentThreadId(), WM_USER, 0, 0);
+    ok(ret, "PostMessage failed with error %ld\n", GetLastError());
+
+    /* note: we receive the WM_QUIT message first this time */
+    ret = GetMessage(&msg, NULL, 0, 0);
+    ok(!ret, "GetMessage return %d with error %ld instead of FALSE\n", ret, GetLastError());
+    ok(msg.message == WM_QUIT, "Received message 0x%04x instead of WM_QUIT\n", msg.message);
+    ok(msg.wParam == 0xdead, "wParam was 0x%x instead of 0xdead\n", msg.wParam);
+
+    ret = GetMessage(&msg, NULL, 0, 0);
+    ok(ret > 0, "GetMessage failed with error %ld\n", GetLastError());
+    ok(msg.message == WM_USER, "Received message 0x%04x instead of WM_USER\n", msg.message);
+}
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -7016,6 +7067,7 @@ START_TEST(msg)
     test_DispatchMessage();
     test_SendMessageTimeout();
     test_edit_messages();
+    test_quit_message();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)

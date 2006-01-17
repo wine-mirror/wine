@@ -2205,6 +2205,16 @@ struct send_message_reply
     struct reply_header __header;
 };
 
+struct post_quit_message_request
+{
+    struct request_header __header;
+    int             exit_code;
+};
+struct post_quit_message_reply
+{
+    struct reply_header __header;
+};
+
 enum message_type
 {
     MSG_ASCII,
@@ -3824,6 +3834,7 @@ enum request
     REQ_get_queue_status,
     REQ_wait_input_idle,
     REQ_send_message,
+    REQ_post_quit_message,
     REQ_get_message,
     REQ_reply_message,
     REQ_accept_hardware_message,
@@ -4042,6 +4053,7 @@ union generic_request
     struct get_queue_status_request get_queue_status_request;
     struct wait_input_idle_request wait_input_idle_request;
     struct send_message_request send_message_request;
+    struct post_quit_message_request post_quit_message_request;
     struct get_message_request get_message_request;
     struct reply_message_request reply_message_request;
     struct accept_hardware_message_request accept_hardware_message_request;
@@ -4258,6 +4270,7 @@ union generic_reply
     struct get_queue_status_reply get_queue_status_reply;
     struct wait_input_idle_reply wait_input_idle_reply;
     struct send_message_reply send_message_reply;
+    struct post_quit_message_reply post_quit_message_reply;
     struct get_message_reply get_message_reply;
     struct reply_message_reply reply_message_reply;
     struct accept_hardware_message_reply accept_hardware_message_reply;
@@ -4349,6 +4362,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 220
+#define SERVER_PROTOCOL_VERSION 221
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -120,6 +120,8 @@ struct msg_queue
     unsigned int           changed_bits;    /* changed wakeup bits */
     unsigned int           changed_mask;    /* changed wakeup mask */
     int                    paint_count;     /* pending paint messages count */
+    int                    quit_message;    /* is there a pending quit message? */
+    int                    exit_code;       /* exit code of pending quit message */
     struct list            msg_list[NB_MSG_KINDS];  /* lists of messages */
     struct list            send_result;     /* stack of sent messages waiting for result */
     struct list            callback_result; /* list of callback messages waiting for result */
@@ -244,6 +246,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->changed_bits    = 0;
         queue->changed_mask    = 0;
         queue->paint_count     = 0;
+        queue->quit_message    = 0;
         queue->recv_result     = NULL;
         queue->next_timer_id   = 1;
         queue->timeout         = NULL;
@@ -642,7 +645,6 @@ static int get_posted_message( struct msg_queue *queue, user_handle_t win,
     /* check against the filters */
     LIST_FOR_EACH_ENTRY( msg, &queue->msg_list[POST_MESSAGE], struct message, entry )
     {
-        if (msg->msg == WM_QUIT) goto found;  /* WM_QUIT is never filtered */
         if (win && msg->win && msg->win != win && !is_child_window( win, msg->win )) continue;
         if (!check_msg_filter( msg->msg, first, last )) continue;
         goto found; /* found one */
@@ -680,6 +682,31 @@ found:
     else if (msg->data) set_reply_data( msg->data, msg->data_size );
 
     return 1;
+}
+
+static int get_quit_message( struct msg_queue *queue, unsigned int flags,
+                             struct get_message_reply *reply )
+{
+    if (queue->quit_message)
+    {
+        reply->total  = 0;
+        reply->type   = MSG_POSTED;
+        reply->win    = NULL;
+        reply->msg    = WM_QUIT;
+        reply->wparam = queue->exit_code;
+        reply->lparam = 0;
+        reply->x      = 0;
+        reply->y      = 0;
+        reply->time   = get_tick_count();
+        reply->info   = 0;
+
+        if (flags & GET_MSG_REMOVE)
+            queue->quit_message = 0;
+
+        return 1;
+    }
+    else
+        return 0;
 }
 
 /* empty a message list and free all the messages */
@@ -1614,6 +1641,18 @@ DECL_HANDLER(send_message)
     if (thread) release_object( thread );
 }
 
+/* post a quit message to the current queue */
+DECL_HANDLER(post_quit_message)
+{
+    struct msg_queue *queue = get_current_queue();
+
+    if (!queue)
+        return;
+
+    queue->quit_message = 1;
+    queue->exit_code = req->exit_code;
+    set_queue_bits( queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
+}
 
 /* get a message from the current queue */
 DECL_HANDLER(get_message)
@@ -1643,6 +1682,11 @@ DECL_HANDLER(get_message)
 
     /* then check for posted messages */
     if (get_posted_message( queue, get_win, req->get_first, req->get_last, req->flags, reply ))
+        return;
+
+    /* only check for quit messages if not posted messages pending.
+     * note: the quit message isn't filtered */
+    if (get_quit_message( queue, req->flags, reply ))
         return;
 
     /* then check for any raw hardware message */
