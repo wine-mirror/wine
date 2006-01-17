@@ -1,5 +1,6 @@
 Makefile
 atom.ok
+change.ok
 env.ok
 error.ok
 exception.ok
