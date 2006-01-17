@@ -29,7 +29,6 @@
  * TODO:
  *
  *   Styles
- *   - SS_REALSIZEIMAGE
  *   - SS_RIGHTJUST
  *
  *   Notifications
@@ -206,12 +205,23 @@ static HENHMETAFILE STATIC_SetEnhMetaFile( HWND hwnd, HENHMETAFILE hEnhMetaFile,
  *
  * Load the icon for an SS_ICON control.
  */
-static HICON STATIC_LoadIconA( HWND hwnd, LPCSTR name )
+static HICON STATIC_LoadIconA( HWND hwnd, LPCSTR name, DWORD style )
 {
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
-    HICON hicon = LoadIconA( hInstance, name );
-    if (!hicon) hicon = LoadIconA( 0, name );
-    return hicon;
+    if ((style & SS_REALSIZEIMAGE) != 0)
+    {
+        return LoadImageA(hInstance, name, IMAGE_ICON, 0, 0, LR_SHARED);
+    }
+    else
+    {
+        HICON hicon = LoadIconA( hInstance, name );
+        if (!hicon) hicon = LoadCursorA( hInstance, name );
+        if (!hicon) hicon = LoadIconA( 0, name );
+        /* Windows doesn't try to load a standard cursor,
+           probably because most IDs for standard cursors conflict
+           with the IDs for standard icons anyway */
+        return hicon;
+    }
 }
 
 /***********************************************************************
@@ -219,12 +229,23 @@ static HICON STATIC_LoadIconA( HWND hwnd, LPCSTR name )
  *
  * Load the icon for an SS_ICON control.
  */
-static HICON STATIC_LoadIconW( HWND hwnd, LPCWSTR name )
+static HICON STATIC_LoadIconW( HWND hwnd, LPCWSTR name, DWORD style )
 {
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
-    HICON hicon = LoadIconW( hInstance, name );
-    if (!hicon) hicon = LoadIconW( 0, name );
-    return hicon;
+    if ((style & SS_REALSIZEIMAGE) != 0)
+    {
+        return LoadImageW(hInstance, name, IMAGE_ICON, 0, 0, LR_SHARED);
+    }
+    else
+    {
+        HICON hicon = LoadIconW( hInstance, name );
+        if (!hicon) hicon = LoadCursorW( hInstance, name );
+        if (!hicon) hicon = LoadIconW( 0, name );
+        /* Windows doesn't try to load a standard cursor,
+           probably because most IDs for standard cursors conflict
+           with the IDs for standard icons anyway */
+        return hicon;
+    }
 }
 
 /***********************************************************************
@@ -368,9 +389,9 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 	{
 	    HICON hIcon;
 	    if(unicode)
-		hIcon = STATIC_LoadIconW(hwnd, (LPCWSTR)lParam);
+		hIcon = STATIC_LoadIconW(hwnd, (LPCWSTR)lParam, full_style);
 	    else
-		hIcon = STATIC_LoadIconA(hwnd, (LPCSTR)lParam);
+		hIcon = STATIC_LoadIconA(hwnd, (LPCSTR)lParam, full_style);
             /* FIXME : should we also return the previous hIcon here ??? */
             STATIC_SetIcon(hwnd, hIcon, full_style);
 	    break;
