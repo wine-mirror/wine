@@ -31,10 +31,6 @@
  *   Styles
  *   - SS_RIGHTJUST
  *
- *   Notifications
- *   - STN_DISABLE
- *   - STN_ENABLE
- *
  *   Messages
  *   - STM_SETIMAGE: IMAGE_CURSOR
  */
@@ -391,7 +387,17 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         break;
 
     case WM_ENABLE:
-        InvalidateRect(hwnd, NULL, TRUE);
+        STATIC_TryPaintFcn( hwnd, full_style );
+        if (full_style & SS_NOTIFY) {
+            if (wParam) {
+                SendMessageW( GetParent(hwnd), WM_COMMAND,
+                              MAKEWPARAM( GetWindowLongPtrW(hwnd,GWLP_ID), STN_ENABLE ), (LPARAM)hwnd);
+            }
+            else {
+                SendMessageW( GetParent(hwnd), WM_COMMAND,
+                              MAKEWPARAM( GetWindowLongPtrW(hwnd,GWLP_ID), STN_DISABLE ), (LPARAM)hwnd);
+            }
+        }
         break;
 
     case WM_SYSCOLORCHANGE:
