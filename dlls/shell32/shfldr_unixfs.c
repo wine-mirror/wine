@@ -1494,13 +1494,21 @@ static HRESULT WINAPI UnixFolder_IPersistFolder3_Initialize(IPersistFolder3* ifa
 
     /* Find the UnixFolderClass root */
     while (current->mkid.cb) {
-        if (_ILIsSpecialFolder(current) && IsEqualIID(This->m_pCLSID, _ILGetGUIDPointer(current)))
+        if ((_ILIsDrive(current) && IsEqualCLSID(This->m_pCLSID, &CLSID_ShellFSFolder)) ||
+            (_ILIsSpecialFolder(current) && IsEqualCLSID(This->m_pCLSID, _ILGetGUIDPointer(current))))
+        {
             break;
+        }
         current = ILGetNext(current);
     }
 
     if (current && current->mkid.cb) {
-        if (IsEqualIID(&CLSID_MyDocuments, _ILGetGUIDPointer(current))) {
+        if (_ILIsDrive(current)) {
+            WCHAR wszDrive[4] = { '?', ':', '\\', 0 };
+            wszDrive[0] = (WCHAR)*_ILGetTextPointer(current);
+            if (!UNIXFS_get_unix_path(wszDrive, szBasePath))
+                return E_FAIL;
+        } else if (IsEqualIID(&CLSID_MyDocuments, _ILGetGUIDPointer(current))) {
             WCHAR wszMyDocumentsPath[MAX_PATH];
             if (!SHGetSpecialFolderPathW(0, wszMyDocumentsPath, CSIDL_PERSONAL, FALSE))
                 return E_FAIL;
@@ -2120,6 +2128,11 @@ HRESULT WINAPI FolderShortcut_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVO
 HRESULT WINAPI MyDocuments_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
     TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
     return CreateUnixFolder(pUnkOuter, riid, ppv, &CLSID_MyDocuments);
+}
+
+HRESULT WINAPI ShellFSFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
+    TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
+    return CreateUnixFolder(pUnkOuter, riid, ppv, &CLSID_ShellFSFolder);
 }
 
 /******************************************************************************
