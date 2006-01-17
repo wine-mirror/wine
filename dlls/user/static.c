@@ -708,17 +708,18 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
 static void STATIC_PaintEnhMetafn(HWND hwnd, HDC hdc, DWORD style )
 {
     HENHMETAFILE hEnhMetaFile;
-
-    /* message is still sent, even if the returned brush is not used */
-    SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC,
-                                   (WPARAM)hdc, (LPARAM)hwnd );
-
+    RECT rc;
+    HBRUSH hbrush;
+    
+    GetClientRect(hwnd, &rc);
+    hbrush = STATIC_SendWmCtlColorStatic(hwnd, hdc);
+    FillRect(hdc, &rc, hbrush);
     if ((hEnhMetaFile = (HENHMETAFILE)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET )))
     {
-        RECT clientRect;
-        if(GetObjectType(hEnhMetaFile) != OBJ_ENHMETAFILE) return;
-        GetClientRect(hwnd, &clientRect);
-        PlayEnhMetaFile(hdc, hEnhMetaFile, &clientRect);
+        /* The control's current font is not selected into the
+           device context! */
+        if (GetObjectType(hEnhMetaFile) == OBJ_ENHMETAFILE)
+            PlayEnhMetaFile(hdc, hEnhMetaFile, &rc);
     }
 }
 
