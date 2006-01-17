@@ -235,10 +235,26 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
         }
         break;
         
+    case ACM_METRIC_DRIVER_SUPPORT:
+        /* Return fdwSupport for driver */
+        if (!hao) return MMSYSERR_INVALHANDLE;
+        mmr = MMSYSERR_INVALHANDLE;
+        for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
+            if (padid == (PWINE_ACMDRIVERID)hao) {
+                if (pMetric) {
+                    *(LPDWORD)pMetric = padid->fdwSupport;
+                    mmr = MMSYSERR_NOERROR;
+                } else {
+                    mmr = MMSYSERR_INVALPARAM;
+                }
+                break;
+            }
+        }
+        break;
+
     case ACM_METRIC_HARDWARE_WAVE_INPUT:
     case ACM_METRIC_HARDWARE_WAVE_OUTPUT:
     case ACM_METRIC_MAX_SIZE_FILTER:
-    case ACM_METRIC_DRIVER_SUPPORT:
     default:
 	FIXME("(%p, %d, %p): stub\n", hao, uMetric, pMetric);
 	mmr = MMSYSERR_NOTSUPPORTED;
