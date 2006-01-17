@@ -1810,6 +1810,7 @@ VOID        WINAPI OutputDebugStringA(LPCSTR);
 VOID        WINAPI OutputDebugStringW(LPCWSTR);
 #define     OutputDebugString WINELIB_NAME_AW(OutputDebugString)
 BOOL        WINAPI PeekNamedPipe(HANDLE,PVOID,DWORD,PDWORD,PDWORD,PDWORD);
+BOOL        WINAPI PostQueuedCompletionStatus(HANDLE,DWORD,ULONG_PTR,LPOVERLAPPED);
 DWORD       WINAPI PrepareTape(HANDLE,DWORD,BOOL);
 BOOL        WINAPI ProcessIdToSessionId(DWORD,DWORD*);
 BOOL        WINAPI PrivilegeCheck(HANDLE,PPRIVILEGE_SET,LPBOOL);

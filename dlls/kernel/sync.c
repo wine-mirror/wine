@@ -1852,6 +1852,14 @@ BOOL WINAPI GetQueuedCompletionStatus( HANDLE CompletionPort, LPDWORD lpNumberOf
     return FALSE;
 }
 
+BOOL WINAPI PostQueuedCompletionStatus( HANDLE CompletionPort, DWORD dwNumberOfBytes,
+                                        ULONG_PTR dwCompletionKey, LPOVERLAPPED lpOverlapped)
+{
+    FIXME("%p %ld %08lx %p\n", CompletionPort, dwNumberOfBytes, dwCompletionKey, lpOverlapped );
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
 /******************************************************************************
  *		CreateJobObjectW (KERNEL32.@)
  */

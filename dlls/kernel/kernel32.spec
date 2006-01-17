@@ -844,7 +844,7 @@
 @ stdcall PeekConsoleInputA(ptr ptr long ptr)
 @ stdcall PeekConsoleInputW(ptr ptr long ptr)
 @ stdcall PeekNamedPipe(long ptr long ptr ptr ptr)
-@ stub PostQueuedCompletionStatus
+@ stdcall PostQueuedCompletionStatus(long long ptr ptr)
 @ stdcall PrepareTape(ptr long long)
 @ stub PrivCopyFileExW
 @ stub PrivMoveFileIdentityW
