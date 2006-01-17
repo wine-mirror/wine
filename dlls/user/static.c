@@ -278,10 +278,8 @@ static HICON STATIC_LoadIconW( HWND hwnd, LPCWSTR name, DWORD style )
 static HBITMAP STATIC_LoadBitmapA( HWND hwnd, LPCSTR name )
 {
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
-    HBITMAP hbitmap = LoadBitmapA( hInstance, name );
-    if (!hbitmap)  /* Try OEM icon (FIXME: is this right?) */
-        hbitmap = LoadBitmapA( 0, name );
-    return hbitmap;
+    /* Windows doesn't try to load OEM Bitmaps (hInstance == NULL) */
+    return LoadBitmapA( hInstance, name );
 }
 
 /***********************************************************************
@@ -292,10 +290,8 @@ static HBITMAP STATIC_LoadBitmapA( HWND hwnd, LPCSTR name )
 static HBITMAP STATIC_LoadBitmapW( HWND hwnd, LPCWSTR name )
 {
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
-    HBITMAP hbitmap = LoadBitmapW( hInstance, name );
-    if (!hbitmap)  /* Try OEM icon (FIXME: is this right?) */
-        hbitmap = LoadBitmapW( 0, name );
-    return hbitmap;
+    /* Windows doesn't try to load OEM Bitmaps (hInstance == NULL) */
+    return LoadBitmapW( hInstance, name );
 }
 
 /***********************************************************************
