@@ -419,7 +419,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 
     case WM_SYSCOLORCHANGE:
         STATIC_InitColours();
-        InvalidateRect(hwnd, NULL, TRUE);
+        STATIC_TryPaintFcn( hwnd, full_style );
         break;
 
     case WM_NCCREATE:
@@ -544,13 +544,13 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 	    FIXME("STM_SETIMAGE: Unhandled type %x\n", wParam);
 	    break;
 	}
-        InvalidateRect( hwnd, NULL, TRUE );
+        STATIC_TryPaintFcn( hwnd, full_style );
 	break;
 
     case STM_SETICON16:
     case STM_SETICON:
         lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)wParam, full_style );
-        InvalidateRect( hwnd, NULL, TRUE );
+        STATIC_TryPaintFcn( hwnd, full_style );
         break;
 
     default:
