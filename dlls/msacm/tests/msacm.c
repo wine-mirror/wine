@@ -61,6 +61,9 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
     MMRESULT rc;
     ACMDRIVERDETAILS dd;
     HACMDRIVER had;
+    
+    DWORD dwDriverPriority;
+    DWORD dwDriverSupport;
 
     if (winetest_interactive) {
         trace("id: %p\n", hadid);
@@ -139,6 +142,54 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
         trace("  Supports %lu filter formats\n", dd.cFilterTags);
     }
 
+    /* try bad pointer */
+    rc = acmMetrics((HACMOBJ)hadid, ACM_METRIC_DRIVER_PRIORITY, 0);
+    ok(rc == MMSYSERR_INVALPARAM,
+        "acmMetrics(): rc = %08x, should be %08x\n",
+        rc, MMSYSERR_INVALPARAM);
+
+    /* try bad handle */
+    rc = acmMetrics((HACMOBJ)1, ACM_METRIC_DRIVER_PRIORITY, &dwDriverPriority);
+    ok(rc == MMSYSERR_INVALHANDLE,
+        "acmMetrics(): rc = %08x, should be %08x\n",
+        rc, MMSYSERR_INVALHANDLE);
+
+    /* try bad pointer and handle */
+    rc = acmMetrics((HACMOBJ)1, ACM_METRIC_DRIVER_PRIORITY, 0);
+    ok(rc == MMSYSERR_INVALHANDLE,
+        "acmMetrics(): rc = %08x, should be %08x\n",
+        rc, MMSYSERR_INVALHANDLE);
+
+    /* try valid parameters */
+    rc = acmMetrics((HACMOBJ)hadid, ACM_METRIC_DRIVER_PRIORITY, &dwDriverSupport);
+    ok(rc == MMSYSERR_NOERROR,
+        "acmMetrics(): rc = %08x, should be %08x\n",
+        rc, MMSYSERR_NOERROR);
+
+    /* try bad pointer */
+    rc = acmMetrics((HACMOBJ)hadid, ACM_METRIC_DRIVER_SUPPORT, 0);
+    ok(rc == MMSYSERR_INVALPARAM,
+        "acmMetrics(): rc = %08x, should be %08x\n",
+        rc, MMSYSERR_INVALPARAM);
+
+    /* try bad handle */
+    rc = acmMetrics((HACMOBJ)1, ACM_METRIC_DRIVER_SUPPORT, &dwDriverSupport);
+    ok(rc == MMSYSERR_INVALHANDLE,
+        "acmMetrics(): rc = %08x, should be %08x\n",
+        rc, MMSYSERR_INVALHANDLE);
+
+    /* try bad pointer and handle */
+    rc = acmMetrics((HACMOBJ)1, ACM_METRIC_DRIVER_SUPPORT, 0);
+    ok(rc == MMSYSERR_INVALHANDLE,
+        "acmMetrics(): rc = %08x, should be %08x\n",
+        rc, MMSYSERR_INVALHANDLE);
+
+    /* try valid parameters */
+    rc = acmMetrics((HACMOBJ)hadid, ACM_METRIC_DRIVER_SUPPORT, &dwDriverSupport);
+    ok(rc == MMSYSERR_NOERROR,
+        "acmMetrics(): rc = %08x, should be %08x\n",
+        rc, MMSYSERR_NOERROR);
+
     /* try invalid pointer */
     rc = acmDriverOpen(0, hadid, 0);
     ok(rc == MMSYSERR_INVALPARAM,
@@ -176,13 +227,13 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
         /* try bad handle */
         rc = acmDriverID((HACMOBJ)1, &hid, 0);
         ok(rc == MMSYSERR_INVALHANDLE,
-           "acmMetrics(): rc = %08x, should be %08x\n",
+           "acmDriverID(): rc = %08x, should be %08x\n",
            rc, MMSYSERR_INVALHANDLE);
 
         /* try bad handle and pointer */
         rc = acmDriverID((HACMOBJ)1, 0, 0);
         ok(rc == MMSYSERR_INVALHANDLE,
-           "acmMetrics(): rc = %08x, should be %08x\n",
+           "acmDriverID(): rc = %08x, should be %08x\n",
            rc, MMSYSERR_INVALHANDLE);
 
         /* try bad flag */
