@@ -2351,7 +2351,7 @@ DWORD WINAPI SHCopyKeyW(HKEY hKeySrc, LPCWSTR lpszSrcSubKey, HKEY hKeyDst, DWORD
   {
     DWORD dwNameSize = dwMaxKeyLen, dwType, dwLen = dwMaxDataLen;
 
-    dwRet = RegEnumValueW(hKeySrc, i, lpszName, &dwNameSize, NULL, &dwType, buff, &dwLen);
+    dwRet = RegEnumValueW(hKeySrc, i, lpszName, &dwNameSize, NULL, &dwType, lpBuff, &dwLen);
 
     if (!dwRet)
       dwRet = SHSetValueW(hKeyDst, NULL, lpszName, dwType, lpBuff, dwLen);
