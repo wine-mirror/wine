@@ -224,12 +224,15 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
     case ACM_METRIC_DRIVER_PRIORITY:
         /* Return current list position of driver */
         if (!hao) return MMSYSERR_INVALHANDLE;
-        if (!pMetric) return MMSYSERR_INVALPARAM;
         mmr = MMSYSERR_INVALHANDLE;
         for (i = 1, padid = MSACM_pFirstACMDriverID; padid; i++, padid = padid->pNextACMDriverID) {
             if (padid == (PWINE_ACMDRIVERID)hao) {
-                *(LPDWORD)pMetric = i;
-                mmr = MMSYSERR_NOERROR;
+                if (pMetric) {
+                    *(LPDWORD)pMetric = i;
+                    mmr = MMSYSERR_NOERROR;
+                } else {
+                    mmr = MMSYSERR_INVALPARAM;
+                }
                 break;
             }
         }
