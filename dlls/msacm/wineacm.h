@@ -348,6 +348,12 @@ extern PWINE_ACMOBJ MSACM_GetObj(HACMOBJ hObj, DWORD type);
 extern MMRESULT MSACM_Message(HACMDRIVER, UINT, LPARAM, LPARAM);
 extern BOOL MSACM_FindFormatTagInCache(WINE_ACMDRIVERID*, DWORD, LPDWORD);
 
+extern void MSACM_RePositionDriver(PWINE_ACMDRIVERID, DWORD);
+extern void MSACM_WriteCurrentPriorities(void);
+extern void MSACM_BroadcastNotification(void);
+extern void MSACM_DisableNotifications(void);
+extern void MSACM_EnableNotifications(void);
+
 /* From msacm32.c */
 extern HINSTANCE MSACM_hInstance32;
 

@@ -404,21 +404,8 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
  */
 MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fdwPriority)
 {
-    PWINE_ACMDRIVERID padid;
-    CHAR szSubKey[17];
-    CHAR szBuffer[256];
-    LONG lBufferLength = sizeof(szBuffer);
-    LONG lError;
-    HKEY hPriorityKey;
-    DWORD dwPriorityCounter;
 
     TRACE("(%p, %08lx, %08lx)\n", hadid, dwPriority, fdwPriority);
-
-    padid = MSACM_GetDriverID(hadid);
-    if (!padid) {
-        WARN("invalid handle\n");
-	return MMSYSERR_INVALHANDLE;
-    }
 
     /* Check for unknown flags */
     if (fdwPriority &
@@ -441,33 +428,91 @@ MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fd
         WARN("invalid flag\n");
 	return MMSYSERR_INVALFLAG;
     }
+    
+    /* According to MSDN, ACM_DRIVERPRIORITYF_BEGIN and ACM_DRIVERPRIORITYF_END 
+       may only appear by themselves, and in addition, hadid and dwPriority must
+       both be zero */
+    if ((fdwPriority & ACM_DRIVERPRIORITYF_BEGIN) ||
+	(fdwPriority & ACM_DRIVERPRIORITYF_END)) {
+	if (fdwPriority & ~(ACM_DRIVERPRIORITYF_BEGIN|ACM_DRIVERPRIORITYF_END)) {
+	    WARN("ACM_DRIVERPRIORITYF_[BEGIN|END] cannot be used with any other flags\n");
+	    return MMSYSERR_INVALPARAM;
+	}
+	if (dwPriority) {
+	    WARN("priority invalid with ACM_DRIVERPRIORITYF_[BEGIN|END]\n");
+	    return MMSYSERR_INVALPARAM;
+	}
+	if (hadid) {
+	    WARN("non-null hadid invalid with ACM_DRIVERPRIORITYF_[BEGIN|END]\n");
+	    return MMSYSERR_INVALPARAM;
+	}
+	/* FIXME: MSDN wording suggests that deferred notification should be 
+	   implemented as a system-wide lock held by a calling task, and that 
+	   re-enabling notifications should broadcast them across all processes.
+	   This implementation uses a simple DWORD counter. One consequence of the
+	   current implementation is that applications will never see 
+	   MMSYSERR_ALLOCATED as a return error.
+	 */
+	if (fdwPriority & ACM_DRIVERPRIORITYF_BEGIN) {
+	    MSACM_DisableNotifications();
+	} else if (fdwPriority & ACM_DRIVERPRIORITYF_END) {
+	    MSACM_EnableNotifications();
+	}
+	return MMSYSERR_NOERROR;
+    } else {
+        PWINE_ACMDRIVERID padid;
+        BOOL bPerformBroadcast = FALSE;
 
-    lError = RegOpenKeyA(HKEY_CURRENT_USER,
-			 "Software\\Microsoft\\Multimedia\\"
-			 "Audio Compression Manager\\Priority v4.00",
-			 &hPriorityKey
-			 );
-    /* FIXME: Create key */
-    if (lError != ERROR_SUCCESS) {
-        WARN("RegOpenKeyA failed\n");
-	return MMSYSERR_ERROR;
+        /* Fetch driver ID */
+        padid = MSACM_GetDriverID(hadid);
+        if (!padid) {
+            WARN("invalid handle\n");
+	    return MMSYSERR_INVALHANDLE;
+        }
+        
+        /* Check whether driver ID is appropriate for requested op */
+        if (dwPriority) {
+            if (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL) {
+                return MMSYSERR_NOTSUPPORTED;
+            }
+            if (dwPriority != 1 && dwPriority != -1) {
+                FIXME("unexpected priority %ld, using sign only\n", dwPriority);
+                if (dwPriority < 0) dwPriority = -1;
+                if (dwPriority > 0) dwPriority = 1;
+            }
+            
+            if (dwPriority == 1 && (padid->pPrevACMDriverID == NULL || 
+                (padid->pPrevACMDriverID->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL))) {
+                /* do nothing - driver is first of list, or first after last
+                   local driver */
+            } else if (dwPriority == -1 && padid->pNextACMDriverID == NULL) {
+                /* do nothing - driver is last of list */
+            } else {
+                MSACM_RePositionDriver(padid, dwPriority);
+                bPerformBroadcast = TRUE;
+            }
+        }
+
+        /* Check whether driver ID should be enabled or disabled */
+        if (fdwPriority & ACM_DRIVERPRIORITYF_DISABLE) {
+            if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED)) {
+                padid->fdwSupport |= ACMDRIVERDETAILS_SUPPORTF_DISABLED;
+                bPerformBroadcast = TRUE;
+            }
+        } else if (fdwPriority & ACM_DRIVERPRIORITYF_ENABLE) {
+            if (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) {
+                padid->fdwSupport &= ~ACMDRIVERDETAILS_SUPPORTF_DISABLED;
+                bPerformBroadcast = TRUE;
+            }
+        }
+        
+        /* Perform broadcast of changes */
+        if (bPerformBroadcast) {
+            MSACM_WriteCurrentPriorities();
+            MSACM_BroadcastNotification();
+        }
+        return MMSYSERR_NOERROR;
     }
-
-    for (dwPriorityCounter = 1; ; dwPriorityCounter++)	{
-	snprintf(szSubKey, 17, "Priority%ld", dwPriorityCounter);
-	lError = RegQueryValueA(hPriorityKey, szSubKey, szBuffer, &lBufferLength);
-	if (lError != ERROR_SUCCESS)
-	    break;
-
-	FIXME("(%p, %ld, %ld): stub (partial)\n",
-	      hadid, dwPriority, fdwPriority);
-	break;
-    }
-
-    RegCloseKey(hPriorityKey);
-
-    WARN("RegQueryValueA failed\n");
-    return MMSYSERR_ERROR;
 }
 
 /***********************************************************************
@@ -491,6 +536,7 @@ MMRESULT WINAPI acmDriverRemove(HACMDRIVERID hadid, DWORD fdwRemove)
     }
 
     MSACM_UnregisterDriver(padid);
+    MSACM_BroadcastNotification();
 
     return MMSYSERR_NOERROR;
 }

@@ -46,6 +46,9 @@ HANDLE MSACM_hHeap = NULL;
 PWINE_ACMDRIVERID MSACM_pFirstACMDriverID = NULL;
 PWINE_ACMDRIVERID MSACM_pLastACMDriverID = NULL;
 
+static DWORD MSACM_suspendBroadcastCount = 0;
+static BOOL MSACM_pendingBroadcast = FALSE;
+
 static void MSACM_ReorderDriversByPriority(void);
 
 #if 0
@@ -334,6 +337,90 @@ void MSACM_RegisterAllDrivers(void)
 }
 
 /***********************************************************************
+ *           MSACM_BroadcastNotification()
+ */
+void MSACM_BroadcastNotification(void)
+{
+    if (MSACM_suspendBroadcastCount <= 0) {
+        FIXME("notification broadcast not (yet) implemented\n");
+    } else {
+        MSACM_pendingBroadcast = TRUE;
+    }
+}
+
+/***********************************************************************
+ *           MSACM_DisableNotifications()
+ */
+void MSACM_DisableNotifications(void)
+{
+    MSACM_suspendBroadcastCount++;
+}
+
+/***********************************************************************
+ *           MSACM_EnableNotifications()
+ */
+void MSACM_EnableNotifications(void)
+{
+    if (MSACM_suspendBroadcastCount > 0) {
+        MSACM_suspendBroadcastCount--;
+        if (MSACM_suspendBroadcastCount == 0 && MSACM_pendingBroadcast) {
+            MSACM_pendingBroadcast = FALSE;
+            MSACM_BroadcastNotification();
+        }
+    }
+}
+
+/***********************************************************************
+ *           MSACM_RePositionDriver()
+ */
+void MSACM_RePositionDriver(PWINE_ACMDRIVERID padid, DWORD dwPriority)
+{
+    PWINE_ACMDRIVERID pTargetPosition = NULL;
+                
+    /* Remove selected driver from linked list */
+    if (MSACM_pFirstACMDriverID == padid) {
+        MSACM_pFirstACMDriverID = padid->pNextACMDriverID;
+    }
+    if (MSACM_pLastACMDriverID == padid) {
+        MSACM_pLastACMDriverID = padid->pPrevACMDriverID;
+    }
+    if (padid->pPrevACMDriverID != NULL) {
+        padid->pPrevACMDriverID->pNextACMDriverID = padid->pNextACMDriverID;
+    }
+    if (padid->pNextACMDriverID != NULL) {
+        padid->pNextACMDriverID->pPrevACMDriverID = padid->pPrevACMDriverID;
+    }
+    
+    /* Look up position where selected driver should be */
+    if (dwPriority == 1) {
+        pTargetPosition = padid->pPrevACMDriverID;
+        while (pTargetPosition->pPrevACMDriverID != NULL &&
+            !(pTargetPosition->pPrevACMDriverID->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL)) {
+            pTargetPosition = pTargetPosition->pPrevACMDriverID;
+        }
+    } else if (dwPriority == -1) {
+        pTargetPosition = padid->pNextACMDriverID;
+        while (pTargetPosition->pNextACMDriverID != NULL) {
+            pTargetPosition = pTargetPosition->pNextACMDriverID;
+        }
+    }
+    
+    /* Place selected driver in selected position */
+    padid->pPrevACMDriverID = pTargetPosition->pPrevACMDriverID;
+    padid->pNextACMDriverID = pTargetPosition;
+    if (padid->pPrevACMDriverID != NULL) {
+        padid->pPrevACMDriverID->pNextACMDriverID = padid;
+    } else {
+        MSACM_pFirstACMDriverID = padid;
+    }
+    if (padid->pNextACMDriverID != NULL) {
+        padid->pNextACMDriverID->pPrevACMDriverID = padid;
+    } else {
+        MSACM_pLastACMDriverID = padid;
+    }
+}
+
+/***********************************************************************
  *           MSACM_ReorderDriversByPriority()
  * Reorders all drivers based on the priority list indicated by the registry key:
  * HKCU\\Software\\Microsoft\\Multimedia\\Audio Compression Manager\\Priority v4.00
@@ -443,6 +530,79 @@ static void MSACM_ReorderDriversByPriority(void)
 errCleanUp:
     if (hPriorityKey != NULL) RegCloseKey(hPriorityKey);
     if (driverList != NULL) HeapFree(MSACM_hHeap, 0, driverList);
+}
+
+/***********************************************************************
+ *           MSACM_WriteCurrentPriorities()
+ * Writes out current order of driver priorities to registry key:
+ * HKCU\\Software\\Microsoft\\Multimedia\\Audio Compression Manager\\Priority v4.00
+ */
+void MSACM_WriteCurrentPriorities(void)
+{
+    LONG lError;
+    HKEY hPriorityKey;
+    static const WCHAR basePriorityKey[] = {
+        'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'M','u','l','t','i','m','e','d','i','a','\\',
+        'A','u','d','i','o',' ','C','o','m','p','r','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
+        'P','r','i','o','r','i','t','y',' ','v','4','.','0','0','\0'
+    };
+    PWINE_ACMDRIVERID padid;
+    DWORD dwPriorityCounter;
+    static const WCHAR priorityTmpl[] = {'P','r','i','o','r','i','t','y','%','l','d','\0'};
+    static const WCHAR valueTmpl[] = {'%','c',',',' ','%','s','\0'};
+    static const WCHAR converterAlias[] = {'I','n','t','e','r','n','a','l',' ','P','C','M',' ','C','o','n','v','e','r','t','e','r','\0'};
+    WCHAR szSubKey[17];
+    WCHAR szBuffer[256];
+
+    /* Delete ACM priority key and create it anew */
+    lError = RegDeleteKeyW(HKEY_CURRENT_USER, basePriorityKey);
+    if (lError != ERROR_SUCCESS && lError != ERROR_FILE_NOT_FOUND) {
+        ERR("unable to remove current key %s (0x%08lx) - priority changes won't persist past application end.\n",
+            debugstr_w(basePriorityKey), lError);
+        return;
+    }
+    lError = RegCreateKeyW(HKEY_CURRENT_USER, basePriorityKey, &hPriorityKey);
+    if (lError != ERROR_SUCCESS) {
+        ERR("unable to create key %s (0x%08lx) - priority changes won't persist past application end.\n",
+            debugstr_w(basePriorityKey), lError);
+        return;
+    }
+    
+    /* Write current list of priorities */
+    for (dwPriorityCounter = 0, padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {        
+        if (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL) continue;
+        if (padid->pszDriverAlias == NULL) continue;    /* internal PCM converter is last */
+
+        /* Build required value name */
+        dwPriorityCounter++;
+        snprintfW(szSubKey, 17, priorityTmpl, dwPriorityCounter);
+        
+        /* Value has a 1 in front for enabled drivers and 0 for disabled drivers */
+        snprintfW(szBuffer, 256, valueTmpl, (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) ? '0' : '1', padid->pszDriverAlias);
+        strlwrW(szBuffer);
+        
+        lError = RegSetValueExW(hPriorityKey, szSubKey, 0, REG_SZ, (BYTE *)szBuffer, (strlenW(szBuffer) + 1) * sizeof(WCHAR));
+        if (lError != ERROR_SUCCESS) {
+            ERR("unable to write value for %s under key %s (0x%08lx)\n",
+                debugstr_w(padid->pszDriverAlias), debugstr_w(basePriorityKey), lError);
+        }
+    }
+    
+    /* Build required value name */
+    dwPriorityCounter++;
+    snprintfW(szSubKey, 17, priorityTmpl, dwPriorityCounter);
+        
+    /* Value has a 1 in front for enabled drivers and 0 for disabled drivers */
+    snprintfW(szBuffer, 256, valueTmpl, '1', converterAlias);
+        
+    lError = RegSetValueExW(hPriorityKey, szSubKey, 0, REG_SZ, (BYTE *)szBuffer, (strlenW(szBuffer) + 1) * sizeof(WCHAR));
+    if (lError != ERROR_SUCCESS) {
+        ERR("unable to write value for %s under key %s (0x%08lx)\n",
+            debugstr_w(converterAlias), debugstr_w(basePriorityKey), lError);
+    }
+    RegCloseKey(hPriorityKey);
 }
 
 /***********************************************************************
