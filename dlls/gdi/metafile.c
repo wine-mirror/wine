@@ -865,6 +865,8 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
     case META_ESCAPE:
         switch (mr->rdParm[0]) {
         case GETSCALINGFACTOR: /* get function ... would just NULL dereference */
+        case GETPHYSPAGESIZE:
+        case GETPRINTINGOFFSET:
              return FALSE;
         case SETABORTPROC:
              FIXME("Filtering Escape(SETABORTPROC), possible virus?\n");
