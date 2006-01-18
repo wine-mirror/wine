@@ -49,6 +49,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(msacm);
 MMRESULT WINAPI acmDriverAddA(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 			      LPARAM lParam, DWORD dwPriority, DWORD fdwAdd)
 {
+    MMRESULT resultW;
+    WCHAR * driverW = NULL;
+    LPARAM lParamW = lParam;
+
     TRACE("(%p, %p, %08lx, %08lx, %08lx)\n",
           phadid, hinstModule, lParam, dwPriority, fdwAdd);
 
@@ -72,30 +76,95 @@ MMRESULT WINAPI acmDriverAddA(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 	return MMSYSERR_INVALFLAG;
     }
 
-    /* FIXME: in fact, should GetModuleFileName(hinstModule) and do a
-     * LoadDriver on it, to be sure we can call SendDriverMessage on the
-     * hDrvr handle.
-     */
-    *phadid = (HACMDRIVERID) MSACM_RegisterDriver(NULL, NULL, hinstModule);
+    /* A->W translation of name */
+    if ((fdwAdd & ACM_DRIVERADDF_TYPEMASK) == ACM_DRIVERADDF_NAME) {
+        unsigned long len;
+        
+        if (lParam == 0) return MMSYSERR_INVALPARAM;
+        len = MultiByteToWideChar(CP_ACP, 0, (LPSTR)lParam, -1, NULL, 0);
+        driverW = HeapAlloc(MSACM_hHeap, 0, len * sizeof(WCHAR));
+        if (!driverW) return MMSYSERR_NOMEM;
+        MultiByteToWideChar(CP_ACP, 0, (LPSTR)lParam, -1, driverW, len);
+        lParamW = (LPARAM)driverW;
+    }
 
-    /* FIXME: lParam, dwPriority and fdwAdd ignored */
-
-    return MMSYSERR_NOERROR;
+    resultW = acmDriverAddW(phadid, hinstModule, lParamW, dwPriority, fdwAdd);
+    HeapFree(MSACM_hHeap, 0, driverW);
+    return resultW;
 }
 
 /***********************************************************************
  *           acmDriverAddW (MSACM32.@)
- * FIXME
- *   Not implemented
+ *
  */
 MMRESULT WINAPI acmDriverAddW(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 			      LPARAM lParam, DWORD dwPriority, DWORD fdwAdd)
 {
-    FIXME("(%p, %p, %ld, %ld, %ld): stub\n",
-	  phadid, hinstModule, lParam, dwPriority, fdwAdd);
+    TRACE("(%p, %p, %08lx, %08lx, %08lx)\n",
+          phadid, hinstModule, lParam, dwPriority, fdwAdd);
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return MMSYSERR_ERROR;
+    if (!phadid) {
+        WARN("invalid parameter\n");
+	return MMSYSERR_INVALPARAM;
+    }
+
+    /* Check if any unknown flags */
+    if (fdwAdd &
+	~(ACM_DRIVERADDF_FUNCTION|ACM_DRIVERADDF_NOTIFYHWND|
+	  ACM_DRIVERADDF_GLOBAL)) {
+        WARN("invalid flag\n");
+	return MMSYSERR_INVALFLAG;
+    }
+ 
+    /* Check if any incompatible flags */
+    if ((fdwAdd & ACM_DRIVERADDF_FUNCTION) &&
+	(fdwAdd & ACM_DRIVERADDF_NOTIFYHWND)) {
+        WARN("invalid flag\n");
+	return MMSYSERR_INVALFLAG;
+    }
+
+    switch (fdwAdd & ACM_DRIVERADDF_TYPEMASK) {
+    case ACM_DRIVERADDF_NAME:
+        /*
+                hInstModule     (unused)
+                lParam          name of value in HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Drivers32
+                dwPriority      (unused, set to 0)
+         */
+        *phadid = (HACMDRIVERID) MSACM_RegisterDriverFromRegistry((LPCWSTR)lParam);        
+        if (!*phadid) {
+            ERR("Unable to register driver via ACM_DRIVERADDF_NAME\n");
+            return MMSYSERR_INVALPARAM;
+        }
+        break;
+    case ACM_DRIVERADDF_FUNCTION:
+        /*
+                hInstModule     Handle of module which contains driver entry proc
+                lParam          Driver function address
+                dwPriority      (unused, set to 0)
+         */
+        fdwAdd &= ~ACM_DRIVERADDF_TYPEMASK;
+
+        *phadid = 0;
+        FIXME("(%p, %p, %ld, %ld, %ld): ACM_DRIVERADDF_FUNCTION: stub\n", phadid, hinstModule, lParam, dwPriority, fdwAdd);
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return MMSYSERR_ERROR;
+    case ACM_DRIVERADDF_NOTIFYHWND:
+        /*
+                hInstModule     (unused)
+                lParam          Handle of notification window
+                dwPriority      Window message to send for notification broadcasts
+         */
+        *phadid = 0;
+        FIXME("(%p, %p, %ld, %ld, %ld): ACM_DRIVERADDF_NOTIFYHWND: stub\n", phadid, hinstModule, lParam, dwPriority, fdwAdd);
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return MMSYSERR_ERROR;
+    default:
+        ERR("invalid flag value 0x%08lx for fdwAdd\n", fdwAdd & ACM_DRIVERADDF_TYPEMASK);
+        return MMSYSERR_INVALFLAG;
+    }
+
+    MSACM_BroadcastNotification();
+    return MMSYSERR_NOERROR;
 }
 
 /***********************************************************************

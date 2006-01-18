@@ -354,6 +354,8 @@ extern void MSACM_BroadcastNotification(void);
 extern void MSACM_DisableNotifications(void);
 extern void MSACM_EnableNotifications(void);
 
+extern PWINE_ACMDRIVERID MSACM_RegisterDriverFromRegistry(LPCWSTR pszRegEntry);
+
 /* From msacm32.c */
 extern HINSTANCE MSACM_hInstance32;
 

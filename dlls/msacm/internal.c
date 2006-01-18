@@ -51,6 +51,43 @@ static BOOL MSACM_pendingBroadcast = FALSE;
 
 static void MSACM_ReorderDriversByPriority(void);
 
+/***********************************************************************
+ *           MSACM_RegisterDriverFromRegistry()
+ */
+PWINE_ACMDRIVERID MSACM_RegisterDriverFromRegistry(LPCWSTR pszRegEntry)
+{
+    static const WCHAR msacmW[] = {'M','S','A','C','M','.'};
+    static const WCHAR drvkey[] = {'S','o','f','t','w','a','r','e','\\',
+				   'M','i','c','r','o','s','o','f','t','\\',
+				   'W','i','n','d','o','w','s',' ','N','T','\\',
+				   'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+				   'D','r','i','v','e','r','s','3','2','\0'};
+    WCHAR buf[2048];
+    DWORD bufLen, lRet;
+    HKEY hKey;
+    PWINE_ACMDRIVERID padid = NULL;
+    
+    /* The requested registry entry must have the format msacm.XXXXX in order to
+       be recognized in any future sessions of msacm
+     */
+    if (0 == strncmpiW(buf, msacmW, sizeof(msacmW)/sizeof(WCHAR))) {
+        lRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, drvkey, 0, KEY_QUERY_VALUE, &hKey);
+        if (lRet != ERROR_SUCCESS) {
+            WARN("unable to open registry key - 0x%08lx\n", lRet);
+        } else {
+            bufLen = sizeof(buf);
+            lRet = RegQueryValueExW(hKey, pszRegEntry, NULL, NULL, (LPBYTE)buf, &bufLen);
+            if (lRet != ERROR_SUCCESS) {
+                WARN("unable to query requested subkey %s - 0x%08lx\n", debugstr_w(pszRegEntry), lRet);
+            } else {
+                MSACM_RegisterDriver(pszRegEntry, buf, 0);
+            }
+            RegCloseKey( hKey );
+        }
+    }
+    return padid;
+}
+
 #if 0
 /***********************************************************************
  *           MSACM_DumpCache
