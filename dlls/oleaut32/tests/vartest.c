@@ -4731,6 +4731,9 @@ static void test_VarMul(void)
     ok(hres == S_OK && V_VT(&result) == VT_DECIMAL, "VarMul: expected coerced type VT_DECIMAL, got %s!\n", vtstr(V_VT(&result)));
     hres = VarR8FromDec(&V_DECIMAL(&result), &r);
     ok(hres == S_OK && EQ_DOUBLE(r, 46.2), "VarMul: DECIMAL value %f, expected %f\n", r, (double)46.2);
+
+    SysFreeString(lbstr);
+    SysFreeString(rbstr);
 }
 
 static HRESULT (WINAPI *pVarAdd)(LPVARIANT,LPVARIANT,LPVARIANT);
@@ -4928,6 +4931,9 @@ static void test_VarAdd(void)
     ok(hres == S_OK && V_VT(&result) == VT_DECIMAL, "VarAdd: expected coerced type VT_DECIMAL, got %s!\n", vtstr(V_VT(&result)));
     hres = VarR8FromDec(&V_DECIMAL(&result), &r);
     ok(hres == S_OK && EQ_DOUBLE(r, -15.2), "VarAdd: DECIMAL value %f, expected %f\n", r, (double)-15.2);
+
+    SysFreeString(lbstr);
+    SysFreeString(rbstr);
 }
 
 static HRESULT (WINAPI *pVarCmp)(LPVARIANT,LPVARIANT,LCID,ULONG);
@@ -5180,6 +5186,17 @@ static void test_VarCmp(void)
     VARCMP(R4,1,BSTR,bstr1few,VARCMP_LT); /* bstr1few == 1+1e-8 */
     SETDEC(dec,8,0,0,0x5F5E101);          /* 1+1e-8 */
     VARCMP(R4,1,DECIMAL,dec,VARCMP_LT);
+
+    SysFreeString(bstrhuh);
+    SysFreeString(bstrempty);
+    SysFreeString(bstr0);
+    SysFreeString(bstr1);
+    SysFreeString(bstr7);
+    SysFreeString(bstr42);
+    SysFreeString(bstr1neg);
+    SysFreeString(bstr666neg);
+    SysFreeString(bstr2cents);
+    SysFreeString(bstr1few);
 }
 
 START_TEST(vartest)
