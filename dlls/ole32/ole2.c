@@ -526,6 +526,8 @@ HRESULT WINAPI DoDragDrop (
      */
     SetCapture(hwndTrackWindow);
 
+    msg.message = 0;
+
     /*
      * Pump messages. All mouse input should go the the capture window.
      */
@@ -564,6 +566,9 @@ HRESULT WINAPI DoDragDrop (
       }
     }
 
+    /* re-post the quit message to outer message loop */
+    if (msg.message == WM_QUIT)
+        PostQuitMessage(msg.wParam);
     /*
      * Destroy the temporary window.
      */
