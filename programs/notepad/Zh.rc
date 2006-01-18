@@ -43,6 +43,7 @@ POPUP "编辑（&E）" {
   MENUITEM "插入日期、时间（&T）\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "自动换行（&W）",  CMD_WRAP
+  MENUITEM "&Font...",          CMD_FONT /* FIXME */
  }
 POPUP "搜索（&S）" {
   MENUITEM "搜索（&S）",           CMD_SEARCH
