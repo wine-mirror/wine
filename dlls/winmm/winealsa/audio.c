@@ -1663,6 +1663,7 @@ static int ALSA_InitRingMessage(ALSA_MSG_RING* omr)
     omr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(ALSA_MSG));
 
     InitializeCriticalSection(&omr->msg_crst);
+    omr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)"WINEALSA_msg_crst";
     return 0;
 }
 
@@ -1680,6 +1681,7 @@ static int ALSA_DestroyRingMessage(ALSA_MSG_RING* omr)
 #endif
     HeapFree(GetProcessHeap(),0,omr->messages);
     omr->ring_buffer_size = 0;
+    omr->msg_crst.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&omr->msg_crst);
     return 0;
 }
@@ -3178,6 +3180,7 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
         frames, pdbi->mmap_buflen_bytes, pdbi->mmap_buffer);
 
     InitializeCriticalSection(&pdbi->mmap_crst);
+    pdbi->mmap_crst.DebugInfo->Spare[0] = (DWORD_PTR)"WINEALSA_mmap_crst";
 
     err = snd_async_add_pcm_handler(&pdbi->mmap_async_handler, wwo->pcm, DSDB_PCMCallback, pdbi);
     if ( err < 0 )
@@ -3194,6 +3197,7 @@ static void DSDB_DestroyMMAP(IDsDriverBufferImpl* pdbi)
     TRACE("mmap buffer %p destroyed\n", pdbi->mmap_buffer);
     pdbi->mmap_areas = NULL;
     pdbi->mmap_buffer = NULL;
+    pdbi->mmap_crst.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&pdbi->mmap_crst);
 }
 
