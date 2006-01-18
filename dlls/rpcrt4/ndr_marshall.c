@@ -1767,7 +1767,10 @@ unsigned char * WINAPI NdrComplexStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
   if (fMustAlloc || !*ppMemory)
+  {
     *ppMemory = NdrAllocate(pStubMsg, size);
+    memset(*ppMemory, 0, size);
+  }
 
   pFormat += 4;
   if (*(const WORD*)pFormat) conf_array = pFormat + *(const WORD*)pFormat;
@@ -2170,7 +2173,10 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   esize = ComplexStructSize(pStubMsg, pFormat);
 
   if (fMustAlloc || !*ppMemory)
+  {
     *ppMemory = NdrAllocate(pStubMsg, pStubMsg->MaxCount * esize);
+    memset(*ppMemory, 0, pStubMsg->MaxCount * esize);
+  }
 
   pMemory = *ppMemory;
   for (count = 0; count < pStubMsg->ActualCount; count++)
