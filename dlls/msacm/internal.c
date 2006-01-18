@@ -46,6 +46,8 @@ HANDLE MSACM_hHeap = NULL;
 PWINE_ACMDRIVERID MSACM_pFirstACMDriverID = NULL;
 PWINE_ACMDRIVERID MSACM_pLastACMDriverID = NULL;
 
+static void MSACM_ReorderDriversByPriority(void);
+
 #if 0
 /***********************************************************************
  *           MSACM_DumpCache
@@ -327,8 +329,120 @@ void MSACM_RegisterAllDrivers(void)
 	    *name = '=';
 	}
     }
-
+    MSACM_ReorderDriversByPriority();
     MSACM_RegisterDriver(msacm32, msacm32, 0);
+}
+
+/***********************************************************************
+ *           MSACM_ReorderDriversByPriority()
+ * Reorders all drivers based on the priority list indicated by the registry key:
+ * HKCU\\Software\\Microsoft\\Multimedia\\Audio Compression Manager\\Priority v4.00
+ */
+static void MSACM_ReorderDriversByPriority(void)
+{
+    PWINE_ACMDRIVERID	padid;
+    unsigned int iNumDrivers;
+    PWINE_ACMDRIVERID * driverList = NULL;
+    HKEY hPriorityKey = NULL;
+    
+    TRACE("\n");
+    
+    /* Count drivers && alloc corresponding memory for list */
+    iNumDrivers = 0;
+    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) iNumDrivers++;
+    if (iNumDrivers > 1)
+    {
+        LONG lError;
+        static const WCHAR basePriorityKey[] = {
+            'S','o','f','t','w','a','r','e','\\',
+            'M','i','c','r','o','s','o','f','t','\\',
+            'M','u','l','t','i','m','e','d','i','a','\\',
+            'A','u','d','i','o',' ','C','o','m','p','r','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
+            'P','r','i','o','r','i','t','y',' ','v','4','.','0','0','\0'
+        };
+        unsigned int i;
+        LONG lBufferLength;
+        WCHAR szBuffer[256];
+        
+        driverList = HeapAlloc(MSACM_hHeap, 0, iNumDrivers * sizeof(PWINE_ACMDRIVERID));
+        if (!driverList)
+        {
+            ERR("out of memory\n");
+            goto errCleanUp;
+        }
+
+        lError = RegOpenKeyW(HKEY_CURRENT_USER, basePriorityKey, &hPriorityKey);
+        if (lError != ERROR_SUCCESS) {
+            TRACE("RegOpenKeyW failed, possibly key does not exist yet\n");
+            hPriorityKey = NULL;
+            goto errCleanUp;
+        } 
+            
+        /* Copy drivers into list to simplify linked list modification */
+        for (i = 0, padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID, i++)
+        {
+            driverList[i] = padid;
+        }
+
+        /* Query each of the priorities in turn. Alias key is in lowercase. 
+            The general form of the priority record is the following:
+            "PriorityN" --> "1, msacm.driveralias"
+            where N is an integer, and the value is a string of the driver
+            alias, prefixed by "1, " for an enabled driver, or "0, " for a
+            disabled driver.
+            */
+        for (i = 0; i < iNumDrivers; i++)
+        {
+            static const WCHAR priorityTmpl[] = {'P','r','i','o','r','i','t','y','%','l','d','\0'};
+            WCHAR szSubKey[17];
+            unsigned int iTargetPosition;
+            unsigned int iCurrentPosition;
+            WCHAR * pAlias;
+            static const WCHAR sPrefix[] = {'m','s','a','c','m','.','\0'};
+            
+            /* Build expected entry name */
+            snprintfW(szSubKey, 17, priorityTmpl, i + 1);
+            lBufferLength = sizeof(szBuffer);
+            lError = RegQueryValueExW(hPriorityKey, szSubKey, NULL, NULL, (LPBYTE)szBuffer, (LPDWORD)&lBufferLength);
+            if (lError != ERROR_SUCCESS) continue;
+
+            /* Recovered driver alias should be at this position */
+            iTargetPosition = i;
+            
+            /* Locate driver alias in driver list */
+            pAlias = strstrW(szBuffer, sPrefix);
+            if (pAlias == NULL) continue;
+            
+            for (iCurrentPosition = 0; iCurrentPosition < iNumDrivers; iCurrentPosition++) {
+                if (strcmpiW(driverList[iCurrentPosition]->pszDriverAlias, pAlias) == 0) 
+                    break;
+            }
+            if (iCurrentPosition < iNumDrivers && iTargetPosition != iCurrentPosition) {
+                padid = driverList[iTargetPosition];
+                driverList[iTargetPosition] = driverList[iCurrentPosition];
+                driverList[iCurrentPosition] = padid;
+
+                /* Locate enabled status */
+                if (szBuffer[0] == '1') {
+                    driverList[iTargetPosition]->fdwSupport &= ~ACMDRIVERDETAILS_SUPPORTF_DISABLED;
+                } else if (szBuffer[0] == '0') {
+                    driverList[iTargetPosition]->fdwSupport |= ACMDRIVERDETAILS_SUPPORTF_DISABLED;
+                }
+            }
+        }
+        
+        /* Re-assign pointers so that linked list traverses the ordered array */
+        for (i = 0; i < iNumDrivers; i++) {
+            driverList[i]->pPrevACMDriverID = (i > 0) ? driverList[i - 1] : NULL;
+            driverList[i]->pNextACMDriverID = (i < iNumDrivers - 1) ? driverList[i + 1] : NULL;
+        }
+        MSACM_pFirstACMDriverID = driverList[0];
+        MSACM_pLastACMDriverID = driverList[iNumDrivers - 1];
+    }
+    
+errCleanUp:
+    if (hPriorityKey != NULL) RegCloseKey(hPriorityKey);
+    if (driverList != NULL) HeapFree(MSACM_hHeap, 0, driverList);
 }
 
 /***********************************************************************
