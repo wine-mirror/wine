@@ -33,7 +33,6 @@
  *   - Implement the OXID resolver so we don't need magic endpoint names for
  *     clients and servers to meet up
  *
- *   - Pump the message loop during RPC calls.
  *   - Call IMessageFilter functions.
  *
  *   - Make all ole interface marshaling use NDR to be wire compatible with
