@@ -847,58 +847,54 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
  * Perform an I/O control operation on an open file handle.
  *
  * PARAMS
- *  DeviceHandle     [I] Handle returned from ZwOpenFile() or ZwCreateFile()
- *  Event            [I] Event to signal upon completion (or NULL)
- *  ApcRoutine       [I] Callback to call upon completion (or NULL)
- *  ApcContext       [I] Context for ApcRoutine (or NULL)
- *  IoStatusBlock    [O] Receives information about the operation on return
- *  IoControlCode    [I] Control code for the operation to perform
- *  InputBuffer      [I] Source for any input data required (or NULL)
- *  InputBufferSize  [I] Size of InputBuffer
- *  OutputBuffer     [O] Source for any output data returned (or NULL)
- *  OutputBufferSize [I] Size of OutputBuffer
+ *  handle         [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  event          [I] Event to signal upon completion (or NULL)
+ *  apc            [I] Callback to call upon completion (or NULL)
+ *  apc_context    [I] Context for ApcRoutine (or NULL)
+ *  io             [O] Receives information about the operation on return
+ *  code           [I] Control code for the operation to perform
+ *  in_buffer      [I] Source for any input data required (or NULL)
+ *  in_size        [I] Size of InputBuffer
+ *  out_buffer     [O] Source for any output data returned (or NULL)
+ *  out_size       [I] Size of OutputBuffer
  *
  * RETURNS
  *  Success: 0. IoStatusBlock is updated.
  *  Failure: An NTSTATUS error code describing the error.
  */
-NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE DeviceHandle, HANDLE hEvent,
-                                      PIO_APC_ROUTINE UserApcRoutine, 
-                                      PVOID UserApcContext,
-                                      PIO_STATUS_BLOCK IoStatusBlock,
-                                      ULONG IoControlCode,
-                                      PVOID InputBuffer,
-                                      ULONG InputBufferSize,
-                                      PVOID OutputBuffer,
-                                      ULONG OutputBufferSize)
+NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
+                                      PIO_APC_ROUTINE apc, PVOID apc_context,
+                                      PIO_STATUS_BLOCK io, ULONG code,
+                                      PVOID in_buffer, ULONG in_size,
+                                      PVOID out_buffer, ULONG out_size)
 {
-    NTSTATUS    ret;
+    ULONG device = (code >> 16);
 
     TRACE("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx)\n",
-          DeviceHandle, hEvent, UserApcRoutine, UserApcContext,
-          IoStatusBlock, IoControlCode, 
-          InputBuffer, InputBufferSize, OutputBuffer, OutputBufferSize);
+          handle, event, apc, apc_context, io, code,
+          in_buffer, in_size, out_buffer, out_size);
 
-    if ((IoControlCode >> 16) == FILE_DEVICE_SERIAL_PORT)
-        ret = COMM_DeviceIoControl(DeviceHandle, hEvent,
-                                   UserApcRoutine, UserApcContext,
-                                   IoStatusBlock, IoControlCode,
-                                   InputBuffer, InputBufferSize,
-                                   OutputBuffer, OutputBufferSize);
-    else ret = CDROM_DeviceIoControl(DeviceHandle, hEvent,
-                                     UserApcRoutine, UserApcContext,
-                                     IoStatusBlock, IoControlCode,
-                                     InputBuffer, InputBufferSize,
-                                     OutputBuffer, OutputBufferSize);
-    if (ret == STATUS_NO_SUCH_DEVICE)
+    switch(device)
     {
-        /* it wasn't a supported device (CDROM, COMM) */
-        FIXME("Unimplemented dwIoControlCode=%08lx\n", IoControlCode);
-        IoStatusBlock->u.Status = STATUS_NOT_IMPLEMENTED;
-        IoStatusBlock->Information = 0;
-        if (hEvent) NtSetEvent(hEvent, NULL);
+    case FILE_DEVICE_DISK:
+    case FILE_DEVICE_CD_ROM:
+    case FILE_DEVICE_DVD:
+    case FILE_DEVICE_CONTROLLER:
+    case FILE_DEVICE_MASS_STORAGE:
+        io->u.Status = CDROM_DeviceIoControl(handle, event, apc, apc_context, io, code,
+                                             in_buffer, in_size, out_buffer, out_size);
+        break;
+    case FILE_DEVICE_SERIAL_PORT:
+        io->u.Status = COMM_DeviceIoControl(handle, event, apc, apc_context, io, code,
+                                            in_buffer, in_size, out_buffer, out_size);
+        break;
+    default:
+        FIXME("Unsupported ioctl %lx (device=%lx access=%lx func=%lx method=%lx)\n",
+              code, device, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+        io->u.Status = STATUS_NOT_SUPPORTED;
+        break;
     }
-    return IoStatusBlock->u.Status;
+    return io->u.Status;
 }
 
 /***********************************************************************
@@ -921,110 +917,123 @@ static void CALLBACK pipe_completion_wait(HANDLE event, PIO_STATUS_BLOCK iosb, U
  * Perform a file system control operation on an open file handle.
  *
  * PARAMS
- *  DeviceHandle     [I] Handle returned from ZwOpenFile() or ZwCreateFile()
- *  Event            [I] Event to signal upon completion (or NULL)
- *  ApcRoutine       [I] Callback to call upon completion (or NULL)
- *  ApcContext       [I] Context for ApcRoutine (or NULL)
- *  IoStatusBlock    [O] Receives information about the operation on return
- *  FsControlCode    [I] Control code for the operation to perform
- *  InputBuffer      [I] Source for any input data required (or NULL)
- *  InputBufferSize  [I] Size of InputBuffer
- *  OutputBuffer     [O] Source for any output data returned (or NULL)
- *  OutputBufferSize [I] Size of OutputBuffer
+ *  handle         [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  event          [I] Event to signal upon completion (or NULL)
+ *  apc            [I] Callback to call upon completion (or NULL)
+ *  apc_context    [I] Context for ApcRoutine (or NULL)
+ *  io             [O] Receives information about the operation on return
+ *  code           [I] Control code for the operation to perform
+ *  in_buffer      [I] Source for any input data required (or NULL)
+ *  in_size        [I] Size of InputBuffer
+ *  out_buffer     [O] Source for any output data returned (or NULL)
+ *  out_size       [I] Size of OutputBuffer
  *
  * RETURNS
  *  Success: 0. IoStatusBlock is updated.
  *  Failure: An NTSTATUS error code describing the error.
  */
-NTSTATUS WINAPI NtFsControlFile(HANDLE DeviceHandle, HANDLE Event OPTIONAL, PIO_APC_ROUTINE ApcRoutine,
-                                PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, ULONG FsControlCode,
-                                PVOID InputBuffer, ULONG InputBufferSize, PVOID OutputBuffer, ULONG OutputBufferSize)
+NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
+                                PVOID apc_context, PIO_STATUS_BLOCK io, ULONG code,
+                                PVOID in_buffer, ULONG in_size, PVOID out_buffer, ULONG out_size)
 {
-    NTSTATUS ret = STATUS_NOT_SUPPORTED;
-    HANDLE internal_event;
-
     TRACE("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx)\n",
-    DeviceHandle,Event,ApcRoutine,ApcContext,IoStatusBlock,FsControlCode,
-    InputBuffer,InputBufferSize,OutputBuffer,OutputBufferSize);
+          handle, event, apc, apc_context, io, code,
+          in_buffer, in_size, out_buffer, out_size);
 
-    if(!IoStatusBlock) return STATUS_INVALID_PARAMETER;
+    if (!io) return STATUS_INVALID_PARAMETER;
 
-    switch(FsControlCode)
+    switch(code)
     {
-        case FSCTL_DISMOUNT_VOLUME:
-            ret = DIR_unmount_device( DeviceHandle );
-            break;
+    case FSCTL_DISMOUNT_VOLUME:
+        io->u.Status = DIR_unmount_device( handle );
+        break;
 
-        case FSCTL_PIPE_LISTEN :
-        case FSCTL_PIPE_WAIT :
+    case FSCTL_PIPE_LISTEN:
         {
-            OBJECT_ATTRIBUTES obj;
+            HANDLE internal_event = 0;
 
-            if(!Event)
+            if(!event)
             {
-                InitializeObjectAttributes(&obj, NULL, 0, 0, NULL);
-                ret = NtCreateEvent(&internal_event, EVENT_ALL_ACCESS, &obj, FALSE, FALSE);
-                if(ret != STATUS_SUCCESS) return ret;
+                io->u.Status = NtCreateEvent(&internal_event, EVENT_ALL_ACCESS, NULL, FALSE, FALSE);
+                if (io->u.Status != STATUS_SUCCESS) return io->u.Status;
             }
-            switch(FsControlCode)
+            SERVER_START_REQ(connect_named_pipe)
             {
-                case FSCTL_PIPE_LISTEN :
-                    SERVER_START_REQ(connect_named_pipe)
-                    {
-                        req->handle = DeviceHandle;
-                        req->event = Event ? Event : internal_event;
-                        req->func = pipe_completion_wait;
-                        ret = wine_server_call(req);
-                    }
-                    SERVER_END_REQ;
-                    break;
-                case FSCTL_PIPE_WAIT :
-                {
-                    FILE_PIPE_WAIT_FOR_BUFFER *buff = InputBuffer;
+                req->handle = handle;
+                req->event = event ? event : internal_event;
+                req->func = pipe_completion_wait;
+                io->u.Status = wine_server_call(req);
+            }
+            SERVER_END_REQ;
 
-                    SERVER_START_REQ(wait_named_pipe)
-                    {
-                        req->handle = DeviceHandle;
-                        req->timeout = buff->TimeoutSpecified ? buff->Timeout.QuadPart / -10000L
-                                                              : NMPWAIT_USE_DEFAULT_WAIT;
-                        req->event = Event ? Event : internal_event;
-                        req->func = pipe_completion_wait;
-                        wine_server_add_data( req, buff->Name, buff->NameLength );
-                        ret = wine_server_call( req );
-                    }
-                    SERVER_END_REQ;
-                    break;
-                }
-            }
-            if(ret == STATUS_SUCCESS)
+            if(io->u.Status == STATUS_SUCCESS)
             {
-                if(Event)
-                    ret = STATUS_PENDING;
+                if(event) io->u.Status = STATUS_PENDING;
                 else
                 {
                     do
-                        ret = NtWaitForSingleObject(internal_event, TRUE, NULL);
-                    while(ret == STATUS_USER_APC);
-                    NtClose(internal_event);
+                        io->u.Status = NtWaitForSingleObject(internal_event, TRUE, NULL);
+                    while(io->u.Status == STATUS_USER_APC);
                 }
             }
-            break;
+            if (internal_event) NtClose(internal_event);
         }
-        case FSCTL_PIPE_DISCONNECT :
-            SERVER_START_REQ(disconnect_named_pipe)
+        break;
+
+    case FSCTL_PIPE_WAIT:
+        {
+            HANDLE internal_event = 0;
+            FILE_PIPE_WAIT_FOR_BUFFER *buff = in_buffer;
+
+            if(!event)
             {
-                req->handle = DeviceHandle;
-                ret = wine_server_call(req);
-                if (!ret && reply->fd != -1) close(reply->fd);
+                io->u.Status = NtCreateEvent(&internal_event, EVENT_ALL_ACCESS, NULL, FALSE, FALSE);
+                if (io->u.Status != STATUS_SUCCESS) return io->u.Status;
+            }
+            SERVER_START_REQ(wait_named_pipe)
+            {
+                req->handle = handle;
+                req->timeout = buff->TimeoutSpecified ? buff->Timeout.QuadPart / -10000L
+                               : NMPWAIT_USE_DEFAULT_WAIT;
+                req->event = event ? event : internal_event;
+                req->func = pipe_completion_wait;
+                wine_server_add_data( req, buff->Name, buff->NameLength );
+                io->u.Status = wine_server_call( req );
             }
             SERVER_END_REQ;
-            break;
-        default :
-            FIXME("Unsupported FsControlCode %lx\n", FsControlCode);
-            break;
+
+            if(io->u.Status == STATUS_SUCCESS)
+            {
+                if(event)
+                    io->u.Status = STATUS_PENDING;
+                else
+                {
+                    do
+                        io->u.Status = NtWaitForSingleObject(internal_event, TRUE, NULL);
+                    while(io->u.Status == STATUS_USER_APC);
+                }
+            }
+            if (internal_event) NtClose(internal_event);
+        }
+        break;
+
+    case FSCTL_PIPE_DISCONNECT:
+        SERVER_START_REQ(disconnect_named_pipe)
+        {
+            req->handle = handle;
+            io->u.Status = wine_server_call(req);
+            if (!io->u.Status && reply->fd != -1) close(reply->fd);
+        }
+        SERVER_END_REQ;
+        break;
+
+    default:
+        FIXME("Unsupported fsctl %lx (device=%lx access=%lx func=%lx method=%lx)\n",
+              code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+        io->u.Status = STATUS_NOT_SUPPORTED;
+        break;
     }
-    IoStatusBlock->u.Status = ret;
-    return ret;
+    return io->u.Status;
 }
 
 /******************************************************************************
