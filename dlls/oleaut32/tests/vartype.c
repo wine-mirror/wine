@@ -77,13 +77,6 @@ int val_empty, val_null;
 
 #define VARINIT( A, type, value)  V_VT(A) = VT##type; V##type(A) = value
 
-/* Macro for VarCmp*/
-
-#define VARCMP(left, ltype, lvalue, right, rtype, rvalue, lcid, flags) \
-  VARINIT(left, ltype, lvalue); \
-  VARINIT(right, rtype, rvalue); \
-  hres = pVarCmp(left, right, lcid, flags)
-
 /* Macros for converting and testing results */
 #define CONVVARS(typ) HRESULT hres; CONV_TYPE out; typ in
 
@@ -517,8 +510,6 @@ static HRESULT (WINAPI *pVarBstrFromR4)(FLOAT,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrFromDate)(DATE,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrFromDec)(DECIMAL*,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrCmp)(BSTR,BSTR,LCID,ULONG);
-
-static HRESULT (WINAPI *pVarCmp)(LPVARIANT,LPVARIANT,LCID,ULONG);
 
 static INT (WINAPI *pSystemTimeToVariantTime)(LPSYSTEMTIME,double*);
 static void (WINAPI *pClearCustData)(LPCUSTDATA);
@@ -4717,62 +4708,6 @@ static void test_VarBoolChangeTypeEx(void)
   }
 }
 
-#undef EXPECT_LT 
-#undef EXPECT_GT 
-#undef EXPECT_EQ 
-#undef EXPECT_NULL
-#undef EXPECTRES
-#define EXPECTRES(res) ok(hres == res, "expected " #res ", got hres=0x%08lx\n", hres)
-#define EXPECT_LT       EXPECTRES(VARCMP_LT)
-#define EXPECT_GT       EXPECTRES(VARCMP_GT)
-#define EXPECT_EQ       EXPECTRES(VARCMP_EQ)
-#define EXPECT_NULL     EXPECTRES(VARCMP_NULL)
-
-static void test_VarCmp(void)
-{
-    HRESULT hres;
-    VARIANTARG left, right;
-    LCID lcid;
-    WCHAR szvalNULL[] = { '0',0 };
-    WCHAR szval100[] = { '1','0','0',0 };
-    WCHAR szval101[] = { '1','0','1',0 };
-    BSTR bzvalNULL, bzval100, bzval101;
-
-    lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
-    bzvalNULL=SysAllocString(szvalNULL);
-    bzval100=SysAllocString(szval100);
-    bzval101=SysAllocString(szval101);
-    CHECKPTR(VarCmp);
-    VARCMP(&left, _DATE,   25570.0, &right, _DATE,   25570.0, lcid, 0); EXPECT_EQ;
-    VARCMP(&left, _DATE,   25570.0, &right, _DATE,   25571.0, lcid, 0); EXPECT_LT;
-    VARCMP(&left, _DATE,   25571.0, &right, _DATE,   25570.0, lcid, 0); EXPECT_GT;
-    VARCMP(&left, _DATE,   25570.0, &right, _EMPTY,        0, lcid, 0); EXPECT_GT;
-    VARCMP(&left, _DATE,   25570.0, &right, _NULL,         0, lcid, 0); EXPECT_NULL;
-    VARCMP(&left, _I2,           2, &right, _I2,           2, lcid, 0); EXPECT_EQ;
-    VARCMP(&left, _I2,           1, &right, _I2,           2, lcid, 0); EXPECT_LT;
-    VARCMP(&left, _I2,           2, &right, _I2,           1, lcid, 0); EXPECT_GT;
-    VARCMP(&left, _I2,           2, &right, _EMPTY,        1, lcid, 0); EXPECT_GT;
-    VARCMP(&left, _I2,           2, &right, _NULL,          1, lcid, 0); EXPECT_NULL;
-    VARCMP(&left, _BSTR,      NULL, &right, _EMPTY,        0, lcid, 0); EXPECT_EQ;
-    VARCMP(&left, _EMPTY,        0, &right, _BSTR,      NULL, lcid, 0); EXPECT_EQ;
-    VARCMP(&left, _EMPTY,        0, &right, _BSTR,  bzval100, lcid, 0); EXPECT_LT;
-    VARCMP(&left, _BSTR, bzvalNULL, &right, _EMPTY,        0, lcid, 0); EXPECT_GT;
-    VARCMP(&left, _BSTR, bzvalNULL, &right, _NULL,         0, lcid, 0); EXPECT_NULL;
-    VARCMP(&left, _BSTR, bzvalNULL, &right, _I2,           0, lcid, 0); EXPECT_GT;
-    VARCMP(&left, _BSTR, bzvalNULL, &right, _NULL,         0, lcid, 0); EXPECT_NULL;
-    VARCMP(&left, _BSTR,  bzval100, &right, _BSTR,  bzval100, lcid, 0); EXPECT_EQ;
-    VARCMP(&left, _BSTR,  bzval100, &right, _BSTR,  bzval101, lcid, 0); EXPECT_LT;
-    VARCMP(&left, _BSTR,  bzval101, &right, _BSTR,  bzval100, lcid, 0); EXPECT_GT;
-    VARCMP(&left, _BSTR,  bzval100, &right, _I2,         100, lcid, 0); EXPECT_GT;
-    VARCMP(&left, _BSTR,  bzval100, &right, _I2,         101, lcid, 0); EXPECT_GT;
-    VARCMP(&left, _BSTR,  bzval100, &right, _I2,         101, lcid, 0); EXPECT_GT;
-    VARCMP(&left, _I2,         100, &right, _BSTR,  bzval100, lcid, 0); EXPECT_LT;
-    VARCMP(&left, _BSTR, (BSTR)100, &right, _I2,         100, lcid, 0); EXPECT_GT;
-    SysFreeString(szval101);
-    SysFreeString(szval100);
-    SysFreeString(szvalNULL);
-}
-
 /*
  * BSTR
  */
@@ -5993,8 +5928,6 @@ START_TEST(vartype)
   test_VarBoolFromStr();
   test_VarBoolCopy();
   test_VarBoolChangeTypeEx();
-
-  test_VarCmp();
 
   test_VarBstrFromR4();
   test_VarBstrFromDate();
