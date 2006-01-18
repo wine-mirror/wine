@@ -1887,6 +1887,9 @@ __int64 _telli64(int fd)
 char *_tempnam(const char *dir, const char *prefix)
 {
   char tmpbuf[MAX_PATH];
+  const char *tmp_dir = MSVCRT_getenv("TMP");
+
+  if (tmp_dir) dir = tmp_dir;
 
   TRACE("dir (%s) prefix (%s)\n",dir,prefix);
   if (GetTempFileNameA(dir,prefix,0,tmpbuf))
