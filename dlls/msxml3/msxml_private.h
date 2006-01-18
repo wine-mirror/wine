@@ -32,6 +32,7 @@ extern IUnknown         *create_domdoc( void );
 extern IUnknown         *create_xmldoc( void );
 extern IXMLDOMNode      *create_node( xmlNodePtr node );
 extern IUnknown         *create_basic_node( xmlNodePtr node, IUnknown *pUnkOuter );
+extern IUnknown         *create_attribute( xmlNodePtr attribute );
 extern IUnknown         *create_element( xmlNodePtr element );
 extern IXMLDOMNodeList  *create_nodelist( xmlNodePtr node );
 extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );

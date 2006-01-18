@@ -9,6 +9,7 @@ EXTRALIBS = -luuid $(LIBUNICODE) @XML2LIBS@ @XSLTLIBS@
 EXTRAINCL = @XML2INCL@ @XSLTINCL@
 
 C_SRCS = \
+	attribute.c \
 	domdoc.c \
 	element.c \
 	factory.c \
