@@ -557,8 +557,8 @@ static HRESULT WINAPI xmlnode_get_nodeTypedValue(
     IXMLDOMNode *iface,
     VARIANT* typedValue)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    FIXME("ignoring data type\n");
+    return xmlnode_get_nodeValue(iface, typedValue);
 }
 
 static HRESULT WINAPI xmlnode_put_nodeTypedValue(
