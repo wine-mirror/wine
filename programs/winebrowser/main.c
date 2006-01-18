@@ -35,6 +35,8 @@
  *   mailto:[E-MAIL]?subject=[TOPIC]&cc=[E-MAIL]&bcc=[E-MAIL]&body=[TEXT]
  */
 
+#define WIN32_LEAN_AND_MEAN
+
 #include "config.h"
 #include "wine/port.h"
 

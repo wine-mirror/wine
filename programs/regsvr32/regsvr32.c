@@ -45,6 +45,8 @@
  * support.
  */
 
+#define WIN32_LEAN_AND_MEAN
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -88,7 +90,7 @@ static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHand
         if(!Silent)
             printf("Failed to load DLL %s\n", strDll);
 
-        exit(-1);
+        ExitProcess(1);
     }
     proc = (VOID *) GetProcAddress(*DllHandle, procName);
     if(!proc)
@@ -96,7 +98,7 @@ static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHand
         if(!Silent)
             printf("%s not implemented in DLL %s\n", procName, strDll);
         FreeLibrary(*DllHandle);
-        exit(-1);
+        ExitProcess(1);
     }
     return proc;
 }
