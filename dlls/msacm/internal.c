@@ -48,6 +48,8 @@ PWINE_ACMDRIVERID MSACM_pLastACMDriverID = NULL;
 
 static DWORD MSACM_suspendBroadcastCount = 0;
 static BOOL MSACM_pendingBroadcast = FALSE;
+static PWINE_ACMNOTIFYWND MSACM_pFirstACMNotifyWnd = NULL;
+static PWINE_ACMNOTIFYWND MSACM_pLastACMNotifyWnd = NULL;
 
 static void MSACM_ReorderDriversByPriority(void);
 
@@ -374,12 +376,43 @@ void MSACM_RegisterAllDrivers(void)
 }
 
 /***********************************************************************
+ *           MSACM_RegisterNotificationWindow()
+ */
+PWINE_ACMNOTIFYWND MSACM_RegisterNotificationWindow(HWND hNotifyWnd, DWORD dwNotifyMsg)
+{
+    PWINE_ACMNOTIFYWND	panwnd;
+
+    TRACE("(%p,0x%08lx)\n", hNotifyWnd, dwNotifyMsg);
+
+    panwnd = HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMNOTIFYWND));
+    panwnd->obj.dwType = WINE_ACMOBJ_NOTIFYWND;
+    panwnd->obj.pACMDriverID = 0;
+    panwnd->hNotifyWnd = hNotifyWnd;
+    panwnd->dwNotifyMsg = dwNotifyMsg;
+    panwnd->fdwSupport = 0;
+    
+    panwnd->pNextACMNotifyWnd = NULL;
+    panwnd->pPrevACMNotifyWnd = MSACM_pLastACMNotifyWnd;
+    if (MSACM_pLastACMNotifyWnd)
+        MSACM_pLastACMNotifyWnd->pNextACMNotifyWnd = panwnd;
+    MSACM_pLastACMNotifyWnd = panwnd;
+    if (!MSACM_pFirstACMNotifyWnd)
+        MSACM_pFirstACMNotifyWnd = panwnd;
+
+    return panwnd;
+}
+
+/***********************************************************************
  *           MSACM_BroadcastNotification()
  */
 void MSACM_BroadcastNotification(void)
 {
     if (MSACM_suspendBroadcastCount <= 0) {
-        FIXME("notification broadcast not (yet) implemented\n");
+        PWINE_ACMNOTIFYWND panwnd;
+
+        for (panwnd = MSACM_pFirstACMNotifyWnd; panwnd; panwnd = panwnd->pNextACMNotifyWnd) 
+        if (!(panwnd->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED))
+            SendMessageW(panwnd->hNotifyWnd, panwnd->dwNotifyMsg, 0, 0);
     } else {
         MSACM_pendingBroadcast = TRUE;
     }
@@ -405,6 +438,29 @@ void MSACM_EnableNotifications(void)
             MSACM_BroadcastNotification();
         }
     }
+}
+
+/***********************************************************************
+ *           MSACM_UnRegisterNotificationWindow()
+ */
+PWINE_ACMNOTIFYWND MSACM_UnRegisterNotificationWindow(PWINE_ACMNOTIFYWND panwnd)
+{
+    PWINE_ACMNOTIFYWND p;
+
+    for (p = MSACM_pFirstACMNotifyWnd; p; p = p->pNextACMNotifyWnd) {
+        if (p == panwnd) {
+            PWINE_ACMNOTIFYWND pNext = p->pNextACMNotifyWnd;
+
+            if (p->pPrevACMNotifyWnd) p->pPrevACMNotifyWnd->pNextACMNotifyWnd = p->pNextACMNotifyWnd;
+            if (p->pNextACMNotifyWnd) p->pNextACMNotifyWnd->pPrevACMNotifyWnd = p->pPrevACMNotifyWnd;
+            if (MSACM_pFirstACMNotifyWnd == p) MSACM_pFirstACMNotifyWnd = p->pNextACMNotifyWnd;
+            if (MSACM_pLastACMNotifyWnd == p) MSACM_pLastACMNotifyWnd = p->pPrevACMNotifyWnd;
+            HeapFree(MSACM_hHeap, 0, p);
+            
+            return pNext;
+        }
+    }
+    return NULL;
 }
 
 /***********************************************************************
@@ -678,12 +734,17 @@ PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
  */
 void MSACM_UnregisterAllDrivers(void)
 {
+    PWINE_ACMNOTIFYWND panwnd = MSACM_pFirstACMNotifyWnd;
     PWINE_ACMDRIVERID p = MSACM_pFirstACMDriverID;
 
     while (p) {
 	MSACM_WriteCache(p);
 	p = MSACM_UnregisterDriver(p);
     }
+    
+    while (panwnd) {
+	panwnd = MSACM_UnRegisterNotificationWindow(panwnd);
+    }    
 }
 
 /***********************************************************************
@@ -714,6 +775,15 @@ PWINE_ACMDRIVER MSACM_GetDriver(HACMDRIVER hDriver)
 {
     return (PWINE_ACMDRIVER)MSACM_GetObj((HACMOBJ)hDriver, WINE_ACMOBJ_DRIVER);
 }
+
+/***********************************************************************
+ *           MSACM_GetNotifyWnd()
+ */
+PWINE_ACMNOTIFYWND MSACM_GetNotifyWnd(HACMDRIVERID hDriver)
+{
+    return (PWINE_ACMNOTIFYWND)MSACM_GetObj((HACMOBJ)hDriver, WINE_ACMOBJ_NOTIFYWND);
+}
+
 
 /***********************************************************************
  *           MSACM_Message()

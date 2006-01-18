@@ -291,6 +291,7 @@ typedef struct _WINE_ACMDRIVER   *PWINE_ACMDRIVER;
 #define WINE_ACMOBJ_DRIVERID	0x5EED0001
 #define WINE_ACMOBJ_DRIVER	0x5EED0002
 #define WINE_ACMOBJ_STREAM	0x5EED0003
+#define WINE_ACMOBJ_NOTIFYWND   0x5EED0004
 
 typedef struct _WINE_ACMOBJ
 {
@@ -332,6 +333,17 @@ typedef struct _WINE_ACMDRIVERID
     }* 			aFormatTag;
 } WINE_ACMDRIVERID;
 
+typedef struct _WINE_ACMNOTIFYWND * PWINE_ACMNOTIFYWND;
+typedef struct _WINE_ACMNOTIFYWND
+{
+    WINE_ACMOBJ		obj;
+    HWND                hNotifyWnd;          /* Window to notify on ACM events: driver add, driver removal, priority change */
+    DWORD               dwNotifyMsg;         /* Notification message to send to window */
+    DWORD		fdwSupport;
+    PWINE_ACMNOTIFYWND  pNextACMNotifyWnd;
+    PWINE_ACMNOTIFYWND  pPrevACMNotifyWnd;
+} WINE_ACMNOTIFYWND;
+
 /* From internal.c */
 extern HANDLE MSACM_hHeap;
 extern PWINE_ACMDRIVERID MSACM_pFirstACMDriverID;
@@ -343,6 +355,7 @@ extern PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p);
 extern void MSACM_UnregisterAllDrivers(void);
 extern PWINE_ACMDRIVERID MSACM_GetDriverID(HACMDRIVERID hDriverID);
 extern PWINE_ACMDRIVER MSACM_GetDriver(HACMDRIVER hDriver);
+extern PWINE_ACMNOTIFYWND MSACM_GetNotifyWnd(HACMDRIVERID hDriver);
 extern PWINE_ACMOBJ MSACM_GetObj(HACMOBJ hObj, DWORD type);
 
 extern MMRESULT MSACM_Message(HACMDRIVER, UINT, LPARAM, LPARAM);
@@ -353,6 +366,8 @@ extern void MSACM_WriteCurrentPriorities(void);
 extern void MSACM_BroadcastNotification(void);
 extern void MSACM_DisableNotifications(void);
 extern void MSACM_EnableNotifications(void);
+extern PWINE_ACMNOTIFYWND MSACM_RegisterNotificationWindow(HWND hNotifyWnd, DWORD dwNotifyMsg);
+extern PWINE_ACMNOTIFYWND MSACM_UnRegisterNotificationWindow(PWINE_ACMNOTIFYWND);
 
 extern PWINE_ACMDRIVERID MSACM_RegisterDriverFromRegistry(LPCWSTR pszRegEntry);
 

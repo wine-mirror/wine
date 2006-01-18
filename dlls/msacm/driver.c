@@ -154,10 +154,12 @@ MMRESULT WINAPI acmDriverAddW(PHACMDRIVERID phadid, HINSTANCE hinstModule,
                 lParam          Handle of notification window
                 dwPriority      Window message to send for notification broadcasts
          */
-        *phadid = 0;
-        FIXME("(%p, %p, %ld, %ld, %ld): ACM_DRIVERADDF_NOTIFYHWND: stub\n", phadid, hinstModule, lParam, dwPriority, fdwAdd);
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        return MMSYSERR_ERROR;
+        *phadid = (HACMDRIVERID) MSACM_RegisterNotificationWindow((HWND)lParam, dwPriority);
+        if (!*phadid) {
+            ERR("Unable to register driver via ACM_DRIVERADDF_NOTIFYHWND\n");
+            return MMSYSERR_INVALPARAM;
+        }
+        break;
     default:
         ERR("invalid flag value 0x%08lx for fdwAdd\n", fdwAdd & ACM_DRIVERADDF_TYPEMASK);
         return MMSYSERR_INVALFLAG;
@@ -530,48 +532,71 @@ MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fd
 	return MMSYSERR_NOERROR;
     } else {
         PWINE_ACMDRIVERID padid;
+        PWINE_ACMNOTIFYWND panwnd;
         BOOL bPerformBroadcast = FALSE;
 
         /* Fetch driver ID */
         padid = MSACM_GetDriverID(hadid);
-        if (!padid) {
+        panwnd = MSACM_GetNotifyWnd(hadid);
+        if (!padid && !panwnd) {
             WARN("invalid handle\n");
 	    return MMSYSERR_INVALHANDLE;
         }
         
-        /* Check whether driver ID is appropriate for requested op */
-        if (dwPriority) {
-            if (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL) {
-                return MMSYSERR_NOTSUPPORTED;
+        if (padid) {
+            /* Check whether driver ID is appropriate for requested op */
+            if (dwPriority) {
+                if (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL) {
+                    return MMSYSERR_NOTSUPPORTED;
+                }
+                if (dwPriority != 1 && dwPriority != -1) {
+                    FIXME("unexpected priority %ld, using sign only\n", dwPriority);
+                    if (dwPriority < 0) dwPriority = -1;
+                    if (dwPriority > 0) dwPriority = 1;
+                }
+                
+                if (dwPriority == 1 && (padid->pPrevACMDriverID == NULL || 
+                    (padid->pPrevACMDriverID->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL))) {
+                    /* do nothing - driver is first of list, or first after last
+                       local driver */
+                } else if (dwPriority == -1 && padid->pNextACMDriverID == NULL) {
+                    /* do nothing - driver is last of list */
+                } else {
+                    MSACM_RePositionDriver(padid, dwPriority);
+                    bPerformBroadcast = TRUE;
+                }
             }
-            if (dwPriority != 1 && dwPriority != -1) {
-                FIXME("unexpected priority %ld, using sign only\n", dwPriority);
-                if (dwPriority < 0) dwPriority = -1;
-                if (dwPriority > 0) dwPriority = 1;
-            }
-            
-            if (dwPriority == 1 && (padid->pPrevACMDriverID == NULL || 
-                (padid->pPrevACMDriverID->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL))) {
-                /* do nothing - driver is first of list, or first after last
-                   local driver */
-            } else if (dwPriority == -1 && padid->pNextACMDriverID == NULL) {
-                /* do nothing - driver is last of list */
-            } else {
-                MSACM_RePositionDriver(padid, dwPriority);
-                bPerformBroadcast = TRUE;
+
+            /* Check whether driver ID should be enabled or disabled */
+            if (fdwPriority & ACM_DRIVERPRIORITYF_DISABLE) {
+                if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED)) {
+                    padid->fdwSupport |= ACMDRIVERDETAILS_SUPPORTF_DISABLED;
+                    bPerformBroadcast = TRUE;
+                }
+            } else if (fdwPriority & ACM_DRIVERPRIORITYF_ENABLE) {
+                if (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) {
+                    padid->fdwSupport &= ~ACMDRIVERDETAILS_SUPPORTF_DISABLED;
+                    bPerformBroadcast = TRUE;
+                }
             }
         }
-
-        /* Check whether driver ID should be enabled or disabled */
-        if (fdwPriority & ACM_DRIVERPRIORITYF_DISABLE) {
-            if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED)) {
-                padid->fdwSupport |= ACMDRIVERDETAILS_SUPPORTF_DISABLED;
-                bPerformBroadcast = TRUE;
+        
+        if (panwnd) {
+            if (dwPriority) {
+                return MMSYSERR_NOTSUPPORTED;
             }
-        } else if (fdwPriority & ACM_DRIVERPRIORITYF_ENABLE) {
-            if (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) {
-                padid->fdwSupport &= ~ACMDRIVERDETAILS_SUPPORTF_DISABLED;
-                bPerformBroadcast = TRUE;
+        
+            /* Check whether notify window should be enabled or disabled */
+            if (fdwPriority & ACM_DRIVERPRIORITYF_DISABLE) {
+                if (!(panwnd->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED)) {
+                    panwnd->fdwSupport |= ACMDRIVERDETAILS_SUPPORTF_DISABLED;
+                    bPerformBroadcast = TRUE;
+                }
+            } else if (fdwPriority & ACM_DRIVERPRIORITYF_ENABLE) {
+                if (panwnd->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) {
+                    panwnd->fdwSupport &= ~ACMDRIVERDETAILS_SUPPORTF_DISABLED;
+                    bPerformBroadcast = TRUE;
+                }
             }
         }
         
@@ -590,11 +615,13 @@ MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fd
 MMRESULT WINAPI acmDriverRemove(HACMDRIVERID hadid, DWORD fdwRemove)
 {
     PWINE_ACMDRIVERID padid;
+    PWINE_ACMNOTIFYWND panwnd;
 
     TRACE("(%p, %08lx)\n", hadid, fdwRemove);
 
     padid = MSACM_GetDriverID(hadid);
-    if (!padid) {
+    panwnd = MSACM_GetNotifyWnd(hadid);
+    if (!padid && !panwnd) {
         WARN("invalid handle\n");
 	return MMSYSERR_INVALHANDLE;
     }
@@ -604,7 +631,8 @@ MMRESULT WINAPI acmDriverRemove(HACMDRIVERID hadid, DWORD fdwRemove)
 	return MMSYSERR_INVALFLAG;
     }
 
-    MSACM_UnregisterDriver(padid);
+    if (padid) MSACM_UnregisterDriver(padid);
+    if (panwnd) MSACM_UnRegisterNotificationWindow(panwnd);
     MSACM_BroadcastNotification();
 
     return MMSYSERR_NOERROR;
