@@ -40,6 +40,7 @@
 #include "msacmdrv.h"
 #include "wineacm.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msacm);
 
@@ -369,6 +370,15 @@ MMRESULT WINAPI acmDriverID(HACMOBJ hao, PHACMDRIVERID phadid, DWORD fdwDriverID
 /***********************************************************************
  *           acmDriverMessage (MSACM32.@)
  *
+ * Note: MSDN documentation (July 2001) is incomplete. This function
+ * accepts sending messages to an HACMDRIVERID in addition to the
+ * documented HACMDRIVER. In fact, for DRV_QUERYCONFIGURE and DRV_CONFIGURE, 
+ * this might actually be the required mode of operation.
+ *
+ * Note: For DRV_CONFIGURE, msacm supplies its own DRVCONFIGINFO structure
+ * when the application fails to supply one. Some native drivers depend on
+ * this and refuse to display unless a valid DRVCONFIGINFO structure is
+ * built and supplied.
  */
 LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARAM lParam2)
 {
@@ -378,8 +388,85 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
 	uMsg == ACMDM_DRIVER_ABOUT ||
 	uMsg == DRV_QUERYCONFIGURE ||
 	uMsg == DRV_CONFIGURE)
-	return MSACM_Message(had, uMsg, lParam1, lParam2);
+    {
+        PWINE_ACMDRIVERID padid;
+        LRESULT lResult;
+        LPDRVCONFIGINFO pConfigInfo = NULL;
 
+        /* Check whether handle is an HACMDRIVERID */
+        padid  = MSACM_GetDriverID((HACMDRIVERID)had);
+        
+        /* If the message is DRV_CONFIGURE, and the application provides no
+           DRVCONFIGINFO structure, msacm must supply its own.
+         */
+        if (uMsg == DRV_CONFIGURE && lParam2 == 0) {
+            LPWSTR pAlias;
+            
+            /* Get the alias from the HACMDRIVERID */
+            if (padid) {
+                pAlias = padid->pszDriverAlias;
+                if (pAlias == NULL) {
+                    WARN("DRV_CONFIGURE: no alias for this driver, cannot self-supply alias\n");
+                }
+            } else {
+                FIXME("DRV_CONFIGURE: reverse lookup HACMDRIVER -> HACMDRIVERID not implemented\n");
+                pAlias = NULL;
+            }
+        
+            if (pAlias != NULL) {
+                unsigned int iStructSize = 16;
+                /* This verification is required because DRVCONFIGINFO is 12 bytes
+                   long, yet native msacm reports a 16-byte structure to codecs.
+                 */
+                if (iStructSize < sizeof(DRVCONFIGINFO)) iStructSize = sizeof(DRVCONFIGINFO);
+                pConfigInfo = HeapAlloc(MSACM_hHeap, 0, iStructSize);
+                if (!pConfigInfo) {
+                    ERR("OOM while supplying DRVCONFIGINFO for DRV_CONFIGURE, using NULL\n");
+                } else {
+                    static const WCHAR drivers32[] = {'D','r','i','v','e','r','s','3','2','\0'};
+                    pConfigInfo->dwDCISize = iStructSize;
+                
+                    pConfigInfo->lpszDCISectionName = HeapAlloc(MSACM_hHeap, 0, (strlenW(drivers32) + 1) * sizeof(WCHAR));
+                    if (pConfigInfo->lpszDCISectionName) strcpyW((WCHAR *)pConfigInfo->lpszDCISectionName, drivers32);
+                    pConfigInfo->lpszDCIAliasName = HeapAlloc(MSACM_hHeap, 0, (strlenW(pAlias) + 1) * sizeof(WCHAR));
+                    if (pConfigInfo->lpszDCIAliasName) strcpyW((WCHAR *)pConfigInfo->lpszDCIAliasName, pAlias);
+                    
+                    if (pConfigInfo->lpszDCISectionName == NULL || pConfigInfo->lpszDCIAliasName == NULL) {
+                        HeapFree(MSACM_hHeap, 0, (void *)pConfigInfo->lpszDCIAliasName);
+                        HeapFree(MSACM_hHeap, 0, (void *)pConfigInfo->lpszDCISectionName);
+                        HeapFree(MSACM_hHeap, 0, pConfigInfo);
+                        pConfigInfo = NULL;
+                        ERR("OOM while supplying DRVCONFIGINFO for DRV_CONFIGURE, using NULL\n");
+                    }
+                }
+            }
+            
+            lParam2 = (LPARAM)pConfigInfo;
+        }
+        
+        if (padid) {
+            /* Handle is really an HACMDRIVERID, must have an open session to get an HACMDRIVER */
+            if (padid->pACMDriverList != NULL) {
+                lResult = SendDriverMessage(padid->pACMDriverList->hDrvr, uMsg, lParam1, lParam2);
+            } else {
+                MMRESULT mmr = acmDriverOpen(&had, (HACMDRIVERID)padid, 0);
+                if (mmr != MMSYSERR_NOERROR) {
+                    lResult = MMSYSERR_INVALPARAM;
+                } else {
+                    lResult = acmDriverMessage(had, uMsg, lParam1, lParam2);
+                    acmDriverClose(had, 0);
+                }
+            }
+        } else {
+            lResult = MSACM_Message(had, uMsg, lParam1, lParam2);
+        }
+        if (pConfigInfo) {
+            HeapFree(MSACM_hHeap, 0, (void *)pConfigInfo->lpszDCIAliasName);
+            HeapFree(MSACM_hHeap, 0, (void *)pConfigInfo->lpszDCISectionName);
+            HeapFree(MSACM_hHeap, 0, pConfigInfo);
+        }
+        return lResult;
+    }
     WARN("invalid parameter\n");
     return MMSYSERR_INVALPARAM;
 }
