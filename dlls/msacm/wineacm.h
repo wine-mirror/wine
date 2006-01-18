@@ -292,6 +292,7 @@ typedef struct _WINE_ACMDRIVER   *PWINE_ACMDRIVER;
 #define WINE_ACMOBJ_DRIVER	0x5EED0002
 #define WINE_ACMOBJ_STREAM	0x5EED0003
 #define WINE_ACMOBJ_NOTIFYWND   0x5EED0004
+#define WINE_ACMOBJ_LOCALDRIVER 0x5EED0005
 
 typedef struct _WINE_ACMOBJ
 {
@@ -299,10 +300,32 @@ typedef struct _WINE_ACMOBJ
     PWINE_ACMDRIVERID	pACMDriverID;
 } WINE_ACMOBJ, *PWINE_ACMOBJ;
 
+typedef struct _WINE_ACMLOCALDRIVER * PWINE_ACMLOCALDRIVER;
+typedef struct _WINE_ACMLOCALDRIVERINST * PWINE_ACMLOCALDRIVERINST;
+typedef struct _WINE_ACMLOCALDRIVER
+{
+    WINE_ACMOBJ         obj;
+    HMODULE             hModule;
+    DRIVERPROC          lpDrvProc;
+    PWINE_ACMLOCALDRIVERINST pACMInstList;
+    PWINE_ACMLOCALDRIVER pNextACMLocalDrv;
+    PWINE_ACMLOCALDRIVER pPrevACMLocalDrv;
+} WINE_ACMLOCALDRIVER;
+
+typedef struct _WINE_ACMLOCALDRIVERINST
+{
+    PWINE_ACMLOCALDRIVER pLocalDriver;
+    DWORD dwDriverID;
+    BOOL bSession;
+    PWINE_ACMLOCALDRIVERINST pNextACMInst;
+} WINE_ACMLOCALDRIVERINST;
+
 typedef struct _WINE_ACMDRIVER
 {
     WINE_ACMOBJ		obj;
     HDRVR      		hDrvr;
+    PWINE_ACMLOCALDRIVERINST pLocalDrvrInst;
+
     PWINE_ACMDRIVER	pNextACMDriver;
 } WINE_ACMDRIVER;
 
@@ -319,7 +342,7 @@ typedef struct _WINE_ACMDRIVERID
     WINE_ACMOBJ		obj;
     LPWSTR		pszDriverAlias;
     LPWSTR              pszFileName;
-    HINSTANCE		hInstModule;          /* NULL if global */
+    PWINE_ACMLOCALDRIVER pLocalDriver;          /* NULL if global */
     PWINE_ACMDRIVER     pACMDriverList;
     PWINE_ACMDRIVERID   pNextACMDriverID;
     PWINE_ACMDRIVERID	pPrevACMDriverID;
@@ -349,7 +372,7 @@ extern HANDLE MSACM_hHeap;
 extern PWINE_ACMDRIVERID MSACM_pFirstACMDriverID;
 extern PWINE_ACMDRIVERID MSACM_pLastACMDriverID;
 extern PWINE_ACMDRIVERID MSACM_RegisterDriver(LPCWSTR pszDriverAlias, LPCWSTR pszFileName,
-					      HINSTANCE hinstModule);
+					      PWINE_ACMLOCALDRIVER pLocalDriver);
 extern void MSACM_RegisterAllDrivers(void);
 extern PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p);
 extern void MSACM_UnregisterAllDrivers(void);
@@ -371,6 +394,13 @@ extern PWINE_ACMNOTIFYWND MSACM_UnRegisterNotificationWindow(PWINE_ACMNOTIFYWND)
 
 extern PWINE_ACMDRIVERID MSACM_RegisterDriverFromRegistry(LPCWSTR pszRegEntry);
 
+extern PWINE_ACMLOCALDRIVER MSACM_RegisterLocalDriver(HMODULE hModule, DRIVERPROC lpDriverProc);
+extern PWINE_ACMLOCALDRIVERINST MSACM_OpenLocalDriver(PWINE_ACMLOCALDRIVER, LPARAM);
+extern LRESULT MSACM_CloseLocalDriver(PWINE_ACMLOCALDRIVERINST);
+extern PWINE_ACMLOCALDRIVER MSACM_UnregisterLocalDriver(PWINE_ACMLOCALDRIVER);
+/*
+extern PWINE_ACMLOCALDRIVER MSACM_GetLocalDriver(HACMDRIVER hDriver);
+*/
 /* From msacm32.c */
 extern HINSTANCE MSACM_hInstance32;
 

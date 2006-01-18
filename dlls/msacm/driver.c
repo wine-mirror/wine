@@ -101,6 +101,8 @@ MMRESULT WINAPI acmDriverAddA(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 MMRESULT WINAPI acmDriverAddW(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 			      LPARAM lParam, DWORD dwPriority, DWORD fdwAdd)
 {
+    PWINE_ACMLOCALDRIVER pLocalDrv = NULL;
+
     TRACE("(%p, %p, %08lx, %08lx, %08lx)\n",
           phadid, hinstModule, lParam, dwPriority, fdwAdd);
 
@@ -144,11 +146,17 @@ MMRESULT WINAPI acmDriverAddW(PHACMDRIVERID phadid, HINSTANCE hinstModule,
                 dwPriority      (unused, set to 0)
          */
         fdwAdd &= ~ACM_DRIVERADDF_TYPEMASK;
-
-        *phadid = 0;
-        FIXME("(%p, %p, %ld, %ld, %ld): ACM_DRIVERADDF_FUNCTION: stub\n", phadid, hinstModule, lParam, dwPriority, fdwAdd);
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        return MMSYSERR_ERROR;
+        /* FIXME: fdwAdd ignored */
+        /* Application-supplied acmDriverProc's are placed at the top of the priority unless
+           fdwAdd indicates ACM_DRIVERADDF_GLOBAL
+         */
+        pLocalDrv = MSACM_RegisterLocalDriver(hinstModule, (DRIVERPROC)lParam);
+        *phadid = pLocalDrv ? (HACMDRIVERID) MSACM_RegisterDriver(NULL, NULL, pLocalDrv) : NULL;
+        if (!*phadid) {
+            ERR("Unable to register driver via ACM_DRIVERADDF_FUNCTION\n");
+            return MMSYSERR_INVALPARAM;
+        }
+        break;
     case ACM_DRIVERADDF_NOTIFYHWND:
         /*
                 hInstModule     (unused)
@@ -203,8 +211,10 @@ MMRESULT WINAPI acmDriverClose(HACMDRIVER had, DWORD fdwClose)
     }
 
     /* close driver if it has been opened */
-    if (pad->hDrvr && !padid->hInstModule)
+    if (pad->hDrvr && !pad->pLocalDrvrInst)
 	CloseDriver(pad->hDrvr, 0, 0);
+    else if (pad->pLocalDrvrInst)
+        MSACM_CloseLocalDriver(pad->pLocalDrvrInst);
 
     HeapFree(MSACM_hHeap, 0, pad);
 
@@ -506,8 +516,10 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 
     pad->obj.dwType = WINE_ACMOBJ_DRIVER;
     pad->obj.pACMDriverID = padid;
+    pad->hDrvr = 0;
+    pad->pLocalDrvrInst = NULL;
 
-    if (!(pad->hDrvr = (HDRVR)padid->hInstModule))
+    if (padid->pLocalDriver == NULL)
     {
         ACMDRVOPENDESCW	adod;
         int		len;
@@ -535,6 +547,29 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 
         HeapFree(MSACM_hHeap, 0, (LPWSTR)adod.pszSectionName);
         if (!pad->hDrvr)
+        {
+            ret = adod.dwError;
+            goto gotError;
+        }
+    }
+    else
+    {
+        ACMDRVOPENDESCW	adod;
+
+        pad->hDrvr = NULL;
+
+        adod.cbStruct = sizeof(adod);
+        adod.fccType = ACMDRIVERDETAILS_FCCTYPE_AUDIOCODEC;
+        adod.fccComp = ACMDRIVERDETAILS_FCCCOMP_UNDEFINED;
+        adod.dwVersion = acmGetVersion();
+        adod.dwFlags = fdwOpen;
+        adod.dwError = 0;
+        adod.pszSectionName = NULL;
+        adod.pszAliasName = NULL;
+        adod.dnDevNode = 0;
+
+        pad->pLocalDrvrInst = MSACM_OpenLocalDriver(padid->pLocalDriver, (DWORD)&adod);
+        if (!pad->pLocalDrvrInst)
         {
             ret = adod.dwError;
             goto gotError;
