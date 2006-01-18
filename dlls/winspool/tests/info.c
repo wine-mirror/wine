@@ -213,12 +213,11 @@ static void test_printer_directory(void)
     ok( !res , "expected result == 0, got %d\n", res);
     ok( cbBuf == pcbNeeded, "pcbNeeded set to %ld instead of %ld\n",
                             pcbNeeded, cbBuf);
-    todo_wine {
+    
     ok( ERROR_INSUFFICIENT_BUFFER == GetLastError(),
         "last error set to %ld instead of ERROR_INSUFFICIENT_BUFFER\n",
         GetLastError());
-    }
- 
+
     SetLastError(0x00dead00);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, &pcbNeeded);
     ok( (!res && ERROR_INVALID_USER_BUFFER == GetLastError()) || 
@@ -278,12 +277,10 @@ static void test_printer_directory(void)
         res = GetPrinterDriverDirectoryA(NULL, env_win9x_case, 1, 
                                         buffer, cbBuf*2, &pcbNeeded);
     }
-    
-    todo_wine{
+
     ok(res && buffer[0], "returned %d with " \
-        "lasterror=%ld and len=%d (expected '0' with 'len > 0')\n", 
+        "lasterror=%ld and len=%d (expected '1' with 'len > 0')\n", 
         res, GetLastError(), lstrlenA((char *)buffer));
-    }
 
     buffer[0] = '\0';
     SetLastError(0x00dead00);

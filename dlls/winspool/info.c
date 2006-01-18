@@ -96,6 +96,14 @@ typedef struct {
     WCHAR *document_title;
 } job_t;
 
+
+typedef struct {
+    LPCWSTR  envname;
+    LPCWSTR  subdir;
+} printenv_t;
+
+/* ############################### */
+
 static opened_printer_t **printer_handles;
 static int nb_printer_handles;
 static LONG next_job_id = 1;
@@ -131,6 +139,12 @@ static const WCHAR user_printers_reg_key[] = { 'S','o','f','t','w','a','r','e','
                                                'D','e','v','i','c','e','s',0};
 
 static const WCHAR DefaultEnvironmentW[] = {'W','i','n','e',0};
+static const WCHAR envname_win40W[] = {'W','i','n','d','o','w','s',' ','4','.','0',0};
+static const WCHAR envname_x86W[] =   {'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0};
+static const WCHAR subdir_win40W[] = {'w','i','n','4','0',0};
+static const WCHAR subdir_x86W[] =   {'w','3','2','x','8','6',0};
+
+static const WCHAR spooldriversW[] = {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\',0};
 
 static const WCHAR Configuration_FileW[] = {'C','o','n','f','i','g','u','r','a','t',
 				      'i','o','n',' ','F','i','l','e',0};
@@ -178,6 +192,58 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 				      DWORD cbBuf, LPDWORD pcbNeeded,
 				      BOOL unicode);
 static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey);
+
+/******************************************************************
+ *  validate the user-supplied printing-environment [internal]
+ *
+ * PARAMS
+ *  env  [I] PTR to Environment-String or NULL
+ *
+ * RETURNS
+ *  Failure:  NULL
+ *  Success:  PTR to printenv_t
+ *
+ * NOTES
+ *  SetLastEror(ERROR_INVALID_ENVIRONMENT) is called on Failure
+ *  
+ */
+
+static const  printenv_t * validate_envW(LPCWSTR env)
+{
+    static const printenv_t env_x86 =   {envname_x86W, subdir_x86W};
+    static const printenv_t env_win40 = {envname_win40W, subdir_win40W};
+    static const printenv_t * const all_printenv[]={&env_x86, &env_win40};
+
+    const printenv_t *result = NULL;
+    unsigned int i;
+
+    TRACE("testing %s\n", debugstr_w(env));
+    if (env)
+    {
+        for (i = 0; i < sizeof(all_printenv)/sizeof(all_printenv[0]); i++)
+        {
+            if (lstrcmpiW(env, all_printenv[i]->envname) == 0)
+            {
+                result = all_printenv[i];
+                break;
+            }
+        }
+
+        if (result == NULL) {
+            FIXME("unsupported Environment: %s\n", debugstr_w(env));
+            SetLastError(ERROR_INVALID_ENVIRONMENT);
+        }
+        /* on win9x, only "Windows 4.0" is allowed, but we ignore this */
+    }
+    else
+    {
+        result = (GetVersion() & 0x80000000) ? &env_win40 : &env_x86;
+    }
+    TRACE("using %p: %s\n", result, debugstr_w(result ? result->envname : NULL));
+
+    return result;
+}
+
 
 /* RtlCreateUnicodeStringFromAsciiz will return an empty string in the buffer
    if passed a NULL string. This returns NULLs to the result. 
@@ -3343,37 +3409,55 @@ BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
 				       DWORD cbBuf, LPDWORD pcbNeeded)
 {
     DWORD needed;
+    const printenv_t * env;
 
     TRACE("(%s, %s, %ld, %p, %ld, %p)\n", debugstr_w(pName), 
           debugstr_w(pEnvironment), Level, pDriverDirectory, cbBuf, pcbNeeded);
     if(pName != NULL) {
-        FIXME("pName = `%s' - unsupported\n", debugstr_w(pName));
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
+        FIXME("pName unsupported: %s\n", debugstr_w(pName));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
-    if(pEnvironment != NULL) {
-        FIXME("pEnvironment = `%s' - unsupported\n", debugstr_w(pEnvironment));
-	SetLastError(ERROR_INVALID_ENVIRONMENT);
-	return FALSE;
-    }
-    if(Level != 1)  /* win95 ignores this so we just carry on */
-        WARN("Level = %ld - assuming 1\n", Level);
 
-    /* FIXME should read from registry */
-    needed = GetSystemDirectoryW( (LPWSTR)pDriverDirectory, cbBuf/sizeof(WCHAR));
-    /* GetSystemDirectoryW returns number of TCHAR without '\0' 
-     * adjust this now
-     */
-    needed++;
-    needed*=sizeof(WCHAR);
+    env = validate_envW(pEnvironment);
+    if(!env) return FALSE;  /* pEnvironment invalid or unsupported */
+
+    if(Level != 1) {
+        WARN("(Level: %ld) is ignored in win9x\n", Level);
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    /* GetSystemDirectoryW returns number of WCHAR including the '\0' */
+    needed = GetSystemDirectoryW(NULL, 0);
+    /* add the Size for the Subdirectories */
+    needed += lstrlenW(spooldriversW);
+    needed += lstrlenW(env->subdir);
+    needed *= sizeof(WCHAR);  /* return-value is size in Bytes */
 
     if(pcbNeeded)
         *pcbNeeded = needed;
-    TRACE("required <%08lx>\n", *pcbNeeded);
+    TRACE("required: 0x%lx/%ld\n", needed, needed);
     if(needed > cbBuf) {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
-	return FALSE;
+        return FALSE;
     }
+    if(pcbNeeded == NULL) {
+        WARN("(pcbNeeded == NULL) is ignored in win9x\n");
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+    if(pDriverDirectory == NULL) {
+        /* ERROR_INVALID_USER_BUFFER is NT, ERROR_INVALID_PARAMETER is win9x */
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+    
+    GetSystemDirectoryW((LPWSTR) pDriverDirectory, cbBuf/sizeof(WCHAR));
+    /* add the Subdirectories */
+    lstrcatW((LPWSTR) pDriverDirectory, spooldriversW);
+    lstrcatW((LPWSTR) pDriverDirectory, env->subdir);
+    TRACE(" => %s\n", debugstr_w((LPWSTR) pDriverDirectory));
     return TRUE;
 }
 
@@ -3399,6 +3483,9 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
     INT len = cbBuf * sizeof(WCHAR)/sizeof(CHAR);
     WCHAR *driverDirectoryW = NULL;
 
+    TRACE("(%s, %s, %ld, %p, %ld, %p)\n", debugstr_a(pName), 
+          debugstr_a(pEnvironment), Level, pDriverDirectory, cbBuf, pcbNeeded);
+ 
     if (len) driverDirectoryW = HeapAlloc( GetProcessHeap(), 0, len );
 
     if(pName) RtlCreateUnicodeStringFromAsciiz(&nameW, pName);
@@ -3410,7 +3497,7 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
 				      (LPBYTE)driverDirectoryW, len, &pcbNeededW );
     if (ret) {
         DWORD needed;
-        needed = 1 + WideCharToMultiByte( CP_ACP, 0, driverDirectoryW, -1, 
+        needed =  WideCharToMultiByte( CP_ACP, 0, driverDirectoryW, -1, 
                                    (LPSTR)pDriverDirectory, cbBuf, NULL, NULL);
         if(pcbNeeded)
             *pcbNeeded = needed;
@@ -3418,7 +3505,7 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
     } else 
         if(pcbNeeded) *pcbNeeded = pcbNeededW * sizeof(CHAR)/sizeof(WCHAR);
 
-    TRACE("provided<%ld> required <%ld>\n", cbBuf, *pcbNeeded);
+    TRACE("required: 0x%lx/%ld\n", pcbNeeded ? *pcbNeeded : 0, pcbNeeded ? *pcbNeeded : 0);
 
     HeapFree( GetProcessHeap(), 0, driverDirectoryW );
     RtlFreeUnicodeString(&environmentW);
