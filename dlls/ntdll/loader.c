@@ -1487,6 +1487,12 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
     }
 
     nt_name.Buffer = NULL;
+
+    if (!contains_path( libname ))
+    {
+        if ((*pwm = find_basename_module( libname )) != NULL) goto found;
+    }
+
     if (RtlDetermineDosPathNameType_U( libname ) == RELATIVE_PATH)
     {
         /* we need to search for it */
@@ -1496,11 +1502,6 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
             if (len >= *size) goto overflow;
             if ((*pwm = find_fullname_module( filename )) != NULL) goto found;
 
-            /* check for already loaded module in a different path */
-            if (!contains_path( libname ))
-            {
-                if ((*pwm = find_basename_module( file_part )) != NULL) goto found;
-            }
             if (!RtlDosPathNameToNtPathName_U( filename, &nt_name, NULL, NULL ))
             {
                 RtlFreeHeap( GetProcessHeap(), 0, dllname );
@@ -1525,7 +1526,6 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
             len = strlenW(libname) * sizeof(WCHAR);
             if (len >= *size) goto overflow;
             strcpyW( filename, libname );
-            *pwm = find_basename_module( filename );
             goto found;
         }
     }
