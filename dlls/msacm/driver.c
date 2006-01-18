@@ -447,7 +447,7 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
         if (padid) {
             /* Handle is really an HACMDRIVERID, must have an open session to get an HACMDRIVER */
             if (padid->pACMDriverList != NULL) {
-                lResult = SendDriverMessage(padid->pACMDriverList->hDrvr, uMsg, lParam1, lParam2);
+                lResult = MSACM_Message((HACMDRIVER)padid->pACMDriverList, uMsg, lParam1, lParam2);
             } else {
                 MMRESULT mmr = acmDriverOpen(&had, (HACMDRIVERID)padid, 0);
                 if (mmr != MMSYSERR_NOERROR) {
