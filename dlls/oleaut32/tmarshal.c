@@ -167,7 +167,7 @@ _marshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN pUnk) {
 	 * can happen. S_OK to make sure we continue
 	 * serializing.
 	 */
-        ERR("pUnk is NULL?\n");
+        WARN("pUnk is NULL\n");
         xsize = 0;
         return xbuf_add(buf,(LPBYTE)&xsize,sizeof(xsize));
     }
