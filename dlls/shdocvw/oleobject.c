@@ -130,18 +130,26 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
     if(This->client == pClientSite)
         return S_OK;
 
-    if(This->doc_view_hwnd)
+    if(This->doc_view_hwnd) {
         DestroyWindow(This->doc_view_hwnd);
-    if(This->shell_embedding_hwnd)
+        This->doc_view_hwnd = NULL;
+    }
+    if(This->shell_embedding_hwnd) {
         DestroyWindow(This->shell_embedding_hwnd);
+        This->shell_embedding_hwnd = NULL;
+    }
 
     if(This->client)
         IOleClientSite_Release(This->client);
 
-    This->client = pClientSite;
-    if(!pClientSite)
+    if(!pClientSite) {
+        if(This->document)
+            deactivate_document(This);
+        This->client = NULL;
         return S_OK;
+    }
 
+    This->client = pClientSite;
     IOleClientSite_AddRef(pClientSite);
 
     create_shell_embedding_hwnd(This);

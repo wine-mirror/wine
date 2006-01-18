@@ -204,6 +204,7 @@ static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSite *iface,
     TRACE("(%p)->(%p %p %p %p %p)\n", This, ppFrame, ppDoc, lprcPosRect,
           lprcClipRect, lpFrameInfo);
 
+    IOleInPlaceFrame_AddRef(INPLACEFRAME(This));
     *ppFrame = INPLACEFRAME(This);
     *ppDoc = NULL;
 

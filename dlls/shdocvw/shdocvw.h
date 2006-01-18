@@ -158,6 +158,7 @@ void WebBrowser_ClientSite_Destroy(WebBrowser*);
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 
 void create_doc_view_hwnd(WebBrowser *This);
+void deactivate_document(WebBrowser*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
 
 #define WB_WM_NAVIGATE2 (WM_USER+100)

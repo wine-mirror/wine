@@ -154,6 +154,58 @@ void create_doc_view_hwnd(WebBrowser *This)
          NULL, shdocvw_hinstance, This);
 }
 
+void deactivate_document(WebBrowser *This)
+{
+    IOleInPlaceObjectWindowless *winobj;
+    IOleObject *oleobj = NULL;
+    IHlinkTarget *hlink = NULL;
+    HRESULT hres;
+
+    if(This->view)
+        IOleDocumentView_UIActivate(This->view, FALSE);
+
+    hres = IUnknown_QueryInterface(This->client, &IID_IOleInPlaceObjectWindowless,
+                                   (void**)&winobj);
+    if(SUCCEEDED(hres)) {
+        IOleInPlaceObjectWindowless_InPlaceDeactivate(winobj);
+        IOleInPlaceObjectWindowless_Release(winobj);
+    }
+
+    if(This->view) {
+        IOleDocumentView_Show(This->view, FALSE);
+        IOleDocumentView_CloseView(This->view, 0);
+        IOleDocumentView_SetInPlaceSite(This->view, NULL);
+        IOleDocumentView_Release(This->view);
+        This->view = NULL;
+    }
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IOleObject, (void**)&oleobj);
+    if(SUCCEEDED(hres))
+        IOleObject_Close(oleobj, OLECLOSE_NOSAVE);
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IHlinkTarget, (void**)&hlink);
+    if(SUCCEEDED(hres)) {
+        IHlinkTarget_SetBrowseContext(hlink, NULL);
+        IHlinkTarget_Release(hlink);
+    }
+
+    if(oleobj) {
+        IOleClientSite *client_site = NULL;
+
+        IOleObject_GetClientSite(oleobj, &client_site);
+        if(client_site) {
+            if(client_site == CLIENTSITE(This))
+                IOleObject_SetClientSite(oleobj, NULL);
+            IOleClientSite_Release(client_site);
+        }
+
+        IOleObject_Release(oleobj);
+    }
+
+    IUnknown_Release(This->document);
+    This->document = NULL;
+}
+
 #define DOCHOSTUI_THIS(iface) DEFINE_THIS(WebBrowser, DocHostUIHandler, iface)
 
 static HRESULT WINAPI DocHostUIHandler_QueryInterface(IDocHostUIHandler2 *iface,

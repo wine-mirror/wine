@@ -177,6 +177,7 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
     TRACE("(%p)->(%p)\n", This, ppCPC);
 
     *ppCPC = CONPTCONT(This->webbrowser);
+    IConnectionPointContainer_AddRef(CONPTCONT(This->webbrowser));
     return S_OK;
 }
 
