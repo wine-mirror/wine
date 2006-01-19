@@ -268,30 +268,38 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
         switch (gl_info->gl_vendor) {
         case VENDOR_NVIDIA:
             gl_string_cursor = strstr(gl_string, "NVIDIA");
-            gl_string_cursor = strstr(gl_string_cursor, " ");
-            while (*gl_string_cursor && ' ' == *gl_string_cursor) ++gl_string_cursor;
-            if (*gl_string_cursor) {
-                char tmp[16];
-                int cursor = 0;
-
-                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
-                    tmp[cursor++] = *gl_string_cursor;
-                    ++gl_string_cursor;
-                }
-                tmp[cursor] = 0;
-                major = atoi(tmp);
-
-                if (*gl_string_cursor != '.') WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
-                ++gl_string_cursor;
-
-                cursor = 0;
-                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
-                    tmp[cursor++] = *gl_string_cursor;
-                    ++gl_string_cursor;
-                }
-                tmp[cursor] = 0;
-                minor = atoi(tmp);
+            if (!gl_string_cursor) {
+                ERR_(d3d_caps)("Invalid nVidia version string: %s\n", debugstr_a(gl_string));
+                break;
             }
+
+            gl_string_cursor = strstr(gl_string_cursor, " ");
+            if (!gl_string_cursor) {
+                ERR_(d3d_caps)("Invalid nVidia version string: %s\n", debugstr_a(gl_string));
+                break;
+            }
+
+            while (*gl_string_cursor == ' ') {
+                ++gl_string_cursor;
+            }
+
+            if (!*gl_string_cursor) {
+                ERR_(d3d_caps)("Invalid nVidia version string: %s\n", debugstr_a(gl_string));
+                break;
+            }
+
+            major = atoi(gl_string_cursor);
+            while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
+                ++gl_string_cursor;
+            }
+
+            if (*gl_string_cursor++ != '.') {
+                ERR_(d3d_caps)("Invalid nVidia version string: %s\n", debugstr_a(gl_string));
+                break;
+            }
+
+            minor = atoi(gl_string_cursor);
+
             break;
 
         case VENDOR_ATI:
