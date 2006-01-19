@@ -592,6 +592,13 @@ typedef void (APIENTRY * PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC) (GLenum stage, 
 /* #define ZERO */
 #endif
 
+/* GL_ARB_point_sprite */
+#ifndef GL_ARB_point_sprite
+#define GL_ARB_point_sprite 1
+#define GL_POINT_SPRITE_ARB               0x8861
+#define GL_COORD_REPLACE_ARB              0x8862
+#endif
+
 /*******
  * OpenGL Official Version 
  *  defines 
