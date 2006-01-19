@@ -886,6 +886,278 @@ static void test_menu_iteminfo(  )
   DeleteObject( hbm);
 }
 
+/* 
+   The following tests try to confirm the algorithum used to return the menu items 
+   when there is a collision between a menu item and a popup menu
+ */
+void test_menu_search_bycommand( void )
+{
+    HMENU        hmenu, hmenuSub, hmenuSub2;
+    MENUITEMINFO info;
+    BOOL         rc;
+    UINT         id;
+    char         strback[0x80];
+    char         strIn[0x80];
+
+    /* Case 1: Menu containing a menu item */
+    hmenu = CreateMenu();
+    
+    memset( &info, 0, sizeof info );
+    info.cbSize = sizeof info;
+    info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID;
+    info.fType = MFT_STRING;
+    strcpy(strIn, "Case 1 MenuItem");
+    info.dwTypeData = strIn;
+    info.wID = (UINT) 0x1234;
+    
+    rc = InsertMenuItem(hmenu, 0, TRUE, &info );
+    ok (rc, "Inserting the menuitem failed\n");
+
+    id = GetMenuItemID(hmenu, 0);
+    ok (id == 0x1234, "Getting the menuitem id failed(gave %x)\n", id);
+
+    /* Confirm the menuitem was given the id supplied (getting by position) */
+    memset( &info, 0, sizeof info );
+    strback[0] = 0x00;
+    strIn[0] = 0x00; /* Ensure a copy of the data, not the original is stored */
+    info.cbSize = sizeof(MENUITEMINFO);
+    info.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING;
+    info.dwTypeData = strback;
+    info.cch = 0x80;
+
+    rc = GetMenuItemInfo(hmenu, 0, TRUE, &info); /* Get by position */
+    ok (rc, "Getting the menu items info failed\n");
+    ok (info.wID == 0x1234, "IDs differ for the menuitem\n");
+    ok (!strcmp(info.dwTypeData, "Case 1 MenuItem"), "Returned item has wrong label\n");
+
+    /* Search by id - Should return the item */
+    memset( &info, 0, sizeof info );
+    strback[0] = 0x00;
+    info.cbSize = sizeof(MENUITEMINFO);
+    info.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING;
+    info.dwTypeData = strback;
+    info.cch = 0x80;
+    rc = GetMenuItemInfo(hmenu, 0x1234, FALSE, &info); /* Get by ID */
+
+    ok (rc, "Getting the menu items info failed\n");
+    ok (info.wID == 0x1234, "IDs differ for the menuitem\n");
+    ok (!strcmp(info.dwTypeData, "Case 1 MenuItem"), "Returned item has wrong label\n");
+
+    DestroyMenu( hmenu );
+
+    /* Case 2: Menu containing a popup menu */
+    hmenu = CreateMenu();
+    hmenuSub = CreateMenu();
+    
+    strcpy(strIn, "Case 2 SubMenu");
+    rc = InsertMenu(hmenu, 0, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT)hmenuSub, strIn);
+    ok (rc, "Inserting the popup menu into the main menu failed\n");
+
+    id = GetMenuItemID(hmenu, 0);
+    ok (id == -1, "Getting the menuitem id unexpectedly worked (gave %x)\n", id);
+
+    /* Confirm the menuitem itself was given an id the same as the HMENU, (getting by position) */
+    memset( &info, 0, sizeof info );
+    strback[0] = 0x00;
+    strIn[0] = 0x00; /* Ensure a copy, not the original is stored */
+    info.cbSize = sizeof(MENUITEMINFO);
+    info.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING;
+    info.dwTypeData = strback;
+    info.cch = 0x80;
+    info.wID = 0xdeadbeef;
+
+    rc = GetMenuItemInfo(hmenu, 0, TRUE, &info); /* Get by position */
+    ok (rc, "Getting the menu items info failed\n");
+    ok (info.wID == (UINT)hmenuSub, "IDs differ for the menuitem\n");
+    ok (!strcmp(info.dwTypeData, "Case 2 SubMenu"), "Returned item has wrong label\n");
+
+    /* Search by id - returns the popup menu itself */
+    memset( &info, 0, sizeof info );
+    strback[0] = 0x00;
+    strIn[0] = 0x00; /* Ensure a copy, not the original is stored */
+    info.cbSize = sizeof(MENUITEMINFO);
+    info.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING;
+    info.dwTypeData = strback;
+    info.cch = 0x80;
+    rc = GetMenuItemInfo(hmenu, (UINT)hmenuSub, FALSE, &info); /* Get by ID */
+
+    ok (rc, "Getting the menu items info failed\n");
+    ok (info.wID == (UINT)hmenuSub, "IDs differ for the popup menu\n");
+    ok (!strcmp(info.dwTypeData, "Case 2 SubMenu"), "Returned item has wrong label\n");
+
+    /* 
+        Now add an item after it with the same id
+     */
+    memset( &info, 0, sizeof info );
+    info.cbSize = sizeof info;
+    info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID;
+    info.fType = MFT_STRING;
+    strcpy(strIn, "Case 2 MenuItem 1");
+    info.dwTypeData = strIn;
+    info.wID = (UINT) hmenuSub;
+    rc = InsertMenuItem(hmenu, -1, TRUE, &info );
+    ok (rc, "Inserting the menuitem failed\n");
+
+    /* Search by id - returns the item which follows the popup menu */
+    memset( &info, 0, sizeof info );
+    strback[0] = 0x00;
+    strIn[0] = 0x00; /* Ensure a copy, not the original is stored */
+    info.cbSize = sizeof(MENUITEMINFO);
+    info.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING;
+    info.dwTypeData = strback;
+    info.cch = 0x80;
+    rc = GetMenuItemInfo(hmenu, (UINT)hmenuSub, FALSE, &info); /* Get by ID */
+
+    ok (rc, "Getting the menu items info failed\n");
+    ok (info.wID == (UINT)hmenuSub, "IDs differ for the popup menu\n");
+    todo_wine {
+    ok (!strcmp(info.dwTypeData, "Case 2 MenuItem 1"), "Returned item has wrong label (%s)\n", info.dwTypeData);
+    }
+
+    /* 
+        Now add an item before the popup (with the same id)
+     */
+    memset( &info, 0, sizeof info );
+    info.cbSize = sizeof info;
+    info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID;
+    info.fType = MFT_STRING;
+    strcpy(strIn, "Case 2 MenuItem 2");
+    info.dwTypeData = strIn;
+    info.wID = (UINT) hmenuSub;
+    rc = InsertMenuItem(hmenu, 0, TRUE, &info );
+    ok (rc, "Inserting the menuitem failed\n");
+
+    /* Search by id - returns the item which preceeds the popup menu */
+    memset( &info, 0, sizeof info );
+    strback[0] = 0x00;
+    strIn[0] = 0x00; /* Ensure a copy, not the original is stored */
+    info.cbSize = sizeof(MENUITEMINFO);
+    info.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING;
+    info.dwTypeData = strback;
+    info.cch = 0x80;
+    rc = GetMenuItemInfo(hmenu, (UINT)hmenuSub, FALSE, &info); /* Get by ID */
+
+    ok (rc, "Getting the menu items info failed\n");
+    ok (info.wID == (UINT)hmenuSub, "IDs differ for the popup menu\n");
+    ok (!strcmp(info.dwTypeData, "Case 2 MenuItem 2"), "Returned item has wrong label (%s)\n", info.dwTypeData);
+
+    DestroyMenu( hmenu );
+    DestroyMenu( hmenuSub );
+
+    /* 
+        Case 3: Menu containing a popup menu which in turn 
+           contains 2 items with the same id as the popup itself
+     */
+             
+    hmenu = CreateMenu();
+    hmenuSub = CreateMenu();
+    
+    memset( &info, 0, sizeof info );
+    info.cbSize = sizeof info;
+    info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID;
+    info.fType = MFT_STRING;
+    info.dwTypeData = "MenuItem";
+    info.wID = (UINT) hmenuSub; /* Enforce id collisions with the hmenu of the popup submenu*/
+
+    rc = InsertMenu(hmenu, 0, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT)hmenuSub, "Submenu");
+    ok (rc, "Inserting the popup menu into the main menu failed\n");
+
+    rc = InsertMenuItem(hmenuSub, 0, TRUE, &info );
+    ok (rc, "Inserting the sub menu menuitem failed\n");
+
+    memset( &info, 0, sizeof info );
+    info.cbSize = sizeof info;
+    info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID;
+    info.fType = MFT_STRING;
+    info.dwTypeData = "MenuItem 2";
+    info.wID = (UINT) hmenuSub; /* Enforce id collisions with the hmenu of the popup submenu*/
+    
+    rc = InsertMenuItem(hmenuSub, 1, TRUE, &info );
+    ok (rc, "Inserting the sub menu menuitem 2 failed\n");
+
+    /* Prove that you cant query the id of a popup directly (By position) */
+    id = GetMenuItemID(hmenu, 0);
+    ok (id == -1, "Getting the sub menu id should have failed because its a popup (gave %x)\n", id);
+
+    /* Prove getting the item info via ID returns the first item (not the popup or 2nd item)*/
+    memset( &info, 0, sizeof info );
+    strback[0] = 0x00;
+    info.cbSize = sizeof(MENUITEMINFO);
+    info.fMask = MIIM_STRING | MIIM_ID;
+    info.dwTypeData = strback;
+    info.cch = 0x80;
+
+    rc = GetMenuItemInfo(hmenu, (UINT)hmenuSub, FALSE, &info);
+    ok (rc, "Getting the menus info failed\n");
+    ok (info.wID == (UINT)hmenuSub, "IDs differ for popup menu\n");
+    todo_wine {
+    ok (!strcmp(info.dwTypeData, "MenuItem"), "Returned item has wrong label (%s)\n", info.dwTypeData);
+    }
+    DestroyMenu( hmenu );
+    DestroyMenu( hmenuSub );
+
+    /* 
+        Case 4: Menu containing 2 popup menus, the second
+           contains 2 items with the same id as the first popup menu
+     */
+    hmenu = CreateMenu();
+    hmenuSub = CreateMenu();
+    hmenuSub2 = CreateMenu();
+    
+    rc = InsertMenu(hmenu, 0, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT)hmenuSub, "Submenu");
+    ok (rc, "Inserting the popup menu into the main menu failed\n");
+    
+    rc = InsertMenu(hmenu, 1, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT)hmenuSub2, "Submenu2");
+    ok (rc, "Inserting the popup menu into the main menu failed\n");
+
+    memset( &info, 0, sizeof info );
+    info.cbSize = sizeof info;
+    info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID;
+    info.fType = MFT_STRING;
+    info.dwTypeData = "MenuItem";
+    info.wID = (UINT) hmenuSub; /* Enforce id collisions with the hmenu of the popup submenu*/
+   
+    rc = InsertMenuItem(hmenuSub2, 0, TRUE, &info );
+    ok (rc, "Inserting the sub menu menuitem failed\n");
+
+    memset( &info, 0, sizeof info );
+    info.cbSize = sizeof info;
+    info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID;
+    info.fType = MFT_STRING;
+    info.dwTypeData = "MenuItem 2";
+    info.wID = (UINT) hmenuSub; /* Enforce id collisions with the hmenu of the popup submenu*/
+    
+    rc = InsertMenuItem(hmenuSub2, 1, TRUE, &info );
+    ok (rc, "Inserting the sub menu menuitem 2 failed\n");
+
+    /* Prove getting the item info via ID returns the first item (not the popup or 2nd item)*/
+    memset( &info, 0, sizeof info );
+    strback[0] = 0x00;
+    info.cbSize = sizeof(MENUITEMINFO);
+    info.fMask = MIIM_STRING | MIIM_ID;
+    info.dwTypeData = strback;
+    info.cch = 0x80;
+
+    rc = GetMenuItemInfo(hmenu, (UINT)hmenuSub, FALSE, &info);
+    ok (rc, "Getting the menus info failed\n");
+    ok (info.wID == (UINT)hmenuSub, "IDs differ for popup menu\n");
+    todo_wine {
+    ok (!strcmp(info.dwTypeData, "MenuItem"), "Returned item has wrong label (%s)\n", info.dwTypeData);
+    }
+
+    memset( &info, 0, sizeof info );
+    strback[0] = 0x00;
+    info.cbSize = sizeof(MENUITEMINFO);
+    info.fMask = MIIM_STRING | MIIM_ID;
+    info.dwTypeData = strback;
+    info.cch = 0x80;
+
+    rc = GetMenuItemInfo(hmenu, (UINT)hmenuSub2, FALSE, &info);
+    ok (rc, "Getting the menus info failed\n");
+    ok (info.wID == (UINT)hmenuSub2, "IDs differ for popup menu\n");
+    ok (!strcmp(info.dwTypeData, "Submenu2"), "Returned item has wrong label (%s)\n", info.dwTypeData);
+}
+
 START_TEST(menu)
 {
     register_menu_check_class();
@@ -894,4 +1166,5 @@ START_TEST(menu)
     test_menu_ownerdraw();
     test_menu_add_string();
     test_menu_iteminfo();
+    test_menu_search_bycommand();
 }
