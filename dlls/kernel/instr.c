@@ -568,8 +568,6 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
                 switch (instr[2])
                 {
                 case 0xc8: /* mov dr1, eax */
-                    context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
-                    NtGetContextThread( GetCurrentThread(), context );
                     TRACE("mov dr1,eax at 0x%08lx\n",context->Eip);
                     context->Eax = context->Dr1;
                     context->Eip += prefixlen+3;
@@ -587,12 +585,8 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
                 switch (instr[2])
                 {
                 case 0xc8: /* mov eax, dr1 */
-                    context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
-                    NtGetContextThread( GetCurrentThread(), context );
                     context->Dr1 = context->Eax;
                     context->Eip += prefixlen+3;
-                    context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
-                    NtSetContextThread( GetCurrentThread(), context );
                     return ExceptionContinueExecution;
                 }
                 ERR("Unsupported DR register, eip+2 is %02x\n", instr[2]);
