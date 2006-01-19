@@ -18,10 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define WIN32_LEAN_AND_MEAN
+
 #include <string.h>
 #include <time.h>
 #include <windows.h>
-#include <windowsx.h>
+#include <stdlib.h>
 #include "main.h"
 #include "dialog.h"
 #include "resource.h"
@@ -55,13 +57,13 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     wc.lpszMenuName = "MENU_WINEMINE";
     wc.lpszClassName = appname;
 
-    if (!RegisterClass(&wc)) exit(1);
+    if (!RegisterClass(&wc)) ExitProcess(1);
     hWnd = CreateWindow( appname, appname,
 	wnd_style,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         0, 0, hInst, NULL );
 
-    if (!hWnd) exit(1);
+    if (!hWnd) ExitProcess(1);
 
     ShowWindow( hWnd, cmdshow );
     UpdateWindow( hWnd );
@@ -111,8 +113,8 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_MOVE:
         WINE_TRACE("WM_MOVE\n");
-	board.pos.x = GET_X_LPARAM(lParam);
-	board.pos.y = GET_Y_LPARAM(lParam);
+        board.pos.x = (short)LOWORD(lParam);
+        board.pos.y = (short)HIWORD(lParam);
         return 0;
 
     case WM_DESTROY:
