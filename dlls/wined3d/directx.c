@@ -234,11 +234,11 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
     if (NULL != display) {
         test = glXQueryVersion(display, &major, &minor);
         gl_info->glx_version = ((major & 0x0000FFFF) << 16) | (minor & 0x0000FFFF);
-        gl_string = glXGetClientString(display, GLX_VENDOR);
     } else {
         FIXME("Display must not be NULL, use glXGetCurrentDisplay or getAdapterDisplay()\n");
-        gl_string = (const char *) glGetString(GL_VENDOR);
     }
+    gl_string = (const char *) glGetString(GL_VENDOR);
+
     TRACE_(d3d_caps)("Filling vendor string %s\n", gl_string);
     if (gl_string != NULL) {
         /* Fill in the GL vendor */
