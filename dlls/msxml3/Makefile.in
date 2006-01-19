@@ -17,7 +17,8 @@ C_SRCS = \
 	node.c \
 	nodelist.c \
 	nodemap.c \
-	parseerror.c
+	parseerror.c \
+	text.c
 
 SUBDIRS = tests
 

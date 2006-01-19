@@ -858,6 +858,9 @@ IXMLDOMNode *create_node( xmlNodePtr node )
     case XML_ELEMENT_NODE:
         pUnk = create_element( node );
         break;
+    case XML_TEXT_NODE:
+        pUnk = create_text( node );
+        break;
     case XML_DOCUMENT_NODE:
         ERR("shouldn't be here!\n");
         return NULL;
