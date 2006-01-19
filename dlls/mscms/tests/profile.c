@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -494,6 +495,59 @@ static void enum_registered_color_profiles(void)
     }
     trace("Total profiles found: %ld.\n", present);
     trace("\n");
+}
+
+static HKEY reg_open_mscms_key(void)
+{
+    char win9x[] = "SOFTWARE\\Microsoft\\Windows";
+    char winNT[] = "SOFTWARE\\Microsoft\\Windows NT";
+    char ICM[] = "CurrentVersion\\ICM\\RegisteredProfiles";
+    HKEY win9x_key, winNT_key, ICM_key;
+
+    RegOpenKeyExA( HKEY_LOCAL_MACHINE, win9x, 0, KEY_READ, &win9x_key );
+    RegOpenKeyExA( HKEY_LOCAL_MACHINE, winNT, 0, KEY_READ, &winNT_key );
+
+    if (RegOpenKeyExA( winNT_key, ICM, 0, KEY_READ, &ICM_key )) 
+        RegOpenKeyExA( win9x_key, ICM, 0, KEY_READ, &ICM_key );
+    RegCloseKey( win9x_key );
+    RegCloseKey( winNT_key );
+
+    if ( !ICM_key ) return NULL;
+    return ICM_key;
+}
+
+static void check_registry(void)
+{
+    HKEY hkIcmKey;
+    LONG res;
+    DWORD i, dwValCount;
+    char szName[16383];
+    char szData[MAX_PATH+1];
+    DWORD dwNameLen, dwDataLen, dwType;
+
+    hkIcmKey = reg_open_mscms_key();
+    if (!hkIcmKey)
+    {
+        trace("Key 'HKLM\\SOFTWARE\\Microsoft\\Windows*\\CurrentVersion\\ICM\\RegisteredProfiles' not found\n" );
+        return;
+    }
+
+    res = RegQueryInfoKeyA(hkIcmKey, NULL, NULL, NULL, NULL, NULL, NULL, &dwValCount, NULL, NULL, NULL, NULL);
+    trace("Count of profile entries found directly in the registry: %ld\n", dwValCount);
+    if (dwValCount<1) return;
+
+    for (i = 0; i<dwValCount; i++) 
+    {
+        dwNameLen = sizeof(szName);
+        dwDataLen = sizeof(szData);
+        res = RegEnumValueA( hkIcmKey, i, szName, &dwNameLen, NULL, &dwType, (LPBYTE)szData, &dwDataLen );
+        if (res != ERROR_SUCCESS) break;
+        ok( dwType == REG_SZ, "RegEnumValueA() returned unexpected value type (%ld)\n", dwType );
+        if (dwType != REG_SZ) break;
+        trace(" found '%s' value containing '%s' (%d chars)\n", szName, szData, strlen(szData));
+    } 
+
+    RegCloseKey( hkIcmKey );
 }
 
 #define fail_GSCSPA(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
@@ -1193,6 +1247,7 @@ START_TEST(profile)
     test_GetCountColorProfileElements();
 
     enum_registered_color_profiles();
+    check_registry();
 
     test_GetStandardColorSpaceProfileA();
     test_GetStandardColorSpaceProfileW();
