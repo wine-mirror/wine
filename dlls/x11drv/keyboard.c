@@ -411,6 +411,16 @@ static const char main_key_CF[MAIN_LEN][4] =
  "«»°"
 };
 
+/*** Canadian French keyboard layout (setxkbmap ca -variant fr) */
+static const char main_key_CA_fr[MAIN_LEN][4] =
+{
+ "#|","1!","2\"","3/","4$","5%","6?","7&","8*","9(","0)","-_","=+",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","^^","¸¨",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","``","<>",
+ "zZ","xX","cC","vV","bB","nN","mM",",'",".","éÉ",
+ "«»"
+};
+
 /*** Canadian keyboard layout (setxkbmap ca) */
 static const char main_key_CA[MAIN_LEN][4] =
 {
@@ -899,6 +909,7 @@ static const struct {
  {0x0406, "Danish keyboard layout", &main_key_DA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x040c, "French keyboard layout", &main_key_FR, &main_key_scan_qwerty, &main_key_vkey_azerty},
  {0x0c0c, "Canadian French keyboard layout", &main_key_CF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0c0c, "Canadian French keyboard layout (CA_fr)", &main_key_CA_fr, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0c0c, "Canadian keyboard layout", &main_key_CA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x080c, "Belgian keyboard layout", &main_key_BE, &main_key_scan_qwerty, &main_key_vkey_azerty},
  {0x0816, "Portuguese keyboard layout", &main_key_PT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
