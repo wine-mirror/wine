@@ -21,20 +21,15 @@
  *
  */
 
-#include <stdarg.h>
-#include <stdio.h>
-
+#define WIN32_LEAN_AND_MEAN
 #define COBJMACROS
 
-#include <windef.h>
-#include <winbase.h>
-#include <winreg.h>
+#include <windows.h>
 #include <shellapi.h>
 #include <objbase.h>
 #include <shlguid.h>
 #include <shlwapi.h>
 #include <shlobj.h>
-#include <winuser.h>
 
 #include <wine/debug.h>
 
@@ -279,7 +274,9 @@ static int fill_drives_list(HWND dialog)
         if (drives[i].letter == 'C')
             drivec_present = TRUE;
 
-        snprintf(letter, sizeof(letter), "%c:", 'A' + i);
+        letter[0] = 'A' + i;
+        letter[1] = ':';
+        letter[2] = 0;
 
         memset(&item, 0, sizeof(item));
         item.mask = LVIF_TEXT | LVIF_PARAM;

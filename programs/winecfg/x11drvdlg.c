@@ -21,13 +21,13 @@
  *
  */
 
+#define WIN32_LEAN_AND_MEAN
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <windef.h>
-#include <winbase.h>
-#include <winreg.h>
+#include <windows.h>
 #include <wine/debug.h>
 
 #include "resource.h"

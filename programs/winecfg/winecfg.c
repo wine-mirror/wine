@@ -27,6 +27,8 @@
  *
  */
 
+#define WIN32_LEAN_AND_MEAN
+
 #include <assert.h>
 #include <stdio.h>
 #include <limits.h>

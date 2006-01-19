@@ -23,10 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <windef.h>
-#include <winbase.h>
-#include <wingdi.h>
-#include <winuser.h>
+#include <windows.h>
 #include <uxtheme.h>
 #include <tmschema.h>
 #include <shlobj.h>

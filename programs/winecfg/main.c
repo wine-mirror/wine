@@ -21,21 +21,12 @@
  *
  */
 
-#include "config.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+#define WIN32_LEAN_AND_MEAN
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#include <windef.h>
-#include <winbase.h>
-#include <winuser.h>
+#include <windows.h>
 #include <commctrl.h>
 #include <objbase.h>
 #include <wine/debug.h>

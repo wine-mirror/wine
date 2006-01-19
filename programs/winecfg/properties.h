@@ -87,7 +87,4 @@ typedef struct
   int nType;
 } DEV_NODES;
 
-const DLL_DESC *getDLLDefaults(void);
-const AUDIO_DRIVER *getAudioDrivers(void);
-
 #endif

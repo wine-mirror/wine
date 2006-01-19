@@ -19,6 +19,7 @@
  *
  */
 
+#define WIN32_LEAN_AND_MEAN
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 
@@ -26,14 +27,11 @@
 #include "wine/port.h"
 
 #include <assert.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include <windef.h>
-#include <winbase.h>
-#include <winreg.h>
+#include <windows.h>
 #include <wine/debug.h>
 #include <shellapi.h>
 #include <objbase.h>
@@ -43,7 +41,6 @@
 #include <windowsx.h>
 #include <mmsystem.h>
 #include <mmreg.h>
-#include <mmsystem.h>
 #include <mmddk.h>
 
 #include "winecfg.h"
@@ -62,6 +59,18 @@ static const char* DSound_HW_Accels[] = {
   "Basic",
   "Emulation",
   NULL
+};
+
+static const AUDIO_DRIVER sAudioDrivers[] = {
+  {"ALSA", "alsa"},
+  {"aRts", "arts"},
+  {"EsounD", "esd"},
+  {"OSS", "oss"},
+  {"JACK", "jack"},
+  {"NAS", "nas"},
+  {"Audio IO(Solaris)", "audioio"},
+  {"Disable sound", ""},
+  {"", ""}
 };
 
 /* list of available drivers */
@@ -467,7 +476,7 @@ static void findAudioDrivers(void)
      */
     old_cursor = SetCursor(LoadCursor(0, IDC_WAIT));
 
-    for (pAudioDrv = getAudioDrivers(); *pAudioDrv->szName; pAudioDrv++)
+    for (pAudioDrv = sAudioDrivers; *pAudioDrv->szName; pAudioDrv++)
     {
         if (strlen(pAudioDrv->szDriver))
         {
