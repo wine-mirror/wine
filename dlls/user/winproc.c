@@ -3017,6 +3017,7 @@ static BOOL WINPROC_CallProc32WTo32A_fast( WNDPROC func, HWND hwnd,
             char *cls = buffer, *name;
             CREATESTRUCTW *csW = (CREATESTRUCTW *)lParam;
             CREATESTRUCTA csA = *(CREATESTRUCTA *)csW;
+            MDICREATESTRUCTA mdi_cs;
             DWORD name_lenA, name_lenW, class_lenA, class_lenW;
 
             class_lenW = strlenW(csW->lpszClass) * sizeof(WCHAR);
@@ -3050,8 +3051,6 @@ static BOOL WINPROC_CallProc32WTo32A_fast( WNDPROC func, HWND hwnd,
 
             if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
             {
-                MDICREATESTRUCTA mdi_cs;
-
                 mdi_cs = *(MDICREATESTRUCTA *)csW->lpCreateParams;
                 mdi_cs.szTitle = csA.lpszName;
                 mdi_cs.szClass = csA.lpszClass;

@@ -833,6 +833,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     WND *wndPtr;
     HWND hwnd, parent, owner, top_child = 0;
     BOOL unicode = (type == WIN_PROC_32W);
+    MDICREATESTRUCTA mdi_cs;
 
     TRACE("%s %s ex=%08lx style=%08lx %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
           (type == WIN_PROC_32W) ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
@@ -848,7 +849,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     /* Fix the styles for MDI children */
     if (cs->dwExStyle & WS_EX_MDICHILD)
     {
-        MDICREATESTRUCTA mdi_cs;
         UINT flags = 0;
 
         wndPtr = WIN_GetPtr(cs->hwndParent);
