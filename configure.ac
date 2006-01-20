@@ -810,19 +810,6 @@ int main(void) {
       AC_DEFINE(CC_FLAG_SHORT_WCHAR, "-fshort-wchar", [Specifies the compiler flag that forces a short wchar_t])
   fi
 
-  dnl Check for -mpreferred-stack-boundary
-  case $host_cpu in
-    *i[[3456789]]86*)
-      AC_CACHE_CHECK([for gcc -mpreferred-stack-boundary=2 support], ac_cv_c_gcc_stack_boundary,
-          [WINE_TRY_CFLAGS([-mpreferred-stack-boundary=2],
-                          ac_cv_c_gcc_stack_boundary="yes",ac_cv_c_gcc_stack_boundary="no")])
-      if test "$ac_cv_c_gcc_stack_boundary" = "yes"
-      then
-        EXTRACFLAGS="$EXTRACFLAGS -mpreferred-stack-boundary=2"
-      fi
-      ;;
-  esac
-
   dnl Check for -fno-strict-aliasing
   AC_CACHE_CHECK([for gcc -fno-strict-aliasing support], ac_cv_c_gcc_no_strict_aliasing,
       [WINE_TRY_CFLAGS([-fno-strict-aliasing],
