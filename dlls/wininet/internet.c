@@ -66,6 +66,7 @@
 #include "resource.h"
 
 #include "wine/unicode.h"
+#include "wincrypt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
@@ -2242,6 +2243,41 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             FIXME("INTERNET_OPTION_SECURITY_FLAGS: Stub\n");
             break;
 
+        case INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT:
+            if (*lpdwBufferLength < sizeof(INTERNET_CERTIFICATE_INFOW))
+            {
+                *lpdwBufferLength = sizeof(INTERNET_CERTIFICATE_INFOW);
+                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            }
+            else if (lpwhh->htype == WH_HHTTPREQ)
+            {
+                LPWININETHTTPREQW lpwhr;
+                PCCERT_CONTEXT context;
+
+                lpwhr = (LPWININETHTTPREQW)lpwhh;
+                context = (PCCERT_CONTEXT)NETCON_GetCert(&(lpwhr->netConnection));
+                if (context)
+                {
+                    LPINTERNET_CERTIFICATE_INFOW info = (LPINTERNET_CERTIFICATE_INFOW)lpBuffer;
+                    memset(info,0,sizeof(INTERNET_CERTIFICATE_INFOW));
+                    info->ftExpiry = context->pCertInfo->NotAfter;
+                    info->ftStart = context->pCertInfo->NotBefore;
+                    /*
+                     * CertNameToStr implement requred for
+                     * lpszSubjectInfo
+                     * lpszIssuerInfo
+                     *
+                     * also need to set:
+                     * lpszProtocolName
+                     * lpszSignatureAlgName
+                     * lpszEncryptionAlgName
+                     * dwKeySize
+                     */
+                    CertFreeCertificateContext(context);
+                    bSuccess = TRUE;
+                }
+            }
+            break;
         default:
             FIXME("Stub! %ld\n", dwOption);
             break;

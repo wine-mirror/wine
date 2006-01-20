@@ -480,6 +480,7 @@ BOOL NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len,
 BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
 		int *recvd /* out */);
 BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPDWORD dwBuffer);
+LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection);
 
 extern void URLCacheContainers_CreateDefaults(void);
 extern void URLCacheContainers_DeleteAll(void);

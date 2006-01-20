@@ -52,6 +52,7 @@
 
 #include "wine/debug.h"
 #include "internet.h"
+#include "wincrypt.h"
 
 #define RESPONSE_TIMEOUT        30            /* FROM internet.c */
 
@@ -100,6 +101,7 @@ MAKE_FUNCPTR(SSL_get_peer_certificate);
 MAKE_FUNCPTR(SSL_CTX_get_timeout);
 MAKE_FUNCPTR(SSL_CTX_set_timeout);
 MAKE_FUNCPTR(SSL_CTX_set_default_verify_paths);
+MAKE_FUNCPTR(i2d_X509);
 
 /* OpenSSL's libcrypto functions that we use */
 MAKE_FUNCPTR(BIO_new_fp);
@@ -162,6 +164,7 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNSSL(SSL_CTX_get_timeout);
 	DYNSSL(SSL_CTX_set_timeout);
 	DYNSSL(SSL_CTX_set_default_verify_paths);
+	DYNSSL(i2d_X509);
 #undef DYNSSL
 
 #define DYNCRYPTO(x) \
@@ -657,4 +660,52 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 	return FALSE;
 #endif
     }
+}
+
+
+LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection)
+{
+
+#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+    X509* cert;
+    unsigned char* buffer,*p;
+    INT len;
+    BOOL malloced = FALSE;
+    LPCVOID r = NULL;
+
+    if (!connection->useSSL)
+        return NULL;
+
+    cert = pSSL_get_peer_certificate(connection->ssl_s);
+    p = NULL;
+    len = pi2d_X509(cert,&p);
+    /*
+     * SSL 0.9.7 and above malloc the buffer if it is null. 
+     * however earlier version do not and so we would need to alloc the buffer.
+     *
+     * see the i2d_X509 man page for more details.
+     */
+    if (!p)
+    {
+        buffer = HeapAlloc(GetProcessHeap(),0,len);
+        p = buffer;
+        len = pi2d_X509(cert,&p);
+    }
+    else
+    {
+        buffer = p;
+        malloced = TRUE;
+    }
+
+    r = CertCreateCertificateContext(X509_ASN_ENCODING,buffer,len);
+
+    if (malloced)
+        free(buffer);
+    else
+        HeapFree(GetProcessHeap(),0,buffer);
+
+    return r;
+#else
+    return NULL;
+#endif
 }
