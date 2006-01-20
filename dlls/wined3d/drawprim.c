@@ -1777,6 +1777,7 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
         if (useVertexShaderFunction) {
             int i;
             GLint errPos;
+            IWineD3DVertexDeclarationImpl *vertexDeclaration;
 
             FIXME("Using vertex shader\n");
 
@@ -1790,11 +1791,14 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
             TRACE_(d3d_shader)("(%p) bound program %u and enabled vertex program ARB\n", This, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->prgId);
 
             /* Vertex Shader 8 constants */
-            if (((IWineD3DVertexDeclarationImpl *)((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration)->constants != NULL) {
-                float *constants = ((IWineD3DVertexDeclarationImpl *)((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration)->constants;
-                for (i = 0; i <=  WINED3D_VSHADER_MAX_CONSTANTS; i++) {
-                    TRACE_(d3d_shader)("Not Loading constants %u = %f %f %f %f\n", i, constants[i * 4], constants[i * 4 + 1], constants[i * 4 + 2], constants[i * 4 + 3]);
-                    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, i, &constants[i * 4]));
+            vertexDeclaration = (IWineD3DVertexDeclarationImpl *)((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration;
+            if (vertexDeclaration != NULL) {
+                float *constants = vertexDeclaration->constants;
+                if (constants != NULL) {
+                    for (i = 0; i <=  WINED3D_VSHADER_MAX_CONSTANTS; i++) {
+                        TRACE_(d3d_shader)("Not Loading constants %u = %f %f %f %f\n", i, constants[i * 4], constants[i * 4 + 1], constants[i * 4 + 2], constants[i * 4 + 3]);
+                        GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, i, &constants[i * 4]));
+                    }
                 }
             }
 
