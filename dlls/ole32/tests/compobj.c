@@ -30,6 +30,7 @@
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08lx\n", hr)
 
+static const CLSID CLSID_non_existent =   { 0x12345678, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 static const CLSID CLSID_CDeviceMoniker = { 0x4315d437, 0x5b8c, 0x11d0, { 0xbd, 0x3b, 0x00, 0xa0, 0xc9, 0x11, 0xce, 0x86 } };
 static const WCHAR devicedotone[] = {'d','e','v','i','c','e','.','1',0};
 static const WCHAR wszCLSID_CDeviceMoniker[] =
@@ -53,6 +54,11 @@ static void test_ProgIDFromCLSID(void)
         ok(!lstrcmpiW(progid, devicedotone), "Didn't get expected prog ID\n");
         CoTaskMemFree(progid);
     }
+
+    progid = (LPWSTR)0xdeadbeef;
+    hr = ProgIDFromCLSID(&CLSID_non_existent, &progid);
+    ok(hr == REGDB_E_CLASSNOTREG, "ProgIDFromCLSID returned %08lx\n", hr);
+    ok(progid == NULL, "ProgIDFromCLSID returns with progid %p\n", progid);
 }
 
 static void test_CLSIDFromProgID(void)

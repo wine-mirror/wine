@@ -1049,6 +1049,7 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID)
     HRESULT  ret;
     LONG progidlen = 0;
 
+    *lplpszProgID = NULL;
     ret = COM_OpenKeyForCLSID(clsid, wszProgID, KEY_READ, &hkey);
     if (FAILED(ret))
         return ret;
