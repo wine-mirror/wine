@@ -2658,9 +2658,8 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
     ULONG cHandles, const HANDLE* pHandles, LPDWORD lpdwindex)
 {
     HRESULT hr = S_OK;
-    DWORD wait_flags = (dwFlags & COWAIT_WAITALL) ? MWMO_WAITALL : 0 |
-                       (dwFlags & COWAIT_ALERTABLE ) ? MWMO_ALERTABLE : 0;
     DWORD start_time = GetTickCount();
+    BOOL message_loop = TRUE;
 
     TRACE("(0x%08lx, 0x%08lx, %ld, %p, %p)\n", dwFlags, dwTimeout, cHandles,
         pHandles, lpdwindex);
@@ -2669,37 +2668,56 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
     {
         DWORD now = GetTickCount();
         DWORD res;
-        
+
         if ((dwTimeout != INFINITE) && (start_time + dwTimeout >= now))
         {
             hr = RPC_S_CALLPENDING;
             break;
         }
 
-        TRACE("waiting for rpc completion or window message\n");
-
-        res = MsgWaitForMultipleObjectsEx(cHandles, pHandles,
-            (dwTimeout == INFINITE) ? INFINITE : start_time + dwTimeout - now,
-            QS_ALLINPUT, wait_flags);
-
-        if (res == WAIT_OBJECT_0 + cHandles)  /* messages available */
+        if (message_loop)
         {
-            MSG msg;
-            while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+            DWORD wait_flags = (dwFlags & COWAIT_WAITALL) ? MWMO_WAITALL : 0 |
+                    (dwFlags & COWAIT_ALERTABLE ) ? MWMO_ALERTABLE : 0;
+
+            TRACE("waiting for rpc completion or window message\n");
+
+            res = MsgWaitForMultipleObjectsEx(cHandles, pHandles,
+                (dwTimeout == INFINITE) ? INFINITE : start_time + dwTimeout - now,
+                QS_ALLINPUT, wait_flags);
+
+            if (res == WAIT_OBJECT_0 + cHandles)  /* messages available */
             {
-                /* FIXME: filter the messages here */
-                TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
-                TranslateMessage(&msg);
-                DispatchMessageW(&msg);
-                if (msg.message == WM_QUIT)
+                MSG msg;
+                while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
                 {
-                    TRACE("resending WM_QUIT to outer message loop\n");
-                    PostQuitMessage(msg.wParam);
-                    goto done;
+                    /* FIXME: filter the messages here */
+                    TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
+                    TranslateMessage(&msg);
+                    DispatchMessageW(&msg);
+                    if (msg.message == WM_QUIT)
+                    {
+                        TRACE("resending WM_QUIT to outer message loop\n");
+                        PostQuitMessage(msg.wParam);
+                        /* no longer need to process messages */
+                        message_loop = FALSE;
+                        break;
+                    }
                 }
+                continue;
             }
         }
-        else if ((res >= WAIT_OBJECT_0) && (res < WAIT_OBJECT_0 + cHandles))
+        else
+        {
+            TRACE("waiting for rpc completion\n");
+
+            res = WaitForMultipleObjectsEx(cHandles, pHandles,
+                (dwFlags & COWAIT_WAITALL) ? TRUE : FALSE,
+                (dwTimeout == INFINITE) ? INFINITE : start_time + dwTimeout - now,
+                (dwFlags & COWAIT_ALERTABLE) ? TRUE : FALSE);
+        }
+
+        if ((res >= WAIT_OBJECT_0) && (res < WAIT_OBJECT_0 + cHandles))
         {
             /* handle signaled, store index */
             *lpdwindex = (res - WAIT_OBJECT_0);
@@ -2717,7 +2735,6 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
             break;
         }
     }
-done:
     TRACE("-- 0x%08lx\n", hr);
     return hr;
 }
