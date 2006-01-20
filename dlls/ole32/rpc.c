@@ -98,6 +98,7 @@ typedef struct
     RpcChannelBuffer       super; /* superclass */
 
     RPC_BINDING_HANDLE     bind; /* handle to the remote server */
+    OXID                   oxid; /* apartment in which the channel is valid */
 } ClientRpcChannelBuffer;
 
 struct dispatch_params
@@ -206,6 +207,12 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
     return HRESULT_FROM_WIN32(status);
 }
 
+static HRESULT WINAPI ServerRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPCOLEMESSAGE *olemsg, ULONG *pstatus)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
 /* this thread runs an outgoing RPC */
 static DWORD WINAPI rpc_sendreceive_thread(LPVOID param)
 {
@@ -219,9 +226,22 @@ static DWORD WINAPI rpc_sendreceive_thread(LPVOID param)
     return 0;
 }
 
-static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPCOLEMESSAGE *olemsg, ULONG *pstatus)
+static inline HRESULT ClientRpcChannelBuffer_IsCorrectApartment(ClientRpcChannelBuffer *This, APARTMENT *apt)
 {
-    HRESULT hr = S_OK;
+    OXID oxid;
+    if (!apt)
+        return S_FALSE;
+    if (apartment_getoxid(apt, &oxid) != S_OK)
+        return S_FALSE;
+    if (This->oxid != oxid)
+        return S_FALSE;
+    return S_OK;
+}
+
+static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPCOLEMESSAGE *olemsg, ULONG *pstatus)
+{
+    ClientRpcChannelBuffer *This = (ClientRpcChannelBuffer *)iface;
+    HRESULT hr;
     RPC_MESSAGE *msg = (RPC_MESSAGE *)olemsg;
     RPC_STATUS status;
     DWORD index;
@@ -232,9 +252,17 @@ static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPC
 
     TRACE("(%p) iMethod=%ld\n", olemsg, olemsg->iMethod);
 
+    hr = ClientRpcChannelBuffer_IsCorrectApartment(This, COM_CurrentApt());
+    if (hr != S_OK)
+    {
+        ERR("called from wrong apartment, should have been 0x%s\n",
+            wine_dbgstr_longlong(This->oxid));
+        return RPC_E_WRONG_THREAD;
+    }
+
     params = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*params));
     if (!params) return E_OUTOFMEMORY;
-    
+
     params->msg = olemsg;
     params->status = RPC_S_OK;
     params->hr = S_OK;
@@ -369,7 +397,7 @@ static const IRpcChannelBufferVtbl ClientRpcChannelBufferVtbl =
     RpcChannelBuffer_AddRef,
     ClientRpcChannelBuffer_Release,
     ClientRpcChannelBuffer_GetBuffer,
-    RpcChannelBuffer_SendReceive,
+    ClientRpcChannelBuffer_SendReceive,
     ClientRpcChannelBuffer_FreeBuffer,
     RpcChannelBuffer_GetDestCtx,
     RpcChannelBuffer_IsConnected
@@ -381,7 +409,7 @@ static const IRpcChannelBufferVtbl ServerRpcChannelBufferVtbl =
     RpcChannelBuffer_AddRef,
     ServerRpcChannelBuffer_Release,
     ServerRpcChannelBuffer_GetBuffer,
-    RpcChannelBuffer_SendReceive,
+    ServerRpcChannelBuffer_SendReceive,
     ServerRpcChannelBuffer_FreeBuffer,
     RpcChannelBuffer_GetDestCtx,
     RpcChannelBuffer_IsConnected
@@ -440,6 +468,7 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid, IRpcChannelB
     This->super.lpVtbl = &ClientRpcChannelBufferVtbl;
     This->super.refs = 1;
     This->bind = bind;
+    apartment_getoxid(COM_CurrentApt(), &This->oxid);
 
     *chan = (IRpcChannelBuffer*)This;
 

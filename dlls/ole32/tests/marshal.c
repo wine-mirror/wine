@@ -1021,14 +1021,12 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
     IUnknown * proxy = NULL;
 
     pCoInitializeEx(NULL, COINIT_MULTITHREADED);
-    
+
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
     if (proxy) IUnknown_Release(proxy);
-    todo_wine {
     ok(hr == RPC_E_WRONG_THREAD,
         "COM should have failed with RPC_E_WRONG_THREAD on using proxy from wrong apartment, but instead returned 0x%08lx\n",
         hr);
-    }
 
     CoUninitialize();
 
