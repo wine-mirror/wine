@@ -864,7 +864,7 @@ inline static void addline(unsigned int *lineNum, char *pgm, unsigned int *pgmLe
     }
 
     *pgmLength += lineLen;
-    ++lineNum;
+    ++(*lineNum);
     TRACE("GL HW (%u, %u) : %s", *lineNum, *pgmLength, line);
 }
 
@@ -1095,7 +1095,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
 #endif
             pInstr = pToken;
             curOpcode = pshader_program_get_opcode(*pToken, version);
-            TRACE("Found opcode %s %s\n", curOpcode->name,curOpcode->glname);
             ++pToken;
             if (NULL == curOpcode) {
                 /* unknown current opcode ... (shouldn't be any!) */
@@ -1108,6 +1107,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 FIXME("Token %s requires greater functionality than Fragment_Progarm_ARB supports\n", curOpcode->name);
                 pToken += curOpcode->num_params;
             } else {
+                TRACE("Found opcode %s %s\n", curOpcode->name, curOpcode->glname);
                 saturate = FALSE;
 
                 /* Build opcode for GL vertex_program */
@@ -1399,7 +1399,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     case D3DSPDM_D8: D8 = TRUE; break;
 #endif
                     default:
-                        TRACE("_unhandled_modifier(0x%08lx)", mask);
+                        TRACE("_unhandled_modifier(0x%08lx)\n", mask);
                     }
                 }
 
@@ -1491,8 +1491,13 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
     /* finally null terminate the pgmStr*/
     pgmStr[pgmLength] = 0;
     if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
-        TRACE("(%p) : Generated program %s\n", This, pgmStr);
         /*  Create the hw shader */
+
+        /* pgmStr sometimes gets too long for a normal TRACE */
+        TRACE("Generated program:\n");
+        if (TRACE_ON(d3d_shader)) {
+            fprintf(stderr, "%s\n", pgmStr);
+        }
 
         /* TODO: change to resource.glObjectHandel or something like that */
         GL_EXTCALL(glGenProgramsARB(1, &This->prgId));
