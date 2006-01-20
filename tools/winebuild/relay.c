@@ -32,6 +32,21 @@
 
 #include "build.h"
 
+/* offset of a structure field relative to the start of the struct */
+#define STRUCTOFFSET(type,field) ((int)FIELD_OFFSET(type,field))
+
+/* offset of register relative to the start of the CONTEXT struct */
+#define CONTEXTOFFSET(reg)  STRUCTOFFSET(CONTEXT86,reg)
+
+/* offset of register relative to the start of the STACK16FRAME struct */
+#define STACK16OFFSET(reg)  STRUCTOFFSET(STACK16FRAME,reg)
+
+/* offset of register relative to the start of the STACK32FRAME struct */
+#define STACK32OFFSET(reg)  STRUCTOFFSET(STACK32FRAME,reg)
+
+/* offset of the stack pointer relative to %fs:(0) */
+#define STACKOFFSET 0xc0  /* STRUCTOFFSET(TEB,WOW32Reserved) */
+
 /* fix this if the ntdll_thread_regs structure is changed */
 #define GS_OFFSET  0x1b0  /* STRUCTOFFSET(TEB,SpareBytes1) + STRUCTOFFSET(ntdll_thread_regs,gs) */
 
@@ -182,7 +197,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     fprintf( outfile, "\tpushl %%ds\n" );
     fprintf( outfile, "\tpopl %%ss\n" );
     fprintf( outfile, "\tmovl %%ebp, %%esp\n" );
-    fprintf( outfile, "\taddl $%d, %%ebp\n", STRUCTOFFSET(STACK32FRAME, ebp) );
+    fprintf( outfile, "\taddl $%d, %%ebp\n", STACK32OFFSET(ebp) );
 
 
     /* At this point:
@@ -294,7 +309,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     if ( reg_func )
     {
         fprintf( outfile, "\tleal -%d(%%ebp), %%ebx\n",
-                 sizeof(CONTEXT) + STRUCTOFFSET(STACK32FRAME, ebp) );
+                 sizeof(CONTEXT) + STACK32OFFSET(ebp) );
 
         /* Switch stack back */
         fprintf( outfile, "\t.byte 0x64\n\tmovw (%d), %%ss\n", STACKOFFSET+2 );
@@ -401,15 +416,15 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
     /* Setup exception frame */
     fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );
     fprintf( outfile, "\tpushl 16(%%ebp)\n" ); /* handler */
-    fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STRUCTOFFSET(TEB,Tib.ExceptionList) );
-    fprintf( outfile, "\t.byte 0x64\n\tmovl %%esp,(%d)\n", STRUCTOFFSET(TEB,Tib.ExceptionList) );
+    fprintf( outfile, "\t.byte 0x64\n\tpushl (0)\n" );
+    fprintf( outfile, "\t.byte 0x64\n\tmovl %%esp,(0)\n" );
 
     /* Call the actual CallTo16 routine (simulate a lcall) */
     fprintf( outfile, "\tpushl %%cs\n" );
     fprintf( outfile, "\tcall .L%s\n", name );
 
     /* Remove exception frame */
-    fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STRUCTOFFSET(TEB,Tib.ExceptionList) );
+    fprintf( outfile, "\t.byte 0x64\n\tpopl (0)\n" );
     fprintf( outfile, "\taddl $4, %%esp\n" );
     fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 

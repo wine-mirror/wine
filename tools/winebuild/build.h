@@ -132,22 +132,6 @@ extern enum target_platform target_platform;
 #define FLAG_FORWARD   0x80  /* function is a forwarded name */
 #define FLAG_EXT_LINK  0x100 /* function links to an external symbol */
 
-  /* Offset of a structure field relative to the start of the struct */
-#define STRUCTOFFSET(type,field) ((int)&((type *)0)->field)
-
-  /* Offset of register relative to the start of the CONTEXT struct */
-#define CONTEXTOFFSET(reg)  STRUCTOFFSET(CONTEXT86,reg)
-
-  /* Offset of register relative to the start of the STACK16FRAME struct */
-#define STACK16OFFSET(reg)  STRUCTOFFSET(STACK16FRAME,reg)
-
-  /* Offset of register relative to the start of the STACK32FRAME struct */
-#define STACK32OFFSET(reg)  STRUCTOFFSET(STACK32FRAME,reg)
-
-  /* Offset of the stack pointer relative to %fs:(0) */
-#define STACKOFFSET (STRUCTOFFSET(TEB,WOW32Reserved))
-
-
 #define MAX_ORDINALS  65535
 
 /* global functions */
