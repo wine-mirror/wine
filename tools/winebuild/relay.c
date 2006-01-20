@@ -32,6 +32,9 @@
 
 #include "build.h"
 
+/* fix this if the ntdll_thread_regs structure is changed */
+#define GS_OFFSET  0x1b0  /* STRUCTOFFSET(TEB,SpareBytes1) + STRUCTOFFSET(ntdll_thread_regs,gs) */
+
 static void function_header( FILE *outfile, const char *name )
 {
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
@@ -150,7 +153,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     else
         fprintf( outfile, "\tmovw %s, %%fs\n", asm_name("CallTo16_TebSelector") );
 
-    fprintf( outfile, "\t.byte 0x64\n\tmov (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
+    fprintf( outfile, "\t.byte 0x64\n\tmov (%d),%%gs\n", GS_OFFSET );
 
     /* Translate STACK16FRAME base to flat offset in %edx */
     fprintf( outfile, "\tmovw %%ss, %%dx\n" );
@@ -393,7 +396,7 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
     fprintf( outfile, "\tpushl %%ebx\n" );
     fprintf( outfile, "\tpushl %%esi\n" );
     fprintf( outfile, "\tpushl %%edi\n" );
-    fprintf( outfile, "\t.byte 0x64\n\tmov %%gs,(%d)\n", STRUCTOFFSET(TEB,gs_sel) );
+    fprintf( outfile, "\t.byte 0x64\n\tmov %%gs,(%d)\n", GS_OFFSET );
 
     /* Setup exception frame */
     fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );
@@ -542,7 +545,7 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\t.byte 0x2e\n\tmov %s", asm_name("CallTo16_TebSelector") );
     fprintf( outfile, "-%s,%%fs\n", asm_name("__wine_call16_start") );
 
-    fprintf( outfile, "\t.byte 0x64\n\tmov (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
+    fprintf( outfile, "\t.byte 0x64\n\tmov (%d),%%gs\n", GS_OFFSET );
 
     /* Restore the 32-bit stack */
 

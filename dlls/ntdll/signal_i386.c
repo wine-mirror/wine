@@ -675,7 +675,7 @@ inline static void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
          * SS is still non-system segment. This is why both CS and SS
          * are checked.
          */
-        wine_set_gs( teb->gs_sel );
+        wine_set_gs( thread_regs->gs );
         stack = teb->WOW32Reserved;
     }
 #ifdef __HAVE_VM86

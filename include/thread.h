@@ -53,12 +53,11 @@ typedef struct _TEB
     PVOID        SystemReserved2[10];          /* 1d4 */
 
     /* The following are Wine-specific fields (NT: GdiTebBatch) */
-    DWORD        gs_sel;              /* 1fc %gs selector for this thread */
-    ULONG_PTR    num_async_io;        /* 200 number of pending async I/O in the server */
-    DWORD        dpmi_vif;            /* 204 protected mode virtual interrupt flag */
-    DWORD        vm86_pending;        /* 208 data for vm86 mode */
+    DWORD        num_async_io;        /* 1fc number of pending async I/O in the server */
+    ULONG_PTR    dpmi_vif;            /* 200 protected mode virtual interrupt flag */
+    DWORD        vm86_pending;        /* 204 data for vm86 mode */
     /* here is plenty space for wine specific fields (don't forget to change pad6!!) */
-    DWORD        pad6[308];           /* 20c */
+    DWORD        pad6[309];           /* 208 */
 
     ULONG        gdiRgn;                     /* 6dc */
     ULONG        gdiPen;                     /* 6e0 */

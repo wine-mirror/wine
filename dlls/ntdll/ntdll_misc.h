@@ -136,14 +136,15 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
 /* thread registers, stored in NtCurrentTeb()->SpareBytes1 */
 struct ntdll_thread_regs
 {
-    DWORD              fs;            /* TEB selector */
-    DWORD              dr0;           /* debug registers */
-    DWORD              dr1;
-    DWORD              dr2;
-    DWORD              dr3;
-    DWORD              dr6;
-    DWORD              dr7;
-    DWORD              spare[3];      /* change this if you add fields! */
+    DWORD              fs;            /* 00 TEB selector */
+    DWORD              gs;            /* 04 libc selector; update winebuild if you move this! */
+    DWORD              dr0;           /* 08 debug registers */
+    DWORD              dr1;           /* 0c */
+    DWORD              dr2;           /* 10 */
+    DWORD              dr3;           /* 14 */
+    DWORD              dr6;           /* 18 */
+    DWORD              dr7;           /* 1c */
+    DWORD              spare[2];      /* 20 change this if you add fields! */
 };
 
 static inline struct ntdll_thread_regs *ntdll_get_thread_regs(void)
