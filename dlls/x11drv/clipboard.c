@@ -2795,7 +2795,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
      */
     cTargets = 1; /* Include TARGETS */
 
-    lpData = ClipData;
+    if (!(lpData = ClipData)) return None;
 
     do
     {
