@@ -15,11 +15,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * This module implements functions shared by DLLs that need to enumerate
- * network interfaces and addresses.  It's meant to hide some problematic
- * defines like socket(), as well as provide only one file
- * that needs to be ported to implement these functions on different platforms,
- * since the Windows API provides multiple ways to get at this info.
+ * This module implements network interface and address enumeration.  It's
+ * meant to hide some problematic defines like socket(), and make iphlpapi
+ * more portable.
  *
  * Like Windows, it uses a numeric index to identify an interface uniquely.
  * As implemented, an interface represents a UNIX network interface, virtual

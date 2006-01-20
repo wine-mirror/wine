@@ -34,7 +34,7 @@
  * FIXME:
  * - I don't support IPv6 addresses here, since SIOCGIFCONF can't return them
  *
- * There are three implemened methods for determining the MAC address of an
+ * There are three implemented methods for determining the MAC address of an
  * interface:
  * - a specific IOCTL (Linux)
  * - looking in the ARP cache (at least Solaris)

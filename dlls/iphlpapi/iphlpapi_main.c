@@ -87,7 +87,6 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 DWORD WINAPI AddIPAddress(IPAddr Address, IPMask IpMask, DWORD IfIndex, PULONG NTEContext, PULONG NTEInstance)
 {
   FIXME(":stub\n");
-  /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -399,7 +398,6 @@ DWORD WINAPI CreateProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
 {
   FIXME("(dwAddress 0x%08lx, dwMask 0x%08lx, dwIfIndex 0x%08lx): stub\n",
    dwAddress, dwMask, dwIfIndex);
-  /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -422,7 +420,6 @@ DWORD WINAPI CreateProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
 DWORD WINAPI DeleteIPAddress(ULONG NTEContext)
 {
   FIXME("(NTEContext %ld): stub\n", NTEContext);
-  /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -494,7 +491,6 @@ DWORD WINAPI DeleteProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
 {
   FIXME("(dwAddress 0x%08lx, dwMask 0x%08lx, dwIfIndex 0x%08lx): stub\n",
    dwAddress, dwMask, dwIfIndex);
-  /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -520,7 +516,7 @@ DWORD WINAPI EnableRouter(HANDLE * pHandle, OVERLAPPED * pOverlapped)
   FIXME("(pHandle %p, pOverlapped %p): stub\n", pHandle, pOverlapped);
   /* could echo "1" > /proc/net/sys/net/ipv4/ip_forward, not sure I want to
      could map EACCESS to ERROR_ACCESS_DENIED, I suppose
-     marking Win2K+ functions not supported */
+   */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -543,8 +539,7 @@ DWORD WINAPI EnableRouter(HANDLE * pHandle, OVERLAPPED * pOverlapped)
 DWORD WINAPI FlushIpNetTable(DWORD dwIfIndex)
 {
   FIXME("(dwIfIndex 0x%08lx): stub\n", dwIfIndex);
-  /* this flushes the arp cache of the given index
-     marking Win2K+ functions not supported */
+  /* this flushes the arp cache of the given index */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -568,7 +563,6 @@ DWORD WINAPI FlushIpNetTable(DWORD dwIfIndex)
 DWORD WINAPI GetAdapterIndex(LPWSTR AdapterName, PULONG IfIndex)
 {
   FIXME("(AdapterName %p, IfIndex %p): stub\n", AdapterName, IfIndex);
-  /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -945,7 +939,7 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
  * Get a list of network interface adapters.
  *
  * PARAMS
- *  pIfTable    [Out] buffer for intertace adapters
+ *  pIfTable    [Out] buffer for interface adapters
  *  dwOutBufLen [Out] if buffer is too small, returns required size
  *
  * RETURNS
@@ -1454,7 +1448,6 @@ DWORD WINAPI GetPerAdapterInfo(ULONG IfIndex, PIP_PER_ADAPTER_INFO pPerAdapterIn
 {
   TRACE("(IfIndex %ld, pPerAdapterInfo %p, pOutBufLen %p)\n", IfIndex,
    pPerAdapterInfo, pOutBufLen);
-  /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -1806,7 +1799,6 @@ DWORD WINAPI IpRenewAddress(PIP_ADAPTER_INDEX_MAP AdapterInfo)
 DWORD WINAPI NotifyAddrChange(PHANDLE Handle, LPOVERLAPPED overlapped)
 {
   FIXME("(Handle %p, overlapped %p): stub\n", Handle, overlapped);
-  /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -1830,7 +1822,6 @@ DWORD WINAPI NotifyAddrChange(PHANDLE Handle, LPOVERLAPPED overlapped)
 DWORD WINAPI NotifyRouteChange(PHANDLE Handle, LPOVERLAPPED overlapped)
 {
   FIXME("(Handle %p, overlapped %p): stub\n", Handle, overlapped);
-  /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -1857,7 +1848,6 @@ DWORD WINAPI SendARP(IPAddr DestIP, IPAddr SrcIP, PULONG pMacAddr, PULONG PhyAdd
 {
   FIXME("(DestIP 0x%08lx, SrcIP 0x%08lx, pMacAddr %p, PhyAddrLen %p): stub\n",
    DestIP, SrcIP, pMacAddr, PhyAddrLen);
-  /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -2027,6 +2017,6 @@ DWORD WINAPI UnenableRouter(OVERLAPPED * pOverlapped, LPDWORD lpdwEnableCount)
    lpdwEnableCount);
   /* could echo "0" > /proc/net/sys/net/ipv4/ip_forward, not sure I want to
      could map EACCESS to ERROR_ACCESS_DENIED, I suppose
-     marking Win2K+ functions not supported */
+   */
   return ERROR_NOT_SUPPORTED;
 }
