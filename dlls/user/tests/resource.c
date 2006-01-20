@@ -287,11 +287,11 @@ static void test_LoadImage(void) {
     HBITMAP bmp;
     
     bmp = LoadBitmapA(NULL, MAKEINTRESOURCE(OBM_CHECK));
-    ok(bmp != NULL, "Could not load the OBM_CHECK bitmap");
+    ok(bmp != NULL, "Could not load the OBM_CHECK bitmap\n");
     if (bmp) DeleteObject(bmp);
     
     bmp = LoadBitmapA(NULL, "#32760"); /* Value of OBM_CHECK */
-    ok(bmp != NULL, "Could not load the OBM_CHECK bitmap");
+    ok(bmp != NULL, "Could not load the OBM_CHECK bitmap\n");
     if (bmp) DeleteObject(bmp);
 }    
 
