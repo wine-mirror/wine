@@ -119,14 +119,13 @@ struct debug_info
 
 struct ntdll_thread_data
 {
-    DWORD              teb_sel;       /* selector to TEB */
     struct debug_info *debug_info;    /* info for debugstr functions */
     int                request_fd;    /* fd for sending server requests */
     int                reply_fd;      /* fd for receiving server replies */
     int                wait_fd[2];    /* fd for sleeping server requests */
     void              *vm86_ptr;      /* data for vm86 mode */
 
-    void              *pad[3];        /* change this if you add fields! */
+    void              *pad[4];        /* change this if you add fields! */
 };
 
 static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
@@ -137,13 +136,14 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
 /* thread registers, stored in NtCurrentTeb()->SpareBytes1 */
 struct ntdll_thread_regs
 {
+    DWORD              fs;            /* TEB selector */
     DWORD              dr0;           /* debug registers */
     DWORD              dr1;
     DWORD              dr2;
     DWORD              dr3;
     DWORD              dr6;
     DWORD              dr7;
-    DWORD              spare[4];      /* change this if you add fields! */
+    DWORD              spare[3];      /* change this if you add fields! */
 };
 
 static inline struct ntdll_thread_regs *ntdll_get_thread_regs(void)

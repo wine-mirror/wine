@@ -648,7 +648,7 @@ inline static void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
 {
     void *stack = (void *)ESP_sig(sigcontext);
     TEB *teb = get_current_teb();
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    struct ntdll_thread_regs *thread_regs = (struct ntdll_thread_regs *)teb->SpareBytes1;
 
     /* get %fs and %gs at time of the fault */
 #ifdef FS_sig
@@ -662,7 +662,7 @@ inline static void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
     *gs = wine_get_gs();
 #endif
 
-    wine_set_fs( thread_data->teb_sel );
+    wine_set_fs( thread_regs->fs );
 
     /* now restore a proper %gs for the fault handler */
     if (!wine_ldt_is_system(CS_sig(sigcontext)) ||

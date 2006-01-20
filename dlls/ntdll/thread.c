@@ -67,6 +67,7 @@ struct wine_pthread_functions pthread_functions = { NULL };
 static inline NTSTATUS init_teb( TEB *teb )
 {
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    struct ntdll_thread_regs *thread_regs = (struct ntdll_thread_regs *)teb->SpareBytes1;
 
     teb->Tib.ExceptionList = (void *)~0UL;
     teb->Tib.StackBase     = (void *)~0UL;
@@ -75,7 +76,7 @@ static inline NTSTATUS init_teb( TEB *teb )
     teb->StaticUnicodeString.Buffer        = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
 
-    if (!(thread_data->teb_sel = wine_ldt_alloc_fs())) return STATUS_TOO_MANY_THREADS;
+    if (!(thread_regs->fs = wine_ldt_alloc_fs())) return STATUS_TOO_MANY_THREADS;
     thread_data->request_fd = -1;
     thread_data->reply_fd   = -1;
     thread_data->wait_fd[0] = -1;
@@ -92,10 +93,10 @@ static inline void free_teb( TEB *teb )
 {
     SIZE_T size = 0;
     void *addr = teb;
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    struct ntdll_thread_regs *thread_regs = (struct ntdll_thread_regs *)teb->SpareBytes1;
 
     NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
-    wine_ldt_free_fs( thread_data->teb_sel );
+    wine_ldt_free_fs( thread_regs->fs );
     munmap( teb, sigstack_total_size );
 }
 
@@ -113,6 +114,7 @@ void thread_init(void)
     void *addr;
     SIZE_T info_size;
     struct ntdll_thread_data *thread_data;
+    struct ntdll_thread_regs *thread_regs;
     struct wine_pthread_thread_info thread_info;
     static struct debug_info debug_info;  /* debug info for initial thread */
 
@@ -138,13 +140,14 @@ void thread_init(void)
     teb = addr;
     init_teb( teb );
     thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    thread_regs = (struct ntdll_thread_regs *)teb->SpareBytes1;
     thread_data->debug_info = &debug_info;
     InsertHeadList( &tls_links, &teb->TlsLinks );
 
     thread_info.stack_base = NULL;
     thread_info.stack_size = 0;
     thread_info.teb_base   = teb;
-    thread_info.teb_sel    = thread_data->teb_sel;
+    thread_info.teb_sel    = thread_regs->fs;
     wine_pthread_get_functions( &pthread_functions, sizeof(pthread_functions) );
     pthread_functions.init_current_teb( &thread_info );
     pthread_functions.init_thread( &thread_info );
@@ -243,7 +246,8 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
                                      PRTL_THREAD_START_ROUTINE start, void *param,
                                      HANDLE *handle_ptr, CLIENT_ID *id )
 {
-    struct ntdll_thread_data *thread_data = NULL;
+    struct ntdll_thread_data *thread_data;
+    struct ntdll_thread_regs *thread_regs = NULL;
     struct startup_info *info = NULL;
     void *addr;
     HANDLE handle = 0;
@@ -294,14 +298,20 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->ClientId.UniqueProcess = (HANDLE)GetCurrentProcessId();
     teb->ClientId.UniqueThread  = (HANDLE)tid;
 
-    /* inherit registers from parent thread */
-    memcpy( teb->SpareBytes1, ntdll_get_thread_regs(), sizeof(teb->SpareBytes1) );
-
     thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    thread_regs = (struct ntdll_thread_regs *)teb->SpareBytes1;
     thread_data->request_fd  = request_pipe[1];
 
     info->pthread_info.teb_base = teb;
-    info->pthread_info.teb_sel  = thread_data->teb_sel;
+    info->pthread_info.teb_sel  = thread_regs->fs;
+
+    /* inherit debug registers from parent thread */
+    thread_regs->dr0 = ntdll_get_thread_regs()->dr0;
+    thread_regs->dr1 = ntdll_get_thread_regs()->dr1;
+    thread_regs->dr2 = ntdll_get_thread_regs()->dr2;
+    thread_regs->dr3 = ntdll_get_thread_regs()->dr3;
+    thread_regs->dr6 = ntdll_get_thread_regs()->dr6;
+    thread_regs->dr7 = ntdll_get_thread_regs()->dr7;
 
     if (!stack_reserve || !stack_commit)
     {
@@ -333,7 +343,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     return STATUS_SUCCESS;
 
 error:
-    if (thread_data) wine_ldt_free_fs( thread_data->teb_sel );
+    if (thread_regs) wine_ldt_free_fs( thread_regs->fs );
     if (addr)
     {
         SIZE_T size = 0;
