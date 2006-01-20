@@ -37,16 +37,18 @@ HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 #define ok_no_locks() ok(cLocks == 0, "Number of locks should be 0, but actually is %ld\n", cLocks)
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", hr)
 
+static const IID IID_IWineTest =
+{
+    0x5201163f,
+    0x8164,
+    0x4fd0,
+    {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
+}; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
+
 static void test_CoGetPSClsid(void)
 {
 	HRESULT hr;
 	CLSID clsid;
-	static const CLSID IID_IWineTest = {
-	    0x5201163f,
-	    0x8164,
-	    0x4fd0,
-	    {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
-	}; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
 
 	hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
 	ok_ole_success(hr, CoGetPSClsid);
@@ -277,12 +279,6 @@ static void test_no_marshaler(void)
 {
     IStream *pStream;
     HRESULT hr;
-    static const CLSID IID_IWineTest = {
-        0x5201163f,
-        0x8164,
-        0x4fd0,
-        {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
-    }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
     ok_ole_success(hr, CreateStreamOnHGlobal);
@@ -1401,8 +1397,11 @@ static HRESULT WINAPI TestRE_IClassFactory_CreateInstance(
     LPVOID *ppvObj)
 {
     DWORD_PTR res;
-    BOOL ret = SendMessageTimeout(hwnd_app, WM_NULL, 0, 0, SMTO_BLOCK, 5000, &res);
-    ok(ret, "Timed out sending a message to originating window during RPC call\n");
+    if (IsEqualIID(riid, &IID_IWineTest))
+    {
+        BOOL ret = SendMessageTimeout(hwnd_app, WM_NULL, 0, 0, SMTO_BLOCK, 5000, &res);
+        ok(ret, "Timed out sending a message to originating window during RPC call\n");
+    }
     return S_FALSE;
 }
 
@@ -1445,7 +1444,9 @@ static LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
         ok_more_than_one_lock();
 
-        hr = IClassFactory_CreateInstance(proxy, NULL, &IID_IUnknown, (void **)&object);
+        /* note the use of the magic IID_IWineTest value to tell remote thread
+         * to try to send a message back to us */
+        hr = IClassFactory_CreateInstance(proxy, NULL, &IID_IWineTest, (void **)&object);
 
         IClassFactory_Release(proxy);
 
@@ -1454,6 +1455,43 @@ static LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         end_host_object(tid, thread);
 
         PostMessage(hwnd, WM_QUIT, 0, 0);
+
+        return 0;
+    }
+    case WM_USER+1:
+    {
+        HRESULT hr;
+        IStream *pStream = NULL;
+        IClassFactory *proxy = NULL;
+        IUnknown *object;
+        DWORD tid;
+        HANDLE thread;
+
+        cLocks = 0;
+
+        hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+        ok_ole_success(hr, CreateStreamOnHGlobal);
+        tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&TestRE_ClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+        ok_more_than_one_lock();
+
+        IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+        hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&proxy);
+        ok_ole_success(hr, CoReleaseMarshalData);
+        IStream_Release(pStream);
+
+        ok_more_than_one_lock();
+
+        /* post quit message before a doing a COM call to show that a pending
+        * WM_QUIT message doesn't stop the call from succeeding */
+        PostMessage(hwnd, WM_QUIT, 0, 0);
+        hr = IClassFactory_CreateInstance(proxy, NULL, &IID_IUnknown, (void **)&object);
+
+        IClassFactory_Release(proxy);
+
+        ok_no_locks();
+
+        end_host_object(tid, thread);
 
         return 0;
     }
@@ -1475,7 +1513,25 @@ static void test_message_reentrancy(void)
     hwnd_app = CreateWindow("WineCOMTest", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, 0);
     ok(hwnd_app != NULL, "Window creation failed\n");
 
+    /* start message re-entrancy test */
     PostMessage(hwnd_app, WM_USER, 0, 0);
+
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
+static void test_WM_QUIT_handling(void)
+{
+    MSG msg;
+
+    hwnd_app = CreateWindow("WineCOMTest", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, 0);
+    ok(hwnd_app != NULL, "Window creation failed\n");
+
+    /* start WM_QUIT handling test */
+    PostMessage(hwnd_app, WM_USER+1, 0, 0);
 
     while (GetMessage(&msg, NULL, 0, 0))
     {
@@ -1852,8 +1908,15 @@ static void test_marshal_HENHMETAFILE(void)
 
 START_TEST(marshal)
 {
+    WNDCLASS wndclass;
     HMODULE hOle32 = GetModuleHandle("ole32");
     if (!(pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx"))) goto no_test;
+
+    /* register a window class used in several tests */
+    memset(&wndclass, 0, sizeof(wndclass));
+    wndclass.lpfnWndProc = window_proc;
+    wndclass.lpszClassName = "WineCOMTest";
+    RegisterClass(&wndclass);
 
     pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
@@ -1889,6 +1952,7 @@ START_TEST(marshal)
     test_stubbuffer(&IID_IClassFactory);
     test_proxybuffer(&IID_IClassFactory);
     test_message_reentrancy();
+    test_WM_QUIT_handling();
 
 /*    test_out_of_process_com(); */
 
