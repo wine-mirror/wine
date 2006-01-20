@@ -23,9 +23,8 @@
 
 HRESULT WINAPI StdProxy_Construct(REFIID riid,
 				  LPUNKNOWN pUnkOuter,
-				  PCInterfaceName name,
-				  CInterfaceProxyVtbl *vtbl,
-				  CInterfaceStubVtbl *svtbl,
+				  const ProxyFileInfo *ProxyInfo,
+				  int Index,
 				  LPPSFACTORYBUFFER pPSFactory,
 				  LPRPCPROXYBUFFER *ppProxy,
 				  LPVOID *ppvObj);

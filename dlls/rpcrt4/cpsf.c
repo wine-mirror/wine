@@ -95,9 +95,7 @@ static HRESULT WINAPI CStdPSFactory_CreateProxy(LPPSFACTORYBUFFER iface,
        debugstr_guid(riid),ppProxy,ppv);
   if (!FindProxyInfo(This->pProxyFileList,riid,&ProxyInfo,&Index))
     return E_NOINTERFACE;
-  return StdProxy_Construct(riid, pUnkOuter, ProxyInfo->pNamesArray[Index],
-                            ProxyInfo->pProxyVtblList[Index],
-                            ProxyInfo->pStubVtblList[Index], iface, ppProxy, ppv);
+  return StdProxy_Construct(riid, pUnkOuter, ProxyInfo, Index, iface, ppProxy, ppv);
 }
 
 static HRESULT WINAPI CStdPSFactory_CreateStub(LPPSFACTORYBUFFER iface,
