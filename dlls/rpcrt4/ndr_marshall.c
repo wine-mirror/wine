@@ -310,7 +310,10 @@ PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pForm
   pStubMsg->MaxCount = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
   pStubMsg->Buffer += 4;
   TRACE("unmarshalled conformance is %ld\n", pStubMsg->MaxCount);
-  return pFormat+4;
+  if (pStubMsg->fHasNewCorrDesc)
+    return pFormat+6;
+  else
+    return pFormat+4;
 }
 
 static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
@@ -330,7 +333,10 @@ static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_S
   TRACE("variance is %ld\n", pStubMsg->ActualCount);
 
 done:
-  return pFormat+4;
+  if (pStubMsg->fHasNewCorrDesc)
+    return pFormat+6;
+  else
+    return pFormat+4;
 }
 
 PFORMAT_STRING ComputeConformanceOrVariance(
@@ -444,7 +450,10 @@ done_conf_grab:
 
 finish_conf:
   TRACE("resulting conformance is %ld\n", *pCount);
-  return pFormat+4;
+  if (pStubMsg->fHasNewCorrDesc)
+    return pFormat+6;
+  else
+    return pFormat+4;
 }
 
 
