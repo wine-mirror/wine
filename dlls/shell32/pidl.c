@@ -133,7 +133,8 @@ BOOL WINAPI ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR pa
             ret = IShellFolder_GetDisplayNameOf(lsf, pidl, flag, &strret);
             if (SUCCEEDED(ret))
             {
-                ret = StrRetToStrNW(path, MAX_PATH, &strret, pidl);
+                if(!StrRetToStrNW(path, MAX_PATH, &strret, pidl))
+                    ret = E_FAIL;
             }
         }
         else
@@ -144,7 +145,8 @@ BOOL WINAPI ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR pa
                 ret = IShellFolder_GetDisplayNameOf(psfParent, pidllast, flag, &strret);
                 if (SUCCEEDED(ret))
                 {
-                    ret = StrRetToStrNW(path, MAX_PATH, &strret, pidllast);
+                    if(!StrRetToStrNW(path, MAX_PATH, &strret, pidllast))
+                        ret = E_FAIL;
                 }
                 IShellFolder_Release(psfParent);
             }

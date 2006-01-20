@@ -350,7 +350,8 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
 
 	    hr = IShellFolder_GetDisplayNameOf (psfChild, pidlNext, dwFlags, &strTemp);
 	    if (SUCCEEDED (hr)) {
-		hr = StrRetToStrNW (szOut, dwOutLen, &strTemp, pidlNext);
+		if(!StrRetToStrNW (szOut, dwOutLen, &strTemp, pidlNext))
+                    hr = E_FAIL;
 	    }
 	    IShellFolder_Release (psfChild);
 	}
