@@ -459,22 +459,9 @@ static HRESULT WINAPI OleInPlaceObject_GetWindow(IOleInPlaceObject *iface, HWND*
 {
     WebBrowser *This = INPLACEOBJ_THIS(iface);
 
-    FIXME("(%p)->(%p)\n", This, phwnd);
+    TRACE("(%p)->(%p)\n", This, phwnd);
 
-#if 0
-    /* Create a fake window to fool MFC into believing that we actually
-     * have an implemented browser control.  Avoids the assertion.
-     */
-    HWND hwnd;
-    hwnd = CreateWindowA("BUTTON", "Web Control",
-                        WS_HSCROLL | WS_VSCROLL | WS_OVERLAPPEDWINDOW,
-                        CW_USEDEFAULT, CW_USEDEFAULT, 600,
-                        400, NULL, NULL, NULL, NULL);
-
-    *phwnd = hwnd;
-    TRACE ("Returning hwnd = %d\n", hwnd);
-#endif
-
+    *phwnd = This->shell_embedding_hwnd;
     return S_OK;
 }
 
