@@ -337,7 +337,7 @@
 @ stdcall NtSetSecurityObject(long long ptr)
 @ stub NtSetSystemEnvironmentValue
 # @ stub NtSetSystemEnvironmentValueEx
-@ stub NtSetSystemInformation
+@ stdcall NtSetSystemInformation(long ptr long)
 @ stub NtSetSystemPowerState
 @ stdcall NtSetSystemTime(ptr ptr)
 # @ stub NtSetThreadExecutionState
@@ -1179,7 +1179,7 @@
 @ stdcall ZwSetSecurityObject(long long ptr) NtSetSecurityObject
 @ stub ZwSetSystemEnvironmentValue
 # @ stub ZwSetSystemEnvironmentValueEx
-@ stub ZwSetSystemInformation
+@ stdcall ZwSetSystemInformation(long ptr long) NtSetSystemInformation
 @ stub ZwSetSystemPowerState
 @ stdcall ZwSetSystemTime(ptr ptr) NtSetSystemTime
 # @ stub ZwSetThreadExecutionState

@@ -904,6 +904,15 @@ NTSTATUS WINAPI NtQuerySystemInformation(
     return ret;
 }
 
+/******************************************************************************
+ * NtSetSystemInformation [NTDLL.@]
+ * ZwSetSystemInformation [NTDLL.@]
+ */
+NTSTATUS WINAPI NtSetSystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG Length)
+{
+    FIXME("(0x%08x,%p,0x%08lx) stub\n",SystemInformationClass,SystemInformation,Length);
+    return STATUS_SUCCESS;
+}
 
 /******************************************************************************
  *  NtCreatePagingFile		[NTDLL.@]
