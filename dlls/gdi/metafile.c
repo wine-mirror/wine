@@ -419,11 +419,10 @@ BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
         mr = (METARECORD *)((char *)mh + offset);
 	TRACE("offset=%04x,size=%08lx\n",
             offset, mr->rdSize);
-	if (!mr->rdSize) {
-            TRACE(
-		  "Entry got size 0 at offset %d, total mf length is %ld\n",
-		  offset,mh->mtSize*2);
-		break; /* would loop endlessly otherwise */
+	if (mr->rdSize < 3) { /* catch illegal record sizes */
+            TRACE("Entry got size %ld at offset %d, total mf length is %ld\n",
+                  mr->rdSize,offset,mh->mtSize*2);
+            break;
 	}
 	offset += mr->rdSize * 2;
 	PlayMetaFileRecord( hdc, ht, mr, mh->mtNoObjects );
