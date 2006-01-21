@@ -39,9 +39,10 @@ typedef HRESULT (WINAPI *DLLREGISTER) (void);
 /***********************************************************************
  *           CloseINFEngine (ADVPACK.@)
  *
+ * Closes a handle to an INF file opened with OpenINFEngine.
  *
  * PARAMS
- *   hInf [I]
+ *   hInf [I] Handle to the INF file to close.
  *
  * RETURNS
  *   Success: S_OK.
