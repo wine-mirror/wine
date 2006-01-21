@@ -35,18 +35,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 /***********************************************************************
  *      AddDelBackupEntry (ADVPACK.@)
  *
- * Either marks the file in the file list as not existing during file
- * save, or deletes the file entry from the INI.
+ * Either appends the files in the file list to the backup section of
+ * the specified INI, or deletes the entries from the INI file.
  *
  * PARAMS
  *   lpcszFileList  [I] NULL-separated list of filenames.
  *   lpcszBackupDir [I] Path of the backup directory.
- *   lpcszBaseName  [I] Basename of the backup files.
- *   dwFlags        [I] See advpub.h.
+ *   lpcszBaseName  [I] Basename of the INI file.
+ *   dwFlags        [I] AADBE_ADD_ENTRY adds the entries in the file list
+ *                      to the INI file, while AADBE_DEL_ENTRY removes
+ *                      the entries from the INI file.
  *
  * RETURNS
  *   Success: S_OK.
  *   Failure: E_FAIL.
+ *
+ * NOTES
+ *   If the INI file does not exist before adding entries to it, the file
+ *   will be created.
+ * 
+ *   If lpcszBackupDir is NULL, the INI file is assumed to exist in
+ *   c:\windows or created there if it does not exist.
  *
  * BUGS
  *   Unimplemented.
