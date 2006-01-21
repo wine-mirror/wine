@@ -30,6 +30,17 @@ typedef struct _CabInfo {
     DWORD dwFlags;
 } CABINFO, *PCABINFO;
 
+typedef struct _PERUSERSECTION {
+    char szGUID[39 /*MAX_GUID_STRING_LEN*/ + 20];
+    char szDispName[128];
+    char szLocale[10];
+    char szStub[MAX_PATH * 4];
+    char szVersion[32];
+    char szCompID[128];
+    DWORD dwIsInstalled;
+    BOOL  bRollback;
+} PERUSERSECTION, *PPERUSERSECTION;
+
 typedef struct _StrEntry {
     LPSTR pszName;
     LPSTR pszValue;
@@ -137,6 +148,7 @@ HRESULT WINAPI RegSaveRestoreOnINF(HWND hWnd, PCSTR pszTitle, PCSTR pszINF,
 HRESULT WINAPI RunSetupCommand(HWND hWnd,
      LPCSTR szCmdName, LPCSTR szInfSection, LPCSTR szDir, LPCSTR lpszTitle,
      HANDLE *phEXE, DWORD dwFlags, LPVOID pvReserved);
+HRESULT WINAPI SetPerUserSecValues(PPERUSERSECTION pPerUser);
 HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
      PCSTR pszTranslateSection, PCSTR pszTranslateKey, PSTR pszBuffer,
      DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved);

@@ -414,6 +414,29 @@ HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved )
 }
 
 /***********************************************************************
+ *             SetPerUserSecValues    (ADVPACK.@)
+ *
+ * Prepares the per-user stub values under IsInstalled\{GUID} that
+ * control the per-user installation.
+ *
+ * PARAMS
+ *   pPerUser [I] Per-user stub values.
+ *
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
+ *
+ * BUGS
+ *   Unimplemented.
+ */
+HRESULT WINAPI SetPerUserSecValues(PPERUSERSECTION pPerUser)
+{
+    FIXME("(%p) stub\n", pPerUser);
+
+    return E_FAIL;
+}
+
+/***********************************************************************
  *             TranslateInfString    (ADVPACK.@)
  *
  * Translates the value of a specified key in an inf file into the

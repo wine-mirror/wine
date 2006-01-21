@@ -25,7 +25,7 @@
 @ stdcall RegSaveRestoreOnINF(ptr str str str long long long)
 @ stdcall RegisterOCX(ptr ptr str long)
 @ stdcall RunSetupCommand(long str str str str ptr long ptr)
-@ stub SetPerUserSecValues
+@ stdcall SetPerUserSecValues(ptr)
 @ stdcall TranslateInfString(str str str str ptr long ptr ptr)
 @ stdcall TranslateInfStringEx(long str str str str long ptr ptr)
 @ stdcall UserInstStubWrapper(long long str long)
