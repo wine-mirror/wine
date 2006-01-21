@@ -139,6 +139,7 @@ DWORD WINAPI NeedRebootInit(VOID);
 BOOL WINAPI NeedReboot(DWORD dwRebootCheck);
 HRESULT WINAPI OpenINFEngine(PCSTR pszInfFilename, PCSTR pszInstallSection,
      DWORD dwFlags, HINF *phInf, PVOID pvReserved);
+HRESULT WINAPI RebootCheckOnInstall(HWND hWnd, LPCSTR pszINF, LPCSTR pszSec, DWORD dwReserved);
 HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable);
 HRESULT WINAPI RegRestoreAll(HWND hWnd, PSTR pszTitleString, HKEY hkBackupKey);
 HRESULT WINAPI RegSaveRestore(HWND hWnd, PCSTR pszTitleString, HKEY hkBackupKey,

@@ -18,7 +18,7 @@
 @ stdcall NeedReboot(long)
 @ stdcall NeedRebootInit()
 @ stdcall OpenINFEngine(str str long ptr ptr)
-@ stub RebootCheckOnInstall
+@ stdcall RebootCheckOnInstall(long str str long)
 @ stdcall RegInstall(ptr str ptr)
 @ stdcall RegRestoreAll(ptr str long)
 @ stdcall RegSaveRestore(ptr str long str str str long)

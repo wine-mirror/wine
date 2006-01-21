@@ -348,6 +348,37 @@ HRESULT WINAPI OpenINFEngine(PCSTR pszInfFilename, PCSTR pszInstallSection,
 }
 
 /***********************************************************************
+ *             RebootCheckOnInstall    (ADVPACK.@)
+ *
+ * Checks if a reboot is required for an installed INF section.
+ *
+ * PARAMS
+ *   hWnd       [I] Handle to the window used for messages.
+ *   pszINF     [I] Filename of the INF file.
+ *   pszSec     [I] INF section to check.
+ *   dwReserved [I] Reserved.  Must be 0.
+ *
+ * RETURNS
+ *   Success: S_OK - Reboot is needed if the INF section is installed.
+ *            S_FALSE - Reboot is not needed.
+ *   Failure: HRESULT of GetLastError().
+ *
+ * NOTES
+ *   if pszSec is NULL, RebootCheckOnInstall checks the DefaultInstall
+ *   or DefaultInstall.NT section.
+ *
+ * BUGS
+ *   Unimplemented.
+ */
+HRESULT WINAPI RebootCheckOnInstall(HWND hWnd, LPCSTR pszINF,
+                                    LPCSTR pszSec, DWORD dwReserved)
+{
+    FIXME("(%p, %p, %p, %ld) stub\n", hWnd, pszINF, pszSec, dwReserved);
+
+    return E_FAIL;
+}
+
+/***********************************************************************
  *             RegisterOCX    (ADVPACK.@)
  */
 void WINAPI RegisterOCX( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
