@@ -982,6 +982,7 @@ void BuildRelays16( FILE *outfile )
     fprintf( outfile, "%s\n\t.long 0\n", asm_globl("CallTo16_DataSelector") );
     fprintf( outfile, "%s\n\t.long 0\n", asm_globl("CallTo16_TebSelector") );
     if (UsePIC) fprintf( outfile, "wine_ldt_copy_ptr:\t.long %s\n", asm_name("wine_ldt_copy") );
+    output_gnu_stack_note( outfile );
 }
 
 /*******************************************************************
@@ -1007,4 +1008,5 @@ void BuildRelays32( FILE *outfile )
     BuildCallFrom32Regs( outfile );
 
     output_function_size( outfile, "__wine_spec_thunk_text_32" );
+    output_gnu_stack_note( outfile );
 }

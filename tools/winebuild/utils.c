@@ -533,6 +533,20 @@ void output_function_size( FILE *outfile, const char *name )
     }
 }
 
+/* output the GNU note for non-exec stack */
+void output_gnu_stack_note( FILE *outfile )
+{
+    switch (target_platform)
+    {
+    case PLATFORM_WINDOWS:
+    case PLATFORM_APPLE:
+        break;
+    default:
+        fprintf( outfile, "\t.section .note.GNU-stack,\"\",@progbits\n" );
+        break;
+    }
+}
+
 /* return a global symbol declaration for an assembly symbol */
 const char *asm_globl( const char *func )
 {

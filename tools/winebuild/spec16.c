@@ -804,6 +804,7 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     output_stubs( outfile, spec );
     output_get_pc_thunk( outfile );
     output_init_code( outfile, spec, header_name );
+    output_gnu_stack_note( outfile );
 
     free( typelist );
 }

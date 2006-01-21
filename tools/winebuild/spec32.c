@@ -479,6 +479,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     output_imports( outfile, spec );
     output_resources( outfile, spec );
     output_asm_constructor( outfile, "__wine_spec_init_ctor" );
+    output_gnu_stack_note( outfile );
 }
 
 
