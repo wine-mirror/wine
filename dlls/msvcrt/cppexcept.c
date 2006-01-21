@@ -52,8 +52,15 @@ DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
 inline static void *call_ebp_func( void *func, void *ebp )
 {
     void *ret;
-    __asm__ __volatile__ ("pushl %%ebp; movl %2,%%ebp; call *%%eax; popl %%ebp" \
-                          : "=a" (ret) : "0" (func), "r" (ebp) : "ecx", "edx", "memory" );
+    int dummy;
+    __asm__ __volatile__ ("pushl %%ebx\n\t"
+                          "pushl %%ebp\n\t"
+                          "movl %4,%%ebp\n\t"
+                          "call *%%eax\n\t"
+                          "popl %%ebp\n\t"
+                          "popl %%ebx"
+                          : "=a" (ret), "=S" (dummy), "=D" (dummy)
+                          : "0" (func), "1" (ebp) : "ecx", "edx", "memory" );
     return ret;
 }
 
