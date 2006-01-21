@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -289,6 +290,31 @@ HRESULT WINAPI DelNode( LPCSTR pszFileOrDirName, DWORD dwFlags )
     return ret;
 }
 
+/* returns the parameter at dwIndex in a list of parameters
+ * separated by the cSeparator character
+ */
+static LPSTR get_parameter(LPSTR szParameters, CHAR cSeparator, DWORD dwIndex)
+{
+    LPSTR szParam = NULL;
+    DWORD i = 0;
+
+    while (*szParameters && i < dwIndex)
+    {
+        if (*szParameters == cSeparator)
+            i++;
+
+        szParameters++;
+    }
+
+    if (!*szParameters)
+        return NULL;
+
+    szParam = HeapAlloc(GetProcessHeap(), 0, lstrlenA(szParameters));
+    lstrcpyA(szParam, szParameters);
+
+    return szParam;
+}
+
 /***********************************************************************
  *             DelNodeRunDLL32    (ADVPACK.@)
  *
@@ -303,14 +329,27 @@ HRESULT WINAPI DelNode( LPCSTR pszFileOrDirName, DWORD dwFlags )
  * RETURNS
  *   Success: S_OK.
  *   Failure: E_FAIL.
- *
- * BUGS
- *   Unimplemented
  */
 HRESULT WINAPI DelNodeRunDLL32( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
 {
-    FIXME("(%s): stub\n", debugstr_a(cmdline));
-    return E_FAIL;
+    LPSTR szFilename, szFlags;
+    DWORD dwFlags;
+    HRESULT res;
+
+    TRACE("(%s)\n", debugstr_a(cmdline));
+
+    /* get the parameters at indexes 0 and 1 respectively */
+    szFilename = get_parameter(cmdline, ',', 0);
+    szFlags = get_parameter(cmdline, ',', 1);
+
+    dwFlags = atol(szFlags);
+
+    res = DelNode(szFilename, dwFlags);
+
+    HeapFree(GetProcessHeap(), 0, szFilename);
+    HeapFree(GetProcessHeap(), 0, szFlags);
+
+    return res;
 }
 
 /* The following defintions were copied from dlls/cabinet/cabinet.h */
