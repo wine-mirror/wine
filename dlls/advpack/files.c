@@ -599,15 +599,12 @@ done:
  * RETURNS
  *   Success: S_OK.
  *   Failure: E_FAIL.
- *
- * BUGS
- *   Unimplemented.
  */
 HRESULT WINAPI FileSaveMarkNotExist(LPSTR pszFileList, LPSTR pszDir, LPSTR pszBaseName)
 {
-    FIXME("(%p, %p, %p) stub\n", pszFileList, pszDir, pszBaseName);
+    TRACE("(%p, %p, %p)\n", pszFileList, pszDir, pszBaseName);
 
-    return E_FAIL;
+    return AddDelBackupEntry(pszFileList, pszDir, pszBaseName, AADBE_DEL_ENTRY);
 }
 
 /***********************************************************************
