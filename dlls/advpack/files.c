@@ -594,7 +594,7 @@ done:
  * PARAMS
  *   pszFileList [I] NULL-separated list of filenames.
  *   pszDir      [I] Path of the backup directory.
- *   pszBaseName [I] Basename of the backup files.
+ *   pszBaseName [I] Basename of the INI file.
  *
  * RETURNS
  *   Success: S_OK.
