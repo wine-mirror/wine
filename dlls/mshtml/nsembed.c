@@ -186,7 +186,7 @@ static BOOL get_mozctl_path(PRUnichar *gre_path)
 
     TRACE("Could not find Mozilla ActiveX Control\n");
 
-    return TRUE;
+    return FALSE;
 }
 
 static BOOL get_wine_gecko_path(PRUnichar *gre_path)
