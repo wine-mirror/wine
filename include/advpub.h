@@ -143,6 +143,8 @@ HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
 HRESULT WINAPI TranslateInfStringEx(HINF hInf, PCSTR pszInfFilename,
     PCSTR pszTranslateSection, PCSTR pszTranslateKey, PSTR pszBuffer,
     DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved);
+HRESULT WINAPI UserInstStubWrapper(HWND hWnd, HINSTANCE hInstance, PSTR pszParms, INT nShow);
+HRESULT WINAPI UserUnInstStubWrapper(HWND hWnd, HINSTANCE hInstance, PSTR pszParms, INT nShow);
 
 #ifdef __cplusplus
 }

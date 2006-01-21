@@ -507,3 +507,25 @@ HRESULT WINAPI TranslateInfStringEx(HINF hInf, PCSTR pszInfFilename,
 
     return E_FAIL;   
 }
+
+/***********************************************************************
+ *             UserInstStubWrapper    (ADVPACK.@)
+ */
+HRESULT WINAPI UserInstStubWrapper(HWND hWnd, HINSTANCE hInstance,
+                                   PSTR pszParms, INT nShow)
+{
+    FIXME("(%p, %p, %p, %i) stub\n", hWnd, hInstance, pszParms, nShow);
+
+    return E_FAIL;
+}
+
+/***********************************************************************
+ *             UserUnInstStubWrapper    (ADVPACK.@)
+ */
+HRESULT WINAPI UserUnInstStubWrapper(HWND hWnd, HINSTANCE hInstance,
+                                     PSTR pszParms, INT nShow)
+{
+    FIXME("(%p, %p, %p, %i) stub\n", hWnd, hInstance, pszParms, nShow);
+
+    return E_FAIL;
+}

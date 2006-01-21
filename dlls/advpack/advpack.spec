@@ -28,5 +28,5 @@
 @ stub SetPerUserSecValues
 @ stdcall TranslateInfString(str str str str ptr long ptr ptr)
 @ stdcall TranslateInfStringEx(long str str str str long ptr ptr)
-@ stub UserInstStubWrapper
-@ stub UserUnInstStubWrapper
+@ stdcall UserInstStubWrapper(long long str long)
+@ stdcall UserUnInstStubWrapper(long long str long)
