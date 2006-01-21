@@ -221,14 +221,66 @@ HRESULT WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
  *
  * RETURNS
  *   TRUE if user has admin rights, FALSE otherwise.
- *
- * BUGS
- *   Unimplemented.
  */
 BOOL WINAPI IsNTAdmin( DWORD reserved, LPDWORD pReserved )
 {
-    FIXME("(0x%08lx, %p): stub\n", reserved, pReserved);
-    return TRUE;
+    SID_IDENTIFIER_AUTHORITY SidAuthority = {SECURITY_NT_AUTHORITY};
+    PTOKEN_GROUPS pTokenGroups;
+    BOOL bSidFound = FALSE;
+    DWORD dwSize, i;
+    HANDLE hToken;
+    PSID pSid;
+
+    TRACE("(0x%08lx, %p)\n", reserved, pReserved);
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
+        return FALSE;
+
+    if (!GetTokenInformation(hToken, TokenGroups, NULL, 0, &dwSize))
+    {
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        {
+            CloseHandle(hToken);
+            return FALSE;
+        }
+    }
+
+    pTokenGroups = HeapAlloc(GetProcessHeap(), 0, dwSize);
+    if (!pTokenGroups)
+    {
+        CloseHandle(hToken);
+        return FALSE;
+    }
+
+    if (!GetTokenInformation(hToken, TokenGroups, pTokenGroups, dwSize, &dwSize))
+    {
+        HeapFree(GetProcessHeap(), 0, pTokenGroups);
+        CloseHandle(hToken);
+        return FALSE;
+    }
+
+    CloseHandle(hToken);
+
+    if (!AllocateAndInitializeSid(&SidAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+                                  DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &pSid))
+    {
+        HeapFree(GetProcessHeap(), 0, pTokenGroups);
+        return FALSE;
+    }
+
+    for (i = 0; i < pTokenGroups->GroupCount; i++)
+    {
+        if (EqualSid(pSid, pTokenGroups->Groups[i].Sid))
+        {
+            bSidFound = TRUE;
+            break;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, pTokenGroups);
+    FreeSid(pSid);
+
+    return bSidFound;
 }
 
 /***********************************************************************
