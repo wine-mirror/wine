@@ -199,17 +199,36 @@ unsigned long* MSVCRT___doserrno(void)
  */
 char* MSVCRT_strerror(int err)
 {
-  return strerror(err); /* FIXME */
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    if (!data->strerror_buffer)
+        if (!(data->strerror_buffer = MSVCRT_malloc(256))) return NULL;
+
+    if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
+    strcpy( data->strerror_buffer, MSVCRT__sys_errlist[err] );
+    return data->strerror_buffer;
 }
 
 /**********************************************************************
  *		_strerror	(MSVCRT.@)
  */
-char* _strerror(const char* err)
+char* _strerror(const char* str)
 {
-  static char strerrbuff[256]; /* FIXME: Per thread, nprintf */
-  sprintf(strerrbuff,"%s: %s\n",err,MSVCRT_strerror(msvcrt_get_thread_data()->thread_errno));
-  return strerrbuff;
+    thread_data_t *data = msvcrt_get_thread_data();
+    int err;
+
+    if (!data->strerror_buffer)
+        if (!(data->strerror_buffer = MSVCRT_malloc(256))) return NULL;
+
+    err = data->thread_errno;
+    if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
+
+    if (str && *str)
+        sprintf( data->strerror_buffer, "%s: %s\n", str, MSVCRT__sys_errlist[err] );
+    else
+        sprintf( data->strerror_buffer, "%s\n", MSVCRT__sys_errlist[err] );
+
+    return data->strerror_buffer;
 }
 
 /*********************************************************************
@@ -217,7 +236,16 @@ char* _strerror(const char* err)
  */
 void MSVCRT_perror(const char* str)
 {
-  _cprintf("%s: %s\n",str,MSVCRT_strerror(msvcrt_get_thread_data()->thread_errno));
+    int err = *MSVCRT__errno();
+    if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
+
+    if (str && *str)
+    {
+        _write( 2, str, strlen(str) );
+        _write( 2, ": ", 2 );
+    }
+    _write( 2, MSVCRT__sys_errlist[err], strlen(MSVCRT__sys_errlist[err]) );
+    _write( 2, "\n", 1 );
 }
 
 /******************************************************************************

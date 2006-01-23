@@ -75,6 +75,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	HeapFree(GetProcessHeap(),0,tls->efcvt_buffer);
 	HeapFree(GetProcessHeap(),0,tls->asctime_buffer);
 	HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
+	HeapFree(GetProcessHeap(),0,tls->strerror_buffer);
     }
     HeapFree(GetProcessHeap(), 0, tls);
     TRACE("finished thread free\n");
