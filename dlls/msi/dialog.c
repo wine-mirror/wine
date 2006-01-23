@@ -314,7 +314,7 @@ static UINT msi_dialog_build_font_list( msi_dialog *dialog )
 }
 
 static msi_control *msi_dialog_create_window( msi_dialog *dialog,
-                MSIRECORD *rec, LPCWSTR szCls, LPCWSTR name, LPCWSTR text,
+                MSIRECORD *rec, DWORD exstyle, LPCWSTR szCls, LPCWSTR name, LPCWSTR text,
                 DWORD style, HWND parent )
 {
     DWORD x, y, width, height;
@@ -351,7 +351,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
         font = msi_dialog_get_style( title_font, &title );
     }
 
-    control->hwnd = CreateWindowW( szCls, title, style,
+    control->hwnd = CreateWindowExW( exstyle, szCls, title, style,
                           x, y, width, height, parent, NULL, NULL, NULL );
 
     TRACE("Dialog %s control %s hwnd %p\n",
@@ -520,6 +520,7 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
 {
     DWORD attributes;
     LPCWSTR text, name;
+    DWORD exstyle = 0;
 
     name = MSI_RecordGetString( rec, 2 );
     attributes = MSI_RecordGetInteger( rec, 8 );
@@ -528,11 +529,13 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
         style |= WS_VISIBLE;
     if( ~attributes & msidbControlAttributesEnabled )
         style |= WS_DISABLED;
+    if( attributes & msidbControlAttributesSunken )
+        exstyle |= WS_EX_CLIENTEDGE;
 
     msi_dialog_map_events(dialog, name);
 
-    return msi_dialog_create_window( dialog, rec, szCls, name, text,
-                                     style, dialog->hwnd );
+    return msi_dialog_create_window( dialog, rec, exstyle, szCls, name,
+                                     text, style, dialog->hwnd );
 }
 
 struct msi_text_info
@@ -1335,7 +1338,7 @@ static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
     if( ~attributes & 2 )
         style |= WS_DISABLED;
 
-    control = msi_dialog_create_window( dialog, rec, szButton, name, text,
+    control = msi_dialog_create_window( dialog, rec, 0, szButton, name, text,
                                         style, group->parent->hwnd );
     if (!control)
         return ERROR_FUNCTION_FAILED;
