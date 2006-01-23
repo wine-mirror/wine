@@ -352,3 +352,15 @@ BOOL WINAPI I_CryptFreeTls(DWORD dwTlsIndex, DWORD unknown)
     TRACE("(%ld, %ld)\n", dwTlsIndex, unknown);
     return TlsFree(dwTlsIndex);
 }
+
+BOOL WINAPI I_CryptGetOssGlobal(DWORD x)
+{
+    FIXME("%08lx\n", x);
+    return FALSE;
+}
+
+BOOL WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
+{
+    FIXME("%08lx %08lx %08lx\n", x, y, z);
+    return FALSE;
+}

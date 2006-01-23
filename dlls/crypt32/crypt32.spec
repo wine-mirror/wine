@@ -175,10 +175,10 @@
 @ stdcall I_CryptFreeTls(long long)
 @ stub I_CryptGetDefaultCryptProv
 @ stub I_CryptGetDefaultCryptProvForEncrypt
-@ stub I_CryptGetOssGlobal
+@ stdcall I_CryptGetOssGlobal(long)
 @ stdcall I_CryptGetTls(long)
 @ stub I_CryptInsertLruEntry
-@ stub I_CryptInstallOssGlobal
+@ stdcall I_CryptInstallOssGlobal(long long long)
 @ stub I_CryptReleaseLruEntry
 @ stdcall I_CryptSetTls(long ptr)
 @ stub I_CryptUninstallOssGlobal
