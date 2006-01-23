@@ -291,6 +291,9 @@ struct process
     struct process*             next;
     HANDLE                      handle;
     char*                       search_path;
+    
+    PSYMBOL_REGISTERED_CALLBACK64       reg_cb;
+    DWORD64                     reg_user;
 
     struct module*              lmodules;
     unsigned long               dbg_hdr_addr;
@@ -314,8 +317,9 @@ struct line_info
 /* dbghelp.c */
 extern struct process* process_find_by_handle(HANDLE hProcess);
 extern HANDLE hMsvcrt;
-extern BOOL validate_addr64(DWORD64 addr);
-	
+extern BOOL         validate_addr64(DWORD64 addr);
+extern BOOL         pcs_callback(const struct process* pcs, ULONG action, void* data);
+
 /* elf_module.c */
 typedef BOOL (*elf_enum_modules_cb)(const char*, unsigned long addr, void* user);
 extern BOOL         elf_enum_modules(HANDLE hProc, elf_enum_modules_cb, void*);

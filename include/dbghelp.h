@@ -221,6 +221,7 @@ typedef struct _SOURCEFILE
 #define CBA_DEFERRED_SYMBOL_LOAD_CANCEL         0x00000007
 #define CBA_SET_OPTIONS                         0x00000008
 #define CBA_EVENT                               0x00000010
+#define CBA_DEFERRED_SYMBOL_LOAD_PARTIAL        0x00000020
 #define CBA_DEBUG_INFO                          0x10000000
 
 typedef struct _IMAGEHLP_CBA_READ_MEMORY
@@ -257,6 +258,17 @@ typedef struct _IMAGEHLP_DEFERRED_SYMBOL_LOAD
     CHAR                        FileName[MAX_PATH];
     BOOLEAN                     Reparse;
 } IMAGEHLP_DEFERRED_SYMBOL_LOAD, *PIMAGEHLP_DEFERRED_SYMBOL_LOAD;
+
+typedef struct _IMAGEHLP_DEFERRED_SYMBOL_LOAD64
+{
+    DWORD                       SizeOfStruct;
+    DWORD64                     BaseOfImage;
+    DWORD                       CheckSum;
+    DWORD                       TimeDateStamp;
+    CHAR                        FileName[MAX_PATH];
+    BOOLEAN                     Reparse;
+    HANDLE                      hFile;
+} IMAGEHLP_DEFERRED_SYMBOL_LOAD64, *PIMAGEHLP_DEFERRED_SYMBOL_LOAD64;
 
 typedef struct _IMAGEHLP_DUPLICATE_SYMBOL
 {

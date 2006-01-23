@@ -61,7 +61,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
  *        getting several of those while looking for a unique symbol. Part of the 
  *        issue is that we don't give a scope to a static variable inside a function
  *      + C++ management
- *  - implement the callback notification mechanism
  */
 
 unsigned   dbghelp_options = SYMOPT_UNDNAME;
@@ -284,6 +283,12 @@ BOOL WINAPI SymCleanup(HANDLE hProcess)
  */
 DWORD WINAPI SymSetOptions(DWORD opts)
 {
+    struct process* pcs;
+
+    for (pcs = process_first; pcs; pcs = pcs->next)
+    {
+        pcs_callback(pcs, CBA_SET_OPTIONS, &opts);
+    }
     return dbghelp_options = opts;
 }
 
@@ -322,6 +327,62 @@ BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
     return TRUE;
 }
 
+/******************************************************************
+ *		reg_cb64to32 (internal)
+ *
+ * Registered callback for converting information from 64 bit to 32 bit
+ */
+static BOOL CALLBACK reg_cb64to32(HANDLE hProcess, ULONG action, ULONG64 data, ULONG64 user)
+{
+    PSYMBOL_REGISTERED_CALLBACK         cb32 = (PSYMBOL_REGISTERED_CALLBACK)(DWORD)(user >> 32);
+    DWORD                               user32 = (DWORD)user;
+    void*                               data32;
+    IMAGEHLP_DEFERRED_SYMBOL_LOAD64*    idsl64;
+    IMAGEHLP_DEFERRED_SYMBOL_LOAD       idsl;
+
+    switch (action)
+    {
+    case CBA_DEBUG_INFO:
+    case CBA_DEFERRED_SYMBOL_LOAD_CANCEL:
+    case CBA_SET_OPTIONS:
+    case CBA_SYMBOLS_UNLOADED:
+        data32 = (void*)(DWORD)data;
+        break;
+    case CBA_DEFERRED_SYMBOL_LOAD_COMPLETE:
+    case CBA_DEFERRED_SYMBOL_LOAD_FAILURE:
+    case CBA_DEFERRED_SYMBOL_LOAD_PARTIAL:
+    case CBA_DEFERRED_SYMBOL_LOAD_START:
+        idsl64 = (IMAGEHLP_DEFERRED_SYMBOL_LOAD64*)(DWORD)data;
+        if (!validate_addr64(idsl64->BaseOfImage))
+            return FALSE;
+        idsl.SizeOfStruct = sizeof(idsl);
+        idsl.BaseOfImage = (DWORD)idsl64->BaseOfImage;
+        idsl.CheckSum = idsl64->CheckSum;
+        idsl.TimeDateStamp = idsl64->TimeDateStamp;
+        memcpy(idsl.FileName, idsl64->FileName, sizeof(idsl.FileName));
+        idsl.Reparse = idsl64->Reparse;
+        data32 = &idsl;
+        break;
+    case CBA_DUPLICATE_SYMBOL:
+    case CBA_EVENT:
+    case CBA_READ_MEMORY:
+    default:
+        FIXME("No mapping for action %lu\n", action);
+        return FALSE;
+    }
+    return cb32(hProcess, action, (PVOID)data32, (PVOID)user32);
+}
+
+/******************************************************************
+ *		pcs_callback (internal)
+ */
+BOOL pcs_callback(const struct process* pcs, ULONG action, void* data)
+{
+    TRACE("%p %lu %p\n", pcs, action, data);
+    if (!pcs->reg_cb) return FALSE;
+    return pcs->reg_cb(pcs->handle, action, (ULONG64)(DWORD_PTR)data, pcs->reg_user);
+}
+
 /***********************************************************************
  *		SymRegisterCallback (DBGHELP.@)
  */
@@ -329,9 +390,8 @@ BOOL WINAPI SymRegisterCallback(HANDLE hProcess,
                                 PSYMBOL_REGISTERED_CALLBACK CallbackFunction,
                                 PVOID UserContext)
 {
-    FIXME("(%p, %p, %p): stub\n", hProcess, CallbackFunction, UserContext);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    DWORD64 tmp = ((ULONGLONG)(DWORD)CallbackFunction << 32) | (DWORD)UserContext;
+    return SymRegisterCallback64(hProcess, reg_cb64to32, tmp);
 }
 
 /***********************************************************************
@@ -341,10 +401,15 @@ BOOL WINAPI SymRegisterCallback64(HANDLE hProcess,
                                   PSYMBOL_REGISTERED_CALLBACK64 CallbackFunction,
                                   ULONG64 UserContext)
 {
-    FIXME("(%p, %p, %s): stub\n", 
+    struct process* pcs = process_find_by_handle(hProcess);
+
+    TRACE("(%p, %p, %s)\n", 
           hProcess, CallbackFunction, wine_dbgstr_longlong(UserContext));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    if (!pcs) return FALSE;
+    pcs->reg_cb = CallbackFunction;
+    pcs->reg_user = UserContext;
+
+    return TRUE;
 }
 
 /* This is imagehlp version not dbghelp !! */

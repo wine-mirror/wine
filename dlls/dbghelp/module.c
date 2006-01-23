@@ -232,7 +232,8 @@ struct module* module_get_containee(const struct process* pcs,
  */
 struct module* module_get_debug(const struct process* pcs, struct module* module)
 {
-    struct module*      parent;
+    struct module*                      parent;
+    IMAGEHLP_DEFERRED_SYMBOL_LOAD64     idsl64;
 
     if (!module) return NULL;
     /* for a PE builtin, always get info from parent */
@@ -245,10 +246,28 @@ struct module* module_get_debug(const struct process* pcs, struct module* module
 
         switch (module->type)
         {
-        case DMT_ELF: ret = elf_load_debug_info(module, NULL);  break;
-        case DMT_PE:  ret = pe_load_debug_info(pcs, module);    break;
+        case DMT_ELF:
+            ret = elf_load_debug_info(module, NULL);
+            break;
+        case DMT_PE:
+            idsl64.SizeOfStruct = sizeof(idsl64);
+            idsl64.BaseOfImage = module->module.BaseOfImage;
+            idsl64.CheckSum = module->module.CheckSum;
+            idsl64.TimeDateStamp = module->module.TimeDateStamp;
+            strcpy(idsl64.FileName, module->module.ImageName);
+            idsl64.Reparse = FALSE;
+            idsl64.hFile = INVALID_HANDLE_VALUE;
+
+            pcs_callback(pcs, CBA_DEFERRED_SYMBOL_LOAD_START, &idsl64);
+            ret = pe_load_debug_info(pcs, module);
+            pcs_callback(pcs,
+                         ret ? CBA_DEFERRED_SYMBOL_LOAD_COMPLETE : CBA_DEFERRED_SYMBOL_LOAD_FAILURE,
+                         &idsl64);
+            break;
         case DMT_VIRTUAL: /* fall through */
-        default:      ret = FALSE;                              break;
+        default:
+            ret = FALSE;
+            break;
         }
         if (!ret) module->module.SymType = SymNone;
         assert(module->module.SymType != SymDeferred);
@@ -451,6 +470,8 @@ BOOL module_remove(struct process* pcs, struct module* module)
     HeapFree(GetProcessHeap(), 0, (char*)module->sources);
     HeapFree(GetProcessHeap(), 0, module->addr_sorttab);
     pool_destroy(&module->pool);
+    if (module->module.SymType != SymNone)
+        pcs_callback(pcs, CBA_SYMBOLS_UNLOADED, NULL);
 
     for (p = &pcs->lmodules; *p; p = &(*p)->next)
     {
