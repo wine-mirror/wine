@@ -271,10 +271,14 @@ static void test_get_atom_name(void)
                 ok( !len, "bad length %d\n", len );
 
             memset(outW, '.', sizeof(outW));
+            SetLastError(0xdeadbeef);
             len = GlobalGetAtomNameW( (ATOM)i, outW, 1);
             if (i)
             {
-                ok(len == 1, "succeed (got %u instead of 1)\n", len);
+                /* len == 0 with ERROR_MORE_DATA is on NT3.51 */
+                ok(len == 1 || (len == 0 && GetLastError() == ERROR_MORE_DATA),
+                         "0x%04x: got %u with %ld (excepted '1' or '0' with " \
+                         "ERROR_MORE_DATA)\n", i, len, GetLastError());
                 ok(outW[1] == DOUBLE('.'), "buffer overwrite\n");
             }
             else ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "0 badly handled\n");
