@@ -140,6 +140,9 @@ static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
 
 #elif defined(__APPLE__)
 
+#include <mach/mach_init.h>
+#include <mach/vm_map.h>
+
 /*
  * On Darwin, we can use the Mach call vm_allocate to allocate
  * anonymous memory at the specified address, and then use mmap with
@@ -148,15 +151,15 @@ static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
 static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
                            int fildes, off_t off)
 {
-    void *result;
-    result = addr;
-    if(vm_allocate(mach_task_self(),&result,len,0))
-        return 0;
-    else
+    vm_address_t result = (vm_address_t)addr;
+
+    if (!vm_allocate(mach_task_self(),&result,len,0))
     {
-        result = mmap( addr, len, prot, flags | MAP_FIXED, fildes, off );
-        return result == addr;
+        if (mmap( (void *)result, len, prot, flags | MAP_FIXED, fildes, off ) != MAP_FAILED)
+            return 1;
+        vm_deallocate(mach_task_self(),result,len);
     }
+    return 0;
 }
 
 #endif  /* (__svr4__ || __NetBSD__) && !MAP_TRYFIXED */

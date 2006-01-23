@@ -176,8 +176,8 @@ static void timer_dump( struct object *obj, int verbose )
 {
     struct timer *timer = (struct timer *)obj;
     assert( obj->ops == &timer_ops );
-    fprintf( stderr, "Timer manual=%d when=%ld.%06ld period=%d ",
-             timer->manual, timer->when.tv_sec, timer->when.tv_usec, timer->period );
+    fprintf( stderr, "Timer manual=%d when=%ld.%06u period=%d ",
+             timer->manual, timer->when.tv_sec, (unsigned int)timer->when.tv_usec, timer->period );
     dump_object_name( &timer->obj );
     fputc( '\n', stderr );
 }
