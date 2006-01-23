@@ -355,6 +355,7 @@ static void test_defines(void)
     CHECK_DEF(ENOLCK);
     CHECK_DEF(ENOSYS);
     CHECK_DEF(ENOTEMPTY);
+    CHECK_DEF(EILSEQ);
     CHECK_DEF(LC_ALL);
     CHECK_DEF(LC_COLLATE);
     CHECK_DEF(LC_CTYPE);

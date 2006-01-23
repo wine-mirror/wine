@@ -60,6 +60,7 @@
 #  define ENOLCK  39
 #  define ENOSYS  40
 #  define ENOTEMPTY 41
+#  define EILSEQ    42
 
 #ifdef __cplusplus
 extern "C" {

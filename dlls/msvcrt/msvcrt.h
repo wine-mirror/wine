@@ -437,6 +437,7 @@ struct MSVCRT__stati64 {
 #define MSVCRT_ENOLCK  39
 #define MSVCRT_ENOSYS  40
 #define MSVCRT_ENOTEMPTY 41
+#define MSVCRT_EILSEQ    42
 
 #define MSVCRT_LC_ALL          0
 #define MSVCRT_LC_COLLATE      1
