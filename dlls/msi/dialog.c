@@ -111,6 +111,7 @@ const WCHAR szMsiHiddenWindow[] = {
 static const WCHAR szStatic[] = { 'S','t','a','t','i','c',0 };
 static const WCHAR szButton[] = { 'B','U','T','T','O','N', 0 };
 static const WCHAR szButtonData[] = { 'M','S','I','D','A','T','A',0 };
+static const WCHAR szProgress[] = { 'P','r','o','g','r','e','s','s',0 };
 static const WCHAR szText[] = { 'T','e','x','t',0 };
 static const WCHAR szPushButton[] = { 'P','u','s','h','B','u','t','t','o','n',0 };
 static const WCHAR szLine[] = { 'L','i','n','e',0 };
@@ -467,16 +468,27 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     ctrl = msi_dialog_find_control( dialog, control );
     if (!ctrl)
         return;
-    if( lstrcmpW(attribute, szText) )
+    if( !lstrcmpW(attribute, szText) )
     {
-        ERR("Attribute %s\n", debugstr_w(attribute));
+        font_text = MSI_RecordGetString( rec , 1 );
+        font = msi_dialog_get_style( font_text, &text );
+        SetWindowTextW( ctrl->hwnd, text );
+        msi_free( font );
+        msi_dialog_check_messages( NULL );
+    }
+    else if( !lstrcmpW(attribute, szProgress) )
+    {
+        /* FIXME: should forward to progress bar */
+        static int display_fixme = 1;
+        if (display_fixme)
+            FIXME("Attribute %s not being set\n", debugstr_w(attribute));
+        display_fixme = 0;
+    }
+    else
+    {
+        FIXME("Attribute %s not being set\n", debugstr_w(attribute));
         return;
     }
-    font_text = MSI_RecordGetString( rec , 1 );
-    font = msi_dialog_get_style( font_text, &text );
-    SetWindowTextW( ctrl->hwnd, text );
-    msi_free( font );
-    msi_dialog_check_messages( NULL );
 }
 
 static void msi_dialog_map_events(msi_dialog* dialog, LPCWSTR control)
