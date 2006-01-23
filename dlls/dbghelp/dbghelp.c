@@ -338,6 +338,18 @@ BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
     struct process* pcs = process_find_by_handle(hProcess);
     if (!pcs) return FALSE;
 
+    if (pcs->ctx_frame.ReturnOffset == StackFrame->ReturnOffset &&
+        pcs->ctx_frame.FrameOffset  == StackFrame->FrameOffset  &&
+        pcs->ctx_frame.StackOffset  == StackFrame->StackOffset)
+    {
+        TRACE("Setting same frame {rtn=%s frm=%s stk=%s}\n",
+              wine_dbgstr_longlong(pcs->ctx_frame.ReturnOffset),
+              wine_dbgstr_longlong(pcs->ctx_frame.FrameOffset),
+              wine_dbgstr_longlong(pcs->ctx_frame.StackOffset));
+        SetLastError(ERROR_ACCESS_DENIED); /* latest MSDN says ERROR_SUCCESS */
+        return FALSE;
+    }
+
     pcs->ctx_frame = *StackFrame;
     /* MSDN states that Context is not (no longer?) used */
     return TRUE;
