@@ -43,8 +43,6 @@ unsigned int MSVCRT_osversion; /* FIXME: */
 unsigned int MSVCRT__winmajor;
 unsigned int MSVCRT__winminor;
 unsigned int MSVCRT__winver;
-unsigned int MSVCRT__sys_nerr; /* FIXME: not accessible from Winelib apps */
-char**       MSVCRT__sys_errlist; /* FIXME: not accessible from Winelib apps */
 unsigned int MSVCRT___setlc_active;
 unsigned int MSVCRT___unguarded_readlc_active;
 double MSVCRT__HUGE;
@@ -270,7 +268,6 @@ void msvcrt_init_args(void)
   MSVCRT_osversion   = version & 0xFFFF;
   MSVCRT_osminor     = version & 0xFF;
   MSVCRT_osmajor     = (version>>8) & 0xFF;
-  MSVCRT__sys_nerr   = 43;
   MSVCRT__HUGE = HUGE_VAL;
   MSVCRT___setlc_active = 0;
   MSVCRT___unguarded_readlc_active = 0;

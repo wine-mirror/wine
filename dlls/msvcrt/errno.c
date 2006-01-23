@@ -26,6 +26,97 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+/* error strings generated with glibc strerror */
+char str_success[]       = "Success";
+char str_EPERM[]         = "Operation not permitted";
+char str_ENOENT[]        = "No such file or directory";
+char str_ESRCH[]         = "No such process";
+char str_EINTR[]         = "Interrupted system call";
+char str_EIO[]           = "Input/output error";
+char str_ENXIO[]         = "No such device or address";
+char str_E2BIG[]         = "Argument list too long";
+char str_ENOEXEC[]       = "Exec format error";
+char str_EBADF[]         = "Bad file descriptor";
+char str_ECHILD[]        = "No child processes";
+char str_EAGAIN[]        = "Resource temporarily unavailable";
+char str_ENOMEM[]        = "Cannot allocate memory";
+char str_EACCES[]        = "Permission denied";
+char str_EFAULT[]        = "Bad address";
+char str_EBUSY[]         = "Device or resource busy";
+char str_EEXIST[]        = "File exists";
+char str_EXDEV[]         = "Invalid cross-device link";
+char str_ENODEV[]        = "No such device";
+char str_ENOTDIR[]       = "Not a directory";
+char str_EISDIR[]        = "Is a directory";
+char str_EINVAL[]        = "Invalid argument";
+char str_ENFILE[]        = "Too many open files in system";
+char str_EMFILE[]        = "Too many open files";
+char str_ENOTTY[]        = "Inappropriate ioctl for device";
+char str_EFBIG[]         = "File too large";
+char str_ENOSPC[]        = "No space left on device";
+char str_ESPIPE[]        = "Illegal seek";
+char str_EROFS[]         = "Read-only file system";
+char str_EMLINK[]        = "Too many links";
+char str_EPIPE[]         = "Broken pipe";
+char str_EDOM[]          = "Numerical argument out of domain";
+char str_ERANGE[]        = "Numerical result out of range";
+char str_EDEADLK[]       = "Resource deadlock avoided";
+char str_ENAMETOOLONG[]  = "File name too long";
+char str_ENOLCK[]        = "No locks available";
+char str_ENOSYS[]        = "Function not implemented";
+char str_ENOTEMPTY[]     = "Directory not empty";
+char str_EILSEQ[]        = "Invalid or incomplete multibyte or wide character";
+char str_generic_error[] = "Unknown error";
+
+char *MSVCRT__sys_errlist[] =
+{
+    str_success,
+    str_EPERM,
+    str_ENOENT,
+    str_ESRCH,
+    str_EINTR,
+    str_EIO,
+    str_ENXIO,
+    str_E2BIG,
+    str_ENOEXEC,
+    str_EBADF,
+    str_ECHILD,
+    str_EAGAIN,
+    str_ENOMEM,
+    str_EACCES,
+    str_EFAULT,
+    str_generic_error,
+    str_EBUSY,
+    str_EEXIST,
+    str_EXDEV,
+    str_ENODEV,
+    str_ENOTDIR,
+    str_EISDIR,
+    str_EINVAL,
+    str_ENFILE,
+    str_EMFILE,
+    str_ENOTTY,
+    str_generic_error,
+    str_EFBIG,
+    str_ENOSPC,
+    str_ESPIPE,
+    str_EROFS,
+    str_EMLINK,
+    str_EPIPE,
+    str_EDOM,
+    str_ERANGE,
+    str_generic_error,
+    str_EDEADLK,
+    str_generic_error,
+    str_ENAMETOOLONG,
+    str_ENOLCK,
+    str_ENOSYS,
+    str_ENOTEMPTY,
+    str_EILSEQ,
+    str_generic_error
+};
+
+unsigned int MSVCRT__sys_nerr = sizeof(MSVCRT__sys_errlist)/sizeof(MSVCRT__sys_errlist[0]) - 1;
 
 /* INTERNAL: Set the crt and dos errno's from the OS error given. */
 void msvcrt_set_errno(int err)
