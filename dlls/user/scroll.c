@@ -260,6 +260,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
         if (!info)
         {
             WARN("called for missing scroll bar");
+            WIN_ReleasePtr( wndPtr );
             return FALSE;
         }
         *arrowSize = GetSystemMetrics(SM_CXVSCROLL);
