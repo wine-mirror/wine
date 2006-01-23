@@ -3083,39 +3083,33 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     }
     case D3DRS_POINTSPRITEENABLE         :
     {
-        if(Value) {
-            if(GL_SUPPORT(GL_ARB_point_sprite)) {
-                glEnable(GL_POINT_SPRITE_ARB);
-                checkGLcall("glEnable GL_POINT_SPRITE_ARB");
-            } else {
-                TRACE("Point sprites cannot be enabled in this version of opengl\n");
-            }
+        if (!GL_SUPPORT(ARB_POINT_SPRITE)) {
+            TRACE("Point sprites not supported\n");
+            break;
+        }
+
+        if (Value) {
+            glEnable(GL_POINT_SPRITE_ARB);
+            checkGLcall("glEnable GL_POINT_SPRITE_ARB");
         } else {
-            if(GL_SUPPORT(GL_ARB_point_sprite)) {
-                glDisable(GL_POINT_SPRITE_ARB);
-                checkGLcall("glDisable GL_POINT_SPRITE_ARB");
-            } else {
-                TRACE("Point sprites cannot be disabled in this version of opengl\n");
-            }
+            glDisable(GL_POINT_SPRITE_ARB);
+            checkGLcall("glDisable GL_POINT_SPRITE_ARB");
         }
         break;
     }
     case D3DRS_MULTISAMPLEANTIALIAS      :
     {
+        if (!GL_SUPPORT(ARB_MULTISAMPLE)) {
+            TRACE("Multisample antialiasing not supported\n");
+            break;
+        }
+
         if(Value) {
-            if(GL_SUPPORT(GL_ARB_multisample)) {
-                glEnable(GL_MULTISAMPLE_ARB);
-                checkGLcall("glEnable GL_MULTISAMPLE_ARB");
-            } else {
-                TRACE("Multisample antialiasing cannot be enabled in this version of opengl\n");
-            }
+            glEnable(GL_MULTISAMPLE_ARB);
+            checkGLcall("glEnable GL_MULTISAMPLE_ARB");
         } else {
-            if(GL_SUPPORT(GL_ARB_multisample)) {
-                glDisable(GL_MULTISAMPLE_ARB);
-                checkGLcall("glDisable GL_MULTISAMPLE_ARB");
-            } else {
-                TRACE("Multisample antialiasing cannot be disabled in this version of opengl\n");
-            }
+            glDisable(GL_MULTISAMPLE_ARB);
+            checkGLcall("glDisable GL_MULTISAMPLE_ARB");
         }
         break;
     }
