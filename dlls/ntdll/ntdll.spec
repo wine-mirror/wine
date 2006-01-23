@@ -1042,7 +1042,7 @@
 # @ stub ZwMapUserPhysicalPagesScatter
 @ stdcall ZwMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection
 # @ stub ZwModifyBootEntry
-@ stub ZwNotifyChangeDirectoryFile
+@ stdcall ZwNotifyChangeDirectoryFile(long long ptr ptr ptr ptr long long long) NtNotifyChangeDirectoryFile
 @ stdcall ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
 # @ stub ZwNotifyChangeMultipleKeys
 @ stdcall ZwOpenDirectoryObject(long long long) NtOpenDirectoryObject
