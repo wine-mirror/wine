@@ -164,6 +164,17 @@ static BOOL WINAPI process_invade_cb(char* name, DWORD base, DWORD size, void* u
 }
 
 /******************************************************************
+ *		check_live_target
+ *
+ */
+static BOOL check_live_target(struct process* pcs)
+{
+    if (!GetProcessId(pcs->handle)) return FALSE;
+    if (!elf_read_wine_loader_dbg_info(pcs)) return FALSE;
+    return getenv("DBGHELP_NOLIVE") == NULL;
+}
+
+/******************************************************************
  *		SymInitialize (DBGHELP.@)
  *
  * The initialisation of a dbghelp's context.
@@ -178,11 +189,14 @@ static BOOL WINAPI process_invade_cb(char* name, DWORD base, DWORD size, void* u
  *   our internal ELF modules representation (loading / unloading). This way,
  *   we'll pair every loaded builtin PE module with its ELF counterpart (and
  *   access its debug information).
- * - if fInvadeProcess (in SymInitialize) is FALSE, we won't be able to
- *   make the peering between a builtin PE module and its ELF counterpart, hence
- *   we won't be able to provide the requested debug information. We'll
- *   however be able to load native PE modules (and their debug information)
- *   without any trouble.
+ * - if fInvadeProcess (in SymInitialize) is FALSE, we check anyway if the 
+ *   hProcess refers to a running process. We use some heuristics here, so YMMV.
+ *   If we detect a live target, then we get the same handling as if
+ *   fInvadeProcess is TRUE (except that the modules are not loaded). Otherwise,
+ *   we won't be able to make the peering between a builtin PE module and its ELF
+ *   counterpart. Hence we won't be able to provide the requested debug
+ *   information. We'll however be able to load native PE modules (and their
+ *   debug information) without any trouble.
  * Note also that this scheme can be intertwined with the deferred loading 
  * mechanism (ie only load the debug information when we actually need it).
  */
@@ -237,16 +251,18 @@ BOOL WINAPI SymInitialize(HANDLE hProcess, PSTR UserSearchPath, BOOL fInvadeProc
     pcs->dbg_hdr_addr = 0;
     pcs->next = process_first;
     process_first = pcs;
-
-    if (fInvadeProcess)
+    
+    if (check_live_target(pcs))
     {
-        if (!elf_read_wine_loader_dbg_info(pcs))
-        {
-            SymCleanup(hProcess);
-            return FALSE;
-        }
-        EnumerateLoadedModules(hProcess, process_invade_cb, (void*)hProcess);
+        if (fInvadeProcess)
+            EnumerateLoadedModules(hProcess, process_invade_cb, (void*)hProcess);
         elf_synchronize_module_list(pcs);
+    }
+    else if (fInvadeProcess)
+    {
+        SymCleanup(hProcess);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
 
     return TRUE;
