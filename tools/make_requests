@@ -30,8 +30,8 @@ my %formats =
     "unsigned short"=> "%04x",
     "unsigned int"  => "%08x",
     "void*"         => "%p",
-    "time_t"        => "%ld",
-    "size_t"        => "%d",
+    "time_t"        => "%ld (long)",
+    "size_t"        => "%lu (unsigned long)",
     "obj_handle_t"  => "%p",
     "atom_t"        => "%04x",
     "user_handle_t" => "%p",
@@ -69,15 +69,18 @@ sub DO_DUMP_FUNC($$@)
                 push @trace_lines, "    $func( &req->$var );\n";
                 push @trace_lines, "    fprintf( stderr, \",\" );\n" if ($#_ > 0);
             }
+            elsif ($formats{$type} =~ /^(%.*)\s+\((.*)\)/)
+            {
+                my ($format, $cast) = ($1, $2);
+                push @trace_lines, "    fprintf( stderr, \" $var=$format";
+                push @trace_lines, "," if ($#_ > 0);
+                push @trace_lines, "\", ($cast)req->$var );\n";
+            }
             else
             {
                 push @trace_lines, "    fprintf( stderr, \" $var=$formats{$type}";
                 push @trace_lines, "," if ($#_ > 0);
-                push @trace_lines, "\", ";
-                # In the case of time_t we need to cast the parameter to
-                # long to match the associated "%ld" printf modifier.
-                push @trace_lines, "(long)" if( $type eq "time_t" );
-                push @trace_lines, "req->$var );\n";
+                push @trace_lines, "\", req->$var );\n";
             }
 	}
 	else  # must be some varargs format

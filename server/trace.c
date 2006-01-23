@@ -639,7 +639,7 @@ static void dump_get_startup_info_reply( const struct get_startup_info_reply *re
 static void dump_init_process_done_request( const struct init_process_done_request *req )
 {
     fprintf( stderr, " module=%p,", req->module );
-    fprintf( stderr, " module_size=%d,", req->module_size );
+    fprintf( stderr, " module_size=%lu,", (unsigned long)req->module_size );
     fprintf( stderr, " entry=%p,", req->entry );
     fprintf( stderr, " name=%p,", req->name );
     fprintf( stderr, " exe_file=%p,", req->exe_file );
@@ -665,7 +665,7 @@ static void dump_init_thread_reply( const struct init_thread_reply *req )
 {
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
-    fprintf( stderr, " info_size=%d,", req->info_size );
+    fprintf( stderr, " info_size=%lu,", (unsigned long)req->info_size );
     fprintf( stderr, " server_start=%ld,", (long)req->server_start );
     fprintf( stderr, " version=%d", req->version );
 }
@@ -751,7 +751,7 @@ static void dump_get_dll_info_request( const struct get_dll_info_request *req )
 
 static void dump_get_dll_info_reply( const struct get_dll_info_reply *req )
 {
-    fprintf( stderr, " size=%d,", req->size );
+    fprintf( stderr, " size=%lu,", (unsigned long)req->size );
     fprintf( stderr, " entry_point=%p,", req->entry_point );
     fprintf( stderr, " filename=" );
     dump_varargs_unicode_str( cur_size );
@@ -781,7 +781,7 @@ static void dump_load_dll_request( const struct load_dll_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " base=%p,", req->base );
-    fprintf( stderr, " size=%d,", req->size );
+    fprintf( stderr, " size=%lu,", (unsigned long)req->size );
     fprintf( stderr, " dbg_offset=%d,", req->dbg_offset );
     fprintf( stderr, " dbg_size=%d,", req->dbg_size );
     fprintf( stderr, " name=%p,", req->name );
@@ -1569,7 +1569,7 @@ static void dump_next_module_reply( const struct next_module_reply *req )
 {
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " base=%p,", req->base );
-    fprintf( stderr, " size=%d,", req->size );
+    fprintf( stderr, " size=%lu,", (unsigned long)req->size );
     fprintf( stderr, " filename=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -1675,7 +1675,7 @@ static void dump_create_key_request( const struct create_key_request *req )
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " modif=%ld,", (long)req->modif );
-    fprintf( stderr, " namelen=%d,", req->namelen );
+    fprintf( stderr, " namelen=%lu,", (unsigned long)req->namelen );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->namelen) );
     fputc( ',', stderr );
@@ -1729,8 +1729,8 @@ static void dump_enum_key_reply( const struct enum_key_reply *req )
     fprintf( stderr, " max_value=%d,", req->max_value );
     fprintf( stderr, " max_data=%d,", req->max_data );
     fprintf( stderr, " modif=%ld,", (long)req->modif );
-    fprintf( stderr, " total=%d,", req->total );
-    fprintf( stderr, " namelen=%d,", req->namelen );
+    fprintf( stderr, " total=%lu,", (unsigned long)req->total );
+    fprintf( stderr, " namelen=%lu,", (unsigned long)req->namelen );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->namelen) );
     fputc( ',', stderr );
@@ -1742,7 +1742,7 @@ static void dump_set_key_value_request( const struct set_key_value_request *req 
 {
     fprintf( stderr, " hkey=%p,", req->hkey );
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " namelen=%d,", req->namelen );
+    fprintf( stderr, " namelen=%lu,", (unsigned long)req->namelen );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->namelen) );
     fputc( ',', stderr );
@@ -1760,7 +1760,7 @@ static void dump_get_key_value_request( const struct get_key_value_request *req 
 static void dump_get_key_value_reply( const struct get_key_value_reply *req )
 {
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " total=%d,", req->total );
+    fprintf( stderr, " total=%lu,", (unsigned long)req->total );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
 }
@@ -1775,8 +1775,8 @@ static void dump_enum_key_value_request( const struct enum_key_value_request *re
 static void dump_enum_key_value_reply( const struct enum_key_value_reply *req )
 {
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " total=%d,", req->total );
-    fprintf( stderr, " namelen=%d,", req->namelen );
+    fprintf( stderr, " total=%lu,", (unsigned long)req->total );
+    fprintf( stderr, " namelen=%lu,", (unsigned long)req->namelen );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->namelen) );
     fputc( ',', stderr );
@@ -1967,7 +1967,7 @@ static void dump_get_atom_information_reply( const struct get_atom_information_r
 {
     fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " pinned=%d,", req->pinned );
-    fprintf( stderr, " total=%d,", req->total );
+    fprintf( stderr, " total=%lu,", (unsigned long)req->total );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -2087,7 +2087,7 @@ static void dump_get_message_reply( const struct get_message_reply *req )
     fprintf( stderr, " info=%08x,", req->info );
     fprintf( stderr, " hw_id=%08x,", req->hw_id );
     fprintf( stderr, " active_hooks=%08x,", req->active_hooks );
-    fprintf( stderr, " total=%d,", req->total );
+    fprintf( stderr, " total=%lu,", (unsigned long)req->total );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
 }
@@ -2326,7 +2326,7 @@ static void dump_set_window_info_request( const struct set_window_info_request *
     fprintf( stderr, " is_unicode=%d,", req->is_unicode );
     fprintf( stderr, " user_data=%p,", req->user_data );
     fprintf( stderr, " extra_offset=%d,", req->extra_offset );
-    fprintf( stderr, " extra_size=%d,", req->extra_size );
+    fprintf( stderr, " extra_size=%lu,", (unsigned long)req->extra_size );
     fprintf( stderr, " extra_value=%08x", req->extra_value );
 }
 
@@ -2489,7 +2489,7 @@ static void dump_get_visible_region_reply( const struct get_visible_region_reply
     fprintf( stderr, " top_org_y=%d,", req->top_org_y );
     fprintf( stderr, " win_org_x=%d,", req->win_org_x );
     fprintf( stderr, " win_org_y=%d,", req->win_org_y );
-    fprintf( stderr, " total_size=%d,", req->total_size );
+    fprintf( stderr, " total_size=%lu,", (unsigned long)req->total_size );
     fprintf( stderr, " region=" );
     dump_varargs_rectangles( cur_size );
 }
@@ -2501,7 +2501,7 @@ static void dump_get_window_region_request( const struct get_window_region_reque
 
 static void dump_get_window_region_reply( const struct get_window_region_reply *req )
 {
-    fprintf( stderr, " total_size=%d,", req->total_size );
+    fprintf( stderr, " total_size=%lu,", (unsigned long)req->total_size );
     fprintf( stderr, " region=" );
     dump_varargs_rectangles( cur_size );
 }
@@ -2524,7 +2524,7 @@ static void dump_get_update_region_reply( const struct get_update_region_reply *
 {
     fprintf( stderr, " child=%p,", req->child );
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " total_size=%d,", req->total_size );
+    fprintf( stderr, " total_size=%lu,", (unsigned long)req->total_size );
     fprintf( stderr, " region=" );
     dump_varargs_rectangles( cur_size );
 }
@@ -2946,7 +2946,7 @@ static void dump_set_class_info_request( const struct set_class_info_request *re
     fprintf( stderr, " win_extra=%d,", req->win_extra );
     fprintf( stderr, " instance=%p,", req->instance );
     fprintf( stderr, " extra_offset=%d,", req->extra_offset );
-    fprintf( stderr, " extra_size=%d,", req->extra_size );
+    fprintf( stderr, " extra_size=%lu,", (unsigned long)req->extra_size );
     fprintf( stderr, " extra_value=%08x", req->extra_value );
 }
 
@@ -3093,7 +3093,7 @@ static void dump_get_token_user_request( const struct get_token_user_request *re
 
 static void dump_get_token_user_reply( const struct get_token_user_reply *req )
 {
-    fprintf( stderr, " user_len=%d,", req->user_len );
+    fprintf( stderr, " user_len=%lu,", (unsigned long)req->user_len );
     fprintf( stderr, " user=" );
     dump_varargs_SID( cur_size );
 }
@@ -3177,7 +3177,7 @@ static void dump_create_symlink_request( const struct create_symlink_request *re
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " rootdir=%p,", req->rootdir );
-    fprintf( stderr, " name_len=%d,", req->name_len );
+    fprintf( stderr, " name_len=%lu,", (unsigned long)req->name_len );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->name_len) );
     fputc( ',', stderr );
