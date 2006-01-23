@@ -25,7 +25,7 @@
 #include <assert.h>
 #include "wine/test.h"
 
-#define TEST_STRING1 "C:\\Program Files\\Application Name"
+#define TEST_STRING1 "\\Application Name"
 #define TEST_STRING2 "%49001%\\Application Name"
 
 static HRESULT (WINAPI *pGetVersionFromFile)(LPSTR,LPDWORD,LPDWORD,BOOL);
@@ -224,8 +224,20 @@ static void translateinfstring_test()
     if(hr == ERROR_SUCCESS)
     todo_wine
     {
-        ok(!strcmp(buffer, TEST_STRING1), "Expected %s, got %s\n", TEST_STRING1, buffer);
-        ok(dwSize == 34, "Expected size 34, got %ld\n", dwSize);
+        HKEY key;
+        DWORD len = MAX_PATH;
+        char cmpbuffer[MAX_PATH];
+        LONG res = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion", &key);
+        if(res == ERROR_SUCCESS) {
+            res = RegQueryValueExA(key, "ProgramFilesDir", NULL, NULL, (LPBYTE)cmpbuffer, &len);
+            if(res == ERROR_SUCCESS) {
+                strcat(cmpbuffer, TEST_STRING1);
+                ok(!strcmp(buffer, cmpbuffer), "Expected '%s', got '%s'\n", cmpbuffer, buffer);
+                ok(dwSize == (strlen(cmpbuffer)+1), "Expected size %d, got %ld\n",
+                   strlen(cmpbuffer)+1, dwSize);
+            }
+            RegCloseKey(key);
+        }
     }
 
     buffer[0] = 0;
