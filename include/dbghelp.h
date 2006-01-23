@@ -726,6 +726,8 @@ BOOL    WINAPI SymUnloadModule64(HANDLE, DWORD64);
 #define SYMFLAG_THUNK            0x00002000
 #define SYMFLAG_TLSREL           0x00004000
 
+#define MAX_SYM_NAME    2000
+
 typedef struct _SYMBOL_INFO
 {
     ULONG       SizeOfStruct;

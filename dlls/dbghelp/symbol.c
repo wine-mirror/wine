@@ -448,13 +448,16 @@ static void symt_fill_sym_info(const struct module* module,
     if (!symt_get_info(sym, TI_GET_TYPE, &sym_info->TypeIndex))
         sym_info->TypeIndex = 0;
     sym_info->info = (DWORD)sym;
+    sym_info->Reserved[0] = sym_info->Reserved[1] = 0;
     if (!symt_get_info(sym, TI_GET_LENGTH, &size) &&
-        sym_info->TypeIndex &&
-        !symt_get_info((struct symt*)sym_info->TypeIndex, TI_GET_LENGTH, &size))
+        (!sym_info->TypeIndex ||
+         !symt_get_info((struct symt*)sym_info->TypeIndex, TI_GET_LENGTH, &size)))
         size = 0;
     sym_info->Size = (DWORD)size;
     sym_info->ModBase = module->module.BaseOfImage;
     sym_info->Flags = 0;
+    sym_info->Value = 0;
+
     switch (sym->tag)
     {
     case SymTagData:
@@ -472,10 +475,9 @@ static void symt_fill_sym_info(const struct module* module,
                 }
                 else
                 {
-                    if (data->u.s.offset < 0)
-                        sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_FRAMEREL;
-                    else
-                        sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_PARAMETER | SYMFLAG_FRAMEREL;
+                    sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_REGREL;
+                    /* FIXME: this is i386 dependent */
+                    if (data->u.s.offset >= 0) sym_info->Flags |= SYMFLAG_PARAMETER;
                     /* FIXME: needed ? moreover, it's i386 dependent !!! */
                     sym_info->Register = CV_REG_EBP;
                     sym_info->Address = data->u.s.offset / 8;
@@ -544,7 +546,7 @@ static void symt_fill_sym_info(const struct module* module,
 static BOOL symt_enum_module(struct module* module, regex_t* regex,
                              PSYM_ENUMERATESYMBOLS_CALLBACK cb, PVOID user)
 {
-    char                        buffer[sizeof(SYMBOL_INFO) + 256];
+    char                        buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
     SYMBOL_INFO*                sym_info = (SYMBOL_INFO*)buffer;
     void*                       ptr;
     struct symt_ht*             sym = NULL;
@@ -720,7 +722,7 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
 {
     struct module*      module;
     struct symt_ht*     sym;
-    char                buffer[sizeof(SYMBOL_INFO) + 256];
+    char                buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
     SYMBOL_INFO*        sym_info = (SYMBOL_INFO*)buffer;
     DWORD               pc = pcs->ctx_frame.InstructionOffset;
     int                 idx;
@@ -898,14 +900,14 @@ BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address,
 BOOL WINAPI SymGetSymFromAddr(HANDLE hProcess, DWORD Address,
                               PDWORD Displacement, PIMAGEHLP_SYMBOL Symbol)
 {
-    char        buffer[sizeof(SYMBOL_INFO) + 256];
+    char        buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
     SYMBOL_INFO*si = (SYMBOL_INFO*)buffer;
     size_t      len;
     DWORD64     Displacement64;
 
     if (Symbol->SizeOfStruct < sizeof(*Symbol)) return FALSE;
     si->SizeOfStruct = sizeof(*si);
-    si->MaxNameLen = 256;
+    si->MaxNameLen = MAX_SYM_NAME;
     if (!SymFromAddr(hProcess, Address, &Displacement64, si))
         return FALSE;
 
@@ -977,13 +979,13 @@ BOOL WINAPI SymFromName(HANDLE hProcess, LPSTR Name, PSYMBOL_INFO Symbol)
  */
 BOOL WINAPI SymGetSymFromName(HANDLE hProcess, LPSTR Name, PIMAGEHLP_SYMBOL Symbol)
 {
-    char        buffer[sizeof(SYMBOL_INFO) + 256];
+    char        buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
     SYMBOL_INFO*si = (SYMBOL_INFO*)buffer;
     size_t      len;
 
     if (Symbol->SizeOfStruct < sizeof(*Symbol)) return FALSE;
     si->SizeOfStruct = sizeof(*si);
-    si->MaxNameLen = 256;
+    si->MaxNameLen = MAX_SYM_NAME;
     if (!SymFromName(hProcess, Name, si)) return FALSE;
 
     Symbol->Address = si->Address;
