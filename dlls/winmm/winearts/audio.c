@@ -57,6 +57,7 @@
 #include "dsdriver.h"
 #include "arts.h"
 #include "wine/unicode.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
@@ -392,14 +393,27 @@ LONG ARTS_WaveInit(void)
 {
     int 	i;
     int		errorcode;
+    LONG	ret = 0;
 
     TRACE("called\n");
 
-    if ((errorcode = ARTS_Init()) < 0)
+    __TRY
     {
-	WARN("arts_init() failed (%d)\n", errorcode);
-	return -1;
+        if ((errorcode = ARTS_Init()) < 0)
+        {
+            WARN("arts_init() failed (%d)\n", errorcode);
+            ret = -1;
+        }
     }
+    __EXCEPT_PAGE_FAULT
+    {
+        ERR("arts_init() crashed\n");
+        ret = -1;
+    }
+    __ENDTRY
+
+    if (ret)
+        return ret;
 
     /* initialize all device handles to -1 */
     for (i = 0; i < MAX_WAVEOUTDRV; ++i)
