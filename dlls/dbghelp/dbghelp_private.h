@@ -334,6 +334,7 @@ extern BOOL         elf_synchronize_module_list(struct process* pcs);
 extern DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr);
 
 /* module.c */
+extern int          module_compute_num_syms(struct module* module);
 extern struct module*
                     module_find_by_addr(const struct process* pcs, unsigned long addr,
                                         enum module_type type);

@@ -575,24 +575,20 @@ static BOOL symt_enum_module(struct module* module, regex_t* regex,
  */
 static BOOL resort_symbols(struct module* module)
 {
-    int		                nsym = 0;
+    int                         nsym;
     void*                       ptr;
     struct symt_ht*             sym;
     struct hash_table_iter      hti;
 
-    hash_table_iter_init(&module->ht_symbols, &hti, NULL);
-    while ((ptr = hash_table_iter_up(&hti)))
-        nsym++;
-
-    if (!(module->module.NumSyms = nsym)) return FALSE;
+    if (!module_compute_num_syms(module)) return FALSE;
     
     if (module->addr_sorttab)
         module->addr_sorttab = HeapReAlloc(GetProcessHeap(), 0,
                                            module->addr_sorttab, 
-                                           nsym * sizeof(struct symt_ht*));
+                                           module->module.NumSyms * sizeof(struct symt_ht*));
     else
         module->addr_sorttab = HeapAlloc(GetProcessHeap(), 0,
-                                         nsym * sizeof(struct symt_ht*));
+                                         module->module.NumSyms * sizeof(struct symt_ht*));
     if (!module->addr_sorttab) return FALSE;
 
     nsym = 0;

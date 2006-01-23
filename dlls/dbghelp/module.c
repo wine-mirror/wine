@@ -271,6 +271,7 @@ struct module* module_get_debug(const struct process* pcs, struct module* module
         }
         if (!ret) module->module.SymType = SymNone;
         assert(module->module.SymType != SymDeferred);
+        module_compute_num_syms(module);
     }
     return (module && module->module.SymType != SymNone) ? module : NULL;
 }
@@ -359,6 +360,18 @@ enum module_type module_get_type_by_name(const char* name)
     return DMT_PE;
 }
 
+int module_compute_num_syms(struct module* module)
+{
+    struct hash_table_iter      hti;
+    void*                       ptr;
+
+    module->module.NumSyms = 0;
+    hash_table_iter_init(&module->ht_symbols, &hti, NULL);
+    while ((ptr = hash_table_iter_up(&hti)))
+         module->module.NumSyms++;
+    return module->module.NumSyms;
+}
+
 /***********************************************************************
  *			SymLoadModule (DBGHELP.@)
  */
@@ -404,7 +417,7 @@ DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, const char* ImageName,
         WARN("Couldn't locate %s\n", ImageName);
         return 0;
     }
-
+    module_compute_num_syms(module);
 done:
     /* by default pe_load_module fills module.ModuleName from a derivation 
      * of ImageName. Overwrite it, if we have better information
@@ -436,6 +449,7 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
         if (!module) return FALSE;
         if (ModuleName)
             lstrcpynA(module->module.ModuleName, ModuleName, sizeof(module->module.ModuleName));
+        module->module.SymType = SymVirtual;
 
         return TRUE;
     }
@@ -601,7 +615,10 @@ BOOL  WINAPI SymGetModuleInfo(HANDLE hProcess, DWORD dwAddr,
     {
         module = module_get_container(pcs, module);
         if (module && module->module.SymType != SymNone)
+        {
             ModuleInfo->SymType = module->module.SymType;
+            ModuleInfo->NumSyms = module->module.NumSyms;
+        }
     }
 
     return TRUE;
@@ -616,8 +633,8 @@ BOOL  WINAPI SymGetModuleInfo64(HANDLE hProcess, DWORD64 dwAddr,
 {
     struct process*     pcs = process_find_by_handle(hProcess);
     struct module*      module;
-    DWORD               sz;
     IMAGEHLP_MODULE64   mod;
+    char*               ptr;
 
     TRACE("%p %s %p\n", hProcess, wine_dbgstr_longlong(dwAddr), ModuleInfo);
 
@@ -626,6 +643,7 @@ BOOL  WINAPI SymGetModuleInfo64(HANDLE hProcess, DWORD64 dwAddr,
     module = module_find_by_addr(pcs, dwAddr, DMT_UNKNOWN);
     if (!module) return FALSE;
 
+    mod.SizeOfStruct = ModuleInfo->SizeOfStruct;
     mod.BaseOfImage = module->module.BaseOfImage;
     mod.ImageSize = module->module.ImageSize;
     mod.TimeDateStamp = module->module.TimeDateStamp;
@@ -635,18 +653,21 @@ BOOL  WINAPI SymGetModuleInfo64(HANDLE hProcess, DWORD64 dwAddr,
     strcpy(mod.ModuleName, module->module.ModuleName);
     strcpy(mod.ImageName, module->module.ImageName);
     strcpy(mod.LoadedImageName, module->module.LoadedImageName);
-    /* FIXME: all following attributes need to be set */
-    mod.LoadedPdbName[0] = '\0';
-    mod.CVSig = 0;
+    /* FIXME: for now, using some 'rather sane' value */
+    sprintf(mod.LoadedPdbName, ".\%s.pdb", module->module.ModuleName);
+    mod.CVSig = 0x53445352; /* RSDS */
     memset(mod.CVData, 0, sizeof(mod.CVData));
+    strcpy(mod.CVData, module->module.LoadedImageName);
+    if ((ptr = strrchr(mod.CVData, '.')))
+        strcpy(ptr + 1, "pdb");
     mod.PdbSig = 0;
     memset(&mod.PdbSig70, 0, sizeof(mod.PdbSig70));
     mod.PdbAge = 0;
-    mod.PdbUnmatched = 0;
-    mod.DbgUnmatched = 0;
-    mod.LineNumbers = 0;
-    mod.GlobalSymbols = 0;
-    mod.TypeInfo = 0;
+    mod.PdbUnmatched = FALSE;
+    mod.DbgUnmatched = FALSE;
+    mod.LineNumbers = TRUE;
+    mod.GlobalSymbols = TRUE;
+    mod.TypeInfo = TRUE;
     mod.SourceIndexed = 0;
     mod.Publics = 0;
 
@@ -654,11 +675,12 @@ BOOL  WINAPI SymGetModuleInfo64(HANDLE hProcess, DWORD64 dwAddr,
     {
         module = module_get_container(pcs, module);
         if (module && module->module.SymType != SymNone)
+        {
             mod.SymType = module->module.SymType;
+            mod.NumSyms = module->module.NumSyms;
+        }
     }
-    sz = ModuleInfo->SizeOfStruct;
-    memcpy(ModuleInfo, &mod, sz);
-    ModuleInfo->SizeOfStruct = sz;
+    memcpy(ModuleInfo, &mod, mod.SizeOfStruct);
     return TRUE;
 }
 
