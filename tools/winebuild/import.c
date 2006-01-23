@@ -78,7 +78,6 @@ static const char * const default_ignored_symbols[] =
     "asin",
     "atan",
     "atan2",
-    "atof",
     "atoi",
     "atol",
     "bsearch",
