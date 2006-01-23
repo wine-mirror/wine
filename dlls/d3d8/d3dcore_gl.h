@@ -599,6 +599,21 @@ typedef void (APIENTRY * PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC) (GLenum stage, 
 #define GL_COORD_REPLACE_ARB              0x8862
 #endif
 
+/* GL_ARB_multisample */
+#ifndef GL_ARB_multisample
+#define GL_ARB_multisample 1
+#define GL_MULTISAMPLE_ARB                0x809D
+#define GL_SAMPLE_ALPHA_TO_COVERAGE_ARB   0x809E
+#define GL_SAMPLE_ALPHA_TO_ONE_ARB        0x809F
+#define GL_SAMPLE_COVERAGE_ARB            0x80A0
+#define GL_SAMPLE_BUFFERS_ARB             0x80A8
+#define GL_SAMPLES_ARB                    0x80A9
+#define GL_SAMPLE_COVERAGE_VALUE_ARB      0x80AA
+#define GL_SAMPLE_COVERAGE_INVERT_ARB     0x80AB
+#define GL_MULTISAMPLE_BIT_ARB            0x20000000
+#endif
+typedef void (APIENTRY * PGLFNSAMPLECOVERAGEARBPROC) (GLclampf value, GLboolean invert);
+
 /*******
  * OpenGL Official Version 
  *  defines 
