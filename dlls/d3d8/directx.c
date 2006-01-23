@@ -398,6 +398,9 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	  TRACE_(d3d_caps)(" FOUND: ARB Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%u\n", gl_max);
 	  This->gl_info.supported[ARB_MULTITEXTURE] = TRUE;
 	  This->gl_info.max_textures = min(8, gl_max);
+	} else if (strcmp(ThisExtn, "GL_ARB_point_sprite") == 0) {
+	  TRACE_(d3d_caps)(" FOUND: ARB Point sprite support\n");
+	  This->gl_info.supported[ARB_POINT_SPRITE] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_cube_map") == 0) {
 	  TRACE_(d3d_caps)(" FOUND: ARB Texture Cube Map support\n");
 	  This->gl_info.supported[ARB_TEXTURE_CUBE_MAP] = TRUE;
