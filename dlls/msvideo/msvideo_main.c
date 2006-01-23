@@ -749,6 +749,7 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
     {
     case WM_INITDIALOG:
     {
+        ICINFO *ic;
         WCHAR buf[128];
         struct choose_compressor *choose_comp = (struct choose_compressor *)lparam;
 
@@ -757,6 +758,11 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
 
         LoadStringW(MSVFW32_hModule, IDS_FULLFRAMES, buf, 128);
         SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_ADDSTRING, 0, (LPARAM)buf);
+
+        ic = HeapAlloc(GetProcessHeap(), 0, sizeof(ICINFO));
+        ic->fccType = streamtypeVIDEO;
+        ic->fccHandler = comptypeDIB;
+        SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_SETITEMDATA, 0, (LPARAM)ic);
 
         enum_compressors(GetDlgItem(hdlg, IDC_COMP_LIST));
 
@@ -782,8 +788,10 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
             {
                 struct choose_compressor *choose_comp = (struct choose_compressor *)GetWindowLongPtrW(hdlg, DWLP_USER);
 
-                choose_comp->cv.hic = ICOpen(ic->fccType, ic->fccHandler, ICMODE_COMPRESS);
-                if (choose_comp->cv.hic)
+                if (ic->fccHandler != comptypeDIB)
+                    choose_comp->cv.hic = ICOpen(ic->fccType, ic->fccHandler, ICMODE_COMPRESS);
+
+                if (ic->fccHandler == comptypeDIB || choose_comp->cv.hic)
                 {
                     choose_comp->cv.fccType = ic->fccType;
                     choose_comp->cv.fccHandler = ic->fccHandler;

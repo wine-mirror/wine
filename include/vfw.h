@@ -143,6 +143,10 @@ DECLARE_HANDLE(HIC);
 #define	ICM_COMPRESS_FRAMES_INFO	(ICM_USER+70)
 #define	ICM_SET_STATUS_PROC		(ICM_USER+72)
 
+#ifndef comptypeDIB
+#define comptypeDIB  mmioFOURCC('D','I','B',' ')
+#endif
+
 /* structs */
 
 /* NOTE: Only the 16 bit structs are packed. Structs that are packed anyway
