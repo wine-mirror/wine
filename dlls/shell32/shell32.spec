@@ -117,6 +117,7 @@
  125 stdcall -noname FileMenu_AddFilesForPidl(long long long ptr long long ptr)
  126 stdcall -noname SHOutOfMemoryMessageBox(long long long)
  127 stdcall -noname SHWinHelp(long long long long)
+ 128 stdcall -noname SHDllGetClassObject(ptr ptr ptr) DllGetClassObject
  129 stdcall -noname DAD_AutoScroll(long ptr ptr)
  130 stdcall -noname DAD_DragEnter(long)
  131 stdcall -noname DAD_DragEnterEx(long double)
