@@ -717,7 +717,7 @@
 @ stdcall UnregisterHotKey(long long)
 # @ stub UnregisterMessagePumpHook
 # @ stub UnregisterUserApiHook
-# @ stub UpdateLayeredWindow
+@ stdcall UpdateLayeredWindow(long long ptr ptr long ptr long ptr long)
 @ stub UpdatePerUserSystemParameters
 @ stdcall UpdateWindow(long)
 @ stdcall User32InitializeImmEntryTable(ptr)
