@@ -1005,7 +1005,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContex
     TRACE("%p\n", phContext);
     if (phContext)
     {
-        ret = SEC_E_UNSUPPORTED_FUNCTION;
+        phContext->dwUpper = 0;
+        phContext->dwLower = 0;
+        ret = SEC_E_OK;
     }
     else
     {
