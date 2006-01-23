@@ -760,8 +760,6 @@ void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * record)
     WCHAR message[1024];
     MSIRECORD * row = 0;
     DWORD size;
-    static const WCHAR szActionData[] = 
-        {'A','c','t','i','o','n','D','a','t','a',0};
 
     if (!package->LastAction || strcmpW(package->LastAction,action))
     {
@@ -793,8 +791,6 @@ void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * record)
     MSI_RecordSetStringW(row,1,message);
  
     MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONDATA, row);
-
-    ControlEvent_FireSubscribedEvent(package,szActionData, row);
 
     msiobj_release(&row->hdr);
 }

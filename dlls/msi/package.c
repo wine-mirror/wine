@@ -576,11 +576,16 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
 INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
                                MSIRECORD *record)
 {
+    static const WCHAR szActionData[] =
+        {'A','c','t','i','o','n','D','a','t','a',0};
+    static const WCHAR szSetProgress[] =
+        {'S','e','t','P','r','o','g','r','e','s','s',0};
+    static const WCHAR szActionText[] =
+        {'A','c','t','i','o','n','T','e','x','t',0};
     DWORD log_type = 0;
     LPWSTR message;
     DWORD sz;
     DWORD total_size = 0;
-    INT msg_field=1;
     INT i;
     INT rc;
     char *msg;
@@ -607,34 +612,62 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_PROGRESS)
         log_type |= 0x800;
 
-    message = msi_alloc(1*sizeof (WCHAR));
-    message[0]=0;
-    msg_field = MSI_RecordGetFieldCount(record);
-    for (i = 1; i <= msg_field; i++)
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONSTART)
     {
-        LPWSTR tmp;
-        WCHAR number[3];
-        static const WCHAR format[] = { '%','i',':',' ',0};
-        static const WCHAR space[] = { ' ',0};
-        sz = 0;
-        MSI_RecordGetStringW(record,i,NULL,&sz);
-        sz+=4;
-        total_size+=sz*sizeof(WCHAR);
-        tmp = msi_alloc(sz*sizeof(WCHAR));
-        message = msi_realloc(message,total_size*sizeof (WCHAR));
+        static const WCHAR template_s[]=
+            {'A','c','t','i','o','n',' ','%','s',':',' ','%','s','.',' ', '%','s',
+            '.',0};
+        static const WCHAR format[] = 
+            {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
+        WCHAR timet[0x100];
+        LPCWSTR action_text;
+        LPCWSTR action;
+        LPWSTR deformated;
 
-        MSI_RecordGetStringW(record,i,tmp,&sz);
+        GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
 
-        if (msg_field > 1)
+        action = MSI_RecordGetString(record, 1);
+        action_text = MSI_RecordGetString(record, 2);
+        deformat_string(package, action_text, &deformated);
+
+        len = strlenW(timet) + strlenW(action) + strlenW(deformated) + 
+              strlenW(template_s) - 6 /* 6 characters of format specifier */;
+        message = msi_alloc((len + 1)*sizeof(WCHAR));
+        sprintfW(message,template_s,timet,action,deformated);
+        msi_free(deformated);
+    }
+    else
+    {
+        INT msg_field=1;
+        message = msi_alloc(1*sizeof (WCHAR));
+        message[0]=0;
+        msg_field = MSI_RecordGetFieldCount(record);
+        for (i = 1; i <= msg_field; i++)
         {
-            sprintfW(number,format,i);
-            strcatW(message,number);
-        }
-        strcatW(message,tmp);
-        if (msg_field > 1)
-            strcatW(message,space);
+            LPWSTR tmp;
+            WCHAR number[3];
+            static const WCHAR format[] = { '%','i',':',' ',0};
+            static const WCHAR space[] = { ' ',0};
+            sz = 0;
+            MSI_RecordGetStringW(record,i,NULL,&sz);
+            sz+=4;
+            total_size+=sz*sizeof(WCHAR);
+            tmp = msi_alloc(sz*sizeof(WCHAR));
+            message = msi_realloc(message,total_size*sizeof (WCHAR));
 
-        msi_free(tmp);
+            MSI_RecordGetStringW(record,i,tmp,&sz);
+
+            if (msg_field > 1)
+            {
+                sprintfW(number,format,i);
+                strcatW(message,number);
+            }
+            strcatW(message,tmp);
+            if (msg_field > 1)
+                strcatW(message,space);
+
+            msi_free(tmp);
+        }
     }
 
     TRACE("(%p %lx %lx %s)\n",gUIHandlerA, gUIFilter, log_type,
@@ -668,8 +701,38 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
         }
     }
     msi_free( msg );
-    
+
     msi_free( message);
+
+    switch (eMessageType & 0xff000000)
+    {
+    case INSTALLMESSAGE_ACTIONDATA:
+        /* FIXME: format record here instead of in ui_actiondata to get the
+         * correct action data for external scripts */
+        ControlEvent_FireSubscribedEvent(package, szActionData, record);
+        break;
+    case INSTALLMESSAGE_ACTIONSTART:
+    {
+        MSIRECORD *uirow;
+        LPWSTR deformated;
+        LPCWSTR action_text = MSI_RecordGetString(record, 2);
+
+        deformat_string(package, action_text, &deformated);
+        uirow = MSI_CreateRecord(1);
+        MSI_RecordSetStringW(uirow, 1, deformated);
+        TRACE("INSTALLMESSAGE_ACTIONSTART: %s\n", debugstr_w(deformated));
+        msi_free(deformated);
+
+        ControlEvent_FireSubscribedEvent(package, szActionText, uirow);
+
+        msiobj_release(&uirow->hdr);
+        break;
+    }
+    case INSTALLMESSAGE_PROGRESS:
+        ControlEvent_FireSubscribedEvent(package, szSetProgress, record);
+        break;
+    }
+
     return ERROR_SUCCESS;
 }
 

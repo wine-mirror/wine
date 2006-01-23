@@ -247,55 +247,20 @@ static struct _actions StandardActions[];
  * helper functions
  ********************************************************/
 
-static void ce_actiontext(MSIPACKAGE* package, LPCWSTR action)
-{
-    static const WCHAR szActionText[] = 
-        {'A','c','t','i','o','n','T','e','x','t',0};
-    MSIRECORD *row;
-
-    row = MSI_CreateRecord(1);
-    MSI_RecordSetStringW(row,1,action);
-    ControlEvent_FireSubscribedEvent(package,szActionText, row);
-    msiobj_release(&row->hdr);
-}
-
 static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
 {
-    static const WCHAR template_s[]=
-        {'A','c','t','i','o','n',' ','%','s',':',' ','%','s','.',' ', '%','s',
-         '.',0};
-    static const WCHAR format[] = 
-        {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
     static const WCHAR Query_t[] = 
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','A','c','t','i','o', 'n','T','e','x','t','`',' ',
          'W','H','E','R','E', ' ','`','A','c','t','i','o','n','`',' ','=', 
          ' ','\'','%','s','\'',0};
-    WCHAR message[1024];
-    WCHAR timet[0x100];
-    MSIRECORD * row = 0;
-    LPCWSTR ActionText;
-    LPWSTR deformated;
-
-    GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
+    MSIRECORD * row;
 
     row = MSI_QueryGetRecord( package->db, Query_t, action );
     if (!row)
         return;
-
-    ActionText = MSI_RecordGetString(row,2);
-    deformat_string(package, ActionText, &deformated);
-
-    sprintfW(message,template_s,timet,action,deformated);
-    ce_actiontext(package, deformated);
-    msiobj_release(&row->hdr);
-
-    row = MSI_CreateRecord(1);
-    MSI_RecordSetStringW(row,1,message);
- 
     MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, row);
     msiobj_release(&row->hdr);
-    msi_free(deformated);
 }
 
 static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start, 
