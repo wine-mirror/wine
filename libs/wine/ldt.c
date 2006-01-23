@@ -117,22 +117,8 @@ extern int i386_set_ldt(int, union descriptor *, int);
 #endif  /* __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
 
 #ifdef __APPLE__
-
-static inline int thread_set_user_ldt( const void *addr, unsigned int size, unsigned int flags )
-{
-    int ret;
-    __asm__ __volatile__ ("pushl %4\n\t"
-                          "pushl %3\n\t"
-                          "pushl %2\n\t"
-                          "pushl $0\n\t"
-                          "lcall $0x3b,$0\n\t"
-                          "leal  16(%%esp),%%esp"
-                          : "=a" (ret)
-                          : "0" (4 /*thread_set_user_ldt*/), "r" (addr), "r" (size), "r" (flags) );
-    return ret;
-}
-
-#endif  /* __APPLE__ */
+#include <i386/user_ldt.h>
+#endif
 
 #endif  /* __i386__ */
 
@@ -242,6 +228,9 @@ static int internal_set_entry( unsigned short sel, const LDT_ENTRY *entry )
         ldt_mod.acc2 = entry->HighWord.Bytes.Flags2 >> 4;
         if ((ret = sysi86(SI86DSCR, &ldt_mod)) == -1) perror("sysi86");
     }
+#elif defined(__APPLE__)
+    if ((ret = i386_set_ldt(index, (union ldt_entry *)entry, 1)) < 0)
+        perror("i386_set_ldt");
 #else
     fprintf( stderr, "No LDT support on this platform\n" );
     exit(1);
@@ -423,11 +412,7 @@ unsigned short wine_ldt_alloc_fs(void)
             if (errno != ENOSYS) perror( "set_thread_area" );
         }
         else global_fs_sel = (ldt_info.entry_number << 3) | 3;
-#elif defined(__APPLE__)
-        int ret = thread_set_user_ldt( NULL, 0, 0 );
-        if (ret != -1) global_fs_sel = ret;
-        else global_fs_sel = 0;
-#endif  /* __APPLE__ */
+#endif
     }
     if (global_fs_sel > 0) return global_fs_sel;
     return wine_ldt_alloc_entries( 1 );
@@ -453,11 +438,7 @@ void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry )
         ldt_info.entry_number = sel >> 3;
         fill_modify_ldt_struct( &ldt_info, entry );
         if ((ret = set_thread_area( &ldt_info ) < 0)) perror( "set_thread_area" );
-#elif defined(__APPLE__)
-        int ret = thread_set_user_ldt( wine_ldt_get_base(entry), wine_ldt_get_limit(entry), 0 );
-        if (ret == -1) perror( "thread_set_user_ldt" );
-        else assert( ret == global_fs_sel );
-#endif  /* __APPLE__ */
+#endif
     }
     else  /* LDT selector */
     {
