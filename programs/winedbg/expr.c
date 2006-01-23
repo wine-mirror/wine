@@ -545,11 +545,10 @@ struct dbg_lvalue expr_eval(struct expr* exp)
                                     types_extract_as_integer(&exp2) * (DWORD)scale2) / (DWORD)scale3;
             break;
 	case EXP_OP_SEG:
-            rtn.type.id = dbg_itype_none;
+            rtn.type.id = dbg_itype_segptr;
             rtn.type.module = 0;
-            rtn.addr.Mode = AddrMode1632;
-            rtn.addr.Segment = types_extract_as_integer(&exp1);
-            rtn.addr.Offset = types_extract_as_integer(&exp2);
+            be_cpu->build_addr(dbg_curr_thread->handle, &dbg_context, &rtn.addr,
+                               types_extract_as_integer(&exp1), types_extract_as_integer(&exp2));
             break;
 	case EXP_OP_LOR:
             exp->un.binop.result = (types_extract_as_integer(&exp1) || types_extract_as_integer(&exp2));

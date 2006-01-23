@@ -151,17 +151,8 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
     ADDRESS             addr;
     void               *linear;
 
-    if (lvalue->type.id == dbg_itype_none)
-    {
-        be_cpu->build_addr(dbg_curr_thread->handle, &dbg_context,
-                           &addr, lvalue->addr.Segment, lvalue->addr.Offset);
-    }
-    else
-    {
-        addr.Mode = AddrModeFlat;
-        addr.Offset = types_extract_as_integer( lvalue );
-    }
-    linear = memory_to_linear_addr( &addr );
+    types_extract_as_address(lvalue, &addr);
+    linear = memory_to_linear_addr(&addr);
 
     if (format != 'i' && count > 1)
     {
@@ -449,7 +440,8 @@ void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
     switch (format)
     {
     case 'x':
-        if (lvalue->addr.Mode != AddrModeFlat)
+        if (lvalue->addr.Mode == AddrMode1616 || 
+            lvalue->addr.Mode == AddrModeReal)
             dbg_printf("0x%04lx", res);
         else
             dbg_printf("0x%08lx", res);
@@ -478,7 +470,10 @@ void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
     case 'b':
         dbg_printf("Format specifier '%c' is meaningless in 'print' command\n", format);
     case 0:
-        print_typed_basic(lvalue);
+        if (lvalue->type.id == dbg_itype_segptr)
+            dbg_printf("%ld", res);
+        else 
+            print_typed_basic(lvalue);
         break;
     }
 }
@@ -567,18 +562,7 @@ void memory_disassemble(const struct dbg_lvalue* xstart,
     else
     {
         if (xstart)
-        {
-            if (xstart->type.id == dbg_itype_none)
-            {
-                be_cpu->build_addr(dbg_curr_thread->handle, &dbg_context,
-                                   &last, xstart->addr.Segment, xstart->addr.Offset);
-            }
-            else
-            {
-                last.Mode = AddrModeFlat;
-                last.Offset = types_extract_as_integer( xstart );
-            }
-        }
+            types_extract_as_address(xstart, &last);
         if (xend) 
             stop = types_extract_as_integer(xend);
     }

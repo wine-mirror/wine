@@ -195,8 +195,7 @@ BOOL break_add_break_from_lvalue(const struct dbg_lvalue* lvalue)
 {
     ADDRESS     addr;
 
-    addr.Mode = AddrModeFlat;
-    addr.Offset = types_extract_as_integer(lvalue);
+    types_extract_as_address(lvalue, &addr);
 
     if (!break_add_break(&addr, TRUE))
     {
@@ -400,8 +399,7 @@ void break_add_watch_from_lvalue(const struct dbg_lvalue* lvalue)
 {
     struct dbg_lvalue   lval;
 
-    lval.addr.Mode = AddrModeFlat;
-    lval.addr.Offset = types_extract_as_integer(lvalue);
+    types_extract_as_address(lvalue, &lval.addr);
     lval.type.id = dbg_itype_none;
 
     break_add_watch(&lval, TRUE);

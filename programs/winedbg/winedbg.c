@@ -58,8 +58,6 @@
  *              o bitfield size is on a 4-bytes
  *      + array_index and deref should be the same function (or should share the same
  *        core)
- *      + segmented pointers are not correctly handled (and are hacked throughout the
- *        code by testing against itype_none)
  * - execution:
  *      + set a better fix for gdb (proxy mode) than the step-mode hack
  *      + implement function call in debuggee

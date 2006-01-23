@@ -177,7 +177,7 @@ static BOOL WINAPI sym_enum_cb(SYMBOL_INFO* sym_info, ULONG size, void* user)
     DWORD               addr;
     unsigned            val;
 
-    if ((sym_info->Flags & (SYMFLAG_PARAMETER|SYMFLAG_FRAMEREL)) == (SYMFLAG_PARAMETER|SYMFLAG_FRAMEREL))
+    if ((sym_info->Flags & (SYMFLAG_PARAMETER|SYMFLAG_REGREL)) == (SYMFLAG_PARAMETER|SYMFLAG_REGREL))
     {
         if (se->tmp[0]) strcat(se->tmp, ", ");
         addr = se->frame + sym_info->Address;

@@ -38,41 +38,43 @@ WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
 {
     long int            rtn = 0;
-    DWORD               tag, size, bt;
-    DWORD64             size64;
+    long long int       val;
+    DWORD               tag, bt;
+    DWORD64             size;
 
     if (lvalue->type.id == dbg_itype_none ||
         !types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
         return 0;
 
+    if (lvalue->type.id == dbg_itype_segptr)
+    {
+        return (long int)memory_to_linear_addr(&lvalue->addr);
+    }
+
     switch (tag)
     {
     case SymTagBaseType:
-        if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size64) ||
+        if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size) ||
             !types_get_info(&lvalue->type, TI_GET_BASETYPE, &bt))
         {
             WINE_ERR("Couldn't get information\n");
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         }
-        if (size64 > sizeof(rtn))
+        if (size > sizeof(rtn))
         {
-            WINE_ERR("Size too large (%s)\n", wine_dbgstr_longlong(size64));
+            WINE_ERR("Size too large (%s)\n", wine_dbgstr_longlong(size));
             return 0;
         }
-        size = (DWORD)size64;
-        /* FIXME: we have an ugly & non portable thing here !!! */
-        if (!memory_read_value(lvalue, size, &rtn)) return 0;
-
-        /* now let's do some promotions !! */
         switch (bt)
         {
+        case btChar:
         case btInt:
-            /* propagate sign information */
-            if (((size & 3) != 0) && (rtn >> (size * 8 - 1)) != 0)
-                rtn |= (-1) << (size * 8);
+            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, TRUE, &val)) return 0;
+            rtn = (long)val;
             break;
         case btUInt:
-        case btChar:
+            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, FALSE, &val)) return 0;
+            rtn = (DWORD)(DWORD64)val;
             break;
         case btFloat:
             RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
@@ -97,6 +99,24 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
     }
 
     return rtn;
+}
+
+/******************************************************************
+ *		types_extract_as_address
+ *
+ *
+ */
+void types_extract_as_address(const struct dbg_lvalue* lvalue, ADDRESS* addr)
+{
+    if (lvalue->type.id == dbg_itype_segptr && lvalue->type.module == 0)
+    {
+        *addr = lvalue->addr;
+    }
+    else
+    {
+        addr->Mode = AddrModeFlat;
+        addr->Offset = types_extract_as_integer( lvalue );
+    }
 }
 
 /******************************************************************
@@ -771,6 +791,15 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         case TI_GET_LENGTH:     X(DWORD64) = 4; break;
         case TI_GET_TYPE:       X(DWORD)   = dbg_itype_char; break;
         default: WINE_FIXME("unsupported %u for a string\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_segptr:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
+        default: WINE_FIXME("unsupported %u for seg-ptr\n", ti); return FALSE;
         }
         break;
     default: WINE_FIXME("unsupported type id 0x%lx\n", type->id);
