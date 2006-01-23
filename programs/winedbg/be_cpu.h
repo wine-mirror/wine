@@ -103,7 +103,7 @@ struct backend_cpu
      * basic type read/write 
      * -------------------------------------------------------------------------------*/
     /* Reads an integer from memory and stores it inside a long long int */
-    int                 (*fetch_integer)(const struct dbg_lvalue* lvalue, unsigned size, unsigned is_signed, long long int*);
+    int                 (*fetch_integer)(const struct dbg_lvalue* lvalue, unsigned size, unsigned is_signed, LONGLONG*);
     /* Reads a real from memory and stores it inside a long double */
     int                 (*fetch_float)(const struct dbg_lvalue* lvalue, unsigned size, long double*);
 };

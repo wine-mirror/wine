@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
 {
     long int            rtn = 0;
-    long long int       val;
+    LONGLONG            val;
     DWORD               tag, bt;
     DWORD64             size;
 

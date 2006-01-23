@@ -275,7 +275,7 @@ BOOL memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicod
 
 static void print_typed_basic(const struct dbg_lvalue* lvalue)
 {
-    long long int       val_int;
+    LONGLONG            val_int;
     void*               val_ptr;
     long double         val_real;
     DWORD64             size64;

@@ -428,7 +428,7 @@ static int stabs_pts_read_type_reference(struct ParseTypedefData* ptd,
 
 struct pts_range_value
 {
-    unsigned long long  val;
+    ULONGLONG           val;
     int                 sign;
 };
 
@@ -483,7 +483,7 @@ static int stabs_pts_read_range(struct ParseTypedefData* ptd, const char* typena
     unsigned                    size;
     enum BasicType              bt;
     int                         i;
-    unsigned long long          v;
+    ULONGLONG                   v;
 
     /* type ';' <int> ';' <int> ';' */
     PTS_ABORTIF(ptd, stabs_pts_read_type_def(ptd, NULL, &ref) == -1);
