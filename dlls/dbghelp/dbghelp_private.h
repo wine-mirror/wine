@@ -367,7 +367,7 @@ extern BOOL         pe_load_debug_directory(const struct process* pcs,
 /* pe_module.c */
 extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth);
 extern struct module*
-                    pe_load_module(struct process* pcs, char* name,
+                    pe_load_module(struct process* pcs, const char* name,
                                    HANDLE hFile, DWORD base, DWORD size);
 extern struct module*
                     pe_load_module_from_pcs(struct process* pcs, const char* name, 

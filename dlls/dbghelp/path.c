@@ -33,9 +33,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 static inline BOOL is_sep(char ch) {return ch == '/' || ch == '\\';}
 
-static inline char* file_name(char* str)
+static inline const char* file_name(const char* str)
 {
-    char*       p;
+    const char*       p;
 
     for (p = str + strlen(str) - 1; p >= str && !is_sep(*p); p--);
     return p + 1;
@@ -45,7 +45,7 @@ static inline char* file_name(char* str)
  *		FindDebugInfoFile (DBGHELP.@)
  *
  */
-HANDLE WINAPI FindDebugInfoFile(PSTR FileName, PSTR SymbolPath, PSTR DebugFilePath)
+HANDLE WINAPI FindDebugInfoFile(PCSTR FileName, PCSTR SymbolPath, PSTR DebugFilePath)
 {
     HANDLE      h;
 
@@ -65,7 +65,7 @@ HANDLE WINAPI FindDebugInfoFile(PSTR FileName, PSTR SymbolPath, PSTR DebugFilePa
  *		FindDebugInfoFileEx (DBGHELP.@)
  *
  */
-HANDLE WINAPI FindDebugInfoFileEx(PSTR FileName, PSTR SymbolPath,
+HANDLE WINAPI FindDebugInfoFileEx(PCSTR FileName, PCSTR SymbolPath,
                                   PSTR DebugFilePath, 
                                   PFIND_DEBUG_FILE_CALLBACK Callback,
                                   PVOID CallerData)
@@ -79,7 +79,7 @@ HANDLE WINAPI FindDebugInfoFileEx(PSTR FileName, PSTR SymbolPath,
  *		FindExecutableImage (DBGHELP.@)
  *
  */
-HANDLE WINAPI FindExecutableImage(PSTR FileName, PSTR SymbolPath, PSTR ImageFilePath)
+HANDLE WINAPI FindExecutableImage(PCSTR FileName, PCSTR SymbolPath, PSTR ImageFilePath)
 {
     HANDLE h;
     if (!SearchPathA(SymbolPath, FileName, NULL, MAX_PATH, ImageFilePath, NULL))
@@ -180,7 +180,7 @@ static BOOL do_search(const char* file, char* buffer, BOOL recurse,
 /***********************************************************************
  *           SearchTreeForFile (DBGHELP.@)
  */
-BOOL WINAPI SearchTreeForFile(LPSTR root, LPSTR file, LPSTR buffer)
+BOOL WINAPI SearchTreeForFile(PCSTR root, PCSTR file, PSTR buffer)
 {
     TRACE("(%s, %s, %p)\n", 
           debugstr_a(root), debugstr_a(file), buffer);
@@ -293,7 +293,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
  *		SymFindFileInPath (DBGHELP.@)
  *
  */
-BOOL WINAPI SymFindFileInPath(HANDLE hProcess, LPSTR searchPath, LPSTR full_path,
+BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR searchPath, PCSTR full_path,
                               PVOID id, DWORD two, DWORD three, DWORD flags,
                               LPSTR buffer, PFINDFILEINPATHCALLBACK cb,
                               PVOID user)
@@ -302,7 +302,7 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, LPSTR searchPath, LPSTR full_path
     struct process*     pcs = process_find_by_handle(hProcess);
     char                tmp[MAX_PATH];
     char*               ptr;
-    char*               filename;
+    const char*         filename;
 
     TRACE("(%p %s %s %p %08lx %08lx %08lx %p %p %p)\n",
           hProcess, searchPath, full_path, id, two, three, flags, 

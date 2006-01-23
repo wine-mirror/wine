@@ -324,7 +324,7 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
  *		pe_load_module
  *
  */
-struct module* pe_load_module(struct process* pcs, char* name,
+struct module* pe_load_module(struct process* pcs, const char* name,
                               HANDLE hFile, DWORD base, DWORD size)
 {
     struct module*      module = NULL;

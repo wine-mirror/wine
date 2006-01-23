@@ -925,7 +925,7 @@ BOOL WINAPI SymGetSymFromAddr(HANDLE hProcess, DWORD Address,
  *		SymFromName (DBGHELP.@)
  *
  */
-BOOL WINAPI SymFromName(HANDLE hProcess, LPSTR Name, PSYMBOL_INFO Symbol)
+BOOL WINAPI SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol)
 {
     struct process*             pcs = process_find_by_handle(hProcess);
     struct module*              module;
@@ -977,7 +977,7 @@ BOOL WINAPI SymFromName(HANDLE hProcess, LPSTR Name, PSYMBOL_INFO Symbol)
 /***********************************************************************
  *		SymGetSymFromName (DBGHELP.@)
  */
-BOOL WINAPI SymGetSymFromName(HANDLE hProcess, LPSTR Name, PIMAGEHLP_SYMBOL Symbol)
+BOOL WINAPI SymGetSymFromName(HANDLE hProcess, PCSTR Name, PIMAGEHLP_SYMBOL Symbol)
 {
     char        buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
     SYMBOL_INFO*si = (SYMBOL_INFO*)buffer;

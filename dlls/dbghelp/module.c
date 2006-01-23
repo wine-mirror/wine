@@ -362,8 +362,8 @@ enum module_type module_get_type_by_name(const char* name)
 /***********************************************************************
  *			SymLoadModule (DBGHELP.@)
  */
-DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, char* ImageName,
-                           char* ModuleName, DWORD BaseOfDll, DWORD SizeOfDll)
+DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, const char* ImageName,
+                           const char* ModuleName, DWORD BaseOfDll, DWORD SizeOfDll)
 {
     struct process*     pcs;
     struct module*	module = NULL;
@@ -449,8 +449,8 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
 /***********************************************************************
  *                     SymLoadModule64 (DBGHELP.@)
  */
-DWORD64 WINAPI SymLoadModule64(HANDLE hProcess, HANDLE hFile, PSTR ImageName,
-                               PSTR ModuleName, DWORD64 BaseOfDll, DWORD SizeOfDll)
+DWORD64 WINAPI SymLoadModule64(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
+                               PCSTR ModuleName, DWORD64 BaseOfDll, DWORD SizeOfDll)
 {
     if (!validate_addr64(BaseOfDll)) return FALSE;
     return SymLoadModule(hProcess, hFile, ImageName, ModuleName, (DWORD)BaseOfDll, SizeOfDll);

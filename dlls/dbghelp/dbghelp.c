@@ -118,7 +118,7 @@ BOOL validate_addr64(DWORD64 addr)
  *		SymSetSearchPath (DBGHELP.@)
  *
  */
-BOOL WINAPI SymSetSearchPath(HANDLE hProcess, PSTR searchPath)
+BOOL WINAPI SymSetSearchPath(HANDLE hProcess, PCSTR searchPath)
 {
     struct process* pcs = process_find_by_handle(hProcess);
 
@@ -200,7 +200,7 @@ static BOOL check_live_target(struct process* pcs)
  * Note also that this scheme can be intertwined with the deferred loading 
  * mechanism (ie only load the debug information when we actually need it).
  */
-BOOL WINAPI SymInitialize(HANDLE hProcess, PSTR UserSearchPath, BOOL fInvadeProcess)
+BOOL WINAPI SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess)
 {
     struct process*     pcs;
 

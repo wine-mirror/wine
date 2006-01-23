@@ -97,7 +97,7 @@ const char* source_get(const struct module* module, unsigned idx)
  *		SymEnumSourceFiles (DBGHELP.@)
  *
  */
-BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, LPSTR Mask,
+BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
                                PSYM_ENUMSOURCEFILES_CALLBACK cbSrcFiles,
                                PVOID UserContext)
 {

@@ -796,7 +796,7 @@ BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase,
  *
  */
 BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll,
-                               LPSTR Name, PSYMBOL_INFO Symbol)
+                               PCSTR Name, PSYMBOL_INFO Symbol)
 {
     struct process*     pcs = process_find_by_handle(hProcess);
     struct module*      module;
