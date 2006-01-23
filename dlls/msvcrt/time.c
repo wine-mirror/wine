@@ -438,6 +438,18 @@ MSVCRT_size_t MSVCRT_strftime( char *str, MSVCRT_size_t max, const char *format,
 }
 
 /*********************************************************************
+ *		wcsftime (MSVCRT.@)
+ */
+MSVCRT_size_t MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
+                               const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm )
+{
+    FIXME( "%p, %d, %s, %p - stub\n", str, max, debugstr_w(format), mstm );
+
+    *str = '\0';
+    return 0;
+}
+
+/*********************************************************************
  *		asctime (MSVCRT.@)
  */
 char *MSVCRT_asctime(const struct MSVCRT_tm *mstm)
