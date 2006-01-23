@@ -529,6 +529,7 @@ static UINT  MENU_GetStartOfPrevColumn(
 static MENUITEM *MENU_FindItem( HMENU *hmenu, UINT *nPos, UINT wFlags )
 {
     POPUPMENU *menu;
+    MENUITEM *fallback = NULL;
     UINT i;
 
     if ((*hmenu == (HMENU)0xffff) || (!(menu = MENU_GetMenu(*hmenu)))) return NULL;
@@ -542,12 +543,7 @@ static MENUITEM *MENU_FindItem( HMENU *hmenu, UINT *nPos, UINT wFlags )
         MENUITEM *item = menu->items;
 	for (i = 0; i < menu->nItems; i++, item++)
 	{
-	    if (item->wID == *nPos)
-	    {
-		*nPos = i;
-		return item;
-	    }
-	    else if (item->fType & MF_POPUP)
+	    if (item->fType & MF_POPUP)
 	    {
 		HMENU hsubmenu = item->hSubMenu;
 		MENUITEM *subitem = MENU_FindItem( &hsubmenu, nPos, wFlags );
@@ -556,10 +552,17 @@ static MENUITEM *MENU_FindItem( HMENU *hmenu, UINT *nPos, UINT wFlags )
 		    *hmenu = hsubmenu;
 		    return subitem;
 		}
+		if ((UINT_PTR)item->hSubMenu == *nPos)
+		    fallback = item; /* fallback to this item if nothing else found */
+	    }
+	    else if (item->wID == *nPos)
+	    {
+		*nPos = i;
+		return item;
 	    }
 	}
     }
-    return NULL;
+    return fallback;
 }
 
 /***********************************************************************
