@@ -90,6 +90,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #define SONAME_LIBFREETYPE "libfreetype.so"
 #endif
 
+#ifndef FT_MODULE_DRIVER_HAS_HINTER
+#define FT_MODULE_DRIVER_HAS_HINTER 0x400
+#endif
+
 static FT_Library library = 0;
 typedef struct
 {
@@ -122,6 +126,7 @@ MAKE_FUNCPTR(FT_Vector_Transform);
 static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
 static FT_Error (*pFT_Load_Sfnt_Table)(FT_Face,FT_ULong,FT_Long,FT_Byte*,FT_ULong*);
 static FT_ULong (*pFT_Get_First_Char)(FT_Face,FT_UInt*);
+static FT_Error (*pFT_Module_Get_Flags)(FT_Module,FT_ULong*);
 #ifdef HAVE_FREETYPE_FTWINFNT_H
 MAKE_FUNCPTR(FT_Get_WinFNT_Header);
 #endif
@@ -1499,6 +1504,7 @@ BOOL WineEngInit(void)
     pFT_Library_Version = wine_dlsym(ft_handle, "FT_Library_Version", NULL, 0);
     pFT_Load_Sfnt_Table = wine_dlsym(ft_handle, "FT_Load_Sfnt_Table", NULL, 0);
     pFT_Get_First_Char = wine_dlsym(ft_handle, "FT_Get_First_Char", NULL, 0);
+    pFT_Module_Get_Flags = wine_dlsym(ft_handle, "FT_Module_Get_Flags", NULL, 0);
 #ifdef HAVE_FREETYPE_FTWINFNT_H
     pFT_Get_WinFNT_Header = wine_dlsym(ft_handle, "FT_Get_WinFNT_Header", NULL, 0);
 #endif
@@ -3727,7 +3733,9 @@ DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
             if( !err && needed < len) len = needed;
         }
         err = pFT_Load_Sfnt_Table(ft_face, table, offset, buf, &len);
-    } else { /* Do it the hard way */
+    }
+#ifdef HAVE_FREETYPE_INTERNAL_SFNT_H
+    else { /* Do it the hard way */
         TT_Face tt_face = (TT_Face) ft_face;
         SFNT_Interface *sfnt;
         if (FT_Version.major==2 && FT_Version.minor==0)
@@ -3748,6 +3756,18 @@ DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
         }
         err = sfnt->load_any(tt_face, table, offset, buf, &len);
     }
+#else
+    else {
+        static int msg;
+        if(!msg) {
+            MESSAGE("This version of Wine was compiled with freetype headers later than 2.2.0\n"
+                    "but is being run with a freetype library without the FT_Load_Sfnt_Table function.\n"
+                    "Please upgrade your freetype library.\n");
+            msg++;
+        }
+        err = FT_Err_Unimplemented_Feature;
+    }
+#endif
     if(err) {
         TRACE("Can't find table %08lx.\n", table);
 	return GDI_ERROR;
@@ -3813,8 +3833,21 @@ BOOL WINAPI FontIsLinked(HDC hdc)
 static BOOL is_hinting_enabled(void)
 {
     FT_Module mod = pFT_Get_Module(library, "truetype");
+
+    /* Use the >= 2.2.0 function if available */
+    if(pFT_Module_Get_Flags)
+    {
+        FT_ULong flags;
+        pFT_Module_Get_Flags(mod, &flags);
+        return flags & FT_MODULE_DRIVER_HAS_HINTER;
+    }
+
+    /* otherwise if we've been compiled with < 2.2.0 headers 
+       use the internal macro */
+#ifdef FT_DRIVER_HAS_HINTER
     if(mod && FT_DRIVER_HAS_HINTER(mod))
         return TRUE;
+#endif
 
     return FALSE;
 }
