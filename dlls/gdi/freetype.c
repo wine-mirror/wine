@@ -82,6 +82,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #ifdef HAVE_FREETYPE_FTWINFNT_H
 #include <freetype/ftwinfnt.h>
 #endif
+#ifdef HAVE_FREETYPE_FTMODAPI_H
+#include <freetype/ftmodapi.h>
+#endif
 
 #ifndef SONAME_LIBFREETYPE
 #define SONAME_LIBFREETYPE "libfreetype.so"
