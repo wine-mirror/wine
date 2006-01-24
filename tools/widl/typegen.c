@@ -91,6 +91,18 @@ static inline int is_base_type(unsigned char type)
     }
 }
 
+static inline int is_string_type(const attr_t *attrs, int ptr_level, const expr_t *array)
+{
+    return (is_attr(attrs, ATTR_STRING) &&
+            ((ptr_level == 1 && !array) || (ptr_level == 0 && array)));
+}
+
+static inline int is_array_type(const attr_t *attrs, int ptr_level, const expr_t *array)
+{
+    return ((ptr_level == 1 && !array && is_attr(attrs, ATTR_SIZEIS)) ||
+            (ptr_level == 0 && array));
+}
+
 static size_t write_procformatstring_var(FILE *file, int indent,
     const var_t *var, int is_return, unsigned int *type_offset)
 {
@@ -625,6 +637,12 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
     while (TRUE)
     {
+        if (is_string_type(var->attrs, ptr_level, var->array))
+            return write_string_tfs(file, var->attrs, type, var->array, var->name);
+
+        if (is_array_type(var->attrs, ptr_level, var->array))
+            return write_array_tfs(file, var->attrs, type, var->array, var->name);
+
         if (ptr_level == 0)
         {
             /* follow reference if the type has one */
@@ -636,14 +654,8 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
             }
 
             /* basic types don't need a type format string */
-            if (!var->array && is_base_type(type->type))
+            if (is_base_type(type->type))
                 return 0;
-
-            if (is_attr(var->attrs, ATTR_STRING))
-                return write_string_tfs(file, var->attrs, type, var->array, var->name);
-
-            if (var->array)
-                return write_array_tfs(file, var->attrs, type, var->array, var->name);
         }
         else if (ptr_level == 1 && !type_has_ref(type))
         {
@@ -819,7 +831,61 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
             break;
         }
 
-        if (var->ptr_level == 0 && !var->array)
+        if (is_string_type(var->attrs, var->ptr_level, var->array))
+        {
+            print_file(file, indent,
+                       "NdrConformantStringMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                       var->name, *type_offset);
+            last_size = 1;
+        }
+        else if (is_array_type(var->attrs, var->ptr_level, var->array))
+        {
+            const expr_t *length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
+            const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+            const char *array_type;
+            int has_length = length_is && (length_is->type != EXPR_VOID);
+            int has_size = size_is && (size_is->type != EXPR_VOID) && !var->array->is_const;
+
+            if (NEXT_LINK(var->array)) /* multi-dimensional array */
+                array_type = "ComplexArray";
+            else
+            {
+                if (!has_length && !has_size)
+                    array_type = "FixedArray";
+                else if (has_length && !has_size)
+                {
+                    print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
+                    print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
+                    write_expr(file, length_is, 1);
+                    fprintf(file, ";\n\n");
+                    array_type = "VaryingArray";
+                }
+                else if (!has_length && has_size)
+                {
+                    print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
+                    write_expr(file, size_is ? size_is : var->array, 1);
+                    fprintf(file, ";\n\n");
+                    array_type = "ConformantArray";
+                }
+                else
+                {
+                    print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
+                    write_expr(file, size_is ? size_is : var->array, 1);
+                    fprintf(file, ";\n");
+                    print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
+                    print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
+                    write_expr(file, length_is, 1);
+                    fprintf(file, ";\n\n");
+                    array_type = "ConformantVaryingArray";
+                }
+            }
+
+            print_file(file, indent,
+                       "Ndr%sMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                       array_type, var->name, *type_offset);
+            last_size = 1;
+        }
+        else if (var->ptr_level == 0 && is_base_type(var->type->type))
         {
             unsigned int size;
             unsigned int alignment = 0;
@@ -876,103 +942,41 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
 
             last_size = size;
         }
-        else if ((var->ptr_level == 1 && !var->array) ||
-            (var->ptr_level == 0 && var->array))
+        else if (var->ptr_level == 0)
         {
-            if (is_attr(var->attrs, ATTR_STRING))
+            const char *ndrtype;
+
+            switch (var->type->type)
             {
-                switch (var->type->type)
-                {
-                case RPC_FC_CHAR:
-                case RPC_FC_WCHAR:
-                    print_file(file, indent,
-                        "NdrConformantStringMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                        var->name, *type_offset);
-                    break;
-                default:
-                    error("marshall_arguments: Unsupported [string] type: %s (0x%02x, ptr_level: 1)\n", var->name, var->type->type);
-                }
+            case RPC_FC_STRUCT:
+                ndrtype = "SimpleStruct";
+                break;
+            case RPC_FC_CSTRUCT:
+            case RPC_FC_CPSTRUCT:
+                ndrtype = "ConformantStruct";
+                break;
+            case RPC_FC_CVSTRUCT:
+                ndrtype = "ConformantVaryingStruct";
+                break;
+            case RPC_FC_BOGUS_STRUCT:
+                ndrtype = "ComplexStruct";
+                break;
+            default:
+                error("marshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
+                    var->name, var->type->type, var->ptr_level);
+                ndrtype = NULL;
             }
-            else if (var->array)
-            {
-                const expr_t *length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
-                const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
-                const char *array_type;
-                int has_length = length_is && (length_is->type != EXPR_VOID);
-                int has_size = size_is && (size_is->type != EXPR_VOID) && !var->array->is_const;
 
-                if (NEXT_LINK(var->array)) /* multi-dimensional array */
-                    array_type = "ComplexArray";
-                else
-                {
-                    if (!has_length && !has_size)
-                        array_type = "FixedArray";
-                    else if (has_length && !has_size)
-                    {
-                        print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
-                        print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
-                        write_expr(file, length_is, 1);
-                        fprintf(file, ";\n\n");
-                        array_type = "VaryingArray";
-                    }
-                    else if (!has_length && has_size)
-                    {
-                        print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                        write_expr(file, size_is ? size_is : var->array, 1);
-                        fprintf(file, ";\n\n");
-                        array_type = "ConformantArray";
-                    }
-                    else
-                    {
-                        print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                        write_expr(file, size_is ? size_is : var->array, 1);
-                        fprintf(file, ";\n");
-                        print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
-                        print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
-                        write_expr(file, length_is, 1);
-                        fprintf(file, ";\n\n");
-                        array_type = "ConformantVaryingArray";
-                    }
-                }
-
-                print_file(file, indent,
-                    "Ndr%sMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                    array_type, var->name, *type_offset);
-            }
-            else
-            {
-                const char *ndrtype;
-
-                switch (var->type->type)
-                {
-                case RPC_FC_STRUCT:
-                    ndrtype = "SimpleStruct";
-                    break;
-                case RPC_FC_CSTRUCT:
-                case RPC_FC_CPSTRUCT:
-                    ndrtype = "ConformantStruct";
-                    break;
-                case RPC_FC_CVSTRUCT:
-                    ndrtype = "ConformantVaryingStruct";
-                    break;
-                case RPC_FC_BOGUS_STRUCT:
-                    ndrtype = "ComplexStruct";
-                    break;
-                default:
-                    error("marshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
-                        var->name, var->type->type, var->ptr_level);
-                    ndrtype = NULL;
-                }
-
-                print_file(file, indent,
-                    "Ndr%sMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                    ndrtype, var->name, *type_offset);
-            }
+            print_file(file, indent,
+                "Ndr%sMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                ndrtype, var->name, *type_offset);
             last_size = 1;
         }
         else
         {
-            error("marshall_arguments: Pointer level %d not supported for variable %s\n", var->ptr_level, var->name);
+            print_file(file, indent,
+                       "NdrPointerMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                       var->name, *type_offset);
             last_size = 1;
         }
         fprintf(file, "\n");
@@ -1012,7 +1016,41 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
             break;
         }
 
-        if (var->ptr_level == 0 && !var->array)
+        if (is_string_type(var->attrs, var->ptr_level, var->array))
+        {
+            print_file(file, indent,
+                       "NdrConformantStringUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
+                       var->name, *type_offset);
+            last_size = 1;
+        }
+        else if (is_array_type(var->attrs, var->ptr_level, var->array))
+        {
+            const expr_t *length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
+            const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+            const char *array_type;
+            int has_length = length_is && (length_is->type != EXPR_VOID);
+            int has_size = size_is && (size_is->type != EXPR_VOID) && !var->array->is_const;
+
+            if (NEXT_LINK(var->array)) /* multi-dimensional array */
+                array_type = "ComplexArray";
+            else
+            {
+                if (!has_length && !has_size)
+                    array_type = "FixedArray";
+                else if (has_length && !has_size)
+                    array_type = "VaryingArray";
+                else if (!has_length && has_size)
+                    array_type = "ConformantArray";
+                else
+                    array_type = "ConformantVaryingArray";
+            }
+
+            print_file(file, indent,
+                       "Ndr%sUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
+                       array_type, var->name, *type_offset);
+            last_size = 1;
+        }
+        else if (var->ptr_level == 0 && is_base_type(var->type->type))
         {
             unsigned int size;
             unsigned int alignment = 0;
@@ -1070,79 +1108,34 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
 
             last_size = size;
         }
-        else if ((var->ptr_level == 1 && !var->array) ||
-            (var->ptr_level == 0 && var->array))
+        else if (var->ptr_level == 0)
         {
-            if (is_attr(var->attrs, ATTR_STRING))
+            const char *ndrtype;
+
+            switch (var->type->type)
             {
-                switch (var->type->type)
-                {
-                case RPC_FC_CHAR:
-                case RPC_FC_WCHAR:
-                    print_file(file, indent,
-                        "NdrConformantStringUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
-                        var->name, *type_offset);
-                    break;
-                default:
-                    error("unmarshall_arguments: Unsupported [string] type: %s (0x%02x, ptr_level: %d)\n",
-                        var->name, var->type->type, var->ptr_level);
-                }
+            case RPC_FC_STRUCT:
+                ndrtype = "SimpleStruct";
+                break;
+            case RPC_FC_CSTRUCT:
+            case RPC_FC_CPSTRUCT:
+                ndrtype = "ConformantStruct";
+                break;
+            case RPC_FC_CVSTRUCT:
+                ndrtype = "ConformantVaryingStruct";
+                break;
+            case RPC_FC_BOGUS_STRUCT:
+                ndrtype = "ComplexStruct";
+                break;
+            default:
+                error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
+                    var->name, var->type->type, var->ptr_level);
+                ndrtype = NULL;
             }
-            else if (var->array)
-            {
-                const expr_t *length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
-                const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
-                const char *array_type;
-                int has_length = length_is && (length_is->type != EXPR_VOID);
-                int has_size = size_is && (size_is->type != EXPR_VOID) && !var->array->is_const;
 
-                if (NEXT_LINK(var->array)) /* multi-dimensional array */
-                    array_type = "ComplexArray";
-                else
-                {
-                    if (!has_length && !has_size)
-                        array_type = "FixedArray";
-                    else if (has_length && !has_size)
-                        array_type = "VaryingArray";
-                    else if (!has_length && has_size)
-                        array_type = "ConformantArray";
-                    else
-                        array_type = "ConformantVaryingArray";
-                }
-
-                print_file(file, indent,
-                    "Ndr%sUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
-                    array_type, var->name, *type_offset);
-            }
-            else
-            {
-                const char *ndrtype;
-
-                switch (var->type->type)
-                {
-                case RPC_FC_STRUCT:
-                    ndrtype = "SimpleStruct";
-                    break;
-                case RPC_FC_CSTRUCT:
-                case RPC_FC_CPSTRUCT:
-                    ndrtype = "ConformantStruct";
-                    break;
-                case RPC_FC_CVSTRUCT:
-                    ndrtype = "ConformantVaryingStruct";
-                    break;
-                case RPC_FC_BOGUS_STRUCT:
-                    ndrtype = "ComplexStruct";
-                    break;
-                default:
-                    error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
-                        var->name, var->type->type, var->ptr_level);
-                    ndrtype = NULL;
-                }
-
-                print_file(file, indent,
-                    "Ndr%sUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
-                    ndrtype, var->name, *type_offset);
-            }
+            print_file(file, indent,
+                "Ndr%sUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
+                ndrtype, var->name, *type_offset);
             last_size = 1;
         }
         else
