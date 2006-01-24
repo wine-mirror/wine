@@ -929,8 +929,40 @@ static HRESULT WINAPI domdoc_save(
     IXMLDOMDocument *iface,
     VARIANT destination )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    HANDLE handle;
+    xmlChar *mem;
+    int size;
+    HRESULT ret = S_OK;
+    DWORD written;
+
+    TRACE("(%p)->(var(vt %x, %s))\n", This, V_VT(&destination),
+          V_VT(&destination) == VT_BSTR ? debugstr_w(V_BSTR(&destination)) : NULL);
+
+    if(V_VT(&destination) != VT_BSTR)
+    {
+        FIXME("Unhandled vt %x\n", V_VT(&destination));
+        return S_FALSE;
+    }
+
+    handle = CreateFileW( V_BSTR(&destination), GENERIC_WRITE, 0,
+                          NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+    if( handle == INVALID_HANDLE_VALUE )
+    {
+        WARN("failed to create file\n");
+        return S_FALSE;
+    }
+
+    xmlDocDumpMemory(get_doc(This), &mem, &size);
+    if(!WriteFile(handle, mem, (DWORD)size, &written, NULL) || written != (DWORD)size)
+    {
+        WARN("write error\n");
+        ret = S_FALSE;
+    }
+
+    xmlFree(mem);
+    CloseHandle(handle);
+    return ret;
 }
 
 static HRESULT WINAPI domdoc_get_validateOnParse(
