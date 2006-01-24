@@ -654,10 +654,26 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
     }
 }
 
+static const var_t *find_array_in_struct(const type_t *type)
+{
+    /* last field is the first in the fields linked list */
+    const var_t *last_field = type->fields;
+    if (is_array_type(last_field->attrs, last_field->ptr_level, last_field->array))
+        return last_field;
+
+    assert((last_field->type->type == RPC_FC_CSTRUCT) ||
+           (last_field->type->type == RPC_FC_CPSTRUCT) ||
+           (last_field->type->type == RPC_FC_CVSTRUCT));
+
+    return find_array_in_struct(last_field->type);
+}
+
 static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
 {
     size_t total_size;
     size_t typestring_size;
+    const var_t *array;
+
     switch (type->type)
     {
     case RPC_FC_STRUCT:
@@ -679,6 +695,32 @@ static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
         print_file(file, 2, "FC_END,\n");
 
         typestring_size += 2;
+        return typestring_size;
+    case RPC_FC_CSTRUCT:
+        total_size = type_memsize(type, 0, NULL);
+
+        if (total_size > USHRT_MAX)
+            error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
+                  name, USHRT_MAX, total_size - USHRT_MAX);
+
+        print_file(file, 2, "0x%x, /* %s */\n", RPC_FC_CSTRUCT, "FC_CSTRUCT");
+        /* alignment */
+        print_file(file, 2, "0x0,\n");
+        /* total size */
+        print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
+        /* FIXME: a fixed offset won't work when pointer layout is present */
+        print_file(file, 2, "NdrShort(0x3), /* 3 */\n");
+        print_file(file, 2, "FC_END,\n");
+        typestring_size = 7;
+
+        array = find_array_in_struct(type);
+        /* assumes array points to the start of the linked list, which is true
+         * if the array is the last member of the struct */
+        current_fields = array;
+        typestring_size += write_array_tfs(file, array->attrs, array->type,
+                                           array->array, array->name);
+        current_fields = NULL;
+
         return typestring_size;
     default:
         error("write_struct_tfs: Unimplemented for type 0x%x\n", type->type);
