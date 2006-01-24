@@ -17,7 +17,7 @@
  */
 
 #include <mshtmdid.h>
-/* #include <mshtmcid.h> */
+#include <mshtmcid.h>
 #include <olectl.h>
 
 import "ocidl.idl";

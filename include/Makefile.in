@@ -181,6 +181,7 @@ WINDOWS_INCLUDES = \
 	msacmdlg.h \
 	msacmdrv.h \
 	mscat.h \
+	mshtmcid.h \
 	mshtmdid.h \
 	msi.h \
 	msidefs.h \
