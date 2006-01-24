@@ -654,7 +654,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
     }
 }
 
-static const var_t *find_array_in_struct(const type_t *type)
+static const var_t *find_array_or_string_in_struct(const type_t *type)
 {
     /* last field is the first in the fields linked list */
     const var_t *last_field = type->fields;
@@ -665,7 +665,7 @@ static const var_t *find_array_in_struct(const type_t *type)
            (last_field->type->type == RPC_FC_CPSTRUCT) ||
            (last_field->type->type == RPC_FC_CVSTRUCT));
 
-    return find_array_in_struct(last_field->type);
+    return find_array_or_string_in_struct(last_field->type);
 }
 
 static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
@@ -713,12 +713,42 @@ static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
         print_file(file, 2, "FC_END,\n");
         typestring_size = 7;
 
-        array = find_array_in_struct(type);
+        array = find_array_or_string_in_struct(type);
         /* assumes array points to the start of the linked list, which is true
          * if the array is the last member of the struct */
         current_fields = array;
         typestring_size += write_array_tfs(file, array->attrs, array->type,
                                            array->array, array->name);
+        current_fields = NULL;
+
+        return typestring_size;
+    case RPC_FC_CVSTRUCT:
+        total_size = type_memsize(type, 0, NULL);
+
+        if (total_size > USHRT_MAX)
+            error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
+                  name, USHRT_MAX, total_size - USHRT_MAX);
+
+        print_file(file, 2, "0x%x, /* %s */\n", RPC_FC_CVSTRUCT, "FC_CVSTRUCT");
+        /* alignment */
+        print_file(file, 2, "0x0,\n");
+        /* total size */
+        print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
+        /* FIXME: a fixed offset won't work when pointer layout is present */
+        print_file(file, 2, "NdrShort(0x3), /* 3 */\n");
+        print_file(file, 2, "FC_END,\n");
+        typestring_size = 7;
+
+        array = find_array_or_string_in_struct(type);
+        /* assumes array points to the start of the linked list, which is true
+         * if the array is the last member of the struct */
+        current_fields = array;
+        if (is_attr(array->attrs, ATTR_STRING))
+            typestring_size += write_string_tfs(file, array->attrs, array->type,
+                                                array->array, array->name);
+        else
+            typestring_size += write_array_tfs(file, array->attrs, array->type,
+                                               array->array, array->name);
         current_fields = NULL;
 
         return typestring_size;
