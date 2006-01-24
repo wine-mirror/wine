@@ -131,19 +131,14 @@ int is_serial_fd( struct fd *fd )
 struct object *create_serial( struct fd *fd, unsigned int options )
 {
     struct serial *serial;
-    int unix_fd;
-
-    if ((unix_fd = dup( get_unix_fd(fd) )) == -1) return NULL;
+    int unix_fd = get_unix_fd( fd );
 
     /* set the fd back to blocking if necessary */
     if (options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT))
         fcntl( unix_fd, F_SETFL, 0 );
 
-    if (!(serial = alloc_object( &serial_ops )))
-    {
-        close( unix_fd );
-        return NULL;
-    }
+    if (!(serial = alloc_object( &serial_ops ))) return NULL;
+
     serial->options      = options;
     serial->readinterval = 0;
     serial->readmult     = 0;
@@ -155,11 +150,8 @@ struct object *create_serial( struct fd *fd, unsigned int options )
     list_init( &serial->read_q );
     list_init( &serial->write_q );
     list_init( &serial->wait_q );
-    if (!(serial->fd = create_anonymous_fd( &serial_fd_ops, unix_fd, &serial->obj )))
-    {
-        release_object( serial );
-        return NULL;
-    }
+    serial->fd = (struct fd *)grab_object( fd );
+    set_fd_user( fd, &serial_fd_ops, &serial->obj );
     return &serial->obj;
 }
 
