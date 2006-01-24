@@ -629,6 +629,18 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
     }
 }
 
+static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
+{
+    error("write_struct_tfs: Unimplemented\n");
+    return 0;
+}
+
+static size_t write_union_tfs(FILE *file, const attr_t *attrs, const type_t *type, const char *name)
+{
+    error("write_union_tfs: Unimplemented\n");
+    return 0;
+}
+
 static size_t write_typeformatstring_var(FILE *file, int indent,
     const var_t *var)
 {
@@ -656,6 +668,22 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
             /* basic types don't need a type format string */
             if (is_base_type(type->type))
                 return 0;
+
+            switch (type->type)
+            {
+            case RPC_FC_STRUCT:
+            case RPC_FC_PSTRUCT:
+            case RPC_FC_CSTRUCT:
+            case RPC_FC_CPSTRUCT:
+            case RPC_FC_CVSTRUCT:
+            case RPC_FC_BOGUS_STRUCT:
+                return write_struct_tfs(file, type, var->name);
+            case RPC_FC_ENCAPSULATED_UNION:
+            case RPC_FC_NON_ENCAPSULATED_UNION:
+                return write_union_tfs(file, var->attrs, type, var->name);
+            default:
+                error("write_typeformatstring_var: Unsupported type 0x%x for variable %s\n", type->type, var->name);
+            }
         }
         else if (ptr_level == 1 && !type_has_ref(type))
         {
