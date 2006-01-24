@@ -281,12 +281,67 @@ static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
     return size;
 }
 
-static size_t write_string_tfs(FILE *file, const attr_t *attr,
+static size_t write_string_tfs(FILE *file, const attr_t *attrs,
                                const type_t *type, const expr_t *array,
                                const char *name)
 {
-    error("write_string_tfs: Unimplemented. name: %s\n", name);
-    return 0;
+    const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
+    int has_size = size_is && (size_is->type != EXPR_VOID);
+
+    if ((type->type != RPC_FC_CHAR) && (type->type != RPC_FC_WCHAR))
+    {
+        error("write_string_tfs: Unimplemented for type 0x%x of name: %s\n", type->type, name);
+        return 0;
+    }
+
+    if (array && array->is_const)
+    {
+        size_t typestring_size;
+
+        if (array->cval > USHRT_MAX)
+            error("array size for parameter %s exceeds %d bytes by %ld bytes\n",
+                  name, USHRT_MAX, array->cval - USHRT_MAX);
+
+        if (type->type == RPC_FC_CHAR)
+            print_file(file, 2, "0x%x, /* FC_CSTRING */\n", RPC_FC_C_CSTRING);
+        else
+            print_file(file, 2, "0x%x, /* FC_WSTRING */\n", RPC_FC_C_WSTRING);
+        print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
+        typestring_size = 2;
+
+        print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", array->cval, array->cval);
+        typestring_size += 2;
+
+        return typestring_size;
+    }
+    else if (has_size)
+    {
+        size_t typestring_size;
+
+        if (type->type == RPC_FC_CHAR)
+            print_file(file, 2, "0x%x, /* FC_C_CSTRING */\n", RPC_FC_C_CSTRING);
+        else
+            print_file(file, 2, "0x%x, /* FC_C_WSTRING */\n", RPC_FC_C_WSTRING);
+        print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
+        typestring_size = 2;
+
+        return typestring_size;
+    }
+    else
+    {
+        size_t typestring_size;
+
+        if (type->type == RPC_FC_CHAR)
+            print_file(file, 2, "0x%x, /* FC_C_CSTRING */\n", RPC_FC_C_CSTRING);
+        else
+            print_file(file, 2, "0x%x, /* FC_C_WSTRING */\n", RPC_FC_C_WSTRING);
+        print_file(file, 2, "0x%x, /* FC_STRING_SIZED */\n", RPC_FC_STRING_SIZED);
+        typestring_size = 2;
+
+        /* FIXME: write out conformance descriptor */
+
+        return typestring_size;
+    }
 }
 
 static size_t write_array_tfs(FILE *file, const attr_t *attrs,
