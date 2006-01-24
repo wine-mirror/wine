@@ -927,6 +927,96 @@ DWORD getInterfaceEntryByIndex(DWORD index, PMIB_IFROW entry)
     return ERROR_INVALID_DATA;
 }
 
+DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
+{
+  DWORD ret;
+
+  if (!ppIpAddrTable)
+    ret = ERROR_INVALID_PARAMETER;
+  else
+  {
+    int fd;
+
+    fd = socket(PF_INET, SOCK_DGRAM, 0);
+    if (fd != -1) {
+      int ioctlRet;
+      DWORD guessedNumAddresses, numAddresses;
+      struct ifconf ifc;
+      caddr_t ifPtr;
+
+      guessedNumAddresses = 0;
+      ioctlRet = 0;
+      memset(&ifc, 0, sizeof(ifc));
+      /* there is no way to know the interface count beforehand,
+         so we need to loop again and again upping our max each time
+         until returned < max */
+      do {
+        if (guessedNumAddresses == 0)
+          guessedNumAddresses = INITIAL_INTERFACES_ASSUMED;
+        else
+          guessedNumAddresses *= 2;
+        HeapFree(GetProcessHeap(), 0, ifc.ifc_buf);
+        ifc.ifc_len = sizeof(struct ifreq) * guessedNumAddresses;
+        ifc.ifc_buf = HeapAlloc(GetProcessHeap(), 0, ifc.ifc_len);
+        ioctlRet = ioctl(fd, SIOCGIFCONF, &ifc);
+      } while (ioctlRet == 0 &&
+       ifc.ifc_len == (sizeof(struct ifreq) * guessedNumAddresses));
+
+      if (ioctlRet == 0) {
+        numAddresses = 0;
+        ifPtr = ifc.ifc_buf;
+        while (ifPtr && ifPtr < ifc.ifc_buf + ifc.ifc_len) {
+          numAddresses++;
+          ifPtr += ifreq_len((struct ifreq *)ifPtr);
+        }
+        *ppIpAddrTable = HeapAlloc(heap, flags, sizeof(MIB_IPADDRTABLE) +
+         (numAddresses - 1) * sizeof(MIB_IPADDRROW));
+        if (*ppIpAddrTable) {
+          DWORD i = 0, bcast;
+
+          ret = NO_ERROR;
+          (*ppIpAddrTable)->dwNumEntries = numAddresses;
+          ifPtr = ifc.ifc_buf;
+          while (!ret && ifPtr && ifPtr < ifc.ifc_buf + ifc.ifc_len) {
+            struct ifreq *ifr = (struct ifreq *)ifPtr;
+
+            ret = getInterfaceIndexByName(ifr->ifr_name,
+             &(*ppIpAddrTable)->table[i].dwIndex);
+            (*ppIpAddrTable)->table[i].dwAddr =
+             getInterfaceIPAddrByIndex((*ppIpAddrTable)->table[i].dwIndex);
+            (*ppIpAddrTable)->table[i].dwMask =
+             getInterfaceMaskByIndex((*ppIpAddrTable)->table[i].dwIndex);
+            /* the dwBCastAddr member isn't the broadcast address, it indicates
+             * whether the interface uses the 1's broadcast address (1) or the
+             * 0's broadcast address (0).
+             */
+            bcast = getInterfaceBCastAddrByIndex(
+             (*ppIpAddrTable)->table[i].dwIndex);
+            (*ppIpAddrTable)->table[i].dwBCastAddr =
+             (bcast & (*ppIpAddrTable)->table[i].dwMask) ? 1 : 0;
+            /* FIXME: hardcoded reasm size, not sure where to get it */
+            (*ppIpAddrTable)->table[i].dwReasmSize = 65535;
+
+            (*ppIpAddrTable)->table[i].unused1 = 0;
+            (*ppIpAddrTable)->table[i].wType = 0;
+            ifPtr += ifreq_len(ifr);
+            i++;
+          }
+        }
+        else
+          ret = ERROR_OUTOFMEMORY;
+      }
+      else
+        ret = ERROR_INVALID_PARAMETER;
+      HeapFree(GetProcessHeap(), 0, ifc.ifc_buf);
+      close(fd);
+    }
+    else
+      ret = ERROR_NO_SYSTEM_RESOURCES;
+  }
+  return ret;
+}
+
 char *toIPAddressString(unsigned int addr, char string[16])
 {
   if (string) {

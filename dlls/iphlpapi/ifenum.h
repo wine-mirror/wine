@@ -125,6 +125,13 @@ DWORD getInterfaceMtuByIndex(DWORD index, PDWORD mtu);
 DWORD getInterfaceEntryByName(const char *name, PMIB_IFROW entry);
 DWORD getInterfaceEntryByIndex(DWORD index, PMIB_IFROW entry);
 
+/* Gets the configured IP addresses for the system, and sets *ppIpAddrTable to
+ * a table of them allocated from heap, or NULL if out of memory.  Returns
+ * NO_ERROR on success, something else on failure.  Note there may be more than
+ * one IP address may exist per interface.
+ */
+DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags);
+
 /* Converts the network-order bytes in addr to a printable string.  Returns
  * string.
  */

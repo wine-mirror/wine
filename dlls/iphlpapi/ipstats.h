@@ -15,9 +15,8 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * This module implements functions shared by DLLs that need to get network-
- * related statistics.  It's meant to hide some platform-specificisms, and
- * share code that was previously duplicated.
+ * This module implements functions that get network-related statistics.
+ * It's meant to hide some platform-specificisms.
  */
 #ifndef WINE_IPSTATS_H_
 #define WINE_IPSTATS_H_
@@ -53,53 +52,37 @@ DWORD getTCPStats(MIB_TCPSTATS *stats);
  */
 DWORD getUDPStats(MIB_UDPSTATS *stats);
 
-/* Route table functions */
-
+/* Returns the number of entries in the route table. */
 DWORD getNumRoutes(void);
 
-/* Minimalist route entry, only has the fields I can actually fill in.  How
- * these map to the different windows route data structures is up to you.
+/* Allocates the route table from heap and returns it to you in
+ * *ppIpForwardTable.  Returns NO_ERROR on success, something else on failure.
  */
-typedef struct _RouteEntry {
-  DWORD dest;
-  DWORD mask;
-  DWORD gateway;
-  DWORD ifIndex;
-  DWORD metric;
-} RouteEntry;
-
-typedef struct _RouteTable {
-  DWORD numRoutes;
-  RouteEntry routes[1];
-} RouteTable;
-
-/* Allocates and returns to you the route table, or NULL if it can't allocate
- * enough memory.  HeapFree() the returned table.
- */
-RouteTable *getRouteTable(void);
+DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
+ DWORD flags);
 
 /* Returns the number of entries in the arp table. */
 DWORD getNumArpEntries(void);
 
-/* Allocates and returns to you the arp table, or NULL if it can't allocate
- * enough memory.  HeapFree() the returned table.
+/* Allocates the arp table from heap and returns it to you in *ppIpNetTable.
+ * Returns NO_ERROR on success, something else on failure.
  */
-PMIB_IPNETTABLE getArpTable(void);
+DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags);
 
 /* Returns the number of entries in the UDP state table. */
 DWORD getNumUdpEntries(void);
 
-/* Allocates and returns to you the UDP state table, or NULL if it can't
- * allocate enough memory.  HeapFree() the returned table.
+/* Allocates the UDP state table from heap and returns it to you in *ppUdpTable.
+ * Returns NO_ERROR on success, something else on failure.
  */
-PMIB_UDPTABLE getUdpTable(void);
+DWORD getUdpTable(PMIB_UDPTABLE *ppUdpTable, HANDLE heap, DWORD flags);
 
 /* Returns the number of entries in the TCP state table. */
 DWORD getNumTcpEntries(void);
 
-/* Allocates and returns to you the TCP state table, or NULL if it can't
- * allocate enough memory.  HeapFree() the returned table.
+/* Allocates the TCP state table from heap and returns it to you in *ppTcpTable.
+ * Returns NO_ERROR on success, something else on failure.
  */
-PMIB_TCPTABLE getTcpTable(void);
+DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, HANDLE heap, DWORD flags);
 
 #endif /* ndef WINE_IPSTATS_H_ */

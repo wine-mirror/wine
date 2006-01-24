@@ -38,6 +38,9 @@
 #ifdef HAVE_NET_IF_H
 #include <net/if.h>
 #endif
+#ifdef HAVE_NET_ROUTE_H
+#include <net/route.h>
+#endif
 #ifdef HAVE_NET_IF_ARP_H
 #include <net/if_arp.h>
 #endif
@@ -561,70 +564,101 @@ DWORD getNumRoutes(void)
   return getNumWithOneHeader("/proc/net/route");
 }
 
-RouteTable *getRouteTable(void)
+DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
+ DWORD flags)
 {
-  DWORD numRoutes = getNumRoutes();
-  RouteTable *ret;
+  DWORD ret;
 
-  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-   sizeof(RouteTable) + (numRoutes - 1) * sizeof(RouteEntry));
-  if (ret) {
-    FILE *fp;
+  if (!ppIpForwardTable)
+    ret = ERROR_INVALID_PARAMETER;
+  else {
+    DWORD numRoutes = getNumRoutes();
+    PMIB_IPFORWARDTABLE table = HeapAlloc(heap, flags,
+     sizeof(MIB_IPFORWARDTABLE) + (numRoutes - 1) * sizeof(MIB_IPFORWARDROW));
 
-    /* get from /proc/net/route, no error if can't */
-    fp = fopen("/proc/net/route", "r");
-    if (fp) {
-      char buf[512] = { 0 }, *ptr;
+    if (table) {
+      FILE *fp;
 
-      /* skip header line */
-      ptr = fgets(buf, sizeof(buf), fp);
-      while (ptr && ret->numRoutes < numRoutes) {
+      ret = NO_ERROR;
+      *ppIpForwardTable = table;
+      table->dwNumEntries = 0;
+      /* get from /proc/net/route, no error if can't */
+      fp = fopen("/proc/net/route", "r");
+      if (fp) {
+        char buf[512] = { 0 }, *ptr;
+
+        /* skip header line */
         ptr = fgets(buf, sizeof(buf), fp);
-        if (ptr) {
-          DWORD index;
+        while (ptr && table->dwNumEntries < numRoutes) {
+          memset(&table->table[table->dwNumEntries], 0,
+           sizeof(MIB_IPFORWARDROW));
+          ptr = fgets(buf, sizeof(buf), fp);
+          if (ptr) {
+            DWORD index;
 
-          while (!isspace(*ptr))
+            while (!isspace(*ptr))
+              ptr++;
+            *ptr = '\0';
             ptr++;
-          *ptr = '\0';
-          ptr++;
-          if (getInterfaceIndexByName(buf, &index) == NO_ERROR) {
-            char *endPtr;
+            if (getInterfaceIndexByName(buf, &index) == NO_ERROR) {
+              char *endPtr;
 
-            ret->routes[ret->numRoutes].ifIndex = index;
-            if (*ptr) {
-              ret->routes[ret->numRoutes].dest = strtoul(ptr, &endPtr, 16);
-              ptr = endPtr;
+              table->table[table->dwNumEntries].dwForwardIfIndex = index;
+              if (*ptr) {
+                table->table[table->dwNumEntries].dwForwardDest =
+                 strtoul(ptr, &endPtr, 16);
+                ptr = endPtr;
+              }
+              if (ptr && *ptr) {
+                table->table[table->dwNumEntries].dwForwardNextHop =
+                 strtoul(ptr, &endPtr, 16);
+                ptr = endPtr;
+              }
+              if (ptr && *ptr) {
+                DWORD flags = strtoul(ptr, &endPtr, 16);
+
+                if (!(flags & RTF_UP))
+                  table->table[table->dwNumEntries].dwForwardType =
+                   MIB_IPROUTE_TYPE_INVALID;
+                else if (flags & RTF_GATEWAY)
+                  table->table[table->dwNumEntries].dwForwardType =
+                   MIB_IPROUTE_TYPE_INDIRECT;
+                else
+                  table->table[table->dwNumEntries].dwForwardType =
+                   MIB_IPROUTE_TYPE_DIRECT;
+                ptr = endPtr;
+              }
+              if (ptr && *ptr) {
+                strtoul(ptr, &endPtr, 16); /* refcount, skip */
+                ptr = endPtr;
+              }
+              if (ptr && *ptr) {
+                strtoul(ptr, &endPtr, 16); /* use, skip */
+                ptr = endPtr;
+              }
+              if (ptr && *ptr) {
+                table->table[table->dwNumEntries].dwForwardMetric1 =
+                 strtoul(ptr, &endPtr, 16);
+                ptr = endPtr;
+              }
+              if (ptr && *ptr) {
+                table->table[table->dwNumEntries].dwForwardMask =
+                 strtoul(ptr, &endPtr, 16);
+                ptr = endPtr;
+              }
+              /* FIXME: other protos might be appropriate, e.g. the default
+               * route is typically set with MIB_IPPROTO_NETMGMT instead */
+              table->table[table->dwNumEntries].dwForwardProto =
+               MIB_IPPROTO_LOCAL;
+              table->dwNumEntries++;
             }
-            if (ptr && *ptr) {
-              ret->routes[ret->numRoutes].gateway = strtoul(ptr, &endPtr, 16);
-              ptr = endPtr;
-            }
-            if (ptr && *ptr) {
-              strtoul(ptr, &endPtr, 16); /* flags, skip */
-              ptr = endPtr;
-            }
-            if (ptr && *ptr) {
-              strtoul(ptr, &endPtr, 16); /* refcount, skip */
-              ptr = endPtr;
-            }
-            if (ptr && *ptr) {
-              strtoul(ptr, &endPtr, 16); /* use, skip */
-              ptr = endPtr;
-            }
-            if (ptr && *ptr) {
-              ret->routes[ret->numRoutes].metric = strtoul(ptr, &endPtr, 16);
-              ptr = endPtr;
-            }
-            if (ptr && *ptr) {
-              ret->routes[ret->numRoutes].mask = strtoul(ptr, &endPtr, 16);
-              ptr = endPtr;
-            }
-            ret->numRoutes++;
           }
         }
+        fclose(fp);
       }
-      fclose(fp);
     }
+    else
+      ret = ERROR_OUTOFMEMORY;
   }
   return ret;
 }
@@ -634,75 +668,90 @@ DWORD getNumArpEntries(void)
   return getNumWithOneHeader("/proc/net/arp");
 }
 
-PMIB_IPNETTABLE getArpTable(void)
+DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags)
 {
-  DWORD numEntries = getNumArpEntries();
-  PMIB_IPNETTABLE ret;
+  DWORD ret;
 
-  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-   sizeof(MIB_IPNETTABLE) + (numEntries - 1) * sizeof(MIB_IPNETROW));
-  if (ret) {
-    FILE *fp;
+  if (!ppIpNetTable)
+    ret = ERROR_INVALID_PARAMETER;
+  else {
+    DWORD numEntries = getNumArpEntries();
+    PMIB_IPNETTABLE table = HeapAlloc(heap, flags,
+     sizeof(MIB_IPNETTABLE) + (numEntries - 1) * sizeof(MIB_IPNETROW));
 
-    /* get from /proc/net/arp, no error if can't */
-    fp = fopen("/proc/net/arp", "r");
-    if (fp) {
-      char buf[512] = { 0 }, *ptr;
+    if (table) {
+      FILE *fp;
 
-      /* skip header line */
-      ptr = fgets(buf, sizeof(buf), fp);
-      while (ptr && ret->dwNumEntries < numEntries) {
+      ret = NO_ERROR;
+      *ppIpNetTable = table;
+      table->dwNumEntries = 0;
+      /* get from /proc/net/arp, no error if can't */
+      fp = fopen("/proc/net/arp", "r");
+      if (fp) {
+        char buf[512] = { 0 }, *ptr;
+
+        /* skip header line */
         ptr = fgets(buf, sizeof(buf), fp);
-        if (ptr) {
-          char *endPtr;
+        while (ptr && table->dwNumEntries < numEntries) {
+          ptr = fgets(buf, sizeof(buf), fp);
+          if (ptr) {
+            char *endPtr;
 
-          ret->table[ret->dwNumEntries].dwAddr = inet_addr(ptr);
-          while (ptr && *ptr && !isspace(*ptr))
-            ptr++;
+            memset(&table->table[table->dwNumEntries], 0, sizeof(MIB_IPNETROW));
+            table->table[table->dwNumEntries].dwAddr = inet_addr(ptr);
+            while (ptr && *ptr && !isspace(*ptr))
+              ptr++;
 
-          if (ptr && *ptr) {
-            strtoul(ptr, &endPtr, 16); /* hw type (skip) */
-            ptr = endPtr;
-          }
-          if (ptr && *ptr) {
-            DWORD flags = strtoul(ptr, &endPtr, 16);
+            if (ptr && *ptr) {
+              strtoul(ptr, &endPtr, 16); /* hw type (skip) */
+              ptr = endPtr;
+            }
+            if (ptr && *ptr) {
+              DWORD flags = strtoul(ptr, &endPtr, 16);
 
 #ifdef ATF_COM
-            if (flags & ATF_COM)
-              ret->table[ret->dwNumEntries].dwType = MIB_IPNET_TYPE_DYNAMIC;
-            else
+              if (flags & ATF_COM)
+                table->table[table->dwNumEntries].dwType =
+                 MIB_IPNET_TYPE_DYNAMIC;
+              else
 #endif
 #ifdef ATF_PERM
-            if (flags & ATF_PERM)
-              ret->table[ret->dwNumEntries].dwType = MIB_IPNET_TYPE_STATIC;
-            else
+              if (flags & ATF_PERM)
+                table->table[table->dwNumEntries].dwType =
+                 MIB_IPNET_TYPE_STATIC;
+              else
 #endif
-              ret->table[ret->dwNumEntries].dwType = MIB_IPNET_TYPE_OTHER;
+                table->table[table->dwNumEntries].dwType = MIB_IPNET_TYPE_OTHER;
 
-            ptr = endPtr;
-          }
-          while (ptr && *ptr && isspace(*ptr))
-            ptr++;
-          while (ptr && *ptr && !isspace(*ptr)) {
-            DWORD byte = strtoul(ptr, &endPtr, 16);
-
-            if (endPtr && *endPtr) {
-              endPtr++;
-              ret->table[ret->dwNumEntries].bPhysAddr[
-               ret->table[ret->dwNumEntries].dwPhysAddrLen++] = byte & 0x0ff;
+              ptr = endPtr;
             }
-            ptr = endPtr;
+            while (ptr && *ptr && isspace(*ptr))
+              ptr++;
+            while (ptr && *ptr && !isspace(*ptr)) {
+              DWORD byte = strtoul(ptr, &endPtr, 16);
+
+              if (endPtr && *endPtr) {
+                endPtr++;
+                table->table[table->dwNumEntries].bPhysAddr[
+                 table->table[table->dwNumEntries].dwPhysAddrLen++] =
+                 byte & 0x0ff;
+              }
+              ptr = endPtr;
+            }
+            if (ptr && *ptr) {
+              strtoul(ptr, &endPtr, 16); /* mask (skip) */
+              ptr = endPtr;
+            }
+            getInterfaceIndexByName(ptr,
+             &table->table[table->dwNumEntries].dwIndex);
+            table->dwNumEntries++;
           }
-          if (ptr && *ptr) {
-            strtoul(ptr, &endPtr, 16); /* mask (skip) */
-            ptr = endPtr;
-          }
-          getInterfaceIndexByName(ptr, &ret->table[ret->dwNumEntries].dwIndex);
-          ret->dwNumEntries++;
         }
+        fclose(fp);
       }
-      fclose(fp);
     }
+    else
+      ret = ERROR_OUTOFMEMORY;
   }
   return ret;
 }
@@ -712,49 +761,60 @@ DWORD getNumUdpEntries(void)
   return getNumWithOneHeader("/proc/net/udp");
 }
 
-PMIB_UDPTABLE getUdpTable(void)
+DWORD getUdpTable(PMIB_UDPTABLE *ppUdpTable, HANDLE heap, DWORD flags)
 {
-  DWORD numEntries = getNumUdpEntries();
-  PMIB_UDPTABLE ret;
+  DWORD ret;
 
-  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-   sizeof(MIB_UDPTABLE) + (numEntries - 1) * sizeof(MIB_UDPROW));
-  if (ret) {
-    FILE *fp;
+  if (!ppUdpTable)
+    ret = ERROR_INVALID_PARAMETER;
+  else {
+    DWORD numEntries = getNumUdpEntries();
+    PMIB_UDPTABLE table = HeapAlloc(heap, flags,
+     sizeof(MIB_UDPTABLE) + (numEntries - 1) * sizeof(MIB_UDPROW));
 
-    /* get from /proc/net/udp, no error if can't */
-    fp = fopen("/proc/net/udp", "r");
-    if (fp) {
-      char buf[512] = { 0 }, *ptr;
+    if (table) {
+      FILE *fp;
 
-      /* skip header line */
-      ptr = fgets(buf, sizeof(buf), fp);
-      while (ptr && ret->dwNumEntries < numEntries) {
+      ret = NO_ERROR;
+      *ppUdpTable = table;
+      table->dwNumEntries = 0;
+      /* get from /proc/net/udp, no error if can't */
+      fp = fopen("/proc/net/udp", "r");
+      if (fp) {
+        char buf[512] = { 0 }, *ptr;
+
+        /* skip header line */
         ptr = fgets(buf, sizeof(buf), fp);
-        if (ptr) {
-          char *endPtr;
+        while (ptr && table->dwNumEntries < numEntries) {
+          memset(&table->table[table->dwNumEntries], 0, sizeof(MIB_UDPROW));
+          ptr = fgets(buf, sizeof(buf), fp);
+          if (ptr) {
+            char *endPtr;
 
-          if (ptr && *ptr) {
-            strtoul(ptr, &endPtr, 16); /* skip */
-            ptr = endPtr;
+            if (ptr && *ptr) {
+              strtoul(ptr, &endPtr, 16); /* skip */
+              ptr = endPtr;
+            }
+            if (ptr && *ptr) {
+              ptr++;
+              table->table[table->dwNumEntries].dwLocalAddr = strtoul(ptr,
+               &endPtr, 16);
+              ptr = endPtr;
+            }
+            if (ptr && *ptr) {
+              ptr++;
+              table->table[table->dwNumEntries].dwLocalPort = strtoul(ptr,
+               &endPtr, 16);
+              ptr = endPtr;
+            }
+            table->dwNumEntries++;
           }
-          if (ptr && *ptr) {
-            ptr++;
-            ret->table[ret->dwNumEntries].dwLocalAddr = strtoul(ptr, &endPtr,
-             16);
-            ptr = endPtr;
-          }
-          if (ptr && *ptr) {
-            ptr++;
-            ret->table[ret->dwNumEntries].dwLocalPort = strtoul(ptr, &endPtr,
-             16);
-            ptr = endPtr;
-          }
-          ret->dwNumEntries++;
         }
+        fclose(fp);
       }
-      fclose(fp);
     }
+    else
+      ret = ERROR_OUTOFMEMORY;
   }
   return ret;
 }
@@ -764,101 +824,122 @@ DWORD getNumTcpEntries(void)
   return getNumWithOneHeader("/proc/net/tcp");
 }
 
-PMIB_TCPTABLE getTcpTable(void)
+DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, HANDLE heap, DWORD flags)
 {
-  DWORD numEntries = getNumTcpEntries();
-  PMIB_TCPTABLE ret;
+  DWORD ret;
 
-  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-   sizeof(MIB_TCPTABLE) + (numEntries - 1) * sizeof(MIB_TCPROW));
-  if (ret) {
-    FILE *fp;
+  if (!ppTcpTable)
+    ret = ERROR_INVALID_PARAMETER;
+  else {
+    DWORD numEntries = getNumTcpEntries();
+    PMIB_TCPTABLE table = HeapAlloc(heap, flags,
+     sizeof(MIB_TCPTABLE) + (numEntries - 1) * sizeof(MIB_TCPROW));
 
-    /* get from /proc/net/tcp, no error if can't */
-    fp = fopen("/proc/net/tcp", "r");
-    if (fp) {
-      char buf[512] = { 0 }, *ptr;
+    if (table) {
+      FILE *fp;
 
-      /* skip header line */
-      ptr = fgets(buf, sizeof(buf), fp);
-      while (ptr && ret->dwNumEntries < numEntries) {
+      ret = NO_ERROR;
+      *ppTcpTable = table;
+      table->dwNumEntries = 0;
+      /* get from /proc/net/tcp, no error if can't */
+      fp = fopen("/proc/net/tcp", "r");
+      if (fp) {
+        char buf[512] = { 0 }, *ptr;
+
+        /* skip header line */
         ptr = fgets(buf, sizeof(buf), fp);
-        if (ptr) {
-          char *endPtr;
+        while (ptr && table->dwNumEntries < numEntries) {
+          memset(&table->table[table->dwNumEntries], 0, sizeof(MIB_TCPROW));
+          ptr = fgets(buf, sizeof(buf), fp);
+          if (ptr) {
+            char *endPtr;
 
-          while (ptr && *ptr && *ptr != ':')
-            ptr++;
-          if (ptr && *ptr)
-            ptr++;
-          if (ptr && *ptr) {
-            ret->table[ret->dwNumEntries].dwLocalAddr = strtoul(ptr, &endPtr,
-             16);
-            ptr = endPtr;
-          }
-          if (ptr && *ptr) {
-            ptr++;
-            ret->table[ret->dwNumEntries].dwLocalPort = strtoul(ptr, &endPtr,
-             16);
-            ptr = endPtr;
-          }
-          if (ptr && *ptr) {
-            ret->table[ret->dwNumEntries].dwRemoteAddr = strtoul(ptr, &endPtr,
-             16);
-            ptr = endPtr;
-          }
-          if (ptr && *ptr) {
-            ptr++;
-            ret->table[ret->dwNumEntries].dwRemotePort = strtoul(ptr, &endPtr,
-             16);
-            ptr = endPtr;
-          }
-          if (ptr && *ptr) {
-            DWORD state = strtoul(ptr, &endPtr, 16);
-
-            switch (state)
-            {
-              case TCPS_ESTABLISHED:
-                ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_ESTAB;
-                break;
-              case TCPS_SYN_SENT:
-                ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_SYN_SENT;
-                break;
-              case TCPS_SYN_RECEIVED:
-                ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_SYN_RCVD;
-                break;
-              case TCPS_FIN_WAIT_1:
-                ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_FIN_WAIT1;
-                break;
-              case TCPS_FIN_WAIT_2:
-                ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_FIN_WAIT2;
-                break;
-              case TCPS_TIME_WAIT:
-                ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_TIME_WAIT;
-                break;
-              case TCPS_CLOSED:
-                ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_CLOSED;
-                break;
-              case TCPS_CLOSE_WAIT:
-                ret->table[ret->dwNumEntries].dwState =
-                 MIB_TCP_STATE_CLOSE_WAIT;
-                break;
-              case TCPS_LAST_ACK:
-                ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_LAST_ACK;
-                break;
-              case TCPS_LISTEN:
-                ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_LISTEN;
-                break;
-              case TCPS_CLOSING:
-                ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_CLOSING;
-                break;
+            while (ptr && *ptr && *ptr != ':')
+              ptr++;
+            if (ptr && *ptr)
+              ptr++;
+            if (ptr && *ptr) {
+              table->table[table->dwNumEntries].dwLocalAddr = strtoul(ptr,
+               &endPtr, 16);
+              ptr = endPtr;
             }
-            ptr = endPtr;
+            if (ptr && *ptr) {
+              ptr++;
+              table->table[table->dwNumEntries].dwLocalPort = strtoul(ptr,
+               &endPtr, 16);
+              ptr = endPtr;
+            }
+            if (ptr && *ptr) {
+              table->table[table->dwNumEntries].dwRemoteAddr = strtoul(ptr,
+               &endPtr, 16);
+              ptr = endPtr;
+            }
+            if (ptr && *ptr) {
+              ptr++;
+              table->table[table->dwNumEntries].dwRemotePort = strtoul(ptr,
+               &endPtr, 16);
+              ptr = endPtr;
+            }
+            if (ptr && *ptr) {
+              DWORD state = strtoul(ptr, &endPtr, 16);
+
+              switch (state)
+              {
+                case TCPS_ESTABLISHED:
+                  table->table[table->dwNumEntries].dwState =
+                   MIB_TCP_STATE_ESTAB;
+                  break;
+                case TCPS_SYN_SENT:
+                  table->table[table->dwNumEntries].dwState =
+                   MIB_TCP_STATE_SYN_SENT;
+                  break;
+                case TCPS_SYN_RECEIVED:
+                  table->table[table->dwNumEntries].dwState =
+                   MIB_TCP_STATE_SYN_RCVD;
+                  break;
+                case TCPS_FIN_WAIT_1:
+                  table->table[table->dwNumEntries].dwState =
+                   MIB_TCP_STATE_FIN_WAIT1;
+                  break;
+                case TCPS_FIN_WAIT_2:
+                  table->table[table->dwNumEntries].dwState =
+                   MIB_TCP_STATE_FIN_WAIT2;
+                  break;
+                case TCPS_TIME_WAIT:
+                  table->table[table->dwNumEntries].dwState =
+                   MIB_TCP_STATE_TIME_WAIT;
+                  break;
+                case TCPS_CLOSED:
+                  table->table[table->dwNumEntries].dwState =
+                   MIB_TCP_STATE_CLOSED;
+                  break;
+                case TCPS_CLOSE_WAIT:
+                  table->table[table->dwNumEntries].dwState =
+                   MIB_TCP_STATE_CLOSE_WAIT;
+                  break;
+                case TCPS_LAST_ACK:
+                  table->table[table->dwNumEntries].dwState =
+                   MIB_TCP_STATE_LAST_ACK;
+                  break;
+                case TCPS_LISTEN:
+                  table->table[table->dwNumEntries].dwState =
+                   MIB_TCP_STATE_LISTEN;
+                  break;
+                case TCPS_CLOSING:
+                  table->table[table->dwNumEntries].dwState =
+                   MIB_TCP_STATE_CLOSING;
+                  break;
+              }
+              ptr = endPtr;
+            }
+            table->dwNumEntries++;
           }
-          ret->dwNumEntries++;
         }
+        fclose(fp);
       }
-      fclose(fp);
     }
+    else
+      ret = ERROR_OUTOFMEMORY;
   }
   return ret;
 }
