@@ -161,6 +161,10 @@
 /* FC_RETURN_PARAM_BASETYPE: basetype */
 
 #define RPC_FC_DEREFERENCE		0x54
+#define RPC_FC_DIV_2			0x55
+#define RPC_FC_MULT_2			0x56
+#define RPC_FC_ADD_1			0x57
+#define RPC_FC_SUB_1			0x58
 
 #define RPC_FC_CALLBACK			0x59
 
