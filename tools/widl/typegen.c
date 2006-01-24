@@ -218,9 +218,56 @@ void write_procformatstring(FILE *file, type_t *iface)
 /* FIXME: only works for top-level variables at the moment */
 static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const expr_t *expr)
 {
+    unsigned char operator_type = 0;
+    const char *operator_string = "no operators";
+    const expr_t *subexpr = expr;
+
     if (!file) return 4; /* optimisation for sizing pass */
 
-    if (expr->type == EXPR_IDENTIFIER)
+    switch (subexpr->type)
+    {
+    case EXPR_PPTR:
+        subexpr = subexpr->ref;
+        operator_type = RPC_FC_DEREFERENCE;
+        operator_string = "FC_DEREFERENCE";
+        break;
+    case EXPR_DIV:
+        if (subexpr->u.ext->is_const && (subexpr->u.ext->cval == 2))
+        {
+            subexpr = subexpr->ref;
+            operator_type = RPC_FC_DIV_2;
+            operator_string = "FC_DIV_2";
+        }
+        break;
+    case EXPR_MUL:
+        if (subexpr->u.ext->is_const && (subexpr->u.ext->cval == 2))
+        {
+            subexpr = subexpr->ref;
+            operator_type = RPC_FC_MULT_2;
+            operator_string = "FC_MULT_2";
+        }
+        break;
+    case EXPR_SUB:
+        if (subexpr->u.ext->is_const && (subexpr->u.ext->cval == 1))
+        {
+            subexpr = subexpr->ref;
+            operator_type = RPC_FC_SUB_1;
+            operator_string = "FC_SUB_1";
+        }
+        break;
+    case EXPR_ADD:
+        if (subexpr->u.ext->is_const && (subexpr->u.ext->cval == 1))
+        {
+            subexpr = subexpr->ref;
+            operator_type = RPC_FC_ADD_1;
+            operator_string = "FC_ADD_1";
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (subexpr->type == EXPR_IDENTIFIER)
     {
         if (func)
         {
@@ -233,7 +280,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const expr_
             while (NEXT_LINK(var)) var = NEXT_LINK(var);
             for (stack_offset = 0; var; stack_offset += sizeof(void *), var = PREV_LINK(var))
             {
-                if (!strcmp(var->name, expr->u.sval))
+                if (!strcmp(var->name, subexpr->u.sval))
                 {
                     conformance_type = var->type;
                     break;
@@ -241,7 +288,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const expr_
             }
             if (!conformance_type)
                 error("write_conf_or_var_desc: couldn't find variable %s\n",
-                    expr->u.sval);
+                    subexpr->u.sval);
 
             while (type_has_ref(conformance_type))
                 conformance_type = conformance_type->ref;
@@ -283,14 +330,14 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const expr_
             print_file(file, 2, "0x%x, /* Corr desc: parameter, %s */\n",
                     RPC_FC_TOP_LEVEL_CONFORMANCE | param_type,
                     param_type_string);
-            print_file(file, 2, "0x0, /* no operators */\n");
+            print_file(file, 2, "0x%x, /* %s */\n", operator_type, operator_string);
             print_file(file, 2, "0x%x, /* x86 stack size / offset = %d */\n", stack_offset, stack_offset);
         }
         else
             error("write_conf_or_var_desc: not supported for non-functions yet\n");
     }
     else
-        error("write_conf_or_var_desc: expression type %d\n", expr->type);
+        error("write_conf_or_var_desc: expression type %d\n", subexpr->type);
     return 4;
 }
 
