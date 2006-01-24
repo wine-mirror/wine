@@ -211,6 +211,21 @@ void write_procformatstring(FILE *file, type_t *iface)
     print_file(file, indent, "\n");
 }
 
+static size_t write_string_tfs(FILE *file, const attr_t *attr,
+                               const type_t *type, const expr_t *array,
+                               const char *name)
+{
+    error("write_string_tfs: Unimplemented. name: %s\n", name);
+    return 0;
+}
+
+static size_t write_array_tfs(FILE *file, const attr_t *attr,
+                              const type_t *type, const expr_t *array,
+                              const char *name)
+{
+    error("write_array_tfs: Unimplemented. name: %s\n", name);
+    return 0;
+}
 
 static size_t write_typeformatstring_var(FILE *file, int indent,
     const var_t *var)
@@ -220,19 +235,29 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
     while (TRUE)
     {
-        if (ptr_level == 0 && type_has_ref(type))
+        if (ptr_level == 0)
         {
-            type = type->ref;
-            continue;
+            /* follow reference if the type has one */
+            if (type_has_ref(type))
+            {
+                type = type->ref;
+                /* FIXME: get new ptr_level from type */
+                continue;
+            }
+
+            /* basic types don't need a type format string */
+            if (!var->array && is_base_type(type->type))
+                return 0;
+
+            if (is_attr(var->attrs, ATTR_STRING))
+                return write_string_tfs(file, var->attrs, type, var->array, var->name);
+
+            if (var->array)
+                return write_array_tfs(file, var->attrs, type, var->array, var->name);
         }
-
-        /* basic types don't need a type format string */
-        if (ptr_level == 0 && !var->array && is_base_type(type->type))
-            return 0;
-
-        if ((ptr_level == 1 && !type_has_ref(type)) ||
-            (ptr_level == 0 && var->array && !NEXT_LINK(var->array)))
+        else if (ptr_level == 1 && !type_has_ref(type))
         {
+            /* special case for pointers to base types */
             switch (type->type)
             {
 #define CASE_BASETYPE(fctype) \
