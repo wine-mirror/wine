@@ -70,8 +70,12 @@ static void init_thread( struct wine_pthread_thread_info *info )
         pthread_getattr_np( pthread_self(), &attr );
         pthread_attr_getstack( &attr, &info->stack_base, &info->stack_size );
 #elif defined(HAVE_PTHREAD_GET_STACKSIZE_NP) && defined(HAVE_PTHREAD_GET_STACKADDR_NP)
+        char dummy;
         info->stack_size = pthread_get_stacksize_np(pthread_self());
         info->stack_base = pthread_get_stackaddr_np(pthread_self());
+        /* if base is too large assume it's the top of the stack instead */
+        if ((char *)info->stack_base > &dummy)
+            info->stack_base = (char *)info->stack_base - info->stack_size;
 #else
         /* assume that the stack allocation is page aligned */
         char dummy;
