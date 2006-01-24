@@ -430,8 +430,13 @@ static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
         size = 0;
     }
 
-    if (array && array->is_const)
-        size *= array->cval;
+    if (array)
+    {
+        if (array->is_const)
+            size *= array->cval;
+        else
+            size = 0;
+    }
 
     return size;
 }
