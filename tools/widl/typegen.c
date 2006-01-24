@@ -91,18 +91,6 @@ static inline int is_base_type(unsigned char type)
     }
 }
 
-static inline int is_string_type(const attr_t *attrs, int ptr_level, const expr_t *array)
-{
-    return (is_attr(attrs, ATTR_STRING) &&
-            ((ptr_level == 1 && !array) || (ptr_level == 0 && array)));
-}
-
-static inline int is_array_type(const attr_t *attrs, int ptr_level, const expr_t *array)
-{
-    return ((ptr_level == 1 && !array && is_attr(attrs, ATTR_SIZEIS)) ||
-            (ptr_level == 0 && array));
-}
-
 static size_t write_procformatstring_var(FILE *file, int indent,
     const var_t *var, int is_return, unsigned int *type_offset)
 {

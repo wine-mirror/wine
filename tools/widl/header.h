@@ -45,4 +45,16 @@ extern void write_library(const char *name, attr_t *attr);
 extern void write_user_types(void);
 extern var_t* get_explicit_handle_var(func_t* func);
 
+static inline int is_string_type(const attr_t *attrs, int ptr_level, const expr_t *array)
+{
+    return (is_attr(attrs, ATTR_STRING) &&
+            ((ptr_level == 1 && !array) || (ptr_level == 0 && array)));
+}
+
+static inline int is_array_type(const attr_t *attrs, int ptr_level, const expr_t *array)
+{
+    return ((ptr_level == 1 && !array && is_attr(attrs, ATTR_SIZEIS)) ||
+            (ptr_level == 0 && array));
+}
+
 #endif

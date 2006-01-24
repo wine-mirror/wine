@@ -1243,13 +1243,31 @@ static int get_struct_type(var_t *field)
   int has_conformant_array = 0;
   int has_conformant_string = 0;
 
-  while (field)
+  for (; field; field = NEXT_LINK(field))
   {
     type_t *t = field->type;
 
     /* get the base type */
     while( (t->type == 0) && t->ref )
       t = t->ref;
+
+    if (is_string_type(field->attrs, field->ptr_level, field->array))
+    {
+        has_conformant_string = 1;
+        continue;
+    }
+
+    if (is_array_type(field->attrs, field->ptr_level, field->array))
+    {
+        has_conformant_array = 1;
+        continue;
+    }
+
+    if (field->ptr_level > 0)
+    {
+        has_pointer = 1;
+        continue;
+    }
 
     switch (t->type)
     {
@@ -1329,7 +1347,6 @@ static int get_struct_type(var_t *field)
     case RPC_FC_BOGUS_STRUCT:
       return RPC_FC_BOGUS_STRUCT;
     }
-    field = NEXT_LINK(field);
   }
 
   if( has_conformant_string && has_pointer )
