@@ -2908,7 +2908,7 @@ int MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, va_list va
   MSVCRT_wchar_t buf[2048], *mem = buf;
   int written, resize = sizeof(buf) / sizeof(MSVCRT_wchar_t), retval;
   /* See vfprintf comments */
-  while ((written = _vsnwprintf(mem, resize, format, valist)) == -1 ||
+  while ((written = MSVCRT_vsnwprintf(mem, resize, format, valist)) == -1 ||
           written > resize)
   {
     resize = (written == -1 ? resize * 2 : written + sizeof(MSVCRT_wchar_t));

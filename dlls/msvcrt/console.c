@@ -254,7 +254,7 @@ int _cprintf(const char* format, ...)
    * Return the number of bytes that would have been written
    * The code below handles both cases
    */
-  while ((written = _snprintf( mem, resize, format, valist )) == -1 ||
+  while ((written = MSVCRT_vsnprintf( mem, resize, format, valist )) == -1 ||
           written > resize)
   {
     resize = (written == -1 ? resize * 2 : written + 1);

@@ -764,7 +764,7 @@ int MSVCRT__snprintf(char *str, unsigned int len, const char *format, ...)
  *		_vsnwsprintf (MSVCRT.@)
  */
 int MSVCRT_vsnwprintf( MSVCRT_wchar_t *str, unsigned int len,
-                              const WCHAR *format, va_list valist )
+                       const MSVCRT_wchar_t *format, va_list valist )
 {
     pf_output out;
 

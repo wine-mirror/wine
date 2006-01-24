@@ -611,11 +611,12 @@ double         MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2);
 MSVCRT_time_t  MSVCRT_time(MSVCRT_time_t*);
 MSVCRT_FILE*   MSVCRT__fdopen(int, const char *);
 int            MSVCRT_vsnprintf(char *str, unsigned int len, const char *format, va_list valist);
+int            MSVCRT_vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
+                                 const MSVCRT_wchar_t *format, va_list valist );
 
 #ifndef __WINE_MSVCRT_TEST
 int            _write(int,const void*,unsigned int);
 int            _getch(void);
-int            _vsnwprintf(MSVCRT_wchar_t*,MSVCRT_size_t,const MSVCRT_wchar_t*,va_list);
 int            _ismbstrail(const unsigned char* start, const unsigned char* str);
 MSVCRT_intptr_t _spawnve(int,const char*,const char* const *,const char* const *);
 void           _searchenv(const char*,const char*,char*);
@@ -626,7 +627,6 @@ char*          _strset(char*,int);
 int            _ungetch(int);
 int            _cputs(const char*);
 int            _cprintf(const char*,...);
-int            _snprintf(char*,size_t,const char*,...);
 char***        __p__environ(void);
 int*           __p___mb_cur_max(void);
 unsigned int*  __p__fmode(void);
