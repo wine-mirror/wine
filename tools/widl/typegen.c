@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <signal.h>
+#include <limits.h>
 
 #include "widl.h"
 #include "utils.h"
@@ -211,6 +212,75 @@ void write_procformatstring(FILE *file, type_t *iface)
     print_file(file, indent, "\n");
 }
 
+static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array);
+
+static size_t fields_memsize(const var_t *v)
+{
+    size_t size = 0;
+    const var_t *first = v;
+    if (!v) return 0;
+    while (NEXT_LINK(v)) v = NEXT_LINK(v);
+    while (v) {
+        size += type_memsize(v->type, v->ptr_level, v->array);
+        if (v == first) break;
+        v = PREV_LINK(v);
+    }
+    return size;
+}
+
+static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
+{
+    size_t size = 0;
+
+    if (ptr_level)
+        return sizeof(void *);
+
+    switch (t->type)
+    {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_USMALL:
+    case RPC_FC_SMALL:
+        size = 1;
+        break;
+    case RPC_FC_WCHAR:
+    case RPC_FC_USHORT:
+    case RPC_FC_SHORT:
+    case RPC_FC_ENUM16:
+        size = 2;
+        break;
+    case RPC_FC_ULONG:
+    case RPC_FC_LONG:
+    case RPC_FC_ERROR_STATUS_T:
+    case RPC_FC_ENUM32:
+    case RPC_FC_FLOAT:
+        size = 4;
+        break;
+    case RPC_FC_HYPER:
+    case RPC_FC_DOUBLE:
+        size = 8;
+        break;
+    case RPC_FC_STRUCT:
+    case RPC_FC_CVSTRUCT:
+    case RPC_FC_CPSTRUCT:
+    case RPC_FC_CSTRUCT:
+    case RPC_FC_PSTRUCT:
+    case RPC_FC_BOGUS_STRUCT:
+    case RPC_FC_ENCAPSULATED_UNION:
+    case RPC_FC_NON_ENCAPSULATED_UNION:
+        size = fields_memsize(t->fields);
+        break;
+    default:
+        error("type_memsize: Unknown type %d", t->type);
+        size = 0;
+    }
+
+    if (array && array->is_const)
+        size *= array->cval;
+
+    return size;
+}
+
 static size_t write_string_tfs(FILE *file, const attr_t *attr,
                                const type_t *type, const expr_t *array,
                                const char *name)
@@ -219,12 +289,145 @@ static size_t write_string_tfs(FILE *file, const attr_t *attr,
     return 0;
 }
 
-static size_t write_array_tfs(FILE *file, const attr_t *attr,
+static size_t write_array_tfs(FILE *file, const attr_t *attrs,
                               const type_t *type, const expr_t *array,
                               const char *name)
 {
-    error("write_array_tfs: Unimplemented. name: %s\n", name);
-    return 0;
+    const expr_t *length_is = get_attrp(attrs, ATTR_LENGTHIS);
+    const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
+    int has_length = length_is && (length_is->type != EXPR_VOID);
+    int has_size = size_is && (size_is->type != EXPR_VOID) && !array->is_const;
+
+    /* FIXME: need to analyse type for pointers */
+
+    if (NEXT_LINK(array)) /* multi-dimensional array */
+    {
+        error("write_array_tfs: Multi-dimensional arrays not implemented yet (param %s)\n", name);
+        return 0;
+    }
+    else
+    {
+        if (!has_length && !has_size)
+        {
+            /* fixed array */
+            size_t typestring_size;
+            size_t size = type_memsize(type, 0, array);
+            if (size < USHRT_MAX)
+            {
+                print_file(file, 2, "0x%x, /* FC_SMFARRAY */\n", RPC_FC_SMFARRAY);
+                /* alignment */
+                print_file(file, 2, "0x%x, /* 0 */\n", 0);
+                /* size */
+                print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", size, size);
+                typestring_size = 4;
+            }
+            else
+            {
+                print_file(file, 2, "0x%x, /* FC_LGFARRAY */\n", RPC_FC_LGFARRAY);
+                /* alignment */
+                print_file(file, 2, "0x%x, /* 0 */\n", 0);
+                /* size */
+                print_file(file, 2, "NdrFcLong(0x%x), /* %d */\n", size, size);
+                typestring_size = 6;
+            }
+
+            /* FIXME: write out pointer descriptor if necessary */
+
+            print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+            print_file(file, 2, "FC_END,\n");
+            typestring_size += 2;
+
+            return typestring_size;
+        }
+        else if (has_length && !has_size)
+        {
+            /* varying array */
+            size_t typestring_size;
+            size_t element_size = type_memsize(type, 0, NULL);
+            size_t elements = array->cval;
+            size_t total_size = element_size * elements;
+
+            if (total_size < USHRT_MAX)
+            {
+                print_file(file, 2, "0x%x, /* FC_SMVARRAY */\n", RPC_FC_SMVARRAY);
+                /* alignment */
+                print_file(file, 2, "0x%x, /* 0 */\n", 0);
+                /* total size */
+                print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", total_size, total_size);
+                /* number of elements */
+                print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", elements, elements);
+                typestring_size = 6;
+            }
+            else
+            {
+                print_file(file, 2, "0x%x, /* FC_LGVARRAY */\n", RPC_FC_LGVARRAY);
+                /* alignment */
+                print_file(file, 2, "0x%x, /* 0 */\n", 0);
+                /* total size */
+                print_file(file, 2, "NdrFcLong(0x%x), /* %d */\n", total_size, total_size);
+                /* number of elements */
+                print_file(file, 2, "NdrFcLong(0x%x), /* %d */\n", elements, elements);
+                typestring_size = 10;
+            }
+            /* element size */
+            print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", element_size, element_size);
+            typestring_size += 2;
+
+            /* FIXME: write out variance descriptor */
+            /* FIXME: write out pointer descriptor if necessary */
+
+            print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+            print_file(file, 2, "FC_END,\n");
+            typestring_size += 2;
+
+            return typestring_size;
+        }
+        else if (!has_length && has_size)
+        {
+            /* conformant array */
+            size_t typestring_size;
+            size_t element_size = type_memsize(type, 0, NULL);
+
+            print_file(file, 2, "0x%x, /* FC_CARRAY */\n", RPC_FC_CARRAY);
+            /* alignment */
+            print_file(file, 2, "0x%x, /* 0 */\n", 0);
+            /* element size */
+            print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", element_size, element_size);
+            typestring_size = 4;
+
+            /* FIXME: write out conformance descriptor */
+            /* FIXME: write out pointer descriptor if necessary */
+
+            print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+            print_file(file, 2, "FC_END,\n");
+            typestring_size += 2;
+
+            return typestring_size;
+        }
+        else
+        {
+            /* conformant varying array */
+            size_t typestring_size;
+            size_t element_size = type_memsize(type, 0, NULL);
+
+            print_file(file, 2, "0x%x, /* FC_CARRAY */\n", RPC_FC_CARRAY);
+            /* alignment */
+            print_file(file, 2, "0x%x, /* 0 */\n", 0);
+            /* element size */
+            print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", element_size, element_size);
+            typestring_size = 4;
+
+            /* FIXME: write out conformance descriptor */
+            /* FIXME: write out variance descriptor */
+            /* FIXME: write out pointer descriptor if necessary */
+
+            print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+            print_file(file, 2, "FC_END,\n");
+            typestring_size += 2;
+
+            return typestring_size;
+        }
+    }
 }
 
 static size_t write_typeformatstring_var(FILE *file, int indent,
