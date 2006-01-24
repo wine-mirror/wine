@@ -21,6 +21,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -58,6 +59,18 @@ INT __cdecl NTDLL__memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
         s2++;
     }
     return ret;
+}
+
+
+/*********************************************************************
+ *                  memcpy   (NTDLL.@)
+ *
+ * NOTES
+ *  Behaves like memmove.
+ */
+void * __cdecl NTDLL_memcpy( void *dst, const void *src, size_t n )
+{
+    return memmove( dst, src, n );
 }
 
 

@@ -1308,7 +1308,7 @@
 @ cdecl -private mbstowcs(ptr str long) NTDLL_mbstowcs
 @ cdecl -private memchr(ptr long long)
 @ cdecl -private memcmp(ptr ptr long)
-@ cdecl -private memcpy(ptr ptr long)
+@ cdecl -private memcpy(ptr ptr long) NTDLL_memcpy
 @ cdecl -private memmove(ptr ptr long)
 @ cdecl -private memset(ptr long long)
 @ cdecl -private pow(double double)

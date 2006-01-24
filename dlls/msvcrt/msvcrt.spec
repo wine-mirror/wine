@@ -666,7 +666,7 @@
 @ cdecl mbtowc(wstr str long) MSVCRT_mbtowc
 @ cdecl memchr(ptr long long) ntdll.memchr
 @ cdecl memcmp(ptr ptr long) ntdll.memcmp
-@ cdecl memcpy(ptr ptr long) ntdll.memmove #sic
+@ cdecl memcpy(ptr ptr long) ntdll.memcpy
 @ cdecl memmove(ptr ptr long) ntdll.memmove
 @ cdecl memset(ptr long long) ntdll.memset
 @ cdecl mktime(ptr) MSVCRT_mktime
