@@ -833,9 +833,14 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
 
         if (is_string_type(var->attrs, var->ptr_level, var->array))
         {
-            print_file(file, indent,
-                       "NdrConformantStringMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                       var->name, *type_offset);
+            if (var->array && var->array->is_const)
+                print_file(file, indent,
+                           "NdrNonConformantStringMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                           var->name, *type_offset);
+            else
+                print_file(file, indent,
+                           "NdrConformantStringMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                           var->name, *type_offset);
             last_size = 1;
         }
         else if (is_array_type(var->attrs, var->ptr_level, var->array))
@@ -1018,9 +1023,14 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
 
         if (is_string_type(var->attrs, var->ptr_level, var->array))
         {
-            print_file(file, indent,
-                       "NdrConformantStringUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
-                       var->name, *type_offset);
+            if (var->array && var->array->is_const)
+                print_file(file, indent,
+                           "NdrNonConformantStringUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
+                           var->name, *type_offset);
+            else
+                print_file(file, indent,
+                           "NdrConformantStringUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
+                           var->name, *type_offset);
             last_size = 1;
         }
         else if (is_array_type(var->attrs, var->ptr_level, var->array))
