@@ -42,6 +42,8 @@
 #include "widl.h"
 #include "typegen.h"
 
+static const func_t *current_func;
+
 static int print_file(FILE *file, int indent, const char *format, ...)
 {
     va_list va;
@@ -212,6 +214,86 @@ void write_procformatstring(FILE *file, type_t *iface)
     print_file(file, indent, "\n");
 }
 
+/* write conformance / variance descriptor */
+/* FIXME: only works for top-level variables at the moment */
+static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const expr_t *expr)
+{
+    if (!file) return 4; /* optimisation for sizing pass */
+
+    if (expr->type == EXPR_IDENTIFIER)
+    {
+        if (func)
+        {
+            size_t stack_offset;
+            const var_t *var = func->args;
+            unsigned char param_type = 0;
+            const char *param_type_string = NULL;
+            const type_t *conformance_type = NULL;
+
+            while (NEXT_LINK(var)) var = NEXT_LINK(var);
+            for (stack_offset = 0; var; stack_offset += sizeof(void *), var = PREV_LINK(var))
+            {
+                if (!strcmp(var->name, expr->u.sval))
+                {
+                    conformance_type = var->type;
+                    break;
+                }
+            }
+            if (!conformance_type)
+                error("write_conf_or_var_desc: couldn't find variable %s\n",
+                    expr->u.sval);
+
+            while (type_has_ref(conformance_type))
+                conformance_type = conformance_type->ref;
+
+            switch (conformance_type->type)
+            {
+            case RPC_FC_CHAR:
+            case RPC_FC_SMALL:
+                param_type = RPC_FC_SMALL;
+                param_type_string = "FC_SMALL";
+                break;
+            case RPC_FC_BYTE:
+            case RPC_FC_USMALL:
+                param_type = RPC_FC_USMALL;
+                param_type_string = "FC_USMALL";
+                break;
+            case RPC_FC_WCHAR:
+            case RPC_FC_SHORT:
+                param_type = RPC_FC_SHORT;
+                param_type_string = "FC_SHORT";
+                break;
+            case RPC_FC_USHORT:
+                param_type = RPC_FC_USHORT;
+                param_type_string = "FC_USHORT";
+                break;
+            case RPC_FC_LONG:
+                param_type = RPC_FC_LONG;
+                param_type_string = "FC_LONG";
+                break;
+            case RPC_FC_ULONG:
+                param_type = RPC_FC_ULONG;
+                param_type_string = "FC_ULONG";
+                break;
+            default:
+                error("write_conf_or_var_desc: conformance variable type not supported 0x%x\n",
+                    conformance_type->type);
+            }
+
+            print_file(file, 2, "0x%x, /* Corr desc: parameter, %s */\n",
+                    RPC_FC_TOP_LEVEL_CONFORMANCE | param_type,
+                    param_type_string);
+            print_file(file, 2, "0x0, /* no operators */\n");
+            print_file(file, 2, "0x%x, /* x86 stack size / offset = %d */\n", stack_offset, stack_offset);
+        }
+        else
+            error("write_conf_or_var_desc: not supported for non-functions yet\n");
+    }
+    else
+        error("write_conf_or_var_desc: expression type %d\n", expr->type);
+    return 4;
+}
+
 static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array);
 
 static size_t fields_memsize(const var_t *v)
@@ -322,8 +404,10 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
             print_file(file, 2, "0x%x, /* FC_C_CSTRING */\n", RPC_FC_C_CSTRING);
         else
             print_file(file, 2, "0x%x, /* FC_C_WSTRING */\n", RPC_FC_C_WSTRING);
-        print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
+        print_file(file, 2, "0x%x, /* FC_STRING_SIZED */\n", RPC_FC_STRING_SIZED);
         typestring_size = 2;
+
+        typestring_size += write_conf_or_var_desc(file, current_func, size_is);
 
         return typestring_size;
     }
@@ -335,10 +419,8 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
             print_file(file, 2, "0x%x, /* FC_C_CSTRING */\n", RPC_FC_C_CSTRING);
         else
             print_file(file, 2, "0x%x, /* FC_C_WSTRING */\n", RPC_FC_C_WSTRING);
-        print_file(file, 2, "0x%x, /* FC_STRING_SIZED */\n", RPC_FC_STRING_SIZED);
+        print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
         typestring_size = 2;
-
-        /* FIXME: write out conformance descriptor */
 
         return typestring_size;
     }
@@ -428,7 +510,8 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", element_size, element_size);
             typestring_size += 2;
 
-            /* FIXME: write out variance descriptor */
+            typestring_size += write_conf_or_var_desc(file, current_func, length_is);
+
             /* FIXME: write out pointer descriptor if necessary */
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
@@ -450,7 +533,8 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", element_size, element_size);
             typestring_size = 4;
 
-            /* FIXME: write out conformance descriptor */
+            typestring_size += write_conf_or_var_desc(file, current_func, size_is);
+
             /* FIXME: write out pointer descriptor if necessary */
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
@@ -472,8 +556,9 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", element_size, element_size);
             typestring_size = 4;
 
-            /* FIXME: write out conformance descriptor */
-            /* FIXME: write out variance descriptor */
+            typestring_size += write_conf_or_var_desc(file, current_func, size_is);
+            typestring_size += write_conf_or_var_desc(file, current_func, length_is);
+
             /* FIXME: write out pointer descriptor if necessary */
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
@@ -570,6 +655,7 @@ void write_typeformatstring(FILE *file, type_t *iface)
         while (NEXT_LINK(func)) func = NEXT_LINK(func);
         for (; func; func = PREV_LINK(func))
         {
+            current_func = func;
             if (func->args)
             {
                 var = func->args;
