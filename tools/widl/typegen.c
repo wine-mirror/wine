@@ -631,8 +631,34 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
 
 static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
 {
-    error("write_struct_tfs: Unimplemented\n");
-    return 0;
+    size_t total_size;
+    size_t typestring_size;
+    switch (type->type)
+    {
+    case RPC_FC_STRUCT:
+        total_size = type_memsize(type, 0, NULL);
+
+        if (total_size > USHRT_MAX)
+            error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
+                  name, USHRT_MAX, total_size - USHRT_MAX);
+
+        print_file(file, 2, "0x%x, /* %s */\n", RPC_FC_STRUCT, "FC_STRUCT");
+        /* alignment */
+        print_file(file, 2, "0x0,\n");
+        /* total size */
+        print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
+        typestring_size = 4;
+
+        /* member layout */
+        print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+        print_file(file, 2, "FC_END,\n");
+
+        typestring_size += 2;
+        return typestring_size;
+    default:
+        error("write_struct_tfs: Unimplemented for type 0x%x\n", type->type);
+        return 0;
+    }
 }
 
 static size_t write_union_tfs(FILE *file, const attr_t *attrs, const type_t *type, const char *name)
@@ -649,11 +675,20 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
     while (TRUE)
     {
+        int pointer_type;
+        size_t typeformat_size = 0;
+
         if (is_string_type(var->attrs, ptr_level, var->array))
-            return write_string_tfs(file, var->attrs, type, var->array, var->name);
+        {
+            typeformat_size += write_string_tfs(file, var->attrs, type, var->array, var->name);
+            return typeformat_size;
+        }
 
         if (is_array_type(var->attrs, ptr_level, var->array))
-            return write_array_tfs(file, var->attrs, type, var->array, var->name);
+        {
+            typeformat_size += write_array_tfs(file, var->attrs, type, var->array, var->name);
+            return typeformat_size;
+        }
 
         if (ptr_level == 0)
         {
@@ -667,7 +702,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
             /* basic types don't need a type format string */
             if (is_base_type(type->type))
-                return 0;
+                return typeformat_size;
 
             switch (type->type)
             {
@@ -677,17 +712,19 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
             case RPC_FC_CPSTRUCT:
             case RPC_FC_CVSTRUCT:
             case RPC_FC_BOGUS_STRUCT:
-                return write_struct_tfs(file, type, var->name);
+                typeformat_size += write_struct_tfs(file, type, var->name);
+                return typeformat_size;
             case RPC_FC_ENCAPSULATED_UNION:
             case RPC_FC_NON_ENCAPSULATED_UNION:
-                return write_union_tfs(file, var->attrs, type, var->name);
+                typeformat_size += write_union_tfs(file, var->attrs, type, var->name);
+                return typeformat_size;
             default:
                 error("write_typeformatstring_var: Unsupported type 0x%x for variable %s\n", type->type, var->name);
             }
         }
         else if (ptr_level == 1 && !type_has_ref(type))
         {
-            int pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
+            pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
             if (!pointer_type) pointer_type = RPC_FC_RP;
 
             /* special case for pointers to base types */
@@ -700,7 +737,8 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
                            pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP")); \
                 print_file(file, indent, "0x%02x,    /* " #fctype " */\n", RPC_##fctype); \
                 print_file(file, indent, "0x5c,          /* FC_PAD */\n"); \
-                return 4
+                typeformat_size += 4; \
+                return typeformat_size
             CASE_BASETYPE(FC_BYTE);
             CASE_BASETYPE(FC_CHAR);
             CASE_BASETYPE(FC_SMALL);
@@ -718,12 +756,21 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
             CASE_BASETYPE(FC_IGNORE);
             CASE_BASETYPE(FC_ERROR_STATUS_T);
             default:
-                error("write_typeformatstring_var: Unknown/unsupported type: %s (0x%02x)\n", var->name, type->type);
-                return 0;
+                break;
             }
         }
-        error("write_typeformatstring_var: Pointer level %d not supported for variable %s\n", ptr_level, var->name);
-        return 0;
+
+        assert(ptr_level > 0);
+
+        pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
+        if (!pointer_type) pointer_type = RPC_FC_RP;
+
+        print_file(file, indent, "0x%x, 0x00,    /* %s */\n",
+                    pointer_type,
+                    pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
+        print_file(file, indent, "NdrShort(0x2),    /* 2 */\n");
+
+        ptr_level--;
     }
 }
 
