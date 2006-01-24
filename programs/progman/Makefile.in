@@ -6,17 +6,13 @@ MODULE    = progman.exe
 APPMODE   = -mwindows
 IMPORTS   = shell32 comdlg32 user32 gdi32 kernel32
 
-LICENSELANG = En
-
 C_SRCS = \
 	dialog.c \
 	group.c \
 	grpfile.c \
-	license.c \
 	main.c \
 	program.c \
-	string.c \
-	$(LICENSELANG:%=License_%.c)
+	string.c
 
 RC_SRCS = rsrc.rc
 

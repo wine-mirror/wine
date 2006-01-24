@@ -233,6 +233,11 @@ extern CHAR STRING_EXECUTE[];
 #define IDS_SYMBOL_FILES               0x16
 #define IDS_SYMBOLS_ICO                0x17
 
+#define IDS_LICENSE_CAPTION            0x20
+#define IDS_LICENSE                    0x21
+#define IDS_WARRANTY_CAPTION           0x22
+#define IDS_WARRANTY                   0x23
+
 /* Menu */
 
 #define MAIN_MENU           0x109
