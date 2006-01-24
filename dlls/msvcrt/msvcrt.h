@@ -641,11 +641,4 @@ int           _dup2(int, int);
 int           _pipe(int *, unsigned int, int);
 #endif
 
-/*  FIXME: Functions that we forward to. They shouldn't be defined
- *  here, but for now they're not declared in the standard headers. 
- */
-void           _splitpath(const char*,char*,char*,char*,char*);
-char*          _strlwr(char*);
-char*          _strupr(char*);
-
 #endif /* __WINE_MSVCRT_H */

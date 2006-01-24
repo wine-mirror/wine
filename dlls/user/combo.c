@@ -2088,17 +2088,17 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
                 else /* unlike the unicode version, the ansi version does not overwrite
                         the string if converting case */
                 {
-                    char *string = NULL;
+                    char *p, *string = NULL;
                     LRESULT ret;
                     if( lphc->dwStyle & CBS_LOWERCASE )
                     {
                         string = strdupA((LPSTR)lParam);
-                        _strlwr(string);
+                        for (p = string; *p; p++) *p = tolower(*p);
                     }
                     else if( lphc->dwStyle & CBS_UPPERCASE )
                     {
                         string = strdupA((LPSTR)lParam);
-                        _strupr(string);
+                        for (p = string; *p; p++) *p = toupper(*p);
                     }
                     ret = SendMessageA(lphc->hWndLBox, LB_ADDSTRING, 0, string ? (LPARAM)string : lParam);
                     HeapFree(GetProcessHeap(), 0, string);
@@ -2119,10 +2119,11 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
                 }
                 else
                 {
+                    char *p;
                     if( lphc->dwStyle & CBS_LOWERCASE )
-                        _strlwr((LPSTR)lParam);
+                        for (p = (LPSTR)lParam; *p; p++) *p = tolower(*p);
                     else if( lphc->dwStyle & CBS_UPPERCASE )
-                        _strupr((LPSTR)lParam);
+                        for (p = (LPSTR)lParam; *p; p++) *p = toupper(*p);
                     return SendMessageA(lphc->hWndLBox, LB_INSERTSTRING, wParam, lParam);
                 }
 	case CB_DELETESTRING16:

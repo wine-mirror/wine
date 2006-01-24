@@ -109,16 +109,6 @@ static inline unsigned char *u__strnset( unsigned char *s, unsigned char c, size
   return (unsigned char*) _strnset( (char*)s, c, len );
 }
 
-static inline unsigned char *u__strlwr( unsigned char *s )
-{
-  return (unsigned char*) _strlwr( (char*)s );
-}
-
-static inline unsigned char *u__strupr( unsigned char *s )
-{
-  return (unsigned char*) _strupr( (char*)s );
-}
-
 static inline size_t u_strcspn( const unsigned char *s, const unsigned char *rej )
 {
   return strcspn( (const char *)s, (const char*)rej );
@@ -1122,12 +1112,12 @@ unsigned char* _mbsncat(unsigned char* dst, const unsigned char* src, MSVCRT_siz
  */
 unsigned char* _mbslwr(unsigned char* s)
 {
+  unsigned char *ret = s;
   if (!s)
     return NULL;
   if (MSVCRT___mb_cur_max > 1)
   {
     unsigned int c;
-    unsigned char* p=s;
     while (*s)
     {
       c = _mbctolower(_mbsnextc(s));
@@ -1139,9 +1129,9 @@ unsigned char* _mbslwr(unsigned char* s)
       }
       *s++=c;
     }
-    return p;
   }
-  return u__strlwr(s);
+  else for ( ; *s; s++) *s = tolower(*s);
+  return ret;
 }
 
 
@@ -1150,12 +1140,12 @@ unsigned char* _mbslwr(unsigned char* s)
  */
 unsigned char* _mbsupr(unsigned char* s)
 {
+  unsigned char *ret = s;
   if (!s)
     return NULL;
   if (MSVCRT___mb_cur_max > 1)
   {
     unsigned int c;
-    unsigned char* p=s;
     while (*s)
     {
       c = _mbctoupper(_mbsnextc(s));
@@ -1167,9 +1157,9 @@ unsigned char* _mbsupr(unsigned char* s)
       }
       *s++=c;
     }
-    return p;
   }
-  return u__strupr(s);
+  else for ( ; *s; s++) *s = toupper(*s);
+  return ret;
 }
 
 

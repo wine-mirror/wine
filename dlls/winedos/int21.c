@@ -1989,7 +1989,10 @@ static void INT21_ExtendedCountryInformation( CONTEXT86 *context )
     case 0x22: /* CAPITALIZE ASCIIZ STRING */
     case 0xa2: /* CAPITALIZE ASCIIZ FILENAME */
         TRACE("Convert ASCIIZ string to uppercase\n");
-        _strupr( (LPSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx) );
+        {
+            char *p = CTX_SEG_OFF_TO_LIN( context, context->SegDs, context->Edx );
+            for ( ; *p; p++) *p = toupper(*p);
+        }
         break;
 
     case 0x23: /* DETERMINE IF CHARACTER REPRESENTS YES/NO RESPONSE */

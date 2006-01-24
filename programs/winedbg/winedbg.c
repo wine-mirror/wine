@@ -955,7 +955,6 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
                    buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll,
                    de->u.LoadDll.dwDebugInfoFileOffset,
                    de->u.LoadDll.nDebugInfoSize);
-        _strupr(buffer);
         SymLoadModule(dbg_curr_process->handle, de->u.LoadDll.hFile, buffer, NULL,
                       (unsigned long)de->u.LoadDll.lpBaseOfDll, 0);
         break_set_xpoints(FALSE);
