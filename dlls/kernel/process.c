@@ -1088,9 +1088,10 @@ void __wine_kernel_init(void)
     if (!main_exe_file)  /* no file handle -> Winelib app */
     {
         TRACE( "starting Winelib app %s\n", debugstr_w(main_exe_name) );
-        if (open_builtin_exe_file( main_exe_name, error, sizeof(error), 0, &file_exists ))
+        if (open_builtin_exe_file( main_exe_name, error, sizeof(error), 0, &file_exists ) &&
+            NtCurrentTeb()->Peb->ImageBaseAddress)
             goto found;
-        MESSAGE( "wine: cannot open builtin library for %s: %s\n",
+        MESSAGE( "wine: cannot open builtin exe for %s: %s\n",
                  debugstr_w(main_exe_name), error );
         ExitProcess(1);
     }
