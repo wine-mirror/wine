@@ -61,6 +61,8 @@ struct file
     unsigned int        options;    /* file options (FILE_DELETE_ON_CLOSE, FILE_SYNCHRONOUS...) */
 };
 
+static unsigned int generic_file_map_access( unsigned int access );
+
 static void file_dump( struct object *obj, int verbose );
 static struct fd *file_get_fd( struct object *obj );
 static unsigned int file_map_access( struct object *obj, unsigned int access );
@@ -120,12 +122,25 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
     return file;
 }
 
+static struct object *create_file_obj( struct fd *fd, unsigned int access, unsigned int options )
+{
+    struct file *file = alloc_object( &file_ops );
+
+    if (!file) return NULL;
+    file->access  = access;
+    file->options = options;
+    file->fd      = fd;
+    grab_object( fd );
+    set_fd_user( fd, &file_fd_ops, &file->obj );
+    return &file->obj;
+}
 
 static struct object *create_file( const char *nameptr, size_t len, unsigned int access,
                                    unsigned int sharing, int create, unsigned int options,
                                    unsigned int attrs )
 {
-    struct file *file;
+    struct object *obj = NULL;
+    struct fd *fd;
     int flags, rw_mode;
     char *name;
     mode_t mode;
@@ -142,7 +157,7 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
     case FILE_OPEN:         flags = 0; break;
     case FILE_OPEN_IF:      flags = O_CREAT; break;
     case FILE_OVERWRITE:    flags = O_TRUNC; break;
-    default:                set_error( STATUS_INVALID_PARAMETER ); goto error;
+    default:                set_error( STATUS_INVALID_PARAMETER ); goto done;
     }
 
     mode = (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
@@ -151,14 +166,11 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
         (!strcasecmp( name + len - 4, ".exe" ) || !strcasecmp( name + len - 4, ".com" )))
         mode |= 0111;
 
-    if (!(file = alloc_object( &file_ops ))) goto error;
-
-    file->access     = file_map_access( &file->obj, access );
-    file->options    = options;
+    access = generic_file_map_access( access );
 
     rw_mode = 0;
-    if (file->access & FILE_UNIX_READ_ACCESS) rw_mode |= FILE_READ_DATA;
-    if (file->access & FILE_UNIX_WRITE_ACCESS) rw_mode |= FILE_WRITE_DATA;
+    if (access & FILE_UNIX_READ_ACCESS) rw_mode |= FILE_READ_DATA;
+    if (access & FILE_UNIX_WRITE_ACCESS) rw_mode |= FILE_WRITE_DATA;
     switch(rw_mode)
     {
     case 0: break;
@@ -168,29 +180,19 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
     }
 
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
-    if (!(file->fd = alloc_fd( &file_fd_ops, &file->obj )) ||
-        !(file->fd = open_fd( file->fd, name, flags | O_NONBLOCK | O_LARGEFILE,
-                              &mode, file->access, sharing, options )))
-    {
-        free( name );
-        release_object( file );
-        return NULL;
-    }
+    fd = open_fd( name, flags | O_NONBLOCK | O_LARGEFILE, &mode, access, sharing, options );
+    if (!fd) goto done;
+
+    if (S_ISCHR(mode) && is_serial_fd( fd ))
+        obj = create_serial( fd, options );
+    else
+        obj = create_file_obj( fd, access, options );
+
+    release_object( fd );
+
+done:
     free( name );
-
-    /* check for serial port */
-    if (S_ISCHR(mode) && is_serial_fd( file->fd ))
-    {
-        struct object *obj = create_serial( file->fd, file->options );
-        release_object( file );
-        return obj;
-    }
-
-    return &file->obj;
-
- error:
-    free( name );
-    return NULL;
+    return obj;
 }
 
 /* check if two file objects point to the same file */
@@ -260,13 +262,18 @@ static struct fd *file_get_fd( struct object *obj )
     return (struct fd *)grab_object( file->fd );
 }
 
-static unsigned int file_map_access( struct object *obj, unsigned int access )
+static unsigned int generic_file_map_access( unsigned int access )
 {
     if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
     if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
     if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
     if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
+static unsigned int file_map_access( struct object *obj, unsigned int access )
+{
+    return generic_file_map_access( access );
 }
 
 static void file_destroy( struct object *obj )

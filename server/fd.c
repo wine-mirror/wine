@@ -1224,14 +1224,14 @@ static inline void unmount_fd( struct fd *fd )
 }
 
 /* allocate an fd object, without setting the unix fd yet */
-struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user )
+static struct fd *alloc_fd_object(void)
 {
     struct fd *fd = alloc_object( &fd_ops );
 
     if (!fd) return NULL;
 
-    fd->fd_ops     = fd_user_ops;
-    fd->user       = user;
+    fd->fd_ops     = NULL;
+    fd->user       = NULL;
     fd->inode      = NULL;
     fd->closed     = NULL;
     fd->access     = 0;
@@ -1311,17 +1311,24 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
     return 1;
 }
 
-/* open() wrapper using a struct fd */
-/* the fd must have been created with alloc_fd */
-/* on error the fd object is released */
-struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
-                    unsigned int access, unsigned int sharing, unsigned int options )
+/* sets the user of an fd that previously had no user */
+void set_fd_user( struct fd *fd, const struct fd_ops *user_ops, struct object *user )
+{
+    assert( fd->fd_ops == NULL );
+    fd->fd_ops = user_ops;
+    fd->user   = user;
+}
+
+/* open() wrapper that returns a struct fd with no fd user set */
+struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int access,
+                    unsigned int sharing, unsigned int options )
 {
     struct stat st;
     struct closed_fd *closed_fd;
+    struct fd *fd;
     const char *unlink_name = "";
 
-    assert( fd->unix_fd == -1 );
+    if (!(fd = alloc_fd_object())) return NULL;
 
     if (options & FILE_DELETE_ON_CLOSE) unlink_name = name;
     if (!(closed_fd = mem_alloc( sizeof(*closed_fd) + strlen(unlink_name) )))
@@ -1337,9 +1344,7 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
             if (errno != EEXIST || (flags & O_EXCL))
             {
                 file_set_error();
-                release_object( fd );
-                free( closed_fd );
-                return NULL;
+                goto error;
             }
         }
         flags &= ~(O_CREAT | O_EXCL | O_TRUNC);
@@ -1347,9 +1352,7 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
     if ((fd->unix_fd = open( name, flags & ~O_TRUNC, *mode )) == -1)
     {
         file_set_error();
-        release_object( fd );
-        free( closed_fd );
-        return NULL;
+        goto error;
     }
     closed_fd->unix_fd = fd->unix_fd;
     closed_fd->unlink[0] = 0;
@@ -1420,10 +1423,11 @@ error:
 /* if the function fails the unix fd is closed */
 struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops, int unix_fd, struct object *user )
 {
-    struct fd *fd = alloc_fd( fd_user_ops, user );
+    struct fd *fd = alloc_fd_object();
 
     if (fd)
     {
+        set_fd_user( fd, fd_user_ops, user );
         fd->unix_fd = unix_fd;
         return fd;
     }
