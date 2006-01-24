@@ -222,8 +222,8 @@ PSTR SECUR32_AllocMultiByteFromWide(PCWSTR str)
 }
 
 static void _makeFnTableA(PSecurityFunctionTableA fnTableA,
- const PSecurityFunctionTableA inFnTableA,
- const PSecurityFunctionTableW inFnTableW)
+ const SecurityFunctionTableA *inFnTableA,
+ const SecurityFunctionTableW *inFnTableW)
 {
     if (fnTableA)
     {
@@ -293,8 +293,8 @@ static void _makeFnTableA(PSecurityFunctionTableA fnTableA,
 }
 
 static void _makeFnTableW(PSecurityFunctionTableW fnTableW,
- const PSecurityFunctionTableA inFnTableA,
- const PSecurityFunctionTableW inFnTableW)
+ const SecurityFunctionTableA *inFnTableA,
+ const SecurityFunctionTableW *inFnTableW)
 {
     if (fnTableW)
     {
@@ -385,8 +385,8 @@ static void _copyPackageInfo(PSecPkgInfoW info, const SecPkgInfoA *inInfoA,
     }
 }
 
-SecureProvider *SECUR32_addProvider(PSecurityFunctionTableA fnTableA,
- PSecurityFunctionTableW fnTableW, PWSTR moduleName)
+SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
+ const SecurityFunctionTableW *fnTableW, const PWSTR moduleName)
 {
     SecureProvider *ret;
 

@@ -259,7 +259,7 @@ static void Binding_FinishedDownload(Binding *This, HRESULT hr)
 		        0, NULL);
 	if (!pwchError)
 	{
-	    static WCHAR achFormat[] = { '%', '0', '8', 'x', 0 };
+	    static const WCHAR achFormat[] = { '%', '0', '8', 'x', 0 };
 
 	    pwchError =(WCHAR *) LocalAlloc(LMEM_FIXED, sizeof(WCHAR) * 9);
 	    wsprintfW(pwchError, achFormat, hr);

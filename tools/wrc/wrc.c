@@ -54,7 +54,7 @@
 #define ENDIAN	"little"
 #endif
 
-static char usage[] =
+static const char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]] [outfile]\n"
 	"   -D id[=val] Define preprocessor identifier id=val\n"
 	"   -E          Preprocess only\n"

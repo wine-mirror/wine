@@ -78,8 +78,8 @@ typedef struct _NegoHelper {
  * Otherwise moduleName must not be NULL.
  * Returns a pointer to the stored provider entry, for use adding packages.
  */
-SecureProvider *SECUR32_addProvider(PSecurityFunctionTableA fnTableA,
- PSecurityFunctionTableW fnTableW, PWSTR moduleName);
+SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
+ const SecurityFunctionTableW *fnTableW, const PWSTR moduleName);
 
 /* Allocates space for and adds toAdd packages with the given provider.
  * provider must not be NULL, and either infoA or infoW may be NULL, but not

@@ -312,7 +312,7 @@ void ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor,
   ME_InternalDeleteText(editor, ME_GetCursorOfs(editor, nCursor), nChars);
 }
 
-static WCHAR wszSpace[] = {' ', 0};
+static const WCHAR wszSpace[] = {' ', 0};
 
 /* FIXME this is temporary, just to have something to test how bad graphics handler is */
 void ME_InsertGraphicsFromCursor(ME_TextEditor *editor, int nCursor)

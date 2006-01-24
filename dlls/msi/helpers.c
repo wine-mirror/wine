@@ -850,8 +850,8 @@ LPWSTR create_component_advertise_string(MSIPACKAGE* package,
      * Ok it appears that the > is used if there is a guid for the compoenent
      * and the < is used if not.
      */
-    static WCHAR fmt1[] = {'%','s','%','s','<',0,0};
-    static WCHAR fmt2[] = {'%','s','%','s','>','%','s',0,0};
+    static const WCHAR fmt1[] = {'%','s','%','s','<',0,0};
+    static const WCHAR fmt2[] = {'%','s','%','s','>','%','s',0,0};
     LPWSTR output = NULL;
     DWORD sz = 0;
 

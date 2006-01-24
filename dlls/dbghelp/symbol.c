@@ -1285,7 +1285,7 @@ DWORD WINAPI UnDecorateSymbolName(LPCSTR DecoratedName, LPSTR UnDecoratedName,
 {
     /* undocumented from msvcrt */
     static char* (*p_undname)(char*, const char*, int, void* (*)(size_t), void (*)(void*), unsigned short);
-    static WCHAR szMsvcrt[] = {'m','s','v','c','r','t','.','d','l','l',0};
+    static const WCHAR szMsvcrt[] = {'m','s','v','c','r','t','.','d','l','l',0};
 
     TRACE("(%s, %p, %ld, 0x%08lx)\n",
           debugstr_a(DecoratedName), UnDecoratedName, UndecoratedLength, Flags);

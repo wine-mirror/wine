@@ -988,10 +988,10 @@ void ME_DestroyEditor(ME_TextEditor *editor)
   FREE_OBJ(editor);
 }
 
-static WCHAR wszClassName[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '2', '0', 'W', 0};
-static WCHAR wszClassName50[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '5', '0', 'W', 0};
-static WCHAR wszClassNameListBox[] = {'R','E','L','i','s','t','B','o','x','2','0','W', 0};
-static WCHAR wszClassNameComboBox[] = {'R','E','C','o','m','b','o','B','o','x','2','0','W', 0};
+static const WCHAR wszClassName[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '2', '0', 'W', 0};
+static const WCHAR wszClassName50[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '5', '0', 'W', 0};
+static const WCHAR wszClassNameListBox[] = {'R','E','L','i','s','t','B','o','x','2','0','W', 0};
+static const WCHAR wszClassNameComboBox[] = {'R','E','C','o','m','b','o','B','o','x','2','0','W', 0};
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {

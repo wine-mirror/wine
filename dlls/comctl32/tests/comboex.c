@@ -25,7 +25,7 @@
 
 static HWND hComboExParentWnd;
 static HINSTANCE hMainHinst;
-static char ComboExTestClass[] = "ComboExTestClass";
+static const char ComboExTestClass[] = "ComboExTestClass";
 
 #define MAX_CHARS 100
 static char *textBuffer = NULL;
@@ -73,11 +73,11 @@ static void test_comboboxex() {
     LONG res = -1;
     COMBOBOXEXITEM cbexItem;
 
-    #define FIRST_ITEM       "First Item"
-    #define SECOND_ITEM      "Second Item"
-    #define THIRD_ITEM       "Third Item"
-    #define MIDDLE_ITEM      "Between First and Second Items"
-    #define REPLACEMENT_ITEM "Between First and Second Items"
+#define FIRST_ITEM       "First Item"
+#define SECOND_ITEM      "Second Item"
+#define THIRD_ITEM       "Third Item"
+#define MIDDLE_ITEM      "Between First and Second Items"
+#define REPLACEMENT_ITEM "Between First and Second Items"
 
     /* Allocate space for result */
     textBuffer = malloc(MAX_CHARS);

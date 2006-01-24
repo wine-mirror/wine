@@ -30,7 +30,7 @@
 
 
 HWND hProgressParentWnd, hProgressWnd;
-static char progressTestClass[] = "ProgressBarTestClass";
+static const char progressTestClass[] = "ProgressBarTestClass";
 
 
 LRESULT CALLBACK ProgressTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)

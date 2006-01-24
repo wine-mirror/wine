@@ -391,7 +391,7 @@ static SECURITY_STATUS SEC_ENTRY nego_VerifySignature(PCtxtHandle phContext,
 
 
 
-static SecurityFunctionTableA negoTableA = {
+static const SecurityFunctionTableA negoTableA = {
     1,
     NULL,   /* EnumerateSecurityPackagesA */
     nego_QueryCredentialsAttributesA,   /* QueryCredentialsAttributesA */
@@ -422,7 +422,7 @@ static SecurityFunctionTableA negoTableA = {
     NULL,   /* SetContextAttributesA */
 };
 
-static SecurityFunctionTableW negoTableW = {
+static const SecurityFunctionTableW negoTableW = {
     1,
     NULL,   /* EnumerateSecurityPackagesW */
     nego_QueryCredentialsAttributesW,   /* QueryCredentialsAttributesW */
@@ -481,11 +481,10 @@ void SECUR32_initNegotiateSP(void)
     static const USHORT version = 1;
     static const USHORT rpcid = 15;
     static const ULONG  max_token = 12000;
-    const SecPkgInfoW infoW = { caps, version, rpcid, max_token, nego_name_W, 
+    const SecPkgInfoW infoW = { caps, version, rpcid, max_token, nego_name_W,
         negotiate_comment_W};
     const SecPkgInfoA infoA = { caps, version, rpcid, max_token, nego_name_A,
         negotiate_comment_A};
 
     SECUR32_addPackages(provider, 1L, &infoA, &infoW);        
-    
 }

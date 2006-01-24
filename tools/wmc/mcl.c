@@ -74,25 +74,25 @@
  * The 'Codepages' keyword is a wmc extension.
  */
 
-static WCHAR ustr_application[]	= { 'A', 'p', 'p', 'l', 'i', 'c', 'a', 't', 'i', 'o', 'n', 0 };
-static WCHAR ustr_codepages[]		= { 'C', 'o', 'd', 'e', 'p', 'a', 'g', 'e', 's', 0 };
-static WCHAR ustr_english[]		= { 'E', 'n', 'g', 'l', 'i', 's', 'h', 0 };
-static WCHAR ustr_error[]		= { 'E', 'r', 'r', 'o', 'r', 0 };
-static WCHAR ustr_facility[]		= { 'F', 'a', 'c', 'i', 'l', 'i', 't', 'y', 0 };
-static WCHAR ustr_facilitynames[]	= { 'F', 'a', 'c', 'i', 'l', 'i', 't', 'y', 'N', 'a', 'm', 'e', 's', 0 };
-static WCHAR ustr_informational[]	= { 'I', 'n', 'f', 'o', 'r', 'm', 'a', 't', 'i', 'o', 'n', 'a', 'l', 0 };
-static WCHAR ustr_language[]		= { 'L', 'a', 'n', 'g', 'u', 'a', 'g', 'e', 0};
-static WCHAR ustr_languagenames[]	= { 'L', 'a', 'n', 'g', 'u', 'a', 'g', 'e', 'N', 'a', 'm', 'e', 's', 0};
-static WCHAR ustr_messageid[]		= { 'M', 'e', 's', 's', 'a', 'g', 'e', 'I', 'd', 0 };
-static WCHAR ustr_messageidtypedef[]	= { 'M', 'e', 's', 's', 'a', 'g', 'e', 'I', 'd', 'T', 'y', 'p', 'e', 'd', 'e', 'f', 0 };
-static WCHAR ustr_outputbase[]	= { 'O', 'u', 't', 'p', 'u', 't', 'B', 'a', 's', 'e', 0 };
-static WCHAR ustr_severity[]		= { 'S', 'e', 'v', 'e', 'r', 'i', 't', 'y', 0 };
-static WCHAR ustr_severitynames[]	= { 'S', 'e', 'v', 'e', 'r', 'i', 't', 'y', 'N', 'a', 'm', 'e', 's', 0 };
-static WCHAR ustr_success[]		= { 'S', 'u', 'c', 'c', 'e', 's', 's', 0 };
-static WCHAR ustr_symbolicname[]	= { 'S', 'y', 'm', 'b', 'o', 'l', 'i', 'c', 'N', 'a', 'm', 'e', 0 };
-static WCHAR ustr_system[]		= { 'S', 'y', 's', 't', 'e', 'm', 0 };
-static WCHAR ustr_warning[]		= { 'W', 'a', 'r', 'n', 'i', 'n', 'g', 0 };
-static WCHAR ustr_msg00001[]		= { 'm', 's', 'g', '0', '0', '0', '0', '1', 0 };
+static const WCHAR ustr_application[]	= { 'A', 'p', 'p', 'l', 'i', 'c', 'a', 't', 'i', 'o', 'n', 0 };
+static const WCHAR ustr_codepages[]	= { 'C', 'o', 'd', 'e', 'p', 'a', 'g', 'e', 's', 0 };
+static const WCHAR ustr_english[]	= { 'E', 'n', 'g', 'l', 'i', 's', 'h', 0 };
+static const WCHAR ustr_error[]		= { 'E', 'r', 'r', 'o', 'r', 0 };
+static const WCHAR ustr_facility[]	= { 'F', 'a', 'c', 'i', 'l', 'i', 't', 'y', 0 };
+static const WCHAR ustr_facilitynames[]	= { 'F', 'a', 'c', 'i', 'l', 'i', 't', 'y', 'N', 'a', 'm', 'e', 's', 0 };
+static const WCHAR ustr_informational[]	= { 'I', 'n', 'f', 'o', 'r', 'm', 'a', 't', 'i', 'o', 'n', 'a', 'l', 0 };
+static const WCHAR ustr_language[]	= { 'L', 'a', 'n', 'g', 'u', 'a', 'g', 'e', 0};
+static const WCHAR ustr_languagenames[]	= { 'L', 'a', 'n', 'g', 'u', 'a', 'g', 'e', 'N', 'a', 'm', 'e', 's', 0};
+static const WCHAR ustr_messageid[]	= { 'M', 'e', 's', 's', 'a', 'g', 'e', 'I', 'd', 0 };
+static const WCHAR ustr_messageidtypedef[] = { 'M', 'e', 's', 's', 'a', 'g', 'e', 'I', 'd', 'T', 'y', 'p', 'e', 'd', 'e', 'f', 0 };
+static const WCHAR ustr_outputbase[]	= { 'O', 'u', 't', 'p', 'u', 't', 'B', 'a', 's', 'e', 0 };
+static const WCHAR ustr_severity[]	= { 'S', 'e', 'v', 'e', 'r', 'i', 't', 'y', 0 };
+static const WCHAR ustr_severitynames[]	= { 'S', 'e', 'v', 'e', 'r', 'i', 't', 'y', 'N', 'a', 'm', 'e', 's', 0 };
+static const WCHAR ustr_success[]	= { 'S', 'u', 'c', 'c', 'e', 's', 's', 0 };
+static const WCHAR ustr_symbolicname[]	= { 'S', 'y', 'm', 'b', 'o', 'l', 'i', 'c', 'N', 'a', 'm', 'e', 0 };
+static const WCHAR ustr_system[]	= { 'S', 'y', 's', 't', 'e', 'm', 0 };
+static const WCHAR ustr_warning[]	= { 'W', 'a', 'r', 'n', 'i', 'n', 'g', 0 };
+static const WCHAR ustr_msg00001[]	= { 'm', 's', 'g', '0', '0', '0', '0', '1', 0 };
 /*
  * This table is to beat any form of "expression building" to check for
  * correct filename characters. It is also used for ident checks.

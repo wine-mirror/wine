@@ -493,7 +493,7 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
 
 static void msi_dialog_map_events(msi_dialog* dialog, LPCWSTR control)
 {
-    static WCHAR Query[] = {
+    static const WCHAR Query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','E','v','e','n','t','M','a','p','p','i','n','g','`',' ',
         'W','H','E','R','E',' ',

@@ -147,8 +147,8 @@ int WINAPI WinMain(HINSTANCE hinstance,
     PROCESS_INFORMATION info;
     parameters_struct   parameters;
     BOOL rc;
-    static WCHAR winefile[] = {'w','i','n','e','f','i','l','e','.','e','x','e',0};
-    static WCHAR space[] = {' ',0};
+    static const WCHAR winefile[] = {'w','i','n','e','f','i','l','e','.','e','x','e',0};
+    static const WCHAR space[] = {' ',0};
     LPWSTR winefile_commandline = NULL;
     DWORD len = 0;
 

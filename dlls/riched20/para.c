@@ -22,7 +22,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
-static WCHAR wszParagraphSign[] = {0xB6, 0};
+static const WCHAR wszParagraphSign[] = {0xB6, 0};
 
 void ME_MakeFirstParagraph(HDC hDC, ME_TextBuffer *text)
 {

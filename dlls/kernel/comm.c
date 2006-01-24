@@ -2207,7 +2207,7 @@ BOOL WINAPI GetCommProperties(
  * The DLL should be loaded when the COMM port is opened, and closed
  * when the COMM port is closed. - MJM 20 June 2000
  ***********************************************************************/
-static WCHAR lpszSerialUI[] = { 
+static const WCHAR lpszSerialUI[] = { 
    's','e','r','i','a','l','u','i','.','d','l','l',0 };
 
 

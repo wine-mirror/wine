@@ -171,8 +171,8 @@ int decode_header(struct frame *fr,unsigned long newhead)
 #if 0
 void print_header(struct frame *fr)
 {
-	static char *modes[4] = { "Stereo", "Joint-Stereo", "Dual-Channel", "Single-Channel" };
-	static char *layers[4] = { "Unknown" , "I", "II", "III" };
+	static const char * const modes[4] = { "Stereo", "Joint-Stereo", "Dual-Channel", "Single-Channel" };
+	static const char * const layers[4] = { "Unknown" , "I", "II", "III" };
 
 	fprintf(stderr,"MPEG %s, Layer: %s, Freq: %ld, mode: %s, modext: %d, BPF : %d\n",
 		fr->mpeg25 ? "2.5" : (fr->lsf ? "2.0" : "1.0"),
@@ -188,8 +188,8 @@ void print_header(struct frame *fr)
 
 void print_header_compact(struct frame *fr)
 {
-	static char *modes[4] = { "stereo", "joint-stereo", "dual-channel", "mono" };
-	static char *layers[4] = { "Unknown" , "I", "II", "III" };
+	static const char * const modes[4] = { "stereo", "joint-stereo", "dual-channel", "mono" };
+	static const char * const layers[4] = { "Unknown" , "I", "II", "III" };
 
 	fprintf(stderr,"MPEG %s layer %s, %d kbit/s, %ld Hz %s\n",
 		fr->mpeg25 ? "2.5" : (fr->lsf ? "2.0" : "1.0"),

@@ -1350,7 +1350,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	}
     } else if (!(wmd = MCI_GetDriver(mciGetDeviceIDW(dev)))) {
 	/* auto open */
-        static WCHAR wszOpenWait[] = {'o','p','e','n',' ','%','s',' ','w','a','i','t',0};
+        static const WCHAR wszOpenWait[] = {'o','p','e','n',' ','%','s',' ','w','a','i','t',0};
 	WCHAR   buf[128];
 	sprintfW(buf, wszOpenWait, dev);
 

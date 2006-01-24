@@ -40,9 +40,9 @@ static struct edit_notify notifications;
 
 static HINSTANCE hinst;
 static HWND hwndET2;
-static char szEditTest2Class[] = "EditTest2Class";
-static char szEditTest3Class[] = "EditTest3Class";
-static char szEditTextPositionClass[] = "EditTextPositionWindowClass";
+static const char szEditTest2Class[] = "EditTest2Class";
+static const char szEditTest3Class[] = "EditTest3Class";
+static const char szEditTextPositionClass[] = "EditTextPositionWindowClass";
 
 static HWND create_editcontrol (DWORD style, DWORD exstyle)
 {

@@ -67,7 +67,7 @@ static void test_TypeComp(void)
     DESCKIND desckind;
     BINDPTR bindptr;
     ITypeInfo *pTypeInfo;
-    static WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
+    static const WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
     static WCHAR wszStdFunctions[] = {'S','t','d','F','u','n','c','t','i','o','n','s',0};
     static WCHAR wszSavePicture[] = {'S','a','v','e','P','i','c','t','u','r','e',0};
     static WCHAR wszOLE_TRISTATE[] = {'O','L','E','_','T','R','I','S','T','A','T','E',0};
