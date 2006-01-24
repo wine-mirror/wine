@@ -1258,13 +1258,17 @@ static int get_struct_type(var_t *field)
         continue;
     }
 
-    if (is_array_type(field->attrs, field->ptr_level, field->array) &&
-        field->array && !field->array->is_const)
+    if (is_array_type(field->attrs, field->ptr_level, field->array))
     {
-        has_conformance = 1;
-        if (PREV_LINK(field))
-            yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
-                    field->name);
+        if (field->array && !field->array->is_const)
+        {
+            has_conformance = 1;
+            if (PREV_LINK(field))
+                yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
+                        field->name);
+        }
+        if (is_attr(field->attrs, ATTR_LENGTHIS))
+            has_variance = 1;
         continue;
     }
 
