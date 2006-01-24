@@ -145,7 +145,16 @@ done
 
 link_app()
 {
-   rm -f "$2" && ln -s "$dlldir/$1.exe.so" "$2" || echo "Warning: failed to create $2"
+    if [ ! -f "$2" ]
+    then
+        # make a copy if the original is writable
+        if [ -w "$dlldir/$1.exe.so" ]
+        then
+            cp "$dlldir/$1.exe.so" "$2" || echo "Warning: failed to create $2"
+        else
+            ln -s "$dlldir/$1.exe.so" "$2" || echo "Warning: failed to create $2"
+        fi
+    fi
 }
 
 link_app start        "$CROOT/windows/command/start.exe"
