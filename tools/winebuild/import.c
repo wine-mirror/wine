@@ -70,56 +70,6 @@ static int nb_delayed = 0;      /* number of delayed dlls */
 static int total_imports = 0;   /* total number of imported functions */
 static int total_delayed = 0;   /* total number of imported functions in delayed DLLs */
 
-/* list of symbols that are ignored by default */
-static const char * const default_ignored_symbols[] =
-{
-    "abs",
-    "acos",
-    "asin",
-    "atan",
-    "atan2",
-    "atoi",
-    "atol",
-    "bsearch",
-    "ceil",
-    "cos",
-    "cosh",
-    "exp",
-    "fabs",
-    "floor",
-    "fmod",
-    "frexp",
-    "labs",
-    "log",
-    "log10",
-    "memchr",
-    "memcmp",
-    "memcpy",
-    "memmove",
-    "memset",
-    "modf",
-    "pow",
-    "qsort",
-    "sin",
-    "sinh",
-    "sqrt",
-    "strcat",
-    "strchr",
-    "strcmp",
-    "strcpy",
-    "strcspn",
-    "strlen",
-    "strncat",
-    "strncmp",
-    "strncpy",
-    "strpbrk",
-    "strrchr",
-    "strspn",
-    "strstr",
-    "tan",
-    "tanh"
-};
-
 
 static inline const char *ppc_reg( int reg )
 {
@@ -397,22 +347,11 @@ static void remove_import_dll( int index )
     free_imports( imp );
 }
 
-/* initialize the list of ignored symbols */
-static void init_ignored_symbols(void)
-{
-    unsigned int i;
-
-    for (i = 0; i < sizeof(default_ignored_symbols)/sizeof(default_ignored_symbols[0]); i++)
-        add_name( &ignore_symbols, default_ignored_symbols[i] );
-}
-
 /* add a symbol to the ignored symbol list */
 /* if the name starts with '-' the symbol is removed instead */
 void add_ignore_symbol( const char *name )
 {
     unsigned int i;
-
-    if (!ignore_symbols.size) init_ignored_symbols();  /* first time around, fill list with defaults */
 
     if (name[0] == '-')  /* remove it */
     {
@@ -603,7 +542,6 @@ int resolve_imports( DLLSPEC *spec )
     unsigned int i, j, removed;
     ORDDEF *odp;
 
-    if (!ignore_symbols.size) init_ignored_symbols();
     sort_names( &ignore_symbols );
 
     for (i = 0; i < nb_imports; i++)
