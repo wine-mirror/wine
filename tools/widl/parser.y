@@ -1257,9 +1257,13 @@ static int get_struct_type(var_t *field)
         continue;
     }
 
-    if (is_array_type(field->attrs, field->ptr_level, field->array))
+    if (is_array_type(field->attrs, field->ptr_level, field->array) &&
+        field->array && !field->array->is_const)
     {
         has_conformant_array = 1;
+        if (PREV_LINK(field))
+            yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
+                    field->name);
         continue;
     }
 
@@ -1303,6 +1307,9 @@ static int get_struct_type(var_t *field)
       break;
     case RPC_FC_CARRAY:
       has_conformant_array = 1;
+      if (PREV_LINK(field))
+          yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
+                  field->name);
       break;
     case RPC_FC_C_CSTRING:
     case RPC_FC_C_WSTRING:
@@ -1320,11 +1327,17 @@ static int get_struct_type(var_t *field)
 
     case RPC_FC_CPSTRUCT:
       has_conformant_array = 1;
+      if (PREV_LINK(field))
+          yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
+                  field->name);
       has_pointer = 1;
       break;
 
     case RPC_FC_CSTRUCT:
       has_conformant_array = 1;
+      if (PREV_LINK(field))
+          yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
+                  field->name);
       break;
 
     case RPC_FC_PSTRUCT:
