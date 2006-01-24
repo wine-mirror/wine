@@ -659,12 +659,17 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
         }
         else if (ptr_level == 1 && !type_has_ref(type))
         {
+            int pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
+            if (!pointer_type) pointer_type = RPC_FC_RP;
+
             /* special case for pointers to base types */
             switch (type->type)
             {
 #define CASE_BASETYPE(fctype) \
             case RPC_##fctype: \
-                print_file(file, indent, "0x11, 0x08,    /* FC_RP [simple_pointer] */\n"); \
+                print_file(file, indent, "0x%x, 0x08,    /* %s [simple_pointer] */\n", \
+                           pointer_type, \
+                           pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP")); \
                 print_file(file, indent, "0x%02x,    /* " #fctype " */\n", RPC_##fctype); \
                 print_file(file, indent, "0x5c,          /* FC_PAD */\n"); \
                 return 4
@@ -1150,7 +1155,9 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
         }
         else
         {
-            error("unmarshall_arguments: Pointer level %d not supported for variable %s\n", var->ptr_level, var->name);
+            print_file(file, indent,
+                       "NdrPointerUnmarshall(&_StubMsg, (unsigned char **)&%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
+                       var->name, *type_offset);
             last_size = 1;
         }
         fprintf(file, "\n");
