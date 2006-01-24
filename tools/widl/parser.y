@@ -1240,8 +1240,8 @@ static type_t *get_typev(unsigned char type, var_t *name, int t)
 static int get_struct_type(var_t *field)
 {
   int has_pointer = 0;
-  int has_conformant_array = 0;
-  int has_conformant_string = 0;
+  int has_conformance = 0;
+  int has_variance = 0;
 
   for (; field; field = NEXT_LINK(field))
   {
@@ -1253,14 +1253,15 @@ static int get_struct_type(var_t *field)
 
     if (is_string_type(field->attrs, field->ptr_level, field->array))
     {
-        has_conformant_string = 1;
+        has_conformance = 1;
+        has_variance = 1;
         continue;
     }
 
     if (is_array_type(field->attrs, field->ptr_level, field->array) &&
         field->array && !field->array->is_const)
     {
-        has_conformant_array = 1;
+        has_conformance = 1;
         if (PREV_LINK(field))
             yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
                     field->name);
@@ -1306,14 +1307,15 @@ static int get_struct_type(var_t *field)
       has_pointer = 1;
       break;
     case RPC_FC_CARRAY:
-      has_conformant_array = 1;
+      has_conformance = 1;
       if (PREV_LINK(field))
           yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
                   field->name);
       break;
     case RPC_FC_C_CSTRING:
     case RPC_FC_C_WSTRING:
-      has_conformant_string = 1;
+      has_conformance = 1;
+      has_variance = 1;
       break;
 
     /*
@@ -1321,12 +1323,13 @@ static int get_struct_type(var_t *field)
      *  a struct should be at least as complex as its member
      */
     case RPC_FC_CVSTRUCT:
-      has_conformant_string = 1;
+      has_conformance = 1;
+      has_variance = 1;
       has_pointer = 1;
       break;
 
     case RPC_FC_CPSTRUCT:
-      has_conformant_array = 1;
+      has_conformance = 1;
       if (PREV_LINK(field))
           yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
                   field->name);
@@ -1334,7 +1337,7 @@ static int get_struct_type(var_t *field)
       break;
 
     case RPC_FC_CSTRUCT:
-      has_conformant_array = 1;
+      has_conformance = 1;
       if (PREV_LINK(field))
           yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
                   field->name);
@@ -1362,11 +1365,11 @@ static int get_struct_type(var_t *field)
     }
   }
 
-  if( has_conformant_string && has_pointer )
+  if( has_variance )
     return RPC_FC_CVSTRUCT;
-  if( has_conformant_array && has_pointer )
+  if( has_conformance && has_pointer )
     return RPC_FC_CPSTRUCT;
-  if( has_conformant_array )
+  if( has_conformance )
     return RPC_FC_CSTRUCT;
   if( has_pointer )
     return RPC_FC_PSTRUCT;
