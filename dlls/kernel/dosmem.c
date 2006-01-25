@@ -80,7 +80,7 @@ static LONG WINAPI dosmem_handler(EXCEPTION_POINTERS* except);
 
 struct winedos_exports winedos;
 
-void load_winedos(void)
+BOOL load_winedos(void)
 {
     static HANDLE	hRunOnce /* = 0 */;
     static HMODULE      hWineDos /* = 0 */;
@@ -88,7 +88,7 @@ void load_winedos(void)
     /* FIXME: this isn't 100% thread safe, as we won't catch access to 1MB while
      * loading winedos (and may return uninitialized valued)
      */
-    if (hWineDos) return;
+    if (hWineDos) goto done;
     if (hRunOnce == 0)
     {
 	HANDLE hEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
@@ -97,29 +97,31 @@ void load_winedos(void)
             HMODULE hModule;
 
 	    /* ok, we're the winning thread */
-            VirtualProtect( DOSMEM_dosmem + DOSMEM_protect,
-                            DOSMEM_SIZE - DOSMEM_protect,
-                            PAGE_EXECUTE_READWRITE, NULL );
-            if (!(hModule = LoadLibraryA( "winedos.dll" )))
+            if (!VirtualProtect( DOSMEM_dosmem + DOSMEM_protect,
+                                 DOSMEM_SIZE - DOSMEM_protect,
+                                 PAGE_EXECUTE_READWRITE, NULL ) ||
+                !(hModule = LoadLibraryA( "winedos.dll" )))
             {
                 ERR("Could not load winedos.dll, DOS subsystem unavailable\n");
-                hWineDos = (HMODULE)1; /* not to try to load it again */
-                return;
+                hModule = (HMODULE)1; /* not to try to load it again */
             }
+            else
+            {
 #define GET_ADDR(func)  winedos.func = (void *)GetProcAddress( hModule, #func );
-    GET_ADDR(AllocDosBlock);
-    GET_ADDR(FreeDosBlock);
-    GET_ADDR(ResizeDosBlock);
-    GET_ADDR(inport);
-    GET_ADDR(outport);
-    GET_ADDR(EmulateInterruptPM);
-    GET_ADDR(CallBuiltinHandler);
-    GET_ADDR(BiosTick);
+                GET_ADDR(AllocDosBlock);
+                GET_ADDR(FreeDosBlock);
+                GET_ADDR(ResizeDosBlock);
+                GET_ADDR(inport);
+                GET_ADDR(outport);
+                GET_ADDR(EmulateInterruptPM);
+                GET_ADDR(CallBuiltinHandler);
+                GET_ADDR(BiosTick);
 #undef GET_ADDR
+            }
             RtlRemoveVectoredExceptionHandler( dosmem_handler );
             hWineDos = hModule;
             SetEvent( hRunOnce );
-	    return;
+            goto done;
 	}
 	/* someone beat us here... */
 	CloseHandle( hEvent );
@@ -127,6 +129,8 @@ void load_winedos(void)
 
     /* and wait for the winner to have finished */
     WaitForSingleObject( hRunOnce, INFINITE );
+ done:
+    return (hWineDos != (HMODULE)1);
 }
 
 /******************************************************************
@@ -142,8 +146,7 @@ static LONG WINAPI dosmem_handler(EXCEPTION_POINTERS* except)
         if (addr >= (ULONG_PTR)DOSMEM_dosmem + DOSMEM_protect &&
             addr < (ULONG_PTR)DOSMEM_dosmem + DOSMEM_SIZE)
         {
-            load_winedos();
-            return EXCEPTION_CONTINUE_EXECUTION;
+            if (load_winedos()) return EXCEPTION_CONTINUE_EXECUTION;
         }
     }
     return EXCEPTION_CONTINUE_SEARCH;

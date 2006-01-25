@@ -113,7 +113,7 @@ extern BOOL   DOSMEM_Init(void);
 extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
 extern LPVOID DOSMEM_MapDosToLinear(UINT);   /* linear DOS to Wine */
 extern UINT   DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
-extern void   load_winedos(void);
+extern BOOL   load_winedos(void);
 
 /* environ.c */
 extern void ENV_CopyStartupInformation(void);
