@@ -136,8 +136,8 @@ HKLM,%CurrentVersion%,"CommonFilesDir",,"%16427%"
 HKLM,%CurrentVersion%,"FirstInstallDateTime",1,21,81,7c,23
 HKLM,%CurrentVersion%,"ProductId",,"12345-oem-0000001-54321"
 HKLM,%CurrentVersion%,"ProgramFilesDir",,"%16422%"
-HKLM,%CurrentVersion%,"RegisteredOrganization",,"Change preferred organization in ~/.wine/system.reg"
-HKLM,%CurrentVersion%,"RegisteredOwner",,"Change preferred owner in ~/.wine/system.reg"
+HKLM,%CurrentVersion%,"RegisteredOrganization",2,"Change preferred organization in ~/.wine/system.reg"
+HKLM,%CurrentVersion%,"RegisteredOwner",2,"Change preferred owner in ~/.wine/system.reg"
 HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"DiskSpinDownMax",,"3600"
 HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"DiskSpinDownMin",,"3"
 HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"LastID",,"5"
@@ -147,27 +147,27 @@ HKLM,Software\Microsoft\Windows NT\CurrentVersion\Fonts,,,""
 HKLM,Software\Microsoft\Windows NT\CurrentVersion\Hotfix\Q246009,"Installed",,"1"
 
 [Debugger]
-HKLM,Software\Microsoft\Windows NT\CurrentVersion\AeDebug,"Debugger",,"winedbg --auto %ld %ld"
-HKLM,Software\Microsoft\Windows NT\CurrentVersion\AeDebug,"Auto",,"1"
+HKLM,Software\Microsoft\Windows NT\CurrentVersion\AeDebug,"Debugger",2,"winedbg --auto %ld %ld"
+HKLM,Software\Microsoft\Windows NT\CurrentVersion\AeDebug,"Auto",2,"1"
 
 [Desktop]
-HKCU,%Desktop%,"FontSmoothing",,"0"
-HKCU,%Desktop%,"DragFullWindows",,"0"
-HKCU,%Desktop%,"SmoothScroll",1,00,00,00,00
-HKCU,%Desktop%,"UserPreferencemask",1,00,00,00,00
+HKCU,%Desktop%,"FontSmoothing",2,"0"
+HKCU,%Desktop%,"DragFullWindows",2,"0"
+HKCU,%Desktop%,"SmoothScroll",3,00,00,00,00
+HKCU,%Desktop%,"UserPreferencemask",3,00,00,00,00
 HKCU,%Desktop%,"LowPowerActive",,"0"
 
 [Metrics]
-HKCU,%Metrics%,"ScrollWidth",,"16"
-HKCU,%Metrics%,"ScrollHeight",,"16"
-HKCU,%Metrics%,"CaptionWidth",,"18"
-HKCU,%Metrics%,"CaptionHeight",,"18"
-HKCU,%Metrics%,"SmCaptionWidth",,"13"
-HKCU,%Metrics%,"SmCaptionHeight",,"15"
-HKCU,%Metrics%,"MenuWidth",,"18"
-HKCU,%Metrics%,"MenuHeight",,"18"
-HKCU,%Metrics%,"BorderWidth",,"1"
-HKCU,%Metrics%,"Shell Icon Size",,"32"
+HKCU,%Metrics%,"ScrollWidth",2,"16"
+HKCU,%Metrics%,"ScrollHeight",2,"16"
+HKCU,%Metrics%,"CaptionWidth",2,"18"
+HKCU,%Metrics%,"CaptionHeight",2,"18"
+HKCU,%Metrics%,"SmCaptionWidth",2,"13"
+HKCU,%Metrics%,"SmCaptionHeight",2,"15"
+HKCU,%Metrics%,"MenuWidth",2,"18"
+HKCU,%Metrics%,"MenuHeight",2,"18"
+HKCU,%Metrics%,"BorderWidth",2,"1"
+HKCU,%Metrics%,"Shell Icon Size",2,"32"
 
 [DirectX]
 HKLM,Software\Microsoft\DirectX,"Version",,"4.09.00.0903"
@@ -202,7 +202,7 @@ HKLM,Software\Microsoft\DirectPlay\Service Providers\Serial Connection For Direc
 
 [Environment]
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ComSpec",,"%11%\wcmd.exe"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"PATH",,"%11%;%10%"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"PATH",2,"%11%;%10%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ProgramFiles",,"%16422%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SYSTEMROOT",,"%10%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TEMP",,"%10%\temp"
@@ -230,7 +230,7 @@ HKLM,%FontSubStr%,"Times New Roman CYR,204",,"Times New Roman,204"
 HKLM,%FontSubStr%,"Times New Roman Greek,161",,"Times New Roman,161"
 HKLM,%FontSubStr%,"Times New Roman TUR,162",,"Times New Roman,162"
 HKLM,%FontSubStr%,"Tms Rmn",,"Times New Roman"
-HKLM,System\CurrentControlSet\Hardware Profiles\Current\Software\Fonts,"LogPixels",0x10001,0x00000060
+HKLM,System\CurrentControlSet\Hardware Profiles\Current\Software\Fonts,"LogPixels",0x10003,0x00000060
 
 [MCI]
 HKLM,%Mci32Str%,"AVIVideo",,"mciavi32.dll"
