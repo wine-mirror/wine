@@ -25,14 +25,21 @@
  * Unless otherwise noted, we believe this code to be complete, as per
  * the specification mentioned above.
  * If you discover missing features, or bugs, please note them below.
- * 
+ *
+ * Notes:
+ *   - Windows XP introduced new behavior: The background of centered
+ *     icons and bitmaps is painted differently. This is only done if
+ *     a manifest is present.
+ *     Because it has not yet been decided how to implement the two
+ *     different modes in Wine, only the Windows XP mode is implemented.
+ *   - Controls with SS_SIMPLE but without SS_NOPREFIX:
+ *     The text should not be changed. Windows doesn't clear the
+ *     client rectangle, so the new text must be larger than the old one.
+ *   - The SS_RIGHTJUST style is currently not implemented by Windows
+ *     (or it does something different than documented).
+ *
  * TODO:
- *
- *   Styles
- *   - SS_RIGHTJUST
- *
- *   Messages
- *   - STM_SETIMAGE: IMAGE_CURSOR
+ *   - Animated cursors
  */
 
 #include <stdarg.h>
@@ -531,13 +538,11 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 	case IMAGE_BITMAP:
 	    lResult = (LRESULT)STATIC_SetBitmap( hwnd, (HBITMAP)lParam, full_style );
 	    break;
-	case IMAGE_CURSOR:
-	    FIXME("STM_SETIMAGE: Unhandled type IMAGE_CURSOR\n");
-	    break;
 	case IMAGE_ENHMETAFILE:
 	    lResult = (LRESULT)STATIC_SetEnhMetaFile( hwnd, (HENHMETAFILE)lParam, full_style );
 	    break;
 	case IMAGE_ICON:
+	case IMAGE_CURSOR:
 	    lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)lParam, full_style );
 	    break;
 	default:
@@ -733,65 +738,90 @@ static void STATIC_PaintRectfn( HWND hwnd, HDC hdc, DWORD style )
 
 static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style )
 {
-    RECT rc;
+    RECT rc, iconRect;
     HBRUSH hbrush;
     HICON hIcon;
-    INT x, y;
+    CURSORICONINFO * info;
 
     GetClientRect( hwnd, &rc );
-    hbrush = (HBRUSH)SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC,
-				   (WPARAM)hdc, (LPARAM)hwnd );
-    FillRect( hdc, &rc, hbrush );
+    hbrush = STATIC_SendWmCtlColorStatic(hwnd, hdc);
     hIcon = (HICON)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET );
-    if (style & SS_CENTERIMAGE)
+    info = hIcon ? (CURSORICONINFO *)GlobalLock16(HICON_16(hIcon)) : NULL;
+    if (!hIcon || !info)
     {
-        CURSORICONINFO *info = hIcon ? (CURSORICONINFO *)GlobalLock16(HICON_16(hIcon)) : NULL;
-        x = (rc.right - rc.left)/2 - (info ? info->nWidth/2 : 0);
-        y = (rc.bottom - rc.top)/2 - (info ? info->nHeight/2 : 0);
+        FillRect(hdc, &rc, hbrush);
     }
     else
     {
-        x = rc.left;
-        y = rc.top;
+        if (style & SS_CENTERIMAGE)
+        {
+            iconRect.left = (rc.right - rc.left) / 2 - info->nWidth / 2;
+            iconRect.top = (rc.bottom - rc.top) / 2 - info->nHeight / 2;
+            iconRect.right = iconRect.left + info->nWidth;
+            iconRect.bottom = iconRect.top + info->nHeight;
+            FillRect( hdc, &rc, hbrush );
+        }
+        else
+        {
+            FillRect( hdc, &rc, hbrush );
+            DrawIconEx( hdc, rc.left, rc.top, hIcon, rc.right - rc.left,
+                        rc.bottom - rc.top, 0, NULL, DI_NORMAL );
+        }
     }
-    if (hIcon)
-        DrawIcon( hdc, x, y, hIcon );
+    if (info) GlobalUnlock16(HICON_16(hIcon));
 }
 
 static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
 {
     HDC hMemDC;
     HBITMAP hBitmap, oldbitmap;
+    HBRUSH hbrush;
 
     /* message is still sent, even if the returned brush is not used */
-    SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC,
-				   (WPARAM)hdc, (LPARAM)hwnd );
+    hbrush = STATIC_SendWmCtlColorStatic(hwnd, hdc);
 
-    if ((hBitmap = (HBITMAP)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET )))
+    if ((hBitmap = (HBITMAP)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET ))
+         && (GetObjectType(hBitmap) == OBJ_BITMAP)
+         && (hMemDC = CreateCompatibleDC( hdc )))
     {
-        INT x, y;
         BITMAP bm;
+        RECT rcClient;
+        LOGBRUSH brush;
 
-        if(GetObjectType(hBitmap) != OBJ_BITMAP) return;
-        if (!(hMemDC = CreateCompatibleDC( hdc ))) return;
-	GetObjectW(hBitmap, sizeof(bm), &bm);
-	oldbitmap = SelectObject(hMemDC, hBitmap);
+        GetObjectW(hBitmap, sizeof(bm), &bm);
+        oldbitmap = SelectObject(hMemDC, hBitmap);
+
+        /* Set the background color for monochrome bitmaps
+           to the color of the background brush */
+        if (GetObjectW( hbrush, sizeof(brush), &brush ))
+        {
+            if (brush.lbStyle == BS_SOLID)
+                SetBkColor(hdc, brush.lbColor);
+        }
+        GetClientRect(hwnd, &rcClient);
         if (style & SS_CENTERIMAGE)
         {
-            RECT rcClient;
-            GetClientRect(hwnd, &rcClient);
+            INT x, y;
             x = (rcClient.right - rcClient.left)/2 - bm.bmWidth/2;
             y = (rcClient.bottom - rcClient.top)/2 - bm.bmHeight/2;
+            FillRect( hdc, &rcClient, hbrush );
+            BitBlt(hdc, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0,
+                   SRCCOPY);
         }
         else
         {
-            x = 0;
-            y = 0;
+            StretchBlt(hdc, 0, 0, rcClient.right - rcClient.left,
+                       rcClient.bottom - rcClient.top, hMemDC,
+                       0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
         }
-        BitBlt(hdc, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0,
-	       SRCCOPY);
-	SelectObject(hMemDC, oldbitmap);
-	DeleteDC(hMemDC);
+        SelectObject(hMemDC, oldbitmap);
+        DeleteDC(hMemDC);
+    }
+    else
+    {
+        RECT rcClient;
+        GetClientRect( hwnd, &rcClient );
+        FillRect( hdc, &rcClient, hbrush );
     }
 }
 
