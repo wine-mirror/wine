@@ -181,7 +181,7 @@ typedef LONG_PTR LPARAM;
 
 cpp_quote("#endif /* winnt.h */")
 
-cpp_quote("#if 0") /* for IDL only */
+cpp_quote("#ifdef _MSC_VER") /* for IDL and MSVC only */
 typedef double DOUBLE;
 cpp_quote("#else")
 cpp_quote("typedef double DECLSPEC_ALIGN(8) DOUBLE;")
@@ -599,7 +599,7 @@ typedef enum tagSTATFLAG {
 
 /******************** OLE Automation ********************/
 
-cpp_quote("#if 0") /* for IDL only */
+cpp_quote("#ifdef _MSC_VER") /* for IDL and MSVC only */
 typedef double DATE;
 cpp_quote("#else")
 cpp_quote("typedef double DECLSPEC_ALIGN(8) DATE;")
