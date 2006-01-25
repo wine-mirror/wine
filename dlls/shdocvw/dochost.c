@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Jacek Caban for CodeWeavers
+ * Copyright 2005-2006 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -239,19 +239,14 @@ static HRESULT WINAPI DocHostUIHandler_GetHostInfo(IDocHostUIHandler2 *iface,
         DOCHOSTUIINFO *pInfo)
 {
     WebBrowser *This = DOCHOSTUI_THIS(iface);
-    IDocHostUIHandler *handler;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pInfo);
 
-    if(This->client) {
-        hres = IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler, (void**)&handler);
-        if(SUCCEEDED(hres)) {
-            hres = IDocHostUIHandler_GetHostInfo(handler, pInfo);
-            IDocHostUIHandler_Release(handler);
-            if(SUCCEEDED(hres))
-                return hres;
-        }
+    if(This->hostui) {
+        hres = IDocHostUIHandler_GetHostInfo(This->hostui, pInfo);
+        if(SUCCEEDED(hres))
+            return hres;
     }
 
     pInfo->dwFlags = DOCHOSTUIFLAG_DISABLE_HELP_MENU | DOCHOSTUIFLAG_OPENNEWWIN
@@ -328,21 +323,11 @@ static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *ifac
         LPOLESTR *pchKey, DWORD dw)
 {
     WebBrowser *This = DOCHOSTUI_THIS(iface);
-    IDocHostUIHandler *handler;
-    HRESULT hres;
 
     TRACE("(%p)->(%p %ld)\n", This, pchKey, dw);
 
-    if(!This->client)
-        return S_OK;
-
-    hres = IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler,
-                                         (void**)&handler);
-    if(SUCCEEDED(hres)) {
-        hres = IDocHostUIHandler_GetOptionKeyPath(handler, pchKey, dw);
-        IDocHostUIHandler_Release(handler);
-        return hres;
-    }
+    if(This->hostui)
+        return IDocHostUIHandler_GetOptionKeyPath(This->hostui, pchKey, dw);
 
     return S_OK;
 }
@@ -429,6 +414,8 @@ static const IDocHostUIHandler2Vtbl DocHostUIHandler2Vtbl = {
 void WebBrowser_DocHost_Init(WebBrowser *This)
 {
     This->lpDocHostUIHandlerVtbl = &DocHostUIHandler2Vtbl;
+
+    This->hostui = NULL;
 
     This->doc_view_hwnd = NULL;
 }

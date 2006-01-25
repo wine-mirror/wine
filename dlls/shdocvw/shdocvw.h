@@ -2,6 +2,7 @@
  * Header includes for shdocvw.dll
  *
  * Copyright 2001 John R. Sheets (for CodeWeavers)
+ * Copyright 2005-2006 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -94,6 +95,7 @@ typedef struct {
     IOleClientSite *client;
     IOleContainer *container;
     IOleDocumentView *view;
+    IDocHostUIHandler *hostui;
 
     LPOLESTR url;
 
