@@ -225,16 +225,34 @@ void EMFDRV_UpdateBBox( PHYSDEV dev, RECTL *rect )
     RECTL vportRect = *rect;
 
     LPtoDP(physDev->hdc, (LPPOINT)&vportRect, 2);
-
-    if(bounds->left > bounds->right) {/* first rect */
-	*bounds = vportRect;
-	return;
+    
+    /* The coordinate systems may be mirrored
+       (LPtoDP handles points, not rectangles) */
+    if (vportRect.left > vportRect.right)
+    {
+        LONG temp = vportRect.right;
+        vportRect.right = vportRect.left;
+        vportRect.left = temp;
     }
-    bounds->left   = min(bounds->left,   vportRect.left);
-    bounds->top    = min(bounds->top,    vportRect.top);
-    bounds->right  = max(bounds->right,  vportRect.right);
-    bounds->bottom = max(bounds->bottom, vportRect.bottom);
-    return;
+    if (vportRect.top > vportRect.bottom)
+    {
+        LONG temp = vportRect.bottom;
+        vportRect.bottom = vportRect.top;
+        vportRect.top = temp;
+    }
+
+    if (bounds->left > bounds->right)
+    {
+        /* first bounding rectangle */
+        *bounds = vportRect;
+    }
+    else
+    {
+        bounds->left   = min(bounds->left,   vportRect.left);
+        bounds->top    = min(bounds->top,    vportRect.top);
+        bounds->right  = max(bounds->right,  vportRect.right);
+        bounds->bottom = max(bounds->bottom, vportRect.bottom);
+    }
 }
 
 /**********************************************************************
