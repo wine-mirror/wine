@@ -908,6 +908,8 @@ int main(int argc, char **argv)
 			opts.gui_app = 0;
 		    else if (strcmp("-municode", argv[i]) == 0)
 			opts.unicode_app = 1;
+		    else if (strcmp("-m32", argv[i]) == 0 || strcmp("-m64", argv[i]) == 0)
+			raw_linker_arg = 1;
 		    break;
                 case 'n':
                     if (strcmp("-nostdinc", argv[i]) == 0)
