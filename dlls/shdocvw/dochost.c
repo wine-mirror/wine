@@ -352,8 +352,14 @@ static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface,
         DWORD dwTranslate, OLECHAR *pchURLIn, OLECHAR **ppchURLOut)
 {
     WebBrowser *This = DOCHOSTUI_THIS(iface);
-    FIXME("(%p)->(%ld %s %p)\n", This, dwTranslate, debugstr_w(pchURLIn), ppchURLOut);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%ld %s %p)\n", This, dwTranslate, debugstr_w(pchURLIn), ppchURLOut);
+
+    if(This->hostui)
+        return IDocHostUIHandler_TranslateUrl(This->hostui, dwTranslate,
+                                              pchURLIn, ppchURLOut);
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI DocHostUIHandler_FilterDataObject(IDocHostUIHandler2 *iface,
