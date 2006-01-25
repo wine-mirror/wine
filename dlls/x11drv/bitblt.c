@@ -1591,6 +1591,10 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
       }
       X11DRV_CoerceDIBSection( physDevDst, DIB_Status_GdiMod, FALSE );
 
+      wine_tsx11_lock();
+      XSetFunction( gdi_display, physDevDst->gc, GXcopy );
+      wine_tsx11_unlock();
+
       X11DRV_DIB_CopyDIBSection( physDevSrc, physDevDst, xSrc, ySrc, xDst, yDst, width, height );
       result = TRUE;
       goto END;
