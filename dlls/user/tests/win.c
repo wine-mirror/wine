@@ -94,6 +94,14 @@ BOOL CALLBACK EnumChildProc( HWND hwndChild, LPARAM lParam)
     return TRUE;
 }
 
+/* will search for the given window */
+BOOL CALLBACK EnumChildProc1( HWND hwndChild, LPARAM lParam) 
+{
+    trace("EnumChildProc1 on %p\n", hwndChild);
+    if ((HWND)lParam == hwndChild) return FALSE;
+    return TRUE;
+}
+
 static HWND create_tool_window( LONG style, HWND parent )
 {
     HWND ret = CreateWindowExA(0, "ToolWindowClass", "Tool window 1", style,
@@ -451,7 +459,9 @@ static void test_parent_owner(void)
 
 
     owner = create_tool_window( WS_OVERLAPPED, 0 );
-    test = create_tool_window( WS_POPUP, NULL );
+    test = create_tool_window( WS_POPUP, desktop );
+
+    ok( !GetWindow( test, GW_OWNER ), "Wrong owner window\n" );
     numChildren = 0;
     ok( !EnumChildWindows( owner, EnumChildProc, (LPARAM)&numChildren ),
         "EnumChildWindows should have returned FALSE\n" );
@@ -471,6 +481,40 @@ static void test_parent_owner(void)
     ok( !EnumChildWindows( owner, EnumChildProc, (LPARAM)&numChildren ),
         "EnumChildWindows should have returned FALSE\n" );
     ok( numChildren == 2, "numChildren should be 2 got %d\n", numChildren );
+    DestroyWindow( child );
+
+    child = create_tool_window( WS_VISIBLE | WS_OVERLAPPEDWINDOW, owner );
+    ok( GetWindow( child, GW_OWNER ) == owner, "Wrong owner window\n" );
+    numChildren = 0;
+    ok( EnumChildWindows( owner, EnumChildProc, (LPARAM)&numChildren ),
+        "EnumChildWindows should have returned TRUE\n" );
+    ok( numChildren == 1, "numChildren should be 1 got %d\n", numChildren );
+
+    ret = SetParent( child, owner );
+    ok( GetWindow( child, GW_OWNER ) == owner, "Wrong owner window\n" );
+    ok( ret == desktop, "SetParent return value %p expected %p\n", ret, desktop );
+    numChildren = 0;
+    ok( !EnumChildWindows( owner, EnumChildProc, (LPARAM)&numChildren ),
+        "EnumChildWindows should have returned FALSE\n" );
+    ok( numChildren == 2, "numChildren should be 2 got %d\n", numChildren );
+
+    ret = SetParent( child, NULL );
+    ok( GetWindow( child, GW_OWNER ) == owner, "Wrong owner window\n" );
+    ok( ret == owner, "SetParent return value %p expected %p\n", ret, owner );
+    numChildren = 0;
+    ok( EnumChildWindows( owner, EnumChildProc, (LPARAM)&numChildren ),
+        "EnumChildWindows should have returned TRUE\n" );
+    ok( numChildren == 1, "numChildren should be 1 got %d\n", numChildren );
+
+    /* even GW_OWNER == owner it's still a desktop's child */
+    ok( !EnumChildWindows( desktop, EnumChildProc1, (LPARAM)child ),
+        "EnumChildWindows should have found %p and returned FALSE\n", child );
+
+    DestroyWindow( child );
+    child = create_tool_window( WS_VISIBLE | WS_OVERLAPPEDWINDOW, NULL );
+
+    ok( !EnumChildWindows( desktop, EnumChildProc1, (LPARAM)child ),
+        "EnumChildWindows should have found %p and returned FALSE\n", child );
 
     DestroyWindow( child );
     DestroyWindow( test );

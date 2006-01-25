@@ -2812,8 +2812,6 @@ static BOOL WIN_EnumChildWindows( HWND *list, WNDENUMPROC func, LPARAM lParam )
     {
         /* Make sure that the window still exists */
         if (!IsWindow( *list )) continue;
-        /* skip owned windows */
-        if (GetWindow( *list, GW_OWNER )) continue;
         /* Build children list first */
         childList = WIN_ListChildren( *list );
 
