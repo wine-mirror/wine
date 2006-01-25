@@ -141,7 +141,7 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
 {
     struct object *obj = NULL;
     struct fd *fd;
-    int flags, rw_mode;
+    int flags;
     char *name;
     mode_t mode;
 
@@ -167,17 +167,6 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
         mode |= 0111;
 
     access = generic_file_map_access( access );
-
-    rw_mode = 0;
-    if (access & FILE_UNIX_READ_ACCESS) rw_mode |= FILE_READ_DATA;
-    if (access & FILE_UNIX_WRITE_ACCESS) rw_mode |= FILE_WRITE_DATA;
-    switch(rw_mode)
-    {
-    case 0: break;
-    case FILE_READ_DATA:  flags |= O_RDONLY; break;
-    case FILE_WRITE_DATA: flags |= O_WRONLY; break;
-    case FILE_READ_DATA|FILE_WRITE_DATA: flags |= O_RDWR; break;
-    }
 
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
     fd = open_fd( name, flags | O_NONBLOCK | O_LARGEFILE, &mode, access, sharing, options );

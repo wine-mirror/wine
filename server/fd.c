@@ -1327,6 +1327,7 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
     struct closed_fd *closed_fd;
     struct fd *fd;
     const char *unlink_name = "";
+    int rw_mode;
 
     if (!(fd = alloc_fd_object())) return NULL;
 
@@ -1336,6 +1337,7 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
         release_object( fd );
         return NULL;
     }
+
     /* create the directory if needed */
     if ((options & FILE_DIRECTORY_FILE) && (flags & O_CREAT))
     {
@@ -1349,11 +1351,26 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
         }
         flags &= ~(O_CREAT | O_EXCL | O_TRUNC);
     }
-    if ((fd->unix_fd = open( name, flags & ~O_TRUNC, *mode )) == -1)
+
+    if ((access & FILE_UNIX_WRITE_ACCESS) && !(options & FILE_DIRECTORY_FILE))
     {
-        file_set_error();
-        goto error;
+        if (access & FILE_UNIX_READ_ACCESS) rw_mode = O_RDWR;
+        else rw_mode = O_WRONLY;
     }
+    else rw_mode = O_RDONLY;
+
+    if ((fd->unix_fd = open( name, rw_mode | (flags & ~O_TRUNC), *mode )) == -1)
+    {
+        /* if we tried to open a directory for write access, retry read-only */
+        if (errno != EISDIR ||
+            !(access & FILE_UNIX_WRITE_ACCESS) ||
+            (fd->unix_fd = open( name, O_RDONLY | (flags & ~O_TRUNC), *mode )) == -1)
+        {
+            file_set_error();
+            goto error;
+        }
+    }
+
     closed_fd->unix_fd = fd->unix_fd;
     closed_fd->unlink[0] = 0;
     fstat( fd->unix_fd, &st );
