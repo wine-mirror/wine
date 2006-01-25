@@ -1,7 +1,7 @@
 /*
  * iphlpapi dll implementation
  *
- * Copyright (C) 2003 Juan Lang
+ * Copyright (C) 2003,2006 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -618,6 +618,7 @@ DWORD WINAPI FlushIpNetTable(DWORD dwIfIndex)
 DWORD WINAPI GetAdapterIndex(LPWSTR AdapterName, PULONG IfIndex)
 {
   FIXME("(AdapterName %p, IfIndex %p): stub\n", AdapterName, IfIndex);
+  /* FIXME: implement using getInterfaceIndexByName */
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -646,22 +647,34 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
     DWORD numNonLoopbackInterfaces = getNumNonLoopbackInterfaces();
 
     if (numNonLoopbackInterfaces > 0) {
-      /* this calculation assumes only one address in the IP_ADDR_STRING lists.
-         that's okay, because:
-         - we don't get multiple addresses per adapter anyway
-         - we don't know about per-adapter gateways
-         - DHCP and WINS servers can have max one entry per list */
-      ULONG size = sizeof(IP_ADAPTER_INFO) * numNonLoopbackInterfaces;
+      DWORD numIPAddresses = getNumIPAddresses();
+      ULONG size;
 
+      /* This may slightly overestimate the amount of space needed, because
+       * the IP addresses include the loopback address, but it's easier
+       * to make sure there's more than enough space than to make sure there's
+       * precisely enough space.
+       */
+      size = sizeof(IP_ADAPTER_INFO) * numNonLoopbackInterfaces;
+      if (numIPAddresses > numNonLoopbackInterfaces)
+        size += (numIPAddresses - numNonLoopbackInterfaces) *
+         sizeof(IP_ADDR_STRING); 
       if (!pAdapterInfo || *pOutBufLen < size) {
         *pOutBufLen = size;
         ret = ERROR_BUFFER_OVERFLOW;
       }
       else {
-        InterfaceIndexTable *table = getNonLoopbackInterfaceIndexTable();
+        InterfaceIndexTable *table = NULL;
+        PMIB_IPADDRTABLE ipAddrTable = NULL;
 
+        ret = getIPAddrTable(&ipAddrTable, GetProcessHeap(), 0);
+        if (!ret)
+          table = getNonLoopbackInterfaceIndexTable();
         if (table) {
           size = sizeof(IP_ADAPTER_INFO) * table->numIndexes;
+          if (ipAddrTable->dwNumEntries > numNonLoopbackInterfaces)
+            size += (ipAddrTable->dwNumEntries - numNonLoopbackInterfaces) *
+             sizeof(IP_ADDR_STRING); 
           if (*pOutBufLen < size) {
             *pOutBufLen = size;
             ret = ERROR_INSUFFICIENT_BUFFER;
@@ -671,10 +684,13 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
             HKEY hKey;
             BOOL winsEnabled = FALSE;
             IP_ADDRESS_STRING primaryWINS, secondaryWINS;
+            PIP_ADDR_STRING nextIPAddr = (PIP_ADDR_STRING)((LPBYTE)pAdapterInfo
+             + numNonLoopbackInterfaces * sizeof(IP_ADAPTER_INFO));
 
             memset(pAdapterInfo, 0, size);
             /* @@ Wine registry key: HKCU\Software\Wine\Network */
-            if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Network", &hKey) == ERROR_SUCCESS) {
+            if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Network",
+             &hKey) == ERROR_SUCCESS) {
               DWORD size = sizeof(primaryWINS.String);
               unsigned long addr;
 
@@ -693,7 +709,9 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
             }
             for (ndx = 0; ndx < table->numIndexes; ndx++) {
               PIP_ADAPTER_INFO ptr = &pAdapterInfo[ndx];
-              DWORD addrLen = sizeof(ptr->Address), type;
+              DWORD addrLen = sizeof(ptr->Address), type, i;
+              PIP_ADDR_STRING currentIPAddr = &ptr->IpAddressList;
+              BOOL firstIPAddr = TRUE;
 
               /* on Win98 this is left empty, but whatever */
               lstrcpynA(ptr->AdapterName,
@@ -707,10 +725,26 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
               ptr->AddressLength = addrLen;
               ptr->Type = type;
               ptr->Index = table->indexes[ndx];
-              toIPAddressString(getInterfaceIPAddrByIndex(table->indexes[ndx]),
-               ptr->IpAddressList.IpAddress.String);
-              toIPAddressString(getInterfaceMaskByIndex(table->indexes[ndx]),
-               ptr->IpAddressList.IpMask.String);
+              for (i = 0; i < ipAddrTable->dwNumEntries; i++) {
+                if (ipAddrTable->table[i].dwIndex == ptr->Index) {
+                  if (firstIPAddr) {
+                    toIPAddressString(ipAddrTable->table[i].dwAddr,
+                     ptr->IpAddressList.IpAddress.String);
+                    toIPAddressString(ipAddrTable->table[i].dwBCastAddr,
+                     ptr->IpAddressList.IpMask.String);
+                    firstIPAddr = FALSE;
+                  }
+                  else {
+                    currentIPAddr->Next = nextIPAddr;
+                    currentIPAddr = nextIPAddr;
+                    toIPAddressString(ipAddrTable->table[i].dwAddr,
+                     currentIPAddr->IpAddress.String);
+                    toIPAddressString(ipAddrTable->table[i].dwBCastAddr,
+                     currentIPAddr->IpMask.String);
+                    nextIPAddr++;
+                  }
+                }
+              }
               if (winsEnabled) {
                 ptr->HaveWins = TRUE;
                 memcpy(ptr->PrimaryWinsServer.IpAddress.String,
@@ -729,6 +763,8 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
         }
         else
           ret = ERROR_OUTOFMEMORY;
+        if (ipAddrTable)
+          HeapFree(GetProcessHeap(), 0, ipAddrTable);
       }
     }
     else
@@ -1038,6 +1074,7 @@ DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
         else {
           DWORD ndx;
 
+          *dwOutBufLen = size;
           pIfTable->NumAdapters = 0;
           for (ndx = 0; ndx < table->numIndexes; ndx++) {
             const char *walker, *name;
@@ -1791,7 +1828,7 @@ DWORD WINAPI SendARP(IPAddr DestIP, IPAddr SrcIP, PULONG pMacAddr, PULONG PhyAdd
 DWORD WINAPI SetIfEntry(PMIB_IFROW pIfRow)
 {
   FIXME("(pIfRow %p): stub\n", pIfRow);
-  /* this is supposed to set an administratively interface up or down.
+  /* this is supposed to set an interface administratively up or down.
      Could do SIOCSIFFLAGS and set/clear IFF_UP, but, not sure I want to, and
      this sort of down is indistinguishable from other sorts of down (e.g. no
      link). */

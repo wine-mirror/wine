@@ -1,5 +1,5 @@
 /* ifenum.h
- * Copyright (C) 2003 Juan Lang
+ * Copyright (C) 2003,2006 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -81,16 +81,6 @@ const char *getInterfaceNameByIndex(DWORD index);
  */
 DWORD getInterfaceIndexByName(const char *name, PDWORD index);
 
-/* This bunch returns IP addresses, and INADDR_ANY or INADDR_NONE if not found,
- * appropriately depending on the f/n.
- */
-DWORD getInterfaceIPAddrByName(const char *name);
-DWORD getInterfaceIPAddrByIndex(DWORD index);
-DWORD getInterfaceMaskByName(const char *name);
-DWORD getInterfaceMaskByIndex(DWORD index);
-DWORD getInterfaceBCastAddrByName(const char *name);
-DWORD getInterfaceBCastAddrByIndex(DWORD index);
-
 /* Gets a few physical charactersistics of a device:  MAC addr len, MAC addr,
  * and type as one of the MIB_IF_TYPEs.
  * len's in-out: on in, needs to say how many bytes are available in addr,
@@ -109,14 +99,6 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
 DWORD getInterfacePhysicalByIndex(DWORD index, PDWORD len, PBYTE addr,
  PDWORD type);
 
-/* Get the operational status as a (MIB_)IF_OPER_STATUS type.
- */
-DWORD getInterfaceStatusByName(const char *name, PDWORD status);
-DWORD getInterfaceStatusByIndex(DWORD index, PDWORD status);
-
-DWORD getInterfaceMtuByName(const char *name, PDWORD mtu);
-DWORD getInterfaceMtuByIndex(DWORD index, PDWORD mtu);
-
 /* Fills in the MIB_IFROW by name/index.  Doesn't fill in interface statistics,
  * see ipstats.h for that.
  * Returns ERROR_INVALID_PARAMETER if name or entry is NULL, ERROR_INVALID_DATA
@@ -124,6 +106,8 @@ DWORD getInterfaceMtuByIndex(DWORD index, PDWORD mtu);
  */
 DWORD getInterfaceEntryByName(const char *name, PMIB_IFROW entry);
 DWORD getInterfaceEntryByIndex(DWORD index, PMIB_IFROW entry);
+
+DWORD getNumIPAddresses(void);
 
 /* Gets the configured IP addresses for the system, and sets *ppIpAddrTable to
  * a table of them allocated from heap, or NULL if out of memory.  Returns
