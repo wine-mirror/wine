@@ -136,12 +136,21 @@ static void test_FindFirstChangeNotification(void)
     lstrcpyA(dirname1, filename1);
     lstrcatA(dirname1, "dir");
 
+    lstrcpyA(dirname2, dirname1);
+    lstrcatA(dirname2, "new");
+
     ret = CreateDirectoryA(dirname1, NULL);
     ok(ret, "CreateDirectoryA error: %ld\n", GetLastError());
 
-    /* What if we remove the directory we registered notification for? */
+    /* What if we move the directory we registered notification for? */
     thread = StartNotificationThread(dirname1, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
-    ret = RemoveDirectoryA(dirname1);
+    ret = MoveFileA(dirname1, dirname2);
+    ok(ret, "MoveFileA error: %ld\n", GetLastError());
+    ok(FinishNotificationThread(thread), "Missed notification\n");
+
+    /* What if we remove the directory we registered notification for? */
+    thread = StartNotificationThread(dirname2, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
+    ret = RemoveDirectoryA(dirname2);
     ok(ret, "RemoveDirectoryA error: %ld\n", GetLastError());
 
     /* win98 and win2k behave differently here */
@@ -155,9 +164,6 @@ static void test_FindFirstChangeNotification(void)
     ret = CreateDirectoryA(dirname1, NULL);
     ok(ret, "CreateDirectoryA error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
-
-    lstrcpyA(dirname2, dirname1);
-    lstrcatA(dirname2, "new");
 
     /* Rename a directory */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
