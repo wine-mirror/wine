@@ -7038,6 +7038,7 @@ done
 
 
 
+
 for ac_header in \
 	IOKit/IOKitLib.h \
 	alsa/asoundlib.h \
@@ -7115,6 +7116,7 @@ for ac_header in \
 	sys/mman.h \
 	sys/modem.h \
 	sys/msg.h \
+	sys/mtio.h \
 	sys/param.h \
 	sys/poll.h \
 	sys/ptrace.h \

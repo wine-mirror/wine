@@ -44,6 +44,7 @@ C_SRCS = \
 	signal_x86_64.c \
 	string.c \
 	sync.c \
+	tape.c \
 	version.c \
 	thread.c \
 	time.c \

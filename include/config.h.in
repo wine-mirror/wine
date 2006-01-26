@@ -698,6 +698,9 @@
 /* Define to 1 if you have the <sys/msg.h> header file. */
 #undef HAVE_SYS_MSG_H
 
+/* Define to 1 if you have the <sys/mtio.h> header file. */
+#undef HAVE_SYS_MTIO_H
+
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
 

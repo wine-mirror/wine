@@ -248,6 +248,7 @@ AC_CHECK_HEADERS(\
 	sys/mman.h \
 	sys/modem.h \
 	sys/msg.h \
+	sys/mtio.h \
 	sys/param.h \
 	sys/poll.h \
 	sys/ptrace.h \

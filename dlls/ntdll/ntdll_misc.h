@@ -88,6 +88,13 @@ extern NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
                                      ULONG IoControlCode,
                                      LPVOID lpInBuffer, DWORD nInBufferSize,
                                      LPVOID lpOutBuffer, DWORD nOutBufferSize);
+extern NTSTATUS TAPE_DeviceIoControl(HANDLE hDevice, 
+                                     HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
+                                     PVOID UserApcContext, 
+                                     PIO_STATUS_BLOCK piosb, 
+                                     ULONG IoControlCode,
+                                     LPVOID lpInBuffer, DWORD nInBufferSize,
+                                     LPVOID lpOutBuffer, DWORD nOutBufferSize);
 
 /* file I/O */
 extern NTSTATUS FILE_GetNtStatus(void);

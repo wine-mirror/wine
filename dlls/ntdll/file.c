@@ -888,6 +888,10 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
         io->u.Status = COMM_DeviceIoControl(handle, event, apc, apc_context, io, code,
                                             in_buffer, in_size, out_buffer, out_size);
         break;
+    case FILE_DEVICE_TAPE:
+        io->u.Status = TAPE_DeviceIoControl(handle, event, apc, apc_context, io, code,
+                                            in_buffer, in_size, out_buffer, out_size);
+        break;
     default:
         FIXME("Unsupported ioctl %lx (device=%lx access=%lx func=%lx method=%lx)\n",
               code, device, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
@@ -1542,6 +1546,9 @@ NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
             break;
         case LP_MAJOR:
             info->DeviceType = FILE_DEVICE_PARALLEL_PORT;
+            break;
+        case SCSI_TAPE_MAJOR:
+            info->DeviceType = FILE_DEVICE_TAPE;
             break;
         }
 #endif
