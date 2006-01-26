@@ -155,6 +155,9 @@ struct wld_link_map {
  */
 void __bb_init_func() { return; }
 
+/* similar to the above but for -fstack-protector */
+void *__stack_chk_guard = 0;
+void __stack_chk_fail(void) { return; }
 
 /*
  * The _start function is the entry and exit point of this program
