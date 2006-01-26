@@ -143,13 +143,13 @@ void ME_Repaint(ME_TextEditor *editor)
 {
   ME_Cursor *pCursor = &editor->pCursors[0];
 
-  ME_MarkSelectionForRepaint(editor);
   if (ME_WrapMarkedParagraphs(editor)) {
     ME_UpdateScrollBar(editor);
   }
   if (editor->bRedraw)
   {
     ME_EnsureVisible(editor, pCursor->pRun);
+    UpdateWindow(editor->hWnd);
   }
 }
 

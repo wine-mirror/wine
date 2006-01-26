@@ -1278,8 +1278,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     return 0;
   case EM_SETSEL:
   {
+    ME_InvalidateSelection(editor);
     ME_SetSelection(editor, wParam, lParam);
-    ME_Repaint(editor);
+    ME_InvalidateSelection(editor);
     ME_SendSelChange(editor);
     return 0;
   }
@@ -1287,9 +1288,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   {
     CHARRANGE *pRange = (CHARRANGE *)lParam;
     TRACE("EM_EXSETSEL (%ld,%ld)\n", pRange->cpMin, pRange->cpMax);
+    ME_InvalidateSelection(editor);
     ME_SetSelection(editor, pRange->cpMin, pRange->cpMax);
-    /* FIXME optimize */
-    ME_Repaint(editor);
+    ME_InvalidateSelection(editor);
     ME_SendSelChange(editor);
     return 0;
   }
@@ -1365,7 +1366,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     else
       nStyle &= ~ES_READONLY;
     SetWindowLongW(hWnd, GWL_STYLE, nStyle);
-    ME_Repaint(editor);
     return 0;
   }
   case EM_SETEVENTMASK:

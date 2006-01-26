@@ -759,8 +759,8 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
     return;
   
   HideCaret(editor->hWnd);
+  ME_InvalidateSelection(editor);
   ME_MoveCaret(editor);
-  ME_Repaint(editor);
   ShowCaret(editor->hWnd);
   ME_SendSelChange(editor);
 }
@@ -1185,7 +1185,8 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
     editor->pCursors[1] = tmp_curs;
   *p = tmp_curs;
   
-  ME_InvalidateSelection(editor);
+  if (ME_IsSelection(editor))
+    ME_InvalidateSelection(editor);
   HideCaret(editor->hWnd);
   ME_EnsureVisible(editor, tmp_curs.pRun); 
   ME_ShowCaret(editor);
