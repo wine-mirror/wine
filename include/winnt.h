@@ -3858,6 +3858,104 @@ typedef struct _FILE_NOTIFY_INFORMATION {
 	WCHAR FileName[1];
 } FILE_NOTIFY_INFORMATION, *PFILE_NOTIFY_INFORMATION;
 
+/* ----------------------------- begin tape storage --------------------- */
+
+#define TAPE_FIXED_PARTITIONS     0
+#define TAPE_SELECT_PARTITIONS    1
+#define TAPE_INITIATOR_PARTITIONS 2
+#define TAPE_ERASE_SHORT 0
+#define TAPE_ERASE_LONG  1
+#define TAPE_LOAD    0
+#define TAPE_UNLOAD  1
+#define TAPE_TENSION 2
+#define TAPE_LOCK    3
+#define TAPE_UNLOCK  4
+#define TAPE_FORMAT  5
+#define TAPE_SETMARKS  0
+#define TAPE_FILEMARKS 1
+#define TAPE_SHORT_FILEMARKS 2
+#define TAPE_LONG_FILEMARKS  3
+#define TAPE_REWIND                0
+#define TAPE_ABSOLUTE_BLOCK        1
+#define TAPE_LOGICAL_BLOCK         2
+#define TAPE_PSEUDO_LOGICAL_BLOCK  3
+#define TAPE_SPACE_END_OF_DATA     4
+#define TAPE_SPACE_RELATIVE_BLOCKS 5
+#define TAPE_SPACE_FILEMARKS       6
+#define TAPE_SPACE_SEQUENTIAL_FMKS 7
+#define TAPE_SPACE_SETMARKS        8
+#define TAPE_SPACE_SEQUENTIAL_SMKS 9
+
+typedef struct _TAPE_CREATE_PARTITION {
+    DWORD Method;
+    DWORD Count;
+    DWORD Size;
+} TAPE_CREATE_PARTITION, *PTAPE_CREATE_PARTITION;
+
+typedef struct _TAPE_ERASE {
+    DWORD Type;
+    BOOLEAN Immediate;
+} TAPE_ERASE, *PTAPE_ERASE;
+
+typedef struct _TAPE_PREPARE {
+    DWORD Operation;
+    BOOLEAN Immediate;
+} TAPE_PREPARE, *PTAPE_PREPARE;
+
+typedef struct _TAPE_SET_DRIVE_PARAMETERS {
+    BOOLEAN ECC;
+    BOOLEAN Compression;
+    BOOLEAN DataPadding;
+    BOOLEAN ReportSetmarks;
+    ULONG EOTWarningZoneSize;
+} TAPE_SET_DRIVE_PARAMETERS, *PTAPE_SET_DRIVE_PARAMETERS;
+
+typedef struct _TAPE_SET_MEDIA_PARAMETERS {
+    ULONG BlockSize;
+} TAPE_SET_MEDIA_PARAMETERS, *PTAPE_SET_MEDIA_PARAMETERS;
+
+typedef struct _TAPE_WRITE_MARKS {
+    DWORD Type;
+    DWORD Count;
+    BOOLEAN Immediate;
+} TAPE_WRITE_MARKS, *PTAPE_WRITE_MARKS;
+
+typedef struct _TAPE_GET_POSITION {
+    ULONG Type;
+    ULONG Partition;
+    ULONG OffsetLow;
+    ULONG OffsetHigh;
+} TAPE_GET_POSITION, *PTAPE_GET_POSITION;
+
+typedef struct _TAPE_SET_POSITION {
+    ULONG Method;
+    ULONG Partition;
+    LARGE_INTEGER Offset;
+    BOOLEAN Immediate;
+} TAPE_SET_POSITION, *PTAPE_SET_POSITION;
+
+typedef struct _TAPE_GET_DRIVE_PARAMETERS {
+    BOOLEAN ECC;
+    BOOLEAN Compression;
+    BOOLEAN DataPadding;
+    BOOLEAN ReportSetmarks;
+    DWORD DefaultBlockSize;
+    DWORD MaximumBlockSize;
+    DWORD MinimumBlockSize;
+    DWORD MaximumPartitionCount;
+    DWORD FeaturesLow;
+    DWORD FeaturesHigh;
+    DWORD EOTWarningZoneSize;
+} TAPE_GET_DRIVE_PARAMETERS, *PTAPE_GET_DRIVE_PARAMETERS;
+
+typedef struct _TAPE_GET_MEDIA_PARAMETERS {
+    LARGE_INTEGER Capacity;
+    LARGE_INTEGER Remaining;
+    DWORD BlockSize;
+    DWORD PartitionCount;
+    BOOLEAN WriteProtected;
+} TAPE_GET_MEDIA_PARAMETERS, *PTAPE_GET_MEDIA_PARAMETERS;
+
 /* ----------------------------- begin registry ----------------------------- */
 
 /* Registry security values */
