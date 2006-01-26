@@ -83,6 +83,7 @@ typedef struct {
     const IOleInPlaceSiteVtbl           *lpOleInPlaceSiteVtbl;
     const IDocHostUIHandler2Vtbl        *lpDocHostUIHandlerVtbl;
     const IOleDocumentSiteVtbl          *lpOleDocumentSiteVtbl;
+    const IOleCommandTargetVtbl         *lpClOleCommandTargetVtbl;
 
     /* Interfaces of InPlaceFrame object */
 
@@ -138,6 +139,7 @@ typedef struct {
 #define DOCHOSTUI(x)    ((IDocHostUIHandler*)           &(x)->lpDocHostUIHandlerVtbl)
 #define DOCHOSTUI2(x)   ((IDocHostUIHandler2*)          &(x)->lpDocHostUIHandlerVtbl)
 #define DOCSITE(x)      ((IOleDocumentSite*)            &(x)->lpOleDocumentSiteVtbl)
+#define CLOLECMD(x)     ((IOleCommandTarget*)           &(x)->lpClOleCommandTargetVtbl)
 
 #define INPLACEFRAME(x) ((IOleInPlaceFrame*)            &(x)->lpOleInPlaceFrameVtbl)
 

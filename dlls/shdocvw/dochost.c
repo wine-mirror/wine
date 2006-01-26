@@ -206,6 +206,56 @@ void deactivate_document(WebBrowser *This)
     This->document = NULL;
 }
 
+#define OLECMD_THIS(iface) DEFINE_THIS(WebBrowser, ClOleCommandTarget, iface)
+
+static HRESULT WINAPI ClOleCommandTarget_QueryInterface(IOleCommandTarget *iface,
+        REFIID riid, void **ppv)
+{
+    WebBrowser *This = OLECMD_THIS(iface);
+    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+}
+
+static ULONG WINAPI ClOleCommandTarget_AddRef(IOleCommandTarget *iface)
+{
+    WebBrowser *This = OLECMD_THIS(iface);
+    return IWebBrowser2_AddRef(WEBBROWSER(This));
+}
+
+static ULONG WINAPI ClOleCommandTarget_Release(IOleCommandTarget *iface)
+{
+    WebBrowser *This = OLECMD_THIS(iface);
+    return IWebBrowser2_Release(WEBBROWSER(This));
+}
+
+static HRESULT WINAPI ClOleCommandTarget_QueryStatus(IOleCommandTarget *iface,
+        const GUID *pguidCmdGroup, ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
+{
+    WebBrowser *This = OLECMD_THIS(iface);
+    FIXME("(%p)->(%s %lu %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds,
+          pCmdText);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
+        const GUID *pguidCmdGroup, DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn,
+        VARIANT *pvaOut)
+{
+    WebBrowser *This = OLECMD_THIS(iface);
+    FIXME("(%p)->(%s %ld %ld %p %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID,
+          nCmdexecopt, pvaIn, pvaOut);
+    return E_NOTIMPL;
+}
+
+#undef OLECMD_THIS
+
+static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
+    ClOleCommandTarget_QueryInterface,
+    ClOleCommandTarget_AddRef,
+    ClOleCommandTarget_Release,
+    ClOleCommandTarget_QueryStatus,
+    ClOleCommandTarget_Exec
+};
+
 #define DOCHOSTUI_THIS(iface) DEFINE_THIS(WebBrowser, DocHostUIHandler, iface)
 
 static HRESULT WINAPI DocHostUIHandler_QueryInterface(IDocHostUIHandler2 *iface,
@@ -419,7 +469,8 @@ static const IDocHostUIHandler2Vtbl DocHostUIHandler2Vtbl = {
 
 void WebBrowser_DocHost_Init(WebBrowser *This)
 {
-    This->lpDocHostUIHandlerVtbl = &DocHostUIHandler2Vtbl;
+    This->lpDocHostUIHandlerVtbl   = &DocHostUIHandler2Vtbl;
+    This->lpClOleCommandTargetVtbl = &OleCommandTargetVtbl;
 
     This->hostui = NULL;
 

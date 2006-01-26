@@ -50,6 +50,9 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
     }else if(IsEqualGUID(&IID_IOleDocumentSite, riid)) {
         TRACE("(%p)->(IID_IOleDocumentSite %p)\n", This, ppv);
         *ppv = DOCSITE(This);
+    }else if(IsEqualGUID(&IID_IOleClientSite, riid)) {
+        TRACE("(%p)->(IID_IOleClientSite %p)\n", This, ppv);
+        *ppv = CLOLECMD(This);
     }
 
     if(*ppv) {
