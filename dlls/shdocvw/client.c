@@ -53,6 +53,9 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
     }else if(IsEqualGUID(&IID_IOleClientSite, riid)) {
         TRACE("(%p)->(IID_IOleClientSite %p)\n", This, ppv);
         *ppv = CLOLECMD(This);
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = CLDISP(This);
     }
 
     if(*ppv) {
@@ -341,11 +344,78 @@ static const IOleDocumentSiteVtbl OleDocumentSiteVtbl = {
     OleDocumentSite_ActivateMe
 };
 
+#define DISP_THIS(iface) DEFINE_THIS(WebBrowser, Dispatch, iface)
+
+static HRESULT WINAPI ClDispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    WebBrowser *This = DISP_THIS(iface);
+    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+}
+
+static ULONG WINAPI ClDispatch_AddRef(IDispatch *iface)
+{
+    WebBrowser *This = DISP_THIS(iface);
+    return IWebBrowser2_AddRef(WEBBROWSER(This));
+}
+
+static ULONG WINAPI ClDispatch_Release(IDispatch *iface)
+{
+    WebBrowser *This = DISP_THIS(iface);
+    return IWebBrowser2_Release(WEBBROWSER(This));
+}
+
+static HRESULT WINAPI ClDispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    WebBrowser *This = DISP_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClDispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid,
+                                      ITypeInfo **ppTInfo)
+{
+    WebBrowser *This = DISP_THIS(iface);
+    FIXME("(%p)->(%u %ld %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClDispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
+                                        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    WebBrowser *This = DISP_THIS(iface);
+    FIXME("(%p)->(%s %p %u %ld %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClDispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+                                 LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                                 VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    WebBrowser *This = DISP_THIS(iface);
+    FIXME("(%p)->(%ld %s %ld %04x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+#undef DISP_THIS
+
+static const IDispatchVtbl DispatchVtbl = {
+    ClDispatch_QueryInterface,
+    ClDispatch_AddRef,
+    ClDispatch_Release,
+    ClDispatch_GetTypeInfoCount,
+    ClDispatch_GetTypeInfo,
+    ClDispatch_GetIDsOfNames,
+    ClDispatch_Invoke
+};
+
 void WebBrowser_ClientSite_Init(WebBrowser *This)
 {
     This->lpOleClientSiteVtbl   = &OleClientSiteVtbl;
     This->lpOleInPlaceSiteVtbl  = &OleInPlaceSiteVtbl;
     This->lpOleDocumentSiteVtbl = &OleDocumentSiteVtbl;
+    This->lpDispatchVtbl        = &DispatchVtbl;
 
     This->view = NULL;
 }
