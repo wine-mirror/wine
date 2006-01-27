@@ -1081,15 +1081,23 @@ static inline int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD ac
     if (!access1 || !access2) return 1;
     if ((access1 & GENERIC_READ) && !(sharing2 & FILE_SHARE_READ)) return 0;
     if ((access1 & GENERIC_WRITE) && !(sharing2 & FILE_SHARE_WRITE)) return 0;
+    if ((access1 & DELETE) && !(sharing2 & FILE_SHARE_DELETE)) return 0;
     if ((access2 & GENERIC_READ) && !(sharing1 & FILE_SHARE_READ)) return 0;
     if ((access2 & GENERIC_WRITE) && !(sharing1 & FILE_SHARE_WRITE)) return 0;
+    if ((access2 & DELETE) && !(sharing1 & FILE_SHARE_DELETE)) return 0;
     return 1;
 }
 
 static void test_file_sharing(void)
 {
-    static const DWORD access_modes[4] = { 0, GENERIC_READ, GENERIC_WRITE, GENERIC_READ|GENERIC_WRITE };
-    static const DWORD sharing_modes[4] = { 0, FILE_SHARE_READ, FILE_SHARE_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE };
+    static const DWORD access_modes[] =
+        { 0, GENERIC_READ, GENERIC_WRITE, GENERIC_READ|GENERIC_WRITE,
+          DELETE, GENERIC_READ|DELETE, GENERIC_WRITE|DELETE, GENERIC_READ|GENERIC_WRITE|DELETE };
+    static const DWORD sharing_modes[] =
+        { 0, FILE_SHARE_READ,
+          FILE_SHARE_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+          FILE_SHARE_DELETE, FILE_SHARE_READ|FILE_SHARE_DELETE,
+          FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE };
     int a1, s1, a2, s2;
     int ret;
     HANDLE h, h2;
@@ -1103,9 +1111,9 @@ static void test_file_sharing(void)
     }
     CloseHandle( h );
 
-    for (a1 = 0; a1 < 4; a1++)
+    for (a1 = 0; a1 < sizeof(access_modes)/sizeof(access_modes[0]); a1++)
     {
-        for (s1 = 0; s1 < 4; s1++)
+        for (s1 = 0; s1 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s1++)
         {
             h = CreateFileA( filename, access_modes[a1], sharing_modes[s1],
                              NULL, OPEN_EXISTING, 0, 0 );
@@ -1114,9 +1122,9 @@ static void test_file_sharing(void)
                 ok(0,"couldn't create file \"%s\" (err=%ld)\n",filename,GetLastError());
                 return;
             }
-            for (a2 = 0; a2 < 4; a2++)
+            for (a2 = 0; a2 < sizeof(access_modes)/sizeof(access_modes[0]); a2++)
             {
-                for (s2 = 0; s2 < 4; s2++)
+                for (s2 = 0; s2 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s2++)
                 {
                     SetLastError(0xdeadbeef);
                     h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],

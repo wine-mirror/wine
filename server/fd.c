@@ -1283,7 +1283,6 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
 {
     unsigned int existing_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
     unsigned int existing_access = 0;
-    int unlink = 0;
     struct list *ptr;
 
     /* if access mode is 0, sharing mode is ignored */
@@ -1298,16 +1297,15 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
         {
             existing_sharing &= fd_ptr->sharing;
             existing_access  |= fd_ptr->access;
-            if (fd_ptr->closed->unlink[0]) unlink = 1;
         }
     }
 
     if ((access & FILE_UNIX_READ_ACCESS) && !(existing_sharing & FILE_SHARE_READ)) return 0;
     if ((access & FILE_UNIX_WRITE_ACCESS) && !(existing_sharing & FILE_SHARE_WRITE)) return 0;
+    if ((access & DELETE) && !(existing_sharing & FILE_SHARE_DELETE)) return 0;
     if ((existing_access & FILE_UNIX_READ_ACCESS) && !(sharing & FILE_SHARE_READ)) return 0;
     if ((existing_access & FILE_UNIX_WRITE_ACCESS) && !(sharing & FILE_SHARE_WRITE)) return 0;
-    if (fd->closed->unlink[0] && !(existing_sharing & FILE_SHARE_DELETE)) return 0;
-    if (unlink && !(sharing & FILE_SHARE_DELETE)) return 0;
+    if ((existing_access & DELETE) && !(sharing & FILE_SHARE_DELETE)) return 0;
     return 1;
 }
 
@@ -1328,6 +1326,12 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
     struct fd *fd;
     const char *unlink_name = "";
     int rw_mode;
+
+    if ((options & FILE_DELETE_ON_CLOSE) && !(access & DELETE))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return NULL;
+    }
 
     if (!(fd = alloc_fd_object())) return NULL;
 

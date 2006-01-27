@@ -1277,7 +1277,7 @@ BOOL WINAPI RemoveDirectoryW( LPCWSTR path )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtOpenFile( &handle, GENERIC_READ, &attr, &io,
+    status = NtOpenFile( &handle, DELETE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     if (status == STATUS_SUCCESS)

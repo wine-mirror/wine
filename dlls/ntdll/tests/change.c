@@ -113,7 +113,6 @@ static void test_ntncdf(void)
     r = WaitForSingleObject( hdir, 0 );
     ok( r == WAIT_OBJECT_0, "event wasn't ready\n" );
 
-    todo_wine {
     r = RemoveDirectoryW( path );
     ok( r == FALSE, "failed to remove directory\n");
 
@@ -121,7 +120,6 @@ static void test_ntncdf(void)
 
     r = RemoveDirectoryW( path );
     ok( r == TRUE, "failed to remove directory\n");
-    }
 }
 
 START_TEST(change)

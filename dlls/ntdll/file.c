@@ -2052,8 +2052,8 @@ NTSTATUS WINAPI NtDeleteFile( POBJECT_ATTRIBUTES ObjectAttributes )
     IO_STATUS_BLOCK io;
 
     TRACE("%p\n", ObjectAttributes);
-    status = NtCreateFile( &hFile, GENERIC_READ | GENERIC_WRITE, ObjectAttributes, 
-                           &io, NULL, 0,
+    status = NtCreateFile( &hFile, GENERIC_READ | GENERIC_WRITE | DELETE,
+                           ObjectAttributes, &io, NULL, 0,
                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 
                            FILE_OPEN, FILE_DELETE_ON_CLOSE, NULL, 0 );
     if (status == STATUS_SUCCESS) status = NtClose(hFile);
