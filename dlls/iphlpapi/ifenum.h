@@ -42,20 +42,12 @@
 #define MAX_INTERFACE_PHYSADDR    8
 #define MAX_INTERFACE_DESCRIPTION 256
 
-/* Call before using the functions in this module */
-void interfaceMapInit(void);
-/* Call to free resources allocated in interfaceMapInit() */
-void interfaceMapFree(void);
-
 DWORD getNumInterfaces(void);
 DWORD getNumNonLoopbackInterfaces(void);
 
-/* A table of interface indexes, see get*InterfaceTable().  Ignore numAllocated,
- * it's used during the creation of the table.
- */
+/* A table of interface indexes, see get*InterfaceTable(). */
 typedef struct _InterfaceIndexTable {
   DWORD numIndexes;
-  DWORD numAllocated;
   DWORD indexes[1];
 } InterfaceIndexTable;
 
@@ -70,10 +62,10 @@ InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void);
 /* ByName/ByIndex versions of various getter functions. */
 
 /* can be used as quick check to see if you've got a valid index, returns NULL
- * if not.  The buffer's only valid till the next call, so copy it right away
- * if you care.
+ * if not.  Overwrites your buffer, which should be at least of size
+ * MAX_ADAPTER_NAME.
  */
-const char *getInterfaceNameByIndex(DWORD index);
+char *getInterfaceNameByIndex(DWORD index, char *name);
 
 /* Fills index with the index of name, if found.  Returns
  * ERROR_INVALID_PARAMETER if name or index is NULL, ERROR_INVALID_DATA if name

@@ -15,22 +15,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Implementation notes
- * Interface index fun:
- * - Windows may rely on an index being cleared in the topmost 8 bits in some
- *   APIs; see GetFriendlyIfIndex and the mention of "backward compatible"
- *   indexes.  It isn't clear which APIs might fail with non-backward-compatible
- *   indexes, but I'll keep them bits clear just in case.
- * - Even though if_nametoindex and if_indextoname seem to be pretty portable,
- *   Linux, at any rate, uses the same interface index for all virtual
- *   interfaces of a real interface as well as for the real interface itself.
- *   If I used the Linux index as my index, this would break my statement that
- *   an index is a key, and that an interface has 0 or 1 IP addresses.
- *   If that behavior were consistent across UNIXen (I don't know), it could
- *   help me implement multiple IP addresses more in the Windows way.
- * I used to assert I could not use UNIX interface indexes as my iphlpapi
- * indexes due to restrictions in netapi32 and wsock32, but I have removed
- * those restrictions, so using if_nametoindex and if_indextoname rather
- * than my current mess would probably be better.
  * FIXME:
  * - I don't support IPv6 addresses here, since SIOCGIFCONF can't return them
  *
@@ -121,68 +105,7 @@
 
 #define INDEX_IS_LOOPBACK 0x00800000
 
-/* Type declarations */
-
-typedef struct _InterfaceNameMapEntry {
-  char  name[IFNAMSIZ];
-  BOOL  inUse;
-  BOOL  usedLastPass;
-} InterfaceNameMapEntry;
-
-typedef struct _InterfaceNameMap {
-  DWORD numInterfaces;
-  DWORD nextAvailable;
-  DWORD numAllocated;
-  InterfaceNameMapEntry table[1];
-} InterfaceNameMap;
-
-/* Global variables */
-
-static CRITICAL_SECTION mapCS;
-static InterfaceNameMap *gNonLoopbackInterfaceMap = NULL;
-static InterfaceNameMap *gLoopbackInterfaceMap = NULL;
-
 /* Functions */
-
-void interfaceMapInit(void)
-{
-    InitializeCriticalSection(&mapCS);
-}
-
-void interfaceMapFree(void)
-{
-    DeleteCriticalSection(&mapCS);
-    HeapFree(GetProcessHeap(), 0, gNonLoopbackInterfaceMap);
-    HeapFree(GetProcessHeap(), 0, gLoopbackInterfaceMap);
-}
-
-/* Sizes the passed-in map to have enough space for numInterfaces interfaces.
- * If map is NULL, allocates a new map.  If it is not, may reallocate the
- * existing map and return a map of increased size.  Returns the allocated map,
- * or NULL if it could not allocate a map of the requested size.
- */
-static InterfaceNameMap *sizeMap(InterfaceNameMap *map, DWORD numInterfaces)
-{
-  if (!map) {
-    numInterfaces = max(numInterfaces, INITIAL_INTERFACES_ASSUMED);
-    map = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-     sizeof(InterfaceNameMap) +
-     (numInterfaces - 1) * sizeof(InterfaceNameMapEntry));
-    if (map)
-      map->numAllocated = numInterfaces;
-  }
-  else {
-    if (map->numAllocated < numInterfaces) {
-      map = HeapReAlloc(GetProcessHeap(), 0, map,
-       sizeof(InterfaceNameMap) +
-       (numInterfaces - 1) * sizeof(InterfaceNameMapEntry));
-      if (map)
-        memset(&map->table[map->numAllocated], 0,
-         (numInterfaces - map->numAllocated) * sizeof(InterfaceNameMapEntry));
-    }
-  }
-  return map;
-}
 
 static int isLoopbackInterface(int fd, const char *name)
 {
@@ -198,243 +121,96 @@ static int isLoopbackInterface(int fd, const char *name)
   return ret;
 }
 
-static void countInterfaces(int fd, caddr_t buf, size_t len)
-{
-  caddr_t ifPtr = buf;
-  DWORD numNonLoopbackInterfaces = 0, numLoopbackInterfaces = 0;
-
-  while (ifPtr && ifPtr < buf + len) {
-    struct ifreq *ifr = (struct ifreq *)ifPtr;
-
-    if (isLoopbackInterface(fd, ifr->ifr_name))
-      numLoopbackInterfaces++;
-    else
-      numNonLoopbackInterfaces++;
-    ifPtr += ifreq_len(ifr);
-  }
-  gNonLoopbackInterfaceMap = sizeMap(gNonLoopbackInterfaceMap,
-   numNonLoopbackInterfaces);
-  gLoopbackInterfaceMap = sizeMap(gLoopbackInterfaceMap,
-   numLoopbackInterfaces);
-}
-
-/* Stores the name in the given map, and increments the map's numInterfaces
- * member if stored successfully.  Will store in the same slot as previously if
- * usedLastPass is set, otherwise will store in a new slot.
- * Assumes map and name are not NULL, and the usedLastPass flag is set
- * correctly for each entry in the map, and that map->numInterfaces <
- * map->numAllocated.
- * FIXME: this is kind of expensive, doing a linear scan of the map with a
- * string comparison of each entry to find the old slot.
+/* The comments say MAX_ADAPTER_NAME is required, but really only IF_NAMESIZE
+ * bytes are necessary.
  */
-static void storeInterfaceInMap(InterfaceNameMap *map, const char *name)
+char *getInterfaceNameByIndex(DWORD index, char *name)
 {
-  if (map && name) {
-    DWORD ndx;
-    BOOL stored = FALSE;
-
-    /* look for previous slot, mark in use if so */
-    for (ndx = 0; !stored && ndx < map->nextAvailable; ndx++) {
-      if (map->table[ndx].usedLastPass && !strncmp(map->table[ndx].name, name,
-       sizeof(map->table[ndx].name))) {
-        map->table[ndx].inUse = TRUE;
-        stored = TRUE;
-      }
-    }
-    /* look for new slot */
-    for (ndx = 0; !stored && ndx < map->numAllocated; ndx++) {
-      if (!map->table[ndx].inUse) {
-        lstrcpynA(map->table[ndx].name, name, IFNAMSIZ);
-        map->table[ndx].inUse = TRUE;
-        stored = TRUE;
-        if (ndx >= map->nextAvailable)
-          map->nextAvailable = ndx + 1;
-      }
-    }
-    if (stored)
-      map->numInterfaces++;
-  }
-}
-
-/* Sets all used entries' usedLastPass flag to their inUse flag, clears
- * their inUse flag, and clears their numInterfaces member.
- */
-static void markOldInterfaces(InterfaceNameMap *map)
-{
-  if (map) {
-    DWORD ndx;
-
-    map->numInterfaces = 0;
-    for (ndx = 0; ndx < map->nextAvailable; ndx++) {
-      map->table[ndx].usedLastPass = map->table[ndx].inUse;
-      map->table[ndx].inUse = FALSE;
-    }
-  }
-}
-
-static void classifyInterfaces(int fd, caddr_t buf, size_t len)
-{
-  caddr_t ifPtr = buf;
-
-  markOldInterfaces(gNonLoopbackInterfaceMap);
-  markOldInterfaces(gLoopbackInterfaceMap);
-  while (ifPtr && ifPtr < buf + len) {
-    struct ifreq *ifr = (struct ifreq *)ifPtr;
-
-    if (ifr->ifr_addr.sa_family == AF_INET) {
-      if (isLoopbackInterface(fd, ifr->ifr_name))
-        storeInterfaceInMap(gLoopbackInterfaceMap, ifr->ifr_name);
-      else
-        storeInterfaceInMap(gNonLoopbackInterfaceMap, ifr->ifr_name);
-    }
-    ifPtr += ifreq_len(ifr);
-  }
-}
-
-static void enumerateInterfaces(void)
-{
-  int fd;
-
-  fd = socket(PF_INET, SOCK_DGRAM, 0);
-  if (fd != -1) {
-    int ret, guessedNumInterfaces;
-    struct ifconf ifc;
-
-    /* try to avoid silly heap action by starting with the right size buffer */
-    guessedNumInterfaces = 0;
-    if (gNonLoopbackInterfaceMap)
-      guessedNumInterfaces += gNonLoopbackInterfaceMap->numInterfaces;
-    if (gLoopbackInterfaceMap)
-      guessedNumInterfaces += gLoopbackInterfaceMap->numInterfaces;
-
-    ret = 0;
-    memset(&ifc, 0, sizeof(ifc));
-    /* there is no way to know the interface count beforehand,
-       so we need to loop again and again upping our max each time
-       until returned < max */
-    do {
-      if (guessedNumInterfaces == 0)
-        guessedNumInterfaces = INITIAL_INTERFACES_ASSUMED;
-      else
-        guessedNumInterfaces *= 2;
-      HeapFree(GetProcessHeap(), 0, ifc.ifc_buf);
-      ifc.ifc_len = sizeof(struct ifreq) * guessedNumInterfaces;
-      ifc.ifc_buf = HeapAlloc(GetProcessHeap(), 0, ifc.ifc_len);
-      ret = ioctl(fd, SIOCGIFCONF, &ifc);
-    } while (ret == 0 &&
-     ifc.ifc_len == (sizeof(struct ifreq) * guessedNumInterfaces));
-
-    if (ret == 0) {
-      EnterCriticalSection(&mapCS);
-      countInterfaces(fd, ifc.ifc_buf, ifc.ifc_len);
-      classifyInterfaces(fd, ifc.ifc_buf, ifc.ifc_len);
-      LeaveCriticalSection(&mapCS);
-    }
-
-    HeapFree(GetProcessHeap(), 0, ifc.ifc_buf);
-    close(fd);
-  }
-}
-
-DWORD getNumNonLoopbackInterfaces(void)
-{
-  enumerateInterfaces();
-  return gNonLoopbackInterfaceMap ? gNonLoopbackInterfaceMap->numInterfaces : 0;
-}
-
-DWORD getNumInterfaces(void)
-{
-  DWORD ret = getNumNonLoopbackInterfaces();
-
-  ret += gLoopbackInterfaceMap ? gLoopbackInterfaceMap->numInterfaces : 0;
-  return ret;
-}
-
-const char *getInterfaceNameByIndex(DWORD index)
-{
-  DWORD realIndex;
-  InterfaceNameMap *map;
-  const char *ret = NULL;
-
-  EnterCriticalSection(&mapCS);
-  if (index & INDEX_IS_LOOPBACK) {
-    realIndex = index ^ INDEX_IS_LOOPBACK;
-    map = gLoopbackInterfaceMap;
-  }
-  else {
-    realIndex = index;
-    map = gNonLoopbackInterfaceMap;
-  }
-  if (map && realIndex < map->nextAvailable)
-    ret = map->table[realIndex].name;
-  LeaveCriticalSection(&mapCS);
-  return ret;
+  return if_indextoname(index, name);
 }
 
 DWORD getInterfaceIndexByName(const char *name, PDWORD index)
 {
-  DWORD ndx, ret;
-  BOOL found = FALSE;
+  DWORD ret;
+  unsigned int idx;
 
   if (!name)
     return ERROR_INVALID_PARAMETER;
   if (!index)
     return ERROR_INVALID_PARAMETER;
-
-  EnterCriticalSection(&mapCS);
-  for (ndx = 0; !found && gNonLoopbackInterfaceMap &&
-   ndx < gNonLoopbackInterfaceMap->nextAvailable; ndx++)
-    if (!strncmp(gNonLoopbackInterfaceMap->table[ndx].name, name, IFNAMSIZ)) {
-      found = TRUE;
-      *index = ndx;
-    }
-  for (ndx = 0; !found && gLoopbackInterfaceMap &&
-   ndx < gLoopbackInterfaceMap->nextAvailable; ndx++)
-    if (!strncmp(gLoopbackInterfaceMap->table[ndx].name, name, IFNAMSIZ)) {
-      found = TRUE;
-      *index = ndx | INDEX_IS_LOOPBACK;
-    }
-  LeaveCriticalSection(&mapCS);
-  if (found)
+  idx = if_nametoindex(name);
+  if (idx) {
+    *index = idx;
     ret = NO_ERROR;
+  }
   else
     ret = ERROR_INVALID_DATA;
   return ret;
 }
 
-static void addMapEntriesToIndexTable(InterfaceIndexTable *table,
- const InterfaceNameMap *map)
+DWORD getNumNonLoopbackInterfaces(void)
 {
-  if (table && map) {
-    DWORD ndx;
+  DWORD numInterfaces;
+  int fd = socket(PF_INET, SOCK_DGRAM, 0);
 
-    for (ndx = 0; ndx < map->nextAvailable &&
-     table->numIndexes < table->numAllocated; ndx++)
-      if (map->table[ndx].inUse) {
-        DWORD externalNdx = ndx;
+  if (fd != -1) {
+    struct if_nameindex *indexes = if_nameindex();
 
-        if (map == gLoopbackInterfaceMap)
-          externalNdx |= INDEX_IS_LOOPBACK;
-        table->indexes[table->numIndexes++] = externalNdx;
-      }
+    if (indexes) {
+      struct if_nameindex *p;
+
+      for (p = indexes, numInterfaces = 0; p && p->if_name; p++)
+        if (!isLoopbackInterface(fd, p->if_name))
+          numInterfaces++;
+      if_freenameindex(indexes);
+    }
+    else
+      numInterfaces = 0;
+    close(fd);
   }
+  else
+    numInterfaces = 0;
+  return numInterfaces;
+}
+
+DWORD getNumInterfaces(void)
+{
+  DWORD numInterfaces;
+  struct if_nameindex *indexes = if_nameindex();
+
+  if (indexes) {
+    struct if_nameindex *p;
+
+    for (p = indexes, numInterfaces = 0; p && p->if_name; p++)
+      numInterfaces++;
+    if_freenameindex(indexes);
+  }
+  else
+    numInterfaces = 0;
+  return numInterfaces;
 }
 
 InterfaceIndexTable *getInterfaceIndexTable(void)
 {
   DWORD numInterfaces;
   InterfaceIndexTable *ret;
- 
-  EnterCriticalSection(&mapCS);
-  numInterfaces = getNumInterfaces();
-  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-   sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
-  if (ret) {
-    ret->numAllocated = numInterfaces;
-    addMapEntriesToIndexTable(ret, gNonLoopbackInterfaceMap);
-    addMapEntriesToIndexTable(ret, gLoopbackInterfaceMap);
+  struct if_nameindex *indexes = if_nameindex();
+
+  if (indexes) {
+    struct if_nameindex *p;
+
+    for (p = indexes, numInterfaces = 0; p && p->if_name; p++)
+      numInterfaces++;
+    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+     sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
+    if (ret) {
+      for (p = indexes; p && p->if_name; p++)
+        ret->indexes[ret->numIndexes++] = p->if_index;
+    }
+    if_freenameindex(indexes);
   }
-  LeaveCriticalSection(&mapCS);
+  else
+    ret = NULL;
   return ret;
 }
 
@@ -442,16 +218,32 @@ InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void)
 {
   DWORD numInterfaces;
   InterfaceIndexTable *ret;
+  int fd = socket(PF_INET, SOCK_DGRAM, 0);
 
-  EnterCriticalSection(&mapCS);
-  numInterfaces = getNumNonLoopbackInterfaces();
-  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-   sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
-  if (ret) {
-    ret->numAllocated = numInterfaces;
-    addMapEntriesToIndexTable(ret, gNonLoopbackInterfaceMap);
+  if (fd != -1) {
+    struct if_nameindex *indexes = if_nameindex();
+
+    if (indexes) {
+      struct if_nameindex *p;
+
+      for (p = indexes, numInterfaces = 0; p && p->if_name; p++)
+        if (!isLoopbackInterface(fd, p->if_name))
+          numInterfaces++;
+      ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+       sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
+      if (ret) {
+        for (p = indexes; p && p->if_name; p++)
+          if (!isLoopbackInterface(fd, p->if_name))
+            ret->indexes[ret->numIndexes++] = p->if_index;
+      }
+      if_freenameindex(indexes);
+    }
+    else
+      ret = NULL;
+    close(fd);
   }
-  LeaveCriticalSection(&mapCS);
+  else
+    ret = NULL;
   return ret;
 }
 
@@ -734,7 +526,8 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
 DWORD getInterfacePhysicalByIndex(DWORD index, PDWORD len, PBYTE addr,
  PDWORD type)
 {
-  const char *name = getInterfaceNameByIndex(index);
+  char nameBuf[IF_NAMESIZE];
+  char *name = getInterfaceNameByIndex(index, nameBuf);
 
   if (name)
     return getInterfacePhysicalByName(name, len, addr, type);
@@ -848,7 +641,8 @@ DWORD getInterfaceEntryByName(const char *name, PMIB_IFROW entry)
 
 DWORD getInterfaceEntryByIndex(DWORD index, PMIB_IFROW entry)
 {
-  const char *name = getInterfaceNameByIndex(index);
+  char nameBuf[IF_NAMESIZE];
+  char *name = getInterfaceNameByIndex(index, nameBuf);
 
   if (name)
     return getInterfaceEntryByName(name, entry);

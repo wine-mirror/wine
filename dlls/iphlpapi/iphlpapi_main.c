@@ -55,11 +55,9 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
       DisableThreadLibraryCalls( hinstDLL );
-      interfaceMapInit();
       break;
 
     case DLL_PROCESS_DETACH:
-      interfaceMapFree();
       break;
   }
   return TRUE;
@@ -714,9 +712,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
               BOOL firstIPAddr = TRUE;
 
               /* on Win98 this is left empty, but whatever */
-              lstrcpynA(ptr->AdapterName,
-               getInterfaceNameByIndex(table->indexes[ndx]),
-               MAX_ADAPTER_NAME_LENGTH+1);
+              getInterfaceNameByIndex(table->indexes[ndx], ptr->AdapterName);
               getInterfacePhysicalByIndex(table->indexes[ndx], &addrLen,
                ptr->Address, &type);
               /* MS defines address length and type as UINT in some places and
@@ -929,13 +925,14 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP pStats)
 DWORD WINAPI GetIfEntry(PMIB_IFROW pIfRow)
 {
   DWORD ret;
-  const char *name;
+  char nameBuf[MAX_ADAPTER_NAME];
+  char *name;
 
   TRACE("pIfRow %p\n", pIfRow);
   if (!pIfRow)
     return ERROR_INVALID_PARAMETER;
 
-  name = getInterfaceNameByIndex(pIfRow->dwIndex);
+  name = getInterfaceNameByIndex(pIfRow->dwIndex, nameBuf);
   if (name) {
     ret = getInterfaceEntryByName(name, pIfRow);
     if (ret == NO_ERROR)
@@ -1044,6 +1041,9 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
+ *
+ * BUGS
+ *  MSDN states this should return non-loopback interfaces only.
  */
 DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
 {
@@ -1073,6 +1073,7 @@ DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
         }
         else {
           DWORD ndx;
+          char nameBuf[MAX_ADAPTER_NAME];
 
           *dwOutBufLen = size;
           pIfTable->NumAdapters = 0;
@@ -1081,7 +1082,7 @@ DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
             WCHAR *assigner;
 
             pIfTable->Adapter[ndx].Index = table->indexes[ndx];
-            name = getInterfaceNameByIndex(table->indexes[ndx]);
+            name = getInterfaceNameByIndex(table->indexes[ndx], nameBuf);
             for (walker = name, assigner = pIfTable->Adapter[ndx].Name;
              walker && *walker &&
              assigner - pIfTable->Adapter[ndx].Name < MAX_ADAPTER_NAME - 1;
