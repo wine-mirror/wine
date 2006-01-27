@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "windef.h"
@@ -84,9 +85,21 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
 
     if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, (HGDIOBJ *)&hpen,
 				    &pen_funcs ))) return 0;
-    penPtr->logpen.lopnStyle = pen->lopnStyle;
-    penPtr->logpen.lopnWidth = pen->lopnWidth;
-    penPtr->logpen.lopnColor = pen->lopnColor;
+    if (pen->lopnStyle == PS_USERSTYLE || pen->lopnStyle == PS_ALTERNATE)
+        penPtr->logpen.lopnStyle = PS_SOLID;
+    else
+        penPtr->logpen.lopnStyle = pen->lopnStyle;
+    penPtr->logpen.lopnWidth.y = 0;
+    if (pen->lopnStyle == PS_NULL)
+    {
+        penPtr->logpen.lopnWidth.x = 1;
+        penPtr->logpen.lopnColor = RGB(0, 0, 0);
+    }
+    else
+    {
+        penPtr->logpen.lopnWidth.x = abs(pen->lopnWidth.x);
+        penPtr->logpen.lopnColor = pen->lopnColor;
+    }
     GDI_ReleaseObj( hpen );
     return hpen;
 }
@@ -174,7 +187,18 @@ static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
     if( !buffer )
         return sizeof(pen->logpen);
 
-    if (count > sizeof(pen->logpen)) count = sizeof(pen->logpen);
-    memcpy( buffer, &pen->logpen, count );
-    return count;
+    switch (count)
+    {
+    case sizeof(EXTLOGPEN):
+        FIXME("extended pens not supported\n");
+        return 0;
+
+    case sizeof(LOGPEN):
+        memcpy( buffer, &pen->logpen, sizeof(LOGPEN) );
+        return sizeof(LOGPEN);
+
+    default:
+        break;
+    }
+    return 0;
 }

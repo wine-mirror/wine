@@ -494,9 +494,232 @@ static void test_GetCurrentObject(void)
     DeleteDC(hdc);
 }
 
+static void test_logpen(void)
+{
+    static const struct
+    {
+        UINT style;
+        INT width;
+        COLORREF color;
+        UINT ret_style;
+        INT ret_width;
+        COLORREF ret_color;
+    } pen[] = {
+        { PS_SOLID, -123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) },
+        { PS_SOLID, 0, RGB(0x12,0x34,0x56), PS_SOLID, 0, RGB(0x12,0x34,0x56) },
+        { PS_SOLID, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) },
+        { PS_DASH, 123, RGB(0x12,0x34,0x56), PS_DASH, 123, RGB(0x12,0x34,0x56) },
+        { PS_DOT, 123, RGB(0x12,0x34,0x56), PS_DOT, 123, RGB(0x12,0x34,0x56) },
+        { PS_DASHDOT, 123, RGB(0x12,0x34,0x56), PS_DASHDOT, 123, RGB(0x12,0x34,0x56) },
+        { PS_DASHDOTDOT, 123, RGB(0x12,0x34,0x56), PS_DASHDOTDOT, 123, RGB(0x12,0x34,0x56) },
+        { PS_NULL, -123, RGB(0x12,0x34,0x56), PS_NULL, 1, 0 },
+        { PS_NULL, 123, RGB(0x12,0x34,0x56), PS_NULL, 1, 0 },
+        { PS_INSIDEFRAME, 123, RGB(0x12,0x34,0x56), PS_INSIDEFRAME, 123, RGB(0x12,0x34,0x56) },
+        { PS_USERSTYLE, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) },
+        { PS_ALTERNATE, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) }
+    };
+    INT i, size;
+    HPEN hpen;
+    LOGPEN lp;
+    EXTLOGPEN elp;
+    LOGBRUSH lb;
+    DWORD user_style[2] = { 1, 2 };
+    struct
+    {
+        EXTLOGPEN elp;
+        DWORD style_data[10];
+    } ext_pen;
+
+    for (i = 0; i < sizeof(pen)/sizeof(pen[0]); i++)
+    {
+        trace("testing style %u\n", pen[i].style);
+
+        /********************** cosmetic pens **********************/
+        SetLastError(0xdeadbeef);
+        hpen = CreatePen(pen[i].style, pen[i].width, pen[i].color);
+        ok(hpen != 0, "CreatePen error %ld\n", GetLastError());
+
+        /* check what's the real size of the object */
+        size = GetObject(hpen, 0, NULL);
+        ok(size == sizeof(lp), "GetObject returned %d, error %ld\n", size, GetLastError());
+
+        /* ask for truncated data */
+        memset(&lp, 0xb0, sizeof(lp));
+        SetLastError(0xdeadbeef);
+        size = GetObject(hpen, sizeof(lp.lopnStyle), &lp);
+        ok(!size, "GetObject should fail: size %d, error %ld\n", size, GetLastError());
+
+        memset(&lp, 0xb0, sizeof(lp));
+        SetLastError(0xdeadbeef);
+        size = GetObject(hpen, sizeof(lp), &lp);
+        ok(size == sizeof(lp), "GetObject returned %d, error %ld\n", size, GetLastError());
+
+        ok(lp.lopnStyle == pen[i].ret_style, "expected %u, got %u\n", pen[i].ret_style, lp.lopnStyle);
+        ok(lp.lopnWidth.x == pen[i].ret_width, "expected %u, got %ld\n", pen[i].ret_width, lp.lopnWidth.x);
+        ok(lp.lopnWidth.y == 0, "expected 0, got %ld\n", lp.lopnWidth.y);
+        ok(lp.lopnColor == pen[i].ret_color, "expected %08lx, got %08lx\n", pen[i].ret_color, lp.lopnColor);
+
+        memset(&elp, 0xb0, sizeof(elp));
+        SetLastError(0xdeadbeef);
+        size = GetObject(hpen, sizeof(elp), &elp);
+/* todo_wine: Wine doesn't support extended pens at all, skip all other tests */
+if (!size) continue;
+
+        /* for some reason XP differentiates PS_NULL here */
+        if (pen[i].style == PS_NULL)
+            ok(size == sizeof(EXTLOGPEN), "GetObject returned %d, error %ld\n", size, GetLastError());
+        else
+            ok(size == sizeof(LOGPEN), "GetObject returned %d, error %ld\n", size, GetLastError());
+
+        ok(elp.elpPenStyle == pen[i].ret_style, "expected %u, got %lu\n", pen[i].ret_style, elp.elpPenStyle);
+        if (pen[i].style == PS_NULL)
+            ok(elp.elpWidth == 0, "expected %u, got %lu\n", pen[i].ret_width, elp.elpWidth);
+        else
+            ok(elp.elpWidth == pen[i].ret_width, "expected %u, got %lu\n", pen[i].ret_width, elp.elpWidth);
+        ok(elp.elpColor == pen[i].ret_color, "expected %08lx, got %08lx\n", pen[i].ret_color, elp.elpColor);
+        ok(elp.elpBrushStyle == BS_SOLID, "expected BS_SOLID, got %u\n", elp.elpBrushStyle);
+
+        /* for some reason XP differenciates PS_NULL here */
+        if (pen[i].style == PS_NULL)
+        {
+            ok(elp.elpHatch == 0, "expected 0, got %p\n", (void *)elp.elpHatch);
+            ok(elp.elpNumEntries == 0, "expected 0, got %lx\n", elp.elpNumEntries);
+        }
+        else
+        {
+            ok(elp.elpHatch == 0xb0b0b0b0, "expected 0xb0b0b0b0, got %p\n", (void *)elp.elpHatch);
+            ok(elp.elpNumEntries == 0xb0b0b0b0, "expected 0xb0b0b0b0, got %lx\n", elp.elpNumEntries);
+        }
+#if 0   /* XP returns garbage here */
+        ok(elp.elpStyleEntry[0] == 0xb0b0b0b0, "expected 0xb0b0b0b0, got %lx\n", elp.elpStyleEntry[0]);
+#endif
+        DeleteObject(hpen);
+
+        /********************** geometric pens **********************/
+        lb.lbStyle = BS_SOLID;
+        lb.lbColor = pen[i].color;
+        lb.lbHatch = HS_CROSS; /* just in case */
+        SetLastError(0xdeadbeef);
+        hpen = ExtCreatePen(PS_GEOMETRIC | pen[i].style, pen[i].width, &lb, 2, user_style);
+        if (pen[i].style != PS_USERSTYLE)
+        {
+            ok(hpen == 0, "ExtCreatePen should fail\n");
+            hpen = ExtCreatePen(PS_GEOMETRIC | pen[i].style, pen[i].width, &lb, 0, NULL);
+        }
+        else
+            ok(hpen != 0, "ExtCreatePen error %ld\n", GetLastError());
+
+        /* check what's the real size of the object */
+        size = GetObject(hpen, 0, NULL);
+        switch (pen[i].style)
+        {
+        case PS_NULL:
+            ok(size == sizeof(LOGPEN),
+               "GetObject returned %d, error %ld\n", size, GetLastError());
+            break;
+
+        case PS_ALTERNATE:
+            ok(size == 0 /*&& GetLastError() == ERROR_INVALID_PARAMETER*/,
+               "GetObject should fail: size %d, error %ld\n", size, GetLastError());
+            break;
+
+        case PS_USERSTYLE:
+            ok(size == sizeof(EXTLOGPEN) - sizeof(elp.elpStyleEntry) + sizeof(user_style),
+               "GetObject returned %d, error %ld\n", size, GetLastError());
+            break;
+
+        default:
+            ok(size == sizeof(EXTLOGPEN) - sizeof(elp.elpStyleEntry),
+               "GetObject returned %d, error %ld\n", size, GetLastError());
+            break;
+        }
+
+        /* ask for truncated data */
+        memset(&lp, 0xb0, sizeof(lp));
+        SetLastError(0xdeadbeef);
+        size = GetObject(hpen, sizeof(lp.lopnStyle), &lp);
+        ok(!size, "GetObject should fail: size %d, error %ld\n", size, GetLastError());
+
+        memset(&lp, 0xb0, sizeof(lp));
+        SetLastError(0xdeadbeef);
+        size = GetObject(hpen, sizeof(lp), &lp);
+        /* for some reason XP differenciates PS_NULL here */
+        if (pen[i].style == PS_NULL)
+        {
+            ok(size == sizeof(LOGPEN), "GetObject returned %d, error %ld\n", size, GetLastError());
+            ok(lp.lopnStyle == pen[i].ret_style, "expected %u, got %u\n", pen[i].ret_style, lp.lopnStyle);
+            ok(lp.lopnWidth.x == pen[i].ret_width, "expected %u, got %ld\n", pen[i].ret_width, lp.lopnWidth.x);
+            ok(lp.lopnWidth.y == 0, "expected 0, got %ld\n", lp.lopnWidth.y);
+            ok(lp.lopnColor == pen[i].ret_color, "expected %08lx, got %08lx\n", pen[i].ret_color, lp.lopnColor);
+        }
+        else
+            /* XP doesn't set last error here */
+            ok(size == 0 /*&& GetLastError() == ERROR_INVALID_PARAMETER*/,
+               "GetObject should fail: size %d, error %ld\n", size, GetLastError());
+
+        memset(&elp, 0xb0, sizeof(elp));
+        SetLastError(0xdeadbeef);
+        size = GetObject(hpen, sizeof(elp), &ext_pen);
+        switch (pen[i].style)
+        {
+        case PS_NULL:
+            ok(size == sizeof(EXTLOGPEN),
+                "GetObject returned %d, error %ld\n", size, GetLastError());
+            ok(ext_pen.elp.elpHatch == 0, "expected 0, got %p\n", (void *)ext_pen.elp.elpHatch);
+            ok(ext_pen.elp.elpNumEntries == 0, "expected 0, got %lx\n", ext_pen.elp.elpNumEntries);
+            break;
+
+        case PS_ALTERNATE:
+            ok(size == 0 /*&& GetLastError() == ERROR_INVALID_PARAMETER*/,
+               "GetObject should fail: size %d, error %ld\n", size, GetLastError());
+            size = GetObject(hpen, sizeof(ext_pen), &ext_pen);
+            /* for PS_ALTERNATE it still fails under XP SP2 */
+            ok(size == 0,
+               "GetObject should fail: size %d, error %ld\n", size, GetLastError());
+            break;
+
+        case PS_USERSTYLE:
+            ok(size == 0 /*&& GetLastError() == ERROR_INVALID_PARAMETER*/,
+               "GetObject should fail: size %d, error %ld\n", size, GetLastError());
+            size = GetObject(hpen, sizeof(ext_pen), &ext_pen);
+            ok(size == sizeof(EXTLOGPEN) - sizeof(elp.elpStyleEntry) + sizeof(user_style),
+               "GetObject returned %d, error %ld\n", size, GetLastError());
+            break;
+
+        default:
+            ok(size == sizeof(EXTLOGPEN) - sizeof(elp.elpStyleEntry),
+               "GetObject returned %d, error %ld\n", size, GetLastError());
+            ok(ext_pen.elp.elpHatch == HS_CROSS, "expected HS_CROSS, got %p\n", (void *)ext_pen.elp.elpHatch);
+            ok(ext_pen.elp.elpNumEntries == 0, "expected 0, got %lx\n", ext_pen.elp.elpNumEntries);
+            break;
+        }
+
+        if (size != 0)
+        {
+            /* for some reason XP differenciates PS_NULL here */
+            if (pen[i].style == PS_NULL)
+                ok(ext_pen.elp.elpPenStyle == pen[i].ret_style, "expected %x, got %lx\n", pen[i].ret_style, ext_pen.elp.elpPenStyle);
+            else if (pen[i].style == PS_USERSTYLE) /* this time it's really PS_USERSTYLE */
+                ok(ext_pen.elp.elpPenStyle == (PS_GEOMETRIC | PS_USERSTYLE), "expected %x, got %lx\n", PS_GEOMETRIC | PS_USERSTYLE, ext_pen.elp.elpPenStyle);
+            else
+                ok(ext_pen.elp.elpPenStyle == (PS_GEOMETRIC | pen[i].ret_style), "expected %x, got %lx\n", PS_GEOMETRIC | pen[i].ret_style, ext_pen.elp.elpPenStyle);
+
+            if (pen[i].style == PS_NULL)
+                ok(ext_pen.elp.elpWidth == 0, "expected %u, got %lx\n", pen[i].ret_width, ext_pen.elp.elpWidth);
+            else
+                ok(ext_pen.elp.elpWidth == pen[i].ret_width, "expected %u, got %lx\n", pen[i].ret_width, ext_pen.elp.elpWidth);
+            ok(ext_pen.elp.elpColor == pen[i].ret_color, "expected %08lx, got %08lx\n", pen[i].ret_color, ext_pen.elp.elpColor);
+            ok(ext_pen.elp.elpBrushStyle == BS_SOLID, "expected BS_SOLID, got %x\n", ext_pen.elp.elpBrushStyle);
+        }
+
+        DeleteObject(hpen);
+    }
+}
+
 START_TEST(gdiobj)
 {
     test_logfont();
+    test_logpen();
     test_bitmap_font();
     test_gdi_objects();
     test_GdiGetCharDimensions();
