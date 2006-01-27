@@ -63,6 +63,7 @@ static HRESULT WINAPI xmlcf_QueryInterface(
         return S_OK;
     }
 
+    FIXME("interface %s not implemented\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 

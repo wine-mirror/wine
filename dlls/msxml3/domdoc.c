@@ -95,7 +95,10 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument *iface, REFIID riid
         return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
     }
     else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
         return E_NOINTERFACE;
+    }
 
     IXMLDOMDocument_AddRef( iface );
 

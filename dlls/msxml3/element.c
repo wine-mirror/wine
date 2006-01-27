@@ -74,7 +74,10 @@ static HRESULT WINAPI domelem_QueryInterface(
         return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
     }
     else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
         return E_NOINTERFACE;
+    }
 
     IXMLDOMElement_AddRef( iface );
 

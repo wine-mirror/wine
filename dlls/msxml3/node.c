@@ -775,6 +775,7 @@ static HRESULT WINAPI Internal_QueryInterface(
         *ppvObject = &This->lpVtbl;
     else
     {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
         *ppvObject = NULL;
         return E_NOINTERFACE;
     }

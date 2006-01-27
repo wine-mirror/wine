@@ -167,7 +167,10 @@ static HRESULT WINAPI xmlnodelist_QueryInterface(
         *ppvObject = iface;
     }
     else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
         return E_NOINTERFACE;
+    }
 
     IXMLDOMNodeList_AddRef( iface );
 
