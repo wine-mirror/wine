@@ -294,7 +294,6 @@ static void test_NtCreateKey(void)
 {
     /*Create WineTest*/
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING ValName;
     HKEY key;
     ACCESS_MASK am = GENERIC_ALL;
     NTSTATUS status;
@@ -303,7 +302,6 @@ static void test_NtCreateKey(void)
     status = pNtCreateKey(&key, am, &attr, 0, 0, 0, 0);
     ok(status == STATUS_SUCCESS, "NtCreateKey Failed: 0x%08lx\n", status);
 
-    pRtlFreeUnicodeString(&ValName);
     pNtClose(&key);
 }
 

@@ -708,7 +708,7 @@ GetDateTimeFormatA_InvalidParameter:
   if (lpStr)
   {
     if (szOut[0])
-      WideCharToMultiByte(cp, 0, szOut, -1, lpStr, cchOut, 0, 0);
+      WideCharToMultiByte(cp, 0, szOut, iRet ? -1 : cchOut, lpStr, cchOut, 0, 0);
     else if (cchOut && iRet)
       *lpStr = '\0';
   }

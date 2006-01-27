@@ -299,7 +299,7 @@ static const char *default_dbgstr_an( const char *str, int n )
         }
     }
     *dst++ = '"';
-    if (*str)
+    if (n > 0)
     {
         *dst++ = '.';
         *dst++ = '.';
@@ -352,7 +352,7 @@ static const char *default_dbgstr_wn( const WCHAR *str, int n )
         }
     }
     *dst++ = '"';
-    if (*str)
+    if (n > 0)
     {
         *dst++ = '.';
         *dst++ = '.';

@@ -1361,9 +1361,9 @@ INT WINAPI GetPrivateProfileSectionA( LPCSTR section, LPSTR buffer,
     retW = GetPrivateProfileSectionW(sectionW.Buffer, bufferW, len, filenameW.Buffer);
     if (len > 2)
     {
-        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, retW + 2, buffer, len, NULL, NULL);
+        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, retW + 1, buffer, len, NULL, NULL);
         if (ret > 2)
-            ret -= 2;
+            ret -= 1;
         else
         {
             ret = 0;
