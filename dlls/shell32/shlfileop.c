@@ -826,6 +826,7 @@ static BOOL add_file_to_entry(FILE_ENTRY *feFile, LPWSTR szFile, BOOL bFromWildc
 {
     DWORD dwLen = strlenW(szFile) + 1;
     LPWSTR ptr;
+    HANDLE h;
 
     feFile->szFullPath = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
     strcpyW(feFile->szFullPath, szFile);
@@ -843,8 +844,10 @@ static BOOL add_file_to_entry(FILE_ENTRY *feFile, LPWSTR szFile, BOOL bFromWildc
     }
 
     feFile->bFromWildcard = bFromWildcard;
-    if (FindFirstFileW(feFile->szFullPath, &feFile->wfd) != INVALID_HANDLE_VALUE)
+    h = FindFirstFileW(feFile->szFullPath, &feFile->wfd);
+    if (h != INVALID_HANDLE_VALUE)
     {
+        FindClose(h);
         if (IsAttribDir(feFile->wfd.dwFileAttributes))
             return TRUE;
     }
@@ -890,7 +893,7 @@ static void parse_wildcard_files(FILE_LIST *flList, LPWSTR szFile, LPDWORD pdwLi
             flList->bAnyDirectories = TRUE;
     }
 
-    CloseHandle(hFile);
+    FindClose(hFile);
 }
 
 /* takes the null-separated file list and fills out the FILE_LIST */
