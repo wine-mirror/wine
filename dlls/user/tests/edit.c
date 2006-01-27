@@ -51,7 +51,7 @@ static HWND create_editcontrol (DWORD style, DWORD exstyle)
     handle = CreateWindowEx(exstyle,
 			  "EDIT",
 			  "Test Text",
-			  ES_AUTOHSCROLL | ES_AUTOVSCROLL | style,
+			  style,
 			  10, 10, 300, 300,
 			  NULL, NULL, hinst, NULL);
     assert (handle);
@@ -84,7 +84,7 @@ static HWND create_child_editcontrol (DWORD style, DWORD exstyle)
     editWnd = CreateWindowEx(exstyle,
                             "EDIT",
                             "Test Text",
-                            WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_AUTOVSCROLL | style,
+                            WS_CHILD | style,
                             0, 0, 300, 300,
                             parentWnd, NULL, hinst, NULL);
     assert(editWnd);
@@ -166,7 +166,7 @@ static void test_edit_control_1(void)
     msMessage.message = WM_KEYDOWN;
 
     trace("EDIT: Single line\n");
-    hwEdit = create_editcontrol(0, 0);
+    hwEdit = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     r = get_edit_style(hwEdit);
     ok(r == (ES_AUTOVSCROLL | ES_AUTOHSCROLL), "Wrong style expected 0xc0 got: 0x%lx\n", r); 
     for (i=0;i<65535;i++)
@@ -179,7 +179,7 @@ static void test_edit_control_1(void)
     DestroyWindow (hwEdit);
 
     trace("EDIT: Single line want returns\n");
-    hwEdit = create_editcontrol(ES_WANTRETURN, 0);
+    hwEdit = create_editcontrol(ES_WANTRETURN | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     r = get_edit_style(hwEdit);
     ok(r == (ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN), "Wrong style expected 0x10c0 got: 0x%lx\n", r); 
     for (i=0;i<65535;i++)
@@ -192,7 +192,7 @@ static void test_edit_control_1(void)
     DestroyWindow (hwEdit);
 
     trace("EDIT: Multiline line\n");
-    hwEdit = create_editcontrol(ES_MULTILINE | WS_VSCROLL | ES_AUTOVSCROLL, 0);
+    hwEdit = create_editcontrol(ES_MULTILINE | WS_VSCROLL | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     r = get_edit_style(hwEdit);
     ok(r == (ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_MULTILINE), "Wrong style expected 0xc4 got: 0x%lx\n", r); 
     for (i=0;i<65535;i++)
@@ -205,7 +205,7 @@ static void test_edit_control_1(void)
     DestroyWindow (hwEdit);
 
     trace("EDIT: Multi line want returns\n");
-    hwEdit = create_editcontrol(ES_MULTILINE | WS_VSCROLL | ES_AUTOVSCROLL | ES_WANTRETURN, 0);
+    hwEdit = create_editcontrol(ES_MULTILINE | WS_VSCROLL | ES_WANTRETURN | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     r = get_edit_style(hwEdit);
     ok(r == (ES_WANTRETURN | ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_MULTILINE), "Wrong style expected 0x10c4 got: 0x%lx\n", r); 
     for (i=0;i<65535;i++)
@@ -562,7 +562,7 @@ static void test_edit_control_4(void)
     int i;
 
     trace("EDIT: Test EM_CHARFROMPOS and EM_POSFROMCHAR\n");
-    hwEdit = create_editcontrol(0, 0);
+    hwEdit = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
     lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
@@ -580,7 +580,7 @@ static void test_edit_control_4(void)
     ok(-1 == ret, "expected -1 got %d\n", ret);
     DestroyWindow(hwEdit);
 
-    hwEdit = create_editcontrol(ES_RIGHT, 0);
+    hwEdit = create_editcontrol(ES_RIGHT | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
     lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
@@ -598,7 +598,7 @@ static void test_edit_control_4(void)
     ok(-1 == ret, "expected -1 got %d\n", ret);
     DestroyWindow(hwEdit);
 
-    hwEdit = create_editcontrol(ES_CENTER, 0);
+    hwEdit = create_editcontrol(ES_CENTER | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
     lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
@@ -616,7 +616,7 @@ static void test_edit_control_4(void)
     ok(-1 == ret, "expected -1 got %d\n", ret);
     DestroyWindow(hwEdit);
 
-    hwEdit = create_editcontrol(ES_MULTILINE, 0);
+    hwEdit = create_editcontrol(ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
     lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
@@ -634,7 +634,7 @@ static void test_edit_control_4(void)
     ok(-1 == ret, "expected -1 got %d\n", ret);
     DestroyWindow(hwEdit);
 
-    hwEdit = create_editcontrol(ES_MULTILINE | ES_RIGHT, 0);
+    hwEdit = create_editcontrol(ES_MULTILINE | ES_RIGHT | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
     lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
@@ -652,7 +652,7 @@ static void test_edit_control_4(void)
     ok(-1 == ret, "expected -1 got %d\n", ret);
     DestroyWindow(hwEdit);
 
-    hwEdit = create_editcontrol(ES_MULTILINE | ES_CENTER, 0);
+    hwEdit = create_editcontrol(ES_MULTILINE | ES_CENTER | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
     lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
@@ -712,7 +712,7 @@ static void test_margins(void)
     INT old_left_margin, old_right_margin;
     DWORD old_margins, new_margins;
 
-    hwEdit = create_editcontrol(WS_BORDER, 0);
+    hwEdit = create_editcontrol(WS_BORDER | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     
     old_margins = SendMessage(hwEdit, EM_GETMARGINS, 0, 0);
     old_left_margin = LOWORD(old_margins);
@@ -810,7 +810,7 @@ void test_text_position_style(DWORD style)
     
     /* Edit controls that are in a parent window */
        
-    hwEdit = create_child_editcontrol(style, 0);
+    hwEdit = create_child_editcontrol(style | WS_VISIBLE, 0);
     SendMessage(hwEdit, WM_SETFONT, (WPARAM) font, (LPARAM) FALSE);
     if (single_line)
     check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 0);
@@ -820,7 +820,7 @@ void test_text_position_style(DWORD style)
     check_pos(hwEdit, metrics.tmHeight + 10, 0, metrics.tmHeight    , 0);
     destroy_child_editcontrol(hwEdit);
 
-    hwEdit = create_child_editcontrol(style | WS_BORDER, 0);
+    hwEdit = create_child_editcontrol(style | WS_BORDER | WS_VISIBLE, 0);
     SendMessage(hwEdit, WM_SETFONT, (WPARAM) font, (LPARAM) FALSE);
     if (single_line)
     check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, b);
@@ -831,7 +831,7 @@ void test_text_position_style(DWORD style)
     check_pos(hwEdit, metrics.tmHeight + b3, b, metrics.tmHeight    , b);
     destroy_child_editcontrol(hwEdit);
 
-    hwEdit = create_child_editcontrol(style, WS_EX_CLIENTEDGE);
+    hwEdit = create_child_editcontrol(style | WS_VISIBLE, WS_EX_CLIENTEDGE);
     SendMessage(hwEdit, WM_SETFONT, (WPARAM) font, (LPARAM) FALSE);
     if (single_line)
     check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 1);
@@ -841,7 +841,7 @@ void test_text_position_style(DWORD style)
     check_pos(hwEdit, metrics.tmHeight + 10, 1, metrics.tmHeight    , 1);
     destroy_child_editcontrol(hwEdit);
 
-    hwEdit = create_child_editcontrol(style | WS_BORDER, WS_EX_CLIENTEDGE);
+    hwEdit = create_child_editcontrol(style | WS_BORDER | WS_VISIBLE, WS_EX_CLIENTEDGE);
     SendMessage(hwEdit, WM_SETFONT, (WPARAM) font, (LPARAM) FALSE);
     if (single_line)
     check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 1);
@@ -899,9 +899,9 @@ void test_text_position_style(DWORD style)
 void test_text_position(void)
 {
     trace("EDIT: Text position (Single line)\n");
-    test_text_position_style(0);
+    test_text_position_style(ES_AUTOHSCROLL | ES_AUTOVSCROLL);
     trace("EDIT: Text position (Multi line)\n");
-    test_text_position_style(ES_MULTILINE);
+    test_text_position_style(ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL);
 }
 
 static BOOL RegisterWindowClasses (void)
