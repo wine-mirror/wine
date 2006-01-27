@@ -31,7 +31,6 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "kernel_private.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
@@ -129,9 +128,31 @@ BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL
                                    DWORD filter, LPDWORD returned, LPOVERLAPPED overlapped,
                                    LPOVERLAPPED_COMPLETION_ROUTINE completion )
 {
-    FIXME( "%p %p 0x%08lx %d 0x%08lx %p %p %p\n", handle, buffer, len, subtree, filter,
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    BOOL ret = TRUE;
+    HANDLE event;
+
+    TRACE("%p %p %08lx %d %08lx %p %p %p\n", handle, buffer, len, subtree, filter,
            returned, overlapped, completion );
 
-    SetLastError( ERROR_INVALID_FUNCTION );
-    return FALSE;
+    if (overlapped)
+        event = overlapped->hEvent;
+    else
+        event = CreateEventW( NULL, 0, 0, NULL );
+
+    status = NtNotifyChangeDirectoryFile( handle, event, NULL, NULL,
+                                              &io, buffer, len, filter, subtree );
+    if (status != STATUS_PENDING)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        ret = FALSE;
+    }
+    else if (!overlapped)
+        WaitForSingleObject( event, INFINITE );
+
+    if (!overlapped)
+        CloseHandle( event );
+
+    return ret;
 }
