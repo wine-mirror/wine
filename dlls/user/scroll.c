@@ -953,7 +953,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         {
 	    if (SCROLL_MovingThumb)
 		SCROLL_DrawMovingThumb(hdc, &rect, vertical, arrowSize, thumbSize);
-            SCROLL_TrackingWin = 0;
+
             SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
                                  thumbPos, infoPtr->flags, vertical,
                                  FALSE, FALSE );
@@ -1049,8 +1049,12 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
             SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                             MAKEWPARAM( SB_THUMBPOSITION, val ), (LPARAM)hwndCtl );
         }
+        /* SB_ENDSCROLL doesn't report thumb position */
         SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                           SB_ENDSCROLL, (LPARAM)hwndCtl );
+
+        /* Terminate tracking */
+        SCROLL_TrackingWin = 0;
     }
 
     ReleaseDC( hwnd, hdc );
@@ -1199,6 +1203,10 @@ static BOOL SCROLL_GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
         info->nMin = infoPtr->minVal;
         info->nMax = infoPtr->maxVal;
     }
+
+    TRACE("cbSize %02x fMask %04x nMin %d nMax %d nPage %u nPos %d nTrackPos %d\n",
+           info->cbSize, info->fMask, info->nMin, info->nMax, info->nPage,
+           info->nPos, info->nTrackPos);
 
     return (info->fMask & SIF_ALL) != 0;
 }
