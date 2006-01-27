@@ -64,10 +64,8 @@ static void test_ntncdf(void)
     r = CreateDirectoryW(path, NULL);
     ok( r == TRUE, "failed to create directory\n");
 
-    todo_wine {
     r = pNtNotifyChangeDirectoryFile(NULL,NULL,NULL,NULL,NULL,NULL,0,0,0);
     ok(r==STATUS_ACCESS_VIOLATION, "should return access violation\n");
-    }
 
     fflags = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
     hdir = CreateFileW(path, GENERIC_READ|SYNCHRONIZE, FILE_SHARE_READ, NULL, 
@@ -76,7 +74,6 @@ static void test_ntncdf(void)
 
     hEvent = CreateEvent( NULL, 0, 0, NULL );
 
-    todo_wine {
     r = pNtNotifyChangeDirectoryFile(hdir,NULL,NULL,NULL,&iosb,NULL,0,0,0);
     ok(r==STATUS_INVALID_PARAMETER, "should return invalid parameter\n");
 
@@ -93,31 +90,28 @@ static void test_ntncdf(void)
     filter |= FILE_NOTIFY_CHANGE_SECURITY;
 
     r = pNtNotifyChangeDirectoryFile(hdir,hEvent,NULL,NULL,&iosb,buffer,sizeof buffer,filter,0);
-    ok(r==STATUS_PENDING, "should return invalid parameter\n");
-    }
+    ok(r==STATUS_PENDING, "should return status pending\n");
 
     r = WaitForSingleObject( hEvent, 0 );
-    ok( r == STATUS_TIMEOUT, "event ready\n" );
+    ok( r == STATUS_TIMEOUT, "event shouldn't be ready\n" );
 
     r = CreateDirectoryW( subdir, NULL );
     ok( r == TRUE, "failed to create directory\n");
 
-    todo_wine {
     r = WaitForSingleObject( hEvent, 0 );
-    ok( r == WAIT_OBJECT_0, "event ready\n" );
+    ok( r == WAIT_OBJECT_0, "event wasn't ready\n" );
 
     r = pNtNotifyChangeDirectoryFile(hdir,0,NULL,NULL,&iosb,NULL,0,filter,0);
-    ok(r==STATUS_PENDING, "should return invalid parameter\n");
+    ok(r==STATUS_PENDING, "should return status pending\n");
 
     r = WaitForSingleObject( hdir, 0 );
-    ok( r == STATUS_TIMEOUT, "event ready\n" );
-    }
+    ok( r == STATUS_TIMEOUT, "event shouldn't be ready\n" );
 
     r = RemoveDirectoryW( subdir );
     ok( r == TRUE, "failed to remove directory\n");
 
     r = WaitForSingleObject( hdir, 0 );
-    ok( r == WAIT_OBJECT_0, "event ready\n" );
+    ok( r == WAIT_OBJECT_0, "event wasn't ready\n" );
 
     todo_wine {
     r = RemoveDirectoryW( path );

@@ -172,7 +172,9 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
     fd = open_fd( name, flags | O_NONBLOCK | O_LARGEFILE, &mode, access, sharing, options );
     if (!fd) goto done;
 
-    if (S_ISCHR(mode) && is_serial_fd( fd ))
+    if (S_ISDIR(mode))
+        obj = create_dir_obj( fd );
+    else if (S_ISCHR(mode) && is_serial_fd( fd ))
         obj = create_serial( fd, options );
     else
         obj = create_file_obj( fd, access, options );

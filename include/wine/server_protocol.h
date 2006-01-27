@@ -1396,32 +1396,18 @@ struct send_console_signal_reply
 
 
 
-struct create_change_notification_request
+struct read_directory_changes_request
 {
     struct request_header __header;
-    unsigned int access;
-    unsigned int attributes;
     obj_handle_t handle;
-    int          subtree;
+    obj_handle_t event;
     unsigned int filter;
 };
-struct create_change_notification_reply
-{
-    struct reply_header __header;
-    obj_handle_t handle;
-};
-
-
-
-struct next_change_notification_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-};
-struct next_change_notification_reply
+struct read_directory_changes_reply
 {
     struct reply_header __header;
 };
+
 
 
 struct create_mapping_request
@@ -3782,8 +3768,7 @@ enum request
     REQ_read_console_output,
     REQ_move_console_output,
     REQ_send_console_signal,
-    REQ_create_change_notification,
-    REQ_next_change_notification,
+    REQ_read_directory_changes,
     REQ_create_mapping,
     REQ_open_mapping,
     REQ_get_mapping_info,
@@ -4001,8 +3986,7 @@ union generic_request
     struct read_console_output_request read_console_output_request;
     struct move_console_output_request move_console_output_request;
     struct send_console_signal_request send_console_signal_request;
-    struct create_change_notification_request create_change_notification_request;
-    struct next_change_notification_request next_change_notification_request;
+    struct read_directory_changes_request read_directory_changes_request;
     struct create_mapping_request create_mapping_request;
     struct open_mapping_request open_mapping_request;
     struct get_mapping_info_request get_mapping_info_request;
@@ -4218,8 +4202,7 @@ union generic_reply
     struct read_console_output_reply read_console_output_reply;
     struct move_console_output_reply move_console_output_reply;
     struct send_console_signal_reply send_console_signal_reply;
-    struct create_change_notification_reply create_change_notification_reply;
-    struct next_change_notification_reply next_change_notification_reply;
+    struct read_directory_changes_reply read_directory_changes_reply;
     struct create_mapping_reply create_mapping_reply;
     struct open_mapping_reply open_mapping_reply;
     struct get_mapping_info_reply get_mapping_info_reply;
@@ -4362,6 +4345,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 221
+#define SERVER_PROTOCOL_VERSION 222
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

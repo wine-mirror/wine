@@ -109,6 +109,7 @@ extern void file_set_error(void);
 
 extern void do_change_notify( int unix_fd );
 extern void sigio_callback(void);
+extern struct object *create_dir_obj( struct fd *fd );
 
 /* serial port functions */
 

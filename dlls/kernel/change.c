@@ -65,7 +65,7 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
     if (!RtlDosPathNameToNtPathName_U( lpPathName, &nt_name, NULL, NULL ))
     {
         SetLastError( ERROR_PATH_NOT_FOUND );
-        return INVALID_HANDLE_VALUE;
+        return ret;
     }
 
     attr.Length = sizeof(attr);
@@ -75,27 +75,28 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtOpenFile( &file, 0, &attr, &io, 0,
+    status = NtOpenFile( &file, SYNCHRONIZE, &attr, &io,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     RtlFreeUnicodeString( &nt_name );
 
     if (status != STATUS_SUCCESS)
     {
         SetLastError( RtlNtStatusToDosError(status) );
-        return INVALID_HANDLE_VALUE;
+        return ret;
     }
 
-    SERVER_START_REQ( create_change_notification )
+    SERVER_START_REQ( read_directory_changes )
     {
-        req->access     = STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE;
-        req->attributes = 0;
         req->handle     = file;
-        req->subtree    = bWatchSubtree;
+        req->event      = NULL;
         req->filter     = dwNotifyFilter;
-        if (!wine_server_call_err( req )) ret = reply->handle;
+        status = wine_server_call( req );
+        if (status == STATUS_PENDING)
+            ret = file;
     }
     SERVER_END_REQ;
-    CloseHandle( file );
+
     return ret;
 }
 
@@ -104,16 +105,28 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
  */
 BOOL WINAPI FindNextChangeNotification( HANDLE handle )
 {
-    BOOL ret;
+    BOOL ret = FALSE;
+    NTSTATUS status;
 
     TRACE("%p\n",handle);
 
-    SERVER_START_REQ( next_change_notification )
+    if (!handle)
     {
-        req->handle = handle;
-        ret = !wine_server_call_err( req );
+        SetLastError( ERROR_INVALID_HANDLE );
+        return ret;
+    }
+
+    SERVER_START_REQ( read_directory_changes )
+    {
+        req->handle     = handle;
+        req->event      = NULL;
+        req->filter     = FILE_NOTIFY_CHANGE_SIZE; /* valid but ignored */
+        status = wine_server_call( req );
+        if (status == STATUS_PENDING)
+            ret = TRUE;
     }
     SERVER_END_REQ;
+
     return ret;
 }
 

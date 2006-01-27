@@ -180,8 +180,7 @@ DECL_HANDLER(fill_console_output);
 DECL_HANDLER(read_console_output);
 DECL_HANDLER(move_console_output);
 DECL_HANDLER(send_console_signal);
-DECL_HANDLER(create_change_notification);
-DECL_HANDLER(next_change_notification);
+DECL_HANDLER(read_directory_changes);
 DECL_HANDLER(create_mapping);
 DECL_HANDLER(open_mapping);
 DECL_HANDLER(get_mapping_info);
@@ -398,8 +397,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_read_console_output,
     (req_handler)req_move_console_output,
     (req_handler)req_send_console_signal,
-    (req_handler)req_create_change_notification,
-    (req_handler)req_next_change_notification,
+    (req_handler)req_read_directory_changes,
     (req_handler)req_create_mapping,
     (req_handler)req_open_mapping,
     (req_handler)req_get_mapping_info,

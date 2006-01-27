@@ -2,6 +2,7 @@
  * Server-side change notification management
  *
  * Copyright (C) 1998 Alexandre Julliard
+ * Copyright (C) 2006 Mike McCormack
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -51,35 +52,50 @@
 #endif
 #endif
 
-struct change
+struct dir
 {
     struct object  obj;      /* object header */
     struct fd     *fd;       /* file descriptor to the directory */
     struct list    entry;    /* entry in global change notifications list */
-    int            subtree;  /* watch all the subtree */
+    struct event  *event;
     unsigned int   filter;   /* notification filter */
     int            notified; /* SIGIO counter */
     long           signaled; /* the file changed */
 };
 
-static void change_dump( struct object *obj, int verbose );
-static int change_signaled( struct object *obj, struct thread *thread );
-static void change_destroy( struct object *obj );
+static struct fd *dir_get_fd( struct object *obj );
+static unsigned int dir_map_access( struct object *obj, unsigned int access );
+static void dir_dump( struct object *obj, int verbose );
+static void dir_destroy( struct object *obj );
+static int dir_signaled( struct object *obj, struct thread *thread );
 
-static const struct object_ops change_ops =
+static const struct object_ops dir_ops =
 {
-    sizeof(struct change),    /* size */
-    change_dump,              /* dump */
+    sizeof(struct dir),       /* size */
+    dir_dump,                 /* dump */
     add_queue,                /* add_queue */
     remove_queue,             /* remove_queue */
-    change_signaled,          /* signaled */
+    dir_signaled,             /* signaled */
     no_satisfied,             /* satisfied */
     no_signal,                /* signal */
-    no_get_fd,                /* get_fd */
-    no_map_access,            /* map_access */
+    dir_get_fd,               /* get_fd */
+    dir_map_access,           /* map_access */
     no_lookup_name,           /* lookup_name */
     no_close_handle,          /* close_handle */
-    change_destroy            /* destroy */
+    dir_destroy               /* destroy */
+};
+
+static int dir_get_poll_events( struct fd *fd );
+static int dir_get_info( struct fd *fd );
+
+static const struct fd_ops dir_fd_ops =
+{
+    dir_get_poll_events,      /* get_poll_events */
+    default_poll_event,       /* poll_event */
+    no_flush,                 /* flush */
+    dir_get_info,             /* get_file_info */
+    default_fd_queue_async,   /* queue_async */
+    default_fd_cancel_async   /* cancel_async */
 };
 
 static struct list change_list = LIST_INIT(change_list);
@@ -113,77 +129,61 @@ static void adjust_changes( int fd, unsigned int filter )
 }
 
 /* insert change in the global list */
-static inline void insert_change( struct change *change )
+static inline void insert_change( struct dir *dir )
 {
     sigset_t sigset;
 
     sigemptyset( &sigset );
     sigaddset( &sigset, SIGIO );
     sigprocmask( SIG_BLOCK, &sigset, NULL );
-    list_add_head( &change_list, &change->entry );
+    list_add_head( &change_list, &dir->entry );
     sigprocmask( SIG_UNBLOCK, &sigset, NULL );
 }
 
 /* remove change from the global list */
-static inline void remove_change( struct change *change )
+static inline void remove_change( struct dir *dir )
 {
     sigset_t sigset;
 
     sigemptyset( &sigset );
     sigaddset( &sigset, SIGIO );
     sigprocmask( SIG_BLOCK, &sigset, NULL );
-    list_remove( &change->entry );
+    list_remove( &dir->entry );
     sigprocmask( SIG_UNBLOCK, &sigset, NULL );
 }
 
-static struct change *create_change_notification( struct fd *fd, int subtree, unsigned int filter )
+struct object *create_dir_obj( struct fd *fd )
 {
-    struct change *change;
-    struct stat st;
-    int unix_fd = get_unix_fd( fd );
+    struct dir *dir;
 
-    if (unix_fd == -1) return NULL;
-
-    if (fstat( unix_fd, &st ) == -1 || !S_ISDIR(st.st_mode))
-    {
-        set_error( STATUS_NOT_A_DIRECTORY );
+    dir = alloc_object( &dir_ops );
+    if (!dir)
         return NULL;
-    }
+ 
+    dir->event = NULL;
+    dir->filter = 0;
+    dir->notified = 0;
+    dir->signaled = 0;
+    grab_object( fd );
+    dir->fd = fd;
+    set_fd_user( fd, &dir_fd_ops, &dir->obj );
 
-    if ((change = alloc_object( &change_ops )))
-    {
-        change->fd       = (struct fd *)grab_object( fd );
-        change->subtree  = subtree;
-        change->filter   = filter;
-        change->notified = 0;
-        change->signaled = 0;
-        insert_change( change );
-        adjust_changes( unix_fd, filter );
-    }
-    return change;
+    return &dir->obj;
 }
 
-static void change_dump( struct object *obj, int verbose )
+static void dir_dump( struct object *obj, int verbose )
 {
-    struct change *change = (struct change *)obj;
-    assert( obj->ops == &change_ops );
-    fprintf( stderr, "Change notification fd=%p sub=%d filter=%08x\n",
-             change->fd, change->subtree, change->filter );
+    struct dir *dir = (struct dir *)obj;
+    assert( obj->ops == &dir_ops );
+    fprintf( stderr, "Dirfile fd=%p event=%p filter=%08x\n",
+             dir->fd, dir->event, dir->filter );
 }
 
-static int change_signaled( struct object *obj, struct thread *thread )
+static int dir_signaled( struct object *obj, struct thread *thread )
 {
-    struct change *change = (struct change *)obj;
-
-    return change->signaled != 0;
-}
-
-static void change_destroy( struct object *obj )
-{
-    struct change *change = (struct change *)obj;
-
-    release_object( change->fd );
-    remove_change( change );
+    struct dir *dir = (struct dir *)obj;
+    assert (obj->ops == &dir_ops);
+    return (dir->event == NULL) && dir->signaled;
 }
 
 /* enter here directly from SIGIO signal handler */
@@ -194,9 +194,9 @@ void do_change_notify( int unix_fd )
     /* FIXME: this is O(n) ... probably can be improved */
     LIST_FOR_EACH( ptr, &change_list )
     {
-        struct change *change = LIST_ENTRY( ptr, struct change, entry );
-        if (get_unix_fd( change->fd ) != unix_fd) continue;
-        interlocked_xchg_add( &change->notified, 1 );
+        struct dir *dir = LIST_ENTRY( ptr, struct dir, entry );
+        if (get_unix_fd( dir->fd ) != unix_fd) continue;
+        interlocked_xchg_add( &dir->notified, 1 );
         break;
     }
 }
@@ -208,46 +208,113 @@ void sigio_callback(void)
 
     LIST_FOR_EACH( ptr, &change_list )
     {
-        struct change *change = LIST_ENTRY( ptr, struct change, entry );
-        long count = interlocked_xchg( &change->notified, 0 );
+        struct dir *dir = LIST_ENTRY( ptr, struct dir, entry );
+        long count = interlocked_xchg( &dir->notified, 0 );
         if (count)
         {
-            change->signaled += count;
-            if (change->signaled == count)  /* was it 0? */
-                wake_up( &change->obj, 0 );
+            dir->signaled += count;
+            if (dir->signaled == count)  /* was it 0? */
+            {
+                if (dir->event)
+                    set_event( dir->event );
+                else
+                    wake_up( &dir->obj, 0 );
+            }
         }
     }
 }
 
-/* create a change notification */
-DECL_HANDLER(create_change_notification)
+static struct fd *dir_get_fd( struct object *obj )
 {
-    struct change *change;
-    struct file *file;
-    struct fd *fd;
-
-    if (!(file = get_file_obj( current->process, req->handle, 0 ))) return;
-    fd = get_obj_fd( (struct object *)file );
-    release_object( file );
-    if (!fd) return;
-
-    if ((change = create_change_notification( fd, req->subtree, req->filter )))
-    {
-        reply->handle = alloc_handle( current->process, change, req->access, req->attributes );
-        release_object( change );
-    }
-    release_object( fd );
+    struct dir *dir = (struct dir *)obj;
+    assert( obj->ops == &dir_ops );
+    return (struct fd *)grab_object( dir->fd );
 }
 
-/* move to the next change notification */
-DECL_HANDLER(next_change_notification)
+static unsigned int dir_map_access( struct object *obj, unsigned int access )
 {
-    struct change *change;
+    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
+    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
+    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
+    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
 
-    if ((change = (struct change *)get_handle_obj( current->process, req->handle,
-                                                   0, &change_ops )))
+static void dir_destroy( struct object *obj )
+{
+    struct dir *dir = (struct dir *)obj;
+    assert (obj->ops == &dir_ops);
+
+    if (dir->filter)
+        remove_change( dir );
+
+    if (dir->event)
     {
-        if (change->signaled > 0) change->signaled--;
-        release_object( change );
+        set_event( dir->event );
+        release_object( dir->event );
     }
+    release_object( dir->fd );
+}
+
+static struct dir *
+get_dir_obj( struct process *process, obj_handle_t handle, unsigned int access )
+{
+    return (struct dir *)get_handle_obj( process, handle, access, &dir_ops );
+}
+
+static int dir_get_poll_events( struct fd *fd )
+{
+    return 0;
+}
+
+static int dir_get_info( struct fd *fd )
+{
+    return 0;
+}
+
+/* enable change notifications for a directory */
+DECL_HANDLER(read_directory_changes)
+{
+    struct event *event = NULL;
+    struct dir *dir;
+
+    if (!req->filter)
+    {
+        set_error(STATUS_INVALID_PARAMETER);
+        return;
+    }
+
+    dir = get_dir_obj( current->process, req->handle, 0 );
+    if (!dir)
+        return;
+
+    /* possibly send changes through an event flag */
+    if (req->event)
+    {
+        event = get_event_obj( current->process, req->event, EVENT_MODIFY_STATE );
+        if (!event)
+            goto end;
+    }
+
+    /* discard the current data, and move onto the next event */
+    if (dir->event) release_object( dir->event );
+    dir->event = event;
+
+    /* assign it once */
+    if (!dir->filter)
+    {
+        insert_change( dir );
+        dir->filter = req->filter;
+    }
+
+    /* remove any notifications */
+    if (dir->signaled>0)
+        dir->signaled--;
+
+    adjust_changes( get_unix_fd( dir->fd ), dir->filter );
+
+    set_error(STATUS_PENDING);
+
+end:
+    release_object( dir );
 }

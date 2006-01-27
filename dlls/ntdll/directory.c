@@ -1778,6 +1778,16 @@ done:
     return status;
 }
 
+#define FILE_NOTIFY_ALL        (  \
+ FILE_NOTIFY_CHANGE_FILE_NAME   | \
+ FILE_NOTIFY_CHANGE_DIR_NAME    | \
+ FILE_NOTIFY_CHANGE_ATTRIBUTES  | \
+ FILE_NOTIFY_CHANGE_SIZE        | \
+ FILE_NOTIFY_CHANGE_LAST_WRITE  | \
+ FILE_NOTIFY_CHANGE_LAST_ACCESS | \
+ FILE_NOTIFY_CHANGE_CREATION    | \
+ FILE_NOTIFY_CHANGE_SECURITY   )
+
 /******************************************************************************
  *  NtNotifyChangeDirectoryFile [NTDLL.@]
  */
@@ -1787,8 +1797,30 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
         PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer,
         ULONG BufferSize, ULONG CompletionFilter, BOOLEAN WatchTree )
 {
-    FIXME("%p %p %p %p %p %p %lu %lu %d\n",
+    NTSTATUS status;
+
+    TRACE("%p %p %p %p %p %p %lu %lu %d\n",
           FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock,
           Buffer, BufferSize, CompletionFilter, WatchTree );
-    return STATUS_NOT_IMPLEMENTED;
+
+    if (!IoStatusBlock)
+        return STATUS_ACCESS_VIOLATION;
+
+    if (CompletionFilter == 0 || (CompletionFilter & ~FILE_NOTIFY_ALL))
+        return STATUS_INVALID_PARAMETER;
+
+    if (ApcRoutine || ApcContext || Buffer || BufferSize || WatchTree)
+        FIXME("parameters ignored %p %p %p %lu %d\n",
+              ApcRoutine, ApcContext, Buffer, BufferSize, WatchTree );
+
+    SERVER_START_REQ( read_directory_changes )
+    {
+        req->handle     = FileHandle;
+        req->event      = Event;
+        req->filter     = CompletionFilter;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return status;
 }
