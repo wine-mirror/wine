@@ -740,9 +740,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
             }
             close(mixer);
         } else {
-            ERR("open(%s) failed (%s)\n", ossdev->mixer_name , strerror(errno));
-            OSS_CloseDevice(ossdev);
-            return FALSE;
+            WARN("open(%s) failed (%s)\n", ossdev->mixer_name , strerror(errno));
         }
     }
 #endif /* SOUND_MIXER_INFO */
@@ -892,9 +890,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
             }
             close(mixer);
         } else {
-            ERR("open(%s) failed (%s)\n", ossdev->mixer_name, strerror(errno));
-            OSS_CloseDevice(ossdev);
-            return FALSE;
+            WARN("open(%s) failed (%s)\n", ossdev->mixer_name, strerror(errno));
         }
     }
 #endif /* SOUND_MIXER_INFO */
@@ -2254,6 +2250,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
         return MMSYSERR_NOTENABLED;
     }
     if (ioctl(mixer, SOUND_MIXER_READ_PCM, &volume) == -1) {
+        close(mixer);
         WARN("ioctl(%s, SOUND_MIXER_READ_PCM) failed (%s)\n",
              WOutDev[wDevID].ossdev->mixer_name, strerror(errno));
         return MMSYSERR_NOTENABLED;
@@ -2297,12 +2294,12 @@ DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
         return MMSYSERR_NOTENABLED;
     }
     if (ioctl(mixer, SOUND_MIXER_WRITE_PCM, &volume) == -1) {
+        close(mixer);
         WARN("ioctl(%s, SOUND_MIXER_WRITE_PCM) failed (%s)\n",
             WOutDev[wDevID].ossdev->mixer_name, strerror(errno));
         return MMSYSERR_NOTENABLED;
-    } else {
-        TRACE("volume=%04x\n", (unsigned)volume);
     }
+    TRACE("volume=%04x\n", (unsigned)volume);
     close(mixer);
 
     /* save requested volume */
