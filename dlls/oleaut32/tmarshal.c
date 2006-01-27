@@ -43,6 +43,7 @@
 
 #include "ole2.h"
 #include "typelib.h"
+#include "variant.h"
 #include "wine/debug.h"
 
 static const WCHAR IDispatchW[] = { 'I','D','i','s','p','a','t','c','h',0};
@@ -501,7 +502,7 @@ serialize_param(
 {
     HRESULT hres = S_OK;
 
-    TRACE("(tdesc.vt %d)\n",tdesc->vt);
+    TRACE("(tdesc.vt %s)\n",debugstr_vt(tdesc->vt));
 
     switch (tdesc->vt) {
     case VT_EMPTY: /* nothing. empty variant for instance */
@@ -551,7 +552,7 @@ serialize_param(
 	VARIANT		*vt = (VARIANT*)arg;
 	DWORD		vttype = V_VT(vt);
 
-	if (debugout) TRACE_(olerelay)("Vt(%ld)(",vttype);
+	if (debugout) TRACE_(olerelay)("Vt(%s%s)(",debugstr_vt(vttype),debugstr_vf(vttype));
 	tdesc2.vt = vttype;
 	if (writeit) {
 	    hres = xbuf_add(buf,(LPBYTE)&vttype,sizeof(vttype));
@@ -762,7 +763,7 @@ serialize_param(
 	    if (debugout) TRACE_(olerelay)("[%ld]",adesc->rgbounds[i].cElements);
 	    arrsize *= adesc->rgbounds[i].cElements;
 	}
-	if (debugout) TRACE_(olerelay)("(vt %d)",adesc->tdescElem.vt);
+	if (debugout) TRACE_(olerelay)("(vt %s)",debugstr_vt(adesc->tdescElem.vt));
 	if (debugout) TRACE_(olerelay)("[");
 	for (i=0;i<arrsize;i++) {
 	    hres = serialize_param(tinfo, writeit, debugout, dealloc, &adesc->tdescElem, (DWORD*)((LPBYTE)arg+i*_xsize(&adesc->tdescElem)), buf);
@@ -791,7 +792,7 @@ deserialize_param(
 {
     HRESULT hres = S_OK;
 
-    TRACE("vt %d at %p\n",tdesc->vt,arg);
+    TRACE("vt %s at %p\n",debugstr_vt(tdesc->vt),arg);
 
     while (1) {
 	switch (tdesc->vt) {
@@ -815,7 +816,7 @@ deserialize_param(
 		memset(&tdesc2,0,sizeof(tdesc2));
 		tdesc2.vt = vttype;
 		V_VT(vt)  = vttype;
-	        if (debugout) TRACE_(olerelay)("Vt(%ld)(",vttype);
+	        if (debugout) TRACE_(olerelay)("Vt(%s%s)(",debugstr_vt(vttype),debugstr_vf(vttype));
 		hres = deserialize_param(tinfo, readit, debugout, alloc, &tdesc2, (DWORD*)&(V_I4(vt)), buf);
 		TRACE_(olerelay)(")");
 		return hres;
