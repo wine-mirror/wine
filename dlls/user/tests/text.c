@@ -36,6 +36,9 @@ static void test_DrawTextCalcRect(void)
     LOGFONTA lf;
     const char text[] = "Example text for testing DrawText in "
       "MM_HIENGLISH mode";
+    const WCHAR textW[] = {'W','i','d','e',' ','c','h','a','r',' ',
+        's','t','r','i','n','g','\0'};
+    const WCHAR emptystringW[] = { 0 };
     INT textlen,textheight;
     RECT rect = { 0, 0, 100, 0 };
     BOOL ret;
@@ -100,6 +103,49 @@ static void test_DrawTextCalcRect(void)
        "should return a positive rectangle bottom. (bot=%ld)\n",
        rect.bottom);
 
+    /* empty or null text should in some cases calc an empty rectangle */
+    /* note: testing the function's return value is useless, it differs
+     * ( 0 or 1) on every Windows version I tried */
+    SetRect( &rect, 10,10, 100, 100);
+    textheight = DrawTextExA(hdc, (char *) text, 0, &rect, DT_CALCRECT, NULL );
+    ok( !(rect.left == rect.right && rect.bottom == rect.top),
+            "rectangle should NOT be empty.\n");
+    SetRect( &rect, 10,10, 100, 100);
+    SetLastError( 0);
+    textheight = DrawTextExA(hdc, "", -1, &rect, DT_CALCRECT, NULL );
+    ok( (rect.left == rect.right && rect.bottom == rect.top),
+            "rectangle should be empty.\n");
+    SetRect( &rect, 10,10, 100, 100);
+    SetLastError( 0);
+    textheight = DrawTextExA(hdc, NULL, -1, &rect, DT_CALCRECT, NULL );
+    ok( (rect.left == rect.right && rect.bottom == rect.top),
+            "rectangle should be empty.\n");
+    SetRect( &rect, 10,10, 100, 100);
+    textheight = DrawTextExA(hdc, NULL, 0, &rect, DT_CALCRECT, NULL );
+    ok( !(rect.left == rect.right && rect.bottom == rect.top),
+            "rectangle should NOT be empty.\n");
+
+    /* Wide char versions */
+    SetRect( &rect, 10,10, 100, 100);
+    SetLastError( 0);
+    textheight = DrawTextExW(hdc, (WCHAR *) textW, 0, &rect, DT_CALCRECT, NULL );
+    if( GetLastError() != ERROR_CALL_NOT_IMPLEMENTED) {
+        ok( !(rect.left == rect.right && rect.bottom == rect.top),
+                "rectangle should NOT be empty.\n");
+        SetRect( &rect, 10,10, 100, 100);
+        textheight = DrawTextExW(hdc, (WCHAR *) emptystringW, -1, &rect, DT_CALCRECT, NULL );
+        ok( (rect.left == rect.right && rect.bottom == rect.top),
+                "rectangle should be empty.\n");
+        SetRect( &rect, 10,10, 100, 100);
+        textheight = DrawTextExW(hdc, NULL, -1, &rect, DT_CALCRECT, NULL );
+        ok( !(rect.left == rect.right && rect.bottom == rect.top),
+                "rectangle should NOT be empty.\n");
+        SetRect( &rect, 10,10, 100, 100);
+        textheight = DrawTextExW(hdc, NULL, 0, &rect, DT_CALCRECT, NULL );
+        ok( !(rect.left == rect.right && rect.bottom == rect.top),
+                "rectangle should NOT be empty.\n");
+    }
+   
     SelectObject(hdc, hOldFont);
     ret = DeleteObject(hFont);
     ok( ret, "DeleteObject error %lu\n", GetLastError());

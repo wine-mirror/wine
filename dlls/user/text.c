@@ -864,9 +864,20 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
    if (dtp) TRACE("Params: iTabLength=%d, iLeftMargin=%d, iRightMargin=%d\n",
           dtp->iTabLength, dtp->iLeftMargin, dtp->iRightMargin);
 
-    if (!str) return 0;
-    if (count == -1) count = strlenW(str);
-    if (count == 0) return 0;
+    if (!str || count == 0) return 0;
+    if (count == -1)
+    {
+        count = strlenW(str);
+        if (count == 0)
+        {
+            if( flags & DT_CALCRECT)
+            {
+                rect->right = rect->left;
+                rect->bottom = rect->top;
+            }
+            return 0;
+        }
+    }
     strPtr = str;
 
     if (flags & DT_SINGLELINE)
@@ -1020,9 +1031,16 @@ INT WINAPI DrawTextExA( HDC hdc, LPSTR str, INT count,
    DWORD wmax;
    DWORD amax;
 
-   if (!str) return 0;
-   if (count == -1) count = strlen(str);
    if (!count) return 0;
+   if( !str || ((count == -1) && !(count = strlen(str))))
+   {
+        if( flags & DT_CALCRECT)
+        {
+            rect->right = rect->left;
+            rect->bottom = rect->top;
+        }
+        return 0;
+   }
    wcount = MultiByteToWideChar( CP_ACP, 0, str, count, NULL, 0 );
    wmax = wcount;
    amax = count;
