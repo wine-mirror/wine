@@ -199,6 +199,15 @@ inline static int run_hook_in_current_thread( struct hook *hook )
     return 0;
 }
 
+/* check if a given hook should run in the owner thread instead of the current thread */
+inline static int run_hook_in_owner_thread( struct hook *hook )
+{
+    if ((hook->index == WH_MOUSE_LL - WH_MINHOOK ||
+         hook->index == WH_KEYBOARD_LL - WH_MINHOOK))
+        return hook->owner != current;
+    return 0;
+}
+
 /* find the first non-deleted hook in the chain */
 inline static struct hook *get_first_valid_hook( struct hook_table *table, int index,
                                                  int event, user_handle_t win,
@@ -389,7 +398,11 @@ DECL_HANDLER(set_hook)
     if (req->id == WH_KEYBOARD_LL || req->id == WH_MOUSE_LL)
     {
         /* low-level hardware hooks are special: always global, but without a module */
-        thread = (struct thread *)grab_object( current );
+        if (thread)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            goto done;
+        }
         module = NULL;
         global = 1;
     }
@@ -488,10 +501,10 @@ DECL_HANDLER(start_hook_chain)
             return;  /* no hook set */
     }
 
-    if (hook->thread && hook->thread != current) /* must run in other thread */
+    if (run_hook_in_owner_thread( hook ))
     {
-        reply->pid  = get_process_id( hook->thread->process );
-        reply->tid  = get_thread_id( hook->thread );
+        reply->pid  = get_process_id( hook->owner->process );
+        reply->tid  = get_thread_id( hook->owner );
     }
     else
     {
@@ -541,10 +554,10 @@ DECL_HANDLER(get_next_hook)
         reply->prev_unicode = hook->unicode;
         reply->next_unicode = next->unicode;
         if (next->module) set_reply_data( next->module, next->module_size );
-        if (next->thread && next->thread != current)
+        if (run_hook_in_owner_thread( next ))
         {
-            reply->pid  = get_process_id( next->thread->process );
-            reply->tid  = get_thread_id( next->thread );
+            reply->pid  = get_process_id( next->owner->process );
+            reply->tid  = get_thread_id( next->owner );
         }
         else
         {
