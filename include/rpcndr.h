@@ -254,6 +254,37 @@ typedef struct _USER_MARSHAL_ROUTINE_QUADRUPLE
   USER_MARSHAL_FREEING_ROUTINE pfnFree;
 } USER_MARSHAL_ROUTINE_QUADRUPLE;
 
+/* 'USRC' */
+#define USER_MARSHAL_CB_SIGNATURE \
+	( (DWORD)'U'         | ( (DWORD)'S' << 8 ) | \
+	( (DWORD)'R' << 16 ) | ( (DWORD)'C' << 24 ) )
+
+typedef enum
+{
+    USER_MARSHAL_CB_BUFFER_SIZE,
+    USER_MARSHAL_CB_MARSHALL,
+    USER_MARSHAL_CB_UNMARSHALL,
+    USER_MARSHAL_CB_FREE
+} USER_MARSHAL_CB_TYPE;
+
+typedef struct _USER_MARSHAL_CB
+{
+    unsigned long Flags;
+    PMIDL_STUB_MESSAGE pStubMsg;
+    PFORMAT_STRING pReserve;
+    unsigned long Signature;
+    USER_MARSHAL_CB_TYPE CBType;
+    PFORMAT_STRING pFormat;
+    PFORMAT_STRING pTypeFormat;
+} USER_MARSHAL_CB;
+
+#define USER_CALL_CTXT_MASK(f) ((f) & 0x00ff)
+#define USER_CALL_AUX_MASK(f) ((f) & 0xff00)
+#define GET_USER_DATA_REP(f) HIWORD(f)
+
+#define USER_CALL_IS_ASYNC 0x0100
+#define USER_CALL_NEW_CORRELATION_DESC 0x0200
+
 typedef struct _MALLOC_FREE_STRUCT
 {
   void * (__RPC_USER *pfnAllocate)(size_t);
