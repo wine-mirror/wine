@@ -165,6 +165,7 @@ struct dbg_thread
     enum dbg_exec_mode          exec_mode;      /* mode the thread is run (step/run...) */
     int			        exec_count;     /* count of mode operations */
     ADDRESS_MODE	        addr_mode;      /* mode */
+    int                         stopped_xpoint; /* xpoint on which the thread has stopped (-1 if none) */
     struct dbg_breakpoint	step_over_bp;
     char                        name[9];
     struct dbg_thread*   	next;
@@ -183,6 +184,7 @@ struct dbg_thread
 struct dbg_delayed_bp
 {
     BOOL                        is_symbol;
+    BOOL                        software_bp;
     union
     {
         struct
@@ -257,10 +259,10 @@ struct type_expr_t
 
   /* break.c */
 extern void             break_set_xpoints(BOOL set);
-extern BOOL             break_add_break(const ADDRESS* addr, BOOL verbose);
-extern BOOL             break_add_break_from_lvalue(const struct dbg_lvalue* value);
-extern void             break_add_break_from_id(const char* name, int lineno);
-extern void             break_add_break_from_lineno(int lineno);
+extern BOOL             break_add_break(const ADDRESS* addr, BOOL verbose, BOOL swbp);
+extern BOOL             break_add_break_from_lvalue(const struct dbg_lvalue* value, BOOL swbp);
+extern void             break_add_break_from_id(const char* name, int lineno, BOOL swbp);
+extern void             break_add_break_from_lineno(int lineno, BOOL swbp);
 extern void             break_add_watch_from_lvalue(const struct dbg_lvalue* lvalue);
 extern void             break_add_watch_from_id(const char* name);
 extern void             break_check_delayed_bp(void);

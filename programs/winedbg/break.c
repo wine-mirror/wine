@@ -26,6 +26,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
+static int is_xpoint_break(int bpnum)
+{
+    int type = dbg_curr_process->bp[bpnum].xpoint_type;
+
+    if (type == be_xpoint_break || type == be_xpoint_watch_exec) return TRUE;
+    if (type == be_xpoint_watch_read || type == be_xpoint_watch_write) return FALSE;
+    RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
+    return 0; /* never reached */
+}
+
 /***********************************************************************
  *           break_set_xpoints
  *
@@ -46,7 +56,7 @@ void  break_set_xpoints(BOOL set)
     {
         if (!bp[i].refcount || !bp[i].enabled) continue;
 
-        if (bp[i].xpoint_type == be_xpoint_break)
+        if (is_xpoint_break(i))
             size = 0;
         else
             size = bp[i].w.len + 1;
@@ -150,13 +160,14 @@ static	BOOL	get_watched_value(int num, LPDWORD val)
  *
  * Add a breakpoint.
  */
-BOOL break_add_break(const ADDRESS* addr, BOOL verbose)
+BOOL break_add_break(const ADDRESS* addr, BOOL verbose, BOOL swbp)
 {
     int                         num;
     BYTE                        ch;
     struct dbg_breakpoint*      bp = dbg_curr_process->bp;
+    int                         type = swbp ? be_xpoint_break : be_xpoint_watch_exec;
 
-    if ((num = find_xpoint(addr, be_xpoint_break)) >= 1)
+    if ((num = find_xpoint(addr, type)) >= 1)
     {
         bp[num].refcount++;
         dbg_printf("Breakpoint %d at ", num);
@@ -176,7 +187,7 @@ BOOL break_add_break(const ADDRESS* addr, BOOL verbose)
         return FALSE;
     }
 
-    if ((num = init_xpoint(be_xpoint_break, addr)) == -1)
+    if ((num = init_xpoint(type, addr)) == -1)
         return FALSE;
 
     dbg_printf("Breakpoint %d at ", num);
@@ -191,13 +202,13 @@ BOOL break_add_break(const ADDRESS* addr, BOOL verbose)
  *
  * Add a breakpoint.
  */
-BOOL break_add_break_from_lvalue(const struct dbg_lvalue* lvalue)
+BOOL break_add_break_from_lvalue(const struct dbg_lvalue* lvalue, BOOL swbp)
 {
     ADDRESS     addr;
 
     types_extract_as_address(lvalue, &addr);
 
-    if (!break_add_break(&addr, TRUE))
+    if (!break_add_break(&addr, TRUE, swbp))
     {
         if (!DBG_IVAR(CanDeferOnBPByAddr))
         {
@@ -210,8 +221,9 @@ BOOL break_add_break_from_lvalue(const struct dbg_lvalue* lvalue)
             dbg_heap_realloc(dbg_curr_process->delayed_bp,
                              sizeof(struct dbg_delayed_bp) * ++dbg_curr_process->num_delayed_bp);
 
-        dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].is_symbol = FALSE;
-        dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].u.addr    = addr;
+        dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].is_symbol   = FALSE;
+        dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].software_bp = swbp;
+        dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].u.addr      = addr;
         return TRUE;
     }
     return FALSE;
@@ -222,7 +234,7 @@ BOOL break_add_break_from_lvalue(const struct dbg_lvalue* lvalue)
  *
  * Add a breakpoint from a function name (and eventually a line #)
  */
-void	break_add_break_from_id(const char *name, int lineno)
+void	break_add_break_from_id(const char *name, int lineno, BOOL swbp)
 {
     struct dbg_lvalue 	lvalue;
     int		        i;
@@ -230,7 +242,7 @@ void	break_add_break_from_id(const char *name, int lineno)
     switch (symbol_get_lvalue(name, lineno, &lvalue, TRUE))
     {
     case sglv_found:
-        break_add_break(&lvalue.addr, TRUE);
+        break_add_break(&lvalue.addr, TRUE, swbp);
         return;
     case sglv_unknown:
         break;
@@ -249,8 +261,9 @@ void	break_add_break_from_id(const char *name, int lineno)
     dbg_curr_process->delayed_bp = dbg_heap_realloc(dbg_curr_process->delayed_bp,
                                                     sizeof(struct dbg_delayed_bp) * ++dbg_curr_process->num_delayed_bp);
 
-    dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].is_symbol = TRUE;
-    dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].u.symbol.name = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(name) + 1), name);
+    dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].is_symbol       = TRUE;
+    dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].software_bp     = swbp;
+    dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].u.symbol.name   = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(name) + 1), name);
     dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].u.symbol.lineno = lineno;
 }
 
@@ -278,7 +291,7 @@ static BOOL CALLBACK line_cb(SRCCODEINFO* sci, void* user)
  *
  * Add a breakpoint from a line number in current file
  */
-void	break_add_break_from_lineno(int lineno)
+void	break_add_break_from_lineno(int lineno, BOOL swbp)
 {
     struct cb_break_lineno      bkln;
 
@@ -310,7 +323,7 @@ void	break_add_break_from_lineno(int lineno)
         }
     }
 
-    break_add_break(&bkln.addr, TRUE);
+    break_add_break(&bkln.addr, TRUE, swbp);
 }
 
 /***********************************************************************
@@ -343,7 +356,7 @@ void break_check_delayed_bp(void)
             WINE_TRACE("\t'%s' @ %d\n", 
                        dbp[i].u.symbol.name, dbp[i].u.symbol.lineno);
 
-        if (break_add_break(&lvalue.addr, FALSE))
+        if (break_add_break(&lvalue.addr, FALSE, dbp[i].software_bp))
             memmove(&dbp[i], &dbp[i+1], (--dbg_curr_process->num_delayed_bp - i) * sizeof(*dbp));
     }
 }
@@ -543,7 +556,7 @@ static int find_triggered_watch(LPDWORD oldval)
     {
         DWORD val = 0;
 
-        if (bp[i].refcount && bp[i].enabled && bp[i].xpoint_type != be_xpoint_break &&
+        if (bp[i].refcount && bp[i].enabled && !is_xpoint_break(i) &&
             (be_cpu->is_watchpoint_set(&dbg_context, bp[i].info)))
         {
             be_cpu->clear_watchpoint(&dbg_context, bp[i].info);
@@ -567,7 +580,7 @@ static int find_triggered_watch(LPDWORD oldval)
     {
         DWORD val = 0;
 
-        if (bp[i].refcount && bp[i].enabled && bp[i].xpoint_type != be_xpoint_break &&
+        if (bp[i].refcount && bp[i].enabled && !is_xpoint_break(i) &&
             get_watched_value(i, &val))
         {
             *oldval = bp[i].w.oldval;
@@ -602,7 +615,7 @@ void break_info(void)
     {
         if (bp[i].refcount)
         {
-            if (bp[i].xpoint_type == be_xpoint_break) nbp++; else nwp++;
+            if (is_xpoint_break(i)) nbp++; else nwp++;
         }
     }
 
@@ -611,11 +624,12 @@ void break_info(void)
         dbg_printf("Breakpoints:\n");
         for (i = 1; i < dbg_curr_process->next_bp; i++)
         {
-            if (!bp[i].refcount || bp[i].xpoint_type != be_xpoint_break)
+            if (!bp[i].refcount || !is_xpoint_break(i))
                 continue;
             dbg_printf("%d: %c ", i, bp[i].enabled ? 'y' : 'n');
             print_address(&bp[i].addr, TRUE);
-            dbg_printf(" (%u)\n", bp[i].refcount);
+            dbg_printf(" (%u)%s\n", bp[i].refcount, 
+                       bp[i].xpoint_type == be_xpoint_watch_exec ? " (hardware assisted)" : "");
 	    if (bp[i].condition != NULL)
 	    {
 	        dbg_printf("\t\tstop when  ");
@@ -630,7 +644,7 @@ void break_info(void)
         dbg_printf("Watchpoints:\n");
         for (i = 1; i < dbg_curr_process->next_bp; i++)
         {
-            if (!bp[i].refcount || bp[i].xpoint_type == be_xpoint_break)
+            if (!bp[i].refcount || is_xpoint_break(i))
                 continue;
             dbg_printf("%d: %c ", i, bp[i].enabled ? 'y' : 'n');
             print_address(&bp[i].addr, TRUE);
@@ -709,9 +723,7 @@ static	BOOL should_stop(int bpnum)
  */
 BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count, BOOL* is_break)
 {
-    int 	        bpnum;
     DWORD	        oldval = 0;
-    int 	        wpnum;
     enum dbg_exec_mode  mode = dbg_curr_thread->exec_mode;
 
     *is_break = FALSE;
@@ -719,32 +731,47 @@ BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count, BOOL* is_break
     if (code == EXCEPTION_BREAKPOINT)
         addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, TRUE);
 
-    bpnum = find_xpoint(addr, be_xpoint_break);
     dbg_curr_process->bp[0].enabled = FALSE;  /* disable the step-over breakpoint */
 
-    if (bpnum > 0)
+    dbg_curr_thread->stopped_xpoint = find_xpoint(addr, be_xpoint_break);
+    if (dbg_curr_thread->stopped_xpoint > 0)
     {
-        if (!should_stop(bpnum)) return TRUE;
+        if (!should_stop(dbg_curr_thread->stopped_xpoint)) return TRUE;
 
-        dbg_printf("Stopped on breakpoint %d at ", bpnum);
-        print_address(&dbg_curr_process->bp[bpnum].addr, TRUE);
+        dbg_printf("Stopped on breakpoint %d at ", dbg_curr_thread->stopped_xpoint);
+        print_address(&dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].addr, TRUE);
         dbg_printf("\n");
         return FALSE;
     }
 
-    wpnum = find_triggered_watch(&oldval);
-    if (wpnum > 0)
+    dbg_curr_thread->stopped_xpoint = find_xpoint(addr, be_xpoint_watch_exec);
+    if (dbg_curr_thread->stopped_xpoint > 0)
     {
         /* If not single-stepping, do not back up over the break instruction */
         if (code == EXCEPTION_BREAKPOINT)
             addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
 
-        if (!should_stop(wpnum)) return TRUE;
+        if (!should_stop(dbg_curr_thread->stopped_xpoint)) return TRUE;
 
-        dbg_printf("Stopped on watchpoint %d at ", wpnum);
+        dbg_printf("Stopped on breakpoint %d at ", dbg_curr_thread->stopped_xpoint);
+        print_address(&dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].addr, TRUE);
+        dbg_printf("\n");
+        return FALSE;
+    }
+
+    dbg_curr_thread->stopped_xpoint = find_triggered_watch(&oldval);
+    if (dbg_curr_thread->stopped_xpoint > 0)
+    {
+        /* If not single-stepping, do not back up over the break instruction */
+        if (code == EXCEPTION_BREAKPOINT)
+            addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
+
+        if (!should_stop(dbg_curr_thread->stopped_xpoint)) return TRUE;
+
+        dbg_printf("Stopped on watchpoint %d at ", dbg_curr_thread->stopped_xpoint);
         print_address(addr, TRUE);
         dbg_printf(" values: old=%lu new=%lu\n",
-                     oldval, dbg_curr_process->bp[wpnum].w.oldval);
+                   oldval, dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].w.oldval);
         return FALSE;
     }
 
@@ -777,7 +804,7 @@ BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count, BOOL* is_break
      * either we must have encountered a break insn in the Windows program
      * or someone is trying to stop us
      */
-    if (bpnum == -1 && code == EXCEPTION_BREAKPOINT)
+    if (dbg_curr_thread->stopped_xpoint == -1 && code == EXCEPTION_BREAKPOINT)
     {
         *is_break = TRUE;
         addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
@@ -808,7 +835,6 @@ void	break_suspend_execution(void)
 void break_restart_execution(int count)
 {
     ADDRESS                     addr;
-    int                         bp;
     enum dbg_line_status        status;
     enum dbg_exec_mode          mode, ret_mode;
     ADDRESS                     callee;
@@ -823,17 +849,19 @@ void break_restart_execution(int count)
      */
     ret_mode = mode = dbg_curr_thread->exec_mode;
 
-    bp = find_xpoint(&addr, be_xpoint_break);
-    if (bp != -1 && bp != 0)
+    /* we've stopped on a xpoint (other than step over) */
+    if (dbg_curr_thread->stopped_xpoint > 0)
     {
 	/*
 	 * If we have set a new value, then save it in the BP number.
 	 */
 	if (count != 0 && mode == dbg_exec_cont)
         {
-	    dbg_curr_process->bp[bp].skipcount = count;
+	    dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].skipcount = count;
         }
-        mode = dbg_exec_step_into_insn;  /* If there's a breakpoint, skip it */
+        /* If we've stopped on a breakpoint, single step over it (, then run) */
+        if (is_xpoint_break(dbg_curr_thread->stopped_xpoint))
+            mode = dbg_exec_step_into_insn;
     }
     else if (mode == dbg_exec_cont && count > 1)
     {

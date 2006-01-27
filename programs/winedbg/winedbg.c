@@ -392,6 +392,7 @@ struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
     t->exec_count = 0;
     t->step_over_bp.enabled = FALSE;
     t->step_over_bp.refcount = 0;
+    t->stopped_xpoint = -1;
     t->in_exception = FALSE;
     t->frames = NULL;
     t->num_frames = 0;
@@ -420,7 +421,7 @@ static void dbg_init_current_thread(void* start)
             break_set_xpoints(FALSE);
 	    addr.Mode   = AddrModeFlat;
 	    addr.Offset = (DWORD)start;
-	    break_add_break(&addr, TRUE);
+	    break_add_break(&addr, TRUE, TRUE);
 	    break_set_xpoints(TRUE);
 	}
     } 

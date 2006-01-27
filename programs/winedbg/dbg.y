@@ -50,7 +50,8 @@ int yyerror(const char*);
 }
 
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tALL tINFO tUP tDOWN
-%token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT tVM86
+%token tENABLE tDISABLE tBREAK tHBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM
+%token tABORT tVM86
 %token tCLASS tMAPS tSTACK tSEGMENTS tSYMBOL tREGS tWND tQUEUE tLOCAL tEXCEPTION
 %token tPROCESS tTHREAD tMODREF tEOL tEOF
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
@@ -215,11 +216,16 @@ print_command:
     ;
 
 break_command:
-      tBREAK '*' expr_lvalue    { break_add_break_from_lvalue(&$3); }
-    | tBREAK identifier         { break_add_break_from_id($2, -1); }
-    | tBREAK identifier ':' tNUM { break_add_break_from_id($2, $4); }
-    | tBREAK tNUM     	        { break_add_break_from_lineno($2); }
-    | tBREAK                    { break_add_break_from_lineno(-1); }
+      tBREAK '*' expr_lvalue    { break_add_break_from_lvalue(&$3, TRUE); }
+    | tBREAK identifier         { break_add_break_from_id($2, -1, TRUE); }
+    | tBREAK identifier ':' tNUM { break_add_break_from_id($2, $4, TRUE); }
+    | tBREAK tNUM     	        { break_add_break_from_lineno($2, TRUE); }
+    | tBREAK                    { break_add_break_from_lineno(-1, TRUE); }
+    | tHBREAK '*' expr_lvalue   { break_add_break_from_lvalue(&$3, FALSE); }
+    | tHBREAK identifier        { break_add_break_from_id($2, -1, FALSE); }
+    | tHBREAK identifier ':' tNUM { break_add_break_from_id($2, $4, FALSE); }
+    | tHBREAK tNUM     	        { break_add_break_from_lineno($2, FALSE); }
+    | tHBREAK                   { break_add_break_from_lineno(-1, FALSE); }
     | tENABLE tNUM              { break_enable_xpoint($2, TRUE); }
     | tENABLE tBREAK tNUM     	{ break_enable_xpoint($3, TRUE); }
     | tDISABLE tNUM             { break_enable_xpoint($2, FALSE); }
