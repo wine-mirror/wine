@@ -161,6 +161,45 @@ interface IPropertyStorage : IUnknown
     [case(VT_LPSTR|VT_VECTOR)]            CALPSTR calpstr;
     [case(VT_LPWSTR|VT_VECTOR)]           CALPWSTR calpwstr;
     [case(VT_VARIANT|VT_VECTOR)]          CAPROPVARIANT capropvar;
+    [case(VT_ARRAY|VT_I1,
+          VT_ARRAY|VT_UI1,
+          VT_ARRAY|VT_I2,
+          VT_ARRAY|VT_UI2,
+          VT_ARRAY|VT_I4,
+          VT_ARRAY|VT_UI4,
+          VT_ARRAY|VT_INT,
+          VT_ARRAY|VT_UINT,
+          VT_ARRAY|VT_R4,
+          VT_ARRAY|VT_R8,
+          VT_ARRAY|VT_CY,
+          VT_ARRAY|VT_DATE,
+          VT_ARRAY|VT_BSTR,
+          VT_ARRAY|VT_BOOL,
+          VT_ARRAY|VT_DECIMAL,
+          VT_ARRAY|VT_DISPATCH,
+          VT_ARRAY|VT_UNKNOWN,
+          VT_ARRAY|VT_ERROR,
+          VT_ARRAY|VT_VARIANT)]           LPSAFEARRAY parray;
+    [case(VT_BYREF|VT_I1)]                CHAR *pcVal;
+    [case(VT_BYREF|VT_UI1)]               UCHAR *pbVal;
+    [case(VT_BYREF|VT_I2)]                SHORT *piVal;
+    [case(VT_BYREF|VT_UI2)]               USHORT *puiVal;
+    [case(VT_BYREF|VT_I4)]                LONG *plVal;
+    [case(VT_BYREF|VT_UI4)]               ULONG *pulVal;
+    [case(VT_BYREF|VT_INT)]               INT *pintVal;
+    [case(VT_BYREF|VT_UINT)]              UINT *puintVal;
+    [case(VT_BYREF|VT_R4)]                FLOAT *pfltVal;
+    [case(VT_BYREF|VT_R8)]                DOUBLE *pdblVal;
+    [case(VT_BYREF|VT_BOOL)]              VARIANT_BOOL *pboolVal;
+    [case(VT_BYREF|VT_DECIMAL)]           DECIMAL *pdecVal;
+    [case(VT_BYREF|VT_ERROR)]             SCODE *pscode;
+    [case(VT_BYREF|VT_CY)]                CY *pcyVal;
+    [case(VT_BYREF|VT_DATE)]              DATE *pdate;
+    [case(VT_BYREF|VT_BSTR)]              BSTR *pbstrVal;
+    [case(VT_BYREF|VT_UNKNOWN)]           IUnknown **ppunkVal;
+    [case(VT_BYREF|VT_DISPATCH)]          IDispatch **ppdispVal;
+    [case(VT_BYREF|VT_ARRAY)]             LPSAFEARRAY *pparray;
+    [case(VT_BYREF|VT_VARIANT)]           PROPVARIANT *pvarVal;
     };
   };
 
