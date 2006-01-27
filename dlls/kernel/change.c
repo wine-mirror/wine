@@ -58,14 +58,14 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
-    HANDLE file, ret = INVALID_HANDLE_VALUE;
+    HANDLE handle = INVALID_HANDLE_VALUE;
 
     TRACE( "%s %d %lx\n", debugstr_w(lpPathName), bWatchSubtree, dwNotifyFilter );
 
     if (!RtlDosPathNameToNtPathName_U( lpPathName, &nt_name, NULL, NULL ))
     {
         SetLastError( ERROR_PATH_NOT_FOUND );
-        return ret;
+        return handle;
     }
 
     attr.Length = sizeof(attr);
@@ -75,7 +75,7 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtOpenFile( &file, SYNCHRONIZE, &attr, &io,
+    status = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     RtlFreeUnicodeString( &nt_name );
@@ -83,21 +83,18 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
     if (status != STATUS_SUCCESS)
     {
         SetLastError( RtlNtStatusToDosError(status) );
-        return ret;
+        return INVALID_HANDLE_VALUE;
     }
 
-    SERVER_START_REQ( read_directory_changes )
+    status = NtNotifyChangeDirectoryFile( handle, NULL, NULL, NULL, &io,
+                                          NULL, 0, dwNotifyFilter, bWatchSubtree );
+    if (status != STATUS_PENDING)
     {
-        req->handle     = file;
-        req->event      = NULL;
-        req->filter     = dwNotifyFilter;
-        status = wine_server_call( req );
-        if (status == STATUS_PENDING)
-            ret = file;
+        NtClose( handle );
+        SetLastError( RtlNtStatusToDosError(status) );
+        return INVALID_HANDLE_VALUE;
     }
-    SERVER_END_REQ;
-
-    return ret;
+    return handle;
 }
 
 /****************************************************************************
@@ -105,29 +102,19 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
  */
 BOOL WINAPI FindNextChangeNotification( HANDLE handle )
 {
-    BOOL ret = FALSE;
+    IO_STATUS_BLOCK io;
     NTSTATUS status;
 
     TRACE("%p\n",handle);
 
-    if (!handle)
+    status = NtNotifyChangeDirectoryFile( handle, NULL, NULL, NULL, &io,
+                                          NULL, 0, FILE_NOTIFY_CHANGE_SIZE, 0 );
+    if (status != STATUS_PENDING)
     {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return ret;
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-
-    SERVER_START_REQ( read_directory_changes )
-    {
-        req->handle     = handle;
-        req->event      = NULL;
-        req->filter     = FILE_NOTIFY_CHANGE_SIZE; /* valid but ignored */
-        status = wine_server_call( req );
-        if (status == STATUS_PENDING)
-            ret = TRUE;
-    }
-    SERVER_END_REQ;
-
-    return ret;
+    return TRUE;
 }
 
 /****************************************************************************
