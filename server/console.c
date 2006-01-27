@@ -265,7 +265,6 @@ static struct object *create_console_input( struct thread* renderer )
 static struct screen_buffer *create_console_output( struct console_input *console_input )
 {
     struct screen_buffer *screen_buffer;
-    struct console_renderer_event evt;
     int	i;
 
     if (!(screen_buffer = alloc_object( &screen_buffer_ops ))) return NULL;
@@ -302,10 +301,12 @@ static struct screen_buffer *create_console_output( struct console_input *consol
 
     if (!console_input->active)
     {
+        struct console_renderer_event evt;
 	console_input->active = (struct screen_buffer*)grab_object( screen_buffer );
 
 	/* generate the initial events */
 	evt.event = CONSOLE_RENDERER_ACTIVE_SB_EVENT;
+        memset(&evt.u, 0, sizeof(evt.u));
 	console_input_events_append( console_input->evt, &evt );
 
 	evt.event = CONSOLE_RENDERER_SB_RESIZE_EVENT;
@@ -351,6 +352,7 @@ int free_console( struct process *process )
 	/* all processes have terminated... tell the renderer to terminate too */
 	struct console_renderer_event evt;
 	evt.event = CONSOLE_RENDERER_EXIT_EVENT;
+        memset(&evt.u, 0, sizeof(evt.u));
 	console_input_events_append( console->evt, &evt );
     }
     release_object( console );
@@ -600,6 +602,7 @@ static int set_console_input_info( const struct set_console_input_info_request *
 
     if (!(console = console_input_get( req->handle, CONSOLE_WRITE ))) goto error;
 
+    memset(&evt.u, 0, sizeof(evt.u));
     if (req->mask & SET_CONSOLE_INPUT_INFO_ACTIVE_SB)
     {
 	struct screen_buffer *screen_buffer;
@@ -739,6 +742,7 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
 {
     struct console_renderer_event evt;
 
+    memset(&evt.u, 0, sizeof(evt.u));
     if (req->mask & SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM)
     {
 	if (req->cursor_size < 1 || req->cursor_size > 100)
@@ -1067,6 +1071,7 @@ static int write_console_output( struct screen_buffer *screen_buffer, size_t siz
     {
         struct console_renderer_event evt;
         evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
+        memset(&evt.u, 0, sizeof(evt.u));
         evt.u.update.top    = y + x / screen_buffer->width;
         evt.u.update.bottom = y + (x + i - 1) / screen_buffer->width;
         console_input_events_append( screen_buffer->input->evt, &evt );
@@ -1117,6 +1122,7 @@ static int fill_console_output( struct screen_buffer *screen_buffer, char_info_t
     {
         struct console_renderer_event evt;
         evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
+        memset(&evt.u, 0, sizeof(evt.u));
         evt.u.update.top    = y;
         evt.u.update.bottom = (y * screen_buffer->width + x + count - 1) / screen_buffer->width;
         console_input_events_append( screen_buffer->input->evt, &evt );
@@ -1230,6 +1236,7 @@ static void scroll_console_output( obj_handle_t handle, int xsrc, int ysrc, int 
 
     /* FIXME: this could be enhanced, by signalling scroll */
     evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
+    memset(&evt.u, 0, sizeof(evt.u));
     evt.u.update.top    = min(ysrc, ydst);
     evt.u.update.bottom = max(ysrc, ydst) + h - 1;
     console_input_events_append( screen_buffer->input->evt, &evt );

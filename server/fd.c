@@ -384,6 +384,7 @@ static inline void set_fd_epoll_events( struct fd *fd, int user, int events )
     }
 
     ev.events = events;
+    memset(&ev.data, 0, sizeof(ev.data));
     ev.data.u32 = user;
 
     if (epoll_ctl( epoll_fd, ctl, fd->unix_fd, &ev ) == -1)

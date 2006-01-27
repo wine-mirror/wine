@@ -742,6 +742,7 @@ inline static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext,
 {
     struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
 
+    memset(context, 0, sizeof(*context));
     context->ContextFlags = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS;
     context->Eax          = EAX_sig(sigcontext);
     context->Ebx          = EBX_sig(sigcontext);

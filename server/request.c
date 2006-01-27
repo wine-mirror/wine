@@ -750,6 +750,7 @@ void open_master_socket(void)
             }
 
             /* signal parent */
+            dummy = 0;
             write( sync_pipe[1], &dummy, 1 );
             close( sync_pipe[1] );
             break;
