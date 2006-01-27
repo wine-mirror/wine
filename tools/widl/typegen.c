@@ -38,14 +38,29 @@
 #include "parser.h"
 #include "header.h"
 #include "windef.h"
+#include "wine/list.h"
 
 #include "widl.h"
 #include "typegen.h"
 
 static const func_t *current_func;
-static const var_t *current_fields;
+static const type_t *current_structure;
+
+/* name of the structure variable for structure callbacks */
+#define STRUCT_EXPR_EVAL_VAR "pS"
+
+static struct list expr_eval_routines = LIST_INIT(expr_eval_routines);
+
+struct expr_eval_routine
+{
+    struct list entry;
+    const type_t *structure;
+    size_t structure_size;
+    const expr_t *expr;
+};
 
 static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array);
+static size_t fields_memsize(const var_t *v);
 
 static int print_file(FILE *file, int indent, const char *format, ...)
 {
@@ -218,11 +233,12 @@ void write_procformatstring(FILE *file, type_t *iface)
 }
 
 /* write conformance / variance descriptor */
-static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const var_t *fields, const expr_t *expr)
+static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_t *structure, const expr_t *expr)
 {
     unsigned char operator_type = 0;
     const char *operator_string = "no operators";
     const expr_t *subexpr = expr;
+    unsigned char correlation_type;
 
     if (!file) return 4; /* optimisation for sizing pass */
 
@@ -271,17 +287,16 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const var_t
 
     if (subexpr->type == EXPR_IDENTIFIER)
     {
-        unsigned char correlation_type;
         const type_t *correlation_variable = NULL;
         unsigned char param_type = 0;
         const char *param_type_string = NULL;
         size_t offset;
 
-        if (fields)
+        if (structure)
         {
             const var_t *var;
 
-            for (offset = 0, var = fields; var; var = NEXT_LINK(var))
+            for (offset = 0, var = structure->fields; var; var = NEXT_LINK(var))
             {
                 offset -= type_memsize(var->type, var->ptr_level, var->array);
                 if (!strcmp(var->name, subexpr->u.sval))
@@ -365,7 +380,38 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const var_t
                    offset);
     }
     else
-        error("write_conf_or_var_desc: expression type %d\n", subexpr->type);
+    {
+        unsigned int callback_offset = 0;
+        struct list *cursor;
+
+        LIST_FOR_EACH(cursor, &expr_eval_routines)
+            callback_offset++;
+
+        if (callback_offset > USHRT_MAX)
+            error("Maximum number of callback routines reached\n");
+
+        if (structure)
+        {
+            struct expr_eval_routine *eval = xmalloc(sizeof(*eval));
+            eval->structure = structure;
+            eval->structure_size = fields_memsize(structure->fields);
+            eval->expr = expr;
+            list_add_tail(&expr_eval_routines, &eval->entry);
+
+            correlation_type = RPC_FC_NORMAL_CONFORMANCE;
+        }
+        else
+        {
+            error("write_conf_or_var_desc: expression type %d\n", subexpr->type);
+            correlation_type = RPC_FC_TOP_LEVEL_CONFORMANCE;
+        }
+
+        print_file(file, 2, "0x%x, /* Corr desc: %s */\n",
+                   correlation_type,
+                   correlation_type == RPC_FC_TOP_LEVEL_CONFORMANCE ? "parameter" : "");
+        print_file(file, 2, "0x%x, /* %s */\n", RPC_FC_CALLBACK, "FC_CALLBACK");
+        print_file(file, 2, "NdrShort(0x%x), /* %u */\n", callback_offset, callback_offset);
+    }
     return 4;
 }
 
@@ -589,7 +635,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             typestring_size += 2;
 
             typestring_size += write_conf_or_var_desc(file, current_func,
-                                                      current_fields,
+                                                      current_structure,
                                                       length_is);
 
             /* FIXME: write out pointer descriptor if necessary */
@@ -614,7 +660,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             typestring_size = 4;
 
             typestring_size += write_conf_or_var_desc(file, current_func,
-                                                      current_fields, size_is);
+                                                      current_structure, size_is);
 
             /* FIXME: write out pointer descriptor if necessary */
 
@@ -638,9 +684,9 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             typestring_size = 4;
 
             typestring_size += write_conf_or_var_desc(file, current_func,
-                                                      current_fields, size_is);
+                                                      current_structure, size_is);
             typestring_size += write_conf_or_var_desc(file, current_func,
-                                                      current_fields,
+                                                      current_structure,
                                                       length_is);
 
             /* FIXME: write out pointer descriptor if necessary */
@@ -714,12 +760,10 @@ static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
         typestring_size = 7;
 
         array = find_array_or_string_in_struct(type);
-        /* assumes array points to the start of the linked list, which is true
-         * if the array is the last member of the struct */
-        current_fields = array;
+        current_structure = type;
         typestring_size += write_array_tfs(file, array->attrs, array->type,
                                            array->array, array->name);
-        current_fields = NULL;
+        current_structure = NULL;
 
         return typestring_size;
     case RPC_FC_CVSTRUCT:
@@ -740,16 +784,14 @@ static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
         typestring_size = 7;
 
         array = find_array_or_string_in_struct(type);
-        /* assumes array points to the start of the linked list, which is true
-         * if the array is the last member of the struct */
-        current_fields = array;
+        current_structure = type;
         if (is_attr(array->attrs, ATTR_STRING))
             typestring_size += write_string_tfs(file, array->attrs, array->type,
                                                 array->array, array->name);
         else
             typestring_size += write_array_tfs(file, array->attrs, array->type,
                                                array->array, array->name);
-        current_fields = NULL;
+         current_structure = NULL;
 
         return typestring_size;
     default:
@@ -1118,7 +1160,7 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
             fprintf(file, " *)_StubMsg.Buffer = ");
             write_name(file, var);
             fprintf(file, ";\n");
-            fprintf(file, "_StubMsg.Buffer += sizeof(");
+            print_file(file, indent, "_StubMsg.Buffer += sizeof(");
             write_type(file, var->type, var, var->tname);
             fprintf(file, ");\n");
 
@@ -1289,7 +1331,7 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
             fprintf(file, " = *(");
             write_type(file, var->type, var, var->tname);
             fprintf(file, " *)_StubMsg.Buffer;\n");
-            fprintf(file, "_StubMsg.Buffer += sizeof(");
+            print_file(file, indent, "_StubMsg.Buffer += sizeof(");
             write_type(file, var->type, var, var->tname);
             fprintf(file, ");\n");
 
@@ -1347,4 +1389,139 @@ size_t get_size_procformatstring_var(const var_t *var)
 size_t get_size_typeformatstring_var(const var_t *var)
 {
     return write_typeformatstring_var(NULL, 0, var);
+}
+
+static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
+                              const var_t *fields, const char *structvar)
+{
+    switch (e->type) {
+        case EXPR_VOID:
+            break;
+        case EXPR_NUM:
+            fprintf(h, "%ld", e->u.lval);
+            break;
+        case EXPR_HEXNUM:
+            fprintf(h, "0x%lx", e->u.lval);
+            break;
+        case EXPR_IDENTIFIER:
+        {
+            const var_t *field;
+            for (field = fields; field; field = NEXT_LINK(field))
+            {
+                if (!strcmp(e->u.sval, field->name))
+                {
+                    fprintf(h, "%s->%s", structvar, e->u.sval);
+                    break;
+                }
+            }
+            if (!field) error("no field found for identifier %s\n", e->u.sval);
+            break;
+        }
+        case EXPR_NEG:
+            fprintf(h, "-");
+            write_struct_expr(h, e->ref, 1, fields, structvar);
+            break;
+        case EXPR_NOT:
+            fprintf(h, "~");
+            write_struct_expr(h, e->ref, 1, fields, structvar);
+            break;
+        case EXPR_PPTR:
+            fprintf(h, "*");
+            write_struct_expr(h, e->ref, 1, fields, structvar);
+            break;
+        case EXPR_CAST:
+            fprintf(h, "(");
+            write_type(h, e->u.tref->ref, NULL, e->u.tref->name);
+            fprintf(h, ")");
+            write_struct_expr(h, e->ref, 1, fields, structvar);
+            break;
+        case EXPR_SIZEOF:
+            fprintf(h, "sizeof(");
+            write_type(h, e->u.tref->ref, NULL, e->u.tref->name);
+            fprintf(h, ")");
+            break;
+        case EXPR_SHL:
+        case EXPR_SHR:
+        case EXPR_MUL:
+        case EXPR_DIV:
+        case EXPR_ADD:
+        case EXPR_SUB:
+        case EXPR_AND:
+        case EXPR_OR:
+            if (brackets) fprintf(h, "(");
+            write_struct_expr(h, e->ref, 1, fields, structvar);
+            switch (e->type) {
+                case EXPR_SHL: fprintf(h, " << "); break;
+                case EXPR_SHR: fprintf(h, " >> "); break;
+                case EXPR_MUL: fprintf(h, " * "); break;
+                case EXPR_DIV: fprintf(h, " / "); break;
+                case EXPR_ADD: fprintf(h, " + "); break;
+                case EXPR_SUB: fprintf(h, " - "); break;
+                case EXPR_AND: fprintf(h, " & "); break;
+                case EXPR_OR:  fprintf(h, " | "); break;
+                default: break;
+            }
+            write_struct_expr(h, e->u.ext, 1, fields, structvar);
+            if (brackets) fprintf(h, ")");
+            break;
+        case EXPR_COND:
+            if (brackets) fprintf(h, "(");
+            write_struct_expr(h, e->ref, 1, fields, structvar);
+            fprintf(h, " ? ");
+            write_struct_expr(h, e->u.ext, 1, fields, structvar);
+            fprintf(h, " : ");
+            write_struct_expr(h, e->ext2, 1, fields, structvar);
+            if (brackets) fprintf(h, ")");
+            break;
+    }
+}
+
+int write_expr_eval_routines(FILE *file, const char *iface)
+{
+    int result = 0;
+    struct expr_eval_routine *eval;
+    unsigned short callback_offset = 0;
+
+    LIST_FOR_EACH_ENTRY(eval, &expr_eval_routines, struct expr_eval_routine, entry)
+    {
+        int indent = 0;
+        result = 1;
+        print_file(file, indent, "static void __RPC_USER %s_%sExprEval_%04u(PMIDL_STUB_MESSAGE pStubMsg)\n",
+                  iface, eval->structure->name, callback_offset);
+        print_file(file, indent, "{\n");
+        indent++;
+        print_file(file, indent, "struct %s *" STRUCT_EXPR_EVAL_VAR " = (struct %s *)(pStubMsg->StackTop - %u);\n",
+                   eval->structure->name, eval->structure->name, eval->structure_size);
+        fprintf(file, "\n");
+        print_file(file, indent, "pStubMsg->Offset = 0;\n"); /* FIXME */
+        print_file(file, indent, "pStubMsg->MaxCount = (unsigned long)");
+        write_struct_expr(file, eval->expr, 1, eval->structure->fields, STRUCT_EXPR_EVAL_VAR);
+        fprintf(file, ";\n");
+        indent--;
+        print_file(file, indent, "}\n\n");
+        callback_offset++;
+    }
+    return result;
+}
+
+void write_expr_eval_routine_list(FILE *file, const char *iface)
+{
+    struct expr_eval_routine *eval;
+    struct expr_eval_routine *cursor;
+    unsigned short callback_offset = 0;
+
+    fprintf(file, "static const EXPR_EVAL ExprEvalRoutines[] =\n");
+    fprintf(file, "{\n");
+
+    LIST_FOR_EACH_ENTRY_SAFE(eval, cursor, &expr_eval_routines, struct expr_eval_routine, entry)
+    {
+        print_file(file, 1, "%s_%sExprEval_%04u,\n",
+                   iface, eval->structure->name, callback_offset);
+
+        callback_offset++;
+        list_remove(&eval->entry);
+        free(eval);
+    }
+
+    fprintf(file, "};\n\n");
 }

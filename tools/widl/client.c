@@ -295,7 +295,7 @@ static void write_stubdescdecl(type_t *iface)
 }
 
 
-static void write_stubdescriptor(type_t *iface)
+static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
 {
     char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
 
@@ -311,7 +311,10 @@ static void write_stubdescriptor(type_t *iface)
         print_client("&%s__MIDL_AutoBindHandle,\n", iface->name);
     print_client("0,\n");
     print_client("0,\n");
-    print_client("0,\n");
+    if (expr_eval_routines)
+        print_client("ExprEvalRoutines,\n");
+    else
+        print_client("0,\n");
     print_client("0,\n");
     print_client("__MIDL_TypeFormatString.Format,\n");
     print_client("1, /* -error bounds_check flag */\n");
@@ -466,6 +469,8 @@ void write_client(ifref_t *ifaces)
 
         if (iface->iface->funcs)
         {
+            int expr_eval_routines;
+
             write_formatstringsdecl(iface->iface);
             write_implicithandledecl(iface->iface);
     
@@ -474,18 +479,22 @@ void write_client(ifref_t *ifaces)
             write_bindinghandledecl(iface->iface);
     
             write_function_stubs(iface->iface);
-            write_stubdescriptor(iface->iface);
+
+            print_client("#if !defined(__RPC_WIN32__)\n");
+            print_client("#error  Invalid build platform for this stub.\n");
+            print_client("#endif\n");
+            fprintf(client, "\n");
+
+            write_procformatstring(client, iface->iface);
+            write_typeformatstring(client, iface->iface);
+
+            fprintf(client, "\n");
+
+            expr_eval_routines = write_expr_eval_routines(client, iface->iface->name);
+            if (expr_eval_routines)
+                write_expr_eval_routine_list(client, iface->iface->name);
+            write_stubdescriptor(iface->iface, expr_eval_routines);
         }
-
-        print_client("#if !defined(__RPC_WIN32__)\n");
-        print_client("#error  Invalid build platform for this stub.\n");
-        print_client("#endif\n");
-        fprintf(client, "\n");
-
-        write_procformatstring(client, iface->iface);
-        write_typeformatstring(client, iface->iface);
-
-        fprintf(client, "\n");
 
         iface = PREV_LINK(iface);
     }

@@ -385,7 +385,7 @@ static void write_stubdescdecl(type_t *iface)
 }
 
 
-static void write_stubdescriptor(type_t *iface)
+static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
 {
     print_server("static const MIDL_STUB_DESC %s_StubDesc =\n", iface->name);
     print_server("{\n");
@@ -396,7 +396,10 @@ static void write_stubdescriptor(type_t *iface)
     print_server("0,\n");
     print_server("0,\n");
     print_server("0,\n");
-    print_server("0,\n");
+    if (expr_eval_routines)
+        print_server("ExprEvalRoutines,\n");
+    else
+        print_server("0,\n");
     print_server("0,\n");
     print_server("__MIDL_TypeFormatString.Format,\n");
     print_server("1, /* -error bounds_check flag */\n");
@@ -538,25 +541,31 @@ void write_server(ifref_t *ifaces)
 
         if (iface->iface->funcs)
         {
+            int expr_eval_routines;
+
             write_formatstringsdecl(iface->iface);
             write_serverinterfacedecl(iface->iface);
             write_stubdescdecl(iface->iface);
     
             write_function_stubs(iface->iface);
     
-            write_stubdescriptor(iface->iface);
+            print_server("#if !defined(__RPC_WIN32__)\n");
+            print_server("#error  Invalid build platform for this stub.\n");
+            print_server("#endif\n");
+            fprintf(server, "\n");
+
+            write_procformatstring(server, iface->iface);
+            write_typeformatstring(server, iface->iface);
+
+            fprintf(server, "\n");
+
+            expr_eval_routines = write_expr_eval_routines(server, iface->iface->name);
+            if (expr_eval_routines)
+                write_expr_eval_routine_list(server, iface->iface->name);
+
+            write_stubdescriptor(iface->iface, expr_eval_routines);
             write_dispatchtable(iface->iface);
         }
-
-        print_server("#if !defined(__RPC_WIN32__)\n");
-        print_server("#error  Invalid build platform for this stub.\n");
-        print_server("#endif\n");
-        fprintf(server, "\n");
-
-        write_procformatstring(server, iface->iface);
-        write_typeformatstring(server, iface->iface);
-
-        fprintf(server, "\n");
 
         iface = PREV_LINK(iface);
     }

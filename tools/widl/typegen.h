@@ -34,3 +34,5 @@ void marshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type
 void unmarshall_arguments(FILE *file, int indent, func_t *func, unsigned int *type_offset, enum pass pass);
 size_t get_size_procformatstring_var(const var_t *var);
 size_t get_size_typeformatstring_var(const var_t *var);
+int write_expr_eval_routines(FILE *file, const char *iface);
+void write_expr_eval_routine_list(FILE *file, const char *iface);
