@@ -1898,13 +1898,17 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     WINE_SPI_WARN(SPI_SETANIMATION);		/*     73  WINVER >= 0x400 */
 
     case SPI_GETFONTSMOOTHING:
+    {
+        UINT tmpval;
         ret = get_uint_param( SPI_SETFONTSMOOTHING_IDX,
                               SPI_SETFONTSMOOTHING_REGKEY,
                               SPI_SETFONTSMOOTHING_VALNAME,
-                              &font_smoothing, pvParam );
+                              &font_smoothing, &tmpval );
+        *(UINT *) pvParam = ( tmpval != 0);
         break;
-
+    }
     case SPI_SETFONTSMOOTHING:
+        uiParam = uiParam ? 2 : 0; /* Win NT4/2k/XP behavior */
         ret = set_uint_param( SPI_SETFONTSMOOTHING_IDX,
                               SPI_SETFONTSMOOTHING_REGKEY,
                               SPI_SETFONTSMOOTHING_VALNAME,

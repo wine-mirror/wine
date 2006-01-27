@@ -39,6 +39,7 @@
 
 static int strict;
 static int dpi;
+static int iswin9x;
 static HDC hdc;
 
 #define eq(received, expected, label, type) \
@@ -118,6 +119,8 @@ static HDC hdc;
 #define SPI_SETSCREENREADER_VALNAME             "On"
 #define SPI_SETSCREENREADER_REGKEY_LEGACY       "Control Panel\\Accessibility"
 #define SPI_SETSCREENREADER_VALNAME_LEGACY      "Blind Access"
+#define SPI_SETFONTSMOOTHING_REGKEY             "Control Panel\\Desktop"
+#define SPI_SETFONTSMOOTHING_VALNAME            "FontSmoothing"
 #define SPI_SETLOWPOWERACTIVE_REGKEY            "Control Panel\\Desktop"
 #define SPI_SETLOWPOWERACTIVE_VALNAME           "LowPowerActive"
 #define SPI_SETPOWEROFFACTIVE_REGKEY            "Control Panel\\Desktop"
@@ -675,7 +678,6 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
 {
     BOOL rc;
     UINT old_border;
-    int iswin9x;
     NONCLIENTMETRICSA ncmsave;
     INT CaptionWidth;
 
@@ -688,11 +690,6 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
     CaptionWidth = metricfromreg(
             "Control Panel\\Desktop\\WindowMetrics","CaptionWidth", dpi);
     ncmsave.iCaptionWidth = CaptionWidth;
-
-    /* The SPI_SETBORDER seems to be buggy on Win9x/ME (looks like you need to
-     * do it twice to make the intended change). So skip parts of the tests on
-     * those platforms */
-    iswin9x = GetVersion() & 0x80000000;
 
     /* These tests hang when XFree86 4.0 for Windows is running (tested on
      *  WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is
@@ -711,6 +708,9 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
     if ( old_border == 7 || old_border == 20 )
         old_border = 1;
 
+    /* The SPI_SETBORDER seems to be buggy on Win9x/ME (looks like you need to
+     * do it twice to make the intended change). So skip parts of the tests on
+     * those platforms */
     if( !iswin9x) {
         test_setborder(1,  1, dpi);
         test_setborder(0,  1, dpi);
@@ -1837,6 +1837,41 @@ static void test_SPI_SETSCREENREADER( void )           /*     71 */
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
 
+static void test_SPI_SETFONTSMOOTHING( void )         /*     75 */
+{
+    BOOL rc;
+    BOOL old_b;
+    const UINT vals[]={0xffffffff,0,1,2};
+    unsigned int i;
+
+    trace("testing SPI_{GET,SET}FONTSMOOTHING\n");
+    if( iswin9x) return; /* 95/98/ME don't seem to implement this fully */ 
+    SetLastError(0xdeadbeef);
+    rc=SystemParametersInfoA( SPI_GETFONTSMOOTHING, 0, &old_b, 0 );
+    if (!test_error_msg(rc,"SPI_{GET,SET}FONTSMOOTHING"))
+        return;
+
+    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    {
+        UINT v;
+
+        rc=SystemParametersInfoA( SPI_SETFONTSMOOTHING, vals[i], 0,
+                                  SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
+        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        test_change_message( SPI_SETFONTSMOOTHING, 0 );
+        test_reg_key( SPI_SETFONTSMOOTHING_REGKEY,
+                      SPI_SETFONTSMOOTHING_VALNAME,
+                      vals[i] ? "2" : "0" );
+
+        rc=SystemParametersInfoA( SPI_GETFONTSMOOTHING, 0, &v, 0 );
+        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        eq( v, vals[i] ? 1 : 0, "SPI_GETFONTSMOOTHING", "%d" );
+    }
+
+    rc=SystemParametersInfoA( SPI_SETFONTSMOOTHING, old_b, 0, SPIF_UPDATEINIFILE );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
+}
+
 static void test_SPI_SETLOWPOWERACTIVE( void )         /*     85 */
 {
     BOOL rc;
@@ -2160,6 +2195,7 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
     test_SPI_SETSHOWSOUNDS();                   /*     57 */
     test_SPI_SETKEYBOARDPREF();                 /*     69 */
     test_SPI_SETSCREENREADER();                 /*     71 */
+    test_SPI_SETFONTSMOOTHING();                /*     75 */
     test_SPI_SETLOWPOWERACTIVE();               /*     85 */
     test_SPI_SETPOWEROFFACTIVE();               /*     86 */
     test_SPI_SETMOUSEHOVERWIDTH();              /*     99 */
@@ -2405,6 +2441,7 @@ START_TEST(sysparams)
 
     hdc = GetDC(0);
     dpi = GetDeviceCaps( hdc, LOGPIXELSY);
+    iswin9x = GetVersion() & 0x80000000;
 
     /* This test requires interactivity, if we don't have it, give up */
     if (!SystemParametersInfoA( SPI_SETBEEP, TRUE, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE ) &&
