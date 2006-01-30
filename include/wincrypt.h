@@ -872,6 +872,18 @@ typedef const CRYPT_OID_INFO CCRYPT_OID_INFO, *PCCRYPT_OID_INFO;
 typedef BOOL (WINAPI *PFN_CRYPT_ENUM_OID_INFO)(PCCRYPT_OID_INFO pInfo,
  void *pvArg);
 
+typedef struct _CRYPT_URL_ARRAY {
+    DWORD   cUrl;
+    LPWSTR *rgwszUrl;
+} CRYPT_URL_ARRAY, *PCRYPT_URL_ARRAY;
+
+typedef struct _CRYPT_URL_INFO {
+    DWORD  cbSize;
+    DWORD  dwSyncDeltaTime;
+    DWORD  cGroup;
+    DWORD *rgcGroupEntry;
+} CRYPT_URL_INFO, *PCRYPT_URL_INFO;
+
 /* OID group IDs */
 #define CRYPT_HASH_ALG_OID_GROUP_ID     1
 #define CRYPT_ENCRYPT_ALG_OID_GROUP_ID  2
@@ -2252,6 +2264,25 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define CRYPT_VERIFY_CERT_SIGN_ISSUER_CHAIN  3
 #define CRYPT_VERIFY_CERT_SIGN_ISSUER_NULL   4
 
+#define CRYPT_GET_URL_FROM_PROPERTY         0x00000001
+#define CRYPT_GET_URL_FROM_EXTENSION        0x00000002
+#define CRYPT_GET_URL_FROM_UNAUTH_ATTRIBUTE 0x00000004
+#define CRYPT_GET_URL_FROM_AUTH_ATTRIBUTE   0x00000008
+
+/* Certificate name string types and flags */
+#define CERT_SIMPLE_NAME_STR 1
+#define CERT_OID_NAME_STR    2
+#define CERT_X500_NAME_STR   3
+#define CERT_NAME_STR_SEMICOLON_FLAG           0x40000000
+#define CERT_NAME_STR_NO_PLUS_FLAG             0x20000000
+#define CERT_STR_NO_QUOTING_FLAG               0x10000000
+#define CERT_NAME_STR_CRLF_FLAG                0x08000000
+#define CERT_NAME_STR_COMMA_FLAG               0x04000000
+#define CERT_NAME_STR_REVERSE_FLAG             0x02000000
+#define CERT_NAME_STR_ENABLE_UTF8_UNICODE_FLAG 0x00040000
+#define CERT_NAME_STR_ENABLE_T61_UNICODE_FLAG  0x00020000
+#define CERT_NAME_STR_DISABLE_IE4_UTF8_FLAG    0x00010000
+
 /* function declarations */
 /* advapi32.dll */
 BOOL WINAPI CryptAcquireContextA(HCRYPTPROV *phProv, LPCSTR pszContainer,
@@ -2610,6 +2641,31 @@ BOOL WINAPI CryptProtectData( DATA_BLOB* pDataIn, LPCWSTR szDataDescr,
 BOOL WINAPI CryptUnprotectData( DATA_BLOB* pDataIn, LPWSTR* ppszDataDescr,
  DATA_BLOB* pOptionalEntropy, PVOID pvReserved,
  CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut );
+
+DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
+ LPSTR psz, DWORD csz);
+DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
+ LPWSTR psz, DWORD csz);
+#define CertRDNValueToStr WINELIB_NAME_AW(CertRDNValueToStr)
+
+DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
+ DWORD dwStrType, LPSTR psz, DWORD csz);
+DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
+ DWORD dwStrType, LPWSTR psz, DWORD csz);
+#define CertNameToStr WINELIB_NAME_AW(CertNameToStr)
+
+BOOL WINAPI CertStrToNameA(DWORD dwCertEncodingType, LPCSTR pszX500,
+ DWORD dwStrType, void *pvReserved, BYTE *pbEncoded, DWORD *pcbEncoded,
+ LPCSTR *ppszError);
+BOOL WINAPI CertStrToNameW(DWORD dwCertEncodingType, LPCWSTR pszX500,
+ DWORD dwStrType, void *pvReserved, BYTE *pbEncoded, DWORD *pcbEncoded,
+ LPCWSTR *ppszError);
+#define CertStrToName WINELIB_NAME_AW(CertStrToName)
+
+/* cryptnet.dll functions */
+BOOL WINAPI CryptGetObjectUrl(LPCSTR pszUrlOid, LPVOID pvPara, DWORD dwFlags,
+ PCRYPT_URL_ARRAY pUrlArray, DWORD *pcbUrlArray, PCRYPT_URL_INFO pUrlInfo,
+ DWORD *pcbUrlInfo, LPVOID pvReserved);
 
 #ifdef __cplusplus
 }
