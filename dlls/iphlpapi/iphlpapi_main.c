@@ -654,9 +654,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
        * precisely enough space.
        */
       size = sizeof(IP_ADAPTER_INFO) * numNonLoopbackInterfaces;
-      if (numIPAddresses > numNonLoopbackInterfaces)
-        size += (numIPAddresses - numNonLoopbackInterfaces) *
-         sizeof(IP_ADDR_STRING); 
+      size += numIPAddresses  * sizeof(IP_ADDR_STRING); 
       if (!pAdapterInfo || *pOutBufLen < size) {
         *pOutBufLen = size;
         ret = ERROR_BUFFER_OVERFLOW;
@@ -670,9 +668,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
           table = getNonLoopbackInterfaceIndexTable();
         if (table) {
           size = sizeof(IP_ADAPTER_INFO) * table->numIndexes;
-          if (ipAddrTable->dwNumEntries > numNonLoopbackInterfaces)
-            size += (ipAddrTable->dwNumEntries - numNonLoopbackInterfaces) *
-             sizeof(IP_ADDR_STRING); 
+          size += ipAddrTable->dwNumEntries * sizeof(IP_ADDR_STRING); 
           if (*pOutBufLen < size) {
             *pOutBufLen = size;
             ret = ERROR_INSUFFICIENT_BUFFER;
