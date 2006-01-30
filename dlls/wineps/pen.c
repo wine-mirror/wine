@@ -41,7 +41,20 @@ HPEN PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
 {
     LOGPEN logpen;
 
-    if (!GetObjectA( hpen, sizeof(logpen), &logpen )) return 0;
+    if (!GetObjectW( hpen, sizeof(logpen), &logpen ))
+    {
+        /* must be an extended pen */
+        EXTLOGPEN elp;
+        if (!GetObjectW( hpen, sizeof(elp), &elp ))
+        {
+            FIXME("extended pen %p not supported\n", hpen);
+            return 0;
+        }
+        logpen.lopnStyle = elp.elpPenStyle;
+        logpen.lopnWidth.x = elp.elpWidth;
+        logpen.lopnWidth.y = 0;
+        logpen.lopnColor = elp.elpColor;
+    }
 
     TRACE("hpen = %p colour = %08lx\n", hpen, logpen.lopnColor);
 

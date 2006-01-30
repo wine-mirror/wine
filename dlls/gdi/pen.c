@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -37,8 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
   /* GDI logical pen object */
 typedef struct
 {
-    GDIOBJHDR   header;
-    LOGPEN    logpen;
+    GDIOBJHDR header;
+    EXTLOGPEN logpen;
 } PENOBJ;
 
 
@@ -86,20 +87,24 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
     if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, (HGDIOBJ *)&hpen,
 				    &pen_funcs ))) return 0;
     if (pen->lopnStyle == PS_USERSTYLE || pen->lopnStyle == PS_ALTERNATE)
-        penPtr->logpen.lopnStyle = PS_SOLID;
+        penPtr->logpen.elpPenStyle = PS_SOLID;
     else
-        penPtr->logpen.lopnStyle = pen->lopnStyle;
-    penPtr->logpen.lopnWidth.y = 0;
+        penPtr->logpen.elpPenStyle = pen->lopnStyle;
     if (pen->lopnStyle == PS_NULL)
     {
-        penPtr->logpen.lopnWidth.x = 1;
-        penPtr->logpen.lopnColor = RGB(0, 0, 0);
+        penPtr->logpen.elpWidth = 1;
+        penPtr->logpen.elpColor = RGB(0, 0, 0);
     }
     else
     {
-        penPtr->logpen.lopnWidth.x = abs(pen->lopnWidth.x);
-        penPtr->logpen.lopnColor = pen->lopnColor;
+        penPtr->logpen.elpWidth = abs(pen->lopnWidth.x);
+        penPtr->logpen.elpColor = pen->lopnColor;
     }
+    penPtr->logpen.elpBrushStyle = BS_SOLID;
+    penPtr->logpen.elpHatch = 0;
+    penPtr->logpen.elpNumEntries = 0;
+    penPtr->logpen.elpStyleEntry[0] = 0;
+
     GDI_ReleaseObj( hpen );
     return hpen;
 }
@@ -118,23 +123,63 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     HPEN hpen;
 
     if ((style & PS_STYLE_MASK) == PS_USERSTYLE)
-	FIXME("PS_USERSTYLE not handled\n");
+    {
+        if (!style_count || !style_bits)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return 0;
+        }
+        /* FIXME: PS_USERSTYLE workaround */
+        FIXME("PS_USERSTYLE not handled\n");
+        style = (style & ~PS_STYLE_MASK) | PS_SOLID;
+    }
+    else
+    {
+        if (style_count || style_bits)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return 0;
+        }
+    }
+
+    if ((style & PS_STYLE_MASK) == PS_NULL)
+        return CreatePen( PS_NULL, 0, brush->lbColor );
+
     if ((style & PS_TYPE_MASK) == PS_GEOMETRIC)
+    {
+        /* PS_ALTERNATE is applicable only for cosmetic pens */
+        if ((style & PS_STYLE_MASK) == PS_ALTERNATE)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return 0;
+        }
+
 	if (brush->lbHatch && ((brush->lbStyle == BS_SOLID) || (brush->lbStyle == BS_HOLLOW)))
 	    FIXME("Hatches not implemented\n");	
+    }
+    else
+    {
+        /* PS_INSIDEFRAME is applicable only for gemetric pens */
+        if ((style & PS_STYLE_MASK) == PS_INSIDEFRAME || width != 1)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return 0;
+        }
+    }
 
-    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, (HGDIOBJ *)&hpen,
+    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ) +
+                                    style_count * sizeof(DWORD) - sizeof(penPtr->logpen.elpStyleEntry),
+                                    EXT_PEN_MAGIC, (HGDIOBJ *)&hpen,
 				    &pen_funcs ))) return 0;
-    penPtr->logpen.lopnStyle = style & ~PS_TYPE_MASK;
 
-    /* PS_USERSTYLE workaround */
-    if((penPtr->logpen.lopnStyle & PS_STYLE_MASK) == PS_USERSTYLE)
-       penPtr->logpen.lopnStyle =
-         (penPtr->logpen.lopnStyle & ~PS_STYLE_MASK) | PS_SOLID;
-
-    penPtr->logpen.lopnWidth.x = (style & PS_GEOMETRIC) ? width : 1;
-    penPtr->logpen.lopnWidth.y = 0;
-    penPtr->logpen.lopnColor = brush->lbColor;
+    penPtr->logpen.elpPenStyle = style;
+    penPtr->logpen.elpWidth = abs(width);
+    penPtr->logpen.elpBrushStyle = brush->lbStyle;
+    penPtr->logpen.elpColor = brush->lbColor;
+    penPtr->logpen.elpHatch = brush->lbHatch;
+    penPtr->logpen.elpNumEntries = style_count;
+    memcpy(penPtr->logpen.elpStyleEntry, style_bits, style_count * sizeof(DWORD));
+    
     GDI_ReleaseObj( hpen );
 
     return hpen;
@@ -165,15 +210,19 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
 static INT PEN_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
 {
     PENOBJ *pen = obj;
-    LOGPEN16 logpen;
+    LOGPEN16 *logpen;
 
-    logpen.lopnStyle = pen->logpen.lopnStyle;
-    logpen.lopnColor = pen->logpen.lopnColor;
-    logpen.lopnWidth.x = pen->logpen.lopnWidth.x;
-    logpen.lopnWidth.y = pen->logpen.lopnWidth.y;
-    if (count > sizeof(logpen)) count = sizeof(logpen);
-    memcpy( buffer, &logpen, count );
-    return count;
+    if (!buffer) return sizeof(LOGPEN16);
+
+    if (count < sizeof(LOGPEN16)) return 0;
+
+    logpen = buffer;
+    logpen->lopnStyle = pen->logpen.elpPenStyle;
+    logpen->lopnColor = pen->logpen.elpColor;
+    logpen->lopnWidth.x = pen->logpen.elpWidth;
+    logpen->lopnWidth.y = 0;
+
+    return sizeof(LOGPEN16);
 }
 
 
@@ -184,21 +233,47 @@ static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
 {
     PENOBJ *pen = obj;
 
-    if( !buffer )
-        return sizeof(pen->logpen);
-
-    switch (count)
+    switch (GDIMAGIC(pen->header.wMagic))
     {
-    case sizeof(EXTLOGPEN):
-        FIXME("extended pens not supported\n");
-        return 0;
+    case PEN_MAGIC:
+    {
+        LOGPEN *lp;
 
-    case sizeof(LOGPEN):
-        memcpy( buffer, &pen->logpen, sizeof(LOGPEN) );
+        if (!buffer) return sizeof(LOGPEN);
+
+        if (count < sizeof(LOGPEN)) return 0;
+
+        if ((pen->logpen.elpPenStyle & PS_STYLE_MASK) == PS_NULL &&
+            count == sizeof(EXTLOGPEN))
+        {
+            EXTLOGPEN *elp = buffer;
+            memcpy(elp, &pen->logpen, sizeof(EXTLOGPEN));
+            elp->elpWidth = 0;
+            return sizeof(EXTLOGPEN);
+        }
+
+        lp = buffer;
+        lp->lopnStyle = pen->logpen.elpPenStyle;
+        lp->lopnColor = pen->logpen.elpColor;
+        lp->lopnWidth.x = pen->logpen.elpWidth;
+        lp->lopnWidth.y = 0;
         return sizeof(LOGPEN);
+    }
+
+    case EXT_PEN_MAGIC:
+    {
+        INT size = sizeof(EXTLOGPEN) + pen->logpen.elpNumEntries * sizeof(DWORD) - sizeof(pen->logpen.elpStyleEntry);
+
+        if (!buffer) return size;
+
+        if (count < size) return 0;
+        memcpy(buffer, &pen->logpen, size);
+        return size;
+    }
 
     default:
         break;
     }
+    assert(0);
     return 0;
 }

@@ -1033,6 +1033,9 @@ DWORD WINAPI GetObjectType( HGDIOBJ handle )
       case PEN_MAGIC:
 	  result = OBJ_PEN;
 	  break;
+      case EXT_PEN_MAGIC:
+	  result = OBJ_EXTPEN;
+	  break;
       case BRUSH_MAGIC:
 	  result = OBJ_BRUSH;
 	  break;
@@ -1288,7 +1291,7 @@ BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle16 )
     GDIOBJHDR *object = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
     if (object)
     {
-        magic = GDIMAGIC(object->wMagic) - PEN_MAGIC + 1;
+        magic = GDIMAGIC(object->wMagic) - FIRST_MAGIC + 1;
         GDI_ReleaseObj( handle );
     }
     return magic;

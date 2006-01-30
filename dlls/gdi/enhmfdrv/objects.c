@@ -398,7 +398,20 @@ static HPEN EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen )
     EMRCREATEPEN emr;
     DWORD index = 0;
 
-    if (!GetObjectA( hPen, sizeof(emr.lopn), &emr.lopn )) return 0;
+    if (!GetObjectW( hPen, sizeof(emr.lopn), &emr.lopn ))
+    {
+        /* must be an extended pen */
+        EXTLOGPEN elp;
+        if (!GetObjectW( hPen, sizeof(elp), &elp ))
+        {
+            FIXME("extended pen %p not supported\n", hPen);
+            return 0;
+        }
+        emr.lopn.lopnStyle = elp.elpPenStyle;
+        emr.lopn.lopnWidth.x = elp.elpWidth;
+        emr.lopn.lopnWidth.y = 0;
+        emr.lopn.lopnColor = elp.elpColor;
+    }
 
     emr.emr.iType = EMR_CREATEPEN;
     emr.emr.nSize = sizeof(emr);

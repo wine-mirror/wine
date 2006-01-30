@@ -404,7 +404,20 @@ HPEN MFDRV_SelectPen( PHYSDEV dev, HPEN hpen )
     if( index < 0 )
     {
         if (!GetObject16( HPEN_16(hpen), sizeof(logpen), &logpen ))
-            return 0;
+        {
+            /* must be an extended pen */
+            EXTLOGPEN elp;
+            if (!GetObjectW( hpen, sizeof(elp), &elp ))
+            {
+                FIXME("extended pen %p not supported\n", hpen);
+                return 0;
+            }
+            logpen.lopnStyle = elp.elpPenStyle;
+            logpen.lopnWidth.x = elp.elpWidth;
+            logpen.lopnWidth.y = 0;
+            logpen.lopnColor = elp.elpColor;
+        }
+
         index = MFDRV_CreatePenIndirect( dev, hpen, &logpen );
         if( index < 0 )
             return 0;

@@ -44,7 +44,8 @@
 #define ENHMETAFILE_MAGIC     0x4f52
 #define ENHMETAFILE_DC_MAGIC  0x4f53
 #define MEMORY_DC_MAGIC       0x4f54
-#define LAST_MAGIC            0x4f54
+#define EXT_PEN_MAGIC         0x4f55
+#define LAST_MAGIC            0x4f55
 
 #define MAGIC_DONTCARE	      0xffff
 
