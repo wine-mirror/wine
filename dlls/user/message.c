@@ -2728,9 +2728,14 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
         }
         if (msg.message & 0x80000000)
         {
-            handle_internal_message( msg.hwnd, msg.message, msg.wParam, msg.lParam );
-            if (!(flags & PM_REMOVE))  /* have to remove it explicitly */
+            if (!(flags & PM_REMOVE))
+            {
+                /* Have to remove the message explicitly.
+                   Do this before handling it, because the message handler may
+                   call PeekMessage again */
                 peek_message( &msg, msg.hwnd, msg.message, msg.message, GET_MSG_REMOVE );
+            }
+            handle_internal_message( msg.hwnd, msg.message, msg.wParam, msg.lParam );
         }
         else break;
     }
