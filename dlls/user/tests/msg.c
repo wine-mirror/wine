@@ -5659,6 +5659,13 @@ static const struct message WmGlobalHookSeq_2[] = {
     { 0 }
 };
 
+static const struct message WmMouseLLHookSeq[] = {
+    { WM_MOUSEMOVE, hook },
+    { WM_LBUTTONDOWN, hook },
+    { WM_LBUTTONUP, hook },
+    { 0 }
+};
+
 static void CALLBACK win_event_global_hook_proc(HWINEVENTHOOK hevent,
 					 DWORD event,
 					 HWND hwnd,
@@ -5708,6 +5715,21 @@ static LRESULT CALLBACK cbt_global_hook_proc(int nCode, WPARAM wParam, LPARAM lP
 	msg.lParam = (cbt_global_hook_thread_id == GetCurrentThreadId()) ? 1 : 2;
 	add_message(&msg);
 
+	return CallNextHookEx(hCBT_global_hook, nCode, wParam, lParam);
+    }
+    /* WH_MOUSE_LL hook */
+    if (nCode == HC_ACTION)
+    {
+	struct message msg;
+        MSLLHOOKSTRUCT *mhll = (MSLLHOOKSTRUCT *)lParam;
+
+        /* we can't test for real mouse events */
+        if (mhll->flags & LLMHF_INJECTED)
+        {
+	    msg.message = wParam;
+            msg.flags = hook;
+	    add_message(&msg);
+        }
 	return CallNextHookEx(hCBT_global_hook, nCode, wParam, lParam);
     }
 
@@ -5794,6 +5816,33 @@ static DWORD WINAPI cbt_global_hook_thread_proc(void *param)
     {
 	TranslateMessage(&msg);
 	DispatchMessage(&msg);
+    }
+    return 0;
+}
+
+static DWORD WINAPI mouse_ll_global_thread_proc(void *param)
+{
+    HWND hwnd;
+    MSG msg;
+    HANDLE hevent = *(HANDLE *)param;
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL);
+    assert(hwnd);
+    trace("created thread window %p\n", hwnd);
+
+    *(HWND *)param = hwnd;
+
+    flush_sequence();
+
+    mouse_event(MOUSEEVENTF_MOVE, 100, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+
+    SetEvent(hevent);
+    while (GetMessage(&msg, 0, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
     return 0;
 }
@@ -5959,6 +6008,39 @@ static void test_winevents(void)
     CloseHandle(hevent);
     ok(!IsWindow(hwnd2), "window should be destroyed on thread exit\n");
     /****** end of out of context event test *************/
+
+    /****** start of MOUSE_LL hook test *************/
+    hCBT_global_hook = SetWindowsHookExA(WH_MOUSE_LL, cbt_global_hook_proc, GetModuleHandleA(0), 0);
+    assert(hCBT_global_hook);
+
+    hevent = CreateEventA(NULL, 0, 0, NULL);
+    assert(hevent);
+    hwnd2 = (HWND)hevent;
+
+    hthread = CreateThread(NULL, 0, mouse_ll_global_thread_proc, &hwnd2, 0, &tid);
+    ok(hthread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+
+    while (WaitForSingleObject(hevent, 100) == WAIT_TIMEOUT)
+        while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+
+    ok_sequence(WmMouseLLHookSeq, "MOUSE_LL hook other thread", FALSE);
+    flush_sequence();
+
+    mouse_event(MOUSEEVENTF_MOVE, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+
+    ok_sequence(WmMouseLLHookSeq, "MOUSE_LL hook same thread", FALSE);
+
+    ret = UnhookWindowsHookEx(hCBT_global_hook);
+    ok( ret, "UnhookWindowsHookEx error %ld\n", GetLastError());
+
+    PostThreadMessageA(tid, WM_QUIT, 0, 0);
+    ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(hthread);
+    CloseHandle(hevent);
+    ok(!IsWindow(hwnd2), "window should be destroyed on thread exit\n");
+    /****** end of MOUSE_LL hook test *************/
 
     ok(DestroyWindow(hwnd), "failed to destroy window\n");
 }
