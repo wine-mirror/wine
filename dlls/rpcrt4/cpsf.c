@@ -137,9 +137,24 @@ HRESULT WINAPI NdrDllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv,
 
   *ppv = NULL;
   if (!pPSFactoryBuffer->lpVtbl) {
+    const ProxyFileInfo **pProxyFileList2;
     pPSFactoryBuffer->lpVtbl = &CStdPSFactory_Vtbl;
     pPSFactoryBuffer->RefCount = 0;
     pPSFactoryBuffer->pProxyFileList = pProxyFileList;
+    for (pProxyFileList2 = pProxyFileList; *pProxyFileList2; pProxyFileList2++) {
+      int i;
+      for (i = 0; i < (*pProxyFileList2)->TableSize; i++) {
+        /* FIXME: i think that different vtables should be copied for
+         * async interfaces */
+        void * const *pSrcRpcStubVtbl = (void * const *)&CStdStubBuffer_Vtbl;
+        void **pRpcStubVtbl = (void **)&(*pProxyFileList2)->pStubVtblList[i]->Vtbl;
+        int j;
+
+        for (j = 0; j < sizeof(IRpcStubBufferVtbl)/sizeof(void *); j++)
+          if (!pRpcStubVtbl[j])
+            pRpcStubVtbl[j] = pSrcRpcStubVtbl[j];
+      }
+    }
   }
   if (IsEqualGUID(rclsid, pclsid))
     return IPSFactoryBuffer_QueryInterface((LPPSFACTORYBUFFER)pPSFactoryBuffer, iid, ppv);
