@@ -713,8 +713,12 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     if (!whichHWND) {
         whichHWND = hFocusWindow;
     }
+    whichHWND = GetAncestor(whichHWND, GA_ROOT);
+    if ( !( object->win = (Window)GetPropA(whichHWND, "__wine_x11_whole_window") ) ) {
+        ERR("Can't get drawable (window), HWND:%p doesn't have the property __wine_x11_whole_window\n", whichHWND);
+        return D3DERR_NOTAVAILABLE;
+    }
     object->win_handle = whichHWND;
-    object->win     = (Window)GetPropA( whichHWND, "__wine_x11_whole_window" );
 
     hDc = GetDC(whichHWND);
     object->display = get_display(hDc);
