@@ -228,7 +228,8 @@
 #include "winreg.h"
 #define NO_SHLWAPI_STREAM 
 #include "shlwapi.h"
-
+#include "imm.h"
+#include "textserv.h"
 #include "rtf.h"
  
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
@@ -2199,12 +2200,11 @@ void ME_RegisterEditorClass(HINSTANCE hInstance)
   bResult = RegisterClassA(&wcA);  
   assert(bResult);
 }
+
 /******************************************************************
  *        CreateTextServices (RICHED20.4)
- *
- * FIXME should be ITextHost instead of void*
  */
-HRESULT WINAPI CreateTextServices(IUnknown *punkOuter, void *pITextHost,
+HRESULT WINAPI CreateTextServices(IUnknown *punkOuter, ITextHost *pITextHost,
     IUnknown **ppUnk)
 {
   FIXME("stub\n");

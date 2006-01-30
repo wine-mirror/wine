@@ -30,8 +30,6 @@ DEFINE_GUID(IID_ITextHost2,   0xc5bdd8d0,0xd26e,0x11ce,0xa8,0x9e,0x00,0xaa,0x00,
 /*****************************************************************************
  * ITextServices interface
  */
-typedef struct ITextServices ITextServices;
-
 #define INTERFACE ITextServices
 DECLARE_INTERFACE_(ITextServices,IUnknown)
 {
@@ -216,8 +214,6 @@ enum TXTVIEW {
 #define TXTBIT_EXTENTCHANGE     0x080000
 #define TXTBIT_CLIENTRECTCHANGE 0x100000
 #define TXTBIT_USECURRENTBKG    0x200000
-
-typedef struct ITextHost ITextHost;
 
 /*****************************************************************************
  * ITextHost interface
