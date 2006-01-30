@@ -28,6 +28,10 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/stat.h>
+#include <errno.h>
+#ifdef HAVE_SYS_ERRNO_H
+#include <sys/errno.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -38,6 +42,8 @@
 #include "thread.h"
 #include "request.h"
 #include "winternl.h"
+
+/* dnotify support */
 
 #ifdef linux
 #ifndef F_NOTIFY
@@ -52,6 +58,92 @@
 #endif
 #endif
 
+/* inotify support */
+
+#if defined(__linux__) && defined(__i386__)
+
+#define SYS_inotify_init	291
+#define SYS_inotify_add_watch	292
+#define SYS_inotify_rm_watch	293
+
+struct inotify_event {
+    int           wd;
+    unsigned int  mask;
+    unsigned int  cookie;
+    unsigned int  len;
+    char          name[1];
+};
+
+#define IN_ACCESS        0x00000001
+#define IN_MODIFY        0x00000002
+#define IN_ATTRIB        0x00000004
+#define IN_CLOSE_WRITE   0x00000008
+#define IN_CLOSE_NOWRITE 0x00000010
+#define IN_OPEN          0x00000020
+#define IN_MOVED_FROM    0x00000040
+#define IN_MOVED_TO      0x00000080
+#define IN_CREATE        0x00000100
+#define IN_DELETE        0x00000200
+#define IN_DELETE_SELF   0x00000400
+
+static inline int inotify_init( void )
+{
+    int ret;
+    __asm__ __volatile__( "int $0x80"
+                          : "=a" (ret)
+                          : "0" (SYS_inotify_init));
+    if (ret<0) { errno = -ret; ret = -1; }
+    return ret;
+}
+
+static inline int inotify_add_watch( int fd, const char *name, unsigned int mask )
+{
+    int ret;
+    __asm__ __volatile__( "pushl %%ebx;\n\t"
+                          "movl %2,%%ebx;\n\t"
+                          "int $0x80;\n\t"
+                          "popl %%ebx"
+                          : "=a" (ret) : "0" (SYS_inotify_add_watch),
+                            "r" (fd), "c" (name), "d" (mask) );
+    if (ret<0) { errno = -ret; ret = -1; }
+    return ret;
+}
+
+static inline int inotify_remove_watch( int fd, int wd )
+{
+    int ret;
+    __asm__ __volatile__( "pushl %%ebx;\n\t"
+                          "movl %2,%%ebx;\n\t"
+                          "int $0x80;\n\t"
+                          "popl %%ebx"
+                          : "=a" (ret) : "0" (SYS_inotify_rm_watch),
+                            "r" (fd), "c" (wd) );
+    if (ret<0) { errno = -ret; ret = -1; }
+    return ret;
+}
+
+#else
+
+static inline int inotify_init( void )
+{
+    errno = ENOSYS;
+    return -1;
+}
+
+static inline int inotify_add_watch( int fd, const char *name, unsigned int mask )
+{
+    errno = ENOSYS;
+    return -1;
+}
+
+static inline int inotify_remove_watch( int fd, int wd )
+{
+    errno = ENOSYS;
+    return -1;
+}
+
+#endif
+
 struct dir
 {
     struct object  obj;      /* object header */
@@ -61,6 +153,8 @@ struct dir
     unsigned int   filter;   /* notification filter */
     int            notified; /* SIGIO counter */
     long           signaled; /* the file changed */
+    struct fd     *inotify_fd; /* inotify file descriptor */
+    int            wd;       /* inotify watch descriptor */
 };
 
 static struct fd *dir_get_fd( struct object *obj );
@@ -100,9 +194,11 @@ static const struct fd_ops dir_fd_ops =
 
 static struct list change_list = LIST_INIT(change_list);
 
-static void adjust_changes( int fd, unsigned int filter )
+static void dnotify_adjust_changes( struct dir *dir )
 {
 #if defined(F_SETSIG) && defined(F_NOTIFY)
+    int fd = get_unix_fd( dir->fd );
+    unsigned int filter = dir->filter;
     unsigned int val;
     if ( 0 > fcntl( fd, F_SETSIG, SIGIO) )
         return;
@@ -159,11 +255,13 @@ struct object *create_dir_obj( struct fd *fd )
     dir = alloc_object( &dir_ops );
     if (!dir)
         return NULL;
- 
+
     dir->event = NULL;
     dir->filter = 0;
     dir->notified = 0;
     dir->signaled = 0;
+    dir->inotify_fd = NULL;
+    dir->wd = -1;
     grab_object( fd );
     dir->fd = fd;
     set_fd_user( fd, &dir_fd_ops, &dir->obj );
@@ -189,37 +287,38 @@ static int dir_signaled( struct object *obj, struct thread *thread )
 /* enter here directly from SIGIO signal handler */
 void do_change_notify( int unix_fd )
 {
-    struct list *ptr;
+    struct dir *dir;
 
     /* FIXME: this is O(n) ... probably can be improved */
-    LIST_FOR_EACH( ptr, &change_list )
+    LIST_FOR_EACH_ENTRY( dir, &change_list, struct dir, entry )
     {
-        struct dir *dir = LIST_ENTRY( ptr, struct dir, entry );
         if (get_unix_fd( dir->fd ) != unix_fd) continue;
         interlocked_xchg_add( &dir->notified, 1 );
         break;
     }
 }
 
+static void dir_signal_changed( struct dir *dir )
+{
+    if (dir->event)
+        set_event( dir->event );
+    else
+        wake_up( &dir->obj, 0 );
+}
+
 /* SIGIO callback, called synchronously with the poll loop */
 void sigio_callback(void)
 {
-    struct list *ptr;
+    struct dir *dir;
 
-    LIST_FOR_EACH( ptr, &change_list )
+    LIST_FOR_EACH_ENTRY( dir, &change_list, struct dir, entry )
     {
-        struct dir *dir = LIST_ENTRY( ptr, struct dir, entry );
         long count = interlocked_xchg( &dir->notified, 0 );
         if (count)
         {
             dir->signaled += count;
             if (dir->signaled == count)  /* was it 0? */
-            {
-                if (dir->event)
-                    set_event( dir->event );
-                else
-                    wake_up( &dir->obj, 0 );
-            }
+                dir_signal_changed( dir );
         }
     }
 }
@@ -248,6 +347,13 @@ static void dir_destroy( struct object *obj )
     if (dir->filter)
         remove_change( dir );
 
+    if (dir->inotify_fd)
+    {
+        if (dir->wd != -1)
+            inotify_remove_watch( get_unix_fd( dir->inotify_fd ), dir->wd );
+        release_object( dir->inotify_fd );
+    }
+
     if (dir->event)
     {
         set_event( dir->event );
@@ -270,6 +376,101 @@ static int dir_get_poll_events( struct fd *fd )
 static int dir_get_info( struct fd *fd )
 {
     return 0;
+}
+
+
+static int inotify_get_poll_events( struct fd *fd );
+static void inotify_poll_event( struct fd *fd, int event );
+static int inotify_get_info( struct fd *fd );
+
+static const struct fd_ops inotify_fd_ops =
+{
+    inotify_get_poll_events,  /* get_poll_events */
+    inotify_poll_event,       /* poll_event */
+    no_flush,                 /* flush */
+    inotify_get_info,         /* get_file_info */
+    default_fd_queue_async,   /* queue_async */
+    default_fd_cancel_async,  /* cancel_async */
+};
+
+static int inotify_get_poll_events( struct fd *fd )
+{
+    return POLLIN;
+}
+
+static void inotify_do_change_notify( struct dir *dir )
+{
+    dir->signaled++;
+    dir_signal_changed( dir );
+}
+
+static void inotify_poll_event( struct fd *fd, int event )
+{
+    int r, ofs, unix_fd;
+    char buffer[0x1000];
+    struct inotify_event *ie;
+    struct dir *dir = get_fd_user( fd );
+
+    unix_fd = get_unix_fd( fd );
+    r = read( unix_fd, buffer, sizeof buffer );
+    if (r < 0)
+    {
+        fprintf(stderr,"inotify_poll_event(): inotify read failed!\n");
+        return;
+    }
+
+    for( ofs = 0; ofs < r; )
+    {
+        ie = (struct inotify_event*) &buffer[ofs];
+        if (!ie->len)
+            break;
+        inotify_do_change_notify( dir );
+        ofs += (sizeof (*ie) + ie->len - 1);
+    }
+}
+
+static int inotify_get_info( struct fd *fd )
+{
+    return 0;
+}
+
+static void inotify_adjust_changes( struct dir *dir )
+{
+    int filter = dir->filter;
+    unsigned int mask = 0;
+    char link[32];
+
+    if (filter & FILE_NOTIFY_CHANGE_FILE_NAME)
+        mask |= (IN_MOVED_FROM | IN_MOVED_TO | IN_DELETE | IN_CREATE);
+    if (filter & FILE_NOTIFY_CHANGE_DIR_NAME)
+        mask |= (IN_MOVED_FROM | IN_MOVED_TO | IN_DELETE | IN_CREATE | IN_DELETE_SELF);
+    if (filter & FILE_NOTIFY_CHANGE_ATTRIBUTES)
+        mask |= IN_ATTRIB;
+    if (filter & FILE_NOTIFY_CHANGE_SIZE)
+        mask |= IN_MODIFY;
+    if (filter & FILE_NOTIFY_CHANGE_LAST_WRITE)
+        mask |= IN_MODIFY;
+    if (filter & FILE_NOTIFY_CHANGE_LAST_ACCESS)
+        mask |= IN_ACCESS;
+    if (filter & FILE_NOTIFY_CHANGE_CREATION)
+        mask |= IN_CREATE;
+    if (filter & FILE_NOTIFY_CHANGE_SECURITY)
+        mask |= IN_ATTRIB;
+
+    sprintf( link, "/proc/self/fd/%u", get_unix_fd( dir->fd ) );
+    dir->wd = inotify_add_watch( get_unix_fd( dir->inotify_fd ), link, mask );
+    if (dir->wd != -1)
+        set_fd_events( dir->inotify_fd, POLLIN );
+}
+
+static struct fd *create_inotify_fd( struct dir *dir )
+{
+    int unix_fd;
+
+    unix_fd = inotify_init();
+    if (unix_fd<0)
+        return NULL;
+    return create_anonymous_fd( &inotify_fd_ops, unix_fd, &dir->obj );
 }
 
 /* enable change notifications for a directory */
@@ -311,7 +512,14 @@ DECL_HANDLER(read_directory_changes)
     if (dir->signaled>0)
         dir->signaled--;
 
-    adjust_changes( get_unix_fd( dir->fd ), dir->filter );
+    if (!dir->inotify_fd)
+        dir->inotify_fd = create_inotify_fd( dir );
+
+    /* setup the real notification */
+    if (dir->inotify_fd)
+        inotify_adjust_changes( dir );
+    else
+        dnotify_adjust_changes( dir );
 
     set_error(STATUS_PENDING);
 
