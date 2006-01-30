@@ -142,12 +142,6 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
         return 0;
     }
 
-    if (!proc)
-    {
-        SetLastError( ERROR_INVALID_FILTER_PROC );
-        return 0;
-    }
-
     /* FIXME: what if the tid belongs to another process? */
     if (tid)  /* thread-local hook */
     {
