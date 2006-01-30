@@ -2,6 +2,7 @@
  * Tests for file change notification functions
  *
  * Copyright (c) 2004 Hans Leidekker
+ * Copyright 2006 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -242,7 +243,79 @@ static void test_FindFirstChangeNotification(void)
     ok(ret, "RemoveDirectoryA error: %ld\n", GetLastError());
 }
 
+/* this test concentrates more on the wait behaviour of the handle */
+static void test_ffcn(void)
+{
+    DWORD filter;
+    HANDLE handle;
+    LONG r;
+    WCHAR path[MAX_PATH], subdir[MAX_PATH];
+    static const WCHAR szBoo[] = { '\\','b','o','o',0 };
+    static const WCHAR szHoo[] = { '\\','h','o','o',0 };
+
+    r = GetTempPathW( MAX_PATH, path );
+    ok( r != 0, "temp path failed\n");
+    if (!r)
+        return;
+
+    lstrcatW( path, szBoo );
+    lstrcpyW( subdir, path );
+    lstrcatW( subdir, szHoo );
+
+    RemoveDirectoryW( subdir );
+    RemoveDirectoryW( path );
+    
+    r = CreateDirectoryW(path, NULL);
+    ok( r == TRUE, "failed to create directory\n");
+
+    filter = FILE_NOTIFY_CHANGE_FILE_NAME;
+    filter |= FILE_NOTIFY_CHANGE_DIR_NAME;
+
+    handle = FindFirstChangeNotificationW( path, 1, filter);
+    ok( handle != INVALID_HANDLE_VALUE, "invalid handle\n");
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == STATUS_TIMEOUT, "should time out\n");
+
+    r = CreateDirectoryW( subdir, NULL );
+    ok( r == TRUE, "failed to create subdir\n");
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == WAIT_OBJECT_0, "should be ready\n");
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == WAIT_OBJECT_0, "should be ready\n");
+
+    r = FindNextChangeNotification(handle);
+    ok( r == TRUE, "find next failed\n");
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == STATUS_TIMEOUT, "should time out\n");
+
+    r = RemoveDirectoryW( subdir );
+    ok( r == TRUE, "failed to remove subdir\n");
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == WAIT_OBJECT_0, "should be ready\n");
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == WAIT_OBJECT_0, "should be ready\n");
+
+    r = FindNextChangeNotification(handle);
+    ok( r == TRUE, "find next failed\n");
+
+    r = FindNextChangeNotification(handle);
+    ok( r == TRUE, "find next failed\n");
+
+    r = FindCloseChangeNotification(handle);
+    ok( r == TRUE, "should succeed\n");
+
+    r = RemoveDirectoryW( path );
+    ok( r == TRUE, "failed to remove dir\n");
+}
+
 START_TEST(change)
 {
     test_FindFirstChangeNotification();
+    test_ffcn();
 }
