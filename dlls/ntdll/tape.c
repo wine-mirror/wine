@@ -480,7 +480,7 @@ NTSTATUS TAPE_DeviceIoControl( HANDLE device, HANDLE event,
     case IOCTL_TAPE_GET_MEDIA_PARAMS:
         status = TAPE_GetMediaParams( fd, (TAPE_GET_MEDIA_PARAMETERS *)out_buffer );
         break;
-    case IOCTL_TAPE_GET_POSITION: break;
+    case IOCTL_TAPE_GET_POSITION:
         status = TAPE_GetPosition( fd, ((TAPE_GET_POSITION *)in_buffer)->Type,
                                    (TAPE_GET_POSITION *)out_buffer );
         break;
@@ -496,7 +496,7 @@ NTSTATUS TAPE_DeviceIoControl( HANDLE device, HANDLE event,
     case IOCTL_TAPE_SET_MEDIA_PARAMS:
         status = TAPE_SetMediaParams( fd, (TAPE_SET_MEDIA_PARAMETERS *)in_buffer );
         break;
-    case IOCTL_TAPE_SET_POSITION: break;
+    case IOCTL_TAPE_SET_POSITION:
         status = TAPE_SetPosition( fd, (TAPE_SET_POSITION *)in_buffer );
         break;
     case IOCTL_TAPE_WRITE_MARKS:
