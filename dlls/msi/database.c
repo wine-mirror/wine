@@ -344,3 +344,20 @@ end:
 
     return r;
 }
+
+MSIDBSTATE WINAPI MsiGetDatabaseState( MSIHANDLE handle )
+{
+    MSIDBSTATE ret = MSIDBSTATE_READ;
+    MSIDATABASE *db;
+
+    TRACE("%ld\n", handle);
+
+    db = msihandle2msiinfo( handle, MSIHANDLETYPE_DATABASE );
+    if (!db)
+        return MSIDBSTATE_ERROR;
+    if (db->mode != MSIDBOPEN_READONLY )
+        ret = MSIDBSTATE_WRITE;
+    msiobj_release( &db->hdr );
+
+    return ret;
+}

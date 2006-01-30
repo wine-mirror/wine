@@ -45,7 +45,7 @@
 49 stdcall MsiGetActiveDatabase(long)
 50 stdcall MsiGetComponentStateA(long str ptr ptr)
 51 stdcall MsiGetComponentStateW(long wstr ptr ptr)
-52 stub MsiGetDatabaseState
+52 stdcall MsiGetDatabaseState(long)
 53 stub MsiGetFeatureCostA
 54 stub MsiGetFeatureCostW
 55 stub MsiGetFeatureInfoA
