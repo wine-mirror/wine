@@ -1554,14 +1554,14 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
         top_down = TRUE;
         dstbits += widthSrc * (heightSrc - 1) * 4;
         y2 = ySrc;
-        y = y2 + heightSrc;
+        y = y2 + heightSrc - 1;
     }
     else
     {
         y = dib.dsBmih.biHeight - ySrc - 1;
-        y2 = y - heightSrc;
+        y2 = y - heightSrc + 1;
     }
-    for(; y > y2; y--) {
+    for(; y >= y2; y--) {
         memcpy(dstbits, (char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes + xSrc * 4,
                widthSrc * 4);
         dstbits += (top_down ? -1 : 1) * widthSrc * 4;
