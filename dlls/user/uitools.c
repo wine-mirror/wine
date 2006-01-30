@@ -1480,9 +1480,12 @@ BOOL WINAPI DrawFocusRect( HDC hdc, const RECT* rc )
     HBRUSH hOldBrush;
     HPEN hOldPen, hNewPen;
     INT oldDrawMode, oldBkMode;
+    LOGBRUSH lb;
 
     hOldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
-    hNewPen = CreatePen(PS_ALTERNATE, 1, GetSysColor(COLOR_WINDOWTEXT));
+    lb.lbStyle = BS_SOLID;
+    lb.lbColor = GetSysColor(COLOR_WINDOWTEXT);
+    hNewPen = ExtCreatePen(PS_COSMETIC|PS_ALTERNATE, 1, &lb, 0, NULL);
     hOldPen = SelectObject(hdc, hNewPen);
     oldDrawMode = SetROP2(hdc, R2_XORPEN);
     oldBkMode = SetBkMode(hdc, TRANSPARENT);
