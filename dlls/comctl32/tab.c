@@ -261,9 +261,11 @@ static inline LRESULT TAB_SetCurSel (TAB_INFO *infoPtr, INT iItem)
 
   if (iItem >= 0 && iItem < infoPtr->uNumItem) {
       prevItem=infoPtr->iSelected;
-      infoPtr->iSelected=iItem;
-      TAB_EnsureSelectionVisible(infoPtr);
-      TAB_InvalidateTabArea(infoPtr);
+      if (infoPtr->iSelected != iItem) {
+          infoPtr->iSelected=iItem;
+          TAB_EnsureSelectionVisible(infoPtr);
+          TAB_InvalidateTabArea(infoPtr);
+      }
   }
   return prevItem;
 }
