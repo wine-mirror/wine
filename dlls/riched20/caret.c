@@ -751,16 +751,18 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
   y += ME_GetYScrollPos(editor);
 
   tmp_cursor = editor->pCursors[0];
-  if (!ME_FindPixelPos(editor, x, y, &editor->pCursors[0], &editor->bCaretAtEnd))
+  if (!ME_FindPixelPos(editor, x, y, &tmp_cursor, &editor->bCaretAtEnd))
     /* return */;
   
   if (tmp_cursor.pRun == editor->pCursors[0].pRun && 
       tmp_cursor.nOffset == editor->pCursors[0].nOffset)
     return;
   
-  HideCaret(editor->hWnd);
   ME_InvalidateSelection(editor);
+  editor->pCursors[0] = tmp_cursor;
+  HideCaret(editor->hWnd);
   ME_MoveCaret(editor);
+  ME_InvalidateSelection(editor);
   ShowCaret(editor->hWnd);
   ME_SendSelChange(editor);
 }
