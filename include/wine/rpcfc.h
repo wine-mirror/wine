@@ -68,6 +68,7 @@
 #define RPC_FC_C_CSTRING		0x22
 #define RPC_FC_C_WSTRING		0x25
 #define RPC_FC_CSTRING                  0x26
+#define RPC_FC_WSTRING                  0x29
 
 #define RPC_FC_ENCAPSULATED_UNION	0x2a
 #define RPC_FC_NON_ENCAPSULATED_UNION	0x2b
