@@ -634,7 +634,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
     const expr_t *length_is = get_attrp(attrs, ATTR_LENGTHIS);
     const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
     int has_length = length_is && (length_is->type != EXPR_VOID);
-    int has_size = size_is && (size_is->type != EXPR_VOID) && !array->is_const;
+    int has_size = (size_is && (size_is->type != EXPR_VOID)) || !array->is_const;
     size_t start_offset = *typestring_offset;
 
     /* FIXME: need to analyse type for pointers */
@@ -735,7 +735,8 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             *typestring_offset += 4;
 
             *typestring_offset += write_conf_or_var_desc(file, current_func,
-                                                         current_structure, size_is);
+                                                         current_structure,
+                                                         size_is ? size_is : array);
 
             /* FIXME: write out pointer descriptor if necessary */
 
@@ -758,7 +759,8 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             *typestring_offset += 4;
 
             *typestring_offset += write_conf_or_var_desc(file, current_func,
-                                                         current_structure, size_is);
+                                                         current_structure,
+                                                         size_is ? size_is : array);
             *typestring_offset += write_conf_or_var_desc(file, current_func,
                                                          current_structure,
                                                          length_is);
@@ -1159,7 +1161,7 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
             const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
             const char *array_type;
             int has_length = length_is && (length_is->type != EXPR_VOID);
-            int has_size = size_is && (size_is->type != EXPR_VOID) && !var->array->is_const;
+            int has_size = (size_is && (size_is->type != EXPR_VOID)) || !var->array->is_const;
 
             if (NEXT_LINK(var->array)) /* multi-dimensional array */
                 array_type = "ComplexArray";
@@ -1353,7 +1355,7 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
             const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
             const char *array_type;
             int has_length = length_is && (length_is->type != EXPR_VOID);
-            int has_size = size_is && (size_is->type != EXPR_VOID) && !var->array->is_const;
+            int has_size = (size_is && (size_is->type != EXPR_VOID)) || !var->array->is_const;
 
             if (NEXT_LINK(var->array)) /* multi-dimensional array */
                 array_type = "ComplexArray";
