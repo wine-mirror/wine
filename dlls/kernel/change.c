@@ -150,6 +150,8 @@ BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL
     }
     else if (!overlapped)
         WaitForSingleObject( event, INFINITE );
+    else
+        overlapped->Internal = STATUS_PENDING;
 
     if (!overlapped)
         CloseHandle( event );
