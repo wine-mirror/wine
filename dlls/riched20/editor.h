@@ -24,6 +24,9 @@
 #define ALLOC_N_OBJ(type, count) HeapAlloc(me_heap, 0, (count)*sizeof(type))
 #define FREE_OBJ(ptr) HeapFree(me_heap, 0, ptr)
 
+#define RUN_IS_HIDDEN(run) ((run)->style->fmt.dwMask & CFM_HIDDEN \
+                             && (run)->style->fmt.dwEffects & CFE_HIDDEN)
+
 /* style.c */
 ME_Style *ME_MakeStyle(CHARFORMAT2W *style);
 void ME_AddRefStyle(ME_Style *item);

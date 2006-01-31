@@ -350,6 +350,10 @@ static void ME_RTFCharAttrHook(RTF_Info *info)
       if (info->rtfMinor == rtfSuperScrShrink) fmt.dwEffects = CFE_SUPERSCRIPT;
       if (info->rtfMinor == rtfNoSuperSub) fmt.dwEffects = 0;
       break;
+    case rtfInvisible:
+      fmt.dwMask = CFM_HIDDEN;
+      fmt.dwEffects = info->rtfParam ? fmt.dwMask : 0;
+      break;
     case rtfBackColor:
       fmt.dwMask = CFM_BACKCOLOR;
       fmt.dwEffects = 0;

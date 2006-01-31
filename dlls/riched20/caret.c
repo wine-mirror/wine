@@ -434,34 +434,37 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
 static BOOL
 ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
 {
-  ME_DisplayItem *pRun;
+  ME_DisplayItem *pRun = pCursor->pRun;
   
   if (nRelOfs == -1)
   {
     if (!pCursor->nOffset)
     {
-      pRun = ME_FindItemBack(pCursor->pRun, diRunOrParagraph);
-      assert(pRun);
-      switch (pRun->type)
-      {
-        case diRun:
-          pCursor->pRun = pRun;
-          pCursor->nOffset = pRun->member.run.strText->nLen;
-          break;
-        case diParagraph:
-          if (pRun->member.para.prev_para->type == diTextStart)
+      do {
+        pRun = ME_FindItemBack(pRun, diRunOrParagraph);
+        assert(pRun);
+        switch (pRun->type)
+        {
+          case diRun:
+            break;
+          case diParagraph:
+            if (pRun->member.para.prev_para->type == diTextStart)
+              return FALSE;
+            pRun = ME_FindItemBack(pRun, diRunOrParagraph);
+            /* every paragraph ought to have at least one run */
+            assert(pRun && pRun->type == diRun);
+            assert(pRun->member.run.nFlags & MERF_ENDPARA);
+            break;
+          default:
+            assert(pRun->type != diRun && pRun->type != diParagraph);
             return FALSE;
-          pRun = ME_FindItemBack(pRun, diRunOrParagraph);
-          /* every paragraph ought to have at least one run */
-          assert(pRun && pRun->type == diRun);
-          assert(pRun->member.run.nFlags & MERF_ENDPARA);
-          pCursor->pRun = pRun;
-          pCursor->nOffset = 0;
-          break;
-        default:
-          assert(pRun->type != diRun && pRun->type != diParagraph);
-          return FALSE;
-      }
+        }
+      } while (RUN_IS_HIDDEN(&pRun->member.run));
+      pCursor->pRun = pRun;
+      if (pRun->member.run.nFlags & MERF_ENDPARA)
+        pCursor->nOffset = 0;
+      else
+        pCursor->nOffset = pRun->member.run.strText->nLen;
     }
     
     if (pCursor->nOffset)
@@ -470,17 +473,19 @@ ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
   }
   else
   {
-    if (!(pCursor->pRun->member.run.nFlags & MERF_ENDPARA))
+    if (!(pRun->member.run.nFlags & MERF_ENDPARA))
     {
-      int new_ofs = ME_StrRelPos2(pCursor->pRun->member.run.strText, pCursor->nOffset, nRelOfs);
+      int new_ofs = ME_StrRelPos2(pRun->member.run.strText, pCursor->nOffset, nRelOfs);
     
-      if (new_ofs < pCursor->pRun->member.run.strText->nLen)
+      if (new_ofs < pRun->member.run.strText->nLen)
       {
         pCursor->nOffset = new_ofs;
         return TRUE;
       }
     }
-    pRun = ME_FindItemFwd(pCursor->pRun, diRun);
+    do {
+      pRun = ME_FindItemFwd(pRun, diRun);
+    } while (pRun && RUN_IS_HIDDEN(&pRun->member.run));
     if (pRun)
     {
       pCursor->pRun = pRun;

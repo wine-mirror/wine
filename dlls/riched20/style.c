@@ -237,6 +237,7 @@ void ME_DumpStyleToBuf(CHARFORMAT2W *pFmt, char buf[2048])
   ME_DumpStyleEffect(&p, "Font italic:", pFmt, CFM_ITALIC);
   ME_DumpStyleEffect(&p, "Font underline:", pFmt, CFM_UNDERLINE);
   ME_DumpStyleEffect(&p, "Font strikeout:", pFmt, CFM_STRIKEOUT);
+  ME_DumpStyleEffect(&p, "Hidden text:", pFmt, CFM_HIDDEN);
   p += sprintf(p, "Text color:           ");
   if (pFmt->dwMask & CFM_COLOR)
   {

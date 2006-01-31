@@ -226,6 +226,9 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
   int nSelFrom, nSelTo;
   const WCHAR wszSpace[] = {' ', 0};
   
+  if (run->nFlags & MERF_HIDDEN)
+    return;
+
   ME_GetSelection(c->editor, &nSelFrom, &nSelTo);
 
   /* Draw selected end-of-paragraph mark */

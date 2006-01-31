@@ -103,6 +103,8 @@ typedef enum {
 #define MERF_CALCBYWRAP 0x0F0000
 /* the "end of paragraph" run, contains 1 character */
 #define MERF_ENDPARA    0x100000
+/* run is hidden */
+#define MERF_HIDDEN     0x200000
 
 /* runs with any of these flags set cannot be joined */
 #define MERF_NOJOIN (MERF_GRAPHICS|MERF_TAB|MERF_ENDPARA)

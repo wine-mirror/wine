@@ -340,6 +340,12 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
 void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run)
 {
   assert(run->nCharOfs != -1);
+
+  if (RUN_IS_HIDDEN(run))
+    run->nFlags |= MERF_HIDDEN;
+  else
+    run->nFlags &= ~MERF_HIDDEN;
+
   if (ME_IsSplitable(run->strText))
     run->nFlags |= MERF_SPLITTABLE;
   else
@@ -539,11 +545,16 @@ SIZE ME_GetRunSize(ME_Context *c, ME_Paragraph *para, ME_Run *run, int nLen)
 
 void ME_CalcRunExtent(ME_Context *c, ME_Paragraph *para, ME_Run *run)
 {
-  int nEnd = ME_StrVLen(run->strText);
-  SIZE size = ME_GetRunSizeCommon(c, para, run, nEnd, &run->nAscent, &run->nDescent);
-  run->nWidth = size.cx;
-  if (!size.cx)
-    WARN("size.cx == 0\n");
+  if (run->nFlags & MERF_HIDDEN)
+    run->nWidth = 0;
+  else
+  {
+    int nEnd = ME_StrVLen(run->strText);
+    SIZE size = ME_GetRunSizeCommon(c, para, run, nEnd, &run->nAscent, &run->nDescent);
+    run->nWidth = size.cx;
+    if (!size.cx)
+      WARN("size.cx == 0\n");
+  }
 }
 
 void ME_MustBeWrapped(ME_Context *c, ME_DisplayItem *para)
